@@ -1,0 +1,42 @@
+{
+  "feature": "jobnotice",
+  "version": "1.0.0",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/admin/job-notices",
+      "description": "채용 공고 목록 조회",
+      "auth": "ADMIN+",
+      "query": {
+        "status": "DRAFT | PUBLISHED | CLOSED | REJECTED (optional)",
+        "source": "DIRECT | CRAWLED (optional)",
+        "page": "number",
+        "size": "number"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/job-notices/{id}",
+      "description": "채용 공고 상세 조회",
+      "auth": "ADMIN+"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/job-notices/{id}/publish",
+      "description": "공고 승인 (PUBLISHED)",
+      "auth": "ADMIN+"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/job-notices/{id}/reject",
+      "description": "공고 반려 (REJECTED)",
+      "auth": "ADMIN+"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/job-notices/import-crawled",
+      "description": "크롤링 공고 이관",
+      "auth": "ADMIN+"
+    }
+  ]
+}

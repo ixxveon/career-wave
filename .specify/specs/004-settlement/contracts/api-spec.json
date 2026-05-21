@@ -1,0 +1,36 @@
+{
+  "feature": "settlement",
+  "version": "1.0.0",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/admin/settlements",
+      "description": "정산 목록 조회",
+      "auth": "ADMIN+",
+      "query": {
+        "status": "PENDING | CONFIRMED | PAID | CANCELLED (optional)",
+        "settlementMonth": "YYYY-MM (optional)",
+        "page": "number",
+        "size": "number"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/settlements/mentor/{mentorId}",
+      "description": "멘토별 정산 이력 조회",
+      "auth": "ADMIN+"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/settlements/{id}/confirm",
+      "description": "정산 확정 (PENDING → CONFIRMED)",
+      "auth": "ADMIN+"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/settlements/{id}/paid",
+      "description": "지급 완료 처리 (CONFIRMED → PAID)",
+      "auth": "ADMIN+"
+    }
+  ]
+}
