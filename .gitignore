@@ -1,31 +1,31 @@
 # =====================
 # Frontend (Node / Vite)
 # =====================
-frontend/node_modules/
-frontend/dist/
-frontend/.env
-frontend/.env.local
-frontend/.env.*.local
+**/frontend/node_modules/
+**/frontend/dist/
+**/frontend/.env
+**/frontend/.env.local
+**/frontend/.env.*.local
 
 # =====================
 # FastAPI (Python)
 # =====================
-fastapi/__pycache__/
-fastapi/**/__pycache__/
-fastapi/*.pyc
-fastapi/.venv/
-fastapi/venv/
-fastapi/.env
+**/fastapi/__pycache__/
+**/fastapi/**/__pycache__/
+**/fastapi/*.pyc
+**/fastapi/.venv/
+**/fastapi/venv/
+**/fastapi/.env
 
 # =====================
 # Backend (Spring Boot)
 # =====================
-backend/.gradle/
-backend/build/
-backend/out/
-backend/.env
-backend/src/main/resources/application-secret.yml
-backend/src/main/resources/application-local.yml
+**/backend/.gradle/
+**/backend/build/
+**/backend/out/
+**/backend/.env
+**/src/main/resources/application-secret.yml
+**/src/main/resources/application-local.yml
 *.jar
 *.war
 
@@ -40,4 +40,3 @@ Thumbs.db
 
 # Spec Kit (agent credentials)
 .github/agents/
-.vscode/
