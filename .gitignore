@@ -1,0 +1,43 @@
+# =====================
+# Frontend (Node / Vite)
+# =====================
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# =====================
+# FastAPI (Python)
+# =====================
+fastapi/__pycache__/
+fastapi/**/__pycache__/
+fastapi/*.pyc
+fastapi/.venv/
+fastapi/venv/
+fastapi/.env
+
+# =====================
+# Backend (Spring Boot)
+# =====================
+backend/.gradle/
+backend/build/
+backend/out/
+backend/.env
+backend/src/main/resources/application-secret.yml
+backend/src/main/resources/application-local.yml
+*.jar
+*.war
+
+# =====================
+# IDE & OS
+# =====================
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Spec Kit (agent credentials)
+.github/agents/
+.vscode/
