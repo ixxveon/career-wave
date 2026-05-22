@@ -1,0 +1,32 @@
+# 로컬 개발용 프로파일 - H2 인메��리 DB 사용 (MySQL 없이 기동 가능)
+spring:
+  datasource:
+    url: jdbc:h2:mem:careerwave;DB_CLOSE_DELAY=-1;MODE=MySQL
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  sql:
+    init:
+      mode: never
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+  mail:
+    host: localhost
+    port: 1025
+
+jwt:
+  secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256

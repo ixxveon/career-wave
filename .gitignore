@@ -24,8 +24,8 @@
 **/backend/build/
 **/backend/out/
 **/backend/.env
+**/backend/*.log
 **/src/main/resources/application-secret.yml
-**/src/main/resources/application-local.yml
 *.jar
 *.war
 
