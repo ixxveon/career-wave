@@ -69,7 +69,7 @@
   font-size: clamp(38px, 3.75vw, 54px);
   line-height: 1.22;
   letter-spacing: 0;
-  font-weight: 950;
+  font-weight: 750;
   word-break: keep-all;
 }
 
@@ -439,7 +439,7 @@
   font-weight: 700;
 }
 
-.cw-home-feature > svg {
+.cw-home-feature>svg {
   color: #50617b;
 }
 
@@ -471,7 +471,7 @@
   font-weight: 700;
 }
 
-.cw-home-jobs header > a {
+.cw-home-jobs header>a {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -613,7 +613,7 @@
   font-weight: 950;
 }
 
-.cw-home-job > p {
+.cw-home-job>p {
   margin: 4px 0 0;
   color: #64738b;
   font-size: 13px;
@@ -867,3 +867,640 @@
     gap: 16px;
   }
 }
+
+/* ===== 고유리 작업 영역: Dashboard UI 시작 ===== */
+
+.cw-dashboard-section {
+  margin: 34px 0 42px;
+}
+
+.cw-dashboard-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.cw-dashboard-section__title h2 {
+  margin: 0;
+  color: #243b53;
+  font-size: 26px;
+  font-weight: 750;
+}
+
+.cw-dashboard-section__title p {
+  margin: 8px 0 0;
+  color: #7b8798;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cw-streak-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 220px;
+  min-height: 58px;
+  padding: 10px 16px;
+  border: 1px solid #cfeee3;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f1fff9, #e7f8f2);
+  box-shadow: none;
+}
+
+.cw-streak-card strong {
+  color: #173765;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.cw-streak-card p {
+  margin: 4px 0 0;
+  color: #5f7f75;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cw-streak-card>span {
+  margin-left: auto;
+  font-size: 24px;
+  opacity: 0.85;
+}
+
+.cw-dashboard-info-bar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 16px 24px;
+  border: 1px solid #e3eaf5;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.cw-dashboard-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+}
+
+.cw-dashboard-info>span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #4d7fca;
+  background: #e8f2ff;
+}
+
+.cw-dashboard-info strong {
+  color: #1f3b63;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.cw-dashboard-info p {
+  margin: 4px 0 0;
+  color: #738199;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cw-dashboard-summary {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr 1.15fr;
+  gap: 16px;
+}
+
+.cw-dashboard-card {
+  min-height: 360px;
+  padding: 22px;
+  border: 1px solid #e3eaf5;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 14px 32px rgba(34, 63, 104, 0.07);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cw-dashboard-card h3 {
+  margin: 0 0 22px;
+  color: #173765;
+  font-size: 18px;
+  font-weight: 750;
+}
+
+.cw-progress-row {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.cw-progress-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #3478f6;
+}
+
+.cw-progress-icon.is-blue {
+  background: #eaf2ff;
+  color: #3478f6;
+}
+
+.cw-progress-icon.is-green {
+  background: #dcfbef;
+  color: #19b98c;
+}
+
+.cw-progress-icon.is-purple {
+  background: #f1e8ff;
+  color: #8b5cf6;
+}
+
+.cw-progress-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  color: #50617b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.cw-progress-item strong {
+  color: #243b53;
+  font-weight: 750;
+}
+
+.cw-progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #edf3fb;
+  overflow: hidden;
+}
+
+.cw-progress-bar div {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5f96ee, #3b77d7);
+}
+
+.cw-progress-bar.is-green div {
+  background: linear-gradient(90deg, #35d6a4, #19b98c);
+}
+
+.cw-progress-bar.is-purple div {
+  background: linear-gradient(90deg, #a777ff, #7b4ee6);
+}
+
+.cw-dashboard-more,
+.cw-github-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  margin-top: auto;
+  border-radius: 8px;
+  color: #2f6fce;
+  background: #f6f9fd;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.cw-interview-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.cw-interview-stats div,
+.cw-github-stats div {
+  padding: 14px 16px;
+  border-radius: 10px;
+  text-align: center;
+  background: #f5f9fe;
+  min-height: 86px;
+}
+
+.cw-interview-stats span,
+.cw-github-stats span {
+  color: #708096;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cw-github-stats strong {
+  display: block;
+  margin-top: 8px;
+  color: #243b53;
+  font-size: 22px;
+  font-weight: 750;
+}
+
+.cw-interview-stats em {
+  color: #173765;
+  font-size: 14px;
+  font-style: normal;
+}
+
+.cw-interview-stats p {
+  margin-top: 8px;
+  color: #5f96ee;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.cw-chart-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 18px 0 12px;
+}
+
+.cw-chart-title h4 {
+  margin: 0;
+  color: #173765;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.cw-chart-title button {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid #dbe6f4;
+  border-radius: 8px;
+  color: #61728a;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cw-line-chart {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 12px;
+  height: 145px;
+  padding: 20px 20px 22px;
+  border-left: 1px solid #dce7f4;
+  border-bottom: 1px solid #dce7f4;
+  background: linear-gradient(180deg, rgba(95, 150, 238, 0.12), rgba(95, 150, 238, 0.02));
+}
+
+.cw-line-chart::before {
+  position: absolute;
+  left: 25px;
+  right: 25px;
+  top: 78px;
+  height: 3px;
+  content: '';
+  background: #3478f6;
+  transform: rotate(-6deg);
+}
+
+.cw-line-chart span {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  color: #0f3f8c;
+  background: #3478f6;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+/* ===== GitHub 카드 UI ===== */
+
+.cw-github-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+}
+
+.cw-github-stats div {
+  padding: 14px 16px;
+  border-radius: 10px;
+  text-align: center;
+  background: #f5f9fe;
+}
+
+.cw-github-stats span {
+  color: #708096;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cw-github-stats strong {
+  display: block;
+  margin-top: 8px;
+  color: #243b53;
+  font-size: 22px;
+  font-weight: 750;
+}
+
+.cw-github-months {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 14px 22px 6px 52px;
+  color: #74849b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.cw-github-heatmap-wrap {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.cw-github-days {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  height: 76px;
+  color: #74849b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.cw-github-grass {
+  display: grid;
+  grid-template-columns: repeat(21, 1fr);
+  gap: 4px;
+  margin: 0;
+}
+
+.cw-github-grass span {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: #dff5ce;
+}
+
+.cw-github-grass .grass-1,
+.cw-github-legend .grass-1 {
+  background: #dff5ce;
+}
+
+.cw-github-grass .grass-2,
+.cw-github-legend .grass-2 {
+  background: #bff0a1;
+}
+
+.cw-github-grass .grass-3,
+.cw-github-legend .grass-3 {
+  background: #8bdd71;
+}
+
+.cw-github-grass .grass-4,
+.cw-github-legend .grass-4 {
+  background: #56c858;
+}
+
+.cw-github-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin: 6px 4px 14px 0;
+  color: #74849b;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.cw-github-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.cw-stack-title {
+  margin: 0 0 10px;
+  color: #173765;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.cw-stack-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cw-stack-tags span {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #f3f7fc;
+  color: #446079;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.cw-github-link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 42px;
+  margin-top: 16px;
+  padding: 0 16px;
+  border-radius: 8px;
+  color: #2f6fce;
+  background: #f6f9fd;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.cw-github-link svg {
+  color: #1f2937;
+}
+
+.cw-progress-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.cw-progress-summary div {
+  padding: 12px 10px;
+  border-radius: 12px;
+  text-align: center;
+  background: #f5f9fe;
+}
+
+.cw-progress-summary span {
+  color: #7b8798;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cw-progress-summary strong {
+  display: block;
+  margin-top: 6px;
+  color: #173765;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.cw-mypage-extra-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 0.9fr;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.cw-mypage-extra-card {
+  padding: 20px;
+  border: 1px solid #e3eaf5;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 14px 32px rgba(34, 63, 104, 0.06);
+}
+
+.cw-mypage-extra-card h3 {
+  margin: 0 0 16px;
+  color: #173765;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.cw-action-list,
+.cw-activity-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cw-action-list li,
+.cw-activity-list li {
+  padding: 13px 14px;
+  border-radius: 12px;
+  background: #f5f9fe;
+}
+
+.cw-action-list strong,
+.cw-activity-list strong {
+  display: block;
+  color: #173765;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cw-action-list span {
+  display: block;
+  margin-top: 5px;
+  color: #7b8798;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.cw-activity-list span {
+  display: block;
+  margin-bottom: 5px;
+  color: #5f96ee;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cw-company-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cw-company-list span {
+  padding: 10px 14px;
+  border-radius: 999px;
+  color: #173765;
+  background: #f5f9fe;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cw-company-note {
+  margin: 18px 0 0;
+  padding: 14px;
+  border-radius: 12px;
+  color: #246b5b;
+  background: #f1fff9;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 980px) {
+  .cw-mypage-extra-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cw-mypage-layout {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.cw-mypage-sidebar {
+  position: sticky;
+  top: 92px;
+  padding: 18px 14px;
+  border: 1px solid #e3eaf5;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 14px 32px rgba(34, 63, 104, 0.05);
+}
+
+.cw-mypage-sidebar strong {
+  display: block;
+  margin: 0 0 14px;
+  padding: 0 8px;
+  color: #173765;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.cw-mypage-sidebar nav {
+  display: grid;
+  gap: 6px;
+}
+
+.cw-mypage-sidebar a {
+  padding: 11px 12px;
+  border-radius: 10px;
+  color: #5f7088;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cw-mypage-sidebar a:hover,
+.cw-mypage-sidebar a.is-active {
+  color: #2f6fce;
+  background: #f5f9ff;
+}
+
+@media (max-width: 1024px) {
+  .cw-mypage-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-mypage-sidebar {
+    position: static;
+  }
+}
+
+/* ===== 고유리 작업 영역: Dashboard UI 끝 ===== */

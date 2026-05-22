@@ -4,6 +4,7 @@ import MainLayout from '../components/layout/MainLayout';
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
 import JobSeekerDashboardPage from '../user/pages/dashboard/JobSeekerDashboardPage';
 import CompanyDashboardPage from '../user/pages/dashboard/CompanyDashboardPage';
+import UserMyPage from '../user/pages/dashboard/UserMyPage';
 
 import LoginPage from '../user/pages/auth/LoginPage';
 import RegisterPage from '../user/pages/auth/RegisterPage';
@@ -52,6 +53,7 @@ function AppRoutes() {
       <Route element={<MainLayout />}>
         <Route index element={<JobSeekerDashboardPage />} />
         <Route path="dashboard/company" element={<CompanyDashboardPage />} />
+        <Route path="mypage" element={<UserMyPage />} />
 
         <Route path="auth">
           <Route index element={<Navigate to="/auth/login" replace />} />
