@@ -33,6 +33,10 @@ export const serviceMenus = [
       { label: '지원 현황', href: '/applications/status' },
       { label: '입사 지원', href: '/applications/apply' },
       { label: '지원자 관리', href: '/applications/applicants' },
+      { label: '취업 준비 기록', href: '/interview/history' },
+      { label: '면접 기록 상세', href: '/interview/detail/backend-20260522' },
+      { label: '학습 로드맵', href: '/interview/roadmap' },
+      { label: '진단 리포트', href: '/interview/report-export' },
     ],
   },
   {
