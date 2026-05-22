@@ -1,0 +1,212 @@
+.cw-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid rgba(221, 229, 240, 0.86);
+  background: #ffffff;
+}
+
+.cw-header__inner {
+  display: grid;
+  grid-template-columns: auto minmax(280px, 330px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  min-height: 66px;
+  padding: 0 clamp(30px, 4vw, 58px);
+}
+
+.cw-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #243c65;
+  font-size: 19px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.cw-header__brand img {
+  width: 54px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.cw-header__search {
+  display: grid;
+  grid-template-columns: 1fr 30px;
+  align-items: center;
+  height: 36px;
+  padding: 0 5px 0 18px;
+  border: 1px solid #b9cce9;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.cw-header__search input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: #344d75;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cw-header__search input::placeholder {
+  color: #7f8ca3;
+}
+
+.cw-header__search button {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #284f90;
+  background: transparent;
+}
+
+.cw-header__nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(16px, 1.8vw, 26px);
+  min-width: 0;
+  color: #172744;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.cw-header__nav-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 64px;
+  white-space: nowrap;
+}
+
+.cw-header__nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 64px;
+}
+
+.cw-header__nav-item:hover .cw-header__nav-link,
+.cw-header__nav-item.is-active .cw-header__nav-link,
+.cw-header__nav-link:hover {
+  color: #2f6fce;
+}
+
+.cw-header__submenu {
+  position: absolute;
+  top: calc(100% - 6px);
+  left: 50%;
+  z-index: 20;
+  display: grid;
+  min-width: 172px;
+  padding: 8px;
+  border: 1px solid #e2e9f4;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 18px 38px rgba(35, 55, 91, 0.14);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(8px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.cw-header__nav-item:hover .cw-header__submenu,
+.cw-header__nav-item:focus-within .cw-header__submenu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.cw-header__submenu a {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: #68768d;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.cw-header__submenu a:hover,
+.cw-header__submenu a.is-active {
+  color: #173765;
+  background: #edf5ff;
+}
+
+.cw-header__account {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.cw-header__account a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid #dce6f4;
+  border-radius: 8px;
+  color: #304664;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.cw-header__account a.is-primary {
+  border-color: transparent;
+  color: #ffffff;
+  background: linear-gradient(180deg, #5f96ee, #3f78d8);
+  box-shadow: 0 8px 16px rgba(63, 117, 214, 0.18);
+}
+
+@media (max-width: 1240px) {
+  .cw-header__inner {
+    grid-template-columns: auto 1fr auto;
+    gap: 16px;
+    padding: 14px 0;
+  }
+
+  .cw-header__search {
+    order: 4;
+    grid-column: 1 / -1;
+  }
+
+  .cw-header__nav {
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .cw-header__inner {
+    grid-template-columns: 1fr auto;
+  }
+
+  .cw-header__brand {
+    font-size: 18px;
+  }
+
+  .cw-header__brand img {
+    width: 48px;
+  }
+
+  .cw-header__nav {
+    order: 5;
+    grid-column: 1 / -1;
+    gap: 18px;
+  }
+
+  .cw-header__account {
+    gap: 6px;
+  }
+}

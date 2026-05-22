@@ -1,0 +1,19 @@
+.cw-app-layout,
+.app-layout {
+  min-height: 100vh;
+  width: min(1480px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 0 0 28px;
+}
+
+.cw-app-main,
+.app-main {
+  min-width: 0;
+}
+
+@media (max-width: 980px) {
+  .cw-app-layout,
+  .app-layout {
+    width: min(100% - 24px, 1480px);
+  }
+}

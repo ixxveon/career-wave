@@ -1,8 +1,17 @@
-import axiosInstance from '../../utils/axiosInstance';
+import { apiClient } from './apiClient';
 
 export const authApi = {
-  login: (data) => axiosInstance.post('/api/v1/auth/login', data),
-  logout: () => axiosInstance.post('/api/v1/auth/logout'),
-  signup: (data) => axiosInstance.post('/api/v1/auth/signup', data),
-  refresh: () => axiosInstance.post('/api/v1/auth/refresh'),
+  login: (payload) =>
+    apiClient('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  register: (payload) =>
+    apiClient('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getProfile: () => apiClient('/members/me'),
 };
