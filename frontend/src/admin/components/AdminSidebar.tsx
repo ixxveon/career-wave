@@ -30,6 +30,7 @@ const menuGroups = [
       { label: 'AI 메트릭스',   path: '/admin/ai' },
       { label: '스크래핑 관리', path: '/admin/scraping' },
       { label: '감사 로그',     path: '/admin/log' },
+      { label: '운영 설정',     path: '/admin/settings' },
     ],
   },
 ];
