@@ -1253,3 +1253,47 @@ button {
   outline: none;
   border-color: #8daeca;
 }
+
+/* ── payment page ──────────────────────────────────────────── */
+
+.refundCalc {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 12px;
+  background: #f6f9fc;
+  border: 1px solid #dbe5ee;
+}
+
+.refundTitle {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #31475f;
+}
+
+.refundRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5edf6;
+  font-size: 14px;
+  color: #5f7388;
+}
+
+.refundRow strong {
+  font-weight: 700;
+  color: #23384f;
+}
+
+.refundRow.highlight {
+  border-bottom: 0;
+  margin-top: 6px;
+  padding-top: 14px;
+}
+
+.refundRow.highlight strong {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1c3e63;
+}
