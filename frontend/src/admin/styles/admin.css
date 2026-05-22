@@ -1171,3 +1171,85 @@ button {
   color: #9a6767;
   background: #fff5f5;
 }
+
+/* ── customer service page ─────────────────────────────────── */
+
+.statusBadge.answering { background: #e7f0fb; color: #3d6091; }
+
+.csTabBar {
+  display: flex;
+  border-bottom: 2px solid #dbe5ee;
+}
+
+.csTab {
+  height: 48px;
+  padding: 0 24px;
+  border: 0;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: #7a8da4;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font-family: inherit;
+  transition: color 0.18s;
+}
+
+.csTab.active {
+  color: #1c3e63;
+  border-bottom-color: #1c3e63;
+}
+
+.csFormRows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.csFormRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.csFormRow > label:first-child {
+  font-size: 13px;
+  font-weight: 600;
+  color: #708397;
+}
+
+.csFormInput,
+.csFormSelect {
+  height: 42px;
+  border: 1px solid #d8e3ed;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #23384f;
+  background: white;
+  font-family: inherit;
+}
+
+.csFormInput:focus,
+.csFormSelect:focus {
+  outline: none;
+  border-color: #8daeca;
+}
+
+.csFormTextarea {
+  border: 1px solid #d8e3ed;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #23384f;
+  background: white;
+  font-family: inherit;
+  min-height: 100px;
+  resize: vertical;
+}
+
+.csFormTextarea:focus {
+  outline: none;
+  border-color: #8daeca;
+}
