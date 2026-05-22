@@ -1172,6 +1172,94 @@ button {
   background: #fff5f5;
 }
 
+/* ── seat progress bar (company member) ────────────────────── */
+
+.seatBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #23384f;
+  font-weight: 600;
+}
+
+.seatProgress {
+  width: 56px;
+  height: 6px;
+  border-radius: 3px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.seatProgress div {
+  height: 100%;
+  border-radius: 3px;
+  background: #3d6d9e;
+}
+
+/* ── credit amount colors ───────────────────────────────────── */
+
+.creditPlus  { color: #5d7b69; font-weight: 700; }
+.creditMinus { color: #9a6767; font-weight: 700; }
+
+/* ── settlement report ─────────────────────────────────────── */
+
+.vatRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.vatItem {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid #e2e8f0;
+}
+
+.vatItem span {
+  display: block;
+  font-size: 12px;
+  color: #7a8da4;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.vatItem strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #23384f;
+}
+
+.revenueBreakdown {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.revenueItem {
+  padding: 14px;
+  border-radius: 10px;
+  background: #f6f9fc;
+  border: 1px solid #dbe5ee;
+}
+
+.revenueItem span {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a8da4;
+  margin-bottom: 6px;
+}
+
+.revenueItem strong {
+  font-size: 16px;
+  font-weight: 800;
+  color: #10243f;
+}
+
 /* ── customer service page ─────────────────────────────────── */
 
 .statusBadge.answering { background: #e7f0fb; color: #3d6091; }
