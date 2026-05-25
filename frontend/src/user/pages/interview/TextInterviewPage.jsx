@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, X, Clock, FileText, ChevronRight } from 'lucide-react';
-import './TextInterviewPage.css';
+import './styles/TextInterviewPage.css';
 
 const JOB_OPTIONS = ['백엔드 개발자', '프론트엔드 개발자', '풀스택 개발자', '데이터 엔지니어', 'DevOps'];
 

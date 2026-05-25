@@ -5,7 +5,7 @@ import {
   Eye, Activity, MessageSquare, Smile,
   BarChart2, Lightbulb, List,
 } from 'lucide-react';
-import './MediaInterviewPage.css';
+import './styles/MediaInterviewPage.css';
 
 const JOB_OPTIONS = ['백엔드 개발자', '프론트엔드 개발자', '풀스택 개발자', '데이터 엔지니어', 'DevOps'];
 

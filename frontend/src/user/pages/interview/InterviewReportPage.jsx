@@ -6,7 +6,7 @@ import {
   Video, MessageSquare, Calendar, Award,
   Download, Lock, Eye, Activity, Gauge, Smile,
 } from 'lucide-react';
-import './InterviewReportPage.css';
+import './styles/InterviewReportPage.css';
 
 /* ── Mock Data ─────────────────────────────────── */
 const REPORT = {

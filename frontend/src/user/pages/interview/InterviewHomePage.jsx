@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import './InterviewHomePage.css';
+import './styles/InterviewHomePage.css';
 import { MessageSquare, Video, ChevronRight, Lightbulb, FileText, User, Zap, ClipboardList } from 'lucide-react';
 
 const mockHistory = [
