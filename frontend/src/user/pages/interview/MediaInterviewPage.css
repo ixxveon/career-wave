@@ -1,0 +1,697 @@
+/* ═══════════════════════════════════════════════
+   MediaInterviewPage
+   ═══════════════════════════════════════════════ */
+
+/* ─── Setup ───────────────────────────────────── */
+.mi-setup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 66px);
+  padding: 40px 0;
+}
+
+.mi-setup__card {
+  width: 100%;
+  max-width: 560px;
+  padding: 48px 52px;
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 40px rgba(30, 58, 110, 0.10);
+}
+
+.mi-setup__eyebrow {
+  display: inline-block;
+  margin: 0 0 16px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: #e0e7f7;
+  color: #2a52a0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.mi-setup__title {
+  margin: 0 0 8px;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.mi-setup__desc {
+  margin: 0 0 28px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+}
+
+/* 카메라 미리보기 */
+.mi-setup__preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #0a0f1e;
+  margin-bottom: 28px;
+}
+
+.mi-setup__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.mi-setup__cam-err {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.mi-setup__preview-overlay {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.mi-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+
+.mi-icon-btn:hover { background: rgba(255, 255, 255, 0.25); }
+.mi-icon-btn--off  { background: rgba(220, 38, 38, 0.6); }
+.mi-icon-btn--off:hover { background: rgba(220, 38, 38, 0.8); }
+
+/* 직무/기업 설정 */
+.mi-setup__section { margin-bottom: 20px; }
+
+.mi-setup__label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.mi-setup__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mi-chip {
+  padding: 7px 16px;
+  border-radius: 100px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.14s;
+}
+
+.mi-chip:hover { border-color: var(--color-primary); color: var(--color-primary-dark); }
+.mi-chip--on   { border-color: var(--color-primary); background: var(--color-sky); color: var(--color-primary-dark); }
+
+.mi-setup__input {
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 0.14s;
+  box-sizing: border-box;
+}
+
+.mi-setup__input:focus { border-color: var(--color-primary); }
+.mi-setup__input::placeholder { color: var(--color-text-secondary); }
+
+.mi-setup__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 32px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: linear-gradient(130deg, #0f2744 0%, #163666 100%);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.14s, transform 0.14s;
+}
+
+.mi-setup__btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+.mi-setup__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Interview Layout ────────────────────────── */
+.mi {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 66px);
+  margin: 0 calc(-1 * (100vw - min(1480px, calc(100vw - 32px))) / 2);
+}
+
+/* ─── 헤더 ───────────────────────────────────── */
+.mi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px 28px;
+  background: #0d1627;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.mi-header__left   { display: flex; align-items: center; gap: 8px; flex: 1; }
+.mi-header__company { font-size: 15px; font-weight: 700; color: #e8f2ff; }
+.mi-header__sep     { color: #4a6fa5; }
+.mi-header__job     { font-size: 13px; color: #7ba8d9; }
+
+.mi-header__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.mi-header__dots { display: flex; gap: 5px; }
+
+.mi-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mi-dot--done { background: #2a4f96; }
+.mi-dot--cur  { background: #60a5fa; box-shadow: 0 0 0 3px rgba(96,165,250,0.25); }
+
+.mi-header__q { font-size: 11px; font-weight: 700; color: #7ba8d9; }
+
+.mi-header__right  { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: flex-end; }
+
+.mi-header__timer {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #93c5fd;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.mi-header__exit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  background: transparent;
+  color: #f87171;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.mi-header__exit:hover { background: rgba(220, 38, 38, 0.15); }
+
+/* ─── 메인 영역 ──────────────────────────────── */
+.mi-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  overflow: hidden;
+  background: #050d1f;
+}
+
+/* ─── 웹캠 ───────────────────────────────────── */
+.mi-cam-wrap {
+  position: relative;
+  background: #000;
+  overflow: hidden;
+}
+
+.mi-cam {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.mi-cam__off {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #0a0f1e;
+  color: #4a6fa5;
+  font-size: 14px;
+}
+
+.mi-cam__rec {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+  color: #f87171;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* ─── 질문 오버레이 (자막 스타일) ──────────── */
+.mi-cam__caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 28px 32px 22px;
+  background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%);
+}
+
+.mi-cam__caption-text {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.55;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+  letter-spacing: -0.01em;
+}
+
+.mi-cam__caption-num {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  margin-left: 2px;
+}
+
+.mi-cam__rec-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: mi-blink 1.4s infinite;
+}
+
+@keyframes mi-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+/* ─── 분석 패널 ──────────────────────────────── */
+.mi-panel {
+  background: #0b1530;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.mi-panel__block {
+  padding: 20px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mi-panel__block--q {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mi-panel__block--nav {
+  margin-top: auto;
+}
+
+.mi-panel__heading {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4a6fa5;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ─── 메트릭 2×2 그리드 ────────────────────── */
+.mi-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mi-metric-card {
+  padding: 12px 10px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mi-metric-card__icon {
+  color: var(--mc, #60a5fa);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.mi-metric-card__value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--mc, #60a5fa);
+  line-height: 1.1;
+}
+
+.mi-metric-card__unit {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+.mi-metric-card__label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #4a6fa5;
+  margin-top: 2px;
+}
+
+.mi-metric-card__bar {
+  height: 3px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.mi-metric-card__fill {
+  height: 100%;
+  border-radius: 100px;
+  background: var(--mc, #60a5fa);
+  opacity: 0.8;
+}
+
+/* ─── 현재 질문 ──────────────────────────────── */
+.mi-q-badge {
+  font-size: 13px;
+  font-weight: 800;
+  color: #60a5fa;
+}
+
+.mi-q-badge span {
+  font-weight: 500;
+  color: #4a6fa5;
+  font-size: 12px;
+}
+
+.mi-q-card {
+  flex: 1;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(96, 165, 250, 0.07);
+  border: 1px solid rgba(96, 165, 250, 0.18);
+  box-shadow: 0 0 20px rgba(96, 165, 250, 0.05);
+}
+
+.mi-q-text {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e8f2ff;
+  line-height: 1.75;
+}
+
+.mi-q-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.mi-q-nav__btn {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+
+.mi-q-nav__btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.mi-q-nav__btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.mi-q-nav__btn--next {
+  background: rgba(96, 165, 250, 0.15);
+  border-color: rgba(96, 165, 250, 0.25);
+  color: #60a5fa;
+}
+
+.mi-q-nav__btn--next:hover:not(:disabled) { background: rgba(96, 165, 250, 0.25); }
+
+/* ─── 답변 힌트 칩 ───────────────────────────── */
+.mi-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mi-hint-chip {
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  color: #c4b5fd;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ─── 질문 진행 목록 ─────────────────────────── */
+.mi-panel__block--progress { flex: 1; overflow-y: auto; }
+
+.mi-q-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mi-q-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.mi-q-item:hover { background: rgba(255,255,255,0.04); }
+
+.mi-q-item__num {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.07);
+  color: #4a6fa5;
+}
+
+.mi-q-item__text {
+  font-size: 11px;
+  color: #4a6fa5;
+  line-height: 1.4;
+}
+
+.mi-q-item--done .mi-q-item__num {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+.mi-q-item--done .mi-q-item__text { color: #3d6b50; }
+
+.mi-q-item--cur {
+  background: rgba(96, 165, 250, 0.08);
+}
+.mi-q-item--cur .mi-q-item__num {
+  background: #60a5fa;
+  color: #0b1530;
+}
+.mi-q-item--cur .mi-q-item__text {
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.mi-q-item--pending {
+  cursor: default;
+  opacity: 0.45;
+}
+.mi-q-item--pending:hover { background: transparent; }
+.mi-q-item--pending .mi-q-item__text {
+  color: #2a3f6a;
+  font-style: italic;
+  letter-spacing: 0.04em;
+}
+
+/* ─── 컨트롤 바 ──────────────────────────────── */
+.mi-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  background: #0d1627;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.mi-controls__left { display: flex; gap: 10px; }
+
+.mi-ctrl-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
+  color: #c8deff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+
+.mi-ctrl-btn:hover   { background: rgba(255, 255, 255, 0.13); }
+.mi-ctrl-btn--off    { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
+.mi-ctrl-btn--off:hover { background: rgba(239, 68, 68, 0.2); }
+
+.mi-next-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: linear-gradient(130deg, #1e3a6e, #2a4f96);
+  color: #e8f2ff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.14s, transform 0.14s;
+}
+
+.mi-controls__q-hint {
+  font-size: 12px;
+  color: #4a6fa5;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+/* ─── Responsive ─────────────────────────────── */
+
+/* 태블릿 */
+@media (max-width: 900px) {
+  /* Setup */
+  .mi-setup__card  { padding: 32px 28px; }
+  .mi-setup__chips { gap: 6px; }
+
+  /* Interview */
+  .mi-main         { grid-template-columns: 1fr; }
+  .mi-panel        { display: none; } /* 태블릿: 패널 숨김, 질문은 컨트롤바 위에 표시 */
+  .mi-controls     { flex-direction: column; gap: 10px; align-items: stretch; }
+  .mi-controls__left { justify-content: center; }
+  .mi-next-btn     { width: 100%; justify-content: center; }
+}
+
+/* 모바일 */
+@media (max-width: 640px) {
+  /* Setup */
+  .mi-setup        { padding: 20px 0; align-items: flex-start; }
+  .mi-setup__card  { padding: 24px 16px; border-radius: var(--radius-lg); }
+  .mi-setup__title { font-size: 22px; }
+  .mi-setup__desc  { font-size: 13px; }
+  .mi-setup__chips { gap: 6px; }
+  .mi-chip         { padding: 6px 12px; font-size: 12px; }
+  .mi-setup__btn   { margin-top: 24px; }
+
+  /* Interview header */
+  .mi-header         { padding: 10px 14px; gap: 8px; }
+  .mi-header__sep,
+  .mi-header__job    { display: none; }
+  .mi-header__company { font-size: 13px; }
+  .mi-header__dots   { display: none; }
+  .mi-header__timer  { padding: 4px 10px; font-size: 12px; }
+  .mi-header__exit   { padding: 5px 10px; font-size: 12px; }
+
+  /* 웹캠: 모바일에서 4:3 비율로 */
+  .mi-cam-wrap { aspect-ratio: 4/3; }
+  .mi-cam      { object-position: center; }
+
+  /* 컨트롤 */
+  .mi-controls      { padding: 12px 14px; }
+  .mi-ctrl-btn      { padding: 8px 14px; font-size: 12px; }
+  .mi-next-btn      { padding: 10px 16px; font-size: 13px; }
+}
+
+/* 소형 모바일 */
+@media (max-width: 400px) {
+  .mi-setup__card { padding: 20px 14px; }
+  .mi-ctrl-btn    { padding: 7px 10px; font-size: 11px; gap: 5px; }
+}

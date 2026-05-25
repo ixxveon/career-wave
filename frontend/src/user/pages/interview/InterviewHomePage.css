@@ -233,7 +233,7 @@
 /* 퀵스타트 아이콘 */
 .iv-card__icon-wrap--glow {
   background: rgba(99,157,255,0.18);
-  font-size: 15px;
+  color: #93c5fd;
 }
 
 /* ─── 2-Column Grid ──────────────────────────── */
@@ -464,13 +464,50 @@
 .iv-tip__cta:hover { background: #d97706; }
 
 /* ─── Responsive ─────────────────────────────── */
+
+/* 태블릿 */
 @media (max-width: 900px) {
   .iv-hero {
     flex-direction: column;
     align-items: flex-start;
     padding: 36px 32px;
   }
-  .iv-hero__stats { width: 100%; justify-content: space-between; }
-  .iv-mode-grid,
-  .iv-grid-2     { grid-template-columns: 1fr; }
+  .iv-hero__stats   { width: 100%; justify-content: space-between; }
+  .iv-grid-2        { grid-template-columns: 1fr; }
+
+  /* 퀵스타트 모드 카드: 태블릿에서 가로 유지 */
+  .iv-qs-list { flex-direction: row; }
+}
+
+/* 모바일 */
+@media (max-width: 640px) {
+  .iv-home { padding: 20px 0 40px; gap: 14px; }
+
+  .iv-hero {
+    padding: 28px 20px;
+    min-height: unset;
+  }
+  .iv-hero__title   { font-size: 20px; }
+  .iv-hero__sub     { font-size: 13px; }
+  .iv-hero__stats   { gap: 8px; }
+  .iv-stat          { min-width: 72px; padding: 14px 10px; }
+  .iv-stat__value   { font-size: 18px; }
+
+  .iv-card          { padding: 20px 16px; }
+  .iv-card--dark    { padding: 20px 16px; }
+
+  /* 퀵스타트: 모바일에서 세로 */
+  .iv-qs-list       { flex-direction: column; }
+  .iv-mode-card     { padding: 14px 16px; }
+  .iv-mode-card__icon { width: 36px; height: 36px; }
+
+  /* 히스토리 테이블: 스크롤 */
+  .iv-card:has(.iv-table) { padding: 20px 0; }
+  .iv-card:has(.iv-table) .iv-card__title { padding: 0 16px; }
+  .iv-table-wrap    { overflow-x: auto; padding: 0 16px; }
+  .iv-table th,
+  .iv-table td      { padding: 10px 10px; font-size: 12px; }
+
+  .iv-tip           { padding: 18px 16px; gap: 12px; flex-direction: column; }
+  .iv-tip__text     { font-size: 13px; }
 }

@@ -1,5 +1,6 @@
+import { useNavigate } from 'react-router-dom';
 import './InterviewHomePage.css';
-import { MessageSquare, Video, ChevronRight, Lightbulb, FileText } from 'lucide-react';
+import { MessageSquare, Video, ChevronRight, Lightbulb, FileText, User, Zap, ClipboardList } from 'lucide-react';
 
 const mockHistory = [
   { date: '05-22', type: 'video', typeLabel: '비디오 면접', target: '토스 (백엔드)', score: 88 },
@@ -12,6 +13,8 @@ function scoreClass(s) {
 }
 
 function InterviewHomePage() {
+  const navigate = useNavigate();
+
   return (
     <div className="iv-home">
 
@@ -53,7 +56,7 @@ function InterviewHomePage() {
         {/* 내 준비 상태 */}
         <div className="iv-card">
           <h2 className="iv-card__title">
-            <span className="iv-card__icon-wrap iv-card__icon-wrap--blue">👤</span>
+            <span className="iv-card__icon-wrap iv-card__icon-wrap--blue"><User size={16} /></span>
             내 준비 상태
           </h2>
           <ul className="iv-status-list">
@@ -91,12 +94,12 @@ function InterviewHomePage() {
         {/* 퀵 스타트 */}
         <div className="iv-card iv-card--dark">
           <h2 className="iv-card__title iv-card__title--light">
-            <span className="iv-card__icon-wrap iv-card__icon-wrap--glow">⚡</span>
+            <span className="iv-card__icon-wrap iv-card__icon-wrap--glow"><Zap size={16} /></span>
             퀵 스타트
             <span className="iv-card__subtitle iv-card__subtitle--light">면접 바로 시작하기</span>
           </h2>
           <div className="iv-qs-list">
-            <button className="iv-mode-card iv-mode-card--text">
+            <button className="iv-mode-card iv-mode-card--text" onClick={() => navigate('/interview/text')}>
               <div className="iv-mode-card__deco" />
               <div className="iv-mode-card__icon"><MessageSquare size={22} /></div>
               <div className="iv-mode-card__body">
@@ -105,7 +108,7 @@ function InterviewHomePage() {
               </div>
               <span className="iv-mode-card__cta">시작하기 <ChevronRight size={14} /></span>
             </button>
-            <button className="iv-mode-card iv-mode-card--video">
+            <button className="iv-mode-card iv-mode-card--video" onClick={() => navigate('/interview/media')}>
               <div className="iv-mode-card__deco" />
               <div className="iv-mode-card__icon"><Video size={22} /></div>
               <div className="iv-mode-card__body">
@@ -121,11 +124,11 @@ function InterviewHomePage() {
       {/* ── 최근 히스토리 ── */}
       <div className="iv-card">
         <h2 className="iv-card__title">
-          <span className="iv-card__icon-wrap iv-card__icon-wrap--green">📋</span>
+          <span className="iv-card__icon-wrap iv-card__icon-wrap--green"><ClipboardList size={16} /></span>
           최근 연습 히스토리
           <span className="iv-card__subtitle">최신 3개</span>
         </h2>
-        <table className="iv-table">
+        <div className="iv-table-wrap"><table className="iv-table">
           <thead>
             <tr>
               <th>날짜</th>
@@ -142,11 +145,11 @@ function InterviewHomePage() {
                 <td><span className={`iv-badge iv-badge--${row.type}`}>{row.typeLabel}</span></td>
                 <td>{row.target}</td>
                 <td><span className={`iv-score ${scoreClass(row.score)}`}>{row.score}점</span></td>
-                <td><button className="iv-report-btn">결과 보기</button></td>
+                <td><button className="iv-report-btn" onClick={() => navigate('/interview/report')}>결과 보기</button></td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
 
       {/* ── AI 팁 ── */}
@@ -158,7 +161,7 @@ function InterviewHomePage() {
             000님은 지난 면접에서 &apos;기술적 예외 처리&apos; 답변 시 목소리 떨림이 있었습니다.<br />
             오늘은 텍스트 모드로 답변 논리 구조를 먼저 배대 잡고 시작하는 걸 추천해요!
           </p>
-          <button className="iv-tip__cta">추천 질문 연습하기 →</button>
+          <button className="iv-tip__cta" onClick={() => navigate('/interview/text')}>추천 질문 연습하기 →</button>
         </div>
       </div>
 
