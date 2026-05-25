@@ -53,6 +53,7 @@ import MatchingPage from '../admin/pages/Matching/MatchingPage';
 import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
 import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
+import OperationSettingsPage from '../admin/pages/Settings/OperationSettingsPage';
 
 function AppRoutes() {
   return (
@@ -135,6 +136,7 @@ function AppRoutes() {
           <Route path="ai"        element={<AiMetricsPage />} />
           <Route path="scraping"  element={<ScrapingPage />} />
           <Route path="log"       element={<AuditLogPage />} />
+          <Route path="settings"  element={<OperationSettingsPage />} />
         </Route>
       </Route>
     </Routes>
