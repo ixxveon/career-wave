@@ -1,26 +1,168 @@
-﻿import { ClipboardCheck, Mic, Video } from 'lucide-react';
-import ServicePage from '../../../components/common/ServicePage';
+import './InterviewHomePage.css';
+import { MessageSquare, Video, ChevronRight, Lightbulb, FileText } from 'lucide-react';
+
+const mockHistory = [
+  { date: '05-22', type: 'video', typeLabel: '비디오 면접', target: '토스 (백엔드)', score: 88 },
+  { date: '05-20', type: 'text',  typeLabel: '텍스트 면접', target: '카카오 (백엔드)', score: 75 },
+  { date: '05-18', type: 'text',  typeLabel: '텍스트 면접', target: '네이버 (인턴)',   score: 62 },
+];
+
+function scoreClass(s) {
+  return s >= 80 ? 'iv-score--high' : s >= 65 ? 'iv-score--mid' : 'iv-score--low';
+}
 
 function InterviewHomePage() {
   return (
-    <ServicePage
-      eyebrow="AI INTERVIEW"
-      title="AI 면접"
-      description="텍스트 면접과 화상 면접을 연습하고, 답변 내용과 태도에 대한 리포트를 받아보세요."
-      primaryAction="모의면접 시작"
-      secondaryAction="리포트 보기"
-      metrics={[
-        { value: '30문항', label: '직무별 예상 질문' },
-        { value: 'AI', label: '답변 피드백' },
-        { value: '리포트', label: '면접 결과 분석' },
-      ]}
-      cards={[
-        { icon: Mic, title: '면접 홈', text: '직무와 난이도를 선택해 면접 연습을 시작합니다.' },
-        { icon: Video, title: '화상 면접', text: '카메라와 음성을 활용해 실전처럼 연습합니다.' },
-        { icon: ClipboardCheck, title: '면접 리포트', text: '답변 완성도와 개선할 포인트를 확인합니다.' },
-      ]}
-      steps={['면접 유형 선택', '질문 답변 진행', 'AI 피드백 확인']}
-    />
+    <div className="iv-home">
+
+      {/* ── Hero ── */}
+      <section className="iv-hero">
+        <div className="iv-hero__deco iv-hero__deco--1" />
+        <div className="iv-hero__deco iv-hero__deco--2" />
+
+        <div className="iv-hero__left">
+          <span className="iv-hero__eyebrow">AI INTERVIEW</span>
+          <h1 className="iv-hero__title">
+            안녕하세요, 000님!<br />
+            오늘 어떤 면접을 연습할까요?
+          </h1>
+          <p className="iv-hero__sub">
+            AI가 이력서와 타겟 공고를 분석해 맞춤 질문을 실시간 생성합니다.
+          </p>
+        </div>
+
+        <div className="iv-hero__stats">
+          <div className="iv-stat">
+            <span className="iv-stat__value">88점</span>
+            <span className="iv-stat__label">최고 점수</span>
+          </div>
+          <div className="iv-stat">
+            <span className="iv-stat__value">3회</span>
+            <span className="iv-stat__label">총 연습</span>
+          </div>
+          <div className="iv-stat">
+            <span className="iv-stat__value">FREE</span>
+            <span className="iv-stat__label">멤버십</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 준비 상태 + 퀵스타트 ── */}
+      <div className="iv-grid-2">
+
+        {/* 내 준비 상태 */}
+        <div className="iv-card">
+          <h2 className="iv-card__title">
+            <span className="iv-card__icon-wrap iv-card__icon-wrap--blue">👤</span>
+            내 준비 상태
+          </h2>
+          <ul className="iv-status-list">
+            <li className="iv-status-item">
+              <span className="iv-status-item__label">연결된 이력서</span>
+              <span className="iv-status-item__value iv-status-item__value--file">
+                <FileText size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                이력서_최종본.pdf
+              </span>
+            </li>
+            <li className="iv-status-item">
+              <span className="iv-status-item__label">이력서 완성도</span>
+              <div className="iv-progress-wrap">
+                <div className="iv-progress">
+                  <div className="iv-progress__bar" style={{ width: '75%' }} />
+                </div>
+                <span className="iv-status-item__value">75%</span>
+              </div>
+            </li>
+            <li className="iv-status-item">
+              <span className="iv-status-item__label">목표 직무</span>
+              <span className="iv-status-item__value">백엔드 개발자</span>
+            </li>
+            <li className="iv-status-item">
+              <span className="iv-status-item__label">멤버십</span>
+              <span className="iv-status-item__value iv-status-item__value--free">FREE</span>
+            </li>
+            <li className="iv-status-item">
+              <span className="iv-status-item__label">이번 달 면접 횟수</span>
+              <span className="iv-status-item__value">0 / 1회 사용</span>
+            </li>
+          </ul>
+        </div>
+
+        {/* 퀵 스타트 */}
+        <div className="iv-card iv-card--dark">
+          <h2 className="iv-card__title iv-card__title--light">
+            <span className="iv-card__icon-wrap iv-card__icon-wrap--glow">⚡</span>
+            퀵 스타트
+            <span className="iv-card__subtitle iv-card__subtitle--light">면접 바로 시작하기</span>
+          </h2>
+          <div className="iv-qs-list">
+            <button className="iv-mode-card iv-mode-card--text">
+              <div className="iv-mode-card__deco" />
+              <div className="iv-mode-card__icon"><MessageSquare size={22} /></div>
+              <div className="iv-mode-card__body">
+                <p className="iv-mode-card__label">텍스트 면접 시작</p>
+                <p className="iv-mode-card__desc">키보드 타이핑, 메신저 대화 스타일</p>
+              </div>
+              <span className="iv-mode-card__cta">시작하기 <ChevronRight size={14} /></span>
+            </button>
+            <button className="iv-mode-card iv-mode-card--video">
+              <div className="iv-mode-card__deco" />
+              <div className="iv-mode-card__icon"><Video size={22} /></div>
+              <div className="iv-mode-card__body">
+                <p className="iv-mode-card__label">AI 비디오 면접 시작</p>
+                <p className="iv-mode-card__desc">웹캠/마이크 사용, 시선 및 태도 분석</p>
+              </div>
+              <span className="iv-mode-card__cta">시작하기 <ChevronRight size={14} /></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 최근 히스토리 ── */}
+      <div className="iv-card">
+        <h2 className="iv-card__title">
+          <span className="iv-card__icon-wrap iv-card__icon-wrap--green">📋</span>
+          최근 연습 히스토리
+          <span className="iv-card__subtitle">최신 3개</span>
+        </h2>
+        <table className="iv-table">
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>면접 종류</th>
+              <th>타겟 기업/직무</th>
+              <th>점수</th>
+              <th>리포트 보기</th>
+            </tr>
+          </thead>
+          <tbody>
+            {mockHistory.map((row, i) => (
+              <tr key={i}>
+                <td className="iv-table__date">{row.date}</td>
+                <td><span className={`iv-badge iv-badge--${row.type}`}>{row.typeLabel}</span></td>
+                <td>{row.target}</td>
+                <td><span className={`iv-score ${scoreClass(row.score)}`}>{row.score}점</span></td>
+                <td><button className="iv-report-btn">결과 보기</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── AI 팁 ── */}
+      <div className="iv-tip">
+        <div className="iv-tip__icon"><Lightbulb size={20} /></div>
+        <div className="iv-tip__body">
+          <p className="iv-tip__label">오늘의 AI 추천 면접 팁</p>
+          <p className="iv-tip__text">
+            000님은 지난 면접에서 &apos;기술적 예외 처리&apos; 답변 시 목소리 떨림이 있었습니다.<br />
+            오늘은 텍스트 모드로 답변 논리 구조를 먼저 배대 잡고 시작하는 걸 추천해요!
+          </p>
+          <button className="iv-tip__cta">추천 질문 연습하기 →</button>
+        </div>
+      </div>
+
+    </div>
   );
 }
 
