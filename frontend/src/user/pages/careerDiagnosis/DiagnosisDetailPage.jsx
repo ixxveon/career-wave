@@ -1,6 +1,6 @@
 import { ArrowLeft, BookOpenCheck, Download, FileText, Lightbulb, Target } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import './InterviewManagement.css';
+import './CareerDiagnosis.css';
 
 const scoreCards = [
   { label: '총점', value: 82, note: '최근 기록 기준' },
@@ -34,17 +34,17 @@ const roadmap = [
   { week: '4주차', title: '프로젝트 경험 STAR 정리', detail: '상황, 행동, 결과를 1분 답변으로 압축' },
 ];
 
-function InterviewDetailPage() {
+function DiagnosisDetailPage() {
   const { id } = useParams();
 
   return (
     <section className="support-page">
       <div className="detail-topbar">
-        <Link className="text-link" to="/interview/history">
+        <Link className="text-link" to="/career-diagnosis/history">
           <ArrowLeft size={17} />
           기록 목록
         </Link>
-        <Link className="support-button support-button--primary" to={`/interview/report-export?record=${id}`}>
+        <Link className="support-button support-button--primary" to={`/career-diagnosis/report?record=${id}`}>
           <Download size={16} />
           PDF 다운로드
         </Link>
@@ -143,4 +143,4 @@ function InterviewDetailPage() {
   );
 }
 
-export default InterviewDetailPage;
+export default DiagnosisDetailPage;

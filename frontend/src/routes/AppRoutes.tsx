@@ -29,10 +29,11 @@ import InterviewHomePage from '../user/pages/interview/InterviewHomePage';
 import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
 import MediaInterviewPage from '../user/pages/interview/MediaInterviewPage';
 import InterviewReportPage from '../user/pages/interview/InterviewReportPage';
-import InterviewHistoryPage from '../user/pages/interview/InterviewHistoryPage';
-import InterviewDetailPage from '../user/pages/interview/InterviewDetailPage';
-import LearningRoadmapPage from '../user/pages/interview/LearningRoadmapPage';
-import ReportExportPage from '../user/pages/interview/ReportExportPage';
+
+import DiagnosisHistoryPage from '../user/pages/careerDiagnosis/DiagnosisHistoryPage';
+import DiagnosisDetailPage from '../user/pages/careerDiagnosis/DiagnosisDetailPage';
+import LearningRoadmapPage from '../user/pages/careerDiagnosis/LearningRoadmapPage';
+import ComprehensiveReportPage from '../user/pages/careerDiagnosis/ComprehensiveReportPage';
 
 import CommunityPage from '../user/pages/community/CommunityPage';
 import PostDetailPage from '../user/pages/community/PostDetailPage';
@@ -93,13 +94,17 @@ function AppRoutes() {
 
         <Route path="interview">
           <Route index element={<InterviewHomePage />} />
-          <Route path="history" element={<InterviewHistoryPage />} />
-          <Route path="detail/:id" element={<InterviewDetailPage />} />
-          <Route path="roadmap" element={<LearningRoadmapPage />} />
           <Route path="report" element={<InterviewReportPage />} />
-          <Route path="report-export" element={<ReportExportPage />} />
           <Route path="text" element={<TextInterviewPage />} />
           <Route path="media" element={<MediaInterviewPage />} />
+        </Route>
+
+        <Route path="career-diagnosis">
+          <Route index element={<Navigate to="/career-diagnosis/report" replace />} />
+          <Route path="history" element={<DiagnosisHistoryPage />} />
+          <Route path="detail/:id" element={<DiagnosisDetailPage />} />
+          <Route path="roadmap" element={<LearningRoadmapPage />} />
+          <Route path="report" element={<ComprehensiveReportPage />} />
         </Route>
 
         <Route path="community">

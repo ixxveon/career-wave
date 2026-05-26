@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import './InterviewManagement.css';
+import './CareerDiagnosis.css';
 
 const records = [
   { id: 'backend-20260522', label: '백엔드 개발자 모의면접 · 사람인 · 2026.05.22', score: 82 },
@@ -78,7 +78,7 @@ function GrowthTooltip({ active, payload, label }) {
   );
 }
 
-function ReportExportPage() {
+function ComprehensiveReportPage() {
   const queryRecord = new URLSearchParams(useLocation().search).get('record');
   const [selectedRecord, setSelectedRecord] = useState(queryRecord || records[0].id);
   const [reportType, setReportType] = useState(reportTypes[1]);
@@ -294,4 +294,4 @@ function ReportExportPage() {
   );
 }
 
-export default ReportExportPage;
+export default ComprehensiveReportPage;

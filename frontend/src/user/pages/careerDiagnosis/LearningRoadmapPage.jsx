@@ -1,6 +1,6 @@
 import { ArrowLeft, BookOpenCheck, CheckCircle2, Circle, FileText, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import './InterviewManagement.css';
+import './CareerDiagnosis.css';
 
 const weakSkills = [
   {
@@ -57,11 +57,11 @@ function LearningRoadmapPage() {
   return (
     <section className="support-page">
       <div className="detail-topbar">
-        <Link className="text-link" to="/interview/history">
+        <Link className="text-link" to="/career-diagnosis/history">
           <ArrowLeft size={17} />
           취업 준비 기록
         </Link>
-        <Link className="support-button support-button--primary" to="/interview/report-export">
+        <Link className="support-button support-button--primary" to="/career-diagnosis/report">
           <FileText size={16} />
           진단 리포트 만들기
         </Link>

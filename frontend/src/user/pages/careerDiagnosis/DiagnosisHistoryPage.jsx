@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import './InterviewManagement.css';
+import './CareerDiagnosis.css';
 
 const filters = ['전체', '기술면접', '인성면접', '프로젝트면접'];
 const jobOptions = ['전체 직무', '백엔드 개발자', '프론트엔드 개발자', '풀스택 개발자', '서비스 기획자'];
@@ -99,7 +99,7 @@ function GrowthTooltip({ active, payload, label }) {
   );
 }
 
-function InterviewHistoryPage() {
+function DiagnosisHistoryPage() {
   const [period, setPeriod] = useState('weekly');
 
   return (
@@ -188,11 +188,11 @@ function InterviewHistoryPage() {
                   <span>이전 대비 {scoreDiff >= 0 ? `+${scoreDiff}` : scoreDiff}점</span>
                 </div>
                 <div className="record-card__actions">
-                  <Link className="support-button support-button--primary" to={`/interview/detail/${record.id}`}>
+                  <Link className="support-button support-button--primary" to={`/career-diagnosis/detail/${record.id}`}>
                     <Search size={16} />
                     결과 상세보기
                   </Link>
-                  <Link className="support-button support-button--secondary" to={`/interview/report-export?record=${record.id}`}>
+                  <Link className="support-button support-button--secondary" to={`/career-diagnosis/report?record=${record.id}`}>
                     <Download size={16} />
                     PDF 리포트
                   </Link>
@@ -259,4 +259,4 @@ function InterviewHistoryPage() {
   );
 }
 
-export default InterviewHistoryPage;
+export default DiagnosisHistoryPage;
