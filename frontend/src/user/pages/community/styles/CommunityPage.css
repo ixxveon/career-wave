@@ -1,0 +1,154 @@
+/* ═══════════════════════════════════════════════
+   CommunityPage
+   ═══════════════════════════════════════════════ */
+.cm-page { display: grid; gap: 20px; padding: 36px 0 60px; }
+
+/* 헤더 */
+.cm-eyebrow {
+  display: inline-block; margin-bottom: 12px;
+  padding: 4px 12px; border-radius: 100px;
+  background: #dbeafe; color: var(--color-primary-dark);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+}
+.cm-header__title { margin: 0 0 8px; font-size: 26px; font-weight: 700; color: var(--color-text-primary); }
+.cm-header__desc  { margin: 0; font-size: 14px; color: var(--color-text-secondary); }
+
+/* 인기글 카드 */
+.cm-popular-card {
+  padding: 24px 28px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  box-shadow: 0 4px 16px rgba(52,65,85,0.05);
+}
+.cm-popular-card__title {
+  display: flex; align-items: center; gap: 6px;
+  margin: 0 0 16px; font-size: 14px; font-weight: 700; color: var(--color-text-primary);
+}
+.cm-popular-card__title svg { color: #f59e0b; }
+.cm-popular-list { display: flex; flex-direction: column; gap: 0; }
+.cm-popular-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--color-line);
+}
+.cm-popular-item:last-child { border-bottom: none; padding-bottom: 0; }
+.cm-popular-rank {
+  display: grid; place-items: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--color-sky); color: var(--color-primary-dark);
+  font-size: 12px; font-weight: 800; flex-shrink: 0;
+}
+.cm-popular-title { flex: 1; font-size: 13px; font-weight: 600; color: var(--color-text-primary); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cm-popular-likes {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 12px; color: var(--color-text-secondary); flex-shrink: 0;
+}
+
+/* 툴바 */
+.cm-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.cm-cats { display: flex; gap: 6px; flex-wrap: wrap; }
+.cm-cat {
+  padding: 6px 14px; border-radius: 100px;
+  border: 1.5px solid var(--color-border); background: var(--color-surface);
+  font-size: 12px; font-weight: 600; color: var(--color-text-secondary);
+  cursor: pointer; transition: all 0.12s;
+}
+.cm-cat:hover  { border-color: var(--color-primary); color: var(--color-primary-dark); }
+.cm-cat--on    { border-color: var(--color-primary); background: var(--color-sky); color: var(--color-primary-dark); }
+
+.cm-right { display: flex; align-items: center; gap: 10px; }
+.cm-search {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 14px; border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-text-secondary); transition: border-color 0.14s;
+}
+.cm-search:focus-within { border-color: var(--color-primary); }
+.cm-search input {
+  border: none; outline: none; background: transparent;
+  font-size: 13px; color: var(--color-text-primary); width: 160px;
+}
+.cm-search input::placeholder { color: var(--color-text-secondary); }
+
+.cm-write-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 9px 18px; border-radius: var(--radius-md);
+  border: none; background: linear-gradient(130deg, #1e3a6e, #2a4f96);
+  color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: opacity 0.14s; white-space: nowrap;
+}
+.cm-write-btn:hover { opacity: 0.88; }
+
+/* 게시글 목록 */
+.cm-list { display: flex; flex-direction: column; gap: 12px; }
+
+.cm-post {
+  padding: 22px 26px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  cursor: pointer; transition: box-shadow 0.14s, border-color 0.14s;
+  box-shadow: 0 2px 8px rgba(52,65,85,0.04);
+}
+.cm-post:hover { border-color: var(--color-primary); box-shadow: 0 4px 20px rgba(30,58,110,0.10); }
+
+.cm-post__top {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.cm-post__cat {
+  display: inline-block; padding: 3px 10px; border-radius: 100px;
+  background: var(--color-sky); color: var(--color-primary-dark);
+  font-size: 11px; font-weight: 700;
+}
+.cm-post__hot {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 8px; border-radius: 100px;
+  background: #fee2e2; color: #dc2626;
+  font-size: 11px; font-weight: 700;
+}
+.cm-post__bookmark {
+  margin-left: auto;
+  display: grid; place-items: center;
+  width: 28px; height: 28px; border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border); background: transparent;
+  color: var(--color-text-secondary); cursor: pointer; transition: all 0.12s;
+}
+.cm-post__bookmark:hover     { border-color: #f59e0b; color: #f59e0b; }
+.cm-post__bookmark--on       { border-color: #f59e0b; color: #f59e0b; background: #fef3c7; }
+
+.cm-post__title {
+  margin: 0 0 8px; font-size: 16px; font-weight: 700;
+  color: var(--color-text-primary); line-height: 1.4;
+}
+.cm-post__preview {
+  margin: 0 0 14px; font-size: 13px; line-height: 1.65;
+  color: var(--color-text-secondary);
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.cm-post__footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.cm-post__author { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
+.cm-post__meta {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11px; color: var(--color-text-secondary);
+}
+.cm-post__meta span { display: flex; align-items: center; gap: 3px; }
+
+.cm-empty {
+  padding: 60px; text-align: center;
+  font-size: 14px; color: var(--color-text-secondary);
+  border-radius: var(--radius-xl); border: 1px dashed var(--color-border);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cm-page    { padding: 20px 0 40px; }
+  .cm-toolbar { flex-direction: column; align-items: flex-start; }
+  .cm-right   { width: 100%; }
+  .cm-search input { flex: 1; width: auto; }
+  .cm-write-btn { margin-left: auto; }
+  .cm-post    { padding: 16px; }
+}
