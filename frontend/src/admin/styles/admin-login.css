@@ -1,0 +1,90 @@
+.loginPage {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #eef4fb 0%, #f7f9fc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
+}
+
+.loginCard {
+  width: 360px;
+  padding: 36px 32px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(210, 223, 238, 0.7);
+  box-shadow: 0 30px 60px rgba(31, 61, 99, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.loginLogo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #6b87a3;
+}
+
+.loginCard h1 {
+  margin: 4px 0 0;
+  font-size: 28px;
+  line-height: 1.1;
+  color: #123d69;
+}
+
+.loginDesc {
+  margin: 0 0 8px;
+  color: #6d8096;
+  font-size: 14px;
+}
+
+.loginCard input {
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid #dbe5f0;
+  background: #fdfefe;
+  padding: 0 18px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.loginCard input:focus {
+  outline: none;
+  border-color: #5b87b5;
+  box-shadow: 0 0 0 4px rgba(91, 135, 181, 0.12);
+}
+
+.loginSubmitBtn {
+  height: 56px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #4874a6, #2d537e);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.loginSubmitBtn:hover {
+  transform: translateY(-1px);
+  opacity: 0.96;
+}
+
+.loginLinks {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.loginLinks button {
+  background: none;
+  border: none;
+  color: #7b8ea3;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
