@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import '../../styles/admin.css';
+import MiniPagination from '../../components/MiniPagination';
 
 type AdminRole = 'MASTER' | 'CS' | 'BACKEND' | 'OPS' | 'BILLING' | 'AUDIT';
 type AdminStatus = 'ACTIVE' | 'LOCKED';
 type AuditSeverity = 'INFO' | 'WARN' | 'ERROR';
-type LogPeriod = 'ALL' | '1H' | '24H' | '7D';
 
 interface AdminAccount {
   id: string;
@@ -53,7 +53,6 @@ const ROLE_META: Record<AdminRole, { label: string; scope: string }> = {
 };
 
 const roleColumns: AdminRole[] = ['MASTER', 'CS', 'BACKEND', 'OPS', 'BILLING', 'AUDIT'];
-const LOG_ACTOR_OPTIONS = ['ALL', 'super_admin', 'cs_admin', 'backend_admin', 'ops_admin', 'system'] as const;
 const MAX_SECURITY_LOGS = 5;
 
 const initialAdmins: AdminAccount[] = [
@@ -141,7 +140,7 @@ const initialAclRules: AclRule[] = [
   },
 ];
 
-const initialLogs: AuditLog[] = [
+export const initialLogs: AuditLog[] = [
   {
     id: 'LOG-001',
     time: '2026.05.25 14:29:12',
@@ -207,11 +206,6 @@ const splitDateTime = (value: string) => {
   return { date, time };
 };
 
-const parseDateString = (value: string) => {
-  const normalized = value.replace(/\./g, '-').replace(' ', 'T');
-  return new Date(normalized);
-};
-
 const getAclRiskMeta = (cidr: string) => {
   const size = Number(cidr.split('/')[1] ?? 32);
 
@@ -226,37 +220,13 @@ const getAclRiskMeta = (cidr: string) => {
   return { label: '넓은 대역', tone: 'high' as const };
 };
 
-const getPeriodCutoff = (period: LogPeriod) => {
-  const now = new Date('2026-05-25T23:59:59');
-
-  if (period === '1H') {
-    now.setHours(now.getHours() - 1);
-    return now;
-  }
-
-  if (period === '24H') {
-    now.setDate(now.getDate() - 1);
-    return now;
-  }
-
-  if (period === '7D') {
-    now.setDate(now.getDate() - 7);
-    return now;
-  }
-
-  return null;
-};
-
 export default function AdminManagementPage() {
   const [admins, setAdmins] = useState(initialAdmins);
   const [aclRules, setAclRules] = useState(initialAclRules);
   const [logs, setLogs] = useState(initialLogs);
   const [adminFilter, setAdminFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState<'ALL' | AdminRole>('ALL');
-  const [auditQuery, setAuditQuery] = useState('');
-  const [auditSeverity, setAuditSeverity] = useState<'ALL' | AuditSeverity>('ALL');
-  const [auditActor, setAuditActor] = useState<(typeof LOG_ACTOR_OPTIONS)[number]>('ALL');
-  const [auditPeriod, setAuditPeriod] = useState<LogPeriod>('ALL');
+  const [auditActor, setAuditActor] = useState<string>('ALL');
   const [aclEnforced, setAclEnforced] = useState(true);
   const [aclSeed, setAclSeed] = useState(4);
   const [aclPage, setAclPage] = useState(1);
@@ -308,7 +278,7 @@ export default function AdminManagementPage() {
   };
 
   const openAdminActivity = (admin: AdminAccount) => {
-    setAuditActor(admin.name as (typeof LOG_ACTOR_OPTIONS)[number]);
+    setAuditActor(admin.name);
     addLog({
       actor: 'super_admin',
       ip: '10.20.0.10',
@@ -416,22 +386,11 @@ export default function AdminManagementPage() {
   }, [admins, adminFilter, roleFilter]);
 
   const filteredLogs = useMemo(() => {
-    const keyword = auditQuery.trim().toLowerCase();
-    const cutoff = getPeriodCutoff(auditPeriod);
-
     return logs.filter((log) => {
-      const matchesKeyword =
-        !keyword ||
-        log.actor.toLowerCase().includes(keyword) ||
-        log.action.toLowerCase().includes(keyword) ||
-        log.target.toLowerCase().includes(keyword) ||
-        log.ip.toLowerCase().includes(keyword);
-      const matchesSeverity = auditSeverity === 'ALL' || log.severity === auditSeverity;
       const matchesActor = auditActor === 'ALL' || log.actor === auditActor;
-      const matchesPeriod = !cutoff || parseDateString(log.time) >= cutoff;
-      return matchesKeyword && matchesSeverity && matchesActor && matchesPeriod;
+      return matchesActor;
     });
-  }, [auditActor, auditPeriod, auditQuery, auditSeverity, logs]);
+  }, [auditActor, logs]);
 
   const totalAdmins = admins.length;
   const activeAdminCount = admins.filter((admin) => admin.status === 'ACTIVE').length;
@@ -684,33 +643,7 @@ export default function AdminManagementPage() {
                   총 {aclRules.length}건 중 {(safeAclPage - 1) * aclPageSize + 1}-{Math.min(safeAclPage * aclPageSize, aclRules.length)} 표시
                 </span>
                 <div>
-                  <button
-                    type="button"
-                    disabled={safeAclPage === 1}
-                    onClick={() => setAclPage((prev) => Math.max(1, prev - 1))}
-                  >
-                    {'<'}
-                  </button>
-                  {Array.from({ length: aclTotalPages }, (_, index) => {
-                    const page = index + 1;
-                    return (
-                      <button
-                        key={page}
-                        className={page === safeAclPage ? 'active' : ''}
-                        type="button"
-                        onClick={() => setAclPage(page)}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    disabled={safeAclPage === aclTotalPages}
-                    onClick={() => setAclPage((prev) => Math.min(aclTotalPages, prev + 1))}
-                  >
-                    {'>'}
-                  </button>
+                  <MiniPagination page={safeAclPage} totalPages={aclTotalPages} onChange={setAclPage} />
                 </div>
               </div>
             )}
@@ -721,76 +654,36 @@ export default function AdminManagementPage() {
       <section className="admin-card amLiveLogCard">
         <div className="amSectionHead">
           <div>
+            <span className="amLogEyebrow">실시간 보안 감시 로그</span>
             <h3>실시간 보안 감시 로그</h3>
-            <p>최근 관리자 활동을 시간순으로 정리해 빠르게 읽고 대응할 수 있게 보여줍니다.</p>
+            <p>관리자 활동과 보안 이벤트를 시간순으로 정리해 즉시 대응할 수 있게 보여줍니다.</p>
           </div>
-          <div className="amLogSummary">
-            <span>전체 {filteredLogs.length}건</span>
-            <span>중요 {criticalLogCount}건</span>
+          <div className="amLogLights" aria-hidden="true">
+            <i className="red" />
+            <i className="amber" />
+            <i className="green" />
           </div>
         </div>
 
-        <div className="amLogToolbar">
-          <input
-            type="text"
-            value={auditQuery}
-            onChange={(e) => setAuditQuery(e.target.value)}
-            placeholder="로그 검색"
-          />
-          <select value={auditSeverity} onChange={(e) => setAuditSeverity(e.target.value as 'ALL' | AuditSeverity)}>
-            <option value="ALL">전체 타입</option>
-            <option value="INFO">INFO</option>
-            <option value="WARN">WARN</option>
-            <option value="ERROR">ERROR</option>
-          </select>
-          <select value={auditActor} onChange={(e) => setAuditActor(e.target.value as (typeof LOG_ACTOR_OPTIONS)[number])}>
-            <option value="ALL">전체 관리자</option>
-            {LOG_ACTOR_OPTIONS.filter((item) => item !== 'ALL').map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-          <select value={auditPeriod} onChange={(e) => setAuditPeriod(e.target.value as LogPeriod)}>
-            <option value="ALL">전체 기간</option>
-            <option value="1H">최근 1시간</option>
-            <option value="24H">최근 24시간</option>
-            <option value="7D">최근 7일</option>
-          </select>
-        </div>
-
-        <div className="amLiveLogList">
-          <div className="amLogTableHead">
-            <span>TYPE</span>
+        <div className="amSecurityConsole">
+          <div className="amSecurityConsoleHead">
             <span>TIMESTAMP</span>
+            <span>TYPE</span>
             <span>USER</span>
             <span>MESSAGE</span>
             <span>IP</span>
           </div>
           {filteredLogs.length === 0 ? (
-            <div className="amDarkEmptyState">조건에 맞는 로그가 없습니다.</div>
+            <div className="amDarkEmptyState">표시할 보안 로그가 없습니다.</div>
           ) : (
             filteredLogs.map((log) => {
-              const { date, time } = splitDateTime(log.time);
-
               return (
-                <article className={`amLogRow ${log.severity.toLowerCase()}`} key={log.id}>
-                  <div className="amLogTypeCell">
-                    <span className={`amLogCode ${log.severity.toLowerCase()}`}>{log.severity}</span>
-                  </div>
-                  <div className="amLogTimeCell">
-                    <strong>{date}</strong>
-                    <span>{time}</span>
-                  </div>
-                  <div className="amLogUserCell">
-                    <span className="amLogAvatar">{log.actor.slice(0, 2).toUpperCase()}</span>
-                    <strong>{log.actor}</strong>
-                  </div>
-                  <div className="amLogMessageCell">
-                    <strong className={`amLogMessage ${log.severity.toLowerCase()}`}>{log.action}</strong>
-                    <span className="amLogTarget">{log.target}</span>
-                  </div>
-                  <div className="amLogIpCell">{log.ip}</div>
+                <article className="amSecurityRow" key={log.id}>
+                  <span className="amSecurityTime">[{log.time.split(' ')[1] ?? log.time}]</span>
+                  <span className={`amSecurityType ${log.severity.toLowerCase()}`}>[{log.severity}]</span>
+                  <span className="amSecurityUser">{log.actor}</span>
+                  <strong className={`amSecurityMessage ${log.severity.toLowerCase()}`}>{log.action}</strong>
+                  <span className="amSecurityIp">{log.ip}</span>
                 </article>
               );
             })
@@ -1328,6 +1221,16 @@ export default function AdminManagementPage() {
           color: #7d8fa2;
         }
 
+        .amLogEyebrow {
+          display: block;
+          margin-bottom: 6px;
+          color: #9eb6d2;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
         .amLogSummary {
           display: flex;
           flex-wrap: wrap;
@@ -1352,15 +1255,34 @@ export default function AdminManagementPage() {
           display: flex;
           flex-direction: column;
           gap: 12px;
-          background: linear-gradient(180deg, #142842 0%, #101f33 100%);
-          border-color: #20344f;
-          color: #d8e3f0;
+          background: #ffffff;
+          border-color: var(--am-border);
+          color: var(--am-text);
+          box-shadow: 0 10px 24px rgba(19, 45, 74, 0.06);
         }
 
         .amLiveLogCard .amSectionHead h3,
         .amLiveLogCard .amSectionHead p {
-          color: #e5edf7;
+          color: var(--am-text);
         }
+
+        .amLogLights {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding-top: 6px;
+        }
+
+        .amLogLights i {
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          display: inline-block;
+        }
+
+        .amLogLights .red { background: #d85d5d; }
+        .amLogLights .amber { background: #e3ad4d; }
+        .amLogLights .green { background: #7ba36d; }
 
         .amLogToolbar {
           display: grid;
@@ -1379,166 +1301,90 @@ export default function AdminManagementPage() {
           color: #88a0bc;
         }
 
-        .amLiveLogList {
+        .amSecurityConsole {
           display: flex;
           flex-direction: column;
-          min-height: 360px;
-          background: rgba(7, 14, 25, 0.95);
-          border: 1px solid rgba(71, 98, 133, 0.34);
+          height: auto;
+          min-height: 0;
+          background: #162a43;
+          border: 1px solid #203a59;
           border-radius: 14px;
           overflow: hidden;
+          padding: 14px 16px;
         }
 
-        .amLogTableHead,
-        .amLogRow {
+        .amSecurityConsoleHead,
+        .amSecurityRow {
           display: grid;
-          grid-template-columns: 98px 170px minmax(170px, 0.95fr) minmax(280px, 1.75fr) 140px;
-          column-gap: 16px;
+          grid-template-columns: 140px 90px 160px minmax(260px, 1fr) 130px;
+          column-gap: 18px;
           align-items: center;
-          padding: 14px 18px;
           font-family: Consolas, 'SFMono-Regular', Menlo, monospace;
           font-size: 12px;
-          line-height: 1.45;
+          line-height: 1.55;
         }
 
-        .amLogTableHead {
-          background: rgba(11, 19, 31, 0.96);
-          border-bottom: 1px solid rgba(84, 111, 145, 0.24);
-          color: #7f96b3;
+        .amSecurityConsoleHead {
+          padding: 4px 14px 12px;
+          border-bottom: 1px solid rgba(107, 137, 173, 0.2);
+          color: #88a2bf;
           font-size: 11px;
           font-weight: 800;
           letter-spacing: 0.08em;
         }
 
-        .amLogRow {
-          color: #d9e5f1;
-          border-top: 1px solid rgba(24, 40, 62, 0.82);
-          background: rgba(8, 15, 26, 0.96);
-          transition: background-color 0.18s ease, border-color 0.18s ease;
+        .amSecurityRow {
+          padding: 10px 14px;
+          color: #dce7f3;
+          border-top: 1px solid rgba(37, 56, 81, 0.9);
         }
 
-        .amLogRow:first-of-type {
+        .amSecurityRow:first-of-type {
           border-top: 0;
         }
 
-        .amLogRow:hover {
-          background: rgba(13, 23, 37, 0.98);
-        }
-
-        .amLogRow.warn {
-          border-left: 3px solid rgba(190, 145, 66, 0.8);
-        }
-
-        .amLogRow.error {
-          border-left: 3px solid rgba(171, 93, 93, 0.82);
-        }
-
-        .amLogCode {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 62px;
-          height: 24px;
-          padding: 0 8px;
-          border-radius: 6px;
-          font-weight: 800;
-          font-size: 10px;
-          letter-spacing: 0.08em;
-        }
-
-        .amLogCode.info {
-          color: #6ff0d5;
-          background: rgba(33, 91, 88, 0.36);
-        }
-
-        .amLogCode.warn {
-          color: #ffd177;
-          background: rgba(93, 74, 34, 0.36);
-        }
-
-        .amLogCode.error {
-          color: #ff9f9f;
-          background: rgba(108, 42, 42, 0.38);
-        }
-
-        .amLogTimeCell,
-        .amLogTypeCell,
-        .amLogIpCell {
-          color: #aac1dc;
-        }
-
-        .amLogTimeCell strong,
-        .amLogIpCell {
-          display: block;
-          color: #e0ebf8;
+        .amSecurityTime,
+        .amSecurityUser,
+        .amSecurityIp {
+          color: #e7f0fb;
           font-weight: 700;
         }
 
-        .amLogTimeCell span {
-          color: #86a0bd;
-          font-size: 11px;
-        }
-
-        .amLogUserCell,
-        .amLogMessageCell {
-          display: flex;
-          align-items: center;
-          min-width: 0;
-        }
-
-        .amLogUserCell {
-          gap: 10px;
-        }
-
-        .amLogAvatar {
-          width: 26px;
-          height: 26px;
-          flex: 0 0 26px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 999px;
-          background: rgba(124, 145, 175, 0.16);
-          border: 1px solid rgba(124, 145, 175, 0.18);
-          color: #a7bdd8;
-          font-size: 10px;
+        .amSecurityType {
           font-weight: 800;
         }
 
-        .amLogUserCell strong {
-          color: #f2f7fc;
-          font-weight: 800;
+        .amSecurityType.info {
+          color: #70f1ce;
         }
 
-        .amLogMessageCell {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 4px;
+        .amSecurityType.warn {
+          color: #f4c55d;
         }
 
-        .amLogMessage {
+        .amSecurityType.error {
+          color: #ff8c8c;
+        }
+
+        .amSecurityMessage {
           color: #f4f8fd;
           font-size: 13px;
           font-weight: 800;
-          white-space: normal;
-          overflow-wrap: anywhere;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
-        .amLogMessage.info {
-          color: #7cf0d8;
+        .amSecurityMessage.info {
+          color: #8cefdc;
         }
 
-        .amLogMessage.warn {
-          color: #ffd177;
+        .amSecurityMessage.warn {
+          color: #ffd77a;
         }
 
-        .amLogMessage.error {
-          color: #ff9f9f;
-        }
-
-        .amLogTarget {
-          color: #8da6c4;
-          font-size: 12px;
+        .amSecurityMessage.error {
+          color: #ff9c9c;
         }
 
         .amEmptyCell,
@@ -1557,6 +1403,10 @@ export default function AdminManagementPage() {
 
         .amDarkEmptyState {
           color: #93aac7;
+          min-height: 240px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         @media (max-width: 1400px) {
@@ -1575,7 +1425,6 @@ export default function AdminManagementPage() {
           }
 
           .amToolbar,
-          .amLogToolbar,
           .amAclForm {
             grid-template-columns: 1fr 1fr;
           }
@@ -1584,7 +1433,6 @@ export default function AdminManagementPage() {
         @media (max-width: 900px) {
           .amOverviewGrid,
           .amToolbar,
-          .amLogToolbar,
           .amAclForm {
             grid-template-columns: 1fr;
           }
@@ -1602,13 +1450,13 @@ export default function AdminManagementPage() {
           }
 
           .amCompactTable,
-          .amLogTableHead,
-          .amLogRow {
+          .amSecurityConsoleHead,
+          .amSecurityRow {
             min-width: 980px;
           }
 
           .amTableWrap,
-          .amLiveLogList {
+          .amSecurityConsole {
             overflow-x: auto;
           }
         }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import '../../styles/admin.css';
+import MiniPagination from '../../components/MiniPagination';
 
 type Tone = 'normal' | 'warning' | 'danger';
 type UserStatus = '정상' | '주의' | '심각';
@@ -14,8 +15,7 @@ interface UsagePoint {
 
 interface HeavyUser {
   id: string;
-  requests: number;
-  risk: number;
+  tokenUsage: number;
   status: UserStatus;
 }
 
@@ -33,6 +33,10 @@ interface LogEvent {
   message: string;
 }
 
+const DOC_PAGE_SIZE = 3;
+
+const llmModelOptions = ['GPT-4-TURBO v2.1', 'GPT-4.1', 'GPT-4o', 'GPT-4o-mini'];
+
 const usageData: UsagePoint[] = [
   { hour: '00', input: 34, output: 18 },
   { hour: '04', input: 42, output: 24 },
@@ -44,38 +48,28 @@ const usageData: UsagePoint[] = [
 ];
 
 const heavyUsers: HeavyUser[] = [
-  { id: 'USR_8892', requests: 12403, risk: 91, status: '심각' },
-  { id: 'USR_2104', requests: 8110, risk: 66, status: '주의' },
-  { id: 'USR_4451', requests: 4200, risk: 24, status: '정상' },
+  { id: 'USR_8892', tokenUsage: 12403, status: '심각' },
+  { id: 'USR_2104', tokenUsage: 8110, status: '주의' },
+  { id: 'USR_4451', tokenUsage: 4200, status: '정상' },
+  { id: 'USR_5580', tokenUsage: 3960, status: '주의' },
+  { id: 'USR_6721', tokenUsage: 3584, status: '정상' },
+  { id: 'USR_7814', tokenUsage: 3310, status: '정상' },
 ];
 
 const ragDocs: RagDoc[] = [
   { id: 'DOC-001', name: 'cluster-provisioning-v3.pdf', chunks: 1420, progress: 79, status: '동기화됨' },
   { id: 'DOC-002', name: 'api-endpoint-security.docx', chunks: 542, progress: 43, status: '인덱싱 중' },
   { id: 'DOC-003', name: 'onboarding-schema-v1.json', chunks: 2100, progress: 8, status: '실패' },
+  { id: 'DOC-004', name: 'vector-search-playbook-v2.txt', chunks: 864, progress: 100, status: '?숆린?붾맖' },
 ];
 
-const statCards = [
-  { label: '실행', value: '890' },
-  { label: '통', value: '42' },
-  { label: '지연 시간', value: '240ms' },
-  { label: '실패', value: '2', tone: 'danger' as Tone },
-];
-
-const logEvents: LogEvent[] = [
+export const logEvents: LogEvent[] = [
   { time: '17:12:24', severity: 'INFO', message: '[정보] 클러스터 상태 동기화 완료' },
   { time: '17:13:24', severity: 'INFO', message: '[정보] 리소스 점검 루프 실행' },
   { time: '17:14:24', severity: 'INFO', message: '[정보] RAG 인덱스 캐시 갱신' },
   { time: '17:15:24', severity: 'WARN', message: '[경고] 응답 시간 상승 감지' },
   { time: '17:16:24', severity: 'INFO', message: '[정보] 워커 헬스체크 통과' },
-  { time: '17:17:24', severity: 'INFO', message: '[정보] 큐 대기량 정상 범위' },
-  { time: '17:18:24', severity: 'INFO', message: '[정보] OpenAI 호출량 집계 반영' },
-  { time: '17:19:24', severity: 'ERROR', message: '[오류] 온보딩 스키마 재처리 필요' },
-  { time: '17:20:24', severity: 'INFO', message: '[정보] 임베딩 작업 재시도 예약' },
-  { time: '17:21:24', severity: 'INFO', message: '[정보] 시스템 운영 상태 안정' },
 ];
-
-const maxUsage = Math.max(...usageData.map((item) => item.input + item.output));
 
 const toneForStatus = (value: UserStatus | RagStatus | EventSeverity): Tone => {
   if (value === '심각' || value === '실패' || value === 'ERROR') return 'danger';
@@ -87,7 +81,18 @@ export default function AiMetricsPage() {
   const [secondsAgo, setSecondsAgo] = useState(12);
   const [docQuery, setDocQuery] = useState('');
   const [selectedDocId, setSelectedDocId] = useState('DOC-001');
-  const [slackEnabled, setSlackEnabled] = useState(true);
+  const [selectedModel, setSelectedModel] = useState(llmModelOptions[0]);
+  const [discordAlertEnabled, setDiscordAlertEnabled] = useState(true);
+  const [docPage, setDocPage] = useState(1);
+  const [monthlyBudget, setMonthlyBudget] = useState(2000);
+  const [budgetDraft, setBudgetDraft] = useState('2000');
+  const [budgetEditorOpen, setBudgetEditorOpen] = useState(false);
+
+  const monthlySpend = 1440;
+  const budgetUsed = Math.round((monthlySpend / monthlyBudget) * 100);
+  const forecastSpend = 1870;
+  const tokensPerMinute = 128;
+  const isBudgetRisk = budgetUsed >= 90;
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -96,24 +101,64 @@ export default function AiMetricsPage() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const filteredUsers = useMemo(() => {
-    return heavyUsers;
-  }, []);
-
   const filteredDocs = useMemo(() => {
     const keyword = docQuery.trim().toLowerCase();
     if (!keyword) return ragDocs;
     return ragDocs.filter((doc) => doc.name.toLowerCase().includes(keyword));
   }, [docQuery]);
 
-  const filteredLogs = useMemo(() => {
-    return logEvents;
-  }, []);
-
   const selectedDoc = useMemo(
     () => ragDocs.find((doc) => doc.id === selectedDocId) ?? ragDocs[0],
     [selectedDocId]
   );
+
+  const docTotalPages = Math.max(1, Math.ceil(filteredDocs.length / DOC_PAGE_SIZE));
+  const pagedDocs = useMemo(() => {
+    const start = (docPage - 1) * DOC_PAGE_SIZE;
+    return filteredDocs.slice(start, start + DOC_PAGE_SIZE);
+  }, [docPage, filteredDocs]);
+  const emptyDocRows = DOC_PAGE_SIZE - pagedDocs.length;
+
+  const axisMax = useMemo(
+    () => Math.ceil(Math.max(...usageData.map((item) => Math.max(item.input, item.output))) / 10) * 10,
+    []
+  );
+
+  const axisTicks = useMemo(
+    () => [1, 0.75, 0.5, 0.25, 0].map((ratio) => `${Math.round(axisMax * ratio)}K`),
+    [axisMax]
+  );
+
+  useEffect(() => {
+    setDocPage((prev) => Math.min(prev, docTotalPages));
+  }, [docTotalPages]);
+
+  const handleDownloadDocument = (doc: RagDoc) => {
+    const content = [
+      `Document: ${doc.name}`,
+      `Chunks: ${doc.chunks}`,
+      `Progress: ${doc.progress}%`,
+      `Status: ${doc.status}`,
+    ].join('\n');
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = doc.name;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(objectUrl);
+  };
+
+  const handleBudgetSave = () => {
+    const nextBudget = Number(budgetDraft.replace(/,/g, '').trim());
+    if (!Number.isFinite(nextBudget) || nextBudget <= 0) return;
+    setMonthlyBudget(nextBudget);
+    setBudgetDraft(String(nextBudget));
+    setBudgetEditorOpen(false);
+  };
 
   return (
     <section className="aiOpsPage">
@@ -145,83 +190,182 @@ export default function AiMetricsPage() {
             <div className="aiOpsPanelHead">
               <div>
                 <span className="aiOpsEyebrow">LLM API 비용 컨트롤러</span>
-                <h3>GPT-4-TURBO v2.1</h3>
+                <h3>{selectedModel}</h3>
               </div>
+              <label className="aiOpsModelField">
+                <span>모델 변경</span>
+                <select value={selectedModel} onChange={(event) => setSelectedModel(event.target.value)}>
+                  {llmModelOptions.map((model) => (
+                    <option key={model} value={model}>
+                      {model}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
 
             <div className="aiOpsUsageGrid">
               <div className="aiOpsUsageChartBlock">
-                <div className="aiOpsMetricCaption">시간당 토큰 사용량 (입력/출력)</div>
-                <div className="aiOpsUsageMeta">1.2M / 0.8M</div>
-                <div className="aiOpsBars">
-                  {usageData.map((item, index) => {
-                    const total = item.input + item.output;
-                    return (
-                      <div className="aiOpsBarItem" key={item.hour}>
-                        <div className="aiOpsStack">
-                          <div
-                            className={`output tone-${index === 4 ? 'strong' : 'soft'}`}
-                            style={{ height: `${(item.output / maxUsage) * 100}%` }}
+                <div className="aiOpsChartHead">
+                  <div>
+                    <div className="aiOpsMetricCaption">시간대별 토큰 사용량</div>
+                    <div className="aiOpsUsageMeta">시간대별 입력/출력 토큰 분포</div>
+                    <div className="aiOpsBudgetControls">
+                      {budgetEditorOpen ? (
+                        <>
+                          <input
+                            type="text"
+                            value={budgetDraft}
+                            onChange={(event) => setBudgetDraft(event.target.value.replace(/[^\d,]/g, ''))}
+                            aria-label="총 예산 입력"
                           />
-                          <div
-                            className={`input tone-${index === 4 ? 'strong' : 'soft'}`}
-                            style={{ height: `${(item.input / maxUsage) * 100}%` }}
-                          />
-                        </div>
-                        <span>{item.hour}</span>
-                        <small>{total}</small>
-                      </div>
-                    );
-                  })}
+                          <button type="button" className="aiOpsBudgetButton primary" onClick={handleBudgetSave}>
+                            저장
+                          </button>
+                          <button
+                            type="button"
+                            className="aiOpsBudgetButton"
+                            onClick={() => {
+                              setBudgetDraft(String(monthlyBudget));
+                              setBudgetEditorOpen(false);
+                            }}
+                          >
+                            취소
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className="aiOpsBudgetButton"
+                          onClick={() => {
+                            setBudgetDraft(String(monthlyBudget));
+                            setBudgetEditorOpen(true);
+                          }}
+                        >
+                          총 예산 변경
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="aiOpsLegend">
+                    <span className="input">입력 토큰</span>
+                    <span className="output">출력 토큰</span>
+                  </div>
+                </div>
+
+                <div className="aiOpsChartPlot">
+                  <div className="aiOpsYAxis">
+                    {axisTicks.map((tick) => (
+                      <span key={tick}>{tick}</span>
+                    ))}
+                  </div>
+
+                  <div className="aiOpsChartPanel">
+                    <div className="aiOpsBars">
+                      {usageData.map((item, index) => {
+                        const total = item.input + item.output;
+                        return (
+                          <div className="aiOpsBarItem" key={item.hour}>
+                            <div
+                              className="aiOpsBarGroup"
+                              data-tooltip={`입력 ${item.input}K | 출력 ${item.output}K | 합계 ${total}K`}
+                            >
+                              <div
+                                className={`aiOpsBar input tone-${index === 4 ? 'strong' : 'soft'}`}
+                                style={{ height: `${(item.input / axisMax) * 100}%` }}
+                              />
+                              <div
+                                className={`aiOpsBar output tone-${index === 4 ? 'strong' : 'soft'}`}
+                                style={{ height: `${(item.output / axisMax) * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="aiOpsXAxisLabels">
+                      {usageData.map((item) => {
+                        const total = item.input + item.output;
+                        return (
+                          <div className="aiOpsXAxisItem" key={`${item.hour}-label`}>
+                            <span>{item.hour}h</span>
+                            <small>{total}K 요청</small>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <aside className="aiOpsBudgetBox">
-                <div>
-                  <div className="aiOpsBudgetValue">$1,440.00</div>
-                  <div className="aiOpsBudgetLine">
-                    <span>/$2,000 예산</span>
-                    <span>72% 소진</span>
+                <div className="aiOpsBudgetShell">
+                  <div className="aiOpsBudgetMain">
+                    <div className="aiOpsBudgetValue">${monthlySpend.toLocaleString()}</div>
+                    <div className="aiOpsBudgetLabel">월간 사용 비용</div>
+                    <div className="aiOpsBudgetLine">${monthlyBudget.toLocaleString()} 예산 중 {budgetUsed}% 사용</div>
                   </div>
-                </div>
 
-                <div className="aiOpsProgress">
-                  <div style={{ width: '72%' }} />
-                </div>
+                  <div className="aiOpsProgress">
+                    <div style={{ width: `${budgetUsed}%` }} />
+                  </div>
 
-                <div className="aiOpsBudgetHealth">
-                  <strong>안전 구간</strong>
-                  <span>예산 제어 안정</span>
+                  <div className={`aiOpsStatusBadge ${isBudgetRisk ? 'danger' : 'stable'}`}>
+                    <span />
+                    {isBudgetRisk ? '위험' : '안정'}
+                  </div>
+
+                  <div className="aiOpsBudgetFacts">
+                    <div>
+                      <span>예상 비용</span>
+                      <strong>${forecastSpend.toLocaleString()}</strong>
+                    </div>
+                    <div>
+                      <span>최고 비용 모델</span>
+                      <strong>{selectedModel}</strong>
+                    </div>
+                    <div>
+                      <span>분당 토큰 사용량</span>
+                      <strong>{tokensPerMinute}</strong>
+                    </div>
+                  </div>
+
+                  <div className="aiOpsAlertCard">
+                    <div className="aiOpsAlertHead">
+                      <div>
+                        <strong>디스코드 알림</strong>
+                        <span>{discordAlertEnabled ? '켜짐' : '꺼짐'}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className={`aiOpsSwitch compact ${discordAlertEnabled ? 'active' : ''}`}
+                        onClick={() => setDiscordAlertEnabled((prev) => !prev)}
+                        aria-label="디스코드 알림 토글"
+                      >
+                        <i />
+                      </button>
+                    </div>
+
+                    <div className="aiOpsThreshold">
+                      <span>임계치</span>
+                      <strong>85%</strong>
+                    </div>
+                  </div>
+
+                  <button type="button" className={`aiOpsDangerButton ${isBudgetRisk ? 'danger' : 'neutral'}`}>
+                    {isBudgetRisk ? '긴급 제한' : '속도 제한 제어'}
+                  </button>
                 </div>
               </aside>
-            </div>
-
-            <div className="aiOpsUsageFooter">
-              <button
-                type="button"
-                className={`aiOpsSwitch ${slackEnabled ? 'active' : ''}`}
-                onClick={() => setSlackEnabled((prev) => !prev)}
-              >
-                <span>Slack 알림</span>
-                <i />
-              </button>
-
-              <div className="aiOpsThreshold">
-                <span>알림 임계치</span>
-                <strong>85%</strong>
-              </div>
-
-              <button type="button" className="aiOpsDangerButton">
-                긴급 속도 제한
-              </button>
             </div>
           </section>
 
           <section className="admin-card aiOpsHeavyCard">
             <div className="aiOpsPanelHead compact">
               <div>
-                <span className="aiOpsEyebrow">이상치 트래커 (API 랭킹)</span>
-                <h3>헤비 유저 트래커</h3>
+                <span className="aiOpsEyebrow">이상치 트래커 (토큰 사용량)</span>
+                <h3>헤비 유저 토큰 트래커</h3>
               </div>
             </div>
 
@@ -230,16 +374,16 @@ export default function AiMetricsPage() {
                 <thead>
                   <tr>
                     <th>사용자 ID</th>
-                    <th>일별 호출 수</th>
+                    <th>누적 토큰 사용량</th>
                     <th>위험도</th>
                     <th>조치</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((user) => (
+                  {heavyUsers.map((user) => (
                     <tr key={user.id}>
                       <td>{user.id}</td>
-                      <td>{user.requests.toLocaleString()}</td>
+                      <td>{user.tokenUsage.toLocaleString()}</td>
                       <td>
                         <span className={`aiOpsBadge ${toneForStatus(user.status)}`}>{user.status}</span>
                       </td>
@@ -286,13 +430,23 @@ export default function AiMetricsPage() {
                   <input
                     type="text"
                     value={docQuery}
-                    onChange={(e) => setDocQuery(e.target.value)}
+                    onChange={(event) => {
+                      setDocQuery(event.target.value);
+                      setDocPage(1);
+                    }}
                     placeholder="청크 또는 메타데이터 검색..."
                   />
                 </div>
 
-                <div className="aiOpsTableWrap">
+                <div className="aiOpsTableWrap ragFixed">
                   <table className="aiOpsTable">
+                    <colgroup>
+                      <col style={{ width: '34%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '18%' }} />
+                      <col style={{ width: '14%' }} />
+                      <col style={{ width: '22%' }} />
+                    </colgroup>
                     <thead>
                       <tr>
                         <th>문서명</th>
@@ -303,7 +457,7 @@ export default function AiMetricsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredDocs.map((doc) => (
+                      {pagedDocs.map((doc) => (
                         <tr
                           key={doc.id}
                           className={selectedDocId === doc.id ? 'selected' : ''}
@@ -323,60 +477,45 @@ export default function AiMetricsPage() {
                             <button type="button" className="aiOpsTextButton">
                               재인덱싱
                             </button>
+                            <button
+                              type="button"
+                              className="aiOpsTextButton"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleDownloadDocument(doc);
+                              }}
+                            >
+                              다운로드
+                            </button>
                             <button type="button" className="aiOpsTextButton danger">
                               삭제
                             </button>
                           </td>
                         </tr>
                       ))}
+                      {Array.from({ length: emptyDocRows }, (_, index) => (
+                        <tr key={`doc-placeholder-${index}`} className="placeholder" aria-hidden="true">
+                          <td colSpan={5} />
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
+
+                <MiniPagination
+                  page={docPage}
+                  totalPages={docTotalPages}
+                  onChange={setDocPage}
+                  className="aiOpsPagination"
+                  showWhenSingle
+                />
               </div>
             </div>
           </section>
         </div>
 
         <div className="aiOpsBoardRow aiOpsBoardBottom">
-          <section className="admin-card aiOpsTrafficCard">
-            <div className="aiOpsPanelHead compact">
-              <div>
-                <span className="aiOpsEyebrow">군 클러스터 트래커</span>
-                <h3>실행 상태</h3>
-              </div>
-              <button type="button" className="aiOpsTinyAction">
-                스케일 아웃 트리거
-              </button>
-            </div>
-
-            <div className="aiOpsStatGrid">
-              {statCards.map((card) => (
-                <article key={card.label} className={`aiOpsStatCard ${card.tone ?? 'normal'}`}>
-                  <span>{card.label}</span>
-                  <strong>{card.value}</strong>
-                </article>
-              ))}
-            </div>
-
-            <div className="aiOpsLineChart">
-              <svg viewBox="0 0 520 180" preserveAspectRatio="none" aria-hidden="true">
-                <path d="M0 116 C42 80, 88 70, 130 108 S220 168, 260 110 344 34, 388 76 478 186, 520 70" />
-                <path d="M0 130 C50 148, 94 90, 136 72 S232 82, 272 132 360 176, 404 88 478 20, 520 56" />
-              </svg>
-              <div className="aiOpsLegendLine">
-                <span>
-                  <i className="solid" />
-                  연산량
-                </span>
-                <span>
-                  <i className="dashed" />
-                  지연 시간
-                </span>
-              </div>
-            </div>
-          </section>
-
-          <section className="admin-card aiOpsLogCard">
+          <section className="admin-card aiOpsLogCard fullWidth">
             <div className="aiOpsPanelHead compact">
               <div>
                 <span className="aiOpsEyebrow">실시간 리소스 및 시스템 로그</span>
@@ -390,7 +529,12 @@ export default function AiMetricsPage() {
             </div>
 
             <div className="aiOpsLogConsole">
-              {filteredLogs.map((event) => (
+              <div className="aiOpsLogHead">
+                <span>TIMESTAMP</span>
+                <span>TYPE</span>
+                <span>MESSAGE</span>
+              </div>
+              {logEvents.map((event) => (
                 <article key={`${event.time}-${event.message}`} className="aiOpsLogRow">
                   <span className="time">[{event.time}]</span>
                   <span className={`aiOpsLogTag ${toneForStatus(event.severity)}`}>[{event.severity}]</span>
@@ -410,7 +554,6 @@ export default function AiMetricsPage() {
           --ai-surface-alt: #f6f9fd;
           --ai-muted: #72859b;
           --ai-accent: #2563c9;
-          --ai-accent-soft: #9fbce2;
           --ai-success: #2d8b57;
           --ai-success-bg: #edf8f1;
           --ai-warning: #b17419;
@@ -441,6 +584,14 @@ export default function AiMetricsPage() {
           background: var(--ai-surface);
         }
 
+        .aiOpsPulse {
+          width: 9px;
+          height: 9px;
+          border-radius: 999px;
+          background: #2563c9;
+          animation: aiOpsPulse 1.8s infinite;
+        }
+
         .aiOpsLiveState strong {
           display: block;
           color: var(--ai-primary);
@@ -453,96 +604,30 @@ export default function AiMetricsPage() {
           font-size: 11px;
         }
 
-        .aiOpsPulse {
-          width: 10px;
-          height: 10px;
-          border-radius: 999px;
-          background: var(--ai-accent);
-          box-shadow: 0 0 0 0 rgba(37, 99, 201, 0.35);
-          animation: aiOpsPulse 1.8s infinite;
-        }
-
         .aiOpsHeaderMeta {
-          display: flex;
+          display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           flex-wrap: wrap;
         }
 
         .aiOpsHeaderMeta span {
           display: inline-flex;
           align-items: center;
-          min-height: 30px;
-          padding: 0 10px;
-          border-radius: 999px;
-          background: #f3f7fb;
-          border: 1px solid var(--ai-border);
-        }
-
-        .aiOpsUsageCard,
-        .aiOpsHeavyCard,
-        .aiOpsRagCard,
-        .aiOpsTrafficCard,
-        .aiOpsLogCard {
-          border-radius: 16px;
-          border: 1px solid var(--ai-border);
-          background: var(--ai-surface);
-          box-shadow: 0 8px 20px rgba(22, 49, 77, 0.05);
-        }
-
-        .aiOpsSearchRow {
-          display: flex;
-          align-items: center;
           gap: 8px;
-          height: 36px;
-          padding: 0 12px;
-          border-radius: 10px;
-          border: 1px solid #dfe7f1;
-          background: #f4f7fb;
         }
 
-        .aiOpsSearchRow input {
-          width: 100%;
-          height: 100%;
-          border: 0;
-          background: transparent;
-          color: var(--ai-primary);
-          font-size: 12px;
-          font-family: inherit;
-        }
-
-        .aiOpsSearchRow input:focus {
-          outline: none;
-        }
-
-        .aiOpsSearchIcon {
-          position: relative;
-          width: 12px;
-          height: 12px;
-          border: 2px solid #9ca9bb;
-          border-radius: 999px;
-          flex: 0 0 auto;
-        }
-
-        .aiOpsSearchIcon::after {
+        .aiOpsHeaderMeta span::before {
           content: '';
-          position: absolute;
-          right: -4px;
-          bottom: -3px;
-          width: 6px;
-          height: 2px;
-          background: #9ca9bb;
-          transform: rotate(45deg);
+          width: 4px;
+          height: 4px;
           border-radius: 999px;
-        }
-
-        .aiOpsSearchIcon.small {
-          width: 10px;
-          height: 10px;
+          background: #a5b7ca;
         }
 
         .aiOpsBoard {
-          display: grid;
+          display: flex;
+          flex-direction: column;
           gap: 12px;
         }
 
@@ -556,24 +641,34 @@ export default function AiMetricsPage() {
           grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr);
         }
 
-        .aiOpsBoardMiddle {
-          grid-template-columns: 1fr;
-        }
-
+        .aiOpsBoardMiddle,
         .aiOpsBoardBottom {
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          grid-template-columns: 1fr;
         }
 
         .aiOpsUsageCard,
         .aiOpsHeavyCard,
         .aiOpsRagCard,
-        .aiOpsTrafficCard,
         .aiOpsLogCard {
           display: flex;
           flex-direction: column;
           padding: 18px;
           min-width: 0;
           height: 100%;
+        }
+
+        .aiOpsHeavyCard {
+          min-height: 100%;
+          align-self: start;
+          height: auto;
+        }
+
+        .aiOpsRagCard {
+          min-height: 418px;
+        }
+
+        .aiOpsLogCard.fullWidth {
+          grid-column: 1 / -1;
         }
 
         .aiOpsPanelHead {
@@ -589,11 +684,21 @@ export default function AiMetricsPage() {
           margin-bottom: 14px;
         }
 
+        .aiOpsRagCard .aiOpsPanelHead {
+          min-height: 42px;
+        }
+
         .aiOpsPanelHead h3 {
           margin: 2px 0 0;
           color: var(--ai-primary);
           font-size: 15px;
           font-weight: 800;
+        }
+
+        .aiOpsRagCard .aiOpsPanelHead h3 {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .aiOpsEyebrow {
@@ -603,90 +708,231 @@ export default function AiMetricsPage() {
           font-weight: 800;
         }
 
+        .aiOpsModelField {
+          display: grid;
+          gap: 6px;
+          justify-items: end;
+          color: #6d859d;
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .aiOpsModelField select {
+          min-width: 168px;
+          height: 38px;
+          border: 1px solid #c8d9ee;
+          border-radius: 10px;
+          background: #f7fafe;
+          color: var(--ai-primary);
+          padding: 0 12px;
+          font-size: 12px;
+          font-weight: 700;
+          font-family: inherit;
+        }
+
         .aiOpsUsageGrid {
           display: grid;
           grid-template-columns: minmax(0, 1.15fr) 230px;
           gap: 18px;
-          align-items: stretch;
+          align-items: start;
           flex: 1;
         }
 
-        .aiOpsMetricCaption,
+        .aiOpsUsageChartBlock {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          min-width: 0;
+        }
+
+        .aiOpsChartHead {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          align-items: flex-start;
+        }
+
+        .aiOpsMetricCaption {
+          color: #173b72;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
         .aiOpsUsageMeta {
+          margin-top: 4px;
           color: #55708d;
           font-size: 11px;
           font-weight: 700;
         }
 
-        .aiOpsUsageMeta {
-          margin-top: 4px;
+        .aiOpsLegend {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          color: #4f6d92;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .aiOpsLegend span {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .aiOpsLegend span::before {
+          content: '';
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          display: block;
+        }
+
+        .aiOpsLegend span.input::before {
+          background: #9dc0eb;
+        }
+
+        .aiOpsLegend span.output::before {
+          background: #245fb8;
+        }
+
+        .aiOpsChartPlot {
+          display: grid;
+          grid-template-columns: 42px minmax(0, 1fr);
+          gap: 10px;
+          align-items: start;
+        }
+
+        .aiOpsYAxis {
+          display: grid;
+          grid-template-rows: repeat(5, 1fr);
+          align-items: end;
+          justify-items: end;
+          height: 250px;
+          padding: 2px 0 10px;
+          color: #7a90ab;
+          font-size: 10px;
+          font-weight: 700;
+        }
+
+        .aiOpsChartPanel {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          min-width: 0;
         }
 
         .aiOpsBars {
           display: grid;
           grid-template-columns: repeat(7, minmax(0, 1fr));
-          gap: 10px;
+          gap: 8px;
           align-items: end;
-          min-height: 136px;
-          margin-top: 12px;
-          padding: 8px 0 2px;
+          min-height: 250px;
+          height: 250px;
+          padding: 12px 10px 10px;
           background:
-            linear-gradient(to bottom, rgba(219, 229, 241, 0.7) 1px, transparent 1px) 0 0 / 100% 34px,
+            linear-gradient(to bottom, rgba(200, 216, 236, 0.45) 1px, transparent 1px) 0 0 / 100% 36px,
             #f6f9ff;
+          border: 1px solid #e1ebf5;
           border-radius: 12px;
         }
 
         .aiOpsBarItem {
+          display: flex;
+          align-items: end;
+          justify-content: center;
+          height: 100%;
+        }
+
+        .aiOpsBarGroup {
+          position: relative;
+          width: 100%;
+          max-width: 54px;
+          height: 212px;
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          gap: 6px;
+        }
+
+        .aiOpsBarGroup::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          left: 50%;
+          bottom: calc(100% + 10px);
+          transform: translateX(-50%);
+          min-width: 164px;
+          padding: 8px 10px;
+          border-radius: 10px;
+          background: rgba(22, 42, 67, 0.96);
+          color: #eef5ff;
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1.4;
+          text-align: center;
+          opacity: 0;
+          pointer-events: none;
+          box-shadow: 0 10px 20px rgba(18, 39, 64, 0.16);
+          transition: opacity 0.16s ease;
+        }
+
+        .aiOpsBarGroup:hover::after {
+          opacity: 1;
+        }
+
+        .aiOpsBar {
+          width: 18px;
+          min-height: 12px;
+          border-radius: 4px 4px 0 0;
+        }
+
+        .aiOpsBar.input.tone-soft {
+          background: #a9c3ea;
+        }
+
+        .aiOpsBar.output.tone-soft {
+          background: #4d7fc6;
+        }
+
+        .aiOpsBar.input.tone-strong {
+          background: #7aa8e8;
+        }
+
+        .aiOpsBar.output.tone-strong {
+          background: #1f58af;
+        }
+
+        .aiOpsXAxisLabels {
+          display: grid;
+          grid-template-columns: repeat(7, minmax(0, 1fr));
+          gap: 8px;
+          padding: 0 10px;
+        }
+
+        .aiOpsXAxisItem {
           display: grid;
           justify-items: center;
           gap: 4px;
         }
 
-        .aiOpsStack {
-          width: 100%;
-          max-width: 34px;
-          height: 118px;
-          display: flex;
-          flex-direction: column-reverse;
-          gap: 2px;
-        }
-
-        .aiOpsStack .input,
-        .aiOpsStack .output {
-          border-radius: 0;
-        }
-
-        .aiOpsStack .input.tone-soft {
-          background: #a9c3ea;
-        }
-
-        .aiOpsStack .output.tone-soft {
-          background: #7ea5dd;
-        }
-
-        .aiOpsStack .input.tone-strong {
-          background: #4f8bd9;
-        }
-
-        .aiOpsStack .output.tone-strong {
-          background: #245fb8;
-        }
-
-        .aiOpsBarItem span,
-        .aiOpsBarItem small {
+        .aiOpsXAxisItem span {
           color: var(--ai-primary);
           font-size: 10px;
+          font-weight: 700;
         }
 
-        .aiOpsBarItem small {
-          color: #9aaabd;
+        .aiOpsXAxisItem small {
+          color: #7a90ab;
+          font-size: 9px;
+          font-weight: 700;
         }
 
-        .aiOpsBudgetBox {
+        .aiOpsBudgetShell {
           display: grid;
-          gap: 14px;
-          align-content: center;
-          padding: 12px 4px 12px 8px;
+          gap: 12px;
+          align-content: start;
         }
 
         .aiOpsBudgetValue {
@@ -696,18 +942,61 @@ export default function AiMetricsPage() {
           line-height: 1;
         }
 
+        .aiOpsBudgetLabel {
+          color: #5a7694;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
         .aiOpsBudgetLine {
-          display: flex;
-          justify-content: space-between;
-          gap: 10px;
-          margin-top: 8px;
           color: var(--ai-muted);
           font-size: 11px;
+          font-weight: 700;
+        }
+
+        .aiOpsBudgetControls {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-top: 10px;
+        }
+
+        .aiOpsBudgetControls input {
+          width: 118px;
+          height: 32px;
+          border: 1px solid #d6dfeb;
+          border-radius: 8px;
+          background: #fff;
+          color: var(--ai-primary);
+          padding: 0 10px;
+          font-size: 11px;
+          font-weight: 700;
+          font-family: inherit;
+        }
+
+        .aiOpsBudgetButton {
+          height: 32px;
+          border-radius: 8px;
+          border: 1px solid #d6dfeb;
+          background: #fff;
+          color: var(--ai-primary);
+          padding: 0 12px;
+          font-size: 11px;
+          font-weight: 800;
+          font-family: inherit;
+          cursor: pointer;
+        }
+
+        .aiOpsBudgetButton.primary {
+          border-color: #2563c9;
+          background: #2563c9;
+          color: #fff;
         }
 
         .aiOpsProgress,
         .aiOpsInlineProgress {
-          height: 6px;
+          height: 8px;
           border-radius: 999px;
           background: #e5edf6;
           overflow: hidden;
@@ -716,54 +1005,103 @@ export default function AiMetricsPage() {
         .aiOpsProgress div,
         .aiOpsInlineProgress div {
           height: 100%;
-          background: linear-gradient(90deg, #5f94dd, #2563c9);
+          background: linear-gradient(90deg, #78a8ea, #2563c9);
         }
 
-        .aiOpsBudgetHealth {
+        .aiOpsStatusBadge {
+          width: fit-content;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          border: 1px solid #d5e3f2;
+          background: #edf9f3;
+          color: #1c4d3e;
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .aiOpsStatusBadge span {
+          width: 7px;
+          height: 7px;
+          border-radius: 999px;
+          background: #28a36a;
+        }
+
+        .aiOpsStatusBadge.danger {
+          border-color: #f0c7c7;
+          background: #fff1f1;
+          color: #9f2f2f;
+        }
+
+        .aiOpsStatusBadge.danger span {
+          background: #d94141;
+        }
+
+        .aiOpsBudgetFacts,
+        .aiOpsAlertCard {
+          display: grid;
+          gap: 8px;
+          padding: 12px;
+          border: 1px solid #e1ebf5;
+          border-radius: 12px;
+          background: #f7fafe;
+        }
+
+        .aiOpsBudgetFacts div,
+        .aiOpsThreshold {
           display: flex;
           justify-content: space-between;
+          gap: 12px;
           align-items: center;
-          color: var(--ai-primary);
+        }
+
+        .aiOpsBudgetFacts span,
+        .aiOpsAlertHead span,
+        .aiOpsThreshold {
+          color: #68839f;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .aiOpsBudgetFacts strong,
+        .aiOpsAlertHead strong {
+          color: #173b72;
           font-size: 12px;
           font-weight: 800;
         }
 
-        .aiOpsBudgetHealth span {
-          color: var(--ai-success);
-        }
-
-        .aiOpsUsageFooter {
-          display: grid;
-          grid-template-columns: auto auto 1fr;
+        .aiOpsAlertHead {
+          display: flex;
+          justify-content: space-between;
           gap: 10px;
           align-items: center;
-          margin-top: 18px;
-          padding-top: 16px;
-          border-top: 1px solid #e7eef6;
+        }
+
+        .aiOpsAlertHead > div {
+          display: grid;
+          gap: 2px;
         }
 
         .aiOpsSwitch {
           display: inline-flex;
           align-items: center;
-          gap: 10px;
+          justify-content: center;
+          width: 46px;
           height: 32px;
-          padding: 0 10px;
-          border-radius: 999px;
           border: 1px solid var(--ai-border);
+          border-radius: 999px;
           background: #f8fbff;
-          color: var(--ai-primary);
-          font-size: 11px;
-          font-weight: 700;
-          font-family: inherit;
           cursor: pointer;
         }
 
         .aiOpsSwitch i {
+          position: relative;
           width: 24px;
           height: 14px;
           border-radius: 999px;
           background: #d1dce8;
-          position: relative;
         }
 
         .aiOpsSwitch i::after {
@@ -774,7 +1112,7 @@ export default function AiMetricsPage() {
           width: 10px;
           height: 10px;
           border-radius: 999px;
-          background: white;
+          background: #fff;
           transition: transform 0.2s ease;
         }
 
@@ -786,66 +1124,58 @@ export default function AiMetricsPage() {
           transform: translateX(10px);
         }
 
-        .aiOpsThreshold {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-          color: var(--ai-muted);
-          font-size: 11px;
-        }
-
-        .aiOpsThreshold strong {
-          color: var(--ai-primary);
-        }
-
         .aiOpsDangerButton,
         .aiOpsUploadCard button,
-        .aiOpsTinyAction,
         .aiOpsTextButton {
-          height: 30px;
+          height: 32px;
           border-radius: 8px;
           border: 1px solid #d6dfeb;
-          background: white;
+          background: #fff;
           color: var(--ai-primary);
           font-size: 11px;
           font-weight: 800;
           padding: 0 12px;
           font-family: inherit;
           cursor: pointer;
-          white-space: nowrap;
         }
 
         .aiOpsDangerButton {
-          justify-self: end;
+          width: 100%;
+        }
+
+        .aiOpsDangerButton.neutral {
+          border-color: #c6d6ea;
+          background: #eaf1fb;
+          color: #173b72;
+        }
+
+        .aiOpsDangerButton.danger {
           border-color: #dfb7b7;
           background: #da2e2e;
-          color: white;
-        }
-
-        .aiOpsTinyAction {
-          color: var(--ai-accent);
-          background: #f3f8ff;
-          border-color: #cbdcf2;
-        }
-
-        .aiOpsTextButton {
-          margin-right: 6px;
-          color: var(--ai-accent);
-        }
-
-        .aiOpsTextButton.danger {
-          color: var(--ai-danger);
+          color: #fff;
         }
 
         .aiOpsTableWrap {
           overflow: auto;
-          border-radius: 0;
           border: 1px solid #dfe8f2;
-          background: white;
+          background: #fff;
         }
 
         .aiOpsTableWrap.compact {
-          min-height: 236px;
+          flex: 1 1 auto;
+          min-height: 0;
+          height: 100%;
+        }
+
+        .aiOpsHeavyCard .aiOpsTableWrap.compact {
+          flex: 0 0 auto;
+          height: auto;
+        }
+
+        .aiOpsTableWrap.ragFixed {
+          min-height: 212px;
+          max-height: 212px;
+          overflow: hidden;
         }
 
         .aiOpsTable {
@@ -853,47 +1183,67 @@ export default function AiMetricsPage() {
           border-collapse: collapse;
         }
 
-        .aiOpsTable th,
-        .aiOpsTable td {
-          padding: 10px 12px;
-          border-bottom: 1px solid #edf2f7;
-          text-align: left;
-          font-size: 11px;
-          vertical-align: middle;
-          white-space: nowrap;
-        }
-
-        .aiOpsTable th {
-          background: #1f3148;
-          color: #eef4fb;
-          font-weight: 800;
-        }
-
-        .aiOpsTable td {
-          color: #24415f;
+        .aiOpsTableWrap.ragFixed .aiOpsTable {
+          table-layout: fixed;
         }
 
         .aiOpsTable tbody tr {
-          cursor: pointer;
+          height: 56px;
         }
 
-        .aiOpsTable tbody tr:hover td {
-          background: #f8fbff;
+        .aiOpsTable th,
+        .aiOpsTable td {
+          padding: 12px 14px;
+          border-bottom: 1px solid #edf2f7;
+          color: var(--ai-primary);
+          font-size: 12px;
+          text-align: left;
+          white-space: nowrap;
         }
 
-        .aiOpsTable tbody tr.selected td {
-          background: #f2f7fd;
+        .aiOpsTableWrap.ragFixed th:nth-child(2),
+        .aiOpsTableWrap.ragFixed td:nth-child(2),
+        .aiOpsTableWrap.ragFixed th:nth-child(4),
+        .aiOpsTableWrap.ragFixed td:nth-child(4) {
+          text-align: center;
+        }
+
+        .aiOpsTableWrap.ragFixed th:nth-child(3),
+        .aiOpsTableWrap.ragFixed td:nth-child(3),
+        .aiOpsTableWrap.ragFixed th:nth-child(5),
+        .aiOpsTableWrap.ragFixed td:nth-child(5) {
+          text-align: left;
+        }
+
+        .aiOpsTableWrap.ragFixed td:first-child,
+        .aiOpsTableWrap.ragFixed td:last-child {
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .aiOpsTable th {
+          color: #6b86a3;
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .aiOpsTable tbody tr.selected {
+          background: #f5f9ff;
+        }
+
+        .aiOpsTable tbody tr.placeholder td {
+          color: transparent;
+          background: #fff;
         }
 
         .aiOpsBadge {
           display: inline-flex;
           align-items: center;
-          height: 22px;
-          padding: 0 8px;
+          height: 24px;
+          padding: 0 10px;
           border-radius: 999px;
-          font-size: 10px;
+          font-size: 11px;
           font-weight: 800;
-          white-space: nowrap;
         }
 
         .aiOpsBadge.normal {
@@ -917,11 +1267,11 @@ export default function AiMetricsPage() {
         }
 
         .aiOpsMiniIcon {
-          width: 20px;
-          height: 20px;
+          width: 22px;
+          height: 22px;
           border-radius: 999px;
           border: 1px solid currentColor;
-          background: white;
+          background: #fff;
           font-size: 11px;
           font-weight: 800;
           line-height: 1;
@@ -942,6 +1292,7 @@ export default function AiMetricsPage() {
           gap: 18px;
           align-items: stretch;
           flex: 1;
+          min-height: 304px;
         }
 
         .aiOpsUploadCard {
@@ -951,7 +1302,6 @@ export default function AiMetricsPage() {
           gap: 12px;
           min-height: 260px;
           padding: 24px 18px;
-          border-radius: 0;
           border: 1px dashed #c6d3e5;
           background: #f4f7fd;
           text-align: center;
@@ -999,109 +1349,112 @@ export default function AiMetricsPage() {
         .aiOpsUploadCard button {
           background: #2563c9;
           border-color: #2563c9;
-          color: white;
+          color: #fff;
         }
 
         .aiOpsRagTableBlock {
           min-width: 0;
           display: flex;
           flex-direction: column;
+          min-height: 304px;
         }
 
         .aiOpsSearchRow {
-          margin-bottom: 10px;
-        }
-
-        .aiOpsStatGrid {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 12px;
-          margin-bottom: 16px;
-        }
-
-        .aiOpsStatCard {
-          min-height: 86px;
-          padding: 14px;
-          border-radius: 0;
-          background: #eef4fc;
-          border: 1px solid #dbe5f2;
-        }
-
-        .aiOpsStatCard span {
-          display: block;
-          color: var(--ai-muted);
-          font-size: 11px;
-          font-weight: 700;
-        }
-
-        .aiOpsStatCard strong {
-          display: block;
-          margin-top: 8px;
-          color: var(--ai-primary);
-          font-size: 16px;
-          font-weight: 800;
-        }
-
-        .aiOpsStatCard.danger {
-          background: #fff0f0;
-        }
-
-        .aiOpsLineChart {
-          position: relative;
-          min-height: 244px;
-          border-radius: 0;
-          background:
-            linear-gradient(to bottom, rgba(216, 228, 241, 0.7) 1px, transparent 1px) 0 0 / 100% 42px,
-            #f4f7fd;
-          border: 1px solid #e3ebf4;
-          overflow: hidden;
-        }
-
-        .aiOpsLineChart svg {
-          width: 100%;
-          height: 206px;
-        }
-
-        .aiOpsLineChart path:first-child {
-          fill: none;
-          stroke: #2563c9;
-          stroke-width: 3;
-        }
-
-        .aiOpsLineChart path:last-child {
-          fill: none;
-          stroke: #ea6f6f;
-          stroke-width: 2;
-          stroke-dasharray: 5 5;
-        }
-
-        .aiOpsLegendLine {
           display: flex;
-          gap: 12px;
           align-items: center;
-          padding: 0 12px 12px;
-          color: var(--ai-muted);
-          font-size: 11px;
+          gap: 8px;
+          height: 36px;
+          padding: 0 12px;
+          margin-bottom: 10px;
+          border-radius: 10px;
+          border: 1px solid #dfe7f1;
+          background: #f4f7fb;
         }
 
-        .aiOpsLegendLine span {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
+        .aiOpsSearchRow input {
+          width: 100%;
+          height: 100%;
+          border: 0;
+          background: transparent;
+          color: var(--ai-primary);
+          font-size: 12px;
+          font-family: inherit;
         }
 
-        .aiOpsLegendLine i {
-          width: 16px;
+        .aiOpsSearchRow input:focus {
+          outline: none;
+        }
+
+        .aiOpsSearchIcon {
+          position: relative;
+          width: 12px;
+          height: 12px;
+        }
+
+        .aiOpsSearchIcon::before,
+        .aiOpsSearchIcon::after {
+          content: '';
+          position: absolute;
+        }
+
+        .aiOpsSearchIcon::before {
+          width: 9px;
+          height: 9px;
+          border: 2px solid #88a2bf;
+          border-radius: 999px;
+          left: 0;
+          top: 0;
+        }
+
+        .aiOpsSearchIcon::after {
+          width: 6px;
           height: 2px;
+          background: #88a2bf;
+          right: -1px;
+          bottom: 0;
+          transform: rotate(45deg);
+          transform-origin: right center;
         }
 
-        .aiOpsLegendLine .solid {
+        .aiOpsTextButton {
+          margin-right: 6px;
+          color: var(--ai-accent);
+        }
+
+        .aiOpsTextButton.danger {
+          color: var(--ai-danger);
+        }
+
+        .aiOpsPagination {
+          display: flex;
+          justify-content: center;
+          gap: 8px;
+          padding-top: 12px;
+          min-height: 44px;
+        }
+
+        .aiOpsPagination button {
+          min-width: 32px;
+          height: 32px;
+          border: 1px solid #d6dfeb;
+          border-radius: 8px;
+          background: #fff;
+          color: var(--ai-primary);
+          font-size: 11px;
+          font-weight: 800;
+          font-family: inherit;
+          cursor: pointer;
+        }
+
+        .aiOpsPagination button.active {
+          border-color: #2563c9;
           background: #2563c9;
+          color: #fff;
         }
 
-        .aiOpsLegendLine .dashed {
-          background: linear-gradient(90deg, #ea6f6f 50%, transparent 50%);
-          background-size: 6px 2px;
+        .aiOpsPagination button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
         }
 
         .aiOpsLogLights {
@@ -1116,46 +1469,77 @@ export default function AiMetricsPage() {
           display: block;
         }
 
-        .aiOpsLogLights .red { background: #ea4f4f; }
-        .aiOpsLogLights .amber { background: #d8b46e; }
-        .aiOpsLogLights .green { background: #76a37f; }
+        .aiOpsLogLights .red {
+          background: #ea4f4f;
+        }
+
+        .aiOpsLogLights .amber {
+          background: #d8b46e;
+        }
+
+        .aiOpsLogLights .green {
+          background: #76a37f;
+        }
 
         .aiOpsLogConsole {
-          display: grid;
-          gap: 4px;
-          min-height: 362px;
-          max-height: 362px;
+          display: flex;
+          flex-direction: column;
+          min-height: 274px;
+          max-height: 274px;
           overflow: auto;
-          padding: 14px;
-          border-radius: 0;
+          padding: 14px 16px;
+          border-radius: 14px;
           background: linear-gradient(180deg, #13253d 0%, #0f2034 100%);
           border: 1px solid #20344f;
         }
 
+        .aiOpsLogHead,
         .aiOpsLogRow {
           display: grid;
-          grid-template-columns: 92px 70px minmax(0, 1fr);
-          gap: 8px;
+          grid-template-columns: 140px 90px minmax(0, 1fr);
+          column-gap: 18px;
           align-items: center;
-          min-height: 22px;
-          color: #d8e4f1;
-          font-size: 11px;
+          font-family: Consolas, 'SFMono-Regular', Menlo, monospace;
+          font-size: 12px;
+          line-height: 1.55;
         }
 
-        .aiOpsLogRow .time,
-        .aiOpsLogTag {
-          font-family: Consolas, 'SFMono-Regular', Menlo, monospace;
+        .aiOpsLogHead {
+          padding: 4px 14px 12px;
+          border-bottom: 1px solid rgba(107, 137, 173, 0.2);
+          color: #88a2bf;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+        }
+
+        .aiOpsLogRow {
+          padding: 10px 14px;
+          color: #dce7f3;
+          border-top: 1px solid rgba(37, 56, 81, 0.9);
+        }
+
+        .aiOpsLogTag.normal {
+          color: #7dd49a;
+        }
+
+        .aiOpsLogTag.warning {
+          color: #e1c36d;
+        }
+
+        .aiOpsLogTag.danger {
+          color: #e39aa2;
         }
 
         .aiOpsLogRow strong {
+          color: #f4f8fd;
           font-family: inherit;
-          font-weight: 600;
-          line-height: 1.3;
+          font-size: 13px;
+          font-weight: 700;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
-
-        .aiOpsLogTag.normal { color: #7dd49a; }
-        .aiOpsLogTag.warning { color: #e1c36d; }
-        .aiOpsLogTag.danger { color: #e39aa2; }
 
         @keyframes aiOpsPulse {
           0% { box-shadow: 0 0 0 0 rgba(37, 99, 201, 0.34); }
@@ -1165,30 +1549,30 @@ export default function AiMetricsPage() {
 
         @media (max-width: 1480px) {
           .aiOpsBoardTop,
-          .aiOpsBoardBottom,
-          .aiOpsRagLayout,
-          .aiOpsUsageGrid {
+          .aiOpsUsageGrid,
+          .aiOpsRagLayout {
             grid-template-columns: 1fr;
-          }
-        }
-
-        @media (max-width: 1180px) {
-          .aiOpsStatGrid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
         }
 
         @media (max-width: 820px) {
           .aiOpsHeaderStatus,
-          .aiOpsUsageFooter {
+          .aiOpsPanelHead,
+          .aiOpsChartHead {
             flex-direction: column;
             align-items: stretch;
           }
 
-          .aiOpsStatGrid {
-            grid-template-columns: 1fr;
+          .aiOpsModelField {
+            justify-items: stretch;
           }
 
+          .aiOpsModelField select {
+            width: 100%;
+            min-width: 0;
+          }
+
+          .aiOpsLogHead,
           .aiOpsLogRow {
             grid-template-columns: 1fr;
           }
