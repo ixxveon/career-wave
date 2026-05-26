@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Apple, LockKeyhole, Mail } from 'lucide-react';
+import { Apple, LockKeyhole, UserRound } from 'lucide-react';
 import './AuthPage.css';
 
 const socialProviders = [
@@ -11,15 +11,26 @@ const socialProviders = [
 
 function LoginPage() {
   const [loginType, setLoginType] = useState('personal');
+  const [credentials, setCredentials] = useState({
+    loginId: '',
+    password: '',
+  });
+
+  const updateCredential = (key, value) => {
+    setCredentials((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  };
 
   return (
     <section className="cw-auth-page">
-      <div className="cw-auth-card">
-        <p className="cw-auth-eyebrow">WELCOME BACK</p>
+      <div className="cw-auth-card cw-auth-card--login">
+        <p className="cw-auth-eyebrow">LOGIN</p>
         <h1>로그인</h1>
         <p>개인회원 또는 기업회원으로 로그인하고 커리어 웨이브 서비스를 이어서 이용하세요.</p>
 
-        <div className="cw-auth-tabs" role="tablist" aria-label="로그인 유형">
+        <div className="cw-register-tabs cw-register-tabs--auth" role="tablist" aria-label="로그인 유형">
           <button
             aria-selected={loginType === 'personal'}
             className={loginType === 'personal' ? 'is-active' : ''}
@@ -42,17 +53,27 @@ function LoginPage() {
 
         <form className="cw-auth-form">
           <label>
-            이메일
+            아이디
             <span>
-              <Mail size={18} />
-              <input type="email" placeholder="career@wave.com" />
+              <UserRound size={18} />
+              <input
+                type="text"
+                placeholder="아이디를 입력하세요"
+                value={credentials.loginId}
+                onChange={(event) => updateCredential('loginId', event.target.value)}
+              />
             </span>
           </label>
           <label>
             비밀번호
             <span>
               <LockKeyhole size={18} />
-              <input type="password" placeholder="비밀번호를 입력하세요" />
+              <input
+                type="password"
+                placeholder="비밀번호를 입력하세요"
+                value={credentials.password}
+                onChange={(event) => updateCredential('password', event.target.value)}
+              />
             </span>
           </label>
           <button type="button">로그인</button>
@@ -74,8 +95,11 @@ function LoginPage() {
         </div>
 
         <div className="cw-auth-links">
+          <a href="#">아이디 찾기</a>
+          <span aria-hidden="true">|</span>
+          <a href="#">비밀번호 찾기</a>
+          <span aria-hidden="true">|</span>
           <a href="/auth/register">회원가입</a>
-          <a href="/auth/profile">프로필 보기</a>
         </div>
       </div>
     </section>
