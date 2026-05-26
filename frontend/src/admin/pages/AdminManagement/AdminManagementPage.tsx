@@ -54,6 +54,7 @@ const ROLE_META: Record<AdminRole, { label: string; scope: string }> = {
 
 const roleColumns: AdminRole[] = ['MASTER', 'CS', 'BACKEND', 'OPS', 'BILLING', 'AUDIT'];
 const LOG_ACTOR_OPTIONS = ['ALL', 'super_admin', 'cs_admin', 'backend_admin', 'ops_admin', 'system'] as const;
+const MAX_SECURITY_LOGS = 5;
 
 const initialAdmins: AdminAccount[] = [
   {
@@ -262,7 +263,7 @@ export default function AdminManagementPage() {
   const [aclDraft, setAclDraft] = useState<AclDraft>({ label: '', cidr: '', note: '' });
 
   const addLog = (log: Omit<AuditLog, 'id' | 'time'>) => {
-    setLogs((prev) => [{ ...log, id: makeId('LOG', prev.length + 1), time: formatNow() }, ...prev].slice(0, 50));
+    setLogs((prev) => [{ ...log, id: makeId('LOG', prev.length + 1), time: formatNow() }, ...prev].slice(0, MAX_SECURITY_LOGS));
   };
 
   const changeAdminRole = (id: string, role: AdminRole) => {
@@ -387,7 +388,7 @@ export default function AdminManagementPage() {
     const timer = window.setInterval(() => {
       const next = events[cursor];
       cursor = (cursor + 1) % events.length;
-      setLogs((prev) => [{ ...next, id: makeId('LOG', prev.length + 1), time: formatNow() }, ...prev].slice(0, 50));
+      setLogs((prev) => [{ ...next, id: makeId('LOG', prev.length + 1), time: formatNow() }, ...prev].slice(0, MAX_SECURITY_LOGS));
     }, 8000);
 
     return () => window.clearInterval(timer);
