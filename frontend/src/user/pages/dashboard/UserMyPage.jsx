@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import "./DashboardPage.css";
 
+
+
 function UserMyPage() {
     return (
         <div className="cw-mypage-layout">
@@ -14,9 +16,8 @@ function UserMyPage() {
                 <strong>마이페이지</strong>
                 <nav>
                     <a href="#dashboard" className="is-active">MY홈</a>
-                    <a href="#github">GitHub 성장</a>
                     <a href="#activity">활동 기록</a>
-                    <a href="#company">관심 기업</a>
+                    <Link to="/mypage/favorites">관심 기업</Link>
                     <a href="#settings">계정 설정</a>
                 </nav>
             </aside>
@@ -54,7 +55,7 @@ function UserMyPage() {
                                     <div style={{ width: "80%" }} />
                                 </div>
 
-                                <Link className="cw-progress-link" to="/resume">
+                                <Link className="cw-progress-link" to="/documents/resume">
                                     자세히 보기 →
                                 </Link>
                             </div>
@@ -73,7 +74,7 @@ function UserMyPage() {
                                     <div style={{ width: "65%" }} />
                                 </div>
 
-                                <Link className="cw-progress-link" to="/documentAnalysis">
+                                <Link className="cw-progress-link" to="/documents/cover-letter">
                                     자세히 보기 →
                                 </Link>
                             </div>
@@ -92,7 +93,7 @@ function UserMyPage() {
                                     <div style={{ width: "55%" }} />
                                 </div>
 
-                                <Link className="cw-progress-link" to="/interview">
+                                <Link className="cw-progress-link" to="/interview/text">
                                     자세히 보기 →
                                 </Link>
                             </div>
@@ -116,9 +117,6 @@ function UserMyPage() {
                         </div>
 
 
-                        <Link className="cw-dashboard-more" to="/dashboard">
-                            자세히 보기 →
-                        </Link>
                     </div>
 
                     <div className="cw-dashboard-card cw-interview-card" id="interview">
@@ -143,7 +141,9 @@ function UserMyPage() {
 
                         <div className="cw-chart-title">
                             <h4>최근 모의면접 점수 추이</h4>
-                            <button type="button">최근 5회</button>
+                            <Link className="cw-chart-filter" to="/interview">
+                                최근 5회
+                            </Link>
                         </div>
 
                         <div className="cw-line-chart">
@@ -272,6 +272,10 @@ function UserMyPage() {
                         <p className="cw-company-note">
                             관심 기업 중 3곳이 현재 채용 중이에요.
                         </p>
+                        <Link className="cw-dashboard-more" to="/mypage/favorites">
+                            자세히 보기 →
+                        </Link>
+
                     </div>
                 </section>
             </section>

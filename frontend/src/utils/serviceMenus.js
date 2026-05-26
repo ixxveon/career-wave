@@ -43,10 +43,12 @@ export const serviceMenus = [
       { label: '멘토 찾기', href: '/community/mentor' },
     ],
   },
+
   {
     label: '기업서비스',
-    href: '/company/profile',
+    href: '/dashboard/company',
     children: [
+      { label: '기업 대시보드', href: '/dashboard/company' },
       { label: '기업 프로필', href: '/company/profile' },
       { label: 'HR 담당자 관리', href: '/company/hr-managers' },
       { label: '기업 상품', href: '/billing/company-products' },
