@@ -16,10 +16,12 @@ const alerts = [
 ];
 
 const adminCards = [
-  { icon: 'USER', title: '회원 관리',   desc: '가입자, 구독 상태, 권한, 정지 회원을 관리합니다.',          value: '신규 128명', cls: 'blue',   path: '/admin/members' },
-  { icon: 'REP',  title: '신고 관리',   desc: '커뮤니티 신고, 블라인드 처리, 스팸 게시글을 확인합니다.',   value: '대기 3건',   cls: 'red',    path: '/admin/reports' },
-  { icon: 'PAY',  title: '결제 · 정산', desc: '결제 내역, 정기결제 실패, 환불 요청을 관리합니다.',          value: '실패 7건',   cls: 'orange', path: '/admin/payments' },
-  { icon: 'AI',   title: 'AI 메트릭스', desc: 'AI 토큰 사용량, 면접 세션, 이상 호출을 모니터링합니다.',    value: '세션 37건',  cls: 'purple', path: '/admin/ai' },
+  { icon: 'USER', title: '회원 관리',   desc: '가입자, 구독 상태, 권한, 정지 회원을 관리합니다.',              value: '신규 128명',   cls: 'blue',   path: '/admin/members' },
+  { icon: 'REP',  title: '신고 관리',   desc: '커뮤니티 신고, 블라인드 처리, 스팸 게시글을 확인합니다.',       value: '대기 3건',     cls: 'red',    path: '/admin/reports' },
+  { icon: 'CS',   title: '고객센터',    desc: '공지사항·FAQ 관리 및 1:1 문의 티켓을 처리합니다.',             value: '미답변 12건',  cls: 'orange', path: '/admin/cs' },
+  { icon: 'PAY',  title: '결제 · 정산', desc: '결제 내역, 정기결제 실패, 환불 요청을 관리합니다.',              value: '실패 7건',     cls: 'orange', path: '/admin/payments' },
+  { icon: 'MTH',  title: '매칭 통계',   desc: '직무별 지원 현황, 합격률, 경쟁률 트렌드를 확인합니다.',         value: '합격률 12.7%', cls: 'green',  path: '/admin/matching' },
+  { icon: 'AI',   title: 'AI 메트릭스', desc: 'AI 토큰 사용량, 면접 세션, 이상 호출을 모니터링합니다.',        value: '세션 37건',    cls: 'purple', path: '/admin/ai' },
 ];
 
 const logs: [string, string, string, string][] = [
@@ -126,7 +128,7 @@ export default function AdminDashboardPage() {
             </article>
           </section>
 
-          <section className="adminCardGrid">
+          <section className="adminCardGrid" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
             {adminCards.map((card) => (
               <article className="adminCard" key={card.title}>
                 <div className="adminTop">

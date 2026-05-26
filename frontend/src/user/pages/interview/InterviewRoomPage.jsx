@@ -15,8 +15,8 @@ const MOCK_JOBS = [
   { id: 0, company: '',       position: '공고 없이 진행', tags: [] },
 ];
 const MOCK_RESUMES = [
-  { id: 1, name: '이가연_이력서_2026.pdf', date: '2026.03.15' },
-  { id: 2, name: '이가연_이력서_2025.pdf', date: '2025.11.20' },
+  { id: 1, name: '홍길동_이력서_2026.pdf', date: '2026.03.15' },
+  { id: 2, name: '홍길동_이력서_2025.pdf', date: '2025.11.20' },
   { id: 0, name: '이력서 없이 진행',       date: '' },
 ];
 const MOCK_QUESTIONS = [

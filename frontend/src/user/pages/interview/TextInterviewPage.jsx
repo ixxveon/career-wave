@@ -1,306 +1,209 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  ChevronRight, Clock, X, Lightbulb, SkipForward,
-  FileText, Briefcase, CheckCircle2, Send,
-} from 'lucide-react';
-import './TextInterviewPage.css';
+import { useState, useRef, useEffect } from 'react';
+import { Send, X, Clock, FileText, ChevronRight } from 'lucide-react';
+import './styles/TextInterviewPage.css';
 
-/* ── Mock 데이터 ── */
-const MOCK_JOBS = [
-  { id: 1, company: '카카오', position: '백엔드 개발자',  tags: ['Java', 'Spring', 'MySQL'] },
-  { id: 2, company: '네이버', position: '서버 개발자',    tags: ['Go', 'Kubernetes', 'gRPC'] },
-  { id: 3, company: '토스',   position: '서버 개발자',    tags: ['Kotlin', 'MSA', 'AWS'] },
-  { id: 0, company: '',       position: '공고 없이 진행', tags: [] },
+const JOB_OPTIONS = ['백엔드 개발자', '프론트엔드 개발자', '풀스택 개발자', '데이터 엔지니어', 'DevOps'];
+
+const INIT_MESSAGES = [
+  {
+    role: 'ai',
+    text: '안녕하세요! 오늘 백엔드 개발자 포지션으로 면접을 시작하겠습니다.\n이력서와 타겟 공고를 분석했어요. 먼저 간단한 자기소개를 부탁드립니다.',
+  },
 ];
 
-const MOCK_RESUMES = [
-  { id: 1, name: '이가연_이력서_2026.pdf', date: '2026.03.15' },
-  { id: 2, name: '이가연_이력서_2025.pdf', date: '2025.11.20' },
-  { id: 0, name: '이력서 없이 진행',       date: '' },
-];
+function TextInterviewPage() {
+  const [phase, setPhase] = useState('setup');
+  const [job, setJob]       = useState('백엔드 개발자');
+  const [company, setCompany] = useState('');
+  const [messages, setMessages] = useState(INIT_MESSAGES);
+  const [input, setInput]   = useState('');
+  const [qNum, setQNum]     = useState(1);
+  const [sec, setSec]       = useState(0);
+  const [typing, setTyping] = useState(false);
 
-const MOCK_QUESTIONS = [
-  '간단한 자기소개와 지원 동기를 말씀해주세요.',
-  '가장 어려웠던 기술적 문제와 해결 과정을 말씀해주세요.',
-  '본인의 기술적 강점과 약점은 무엇인가요?',
-  '협업 중 갈등 상황이 생겼을 때 어떻게 해결하셨나요?',
-  '입사 후 커리어 목표는 어떻게 되시나요?',
-];
-
-function formatTime(s) {
-  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-}
-
-/* ════════════════════════
-   Setup View
-════════════════════════ */
-function SetupView({ onStart }) {
-  const [job,    setJob]    = useState(null);
-  const [resume, setResume] = useState(null);
-  const navigate = useNavigate();
-
-  return (
-    <div className="ti-setup">
-      <div className="ti-setup__head">
-        <button className="ti-setup__back" onClick={() => navigate('/interview')} type="button">
-          <X size={18} />
-        </button>
-        <span className="eyebrow">TEXT INTERVIEW</span>
-        <h1>면접 설정</h1>
-        <p>연습할 공고와 이력서를 선택해주세요.</p>
-      </div>
-
-      <div className="ti-setup__body">
-        {/* 공고 선택 */}
-        <section className="ti-setup__section">
-          <h2><Briefcase size={15} /> 어떤 공고로 연습할까요?</h2>
-          <ul className="ti-setup__list">
-            {MOCK_JOBS.map((j) => (
-              <li key={j.id}>
-                <button
-                  className={`ti-setup__item ${job?.id === j.id ? 'is-selected' : ''}`}
-                  onClick={() => setJob(j)}
-                  type="button"
-                >
-                  <div className="ti-setup__item-info">
-                    <strong>
-                      {j.company ? `${j.company} · ${j.position}` : j.position}
-                    </strong>
-                    {j.tags.length > 0 && (
-                      <div className="ti-setup__tags">
-                        {j.tags.map(t => <span key={t}>{t}</span>)}
-                      </div>
-                    )}
-                  </div>
-                  {job?.id === j.id && <CheckCircle2 size={18} className="ti-setup__check" />}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* 이력서 선택 */}
-        <section className="ti-setup__section">
-          <h2><FileText size={15} /> 어떤 이력서를 사용할까요?</h2>
-          <ul className="ti-setup__list">
-            {MOCK_RESUMES.map((r) => (
-              <li key={r.id}>
-                <button
-                  className={`ti-setup__item ${resume?.id === r.id ? 'is-selected' : ''}`}
-                  onClick={() => setResume(r)}
-                  type="button"
-                >
-                  <div className="ti-setup__item-info">
-                    <strong>{r.name}</strong>
-                    {r.date && <span>{r.date}</span>}
-                  </div>
-                  {resume?.id === r.id && <CheckCircle2 size={18} className="ti-setup__check" />}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-
-      <div className="ti-setup__footer">
-        <div className="ti-setup__summary">
-          {job    ? <span><CheckCircle2 size={13} /> {job.company || '공고 없이'} {job.position}</span> : <span className="is-empty">공고를 선택해주세요</span>}
-          {resume ? <span><CheckCircle2 size={13} /> {resume.name}</span> : <span className="is-empty">이력서를 선택해주세요</span>}
-        </div>
-        <button
-          className="ti-btn ti-btn--primary"
-          onClick={() => onStart({ job, resume })}
-          disabled={!job || !resume}
-          type="button"
-        >
-          면접 시작 <ChevronRight size={15} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ════════════════════════
-   Interview View
-════════════════════════ */
-function InterviewView({ config, onFinish }) {
-  const [currentQ,  setCurrentQ]  = useState(0);
-  const [answer,    setAnswer]    = useState('');
-  const [history,   setHistory]   = useState([]);
-  const [elapsed,   setElapsed]   = useState(0);
-  const [showHist,  setShowHist]  = useState(false);
-  const [showExit,  setShowExit]  = useState(false);
+  const bottomRef  = useRef(null);
+  const timerRef   = useRef(null);
   const textareaRef = useRef(null);
-  const navigate    = useNavigate();
-
-  const total = MOCK_QUESTIONS.length;
-  const q     = MOCK_QUESTIONS[currentQ];
 
   useEffect(() => {
-    const id = setInterval(() => setElapsed(e => e + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, typing]);
 
-  useEffect(() => {
-    textareaRef.current?.focus();
-  }, [currentQ]);
+  function startInterview() {
+    setPhase('interview');
+    setMessages(INIT_MESSAGES);
+    setQNum(1);
+    setSec(0);
+    timerRef.current = setInterval(() => setSec(s => s + 1), 1000);
+  }
 
-  const handleSubmit = () => {
-    if (!answer.trim()) return;
-    const next = [...history, { q, a: answer }];
-    setHistory(next);
-    setAnswer('');
-    if (currentQ + 1 >= total) {
-      onFinish(next);
-    } else {
-      setCurrentQ(i => i + 1);
-      setShowHist(false);
+  function endInterview() {
+    clearInterval(timerRef.current);
+    setPhase('setup');
+  }
+
+  function handleSend() {
+    if (!input.trim() || typing) return;
+    const text = input.trim();
+    setMessages(prev => [...prev, { role: 'user', text }]);
+    setInput('');
+    setTyping(true);
+
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        text: '답변 감사합니다. 말씀하신 내용을 바탕으로 추가로 여쭤볼게요.\n해당 상황에서 기술적인 선택의 근거는 무엇이었나요?',
+      }]);
+      setQNum(q => q + 1);
+      setTyping(false);
+    }, 1400);
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
-  };
+  }
 
-  const handleSkip = () => {
-    const next = [...history, { q, a: '(넘김)' }];
-    setHistory(next);
-    setAnswer('');
-    if (currentQ + 1 >= total) {
-      onFinish(next);
-    } else {
-      setCurrentQ(i => i + 1);
-      setShowHist(false);
-    }
-  };
+  const mm = String(Math.floor(sec / 60)).padStart(2, '0');
+  const ss = String(sec % 60).padStart(2, '0');
+  const TOTAL_Q = 10;
 
-  const handleKey = (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit();
-  };
+  /* ── Setup ─────────────────────────────── */
+  if (phase === 'setup') {
+    return (
+      <div className="ti-setup">
+        <div className="ti-setup__card">
+          <p className="ti-setup__eyebrow">TEXT INTERVIEW</p>
+          <h1 className="ti-setup__title">텍스트 면접 설정</h1>
+          <p className="ti-setup__desc">
+            이력서와 타겟 공고를 기반으로 AI가 맞춤 질문을 실시간 생성합니다.
+          </p>
 
-  const label = config.job?.company
-    ? `${config.job.company} · ${config.job.position}`
-    : config.job?.position ?? '일반 면접';
+          <div className="ti-setup__resume">
+            <FileText size={15} />
+            <span>이력서_최종본.pdf</span>
+            <span className="ti-setup__resume-badge">연결됨</span>
+          </div>
 
+          <div className="ti-setup__section">
+            <label className="ti-setup__label">목표 직무</label>
+            <div className="ti-setup__chips">
+              {JOB_OPTIONS.map(j => (
+                <button
+                  key={j}
+                  className={`ti-chip${job === j ? ' ti-chip--on' : ''}`}
+                  onClick={() => setJob(j)}
+                >
+                  {j}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="ti-setup__section">
+            <label className="ti-setup__label">타겟 기업</label>
+            <input
+              className="ti-setup__input"
+              placeholder="ex) 토스, 카카오, 네이버"
+              value={company}
+              onChange={e => setCompany(e.target.value)}
+            />
+          </div>
+
+          <button
+            className="ti-setup__btn"
+            onClick={startInterview}
+            disabled={!company.trim()}
+          >
+            면접 시작하기 <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Interview ──────────────────────────── */
   return (
-    <div className="ti-interview">
-      {/* 상단 바 */}
-      <div className="ti-bar">
-        <div className="ti-bar__left">
-          <div className="ti-progress">
-            {Array.from({ length: total }).map((_, i) => (
+    <div className="ti">
+
+      {/* 헤더 */}
+      <header className="ti-header">
+        <div className="ti-header__left">
+          <span className="ti-header__company">{company}</span>
+          <span className="ti-header__sep">·</span>
+          <span className="ti-header__job">{job}</span>
+        </div>
+
+        <div className="ti-header__center">
+          <div className="ti-header__dots">
+            {Array.from({ length: TOTAL_Q }, (_, i) => (
               <span
                 key={i}
-                className={`ti-progress__dot ${i < currentQ ? 'is-done' : i === currentQ ? 'is-current' : ''}`}
+                className={`ti-dot${i < qNum - 1 ? ' ti-dot--done' : i === qNum - 1 ? ' ti-dot--cur' : ''}`}
               />
             ))}
           </div>
-          <span className="ti-bar__label">Q {currentQ + 1} / {total}</span>
+          <span className="ti-header__q">Q {qNum} / {TOTAL_Q}</span>
         </div>
-        <span className="ti-bar__job">{label}</span>
-        <div className="ti-bar__right">
-          <span className="ti-bar__timer"><Clock size={13} /> {formatTime(elapsed)}</span>
-          <button className="ti-bar__exit" onClick={() => setShowExit(true)} type="button">
-            <X size={16} />
+
+        <div className="ti-header__right">
+          <div className="ti-header__timer">
+            <Clock size={13} />
+            {mm}:{ss}
+          </div>
+          <button className="ti-header__exit" onClick={endInterview}>
+            <X size={14} /> 종료
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* 메인 */}
-      <div className="ti-main">
+      {/* 채팅 */}
+      <div className="ti-chat">
+        {messages.map((msg, i) => (
+          <div key={i} className={`ti-msg ti-msg--${msg.role}`}>
+            {msg.role === 'ai' && <div className="ti-msg__avatar">AI</div>}
+            <div className="ti-msg__bubble">
+              {msg.text.split('\n').map((line, j) => <p key={j}>{line}</p>)}
+            </div>
+          </div>
+        ))}
 
-        {/* 질문 카드 */}
-        <div className="ti-question">
-          <div className="ti-question__avatar">AI</div>
-          <div className="ti-question__bubble">{q}</div>
-        </div>
-
-        {/* 이전 대화 토글 */}
-        {history.length > 0 && (
-          <button
-            className="ti-history-toggle"
-            onClick={() => setShowHist(v => !v)}
-            type="button"
-          >
-            이전 대화 {history.length}개 {showHist ? '접기 ▲' : '보기 ▼'}
-          </button>
-        )}
-
-        {showHist && (
-          <div className="ti-history">
-            {history.map(({ q: hq, a: ha }, i) => (
-              <div key={i} className="ti-history__item">
-                <p className="ti-history__q"><span>Q{i + 1}</span> {hq}</p>
-                <p className="ti-history__a">{ha}</p>
-              </div>
-            ))}
+        {typing && (
+          <div className="ti-msg ti-msg--ai">
+            <div className="ti-msg__avatar">AI</div>
+            <div className="ti-msg__bubble ti-msg__bubble--typing">
+              <span /><span /><span />
+            </div>
           </div>
         )}
 
-        {/* 답변 입력 */}
-        <div className="ti-answer">
-          <textarea
-            ref={textareaRef}
-            className="ti-answer__input"
-            value={answer}
-            onChange={e => setAnswer(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder="답변을 입력하세요... (Ctrl+Enter로 제출)"
-            rows={5}
-          />
-          <div className="ti-answer__actions">
-            <div className="ti-answer__left">
-              <button className="ti-action-btn" type="button">
-                <Lightbulb size={14} /> 힌트
-              </button>
-              <button className="ti-action-btn" onClick={handleSkip} type="button">
-                <SkipForward size={14} /> 넘기기
-              </button>
-            </div>
-            <button
-              className="ti-btn ti-btn--primary"
-              onClick={handleSubmit}
-              disabled={!answer.trim()}
-              type="button"
-            >
-              답변 완료 <Send size={14} />
-            </button>
-          </div>
-        </div>
-
+        <div ref={bottomRef} />
       </div>
 
-      {/* 종료 확인 모달 */}
-      {showExit && (
-        <div className="ti-modal-overlay" onClick={() => setShowExit(false)}>
-          <div className="ti-modal" onClick={e => e.stopPropagation()}>
-            <h3>면접을 종료할까요?</h3>
-            <p>지금까지의 답변은 저장되지 않아요.</p>
-            <div className="ti-modal__btns">
-              <button className="ti-btn ti-btn--ghost" onClick={() => setShowExit(false)} type="button">계속하기</button>
-              <button className="ti-btn ti-btn--danger" onClick={() => navigate('/interview')} type="button">종료</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 입력 */}
+      <div className="ti-input-bar">
+        <textarea
+          ref={textareaRef}
+          className="ti-input"
+          placeholder="답변을 입력하세요… (Enter 전송 / Shift+Enter 줄바꿈)"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKey}
+          rows={3}
+        />
+        <button
+          className="ti-send"
+          onClick={handleSend}
+          disabled={!input.trim() || typing}
+        >
+          <Send size={18} />
+        </button>
+      </div>
+
     </div>
   );
 }
 
-/* ════════════════════════
-   Main
-════════════════════════ */
-export default function TextInterviewPage() {
-  const navigate = useNavigate();
-  const [phase,  setPhase]  = useState('setup');
-  const [config, setConfig] = useState(null);
-
-  const handleStart = (cfg) => {
-    setConfig(cfg);
-    setPhase('interview');
-  };
-
-  const handleFinish = () => {
-    navigate('/interview/report');
-  };
-
-  if (phase === 'setup') return <SetupView onStart={handleStart} />;
-  return <InterviewView config={config} onFinish={handleFinish} />;
-}
+export default TextInterviewPage;
