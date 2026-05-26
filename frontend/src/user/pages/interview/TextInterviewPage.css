@@ -1,0 +1,428 @@
+/* ══════════════════════════════════════
+   Text Interview
+══════════════════════════════════════ */
+
+/* 공통 버튼 */
+.ti-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: opacity .15s, transform .15s;
+  white-space: nowrap;
+}
+.ti-btn:hover:not(:disabled) { opacity: .86; transform: translateY(-1px); }
+.ti-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+.ti-btn--primary { background: var(--color-primary-dark); color: #fff; }
+.ti-btn--ghost   { background: transparent; border: 1.5px solid var(--color-border); color: var(--color-text-secondary); }
+.ti-btn--danger  { background: var(--color-danger); color: #7a3535; }
+
+/* ══ Setup ══ */
+.ti-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: calc(100vh - 160px);
+}
+
+.ti-setup__head {
+  position: relative;
+  padding: 36px 0 28px;
+}
+
+.ti-setup__back {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background .15s;
+}
+.ti-setup__back:hover { background: var(--color-surface-soft); }
+
+.ti-setup__head h1 {
+  margin: 8px 0 6px;
+  font-size: 26px;
+  font-weight: 950;
+  color: #0f274b;
+}
+
+.ti-setup__head p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.ti-setup__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  flex: 1;
+}
+
+.ti-setup__section {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-soft);
+  padding: 22px;
+}
+
+.ti-setup__section h2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--color-text-primary);
+}
+
+.ti-setup__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ti-setup__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-soft);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .15s, background .15s;
+}
+.ti-setup__item:hover            { border-color: var(--color-primary); background: var(--color-sky); }
+.ti-setup__item.is-selected      { border-color: var(--color-primary-dark); background: var(--color-sky); }
+
+.ti-setup__item-info { flex: 1; min-width: 0; }
+.ti-setup__item-info strong { display: block; font-size: 14px; font-weight: 800; color: var(--color-text-primary); }
+.ti-setup__item-info span   { display: block; font-size: 12px; color: var(--color-text-secondary); font-weight: 600; margin-top: 2px; }
+
+.ti-setup__tags {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+.ti-setup__tags span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.ti-setup__check { flex-shrink: 0; color: var(--color-primary-dark); }
+
+.ti-setup__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--color-line);
+  margin-top: 20px;
+}
+
+.ti-setup__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ti-setup__summary span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+.ti-setup__summary span.is-empty { color: var(--color-text-secondary); }
+.ti-setup__summary span svg      { color: var(--color-primary-dark); }
+.ti-setup__summary span.is-empty svg { color: var(--color-border); }
+
+/* ══ Interview ══ */
+.ti-interview {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: calc(100vh - 160px);
+}
+
+/* 상단 바 */
+.ti-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 20px;
+}
+
+.ti-bar__left  { display: flex; align-items: center; gap: 12px; }
+.ti-bar__right { display: flex; align-items: center; gap: 12px; }
+
+.ti-progress {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.ti-progress__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-border);
+  transition: background .2s;
+}
+.ti-progress__dot.is-done    { background: var(--color-primary); }
+.ti-progress__dot.is-current { background: var(--color-primary-dark); width: 10px; height: 10px; }
+
+.ti-bar__label { font-size: 13px; font-weight: 800; color: var(--color-text-primary); }
+.ti-bar__job   { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
+
+.ti-bar__timer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-text-secondary);
+}
+
+.ti-bar__exit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background .15s;
+}
+.ti-bar__exit:hover { background: var(--color-surface-soft); }
+
+/* 메인 */
+.ti-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+/* 질문 카드 */
+.ti-question {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(234, 243, 255, .9), rgba(240, 238, 255, .7));
+  border: 1px solid rgba(168, 200, 240, .35);
+}
+
+.ti-question__avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--color-primary-dark);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ti-question__bubble {
+  padding-top: 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.7;
+  word-break: keep-all;
+}
+
+/* 이전 대화 */
+.ti-history-toggle {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background .15s;
+}
+.ti-history-toggle:hover { background: var(--color-surface-soft); }
+
+.ti-history {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+}
+
+.ti-history__item { display: flex; flex-direction: column; gap: 4px; }
+
+.ti-history__q {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+.ti-history__q span {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--color-sky);
+  color: var(--color-primary-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.ti-history__a {
+  margin: 0 0 0 34px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.6;
+}
+
+/* 답변 입력 */
+.ti-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  border: 1.5px solid var(--color-border);
+  box-shadow: var(--shadow-soft);
+}
+
+.ti-answer__input {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: vertical;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.75;
+  font-family: inherit;
+  min-height: 120px;
+}
+.ti-answer__input::placeholder { color: var(--color-border); }
+
+.ti-answer__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-line);
+}
+
+.ti-answer__left { display: flex; gap: 8px; }
+
+.ti-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.ti-action-btn:hover { background: var(--color-surface-soft); }
+
+/* 종료 모달 */
+.ti-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ti-modal {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  width: 360px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.15);
+}
+
+.ti-modal h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 950;
+  color: var(--color-text-primary);
+}
+
+.ti-modal p {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.ti-modal__btns {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .ti-setup__body { grid-template-columns: 1fr; }
+  .ti-bar         { flex-wrap: wrap; gap: 10px; }
+  .ti-bar__job    { display: none; }
+}
