@@ -27,3 +27,5 @@ jobs:
       - name: 빌드 및 테스트 실행
         working-directory: backend
         run: ./gradlew test --no-daemon
+        env:
+          SPRING_PROFILES_ACTIVE: local
