@@ -15,6 +15,10 @@ import {
   Sparkles,
   Users,
   UserSearch,
+  ClipboardList,
+  FilePenLine,
+  UsersRound,
+  Github,
 } from 'lucide-react';
 import './DashboardPage.css';
 

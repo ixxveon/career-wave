@@ -56,6 +56,10 @@ function Header() {
         </nav>
 
         <nav className="cw-header__account" aria-label="계정 메뉴">
+          {/* ===== 고유리: 마이페이지 UI 확인용 임시 버튼 ===== */}
+          <NavLink to="/mypage">마이페이지</NavLink>
+          {/* ===== 고유리: 마이페이지 UI 확인용 임시 버튼 ===== */}
+
           <NavLink to="/auth/login">로그인</NavLink>
           <NavLink className="is-primary" to="/auth/register">
             회원가입
