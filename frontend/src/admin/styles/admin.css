@@ -206,11 +206,15 @@ button {
 }
 
 .kpiCard {
-  height: 142px;
+  min-height: 142px;
   padding: 24px 22px;
   display: flex;
   align-items: center;
   gap: 22px;
+}
+
+.kpiCard > div:last-child {
+  min-width: 0;
 }
 
 .kpiCard:nth-child(1) {
@@ -270,10 +274,11 @@ button {
 
 .kpiCard h3 {
   margin: 0;
-  font-size: 34px;
+  font-size: clamp(26px, 2vw, 34px);
   font-weight: 800;
   letter-spacing: -1px;
   color: #10243f;
+  overflow-wrap: anywhere;
 }
 
 .kpiCard b {
@@ -301,13 +306,18 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
   gap: 22px;
+  align-items: start;
 }
 
 .leftColumn {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .rightColumn {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -360,13 +370,13 @@ button {
 }
 
 .alertRow {
-  height: 52px;
+  min-height: 52px;
   border-radius: 10px;
   display: grid;
-  grid-template-columns: 28px 54px 74px 1fr auto;
+  grid-template-columns: 28px 54px 74px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 0 14px;
+  padding: 10px 14px;
   border: 1px solid #e2e8f0;
   cursor: pointer;
   transition: 0.18s ease;
@@ -442,29 +452,31 @@ button {
   font-size: 14px;
   font-weight: 600;
   color: #23384f;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* charts */
 
 .chartGrid {
-  margin-top: 18px;
   display: grid;
-  grid-template-columns: 1.55fr 0.95fr;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.95fr);
   gap: 18px;
 }
 
 .chartCard,
 .donutCard {
-  height: 280px;
+  min-height: 280px;
   padding: 22px;
   overflow: hidden;
 }
 
 .chartArea {
-  height: 170px;
+  min-height: 200px;
   display: flex;
   gap: 14px;
   margin-top: 12px;
+  align-items: stretch;
 }
 
 .yAxis {
@@ -481,11 +493,12 @@ button {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 18px;
+  gap: clamp(10px, 1.2vw, 18px);
   align-items: end;
   padding: 0 6px 24px;
   background-image: linear-gradient(to bottom, #e2ebf3 1px, transparent 1px);
   background-size: 100% 42px;
+  min-width: 0;
 }
 
 .barItem {
@@ -494,10 +507,11 @@ button {
   align-items: flex-end;
   justify-content: center;
   position: relative;
+  min-width: 0;
 }
 
 .barItem div {
-  width: 54px;
+  width: min(54px, 100%);
   max-width: 100%;
   border-radius: 8px 8px 0 0;
   background: linear-gradient(180deg, #5d8fbe, #c9dbea);
@@ -507,33 +521,36 @@ button {
   position: absolute;
   bottom: -24px;
   color: #60758c;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .donutContent {
-  height: 185px;
+  min-height: 185px;
   display: flex;
   align-items: center;
   gap: 34px;
 }
 
 .donut {
-  width: 150px;
-  height: 150px;
+  width: clamp(120px, 11vw, 150px);
+  aspect-ratio: 1;
+  height: auto;
   border-radius: 50%;
   background: conic-gradient(#27577f 0 62%, #8daeca 62% 90%, #d6e3ee 90% 100%);
   position: relative;
+  flex: 0 0 auto;
 }
 
 .donut::after {
   content: "";
-  width: 76px;
-  height: 76px;
+  width: 50.6%;
+  height: 50.6%;
   border-radius: 50%;
   background: white;
   position: absolute;
-  inset: 37px;
+  inset: 24.7%;
 }
 
 .donutContent ul {
@@ -547,6 +564,7 @@ button {
   font-size: 15px;
   color: #31475f;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .donutContent i {
@@ -597,6 +615,7 @@ button {
   font-size: 19px;
   font-weight: 700;
   color: #1c3e63;
+  overflow-wrap: anywhere;
 }
 
 .adminCard p {
@@ -605,7 +624,8 @@ button {
   line-height: 1.7;
   color: #708397;
   font-weight: 500;
-  min-height: 96px;
+  min-height: 84px;
+  overflow-wrap: anywhere;
 }
 
 .adminBottom {
@@ -622,6 +642,7 @@ button {
   font-size: 15px;
   font-weight: 700;
   color: #10243f;
+  overflow-wrap: anywhere;
 }
 
 .adminCard button {
@@ -649,7 +670,7 @@ button {
 /* AI panel */
 
 .aiPanel {
-  height: 352px;
+  min-height: 352px;
   border-radius: 16px;
   padding: 24px 20px;
   background: linear-gradient(135deg, #29486d, #5d7e9f);
@@ -663,7 +684,7 @@ button {
 }
 
 .aiItem {
-  height: 72px;
+  min-height: 72px;
   margin-bottom: 12px;
   border-radius: 11px;
   padding: 14px 17px;
@@ -672,6 +693,10 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+}
+
+.aiItem > div {
+  min-width: 0;
 }
 
 .aiItem strong {
@@ -683,6 +708,7 @@ button {
   margin: 9px 0 0;
   font-size: 14px;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .aiItem button {
@@ -703,7 +729,7 @@ button {
 }
 
 .statusRow {
-  height: 34px;
+  min-height: 34px;
   border-bottom: 1px solid #e5edf6;
   display: flex;
   align-items: center;
@@ -711,6 +737,7 @@ button {
   color: #31475f;
   font-size: 15px;
   font-weight: 600;
+  padding: 6px 0;
 }
 
 .statusRow span {
@@ -756,10 +783,10 @@ button {
   min-height: 42px;
   border-bottom: 1px solid #e5edf6;
   display: grid;
-  grid-template-columns: 58px 120px 1fr;
+  grid-template-columns: 58px 120px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  padding: 0 4px;
+  padding: 8px 4px;
   cursor: pointer;
 }
 
@@ -782,6 +809,8 @@ button {
 
 .logRow p {
   color: #50657d;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* member page */
@@ -1083,11 +1112,15 @@ button {
 
   .rightColumn {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .aiPanel {
     grid-row: span 2;
+  }
+
+  .chartGrid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1109,6 +1142,11 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .kpiCard {
+    padding: 20px 18px;
+    gap: 16px;
+  }
+
   .admin-sidebar {
     display: none;
   }
@@ -1116,6 +1154,40 @@ button {
   .admin-main {
     margin-left: 0;
     width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .alertRow {
+    grid-template-columns: 28px 54px 74px minmax(0, 1fr);
+  }
+
+  .alertRow button {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+
+  .donutContent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .aiItem {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .aiItem button {
+    width: 100%;
+  }
+
+  .logRow {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .logRow p {
+    grid-column: 2;
   }
 }
 
