@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Apple, LockKeyhole, UserRound } from 'lucide-react';
 import './AuthPage.css';
@@ -95,11 +96,11 @@ function LoginPage() {
         </div>
 
         <div className="cw-auth-links">
-          <a href="#">아이디 찾기</a>
+          <Link to="/auth/find-account">아이디 찾기</Link>
           <span aria-hidden="true">|</span>
-          <a href="#">비밀번호 찾기</a>
+          <Link to="/auth/find-account">비밀번호 찾기</Link>
           <span aria-hidden="true">|</span>
-          <a href="/auth/register">회원가입</a>
+          <Link to="/auth/register">회원가입</Link>
         </div>
       </div>
     </section>

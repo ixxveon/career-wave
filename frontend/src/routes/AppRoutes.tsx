@@ -6,8 +6,11 @@ import JobSeekerDashboardPage from '../user/pages/dashboard/JobSeekerDashboardPa
 import CompanyDashboardPage from '../user/pages/dashboard/CompanyDashboardPage';
 
 import LoginPage from '../user/pages/auth/LoginPage';
+import FindAccountPage from '../user/pages/auth/FindAccountPage';
 import RegisterPage from '../user/pages/auth/RegisterPage';
 import RegisterVerifyPage from '../user/pages/auth/RegisterVerifyPage';
+import FindIdPage from '../user/pages/auth/FindIdPage';
+import FindPasswordPage from '../user/pages/auth/FindPasswordPage';
 import ProfilePage from '../user/pages/auth/ProfilePage';
 
 import CompanyProfilePage from '../user/pages/company/CompanyProfilePage';
@@ -66,6 +69,9 @@ function AppRoutes() {
         <Route path="auth">
           <Route index element={<Navigate to="/auth/login" replace />} />
           <Route path="login" element={<LoginPage />} />
+          <Route path="find-account" element={<FindAccountPage />} />
+          <Route path="find-id/:memberType" element={<FindIdPage />} />
+          <Route path="find-password/:memberType" element={<FindPasswordPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register/verify" element={<RegisterVerifyPage />} />
           <Route path="profile" element={<ProfilePage />} />
