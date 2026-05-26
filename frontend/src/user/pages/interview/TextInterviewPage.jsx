@@ -21,15 +21,27 @@ function TextInterviewPage() {
   const [sec, setSec]       = useState(0);
   const [typing, setTyping] = useState(false);
 
-  const bottomRef  = useRef(null);
-  const timerRef   = useRef(null);
+  const bottomRef   = useRef(null);
+  const timerRef    = useRef(null);
+  const replyRef    = useRef(null);
   const textareaRef = useRef(null);
+
+  const TOTAL_Q = 10;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
+  // P2: 컴포넌트 언마운트 시 타이머/타임아웃 정리
+  useEffect(() => {
+    return () => {
+      clearInterval(timerRef.current);
+      clearTimeout(replyRef.current);
+    };
+  }, []);
+
   function startInterview() {
+    clearTimeout(replyRef.current); // P1: 이전 세션의 pending 응답 취소
     setPhase('interview');
     setMessages(INIT_MESSAGES);
     setQNum(1);
@@ -39,6 +51,8 @@ function TextInterviewPage() {
 
   function endInterview() {
     clearInterval(timerRef.current);
+    clearTimeout(replyRef.current); // P1: pending AI 응답 취소
+    setTyping(false);
     setPhase('setup');
   }
 
@@ -49,12 +63,12 @@ function TextInterviewPage() {
     setInput('');
     setTyping(true);
 
-    setTimeout(() => {
+    replyRef.current = setTimeout(() => { // P1: ref에 저장해 취소 가능하게
       setMessages(prev => [...prev, {
         role: 'ai',
         text: '답변 감사합니다. 말씀하신 내용을 바탕으로 추가로 여쭤볼게요.\n해당 상황에서 기술적인 선택의 근거는 무엇이었나요?',
       }]);
-      setQNum(q => q + 1);
+      setQNum(q => Math.min(q + 1, TOTAL_Q)); // P2: TOTAL_Q 초과 방지
       setTyping(false);
     }, 1400);
   }
@@ -68,7 +82,6 @@ function TextInterviewPage() {
 
   const mm = String(Math.floor(sec / 60)).padStart(2, '0');
   const ss = String(sec % 60).padStart(2, '0');
-  const TOTAL_Q = 10;
 
   /* ── Setup ─────────────────────────────── */
   if (phase === 'setup') {
