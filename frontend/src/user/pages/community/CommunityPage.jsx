@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, ThumbsUp, MessageCircle, Bookmark, ChevronRight, Flame, Star, Clock } from 'lucide-react';
 import './styles/CommunityPage.css';
 
@@ -68,6 +69,7 @@ function PostCard({ post }) {
 }
 
 export default function CommunityPage() {
+  const navigate = useNavigate();
   const [search,   setSearch]   = useState('');
   const [category, setCategory] = useState('전체');
 
@@ -111,7 +113,7 @@ export default function CommunityPage() {
             <Search size={14} />
             <input placeholder="게시글 검색" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <button className="cm-write-btn">글 작성하기 <ChevronRight size={14} /></button>
+          <button className="cm-write-btn" onClick={() => navigate('/community/posts/create')}>글 작성하기 <ChevronRight size={14} /></button>
         </div>
       </div>
 

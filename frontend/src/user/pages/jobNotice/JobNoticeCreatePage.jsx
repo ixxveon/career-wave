@@ -30,11 +30,10 @@ export default function JobNoticeCreatePage() {
 
   return (
     <div className="jc">
-      <button className="jc-back" onClick={() => navigate('/jobs')}>
-        <ChevronLeft size={16} /> 공고 목록
-      </button>
-
       <div className="jc-wrap">
+        <button className="jc-back" onClick={() => navigate('/jobs')}>
+          <ChevronLeft size={16} /> 공고 목록
+        </button>
         <div className="jc-header">
           <span className="jc-eyebrow">JOB NOTICE</span>
           <h1 className="jc-header__title">채용 공고 등록</h1>
@@ -130,7 +129,7 @@ export default function JobNoticeCreatePage() {
 
           <div className="jc-actions">
             <button type="button" className="jc-btn jc-btn--outline" onClick={() => navigate('/jobs')}>취소</button>
-            <button type="button" className="jc-btn jc-btn--primary" disabled={!canSubmit}>
+            <button type="button" className="jc-btn jc-btn--primary" disabled={!canSubmit} onClick={() => navigate('/jobs')}>
               <Send size={14} /> 공고 등록하기
             </button>
           </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building2, MapPin, Users, Globe, Edit3, Eye, CheckCircle2, Plus, X } from 'lucide-react';
+import { Building2, MapPin, Users, Globe, Edit3, Eye, CheckCircle2, Plus, X, Briefcase } from 'lucide-react';
 import './styles/CompanyProfilePage.css';
 
 const WELFARE_PRESETS = ['자율 출퇴근', '재택근무', '성과급', '스톡옵션', '건강검진', '점심 제공', '교육비 지원', '사내 카페'];
@@ -13,10 +13,67 @@ const MOCK = {
   openings: 3,
 };
 
+function PreviewModal({ form, onClose }) {
+  return (
+    <div className="cp-modal-backdrop" onClick={onClose}>
+      <div className="cp-modal" onClick={e => e.stopPropagation()}>
+        <div className="cp-modal__header">
+          <span className="cp-modal__label">구직자 화면 미리보기</span>
+          <button className="cp-modal__close" onClick={onClose}><X size={18} /></button>
+        </div>
+
+        <div className="cp-modal__body">
+          {/* 기업 헤더 */}
+          <div className="cp-preview__hero">
+            <div className="cp-preview__logo">{form.name[0]}</div>
+            <div>
+              <p className="cp-preview__name">{form.name}</p>
+              <div className="cp-preview__meta">
+                <span><Briefcase size={12} /> {form.industry}</span>
+                <span><Users size={12} /> {form.size}</span>
+                <span><MapPin size={12} /> {form.location}</span>
+                <span><Globe size={12} /><a href={form.website} target="_blank" rel="noreferrer">{form.website}</a></span>
+              </div>
+            </div>
+          </div>
+
+          {/* 기업 소개 */}
+          <div className="cp-preview__section">
+            <p className="cp-preview__section-title">기업 소개</p>
+            <p className="cp-preview__desc">{form.description}</p>
+          </div>
+
+          {/* 기술 스택 */}
+          <div className="cp-preview__section">
+            <p className="cp-preview__section-title">기술 스택</p>
+            <div className="cp-preview__stacks">
+              {form.stacks.map(s => <span key={s} className="cp-preview__stack">{s}</span>)}
+            </div>
+          </div>
+
+          {/* 복지 */}
+          <div className="cp-preview__section">
+            <p className="cp-preview__section-title">복지 및 혜택</p>
+            <div className="cp-preview__welfares">
+              {form.welfare.map(w => <span key={w} className="cp-preview__welfare">{w}</span>)}
+            </div>
+          </div>
+
+          {/* 채용 공고 수 */}
+          <div className="cp-preview__openings">
+            <Briefcase size={14} /> 진행 중인 채용공고 <strong>{form.openings}건</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CompanyProfilePage() {
   const [mode,       setMode]       = useState('view');
   const [form,       setForm]       = useState(MOCK);
   const [stackInput, setStackInput] = useState('');
+  const [preview,    setPreview]    = useState(false);
 
   function handleSave() {
     setMode('view');
@@ -46,6 +103,7 @@ export default function CompanyProfilePage() {
 
   return (
     <div className="cp-page">
+      {preview && <PreviewModal form={form} onClose={() => setPreview(false)} />}
       <div className="cp-header">
         <span className="cp-eyebrow">COMPANY</span>
         <h1 className="cp-header__title">기업 프로필</h1>
@@ -69,7 +127,7 @@ export default function CompanyProfilePage() {
                 <button className="cp-btn cp-btn--primary" onClick={handleSave}><CheckCircle2 size={14} /> 저장</button>
               </>
           }
-          <button className="cp-btn cp-btn--outline"><Eye size={14} /> 미리보기</button>
+          <button className="cp-btn cp-btn--outline" onClick={() => setPreview(true)}><Eye size={14} /> 미리보기</button>
         </div>
       </div>
 

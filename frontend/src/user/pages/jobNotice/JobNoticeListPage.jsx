@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bookmark, BookmarkCheck, MapPin, Clock, Zap, SlidersHorizontal } from 'lucide-react';
+import { Search, Bookmark, BookmarkCheck, MapPin, Clock, Zap, SlidersHorizontal, Plus } from 'lucide-react';
 import './styles/JobNoticeListPage.css';
 
 const JOB_FILTERS   = ['전체', '백엔드', '프론트엔드', '풀스택', '데이터', 'DevOps', 'iOS/Android'];
