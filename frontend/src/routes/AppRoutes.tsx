@@ -26,8 +26,7 @@ import ResumeAnalysisPage from '../user/pages/documentAnalysis/ResumeAnalysisPag
 import CoverLetterAnalysisPage from '../user/pages/documentAnalysis/CoverLetterAnalysisPage';
 
 import InterviewHomePage from '../user/pages/interview/InterviewHomePage';
-import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
-import MediaInterviewPage from '../user/pages/interview/MediaInterviewPage';
+import InterviewRoomPage from '../user/pages/interview/InterviewRoomPage';
 import InterviewReportPage from '../user/pages/interview/InterviewReportPage';
 
 import CommunityPage from '../user/pages/community/CommunityPage';
@@ -99,8 +98,8 @@ function AppRoutes() {
 
         <Route path="interview">
           <Route index element={<InterviewHomePage />} />
-          <Route path="text" element={<TextInterviewPage />} />
-          <Route path="media" element={<MediaInterviewPage />} />
+          <Route path="text"   element={<InterviewRoomPage mode="text" />} />
+          <Route path="media"  element={<InterviewRoomPage mode="video" />} />
           <Route path="report" element={<InterviewReportPage />} />
         </Route>
 
