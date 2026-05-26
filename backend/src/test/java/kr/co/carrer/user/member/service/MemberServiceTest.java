@@ -2,11 +2,7 @@ package kr.co.carrer.user.member.service;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
-@Transactional
 class MemberServiceTest {
 
     // TODO: specs/user-platform/001-member/spec.md 기반 비즈니스 사양 테스트 작성
