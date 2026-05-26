@@ -16,7 +16,6 @@ import HrManagerPage from '../user/pages/company/HrManagerPage';
 import JobNoticeListPage from '../user/pages/jobNotice/JobNoticeListPage';
 import JobNoticeDetailPage from '../user/pages/jobNotice/JobNoticeDetailPage';
 import JobNoticeCreatePage from '../user/pages/jobNotice/JobNoticeCreatePage';
-import JobScrapingPage from '../user/pages/jobNotice/JobScrapingPage';
 
 import ApplicationStatusPage from '../user/pages/application/ApplicationStatusPage';
 import ApplicantManagementPage from '../user/pages/application/ApplicantManagementPage';
@@ -37,6 +36,7 @@ import ComprehensiveReportPage from '../user/pages/careerDiagnosis/Comprehensive
 
 import CommunityPage from '../user/pages/community/CommunityPage';
 import PostDetailPage from '../user/pages/community/PostDetailPage';
+import PostCreatePage from '../user/pages/community/PostCreatePage';
 import MentorPage from '../user/pages/community/MentorPage';
 
 import PricingPage from '../user/pages/billing/PricingPage';
@@ -46,9 +46,19 @@ import CompanyProductPage from '../user/pages/billing/CompanyProductPage';
 import NotFoundPage from '../user/pages/common/NotFoundPage';
 
 // ── 어드민 플랫폼 ──────────────────────────────────────────────
-import AdminCompanyListPage from '../admin/pages/Company/CompanyListPage';
-import AdminJobNoticeListPage from '../admin/pages/JobNotice/JobNoticeListPage';
-import AdminSettlementListPage from '../admin/pages/Settlement/SettlementListPage';
+import AdminLayout from '../admin/layouts/AdminLayout';
+import AdminLoginPage from '../admin/pages/AdminLogin/AdminLoginPage';
+import AdminDashboardPage from '../admin/pages/Dashboard/AdminDashboardPage';
+import AdminManagementPage from '../admin/pages/AdminManagement/AdminManagementPage';
+import UserManagementPage from '../admin/pages/UserManagement/UserManagementPage';
+import ReportPage from '../admin/pages/Report/ReportPage';
+import CustomerServicePage from '../admin/pages/CustomerService/CustomerServicePage';
+import AdminPaymentPage from '../admin/pages/Payment/PaymentPage';
+import MatchingPage from '../admin/pages/Matching/MatchingPage';
+import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
+import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
+import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
+import OperationSettingsPage from '../admin/pages/Settings/OperationSettingsPage';
 
 function AppRoutes() {
   return (
@@ -75,7 +85,6 @@ function AppRoutes() {
         <Route path="jobs">
           <Route index element={<JobNoticeListPage />} />
           <Route path="create" element={<JobNoticeCreatePage />} />
-          <Route path="scraping" element={<JobScrapingPage />} />
           <Route path=":jobId" element={<JobNoticeDetailPage />} />
         </Route>
 
@@ -109,6 +118,7 @@ function AppRoutes() {
 
         <Route path="community">
           <Route index element={<CommunityPage />} />
+          <Route path="posts/create" element={<PostCreatePage />} />
           <Route path="posts/:postId" element={<PostDetailPage />} />
           <Route path="mentor" element={<MentorPage />} />
         </Route>
@@ -125,10 +135,22 @@ function AppRoutes() {
 
       {/* 어드민 플랫폼 */}
       <Route path="admin">
-        <Route index element={<Navigate to="/admin/companies" replace />} />
-        <Route path="companies" element={<AdminCompanyListPage />} />
-        <Route path="job-notices" element={<AdminJobNoticeListPage />} />
-        <Route path="settlements" element={<AdminSettlementListPage />} />
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="login" element={<AdminLoginPage />} />
+
+        <Route element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="admins"    element={<AdminManagementPage />} />
+          <Route path="members"   element={<UserManagementPage />} />
+          <Route path="reports"   element={<ReportPage />} />
+          <Route path="cs"        element={<CustomerServicePage />} />
+          <Route path="payments"  element={<AdminPaymentPage />} />
+          <Route path="matching"  element={<MatchingPage />} />
+          <Route path="ai"        element={<AiMetricsPage />} />
+          <Route path="scraping"  element={<ScrapingPage />} />
+          <Route path="log"       element={<AuditLogPage />} />
+          <Route path="settings"  element={<OperationSettingsPage />} />
+        </Route>
       </Route>
     </Routes>
   );
