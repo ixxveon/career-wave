@@ -16,7 +16,6 @@ import HrManagerPage from '../user/pages/company/HrManagerPage';
 import JobNoticeListPage from '../user/pages/jobNotice/JobNoticeListPage';
 import JobNoticeDetailPage from '../user/pages/jobNotice/JobNoticeDetailPage';
 import JobNoticeCreatePage from '../user/pages/jobNotice/JobNoticeCreatePage';
-import JobScrapingPage from '../user/pages/jobNotice/JobScrapingPage';
 
 import ApplicationStatusPage from '../user/pages/application/ApplicationStatusPage';
 import ApplicantManagementPage from '../user/pages/application/ApplicantManagementPage';
@@ -26,11 +25,13 @@ import ResumeAnalysisPage from '../user/pages/documentAnalysis/ResumeAnalysisPag
 import CoverLetterAnalysisPage from '../user/pages/documentAnalysis/CoverLetterAnalysisPage';
 
 import InterviewHomePage from '../user/pages/interview/InterviewHomePage';
-import InterviewRoomPage from '../user/pages/interview/InterviewRoomPage';
+import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
+import MediaInterviewPage from '../user/pages/interview/MediaInterviewPage';
 import InterviewReportPage from '../user/pages/interview/InterviewReportPage';
 
 import CommunityPage from '../user/pages/community/CommunityPage';
 import PostDetailPage from '../user/pages/community/PostDetailPage';
+import PostCreatePage from '../user/pages/community/PostCreatePage';
 import MentorPage from '../user/pages/community/MentorPage';
 
 import PricingPage from '../user/pages/billing/PricingPage';
@@ -79,7 +80,6 @@ function AppRoutes() {
         <Route path="jobs">
           <Route index element={<JobNoticeListPage />} />
           <Route path="create" element={<JobNoticeCreatePage />} />
-          <Route path="scraping" element={<JobScrapingPage />} />
           <Route path=":jobId" element={<JobNoticeDetailPage />} />
         </Route>
 
@@ -98,13 +98,14 @@ function AppRoutes() {
 
         <Route path="interview">
           <Route index element={<InterviewHomePage />} />
-          <Route path="text"   element={<InterviewRoomPage mode="text" />} />
-          <Route path="media"  element={<InterviewRoomPage mode="video" />} />
+          <Route path="text"  element={<TextInterviewPage />} />
+          <Route path="media" element={<MediaInterviewPage />} />
           <Route path="report" element={<InterviewReportPage />} />
         </Route>
 
         <Route path="community">
           <Route index element={<CommunityPage />} />
+          <Route path="posts/create" element={<PostCreatePage />} />
           <Route path="posts/:postId" element={<PostDetailPage />} />
           <Route path="mentor" element={<MentorPage />} />
         </Route>
