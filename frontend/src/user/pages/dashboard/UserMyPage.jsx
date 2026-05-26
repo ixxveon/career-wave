@@ -10,16 +10,14 @@ import "./DashboardPage.css";
 function UserMyPage() {
     return (
         <div className="cw-mypage-layout">
-
             <aside className="cw-mypage-sidebar">
                 <strong>마이페이지</strong>
-
                 <nav>
                     <a href="#dashboard" className="is-active">MY홈</a>
-                    <a href="#progress">취업 준비</a>
-                    <a href="#interview">AI 면접</a>
                     <a href="#github">GitHub 성장</a>
-                    <a href="#activity">최근 활동</a>
+                    <a href="#activity">활동 기록</a>
+                    <a href="#company">관심 기업</a>
+                    <a href="#settings">계정 설정</a>
                 </nav>
             </aside>
 
@@ -40,55 +38,63 @@ function UserMyPage() {
                 </div>
 
                 <section className="cw-dashboard-summary">
-                    <div
-                        className="cw-dashboard-card cw-progress-card"
-                        id="progress"
-                    >
+                    <div className="cw-dashboard-card" id="progress">
                         <h3>취업 준비 진행도</h3>
 
                         <div className="cw-progress-row">
-                            <span className="cw-progress-icon is-blue">
-                                <ClipboardList size={22} />
-                            </span>
+                            <div className="cw-progress-icon is-blue">📋</div>
+
                             <div>
                                 <div className="cw-progress-item">
                                     <span>이력서 완성도</span>
                                     <strong>80%</strong>
                                 </div>
+
                                 <div className="cw-progress-bar">
                                     <div style={{ width: "80%" }} />
                                 </div>
+
+                                <Link className="cw-progress-link" to="/resume">
+                                    자세히 보기 →
+                                </Link>
                             </div>
                         </div>
 
-
                         <div className="cw-progress-row">
-                            <span className="cw-progress-icon is-green">
-                                <FilePenLine size={22} />
-                            </span>
+                            <div className="cw-progress-icon is-green">📝</div>
+
                             <div>
                                 <div className="cw-progress-item">
                                     <span>자소서 작성률</span>
                                     <strong>65%</strong>
                                 </div>
+
                                 <div className="cw-progress-bar is-green">
                                     <div style={{ width: "65%" }} />
                                 </div>
+
+                                <Link className="cw-progress-link" to="/documentAnalysis">
+                                    자세히 보기 →
+                                </Link>
                             </div>
                         </div>
 
                         <div className="cw-progress-row">
-                            <span className="cw-progress-icon is-purple">
-                                <UsersRound size={22} />
-                            </span>
+                            <div className="cw-progress-icon is-purple">👥</div>
+
                             <div>
                                 <div className="cw-progress-item">
                                     <span>면접 연습</span>
                                     <strong>12회</strong>
                                 </div>
+
                                 <div className="cw-progress-bar is-purple">
                                     <div style={{ width: "55%" }} />
                                 </div>
+
+                                <Link className="cw-progress-link" to="/interview">
+                                    자세히 보기 →
+                                </Link>
                             </div>
                         </div>
 
@@ -97,25 +103,25 @@ function UserMyPage() {
                                 <span>프로필 완성도</span>
                                 <strong>85%</strong>
                             </div>
+
                             <div>
                                 <span>포트폴리오</span>
                                 <strong>3개</strong>
                             </div>
+
                             <div>
                                 <span>저장 공고</span>
                                 <strong>12개</strong>
                             </div>
                         </div>
 
+
                         <Link className="cw-dashboard-more" to="/dashboard">
                             자세히 보기 →
                         </Link>
                     </div>
 
-                    <div
-                        className="cw-dashboard-card cw-interview-card"
-                        id="interview"
-                    >
+                    <div className="cw-dashboard-card cw-interview-card" id="interview">
                         <h3>AI 면접 연습 현황</h3>
 
                         <div className="cw-interview-stats">
@@ -149,10 +155,7 @@ function UserMyPage() {
                         </div>
                     </div>
 
-                    <div
-                        className="cw-dashboard-card cw-github-card"
-                        id="github"
-                    >
+                    <div className="cw-dashboard-card cw-github-card" id="github">
                         <h3>GitHub 성장 그래프</h3>
 
                         <div className="cw-github-stats">
@@ -216,11 +219,9 @@ function UserMyPage() {
                         </Link>
                     </div>
                 </section>
-                <section
-                    className="cw-mypage-extra-grid"
-                    id="activity"
-                >
-                    <div className="cw-mypage-extra-card">
+
+                <section className="cw-mypage-extra-grid">
+                    <div className="cw-mypage-extra-card" id="recommend">
                         <h3>오늘의 추천 액션</h3>
 
                         <ul className="cw-action-list">
@@ -239,7 +240,7 @@ function UserMyPage() {
                         </ul>
                     </div>
 
-                    <div className="cw-mypage-extra-card">
+                    <div className="cw-mypage-extra-card" id="activity">
                         <h3>최근 활동</h3>
 
                         <ul className="cw-activity-list">
@@ -258,7 +259,7 @@ function UserMyPage() {
                         </ul>
                     </div>
 
-                    <div className="cw-mypage-extra-card">
+                    <div className="cw-mypage-extra-card" id="company">
                         <h3>관심 기업</h3>
 
                         <div className="cw-company-list">
@@ -268,10 +269,11 @@ function UserMyPage() {
                             <span>당근</span>
                         </div>
 
-                        <p className="cw-company-note">관심 기업 중 3곳이 현재 채용 중이에요.</p>
+                        <p className="cw-company-note">
+                            관심 기업 중 3곳이 현재 채용 중이에요.
+                        </p>
                     </div>
                 </section>
-
             </section>
         </div>
     );
