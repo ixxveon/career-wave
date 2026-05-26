@@ -60,7 +60,7 @@ const ragDocs: RagDoc[] = [
   { id: 'DOC-001', name: 'cluster-provisioning-v3.pdf', chunks: 1420, progress: 79, status: '동기화됨' },
   { id: 'DOC-002', name: 'api-endpoint-security.docx', chunks: 542, progress: 43, status: '인덱싱 중' },
   { id: 'DOC-003', name: 'onboarding-schema-v1.json', chunks: 2100, progress: 8, status: '실패' },
-  { id: 'DOC-004', name: 'vector-search-playbook-v2.txt', chunks: 864, progress: 100, status: '?숆린?붾맖' },
+  { id: 'DOC-004', name: 'vector-search-playbook-v2.txt', chunks: 864, progress: 100, status: '동기화됨' },
 ];
 
 export const logEvents: LogEvent[] = [
