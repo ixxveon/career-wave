@@ -23,6 +23,9 @@ function UserMyPage() {
             </aside>
 
             <section className="cw-dashboard-section" id="dashboard">
+                
+
+
                 <div className="cw-dashboard-title-row">
                     <div className="cw-dashboard-section__title">
                         <h2>오늘의 커리어 현황</h2>
