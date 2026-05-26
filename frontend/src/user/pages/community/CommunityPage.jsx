@@ -40,10 +40,10 @@ const MOCK_POSTS = [
 
 const POPULAR = MOCK_POSTS.slice(0, 3).sort((a, b) => b.likes - a.likes);
 
-function PostCard({ post }) {
+function PostCard({ post, onClick }) {
   const [bookmarked, setBookmarked] = useState(post.bookmarked);
   return (
-    <div className="cm-post">
+    <div className="cm-post" onClick={onClick} style={{ cursor: 'pointer' }}>
       <div className="cm-post__top">
         <span className="cm-post__cat">{post.category}</span>
         {post.hot && <span className="cm-post__hot"><Flame size={11} /> HOT</span>}
@@ -119,7 +119,7 @@ export default function CommunityPage() {
 
       {/* 게시글 목록 */}
       <div className="cm-list">
-        {filtered.map(p => <PostCard key={p.id} post={p} />)}
+        {filtered.map(p => <PostCard key={p.id} post={p} onClick={() => navigate(`/community/posts/${p.id}`)} />)}
         {filtered.length === 0 && (
           <div className="cm-empty">검색 결과가 없습니다.</div>
         )}

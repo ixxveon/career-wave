@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ThumbsUp, Bookmark, MessageCircle, Flag, Send } from 'lucide-react';
 import './styles/PostDetailPage.css';
 
@@ -36,6 +37,7 @@ const MOCK_COMMENTS = [
 ];
 
 export default function PostDetailPage() {
+  const navigate = useNavigate();
   const [liked,      setLiked]      = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [likeCount,  setLikeCount]  = useState(MOCK_POST.likes);
@@ -58,7 +60,7 @@ export default function PostDetailPage() {
 
   return (
     <div className="pd-page">
-      <button className="pd-back"><ChevronLeft size={14} /> 커뮤니티로</button>
+      <button className="pd-back" onClick={() => navigate('/community')}><ChevronLeft size={14} /> 커뮤니티로</button>
 
       <article className="pd-article">
         {/* 헤더 */}
