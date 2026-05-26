@@ -1,9 +1,12 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
+import FavoriteCompanyPage from '@/user/pages/dashboard/FavoriteCompanyPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
 import JobSeekerDashboardPage from '../user/pages/dashboard/JobSeekerDashboardPage';
 import CompanyDashboardPage from '../user/pages/dashboard/CompanyDashboardPage';
+import UserMyPage from '../user/pages/dashboard/UserMyPage';
+
 
 import LoginPage from '../user/pages/auth/LoginPage';
 import FindAccountPage from '../user/pages/auth/FindAccountPage';
@@ -19,7 +22,6 @@ import HrManagerPage from '../user/pages/company/HrManagerPage';
 import JobNoticeListPage from '../user/pages/jobNotice/JobNoticeListPage';
 import JobNoticeDetailPage from '../user/pages/jobNotice/JobNoticeDetailPage';
 import JobNoticeCreatePage from '../user/pages/jobNotice/JobNoticeCreatePage';
-import JobScrapingPage from '../user/pages/jobNotice/JobScrapingPage';
 
 import ApplicationStatusPage from '../user/pages/application/ApplicationStatusPage';
 import ApplicantManagementPage from '../user/pages/application/ApplicantManagementPage';
@@ -33,8 +35,14 @@ import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
 import MediaInterviewPage from '../user/pages/interview/MediaInterviewPage';
 import InterviewReportPage from '../user/pages/interview/InterviewReportPage';
 
+import DiagnosisHistoryPage from '../user/pages/careerDiagnosis/DiagnosisHistoryPage';
+import DiagnosisDetailPage from '../user/pages/careerDiagnosis/DiagnosisDetailPage';
+import LearningRoadmapPage from '../user/pages/careerDiagnosis/LearningRoadmapPage';
+import ComprehensiveReportPage from '../user/pages/careerDiagnosis/ComprehensiveReportPage';
+
 import CommunityPage from '../user/pages/community/CommunityPage';
 import PostDetailPage from '../user/pages/community/PostDetailPage';
+import PostCreatePage from '../user/pages/community/PostCreatePage';
 import MentorPage from '../user/pages/community/MentorPage';
 
 import PricingPage from '../user/pages/billing/PricingPage';
@@ -65,6 +73,8 @@ function AppRoutes() {
       <Route element={<MainLayout />}>
         <Route index element={<JobSeekerDashboardPage />} />
         <Route path="dashboard/company" element={<CompanyDashboardPage />} />
+        <Route path="mypage" element={<UserMyPage />} />
+        <Route path="mypage/favorites" element={<FavoriteCompanyPage />} />
 
         <Route path="auth">
           <Route index element={<Navigate to="/auth/login" replace />} />
@@ -86,7 +96,6 @@ function AppRoutes() {
         <Route path="jobs">
           <Route index element={<JobNoticeListPage />} />
           <Route path="create" element={<JobNoticeCreatePage />} />
-          <Route path="scraping" element={<JobScrapingPage />} />
           <Route path=":jobId" element={<JobNoticeDetailPage />} />
         </Route>
 
@@ -105,13 +114,22 @@ function AppRoutes() {
 
         <Route path="interview">
           <Route index element={<InterviewHomePage />} />
+          <Route path="report" element={<InterviewReportPage />} />
           <Route path="text" element={<TextInterviewPage />} />
           <Route path="media" element={<MediaInterviewPage />} />
-          <Route path="report" element={<InterviewReportPage />} />
+        </Route>
+
+        <Route path="career-diagnosis">
+          <Route index element={<Navigate to="/career-diagnosis/report" replace />} />
+          <Route path="history" element={<DiagnosisHistoryPage />} />
+          <Route path="detail/:id" element={<DiagnosisDetailPage />} />
+          <Route path="roadmap" element={<LearningRoadmapPage />} />
+          <Route path="report" element={<ComprehensiveReportPage />} />
         </Route>
 
         <Route path="community">
           <Route index element={<CommunityPage />} />
+          <Route path="posts/create" element={<PostCreatePage />} />
           <Route path="posts/:postId" element={<PostDetailPage />} />
           <Route path="mentor" element={<MentorPage />} />
         </Route>
