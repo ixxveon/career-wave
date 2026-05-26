@@ -29,6 +29,11 @@ import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
 import MediaInterviewPage from '../user/pages/interview/MediaInterviewPage';
 import InterviewReportPage from '../user/pages/interview/InterviewReportPage';
 
+import DiagnosisHistoryPage from '../user/pages/careerDiagnosis/DiagnosisHistoryPage';
+import DiagnosisDetailPage from '../user/pages/careerDiagnosis/DiagnosisDetailPage';
+import LearningRoadmapPage from '../user/pages/careerDiagnosis/LearningRoadmapPage';
+import ComprehensiveReportPage from '../user/pages/careerDiagnosis/ComprehensiveReportPage';
+
 import CommunityPage from '../user/pages/community/CommunityPage';
 import PostDetailPage from '../user/pages/community/PostDetailPage';
 import PostCreatePage from '../user/pages/community/PostCreatePage';
@@ -98,9 +103,17 @@ function AppRoutes() {
 
         <Route path="interview">
           <Route index element={<InterviewHomePage />} />
-          <Route path="text"  element={<TextInterviewPage />} />
-          <Route path="media" element={<MediaInterviewPage />} />
           <Route path="report" element={<InterviewReportPage />} />
+          <Route path="text" element={<TextInterviewPage />} />
+          <Route path="media" element={<MediaInterviewPage />} />
+        </Route>
+
+        <Route path="career-diagnosis">
+          <Route index element={<Navigate to="/career-diagnosis/report" replace />} />
+          <Route path="history" element={<DiagnosisHistoryPage />} />
+          <Route path="detail/:id" element={<DiagnosisDetailPage />} />
+          <Route path="roadmap" element={<LearningRoadmapPage />} />
+          <Route path="report" element={<ComprehensiveReportPage />} />
         </Route>
 
         <Route path="community">
