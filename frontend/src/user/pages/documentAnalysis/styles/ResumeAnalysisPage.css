@@ -1,0 +1,363 @@
+/* ═══════════════════════════════════════════════
+   ResumeAnalysisPage
+   ═══════════════════════════════════════════════ */
+
+.ra {
+  display: grid;
+  gap: 20px;
+  padding: 36px 0 60px;
+}
+
+.ra-eyebrow {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: #dbeafe;
+  color: var(--color-primary-dark);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+/* ─── 업로드 화면 ─────────────────────────────── */
+.ra-upload-wrap {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 48px 52px;
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 40px rgba(30,58,110,0.08);
+}
+
+.ra-upload__title {
+  margin: 0 0 10px;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.ra-upload__desc {
+  margin: 0 0 28px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+}
+
+/* 드래그 앤 드롭 */
+.ra-dropzone {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 24px;
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--color-border);
+  background: var(--color-surface-soft, #f8fafd);
+  cursor: pointer;
+  transition: border-color 0.14s, background 0.14s;
+  margin-bottom: 24px;
+}
+
+.ra-dropzone:hover,
+.ra-dropzone--over {
+  border-color: var(--color-primary);
+  background: #eef4ff;
+}
+
+.ra-dropzone--filled {
+  border-style: solid;
+  border-color: var(--color-primary);
+  background: #eef4ff;
+  cursor: default;
+}
+
+.ra-dropzone__icon { color: var(--color-text-secondary); }
+
+.ra-dropzone__label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.ra-dropzone__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.ra-dropzone__file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-primary-dark);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ra-dropzone__remove {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(220,38,38,0.1);
+  color: #dc2626;
+  cursor: pointer;
+}
+
+/* 직무 입력 */
+.ra-field {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 24px;
+}
+
+.ra-field__label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.ra-field__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 0.14s;
+}
+
+.ra-field__input:focus { border-color: var(--color-primary); }
+.ra-field__input::placeholder { color: var(--color-text-secondary); }
+
+/* ─── 버튼 ────────────────────────────────────── */
+.ra-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+  border: none;
+}
+
+.ra-btn--primary {
+  width: 100%;
+  justify-content: center;
+  background: linear-gradient(130deg, #1e3a6e, #2a4f96);
+  color: #fff;
+}
+.ra-btn--primary:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+.ra-btn--primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ra-btn--outline {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+.ra-btn--outline:hover { background: var(--color-sky); color: var(--color-primary-dark); }
+
+/* ─── 결과 화면 ──────────────────────────────── */
+.ra-result-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 36px 44px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, #0b1e3d 0%, #112859 55%, #0d2049 100%);
+}
+
+.ra-result-banner__title {
+  margin: 10px 0 4px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #f0f6ff;
+}
+
+.ra-result-banner__job {
+  margin: 0;
+  font-size: 13px;
+  color: #7ba8d9;
+}
+.ra-result-banner__job strong { color: #93c5fd; }
+
+/* 점수 + 키워드 행 */
+.ra-score-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+}
+
+/* 공통 카드 */
+.ra-card {
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: 0 4px 20px rgba(52,65,85,0.06);
+}
+
+.ra-card__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.ra-card__title--mt { margin-top: 20px; }
+
+/* 게이지 */
+.ra-score-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ra-gauge { position: relative; width: 130px; }
+.ra-gauge__svg { width: 100%; }
+
+.ra-gauge__label {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.ra-gauge__value { font-size: 30px; font-weight: 900; line-height: 1; }
+.ra-gauge__sub   { font-size: 12px; color: var(--color-text-secondary); font-weight: 600; }
+
+.ra-score-card__desc {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+/* 키워드 */
+.ra-kw-list { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.ra-kw {
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ra-kw--hit  { background: #dcfce7; color: #16a34a; }
+.ra-kw--miss { background: #fee2e2; color: #dc2626; }
+
+/* ─── 피드백 아코디언 ─────────────────────────── */
+.ra-fb-list { display: flex; flex-direction: column; gap: 8px; }
+
+.ra-fb-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.14s;
+}
+.ra-fb-item--open { border-color: var(--color-primary); }
+
+.ra-fb-item__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.ra-fb-item__head:hover { background: var(--color-surface-soft, #f8fafd); }
+.ra-fb-item--open .ra-fb-item__head { background: var(--color-sky, #eef4ff); }
+
+.ra-fb-item__tag {
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.ra-fb-item__original {
+  flex: 1;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ra-fb-item__body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ra-fb-item__improved,
+.ra-fb-item__reason {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ra-fb-item__section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.ra-fb-item__improved { padding: 14px; border-radius: var(--radius-sm); background: #f0f6ff; border: 1px solid #dbeafe; }
+.ra-fb-item__improved .ra-fb-item__section-label { color: var(--color-primary-dark); }
+.ra-fb-item__improved p { margin: 0; font-size: 13px; color: var(--color-text-primary); line-height: 1.75; }
+.ra-fb-item__reason p  { margin: 0; font-size: 12px; color: var(--color-text-secondary); line-height: 1.65; }
+
+/* ─── Responsive ─────────────────────────────── */
+@media (max-width: 900px) {
+  .ra-score-row { grid-template-columns: 1fr; }
+  .ra-score-card { align-items: flex-start; flex-direction: row; gap: 20px; }
+}
+
+@media (max-width: 640px) {
+  .ra { padding: 20px 0 40px; }
+  .ra-upload-wrap { padding: 28px 20px; }
+  .ra-upload__title { font-size: 22px; }
+  .ra-result-banner { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+  .ra-card { padding: 20px 16px; }
+  .ra-score-card { flex-direction: column; align-items: center; }
+}
