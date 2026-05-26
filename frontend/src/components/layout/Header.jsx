@@ -1,4 +1,4 @@
-﻿import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { serviceMenus } from '../../utils/serviceMenus';
 import logo from '../../assets/logo.svg';
@@ -7,10 +7,13 @@ import './Header.css';
 function Header() {
   const { pathname } = useLocation();
 
-  const isMenuActive = (item) =>
-    pathname === item.href ||
-    pathname.startsWith(`${item.href}/`) ||
-    item.children?.some((child) => pathname === child.href || pathname.startsWith(`${child.href}/`));
+  const activeMenuLabel = serviceMenus
+    .flatMap((item) => [
+      { label: item.label, href: item.href },
+      ...(item.children || []).map((child) => ({ label: item.label, href: child.href })),
+    ])
+    .filter(({ href }) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.label;
 
   return (
     <header className="cw-header">
@@ -29,7 +32,7 @@ function Header() {
 
         <nav className="cw-header__nav" aria-label="주요 메뉴">
           {serviceMenus.map((item) => (
-            <div className={`cw-header__nav-item ${isMenuActive(item) ? 'is-active' : ''}`} key={item.label}>
+            <div className={`cw-header__nav-item ${activeMenuLabel === item.label ? 'is-active' : ''}`} key={item.label}>
               <NavLink className="cw-header__nav-link" to={item.href}>
                 {item.label}
               </NavLink>

@@ -1,0 +1,166 @@
+/* ═══════════════════════════════════════════════
+   HrManagerPage
+   ═══════════════════════════════════════════════ */
+.hr-page { display: grid; gap: 20px; padding: 36px 0 60px; }
+
+/* 헤더 */
+.hr-eyebrow {
+  display: inline-block; margin-bottom: 12px;
+  padding: 4px 12px; border-radius: 100px;
+  background: #dbeafe; color: var(--color-primary-dark);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+}
+.hr-header__title { margin: 0 0 8px; font-size: 26px; font-weight: 700; color: var(--color-text-primary); }
+.hr-header__desc  { margin: 0; font-size: 14px; color: var(--color-text-secondary); }
+
+/* 통계 */
+.hr-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+}
+.hr-stat {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 22px; border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  box-shadow: 0 2px 8px rgba(52,65,85,0.05);
+}
+.hr-stat__value { font-size: 28px; font-weight: 800; color: var(--color-text-primary); line-height: 1; }
+.hr-stat__label { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
+
+/* 카드 공통 */
+.hr-card {
+  padding: 24px 28px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  box-shadow: 0 4px 16px rgba(52,65,85,0.05);
+}
+.hr-card__header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--color-line);
+}
+.hr-card__title {
+  display: flex; align-items: center; gap: 6px;
+  margin: 0 0 18px; font-size: 14px; font-weight: 700; color: var(--color-text-primary);
+  padding-bottom: 14px; border-bottom: 1px solid var(--color-line);
+}
+.hr-card > .hr-card__title:first-child { margin-bottom: 18px; }
+
+.hr-invite-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: var(--radius-md);
+  border: none; background: linear-gradient(130deg, #1e3a6e, #2a4f96);
+  color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: opacity 0.14s;
+}
+.hr-invite-btn:hover { opacity: 0.88; }
+
+/* 초대 폼 */
+.hr-invite-form {
+  display: flex; flex-direction: column; gap: 12px;
+  margin-bottom: 20px; padding: 18px;
+  border-radius: var(--radius-lg);
+  border: 1.5px dashed var(--color-primary); background: var(--color-sky);
+}
+.hr-invite-form__fields { display: flex; gap: 10px; }
+.hr-input {
+  flex: 1; padding: 9px 14px; border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border); background: #fff;
+  font-size: 13px; font-family: inherit; color: var(--color-text-primary);
+  outline: none; transition: border-color 0.14s;
+}
+.hr-input:focus { border-color: var(--color-primary); }
+.hr-invite-form__actions { display: flex; gap: 8px; justify-content: flex-end; }
+.hr-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 16px; border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.12s; border: none;
+}
+.hr-btn--primary { background: linear-gradient(130deg, #1e3a6e, #2a4f96); color: #fff; }
+.hr-btn--primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.hr-btn--outline { border: 1.5px solid var(--color-border); background: #fff; color: var(--color-text-secondary); }
+.hr-btn--outline:hover { background: var(--color-sky); color: var(--color-primary-dark); }
+
+/* 테이블 */
+.hr-table-wrap { overflow-x: auto; }
+.hr-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px; color: var(--color-text-primary);
+}
+.hr-table thead tr { background: var(--color-surface-soft, #f8fafd); border-bottom: 1px solid var(--color-border); }
+.hr-table th {
+  padding: 11px 14px; text-align: left;
+  font-size: 11px; font-weight: 700; color: var(--color-text-secondary); white-space: nowrap;
+}
+.hr-table td {
+  padding: 13px 14px; border-bottom: 1px solid var(--color-line); vertical-align: middle;
+}
+.hr-table tbody tr:last-child td { border-bottom: none; }
+.hr-table tbody tr:hover { background: #fafbff; }
+
+.hr-table__name  { font-weight: 700; }
+.hr-table__email { color: var(--color-text-secondary); font-size: 12px; }
+.hr-table__date  { color: var(--color-text-secondary); font-size: 12px; white-space: nowrap; }
+
+.hr-role-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 100px;
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+
+.hr-last-active {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; color: var(--color-text-secondary);
+}
+
+.hr-status {
+  display: inline-block; padding: 3px 10px; border-radius: 100px;
+  font-size: 11px; font-weight: 700;
+}
+.hr-status--active  { background: #dcfce7; color: #15803d; }
+.hr-status--invited { background: #fef3c7; color: #b45309; }
+
+.hr-del-btn {
+  display: grid; place-items: center;
+  width: 28px; height: 28px; border-radius: var(--radius-sm);
+  border: 1px solid #fecaca; background: #fff5f5; color: #dc2626;
+  cursor: pointer; transition: all 0.12s;
+}
+.hr-del-btn:hover { background: #fee2e2; border-color: #dc2626; }
+
+/* 권한 목록 */
+.hr-roles { display: flex; flex-direction: column; gap: 0; }
+.hr-role-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 0; border-bottom: 1px solid var(--color-line);
+}
+.hr-role-item:last-child { border-bottom: none; }
+.hr-role-item .hr-role-badge { flex-shrink: 0; min-width: 90px; text-align: center; }
+.hr-role-desc { font-size: 13px; color: var(--color-text-secondary); }
+
+/* 활동 로그 */
+.hr-log-list { display: flex; flex-direction: column; gap: 0; }
+.hr-log {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--color-line);
+}
+.hr-log:last-child { border-bottom: none; }
+.hr-log__avatar {
+  display: grid; place-items: center;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #1e3a6e, #2a4f96);
+  color: #fff; font-size: 13px; font-weight: 800; flex-shrink: 0;
+}
+.hr-log__body { flex: 1; min-width: 0; font-size: 13px; display: flex; gap: 6px; align-items: center; }
+.hr-log__actor { font-weight: 700; color: var(--color-text-primary); flex-shrink: 0; }
+.hr-log__action { color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hr-log__time { font-size: 11px; color: var(--color-text-secondary); flex-shrink: 0; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .hr-stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .hr-page  { padding: 20px 0 40px; }
+  .hr-card  { padding: 18px; }
+  .hr-stats { grid-template-columns: repeat(2, 1fr); }
+  .hr-invite-form__fields { flex-direction: column; }
+  .hr-log__action { display: none; }
+}

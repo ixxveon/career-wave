@@ -1,0 +1,144 @@
+/* ═══════════════════════════════════════════════
+   JobNoticeListPage
+   ═══════════════════════════════════════════════ */
+.jn { display: grid; gap: 20px; padding: 36px 0 60px; }
+
+/* 검색 */
+.jn-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: 0 2px 12px rgba(30,58,110,0.06);
+}
+.jn-search-bar__icon { color: var(--color-text-secondary); flex-shrink: 0; }
+.jn-search-bar__input {
+  flex: 1; border: none; outline: none; font-size: 15px;
+  color: var(--color-text-primary); background: transparent;
+}
+.jn-search-bar__input::placeholder { color: var(--color-text-secondary); }
+
+/* 필터 */
+.jn-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.jn-filter-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.jn-filter-group__label {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 700; color: var(--color-text-secondary);
+  flex-shrink: 0; min-width: 32px;
+}
+.jn-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.jn-chip {
+  padding: 5px 13px; border-radius: 100px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 12px; font-weight: 600; color: var(--color-text-secondary);
+  cursor: pointer; transition: all 0.12s;
+}
+.jn-chip:hover { border-color: var(--color-primary); color: var(--color-primary-dark); }
+.jn-chip--on { border-color: var(--color-primary); background: var(--color-sky); color: var(--color-primary-dark); }
+
+/* 섹션 레이블 */
+.jn-section-label {
+  display: flex; align-items: center; gap: 5px;
+  margin: 0 0 10px;
+  font-size: 13px; font-weight: 700; color: var(--color-text-primary);
+}
+.jn-section-label span { color: var(--color-text-secondary); font-weight: 500; }
+
+/* 공고 목록 */
+.jn-list { display: flex; flex-direction: column; gap: 8px; }
+
+/* 공고 카드 */
+.jn-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color 0.14s, box-shadow 0.14s, transform 0.14s;
+}
+.jn-card:hover { border-color: var(--color-primary); box-shadow: 0 4px 20px rgba(30,58,110,0.08); transform: translateY(-1px); }
+.jn-card--premium { border-color: #fbbf24; background: linear-gradient(135deg, #fffbeb 0%, #fefce8 100%); }
+.jn-card--premium:hover { border-color: #f59e0b; box-shadow: 0 4px 20px rgba(245,158,11,0.15); }
+
+.jn-card__premium-badge {
+  position: absolute; top: 12px; right: 56px;
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 100px;
+  background: #f59e0b; color: #fff;
+  font-size: 10px; font-weight: 700;
+}
+
+.jn-card__logo {
+  display: grid; place-items: center;
+  width: 48px; height: 48px; border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #1e3a6e, #2a4f96);
+  color: #fff; font-size: 18px; font-weight: 800;
+  flex-shrink: 0;
+}
+
+.jn-card__body { flex: 1; min-width: 0; }
+.jn-card__company { margin: 0 0 3px; font-size: 12px; color: var(--color-text-secondary); font-weight: 600; }
+.jn-card__title   { margin: 0 0 8px; font-size: 15px; font-weight: 700; color: var(--color-text-primary); }
+
+.jn-card__meta {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+.jn-card__meta span { display: flex; align-items: center; gap: 3px; font-size: 12px; color: var(--color-text-secondary); }
+
+.jn-card__stacks { display: flex; flex-wrap: wrap; gap: 5px; }
+.jn-stack {
+  padding: 2px 9px; border-radius: 100px;
+  background: var(--color-sky); color: var(--color-primary-dark);
+  font-size: 11px; font-weight: 700;
+}
+
+.jn-card__right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+
+.jn-dday {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 10px; border-radius: 100px;
+  background: var(--color-sky); color: var(--color-primary-dark);
+  font-size: 11px; font-weight: 700;
+}
+.jn-dday--urgent { background: #fee2e2; color: #dc2626; }
+
+.jn-bookmark {
+  display: grid; place-items: center;
+  width: 32px; height: 32px; border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-text-secondary); cursor: pointer; transition: all 0.12s;
+}
+.jn-bookmark:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.jn-bookmark--active { border-color: var(--color-primary); background: var(--color-sky); color: var(--color-primary); }
+
+.jn-empty {
+  padding: 48px; text-align: center;
+  color: var(--color-text-secondary); font-size: 14px;
+  border: 1px dashed var(--color-border); border-radius: var(--radius-lg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .jn { padding: 20px 0 40px; }
+  .jn-card { padding: 16px; gap: 12px; }
+  .jn-card__logo { width: 40px; height: 40px; font-size: 15px; }
+  .jn-card__title { font-size: 14px; }
+  .jn-filter-group { gap: 8px; }
+  .jn-filters { padding: 16px; }
+}
