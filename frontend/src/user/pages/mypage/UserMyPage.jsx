@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import {
     ClipboardList,
     FilePenLine,
@@ -15,10 +15,10 @@ function UserMyPage() {
             <aside className="cw-mypage-sidebar">
                 <strong>마이페이지</strong>
                 <nav>
-                    <a href="#dashboard" className="is-active">MY홈</a>
-                    <a href="#activity">활동 기록</a>
-                    <Link to="/mypage/favorites">관심 기업</Link>
-                    <a href="#settings">계정 설정</a>
+                    <NavLink to="/mypage" end className="is-active">내 정보 관리</NavLink>
+                    <NavLink to="/mypage/favorites">스크랩 공고</NavLink>
+                    <NavLink to="/mypage/subscription">AI 서비스</NavLink>
+                    <NavLink to="/mypage/payment-history">구독/결제 내역</NavLink>
                 </nav>
             </aside>
 
