@@ -13,7 +13,7 @@ export const serviceMenus = [
     children: [
       { label: '이력서 분석', href: '/documents/resume' },
       { label: '자기소개서 분석', href: '/documents/cover-letter' },
-      { label: '서류 분석 리포트', href: '/documents/report' },
+      // { label: '서류 분석 리포트', href: '/documents/report' }, // TODO: 백엔드 연동 후 활성화
     ],
   },
   {
