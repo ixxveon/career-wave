@@ -5,6 +5,8 @@ import '../../styles/admin.css';
 type MemberTab = 'user' | 'company';
 
 // ── 개인 회원 ────────────────────────────────────────────────
+const WARN_THRESHOLD = 3; // 경고 N회 누적 시 활동정지 권고
+
 interface Member {
   id: string;
   name: string;
@@ -13,16 +15,18 @@ interface Member {
   plan: 'FREE' | 'PREMIUM';
   joinedAt: string;
   lastLogin: string;
-  status: string;
+  status: MemberStatus;
+  warningCount: number;
+  reportCount: number;
 }
 
 const dummyMembers: Member[] = [
-  { id: 'U-1001', name: '김민지', email: 'minji@email.com',   role: 'ROLE_USER',    plan: 'PREMIUM', joinedAt: '2026.05.02', lastLogin: '2026.05.21', status: '정상' },
-  { id: 'U-1002', name: '이준호', email: 'junho@email.com',   role: 'ROLE_USER',    plan: 'FREE',    joinedAt: '2026.05.01', lastLogin: '2026.05.20', status: '정상' },
-  { id: 'U-1003', name: '박서연', email: 'seoyeon@email.com', role: 'ROLE_USER',    plan: 'FREE',    joinedAt: '2026.04.28', lastLogin: '2026.05.18', status: '7일 정지' },
-  { id: 'U-1004', name: '최도윤', email: 'doyoon@email.com',  role: 'ROLE_COMPANY', plan: 'PREMIUM', joinedAt: '2026.04.20', lastLogin: '2026.05.21', status: '정상' },
-  { id: 'U-1005', name: '강하늘', email: 'haneul@email.com',  role: 'ROLE_USER',    plan: 'FREE',    joinedAt: '2026.04.15', lastLogin: '2026.05.19', status: '정상' },
-  { id: 'U-1006', name: '윤지수', email: 'jisoo@email.com',   role: 'ROLE_USER',    plan: 'PREMIUM', joinedAt: '2026.04.10', lastLogin: '2026.05.22', status: '탈퇴' },
+  { id: 'U-1001', name: '김민지', email: 'minji@email.com',   role: 'ROLE_USER',    plan: 'PREMIUM', joinedAt: '2026.05.02', lastLogin: '2026.05.21', status: 'ACTIVE',    warningCount: 0, reportCount: 0 },
+  { id: 'U-1002', name: '이준호', email: 'junho@email.com',   role: 'ROLE_USER',    plan: 'FREE',    joinedAt: '2026.05.01', lastLogin: '2026.05.20', status: 'ACTIVE',    warningCount: 2, reportCount: 5 },
+  { id: 'U-1003', name: '박서연', email: 'seoyeon@email.com', role: 'ROLE_USER',    plan: 'FREE',    joinedAt: '2026.04.28', lastLogin: '2026.05.18', status: 'SUSPENDED', warningCount: 3, reportCount: 7 },
+  { id: 'U-1004', name: '최도윤', email: 'doyoon@email.com',  role: 'ROLE_COMPANY', plan: 'PREMIUM', joinedAt: '2026.04.20', lastLogin: '2026.05.21', status: 'ACTIVE',    warningCount: 1, reportCount: 2 },
+  { id: 'U-1005', name: '강하늘', email: 'haneul@email.com',  role: 'ROLE_USER',    plan: 'FREE',    joinedAt: '2026.04.15', lastLogin: '2026.05.19', status: 'ACTIVE',    warningCount: 0, reportCount: 0 },
+  { id: 'U-1006', name: '윤지수', email: 'jisoo@email.com',   role: 'ROLE_USER',    plan: 'PREMIUM', joinedAt: '2026.04.10', lastLogin: '2026.05.22', status: 'BANNED',    warningCount: 3, reportCount: 8 },
 ];
 
 // ── 기업 회원 (HR 담당자 승인 기반) ──────────────────────────
@@ -94,7 +98,19 @@ const dummyCompanies: CompanyMember[] = [
   },
 ];
 
-const SUSPEND_PERIODS = ['3일', '7일', '30일', '영구'];
+type MemberStatus   = 'ACTIVE' | 'SUSPENDED' | 'BANNED';
+type SuspendDuration = 'THREE_DAYS' | 'SEVEN_DAYS' | 'THIRTY_DAYS' | 'PERMANENT';
+
+const SUSPEND_PERIODS: SuspendDuration[] = ['THREE_DAYS', 'SEVEN_DAYS', 'THIRTY_DAYS', 'PERMANENT'];
+const durationLabel: Record<SuspendDuration, string> = {
+  THREE_DAYS: '3일', SEVEN_DAYS: '7일', THIRTY_DAYS: '30일', PERMANENT: '영구',
+};
+const memberStatusLabel: Record<MemberStatus, string> = {
+  ACTIVE: '정상', SUSPENDED: '정지', BANNED: '영구정지',
+};
+const memberStatusCls: Record<MemberStatus, string> = {
+  ACTIVE: 'normal', SUSPENDED: 'blinded', BANNED: 'dismissed',
+};
 
 const approvalBadgeCls: Record<ApprovalStatus, string> = {
   '승인 대기': 'pending',
@@ -113,12 +129,12 @@ export default function UserManagementPage() {
   const [tab, setTab] = useState<MemberTab>('user');
 
   // 개인 회원 상태
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [suspendTarget, setSuspendTarget]   = useState<Member | null>(null);
-  const [suspendPeriod, setSuspendPeriod]   = useState('7일');
-  const [suspendReason, setSuspendReason]   = useState('');
-  const [checkedIds, setCheckedIds]         = useState<string[]>([]);
-  const [userKeyword, setUserKeyword]       = useState('');
+  const [selectedMember, setSelectedMember]   = useState<Member | null>(null);
+  const [suspendTarget, setSuspendTarget]      = useState<Member | null>(null);
+  const [suspendPeriod, setSuspendPeriod]      = useState<SuspendDuration>('SEVEN_DAYS');
+  const [suspendReason, setSuspendReason]      = useState('');
+  const [checkedIds, setCheckedIds]            = useState<string[]>([]);
+  const [userKeyword, setUserKeyword]          = useState('');
 
   // 기업 회원 상태
   const [selectedCompany, setSelectedCompany]   = useState<CompanyMember | null>(null);
@@ -155,7 +171,7 @@ export default function UserManagementPage() {
   const openSuspend = (member: Member) => {
     setSelectedMember(null);
     setSuspendTarget(member);
-    setSuspendPeriod('7일');
+    setSuspendPeriod('SEVEN_DAYS');
     setSuspendReason('');
   };
   const handleSuspend = () => setSuspendTarget(null);
@@ -240,26 +256,12 @@ export default function UserManagementPage() {
               value={userKeyword}
               onChange={(e) => setUserKeyword(e.target.value)}
             />
-            <select>
-              <option>계정 상태 (전체)</option>
-              <option>정상</option>
-              <option>3일 정지</option>
-              <option>7일 정지</option>
-              <option>영구 정지</option>
-              <option>탈퇴</option>
-            </select>
-            <select>
-              <option>플랜 (전체)</option>
-              <option>FREE</option>
-              <option>PREMIUM</option>
-            </select>
-            <select>
-              <option>가입일 (전체)</option>
-              <option>오늘</option>
-              <option>이번 주</option>
-              <option>이번 달</option>
-            </select>
-            <button className="memberFilterBtn">검색</button>
+            <select><option value="">권한 전체</option><option value="ROLE_USER">일반 회원</option><option value="ROLE_COMPANY">기업 회원</option></select>
+            <select><option>구독 전체</option><option>FREE</option><option>PREMIUM</option></select>
+            <select><option value="">상태 전체</option><option value="ACTIVE">정상</option><option value="SUSPENDED">정지</option><option value="BANNED">영구정지</option></select>
+            <input type="date" style={{ maxWidth: 160 }} />
+            <span style={{ fontSize: 13, color: '#7a8da4', fontWeight: 600 }}>~</span>
+            <input type="date" style={{ maxWidth: 160 }} />
           </section>
 
           <section className="admin-card memberTableCard">
@@ -270,6 +272,7 @@ export default function UserManagementPage() {
               </h3>
               <button>회원 데이터 내보내기</button>
             </div>
+            <div className="tableScroll">
             <table className="memberTable">
               <thead>
                 <tr>
@@ -308,7 +311,7 @@ export default function UserManagementPage() {
                     <td><span className="roleBadge">{m.role === 'ROLE_USER' ? '개인' : '기업'}</span></td>
                     <td><span className={`planBadge ${m.plan.toLowerCase()}`}>{m.plan}</span></td>
                     <td>{m.joinedAt}</td>
-                    <td><span className={`statusBadge ${getStatusBadgeCls(m.status)}`}>{m.status}</span></td>
+                    <td><span className={`statusBadge ${memberStatusCls[m.status]}`}>{memberStatusLabel[m.status]}</span></td>
                     <td>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button className="tableBtn" onClick={() => setSelectedMember(m)}>상세보기</button>
@@ -408,6 +411,7 @@ export default function UserManagementPage() {
               </h3>
               <button>데이터 내보내기</button>
             </div>
+            <div className="tableScroll">
             <table className="memberTable">
               <thead>
                 <tr>
@@ -481,8 +485,30 @@ export default function UserManagementPage() {
               <div><span>구독 플랜</span><strong>{selectedMember.plan}</strong></div>
               <div><span>가입일</span><strong>{selectedMember.joinedAt}</strong></div>
               <div><span>최근 접속</span><strong>{selectedMember.lastLogin}</strong></div>
-              <div><span>계정 상태</span><strong>{selectedMember.status}</strong></div>
-              <div><span>신고 받은 횟수</span><strong>0건</strong></div>
+              <div><span>현재 상태</span><strong><span className={`statusBadge ${memberStatusCls[selectedMember.status]}`}>{memberStatusLabel[selectedMember.status]}</span></strong></div>
+              <div><span>신고 받은 횟수</span><strong>{selectedMember.reportCount}건</strong></div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <span>경고 횟수</span>
+                <div className="warnCountWrap">
+                  <div className="warnDots">
+                    {Array.from({ length: WARN_THRESHOLD }).map((_, i) => (
+                      <span key={i} className={`warnDot ${i < selectedMember.warningCount ? 'filled' : ''}`} />
+                    ))}
+                  </div>
+                  <strong className={`warnCountText ${
+                    selectedMember.warningCount >= WARN_THRESHOLD ? 'danger' :
+                    selectedMember.warningCount === WARN_THRESHOLD - 1 ? 'caution' : ''
+                  }`}>
+                    {selectedMember.warningCount}/{WARN_THRESHOLD}회
+                  </strong>
+                  {selectedMember.warningCount >= WARN_THRESHOLD && (
+                    <span className="warnAlert">활동정지 권고</span>
+                  )}
+                  {selectedMember.warningCount === WARN_THRESHOLD - 1 && (
+                    <span className="warnCaution">1회 추가 시 활동정지 권고</span>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="modalAction">
               <button onClick={() => openSuspend(selectedMember)}>활동 정지</button>
@@ -519,7 +545,7 @@ export default function UserManagementPage() {
                         fontWeight: 600, fontSize: 14, cursor: 'pointer',
                       }}
                     >
-                      {p}
+                      {durationLabel[p]}
                     </button>
                   ))}
                 </div>
@@ -541,9 +567,9 @@ export default function UserManagementPage() {
             <div className="modalAction">
               <button
                 onClick={handleSuspend}
-                style={suspendPeriod === '영구' ? { background: '#9a6767', color: 'white', borderColor: '#9a6767' } : {}}
+                style={suspendPeriod === 'PERMANENT' ? { background: '#9a6767', color: 'white', borderColor: '#9a6767' } : {}}
               >
-                {suspendPeriod} 정지 처리
+                {durationLabel[suspendPeriod]} 정지 처리
               </button>
               <button onClick={() => setSuspendTarget(null)}>취소</button>
             </div>
