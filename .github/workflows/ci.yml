@@ -21,9 +21,15 @@ jobs:
       - name: gradlew 실행 권한 부여
         run: chmod +x backend/gradlew
 
+      - name: 환경 확인
+        working-directory: backend
+        run: |
+          java -version
+          ./gradlew --version --no-daemon
+
       - name: 빌드 및 테스트 실행
         working-directory: backend
-        run: ./gradlew test --no-daemon --stacktrace
+        run: ./gradlew test --no-daemon --stacktrace --info
         env:
           SPRING_PROFILES_ACTIVE: local
 
