@@ -594,7 +594,7 @@ export default function TextInterviewPage() {
 
   /* 면접 세션 시작 */
   async function handleStart() {
-    if (!company.trim()) return;
+    if (!company.trim() || resumeLoading || !resume) return;
     setApiError(null);
     setIsLoading(true);
     try {
@@ -726,7 +726,7 @@ export default function TextInterviewPage() {
         <button
           className="ti-setup__btn"
           onClick={handleStart}
-          disabled={!company.trim() || isLoading}
+          disabled={!company.trim() || isLoading || resumeLoading || !resume}
         >
           {isLoading
             ? <><Loader2 size={15} className="ti-spin" /> 세션 생성 중...</>
