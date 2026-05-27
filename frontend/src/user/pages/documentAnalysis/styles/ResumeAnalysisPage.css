@@ -347,6 +347,143 @@
 .ra-fb-item__improved p { margin: 0; font-size: 13px; color: var(--color-text-primary); line-height: 1.75; }
 .ra-fb-item__reason p  { margin: 0; font-size: 12px; color: var(--color-text-secondary); line-height: 1.65; }
 
+/* ─── 파일 업로드 완료 카드 ─────────────────────── */
+.ra-file-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  background: #eef4ff;
+  border: 1.5px solid var(--color-primary);
+}
+
+.ra-file-card__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #dbeafe;
+  color: var(--color-primary-dark);
+  flex-shrink: 0;
+}
+
+.ra-file-card__info { flex: 1; min-width: 0; }
+
+.ra-file-card__name {
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ra-file-card__size {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.ra-file-card__remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #fca5a5;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+.ra-file-card__remove:hover { background: #fca5a5; }
+
+/* ─── 파일 오류 메시지 ────────────────────────── */
+.ra-file-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -14px 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+/* ─── 로딩 오버레이 ──────────────────────────── */
+@keyframes ra-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.ra-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.ra-overlay__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  padding: 40px 48px;
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: 0 20px 60px rgba(10,20,50,0.25);
+}
+
+.ra-overlay__spinner {
+  color: var(--color-primary);
+  animation: ra-spin 1s linear infinite;
+}
+
+.ra-overlay__msg {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.ra-overlay__sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* ─── API 오류 메시지 ────────────────────────── */
+.ra-api-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -12px 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+/* ─── 버튼 스피너 ────────────────────────────── */
+@keyframes ra-btn-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.ra-btn__spinner {
+  animation: ra-btn-spin 1s linear infinite;
+}
+
 /* ─── Responsive ─────────────────────────────── */
 @media (max-width: 900px) {
   .ra-score-row { grid-template-columns: 1fr; }
