@@ -9,7 +9,7 @@ import './styles/CoverLetterAnalysisPage.css';
 import './styles/ResumeAnalysisPage.css'; /* ra-quota-bar 공용 스타일 */
 
 /* ── 멤버십 한도 (서류 분석 이력서+자소서 통합 카운트) ── */
-const PLAN_LIMITS = { FREE: { document: 3 }, PREMIUM: { document: 20 } };
+const PLAN_LIMITS = { FREE: { document: 1 }, PREMIUM: { document: 20 } };
 
 /* ── Mock 사용량 ─────────────────────────────────────── */
 const MOCK_QUOTA = { membership: 'PREMIUM', documentUsed: 7 };

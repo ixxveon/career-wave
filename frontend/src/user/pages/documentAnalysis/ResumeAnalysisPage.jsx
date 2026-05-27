@@ -10,7 +10,7 @@ import './styles/ResumeAnalysisPage.css';
 const ALLOWED_EXT = ['.pdf', '.doc', '.docx'];
 
 /* ── 멤버십 한도 (InterviewHomePage와 동일 기준) ── */
-const PLAN_LIMITS = { FREE: { document: 3 }, PREMIUM: { document: 20 } };
+const PLAN_LIMITS = { FREE: { document: 1 }, PREMIUM: { document: 20 } };
 
 /* ── Mock 사용량 (백엔드 연동 전 임시) ─────────── */
 const MOCK_QUOTA = { membership: 'PREMIUM', documentUsed: 7 };

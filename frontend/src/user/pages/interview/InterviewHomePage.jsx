@@ -8,7 +8,7 @@ import { MessageSquare, Video, ChevronRight, Lightbulb, FileText, User, Zap, Cli
    PREMIUM : 서류 분석 20회 / 면접 10회
 ──────────────────────────────────────────────── */
 const PLAN_LIMITS = {
-  FREE:    { document: 3,  interview: 1  },
+  FREE:    { document: 1,  interview: 1  },
   PREMIUM: { document: 20, interview: 10 },
 };
 
