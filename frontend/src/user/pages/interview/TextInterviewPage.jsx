@@ -508,7 +508,7 @@ function ChatRoom({ company, job, onExit }) {
               </div>
               <button
                 className="ti-switch-input"
-                onClick={() => setInputMode('voice')}
+                onClick={() => { stopCountdown(); setInputMode('voice'); }}
                 type="button"
               >
                 <Mic size={13} /> 음성으로 답변하기
