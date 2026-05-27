@@ -13,6 +13,7 @@ export const serviceMenus = [
     children: [
       { label: '이력서 분석', href: '/documents/resume' },
       { label: '자기소개서 분석', href: '/documents/cover-letter' },
+      { label: '서류 분석 리포트', href: '/documents/report' },
     ],
   },
   {
@@ -20,7 +21,7 @@ export const serviceMenus = [
     href: '/interview',
     children: [
       { label: '면접 홈', href: '/interview' },
-      { label: 'AI 음성/텍스트 면접', href: '/interview/text' },
+      { label: 'AI 텍스트 · 음성 면접', href: '/interview/text' },
       { label: 'AI 화상 면접', href: '/interview/media', comingSoon: true },
       { label: '면접 리포트', href: '/interview/report' },
     ],

@@ -20,6 +20,11 @@
   background: linear-gradient(135deg, #0b1e3d 0%, #112859 55%, #0d2049 100%);
 }
 
+/* 서류 유형 탭 슬롯 (DocumentReportPage에서 주입) */
+.dr-type-selector {
+  margin-bottom: 16px;
+}
+
 .dr-eyebrow {
   display: inline-block;
   margin-bottom: 10px;

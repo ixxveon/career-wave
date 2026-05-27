@@ -42,13 +42,14 @@ function ScoreBar({ label, value, color }) {
 
 /* ── 메인 컴포넌트 ──────────────────────────────── */
 /**
- * @param {{ result: object, onReset: () => void, label: string, subtitle?: string }} props
- *   result  — 백엔드 JSON ({ documentId, evaluation, feedbackDetails })
- *   onReset — 다시 작성하기 핸들러
- *   label   — eyebrow 텍스트 ('COVER LETTER AI' | 'RESUME ANALYSIS')
- *   subtitle — 배너 부제 (ex. '카카오 · 백엔드 개발자')
+ * @param {{ result: object, onReset: () => void, label: string, subtitle?: string, typeSelector?: ReactNode }} props
+ *   result       — 백엔드 JSON ({ documentId, evaluation, feedbackDetails })
+ *   onReset      — 다시 작성하기 핸들러
+ *   label        — eyebrow 텍스트 ('COVER LETTER AI' | 'RESUME ANALYSIS')
+ *   subtitle     — 배너 부제 (ex. '카카오 · 백엔드 개발자')
+ *   typeSelector — 서류 유형 탭 슬롯 (DocumentReportPage에서 주입)
  */
-export default function DocumentResultView({ result, onReset, label, subtitle }) {
+export default function DocumentResultView({ result, onReset, label, subtitle, typeSelector }) {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState(0);
 
@@ -72,6 +73,10 @@ export default function DocumentResultView({ result, onReset, label, subtitle })
       {/* ── 배너 ── */}
       <div className="dr-banner">
         <div>
+          {/* 서류 유형 탭 슬롯 — DocumentReportPage에서 주입, 일반 분석 페이지는 null */}
+          {typeSelector && (
+            <div className="dr-type-selector">{typeSelector}</div>
+          )}
           <span className="dr-eyebrow">{label}</span>
           <h1 className="dr-banner__title">AI 종합 진단 리포트</h1>
           {subtitle
@@ -163,7 +168,7 @@ export default function DocumentResultView({ result, onReset, label, subtitle })
       {/* ── CTA ── */}
       <button className="dr-cta" onClick={() => navigate('/interview/text')}>
         <Mic size={20} />
-        이 서류 기반으로 AI 실시간 음성 면접 시작하기
+        이 서류 기반으로 AI 텍스트 · 음성 면접 시작하기
       </button>
 
     </div>

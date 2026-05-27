@@ -6,6 +6,13 @@ import {
 import { documentApi } from '../../api/documentApi';
 import DocumentResultView from './DocumentResultView';
 import './styles/CoverLetterAnalysisPage.css';
+import './styles/ResumeAnalysisPage.css'; /* ra-quota-bar 공용 스타일 */
+
+/* ── 멤버십 한도 (서류 분석 이력서+자소서 통합 카운트) ── */
+const PLAN_LIMITS = { FREE: { document: 3 }, PREMIUM: { document: 20 } };
+
+/* ── Mock 사용량 ─────────────────────────────────────── */
+const MOCK_QUOTA = { membership: 'PREMIUM', documentUsed: 7 };
 
 /* ── Mock (백엔드 미완성 시 폴백) ────────────────────── */
 const MOCK_RESULT = {
@@ -132,11 +139,35 @@ export default function CoverLetterAnalysisPage() {
   }
 
   /* ── 입력 화면 ── */
+  const { membership, documentUsed } = MOCK_QUOTA;
+  const docLimit    = PLAN_LIMITS[membership].document;
+  const docLeft     = docLimit - documentUsed;
+  const pct         = Math.min((documentUsed / docLimit) * 100, 100);
+  const isExhausted = docLeft <= 0;
+
   return (
     <div className="cl" style={{ position: 'relative' }}>
       {isLoading && <LoadingOverlay />}
 
       <div className="cl-input-wrap">
+        {/* ── 할당량 표시 ── */}
+        <div className="ra-quota-bar">
+          <div className="ra-quota-bar__info">
+            <span className="ra-quota-bar__label">이번 달 서류 분석</span>
+            <span className={`ra-quota-bar__count${isExhausted ? ' ra-quota-bar__count--full' : docLeft <= 3 ? ' ra-quota-bar__count--warn' : ''}`}>
+              {documentUsed} / {docLimit}회 사용
+              {isExhausted && <span className="ra-quota-bar__tag">한도 초과</span>}
+              {!isExhausted && docLeft <= 3 && <span className="ra-quota-bar__tag ra-quota-bar__tag--warn">잔여 {docLeft}회</span>}
+            </span>
+          </div>
+          <div className="ra-quota-bar__track">
+            <div
+              className={`ra-quota-bar__fill${isExhausted ? ' ra-quota-bar__fill--full' : pct >= 70 ? ' ra-quota-bar__fill--warn' : ''}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+
         <span className="cl-eyebrow">COVER LETTER AI</span>
         <h1 className="cl-input__title">자기소개서 AI 분석</h1>
         <p className="cl-input__desc">

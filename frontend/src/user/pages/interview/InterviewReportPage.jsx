@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   ChevronDown, ChevronUp, RotateCcw, Home,
   CheckCircle2, AlertCircle, TrendingUp,
-  Video, MessageSquare, Calendar, Award,
-  Download, Lock, Eye, Activity, Gauge, Smile,
+  MessageSquare, Calendar, Award,
+  Lock, Volume2, Gauge, Music2, MicOff, X,
 } from 'lucide-react';
 import './styles/InterviewReportPage.css';
 
@@ -13,18 +13,56 @@ const REPORT = {
   company:    '토스',
   job:        '백엔드 개발자',
   date:       '2025-05-22',
-  type:       'video',   // 'video' | 'text'
+  type:       'text',   // 'text' | 'voice' — text 유저는 voiceOnly 지표 null
   totalScore:  88,
   grade:      'A',
-  membership: 'FREE',    // 'FREE' | 'PREMIUM'
+  membership: 'FREE',   // 'FREE' | 'PREMIUM'
 };
 
-/* 비디오 전용 - FastAPI raw 분석 수치 */
+/* 오디오 분석 지표
+ * voiceOnly: true  → 음성 데이터가 없으면 value가 null / -1 → 블러 처리
+ * voiceOnly: false → 텍스트 유저도 항상 표시 */
 const AI_METRICS = [
-  { Icon: Eye,      label: '시선 안정도',   value: 82,     unit: '%',      color: '#60a5fa', desc: '면접관과의 시선 접촉이 양호합니다.' },
-  { Icon: Activity, label: '자세 안정성',   value: 76,     unit: '%',      color: '#34d399', desc: '상체 흔들림이 다소 감지되었습니다.' },
-  { Icon: Gauge,    label: '말하기 속도',   value: 138,    unit: 'WPM',    color: '#a78bfa', desc: '적정 속도(120~150 WPM) 범위 내입니다.' },
-  { Icon: Smile,    label: '표정 감정',     value: '안정',  unit: '',       color: '#fb923c', desc: '긍정적이고 차분한 표정이 유지되었습니다.' },
+  {
+    Icon:      Volume2,
+    emoji:     '🎙️',
+    label:     '목소리 성량 및 데시벨',
+    value:     null,   // text 모드 → null
+    unit:      'dB',
+    color:     '#60a5fa',
+    desc:      '안정적인 크기와 성량으로 답변이 뚜렷하게 전달되었습니다.',
+    voiceOnly: true,
+  },
+  {
+    Icon:      MicOff,
+    emoji:     '🗣️',
+    label:     '지연어 사용 빈도',
+    value:     null,   // text 모드 → null
+    unit:      '회',
+    color:     '#34d399',
+    desc:      "'어...', '음...' 같은 무의미한 주저함이 적어 깔끔했습니다.",
+    voiceOnly: true,
+  },
+  {
+    Icon:      Gauge,
+    emoji:     '⏱️',
+    label:     '말하기 속도',
+    value:     138,
+    unit:      'WPM',
+    color:     '#a78bfa',
+    desc:      '적정 속도(120~150 WPM) 범위 내에서 안정적으로 발성했습니다.',
+    voiceOnly: false,
+  },
+  {
+    Icon:      Music2,
+    emoji:     '🎵',
+    label:     '목소리 톤 및 자신감',
+    value:     '안정',
+    unit:      '',
+    color:     '#fb923c',
+    desc:      '면접관에게 신뢰감을 주는 차분하고 활력 있는 톤이 유지되었습니다.',
+    voiceOnly: false,
+  },
 ];
 
 const REVIEWS = [
@@ -65,22 +103,46 @@ const REVIEWS = [
   },
 ];
 
+/* 영상 전용 "자세 안정성 향상" 항목 제거 */
 const IMPROVEMENTS = [
-  { title: 'STAR 기법 심화',    desc: '과제(T)와 결과(R)에 수치를 반드시 포함하는 연습을 해보세요.',    cta: '관련 질문 연습하기',    to: '/interview/text'  },
-  { title: '강점 사례 구체화',   desc: '강점을 말할 때 측정 가능한 성과(%, 시간)로 뒷받침하세요.',      cta: '강점 질문 연습하기',    to: '/interview/text'  },
-  { title: '자세 안정성 향상',   desc: '면접 중 상체 흔들림이 감지됩니다. 자세 교정 연습을 추천합니다.', cta: '비디오 면접 다시 연습', to: '/interview/media' },
+  { title: 'STAR 기법 심화',   desc: '과제(T)와 결과(R)에 수치를 반드시 포함하는 연습을 해보세요.',   cta: '관련 질문 연습하기', to: '/interview/text' },
+  { title: '강점 사례 구체화', desc: '강점을 말할 때 측정 가능한 성과(%, 시간)로 뒷받침하세요.',     cta: '강점 질문 연습하기', to: '/interview/text' },
 ];
+
+/* value가 null 또는 -1인 voiceOnly 지표 → blur 처리 */
+function isNullMetric(m) {
+  return m.voiceOnly && (m.value === null || m.value === -1);
+}
+
+/* ── PDF v2 안내 모달 ─────────────────────────────── */
+function PdfModal({ onClose }) {
+  return (
+    <div className="ir-pdf-overlay" onClick={onClose}>
+      <div className="ir-pdf-modal" onClick={e => e.stopPropagation()}>
+        <button className="ir-pdf-modal__close" onClick={onClose}><X size={18} /></button>
+        <div className="ir-pdf-modal__icon">📄</div>
+        <div className="ir-pdf-modal__badge">v2 COMING SOON</div>
+        <h3 className="ir-pdf-modal__title">PDF 리포트 다운로드</h3>
+        <p className="ir-pdf-modal__desc">
+          나만의 면접 답변을 소장할 수 있는<br />
+          PDF 리포트 다운로드 기능은<br />
+          <strong>v2에서 공개됩니다!</strong>
+        </p>
+        <button className="ir-pdf-modal__cta" onClick={onClose}>확인했어요</button>
+      </div>
+    </div>
+  );
+}
 
 /* ── Component ─────────────────────────────────── */
 function InterviewReportPage() {
-  const navigate  = useNavigate();
-  const [openIdx, setOpenIdx] = useState(null);
-
-  const isPremium = REPORT.membership === 'PREMIUM';
-  const isVideo   = REPORT.type === 'video';
+  const navigate     = useNavigate();
+  const [openIdx, setOpenIdx]         = useState(null);
+  const [showPdfModal, setShowPdfModal] = useState(false);
 
   return (
     <div className="ir">
+      {showPdfModal && <PdfModal onClose={() => setShowPdfModal(false)} />}
 
       {/* ── 배너 ── */}
       <div className="ir-banner">
@@ -90,9 +152,7 @@ function InterviewReportPage() {
         <div className="ir-banner__left">
           <div className="ir-banner__meta">
             <span className="ir-banner__type-badge">
-              {isVideo
-                ? <><Video size={11} /> AI 비디오 면접</>
-                : <><MessageSquare size={11} /> 텍스트 면접</>}
+              <MessageSquare size={11} /> AI 텍스트 · 음성 면접
             </span>
             <span className="ir-banner__date"><Calendar size={11} /> {REPORT.date}</span>
           </div>
@@ -105,24 +165,14 @@ function InterviewReportPage() {
             <button className="ir-btn ir-btn--outline" onClick={() => navigate('/interview')}>
               <Home size={14} /> 홈으로
             </button>
-            <button
-              className="ir-btn ir-btn--white"
-              onClick={() => navigate(isVideo ? '/interview/media' : '/interview/text')}
-            >
+            <button className="ir-btn ir-btn--white" onClick={() => navigate('/interview/text')}>
               <RotateCcw size={14} /> 다시 연습하기
             </button>
-
-            {/* PDF 다운로드 - PREMIUM 전용 */}
-            {isPremium ? (
-              <button className="ir-btn ir-btn--pdf">
-                <Download size={14} /> PDF 리포트 저장
-              </button>
-            ) : (
-              <button className="ir-btn ir-btn--pdf-locked" disabled>
-                <Lock size={13} /> PDF 리포트
-                <span className="ir-btn__premium-badge">PREMIUM</span>
-              </button>
-            )}
+            {/* PDF — v2 예정: disabled 스타일이지만 onClick으로 안내 모달 표시 */}
+            <button className="ir-btn ir-btn--pdf-locked" onClick={() => setShowPdfModal(true)}>
+              <Lock size={13} /> PDF 리포트
+              <span className="ir-btn__premium-badge">PREMIUM</span>
+            </button>
           </div>
         </div>
 
@@ -150,35 +200,63 @@ function InterviewReportPage() {
         </div>
       </div>
 
-      {/* ── AI 원시 분석 수치 (비디오 전용) ── */}
-      {isVideo && (
-        <div className="ir-card">
-          <h2 className="ir-card__title">
-            AI 실시간 분석 지표
-            <span className="ir-card__badge">FastAPI 분석 결과</span>
-          </h2>
-          <div className="ir-metrics-grid">
-            {AI_METRICS.map(({ Icon, label, value, unit, color, desc }) => (
-              <div key={label} className="ir-metric-card" style={{ '--mc': color }}>
-                <div className="ir-metric-card__icon"><Icon size={16} /></div>
-                <div className="ir-metric-card__body">
-                  <div className="ir-metric-card__value">
-                    {value}
-                    {unit && <span className="ir-metric-card__unit">{unit}</span>}
+      {/* ── AI 실시간 분석 지표 (전 면접 유형에 표시) ── */}
+      <div className="ir-card">
+        <h2 className="ir-card__title">
+          AI 실시간 분석 지표
+        </h2>
+        <div className="ir-metrics-grid">
+          {AI_METRICS.map((m) => {
+            const nullState = isNullMetric(m);
+            return (
+              /* wrapper: 블러된 카드 위에 마스크 레이어를 absolute로 올리기 위한 relative 컨테이너 */
+              <div key={m.label} className="ir-metric-card-wrap">
+
+                {/* 블러 카드 본체 */}
+                <div
+                  className={`ir-metric-card${nullState ? ' ir-metric-card--null' : ''}`}
+                  style={{ '--mc': m.color }}
+                >
+                  <div
+                    className="ir-metric-card__icon"
+                    style={{ background: `${m.color}22`, color: m.color }}
+                  >
+                    <m.Icon size={16} />
                   </div>
-                  <div className="ir-metric-card__label">{label}</div>
-                  {typeof value === 'number' && (
-                    <div className="ir-metric-card__bar-track">
-                      <div className="ir-metric-card__bar-fill" style={{ width: `${value}%` }} />
+                  <div className="ir-metric-card__body">
+                    <div className="ir-metric-card__value">
+                      {nullState ? '—' : m.value}
+                      {!nullState && m.unit && (
+                        <span className="ir-metric-card__unit">{m.unit}</span>
+                      )}
                     </div>
-                  )}
-                  <p className="ir-metric-card__desc">{desc}</p>
+                    <div className="ir-metric-card__label">{m.emoji} {m.label}</div>
+                    {!nullState && typeof m.value === 'number' && (
+                      <div className="ir-metric-card__bar-track">
+                        <div
+                          className="ir-metric-card__bar-fill"
+                          style={{
+                            width: `${Math.min(m.value, 100)}%`,
+                            background: m.color,
+                          }}
+                        />
+                      </div>
+                    )}
+                    <p className="ir-metric-card__desc">{m.desc}</p>
+                  </div>
                 </div>
+
+                {/* 마스크 오버레이 — 블러 카드의 형제 노드이므로 filter 영향 받지 않음 */}
+                {nullState && (
+                  <div className="ir-metric-card__mask">
+                    <span>⚠️ 음성 면접 시에만<br />제공되는 지표입니다.</span>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )}
+      </div>
 
       {/* ── 질문별 리뷰 ── */}
       <div className="ir-card">
@@ -198,7 +276,7 @@ function InterviewReportPage() {
                 </span>
                 <span className="ir-review-item__score">{r.score}점</span>
                 {openIdx === i
-                  ? <ChevronUp size={15} className="ir-review-item__chevron" />
+                  ? <ChevronUp   size={15} className="ir-review-item__chevron" />
                   : <ChevronDown size={15} className="ir-review-item__chevron" />}
               </button>
 
@@ -231,7 +309,12 @@ function InterviewReportPage() {
               <span className="ir-improve-card__num">{String(i + 1).padStart(2, '0')}</span>
               <p className="ir-improve-card__title">{item.title}</p>
               <p className="ir-improve-card__desc">{item.desc}</p>
-              <button className="ir-improve-card__cta" onClick={() => navigate(item.to)}>{item.cta} →</button>
+              <button
+                className="ir-improve-card__cta"
+                onClick={() => navigate(item.to)}
+              >
+                {item.cta} →
+              </button>
             </div>
           ))}
         </div>

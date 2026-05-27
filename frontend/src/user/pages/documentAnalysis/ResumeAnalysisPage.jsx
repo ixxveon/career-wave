@@ -9,6 +9,12 @@ import './styles/ResumeAnalysisPage.css';
 /* ── 상수 ──────────────────────────────────────── */
 const ALLOWED_EXT = ['.pdf', '.doc', '.docx'];
 
+/* ── 멤버십 한도 (InterviewHomePage와 동일 기준) ── */
+const PLAN_LIMITS = { FREE: { document: 3 }, PREMIUM: { document: 20 } };
+
+/* ── Mock 사용량 (백엔드 연동 전 임시) ─────────── */
+const MOCK_QUOTA = { membership: 'PREMIUM', documentUsed: 7 };
+
 const MOCK_RESULT = {
   documentId: 2,
   evaluation: {
@@ -131,11 +137,35 @@ export default function ResumeAnalysisPage() {
   }
 
   /* ── 업로드 화면 ── */
+  const { membership, documentUsed } = MOCK_QUOTA;
+  const docLimit  = PLAN_LIMITS[membership].document;
+  const docLeft   = docLimit - documentUsed;
+  const pct       = Math.min((documentUsed / docLimit) * 100, 100);
+  const isExhausted = docLeft <= 0;
+
   return (
     <div className="ra">
       {isLoading && <LoadingOverlay />}
 
       <div className="ra-upload-wrap">
+        {/* ── 할당량 표시 ── */}
+        <div className="ra-quota-bar">
+          <div className="ra-quota-bar__info">
+            <span className="ra-quota-bar__label">이번 달 서류 분석</span>
+            <span className={`ra-quota-bar__count${isExhausted ? ' ra-quota-bar__count--full' : docLeft <= 3 ? ' ra-quota-bar__count--warn' : ''}`}>
+              {documentUsed} / {docLimit}회 사용
+              {isExhausted && <span className="ra-quota-bar__tag">한도 초과</span>}
+              {!isExhausted && docLeft <= 3 && <span className="ra-quota-bar__tag ra-quota-bar__tag--warn">잔여 {docLeft}회</span>}
+            </span>
+          </div>
+          <div className="ra-quota-bar__track">
+            <div
+              className={`ra-quota-bar__fill${isExhausted ? ' ra-quota-bar__fill--full' : pct >= 70 ? ' ra-quota-bar__fill--warn' : ''}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+
         <span className="ra-eyebrow">RESUME ANALYSIS</span>
         <h1 className="ra-upload__title">이력서 AI 분석</h1>
         <p className="ra-upload__desc">
