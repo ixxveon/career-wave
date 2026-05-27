@@ -2,33 +2,33 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/admin.css';
 
 const kpis = [
-  { icon: 'USER', title: '오늘 신규 가입자', value: '128',   rate: '▲ 12%', desc: '어제 대비 +14명',      theme: 'blue' },
-  { icon: 'LIVE', title: '실시간 접속자',    value: '1,042', rate: '▲ 8%',  desc: '최근 7일 평균 이상',  theme: 'green' },
-  { icon: 'AI',   title: 'AI 면접 세션',    value: '37',    rate: '▼ 3%',  desc: '평균 응답 안정',      theme: 'purple', down: true },
-  { icon: 'PAY',  title: '오늘 매출',       value: '₩2.4M', rate: '▲ 18%', desc: '구독 결제 증가',      theme: 'yellow' },
+  { icon: 'USER', title: '오늘 신규 가입자', value: '128', rate: '▲12%', desc: '어제 대비 +14명', theme: 'blue' },
+  { icon: 'LIVE', title: '실시간 접속자', value: '1,042', rate: '▲8%', desc: '최근 7일 평균 이상', theme: 'green' },
+  { icon: 'AI', title: 'AI 면접 세션', value: '37', rate: '▼3%', desc: '평균 응답 안정', theme: 'purple', down: true },
+  { icon: 'PAY', title: '오늘 매출', value: '₩4.4M', rate: '▲18%', desc: '구독 결제 증가', theme: 'yellow' },
 ];
 
 const alerts = [
-  { icon: '!',  level: '긴급', type: '신고', text: '게시글 신고 3건 처리 대기 중',    button: '신고 관리로 이동',  cls: 'danger',  path: '/admin/reports' },
-  { icon: '₩',  level: '주의', type: '결제', text: '정기결제 실패 7건 확인 필요',    button: '결제 · 정산로 이동', cls: 'warning', path: '/admin/payments' },
-  { icon: 'Q',  level: '일반', type: '문의', text: '1:1 문의 미답변 12건',           button: '고객센터로 이동',   cls: 'normal',  path: '/admin/cs' },
-  { icon: 'AI', level: '주의', type: 'AI',  text: '이상 토큰 사용 유저 2명 감지',   button: 'AI 메트릭스로 이동', cls: 'ai',      path: '/admin/ai' },
+  { icon: '!', level: '긴급', type: '신고', text: '게시글 신고 3건 처리 대기 중', button: '신고 관리로 이동', cls: 'danger', path: '/admin/reports' },
+  { icon: '₩', level: '주의', type: '결제', text: '정기결제 실패 7건 확인 필요', button: '결제 및 정산으로 이동', cls: 'warning', path: '/admin/payments' },
+  { icon: 'Q', level: '일반', type: '문의', text: '1:1 문의 미답변 12건', button: '고객센터로 이동', cls: 'normal', path: '/admin/cs' },
+  { icon: 'AI', level: '주의', type: 'AI', text: '이상 토큰 사용 유저 2명 감지', button: 'AI 메트릭스으로 이동', cls: 'ai', path: '/admin/ai' },
 ];
 
 const adminCards = [
-  { icon: 'USER', title: '회원 관리',   desc: '가입자, 구독 상태, 권한, 정지 회원을 관리합니다.',              value: '신규 128명',   cls: 'blue',   path: '/admin/members' },
-  { icon: 'REP',  title: '신고 관리',   desc: '커뮤니티 신고, 블라인드 처리, 스팸 게시글을 확인합니다.',       value: '대기 3건',     cls: 'red',    path: '/admin/reports' },
-  { icon: 'CS',   title: '고객센터',    desc: '공지사항·FAQ 관리 및 1:1 문의 티켓을 처리합니다.',             value: '미답변 12건',  cls: 'orange', path: '/admin/cs' },
-  { icon: 'PAY',  title: '결제 · 정산', desc: '결제 내역, 정기결제 실패, 환불 요청을 관리합니다.',              value: '실패 7건',     cls: 'orange', path: '/admin/payments' },
-  { icon: 'MTH',  title: '매칭 통계',   desc: '직무별 지원 현황, 합격률, 경쟁률 트렌드를 확인합니다.',         value: '합격률 12.7%', cls: 'green',  path: '/admin/matching' },
-  { icon: 'AI',   title: 'AI 메트릭스', desc: 'AI 토큰 사용량, 면접 세션, 이상 호출을 모니터링합니다.',        value: '세션 37건',    cls: 'purple', path: '/admin/ai' },
+  { icon: 'USER', title: '회원 관리', desc: '가입자, 구독 상태, 권한, 정지 회원을 관리합니다.', value: '신규 128명', cls: 'blue', path: '/admin/members' },
+  { icon: 'REP', title: '신고 관리', desc: '커뮤니티 신고, 블라인드 처리, 스팸 게시글을 확인합니다.', value: '대기 3건', cls: 'red', path: '/admin/reports' },
+  { icon: 'CS', title: '고객센터', desc: '공지사항·FAQ 관리 및 1:1 문의 응대를 처리합니다.', value: '미답변 12건', cls: 'orange', path: '/admin/cs' },
+  { icon: 'PAY', title: '결제 및 정산', desc: '결제 내역, 정기결제 실패, 환불 요청을 관리합니다.', value: '실패 7건', cls: 'orange', path: '/admin/payments' },
+  { icon: 'MTH', title: '매칭 통계', desc: '직무별 지원율, 합격률, 경쟁률을 트래킹해 확인합니다.', value: '합격률 12.7%', cls: 'green', path: '/admin/matching' },
+  { icon: 'AI', title: 'AI 메트릭스', desc: 'AI 토큰 사용량, 면접 세션, 이상 탐지를 모니터링합니다.', value: '세션 37건', cls: 'purple', path: '/admin/ai' },
 ];
 
 const logs: [string, string, string, string][] = [
-  ['09:12', 'cs_admin',      '환불 요청 1건 승인',            '/admin/payments'],
-  ['09:18', 'backend_admin', '스크래핑 실패 로그 확인',       '/admin/scraping'],
-  ['09:22', 'super_admin',   '관리자 계정 권한 변경',         '/admin/admins'],
-  ['09:31', 'cs_admin',      '신고 게시글 블라인드 처리',     '/admin/reports'],
+  ['09:12', 'cs_admin', '환불 요청 1건 확인', '/admin/payments'],
+  ['09:18', 'backend_admin', '스크래핑 실패 로그 확인', '/admin/scraping'],
+  ['09:22', 'super_admin', '관리자 계정 권한 변경', '/admin/admins'],
+  ['09:31', 'cs_admin', '신고 게시글 블라인드 처리', '/admin/reports'],
   ['09:45', 'backend_admin', 'AI 토큰 사용량 임계치 알림 설정', '/admin/ai'],
 ];
 
@@ -122,7 +122,7 @@ export default function AdminDashboardPage() {
                 <ul>
                   <li><i className="c1" />카드 <b>62%</b></li>
                   <li><i className="c2" />간편결제 <b>28%</b></li>
-                  <li><i className="c3" />환불 <b>10%</b></li>
+                  <li><i className="c3" />기타 <b>10%</b></li>
                 </ul>
               </div>
             </article>
@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
 
         <aside className="rightColumn">
           <section className="aiPanel">
-            <h3>✦ AI 관제 어시스턴트</h3>
+            <h3>AI 관제 어시스턴트</h3>
             <div className="aiItem">
               <div><strong>AI 추천 액션</strong><p>욕설 포함 게시글 3건 자동 감지</p></div>
               <button>조치하기</button>
