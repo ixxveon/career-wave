@@ -27,6 +27,7 @@
 **/backend/*.log
 **/src/main/resources/application-secret.yml
 *.jar
+!backend/gradle/wrapper/gradle-wrapper.jar
 *.war
 
 # =====================
