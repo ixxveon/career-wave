@@ -4,33 +4,30 @@ import '../styles/admin.css';
 const menuGroups = [
   {
     title: 'OVERVIEW',
-    items: [
-      { label: '종합 대시보드', path: '/admin/dashboard' },
-    ],
+    items: [{ label: '종합 대시보드', path: '/admin/dashboard' }],
   },
   {
     title: 'USER & CS',
     items: [
       { label: '관리자 관리', path: '/admin/admins' },
-      { label: '회원 관리',   path: '/admin/members' },
-      { label: '신고 관리',   path: '/admin/reports' },
-      { label: '고객센터',    path: '/admin/cs' },
+      { label: '회원 관리', path: '/admin/members' },
+      { label: '신고 관리', path: '/admin/reports' },
+      { label: '고객센터', path: '/admin/cs' },
     ],
   },
   {
     title: 'BUSINESS',
     items: [
       { label: '결제 · 정산', path: '/admin/payments' },
-      { label: '매칭 통계',   path: '/admin/matching' },
+      { label: '매칭 통계', path: '/admin/matching' },
     ],
   },
   {
     title: 'AI SYSTEM',
     items: [
-      { label: 'AI 메트릭스',   path: '/admin/ai' },
+      { label: 'AI 메트릭스', path: '/admin/ai' },
       { label: '스크래핑 관리', path: '/admin/scraping' },
-      { label: '감사 로그',     path: '/admin/log' },
-      { label: '운영 설정',     path: '/admin/settings' },
+      { label: '감사 로그', path: '/admin/log' },
     ],
   },
 ];
@@ -58,9 +55,7 @@ export default function AdminSidebar() {
               <NavLink
                 key={item.path}
                 to={item.path}
-                className={({ isActive }) =>
-                  `admin-menuItem${isActive ? ' active' : ''}`
-                }
+                className={({ isActive }) => `admin-menuItem${isActive ? ' active' : ''}`}
               >
                 {item.label}
               </NavLink>
