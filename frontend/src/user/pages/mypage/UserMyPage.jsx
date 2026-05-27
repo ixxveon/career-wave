@@ -5,7 +5,7 @@ import {
     Github,
     UsersRound,
 } from "lucide-react";
-import "./DashboardPage.css";
+import "./MyPage.css";
 
 
 

@@ -1,11 +1,11 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
-import FavoriteCompanyPage from '@/user/pages/dashboard/FavoriteCompanyPage';
+import FavoriteCompanyPage from '@/user/pages/mypage/FavoriteCompanyPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
 import JobSeekerDashboardPage from '../user/pages/dashboard/JobSeekerDashboardPage';
 import CompanyDashboardPage from '../user/pages/dashboard/CompanyDashboardPage';
-import UserMyPage from '../user/pages/dashboard/UserMyPage';
+import UserMyPage from '../user/pages/mypage/UserMyPage';
 
 
 import LoginPage from '../user/pages/auth/LoginPage';
