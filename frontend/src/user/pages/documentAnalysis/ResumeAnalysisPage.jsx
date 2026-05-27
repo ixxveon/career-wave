@@ -1,169 +1,140 @@
 import { useState, useRef } from 'react';
 import {
-  Upload, FileText, X, CheckCircle2, AlertCircle,
-  ChevronDown, ChevronUp, Gauge, Lightbulb, TrendingUp,
+  Upload, FileText, X, AlertCircle, Loader2,
 } from 'lucide-react';
+import { documentApi } from '../../api/documentApi';
+import DocumentResultView from './DocumentResultView';
 import './styles/ResumeAnalysisPage.css';
 
-/* ── Mock 분석 결과 ──────────────────────────── */
+/* ── 상수 ──────────────────────────────────────── */
+const ALLOWED_EXT = ['.pdf', '.doc', '.docx'];
+
 const MOCK_RESULT = {
-  fileName:    '이력서_최종본.pdf',
-  job:         '백엔드 개발자',
-  fitScore:    82,
-  keywords:    ['Spring Boot', 'AWS', 'PostgreSQL', 'Docker', 'Redis'],
-  missing:     ['Kubernetes', 'CI/CD', '대용량 트래픽'],
-  feedbacks: [
+  documentId: 2,
+  evaluation: {
+    totalScore: 82,
+    jobFitnessScore: 90,
+    techStackScore: 80,
+    quantifiedScore: 65,
+    logicalScore: 85,
+    overallReview:
+      '전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다. 기술 스택 언급과 팀 협업 경험은 긍정적으로 평가됩니다.',
+  },
+  feedbackDetails: [
     {
-      original: '결제 시스템 개발에 참여하였습니다.',
-      improved: '월 거래액 50억 규모의 결제 시스템 API를 Spring Boot로 설계 및 구현, TPS 300 처리 안정화에 기여하였습니다.',
-      reason:   '수치(거래액, TPS)와 기술 스택을 명시해 성과를 구체화했습니다.',
-      tag:      'kpi',
+      sectionNumber: 1,
+      question: '주요 프로젝트 경험',
+      originalText: '결제 시스템 개발에 참여하였습니다. 팀원들과 협업하여 서비스를 개선했습니다.',
+      goodPoint:
+        '백엔드 프로젝트 경험과 팀 협업 이력이 명시되어 있어 기본 역량이 확인됩니다.',
+      badPoint:
+        '역할, 규모, 성과가 모두 빠져 있습니다. "참여", "개선"이라는 추상적 동사 대신 수치화된 임팩트를 작성해야 합니다.',
+      improvedText:
+        '월 거래액 50억 규모의 결제 시스템 API를 Spring Boot로 설계 및 구현, TPS 300 처리 안정화에 기여하였습니다. 5인 팀 스크럼 환경에서 백엔드 리드로 API 응답 속도를 평균 340ms → 80ms로 개선하였습니다.',
     },
     {
-      original: '팀원들과 협업하여 서비스를 개선했습니다.',
-      improved: '5인 팀 스크럼 환경에서 백엔드 리드로 API 응답 속도를 평균 340ms → 80ms로 개선하였습니다.',
-      reason:   '팀 규모, 역할, 수치화된 개선 결과를 추가해 임팩트를 강조했습니다.',
-      tag:      'kpi',
-    },
-    {
-      original: '다양한 경험을 통해 성장하였습니다.',
-      improved: '스타트업 3곳에서 백엔드 풀사이클 개발(기획→설계→배포)을 수행하며 서비스 런칭 경험을 쌓았습니다.',
-      reason:   '"다양한 경험"이라는 추상적 표현을 구체적 경력 사실로 대체했습니다.',
-      tag:      'vague',
+      sectionNumber: 2,
+      question: '자기소개 및 강점',
+      originalText: '다양한 경험을 통해 성장하였습니다.',
+      goodPoint:
+        '성장 의지가 드러나는 문장 구성입니다.',
+      badPoint:
+        '"다양한 경험"이라는 추상적 표현만으로는 역량을 판단할 수 없습니다. 구체적 경력 사실로 대체해야 합니다.',
+      improvedText:
+        '스타트업 3곳에서 백엔드 풀사이클 개발(기획→설계→배포)을 수행하며 서비스 런칭 5건의 경험을 쌓았습니다.',
     },
   ],
 };
 
-const TAG_META = {
-  kpi:   { label: 'KPI 부족', color: '#f59e0b', bg: '#fef3c7' },
-  vague: { label: '모호한 표현', color: '#a78bfa', bg: '#ede9fe' },
-};
-
-function FitGauge({ score }) {
-  const color = score >= 80 ? '#22c55e' : score >= 65 ? '#60a5fa' : '#f87171';
+/* ── 서브 컴포넌트 ──────────────────────────────── */
+function LoadingOverlay() {
   return (
-    <div className="ra-gauge">
-      <svg viewBox="0 0 120 70" className="ra-gauge__svg">
-        <path d="M10,60 A50,50 0 0,1 110,60" fill="none" stroke="#e2e8f0" strokeWidth="12" strokeLinecap="round" />
-        <path
-          d="M10,60 A50,50 0 0,1 110,60"
-          fill="none" stroke={color} strokeWidth="12" strokeLinecap="round"
-          strokeDasharray={`${157 * score / 100} 157`}
-        />
-      </svg>
-      <div className="ra-gauge__label">
-        <span className="ra-gauge__value" style={{ color }}>{score}</span>
-        <span className="ra-gauge__sub">/ 100</span>
+    <div className="ra-overlay">
+      <div className="ra-overlay__inner">
+        <Loader2 className="ra-overlay__spinner" size={52} />
+        <p className="ra-overlay__msg">AI 면접관이 서류의 문맥과 직무 적합도를 꼼꼼히 분석하고 있습니다.</p>
+        <p className="ra-overlay__sub">잠시만 기다려주세요! (약 30초 소요)</p>
       </div>
     </div>
   );
 }
 
-function FeedbackItem({ item, index }) {
-  const [open, setOpen] = useState(false);
-  const meta = TAG_META[item.tag];
-
-  return (
-    <div className={`ra-fb-item${open ? ' ra-fb-item--open' : ''}`}>
-      <button className="ra-fb-item__head" onClick={() => setOpen(v => !v)}>
-        <span className="ra-fb-item__tag" style={{ color: meta.color, background: meta.bg }}>
-          {meta.label}
-        </span>
-        <span className="ra-fb-item__original">{item.original}</span>
-        {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-      </button>
-      {open && (
-        <div className="ra-fb-item__body">
-          <div className="ra-fb-item__improved">
-            <span className="ra-fb-item__section-label"><TrendingUp size={12} /> AI 개선 문장</span>
-            <p>{item.improved}</p>
-          </div>
-          <div className="ra-fb-item__reason">
-            <span className="ra-fb-item__section-label"><Lightbulb size={12} /> 개선 이유</span>
-            <p>{item.reason}</p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
+/* ── 메인 컴포넌트 ──────────────────────────────── */
 export default function ResumeAnalysisPage() {
-  const [phase, setPhase]       = useState('upload'); // 'upload' | 'result'
-  const [dragging, setDragging] = useState(false);
-  const [file, setFile]         = useState(null);
-  const [job, setJob]           = useState('');
-  const inputRef                = useRef(null);
+  const [phase, setPhase]         = useState('upload'); // 'upload' | 'result'
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError]   = useState(null);
+  const [dragging, setDragging]   = useState(false);
+  const [file, setFile]           = useState(null);
+  const [fileError, setFileError] = useState(null);
+  const [job, setJob]             = useState('');
+  const [result, setResult]       = useState(null);
+  const inputRef                  = useRef(null);
 
-  function handleFile(f) {
+  function validateAndSetFile(f) {
     if (!f) return;
+    const ext = '.' + f.name.split('.').pop().toLowerCase();
+    if (!ALLOWED_EXT.includes(ext)) {
+      setFileError(`'${f.name}' 파일은 업로드할 수 없습니다. PDF, DOC, DOCX 형식만 허용됩니다.`);
+      setFile(null);
+      return;
+    }
+    setFileError(null);
     setFile(f);
   }
 
   function handleDrop(e) {
     e.preventDefault();
     setDragging(false);
-    handleFile(e.dataTransfer.files[0]);
+    validateAndSetFile(e.dataTransfer.files[0]);
   }
 
-  if (phase === 'result') {
-    const r = MOCK_RESULT;
+  async function handleSubmit() {
+    setIsLoading(true);
+    setApiError(null);
+    try {
+      // job → jobCategory
+      const data = await documentApi.analyzeResume({ file, jobCategory: job });
+      setResult(data);
+      setPhase('result');
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        setResult(MOCK_RESULT);
+        setPhase('result');
+      } else {
+        setApiError(err.message || '분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function handleReset() {
+    setPhase('upload');
+    setFile(null);
+    setResult(null);
+    setApiError(null);
+    setJob('');
+    setFileError(null);
+  }
+
+  /* ── 결과 화면 ── */
+  if (phase === 'result' && result) {
     return (
-      <div className="ra">
-        {/* 결과 헤더 */}
-        <div className="ra-result-banner">
-          <div className="ra-result-banner__left">
-            <span className="ra-eyebrow">RESUME ANALYSIS</span>
-            <h1 className="ra-result-banner__title">{r.fileName}</h1>
-            <p className="ra-result-banner__job">분석 직무: <strong>{r.job}</strong></p>
-          </div>
-          <button className="ra-btn ra-btn--outline" onClick={() => { setPhase('upload'); setFile(null); }}>
-            <Upload size={14} /> 다시 업로드
-          </button>
-        </div>
-
-        {/* 직무 적합도 + 키워드 */}
-        <div className="ra-score-row">
-          <div className="ra-card ra-score-card">
-            <p className="ra-card__title"><Gauge size={14} /> 직무 적합도</p>
-            <FitGauge score={r.fitScore} />
-            <p className="ra-score-card__desc">
-              {r.fitScore >= 80 ? '합격 가능성이 높습니다.' : r.fitScore >= 65 ? '보완 후 지원을 추천합니다.' : '이력서 개선이 필요합니다.'}
-            </p>
-          </div>
-
-          <div className="ra-card ra-kw-card">
-            <p className="ra-card__title"><CheckCircle2 size={14} /> 감지된 키워드</p>
-            <div className="ra-kw-list">
-              {r.keywords.map(k => (
-                <span key={k} className="ra-kw ra-kw--hit">{k}</span>
-              ))}
-            </div>
-            <p className="ra-card__title ra-card__title--mt"><AlertCircle size={14} /> 부족한 키워드</p>
-            <div className="ra-kw-list">
-              {r.missing.map(k => (
-                <span key={k} className="ra-kw ra-kw--miss">{k}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* AI 피드백 */}
-        <div className="ra-card">
-          <p className="ra-card__title"><TrendingUp size={14} /> AI 문장 개선 제안 ({r.feedbacks.length}건)</p>
-          <div className="ra-fb-list">
-            {r.feedbacks.map((item, i) => (
-              <FeedbackItem key={i} item={item} index={i} />
-            ))}
-          </div>
-        </div>
-      </div>
+      <DocumentResultView
+        result={result}
+        onReset={handleReset}
+        label="RESUME ANALYSIS"
+        subtitle={`${file?.name ?? '이력서'} · ${job}`}
+      />
     );
   }
 
-  /* 업로드 화면 */
+  /* ── 업로드 화면 ── */
   return (
     <div className="ra">
+      {isLoading && <LoadingOverlay />}
+
       <div className="ra-upload-wrap">
         <span className="ra-eyebrow">RESUME ANALYSIS</span>
         <h1 className="ra-upload__title">이력서 AI 분석</h1>
@@ -185,14 +156,23 @@ export default function ResumeAnalysisPage() {
             type="file"
             accept=".pdf,.doc,.docx"
             style={{ display: 'none' }}
-            onChange={e => handleFile(e.target.files[0])}
+            onChange={e => validateAndSetFile(e.target.files[0])}
           />
+
           {file ? (
-            <div className="ra-dropzone__file">
-              <FileText size={28} />
-              <span>{file.name}</span>
-              <button className="ra-dropzone__remove" onClick={e => { e.stopPropagation(); setFile(null); }}>
-                <X size={14} />
+            <div className="ra-file-card">
+              <div className="ra-file-card__icon">
+                <FileText size={28} />
+              </div>
+              <div className="ra-file-card__info">
+                <p className="ra-file-card__name">{file.name}</p>
+                <p className="ra-file-card__size">{(file.size / 1024).toFixed(1)} KB</p>
+              </div>
+              <button
+                className="ra-file-card__remove"
+                onClick={e => { e.stopPropagation(); setFile(null); setFileError(null); }}
+              >
+                <X size={14} /> 삭제
               </button>
             </div>
           ) : (
@@ -203,6 +183,13 @@ export default function ResumeAnalysisPage() {
             </>
           )}
         </div>
+
+        {/* 확장자 오류 메시지 */}
+        {fileError && (
+          <p className="ra-file-error">
+            <AlertCircle size={13} /> {fileError}
+          </p>
+        )}
 
         {/* 직무 입력 */}
         <div className="ra-field">
@@ -215,11 +202,19 @@ export default function ResumeAnalysisPage() {
           />
         </div>
 
+        {/* API 오류 메시지 */}
+        {apiError && (
+          <p className="ra-api-error">
+            <AlertCircle size={13} /> {apiError}
+          </p>
+        )}
+
         <button
           className="ra-btn ra-btn--primary"
-          disabled={!file || !job.trim()}
-          onClick={() => setPhase('result')}
+          disabled={!file || !job.trim() || isLoading}
+          onClick={handleSubmit}
         >
+          {isLoading ? <Loader2 size={15} className="ra-btn__spinner" /> : <Upload size={15} />}
           AI 분석 시작하기
         </button>
       </div>
