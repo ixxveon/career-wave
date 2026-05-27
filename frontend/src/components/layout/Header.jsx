@@ -1,11 +1,18 @@
 import { useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { serviceMenus } from '../../utils/serviceMenus';
 import logo from '../../assets/logo.svg';
 import './Header.css';
 
 function ComingSoonModal({ onClose }) {
+  const navigate = useNavigate();
+
+  function handleCta() {
+    onClose();
+    navigate('/interview/text');
+  }
+
   return (
     <div className="cw-modal-overlay" onClick={onClose}>
       <div className="cw-modal" onClick={e => e.stopPropagation()}>
@@ -20,7 +27,7 @@ function ComingSoonModal({ onClose }) {
           지금은 <strong>[AI 음성/텍스트 면접]</strong>을 통해<br />
           먼저 연습해 보세요!
         </p>
-        <button className="cw-modal__cta" onClick={onClose}>
+        <button className="cw-modal__cta" onClick={handleCta}>
           텍스트 면접 시작하기 →
         </button>
       </div>
