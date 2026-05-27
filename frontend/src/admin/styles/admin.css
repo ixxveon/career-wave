@@ -96,23 +96,23 @@ button {
 .admin-main {
   margin-left: 220px;
   width: calc(100% - 220px);
-  padding: 28px 36px 34px;
+  padding: clamp(18px, 2.5vw, 36px);
 }
 
 .admin-header {
-  height: 74px;
+  min-height: 74px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 18px;
   margin-bottom: 18px;
 }
 
 .admin-header h2 {
   margin: 0;
-  font-size: 34px;
+  font-size: clamp(26px, 2.4vw, 34px);
   line-height: 1;
   font-weight: 800;
-  letter-spacing: -1px;
   color: #1c3e63;
 }
 
@@ -126,6 +126,9 @@ button {
   display: flex;
   align-items: flex-start;
   gap: 13px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .serviceBadge {
@@ -200,7 +203,7 @@ button {
 
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
   margin-bottom: 18px;
 }
@@ -304,7 +307,7 @@ button {
 
 .layoutGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
   gap: 22px;
   align-items: start;
 }
@@ -321,6 +324,9 @@ button {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  height: calc(100vh - 48px);
+  position: sticky;
+  top: 24px;
 }
 
 /* alert */
@@ -460,7 +466,7 @@ button {
 
 .chartGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.95fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.95fr);
   gap: 18px;
 }
 
@@ -584,8 +590,12 @@ button {
 .adminCardGrid {
   margin-top: 18px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
+}
+
+.adminCardGrid--dashboard {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
 
 .adminCard {
@@ -667,64 +677,10 @@ button {
 .adminIcon.orange { background: #f5ede3; color: #9b7553; }
 .adminIcon.purple { background: #efeaf6; color: #75658d; }
 
-/* AI panel */
-
-.aiPanel {
-  min-height: 352px;
-  border-radius: 16px;
-  padding: 24px 20px;
-  background: linear-gradient(135deg, #29486d, #5d7e9f);
-  color: white;
-}
-
-.aiPanel h3 {
-  margin: 0 0 20px;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.aiItem {
-  min-height: 72px;
-  margin-bottom: 12px;
-  border-radius: 11px;
-  padding: 14px 17px;
-  background: rgba(255, 255, 255, 0.14);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.aiItem > div {
-  min-width: 0;
-}
-
-.aiItem strong {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.aiItem p {
-  margin: 9px 0 0;
-  font-size: 14px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.aiItem button {
-  width: 94px;
-  height: 32px;
-  border-radius: 999px;
-  border: 0;
-  background: white;
-  color: #24496f;
-  font-size: 13px;
-  font-weight: 600;
-}
-
 /* status */
 
 .statusCard {
+  flex: 0 0 auto;
   padding: 22px;
 }
 
@@ -767,8 +723,10 @@ button {
 /* logs */
 
 .logCard {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
   padding: 20px 22px;
-  min-height: 400px;
 }
 
 .logCard .sectionHead {
@@ -1113,10 +1071,12 @@ button {
   .rightColumn {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    height: auto;
+    position: static;
   }
 
-  .aiPanel {
-    grid-row: span 2;
+  .logCard {
+    min-height: 400px;
   }
 
   .chartGrid {
@@ -1158,6 +1118,21 @@ button {
 }
 
 @media (max-width: 900px) {
+  .admin-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .adminProfile {
+    justify-content: flex-start;
+  }
+
+  .sectionHead {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .alertRow {
     grid-template-columns: 28px 54px 74px minmax(0, 1fr);
   }
@@ -1173,21 +1148,58 @@ button {
     gap: 18px;
   }
 
-  .aiItem {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .aiItem button {
-    width: 100%;
-  }
-
   .logRow {
     grid-template-columns: 58px minmax(0, 1fr);
   }
 
   .logRow p {
     grid-column: 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-main {
+    padding: 16px 12px 24px;
+  }
+
+  .adminProfile {
+    align-items: center;
+  }
+
+  .serviceBadge,
+  .admin-logoutButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .kpiCard {
+    align-items: flex-start;
+  }
+
+  .alertRow {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .alertLevel,
+  .alertRow strong,
+  .alertRow p,
+  .alertRow button {
+    grid-column: 2;
+  }
+
+  .alertRow button {
+    width: 100%;
+  }
+
+  .adminTop,
+  .adminBottom {
+    align-items: flex-start;
+  }
+
+  .adminBottom strong,
+  .adminCard button {
+    width: 100%;
+    text-align: left;
   }
 }
 

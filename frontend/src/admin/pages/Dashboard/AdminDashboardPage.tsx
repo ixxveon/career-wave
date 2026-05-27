@@ -128,7 +128,7 @@ export default function AdminDashboardPage() {
             </article>
           </section>
 
-          <section className="adminCardGrid" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+          <section className="adminCardGrid adminCardGrid--dashboard">
             {adminCards.map((card) => (
               <article className="adminCard" key={card.title}>
                 <div className="adminTop">
@@ -146,22 +146,6 @@ export default function AdminDashboardPage() {
         </div>
 
         <aside className="rightColumn">
-          <section className="aiPanel">
-            <h3>AI 관제 어시스턴트</h3>
-            <div className="aiItem">
-              <div><strong>AI 추천 액션</strong><p>욕설 포함 게시글 3건 자동 감지</p></div>
-              <button>조치하기</button>
-            </div>
-            <div className="aiItem">
-              <div><strong>AI 추천 액션</strong><p>결제 실패 유저 증가 추세</p></div>
-              <button>조치하기</button>
-            </div>
-            <div className="aiItem">
-              <div><strong>AI 추천 액션</strong><p>OpenAI API 응답 지연 가능성 감지</p></div>
-              <button>조치하기</button>
-            </div>
-          </section>
-
           <section className="admin-card statusCard">
             <h3>시스템 상태</h3>
             <div className="statusRow"><span />AI API <b>정상</b></div>
