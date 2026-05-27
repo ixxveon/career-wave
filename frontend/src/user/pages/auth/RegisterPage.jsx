@@ -552,7 +552,7 @@ function PersonalRegisterForm() {
   const [terms, setTerms] = useState(initialPersonalTerms);
   const [verified, setVerified] = useState({ userId: false, email: false, phoneSent: false, phoneResent: false, phone: false });
   const passwordMismatch = form.passwordConfirm && form.password !== form.passwordConfirm;
-  const canSubmit = terms.age && terms.service && !passwordMismatch;
+  const canSubmit = terms.age && terms.service && terms.privacy && !passwordMismatch;
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -671,7 +671,7 @@ function CompanyRegisterForm() {
     email: false,
   });
   const passwordMismatch = form.managerPasswordConfirm && form.managerPassword !== form.managerPasswordConfirm;
-  const canSubmit = terms.service && terms.sms && !passwordMismatch;
+  const canSubmit = terms.service && terms.sms && terms.privacy && !passwordMismatch;
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 

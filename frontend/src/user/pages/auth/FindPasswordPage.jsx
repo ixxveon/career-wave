@@ -50,6 +50,17 @@ function FindPasswordPage() {
     setCompanyForm((current) => ({ ...current, [key]: value }));
   };
 
+  const handleReset = () => {
+    if (isCompany) {
+      if (!companyStatus.verified || companyPasswordMismatch) return;
+      setCompanyStatus((current) => ({ ...current, resetDone: true }));
+      return;
+    }
+
+    if (!userStatus.verified || userPasswordMismatch) return;
+    setUserStatus((current) => ({ ...current, resetDone: true }));
+  };
+
   return (
     <section className="cw-auth-page cw-auth-page--recovery">
       <div className="cw-auth-recovery cw-auth-recovery--detail">
@@ -357,11 +368,7 @@ function FindPasswordPage() {
             <button
               className="cw-auth-main-button"
               type="button"
-              onClick={() =>
-                isCompany
-                  ? setCompanyStatus((current) => ({ ...current, resetDone: true }))
-                  : setUserStatus((current) => ({ ...current, resetDone: true }))
-              }
+              onClick={handleReset}
             >
               비밀번호 재설정
             </button>
