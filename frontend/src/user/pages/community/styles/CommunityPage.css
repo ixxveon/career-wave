@@ -29,6 +29,8 @@
 .cm-popular-item {
   display: flex; align-items: center; gap: 12px;
   padding: 10px 0; border-bottom: 1px solid var(--color-line);
+  width: 100%; border-left: 0; border-right: 0; border-top: 0;
+  background: transparent; text-align: left; cursor: pointer;
 }
 .cm-popular-item:last-child { border-bottom: none; padding-bottom: 0; }
 .cm-popular-rank {
@@ -84,6 +86,9 @@
 .cm-list { display: flex; flex-direction: column; gap: 12px; }
 
 .cm-post {
+  display: block;
+  width: 100%;
+  text-align: left;
   padding: 22px 26px;
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border); background: var(--color-surface);
@@ -128,8 +133,10 @@
 }
 
 .cm-post__footer {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  font-size: 12px; color: var(--color-text-secondary);
 }
+.cm-post__footer span { display: inline-flex; align-items: center; gap: 4px; }
 .cm-post__author { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
 .cm-post__meta {
   display: flex; align-items: center; gap: 10px;

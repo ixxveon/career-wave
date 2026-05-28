@@ -1,31 +1,8 @@
+import { useEffect, useState } from 'react';
 import { ArrowLeft, BookOpenCheck, Download, FileText, Lightbulb, Target } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
+import { careerHistoryApi } from '../../api/careerHistoryApi';
 import './CareerDiagnosis.css';
-
-const scoreCards = [
-  { label: '총점', value: 82, note: '최근 기록 기준' },
-  { label: '논리성', value: 80, note: '답변 구조 양호' },
-  { label: '구체성', value: 75, note: '사례 보완 필요' },
-  { label: '기술 정확도', value: 85, note: '개념 이해도 높음' },
-  { label: '직무 적합도', value: 78, note: '프로젝트 연결 필요' },
-];
-
-const questions = [
-  {
-    question: 'JPA를 사용하는 이유는 무엇인가요?',
-    answer: 'JPA는 객체와 테이블을 매핑해서 DB 작업을 쉽게 해줍니다.',
-    feedback: '기본 개념은 맞지만 ORM의 장점과 영속성 컨텍스트를 함께 설명하면 더 좋습니다.',
-    improvement:
-      'JPA를 사용한 이유는 반복적인 SQL 작성 부담을 줄이고 객체 중심으로 데이터를 다루기 위해서입니다. 또한 영속성 컨텍스트를 통해 변경 감지와 1차 캐시를 활용할 수 있어 유지보수성과 생산성을 높일 수 있습니다.',
-  },
-  {
-    question: '프로젝트에서 성능 문제를 해결한 경험을 말해 주세요.',
-    answer: 'API 응답이 느린 부분을 찾아 쿼리를 개선했고 캐시를 적용했습니다.',
-    feedback: '문제 상황, 측정 지표, 개선 결과를 수치로 연결하면 설득력이 높아집니다.',
-    improvement:
-      '주문 목록 API 응답 시간이 2초 이상 걸리는 문제가 있었고, 실행 계획을 확인해 불필요한 조인을 줄였습니다. 이후 Redis 캐시를 적용해 평균 응답 시간을 600ms 수준으로 낮췄습니다.',
-  },
-];
 
 const roadmap = [
   { week: '1주차', title: 'JPA 기본 개념 복습', detail: '영속성 컨텍스트, 변경 감지, 지연 로딩 정리' },
@@ -36,6 +13,38 @@ const roadmap = [
 
 function DiagnosisDetailPage() {
   const { id } = useParams();
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    careerHistoryApi.getHistoryDetail(id)
+      .then((result) => {
+        if (active) setDetail(result);
+      })
+      .catch(() => {
+        if (active) setError('기록 상세 정보를 불러오지 못했습니다.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  if (loading) return <section className="support-page"><div className="empty-state">기록을 불러오는 중입니다.</div></section>;
+  if (error) return <section className="support-page"><div className="empty-state empty-state--error">{error}</div></section>;
+  if (!detail) {
+    return (
+      <section className="support-page">
+        <div className="empty-state">존재하지 않는 취업 준비 기록입니다. <Link to="/career-diagnosis/history">기록 목록으로 이동</Link></div>
+      </section>
+    );
+  }
 
   return (
     <section className="support-page">
@@ -54,16 +63,16 @@ function DiagnosisDetailPage() {
         <div>
           <p className="support-eyebrow">INTERVIEW ANALYSIS</p>
           <h1>면접 결과 상세</h1>
-          <p>점수의 이유와 다음 답변에서 고쳐야 할 방향을 질문별로 확인하세요.</p>
+          <p>{detail.history.companyName} {detail.history.jobTitle} 기록의 답변과 개선 방향을 확인하세요.</p>
         </div>
         <div className="support-hero__summary">
           <span>면접 기록</span>
-          <strong>{id}</strong>
+          <strong>{detail.history.practiceDate}</strong>
         </div>
       </header>
 
       <div className="score-grid score-grid--five">
-        {scoreCards.map((score) => (
+        {detail.scores.map((score) => (
           <article className="score-card" key={score.label}>
             <span>{score.label}</span>
             <strong>{score.value}점</strong>
@@ -78,26 +87,35 @@ function DiagnosisDetailPage() {
           <h2>AI 종합 피드백</h2>
         </div>
         <p>
-          기술 개념은 이해하고 있으나 실제 프로젝트에서 어떻게 적용했는지 설명이 부족합니다. 답변마다
-          문제 상황, 내가 한 행동, 결과 지표를 함께 말하면 직무 적합도가 더 선명하게 전달됩니다.
+          {detail.overallFeedback ?? '아직 생성된 AI 종합 피드백이 없습니다.'}
         </p>
       </section>
 
+      <section className="feedback-panel">
+        <div className="section-title">
+          <FileText size={21} />
+          <h2>전체 면접 스크립트</h2>
+        </div>
+        <pre className="script-preview">{detail.script ?? '저장된 면접 스크립트가 없습니다.'}</pre>
+      </section>
+
       <div className="question-list">
-        {questions.map((item, index) => (
+        {!detail.questions?.length && <div className="empty-state">저장된 질문-답변 매칭 데이터가 없습니다.</div>}
+        {detail.questions?.map((item, index) => (
           <article className="question-card" key={item.question}>
             <h2>
               질문 {index + 1}. {item.question}
             </h2>
 
             <div className="answer-grid">
-              <div className="answer-box">
+              <div className={`answer-box ${item.needsImprovement ? 'answer-box--issue' : ''}`}>
                 <span>내 답변</span>
                 <p>{item.answer}</p>
+                {item.highlightedIssue && <small>개선 필요 표현: {item.highlightedIssue}</small>}
               </div>
               <div className="answer-box answer-box--highlight">
                 <span>AI 피드백</span>
-                <p>{item.feedback}</p>
+                <p>{item.feedback ?? '생성된 AI 피드백이 없습니다.'}</p>
               </div>
             </div>
 

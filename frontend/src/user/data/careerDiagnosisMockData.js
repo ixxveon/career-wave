@@ -1,0 +1,170 @@
+export const mockCareerHistories = [
+  {
+    id: 'backend-20260522',
+    userId: 'user-001',
+    companyName: '사람인',
+    activityType: '기술면접',
+    interviewType: 'VIDEO',
+    jobTitle: '백엔드 개발자',
+    title: '백엔드 개발자 모의면접',
+    practiceDate: '2026-05-22',
+    status: 'COMPLETED',
+    score: 82,
+    previousScore: 76,
+    summary: '기술 개념은 이해하고 있지만 구체적인 프로젝트 사례가 부족합니다.',
+    weakness: 'JPA 영속성 컨텍스트, Spring Security 인증 흐름',
+  },
+  {
+    id: 'frontend-20260520',
+    userId: 'user-001',
+    companyName: '원티드',
+    activityType: '프로젝트면접',
+    interviewType: 'TEXT',
+    jobTitle: '프론트엔드 개발자',
+    title: '프론트엔드 개발자 모의면접',
+    practiceDate: '2026-05-20',
+    status: 'ANALYZED',
+    score: 76,
+    previousScore: 74,
+    summary: 'React 상태관리 설명은 가능하지만 선택 이유와 성능 개선 경험 보완이 필요합니다.',
+    weakness: '상태관리 선택 기준, 렌더링 최적화',
+  },
+  {
+    id: 'personality-20260518',
+    userId: 'user-001',
+    companyName: '카카오페이',
+    activityType: '인성면접',
+    interviewType: 'VIDEO',
+    jobTitle: '백엔드 개발자',
+    title: '백엔드 개발자 인성면접',
+    practiceDate: '2026-05-18',
+    status: 'COMPLETED',
+    score: 79,
+    previousScore: 81,
+    summary: '협업 경험은 좋지만 갈등 상황에서의 행동과 결과가 조금 더 필요합니다.',
+    weakness: 'STAR 답변 구조, 협업 사례 정리',
+  },
+];
+
+export const mockCareerDetails = {
+  'backend-20260522': {
+    history: mockCareerHistories[0],
+    script: 'AI: JPA를 사용하는 이유는 무엇인가요?\n지원자: 객체 중심으로 데이터를 다루기 위해 사용했습니다.\nAI: 성능 문제 해결 경험을 설명해 주세요.',
+    scores: [
+      { label: '종합 점수', value: 82, note: '최근 기록 기준' },
+      { label: '서류 점수', value: 78, note: '자기소개서 분석' },
+      { label: '면접 점수', value: 82, note: '모의면접 분석' },
+      { label: '기술 정확도', value: 85, note: '개념 이해도 높음' },
+      { label: '직무 적합도', value: 78, note: '프로젝트 연결 필요' },
+    ],
+    overallFeedback: '기술 개념은 이해하고 있으나 실제 프로젝트 적용 설명이 부족합니다. 답변마다 문제 상황, 행동, 결과 지표를 함께 제시해 보세요.',
+    questions: [
+      {
+        id: 'q1',
+        question: 'JPA를 사용하는 이유는 무엇인가요?',
+        answer: 'JPA는 객체와 테이블을 매핑해서 DB 작업을 쉽게 해줍니다.',
+        highlightedIssue: 'DB 작업을 쉽게 해줍니다.',
+        feedback: 'ORM의 장점과 영속성 컨텍스트를 함께 설명하면 더 좋습니다.',
+        improvement: '반복적인 SQL 부담을 줄이고 영속성 컨텍스트의 변경 감지와 1차 캐시를 활용해 유지보수성을 높였다고 설명해 보세요.',
+        needsImprovement: true,
+      },
+      {
+        id: 'q2',
+        question: '프로젝트에서 성능 문제를 해결한 경험을 말해 주세요.',
+        answer: 'API 응답이 느린 부분을 찾아 쿼리를 개선했고 캐시를 적용했습니다.',
+        highlightedIssue: '쿼리를 개선했고 캐시를 적용했습니다.',
+        feedback: '측정 지표와 개선 결과를 수치로 연결하면 설득력이 높아집니다.',
+        improvement: '응답 시간 2초 이상 문제를 분석해 쿼리와 Redis 캐시를 적용했고 평균 600ms로 줄였다고 정리해 보세요.',
+        needsImprovement: true,
+      },
+    ],
+  },
+  'frontend-20260520': {
+    history: mockCareerHistories[1],
+    script: 'AI: React 상태 관리 도구를 선택한 기준을 말해 주세요.\n지원자: 전역 상태가 필요해 도입했습니다.',
+    scores: [
+      { label: '종합 점수', value: 76, note: '최근 기록 기준' },
+      { label: '서류 점수', value: 80, note: '자기소개서 분석' },
+      { label: '면접 점수', value: 76, note: '모의면접 분석' },
+    ],
+    overallFeedback: '선택 기준과 렌더링 최적화 결과를 실제 사례로 보강할 필요가 있습니다.',
+    questions: [],
+  },
+};
+
+export const mockCompetencyReport = {
+  id: 'competency-001',
+  userId: 'user-001',
+  documentScore: 78,
+  interviewScore: 82,
+  totalScore: 80,
+  weaknesses: ['답변 구체성', '프로젝트 결과 수치화', '인증 흐름 설명'],
+  priorityTargets: ['JPA', 'Spring Security', 'STAR 답변'],
+  growthTrend: {
+    weekly: [
+      { label: '05.18', score: 79, company: '카카오페이', type: '인성면접' },
+      { label: '05.20', score: 76, company: '원티드', type: '프로젝트면접' },
+      { label: '05.22', score: 82, company: '사람인', type: '기술면접' },
+    ],
+    monthly: [
+      { label: '3월', score: 72, company: '월간 평균', type: '면접 평균' },
+      { label: '4월', score: 76, company: '월간 평균', type: '면접 평균' },
+      { label: '5월', score: 82, company: '월간 평균', type: '면접 평균' },
+    ],
+    yearly: [
+      { label: '2024', score: 68, company: '연간 평균', type: '취업 준비 진단' },
+      { label: '2025', score: 75, company: '연간 평균', type: '취업 준비 진단' },
+      { label: '2026', score: 82, company: '연간 평균', type: '취업 준비 진단' },
+    ],
+  },
+};
+
+export const mockRoadmap = {
+  sufficientData: true,
+  priorityTarget: 'JPA',
+  weaknesses: [
+    { title: 'JPA 영속성 컨텍스트', reason: '최근 기술면접에서 1차 캐시와 변경 감지 설명이 부족했습니다.', level: '우선 학습' },
+    { title: 'Spring Security 인증 흐름', reason: 'JWT 로그인 흐름을 프로젝트 사례로 연결해야 합니다.', level: '핵심 보완' },
+    { title: '프로젝트 문제 해결 과정 설명', reason: '성능 개선 경험을 수치와 결과 중심으로 정리해야 합니다.', level: '답변 개선' },
+  ],
+  steps: [
+    { step: 1, label: '1주차', title: 'JPA 기본 개념 복습', description: '영속성 컨텍스트, 변경 감지, 지연 로딩을 답변용으로 정리합니다.', recommendedActions: ['개념 노트 작성', '1분 답변 녹음'], targetSkill: 'JPA', done: true },
+    { step: 2, label: '2주차', title: 'N+1 문제와 Fetch Join 정리', description: '실제 프로젝트 쿼리 사례로 원인과 개선 결과를 정리합니다.', recommendedActions: ['쿼리 사례 정리'], targetSkill: 'JPA', done: false },
+    { step: 3, label: '3주차', title: 'JWT 로그인 흐름 정리', description: '인증 필터와 토큰 검증 과정을 그림으로 설명합니다.', recommendedActions: ['인증 흐름 도식화'], targetSkill: 'Spring Security', done: false },
+    { step: 4, label: '4주차', title: '프로젝트 경험 STAR 답변 작성', description: '상황, 행동, 결과를 1분 답변으로 압축합니다.', recommendedActions: ['모의 답변 진행'], targetSkill: 'STAR 답변', done: false },
+  ],
+  resources: ['JPA 영속성 컨텍스트 핵심 개념 정리', 'Spring Security + JWT 인증 흐름 실습', '프로젝트 성능 개선 사례 STAR 답변 템플릿'],
+};
+
+export const mockReportPreview = {
+  id: 'report-20260522',
+  userId: 'user-001',
+  reportTitle: '고은별님의 종합 취업 진단 리포트',
+  createdAt: '2026-05-26',
+  fileName: 'career-wave-comprehensive-report-20260526.pdf',
+  status: 'MAPPED',
+  userProfile: { name: '고은별', targetRole: '백엔드 개발자' },
+  documentAnalysisData: {
+    documentScore: 78,
+    contentFeedback: '지원 동기와 프로젝트 성과의 연결이 좋습니다.',
+    keywordFeedback: 'Spring Boot, AWS 경험을 강조해 보세요.',
+    improvementPoints: ['수치 기반 성과 추가', '지원 기업 연결 강화'],
+  },
+  interviewAnalysisData: {
+    interviewScore: 82,
+    attitudeFeedback: '차분한 응답 흐름을 유지했습니다.',
+    answerFeedback: '프로젝트 적용 사례를 더 구체화해야 합니다.',
+    highlightedIssues: ['결과 지표 설명 부족'],
+  },
+  careerHistoryData: {
+    totalPracticeCount: 3,
+    averageScore: 79,
+    priorityTargets: ['JPA', 'Spring Security'],
+    roadmapSummary: '4주 동안 기술 설명과 프로젝트 사례 답변을 집중 보완합니다.',
+  },
+  careerTrend: mockCompetencyReport.growthTrend,
+  strengths: ['기본 개념 이해도', '침착한 답변 흐름'],
+  weaknesses: ['프로젝트 결과 지표 설명'],
+  roadmap: mockRoadmap.steps,
+  pdfTheme: { primaryColor: '#1e3a5f', accentColor: '#5b8def' },
+};

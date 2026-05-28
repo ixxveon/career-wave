@@ -1,5 +1,5 @@
 import { Download, FileCheck2, History, LineChart as LineChartIcon, Settings2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   CartesianGrid,
@@ -10,22 +10,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { careerHistoryApi } from '../../api/careerHistoryApi';
+import { reportExportApi } from '../../api/reportExportApi';
 import './CareerDiagnosis.css';
 
-const records = [
-  { id: 'backend-20260522', label: '백엔드 개발자 모의면접 · 사람인 · 2026.05.22', score: 82 },
-  { id: 'frontend-20260520', label: '프론트엔드 개발자 모의면접 · 원티드 · 2026.05.20', score: 76 },
-  { id: 'personality-20260518', label: '백엔드 개발자 인성면접 · 카카오페이 · 2026.05.18', score: 79 },
-];
-
-const reportTypes = ['면접 결과 리포트', '종합 취업 진단 리포트'];
-
 const optionItems = [
-  { key: 'interview', label: '면접 결과' },
-  { key: 'feedback', label: 'AI 피드백' },
-  { key: 'scores', label: '세부 점수' },
-  { key: 'questions', label: '질문/답변 요약' },
-  { key: 'improvement', label: '개선 방향' },
+  { key: 'document', label: '자기소개서 분석 결과' },
+  { key: 'interview', label: '면접 분석 결과' },
+  { key: 'history', label: '취업 준비 히스토리' },
   { key: 'roadmap', label: '추천 학습 로드맵' },
   { key: 'growth', label: '누적 성장 변화' },
 ];
@@ -36,30 +28,16 @@ const periodTabs = [
   { key: 'yearly', label: '연도별' },
 ];
 
-const chartData = {
-  weekly: [
-    { label: '05.18', score: 79, company: '카카오페이', type: '인성면접' },
-    { label: '05.20', score: 76, company: '원티드', type: '프로젝트면접' },
-    { label: '05.22', score: 82, company: '사람인', type: '기술면접' },
-  ],
-  monthly: [
-    { label: '3월', score: 72, company: '월간 평균', type: '면접 평균' },
-    { label: '4월', score: 76, company: '월간 평균', type: '면접 평균' },
-    { label: '5월', score: 82, company: '월간 평균', type: '면접 평균' },
-  ],
-  yearly: [
-    { label: '2024', score: 68, company: '연간 평균', type: '취업 준비 진단' },
-    { label: '2025', score: 75, company: '연간 평균', type: '취업 준비 진단' },
-    { label: '2026', score: 82, company: '연간 평균', type: '취업 준비 진단' },
-  ],
+const statusLabels = {
+  REQUESTED: '생성 요청',
+  MAPPED: '데이터 매핑',
+  RENDERING: 'PDF 생성 중',
+  COMPLETED: '다운로드 가능',
+  FAILED: '생성 실패',
+  DOWNLOADED: '다운로드 완료',
 };
 
-const growthStats = [
-  { label: '최고 점수', value: '82점' },
-  { label: '최저 점수', value: '76점' },
-  { label: '최근 변화', value: '+6점' },
-  { label: '평균 점수', value: '79점' },
-];
+const fallback = (value) => value || '분석 데이터가 아직 없습니다.';
 
 function GrowthTooltip({ active, payload, label }) {
   if (!active || !payload?.length) {
@@ -80,34 +58,106 @@ function GrowthTooltip({ active, payload, label }) {
 
 function ComprehensiveReportPage() {
   const queryRecord = new URLSearchParams(useLocation().search).get('record');
-  const [selectedRecord, setSelectedRecord] = useState(queryRecord || records[0].id);
-  const [reportType, setReportType] = useState(reportTypes[1]);
+  const [selectedRecord, setSelectedRecord] = useState(queryRecord || '');
   const [period, setPeriod] = useState('weekly');
+  const [records, setRecords] = useState([]);
+  const [preview, setPreview] = useState(null);
+  const [reportStatus, setReportStatus] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState('');
   const [options, setOptions] = useState({
+    document: true,
     interview: true,
-    feedback: true,
-    scores: true,
-    questions: true,
-    improvement: true,
+    history: true,
     roadmap: true,
     growth: true,
   });
 
+  useEffect(() => {
+    let active = true;
+    Promise.all([careerHistoryApi.getHistories(), reportExportApi.getPreview(queryRecord)])
+      .then(([historyRecords, previewData]) => {
+        if (!active) return;
+        setRecords(historyRecords);
+        setSelectedRecord(queryRecord || historyRecords[0]?.id || '');
+        setPreview(previewData);
+        setReportStatus(previewData.status);
+      })
+      .catch(() => {
+        if (active) setError('종합 진단 리포트 미리보기를 불러오지 못했습니다.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [queryRecord]);
+
   const currentRecord = useMemo(
-    () => records.find((record) => record.id === selectedRecord) || records[0],
+    () => records.find((record) => record.id === selectedRecord) || records[0] || null,
     [selectedRecord],
   );
 
   const selectedOptions = optionItems.filter((item) => options[item.key]).map((item) => item.label);
+  const growthStats = useMemo(() => [
+    { label: '서류 점수', value: `${preview?.documentAnalysisData?.documentScore ?? '-'}점` },
+    { label: '면접 점수', value: `${preview?.interviewAnalysisData?.interviewScore ?? '-'}점` },
+    { label: '평균 점수', value: `${preview?.careerHistoryData?.averageScore ?? '-'}점` },
+    { label: '연습 기록', value: `${preview?.careerHistoryData?.totalPracticeCount ?? '-'}회` },
+  ], [preview]);
 
   const toggleOption = (key) => {
     setOptions((current) => ({ ...current, [key]: !current[key] }));
+    setReportStatus('MAPPED');
   };
 
-  const downloadReport = () => {
+  const changeRecord = (recordId) => {
+    setSelectedRecord(recordId);
+    setReportStatus('MAPPED');
+  };
+
+  const createReport = async () => {
+    setWorking(true);
+    setError('');
+    setReportStatus('REQUESTED');
+
+    try {
+      const report = await reportExportApi.createReport({ recordId: selectedRecord, options });
+      setPreview(report);
+      setReportStatus(report.status);
+    } catch {
+      setReportStatus('FAILED');
+      setError('PDF 리포트 생성에 실패했습니다. 다시 생성해 주세요.');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const downloadReport = async () => {
+    if (reportStatus !== 'COMPLETED' && reportStatus !== 'DOWNLOADED') {
+      setError('완료된 리포트만 다운로드할 수 있습니다. 먼저 리포트를 생성해 주세요.');
+      return;
+    }
+
     const printableReport = window.open('', '_blank', 'width=860,height=720');
 
     if (!printableReport) {
+      setError('브라우저에서 다운로드 창이 차단되었습니다. 팝업 허용 후 다시 시도해 주세요.');
+      return;
+    }
+
+    setWorking(true);
+    setError('');
+    try {
+      await reportExportApi.downloadReport(preview.id);
+      setReportStatus('DOWNLOADED');
+    } catch {
+      printableReport.close();
+      setError('PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      setWorking(false);
       return;
     }
 
@@ -126,25 +176,29 @@ function ComprehensiveReportPage() {
           </style>
         </head>
         <body>
-          <h1>고은별님의 백엔드 개발자 면접 준비 리포트</h1>
+          <h1>${preview.reportTitle}</h1>
           <dl>
-            <div><dt>리포트 유형</dt><dd>${reportType}</dd></div>
-            <div><dt>최근 기록</dt><dd>${currentRecord.label}</dd></div>
-            <div><dt>최근 면접 총점</dt><dd>${currentRecord.score}점</dd></div>
-            <div><dt>강점</dt><dd>기본 개념 이해도</dd></div>
-            <div><dt>보완점</dt><dd>프로젝트 적용 사례 설명</dd></div>
-            <div><dt>추천 학습</dt><dd>JPA, Spring Security, 배포 경험 정리</dd></div>
+            <div><dt>생성일</dt><dd>${preview.createdAt}</dd></div>
+            <div><dt>서류 분석 점수</dt><dd>${preview.documentAnalysisData?.documentScore ?? '-'}점</dd></div>
+            <div><dt>면접 분석 점수</dt><dd>${preview.interviewAnalysisData?.interviewScore ?? '-'}점</dd></div>
+            <div><dt>평균 점수</dt><dd>${preview.careerHistoryData?.averageScore ?? '-'}점</dd></div>
+            <div><dt>강점</dt><dd>${preview.strengths?.join(', ') || '분석 데이터가 아직 없습니다.'}</dd></div>
+            <div><dt>보완점</dt><dd>${preview.weaknesses?.join(', ') || '분석 데이터가 아직 없습니다.'}</dd></div>
+            <div><dt>추천 학습</dt><dd>${preview.careerHistoryData?.priorityTargets?.join(', ') || '분석 데이터가 아직 없습니다.'}</dd></div>
             <div><dt>포함 항목</dt><dd>${selectedOptions.join(', ') || '선택 항목 없음'}</dd></div>
           </dl>
           <h2>누적 변화</h2>
-          <p>최근 3회 점수는 79점, 76점, 82점으로 회복세입니다. 반복 약점은 답변 구체성과 프로젝트 결과 지표 설명입니다.</p>
+          <p>${fallback(preview.careerHistoryData?.roadmapSummary)}</p>
         </body>
       </html>
     `);
     printableReport.document.close();
     printableReport.focus();
     printableReport.print();
+    setWorking(false);
   };
+
+  if (loading) return <section className="support-page"><div className="empty-state">리포트 미리보기를 불러오는 중입니다.</div></section>;
 
   return (
     <section className="support-page">
@@ -152,13 +206,31 @@ function ComprehensiveReportPage() {
         <div>
           <p className="support-eyebrow">REPORT EXPORT</p>
           <h1>종합 진단 리포트</h1>
-          <p>면접 결과, AI 피드백, 개선 방향, 학습 로드맵을 한 장의 진단 리포트로 정리하세요.</p>
+          <p>서류 분석, 면접 분석, 취업 히스토리, 학습 로드맵을 한 장의 진단 리포트로 정리하세요.</p>
         </div>
-        <button className="support-button support-button--primary" type="button" onClick={downloadReport}>
-          <Download size={16} />
-          PDF 다운로드
-        </button>
+        <div className="report-actions">
+          <span className="report-status">{statusLabels[reportStatus] ?? '미생성'}</span>
+          <button
+            className="support-button support-button--secondary"
+            type="button"
+            onClick={createReport}
+            disabled={working || reportStatus === 'COMPLETED' || reportStatus === 'DOWNLOADED'}
+          >
+            {working ? '처리 중...' : '리포트 생성'}
+          </button>
+          <button
+            className="support-button support-button--primary"
+            type="button"
+            onClick={downloadReport}
+            disabled={working || (reportStatus !== 'COMPLETED' && reportStatus !== 'DOWNLOADED')}
+          >
+            <Download size={16} />
+            PDF 다운로드
+          </button>
+        </div>
       </header>
+
+      {error && <div className="empty-state empty-state--error">{error}</div>}
 
       <div className="report-layout">
         <section className="report-panel">
@@ -167,20 +239,12 @@ function ComprehensiveReportPage() {
             <h2>리포트 생성 옵션</h2>
           </div>
 
-          <div className="segment-control" aria-label="리포트 유형 선택">
-            {reportTypes.map((type) => (
-              <button className={reportType === type ? 'is-active' : ''} key={type} type="button" onClick={() => setReportType(type)}>
-                {type}
-              </button>
-            ))}
-          </div>
-
           <label className="select-field">
-            <span>최근 기록 선택</span>
-            <select value={selectedRecord} onChange={(event) => setSelectedRecord(event.target.value)}>
+            <span>기준 취업 준비 기록 선택</span>
+            <select value={selectedRecord} onChange={(event) => changeRecord(event.target.value)}>
               {records.map((record) => (
                 <option key={record.id} value={record.id}>
-                  {record.label}
+                  {record.title} · {record.companyName} · {record.practiceDate}
                 </option>
               ))}
             </select>
@@ -201,37 +265,84 @@ function ComprehensiveReportPage() {
             <FileCheck2 size={21} />
             <h2>리포트 미리보기</h2>
           </div>
-          <div className="preview-title">고은별님의 백엔드 개발자 면접 준비 리포트</div>
+          <div className="preview-title">{fallback(preview?.reportTitle)}</div>
           <dl>
             <div>
-              <dt>리포트 유형</dt>
-              <dd>{reportType}</dd>
+              <dt>생성일</dt>
+              <dd>{fallback(preview?.createdAt)}</dd>
             </div>
             <div>
-              <dt>준비 기업</dt>
-              <dd>사람인, 원티드, 카카오페이</dd>
+              <dt>대상 직무</dt>
+              <dd>{fallback(preview?.userProfile?.targetRole)}</dd>
             </div>
             <div>
               <dt>최근 면접 총점</dt>
-              <dd>{currentRecord.score}점</dd>
+              <dd>{currentRecord ? `${currentRecord.score}점` : '기록 없음'}</dd>
             </div>
             <div>
               <dt>강점</dt>
-              <dd>기본 개념 이해도</dd>
+              <dd>{fallback(preview?.strengths?.join(', '))}</dd>
             </div>
             <div>
               <dt>보완점</dt>
-              <dd>프로젝트 적용 사례 설명</dd>
+              <dd>{fallback(preview?.weaknesses?.join(', '))}</dd>
             </div>
             <div>
               <dt>추천 학습</dt>
-              <dd>JPA, Spring Security, 배포 경험 정리</dd>
+              <dd>{fallback(preview?.careerHistoryData?.priorityTargets?.join(', '))}</dd>
             </div>
           </dl>
         </section>
       </div>
 
-      <section className="generated-history">
+      <section className="report-domain-grid" aria-label="통합 분석 결과">
+        {options.document && (
+          <article className="feedback-panel">
+            <h2>자기소개서 분석</h2>
+            <strong>{preview?.documentAnalysisData?.documentScore ?? '-'}점</strong>
+            <p>{fallback(preview?.documentAnalysisData?.contentFeedback)}</p>
+            <p>{fallback(preview?.documentAnalysisData?.keywordFeedback)}</p>
+          </article>
+        )}
+        {options.interview && (
+          <article className="feedback-panel">
+            <h2>면접 분석</h2>
+            <strong>{preview?.interviewAnalysisData?.interviewScore ?? '-'}점</strong>
+            <p>{fallback(preview?.interviewAnalysisData?.attitudeFeedback)}</p>
+            <p>{fallback(preview?.interviewAnalysisData?.answerFeedback)}</p>
+          </article>
+        )}
+        {options.history && (
+          <article className="feedback-panel">
+            <h2>취업 히스토리</h2>
+            <strong>{preview?.careerHistoryData?.totalPracticeCount ?? '-'}회</strong>
+            <p>평균 점수: {preview?.careerHistoryData?.averageScore ?? '-'}점</p>
+            <p>{fallback(preview?.careerHistoryData?.roadmapSummary)}</p>
+          </article>
+        )}
+      </section>
+
+      {options.roadmap && (
+        <section className="feedback-panel">
+          <div className="section-title">
+            <Settings2 size={21} />
+            <h2>맞춤형 로드맵 요약</h2>
+          </div>
+          <p>{fallback(preview?.careerHistoryData?.roadmapSummary)}</p>
+          <div className="roadmap-list roadmap-list--report">
+            {preview?.roadmap?.slice(0, 4).map((step) => (
+              <article key={step.step}>
+                <span>{step.label}</span>
+                <strong>{step.title}</strong>
+                <p>{step.targetSkill}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {options.growth && (
+        <section className="generated-history">
         <div className="growth-summary__header">
           <div className="section-title">
             <LineChartIcon size={21} />
@@ -253,7 +364,7 @@ function ComprehensiveReportPage() {
 
         <div className="growth-chart" aria-label="진단 리포트 누적 성장 변화 선 그래프">
           <ResponsiveContainer height="100%" width="100%">
-            <LineChart data={chartData[period]} margin={{ top: 10, right: 22, left: -18, bottom: 0 }}>
+            <LineChart data={preview?.careerTrend?.[period] ?? []} margin={{ top: 10, right: 22, left: -18, bottom: 0 }}>
               <CartesianGrid stroke="#e5edf7" strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="label" tickLine={false} />
               <YAxis domain={[60, 100]} tickLine={false} width={42} />
@@ -269,7 +380,7 @@ function ComprehensiveReportPage() {
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <p>최근 기록 기준으로 점수는 회복세이며, 반복 약점은 답변 구체성과 프로젝트 적용 사례 설명입니다.</p>
+        <p>{fallback(preview?.careerHistoryData?.roadmapSummary)}</p>
         <div className="growth-summary__grid growth-summary__grid--compact">
           {growthStats.map((stat) => (
             <article key={stat.label}>
@@ -278,7 +389,8 @@ function ComprehensiveReportPage() {
             </article>
           ))}
         </div>
-      </section>
+        </section>
+      )}
 
       <section className="generated-history">
         <div className="section-title">
@@ -286,8 +398,7 @@ function ComprehensiveReportPage() {
           <h2>생성 이력</h2>
         </div>
         <ul>
-          <li>2026.05.22 · 백엔드 개발자 모의면접 종합 진단 리포트</li>
-          <li>2026.05.20 · 프론트엔드 개발자 면접 결과 리포트</li>
+          <li>{preview?.createdAt ?? '-'} · {fallback(preview?.reportTitle)} · {statusLabels[reportStatus] ?? '미생성'}</li>
         </ul>
       </section>
     </section>
