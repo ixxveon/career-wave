@@ -9,6 +9,7 @@ export interface JobNotice {
   companySize: string;
   salary: string;
   deadline: string;
+  postedAt?: string;
   tags: string[];
   source: string;
   recommended: boolean;

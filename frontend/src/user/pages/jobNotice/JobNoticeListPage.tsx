@@ -37,7 +37,6 @@ const FILTER_FIELD_BY_LABEL = {
 } as const;
 
 type FilterLabel = keyof typeof FILTER_FIELD_BY_LABEL;
-type FilterField = (typeof FILTER_FIELD_BY_LABEL)[FilterLabel];
 type Filters = Record<FilterLabel, string>;
 type Bookmarks = Record<number, boolean>;
 type Period = (typeof PERIODS)[number];
@@ -84,6 +83,7 @@ const JOBS: JobNotice[] = [
     companySize: '스타트업',
     salary: '협의',
     deadline: '상시',
+    postedAt: '2026-05-28',
     tags: ['프롬프트 엔지니어', '개발', 'AI 컨설턴트'],
     source: '직행수집',
     recommended: true,
@@ -102,6 +102,7 @@ const JOBS: JobNotice[] = [
     companySize: '스타트업',
     salary: '협의',
     deadline: '상시',
+    postedAt: '2026-05-27',
     tags: ['테스트자동화', '이슈트래킹', 'QA프로세스'],
     source: '그룹바이',
     recommended: false,
@@ -120,6 +121,7 @@ const JOBS: JobNotice[] = [
     companySize: '중견',
     salary: '협의',
     deadline: '상시',
+    postedAt: '2026-05-24',
     tags: ['AI어시스턴트', '아바타메타버스', 'AI모델연구'],
     source: '그룹바이',
     recommended: false,
@@ -138,6 +140,7 @@ const JOBS: JobNotice[] = [
     companySize: '스타트업',
     salary: '협의',
     deadline: '상시',
+    postedAt: '2026-05-20',
     tags: ['자율주행설계', '로봇'],
     source: '그룹바이',
     recommended: false,
@@ -156,6 +159,7 @@ const JOBS: JobNotice[] = [
     companySize: '중견',
     salary: '협의',
     deadline: '상시',
+    postedAt: '2026-05-12',
     tags: ['인프라엔지니어', '쿠버네티스', '오픈소스운영'],
     source: '그룹바이',
     recommended: false,
@@ -174,6 +178,7 @@ const JOBS: JobNotice[] = [
     companySize: '중견',
     salary: '협의',
     deadline: '상시',
+    postedAt: '2026-04-28',
     tags: ['공동구매', '커머스', '인플루언서'],
     source: '그룹바이',
     recommended: false,
@@ -191,11 +196,90 @@ function createInitialBookmarks(): Bookmarks {
   return Object.fromEntries(JOBS.map((job) => [job.id, job.bookmarked]));
 }
 
-function filterJobs(jobs: JobNotice[], filters: Filters) {
+function normalizeText(value: string) {
+  return value.toLowerCase().replace(/\s+/g, '');
+}
+
+function parseExperienceRange(value: string): [number, number] | null {
+  if (value.includes('경력무관')) return [0, 99];
+  if (value.includes('신입')) return [0, 0];
+
+  const numbers = value.match(/\d+/g)?.map(Number);
+  if (!numbers?.length) return null;
+  if (value.includes('이상')) return [numbers[0], 99];
+
+  return [numbers[0], numbers[1] ?? numbers[0]];
+}
+
+function rangesOverlap(left: [number, number], right: [number, number]) {
+  return left[0] <= right[1] && right[0] <= left[1];
+}
+
+function matchesFilter(job: JobNotice, label: FilterLabel, selectedValue: string) {
+  if (selectedValue === DEFAULT_FILTER_VALUE) return true;
+
+  if (label === '경력') {
+    const selectedRange = parseExperienceRange(selectedValue);
+    const jobRange = parseExperienceRange(job.exp);
+    return Boolean(selectedRange && jobRange && rangesOverlap(selectedRange, jobRange));
+  }
+
+  if (label === '채용 유형') {
+    const value = normalizeText(job.employment);
+    if (selectedValue === '인턴') return value.includes('인턴');
+    return value.includes(normalizeText(selectedValue));
+  }
+
+  const field = FILTER_FIELD_BY_LABEL[label];
+  return normalizeText(job[field]).includes(normalizeText(selectedValue));
+}
+
+function matchesSearch(job: JobNotice, searchQuery: string) {
+  const keyword = normalizeText(searchQuery.trim());
+  if (!keyword) return true;
+
+  const targetText = [
+    job.company,
+    job.title,
+    job.jobType,
+    job.exp,
+    job.employment,
+    job.location,
+    job.companySize,
+    job.source,
+    ...job.tags,
+  ].join(' ');
+
+  return normalizeText(targetText).includes(keyword);
+}
+
+function getReferenceDate(jobs: JobNotice[]) {
+  const timestamps = jobs
+    .map((job) => (job.postedAt ? new Date(job.postedAt).getTime() : NaN))
+    .filter((timestamp) => Number.isFinite(timestamp));
+
+  return new Date(Math.max(...timestamps));
+}
+
+function matchesPeriod(job: JobNotice, period: Period, referenceDate: Date) {
+  if (period === '기간 전체') return true;
+  if (!job.postedAt) return false;
+
+  const postedDate = new Date(job.postedAt);
+  const diffDays = Math.floor((referenceDate.getTime() - postedDate.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (period === '오늘') return diffDays === 0;
+  if (period === '7일') return diffDays >= 0 && diffDays <= 7;
+  return diffDays >= 0 && diffDays <= 30;
+}
+
+function filterJobs(jobs: JobNotice[], filters: Filters, period: Period, searchQuery: string) {
+  const referenceDate = getReferenceDate(jobs);
+
   return jobs.filter((job) => (
-    (Object.entries(FILTER_FIELD_BY_LABEL) as Array<[FilterLabel, FilterField]>).every(([label, field]) => (
-      filters[label] === DEFAULT_FILTER_VALUE || job[field] === filters[label]
-    ))
+    matchesPeriod(job, period, referenceDate)
+    && matchesSearch(job, searchQuery)
+    && (Object.keys(FILTER_FIELD_BY_LABEL) as FilterLabel[]).every((label) => matchesFilter(job, label, filters[label]))
   ));
 }
 
@@ -207,13 +291,29 @@ function sortJobs(jobs: JobNotice[], sort: SortOption) {
   });
 }
 
-function BannerSearch() {
+function BannerSearch({ onSearch }: { onSearch: (searchText: string) => void }) {
+  const [searchText, setSearchText] = useState('');
+
+  function submitSearch(value = searchText) {
+    onSearch(value.trim());
+  }
+
   return (
     <div className="jn-banner__search">
       <label className="jn-hero-search">
         <span className="sr-only">채용 공고 검색</span>
-        <input type="search" placeholder="회사명, 공고명, 기술 스택으로 검색하세요" />
-        <button type="button" aria-label="검색">
+        <input
+          type="search"
+          value={searchText}
+          placeholder="회사명, 공고명, 기술 스택으로 검색하세요"
+          onChange={(event) => setSearchText(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              submitSearch();
+            }
+          }}
+        />
+        <button type="button" aria-label="검색" onClick={() => submitSearch()}>
           <Search size={21} />
         </button>
       </label>
@@ -221,7 +321,16 @@ function BannerSearch() {
       <div className="jn-popular-tags" aria-label="인기 검색어">
         <span>인기 검색어</span>
         {POPULAR_SEARCH_TAGS.map((tag) => (
-          <button type="button" key={tag}>{tag}</button>
+          <button
+            type="button"
+            key={tag}
+            onClick={() => {
+              setSearchText(tag);
+              submitSearch(tag);
+            }}
+          >
+            {tag}
+          </button>
         ))}
       </div>
     </div>
@@ -265,7 +374,20 @@ interface JobCardProps {
 
 function JobCard({ job, bookmarked, onBookmark, onClick }: JobCardProps) {
   return (
-    <article className={`jn-card${job.recommended ? ' jn-card--featured' : ''}`} onClick={onClick}>
+    <article
+      className={`jn-card${job.recommended ? ' jn-card--featured' : ''}`}
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.target instanceof HTMLElement && event.target.closest('button')) return;
+
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+    >
       <div className="jn-card__top">
         <div className="jn-card__logo">{job.company[0]}</div>
         <div className="jn-card__company">
@@ -416,6 +538,7 @@ export default function JobNoticeListPage() {
   const [selectedJob, setSelectedJob] = useState<JobNotice | null>(null);
   const [filters, setFilters] = useState(createInitialFilters);
   const [bookmarks, setBookmarks] = useState(createInitialBookmarks);
+  const [searchQuery, setSearchQuery] = useState('');
 
   function updateFilter(label: FilterLabel, value: string) {
     setFilters((current) => ({ ...current, [label]: value }));
@@ -434,12 +557,16 @@ export default function JobNoticeListPage() {
     setSortOpen(false);
   }
 
-  const filteredJobs = sortJobs(filterJobs(JOBS, filters), sort);
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const filteredJobs = sortJobs(filterJobs(JOBS, filters, period, searchQuery), sort);
 
   return (
     <div className="jn">
       <section className="jn-banner">
-        <BannerSearch />
+        <BannerSearch onSearch={setSearchQuery} />
         <BannerStats />
       </section>
 
@@ -494,7 +621,7 @@ export default function JobNoticeListPage() {
         </main>
       </div>
 
-      <button type="button" className="jn-scroll-top" aria-label="위로 이동">
+      <button type="button" className="jn-scroll-top" aria-label="위로 이동" onClick={scrollToTop}>
         <CalendarDays size={18} />
       </button>
 
