@@ -340,9 +340,15 @@ export default function PaymentPage() {
                       <td>{p.paidAt}</td>
                       <td>₩{p.amount.toLocaleString()}</td>
                       <td>
-                        <span className={`statusBadge ${payStatusCls[p.status]}`}>
-                          {payStatusLabel[p.status]}
-                        </span>
+                        {p.refundStatus ? (
+                          <span className={`statusBadge ${refundStatusCls[p.refundStatus]}`}>
+                            {refundStatusLabel[p.refundStatus]}
+                          </span>
+                        ) : (
+                          <span className={`statusBadge ${payStatusCls[p.status]}`}>
+                            {payStatusLabel[p.status]}
+                          </span>
+                        )}
                       </td>
                       <td>
                         <button
