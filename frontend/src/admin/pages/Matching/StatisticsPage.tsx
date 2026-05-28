@@ -148,7 +148,9 @@ export default function StatisticsPage() {
                   {lineYLabels.map(lbl => <span key={lbl}>{lbl}</span>)}
                 </div>
                 <div className="statsLineChartBox">
-                  <svg viewBox={`0 0 ${LINE_VBW} ${LINE_VBH}`} preserveAspectRatio="none" className="statsLineSvg">
+                  <svg viewBox={`0 0 ${LINE_VBW} ${LINE_VBH}`} preserveAspectRatio="none" className="statsLineSvg"
+                    role="img" aria-label="월별 매출 추이 차트">
+                    <title>월별 매출 추이</title>
                     <defs>
                       <linearGradient id="statGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%"   stopColor="#24496f" stopOpacity="0.16" />
@@ -236,7 +238,9 @@ export default function StatisticsPage() {
                   {subYLabels.map(lbl => <span key={lbl}>{lbl}</span>)}
                 </div>
                 <div className="statsLineChartBox">
-                  <svg viewBox={`0 0 ${LINE_VBW} ${LINE_VBH}`} preserveAspectRatio="none" className="statsLineSvg">
+                  <svg viewBox={`0 0 ${LINE_VBW} ${LINE_VBH}`} preserveAspectRatio="none" className="statsLineSvg"
+                    role="img" aria-label="구독자 변동 추이 차트">
+                    <title>구독자 변동 추이</title>
                     <defs>
                       <linearGradient id="subNewGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%"   stopColor="#3d8e6a" stopOpacity="0.15" />
