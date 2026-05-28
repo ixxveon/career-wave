@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lightbulb, Mic, ThumbsUp, ThumbsDown, Wand2 } from 'lucide-react';
+import { Lightbulb, Mic, ThumbsUp, ThumbsDown, Wand2, Star, CheckCircle2, XCircle, Hash, PenLine } from 'lucide-react';
 import './styles/DocumentResultView.css';
 
 /* ── 헬퍼 ──────────────────────────────────────── */
@@ -42,13 +42,14 @@ function ScoreBar({ label, value, color }) {
 
 /* ── 메인 컴포넌트 ──────────────────────────────── */
 /**
- * @param {{ result: object, onReset: () => void, label: string, subtitle?: string }} props
- *   result  — 백엔드 JSON ({ documentId, evaluation, feedbackDetails })
- *   onReset — 다시 작성하기 핸들러
- *   label   — eyebrow 텍스트 ('COVER LETTER AI' | 'RESUME ANALYSIS')
- *   subtitle — 배너 부제 (ex. '카카오 · 백엔드 개발자')
+ * @param {{ result: object, onReset: () => void, label: string, subtitle?: string, typeSelector?: ReactNode }} props
+ *   result       — 백엔드 JSON ({ documentId, evaluation, feedbackDetails })
+ *   onReset      — 다시 작성하기 핸들러
+ *   label        — eyebrow 텍스트 ('COVER LETTER AI' | 'RESUME ANALYSIS')
+ *   subtitle     — 배너 부제 (ex. '카카오 · 백엔드 개발자')
+ *   typeSelector — 서류 유형 탭 슬롯 (DocumentReportPage에서 주입)
  */
-export default function DocumentResultView({ result, onReset, label, subtitle }) {
+export default function DocumentResultView({ result, onReset, label, subtitle, typeSelector, onRevise }) {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState(0);
 
@@ -72,6 +73,10 @@ export default function DocumentResultView({ result, onReset, label, subtitle })
       {/* ── 배너 ── */}
       <div className="dr-banner">
         <div>
+          {/* 서류 유형 탭 슬롯 — DocumentReportPage에서 주입, 일반 분석 페이지는 null */}
+          {typeSelector && (
+            <div className="dr-type-selector">{typeSelector}</div>
+          )}
           <span className="dr-eyebrow">{label}</span>
           <h1 className="dr-banner__title">AI 종합 진단 리포트</h1>
           {subtitle
@@ -79,7 +84,14 @@ export default function DocumentResultView({ result, onReset, label, subtitle })
             : <p className="dr-banner__sub">{feedbackDetails.length}개 항목 분석 완료</p>
           }
         </div>
-        <button className="dr-btn--outline" onClick={onReset}>다시 작성하기</button>
+        <div className="dr-banner__actions">
+          {onRevise && (
+            <button className="dr-btn--revise" onClick={() => onRevise(feedbackDetails)}>
+              <PenLine size={14} /> 수정 후 재분석
+            </button>
+          )}
+          <button className="dr-btn--outline" onClick={onReset}>다시 작성하기</button>
+        </div>
       </div>
 
       {/* ── 점수 요약 ── */}
@@ -145,25 +157,90 @@ export default function DocumentResultView({ result, onReset, label, subtitle })
             <p className="dr-bad-card__text">{fd.badPoint}</p>
           </div>
 
-          <div className="dr-card dr-improved">
-            <p className="dr-improved__label"><Wand2 size={13} /> 이렇게 고쳐보세요</p>
-            <div className="dr-improved__before">
-              <span className="dr-improved__badge dr-improved__badge--before">Before</span>
-              <p>{fd.originalText}</p>
+          {/* STAR 기법 분석 — starAnalysis 필드가 있을 때만 노출 (자소서 전용) */}
+          {fd.starAnalysis && (
+            <div className="dr-card dr-star-card">
+              <p className="dr-star-card__label"><Star size={13} /> STAR 기법 분석</p>
+              <div className="dr-star-grid">
+                {[
+                  { key: 's', name: 'S', ko: '상황' },
+                  { key: 't', name: 'T', ko: '과제' },
+                  { key: 'a', name: 'A', ko: '행동' },
+                  { key: 'r', name: 'R', ko: '결과' },
+                ].map(({ key, name, ko }) => {
+                  const item = fd.starAnalysis[key];
+                  return (
+                    <div key={key} className={`dr-star-row${item.ok ? ' dr-star-row--ok' : ' dr-star-row--bad'}`}>
+                      <span className="dr-star-row__badge">{name}</span>
+                      <span className="dr-star-row__ko">{ko}</span>
+                      <p className="dr-star-row__comment">{item.comment}</p>
+                      {item.ok
+                        ? <CheckCircle2 size={14} className="dr-star-row__icon" />
+                        : <XCircle     size={14} className="dr-star-row__icon" />
+                      }
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="dr-improved__after">
-              <span className="dr-improved__badge dr-improved__badge--after">After</span>
-              <p>{fd.improvedText}</p>
+          )}
+
+          {/* 수치화·정량화 체크 — quantAnalysis 필드가 있을 때만 노출 (자소서 전용) */}
+          {fd.quantAnalysis && (
+            <div className="dr-card dr-quant-card">
+              <p className="dr-quant-card__label"><Hash size={13} /> 수치화·정량화 체크</p>
+              <div className="dr-star-grid">
+                {[
+                  { key: 'numbers',   ko: '수치/퍼센트' },
+                  { key: 'timeframe', ko: '기간/빈도'   },
+                  { key: 'scale',     ko: '규모/범위'   },
+                  { key: 'impact',    ko: '성과 임팩트' },
+                ].map(({ key, ko }) => {
+                  const item = fd.quantAnalysis[key];
+                  return (
+                    <div key={key} className={`dr-star-row${item.ok ? ' dr-star-row--ok' : ' dr-star-row--bad'}`}>
+                      <span className="dr-star-row__badge dr-star-row__badge--quant">#</span>
+                      <span className="dr-star-row__ko">{ko}</span>
+                      <p className="dr-star-row__comment">{item.comment}</p>
+                      {item.ok
+                        ? <CheckCircle2 size={14} className="dr-star-row__icon" />
+                        : <XCircle     size={14} className="dr-star-row__icon" />
+                      }
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
+
 
         </div>
+      </div>
+
+      {/* ── 개선 제안 (전폭) ── */}
+      <div className="dr-card dr-improved">
+        <p className="dr-improved__label"><Wand2 size={13} /> 이렇게 고쳐보세요</p>
+        <div className="dr-improved__panels">
+          <div className="dr-improved__before">
+            <span className="dr-improved__badge dr-improved__badge--before">Before</span>
+            <p>{fd.originalText}</p>
+          </div>
+          <div className="dr-improved__after">
+            <span className="dr-improved__badge dr-improved__badge--after">After</span>
+            <p>{fd.improvedText}</p>
+          </div>
+        </div>
+        {onRevise && (
+          <button className="dr-revise-cta" onClick={() => onRevise(feedbackDetails)}>
+            <PenLine size={14} /> 이 수정안 기반으로 재작성하기
+          </button>
+        )}
       </div>
 
       {/* ── CTA ── */}
       <button className="dr-cta" onClick={() => navigate('/interview/text')}>
         <Mic size={20} />
-        이 서류 기반으로 AI 실시간 음성 면접 시작하기
+        이 서류 기반으로 AI 텍스트 · 음성 면접 시작하기
       </button>
 
     </div>

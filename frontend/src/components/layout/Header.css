@@ -289,12 +289,10 @@
 
   .cw-header__nav {
     justify-content: flex-start;
-    overflow-x: auto;
-    /* 스크롤바 숨기기 */
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    /* clip: 시각적으로만 자르고 스크롤 컨테이너를 만들지 않음
+       → overflow-y가 visible 유지되어 서브메뉴 드롭다운이 잘리지 않음 */
+    overflow-x: clip;
   }
-  .cw-header__nav::-webkit-scrollbar { display: none; }
 }
 
 /* ── 좁은 화면: 계정 버튼 일부 숨김 ─────────── */
