@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  Bell,
-  HelpCircle,
-  MessageSquare,
-  AlertCircle,
-  Sparkles,
-} from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import '../../styles/admin.css';
 import '../../styles/CustomerService.css';
 
@@ -387,40 +381,20 @@ export default function CustomerServicePage() {
       </header>
 
       {/* KPI */}
-      <div className="kpiGrid">
-        <div className="kpiCard kpi-blue">
-          <div className="kpiContent">
-            <p>공지사항</p>
-            <h3>{notices.length}</h3>
-            <span>등록된 공지</span>
-          </div>
-          <div className="kpiIcon kpi-blue"><Bell size={24} /></div>
-        </div>
-        <div className="kpiCard kpi-green">
-          <div className="kpiContent">
-            <p>FAQ</p>
-            <h3>{faqs.length}</h3>
-            <span>등록된 항목</span>
-          </div>
-          <div className="kpiIcon kpi-green"><HelpCircle size={24} /></div>
-        </div>
-        <div className="kpiCard kpi-yellow">
-          <div className="kpiContent">
-            <p>미답변 문의</p>
-            <h3>{pendingCount}</h3>
-            <span>즉시 처리 필요</span>
-          </div>
-          <div className="kpiIcon kpi-yellow"><AlertCircle size={24} /></div>
-        </div>
-        <div className="kpiCard kpi-purple">
-          <div className="kpiContent">
-            <p>답변 진행 중</p>
-            <h3>{answeringCount}</h3>
-            <span>처리 중</span>
-          </div>
-          <div className="kpiIcon kpi-purple"><MessageSquare size={24} /></div>
-        </div>
-      </div>
+      <section className="memberSummaryGrid" style={{ marginBottom: 18 }}>
+        <article className="memberSummaryCard">
+          <p>공지사항</p><h3>{notices.length}</h3><span>등록된 공지</span>
+        </article>
+        <article className="memberSummaryCard">
+          <p>FAQ</p><h3>{faqs.length}</h3><span>등록된 항목</span>
+        </article>
+        <article className="memberSummaryCard">
+          <p>미답변 문의</p><h3>{pendingCount}</h3><span>즉시 처리 필요</span>
+        </article>
+        <article className="memberSummaryCard">
+          <p>답변 진행 중</p><h3>{answeringCount}</h3><span>처리 중</span>
+        </article>
+      </section>
 
       {/* Tab Bar */}
       <div className="csTabBar" style={{ marginBottom: 24 }}>

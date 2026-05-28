@@ -199,6 +199,12 @@
   border-radius: 8px;
 }
 
+/* modalInfoGrid 안에서 block override 방지 */
+.modalInfoGrid .csInqCatBadge {
+  display: inline-flex;
+  width: fit-content;
+}
+
 /* ── 1:1 문의 상세 모달 ──────────────────────────────────────── */
 
 .csInqContent {
