@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Building2, CheckCircle, Clock, UserPlus, UserX, Users, XCircle } from 'lucide-react';
 import '../../styles/admin.css';
+import '../../styles/UserManagement.css';
 
 type MemberTab = 'user' | 'company';
 
