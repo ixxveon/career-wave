@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import '../../styles/admin.css';
+import '../../styles/Payment.css';
 
 type PayTab = '결제 내역' | '구독 현황' | '크레딧 관리' | '정산 리포트';
 

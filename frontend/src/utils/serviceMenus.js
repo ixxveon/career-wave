@@ -4,7 +4,6 @@ export const serviceMenus = [
     href: '/jobs',
     children: [
       { label: '채용공고 목록', href: '/jobs' },
-      { label: '공고 등록', href: '/jobs/create' },
     ],
   },
   {
