@@ -1,11 +1,12 @@
+import { Activity, Bot, CreditCard, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/admin.css';
 
 const kpis = [
-  { icon: 'USER', title: '오늘 신규 가입자', value: '128', rate: '▲12%', desc: '어제 대비 +14명', theme: 'blue' },
-  { icon: 'LIVE', title: '실시간 접속자', value: '1,042', rate: '▲8%', desc: '최근 7일 평균 이상', theme: 'green' },
-  { icon: 'AI', title: 'AI 면접 세션', value: '37', rate: '▼3%', desc: '평균 응답 안정', theme: 'purple', down: true },
-  { icon: 'PAY', title: '오늘 매출', value: '₩4.4M', rate: '▲18%', desc: '구독 결제 증가', theme: 'yellow' },
+  { Icon: Users, title: '오늘 신규 가입자', value: '128', desc: '어제 대비 +14명', theme: 'kpi-blue' },
+  { Icon: Activity, title: '실시간 접속자', value: '1,042', desc: '최근 7일 평균 이상', theme: 'kpi-green' },
+  { Icon: Bot, title: 'AI 면접 세션', value: '37', desc: '평균 응답 안정', theme: 'kpi-purple' },
+  { Icon: CreditCard, title: '오늘 매출', value: '₩4.4M', desc: '구독 결제 증가', theme: 'kpi-yellow' },
 ];
 
 const alerts = [
@@ -64,13 +65,14 @@ export default function AdminDashboardPage() {
 
       <section className="kpiGrid">
         {kpis.map((item) => (
-          <article className="kpiCard" key={item.title}>
-            <div className={`kpiIcon ${item.theme}`}>{item.icon}</div>
-            <div>
+          <article className={`kpiCard ${item.theme}`} key={item.title}>
+            <div className="kpiContent">
               <p>{item.title}</p>
               <h3>{item.value}</h3>
-              <b className={item.down ? 'down' : ''}>{item.rate}</b>
               <span>{item.desc}</span>
+            </div>
+            <div className={`kpiIcon ${item.theme}`}>
+              <item.Icon size={26} strokeWidth={2.3} />
             </div>
           </article>
         ))}
