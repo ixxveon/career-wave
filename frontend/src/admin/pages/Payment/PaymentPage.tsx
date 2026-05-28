@@ -16,13 +16,14 @@ import '../../styles/Payment.css';
 // ── Types (ERD-aligned) ───────────────────────────────────────
 type PayTab = '결제 내역' | '구독 현황' | '정산 리포트';
 
-type PayStatus = 'COMPLETED' | 'REFUND_REQUESTED' | 'REFUNDED' | 'FAILED';
+type PayStatus = 'COMPLETED' | 'REFUND_REQUESTED' | 'REFUNDED' | 'REFUND_REJECTED' | 'FAILED';
 type SubStatus = 'ACTIVE' | 'RENEWAL_SCHEDULED' | 'CANCEL_SCHEDULED' | 'AT_RISK';
 
 const payStatusLabel: Record<PayStatus, string> = {
   COMPLETED:        '결제 완료',
   REFUND_REQUESTED: '환불 요청',
   REFUNDED:         '환불 완료',
+  REFUND_REJECTED:  '환불 거절',
   FAILED:           '결제 실패',
 };
 
@@ -30,6 +31,7 @@ const payStatusCls: Record<PayStatus, string> = {
   COMPLETED:        'normal',
   REFUND_REQUESTED: 'pending',
   REFUNDED:         'dismissed',
+  REFUND_REJECTED:  'blinded',
   FAILED:           'blinded',
 };
 
@@ -165,6 +167,13 @@ export default function PaymentPage() {
     setSelected(null);
   };
 
+  const processReject = (id: string) => {
+    setPayments((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status: 'REFUND_REJECTED' as PayStatus } : p)),
+    );
+    setSelected(null);
+  };
+
   // ── Tab 2 derived ─────────────────────────────────────────────
   const filteredSubs = dummySubs.filter(
     (s) => !subStatusFilter || s.status === subStatusFilter,
@@ -252,6 +261,7 @@ export default function PaymentPage() {
               <option value="COMPLETED">결제 완료</option>
               <option value="REFUND_REQUESTED">환불 요청</option>
               <option value="REFUNDED">환불 완료</option>
+              <option value="REFUND_REJECTED">환불 거절</option>
               <option value="FAILED">결제 실패</option>
             </select>
           </section>
@@ -509,6 +519,14 @@ export default function PaymentPage() {
             <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
               {selected.status === 'REFUND_REQUESTED' && refundCheck?.eligible && (
                 <button onClick={() => processRefund(selected.id)}>환불 처리 확정</button>
+              )}
+              {selected.status === 'REFUND_REQUESTED' && refundCheck && !refundCheck.eligible && (
+                <button
+                  className="tableBtn--danger"
+                  onClick={() => processReject(selected.id)}
+                >
+                  환불 거절 처리
+                </button>
               )}
               <button onClick={() => setSelected(null)}>닫기</button>
             </div>
