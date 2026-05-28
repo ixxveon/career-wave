@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Apple, BadgeCheck, Building2, CheckCircle2, ShieldCheck, UserRound } from 'lucide-react';
+import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import { Apple, BadgeCheck, Building2, CheckCircle2, FileText, ShieldCheck, UserRound } from 'lucide-react';
 import './AuthPage.css';
 
 const socialProviders = [
@@ -50,6 +50,11 @@ const initialCompanyForm = {
   managerEmail: '',
   managerEmailCode: '',
 };
+
+type PersonalForm = typeof initialPersonalForm;
+type CompanyForm = typeof initialCompanyForm;
+type PersonalFormKey = keyof PersonalForm;
+type CompanyFormKey = keyof CompanyForm;
 
 const initialTerms = {
   service: false,
@@ -275,7 +280,41 @@ const companyTermDetails = {
   ],
 };
 
-function Field({ label, children, required = false, wide = false }) {
+type FieldProps = {
+  label: string;
+  children: ReactNode;
+  required?: boolean;
+  wide?: boolean;
+};
+
+type TextInputProps = {
+  type?: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+};
+
+type SelectInputProps = {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  options: string[];
+};
+
+type StatusPillProps = {
+  active: boolean;
+  children: ReactNode;
+};
+
+type AuthButtonGroupProps = {
+  input: ReactNode;
+  buttonLabel: string;
+  onClick: () => void;
+  secondButtonLabel?: string;
+  onSecondClick?: () => void;
+};
+
+function Field({ label, children, required = false, wide = false }: FieldProps) {
   return (
     <label className={wide ? 'cw-register-field cw-register-field--wide' : 'cw-register-field'}>
       <span className="cw-register-label">
@@ -287,11 +326,11 @@ function Field({ label, children, required = false, wide = false }) {
   );
 }
 
-function TextInput({ type = 'text', value, onChange, placeholder }) {
+function TextInput({ type = 'text', value, onChange, placeholder }: TextInputProps) {
   return <input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />;
 }
 
-function SelectInput({ value, onChange, placeholder, options }) {
+function SelectInput({ value, onChange, placeholder, options }: SelectInputProps) {
   return (
     <select value={value} onChange={(event) => onChange(event.target.value)}>
       <option value="">{placeholder}</option>
@@ -304,7 +343,7 @@ function SelectInput({ value, onChange, placeholder, options }) {
   );
 }
 
-function StatusPill({ active, children }) {
+function StatusPill({ active, children }: StatusPillProps) {
   if (!active) return null;
 
   return (
@@ -361,7 +400,7 @@ function RegisterTerms({ values, onChange, marketingLabel = '선택 마케팅 �
   );
 }
 
-function AuthButtonGroup({ input, buttonLabel, onClick, secondButtonLabel, onSecondClick }) {
+function AuthButtonGroup({ input, buttonLabel, onClick, secondButtonLabel, onSecondClick }: AuthButtonGroupProps) {
   return (
     <div className={secondButtonLabel ? 'cw-register-inline cw-register-inline--triple' : 'cw-register-inline'}>
       {input}
@@ -554,7 +593,7 @@ function PersonalRegisterForm() {
   const passwordMismatch = form.passwordConfirm && form.password !== form.passwordConfirm;
   const canSubmit = terms.age && terms.service && terms.privacy && !passwordMismatch;
 
-  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const update = (key: PersonalFormKey, value: PersonalForm[PersonalFormKey]) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
     <form className="cw-register-form">
@@ -658,8 +697,11 @@ function PersonalRegisterForm() {
 }
 
 function CompanyRegisterForm() {
-  const [form, setForm] = useState(initialCompanyForm);
+  const [form, setForm] = useState<CompanyForm>(initialCompanyForm);
   const [terms, setTerms] = useState(initialCompanyTerms);
+  const [employmentCertificate, setEmploymentCertificate] = useState<File | null>(null);
+  const [isSubmitGuideOpen, setIsSubmitGuideOpen] = useState(false);
+  const employmentCertificateInputRef = useRef<HTMLInputElement | null>(null);
   const [verified, setVerified] = useState({
     company: false,
     managerId: false,
@@ -673,11 +715,16 @@ function CompanyRegisterForm() {
   const passwordMismatch = form.managerPasswordConfirm && form.managerPassword !== form.managerPasswordConfirm;
   const canSubmit = terms.service && terms.sms && terms.privacy && !passwordMismatch;
 
-  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const update = (key: CompanyFormKey, value: CompanyForm[CompanyFormKey]) => setForm((current) => ({ ...current, [key]: value }));
+  const handleCertificateChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0] ?? null;
+    setEmploymentCertificate(selectedFile);
+  };
 
   return (
-    <form className="cw-register-form">
-      <section className="cw-register-section">
+    <>
+      <form className="cw-register-form">
+        <section className="cw-register-section">
         <div className="cw-register-section__title">
           <Building2 size={22} />
           <div>
@@ -713,9 +760,9 @@ function CompanyRegisterForm() {
             <span>파견/도급/채용대행 기업입니다.</span>
           </label>
         </div>
-      </section>
+        </section>
 
-      <section className="cw-register-section">
+        <section className="cw-register-section">
         <div className="cw-register-section__title">
           <ShieldCheck size={22} />
           <div>
@@ -737,9 +784,9 @@ function CompanyRegisterForm() {
           />
           <StatusPill active={verified.company}>기업인증 완료</StatusPill>
         </Field>
-      </section>
+        </section>
 
-      <section className="cw-register-section">
+        <section className="cw-register-section">
         <div className="cw-register-section__title">
           <UserRound size={22} />
           <div>
@@ -846,10 +893,42 @@ function CompanyRegisterForm() {
             <StatusPill active={verified.email}>이메일 인증이 완료되었습니다.</StatusPill>
             <StatusPill active={verified.emailResent}>인증번호를 다시 전송했습니다.</StatusPill>
           </Field>
+          <Field label="재직증명서 업로드" required wide>
+            <div className="cw-register-upload">
+              <div className="cw-register-upload__hint">
+                <FileText size={18} />
+                <p>인사담당자 재직 확인을 위한 PDF 파일을 업로드해 주세요.</p>
+              </div>
+              <div className="cw-register-inline">
+                <input
+                  className="cw-register-upload__display"
+                  placeholder="선택된 PDF 파일이 없습니다."
+                  readOnly
+                  type="text"
+                  value={employmentCertificate?.name ?? ''}
+                />
+                <button
+                  className="cw-register-sub-button"
+                  onClick={() => employmentCertificateInputRef.current?.click()}
+                  type="button"
+                >
+                  PDF 파일 선택
+                </button>
+              </div>
+              <input
+                accept=".pdf,application/pdf"
+                className="cw-register-upload__input"
+                id="company-employment-certificate"
+                ref={employmentCertificateInputRef}
+                onChange={handleCertificateChange}
+                type="file"
+              />
+            </div>
+          </Field>
         </div>
-      </section>
+        </section>
 
-      <section className="cw-register-section">
+        <section className="cw-register-section">
         <div className="cw-register-section__title">
           <BadgeCheck size={22} />
           <div>
@@ -858,12 +937,27 @@ function CompanyRegisterForm() {
           </div>
         </div>
         <CompanyTerms values={terms} onChange={setTerms} />
-      </section>
+        </section>
 
-      <button className="cw-register-submit" disabled={!canSubmit} type="button">
-        기업회원 가입하기
-      </button>
-    </form>
+        <button className="cw-register-submit" disabled={!canSubmit} onClick={() => setIsSubmitGuideOpen(true)} type="button">
+          기업회원 가입하기
+        </button>
+      </form>
+
+      {isSubmitGuideOpen && (
+        <div aria-labelledby="company-submit-guide-title" aria-modal="true" className="cw-register-modal" role="dialog">
+          <button aria-label="모달 닫기" className="cw-register-modal__backdrop" onClick={() => setIsSubmitGuideOpen(false)} type="button" />
+          <div className="cw-register-modal__dialog">
+            <h3 id="company-submit-guide-title">가입 신청이 접수되었습니다.</h3>
+            <p>제출해주신 기업 정보와 재직증명서를 검토한 후 기업회원 가입이 승인됩니다.</p>
+            <p>심사는 영업일 기준 2~3일 정도 소요될 수 있으며, 승인 결과는 입력하신 담당자 이메일로 안내드릴 예정입니다.</p>
+            <button className="cw-register-submit cw-register-modal__confirm" onClick={() => setIsSubmitGuideOpen(false)} type="button">
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
