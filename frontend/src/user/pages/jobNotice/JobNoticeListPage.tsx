@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
+  ArrowUp,
   Bookmark,
   BookmarkCheck,
-  CalendarDays,
   ChevronDown,
   Eye,
   FileText,
@@ -258,7 +258,7 @@ function getReferenceDate(jobs: JobNotice[]) {
     .map((job) => (job.postedAt ? new Date(job.postedAt).getTime() : NaN))
     .filter((timestamp) => Number.isFinite(timestamp));
 
-  return new Date(Math.max(...timestamps));
+  return timestamps.length > 0 ? new Date(Math.max(...timestamps)) : new Date();
 }
 
 function matchesPeriod(job: JobNotice, period: Period, referenceDate: Date) {
@@ -622,7 +622,7 @@ export default function JobNoticeListPage() {
       </div>
 
       <button type="button" className="jn-scroll-top" aria-label="위로 이동" onClick={scrollToTop}>
-        <CalendarDays size={18} />
+        <ArrowUp size={18} />
       </button>
 
       <JobNoticeDetail
