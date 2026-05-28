@@ -2792,7 +2792,7 @@ a.cw-chart-filter {
 .cw-billing-payment-list__head,
 .cw-billing-payment-item {
   display: grid;
-  grid-template-columns: 1.8fr 1fr 0.9fr 0.9fr;
+  grid-template-columns: 1.9fr 1fr 0.9fr;
   gap: 12px;
   align-items: center;
   padding: 16px 18px;
@@ -2825,17 +2825,6 @@ a.cw-chart-filter {
 
 .cw-billing-payment-item__cell strong {
   font-size: 15px;
-  font-weight: 700;
-}
-
-.cw-billing-payment-item__cell.is-action button {
-  min-height: 38px;
-  padding: 0 14px;
-  border: 1px solid #dbe7f6;
-  border-radius: 12px;
-  color: #2f6fce;
-  background: #f8fbff;
-  font-size: 13px;
   font-weight: 700;
 }
 
@@ -2916,9 +2905,5 @@ a.cw-chart-filter {
 
   .cw-billing-payment-item__cell small {
     display: block;
-  }
-
-  .cw-billing-payment-item__cell.is-action button {
-    width: 100%;
   }
 }

@@ -1,7 +1,3 @@
-﻿import { UserRound } from 'lucide-react';
-import DomainShell from '../../../components/common/DomainShell';
-import { domainCards } from '../../../utils/domainData';
-
 function ProfilePage() {
   return (
     <div className="cw-page cw-profile">

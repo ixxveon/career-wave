@@ -3,17 +3,64 @@ import { Link } from 'react-router-dom';
 import { CalendarClock, ChevronLeft, ChevronRight, Info, Sparkles } from 'lucide-react';
 import './MyPage.css';
 
-const initialSubscriptions = [
+type MockMode = 'empty' | 'filled';
+
+type SubscriptionItem = {
+  id: 'document-coaching' | 'interview';
+  name: string;
+  isActive: boolean;
+  autoBilling: boolean;
+  cancelScheduled: boolean;
+  nextBillingDate: string | null;
+  billingCycle: string;
+  monthlyPrice: string;
+  startedAt: string | null;
+  description: string;
+  href: string;
+};
+
+type PaymentHistoryItem = {
+  id: number;
+  date: string;
+  name: string;
+  amount: string;
+};
+
+type SubscriptionCardProps = {
+  subscription: SubscriptionItem;
+  onCancel: (subscription: SubscriptionItem) => void;
+};
+
+type RecommendationCardProps = {
+  subscription: SubscriptionItem;
+};
+
+// Mock view switches
+// - subscriptionMockMode
+//   - 'empty': 이용중인 구독 상품이 없는 화면
+//   - 'filled': 구독중인 상품 카드와 추천 상품 카드가 함께 보이는 화면
+// - paymentHistoryMockMode
+//   - 'empty': 신규 사용자처럼 최근 결제 내역이 없는 화면
+//   - 'filled': 최근 결제 내역 리스트가 보이는 화면
+const mockModes: { subscription: MockMode; paymentHistory: MockMode } = {
+  subscription: 'empty',
+  paymentHistory: 'filled',
+};
+
+const subscriptionMockMode = mockModes.subscription;
+const paymentHistoryMockMode = mockModes.paymentHistory;
+
+const subscriptionItems: SubscriptionItem[] = [
   {
     id: 'document-coaching',
     name: '서류 AI 코칭 플랜',
-    isActive: false,
+    isActive: true,
     autoBilling: false,
     cancelScheduled: false,
-    nextBillingDate: null,
+    nextBillingDate: '2026.06.27',
     billingCycle: '매월 정기 결제',
     monthlyPrice: '₩29,000',
-    startedAt: null,
+    startedAt: '2026.05.27',
     description: '자기소개서와 이력서를 더 빠르게 다듬고 싶은 분께 추천하는 서류 코칭 구독 상품이에요.',
     href: '/mypage/subscription',
   },
@@ -31,13 +78,19 @@ const initialSubscriptions = [
     href: '/mypage/subscription',
   },
 ];
+const initialSubscriptions =
+  subscriptionMockMode === 'filled'
+    ? subscriptionItems
+    : subscriptionItems.map((subscription) => ({
+        ...subscription,
+        isActive: false,
+        autoBilling: false,
+        cancelScheduled: false,
+        nextBillingDate: null,
+        startedAt: null,
+      }));
 
-// Mock view switch
-// - 'empty': 신규 사용자처럼 최근 결제 내역이 없는 화면
-// - 'filled': 최근 결제 내역이 있는 화면
-const paymentHistoryMockMode = 'filled';
-
-const paymentHistoryItems = [
+const paymentHistoryItems: PaymentHistoryItem[] = [
   {
     id: 1,
     date: '2026.05.27',
@@ -102,12 +155,12 @@ const noticeItems = [
   '결제 및 취소/환불 관련 상세 문의는 고객센터를 통해 접수할 수 있습니다.',
 ];
 
-function parsePaymentDate(value) {
+function parsePaymentDate(value: string): Date {
   const [year, month, day] = value.split('.').map(Number);
   return new Date(year, month - 1, day);
 }
 
-function isWithinPeriod(date, period) {
+function isWithinPeriod(date: string, period: string): boolean {
   if (period === '기간 설정') return true;
 
   const candidate = parsePaymentDate(date);
@@ -130,7 +183,7 @@ function isWithinPeriod(date, period) {
   }
 }
 
-function SubscriptionCard({ subscription, onCancel }) {
+function SubscriptionCard({ subscription, onCancel }: SubscriptionCardProps) {
   return (
     <article className="cw-billing-subscription-card">
       <div className="cw-billing-subscription-card__top">
@@ -185,7 +238,7 @@ function SubscriptionCard({ subscription, onCancel }) {
   );
 }
 
-function RecommendationCard({ subscription }) {
+function RecommendationCard({ subscription }: RecommendationCardProps) {
   return (
     <article className="cw-billing-recommend-card">
       <span>추천 상품</span>
@@ -197,10 +250,10 @@ function RecommendationCard({ subscription }) {
 }
 
 function PaymentHistoryPage() {
-  const [subscriptionState, setSubscriptionState] = useState(initialSubscriptions);
+  const [subscriptionState, setSubscriptionState] = useState<SubscriptionItem[]>(initialSubscriptions);
   const [periodFilter, setPeriodFilter] = useState('최근 6개월');
   const [page, setPage] = useState(1);
-  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState<SubscriptionItem | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
 
   const activeSubscriptions = useMemo(
@@ -312,7 +365,7 @@ function PaymentHistoryPage() {
             <div className="cw-subscription-section__head">
               <div>
                 <h3>최근 결제 내역</h3>
-                <p>기간별 결제 이력을 간단하게 확인하고 현금영수증 발급 화면으로 이동할 수 있어요.</p>
+                <p>기간별 결제 이력을 간단하게 확인할 수 있어요.</p>
               </div>
             </div>
 
@@ -343,7 +396,6 @@ function PaymentHistoryPage() {
                   <span>상품명</span>
                   <span>결제일</span>
                   <span>결제 금액</span>
-                  <span>현금영수증 발급</span>
                 </div>
 
                 {visiblePayments.map((payment) => (
@@ -359,10 +411,6 @@ function PaymentHistoryPage() {
                     <div className="cw-billing-payment-item__cell">
                       <small>결제 금액</small>
                       <strong>{payment.amount}</strong>
-                    </div>
-                    <div className="cw-billing-payment-item__cell is-action">
-                      <small>현금영수증 발급</small>
-                      <button type="button">보기</button>
                     </div>
                   </article>
                 ))}
