@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Building2, Search, Star, MapPin, BriefcaseBusiness } from 'lucide-react';
-import './DashboardPage.css';
+import './MyPage.css';
 
 function FavoriteCompanyPage() {
     const favoriteCompanies = [

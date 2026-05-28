@@ -1,11 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
-import FavoriteCompanyPage from '@/user/pages/dashboard/FavoriteCompanyPage';
+import FavoriteCompanyPage from '@/user/pages/mypage/FavoriteCompanyPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
 import JobSeekerDashboardPage from '../user/pages/dashboard/JobSeekerDashboardPage';
 import CompanyDashboardPage from '../user/pages/dashboard/CompanyDashboardPage';
-import UserMyPage from '../user/pages/dashboard/UserMyPage';
+import UserMyPage from '../user/pages/mypage/UserMyPage';
+import SubscriptionPage from '../user/pages/mypage/SubscriptionPage';
+import PaymentHistoryPage from '../user/pages/mypage/PaymentHistoryPage';
 
 
 import LoginPage from '../user/pages/auth/LoginPage';
@@ -49,6 +51,9 @@ import MentorPage from '../user/pages/community/MentorPage';
 import PricingPage from '../user/pages/billing/PricingPage';
 import PaymentPage from '../user/pages/billing/PaymentPage';
 import CompanyProductPage from '../user/pages/billing/CompanyProductPage';
+import CheckoutPage from '../user/pages/billing/CheckoutPage';
+import PaymentSuccessPage from '../user/pages/billing/PaymentSuccessPage';
+import PaymentFailPage from '../user/pages/billing/PaymentFailPage';
 
 import NotFoundPage from '../user/pages/common/NotFoundPage';
 
@@ -75,6 +80,8 @@ function AppRoutes() {
         <Route path="dashboard/company" element={<CompanyDashboardPage />} />
         <Route path="mypage" element={<UserMyPage />} />
         <Route path="mypage/favorites" element={<FavoriteCompanyPage />} />
+        <Route path="mypage/subscription" element={<SubscriptionPage />} />
+        <Route path="mypage/payment-history" element={<PaymentHistoryPage />} />
 
         <Route path="auth">
           <Route index element={<Navigate to="/auth/login" replace />} />
@@ -139,6 +146,11 @@ function AppRoutes() {
           <Route index element={<Navigate to="/billing/pricing" replace />} />
           <Route path="pricing" element={<PricingPage />} />
           <Route path="payment" element={<PaymentPage />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="success" element={<PaymentSuccessPage />} />
+          <Route path="fail" element={<PaymentFailPage />} />
+          <Route path="document-coaching/plans" element={<PaymentPage />} />
+          <Route path="interview/plans" element={<PaymentPage />} />
           <Route path="company-products" element={<CompanyProductPage />} />
         </Route>
 
