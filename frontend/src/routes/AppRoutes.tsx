@@ -1,13 +1,19 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
+import FavoriteCompanyPage from '@/user/pages/dashboard/FavoriteCompanyPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
 import JobSeekerDashboardPage from '../user/pages/dashboard/JobSeekerDashboardPage';
 import CompanyDashboardPage from '../user/pages/dashboard/CompanyDashboardPage';
+import UserMyPage from '../user/pages/dashboard/UserMyPage';
+
 
 import LoginPage from '../user/pages/auth/LoginPage';
+import FindAccountPage from '../user/pages/auth/FindAccountPage';
 import RegisterPage from '../user/pages/auth/RegisterPage';
 import RegisterVerifyPage from '../user/pages/auth/RegisterVerifyPage';
+import FindIdPage from '../user/pages/auth/FindIdPage';
+import FindPasswordPage from '../user/pages/auth/FindPasswordPage';
 import ProfilePage from '../user/pages/auth/ProfilePage';
 
 import CompanyProfilePage from '../user/pages/company/CompanyProfilePage';
@@ -16,7 +22,6 @@ import HrManagerPage from '../user/pages/company/HrManagerPage';
 import JobNoticeListPage from '../user/pages/jobNotice/JobNoticeListPage';
 import JobNoticeDetailPage from '../user/pages/jobNotice/JobNoticeDetailPage';
 import JobNoticeCreatePage from '../user/pages/jobNotice/JobNoticeCreatePage';
-import JobScrapingPage from '../user/pages/jobNotice/JobScrapingPage';
 
 import ApplicationStatusPage from '../user/pages/application/ApplicationStatusPage';
 import ApplicantManagementPage from '../user/pages/application/ApplicantManagementPage';
@@ -26,7 +31,8 @@ import ResumeAnalysisPage from '../user/pages/documentAnalysis/ResumeAnalysisPag
 import CoverLetterAnalysisPage from '../user/pages/documentAnalysis/CoverLetterAnalysisPage';
 
 import InterviewHomePage from '../user/pages/interview/InterviewHomePage';
-import InterviewRoomPage from '../user/pages/interview/InterviewRoomPage';
+import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
+import MediaInterviewPage from '../user/pages/interview/MediaInterviewPage';
 import InterviewReportPage from '../user/pages/interview/InterviewReportPage';
 
 import DiagnosisHistoryPage from '../user/pages/careerDiagnosis/DiagnosisHistoryPage';
@@ -36,6 +42,7 @@ import ComprehensiveReportPage from '../user/pages/careerDiagnosis/Comprehensive
 
 import CommunityPage from '../user/pages/community/CommunityPage';
 import PostDetailPage from '../user/pages/community/PostDetailPage';
+import PostCreatePage from '../user/pages/community/PostCreatePage';
 import MentorPage from '../user/pages/community/MentorPage';
 
 import PricingPage from '../user/pages/billing/PricingPage';
@@ -57,7 +64,6 @@ import MatchingPage from '../admin/pages/Matching/MatchingPage';
 import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
 import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
-import OperationSettingsPage from '../admin/pages/Settings/OperationSettingsPage';
 
 function AppRoutes() {
   return (
@@ -66,10 +72,15 @@ function AppRoutes() {
       <Route element={<MainLayout />}>
         <Route index element={<JobSeekerDashboardPage />} />
         <Route path="dashboard/company" element={<CompanyDashboardPage />} />
+        <Route path="mypage" element={<UserMyPage />} />
+        <Route path="mypage/favorites" element={<FavoriteCompanyPage />} />
 
         <Route path="auth">
           <Route index element={<Navigate to="/auth/login" replace />} />
           <Route path="login" element={<LoginPage />} />
+          <Route path="find-account" element={<FindAccountPage />} />
+          <Route path="find-id/:memberType" element={<FindIdPage />} />
+          <Route path="find-password/:memberType" element={<FindPasswordPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register/verify" element={<RegisterVerifyPage />} />
           <Route path="profile" element={<ProfilePage />} />
@@ -84,7 +95,6 @@ function AppRoutes() {
         <Route path="jobs">
           <Route index element={<JobNoticeListPage />} />
           <Route path="create" element={<JobNoticeCreatePage />} />
-          <Route path="scraping" element={<JobScrapingPage />} />
           <Route path=":jobId" element={<JobNoticeDetailPage />} />
         </Route>
 
@@ -103,9 +113,9 @@ function AppRoutes() {
 
         <Route path="interview">
           <Route index element={<InterviewHomePage />} />
-          <Route path="text"   element={<InterviewRoomPage mode="text" />} />
-          <Route path="media"  element={<InterviewRoomPage mode="video" />} />
           <Route path="report" element={<InterviewReportPage />} />
+          <Route path="text" element={<TextInterviewPage />} />
+          <Route path="media" element={<MediaInterviewPage />} />
         </Route>
 
         <Route path="career-diagnosis">
@@ -118,6 +128,7 @@ function AppRoutes() {
 
         <Route path="community">
           <Route index element={<CommunityPage />} />
+          <Route path="posts/create" element={<PostCreatePage />} />
           <Route path="posts/:postId" element={<PostDetailPage />} />
           <Route path="mentor" element={<MentorPage />} />
         </Route>
@@ -148,7 +159,6 @@ function AppRoutes() {
           <Route path="ai"        element={<AiMetricsPage />} />
           <Route path="scraping"  element={<ScrapingPage />} />
           <Route path="log"       element={<AuditLogPage />} />
-          <Route path="settings"  element={<OperationSettingsPage />} />
         </Route>
       </Route>
     </Routes>

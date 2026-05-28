@@ -1,27 +1,219 @@
-﻿import { MessageSquareText, PenLine, Sparkles } from 'lucide-react';
-import ServicePage from '../../../components/common/ServicePage';
+import { useState } from 'react';
+import {
+  Plus, X, Send,
+  AlertCircle, Loader2, Building2, Briefcase,
+} from 'lucide-react';
+import { documentApi } from '../../api/documentApi';
+import DocumentResultView from './DocumentResultView';
+import './styles/CoverLetterAnalysisPage.css';
 
-function CoverLetterAnalysisPage() {
+/* ── Mock (백엔드 미완성 시 폴백) ────────────────────── */
+const MOCK_RESULT = {
+  documentId: 1,
+  evaluation: {
+    totalScore: 78,
+    jobFitnessScore: 85,
+    techStackScore: 75,
+    quantifiedScore: 60,
+    logicalScore: 82,
+    overallReview:
+      '직무 연관성과 논리 구조는 양호하나, 성과의 정량적 수치화가 전반적으로 부족합니다. 구체적인 숫자와 기술 스택을 명시하면 서류 경쟁력이 크게 올라갈 것입니다.',
+  },
+  feedbackDetails: [
+    {
+      sectionNumber: 1,
+      question: '지원 동기 및 입사 후 포부를 서술하시오.',
+      originalText:
+        '저는 카카오의 기술력과 문화에 매력을 느껴 지원하였습니다. 입사 후에는 열심히 노력하겠습니다.',
+      goodPoint:
+        '개발에 대한 열정과 팀원들과 소통하려는 태도가 본문에 잘 드러나 있습니다.',
+      badPoint:
+        '"열심히", "성공적"이라는 표현이 너무 추상적입니다. 어떤 성과(수치)를 냈는지 알 수 없습니다.',
+      improvedText:
+        '카카오의 대규모 트래픽 처리 아키텍처(Kakao Pub/Sub, Krane)를 기술 블로그로 꾸준히 학습해왔습니다. 입사 후 3년 내 핵심 API 서버 개발을 담당하고, 이후 아키텍처 설계까지 성장하는 것을 목표로 합니다.',
+    },
+    {
+      sectionNumber: 2,
+      question: '본인의 강점을 바탕으로 팀에 기여한 경험을 서술하시오.',
+      originalText:
+        '저는 꼼꼼한 성격으로 코드 리뷰를 꼼꼼하게 하였으며, 팀 분위기를 좋게 만들었습니다.',
+      goodPoint:
+        'STAR 구조와 수치 기반 성과 서술이 잘 작성되어 있습니다. 역할과 기여가 명확히 드러납니다.',
+      badPoint:
+        '강점(코드 리뷰)과 결과(팀 분위기)의 인과관계가 불명확합니다. 성과를 수치로 표현하면 신뢰도가 높아집니다.',
+      improvedText:
+        '코드 리뷰 문화 정착을 주도하여 PR 사이클을 2일 → 6시간으로 단축, 릴리즈 주기 30% 개선에 기여하였습니다.',
+    },
+  ],
+};
+
+/* ── 서브 컴포넌트 ─────────────────────────────────── */
+function LoadingOverlay() {
   return (
-    <ServicePage
-      eyebrow="COVER LETTER"
-      title="자기소개서 첨삭"
-      description="문항 의도에 맞는 답변 구조와 표현을 점검하고, 더 설득력 있는 자기소개서로 다듬습니다."
-      primaryAction="자소서 첨삭 시작"
-      secondaryAction="작성 가이드 보기"
-      metrics={[
-        { value: '4개', label: '문항별 구조 분석' },
-        { value: 'AI', label: '표현 개선 제안' },
-        { value: '즉시', label: '피드백 제공' },
-      ]}
-      cards={[
-        { icon: MessageSquareText, title: '문항 의도 파악', text: '지원 문항이 요구하는 경험과 역량을 먼저 정리합니다.' },
-        { icon: PenLine, title: '문장 첨삭', text: '모호한 표현과 반복되는 문장을 더 선명하게 바꿉니다.' },
-        { icon: Sparkles, title: '합격 포인트 강화', text: '직무와 연결되는 성과 중심 표현을 추천합니다.' },
-      ]}
-      steps={['문항 입력', '초안 분석', '개선 문장 확인']}
-    />
+    <div className="cl-overlay">
+      <div className="cl-overlay__box">
+        <Loader2 className="cl-overlay__spinner" size={52} />
+        <p className="cl-overlay__msg">AI 면접관이 서류의 문맥과 직무 적합도를 꼼꼼히 분석하고 있습니다.</p>
+        <p className="cl-overlay__sub">잠시만 기다려주세요! (약 30초 소요)</p>
+      </div>
+    </div>
   );
 }
 
-export default CoverLetterAnalysisPage;
+/* ── 메인 컴포넌트 ─────────────────────────────────── */
+export default function CoverLetterAnalysisPage() {
+  const [phase, setPhase]         = useState('input'); // 'input' | 'result'
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError]   = useState(null);
+
+  const [company,   setCompany]   = useState('');
+  const [job,       setJob]       = useState('');
+  const [questions, setQuestions] = useState([{ q: '', a: '' }]);
+  const [result,    setResult]    = useState(null);
+
+  function addQuestion() {
+    if (questions.length >= 5) return;
+    setQuestions(qs => [...qs, { q: '', a: '' }]);
+  }
+
+  function removeQuestion(i) {
+    setQuestions(qs => qs.filter((_, idx) => idx !== i));
+  }
+
+  function updateQuestion(i, field, val) {
+    setQuestions(qs => qs.map((item, idx) => idx === i ? { ...item, [field]: val } : item));
+  }
+
+  async function handleSubmit() {
+    setApiError(null);
+    setIsLoading(true);
+    try {
+      // company → title, job → jobCategory, questions → items
+      const data = await documentApi.analyzeCoverLetter({
+        title: company,
+        jobCategory: job,
+        items: questions.map(q => ({ question: q.q, answer: q.a })),
+      });
+      setResult(data);
+      setPhase('result');
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        setResult(MOCK_RESULT);
+        setPhase('result');
+      } else {
+        setApiError(err.message || '분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function handleReset() {
+    setPhase('input');
+    setResult(null);
+    setApiError(null);
+    setCompany('');
+    setJob('');
+    setQuestions([{ q: '', a: '' }]);
+  }
+
+  const canSubmit = company.trim() && job.trim() && questions.every(q => q.q.trim() && q.a.trim());
+
+  /* ── 결과 화면 ── */
+  if (phase === 'result' && result) {
+    return (
+      <DocumentResultView
+        result={result}
+        onReset={handleReset}
+        label="COVER LETTER AI"
+        subtitle={`${company} · ${job}`}
+      />
+    );
+  }
+
+  /* ── 입력 화면 ── */
+  return (
+    <div className="cl" style={{ position: 'relative' }}>
+      {isLoading && <LoadingOverlay />}
+
+      <div className="cl-input-wrap">
+        <span className="cl-eyebrow">COVER LETTER AI</span>
+        <h1 className="cl-input__title">자기소개서 AI 분석</h1>
+        <p className="cl-input__desc">
+          문항과 답변을 입력하면 AI가 논리 구조, 표현 교정, 수정안을 제시합니다.<br />
+          최대 5개 문항까지 한 번에 분석할 수 있습니다.
+        </p>
+
+        <div className="cl-form">
+          {/* 회사명 / 직무 */}
+          <div className="cl-meta-row">
+            <div className="cl-meta-field">
+              <label className="cl-meta-label"><Building2 size={13} /> 지원 회사</label>
+              <input
+                className="cl-field"
+                placeholder="ex) 카카오, 네이버, 토스"
+                value={company}
+                onChange={e => setCompany(e.target.value)}
+              />
+            </div>
+            <div className="cl-meta-field">
+              <label className="cl-meta-label"><Briefcase size={13} /> 지원 직무</label>
+              <input
+                className="cl-field"
+                placeholder="ex) 백엔드 개발자, 데이터 분석가"
+                value={job}
+                onChange={e => setJob(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* 문항 블록 */}
+          {questions.map((item, i) => (
+            <div key={i} className="cl-qblock">
+              <div className="cl-qblock__header">
+                <span className="cl-qblock__num">문항 {i + 1}</span>
+                {questions.length > 1 && (
+                  <button className="cl-qblock__remove" onClick={() => removeQuestion(i)}>
+                    <X size={12} /> 삭제
+                  </button>
+                )}
+              </div>
+              <input
+                className="cl-field"
+                placeholder="문항을 입력하세요. ex) 지원 동기 및 입사 후 포부를 서술하시오."
+                value={item.q}
+                onChange={e => updateQuestion(i, 'q', e.target.value)}
+              />
+              <div className="cl-textarea-wrap">
+                <textarea
+                  className="cl-field cl-field--textarea"
+                  placeholder="답변을 입력하세요."
+                  rows={5}
+                  maxLength={1000}
+                  value={item.a}
+                  onChange={e => updateQuestion(i, 'a', e.target.value)}
+                />
+                <span className={`cl-char-count${item.a.length >= 900 ? ' cl-char-count--warn' : ''}`}>
+                  {item.a.length} / 1000자
+                </span>
+              </div>
+            </div>
+          ))}
+
+          <button className="cl-add-btn" onClick={addQuestion} disabled={questions.length >= 5}>
+            <Plus size={15} /> 문항 추가 ({questions.length}/5)
+          </button>
+
+          {apiError && (
+            <p className="cl-api-error"><AlertCircle size={13} /> {apiError}</p>
+          )}
+
+          <button className="cl-btn cl-btn--primary" disabled={!canSubmit || isLoading} onClick={handleSubmit}>
+            {isLoading ? <Loader2 size={15} className="cl-btn__spinner" /> : <Send size={15} />}
+            AI 분석 시작하기
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

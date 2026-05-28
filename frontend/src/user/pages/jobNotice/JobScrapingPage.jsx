@@ -1,27 +1,122 @@
-﻿import { Bot, Database, RefreshCw } from 'lucide-react';
-import ServicePage from '../../../components/common/ServicePage';
+import { useState } from 'react';
+import { RefreshCw, CheckCircle2, AlertCircle, Clock, Bot, Database } from 'lucide-react';
+import './styles/JobScrapingPage.css';
 
-function JobScrapingPage() {
+const SOURCES = [
+  { name: '원티드',       url: 'wanted.co.kr',    status: 'done',    count: 1240, lastAt: '2025-05-25 09:00' },
+  { name: '로켓펀치',     url: 'rocketpunch.com', status: 'done',    count: 380,  lastAt: '2025-05-25 09:02' },
+  { name: '프로그래머스', url: 'programmers.co.kr',status: 'done',   count: 560,  lastAt: '2025-05-25 09:05' },
+  { name: '잡코리아',     url: 'jobkorea.co.kr',  status: 'error',   count: 0,    lastAt: '2025-05-24 22:00' },
+  { name: '사람인',       url: 'saramin.co.kr',   status: 'pending', count: null, lastAt: null },
+];
+
+const STATUS_META = {
+  done:    { label: '완료',    icon: CheckCircle2, color: '#22c55e' },
+  error:   { label: '오류',    icon: AlertCircle,  color: '#ef4444' },
+  pending: { label: '대기 중', icon: Clock,        color: '#94a3b8' },
+  running: { label: '수집 중', icon: RefreshCw,    color: '#60a5fa' },
+};
+
+export default function JobScrapingPage() {
+  const [sources, setSources] = useState(SOURCES);
+  const [running, setRunning] = useState(false);
+
+  const total  = sources.reduce((s, r) => s + (r.count ?? 0), 0);
+  const errors = sources.filter(r => r.status === 'error').length;
+
+  function runAll() {
+    setRunning(true);
+    setSources(prev => prev.map(s => ({ ...s, status: 'running' })));
+    setTimeout(() => {
+      setSources(prev => prev.map(s => ({
+        ...s,
+        status: 'done',
+        count:  (s.count ?? 0) + Math.floor(Math.random() * 50),
+        lastAt: new Date().toLocaleString('ko-KR', { hour12: false }).replace(',', ''),
+      })));
+      setRunning(false);
+    }, 2500);
+  }
+
   return (
-    <ServicePage
-      eyebrow="JOB SCRAPING"
-      title="공고 스크래핑"
-      description="외부 채용 정보를 수집하고 정리해 커리어 웨이브 안에서 비교할 수 있도록 준비합니다."
-      primaryAction="수집 시작"
-      secondaryAction="수집 이력 보기"
-      metrics={[
-        { value: '자동', label: '공고 데이터 정리' },
-        { value: '중복', label: '공고 필터링' },
-        { value: '매일', label: '데이터 갱신' },
-      ]}
-      cards={[
-        { icon: Bot, title: 'AI 수집 보조', text: '공고 제목과 본문을 분석해 직무와 요구 기술을 분류합니다.' },
-        { icon: Database, title: '데이터 표준화', text: '회사명, 직무, 연봉, 경력 조건을 같은 기준으로 정리합니다.' },
-        { icon: RefreshCw, title: '변경 감지', text: '마감일과 모집 상태가 바뀌면 자동으로 업데이트합니다.' },
-      ]}
-      steps={['수집 대상 등록', 'AI 분류 확인', '채용공고 목록 반영']}
-    />
+    <div className="js">
+      {/* 헤더 */}
+      <div className="js-banner">
+        <div className="js-banner__left">
+          <span className="js-eyebrow"><Bot size={11} /> AI SCRAPING ENGINE</span>
+          <h1 className="js-banner__title">공고 스크래핑 현황</h1>
+          <p className="js-banner__desc">admin-fastapi 기반 채용 공고 자동 수집 엔진입니다.</p>
+        </div>
+        <button className={`js-run-btn${running ? ' js-run-btn--running' : ''}`} onClick={runAll} disabled={running}>
+          <RefreshCw size={15} className={running ? 'js-spin' : ''} />
+          {running ? '수집 중...' : '전체 수집 실행'}
+        </button>
+      </div>
+
+      {/* 요약 통계 */}
+      <div className="js-stats">
+        <div className="js-stat">
+          <Database size={18} />
+          <span className="js-stat__value">{total.toLocaleString()}</span>
+          <span className="js-stat__label">총 수집 공고</span>
+        </div>
+        <div className="js-stat">
+          <CheckCircle2 size={18} style={{ color: '#22c55e' }} />
+          <span className="js-stat__value">{sources.filter(s => s.status === 'done').length}</span>
+          <span className="js-stat__label">정상 소스</span>
+        </div>
+        <div className="js-stat">
+          <AlertCircle size={18} style={{ color: '#ef4444' }} />
+          <span className="js-stat__value">{errors}</span>
+          <span className="js-stat__label">오류 소스</span>
+        </div>
+      </div>
+
+      {/* 소스 목록 */}
+      <div className="js-card">
+        <h2 className="js-card__title">수집 소스 현황</h2>
+        <div className="js-source-list">
+          {sources.map((src, i) => {
+            const meta = STATUS_META[src.status];
+            const Icon = meta.icon;
+            return (
+              <div key={i} className="js-source">
+                <div className="js-source__info">
+                  <p className="js-source__name">{src.name}</p>
+                  <p className="js-source__url">{src.url}</p>
+                </div>
+                <div className="js-source__meta">
+                  {src.count !== null && (
+                    <span className="js-source__count">{src.count.toLocaleString()}건</span>
+                  )}
+                  {src.lastAt && (
+                    <span className="js-source__time"><Clock size={11} /> {src.lastAt}</span>
+                  )}
+                </div>
+                <span className="js-source__status" style={{ color: meta.color }}>
+                  <Icon size={14} className={src.status === 'running' ? 'js-spin' : ''} />
+                  {meta.label}
+                </span>
+                <button
+                  className="js-source__btn"
+                  disabled={running}
+                  onClick={() => {
+                    setSources(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'running' } : s));
+                    setTimeout(() => {
+                      setSources(prev => prev.map((s, idx) => idx === i
+                        ? { ...s, status: 'done', count: (s.count ?? 0) + Math.floor(Math.random() * 30), lastAt: new Date().toLocaleString('ko-KR', { hour12: false }).replace(',', '') }
+                        : s
+                      ));
+                    }, 1500);
+                  }}
+                >
+                  수집
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
-
-export default JobScrapingPage;

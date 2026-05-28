@@ -5,7 +5,6 @@ export const serviceMenus = [
     children: [
       { label: '채용공고 목록', href: '/jobs' },
       { label: '공고 등록', href: '/jobs/create' },
-      { label: '공고 스크래핑', href: '/jobs/scraping' },
     ],
   },
   {
@@ -13,7 +12,7 @@ export const serviceMenus = [
     href: '/documents/resume',
     children: [
       { label: '이력서 분석', href: '/documents/resume' },
-      { label: '자기소개서 첨삭', href: '/documents/cover-letter' },
+      { label: '자기소개서 분석', href: '/documents/cover-letter' },
     ],
   },
   {
@@ -21,8 +20,8 @@ export const serviceMenus = [
     href: '/interview',
     children: [
       { label: '면접 홈', href: '/interview' },
-      { label: '텍스트 면접', href: '/interview/text' },
-      { label: '영상 면접', href: '/interview/media' },
+      { label: 'AI 음성/텍스트 면접', href: '/interview/text' },
+      { label: 'AI 화상 면접', href: '/interview/media', comingSoon: true },
       { label: '면접 리포트', href: '/interview/report' },
     ],
   },
@@ -47,10 +46,12 @@ export const serviceMenus = [
       { label: '멘토 찾기', href: '/community/mentor' },
     ],
   },
+
   {
     label: '기업서비스',
-    href: '/company/profile',
+    href: '/dashboard/company',
     children: [
+      { label: '기업 대시보드', href: '/dashboard/company' },
       { label: '기업 프로필', href: '/company/profile' },
       { label: 'HR 담당자 관리', href: '/company/hr-managers' },
       { label: '기업 상품', href: '/billing/company-products' },

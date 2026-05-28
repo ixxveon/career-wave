@@ -1,0 +1,148 @@
+/* ═══════════════════════════════════════════════
+   ApplicantManagementPage
+   ═══════════════════════════════════════════════ */
+.am-page { display: grid; gap: 20px; padding: 36px 0 60px; }
+
+/* 헤더 */
+.am-eyebrow {
+  display: inline-block; margin-bottom: 12px;
+  padding: 4px 12px; border-radius: 100px;
+  background: #dbeafe; color: var(--color-primary-dark);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+}
+.am-header__title { margin: 0 0 8px; font-size: 26px; font-weight: 700; color: var(--color-text-primary); }
+.am-header__desc  { margin: 0; font-size: 14px; color: var(--color-text-secondary); }
+
+/* 툴바 */
+.am-toolbar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.am-search {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px; border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-text-secondary); flex-shrink: 0;
+  transition: border-color 0.14s;
+}
+.am-search:focus-within { border-color: var(--color-primary); }
+.am-search input {
+  border: none; outline: none; background: transparent;
+  font-size: 13px; color: var(--color-text-primary); width: 180px;
+}
+.am-search input::placeholder { color: var(--color-text-secondary); }
+
+.am-stage-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.am-stage-chip {
+  padding: 6px 14px; border-radius: 100px;
+  border: 1.5px solid var(--color-border); background: var(--color-surface);
+  font-size: 12px; font-weight: 600; color: var(--color-text-secondary);
+  cursor: pointer; transition: all 0.12s;
+}
+.am-stage-chip:hover  { border-color: var(--color-primary); color: var(--color-primary-dark); }
+.am-stage-chip--on    { border-color: var(--color-primary); background: var(--color-sky); color: var(--color-primary-dark); }
+
+/* 카드 */
+.am-card {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  box-shadow: 0 4px 16px rgba(52,65,85,0.05);
+  overflow: hidden;
+}
+
+/* 테이블 */
+.am-table-wrap { overflow-x: auto; }
+.am-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px; color: var(--color-text-primary);
+}
+.am-table thead tr {
+  background: var(--color-surface-soft, #f8fafd);
+  border-bottom: 1px solid var(--color-border);
+}
+.am-table th {
+  padding: 13px 16px; text-align: left;
+  font-size: 12px; font-weight: 700; color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.am-table td {
+  padding: 14px 16px; border-bottom: 1px solid var(--color-line);
+  vertical-align: middle;
+}
+.am-table tbody tr:last-child td { border-bottom: none; }
+.am-table tbody tr:hover { background: #fafbff; }
+
+.am-table__name { font-weight: 700; }
+.am-table__date { color: var(--color-text-secondary); white-space: nowrap; }
+
+/* 기술 스택 */
+.am-stacks { display: flex; flex-wrap: wrap; gap: 4px; }
+.am-stack {
+  padding: 3px 10px; border-radius: 100px;
+  background: var(--color-sky); color: var(--color-primary-dark);
+  font-size: 11px; font-weight: 700;
+}
+
+/* AI 점수 */
+.am-score {
+  display: inline-block; padding: 3px 10px; border-radius: 100px;
+  font-size: 12px; font-weight: 800;
+}
+.am-score--high { background: #dcfce7; color: #15803d; }
+.am-score--mid  { background: #fef3c7; color: #b45309; }
+.am-score--low  { background: #fee2e2; color: #dc2626; }
+
+/* 전형 단계 배지 + 드롭다운 */
+.am-stage-select-wrap {
+  display: flex; align-items: center; gap: 6px;
+}
+.am-stage-badge {
+  display: inline-block; padding: 3px 12px; border-radius: 100px;
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+
+.am-stage-dropdown { position: relative; }
+.am-stage-dropdown__btn {
+  display: grid; place-items: center;
+  width: 22px; height: 22px; border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-text-secondary); cursor: pointer;
+  transition: all 0.12s;
+}
+.am-stage-dropdown__btn:hover { border-color: var(--color-primary); color: var(--color-primary-dark); background: var(--color-sky); }
+
+.am-stage-dropdown__menu {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 50;
+  min-width: 110px; border-radius: var(--radius-md);
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  box-shadow: 0 8px 24px rgba(30,58,110,0.12);
+  overflow: hidden;
+}
+.am-stage-dropdown:hover .am-stage-dropdown__menu { display: block; }
+.am-stage-dropdown__menu button {
+  display: block; width: 100%; padding: 9px 14px;
+  border: none; background: transparent; text-align: left;
+  font-size: 13px; font-weight: 600; color: var(--color-text-primary);
+  cursor: pointer; transition: background 0.1s;
+}
+.am-stage-dropdown__menu button:hover { background: var(--color-sky); color: var(--color-primary-dark); }
+
+/* 액션 버튼 */
+.am-actions { display: flex; align-items: center; gap: 4px; }
+.am-action-btn {
+  display: grid; place-items: center;
+  width: 28px; height: 28px; border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-text-secondary); cursor: pointer; transition: all 0.12s;
+}
+.am-action-btn:hover             { border-color: var(--color-primary); color: var(--color-primary-dark); background: var(--color-sky); }
+.am-action-btn--pass             { color: #15803d; border-color: #bbf7d0; background: #f0fdf4; }
+.am-action-btn--pass:hover       { background: #dcfce7; border-color: #15803d; color: #15803d; }
+.am-action-btn--fail             { color: #dc2626; border-color: #fecaca; background: #fff5f5; }
+.am-action-btn--fail:hover       { background: #fee2e2; border-color: #dc2626; color: #dc2626; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .am-page    { padding: 20px 0 40px; }
+  .am-toolbar { flex-direction: column; align-items: flex-start; }
+  .am-search input { width: 140px; }
+}
