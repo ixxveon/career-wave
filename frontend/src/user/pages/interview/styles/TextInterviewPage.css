@@ -332,17 +332,23 @@
  * 100vh + 28px 이 되고, sticky GNB가 유지되는 동안 채팅룸이 GNB 뒤로
  * 28px 밀려 올라가는 현상이 발생합니다.
  * fixed 포지셔닝으로 레이아웃 컨테이너에서 완전히 분리합니다.
+ *
+ * 중앙 정렬 + max-width 로 넓은 화면에서도 과도하게 늘어나지 않게 합니다.
+ * 사방 여백 + border-radius + shadow 로 "카드가 페이지 위에 떠있는" 느낌을 줍니다.
  */
 .ti {
   position: fixed;
-  top: 66px; /* GNB 높이 */
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: calc(66px + 20px);          /* GNB 아래 20px 여백 */
+  bottom: 20px;
+  left: clamp(30px, 4vw, 58px);   /* GNB .cw-header__inner 좌우 패딩과 동일 */
+  right: clamp(30px, 4vw, 58px);
   display: flex;
   flex-direction: column;
   background: #f0f4fa;
   z-index: 5; /* GNB z-index(30) 보다 낮게 유지 */
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: 0 4px 40px rgba(30, 58, 110, 0.14);
 }
 
 /* ─── 면접 헤더 ──────────────────────────────── */
@@ -831,6 +837,9 @@
 
 /* ─── Responsive ─────────────────────────────── */
 @media (max-width: 768px) {
+  /* 채팅룸 — GNB 1240px 브레이크포인트에 맞춰 여백 축소 */
+  .ti { left: clamp(16px, 3vw, 40px); right: clamp(16px, 3vw, 40px); }
+
   /* 설정 화면 */
   .ti-setup       { padding: 24px 0; align-items: flex-start; }
   .ti-setup__card { padding: 28px 20px; border-radius: var(--radius-lg); }
@@ -855,6 +864,11 @@
   .ti-input-bar    { padding: 10px 14px; gap: 6px; }
   .ti-send         { width: 42px; height: 42px; }
   .ti-countdown    { padding: 6px 16px; }
+}
+
+@media (max-width: 760px) {
+  /* GNB 760px 브레이크포인트 — 채팅창도 16px 고정 여백 */
+  .ti { left: 16px; right: 16px; }
 }
 
 @media (max-width: 400px) {
