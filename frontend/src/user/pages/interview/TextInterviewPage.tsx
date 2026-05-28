@@ -6,7 +6,15 @@ import {
   Send, Clock, X, ArrowLeft, Keyboard,
 } from 'lucide-react';
 import { interviewApi } from '../../api/interviewApi';
+import type { Message, MicStatus, InputMode, Phase, Resume } from '../../types/interview';
 import './styles/TextInterviewPage.css';
+
+/* ── Web Speech API 확장 선언 ── */
+declare global {
+  interface Window {
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
 
 /* ── 상수 ──────────────────────────────────────── */
 const JOB_OPTIONS = [
@@ -22,7 +30,7 @@ const MOCK_SETUP = {
 const TOTAL_Q = 5;
 const ANSWER_LIMIT = 150; // 최대 답변 시간 2분 30초
 
-const INIT_MESSAGES = [{
+const INIT_MESSAGES: Message[] = [{
   id: 1,
   role: 'ai',
   text: '안녕하세요! AI 실시간 음성 면접을 시작하겠습니다.\n이력서를 분석했어요. 먼저 간단한 자기소개를 부탁드립니다.',
@@ -36,7 +44,7 @@ const AI_REPLIES = [
   '마지막 질문입니다. 입사 후 3년간의 커리어 목표를 말씀해 주세요.',
 ];
 
-function formatTime(s) {
+function formatTime(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
@@ -53,39 +61,47 @@ function LoadingOverlay() {
   );
 }
 
+/* ── ChatRoom props ── */
+interface ChatRoomProps {
+  company: string;
+  job: string;
+  onExit: () => void;
+}
+
 /* ── 채팅 면접 룸 ───────────────────────────────── */
-function ChatRoom({ company, job, onExit }) {
+function ChatRoom({ company, job, onExit }: ChatRoomProps) {
   const navigate = useNavigate();
 
   /* ── State ── */
-  const [messages,        setMessages]        = useState(INIT_MESSAGES);
+  const [messages,        setMessages]        = useState<Message[]>(INIT_MESSAGES);
   const [qNum,            setQNum]            = useState(1);
   const [elapsed,         setElapsed]         = useState(0);
   const [typing,          setTyping]          = useState(false);
   const [done,            setDone]            = useState(false);
   const [exitModal,       setExitModal]       = useState(false);
-  /* 입력 모드: 'voice' | 'text' */
-  const [inputMode,       setInputMode]       = useState('voice');
-  const [input,           setInput]           = useState('');     // 텍스트 모드
-  const [sttLive,         setSttLive]         = useState('');     // 실시간 STT 미리보기
+  /* 입력 모드 */
+  const [inputMode,       setInputMode]       = useState<InputMode>('voice');
+  const [input,           setInput]           = useState('');
+  const [sttLive,         setSttLive]         = useState('');
   const [isRecording,     setIsRecording]     = useState(false);
   /* 답변 제한 카운트다운 */
   const [countdown,       setCountdown]       = useState(ANSWER_LIMIT);
   const [countdownActive, setCountdownActive] = useState(false);
 
   /* ── Refs ── */
-  const bottomRef      = useRef(null);
-  const elapsedRef     = useRef(null);
-  const countdownRef   = useRef(null);
-  const replyRef       = useRef(null);
-  const recognitionRef = useRef(null);
-  const textareaRef    = useRef(null);
-  const audioRef       = useRef(null);    // AI TTS 오디오
-  const pendingTextRef    = useRef('');      // 자동 제출용 최신 입력 텍스트
-  const handleSendRef     = useRef(null);    // stale closure 방지
+  const bottomRef         = useRef<HTMLDivElement>(null);
+  const elapsedRef        = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const replyRef          = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recognitionRef    = useRef<SpeechRecognition | null>(null);
+  const textareaRef       = useRef<HTMLTextAreaElement>(null);
+  const audioRef          = useRef<HTMLAudioElement | null>(null);
+  const pendingTextRef    = useRef('');
+  const handleSendRef     = useRef<((text: string, opts?: SendOpts) => void) | null>(null);
   const qNumRef           = useRef(qNum);
-  const sendOnMicStopRef  = useRef(false);   // 사용자가 직접 중지했는지 여부 (onend에서 전송 결정)
-  const pendingVoiceIdRef = useRef(null);    // 전송 대기 중인 음성 버블 id
+  const sendOnMicStopRef  = useRef(false);
+  const pendingVoiceIdRef = useRef<number | null>(null);
+
   useEffect(() => { qNumRef.current = qNum; }, [qNum]);
 
   /* ── body 스크롤 잠금 ── */
@@ -102,19 +118,22 @@ function ChatRoom({ company, job, onExit }) {
   /* ── 총 경과 타이머 ── */
   useEffect(() => {
     elapsedRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
-    return () => clearInterval(elapsedRef.current);
+    return () => {
+      if (elapsedRef.current !== null) clearInterval(elapsedRef.current);
+    };
   }, []);
 
-  useEffect(() => { if (done) clearInterval(elapsedRef.current); }, [done]);
+  useEffect(() => {
+    if (done && elapsedRef.current !== null) clearInterval(elapsedRef.current);
+  }, [done]);
 
-  /* ── pendingTextRef 동기화 (stale closure 방지) ── */
+  /* ── pendingTextRef 동기화 ── */
   useEffect(() => {
     pendingTextRef.current = inputMode === 'voice' ? sttLive : input;
   }, [input, sttLive, inputMode]);
 
   /* ─────────────────────────────────────────────────
      답변 카운트다운 타이머
-     AI 음성 재생 종료 시 startCountdown() 호출로 활성화
   ───────────────────────────────────────────────── */
   useEffect(() => {
     if (!countdownActive) return;
@@ -122,44 +141,41 @@ function ChatRoom({ company, job, onExit }) {
       setCountdownActive(false);
       const pendingText = pendingTextRef.current.trim();
 
-      // 진행 중이던 음성 버블 확정 처리
-      if (pendingVoiceIdRef.current) {
+      if (pendingVoiceIdRef.current !== null) {
         const pid = pendingVoiceIdRef.current;
         pendingVoiceIdRef.current = null;
         setMessages(prev => prev.map(m =>
           m.id === pid ? { ...m, isPending: false, text: pendingText } : m
         ));
       } else if (pendingText) {
-        // 텍스트 모드에서 시간 초과 → 입력 중이던 텍스트를 사용자 버블로 남김
         setMessages(prev => [...prev, { id: Date.now(), role: 'user', text: pendingText }]);
       }
 
-      // 시간 초과 노티스
       setMessages(prev => [...prev, { id: Date.now() + 1, role: 'notice', text: '⏰ 답변 시간이 초과되었습니다.' }]);
       stopRecognition();
       handleSendRef.current?.('', { isTimeout: true });
       return;
     }
     countdownRef.current = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => clearTimeout(countdownRef.current);
-  }, [countdown, countdownActive]);
+    return () => {
+      if (countdownRef.current !== null) clearTimeout(countdownRef.current);
+    };
+  }, [countdown, countdownActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function startCountdown() {
-    clearTimeout(countdownRef.current);
+    if (countdownRef.current !== null) clearTimeout(countdownRef.current);
     setCountdown(ANSWER_LIMIT);
     setCountdownActive(true);
   }
   function stopCountdown() {
     setCountdownActive(false);
-    clearTimeout(countdownRef.current);
+    if (countdownRef.current !== null) clearTimeout(countdownRef.current);
   }
 
   /* ─────────────────────────────────────────────────
-     TTS: AI 질문 음성 자동 재생 → 재생 종료 시 카운트다운 시작
-     TODO [WebSocket]: new Audio(audioUrl).play() 로 대체
-       (FastAPI TTS endpoint에서 받은 audioUrl 사용)
+     TTS: SpeechSynthesis 브라우저 폴백
   ───────────────────────────────────────────────── */
-  function playTTSFallback(text, onEnd) {
+  function playTTSFallback(text: string, onEnd: (() => void) | null) {
     if (!window.speechSynthesis) { setTimeout(() => onEnd?.(), 500); return; }
     window.speechSynthesis.cancel();
     const utt = new SpeechSynthesisUtterance(text.replace(/\n/g, ' '));
@@ -171,16 +187,14 @@ function ChatRoom({ company, job, onExit }) {
   }
 
   /* ─────────────────────────────────────────────────
-     AI 질문 말풍선 렌더링 + 오디오 재생 + 카운트다운 시작
-     TODO [WebSocket]: ws.onmessage → { type:'question', questionText, audioUrl }
+     AI 질문 말풍선 렌더링 + 오디오 재생
   ───────────────────────────────────────────────── */
-  function displayAIQuestion(text, audioUrl) {
+  function displayAIQuestion(text: string, audioUrl: string | null) {
     setMessages(prev => [...prev, { id: Date.now(), role: 'ai', text }]);
     setTyping(false);
     audioRef.current?.pause();
     audioRef.current = null;
 
-    /* TTS 재생만 — 카운트다운은 사용자가 마이크/키보드 버튼을 눌렀을 때 시작 */
     if (audioUrl) {
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
@@ -193,25 +207,18 @@ function ChatRoom({ company, job, onExit }) {
 
   /* ─────────────────────────────────────────────────
      STT: SpeechRecognition 브라우저 폴백
-     TODO [WebSocket]: MediaRecorder → Blob → WS → Whisper(FastAPI) → 텍스트 수신
   ───────────────────────────────────────────────── */
-  /* 시스템 강제 중지 (카운트다운 만료 / handleSend 내부)
-     → sendOnMicStopRef를 false로 설정해 onend에서 자동 전송 안 함 */
   function stopRecognition() {
     sendOnMicStopRef.current = false;
-    try { recognitionRef.current?.stop(); } catch {}
+    try { recognitionRef.current?.stop(); } catch { /* ignore */ }
     recognitionRef.current = null;
     setIsRecording(false);
   }
 
   function toggleMic() {
     if (isRecording) {
-      /* ── 사용자 수동 중지 ──
-         stop() 호출 후 onresult(최종) → onend 순으로 비동기 발생.
-         sendOnMicStopRef = true 로 표시해 두면 onend에서 안전하게 전송. */
-      stopCountdown(); // 녹음 멈추는 순간 타이머도 즉시 중지
+      stopCountdown();
 
-      // 채팅창에 "음성 분석 중..." 버블 즉시 추가 → onend에서 텍스트로 교체
       const pendingId = Date.now();
       pendingVoiceIdRef.current = pendingId;
       setMessages(prev => [...prev, {
@@ -219,28 +226,26 @@ function ChatRoom({ company, job, onExit }) {
       }]);
 
       sendOnMicStopRef.current = true;
-      try { recognitionRef.current?.stop(); } catch {}
+      try { recognitionRef.current?.stop(); } catch { /* ignore */ }
       recognitionRef.current = null;
       setIsRecording(false);
       return;
     }
 
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { setInputMode('text'); return; } // 미지원 브라우저 → 텍스트 모드로 전환
+    const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    if (!SR) { setInputMode('text'); return; }
 
     const rec = new SR();
     rec.lang           = 'ko-KR';
     rec.continuous     = true;
     rec.interimResults = true;
 
-    rec.onresult = (e) => {
+    rec.onresult = (e: SpeechRecognitionEvent) => {
       const t = Array.from(e.results).map(r => r[0].transcript).join('');
       setSttLive(t);
       pendingTextRef.current = t;
     };
 
-    /* onend: stop() 이후 마지막 onresult 까지 모두 처리된 뒤 발생
-       → 사용자 수동 중지인 경우에만 pending 버블 확정 + AI 응답 트리거 */
     rec.onend = () => {
       setIsRecording(false);
       if (sendOnMicStopRef.current) {
@@ -249,7 +254,6 @@ function ChatRoom({ company, job, onExit }) {
         const pid = pendingVoiceIdRef.current;
         pendingVoiceIdRef.current = null;
 
-        // pending 버블을 최종 STT 텍스트로 교체
         setMessages(prev => prev.map(m =>
           m.id === pid ? { ...m, isPending: false, text: finalText } : m
         ));
@@ -257,7 +261,6 @@ function ChatRoom({ company, job, onExit }) {
         setSttLive('');
         pendingTextRef.current = '';
 
-        // 텍스트가 있으면 AI 응답 트리거 (버블은 이미 추가됐으므로 skipAddMessage)
         if (finalText) {
           handleSendRef.current?.(finalText, { skipAddMessage: true });
         }
@@ -272,14 +275,18 @@ function ChatRoom({ company, job, onExit }) {
     recognitionRef.current = rec;
     rec.start();
     setIsRecording(true);
-    startCountdown(); // 마이크 버튼을 누른 순간 답변 타이머 시작
+    startCountdown();
   }
 
   /* ─────────────────────────────────────────────────
      공통 답변 전송 로직
-     TODO [WebSocket]: ws.send(JSON.stringify({ type:'answer', text }))
   ───────────────────────────────────────────────── */
-  function handleSend(text, opts = {}) {
+  interface SendOpts {
+    isTimeout?: boolean;
+    skipAddMessage?: boolean;
+  }
+
+  function handleSend(text: string, opts: SendOpts = {}) {
     const { isTimeout = false, skipAddMessage = false } = opts;
     if (typing || done) return;
     if (!isTimeout && !skipAddMessage && !text?.trim()) return;
@@ -300,7 +307,6 @@ function ChatRoom({ company, job, onExit }) {
     replyRef.current = setTimeout(() => {
       const currentQ = qNumRef.current;
 
-      /* 마지막 질문 → 면접 종료 */
       if (currentQ >= TOTAL_Q) {
         const closingText =
           '수고하셨습니다! 총 5개 질문에 모두 답변해 주셨어요.\n' +
@@ -313,25 +319,22 @@ function ChatRoom({ company, job, onExit }) {
         return;
       }
 
-      /* 다음 질문 */
       const aiText = AI_REPLIES[Math.min(currentQ - 1, AI_REPLIES.length - 1)];
       setQNum(q => q + 1);
-      // TODO [WebSocket]: displayAIQuestion(data.questionText, data.audioUrl)
       displayAIQuestion(aiText, null);
     }, 1400);
   }
 
-  /* handleSend 최신 참조 유지 (매 렌더) */
+  /* handleSend 최신 참조 유지 */
   handleSendRef.current = handleSend;
 
-  /* 마운트: 초기 AI 질문 TTS (카운트다운은 사용자가 마이크/키보드 버튼을 눌렀을 때 시작) */
+  /* 마운트: 초기 AI 질문 TTS */
   useEffect(() => {
-    // TODO [WebSocket]: 초기 질문도 { questionText, audioUrl } 형태로 수신
     playTTSFallback(INIT_MESSAGES[0].text, null);
     return () => {
-      clearInterval(elapsedRef.current);
-      clearTimeout(countdownRef.current);
-      clearTimeout(replyRef.current);
+      if (elapsedRef.current !== null) clearInterval(elapsedRef.current);
+      if (countdownRef.current !== null) clearTimeout(countdownRef.current);
+      if (replyRef.current !== null) clearTimeout(replyRef.current);
       stopRecognition();
       window.speechSynthesis?.cancel();
       audioRef.current?.pause();
@@ -376,7 +379,6 @@ function ChatRoom({ company, job, onExit }) {
       {/* 채팅 영역 */}
       <div className="ti-chat">
         {messages.map(msg => {
-          /* 시스템 노티스 (시간 초과 등) */
           if (msg.role === 'notice') {
             return (
               <div key={msg.id} className="ti-msg ti-msg--notice">
@@ -538,15 +540,15 @@ function ChatRoom({ company, job, onExit }) {
 /* ── 메인 컴포넌트 ──────────────────────────────── */
 export default function TextInterviewPage() {
   const navigate = useNavigate();
-  const [phase,         setPhase]         = useState('setup');
-  const [resume,        setResume]        = useState(null);
+  const [phase,         setPhase]         = useState<Phase>('setup');
+  const [resume,        setResume]        = useState<Resume | null>(null);
   const [resumeLoading, setResumeLoading] = useState(true);
   const [job,           setJob]           = useState(JOB_OPTIONS[0]);
   const [company,       setCompany]       = useState('');
-  const [micStatus,     setMicStatus]     = useState('idle'); // 'idle'|'testing'|'ok'|'error'
+  const [micStatus,     setMicStatus]     = useState<MicStatus>('idle');
   const [audioPlaying,  setAudioPlaying]  = useState(false);
   const [isLoading,     setIsLoading]     = useState(false);
-  const [apiError,      setApiError]      = useState(null);
+  const [apiError,      setApiError]      = useState<string | null>(null);
 
   /* 마운트 시 대표 이력서 조회 */
   useEffect(() => {
@@ -576,7 +578,7 @@ export default function TextInterviewPage() {
     if (audioPlaying) return;
     setAudioPlaying(true);
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = new (window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);

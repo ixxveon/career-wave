@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { documentApi } from '../../api/documentApi';
 import DocumentResultView from './DocumentResultView';
+import type { DocumentResult, FeedbackDetail } from '../../types/document';
 import './styles/CoverLetterAnalysisPage.css';
 import './styles/ResumeAnalysisPage.css'; /* ra-quota-bar 공용 스타일 */
 
@@ -12,10 +13,10 @@ import './styles/ResumeAnalysisPage.css'; /* ra-quota-bar 공용 스타일 */
 const PLAN_LIMITS = { FREE: { document: 1 }, PREMIUM: { document: 20 } };
 
 /* ── Mock 사용량 ─────────────────────────────────────── */
-const MOCK_QUOTA = { membership: 'PREMIUM', documentUsed: 7 };
+const MOCK_QUOTA = { membership: 'PREMIUM' as const, documentUsed: 7 };
 
 /* ── Mock (백엔드 미완성 시 폴백) ────────────────────── */
-const MOCK_RESULT = {
+const MOCK_RESULT: DocumentResult = {
   documentId: 1,
   evaluation: {
     totalScore: 78,
@@ -78,6 +79,12 @@ const MOCK_RESULT = {
   ],
 };
 
+/* ── 문항 입력 타입 ─────────────────────────────────── */
+interface QuestionItem {
+  q: string;
+  a: string;
+}
+
 /* ── 서브 컴포넌트 ─────────────────────────────────── */
 function LoadingOverlay() {
   return (
@@ -93,25 +100,25 @@ function LoadingOverlay() {
 
 /* ── 메인 컴포넌트 ─────────────────────────────────── */
 export default function CoverLetterAnalysisPage() {
-  const [phase, setPhase]         = useState('input'); // 'input' | 'result'
+  const [phase, setPhase]         = useState<'input' | 'result'>('input');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiError, setApiError]   = useState(null);
+  const [apiError, setApiError]   = useState<string | null>(null);
 
   const [company,   setCompany]   = useState('');
   const [job,       setJob]       = useState('');
-  const [questions, setQuestions] = useState([{ q: '', a: '' }]);
-  const [result,    setResult]    = useState(null);
+  const [questions, setQuestions] = useState<QuestionItem[]>([{ q: '', a: '' }]);
+  const [result,    setResult]    = useState<DocumentResult | null>(null);
 
   function addQuestion() {
     if (questions.length >= 5) return;
     setQuestions(qs => [...qs, { q: '', a: '' }]);
   }
 
-  function removeQuestion(i) {
+  function removeQuestion(i: number) {
     setQuestions(qs => qs.filter((_, idx) => idx !== i));
   }
 
-  function updateQuestion(i, field, val) {
+  function updateQuestion(i: number, field: keyof QuestionItem, val: string) {
     setQuestions(qs => qs.map((item, idx) => idx === i ? { ...item, [field]: val } : item));
   }
 
@@ -119,7 +126,6 @@ export default function CoverLetterAnalysisPage() {
     setApiError(null);
     setIsLoading(true);
     try {
-      // company → title, job → jobCategory, questions → items
       const data = await documentApi.analyzeCoverLetter({
         title: company,
         jobCategory: job,
@@ -132,7 +138,7 @@ export default function CoverLetterAnalysisPage() {
         setResult(MOCK_RESULT);
         setPhase('result');
       } else {
-        setApiError(err.message || '분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        setApiError(err instanceof Error ? err.message : '분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       }
     } finally {
       setIsLoading(false);
@@ -149,7 +155,7 @@ export default function CoverLetterAnalysisPage() {
   }
 
   /* AI 수정안을 입력 폼에 자동 적용 후 재분석 */
-  function handleRevise(feedbackDetails) {
+  function handleRevise(feedbackDetails: FeedbackDetail[]) {
     setQuestions(feedbackDetails.map(item => ({
       q: item.question,
       a: item.improvedText,
