@@ -3,7 +3,21 @@ import { useState } from 'react';
 import { Apple, LockKeyhole, UserRound } from 'lucide-react';
 import './AuthPage.css';
 
-const socialProviders = [
+type LoginType = 'personal' | 'company';
+type CredentialKey = 'loginId' | 'password';
+
+interface Credentials {
+  loginId: string;
+  password: string;
+}
+
+interface SocialProvider {
+  id: 'kakao' | 'naver' | 'google' | 'apple';
+  label: string;
+  mark?: string;
+}
+
+const socialProviders: SocialProvider[] = [
   { id: 'kakao', label: '카카오', mark: 'K' },
   { id: 'naver', label: '네이버', mark: 'N' },
   { id: 'google', label: 'Google', mark: 'G' },
@@ -11,13 +25,13 @@ const socialProviders = [
 ];
 
 function LoginPage() {
-  const [loginType, setLoginType] = useState('personal');
-  const [credentials, setCredentials] = useState({
+  const [loginType, setLoginType] = useState<LoginType>('personal');
+  const [credentials, setCredentials] = useState<Credentials>({
     loginId: '',
     password: '',
   });
 
-  const updateCredential = (key, value) => {
+  const updateCredential = (key: CredentialKey, value: string) => {
     setCredentials((current) => ({
       ...current,
       [key]: value,
