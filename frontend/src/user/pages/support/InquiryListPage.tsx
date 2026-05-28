@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, ChevronRight, Clock, CheckCircle, AlertCircle, Plus } from 'lucide-react';
 import './styles/InquiryListPage.css';
@@ -67,7 +68,7 @@ const MOCK_INQUIRIES: Inquiry[] = [
   },
 ];
 
-const STATUS_CONFIG: Record<InquiryStatus, { icon: React.ReactNode; cls: string }> = {
+const STATUS_CONFIG: Record<InquiryStatus, { icon: ReactNode; cls: string }> = {
   '접수':    { icon: <AlertCircle size={12} />,  cls: 'iq-status--pending'     },
   '처리 중': { icon: <Clock size={12} />,        cls: 'iq-status--processing'  },
   '답변 완료':{ icon: <CheckCircle size={12} />, cls: 'iq-status--done'        },
