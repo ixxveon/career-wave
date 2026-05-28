@@ -29,7 +29,7 @@ const monthlyGrowth = [
 const MAX_REV    = 38500000;
 const MAX_GROWTH = 314;
 
-export default function MatchingPage() {
+export default function StatisticsPage() {
   return (
     <section>
       <header className="admin-header">

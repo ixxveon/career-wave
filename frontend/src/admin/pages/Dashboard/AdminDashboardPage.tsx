@@ -20,7 +20,7 @@ const adminCards = [
   { icon: 'REP', title: '신고 관리', desc: '커뮤니티 신고, 블라인드 처리, 스팸 게시글을 확인합니다.', value: '대기 3건', cls: 'red', path: '/admin/reports' },
   { icon: 'CS', title: '고객센터', desc: '공지사항·FAQ 관리 및 1:1 문의 응대를 처리합니다.', value: '미답변 12건', cls: 'orange', path: '/admin/cs' },
   { icon: 'PAY', title: '결제 및 정산', desc: '결제 내역, 정기결제 실패, 환불 요청을 관리합니다.', value: '실패 7건', cls: 'orange', path: '/admin/payments' },
-  { icon: 'MTH', title: '매칭 통계', desc: '직무별 지원율, 합격률, 경쟁률을 트래킹해 확인합니다.', value: '합격률 12.7%', cls: 'green', path: '/admin/matching' },
+  { icon: 'STT', title: '서비스 통계', desc: '매출 현황과 가입자 증가 추이를 확인합니다.', value: '이번 달 매출', cls: 'green', path: '/admin/stats' },
   { icon: 'AI', title: 'AI 메트릭스', desc: 'AI 토큰 사용량, 면접 세션, 이상 탐지를 모니터링합니다.', value: '세션 37건', cls: 'purple', path: '/admin/ai' },
 ];
 

@@ -19,7 +19,7 @@ const menuGroups = [
     title: 'BUSINESS',
     items: [
       { label: '결제 · 정산', path: '/admin/payments' },
-      { label: '서비스 통계', path: '/admin/matching' },
+      { label: '서비스 통계', path: '/admin/stats' },
     ],
   },
   {
