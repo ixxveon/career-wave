@@ -3,19 +3,27 @@ import '../../styles/admin.css';
 import '../../styles/Statistics.css';
 
 const kpis = [
-  { label: '이번 달 매출',      value: '₩ 38,500,000',  sub: '전월 대비 +12.6%', color: 'kpi-green',  Icon: TrendingUp },
-  { label: '누적 총 매출',      value: '₩ 186,500,000', sub: '서비스 오픈 이후',  color: 'kpi-blue',   Icon: DollarSign },
-  { label: '총 가입자 수',      value: '12,847명',       sub: '서비스 오픈 이후',  color: 'kpi-purple', Icon: Users      },
-  { label: '이번 달 신규 가입', value: '314명',           sub: '전월 대비 +2.3%',  color: 'kpi-yellow', Icon: UserPlus   },
+  { label: '이번 달 매출',      value: '₩38,500,000',   sub: '전월 대비 +12.6%', color: 'kpi-green',  Icon: TrendingUp },
+  { label: '누적 총 매출',      value: '₩186,500,000',  sub: '서비스 오픈 이후',  color: 'kpi-blue',   Icon: DollarSign },
+  { label: '총 가입자 수',      value: '12,847명',        sub: '서비스 오픈 이후',  color: 'kpi-purple', Icon: Users      },
+  { label: '이번 달 신규 가입', value: '314명',            sub: '전월 대비 +2.3%',  color: 'kpi-yellow', Icon: UserPlus   },
 ];
 
 const monthlyRevenue = [
-  { month: '12월', monthly: 16500000, annual:  8300000, total: 24800000, prev: null      },
-  { month: '1월',  monthly: 18600000, annual:  8900000, total: 27500000, prev: 24800000  },
-  { month: '2월',  monthly: 19400000, annual:  9700000, total: 29100000, prev: 27500000  },
-  { month: '3월',  monthly: 21800000, annual: 10600000, total: 32400000, prev: 29100000  },
-  { month: '4월',  monthly: 23200000, annual: 11000000, total: 34200000, prev: 32400000  },
-  { month: '5월',  monthly: 26900000, annual: 11600000, total: 38500000, prev: 34200000  },
+  { month: '12월', total: 24800000 },
+  { month: '1월',  total: 27500000 },
+  { month: '2월',  total: 29100000 },
+  { month: '3월',  total: 32400000 },
+  { month: '4월',  total: 34200000 },
+  { month: '5월',  total: 38500000 },
+];
+
+const subscriptionBreakdown = [
+  { abbr: '월', label: '프리미엄 월정액', amount: 26900000, growth: 15.9, up: true  },
+  { abbr: '연', label: '프리미엄 연정액', amount: 11600000, growth:  5.5, up: true  },
+  { abbr: '전', label: '신규 가입 전환',  amount:  3480000, growth: 22.1, up: true  },
+  { abbr: '갱', label: '갱신 결제',       amount: 23420000, growth: 11.3, up: true  },
+  { abbr: '환', label: '환불 차감',       amount:   580000, growth: -8.2, up: false },
 ];
 
 const monthlyGrowth = [
@@ -27,10 +35,41 @@ const monthlyGrowth = [
   { month: '5월',  individual: 262, company: 52 },
 ];
 
-const MAX_REV    = 38500000;
-const MAX_GROWTH = 314;
+const recentActivity = [
+  { initials: 'KM', name: '김민지', status: 'ACTIVE',  plan: '프리미엄 월정액', time: '5분 전'   },
+  { initials: 'LJ', name: '이준호', status: 'PENDING', plan: '프리미엄 월정액', time: '23분 전'  },
+  { initials: 'PS', name: '박서연', status: 'ACTIVE',  plan: '프리미엄 연정액', time: '1시간 전' },
+  { initials: 'CD', name: '최도윤', status: 'ACTIVE',  plan: '프리미엄 월정액', time: '2시간 전' },
+  { initials: 'KH', name: '강하늘', status: 'PENDING', plan: '신규 가입',       time: '3시간 전' },
+];
+
+function buildSvgPath(values: number[], vbW = 1000, vbH = 240, pad = 30) {
+  const chartH = vbH - pad * 2;
+  const maxVal = Math.max(...values) * 1.08;
+  const pts: [number, number][] = values.map((v, i) => [
+    Math.round((i / (values.length - 1)) * vbW),
+    Math.round(pad + chartH - (v / maxVal) * chartH),
+  ]);
+
+  let line = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1];
+    const [x1, y1] = pts[i];
+    const cx = Math.round((x0 + x1) / 2);
+    line += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;
+  }
+
+  const area = `${line} L${pts[pts.length - 1][0]},${vbH} L0,${vbH} Z`;
+  return { line, area, pts };
+}
+
+const MAX_TOTAL = Math.max(...monthlyGrowth.map((m) => m.individual + m.company));
+const CHART_H   = 180;
 
 export default function StatisticsPage() {
+  const { line, area, pts } = buildSvgPath(monthlyRevenue.map((m) => m.total));
+  const peakIdx = pts.reduce((max, p, i) => (p[1] < pts[max][1] ? i : max), 0);
+
   return (
     <section>
       <header className="admin-header">
@@ -58,131 +97,125 @@ export default function StatisticsPage() {
           ))}
         </section>
 
-        {/* ── 매출 통계 ── */}
-        <div className="matchChartGrid">
+        {/* Row 1 ── 월별 매출 추이 + 구독 유형별 매출 실적 */}
+        <div className="statsMainGrid">
 
-          {/* 월별 매출 바 차트 */}
-          <section className="admin-card" style={{ padding: '22px' }}>
-            <h3 style={{ margin: '0 0 28px', fontSize: 22, fontWeight: 700, color: '#1c3e63' }}>
-              월별 매출 추이
-            </h3>
-            <div className="matchBarChart">
-              {monthlyRevenue.map((m) => (
-                <div className="matchBarItem" key={m.month}>
-                  <span className="matchBarVal">
-                    {Math.round(m.total / 10000).toLocaleString()}만
-                  </span>
-                  <div
-                    className="matchBarFill revenue"
-                    style={{ height: Math.round((m.total / MAX_REV) * 160) }}
+          <section className="admin-card statsCard">
+            <div className="statsCardHead">
+              <div>
+                <h3>월별 매출 추이</h3>
+                <p>월별 구독 매출 실적</p>
+              </div>
+              <span className="statsTrendBadge up">▲ +12.6%</span>
+            </div>
+            <div className="statsLineWrap">
+              <svg viewBox="0 0 1000 240" preserveAspectRatio="none" className="statsLineSvg">
+                <defs>
+                  <linearGradient id="statGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor="#24496f" stopOpacity="0.18" />
+                    <stop offset="100%" stopColor="#24496f" stopOpacity="0"    />
+                  </linearGradient>
+                </defs>
+                <path d={area} fill="url(#statGrad)" />
+                <path d={line} fill="none" stroke="#24496f" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                {pts.map(([cx, cy], i) => (
+                  <circle key={i} cx={cx} cy={cy}
+                    r={i === peakIdx ? 7 : 5}
+                    fill="#24496f" stroke="white" strokeWidth="2.5"
                   />
-                  <span className="matchBarLabel">{m.month}</span>
-                </div>
-              ))}
+                ))}
+                {/* Peak 말풍선 */}
+                <rect x={pts[peakIdx][0] - 60} y={pts[peakIdx][1] - 34} width={120} height={24} rx="6" fill="#24496f" />
+                <text x={pts[peakIdx][0]} y={pts[peakIdx][1] - 17}
+                  textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="inherit">
+                  Peak: ₩38,500,000
+                </text>
+              </svg>
+              <div className="statsLineLabels">
+                {monthlyRevenue.map((m) => <span key={m.month}>{m.month}</span>)}
+              </div>
             </div>
           </section>
 
-          {/* 채널별 매출 구성 테이블 */}
-          <section className="admin-card" style={{ padding: '22px' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700, color: '#1c3e63' }}>
-              채널별 매출 구성
-            </h3>
-            <table className="memberTable" style={{ fontSize: 13 }}>
-              <thead>
-                <tr>
-                  <th>월</th>
-                  <th>월정액</th>
-                  <th>연정액</th>
-                  <th>합계</th>
-                  <th>전월 대비</th>
-                </tr>
-              </thead>
-              <tbody>
-                {monthlyRevenue.map((m) => {
-                  const change = m.prev != null
-                    ? ((m.total - m.prev) / m.prev * 100).toFixed(1)
-                    : null;
-                  return (
-                    <tr key={m.month}>
-                      <td>{m.month}</td>
-                      <td>₩{Math.round(m.monthly / 10000).toLocaleString()}만</td>
-                      <td>₩{Math.round(m.annual  / 10000).toLocaleString()}만</td>
-                      <td><strong>₩{Math.round(m.total / 10000).toLocaleString()}만</strong></td>
-                      <td>
-                        {change != null ? (
-                          <span style={{ color: '#2c7a4b', fontWeight: 600 }}>+{change}%</span>
-                        ) : (
-                          <span style={{ color: '#aab6c3' }}>-</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <section className="admin-card statsCard">
+            <div className="statsCardHead">
+              <div>
+                <h3>구독 유형별 매출 실적</h3>
+                <p>이번 달 구독 유형별 성과</p>
+              </div>
+            </div>
+            <div className="statsChannelList">
+              {subscriptionBreakdown.map((item) => (
+                <div className="statsChannelRow" key={item.label}>
+                  <div className="statsChannelIcon">{item.abbr}</div>
+                  <span className="statsChannelName">{item.label}</span>
+                  <span className="statsChannelAmt">
+                    {item.up ? '' : '-'}₩{item.amount.toLocaleString()}
+                  </span>
+                  <span className={`statsGrowthBadge ${item.up ? 'up' : 'down'}`}>
+                    {item.up ? '+' : ''}{item.growth}%
+                  </span>
+                </div>
+              ))}
+            </div>
           </section>
         </div>
 
-        {/* ── 가입자 증가 추이 ── */}
-        <div className="matchChartGrid">
+        {/* Row 2 ── 신규 구독자 추이 + 최근 가입 피드 */}
+        <div className="statsMainGrid">
 
-          {/* 월별 신규 가입 바 차트 */}
-          <section className="admin-card" style={{ padding: '22px' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700, color: '#1c3e63' }}>
-              월별 신규 가입자 추이
-            </h3>
-            <div className="matchTrendLegend">
-              <span><i className="matchDot doc" />개인 회원</span>
-              <span><i className="matchDot comp" />기업 회원</span>
+          <section className="admin-card statsCard">
+            <div className="statsCardHead">
+              <div>
+                <h3>신규 구독자 추이</h3>
+                <p>개인 vs 기업 구독자 비교</p>
+              </div>
+              <div className="statsLegend">
+                <span><i className="statsLegendDot navy" />기업</span>
+                <span><i className="statsLegendDot teal" />개인</span>
+              </div>
             </div>
-            <div className="matchTrend">
-              {monthlyGrowth.map((m) => (
-                <div className="matchTrendCol" key={m.month}>
-                  <div className="matchTrendBars">
-                    <div
-                      className="matchTrendBar doc"
-                      style={{ height: Math.round((m.individual / MAX_GROWTH) * 160) }}
-                    >
-                      <span>{m.individual}</span>
+            <div className="statsStackedWrap">
+              {monthlyGrowth.map((m) => {
+                const total  = m.individual + m.company;
+                const totalH = Math.round((total / MAX_TOTAL) * CHART_H);
+                const compH  = Math.round((m.company / MAX_TOTAL) * CHART_H);
+                const indivH = totalH - compH;
+                return (
+                  <div className="statsStackedCol" key={m.month}>
+                    <div className="statsStackedBars">
+                      <div className="statsBarIndiv" style={{ height: indivH }} />
+                      <div className="statsBarComp"  style={{ height: compH  }} />
                     </div>
-                    <div
-                      className="matchTrendBar comp"
-                      style={{ height: Math.round((m.company / MAX_GROWTH) * 160) }}
-                    >
-                      <span>{m.company}</span>
-                    </div>
+                    <span>{m.month}</span>
                   </div>
-                  <p>{m.month}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 
-          {/* 가입자 현황 테이블 */}
-          <section className="admin-card" style={{ padding: '22px' }}>
-            <h3 style={{ margin: '0 0 20px', fontSize: 22, fontWeight: 700, color: '#1c3e63' }}>
-              가입자 현황
-            </h3>
-            <table className="memberTable" style={{ fontSize: 13 }}>
-              <thead>
-                <tr>
-                  <th>월</th>
-                  <th>개인 신규</th>
-                  <th>기업 신규</th>
-                  <th>월 합계</th>
-                </tr>
-              </thead>
-              <tbody>
-                {monthlyGrowth.map((m) => (
-                  <tr key={m.month}>
-                    <td>{m.month}</td>
-                    <td>{m.individual.toLocaleString()}</td>
-                    <td>{m.company.toLocaleString()}</td>
-                    <td><strong>{(m.individual + m.company).toLocaleString()}</strong></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <section className="admin-card statsCard">
+            <div className="statsCardHead">
+              <h3>최근 가입 피드</h3>
+              <button className="sectionHead" style={{ background: 'none', border: 'none', color: '#24496f', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                전체보기
+              </button>
+            </div>
+            <div className="statsFeed">
+              {recentActivity.map((item) => (
+                <div className="statsFeedItem" key={item.name}>
+                  <div className="statsAvatar">{item.initials}</div>
+                  <div className="statsFeedInfo">
+                    <strong>{item.name}</strong>
+                    <div>
+                      <span className={`statsStatusPill ${item.status.toLowerCase()}`}>{item.status}</span>
+                      <span>{item.plan}</span>
+                    </div>
+                  </div>
+                  <span className="statsFeedTime">{item.time}</span>
+                </div>
+              ))}
+            </div>
           </section>
         </div>
 
