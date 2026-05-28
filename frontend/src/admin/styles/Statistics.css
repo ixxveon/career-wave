@@ -246,6 +246,11 @@
 .statsLegend .teal::before  { background: #3d8e6a; }
 .statsLegend .coral::before { background: #c04c4c; }
 
+.statsLegend .teal  { color: #2c7a55; }
+.statsLegend .coral { color: #a03838; }
+.statsLegend .teal strong,
+.statsLegend .coral strong { font-weight: 800; }
+
 /* ── recent activity feed ────────────────────────────────────── */
 .statsFeed { padding: 0; }
 

@@ -92,8 +92,7 @@ function buildSvgPath(values: number[], maxVal = LINE_MAX_VAL) {
   return { line, area, pts };
 }
 
-const TOOLTIP_W     = 104;
-const SUB_TOOLTIP_W = 80;
+const TOOLTIP_W = 104;
 
 export default function StatisticsPage() {
   const { line, area, pts } = buildSvgPath(monthlyRevenue.map(m => m.total));
@@ -103,11 +102,7 @@ export default function StatisticsPage() {
   const subNewPath   = buildSvgPath(monthlySubscribers.map(m => m.newSubs),  SUB_MAX_VAL);
   const subChurnPath = buildSvgPath(monthlySubscribers.map(m => m.churned), SUB_MAX_VAL);
 
-  const subLastIdx      = monthlySubscribers.length - 1;
-  const subNewLastPt    = subNewPath.pts[subLastIdx];
-  const subChurnLastPt  = subChurnPath.pts[subLastIdx];
-  const subNewTooltipX  = subNewLastPt[0]   - SUB_TOOLTIP_W - 8;
-  const subChurnTooltipX = subChurnLastPt[0] - SUB_TOOLTIP_W - 8;
+  const subLast = monthlySubscribers[monthlySubscribers.length - 1];
 
   return (
     <section>
@@ -230,8 +225,8 @@ export default function StatisticsPage() {
                 <h3>구독자 변동 추이</h3>
               </div>
               <div className="statsLegend">
-                <span className="teal">신규</span>
-                <span className="coral">탈퇴</span>
+                <span className="teal">신규 <strong>{subLast.newSubs}명</strong></span>
+                <span className="coral">탈퇴 <strong>{subLast.churned}명</strong></span>
               </div>
             </div>
             <div className="statsLineWrap">
@@ -276,19 +271,6 @@ export default function StatisticsPage() {
                       <circle key={`churn-${i}`} cx={cx} cy={cy} r={4} fill="#c04c4c" stroke="white" strokeWidth="2" />
                     ))}
 
-                    {/* 신규 합계 툴팁 */}
-                    <rect x={subNewTooltipX} y={subNewLastPt[1] - 36} width={SUB_TOOLTIP_W} height={24} rx="7" fill="#3d8e6a" />
-                    <text x={subNewTooltipX + SUB_TOOLTIP_W / 2} y={subNewLastPt[1] - 19}
-                      textAnchor="middle" fill="white" fontSize="12" fontWeight="700" fontFamily="inherit">
-                      신규 {monthlySubscribers[subLastIdx].newSubs}명
-                    </text>
-
-                    {/* 탈퇴 합계 툴팁 */}
-                    <rect x={subChurnTooltipX} y={subChurnLastPt[1] - 36} width={SUB_TOOLTIP_W} height={24} rx="7" fill="#c04c4c" />
-                    <text x={subChurnTooltipX + SUB_TOOLTIP_W / 2} y={subChurnLastPt[1] - 19}
-                      textAnchor="middle" fill="white" fontSize="12" fontWeight="700" fontFamily="inherit">
-                      탈퇴 {monthlySubscribers[subLastIdx].churned}명
-                    </text>
                   </svg>
                   <div className="statsLineLabels">
                     {monthlySubscribers.map(m => <span key={m.month}>{m.month}</span>)}
