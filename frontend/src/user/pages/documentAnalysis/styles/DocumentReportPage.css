@@ -1,0 +1,43 @@
+/* ══════════════════════════════════════
+   Document Report Page
+   — 배너 내부 유형 탭 (.dr-type-selector 슬롯에 주입)
+══════════════════════════════════════ */
+
+/* 탭 묶음 — 다크 배너 배경 위에서 동작 */
+.drp-type-tabs {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.drp-type-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.drp-type-tab:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 활성 탭 — 흰색 배경으로 다크 배너 위에서 뚜렷하게 구분 */
+.drp-type-tab--active {
+  background: #fff;
+  border-color: #fff;
+  color: #0b1e3d;
+}
+.drp-type-tab--active:hover {
+  background: #f0f6ff;
+  border-color: #f0f6ff;
+  color: #0b1e3d;
+}

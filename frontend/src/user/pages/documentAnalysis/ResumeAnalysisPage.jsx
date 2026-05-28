@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import {
-  Upload, FileText, X, AlertCircle, Loader2,
+  Upload, FileText, X, AlertCircle, Loader2, Building2, Briefcase,
 } from 'lucide-react';
 import { documentApi } from '../../api/documentApi';
 import DocumentResultView from './DocumentResultView';
@@ -8,6 +8,12 @@ import './styles/ResumeAnalysisPage.css';
 
 /* ── 상수 ──────────────────────────────────────── */
 const ALLOWED_EXT = ['.pdf', '.doc', '.docx'];
+
+/* ── 멤버십 한도 (InterviewHomePage와 동일 기준) ── */
+const PLAN_LIMITS = { FREE: { document: 1 }, PREMIUM: { document: 20 } };
+
+/* ── Mock 사용량 (백엔드 연동 전 임시) ─────────── */
+const MOCK_QUOTA = { membership: 'PREMIUM', documentUsed: 7 };
 
 const MOCK_RESULT = {
   documentId: 2,
@@ -67,6 +73,7 @@ export default function ResumeAnalysisPage() {
   const [dragging, setDragging]   = useState(false);
   const [file, setFile]           = useState(null);
   const [fileError, setFileError] = useState(null);
+  const [company, setCompany]     = useState('');
   const [job, setJob]             = useState('');
   const [result, setResult]       = useState(null);
   const inputRef                  = useRef(null);
@@ -93,8 +100,7 @@ export default function ResumeAnalysisPage() {
     setIsLoading(true);
     setApiError(null);
     try {
-      // job → jobCategory
-      const data = await documentApi.analyzeResume({ file, jobCategory: job });
+      const data = await documentApi.analyzeResume({ file, targetCompany: company, jobCategory: job });
       setResult(data);
       setPhase('result');
     } catch (err) {
@@ -114,6 +120,7 @@ export default function ResumeAnalysisPage() {
     setFile(null);
     setResult(null);
     setApiError(null);
+    setCompany('');
     setJob('');
     setFileError(null);
   }
@@ -125,17 +132,41 @@ export default function ResumeAnalysisPage() {
         result={result}
         onReset={handleReset}
         label="RESUME ANALYSIS"
-        subtitle={`${file?.name ?? '이력서'} · ${job}`}
+        subtitle={`${company ? company + ' · ' : ''}${file?.name ?? '이력서'} · ${job}`}
       />
     );
   }
 
   /* ── 업로드 화면 ── */
+  const { membership, documentUsed } = MOCK_QUOTA;
+  const docLimit  = PLAN_LIMITS[membership].document;
+  const docLeft   = docLimit - documentUsed;
+  const pct       = Math.min((documentUsed / docLimit) * 100, 100);
+  const isExhausted = docLeft <= 0;
+
   return (
     <div className="ra">
       {isLoading && <LoadingOverlay />}
 
       <div className="ra-upload-wrap">
+        {/* ── 할당량 표시 ── */}
+        <div className="ra-quota-bar">
+          <div className="ra-quota-bar__info">
+            <span className="ra-quota-bar__label">이번 달 서류 분석</span>
+            <span className={`ra-quota-bar__count${isExhausted ? ' ra-quota-bar__count--full' : docLeft <= 3 ? ' ra-quota-bar__count--warn' : ''}`}>
+              {documentUsed} / {docLimit}회 사용
+              {isExhausted && <span className="ra-quota-bar__tag">한도 초과</span>}
+              {!isExhausted && docLeft <= 3 && <span className="ra-quota-bar__tag ra-quota-bar__tag--warn">잔여 {docLeft}회</span>}
+            </span>
+          </div>
+          <div className="ra-quota-bar__track">
+            <div
+              className={`ra-quota-bar__fill${isExhausted ? ' ra-quota-bar__fill--full' : pct >= 70 ? ' ra-quota-bar__fill--warn' : ''}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+
         <span className="ra-eyebrow">RESUME ANALYSIS</span>
         <h1 className="ra-upload__title">이력서 AI 분석</h1>
         <p className="ra-upload__desc">
@@ -191,15 +222,26 @@ export default function ResumeAnalysisPage() {
           </p>
         )}
 
-        {/* 직무 입력 */}
-        <div className="ra-field">
-          <label className="ra-field__label">분석 기준 직무</label>
-          <input
-            className="ra-field__input"
-            placeholder="ex) 백엔드 개발자, 프론트엔드 개발자"
-            value={job}
-            onChange={e => setJob(e.target.value)}
-          />
+        {/* 회사 + 직무 입력 */}
+        <div className="ra-meta-row">
+          <div className="ra-field">
+            <label className="ra-field__label"><Building2 size={13} /> 지원 회사</label>
+            <input
+              className="ra-field__input"
+              placeholder="ex) 카카오, 네이버, 토스"
+              value={company}
+              onChange={e => setCompany(e.target.value)}
+            />
+          </div>
+          <div className="ra-field">
+            <label className="ra-field__label"><Briefcase size={13} /> 지원 직무</label>
+            <input
+              className="ra-field__input"
+              placeholder="ex) 백엔드 개발자, 프론트엔드 개발자"
+              value={job}
+              onChange={e => setJob(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* API 오류 메시지 */}
@@ -211,7 +253,7 @@ export default function ResumeAnalysisPage() {
 
         <button
           className="ra-btn ra-btn--primary"
-          disabled={!file || !job.trim() || isLoading}
+          disabled={!file || !company.trim() || !job.trim() || isLoading}
           onClick={handleSubmit}
         >
           {isLoading ? <Loader2 size={15} className="ra-btn__spinner" /> : <Upload size={15} />}
