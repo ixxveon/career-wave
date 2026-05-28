@@ -4,7 +4,6 @@ import {
     FilePenLine,
     UsersRound,
 } from "lucide-react";
-import "./DashboardPage.css";
 import ProgressCard from "../../components/dashboard/ProgressCard";
 import InterviewStatusCard from "../../components/dashboard/InterviewStatusCard";
 import GithubGrowthCard from "../../components/dashboard/GithubGrowthCard";
