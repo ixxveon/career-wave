@@ -1,4 +1,4 @@
-﻿import { CreditCard, ReceiptText, WalletCards } from 'lucide-react';
+import { CreditCard, ReceiptText, WalletCards } from 'lucide-react';
 import ServicePage from '../../../components/common/ServicePage';
 
 function PricingPage() {

@@ -1,4 +1,4 @@
-﻿import { BadgeCheck, BriefcaseBusiness, Megaphone } from 'lucide-react';
+import { BadgeCheck, BriefcaseBusiness, Megaphone } from 'lucide-react';
 import ServicePage from '../../../components/common/ServicePage';
 
 function CompanyProductPage() {
