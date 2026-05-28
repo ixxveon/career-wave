@@ -4,7 +4,6 @@ export const serviceMenus = [
     href: '/jobs',
     children: [
       { label: '채용공고 목록', href: '/jobs' },
-      { label: '공고 등록', href: '/jobs/create' },
     ],
   },
   {
@@ -12,7 +11,8 @@ export const serviceMenus = [
     href: '/documents/resume',
     children: [
       { label: '이력서 분석', href: '/documents/resume' },
-      { label: '자기소개서 첨삭', href: '/documents/cover-letter' },
+      { label: '자기소개서 분석', href: '/documents/cover-letter' },
+      // { label: '서류 분석 리포트', href: '/documents/report' }, // TODO: 백엔드 연동 후 활성화
     ],
   },
   {
@@ -20,8 +20,8 @@ export const serviceMenus = [
     href: '/interview',
     children: [
       { label: '면접 홈', href: '/interview' },
-      { label: '텍스트 면접', href: '/interview/text' },
-      { label: '영상 면접', href: '/interview/media' },
+      { label: 'AI 텍스트 · 음성 면접', href: '/interview/text' },
+      { label: 'AI 화상 면접', href: '/interview/media', comingSoon: true },
       { label: '면접 리포트', href: '/interview/report' },
     ],
   },

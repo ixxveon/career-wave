@@ -96,23 +96,23 @@ button {
 .admin-main {
   margin-left: 220px;
   width: calc(100% - 220px);
-  padding: 28px 36px 34px;
+  padding: clamp(18px, 2.5vw, 36px);
 }
 
 .admin-header {
-  height: 74px;
+  min-height: 74px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 18px;
   margin-bottom: 18px;
 }
 
 .admin-header h2 {
   margin: 0;
-  font-size: 34px;
+  font-size: clamp(26px, 2.4vw, 34px);
   line-height: 1;
   font-weight: 800;
-  letter-spacing: -1px;
   color: #1c3e63;
 }
 
@@ -126,6 +126,9 @@ button {
   display: flex;
   align-items: flex-start;
   gap: 13px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .serviceBadge {
@@ -200,17 +203,21 @@ button {
 
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
   margin-bottom: 18px;
 }
 
 .kpiCard {
-  height: 142px;
+  min-height: 142px;
   padding: 24px 22px;
   display: flex;
   align-items: center;
   gap: 22px;
+}
+
+.kpiCard > div:last-child {
+  min-width: 0;
 }
 
 .kpiCard:nth-child(1) {
@@ -270,10 +277,11 @@ button {
 
 .kpiCard h3 {
   margin: 0;
-  font-size: 34px;
+  font-size: clamp(26px, 2vw, 34px);
   font-weight: 800;
   letter-spacing: -1px;
   color: #10243f;
+  overflow-wrap: anywhere;
 }
 
 .kpiCard b {
@@ -299,18 +307,26 @@ button {
 
 .layoutGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
   gap: 22px;
+  align-items: start;
 }
 
 .leftColumn {
   min-width: 0;
-}
-
-.rightColumn {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.rightColumn {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: calc(100vh - 48px);
+  position: sticky;
+  top: 24px;
 }
 
 /* alert */
@@ -360,13 +376,13 @@ button {
 }
 
 .alertRow {
-  height: 52px;
+  min-height: 52px;
   border-radius: 10px;
   display: grid;
-  grid-template-columns: 28px 54px 74px 1fr auto;
+  grid-template-columns: 28px 54px 74px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 0 14px;
+  padding: 10px 14px;
   border: 1px solid #e2e8f0;
   cursor: pointer;
   transition: 0.18s ease;
@@ -442,29 +458,31 @@ button {
   font-size: 14px;
   font-weight: 600;
   color: #23384f;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* charts */
 
 .chartGrid {
-  margin-top: 18px;
   display: grid;
-  grid-template-columns: 1.55fr 0.95fr;
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.95fr);
   gap: 18px;
 }
 
 .chartCard,
 .donutCard {
-  height: 280px;
+  min-height: 280px;
   padding: 22px;
   overflow: hidden;
 }
 
 .chartArea {
-  height: 170px;
+  min-height: 200px;
   display: flex;
   gap: 14px;
   margin-top: 12px;
+  align-items: stretch;
 }
 
 .yAxis {
@@ -481,11 +499,12 @@ button {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 18px;
+  gap: clamp(10px, 1.2vw, 18px);
   align-items: end;
   padding: 0 6px 24px;
   background-image: linear-gradient(to bottom, #e2ebf3 1px, transparent 1px);
   background-size: 100% 42px;
+  min-width: 0;
 }
 
 .barItem {
@@ -494,10 +513,11 @@ button {
   align-items: flex-end;
   justify-content: center;
   position: relative;
+  min-width: 0;
 }
 
 .barItem div {
-  width: 54px;
+  width: min(54px, 100%);
   max-width: 100%;
   border-radius: 8px 8px 0 0;
   background: linear-gradient(180deg, #5d8fbe, #c9dbea);
@@ -507,33 +527,36 @@ button {
   position: absolute;
   bottom: -24px;
   color: #60758c;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .donutContent {
-  height: 185px;
+  min-height: 185px;
   display: flex;
   align-items: center;
   gap: 34px;
 }
 
 .donut {
-  width: 150px;
-  height: 150px;
+  width: clamp(120px, 11vw, 150px);
+  aspect-ratio: 1;
+  height: auto;
   border-radius: 50%;
   background: conic-gradient(#27577f 0 62%, #8daeca 62% 90%, #d6e3ee 90% 100%);
   position: relative;
+  flex: 0 0 auto;
 }
 
 .donut::after {
   content: "";
-  width: 76px;
-  height: 76px;
+  width: 50.6%;
+  height: 50.6%;
   border-radius: 50%;
   background: white;
   position: absolute;
-  inset: 37px;
+  inset: 24.7%;
 }
 
 .donutContent ul {
@@ -547,6 +570,7 @@ button {
   font-size: 15px;
   color: #31475f;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .donutContent i {
@@ -566,8 +590,12 @@ button {
 .adminCardGrid {
   margin-top: 18px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
+}
+
+.adminCardGrid--dashboard {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
 
 .adminCard {
@@ -597,6 +625,7 @@ button {
   font-size: 19px;
   font-weight: 700;
   color: #1c3e63;
+  overflow-wrap: anywhere;
 }
 
 .adminCard p {
@@ -605,7 +634,8 @@ button {
   line-height: 1.7;
   color: #708397;
   font-weight: 500;
-  min-height: 96px;
+  min-height: 84px;
+  overflow-wrap: anywhere;
 }
 
 .adminBottom {
@@ -622,6 +652,7 @@ button {
   font-size: 15px;
   font-weight: 700;
   color: #10243f;
+  overflow-wrap: anywhere;
 }
 
 .adminCard button {
@@ -646,64 +677,15 @@ button {
 .adminIcon.orange { background: #f5ede3; color: #9b7553; }
 .adminIcon.purple { background: #efeaf6; color: #75658d; }
 
-/* AI panel */
-
-.aiPanel {
-  height: 352px;
-  border-radius: 16px;
-  padding: 24px 20px;
-  background: linear-gradient(135deg, #29486d, #5d7e9f);
-  color: white;
-}
-
-.aiPanel h3 {
-  margin: 0 0 20px;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.aiItem {
-  height: 72px;
-  margin-bottom: 12px;
-  border-radius: 11px;
-  padding: 14px 17px;
-  background: rgba(255, 255, 255, 0.14);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.aiItem strong {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.aiItem p {
-  margin: 9px 0 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.aiItem button {
-  width: 94px;
-  height: 32px;
-  border-radius: 999px;
-  border: 0;
-  background: white;
-  color: #24496f;
-  font-size: 13px;
-  font-weight: 600;
-}
-
 /* status */
 
 .statusCard {
+  flex: 0 0 auto;
   padding: 22px;
 }
 
 .statusRow {
-  height: 34px;
+  min-height: 34px;
   border-bottom: 1px solid #e5edf6;
   display: flex;
   align-items: center;
@@ -711,6 +693,7 @@ button {
   color: #31475f;
   font-size: 15px;
   font-weight: 600;
+  padding: 6px 0;
 }
 
 .statusRow span {
@@ -740,8 +723,10 @@ button {
 /* logs */
 
 .logCard {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
   padding: 20px 22px;
-  min-height: 400px;
 }
 
 .logCard .sectionHead {
@@ -756,10 +741,10 @@ button {
   min-height: 42px;
   border-bottom: 1px solid #e5edf6;
   display: grid;
-  grid-template-columns: 58px 120px 1fr;
+  grid-template-columns: 58px 120px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  padding: 0 4px;
+  padding: 8px 4px;
   cursor: pointer;
 }
 
@@ -782,6 +767,8 @@ button {
 
 .logRow p {
   color: #50657d;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* member page */
@@ -909,6 +896,7 @@ button {
   text-align: left;
   padding: 0 16px;
   border-bottom: 1px solid #e5edf6;
+  white-space: nowrap;
 }
 
 .memberTable td {
@@ -917,6 +905,7 @@ button {
   font-size: 14px;
   color: #23384f;
   border-bottom: 1px solid #eef3f8;
+  white-space: nowrap;
 }
 
 .memberTable tbody tr:hover {
@@ -982,6 +971,29 @@ button {
   box-shadow: 0 24px 60px rgba(16, 36, 63, 0.22);
 }
 
+/* 내용이 긴 모달에 붙이는 modifier — 헤더·액션 고정, 본문만 스크롤 */
+.memberModal.modal--scrollable {
+  display: flex;
+  flex-direction: column;
+  max-height: 88vh;
+  padding: 0;
+  overflow: hidden;
+}
+.memberModal.modal--scrollable .modalHeader {
+  padding: 20px 24px;
+  flex-shrink: 0;
+}
+.memberModal.modal--scrollable .modalAction {
+  flex-shrink: 0;
+  padding: 16px 24px 20px;
+}
+.modalBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 8px;
+  min-height: 0;
+}
+
 .modalHeader {
   display: flex;
   justify-content: space-between;
@@ -1039,6 +1051,13 @@ button {
   font-size: 15px;
 }
 
+.modalInfoGrid .statusBadge,
+.modalInfoGrid .planBadge {
+  display: inline-flex;
+  min-width: fit-content;
+  width: fit-content;
+}
+
 .modalAction {
   display: flex;
   justify-content: flex-end;
@@ -1083,11 +1102,17 @@ button {
 
   .rightColumn {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    height: auto;
+    position: static;
   }
 
-  .aiPanel {
-    grid-row: span 2;
+  .logCard {
+    min-height: 400px;
+  }
+
+  .chartGrid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1109,6 +1134,11 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .kpiCard {
+    padding: 20px 18px;
+    gap: 16px;
+  }
+
   .admin-sidebar {
     display: none;
   }
@@ -1116,6 +1146,92 @@ button {
   .admin-main {
     margin-left: 0;
     width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .adminProfile {
+    justify-content: flex-start;
+  }
+
+  .sectionHead {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .alertRow {
+    grid-template-columns: 28px 54px 74px minmax(0, 1fr);
+  }
+
+  .alertRow button {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+
+  .donutContent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .logRow {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .logRow p {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-main {
+    padding: 16px 12px 24px;
+  }
+
+  .adminProfile {
+    align-items: center;
+  }
+
+  .serviceBadge,
+  .admin-logoutButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .kpiCard {
+    align-items: flex-start;
+  }
+
+  .alertRow {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .alertLevel,
+  .alertRow strong,
+  .alertRow p,
+  .alertRow button {
+    grid-column: 2;
+  }
+
+  .alertRow button {
+    width: 100%;
+  }
+
+  .adminTop,
+  .adminBottom {
+    align-items: flex-start;
+  }
+
+  .adminBottom strong,
+  .adminCard button {
+    width: 100%;
+    text-align: left;
   }
 }
 
@@ -1514,4 +1630,140 @@ button {
 
 @media (max-width: 1100px) {
   .matchChartGrid { grid-template-columns: 1fr; }
+  .memberSummaryGrid { grid-template-columns: repeat(2, 1fr); }
 }
+
+@media (max-width: 640px) {
+  .memberSummaryGrid { grid-template-columns: 1fr; }
+}
+
+/* 테이블 가로 스크롤 래퍼 */
+.tableScroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── KPI card — icon layout & color variants ─────────────────── */
+.memberSummaryCard { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.memberKpiContent { flex: 1; min-width: 0; }
+.memberKpiIcon { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: none; }
+
+.memberSummaryCard.kpi-blue   { background: linear-gradient(135deg, #daeaf8 0%, #ecf4fc 100%); border-color: #bfd5ed; }
+.memberSummaryCard.kpi-green  { background: linear-gradient(135deg, #d4eee3 0%, #e9f6ef 100%); border-color: #b5dac7; }
+.memberSummaryCard.kpi-purple { background: linear-gradient(135deg, #e0d5f2 0%, #ede9f8 100%); border-color: #c8bde8; }
+.memberSummaryCard.kpi-yellow { background: linear-gradient(135deg, #fde9cf 0%, #fef4e5 100%); border-color: #f0d0a4; }
+
+.memberSummaryCard.kpi-blue .memberKpiContent p    { color: #2d5f8e; }
+.memberSummaryCard.kpi-blue .memberKpiContent h3   { color: #1a3d5e; }
+.memberSummaryCard.kpi-blue .memberKpiContent span { color: #4a7299; }
+.memberSummaryCard.kpi-green .memberKpiContent p    { color: #2c6e4f; }
+.memberSummaryCard.kpi-green .memberKpiContent h3   { color: #1a4a34; }
+.memberSummaryCard.kpi-green .memberKpiContent span { color: #3d7a5f; }
+.memberSummaryCard.kpi-purple .memberKpiContent p    { color: #5c4d85; }
+.memberSummaryCard.kpi-purple .memberKpiContent h3   { color: #3d3260; }
+.memberSummaryCard.kpi-purple .memberKpiContent span { color: #6b5a96; }
+.memberSummaryCard.kpi-yellow .memberKpiContent p    { color: #8a5a20; }
+.memberSummaryCard.kpi-yellow .memberKpiContent h3   { color: #5e3d10; }
+.memberSummaryCard.kpi-yellow .memberKpiContent span { color: #9e6c2a; }
+
+.memberKpiIcon.kpi-blue   { background: rgba(58,114,178,0.16);  color: #2d5f8e; }
+.memberKpiIcon.kpi-green  { background: rgba(45,110,79,0.16);   color: #2c6e4f; }
+.memberKpiIcon.kpi-purple { background: rgba(92,77,133,0.16);   color: #5c4d85; }
+.memberKpiIcon.kpi-yellow { background: rgba(155,117,53,0.16);  color: #8a5a20; }
+
+.memberFilterBtn { height: 42px; padding: 0 24px; border-radius: 10px; background: #24496f; color: white; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: background 0.18s; }
+.memberFilterBtn:hover { background: #1c3e63; }
+
+.roleBadge { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 6px; font-size: 12px; font-weight: 700; background: #edf3f9; color: #4f6b8a; }
+.tableBtn--danger  { border-color: #f0d0d0 !important; color: #9a6767 !important; background: #fff8f8 !important; }
+.tableBtn--danger:hover  { background: #fff1f2 !important; }
+.tableBtn--approve { border-color: #b5dac7 !important; color: #2c6e4f !important; background: #f0f8f4 !important; }
+.tableBtn--approve:hover { background: #d4eee3 !important; }
+
+.memberTotalCount { display: inline-block; margin-left: 10px; font-size: 14px; font-weight: 600; color: #7a8da4; letter-spacing: 0; }
+.memberTableFooter { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+.memberTableCount { font-size: 13px; color: #7a8da4; font-weight: 500; }
+
+.tabBadge { display: inline-flex; align-items: center; justify-content: center; margin-left: 7px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #e85555; color: white; font-size: 11px; font-weight: 700; }
+.certFileLink { font-size: 13px; color: #4a7299; cursor: pointer; white-space: nowrap; }
+.certFileLink:hover { text-decoration: underline; }
+
+.modalInfoGrid .statusBadge,
+.modalInfoGrid .planBadge {
+  display: inline-flex;
+  min-width: fit-content;
+  width: fit-content;
+}
+
+/* ── Bulk action bar ─────────────────────────────────────────── */
+.bulkBar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #f0f4f8; border-radius: 10px; margin-bottom: 12px; font-size: 13px; }
+.bulkBar > span { font-weight: 600; color: #4f6b8a; }
+.bulkBar button { height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid #c5d3e0; background: white; color: #4f6b8a; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+.bulkBar button:hover { background: #e8f0f8; }
+.bulkBar button.danger { border-color: #f0d0d0; color: #9a6767; background: #fff8f8; }
+.bulkBar button.danger:hover { background: #fff1f2; }
+
+/* ── Report page ─────────────────────────────────────────────── */
+.reportTypeBadge { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+.reportTypeBadge.post    { background: #daeaf8; color: #2d5f8e; }
+.reportTypeBadge.comment { background: #d4eee3; color: #2c6e4f; }
+.reportTypeBadge.member  { background: #fde9cf; color: #8a5a20; }
+
+.reportAiSection { margin-top: 20px; border-top: 1px solid #edf0f5; padding-top: 16px; }
+.reportAiSection h4 { font-size: 13px; font-weight: 700; color: #4f6b8a; margin: 0 0 12px; display: flex; align-items: center; gap: 6px; }
+.reportAiGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.reportAiGrid > div > span:first-child { font-size: 12px; color: #7a8da4; display: block; margin-bottom: 4px; }
+.reportAiSummary { font-size: 13px; color: #545e75; line-height: 1.7; background: #f7f9fc; border-radius: 8px; padding: 10px 14px; border: 1px solid #edf0f5; margin: 0; }
+
+.severityBadge { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+.severityBadge.low    { background: #d4eee3; color: #2c6e4f; }
+.severityBadge.medium { background: #fde9cf; color: #8a5a20; }
+.severityBadge.high   { background: #fde8e8; color: #9a3a3a; }
+
+.aiReviewBtn { height: 36px; padding: 0 16px; border-radius: 8px; border: 1px solid #c8bde8; color: #5c4d85; background: #f0edf8; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; transition: background 0.18s; }
+.aiReviewBtn:hover:not(:disabled) { background: #e0d5f2; }
+.aiReviewBtn:disabled { opacity: 0.6; cursor: default; }
+
+.reportAiGrid .statusBadge { display: inline-flex; min-width: fit-content; width: fit-content; }
+.modalInfoGrid .reportTypeBadge { display: inline-flex; min-width: fit-content; width: fit-content; }
+
+/* ── User AI review section ──────────────────────────────────── */
+.userAiSection { margin-top: 16px; border-top: 1px solid #edf0f5; padding-top: 16px; }
+.userAiSection h4 { font-size: 13px; font-weight: 700; color: #4f6b8a; margin: 0 0 12px; display: flex; align-items: center; gap: 6px; }
+
+/* Sanction recommendation badge */
+.sanctionBadge { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+.sanctionBadge.normal    { background: #d4eee3; color: #2c6e4f; }
+.sanctionBadge.warn      { background: #fde9cf; color: #8a5a20; }
+.sanctionBadge.suspend   { background: #e0d5f2; color: #5c4d85; }
+.sanctionBadge.blacklist { background: #fde8e8; color: #9a3a3a; }
+
+/* Warn action button */
+.tableBtn--warn { border-color: #f0d0a4 !important; color: #8a5a20 !important; background: #fffaf0 !important; }
+.tableBtn--warn:hover { background: #fef4e5 !important; }
+
+/* ── Sanction modal ──────────────────────────────────────────── */
+.sanctionTarget { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f7f9fc; border-radius: 10px; margin-bottom: 18px; border: 1px solid #edf0f5; }
+.sanctionTarget span { font-size: 13px; color: #7a8da4; }
+.sanctionTarget strong { font-size: 14px; color: #10243f; }
+.sanctionTypeLabel { font-size: 13px; font-weight: 600; color: #4f6b8a; margin-bottom: 8px; display: block; }
+.sanctionTypeGroup { display: flex; gap: 8px; margin-bottom: 18px; }
+.sanctionTypeBtn { flex: 1; height: 38px; border-radius: 8px; border: 1px solid #d8e3ed; background: white; color: #4f6b8a; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.sanctionTypeBtn.active-warn      { border-color: #f0d0a4; background: #fef4e5; color: #8a5a20; }
+.sanctionTypeBtn.active-suspend   { border-color: #c8bde8; background: #f0edf8; color: #5c4d85; }
+.sanctionTypeBtn.active-blacklist { border-color: #f0d0d0; background: #fff8f8; color: #9a3a3a; }
+.sanctionReasonWrap { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.sanctionReasonWrap > span { font-size: 13px; font-weight: 600; color: #4f6b8a; }
+.sanctionReasonWrap textarea { width: 100%; border: 1px solid #d8e3ed; border-radius: 10px; padding: 12px 14px; font-size: 13px; font-family: inherit; color: #23384f; resize: none; line-height: 1.6; box-sizing: border-box; }
+.sanctionReasonWrap textarea:focus { outline: none; border-color: #8daeca; }
+.sanctionNote { font-size: 12px; color: #9aabb9; margin: 4px 0 0; }
+.sanctionDurationWrap { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.sanctionDurationWrap > span { font-size: 13px; font-weight: 600; color: #4f6b8a; white-space: nowrap; }
+
+/* ── Warning count indicator ─────────────────────────────────── */
+.warnCountWrap { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.warnDots { display: flex; gap: 5px; }
+.warnDot { width: 10px; height: 10px; border-radius: 50%; background: #dbe5ee; }
+.warnDot.filled { background: #e85555; }
+.warnCountText { font-size: 14px; font-weight: 700; color: #4f6b8a; }
+.warnCountText.caution { color: #8a5a20; }
+.warnCountText.danger  { color: #9a3a3a; }
+.warnAlert   { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 11px; font-weight: 700; background: #fde8e8; color: #9a3a3a; }
+.warnCaution { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 11px; font-weight: 700; background: #fde9cf; color: #8a5a20; }

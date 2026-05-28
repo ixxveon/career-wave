@@ -6,6 +6,7 @@
 **/frontend/.env
 **/frontend/.env.local
 **/frontend/.env.*.local
+**/frontend/*.log
 
 # =====================
 # FastAPI (Python)
@@ -27,6 +28,7 @@
 **/backend/*.log
 **/src/main/resources/application-secret.yml
 *.jar
+!backend/gradle/wrapper/gradle-wrapper.jar
 *.war
 
 # =====================

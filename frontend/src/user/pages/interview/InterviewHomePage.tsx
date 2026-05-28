@@ -1,22 +1,84 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './styles/InterviewHomePage.css';
-import { MessageSquare, Video, ChevronRight, Lightbulb, FileText, User, Zap, ClipboardList } from 'lucide-react';
+import {
+  MessageSquare, Video, ChevronRight, Lightbulb,
+  FileText, User, Zap, ClipboardList, X,
+} from 'lucide-react';
+import type { PlanLimits, MockUser, HistoryItem } from '../../types/interview';
 
-const mockHistory = [
+/* ── 멤버십별 월 이용 한도 ─────────────────────────
+   FREE    : 서류 분석  1회 / 면접 1회
+   PREMIUM : 서류 분석 20회 / 면접 10회
+──────────────────────────────────────────────── */
+const PLAN_LIMITS: PlanLimits = {
+  FREE:    { document: 1,  interview: 1  },
+  PREMIUM: { document: 20, interview: 10 },
+};
+
+/* ── Mock 유저 (백엔드 연동 전 임시 데이터) ──────── */
+const MOCK_USER: MockUser = {
+  name:          '김지원',
+  membership:    'PREMIUM',
+  documentUsed:  7,
+  interviewUsed: 3,
+};
+
+const mockHistory: HistoryItem[] = [
   { date: '05-22', type: 'video', typeLabel: '비디오 면접', target: '토스 (백엔드)', score: 88 },
   { date: '05-20', type: 'text',  typeLabel: '텍스트 면접', target: '카카오 (백엔드)', score: 75 },
   { date: '05-18', type: 'text',  typeLabel: '텍스트 면접', target: '네이버 (인턴)',   score: 62 },
 ];
 
-function scoreClass(s) {
+function scoreClass(s: number): string {
   return s >= 80 ? 'iv-score--high' : s >= 65 ? 'iv-score--mid' : 'iv-score--low';
+}
+
+interface ComingSoonModalProps {
+  onClose: () => void;
+  onTextStart: () => void;
+}
+
+function ComingSoonModal({ onClose, onTextStart }: ComingSoonModalProps) {
+  return (
+    <div className="iv-cs-overlay" onClick={onClose}>
+      <div className="iv-cs-modal" onClick={e => e.stopPropagation()}>
+        <button className="iv-cs-modal__close" onClick={onClose}><X size={18} /></button>
+        <div className="iv-cs-modal__badge">COMING SOON</div>
+        <h3 className="iv-cs-modal__title">AI 비디오 면접</h3>
+        <p className="iv-cs-modal__desc">
+          웹캠·마이크를 활용한 AI 화상 면접 기능을<br />
+          현재 열심히 개발 중이에요!<br />
+          그 전에 텍스트 면접으로 먼저 연습해보세요.
+        </p>
+        <button className="iv-cs-modal__cta" onClick={() => { onClose(); onTextStart(); }}>
+          텍스트 면접 시작하기 →
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function InterviewHomePage() {
   const navigate = useNavigate();
+  const [showComingSoon, setShowComingSoon] = useState(false);
+
+  const { membership, documentUsed, interviewUsed } = MOCK_USER;
+  const limits      = PLAN_LIMITS[membership];
+  const isPremium   = membership === 'PREMIUM';
+
+  /* 사용량 퍼센트 (최대 100%) */
+  const docPct  = Math.min((documentUsed  / limits.document)  * 100, 100);
+  const ivPct   = Math.min((interviewUsed / limits.interview) * 100, 100);
 
   return (
     <div className="iv-home">
+      {showComingSoon && (
+        <ComingSoonModal
+          onClose={() => setShowComingSoon(false)}
+          onTextStart={() => navigate('/interview/text')}
+        />
+      )}
 
       {/* ── Hero ── */}
       <section className="iv-hero">
@@ -26,7 +88,7 @@ function InterviewHomePage() {
         <div className="iv-hero__left">
           <span className="iv-hero__eyebrow">AI INTERVIEW</span>
           <h1 className="iv-hero__title">
-            안녕하세요, 000님!<br />
+            안녕하세요, {MOCK_USER.name}님!<br />
             오늘 어떤 면접을 연습할까요?
           </h1>
           <p className="iv-hero__sub">
@@ -43,8 +105,8 @@ function InterviewHomePage() {
             <span className="iv-stat__value">3회</span>
             <span className="iv-stat__label">총 연습</span>
           </div>
-          <div className="iv-stat">
-            <span className="iv-stat__value">FREE</span>
+          <div className={`iv-stat${isPremium ? ' iv-stat--premium' : ''}`}>
+            <span className="iv-stat__value">{membership}</span>
             <span className="iv-stat__label">멤버십</span>
           </div>
         </div>
@@ -82,11 +144,41 @@ function InterviewHomePage() {
             </li>
             <li className="iv-status-item">
               <span className="iv-status-item__label">멤버십</span>
-              <span className="iv-status-item__value iv-status-item__value--free">FREE</span>
+              <span className={`iv-status-item__value iv-status-item__value--${isPremium ? 'premium' : 'free'}`}>
+                {membership}
+              </span>
             </li>
-            <li className="iv-status-item">
-              <span className="iv-status-item__label">이번 달 면접 횟수</span>
-              <span className="iv-status-item__value">0 / 1회 사용</span>
+
+            {/* ── 이번 달 서류 분석 사용량 ── */}
+            <li className="iv-status-item iv-status-item--usage">
+              <span className="iv-status-item__label">이번 달 서류 분석</span>
+              <div className="iv-quota-wrap">
+                <div className="iv-quota-bar">
+                  <div
+                    className={`iv-quota-bar__fill${docPct >= 90 ? ' iv-quota-bar__fill--warn' : ''}`}
+                    style={{ width: `${docPct}%` }}
+                  />
+                </div>
+                <span className={`iv-quota-count${docPct >= 90 ? ' iv-quota-count--warn' : ''}`}>
+                  {documentUsed} / {limits.document}회
+                </span>
+              </div>
+            </li>
+
+            {/* ── 이번 달 AI 면접 사용량 ── */}
+            <li className="iv-status-item iv-status-item--usage">
+              <span className="iv-status-item__label">이번 달 AI 면접</span>
+              <div className="iv-quota-wrap">
+                <div className="iv-quota-bar">
+                  <div
+                    className={`iv-quota-bar__fill${ivPct >= 90 ? ' iv-quota-bar__fill--warn' : ''}`}
+                    style={{ width: `${ivPct}%` }}
+                  />
+                </div>
+                <span className={`iv-quota-count${ivPct >= 90 ? ' iv-quota-count--warn' : ''}`}>
+                  {interviewUsed} / {limits.interview}회
+                </span>
+              </div>
             </li>
           </ul>
         </div>
@@ -103,12 +195,12 @@ function InterviewHomePage() {
               <div className="iv-mode-card__deco" />
               <div className="iv-mode-card__icon"><MessageSquare size={22} /></div>
               <div className="iv-mode-card__body">
-                <p className="iv-mode-card__label">텍스트 면접 시작</p>
-                <p className="iv-mode-card__desc">키보드 타이핑, 메신저 대화 스타일</p>
+                <p className="iv-mode-card__label">AI 텍스트 · 음성 면접</p>
+                <p className="iv-mode-card__desc">타이핑 또는 마이크로 답변, 채팅 스타일</p>
               </div>
               <span className="iv-mode-card__cta">시작하기 <ChevronRight size={14} /></span>
             </button>
-            <button className="iv-mode-card iv-mode-card--video" onClick={() => navigate('/interview/media')}>
+            <button className="iv-mode-card iv-mode-card--video" onClick={() => setShowComingSoon(true)}>
               <div className="iv-mode-card__deco" />
               <div className="iv-mode-card__icon"><Video size={22} /></div>
               <div className="iv-mode-card__body">
