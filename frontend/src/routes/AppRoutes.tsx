@@ -26,8 +26,7 @@ import ResumeAnalysisPage from '../user/pages/documentAnalysis/ResumeAnalysisPag
 import CoverLetterAnalysisPage from '../user/pages/documentAnalysis/CoverLetterAnalysisPage';
 
 import InterviewHomePage from '../user/pages/interview/InterviewHomePage';
-import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
-import MediaInterviewPage from '../user/pages/interview/MediaInterviewPage';
+import InterviewRoomPage from '../user/pages/interview/InterviewRoomPage';
 import InterviewReportPage from '../user/pages/interview/InterviewReportPage';
 
 import DiagnosisHistoryPage from '../user/pages/careerDiagnosis/DiagnosisHistoryPage';
@@ -46,9 +45,19 @@ import CompanyProductPage from '../user/pages/billing/CompanyProductPage';
 import NotFoundPage from '../user/pages/common/NotFoundPage';
 
 // ── 어드민 플랫폼 ──────────────────────────────────────────────
-import AdminCompanyListPage from '../admin/pages/Company/CompanyListPage';
-import AdminJobNoticeListPage from '../admin/pages/JobNotice/JobNoticeListPage';
-import AdminSettlementListPage from '../admin/pages/Settlement/SettlementListPage';
+import AdminLayout from '../admin/layouts/AdminLayout';
+import AdminLoginPage from '../admin/pages/AdminLogin/AdminLoginPage';
+import AdminDashboardPage from '../admin/pages/Dashboard/AdminDashboardPage';
+import AdminManagementPage from '../admin/pages/AdminManagement/AdminManagementPage';
+import UserManagementPage from '../admin/pages/UserManagement/UserManagementPage';
+import ReportPage from '../admin/pages/Report/ReportPage';
+import CustomerServicePage from '../admin/pages/CustomerService/CustomerServicePage';
+import AdminPaymentPage from '../admin/pages/Payment/PaymentPage';
+import MatchingPage from '../admin/pages/Matching/MatchingPage';
+import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
+import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
+import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
+import OperationSettingsPage from '../admin/pages/Settings/OperationSettingsPage';
 
 function AppRoutes() {
   return (
@@ -94,9 +103,9 @@ function AppRoutes() {
 
         <Route path="interview">
           <Route index element={<InterviewHomePage />} />
+          <Route path="text"   element={<InterviewRoomPage mode="text" />} />
+          <Route path="media"  element={<InterviewRoomPage mode="video" />} />
           <Route path="report" element={<InterviewReportPage />} />
-          <Route path="text" element={<TextInterviewPage />} />
-          <Route path="media" element={<MediaInterviewPage />} />
         </Route>
 
         <Route path="career-diagnosis">
@@ -125,10 +134,22 @@ function AppRoutes() {
 
       {/* 어드민 플랫폼 */}
       <Route path="admin">
-        <Route index element={<Navigate to="/admin/companies" replace />} />
-        <Route path="companies" element={<AdminCompanyListPage />} />
-        <Route path="job-notices" element={<AdminJobNoticeListPage />} />
-        <Route path="settlements" element={<AdminSettlementListPage />} />
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="login" element={<AdminLoginPage />} />
+
+        <Route element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="admins"    element={<AdminManagementPage />} />
+          <Route path="members"   element={<UserManagementPage />} />
+          <Route path="reports"   element={<ReportPage />} />
+          <Route path="cs"        element={<CustomerServicePage />} />
+          <Route path="payments"  element={<AdminPaymentPage />} />
+          <Route path="matching"  element={<MatchingPage />} />
+          <Route path="ai"        element={<AiMetricsPage />} />
+          <Route path="scraping"  element={<ScrapingPage />} />
+          <Route path="log"       element={<AuditLogPage />} />
+          <Route path="settings"  element={<OperationSettingsPage />} />
+        </Route>
       </Route>
     </Routes>
   );
