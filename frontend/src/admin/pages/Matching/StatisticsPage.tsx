@@ -1,5 +1,6 @@
 import { TrendingUp, DollarSign, Users, UserPlus } from 'lucide-react';
 import '../../styles/admin.css';
+import '../../styles/Statistics.css';
 
 const kpis = [
   { label: '이번 달 매출',      value: '₩ 38,500,000',  sub: '전월 대비 +12.6%', color: 'kpi-green',  Icon: TrendingUp },
