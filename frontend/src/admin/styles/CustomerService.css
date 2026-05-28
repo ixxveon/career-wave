@@ -1,9 +1,58 @@
-/* ── customer service page — form styles ───────────────────── */
+/* ── CustomerService page styles ────────────────────────────── */
+
+/* ── 탭바 (admin.css의 csTabBar/csTab 공용 사용) ─────────────── */
+
+/* ── 공지사항 카테고리 뱃지 ──────────────────────────────────── */
+
+.csNoticeCat {
+  min-width: auto;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* ── 1:1 문의 카테고리 뱃지 ──────────────────────────────────── */
+
+.csInqCatBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.csInqCat--refund {
+  background: #fff3e8;
+  color: #9a5e30;
+}
+
+.csInqCat--error {
+  background: #fff0f0;
+  color: #9a4545;
+}
+
+.csInqCat--service {
+  background: #e8f0fb;
+  color: #3d5f91;
+}
+
+.csInqCat--account {
+  background: #ede9f8;
+  color: #5c4d85;
+}
+
+.csInqCat--etc {
+  background: #f0f4f8;
+  color: #5f7a96;
+}
+
+/* ── 폼 공통 ─────────────────────────────────────────────────── */
 
 .csFormRows {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .csFormRow {
@@ -13,6 +62,19 @@
 }
 
 .csFormRow > label:first-child {
+  font-size: 13px;
+  font-weight: 600;
+  color: #708397;
+}
+
+.csFormLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.csFormLabelRow > label {
   font-size: 13px;
   font-weight: 600;
   color: #708397;
@@ -46,9 +108,143 @@
   font-family: inherit;
   min-height: 100px;
   resize: vertical;
+  line-height: 1.7;
+}
+
+.csFormTextarea--tall {
+  min-height: 140px;
+}
+
+.csFormTextarea--reply {
+  min-height: 160px;
 }
 
 .csFormTextarea:focus {
   outline: none;
   border-color: #8daeca;
+}
+
+.csCheckLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #23384f;
+  width: fit-content;
+}
+
+/* ── AI 작성 보조 섹션 ───────────────────────────────────────── */
+
+.csAiSection {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f3f0fb;
+  border: 1px solid #ddd6f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.csAiLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #5c4d85;
+}
+
+.csAiDesc {
+  margin: 0;
+  font-size: 12px;
+  color: #7a6eaa;
+  line-height: 1.6;
+}
+
+/* AI 버튼 — 섹션형 (공지사항 모달 내 독립 버튼) */
+.csAiBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid #c8bde8;
+  border-radius: 10px;
+  background: white;
+  color: #5c4d85;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+  width: fit-content;
+}
+
+.csAiBtn:hover:not(:disabled) {
+  background: #ede9f8;
+  border-color: #b8aad8;
+}
+
+.csAiBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* AI 버튼 — 인라인형 (라벨 옆에 붙는 작은 버튼) */
+.csAiBtn--inline {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+/* ── 1:1 문의 상세 모달 ──────────────────────────────────────── */
+
+.csInqContent {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f6f9fc;
+  border: 1px solid #dbe5ee;
+}
+
+.csInqContentLabel {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a8da4;
+}
+
+.csInqContentBody {
+  margin: 0;
+  font-size: 14px;
+  color: #23384f;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.csReplySection {
+  margin-top: 4px;
+}
+
+.csReplyLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #708397;
+}
+
+/* ── 반응형 ──────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .csAiSection {
+    padding: 12px;
+  }
+
+  .csFormLabelRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
 }
