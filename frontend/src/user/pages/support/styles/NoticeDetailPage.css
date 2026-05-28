@@ -53,6 +53,8 @@
   border: 1px solid var(--color-border); background: var(--color-surface);
   cursor: pointer; transition: all 0.12s;
   display: flex; flex-direction: column; gap: 6px;
+  /* <button> 기본 스타일 리셋 */
+  font: inherit; text-align: left;
 }
 .nd-nav__item:hover { border-color: var(--color-primary); background: var(--color-sky); }
 .nd-nav__item--empty { cursor: default; pointer-events: none; border-color: transparent; background: transparent; }

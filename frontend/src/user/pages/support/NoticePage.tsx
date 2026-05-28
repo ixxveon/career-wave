@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Bell, ChevronRight, Search, Pin } from 'lucide-react';
 import './styles/NoticePage.css';
 
@@ -24,7 +24,6 @@ const MOCK_NOTICES: Notice[] = [
 const CATEGORIES = ['전체', '공지', '업데이트', '점검'];
 
 export default function NoticePage() {
-  const navigate = useNavigate();
   const [search,   setSearch]   = useState('');
   const [category, setCategory] = useState('전체');
 
@@ -73,10 +72,10 @@ export default function NoticePage() {
           <div className="nt-empty">검색 결과가 없습니다.</div>
         ) : (
           displayed.map(n => (
-            <div
+            <Link
               key={n.id}
               className={`nt-item${n.pinned ? ' nt-item--pinned' : ''}`}
-              onClick={() => navigate(`/support/notices/${n.id}`)}
+              to={`/support/notices/${n.id}`}
             >
               <div className="nt-item__left">
                 {n.pinned && (
@@ -91,7 +90,7 @@ export default function NoticePage() {
                 <span className="nt-item__date">{n.createdAt}</span>
                 <ChevronRight size={14} className="nt-item__arrow" />
               </div>
-            </div>
+            </Link>
           ))
         )}
       </div>

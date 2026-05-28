@@ -92,6 +92,7 @@ export default function FaqPage() {
         <div className="fq-search">
           <Search size={14} />
           <input
+            aria-label="FAQ 검색"
             placeholder="질문 검색"
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -105,7 +106,12 @@ export default function FaqPage() {
         ) : (
           filtered.map(f => (
             <div key={f.id} className={`fq-item${openId === f.id ? ' fq-item--open' : ''}`}>
-              <button className="fq-question" onClick={() => toggle(f.id)}>
+              <button
+                className="fq-question"
+                aria-expanded={openId === f.id}
+                aria-controls={`faq-answer-${f.id}`}
+                onClick={() => toggle(f.id)}
+              >
                 <div className="fq-question__left">
                   <HelpCircle size={16} className="fq-question__icon" />
                   <span className="fq-question__text">{f.question}</span>
@@ -117,7 +123,7 @@ export default function FaqPage() {
                 }
               </button>
               {openId === f.id && (
-                <div className="fq-answer">
+                <div id={`faq-answer-${f.id}`} className="fq-answer">
                   <p>{f.answer}</p>
                 </div>
               )}

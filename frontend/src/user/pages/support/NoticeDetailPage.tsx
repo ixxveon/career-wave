@@ -136,17 +136,17 @@ export default function NoticeDetailPage() {
 
       <div className="nd-nav">
         {next ? (
-          <div className="nd-nav__item nd-nav__item--next" onClick={() => navigate(`/support/notices/${next.id}`)}>
+          <button type="button" className="nd-nav__item nd-nav__item--next" onClick={() => navigate(`/support/notices/${next.id}`)}>
             <span className="nd-nav__label"><ChevronLeft size={13} /> 다음 공지</span>
             <span className="nd-nav__title">{next.title}</span>
-          </div>
+          </button>
         ) : <div className="nd-nav__item nd-nav__item--empty" />}
 
         {prev ? (
-          <div className="nd-nav__item nd-nav__item--prev" onClick={() => navigate(`/support/notices/${prev.id}`)}>
+          <button type="button" className="nd-nav__item nd-nav__item--prev" onClick={() => navigate(`/support/notices/${prev.id}`)}>
             <span className="nd-nav__label">이전 공지 <ChevronRight size={13} /></span>
             <span className="nd-nav__title">{prev.title}</span>
-          </div>
+          </button>
         ) : <div className="nd-nav__item nd-nav__item--empty" />}
       </div>
 

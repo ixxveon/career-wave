@@ -100,10 +100,12 @@ function InquiryDetailModal({ inquiry, onClose }: InquiryDetailModalProps) {
           <p className="iq-modal__content">{inquiry.preview}</p>
         </div>
 
-        {inquiry.hasAnswer && inquiry.answer && (
+        {inquiry.hasAnswer && (
           <div className="iq-modal__section iq-modal__section--answer">
             <p className="iq-modal__section-label">답변</p>
-            <p className="iq-modal__content">{inquiry.answer}</p>
+            <p className="iq-modal__content">
+              {inquiry.answer || '답변이 준비되지 않았습니다.'}
+            </p>
           </div>
         )}
 
@@ -167,7 +169,7 @@ export default function InquiryListPage() {
           filtered.map(i => {
             const cfg = STATUS_CONFIG[i.status];
             return (
-              <div key={i.id} className="iq-item" onClick={() => setSelected(i)}>
+              <button type="button" key={i.id} className="iq-item" onClick={() => setSelected(i)}>
                 <div className="iq-item__left">
                   <span className="iq-cat-badge">{i.category}</span>
                   <MessageSquare size={14} className="iq-item__icon" />
@@ -181,7 +183,7 @@ export default function InquiryListPage() {
                   <span className="iq-item__date">{i.createdAt}</span>
                   <ChevronRight size={14} className="iq-item__arrow" />
                 </div>
-              </div>
+              </button>
             );
           })
         )}
