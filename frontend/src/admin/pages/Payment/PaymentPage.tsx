@@ -56,7 +56,6 @@ interface Payment {
   paidAt: string;
   amount: number;
   status: PayStatus;
-  totalDays: number;
 }
 
 interface Subscription {
@@ -70,14 +69,14 @@ interface Subscription {
 
 // ── Dummy Data ────────────────────────────────────────────────
 const initialPayments: Payment[] = [
-  { id: 'PAY-3001', orderId: 'TOSS-20260501-A1B2C3', memberName: '김민지', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        totalDays: 30 },
-  { id: 'PAY-3002', orderId: 'TOSS-20260425-D4E5F6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.04.25', amount: 29000, status: 'REFUND_REQUESTED', totalDays: 30 },
-  { id: 'PAY-3003', orderId: 'TOSS-20260518-J1K2L3', memberName: '박서연', product: '프리미엄 월정액', paidAt: '2026.05.18', amount: 29000, status: 'FAILED',           totalDays: 30 },
-  { id: 'PAY-3004', orderId: 'TOSS-20260301-M4N5O6', memberName: '홍길동', product: '프리미엄 월정액', paidAt: '2026.03.01', amount: 29000, status: 'REFUNDED',         totalDays: 30 },
-  { id: 'PAY-3005', orderId: 'TOSS-20260505-P7Q8R9', memberName: '이영희', product: '프리미엄 월정액', paidAt: '2026.05.05', amount: 29000, status: 'COMPLETED',        totalDays: 30 },
-  { id: 'PAY-3006', orderId: 'TOSS-20260412-S1T2U3', memberName: '정현우', product: '프리미엄 월정액', paidAt: '2026.04.12', amount: 29000, status: 'COMPLETED',        totalDays: 30 },
-  { id: 'PAY-3007', orderId: 'TOSS-20260501-V4W5X6', memberName: '최도윤', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        totalDays: 30 },
-  { id: 'PAY-3008', orderId: 'TOSS-20260503-W7X8Y9', memberName: '강지수', product: '프리미엄 월정액', paidAt: '2026.05.03', amount: 29000, status: 'COMPLETED',        totalDays: 30 },
+  { id: 'PAY-3001', orderId: 'TOSS-20260501-A1B2C3', memberName: '김민지', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED'        },
+  { id: 'PAY-3002', orderId: 'TOSS-20260425-D4E5F6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.04.25', amount: 29000, status: 'REFUND_REQUESTED' },
+  { id: 'PAY-3003', orderId: 'TOSS-20260518-J1K2L3', memberName: '박서연', product: '프리미엄 월정액', paidAt: '2026.05.18', amount: 29000, status: 'FAILED'           },
+  { id: 'PAY-3004', orderId: 'TOSS-20260301-M4N5O6', memberName: '홍길동', product: '프리미엄 월정액', paidAt: '2026.03.01', amount: 29000, status: 'REFUNDED'         },
+  { id: 'PAY-3005', orderId: 'TOSS-20260505-P7Q8R9', memberName: '이영희', product: '프리미엄 월정액', paidAt: '2026.05.05', amount: 29000, status: 'COMPLETED'        },
+  { id: 'PAY-3006', orderId: 'TOSS-20260412-S1T2U3', memberName: '정현우', product: '프리미엄 월정액', paidAt: '2026.04.12', amount: 29000, status: 'COMPLETED'        },
+  { id: 'PAY-3007', orderId: 'TOSS-20260501-V4W5X6', memberName: '최도윤', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED'        },
+  { id: 'PAY-3008', orderId: 'TOSS-20260503-W7X8Y9', memberName: '강지수', product: '프리미엄 월정액', paidAt: '2026.05.03', amount: 29000, status: 'COMPLETED'        },
 ];
 
 const dummySubs: Subscription[] = [
@@ -90,17 +89,6 @@ const dummySubs: Subscription[] = [
   { id: 'SUB-007', memberName: '박서연', plan: '프리미엄 월정액', startDate: '2026.03.18', renewDate: '2026.05.28', status: 'RENEWAL_SCHEDULED' },
   { id: 'SUB-008', memberName: '이준호', plan: '프리미엄 월정액', startDate: '2026.04.25', renewDate: '2026.05.25', status: 'AT_RISK'           },
 ];
-
-const TODAY = new Date(2026, 4, 22);
-
-function calcRefund(amount: number, paidAt: string, totalDays: number) {
-  const [y, m, d] = paidAt.split('.').map(Number);
-  const paid       = new Date(y, m - 1, d);
-  const usedDays   = Math.max(0, Math.floor((TODAY.getTime() - paid.getTime()) / 86400000));
-  const remainDays = Math.max(0, totalDays - usedDays);
-  const refundAmt  = Math.floor(amount * (remainDays / totalDays));
-  return { usedDays, remainDays, refundAmt };
-}
 
 const TABS: PayTab[] = ['결제 내역', '구독 현황', '정산 리포트'];
 
@@ -135,7 +123,6 @@ export default function PaymentPage() {
   const paidCount    = payments.filter((p) => p.status === 'COMPLETED').length;
   const refundReqCnt = payments.filter((p) => p.status === 'REFUND_REQUESTED').length;
   const failCount    = payments.filter((p) => p.status === 'FAILED').length;
-  const refund       = selected ? calcRefund(selected.amount, selected.paidAt, selected.totalDays) : null;
 
   const processRefund = (id: string) => {
     setPayments((prev) =>
@@ -408,15 +395,15 @@ export default function PaymentPage() {
       )}
 
       {/* ── 결제 상세 / 환불 처리 모달 ──────────────────────────── */}
-      {selected && refund && (
+      {selected && (
         <div className="modalOverlay" onClick={() => setSelected(null)}>
           <div
-            className="memberModal modal--scrollable"
-            style={{ width: 560 }}
+            className="memberModal"
+            style={{ width: 520 }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 헤더 */}
-            <div className="modalHeader" style={{ flexShrink: 0, padding: '20px 24px 16px' }}>
+            <div className="modalHeader">
               <div>
                 <h3>{selected.memberName} · {selected.id}</h3>
                 <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>
@@ -427,41 +414,26 @@ export default function PaymentPage() {
             </div>
 
             {/* 본문 */}
-            <div className="modalBody">
-              <div className="modalInfoGrid">
-                <div><span>상품명</span><strong>{selected.product}</strong></div>
-                <div><span>결제일</span><strong>{selected.paidAt}</strong></div>
-                <div><span>결제 금액</span><strong>₩{selected.amount.toLocaleString()}</strong></div>
-                <div><span>구독 기간</span><strong>{selected.totalDays}일</strong></div>
-                <div>
-                  <span>현재 상태</span>
-                  <span className={`statusBadge ${payStatusCls[selected.status]}`}>
-                    {payStatusLabel[selected.status]}
-                  </span>
-                </div>
+            <div className="modalInfoGrid" style={{ padding: '8px 0 16px' }}>
+              <div><span>상품명</span><strong>{selected.product}</strong></div>
+              <div><span>결제일</span><strong>{selected.paidAt}</strong></div>
+              <div><span>결제 금액</span><strong>₩{selected.amount.toLocaleString()}</strong></div>
+              <div>
+                <span>현재 상태</span>
+                <span className={`statusBadge ${payStatusCls[selected.status]}`}>
+                  {payStatusLabel[selected.status]}
+                </span>
               </div>
-
-              {selected.status === 'REFUND_REQUESTED' && (
-                <div className="refundCalc">
-                  <p className="refundTitle">일할 계산 환불 금액</p>
-                  <div className="refundRow">
-                    <span>이용한 일수</span>
-                    <strong>{refund.usedDays}일</strong>
-                  </div>
-                  <div className="refundRow">
-                    <span>남은 일수</span>
-                    <strong>{refund.remainDays}일</strong>
-                  </div>
-                  <div className="refundRow highlight">
-                    <span>환불 예정 금액</span>
-                    <strong>₩{refund.refundAmt.toLocaleString()}</strong>
-                  </div>
-                </div>
-              )}
             </div>
 
+            {selected.status === 'REFUND_REQUESTED' && (
+              <div className="refundNote">
+                환불 요청 건입니다. 확정 시 즉시 처리됩니다.
+              </div>
+            )}
+
             {/* 액션 */}
-            <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
+            <div className="modalAction">
               {selected.status === 'REFUND_REQUESTED' && (
                 <button onClick={() => processRefund(selected.id)}>환불 처리 확정</button>
               )}
