@@ -20,8 +20,6 @@ import CompanyProfilePage from '../user/pages/company/CompanyProfilePage';
 import HrManagerPage from '../user/pages/company/HrManagerPage';
 
 import JobNoticeListPage from '../user/pages/jobNotice/JobNoticeListPage';
-import JobNoticeDetailPage from '../user/pages/jobNotice/JobNoticeDetailPage';
-import JobNoticeCreatePage from '../user/pages/jobNotice/JobNoticeCreatePage';
 
 import ApplicationStatusPage from '../user/pages/application/ApplicationStatusPage';
 import ApplicantManagementPage from '../user/pages/application/ApplicantManagementPage';
@@ -94,8 +92,6 @@ function AppRoutes() {
 
         <Route path="jobs">
           <Route index element={<JobNoticeListPage />} />
-          <Route path="create" element={<JobNoticeCreatePage />} />
-          <Route path=":jobId" element={<JobNoticeDetailPage />} />
         </Route>
 
         <Route path="applications">

@@ -1,139 +1,466 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Bookmark, BookmarkCheck, MapPin, Clock, Zap, SlidersHorizontal, Plus } from 'lucide-react';
+import { useRef, useState } from 'react';
+import {
+  Bookmark,
+  BookmarkCheck,
+  CalendarDays,
+  ChevronDown,
+  Eye,
+  FileText,
+  Filter,
+  Flame,
+  Search,
+} from 'lucide-react';
+import JobNoticeDetail from './JobNoticeDetail';
 import './styles/JobNoticeListPage.css';
 
-const JOB_FILTERS   = ['전체', '백엔드', '프론트엔드', '풀스택', '데이터', 'DevOps', 'iOS/Android'];
-const EXP_FILTERS   = ['전체', '신입', '1~3년', '3~5년', '5년 이상'];
-const STACK_FILTERS = ['전체', 'Java', 'Python', 'React', 'Node.js', 'Spring', 'AWS', 'Docker'];
-
-const MOCK_JOBS = [
-  { id: 1, company: '토스',   title: '백엔드 개발자 (Server)',        location: '서울 강남', exp: '3~5년',    deadline: '2025-06-15', stacks: ['Java','Spring','AWS'],       premium: true,  bookmarked: false },
-  { id: 2, company: '카카오', title: '프론트엔드 개발자',              location: '서울 성남', exp: '신입/경력', deadline: '2025-06-20', stacks: ['React','TypeScript'],        premium: true,  bookmarked: true  },
-  { id: 3, company: '네이버', title: '클라우드 인프라 엔지니어',       location: '경기 성남', exp: '3년 이상', deadline: '2025-06-30', stacks: ['AWS','Docker','K8s'],        premium: false, bookmarked: false },
-  { id: 4, company: '라인',   title: '데이터 엔지니어',               location: '서울 신촌', exp: '1~3년',    deadline: '2025-07-01', stacks: ['Python','Spark','Airflow'],  premium: false, bookmarked: false },
-  { id: 5, company: '쿠팡',   title: '백엔드 개발자 (물류플랫폼)',    location: '서울 송파', exp: '3~5년',    deadline: '2025-06-25', stacks: ['Java','MSA','Kafka'],        premium: false, bookmarked: true  },
-  { id: 6, company: '당근',   title: 'iOS 개발자',                    location: '서울 마포', exp: '신입',     deadline: '2025-07-10', stacks: ['Swift','UIKit'],             premium: false, bookmarked: false },
+const FILTER_GROUPS = [
+  { label: '직무', options: ['전체', '백엔드', '프론트엔드', '데이터', 'DevOps'] },
+  { label: '경력', options: ['전체', '신입', '1~3년', '3~5년', '5년 이상'] },
+  { label: '채용 유형', options: ['전체', '정규직', '인턴', '계약직'] },
+  { label: '지역', options: ['전체', '서울', '경기', '원격'] },
+  { label: '기업 규모', options: ['전체', '스타트업', '중견', '대기업'] },
 ];
 
-function dday(deadline) {
-  const diff = Math.ceil((new Date(deadline) - new Date()) / 86400000);
-  if (diff < 0)  return '마감';
-  if (diff === 0) return 'D-day';
-  return `D-${diff}`;
+const PERIODS = ['오늘', '7일', '30일', '기간 전체'];
+const SORT_OPTIONS = ['추천순', '최신순', '조회순'];
+const DEFAULT_FILTER_VALUE = '전체';
+const POPULAR_SEARCH_TAGS = ['백엔드', '프론트엔드', 'Java', 'React', 'Spring Boot', 'AWS', 'Python'];
+
+const FILTER_FIELD_BY_LABEL = {
+  직무: 'jobType',
+  경력: 'exp',
+  '채용 유형': 'employment',
+  지역: 'location',
+  '기업 규모': 'companySize',
+};
+
+const BANNER_STATS = [
+  {
+    label: '전체 공고',
+    value: '111,053',
+    description: '+2,342 오늘',
+    Icon: FileText,
+    iconClassName: 'jn-stat-card__icon--blue',
+  },
+  {
+    label: '오늘 신규 공고',
+    value: '2,342',
+    description: '(15.8%)',
+    highlight: '+320',
+    Icon: Flame,
+    iconClassName: 'jn-stat-card__icon--pink',
+    valueClassName: 'jn-stat-card__value--pink',
+  },
+];
+
+const JOBS = [
+  {
+    id: 1,
+    company: '제너러티브랩',
+    title: '제너러티브랩 공개채용 [학력, 경력, 스펙 무관]',
+    jobType: '백엔드',
+    exp: '경력무관',
+    employment: '전환형인턴',
+    location: '서울',
+    companySize: '스타트업',
+    salary: '협의',
+    deadline: '상시',
+    tags: ['프롬프트 엔지니어', '개발', 'AI 컨설턴트'],
+    source: '직행수집',
+    recommended: true,
+    recommendScore: 98,
+    views: 1756,
+    bookmarked: false,
+  },
+  {
+    id: 2,
+    company: '리빌더에이아이',
+    title: '[리빌더AI] QA 엔지니어',
+    jobType: '데이터',
+    exp: '3~20년',
+    employment: '정규직',
+    location: '경기',
+    companySize: '스타트업',
+    salary: '협의',
+    deadline: '상시',
+    tags: ['테스트자동화', '이슈트래킹', 'QA프로세스'],
+    source: '그룹바이',
+    recommended: false,
+    recommendScore: 86,
+    views: 6,
+    bookmarked: false,
+  },
+  {
+    id: 3,
+    company: '코코네',
+    title: '[Cocone Internship] AI Engineer',
+    jobType: '데이터',
+    exp: '신입',
+    employment: '인턴',
+    location: '서울',
+    companySize: '중견',
+    salary: '협의',
+    deadline: '상시',
+    tags: ['AI어시스턴트', '아바타메타버스', 'AI모델연구'],
+    source: '그룹바이',
+    recommended: false,
+    recommendScore: 82,
+    views: 102,
+    bookmarked: false,
+  },
+  {
+    id: 4,
+    company: '비전스페이스',
+    title: '산업용 로봇 AI 자율주행 & ROS & RMS 담당',
+    jobType: 'DevOps',
+    exp: '신입',
+    employment: '정규직',
+    location: '서울',
+    companySize: '스타트업',
+    salary: '협의',
+    deadline: '상시',
+    tags: ['자율주행설계', '로봇'],
+    source: '그룹바이',
+    recommended: false,
+    recommendScore: 78,
+    views: 494,
+    bookmarked: false,
+  },
+  {
+    id: 5,
+    company: '어센트 AI',
+    title: '인프라 엔지니어 (IDC)',
+    jobType: 'DevOps',
+    exp: '4~10년',
+    employment: '정규직',
+    location: '서울',
+    companySize: '중견',
+    salary: '협의',
+    deadline: '상시',
+    tags: ['인프라엔지니어', '쿠버네티스', '오픈소스운영'],
+    source: '그룹바이',
+    recommended: false,
+    recommendScore: 84,
+    views: 19,
+    bookmarked: false,
+  },
+  {
+    id: 6,
+    company: '(주)무아스',
+    title: '[무아스] 인플루언서 공동구매 MD 채용 공고',
+    jobType: '프론트엔드',
+    exp: '2~20년',
+    employment: '정규직',
+    location: '서울',
+    companySize: '중견',
+    salary: '협의',
+    deadline: '상시',
+    tags: ['공동구매', '커머스', '인플루언서'],
+    source: '그룹바이',
+    recommended: false,
+    recommendScore: 72,
+    views: 1,
+    bookmarked: false,
+  },
+];
+
+function createInitialFilters() {
+  return Object.fromEntries(FILTER_GROUPS.map((group) => [group.label, DEFAULT_FILTER_VALUE]));
 }
 
-function JobCard({ job: j, bookmarks, onBookmark, onClick }) {
-  const d = dday(j.deadline);
-  const urgent = d === 'D-day' || (d.startsWith('D-') && parseInt(d.slice(2)) <= 3);
+function createInitialBookmarks() {
+  return Object.fromEntries(JOBS.map((job) => [job.id, job.bookmarked]));
+}
+
+function filterJobs(jobs, filters) {
+  return jobs.filter((job) => (
+    Object.entries(FILTER_FIELD_BY_LABEL).every(([label, field]) => (
+      filters[label] === DEFAULT_FILTER_VALUE || job[field] === filters[label]
+    ))
+  ));
+}
+
+function sortJobs(jobs, sort) {
+  return [...jobs].sort((a, b) => {
+    if (sort === '조회순') return b.views - a.views;
+    if (sort === '최신순') return b.id - a.id;
+    return b.recommendScore - a.recommendScore;
+  });
+}
+
+function BannerSearch() {
   return (
-    <div className={`jn-card${j.premium ? ' jn-card--premium' : ''}`} onClick={onClick}>
-      {j.premium && <span className="jn-card__premium-badge"><Zap size={10} /> 프리미엄</span>}
-      <div className="jn-card__logo">{j.company[0]}</div>
-      <div className="jn-card__body">
-        <p className="jn-card__company">{j.company}</p>
-        <p className="jn-card__title">{j.title}</p>
-        <div className="jn-card__meta">
-          <span><MapPin size={11} /> {j.location}</span>
-          <span>{j.exp}</span>
-        </div>
-        <div className="jn-card__stacks">
-          {j.stacks.map(s => <span key={s} className="jn-stack">{s}</span>)}
-        </div>
-      </div>
-      <div className="jn-card__right">
-        <span className={`jn-dday${urgent ? ' jn-dday--urgent' : ''}`}>
-          <Clock size={10} /> {d}
-        </span>
-        <button
-          className={`jn-bookmark${bookmarks[j.id] ? ' jn-bookmark--active' : ''}`}
-          onClick={e => onBookmark(e, j.id)}
-        >
-          {bookmarks[j.id] ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+    <div className="jn-banner__search">
+      <label className="jn-hero-search">
+        <span className="sr-only">채용 공고 검색</span>
+        <input type="search" placeholder="회사명, 공고명, 기술 스택으로 검색하세요" />
+        <button type="button" aria-label="검색">
+          <Search size={21} />
         </button>
+      </label>
+
+      <div className="jn-popular-tags" aria-label="인기 검색어">
+        <span>인기 검색어</span>
+        {POPULAR_SEARCH_TAGS.map((tag) => (
+          <button type="button" key={tag}>{tag}</button>
+        ))}
       </div>
     </div>
   );
 }
 
-export default function JobNoticeListPage() {
-  const navigate = useNavigate();
-  const [search,    setSearch]    = useState('');
-  const [job,       setJob]       = useState('전체');
-  const [exp,       setExp]       = useState('전체');
-  const [stack,     setStack]     = useState('전체');
-  const [bookmarks, setBookmarks] = useState(
-    Object.fromEntries(MOCK_JOBS.map(j => [j.id, j.bookmarked]))
-  );
+function StatCard({ stat }) {
+  const { Icon } = stat;
 
-  function toggleBookmark(e, id) {
-    e.stopPropagation();
-    setBookmarks(b => ({ ...b, [id]: !b[id] }));
+  return (
+    <article className="jn-stat-card">
+      <span className={`jn-stat-card__icon ${stat.iconClassName}`}>
+        <Icon size={20} />
+      </span>
+      <span className="jn-stat-card__label">{stat.label}</span>
+      <strong className={stat.valueClassName}>{stat.value}</strong>
+      <small>
+        {stat.highlight && <b>{stat.highlight}</b>}
+        {stat.highlight ? ` ${stat.description}` : stat.description}
+      </small>
+    </article>
+  );
+}
+
+function BannerStats() {
+  return (
+    <div className="jn-banner__stats" aria-label="채용 공고 통계">
+      {BANNER_STATS.map((stat) => (
+        <StatCard key={stat.label} stat={stat} />
+      ))}
+    </div>
+  );
+}
+
+function JobCard({ job, bookmarked, onBookmark, onClick }) {
+  return (
+    <article className={`jn-card${job.recommended ? ' jn-card--featured' : ''}`} onClick={onClick}>
+      <div className="jn-card__top">
+        <div className="jn-card__logo">{job.company[0]}</div>
+        <div className="jn-card__company">
+          <strong>{job.company}</strong>
+          <span>{job.exp} · {job.employment} · {job.location}</span>
+        </div>
+        <button
+          className={`jn-bookmark${bookmarked ? ' jn-bookmark--active' : ''}`}
+          type="button"
+          aria-label={bookmarked ? '북마크 해제' : '북마크'}
+          onClick={(event) => {
+            event.stopPropagation();
+            onBookmark(job.id);
+          }}
+        >
+          {bookmarked ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
+        </button>
+      </div>
+
+      <h3>{job.title}</h3>
+
+      <div className="jn-card__tags">
+        {job.tags.map((tag) => <span key={tag}>#{tag}</span>)}
+      </div>
+
+      <div className="jn-card__footer">
+        {job.recommended && <span className="jn-badge jn-badge--recommend">추천</span>}
+        <span className="jn-badge">{job.deadline}</span>
+        <span className="jn-badge jn-badge--source">{job.source}</span>
+        <span className="jn-views"><Eye size={14} /> {job.views.toLocaleString()}</span>
+      </div>
+    </article>
+  );
+}
+
+function FilterBlock({ group, value, onChange }) {
+  const detailsRef = useRef(null);
+
+  function selectOption(option) {
+    onChange(group.label, option);
+    if (detailsRef.current) {
+      detailsRef.current.open = false;
+    }
   }
 
-  const filtered = MOCK_JOBS.filter(j => {
-    if (search && !j.title.includes(search) && !j.company.includes(search)) return false;
-    if (job   !== '전체' && !j.title.includes(job))   return false;
-    if (exp   !== '전체' && j.exp !== exp)             return false;
-    if (stack !== '전체' && !j.stacks.includes(stack)) return false;
-    return true;
-  });
+  return (
+    <details className="jn-filter-block" ref={detailsRef}>
+      <summary>
+        <span>{group.label}</span>
+        {value !== '전체' && <em>{value}</em>}
+        <strong>+</strong>
+      </summary>
+      <div>
+        {group.options.map((option) => (
+          <button
+            type="button"
+            key={option}
+            className={value === option ? 'is-active' : ''}
+            onClick={() => selectOption(option)}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </details>
+  );
+}
 
-  const premium = filtered.filter(j => j.premium);
-  const normal  = filtered.filter(j => !j.premium);
+function PeriodSelector({ period, onChange }) {
+  return (
+    <div className="jn-periods">
+      {PERIODS.map((item) => (
+        <button
+          key={item}
+          type="button"
+          className={period === item ? 'is-active' : ''}
+          onClick={() => onChange(item)}
+        >
+          {item}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SortDropdown({ selected, isOpen, onToggle, onSelect }) {
+  return (
+    <div className={`jn-sort${isOpen ? ' is-open' : ''}`}>
+      <button type="button" onClick={onToggle}>
+        {selected} <ChevronDown size={16} />
+      </button>
+      {isOpen && (
+        <div className="jn-sort__menu">
+          {SORT_OPTIONS.map((option) => (
+            <button
+              type="button"
+              key={option}
+              className={selected === option ? 'is-active' : ''}
+              onClick={() => onSelect(option)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ActiveFilterChips({ filters, onReset }) {
+  const activeFilters = Object.entries(filters).filter(([, value]) => value !== DEFAULT_FILTER_VALUE);
+
+  if (activeFilters.length === 0) return null;
+
+  return (
+    <div className="jn-active-filters">
+      {activeFilters.map(([label, value]) => (
+        <button key={label} type="button" onClick={() => onReset(label)}>
+          {value} ×
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export default function JobNoticeListPage() {
+  const [period, setPeriod] = useState('기간 전체');
+  const [sort, setSort] = useState('추천순');
+  const [sortOpen, setSortOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [filters, setFilters] = useState(createInitialFilters);
+  const [bookmarks, setBookmarks] = useState(createInitialBookmarks);
+
+  function updateFilter(label, value) {
+    setFilters((current) => ({ ...current, [label]: value }));
+  }
+
+  function toggleBookmark(id) {
+    setBookmarks((current) => ({ ...current, [id]: !current[id] }));
+  }
+
+  function resetFilter(label) {
+    updateFilter(label, DEFAULT_FILTER_VALUE);
+  }
+
+  function selectSort(option) {
+    setSort(option);
+    setSortOpen(false);
+  }
+
+  const filteredJobs = sortJobs(filterJobs(JOBS, filters), sort);
 
   return (
     <div className="jn">
-      {/* 검색 */}
-      <div className="jn-search-bar">
-        <Search size={16} className="jn-search-bar__icon" />
-        <input
-          className="jn-search-bar__input"
-          placeholder="직무, 기업, 키워드로 검색"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      </div>
+      <section className="jn-banner">
+        <BannerSearch />
+        <BannerStats />
+      </section>
 
-      {/* 필터 */}
-      <div className="jn-filters">
-        {[
-          { label: '직무', options: JOB_FILTERS,   val: job,   set: setJob   },
-          { label: '경력', options: EXP_FILTERS,   val: exp,   set: setExp   },
-          { label: '기술', options: STACK_FILTERS,  val: stack, set: setStack },
-        ].map(({ label, options, val, set }) => (
-          <div key={label} className="jn-filter-group">
-            <span className="jn-filter-group__label">{label}</span>
-            <div className="jn-chips">
-              {options.map(f => (
-                <button key={f} className={`jn-chip${val === f ? ' jn-chip--on' : ''}`} onClick={() => set(f)}>{f}</button>
-              ))}
+      <div className="jn-layout">
+        <aside className="jn-filter-panel">
+          {FILTER_GROUPS.map((group) => (
+            <FilterBlock
+              key={group.label}
+              group={group}
+              value={filters[group.label]}
+              onChange={updateFilter}
+            />
+          ))}
+        </aside>
+
+        <main className="jn-results">
+          <div className="jn-results__head">
+            <div>
+              <span>해당 공고 <b>{filteredJobs.length.toLocaleString()}</b>개</span>
+              <ActiveFilterChips filters={filters} onReset={resetFilter} />
+            </div>
+            <div className="jn-results__tools">
+              <PeriodSelector period={period} onChange={setPeriod} />
+              <SortDropdown
+                selected={sort}
+                isOpen={sortOpen}
+                onToggle={() => setSortOpen((open) => !open)}
+                onSelect={selectSort}
+              />
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* 프리미엄 */}
-      {premium.length > 0 && (
-        <section>
-          <p className="jn-section-label"><Zap size={12} /> 프리미엄 공고</p>
-          <div className="jn-list">
-            {premium.map(j => (
-              <JobCard key={j.id} job={j} bookmarks={bookmarks} onBookmark={toggleBookmark} onClick={() => navigate(`/jobs/${j.id}`)} />
+          <div className="jn-job-grid">
+            {filteredJobs.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                bookmarked={bookmarks[job.id]}
+                onBookmark={toggleBookmark}
+                onClick={() => setSelectedJob(job)}
+              />
             ))}
           </div>
-        </section>
-      )}
 
-      {/* 일반 */}
-      <section>
-        <p className="jn-section-label">전체 공고 <span>{normal.length}건</span></p>
-        {normal.length > 0
-          ? <div className="jn-list">{normal.map(j => (
-              <JobCard key={j.id} job={j} bookmarks={bookmarks} onBookmark={toggleBookmark} onClick={() => navigate(`/jobs/${j.id}`)} />
-            ))}</div>
-          : <div className="jn-empty">검색 결과가 없습니다.</div>}
-      </section>
+          {filteredJobs.length === 0 && (
+            <div className="jn-empty">
+              <Filter size={18} />
+              <strong>조건에 맞는 공고가 없습니다.</strong>
+              <span>필터를 줄이거나 검색어를 다시 입력해 주세요.</span>
+            </div>
+          )}
+        </main>
+      </div>
+
+      <button type="button" className="jn-scroll-top" aria-label="위로 이동">
+        <CalendarDays size={18} />
+      </button>
+
+      <JobNoticeDetail
+        job={selectedJob}
+        isOpen={Boolean(selectedJob)}
+        bookmarked={Boolean(selectedJob && bookmarks[selectedJob.id])}
+        onClose={() => setSelectedJob(null)}
+        onBookmark={toggleBookmark}
+      />
     </div>
   );
 }
