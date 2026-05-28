@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { LockKeyhole, Network, ShieldCheck, UserCheck } from 'lucide-react';
 import '../../styles/admin.css';
 import MiniPagination from '../../components/MiniPagination';
 
@@ -396,18 +397,16 @@ export default function AdminManagementPage() {
   const activeAdminCount = admins.filter((admin) => admin.status === 'ACTIVE').length;
   const lockedAdminCount = admins.filter((admin) => admin.status === 'LOCKED').length;
   const activeAclCount = aclRules.filter((rule) => rule.enabled).length;
-  const criticalLogCount = logs.filter((log) => log.severity === 'ERROR').length;
   const aclPageSize = 3;
   const aclTotalPages = Math.max(1, Math.ceil(aclRules.length / aclPageSize));
   const safeAclPage = Math.min(aclPage, aclTotalPages);
   const pagedAclRules = aclRules.slice((safeAclPage - 1) * aclPageSize, safeAclPage * aclPageSize);
 
   const kpiItems = [
-    { label: '전체 관리자', value: totalAdmins, tone: 'default' },
-    { label: '활성 관리자', value: activeAdminCount, tone: 'success' },
-    { label: '잠긴 계정', value: lockedAdminCount, tone: 'danger' },
-    { label: '활성 ACL', value: activeAclCount, tone: 'accent' },
-    { label: '중요 로그', value: criticalLogCount, tone: 'warning' },
+    { label: '전체 관리자', value: totalAdmins, desc: '등록된 관리자 계정', tone: 'kpi-blue', Icon: ShieldCheck },
+    { label: '활성 관리자', value: activeAdminCount, desc: '즉시 접근 가능', tone: 'kpi-green', Icon: UserCheck },
+    { label: '활성 ACL', value: activeAclCount, desc: '접근 허용 정책', tone: 'kpi-purple', Icon: Network },
+    { label: '잠긴 계정', value: lockedAdminCount, desc: '보안 확인 필요', tone: 'kpi-yellow', Icon: LockKeyhole },
   ];
 
   return (
@@ -422,8 +421,14 @@ export default function AdminManagementPage() {
       <section className="amOverviewGrid">
         {kpiItems.map((item) => (
           <article className={`admin-card amKpiCard ${item.tone}`} key={item.label}>
-            <span className="amKpiLabel">{item.label}</span>
-            <strong className="amKpiValue">{item.value}</strong>
+            <div className="amKpiContent">
+              <p>{item.label}</p>
+              <h3>{item.value.toLocaleString()}</h3>
+              <span>{item.desc}</span>
+            </div>
+            <div className={`amKpiIcon ${item.tone}`}>
+              <item.Icon size={26} />
+            </div>
           </article>
         ))}
       </section>
@@ -716,47 +721,144 @@ export default function AdminManagementPage() {
 
         .amOverviewGrid {
           display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
-          gap: 12px;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 18px;
         }
 
         .amKpiCard {
-          padding: 16px 18px;
-          border-radius: 14px;
+          min-height: 0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 22px;
+          border-radius: 16px;
           border: 1px solid var(--am-border);
-          box-shadow: 0 10px 24px rgba(19, 45, 74, 0.06);
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 249, 253, 0.96));
+          box-shadow: 0 8px 24px rgba(30, 60, 90, 0.04);
         }
 
-        .amKpiCard.success {
-          background: linear-gradient(180deg, #fbfdfb, #eff7f2);
+        .amKpiContent {
+          flex: 1;
+          min-width: 0;
         }
 
-        .amKpiCard.danger {
-          background: linear-gradient(180deg, #fffafa, #fbeff0);
-        }
-
-        .amKpiCard.accent {
-          background: linear-gradient(180deg, #fbfdff, #edf4fd);
-        }
-
-        .amKpiCard.warning {
-          background: linear-gradient(180deg, #fffdf9, #fbf4e6);
-        }
-
-        .amKpiLabel {
-          display: block;
-          margin-bottom: 10px;
-          color: var(--am-text-soft);
-          font-size: 12px;
-          font-weight: 700;
-        }
-
-        .amKpiValue {
-          color: var(--am-primary);
-          font-size: 28px;
+        .amKpiContent p {
+          margin: 0 0 8px;
+          font-size: 14px;
           font-weight: 800;
-          letter-spacing: -0.03em;
+        }
+
+        .amKpiContent h3 {
+          margin: 0;
+          font-size: 34px;
+          line-height: 1.1;
+          font-weight: 900;
+          letter-spacing: -0.06em;
+        }
+
+        .amKpiContent span {
+          display: block;
+          margin-top: 8px;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .amKpiIcon {
+          width: 54px;
+          height: 54px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex: none;
+        }
+
+        .amKpiCard.kpi-blue {
+          background: linear-gradient(135deg, #daeaf8 0%, #ecf4fc 100%);
+          border-color: #bfd5ed;
+        }
+
+        .amKpiCard.kpi-green {
+          background: linear-gradient(135deg, #d4eee3 0%, #e9f6ef 100%);
+          border-color: #b5dac7;
+        }
+
+        .amKpiCard.kpi-purple {
+          background: linear-gradient(135deg, #e0d5f2 0%, #ede9f8 100%);
+          border-color: #c8bde8;
+        }
+
+        .amKpiCard.kpi-yellow {
+          background: linear-gradient(135deg, #fde9cf 0%, #fef4e5 100%);
+          border-color: #f0d0a4;
+        }
+
+        .amKpiCard.kpi-blue .amKpiContent p,
+        .amKpiIcon.kpi-blue {
+          color: #2d5f8e;
+        }
+
+        .amKpiCard.kpi-blue .amKpiContent h3 {
+          color: #1a3d5e;
+        }
+
+        .amKpiCard.kpi-blue .amKpiContent span {
+          color: #4a7299;
+        }
+
+        .amKpiCard.kpi-green .amKpiContent p,
+        .amKpiIcon.kpi-green {
+          color: #2c6e4f;
+        }
+
+        .amKpiCard.kpi-green .amKpiContent h3 {
+          color: #1a4a34;
+        }
+
+        .amKpiCard.kpi-green .amKpiContent span {
+          color: #3d7a5f;
+        }
+
+        .amKpiCard.kpi-purple .amKpiContent p,
+        .amKpiIcon.kpi-purple {
+          color: #5c4d85;
+        }
+
+        .amKpiCard.kpi-purple .amKpiContent h3 {
+          color: #3d3260;
+        }
+
+        .amKpiCard.kpi-purple .amKpiContent span {
+          color: #6b5a96;
+        }
+
+        .amKpiCard.kpi-yellow .amKpiContent p,
+        .amKpiIcon.kpi-yellow {
+          color: #8a5a20;
+        }
+
+        .amKpiCard.kpi-yellow .amKpiContent h3 {
+          color: #5e3d10;
+        }
+
+        .amKpiCard.kpi-yellow .amKpiContent span {
+          color: #9e6c2a;
+        }
+
+        .amKpiIcon.kpi-blue {
+          background: rgba(58, 114, 178, 0.16);
+        }
+
+        .amKpiIcon.kpi-green {
+          background: rgba(45, 110, 79, 0.16);
+        }
+
+        .amKpiIcon.kpi-purple {
+          background: rgba(92, 77, 133, 0.16);
+        }
+
+        .amKpiIcon.kpi-yellow {
+          background: rgba(155, 117, 53, 0.16);
         }
 
         .amHeaderButton,
