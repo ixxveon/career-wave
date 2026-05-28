@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
-import FavoriteCompanyPage from '@/user/pages/mypage/FavoriteCompanyPage';
+import ScrappedJobPage from '@/user/pages/mypage/ScrappedJobPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
 import JobSeekerDashboardPage from '../user/pages/dashboard/JobSeekerDashboardPage';
@@ -77,7 +77,7 @@ function AppRoutes() {
         <Route index element={<JobSeekerDashboardPage />} />
         <Route path="dashboard/company" element={<CompanyDashboardPage />} />
         <Route path="mypage" element={<UserMyPage />} />
-        <Route path="mypage/favorites" element={<FavoriteCompanyPage />} />
+        <Route path="mypage/favorites" element={<ScrappedJobPage />} />
         <Route path="mypage/subscription" element={<SubscriptionPage />} />
         <Route path="mypage/payment-history" element={<PaymentHistoryPage />} />
 
@@ -160,15 +160,15 @@ function AppRoutes() {
 
         <Route element={<AdminLayout />}>
           <Route path="dashboard" element={<AdminDashboardPage />} />
-          <Route path="admins"    element={<AdminManagementPage />} />
-          <Route path="members"   element={<UserManagementPage />} />
-          <Route path="reports"   element={<ReportPage />} />
-          <Route path="cs"        element={<CustomerServicePage />} />
-          <Route path="payments"  element={<AdminPaymentPage />} />
-          <Route path="matching"  element={<MatchingPage />} />
-          <Route path="ai"        element={<AiMetricsPage />} />
-          <Route path="scraping"  element={<ScrapingPage />} />
-          <Route path="log"       element={<AuditLogPage />} />
+          <Route path="admins" element={<AdminManagementPage />} />
+          <Route path="members" element={<UserManagementPage />} />
+          <Route path="reports" element={<ReportPage />} />
+          <Route path="cs" element={<CustomerServicePage />} />
+          <Route path="payments" element={<AdminPaymentPage />} />
+          <Route path="matching" element={<MatchingPage />} />
+          <Route path="ai" element={<AiMetricsPage />} />
+          <Route path="scraping" element={<ScrapingPage />} />
+          <Route path="log" element={<AuditLogPage />} />
         </Route>
       </Route>
     </Routes>
