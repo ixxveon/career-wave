@@ -46,9 +46,10 @@ const recentActivity = [
 // ── 꺾은선 차트 상수 ────────────────────────────────────────────
 // Y축 max를 4500만으로 고정해 gridline이 레이블과 정확히 일치
 const LINE_MAX_VAL = 45_000_000;
-const LINE_VBH = 220;
-const LINE_PAD = 28;
-const LINE_VBW = 1000;
+const LINE_VBH     = 220;
+const LINE_PAD     = 28;
+const LINE_VBW     = 1000;
+const LINE_PAD_X   = 30;   // SVG 좌우 여백 — 경계 점 잘림 방지
 const LINE_CHART_H_SVG = LINE_VBH - LINE_PAD * 2; // 164
 
 // Y축 레이블 (위→아래 = 높은값→낮은값)
@@ -66,8 +67,9 @@ const BAR_CHART_H  = 140;  // 막대 최대 픽셀 높이
 const barYLabels = ['320명', '240명', '160명', '80명', '0'];
 
 function buildSvgPath(values: number[]) {
+  const xRange = LINE_VBW - 2 * LINE_PAD_X;
   const pts: [number, number][] = values.map((v, i) => [
-    Math.round((i / (values.length - 1)) * LINE_VBW),
+    Math.round(LINE_PAD_X + (i / (values.length - 1)) * xRange),
     Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / LINE_MAX_VAL)),
   ]);
 
@@ -79,13 +81,18 @@ function buildSvgPath(values: number[]) {
     line += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;
   }
 
-  const area = `${line} L${pts[pts.length - 1][0]},${LINE_VBH} L0,${LINE_VBH} Z`;
+  // area path: extend to viewBox bottom-left corner (x=0) for full fill
+  const area = `${line} L${pts[pts.length - 1][0]},${LINE_VBH} L${pts[0][0]},${LINE_VBH} Z`;
   return { line, area, pts };
 }
+
+const TOOLTIP_W = 124;
 
 export default function StatisticsPage() {
   const { line, area, pts } = buildSvgPath(monthlyRevenue.map((m) => m.total));
   const peakIdx = pts.reduce((max, p, i) => (p[1] < pts[max][1] ? i : max), 0);
+  // viewBox 경계 초과 방지: 오른쪽 끝 데이터(5월)면 왼쪽으로 밀기
+  const tooltipX = Math.min(pts[peakIdx][0] - TOOLTIP_W / 2, LINE_VBW - TOOLTIP_W - 6);
 
   return (
     <section>
@@ -169,9 +176,9 @@ export default function StatisticsPage() {
                       />
                     ))}
 
-                    {/* Peak 말풍선 */}
-                    <rect x={pts[peakIdx][0] - 62} y={pts[peakIdx][1] - 36} width={124} height={24} rx="7" fill="#24496f" />
-                    <text x={pts[peakIdx][0]} y={pts[peakIdx][1] - 19}
+                    {/* Peak 말풍선 — tooltipX로 우측 잘림 방지 */}
+                    <rect x={tooltipX} y={pts[peakIdx][1] - 36} width={TOOLTIP_W} height={24} rx="7" fill="#24496f" />
+                    <text x={tooltipX + TOOLTIP_W / 2} y={pts[peakIdx][1] - 19}
                       textAnchor="middle" fill="white" fontSize="12" fontWeight="700" fontFamily="inherit">
                       Peak: ₩38,500,000
                     </text>

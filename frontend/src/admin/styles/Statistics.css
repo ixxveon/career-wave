@@ -14,8 +14,13 @@
   margin-bottom: 18px;
 }
 
-/* ── base card (no padding — controlled per section) ─────────── */
-.statsCard { padding: 0; overflow: hidden; }
+/* ── base card — flex column so content fills available height ── */
+.statsCard {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
 .statsCardHead {
   display: flex;
@@ -91,8 +96,16 @@
 }
 
 /* ── 꺾은선 차트 ─────────────────────────────────────────────── */
+/*
+ * flex: 1  → 카드 남은 높이를 채움
+ * justify-content: center → 콘텐츠보다 카드가 클 때 세로 중앙 정렬
+ */
 .statsLineWrap {
-  padding: 14px 16px 10px 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 14px 16px 14px 10px;
 }
 
 .statsLineChartBox {
@@ -114,7 +127,8 @@
 .statsLineLabels {
   display: flex;
   justify-content: space-between;
-  padding: 6px 10px 7px;
+  /* 3% ≈ LINE_PAD_X(30) / LINE_VBW(1000) — 월 레이블이 SVG 데이터 점 위치와 정렬 */
+  padding: 6px 3% 7px;
   font-size: 10px;
   font-weight: 700;
   color: var(--st-muted);
@@ -248,7 +262,12 @@
 .statsLegend .navy::before { background: #24496f; }
 .statsLegend .teal::before { background: #3d8e6a; }
 
+/* flex: 1 → 카드 남은 높이 채움, center → 세로 중앙 정렬 */
 .statsStackedWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: 14px 16px 14px 10px;
 }
 
