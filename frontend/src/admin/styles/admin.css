@@ -1767,3 +1767,9 @@ button {
 .warnCountText.danger  { color: #9a3a3a; }
 .warnAlert   { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 11px; font-weight: 700; background: #fde8e8; color: #9a3a3a; }
 .warnCaution { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 11px; font-weight: 700; background: #fde9cf; color: #8a5a20; }
+
+/* ── service stats page ──────────────────────────────────── */
+.matchBarFill.revenue    { background: linear-gradient(180deg, #4caf91 0%, #2d8c6e 100%); }
+.matchTrendBar.comp      { background: #7b68bb; }
+.matchTrendBar.comp span { color: #7b68bb; }
+.matchDot.comp           { background: #7b68bb; }

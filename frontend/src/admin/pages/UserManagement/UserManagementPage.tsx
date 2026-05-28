@@ -118,13 +118,6 @@ const approvalBadgeCls: Record<ApprovalStatus, string> = {
   '반려':      'blinded',
 };
 
-function getStatusBadgeCls(status: string): string {
-  if (status === '정상')          return 'normal';
-  if (status.includes('정지'))    return 'blinded';
-  if (status === '탈퇴')          return 'dismissed';
-  return 'pending';
-}
-
 export default function UserManagementPage() {
   const [tab, setTab] = useState<MemberTab>('user');
 
