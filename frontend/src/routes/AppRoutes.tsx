@@ -64,7 +64,7 @@ import UserManagementPage from '../admin/pages/UserManagement/UserManagementPage
 import ReportPage from '../admin/pages/Report/ReportPage';
 import CustomerServicePage from '../admin/pages/CustomerService/CustomerServicePage';
 import AdminPaymentPage from '../admin/pages/Payment/PaymentPage';
-import MatchingPage from '../admin/pages/Matching/MatchingPage';
+import StatisticsPage from '../admin/pages/Statistics/StatisticsPage';
 import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
 import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
@@ -165,7 +165,7 @@ function AppRoutes() {
           <Route path="reports"   element={<ReportPage />} />
           <Route path="cs"        element={<CustomerServicePage />} />
           <Route path="payments"  element={<AdminPaymentPage />} />
-          <Route path="matching"  element={<MatchingPage />} />
+          <Route path="stats"     element={<StatisticsPage />} />
           <Route path="ai"        element={<AiMetricsPage />} />
           <Route path="scraping"  element={<ScrapingPage />} />
           <Route path="log"       element={<AuditLogPage />} />
