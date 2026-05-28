@@ -17,11 +17,36 @@ import '../../styles/Payment.css';
 type PayTab = '결제 내역' | '구독 현황' | '정산 리포트';
 
 // payments.payment_status (ERD-aligned)
-type PayStatus   = 'PENDING' | 'DONE' | 'CANCELED' | 'FAILED';
+const PAY_STATUS = {
+  PENDING:  'PENDING',
+  DONE:     'DONE',
+  CANCELED: 'CANCELED',
+  FAILED:   'FAILED',
+} as const;
+type PayStatus = (typeof PAY_STATUS)[keyof typeof PAY_STATUS];
+
 // refunds.refund_status (ERD-aligned)
-type RefundStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REJECTED';
-type PaymentType  = 'MANUAL' | 'AUTO_RENEWAL';
-type SubStatus    = 'ACTIVE' | 'RENEWAL_SCHEDULED' | 'CANCEL_SCHEDULED' | 'AT_RISK';
+const REFUND_STATUS = {
+  PENDING:   'PENDING',
+  COMPLETED: 'COMPLETED',
+  FAILED:    'FAILED',
+  REJECTED:  'REJECTED',
+} as const;
+type RefundStatus = (typeof REFUND_STATUS)[keyof typeof REFUND_STATUS];
+
+const PAYMENT_TYPE = {
+  MANUAL:       'MANUAL',
+  AUTO_RENEWAL: 'AUTO_RENEWAL',
+} as const;
+type PaymentType = (typeof PAYMENT_TYPE)[keyof typeof PAYMENT_TYPE];
+
+const SUB_STATUS = {
+  ACTIVE:            'ACTIVE',
+  RENEWAL_SCHEDULED: 'RENEWAL_SCHEDULED',
+  CANCEL_SCHEDULED:  'CANCEL_SCHEDULED',
+  AT_RISK:           'AT_RISK',
+} as const;
+type SubStatus = (typeof SUB_STATUS)[keyof typeof SUB_STATUS];
 
 const payStatusLabel: Record<PayStatus, string> = {
   PENDING:  '결제 대기',
