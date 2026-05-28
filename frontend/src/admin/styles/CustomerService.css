@@ -1,0 +1,54 @@
+/* ── customer service page — form styles ───────────────────── */
+
+.csFormRows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.csFormRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.csFormRow > label:first-child {
+  font-size: 13px;
+  font-weight: 600;
+  color: #708397;
+}
+
+.csFormInput,
+.csFormSelect {
+  height: 42px;
+  border: 1px solid #d8e3ed;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #23384f;
+  background: white;
+  font-family: inherit;
+}
+
+.csFormInput:focus,
+.csFormSelect:focus {
+  outline: none;
+  border-color: #8daeca;
+}
+
+.csFormTextarea {
+  border: 1px solid #d8e3ed;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #23384f;
+  background: white;
+  font-family: inherit;
+  min-height: 100px;
+  resize: vertical;
+}
+
+.csFormTextarea:focus {
+  outline: none;
+  border-color: #8daeca;
+}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AlertTriangle, Bot, Clock, EyeOff, Flag, UserX } from 'lucide-react';
 import '../../styles/admin.css';
+import '../../styles/Report.css';
 
 // ── ERD 기반 타입 ────────────────────────────────────────────
 type ReportStatus   = 'PENDING' | 'BLINDED' | 'DISMISSED';
