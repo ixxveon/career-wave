@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LockKeyhole, Network, ShieldCheck, UserCheck } from 'lucide-react';
+import { LockKeyhole, Network, Plus, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
 import '../../styles/admin.css';
 import MiniPagination from '../../components/MiniPagination';
 
@@ -42,6 +42,13 @@ interface AclDraft {
   label: string;
   cidr: string;
   note: string;
+}
+
+interface AdminDraft {
+  email: string;
+  password: string;
+  name: string;
+  role: AdminRole;
 }
 
 const ROLE_META: Record<AdminRole, { label: string; scope: string }> = {
@@ -221,6 +228,13 @@ const getAclRiskMeta = (cidr: string) => {
   return { label: '넓은 대역', tone: 'high' as const };
 };
 
+const createEmptyAdminDraft = (): AdminDraft => ({
+  email: '',
+  password: '',
+  name: '',
+  role: 'CS',
+});
+
 export default function AdminManagementPage() {
   const [admins, setAdmins] = useState(initialAdmins);
   const [aclRules, setAclRules] = useState(initialAclRules);
@@ -229,6 +243,9 @@ export default function AdminManagementPage() {
   const [roleFilter, setRoleFilter] = useState<'ALL' | AdminRole>('ALL');
   const [auditActor, setAuditActor] = useState<string>('ALL');
   const [aclEnforced, setAclEnforced] = useState(true);
+  const [isCreateAdminOpen, setIsCreateAdminOpen] = useState(false);
+  const [adminDraft, setAdminDraft] = useState<AdminDraft>(createEmptyAdminDraft);
+  const [adminSeed, setAdminSeed] = useState(initialAdmins.length + 1);
   const [aclSeed, setAclSeed] = useState(4);
   const [aclPage, setAclPage] = useState(1);
   const [aclDraft, setAclDraft] = useState<AclDraft>({ label: '', cidr: '', note: '' });
@@ -251,6 +268,45 @@ export default function AdminManagementPage() {
     });
   };
 
+  const closeCreateAdminPage = () => {
+    setAdminDraft(createEmptyAdminDraft());
+    setIsCreateAdminOpen(false);
+  };
+
+  const createAdminAccount = () => {
+    const email = adminDraft.email.trim();
+    const name = adminDraft.name.trim();
+    const password = adminDraft.password.trim();
+    if (!email || !name || !password) return;
+
+    const nextId = makeId('ADM', adminSeed);
+    const nextAdmin: AdminAccount = {
+      id: nextId,
+      name,
+      email,
+      role: adminDraft.role,
+      scope: ROLE_META[adminDraft.role].scope,
+      ip: '10.20.0.30',
+      createdAt: formatNow(),
+      lastLogin: '-',
+      status: 'ACTIVE',
+    };
+
+    setAdmins((prev) => [nextAdmin, ...prev]);
+    setAdminSeed((prev) => prev + 1);
+    setAdminFilter('');
+    setRoleFilter('ALL');
+    closeCreateAdminPage();
+
+    addLog({
+      actor: 'super_admin',
+      ip: '10.20.0.10',
+      action: '관리자 계정 생성',
+      target: nextId,
+      severity: 'WARN',
+    });
+  };
+
   const toggleAdminStatus = (id: string) => {
     const target = admins.find((item) => item.id === id);
     if (!target) return;
@@ -268,13 +324,19 @@ export default function AdminManagementPage() {
     });
   };
 
-  const openAdminDetail = (admin: AdminAccount) => {
+  const removeAdminAccount = (admin: AdminAccount) => {
+    setAdmins((prev) => prev.filter((item) => item.id !== admin.id));
+
+    if (auditActor === admin.name) {
+      setAuditActor('ALL');
+    }
+
     addLog({
       actor: 'super_admin',
       ip: '10.20.0.10',
-      action: '관리자 상세 조회',
+      action: '관리자 계정 삭제',
       target: admin.id,
-      severity: 'INFO',
+      severity: 'ERROR',
     });
   };
 
@@ -372,6 +434,24 @@ export default function AdminManagementPage() {
     }
   }, [aclPage, aclRules.length]);
 
+  useEffect(() => {
+    if (!isCreateAdminOpen) return undefined;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeCreateAdminPage();
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isCreateAdminOpen]);
+
   const filteredAdmins = useMemo(() => {
     const keyword = adminFilter.trim().toLowerCase();
 
@@ -441,6 +521,14 @@ export default function AdminManagementPage() {
                 <h3>관리자 계정 목록 (RBAC)</h3>
                 <p>권한, 상태, 최근 접속 이력을 한 번에 비교할 수 있도록 정리했습니다.</p>
               </div>
+              <button
+                className="amHeaderButton amCreateAdminButton"
+                type="button"
+                onClick={() => setIsCreateAdminOpen(true)}
+              >
+                <Plus size={16} />
+                관리자 계정 생성
+              </button>
             </div>
 
             <div className="amToolbar">
@@ -525,11 +613,12 @@ export default function AdminManagementPage() {
                               <button className="amRowButton" type="button" onClick={() => toggleAdminStatus(admin.id)}>
                                 {admin.status === 'ACTIVE' ? '잠금' : '해제'}
                               </button>
-                              <button className="amRowButton subtle" type="button" onClick={() => openAdminDetail(admin)}>
-                                상세
-                              </button>
                               <button className="amRowButton subtle" type="button" onClick={() => openAdminActivity(admin)}>
                                 활동 로그
+                              </button>
+                              <button className="amRowButton danger" type="button" onClick={() => removeAdminAccount(admin)}>
+                                <Trash2 size={14} />
+                                삭제
                               </button>
                             </div>
                           </td>
@@ -542,7 +631,10 @@ export default function AdminManagementPage() {
             </div>
 
             <div className="amPagination">
-              <span>총 12건 중 1-5 표시</span>
+              <span>
+                총 {filteredAdmins.length.toLocaleString()}건 중 {filteredAdmins.length > 0 ? '1' : '0'}-
+                {filteredAdmins.length.toLocaleString()} 표시
+              </span>
               <div>
                 <button type="button">{'<'}</button>
                 <button className="active" type="button">
@@ -695,6 +787,90 @@ export default function AdminManagementPage() {
           )}
         </div>
       </section>
+
+      {isCreateAdminOpen && (
+        <div className="amCreatePageOverlay" role="presentation" onMouseDown={closeCreateAdminPage}>
+          <form
+            className="amCreatePage"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="amCreatePageTitle"
+            onMouseDown={(event) => event.stopPropagation()}
+            onSubmit={(event) => {
+              event.preventDefault();
+              createAdminAccount();
+            }}
+          >
+            <div className="amCreatePageHero">
+              <div>
+                <span>RBAC 관리자 등록</span>
+                <h3 id="amCreatePageTitle">관리자 계정 생성</h3>
+                <p>새 관리자에게 로그인 정보와 초기 권한을 부여합니다.</p>
+              </div>
+              <button className="amGhostButton" type="button" onClick={closeCreateAdminPage}>
+                닫기
+              </button>
+            </div>
+
+            <div className="amCreatePageBody">
+              <label>
+                로그인 이메일
+                <input
+                  type="email"
+                  value={adminDraft.email}
+                  onChange={(e) => setAdminDraft((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder="admin@career-wave.com"
+                  autoFocus
+                />
+              </label>
+              <label>
+                비밀번호
+                <input
+                  type="password"
+                  value={adminDraft.password}
+                  onChange={(e) => setAdminDraft((prev) => ({ ...prev, password: e.target.value }))}
+                  placeholder="초기 비밀번호 입력"
+                />
+              </label>
+              <label>
+                관리자 이름
+                <input
+                  type="text"
+                  value={adminDraft.name}
+                  onChange={(e) => setAdminDraft((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="관리자 이름"
+                />
+              </label>
+              <label>
+                권한
+                <select
+                  value={adminDraft.role}
+                  onChange={(e) => setAdminDraft((prev) => ({ ...prev, role: e.target.value as AdminRole }))}
+                >
+                  {roleColumns.map((role) => (
+                    <option key={role} value={role}>
+                      {ROLE_META[role].label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="amCreatePageActions">
+              <button className="amGhostButton" type="button" onClick={closeCreateAdminPage}>
+                취소
+              </button>
+              <button
+                className="amPrimaryButton"
+                type="submit"
+                disabled={!adminDraft.email.trim() || !adminDraft.password.trim() || !adminDraft.name.trim()}
+              >
+                관리자 생성
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <style>{`
         .admin-managementPage {
@@ -900,6 +1076,8 @@ export default function AdminManagementPage() {
         .amToolbar input:focus,
         .amToolbar select:focus,
         .amAclForm input:focus,
+        .amCreatePageBody input:focus,
+        .amCreatePageBody select:focus,
         .amLogToolbar input:focus,
         .amLogToolbar select:focus,
         .amInlineSelect:focus {
@@ -920,6 +1098,27 @@ export default function AdminManagementPage() {
           background: var(--am-primary);
           border-color: var(--am-primary);
           color: #f5f9ff;
+        }
+
+        .amCreateAdminButton,
+        .amRowButton.danger {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          white-space: nowrap;
+        }
+
+        .amCreateAdminButton {
+          background: var(--am-primary);
+          border-color: var(--am-primary);
+          color: #f5f9ff;
+          box-shadow: 0 8px 18px rgba(20, 53, 84, 0.14);
+        }
+
+        .amCreateAdminButton:hover {
+          background: var(--am-primary-strong);
+          border-color: var(--am-primary-strong);
         }
 
         .amPrimaryButton:hover {
@@ -998,6 +1197,88 @@ export default function AdminManagementPage() {
           line-height: 1.5;
         }
 
+        .amCreatePageOverlay {
+          position: fixed;
+          inset: 0;
+          z-index: 80;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 28px;
+          background: rgba(10, 26, 43, 0.32);
+          backdrop-filter: blur(8px);
+        }
+
+        .amCreatePage {
+          width: min(760px, 100%);
+          max-height: min(720px, calc(100vh - 56px));
+          overflow-y: auto;
+          border: 1px solid #dce8f4;
+          border-radius: 22px;
+          background: #ffffff;
+          box-shadow: 0 28px 70px rgba(14, 38, 64, 0.24);
+        }
+
+        .amCreatePageHero {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 20px;
+          padding: 28px 30px;
+          border-bottom: 1px solid #e7eef7;
+          background:
+            radial-gradient(circle at 85% 0%, rgba(91, 143, 203, 0.18), transparent 34%),
+            linear-gradient(135deg, #f4f9ff 0%, #ffffff 100%);
+        }
+
+        .amCreatePageHero span {
+          display: block;
+          margin-bottom: 8px;
+          color: var(--am-accent);
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .amCreatePageHero h3 {
+          margin: 0;
+          color: var(--am-primary);
+          font-size: 26px;
+          font-weight: 900;
+          letter-spacing: -0.05em;
+        }
+
+        .amCreatePageHero p {
+          margin: 8px 0 0;
+          color: var(--am-text-soft);
+          font-size: 13px;
+          line-height: 1.6;
+        }
+
+        .amCreatePageBody {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+          padding: 26px 30px 10px;
+        }
+
+        .amCreatePageBody label {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          color: #4b627d;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .amCreatePageActions {
+          display: flex;
+          gap: 10px;
+          justify-content: flex-end;
+          padding: 22px 30px 28px;
+        }
+
         .amToolbar {
           display: grid;
           grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.8fr);
@@ -1023,6 +1304,8 @@ export default function AdminManagementPage() {
         .amToolbar input,
         .amToolbar select,
         .amAclForm input,
+        .amCreatePageBody input,
+        .amCreatePageBody select,
         .amLogToolbar input,
         .amLogToolbar select,
         .amInlineSelect {
@@ -1038,7 +1321,7 @@ export default function AdminManagementPage() {
         }
 
         .amTableWrap {
-          overflow-x: auto;
+          overflow-x: hidden;
           border-radius: 12px;
           border: 1px solid #e5edf6;
           background: #fff;
@@ -1047,7 +1330,33 @@ export default function AdminManagementPage() {
         .amCompactTable {
           width: 100%;
           border-collapse: collapse;
-          min-width: 980px;
+          min-width: 0;
+          table-layout: fixed;
+        }
+
+        .amCompactTable th:nth-child(1),
+        .amCompactTable td:nth-child(1) {
+          width: 25%;
+        }
+
+        .amCompactTable th:nth-child(2),
+        .amCompactTable td:nth-child(2) {
+          width: 26%;
+        }
+
+        .amCompactTable th:nth-child(3),
+        .amCompactTable td:nth-child(3) {
+          width: 10%;
+        }
+
+        .amCompactTable th:nth-child(4),
+        .amCompactTable td:nth-child(4) {
+          width: 14%;
+        }
+
+        .amCompactTable th:nth-child(5),
+        .amCompactTable td:nth-child(5) {
+          width: 25%;
         }
 
         .amCompactTable thead {
@@ -1060,20 +1369,30 @@ export default function AdminManagementPage() {
         }
 
         .amCompactTable th {
-          padding: 14px 14px;
+          padding: 13px 12px;
           text-align: left;
           color: #68819b;
           font-size: 12px;
           font-weight: 800;
+          white-space: nowrap;
         }
 
         .amCompactTable td {
-          padding: 14px 14px;
+          padding: 13px 12px;
           color: var(--am-text);
           font-size: 13px;
           vertical-align: middle;
           background: #fff;
           transition: background-color 0.18s ease;
+        }
+
+        .amCompactTable th:nth-child(3),
+        .amCompactTable td:nth-child(3) {
+          text-align: center;
+        }
+
+        .amCompactTable td:nth-child(5) {
+          text-align: right;
         }
 
         .amCompactTable tbody tr:hover td {
@@ -1084,6 +1403,9 @@ export default function AdminManagementPage() {
           display: block;
           color: var(--am-primary);
           font-weight: 800;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .amCompactTable td small {
@@ -1092,6 +1414,9 @@ export default function AdminManagementPage() {
           color: #7f93a8;
           font-size: 11px;
           line-height: 1.45;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .amStatusBadge {
@@ -1118,13 +1443,35 @@ export default function AdminManagementPage() {
 
         .amRowActions {
           display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
+          gap: 6px;
+          flex-wrap: nowrap;
+          justify-content: flex-end;
+        }
+
+        .amRowActions .amRowButton {
+          flex: 0 0 auto;
+          height: 32px;
+          min-width: auto;
+          padding: 0 9px;
+          border-radius: 9px;
+          white-space: nowrap;
+          word-break: keep-all;
         }
 
         .amRowButton.subtle {
           background: #f7fafe;
           color: #4d6c91;
+        }
+
+        .amRowButton.danger {
+          border-color: #ebd2d6;
+          color: #8b6067;
+          background: #fff7f8;
+        }
+
+        .amRowButton.danger:hover {
+          background: #faeef0;
+          border-color: #e2bfc5;
         }
 
         .amPagination {
@@ -1535,8 +1882,20 @@ export default function AdminManagementPage() {
         @media (max-width: 900px) {
           .amOverviewGrid,
           .amToolbar,
+          .amCreatePageBody,
           .amAclForm {
             grid-template-columns: 1fr;
+          }
+
+          .amCreatePageOverlay {
+            align-items: stretch;
+            padding: 16px;
+          }
+
+          .amCreatePageHero,
+          .amCreatePageActions {
+            flex-direction: column;
+            align-items: stretch;
           }
 
           .amSectionHead,
@@ -1551,13 +1910,11 @@ export default function AdminManagementPage() {
             justify-content: flex-start;
           }
 
-          .amCompactTable,
           .amSecurityConsoleHead,
           .amSecurityRow {
             min-width: 980px;
           }
 
-          .amTableWrap,
           .amSecurityConsole {
             overflow-x: auto;
           }
