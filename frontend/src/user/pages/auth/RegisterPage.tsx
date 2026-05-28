@@ -700,6 +700,7 @@ function CompanyRegisterForm() {
   const [form, setForm] = useState<CompanyForm>(initialCompanyForm);
   const [terms, setTerms] = useState(initialCompanyTerms);
   const [employmentCertificate, setEmploymentCertificate] = useState<File | null>(null);
+  const [employmentCertificateError, setEmploymentCertificateError] = useState('');
   const [isSubmitGuideOpen, setIsSubmitGuideOpen] = useState(false);
   const employmentCertificateInputRef = useRef<HTMLInputElement | null>(null);
   const [verified, setVerified] = useState({
@@ -713,12 +714,29 @@ function CompanyRegisterForm() {
     email: false,
   });
   const passwordMismatch = form.managerPasswordConfirm && form.managerPassword !== form.managerPasswordConfirm;
-  const canSubmit = terms.service && terms.sms && terms.privacy && !passwordMismatch;
+  const canSubmit = terms.service && terms.sms && terms.privacy && !passwordMismatch && employmentCertificate !== null;
 
   const update = (key: CompanyFormKey, value: CompanyForm[CompanyFormKey]) => setForm((current) => ({ ...current, [key]: value }));
   const handleCertificateChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
+
+    if (!selectedFile) {
+      setEmploymentCertificate(null);
+      setEmploymentCertificateError('');
+      return;
+    }
+
+    const isPdf = selectedFile.type === 'application/pdf' || selectedFile.name.toLowerCase().endsWith('.pdf');
+
+    if (!isPdf) {
+      setEmploymentCertificate(null);
+      setEmploymentCertificateError('PDF 형식의 파일만 업로드할 수 있습니다.');
+      event.target.value = '';
+      return;
+    }
+
     setEmploymentCertificate(selectedFile);
+    setEmploymentCertificateError('');
   };
 
   return (
@@ -923,6 +941,7 @@ function CompanyRegisterForm() {
                 onChange={handleCertificateChange}
                 type="file"
               />
+              {employmentCertificateError && <p className="cw-register-error">{employmentCertificateError}</p>}
             </div>
           </Field>
         </div>
