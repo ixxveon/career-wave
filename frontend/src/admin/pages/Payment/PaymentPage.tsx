@@ -16,9 +16,40 @@ import '../../styles/Payment.css';
 // ── Types (ERD-aligned) ───────────────────────────────────────
 type PayTab = '결제 내역' | '구독 현황' | '정산 리포트';
 
-type PayStatus  = 'COMPLETED' | 'REFUND_REQUESTED' | 'REFUNDED' | 'REFUND_REJECTED' | 'FAILED';
-type PaymentType = 'MANUAL' | 'AUTO_RENEWAL';
-type SubStatus  = 'ACTIVE' | 'RENEWAL_SCHEDULED' | 'CANCEL_SCHEDULED' | 'AT_RISK';
+// payments.payment_status (ERD-aligned)
+type PayStatus   = 'PENDING' | 'DONE' | 'CANCELED' | 'FAILED';
+// refunds.refund_status (ERD-aligned)
+type RefundStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REJECTED';
+type PaymentType  = 'MANUAL' | 'AUTO_RENEWAL';
+type SubStatus    = 'ACTIVE' | 'RENEWAL_SCHEDULED' | 'CANCEL_SCHEDULED' | 'AT_RISK';
+
+const payStatusLabel: Record<PayStatus, string> = {
+  PENDING:  '결제 대기',
+  DONE:     '결제 완료',
+  CANCELED: '환불 완료',
+  FAILED:   '결제 실패',
+};
+
+const payStatusCls: Record<PayStatus, string> = {
+  PENDING:  'pending',
+  DONE:     'normal',
+  CANCELED: 'dismissed',
+  FAILED:   'blinded',
+};
+
+const refundStatusLabel: Record<RefundStatus, string> = {
+  PENDING:   '환불 요청',
+  COMPLETED: '환불 완료',
+  FAILED:    '환불 실패',
+  REJECTED:  '환불 불가',
+};
+
+const refundStatusCls: Record<RefundStatus, string> = {
+  PENDING:   'pending',
+  COMPLETED: 'dismissed',
+  FAILED:    'blinded',
+  REJECTED:  'blinded',
+};
 
 const paymentTypeLabel: Record<PaymentType, string> = {
   MANUAL:       '직접 결제',
@@ -28,22 +59,6 @@ const paymentTypeLabel: Record<PaymentType, string> = {
 const paymentTypeCls: Record<PaymentType, string> = {
   MANUAL:       'payType--manual',
   AUTO_RENEWAL: 'payType--renewal',
-};
-
-const payStatusLabel: Record<PayStatus, string> = {
-  COMPLETED:        '결제 완료',
-  REFUND_REQUESTED: '환불 요청',
-  REFUNDED:         '환불 완료',
-  REFUND_REJECTED:  '환불 불가',
-  FAILED:           '결제 실패',
-};
-
-const payStatusCls: Record<PayStatus, string> = {
-  COMPLETED:        'normal',
-  REFUND_REQUESTED: 'pending',
-  REFUNDED:         'dismissed',
-  REFUND_REJECTED:  'blinded',
-  FAILED:           'blinded',
 };
 
 const subStatusLabel: Record<SubStatus, string> = {
@@ -76,6 +91,7 @@ interface Payment {
   status: PayStatus;
   paymentType: PaymentType;
   aiUsage: AiUsage;
+  refundStatus?: RefundStatus; // refunds 테이블 조인 결과 (환불 요청 건만 존재)
 }
 
 // ── 환불 가능 여부 판단 헬퍼 ─────────────────────────────────
@@ -97,6 +113,8 @@ function checkRefundEligibility(p: Payment): { eligible: boolean; reason: string
   }
   return { eligible: true, reason: null };
 }
+// 환불 요청 중인 건 (refunds.refund_status = PENDING)
+const isRefundPending = (p: Payment) => p.refundStatus === 'PENDING';
 
 interface Subscription {
   id: string;
@@ -109,21 +127,21 @@ interface Subscription {
 
 // ── Dummy Data ────────────────────────────────────────────────
 const initialPayments: Payment[] = [
-  // 직접 결제 — 결제 완료
-  { id: 'PAY-3001', orderId: 'TOSS-20260501-A1B2C3', memberName: '김민지', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 3, interviewPaidCount: 1 } },
-  { id: 'PAY-3005', orderId: 'TOSS-20260505-P7Q8R9', memberName: '이영희', product: '프리미엄 월정액', paidAt: '2026.05.05', amount: 29000, status: 'COMPLETED',        paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 1, interviewPaidCount: 2 } },
-  { id: 'PAY-3006', orderId: 'TOSS-20260412-S1T2U3', memberName: '정현우', product: '프리미엄 월정액', paidAt: '2026.04.12', amount: 29000, status: 'COMPLETED',        paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 5, interviewPaidCount: 0 } },
-  { id: 'PAY-3007', orderId: 'TOSS-20260501-V4W5X6', memberName: '최도윤', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 2, interviewPaidCount: 3 } },
-  { id: 'PAY-3008', orderId: 'TOSS-20260503-W7X8Y9', memberName: '강지수', product: '프리미엄 월정액', paidAt: '2026.05.03', amount: 29000, status: 'COMPLETED',        paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 1 } },
-  // 직접 결제 — 환불 요청 (가능 / 불가)
-  { id: 'PAY-3002', orderId: 'TOSS-20260525-D4E5F6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.05.25', amount: 29000, status: 'REFUND_REQUESTED', paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
-  { id: 'PAY-3009', orderId: 'TOSS-20260522-Z9Y8X7', memberName: '오민서', product: '프리미엄 월정액', paidAt: '2026.05.22', amount: 29000, status: 'REFUND_REQUESTED', paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 2, interviewPaidCount: 0 } },
-  // 직접 결제 — 실패 / 환불 완료
-  { id: 'PAY-3003', orderId: 'TOSS-20260518-J1K2L3', memberName: '박서연', product: '프리미엄 월정액', paidAt: '2026.05.18', amount: 29000, status: 'FAILED',           paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
-  { id: 'PAY-3004', orderId: 'TOSS-20260301-M4N5O6', memberName: '오민서', product: '프리미엄 월정액', paidAt: '2026.03.01', amount: 29000, status: 'REFUNDED',         paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
+  // 직접 결제 — DONE
+  { id: 'PAY-3001', orderId: 'TOSS-20260501-A1B2C3', memberName: '김민지', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'DONE',     paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 3, interviewPaidCount: 1 } },
+  { id: 'PAY-3005', orderId: 'TOSS-20260505-P7Q8R9', memberName: '이영희', product: '프리미엄 월정액', paidAt: '2026.05.05', amount: 29000, status: 'DONE',     paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 1, interviewPaidCount: 2 } },
+  { id: 'PAY-3006', orderId: 'TOSS-20260412-S1T2U3', memberName: '정현우', product: '프리미엄 월정액', paidAt: '2026.04.12', amount: 29000, status: 'DONE',     paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 5, interviewPaidCount: 0 } },
+  { id: 'PAY-3007', orderId: 'TOSS-20260501-V4W5X6', memberName: '최도윤', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'DONE',     paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 2, interviewPaidCount: 3 } },
+  { id: 'PAY-3008', orderId: 'TOSS-20260503-W7X8Y9', memberName: '강지수', product: '프리미엄 월정액', paidAt: '2026.05.03', amount: 29000, status: 'DONE',     paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 1 } },
+  // 직접 결제 — DONE + refundStatus PENDING (환불 요청 중, refunds 테이블 조인)
+  { id: 'PAY-3002', orderId: 'TOSS-20260525-D4E5F6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.05.25', amount: 29000, status: 'DONE',     paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 }, refundStatus: 'PENDING'   },
+  { id: 'PAY-3009', orderId: 'TOSS-20260522-Z9Y8X7', memberName: '오민서', product: '프리미엄 월정액', paidAt: '2026.05.22', amount: 29000, status: 'DONE',     paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 2, interviewPaidCount: 0 }, refundStatus: 'PENDING'   },
+  // 직접 결제 — FAILED / CANCELED (환불 완료)
+  { id: 'PAY-3003', orderId: 'TOSS-20260518-J1K2L3', memberName: '박서연', product: '프리미엄 월정액', paidAt: '2026.05.18', amount: 29000, status: 'FAILED',   paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
+  { id: 'PAY-3004', orderId: 'TOSS-20260301-M4N5O6', memberName: '오민서', product: '프리미엄 월정액', paidAt: '2026.03.01', amount: 29000, status: 'CANCELED', paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 }, refundStatus: 'COMPLETED' },
   // 자동 갱신 실패 → 구독 현황 이탈 위험(AT_RISK) 근거
-  { id: 'PAY-3010', orderId: 'TOSS-20260530-H1D2G3', memberName: '홍길동', product: '프리미엄 월정액', paidAt: '2026.05.30', amount: 29000, status: 'FAILED',           paymentType: 'AUTO_RENEWAL', aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
-  { id: 'PAY-3011', orderId: 'TOSS-20260525-K4L5M6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.05.25', amount: 29000, status: 'FAILED',           paymentType: 'AUTO_RENEWAL', aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
+  { id: 'PAY-3010', orderId: 'TOSS-20260530-H1D2G3', memberName: '홍길동', product: '프리미엄 월정액', paidAt: '2026.05.30', amount: 29000, status: 'FAILED',   paymentType: 'AUTO_RENEWAL', aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
+  { id: 'PAY-3011', orderId: 'TOSS-20260525-K4L5M6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.05.25', amount: 29000, status: 'FAILED',   paymentType: 'AUTO_RENEWAL', aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
 ];
 
 const dummySubs: Subscription[] = [
@@ -165,25 +183,29 @@ export default function PaymentPage() {
   );
 
   const totalRevenue = payments
-    .filter((p) => p.status === 'COMPLETED')
+    .filter((p) => p.status === 'DONE')
     .reduce((s, p) => s + p.amount, 0);
-  const paidCount    = payments.filter((p) => p.status === 'COMPLETED').length;
-  const refundReqCnt = payments.filter((p) => p.status === 'REFUND_REQUESTED').length;
+  const paidCount    = payments.filter((p) => p.status === 'DONE').length;
+  const refundReqCnt = payments.filter((p) => isRefundPending(p)).length;
   const failCount    = payments.filter((p) => p.status === 'FAILED').length;
-  const refundCheck  = selected?.status === 'REFUND_REQUESTED'
+  const refundCheck  = selected?.refundStatus === 'PENDING'
     ? checkRefundEligibility(selected)
     : null;
 
   const processRefund = (id: string) => {
     setPayments((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: 'REFUNDED' as PayStatus } : p)),
+      prev.map((p) =>
+        p.id === id ? { ...p, status: 'CANCELED' as PayStatus, refundStatus: 'COMPLETED' as RefundStatus } : p,
+      ),
     );
     setSelected(null);
   };
 
   const processReject = (id: string) => {
     setPayments((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: 'REFUND_REJECTED' as PayStatus } : p)),
+      prev.map((p) =>
+        p.id === id ? { ...p, refundStatus: 'REJECTED' as RefundStatus } : p,
+      ),
     );
     setSelected(null);
   };
@@ -272,10 +294,9 @@ export default function PaymentPage() {
             </select>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">상태 전체</option>
-              <option value="COMPLETED">결제 완료</option>
-              <option value="REFUND_REQUESTED">환불 요청</option>
-              <option value="REFUNDED">환불 완료</option>
-              <option value="REFUND_REJECTED">환불 불가</option>
+              <option value="DONE">결제 완료</option>
+              <option value="PENDING">결제 대기</option>
+              <option value="CANCELED">환불 완료</option>
               <option value="FAILED">결제 실패</option>
             </select>
           </section>
@@ -325,10 +346,10 @@ export default function PaymentPage() {
                       </td>
                       <td>
                         <button
-                          className={`tableBtn${p.status === 'REFUND_REQUESTED' ? ' tableBtn--refund' : ''}`}
+                          className={`tableBtn${isRefundPending(p) ? ' tableBtn--refund' : ''}`}
                           onClick={() => setSelected(p)}
                         >
-                          {p.status === 'REFUND_REQUESTED' ? '환불 처리' : '상세보기'}
+                          {isRefundPending(p) ? '환불 처리' : '상세보기'}
                         </button>
                       </td>
                     </tr>
@@ -496,10 +517,18 @@ export default function PaymentPage() {
                     {payStatusLabel[selected.status]}
                   </span>
                 </div>
+                {selected.refundStatus && (
+                  <div>
+                    <span>환불 상태</span>
+                    <span className={`statusBadge ${refundStatusCls[selected.refundStatus]}`}>
+                      {refundStatusLabel[selected.refundStatus]}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* 환불 요청 건 — CS 관리자 확인 섹션 */}
-              {selected.status === 'REFUND_REQUESTED' && refundCheck && (
+              {selected.refundStatus === 'PENDING' && refundCheck && (
                 <div className="refundCheckSection">
                   <p className="refundCheckTitle">환불 가능 여부 확인</p>
 
@@ -543,10 +572,10 @@ export default function PaymentPage() {
 
             {/* 액션 */}
             <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
-              {selected.status === 'REFUND_REQUESTED' && refundCheck?.eligible && (
+              {selected.refundStatus === 'PENDING' && refundCheck?.eligible && (
                 <button onClick={() => processRefund(selected.id)}>환불 처리 확정</button>
               )}
-              {selected.status === 'REFUND_REQUESTED' && refundCheck && !refundCheck.eligible && (
+              {selected.refundStatus === 'PENDING' && refundCheck && !refundCheck.eligible && (
                 <button
                   className="tableBtn--danger"
                   onClick={() => processReject(selected.id)}
