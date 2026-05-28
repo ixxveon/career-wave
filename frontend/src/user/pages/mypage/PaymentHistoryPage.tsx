@@ -3,6 +3,38 @@ import { Link } from 'react-router-dom';
 import { CalendarClock, ChevronLeft, ChevronRight, Info, Sparkles } from 'lucide-react';
 import './MyPage.css';
 
+type MockMode = 'empty' | 'filled';
+
+type SubscriptionItem = {
+  id: 'document-coaching' | 'interview';
+  name: string;
+  isActive: boolean;
+  autoBilling: boolean;
+  cancelScheduled: boolean;
+  nextBillingDate: string | null;
+  billingCycle: string;
+  monthlyPrice: string;
+  startedAt: string | null;
+  description: string;
+  href: string;
+};
+
+type PaymentHistoryItem = {
+  id: number;
+  date: string;
+  name: string;
+  amount: string;
+};
+
+type SubscriptionCardProps = {
+  subscription: SubscriptionItem;
+  onCancel: (subscription: SubscriptionItem) => void;
+};
+
+type RecommendationCardProps = {
+  subscription: SubscriptionItem;
+};
+
 // Mock view switches
 // - subscriptionMockMode
 //   - 'empty': 이용중인 구독 상품이 없는 화면
@@ -10,10 +42,15 @@ import './MyPage.css';
 // - paymentHistoryMockMode
 //   - 'empty': 신규 사용자처럼 최근 결제 내역이 없는 화면
 //   - 'filled': 최근 결제 내역 리스트가 보이는 화면
-const subscriptionMockMode = 'empty';
-const paymentHistoryMockMode = 'empty';
+const mockModes: { subscription: MockMode; paymentHistory: MockMode } = {
+  subscription: 'empty',
+  paymentHistory: 'filled',
+};
 
-const subscriptionItems = [
+const subscriptionMockMode = mockModes.subscription;
+const paymentHistoryMockMode = mockModes.paymentHistory;
+
+const subscriptionItems: SubscriptionItem[] = [
   {
     id: 'document-coaching',
     name: '서류 AI 코칭 플랜',
@@ -53,7 +90,7 @@ const initialSubscriptions =
         startedAt: null,
       }));
 
-const paymentHistoryItems = [
+const paymentHistoryItems: PaymentHistoryItem[] = [
   {
     id: 1,
     date: '2026.05.27',
@@ -118,12 +155,12 @@ const noticeItems = [
   '결제 및 취소/환불 관련 상세 문의는 고객센터를 통해 접수할 수 있습니다.',
 ];
 
-function parsePaymentDate(value) {
+function parsePaymentDate(value: string): Date {
   const [year, month, day] = value.split('.').map(Number);
   return new Date(year, month - 1, day);
 }
 
-function isWithinPeriod(date, period) {
+function isWithinPeriod(date: string, period: string): boolean {
   if (period === '기간 설정') return true;
 
   const candidate = parsePaymentDate(date);
@@ -146,7 +183,7 @@ function isWithinPeriod(date, period) {
   }
 }
 
-function SubscriptionCard({ subscription, onCancel }) {
+function SubscriptionCard({ subscription, onCancel }: SubscriptionCardProps) {
   return (
     <article className="cw-billing-subscription-card">
       <div className="cw-billing-subscription-card__top">
@@ -201,7 +238,7 @@ function SubscriptionCard({ subscription, onCancel }) {
   );
 }
 
-function RecommendationCard({ subscription }) {
+function RecommendationCard({ subscription }: RecommendationCardProps) {
   return (
     <article className="cw-billing-recommend-card">
       <span>추천 상품</span>
@@ -213,10 +250,10 @@ function RecommendationCard({ subscription }) {
 }
 
 function PaymentHistoryPage() {
-  const [subscriptionState, setSubscriptionState] = useState(initialSubscriptions);
+  const [subscriptionState, setSubscriptionState] = useState<SubscriptionItem[]>(initialSubscriptions);
   const [periodFilter, setPeriodFilter] = useState('최근 6개월');
   const [page, setPage] = useState(1);
-  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState<SubscriptionItem | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
 
   const activeSubscriptions = useMemo(
@@ -328,7 +365,7 @@ function PaymentHistoryPage() {
             <div className="cw-subscription-section__head">
               <div>
                 <h3>최근 결제 내역</h3>
-                <p>기간별 결제 이력을 간단하게 확인하고 현금영수증 발급 화면으로 이동할 수 있어요.</p>
+                <p>기간별 결제 이력을 간단하게 확인할 수 있어요.</p>
               </div>
             </div>
 
@@ -359,7 +396,6 @@ function PaymentHistoryPage() {
                   <span>상품명</span>
                   <span>결제일</span>
                   <span>결제 금액</span>
-                  <span>현금영수증 발급</span>
                 </div>
 
                 {visiblePayments.map((payment) => (
@@ -375,10 +411,6 @@ function PaymentHistoryPage() {
                     <div className="cw-billing-payment-item__cell">
                       <small>결제 금액</small>
                       <strong>{payment.amount}</strong>
-                    </div>
-                    <div className="cw-billing-payment-item__cell is-action">
-                      <small>현금영수증 발급</small>
-                      <button type="button">보기</button>
                     </div>
                   </article>
                 ))}
