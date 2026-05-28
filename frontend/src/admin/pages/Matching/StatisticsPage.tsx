@@ -3,10 +3,10 @@ import '../../styles/admin.css';
 import '../../styles/Statistics.css';
 
 const kpis = [
-  { label: '이번 달 매출',      value: '₩38,500,000',   sub: '전월 대비 +12.6%', color: 'kpi-green',  Icon: TrendingUp },
-  { label: '누적 총 매출',      value: '₩186,500,000',  sub: '서비스 오픈 이후',  color: 'kpi-blue',   Icon: DollarSign },
-  { label: '총 가입자 수',      value: '12,847명',        sub: '서비스 오픈 이후',  color: 'kpi-purple', Icon: Users      },
-  { label: '이번 달 신규 가입', value: '314명',            sub: '전월 대비 +2.3%',  color: 'kpi-yellow', Icon: UserPlus   },
+  { label: '이번 달 매출',      value: '₩3,850만',      sub: '전월 대비 +12.6%', color: 'kpi-green',  Icon: TrendingUp },
+  { label: '누적 총 매출',      value: '₩18,650만',     sub: '서비스 오픈 이후',  color: 'kpi-blue',   Icon: DollarSign },
+  { label: '총 가입자 수',      value: '12,847명',       sub: '서비스 오픈 이후',  color: 'kpi-purple', Icon: Users      },
+  { label: '이번 달 신규 가입', value: '314명',           sub: '전월 대비 +2.3%',  color: 'kpi-yellow', Icon: UserPlus   },
 ];
 
 const monthlyRevenue = [
@@ -60,6 +60,17 @@ const lineGridSvgY = [45_000_000, 30_000_000, 15_000_000, 0].map(
 ); // ≈ [28, 83, 137, 192]
 
 // ── 누적 막대 차트 상수 ─────────────────────────────────────────
+// 만원 단위 축약 포맷 (e.g. 26900000 → "2,690만")
+function toManwon(n: number): string {
+  const abs = Math.abs(n);
+  if (abs >= 100_000_000) {
+    const eok = Math.floor(abs / 100_000_000);
+    const man = Math.round((abs % 100_000_000) / 10_000);
+    return man > 0 ? `${eok}억 ${man.toLocaleString()}만` : `${eok}억`;
+  }
+  return `${Math.round(abs / 10_000).toLocaleString()}만`;
+}
+
 const BAR_MAX      = 320;  // Y축 최대값 (320명)
 const BAR_CHART_H  = 140;  // 막대 최대 픽셀 높이
 
@@ -210,7 +221,7 @@ export default function StatisticsPage() {
                   <div className="statsChannelIcon">{item.abbr}</div>
                   <span className="statsChannelName">{item.label}</span>
                   <span className="statsChannelAmt">
-                    {item.up ? '' : '-'}₩{item.amount.toLocaleString()}
+                    {item.up ? '' : '-'}{toManwon(item.amount)}
                   </span>
                   <span className={`statsGrowthBadge ${item.up ? 'up' : 'down'}`}>
                     {item.up ? '+' : ''}{item.growth}%
