@@ -43,7 +43,6 @@ import ComprehensiveReportPage from '../user/pages/careerDiagnosis/Comprehensive
 import CommunityPage from '../user/pages/community/CommunityPage';
 import PostDetailPage from '../user/pages/community/PostDetailPage';
 import PostCreatePage from '../user/pages/community/PostCreatePage';
-import PostEditPage from '../user/pages/community/PostEditPage';
 import MentorPage from '../user/pages/community/MentorPage';
 
 import PricingPage from '../user/pages/billing/PricingPage';
@@ -140,7 +139,6 @@ function AppRoutes() {
           <Route index element={<CommunityPage />} />
           <Route path="posts/create" element={<PostCreatePage />} />
           <Route path="posts/:postId" element={<PostDetailPage />} />
-          <Route path="posts/:postId/edit" element={<PostEditPage />} />
           <Route path="mentor" element={<MentorPage />} />
         </Route>
 

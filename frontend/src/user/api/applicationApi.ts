@@ -1,8 +1,37 @@
+/// <reference types="vite/client" />
+
 import { apiClient } from '../../utils/apiClient';
+
+export type ApplicationStatus = 'APPLIED' | 'PASSED' | 'FAILED' | 'FINAL_PASSED';
+
+export interface Applicant {
+  id: string;
+  applicantName: string;
+  jobTitle: string;
+  companyName: string;
+  appliedAt: string;
+  status: ApplicationStatus;
+  experience: string;
+  stacks: string[];
+  documentScore: number;
+  interviewScore: number;
+  careerHistoryId: string;
+  aiFeedback: string;
+  pdfUrl: string;
+}
+
+interface ApplicationQuery {
+  keyword?: string;
+  status?: ApplicationStatus | 'ALL';
+}
+
+interface DiagnosisPdfPayload {
+  pdfUrl?: string;
+}
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
-const mockApplicants = [
+const mockApplicants: Applicant[] = [
   {
     id: 'app-001',
     applicantName: '고은별',
@@ -15,7 +44,7 @@ const mockApplicants = [
     documentScore: 84,
     interviewScore: 82,
     careerHistoryId: 'backend-20260522',
-    aiFeedback: 'Spring 기반 API 설계 이해도가 좋고, 프로젝트 성과를 수치로 보완하면 더 설득력 있습니다.',
+    aiFeedback: 'Spring 기반 API 설계 이해도가 좋고 프로젝트 성과를 수치로 보완하면 더 설득력 있습니다.',
     pdfUrl: '',
   },
   {
@@ -50,14 +79,14 @@ const mockApplicants = [
   },
 ];
 
-function mockResponse(data) {
+function mockResponse<T>(data: T): Promise<T> {
   return Promise.resolve(structuredClone(data));
 }
 
 export const applicationApi = {
-  getApplications: (params = {}) => {
+  getApplications: (params: ApplicationQuery = {}): Promise<Applicant[]> => {
     if (!useMockData) {
-      const query = new URLSearchParams(params).toString();
+      const query = new URLSearchParams(params as Record<string, string>).toString();
       return apiClient(`/applications${query ? `?${query}` : ''}`);
     }
 
@@ -75,7 +104,7 @@ export const applicationApi = {
     return mockResponse(filtered);
   },
 
-  getApplicationDetail: (applicationId) => {
+  getApplicationDetail: (applicationId: string): Promise<Applicant | null> => {
     if (!useMockData) {
       return apiClient(`/applications/${applicationId}`);
     }
@@ -83,7 +112,7 @@ export const applicationApi = {
     return mockResponse(mockApplicants.find((applicant) => applicant.id === applicationId) || null);
   },
 
-  updateApplicationStatus: (applicationId, status) => (
+  updateApplicationStatus: (applicationId: string, status: ApplicationStatus) => (
     useMockData
       ? mockResponse({ applicationId, status })
       : apiClient(`/applications/${applicationId}/status`, {
@@ -92,7 +121,7 @@ export const applicationApi = {
         })
   ),
 
-  saveDiagnosisPdf: (applicationId, payload) => (
+  saveDiagnosisPdf: (applicationId: string, payload: DiagnosisPdfPayload) => (
     useMockData
       ? mockResponse({ applicationId, pdfUrl: payload.pdfUrl || 'mock://diagnosis-report.pdf' })
       : apiClient(`/applications/${applicationId}/diagnosis-pdf`, {

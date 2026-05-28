@@ -25,12 +25,30 @@ function getCurrentMembership() {
   return storedMembership.toUpperCase();
 }
 
+function appendTextElement(documentRef, parent, tagName, text, className) {
+  const element = documentRef.createElement(tagName);
+  if (className) element.className = className;
+  element.textContent = text;
+  parent.appendChild(element);
+  return element;
+}
+
+function appendReportRow(documentRef, parent, label, value) {
+  const row = documentRef.createElement('div');
+  const term = documentRef.createElement('dt');
+  const description = documentRef.createElement('dd');
+
+  term.textContent = label;
+  description.textContent = value || '-';
+  row.append(term, description);
+  parent.appendChild(row);
+}
+
 function ComprehensiveReportPage() {
   const navigate = useNavigate();
   const { id: routeRecordId } = useParams();
   const queryRecord = new URLSearchParams(useLocation().search).get('record');
-  const initialRecordId = queryRecord || routeRecordId || '';
-  const [selectedRecord, setSelectedRecord] = useState(initialRecordId);
+  const [selectedRecord, setSelectedRecord] = useState('');
   const [records, setRecords] = useState([]);
   const [detail, setDetail] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -48,19 +66,24 @@ function ComprehensiveReportPage() {
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setError('');
     setMembership(getCurrentMembership());
 
     careerHistoryApi
       .getHistories()
       .then(async (historyRecords) => {
         if (!active) return;
-        const initialRecord = queryRecord || routeRecordId || historyRecords[0]?.id || '';
+
+        const requestedRecord = queryRecord || routeRecordId || '';
+        const requestedExists = historyRecords.some((record) => record.id === requestedRecord);
+        const nextRecordId = requestedExists ? requestedRecord : historyRecords[0]?.id || '';
+
         setRecords(historyRecords);
-        setSelectedRecord(initialRecord);
+        setSelectedRecord(nextRecordId);
 
         const [detailData, previewData] = await Promise.all([
-          initialRecord ? careerHistoryApi.getHistoryDetail(initialRecord) : Promise.resolve(null),
-          reportExportApi.getPreview(initialRecord),
+          nextRecordId ? careerHistoryApi.getHistoryDetail(nextRecordId) : Promise.resolve(null),
+          reportExportApi.getPreview(nextRecordId),
         ]);
 
         if (!active) return;
@@ -92,6 +115,8 @@ function ComprehensiveReportPage() {
         { label: '평균 점수', value: preview?.careerHistoryData?.averageScore ?? '-', note: '취업 준비 기록' },
       ];
 
+  const isPremium = membership === 'PREMIUM';
+
   const changeRecord = async (recordId) => {
     setSelectedRecord(recordId);
     setLoading(true);
@@ -116,8 +141,6 @@ function ComprehensiveReportPage() {
     setOptions((current) => ({ ...current, [key]: !current[key] }));
   };
 
-  const isPremium = membership === 'PREMIUM';
-
   const openPdfFile = async () => {
     if (!isPremium) return;
 
@@ -131,34 +154,40 @@ function ComprehensiveReportPage() {
     const pdfWindow = window.open('', '_blank', 'width=860,height=720');
     if (!pdfWindow) return;
 
-    pdfWindow.document.write(`
-      <html lang="ko">
-        <head>
-          <title>${preview?.fileName || 'career-wave-diagnosis-report.pdf'}</title>
-          <style>
-            body { font-family: Arial, sans-serif; color: #1f2937; padding: 40px; line-height: 1.7; }
-            h1, h2 { color: #1e3a5f; }
-            dl { display: grid; gap: 12px; }
-            div { display: grid; grid-template-columns: 150px 1fr; gap: 16px; }
-            dt { color: #6b7280; font-weight: 700; }
-            dd { margin: 0; font-weight: 700; }
-          </style>
-        </head>
-        <body>
-          <h1>${preview?.reportTitle || 'Career Wave 종합 진단 리포트'}</h1>
-          <dl>
-            <div><dt>지원 직무</dt><dd>${preview?.userProfile?.targetRole || currentRecord?.jobTitle || '-'}</dd></div>
-            <div><dt>서류 점수</dt><dd>${preview?.documentAnalysisData?.documentScore ?? '-'}</dd></div>
-            <div><dt>면접 점수</dt><dd>${preview?.interviewAnalysisData?.interviewScore ?? currentRecord?.score ?? '-'}</dd></div>
-            <div><dt>강점</dt><dd>${preview?.strengths?.join(', ') || '-'}</dd></div>
-            <div><dt>보완점</dt><dd>${preview?.weaknesses?.join(', ') || currentRecord?.weakness || '-'}</dd></div>
-          </dl>
-          <h2>AI 종합 피드백</h2>
-          <p>${detail?.overallFeedback || currentRecord?.summary || '-'}</p>
-        </body>
-      </html>
-    `);
-    pdfWindow.document.close();
+    const { document: pdfDocument } = pdfWindow;
+    pdfDocument.title = preview?.fileName || 'career-wave-diagnosis-report.pdf';
+
+    const style = pdfDocument.createElement('style');
+    style.textContent = [
+      'body { font-family: Arial, sans-serif; color: #1f2937; padding: 40px; line-height: 1.7; }',
+      'h1, h2 { color: #1e3a5f; }',
+      'dl { display: grid; gap: 12px; }',
+      'dl div { display: grid; grid-template-columns: 150px 1fr; gap: 16px; }',
+      'dt { color: #6b7280; font-weight: 700; }',
+      'dd { margin: 0; font-weight: 700; }',
+    ].join('\n');
+    pdfDocument.head.appendChild(style);
+
+    const container = pdfDocument.createElement('main');
+    appendTextElement(pdfDocument, container, 'h1', preview?.reportTitle || 'Career Wave 종합 진단 리포트');
+
+    const definitionList = pdfDocument.createElement('dl');
+    appendReportRow(pdfDocument, definitionList, '지원 직무', preview?.userProfile?.targetRole || currentRecord?.jobTitle);
+    appendReportRow(pdfDocument, definitionList, '서류 점수', String(preview?.documentAnalysisData?.documentScore ?? '-'));
+    appendReportRow(
+      pdfDocument,
+      definitionList,
+      '면접 점수',
+      String(preview?.interviewAnalysisData?.interviewScore ?? currentRecord?.score ?? '-'),
+    );
+    appendReportRow(pdfDocument, definitionList, '강점', preview?.strengths?.join(', '));
+    appendReportRow(pdfDocument, definitionList, '보완점', preview?.weaknesses?.join(', ') || currentRecord?.weakness);
+    container.appendChild(definitionList);
+
+    appendTextElement(pdfDocument, container, 'h2', 'AI 종합 피드백');
+    appendTextElement(pdfDocument, container, 'p', detail?.overallFeedback || currentRecord?.summary || '-');
+
+    pdfDocument.body.replaceChildren(container);
     pdfWindow.focus();
   };
 
@@ -352,7 +381,6 @@ function ComprehensiveReportPage() {
           </div>
         </section>
       )}
-
     </section>
   );
 }
