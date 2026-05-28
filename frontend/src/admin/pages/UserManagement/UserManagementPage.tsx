@@ -332,6 +332,7 @@ export default function UserManagementPage() {
                 <button>{'>'}</button>
               </div>
             </div>
+            </div>
           </section>
         </div>
       )}
@@ -464,6 +465,7 @@ export default function UserManagementPage() {
                 <button className="activePage">1</button>
                 <button>{'>'}</button>
               </div>
+            </div>
             </div>
           </section>
         </div>
