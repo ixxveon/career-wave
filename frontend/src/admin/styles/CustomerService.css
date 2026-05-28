@@ -1,5 +1,12 @@
 /* ── CustomerService page styles ────────────────────────────── */
 
+/* ── KPI 카드 hover 이동 효과 제거 (정보 표시 전용) ─────────── */
+
+.csKpiStatic:hover {
+  transform: none;
+  box-shadow: 0 8px 24px rgba(30, 60, 90, 0.04);
+}
+
 /* ── 탭바 (admin.css의 csTabBar/csTab 공용 사용) ─────────────── */
 
 /* ── 공지사항 카테고리 뱃지 ──────────────────────────────────── */
