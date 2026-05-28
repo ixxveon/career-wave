@@ -9,12 +9,12 @@ const kpis = [
 ];
 
 const monthlyRevenue = [
-  { month: '12월', b2c: 18200000, b2b: 5100000, credit: 1500000, total: 24800000, prev: null      },
-  { month: '1월',  b2c: 20100000, b2b: 5900000, credit: 1500000, total: 27500000, prev: 24800000  },
-  { month: '2월',  b2c: 21500000, b2b: 6100000, credit: 1500000, total: 29100000, prev: 27500000  },
-  { month: '3월',  b2c: 23800000, b2b: 6900000, credit: 1700000, total: 32400000, prev: 29100000  },
-  { month: '4월',  b2c: 25200000, b2b: 7300000, credit: 1700000, total: 34200000, prev: 32400000  },
-  { month: '5월',  b2c: 28600000, b2b: 8100000, credit: 1800000, total: 38500000, prev: 34200000  },
+  { month: '12월', monthly: 16500000, annual:  8300000, total: 24800000, prev: null      },
+  { month: '1월',  monthly: 18600000, annual:  8900000, total: 27500000, prev: 24800000  },
+  { month: '2월',  monthly: 19400000, annual:  9700000, total: 29100000, prev: 27500000  },
+  { month: '3월',  monthly: 21800000, annual: 10600000, total: 32400000, prev: 29100000  },
+  { month: '4월',  monthly: 23200000, annual: 11000000, total: 34200000, prev: 32400000  },
+  { month: '5월',  monthly: 26900000, annual: 11600000, total: 38500000, prev: 34200000  },
 ];
 
 const monthlyGrowth = [
@@ -90,9 +90,8 @@ export default function MatchingPage() {
               <thead>
                 <tr>
                   <th>월</th>
-                  <th>B2C</th>
-                  <th>B2B</th>
-                  <th>크레딧</th>
+                  <th>월정액</th>
+                  <th>연정액</th>
                   <th>합계</th>
                   <th>전월 대비</th>
                 </tr>
@@ -105,9 +104,8 @@ export default function MatchingPage() {
                   return (
                     <tr key={m.month}>
                       <td>{m.month}</td>
-                      <td>₩{Math.round(m.b2c   / 10000).toLocaleString()}만</td>
-                      <td>₩{Math.round(m.b2b   / 10000).toLocaleString()}만</td>
-                      <td>₩{Math.round(m.credit / 10000).toLocaleString()}만</td>
+                      <td>₩{Math.round(m.monthly / 10000).toLocaleString()}만</td>
+                      <td>₩{Math.round(m.annual  / 10000).toLocaleString()}만</td>
                       <td><strong>₩{Math.round(m.total / 10000).toLocaleString()}만</strong></td>
                       <td>
                         {change != null ? (
