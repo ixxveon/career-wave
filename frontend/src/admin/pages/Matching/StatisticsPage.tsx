@@ -43,9 +43,9 @@ const recentActivity = [
   { initials: 'KH', name: '강하늘', status: 'PENDING', plan: '신규 가입',       time: '3시간 전' },
 ];
 
-function buildSvgPath(values: number[], vbW = 1000, vbH = 240, pad = 30) {
+function buildSvgPath(values: number[], vbW = 1000, vbH = 220, pad = 28) {
   const chartH = vbH - pad * 2;
-  const maxVal = Math.max(...values) * 1.08;
+  const maxVal = Math.max(...values) * 1.1;
   const pts: [number, number][] = values.map((v, i) => [
     Math.round((i / (values.length - 1)) * vbW),
     Math.round(pad + chartH - (v / maxVal) * chartH),
@@ -64,7 +64,7 @@ function buildSvgPath(values: number[], vbW = 1000, vbH = 240, pad = 30) {
 }
 
 const MAX_TOTAL = Math.max(...monthlyGrowth.map((m) => m.individual + m.company));
-const CHART_H   = 180;
+const CHART_H   = 140;
 
 export default function StatisticsPage() {
   const { line, area, pts } = buildSvgPath(monthlyRevenue.map((m) => m.total));
@@ -103,36 +103,38 @@ export default function StatisticsPage() {
           <section className="admin-card statsCard">
             <div className="statsCardHead">
               <div>
+                <span className="statsEyebrow">월별 구독 매출 실적</span>
                 <h3>월별 매출 추이</h3>
-                <p>월별 구독 매출 실적</p>
               </div>
               <span className="statsTrendBadge up">▲ +12.6%</span>
             </div>
             <div className="statsLineWrap">
-              <svg viewBox="0 0 1000 240" preserveAspectRatio="none" className="statsLineSvg">
-                <defs>
-                  <linearGradient id="statGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor="#24496f" stopOpacity="0.18" />
-                    <stop offset="100%" stopColor="#24496f" stopOpacity="0"    />
-                  </linearGradient>
-                </defs>
-                <path d={area} fill="url(#statGrad)" />
-                <path d={line} fill="none" stroke="#24496f" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-                {pts.map(([cx, cy], i) => (
-                  <circle key={i} cx={cx} cy={cy}
-                    r={i === peakIdx ? 7 : 5}
-                    fill="#24496f" stroke="white" strokeWidth="2.5"
-                  />
-                ))}
-                {/* Peak 말풍선 */}
-                <rect x={pts[peakIdx][0] - 60} y={pts[peakIdx][1] - 34} width={120} height={24} rx="6" fill="#24496f" />
-                <text x={pts[peakIdx][0]} y={pts[peakIdx][1] - 17}
-                  textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="inherit">
-                  Peak: ₩38,500,000
-                </text>
-              </svg>
-              <div className="statsLineLabels">
-                {monthlyRevenue.map((m) => <span key={m.month}>{m.month}</span>)}
+              <div className="statsLineChartBox">
+                <svg viewBox="0 0 1000 220" preserveAspectRatio="none" className="statsLineSvg">
+                  <defs>
+                    <linearGradient id="statGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%"   stopColor="#24496f" stopOpacity="0.16" />
+                      <stop offset="100%" stopColor="#24496f" stopOpacity="0"    />
+                    </linearGradient>
+                  </defs>
+                  <path d={area} fill="url(#statGrad)" />
+                  <path d={line} fill="none" stroke="#24496f" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  {pts.map(([cx, cy], i) => (
+                    <circle key={i} cx={cx} cy={cy}
+                      r={i === peakIdx ? 6.5 : 4.5}
+                      fill="#24496f" stroke="white" strokeWidth="2.5"
+                    />
+                  ))}
+                  {/* Peak 말풍선 */}
+                  <rect x={pts[peakIdx][0] - 62} y={pts[peakIdx][1] - 36} width={124} height={24} rx="7" fill="#24496f" />
+                  <text x={pts[peakIdx][0]} y={pts[peakIdx][1] - 19}
+                    textAnchor="middle" fill="white" fontSize="12" fontWeight="700" fontFamily="inherit">
+                    Peak: ₩38,500,000
+                  </text>
+                </svg>
+                <div className="statsLineLabels">
+                  {monthlyRevenue.map((m) => <span key={m.month}>{m.month}</span>)}
+                </div>
               </div>
             </div>
           </section>
@@ -140,11 +142,16 @@ export default function StatisticsPage() {
           <section className="admin-card statsCard">
             <div className="statsCardHead">
               <div>
+                <span className="statsEyebrow">이번 달 구독 유형별 성과</span>
                 <h3>구독 유형별 매출 실적</h3>
-                <p>이번 달 구독 유형별 성과</p>
               </div>
             </div>
             <div className="statsChannelList">
+              <div className="statsChannelTableHead">
+                <span>구독 유형</span>
+                <span className="colAmt">매출액</span>
+                <span className="colDelta">증감</span>
+              </div>
               {subscriptionBreakdown.map((item) => (
                 <div className="statsChannelRow" key={item.label}>
                   <div className="statsChannelIcon">{item.abbr}</div>
@@ -167,39 +174,42 @@ export default function StatisticsPage() {
           <section className="admin-card statsCard">
             <div className="statsCardHead">
               <div>
+                <span className="statsEyebrow">개인 vs 기업 구독자 비교</span>
                 <h3>신규 구독자 추이</h3>
-                <p>개인 vs 기업 구독자 비교</p>
               </div>
               <div className="statsLegend">
-                <span><i className="statsLegendDot navy" />기업</span>
-                <span><i className="statsLegendDot teal" />개인</span>
+                <span className="navy">기업</span>
+                <span className="teal">개인</span>
               </div>
             </div>
             <div className="statsStackedWrap">
-              {monthlyGrowth.map((m) => {
-                const total  = m.individual + m.company;
-                const totalH = Math.round((total / MAX_TOTAL) * CHART_H);
-                const compH  = Math.round((m.company / MAX_TOTAL) * CHART_H);
-                const indivH = totalH - compH;
-                return (
-                  <div className="statsStackedCol" key={m.month}>
-                    <div className="statsStackedBars">
-                      <div className="statsBarIndiv" style={{ height: indivH }} />
-                      <div className="statsBarComp"  style={{ height: compH  }} />
+              <div className="statsStackedChart">
+                {monthlyGrowth.map((m) => {
+                  const total  = m.individual + m.company;
+                  const totalH = Math.round((total / MAX_TOTAL) * CHART_H);
+                  const compH  = Math.round((m.company / MAX_TOTAL) * CHART_H);
+                  const indivH = totalH - compH;
+                  return (
+                    <div className="statsStackedCol" key={m.month}>
+                      <div className="statsStackedBars">
+                        <div className="statsBarIndiv" style={{ height: indivH }} />
+                        <div className="statsBarComp"  style={{ height: compH  }} />
+                      </div>
+                      <span>{m.month}</span>
                     </div>
-                    <span>{m.month}</span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </section>
 
           <section className="admin-card statsCard">
             <div className="statsCardHead">
-              <h3>최근 가입 피드</h3>
-              <button className="sectionHead" style={{ background: 'none', border: 'none', color: '#24496f', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                전체보기
-              </button>
+              <div>
+                <span className="statsEyebrow">최근 구독 현황</span>
+                <h3>최근 가입 피드</h3>
+              </div>
+              <button className="statsViewAllBtn">전체보기</button>
             </div>
             <div className="statsFeed">
               {recentActivity.map((item) => (
