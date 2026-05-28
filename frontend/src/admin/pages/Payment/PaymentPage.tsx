@@ -18,7 +18,6 @@ type PayTab = '결제 내역' | '구독 현황' | '정산 리포트';
 
 type PayStatus = 'COMPLETED' | 'REFUND_REQUESTED' | 'REFUNDED' | 'FAILED';
 type SubStatus = 'ACTIVE' | 'RENEWAL_SCHEDULED' | 'CANCEL_SCHEDULED' | 'AT_RISK';
-type SubType   = 'B2C' | 'B2B';
 
 const payStatusLabel: Record<PayStatus, string> = {
   COMPLETED:        '결제 완료',
@@ -63,7 +62,6 @@ interface Payment {
 interface Subscription {
   id: string;
   memberName: string;
-  type: SubType;
   plan: string;
   startDate: string;
   renewDate: string;
@@ -72,25 +70,25 @@ interface Subscription {
 
 // ── Dummy Data ────────────────────────────────────────────────
 const initialPayments: Payment[] = [
-  { id: 'PAY-3001', orderId: 'TOSS-20260501-A1B2C3', memberName: '김민지',        product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000,  status: 'COMPLETED',        totalDays: 30  },
-  { id: 'PAY-3002', orderId: 'TOSS-20260425-D4E5F6', memberName: '이준호',        product: '프리미엄 월정액', paidAt: '2026.04.25', amount: 29000,  status: 'REFUND_REQUESTED', totalDays: 30  },
-  { id: 'PAY-3003', orderId: 'TOSS-20260510-G7H8I9', memberName: '최도윤',        product: '기업 Standard',  paidAt: '2026.05.10', amount: 150000, status: 'COMPLETED',        totalDays: 90  },
-  { id: 'PAY-3004', orderId: 'TOSS-20260518-J1K2L3', memberName: '박서연',        product: '프리미엄 월정액', paidAt: '2026.05.18', amount: 29000,  status: 'FAILED',           totalDays: 30  },
-  { id: 'PAY-3005', orderId: 'TOSS-20260301-M4N5O6', memberName: '홍길동',        product: '프리미엄 연정액', paidAt: '2026.03.01', amount: 290000, status: 'REFUNDED',         totalDays: 365 },
-  { id: 'PAY-3006', orderId: 'TOSS-20260505-P7Q8R9', memberName: '이영희',        product: '프리미엄 월정액', paidAt: '2026.05.05', amount: 29000,  status: 'COMPLETED',        totalDays: 30  },
-  { id: 'PAY-3007', orderId: 'TOSS-20260412-S1T2U3', memberName: '(주)테크스타트', product: '기업 Premium',   paidAt: '2026.04.12', amount: 350000, status: 'COMPLETED',        totalDays: 30  },
-  { id: 'PAY-3008', orderId: 'TOSS-20260501-V4W5X6', memberName: '네오소프트',    product: '기업 Standard',  paidAt: '2026.05.01', amount: 150000, status: 'COMPLETED',        totalDays: 30  },
+  { id: 'PAY-3001', orderId: 'TOSS-20260501-A1B2C3', memberName: '김민지', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        totalDays: 30 },
+  { id: 'PAY-3002', orderId: 'TOSS-20260425-D4E5F6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.04.25', amount: 29000, status: 'REFUND_REQUESTED', totalDays: 30 },
+  { id: 'PAY-3003', orderId: 'TOSS-20260518-J1K2L3', memberName: '박서연', product: '프리미엄 월정액', paidAt: '2026.05.18', amount: 29000, status: 'FAILED',           totalDays: 30 },
+  { id: 'PAY-3004', orderId: 'TOSS-20260301-M4N5O6', memberName: '홍길동', product: '프리미엄 월정액', paidAt: '2026.03.01', amount: 29000, status: 'REFUNDED',         totalDays: 30 },
+  { id: 'PAY-3005', orderId: 'TOSS-20260505-P7Q8R9', memberName: '이영희', product: '프리미엄 월정액', paidAt: '2026.05.05', amount: 29000, status: 'COMPLETED',        totalDays: 30 },
+  { id: 'PAY-3006', orderId: 'TOSS-20260412-S1T2U3', memberName: '정현우', product: '프리미엄 월정액', paidAt: '2026.04.12', amount: 29000, status: 'COMPLETED',        totalDays: 30 },
+  { id: 'PAY-3007', orderId: 'TOSS-20260501-V4W5X6', memberName: '최도윤', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        totalDays: 30 },
+  { id: 'PAY-3008', orderId: 'TOSS-20260503-W7X8Y9', memberName: '강지수', product: '프리미엄 월정액', paidAt: '2026.05.03', amount: 29000, status: 'COMPLETED',        totalDays: 30 },
 ];
 
 const dummySubs: Subscription[] = [
-  { id: 'SUB-001', memberName: '김민지',        type: 'B2C', plan: '프리미엄 월정액', startDate: '2026.05.01', renewDate: '2026.06.01', status: 'ACTIVE'            },
-  { id: 'SUB-002', memberName: '최도윤',        type: 'B2C', plan: '프리미엄 월정액', startDate: '2026.04.10', renewDate: '2026.05.29', status: 'RENEWAL_SCHEDULED' },
-  { id: 'SUB-003', memberName: '이영희',        type: 'B2C', plan: '프리미엄 월정액', startDate: '2026.05.05', renewDate: '2026.06.05', status: 'ACTIVE'            },
-  { id: 'SUB-004', memberName: '정현우',        type: 'B2C', plan: '프리미엄 연정액', startDate: '2026.02.01', renewDate: '2027.02.01', status: 'CANCEL_SCHEDULED'  },
-  { id: 'SUB-005', memberName: '(주)테크스타트', type: 'B2B', plan: 'Premium 5석',   startDate: '2026.04.12', renewDate: '2026.05.29', status: 'RENEWAL_SCHEDULED' },
-  { id: 'SUB-006', memberName: '네오소프트',    type: 'B2B', plan: 'Standard 3석',  startDate: '2026.05.01', renewDate: '2026.06.01', status: 'ACTIVE'            },
-  { id: 'SUB-007', memberName: '이노베이션랩',  type: 'B2B', plan: 'Premium 5석',   startDate: '2026.03.15', renewDate: '2026.05.30', status: 'AT_RISK'           },
-  { id: 'SUB-008', memberName: '디지털파트너스', type: 'B2B', plan: 'Standard 3석', startDate: '2026.04.01', renewDate: '2026.07.01', status: 'ACTIVE'            },
+  { id: 'SUB-001', memberName: '김민지', plan: '프리미엄 월정액', startDate: '2026.05.01', renewDate: '2026.06.01', status: 'ACTIVE'            },
+  { id: 'SUB-002', memberName: '최도윤', plan: '프리미엄 월정액', startDate: '2026.04.10', renewDate: '2026.05.29', status: 'RENEWAL_SCHEDULED' },
+  { id: 'SUB-003', memberName: '이영희', plan: '프리미엄 월정액', startDate: '2026.05.05', renewDate: '2026.06.05', status: 'ACTIVE'            },
+  { id: 'SUB-004', memberName: '정현우', plan: '프리미엄 월정액', startDate: '2026.04.01', renewDate: '2026.05.31', status: 'CANCEL_SCHEDULED'  },
+  { id: 'SUB-005', memberName: '강지수', plan: '프리미엄 월정액', startDate: '2026.05.03', renewDate: '2026.06.03', status: 'ACTIVE'            },
+  { id: 'SUB-006', memberName: '홍길동', plan: '프리미엄 월정액', startDate: '2026.03.01', renewDate: '2026.05.30', status: 'AT_RISK'           },
+  { id: 'SUB-007', memberName: '박서연', plan: '프리미엄 월정액', startDate: '2026.03.18', renewDate: '2026.05.28', status: 'RENEWAL_SCHEDULED' },
+  { id: 'SUB-008', memberName: '이준호', plan: '프리미엄 월정액', startDate: '2026.04.25', renewDate: '2026.05.25', status: 'AT_RISK'           },
 ];
 
 const TODAY = new Date(2026, 4, 22);
@@ -118,7 +116,6 @@ export default function PaymentPage() {
   const [productFilter, setProductFilter] = useState('');
 
   // Tab 2 state
-  const [subTypeFilter,   setSubTypeFilter]   = useState('');
   const [subStatusFilter, setSubStatusFilter] = useState('');
 
   // ── Tab 1 derived ─────────────────────────────────────────────
@@ -149,9 +146,7 @@ export default function PaymentPage() {
 
   // ── Tab 2 derived ─────────────────────────────────────────────
   const filteredSubs = dummySubs.filter(
-    (s) =>
-      (!subTypeFilter   || s.type   === subTypeFilter) &&
-      (!subStatusFilter || s.status === subStatusFilter),
+    (s) => !subStatusFilter || s.status === subStatusFilter,
   );
   const activeCount  = dummySubs.filter((s) => s.status === 'ACTIVE').length;
   const renewCount   = dummySubs.filter((s) => s.status === 'RENEWAL_SCHEDULED').length;
@@ -163,7 +158,7 @@ export default function PaymentPage() {
       <header className="admin-header">
         <div>
           <h2>결제 · 정산</h2>
-          <p>결제 내역, 구독 현황, 정산 리포트를 관리합니다.</p>
+          <p>구독 결제 내역, 구독 현황, 정산 리포트를 관리합니다.</p>
         </div>
       </header>
 
@@ -229,10 +224,7 @@ export default function PaymentPage() {
             />
             <select value={productFilter} onChange={(e) => setProductFilter(e.target.value)}>
               <option value="">상품 전체</option>
-              <option value="월정액">프리미엄 월정액</option>
-              <option value="연정액">프리미엄 연정액</option>
-              <option value="Standard">기업 Standard</option>
-              <option value="Premium">기업 Premium</option>
+              <option value="프리미엄 월정액">프리미엄 월정액</option>
             </select>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">상태 전체</option>
@@ -336,7 +328,7 @@ export default function PaymentPage() {
               <div className="kpiContent">
                 <p>이탈 위험</p>
                 <h3>{atRiskCount}</h3>
-                <span>갱신 위험 회원</span>
+                <span>갱신 미납 위험</span>
               </div>
               <div className="kpiIcon kpi-purple"><AlertTriangle size={24} /></div>
             </div>
@@ -344,11 +336,6 @@ export default function PaymentPage() {
 
           {/* 필터 */}
           <section className="admin-card memberFilter">
-            <select value={subTypeFilter} onChange={(e) => setSubTypeFilter(e.target.value)}>
-              <option value="">유형 전체</option>
-              <option value="B2C">B2C (개인)</option>
-              <option value="B2B">B2B (기업)</option>
-            </select>
             <select value={subStatusFilter} onChange={(e) => setSubStatusFilter(e.target.value)}>
               <option value="">상태 전체</option>
               <option value="ACTIVE">활성</option>
@@ -372,8 +359,7 @@ export default function PaymentPage() {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>회원 / 기업명</th>
-                    <th>유형</th>
+                    <th>회원명</th>
                     <th>구독 플랜</th>
                     <th>시작일</th>
                     <th>다음 갱신일</th>
@@ -385,11 +371,6 @@ export default function PaymentPage() {
                     <tr key={s.id}>
                       <td>{s.id}</td>
                       <td>{s.memberName}</td>
-                      <td>
-                        <span className={`statusBadge ${s.type === 'B2B' ? 'answering' : 'normal'}`}>
-                          {s.type}
-                        </span>
-                      </td>
                       <td>{s.plan}</td>
                       <td>{s.startDate}</td>
                       <td>{s.renewDate}</td>
