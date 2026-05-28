@@ -64,10 +64,15 @@
   transition: background 0.14s, color 0.14s, border-color 0.14s;
 }
 
-.cw-footer__sns-btn:hover {
+.cw-footer__sns-btn:not(:disabled):hover {
   background: #2f6fce;
   border-color: #2f6fce;
   color: #ffffff;
+}
+
+.cw-footer__sns-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* ── 링크 컬럼 묶음 ─────────────────────────────── */

@@ -16,7 +16,6 @@ interface FooterCol {
 interface SnsItem {
   label: string;
   icon: LucideIcon;
-  href: string;
 }
 
 const FOOTER_COLS: FooterCol[] = [
@@ -47,9 +46,9 @@ const FOOTER_COLS: FooterCol[] = [
 ];
 
 const SNS: SnsItem[] = [
-  { label: 'Instagram', icon: Instagram, href: '#' },
-  { label: 'GitHub',    icon: Github,    href: '#' },
-  { label: 'Kakao',     icon: Send,      href: '#' },
+  { label: 'Instagram', icon: Instagram },
+  { label: 'GitHub',    icon: Github    },
+  { label: 'Kakao',     icon: Send      },
 ];
 
 function Footer() {
@@ -69,10 +68,11 @@ function Footer() {
               취업 준비의 모든 단계를 함께합니다.
             </p>
             <div className="cw-footer__sns">
-              {SNS.map(({ label, icon: Icon, href }) => (
-                <a key={label} href={href} aria-label={label} className="cw-footer__sns-btn">
+              {SNS.map(({ label, icon: Icon }) => (
+                // TODO: SNS 채널 개설 후 <a href={url}> 로 교체
+                <button key={label} type="button" aria-label={label} className="cw-footer__sns-btn" disabled>
                   <Icon size={16} />
-                </a>
+                </button>
               ))}
             </div>
           </div>
