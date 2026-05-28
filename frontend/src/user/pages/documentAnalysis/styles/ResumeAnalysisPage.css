@@ -20,6 +20,69 @@
   letter-spacing: 0.12em;
 }
 
+/* ─── 할당량 표시 바 (이력서 + 자소서 페이지 공용) ── */
+.ra-quota-bar {
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft, #f8fafc);
+  border: 1px solid var(--color-border);
+}
+
+.ra-quota-bar__info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ra-quota-bar__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.ra-quota-bar__count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+.ra-quota-bar__count--warn { color: #d97706; }
+.ra-quota-bar__count--full { color: #dc2626; }
+
+.ra-quota-bar__tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  color: #1a1a1a;
+  font-size: 10px;
+  font-weight: 900;
+}
+.ra-quota-bar__tag--warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ra-quota-bar__track {
+  height: 5px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.ra-quota-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
+  transition: width .6s ease;
+}
+.ra-quota-bar__fill--warn { background: linear-gradient(90deg, #f97316, #ea580c); }
+.ra-quota-bar__fill--full { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
 /* ─── 업로드 화면 ─────────────────────────────── */
 .ra-upload-wrap {
   max-width: 600px;
@@ -116,6 +179,18 @@
   cursor: pointer;
 }
 
+/* 회사 + 직무 나란히 */
+.ra-meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+.ra-meta-row .ra-field {
+  margin-bottom: 0;
+}
+
 /* 직무 입력 */
 .ra-field {
   width: 100%;
@@ -124,7 +199,9 @@
 }
 
 .ra-field__label {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   margin-bottom: 8px;
   font-size: 13px;
   font-weight: 700;
