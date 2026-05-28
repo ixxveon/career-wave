@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, ScrollText } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import DocumentResultView from './DocumentResultView';
+import type { DocumentResult } from '../../types/document';
 import './styles/DocumentReportPage.css';
 
 /* ── Mock 데이터 ──────────────────────────────────────────────
    실제 서비스에서는 documentId를 라우트 파라미터나 전역 상태로 받아
    백엔드 GET /documents/{id}/result 로 불러옵니다.
 ────────────────────────────────────────────────────────────── */
-const MOCK_RESUME = {
+const MOCK_RESUME: DocumentResult = {
   documentId: 2,
   evaluation: {
-    totalScore:     82,
+    totalScore:      82,
     jobFitnessScore: 90,
     techStackScore:  80,
     quantifiedScore: 65,
@@ -47,7 +49,7 @@ const MOCK_RESUME = {
   ],
 };
 
-const MOCK_COVER = {
+const MOCK_COVER: DocumentResult = {
   documentId: 1,
   evaluation: {
     totalScore:      78,
@@ -87,16 +89,28 @@ const MOCK_COVER = {
   ],
 };
 
-const TABS = [
-  { key: 'resume', label: '이력서 분석', Icon: FileText,   data: MOCK_RESUME, resetTo: '/documents/resume',       viewLabel: 'RESUME ANALYSIS', subtitle: '이력서_최종본.pdf · 백엔드 개발자' },
+type TabKey = 'resume' | 'cover';
+
+interface Tab {
+  key: TabKey;
+  label: string;
+  Icon: LucideIcon;
+  data: DocumentResult;
+  resetTo: string;
+  viewLabel: string;
+  subtitle: string;
+}
+
+const TABS: Tab[] = [
+  { key: 'resume', label: '이력서 분석',    Icon: FileText,   data: MOCK_RESUME, resetTo: '/documents/resume',       viewLabel: 'RESUME ANALYSIS', subtitle: '이력서_최종본.pdf · 백엔드 개발자' },
   { key: 'cover',  label: '자기소개서 분석', Icon: ScrollText, data: MOCK_COVER,  resetTo: '/documents/cover-letter', viewLabel: 'COVER LETTER AI', subtitle: '카카오 · 백엔드 개발자' },
 ];
 
 export default function DocumentReportPage() {
   const navigate            = useNavigate();
-  const [active, setActive] = useState('resume');
+  const [active, setActive] = useState<TabKey>('resume');
 
-  const tab = TABS.find(t => t.key === active);
+  const tab = TABS.find(t => t.key === active)!;
 
   /* 배너 안에 주입할 탭 슬롯 — 다크 배너 위에서 바로 눈에 띄도록 배치 */
   const typeSelector = (

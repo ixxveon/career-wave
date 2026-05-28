@@ -6,17 +6,18 @@ import {
   MessageSquare, Calendar, Award,
   Lock, Volume2, Gauge, X,
 } from 'lucide-react';
+import type { Report, Metric, Review, ImprovementItem } from '../../types/interview';
 import './styles/InterviewReportPage.css';
 
 /* ── Mock Data ─────────────────────────────────── */
-const REPORT = {
+const REPORT: Report = {
   company:    '토스',
   job:        '백엔드 개발자',
   date:       '2025-05-22',
-  type:       'text',   // 'text' | 'voice' — text 유저는 voiceOnly 지표 null
+  type:       'text',
   totalScore:  88,
   grade:      'A',
-  membership: 'FREE',   // 'FREE' | 'PREMIUM'
+  membership: 'FREE',
 };
 
 /* AI 면접 분석 지표
@@ -26,7 +27,7 @@ const REPORT = {
  * 채점 정책
  *   답변 일치도 / 기술적 깊이: 전체 문항 합산 ÷ 문항 수 (텍스트·음성 무관)
  *   전달력 및 발성 / 표현 유창성: 음성으로 답변한 문항만 합산 ÷ 음성 문항 수 */
-const AI_METRICS = [
+const AI_METRICS: Metric[] = [
   {
     Icon:      MessageSquare,
     emoji:     '',
@@ -51,7 +52,7 @@ const AI_METRICS = [
     Icon:      Volume2,
     emoji:     '',
     label:     '전달력 및 발성',
-    value:     null,   // text 모드 → null (음성 답변 문항만 합산 평균)
+    value:     null,
     unit:      '점',
     color:     '#a78bfa',
     desc:      '목소리 성량(데시벨)과 톤·자신감을 종합 평가한 지표입니다.',
@@ -61,7 +62,7 @@ const AI_METRICS = [
     Icon:      Gauge,
     emoji:     '',
     label:     '표현 유창성',
-    value:     null,   // text 모드 → null (음성 답변 문항만 합산 평균)
+    value:     null,
     unit:      '점',
     color:     '#fb923c',
     desc:      '말하기 속도(WPM)와 지연어(어, 음 등) 빈도를 분석한 지표입니다.',
@@ -69,7 +70,7 @@ const AI_METRICS = [
   },
 ];
 
-const REVIEWS = [
+const REVIEWS: Review[] = [
   {
     q:       '간단한 자기소개를 부탁드립니다.',
     a:       '안녕하세요. 저는 3년차 백엔드 개발자 김지원입니다. Spring Boot와 AWS 기반의 서비스 개발을 주로 담당해왔으며, 최근에는 결제 시스템 고도화 프로젝트에서 TPS 300을 안정적으로 처리하는 경험을 쌓았습니다.',
@@ -113,7 +114,7 @@ const REVIEWS = [
  * 모든 지표가 양호하면 FALLBACK 항목 노출 */
 const IMPROVEMENT_THRESHOLD = 85;
 
-const IMPROVEMENT_POOL = [
+const IMPROVEMENT_POOL: ImprovementItem[] = [
   {
     metricLabel: '답변 일치도',
     title:       '꼬리 질문 대응력 강화',
@@ -144,7 +145,7 @@ const IMPROVEMENT_POOL = [
   },
 ];
 
-const FALLBACK_IMPROVEMENTS = [
+const FALLBACK_IMPROVEMENTS: ImprovementItem[] = [
   {
     title: '압박·심층 질문 도전',
     desc:  '전반적으로 높은 수준을 유지하고 있습니다. 더 어려운 압박 질문이나 예상치 못한 꼬리 질문에 도전해 완성도를 더 높여보세요.',
@@ -159,11 +160,11 @@ const FALLBACK_IMPROVEMENTS = [
   },
 ];
 
-function computeImprovements(metrics) {
+function computeImprovements(metrics: Metric[]): ImprovementItem[] {
   const items = IMPROVEMENT_POOL.filter(def => {
     const metric = metrics.find(m => m.label === def.metricLabel);
     if (!metric) return false;
-    if (metric.value === null || metric.value === -1) return false; // 음성 데이터 없음 → 스킵
+    if (metric.value === null || metric.value === -1) return false;
     return typeof metric.value === 'number' && metric.value < IMPROVEMENT_THRESHOLD;
   });
   return items.length > 0 ? items : FALLBACK_IMPROVEMENTS;
@@ -172,12 +173,16 @@ function computeImprovements(metrics) {
 const IMPROVEMENTS = computeImprovements(AI_METRICS);
 
 /* value가 null 또는 -1인 voiceOnly 지표 → blur 처리 */
-function isNullMetric(m) {
+function isNullMetric(m: Metric): boolean {
   return m.voiceOnly && (m.value === null || m.value === -1);
 }
 
 /* ── PDF v2 안내 모달 ─────────────────────────────── */
-function PdfModal({ onClose }) {
+interface PdfModalProps {
+  onClose: () => void;
+}
+
+function PdfModal({ onClose }: PdfModalProps) {
   return (
     <div className="ir-pdf-overlay" onClick={onClose}>
       <div className="ir-pdf-modal" onClick={e => e.stopPropagation()}>
@@ -198,9 +203,9 @@ function PdfModal({ onClose }) {
 
 /* ── Component ─────────────────────────────────── */
 function InterviewReportPage() {
-  const navigate     = useNavigate();
-  const [openIdx, setOpenIdx]         = useState(null);
-  const [showPdfModal, setShowPdfModal] = useState(false);
+  const navigate                              = useNavigate();
+  const [openIdx, setOpenIdx]                 = useState<number | null>(null);
+  const [showPdfModal, setShowPdfModal]       = useState(false);
 
   return (
     <div className="ir">
@@ -277,7 +282,7 @@ function InterviewReportPage() {
                 {/* 블러 카드 본체 */}
                 <div
                   className={`ir-metric-card${nullState ? ' ir-metric-card--null' : ''}`}
-                  style={{ '--mc': m.color }}
+                  style={{ '--mc': m.color } as React.CSSProperties}
                 >
                   <div
                     className="ir-metric-card__icon"

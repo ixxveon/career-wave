@@ -1,36 +1,45 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './styles/InterviewHomePage.css';
-import { MessageSquare, Video, ChevronRight, Lightbulb, FileText, User, Zap, ClipboardList, X } from 'lucide-react';
+import {
+  MessageSquare, Video, ChevronRight, Lightbulb,
+  FileText, User, Zap, ClipboardList, X,
+} from 'lucide-react';
+import type { PlanLimits, MockUser, HistoryItem } from '../../types/interview';
 
 /* ── 멤버십별 월 이용 한도 ─────────────────────────
-   FREE    : 서류 분석  3회 / 면접 1회
+   FREE    : 서류 분석  1회 / 면접 1회
    PREMIUM : 서류 분석 20회 / 면접 10회
 ──────────────────────────────────────────────── */
-const PLAN_LIMITS = {
+const PLAN_LIMITS: PlanLimits = {
   FREE:    { document: 1,  interview: 1  },
   PREMIUM: { document: 20, interview: 10 },
 };
 
 /* ── Mock 유저 (백엔드 연동 전 임시 데이터) ──────── */
-const MOCK_USER = {
+const MOCK_USER: MockUser = {
   name:          '김지원',
-  membership:    'PREMIUM',   // 'FREE' | 'PREMIUM'
-  documentUsed:  7,           // 이번 달 서류 분석 사용 횟수 (이력서 + 자소서 합산)
-  interviewUsed: 3,           // 이번 달 AI 면접 사용 횟수
+  membership:    'PREMIUM',
+  documentUsed:  7,
+  interviewUsed: 3,
 };
 
-const mockHistory = [
+const mockHistory: HistoryItem[] = [
   { date: '05-22', type: 'video', typeLabel: '비디오 면접', target: '토스 (백엔드)', score: 88 },
   { date: '05-20', type: 'text',  typeLabel: '텍스트 면접', target: '카카오 (백엔드)', score: 75 },
   { date: '05-18', type: 'text',  typeLabel: '텍스트 면접', target: '네이버 (인턴)',   score: 62 },
 ];
 
-function scoreClass(s) {
+function scoreClass(s: number): string {
   return s >= 80 ? 'iv-score--high' : s >= 65 ? 'iv-score--mid' : 'iv-score--low';
 }
 
-function ComingSoonModal({ onClose, onTextStart }) {
+interface ComingSoonModalProps {
+  onClose: () => void;
+  onTextStart: () => void;
+}
+
+function ComingSoonModal({ onClose, onTextStart }: ComingSoonModalProps) {
   return (
     <div className="iv-cs-overlay" onClick={onClose}>
       <div className="iv-cs-modal" onClick={e => e.stopPropagation()}>

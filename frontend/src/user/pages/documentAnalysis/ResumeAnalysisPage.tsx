@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import { documentApi } from '../../api/documentApi';
 import DocumentResultView from './DocumentResultView';
+import type { DocumentResult } from '../../types/document';
 import './styles/ResumeAnalysisPage.css';
 
 /* ── 상수 ──────────────────────────────────────── */
@@ -13,9 +14,9 @@ const ALLOWED_EXT = ['.pdf', '.doc', '.docx'];
 const PLAN_LIMITS = { FREE: { document: 1 }, PREMIUM: { document: 20 } };
 
 /* ── Mock 사용량 (백엔드 연동 전 임시) ─────────── */
-const MOCK_QUOTA = { membership: 'PREMIUM', documentUsed: 7 };
+const MOCK_QUOTA = { membership: 'PREMIUM' as const, documentUsed: 7 };
 
-const MOCK_RESULT = {
+const MOCK_RESULT: DocumentResult = {
   documentId: 2,
   evaluation: {
     totalScore: 82,
@@ -67,20 +68,20 @@ function LoadingOverlay() {
 
 /* ── 메인 컴포넌트 ──────────────────────────────── */
 export default function ResumeAnalysisPage() {
-  const [phase, setPhase]         = useState('upload'); // 'upload' | 'result'
+  const [phase, setPhase]         = useState<'upload' | 'result'>('upload');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiError, setApiError]   = useState(null);
+  const [apiError, setApiError]   = useState<string | null>(null);
   const [dragging, setDragging]   = useState(false);
-  const [file, setFile]           = useState(null);
-  const [fileError, setFileError] = useState(null);
+  const [file, setFile]           = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [company, setCompany]     = useState('');
   const [job, setJob]             = useState('');
-  const [result, setResult]       = useState(null);
-  const inputRef                  = useRef(null);
+  const [result, setResult]       = useState<DocumentResult | null>(null);
+  const inputRef                  = useRef<HTMLInputElement>(null);
 
-  function validateAndSetFile(f) {
+  function validateAndSetFile(f: File | null | undefined) {
     if (!f) return;
-    const ext = '.' + f.name.split('.').pop().toLowerCase();
+    const ext = '.' + f.name.split('.').pop()?.toLowerCase();
     if (!ALLOWED_EXT.includes(ext)) {
       setFileError(`'${f.name}' 파일은 업로드할 수 없습니다. PDF, DOC, DOCX 형식만 허용됩니다.`);
       setFile(null);
@@ -90,13 +91,14 @@ export default function ResumeAnalysisPage() {
     setFile(f);
   }
 
-  function handleDrop(e) {
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setDragging(false);
     validateAndSetFile(e.dataTransfer.files[0]);
   }
 
   async function handleSubmit() {
+    if (!file) return;
     setIsLoading(true);
     setApiError(null);
     try {
@@ -108,7 +110,7 @@ export default function ResumeAnalysisPage() {
         setResult(MOCK_RESULT);
         setPhase('result');
       } else {
-        setApiError(err.message || '분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        setApiError(err instanceof Error ? err.message : '분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       }
     } finally {
       setIsLoading(false);
@@ -187,7 +189,7 @@ export default function ResumeAnalysisPage() {
             type="file"
             accept=".pdf,.doc,.docx"
             style={{ display: 'none' }}
-            onChange={e => validateAndSetFile(e.target.files[0])}
+            onChange={e => validateAndSetFile(e.target.files?.[0])}
           />
 
           {file ? (
