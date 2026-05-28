@@ -23,7 +23,7 @@ const payStatusLabel: Record<PayStatus, string> = {
   COMPLETED:        '결제 완료',
   REFUND_REQUESTED: '환불 요청',
   REFUNDED:         '환불 완료',
-  REFUND_REJECTED:  '환불 거절',
+  REFUND_REJECTED:  '환불 불가',
   FAILED:           '결제 실패',
 };
 
@@ -261,7 +261,7 @@ export default function PaymentPage() {
               <option value="COMPLETED">결제 완료</option>
               <option value="REFUND_REQUESTED">환불 요청</option>
               <option value="REFUNDED">환불 완료</option>
-              <option value="REFUND_REJECTED">환불 거절</option>
+              <option value="REFUND_REJECTED">환불 불가</option>
               <option value="FAILED">결제 실패</option>
             </select>
           </section>
@@ -525,7 +525,7 @@ export default function PaymentPage() {
                   className="tableBtn--danger"
                   onClick={() => processReject(selected.id)}
                 >
-                  환불 거절 처리
+                  환불 불가 처리
                 </button>
               )}
               <button onClick={() => setSelected(null)}>닫기</button>
