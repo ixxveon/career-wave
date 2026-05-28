@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import '../../styles/admin.css';
+import '../../styles/CustomerService.css';
 
 // ── Types ────────────────────────────────────────────────────
 

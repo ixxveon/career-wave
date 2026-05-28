@@ -4,12 +4,25 @@ import { CheckCircle2, Mail, Phone, UserRound, Building2 } from 'lucide-react';
 import RecoverySupportPanel from './RecoverySupportPanel';
 import './AuthPage.css';
 
+interface UserForm {
+  email: string;
+  phone: string;
+  code: string;
+}
+
+interface CompanyForm {
+  managerName: string;
+  businessNumber: string;
+  email: string;
+  code: string;
+}
+
 function FindIdPage() {
   const { memberType } = useParams();
   const isCompany = memberType === 'company';
 
   const [userMethod, setUserMethod] = useState('email');
-  const [userForm, setUserForm] = useState({
+  const [userForm, setUserForm] = useState<UserForm>({
     email: '',
     phone: '',
     code: '',
@@ -20,7 +33,7 @@ function FindIdPage() {
     result: false,
   });
 
-  const [companyForm, setCompanyForm] = useState({
+  const [companyForm, setCompanyForm] = useState<CompanyForm>({
     managerName: '',
     businessNumber: '',
     email: '',
@@ -32,11 +45,11 @@ function FindIdPage() {
     result: false,
   });
 
-  const updateUser = (key, value) => {
+  const updateUser = (key: keyof UserForm, value: string) => {
     setUserForm((current) => ({ ...current, [key]: value }));
   };
 
-  const updateCompany = (key, value) => {
+  const updateCompany = (key: keyof CompanyForm, value: string) => {
     setCompanyForm((current) => ({ ...current, [key]: value }));
   };
 
