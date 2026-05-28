@@ -938,6 +938,30 @@
   min-height: 82px;
 }
 
+.premium-report-panel {
+  border-color: #f5c451;
+  background: #fffaf0;
+}
+
+.premium-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.premium-report-actions .support-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.premium-report-lock {
+  align-self: center;
+  color: #8a6d1d;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 @media (max-width: 900px) {
   .support-hero,
   .record-card,

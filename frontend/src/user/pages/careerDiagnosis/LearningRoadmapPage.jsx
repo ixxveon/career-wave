@@ -38,10 +38,6 @@ function LearningRoadmapPage() {
           <ArrowLeft size={17} />
           취업 준비 기록
         </Link>
-        <Link className="support-button support-button--primary" to="/career-diagnosis/report">
-          <FileText size={16} />
-          진단 리포트 만들기
-        </Link>
       </div>
 
       <header className="support-hero">

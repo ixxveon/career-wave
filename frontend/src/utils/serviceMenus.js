@@ -13,7 +13,7 @@ export const serviceMenus = [
     children: [
       { label: '이력서 분석', href: '/documents/resume' },
       { label: '자기소개서 분석', href: '/documents/cover-letter' },
-      // { label: '서류 분석 리포트', href: '/documents/report' }, // TODO: 백엔드 연동 후 활성화
+      { label: '서류 분석 리포트', href: '/documents/report' },
     ],
   },
   {
@@ -21,7 +21,7 @@ export const serviceMenus = [
     href: '/interview',
     children: [
       { label: '면접 홈', href: '/interview' },
-      { label: 'AI 텍스트 · 음성 면접', href: '/interview/text' },
+      { label: 'AI 텍스트 면접', href: '/interview/text' },
       { label: 'AI 화상 면접', href: '/interview/media', comingSoon: true },
       { label: '면접 리포트', href: '/interview/report' },
     ],
@@ -34,7 +34,6 @@ export const serviceMenus = [
       { label: '입사 지원', href: '/applications/apply' },
       { label: '지원자 관리', href: '/applications/applicants' },
       { label: '취업 준비 기록', href: '/career-diagnosis/history' },
-      { label: '진단 상세', href: '/career-diagnosis/detail/backend-20260522' },
       { label: '학습 로드맵', href: '/career-diagnosis/roadmap' },
       { label: '종합 진단 리포트', href: '/career-diagnosis/report' },
     ],
@@ -47,7 +46,6 @@ export const serviceMenus = [
       { label: '멘토 찾기', href: '/community/mentor' },
     ],
   },
-
   {
     label: '기업서비스',
     href: '/dashboard/company',
