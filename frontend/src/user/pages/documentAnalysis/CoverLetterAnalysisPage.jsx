@@ -38,6 +38,18 @@ const MOCK_RESULT = {
         '"열심히", "성공적"이라는 표현이 너무 추상적입니다. 어떤 성과(수치)를 냈는지 알 수 없습니다.',
       improvedText:
         '카카오의 대규모 트래픽 처리 아키텍처(Kakao Pub/Sub, Krane)를 기술 블로그로 꾸준히 학습해왔습니다. 입사 후 3년 내 핵심 API 서버 개발을 담당하고, 이후 아키텍처 설계까지 성장하는 것을 목표로 합니다.',
+      starAnalysis: {
+        s: { ok: true,  comment: '카카오 기술력과 문화에 매력을 느낀 배경이 제시되어 상황 설명이 존재합니다.' },
+        t: { ok: false, comment: '지원 목적(과제)이 "매력을 느꼈다"는 수준에 머뭅니다. 본인이 해결하고 싶은 문제나 목표를 구체적으로 명시하세요.' },
+        a: { ok: false, comment: '입사 전·후 어떤 구체적인 행동을 취할지 전혀 서술되지 않았습니다. 학습 경험이나 준비 과정을 추가하세요.' },
+        r: { ok: false, comment: '"열심히 노력하겠습니다"는 결과·성과가 아닙니다. 3년 내 달성할 구체적인 커리어 마일스톤을 수치로 제시하세요.' },
+      },
+      quantAnalysis: {
+        numbers:   { ok: false, comment: '수치(%, 횟수, 금액 등)가 전혀 사용되지 않았습니다. 구체적인 숫자가 신뢰도를 높입니다.' },
+        timeframe: { ok: false, comment: '기간·빈도 표현이 없습니다. "매주", "6개월간" 같은 시간 기반 맥락을 추가하세요.' },
+        scale:     { ok: false, comment: '규모·범위 언급이 없습니다. 팀 크기, 사용자 수, 트래픽 규모 등을 제시해보세요.' },
+        impact:    { ok: false, comment: '행동의 결과가 수치로 측정되지 않았습니다. 성과 지표(속도 개선율, 비용 절감액 등)를 명시하세요.' },
+      },
     },
     {
       sectionNumber: 2,
@@ -50,6 +62,18 @@ const MOCK_RESULT = {
         '강점(코드 리뷰)과 결과(팀 분위기)의 인과관계가 불명확합니다. 성과를 수치로 표현하면 신뢰도가 높아집니다.',
       improvedText:
         '코드 리뷰 문화 정착을 주도하여 PR 사이클을 2일 → 6시간으로 단축, 릴리즈 주기 30% 개선에 기여하였습니다.',
+      starAnalysis: {
+        s: { ok: true,  comment: '팀 내 코드 리뷰 상황이 배경으로 설정되어 있어 상황 설명이 적절합니다.' },
+        t: { ok: false, comment: '본인이 맡은 과제(역할)가 "꼼꼼한 리뷰"로만 표현되어 구체적인 목표가 드러나지 않습니다.' },
+        a: { ok: true,  comment: '코드 리뷰라는 구체적인 행동이 언급되었습니다. 어떤 기준으로 리뷰했는지 추가하면 더 좋습니다.' },
+        r: { ok: false, comment: '"팀 분위기를 좋게 만들었다"는 결과가 매우 추상적입니다. PR 사이클 단축, 결함률 감소 등 수치로 표현하세요.' },
+      },
+      quantAnalysis: {
+        numbers:   { ok: false, comment: '성과를 뒷받침하는 수치가 없습니다. "PR 사이클 X% 단축" 같은 정량 표현을 추가하세요.' },
+        timeframe: { ok: false, comment: '언제, 얼마나 오랫동안 코드 리뷰를 주도했는지 기간 정보가 빠져 있습니다.' },
+        scale:     { ok: true,  comment: '팀 내 활동임을 언급하여 기여 범위가 어느 정도 드러납니다.' },
+        impact:    { ok: false, comment: '"팀 분위기 개선"은 측정 불가한 표현입니다. 릴리즈 빈도, 버그율 등 정량 지표로 교체하세요.' },
+      },
     },
   ],
 };
@@ -124,6 +148,17 @@ export default function CoverLetterAnalysisPage() {
     setQuestions([{ q: '', a: '' }]);
   }
 
+  /* AI 수정안을 입력 폼에 자동 적용 후 재분석 */
+  function handleRevise(feedbackDetails) {
+    setQuestions(feedbackDetails.map(item => ({
+      q: item.question,
+      a: item.improvedText,
+    })));
+    setResult(null);
+    setApiError(null);
+    setPhase('input');
+  }
+
   const canSubmit = company.trim() && job.trim() && questions.every(q => q.q.trim() && q.a.trim());
 
   /* ── 결과 화면 ── */
@@ -132,6 +167,7 @@ export default function CoverLetterAnalysisPage() {
       <DocumentResultView
         result={result}
         onReset={handleReset}
+        onRevise={handleRevise}
         label="COVER LETTER AI"
         subtitle={`${company} · ${job}`}
       />

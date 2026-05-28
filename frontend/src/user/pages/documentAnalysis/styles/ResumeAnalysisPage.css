@@ -179,6 +179,18 @@
   cursor: pointer;
 }
 
+/* 회사 + 직무 나란히 */
+.ra-meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+.ra-meta-row .ra-field {
+  margin-bottom: 0;
+}
+
 /* 직무 입력 */
 .ra-field {
   width: 100%;
@@ -187,7 +199,9 @@
 }
 
 .ra-field__label {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   margin-bottom: 8px;
   font-size: 13px;
   font-weight: 700;

@@ -4,7 +4,7 @@ import {
   ChevronDown, ChevronUp, RotateCcw, Home,
   CheckCircle2, AlertCircle, TrendingUp,
   MessageSquare, Calendar, Award,
-  Lock, Volume2, Gauge, Music2, MicOff, X,
+  Lock, Volume2, Gauge, X,
 } from 'lucide-react';
 import './styles/InterviewReportPage.css';
 
@@ -19,49 +19,53 @@ const REPORT = {
   membership: 'FREE',   // 'FREE' | 'PREMIUM'
 };
 
-/* 오디오 분석 지표
- * voiceOnly: true  → 음성 데이터가 없으면 value가 null / -1 → 블러 처리
- * voiceOnly: false → 텍스트 유저도 항상 표시 */
+/* AI 면접 분석 지표
+ * voiceOnly: true  → 음성 데이터 없으면 value null / -1 → 블러 처리
+ * voiceOnly: false → 텍스트·음성 모두 채점, 항상 표시
+ *
+ * 채점 정책
+ *   답변 일치도 / 기술적 깊이: 전체 문항 합산 ÷ 문항 수 (텍스트·음성 무관)
+ *   전달력 및 발성 / 표현 유창성: 음성으로 답변한 문항만 합산 ÷ 음성 문항 수 */
 const AI_METRICS = [
   {
-    Icon:      Volume2,
-    emoji:     '🎙️',
-    label:     '목소리 성량 및 데시벨',
-    value:     null,   // text 모드 → null
-    unit:      'dB',
+    Icon:      MessageSquare,
+    emoji:     '',
+    label:     '답변 일치도',
+    value:     82,
+    unit:      '점',
     color:     '#60a5fa',
-    desc:      '안정적인 크기와 성량으로 답변이 뚜렷하게 전달되었습니다.',
-    voiceOnly: true,
+    desc:      'AI 질문의 의도를 정확히 파악하고 일관된 답변을 이어갔습니다.',
+    voiceOnly: false,
   },
   {
-    Icon:      MicOff,
-    emoji:     '🗣️',
-    label:     '지연어 사용 빈도',
-    value:     null,   // text 모드 → null
-    unit:      '회',
+    Icon:      TrendingUp,
+    emoji:     '',
+    label:     '기술적 깊이',
+    value:     78,
+    unit:      '점',
     color:     '#34d399',
-    desc:      "'어...', '음...' 같은 무의미한 주저함이 적어 깔끔했습니다.",
+    desc:      '실제 프로젝트 경험과 CS 지식을 구체적으로 연결한 답변이 돋보였습니다.',
+    voiceOnly: false,
+  },
+  {
+    Icon:      Volume2,
+    emoji:     '',
+    label:     '전달력 및 발성',
+    value:     null,   // text 모드 → null (음성 답변 문항만 합산 평균)
+    unit:      '점',
+    color:     '#a78bfa',
+    desc:      '목소리 성량(데시벨)과 톤·자신감을 종합 평가한 지표입니다.',
     voiceOnly: true,
   },
   {
     Icon:      Gauge,
-    emoji:     '⏱️',
-    label:     '말하기 속도',
-    value:     138,
-    unit:      'WPM',
-    color:     '#a78bfa',
-    desc:      '적정 속도(120~150 WPM) 범위 내에서 안정적으로 발성했습니다.',
-    voiceOnly: false,
-  },
-  {
-    Icon:      Music2,
-    emoji:     '🎵',
-    label:     '목소리 톤 및 자신감',
-    value:     '안정',
-    unit:      '',
+    emoji:     '',
+    label:     '표현 유창성',
+    value:     null,   // text 모드 → null (음성 답변 문항만 합산 평균)
+    unit:      '점',
     color:     '#fb923c',
-    desc:      '면접관에게 신뢰감을 주는 차분하고 활력 있는 톤이 유지되었습니다.',
-    voiceOnly: false,
+    desc:      '말하기 속도(WPM)와 지연어(어, 음 등) 빈도를 분석한 지표입니다.',
+    voiceOnly: true,
   },
 ];
 
@@ -103,11 +107,69 @@ const REVIEWS = [
   },
 ];
 
-/* 영상 전용 "자세 안정성 향상" 항목 제거 */
-const IMPROVEMENTS = [
-  { title: 'STAR 기법 심화',   desc: '과제(T)와 결과(R)에 수치를 반드시 포함하는 연습을 해보세요.',   cta: '관련 질문 연습하기', to: '/interview/text' },
-  { title: '강점 사례 구체화', desc: '강점을 말할 때 측정 가능한 성과(%, 시간)로 뒷받침하세요.',     cta: '강점 질문 연습하기', to: '/interview/text' },
+/* ── 개선 추천 액션 — 지표 점수 기반 동적 생성 ─────────
+ * 각 AI 지표가 THRESHOLD 미만이면 해당 개선 항목 추천
+ * voiceOnly 지표는 value가 null이면 데이터 없음 → 스킵
+ * 모든 지표가 양호하면 FALLBACK 항목 노출 */
+const IMPROVEMENT_THRESHOLD = 85;
+
+const IMPROVEMENT_POOL = [
+  {
+    metricLabel: '답변 일치도',
+    title:       '꼬리 질문 대응력 강화',
+    desc:        'AI 질문의 의도를 빠르게 파악하고 핵심만 간결하게 답하는 연습을 해보세요. 동문서답 없이 질문에 정확히 응답하는 훈련이 일치도 점수를 끌어올립니다.',
+    cta:         '질문 의도 파악 연습',
+    to:          '/interview/text',
+  },
+  {
+    metricLabel: '기술적 깊이',
+    title:       '기술 면접 심화 연습',
+    desc:        '프로젝트 경험을 CS 개념과 직접 연결하는 답변을 만들어보세요. "왜 그 기술을 선택했는가"에 대한 근거와 트레이드오프까지 설명할 수 있으면 기술 깊이가 크게 올라갑니다.',
+    cta:         '기술 심화 질문 연습',
+    to:          '/interview/text',
+  },
+  {
+    metricLabel: '전달력 및 발성',
+    title:       '발성·자신감 향상',
+    desc:        '목소리 크기와 톤을 일정하게 유지하는 발성 연습으로 면접관에게 신뢰감을 높여보세요. 답변 시작 첫 문장을 또렷하게 내뱉는 것만으로도 인상이 달라집니다.',
+    cta:         '음성 면접 다시 연습하기',
+    to:          '/interview/text',
+  },
+  {
+    metricLabel: '표현 유창성',
+    title:       '지연어 제거 & 속도 교정',
+    desc:        "'어...', '음...' 같은 지연어를 의식적으로 줄이고, 적정 속도(120~150 WPM)로 말하는 연습을 꾸준히 해보세요. 유창성이 높아질수록 전문성 인상이 강해집니다.",
+    cta:         '음성 면접 다시 연습하기',
+    to:          '/interview/text',
+  },
 ];
+
+const FALLBACK_IMPROVEMENTS = [
+  {
+    title: '압박·심층 질문 도전',
+    desc:  '전반적으로 높은 수준을 유지하고 있습니다. 더 어려운 압박 질문이나 예상치 못한 꼬리 질문에 도전해 완성도를 더 높여보세요.',
+    cta:   '다시 면접 연습하기',
+    to:    '/interview/text',
+  },
+  {
+    title: '다른 직무로 연습',
+    desc:  '현재 직무 외 다양한 포지션 면접을 경험하며 유연한 답변 능력을 키워보세요. 시야를 넓힐수록 본 직무 면접에서도 더 풍부한 답변이 가능합니다.',
+    cta:   '새 면접 시작하기',
+    to:    '/interview/text',
+  },
+];
+
+function computeImprovements(metrics) {
+  const items = IMPROVEMENT_POOL.filter(def => {
+    const metric = metrics.find(m => m.label === def.metricLabel);
+    if (!metric) return false;
+    if (metric.value === null || metric.value === -1) return false; // 음성 데이터 없음 → 스킵
+    return typeof metric.value === 'number' && metric.value < IMPROVEMENT_THRESHOLD;
+  });
+  return items.length > 0 ? items : FALLBACK_IMPROVEMENTS;
+}
+
+const IMPROVEMENTS = computeImprovements(AI_METRICS);
 
 /* value가 null 또는 -1인 voiceOnly 지표 → blur 처리 */
 function isNullMetric(m) {
@@ -120,7 +182,7 @@ function PdfModal({ onClose }) {
     <div className="ir-pdf-overlay" onClick={onClose}>
       <div className="ir-pdf-modal" onClick={e => e.stopPropagation()}>
         <button className="ir-pdf-modal__close" onClick={onClose}><X size={18} /></button>
-        <div className="ir-pdf-modal__icon">📄</div>
+        <div className="ir-pdf-modal__icon">PDF</div>
         <div className="ir-pdf-modal__badge">v2 COMING SOON</div>
         <h3 className="ir-pdf-modal__title">PDF 리포트 다운로드</h3>
         <p className="ir-pdf-modal__desc">
@@ -230,7 +292,7 @@ function InterviewReportPage() {
                         <span className="ir-metric-card__unit">{m.unit}</span>
                       )}
                     </div>
-                    <div className="ir-metric-card__label">{m.emoji} {m.label}</div>
+                    <div className="ir-metric-card__label">{m.label}</div>
                     {!nullState && typeof m.value === 'number' && (
                       <div className="ir-metric-card__bar-track">
                         <div
@@ -249,7 +311,7 @@ function InterviewReportPage() {
                 {/* 마스크 오버레이 — 블러 카드의 형제 노드이므로 filter 영향 받지 않음 */}
                 {nullState && (
                   <div className="ir-metric-card__mask">
-                    <span>⚠️ 음성 면접 시에만<br />제공되는 지표입니다.</span>
+                    <span>음성 면접 시에만<br />제공되는 지표입니다.</span>
                   </div>
                 )}
               </div>
