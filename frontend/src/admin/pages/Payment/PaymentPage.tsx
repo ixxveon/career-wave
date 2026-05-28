@@ -16,8 +16,19 @@ import '../../styles/Payment.css';
 // ── Types (ERD-aligned) ───────────────────────────────────────
 type PayTab = '결제 내역' | '구독 현황' | '정산 리포트';
 
-type PayStatus = 'COMPLETED' | 'REFUND_REQUESTED' | 'REFUNDED' | 'REFUND_REJECTED' | 'FAILED';
-type SubStatus = 'ACTIVE' | 'RENEWAL_SCHEDULED' | 'CANCEL_SCHEDULED' | 'AT_RISK';
+type PayStatus  = 'COMPLETED' | 'REFUND_REQUESTED' | 'REFUNDED' | 'REFUND_REJECTED' | 'FAILED';
+type PaymentType = 'MANUAL' | 'AUTO_RENEWAL';
+type SubStatus  = 'ACTIVE' | 'RENEWAL_SCHEDULED' | 'CANCEL_SCHEDULED' | 'AT_RISK';
+
+const paymentTypeLabel: Record<PaymentType, string> = {
+  MANUAL:       '직접 결제',
+  AUTO_RENEWAL: '자동 갱신',
+};
+
+const paymentTypeCls: Record<PaymentType, string> = {
+  MANUAL:       'payType--manual',
+  AUTO_RENEWAL: 'payType--renewal',
+};
 
 const payStatusLabel: Record<PayStatus, string> = {
   COMPLETED:        '결제 완료',
@@ -63,6 +74,7 @@ interface Payment {
   paidAt: string;
   amount: number;
   status: PayStatus;
+  paymentType: PaymentType;
   aiUsage: AiUsage;
 }
 
@@ -97,19 +109,21 @@ interface Subscription {
 
 // ── Dummy Data ────────────────────────────────────────────────
 const initialPayments: Payment[] = [
-  // 결제 완료
-  { id: 'PAY-3001', orderId: 'TOSS-20260501-A1B2C3', memberName: '김민지', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        aiUsage: { resumePaidCount: 3, interviewPaidCount: 1 } },
-  { id: 'PAY-3005', orderId: 'TOSS-20260505-P7Q8R9', memberName: '이영희', product: '프리미엄 월정액', paidAt: '2026.05.05', amount: 29000, status: 'COMPLETED',        aiUsage: { resumePaidCount: 1, interviewPaidCount: 2 } },
-  { id: 'PAY-3006', orderId: 'TOSS-20260412-S1T2U3', memberName: '정현우', product: '프리미엄 월정액', paidAt: '2026.04.12', amount: 29000, status: 'COMPLETED',        aiUsage: { resumePaidCount: 5, interviewPaidCount: 0 } },
-  { id: 'PAY-3007', orderId: 'TOSS-20260501-V4W5X6', memberName: '최도윤', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        aiUsage: { resumePaidCount: 2, interviewPaidCount: 3 } },
-  { id: 'PAY-3008', orderId: 'TOSS-20260503-W7X8Y9', memberName: '강지수', product: '프리미엄 월정액', paidAt: '2026.05.03', amount: 29000, status: 'COMPLETED',        aiUsage: { resumePaidCount: 0, interviewPaidCount: 1 } },
-  // 환불 요청 — 환불 가능 (7일 이내 + AI 미이용)
-  { id: 'PAY-3002', orderId: 'TOSS-20260525-D4E5F6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.05.25', amount: 29000, status: 'REFUND_REQUESTED', aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
-  // 환불 요청 — 환불 불가 (7일 이내이지만 AI 이용 이력 있음)
-  { id: 'PAY-3009', orderId: 'TOSS-20260522-Z9Y8X7', memberName: '오민서', product: '프리미엄 월정액', paidAt: '2026.05.22', amount: 29000, status: 'REFUND_REQUESTED', aiUsage: { resumePaidCount: 2, interviewPaidCount: 0 } },
-  // 결제 실패 / 환불 완료
-  { id: 'PAY-3003', orderId: 'TOSS-20260518-J1K2L3', memberName: '박서연', product: '프리미엄 월정액', paidAt: '2026.05.18', amount: 29000, status: 'FAILED',           aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
-  { id: 'PAY-3004', orderId: 'TOSS-20260301-M4N5O6', memberName: '홍길동', product: '프리미엄 월정액', paidAt: '2026.03.01', amount: 29000, status: 'REFUNDED',         aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
+  // 직접 결제 — 결제 완료
+  { id: 'PAY-3001', orderId: 'TOSS-20260501-A1B2C3', memberName: '김민지', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 3, interviewPaidCount: 1 } },
+  { id: 'PAY-3005', orderId: 'TOSS-20260505-P7Q8R9', memberName: '이영희', product: '프리미엄 월정액', paidAt: '2026.05.05', amount: 29000, status: 'COMPLETED',        paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 1, interviewPaidCount: 2 } },
+  { id: 'PAY-3006', orderId: 'TOSS-20260412-S1T2U3', memberName: '정현우', product: '프리미엄 월정액', paidAt: '2026.04.12', amount: 29000, status: 'COMPLETED',        paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 5, interviewPaidCount: 0 } },
+  { id: 'PAY-3007', orderId: 'TOSS-20260501-V4W5X6', memberName: '최도윤', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 2, interviewPaidCount: 3 } },
+  { id: 'PAY-3008', orderId: 'TOSS-20260503-W7X8Y9', memberName: '강지수', product: '프리미엄 월정액', paidAt: '2026.05.03', amount: 29000, status: 'COMPLETED',        paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 1 } },
+  // 직접 결제 — 환불 요청 (가능 / 불가)
+  { id: 'PAY-3002', orderId: 'TOSS-20260525-D4E5F6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.05.25', amount: 29000, status: 'REFUND_REQUESTED', paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
+  { id: 'PAY-3009', orderId: 'TOSS-20260522-Z9Y8X7', memberName: '오민서', product: '프리미엄 월정액', paidAt: '2026.05.22', amount: 29000, status: 'REFUND_REQUESTED', paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 2, interviewPaidCount: 0 } },
+  // 직접 결제 — 실패 / 환불 완료
+  { id: 'PAY-3003', orderId: 'TOSS-20260518-J1K2L3', memberName: '박서연', product: '프리미엄 월정액', paidAt: '2026.05.18', amount: 29000, status: 'FAILED',           paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
+  { id: 'PAY-3004', orderId: 'TOSS-20260301-M4N5O6', memberName: '오민서', product: '프리미엄 월정액', paidAt: '2026.03.01', amount: 29000, status: 'REFUNDED',         paymentType: 'MANUAL',       aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
+  // 자동 갱신 실패 → 구독 현황 이탈 위험(AT_RISK) 근거
+  { id: 'PAY-3010', orderId: 'TOSS-20260530-H1D2G3', memberName: '홍길동', product: '프리미엄 월정액', paidAt: '2026.05.30', amount: 29000, status: 'FAILED',           paymentType: 'AUTO_RENEWAL', aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
+  { id: 'PAY-3011', orderId: 'TOSS-20260525-K4L5M6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.05.25', amount: 29000, status: 'FAILED',           paymentType: 'AUTO_RENEWAL', aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
 ];
 
 const dummySubs: Subscription[] = [
@@ -283,6 +297,7 @@ export default function PaymentPage() {
                     <th>Toss 주문번호</th>
                     <th>회원명</th>
                     <th>상품명</th>
+                    <th>유형</th>
                     <th>결제일</th>
                     <th>금액</th>
                     <th>상태</th>
@@ -296,6 +311,11 @@ export default function PaymentPage() {
                       <td className="payOrderId">{p.orderId}</td>
                       <td>{p.memberName}</td>
                       <td>{p.product}</td>
+                      <td>
+                        <span className={`payTypeBadge ${paymentTypeCls[p.paymentType]}`}>
+                          {paymentTypeLabel[p.paymentType]}
+                        </span>
+                      </td>
                       <td>{p.paidAt}</td>
                       <td>₩{p.amount.toLocaleString()}</td>
                       <td>
@@ -359,7 +379,7 @@ export default function PaymentPage() {
               <div className="kpiContent">
                 <p>이탈 위험</p>
                 <h3>{atRiskCount}</h3>
-                <span>갱신 미납 위험</span>
+                <span>자동 갱신 결제 실패</span>
               </div>
               <div className="kpiIcon kpi-purple"><AlertTriangle size={24} /></div>
             </div>
@@ -464,6 +484,12 @@ export default function PaymentPage() {
                 <div><span>상품명</span><strong>{selected.product}</strong></div>
                 <div><span>결제일</span><strong>{selected.paidAt}</strong></div>
                 <div><span>결제 금액</span><strong>₩{selected.amount.toLocaleString()}</strong></div>
+                <div>
+                  <span>결제 유형</span>
+                  <span className={`payTypeBadge ${paymentTypeCls[selected.paymentType]}`}>
+                    {paymentTypeLabel[selected.paymentType]}
+                  </span>
+                </div>
                 <div>
                   <span>현재 상태</span>
                   <span className={`statusBadge ${payStatusCls[selected.status]}`}>
