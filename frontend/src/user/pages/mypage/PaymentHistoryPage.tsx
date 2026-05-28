@@ -3,17 +3,27 @@ import { Link } from 'react-router-dom';
 import { CalendarClock, ChevronLeft, ChevronRight, Info, Sparkles } from 'lucide-react';
 import './MyPage.css';
 
-const initialSubscriptions = [
+// Mock view switches
+// - subscriptionMockMode
+//   - 'empty': 이용중인 구독 상품이 없는 화면
+//   - 'filled': 구독중인 상품 카드와 추천 상품 카드가 함께 보이는 화면
+// - paymentHistoryMockMode
+//   - 'empty': 신규 사용자처럼 최근 결제 내역이 없는 화면
+//   - 'filled': 최근 결제 내역 리스트가 보이는 화면
+const subscriptionMockMode = 'empty';
+const paymentHistoryMockMode = 'empty';
+
+const subscriptionItems = [
   {
     id: 'document-coaching',
     name: '서류 AI 코칭 플랜',
-    isActive: false,
+    isActive: true,
     autoBilling: false,
     cancelScheduled: false,
-    nextBillingDate: null,
+    nextBillingDate: '2026.06.27',
     billingCycle: '매월 정기 결제',
     monthlyPrice: '₩29,000',
-    startedAt: null,
+    startedAt: '2026.05.27',
     description: '자기소개서와 이력서를 더 빠르게 다듬고 싶은 분께 추천하는 서류 코칭 구독 상품이에요.',
     href: '/mypage/subscription',
   },
@@ -31,11 +41,17 @@ const initialSubscriptions = [
     href: '/mypage/subscription',
   },
 ];
-
-// Mock view switch
-// - 'empty': 신규 사용자처럼 최근 결제 내역이 없는 화면
-// - 'filled': 최근 결제 내역이 있는 화면
-const paymentHistoryMockMode = 'filled';
+const initialSubscriptions =
+  subscriptionMockMode === 'filled'
+    ? subscriptionItems
+    : subscriptionItems.map((subscription) => ({
+        ...subscription,
+        isActive: false,
+        autoBilling: false,
+        cancelScheduled: false,
+        nextBillingDate: null,
+        startedAt: null,
+      }));
 
 const paymentHistoryItems = [
   {
