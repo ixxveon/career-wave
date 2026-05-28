@@ -233,7 +233,7 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
     }
 
     const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    if (!SR) { setInputMode('text'); return; }
+    if (!SR) { setInputMode('text'); startCountdown(); return; }
 
     const rec = new SR();
     rec.lang           = 'ko-KR';
