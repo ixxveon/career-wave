@@ -3,10 +3,10 @@ import '../../styles/admin.css';
 import '../../styles/Statistics.css';
 
 const kpis = [
-  { label: '이번 달 매출',      value: '₩3,850만',      sub: '전월 대비 +12.6%', color: 'kpi-green',  Icon: TrendingUp },
-  { label: '누적 총 매출',      value: '₩18,650만',     sub: '서비스 오픈 이후',  color: 'kpi-blue',   Icon: DollarSign },
-  { label: '총 가입자 수',      value: '12,847명',       sub: '서비스 오픈 이후',  color: 'kpi-purple', Icon: Users      },
-  { label: '이번 달 신규 가입', value: '314명',           sub: '전월 대비 +2.3%',  color: 'kpi-yellow', Icon: UserPlus   },
+  { label: '이번 달 매출',      value: '₩38.5M',  sub: '전월 대비 +12.6%', color: 'kpi-green',  Icon: TrendingUp },
+  { label: '누적 총 매출',      value: '₩186.5M', sub: '서비스 오픈 이후',  color: 'kpi-blue',   Icon: DollarSign },
+  { label: '총 가입자 수',      value: '12,847명', sub: '서비스 오픈 이후',  color: 'kpi-purple', Icon: Users      },
+  { label: '이번 달 신규 가입', value: '314명',    sub: '전월 대비 +2.3%',  color: 'kpi-yellow', Icon: UserPlus   },
 ];
 
 const monthlyRevenue = [
@@ -20,7 +20,6 @@ const monthlyRevenue = [
 
 const subscriptionBreakdown = [
   { abbr: '월', label: '프리미엄 월정액', amount: 26900000, growth: 15.9, up: true  },
-  { abbr: '연', label: '프리미엄 연정액', amount: 11600000, growth:  5.5, up: true  },
   { abbr: '전', label: '신규 가입 전환',  amount:  3480000, growth: 22.1, up: true  },
   { abbr: '갱', label: '갱신 결제',       amount: 23420000, growth: 11.3, up: true  },
   { abbr: '환', label: '환불 차감',       amount:   580000, growth: -8.2, up: false },
@@ -60,15 +59,13 @@ const lineGridSvgY = [45_000_000, 30_000_000, 15_000_000, 0].map(
 ); // ≈ [28, 83, 137, 192]
 
 // ── 누적 막대 차트 상수 ─────────────────────────────────────────
-// 만원 단위 축약 포맷 (e.g. 26900000 → "2,690만")
-function toManwon(n: number): string {
-  const abs = Math.abs(n);
-  if (abs >= 100_000_000) {
-    const eok = Math.floor(abs / 100_000_000);
-    const man = Math.round((abs % 100_000_000) / 10_000);
-    return man > 0 ? `${eok}억 ${man.toLocaleString()}만` : `${eok}억`;
-  }
-  return `${Math.round(abs / 10_000).toLocaleString()}만`;
+// M 단위 축약 포맷 (e.g. 26900000 → "₩26.9M")
+function toM(n: number): string {
+  const sign = n < 0 ? '-' : '';
+  const m    = Math.abs(n) / 1_000_000;
+  const val  = Math.round(m * 10) / 10;
+  const str  = val % 1 === 0 ? String(val) : val.toFixed(1);
+  return `${sign}₩${str}M`;
 }
 
 const BAR_MAX      = 320;  // Y축 최대값 (320명)
@@ -191,7 +188,7 @@ export default function StatisticsPage() {
                     <rect x={tooltipX} y={pts[peakIdx][1] - 36} width={TOOLTIP_W} height={24} rx="7" fill="#24496f" />
                     <text x={tooltipX + TOOLTIP_W / 2} y={pts[peakIdx][1] - 19}
                       textAnchor="middle" fill="white" fontSize="12" fontWeight="700" fontFamily="inherit">
-                      Peak: ₩38,500,000
+                      Peak: {toM(Math.max(...monthlyRevenue.map(m => m.total)))}
                     </text>
                   </svg>
 
@@ -221,7 +218,7 @@ export default function StatisticsPage() {
                   <div className="statsChannelIcon">{item.abbr}</div>
                   <span className="statsChannelName">{item.label}</span>
                   <span className="statsChannelAmt">
-                    {item.up ? '' : '-'}{toManwon(item.amount)}
+                    {toM(item.up ? item.amount : -item.amount)}
                   </span>
                   <span className={`statsGrowthBadge ${item.up ? 'up' : 'down'}`}>
                     {item.up ? '+' : ''}{item.growth}%
