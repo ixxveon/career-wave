@@ -43,12 +43,32 @@ const recentActivity = [
   { initials: 'KH', name: '강하늘', status: 'PENDING', plan: '신규 가입',       time: '3시간 전' },
 ];
 
-function buildSvgPath(values: number[], vbW = 1000, vbH = 220, pad = 28) {
-  const chartH = vbH - pad * 2;
-  const maxVal = Math.max(...values) * 1.1;
+// ── 꺾은선 차트 상수 ────────────────────────────────────────────
+// Y축 max를 4500만으로 고정해 gridline이 레이블과 정확히 일치
+const LINE_MAX_VAL = 45_000_000;
+const LINE_VBH = 220;
+const LINE_PAD = 28;
+const LINE_VBW = 1000;
+const LINE_CHART_H_SVG = LINE_VBH - LINE_PAD * 2; // 164
+
+// Y축 레이블 (위→아래 = 높은값→낮은값)
+const lineYLabels = ['₩4,500만', '₩3,000만', '₩1,500만', '₩0'];
+// 위 레이블에 대응하는 SVG 내부 Y 좌표 (gridline 위치)
+const lineGridSvgY = [45_000_000, 30_000_000, 15_000_000, 0].map(
+  (v) => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / LINE_MAX_VAL))
+); // ≈ [28, 83, 137, 192]
+
+// ── 누적 막대 차트 상수 ─────────────────────────────────────────
+const BAR_MAX      = 320;  // Y축 최대값 (320명)
+const BAR_CHART_H  = 140;  // 막대 최대 픽셀 높이
+
+// Y축 레이블 (위→아래): 320, 240, 160, 80, 0 — 35px 간격으로 정렬
+const barYLabels = ['320명', '240명', '160명', '80명', '0'];
+
+function buildSvgPath(values: number[]) {
   const pts: [number, number][] = values.map((v, i) => [
-    Math.round((i / (values.length - 1)) * vbW),
-    Math.round(pad + chartH - (v / maxVal) * chartH),
+    Math.round((i / (values.length - 1)) * LINE_VBW),
+    Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / LINE_MAX_VAL)),
   ]);
 
   let line = `M${pts[0][0]},${pts[0][1]}`;
@@ -59,12 +79,9 @@ function buildSvgPath(values: number[], vbW = 1000, vbH = 220, pad = 28) {
     line += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;
   }
 
-  const area = `${line} L${pts[pts.length - 1][0]},${vbH} L0,${vbH} Z`;
+  const area = `${line} L${pts[pts.length - 1][0]},${LINE_VBH} L0,${LINE_VBH} Z`;
   return { line, area, pts };
 }
-
-const MAX_TOTAL = Math.max(...monthlyGrowth.map((m) => m.individual + m.company));
-const CHART_H   = 140;
 
 export default function StatisticsPage() {
   const { line, area, pts } = buildSvgPath(monthlyRevenue.map((m) => m.total));
@@ -108,32 +125,61 @@ export default function StatisticsPage() {
               </div>
               <span className="statsTrendBadge up">▲ +12.6%</span>
             </div>
+
             <div className="statsLineWrap">
-              <div className="statsLineChartBox">
-                <svg viewBox="0 0 1000 220" preserveAspectRatio="none" className="statsLineSvg">
-                  <defs>
-                    <linearGradient id="statGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%"   stopColor="#24496f" stopOpacity="0.16" />
-                      <stop offset="100%" stopColor="#24496f" stopOpacity="0"    />
-                    </linearGradient>
-                  </defs>
-                  <path d={area} fill="url(#statGrad)" />
-                  <path d={line} fill="none" stroke="#24496f" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  {pts.map(([cx, cy], i) => (
-                    <circle key={i} cx={cx} cy={cy}
-                      r={i === peakIdx ? 6.5 : 4.5}
-                      fill="#24496f" stroke="white" strokeWidth="2.5"
-                    />
-                  ))}
-                  {/* Peak 말풍선 */}
-                  <rect x={pts[peakIdx][0] - 62} y={pts[peakIdx][1] - 36} width={124} height={24} rx="7" fill="#24496f" />
-                  <text x={pts[peakIdx][0]} y={pts[peakIdx][1] - 19}
-                    textAnchor="middle" fill="white" fontSize="12" fontWeight="700" fontFamily="inherit">
-                    Peak: ₩38,500,000
-                  </text>
-                </svg>
-                <div className="statsLineLabels">
-                  {monthlyRevenue.map((m) => <span key={m.month}>{m.month}</span>)}
+              {/* Y축 + 차트 영역 */}
+              <div className="statsChartWithAxis">
+                {/* Y축 레이블 */}
+                <div className="statsLineYAxis">
+                  {lineYLabels.map((lbl) => <span key={lbl}>{lbl}</span>)}
+                </div>
+
+                {/* 차트 박스 */}
+                <div className="statsLineChartBox">
+                  <svg
+                    viewBox={`0 0 ${LINE_VBW} ${LINE_VBH}`}
+                    preserveAspectRatio="none"
+                    className="statsLineSvg"
+                  >
+                    <defs>
+                      <linearGradient id="statGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stopColor="#24496f" stopOpacity="0.16" />
+                        <stop offset="100%" stopColor="#24496f" stopOpacity="0"    />
+                      </linearGradient>
+                    </defs>
+
+                    {/* 수평 gridlines — SVG 좌표 내에서 정확히 레이블 값과 일치 */}
+                    {lineGridSvgY.map((y, i) => (
+                      <line
+                        key={y}
+                        x1="0" y1={y} x2={LINE_VBW} y2={y}
+                        stroke={i === lineGridSvgY.length - 1 ? '#c8d8ea' : '#dde8f2'}
+                        strokeWidth={i === lineGridSvgY.length - 1 ? '1.5' : '1'}
+                        strokeDasharray={i === lineGridSvgY.length - 1 ? '0' : '8 6'}
+                      />
+                    ))}
+
+                    <path d={area} fill="url(#statGrad)" />
+                    <path d={line} fill="none" stroke="#24496f" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                    {pts.map(([cx, cy], i) => (
+                      <circle key={i} cx={cx} cy={cy}
+                        r={i === peakIdx ? 6.5 : 4.5}
+                        fill="#24496f" stroke="white" strokeWidth="2.5"
+                      />
+                    ))}
+
+                    {/* Peak 말풍선 */}
+                    <rect x={pts[peakIdx][0] - 62} y={pts[peakIdx][1] - 36} width={124} height={24} rx="7" fill="#24496f" />
+                    <text x={pts[peakIdx][0]} y={pts[peakIdx][1] - 19}
+                      textAnchor="middle" fill="white" fontSize="12" fontWeight="700" fontFamily="inherit">
+                      Peak: ₩38,500,000
+                    </text>
+                  </svg>
+
+                  <div className="statsLineLabels">
+                    {monthlyRevenue.map((m) => <span key={m.month}>{m.month}</span>)}
+                  </div>
                 </div>
               </div>
             </div>
@@ -182,23 +228,33 @@ export default function StatisticsPage() {
                 <span className="teal">개인</span>
               </div>
             </div>
+
             <div className="statsStackedWrap">
-              <div className="statsStackedChart">
-                {monthlyGrowth.map((m) => {
-                  const total  = m.individual + m.company;
-                  const totalH = Math.round((total / MAX_TOTAL) * CHART_H);
-                  const compH  = Math.round((m.company / MAX_TOTAL) * CHART_H);
-                  const indivH = totalH - compH;
-                  return (
-                    <div className="statsStackedCol" key={m.month}>
-                      <div className="statsStackedBars">
-                        <div className="statsBarIndiv" style={{ height: indivH }} />
-                        <div className="statsBarComp"  style={{ height: compH  }} />
+              {/* Y축 + 차트 영역 */}
+              <div className="statsChartWithAxis">
+                {/* Y축 레이블: padding 30px top / 10px bottom 로 막대 영역과 정렬 */}
+                <div className="statsBarYAxis">
+                  {barYLabels.map((lbl) => <span key={lbl}>{lbl}</span>)}
+                </div>
+
+                {/* 막대 차트 */}
+                <div className="statsStackedChart">
+                  {monthlyGrowth.map((m) => {
+                    const total  = m.individual + m.company;
+                    const totalH = Math.round((total / BAR_MAX) * BAR_CHART_H);
+                    const compH  = Math.round((m.company / BAR_MAX) * BAR_CHART_H);
+                    const indivH = totalH - compH;
+                    return (
+                      <div className="statsStackedCol" key={m.month}>
+                        <div className="statsStackedBars">
+                          <div className="statsBarIndiv" style={{ height: indivH }} />
+                          <div className="statsBarComp"  style={{ height: compH  }} />
+                        </div>
+                        <span>{m.month}</span>
                       </div>
-                      <span>{m.month}</span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </section>

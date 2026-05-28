@@ -61,31 +61,60 @@
 .statsTrendBadge.up   { background: #eaf6f0; border-color: #b8dfcc; color: #2c6e4f; }
 .statsTrendBadge.down { background: #fdf0f0; border-color: #f0c8c8; color: #9a3a3a; }
 
-/* ── SVG line chart ──────────────────────────────────────────── */
+/* ── Y축 + 차트 래퍼 (공통) ──────────────────────────────────── */
+.statsChartWithAxis {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+/* ── 꺾은선 차트 Y축 레이블 ──────────────────────────────────── */
+/*
+ * SVG viewBox 0 0 1000 220, pad=28, maxVal=45M, CSS height=190px
+ * 눈금 SVG Y: 28, 83, 137, 192 → CSS Y: 24.2, 71.7, 118.3, 165.8px
+ * padding 24px top/bottom, height 190px → space-between 4항목:
+ *   항목 위치: 24, 71.3, 118.7, 166px  ← 오차 < 0.5px
+ */
+.statsLineYAxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 8px 24px 0;
+  width: 54px;
+  height: 190px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--st-muted);
+  text-align: right;
+}
+
+/* ── 꺾은선 차트 ─────────────────────────────────────────────── */
 .statsLineWrap {
-  padding: 16px 18px 10px;
+  padding: 14px 16px 10px 10px;
 }
 
 .statsLineChartBox {
+  flex: 1;
   border: 1px solid var(--st-border);
   border-radius: 12px;
   overflow: hidden;
   background: #f6f9ff;
+  min-width: 0;
 }
 
 .statsLineSvg {
   width: 100%;
   height: 190px;
   display: block;
-  background:
-    linear-gradient(to bottom, rgba(200,216,236,0.4) 1px, transparent 1px) 0 0 / 100% 38px,
-    #f6f9ff;
+  background: #f6f9ff;
 }
 
 .statsLineLabels {
   display: flex;
   justify-content: space-between;
-  padding: 7px 10px 8px;
+  padding: 6px 10px 7px;
   font-size: 10px;
   font-weight: 700;
   color: var(--st-muted);
@@ -172,6 +201,28 @@
 .statsGrowthBadge.up   { background: #eaf6f0; border-color: #b8dfcc; color: #2c6e4f; }
 .statsGrowthBadge.down { background: #fdf0f0; border-color: #f0c8c8; color: #9a3a3a; }
 
+/* ── 누적 막대 차트 Y축 레이블 ───────────────────────────────── */
+/*
+ * .statsStackedChart: height 180px, padding 12px top / 10px bottom
+ * 막대 최대높이(BAR_CHART_H) = 140px, 막대 바닥 y = 170px, 막대 꼭대기 y = 30px
+ * padding 30px top / 10px bottom, height 180px → space-between 5항목:
+ *   항목 위치: 30, 65, 100, 135, 170px  ← 막대 눈금과 정확히 일치
+ */
+.statsBarYAxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 30px 8px 10px 0;
+  width: 46px;
+  height: 180px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--st-muted);
+  text-align: right;
+}
+
 /* ── stacked bar chart ───────────────────────────────────────── */
 .statsLegend {
   display: flex;
@@ -198,13 +249,13 @@
 .statsLegend .teal::before { background: #3d8e6a; }
 
 .statsStackedWrap {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  padding: 16px 18px 16px;
-  height: 240px;
+  padding: 14px 16px 14px 10px;
 }
 
+/*
+ * grid-line background: 30px top offset, 35px 간격
+ * → 눈금선 위치: 30, 65, 100, 135, 170px — Y축 레이블과 정확히 일치
+ */
 .statsStackedChart {
   flex: 1;
   display: flex;
@@ -213,10 +264,12 @@
   height: 180px;
   padding: 12px 10px 10px;
   background:
-    linear-gradient(to bottom, rgba(200,216,236,0.4) 1px, transparent 1px) 0 0 / 100% 36px,
+    linear-gradient(to bottom, rgba(200,216,236,0.45) 1px, transparent 1px) 0 30px / 100% 35px,
     #f6f9ff;
   border: 1px solid var(--st-border);
   border-radius: 12px;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .statsStackedCol {
@@ -226,7 +279,7 @@
   align-items: center;
   height: 100%;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
 .statsStackedBars {
@@ -251,13 +304,6 @@
   font-size: 10px;
   font-weight: 700;
   color: var(--st-muted);
-}
-
-.statsStackedLabels {
-  display: flex;
-  gap: 8px;
-  padding: 0 18px 14px;
-  justify-content: center;
 }
 
 /* ── recent activity feed ────────────────────────────────────── */
