@@ -1,4 +1,4 @@
-import { TrendingUp, DollarSign, Users, UserPlus } from 'lucide-react';
+import { TrendingUp, DollarSign, Users, UserPlus, CreditCard, RefreshCw, Minus } from 'lucide-react';
 import '../../styles/admin.css';
 import '../../styles/Statistics.css';
 
@@ -19,47 +19,52 @@ const monthlyRevenue = [
 ];
 
 const subscriptionBreakdown = [
-  { abbr: '월', label: '프리미엄 월정액', amount: 26900000, growth: 15.9, up: true  },
-  { abbr: '전', label: '신규 가입 전환',  amount:  3480000, growth: 22.1, up: true  },
-  { abbr: '갱', label: '갱신 결제',       amount: 23420000, growth: 11.3, up: true  },
-  { abbr: '환', label: '환불 차감',       amount:   580000, growth: -8.2, up: false },
+  { Icon: CreditCard, label: '프리미엄 월정액', amount: 26900000, growth: 15.9, up: true  },
+  { Icon: UserPlus,   label: '신규 가입 전환',  amount:  3480000, growth: 22.1, up: true  },
+  { Icon: RefreshCw,  label: '갱신 결제',       amount: 23420000, growth: 11.3, up: true  },
+  { Icon: Minus,      label: '환불 차감',       amount:   580000, growth: -8.2, up: false },
 ];
 
-const monthlyGrowth = [
-  { month: '12월', individual: 180, company: 32 },
-  { month: '1월',  individual: 210, company: 38 },
-  { month: '2월',  individual: 195, company: 41 },
-  { month: '3월',  individual: 240, company: 45 },
-  { month: '4월',  individual: 258, company: 49 },
-  { month: '5월',  individual: 262, company: 52 },
+// 신규 + 탈퇴 구독자 월별 데이터
+const monthlySubscribers = [
+  { month: '12월', newSubs: 212, churned: 45 },
+  { month: '1월',  newSubs: 248, churned: 38 },
+  { month: '2월',  newSubs: 236, churned: 52 },
+  { month: '3월',  newSubs: 285, churned: 41 },
+  { month: '4월',  newSubs: 307, churned: 48 },
+  { month: '5월',  newSubs: 314, churned: 55 },
 ];
 
 const recentActivity = [
   { initials: 'KM', name: '김민지', status: 'ACTIVE',  plan: '프리미엄 월정액', time: '5분 전'   },
   { initials: 'LJ', name: '이준호', status: 'PENDING', plan: '프리미엄 월정액', time: '23분 전'  },
-  { initials: 'PS', name: '박서연', status: 'ACTIVE',  plan: '프리미엄 연정액', time: '1시간 전' },
+  { initials: 'PS', name: '박서연', status: 'ACTIVE',  plan: '신규 가입',       time: '1시간 전' },
   { initials: 'CD', name: '최도윤', status: 'ACTIVE',  plan: '프리미엄 월정액', time: '2시간 전' },
   { initials: 'KH', name: '강하늘', status: 'PENDING', plan: '신규 가입',       time: '3시간 전' },
 ];
 
-// ── 꺾은선 차트 상수 ────────────────────────────────────────────
-// Y축 max를 4500만으로 고정해 gridline이 레이블과 정확히 일치
+// ── 꺾은선 차트 공통 상수 ──────────────────────────────────────
 const LINE_MAX_VAL = 45_000_000;
 const LINE_VBH     = 220;
 const LINE_PAD     = 28;
 const LINE_VBW     = 1000;
-const LINE_PAD_X   = 30;   // SVG 좌우 여백 — 경계 점 잘림 방지
+const LINE_PAD_X   = 30;
 const LINE_CHART_H_SVG = LINE_VBH - LINE_PAD * 2; // 164
 
-// Y축 레이블 (위→아래 = 높은값→낮은값)
-const lineYLabels = ['₩4,500만', '₩3,000만', '₩1,500만', '₩0'];
-// 위 레이블에 대응하는 SVG 내부 Y 좌표 (gridline 위치)
+// 매출 Y축 레이블 (4항목, padding 24px top/bottom → 위치 자동 정렬)
+const lineYLabels  = ['₩4,500만', '₩3,000만', '₩1,500만', '₩0'];
 const lineGridSvgY = [45_000_000, 30_000_000, 15_000_000, 0].map(
-  (v) => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / LINE_MAX_VAL))
-); // ≈ [28, 83, 137, 192]
+  v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / LINE_MAX_VAL))
+); // [28, 83, 137, 192]
 
-// ── 누적 막대 차트 상수 ─────────────────────────────────────────
-// M 단위 축약 포맷 (e.g. 26900000 → "₩26.9M")
+// 구독자 Y축 레이블 (5항목, 동일 padding → 동일 CSS 재사용)
+const SUB_MAX_VAL  = 400;
+const subYLabels   = ['400명', '300명', '200명', '100명', '0'];
+const subGridSvgY  = [400, 300, 200, 100, 0].map(
+  v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / SUB_MAX_VAL))
+); // [28, 69, 110, 151, 192]
+
+// M 단위 축약 포맷
 function toM(n: number): string {
   const sign = n < 0 ? '-' : '';
   const m    = Math.abs(n) / 1_000_000;
@@ -68,17 +73,12 @@ function toM(n: number): string {
   return `${sign}₩${str}M`;
 }
 
-const BAR_MAX      = 320;  // Y축 최대값 (320명)
-const BAR_CHART_H  = 140;  // 막대 최대 픽셀 높이
-
-// Y축 레이블 (위→아래): 320, 240, 160, 80, 0 — 35px 간격으로 정렬
-const barYLabels = ['320명', '240명', '160명', '80명', '0'];
-
-function buildSvgPath(values: number[]) {
+// SVG 꺾은선 path 생성 (maxVal 파라미터로 매출/구독자 공용 사용)
+function buildSvgPath(values: number[], maxVal = LINE_MAX_VAL) {
   const xRange = LINE_VBW - 2 * LINE_PAD_X;
   const pts: [number, number][] = values.map((v, i) => [
     Math.round(LINE_PAD_X + (i / (values.length - 1)) * xRange),
-    Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / LINE_MAX_VAL)),
+    Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / maxVal)),
   ]);
 
   let line = `M${pts[0][0]},${pts[0][1]}`;
@@ -88,19 +88,19 @@ function buildSvgPath(values: number[]) {
     const cx = Math.round((x0 + x1) / 2);
     line += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;
   }
-
-  // area path: extend to viewBox bottom-left corner (x=0) for full fill
   const area = `${line} L${pts[pts.length - 1][0]},${LINE_VBH} L${pts[0][0]},${LINE_VBH} Z`;
   return { line, area, pts };
 }
 
-const TOOLTIP_W = 124;
+const TOOLTIP_W = 104;
 
 export default function StatisticsPage() {
-  const { line, area, pts } = buildSvgPath(monthlyRevenue.map((m) => m.total));
-  const peakIdx = pts.reduce((max, p, i) => (p[1] < pts[max][1] ? i : max), 0);
-  // viewBox 경계 초과 방지: 오른쪽 끝 데이터(5월)면 왼쪽으로 밀기
+  const { line, area, pts } = buildSvgPath(monthlyRevenue.map(m => m.total));
+  const peakIdx  = pts.reduce((max, p, i) => (p[1] < pts[max][1] ? i : max), 0);
   const tooltipX = Math.min(pts[peakIdx][0] - TOOLTIP_W / 2, LINE_VBW - TOOLTIP_W - 6);
+
+  const subNewPath   = buildSvgPath(monthlySubscribers.map(m => m.newSubs),  SUB_MAX_VAL);
+  const subChurnPath = buildSvgPath(monthlySubscribers.map(m => m.churned), SUB_MAX_VAL);
 
   return (
     <section>
@@ -140,60 +140,42 @@ export default function StatisticsPage() {
               </div>
               <span className="statsTrendBadge up">▲ +12.6%</span>
             </div>
-
             <div className="statsLineWrap">
-              {/* Y축 + 차트 영역 */}
               <div className="statsChartWithAxis">
-                {/* Y축 레이블 */}
                 <div className="statsLineYAxis">
-                  {lineYLabels.map((lbl) => <span key={lbl}>{lbl}</span>)}
+                  {lineYLabels.map(lbl => <span key={lbl}>{lbl}</span>)}
                 </div>
-
-                {/* 차트 박스 */}
                 <div className="statsLineChartBox">
-                  <svg
-                    viewBox={`0 0 ${LINE_VBW} ${LINE_VBH}`}
-                    preserveAspectRatio="none"
-                    className="statsLineSvg"
-                  >
+                  <svg viewBox={`0 0 ${LINE_VBW} ${LINE_VBH}`} preserveAspectRatio="none" className="statsLineSvg">
                     <defs>
                       <linearGradient id="statGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%"   stopColor="#24496f" stopOpacity="0.16" />
                         <stop offset="100%" stopColor="#24496f" stopOpacity="0"    />
                       </linearGradient>
                     </defs>
-
-                    {/* 수평 gridlines — SVG 좌표 내에서 정확히 레이블 값과 일치 */}
                     {lineGridSvgY.map((y, i) => (
-                      <line
-                        key={y}
-                        x1="0" y1={y} x2={LINE_VBW} y2={y}
+                      <line key={y} x1="0" y1={y} x2={LINE_VBW} y2={y}
                         stroke={i === lineGridSvgY.length - 1 ? '#c8d8ea' : '#dde8f2'}
                         strokeWidth={i === lineGridSvgY.length - 1 ? '1.5' : '1'}
                         strokeDasharray={i === lineGridSvgY.length - 1 ? '0' : '8 6'}
                       />
                     ))}
-
                     <path d={area} fill="url(#statGrad)" />
                     <path d={line} fill="none" stroke="#24496f" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-
                     {pts.map(([cx, cy], i) => (
                       <circle key={i} cx={cx} cy={cy}
                         r={i === peakIdx ? 6.5 : 4.5}
                         fill="#24496f" stroke="white" strokeWidth="2.5"
                       />
                     ))}
-
-                    {/* Peak 말풍선 — tooltipX로 우측 잘림 방지 */}
                     <rect x={tooltipX} y={pts[peakIdx][1] - 36} width={TOOLTIP_W} height={24} rx="7" fill="#24496f" />
                     <text x={tooltipX + TOOLTIP_W / 2} y={pts[peakIdx][1] - 19}
                       textAnchor="middle" fill="white" fontSize="12" fontWeight="700" fontFamily="inherit">
                       Peak: {toM(Math.max(...monthlyRevenue.map(m => m.total)))}
                     </text>
                   </svg>
-
                   <div className="statsLineLabels">
-                    {monthlyRevenue.map((m) => <span key={m.month}>{m.month}</span>)}
+                    {monthlyRevenue.map(m => <span key={m.month}>{m.month}</span>)}
                   </div>
                 </div>
               </div>
@@ -213,9 +195,11 @@ export default function StatisticsPage() {
                 <span className="colAmt">매출액</span>
                 <span className="colDelta">증감</span>
               </div>
-              {subscriptionBreakdown.map((item) => (
+              {subscriptionBreakdown.map(item => (
                 <div className="statsChannelRow" key={item.label}>
-                  <div className="statsChannelIcon">{item.abbr}</div>
+                  <div className="statsChannelIcon">
+                    <item.Icon size={14} />
+                  </div>
                   <span className="statsChannelName">{item.label}</span>
                   <span className="statsChannelAmt">
                     {toM(item.up ? item.amount : -item.amount)}
@@ -229,46 +213,65 @@ export default function StatisticsPage() {
           </section>
         </div>
 
-        {/* Row 2 ── 신규 구독자 추이 + 최근 가입 피드 */}
+        {/* Row 2 ── 구독자 변동 추이 + 최근 가입 피드 */}
         <div className="statsMainGrid">
 
           <section className="admin-card statsCard">
             <div className="statsCardHead">
               <div>
-                <span className="statsEyebrow">개인 vs 기업 구독자 비교</span>
-                <h3>신규 구독자 추이</h3>
+                <span className="statsEyebrow">신규 vs 탈퇴 구독자 현황</span>
+                <h3>구독자 변동 추이</h3>
               </div>
               <div className="statsLegend">
-                <span className="navy">기업</span>
-                <span className="teal">개인</span>
+                <span className="teal">신규</span>
+                <span className="coral">탈퇴</span>
               </div>
             </div>
-
-            <div className="statsStackedWrap">
-              {/* Y축 + 차트 영역 */}
+            <div className="statsLineWrap">
               <div className="statsChartWithAxis">
-                {/* Y축 레이블: padding 30px top / 10px bottom 로 막대 영역과 정렬 */}
-                <div className="statsBarYAxis">
-                  {barYLabels.map((lbl) => <span key={lbl}>{lbl}</span>)}
+                {/* 5항목 Y축 — lineYAxis CSS 재사용 (동일 SVG 상수) */}
+                <div className="statsLineYAxis">
+                  {subYLabels.map(lbl => <span key={lbl}>{lbl}</span>)}
                 </div>
+                <div className="statsLineChartBox">
+                  <svg viewBox={`0 0 ${LINE_VBW} ${LINE_VBH}`} preserveAspectRatio="none" className="statsLineSvg">
+                    <defs>
+                      <linearGradient id="subNewGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stopColor="#3d8e6a" stopOpacity="0.15" />
+                        <stop offset="100%" stopColor="#3d8e6a" stopOpacity="0"    />
+                      </linearGradient>
+                      <linearGradient id="subChurnGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stopColor="#c04c4c" stopOpacity="0.12" />
+                        <stop offset="100%" stopColor="#c04c4c" stopOpacity="0"    />
+                      </linearGradient>
+                    </defs>
 
-                {/* 막대 차트 */}
-                <div className="statsStackedChart">
-                  {monthlyGrowth.map((m) => {
-                    const total  = m.individual + m.company;
-                    const totalH = Math.round((total / BAR_MAX) * BAR_CHART_H);
-                    const compH  = Math.round((m.company / BAR_MAX) * BAR_CHART_H);
-                    const indivH = totalH - compH;
-                    return (
-                      <div className="statsStackedCol" key={m.month}>
-                        <div className="statsStackedBars">
-                          <div className="statsBarIndiv" style={{ height: indivH }} />
-                          <div className="statsBarComp"  style={{ height: compH  }} />
-                        </div>
-                        <span>{m.month}</span>
-                      </div>
-                    );
-                  })}
+                    {/* 수평 gridlines */}
+                    {subGridSvgY.map((y, i) => (
+                      <line key={y} x1="0" y1={y} x2={LINE_VBW} y2={y}
+                        stroke={i === subGridSvgY.length - 1 ? '#c8d8ea' : '#dde8f2'}
+                        strokeWidth={i === subGridSvgY.length - 1 ? '1.5' : '1'}
+                        strokeDasharray={i === subGridSvgY.length - 1 ? '0' : '8 6'}
+                      />
+                    ))}
+
+                    {/* 신규 구독자 */}
+                    <path d={subNewPath.area} fill="url(#subNewGrad)" />
+                    <path d={subNewPath.line} fill="none" stroke="#3d8e6a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    {subNewPath.pts.map(([cx, cy], i) => (
+                      <circle key={`new-${i}`} cx={cx} cy={cy} r={4.5} fill="#3d8e6a" stroke="white" strokeWidth="2.5" />
+                    ))}
+
+                    {/* 탈퇴 구독자 */}
+                    <path d={subChurnPath.area} fill="url(#subChurnGrad)" />
+                    <path d={subChurnPath.line} fill="none" stroke="#c04c4c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    {subChurnPath.pts.map(([cx, cy], i) => (
+                      <circle key={`churn-${i}`} cx={cx} cy={cy} r={4} fill="#c04c4c" stroke="white" strokeWidth="2" />
+                    ))}
+                  </svg>
+                  <div className="statsLineLabels">
+                    {monthlySubscribers.map(m => <span key={m.month}>{m.month}</span>)}
+                  </div>
                 </div>
               </div>
             </div>
@@ -283,7 +286,7 @@ export default function StatisticsPage() {
               <button className="statsViewAllBtn">전체보기</button>
             </div>
             <div className="statsFeed">
-              {recentActivity.map((item) => (
+              {recentActivity.map(item => (
                 <div className="statsFeedItem" key={item.name}>
                   <div className="statsAvatar">{item.initials}</div>
                   <div className="statsFeedInfo">
