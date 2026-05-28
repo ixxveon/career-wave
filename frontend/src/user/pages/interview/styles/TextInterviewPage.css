@@ -836,9 +836,12 @@
 .ti-exit-modal__confirm:hover { background: #b91c1c; }
 
 /* ─── Responsive ─────────────────────────────── */
-@media (max-width: 768px) {
-  /* 채팅룸 — GNB 1240px 브레이크포인트에 맞춰 여백 축소 */
+@media (max-width: 1240px) {
+  /* GNB .cw-header__inner 1240px 브레이크포인트와 동기화 */
   .ti { left: clamp(16px, 3vw, 40px); right: clamp(16px, 3vw, 40px); }
+}
+
+@media (max-width: 768px) {
 
   /* 설정 화면 */
   .ti-setup       { padding: 24px 0; align-items: flex-start; }
