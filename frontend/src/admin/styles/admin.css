@@ -203,104 +203,156 @@ button {
 
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
   margin-bottom: 18px;
 }
 
 .kpiCard {
-  min-height: 142px;
-  padding: 24px 22px;
+  padding: 22px;
   display: flex;
   align-items: center;
-  gap: 22px;
+  justify-content: space-between;
+  gap: 16px;
+  border-radius: 16px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
-.kpiCard > div:last-child {
+.kpiCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(30, 60, 90, 0.08);
+}
+
+.kpiContent {
+  flex: 1;
   min-width: 0;
 }
 
-.kpiCard:nth-child(1) {
-  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+.kpiCard.kpi-blue {
+  background: linear-gradient(135deg, #daeaf8 0%, #ecf4fc 100%);
+  border-color: #bfd5ed;
 }
 
-.kpiCard:nth-child(2) {
-  background: linear-gradient(180deg, #ffffff 0%, #f7fcf9 100%);
+.kpiCard.kpi-green {
+  background: linear-gradient(135deg, #d4eee3 0%, #e9f6ef 100%);
+  border-color: #b5dac7;
 }
 
-.kpiCard:nth-child(3) {
-  background: linear-gradient(180deg, #ffffff 0%, #faf7fd 100%);
+.kpiCard.kpi-purple {
+  background: linear-gradient(135deg, #e0d5f2 0%, #ede9f8 100%);
+  border-color: #c8bde8;
 }
 
-.kpiCard:nth-child(4) {
-  background: linear-gradient(180deg, #ffffff 0%, #fffaf5 100%);
+.kpiCard.kpi-yellow {
+  background: linear-gradient(135deg, #fde9cf 0%, #fef4e5 100%);
+  border-color: #f0d0a4;
 }
 
 .kpiIcon {
-  width: 66px;
-  height: 66px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
   flex: none;
 }
 
-.kpiIcon.blue {
-  background: #e7eef7;
-  color: #4f6b8a;
+.kpiIcon.kpi-blue {
+  background: rgba(58, 114, 178, 0.16);
+  color: #2d5f8e;
 }
 
-.kpiIcon.green {
-  background: #e7f1ec;
-  color: #5d7b69;
+.kpiIcon.kpi-green {
+  background: rgba(45, 110, 79, 0.16);
+  color: #2c6e4f;
 }
 
-.kpiIcon.purple {
-  background: #efeaf6;
-  color: #75658d;
+.kpiIcon.kpi-purple {
+  background: rgba(92, 77, 133, 0.16);
+  color: #5c4d85;
 }
 
-.kpiIcon.yellow {
-  background: #f5ede3;
-  color: #9b7553;
+.kpiIcon.kpi-yellow {
+  background: rgba(155, 117, 53, 0.16);
+  color: #8a5a20;
 }
 
 .kpiCard p {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #31475f;
 }
 
 .kpiCard h3 {
   margin: 0;
-  font-size: clamp(26px, 2vw, 34px);
+  font-size: 34px;
   font-weight: 800;
   letter-spacing: -1px;
-  color: #10243f;
   overflow-wrap: anywhere;
-}
-
-.kpiCard b {
-  display: block;
-  margin-top: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #5d7b69;
-}
-
-.kpiCard b.down {
-  color: #9a6767;
 }
 
 .kpiCard span {
   display: block;
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 13px;
-  color: #708397;
+  font-weight: 400;
+}
+
+.kpiCard.kpi-blue p,
+.kpiCard.kpi-blue h3,
+.kpiCard.kpi-blue span {
+  color: #1a3d5e;
+}
+
+.kpiCard.kpi-blue p {
+  color: #2d5f8e;
+}
+
+.kpiCard.kpi-blue span {
+  color: #4a7299;
+}
+
+.kpiCard.kpi-green p,
+.kpiCard.kpi-green h3,
+.kpiCard.kpi-green span {
+  color: #1a4a34;
+}
+
+.kpiCard.kpi-green p {
+  color: #2c6e4f;
+}
+
+.kpiCard.kpi-green span {
+  color: #3d7a5f;
+}
+
+.kpiCard.kpi-purple p,
+.kpiCard.kpi-purple h3,
+.kpiCard.kpi-purple span {
+  color: #3d3260;
+}
+
+.kpiCard.kpi-purple p {
+  color: #5c4d85;
+}
+
+.kpiCard.kpi-purple span {
+  color: #6b5a96;
+}
+
+.kpiCard.kpi-yellow p,
+.kpiCard.kpi-yellow h3,
+.kpiCard.kpi-yellow span {
+  color: #5e3d10;
+}
+
+.kpiCard.kpi-yellow p {
+  color: #8a5a20;
+}
+
+.kpiCard.kpi-yellow span {
+  color: #9e6c2a;
 }
 
 /* layout */
@@ -1117,6 +1169,10 @@ button {
 }
 
 @media (max-width: 1200px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .memberSummaryGrid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1127,7 +1183,6 @@ button {
 }
 
 @media (max-width: 1100px) {
-  .kpiGrid,
   .adminCardGrid,
   .chartGrid,
   .rightColumn {
@@ -1204,8 +1259,13 @@ button {
     text-align: center;
   }
 
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+
   .kpiCard {
     align-items: flex-start;
+    padding: 22px;
   }
 
   .alertRow {
