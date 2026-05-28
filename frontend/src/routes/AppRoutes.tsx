@@ -53,6 +53,13 @@ import CheckoutPage from '../user/pages/billing/CheckoutPage';
 import PaymentSuccessPage from '../user/pages/billing/PaymentSuccessPage';
 import PaymentFailPage from '../user/pages/billing/PaymentFailPage';
 
+import SupportPage from '../user/pages/support/SupportPage';
+import NoticePage from '../user/pages/support/NoticePage';
+import NoticeDetailPage from '../user/pages/support/NoticeDetailPage';
+import FaqPage from '../user/pages/support/FaqPage';
+import InquiryListPage from '../user/pages/support/InquiryListPage';
+import InquiryCreatePage from '../user/pages/support/InquiryCreatePage';
+
 import NotFoundPage from '../user/pages/common/NotFoundPage';
 
 // ── 어드민 플랫폼 ──────────────────────────────────────────────
@@ -136,6 +143,14 @@ function AppRoutes() {
           <Route path="posts/create" element={<PostCreatePage />} />
           <Route path="posts/:postId" element={<PostDetailPage />} />
           <Route path="mentor" element={<MentorPage />} />
+        </Route>
+
+        <Route path="support" element={<SupportPage />}>
+          <Route path="notices" element={<NoticePage />} />
+          <Route path="notices/:id" element={<NoticeDetailPage />} />
+          <Route path="faq" element={<FaqPage />} />
+          <Route path="inquiry" element={<InquiryListPage />} />
+          <Route path="inquiry/create" element={<InquiryCreatePage />} />
         </Route>
 
         <Route path="billing">

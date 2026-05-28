@@ -48,6 +48,15 @@ export const serviceMenus = [
   },
 
   {
+    label: '고객센터',
+    href: '/support/notices',
+    children: [
+      { label: '공지사항', href: '/support/notices' },
+      { label: 'FAQ',      href: '/support/faq' },
+      { label: '1:1 문의', href: '/support/inquiry' },
+    ],
+  },
+  {
     label: '기업서비스',
     href: '/dashboard/company',
     children: [
