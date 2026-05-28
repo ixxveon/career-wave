@@ -2,6 +2,7 @@ import { TrendingUp, DollarSign, Users, UserPlus, CreditCard, RefreshCw, Minus }
 import '../../styles/admin.css';
 import '../../styles/Statistics.css';
 
+// TODO: 아래 데이터는 목업입니다. API 연동 시 교체 필요합니다.
 const kpis = [
   { label: '이번 달 매출',      value: '₩38.5M',  sub: '전월 대비 +12.6%', color: 'kpi-green',  Icon: TrendingUp },
   { label: '누적 총 매출',      value: '₩186.5M', sub: '서비스 오픈 이후',  color: 'kpi-blue',   Icon: DollarSign },

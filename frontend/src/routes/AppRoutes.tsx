@@ -64,7 +64,7 @@ import UserManagementPage from '../admin/pages/UserManagement/UserManagementPage
 import ReportPage from '../admin/pages/Report/ReportPage';
 import CustomerServicePage from '../admin/pages/CustomerService/CustomerServicePage';
 import AdminPaymentPage from '../admin/pages/Payment/PaymentPage';
-import StatisticsPage from '../admin/pages/Matching/StatisticsPage';
+import StatisticsPage from '../admin/pages/Statistics/StatisticsPage';
 import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
 import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
