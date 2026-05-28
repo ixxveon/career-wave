@@ -8,7 +8,7 @@ import {
 import type { PlanLimits, MockUser, HistoryItem } from '../../types/interview';
 
 /* ── 멤버십별 월 이용 한도 ─────────────────────────
-   FREE    : 서류 분석  3회 / 면접 1회
+   FREE    : 서류 분석  1회 / 면접 1회
    PREMIUM : 서류 분석 20회 / 면접 10회
 ──────────────────────────────────────────────── */
 const PLAN_LIMITS: PlanLimits = {
