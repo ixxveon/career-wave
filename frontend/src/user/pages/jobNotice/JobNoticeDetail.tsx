@@ -11,11 +11,13 @@ import {
   Timer,
   X,
 } from 'lucide-react';
+import type { JobNotice } from './JobNoticeTypes';
 import './styles/JobNoticeDetail.css';
 
-const TABS = ['공고 상세', '기업 정보'];
+const TABS = ['공고 상세', '기업 정보'] as const;
+type DetailTab = (typeof TABS)[number];
 
-const STACKS_BY_JOB_TYPE = {
+const STACKS_BY_JOB_TYPE: Partial<Record<JobNotice['jobType'], string[]>> = {
   백엔드: ['Java', 'Spring Boot', 'AWS', 'Docker', 'MySQL'],
   프론트엔드: ['React', 'TypeScript', 'Next.js', 'CSS', 'Vite'],
   데이터: ['Python', 'SQL', 'TensorFlow', 'Airflow', 'AWS'],
@@ -104,7 +106,7 @@ function JobDetailSkeleton() {
   );
 }
 
-function EmptyDetail({ onClose }) {
+function EmptyDetail({ onClose }: { onClose: () => void }) {
   return (
     <div className="jnd-empty">
       <BriefcaseBusiness size={26} />
@@ -115,7 +117,14 @@ function EmptyDetail({ onClose }) {
   );
 }
 
-function DetailHeader({ job, bookmarked, onBookmark, onClose }) {
+interface DetailHeaderProps {
+  job: JobNotice;
+  bookmarked: boolean;
+  onBookmark: (id: number) => void;
+  onClose: () => void;
+}
+
+function DetailHeader({ job, bookmarked, onBookmark, onClose }: DetailHeaderProps) {
   const originalJobUrl = getOriginalJobUrl(job);
 
   return (
@@ -145,7 +154,7 @@ function DetailHeader({ job, bookmarked, onBookmark, onClose }) {
   );
 }
 
-function InfoGrid({ job }) {
+function InfoGrid({ job }: { job: JobNotice }) {
   const infoItems = [
     { label: '경력', value: job.exp, Icon: BriefcaseBusiness },
     { label: '고용 형태', value: job.employment, Icon: CheckCircle2 },
@@ -167,11 +176,11 @@ function InfoGrid({ job }) {
   );
 }
 
-function getOriginalJobUrl(job) {
+function getOriginalJobUrl(job: JobNotice) {
   return job.originalUrl || `https://www.wanted.co.kr/search?query=${encodeURIComponent(job.title)}`;
 }
 
-function DetailTabContent({ activeTab, job }) {
+function DetailTabContent({ activeTab, job }: { activeTab: DetailTab; job: JobNotice }) {
   if (activeTab === '기업 정보') {
     return (
       <article className="jnd-job-description">
@@ -209,7 +218,7 @@ function DetailTabContent({ activeTab, job }) {
   );
 }
 
-function TechStackStrip({ job }) {
+function TechStackStrip({ job }: { job: JobNotice }) {
   const stacks = job.stacks || STACKS_BY_JOB_TYPE[job.jobType] || job.tags;
 
   return (
@@ -228,8 +237,14 @@ export default function JobNoticeDetail({
   bookmarked,
   onClose,
   onBookmark,
+}: {
+  job: JobNotice | null;
+  isOpen: boolean;
+  bookmarked: boolean;
+  onClose: () => void;
+  onBookmark: (id: number) => void;
 }) {
-  const [activeTab, setActiveTab] = useState(TABS[0]);
+  const [activeTab, setActiveTab] = useState<DetailTab>(TABS[0]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -237,7 +252,7 @@ export default function JobNoticeDetail({
 
     document.body.style.overflow = 'hidden';
 
-    function handleKeyDown(event) {
+    function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose();
     }
 

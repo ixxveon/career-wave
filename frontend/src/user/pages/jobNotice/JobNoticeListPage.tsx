@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import {
   Bookmark,
   BookmarkCheck,
@@ -11,6 +12,7 @@ import {
   Search,
 } from 'lucide-react';
 import JobNoticeDetail from './JobNoticeDetail';
+import type { JobNotice } from './JobNoticeTypes';
 import './styles/JobNoticeListPage.css';
 
 const FILTER_GROUPS = [
@@ -19,7 +21,7 @@ const FILTER_GROUPS = [
   { label: '채용 유형', options: ['전체', '정규직', '인턴', '계약직'] },
   { label: '지역', options: ['전체', '서울', '경기', '원격'] },
   { label: '기업 규모', options: ['전체', '스타트업', '중견', '대기업'] },
-];
+] as const;
 
 const PERIODS = ['오늘', '7일', '30일', '기간 전체'];
 const SORT_OPTIONS = ['추천순', '최신순', '조회순'];
@@ -32,9 +34,26 @@ const FILTER_FIELD_BY_LABEL = {
   '채용 유형': 'employment',
   지역: 'location',
   '기업 규모': 'companySize',
-};
+} as const;
 
-const BANNER_STATS = [
+type FilterLabel = keyof typeof FILTER_FIELD_BY_LABEL;
+type FilterField = (typeof FILTER_FIELD_BY_LABEL)[FilterLabel];
+type Filters = Record<FilterLabel, string>;
+type Bookmarks = Record<number, boolean>;
+type Period = (typeof PERIODS)[number];
+type SortOption = (typeof SORT_OPTIONS)[number];
+
+interface BannerStat {
+  label: string;
+  value: string;
+  description: string;
+  Icon: LucideIcon;
+  iconClassName: string;
+  highlight?: string;
+  valueClassName?: string;
+}
+
+const BANNER_STATS: BannerStat[] = [
   {
     label: '전체 공고',
     value: '111,053',
@@ -53,7 +72,7 @@ const BANNER_STATS = [
   },
 ];
 
-const JOBS = [
+const JOBS: JobNotice[] = [
   {
     id: 1,
     company: '제너러티브랩',
@@ -164,23 +183,23 @@ const JOBS = [
   },
 ];
 
-function createInitialFilters() {
-  return Object.fromEntries(FILTER_GROUPS.map((group) => [group.label, DEFAULT_FILTER_VALUE]));
+function createInitialFilters(): Filters {
+  return Object.fromEntries(FILTER_GROUPS.map((group) => [group.label, DEFAULT_FILTER_VALUE])) as Filters;
 }
 
-function createInitialBookmarks() {
+function createInitialBookmarks(): Bookmarks {
   return Object.fromEntries(JOBS.map((job) => [job.id, job.bookmarked]));
 }
 
-function filterJobs(jobs, filters) {
+function filterJobs(jobs: JobNotice[], filters: Filters) {
   return jobs.filter((job) => (
-    Object.entries(FILTER_FIELD_BY_LABEL).every(([label, field]) => (
+    (Object.entries(FILTER_FIELD_BY_LABEL) as Array<[FilterLabel, FilterField]>).every(([label, field]) => (
       filters[label] === DEFAULT_FILTER_VALUE || job[field] === filters[label]
     ))
   ));
 }
 
-function sortJobs(jobs, sort) {
+function sortJobs(jobs: JobNotice[], sort: SortOption) {
   return [...jobs].sort((a, b) => {
     if (sort === '조회순') return b.views - a.views;
     if (sort === '최신순') return b.id - a.id;
@@ -209,7 +228,7 @@ function BannerSearch() {
   );
 }
 
-function StatCard({ stat }) {
+function StatCard({ stat }: { stat: BannerStat }) {
   const { Icon } = stat;
 
   return (
@@ -237,7 +256,14 @@ function BannerStats() {
   );
 }
 
-function JobCard({ job, bookmarked, onBookmark, onClick }) {
+interface JobCardProps {
+  job: JobNotice;
+  bookmarked: boolean;
+  onBookmark: (id: number) => void;
+  onClick: () => void;
+}
+
+function JobCard({ job, bookmarked, onBookmark, onClick }: JobCardProps) {
   return (
     <article className={`jn-card${job.recommended ? ' jn-card--featured' : ''}`} onClick={onClick}>
       <div className="jn-card__top">
@@ -275,10 +301,21 @@ function JobCard({ job, bookmarked, onBookmark, onClick }) {
   );
 }
 
-function FilterBlock({ group, value, onChange }) {
-  const detailsRef = useRef(null);
+interface FilterGroup {
+  label: FilterLabel;
+  options: readonly string[];
+}
 
-  function selectOption(option) {
+interface FilterBlockProps {
+  group: FilterGroup;
+  value: string;
+  onChange: (label: FilterLabel, value: string) => void;
+}
+
+function FilterBlock({ group, value, onChange }: FilterBlockProps) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+
+  function selectOption(option: string) {
     onChange(group.label, option);
     if (detailsRef.current) {
       detailsRef.current.open = false;
@@ -308,7 +345,7 @@ function FilterBlock({ group, value, onChange }) {
   );
 }
 
-function PeriodSelector({ period, onChange }) {
+function PeriodSelector({ period, onChange }: { period: Period; onChange: (period: Period) => void }) {
   return (
     <div className="jn-periods">
       {PERIODS.map((item) => (
@@ -325,7 +362,14 @@ function PeriodSelector({ period, onChange }) {
   );
 }
 
-function SortDropdown({ selected, isOpen, onToggle, onSelect }) {
+interface SortDropdownProps {
+  selected: SortOption;
+  isOpen: boolean;
+  onToggle: () => void;
+  onSelect: (option: SortOption) => void;
+}
+
+function SortDropdown({ selected, isOpen, onToggle, onSelect }: SortDropdownProps) {
   return (
     <div className={`jn-sort${isOpen ? ' is-open' : ''}`}>
       <button type="button" onClick={onToggle}>
@@ -349,8 +393,8 @@ function SortDropdown({ selected, isOpen, onToggle, onSelect }) {
   );
 }
 
-function ActiveFilterChips({ filters, onReset }) {
-  const activeFilters = Object.entries(filters).filter(([, value]) => value !== DEFAULT_FILTER_VALUE);
+function ActiveFilterChips({ filters, onReset }: { filters: Filters; onReset: (label: FilterLabel) => void }) {
+  const activeFilters = (Object.entries(filters) as Array<[FilterLabel, string]>).filter(([, value]) => value !== DEFAULT_FILTER_VALUE);
 
   if (activeFilters.length === 0) return null;
 
@@ -366,26 +410,26 @@ function ActiveFilterChips({ filters, onReset }) {
 }
 
 export default function JobNoticeListPage() {
-  const [period, setPeriod] = useState('기간 전체');
-  const [sort, setSort] = useState('추천순');
+  const [period, setPeriod] = useState<Period>('기간 전체');
+  const [sort, setSort] = useState<SortOption>('추천순');
   const [sortOpen, setSortOpen] = useState(false);
-  const [selectedJob, setSelectedJob] = useState(null);
+  const [selectedJob, setSelectedJob] = useState<JobNotice | null>(null);
   const [filters, setFilters] = useState(createInitialFilters);
   const [bookmarks, setBookmarks] = useState(createInitialBookmarks);
 
-  function updateFilter(label, value) {
+  function updateFilter(label: FilterLabel, value: string) {
     setFilters((current) => ({ ...current, [label]: value }));
   }
 
-  function toggleBookmark(id) {
+  function toggleBookmark(id: number) {
     setBookmarks((current) => ({ ...current, [id]: !current[id] }));
   }
 
-  function resetFilter(label) {
+  function resetFilter(label: FilterLabel) {
     updateFilter(label, DEFAULT_FILTER_VALUE);
   }
 
-  function selectSort(option) {
+  function selectSort(option: SortOption) {
     setSort(option);
     setSortOpen(false);
   }
