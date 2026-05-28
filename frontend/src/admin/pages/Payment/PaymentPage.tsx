@@ -48,6 +48,11 @@ const subStatusCls: Record<SubStatus, string> = {
 };
 
 // ── Interfaces ────────────────────────────────────────────────
+interface AiUsage {
+  resumePaidCount: number;    // 유료 이력서 분석 이용 횟수
+  interviewPaidCount: number; // 유료 AI 면접 이용 횟수
+}
+
 interface Payment {
   id: string;
   orderId: string;
@@ -56,6 +61,27 @@ interface Payment {
   paidAt: string;
   amount: number;
   status: PayStatus;
+  aiUsage: AiUsage;
+}
+
+// ── 환불 가능 여부 판단 헬퍼 ─────────────────────────────────
+const TODAY_REF = new Date(2026, 4, 28); // 2026-05-28
+
+function daysSincePaid(paidAt: string): number {
+  const [y, m, d] = paidAt.split('.').map(Number);
+  const paid = new Date(y, m - 1, d);
+  return Math.floor((TODAY_REF.getTime() - paid.getTime()) / 86400000);
+}
+
+function checkRefundEligibility(p: Payment): { eligible: boolean; reason: string | null } {
+  const days = daysSincePaid(p.paidAt);
+  if (days > 7) {
+    return { eligible: false, reason: `결제일로부터 ${days}일 경과 — 환불 가능 기간(7일)을 초과하였습니다.` };
+  }
+  if (p.aiUsage.resumePaidCount > 0 || p.aiUsage.interviewPaidCount > 0) {
+    return { eligible: false, reason: '유료 AI 기능 이용 이력이 있어 환불이 불가합니다.' };
+  }
+  return { eligible: true, reason: null };
 }
 
 interface Subscription {
@@ -69,14 +95,19 @@ interface Subscription {
 
 // ── Dummy Data ────────────────────────────────────────────────
 const initialPayments: Payment[] = [
-  { id: 'PAY-3001', orderId: 'TOSS-20260501-A1B2C3', memberName: '김민지', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED'        },
-  { id: 'PAY-3002', orderId: 'TOSS-20260425-D4E5F6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.04.25', amount: 29000, status: 'REFUND_REQUESTED' },
-  { id: 'PAY-3003', orderId: 'TOSS-20260518-J1K2L3', memberName: '박서연', product: '프리미엄 월정액', paidAt: '2026.05.18', amount: 29000, status: 'FAILED'           },
-  { id: 'PAY-3004', orderId: 'TOSS-20260301-M4N5O6', memberName: '홍길동', product: '프리미엄 월정액', paidAt: '2026.03.01', amount: 29000, status: 'REFUNDED'         },
-  { id: 'PAY-3005', orderId: 'TOSS-20260505-P7Q8R9', memberName: '이영희', product: '프리미엄 월정액', paidAt: '2026.05.05', amount: 29000, status: 'COMPLETED'        },
-  { id: 'PAY-3006', orderId: 'TOSS-20260412-S1T2U3', memberName: '정현우', product: '프리미엄 월정액', paidAt: '2026.04.12', amount: 29000, status: 'COMPLETED'        },
-  { id: 'PAY-3007', orderId: 'TOSS-20260501-V4W5X6', memberName: '최도윤', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED'        },
-  { id: 'PAY-3008', orderId: 'TOSS-20260503-W7X8Y9', memberName: '강지수', product: '프리미엄 월정액', paidAt: '2026.05.03', amount: 29000, status: 'COMPLETED'        },
+  // 결제 완료
+  { id: 'PAY-3001', orderId: 'TOSS-20260501-A1B2C3', memberName: '김민지', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        aiUsage: { resumePaidCount: 3, interviewPaidCount: 1 } },
+  { id: 'PAY-3005', orderId: 'TOSS-20260505-P7Q8R9', memberName: '이영희', product: '프리미엄 월정액', paidAt: '2026.05.05', amount: 29000, status: 'COMPLETED',        aiUsage: { resumePaidCount: 1, interviewPaidCount: 2 } },
+  { id: 'PAY-3006', orderId: 'TOSS-20260412-S1T2U3', memberName: '정현우', product: '프리미엄 월정액', paidAt: '2026.04.12', amount: 29000, status: 'COMPLETED',        aiUsage: { resumePaidCount: 5, interviewPaidCount: 0 } },
+  { id: 'PAY-3007', orderId: 'TOSS-20260501-V4W5X6', memberName: '최도윤', product: '프리미엄 월정액', paidAt: '2026.05.01', amount: 29000, status: 'COMPLETED',        aiUsage: { resumePaidCount: 2, interviewPaidCount: 3 } },
+  { id: 'PAY-3008', orderId: 'TOSS-20260503-W7X8Y9', memberName: '강지수', product: '프리미엄 월정액', paidAt: '2026.05.03', amount: 29000, status: 'COMPLETED',        aiUsage: { resumePaidCount: 0, interviewPaidCount: 1 } },
+  // 환불 요청 — 환불 가능 (7일 이내 + AI 미이용)
+  { id: 'PAY-3002', orderId: 'TOSS-20260525-D4E5F6', memberName: '이준호', product: '프리미엄 월정액', paidAt: '2026.05.25', amount: 29000, status: 'REFUND_REQUESTED', aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
+  // 환불 요청 — 환불 불가 (7일 이내이지만 AI 이용 이력 있음)
+  { id: 'PAY-3009', orderId: 'TOSS-20260522-Z9Y8X7', memberName: '오민서', product: '프리미엄 월정액', paidAt: '2026.05.22', amount: 29000, status: 'REFUND_REQUESTED', aiUsage: { resumePaidCount: 2, interviewPaidCount: 0 } },
+  // 결제 실패 / 환불 완료
+  { id: 'PAY-3003', orderId: 'TOSS-20260518-J1K2L3', memberName: '박서연', product: '프리미엄 월정액', paidAt: '2026.05.18', amount: 29000, status: 'FAILED',           aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
+  { id: 'PAY-3004', orderId: 'TOSS-20260301-M4N5O6', memberName: '홍길동', product: '프리미엄 월정액', paidAt: '2026.03.01', amount: 29000, status: 'REFUNDED',         aiUsage: { resumePaidCount: 0, interviewPaidCount: 0 } },
 ];
 
 const dummySubs: Subscription[] = [
@@ -123,6 +154,9 @@ export default function PaymentPage() {
   const paidCount    = payments.filter((p) => p.status === 'COMPLETED').length;
   const refundReqCnt = payments.filter((p) => p.status === 'REFUND_REQUESTED').length;
   const failCount    = payments.filter((p) => p.status === 'FAILED').length;
+  const refundCheck  = selected?.status === 'REFUND_REQUESTED'
+    ? checkRefundEligibility(selected)
+    : null;
 
   const processRefund = (id: string) => {
     setPayments((prev) =>
@@ -398,12 +432,12 @@ export default function PaymentPage() {
       {selected && (
         <div className="modalOverlay" onClick={() => setSelected(null)}>
           <div
-            className="memberModal"
-            style={{ width: 520 }}
+            className="memberModal modal--scrollable"
+            style={{ width: 540 }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 헤더 */}
-            <div className="modalHeader">
+            <div className="modalHeader" style={{ flexShrink: 0, padding: '20px 24px 16px' }}>
               <div>
                 <h3>{selected.memberName} · {selected.id}</h3>
                 <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>
@@ -414,27 +448,66 @@ export default function PaymentPage() {
             </div>
 
             {/* 본문 */}
-            <div className="modalInfoGrid" style={{ padding: '8px 0 16px' }}>
-              <div><span>상품명</span><strong>{selected.product}</strong></div>
-              <div><span>결제일</span><strong>{selected.paidAt}</strong></div>
-              <div><span>결제 금액</span><strong>₩{selected.amount.toLocaleString()}</strong></div>
-              <div>
-                <span>현재 상태</span>
-                <span className={`statusBadge ${payStatusCls[selected.status]}`}>
-                  {payStatusLabel[selected.status]}
-                </span>
+            <div className="modalBody">
+              {/* 결제 정보 */}
+              <div className="modalInfoGrid">
+                <div><span>상품명</span><strong>{selected.product}</strong></div>
+                <div><span>결제일</span><strong>{selected.paidAt}</strong></div>
+                <div><span>결제 금액</span><strong>₩{selected.amount.toLocaleString()}</strong></div>
+                <div>
+                  <span>현재 상태</span>
+                  <span className={`statusBadge ${payStatusCls[selected.status]}`}>
+                    {payStatusLabel[selected.status]}
+                  </span>
+                </div>
               </div>
+
+              {/* 환불 요청 건 — CS 관리자 확인 섹션 */}
+              {selected.status === 'REFUND_REQUESTED' && refundCheck && (
+                <div className="refundCheckSection">
+                  <p className="refundCheckTitle">환불 가능 여부 확인</p>
+
+                  {/* 결제 경과일 */}
+                  <div className="refundCheckRow">
+                    <span>결제일로부터 경과</span>
+                    <strong className={daysSincePaid(selected.paidAt) <= 7 ? 'refundOk' : 'refundFail'}>
+                      {daysSincePaid(selected.paidAt)}일 경과
+                      {daysSincePaid(selected.paidAt) <= 7 ? ' (7일 이내)' : ' (7일 초과)'}
+                    </strong>
+                  </div>
+
+                  {/* AI 이용 이력 */}
+                  <div className="refundCheckRow">
+                    <span>이력서 분석 유료 이용</span>
+                    <strong className={selected.aiUsage.resumePaidCount === 0 ? 'refundOk' : 'refundFail'}>
+                      {selected.aiUsage.resumePaidCount === 0 ? '없음' : `${selected.aiUsage.resumePaidCount}회`}
+                    </strong>
+                  </div>
+                  <div className="refundCheckRow">
+                    <span>AI 면접 유료 이용</span>
+                    <strong className={selected.aiUsage.interviewPaidCount === 0 ? 'refundOk' : 'refundFail'}>
+                      {selected.aiUsage.interviewPaidCount === 0 ? '없음' : `${selected.aiUsage.interviewPaidCount}회`}
+                    </strong>
+                  </div>
+
+                  {/* 최종 판단 */}
+                  <div className="refundEligibleRow">
+                    <span>환불 가능 여부</span>
+                    <span className={`refundEligibleBadge ${refundCheck.eligible ? 'eligible' : 'ineligible'}`}>
+                      {refundCheck.eligible ? '환불 가능' : '환불 불가'}
+                    </span>
+                  </div>
+
+                  {!refundCheck.eligible && (
+                    <p className="refundIneligibleNote">{refundCheck.reason}</p>
+                  )}
+                </div>
+              )}
             </div>
 
-            {selected.status === 'REFUND_REQUESTED' && (
-              <div className="refundNote">
-                환불 요청 건입니다. 확정 시 즉시 처리됩니다.
-              </div>
-            )}
-
             {/* 액션 */}
-            <div className="modalAction">
-              {selected.status === 'REFUND_REQUESTED' && (
+            <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
+              {selected.status === 'REFUND_REQUESTED' && refundCheck?.eligible && (
                 <button onClick={() => processRefund(selected.id)}>환불 처리 확정</button>
               )}
               <button onClick={() => setSelected(null)}>닫기</button>

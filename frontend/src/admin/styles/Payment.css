@@ -1,14 +1,73 @@
-/* ── payment page — refund modal ───────────────────────────── */
+/* ── payment page — 환불 가능 여부 확인 섹션 ──────────────── */
 
-.refundNote {
-  margin: 0 0 4px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: #fff8f0;
-  border: 1px solid #f0d8c0;
+.refundCheckSection {
+  margin: 12px 0 4px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f6f9fc;
+  border: 1px solid #dbe5ee;
+}
+
+.refundCheckTitle {
+  margin: 0 0 10px;
   font-size: 13px;
-  font-weight: 600;
-  color: #9a6048;
+  font-weight: 700;
+  color: #31475f;
+}
+
+.refundCheckRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5edf6;
+  font-size: 13px;
+  color: #5f7388;
+}
+
+.refundCheckRow strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.refundOk   { color: #2d6e4f; }
+.refundFail { color: #9a4545; }
+
+.refundEligibleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  font-size: 13px;
+  color: #5f7388;
+}
+
+.refundEligibleBadge {
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.refundEligibleBadge.eligible {
+  background: #e8f5ee;
+  color: #2d6e4f;
+}
+
+.refundEligibleBadge.ineligible {
+  background: #fdf0f0;
+  color: #9a4545;
+}
+
+.refundIneligibleNote {
+  margin: 10px 0 0;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #fff5f5;
+  border: 1px solid #f0d0d0;
+  font-size: 12px;
+  color: #9a4545;
+  line-height: 1.6;
 }
 
 /* ── payment table utilities ────────────────────────────────── */
