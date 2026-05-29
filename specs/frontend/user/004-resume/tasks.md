@@ -20,7 +20,7 @@
 
 ### 이력서 파일 업로드
 - [ ] `utils/resume/validation.ts` — 파일 용량(10MB) / 확장자(PDF·DOC·DOCX) / MIME 타입 검증
-- [ ] `hooks/resume/useResumeUpload.ts` — 검증 → Presigned URL 요청 → S3 업로드 → `documentId` 저장 흐름 구현
+- [ ] `hooks/resume/useResumeUpload.ts` — 검증 → `POST /upload` 서버 전송 → `documentId` 저장 → 폴링 시작 흐름 구현
 - [ ] `components/resume/ResumeUpload.tsx` — 드롭존 UI 구현, 업로드 중 중복 요청 방지
 - [ ] 에러 처리 — 용량/확장자/네트워크 실패 메시지 분기 처리
 
@@ -65,7 +65,6 @@
 
 ## Phase 6 — Polish & QA
 
-- [ ] `src/user/docs/resume/ResumeDocs.ts` — API 명세 인터페이스 정리
 - [ ] 모바일/태블릿 반응형 검증 — `ReportChart` 및 폼 레이아웃 대응
 - [ ] 통합 테스트 (MSW 활용) — 주요 시나리오(업로드/분석/조회) 테스트
 - [ ] 최종 클린업 — 하드코딩 목업 데이터 삭제, ESLint `no-console` 검사

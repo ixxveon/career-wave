@@ -23,14 +23,13 @@
 | 상태 관리 | `Zustand` | 서버 데이터 및 분석 상태 전역 공유 |
 | 비동기 통신 | `Axios` + `TanStack Query` | 서버 데이터 캐싱 및 로딩/에러/재시도 관리 |
 | 시각화 | `Recharts` | 역량 점수 레이더 차트 기본 지원 |
-| 스타일링 | `TailwindCSS` + `Framer Motion` | 로딩 메시지 전환 및 차트 진입 애니메이션 |
-| 데이터베이스 | `PostgreSQL` | 분석 결과 저장용 (JSONB 타입 활용으로 데이터 구조 유연성 확보) |
+| 스타일링 | `Plain CSS` + CSS 트랜지션/애니메이션 | 프로젝트 기존 스타일링 방식 준수 |
 | 세션 유지 | `SessionStorage` | 탭 종료 시 자동 만료 — `documentId` 및 분석 결과 저장 |
 
 ### 전제 조건 및 미결 항목
 
 - 업로드 시 백엔드에서 `documentId` 발급
-- 파일 업로드: S3 Presigned URL 방식 (백엔드 API 연동 필요)
+- 파일 업로드: `multipart/form-data` 직접 서버 전송 방식 (`POST /api/v1/resume/upload`)
 - 분석 상태 추적: **폴링(Polling) vs WebSocket** (Phase 3 착수 전 백엔드와 협의 후 확정)
 - 보안 검증: IDOR 방어를 위해 백엔드 API 단에서 `documentId` 소유권 검증 필수
 
@@ -43,7 +42,7 @@ src/
 └── user/
     ├── api/
     │   └── resume/
-    │       ├── uploadResume.ts             # Presigned URL 요청 및 S3 업로드 (이력서)
+    │       ├── uploadResume.ts             # 이력서 파일 업로드 (multipart/form-data)
     │       ├── submitCoverLetter.ts        # 자기소개서 문항/답변 제출
     │       ├── getAnalysisResult.ts        # 분석 결과 조회
     │       └── getResumeHistory.ts         # 이력 목록 페이징 조회

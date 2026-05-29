@@ -1,7 +1,7 @@
 # Feature Specification: Document Analysis (서류 코칭)
 
 > 작성일: 2026-05-29  
-> 관련 문서: `plan.md` / `api-schema.md` / `db-schema.md` / `constitution.md`  
+> 관련 문서: `plan.md` / `api-schema.md` / `constitution.md`  
 > **Feature Branch**: `feature/user-resume-analyze`  
 > **Status**: Final
 
@@ -25,6 +25,7 @@
 2. **Given** 미입력 필드 존재 시, **When** 'AI 분석 시작하기' 클릭 시, **Then** 버튼이 비활성화되거나 필수 입력 안내 메시지가 노출된다.
 
 ### User Story 3 — 분석 이력 재조회 (Priority: P2)
+> 취업 준비생은 이전에 분석한 서류 결과를 다시 확인하거나 면접 연습에 활용하고 싶다.
 
 **Acceptance Scenarios**:
 1. **Given** 이력 목록 진입 시, **Then** 본인의 분석 이력이 최신순으로 페이징되어 표시된다.
@@ -41,7 +42,7 @@
 - **FR-003**: 분석 완료 후 `documentId` 기반 결과 재조회 기능.
 - **FR-004**: 이력 목록 최신순 페이징 조회.
 - **FR-005**: 분석 완료 후 면접 도메인 연동(`?documentId=xxx`).
-- **FR-006**: AI 분석 작업 취소(Abort) 및 `IDLE` 상태 복귀 기능 제공.
+- **FR-006**: AI 분석 작업 취소(Abort) 및 `IDLE` 상태 복귀 기능 제공. (클라이언트 사이드 — 폴링 중단 후 상태 초기화. 별도 서버 취소 API 없음)
 
 ### Non-functional Requirements
 - **NFR-001**: 분석 완료까지 30초 이내 처리(Timeout 시 안내).

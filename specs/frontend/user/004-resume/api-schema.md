@@ -62,12 +62,15 @@ Authorization: Bearer {accessToken}
 {
   "documentId": "uuid-v4",
   "status": "UPLOADED",
-  "fileUrl": "[https://s3.bucket/path/to/file.pdf](https://s3.bucket/path/to/file.pdf)",
+  "fileUrl": "https://s3.bucket/path/to/file.pdf",
   "originalName": "이력서_홍길동.pdf",
   "fileType": "RESUME",
   "createdAt": "2026-05-29T14:53:44Z"
 }
 ```
+
+> ℹ️ 업로드 완료 즉시 서버에서 AI 분석 작업을 **자동 트리거**합니다.  
+> 클라이언트는 `documentId` 수신 후 즉시 `GET /feedback` 폴링을 시작합니다.
 
 ### Error Cases
 | errorCode | 상황 |
@@ -117,6 +120,9 @@ Authorization: Bearer {accessToken}
   "createdAt": "2026-05-29T14:53:44Z"
 }
 ```
+
+> ℹ️ 제출 완료 즉시 서버에서 AI 분석 작업을 **자동 트리거**합니다.  
+> 클라이언트는 `documentId` 수신 후 즉시 `GET /feedback` 폴링을 시작합니다.
 
 ### Error Cases
 | errorCode | 상황 |
@@ -191,8 +197,19 @@ Authorization: Bearer {accessToken}
       "documentId": "uuid-v4",
       "fileType": "RESUME",
       "originalName": "이력서_홍길동.pdf",
+      "company": null,
+      "job": null,
       "score": 82,
       "createdAt": "2026-05-29T14:53:44Z"
+    },
+    {
+      "documentId": "uuid-v4-2",
+      "fileType": "COVER_LETTER",
+      "originalName": null,
+      "company": "카카오",
+      "job": "백엔드 개발자",
+      "score": 76,
+      "createdAt": "2026-05-28T10:20:00Z"
     }
   ],
   "page": 0,
@@ -205,7 +222,9 @@ Authorization: Bearer {accessToken}
 | Field | Type | 설명 |
 |-------|------|------|
 | `fileType` | `string` | `RESUME` \| `COVER_LETTER` |
-| `originalName` | `string` \| `null` | 이력서는 파일명, 자기소개서는 `null` |
+| `originalName` | `string` \| `null` | 이력서: 파일명, 자기소개서: `null` |
+| `company` | `string` \| `null` | 자기소개서: 지원 회사명, 이력서: `null` |
+| `job` | `string` \| `null` | 자기소개서: 지원 직무명, 이력서: `null` |
 | `score` | `number` \| `null` | 분석 미완료 시 `null` |
 
 ### Error Cases
