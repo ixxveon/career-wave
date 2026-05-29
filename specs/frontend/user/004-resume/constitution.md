@@ -1,45 +1,87 @@
-# Constitution: Interview 도메인
+# Constitution: Document Analysis 도메인
 
-**Feature Branch**: `feature/user-interview-[기능명]` 
+> 관련 문서: `plan.md` / `checklist.md` / `api-schema.md`  
+> 레이어: **Frontend Only**
+
+## 0. 컨벤션
+
+* **Feature Branch**: `feature/user-resume-[기능명]`
+* **PR 제목**: `[RESUME] 기능명`
+* **파일 경로**: `src/user/{api|components|hooks|store|types|utils}/resume/`
+
+---
 
 ## 1. 도메인 원칙
-* 실시간 면접 세션(AI 텍스트/화상)의 생성부터 결과 리포트 산출까지의 전체 생명주기를 관리한다.
-* AI 분석 데이터는 수정이 불가능한(Immutable) 로그 형태로 저장하여 결과의 신뢰성을 보장한다.
-* 면접 중 발생하는 모든 상태(REC, 통신 연결 등)는 실시간성을 최우선으로 제어한다.
-* 모든 면접 세션 생성은 로그인된 유저를 전제로 하며, 유저의 구독 플랜 및 권한 레벨을 사전에 검증해야 한다.
+
+* **분석 무결성**: 사용자가 입력한 데이터와 파일은 서버 전송 전 `utils/resume/validation.ts`를 통한 1차 검증을 거치며, 분석 결과는 원본과 매핑되어 유실 없이 UI에 투영한다.
+* **사용자 경험(UX) 우선**: 분석 과정의 모든 단계(`IDLE → SUBMITTING → ANALYZING → SUCCESS/ERROR`)는 사용자에게 시각적으로 투명하게 공유되어야 한다.
+* **보안 및 프라이버시**: 분석된 개인정보 및 서류 데이터는 해당 유저만 접근 가능하며, IDOR 공격을 원천 차단한다.
+* **상태 일관성**: 분석 데이터는 전역 상태(`Zustand`)에서 관리하며, 새로고침 시에도 `SessionStorage`를 통해 복원되어야 한다.
+
+---
 
 ## 2. 상태 머신
-[READY] -> (start) -> [RUNNING] -> (finish) -> [FINISHED/ANALYZING] -> (complete) -> [REPORT]
+
+> 이력서(파일 업로드)와 자기소개서(텍스트 입력)는 제출 방식이 다르나 동일한 상태 머신을 따른다.
+
+```
+[IDLE] → [SUBMITTING] → [ANALYZING] → [SUCCESS]
+                                     ↘ [ERROR]
+ANY → [IDLE]  # 폼 초기화 및 재시도
+```
 
 | 전이 | 허용 여부 | 사유 |
 |------|-----------|------|
-| READY → RUNNING | 허용 | 면접 시작 |
-| RUNNING → FINISHED/ANALYZING | 허용 | 면접 종료 후 분석 대기 |
-| ANALYZING → REPORT | 허용 | 분석 완료 후 결과 산출 |
-| ANALYZING → ANALYZING (Timeout) | 허용 | 분석 지연 시 최대 30초 대기 후 Fallback(임시 결과 리포트) 처리 |
-| ANY → READY | **금지** | 면접 중 세션 초기화 금지 |
+| IDLE → SUBMITTING | 허용 | 이력서 업로드 또는 자기소개서 제출 시작 |
+| SUBMITTING → ANALYZING | 허용 | 서버 전송 완료 후 AI 분석 트리거 |
+| ANALYZING → SUCCESS | 허용 | 분석 완료 및 결과 수신 |
+| ANALYZING → ERROR | 허용 | API 타임아웃 또는 처리 실패 |
+| ANY → IDLE | 허용 | 폼 초기화 및 분석 재시도 |
+
+**에러 처리 정책**
+* `ANALYZING → ERROR` 전이 시 상태는 `IDLE`로 복원하여 재시도를 허용한다.
+* API 에러는 `ErrorCode` 기반 공통 모달로 처리한다.
+* 네트워크 단절은 별도 토스트 메시지로 처리한다.
+* `LoadingModal`은 `ERROR` 전이 시 반드시 닫혀야 한다.
+
+---
 
 ## 3. 아키텍처 결정
+
 | 결정 | 내용 | 근거 |
 |------|------|------|
-| WebSocket 채널 분리 | Spring(메인) / FastAPI(분석) 이중 연결 | AI 분석 데이터의 부하 분산 및 실시간 처리 속도 최적화 |
-| RAG 질문 생성 | Document Analysis 도메인 참조 | 유저 이력서 기반의 맞춤형 면접 환경 구축 |
-| 상태 관리 | Zustand (FE) | 실시간 스트리밍 및 소켓 데이터의 불필요한 리렌더링 방지 |
-| 장애 시 처리 정책 | Spring 단절 시 면접 자동 종료 후 서버 세션 유지, FastAPI 단절 시 분석 데이터 보존하며 면접은 세션 유지 | 데이터 무결성 보호 |
+| 상태 관리 | Zustand (Store 분리) | UI 상태(모달/입력폼)와 서버 상태(분석결과) 격리 |
+| API 계약 | `api-schema.md` 엄격 준수 | 프론트엔드-백엔드 간 데이터 불일치 방지 |
+| 유효성 검사 | 클라이언트 1차 검증 필수 | 파일 타입/용량/문항수 등 예외 상황 사전 차단 (서버 2차 검증은 백엔드 책임) |
+| 세션 저장소 | SessionStorage | 탭 종료 시 민감 데이터 자동 삭제 (`localStorage` 사용 금지) |
+| API 레이어 분리 | 순수 API 호출 → `api/` / 상태·사이드이펙트 포함 → `hooks/` | 역할 혼재 방지 |
+
+---
 
 ## 4. 불변 규칙 (Invariants)
-* 상태 변경은 반드시 `InterviewService`의 비즈니스 로직을 통과한다. (Repository 직접 수정 금지)
-* 모든 면접 데이터는 `SessionID`를 기준으로 논리적으로 격리되어야 한다.
-* 분석 데이터(시선, WPM 등)는 `interview.finish` 이벤트 수신 직후 전체 Flush를 수행하며, 서버 로그는 90일, 로컬 스토리지는 세션 종료 시점에 만료 정책(TTL)을 적용한다.
-* 유저 중복 접속 시, 기존 세션을 강제 종료하고 신규 접속을 허용하는 'Last-in-Wins' 정책을 원칙으로 한다.
+
+* **API 독립성**: API 호출 로직은 View 레이어에 직접 작성하지 않고 반드시 `api/` 또는 `hooks/`로 분리한다.
+    * 순수 API 호출 함수 → `user/api/resume/`
+    * 상태·사이드이펙트가 포함된 비동기 로직 → `user/hooks/resume/`
+* **데이터 검증**: 이력서 업로드 및 자기소개서 제출 전 `utils/resume/validation.ts`를 반드시 통과해야만 API 요청이 허용된다.
+* **IDOR 대응**: 프론트엔드는 서버 응답으로 받은 `documentId`만을 쿼리 키로 사용하며, 임의 값을 직접 생성하거나 조작하지 않는다.
+* **리포트 렌더링**: 분석 결과 리포트는 고정된 3단 구조(Good/Bad/Fix)를 엄격히 준수하며, 항목 중 하나가 비어 있을 경우 Empty State UI를 렌더링한다.
+* **자기소개서 상태 관리**: 문항/답변 상태는 `useCoverLetterForm` 훅을 통해 일관되게 관리하며, 컴포넌트 로컬 `useState`로 개별 관리하지 않는다.
+
+---
 
 ## 5. 연동 계약
-* **Job Notice 도메인:** 공고 ID를 입력받아 타겟 정보(Job Notice)를 제공받음. 조회 실패 시 기본 일반 면접 질문셋(Default Question Set)으로 대체.
-* **Document Analysis 도메인:** 이력서 데이터를 면접 질문 컨텍스트로 사용함. 파싱 실패 시 파싱되지 않은 원본 텍스트 기반 혹은 범용 직무 질문으로 fallback.
-* **FastAPI 모듈:** 분석된 감정/자세 수치(JSON)를 반환함. 반환 실패 시 해당 구간의 점수를 '측정 불가'로 마킹하고 사용자에게 재측정 안내 알림 발송.
+
+* **면접 도메인**: 분석 완료 후 `documentId`를 URL 파라미터(`?documentId=xxx`)로 전달하여 면접 질문 컨텍스트로 활용한다. 유효하지 않은 `documentId`로 진입 시 에러 처리가 되어야 한다.
+* **목록 관리**: 페이징 데이터 조회 시 반드시 최신순 정렬을 기본으로 한다.
+
+---
 
 ## 6. 금지 패턴
-* Swagger 어노테이션을 Controller에 직접 작성 금지 → `InterviewDocs` 인터페이스로 분리.
-* Controller 레이어에서 직접 `ResponseEntity`를 반환 금지 → 반드시 `ApiResponse<T>` 래퍼 사용.
-* 프론트엔드에서 전역 데이터(소켓 수신 데이터 등)를 로컬 상태(`useState`)에 복사하여 사용하는 패턴 금지. 단, `isOpen`, `hover` 등 UI 전용 상태는 허용.
-* 면접 중인 세션 정보를 브라우저의 전역 객체(window)에 직접 저장 금지.
+
+* **전역 상태 오염**: `Zustand` 스토어의 상태를 컴포넌트 내부 `useState`로 복사하여 동기화를 깨뜨리는 행위 금지.
+* **자기소개서 상태 분산**: 문항/답변 데이터를 각 컴포넌트가 개별 `useState`로 파편화하여 관리하는 행위 금지.
+* **로그 출력**: 배포 전 모든 `console.log` 및 디버깅 코드 제거 (ESLint `no-console` 룰로 강제).
+* **DOM 직접 접근**: `document.getElementById` 등 원시적인 DOM 접근 금지 (React Ref 활용).
+* **데이터 직접 저장**: 분석 결과 및 세션 정보를 `localStorage`에 저장 금지 (`SessionStorage` 강제).
+* **window 전역 오염**: 세션 정보나 상태를 `window` 객체에 직접 저장 금지.
