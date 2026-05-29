@@ -10,8 +10,8 @@
 
 ### 상태 설계
 
-- [ ] `Zustand` 스토어: 서버 상태(서류 분석 결과)와 UI 로컬 상태(modal open/close, input value)가 분리되어 있는가?
-- [ ] 전역 상태를 로컬 `useState`에 복사하여 의존성이 꼬이게 만들지 않았는가?
+- [ ] 서버 상태(분석 결과, 이력 목록)는 `TanStack Query`로 관리하고, 입력 폼 상태는 컴포넌트 `useState`로 관리하는가?
+- [ ] TanStack Query 캐시 데이터를 컴포넌트 `useState`에 복사하여 동기화를 깨뜨리지 않았는가?
 - [ ] `idle → uploading → analyzing → success / error` UI 상태 전이가 누락 없이 처리되는가?
 
 ### 데이터 연동

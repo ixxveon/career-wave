@@ -9,7 +9,6 @@
 ## Phase 1 — 인프라 세팅 & 타입 정의
 
 - [ ] `types/resume.d.ts` 정의 (Request/Response DTO, AnalysisResult, 상태 머신 타입)
-- [ ] `store/resumeStore.ts` 구현 (서버 상태 / UI 상태 분리, Zustand slice 설계 및 리렌더링 최적화)
 - [ ] `api/resume/` API 호출 함수 인터페이스 작성 (AbortController 지원) 및 공통 에러 핸들링 구조 세팅
 - [ ] TanStack Query 커스텀 훅 세팅 (queryKey 컨벤션, `retry` 정책 포함)
 - [ ] SessionStorage 헬퍼 유틸리티 구현 (`try-catch` 통한 직렬화/역직렬화 예외 처리 포함)

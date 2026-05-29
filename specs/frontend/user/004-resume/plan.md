@@ -20,8 +20,8 @@
 
 | 분류 | 선택 | 근거 |
 |------|------|------|
-| 상태 관리 | `Zustand` | 서버 데이터 및 분석 상태 전역 공유 ⚠️ 구현 전 팀 합의 및 `package.json` 등록 필요 (CONVENTION.md § 11) |
-| 비동기 통신 | `Axios` + `TanStack Query` | 서버 데이터 캐싱 및 로딩/에러/재시도 관리 ⚠️ TanStack Query 의존성 설치 여부 확인 필요 (CONVENTION.md § 11) |
+| 서버 상태 | `TanStack Query` | 분석 결과 캐싱 및 로딩/에러/재시도 관리 |
+| 입력 폼 상태 | React `useState` | 컴포넌트 내 단기 입력 상태 관리 |
 | 시각화 | `Recharts` | 역량 점수 레이더 차트 기본 지원 ⚠️ 의존성 설치 여부 확인 필요 |
 | 스타일링 | `Plain CSS` + CSS 트랜지션/애니메이션 | 프로젝트 기존 스타일링 방식 준수 |
 | 세션 유지 | `SessionStorage` | 탭 종료 시 자동 만료 — `documentId` 및 분석 결과 저장 |
@@ -57,11 +57,9 @@ src/
     ├── hooks/
     │   └── resume/
     │       ├── useResumeUpload.ts          # 파일 검증 → 업로드 로직
-    │       ├── useCoverLetterForm.ts       # 폼 유효성 및 데이터 관리
-    │       ├── useAnalysisResult.ts        # 분석 상태 구독 및 결과 수신
-    │       └── useResumeHistory.ts         # 이력 목록 관리
-    ├── store/
-    │   └── resumeStore.ts                  # 서버/UI 상태 격리 및 리렌더링 최적화
+    │       ├── useCoverLetterForm.ts       # 폼 입력 상태 및 유효성 관리 (local state)
+    │       ├── useAnalysisResult.ts        # TanStack Query 기반 분석 결과 조회
+    │       └── useResumeHistory.ts         # TanStack Query 기반 이력 목록 조회
     ├── types/
     │   └── resume.d.ts                     # API DTO 및 도메인 타입
     └── utils/
