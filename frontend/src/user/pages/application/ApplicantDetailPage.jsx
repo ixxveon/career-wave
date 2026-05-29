@@ -125,7 +125,7 @@ export default function ApplicantDetailPage() {
             <h2>면접 답변 기록</h2>
           </div>
           <pre>{historyDetail?.script || '연결된 면접 기록이 없습니다.'}</pre>
-          <Link className="ad-link" to={`/career-diagnosis/detail/${applicant.careerHistoryId}`}>
+          <Link className="ad-link" to="/career-history">
             진단 원본 보기 <ExternalLink size={14} />
           </Link>
         </article>

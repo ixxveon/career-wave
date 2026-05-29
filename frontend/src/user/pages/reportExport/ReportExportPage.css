@@ -1,0 +1,269 @@
+.report-export-page {
+  display: grid;
+  gap: 28px;
+  padding: 40px min(5vw, 64px) 56px;
+  background: #f6f8fb;
+  color: #172033;
+}
+
+.report-export-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px;
+  border: 1px solid #dce5f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.report-export-hero h1 {
+  margin: 0 0 12px;
+  font-size: clamp(28px, 4vw, 42px);
+}
+
+.report-export-hero span,
+.report-export-score-grid p,
+.report-export-side p {
+  color: #64748b;
+  line-height: 1.7;
+}
+
+.report-export-hero button,
+.download-panel button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.report-export-score-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.report-export-score-grid article,
+.report-export-side section,
+.report-paper {
+  border: 1px solid #dce5f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.report-export-score-grid article {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+}
+
+.report-export-score-grid svg,
+.report-export-section-title svg {
+  color: #2563eb;
+}
+
+.report-export-score-grid span {
+  color: #64748b;
+  font-weight: 900;
+}
+
+.report-export-score-grid strong {
+  font-size: 32px;
+}
+
+.report-export-score-grid p {
+  margin: 0;
+}
+
+.report-export-layout {
+  display: grid;
+  grid-template-columns: minmax(420px, 1.2fr) minmax(320px, 0.8fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.report-export-preview {
+  padding: 18px;
+  border-radius: 8px;
+  background: #e8eef6;
+}
+
+.report-paper {
+  display: grid;
+  gap: 24px;
+  min-height: 720px;
+  padding: 42px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+}
+
+.report-paper header {
+  padding-bottom: 20px;
+  border-bottom: 2px solid #172033;
+}
+
+.report-paper header span {
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.report-paper h2 {
+  margin: 8px 0;
+  font-size: 30px;
+}
+
+.report-paper h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.report-paper ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: #334155;
+  line-height: 1.7;
+}
+
+.report-history-table {
+  display: grid;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.report-history-table div {
+  display: grid;
+  grid-template-columns: 110px 1fr 70px;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.report-history-table div:last-child {
+  border-bottom: 0;
+}
+
+.report-history-table span,
+.report-history-table em {
+  color: #64748b;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.report-export-side {
+  display: grid;
+  gap: 18px;
+}
+
+.report-export-side section {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.report-export-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-export-section-title h2,
+.download-panel h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.weakness-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.weakness-list span {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #be123c;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.action-plan-list {
+  display: grid;
+  gap: 12px;
+}
+
+.action-plan-list article {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.action-plan-list span {
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.action-plan-list strong {
+  font-size: 16px;
+}
+
+.action-plan-list p {
+  margin: 0;
+}
+
+.download-panel {
+  background: #172033 !important;
+  color: #ffffff;
+}
+
+.download-panel p {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.download-panel button {
+  background: #ffffff;
+  color: #172033;
+}
+
+@media (max-width: 1040px) {
+  .report-export-score-grid,
+  .report-export-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .report-export-page {
+    padding: 24px 16px 40px;
+  }
+
+  .report-export-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .report-paper {
+    min-height: auto;
+    padding: 24px;
+  }
+
+  .report-history-table div {
+    grid-template-columns: 1fr;
+  }
+}

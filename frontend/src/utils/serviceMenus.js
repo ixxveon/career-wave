@@ -16,13 +16,11 @@ export const serviceMenus = [
     ],
   },
   {
-    label: 'AI 면접',
-    href: '/interview',
+    label: '취업 준비',
+    href: '/career-history',
     children: [
-      { label: '면접 홈', href: '/interview' },
-      { label: 'AI 텍스트 면접', href: '/interview/text' },
-      { label: 'AI 화상 면접', href: '/interview/media', comingSoon: true },
-      { label: '면접 리포트', href: '/interview/report' },
+      { label: 'Career History', href: '/career-history' },
+      { label: 'Report Export', href: '/report-export' },
     ],
   },
   {
@@ -32,9 +30,6 @@ export const serviceMenus = [
       { label: '지원 현황', href: '/applications/status' },
       { label: '입사 지원', href: '/applications/apply' },
       { label: '지원자 관리', href: '/applications/applicants' },
-      { label: '취업 준비 기록', href: '/career-diagnosis/history' },
-      { label: '학습 로드맵', href: '/career-diagnosis/roadmap' },
-      { label: '종합 진단 리포트', href: '/career-diagnosis/report' },
     ],
   },
   {

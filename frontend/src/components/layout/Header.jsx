@@ -10,7 +10,7 @@ function ComingSoonModal({ onClose }) {
 
   function handleCta() {
     onClose();
-    navigate('/interview/text');
+    navigate('/career-history');
   }
 
   return (

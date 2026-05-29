@@ -96,7 +96,7 @@ function UserMyPage() {
                                     <div style={{ width: "55%" }} />
                                 </div>
 
-                                <Link className="cw-progress-link" to="/interview/text">
+                                <Link className="cw-progress-link" to="/career-history">
                                     자세히 보기 →
                                 </Link>
                             </div>
@@ -144,7 +144,7 @@ function UserMyPage() {
 
                         <div className="cw-chart-title">
                             <h4>최근 모의면접 점수 추이</h4>
-                            <Link className="cw-chart-filter" to="/interview">
+                            <Link className="cw-chart-filter" to="/career-history">
                                 최근 5회
                             </Link>
                         </div>

@@ -232,7 +232,8 @@ export default function DocumentResultView({
         )}
       </div>
 
-      <button className="dr-cta" onClick={() => navigate('/interview/text')}>
+      {/* ── CTA ── */}
+      <button className="dr-cta" onClick={() => navigate('/career-history')}>
         <Mic size={20} />
         이 서류 기반으로 AI 텍스트 · 음성 면접 시작하기
       </button>
