@@ -69,4 +69,4 @@
 - [ ] 통합 테스트 (MSW 활용) — 주요 시나리오(업로드/분석/조회) 테스트
 - [ ] 최종 클린업 — 하드코딩 목업 데이터 삭제, ESLint `no-console` 검사
 - [ ] 성능 측정 — Lighthouse 성능 90점 / 접근성 95점 이상 달성
-- [ ] `checklist.md` 기반 최종 점검 및 PR 생성 (`[RESUME] 서류 분석 기능 구현`)
+- [ ] `checklist.md` 기반 최종 점검 및 PR 생성 (`.github/pull_request_template.md` 형식 준수)

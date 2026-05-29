@@ -85,7 +85,7 @@ specs/fastapi/{scope}/{number}-{domain}/
 | `tasks.md` | 실제 작업 단위 목록 |
 | `constitution.md` | 도메인 원칙과 불변 규칙 정의 |
 | `checklist.md` | 구현 완료 후 최종 점검 항목 정의 |
-| `api-spec.json` | API 요청/응답 계약 정의 |
+| `api-spec.json` | API 요청/응답 계약 정의 (OpenAPI 자동화 시 추가) |
 
 ### 작성 규칙
 

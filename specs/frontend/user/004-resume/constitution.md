@@ -5,8 +5,8 @@
 
 ## 0. 컨벤션
 
-* **Feature Branch**: `feature/user-resume-[기능명]`
-* **PR 제목**: `[RESUME] 기능명`
+* **Feature Branch**: `feature/user-resume-{기능명}` (예: `feature/user-resume-analyze`)
+* **PR 작성**: `.github/pull_request_template.md` 형식 필수 준수 (CONTRIBUTION.md § 6)
 * **파일 경로**: `src/user/{api|components|hooks|store|types|utils}/resume/`
 
 ---
@@ -50,7 +50,8 @@ ANY → [IDLE]  # 폼 초기화 및 재시도
 
 | 결정 | 내용 | 근거 |
 |------|------|------|
-| 상태 관리 | Zustand (Store 분리) | UI 상태(모달/입력폼)와 서버 상태(분석결과) 격리 |
+| 상태 관리 | Zustand (Store 분리) | UI 상태(모달/입력폼)와 서버 상태(분석결과) 격리 ⚠️ 팀 합의 및 `package.json` 등록 필요 (CONVENTION.md § 11) |
+| 비동기 통신 | TanStack Query | 서버 데이터 캐싱 및 로딩/에러/재시도 관리 ⚠️ 의존성 설치 여부 확인 필요 (CONVENTION.md § 11) |
 | API 계약 | `api-schema.md` 엄격 준수 | 프론트엔드-백엔드 간 데이터 불일치 방지 |
 | 유효성 검사 | 클라이언트 1차 검증 필수 | 파일 타입/용량/문항수 등 예외 상황 사전 차단 (서버 2차 검증은 백엔드 책임) |
 | 세션 저장소 | SessionStorage | 탭 종료 시 민감 데이터 자동 삭제 (`localStorage` 사용 금지) |

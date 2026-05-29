@@ -20,9 +20,9 @@
 
 | 분류 | 선택 | 근거 |
 |------|------|------|
-| 상태 관리 | `Zustand` | 서버 데이터 및 분석 상태 전역 공유 |
-| 비동기 통신 | `Axios` + `TanStack Query` | 서버 데이터 캐싱 및 로딩/에러/재시도 관리 |
-| 시각화 | `Recharts` | 역량 점수 레이더 차트 기본 지원 |
+| 상태 관리 | `Zustand` | 서버 데이터 및 분석 상태 전역 공유 ⚠️ 구현 전 팀 합의 및 `package.json` 등록 필요 (CONVENTION.md § 11) |
+| 비동기 통신 | `Axios` + `TanStack Query` | 서버 데이터 캐싱 및 로딩/에러/재시도 관리 ⚠️ TanStack Query 의존성 설치 여부 확인 필요 (CONVENTION.md § 11) |
+| 시각화 | `Recharts` | 역량 점수 레이더 차트 기본 지원 ⚠️ 의존성 설치 여부 확인 필요 |
 | 스타일링 | `Plain CSS` + CSS 트랜지션/애니메이션 | 프로젝트 기존 스타일링 방식 준수 |
 | 세션 유지 | `SessionStorage` | 탭 종료 시 자동 만료 — `documentId` 및 분석 결과 저장 |
 
