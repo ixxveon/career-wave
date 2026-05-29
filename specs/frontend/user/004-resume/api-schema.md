@@ -23,7 +23,6 @@
 Authorization: Bearer {accessToken}
 ```
 
-> ⚠️ TODO: JWT 기반 인증 방식 백엔드 확인 필요 (현재 Request body의 `memberId` 제거 전제)
 
 ### 에러 응답 공통 포맷
 ```json
@@ -70,7 +69,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 업로드 완료 즉시 서버에서 AI 분석 작업을 **자동 트리거**합니다.  
-> 클라이언트는 `documentId` 수신 후 즉시 `GET /feedback` 폴링을 시작합니다.
+> 클라이언트는 `documentId` 수신 후 즉시 WebSocket(`WS /ws/resume/{documentId}/status`) 연결을 시작합니다.
 
 ### Error Cases
 | errorCode | 상황 |
@@ -87,8 +86,7 @@ Authorization: Bearer {accessToken}
 - **Description**: 문항 및 답변 데이터 제출 및 `documentId` 발급
 - **Content-Type**: `application/json`
 
-> ⚠️ TODO: 자기소개서는 파일이 없으므로 DB의 `file_url NOT NULL` 제약 처리 방식 백엔드 확인 필요  
-> (빈 문자열 `""` 또는 고정값 `"NONE"` 중 결정 후 이 줄 업데이트)
+> ℹ️ 자기소개서는 파일이 없으므로 DB의 `file_url` 컬럼은 **nullable**로 설계한다.
 
 ### Request
 ```json
@@ -122,7 +120,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 제출 완료 즉시 서버에서 AI 분석 작업을 **자동 트리거**합니다.  
-> 클라이언트는 `documentId` 수신 후 즉시 `GET /feedback` 폴링을 시작합니다.
+> 클라이언트는 `documentId` 수신 후 즉시 WebSocket(`WS /ws/resume/{documentId}/status`) 연결을 시작합니다.
 
 ### Error Cases
 | errorCode | 상황 |
@@ -135,12 +133,11 @@ Authorization: Bearer {accessToken}
 ## 3. 분석 결과 조회
 
 - **Endpoint**: `GET /api/v1/resume/{documentId}/feedback`
-- **Description**: AI 분석 완료 후 피드백 결과 조회
+- **Description**: 분석 완료 후 피드백 결과 조회 (페이지 재진입·새로고침 시 TanStack Query로 재조회)
 - **Content-Type**: `application/json`
 
-> ⚠️ TODO: 분석 상태 추적 방식(폴링 vs WebSocket) 백엔드 협의 후 확정 필요
-> - 폴링 방식: 클라이언트가 일정 주기로 이 엔드포인트를 호출하여 `status` 확인
-> - WebSocket 방식: 별도 WS 엔드포인트 명세 추가 필요
+> ℹ️ 실시간 분석 상태 추적은 **WebSocket**을 사용한다 (`WS /ws/resume/{documentId}/status`).  
+> 이 엔드포인트는 `COMPLETED` 상태의 전체 결과를 가져오거나 재진입 시 복원 용도로 사용한다.
 
 ### Response `200 OK`
 ```json
@@ -231,3 +228,74 @@ Authorization: Bearer {accessToken}
 | errorCode | 상황 |
 |-----------|------|
 | `UNAUTHORIZED` | 토큰 없음 또는 만료 |
+
+---
+
+## 5. 분석 상태 실시간 구독 (WebSocket)
+
+- **Endpoint**: `WS /ws/resume/{documentId}/status`
+- **Description**: 업로드 또는 자기소개서 제출 후 AI 분석 상태를 실시간으로 수신
+
+### 인증
+
+JWT를 WebSocket 핸드셰이크 시 쿼리 파라미터로 전달한다.
+
+```
+WS /ws/resume/{documentId}/status?token={accessToken}
+```
+
+### Connection Lifecycle
+
+```
+클라이언트                          서버
+   │                                │
+   │── WS 연결 요청 ────────────────▶│  documentId 소유권 검증
+   │                                │
+   │◀─ {"status":"ANALYZING", ...} ─│  분석 진행 중 (1회 이상)
+   │◀─ {"status":"ANALYZING", ...} ─│
+   │                                │
+   │◀─ {"status":"COMPLETED", ...} ─│  분석 완료 → 서버가 연결 종료
+   │   (또는 "FAILED")              │
+   │                                │
+   │  (클라이언트 연결 종료)         │
+```
+
+> ℹ️ 클라이언트가 먼저 연결을 끊을 경우(탭 이탈 / 분석 취소): 서버 측 별도 취소 API 없음 — 클라이언트만 WS 연결을 닫고 UI 상태를 `IDLE`로 초기화한다.
+
+### Server → Client 메시지 형식
+
+```json
+{
+  "status": "ANALYZING",
+  "message": "키워드를 추출하고 있어요",
+  "progress": 40
+}
+```
+
+| Field | Type | 설명 |
+|-------|------|------|
+| `status` | `string` | `ANALYZING` \| `COMPLETED` \| `FAILED` |
+| `message` | `string` | 현재 단계 안내 문구 (UI 표시용) |
+| `progress` | `number` | 진행률 0~100 |
+
+#### 단계별 `message` 예시
+
+| status | message | progress |
+|--------|---------|----------|
+| `ANALYZING` | `"파일을 읽고 있어요"` | 10 |
+| `ANALYZING` | `"키워드를 추출하고 있어요"` | 40 |
+| `ANALYZING` | `"피드백을 생성하고 있어요"` | 70 |
+| `COMPLETED` | `"분석이 완료되었어요"` | 100 |
+| `FAILED` | `"분석 중 오류가 발생했어요"` | — |
+
+> ℹ️ `COMPLETED` 또는 `FAILED` 수신 즉시 서버가 WS 연결을 종료한다.  
+> 클라이언트는 `COMPLETED` 수신 후 `GET /api/v1/resume/{documentId}/feedback`으로 전체 결과를 조회한다.
+
+### Error Cases
+
+| 상황 | 동작 |
+|------|------|
+| 유효하지 않은 `documentId` | 연결 즉시 종료 (Close 1008) |
+| 본인 소유가 아닌 `documentId` | 연결 즉시 종료 (Close 1008) |
+| 토큰 없음 또는 만료 | 연결 즉시 종료 (Close 1008) |
+| AI 분석 타임아웃 | `FAILED` 메시지 전송 후 연결 종료 |
