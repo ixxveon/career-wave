@@ -1,0 +1,145 @@
+.cw-footer {
+  margin-top: 60px;
+  border-top: 1px solid #e6edf7;
+  background: #f4f8fd;
+}
+
+.cw-footer__inner {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 52px clamp(20px, 2.5vw, 40px) 32px;
+}
+
+/* ── 상단: 브랜드 + 링크 컬럼 ──────────────────── */
+.cw-footer__top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: flex-start;
+}
+
+/* ── 브랜드 영역 ────────────────────────────────── */
+.cw-footer__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.cw-footer__logo img {
+  width: 36px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.cw-footer__logo span {
+  font-size: 17px;
+  font-weight: 950;
+  color: #28416b;
+}
+
+.cw-footer__desc {
+  margin: 0 0 20px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.8;
+  color: #6d7890;
+}
+
+/* ── SNS 아이콘 ─────────────────────────────────── */
+.cw-footer__sns {
+  display: flex;
+  gap: 10px;
+}
+
+.cw-footer__sns-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #dce6f4;
+  background: #ffffff;
+  color: #5577a8;
+  transition: background 0.14s, color 0.14s, border-color 0.14s;
+}
+
+.cw-footer__sns-btn:not(:disabled):hover {
+  background: #2f6fce;
+  border-color: #2f6fce;
+  color: #ffffff;
+}
+
+.cw-footer__sns-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── 링크 컬럼 묶음 ─────────────────────────────── */
+.cw-footer__cols {
+  display: flex;
+  justify-content: flex-end;
+  gap: 56px;
+}
+
+.cw-footer__col-title {
+  margin: 0 0 14px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #344d75;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cw-footer__col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cw-footer__col a {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6d7890;
+  transition: color 0.12s;
+}
+
+.cw-footer__col a:hover {
+  color: #2f6fce;
+}
+
+/* ── 하단: 카피라이트 ──────────────────────────── */
+.cw-footer__bottom {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e2eaf5;
+}
+
+.cw-footer__bottom small {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7a8aa3;
+}
+
+/* ── 반응형 ─────────────────────────────────────── */
+@media (max-width: 960px) {
+  .cw-footer__top {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .cw-footer__cols {
+    justify-content: flex-start;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .cw-footer__cols {
+    gap: 24px;
+  }
+}

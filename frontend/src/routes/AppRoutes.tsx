@@ -53,6 +53,13 @@ import CheckoutPage from '../user/pages/billing/CheckoutPage';
 import PaymentSuccessPage from '../user/pages/billing/PaymentSuccessPage';
 import PaymentFailPage from '../user/pages/billing/PaymentFailPage';
 
+import SupportPage from '../user/pages/support/SupportPage';
+import NoticePage from '../user/pages/support/NoticePage';
+import NoticeDetailPage from '../user/pages/support/NoticeDetailPage';
+import FaqPage from '../user/pages/support/FaqPage';
+import InquiryListPage from '../user/pages/support/InquiryListPage';
+import InquiryCreatePage from '../user/pages/support/InquiryCreatePage';
+
 import NotFoundPage from '../user/pages/common/NotFoundPage';
 
 // ── 어드민 플랫폼 ──────────────────────────────────────────────
@@ -64,7 +71,7 @@ import UserManagementPage from '../admin/pages/UserManagement/UserManagementPage
 import ReportPage from '../admin/pages/Report/ReportPage';
 import CustomerServicePage from '../admin/pages/CustomerService/CustomerServicePage';
 import AdminPaymentPage from '../admin/pages/Payment/PaymentPage';
-import MatchingPage from '../admin/pages/Matching/MatchingPage';
+import StatisticsPage from '../admin/pages/Statistics/StatisticsPage';
 import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
 import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
@@ -138,6 +145,14 @@ function AppRoutes() {
           <Route path="mentor" element={<MentorPage />} />
         </Route>
 
+        <Route path="support" element={<SupportPage />}>
+          <Route path="notices" element={<NoticePage />} />
+          <Route path="notices/:id" element={<NoticeDetailPage />} />
+          <Route path="faq" element={<FaqPage />} />
+          <Route path="inquiry" element={<InquiryListPage />} />
+          <Route path="inquiry/create" element={<InquiryCreatePage />} />
+        </Route>
+
         <Route path="billing">
           <Route index element={<Navigate to="/billing/pricing" replace />} />
           <Route path="pricing" element={<PricingPage />} />
@@ -165,7 +180,7 @@ function AppRoutes() {
           <Route path="reports"   element={<ReportPage />} />
           <Route path="cs"        element={<CustomerServicePage />} />
           <Route path="payments"  element={<AdminPaymentPage />} />
-          <Route path="matching"  element={<MatchingPage />} />
+          <Route path="stats"     element={<StatisticsPage />} />
           <Route path="ai"        element={<AiMetricsPage />} />
           <Route path="scraping"  element={<ScrapingPage />} />
           <Route path="log"       element={<AuditLogPage />} />
