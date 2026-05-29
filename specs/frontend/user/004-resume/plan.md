@@ -26,11 +26,11 @@
 | 스타일링 | `Plain CSS` + CSS 트랜지션/애니메이션 | 프로젝트 기존 스타일링 방식 준수 |
 | 세션 유지 | `SessionStorage` | 탭 종료 시 자동 만료 — `documentId` 및 분석 결과 저장 |
 
-### 전제 조건 및 미결 항목
+### 전제 조건
 
 - 업로드 시 백엔드에서 `documentId` 발급
 - 파일 업로드: `multipart/form-data` 직접 서버 전송 방식 (`POST /api/v1/resume/upload`)
-- 분석 상태 추적: **폴링(Polling) vs WebSocket** (Phase 3 착수 전 백엔드와 협의 후 확정)
+- 분석 상태 추적: **WebSocket** 확정 (`WS /ws/resume/{documentId}/status`)
 - 보안 검증: IDOR 방어를 위해 백엔드 API 단에서 `documentId` 소유권 검증 필수
 
 ---
@@ -89,7 +89,7 @@ src/
 - [ ] `CoverLetterForm` 컴포넌트 — 폼 유효성 검사 및 분석 시작 버튼 연동
 
 ### Phase 3: AI 분석 로딩 흐름
-- [ ] `useAnalysisResult` — 폴링/WebSocket 기반 상태 구독
+- [ ] `useAnalysisResult` — WebSocket 기반 분석 상태 구독
 - [ ] `LoadingModal` — 단계별(파일 파싱 → AI 분석 → 리포트 생성) 상태 머신 구현
 - [ ] 비정상 종료 대응 — 타임아웃 및 네트워크 오류 시 에러 처리
 
