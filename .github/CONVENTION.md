@@ -4,7 +4,7 @@
 
 ---
 
-# 1. Core Principle
+## 1. Core Principle
 
 CareerWave는 스펙 주도 개발을 기준으로 작업한다.
 
@@ -24,9 +24,9 @@ CareerWave는 스펙 주도 개발을 기준으로 작업한다.
 
 ---
 
-# 2. Architecture
+## 2. Architecture
 
-## Repository
+### Repository
 
 ```text
 backend/    Spring Boot API
@@ -36,7 +36,7 @@ specs/      spec-driven development documents
 .github/    workflows, prompts, templates, convention
 ```
 
-## Backend
+### Backend
 
 ```text
 backend/src/main/java/kr/co/carrer/
@@ -74,7 +74,7 @@ backend/src/main/java/kr/co/carrer/
 
 ---
 
-# 3. Naming Convention
+## 3. Naming Convention
 
 | Component | Rule | Example |
 |-----------|------|---------|
@@ -101,7 +101,7 @@ interface MiniPaginationProps {}
 
 ---
 
-# 4. DTO Convention
+## 4. DTO Convention
 
 도메인별 DTO는 기본적으로 하나의 파일에서 관리한다.
 
@@ -123,7 +123,7 @@ public class MemberDTO {
 
 ---
 
-# 5. Enum Convention
+## 5. Enum Convention
 
 ### Backend
 
@@ -140,7 +140,7 @@ private CompanyStatus status;
 
 ---
 
-# 6. API Response Convention
+## 6. API Response Convention
 
 모든 Backend API 응답은 `ApiResponse<T>` 사용을 원칙으로 한다.
 
@@ -161,7 +161,7 @@ ApiResponse.fail(statusCode, message, data);
 
 ---
 
-# 7. Exception Convention
+## 7. Exception Convention
 
 ### Rules
 
@@ -179,7 +179,7 @@ throw new CustomException(ErrorCode.USER_NOT_FOUND);
 
 ---
 
-# 8. Swagger Convention
+## 8. Swagger Convention
 
 Swagger Annotation은 가능한 경우 `docs` 패키지의 인터페이스로 분리한다.
 
@@ -196,7 +196,7 @@ docs/
 
 ---
 
-# 9. Security Convention
+## 9. Security Convention
 
 ### Roles
 
@@ -215,36 +215,36 @@ ROLE_ADMIN
 
 ---
 
-# 10. Database Convention
+## 10. Database Convention
 
-## Table Naming
+### Table Naming
 
 - 모든 테이블명은 lowercase snake_case를 사용한다.
 - 테이블명은 복수형을 사용한다.
 - PostgreSQL 예약어 단독 사용을 금지한다.
 
-### Examples
+#### Examples
 
 - `companies`
 - `managers`
 - `job_notices`
 - `settlements`
 
-## Column Naming
+### Column Naming
 
 - DB 컬럼명은 snake_case를 사용한다.
 - Java Entity 필드는 camelCase를 사용한다.
 - 현재 Entity PK 필드명은 `id`를 기준으로 한다.
 - 명시적인 DB 컬럼명이 필요한 경우 `@Column(name = "...")`로 snake_case를 지정한다.
 
-## PK Strategy
+### PK Strategy
 
 - 기본 PK 전략은 `GenerationType.IDENTITY`를 사용한다.
 - 현재 기본 PK 타입은 `Long`을 우선 사용한다.
 - 외부 URL, 결제, 세션, 공개 리소스처럼 ID 노출 위험이 있는 경우 UUID 사용을 검토한다.
 - 모든 FK 타입은 참조 대상 PK 타입과 동일해야 한다.
 
-## Entity Rules
+### Entity Rules
 
 - Entity는 `@NoArgsConstructor(access = AccessLevel.PROTECTED)`를 사용한다.
 - Entity 필드는 직접 setter를 열지 않는다.
@@ -255,9 +255,9 @@ ROLE_ADMIN
 
 ---
 
-# 11. Frontend Convention
+## 11. Frontend Convention
 
-## Structure
+### Structure
 
 ```text
 frontend/src/
@@ -305,9 +305,9 @@ user/api/documentApi.ts
 
 ---
 
-# 12. FastAPI Convention
+## 12. FastAPI Convention
 
-## Structure
+### Structure
 
 ```text
 fastapi/
@@ -334,7 +334,7 @@ fastapi/
 
 ---
 
-# 13. AI Generation Rules
+## 13. AI Generation Rules
 
 ### MUST
 
@@ -353,4 +353,3 @@ fastapi/
 - 의미 없는 TODO 코드를 남기지 않는다.
 - `admin`과 `user` 도메인 간 직접 참조를 만들지 않는다.
 - Spec과 다른 동작을 조용히 구현하지 않는다.
-
