@@ -25,7 +25,8 @@
 
 /* 뒤로 가기 */
 .ti-setup__back {
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
   align-items: center;
   gap: 6px;
   margin-bottom: 20px;

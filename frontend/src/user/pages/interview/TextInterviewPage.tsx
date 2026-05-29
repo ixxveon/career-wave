@@ -3,16 +3,32 @@ import { useNavigate } from 'react-router-dom';
 import {
   FileText, Mic, MicOff, Volume2,
   AlertCircle, Loader2, Wifi,
-  Send, Clock, X, ArrowLeft, Keyboard,
+  Send, Clock, X, Keyboard,
 } from 'lucide-react';
 import { interviewApi } from '../../api/interviewApi';
 import type { Message, MicStatus, InputMode, Phase, Resume } from '../../types/interview';
 import './styles/TextInterviewPage.css';
 
-/* ── Web Speech API 확장 선언 ── */
+/* ── Web Speech API 타입 선언 (TypeScript DOM lib 미포함 항목) ── */
 declare global {
   interface Window {
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    SpeechRecognition?:       new () => SpeechRecognition;
+    webkitSpeechRecognition?: new () => SpeechRecognition;
+  }
+
+  interface SpeechRecognition extends EventTarget {
+    lang:            string;
+    continuous:      boolean;
+    interimResults:  boolean;
+    start(): void;
+    stop():  void;
+    onresult: ((event: SpeechRecognitionEvent) => void) | null;
+    onend:    (() => void) | null;
+    onerror:  ((event: Event) => void) | null;
+  }
+
+  interface SpeechRecognitionEvent extends Event {
+    readonly results: SpeechRecognitionResultList;
   }
 }
 
@@ -241,7 +257,7 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
     rec.interimResults = true;
 
     rec.onresult = (e: SpeechRecognitionEvent) => {
-      const t = Array.from(e.results).map(r => r[0].transcript).join('');
+      const t = Array.from(e.results).map(r => (r as SpeechRecognitionResult)[0].transcript).join('');
       setSttLive(t);
       pendingTextRef.current = t;
     };
@@ -539,7 +555,6 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
 
 /* ── 메인 컴포넌트 ──────────────────────────────── */
 export default function TextInterviewPage() {
-  const navigate = useNavigate();
   const [phase,         setPhase]         = useState<Phase>('setup');
   const [resume,        setResume]        = useState<Resume | null>(null);
   const [resumeLoading, setResumeLoading] = useState(true);
@@ -631,9 +646,6 @@ export default function TextInterviewPage() {
       {isLoading && <LoadingOverlay />}
 
       <div className="ti-setup__card">
-        <button className="ti-setup__back" onClick={() => navigate('/interview')}>
-          <ArrowLeft size={15} /> 면접 홈
-        </button>
         <p className="ti-setup__eyebrow">AI INTERVIEW</p>
         <h1 className="ti-setup__title">AI 텍스트 · 음성 면접</h1>
         <p className="ti-setup__desc">
