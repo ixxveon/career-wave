@@ -23,24 +23,39 @@
 Authorization: Bearer {accessToken}
 ```
 
+### 응답 공통 포맷
 
-### 에러 응답 공통 포맷
+백엔드는 모든 응답을 `ApiResponse<T>` 래퍼로 반환한다.
+
+**성공 응답**
 ```json
 {
-  "errorCode": "ERROR_CODE",
+  "success": true,
+  "statusCode": 200,
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": { }
+}
+```
+
+**에러 응답**  
+> `data`가 `null`이므로 `@JsonInclude(NON_NULL)` 에 의해 응답에서 생략된다.
+```json
+{
+  "success": false,
+  "statusCode": 400,
   "message": "에러 설명 메시지"
 }
 ```
 
-| errorCode | 설명 |
+### 에러 상황별 statusCode
+
+| statusCode | 상황 |
 |-----------|------|
-| `FILE_SIZE_EXCEEDED` | 파일 크기 10MB 초과 |
-| `INVALID_FILE_TYPE` | 지원하지 않는 파일 형식 |
-| `DOCUMENT_NOT_FOUND` | 존재하지 않는 documentId |
-| `FORBIDDEN_DOCUMENT` | 본인 소유가 아닌 문서 접근 (IDOR 방어) |
-| `ANALYSIS_TIMEOUT` | AI 분석 타임아웃 |
-| `INVALID_CONTENT` | 자기소개서 문항 수 또는 글자 수 초과 |
-| `UNAUTHORIZED` | 인증 토큰 없음 또는 만료 |
+| `400` | 파일 크기 10MB 초과 / 지원하지 않는 파일 형식 / 문항 수·글자 수 초과 등 입력값 검증 실패 |
+| `401` | 인증 토큰 없음 또는 만료 |
+| `403` | 본인 소유가 아닌 문서 접근 (IDOR 방어) |
+| `404` | 존재하지 않는 `documentId` |
+| `500` | AI 분석 타임아웃 및 서버 내부 오류 |
 
 ---
 
@@ -59,24 +74,29 @@ Authorization: Bearer {accessToken}
 ### Response `200 OK`
 ```json
 {
-  "documentId": "uuid-v4",
-  "status": "UPLOADED",
-  "fileUrl": "https://s3.bucket/path/to/file.pdf",
-  "originalName": "이력서_홍길동.pdf",
-  "fileType": "RESUME",
-  "createdAt": "2026-05-29T14:53:44Z"
+  "success": true,
+  "statusCode": 200,
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": {
+    "documentId": "uuid-v4",
+    "status": "UPLOADED",
+    "fileUrl": "https://s3.bucket/path/to/file.pdf",
+    "originalName": "이력서_홍길동.pdf",
+    "fileType": "RESUME",
+    "createdAt": "2026-05-29T14:53:44Z"
+  }
 }
 ```
 
 > ℹ️ 업로드 완료 즉시 서버에서 AI 분석 작업을 **자동 트리거**합니다.  
-> 클라이언트는 `documentId` 수신 후 즉시 WebSocket(`WS /ws/resume/{documentId}/status`) 연결을 시작합니다.
+> 클라이언트는 `data.documentId` 수신 후 즉시 WebSocket(`WS /ws/resume/{documentId}/status`) 연결을 시작합니다.
 
 ### Error Cases
-| errorCode | 상황 |
+| statusCode | 상황 |
 |-----------|------|
-| `FILE_SIZE_EXCEEDED` | 파일 크기 10MB 초과 |
-| `INVALID_FILE_TYPE` | PDF·DOC·DOCX 이외 파일 |
-| `UNAUTHORIZED` | 토큰 없음 또는 만료 |
+| `400` | 파일 크기 10MB 초과 |
+| `400` | PDF·DOC·DOCX 이외 파일 |
+| `401` | 토큰 없음 또는 만료 |
 
 ---
 
@@ -112,21 +132,26 @@ Authorization: Bearer {accessToken}
 ### Response `200 OK`
 ```json
 {
-  "documentId": "uuid-v4",
-  "status": "UPLOADED",
-  "fileType": "COVER_LETTER",
-  "createdAt": "2026-05-29T14:53:44Z"
+  "success": true,
+  "statusCode": 200,
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": {
+    "documentId": "uuid-v4",
+    "status": "UPLOADED",
+    "fileType": "COVER_LETTER",
+    "createdAt": "2026-05-29T14:53:44Z"
+  }
 }
 ```
 
 > ℹ️ 제출 완료 즉시 서버에서 AI 분석 작업을 **자동 트리거**합니다.  
-> 클라이언트는 `documentId` 수신 후 즉시 WebSocket(`WS /ws/resume/{documentId}/status`) 연결을 시작합니다.
+> 클라이언트는 `data.documentId` 수신 후 즉시 WebSocket(`WS /ws/resume/{documentId}/status`) 연결을 시작합니다.
 
 ### Error Cases
-| errorCode | 상황 |
+| statusCode | 상황 |
 |-----------|------|
-| `INVALID_CONTENT` | 문항 수 5개 초과 또는 답변 1000자 초과 |
-| `UNAUTHORIZED` | 토큰 없음 또는 만료 |
+| `400` | 문항 수 5개 초과 또는 답변 1000자 초과 |
+| `401` | 토큰 없음 또는 만료 |
 
 ---
 
@@ -142,34 +167,39 @@ Authorization: Bearer {accessToken}
 ### Response `200 OK`
 ```json
 {
-  "documentId": "uuid-v4",
-  "status": "COMPLETED",
-  "score": 82,
-  "feedback": {
-    "good": ["논리적인 문장 구조"],
-    "bad": ["직무 연관성 부족"],
-    "fix": ["3번 문항 두괄식 수정 필요"]
-  },
-  "errorMessage": null,
-  "createdAt": "2026-05-29T14:55:00Z"
+  "success": true,
+  "statusCode": 200,
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": {
+    "documentId": "uuid-v4",
+    "status": "COMPLETED",
+    "score": 82,
+    "feedback": {
+      "good": ["논리적인 문장 구조"],
+      "bad": ["직무 연관성 부족"],
+      "fix": ["3번 문항 두괄식 수정 필요"]
+    },
+    "errorMessage": null,
+    "createdAt": "2026-05-29T14:55:00Z"
+  }
 }
 ```
 
 | Field | Type | 설명 |
 |-------|------|------|
-| `status` | `string` | `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
-| `score` | `number` \| `null` | AI 진단 점수 (0~100), 분석 미완료 시 `null` |
-| `feedback.good` | `string[]` | 잘된 점 목록, 없을 경우 빈 배열 `[]` |
-| `feedback.bad` | `string[]` | 아쉬운 점 목록, 없을 경우 빈 배열 `[]` |
-| `feedback.fix` | `string[]` | 개선 제안 목록, 없을 경우 빈 배열 `[]` |
+| `data.status` | `string` | `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
+| `data.score` | `number` \| `null` | AI 진단 점수 (0~100), 분석 미완료 시 `null` |
+| `data.feedback.good` | `string[]` | 잘된 점 목록, 없을 경우 빈 배열 `[]` |
+| `data.feedback.bad` | `string[]` | 아쉬운 점 목록, 없을 경우 빈 배열 `[]` |
+| `data.feedback.fix` | `string[]` | 개선 제안 목록, 없을 경우 빈 배열 `[]` |
 
 ### Error Cases
-| errorCode | 상황 |
+| statusCode | 상황 |
 |-----------|------|
-| `DOCUMENT_NOT_FOUND` | 존재하지 않는 `documentId` |
-| `FORBIDDEN_DOCUMENT` | 본인 소유가 아닌 문서 접근 |
-| `ANALYSIS_TIMEOUT` | AI 분석 타임아웃 |
-| `UNAUTHORIZED` | 토큰 없음 또는 만료 |
+| `404` | 존재하지 않는 `documentId` |
+| `403` | 본인 소유가 아닌 문서 접근 |
+| `500` | AI 분석 타임아웃 |
+| `401` | 토큰 없음 또는 만료 |
 
 ---
 
@@ -189,45 +219,50 @@ Authorization: Bearer {accessToken}
 ### Response `200 OK`
 ```json
 {
-  "content": [
-    {
-      "documentId": "uuid-v4",
-      "fileType": "RESUME",
-      "originalName": "이력서_홍길동.pdf",
-      "company": null,
-      "job": null,
-      "score": 82,
-      "createdAt": "2026-05-29T14:53:44Z"
-    },
-    {
-      "documentId": "uuid-v4-2",
-      "fileType": "COVER_LETTER",
-      "originalName": null,
-      "company": "카카오",
-      "job": "백엔드 개발자",
-      "score": 76,
-      "createdAt": "2026-05-28T10:20:00Z"
-    }
-  ],
-  "page": 0,
-  "size": 10,
-  "totalElements": 24,
-  "totalPages": 3
+  "success": true,
+  "statusCode": 200,
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": {
+    "content": [
+      {
+        "documentId": "uuid-v4",
+        "fileType": "RESUME",
+        "originalName": "이력서_홍길동.pdf",
+        "company": null,
+        "job": null,
+        "score": 82,
+        "createdAt": "2026-05-29T14:53:44Z"
+      },
+      {
+        "documentId": "uuid-v4-2",
+        "fileType": "COVER_LETTER",
+        "originalName": null,
+        "company": "카카오",
+        "job": "백엔드 개발자",
+        "score": 76,
+        "createdAt": "2026-05-28T10:20:00Z"
+      }
+    ],
+    "page": 0,
+    "size": 10,
+    "totalElements": 24,
+    "totalPages": 3
+  }
 }
 ```
 
 | Field | Type | 설명 |
 |-------|------|------|
-| `fileType` | `string` | `RESUME` \| `COVER_LETTER` |
-| `originalName` | `string` \| `null` | 이력서: 파일명, 자기소개서: `null` |
-| `company` | `string` \| `null` | 자기소개서: 지원 회사명, 이력서: `null` |
-| `job` | `string` \| `null` | 자기소개서: 지원 직무명, 이력서: `null` |
-| `score` | `number` \| `null` | 분석 미완료 시 `null` |
+| `data.content[].fileType` | `string` | `RESUME` \| `COVER_LETTER` |
+| `data.content[].originalName` | `string` \| `null` | 이력서: 파일명, 자기소개서: `null` |
+| `data.content[].company` | `string` \| `null` | 자기소개서: 지원 회사명, 이력서: `null` |
+| `data.content[].job` | `string` \| `null` | 자기소개서: 지원 직무명, 이력서: `null` |
+| `data.content[].score` | `number` \| `null` | 분석 미완료 시 `null` |
 
 ### Error Cases
-| errorCode | 상황 |
+| statusCode | 상황 |
 |-----------|------|
-| `UNAUTHORIZED` | 토큰 없음 또는 만료 |
+| `401` | 토큰 없음 또는 만료 |
 
 ---
 
