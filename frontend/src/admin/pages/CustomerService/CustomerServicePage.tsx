@@ -26,8 +26,21 @@ interface Faq {
   createdAt: string;
 }
 
-type InquiryStatus   = '접수 중' | '답변 중' | '완료';
-type InquiryCategory = '환불' | '결제오류' | '서비스' | '계정' | '기타';
+const INQUIRY_STATUS = {
+  PENDING:     '접수 중',
+  IN_PROGRESS: '답변 중',
+  COMPLETED:   '완료',
+} as const;
+type InquiryStatus = (typeof INQUIRY_STATUS)[keyof typeof INQUIRY_STATUS];
+
+const INQUIRY_CATEGORY = {
+  REFUND:        '환불',
+  PAYMENT_ERROR: '결제오류',
+  SERVICE:       '서비스',
+  ACCOUNT:       '계정',
+  OTHER:         '기타',
+} as const;
+type InquiryCategory = (typeof INQUIRY_CATEGORY)[keyof typeof INQUIRY_CATEGORY];
 
 interface Inquiry {
   id: string;
@@ -65,6 +78,11 @@ const TAB_LABEL: Record<CsTab, string> = {
   faq:     'FAQ',
   inquiry: '1:1 문의',
 };
+
+function formatDate(): string {
+  const d = new Date();
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+}
 
 // ── Dummy Data ────────────────────────────────────────────────
 
@@ -268,7 +286,7 @@ export default function CustomerServicePage() {
           title: noticeForm.title!,
           content: noticeForm.content ?? '',
           category: noticeForm.category ?? '공지',
-          createdAt: '2026.05.28',
+          createdAt: formatDate(),
           visible: noticeForm.visible ?? true,
         },
       ]);
@@ -303,7 +321,7 @@ export default function CustomerServicePage() {
           category: faqForm.category ?? '계정',
           question: faqForm.question!,
           answer: faqForm.answer ?? '',
-          createdAt: '2026.05.28',
+          createdAt: formatDate(),
         },
       ]);
     } else {
@@ -345,6 +363,7 @@ export default function CustomerServicePage() {
 
   const completeInquiry = () => {
     if (!selectedInquiry) return;
+    if (!inquiryReply.trim()) return;
     setInquiries((p) =>
       p.map((inq) =>
         inq.id === selectedInquiry.id
@@ -822,7 +841,7 @@ export default function CustomerServicePage() {
                 <>
                   <button onClick={saveInquiryReply}>답변 저장</button>
                   {selectedInquiry.status === '답변 중' && (
-                    <button onClick={completeInquiry}>처리 완료</button>
+                    <button onClick={completeInquiry} disabled={!inquiryReply.trim()}>처리 완료</button>
                   )}
                 </>
               )}

@@ -235,7 +235,8 @@
   color: #23384f;
   line-height: 1.75;
   white-space: pre-wrap;
-  word-break: break-all;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .csReplySection {

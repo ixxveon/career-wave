@@ -44,6 +44,7 @@ CREATE TABLE inquiries (
   inquiry_id      BIGSERIAL    PRIMARY KEY,
   member_id       UUID         NOT NULL REFERENCES members(id),
   admin_id        BIGINT       NULL REFERENCES admins(admin_id),
+                  -- PENDING 시 NULL 허용. IN_PROGRESS/COMPLETED 전이 시 애플리케이션 레벨에서 NOT NULL 검증.
   category        VARCHAR(20)  NOT NULL
                   CHECK (category IN ('REFUND','PAYMENT_ERROR','SERVICE','ACCOUNT','ETC')),
   title           VARCHAR(200) NOT NULL,
@@ -151,6 +152,7 @@ CREATE INDEX idx_inquiries_member   ON inquiries(member_id);
 | Method | Path | Description |
 |---|---|---|
 | GET | `/admin/notices` | 공지사항 목록 조회 |
+| GET | `/admin/notices/{noticeId}` | 공지사항 단건 조회 |
 | POST | `/admin/notices` | 공지사항 등록 |
 | PUT | `/admin/notices/{noticeId}` | 공지사항 수정 |
 | DELETE | `/admin/notices/{noticeId}` | 공지사항 삭제 |
