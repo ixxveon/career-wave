@@ -2,7 +2,7 @@
 
 > 본 문서는 CareerWave 팀원이 기능을 제안하고, 스펙을 작성하고, 구현하고, Pull Request를 생성하기까지의 기여 절차를 정의한다.
 
-코드 구조, 네이밍, DTO, API 응답, 예외 처리 등 구현 규칙은 `.github/CONVENTION.md`를 따른다.
+코드 구조, 네이밍, DTO, API 응답, 예외 처리 등 구현 규칙은 `docs/CONVENTION.md`를 따른다.
 
 ---
 
@@ -26,7 +26,7 @@ CareerWave는 스펙 주도 개발을 기준으로 작업한다.
 - 한 PR에는 하나의 목적만 담는다.
 - 관련 없는 파일 변경은 커밋에 포함하지 않는다.
 - 기존 코드 스타일과 프로젝트 구조를 우선 따른다.
-- 구현 세부 규칙은 `.github/CONVENTION.md`를 기준으로 한다.
+- 구현 세부 규칙은 `docs/CONVENTION.md`를 기준으로 한다.
 - Spec과 구현이 충돌하면 구현 전에 Spec 또는 Convention을 먼저 정리한다.
 
 ---
@@ -101,7 +101,7 @@ specs/fastapi/{scope}/{number}-{domain}/
 
 ## 4. 개발 절차
 
-이 섹션은 작업 흐름만 정의한다. 세부 코드 작성 규칙은 `.github/CONVENTION.md`를 따른다.
+이 섹션은 작업 흐름만 정의한다. 세부 코드 작성 규칙은 `docs/CONVENTION.md`를 따른다.
 
 ### Backend
 
@@ -138,7 +138,7 @@ specs/fastapi/{scope}/{number}-{domain}/
 | `feat` | 기능 추가 |
 | `fix` | 버그 수정 |
 | `style` | 코드 포맷 또는 스타일 변경 |
-| `chore` | 기타 설정 또는 문서 외 작업 |
+| `chore` | 기타 설정 또는 문서 작업 |
 | `design` | UI/UX 변경 |
 | `rename` | 파일 또는 이름 변경 |
 | `remove` | 삭제 |
@@ -150,7 +150,7 @@ specs/fastapi/{scope}/{number}-{domain}/
 ```text
 feat(feature/user-login-api) : 회원 로그인 API 추가
 fix(fix/payment-status-validation) : 결제 상태 검증 오류 수정
-docs(docs/contribution-guide) : 기여 가이드 문서 추가
+chore(docs/contribution-guide) : 기여 가이드 문서 추가
 ```
 
 ### 주의사항

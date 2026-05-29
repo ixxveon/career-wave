@@ -33,7 +33,8 @@ backend/    Spring Boot API
 frontend/   React + Vite UI
 fastapi/    AI, scraping, pipeline service
 specs/      spec-driven development documents
-.github/    workflows, prompts, templates, convention
+docs/       convention and project documents
+.github/    workflows, prompts, templates, contribution guide
 ```
 
 ### Backend
