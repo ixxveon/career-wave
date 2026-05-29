@@ -209,9 +209,9 @@ PENDING → IN_PROGRESS → COMPLETED
 
 | 기능 | 입력 | 출력 | 연동 |
 |---|---|---|---|
-| 공지 초안 생성 | `category`, `title` | 공지 내용 초안(text) | FastAPI `/ai/notice-draft` |
-| FAQ 답변 초안 | `question` | 답변 초안(text) | FastAPI `/ai/faq-draft` |
-| 문의 답변 초안 | `category`, `title`, `content` | 답변 초안(text) | FastAPI `/ai/inquiry-draft` |
+| 공지 초안 생성 | `category`, `title` | 공지 내용 초안(text) | FastAPI `/admin/ai/notice-draft` |
+| FAQ 답변 초안 | `question` | 답변 초안(text) | FastAPI `/admin/ai/faq-draft` |
+| 문의 답변 초안 | `category`, `title`, `content` | 답변 초안(text) | FastAPI `/admin/ai/inquiry-draft` |
 
 > 현재 v1은 mock 구현. FastAPI LLM 연동 시 위 엔드포인트로 교체.
 
