@@ -1,0 +1,353 @@
+/* ── CSS custom properties ───────────────────────────────────── */
+:root {
+  --st-primary:  #173553;
+  --st-border:   #d8e4f1;
+  --st-surface:  #f6f9fd;
+  --st-muted:    #72859b;
+}
+
+/* ── 65/35 two-row grid ──────────────────────────────────────── */
+.statsMainGrid {
+  display: grid;
+  grid-template-columns: 65fr 35fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+/* ── base card — flex column so content fills available height ── */
+.statsCard {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.statsCardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--st-border);
+  background: white;
+}
+
+.statsCardHead > div { display: grid; gap: 3px; }
+
+.statsEyebrow {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--st-muted);
+}
+
+.statsCardHead h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--st-primary);
+  line-height: 1.2;
+}
+
+/* ── trend badge ─────────────────────────────────────────────── */
+.statsTrendBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.statsTrendBadge.up   { background: #eaf6f0; border-color: #b8dfcc; color: #2c6e4f; }
+.statsTrendBadge.down { background: #fdf0f0; border-color: #f0c8c8; color: #9a3a3a; }
+
+/* ── Y축 + 차트 래퍼 (공통) ──────────────────────────────────── */
+.statsChartWithAxis {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+/* ── 꺾은선 차트 Y축 레이블 ──────────────────────────────────── */
+/*
+ * SVG viewBox 0 0 1000 220, pad=28, maxVal=45M, CSS height=190px
+ * 눈금 SVG Y: 28, 83, 137, 192 → CSS Y: 24.2, 71.7, 118.3, 165.8px
+ * padding 24px top/bottom, height 190px → space-between 4항목:
+ *   항목 위치: 24, 71.3, 118.7, 166px  ← 오차 < 0.5px
+ */
+.statsLineYAxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 8px 24px 0;
+  width: 54px;
+  height: 190px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--st-muted);
+  text-align: right;
+}
+
+/* ── 꺾은선 차트 ─────────────────────────────────────────────── */
+/*
+ * flex: 1  → 카드 남은 높이를 채움
+ * justify-content: center → 콘텐츠보다 카드가 클 때 세로 중앙 정렬
+ */
+.statsLineWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 14px 16px 14px 10px;
+}
+
+.statsLineChartBox {
+  flex: 1;
+  border: 1px solid var(--st-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f6f9ff;
+  min-width: 0;
+}
+
+.statsLineSvg {
+  width: 100%;
+  height: 190px;
+  display: block;
+  background: #f6f9ff;
+}
+
+.statsLineLabels {
+  display: flex;
+  justify-content: space-between;
+  /* 3% ≈ LINE_PAD_X(30) / LINE_VBW(1000) — 월 레이블이 SVG 데이터 점 위치와 정렬 */
+  padding: 6px 3% 7px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--st-muted);
+  border-top: 1px solid var(--st-border);
+  background: white;
+}
+
+/* ── subscription breakdown table ───────────────────────────── */
+.statsChannelList { padding: 0; }
+
+.statsChannelTableHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 20px;
+  background: var(--st-surface);
+  border-bottom: 1px solid var(--st-border);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--st-muted);
+}
+
+.statsChannelTableHead span:first-child  { flex: 1; min-width: 0; }
+.statsChannelTableHead .colAmt   { width: 74px; text-align: right; flex-shrink: 0; }
+.statsChannelTableHead .colDelta { width: 54px; text-align: right; flex-shrink: 0; }
+
+.statsChannelRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #f0f4f9;
+  transition: background 0.12s;
+}
+.statsChannelRow:last-child { border-bottom: 0; }
+.statsChannelRow:hover { background: var(--st-surface); }
+
+.statsChannelIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #e2ecf6;
+  color: var(--st-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.statsChannelName {
+  flex: 1;
+  min-width: 0;           /* flex 아이템이 콘텐츠보다 작게 줄어들 수 있도록 */
+  font-size: 13px;
+  font-weight: 600;
+  color: #23384f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statsChannelAmt {
+  width: 74px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--st-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.statsGrowthBadge {
+  width: 54px;
+  flex-shrink: 0;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.statsGrowthBadge.up   { background: #eaf6f0; border-color: #b8dfcc; color: #2c6e4f; }
+.statsGrowthBadge.down { background: #fdf0f0; border-color: #f0c8c8; color: #9a3a3a; }
+
+/* ── stacked bar chart ───────────────────────────────────────── */
+.statsLegend {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--st-muted);
+}
+
+.statsLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statsLegend span::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: block;
+}
+.statsLegend .teal::before  { background: #3d8e6a; }
+.statsLegend .coral::before { background: #c04c4c; }
+
+.statsLegend .teal  { color: #2c7a55; }
+.statsLegend .coral { color: #a03838; }
+.statsLegend .teal strong,
+.statsLegend .coral strong { font-weight: 800; }
+
+/* ── recent activity feed ────────────────────────────────────── */
+.statsFeed { padding: 0; }
+
+.statsFeedItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 20px;
+  border-bottom: 1px solid #f0f4f9;
+  transition: background 0.12s;
+}
+.statsFeedItem:last-child { border-bottom: 0; }
+.statsFeedItem:hover { background: var(--st-surface); }
+
+.statsAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #daeaf8;
+  color: var(--st-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+  border: 1.5px solid #c0d8ee;
+}
+
+.statsFeedInfo { flex: 1; min-width: 0; }
+
+.statsFeedInfo strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #10243f;
+  margin-bottom: 3px;
+}
+
+.statsFeedInfo > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statsFeedInfo > div > span:last-child {
+  font-size: 11px;
+  color: var(--st-muted);
+  font-weight: 600;
+}
+
+.statsStatusPill {
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+}
+.statsStatusPill.active  { background: #eaf6f0; border-color: #b8dfcc; color: #2c6e4f; }
+.statsStatusPill.pending { background: #fef8ec; border-color: #f0dda8; color: #8a5a20; }
+
+.statsFeedTime {
+  font-size: 11px;
+  font-weight: 600;
+  color: #a0b2c4;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── full-view button ────────────────────────────────────────── */
+.statsViewAllBtn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--st-border);
+  background: var(--st-surface);
+  color: var(--st-primary);
+  font-size: 11px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.statsViewAllBtn:hover { background: #e8f0f9; }
+
+/* ── responsive ──────────────────────────────────────────────── */
+/*
+ * 사이드바(220px)는 1100px에서 사라짐 → 콘텐츠 영역이 그 시점에 더 넓어짐
+ * statsMainGrid는 900px 이하에서 1열로 접음 (1100px 기준 적용 시 너무 이름)
+ * memberSummaryGrid 반응형은 admin.css(1200px→2열, 900px→1열)에서 통합 관리
+ */
+@media (max-width: 900px) {
+  .statsMainGrid { grid-template-columns: 1fr; }
+}

@@ -17,5 +17,16 @@ export async function apiClient(endpoint, options = {}) {
     throw new Error(message);
   }
 
+  // 204 No Content 또는 빈 바디 응답은 null 반환 (JSON 파싱 시도 않음)
+  const contentType = response.headers.get('content-type');
+  const contentLength = response.headers.get('content-length');
+  if (
+    response.status === 204 ||
+    contentLength === '0' ||
+    !contentType?.includes('application/json')
+  ) {
+    return null;
+  }
+
   return response.json();
 }

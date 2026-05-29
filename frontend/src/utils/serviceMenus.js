@@ -4,7 +4,6 @@ export const serviceMenus = [
     href: '/jobs',
     children: [
       { label: '채용공고 목록', href: '/jobs' },
-      { label: '공고 등록', href: '/jobs/create' },
     ],
   },
   {
@@ -44,6 +43,15 @@ export const serviceMenus = [
     children: [
       { label: '커뮤니티 홈', href: '/community' },
       { label: '멘토 찾기', href: '/community/mentor' },
+    ],
+  },
+  {
+    label: '고객센터',
+    href: '/support/notices',
+    children: [
+      { label: '공지사항', href: '/support/notices' },
+      { label: 'FAQ',      href: '/support/faq' },
+      { label: '1:1 문의', href: '/support/inquiry' },
     ],
   },
   {

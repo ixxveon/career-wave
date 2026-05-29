@@ -1,0 +1,103 @@
+reviews:
+  language: "ko-KR"
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "develop"
+      - "main"
+
+  instructions: |
+    이 프로젝트는 Spring Boot(백엔드) + React(프론트엔드) + FastAPI 모노레포입니다.
+    아래 팀 컨벤션을 기준으로 코드를 리뷰하고, 모든 리뷰 코멘트는 반드시 한국어로 작성해 주세요.
+
+    ## 네이밍 규칙
+    - 클래스: Controller / Service / Repository 접미사 사용. Entity는 단수 명사(접미사 없음, Setter 금지).
+    - DTO 파일명: `도메인명DTO.java` (예: MemberDTO). 이너 클래스로 Request~ / Response~ 선언.
+    - 예외 클래스: ~Exception 접미사. 도메인별 예외 파일 신규 생성 금지.
+    - 메서드 / 변수: camelCase (의미가 명확한 동사 또는 명사 사용).
+    - 상수: UPPER_SNAKE_CASE.
+    - API URL: 소문자 kebab-case, 명사형 설계 (예: /api/v1/job-notices, /api/v1/interview-histories).
+    - Enum 패키지: `enums/` 대신 `type/` 사용. 클래스명은 ~Type 또는 ~Status 접미사.
+
+    ## DTO 이너 클래스 패턴
+    - DTO는 반드시 도메인 `dto/` 패키지 내 대표 파일 하나에 이너 클래스로 통합 관리.
+    - 선언 형식: `public static class Request기능명`, `public static class Response기능명`.
+    - 요청 데이터만 필요한 기능도 동일한 이너 클래스 스타일로 작성하여 코드 스타일 통일.
+
+    ## 예외 처리 규칙
+    - 새로운 예외 클래스 파일 생성 금지 (예: UserNotFoundException.java 신규 파일 금지).
+    - `throw new RuntimeException("문자열")` 형태의 문자열 하드코딩 예외 금지.
+    - 반드시 ErrorCode enum 상수를 주입하여 BadRequestException 또는 ResourceNotFoundException으로 예외 발생.
+    - 모든 예외는 @RestControllerAdvice의 GlobalExceptionHandler에서 일괄 처리.
+
+    ## 응답 표준화
+    - 성공 / 실패 모두 `ApiResponse<T>` 래퍼 사용 의무.
+    - 실패 응답 시에도 data 필드를 null로 유지 (필드 자체 생략 금지).
+    - @Valid 검증 실패 시 data 필드에 Map<String, String> 구조로 필드별 에러 사유 바인딩.
+
+    ## JPA / PostgreSQL 규칙
+    - 테이블명 / 컬럼명: 전부 소문자 snake_case로 명시.
+    - PostgreSQL 예약어(user, order, role, check 등) 테이블명 직접 사용 금지 → cw_ 접두사 사용 (예: cw_user, cw_order).
+    - Enum 컬럼: @Enumerated(EnumType.STRING) 필수 적용.
+    - PK 전략 이원화: 내부 관리용 엔티티 → GenerationType.IDENTITY(Long), 외부 노출/보안 필요 엔티티 → UUID.
+    - Entity에 Setter 사용 금지.
+
+    ## 시큐리티 규칙
+    - 역할명 표준: ROLE_USER, ROLE_ADMIN, ROLE_COMPANY.
+    - admin/ 도메인 컨트롤러 메서드에는 @PreAuthorize("hasRole('ADMIN')") 또는 @Secured("ROLE_ADMIN") 필수.
+    - JWT 예외는 SecurityConfig의 커스텀 AuthenticationEntryPoint에서 ApiResponse.fail() 형식으로 반환.
+
+    ## Swagger 문서화 규칙
+    - @Tag, @Operation, @ApiResponses 등 Swagger 어노테이션은 docs/ 패키지의 XxxControllerDocs.java 인터페이스에만 작성.
+    - 실제 비즈니스 컨트롤러 클래스에 Swagger 어노테이션 직접 작성 금지.
+    - API 그룹: User API는 /api/v1/user/**, Admin API는 /api/v1/admin/** 경로로 분리.
+
+    ## 프론트엔드 규칙
+    - 백엔드 type/ 데이터 분기 처리 시 문자열 하드코딩 금지 → `as const` 상수 객체 정의 후 사용.
+    - API 응답 타입은 ApiResponse<T> 구조와 일치하도록 정의.
+
+    ## 커밋 메시지 규칙
+    - 형식: {타입}({도메인}): {작업 내용}
+    - 허용 타입: feat / fix / style / chore / design / rename / remove / build / refactor
+    - 예시: feat(board): 게시판 등록 기능 추가, fix(board): 게시글 이미지 깨지는 현상 수정
+
+    ## 브랜치 네이밍 규칙
+    - 사용자 기능: feature/user-[도메인명]-[세부기능] (예: feature/user-member-login)
+    - 관리자 기능: feature/admin-[도메인명]-[세부기능] (예: feature/admin-settlement-list)
+    - 버그 수정: fix/[플랫폼]-[도메인명]-[세부기능] (예: fix/user-cart-quantity)
+    - 리팩토링: refactor/[플랫폼]-[도메인명]-[세부기능] (예: refactor/user-order-service)
+
+  path_instructions:
+    - path: "backend/**/*.java"
+      instructions: |
+        백엔드 Java 코드 리뷰 시 아래 항목을 중점적으로 확인해 주세요.
+        - DTO 이너 클래스 패턴 준수 여부 (Request~ / Response~ 접두사, dto/ 패키지 내 대표 파일 통합)
+        - ErrorCode 기반 예외 처리 여부 (RuntimeException 문자열 하드코딩 및 도메인 예외 파일 신규 생성 금지)
+        - ApiResponse<T> 래퍼 적용 여부
+        - Entity Setter 사용 금지 여부
+        - Enum 컬럼에 @Enumerated(EnumType.STRING) 누락 여부
+        - PostgreSQL 예약어 테이블명 직접 사용 여부 (cw_ 접두사 확인)
+        - 관리자 API 컨트롤러에 @PreAuthorize 또는 @Secured 어노테이션 누락 여부
+        - Swagger 어노테이션이 컨트롤러 본문에 직접 작성되었는지 여부 (docs/ 인터페이스로 분리해야 함)
+        - UUID PK가 필요한 엔티티(결제, AI 세션 등 외부 노출 대상)에 올바른 전략 적용 여부
+
+    - path: "frontend/**/*.{ts,tsx,js,jsx}"
+      instructions: |
+        프론트엔드 코드 리뷰 시 아래 항목을 중점적으로 확인해 주세요.
+        - 백엔드 type/ 데이터 분기 처리 시 문자열 하드코딩 여부 (as const 상수 객체 사용 권장)
+        - API 응답 파싱 타입이 ApiResponse<T> 구조와 일치하는지 여부
+
+    - path: "fastapi/**/*.py"
+      instructions: |
+        FastAPI Python 코드 리뷰 시 응답 구조가 백엔드 ApiResponse 규격과 일치하는지 확인해 주세요.
+
+chat:
+  auto_reply: true

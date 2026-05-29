@@ -1,11 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
-import FavoriteCompanyPage from '@/user/pages/dashboard/FavoriteCompanyPage';
+import FavoriteCompanyPage from '@/user/pages/mypage/FavoriteCompanyPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
 import JobSeekerDashboardPage from '../user/pages/dashboard/JobSeekerDashboardPage';
 import CompanyDashboardPage from '../user/pages/dashboard/CompanyDashboardPage';
-import UserMyPage from '../user/pages/dashboard/UserMyPage';
+import UserMyPage from '../user/pages/mypage/UserMyPage';
+import SubscriptionPage from '../user/pages/mypage/SubscriptionPage';
+import PaymentHistoryPage from '../user/pages/mypage/PaymentHistoryPage';
 
 
 import LoginPage from '../user/pages/auth/LoginPage';
@@ -20,8 +22,6 @@ import CompanyProfilePage from '../user/pages/company/CompanyProfilePage';
 import HrManagerPage from '../user/pages/company/HrManagerPage';
 
 import JobNoticeListPage from '../user/pages/jobNotice/JobNoticeListPage';
-import JobNoticeDetailPage from '../user/pages/jobNotice/JobNoticeDetailPage';
-import JobNoticeCreatePage from '../user/pages/jobNotice/JobNoticeCreatePage';
 
 import ApplicationStatusPage from '../user/pages/application/ApplicationStatusPage';
 import ApplicantManagementPage from '../user/pages/application/ApplicantManagementPage';
@@ -48,6 +48,16 @@ import MentorPage from '../user/pages/community/MentorPage';
 import PricingPage from '../user/pages/billing/PricingPage';
 import PaymentPage from '../user/pages/billing/PaymentPage';
 import CompanyProductPage from '../user/pages/billing/CompanyProductPage';
+import CheckoutPage from '../user/pages/billing/CheckoutPage';
+import PaymentSuccessPage from '../user/pages/billing/PaymentSuccessPage';
+import PaymentFailPage from '../user/pages/billing/PaymentFailPage';
+
+import SupportPage from '../user/pages/support/SupportPage';
+import NoticePage from '../user/pages/support/NoticePage';
+import NoticeDetailPage from '../user/pages/support/NoticeDetailPage';
+import FaqPage from '../user/pages/support/FaqPage';
+import InquiryListPage from '../user/pages/support/InquiryListPage';
+import InquiryCreatePage from '../user/pages/support/InquiryCreatePage';
 
 import NotFoundPage from '../user/pages/common/NotFoundPage';
 
@@ -60,7 +70,7 @@ import UserManagementPage from '../admin/pages/UserManagement/UserManagementPage
 import ReportPage from '../admin/pages/Report/ReportPage';
 import CustomerServicePage from '../admin/pages/CustomerService/CustomerServicePage';
 import AdminPaymentPage from '../admin/pages/Payment/PaymentPage';
-import MatchingPage from '../admin/pages/Matching/MatchingPage';
+import StatisticsPage from '../admin/pages/Statistics/StatisticsPage';
 import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
 import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
@@ -77,6 +87,8 @@ function AppRoutes() {
         <Route path="dashboard/company" element={<CompanyDashboardPage />} />
         <Route path="mypage" element={<UserMyPage />} />
         <Route path="mypage/favorites" element={<FavoriteCompanyPage />} />
+        <Route path="mypage/subscription" element={<SubscriptionPage />} />
+        <Route path="mypage/payment-history" element={<PaymentHistoryPage />} />
 
         <Route path="auth">
           <Route index element={<Navigate to="/auth/login" replace />} />
@@ -97,8 +109,6 @@ function AppRoutes() {
 
         <Route path="jobs">
           <Route index element={<JobNoticeListPage />} />
-          <Route path="create" element={<JobNoticeCreatePage />} />
-          <Route path=":jobId" element={<JobNoticeDetailPage />} />
         </Route>
 
         <Route path="applications">
@@ -142,10 +152,23 @@ function AppRoutes() {
           <Route path="mentor" element={<MentorPage />} />
         </Route>
 
+        <Route path="support" element={<SupportPage />}>
+          <Route path="notices" element={<NoticePage />} />
+          <Route path="notices/:id" element={<NoticeDetailPage />} />
+          <Route path="faq" element={<FaqPage />} />
+          <Route path="inquiry" element={<InquiryListPage />} />
+          <Route path="inquiry/create" element={<InquiryCreatePage />} />
+        </Route>
+
         <Route path="billing">
           <Route index element={<Navigate to="/billing/pricing" replace />} />
           <Route path="pricing" element={<PricingPage />} />
           <Route path="payment" element={<PaymentPage />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="success" element={<PaymentSuccessPage />} />
+          <Route path="fail" element={<PaymentFailPage />} />
+          <Route path="document-coaching/plans" element={<PaymentPage />} />
+          <Route path="interview/plans" element={<PaymentPage />} />
           <Route path="company-products" element={<CompanyProductPage />} />
         </Route>
 
@@ -164,7 +187,7 @@ function AppRoutes() {
           <Route path="reports"   element={<ReportPage />} />
           <Route path="cs"        element={<CustomerServicePage />} />
           <Route path="payments"  element={<AdminPaymentPage />} />
-          <Route path="matching"  element={<MatchingPage />} />
+          <Route path="stats"     element={<StatisticsPage />} />
           <Route path="ai"        element={<AiMetricsPage />} />
           <Route path="scraping"  element={<ScrapingPage />} />
           <Route path="log"       element={<AuditLogPage />} />

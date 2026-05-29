@@ -1,4 +1,5 @@
 import '../../styles/admin.css';
+import '../../styles/Statistics.css';
 
 const kpis = [
   { label: '총 지원 건수',  value: '14,382', sub: '이번 달 기준' },

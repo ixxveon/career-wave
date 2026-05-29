@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Bot, Database, FileText, ShieldCheck } from 'lucide-react';
 import '../../styles/admin.css';
 import { adminSecurityLogSeeds, aiMetricLogSeeds, scrapingLogSeeds } from '../../data/logSeeds';
 
@@ -104,6 +105,37 @@ export default function AuditLogPage() {
     []
   );
 
+  const summaryItems = [
+    {
+      Icon: FileText,
+      title: '전체 로그',
+      value: unifiedLogsSeed.length,
+      desc: '통합 감사 이벤트',
+      theme: 'kpi-blue',
+    },
+    {
+      Icon: ShieldCheck,
+      title: '관리자 로그',
+      value: sourceCounts.ADMIN,
+      desc: '권한, ACL, 보안 이벤트',
+      theme: 'kpi-green',
+    },
+    {
+      Icon: Bot,
+      title: 'AI 로그',
+      value: sourceCounts.AI,
+      desc: '리소스, 토큰, 모델 이벤트',
+      theme: 'kpi-purple',
+    },
+    {
+      Icon: Database,
+      title: '스크래핑 로그',
+      value: sourceCounts.SCRAPING,
+      desc: '파이프라인, 복구, 장애 이벤트',
+      theme: 'kpi-yellow',
+    },
+  ];
+
   return (
     <section className="auditOpsPage">
       <header className="admin-header">
@@ -114,21 +146,18 @@ export default function AuditLogPage() {
       </header>
 
       <div className="auditOpsSummary">
-        <article className="admin-card auditOpsSummaryCard">
-          <span>관리자 관리</span>
-          <strong>{sourceCounts.ADMIN}</strong>
-          <small>권한, ACL, 보안 이벤트</small>
-        </article>
-        <article className="admin-card auditOpsSummaryCard">
-          <span>AI 메트릭스</span>
-          <strong>{sourceCounts.AI}</strong>
-          <small>리소스, 토큰, 모델 이벤트</small>
-        </article>
-        <article className="admin-card auditOpsSummaryCard">
-          <span>스크래핑 관리</span>
-          <strong>{sourceCounts.SCRAPING}</strong>
-          <small>파이프라인, 복구, 장애 이벤트</small>
-        </article>
+        {summaryItems.map((item) => (
+          <article className={`admin-card auditOpsSummaryCard ${item.theme}`} key={item.title}>
+            <div className="auditOpsSummaryContent">
+              <span>{item.title}</span>
+              <strong>{item.value.toLocaleString()}</strong>
+              <small>{item.desc}</small>
+            </div>
+            <div className={`auditOpsSummaryIcon ${item.theme}`}>
+              <item.Icon size={26} strokeWidth={2.3} />
+            </div>
+          </article>
+        ))}
       </div>
 
       <section className="admin-card auditOpsShell">
@@ -257,14 +286,77 @@ export default function AuditLogPage() {
 
         .auditOpsSummary {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 12px;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 18px;
         }
 
         .auditOpsSummaryCard {
-          display: grid;
-          gap: 6px;
-          padding: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 22px;
+          border-radius: 16px;
+          transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+
+        .auditOpsSummaryCard:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 28px rgba(30, 60, 90, 0.08);
+        }
+
+        .auditOpsSummaryContent {
+          min-width: 0;
+        }
+
+        .auditOpsSummaryCard.kpi-blue {
+          background: linear-gradient(135deg, #daeaf8 0%, #ecf4fc 100%);
+          border-color: #bfd5ed;
+        }
+
+        .auditOpsSummaryCard.kpi-green {
+          background: linear-gradient(135deg, #d4eee3 0%, #e9f6ef 100%);
+          border-color: #b5dac7;
+        }
+
+        .auditOpsSummaryCard.kpi-purple {
+          background: linear-gradient(135deg, #e0d5f2 0%, #ede9f8 100%);
+          border-color: #c8bde8;
+        }
+
+        .auditOpsSummaryCard.kpi-yellow {
+          background: linear-gradient(135deg, #fde9cf 0%, #fef4e5 100%);
+          border-color: #f0d0a4;
+        }
+
+        .auditOpsSummaryIcon {
+          width: 54px;
+          height: 54px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex: none;
+        }
+
+        .auditOpsSummaryIcon.kpi-blue {
+          background: rgba(58, 114, 178, 0.16);
+          color: #2d5f8e;
+        }
+
+        .auditOpsSummaryIcon.kpi-green {
+          background: rgba(45, 110, 79, 0.16);
+          color: #2c6e4f;
+        }
+
+        .auditOpsSummaryIcon.kpi-purple {
+          background: rgba(92, 77, 133, 0.16);
+          color: #5c4d85;
+        }
+
+        .auditOpsSummaryIcon.kpi-yellow {
+          background: rgba(155, 117, 53, 0.16);
+          color: #8a5a20;
         }
 
         .auditOpsSummaryCard span,
@@ -276,16 +368,80 @@ export default function AuditLogPage() {
           font-weight: 800;
         }
 
+        .auditOpsSummaryCard span {
+          display: block;
+          margin: 0 0 8px;
+          font-size: 14px;
+          font-weight: 600;
+        }
+
         .auditOpsSummaryCard strong {
-          color: var(--audit-primary);
-          font-size: 32px;
-          line-height: 1;
+          display: block;
+          font-size: 34px;
+          letter-spacing: -1px;
         }
 
         .auditOpsSummaryCard small {
-          color: var(--audit-muted);
-          font-size: 12px;
-          font-weight: 700;
+          display: block;
+          margin-top: 8px;
+          font-size: 13px;
+          font-weight: 400;
+        }
+
+        .auditOpsSummaryCard.kpi-blue span,
+        .auditOpsSummaryCard.kpi-blue strong,
+        .auditOpsSummaryCard.kpi-blue small {
+          color: #1a3d5e;
+        }
+
+        .auditOpsSummaryCard.kpi-blue span {
+          color: #2d5f8e;
+        }
+
+        .auditOpsSummaryCard.kpi-blue small {
+          color: #4a7299;
+        }
+
+        .auditOpsSummaryCard.kpi-green span,
+        .auditOpsSummaryCard.kpi-green strong,
+        .auditOpsSummaryCard.kpi-green small {
+          color: #1a4a34;
+        }
+
+        .auditOpsSummaryCard.kpi-green span {
+          color: #2c6e4f;
+        }
+
+        .auditOpsSummaryCard.kpi-green small {
+          color: #3d7a5f;
+        }
+
+        .auditOpsSummaryCard.kpi-purple span,
+        .auditOpsSummaryCard.kpi-purple strong,
+        .auditOpsSummaryCard.kpi-purple small {
+          color: #3d3260;
+        }
+
+        .auditOpsSummaryCard.kpi-purple span {
+          color: #5c4d85;
+        }
+
+        .auditOpsSummaryCard.kpi-purple small {
+          color: #6b5a96;
+        }
+
+        .auditOpsSummaryCard.kpi-yellow span,
+        .auditOpsSummaryCard.kpi-yellow strong,
+        .auditOpsSummaryCard.kpi-yellow small {
+          color: #5e3d10;
+        }
+
+        .auditOpsSummaryCard.kpi-yellow span {
+          color: #8a5a20;
+        }
+
+        .auditOpsSummaryCard.kpi-yellow small {
+          color: #9e6c2a;
         }
 
         .auditOpsShell {
@@ -556,6 +712,10 @@ export default function AuditLogPage() {
         }
 
         @media (max-width: 1280px) {
+          .auditOpsSummary {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
           .auditOpsGrid {
             grid-template-columns: 1fr;
           }

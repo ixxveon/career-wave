@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Building2, CheckCircle, Clock, UserPlus, UserX, Users, XCircle } from 'lucide-react';
 import '../../styles/admin.css';
+import '../../styles/UserManagement.css';
 
 type MemberTab = 'user' | 'company';
 
@@ -117,14 +118,6 @@ const approvalBadgeCls: Record<ApprovalStatus, string> = {
   '승인 완료': 'normal',
   '반려':      'blinded',
 };
-
-function getStatusBadgeCls(status: string): string {
-  if (status === '정상')          return 'normal';
-  if (status.includes('정지'))    return 'blinded';
-  if (status === '탈퇴')          return 'dismissed';
-  return 'pending';
-}
-void getStatusBadgeCls;
 
 export default function UserManagementPage() {
   const [tab, setTab] = useState<MemberTab>('user');
