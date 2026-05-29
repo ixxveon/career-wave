@@ -7,10 +7,8 @@ import {
   CalendarDays,
   ChevronRight,
   FileSearch,
-  Globe2,
   MapPin,
   Mic,
-  Share2,
   ShieldCheck,
   Sparkles,
   Users,
@@ -252,27 +250,6 @@ function JobSeekerDashboardPage() {
         ))}
       </section>
 
-      <footer className="cw-home-footer">
-        <div className="cw-home-footer__top">
-          <div>
-            <strong>Career Wave</strong>
-            <p>AI로 여는 커리어의 새로운 흐름.</p>
-          </div>
-          <nav aria-label="푸터 메뉴">
-            <Link to="/company/profile">About Us</Link>
-            <Link to="/auth/profile">Privacy Policy</Link>
-            <Link to="/billing/pricing">Terms of Service</Link>
-            <Link to="/community">Contact</Link>
-          </nav>
-        </div>
-        <div className="cw-home-footer__bottom">
-          <small>© 2024 Career Wave. All rights reserved.</small>
-          <span>
-            <Globe2 size={16} />
-            <Share2 size={16} />
-          </span>
-        </div>
-      </footer>
     </div>
   );
 }

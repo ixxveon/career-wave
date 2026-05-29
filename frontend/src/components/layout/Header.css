@@ -293,6 +293,16 @@
        → overflow-y가 visible 유지되어 서브메뉴 드롭다운이 잘리지 않음 */
     overflow-x: clip;
   }
+
+  /* 첫 번째 메뉴 아이템 서브메뉴는 왼쪽 정렬 — translateX(-50%) 시 왼쪽으로 튀어나와 clip되는 현상 방지 */
+  .cw-header__nav-item:first-child .cw-header__submenu {
+    left: 0;
+    transform: translateX(0) translateY(8px);
+  }
+
+  .cw-header__nav-item:first-child:hover .cw-header__submenu {
+    transform: translateX(0) translateY(0);
+  }
 }
 
 /* ── 좁은 화면: 계정 버튼 일부 숨김 ─────────── */

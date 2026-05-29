@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   FileText, Mic, MicOff, Volume2,
   AlertCircle, Loader2, Wifi,
-  Send, Clock, X, ArrowLeft, Keyboard,
+  Send, Clock, X, Keyboard,
 } from 'lucide-react';
 import { interviewApi } from '../../api/interviewApi';
 import type { Message, MicStatus, InputMode, Phase, Resume } from '../../types/interview';
@@ -631,9 +631,6 @@ export default function TextInterviewPage() {
       {isLoading && <LoadingOverlay />}
 
       <div className="ti-setup__card">
-        <button className="ti-setup__back" onClick={() => navigate('/interview')}>
-          <ArrowLeft size={15} /> 면접 홈
-        </button>
         <p className="ti-setup__eyebrow">AI INTERVIEW</p>
         <h1 className="ti-setup__title">AI 텍스트 · 음성 면접</h1>
         <p className="ti-setup__desc">
