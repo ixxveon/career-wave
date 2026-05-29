@@ -92,6 +92,7 @@ Authorization: Bearer {accessToken}
 > 클라이언트는 `data.documentId` 수신 후 즉시 WebSocket(`WS /ws/resume/{documentId}/status`) 연결을 시작합니다.
 
 ### Error Cases
+
 | statusCode | 상황 |
 |-----------|------|
 | `400` | 파일 크기 10MB 초과 |
@@ -148,6 +149,7 @@ Authorization: Bearer {accessToken}
 > 클라이언트는 `data.documentId` 수신 후 즉시 WebSocket(`WS /ws/resume/{documentId}/status`) 연결을 시작합니다.
 
 ### Error Cases
+
 | statusCode | 상황 |
 |-----------|------|
 | `400` | 문항 수 5개 초과 또는 답변 1000자 초과 |
@@ -194,6 +196,7 @@ Authorization: Bearer {accessToken}
 | `data.feedback.fix` | `string[]` | 개선 제안 목록, 없을 경우 빈 배열 `[]` |
 
 ### Error Cases
+
 | statusCode | 상황 |
 |-----------|------|
 | `404` | 존재하지 않는 `documentId` |
@@ -260,6 +263,7 @@ Authorization: Bearer {accessToken}
 | `data.content[].score` | `number` \| `null` | 분석 미완료 시 `null` |
 
 ### Error Cases
+
 | statusCode | 상황 |
 |-----------|------|
 | `401` | 토큰 없음 또는 만료 |
