@@ -25,15 +25,23 @@ import JobNoticeListPage from '../user/pages/jobNotice/JobNoticeListPage';
 
 import ApplicationStatusPage from '../user/pages/application/ApplicationStatusPage';
 import ApplicantManagementPage from '../user/pages/application/ApplicantManagementPage';
-import ApplicantDetailPage from '../user/pages/application/ApplicantDetailPage';
 import ApplyPage from '../user/pages/application/ApplyPage';
+import CareerHistoryPage from '../user/pages/careerHistory/CareerHistoryPage';
+import ReportExportPage from '../user/pages/reportExport/ReportExportPage';
 
 import ResumeAnalysisPage from '../user/pages/documentAnalysis/ResumeAnalysisPage';
 import CoverLetterAnalysisPage from '../user/pages/documentAnalysis/CoverLetterAnalysisPage';
 import DocumentReportPage from '../user/pages/documentAnalysis/DocumentReportPage';
 
-import CareerHistoryPage from '../user/pages/careerHistory/CareerHistoryPage';
-import ReportExportPage from '../user/pages/reportExport/ReportExportPage';
+import InterviewHomePage from '../user/pages/interview/InterviewHomePage';
+import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
+import MediaInterviewPage from '../user/pages/interview/MediaInterviewPage';
+import InterviewReportPage from '../user/pages/interview/InterviewReportPage';
+
+import DiagnosisHistoryPage from '../user/pages/careerDiagnosis/DiagnosisHistoryPage';
+import DiagnosisDetailPage from '../user/pages/careerDiagnosis/DiagnosisDetailPage';
+import LearningRoadmapPage from '../user/pages/careerDiagnosis/LearningRoadmapPage';
+import ComprehensiveReportPage from '../user/pages/careerDiagnosis/ComprehensiveReportPage';
 
 import CommunityPage from '../user/pages/community/CommunityPage';
 import PostDetailPage from '../user/pages/community/PostDetailPage';
@@ -69,9 +77,6 @@ import StatisticsPage from '../admin/pages/Statistics/StatisticsPage';
 import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
 import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
-import AdminCompanyListPage from '../admin/pages/Company/CompanyListPage';
-import AdminJobNoticeListPage from '../admin/pages/JobNotice/JobNoticeListPage';
-import AdminSettlementListPage from '../admin/pages/Settlement/SettlementListPage';
 
 function AppRoutes() {
   return (
@@ -110,8 +115,9 @@ function AppRoutes() {
           <Route index element={<Navigate to="/applications/status" replace />} />
           <Route path="status" element={<ApplicationStatusPage />} />
           <Route path="applicants" element={<ApplicantManagementPage />} />
-          <Route path="applicants/:applicationId" element={<ApplicantDetailPage />} />
           <Route path="apply" element={<ApplyPage />} />
+          <Route path="career-history" element={<CareerHistoryPage />} />
+          <Route path="report-export" element={<ReportExportPage />} />
         </Route>
 
         <Route path="documents">
@@ -121,9 +127,20 @@ function AppRoutes() {
           <Route path="report" element={<DocumentReportPage />} />
         </Route>
 
-        <Route path="interview" element={<CareerHistoryPage />} />
-        <Route path="career-history" element={<CareerHistoryPage />} />
-        <Route path="report-export" element={<ReportExportPage />} />
+        <Route path="interview">
+          <Route index element={<InterviewHomePage />} />
+          <Route path="report" element={<InterviewReportPage />} />
+          <Route path="text" element={<TextInterviewPage />} />
+          <Route path="media" element={<MediaInterviewPage />} />
+        </Route>
+
+        <Route path="career-diagnosis">
+          <Route index element={<Navigate to="/career-diagnosis/report" replace />} />
+          <Route path="history" element={<DiagnosisHistoryPage />} />
+          <Route path="detail/:id" element={<DiagnosisDetailPage />} />
+          <Route path="roadmap" element={<LearningRoadmapPage />} />
+          <Route path="report" element={<ComprehensiveReportPage />} />
+        </Route>
 
         <Route path="community">
           <Route index element={<CommunityPage />} />
@@ -171,9 +188,6 @@ function AppRoutes() {
           <Route path="ai"        element={<AiMetricsPage />} />
           <Route path="scraping"  element={<ScrapingPage />} />
           <Route path="log"       element={<AuditLogPage />} />
-          <Route path="companies" element={<AdminCompanyListPage />} />
-          <Route path="job-notices" element={<AdminJobNoticeListPage />} />
-          <Route path="settlements" element={<AdminSettlementListPage />} />
         </Route>
       </Route>
     </Routes>

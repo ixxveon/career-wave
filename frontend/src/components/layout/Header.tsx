@@ -5,12 +5,16 @@ import { serviceMenus } from '../../utils/serviceMenus';
 import logo from '../../assets/logo.svg';
 import './Header.css';
 
-function ComingSoonModal({ onClose }) {
+interface ComingSoonModalProps {
+  onClose: () => void;
+}
+
+function ComingSoonModal({ onClose }: ComingSoonModalProps) {
   const navigate = useNavigate();
 
   function handleCta() {
     onClose();
-    navigate('/career-history');
+    navigate('/interview/text');
   }
 
   return (

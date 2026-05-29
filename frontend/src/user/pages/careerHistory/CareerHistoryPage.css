@@ -2,8 +2,8 @@
   display: grid;
   gap: 28px;
   padding: 40px min(5vw, 64px) 56px;
-  background: #f6f8fb;
-  color: #172033;
+  background: #ffffff;
+  color: #2e3e5c;
 }
 
 .career-history-hero {
@@ -12,14 +12,14 @@
   justify-content: space-between;
   gap: 24px;
   padding: 32px;
-  border: 1px solid #dce5f0;
+  border: 1px solid #deeff3;
   border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #eef5ff 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f4ede1 100%);
 }
 
 .career-history-hero p {
   margin: 0 0 8px;
-  color: #2563eb;
+  color: #7faeeb;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0;
@@ -53,7 +53,7 @@
 }
 
 .career-history-hero__score strong {
-  color: #1d4ed8;
+  color: #7faeeb;
   font-size: 48px;
   line-height: 1;
 }
@@ -89,8 +89,8 @@
 }
 
 .career-history-tabs button.is-active {
-  border-color: #1d4ed8;
-  background: #1d4ed8;
+  border-color: #7faeeb;
+  background: #7faeeb;
   color: #ffffff;
 }
 
@@ -109,7 +109,7 @@
   width: 100%;
   border: 0;
   outline: 0;
-  color: #172033;
+  color: #2e3e5c;
   font: inherit;
 }
 
@@ -158,8 +158,8 @@
 }
 
 .career-record-card.is-selected {
-  border-color: #2563eb;
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
+  border-color: #7faeeb;
+  box-shadow: 0 10px 24px rgba(127, 174, 235, 0.18);
 }
 
 .career-record-card__date,
@@ -201,8 +201,8 @@
 .career-skill-list span {
   padding: 6px 10px;
   border-radius: 8px;
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: #bfe3ff;
+  color: #2e3e5c;
   font-size: 12px;
   font-weight: 800;
 }
@@ -235,7 +235,7 @@
 
 .career-history-detail__header span,
 .career-history-detail__section h3 {
-  color: #2563eb;
+  color: #7faeeb;
   font-size: 13px;
   font-weight: 900;
 }
@@ -253,7 +253,7 @@
 }
 
 .career-history-detail__header strong {
-  color: #1d4ed8;
+  color: #7faeeb;
   font-size: 38px;
 }
 
@@ -290,7 +290,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #2563eb;
+  color: #7faeeb;
   font-size: 13px;
   font-weight: 900;
 }
@@ -339,7 +339,7 @@
 }
 
 .career-history-metrics svg {
-  color: #2563eb;
+  color: #7faeeb;
 }
 
 .career-history-metrics span {

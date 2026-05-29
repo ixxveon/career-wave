@@ -2,8 +2,8 @@
   display: grid;
   gap: 28px;
   padding: 40px min(5vw, 64px) 56px;
-  background: #f6f8fb;
-  color: #172033;
+  background: #ffffff;
+  color: #2e3e5c;
 }
 
 .report-export-hero {
@@ -12,7 +12,7 @@
   justify-content: space-between;
   gap: 24px;
   padding: 32px;
-  border: 1px solid #dce5f0;
+  border: 1px solid #deeff3;
   border-radius: 8px;
   background: #ffffff;
 }
@@ -39,10 +39,18 @@
   padding: 0 18px;
   border: 0;
   border-radius: 8px;
-  background: #1d4ed8;
+  background: #7faeeb;
   color: #ffffff;
   font-weight: 900;
   cursor: pointer;
+}
+
+.report-export-hero button:disabled,
+.download-panel button:disabled {
+  background: #deeff3;
+  color: #7f8ca3;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .report-export-score-grid {
@@ -54,7 +62,7 @@
 .report-export-score-grid article,
 .report-export-side section,
 .report-paper {
-  border: 1px solid #dce5f0;
+  border: 1px solid #deeff3;
   border-radius: 8px;
   background: #ffffff;
 }
@@ -67,7 +75,7 @@
 
 .report-export-score-grid svg,
 .report-export-section-title svg {
-  color: #2563eb;
+  color: #7faeeb;
 }
 
 .report-export-score-grid span {
@@ -93,7 +101,7 @@
 .report-export-preview {
   padding: 18px;
   border-radius: 8px;
-  background: #e8eef6;
+  background: #deeff3;
 }
 
 .report-paper {
@@ -106,11 +114,11 @@
 
 .report-paper header {
   padding-bottom: 20px;
-  border-bottom: 2px solid #172033;
+  border-bottom: 2px solid #2e3e5c;
 }
 
 .report-paper header span {
-  color: #2563eb;
+  color: #7faeeb;
   font-size: 12px;
   font-weight: 900;
 }
@@ -213,7 +221,7 @@
 }
 
 .action-plan-list span {
-  color: #2563eb;
+  color: #7faeeb;
   font-size: 13px;
   font-weight: 900;
 }
@@ -227,7 +235,7 @@
 }
 
 .download-panel {
-  background: #172033 !important;
+  background: #2e3e5c !important;
   color: #ffffff;
 }
 
@@ -238,7 +246,12 @@
 
 .download-panel button {
   background: #ffffff;
-  color: #172033;
+  color: #2e3e5c;
+}
+
+.download-panel button:disabled {
+  background: #deeff3;
+  color: #7f8ca3;
 }
 
 @media (max-width: 1040px) {

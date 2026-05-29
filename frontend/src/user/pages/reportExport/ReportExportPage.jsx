@@ -2,8 +2,50 @@ import { Download, FileText, ListChecks, PieChart, ShieldCheck } from 'lucide-re
 import { careerHistoryRecords, reportExportSummary } from '../../data/careerWorkflowMockData';
 import './ReportExportPage.css';
 
+const authTokenKeys = ['careerWaveToken', 'careerWaveUser'];
+const paidMemberships = ['PREMIUM', 'PAID', 'SUBSCRIBED', 'PRO'];
+
+function hasAuthToken() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return authTokenKeys.some((key) => localStorage.getItem(key) || sessionStorage.getItem(key));
+}
+
+function hasPaidSubscription() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const membership = (
+    localStorage.getItem('membership') ||
+    localStorage.getItem('userMembership') ||
+    localStorage.getItem('plan') ||
+    sessionStorage.getItem('membership') ||
+    sessionStorage.getItem('userMembership') ||
+    sessionStorage.getItem('plan') ||
+    ''
+  ).toUpperCase();
+
+  return paidMemberships.includes(membership);
+}
+
 function ReportExportPage() {
+  const isLoggedIn = hasAuthToken();
+  const isSubscribed = hasPaidSubscription();
+  const canDownload = isLoggedIn && isSubscribed;
+  const downloadGuide = !isLoggedIn
+    ? '로그인 후 정기 결제를 완료하면 PDF 다운로드를 이용할 수 있습니다.'
+    : !isSubscribed
+      ? '정기 결제 이용권을 구독하면 PDF 다운로드를 이용할 수 있습니다.'
+      : '정기 결제 이용자 전용 PDF 다운로드가 준비되었습니다.';
+
   const handleDownload = () => {
+    if (!canDownload) {
+      return;
+    }
+
     window.alert('PDF 다운로드 기능은 추후 연결 예정입니다.');
   };
 
@@ -15,7 +57,7 @@ function ReportExportPage() {
           <h1>종합 진단 PDF 리포트</h1>
           <span>서류 분석, 면접 분석, 누적 Career History 데이터를 하나의 리포트 형태로 미리 확인합니다.</span>
         </div>
-        <button type="button" onClick={handleDownload}>
+        <button type="button" disabled={!canDownload} title={downloadGuide} onClick={handleDownload}>
           <Download size={18} />
           PDF 다운로드
         </button>
@@ -102,10 +144,10 @@ function ReportExportPage() {
 
           <section className="download-panel">
             <h2>PDF 산출 상태</h2>
-            <p>현재 화면은 UI 시안입니다. 실제 PDF 생성과 파일 다운로드는 백엔드 연동 단계에서 연결합니다.</p>
-            <button type="button" onClick={handleDownload}>
+            <p>{downloadGuide}</p>
+            <button type="button" disabled={!canDownload} title={downloadGuide} onClick={handleDownload}>
               <Download size={18} />
-              다운로드 준비 중
+              {canDownload ? 'PDF 다운로드' : !isLoggedIn ? '로그인 필요' : '정기 결제 필요'}
             </button>
           </section>
         </aside>
