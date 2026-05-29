@@ -29,9 +29,9 @@ src/
 │   │       └── FavoriteCompanyCard.jsx
 │   │
 │   ├── pages/
-│   │   └── dashboard/
+│   │   └── mypage/
 │   │       ├── UserMyPage.jsx
-│   │       └── DashboardPage.css
+│   │       └── MyPage.css
 │   │
 │   ├── api/
 │   │   └── dashboardApi.js

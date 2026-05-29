@@ -48,7 +48,7 @@ function UserMyPage() {
 
                 <div className="cw-account-grid">
                     <section className="cw-account-card">
-                        <div className="cw-card-title">
+                        <div className="cw-card-title has-action">
                             <div className="cw-card-title-left">
                                 <UserRound size={18} />
                                 <h3>기본 계정 정보</h3>
@@ -120,7 +120,7 @@ function UserMyPage() {
                 </div>
 
                 <section className="cw-account-card cw-github-card">
-                    <div className="cw-card-title">
+                    <div className="cw-card-title has-action">
                         <div className="cw-card-title-left">
                             <Github size={18} />
                             <h3>GitHub 연동 정보</h3>

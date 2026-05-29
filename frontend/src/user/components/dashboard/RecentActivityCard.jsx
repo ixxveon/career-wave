@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 function RecentActivityCard() {
     return (
         <div className="cw-mypage-extra-card" id="activity">

@@ -112,7 +112,7 @@ function ScrappedJobPage() {
                 </div>
 
                 <div className="cw-scrap-toolbar">
-                    <span>스크랩한 공고 3개</span>
+                    <span>스크랩한 공고 {scrappedJobs.length}개</span>
                     <button type="button">최근 스크랩순</button>
                 </div>
 
