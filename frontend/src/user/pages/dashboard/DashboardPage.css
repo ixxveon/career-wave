@@ -729,67 +729,6 @@
   font-weight: 700;
 }
 
-.cw-home-footer {
-  margin-top: 14px;
-  padding: 42px 0 30px;
-  border-top: 1px solid #e6edf7;
-  color: #6d7890;
-}
-
-.cw-home-footer__top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 28px;
-  min-height: 72px;
-}
-
-.cw-home-footer strong {
-  display: block;
-  color: #28416b;
-  font-size: 18px;
-  font-weight: 950;
-}
-
-.cw-home-footer p {
-  margin: 8px 0 0;
-  color: #6d7890;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.cw-home-footer nav {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 30px;
-  padding-top: 2px;
-  color: #334b70;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.cw-home-footer__bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding-top: 26px;
-  border-top: 1px solid #eef3f9;
-}
-
-.cw-home-footer__bottom small {
-  color: #7a8aa3;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.cw-home-footer__bottom span {
-  display: inline-flex;
-  align-items: center;
-  gap: 18px;
-  color: #6682ad;
-}
 
 @media (max-width: 1180px) {
   .cw-home-hero {
@@ -855,17 +794,7 @@
     flex-direction: column;
   }
 
-  .cw-home-footer__top,
-  .cw-home-footer__bottom {
-    align-items: flex-start;
-    flex-direction: column;
-  }
 
-  .cw-home-footer nav {
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
 }
 
 /* ===== 고유리 작업 영역: Dashboard UI 시작 ===== */
