@@ -74,8 +74,9 @@ src/
 
 ### Phase 1: 인프라 세팅 & 타입 정의
 - [ ] `resume.d.ts` — API DTO 및 도메인 타입 정의
-- [ ] `resumeStore.ts` — Zustand 스토어 설계 (서버/UI 상태 분리, 리렌더링 최적화)
 - [ ] `api/` — API 함수 인터페이스 및 공통 에러/재시도(TanStack Query) 구조 작성
+- [ ] TanStack Query 커스텀 훅 세팅 (queryKey 컨벤션, retry 정책 포함)
+- [ ] SessionStorage 헬퍼 유틸리티 구현 (`documentId` 및 분석 상태 직렬화/역직렬화)
 
 ### Phase 2: 입력 UI 구현
 **이력서 파일 업로드**
