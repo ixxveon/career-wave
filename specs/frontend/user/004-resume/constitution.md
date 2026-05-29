@@ -38,9 +38,22 @@ ANY → [IDLE]  # 폼 초기화 및 재시도
 | ANALYZING → ERROR | 허용 | API 타임아웃 또는 처리 실패 |
 | ANY → IDLE | 허용 | 폼 초기화 및 분석 재시도 |
 
+### 백엔드 status 값 → 프론트 상태 매핑
+
+> 백엔드 `status` 값(DB/API 응답)과 프론트 UI 상태 머신은 목적이 다르다.  
+> 아래 매핑에 따라 `useAnalysisResult` 훅 내부에서 변환한다.
+
+| 백엔드 `status` | 출처 | 프론트 상태 전이 |
+|----------------|------|-----------------|
+| `UPLOADED` | POST 업로드·제출 응답 | `SUBMITTING → ANALYZING` (WebSocket 연결 시작) |
+| `PENDING` | GET /feedback 재진입 시 | `ANALYZING` 유지 (서버 큐 대기 중) |
+| `ANALYZING` | WebSocket 메시지 | `ANALYZING` 유지 |
+| `COMPLETED` | WebSocket 메시지 | `ANALYZING → SUCCESS` |
+| `FAILED` | WebSocket 메시지 | `ANALYZING → ERROR` |
+
 **에러 처리 정책**
 * `ANALYZING → ERROR` 전이 시 상태는 `IDLE`로 복원하여 재시도를 허용한다.
-* API 에러는 `ErrorCode` 기반 공통 모달로 처리한다.
+* API 에러는 `statusCode` 기반 공통 모달로 처리한다.
 * 네트워크 단절은 별도 토스트 메시지로 처리한다.
 * `LoadingModal`은 `ERROR` 전이 시 반드시 닫혀야 한다.
 
