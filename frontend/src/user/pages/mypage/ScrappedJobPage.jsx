@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Bookmark, Eye, Search } from "lucide-react";
+import { Search, Bookmark } from "lucide-react";
 import JobNoticeDetail from "@/user/pages/jobNotice/JobNoticeDetail";
 import "./MyPage.css";
 
@@ -31,8 +31,8 @@ function ScrappedJobPage() {
         {
             id: 2,
             logo: "리",
-            company: "리벨더에이아이",
-            title: "[리벨더AI] QA 엔지니어",
+            company: "리빌더에이아이",
+            title: "[리빌더AI] QA 엔지니어",
             jobType: "데이터",
             exp: "3~20년",
             employment: "정규직",
@@ -70,6 +70,14 @@ function ScrappedJobPage() {
         },
     ];
 
+    function closeDetail() {
+        setSelectedJob(null);
+    }
+
+    function toggleBookmark() {
+        alert("스크랩 해제 기능은 준비 중입니다.");
+    }
+
     return (
         <div className="cw-mypage-layout">
             <aside className="cw-mypage-sidebar">
@@ -79,42 +87,38 @@ function ScrappedJobPage() {
                     <NavLink to="/mypage" end>
                         내 정보 관리
                     </NavLink>
-
-                    <NavLink to="/mypage/favorites">
+                    <NavLink to="/mypage/favorites" className="is-active">
                         스크랩 공고
                     </NavLink>
-
-                    <NavLink to="/mypage/subscription">
-                        AI 서비스
-                    </NavLink>
-
-                    <NavLink to="/mypage/payment-history">
-                        구독/결제 내역
-                    </NavLink>
+                    <NavLink to="/mypage/subscription">AI 서비스</NavLink>
+                    <NavLink to="/mypage/payment-history">구독/결제 내역</NavLink>
                 </nav>
             </aside>
 
-            <section className="cw-account-section cw-scrap-page">
+            <section className="cw-scrap-page">
                 <div className="cw-scrap-header">
                     <div>
+                        <span className="cw-account-badge">SAVED JOBS</span>
                         <h2>스크랩 공고</h2>
-                        <p>내가 저장한 채용공고를 한눈에 확인하고 관리할 수 있어요.</p>
+                        <p>
+                            내가 저장한 채용공고를 한눈에 확인하고 관리할 수 있어요.
+                        </p>
                     </div>
 
                     <div className="cw-scrap-search">
-                        <input placeholder="공고명 또는 회사명 검색" />
+                        <input type="text" placeholder="공고명 또는 회사명 검색" />
                         <Search size={18} />
                     </div>
                 </div>
 
                 <div className="cw-scrap-toolbar">
-                    <span>스크랩한 공고 {scrappedJobs.length}개</span>
+                    <span>스크랩한 공고 3개</span>
                     <button type="button">최근 스크랩순</button>
                 </div>
 
                 <div className="cw-scrap-grid">
                     {scrappedJobs.map((job) => (
-                        <article className="cw-scrap-card" key={job.id}>
+                        <div className="cw-scrap-card" key={job.id}>
                             <div className="cw-scrap-card-top">
                                 <div className="cw-scrap-logo">{job.logo}</div>
 
@@ -125,11 +129,7 @@ function ScrappedJobPage() {
                                     </span>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    className="cw-scrap-bookmark"
-                                    aria-label="스크랩 해제"
-                                >
+                                <button type="button" className="cw-scrap-bookmark">
                                     <Bookmark size={18} />
                                 </button>
                             </div>
@@ -140,39 +140,30 @@ function ScrappedJobPage() {
                                 {job.tags.map((tag) => `#${tag}`).join(" ")}
                             </p>
 
-                            <div className="cw-scrap-tags">
-                                <span>{job.deadline}</span>
-                                <span>{job.source}</span>
-                                {job.recommended && <span>추천</span>}
-                            </div>
-
                             <div className="cw-scrap-card-bottom">
-                                <span>
-                                    <Eye size={14} />
-                                    {job.views.toLocaleString()}
-                                </span>
+                                <span>{job.deadline}</span>
 
                                 <button
                                     type="button"
                                     className="cw-job-detail-button"
                                     onClick={() => setSelectedJob(job)}
                                 >
-                                    공고 보기
+                                    상세보기
                                 </button>
                             </div>
-                        </article>
+                        </div>
                     ))}
                 </div>
-
-                <JobNoticeDetail
-                    job={selectedJob}
-                    isOpen={Boolean(selectedJob)}
-                    bookmarked={Boolean(selectedJob?.bookmarked)}
-                    onClose={() => setSelectedJob(null)}
-                    onBookmark={() => { }}
-                />
             </section>
-        </div >
+
+            <JobNoticeDetail
+                job={selectedJob}
+                isOpen={Boolean(selectedJob)}
+                bookmarked={Boolean(selectedJob?.bookmarked)}
+                onClose={closeDetail}
+                onBookmark={toggleBookmark}
+            />
+        </div>
     );
 }
 
