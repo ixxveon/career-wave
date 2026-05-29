@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
-import FavoriteCompanyPage from '@/user/pages/mypage/FavoriteCompanyPage';
+import ScrappedJobPage from '@/user/pages/mypage/ScrappedJobPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
 import JobSeekerDashboardPage from '../user/pages/dashboard/JobSeekerDashboardPage';
@@ -84,7 +84,7 @@ function AppRoutes() {
         <Route index element={<JobSeekerDashboardPage />} />
         <Route path="dashboard/company" element={<CompanyDashboardPage />} />
         <Route path="mypage" element={<UserMyPage />} />
-        <Route path="mypage/favorites" element={<FavoriteCompanyPage />} />
+        <Route path="mypage/favorites" element={<ScrappedJobPage />} />
         <Route path="mypage/subscription" element={<SubscriptionPage />} />
         <Route path="mypage/payment-history" element={<PaymentHistoryPage />} />
 
