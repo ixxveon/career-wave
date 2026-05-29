@@ -12,8 +12,8 @@ import './styles/TextInterviewPage.css';
 /* ── Web Speech API 타입 선언 (TypeScript DOM lib 미포함 항목) ── */
 declare global {
   interface Window {
-    SpeechRecognition:       new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
+    SpeechRecognition?:       new () => SpeechRecognition;
+    webkitSpeechRecognition?: new () => SpeechRecognition;
   }
 
   interface SpeechRecognition extends EventTarget {
