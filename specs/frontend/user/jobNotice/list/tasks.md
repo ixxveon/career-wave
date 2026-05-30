@@ -8,7 +8,7 @@
 - [ ] API 성공/실패 응답이 `ApiResponse<T>`의 `success`, `statusCode`, `message`, `data` 필드를 기준으로 문서화되어 있는지 확인한다.
 - [ ] `JobNoticeTypes.ts`의 필드명을 API 응답과 매핑한다. 필요 시 `experience`/`employmentType` 등 서버 필드와 화면 필드 변환 함수를 둔다.
 - [ ] 필터 enum(`직무`, `경력`, `채용 유형`, `지역`, `기업 규모`)과 정렬 enum(`추천순`, `최신순`, `조회순`)을 상수로 고정한다.
-- [ ] 목록과 상세가 같은 `jobNoticeId`와 `bookmarked` 값을 참조하도록 상태 소유 지점을 정한다.
+- [ ] 목록과 상세가 같은 공고 `id`와 `bookmarked` 값을 참조하도록 상태 소유 지점을 정한다.
 
 ## Phase 2 - 목록 데이터 흐름
 

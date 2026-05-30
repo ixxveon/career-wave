@@ -50,12 +50,12 @@
 
 ## Edge Cases
 
-- 검색어가 공백만 포함된 경우 전체 검색으로 처리할 것인가?
-- 기간 필터에서 기준 날짜는 서버 현재일과 데이터의 최신 게시일 중 무엇을 사용할 것인가?
-- 경력 조건이 `경력무관`, `신입`, `3~20년`처럼 범위가 다른 경우 교집합 판단을 어떻게 적용할 것인가?
-- API 응답은 성공했지만 `items`가 빈 배열인 경우와 API 오류를 어떻게 구분해서 표시할 것인가?
-- 스크랩 토글 요청이 실패했을 때 낙관적으로 바뀐 버튼 상태를 어떻게 되돌릴 것인가?
-- 원본 공고 URL이 없는 공고를 상세로 열었을 때 원본 이동 버튼은 어떤 fallback을 사용할 것인가?
+- 검색어가 공백만 포함된 경우: 프론트엔드는 `trim()` 결과가 빈 문자열이면 `keyword`를 API 요청에서 제외하고 전체 검색으로 처리한다. 서버도 공백-only `keyword`를 받은 경우 필터를 적용하지 않는다.
+- 기간 필터에서 기준 날짜: API 연동 후에는 서버 현재일을 기준으로 `today`, `7d`, `30d`, `all`을 계산한다. mock 데이터 단계에서는 서버 기준일을 받을 수 없으므로 데이터의 최신 `postedAt`을 기준일로 사용하고, API 전환 시 제거한다.
+- 경력 조건이 `경력무관`, `신입`, `3~20년`처럼 범위가 다른 경우: `경력무관`은 `[0, 99]`, `신입`은 `[0, 0]`, `N~M년`은 `[N, M]`, `N년 이상`은 `[N, 99]`로 정규화하고 두 범위가 하나라도 겹치면 포함한다.
+- API 응답은 성공했지만 `items`가 빈 배열인 경우와 API 오류 구분: `success=true`와 `items=[]`는 빈 결과 UI를 표시한다. HTTP 실패 또는 `success=false`는 오류 UI와 재시도 액션을 표시하며 빈 결과로 대체하지 않는다.
+- 스크랩 토글 요청이 실패했을 때 낙관적으로 바뀐 버튼 상태: 프론트엔드는 이전 `bookmarked` 값을 저장한 뒤 낙관적으로 갱신하고, 실패 시 이전 값으로 롤백하며 `message` 또는 기본 실패 문구를 토스트/인라인 안내로 표시한다.
+- 원본 공고 URL이 없는 공고를 상세로 열었을 때 원본 이동 버튼 fallback: `originalUrl`이 없으면 공고 제목으로 구성한 검색 URL을 새 탭으로 열고, 검색 URL도 생성할 수 없는 경우 원본 이동 버튼을 비활성화하고 안내 문구를 표시한다.
 
 ## Requirements
 
@@ -81,7 +81,7 @@
 - **JobNoticeSummary**: id, company, title, jobType, experience, employmentType, location, companySize, salary, deadline, postedAt, tags, source, recommended, recommendScore, views, bookmarked, originalUrl, stacks
 - **JobNoticeFilter**: keyword, jobType, experience, employmentType, location, companySize, period, sort
 - **JobNoticeListStats**: totalOpenCount, todayNewCount, todayNewDelta, todayNewRate
-- **BookmarkState**: jobNoticeId, bookmarked
+- **BookmarkState**: id, bookmarked
 
 ## Success Criteria
 

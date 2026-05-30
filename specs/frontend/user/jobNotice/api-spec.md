@@ -229,7 +229,7 @@
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| `jobNoticeId` | number | 공고 ID |
+| `id` | number | 공고 ID. 목록/상세의 `JobNoticeSummary.id`와 같은 canonical key를 사용한다. |
 | `bookmarked` | boolean | 최종 스크랩 여부 |
 | `scrapCount` | number | 해당 공고의 전체 스크랩 수 |
 
