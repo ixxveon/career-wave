@@ -132,7 +132,7 @@
 |------|------|------|--------|------|
 | `keyword` | string | N | - | 회사명, 공고명, 직무, 기술 스택, 출처 통합 검색어 |
 | `jobType` | string | N | - | 직무 필터. `전체` 선택 시 생략 |
-| `experience` | string | N | - | 경력 필터. 범위 필터는 서버가 교집합 기준으로 처리 |
+| `experience` | string | N | - | 경력 필터. 서버는 선택한 `experience` 범위와 공고 경력 범위가 겹치면 포함한다. 경계값은 포함하며, 정규화 예시는 `constitution.md`의 경력 범위 규칙을 따른다. |
 | `employmentType` | string | N | - | 채용 유형 필터 |
 | `location` | string | N | - | 지역 필터 |
 | `companySize` | string | N | - | 기업 규모 필터 |
@@ -168,7 +168,24 @@
   "statusCode": 200,
   "message": "조건에 맞는 공고가 없습니다.",
   "data": {
-    "items": []
+    "items": [],
+    "page": 1,
+    "size": 18,
+    "totalItems": 0,
+    "totalPages": 0,
+    "stats": {
+      "totalOpenCount": 0,
+      "todayNewCount": 0,
+      "todayNewDelta": 0,
+      "todayNewRate": 0
+    },
+    "filterOptions": {
+      "jobType": ["전체", "백엔드", "프론트엔드", "데이터", "DevOps"],
+      "experience": ["전체", "신입", "1~3년", "3~5년", "5년 이상", "경력무관"],
+      "employmentType": ["전체", "정규직", "인턴", "계약직"],
+      "location": ["전체", "서울", "경기", "원격"],
+      "companySize": ["전체", "스타트업", "중견", "대기업"]
+    }
   }
 }
 ```
@@ -247,7 +264,7 @@
 | 목록 페이지 | `frontend/src/user/pages/jobNotice/JobNoticeListPage.tsx` |
 | 상세 드로어 | `frontend/src/user/pages/jobNotice/JobNoticeDetail.tsx` |
 | 공유 타입 | `frontend/src/user/pages/jobNotice/JobNoticeTypes.ts` |
-| API 모듈 | `frontend/src/user/api/jobApi.js` 또는 `frontend/src/user/api/jobNoticeApi.ts` |
+| API 모듈 | `frontend/src/user/api/jobNoticeApi.ts` |
 | API 클라이언트 | `frontend/src/utils/apiClient.js` |
 
 ## 8. Notes
