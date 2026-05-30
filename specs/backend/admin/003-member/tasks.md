@@ -31,7 +31,7 @@
   - [ ] `approve()` 메서드 — hr_status → ACTIVE, approved_at 기록
   - [ ] `reject(String rejectReason)` 메서드 — hr_status → REMOVED, reject_reason 저장
 - [ ] `SuspendHistory.java`
-  - [ ] `@Id @Column(name = "history_id") Long historyId`
+  - [ ] `@Id @Column(name = "suspend_history_id") Long suspendHistoryId`
   - [ ] 생성자 또는 정적 팩토리 메서드로 생성 강제
 
 ---

@@ -1,15 +1,24 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Mic, MicOff, Video, VideoOff,
   X, Clock, ChevronRight,
   Eye, Activity, MessageSquare, Smile,
   BarChart2, Lightbulb, List,
+  type LucideIcon,
 } from 'lucide-react';
-import './styles/MediaInterviewPage.css';
+import './MediaInterviewPage.css';
 
-const JOB_OPTIONS = ['백엔드 개발자', '프론트엔드 개발자', '풀스택 개발자', '데이터 엔지니어', 'DevOps'];
+interface MetricItem {
+  Icon: LucideIcon;
+  label: string;
+  value: number | string;
+  unit: string;
+  color: string;
+}
 
-const QUESTIONS = [
+const JOB_OPTIONS: string[] = ['백엔드 개발자', '프론트엔드 개발자', '풀스택 개발자', '데이터 엔지니어', 'DevOps'];
+
+const QUESTIONS: string[] = [
   '간단한 자기소개를 부탁드립니다.',
   '가장 어려웠던 프로젝트 경험을 말씀해주세요.',
   '본인의 강점과 약점은 무엇인가요?',
@@ -22,7 +31,7 @@ const QUESTIONS = [
   '마지막으로 하고 싶은 말이 있으신가요?',
 ];
 
-const HINTS = [
+const HINTS: string[][] = [
   ['STAR 기법', '직무 연관성', '간결하게'],
   ['구체적 수치', '기술 스택', '팀 기여도'],
   ['강점 2가지', '약점 + 극복', '진정성'],
@@ -35,7 +44,7 @@ const HINTS = [
   ['인상 남기기', '질문 준비', '자신감'],
 ];
 
-const METRICS = [
+const METRICS: MetricItem[] = [
   { Icon: Eye,           label: '시선 안정도', value: 82,    unit: '%',      color: '#22c55e' },
   { Icon: Activity,      label: 'WPM',         value: 138,   unit: '단어/분', color: '#60a5fa' },
   { Icon: MessageSquare, label: '말하기 속도', value: '보통', unit: '',       color: '#a78bfa' },
@@ -43,24 +52,24 @@ const METRICS = [
 ];
 
 function MediaInterviewPage() {
-  const [phase,   setPhase]   = useState('setup');
+  const [phase,   setPhase]   = useState<'setup' | 'interview'>('setup');
   const [job,     setJob]     = useState('백엔드 개발자');
   const [company, setCompany] = useState('');
   const [micOn,   setMicOn]   = useState(true);
   const [camOn,   setCamOn]   = useState(true);
   const [qIdx,    setQIdx]    = useState(0);
   const [sec,     setSec]     = useState(0);
-  const [stream,  setStream]  = useState(null);
+  const [stream,  setStream]  = useState<MediaStream | null>(null);
   const [camErr,  setCamErr]  = useState(false);
 
-  const setupVidRef = useRef(null);
-  const liveVidRef  = useRef(null);
-  const timerRef    = useRef(null);
+  const setupVidRef = useRef<HTMLVideoElement>(null);
+  const liveVidRef  = useRef<HTMLVideoElement>(null);
+  const timerRef    = useRef<number | null>(null);
 
   /* ── 카메라 스트림 획득 ─────────────────────── */
   useEffect(() => {
     let cancelled = false;
-    let localStream = null;
+    let localStream: MediaStream | null = null;
 
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
@@ -92,7 +101,9 @@ function MediaInterviewPage() {
     if (phase === 'interview') {
       timerRef.current = setInterval(() => setSec(s => s + 1), 1000);
     }
-    return () => clearInterval(timerRef.current);
+    return () => {
+      if (timerRef.current !== null) clearInterval(timerRef.current);
+    };
   }, [phase]);
 
   /* ── 트랙 토글 ──────────────────────────────── */
@@ -105,7 +116,10 @@ function MediaInterviewPage() {
   }, [camOn, stream]);
 
   function startInterview() { setSec(0); setQIdx(0); setPhase('interview'); }
-  function endInterview()   { clearInterval(timerRef.current); setSec(0); setQIdx(0); setPhase('setup'); }
+  function endInterview()   {
+    if (timerRef.current !== null) clearInterval(timerRef.current);
+    setSec(0); setQIdx(0); setPhase('setup');
+  }
 
   const TOTAL_Q = 10;
   const mm = String(Math.floor(sec / 60)).padStart(2, '0');
@@ -136,12 +150,14 @@ function MediaInterviewPage() {
               <button
                 className={`mi-icon-btn${micOn ? '' : ' mi-icon-btn--off'}`}
                 onClick={() => setMicOn(m => !m)}
+                type="button"
               >
                 {micOn ? <Mic size={16} /> : <MicOff size={16} />}
               </button>
               <button
                 className={`mi-icon-btn${camOn ? '' : ' mi-icon-btn--off'}`}
                 onClick={() => setCamOn(c => !c)}
+                type="button"
               >
                 {camOn ? <Video size={16} /> : <VideoOff size={16} />}
               </button>
@@ -152,7 +168,7 @@ function MediaInterviewPage() {
             <label className="mi-setup__label">목표 직무</label>
             <div className="mi-setup__chips">
               {JOB_OPTIONS.map(j => (
-                <button key={j} className={`mi-chip${job === j ? ' mi-chip--on' : ''}`} onClick={() => setJob(j)}>
+                <button key={j} className={`mi-chip${job === j ? ' mi-chip--on' : ''}`} onClick={() => setJob(j)} type="button">
                   {j}
                 </button>
               ))}
@@ -169,7 +185,7 @@ function MediaInterviewPage() {
             />
           </div>
 
-          <button className="mi-setup__btn" onClick={startInterview} disabled={!company.trim()}>
+          <button className="mi-setup__btn" onClick={startInterview} disabled={!company.trim()} type="button">
             면접 시작하기 <ChevronRight size={16} />
           </button>
         </div>
@@ -196,7 +212,7 @@ function MediaInterviewPage() {
         </div>
         <div className="mi-header__right">
           <div className="mi-header__timer"><Clock size={13} />{mm}:{ss}</div>
-          <button className="mi-header__exit" onClick={endInterview}><X size={14} /> 종료</button>
+          <button className="mi-header__exit" onClick={endInterview} type="button"><X size={14} /> 종료</button>
         </div>
       </header>
 
@@ -224,7 +240,7 @@ function MediaInterviewPage() {
             <p className="mi-panel__heading"><BarChart2 size={12} /> 실시간 AI 분석</p>
             <div className="mi-metric-grid">
               {METRICS.map(({ Icon, label, value, unit, color }, i) => (
-                <div key={i} className="mi-metric-card" style={{ '--mc': color }}>
+                <div key={i} className="mi-metric-card" style={{ '--mc': color } as React.CSSProperties}>
                   <div className="mi-metric-card__icon"><Icon size={14} /></div>
                   <div className="mi-metric-card__value">
                     {value}
@@ -277,6 +293,7 @@ function MediaInterviewPage() {
               style={{ width: '100%' }}
               onClick={() => setQIdx(q => Math.min(q + 1, TOTAL_Q - 1))}
               disabled={qIdx >= TOTAL_Q - 1}
+              type="button"
             >다음 질문 →</button>
           </div>
 
@@ -285,11 +302,11 @@ function MediaInterviewPage() {
 
       <div className="mi-controls">
         <div className="mi-controls__left">
-          <button className={`mi-ctrl-btn${micOn ? '' : ' mi-ctrl-btn--off'}`} onClick={() => setMicOn(m => !m)}>
+          <button className={`mi-ctrl-btn${micOn ? '' : ' mi-ctrl-btn--off'}`} onClick={() => setMicOn(m => !m)} type="button">
             {micOn ? <Mic size={17} /> : <MicOff size={17} />}
             {micOn ? '마이크' : '음소거'}
           </button>
-          <button className={`mi-ctrl-btn${camOn ? '' : ' mi-ctrl-btn--off'}`} onClick={() => setCamOn(c => !c)}>
+          <button className={`mi-ctrl-btn${camOn ? '' : ' mi-ctrl-btn--off'}`} onClick={() => setCamOn(c => !c)} type="button">
             {camOn ? <Video size={17} /> : <VideoOff size={17} />}
             {camOn ? '카메라' : '카메라 꺼짐'}
           </button>

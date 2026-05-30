@@ -59,7 +59,7 @@ approved_at         TIMESTAMPTZ   NULL
 ### suspend_histories
 
 ```sql
-history_id      BIGSERIAL     PK
+suspend_history_id BIGSERIAL  PK
 member_id       UUID          NOT NULL REFERENCES members(member_id)
 admin_id        BIGINT        NOT NULL REFERENCES admins(admin_id)
 sanction_type   VARCHAR(20)   NOT NULL CHECK (sanction_type IN ('WARNING', 'SUSPEND', 'BLACKLIST'))
@@ -299,7 +299,7 @@ public class HrManagerDTO {
 |---|---|---|
 | `MEMBER_NOT_FOUND` | 404 | 존재하지 않는 회원입니다. |
 | `ALREADY_BANNED` | 409 | 이미 영구 정지된 회원입니다. |
-| `INVALID_SANCTION_DURATION` | 400 | SUSPEND 제재 시 기간이 필요합니다. |
+| `INVALID_SANCTION_DURATION` | 400 | SUSPEND 제재 시 유효하지 않은 기간입니다. (null 또는 PERMANENT 불가) |
 | `REASON_REQUIRED` | 400 | 제재 사유는 필수입니다. |
 | `REASON_TOO_SHORT` | 400 | 제재 사유는 최소 10자 이상 입력해주세요. |
 
@@ -403,24 +403,27 @@ public class HrManagerDTO {
 sanctionMember(memberId, RequestSanction dto)
   1. Member 조회 → MEMBER_NOT_FOUND
   2. member_status == BANNED → ALREADY_BANNED
-  3. SUSPEND 요청 시 duration == null → INVALID_SANCTION_DURATION
+  3. SanctionType별 duration 검증:
+     - SUSPEND 요청 시 duration == null → INVALID_SANCTION_DURATION
+     - SUSPEND 요청 시 duration == PERMANENT → INVALID_SANCTION_DURATION (영구 제재는 BLACKLIST 전용)
   4. reason 검증 → REASON_REQUIRED / REASON_TOO_SHORT (10자 미만)
   5. SanctionType별 처리:
      - WARNING  : member.increaseWarningCount()
-     - SUSPEND  : member.suspend(endDate 계산), suspend_end_date 저장
+     - SUSPEND  : member.suspend(endDate 계산), suspend_end_date 저장 (THREE_DAYS / SEVEN_DAYS / THIRTY_DAYS만 허용)
      - BLACKLIST: member.ban(), suspend_end_date = null
   6. SuspendHistory 생성 및 저장
   7. Member 변경사항 반영 (JPA 더티 체킹)
 ```
 
-**SUSPEND duration별 suspend_end_date 계산**:
+**SUSPEND duration별 suspend_end_date 계산** (BLACKLIST는 duration 미사용):
 
 | duration | suspend_end_date |
 |---|---|
 | `THREE_DAYS` | NOW() + 3일 |
 | `SEVEN_DAYS` | NOW() + 7일 |
 | `THIRTY_DAYS` | NOW() + 30일 |
-| `PERMANENT` | null (사실상 BLACKLIST와 동일) |
+
+> `PERMANENT` duration은 **BLACKLIST 전용**입니다. SUSPEND에 PERMANENT를 지정하면 `INVALID_SANCTION_DURATION`을 반환합니다.
 
 ### 기업 회원 승인/반려 (`@Transactional`)
 
@@ -448,7 +451,7 @@ rejectHrManager(memberId, RequestReject dto)
 | `ALREADY_BANNED` | 409 | 이미 영구 정지된 회원입니다. |
 | `ALREADY_PROCESSED` | 409 | 이미 처리된 가입 신청입니다. |
 | `INVALID_MEMBER_FILTER` | 400 | 지원하지 않는 필터 값입니다. |
-| `INVALID_SANCTION_DURATION` | 400 | SUSPEND 제재 시 기간이 필요합니다. |
+| `INVALID_SANCTION_DURATION` | 400 | SUSPEND 제재 시 유효하지 않은 기간입니다. (null 또는 PERMANENT 불가) |
 | `REASON_REQUIRED` | 400 | 사유는 필수입니다. |
 | `REASON_TOO_SHORT` | 400 | 사유는 최소 10자 이상 입력해주세요. |
 
