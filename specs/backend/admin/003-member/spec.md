@@ -59,7 +59,7 @@ approved_at         TIMESTAMPTZ   NULL
 ### suspend_histories
 
 ```sql
-history_id      BIGSERIAL     PK
+suspend_history_id BIGSERIAL  PK
 member_id       UUID          NOT NULL REFERENCES members(member_id)
 admin_id        BIGINT        NOT NULL REFERENCES admins(admin_id)
 sanction_type   VARCHAR(20)   NOT NULL CHECK (sanction_type IN ('WARNING', 'SUSPEND', 'BLACKLIST'))

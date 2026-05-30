@@ -20,7 +20,7 @@
 - 대상 컴포넌트: `frontend/src/admin/pages/UserManagement/UserManagementPage.tsx`
 - 스타일: `frontend/src/admin/styles/UserManagement.css`
 - 아이콘: `lucide-react`
-- API 계약: `specs/frontend/admin/006-member/api-schema.md`
+- API 계약: `specs/frontend/admin/003-member/api-schema.md`
 - 서버 상태: API 연동 시 TanStack Query 우선 검토
 - HTTP 호출: `frontend/src/admin/api` 하위 도메인 API 모듈 사용 (페이지에서 직접 호출 금지)
 
@@ -35,7 +35,7 @@ frontend/src/admin/pages/UserManagement/
 frontend/src/admin/styles/
 └── UserManagement.css           # 회원관리 전용 스타일
 
-specs/frontend/admin/006-member/
+specs/frontend/admin/003-member/
 ├── constitution.md
 ├── spec.md
 ├── plan.md                      # 이 파일

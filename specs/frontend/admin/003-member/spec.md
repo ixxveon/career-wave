@@ -254,7 +254,7 @@ UI는 탭으로 구분한다.
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `history_id` | BIGSERIAL PK | 제재 이력 고유 ID |
+| `suspend_history_id` | BIGSERIAL PK | 제재 이력 고유 ID |
 | `member_id` | UUID FK | 제재 대상 회원 |
 | `admin_id` | BIGINT FK | 처리 관리자 |
 | `sanction_type` | VARCHAR | `WARNING` / `SUSPEND` / `BLACKLIST` |
