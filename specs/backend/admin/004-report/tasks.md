@@ -30,8 +30,10 @@
   - [ ] 동적 필터 쿼리 (`status` / `targetType` / `reason` — null이면 해당 조건 미적용)
   - [ ] `countByReportStatus(ReportStatus status)` — KPI 집계용
   - [ ] 기본 정렬 `created_at DESC`
+- [ ] `ReportBoardRepository.java` — `boards` 테이블 접근용 admin 전용 Repository (`boardId`, `isBlind` 필드만)
+- [ ] `ReportCommentRepository.java` — `comments` 테이블 접근용 admin 전용 Repository (`commentId`, `isBlind` 필드만)
 
-> 블라인드 처리 시 boards·comments 업데이트는 기존 `BoardRepository`, `CommentRepository` 재사용
+> `user/` 패키지의 BoardRepository/CommentRepository를 직접 import하지 않는다. admin 전용 Repository를 별도 정의하여 같은 테이블에 접근한다.
 
 ---
 
