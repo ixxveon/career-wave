@@ -13,43 +13,47 @@ const KEYS = {
 
 /** documentId 저장 */
 const saveDocumentId = (documentId: string): void => {
-  try {
-    sessionStorage.setItem(KEYS.DOCUMENT_ID, documentId);
-  } catch {
-    // sessionStorage 접근 불가 시 무시 (Private 모드 등)
-  }
+  try { sessionStorage.setItem(KEYS.DOCUMENT_ID, documentId); } catch { /* 무시 */ }
 };
 
 /** documentId 조회 */
 const getDocumentId = (): string | null => {
-  try {
-    return sessionStorage.getItem(KEYS.DOCUMENT_ID);
-  } catch {
-    return null;
-  }
+  try { return sessionStorage.getItem(KEYS.DOCUMENT_ID); } catch { return null; }
 };
 
 /** documentId 삭제 */
 const removeDocumentId = (): void => {
-  try {
-    sessionStorage.removeItem(KEYS.DOCUMENT_ID);
-  } catch {
-    // 무시
-  }
+  try { sessionStorage.removeItem(KEYS.DOCUMENT_ID); } catch { /* 무시 */ }
+};
+
+// ── UI 상태 (새로고침 시 ANALYZING 복원용) ───────────────────
+
+/** UI 상태 저장 */
+const saveUIState = (state: string): void => {
+  try { sessionStorage.setItem(KEYS.UI_STATE, state); } catch { /* 무시 */ }
+};
+
+/** UI 상태 조회 */
+const getUIState = (): string | null => {
+  try { return sessionStorage.getItem(KEYS.UI_STATE); } catch { return null; }
+};
+
+/** UI 상태 삭제 */
+const removeUIState = (): void => {
+  try { sessionStorage.removeItem(KEYS.UI_STATE); } catch { /* 무시 */ }
 };
 
 /** 세션 전체 초기화 (분석 취소 또는 완료 후 재시도 시) */
 const clear = (): void => {
-  try {
-    Object.values(KEYS).forEach((key) => sessionStorage.removeItem(key));
-  } catch {
-    // 무시
-  }
+  try { Object.values(KEYS).forEach(key => sessionStorage.removeItem(key)); } catch { /* 무시 */ }
 };
 
 export const resumeStorage = {
   saveDocumentId,
   getDocumentId,
   removeDocumentId,
+  saveUIState,
+  getUIState,
+  removeUIState,
   clear,
 };
