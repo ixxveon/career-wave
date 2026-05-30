@@ -1,0 +1,125 @@
+/* ═══════════════════════════════════════════════
+   ResumeUpload
+   ═══════════════════════════════════════════════ */
+
+.ru {
+  width: 100%;
+}
+
+/* ─── 드롭존 ──────────────────────────────────── */
+.ru-dropzone {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 24px;
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--color-border);
+  background: var(--color-surface-soft, #f8fafd);
+  cursor: pointer;
+  transition: border-color 0.14s, background 0.14s;
+  margin-bottom: 8px;
+  outline: none;
+}
+
+.ru-dropzone:hover:not(.ru-dropzone--filled):not(.ru-dropzone--disabled),
+.ru-dropzone:focus-visible:not(.ru-dropzone--filled) {
+  border-color: var(--color-primary);
+  background: #eef4ff;
+}
+
+.ru-dropzone--filled {
+  border-style: solid;
+  border-color: var(--color-primary);
+  background: #eef4ff;
+  cursor: default;
+}
+
+.ru-dropzone--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ru-dropzone__icon { color: var(--color-text-secondary); }
+
+.ru-dropzone__label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.ru-dropzone__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* ─── 파일 카드 ───────────────────────────────── */
+.ru-file-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.ru-file-card__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #dbeafe;
+  color: var(--color-primary-dark);
+  flex-shrink: 0;
+}
+
+.ru-file-card__info { flex: 1; min-width: 0; }
+
+.ru-file-card__name {
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ru-file-card__size {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.ru-file-card__remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #fca5a5;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+.ru-file-card__remove:hover:not(:disabled) { background: #fca5a5; }
+.ru-file-card__remove:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ─── 에러 메시지 ─────────────────────────────── */
+.ru-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+}
