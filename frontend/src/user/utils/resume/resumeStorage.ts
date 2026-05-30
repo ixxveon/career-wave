@@ -38,6 +38,35 @@ const removeDocumentId = (): void => {
   }
 };
 
+// ── UI 상태 (새로고침 시 ANALYZING 복원용) ───────────────────
+
+/** UI 상태 저장 */
+const saveUIState = (state: string): void => {
+  try {
+    sessionStorage.setItem(KEYS.UI_STATE, state);
+  } catch {
+    // 무시
+  }
+};
+
+/** UI 상태 조회 */
+const getUIState = (): string | null => {
+  try {
+    return sessionStorage.getItem(KEYS.UI_STATE);
+  } catch {
+    return null;
+  }
+};
+
+/** UI 상태 삭제 */
+const removeUIState = (): void => {
+  try {
+    sessionStorage.removeItem(KEYS.UI_STATE);
+  } catch {
+    // 무시
+  }
+};
+
 /** 세션 전체 초기화 (분석 취소 또는 완료 후 재시도 시) */
 const clear = (): void => {
   try {
@@ -51,5 +80,8 @@ export const resumeStorage = {
   saveDocumentId,
   getDocumentId,
   removeDocumentId,
+  saveUIState,
+  getUIState,
+  removeUIState,
   clear,
 };
