@@ -292,6 +292,7 @@ GET /api/admin/faqs
         "faqId": 1,
         "category": "PAYMENT",
         "question": "구독 환불은 어떻게 하나요?",
+        "answer": "구독 결제일로부터 7일 이내, AI 기능 미이용 시 전액 환불 가능합니다.",
         "createdAt": "2026-05-20T10:00:00Z"
       }
     ],
@@ -566,6 +567,7 @@ PUT /api/admin/inquiries/{inquiryId}/complete
 |---|---|---|
 | `INQUIRY_NOT_FOUND` | 404 | 존재하지 않는 문의입니다. |
 | `INQUIRY_NOT_IN_PROGRESS` | 400 | 답변 저장 후 처리 완료할 수 있습니다. |
+| `INQUIRY_ALREADY_COMPLETED` | 409 | 이미 완료된 문의입니다. |
 | `UNAUTHORIZED` | 401 | 관리자 인증이 필요합니다. |
 
 ---

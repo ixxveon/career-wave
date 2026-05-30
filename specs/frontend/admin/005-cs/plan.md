@@ -11,7 +11,7 @@
 
 공지사항·FAQ 콘텐츠 관리와 회원 1:1 문의 처리를 담당하는 어드민 페이지.
 3-탭 구조(공지사항 / FAQ / 1:1 문의)로 구성하며, 탭별 CRUD와 문의 답변 처리를 지원한다.
-AI 초안 생성은 P2(FastAPI LLM 연동 예정)로, v1은 mock UI만 구성한다.
+AI 초안 생성은 v2(FastAPI LLM 연동 예정)로, v1은 mock UI만 구성한다.
 
 ---
 
@@ -43,7 +43,7 @@ CustomerServicePage
 │   │   ├── 제목 입력
 │   │   ├── 내용 텍스트에어리어
 │   │   ├── 노출 여부 토글
-│   │   ├── "AI 초안 생성" 버튼 (P2)
+│   │   ├── "AI 초안 생성" 버튼 (v2, 공지 내용 초안)
 │   │   └── 저장 / 닫기 버튼
 │   └── 삭제 확인 모달
 │
@@ -56,7 +56,7 @@ CustomerServicePage
 │       ├── 카테고리 셀렉트
 │       ├── 질문 입력
 │       ├── 답변 텍스트에어리어
-│       ├── "AI 답변 초안" 버튼 (P2)
+│       ├── "AI 초안 생성" 버튼 (v2, FAQ 답변 초안)
 │       └── 저장 / 닫기 버튼
 │
 └── [1:1 문의 탭] InquiryTab
@@ -67,7 +67,7 @@ CustomerServicePage
     └── InquiryDetailModal
         ├── 문의 정보 영역 (카테고리·상태·제목·내용·접수일)
         ├── 답변 입력창 (COMPLETED 시 읽기 전용)
-        ├── "AI 답변 초안" 버튼 (P2, COMPLETED 시 미노출)
+        ├── "AI 초안 생성" 버튼 (v2, 문의 답변 초안, COMPLETED 시 미노출)
         ├── "답변 저장" 버튼 (COMPLETED 시 미노출)
         └── "처리 완료" 버튼 (IN_PROGRESS 시만 노출)
 ```
@@ -81,4 +81,4 @@ CustomerServicePage
 - [ ] Phase 3: FAQ 탭 — 목록 테이블, 등록/수정 모달
 - [ ] Phase 4: 1:1 문의 탭 — 목록 테이블, 상세·답변 모달, 상태 배지
 - [ ] Phase 5: API 연동 — `frontend/src/admin/api/csApi.ts` 작성 및 더미 데이터 제거
-- [ ] Phase 6: AI 초안 (P2) — 공지·FAQ·문의 초안 생성 버튼 및 FastAPI 연동
+- [ ] Phase 6: AI 초안 (v2) — 공지·FAQ·문의 초안 생성 버튼 및 FastAPI 연동

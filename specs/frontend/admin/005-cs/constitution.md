@@ -71,6 +71,7 @@ COMPLETED
 ## 5. 연동 계약
 
 - `admin-backend`는 아래 API를 제공한다:
+  - `GET /api/admin/cs/summary` — KPI 집계 (noticeCount, faqCount, pendingCount, inProgressCount)
   - `GET /api/admin/notices` — 공지사항 목록 (category, visible, page, size)
   - `GET /api/admin/notices/{noticeId}` — 공지사항 단건
   - `POST /api/admin/notices` — 공지사항 등록
