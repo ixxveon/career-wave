@@ -93,7 +93,7 @@
 
 ## Assumptions
 
-- v1 구현은 현재 `JobNoticeListPage.tsx`의 mock 데이터 구조를 기준으로 시작하되, API 연동 시 `api-spec.md`의 응답 구조로 전환한다.
+- v1 구현은 현재 `JobNoticeListPage.tsx`의 mock 데이터 구조를 기준으로 시작하되, API 연동 시 `api-schema.md`의 응답 구조로 전환한다.
 - API 연동 전환 시 서버 상태는 TanStack Query 사용을 우선 검토하고, 검색/필터/정렬처럼 화면에 종속된 입력 상태는 React local state로 관리한다.
 - 상세 페이지는 별도 라우트가 아니라 목록 페이지 안에서 `JobNoticeDetail` 드로어로 열린다.
 - 목록 조회는 비로그인 사용자에게도 허용하지만, 스크랩 저장과 해제는 로그인 사용자만 가능하다.

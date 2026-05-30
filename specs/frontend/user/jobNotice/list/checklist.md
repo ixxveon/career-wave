@@ -4,7 +4,7 @@
 
 ## Phase 1 - 계약 및 타입
 
-- [ ] `api-spec.md`의 목록 응답 필드와 `JobNoticeTypes.ts`의 화면 필드가 매핑되어 있다.
+- [ ] `api-schema.md`의 목록 응답 필드와 `JobNoticeTypes.ts`의 화면 필드가 매핑되어 있다.
 - [ ] API 응답 계약이 `ApiResponse<T>`의 `success`, `statusCode`, `message`, `data` 필드를 기준으로 작성되어 있다.
 - [ ] 목록과 상세가 같은 공고 ID와 스크랩 상태를 공유한다.
 - [ ] 필터와 정렬 값은 화면 라벨, API 쿼리 값, 내부 상수 사이의 변환 규칙이 명확하다.

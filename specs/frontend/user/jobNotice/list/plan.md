@@ -14,7 +14,7 @@
 - API 계층: `frontend/src/user/api` 하위 도메인 API 모듈
 - 공통 API 클라이언트: `frontend/src/utils/apiClient.js` 또는 프로젝트가 채택한 공통 클라이언트
 - 아이콘: `lucide-react`
-- API 계약: `specs/frontend/user/jobNotice/api-spec.md`
+- API 계약: `specs/frontend/user/jobNotice/api-schema.md`
 - 목록은 공개 조회를 지원하고, 스크랩 토글은 인증 상태가 필요하다.
 - API 연동 후 서버 상태는 TanStack Query 사용을 우선하고, 페이지 입력 상태는 React local state로 관리한다.
 - 페이지와 컴포넌트에서는 `axios` 또는 `fetch`를 직접 호출하지 않는다.
@@ -34,7 +34,7 @@ frontend/src/user/api/
 └── jobApi.js 또는 jobNoticeApi.ts  # 채용 공고 목록/상세/스크랩 API 호출 계층
 
 specs/frontend/user/jobNotice/
-├── api-spec.md                  # 목록/상세 공통 API 계약
+├── api-schema.md                # 목록/상세 공통 API 계약
 ├── constitution.md              # 목록/상세 공통 규칙
 └── list/
     ├── spec.md
