@@ -51,7 +51,8 @@ src/
     │       ├── submitTextAnswer.ts          # 텍스트 답변 전송
     │       ├── submitVoiceBlob.ts           # 음성 Blob 전송 (STT 파이프라인)
     │       ├── endSession.ts               # 면접 세션 종료 및 스크립트 동기화
-    │       └── getInterviewReport.ts        # 면접 분석 리포트 조회
+    │       ├── getInterviewReport.ts        # 면접 분석 리포트 조회
+    │       └── getInterviewHistory.ts       # 면접 이력 목록 페이징 조회
     ├── components/
     │   └── interview/
     │       ├── PreflightCheck.tsx           # 면접 진입 전 권한·네트워크 사전 진단
@@ -72,7 +73,8 @@ src/
     │       ├── useAudioRecorder.ts          # MediaRecorder 래핑, Safari MIME 분기
     │       ├── useTTSQueue.ts              # TTS 오디오 재생 큐 관리
     │       ├── useInterviewTimer.ts         # 문항별 타이머 로직
-    │       └── useInterviewReport.ts        # TanStack Query 기반 리포트 조회
+    │       ├── useInterviewReport.ts        # TanStack Query 기반 리포트 조회
+    │       └── useInterviewHistory.ts       # TanStack Query 기반 이력 목록 조회
     ├── types/
     │   └── interview.d.ts                   # API DTO, 세션·상태 머신 타입, WS 메시지 포맷
     └── utils/
@@ -140,6 +142,7 @@ src/
 
 ### Phase 5: 도메인 통합
 - [ ] `useInterviewReport` — TanStack Query 기반 리포트 조회 및 페이지 재진입 시 복원
+- [ ] `useInterviewHistory` — TanStack Query 기반 면접 이력 최신순 페이징 조회
 - [ ] 면접 중 비정상 종료 시 sessionStorage 기반 세션 복구 정책 구현
 - [ ] 서류 도메인 연동 테스트 — 유효하지 않은 `documentId` 진입 시 403/404 에러 처리
 - [ ] 모바일 호환성 검증 — iOS Safari getUserMedia 제약 대응 확인
