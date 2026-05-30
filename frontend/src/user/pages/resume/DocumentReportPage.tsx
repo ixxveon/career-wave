@@ -4,7 +4,7 @@ import { FileText, ScrollText } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import DocumentResultView from './DocumentResultView';
 import type { DocumentResult } from '../../types/document';
-import './styles/DocumentReportPage.css';
+import './DocumentReportPage.css';
 
 /* ── Mock 데이터 ──────────────────────────────────────────────
    실제 서비스에서는 documentId를 라우트 파라미터나 전역 상태로 받아
