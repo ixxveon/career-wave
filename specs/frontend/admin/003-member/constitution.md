@@ -91,7 +91,7 @@ REMOVED
 - `admin-backend`는 아래 API를 제공한다:
   - `GET /api/admin/members?role=&status=&plan=&keyword=&page=&size=` — 개인 회원 목록 (페이지네이션)
   - `GET /api/admin/members/{memberId}` — 개인 회원 상세
-  - `POST /api/admin/members/{memberId}/sanctions` — 제재 처리 (sanction_type, duration, reason)
+  - `POST /api/admin/members/{memberId}/sanctions` — 제재 처리 (sanctionType, duration, reason)
   - `GET /api/admin/hr-managers?hrStatus=&keyword=&page=&size=` — 기업 회원 목록
   - `GET /api/admin/hr-managers/{memberId}` — 기업 회원 상세
   - `PATCH /api/admin/hr-managers/{memberId}/approve` — 기업 회원 승인
