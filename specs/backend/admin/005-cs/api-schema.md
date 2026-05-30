@@ -12,14 +12,14 @@
 
 ```java
 // KPI 집계 조회
-ResponseEntity<ApiResponse<InquiryDTO.ResponseSummary>> getSummary();
+ResponseEntity<ApiResponse<CsDTO.ResponseSummary>> getSummary();
 ```
 
 ### AdminNoticeController
 
 ```java
 // 공지사항 목록 조회
-ResponseEntity<ApiResponse<Map<String, Object>>> getNotices(
+ResponseEntity<ApiResponse<PaginationResponse<NoticeDTO.ResponseList>>> getNotices(
     @RequestParam(required = false) String category,
     @RequestParam(required = false) Boolean visible,
     @RequestParam(defaultValue = "1") int page,
@@ -53,7 +53,7 @@ ResponseEntity<ApiResponse<Void>> deleteNotice(
 
 ```java
 // FAQ 목록 조회
-ResponseEntity<ApiResponse<Map<String, Object>>> getFaqs(
+ResponseEntity<ApiResponse<PaginationResponse<FaqDTO.ResponseList>>> getFaqs(
     @RequestParam(required = false) String category,
     @RequestParam(defaultValue = "1") int page,
     @RequestParam(defaultValue = "20") int size
@@ -81,7 +81,7 @@ ResponseEntity<ApiResponse<Void>> deleteFaq(
 
 ```java
 // 문의 목록 조회
-ResponseEntity<ApiResponse<Map<String, Object>>> getInquiries(
+ResponseEntity<ApiResponse<PaginationResponse<InquiryDTO.ResponseList>>> getInquiries(
     @RequestParam(required = false) String category,
     @RequestParam(required = false) String status,
     @RequestParam(required = false) String keyword,
@@ -108,18 +108,18 @@ ResponseEntity<ApiResponse<InquiryDTO.ResponseComplete>> completeInquiry(
 );
 
 // AI 초안 — 공지
-ResponseEntity<ApiResponse<InquiryDTO.ResponseDraft>> generateNoticeDraft(
-    @RequestBody Map<String, String> request   // category, title
+ResponseEntity<ApiResponse<AiDTO.ResponseDraft>> generateNoticeDraft(
+    @RequestBody @Valid AiDTO.RequestNoticeDraft request
 );
 
 // AI 초안 — FAQ
-ResponseEntity<ApiResponse<InquiryDTO.ResponseDraft>> generateFaqDraft(
-    @RequestBody Map<String, String> request   // question
+ResponseEntity<ApiResponse<AiDTO.ResponseDraft>> generateFaqDraft(
+    @RequestBody @Valid AiDTO.RequestFaqDraft request
 );
 
 // AI 초안 — 문의
-ResponseEntity<ApiResponse<InquiryDTO.ResponseDraft>> generateInquiryDraft(
-    @RequestBody Map<String, String> request   // category, title, content
+ResponseEntity<ApiResponse<AiDTO.ResponseDraft>> generateInquiryDraft(
+    @RequestBody @Valid AiDTO.RequestInquiryDraft request
 );
 ```
 
@@ -147,15 +147,19 @@ ApiResponse.fail(statusCode, message);  // 실패
 ## 페이지네이션 응답 형식
 
 ```java
-// Service에서 Map으로 직접 구성 (Spring Page 객체 직접 반환 금지)
-Map<String, Object> result = new LinkedHashMap<>();
-result.put("items",      page.getContent().stream().map(...).toList());
-result.put("page",       pageNum);          // 1-based (요청값 그대로)
-result.put("size",       page.getSize());
-result.put("totalItems", page.getTotalElements());
-result.put("totalPages", page.getTotalPages());
+// Service에서 PaginationResponse로 변환 (Spring Page 객체 직접 반환 금지)
+PaginationResponse<T> result = new PaginationResponse<>(
+    page.getContent().stream().map(...).toList(),
+    pageNum,                   // 1-based (요청값 그대로)
+    page.getSize(),
+    page.getTotalElements(),
+    page.getTotalPages()
+);
 return ApiResponse.ok(result);
 ```
+
+> `PaginationResponse<T>`는 `common/dto/` 패키지에 공통 선언한다.
+> 반환 필드: `items`, `page`, `size`, `totalItems`, `totalPages`
 
 ---
 
@@ -170,3 +174,4 @@ return ApiResponse.ok(result);
 | `INQUIRY_NOT_IN_PROGRESS` | 400 | IN_PROGRESS 아닌 문의 처리 완료 시도 |
 | `AI_SERVER_UNAVAILABLE` | 503 | FastAPI 타임아웃(10초) 초과 또는 연결 실패 |
 | `UNAUTHORIZED` | 401 | 인증 실패 |
+

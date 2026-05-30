@@ -161,6 +161,11 @@ public class Notice {
         this.updatedAt = ZonedDateTime.now();
     }
 
+    @PreUpdate
+    private void preUpdate() {
+        this.updatedAt = ZonedDateTime.now();
+    }
+
     // 등록
     public static Notice create(Long adminId, NoticeCategory category,
                                  String title, String content, boolean isVisible) {
@@ -180,7 +185,6 @@ public class Notice {
         this.title = title;
         this.content = content;
         this.isVisible = isVisible;
-        this.updatedAt = ZonedDateTime.now();
     }
 }
 ```
@@ -223,6 +227,11 @@ public class Faq {
         this.updatedAt = ZonedDateTime.now();
     }
 
+    @PreUpdate
+    private void preUpdate() {
+        this.updatedAt = ZonedDateTime.now();
+    }
+
     public static Faq create(Long adminId, FaqCategory category,
                               String question, String answer) {
         Faq faq = new Faq();
@@ -237,7 +246,6 @@ public class Faq {
         this.category = category;
         this.question = question;
         this.answer = answer;
-        this.updatedAt = ZonedDateTime.now();
     }
 }
 ```
@@ -297,8 +305,8 @@ public class Inquiry {
         this.updatedAt = ZonedDateTime.now();
     }
 
-    // 답변 저장 (PENDING → IN_PROGRESS 전이 포함)
-    // 호출 전 Service에서 COMPLETED 여부를 검증한다.
+    // 답변 저장 (PENDING/IN_PROGRESS → IN_PROGRESS 전이)
+    // 호출 전 Service에서 COMPLETED 상태를 검증하여 차단한다.
     public void saveReply(String reply, Long adminId) {
         this.reply = reply;
         this.adminId = adminId;
@@ -322,6 +330,24 @@ public class Inquiry {
 ---
 
 ## DTO 구조
+
+### PaginationResponse.java
+
+```java
+// common/dto/ 패키지에 공통 배치
+public record PaginationResponse<T>(
+    List<T> items,
+    int page,          // 1-based (요청값 그대로 반환)
+    int size,
+    long totalItems,
+    int totalPages
+) {}
+```
+
+> Spring 기본 `Page<T>` 객체를 직접 반환하지 않는다.
+> Service에서 `Page` 결과를 `PaginationResponse`로 변환하여 반환한다.
+
+---
 
 ### NoticeDTO.java
 
@@ -450,16 +476,50 @@ public class InquiryDTO {
         InquiryStatus inquiryStatus,
         ZonedDateTime completedAt
     ) {}
+}
+```
 
-    // KPI 집계
+### CsDTO.java
+
+```java
+// KPI 집계는 공지·FAQ·문의 3개 도메인에 걸친 크로스 도메인 DTO
+public class CsDTO {
+
+    // KPI 집계 응답
     public record ResponseSummary(
         long noticeCount,
         long faqCount,
         long pendingCount,
         long inProgressCount
     ) {}
+}
+```
 
-    // AI 초안 응답 (공통)
+### AiDTO.java
+
+```java
+// AI 초안 생성 요청·응답 (공지·FAQ·문의 공통)
+public class AiDTO {
+
+    // 공지 초안 요청
+    public record RequestNoticeDraft(
+        @NotNull NoticeCategory category,
+        @NotBlank String title
+    ) {}
+
+    // FAQ 초안 요청
+    public record RequestFaqDraft(
+        @NotBlank String question
+    ) {}
+
+    // 문의 초안 요청
+    public record RequestInquiryDraft(
+        @NotNull InquiryCategory category,
+        @NotBlank String title,
+        @NotBlank String content
+    ) {}
+
+    // AI 초안 응답 (공지·FAQ·문의 공통)
     public record ResponseDraft(
         String draft
     ) {}
@@ -474,14 +534,14 @@ public class InquiryDTO {
 
 ```http
 GET /api/admin/cs/summary
-응답: ApiResponse<InquiryDTO.ResponseSummary>
+응답: ApiResponse<CsDTO.ResponseSummary>
 ```
 
 ### 공지사항
 
 ```http
 GET    /api/admin/notices?category=&visible=&page=&size=
-         → ApiResponse<Map<String,Object>>  (items, page, size, totalItems, totalPages)
+         → ApiResponse<PaginationResponse<NoticeDTO.ResponseList>>
 
 GET    /api/admin/notices/{noticeId}
          → ApiResponse<NoticeDTO.ResponseDetail>
@@ -502,7 +562,7 @@ DELETE /api/admin/notices/{noticeId}
 
 ```http
 GET    /api/admin/faqs?category=&page=&size=
-         → ApiResponse<Map<String,Object>>  (items, page, size, totalItems, totalPages)
+         → ApiResponse<PaginationResponse<FaqDTO.ResponseList>>
 
 POST   /api/admin/faqs
          Body: FaqDTO.RequestCreate
@@ -520,7 +580,7 @@ DELETE /api/admin/faqs/{faqId}
 
 ```http
 GET    /api/admin/inquiries?category=&status=&keyword=&page=&size=
-         → ApiResponse<Map<String,Object>>  (items, page, size, totalItems, totalPages)
+         → ApiResponse<PaginationResponse<InquiryDTO.ResponseList>>
          keyword: title 기준 LIKE 검색
 
 GET    /api/admin/inquiries/{inquiryId}
@@ -538,16 +598,16 @@ PUT    /api/admin/inquiries/{inquiryId}/complete
 
 ```http
 POST   /api/admin/ai/notice-draft
-         Body: { "category": "NOTICE", "title": "..." }
-         → ApiResponse<InquiryDTO.ResponseDraft>
+         Body: AiDTO.RequestNoticeDraft  (category, title)
+         → ApiResponse<AiDTO.ResponseDraft>
 
 POST   /api/admin/ai/faq-draft
-         Body: { "question": "..." }
-         → ApiResponse<InquiryDTO.ResponseDraft>
+         Body: AiDTO.RequestFaqDraft  (question)
+         → ApiResponse<AiDTO.ResponseDraft>
 
 POST   /api/admin/ai/inquiry-draft
-         Body: { "category": "REFUND", "title": "...", "content": "..." }
-         → ApiResponse<InquiryDTO.ResponseDraft>
+         Body: AiDTO.RequestInquiryDraft  (category, title, content)
+         → ApiResponse<AiDTO.ResponseDraft>
 ```
 
 > AI 엔드포인트는 Spring → FastAPI 내부 호출 방식 (RestTemplate 또는 WebClient 사용).
@@ -605,14 +665,37 @@ POST   /api/admin/ai/inquiry-draft
 
 ---
 
-### AdminInquiryService
+### AdminCsService
 
 #### getSummary()
 - `noticeRepository.count()` → `noticeCount`
 - `faqRepository.count()` → `faqCount`
 - `inquiryRepository.countByInquiryStatus(PENDING)` → `pendingCount`
 - `inquiryRepository.countByInquiryStatus(IN_PROGRESS)` → `inProgressCount`
-- 반환: `ResponseSummary`
+- 반환: `CsDTO.ResponseSummary`
+
+---
+
+### AdminAiService
+
+#### generateNoticeDraft(AiDTO.RequestNoticeDraft dto)
+- FastAPI `POST /ai/notice-draft` 내부 호출 (RestTemplate 또는 WebClient)
+- 타임아웃 10초 초과 시 `AI_SERVER_UNAVAILABLE(503)` 예외 발생
+- 반환: `AiDTO.ResponseDraft(draft)`
+
+#### generateFaqDraft(AiDTO.RequestFaqDraft dto)
+- FastAPI `POST /ai/faq-draft` 내부 호출
+- 타임아웃 10초 초과 시 `AI_SERVER_UNAVAILABLE(503)` 예외 발생
+- 반환: `AiDTO.ResponseDraft(draft)`
+
+#### generateInquiryDraft(AiDTO.RequestInquiryDraft dto)
+- FastAPI `POST /ai/inquiry-draft` 내부 호출
+- 타임아웃 10초 초과 시 `AI_SERVER_UNAVAILABLE(503)` 예외 발생
+- 반환: `AiDTO.ResponseDraft(draft)`
+
+---
+
+### AdminInquiryService
 
 #### getInquiries(category, status, keyword, page, size)
 - 동적 필터, `keyword`는 `title LIKE %keyword%`

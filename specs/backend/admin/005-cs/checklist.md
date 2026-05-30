@@ -78,3 +78,4 @@
 - [ ] AI 초안 엔드포인트가 외부에 직접 노출되지 않고 Spring → FastAPI 내부 호출 방식을 사용한다.
 - [ ] FastAPI 타임아웃(10초) 초과 시 `AI_SERVER_UNAVAILABLE(503)`이 반환된다.
 - [ ] AI 서버 장애 시 공지사항·FAQ·문의 CRUD 기능이 정상 동작한다.
+

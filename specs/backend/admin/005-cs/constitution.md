@@ -47,7 +47,8 @@ COMPLETED
 | 결정 | 내용 | 근거 |
 |---|---|---|
 | 컨트롤러 분리 | AdminCsController / AdminNoticeController / AdminFaqController / AdminInquiryController | 도메인별 책임 분리, 파일 크기 관리 |
-| KPI 집계 위치 | AdminInquiryService.getSummary() | noticeCount·faqCount 포함이지만 문의 KPI가 주목적 |
+| AI 엔드포인트 소유 | AdminInquiryController (`/api/admin/ai/*`) | AI 초안 3종이 문의 답변 흐름과 밀접, 별도 컨트롤러 생성 대신 AdminInquiryController에 통합 |
+| KPI 집계 위치 | AdminCsService.getSummary() → AdminCsController | 공지·FAQ·문의 3개 도메인 크로스 집계 → 특정 도메인 서비스에 종속 금지 |
 | 동적 필터 | JPA Specification 또는 QueryDSL | null 조건 무시, AND 조건 결합 |
 | page 1-based | Controller에서 `page - 1` 변환 후 Pageable 전달 | FE 계약(`page=1` 이 첫 페이지) 준수 |
 | admin ↔ user 분리 | `user/` 패키지 클래스 직접 참조 금지 | CONVENTION.md — admin과 user는 서로 직접 참조 금지 |
@@ -107,3 +108,4 @@ COMPLETED
 - Spring 기본 `Page<T>` 객체를 API 응답으로 직접 반환하는 것을 금지한다.
 - AI 초안 API 실패를 공지사항·FAQ·문의 CRUD에 영향을 주는 방식으로 처리하는 것을 금지한다.
 - ERD에 없는 Enum 값을 코드에서 가정하는 것을 금지한다.
+

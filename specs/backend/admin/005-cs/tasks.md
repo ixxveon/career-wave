@@ -92,9 +92,34 @@
 - [ ] `updateFaq(Long faqId, RequestUpdate dto)` — `faq.update(...)` 사용, `@Transactional`
 - [ ] `deleteFaq(Long faqId)` — `FAQ_NOT_FOUND(404)` 예외 처리, `@Transactional`
 
+### AdminCsService
+
+- [ ] `getSummary()` — noticeCount·faqCount·pendingCount·inProgressCount 크로스 도메인 집계
+  - [ ] `noticeRepository.count()` → `noticeCount`
+  - [ ] `faqRepository.count()` → `faqCount`
+  - [ ] `inquiryRepository.countByInquiryStatus(PENDING)` → `pendingCount`
+  - [ ] `inquiryRepository.countByInquiryStatus(IN_PROGRESS)` → `inProgressCount`
+  - [ ] 반환: `CsDTO.ResponseSummary`
+
+### AdminAiService
+
+- [ ] `generateNoticeDraft(AiDTO.RequestNoticeDraft dto)` — FastAPI 내부 호출
+  - [ ] RestTemplate 또는 WebClient로 FastAPI `POST /ai/notice-draft` 호출
+  - [ ] 타임아웃 10초 초과 시 `AI_SERVER_UNAVAILABLE(503)` 예외 발생
+  - [ ] 반환: `AiDTO.ResponseDraft`
+- [ ] `generateFaqDraft(AiDTO.RequestFaqDraft dto)` — FastAPI 내부 호출
+  - [ ] RestTemplate 또는 WebClient로 FastAPI `POST /ai/faq-draft` 호출
+  - [ ] 타임아웃 10초 초과 시 `AI_SERVER_UNAVAILABLE(503)` 예외 발생
+  - [ ] 반환: `AiDTO.ResponseDraft`
+- [ ] `generateInquiryDraft(AiDTO.RequestInquiryDraft dto)` — FastAPI 내부 호출
+  - [ ] RestTemplate 또는 WebClient로 FastAPI `POST /ai/inquiry-draft` 호출
+  - [ ] 타임아웃 10초 초과 시 `AI_SERVER_UNAVAILABLE(503)` 예외 발생
+  - [ ] 반환: `AiDTO.ResponseDraft`
+
+> AI 서비스 장애가 CRUD 기능에 영향을 주지 않는다. AI 예외는 AI 엔드포인트에서만 전파한다.
+
 ### AdminInquiryService
 
-- [ ] `getSummary()` — noticeCount·faqCount·pendingCount·inProgressCount 집계
 - [ ] `getInquiries(category, status, keyword, page, size)` — 동적 필터 + keyword(LIKE) + 페이지네이션
 - [ ] `getInquiryDetail(Long inquiryId)` — `INQUIRY_NOT_FOUND(404)` 예외 처리, memberName 포함
 - [ ] `saveReply(Long inquiryId, String reply, Long adminId)`
@@ -112,7 +137,7 @@
 
 ## Phase 4 — Controller & Swagger Docs
 
-- [ ] `AdminCsController.java` — `GET /api/admin/cs/summary`
+- [ ] `AdminCsController.java` — `GET /api/admin/cs/summary` → `AdminCsService.getSummary()` 위임
 - [ ] `AdminNoticeController.java`
   - [ ] `GET /api/admin/notices`
   - [ ] `GET /api/admin/notices/{noticeId}`
@@ -132,9 +157,9 @@
   - [ ] `GET /api/admin/inquiries/{inquiryId}`
   - [ ] `PUT /api/admin/inquiries/{inquiryId}/reply`
   - [ ] `PUT /api/admin/inquiries/{inquiryId}/complete`
-  - [ ] `POST /api/admin/ai/notice-draft`
-  - [ ] `POST /api/admin/ai/faq-draft`
-  - [ ] `POST /api/admin/ai/inquiry-draft`
+  - [ ] `POST /api/admin/ai/notice-draft` → `AdminAiService.generateNoticeDraft()` 위임
+  - [ ] `POST /api/admin/ai/faq-draft` → `AdminAiService.generateFaqDraft()` 위임
+  - [ ] `POST /api/admin/ai/inquiry-draft` → `AdminAiService.generateInquiryDraft()` 위임
 - [ ] Swagger Docs 분리
   - [ ] `AdminCsControllerDocs.java`
   - [ ] `AdminNoticeControllerDocs.java`
