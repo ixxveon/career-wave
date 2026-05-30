@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────────────────────
-// validation.ts — 이력서 파일 검증
+// validation.ts — 이력서 파일 / 자기소개서 폼 검증
 // constitution.md: 반드시 이 함수를 통과해야만 API 요청 허용
 // ──────────────────────────────────────────────────────────────
 
@@ -61,5 +61,74 @@ export function validateResumeFile(file: File): FileValidationResult {
     };
   }
 
+  return { valid: true };
+}
+
+// ──────────────────────────────────────────────────────────────
+// 자기소개서 폼 검증
+// ──────────────────────────────────────────────────────────────
+
+export const MAX_COVER_LETTER_ITEMS = 5;
+export const MAX_ANSWER_LENGTH = 1000;
+
+export type CoverLetterValidationErrorCode =
+  | 'EMPTY_COMPANY'
+  | 'EMPTY_JOB'
+  | 'EMPTY_QUESTION'
+  | 'EMPTY_ANSWER'
+  | 'ANSWER_TOO_LONG'
+  | 'TOO_MANY_ITEMS';
+
+export interface CoverLetterValidationResult {
+  valid: boolean;
+  errorCode?: CoverLetterValidationErrorCode;
+  message?: string;
+}
+
+export interface CoverLetterItemInput {
+  question: string;
+  answer: string;
+}
+
+/**
+ * 자기소개서 폼 전체 검증
+ * 1. 필수 필드 (회사명, 직무)
+ * 2. 문항 수 (max 5)
+ * 3. 문항/답변 공백 여부
+ * 4. 답변 글자 수 (max 1000자)
+ */
+export function validateCoverLetterForm(
+  company: string,
+  job: string,
+  items: CoverLetterItemInput[],
+): CoverLetterValidationResult {
+  if (!company.trim()) {
+    return { valid: false, errorCode: 'EMPTY_COMPANY', message: '지원 회사를 입력해주세요.' };
+  }
+  if (!job.trim()) {
+    return { valid: false, errorCode: 'EMPTY_JOB', message: '지원 직무를 입력해주세요.' };
+  }
+  if (items.length > MAX_COVER_LETTER_ITEMS) {
+    return {
+      valid: false,
+      errorCode: 'TOO_MANY_ITEMS',
+      message: `문항은 최대 ${MAX_COVER_LETTER_ITEMS}개까지 입력 가능합니다.`,
+    };
+  }
+  for (let i = 0; i < items.length; i++) {
+    if (!items[i].question.trim()) {
+      return { valid: false, errorCode: 'EMPTY_QUESTION', message: `${i + 1}번 문항을 입력해주세요.` };
+    }
+    if (!items[i].answer.trim()) {
+      return { valid: false, errorCode: 'EMPTY_ANSWER', message: `${i + 1}번 답변을 입력해주세요.` };
+    }
+    if (items[i].answer.length > MAX_ANSWER_LENGTH) {
+      return {
+        valid: false,
+        errorCode: 'ANSWER_TOO_LONG',
+        message: `${i + 1}번 답변이 1000자를 초과했습니다.`,
+      };
+    }
+  }
   return { valid: true };
 }
