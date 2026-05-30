@@ -91,3 +91,7 @@
 - [ ] 처리 관리자 ID가 세션에서 가져오도록 전환되었는지 확인한다.
 - [ ] API 성공·실패 응답이 `ApiResponse<T>` 형식(`success`, `statusCode`, `message`, `data`)을 기준으로 처리되는지 확인한다.
 - [ ] 모든 HTTP 호출이 `frontend/src/admin/api` 또는 팀이 정한 API 계층을 통해 수행되는지 확인한다.
+- [ ] API 호출 실패 시 `ApiResponse.message`를 기반으로 사용자 친화적 오류 메시지가 표시되는지 확인한다.
+- [ ] 목록 API 호출 중 로딩 상태(스피너/스켈레톤)가 표시되는지 확인한다.
+- [ ] 페이지네이션이 API 응답의 `totalElements`, `totalPages`와 연동되는지 확인한다.
+- [ ] 제재·승인·반려 처리 성공/실패 후 토스트 알림이 표시되는지 확인한다.
