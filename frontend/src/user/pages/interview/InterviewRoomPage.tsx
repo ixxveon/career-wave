@@ -7,19 +7,59 @@ import {
 } from 'lucide-react';
 import './InterviewRoomPage.css';
 
+/* ── Types ── */
+interface Job {
+  id: number;
+  company: string;
+  position: string;
+  tags: string[];
+}
+
+interface Resume {
+  id: number;
+  name: string;
+  date: string;
+}
+
+interface InterviewConfig {
+  job: Job | null;
+  resume: Resume | null;
+}
+
+interface SetupPhaseProps {
+  mode: 'text' | 'video';
+  onStart: (cfg: InterviewConfig) => void;
+  onBack: () => void;
+}
+
+interface HistoryItem {
+  q: string;
+  a: string;
+}
+
+interface RoomProps {
+  config: InterviewConfig;
+  onFinish: () => void;
+  onExit: () => void;
+}
+
+interface InterviewRoomPageProps {
+  mode?: 'text' | 'video';
+}
+
 /* ── Mock ── */
-const MOCK_JOBS = [
+const MOCK_JOBS: Job[] = [
   { id: 1, company: '카카오', position: '백엔드 개발자', tags: ['Java', 'Spring'] },
   { id: 2, company: '네이버', position: '서버 개발자',   tags: ['Go', 'Kubernetes'] },
   { id: 3, company: '토스',   position: '서버 개발자',   tags: ['Kotlin', 'MSA'] },
   { id: 0, company: '',       position: '공고 없이 진행', tags: [] },
 ];
-const MOCK_RESUMES = [
+const MOCK_RESUMES: Resume[] = [
   { id: 1, name: '홍길동_이력서_2026.pdf', date: '2026.03.15' },
   { id: 2, name: '홍길동_이력서_2025.pdf', date: '2025.11.20' },
   { id: 0, name: '이력서 없이 진행',       date: '' },
 ];
-const MOCK_QUESTIONS = [
+const MOCK_QUESTIONS: string[] = [
   '간단한 자기소개와 지원 동기를 말씀해주세요.',
   '가장 어려웠던 기술적 문제와 해결 과정을 말씀해주세요.',
   '본인의 기술적 강점과 약점은 무엇인가요?',
@@ -29,16 +69,16 @@ const MOCK_QUESTIONS = [
 
 const MOCK_ANALYSIS = { gaze: 87, posture: 72, tone: 91, wpm: 143 };
 
-function formatTime(s) {
+function formatTime(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
 /* ════════════════════════════
    Setup Phase (공통)
 ════════════════════════════ */
-function SetupPhase({ mode, onStart, onBack }) {
-  const [job,    setJob]    = useState(null);
-  const [resume, setResume] = useState(null);
+function SetupPhase({ mode, onStart, onBack }: SetupPhaseProps) {
+  const [job,    setJob]    = useState<Job | null>(null);
+  const [resume, setResume] = useState<Resume | null>(null);
   const [camOk,  setCamOk]  = useState(false);
 
   const canStart = job && resume && (mode === 'text' || camOk);
@@ -156,14 +196,14 @@ function SetupPhase({ mode, onStart, onBack }) {
 /* ════════════════════════════
    Text Interview Room
 ════════════════════════════ */
-function TextRoom({ config, onFinish, onExit }) {
-  const [qIdx,     setQIdx]     = useState(0);
-  const [answer,   setAnswer]   = useState('');
-  const [history,  setHistory]  = useState([]);
-  const [elapsed,  setElapsed]  = useState(0);
-  const [histOpen, setHistOpen] = useState(false);
+function TextRoom({ config, onFinish, onExit }: RoomProps) {
+  const [qIdx,      setQIdx]      = useState(0);
+  const [answer,    setAnswer]    = useState('');
+  const [history,   setHistory]   = useState<HistoryItem[]>([]);
+  const [elapsed,   setElapsed]   = useState(0);
+  const [histOpen,  setHistOpen]  = useState(false);
   const [exitModal, setExitModal] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const id = setInterval(() => setElapsed(e => e + 1), 1000);
@@ -284,9 +324,9 @@ function TextRoom({ config, onFinish, onExit }) {
 /* ════════════════════════════
    Video Interview Room
 ════════════════════════════ */
-function VideoRoom({ config, onFinish, onExit }) {
-  const [qIdx,    setQIdx]    = useState(0);
-  const [elapsed, setElapsed] = useState(0);
+function VideoRoom({ config, onFinish, onExit }: RoomProps) {
+  const [qIdx,      setQIdx]      = useState(0);
+  const [elapsed,   setElapsed]   = useState(0);
   const [panelOpen, setPanelOpen] = useState(true);
   const [exitModal, setExitModal] = useState(false);
 
@@ -350,10 +390,10 @@ function VideoRoom({ config, onFinish, onExit }) {
             <h3>실시간 분석</h3>
 
             {[
-              { icon: Eye,      label: '시선 처리', val: MOCK_ANALYSIS.gaze,    unit: '%' },
-              { icon: Activity, label: '자세',      val: MOCK_ANALYSIS.posture,  unit: '%' },
-              { icon: Mic,      label: '음성 톤',   val: MOCK_ANALYSIS.tone,     unit: '%' },
-              { icon: MessageSquare, label: 'WPM',  val: MOCK_ANALYSIS.wpm,      unit: '' },
+              { icon: Eye,           label: '시선 처리', val: MOCK_ANALYSIS.gaze,    unit: '%' },
+              { icon: Activity,      label: '자세',      val: MOCK_ANALYSIS.posture,  unit: '%' },
+              { icon: Mic,           label: '음성 톤',   val: MOCK_ANALYSIS.tone,     unit: '%' },
+              { icon: MessageSquare, label: 'WPM',       val: MOCK_ANALYSIS.wpm,      unit: '' },
             ].map(({ icon: Icon, label, val, unit }) => (
               <div key={label} className="ir-metric">
                 <div className="ir-metric__label">
@@ -393,10 +433,10 @@ function VideoRoom({ config, onFinish, onExit }) {
 /* ════════════════════════════
    Main Export
 ════════════════════════════ */
-export default function InterviewRoomPage({ mode = 'text' }) {
+export default function InterviewRoomPage({ mode = 'text' }: InterviewRoomPageProps) {
   const navigate = useNavigate();
-  const [phase,  setPhase]  = useState('setup');
-  const [config, setConfig] = useState(null);
+  const [phase,  setPhase]  = useState<'setup' | 'interview'>('setup');
+  const [config, setConfig] = useState<InterviewConfig | null>(null);
 
   if (phase === 'setup') {
     return (
@@ -411,7 +451,7 @@ export default function InterviewRoomPage({ mode = 'text' }) {
   const Room = mode === 'video' ? VideoRoom : TextRoom;
   return (
     <Room
-      config={config}
+      config={config!}
       onFinish={() => navigate('/interview/report')}
       onExit={() => navigate('/interview')}
     />

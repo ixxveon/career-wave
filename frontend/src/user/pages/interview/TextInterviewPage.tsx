@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { interviewApi } from '../../api/interviewApi';
 import type { Message, MicStatus, InputMode, Phase, Resume } from '../../types/interview';
-import './styles/TextInterviewPage.css';
+import './TextInterviewPage.css';
 
 /* ── Web Speech API 타입 선언 (TypeScript DOM lib 미포함 항목) ── */
 declare global {
