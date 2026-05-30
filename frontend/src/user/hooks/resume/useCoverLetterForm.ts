@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { submitCoverLetter } from '../../api/resume/submitCoverLetter';
 import {
   validateCoverLetterForm,
@@ -6,7 +6,8 @@ import {
   MAX_ANSWER_LENGTH,
 } from '../../utils/resume/validation';
 import { resumeStorage } from '../../utils/resume/resumeStorage';
-import type { ResumeUIState, SubmitCoverLetterResponse } from '../../types/resume.d';
+import { useAnalysisWebSocket } from './useAnalysisWebSocket';
+import type { ResumeUIState, SubmitCoverLetterResponse, WsStatusMessage } from '../../types/resume.d';
 
 export interface CoverLetterFormItem {
   question: string;
@@ -19,6 +20,8 @@ export interface UseCoverLetterFormReturn {
   items: CoverLetterFormItem[];
   uiState: ResumeUIState;
   apiError: string | null;
+  networkError: boolean;
+  wsMessage: WsStatusMessage | null;
   submitResult: SubmitCoverLetterResponse | null;
   canSubmit: boolean;
   setCompany: (value: string) => void;
@@ -28,6 +31,7 @@ export interface UseCoverLetterFormReturn {
   updateItem: (index: number, field: keyof CoverLetterFormItem, value: string) => void;
   handleSubmit: () => Promise<void>;
   reset: () => void;
+  dismissNetworkError: () => void;
 }
 
 const INITIAL_ITEM: CoverLetterFormItem = { question: '', answer: '' };
@@ -35,22 +39,25 @@ const INITIAL_ITEM: CoverLetterFormItem = { question: '', answer: '' };
 /**
  * 자기소개서 폼 훅
  *
- * constitution.md §4 불변 규칙:
+ * constitution.md §4:
  * - 문항/답변 상태는 이 훅을 통해 일관되게 관리 (컴포넌트 개별 useState 금지)
  * - 전송 직전 validateCoverLetterForm() 재검증 필수
  * - documentId는 sessionStorage에만 저장
- * - SUBMITTING 상태 중 handleSubmit 중복 호출 무시
+ *
+ * sessionStorage 복원:
+ * - 마운트 시 저장된 documentId + UIState === 'ANALYZING' 이면 WebSocket 재연결
  */
 export function useCoverLetterForm(): UseCoverLetterFormReturn {
-  const [company, setCompany]           = useState('');
-  const [job, setJob]                   = useState('');
-  const [items, setItems]               = useState<CoverLetterFormItem[]>([{ ...INITIAL_ITEM }]);
-  const [uiState, setUiState]           = useState<ResumeUIState>('IDLE');
-  const [apiError, setApiError]         = useState<string | null>(null);
-  const [submitResult, setSubmitResult] = useState<SubmitCoverLetterResponse | null>(null);
-  const abortRef                        = useRef<AbortController | null>(null);
+  const [company, setCompany]             = useState('');
+  const [job, setJob]                     = useState('');
+  const [items, setItems]                 = useState<CoverLetterFormItem[]>([{ ...INITIAL_ITEM }]);
+  const [uiState, setUiState]             = useState<ResumeUIState>('IDLE');
+  const [apiError, setApiError]           = useState<string | null>(null);
+  const [networkError, setNetworkError]   = useState(false);
+  const [wsMessage, setWsMessage]         = useState<WsStatusMessage | null>(null);
+  const [submitResult, setSubmitResult]   = useState<SubmitCoverLetterResponse | null>(null);
+  const abortRef                          = useRef<AbortController | null>(null);
 
-  // 분석 버튼 활성화 조건
   const canSubmit =
     company.trim() !== '' &&
     job.trim() !== '' &&
@@ -60,6 +67,40 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
         item.answer.trim() !== '' &&
         item.answer.length <= MAX_ANSWER_LENGTH,
     );
+
+  const handleCompleted = useCallback(() => {
+    resumeStorage.removeUIState();
+    setUiState('SUCCESS');
+  }, []);
+
+  const handleFailed = useCallback((message: string) => {
+    resumeStorage.removeUIState();
+    setApiError(message);
+    setUiState('ERROR');
+  }, []);
+
+  const handleNetworkError = useCallback(() => {
+    setNetworkError(true);
+  }, []);
+
+  const { connect, disconnect } = useAnalysisWebSocket({
+    onMessage: setWsMessage,
+    onCompleted: handleCompleted,
+    onFailed: handleFailed,
+    onNetworkError: handleNetworkError,
+  });
+
+  // sessionStorage 복원 — 새로고침 후 ANALYZING 상태 복구
+  useEffect(() => {
+    const savedDocumentId = resumeStorage.getDocumentId();
+    const savedUIState    = resumeStorage.getUIState();
+    if (savedDocumentId && savedUIState === 'ANALYZING') {
+      setUiState('ANALYZING');
+      connect(savedDocumentId);
+    }
+    return () => { disconnect(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function addItem() {
     if (items.length >= MAX_COVER_LETTER_ITEMS) return;
@@ -71,7 +112,6 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
   }
 
   function updateItem(index: number, field: keyof CoverLetterFormItem, value: string) {
-    // 답변 1000자 초과 입력 차단
     if (field === 'answer' && value.length > MAX_ANSWER_LENGTH) return;
     setItems(prev =>
       prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
@@ -81,7 +121,6 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
   async function handleSubmit() {
     if (!canSubmit || uiState === 'SUBMITTING') return;
 
-    // 전송 직전 재검증 (constitution.md §4)
     const validation = validateCoverLetterForm(company, job, items);
     if (!validation.valid) {
       setApiError(validation.message ?? '입력값을 확인해주세요.');
@@ -106,13 +145,13 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
         abortRef.current.signal,
       );
 
-      // documentId + uiState sessionStorage 저장 (constitution.md §3)
       resumeStorage.saveDocumentId(data.documentId);
       resumeStorage.saveUIState('ANALYZING');
       setSubmitResult(data);
-
-      // 백엔드 UPLOADED → 프론트 ANALYZING 전이
       setUiState('ANALYZING');
+
+      // WebSocket 연결 시작
+      connect(data.documentId);
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
       setApiError(
@@ -126,11 +165,14 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
 
   function reset() {
     abortRef.current?.abort();
+    disconnect();
     setCompany('');
     setJob('');
     setItems([{ ...INITIAL_ITEM }]);
     setUiState('IDLE');
     setApiError(null);
+    setNetworkError(false);
+    setWsMessage(null);
     setSubmitResult(null);
     resumeStorage.removeDocumentId();
     resumeStorage.removeUIState();
@@ -142,6 +184,8 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
     items,
     uiState,
     apiError,
+    networkError,
+    wsMessage,
     submitResult,
     canSubmit,
     setCompany,
@@ -151,5 +195,6 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
     updateItem,
     handleSubmit,
     reset,
+    dismissNetworkError: () => setNetworkError(false),
   };
 }
