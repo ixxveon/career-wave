@@ -1,0 +1,148 @@
+/* ═══════════════════════════════════════════════
+   CoverLetterForm
+   ═══════════════════════════════════════════════ */
+
+.clf {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ─── 회사 / 직무 행 ───────────────────────────── */
+.clf-meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.clf-meta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.clf-meta-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+/* ─── 공통 입력 ───────────────────────────────── */
+.clf-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 0.14s;
+  font-family: inherit;
+  resize: none;
+}
+
+.clf-input:focus { border-color: var(--color-primary); }
+.clf-input::placeholder { color: var(--color-text-secondary); }
+.clf-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.clf-input--textarea {
+  display: block;
+  line-height: 1.7;
+}
+
+/* ─── 문항 블록 ───────────────────────────────── */
+.clf-qblock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-soft, #f8fafd);
+}
+
+.clf-qblock__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.clf-qblock__num {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.clf-qblock__remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #fca5a5;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.clf-qblock__remove:hover:not(:disabled) { background: #fca5a5; }
+.clf-qblock__remove:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ─── 글자 수 카운터 ──────────────────────────── */
+.clf-textarea-wrap {
+  position: relative;
+}
+
+.clf-char-count {
+  display: block;
+  margin-top: 6px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: color 0.14s;
+}
+
+.clf-char-count--warn { color: #d97706; }
+
+/* ─── 문항 추가 버튼 ──────────────────────────── */
+.clf-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  margin-bottom: 24px;
+  border-radius: var(--radius-md);
+  border: 1.5px dashed var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+  width: 100%;
+  justify-content: center;
+}
+
+.clf-add-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+  background: #eef4ff;
+}
+
+.clf-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Responsive ──────────────────────────────── */
+@media (max-width: 640px) {
+  .clf-meta-row { grid-template-columns: 1fr; }
+}
