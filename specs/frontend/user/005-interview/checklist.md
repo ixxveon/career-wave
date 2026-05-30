@@ -19,8 +19,8 @@
 
 - [ ] 데이터 계약: `api-schema.md`에 정의된 JSON 구조와 실제 API 호출/응답 구조가 일치하는가?
 - [ ] 세션 유지: 페이지 새로고침 시에도 `sessionId` 및 면접 상태가 유실되지 않는가?
-  > SessionStorage 적용 (탭 종료 시 자동 만료 의도 — LocalStorage 사용 금지)
-- [ ] 비정상 종료 후 재진입 시, `RUNNING` 상태가 `SessionStorage` 기반으로 복원되는가?
+  > sessionStorage 적용 (탭 종료 시 자동 만료 의도 — localStorage 사용 금지)
+- [ ] 비정상 종료 후 재진입 시, `RUNNING` 상태가 `sessionStorage` 기반으로 복원되는가?
 
 ### 에러 핸들링
 
@@ -107,7 +107,7 @@
 
 - [ ] 리포트·세션 API가 본인 소유의 `sessionId`만 조회 가능한가? (타인의 `sessionId` 직접 입력 시 403 차단 — IDOR 방어)
 - [ ] 브라우저 전역 객체(`window`)에 세션 정보나 소켓 인스턴스를 직접 저장하지 않았는가?
-- [ ] 세션 정보가 `localStorage`가 아닌 `SessionStorage`에만 저장되는가?
+- [ ] 세션 정보가 `localStorage`가 아닌 `sessionStorage`에만 저장되는가?
 
 ---
 

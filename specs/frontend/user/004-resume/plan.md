@@ -24,7 +24,7 @@
 | 입력 폼 상태 | React `useState` | 컴포넌트 내 단기 입력 상태 관리 |
 | 시각화 | `Recharts ^3.8.1` | 역량 점수 레이더 차트 기본 지원 |
 | 스타일링 | `Plain CSS` + CSS 트랜지션/애니메이션 | 프로젝트 기존 스타일링 방식 준수 |
-| 세션 유지 | `SessionStorage` | 탭 종료 시 자동 만료 — `documentId` 및 분석 결과 저장 |
+| 세션 유지 | `sessionStorage` | 탭 종료 시 자동 만료 — `documentId` 및 분석 결과 저장 |
 
 ### 전제 조건
 
@@ -76,7 +76,7 @@ src/
 - [ ] `resume.d.ts` — API DTO 및 도메인 타입 정의
 - [ ] `api/` — API 함수 인터페이스 및 공통 에러/재시도(TanStack Query) 구조 작성
 - [ ] TanStack Query 커스텀 훅 세팅 (queryKey 컨벤션, retry 정책 포함)
-- [ ] SessionStorage 헬퍼 유틸리티 구현 (`documentId` 및 분석 상태 직렬화/역직렬화)
+- [ ] sessionStorage 헬퍼 유틸리티 구현 (`documentId` 및 분석 상태 직렬화/역직렬화)
 
 ### Phase 2: 입력 UI 구현
 **이력서 파일 업로드**

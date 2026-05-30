@@ -27,7 +27,7 @@
 | 오디오 캡처 | `MediaRecorder API` | 음성 녹음 및 Blob 전송 (Safari WebM 미지원 대비 MIME 타입 분기 처리) |
 | 시각화 | `Recharts ^3.8.1` | 역량 지표 레이더 차트 기본 지원 |
 | 스타일링 | `Plain CSS` + CSS 트랜지션/애니메이션 | 프로젝트 기존 스타일링 방식 준수 |
-| 세션 유지 | `SessionStorage` | 탭 종료 시 자동 만료 — 면접 세션 복구용 데이터 저장 |
+| 세션 유지 | `sessionStorage` | 탭 종료 시 자동 만료 — 면접 세션 복구용 데이터 저장 |
 
 ### 전제 조건
 
@@ -140,7 +140,7 @@ src/
 
 ### Phase 5: 도메인 통합
 - [ ] `useInterviewReport` — TanStack Query 기반 리포트 조회 및 페이지 재진입 시 복원
-- [ ] 면접 중 비정상 종료 시 SessionStorage 기반 세션 복구 정책 구현
+- [ ] 면접 중 비정상 종료 시 sessionStorage 기반 세션 복구 정책 구현
 - [ ] 서류 도메인 연동 테스트 — 유효하지 않은 `documentId` 진입 시 403/404 에러 처리
 - [ ] 모바일 호환성 검증 — iOS Safari getUserMedia 제약 대응 확인
 

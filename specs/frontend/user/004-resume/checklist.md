@@ -18,7 +18,7 @@
 
 - [ ] 데이터 계약: `api-schema.md`에 정의된 JSON 구조와 실제 API 호출/응답 구조가 일치하는가?
 - [ ] 세션 유지: 페이지 새로고침 시에도 `documentId` 및 분석 결과가 유실되지 않는가?
-  > SessionStorage 적용 (탭 종료 시 자동 만료 의도 — LocalStorage 사용 금지)
+  > sessionStorage 적용 (탭 종료 시 자동 만료 의도 — localStorage 사용 금지)
 - [ ] 분석 중 페이지 이탈 후 재진입 시, 진행 중이던 상태가 올바르게 복원되는가?
 
 ### 에러 핸들링

@@ -48,7 +48,7 @@
 - **NFR-001**: 분석 완료까지 30초 이내 처리(Timeout 시 안내).
 - **NFR-002**: Lighthouse 성능 90/접근성 95점 이상.
 - **NFR-003**: 본인 소유가 아닌 문서 접근 차단(IDOR 방어).
-- **NFR-004**: 새로고침 시 `SessionStorage`를 통한 세션 복원.
+- **NFR-004**: 새로고침 시 `sessionStorage`를 통한 세션 복원.
 
 ### Key Entities
 - **Document**: `documentId`, `memberId`, `fileType`, `fileUrl`, `originalName`, `createdAt`
@@ -60,7 +60,7 @@
 ## 3. Edge Cases 및 해결 정책
 
 - **네트워크 연결 끊김**: 분석 요청 중 단절 시 토스트 메시지 노출 및 `IDLE` 상태 복귀.
-- **분석 중 페이지 이탈**: `SessionStorage`에 `documentId` 저장. 재진입 시 해당 ID로 피드백 조회(`GET /feedback`)하여 분석 중이면 로딩 모달 자동 노출.
+- **분석 중 페이지 이탈**: `sessionStorage`에 `documentId` 저장. 재진입 시 해당 ID로 피드백 조회(`GET /feedback`)하여 분석 중이면 로딩 모달 자동 노출.
 - **문항 5개 초과 추가 시도**: UI 상에서 추가 버튼 비활성화(Disabled).
 - **피드백 항목 일부 누락**: Good/Bad/Fix 중 데이터 없는 경우 `Empty State` UI 렌더링.
 - **유효하지 않은 `documentId`**: 면접 도메인 진입 시 404/403 처리 및 안내.
@@ -70,7 +70,7 @@
 ## 4. Success Criteria
 
 - **SC-001**: 분석 완료 후 면접 도메인으로 `documentId` 파라미터가 정상 전달됨.
-- **SC-002**: 새로고침 시 `SessionStorage`를 통해 분석 중인 모달 상태 복원.
+- **SC-002**: 새로고침 시 `sessionStorage`를 통해 분석 중인 모달 상태 복원.
 - **SC-003**: 피드백 항목이 일부 비어 있어도 리포트 UI가 깨지지 않고 정상 렌더링됨.
 
 ---

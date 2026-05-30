@@ -11,7 +11,7 @@
 - [ ] `types/resume.d.ts` 정의 (Request/Response DTO, AnalysisResult, 상태 머신 타입)
 - [ ] `api/resume/` API 호출 함수 인터페이스 작성 (AbortController 지원) 및 공통 에러 핸들링 구조 세팅
 - [ ] TanStack Query 커스텀 훅 세팅 (queryKey 컨벤션, `retry` 정책 포함)
-- [ ] SessionStorage 헬퍼 유틸리티 구현 (`try-catch` 통한 직렬화/역직렬화 예외 처리 포함)
+- [ ] sessionStorage 헬퍼 유틸리티 구현 (`try-catch` 통한 직렬화/역직렬화 예외 처리 포함)
 
 ---
 
@@ -30,7 +30,7 @@
 - [ ] 버튼 인터랙션 — 미입력 시 분석 시작 버튼 비활성화
 
 ### 공통
-- [ ] `documentId` SessionStorage 저장 및 새로고침 후 복원 검증
+- [ ] `documentId` sessionStorage 저장 및 새로고침 후 복원 검증
 
 ---
 
@@ -40,7 +40,7 @@
 - [ ] `components/resume/LoadingModal.tsx` — 상태 머신(`IDLE → SUBMITTING → ANALYZING → SUCCESS/ERROR`)에 따른 단계별 메시지 전환
 - [ ] 비정상 종료 처리 — 타임아웃/API 에러 시 Modal 닫힘 + 에러 상태 전이 + 에러 메시지 노출
 - [ ] 네트워크 단절 시 토스트 메시지 알림 처리
-- [ ] 페이지 이탈 후 재진입 시 SessionStorage 기반 분석 상태 복원 검증
+- [ ] 페이지 이탈 후 재진입 시 sessionStorage 기반 분석 상태 복원 검증
 
 ---
 

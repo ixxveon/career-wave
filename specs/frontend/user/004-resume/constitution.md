@@ -16,7 +16,7 @@
 * **분석 무결성**: 사용자가 입력한 데이터와 파일은 서버 전송 전 `utils/resume/validation.ts`를 통한 1차 검증을 거치며, 분석 결과는 원본과 매핑되어 유실 없이 UI에 투영한다.
 * **사용자 경험(UX) 우선**: 분석 과정의 모든 단계(`IDLE → SUBMITTING → ANALYZING → SUCCESS/ERROR`)는 사용자에게 시각적으로 투명하게 공유되어야 한다.
 * **보안 및 프라이버시**: 분석된 개인정보 및 서류 데이터는 해당 유저만 접근 가능하며, IDOR 공격을 원천 차단한다.
-* **상태 일관성**: 서버 상태(분석 결과)는 `TanStack Query`로 관리하고, 입력 폼 상태는 `React local state`로 관리한다. 새로고침 시에도 `SessionStorage`를 통해 `documentId` 및 분석 상태가 복원되어야 한다.
+* **상태 일관성**: 서버 상태(분석 결과)는 `TanStack Query`로 관리하고, 입력 폼 상태는 `React local state`로 관리한다. 새로고침 시에도 `sessionStorage`를 통해 `documentId` 및 분석 상태가 복원되어야 한다.
 
 ---
 
@@ -67,7 +67,7 @@ ANY → [IDLE]  # 폼 초기화 및 재시도
 | 입력 폼 상태 | React local state (`useState`) | 컴포넌트 내 단기 입력 상태 — 전역 공유 불필요 |
 | API 계약 | `api-schema.md` 엄격 준수 | 프론트엔드-백엔드 간 데이터 불일치 방지 |
 | 유효성 검사 | 클라이언트 1차 검증 필수 | 파일 타입/용량/문항수 등 예외 상황 사전 차단 (서버 2차 검증은 백엔드 책임) |
-| 세션 저장소 | SessionStorage | 탭 종료 시 민감 데이터 자동 삭제 (`localStorage` 사용 금지) |
+| 세션 저장소 | sessionStorage | 탭 종료 시 민감 데이터 자동 삭제 (`localStorage` 사용 금지) |
 | API 레이어 분리 | 순수 API 호출 → `api/` / 상태·사이드이펙트 포함 → `hooks/` | 역할 혼재 방지 |
 
 ---
@@ -97,5 +97,5 @@ ANY → [IDLE]  # 폼 초기화 및 재시도
 * **자기소개서 상태 분산**: 문항/답변 데이터를 각 컴포넌트가 개별 `useState`로 파편화하여 관리하는 행위 금지.
 * **로그 출력**: 배포 전 모든 `console.log` 및 디버깅 코드 제거 (ESLint `no-console` 룰로 강제).
 * **DOM 직접 접근**: `document.getElementById` 등 원시적인 DOM 접근 금지 (React Ref 활용).
-* **데이터 직접 저장**: 분석 결과 및 세션 정보를 `localStorage`에 저장 금지 (`SessionStorage` 강제).
+* **데이터 직접 저장**: 분석 결과 및 세션 정보를 `localStorage`에 저장 금지 (`sessionStorage` 강제).
 * **window 전역 오염**: 세션 정보나 상태를 `window` 객체에 직접 저장 금지.
