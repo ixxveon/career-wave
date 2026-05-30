@@ -1,0 +1,93 @@
+# Checklist: 고객센터 관리 (Customer Service)
+
+> `spec.md`가 "무엇을 만들지"라면, 이 파일은 "제대로 만들어졌는지" 검증한다.
+> UI 구현 완료 기준 체크 + API 연동 전 재검증 항목을 포함한다.
+
+---
+
+## Phase 1 — ERD 정합성
+
+- [ ] `NoticeCategory` 값이 ERD 기준 `NOTICE / UPDATE / EVENT / MAINTENANCE`만 사용한다.
+- [ ] `FaqCategory` 값이 ERD 기준 `ACCOUNT / PAYMENT / SERVICE / ETC`만 사용한다.
+- [ ] `InquiryCategory` 값이 ERD 기준 `REFUND / PAYMENT_ERROR / SERVICE / ACCOUNT / ETC`만 사용한다.
+- [ ] `InquiryStatus` 값이 ERD 기준 `PENDING / IN_PROGRESS / COMPLETED`만 사용한다.
+- [ ] 공지사항·FAQ·문의 상태를 동일한 상태 변수에 혼합하지 않는다.
+
+---
+
+## Phase 2 — KPI 카드
+
+- [ ] KPI 카드 4종(공지 수 / FAQ 수 / 미답변(PENDING) 수 / 답변 중(IN_PROGRESS) 수)이 표시된다.
+- [ ] 각 KPI 카드가 더미 데이터 기준으로 정상 렌더링된다.
+
+---
+
+## Phase 3 — 공지사항 탭
+
+- [ ] 공지 목록에 번호·카테고리·제목·등록일·노출 여부·관리 컬럼이 표시된다.
+- [ ] 카테고리 필터 드롭다운이 `NOTICE / UPDATE / EVENT / MAINTENANCE` 4종과 "전체" 옵션을 포함한다.
+- [ ] 노출 여부 필터 드롭다운이 "노출 / 미노출 / 전체" 옵션을 포함한다.
+- [ ] "+ 공지 등록" 버튼 클릭 시 `NoticeFormModal`이 열린다.
+- [ ] `NoticeFormModal`에서 제목 미입력 시 저장 버튼이 비활성화된다.
+- [ ] `NoticeFormModal`에서 수정 클릭 시 기존 데이터가 입력창에 미리 채워진다.
+- [ ] 삭제 버튼 클릭 시 확인 모달이 표시된다. (즉시 삭제 금지)
+- [ ] 삭제 확인 모달에서 "취소" 시 삭제가 진행되지 않는다.
+
+---
+
+## Phase 4 — FAQ 탭
+
+- [ ] FAQ 목록에 번호·카테고리·질문·등록일·관리 컬럼이 표시된다.
+- [ ] 카테고리 필터 드롭다운이 `ACCOUNT / PAYMENT / SERVICE / ETC` 4종과 "전체" 옵션을 포함한다.
+- [ ] "+ FAQ 등록" 버튼 클릭 시 `FaqFormModal`이 열린다.
+- [ ] `FaqFormModal`에서 질문 미입력 시 저장 버튼이 비활성화된다.
+- [ ] `FaqFormModal`에서 수정 클릭 시 기존 데이터가 입력창에 미리 채워진다.
+
+---
+
+## Phase 5 — 1:1 문의 탭
+
+- [ ] 문의 목록에 문의ID·회원명·카테고리·제목·접수일·상태·관리 컬럼이 표시된다.
+- [ ] 카테고리 필터 드롭다운이 `REFUND / PAYMENT_ERROR / SERVICE / ACCOUNT / ETC` 5종과 "전체" 옵션을 포함한다.
+- [ ] 상태 필터 드롭다운이 `PENDING / IN_PROGRESS / COMPLETED` 3종과 "전체" 옵션을 포함한다.
+- [ ] 상태 배지가 `PENDING → 접수 중`, `IN_PROGRESS → 답변 중`, `COMPLETED → 완료`로 표시된다.
+- [ ] `PENDING` 상태 배지가 시각적으로 강조되어 표시된다.
+- [ ] 관리 컬럼 "상세보기" 버튼이 모든 상태에서 표시된다.
+
+---
+
+## Phase 6 — 문의 상세 모달
+
+- [ ] 상세 모달에 카테고리·상태·제목·문의 내용·접수일이 표시된다.
+- [ ] 기존 답변이 있는 경우 답변 입력창에 미리 채워진다.
+- [ ] `COMPLETED` 상태에서 답변 입력창이 비활성화(disabled)된다.
+- [ ] `COMPLETED` 상태에서 "답변 저장" 버튼이 미노출된다.
+- [ ] `COMPLETED` 상태에서 "처리 완료" 버튼이 미노출된다.
+- [ ] `PENDING` 상태에서 "답변 저장" 버튼이 표시된다.
+- [ ] `IN_PROGRESS` 상태에서 "답변 저장" 버튼과 "처리 완료" 버튼이 모두 표시된다.
+- [ ] 모달 닫기 버튼 또는 외부 클릭으로 모달이 닫힌다.
+- [ ] 프론트엔드에서 문의 상태를 직접 변경하지 않는다. (서버 응답 기준 갱신)
+
+---
+
+## Phase 7 — API 연동 전 체크
+
+- [ ] `Notice` 인터페이스 필드가 백엔드 응답 DTO와 매핑 가능한 구조인지 확인한다.
+- [ ] `Faq` 인터페이스 필드가 백엔드 응답 DTO와 매핑 가능한 구조인지 확인한다.
+- [ ] `Inquiry` 인터페이스 필드가 백엔드 응답 DTO와 매핑 가능한 구조인지 확인한다.
+- [ ] 필터 쿼리 파라미터(`category`, `status`, `page`, `size`)가 현재 상태와 연결 가능한 구조인지 확인한다.
+- [ ] 답변 저장 성공 응답의 `inquiryStatus`를 기반으로 목록 상태 배지를 갱신하는 로직이 구현되어 있는지 확인한다.
+- [ ] API 성공·실패 응답이 `ApiResponse<T>` 형식을 기준으로 처리되는지 확인한다.
+- [ ] 서버 409 응답(INQUIRY_ALREADY_COMPLETED) 시 에러 메시지가 표시되는지 확인한다.
+- [ ] 모든 HTTP 호출이 `frontend/src/admin/api/csApi.ts`를 통해서만 수행되는지 확인한다.
+
+---
+
+## Phase 8 — AI 초안 (P2)
+
+- [ ] 공지 등록 모달 "AI 초안 생성" 버튼이 제목 미입력 시 비활성화된다.
+- [ ] FAQ 등록 모달 "AI 답변 초안" 버튼이 질문 미입력 시 비활성화된다.
+- [ ] AI 초안 결과가 입력창에 자동 입력되고, 관리자가 직접 수정 가능하다.
+- [ ] AI 초안이 자동으로 저장·제출되지 않는다. (관리자 저장 클릭 필수)
+- [ ] `COMPLETED` 상태 문의에서 "AI 답변 초안" 버튼이 미노출된다.
+- [ ] AI 서버 오류(503) 시 에러 토스트가 표시된다.

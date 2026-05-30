@@ -1,7 +1,7 @@
 # Feature Specification: 고객센터 관리 (Customer Service)
 
 **Feature Branch**: `feature/admin-cs-ui`
-**Status**: In Progress
+**Status**: 스펙 완료
 **담당**: 신보라
 
 ---
@@ -151,7 +151,7 @@ PENDING → IN_PROGRESS → COMPLETED
 
 - **FR-001**: 공지사항 CRUD — 카테고리(공지/업데이트/이벤트/점검), 제목, 내용, 노출 여부 관리
 - **FR-002**: FAQ CRUD — 카테고리(계정/결제/서비스/기타), 질문, 답변 관리
-- **FR-003**: 1:1 문의 목록을 카테고리·상태 기준 필터링 조회
+- **FR-003**: 1:1 문의 목록을 카테고리·상태 기준 필터링 조회 및 키워드(제목) 검색
 - **FR-004**: 문의 상세 모달에서 답변 입력 및 저장
 - **FR-005**: 답변 저장 시 `PENDING → IN_PROGRESS` 자동 상태 전이
 - **FR-006**: "처리 완료" 버튼으로 `IN_PROGRESS → COMPLETED` 전이
