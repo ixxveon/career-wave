@@ -77,7 +77,7 @@
 
 ## 5. 연동 계약
 
-- `user-backend`는 `api-spec.json`의 목록 조회, 상세 조회, 스크랩 토글 계약을 제공한다.
+- `user-backend`는 `api-spec.md`의 목록 조회, 상세 조회, 스크랩 토글 계약을 제공한다.
 - 모든 Backend API 응답은 `ApiResponse<T>` 형식(`success`, `statusCode`, `message`, `data`)을 사용한다.
 - 예상 가능한 실패는 `ErrorCode`와 공통 예외 흐름을 통해 처리하고, 프론트엔드는 `message`를 사용자 안내 문구로 활용한다.
 - `admin-backend` 또는 수집 파이프라인에서 비공개, 반려, 마감 처리한 공고는 사용자 목록 API에 노출하지 않는다.
