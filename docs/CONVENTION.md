@@ -274,15 +274,13 @@ frontend/src/
 │  ├─ components
 │  ├─ hooks
 │  ├─ pages
-│  ├─ store
 │  ├─ types
 │  └─ utils
 ├─ components/
 ├─ hooks/
 ├─ routes/
 ├─ styles/
-├─ utils/
-└─ store/
+└─ utils/
 ```
 
 ### State Management
