@@ -38,16 +38,16 @@
 
 | Enum | 표시 |
 |---|---|
-| `PENDING` | 접수 |
+| `PENDING` | 처리 대기 |
 | `BLINDED` | 블라인드 |
 | `DISMISSED` | 기각 |
 | `BOARD` | 게시글 |
 | `COMMENT` | 댓글 |
 | `MEMBER` | 회원 |
-| `SPAM` | 스팸 |
-| `ABUSE` | 욕설·비방 |
-| `AD` | 광고·홍보 |
-| `INAPPROPRIATE` | 부적절한 콘텐츠 |
+| `SPAM` | 스팸/광고 |
+| `ABUSE` | 욕설/비방 |
+| `AD` | 광고성 |
+| `INAPPROPRIATE` | 부적절한 내용 |
 | `OTHER` | 기타 |
 
 ---
@@ -69,7 +69,7 @@ GET /api/admin/reports/summary
     "totalCount": 142,
     "pendingCount": 38,
     "blindedCount": 79,
-    "dismissedCount": 25
+    "highRiskCount": 12
   }
 }
 ```
@@ -77,9 +77,11 @@ GET /api/admin/reports/summary
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `totalCount` | number | 전체 신고 건수 |
-| `pendingCount` | number | 접수(미처리) 건수 |
+| `pendingCount` | number | 처리 대기(미처리) 건수 |
 | `blindedCount` | number | 블라인드 처리 건수 |
-| `dismissedCount` | number | 기각 처리 건수 |
+| `highRiskCount` | number | AI 고위험 감지 건수 (ai_suggestion 심각도 `높음`) |
+
+> `highRiskCount`는 현재 클라이언트에서 더미 데이터 기준으로 집계하며, API 연동 시 서버에서 제공한다.
 
 ### Errors
 

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `feature/admin-report-api`
 **버전**: v1
-**Status**: 스펙 작성 중
+**Status**: 스펙 완료
 **담당**: 신보라
 
 ---
