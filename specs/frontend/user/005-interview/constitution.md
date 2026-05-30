@@ -25,7 +25,7 @@
 
 > 면접 세션은 단방향 흐름을 가지며, 모든 전이는 `useInterviewSession`의 `useReducer`를 통해 일관되게 관리한다.
 
-```
+```text
 [READY] → [RUNNING] → [FINISHED]
                ↕
         [RECONNECTING] → [ERROR]
