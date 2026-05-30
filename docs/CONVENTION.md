@@ -235,8 +235,8 @@ ROLE_ADMIN
 
 - DB 컬럼명은 snake_case를 사용한다.
 - Java Entity 필드는 camelCase를 사용한다.
-- Entity PK 필드명은 `{테이블명}Id` 형식을 사용한다. (예: `memberId`, `noticeId`)
-- DB PK 컬럼명은 `{테이블명}_id` 형식을 사용한다. (예: `member_id`, `notice_id`)
+- Entity PK 필드명은 `{도메인(엔티티)명}Id` 형식(단수, camelCase)을 사용한다. (예: `memberId`, `noticeId`, `reportId`)
+- DB PK 컬럼명은 `{도메인(엔티티)명}_id` 형식(단수, snake_case)을 사용한다. (예: `member_id`, `notice_id`, `report_id`)
 - 명시적인 DB 컬럼명이 필요한 경우 `@Column(name = "...")`로 snake_case를 지정한다.
 
 ### PK Strategy
