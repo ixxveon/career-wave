@@ -103,7 +103,7 @@ GET /api/admin/reports
 |---|---|---|---|
 | `status` | string | N | `PENDING` \| `BLINDED` \| `DISMISSED` — 생략 시 전체 |
 | `targetType` | string | N | `BOARD` \| `COMMENT` \| `MEMBER` — 생략 시 전체 |
-| `reason` | string | N | `SPAM` \| `ABUSE` \| `AD` \| `INAPPROPRIATE` \| `OTHER` — 생략 시 전체 |
+| `reason` | string | N | `SPAM` \| `ABUSE` \| `AD` \| `INAPPROPRIATE` \| `OTHER` — 생략 시 전체 _(v2 예정)_ |
 | `page` | number | N | 페이지 번호 (기본값: 1) |
 | `size` | number | N | 페이지당 건수 (기본값: 20, 최대 100) |
 

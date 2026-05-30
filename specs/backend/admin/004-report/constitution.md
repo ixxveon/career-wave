@@ -39,7 +39,7 @@ DISMISSED → (변경 불가 — v1)
 
 | 결정 | 내용 | 근거 |
 |------|------|------|
-| 콘텐츠 블라인드 직접 처리 | AdminReportService가 BoardRepository, CommentRepository를 직접 사용 | v1 범위에서 이벤트 기반 분리보다 단순한 직접 처리가 적합 |
+| 콘텐츠 블라인드 처리 방식 | ⚠️ **구현 전 팀 합의 필요** — boards/comments가 `user` 도메인에 속할 경우 `admin/report`에서 직접 참조하면 도메인 경계 규칙(`admin`↔`user` 직접 참조 금지) 위반. 해결 방안: ① `admin` 공용 패키지로 이동, ② 이벤트 기반 처리, ③ 별도 공유 서비스 계층 추가 중 선택 필요 | CONVENTION.md — admin과 user는 서로 직접 참조하지 않는다 |
 | 동적 필터 | QueryDSL 또는 JPA Specification | null 필터 조건 무시, AND 조건 결합 |
 | KPI 집계 | 별도 summary 엔드포인트 | 목록과 독립적으로 집계 카드를 조회할 수 있도록 분리 |
 | 정렬 기본값 | `created_at DESC` | 최신 신고를 먼저 확인할 수 있도록 |
