@@ -1,114 +1,193 @@
-import { useState } from 'react';
-import { Search, CheckCircle2, XCircle, Clock, FileText, MessageSquare, ChevronDown } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle2, FileText, Search, XCircle } from 'lucide-react';
+import { applicationApi } from '../../api/applicationApi';
 import './styles/ApplicantManagementPage.css';
 
-const STAGES = ['전체', '서류 검토', '서류 합격', '면접 대기', '최종 결과'];
-
-const MOCK_APPLICANTS = [
-  { id: 1, name: '김민준', job: '백엔드 개발자', appliedAt: '2025-05-10', stage: '서류 검토', exp: '3년',  stacks: ['Java','Spring','AWS'],  score: 88 },
-  { id: 2, name: '이지은', job: '백엔드 개발자', appliedAt: '2025-05-11', stage: '서류 합격', exp: '5년',  stacks: ['Python','Django','GCP'], score: 91 },
-  { id: 3, name: '박서준', job: '프론트엔드',    appliedAt: '2025-05-12', stage: '면접 대기', exp: '2년',  stacks: ['React','TypeScript'],    score: 75 },
-  { id: 4, name: '최수연', job: '백엔드 개발자', appliedAt: '2025-05-13', stage: '서류 검토', exp: '신입', stacks: ['Java','Spring'],          score: 70 },
-  { id: 5, name: '정하은', job: '프론트엔드',    appliedAt: '2025-05-14', stage: '최종 결과', exp: '4년',  stacks: ['Vue','Nuxt','Node.js'],   score: 85 },
+const STATUS_OPTIONS = [
+  { value: 'ALL', label: '전체' },
+  { value: 'APPLIED', label: '지원 접수' },
+  { value: 'PASSED', label: '서류 합격' },
+  { value: 'FAILED', label: '불합격' },
+  { value: 'FINAL_PASSED', label: '최종 합격' },
 ];
 
-const STAGE_META = {
-  '서류 검토': { color: '#60a5fa', bg: '#dbeafe' },
-  '서류 합격': { color: '#22c55e', bg: '#dcfce7' },
-  '면접 대기': { color: '#f59e0b', bg: '#fef3c7' },
-  '최종 결과': { color: '#a78bfa', bg: '#ede9fe' },
+const STATUS_META = {
+  APPLIED: { label: '지원 접수', color: '#2563eb', bg: '#dbeafe' },
+  PASSED: { label: '서류 합격', color: '#15803d', bg: '#dcfce7' },
+  FAILED: { label: '불합격', color: '#dc2626', bg: '#fee2e2' },
+  FINAL_PASSED: { label: '최종 합격', color: '#7c3aed', bg: '#ede9fe' },
 };
 
 export default function ApplicantManagementPage() {
-  const [search,      setSearch]      = useState('');
-  const [stageFilter, setStageFilter] = useState('전체');
-  const [stages,      setStages]      = useState(
-    Object.fromEntries(MOCK_APPLICANTS.map(a => [a.id, a.stage]))
-  );
+  const navigate = useNavigate();
+  const [keyword, setKeyword] = useState('');
+  const [status, setStatus] = useState('ALL');
+  const [applicants, setApplicants] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  function updateStage(id, stage) { setStages(s => ({ ...s, [id]: stage })); }
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
 
-  const filtered = MOCK_APPLICANTS.filter(a => {
-    if (search && !a.name.includes(search) && !a.job.includes(search)) return false;
-    if (stageFilter !== '전체' && stages[a.id] !== stageFilter) return false;
-    return true;
-  });
+    applicationApi
+      .getApplications({ keyword, status })
+      .then((data) => {
+        if (active) setApplicants(data);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [keyword, status]);
+
+  const summary = useMemo(() => {
+    const total = applicants.length;
+    const averageScore = total
+      ? Math.round(applicants.reduce((sum, applicant) => sum + applicant.interviewScore, 0) / total)
+      : 0;
+    return { total, averageScore };
+  }, [applicants]);
+
+  const updateStatus = async (applicationId, nextStatus) => {
+    await applicationApi.updateApplicationStatus(applicationId, nextStatus);
+    setApplicants((current) =>
+      current.map((applicant) =>
+        applicant.id === applicationId ? { ...applicant, status: nextStatus } : applicant,
+      ),
+    );
+  };
 
   return (
     <div className="am-page">
       <div className="am-header">
         <span className="am-eyebrow">APPLICANT MANAGEMENT</span>
         <h1 className="am-header__title">지원자 관리</h1>
-        <p className="am-header__desc">접수된 지원자의 이력서를 검토하고 전형 단계를 업데이트합니다.</p>
+        <p className="am-header__desc">지원자 목록, 전형 상태, AI 진단 점수와 PDF 리포트 연결을 관리합니다.</p>
       </div>
 
-      {/* 필터 바 */}
+      <div className="am-summary">
+        <article>
+          <span>지원자</span>
+          <strong>{summary.total}</strong>
+        </article>
+        <article>
+          <span>평균 면접 점수</span>
+          <strong>{summary.averageScore || '-'}</strong>
+        </article>
+      </div>
+
       <div className="am-toolbar">
         <div className="am-search">
           <Search size={15} />
-          <input placeholder="이름, 직무 검색" value={search} onChange={e => setSearch(e.target.value)} />
+          <input
+            placeholder="이름, 직무 검색"
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+          />
         </div>
         <div className="am-stage-filters">
-          {STAGES.map(s => (
-            <button key={s} className={`am-stage-chip${stageFilter === s ? ' am-stage-chip--on' : ''}`} onClick={() => setStageFilter(s)}>{s}</button>
+          {STATUS_OPTIONS.map((option) => (
+            <button
+              className={`am-stage-chip${status === option.value ? ' am-stage-chip--on' : ''}`}
+              key={option.value}
+              type="button"
+              onClick={() => setStatus(option.value)}
+            >
+              {option.label}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* 지원자 테이블 */}
       <div className="am-card">
         <div className="am-table-wrap">
           <table className="am-table">
             <thead>
               <tr>
-                <th>이름</th><th>직무</th><th>경력</th><th>기술 스택</th>
-                <th>AI 면접 점수</th><th>지원일</th><th>전형 단계</th><th>액션</th>
+                <th>지원자</th>
+                <th>지원 공고</th>
+                <th>경력</th>
+                <th>기술 스택</th>
+                <th>서류</th>
+                <th>면접</th>
+                <th>지원일</th>
+                <th>상태</th>
+                <th>관리</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(a => {
-                const stage = stages[a.id];
-                const meta  = STAGE_META[stage];
+              {loading && (
+                <tr>
+                  <td colSpan={9}>지원자 목록을 불러오는 중입니다.</td>
+                </tr>
+              )}
+              {!loading && applicants.map((applicant) => {
+                const meta = STATUS_META[applicant.status] || STATUS_META.APPLIED;
                 return (
-                  <tr key={a.id}>
-                    <td className="am-table__name">{a.name}</td>
-                    <td>{a.job}</td>
-                    <td>{a.exp}</td>
+                  <tr key={applicant.id}>
+                    <td className="am-table__name">{applicant.applicantName}</td>
+                    <td>{applicant.jobTitle}</td>
+                    <td>{applicant.experience}</td>
                     <td>
                       <div className="am-stacks">
-                        {a.stacks.map(s => <span key={s} className="am-stack">{s}</span>)}
+                        {applicant.stacks.map((stack) => <span className="am-stack" key={stack}>{stack}</span>)}
                       </div>
                     </td>
+                    <td><span className="am-score am-score--mid">{applicant.documentScore}</span></td>
+                    <td><span className="am-score am-score--high">{applicant.interviewScore}</span></td>
+                    <td className="am-table__date">{applicant.appliedAt}</td>
                     <td>
-                      <span className={`am-score${a.score >= 85 ? ' am-score--high' : a.score >= 70 ? ' am-score--mid' : ' am-score--low'}`}>
-                        {a.score}점
-                      </span>
-                    </td>
-                    <td className="am-table__date">{a.appliedAt}</td>
-                    <td>
-                      <div className="am-stage-select-wrap">
-                        <span className="am-stage-badge" style={{ color: meta.color, background: meta.bg }}>{stage}</span>
-                        <div className="am-stage-dropdown">
-                          <button className="am-stage-dropdown__btn"><ChevronDown size={12} /></button>
-                          <div className="am-stage-dropdown__menu">
-                            {STAGES.slice(1).map(s => (
-                              <button key={s} onClick={() => updateStage(a.id, s)}>{s}</button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                      <select
+                        className="am-status-select"
+                        style={{ color: meta.color, background: meta.bg }}
+                        value={applicant.status}
+                        onChange={(event) => updateStatus(applicant.id, event.target.value)}
+                      >
+                        {STATUS_OPTIONS.slice(1).map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
                     </td>
                     <td>
                       <div className="am-actions">
-                        <button className="am-action-btn" title="이력서"><FileText size={13} /></button>
-                        <button className="am-action-btn am-action-btn--pass" title="합격" onClick={() => updateStage(a.id, '서류 합격')}><CheckCircle2 size={13} /></button>
-                        <button className="am-action-btn am-action-btn--fail" title="불합격" onClick={() => updateStage(a.id, '최종 결과')}><XCircle size={13} /></button>
-                        <button className="am-action-btn" title="메시지"><MessageSquare size={13} /></button>
+                        <button
+                          className="am-action-btn"
+                          title="진단 상세"
+                          type="button"
+                          onClick={() => navigate(`/applications/applicants/${applicant.id}`)}
+                        >
+                          <FileText size={13} />
+                        </button>
+                        <button
+                          className="am-action-btn am-action-btn--pass"
+                          title="합격 처리"
+                          type="button"
+                          onClick={() => updateStatus(applicant.id, 'PASSED')}
+                        >
+                          <CheckCircle2 size={13} />
+                        </button>
+                        <button
+                          className="am-action-btn am-action-btn--fail"
+                          title="불합격 처리"
+                          type="button"
+                          onClick={() => updateStatus(applicant.id, 'FAILED')}
+                        >
+                          <XCircle size={13} />
+                        </button>
                       </div>
                     </td>
                   </tr>
                 );
               })}
+              {!loading && applicants.length === 0 && (
+                <tr>
+                  <td colSpan={9}>조건에 맞는 지원자가 없습니다.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

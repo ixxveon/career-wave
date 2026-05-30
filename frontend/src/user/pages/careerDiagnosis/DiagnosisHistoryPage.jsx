@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BarChart3, Building2, CalendarDays, Download, Search, SlidersHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -10,28 +10,11 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { careerHistoryApi } from '../../api/careerHistoryApi';
 import './CareerDiagnosis.css';
 
 const filters = ['전체', '기술면접', '인성면접', '프로젝트면접'];
 const jobOptions = ['전체 직무', '백엔드 개발자', '프론트엔드 개발자', '풀스택 개발자', '서비스 기획자'];
-
-const chartData = {
-  weekly: [
-    { label: '05.18', score: 79, company: '카카오페이', type: '인성면접' },
-    { label: '05.20', score: 76, company: '원티드', type: '프로젝트면접' },
-    { label: '05.22', score: 82, company: '사람인', type: '기술면접' },
-  ],
-  monthly: [
-    { label: '3월', score: 72, company: '월간 평균', type: '면접 평균' },
-    { label: '4월', score: 76, company: '월간 평균', type: '면접 평균' },
-    { label: '5월', score: 82, company: '월간 평균', type: '면접 평균' },
-  ],
-  yearly: [
-    { label: '2024', score: 68, company: '연간 평균', type: '취업 준비 진단' },
-    { label: '2025', score: 75, company: '연간 평균', type: '취업 준비 진단' },
-    { label: '2026', score: 82, company: '연간 평균', type: '취업 준비 진단' },
-  ],
-};
 
 const periodTabs = [
   { key: 'weekly', label: '주별' },
@@ -39,48 +22,12 @@ const periodTabs = [
   { key: 'yearly', label: '연도별' },
 ];
 
-const interviewRecords = [
-  {
-    id: 'backend-20260522',
-    type: '기술면접',
-    job: '백엔드 개발자',
-    company: '사람인',
-    date: '2026.05.22',
-    score: 82,
-    previousScore: 76,
-    summary: '기술 개념은 이해하고 있지만 구체적인 프로젝트 사례가 부족합니다.',
-    weakness: 'JPA 영속성 컨텍스트, Spring Security 인증 흐름',
-  },
-  {
-    id: 'frontend-20260520',
-    type: '프로젝트면접',
-    job: '프론트엔드 개발자',
-    company: '원티드',
-    date: '2026.05.20',
-    score: 76,
-    previousScore: 74,
-    summary: 'React 상태관리 설명은 가능하지만 선택 이유와 성능 개선 경험 보완이 필요합니다.',
-    weakness: '상태관리 선택 기준, 렌더링 최적화',
-  },
-  {
-    id: 'personality-20260518',
-    type: '인성면접',
-    job: '백엔드 개발자',
-    company: '카카오페이',
-    date: '2026.05.18',
-    score: 79,
-    previousScore: 81,
-    summary: '협업 경험은 좋지만 갈등 상황에서의 행동과 결과가 조금 더 필요합니다.',
-    weakness: 'STAR 답변 구조, 협업 사례 정리',
-  },
-];
-
-const growthStats = [
-  { label: '최고 점수', value: '82점' },
-  { label: '최저 점수', value: '76점' },
-  { label: '최근 변화', value: '+6점' },
-  { label: '평균 점수', value: '79점' },
-];
+const statusLabels = {
+  CREATED: '기록 생성',
+  ANALYZED: '분석 완료',
+  COMPLETED: '로드맵 완료',
+  ARCHIVED: '보관됨',
+};
 
 function GrowthTooltip({ active, payload, label }) {
   if (!active || !payload?.length) {
@@ -101,6 +48,58 @@ function GrowthTooltip({ active, payload, label }) {
 
 function DiagnosisHistoryPage() {
   const [period, setPeriod] = useState('weekly');
+  const [activeFilter, setActiveFilter] = useState('전체');
+  const [companyName, setCompanyName] = useState('');
+  const [practiceDate, setPracticeDate] = useState('');
+  const [jobTitle, setJobTitle] = useState('전체 직무');
+  const [records, setRecords] = useState([]);
+  const [competency, setCompetency] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError('');
+
+    Promise.all([
+      careerHistoryApi.getHistories({
+        activityType: activeFilter,
+        companyName,
+        practiceDate,
+        jobTitle,
+      }),
+      careerHistoryApi.getCompetencyReport(),
+    ])
+      .then(([historyRecords, competencyReport]) => {
+        if (!active) return;
+        setRecords(historyRecords);
+        setCompetency(competencyReport);
+      })
+      .catch(() => {
+        if (active) setError('취업 준비 기록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [activeFilter, companyName, jobTitle, practiceDate]);
+
+  const latestScore = records[0]?.score ?? competency?.interviewScore;
+  const growthStats = useMemo(() => {
+    const scores = records.map((record) => record.score);
+    if (!scores.length) return [];
+    const latestDifference = records[0].score - records[0].previousScore;
+    return [
+      { label: '최고 점수', value: `${Math.max(...scores)}점` },
+      { label: '최저 점수', value: `${Math.min(...scores)}점` },
+      { label: '최근 변화', value: `${latestDifference >= 0 ? '+' : ''}${latestDifference}점` },
+      { label: '종합 점수', value: `${competency?.totalScore ?? '-'}점` },
+    ];
+  }, [competency, records]);
 
   return (
     <section className="support-page">
@@ -108,36 +107,36 @@ function DiagnosisHistoryPage() {
         <div>
           <p className="support-eyebrow">CAREER HISTORY</p>
           <h1>취업 준비 기록</h1>
-          <p>날짜, 기업, 직무별로 모의면접 기록을 찾고 AI 피드백과 성장 변화를 복습하세요.</p>
+          <p>날짜, 기업, 직무별로 취업 준비 기록을 찾고 AI 피드백과 성장 변화를 복습하세요.</p>
         </div>
         <div className="support-hero__summary">
           <span>최근 면접 총점</span>
-          <strong>82점</strong>
+          <strong>{latestScore ? `${latestScore}점` : '-'}</strong>
         </div>
       </header>
 
       <section className="insight-grid" aria-label="누적 성장 요약">
         <article>
           <span>최근 성장</span>
-          <strong>+6점</strong>
-          <p>직전 면접 76점 → 최근 면접 82점</p>
+          <strong>{records[0] ? `${records[0].score - records[0].previousScore >= 0 ? '+' : ''}${records[0].score - records[0].previousScore}점` : '-'}</strong>
+          <p>{records[0] ? `직전 면접 ${records[0].previousScore}점 -> 최근 면접 ${records[0].score}점` : '분석할 기록이 없습니다.'}</p>
         </article>
         <article>
           <span>반복 약점</span>
-          <strong>답변 구체성</strong>
-          <p>프로젝트 적용 사례 설명 보완 필요</p>
+          <strong>{competency?.weaknesses?.[0] ?? '-'}</strong>
+          <p>{competency?.weaknesses?.[1] ?? '분석 데이터가 필요합니다.'}</p>
         </article>
         <article>
           <span>다음 학습</span>
-          <strong>JPA</strong>
-          <p>최근 면접에서 영속성 컨텍스트 설명 부족</p>
+          <strong>{competency?.priorityTargets?.[0] ?? '-'}</strong>
+          <p>{competency?.priorityTargets?.[1] ?? '추천 학습 데이터가 필요합니다.'}</p>
         </article>
       </section>
 
       <div className="history-toolbar history-toolbar--stacked">
         <div className="history-filters" aria-label="면접 유형 필터">
           {filters.map((filter) => (
-            <button className={filter === '전체' ? 'is-active' : ''} key={filter} type="button">
+            <button className={filter === activeFilter ? 'is-active' : ''} key={filter} type="button" onClick={() => setActiveFilter(filter)}>
               {filter}
             </button>
           ))}
@@ -146,15 +145,15 @@ function DiagnosisHistoryPage() {
         <div className="search-controls">
           <label className="date-filter">
             <CalendarDays size={18} />
-            <input aria-label="날짜 선택" type="date" />
+            <input aria-label="날짜 선택" type="date" value={practiceDate} onChange={(event) => setPracticeDate(event.target.value)} />
           </label>
           <label className="date-filter">
             <Building2 size={18} />
-            <input aria-label="기업명 검색" placeholder="기업명 검색" type="search" />
+            <input aria-label="기업명 검색" placeholder="기업명 검색" type="search" value={companyName} onChange={(event) => setCompanyName(event.target.value)} />
           </label>
           <label className="date-filter">
             <SlidersHorizontal size={18} />
-            <select aria-label="직무 선택" defaultValue="전체 직무">
+            <select aria-label="직무 선택" value={jobTitle} onChange={(event) => setJobTitle(event.target.value)}>
               {jobOptions.map((job) => (
                 <option key={job}>{job}</option>
               ))}
@@ -164,19 +163,23 @@ function DiagnosisHistoryPage() {
       </div>
 
       <div className="record-list">
-        {interviewRecords.map((record) => {
+        {loading && <div className="empty-state">기록을 불러오는 중입니다.</div>}
+        {!loading && error && <div className="empty-state empty-state--error">{error}</div>}
+        {!loading && !error && records.length === 0 && <div className="empty-state">조건에 맞는 취업 준비 기록이 없습니다.</div>}
+        {!loading && !error && records.map((record) => {
           const scoreDiff = record.score - record.previousScore;
 
           return (
             <article className="record-card" key={record.id}>
               <div className="record-card__main">
                 <div className="record-tags">
-                  <span className="record-type">{record.type}</span>
-                  <span className="record-type record-type--muted">{record.job}</span>
+                  <span className="record-type">{record.activityType}</span>
+                  <span className="record-type record-type--muted">{record.jobTitle}</span>
+                  <span className="record-type record-type--muted">{statusLabels[record.status] ?? record.status}</span>
                 </div>
-                <h2>{record.job} 모의면접 · {record.company}</h2>
+                <h2>{record.title} · {record.companyName}</h2>
                 <p className="record-meta">
-                  {record.date} · {record.company} · 총점 {record.score}점
+                  {record.practiceDate} · {record.companyName} · 총점 {record.score}점
                 </p>
                 <p className="record-summary">{record.summary}</p>
                 <p className="record-weakness">추천 복습: {record.weakness}</p>
@@ -225,7 +228,7 @@ function DiagnosisHistoryPage() {
 
         <div className="growth-chart" aria-label="기간별 면접 점수 선 그래프">
           <ResponsiveContainer height="100%" width="100%">
-            <LineChart data={chartData[period]} margin={{ top: 10, right: 22, left: -18, bottom: 0 }}>
+            <LineChart data={competency?.growthTrend?.[period] ?? []} margin={{ top: 10, right: 22, left: -18, bottom: 0 }}>
               <CartesianGrid stroke="#e5edf7" strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="label" tickLine={false} />
               <YAxis domain={[60, 100]} tickLine={false} width={42} />
@@ -243,7 +246,7 @@ function DiagnosisHistoryPage() {
         </div>
 
         <p className="growth-summary__note">
-          최근 기록 기준으로 점수는 회복세이며, 반복 약점은 답변 구체성과 프로젝트 적용 사례 설명입니다.
+          {competency ? `서류 ${competency.documentScore}점, 면접 ${competency.interviewScore}점 기준 종합 역량은 ${competency.totalScore}점입니다.` : '역량 평가 데이터가 없습니다.'}
         </p>
 
         <div className="growth-summary__grid">
