@@ -17,6 +17,7 @@ ResponseEntity<ApiResponse<Map<String, Object>>> getReports(
     @RequestParam(required = false) String status,
     @RequestParam(required = false) String targetType,
     @RequestParam(required = false) String reason,
+    @RequestParam(required = false) String keyword,
     @RequestParam(defaultValue = "1") int page,
     @RequestParam(defaultValue = "20") int size
 );

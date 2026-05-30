@@ -54,7 +54,7 @@
 
 ## 패키지 구조
 
-```
+```text
 admin/report/
 ├── entity/
 │   └── ReportDetail.java
@@ -153,6 +153,9 @@ public class ReportDetailDTO {
         TargetType targetType,
         ReportReason reason,
         ReportStatus reportStatus,
+        String reporterName,    // 신고자 이름
+        String reportedName,    // 피신고자 이름
+        String contentTitle,    // 신고 대상 콘텐츠 제목 (BOARD 시 게시글 제목, 그 외 null)
         ZonedDateTime createdAt
     ) {}
 
@@ -161,7 +164,7 @@ public class ReportDetailDTO {
         long totalCount,
         long pendingCount,
         long blindedCount,
-        long dismissedCount
+        long highRiskCount   // ai_suggestion 심각도 '높음' 건수
     ) {}
 
     // 상세 조회
@@ -195,7 +198,7 @@ public class ReportDetailDTO {
 
 ### 1. KPI 집계 조회
 
-```
+```http
 GET /api/admin/reports/summary
 ```
 
@@ -206,8 +209,8 @@ GET /api/admin/reports/summary
 
 ### 2. 신고 목록 조회
 
-```
-GET /api/admin/reports?status=&targetType=&reason=&page=&size=
+```http
+GET /api/admin/reports?status=&targetType=&reason=&keyword=&page=&size=
 ```
 
 - **응답**: `ApiResponse<Map<String, Object>>` (`items`, `page`, `size`, `totalItems`, `totalPages`)
@@ -218,7 +221,7 @@ GET /api/admin/reports?status=&targetType=&reason=&page=&size=
 
 ### 3. 신고 상세 조회
 
-```
+```http
 GET /api/admin/reports/{reportId}
 ```
 
@@ -230,7 +233,7 @@ GET /api/admin/reports/{reportId}
 
 ### 4. 블라인드 처리
 
-```
+```http
 PATCH /api/admin/reports/{reportId}/blind
 ```
 
@@ -244,7 +247,7 @@ PATCH /api/admin/reports/{reportId}/blind
 
 ### 5. 기각 처리
 
-```
+```http
 PATCH /api/admin/reports/{reportId}/dismiss
 ```
 

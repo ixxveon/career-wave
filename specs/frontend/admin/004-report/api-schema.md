@@ -104,6 +104,7 @@ GET /api/admin/reports
 | `status` | string | N | `PENDING` \| `BLINDED` \| `DISMISSED` — 생략 시 전체 |
 | `targetType` | string | N | `BOARD` \| `COMMENT` \| `MEMBER` — 생략 시 전체 |
 | `reason` | string | N | `SPAM` \| `ABUSE` \| `AD` \| `INAPPROPRIATE` \| `OTHER` — 생략 시 전체 _(v2 예정)_ |
+| `keyword` | string | N | 신고자명·피신고자명·콘텐츠 제목 통합 검색 |
 | `page` | number | N | 페이지 번호 (기본값: 1) |
 | `size` | number | N | 페이지당 건수 (기본값: 20, 최대 100) |
 
@@ -121,6 +122,9 @@ GET /api/admin/reports
         "targetType": "BOARD",
         "reason": "SPAM",
         "reportStatus": "PENDING",
+        "reporterName": "김민지",
+        "reportedName": "이상훈",
+        "contentTitle": "게시글 제목",
         "createdAt": "2026-05-30T10:00:00Z"
       }
     ],
@@ -221,6 +225,7 @@ PATCH /api/admin/reports/{reportId}/blind
 
 | 코드 | 상태 | 메시지 |
 |---|---|---|
+| `UNAUTHORIZED` | 401 | 관리자 인증이 필요합니다. |
 | `REPORT_NOT_FOUND` | 404 | 존재하지 않는 신고입니다. |
 | `ALREADY_PROCESSED` | 409 | 이미 처리된 신고입니다. |
 
@@ -257,5 +262,6 @@ PATCH /api/admin/reports/{reportId}/dismiss
 
 | 코드 | 상태 | 메시지 |
 |---|---|---|
+| `UNAUTHORIZED` | 401 | 관리자 인증이 필요합니다. |
 | `REPORT_NOT_FOUND` | 404 | 존재하지 않는 신고입니다. |
 | `ALREADY_PROCESSED` | 409 | 이미 처리된 신고입니다. |

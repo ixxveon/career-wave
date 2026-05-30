@@ -10,7 +10,7 @@
 - [x] `ReportStatus` 값이 ERD 기준 `PENDING / BLINDED / DISMISSED`만 사용한다.
 - [x] `TargetType` 값이 ERD 기준 `BOARD / COMMENT / MEMBER`만 사용한다.
 - [x] `ReportReason` 값이 ERD 기준 `SPAM / ABUSE / AD / INAPPROPRIATE / OTHER`만 사용한다.
-- [x] 신고 ID(`id`) 타입이 string으로 선언되어 있다. (API 연동 시 number/BIGSERIAL로 전환)
+- [x] 신고 ID(`reportId`) 타입이 string으로 선언되어 있다. (API 연동 시 number/BIGSERIAL로 전환)
 
 ---
 
