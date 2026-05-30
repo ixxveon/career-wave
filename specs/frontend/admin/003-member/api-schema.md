@@ -42,7 +42,7 @@
 
 ## 1. 개인 회원 목록 조회
 
-```
+```http
 GET /api/admin/members
 ```
 
@@ -101,7 +101,7 @@ GET /api/admin/members
 
 ## 2. 개인 회원 상세 조회
 
-```
+```http
 GET /api/admin/members/{memberId}
 ```
 
@@ -144,7 +144,7 @@ GET /api/admin/members/{memberId}
 
 ## 3. 회원 제재 처리
 
-```
+```http
 POST /api/admin/members/{memberId}/sanctions
 ```
 
@@ -196,7 +196,7 @@ POST /api/admin/members/{memberId}/sanctions
 
 ## 4. 기업 회원 목록 조회
 
-```
+```http
 GET /api/admin/hr-managers
 ```
 
@@ -249,7 +249,7 @@ GET /api/admin/hr-managers
 
 ## 5. 기업 회원 상세 조회
 
-```
+```http
 GET /api/admin/hr-managers/{memberId}
 ```
 
@@ -271,7 +271,8 @@ GET /api/admin/hr-managers/{memberId}
     "certFileName": "재직증명서_이상훈_20260501.pdf",
     "joinedAt": "2026-05-01T00:00:00Z",
     "approvedAt": "2026-05-03T09:00:00Z",
-    "hrStatus": "ACTIVE"
+    "hrStatus": "ACTIVE",
+    "rejectReason": null
   }
 }
 ```
@@ -280,7 +281,7 @@ GET /api/admin/hr-managers/{memberId}
 
 ## 6. 기업 회원 승인
 
-```
+```http
 PATCH /api/admin/hr-managers/{memberId}/approve
 ```
 
@@ -310,13 +311,21 @@ PATCH /api/admin/hr-managers/{memberId}/approve
 
 ## 7. 기업 회원 반려
 
-```
+```http
 PATCH /api/admin/hr-managers/{memberId}/reject
 ```
 
 ### Request Body
 
-없음 (body 불필요)
+```json
+{
+  "rejectReason": "제출하신 재직증명서의 유효기간이 만료되었습니다."
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `rejectReason` | string | Y | 반려 사유 (최소 10자, 최대 500자) |
 
 ### Response
 
@@ -327,7 +336,8 @@ PATCH /api/admin/hr-managers/{memberId}/reject
   "message": "기업 회원 가입이 반려되었습니다.",
   "data": {
     "memberId": "uuid",
-    "hrStatus": "REMOVED"
+    "hrStatus": "REMOVED",
+    "rejectReason": "제출하신 재직증명서의 유효기간이 만료되었습니다."
   }
 }
 ```
@@ -338,3 +348,5 @@ PATCH /api/admin/hr-managers/{memberId}/reject
 |---|---|---|
 | `HR_MANAGER_NOT_FOUND` | 404 | 존재하지 않는 기업 회원입니다. |
 | `ALREADY_PROCESSED` | 409 | 이미 처리된 가입 신청입니다. |
+| `REASON_REQUIRED` | 400 | 반려 사유는 필수입니다. |
+| `REASON_TOO_SHORT` | 400 | 반려 사유는 최소 10자 이상 입력해주세요. |

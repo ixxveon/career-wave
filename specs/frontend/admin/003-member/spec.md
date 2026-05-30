@@ -275,6 +275,7 @@ UI는 탭으로 구분한다.
 | `company_profile_id` | UUID FK → company_profiles | 소속 기업 |
 | `permission_level` | VARCHAR(10) NOT NULL | `FULL` / `NOTICE` / `VIEWER` |
 | `hr_status` | VARCHAR(10) NOT NULL | `PENDING` / `ACTIVE` / `REMOVED` |
+| `reject_reason` | TEXT | 반려 사유 (hr_status가 REMOVED일 때 저장) |
 | `created_at` | TIMESTAMPTZ NOT NULL | 가입 신청 일시 |
 | `approved_at` | TIMESTAMPTZ | 관리자 승인 일시 |
 

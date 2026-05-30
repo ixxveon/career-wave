@@ -95,7 +95,7 @@ REMOVED
   - `GET /api/admin/hr-managers?hrStatus=&keyword=&page=&size=` — 기업 회원 목록
   - `GET /api/admin/hr-managers/{memberId}` — 기업 회원 상세
   - `PATCH /api/admin/hr-managers/{memberId}/approve` — 기업 회원 승인
-  - `PATCH /api/admin/hr-managers/{memberId}/reject` — 기업 회원 반려 (hr_status → REMOVED)
+  - `PATCH /api/admin/hr-managers/{memberId}/reject` — 기업 회원 반려 (rejectReason 필수, hr_status → REMOVED, reject_reason 저장)
 - 모든 응답은 `ApiResponse<T>` 형식 (`success`, `statusCode`, `message`, `data`)을 사용한다.
 - 제재 처리 성공 시 해당 회원의 `member_status`가 즉시 변경되어 목록에 반영된다.
 
