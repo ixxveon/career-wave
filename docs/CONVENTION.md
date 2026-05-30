@@ -266,19 +266,22 @@ frontend/src/
 ├─ admin/
 │  ├─ api
 │  ├─ components
+│  ├─ data
 │  ├─ layouts
 │  ├─ pages
 │  └─ styles
 ├─ user/
 │  ├─ api
+│  ├─ components
+│  ├─ hooks
 │  ├─ pages
-│  └─ types
+│  ├─ types
+│  └─ utils
 ├─ components/
 ├─ hooks/
 ├─ routes/
 ├─ styles/
-├─ utils/
-└─ store/
+└─ utils/
 ```
 
 ### State Management
@@ -302,7 +305,7 @@ user/api/documentApi.ts
 
 - 공통 컴포넌트는 `components/common` 또는 기존 공통 영역을 우선 재사용한다.
 - 300줄 이상 컴포넌트는 분리를 고려한다.
-- 페이지별 스타일은 현재 구조처럼 해당 도메인 또는 페이지의 `styles` 폴더에 둔다.
+- 페이지별 스타일은 컴포넌트와 같은 경로에 co-locate하거나, 도메인 내 `styles/` 하위 폴더로 분리할 수 있다. 도메인 내에서 일관성을 유지한다.
 - TypeScript 파일과 JavaScript 파일이 공존하므로, 새 파일은 주변 파일의 확장자와 패턴을 우선 따른다.
 
 ---
