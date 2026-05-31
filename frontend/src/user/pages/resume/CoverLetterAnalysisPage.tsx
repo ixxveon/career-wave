@@ -42,10 +42,10 @@ export default function CoverLetterAnalysisPage() {
         label="COVER LETTER AI"
         subtitle={`${company} · ${job}`}
         onReset={reset}
+        interviewDocumentId={analysisResult.documentId}
         onRevise={(feedbackDetails) => {
           reset();
-          // 개선안 기반 재작성은 items 상태를 직접 세팅할 수 없어 페이지 리셋 후 안내
-          // TODO: useCoverLetterForm에 setItemsFromFeedback 추가 시 연동
+          // TODO: useCoverLetterForm에 setItemsFromFeedback 추가 시 개선안 자동 적용 연동
         }}
       />
     );

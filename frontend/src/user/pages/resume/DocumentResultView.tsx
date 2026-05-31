@@ -19,14 +19,18 @@ function TotalScoreRing({ score }: TotalScoreRingProps) {
   const r = 52, cx = 68, cy = 68;
   const circ = 2 * Math.PI * r;
   const color = scoreColor(score);
+  const dash  = (score / 100) * circ;
   return (
     <svg viewBox="0 0 136 136" className="dr-ring__svg">
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e2e8f0" strokeWidth="14" />
       <circle
         cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="14"
         strokeLinecap="round"
-        strokeDasharray={`${(score / 100) * circ} ${circ}`}
+        strokeDasharray={`${dash} ${circ}`}
+        strokeDashoffset={circ}
         transform={`rotate(-90 ${cx} ${cy})`}
+        className="dr-ring__arc"
+        style={{ '--dr-ring-dash': dash, '--dr-ring-circ': circ } as React.CSSProperties}
       />
       <text x={cx} y={cy - 6} textAnchor="middle" fontSize="28" fontWeight="900" fill="#1e293b">{score}</text>
       <text x={cx} y={cy + 14} textAnchor="middle" fontSize="11" fontWeight="600" fill="#64748b">/ 100점</text>
@@ -59,6 +63,8 @@ interface DocumentResultViewProps {
   subtitle?: string;
   typeSelector?: React.ReactNode;
   onRevise?: (feedbackDetails: FeedbackDetail[]) => void;
+  /** 면접 시작 시 사용할 documentId — 없으면 /interview/text 기본 이동 */
+  interviewDocumentId?: string;
 }
 
 export default function DocumentResultView({
@@ -68,6 +74,7 @@ export default function DocumentResultView({
   subtitle,
   typeSelector,
   onRevise,
+  interviewDocumentId,
 }: DocumentResultViewProps) {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState(0);
@@ -232,7 +239,14 @@ export default function DocumentResultView({
         )}
       </div>
 
-      <button className="dr-cta" onClick={() => navigate('/interview/text')}>
+      <button
+        className="dr-cta"
+        onClick={() => navigate(
+          interviewDocumentId
+            ? `/interview/text?documentId=${interviewDocumentId}`
+            : '/interview/text'
+        )}
+      >
         <Mic size={20} />
         이 서류 기반으로 AI 텍스트 · 음성 면접 시작하기
       </button>
