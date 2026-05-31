@@ -1,7 +1,7 @@
 # Feature Specification: 고객센터 관리 (Customer Service)
 
 **Feature Branch**: `feature/admin-cs-ui`
-**Status**: 스펙 완료
+**Status**: UI 구현 완료 — API 연동 예정
 **담당**: 신보라
 
 ---
