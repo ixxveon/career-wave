@@ -173,6 +173,8 @@ PENDING → IN_PROGRESS → COMPLETED
 | `title` | VARCHAR NOT NULL | 제목 |
 | `content` | TEXT | 내용 |
 | `is_visible` | BOOLEAN DEFAULT true | 노출 여부 |
+| `is_pinned` | BOOLEAN DEFAULT false | 공지 고정 여부 (User 목록 상단 고정) |
+| `view_count` | INT DEFAULT 0 | 조회수 (User 상세 페이지 조회 시 증가) |
 | `created_at` | TIMESTAMPTZ | 생성 시각 |
 | `updated_at` | TIMESTAMPTZ | 수정 시각 |
 
