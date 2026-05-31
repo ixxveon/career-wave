@@ -30,6 +30,8 @@ AI 초안 생성은 Spring → FastAPI 내부 호출 방식으로 처리하며, 
 | `title` | VARCHAR(200) | NOT NULL | 제목 |
 | `content` | TEXT | NULL | 내용 |
 | `is_visible` | BOOLEAN | NOT NULL DEFAULT true | 노출 여부 |
+| `is_pinned` | BOOLEAN | NOT NULL DEFAULT false | 공지 고정 여부 (User 목록 상단 고정) |
+| `view_count` | INT | NOT NULL DEFAULT 0 | 조회수 (User 상세 페이지 조회 시 증가) |
 | `created_at` | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | 생성 시각 |
 | `updated_at` | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | 수정 시각 |
 
@@ -148,6 +150,12 @@ public class Notice {
 
     @Column(name = "is_visible", nullable = false)
     private boolean isVisible;
+
+    @Column(name = "is_pinned", nullable = false)
+    private boolean isPinned;
+
+    @Column(name = "view_count", nullable = false)
+    private int viewCount;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;
