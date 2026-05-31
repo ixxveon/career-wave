@@ -275,6 +275,9 @@ public class Refund {
 
     // Toss API 실패 — PENDING 상태에서만 호출. 트랜잭션 분리 필요(@Transactional(noRollbackFor))
     public void fail() {
+        if (this.refundStatus != RefundStatus.PENDING) {
+            throw new IllegalStateException("PENDING 상태의 환불만 실패 처리할 수 있습니다.");
+        }
         this.refundStatus = RefundStatus.FAILED;
     }
 }
