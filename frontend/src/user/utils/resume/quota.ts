@@ -1,5 +1,5 @@
 // 멤버십별 서류 분석 한도 — 백엔드 연동 전 임시 목업
-// TODO: Phase 4에서 GET /api/v1/member/quota 또는 인증 정보 응답으로 교체
+// TODO: 백엔드 회원 정보 API 구현 후 GET /api/v1/member/quota (또는 인증 토큰 payload) 로 교체 필요
 
 export const PLAN_LIMITS = {
   FREE:    { document: 1 },
