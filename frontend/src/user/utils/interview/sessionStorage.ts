@@ -12,14 +12,31 @@ export interface StoredInterviewSession {
   startedAt: string;
 }
 
+function isValidSession(value: unknown): value is StoredInterviewSession {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.sessionId === 'string' &&
+    typeof v.sessionType === 'string' &&
+    typeof v.questionOrder === 'number' &&
+    typeof v.startedAt === 'string'
+  );
+}
+
 export function saveInterviewSession(data: StoredInterviewSession): void {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+  } catch {
+    // storage 용량 초과 등 setItem 실패 시 무시
+  }
 }
 
 export function loadInterviewSession(): StoredInterviewSession | null {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as StoredInterviewSession) : null;
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    return isValidSession(parsed) ? parsed : null;
   } catch {
     return null;
   }

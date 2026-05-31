@@ -12,6 +12,7 @@ const PREFERRED_TYPES = [
 ];
 
 export function getSupportedMimeType(): string {
+  if (typeof MediaRecorder === 'undefined') return '';
   for (const type of PREFERRED_TYPES) {
     if (MediaRecorder.isTypeSupported(type)) return type;
   }

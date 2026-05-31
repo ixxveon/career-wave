@@ -1,11 +1,46 @@
 /* ── AI 면접 도메인 타입 정의 ─────────────────────────────────────── */
 /* api-schema.md 계약 기준, constitution.md 상태 머신 포함        */
 
-// ── Enums ─────────────────────────────────────────────────────────
+// ── as const 상수 (런타임 분기 시 문자열 하드코딩 방지) ──────────
 
-export type SessionType = 'TEXT' | 'VOICE' | 'VIDEO';
-export type InterviewType = 'TECHNICAL' | 'PERSONALITY' | 'PROJECT';
-export type SessionStatus = 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+export const SESSION_TYPE = {
+  TEXT:  'TEXT',
+  VOICE: 'VOICE',
+  VIDEO: 'VIDEO',
+} as const;
+
+export const INTERVIEW_TYPE = {
+  TECHNICAL:   'TECHNICAL',
+  PERSONALITY: 'PERSONALITY',
+  PROJECT:     'PROJECT',
+} as const;
+
+export const SESSION_STATUS = {
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED:   'COMPLETED',
+  FAILED:      'FAILED',
+} as const;
+
+export const SPRING_WS_MESSAGE_TYPE = {
+  QUESTION: 'QUESTION',
+  SYSTEM:   'SYSTEM',
+  ERROR:    'ERROR',
+} as const;
+
+export const FASTAPI_WS_MESSAGE_TYPE = {
+  STT_RESULT: 'STT_RESULT',
+  LLM_STREAM: 'LLM_STREAM',
+  TTS_AUDIO:  'TTS_AUDIO',
+  ERROR:      'ERROR',
+} as const;
+
+// ── 타입 별칭 ──────────────────────────────────────────────────────
+
+export type SessionType         = typeof SESSION_TYPE[keyof typeof SESSION_TYPE];
+export type InterviewType       = typeof INTERVIEW_TYPE[keyof typeof INTERVIEW_TYPE];
+export type SessionStatus       = typeof SESSION_STATUS[keyof typeof SESSION_STATUS];
+export type SpringWSMessageType = typeof SPRING_WS_MESSAGE_TYPE[keyof typeof SPRING_WS_MESSAGE_TYPE];
+export type FastApiWSMessageType = typeof FASTAPI_WS_MESSAGE_TYPE[keyof typeof FASTAPI_WS_MESSAGE_TYPE];
 
 /** Frontend 상태 머신 (constitution.md §2) */
 export type InterviewSessionState = 'READY' | 'RUNNING' | 'RECONNECTING' | 'FINISHED' | 'ERROR';
@@ -94,15 +129,11 @@ export interface InterviewHistoryResponse {
 
 // ── WebSocket 메시지 타입 ─────────────────────────────────────────
 
-export type SpringWSMessageType = 'QUESTION' | 'SYSTEM' | 'ERROR';
-
 export interface SpringWSMessage {
   type: SpringWSMessageType;
   content: string;
   questionOrder: number | null;
 }
-
-export type FastApiWSMessageType = 'STT_RESULT' | 'LLM_STREAM' | 'TTS_AUDIO' | 'ERROR';
 
 export interface FastApiWSMessage {
   type: FastApiWSMessageType;
@@ -116,13 +147,13 @@ export interface FastApiWSMessage {
 import type { LucideIcon } from 'lucide-react';
 
 export type Membership = 'FREE' | 'PREMIUM';
-export type MicStatus = 'idle' | 'testing' | 'ok' | 'error';
-export type InputMode = 'voice' | 'text';
-export type Phase = 'setup' | 'chat';
-export type ReviewTag = 'good' | 'improve';
+export type MicStatus  = 'idle' | 'testing' | 'ok' | 'error';
+export type InputMode  = 'voice' | 'text';
+export type Phase      = 'setup' | 'chat';
+export type ReviewTag  = 'good' | 'improve';
 
 /** UI 표시용 면접 방식 레이블 (SessionType과 구분) */
-export type SessionDisplayType = 'video' | 'text';
+export type SessionDisplayType = 'video' | 'text' | 'voice';
 
 export interface Resume {
   fileName: string;
@@ -138,7 +169,7 @@ export interface Message {
 }
 
 export interface PlanLimits {
-  FREE: { document: number; interview: number };
+  FREE:    { document: number; interview: number };
   PREMIUM: { document: number; interview: number };
 }
 
@@ -162,7 +193,7 @@ export interface Report {
   company: string;
   job: string;
   date: string;
-  type: 'text' | 'voice';
+  type: SessionDisplayType;
   totalScore: number;
   grade: string;
   membership: Membership;
