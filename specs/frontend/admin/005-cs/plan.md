@@ -61,7 +61,6 @@ CustomerServicePage
 │
 └── [1:1 문의 탭] InquiryTab
     ├── 필터 드롭다운 (카테고리 / 상태)
-    ├── 키워드 검색
     ├── 문의 목록 테이블
     │   └── 행: 문의ID·회원명·카테고리·제목·접수일·상태·관리(상세보기)
     └── InquiryDetailModal

@@ -81,7 +81,7 @@ COMPLETED
   - `POST /api/admin/faqs` — FAQ 등록
   - `PUT /api/admin/faqs/{faqId}` — FAQ 수정
   - `DELETE /api/admin/faqs/{faqId}` — FAQ 삭제
-  - `GET /api/admin/inquiries` — 문의 목록 (category, status, keyword, page, size)
+  - `GET /api/admin/inquiries` — 문의 목록 (category, status, page, size)
   - `GET /api/admin/inquiries/{inquiryId}` — 문의 상세
   - `PUT /api/admin/inquiries/{inquiryId}/reply` — 답변 저장
   - `PUT /api/admin/inquiries/{inquiryId}/complete` — 처리 완료

@@ -204,7 +204,6 @@ export const INQUIRY_STATUS_LABEL: Record<InquiryStatus, string> = {
 - [ ] `InquiryTab.tsx` 컴포넌트 생성
 - [ ] 카테고리 필터 드롭다운 (전체 / REFUND / PAYMENT_ERROR / SERVICE / ACCOUNT / ETC)
 - [ ] 상태 필터 드롭다운 (전체 / PENDING / IN_PROGRESS / COMPLETED)
-- [ ] 키워드 검색 입력 (문의 제목 기준)
 - [ ] 문의 목록 테이블 (문의ID / 회원명 / 카테고리 / 제목 / 접수일 / 상태 / 관리)
 - [ ] 상태 배지 렌더링 (`INQUIRY_STATUS_LABEL` 활용)
   - `PENDING` → 강조 배지 (미답변 강조)
@@ -262,7 +261,7 @@ export const deleteFaq = (faqId: number) =>
   axiosInstance.delete(`/api/admin/faqs/${faqId}`).then(r => r.data);
 
 // 문의
-export const fetchInquiries = (params: { category?: string; status?: string; keyword?: string; page: number; size: number }) =>
+export const fetchInquiries = (params: { category?: string; status?: string; page: number; size: number }) =>
   axiosInstance.get('/api/admin/inquiries', { params }).then(r => r.data);
 
 export const fetchInquiryDetail = (inquiryId: number) =>
@@ -300,7 +299,7 @@ export const generateInquiryDraft = (body: { category: string; title: string; co
 - [ ] FAQ 수정 API 연동 (`PUT /api/admin/faqs/{faqId}`)
 - [ ] FAQ 삭제 API 연동 (`DELETE /api/admin/faqs/{faqId}`)
 - [ ] 문의 목록 API 연동 및 더미 데이터 제거 (`GET /api/admin/inquiries`)
-- [ ] 문의 카테고리·상태·키워드 필터 쿼리 파라미터 연결
+- [ ] 문의 카테고리·상태 필터 쿼리 파라미터 연결
 - [ ] 문의 페이지네이션 연결 (page, size)
 - [ ] 문의 상세 API 연동 (`GET /api/admin/inquiries/{inquiryId}`)
 - [ ] 답변 저장 API 연동 (`PUT /api/admin/inquiries/{inquiryId}/reply`)

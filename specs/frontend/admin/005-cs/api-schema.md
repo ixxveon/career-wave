@@ -426,7 +426,6 @@ GET /api/admin/inquiries
 |---|---|---|---|
 | `category` | string | N | `REFUND` \| `PAYMENT_ERROR` \| `SERVICE` \| `ACCOUNT` \| `ETC` — 생략 시 전체 |
 | `status` | string | N | `PENDING` \| `IN_PROGRESS` \| `COMPLETED` — 생략 시 전체 |
-| `keyword` | string | N | 회원명·제목 통합 검색 |
 | `page` | number | N | 페이지 번호 (기본값: 1) |
 | `size` | number | N | 페이지당 건수 (기본값: 20) |
 
