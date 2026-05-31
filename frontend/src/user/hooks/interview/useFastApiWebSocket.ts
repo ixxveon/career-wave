@@ -33,18 +33,23 @@ export function useFastApiWebSocket({
 
   const connect = useCallback(
     (sid: string) => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) return;
+      // OPEN 또는 CONNECTING 상태면 중복 연결 방지
+      const state = wsRef.current?.readyState;
+      if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
 
       onStatusChange(attemptRef.current === 0 ? 'CONNECTING' : 'RECONNECTING');
       const ws = new WebSocket(getWsUrl(sid));
       wsRef.current = ws;
 
       ws.onopen = () => {
+        // 연결 시점에 현재 소켓인지 확인 (sessionId 변경으로 교체된 경우 무시)
+        if (wsRef.current !== ws) return;
         attemptRef.current = 0;
         onStatusChange('CONNECTED');
       };
 
       ws.onmessage = (event: MessageEvent) => {
+        if (wsRef.current !== ws) return;
         try {
           const msg = JSON.parse(event.data as string) as FastApiWSMessage;
           onMessage(msg);
@@ -54,6 +59,8 @@ export function useFastApiWebSocket({
       };
 
       ws.onclose = () => {
+        // 이미 교체된 소켓의 onclose는 재연결 시도하지 않음
+        if (wsRef.current !== ws) return;
         if (isManualCloseRef.current) {
           onStatusChange('DISCONNECTED');
           return;
@@ -90,6 +97,7 @@ export function useFastApiWebSocket({
       isManualCloseRef.current = true;
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       wsRef.current?.close();
+      wsRef.current = null;
     };
   }, [sessionId, connect]);
 
