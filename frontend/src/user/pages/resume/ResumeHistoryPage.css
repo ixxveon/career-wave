@@ -8,39 +8,111 @@
   width: 100%;
 }
 
-/* 헤더 */
+/* ─── 헤더 배너 ───────────────────────────────── */
+.rh-banner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 32px 40px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, #0b1e3d 0%, #112859 55%, #0d2049 100%);
+}
+
+.rh-banner__text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .rh-eyebrow {
   display: inline-block;
-  margin-bottom: 10px;
+  align-self: flex-start;
   padding: 4px 12px;
   border-radius: 100px;
-  background: #dbeafe;
-  color: var(--color-primary-dark, #1e3a6e);
+  background: rgba(255, 255, 255, 0.12);
+  color: #93c5fd;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
 }
 
-.rh-header {
-  display: flex;
-  flex-direction: column;
-}
-
 .rh-title {
-  margin: 0 0 8px;
-  font-size: 26px;
+  margin: 0;
+  font-size: 24px;
   font-weight: 700;
-  color: var(--color-text-primary, #111);
+  color: #f0f6ff;
 }
 
 .rh-desc {
   margin: 0;
-  font-size: 14px;
-  color: var(--color-text-secondary, #6b7280);
+  font-size: 13px;
+  color: #7ba8d9;
   line-height: 1.6;
 }
 
-/* 건수 */
+.rh-new-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.12);
+  color: #e0f0ff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.14s;
+  flex-shrink: 0;
+}
+.rh-new-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* ─── 카드 래퍼 ───────────────────────────────── */
+.rh-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 32px;
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 24px rgba(30, 58, 110, 0.06);
+}
+
+/* ─── 필터 탭 ─────────────────────────────────── */
+.rh-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.rh-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.rh-tab:hover:not(.rh-tab--active) {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark, #1e3a6e);
+  background: #eef4ff;
+}
+
+.rh-tab--active {
+  background: linear-gradient(130deg, #1e3a6e, #2a4f96);
+  border-color: transparent;
+  color: #fff;
+}
+
+/* ─── 건수 ────────────────────────────────────── */
 .rh-count {
   margin: 0;
   font-size: 13px;
@@ -48,7 +120,7 @@
   color: var(--color-text-secondary, #6b7280);
 }
 
-/* 목록 */
+/* ─── 목록 ────────────────────────────────────── */
 .rh-list {
   list-style: none;
   margin: 0;
@@ -58,7 +130,7 @@
   gap: 10px;
 }
 
-/* 스켈레톤 */
+/* ─── 스켈레톤 ────────────────────────────────── */
 .rh-skeleton {
   height: 76px;
   border-radius: var(--radius-md);
@@ -72,21 +144,19 @@
   100% { background-position: -200% 0; }
 }
 
-/* 상태 (Empty / Error) */
+/* ─── Empty / Error 상태 ─────────────────────── */
 .rh-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 60px 20px;
+  padding: 48px 20px;
   text-align: center;
   color: var(--color-text-secondary, #6b7280);
 }
 
 .rh-state--empty svg,
-.rh-state--error svg {
-  opacity: 0.35;
-}
+.rh-state--error svg { opacity: 0.35; }
 
 .rh-state__title {
   margin: 0;
@@ -128,13 +198,13 @@
 }
 .rh-retry-btn:hover { background: #f8fafc; }
 
-/* 페이지네이션 */
+/* ─── 페이지네이션 ────────────────────────────── */
 .rh-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 6px;
-  margin-top: 8px;
+  padding-top: 8px;
 }
 
 .rh-page-btn {
@@ -168,8 +238,10 @@
   cursor: not-allowed;
 }
 
-/* 반응형 */
+/* ─── 반응형 ──────────────────────────────────── */
 @media (max-width: 640px) {
   .rh { padding: 20px 0 40px; }
-  .rh-title { font-size: 22px; }
+  .rh-banner { padding: 24px 20px; flex-direction: column; align-items: flex-start; gap: 16px; }
+  .rh-card { padding: 20px 16px; }
+  .rh-title { font-size: 20px; }
 }
