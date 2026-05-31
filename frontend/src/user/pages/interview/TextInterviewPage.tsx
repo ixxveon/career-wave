@@ -5,7 +5,7 @@ import {
   AlertCircle, Loader2, Wifi,
   Send, Clock, X, Keyboard,
 } from 'lucide-react';
-import { interviewApi } from '../../api/interviewApi';
+import { startSession } from '../../api/interview/startSession';
 import type { Message, MicStatus, InputMode, Phase, Resume } from '../../types/interview';
 import './TextInterviewPage.css';
 
@@ -565,15 +565,12 @@ export default function TextInterviewPage() {
   const [isLoading,     setIsLoading]     = useState(false);
   const [apiError,      setApiError]      = useState<string | null>(null);
 
-  /* 마운트 시 대표 이력서 조회 */
+  /* 대표 이력서 로드 — 서류 도메인 연동 전 DEV 목업 사용 (Phase 5에서 documentApi 연동 예정) */
   useEffect(() => {
-    interviewApi.getSetup()
-      .then(data => setResume({ fileName: data.resumeFileName, s3Url: data.resumeS3Url }))
-      .catch(() => {
-        if (import.meta.env.DEV)
-          setResume({ fileName: MOCK_SETUP.resumeFileName, s3Url: MOCK_SETUP.resumeS3Url });
-      })
-      .finally(() => setResumeLoading(false));
+    if (import.meta.env.DEV) {
+      setResume({ fileName: MOCK_SETUP.resumeFileName, s3Url: MOCK_SETUP.resumeS3Url });
+    }
+    setResumeLoading(false);
   }, []);
 
   /* 마이크 권한 체크 */
@@ -615,11 +612,7 @@ export default function TextInterviewPage() {
     setApiError(null);
     setIsLoading(true);
     try {
-      await interviewApi.startSession({
-        targetJob: job,
-        targetCompany: company,
-        resumeS3Url: resume?.s3Url ?? '',
-      });
+      await startSession({ sessionType: 'VOICE', targetCompany: company });
       setPhase('chat');
     } catch {
       if (import.meta.env.DEV) setPhase('chat');
