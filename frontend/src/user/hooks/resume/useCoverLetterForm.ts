@@ -78,7 +78,7 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
     );
 
   const handleCompleted = useCallback(async () => {
-    resumeStorage.removeUIState();
+    resumeStorage.removeUIState('COVER_LETTER');
     if (documentIdRef.current) {
       try {
         const result = await getAnalysisResult(documentIdRef.current);
@@ -91,7 +91,7 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
   }, []);
 
   const handleFailed = useCallback((message: string) => {
-    resumeStorage.removeUIState();
+    resumeStorage.removeUIState('COVER_LETTER');
     setApiError(message);
     setUiState('ERROR');
   }, []);
@@ -109,8 +109,8 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
 
   // sessionStorage 복원 — 새로고침 후 ANALYZING 상태 복구
   useEffect(() => {
-    const savedDocumentId = resumeStorage.getDocumentId();
-    const savedUIState    = resumeStorage.getUIState();
+    const savedDocumentId = resumeStorage.getDocumentId('COVER_LETTER');
+    const savedUIState    = resumeStorage.getUIState('COVER_LETTER');
     if (savedDocumentId && savedUIState === 'ANALYZING') {
       documentIdRef.current = savedDocumentId;
       setUiState('ANALYZING');
@@ -163,8 +163,8 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
         abortRef.current.signal,
       );
 
-      resumeStorage.saveDocumentId(data.documentId);
-      resumeStorage.saveUIState('ANALYZING');
+      resumeStorage.saveDocumentId('COVER_LETTER', data.documentId);
+      resumeStorage.saveUIState('COVER_LETTER', 'ANALYZING');
       documentIdRef.current = data.documentId;
       setSubmitResult(data);
       setUiState('ANALYZING');
@@ -195,8 +195,8 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
     setSubmitResult(null);
     setAnalysisResult(null);
     documentIdRef.current = null;
-    resumeStorage.removeDocumentId();
-    resumeStorage.removeUIState();
+    resumeStorage.removeDocumentId('COVER_LETTER');
+    resumeStorage.removeUIState('COVER_LETTER');
   }
 
   return {

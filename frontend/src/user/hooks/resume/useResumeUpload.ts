@@ -53,7 +53,7 @@ export function useResumeUpload(): UseResumeUploadReturn {
   const documentIdRef                         = useRef<string | null>(null);
 
   const handleCompleted = useCallback(async () => {
-    resumeStorage.removeUIState();
+    resumeStorage.removeUIState('RESUME');
     if (documentIdRef.current) {
       try {
         const result = await getAnalysisResult(documentIdRef.current);
@@ -66,7 +66,7 @@ export function useResumeUpload(): UseResumeUploadReturn {
   }, []);
 
   const handleFailed = useCallback((message: string) => {
-    resumeStorage.removeUIState();
+    resumeStorage.removeUIState('RESUME');
     setApiError(message);
     setUiState('ERROR');
   }, []);
@@ -84,8 +84,8 @@ export function useResumeUpload(): UseResumeUploadReturn {
 
   // sessionStorage 복원 — 새로고침 후 ANALYZING 상태 복구
   useEffect(() => {
-    const savedDocumentId = resumeStorage.getDocumentId();
-    const savedUIState    = resumeStorage.getUIState();
+    const savedDocumentId = resumeStorage.getDocumentId('RESUME');
+    const savedUIState    = resumeStorage.getUIState('RESUME');
     if (savedDocumentId && savedUIState === 'ANALYZING') {
       documentIdRef.current = savedDocumentId;
       setUiState('ANALYZING');
@@ -127,8 +127,8 @@ export function useResumeUpload(): UseResumeUploadReturn {
     try {
       const data = await uploadResume(file, abortRef.current.signal);
 
-      resumeStorage.saveDocumentId(data.documentId);
-      resumeStorage.saveUIState('ANALYZING');
+      resumeStorage.saveDocumentId('RESUME', data.documentId);
+      resumeStorage.saveUIState('RESUME', 'ANALYZING');
       documentIdRef.current = data.documentId;
       setUploadResult(data);
       setUiState('ANALYZING');
@@ -154,8 +154,8 @@ export function useResumeUpload(): UseResumeUploadReturn {
     setUploadResult(null);
     setAnalysisResult(null);
     documentIdRef.current = null;
-    resumeStorage.removeDocumentId();
-    resumeStorage.removeUIState();
+    resumeStorage.removeDocumentId('RESUME');
+    resumeStorage.removeUIState('RESUME');
   }
 
   return {
