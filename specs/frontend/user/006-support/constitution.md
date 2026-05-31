@@ -58,7 +58,7 @@
 
 ### 공지사항 (notices.category)
 ```ts
-const NOTICE_CATEGORY_LABEL: Record<string, string> = {
+const NOTICE_CATEGORY_LABEL: Record<NoticeCategory, string> = {
   NOTICE:      '공지',
   UPDATE:      '업데이트',
   EVENT:       '이벤트',
@@ -68,7 +68,7 @@ const NOTICE_CATEGORY_LABEL: Record<string, string> = {
 
 ### FAQ (faqs.category)
 ```ts
-const FAQ_CATEGORY_LABEL: Record<string, string> = {
+const FAQ_CATEGORY_LABEL: Record<FaqCategory, string> = {
   ACCOUNT: '계정',
   PAYMENT: '구독/결제',
   SERVICE: 'AI 서비스',
@@ -78,7 +78,7 @@ const FAQ_CATEGORY_LABEL: Record<string, string> = {
 
 ### 1:1 문의 카테고리 (inquiries.category)
 ```ts
-const INQUIRY_CATEGORY_LABEL: Record<string, string> = {
+const INQUIRY_CATEGORY_LABEL: Record<InquiryCategory, string> = {
   REFUND:        '환불',
   PAYMENT_ERROR: '구독/결제',
   SERVICE:       'AI 서비스',
@@ -89,7 +89,7 @@ const INQUIRY_CATEGORY_LABEL: Record<string, string> = {
 
 ### 1:1 문의 상태 (inquiries.inquiry_status)
 ```ts
-const INQUIRY_STATUS_LABEL: Record<string, string> = {
+const INQUIRY_STATUS_LABEL: Record<InquiryStatus, string> = {
   PENDING:     '접수',
   IN_PROGRESS: '처리 중',
   COMPLETED:   '답변 완료',
