@@ -41,7 +41,7 @@
 
 ### 2.1 구독 상태
 
-```
+```text
 NONE -> ACTIVE -> CANCEL_SCHEDULED -> EXPIRED
               -> PAYMENT_FAILED
 PAYMENT_FAILED -> ACTIVE
@@ -52,7 +52,7 @@ ACTIVE -> REFUND_PENDING -> REFUNDED
 |------|---------|
 | `NONE` | 구독 없음, 상품 추천 및 구매 CTA |
 | `ACTIVE` | 구독중, 사용량 카드 및 다음 결제일 표시 |
-| `CANCEL_SCHEDULED` | 해지 예약됨, 남은 이용 기간 표시 |
+| `CANCEL_SCHEDULED` | 해지 예약됨, 남은 이용 기간 표시. 현재 이용 기간 종료 또는 만료일 도달 시 `EXPIRED`로 전환 |
 | `EXPIRED` | 만료됨, 재구독 CTA |
 | `PAYMENT_FAILED` | 자동 결제 실패, 결제수단 확인 CTA |
 | `REFUND_PENDING` | 환불 처리 중 |
@@ -60,10 +60,11 @@ ACTIVE -> REFUND_PENDING -> REFUNDED
 
 ### 2.2 결제 플로우 상태
 
-```
-READY -> AGREED -> REQUESTING -> REDIRECTING -> CONFIRMING -> SUCCESS
-                                                  -> FAIL
-READY -> FAIL
+```text
+READY -> AGREED -> REQUESTING -> REDIRECTING -> CONFIRMING -> PAID
+                                                  -> FAILED
+                                                  -> CANCELED
+READY -> FAILED
 ```
 
 | 전이 | 허용 여부 | 사유 |
@@ -72,8 +73,11 @@ READY -> FAIL
 | AGREED -> REQUESTING | 허용 | 서버 checkout/order 생성 요청 |
 | REQUESTING -> REDIRECTING | 허용 | PG 결제창 또는 mock success 이동 |
 | REDIRECTING -> CONFIRMING | 허용 | success redirect 후 결제 승인 확인 |
-| CONFIRMING -> SUCCESS | 허용 | 서버 결제 승인 및 구독 활성화 완료 |
-| ANY -> FAIL | 허용 | 사용자 취소, PG 실패, 서버 승인 실패, 네트워크 오류 |
+| CONFIRMING -> PAID | 허용 | 서버 결제 승인 및 구독 활성화 완료 |
+| ANY -> FAILED | 허용 | PG 실패, 서버 승인 실패, 네트워크 오류 |
+| ANY -> CANCELED | 허용 | 사용자가 결제창에서 결제를 취소 |
+
+`CANCEL_SCHEDULED -> EXPIRED` 전이는 해지 예약 후 남은 유료 이용 기간이 종료되거나 `currentPeriodEnd`에 도달했을 때 발생한다. 이 전이는 서버 구독 상태 재조회 결과를 기준으로 반영한다.
 
 ---
 

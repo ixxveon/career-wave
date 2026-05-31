@@ -20,13 +20,14 @@
 | 서버 상태 | `TanStack Query` 또는 인증 전용 훅 | 내 회원 상태, 기업 승인 상태, 인증 세션 재조회 및 에러 처리 |
 | 입력 폼 상태 | React local state / 폼 훅 | 로그인·가입·찾기 입력은 단기 상태이며 전역 공유 불필요 |
 | 파일 검증 | 클라이언트 1차 검증 + 서버 2차 검증 | 재직증명서 PDF 위장 파일, 용량 초과, 악성 파일 업로드 방어 |
-| 세션 유지 | HttpOnly cookie 또는 memory token 우선 | XSS 토큰 탈취 방지. `localStorage` 저장 금지 |
+| 세션 유지 | JWT Bearer access token + refresh HttpOnly cookie 옵션 | access token은 메모리 보관, refresh token은 쿠키 사용. `localStorage` 저장 금지 |
 | 인증번호 | 서버 발급 `verificationToken` | 프론트 boolean 조작으로 인증 완료 우회 방지 |
 | 스타일링 | 기존 Career Wave UI/CSS 컨벤션 | 신규 디자인 시스템 도입 없이 기존 톤 유지 |
 
 ### 전제 조건
 
 - 백엔드가 로그인 성공 시 `memberType`, `memberStatus`, `companyApprovalStatus`를 반환한다.
+- 비로그인 API를 제외한 사용자 회원 API는 `Authorization: Bearer {accessToken}` 헤더를 사용한다.
 - 이메일/SMS 인증번호 발송은 백엔드 또는 외부 발송 서비스가 담당하며, 프론트는 발송 상태와 재전송 쿨다운만 표시한다.
 - 기업회원 재직증명서 파일은 공개 URL이 아닌 서버 관리 file id 또는 비공개 object key로 추적한다.
 - 블랙리스트, 계정 잠금, 제재 상태는 관리자/보안 도메인에서 결정되며 사용자 프론트는 결과 상태만 표시한다.

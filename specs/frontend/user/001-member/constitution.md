@@ -64,6 +64,7 @@ BLOCKED -> IDLE
 ### 2.2 회원 상태 매핑
 
 > 아래 값은 프론트엔드 계약안이다. 현재 ERD 초안의 `member_status`, `role_type`, `subscription_status`는 실제 백엔드 계약 확정 시 enum 명칭과 책임을 재검토한다.
+> `WITHDRAWN`, `LOCKED`, `BLACKLISTED`는 현재 ERD 초안에 없는 UI/보안 상태이므로 backend spec에서 enum을 확장하거나, API 응답에서 `restriction.restrictionType`을 통해 프론트 상태로 매핑해야 한다.
 
 | 백엔드 상태 후보 | 프론트 표시 정책 | 비고 |
 |------------------|------------------|------|

@@ -12,7 +12,7 @@
 
 - [ ] `api-schema.md`의 product/subscription/payment enum과 실제 프론트 타입이 일치하는가?
 - [ ] 구독 상태 `NONE`, `ACTIVE`, `CANCEL_SCHEDULED`, `EXPIRED`, `PAYMENT_FAILED`가 모두 UI에서 처리되는가?
-- [ ] 결제 상태 `READY`, `PENDING`, `CONFIRMING`, `PAID`, `FAILED`, `CANCELED`가 모두 처리되는가?
+- [ ] 결제 상태 `READY`, `AGREED`, `REQUESTING`, `REDIRECTING`, `CONFIRMING`, `PAID`, `FAILED`, `CANCELED`, `REFUNDED`가 모두 처리되는가?
 - [ ] ERD 초안에 없는 결제/구독 모델이 backend 계약 필요 항목으로 정리되었는가?
 - [ ] mock 데이터와 실제 API 응답 매핑이 분리되어 있는가?
 

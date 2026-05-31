@@ -33,6 +33,13 @@
 - Member 도메인의 제재/블랙리스트/기업 승인 대기 상태는 결제 요청을 차단할 수 있다.
 - ERD 초안에는 결제/구독 관련 테이블이 부족하므로 backend spec에서 `products`, `subscriptions`, `payments`, `payment_orders`, `subscription_usages` 계열 모델 재설계가 필요하다.
 
+### Phase 0 선행 조건
+
+- Backend spec에서 `products`, `subscriptions`, `payments`, `payment_orders`, `subscription_usages` 모델과 관계를 확정해야 한다.
+- 위 ERD 재설계는 실제 API 연동 전 blocking dependency다.
+- 단, frontend mock 구현은 `api-schema.md`의 계약을 기준으로 독립 진행할 수 있다.
+- Phase 0 완료 전까지 checkout/결제/구독 상태는 mock adapter를 사용하고, 실제 PG confirm 및 entitlement 부여는 연결하지 않는다.
+
 ---
 
 ## Project Structure

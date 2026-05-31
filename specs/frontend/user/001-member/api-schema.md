@@ -24,7 +24,12 @@ DB 컬럼명은 snake_case(`member_id`)를 따르며, Frontend API DTO는 기존
 
 ### 인증
 
-비로그인 API를 제외한 모든 API는 JWT Bearer 또는 HttpOnly cookie 기반 세션을 사용한다. 최종 방식은 백엔드 보안 정책으로 확정한다.
+비로그인 API를 제외한 모든 API는 **JWT Bearer access token** 인증을 사용한다.
+
+* access token은 브라우저 메모리 또는 인증 전용 상태에만 보관하고 `localStorage`에 저장하지 않는다.
+* refresh token이 필요한 경우 HttpOnly Secure SameSite cookie를 사용한다.
+* API client는 401 응답 수신 시 access token 갱신을 1회 시도하고, 실패 시 세션을 정리한 뒤 `/auth/login`으로 이동한다.
+* Bearer token 기반 API는 CSRF 토큰을 요구하지 않는다. 단, refresh cookie 기반 엔드포인트를 도입하는 경우 백엔드 보안 정책에 따라 SameSite 또는 CSRF 보호를 적용한다.
 
 ```txt
 Authorization: Bearer {accessToken}
@@ -258,9 +263,12 @@ Authorization: Bearer {accessToken}
 ## 6. 기업회원 가입
 
 - **Endpoint**: `POST /api/v1/members/register/company`
-- **Content-Type**: `multipart/form-data` 또는 선업로드 후 JSON 계약 중 택1 필요
+- **Content-Type**: `application/json`
 
-### Request JSON 계약안
+> 재직증명서 PDF는 먼저 `POST /api/v1/members/company/employment-certificate`로 업로드하고, 기업회원 가입 요청에는 서버가 반환한 `employmentCertificateFileId`만 포함한다.  
+> 가입 정보 저장과 파일 업로드 실패를 분리하여 재시도/진행률/오류 메시지를 명확히 처리하기 위함이다.
+
+### Request
 
 ```json
 {
@@ -315,7 +323,9 @@ Authorization: Bearer {accessToken}
 
 | Field | Type | 필수 | 제약 |
 |-------|------|------|------|
-| `file` | `File` | Y | PDF, max size 백엔드 확정 필요 |
+| `file` | `File` | Y | PDF, max 5MB |
+
+> FR-007 기준으로 프론트는 확장자, MIME 타입(`application/pdf`), 파일 크기(5MB 이하)를 1차 검증한다. 서버는 동일 조건을 2차 검증하고 악성 파일 또는 위장 파일을 차단한다.
 
 ### Response
 
@@ -333,6 +343,16 @@ Authorization: Bearer {accessToken}
   }
 }
 ```
+
+### Error Cases
+
+| statusCode | 상황 |
+|------------|------|
+| `400` | PDF 형식 아님 / MIME 불일치 / 5MB 초과 |
+| `401` | 인증 필요 또는 토큰 만료 |
+| `413` | 서버 허용 용량 초과 |
+| `415` | 지원하지 않는 파일 형식 |
+| `500` | 파일 저장소 또는 악성 파일 검사 실패 |
 
 ---
 

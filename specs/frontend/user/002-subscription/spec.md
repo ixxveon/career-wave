@@ -90,9 +90,11 @@
 - **Product**: `productCode`, `name`, `description`, `price`, `billingCycle`, `features`, `active`
 - **Subscription**: `subscriptionId`, `memberId`, `productCode`, `status`, `startedAt`, `currentPeriodStart`, `currentPeriodEnd`, `nextBillingAt`, `cancelScheduledAt`
 - **UsageSummary**: `productCode`, `limit`, `used`, `remaining`, `unit`, `resetAt`
-- **PaymentOrder**: `orderId`, `productCode`, `amount`, `currency`, `status`, `idempotencyKey`, `createdAt`
-- **PaymentHistory**: `paymentId`, `orderId`, `productCode`, `amount`, `status`, `paidAt`, `failedReason`
+- **PaymentOrder**: `orderId`, `productCode`, `amount`, `currency`, `status(PaymentStatus)`, `idempotencyKey`, `createdAt`
+- **PaymentHistory**: `paymentId`, `orderId`, `productCode`, `amount`, `status(PaymentStatus)`, `paidAt`, `failedReason`
 - **PaymentFailure**: `reasonCode`, `displayMessage`, `retryable`
+
+> `PaymentOrder.status`와 `PaymentHistory.status`는 `api-schema.md`의 `PaymentStatus` enum을 사용하며, 결제 플로우 전이는 `constitution.md`의 "2.2 결제 플로우 상태"를 따른다.
 
 ---
 

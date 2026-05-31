@@ -7,7 +7,7 @@
 
 ## Phase 1 — 상품/구독/결제 타입 및 API 계약 정의
 
-- [ ] `subscription.ts` 타입 정의: `ProductCode`, `SubscriptionStatus`, `PaymentStatus`, `PaymentFailureReason`, `UsageMetric`
+- [ ] `subscription.ts` 타입 정의: `ProductCode`, `SubscriptionStatus`, `PaymentStatus(READY/AGREED/REQUESTING/REDIRECTING/CONFIRMING/PAID/FAILED/CANCELED/REFUNDED)`, `PaymentFailureReason`, `UsageMetric`
 - [ ] ERD 초안에서 누락된 결제/구독 테이블 요구사항 정리
 - [ ] 상품 목록/상세 API 응답 타입 정의
 - [ ] 내 구독 목록, 사용량, 결제 내역, checkout order 생성, 결제 confirm, 구독 해지 API 타입 정의

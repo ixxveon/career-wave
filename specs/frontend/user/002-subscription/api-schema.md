@@ -49,7 +49,7 @@ Authorization: Bearer {accessToken}
 | `ProductCode` | `document-coaching`, `interview` |
 | `BillingCycle` | `MONTHLY` |
 | `SubscriptionStatus` | `NONE`, `ACTIVE`, `CANCEL_SCHEDULED`, `EXPIRED`, `PAYMENT_FAILED`, `REFUND_PENDING`, `REFUNDED` |
-| `PaymentStatus` | `READY`, `PENDING`, `CONFIRMING`, `PAID`, `FAILED`, `CANCELED`, `REFUNDED` |
+| `PaymentStatus` | `READY`, `AGREED`, `REQUESTING`, `REDIRECTING`, `CONFIRMING`, `PAID`, `FAILED`, `CANCELED`, `REFUNDED` |
 | `PaymentFailureReason` | `USER_CANCELED`, `CARD_DECLINED`, `TIMEOUT`, `DUPLICATE_ORDER`, `CONFIRM_FAILED`, `FORBIDDEN`, `UNKNOWN` |
 
 ### 공통 Error Cases
