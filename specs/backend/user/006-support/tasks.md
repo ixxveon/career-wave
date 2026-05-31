@@ -91,7 +91,7 @@
 
 ### ErrorCode 추가
 
-- [ ] `NOTICE_NOT_FOUND` (404) — admin/cs에 이미 등록된 경우 재사용
+- [ ] `NOTICE_NOT_FOUND` (404) — admin/cs `ErrorCode`에 이미 등록된 경우 반드시 재사용. 중복 선언 금지.
 - [ ] `INVALID_INQUIRY_CONTENT` (400) — `@Size(min=10)` 위반 시
 
 ### 검증

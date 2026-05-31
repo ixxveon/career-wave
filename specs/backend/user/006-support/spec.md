@@ -136,7 +136,7 @@ public class SupportDTO {
         Long inquiryId,
         String category,       // REFUND / PAYMENT_ERROR / SERVICE / ACCOUNT / ETC
         String title,
-        String content,        // 미리보기
+        String content,        // 미리보기 — 최대 100자 잘라내기 (서비스 레이어에서 처리)
         String reply,          // null이면 미답변
         String inquiryStatus,  // PENDING / IN_PROGRESS / COMPLETED
         ZonedDateTime createdAt

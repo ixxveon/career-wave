@@ -57,9 +57,13 @@ ResponseEntity<ApiResponse<SupportDTO.ResponseCreateInquiry>> createInquiry(
 
 ```java
 ApiResponse.ok(data);
-ApiResponse.created(data);   // 201 Created (문의 접수)
+// 문의 접수 201 응답 — ApiResponse에 created() 메서드가 없는 경우 아래 방식 사용
+ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(data));
 ApiResponse.fail(statusCode, message);
 ```
+
+> `ApiResponse.created()` 메서드 존재 여부는 구현 단계에서 확인.
+> 없을 경우 `ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(data))` 사용.
 
 ---
 

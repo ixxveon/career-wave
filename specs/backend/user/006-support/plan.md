@@ -11,7 +11,15 @@
 
 회원이 공지사항·FAQ를 조회하고 1:1 문의를 접수·확인하는 사용자 고객센터 REST API.
 notices, faqs, inquiries 테이블은 admin/cs와 공유하며, user/support는 조회·접수 전용.
-Entity 공유 전략은 구현 단계에서 admin 팀과 협의하여 결정.
+
+**Entity 공유 전략 (우선 적용):**
+현재 admin/cs에 `admin/cs/entity/` 패키지에 Notice, Faq, Inquiry Entity가 정의되어 있다.
+user/support에서 직접 참조할 수 없으므로 아래 방식 중 하나로 결정한다:
+
+- **Option A (권장)**: `domain/notice/`, `domain/faq/`, `domain/inquiry/` 공통 패키지로 Entity 이동, admin/cs와 user/support 모두 공통 패키지 참조
+- **Option B**: user/support 전용 Repository에서 JPQL로 직접 테이블 접근 (Entity 미사용)
+
+구현 착수 전 admin 담당자와 협의 필요.
 
 ---
 

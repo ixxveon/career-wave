@@ -27,7 +27,8 @@ user/support는 `PENDING` 상태로 문의 생성만 수행하고, 이후 전이
 |---|---|---|
 | admin/cs 직접 참조 금지 | user/support가 admin/cs 패키지를 import하지 않음 | CONVENTION.md — 도메인 간 직접 참조 금지 |
 | Entity 공유 전략 | notices·faqs·inquiries Entity를 공통 domain 패키지로 분리 협의 | admin과 user가 동일 테이블을 사용하므로 Entity 중복 정의 금지 |
-| 공지·FAQ 비인증 허용 | `permitAll()` Security 설정 | 서비스 정보 접근성 보장 |
+| 공지·FAQ 비인증 허용 | `SecurityConfig`에 `/api/notices/**`, `/api/faqs/**` `permitAll()` 명시적 추가 필요 | 서비스 정보 접근성 보장 |
+| API 경로 충돌 없음 | admin API는 `/api/admin/notices/**`, user API는 `/api/notices/**` | 경로 prefix가 달라 충돌 없음 |
 | 문의 인증 필수 | JWT + USER 권한 | 본인 식별 필요 |
 | is_visible 필터 | 모든 공지 조회에 `is_visible = true` 조건 필수 | 어드민이 숨긴 공지 User 미노출 보장 |
 | view_count 증가 | 상세 조회 시 UPDATE, @Transactional | 클라이언트 직접 증가 금지 |
