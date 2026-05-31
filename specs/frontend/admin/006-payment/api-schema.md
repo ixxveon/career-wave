@@ -67,7 +67,7 @@ interface PageInfo {
 
 ### KPI 집계
 
-```
+```http
 GET /api/admin/payments/summary
 응답: ApiResponse<PaymentSummary>
 ```

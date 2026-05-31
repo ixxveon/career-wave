@@ -55,7 +55,7 @@ Toss Payments PG 연동 기준이며, 결제 상태(`payments`)와 환불 라이
 
 ### 상태 전이도
 
-```
+```text
 [결제 흐름]
 payments: PENDING ──► DONE ──► CANCELED (환불 완료 후)
                   └──► FAILED
@@ -169,6 +169,7 @@ refunds: PENDING ──► COMPLETED ──► (payments: CANCELED)
 ## Key Entities
 
 ### payments
+
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `payment_id` | UUID PK | 결제 고유 ID |
@@ -188,6 +189,7 @@ refunds: PENDING ──► COMPLETED ──► (payments: CANCELED)
 | `created_at` | TIMESTAMPTZ NOT NULL | 생성 시각 |
 
 ### refunds
+
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `refund_id` | BIGSERIAL PK | 환불 고유 ID |
@@ -201,6 +203,7 @@ refunds: PENDING ──► COMPLETED ──► (payments: CANCELED)
 | `created_at` | TIMESTAMPTZ NOT NULL | 환불 요청 시각 |
 
 ### subscriptions
+
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `subscription_id` | BIGSERIAL PK | 구독 고유 ID |
@@ -214,6 +217,7 @@ refunds: PENDING ──► COMPLETED ──► (payments: CANCELED)
 | `created_at` | TIMESTAMPTZ NOT NULL | 생성 시각 |
 
 ### plans
+
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `plan_id` | BIGSERIAL PK | 플랜 고유 ID |

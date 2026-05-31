@@ -102,36 +102,39 @@ const isRefundPending = (p: Payment) => p.refundStatus === 'PENDING';
 // frontend/src/admin/api/paymentApi.ts
 import axiosInstance from '@/utils/axiosInstance';
 
-// KPI
-export const fetchPaymentSummary = () =>
-  axiosInstance.get('/api/admin/payments/summary').then(r => r.data);
+// KPI — 반환: ApiResponse<PaymentSummary>.data
+export const fetchPaymentSummary = (): Promise<PaymentSummary> =>
+  axiosInstance.get('/api/admin/payments/summary').then(r => r.data.data);
 
-// 결제 목록
+// 결제 목록 — 반환: ApiResponse<PageResult<Payment>>.data
 export const fetchPayments = (params: {
   keyword?: string;
   status?: string;
+  product?: string;
   page: number;
   size: number;
-}) => axiosInstance.get('/api/admin/payments', { params }).then(r => r.data);
+}): Promise<{ items: Payment[]; page: number; size: number; totalItems: number; totalPages: number }> =>
+  axiosInstance.get('/api/admin/payments', { params }).then(r => r.data.data);
 
-// 결제 상세
-export const fetchPaymentDetail = (paymentId: string) =>
-  axiosInstance.get(`/api/admin/payments/${paymentId}`).then(r => r.data);
+// 결제 상세 — 반환: ApiResponse<Payment>.data
+export const fetchPaymentDetail = (paymentId: string): Promise<Payment> =>
+  axiosInstance.get(`/api/admin/payments/${paymentId}`).then(r => r.data.data);
 
-// 환불 처리 확정
+// 환불 처리 확정 — 반환: ApiResponse<{ paymentStatus, refundStatus }>.data
 export const confirmRefund = (paymentId: string) =>
-  axiosInstance.post(`/api/admin/payments/${paymentId}/refund`).then(r => r.data);
+  axiosInstance.post(`/api/admin/payments/${paymentId}/refund`).then(r => r.data.data);
 
-// 환불 불가 처리
+// 환불 불가 처리 — 반환: ApiResponse<{ paymentStatus, refundStatus }>.data
 export const rejectRefund = (paymentId: string) =>
-  axiosInstance.post(`/api/admin/payments/${paymentId}/refund-reject`).then(r => r.data);
+  axiosInstance.post(`/api/admin/payments/${paymentId}/refund-reject`).then(r => r.data.data);
 
-// 구독 현황 목록
+// 구독 현황 목록 — 반환: ApiResponse<PageResult<Subscription>>.data
 export const fetchSubscriptions = (params: {
   status?: string;
   page: number;
   size: number;
-}) => axiosInstance.get('/api/admin/subscriptions', { params }).then(r => r.data);
+}): Promise<{ items: Subscription[]; page: number; size: number; totalItems: number; totalPages: number }> =>
+  axiosInstance.get('/api/admin/subscriptions', { params }).then(r => r.data.data);
 ```
 
 ### API 연동 체크리스트
@@ -139,7 +142,7 @@ export const fetchSubscriptions = (params: {
 - [ ] `paymentApi.ts` 파일 작성
 - [ ] KPI 집계 API 연동 및 더미 데이터 제거 (`GET /api/admin/payments/summary`)
 - [ ] 결제 목록 API 연동 및 더미 데이터 제거 (`GET /api/admin/payments`)
-- [ ] keyword / status 필터 쿼리 파라미터 연결
+- [ ] keyword / status / product 필터 쿼리 파라미터 연결
 - [ ] 결제 목록 페이지네이션 연결 (page, size)
 - [ ] 결제 상세 API 연동 (`GET /api/admin/payments/{paymentId}`)
 - [ ] 환불 처리 확정 API 연동 (`POST /api/admin/payments/{paymentId}/refund`)
