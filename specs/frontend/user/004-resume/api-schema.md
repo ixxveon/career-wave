@@ -182,11 +182,29 @@ Authorization: Bearer {accessToken}
       "logicalStructure": 72,
       "total": 74
     },
-    "feedback": {
-      "good": ["논리적인 문장 구조"],
-      "bad": ["직무 연관성 부족"],
-      "fix": ["3번 문항 두괄식 수정 필요"]
-    },
+    "overallReview": "전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다.",
+    "feedbackDetails": [
+      {
+        "sectionNumber": 1,
+        "question": "주요 프로젝트 경험",
+        "originalText": "결제 시스템 개발에 참여하였습니다.",
+        "goodPoint": "백엔드 프로젝트 경험이 확인됩니다.",
+        "badPoint": "역할, 규모, 성과가 빠져 있습니다.",
+        "improvedText": "월 거래액 50억 규모의 결제 시스템 API를 설계 및 구현...",
+        "starAnalysis": {
+          "s": { "ok": true,  "comment": "상황 설명이 적절합니다." },
+          "t": { "ok": false, "comment": "과제가 구체적으로 드러나지 않습니다." },
+          "a": { "ok": true,  "comment": "행동이 명시되어 있습니다." },
+          "r": { "ok": false, "comment": "결과가 수치로 표현되지 않았습니다." }
+        },
+        "quantAnalysis": {
+          "numbers":   { "ok": false, "comment": "수치가 사용되지 않았습니다." },
+          "timeframe": { "ok": false, "comment": "기간 표현이 없습니다." },
+          "scale":     { "ok": true,  "comment": "규모 언급이 있습니다." },
+          "impact":    { "ok": false, "comment": "성과가 수치로 측정되지 않았습니다." }
+        }
+      }
+    ],
     "errorMessage": null,
     "createdAt": "2026-05-29T14:55:00Z"
   }
@@ -202,9 +220,16 @@ Authorization: Bearer {accessToken}
 | `data.scores.quantifiedAchievement` | `number` | 경험 구체성 및 수치화 점수 (0~100) |
 | `data.scores.logicalStructure` | `number` | 논리력 및 구조화 점수 (0~100) |
 | `data.scores.total` | `number` | 종합 점수 (0~100) |
-| `data.feedback.good` | `string[]` | 잘된 점 목록, 없을 경우 빈 배열 `[]` |
-| `data.feedback.bad` | `string[]` | 아쉬운 점 목록, 없을 경우 빈 배열 `[]` |
-| `data.feedback.fix` | `string[]` | 개선 제안 목록, 없을 경우 빈 배열 `[]` |
+| `data.overallReview` | `string` | AI 종합 총평 |
+| `data.feedbackDetails` | `array` | 항목별 첨삭 가이드라인 목록 |
+| `data.feedbackDetails[].sectionNumber` | `number` | 항목 번호 |
+| `data.feedbackDetails[].question` | `string` | 문항 또는 섹션 제목 |
+| `data.feedbackDetails[].originalText` | `string` | 원문 |
+| `data.feedbackDetails[].goodPoint` | `string` | 잘한 점 |
+| `data.feedbackDetails[].badPoint` | `string` | 아쉬운 점 |
+| `data.feedbackDetails[].improvedText` | `string` | AI 개선 제안 문장 |
+| `data.feedbackDetails[].starAnalysis` | `object` \| `null` | STAR 기법 분석 (S/T/A/R 각 ok + comment) |
+| `data.feedbackDetails[].quantAnalysis` | `object` \| `null` | 수치화 체크 (numbers/timeframe/scale/impact 각 ok + comment) |
 
 ### Error Cases
 
