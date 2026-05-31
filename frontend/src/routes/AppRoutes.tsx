@@ -30,6 +30,7 @@ import ApplyPage from '../user/pages/application/ApplyPage';
 import ResumeAnalysisPage from '../user/pages/resume/ResumeAnalysisPage';
 import CoverLetterAnalysisPage from '../user/pages/resume/CoverLetterAnalysisPage';
 import DocumentReportPage from '../user/pages/resume/DocumentReportPage';
+import ResumeHistoryPage from '../user/pages/resume/ResumeHistoryPage';
 
 import InterviewHomePage from '../user/pages/interview/InterviewHomePage';
 import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
@@ -121,6 +122,7 @@ function AppRoutes() {
           <Route path="resume" element={<ResumeAnalysisPage />} />
           <Route path="cover-letter" element={<CoverLetterAnalysisPage />} />
           <Route path="report" element={<DocumentReportPage />} />
+          <Route path="history" element={<ResumeHistoryPage />} />
         </Route>
 
         <Route path="interview">
