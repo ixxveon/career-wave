@@ -82,8 +82,8 @@
   - [ ] `PAYMENT_NOT_FOUND(404)` 예외 처리
   - [ ] `refund_status != PENDING` → `REFUND_NOT_PENDING(409)` 예외
   - [ ] Toss 환불 API 호출 (`payment_key` 사용)
-  - [ ] 성공: `refund.complete(adminId)` + `payment.cancel()` — `@Transactional`
-  - [ ] 실패: `refund.fail()` → `TOSS_REFUND_FAILED(502)` 예외
+  - [ ] 성공: `refund.complete(adminId)` + `payment.cancel()` — `@Transactional` (원자적 처리)
+  - [ ] 실패: `refund.fail()`을 `@Transactional(noRollbackFor = ...)` 또는 `REQUIRES_NEW` 내부 메서드로 분리하여 `FAILED` 상태 영속 보장 후 `TOSS_REFUND_FAILED(502)` 예외 발생
   - [ ] 반환: `RefundDTO.ResponseApprove`
 
 - [ ] `rejectRefund(String paymentId, String rejectReason, Long adminId)`
@@ -136,7 +136,8 @@
 - [ ] Swagger UI에서 전체 API 요청/응답 확인
 - [ ] FE `api-schema.md` 계약과 실제 응답 형식 일치 여부 확인
 - [ ] `page=1` 요청 시 첫 번째 페이지 반환 확인 (1-based → 0-based 변환)
-- [ ] `COMPLETED` / `REJECTED` 환불 건 재처리 시도 → `REFUND_NOT_PENDING(409)` 응답 확인
+- [ ] `COMPLETED` / `REJECTED` / `FAILED` 환불 건 재처리 시도 → `REFUND_NOT_PENDING(409)` 응답 확인
 - [ ] `rejectReason` 미입력 시 → `REJECT_REASON_REQUIRED(400)` 응답 확인
 - [ ] Toss 환불 API 실패 시 `payment_status` 변경 없음 확인
+- [ ] Toss 환불 API 실패 시 `refund_status → FAILED`가 롤백 없이 영속되는지 확인 (`noRollbackFor` 또는 `REQUIRES_NEW` 적용 여부)
 - [ ] 환불 확정 성공 시 `payment_status → CANCELED`, `refund_status → COMPLETED` 트랜잭션 원자적 처리 확인

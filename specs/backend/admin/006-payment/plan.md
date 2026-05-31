@@ -1,6 +1,6 @@
 # Plan: 결제·정산 관리 API (Payment & Settlement)
 
-**Feature Branch**: `feature/admin-payment-api`
+**Feature Branch**: `feature/admin-payment-be-spec`
 **담당**: 신보라
 **버전**: v1
 **상태**: 스펙 완료 / 구현 예정

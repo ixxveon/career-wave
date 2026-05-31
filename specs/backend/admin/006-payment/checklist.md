@@ -34,6 +34,7 @@
 - [ ] Toss 환불 API 실패 시 `payment_status`가 변경되지 않는다. `refund_status → FAILED`만 기록된다.
 - [ ] `refund_status = COMPLETED` 건 재처리 시도 → `REFUND_NOT_PENDING(409)` 반환된다.
 - [ ] `refund_status = REJECTED` 건 재처리 시도 → `REFUND_NOT_PENDING(409)` 반환된다.
+- [ ] `refund_status = FAILED` 건 재처리 시도 → `REFUND_NOT_PENDING(409)` 반환된다.
 - [ ] 환불 확정 성공 응답에 `paymentStatus: CANCELED`, `refundStatus: COMPLETED`가 포함된다.
 - [ ] 환불 불가 처리 성공 응답에 `paymentStatus: DONE`, `refundStatus: REJECTED`가 포함된다.
 

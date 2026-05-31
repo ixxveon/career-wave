@@ -18,8 +18,9 @@ ResponseEntity<ApiResponse<PaymentDTO.ResponseSummary>> getSummary();
 ResponseEntity<ApiResponse<PaginationResponse<PaymentDTO.ResponseList>>> getPayments(
     @RequestParam(required = false) String keyword,
     @RequestParam(required = false) String status,
-    @RequestParam(defaultValue = "1") int page,
-    @RequestParam(defaultValue = "20") int size
+    @RequestParam(required = false) String product,
+    @RequestParam(defaultValue = "1") @Min(1) int page,
+    @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
 );
 
 // 결제 상세 조회
@@ -47,8 +48,8 @@ ResponseEntity<ApiResponse<RefundDTO.ResponseReject>> rejectRefund(
 // 구독 현황 목록 조회
 ResponseEntity<ApiResponse<PaginationResponse<SubscriptionDTO.ResponseList>>> getSubscriptions(
     @RequestParam(required = false) String status,
-    @RequestParam(defaultValue = "1") int page,
-    @RequestParam(defaultValue = "20") int size
+    @RequestParam(defaultValue = "1") @Min(1) int page,
+    @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
 );
 ```
 

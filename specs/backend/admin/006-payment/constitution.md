@@ -92,7 +92,7 @@ PENDING ──► COMPLETED  (환불 처리 확정)
   - `POST /api/admin/payments/{paymentId}/refund-reject`
   - `GET /api/admin/subscriptions`
 - 환불 처리 확정 성공 응답에 변경된 `paymentStatus(CANCELED)`, `refundStatus(COMPLETED)`가 포함되어야 한다.
-- 환불 불가 처리 성공 응답에 변경된 `refundStatus(REJECTED)`가 포함되어야 한다.
+- 환불 불가 처리 성공 응답에 `paymentStatus(DONE)`, `refundStatus(REJECTED)` 모두 포함되어야 한다.
 
 ---
 
