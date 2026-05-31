@@ -1,6 +1,6 @@
 # Feature Specification: 서비스 통계 및 분석 (Statistics)
 
-**Feature Branch**: `feature/admin-statistics-ui`
+**Feature Branch**: `feature/admin-statistics-fe-spec`
 **버전**: v1
 **Status**: UI 구현 완료 — API 연동 예정
 **담당**: 신보라

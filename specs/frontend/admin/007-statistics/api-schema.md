@@ -95,6 +95,9 @@ GET /api/admin/statistics/revenue/monthly
   "data": [
     { "month": "2025-12", "total": 24800000 },
     { "month": "2026-01", "total": 27500000 },
+    { "month": "2026-02", "total": 29100000 },
+    { "month": "2026-03", "total": 32400000 },
+    { "month": "2026-04", "total": 34200000 },
     { "month": "2026-05", "total": 38500000 }
   ]
 }
