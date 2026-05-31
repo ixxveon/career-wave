@@ -2,11 +2,8 @@ import { Upload, AlertCircle, WifiOff } from 'lucide-react';
 import ResumeUpload from '../../components/resume/ResumeUpload';
 import LoadingModal from '../../components/resume/LoadingModal';
 import { useResumeUpload } from '../../hooks/resume/useResumeUpload';
+import { PLAN_LIMITS, MOCK_QUOTA } from '../../utils/resume/quota';
 import './ResumeAnalysisPage.css';
-
-/* ── 멤버십 한도 (백엔드 연동 전 임시 목업) ── */
-const PLAN_LIMITS = { FREE: { document: 1 }, PREMIUM: { document: 20 } };
-const MOCK_QUOTA  = { membership: 'PREMIUM' as const, documentUsed: 7 };
 
 export default function ResumeAnalysisPage() {
   const {

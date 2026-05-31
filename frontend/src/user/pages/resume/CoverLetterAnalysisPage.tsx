@@ -2,11 +2,9 @@ import { Send, AlertCircle, WifiOff } from 'lucide-react';
 import CoverLetterForm from '../../components/resume/CoverLetterForm';
 import LoadingModal from '../../components/resume/LoadingModal';
 import { useCoverLetterForm } from '../../hooks/resume/useCoverLetterForm';
+import { PLAN_LIMITS, MOCK_QUOTA } from '../../utils/resume/quota';
 import './CoverLetterAnalysisPage.css';
 import './ResumeAnalysisPage.css'; /* ra-quota-bar + ra-toast 공용 스타일 */
-
-const PLAN_LIMITS = { FREE: { document: 1 }, PREMIUM: { document: 20 } };
-const MOCK_QUOTA  = { membership: 'PREMIUM' as const, documentUsed: 7 };
 
 export default function CoverLetterAnalysisPage() {
   const {
