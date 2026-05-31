@@ -134,11 +134,11 @@ GET /api/admin/statistics/summary
 
 **집계 로직**:
 - `currentMonthRevenue`: 당월 `payment_status = DONE` AND `amount` SUM
-- `currentMonthRevenueGrowth`: (당월 매출 - 전월 매출) / 전월 매출 × 100
+- `currentMonthRevenueGrowth`: (당월 매출 - 전월 매출) / 전월 매출 × 100. **전월 매출이 0이면 0.0 반환** (0 나누기 방지)
 - `totalRevenue`: 전체 `payment_status = DONE` AND `amount` SUM
 - `totalMembers`: `members` 테이블 COUNT
 - `currentMonthNewMembers`: 당월 `members.created_at` COUNT
-- `currentMonthNewMembersGrowth`: (당월 신규 - 전월 신규) / 전월 신규 × 100
+- `currentMonthNewMembersGrowth`: (당월 신규 - 전월 신규) / 전월 신규 × 100. **전월 신규 가입이 0이면 0.0 반환** (0 나누기 방지)
 
 ---
 
@@ -197,7 +197,7 @@ GET /api/admin/statistics/subscribers/recent
 **집계 로직**:
 - `subscriptions.created_at DESC` 상위 5건
 - `members` 테이블 JOIN → `memberName` 조회
-- `timeAgo`: 서버에서 현재 시각 기준 경과 시간 포맷 ("N분 전", "N시간 전")
+- `timeAgo`: 서버에서 현재 시각 기준 경과 시간 포맷 ("N분 전", "N시간 전", "N일 전")
 
 ---
 
