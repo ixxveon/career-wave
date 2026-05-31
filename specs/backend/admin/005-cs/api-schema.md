@@ -84,7 +84,6 @@ ResponseEntity<ApiResponse<Void>> deleteFaq(
 ResponseEntity<ApiResponse<PaginationResponse<InquiryDTO.ResponseList>>> getInquiries(
     @RequestParam(required = false) String category,
     @RequestParam(required = false) String status,
-    @RequestParam(required = false) String keyword,
     @RequestParam(defaultValue = "1") int page,
     @RequestParam(defaultValue = "20") int size
 );

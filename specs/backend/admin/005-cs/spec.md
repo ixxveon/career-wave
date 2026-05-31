@@ -579,9 +579,8 @@ DELETE /api/admin/faqs/{faqId}
 ### 1:1 문의
 
 ```http
-GET    /api/admin/inquiries?category=&status=&keyword=&page=&size=
+GET    /api/admin/inquiries?category=&status=&page=&size=
          → ApiResponse<PaginationResponse<InquiryDTO.ResponseList>>
-         keyword: title 기준 LIKE 검색
 
 GET    /api/admin/inquiries/{inquiryId}
          → ApiResponse<InquiryDTO.ResponseDetail>
@@ -697,8 +696,8 @@ POST   /api/admin/ai/inquiry-draft
 
 ### AdminInquiryService
 
-#### getInquiries(category, status, keyword, page, size)
-- 동적 필터, `keyword`는 `title LIKE %keyword%`
+#### getInquiries(category, status, page, size)
+- 동적 필터 (`category`, `status` null이면 미적용)
 - page 1-based → 0-based 변환
 - 기본 정렬: `createdAt DESC`
 

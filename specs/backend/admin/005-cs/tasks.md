@@ -65,7 +65,7 @@
   - [ ] 기본 정렬 `createdAt DESC`
 
 - [ ] `InquiryRepository.java`
-  - [ ] 동적 필터 쿼리 (`category`, `status`, `keyword(title LIKE)` — null이면 미적용)
+  - [ ] 동적 필터 쿼리 (`category`, `status` — null이면 미적용)
   - [ ] `countByInquiryStatus(InquiryStatus status)` — KPI 집계용
   - [ ] 기본 정렬 `createdAt DESC`
   - [ ] `memberName` 포함을 위한 members 테이블 조인 쿼리
@@ -120,7 +120,7 @@
 
 ### AdminInquiryService
 
-- [ ] `getInquiries(category, status, keyword, page, size)` — 동적 필터 + keyword(LIKE) + 페이지네이션
+- [ ] `getInquiries(category, status, page, size)` — 동적 필터 + 페이지네이션
 - [ ] `getInquiryDetail(Long inquiryId)` — `INQUIRY_NOT_FOUND(404)` 예외 처리, memberName 포함
 - [ ] `saveReply(Long inquiryId, String reply, Long adminId)`
   - [ ] `INQUIRY_NOT_FOUND(404)` 예외 처리
