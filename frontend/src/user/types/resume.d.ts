@@ -75,6 +75,15 @@ export interface SubmitCoverLetterResponse {
 
 // ── 3. 분석 결과 조회 ─────────────────────────────────────────
 
+/** 역량 5개 항목 점수 (api-schema.md §3) */
+export interface ScoreBreakdown {
+  jobFitness: number;
+  techStack: number;
+  quantifiedAchievement: number;
+  logicalStructure: number;
+  total: number;
+}
+
 /** AI 피드백 3단 구조 */
 export interface FeedbackData {
   good: string[];
@@ -86,7 +95,7 @@ export interface FeedbackData {
 export interface AnalysisResultResponse {
   documentId: string;
   status: BackendDocumentStatus;
-  score: number | null;
+  scores: ScoreBreakdown | null;
   feedback: FeedbackData;
   errorMessage: string | null;
   createdAt: string;
@@ -101,7 +110,7 @@ export interface ResumeHistoryItem {
   originalName: string | null;
   company: string | null;
   job: string | null;
-  score: number | null;
+  totalScore: number | null;
   createdAt: string;
 }
 

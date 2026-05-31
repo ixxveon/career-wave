@@ -561,6 +561,38 @@
   animation: ra-btn-spin 1s linear infinite;
 }
 
+/* ─── 네트워크 단절 토스트 ──────────────────── */
+.ra-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  white-space: nowrap;
+}
+
+.ra-toast__close {
+  margin-left: 8px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  line-height: 1;
+}
+.ra-toast__close:hover { color: #f8fafc; }
+
 /* ─── Responsive ─────────────────────────────── */
 @media (max-width: 900px) {
   .ra-score-row { grid-template-columns: 1fr; }

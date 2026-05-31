@@ -175,7 +175,13 @@ Authorization: Bearer {accessToken}
   "data": {
     "documentId": "uuid-v4",
     "status": "COMPLETED",
-    "score": 82,
+    "scores": {
+      "jobFitness": 78,
+      "techStack": 85,
+      "quantifiedAchievement": 60,
+      "logicalStructure": 72,
+      "total": 74
+    },
     "feedback": {
       "good": ["논리적인 문장 구조"],
       "bad": ["직무 연관성 부족"],
@@ -190,7 +196,12 @@ Authorization: Bearer {accessToken}
 | Field | Type | 설명 |
 |-------|------|------|
 | `data.status` | `string` | `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
-| `data.score` | `number` \| `null` | AI 진단 점수 (0~100), 분석 미완료 시 `null` |
+| `data.scores` | `object` \| `null` | 역량 점수 객체, 분석 미완료 시 `null` |
+| `data.scores.jobFitness` | `number` | 직무 적합도 점수 (0~100) |
+| `data.scores.techStack` | `number` | 기술 스택 및 역량 점수 (0~100) |
+| `data.scores.quantifiedAchievement` | `number` | 경험 구체성 및 수치화 점수 (0~100) |
+| `data.scores.logicalStructure` | `number` | 논리력 및 구조화 점수 (0~100) |
+| `data.scores.total` | `number` | 종합 점수 (0~100) |
 | `data.feedback.good` | `string[]` | 잘된 점 목록, 없을 경우 빈 배열 `[]` |
 | `data.feedback.bad` | `string[]` | 아쉬운 점 목록, 없을 경우 빈 배열 `[]` |
 | `data.feedback.fix` | `string[]` | 개선 제안 목록, 없을 경우 빈 배열 `[]` |
@@ -233,7 +244,7 @@ Authorization: Bearer {accessToken}
         "originalName": "이력서_홍길동.pdf",
         "company": null,
         "job": null,
-        "score": 82,
+        "totalScore": 74,
         "createdAt": "2026-05-29T14:53:44Z"
       },
       {
@@ -242,7 +253,7 @@ Authorization: Bearer {accessToken}
         "originalName": null,
         "company": "카카오",
         "job": "백엔드 개발자",
-        "score": 76,
+        "totalScore": 76,
         "createdAt": "2026-05-28T10:20:00Z"
       }
     ],
@@ -260,7 +271,7 @@ Authorization: Bearer {accessToken}
 | `data.content[].originalName` | `string` \| `null` | 이력서: 파일명, 자기소개서: `null` |
 | `data.content[].company` | `string` \| `null` | 자기소개서: 지원 회사명, 이력서: `null` |
 | `data.content[].job` | `string` \| `null` | 자기소개서: 지원 직무명, 이력서: `null` |
-| `data.content[].score` | `number` \| `null` | 분석 미완료 시 `null` |
+| `data.content[].totalScore` | `number` \| `null` | 종합 점수, 분석 미완료 시 `null` |
 
 ### Error Cases
 

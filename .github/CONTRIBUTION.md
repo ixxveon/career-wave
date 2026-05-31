@@ -64,6 +64,22 @@ fix/payment-status-validation
 - 브랜치를 잘못 만들었다면 변경사항을 보존한 뒤 `develop` 기준으로 다시 만든다.
 - 브랜치명은 작업 내용을 짧고 명확하게 표현한다.
 
+### 예외: 순차 의존 피처
+
+다음 조건을 모두 만족하는 경우, 이전 Phase 브랜치 위에서 새 브랜치를 만들 수 있다.
+
+1. Phase N+1이 Phase N의 코드를 직접 필요로 하여 `develop` 분기가 불가능한 경우
+2. 머지 순서가 반드시 Phase N → Phase N+1 순서임을 PR 본문에 명시한 경우
+3. 각 Phase의 PR 범위(변경 파일)가 명확히 분리되어 있는 경우
+
+```text
+develop → feature/Phase-1
+               └── feature/Phase-2   # Phase 1 코드 의존
+                       └── feature/Phase-3
+```
+
+> Phase N 브랜치가 `develop`에 합쳐진 뒤 Phase N+1 브랜치를 `develop` 기준으로 rebase하여 독립시킨다.
+
 ---
 
 ## 3. Spec 작성 절차
