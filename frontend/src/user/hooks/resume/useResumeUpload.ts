@@ -1,9 +1,15 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { uploadResume } from '../../api/resume/uploadResume';
+import { getAnalysisResult } from '../../api/resume/getAnalysisResult';
 import { validateResumeFile } from '../../utils/resume/validation';
 import { resumeStorage } from '../../utils/resume/resumeStorage';
 import { useAnalysisWebSocket } from './useAnalysisWebSocket';
-import type { ResumeUIState, UploadResumeResponse, WsStatusMessage } from '../../types/resume.d';
+import type {
+  ResumeUIState,
+  UploadResumeResponse,
+  AnalysisResultResponse,
+  WsStatusMessage,
+} from '../../types/resume.d';
 
 export interface UseResumeUploadReturn {
   file: File | null;
@@ -13,6 +19,7 @@ export interface UseResumeUploadReturn {
   networkError: boolean;
   wsMessage: WsStatusMessage | null;
   uploadResult: UploadResumeResponse | null;
+  analysisResult: AnalysisResultResponse | null;
   handleFileSelect: (file: File) => void;
   handleFileRemove: () => void;
   handleUpload: () => Promise<void>;
@@ -34,18 +41,27 @@ export interface UseResumeUploadReturn {
  * - 마운트 시 저장된 documentId + UIState === 'ANALYZING' 이면 WebSocket 재연결
  */
 export function useResumeUpload(): UseResumeUploadReturn {
-  const [file, setFile]                   = useState<File | null>(null);
-  const [uiState, setUiState]             = useState<ResumeUIState>('IDLE');
-  const [fileError, setFileError]         = useState<string | null>(null);
-  const [apiError, setApiError]           = useState<string | null>(null);
-  const [networkError, setNetworkError]   = useState(false);
-  const [wsMessage, setWsMessage]         = useState<WsStatusMessage | null>(null);
-  const [uploadResult, setUploadResult]   = useState<UploadResumeResponse | null>(null);
-  const abortRef                          = useRef<AbortController | null>(null);
-  const documentIdRef                     = useRef<string | null>(null);
+  const [file, setFile]                       = useState<File | null>(null);
+  const [uiState, setUiState]                 = useState<ResumeUIState>('IDLE');
+  const [fileError, setFileError]             = useState<string | null>(null);
+  const [apiError, setApiError]               = useState<string | null>(null);
+  const [networkError, setNetworkError]       = useState(false);
+  const [wsMessage, setWsMessage]             = useState<WsStatusMessage | null>(null);
+  const [uploadResult, setUploadResult]       = useState<UploadResumeResponse | null>(null);
+  const [analysisResult, setAnalysisResult]   = useState<AnalysisResultResponse | null>(null);
+  const abortRef                              = useRef<AbortController | null>(null);
+  const documentIdRef                         = useRef<string | null>(null);
 
-  const handleCompleted = useCallback(() => {
+  const handleCompleted = useCallback(async () => {
     resumeStorage.removeUIState();
+    if (documentIdRef.current) {
+      try {
+        const result = await getAnalysisResult(documentIdRef.current);
+        setAnalysisResult(result);
+      } catch {
+        // 결과 조회 실패 시에도 SUCCESS로 전이 — 재조회는 Phase 4 리포트 페이지에서 처리
+      }
+    }
     setUiState('SUCCESS');
   }, []);
 
@@ -136,6 +152,7 @@ export function useResumeUpload(): UseResumeUploadReturn {
     setNetworkError(false);
     setWsMessage(null);
     setUploadResult(null);
+    setAnalysisResult(null);
     documentIdRef.current = null;
     resumeStorage.removeDocumentId();
     resumeStorage.removeUIState();
@@ -149,6 +166,7 @@ export function useResumeUpload(): UseResumeUploadReturn {
     networkError,
     wsMessage,
     uploadResult,
+    analysisResult,
     handleFileSelect,
     handleFileRemove,
     handleUpload,

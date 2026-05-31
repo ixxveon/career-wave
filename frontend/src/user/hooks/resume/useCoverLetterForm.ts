@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { submitCoverLetter } from '../../api/resume/submitCoverLetter';
+import { getAnalysisResult } from '../../api/resume/getAnalysisResult';
 import {
   validateCoverLetterForm,
   MAX_COVER_LETTER_ITEMS,
@@ -7,7 +8,12 @@ import {
 } from '../../utils/resume/validation';
 import { resumeStorage } from '../../utils/resume/resumeStorage';
 import { useAnalysisWebSocket } from './useAnalysisWebSocket';
-import type { ResumeUIState, SubmitCoverLetterResponse, WsStatusMessage } from '../../types/resume.d';
+import type {
+  ResumeUIState,
+  SubmitCoverLetterResponse,
+  AnalysisResultResponse,
+  WsStatusMessage,
+} from '../../types/resume.d';
 
 export interface CoverLetterFormItem {
   question: string;
@@ -23,6 +29,7 @@ export interface UseCoverLetterFormReturn {
   networkError: boolean;
   wsMessage: WsStatusMessage | null;
   submitResult: SubmitCoverLetterResponse | null;
+  analysisResult: AnalysisResultResponse | null;
   canSubmit: boolean;
   setCompany: (value: string) => void;
   setJob: (value: string) => void;
@@ -56,7 +63,9 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
   const [networkError, setNetworkError]   = useState(false);
   const [wsMessage, setWsMessage]         = useState<WsStatusMessage | null>(null);
   const [submitResult, setSubmitResult]   = useState<SubmitCoverLetterResponse | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResultResponse | null>(null);
   const abortRef                          = useRef<AbortController | null>(null);
+  const documentIdRef                     = useRef<string | null>(null);
 
   const canSubmit =
     company.trim() !== '' &&
@@ -68,8 +77,16 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
         item.answer.length <= MAX_ANSWER_LENGTH,
     );
 
-  const handleCompleted = useCallback(() => {
+  const handleCompleted = useCallback(async () => {
     resumeStorage.removeUIState();
+    if (documentIdRef.current) {
+      try {
+        const result = await getAnalysisResult(documentIdRef.current);
+        setAnalysisResult(result);
+      } catch {
+        // 결과 조회 실패 시에도 SUCCESS로 전이 — 재조회는 Phase 4 리포트 페이지에서 처리
+      }
+    }
     setUiState('SUCCESS');
   }, []);
 
@@ -95,6 +112,7 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
     const savedDocumentId = resumeStorage.getDocumentId();
     const savedUIState    = resumeStorage.getUIState();
     if (savedDocumentId && savedUIState === 'ANALYZING') {
+      documentIdRef.current = savedDocumentId;
       setUiState('ANALYZING');
       connect(savedDocumentId);
     }
@@ -147,6 +165,7 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
 
       resumeStorage.saveDocumentId(data.documentId);
       resumeStorage.saveUIState('ANALYZING');
+      documentIdRef.current = data.documentId;
       setSubmitResult(data);
       setUiState('ANALYZING');
 
@@ -174,6 +193,8 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
     setNetworkError(false);
     setWsMessage(null);
     setSubmitResult(null);
+    setAnalysisResult(null);
+    documentIdRef.current = null;
     resumeStorage.removeDocumentId();
     resumeStorage.removeUIState();
   }
@@ -187,6 +208,7 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
     networkError,
     wsMessage,
     submitResult,
+    analysisResult,
     canSubmit,
     setCompany,
     setJob,
