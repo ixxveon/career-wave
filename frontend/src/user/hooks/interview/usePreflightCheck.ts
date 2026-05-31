@@ -37,10 +37,19 @@ export function usePreflightCheck(): PreflightResult {
     const wsBase =
       import.meta.env.VITE_WS_BASE_URL ||
       (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/^http/, 'ws');
-    const token = localStorage.getItem('accessToken') ?? '';
+    const token = encodeURIComponent(localStorage.getItem('accessToken') ?? '');
 
     await new Promise<void>(resolve => {
-      const ws = new WebSocket(`${wsBase}/ws/health?token=${token}`);
+      let ws: WebSocket;
+      try {
+        ws = new WebSocket(`${wsBase}/ws/health?token=${token}`);
+      } catch {
+        // URL 형식 오류 등 WebSocket 생성 자체가 실패한 경우
+        setNetworkStatus('fail');
+        resolve();
+        return;
+      }
+
       const timer = setTimeout(() => {
         ws.close();
         setNetworkStatus('fail');
