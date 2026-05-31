@@ -26,7 +26,7 @@ export function useSpringWebSocket({
     const base =
       import.meta.env.VITE_WS_BASE_URL ||
       (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/^http/, 'ws');
-    const token = localStorage.getItem('accessToken') ?? '';
+    const token = encodeURIComponent(localStorage.getItem('accessToken') ?? '');
     return `${base}/ws/interview/${sid}/chat?token=${token}`;
   };
 

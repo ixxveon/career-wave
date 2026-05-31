@@ -27,7 +27,7 @@ export function useFastApiWebSocket({
       import.meta.env.VITE_FASTAPI_WS_URL ||
       import.meta.env.VITE_FASTAPI_BASE_URL?.replace(/^http/, 'ws') ||
       'ws://localhost:8000';
-    const token = localStorage.getItem('accessToken') ?? '';
+    const token = encodeURIComponent(localStorage.getItem('accessToken') ?? '');
     return `${base}/ws/interview/${sid}/ai?token=${token}`;
   };
 
