@@ -1,8 +1,7 @@
 import { Upload, AlertCircle, WifiOff } from 'lucide-react';
 import ResumeUpload from '../../components/resume/ResumeUpload';
 import LoadingModal from '../../components/resume/LoadingModal';
-import ReportChart from '../../components/resume/ReportChart';
-import FeedbackList from '../../components/resume/FeedbackList';
+import DocumentResultView from './DocumentResultView';
 import { useResumeUpload } from '../../hooks/resume/useResumeUpload';
 import { PLAN_LIMITS, MOCK_QUOTA } from '../../utils/resume/quota';
 import './ResumeAnalysisPage.css';
@@ -25,36 +24,23 @@ export default function ResumeAnalysisPage() {
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (
-      <div className="ra">
-        <div className="ra-report">
-          <div className="ra-report__header">
-            <span className="ra-eyebrow">RESUME ANALYSIS</span>
-            <h1 className="ra-report__title">분석 리포트</h1>
-          </div>
-
-          <ReportChart scores={analysisResult.scores ?? {
-            jobFitness: 0, techStack: 0, quantifiedAchievement: 0, logicalStructure: 0, total: 0,
-          }} />
-
-          <FeedbackList feedback={analysisResult.feedback} />
-
-          <div className="ra-report__actions">
-            <button
-              type="button"
-              className="ra-btn ra-btn--outline"
-              onClick={reset}
-            >
-              다시 분석하기
-            </button>
-            <a
-              href={`/interview?documentId=${analysisResult.documentId}`}
-              className="ra-btn ra-btn--primary"
-            >
-              이 서류로 면접 시작하기
-            </a>
-          </div>
-        </div>
-      </div>
+      <DocumentResultView
+        result={{
+          documentId: analysisResult.documentId,
+          evaluation: {
+            totalScore:        analysisResult.scores?.total              ?? 0,
+            jobFitnessScore:   analysisResult.scores?.jobFitness         ?? 0,
+            techStackScore:    analysisResult.scores?.techStack           ?? 0,
+            quantifiedScore:   analysisResult.scores?.quantifiedAchievement ?? 0,
+            logicalScore:      analysisResult.scores?.logicalStructure    ?? 0,
+            overallReview:     analysisResult.overallReview,
+          },
+          feedbackDetails: analysisResult.feedbackDetails,
+        }}
+        label="RESUME ANALYSIS"
+        subtitle={file?.name ?? '이력서'}
+        onReset={reset}
+      />
     );
   }
 
