@@ -1,14 +1,17 @@
 import { Send, AlertCircle, WifiOff } from 'lucide-react';
 import CoverLetterForm from '../../components/resume/CoverLetterForm';
 import LoadingModal from '../../components/resume/LoadingModal';
+import ReportChart from '../../components/resume/ReportChart';
+import FeedbackList from '../../components/resume/FeedbackList';
 import { useCoverLetterForm } from '../../hooks/resume/useCoverLetterForm';
 import { PLAN_LIMITS, MOCK_QUOTA } from '../../utils/resume/quota';
 import './CoverLetterAnalysisPage.css';
-import './ResumeAnalysisPage.css'; /* ra-quota-bar + ra-toast 공용 스타일 */
+import './ResumeAnalysisPage.css'; /* ra-quota-bar + ra-toast + ra-report 공용 스타일 */
 
 export default function CoverLetterAnalysisPage() {
   const {
     company, job, items, uiState, apiError, networkError, wsMessage, canSubmit,
+    analysisResult,
     setCompany, setJob, addItem, removeItem, updateItem,
     handleSubmit, reset, dismissNetworkError,
   } = useCoverLetterForm();
@@ -22,17 +25,36 @@ export default function CoverLetterAnalysisPage() {
   const pct         = Math.min((documentUsed / docLimit) * 100, 100);
   const isExhausted = docLeft <= 0;
 
-  if (uiState === 'SUCCESS') {
+  if (uiState === 'SUCCESS' && analysisResult) {
     return (
       <div className="cl">
-        <div className="cl-input-wrap" style={{ alignItems: 'center', textAlign: 'center', gap: 16 }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 20 }}>✅ 분석이 완료되었어요!</p>
-          <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-secondary)' }}>
-            Phase 4에서 리포트 화면이 구현될 예정입니다.
-          </p>
-          <button type="button" className="cl-btn cl-btn--outline" onClick={reset}>
-            다시 분석하기
-          </button>
+        <div className="ra-report">
+          <div className="ra-report__header">
+            <span className="ra-eyebrow">COVER LETTER AI</span>
+            <h1 className="ra-report__title">분석 리포트</h1>
+          </div>
+
+          <ReportChart scores={analysisResult.scores ?? {
+            jobFitness: 0, techStack: 0, quantifiedAchievement: 0, logicalStructure: 0, total: 0,
+          }} />
+
+          <FeedbackList feedback={analysisResult.feedback} />
+
+          <div className="ra-report__actions">
+            <button
+              type="button"
+              className="ra-btn ra-btn--outline"
+              onClick={reset}
+            >
+              다시 분석하기
+            </button>
+            <a
+              href={`/interview?documentId=${analysisResult.documentId}`}
+              className="ra-btn ra-btn--primary"
+            >
+              이 서류로 면접 시작하기
+            </a>
+          </div>
         </div>
       </div>
     );

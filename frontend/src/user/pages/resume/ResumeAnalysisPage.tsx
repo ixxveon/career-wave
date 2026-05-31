@@ -1,6 +1,8 @@
 import { Upload, AlertCircle, WifiOff } from 'lucide-react';
 import ResumeUpload from '../../components/resume/ResumeUpload';
 import LoadingModal from '../../components/resume/LoadingModal';
+import ReportChart from '../../components/resume/ReportChart';
+import FeedbackList from '../../components/resume/FeedbackList';
 import { useResumeUpload } from '../../hooks/resume/useResumeUpload';
 import { PLAN_LIMITS, MOCK_QUOTA } from '../../utils/resume/quota';
 import './ResumeAnalysisPage.css';
@@ -8,6 +10,7 @@ import './ResumeAnalysisPage.css';
 export default function ResumeAnalysisPage() {
   const {
     file, uiState, fileError, apiError, networkError, wsMessage,
+    analysisResult,
     handleFileSelect, handleFileRemove, handleUpload, reset, dismissNetworkError,
   } = useResumeUpload();
 
@@ -20,17 +23,36 @@ export default function ResumeAnalysisPage() {
   const pct         = Math.min((documentUsed / docLimit) * 100, 100);
   const isExhausted = docLeft <= 0;
 
-  if (uiState === 'SUCCESS') {
+  if (uiState === 'SUCCESS' && analysisResult) {
     return (
       <div className="ra">
-        <div className="ra-upload-wrap" style={{ alignItems: 'center', textAlign: 'center', gap: 16 }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 20 }}>✅ 분석이 완료되었어요!</p>
-          <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-secondary)' }}>
-            Phase 4에서 리포트 화면이 구현될 예정입니다.
-          </p>
-          <button type="button" className="ra-btn ra-btn--outline" onClick={reset}>
-            다시 분석하기
-          </button>
+        <div className="ra-report">
+          <div className="ra-report__header">
+            <span className="ra-eyebrow">RESUME ANALYSIS</span>
+            <h1 className="ra-report__title">분석 리포트</h1>
+          </div>
+
+          <ReportChart scores={analysisResult.scores ?? {
+            jobFitness: 0, techStack: 0, quantifiedAchievement: 0, logicalStructure: 0, total: 0,
+          }} />
+
+          <FeedbackList feedback={analysisResult.feedback} />
+
+          <div className="ra-report__actions">
+            <button
+              type="button"
+              className="ra-btn ra-btn--outline"
+              onClick={reset}
+            >
+              다시 분석하기
+            </button>
+            <a
+              href={`/interview?documentId=${analysisResult.documentId}`}
+              className="ra-btn ra-btn--primary"
+            >
+              이 서류로 면접 시작하기
+            </a>
+          </div>
         </div>
       </div>
     );
