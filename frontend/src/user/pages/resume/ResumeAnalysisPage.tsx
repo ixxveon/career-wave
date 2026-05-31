@@ -40,6 +40,7 @@ export default function ResumeAnalysisPage() {
         label="RESUME ANALYSIS"
         subtitle={file?.name ?? '이력서'}
         onReset={reset}
+        interviewDocumentId={analysisResult.documentId}
       />
     );
   }
