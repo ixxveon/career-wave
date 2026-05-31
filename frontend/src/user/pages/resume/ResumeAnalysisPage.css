@@ -607,3 +607,53 @@
   .ra-card { padding: 20px 16px; }
   .ra-score-card { flex-direction: column; align-items: center; }
 }
+
+/* ─── Phase 4 리포트 화면 ────────────────────── */
+.ra-report {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  padding: 48px 52px;
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 40px rgba(30,58,110,0.08);
+}
+
+.ra-report__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  width: 100%;
+}
+
+.ra-report__title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.ra-report__actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.ra-report__actions .ra-btn--primary {
+  flex: 1;
+  text-decoration: none;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .ra-report { padding: 28px 20px; }
+  .ra-report__actions { flex-direction: column; }
+}

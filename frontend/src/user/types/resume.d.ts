@@ -84,11 +84,40 @@ export interface ScoreBreakdown {
   total: number;
 }
 
-/** AI 피드백 3단 구조 */
-export interface FeedbackData {
-  good: string[];
-  bad: string[];
-  fix: string[];
+/** STAR 기법 항목별 분석 */
+export interface StarItem {
+  ok: boolean;
+  comment: string;
+}
+export interface StarAnalysis {
+  s: StarItem;
+  t: StarItem;
+  a: StarItem;
+  r: StarItem;
+}
+
+/** 수치화·정량화 체크 */
+export interface QuantItem {
+  ok: boolean;
+  comment: string;
+}
+export interface QuantAnalysis {
+  numbers: QuantItem;
+  timeframe: QuantItem;
+  scale: QuantItem;
+  impact: QuantItem;
+}
+
+/** 항목별 첨삭 가이드라인 */
+export interface FeedbackDetail {
+  sectionNumber: number;
+  question: string;
+  originalText: string;
+  goodPoint: string;
+  badPoint: string;
+  improvedText: string;
+  starAnalysis?: StarAnalysis;
+  quantAnalysis?: QuantAnalysis;
 }
 
 /** GET /api/v1/resume/{documentId}/feedback — Response data */
@@ -96,7 +125,8 @@ export interface AnalysisResultResponse {
   documentId: string;
   status: BackendDocumentStatus;
   scores: ScoreBreakdown | null;
-  feedback: FeedbackData;
+  overallReview: string;
+  feedbackDetails: FeedbackDetail[];
   errorMessage: string | null;
   createdAt: string;
 }

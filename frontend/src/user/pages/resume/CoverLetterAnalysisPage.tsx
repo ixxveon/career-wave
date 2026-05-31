@@ -1,6 +1,7 @@
 import { Send, AlertCircle, WifiOff } from 'lucide-react';
 import CoverLetterForm from '../../components/resume/CoverLetterForm';
 import LoadingModal from '../../components/resume/LoadingModal';
+import DocumentResultView from './DocumentResultView';
 import { useCoverLetterForm } from '../../hooks/resume/useCoverLetterForm';
 import { PLAN_LIMITS, MOCK_QUOTA } from '../../utils/resume/quota';
 import './CoverLetterAnalysisPage.css';
@@ -9,6 +10,7 @@ import './ResumeAnalysisPage.css'; /* ra-quota-bar + ra-toast 공용 스타일 *
 export default function CoverLetterAnalysisPage() {
   const {
     company, job, items, uiState, apiError, networkError, wsMessage, canSubmit,
+    analysisResult,
     setCompany, setJob, addItem, removeItem, updateItem,
     handleSubmit, reset, dismissNetworkError,
   } = useCoverLetterForm();
@@ -22,19 +24,30 @@ export default function CoverLetterAnalysisPage() {
   const pct         = Math.min((documentUsed / docLimit) * 100, 100);
   const isExhausted = docLeft <= 0;
 
-  if (uiState === 'SUCCESS') {
+  if (uiState === 'SUCCESS' && analysisResult) {
     return (
-      <div className="cl">
-        <div className="cl-input-wrap" style={{ alignItems: 'center', textAlign: 'center', gap: 16 }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 20 }}>✅ 분석이 완료되었어요!</p>
-          <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-secondary)' }}>
-            Phase 4에서 리포트 화면이 구현될 예정입니다.
-          </p>
-          <button type="button" className="cl-btn cl-btn--outline" onClick={reset}>
-            다시 분석하기
-          </button>
-        </div>
-      </div>
+      <DocumentResultView
+        result={{
+          documentId: analysisResult.documentId,
+          evaluation: {
+            totalScore:        analysisResult.scores?.total                 ?? 0,
+            jobFitnessScore:   analysisResult.scores?.jobFitness            ?? 0,
+            techStackScore:    analysisResult.scores?.techStack              ?? 0,
+            quantifiedScore:   analysisResult.scores?.quantifiedAchievement ?? 0,
+            logicalScore:      analysisResult.scores?.logicalStructure       ?? 0,
+            overallReview:     analysisResult.overallReview,
+          },
+          feedbackDetails: analysisResult.feedbackDetails,
+        }}
+        label="COVER LETTER AI"
+        subtitle={`${company} · ${job}`}
+        onReset={reset}
+        interviewDocumentId={analysisResult.documentId}
+        onRevise={(feedbackDetails) => {
+          reset();
+          // TODO: useCoverLetterForm에 setItemsFromFeedback 추가 시 개선안 자동 적용 연동
+        }}
+      />
     );
   }
 

@@ -1,9 +1,7 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
-
 export async function apiClient(endpoint, options = {}) {
   const isFormData = options.body instanceof FormData;
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  const response = await fetch(endpoint, {
     ...options,
     // FormData는 브라우저가 Content-Type + boundary를 자동 설정하므로 헤더를 건드리지 않는다
     headers: isFormData

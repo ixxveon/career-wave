@@ -45,7 +45,7 @@ export interface Evaluation {
 }
 
 export interface DocumentResult {
-  documentId: number;
+  documentId: string | number;
   evaluation: Evaluation;
   feedbackDetails: FeedbackDetail[];
 }

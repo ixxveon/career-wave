@@ -1,12 +1,10 @@
 import { useRef, useState, useCallback } from 'react';
 import type { WsStatusMessage } from '../../types/resume.d';
 
-// HTTP(S) → WS(S) 변환, /api 경로 제거
-const WS_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)
-  ?.replace(/^https/, 'wss')
-  ?.replace(/^http/, 'ws')
-  ?.replace(/\/api$/, '')
-  ?? 'ws://localhost:8080';
+// 현재 페이지 origin 기준 WS URL 생성 (Vite 프록시 경유)
+const WS_BASE_URL = window.location.origin
+  .replace(/^https/, 'wss')
+  .replace(/^http/, 'ws');
 
 // spec.md NFR-001: 분석 완료까지 30초 이내 처리
 const ANALYSIS_TIMEOUT_MS = 30_000;
