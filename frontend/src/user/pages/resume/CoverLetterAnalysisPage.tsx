@@ -1,12 +1,11 @@
 import { Send, AlertCircle, WifiOff } from 'lucide-react';
 import CoverLetterForm from '../../components/resume/CoverLetterForm';
 import LoadingModal from '../../components/resume/LoadingModal';
-import ReportChart from '../../components/resume/ReportChart';
-import FeedbackList from '../../components/resume/FeedbackList';
+import DocumentResultView from './DocumentResultView';
 import { useCoverLetterForm } from '../../hooks/resume/useCoverLetterForm';
 import { PLAN_LIMITS, MOCK_QUOTA } from '../../utils/resume/quota';
 import './CoverLetterAnalysisPage.css';
-import './ResumeAnalysisPage.css'; /* ra-quota-bar + ra-toast + ra-report 공용 스타일 */
+import './ResumeAnalysisPage.css'; /* ra-quota-bar + ra-toast 공용 스타일 */
 
 export default function CoverLetterAnalysisPage() {
   const {
@@ -27,36 +26,28 @@ export default function CoverLetterAnalysisPage() {
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (
-      <div className="cl">
-        <div className="ra-report">
-          <div className="ra-report__header">
-            <span className="ra-eyebrow">COVER LETTER AI</span>
-            <h1 className="ra-report__title">분석 리포트</h1>
-          </div>
-
-          <ReportChart scores={analysisResult.scores ?? {
-            jobFitness: 0, techStack: 0, quantifiedAchievement: 0, logicalStructure: 0, total: 0,
-          }} />
-
-          <FeedbackList feedback={analysisResult.feedback} />
-
-          <div className="ra-report__actions">
-            <button
-              type="button"
-              className="ra-btn ra-btn--outline"
-              onClick={reset}
-            >
-              다시 분석하기
-            </button>
-            <a
-              href={`/interview?documentId=${analysisResult.documentId}`}
-              className="ra-btn ra-btn--primary"
-            >
-              이 서류로 면접 시작하기
-            </a>
-          </div>
-        </div>
-      </div>
+      <DocumentResultView
+        result={{
+          documentId: analysisResult.documentId,
+          evaluation: {
+            totalScore:        analysisResult.scores?.total                 ?? 0,
+            jobFitnessScore:   analysisResult.scores?.jobFitness            ?? 0,
+            techStackScore:    analysisResult.scores?.techStack              ?? 0,
+            quantifiedScore:   analysisResult.scores?.quantifiedAchievement ?? 0,
+            logicalScore:      analysisResult.scores?.logicalStructure       ?? 0,
+            overallReview:     analysisResult.overallReview,
+          },
+          feedbackDetails: analysisResult.feedbackDetails,
+        }}
+        label="COVER LETTER AI"
+        subtitle={`${company} · ${job}`}
+        onReset={reset}
+        onRevise={(feedbackDetails) => {
+          reset();
+          // 개선안 기반 재작성은 items 상태를 직접 세팅할 수 없어 페이지 리셋 후 안내
+          // TODO: useCoverLetterForm에 setItemsFromFeedback 추가 시 연동
+        }}
+      />
     );
   }
 
