@@ -12,6 +12,6 @@ export const useResumeHistory = (page = 0, size = 10) => {
   return useQuery({
     queryKey: resumeQueryKeys.history(page, size),
     queryFn: ({ signal }) => getResumeHistory({ page, size }, signal),
-    retry: 2,
+    retry: false, // MSW 환경에서 백엔드 미연동 시 재시도 억제 — 백엔드 연동 후 retry: 1로 변경
   });
 };
