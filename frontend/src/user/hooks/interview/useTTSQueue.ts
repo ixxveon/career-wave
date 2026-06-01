@@ -21,11 +21,17 @@ export function useTTSQueue(): UseTTSQueueResult {
   const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
   /**
-   * 세대 번호 (generation counter)
-   * clear() / stop() 호출 시 증가 → 진행 중인 decodeAudioData() 완료 후
-   * 세대가 바뀌었으면 재생을 취소하여 뒤늦은 TTS 재생 방지
+   * 세대 번호 — clear()/stop() 호출 시 증가
+   * decodeAudioData() 완료 후 세대가 바뀌었으면 재생 취소
    */
   const generationRef = useRef(0);
+
+  /**
+   * 수동 중단 플래그 — stop()/clear() 호출 시 true
+   * onended에서 다음 청크 자동 재생 방지용
+   * 커스텀 프로퍼티를 AudioBufferSourceNode에 직접 붙이지 않고 ref로 관리
+   */
+  const stoppedManuallyRef = useRef(false);
 
   /** AudioContext 싱글턴 — 닫혔으면 새로 생성 */
   function getAudioContext(): AudioContext {
@@ -51,6 +57,7 @@ export function useTTSQueue(): UseTTSQueueResult {
 
     const base64 = queueRef.current.shift()!;
     isPlayingRef.current = true;
+    stoppedManuallyRef.current = false;
     setStatus('loading');
 
     // decodeAudioData() 시작 시점의 세대 번호 캡처
@@ -79,15 +86,10 @@ export function useTTSQueue(): UseTTSQueueResult {
         return;
       }
 
-      // AudioBufferSourceNode 생성 및 재생
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(ctx.destination);
       currentSourceRef.current = source;
-
-      // stop() 호출 여부를 클로저로 추적
-      // stop()이 호출된 경우 onended에서 다음 청크 재생 방지
-      let stoppedManually = false;
 
       setStatus('playing');
       source.start(0);
@@ -95,15 +97,12 @@ export function useTTSQueue(): UseTTSQueueResult {
       source.onended = () => {
         isPlayingRef.current = false;
         currentSourceRef.current = null;
-        if (!stoppedManually) {
-          // 자연 종료 시에만 다음 청크 재생
+        // stoppedManuallyRef가 true면 stop()/clear() 호출로 인한 종료
+        // → 다음 청크 재생하지 않음
+        if (!stoppedManuallyRef.current) {
           playNextRef.current?.();
         }
       };
-
-      // stop() 호출 시 stoppedManually 플래그 설정을 위해 ref에 setter 노출
-      (source as AudioBufferSourceNode & { _markStopped?: () => void })._markStopped =
-        () => { stoppedManually = true; };
     } catch {
       // 디코딩 실패 시 해당 청크 스킵하고 다음 청크 재생 시도
       isPlayingRef.current = false;
@@ -118,7 +117,6 @@ export function useTTSQueue(): UseTTSQueueResult {
 
   const enqueue = useCallback((base64Audio: string) => {
     queueRef.current.push(base64Audio);
-    // 재생 중이 아닐 때만 즉시 시작 (재생 중이면 onended에서 자동으로 다음 재생)
     if (!isPlayingRef.current) {
       playNextRef.current?.();
     }
@@ -127,11 +125,9 @@ export function useTTSQueue(): UseTTSQueueResult {
   const stop = useCallback(() => {
     // 세대 번호 증가 → 진행 중인 decodeAudioData 완료 후 재생 취소
     generationRef.current += 1;
-    const source = currentSourceRef.current as
-      (AudioBufferSourceNode & { _markStopped?: () => void }) | null;
-    // onended가 발동해도 다음 청크를 재생하지 않도록 플래그 먼저 설정
-    source?._markStopped?.();
-    try { source?.stop(); } catch { /* 이미 종료된 경우 무시 */ }
+    // onended에서 다음 청크 재생 방지
+    stoppedManuallyRef.current = true;
+    try { currentSourceRef.current?.stop(); } catch { /* 이미 종료된 경우 무시 */ }
     currentSourceRef.current = null;
     isPlayingRef.current = false;
     setStatus('idle');
