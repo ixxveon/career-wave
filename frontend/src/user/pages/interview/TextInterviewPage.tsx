@@ -1,135 +1,74 @@
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  FileText, Mic, Volume2,
-  AlertCircle, Loader2, Wifi,
-  Send, Clock, X,
-} from 'lucide-react';
-import { startSession } from '../../api/interview/startSession';
-import { SESSION_TYPE } from '../../types/interview';
-import type { Message, MicStatus, InputMode, Phase, Resume } from '../../types/interview';
-import { useTTSQueue } from '../../hooks/interview/useTTSQueue';
-import TTSPlayer from '../../components/interview/TTSPlayer';
-import { useAudioRecorder } from '../../hooks/interview/useAudioRecorder';
-import VoiceRecorder from '../../components/interview/VoiceRecorder';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Clock, X, Loader2 } from 'lucide-react';
+
+import { startSession }          from '../../api/interview/startSession';
+import { SESSION_TYPE }          from '../../types/interview';
+import type { SessionType, Resume, MicStatus } from '../../types/interview';
+
+import { usePreflightCheck }     from '../../hooks/interview/usePreflightCheck';
+import { useInterviewSession }   from '../../hooks/interview/useInterviewSession';
+import { useInterviewTimer }     from '../../hooks/interview/useInterviewTimer';
+import { useAudioRecorder }      from '../../hooks/interview/useAudioRecorder';
+
+import TTSPlayer       from '../../components/interview/TTSPlayer';
+import ChatWindow      from '../../components/interview/ChatWindow';
+import TextAnswerInput from '../../components/interview/TextAnswerInput';
+import InterviewTimer  from '../../components/interview/InterviewTimer';
+import VoiceRecorder   from '../../components/interview/VoiceRecorder';
+import InterviewSetup  from '../../components/interview/InterviewSetup';
+
+import { loadInterviewSession }  from '../../utils/interview/sessionStorage';
 import './TextInterviewPage.css';
 
-/* ── 상수 ──────────────────────────────────────── */
-const JOB_OPTIONS = [
-  '백엔드 개발자', '프론트엔드 개발자', '풀스택 개발자',
-  '데이터 엔지니어', 'DevOps',
-];
+/* ── 상수 ── */
+const ANSWER_LIMIT = 150; // 스펙 FR-004: 150초
 
 const MOCK_SETUP = {
   resumeFileName: '이력서_최종본.pdf',
-  resumeS3Url: 'https://s3.careerwave.kr/mock/resume.pdf',
+  resumeS3Url:    'https://s3.careerwave.kr/mock/resume.pdf',
 };
 
-const TOTAL_Q = 5;
-const ANSWER_LIMIT = 150; // 최대 답변 시간 2분 30초
-
-const INIT_MESSAGES: Message[] = [{
-  id: 1,
-  role: 'ai',
-  text: '안녕하세요! AI 실시간 음성 면접을 시작하겠습니다.\n이력서를 분석했어요. 먼저 간단한 자기소개를 부탁드립니다.',
-}];
-
-// 목업 AI 답변 (WebSocket 연동 전)
-const AI_REPLIES = [
-  '답변 감사합니다. 말씀하신 내용을 바탕으로 추가 질문드릴게요.\n해당 기술적 선택의 근거는 무엇이었나요?',
-  '좋습니다. 팀 협업 상황에서 의견 충돌이 생겼을 때 어떻게 해결하셨나요?',
-  '인상적인 경험이네요. 본인의 강점과 약점을 각각 한 가지씩 말씀해 주세요.',
-  '마지막 질문입니다. 입사 후 3년간의 커리어 목표를 말씀해 주세요.',
-];
-
-function formatTime(s: number): string {
+function formatTime(s: number) {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
-/* ── 로딩 오버레이 ──────────────────────────────── */
-function LoadingOverlay() {
-  return (
-    <div className="ti-overlay">
-      <div className="ti-overlay__box">
-        <Loader2 className="ti-overlay__spinner" size={48} />
-        <p className="ti-overlay__msg">AI 면접관이 준비 중입니다.</p>
-        <p className="ti-overlay__sub">이력서와 직무 분석 중이에요. 잠시만 기다려 주세요!</p>
-      </div>
-    </div>
-  );
+/* ─────────────────────────────────────────────────────────────
+   면접 룸 컴포넌트
+───────────────────────────────────────────────────────────── */
+interface InterviewRoomProps {
+  sessionId: string;
+  company:   string;
+  job:       string;
+  sessionType: SessionType;
+  onExit:    () => void;
 }
 
-/* ── ChatRoom props ── */
-interface ChatRoomProps {
-  company: string;
-  job: string;
-  onExit: () => void;
-}
-
-/* ── 채팅 면접 룸 ───────────────────────────────── */
-function ChatRoom({ company, job, onExit }: ChatRoomProps) {
+function InterviewRoom({ sessionId, company, job, sessionType, onExit }: InterviewRoomProps) {
   const navigate = useNavigate();
 
-  /* ── TTS 재생 큐 (Web Audio API 기반 순차 재생) ── */
-  const tts = useTTSQueue();
+  const session = useInterviewSession({ sessionId });
 
-  /* ── State ── */
-  const [messages,        setMessages]        = useState<Message[]>(INIT_MESSAGES);
-  const [qNum,            setQNum]            = useState(1);
-  const [elapsed,         setElapsed]         = useState(0);
-  const [typing,          setTyping]          = useState(false);
-  const [done,            setDone]            = useState(false);
-  const [exitModal,       setExitModal]       = useState(false);
-  /* 입력 모드 */
-  const [inputMode,       setInputMode]       = useState<InputMode>('voice');
-  const [input,           setInput]           = useState('');
-  const [sttLive,         setSttLive]         = useState('');
-  /* 답변 제한 카운트다운 */
-  const [countdown,       setCountdown]       = useState(ANSWER_LIMIT);
-  const [countdownActive, setCountdownActive] = useState(false);
+  const [inputMode,  setInputMode]  = useState<'voice' | 'text'>(
+    sessionType === SESSION_TYPE.TEXT ? 'text' : 'voice',
+  );
+  const [sttLive,    setSttLive]    = useState('');
+  const [elapsed,    setElapsed]    = useState(0);
+  const [exitModal,  setExitModal]  = useState(false);
+  const [pendingVoiceId, setPendingVoiceId] = useState<number | null>(null);
 
-  /* ── Refs ── */
-  const bottomRef         = useRef<HTMLDivElement>(null);
-  const elapsedRef        = useRef<ReturnType<typeof setInterval> | null>(null);
-  const countdownRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const replyRef          = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const textareaRef       = useRef<HTMLTextAreaElement>(null);
-  const pendingTextRef    = useRef('');
-  const handleSendRef     = useRef<((text: string, opts?: SendOpts) => void) | null>(null);
-  const qNumRef           = useRef(qNum);
-  const pendingVoiceIdRef = useRef<number | null>(null);
+  /* ── 총 경과 타이머 ── */
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
 
-  /* ── MediaRecorder 기반 STT (useAudioRecorder) ── */
-  const recorder = useAudioRecorder({
-    sessionId: null, // Phase 4에서 실제 sessionId 주입
-    questionOrder: qNum,
-    onStop: () => {
-      // 녹음 종료 시 DEV mock 모드에서 다음 질문 자동 진행
-      if (import.meta.env.DEV) {
-        const pid = pendingVoiceIdRef.current;
-        pendingVoiceIdRef.current = null;
-        setMessages(prev => prev.map(m =>
-          m.id === pid ? { ...m, isPending: false, text: '(음성 답변 전송됨)' } : m
-        ));
-        setSttLive('');
-        pendingTextRef.current = '';
-        handleSendRef.current?.('', { skipAddMessage: true });
-      }
-      // 실제 모드: FastAPI WS STT_RESULT 수신 시 pendingVoiceIdRef 메시지 업데이트 (Phase 4)
-    },
-    onError: () => {
-      // 녹음 시작 실패 시 pending 말풍선 제거 후 텍스트 모드 전환
-      if (pendingVoiceIdRef.current !== null) {
-        setMessages(prev => prev.filter(m => m.id !== pendingVoiceIdRef.current));
-        pendingVoiceIdRef.current = null;
-      }
-      stopCountdown();
-      setInputMode('text');
-      startCountdown();
-    },
-  });
-
-  useEffect(() => { qNumRef.current = qNum; }, [qNum]);
+  /* ── FINISHED → 리포트 페이지 이동 ── */
+  useEffect(() => {
+    if (session.sessionState === 'FINISHED') {
+      setTimeout(() => navigate(`/interview/report?sessionId=${sessionId}`), 2000);
+    }
+  }, [session.sessionState, sessionId, navigate]);
 
   /* ── body 스크롤 잠금 ── */
   useEffect(() => {
@@ -137,168 +76,104 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  /* ── 스크롤 하단 고정 ── */
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, typing]);
-
-  /* ── 총 경과 타이머 ── */
-  useEffect(() => {
-    elapsedRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
-    return () => {
-      if (elapsedRef.current !== null) clearInterval(elapsedRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (done && elapsedRef.current !== null) clearInterval(elapsedRef.current);
-  }, [done]);
-
-  /* ── pendingTextRef 동기화 ── */
-  useEffect(() => {
-    pendingTextRef.current = inputMode === 'voice' ? sttLive : input;
-  }, [input, sttLive, inputMode]);
-
-  /* ─────────────────────────────────────────────────
-     답변 카운트다운 타이머
-  ───────────────────────────────────────────────── */
-  useEffect(() => {
-    if (!countdownActive) return;
-    if (countdown <= 0) {
-      setCountdownActive(false);
-      const pendingText = pendingTextRef.current.trim();
-
-      if (pendingVoiceIdRef.current !== null) {
-        const pid = pendingVoiceIdRef.current;
-        pendingVoiceIdRef.current = null;
-        setMessages(prev => prev.map(m =>
-          m.id === pid ? { ...m, isPending: false, text: pendingText } : m
-        ));
-      } else if (pendingText) {
-        setMessages(prev => [...prev, { id: Date.now(), role: 'user', text: pendingText }]);
-      }
-
-      setMessages(prev => [...prev, { id: Date.now() + 1, role: 'notice', text: '⏰ 답변 시간이 초과되었습니다.' }]);
+  /* ── 문항별 카운트다운 타이머 ── */
+  const timer = useInterviewTimer({
+    duration: ANSWER_LIMIT,
+    onExpire: () => {
       if (recorder.status === 'recording') recorder.stop();
-      handleSendRef.current?.('', { isTimeout: true });
-      return;
+      session.dispatch({ type: 'ADD_MESSAGE', message: {
+        id: Date.now(), role: 'notice', text: '⏰ 답변 시간이 초과되었습니다.',
+      }});
+      session.sendTextAnswer(''); // 빈 답변으로 타임아웃 처리
+    },
+  });
+
+  /* ── MediaRecorder 기반 STT ── */
+  const recorder = useAudioRecorder({
+    sessionId,
+    questionOrder: session.questionOrder,
+    onStop: () => {
+      // 실제: FastAPI WS STT_RESULT 수신 시 pending 메시지 업데이트
+      // DEV mock: 자동 진행
+      if (import.meta.env.DEV) {
+        if (pendingVoiceId !== null) {
+          session.dispatch({
+            type:    'UPDATE_MESSAGE',
+            id:      pendingVoiceId,
+            updates: { isPending: false, text: '(음성 답변 전송됨)' },
+          });
+          setPendingVoiceId(null);
+        }
+        setSttLive('');
+        session.sendTextAnswer(''); // mock: 빈 텍스트로 다음 질문 트리거
+      }
+    },
+    onError: () => {
+      if (pendingVoiceId !== null) {
+        session.dispatch({ type: 'REMOVE_MESSAGE', id: pendingVoiceId });
+        setPendingVoiceId(null);
+      }
+      timer.stop();
+      setInputMode('text');
+      timer.start();
+    },
+  });
+
+  /* ── STT_RESULT WS 메시지로 sttLive 업데이트 ── */
+  useEffect(() => {
+    setSttLive(session.sttLiveText);
+    if (session.pendingVoiceId !== null) {
+      setPendingVoiceId(session.pendingVoiceId);
     }
-    countdownRef.current = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => {
-      if (countdownRef.current !== null) clearTimeout(countdownRef.current);
-    };
-  }, [countdown, countdownActive]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session.sttLiveText, session.pendingVoiceId]);
 
-  function startCountdown() {
-    if (countdownRef.current !== null) clearTimeout(countdownRef.current);
-    setCountdown(ANSWER_LIMIT);
-    setCountdownActive(true);
-  }
-  function stopCountdown() {
-    setCountdownActive(false);
-    if (countdownRef.current !== null) clearTimeout(countdownRef.current);
-  }
-
-  /* ─────────────────────────────────────────────────
-     AI 질문 말풍선 렌더링 + TTS 재생
-     base64Audio: FastAPI WS TTS_AUDIO 메시지의 audioChunk
-     DEV mock 모드에서는 오디오 없이 텍스트만 표시
-  ───────────────────────────────────────────────── */
-  function displayAIQuestion(text: string, base64Audio: string | null) {
-    setMessages(prev => [...prev, { id: Date.now(), role: 'ai', text }]);
-    setTyping(false);
-    if (base64Audio) {
-      tts.enqueue(base64Audio);
-    }
-  }
-
-  /* ─────────────────────────────────────────────────
-     STT: MediaRecorder 기반 마이크 토글
-     SpeechRecognition(브라우저 내장) 완전 제거
-     실제 STT 결과는 FastAPI WS STT_RESULT로 수신 (Phase 4 연동)
-  ───────────────────────────────────────────────── */
+  /* ── 마이크 시작 ── */
   async function handleMicStart() {
     if (recorder.status === 'recording') return;
-    startCountdown();
-    const pendingId = Date.now();
-    pendingVoiceIdRef.current = pendingId;
-    setMessages(prev => [...prev, {
-      id: pendingId, role: 'user', isVoice: true, isPending: true, text: '',
-    }]);
+    timer.start();
+    const pid = Date.now();
+    setPendingVoiceId(pid);
+    session.dispatch({
+      type:    'ADD_MESSAGE',
+      message: { id: pid, role: 'user', isVoice: true, isPending: true, text: '' },
+    });
+    session.dispatch({ type: 'SET_PENDING_VOICE_ID', id: pid });
     await recorder.start();
   }
 
+  /* ── 마이크 중지 (답변 제출) ── */
   function handleMicStop() {
-    stopCountdown();
-    recorder.stop(); // isFinal: true 청크 전송 → onStop 콜백 발동
+    timer.stop();
+    recorder.stop();
   }
 
-  /* ─────────────────────────────────────────────────
-     공통 답변 전송 로직
-  ───────────────────────────────────────────────── */
-  interface SendOpts {
-    isTimeout?: boolean;
-    skipAddMessage?: boolean;
+  /* ── 텍스트 답변 전송 ── */
+  async function handleTextSubmit(text: string) {
+    timer.stop();
+    if (recorder.status === 'recording') recorder.cancel();
+    await session.sendTextAnswer(text);
   }
 
-  function handleSend(text: string, opts: SendOpts = {}) {
-    const { isTimeout = false, skipAddMessage = false } = opts;
-    if (typing || done) return;
-    if (!isTimeout && !skipAddMessage && !text?.trim()) return;
-    stopCountdown();
-    if (recorder.status === 'recording') recorder.stop();
-    tts.clear();
-
-    if (!isTimeout && !skipAddMessage) {
-      const trimmed = text.trim();
-      setMessages(prev => [...prev, { id: Date.now(), role: 'user', text: trimmed }]);
+  /* ── 음성→텍스트 전환 (취소) ── */
+  function handleSwitchToText() {
+    if (recorder.status === 'recording') recorder.cancel();
+    if (pendingVoiceId !== null) {
+      session.dispatch({ type: 'REMOVE_MESSAGE', id: pendingVoiceId });
+      setPendingVoiceId(null);
     }
-    setInput('');
     setSttLive('');
-    pendingTextRef.current = '';
-    setTyping(true);
-
-    replyRef.current = setTimeout(() => {
-      const currentQ = qNumRef.current;
-
-      if (currentQ >= TOTAL_Q) {
-        const closingText =
-          '수고하셨습니다! 총 5개 질문에 모두 답변해 주셨어요.\n' +
-          'AI가 답변을 분석하여 면접 리포트를 생성하고 있습니다. 잠시만 기다려 주세요.';
-        setMessages(prev => [...prev, { id: Date.now(), role: 'ai', text: closingText }]);
-        setTyping(false);
-        setDone(true);
-        // 실제 TTS 오디오는 FastAPI WS TTS_AUDIO 메시지로 수신 (Phase 3 연동)
-        setTimeout(() => navigate('/interview/report'), 3000);
-        return;
-      }
-
-      const aiText = AI_REPLIES[Math.min(currentQ - 1, AI_REPLIES.length - 1)];
-      setQNum(q => q + 1);
-      displayAIQuestion(aiText, null);
-    }, 1400);
+    timer.stop();
+    setInputMode('text');
+    timer.start();
   }
 
-  /* handleSend 최신 참조 유지 */
-  handleSendRef.current = handleSend;
-
-  /* 마운트: 초기 AI 질문 — TTS 오디오는 FastAPI WS 연결 후 수신 (Phase 3) */
-  useEffect(() => {
-    return () => {
-      if (elapsedRef.current !== null) clearInterval(elapsedRef.current);
-      if (countdownRef.current !== null) clearTimeout(countdownRef.current);
-      if (replyRef.current !== null) clearTimeout(replyRef.current);
-      recorder.stop();
-      tts.clear();
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const isUrgent = countdownActive && countdown <= 30;
+  const isDone   = session.sessionState === 'FINISHED';
+  const isError  = session.sessionState === 'ERROR';
+  const totalQ   = 5; // 서버 설정값으로 추후 대체 예정
 
   return (
     <div className="ti">
-
-      {/* 면접 헤더 */}
+      {/* 헤더 */}
       <header className="ti-header">
         <div className="ti-header__left">
           <span className="ti-header__company">{company || '기업명 미입력'}</span>
@@ -307,18 +182,17 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
         </div>
         <div className="ti-header__center">
           <div className="ti-header__dots">
-            {Array.from({ length: TOTAL_Q }, (_, i) => (
-              <span
-                key={i}
-                className={`ti-dot${
-                  done || i < qNum - 1 ? ' ti-dot--done'
-                  : i === qNum - 1     ? ' ti-dot--cur'
-                  : ''
-                }`}
-              />
+            {Array.from({ length: totalQ }, (_, i) => (
+              <span key={i} className={`ti-dot${
+                isDone || i < session.questionOrder - 1 ? ' ti-dot--done'
+                : i === session.questionOrder - 1      ? ' ti-dot--cur'
+                : ''
+              }`} />
             ))}
           </div>
-          <span className="ti-header__q">{done ? '완료' : `Q ${qNum} / ${TOTAL_Q}`}</span>
+          <span className="ti-header__q">
+            {isDone ? '완료' : `Q ${session.questionOrder} / ${totalQ}`}
+          </span>
         </div>
         <div className="ti-header__right">
           <div className="ti-header__timer"><Clock size={13} /> {formatTime(elapsed)}</div>
@@ -328,139 +202,54 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
         </div>
       </header>
 
-      {/* TTS 재생 상태 표시 — 헤더 아래, 채팅창 위 */}
+      {/* TTS 상태 바 */}
       <div className="ti-tts-bar">
-        <TTSPlayer status={tts.status} />
+        <TTSPlayer status={session.ttsStatus} />
       </div>
 
-      {/* 채팅 영역 */}
-      <div className="ti-chat">
-        {messages.map(msg => {
-          if (msg.role === 'notice') {
-            return (
-              <div key={msg.id} className="ti-msg ti-msg--notice">
-                <span className="ti-notice-chip">{msg.text}</span>
-              </div>
-            );
-          }
-          return (
-            <div key={msg.id} className={`ti-msg ti-msg--${msg.role}`}>
-              {msg.role === 'ai' && <div className="ti-msg__avatar">AI</div>}
-              <div className={`ti-msg__bubble${msg.isVoice ? ' ti-msg__bubble--voice' : ''}`}>
-                {msg.isVoice ? (
-                  <>
-                    <span className="ti-voice-label">
-                      {msg.isPending
-                        ? <><Loader2 size={11} className="ti-spin" /> 음성 분석 중...</>
-                        : <><Mic size={11} /> 음성 답변</>
-                      }
-                    </span>
-                    {!msg.isPending && (
-                      msg.text
-                        ? <div className="ti-voice-text">{msg.text.split('\n').map((line, j) => <p key={j}>{line}</p>)}</div>
-                        : <p className="ti-voice-empty">음성이 감지되지 않았습니다</p>
-                    )}
-                  </>
-                ) : (
-                  msg.text.split('\n').map((line, j) => <p key={j}>{line}</p>)
-                )}
-              </div>
-            </div>
-          );
-        })}
-        {typing && (
-          <div className="ti-msg ti-msg--ai">
-            <div className="ti-msg__avatar">AI</div>
-            <div className="ti-msg__bubble ti-msg__bubble--typing">
-              <span /><span /><span />
-            </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
-      </div>
+      {/* 채팅창 */}
+      <ChatWindow
+        messages={session.messages}
+        isTyping={session.isTyping}
+        streamingText={session.streamingText}
+      />
 
-      {/* ── 하단 입력 영역 ── */}
-      {done ? (
+      {/* 하단 입력 영역 */}
+      {isDone ? (
         <div className="ti-done-bar">
           <Loader2 size={16} className="ti-spin" />
           <span>AI가 리포트를 생성하고 있습니다. 잠시만 기다려 주세요...</span>
         </div>
+      ) : isError ? (
+        <div className="ti-error-bar">
+          <span>세션 연결이 끊겼습니다.</span>
+          <button onClick={onExit}>재시작</button>
+        </div>
       ) : (
-        <div className={`ti-bottom${isUrgent ? ' ti-bottom--urgent' : ''}`}>
-
-          {/* ① 답변 제한 카운트다운 바 */}
-          {countdownActive && (
-            <div className={`ti-countdown${isUrgent ? ' ti-countdown--urgent' : ''}`}>
-              <div className="ti-countdown__track">
-                <div
-                  className="ti-countdown__fill"
-                  style={{ width: `${(countdown / ANSWER_LIMIT) * 100}%` }}
-                />
-              </div>
-              <span className={`ti-countdown__label${isUrgent ? ' ti-countdown__label--urgent' : ''}`}>
-                <Clock size={11} />{isUrgent ? ' ⚠️' : ''} {formatTime(countdown)} 남음
-              </span>
-            </div>
-          )}
-
-          {/* ② 음성 입력 모드 (기본) — VoiceRecorder 컴포넌트 */}
-          {inputMode === 'voice' && (
+        <div className={`ti-bottom${timer.active && timer.remaining <= 30 ? ' ti-bottom--urgent' : ''}`}>
+          <InterviewTimer
+            remaining={timer.remaining}
+            duration={ANSWER_LIMIT}
+            active={timer.active}
+          />
+          {inputMode === 'voice' ? (
             <VoiceRecorder
               status={recorder.status}
               error={recorder.error}
               sttLive={sttLive}
               onStart={handleMicStart}
               onStop={handleMicStop}
-              onSwitchToText={() => {
-                // 취소 경로 — 답변 제출 아닌 모드 전환
-                // cancel()로 잔여 청크 전송 차단 + onStop 미실행
-                if (recorder.status === 'recording') recorder.cancel();
-                // pending 음성 말풍선 제거 (텍스트 답변과 꼬임 방지)
-                if (pendingVoiceIdRef.current !== null) {
-                  setMessages(prev => prev.filter(m => m.id !== pendingVoiceIdRef.current));
-                  pendingVoiceIdRef.current = null;
-                }
-                setSttLive('');
-                stopCountdown();
-                setInputMode('text');
-                startCountdown();
+              onSwitchToText={handleSwitchToText}
+            />
+          ) : (
+            <TextAnswerInput
+              disabled={session.isTyping}
+              onSubmit={handleTextSubmit}
+              onSwitchToVoice={() => {
+                timer.stop();
+                setInputMode('voice');
               }}
             />
-          )}
-
-          {/* ③ 텍스트 입력 모드 (보조) */}
-          {inputMode === 'text' && (
-            <div className="ti-text-area">
-              <div className="ti-input-bar">
-                <textarea
-                  ref={textareaRef}
-                  className="ti-input"
-                  placeholder="답변을 입력하세요 (Enter 전송 / Shift+Enter 줄바꿈)"
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(input); }
-                  }}
-                  rows={3}
-                  autoFocus
-                />
-                <button
-                  className="ti-send"
-                  onClick={() => handleSend(input)}
-                  disabled={!input.trim() || typing}
-                  type="button"
-                >
-                  <Send size={18} />
-                </button>
-              </div>
-              <button
-                className="ti-switch-input"
-                onClick={() => { stopCountdown(); setInputMode('voice'); }}
-                type="button"
-              >
-                <Mic size={13} /> 음성으로 답변하기
-              </button>
-            </div>
           )}
         </div>
       )}
@@ -482,20 +271,38 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
   );
 }
 
-/* ── 메인 컴포넌트 ──────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────
+   메인 컴포넌트
+───────────────────────────────────────────────────────────── */
 export default function TextInterviewPage() {
-  const [phase,         setPhase]         = useState<Phase>('setup');
+  const navigate      = useNavigate();
+  const [searchParams] = useSearchParams();
+  const documentId    = searchParams.get('documentId');
+
+  const preflight = usePreflightCheck();
+
+  const [sessionId,     setSessionId]     = useState<string | null>(null);
+  const [phase,         setPhase]         = useState<'setup' | 'interview'>('setup');
   const [resume,        setResume]        = useState<Resume | null>(null);
   const [resumeLoading, setResumeLoading] = useState(true);
-  const [job,           setJob]           = useState(JOB_OPTIONS[0]);
+  const [job,           setJob]           = useState('백엔드 개발자');
   const [company,       setCompany]       = useState('');
+  const [sessionType,   setSessionType]   = useState<SessionType>(SESSION_TYPE.VOICE);
   const [micStatus,     setMicStatus]     = useState<MicStatus>('idle');
   const [audioPlaying,  setAudioPlaying]  = useState(false);
   const [isLoading,     setIsLoading]     = useState(false);
   const [apiError,      setApiError]      = useState<string | null>(null);
 
-  /* 대표 이력서 로드 — Phase 5에서 documentApi 연동 예정, 현재는 DEV 목업 사용
-   * 이력서 없이도 면접 진행 가능 (documentId는 선택 항목, api-schema.md §1) */
+  /* ── 비정상 종료 세션 복구 (constitution.md §상태 복원력) ── */
+  useEffect(() => {
+    const stored = loadInterviewSession();
+    if (stored) {
+      setSessionId(stored.sessionId);
+      setPhase('interview');
+    }
+  }, []);
+
+  /* ── 대표 이력서 로드 (Phase 7에서 documentApi 연동 예정) ── */
   useEffect(() => {
     if (import.meta.env.DEV) {
       setResume({ fileName: MOCK_SETUP.resumeFileName, s3Url: MOCK_SETUP.resumeS3Url });
@@ -503,7 +310,6 @@ export default function TextInterviewPage() {
     setResumeLoading(false);
   }, []);
 
-  /* 마이크 권한 체크 */
   async function handleMicTest() {
     setMicStatus('testing');
     try {
@@ -515,13 +321,13 @@ export default function TextInterviewPage() {
     }
   }
 
-  /* 오디오 출력 테스트 (440Hz 비프음) */
   function handleAudioTest() {
     if (audioPlaying) return;
     setAudioPlaying(true);
     try {
-      const ctx = new (window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      const osc = ctx.createOscillator();
+      const ctx = new (window.AudioContext ??
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const osc  = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -536,141 +342,68 @@ export default function TextInterviewPage() {
     }
   }
 
-  /* 면접 세션 시작 */
   async function handleStart() {
     if (!company.trim() || resumeLoading) return;
     setApiError(null);
     setIsLoading(true);
     try {
-      await startSession({ sessionType: SESSION_TYPE.VOICE, targetCompany: company });
-      setPhase('chat');
+      const result = await startSession({
+        sessionType,
+        targetCompany: company,
+        documentId:    documentId ?? null,
+      });
+      setSessionId(result.sessionId);
+      setPhase('interview');
     } catch {
-      if (import.meta.env.DEV) setPhase('chat');
-      else setApiError('세션 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      if (import.meta.env.DEV) {
+        // DEV fallback: mock sessionId
+        setSessionId(`dev-session-${Date.now()}`);
+        setPhase('interview');
+      } else {
+        setApiError('세션 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      }
     } finally {
       setIsLoading(false);
     }
   }
 
-  /* ── 채팅 면접 룸 ── */
-  if (phase === 'chat') {
+  if (phase === 'interview' && sessionId) {
     return (
-      <ChatRoom
+      <InterviewRoom
+        sessionId={sessionId}
         company={company}
         job={job}
-        onExit={() => { setPhase('setup'); setApiError(null); }}
+        sessionType={sessionType}
+        onExit={() => {
+          setPhase('setup');
+          setSessionId(null);
+          setApiError(null);
+        }}
       />
     );
   }
 
-  /* ── 설정 화면 ── */
   return (
-    <div className="ti-setup">
-      {isLoading && <LoadingOverlay />}
-
-      <div className="ti-setup__card">
-        <p className="ti-setup__eyebrow">AI INTERVIEW</p>
-        <h1 className="ti-setup__title">AI 텍스트 · 음성 면접</h1>
-        <p className="ti-setup__desc">
-          타이핑으로 답변하거나 마이크 버튼으로 음성 답변 — 둘 다 가능해요.<br />
-          이력서와 타겟 공고를 분석해 AI 면접관이 맞춤 질문을 드립니다.
-        </p>
-
-        {/* 대표 이력서 */}
-        <div className={`ti-setup__resume${!resume && !resumeLoading ? ' ti-setup__resume--warn' : ''}`}>
-          {resumeLoading
-            ? <><Loader2 size={14} className="ti-spin" /> 대표 이력서 불러오는 중...</>
-            : resume
-            ? <><FileText size={14} /><span>{resume.fileName}</span><span className="ti-setup__resume-badge">연결됨</span></>
-            : <><AlertCircle size={14} /><span className="ti-setup__resume-none">마이페이지에서 대표 이력서를 등록해주세요.</span></>
-          }
-        </div>
-
-        {/* 목표 직무 */}
-        <div className="ti-setup__section">
-          <label className="ti-setup__label">목표 직무</label>
-          <div className="ti-setup__chips">
-            {JOB_OPTIONS.map(j => (
-              <button key={j} className={`ti-chip${job === j ? ' ti-chip--on' : ''}`} onClick={() => setJob(j)}>
-                {j}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 타겟 기업 */}
-        <div className="ti-setup__section">
-          <label className="ti-setup__label">타겟 기업</label>
-          <input
-            className="ti-setup__input"
-            placeholder="ex) 토스, 카카오, 네이버"
-            value={company}
-            onChange={e => setCompany(e.target.value)}
-          />
-        </div>
-
-        {/* 디바이스 환경 점검 */}
-        <div className="ti-device-check">
-          <p className="ti-device-check__title"><Wifi size={13} /> 디바이스 환경 점검</p>
-          <div className="ti-device-check__grid">
-
-            {/* 마이크 테스트 */}
-            <div className="ti-device-item">
-              <div className="ti-device-item__row">
-                <button
-                  className={`ti-device-btn${micStatus === 'ok' ? ' ti-device-btn--ok' : micStatus === 'error' ? ' ti-device-btn--err' : ''}`}
-                  onClick={handleMicTest}
-                  disabled={micStatus === 'testing'}
-                >
-                  {micStatus === 'testing' ? <Loader2 size={14} className="ti-spin" /> : <Mic size={14} />}
-                  {micStatus === 'idle'    && '마이크 테스트'}
-                  {micStatus === 'testing' && '확인 중...'}
-                  {micStatus === 'ok'      && '마이크 연결됨'}
-                  {micStatus === 'error'   && '권한 오류'}
-                </button>
-                {micStatus === 'ok' && (
-                  <div className="ti-wave-bars">
-                    {[0, 1, 2, 3, 4].map(i => (
-                      <span key={i} className="ti-wave-bar" style={{ animationDelay: `${i * 0.1}s` }} />
-                    ))}
-                  </div>
-                )}
-              </div>
-              {micStatus === 'error' && (
-                <p className="ti-device-item__hint">브라우저 설정에서 마이크 권한을 허용해주세요.</p>
-              )}
-            </div>
-
-            {/* 스피커 테스트 */}
-            <div className="ti-device-item">
-              <button
-                className={`ti-device-btn${audioPlaying ? ' ti-device-btn--playing' : ''}`}
-                onClick={handleAudioTest}
-                disabled={audioPlaying}
-              >
-                <Volume2 size={14} />
-                {audioPlaying ? '재생 중...' : '스피커 테스트'}
-              </button>
-            </div>
-
-          </div>
-        </div>
-
-        {apiError && (
-          <p className="ti-api-error"><AlertCircle size={13} /> {apiError}</p>
-        )}
-
-        <button
-          className="ti-setup__btn"
-          onClick={handleStart}
-          disabled={!company.trim() || isLoading || resumeLoading}
-        >
-          {isLoading
-            ? <><Loader2 size={15} className="ti-spin" /> 세션 생성 중...</>
-            : <><Mic size={15} /> AI 텍스트 · 음성 면접 시작하기</>
-          }
-        </button>
-      </div>
-    </div>
+    <InterviewSetup
+      resume={resume}
+      resumeLoading={resumeLoading}
+      job={job}
+      company={company}
+      sessionType={sessionType}
+      micCheckStatus={preflight.micStatus}
+      networkCheckStatus={preflight.networkStatus}
+      onCheckMic={preflight.checkMic}
+      onCheckNetwork={preflight.checkNetwork}
+      micStatus={micStatus}
+      audioPlaying={audioPlaying}
+      onMicTest={handleMicTest}
+      onAudioTest={handleAudioTest}
+      onJobChange={setJob}
+      onCompanyChange={setCompany}
+      onSessionTypeChange={setSessionType}
+      onStart={handleStart}
+      isLoading={isLoading}
+      apiError={apiError}
+    />
   );
 }
