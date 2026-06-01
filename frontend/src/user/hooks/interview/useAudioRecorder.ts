@@ -164,7 +164,10 @@ export function useAudioRecorder({
   useEffect(() => {
     return () => {
       isStoppingRef.current = true;
-      recorderRef.current?.stop();
+      // inactive 상태에서 stop() 호출 시 InvalidStateError 방지
+      if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+        recorderRef.current.stop();
+      }
       releaseStream();
     };
   }, []);
