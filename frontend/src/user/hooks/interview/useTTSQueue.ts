@@ -15,10 +15,17 @@ export interface UseTTSQueueResult {
 export function useTTSQueue(): UseTTSQueueResult {
   const [status, setStatus] = useState<TTSQueueStatus>('idle');
 
-  const queueRef        = useRef<string[]>([]);
-  const isPlayingRef    = useRef(false);
-  const audioCtxRef     = useRef<AudioContext | null>(null);
+  const queueRef         = useRef<string[]>([]);
+  const isPlayingRef     = useRef(false);
+  const audioCtxRef      = useRef<AudioContext | null>(null);
   const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
+
+  /**
+   * 세대 번호 (generation counter)
+   * clear() / stop() 호출 시 증가 → 진행 중인 decodeAudioData() 완료 후
+   * 세대가 바뀌었으면 재생을 취소하여 뒤늦은 TTS 재생 방지
+   */
+  const generationRef = useRef(0);
 
   /** AudioContext 싱글턴 — 닫혔으면 새로 생성 */
   function getAudioContext(): AudioContext {
@@ -46,6 +53,9 @@ export function useTTSQueue(): UseTTSQueueResult {
     isPlayingRef.current = true;
     setStatus('loading');
 
+    // decodeAudioData() 시작 시점의 세대 번호 캡처
+    const myGeneration = generationRef.current;
+
     try {
       const ctx = getAudioContext();
 
@@ -59,8 +69,15 @@ export function useTTSQueue(): UseTTSQueueResult {
         bytes[i] = binary.charCodeAt(i);
       }
 
-      // ArrayBuffer → AudioBuffer (디코딩)
+      // ArrayBuffer → AudioBuffer (비동기 디코딩)
       const audioBuffer = await ctx.decodeAudioData(bytes.buffer.slice(0));
+
+      // decodeAudioData() 완료 후 세대 확인
+      // clear()/stop()이 호출됐으면 세대가 바뀌어 있으므로 재생 취소
+      if (generationRef.current !== myGeneration) {
+        isPlayingRef.current = false;
+        return;
+      }
 
       // AudioBufferSourceNode 생성 및 재생
       const source = ctx.createBufferSource();
@@ -90,7 +107,9 @@ export function useTTSQueue(): UseTTSQueueResult {
     } catch {
       // 디코딩 실패 시 해당 청크 스킵하고 다음 청크 재생 시도
       isPlayingRef.current = false;
-      playNextRef.current?.();
+      if (generationRef.current === myGeneration) {
+        playNextRef.current?.();
+      }
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -106,6 +125,8 @@ export function useTTSQueue(): UseTTSQueueResult {
   }, []);
 
   const stop = useCallback(() => {
+    // 세대 번호 증가 → 진행 중인 decodeAudioData 완료 후 재생 취소
+    generationRef.current += 1;
     const source = currentSourceRef.current as
       (AudioBufferSourceNode & { _markStopped?: () => void }) | null;
     // onended가 발동해도 다음 청크를 재생하지 않도록 플래그 먼저 설정
