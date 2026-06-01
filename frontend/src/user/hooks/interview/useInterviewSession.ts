@@ -181,7 +181,11 @@ export function useInterviewSession({
   const handleSpringStatusChange = useCallback((status: SpringWSStatus) => {
     setSpringWsStatus(status);
     if (status === 'RECONNECTING') dispatch({ type: 'RECONNECTING' });
-    if (status === 'ERROR')        dispatch({ type: 'ERROR' });
+    // DEV 모드: 백엔드 없을 때 WS ERROR를 무시하고 RUNNING으로 유지
+    if (status === 'ERROR') {
+      if (import.meta.env.DEV) return;
+      dispatch({ type: 'ERROR' });
+    }
     if (status === 'CONNECTED' && stateRef.current.sessionState === 'RECONNECTING') {
       dispatch({ type: 'RUNNING' });
     }
@@ -255,7 +259,10 @@ export function useInterviewSession({
   const handleFastApiStatusChange = useCallback((status: FastApiWSStatus) => {
     setFastApiWsStatus(status);
     if (status === 'RECONNECTING') dispatch({ type: 'RECONNECTING' });
-    if (status === 'ERROR')        dispatch({ type: 'ERROR' });
+    if (status === 'ERROR') {
+      if (import.meta.env.DEV) return;
+      dispatch({ type: 'ERROR' });
+    }
   }, []);
 
   // ── WebSocket 이중 연결 ─────────────────────────────────────
@@ -290,14 +297,43 @@ export function useInterviewSession({
 
   // ── 액션 메서드 ────────────────────────────────────────────
 
+  const DEV_REPLIES = [
+    '답변 감사합니다. 해당 기술적 선택의 근거는 무엇이었나요?',
+    '좋습니다. 팀 협업 시 의견 충돌이 생겼을 때 어떻게 해결하셨나요?',
+    '인상적이네요. 본인의 강점과 약점을 각각 말씀해 주세요.',
+    '마지막 질문입니다. 입사 후 3년간의 커리어 목표를 말씀해 주세요.',
+    '수고하셨습니다! AI가 답변을 분석하여 리포트를 생성하고 있습니다.',
+  ];
+
   const sendTextAnswer = useCallback(async (text: string) => {
-    if (!sessionId || !text.trim()) return;
-    dispatch({
-      type:    'ADD_MESSAGE',
-      message: { id: Date.now(), role: 'user', text: text.trim() },
-    });
+    if (!sessionId) return;
+    if (text.trim()) {
+      dispatch({
+        type:    'ADD_MESSAGE',
+        message: { id: Date.now(), role: 'user', text: text.trim() },
+      });
+    }
     dispatch({ type: 'SET_TYPING', typing: true });
     tts.clear();
+
+    // DEV mock: API 호출 없이 다음 질문 자동 생성
+    if (import.meta.env.DEV) {
+      const currentQ = stateRef.current.questionOrder;
+      setTimeout(() => {
+        if (currentQ >= 5) {
+          dispatch({ type: 'FINISH' });
+          return;
+        }
+        dispatch({ type: 'SET_TYPING', typing: false });
+        dispatch({
+          type:    'ADD_MESSAGE',
+          message: { id: Date.now(), role: 'ai', text: DEV_REPLIES[Math.min(currentQ - 1, DEV_REPLIES.length - 1)] },
+        });
+        dispatch({ type: 'SET_QUESTION_ORDER', order: currentQ + 1 });
+      }, 1200);
+      return;
+    }
+
     try {
       await submitTextAnswer(sessionId, {
         questionOrder:  stateRef.current.questionOrder,
@@ -306,7 +342,7 @@ export function useInterviewSession({
     } catch {
       dispatch({ type: 'SET_TYPING', typing: false });
     }
-  }, [sessionId, tts]);
+  }, [sessionId, tts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const finishSession = useCallback(async () => {
     if (!sessionId) return;

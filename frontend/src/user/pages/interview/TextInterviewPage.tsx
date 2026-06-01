@@ -57,6 +57,20 @@ function InterviewRoom({ sessionId, company, job, sessionType, onExit }: Intervi
   const [exitModal,  setExitModal]  = useState(false);
   const [pendingVoiceId, setPendingVoiceId] = useState<number | null>(null);
 
+  /* ── DEV mock: 초기 AI 질문 + RUNNING 전환 ── */
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    session.dispatch({ type: 'RUNNING' });
+    session.dispatch({
+      type:    'ADD_MESSAGE',
+      message: {
+        id:   1,
+        role: 'ai',
+        text: '안녕하세요! AI 실시간 면접을 시작하겠습니다.\n이력서를 분석했어요. 먼저 간단한 자기소개를 부탁드립니다.',
+      },
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ── 총 경과 타이머 ── */
   useEffect(() => {
     const id = setInterval(() => setElapsed(e => e + 1), 1000);
