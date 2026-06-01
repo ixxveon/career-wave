@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 
 export type TTSQueueStatus = 'idle' | 'loading' | 'playing';
 
@@ -137,6 +137,14 @@ export function useTTSQueue(): UseTTSQueueResult {
     queueRef.current = [];
     stop();
   }, [stop]);
+
+  // 언마운트 시 AudioContext 명시적 종료 — 메모리 누수 방지
+  useEffect(() => {
+    return () => {
+      audioCtxRef.current?.close();
+      audioCtxRef.current = null;
+    };
+  }, []);
 
   return { status, enqueue, stop, clear };
 }
