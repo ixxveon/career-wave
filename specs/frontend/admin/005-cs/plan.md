@@ -81,3 +81,36 @@ CustomerServicePage
 - [ ] Phase 4: 1:1 문의 탭 — 목록 테이블, 상세·답변 모달, 상태 배지
 - [ ] Phase 5: API 연동 — `frontend/src/admin/api/csApi.ts` 작성 및 더미 데이터 제거
 - [ ] Phase 6: AI 초안 (v2) — 공지·FAQ·문의 초안 생성 버튼 및 FastAPI 연동
+
+---
+
+## Data Flow
+
+1. 탭 전환 시 해당 탭 데이터만 독립적으로 로드한다 (공지/FAQ/문의 데이터 혼합 금지).
+2. KPI는 페이지 마운트 및 CRUD 성공 시 재조회한다.
+3. 필터 변경 → 검색 버튼 → `appliedFilters ref` 갱신 → fetch 호출.
+4. 공지·FAQ CRUD 성공 → 목록 재조회.
+5. 답변 저장 성공 → 서버 응답의 `inquiryStatus` 기준으로 해당 행 상태 배지 갱신.
+
+---
+
+## State Ownership
+
+| 상태 | 소유 위치 |
+|---|---|
+| KPI 집계 | `CustomerServicePage` |
+| 공지 목록 | `CustomerServicePage` (탭 내 독립) |
+| FAQ 목록 | `CustomerServicePage` (탭 내 독립) |
+| 문의 목록 | `CustomerServicePage` (탭 내 독립) |
+| 필터 입력 상태 | `CustomerServicePage` (로컬) |
+| 적용 필터 | `appliedFilters ref` |
+| 모달 상태 (등록/수정/상세) | `CustomerServicePage` |
+
+---
+
+## Risks
+
+- **notices·faqs·inquiries 테이블 공유**: `user/support`와 `admin/cs`가 동일 테이블 사용 → BE Entity 공유 전략(Option A: 공통 패키지 이동) 확인 필요.
+- **BE 미완성**: API 연동 전까지 더미 데이터 유지, `csApi.ts` 구조만 완성하여 전환 대비.
+- **AI 초안**: v2 예정 → v1에서는 mock 버튼 UI만 유지, 실제 FastAPI 연동 금지.
+- **409 INQUIRY_ALREADY_COMPLETED**: 동시 처리 방지를 위한 서버 에러 → 별도 에러 메시지 처리 필요.
