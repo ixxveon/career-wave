@@ -7,7 +7,7 @@ const MAX_EMPLOYMENT_CERTIFICATE_SIZE = 5 * 1024 * 1024;
 
 export function validateEmploymentCertificateFile(file: File): FileValidationResult {
   const hasPdfExtension = file.name.toLowerCase().endsWith('.pdf');
-  const hasPdfMimeType = file.type === 'application/pdf' || file.type === '';
+  const hasPdfMimeType = file.type === 'application/pdf';
 
   if (!hasPdfExtension || !hasPdfMimeType) {
     return {

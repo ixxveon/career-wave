@@ -1,15 +1,18 @@
 import type { ApiErrorBody } from '../../types/member';
 
-export type MemberErrorCode =
-  | 'VALIDATION_ERROR'
-  | 'UNAUTHORIZED'
-  | 'FORBIDDEN'
-  | 'DUPLICATED'
-  | 'LOCKED'
-  | 'RATE_LIMITED'
-  | 'SERVER_ERROR'
-  | 'NETWORK_ERROR'
-  | 'UNKNOWN';
+export const MEMBER_ERROR_CODE = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  DUPLICATED: 'DUPLICATED',
+  LOCKED: 'LOCKED',
+  RATE_LIMITED: 'RATE_LIMITED',
+  SERVER_ERROR: 'SERVER_ERROR',
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+export type MemberErrorCode = (typeof MEMBER_ERROR_CODE)[keyof typeof MEMBER_ERROR_CODE];
 
 export interface MemberApiError {
   code: MemberErrorCode;
@@ -31,25 +34,25 @@ const fallbackMessages: Record<MemberErrorCode, string> = {
 };
 
 export function getMemberErrorCode(statusCode: number): MemberErrorCode {
-  if (statusCode === 0) return 'NETWORK_ERROR';
+  if (statusCode === 0) return MEMBER_ERROR_CODE.NETWORK_ERROR;
 
   switch (statusCode) {
     case 400:
-      return 'VALIDATION_ERROR';
+      return MEMBER_ERROR_CODE.VALIDATION_ERROR;
     case 401:
-      return 'UNAUTHORIZED';
+      return MEMBER_ERROR_CODE.UNAUTHORIZED;
     case 403:
-      return 'FORBIDDEN';
+      return MEMBER_ERROR_CODE.FORBIDDEN;
     case 409:
-      return 'DUPLICATED';
+      return MEMBER_ERROR_CODE.DUPLICATED;
     case 423:
-      return 'LOCKED';
+      return MEMBER_ERROR_CODE.LOCKED;
     case 429:
-      return 'RATE_LIMITED';
+      return MEMBER_ERROR_CODE.RATE_LIMITED;
     case 500:
-      return 'SERVER_ERROR';
+      return MEMBER_ERROR_CODE.SERVER_ERROR;
     default:
-      return statusCode >= 500 ? 'SERVER_ERROR' : 'UNKNOWN';
+      return statusCode >= 500 ? MEMBER_ERROR_CODE.SERVER_ERROR : MEMBER_ERROR_CODE.UNKNOWN;
   }
 }
 
@@ -70,8 +73,10 @@ export function toMemberApiError(statusCode: number, body?: ApiErrorBody): Membe
 }
 
 export function getSafeLoginMessage(error: MemberApiError): string {
-  if (error.code === 'LOCKED') return fallbackMessages.LOCKED;
-  if (error.code === 'RATE_LIMITED') return fallbackMessages.RATE_LIMITED;
-  if (error.code === 'FORBIDDEN') return fallbackMessages.FORBIDDEN;
+  if (error.code === MEMBER_ERROR_CODE.NETWORK_ERROR) return fallbackMessages.NETWORK_ERROR;
+  if (error.code === MEMBER_ERROR_CODE.SERVER_ERROR || error.statusCode >= 500) return fallbackMessages.SERVER_ERROR;
+  if (error.code === MEMBER_ERROR_CODE.LOCKED) return fallbackMessages.LOCKED;
+  if (error.code === MEMBER_ERROR_CODE.RATE_LIMITED) return fallbackMessages.RATE_LIMITED;
+  if (error.code === MEMBER_ERROR_CODE.FORBIDDEN) return fallbackMessages.FORBIDDEN;
   return '아이디 또는 비밀번호를 확인해주세요.';
 }

@@ -1,7 +1,15 @@
 import { MEMBER_TYPE, type MemberType } from '../../types/member';
 import { isPasswordConfirmed, validatePasswordPolicy } from './passwordPolicy';
 
-export type LoginIdCheckState = 'unchecked' | 'checking' | 'available' | 'duplicated' | 'error';
+export const LOGIN_ID_CHECK_STATE = {
+  UNCHECKED: 'unchecked',
+  CHECKING: 'checking',
+  AVAILABLE: 'available',
+  DUPLICATED: 'duplicated',
+  ERROR: 'error',
+} as const;
+
+export type LoginIdCheckState = (typeof LOGIN_ID_CHECK_STATE)[keyof typeof LOGIN_ID_CHECK_STATE];
 
 export interface PersonalRegisterDraft {
   loginId: string;
@@ -55,7 +63,7 @@ export function canSubmitPersonalRegister(form: PersonalRegisterDraft, loginIdSt
 
   return (
     form.loginId.trim().length > 0 &&
-    loginIdState === 'available' &&
+    loginIdState === LOGIN_ID_CHECK_STATE.AVAILABLE &&
     password.valid &&
     isPasswordConfirmed(form.password, form.passwordConfirm) &&
     form.name.trim().length > 0 &&
@@ -73,7 +81,7 @@ export function canSubmitCompanyRegister(form: CompanyRegisterDraft, loginIdStat
 
   return (
     form.loginId.trim().length > 0 &&
-    loginIdState === 'available' &&
+    loginIdState === LOGIN_ID_CHECK_STATE.AVAILABLE &&
     password.valid &&
     isPasswordConfirmed(form.password, form.passwordConfirm) &&
     form.managerName.trim().length > 0 &&

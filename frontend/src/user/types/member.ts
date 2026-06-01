@@ -5,13 +5,16 @@ export const MEMBER_TYPE = {
 
 export type MemberType = (typeof MEMBER_TYPE)[keyof typeof MEMBER_TYPE];
 
-export type MemberStatus =
-  | 'ACTIVE'
-  | 'SUSPENDED'
-  | 'BANNED'
-  | 'LOCKED'
-  | 'WITHDRAWN'
-  | 'BLACKLISTED';
+export const MEMBER_STATUS = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  BANNED: 'BANNED',
+  LOCKED: 'LOCKED',
+  WITHDRAWN: 'WITHDRAWN',
+  BLACKLISTED: 'BLACKLISTED',
+} as const;
+
+export type MemberStatus = (typeof MEMBER_STATUS)[keyof typeof MEMBER_STATUS];
 
 export const COMPANY_APPROVAL_STATUS = {
   NONE: 'NONE',

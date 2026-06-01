@@ -13,13 +13,14 @@ import {
   isValidLoginId,
   isValidPhone,
   isValidVerificationCode,
+  COMPANY_TYPE_LABELS,
   toCompanyRegisterRequest,
   toUserRegisterRequest,
   validateCompanyRegisterForm,
   validatePersonalRegisterForm,
   type RegisterFieldErrors,
 } from '../../utils/member/registerSchema';
-import type { LoginIdCheckState } from '../../utils/member/validation';
+import { LOGIN_ID_CHECK_STATE, type LoginIdCheckState } from '../../utils/member/validation';
 import './AuthPage.css';
 
 const socialProviders = [
@@ -29,18 +30,7 @@ const socialProviders = [
   { id: 'apple', label: 'Apple' },
 ];
 
-const companyTypes = [
-  '대기업',
-  '대기업 계열사·자회사',
-  '중소기업(300명 이하)',
-  '중견기업(300명 이상)',
-  '벤처기업',
-  '외국계(외국 투자기업)',
-  '외국계(외국 법인기업)',
-  '국내 공공기관·공기업',
-  '비영리단체·협회·교육재단',
-  '외국 기관·비영리기구·단체',
-];
+const companyTypes = Object.values(COMPANY_TYPE_LABELS);
 
 const initialPersonalForm = {
   userId: '',
@@ -612,7 +602,7 @@ function CompanyTerms({ values, onChange }) {
 function PersonalRegisterForm() {
   const [form, setForm] = useState(initialPersonalForm);
   const [terms, setTerms] = useState(initialPersonalTerms);
-  const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>('unchecked');
+  const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>(LOGIN_ID_CHECK_STATE.UNCHECKED);
   const [verification, setVerification] = useState({
     emailId: '',
     emailToken: '',
@@ -659,28 +649,28 @@ function PersonalRegisterForm() {
     setFormMessage('');
     setSuccessMessage('');
 
-    if (key === 'userId') setLoginIdState('unchecked');
+    if (key === 'userId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
     if (key === 'email') setVerification((current) => ({ ...current, emailId: '', emailToken: '' }));
     if (key === 'phone') setVerification((current) => ({ ...current, phoneId: '', phoneToken: '' }));
   };
 
   const handleLoginIdCheck = async () => {
     if (!isValidLoginId(form.userId)) {
-      setLoginIdState('error');
+      setLoginIdState(LOGIN_ID_CHECK_STATE.ERROR);
       setFieldErrors((current) => ({ ...current, loginId: '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.' }));
       return;
     }
 
-    setLoginIdState('checking');
+    setLoginIdState(LOGIN_ID_CHECK_STATE.CHECKING);
     try {
       const result = await checkLoginId.mutateAsync(form.userId.trim());
-      setLoginIdState(result.available ? 'available' : 'duplicated');
+      setLoginIdState(result.available ? LOGIN_ID_CHECK_STATE.AVAILABLE : LOGIN_ID_CHECK_STATE.DUPLICATED);
       setFieldErrors((current) => ({
         ...current,
         loginId: result.available ? '' : '이미 사용 중인 아이디입니다.',
       }));
     } catch (error) {
-      setLoginIdState('error');
+      setLoginIdState(LOGIN_ID_CHECK_STATE.ERROR);
       setFieldErrors((current) => ({ ...current, loginId: getErrorMessage(error, '아이디 중복 확인에 실패했습니다.') }));
     }
   };
@@ -805,11 +795,11 @@ function PersonalRegisterForm() {
           <Field label="아이디" required wide>
             <AuthButtonGroup
               input={<TextInput value={form.userId} onChange={(value) => update('userId', value)} placeholder="아이디(영문, 숫자 조합 6~20자)" />}
-              buttonLabel={checkLoginId.isPending || loginIdState === 'checking' ? '확인 중' : '중복 확인'}
-              disabled={checkLoginId.isPending || loginIdState === 'checking'}
+              buttonLabel={checkLoginId.isPending || loginIdState === LOGIN_ID_CHECK_STATE.CHECKING ? '확인 중' : '중복 확인'}
+              disabled={checkLoginId.isPending || loginIdState === LOGIN_ID_CHECK_STATE.CHECKING}
               onClick={handleLoginIdCheck}
             />
-            <StatusPill active={loginIdState === 'available'}>사용 가능한 아이디입니다.</StatusPill>
+            <StatusPill active={loginIdState === LOGIN_ID_CHECK_STATE.AVAILABLE}>사용 가능한 아이디입니다.</StatusPill>
             {fieldErrors.loginId && <p className="cw-register-error">{fieldErrors.loginId}</p>}
           </Field>
           <Field label="이름" required wide>
@@ -905,7 +895,7 @@ function CompanyRegisterForm() {
   const [terms, setTerms] = useState(initialCompanyTerms);
   const [employmentCertificate, setEmploymentCertificate] = useState<File | null>(null);
   const [employmentCertificateError, setEmploymentCertificateError] = useState('');
-  const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>('unchecked');
+  const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>(LOGIN_ID_CHECK_STATE.UNCHECKED);
   const [verification, setVerification] = useState({
     phoneId: '',
     phoneToken: '',
@@ -970,7 +960,7 @@ function CompanyRegisterForm() {
     setFormMessage('');
     setSuccessMessage('');
 
-    if (key === 'managerId') setLoginIdState('unchecked');
+    if (key === 'managerId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
     if (key === 'managerPhone') setVerification((current) => ({ ...current, phoneId: '', phoneToken: '' }));
     if (key === 'managerEmail') setVerification((current) => ({ ...current, emailId: '', emailToken: '' }));
     if (key === 'certificateNumber') setVerified((current) => ({ ...current, company: false }));
@@ -985,11 +975,17 @@ function CompanyRegisterForm() {
       return;
     }
 
-    const isPdf = selectedFile.type === 'application/pdf' || selectedFile.type === '' || selectedFile.name.toLowerCase().endsWith('.pdf');
+    const fileValidation = validateCompanyRegisterForm(
+      {
+        ...companySnapshot,
+        employmentCertificate: selectedFile,
+      },
+      loginIdState,
+    );
 
-    if (!isPdf) {
+    if (fileValidation.employmentCertificate) {
       setEmploymentCertificate(null);
-      setEmploymentCertificateError('PDF 형식의 파일만 업로드할 수 있습니다.');
+      setEmploymentCertificateError(fileValidation.employmentCertificate);
       setVerification((current) => ({ ...current, employmentCertificateFileId: '' }));
       event.target.value = '';
       return;
@@ -1012,21 +1008,21 @@ function CompanyRegisterForm() {
 
   const handleLoginIdCheck = async () => {
     if (!isValidLoginId(form.managerId)) {
-      setLoginIdState('error');
+      setLoginIdState(LOGIN_ID_CHECK_STATE.ERROR);
       setFieldErrors((current) => ({ ...current, loginId: '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.' }));
       return;
     }
 
-    setLoginIdState('checking');
+    setLoginIdState(LOGIN_ID_CHECK_STATE.CHECKING);
     try {
       const result = await checkLoginId.mutateAsync(form.managerId.trim());
-      setLoginIdState(result.available ? 'available' : 'duplicated');
+      setLoginIdState(result.available ? LOGIN_ID_CHECK_STATE.AVAILABLE : LOGIN_ID_CHECK_STATE.DUPLICATED);
       setFieldErrors((current) => ({
         ...current,
         loginId: result.available ? '' : '이미 사용 중인 아이디입니다.',
       }));
     } catch (error) {
-      setLoginIdState('error');
+      setLoginIdState(LOGIN_ID_CHECK_STATE.ERROR);
       setFieldErrors((current) => ({ ...current, loginId: getErrorMessage(error, '아이디 중복 확인에 실패했습니다.') }));
     }
   };
@@ -1228,11 +1224,11 @@ function CompanyRegisterForm() {
                   placeholder="아이디(영문, 숫자 조합 6~20자)"
                 />
               }
-              buttonLabel={checkLoginId.isPending || loginIdState === 'checking' ? '확인 중' : '중복 확인'}
-              disabled={checkLoginId.isPending || loginIdState === 'checking'}
+              buttonLabel={checkLoginId.isPending || loginIdState === LOGIN_ID_CHECK_STATE.CHECKING ? '확인 중' : '중복 확인'}
+              disabled={checkLoginId.isPending || loginIdState === LOGIN_ID_CHECK_STATE.CHECKING}
               onClick={handleLoginIdCheck}
             />
-            <StatusPill active={loginIdState === 'available'}>사용 가능한 아이디입니다.</StatusPill>
+            <StatusPill active={loginIdState === LOGIN_ID_CHECK_STATE.AVAILABLE}>사용 가능한 아이디입니다.</StatusPill>
             {fieldErrors.loginId && <p className="cw-register-error">{fieldErrors.loginId}</p>}
           </Field>
           <Field label="담당자명" required>
