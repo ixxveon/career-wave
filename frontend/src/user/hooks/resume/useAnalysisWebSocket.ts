@@ -128,12 +128,15 @@ export function useAnalysisWebSocket({
         }
       };
 
+      // onerror: 네트워크 단절 토스트 + ERROR 상태 전이
       // onerror 이후 onclose가 항상 발화하므로 errorFiredRef로 중복 방지
       ws.onerror = () => {
         clearTimeout_();
         errorFiredRef.current = true;
         setIsConnected(false);
         onNetworkError();
+        // 네트워크 에러도 ERROR 상태로 전이 — LoadingModal 닫힘 보장
+        onFailed('네트워크 연결이 끊겼습니다. 연결 상태를 확인 후 다시 시도해주세요.');
       };
 
       ws.onclose = (event: CloseEvent) => {
