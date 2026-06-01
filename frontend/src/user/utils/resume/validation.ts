@@ -126,7 +126,7 @@ export function validateCoverLetterForm(
       return {
         valid: false,
         errorCode: 'ANSWER_TOO_LONG',
-        message: `${i + 1}번 답변이 1000자를 초과했습니다.`,
+        message: `${i + 1}번 답변이 ${MAX_ANSWER_LENGTH}자를 초과했습니다.`,
       };
     }
   }
