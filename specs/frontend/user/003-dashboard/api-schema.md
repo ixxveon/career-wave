@@ -84,6 +84,7 @@ Authorization: Bearer {accessToken}
     "roleType": "ROLE_USER",
     "memberStatus": "ACTIVE",
     "subscriptionStatus": "FREE",
+    "notificationEnabled": true,
     "createdAt": "2026-05-01T12:00:00Z"
   }
 }
@@ -97,6 +98,7 @@ Authorization: Bearer {accessToken}
 
 ### Linked Response
 
+```json
 {
   "success": true,
   "statusCode": 200,
@@ -107,9 +109,11 @@ Authorization: Bearer {accessToken}
     "linked": true
   }
 }
+```
 
 ### Not Linked Response
 
+```json
 {
   "success": true,
   "statusCode": 200,
@@ -120,6 +124,7 @@ Authorization: Bearer {accessToken}
     "linked": false
   }
 }
+```
 
 > 프론트는 `linked` 값을 기준으로 GitHub 연동 상태를 표시한다.
 
@@ -260,20 +265,15 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 6. 채용공고 상세 페이지 이동
+## 6. 채용공고 상세 보기
 
-채용공고 상세 페이지 이동은 프론트 라우팅으로 처리한다.
+스크랩 공고에서 채용공고 상세보기는 현재 Dashboard 화면 내에서 `JobNoticeDetail` 컴포넌트를 모달 형태로 표시한다.
 
-### Route
-
-```txt
-/job-notices/{jobNoticeId}
-```
-
-### Example
+### 동작
 
 ```txt
-/job-notices/101
+상세보기 클릭
+→ 선택한 jobNoticeId 기준으로 JobNoticeDetail 모달 오픈
 ```
 
-> 실제 상세 페이지 경로는 JobNotice 프론트 라우팅 확정 후 맞춘다.
+> 실제 상세 페이지 라우팅이 별도로 확정되는 경우, JobNotice 도메인 담당 구현 기준에 맞춰 이동 방식을 변경한다.
