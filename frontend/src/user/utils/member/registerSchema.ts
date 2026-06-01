@@ -39,6 +39,7 @@ export interface PersonalRegisterFormSnapshot extends PersonalRegisterDraft {
 export interface CompanyRegisterFormSnapshot extends CompanyRegisterDraft {
   companyType: string;
   certificateNumber: string;
+  managerEmailVerificationToken?: string;
   managerPhoneCode: string;
   managerEmailCode: string;
   employmentCertificate: File | null;
@@ -104,7 +105,7 @@ export function validateCompanyRegisterForm(
   if (!isValidPhone(form.managerPhone)) errors.managerPhone = '담당자 전화번호를 올바르게 입력해주세요.';
   if (!form.managerVerificationToken?.trim()) errors.managerPhoneCode = '담당자 휴대폰 인증을 완료해주세요.';
   if (!isValidEmail(form.managerEmail)) errors.managerEmail = '담당자 이메일을 올바르게 입력해주세요.';
-  if (!form.employmentCertificateFileId?.trim()) errors.managerEmailCode = '담당자 이메일 인증을 완료해주세요.';
+  if (!form.managerEmailVerificationToken?.trim()) errors.managerEmailCode = '담당자 이메일 인증을 완료해주세요.';
   if (!password.valid) errors.password = password.errors[0];
   if (form.password !== form.passwordConfirm) errors.passwordConfirm = '비밀번호가 일치하지 않습니다.';
 

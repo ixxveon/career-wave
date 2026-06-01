@@ -1,12 +1,21 @@
 import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { Apple, BadgeCheck, Building2, CheckCircle2, FileText, ShieldCheck, UserRound } from 'lucide-react';
-import { useLoginIdCheck, useRegisterUser, useSendVerificationCode, useConfirmVerificationCode } from '../../hooks/member';
+import {
+  useLoginIdCheck,
+  useRegisterUser,
+  useRegisterCompany,
+  useUploadEmploymentCertificate,
+  useSendVerificationCode,
+  useConfirmVerificationCode,
+} from '../../hooks/member';
 import {
   isValidEmail,
   isValidLoginId,
   isValidPhone,
   isValidVerificationCode,
+  toCompanyRegisterRequest,
   toUserRegisterRequest,
+  validateCompanyRegisterForm,
   validatePersonalRegisterForm,
   type RegisterFieldErrors,
 } from '../../utils/member/registerSchema';
@@ -546,7 +555,7 @@ function CompanyTerms({ values, onChange }) {
   const terms = [
     { key: 'service', type: 'required', label: '이용약관 동의', details: companyTermDetails.service },
     { key: 'sms', type: 'required', label: '문자서비스 이용약관 동의', details: companyTermDetails.sms },
-    { key: 'privacy', type: 'optional', label: '개인정보 수집 및 이용 동의', details: companyTermDetails.privacy },
+    { key: 'privacy', type: 'required', label: '개인정보 수집 및 이용 동의', details: companyTermDetails.privacy },
     { key: 'marketing', type: 'optional', label: '광고성 정보 수신 동의', details: companyTermDetails.marketing },
   ];
 
@@ -896,22 +905,77 @@ function CompanyRegisterForm() {
   const [terms, setTerms] = useState(initialCompanyTerms);
   const [employmentCertificate, setEmploymentCertificate] = useState<File | null>(null);
   const [employmentCertificateError, setEmploymentCertificateError] = useState('');
+  const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>('unchecked');
+  const [verification, setVerification] = useState({
+    phoneId: '',
+    phoneToken: '',
+    emailId: '',
+    emailToken: '',
+    employmentCertificateFileId: '',
+  });
+  const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
+  const [formMessage, setFormMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitGuideOpen, setIsSubmitGuideOpen] = useState(false);
   const employmentCertificateInputRef = useRef<HTMLInputElement | null>(null);
   const [verified, setVerified] = useState({
     company: false,
-    managerId: false,
-    phoneSent: false,
-    phoneResent: false,
-    phone: false,
-    emailSent: false,
-    emailResent: false,
-    email: false,
   });
+  const checkLoginId = useLoginIdCheck();
+  const sendPhoneCode = useSendVerificationCode();
+  const confirmPhoneCode = useConfirmVerificationCode();
+  const sendEmailCode = useSendVerificationCode();
+  const confirmEmailCode = useConfirmVerificationCode();
+  const uploadEmploymentCertificate = useUploadEmploymentCertificate();
+  const registerCompany = useRegisterCompany();
   const passwordMismatch = form.managerPasswordConfirm && form.managerPassword !== form.managerPasswordConfirm;
-  const canSubmit = terms.service && terms.sms && terms.privacy && !passwordMismatch && employmentCertificate !== null;
+  const companySnapshot = {
+    loginId: form.managerId,
+    password: form.managerPassword,
+    passwordConfirm: form.managerPasswordConfirm,
+    managerName: form.managerName,
+    managerEmail: form.managerEmail,
+    managerEmailVerificationToken: verification.emailToken,
+    managerPhone: form.managerPhone,
+    managerVerificationToken: verification.phoneToken,
+    companyName: form.companyName,
+    businessNumber: form.businessNumber,
+    ceoName: form.ceoName,
+    address: form.address,
+    addressDetail: form.addressDetail,
+    isAgency: form.isAgency,
+    companyType: form.companyType,
+    certificateNumber: verified.company ? form.certificateNumber : '',
+    managerPhoneCode: form.managerPhoneCode,
+    managerEmailCode: form.managerEmailCode,
+    employmentCertificate,
+    employmentCertificateFileId: verification.employmentCertificateFileId,
+    terms: {
+      service: terms.service,
+      privacy: terms.privacy,
+      companyVerification: terms.sms,
+    },
+  };
+  const canSubmit =
+    Object.keys(validateCompanyRegisterForm(companySnapshot, loginIdState)).length === 0 &&
+    !uploadEmploymentCertificate.isPending &&
+    !registerCompany.isPending;
 
-  const update = (key: CompanyFormKey, value: CompanyForm[CompanyFormKey]) => setForm((current) => ({ ...current, [key]: value }));
+  const getErrorMessage = (error: unknown, fallback: string) =>
+    error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' ? error.message : fallback;
+
+  const update = (key: CompanyFormKey, value: CompanyForm[CompanyFormKey]) => {
+    setForm((current) => ({ ...current, [key]: value }));
+    setFieldErrors((current) => ({ ...current, [key]: '' }));
+    setFormMessage('');
+    setSuccessMessage('');
+
+    if (key === 'managerId') setLoginIdState('unchecked');
+    if (key === 'managerPhone') setVerification((current) => ({ ...current, phoneId: '', phoneToken: '' }));
+    if (key === 'managerEmail') setVerification((current) => ({ ...current, emailId: '', emailToken: '' }));
+    if (key === 'certificateNumber') setVerified((current) => ({ ...current, company: false }));
+  };
+
   const handleCertificateChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
 
@@ -921,17 +985,163 @@ function CompanyRegisterForm() {
       return;
     }
 
-    const isPdf = selectedFile.type === 'application/pdf' || selectedFile.name.toLowerCase().endsWith('.pdf');
+    const isPdf = selectedFile.type === 'application/pdf' || selectedFile.type === '' || selectedFile.name.toLowerCase().endsWith('.pdf');
 
     if (!isPdf) {
       setEmploymentCertificate(null);
       setEmploymentCertificateError('PDF 형식의 파일만 업로드할 수 있습니다.');
+      setVerification((current) => ({ ...current, employmentCertificateFileId: '' }));
       event.target.value = '';
       return;
     }
 
     setEmploymentCertificate(selectedFile);
+    setVerification((current) => ({ ...current, employmentCertificateFileId: '' }));
     setEmploymentCertificateError('');
+    setFieldErrors((current) => ({ ...current, employmentCertificate: '', employmentCertificateFileId: '' }));
+  };
+
+  const handleCompanyVerification = () => {
+    if (!form.certificateNumber.trim()) {
+      setFieldErrors((current) => ({ ...current, certificateNumber: '사업자등록증명원 발급번호를 입력해주세요.' }));
+      return;
+    }
+    setVerified((current) => ({ ...current, company: true }));
+    setFieldErrors((current) => ({ ...current, certificateNumber: '' }));
+  };
+
+  const handleLoginIdCheck = async () => {
+    if (!isValidLoginId(form.managerId)) {
+      setLoginIdState('error');
+      setFieldErrors((current) => ({ ...current, loginId: '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.' }));
+      return;
+    }
+
+    setLoginIdState('checking');
+    try {
+      const result = await checkLoginId.mutateAsync(form.managerId.trim());
+      setLoginIdState(result.available ? 'available' : 'duplicated');
+      setFieldErrors((current) => ({
+        ...current,
+        loginId: result.available ? '' : '이미 사용 중인 아이디입니다.',
+      }));
+    } catch (error) {
+      setLoginIdState('error');
+      setFieldErrors((current) => ({ ...current, loginId: getErrorMessage(error, '아이디 중복 확인에 실패했습니다.') }));
+    }
+  };
+
+  const handleSendPhoneCode = async () => {
+    if (!isValidPhone(form.managerPhone)) {
+      setFieldErrors((current) => ({ ...current, managerPhone: '담당자 전화번호를 올바르게 입력해주세요.' }));
+      return;
+    }
+
+    try {
+      const result = await sendPhoneCode.mutateAsync({ channel: 'PHONE', target: form.managerPhone.replace(/\D/g, ''), purpose: 'REGISTER' });
+      setVerification((current) => ({ ...current, phoneId: result.verificationId, phoneToken: '' }));
+      setFieldErrors((current) => ({ ...current, managerPhone: '', managerPhoneCode: '' }));
+    } catch (error) {
+      setFieldErrors((current) => ({ ...current, managerPhone: getErrorMessage(error, '휴대폰 인증번호 발송에 실패했습니다.') }));
+    }
+  };
+
+  const handleConfirmPhoneCode = async () => {
+    if (!verification.phoneId) {
+      setFieldErrors((current) => ({ ...current, managerPhoneCode: '휴대폰 인증번호를 먼저 요청해주세요.' }));
+      return;
+    }
+    if (!isValidVerificationCode(form.managerPhoneCode)) {
+      setFieldErrors((current) => ({ ...current, managerPhoneCode: '인증번호 6자리를 입력해주세요.' }));
+      return;
+    }
+
+    try {
+      const result = await confirmPhoneCode.mutateAsync({ verificationId: verification.phoneId, code: form.managerPhoneCode.trim() });
+      setVerification((current) => ({ ...current, phoneToken: result.verificationToken }));
+      setFieldErrors((current) => ({ ...current, managerPhoneCode: '' }));
+    } catch (error) {
+      setFieldErrors((current) => ({ ...current, managerPhoneCode: getErrorMessage(error, '휴대폰 인증 확인에 실패했습니다.') }));
+    }
+  };
+
+  const handleSendEmailCode = async () => {
+    if (!isValidEmail(form.managerEmail)) {
+      setFieldErrors((current) => ({ ...current, managerEmail: '담당자 이메일을 올바르게 입력해주세요.' }));
+      return;
+    }
+
+    try {
+      const result = await sendEmailCode.mutateAsync({ channel: 'EMAIL', target: form.managerEmail.trim(), purpose: 'REGISTER' });
+      setVerification((current) => ({ ...current, emailId: result.verificationId, emailToken: '' }));
+      setFieldErrors((current) => ({ ...current, managerEmail: '', managerEmailCode: '' }));
+    } catch (error) {
+      setFieldErrors((current) => ({ ...current, managerEmail: getErrorMessage(error, '이메일 인증번호 발송에 실패했습니다.') }));
+    }
+  };
+
+  const handleConfirmEmailCode = async () => {
+    if (!verification.emailId) {
+      setFieldErrors((current) => ({ ...current, managerEmailCode: '이메일 인증번호를 먼저 요청해주세요.' }));
+      return;
+    }
+    if (!isValidVerificationCode(form.managerEmailCode)) {
+      setFieldErrors((current) => ({ ...current, managerEmailCode: '인증번호 6자리를 입력해주세요.' }));
+      return;
+    }
+
+    try {
+      const result = await confirmEmailCode.mutateAsync({ verificationId: verification.emailId, code: form.managerEmailCode.trim() });
+      setVerification((current) => ({ ...current, emailToken: result.verificationToken }));
+      setFieldErrors((current) => ({ ...current, managerEmailCode: '' }));
+    } catch (error) {
+      setFieldErrors((current) => ({ ...current, managerEmailCode: getErrorMessage(error, '이메일 인증 확인에 실패했습니다.') }));
+    }
+  };
+
+  const handleSubmit = async () => {
+    let nextSnapshot = companySnapshot;
+    let errors = validateCompanyRegisterForm(nextSnapshot, loginIdState);
+    setFieldErrors(errors);
+    setFormMessage('');
+    setSuccessMessage('');
+
+    if (Object.keys(errors).length > 0) {
+      setFormMessage('입력값과 인증 완료 여부를 확인해주세요.');
+      return;
+    }
+
+    if (!nextSnapshot.employmentCertificateFileId && employmentCertificate) {
+      try {
+        const uploadResult = await uploadEmploymentCertificate.mutateAsync(employmentCertificate);
+        nextSnapshot = {
+          ...nextSnapshot,
+          employmentCertificateFileId: uploadResult.fileId,
+        };
+        setVerification((current) => ({ ...current, employmentCertificateFileId: uploadResult.fileId }));
+        errors = validateCompanyRegisterForm(nextSnapshot, loginIdState);
+        setFieldErrors(errors);
+      } catch (error) {
+        setFormMessage(getErrorMessage(error, '재직증명서 업로드에 실패했습니다. 파일을 확인한 뒤 다시 시도해주세요.'));
+        return;
+      }
+    }
+
+    errors = validateCompanyRegisterForm(nextSnapshot, loginIdState);
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      setFormMessage('입력값과 인증 완료 여부를 확인해주세요.');
+      return;
+    }
+
+    try {
+      await registerCompany.mutateAsync(toCompanyRegisterRequest(nextSnapshot));
+      setSuccessMessage('기업회원 가입 신청이 접수되었습니다.');
+      setIsSubmitGuideOpen(true);
+    } catch (error) {
+      setFormMessage(getErrorMessage(error, '기업회원 가입 신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
+    }
   };
 
   return (
@@ -993,9 +1203,10 @@ function CompanyRegisterForm() {
               />
             }
             buttonLabel="기업인증 확인"
-            onClick={() => setVerified((current) => ({ ...current, company: true }))}
+            onClick={handleCompanyVerification}
           />
           <StatusPill active={verified.company}>기업인증 완료</StatusPill>
+          {fieldErrors.certificateNumber && <p className="cw-register-error">{fieldErrors.certificateNumber}</p>}
         </Field>
         </section>
 
@@ -1017,10 +1228,12 @@ function CompanyRegisterForm() {
                   placeholder="아이디(영문, 숫자 조합 6~20자)"
                 />
               }
-              buttonLabel="중복 확인"
-              onClick={() => setVerified((current) => ({ ...current, managerId: true }))}
+              buttonLabel={checkLoginId.isPending || loginIdState === 'checking' ? '확인 중' : '중복 확인'}
+              disabled={checkLoginId.isPending || loginIdState === 'checking'}
+              onClick={handleLoginIdCheck}
             />
-            <StatusPill active={verified.managerId}>사용 가능한 아이디입니다.</StatusPill>
+            <StatusPill active={loginIdState === 'available'}>사용 가능한 아이디입니다.</StatusPill>
+            {fieldErrors.loginId && <p className="cw-register-error">{fieldErrors.loginId}</p>}
           </Field>
           <Field label="담당자명" required>
             <TextInput value={form.managerName} onChange={(value) => update('managerName', value)} placeholder="담당자명(실명)" />
@@ -1032,6 +1245,7 @@ function CompanyRegisterForm() {
               onChange={(value) => update('managerPassword', value)}
               placeholder="비밀번호(8~16자의 영문, 숫자, 특수기호)"
             />
+            {fieldErrors.password && <p className="cw-register-error">{fieldErrors.password}</p>}
           </Field>
           <Field label="비밀번호 확인" required>
             <TextInput
@@ -1041,6 +1255,7 @@ function CompanyRegisterForm() {
               placeholder="비밀번호 재입력"
             />
             {passwordMismatch && <p className="cw-register-error">비밀번호가 일치하지 않습니다.</p>}
+            {fieldErrors.passwordConfirm && <p className="cw-register-error">{fieldErrors.passwordConfirm}</p>}
           </Field>
           <Field label="담당자 전화번호" required wide>
             <AuthButtonGroup
@@ -1052,10 +1267,12 @@ function CompanyRegisterForm() {
                   placeholder="휴대폰번호('-' 없이 숫자만 입력)"
                 />
               }
-              buttonLabel="인증번호 전송"
-              onClick={() => setVerified((current) => ({ ...current, phoneSent: true, phoneResent: false }))}
+              buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? '재전송' : '인증번호 전송'}
+              disabled={sendPhoneCode.isPending}
+              onClick={handleSendPhoneCode}
             />
-            <StatusPill active={verified.phoneSent}>인증번호가 발송되었습니다.</StatusPill>
+            <StatusPill active={Boolean(verification.phoneId) && !verification.phoneToken}>인증번호가 발송되었습니다.</StatusPill>
+            {fieldErrors.managerPhone && <p className="cw-register-error">{fieldErrors.managerPhone}</p>}
           </Field>
           <Field label="휴대폰 인증번호" required wide>
             <AuthButtonGroup
@@ -1066,13 +1283,15 @@ function CompanyRegisterForm() {
                   placeholder="인증번호 6자리 입력"
                 />
               }
-              buttonLabel="인증 확인"
-              onClick={() => setVerified((current) => ({ ...current, phone: true }))}
+              buttonLabel={confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
+              disabled={confirmPhoneCode.isPending || !verification.phoneId}
+              onClick={handleConfirmPhoneCode}
               secondButtonLabel="재전송"
-              onSecondClick={() => setVerified((current) => ({ ...current, phoneSent: false, phoneResent: true }))}
+              secondDisabled={sendPhoneCode.isPending}
+              onSecondClick={handleSendPhoneCode}
             />
-            <StatusPill active={verified.phone}>휴대폰 인증이 완료되었습니다.</StatusPill>
-            <StatusPill active={verified.phoneResent}>인증번호를 다시 전송했습니다.</StatusPill>
+            <StatusPill active={Boolean(verification.phoneToken)}>휴대폰 인증이 완료되었습니다.</StatusPill>
+            {fieldErrors.managerPhoneCode && <p className="cw-register-error">{fieldErrors.managerPhoneCode}</p>}
           </Field>
           <Field label="담당자 이메일" required wide>
             <AuthButtonGroup
@@ -1084,10 +1303,12 @@ function CompanyRegisterForm() {
                   placeholder="담당자 이메일 주소 입력"
                 />
               }
-              buttonLabel="인증번호 전송"
-              onClick={() => setVerified((current) => ({ ...current, emailSent: true, emailResent: false }))}
+              buttonLabel={sendEmailCode.isPending ? '전송 중' : verification.emailId ? '재전송' : '인증번호 전송'}
+              disabled={sendEmailCode.isPending}
+              onClick={handleSendEmailCode}
             />
-            <StatusPill active={verified.emailSent}>인증번호가 발송되었습니다.</StatusPill>
+            <StatusPill active={Boolean(verification.emailId) && !verification.emailToken}>인증번호가 발송되었습니다.</StatusPill>
+            {fieldErrors.managerEmail && <p className="cw-register-error">{fieldErrors.managerEmail}</p>}
           </Field>
           <Field label="이메일 인증번호" required wide>
             <AuthButtonGroup
@@ -1098,13 +1319,15 @@ function CompanyRegisterForm() {
                   placeholder="인증번호 6자리 입력"
                 />
               }
-              buttonLabel="인증 확인"
-              onClick={() => setVerified((current) => ({ ...current, email: true }))}
+              buttonLabel={confirmEmailCode.isPending ? '확인 중' : '인증 확인'}
+              disabled={confirmEmailCode.isPending || !verification.emailId}
+              onClick={handleConfirmEmailCode}
               secondButtonLabel="재전송"
-              onSecondClick={() => setVerified((current) => ({ ...current, emailSent: false, emailResent: true }))}
+              secondDisabled={sendEmailCode.isPending}
+              onSecondClick={handleSendEmailCode}
             />
-            <StatusPill active={verified.email}>이메일 인증이 완료되었습니다.</StatusPill>
-            <StatusPill active={verified.emailResent}>인증번호를 다시 전송했습니다.</StatusPill>
+            <StatusPill active={Boolean(verification.emailToken)}>이메일 인증이 완료되었습니다.</StatusPill>
+            {fieldErrors.managerEmailCode && <p className="cw-register-error">{fieldErrors.managerEmailCode}</p>}
           </Field>
           <Field label="재직증명서 업로드" required wide>
             <div className="cw-register-upload">
@@ -1137,6 +1360,8 @@ function CompanyRegisterForm() {
                 type="file"
               />
               {employmentCertificateError && <p className="cw-register-error">{employmentCertificateError}</p>}
+              {fieldErrors.employmentCertificate && <p className="cw-register-error">{fieldErrors.employmentCertificate}</p>}
+              {verification.employmentCertificateFileId && <StatusPill active>재직증명서 업로드 준비가 완료되었습니다.</StatusPill>}
             </div>
           </Field>
         </div>
@@ -1151,10 +1376,14 @@ function CompanyRegisterForm() {
           </div>
         </div>
         <CompanyTerms values={terms} onChange={setTerms} />
+        {fieldErrors.terms && <p className="cw-register-error">{fieldErrors.terms}</p>}
         </section>
 
-        <button className="cw-register-submit" disabled={!canSubmit} onClick={() => setIsSubmitGuideOpen(true)} type="button">
-          기업회원 가입하기
+        {formMessage && <p className="cw-register-error">{formMessage}</p>}
+        {successMessage && <StatusPill active>{successMessage}</StatusPill>}
+
+        <button className="cw-register-submit" disabled={!canSubmit} onClick={handleSubmit} type="button">
+          {uploadEmploymentCertificate.isPending || registerCompany.isPending ? '가입 신청 처리 중' : '기업회원 가입하기'}
         </button>
       </form>
 
