@@ -100,9 +100,20 @@ export function useAudioRecorder({
     }
 
     streamRef.current = stream;
-    const mimeType = getSupportedMimeType();
-    const recorder  = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-    recorderRef.current = recorder;
+
+    let recorder: MediaRecorder;
+    try {
+      const mimeType = getSupportedMimeType();
+      recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      recorderRef.current = recorder;
+    } catch {
+      // MIME 타입 미지원 등 MediaRecorder 생성 실패
+      releaseStream();
+      setError('not_supported');
+      setStatus('error');
+      onError?.('not_supported');
+      return;
+    }
 
     /**
      * timeslice: 5000 — 5초마다 ondataavailable 발동
@@ -128,7 +139,17 @@ export function useAudioRecorder({
       onError?.('unknown');
     };
 
-    recorder.start(CHUNK_INTERVAL_MS);
+    try {
+      recorder.start(CHUNK_INTERVAL_MS);
+    } catch {
+      // 스트림 상태 이상 등 start() 실패
+      releaseStream();
+      setError('unknown');
+      setStatus('error');
+      onError?.('unknown');
+      return;
+    }
+
     setStatus('recording');
   }, [sessionId, onError, onChunkSent, onStop]); // eslint-disable-line react-hooks/exhaustive-deps
 
