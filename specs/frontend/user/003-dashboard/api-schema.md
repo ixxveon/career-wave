@@ -1,143 +1,216 @@
 # API Schema: Dashboard
 
-> Dashboard 도메인의 프론트엔드, 백엔드, FastAPI 간 데이터 전달 구조를 정의한다.
-> 본 문서는 화면 구현에 필요한 JSON 데이터 계약을 정의한다.
-> 현재 ERD가 최종 확정 전이므로, 본 문서는 ERD 초안을 기준으로 작성한다.
-> ERD 최종 확정 후 필드명과 타입은 변경될 수 있다.
+> 백엔드 통신을 위한 프론트엔드 계약안입니다.
+> 관련 문서: `constitution.md` / `plan.md` / `tasks.md` / `spec.md`
+> ERD 초안은 참고만 하며, 실제 연동 전 백엔드와 확정이 필요합니다.
 
 ---
 
-## 1. User Profile
+## 공통
 
-내 정보 관리 화면에서 사용하는 사용자 기본 정보 데이터이다.
+### Base URL
+
+```txt
+/api/v1/dashboard
+```
+
+### 날짜 포맷
+
+모든 날짜와 시간은 ISO 8601 형식을 사용한다. 예: `2026-05-31T12:30:00Z`
+
+### 필드명 표기
+
+DB 컬럼명은 snake_case(`member_id`)를 따르며, Frontend API DTO는 기존 user frontend 문서 관례에 따라 camelCase(`memberId`)를 사용한다.
+
+### 인증
+
+모든 API는 로그인된 사용자 기준으로 동작한다.
+
+```txt
+Authorization: Bearer {accessToken}
+```
+
+### 응답 공통 포맷
 
 ```json
 {
-  "memberId": "550e8400-e29b-41d4-a716-446655440000",
-  "loginId": "user01",
-  "email": "user@example.com",
-  "name": "김지원",
-  "phone": "010-1234-5678",
-  "roleType": "ROLE_USER",
-  "memberStatus": "ACTIVE",
-  "subscriptionStatus": "FREE",
-  "createdAt": "2026-05-01T10:00:00"
+  "success": true,
+  "statusCode": 200,
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": {}
 }
 ```
 
-| Field              | Type        | Required | Description |
-| ------------------ | ----------- | -------- | ----------- |
-| memberId           | string      | Y        | 회원 고유 식별자   |
-| loginId            | string      | Y        | 로그인 계정      |
-| email              | string/null | N        | 이메일 주소      |
-| name               | string      | Y        | 회원 이름       |
-| phone              | string/null | N        | 휴대폰 번호      |
-| roleType           | string      | Y        | 회원 유형       |
-| memberStatus       | string      | Y        | 계정 상태       |
-| subscriptionStatus | string      | Y        | 구독 상태       |
-| createdAt          | string      | Y        | 가입 일시       |
+### 공통 Enum
+
+| Enum                 | Values                          |
+| -------------------- | ------------------------------- |
+| `RoleType`           | `ROLE_USER`, `ROLE_COMPANY`     |
+| `MemberStatus`       | `ACTIVE`, `SUSPENDED`, `BANNED` |
+| `SubscriptionStatus` | `FREE`, `PREMIUM`               |
+| `NoticeStatus`       | `ACTIVE`, `CLOSED`              |
+| `CareerLevel`        | `JUNIOR`, `SENIOR`, `ANY`       |
+| `ScrapSort`          | `LATEST`                        |
+
+### 공통 Error Cases
+
+| statusCode | 상황                 | 프론트 처리       |
+| ---------- | ------------------ | ------------ |
+| `400`      | 잘못된 요청 또는 검색 조건 오류 | 입력값 확인 안내    |
+| `401`      | 인증 필요 또는 토큰 만료     | 로그인 페이지 이동   |
+| `403`      | 접근 권한 없음           | 접근 제한 안내     |
+| `404`      | 회원 정보 또는 공고 데이터 없음 | 빈 상태 UI 표시   |
+| `500`      | 서버 오류              | 재시도 또는 오류 안내 |
 
 ---
 
-## 2. Github Profile
+## 1. 내 정보 조회
 
-GitHub 연동 정보 조회에 사용하는 데이터이다.
-GitHub OAuth 연동 구현은 v2 범위로 두고, v1에서는 GitHub URL 존재 여부를 기준으로 연동 상태를 표시한다.
+* **Endpoint**: `GET /api/v1/dashboard/profile`
 
-```json
-{
-  "githubUrl": "https://github.com/careerwave-user",
-  "linked": true
-}
-```
-
-### GitHub Not Linked
+### Response
 
 ```json
 {
-  "githubUrl": null,
-  "linked": false
+  "success": true,
+  "statusCode": 200,
+  "message": "회원 정보를 조회했습니다.",
+  "data": {
+    "memberId": "uuid-v4",
+    "loginId": "career_user01",
+    "email": "user@example.com",
+    "name": "홍길동",
+    "phone": "01012345678",
+    "roleType": "ROLE_USER",
+    "memberStatus": "ACTIVE",
+    "subscriptionStatus": "FREE",
+    "createdAt": "2026-05-01T12:00:00Z"
+  }
 }
 ```
-
-| Field     | Type        | Required | Description    |
-| --------- | ----------- | -------- | -------------- |
-| githubUrl | string/null | N        | GitHub 프로필 URL |
-| linked    | boolean     | Y        | GitHub 연동 여부   |
 
 ---
 
-## 3. Update User Profile Request
+## 2. GitHub 연동 정보 조회
 
-회원 정보 수정 요청 데이터이다.
+* **Endpoint**: `GET /api/v1/dashboard/github`
+
+### Linked Response
 
 ```json
 {
-  "name": "김지원",
-  "phone": "010-1111-2222",
+  "success": true,
+  "statusCode": 200,
+  "message": "GitHub 정보를 조회했습니다.",
+  "data": {
+    "githubUrl": "https://github.com/careerwave-user"
+  }
+}
+```
+
+### Not Linked Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "GitHub 정보가 없습니다.",
+  "data": {
+    "githubUrl": null
+  }
+}
+```
+
+> 프론트는 `githubUrl` 값이 `null`인지 여부로 GitHub 연동 상태를 표시한다.
+
+---
+
+## 3. 회원 정보 수정
+
+* **Endpoint**: `PATCH /api/v1/dashboard/profile`
+* **Content-Type**: `application/json`
+
+### Request
+
+```json
+{
+  "name": "홍길동",
+  "phone": "01011112222",
   "githubUrl": "https://github.com/careerwave-user"
 }
 ```
 
-| Field     | Type        | Required | Description        |
-| --------- | ----------- | -------- | ------------------ |
-| name      | string      | Y        | 수정할 회원 이름          |
-| phone     | string/null | N        | 수정할 휴대폰 번호         |
-| githubUrl | string/null | N        | 수정할 GitHub 프로필 URL |
+| Field       | Type              | 필수 | 설명             |
+| ----------- | ----------------- | -- | -------------- |
+| `name`      | `string`          | Y  | 회원 이름          |
+| `phone`     | `string`          | N  | 휴대폰 번호         |
+| `githubUrl` | `string` | `null` | N  | GitHub 프로필 URL |
 
----
-
-## 4. Scrap Job
-
-스크랩 공고 목록에서 사용하는 단일 공고 데이터이다.
+### Response
 
 ```json
 {
-  "bookmarkId": 1,
-  "jobNoticeId": 101,
-  "companyName": "커리어웨이브",
-  "title": "프론트엔드 개발자 채용",
-  "careerLevel": "JUNIOR",
-  "location": "서울",
-  "deadline": "2026-06-30",
-  "noticeStatus": "ACTIVE",
-  "createdAt": "2026-05-20T10:00:00"
+  "success": true,
+  "statusCode": 200,
+  "message": "회원 정보가 수정되었습니다.",
+  "data": {
+    "memberId": "uuid-v4",
+    "name": "홍길동",
+    "phone": "01011112222",
+    "githubUrl": "https://github.com/careerwave-user"
+  }
 }
 ```
 
-| Field        | Type        | Required | Description |
-| ------------ | ----------- | -------- | ----------- |
-| bookmarkId   | number      | Y        | 북마크 고유 식별자  |
-| jobNoticeId  | number      | Y        | 채용공고 고유 식별자 |
-| companyName  | string/null | N        | 공고 게시 기업명   |
-| title        | string      | Y        | 채용공고 제목     |
-| careerLevel  | string/null | N        | 경력 조건       |
-| location     | string/null | N        | 근무지         |
-| deadline     | string/null | N        | 지원 마감일      |
-| noticeStatus | string      | Y        | 공고 상태       |
-| createdAt    | string      | Y        | 스크랩 일시      |
+### Error Cases
+
+| statusCode | 상황                           |
+| ---------- | ---------------------------- |
+| `400`      | 이름, 휴대폰 번호, GitHub URL 형식 오류 |
+| `401`      | 인증 필요 또는 토큰 만료               |
+| `404`      | 회원 정보 없음                     |
 
 ---
 
-## 5. Scrap Job List
+## 4. 스크랩 공고 목록 조회
 
-스크랩 공고 목록 조회 응답 데이터이다.
+* **Endpoint**: `GET /api/v1/dashboard/bookmarks`
+
+### Query Parameters
+
+| Parameter | Type        | 필수 | 기본값      | 설명               |
+| --------- | ----------- | -- | -------- | ---------------- |
+| `keyword` | `string`    | N  | `""`     | 기업명 또는 공고 제목 검색어 |
+| `sort`    | `ScrapSort` | N  | `LATEST` | 정렬 기준            |
+| `page`    | `number`    | N  | `0`      | 0-based page     |
+| `size`    | `number`    | N  | `10`     | 페이지 크기           |
+
+### Response
 
 ```json
 {
-  "content": [
-    {
-      "bookmarkId": 1,
-      "jobNoticeId": 101,
-      "companyName": "커리어웨이브",
-      "title": "프론트엔드 개발자 채용",
-      "careerLevel": "JUNIOR",
-      "location": "서울",
-      "deadline": "2026-06-30",
-      "noticeStatus": "ACTIVE",
-      "createdAt": "2026-05-20T10:00:00"
-    }
-  ]
+  "success": true,
+  "statusCode": 200,
+  "message": "스크랩 공고를 조회했습니다.",
+  "data": {
+    "content": [
+      {
+        "bookmarkId": 1,
+        "jobNoticeId": 101,
+        "companyName": "커리어웨이브",
+        "title": "프론트엔드 개발자 채용",
+        "careerLevel": "JUNIOR",
+        "location": "서울",
+        "deadline": "2026-06-30",
+        "noticeStatus": "ACTIVE",
+        "createdAt": "2026-05-20T10:00:00Z"
+      }
+    ],
+    "page": 0,
+    "size": 10,
+    "totalElements": 1,
+    "totalPages": 1
+  }
 }
 ```
 
@@ -145,57 +218,62 @@ GitHub OAuth 연동 구현은 v2 범위로 두고, v1에서는 GitHub URL 존재
 
 ```json
 {
-  "content": []
+  "success": true,
+  "statusCode": 200,
+  "message": "스크랩 공고가 없습니다.",
+  "data": {
+    "content": [],
+    "page": 0,
+    "size": 10,
+    "totalElements": 0,
+    "totalPages": 0
+  }
 }
 ```
 
 ---
 
-## 6. Scrap Job Search Condition
+## 5. 스크랩 취소
 
-스크랩 공고 검색 및 정렬에 사용하는 요청 조건이다.
+* **Endpoint**: `DELETE /api/v1/dashboard/bookmarks/{bookmarkId}`
+
+### Response
 
 ```json
 {
-  "keyword": "프론트엔드",
-  "sort": "LATEST",
-  "page": 0,
-  "size": 10
+  "success": true,
+  "statusCode": 200,
+  "message": "스크랩이 취소되었습니다.",
+  "data": {
+    "bookmarkId": 1
+  }
 }
 ```
 
-| Field   | Type   | Required | Description |
-| ------- | ------ | -------- | ----------- |
-| keyword | string | N        | 검색어         |
-| sort    | string | N        | 정렬 기준       |
-| page    | number | N        | 페이지 번호      |
-| size    | number | N        | 페이지 크기      |
+### Error Cases
 
-### Sort Type
-
-| Value  | Description |
-| ------ | ----------- |
-| LATEST | 최신순         |
+| statusCode | 상황             |
+| ---------- | -------------- |
+| `401`      | 인증 필요 또는 토큰 만료 |
+| `404`      | 존재하지 않는 스크랩    |
+| `500`      | 서버 오류          |
 
 ---
 
-## 7. Delete Scrap Response
+## 6. 채용공고 상세 페이지 이동
 
-스크랩 삭제 성공 응답 데이터이다.
+채용공고 상세 페이지 이동은 프론트 라우팅으로 처리한다.
 
-```json
-{
-  "deletedBookmarkId": 1
-}
+### Route
+
+```txt
+/job-notices/{jobNoticeId}
 ```
 
----
+### Example
 
-## Notes
+```txt
+/job-notices/101
+```
 
-* 사용자 인증 및 로그인 기능은 `members` 테이블과 Member 도메인에서 관리한다.
-* GitHub 프로필 URL은 `personal_profiles.github_url` 값을 기준으로 한다.
-* 스크랩 공고는 `bookmarks`와 `job_notices` 테이블을 기준으로 한다.
-* 채용공고 상세 조회 기능은 JobNotice 도메인에서 제공한다.
-* GitHub OAuth 연동 구현은 v2 범위로 분리한다.
-* Dashboard 문서에서는 내 정보 관리, GitHub 연동 상태 조회, 스크랩 공고 관리에 필요한 데이터 구조만 정의한다.
+> 실제 상세 페이지 경로는 JobNotice 프론트 라우팅 확정 후 맞춘다.
