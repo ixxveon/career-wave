@@ -8,6 +8,17 @@ export interface MemberApiOptions extends RequestInit {
   auth?: boolean;
 }
 
+function redirectToLoginOnSessionExpired() {
+  if (typeof window === 'undefined') return;
+
+  const { pathname, search } = window.location;
+  if (pathname === '/auth/login') return;
+
+  const currentPath = `${pathname}${search}`;
+  const next = currentPath && currentPath !== '/' ? `?next=${encodeURIComponent(currentPath)}` : '';
+  window.location.assign(`/auth/login${next}`);
+}
+
 async function requestAccessTokenRefresh(): Promise<string | null> {
   const refreshToken = authSession.getRefreshToken();
   const headers = new Headers({ 'Content-Type': 'application/json' });
@@ -96,6 +107,7 @@ export async function memberApiClient<T>(endpoint: string, options: MemberApiOpt
   if (!response.ok) {
     if (response.status === 401) {
       authSession.clear();
+      if (auth) redirectToLoginOnSessionExpired();
     }
     throw toMemberApiError(response.status, payload ?? undefined);
   }
