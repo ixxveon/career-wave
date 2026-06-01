@@ -8,6 +8,8 @@ import {
 import { startSession } from '../../api/interview/startSession';
 import { SESSION_TYPE } from '../../types/interview';
 import type { Message, MicStatus, InputMode, Phase, Resume } from '../../types/interview';
+import { useTTSQueue } from '../../hooks/interview/useTTSQueue';
+import TTSPlayer from '../../components/interview/TTSPlayer';
 import './TextInterviewPage.css';
 
 /* ── Web Speech API 타입 선언 (TypeScript DOM lib 미포함 항목) ── */
@@ -89,6 +91,9 @@ interface ChatRoomProps {
 function ChatRoom({ company, job, onExit }: ChatRoomProps) {
   const navigate = useNavigate();
 
+  /* ── TTS 재생 큐 (Web Audio API 기반 순차 재생) ── */
+  const tts = useTTSQueue();
+
   /* ── State ── */
   const [messages,        setMessages]        = useState<Message[]>(INIT_MESSAGES);
   const [qNum,            setQNum]            = useState(1);
@@ -112,7 +117,6 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
   const replyRef          = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recognitionRef    = useRef<SpeechRecognition | null>(null);
   const textareaRef       = useRef<HTMLTextAreaElement>(null);
-  const audioRef          = useRef<HTMLAudioElement | null>(null);
   const pendingTextRef    = useRef('');
   const handleSendRef     = useRef<((text: string, opts?: SendOpts) => void) | null>(null);
   const qNumRef           = useRef(qNum);
@@ -190,35 +194,15 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
   }
 
   /* ─────────────────────────────────────────────────
-     TTS: SpeechSynthesis 브라우저 폴백
+     AI 질문 말풍선 렌더링 + TTS 재생
+     base64Audio: FastAPI WS TTS_AUDIO 메시지의 audioChunk
+     DEV mock 모드에서는 오디오 없이 텍스트만 표시
   ───────────────────────────────────────────────── */
-  function playTTSFallback(text: string, onEnd: (() => void) | null) {
-    if (!window.speechSynthesis) { setTimeout(() => onEnd?.(), 500); return; }
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text.replace(/\n/g, ' '));
-    utt.lang   = 'ko-KR';
-    utt.rate   = 1.05;
-    utt.onend  = () => onEnd?.();
-    utt.onerror = () => setTimeout(() => onEnd?.(), 500);
-    window.speechSynthesis.speak(utt);
-  }
-
-  /* ─────────────────────────────────────────────────
-     AI 질문 말풍선 렌더링 + 오디오 재생
-  ───────────────────────────────────────────────── */
-  function displayAIQuestion(text: string, audioUrl: string | null) {
+  function displayAIQuestion(text: string, base64Audio: string | null) {
     setMessages(prev => [...prev, { id: Date.now(), role: 'ai', text }]);
     setTyping(false);
-    audioRef.current?.pause();
-    audioRef.current = null;
-
-    if (audioUrl) {
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      audio.onerror = () => playTTSFallback(text, null);
-      audio.play().catch(() => playTTSFallback(text, null));
-    } else {
-      playTTSFallback(text, null);
+    if (base64Audio) {
+      tts.enqueue(base64Audio);
     }
   }
 
@@ -309,8 +293,7 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
     if (!isTimeout && !skipAddMessage && !text?.trim()) return;
     stopCountdown();
     stopRecognition();
-    window.speechSynthesis?.cancel();
-    audioRef.current?.pause();
+    tts.stop();
 
     if (!isTimeout && !skipAddMessage) {
       const trimmed = text.trim();
@@ -331,7 +314,7 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
         setMessages(prev => [...prev, { id: Date.now(), role: 'ai', text: closingText }]);
         setTyping(false);
         setDone(true);
-        playTTSFallback(closingText, null);
+        // 실제 TTS 오디오는 FastAPI WS TTS_AUDIO 메시지로 수신 (Phase 3 연동)
         setTimeout(() => navigate('/interview/report'), 3000);
         return;
       }
@@ -345,16 +328,14 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
   /* handleSend 최신 참조 유지 */
   handleSendRef.current = handleSend;
 
-  /* 마운트: 초기 AI 질문 TTS */
+  /* 마운트: 초기 AI 질문 — TTS 오디오는 FastAPI WS 연결 후 수신 (Phase 3) */
   useEffect(() => {
-    playTTSFallback(INIT_MESSAGES[0].text, null);
     return () => {
       if (elapsedRef.current !== null) clearInterval(elapsedRef.current);
       if (countdownRef.current !== null) clearTimeout(countdownRef.current);
       if (replyRef.current !== null) clearTimeout(replyRef.current);
       stopRecognition();
-      window.speechSynthesis?.cancel();
-      audioRef.current?.pause();
+      tts.clear();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -386,6 +367,7 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
           <span className="ti-header__q">{done ? '완료' : `Q ${qNum} / ${TOTAL_Q}`}</span>
         </div>
         <div className="ti-header__right">
+          <TTSPlayer status={tts.status} />
           <div className="ti-header__timer"><Clock size={13} /> {formatTime(elapsed)}</div>
           <button className="ti-header__exit" onClick={() => setExitModal(true)}>
             <X size={14} /> 종료
