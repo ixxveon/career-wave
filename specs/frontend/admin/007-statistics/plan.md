@@ -57,3 +57,33 @@ StatisticsPage
 - [x] Phase 5: 구독자 변동 추이 SVG 이중 꺾은선 구현
 - [x] Phase 6: 최근 가입 피드 구현
 - [ ] Phase 7: API 연동 — `statsApi.ts` 작성 및 더미 데이터 교체
+
+---
+
+## Data Flow
+
+1. 페이지 마운트 시 5개 API를 병렬 호출한다 (summary, revenue/monthly, revenue/breakdown, subscribers/monthly, subscribers/recent).
+2. 각 API 응답은 독립적으로 해당 섹션 상태를 갱신한다.
+3. SVG 차트의 데이터 소스와 X축 레이블을 API 응답으로 교체한다.
+4. 별도 필터·검색 없음 → 마운트 시 1회 로드, 새로고침 시 재로드.
+
+---
+
+## State Ownership
+
+| 상태 | 소유 위치 |
+|---|---|
+| KPI 집계 | `StatisticsPage` |
+| 월별 매출 추이 | `StatisticsPage` |
+| 구독 유형별 매출 | `StatisticsPage` |
+| 구독자 변동 추이 | `StatisticsPage` |
+| 최근 가입 피드 | `StatisticsPage` |
+
+---
+
+## Risks
+
+- **SVG 차트 데이터 교체**: X축 레이블을 API 응답 `month` 필드로 교체 시 기존 SVG 좌표 계산 로직 수정 필요.
+- **누락 월 0 채움**: 신규 서비스 특성상 일부 월 데이터 없을 수 있음 → BE에서 0으로 채워 반환 (프론트에서 가정 금지).
+- **BE 미완성**: API 연동 전까지 더미 상수 유지, `statsApi.ts` 구조만 완성하여 전환 대비.
+- **병렬 호출 실패**: 5개 중 일부 실패 시 나머지는 정상 표시, 실패 섹션만 에러 표시.

@@ -1,6 +1,7 @@
 # Constitution: 사용자 채용 공고
 
-**Feature Branch**: `feature/user-job-notice`
+**Spec Branch**: `feature/jobnotice-domain-spec`
+**Implementation Branch Pattern**: `feature/user-jobNotice-{세부기능명}`
 **Scope**: 채용 공고 목록 페이지, 채용 공고 상세 드로어 공통
 
 ## 1. 도메인 가치
@@ -64,6 +65,7 @@
 | 원본 공고 이동 | 상세의 `originalUrl`은 새 탭으로 연다. | Career Wave 탐색 흐름을 보존하고 원본 사이트 확인을 가능하게 한다. |
 | API 호출 계층 | 목록/상세/스크랩 API 호출은 `frontend/src/user/api` 하위 도메인 API 모듈을 통해 수행한다. | 페이지 또는 컴포넌트에서 `axios`나 `fetch`를 직접 호출하지 않는 팀 규칙을 지킨다. |
 | 서버 상태 관리 | API 연동 후 목록, 상세, 스크랩 mutation은 TanStack Query 사용을 우선한다. | `CONVENTION.md`의 Frontend State Management 원칙을 따른다. |
+| 구현 브랜치 단위 | 현재 브랜치는 스펙 작성 전용이며, 실제 구현은 Phase 단위로 `feature/user-jobNotice-{세부기능명}` 브랜치를 나누어 진행한다. | 한 PR에 하나의 목적만 담는 Contribution 규칙을 지킨다. |
 
 ## 4. 불변 규칙
 

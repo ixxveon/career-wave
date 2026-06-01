@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Bot, Clock, EyeOff, Flag, UserX } from 'lucide-react';
 import { reportApi, type ReportItem, type ReportSummary, type ReportStatus, type TargetType, type ReportReason } from '../../api/reportApi';
 import '../../styles/admin.css';
@@ -94,39 +94,53 @@ export default function ReportPage() {
   const [suspendDuration, setSuspendDuration] = useState<SuspendDuration>('THREE_DAYS');
   const [suspendReason, setSuspendReason] = useState('');
 
+  // ── 적용 필터 ref (검색 버튼/Enter 시에만 갱신) ───────────
+  const appliedFilters = useRef({ status: '', targetType: '', keyword: '' });
+  const reportReqId = useRef(0);
+
   // ── KPI 조회 ───────────────────────────────────────────────
   const fetchSummary = useCallback(async () => {
     try {
       const res = await reportApi.getSummary();
       setSummary(res.data.data);
-    } catch {
-      // summary 실패는 조용히 처리
+    } catch (err) {
+      console.error('fetchSummary failed:', err);
     }
   }, []);
 
   // ── 목록 조회 ──────────────────────────────────────────────
   const fetchReports = useCallback(async (page = 1) => {
+    const reqId = ++reportReqId.current;
+    const f = appliedFilters.current;
     setListLoading(true);
     setListError('');
     try {
       const res = await reportApi.getReports({
-        ...(statusFilter && { status: statusFilter as ReportStatus }),
-        ...(typeFilter && { targetType: typeFilter as TargetType }),
-        ...(keyword && { keyword }),
+        ...(f.status && { status: f.status as ReportStatus }),
+        ...(f.targetType && { targetType: f.targetType as TargetType }),
+        ...(f.keyword && { keyword: f.keyword }),
         page,
         size: 20,
       });
+      if (reqId !== reportReqId.current) return;
       const { items, totalItems, totalPages } = res.data.data;
       setReports(items);
       setTotalItems(totalItems);
       setTotalPages(totalPages);
       setCurrentPage(page);
     } catch {
+      if (reqId !== reportReqId.current) return;
       setListError('신고 목록을 불러오지 못했습니다.');
     } finally {
-      setListLoading(false);
+      if (reqId === reportReqId.current) setListLoading(false);
     }
-  }, [statusFilter, typeFilter, keyword]);
+  }, []);
+
+  // ── 검색 적용 핸들러 ───────────────────────────────────────
+  const applySearch = () => {
+    appliedFilters.current = { status: statusFilter, targetType: typeFilter, keyword };
+    fetchReports(1);
+  };
 
   useEffect(() => { fetchSummary(); }, [fetchSummary]);
   useEffect(() => { fetchReports(1); }, [fetchReports]);
@@ -212,15 +226,15 @@ export default function ReportPage() {
   // ── 페이지네이션 ───────────────────────────────────────────
   const renderPagination = () => (
     <div className="pagination">
-      <button disabled={currentPage <= 1} onClick={() => fetchReports(currentPage - 1)}>{'<'}</button>
+      <button disabled={listLoading || currentPage <= 1} onClick={() => fetchReports(currentPage - 1)}>{'<'}</button>
       {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
         const p = Math.max(1, currentPage - 2) + i;
         if (p > totalPages) return null;
         return (
-          <button key={p} className={p === currentPage ? 'activePage' : ''} onClick={() => fetchReports(p)}>{p}</button>
+          <button key={p} className={p === currentPage ? 'activePage' : ''} disabled={listLoading} onClick={() => fetchReports(p)}>{p}</button>
         );
       })}
-      <button disabled={currentPage >= totalPages} onClick={() => fetchReports(currentPage + 1)}>{'>'}</button>
+      <button disabled={listLoading || currentPage >= totalPages} onClick={() => fetchReports(currentPage + 1)}>{'>'}</button>
     </div>
   );
 
@@ -270,7 +284,7 @@ export default function ReportPage() {
             placeholder="신고 ID, 대상, 신고자 검색"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && fetchReports(1)}
+            onKeyDown={(e) => e.key === 'Enter' && applySearch()}
           />
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
             <option value="">전체</option>
@@ -284,16 +298,16 @@ export default function ReportPage() {
             <option value="BLINDED">블라인드</option>
             <option value="DISMISSED">기각</option>
           </select>
-          <button className="memberFilterBtn" onClick={() => fetchReports(1)}>검색</button>
+          <button className="memberFilterBtn" onClick={applySearch}>검색</button>
         </section>
 
         {/* Bulk action bar */}
         {checkedIds.length > 0 && (
           <div className="bulkBar">
             <span>{checkedIds.length}건 선택됨</span>
-            <button>일괄 블라인드</button>
-            <button>일괄 기각</button>
-            <button className="danger">일괄 삭제</button>
+            <button disabled>일괄 블라인드</button>
+            <button disabled>일괄 기각</button>
+            <button className="danger" disabled>일괄 삭제</button>
           </div>
         )}
 
@@ -348,7 +362,10 @@ export default function ReportPage() {
           </div>
           <div className="memberTableFooter">
             <span className="memberTableCount">
-              표시 중: {(currentPage - 1) * 20 + 1} - {Math.min(currentPage * 20, totalItems)} / 총 {totalItems.toLocaleString()}건
+              {totalItems === 0
+                ? '총 0건'
+                : `표시 중: ${(currentPage - 1) * 20 + 1} - ${Math.min(currentPage * 20, totalItems)} / 총 ${totalItems.toLocaleString()}건`
+              }
             </span>
             {renderPagination()}
           </div>
