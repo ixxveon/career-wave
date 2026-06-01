@@ -431,6 +431,17 @@
 }
 .ti-header__exit:hover { background: #fef2f2; }
 
+/* ─── TTS 상태 바 (헤더 아래, 채팅창 위) ────────── */
+.ti-tts-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
 /* ─── 채팅 메시지 영역 ───────────────────────── */
 .ti-chat {
   flex: 1;
