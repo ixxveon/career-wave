@@ -293,7 +293,7 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
     if (!isTimeout && !skipAddMessage && !text?.trim()) return;
     stopCountdown();
     stopRecognition();
-    tts.stop();
+    tts.clear(); // 현재 재생 중단 + 큐 전체 비우기 (잔여 청크 재생 방지)
 
     if (!isTimeout && !skipAddMessage) {
       const trimmed = text.trim();
