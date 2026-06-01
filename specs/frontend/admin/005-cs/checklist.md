@@ -95,3 +95,16 @@
 - [ ] AI 초안이 자동으로 저장·제출되지 않는다. (관리자 저장 클릭 필수)
 - [ ] `COMPLETED` 상태 문의에서 "AI 답변 초안" 버튼이 미노출된다.
 - [ ] AI 서버 오류(503) 시 에러 토스트가 표시된다.
+
+---
+
+## Phase 8 — 구현 패턴 검증
+
+- [ ] 필터 드롭다운·입력값 변경이 즉시 API 호출을 트리거하지 않는다.
+- [ ] 검색 버튼 클릭 또는 Enter 입력 시에만 fetch가 호출된다.
+- [ ] 적용 필터가 `appliedFilters ref`로 입력 상태와 분리되어 있다.
+- [ ] Stale 응답 방지를 위해 `reqId ref`가 사용된다.
+- [ ] API 응답 처리 시 `res.data.success`를 먼저 확인한 후 `res.data.data`에 접근한다.
+- [ ] 모든 HTTP 호출이 `csApi.ts`를 통해서만 수행된다.
+- [ ] CRUD 처리 중 모달 버튼이 `disabled` 처리된다.
+- [ ] 409 (`INQUIRY_ALREADY_COMPLETED`) 응답이 별도 에러 메시지로 처리된다.
