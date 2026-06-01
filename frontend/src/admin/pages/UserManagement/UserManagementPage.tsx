@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Building2, CheckCircle, Clock, UserPlus, UserX, Users, XCircle } from 'lucide-react';
 import {
   memberApi,
@@ -79,21 +79,32 @@ export default function UserManagementPage() {
   const [rejectLoading, setRejectLoading] = useState(false);
   const [actionError, setActionError] = useState('');
 
+  // ── 적용 필터 ref (검색 버튼/Enter 시에만 갱신) ───────────
+  const appliedMemberFilters = useRef({ role: '', status: '', plan: '', keyword: '', startDate: '', endDate: '' });
+  const appliedHrFilters = useRef({ hrStatus: '', keyword: '' });
+
+  // ── 요청 ID ref (stale 응답 방지) ─────────────────────────
+  const memberReqId = useRef(0);
+  const hrReqId = useRef(0);
+
   // ── 개인 회원 목록 조회 ────────────────────────────────────
   const fetchMembers = useCallback(async (page = 1) => {
+    const reqId = ++memberReqId.current;
+    const f = appliedMemberFilters.current;
     setMemberLoading(true);
     setMemberError('');
     try {
       const res = await memberApi.getMembers({
-        ...(roleFilter && { role: roleFilter as any }),
-        ...(statusFilter && { status: statusFilter as any }),
-        ...(planFilter && { plan: planFilter as any }),
-        ...(userKeyword && { keyword: userKeyword }),
-        ...(startDate && { startDate }),
-        ...(endDate && { endDate }),
+        ...(f.role && { role: f.role as any }),
+        ...(f.status && { status: f.status as any }),
+        ...(f.plan && { plan: f.plan as any }),
+        ...(f.keyword && { keyword: f.keyword }),
+        ...(f.startDate && { startDate: f.startDate }),
+        ...(f.endDate && { endDate: f.endDate }),
         page,
         size: 20,
       });
+      if (reqId !== memberReqId.current) return;
       if (!res.data.success) throw new Error(res.data.message);
       const { items, totalItems, totalPages } = res.data.data;
       setMembers(items);
@@ -101,23 +112,27 @@ export default function UserManagementPage() {
       setMemberTotalPages(totalPages);
       setMemberPage(page);
     } catch (err: any) {
+      if (reqId !== memberReqId.current) return;
       setMemberError(err.response?.data?.message || err.message || '회원 목록을 불러오지 못했습니다.');
     } finally {
-      setMemberLoading(false);
+      if (reqId === memberReqId.current) setMemberLoading(false);
     }
-  }, [roleFilter, statusFilter, planFilter, userKeyword, startDate, endDate]);
+  }, []);
 
   // ── 기업 회원 목록 조회 ────────────────────────────────────
   const fetchHrManagers = useCallback(async (page = 1) => {
+    const reqId = ++hrReqId.current;
+    const f = appliedHrFilters.current;
     setHrLoading(true);
     setHrError('');
     try {
       const res = await memberApi.getHrManagers({
-        ...(hrStatusFilter && { hrStatus: hrStatusFilter as any }),
-        ...(companyKeyword && { keyword: companyKeyword }),
+        ...(f.hrStatus && { hrStatus: f.hrStatus as any }),
+        ...(f.keyword && { keyword: f.keyword }),
         page,
         size: 20,
       });
+      if (reqId !== hrReqId.current) return;
       if (!res.data.success) throw new Error(res.data.message);
       const { items, totalItems, totalPages, pendingCount } = res.data.data;
       setHrManagers(items);
@@ -126,11 +141,23 @@ export default function UserManagementPage() {
       setHrPendingCount(pendingCount);
       setHrPage(page);
     } catch (err: any) {
+      if (reqId !== hrReqId.current) return;
       setHrError(err.response?.data?.message || err.message || '기업 회원 목록을 불러오지 못했습니다.');
     } finally {
-      setHrLoading(false);
+      if (reqId === hrReqId.current) setHrLoading(false);
     }
-  }, [hrStatusFilter, companyKeyword]);
+  }, []);
+
+  // ── 검색 적용 핸들러 ───────────────────────────────────────
+  const applyMemberSearch = () => {
+    appliedMemberFilters.current = { role: roleFilter, status: statusFilter, plan: planFilter, keyword: userKeyword, startDate, endDate };
+    fetchMembers(1);
+  };
+
+  const applyHrSearch = () => {
+    appliedHrFilters.current = { hrStatus: hrStatusFilter, keyword: companyKeyword };
+    fetchHrManagers(1);
+  };
 
   useEffect(() => { fetchMembers(1); }, [fetchMembers]);
   useEffect(() => { fetchHrManagers(1); }, [fetchHrManagers]);
@@ -306,7 +333,7 @@ export default function UserManagementPage() {
               placeholder="이름, 이메일, 회원 ID 검색"
               value={userKeyword}
               onChange={(e) => setUserKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchMembers(1)}
+              onKeyDown={(e) => e.key === 'Enter' && applyMemberSearch()}
             />
             <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
               <option value="">권한 전체</option>
@@ -327,6 +354,7 @@ export default function UserManagementPage() {
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ maxWidth: 160 }} />
             <span style={{ fontSize: 13, color: '#7a8da4', fontWeight: 600 }}>~</span>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ maxWidth: 160 }} />
+            <button className="memberFilterBtn" onClick={applyMemberSearch}>검색</button>
           </section>
 
           <section className="admin-card memberTableCard">
@@ -449,7 +477,7 @@ export default function UserManagementPage() {
               placeholder="담당자명, 기업명, 이메일 검색"
               value={companyKeyword}
               onChange={(e) => setCompanyKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchHrManagers(1)}
+              onKeyDown={(e) => e.key === 'Enter' && applyHrSearch()}
             />
             <select value={hrStatusFilter} onChange={(e) => setHrStatusFilter(e.target.value)}>
               <option value="">전체</option>
@@ -457,7 +485,7 @@ export default function UserManagementPage() {
               <option value="ACTIVE">승인 완료</option>
               <option value="REMOVED">반려</option>
             </select>
-            <button className="memberFilterBtn" onClick={() => fetchHrManagers(1)}>검색</button>
+            <button className="memberFilterBtn" onClick={applyHrSearch}>검색</button>
           </section>
 
           <section className="admin-card memberTableCard">
