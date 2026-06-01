@@ -113,12 +113,14 @@ export function useAnalysisWebSocket({
           if (msg.status === 'COMPLETED') {
             clearTimeout_();
             cleanupWs(ws);
+            ws.close();
             wsRef.current = null;
             setIsConnected(false);
             onCompleted();
           } else if (msg.status === 'FAILED') {
             clearTimeout_();
             cleanupWs(ws);
+            ws.close();
             wsRef.current = null;
             setIsConnected(false);
             onFailed(msg.message);
