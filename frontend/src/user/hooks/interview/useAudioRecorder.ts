@@ -122,6 +122,10 @@ export function useAudioRecorder({
      * timeslice: 5000 — 5초마다 ondataavailable 발동
      * stop() 호출 시 마지막 잔여 버퍼도 ondataavailable로 전달됨
      * isStoppingRef로 마지막 청크 여부를 구분
+     *
+     * sendChunk는 start() 호출 시점의 sessionId를 클로저로 캡처한다.
+     * 녹음 중 sessionId가 변경되지 않는 것을 전제로 한다.
+     * (면접 세션은 시작 후 종료까지 sessionId가 고정됨)
      */
     recorder.ondataavailable = (e: BlobEvent) => {
       if (e.data.size > 0) {
