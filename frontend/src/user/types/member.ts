@@ -96,7 +96,13 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string;
+  refreshToken?: string;
   member: MemberSummary;
+}
+
+export interface TokenRefreshResponse {
+  accessToken: string;
+  refreshToken?: string;
 }
 
 export interface CheckLoginIdResponse {

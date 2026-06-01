@@ -9,7 +9,10 @@ export const memberAuthApi = {
       body: JSON.stringify(payload),
     });
 
-    authSession.setAccessToken(data.accessToken);
+    authSession.setTokens({
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+    });
     authSession.setMember(data.member);
 
     return data;
