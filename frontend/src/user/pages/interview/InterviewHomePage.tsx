@@ -5,7 +5,7 @@ import {
   MessageSquare, Video, ChevronRight, Lightbulb,
   FileText, User, Zap, ClipboardList, X,
 } from 'lucide-react';
-import type { PlanLimits, MockUser, HistoryItem } from '../../types/interview';
+import type { PlanLimits, MockUser, HistoryDisplayItem } from '../../types/interview';
 
 /* ── 멤버십별 월 이용 한도 ─────────────────────────
    FREE    : 서류 분석  1회 / 면접 1회
@@ -24,7 +24,7 @@ const MOCK_USER: MockUser = {
   interviewUsed: 3,
 };
 
-const mockHistory: HistoryItem[] = [
+const mockHistory: HistoryDisplayItem[] = [
   { date: '05-22', type: 'video', typeLabel: '비디오 면접', target: '토스 (백엔드)', score: 88 },
   { date: '05-20', type: 'text',  typeLabel: '텍스트 면접', target: '카카오 (백엔드)', score: 75 },
   { date: '05-18', type: 'text',  typeLabel: '텍스트 면접', target: '네이버 (인턴)',   score: 62 },
