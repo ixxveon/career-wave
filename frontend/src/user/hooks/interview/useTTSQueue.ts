@@ -68,15 +68,25 @@ export function useTTSQueue(): UseTTSQueueResult {
       source.connect(ctx.destination);
       currentSourceRef.current = source;
 
+      // stop() 호출 여부를 클로저로 추적
+      // stop()이 호출된 경우 onended에서 다음 청크 재생 방지
+      let stoppedManually = false;
+
       setStatus('playing');
       source.start(0);
 
       source.onended = () => {
         isPlayingRef.current = false;
         currentSourceRef.current = null;
-        // 다음 청크 재생 (stale closure 방지를 위해 ref 경유)
-        playNextRef.current?.();
+        if (!stoppedManually) {
+          // 자연 종료 시에만 다음 청크 재생
+          playNextRef.current?.();
+        }
       };
+
+      // stop() 호출 시 stoppedManually 플래그 설정을 위해 ref에 setter 노출
+      (source as AudioBufferSourceNode & { _markStopped?: () => void })._markStopped =
+        () => { stoppedManually = true; };
     } catch {
       // 디코딩 실패 시 해당 청크 스킵하고 다음 청크 재생 시도
       isPlayingRef.current = false;
@@ -96,7 +106,11 @@ export function useTTSQueue(): UseTTSQueueResult {
   }, []);
 
   const stop = useCallback(() => {
-    try { currentSourceRef.current?.stop(); } catch { /* 이미 종료된 경우 무시 */ }
+    const source = currentSourceRef.current as
+      (AudioBufferSourceNode & { _markStopped?: () => void }) | null;
+    // onended가 발동해도 다음 청크를 재생하지 않도록 플래그 먼저 설정
+    source?._markStopped?.();
+    try { source?.stop(); } catch { /* 이미 종료된 경우 무시 */ }
     currentSourceRef.current = null;
     isPlayingRef.current = false;
     setStatus('idle');
