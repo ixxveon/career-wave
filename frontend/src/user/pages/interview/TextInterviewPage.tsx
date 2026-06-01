@@ -84,7 +84,6 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
   const [inputMode,       setInputMode]       = useState<InputMode>('voice');
   const [input,           setInput]           = useState('');
   const [sttLive,         setSttLive]         = useState('');
-  const [isRecording,     setIsRecording]     = useState(false);
   /* 답변 제한 카운트다운 */
   const [countdown,       setCountdown]       = useState(ANSWER_LIMIT);
   const [countdownActive, setCountdownActive] = useState(false);
@@ -175,7 +174,7 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
       }
 
       setMessages(prev => [...prev, { id: Date.now() + 1, role: 'notice', text: '⏰ 답변 시간이 초과되었습니다.' }]);
-      stopRecognition();
+      if (recorder.status === 'recording') recorder.stop();
       handleSendRef.current?.('', { isTimeout: true });
       return;
     }
@@ -221,14 +220,12 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
     setMessages(prev => [...prev, {
       id: pendingId, role: 'user', isVoice: true, isPending: true, text: '',
     }]);
-    setIsRecording(true);
     await recorder.start();
   }
 
   function handleMicStop() {
     stopCountdown();
     recorder.stop(); // isFinal: true 청크 전송 → onStop 콜백 발동
-    setIsRecording(false);
   }
 
   /* ─────────────────────────────────────────────────
@@ -245,7 +242,6 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
     if (!isTimeout && !skipAddMessage && !text?.trim()) return;
     stopCountdown();
     if (recorder.status === 'recording') recorder.stop();
-    setIsRecording(false);
     tts.clear();
 
     if (!isTimeout && !skipAddMessage) {
@@ -447,7 +443,7 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
               </div>
               <button
                 className="ti-switch-input"
-                onClick={() => { stopCountdown(); setIsRecording(false); setInputMode('voice'); }}
+                onClick={() => { stopCountdown(); setInputMode('voice'); }}
                 type="button"
               >
                 <Mic size={13} /> 음성으로 답변하기
