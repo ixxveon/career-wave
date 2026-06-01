@@ -97,31 +97,31 @@ Authorization: Bearer {accessToken}
 
 ### Linked Response
 
-```json
 {
   "success": true,
   "statusCode": 200,
   "message": "GitHub 정보를 조회했습니다.",
   "data": {
-    "githubUrl": "https://github.com/careerwave-user"
+    "githubId": "careerwave-user",
+    "githubUrl": "https://github.com/careerwave-user",
+    "linked": true
   }
 }
-```
 
 ### Not Linked Response
 
-```json
 {
   "success": true,
   "statusCode": 200,
   "message": "GitHub 정보가 없습니다.",
   "data": {
-    "githubUrl": null
+    "githubId": null,
+    "githubUrl": null,
+    "linked": false
   }
 }
-```
 
-> 프론트는 `githubUrl` 값이 `null`인지 여부로 GitHub 연동 상태를 표시한다.
+> 프론트는 `linked` 값을 기준으로 GitHub 연동 상태를 표시한다.
 
 ---
 
@@ -144,7 +144,7 @@ Authorization: Bearer {accessToken}
 | ----------- | ----------------- | -- | -------------- |
 | `name`      | `string`          | Y  | 회원 이름          |
 | `phone`     | `string`          | N  | 휴대폰 번호         |
-| `githubUrl` | `string` | `null` | N  | GitHub 프로필 URL |
+| `githubUrl` | `string \| null` | N | GitHub 프로필 URL |
 
 ### Response
 

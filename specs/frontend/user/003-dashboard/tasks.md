@@ -11,7 +11,7 @@
 * [ ] 기존 ScrappedJobPage.jsx 파일 TSX 전환
 * [ ] Dashboard API Schema 검토 및 데이터 구조 정의
 * [ ] User Profile 타입 정의
-* [ ] Github Profile 타입 정의
+* [ ] GitHub Profile 타입 정의
 * [ ] Scrap Job 타입 정의
 * [ ] Mock 데이터와 API 응답 구조 매핑 정의
 * [ ] 화면 데이터와 API Schema 필드 매핑 검토

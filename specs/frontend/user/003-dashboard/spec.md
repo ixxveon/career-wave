@@ -51,26 +51,25 @@
 * **FR-002**: 사용자는 자신의 계정 상태 정보를 확인할 수 있어야 한다.
 * **FR-003**: 사용자는 GitHub 연동 상태 정보를 확인할 수 있어야 한다.
 * **FR-004**: 사용자는 회원 정보 수정 화면을 사용할 수 있어야 한다.
-* **FR-005**: 사용자는 GitHub 연동 상태를 확인할 수 있어야 한다.
-* **FR-006**: 사용자는 스크랩한 채용공고 목록을 확인할 수 있어야 한다.
-* **FR-007**: 사용자는 스크랩 공고를 검색할 수 있어야 한다.
-* **FR-008**: 사용자는 스크랩 공고를 최신순으로 정렬할 수 있어야 한다.
-* **FR-009**: 사용자는 채용공고 상세 페이지로 이동할 수 있어야 한다.
-* **FR-010**: 사용자는 스크랩 취소 기능을 사용할 수 있어야 한다.
+* **FR-005**: 사용자는 스크랩한 채용공고 목록을 확인할 수 있어야 한다.
+* **FR-006**: 사용자는 스크랩 공고를 검색할 수 있어야 한다.
+* **FR-007**: 사용자는 스크랩 공고를 최신순으로 정렬할 수 있어야 한다.
+* **FR-008**: 사용자는 채용공고 상세 페이지로 이동할 수 있어야 한다.
+* **FR-009**: 사용자는 스크랩 취소 기능을 사용할 수 있어야 한다.
 
 ### Key UI Data
 
 * **User**
 
-  * userId
-  * name
+  * memberId
+  * loginId
   * email
+  * name
   * phone
-  * joinDate
-  * memberType
-  * loginType
-  * notificationEnabled
-  * accountStatus
+  * roleType
+  * memberStatus
+  * subscriptionStatus
+  * createdAt
 
 * **GithubProfile**
 
@@ -80,12 +79,14 @@
 
 * **ScrapJob**
 
-  * scrapId
-  * jobId
+  * bookmarkId
+  * jobNoticeId
   * companyName
   * title
-  * career
+  * careerLevel
   * location
+  * deadline
+  * noticeStatus
   * createdAt
 
 ## Success Criteria
