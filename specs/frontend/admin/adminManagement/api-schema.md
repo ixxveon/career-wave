@@ -9,7 +9,7 @@
 - 모든 endpoint는 JWT 인증과 `ROLE_ADMIN` 권한을 필요로 한다.
 - 계정 생성, 권한 변경, 잠금/해제, 삭제, ACL 변경 endpoint는 관리자 세부 역할 `MASTER`만 수행할 수 있다.
 - 서버는 인증 관리자 ID를 Security Context 또는 공통 인증 유틸에서 추출한다.
-- 프론트엔드는 응답으로 내려온 권한과 API 실패 응답을 기준으로 버튼 노출/비활성화 상태를 결정한다.
+- 프론트엔드는 `AdminAccount.role`/`scope` 등 응답으로 내려온 권한 필드와 `401`/`403` API 실패 응답을 기준으로 버튼 노출/비활성화 상태를 결정한다.
 
 ## Endpoints
 
@@ -36,6 +36,13 @@
 | `keyword` | `string` | N | 관리자 ID, 이름, 이메일 검색어 |
 | `role` | `AdminRole \| ALL` | N | 권한 필터. 기본값 `ALL` |
 | `status` | `AdminStatus \| ALL` | N | 상태 필터. 기본값 `ALL` |
+| `page` | `number` | N | 1부터 시작 |
+| `size` | `number` | N | 기본값 20 |
+
+### `GET /api/admin/admin-acls`
+
+| Name | Type | Required | Description |
+|---|---|---|---|
 | `page` | `number` | N | 1부터 시작 |
 | `size` | `number` | N | 기본값 20 |
 
@@ -122,24 +129,30 @@
 }
 ```
 
-### `ApiResponse<AdminAclRule[]>`
+### `ApiResponse<PagedAdminAclRules>`
 
 ```json
 {
   "success": true,
   "statusCode": 200,
   "message": "IP ACL 목록 조회에 성공했습니다.",
-  "data": [
-    {
-      "id": "ACL-001",
-      "label": "본사 사내망",
-      "cidr": "10.20.0.0/16",
-      "note": "사내 네트워크 전체 허용",
-      "enabled": true,
-      "riskLevel": "HIGH",
-      "updatedAt": "2026-05-25T08:30:00+09:00"
-    }
-  ]
+  "data": {
+    "items": [
+      {
+        "id": "ACL-001",
+        "label": "본사 사내망",
+        "cidr": "10.20.0.0/16",
+        "note": "사내 네트워크 전체 허용",
+        "enabled": true,
+        "riskLevel": "HIGH",
+        "updatedAt": "2026-05-25T08:30:00+09:00"
+      }
+    ],
+    "page": 1,
+    "size": 20,
+    "totalItems": 1,
+    "totalPages": 1
+  }
 }
 ```
 
