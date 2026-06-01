@@ -2,18 +2,22 @@ import axiosInstance from '../../utils/axiosInstance';
 
 // ── 공통 타입 ──────────────────────────────────────────────────
 
-export type ReportStatus = 'PENDING' | 'BLINDED' | 'DISMISSED';
-export type TargetType = 'BOARD' | 'COMMENT' | 'MEMBER';
-export type ReportReason = 'SPAM' | 'ABUSE' | 'AD' | 'INAPPROPRIATE' | 'OTHER';
+export const REPORT_STATUS = { PENDING: 'PENDING', BLINDED: 'BLINDED', DISMISSED: 'DISMISSED' } as const;
+export const TARGET_TYPE = { BOARD: 'BOARD', COMMENT: 'COMMENT', MEMBER: 'MEMBER' } as const;
+export const REPORT_REASON = { SPAM: 'SPAM', ABUSE: 'ABUSE', AD: 'AD', INAPPROPRIATE: 'INAPPROPRIATE', OTHER: 'OTHER' } as const;
 
-interface ApiResponse<T> {
+export type ReportStatus = typeof REPORT_STATUS[keyof typeof REPORT_STATUS];
+export type TargetType = typeof TARGET_TYPE[keyof typeof TARGET_TYPE];
+export type ReportReason = typeof REPORT_REASON[keyof typeof REPORT_REASON];
+
+export interface ApiResponse<T> {
   success: boolean;
   statusCode: number;
   message: string;
   data: T;
 }
 
-interface PageMeta {
+export interface PageMeta {
   page: number;
   size: number;
   totalItems: number;
