@@ -2,13 +2,21 @@ import axiosInstance from '../../utils/axiosInstance';
 
 // ── 공통 타입 ──────────────────────────────────────────────────
 
-export type MemberStatus = 'ACTIVE' | 'SUSPENDED' | 'BANNED';
-export type MemberRole = 'ROLE_USER' | 'ROLE_COMPANY';
-export type PlanType = 'FREE' | 'PREMIUM';
-export type SanctionType = 'WARNING' | 'SUSPEND' | 'BLACKLIST';
-export type SuspendDuration = 'THREE_DAYS' | 'SEVEN_DAYS' | 'THIRTY_DAYS' | 'PERMANENT';
-export type HrStatus = 'PENDING' | 'ACTIVE' | 'REMOVED';
-export type PermissionLevel = 'FULL' | 'NOTICE' | 'VIEWER';
+export const MEMBER_STATUS = { ACTIVE: 'ACTIVE', SUSPENDED: 'SUSPENDED', BANNED: 'BANNED' } as const;
+export const MEMBER_ROLE = { ROLE_USER: 'ROLE_USER', ROLE_COMPANY: 'ROLE_COMPANY' } as const;
+export const PLAN_TYPE = { FREE: 'FREE', PREMIUM: 'PREMIUM' } as const;
+export const SANCTION_TYPE = { WARNING: 'WARNING', SUSPEND: 'SUSPEND', BLACKLIST: 'BLACKLIST' } as const;
+export const SUSPEND_DURATION = { THREE_DAYS: 'THREE_DAYS', SEVEN_DAYS: 'SEVEN_DAYS', THIRTY_DAYS: 'THIRTY_DAYS', PERMANENT: 'PERMANENT' } as const;
+export const HR_STATUS = { PENDING: 'PENDING', ACTIVE: 'ACTIVE', REMOVED: 'REMOVED' } as const;
+export const PERMISSION_LEVEL = { FULL: 'FULL', NOTICE: 'NOTICE', VIEWER: 'VIEWER' } as const;
+
+export type MemberStatus = typeof MEMBER_STATUS[keyof typeof MEMBER_STATUS];
+export type MemberRole = typeof MEMBER_ROLE[keyof typeof MEMBER_ROLE];
+export type PlanType = typeof PLAN_TYPE[keyof typeof PLAN_TYPE];
+export type SanctionType = typeof SANCTION_TYPE[keyof typeof SANCTION_TYPE];
+export type SuspendDuration = typeof SUSPEND_DURATION[keyof typeof SUSPEND_DURATION];
+export type HrStatus = typeof HR_STATUS[keyof typeof HR_STATUS];
+export type PermissionLevel = typeof PERMISSION_LEVEL[keyof typeof PERMISSION_LEVEL];
 
 interface ApiResponse<T> {
   success: boolean;

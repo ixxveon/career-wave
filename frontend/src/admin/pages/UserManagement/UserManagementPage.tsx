@@ -94,13 +94,14 @@ export default function UserManagementPage() {
         page,
         size: 20,
       });
+      if (!res.data.success) throw new Error(res.data.message);
       const { items, totalItems, totalPages } = res.data.data;
       setMembers(items);
       setMemberTotalItems(totalItems);
       setMemberTotalPages(totalPages);
       setMemberPage(page);
-    } catch {
-      setMemberError('회원 목록을 불러오지 못했습니다.');
+    } catch (err: any) {
+      setMemberError(err.response?.data?.message || err.message || '회원 목록을 불러오지 못했습니다.');
     } finally {
       setMemberLoading(false);
     }
@@ -117,14 +118,15 @@ export default function UserManagementPage() {
         page,
         size: 20,
       });
+      if (!res.data.success) throw new Error(res.data.message);
       const { items, totalItems, totalPages, pendingCount } = res.data.data;
       setHrManagers(items);
       setHrTotalItems(totalItems);
       setHrTotalPages(totalPages);
       setHrPendingCount(pendingCount);
       setHrPage(page);
-    } catch {
-      setHrError('기업 회원 목록을 불러오지 못했습니다.');
+    } catch (err: any) {
+      setHrError(err.response?.data?.message || err.message || '기업 회원 목록을 불러오지 못했습니다.');
     } finally {
       setHrLoading(false);
     }
@@ -365,7 +367,7 @@ export default function UserManagementPage() {
                 <tbody>
                   {memberLoading ? (
                     <tr><td colSpan={10} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
-                  ) : members.map((m) => (
+                  ) : members.map((m, idx) => (
                     <tr key={m.memberId}>
                       <td>
                         <input
@@ -374,7 +376,7 @@ export default function UserManagementPage() {
                           onChange={(e) => toggleOne(m.memberId, e.target.checked)}
                         />
                       </td>
-                      <td style={{ color: '#7a8da4', fontSize: 13 }}>{m.loginId}</td>
+                      <td style={{ color: '#7a8da4', fontSize: 13 }}>{(memberPage - 1) * 20 + idx + 1}</td>
                       <td><strong style={{ color: '#1a2941' }}>{m.name}</strong></td>
                       <td>{m.email}</td>
                       <td style={{ color: '#7a8da4', fontSize: 13 }}>{m.loginId}</td>
@@ -427,7 +429,7 @@ export default function UserManagementPage() {
               <div className="memberKpiContent">
                 <p>승인 완료</p>
                 <h3>{hrManagers.filter((c) => c.hrStatus === 'ACTIVE').length}</h3>
-                <span>플랫폼 이용 가능</span>
+                <span>현재 페이지 기준</span>
               </div>
               <div className="memberKpiIcon kpi-green"><CheckCircle size={26} /></div>
             </article>
@@ -435,7 +437,7 @@ export default function UserManagementPage() {
               <div className="memberKpiContent">
                 <p style={{ color: '#8a2020' }}>반려</p>
                 <h3 style={{ color: '#5e1010' }}>{hrManagers.filter((c) => c.hrStatus === 'REMOVED').length}</h3>
-                <span style={{ color: '#9e3030' }}>서류 재제출 안내 필요</span>
+                <span style={{ color: '#9e3030' }}>현재 페이지 기준</span>
               </div>
               <div className="memberKpiIcon kpi-yellow" style={{ background: 'rgba(178, 58, 58, 0.16)', color: '#8a2020' }}><XCircle size={26} /></div>
             </article>
