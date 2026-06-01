@@ -4,6 +4,7 @@
 
 ## Phase 1 - 타입 및 API 계층
 
+- [ ] `feature/admin-dashboard-spec` 브랜치를 기준으로 `feature/admin-dashboard-api` 브랜치를 생성한다.
 - [ ] `frontend/src/admin/api/dashboardApi.ts`를 생성한다.
 - [ ] `AdminDashboardSummary` 응답 타입을 정의하고 export한다.
 - [ ] `DashboardKpi`, `DashboardAlert`, `DashboardActivity` 타입을 정의하고 export한다.
@@ -13,6 +14,7 @@
 
 ## Phase 2 - 화면 데이터 연동
 
+- [ ] `feature/admin-dashboard-api` 브랜치를 기준으로 `feature/admin-dashboard-data` 브랜치를 생성한다.
 - [ ] `AdminDashboardPage.tsx`의 mock KPI 데이터를 API 응답 기반으로 교체한다.
 - [ ] 주요 알림 목록을 API 응답 기반으로 교체한다.
 - [ ] 주간 가입자 차트를 API 응답 기반으로 교체한다.
@@ -23,6 +25,7 @@
 
 ## Phase 3 - 상태 처리
 
+- [ ] `feature/admin-dashboard-data` 브랜치를 기준으로 `feature/admin-dashboard-state` 브랜치를 생성한다.
 - [ ] 초기 로딩 상태를 구현한다.
 - [ ] 전체 데이터가 비어 있을 때 빈 상태 메시지를 표시한다.
 - [ ] 주요 알림이 없을 때 알림 없음 상태를 표시한다.
@@ -32,6 +35,7 @@
 
 ## Phase 4 - 라우팅 및 권한
 
+- [ ] `feature/admin-dashboard-state` 브랜치를 기준으로 `feature/admin-dashboard-route-auth` 브랜치를 생성한다.
 - [ ] `AdminSidebar`의 관리자 라우트와 대시보드 카드 `targetPath`를 대조한다.
 - [ ] 알림 이동 버튼의 `targetPath`가 실제 라우트와 일치하는지 검증한다.
 - [ ] 존재하지 않는 `targetPath`는 버튼 비활성화로 처리한다.
@@ -40,6 +44,7 @@
 
 ## Phase 5 - 검증
 
+- [ ] `feature/admin-dashboard-route-auth` 브랜치를 기준으로 `feature/admin-dashboard-verify` 브랜치를 생성한다.
 - [ ] `/admin/dashboard` 진입 시 KPI 4개가 표시되는지 확인한다.
 - [ ] 주요 알림 버튼이 올바른 관리자 페이지로 이동하는지 확인한다.
 - [ ] 기능 카드 상세 보기 버튼이 올바른 관리자 페이지로 이동하는지 확인한다.

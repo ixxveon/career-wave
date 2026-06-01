@@ -3,6 +3,13 @@
 **Feature Branch**: `feature/admin-dashboard-spec`
 **Status**: Draft
 
+## 브랜치 전략
+
+- [ ] Phase별 구현 브랜치가 정의되어 있다.
+- [ ] Phase 1 브랜치는 `feature/admin-dashboard-spec`을 기준으로 생성한다.
+- [ ] Phase 2 이후 브랜치는 직전 Phase 브랜치를 기준으로 생성한다.
+- [ ] 선행 Phase PR 병합 후 후속 Phase 브랜치의 rebase 또는 PR base 조정 기준이 명시되어 있다.
+
 ## 타입 및 API 계층
 
 - [ ] `frontend/src/admin/api/dashboardApi.ts`가 생성되어 있다.
