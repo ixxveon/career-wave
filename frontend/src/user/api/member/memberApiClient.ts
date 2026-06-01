@@ -1,4 +1,3 @@
-import type { ApiResponse } from '../../types/member';
 import { authSession } from '../../utils/member/authSession';
 import { toMemberApiError } from '../../utils/member/errorMapping';
 
@@ -22,11 +21,22 @@ export async function memberApiClient<T>(endpoint: string, options: MemberApiOpt
     requestHeaders.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...rest,
-    body,
-    headers: requestHeaders,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...rest,
+      body,
+      headers: requestHeaders,
+    });
+  } catch (error) {
+    if (auth) {
+      authSession.clear();
+    }
+    throw toMemberApiError(0, {
+      message: error instanceof Error ? error.message : undefined,
+    });
+  }
 
   const contentType = response.headers.get('content-type');
   const payload = contentType?.includes('application/json') ? await response.json().catch(() => null) : null;
@@ -38,5 +48,9 @@ export async function memberApiClient<T>(endpoint: string, options: MemberApiOpt
     throw toMemberApiError(response.status, payload ?? undefined);
   }
 
-  return (payload as ApiResponse<T>).data;
+  if (payload && typeof payload === 'object' && 'data' in payload) {
+    return payload.data as T;
+  }
+
+  return undefined as T;
 }

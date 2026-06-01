@@ -1,4 +1,9 @@
-export type MemberType = 'USER' | 'COMPANY';
+export const MEMBER_TYPE = {
+  USER: 'USER',
+  COMPANY: 'COMPANY',
+} as const;
+
+export type MemberType = (typeof MEMBER_TYPE)[keyof typeof MEMBER_TYPE];
 
 export type MemberStatus =
   | 'ACTIVE'
@@ -8,12 +13,15 @@ export type MemberStatus =
   | 'WITHDRAWN'
   | 'BLACKLISTED';
 
-export type CompanyApprovalStatus =
-  | 'NONE'
-  | 'PENDING_REVIEW'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'NEEDS_REVISION';
+export const COMPANY_APPROVAL_STATUS = {
+  NONE: 'NONE',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  NEEDS_REVISION: 'NEEDS_REVISION',
+} as const;
+
+export type CompanyApprovalStatus = (typeof COMPANY_APPROVAL_STATUS)[keyof typeof COMPANY_APPROVAL_STATUS];
 
 export type VerificationChannel = 'EMAIL' | 'PHONE';
 

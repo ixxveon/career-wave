@@ -1,4 +1,4 @@
-import type { MemberType } from '../../types/member';
+import { MEMBER_TYPE, type MemberType } from '../../types/member';
 import { isPasswordConfirmed, validatePasswordPolicy } from './passwordPolicy';
 
 export type LoginIdCheckState = 'unchecked' | 'checking' | 'available' | 'duplicated' | 'error';
@@ -39,7 +39,11 @@ export interface CompanyRegisterDraft {
 }
 
 export function toMemberType(value: string | null | undefined): MemberType {
-  return value?.toUpperCase() === 'COMPANY' ? 'COMPANY' : 'USER';
+  return value?.toUpperCase() === MEMBER_TYPE.COMPANY ? MEMBER_TYPE.COMPANY : MEMBER_TYPE.USER;
+}
+
+function hasValue(value: string | undefined): boolean {
+  return Boolean(value?.trim());
 }
 
 export function canSubmitLogin(loginId: string, password: string): boolean {
@@ -57,8 +61,8 @@ export function canSubmitPersonalRegister(form: PersonalRegisterDraft, loginIdSt
     form.name.trim().length > 0 &&
     form.email.trim().length > 0 &&
     form.phone.trim().length > 0 &&
-    Boolean(form.emailVerificationToken) &&
-    Boolean(form.phoneVerificationToken) &&
+    hasValue(form.emailVerificationToken) &&
+    hasValue(form.phoneVerificationToken) &&
     form.terms.service &&
     form.terms.privacy
   );
@@ -79,8 +83,8 @@ export function canSubmitCompanyRegister(form: CompanyRegisterDraft, loginIdStat
     form.businessNumber.trim().length > 0 &&
     form.ceoName.trim().length > 0 &&
     form.address.trim().length > 0 &&
-    Boolean(form.managerVerificationToken) &&
-    Boolean(form.employmentCertificateFileId) &&
+    hasValue(form.managerVerificationToken) &&
+    hasValue(form.employmentCertificateFileId) &&
     form.terms.service &&
     form.terms.privacy &&
     form.terms.companyVerification

@@ -31,6 +31,8 @@ const fallbackMessages: Record<MemberErrorCode, string> = {
 };
 
 export function getMemberErrorCode(statusCode: number): MemberErrorCode {
+  if (statusCode === 0) return 'NETWORK_ERROR';
+
   switch (statusCode) {
     case 400:
       return 'VALIDATION_ERROR';
