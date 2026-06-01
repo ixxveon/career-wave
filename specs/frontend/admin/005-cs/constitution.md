@@ -101,3 +101,49 @@ COMPLETED
 - 공지사항 삭제를 확인 모달 없이 즉시 실행하는 것을 금지한다.
 - `InquiryStatus` 등 Enum에 ERD에 없는 값을 코드에서 가정하는 것을 금지한다.
 - 프론트엔드에서 문의 상태를 직접 변경하는 것을 금지한다. 서버 응답 기준으로만 갱신한다.
+
+---
+
+## 7. 구현 패턴
+
+### API 호출 계층
+
+```
+Page 컴포넌트
+  → csApi.ts (도메인 API 모듈)
+  → axiosInstance (공통 HTTP 클라이언트)
+```
+
+- Page 컴포넌트에서 `axios`, `fetch`를 직접 호출하지 않는다.
+- 모든 HTTP 호출은 `frontend/src/admin/api/csApi.ts`를 통해서만 수행한다.
+
+### ApiResponse\<T\> 처리 패턴
+
+```ts
+const res = await csApi.getNotices(params);
+if (!res.data.success) throw new Error(res.data.message);
+const { items, totalItems, totalPages } = res.data.data;
+```
+
+- `res.data.success` 를 먼저 확인한다.
+- 실제 데이터는 `res.data.data` 로 접근한다.
+- API 실패 시 `res.data.message` 를 에러 메시지로 표시한다.
+- 409 (`INQUIRY_ALREADY_COMPLETED`) 응답은 별도 에러 메시지로 처리한다.
+
+### 필터 상태 관리 패턴
+
+- 필터 드롭다운·입력값 변경이 즉시 API 호출을 트리거하지 않는다.
+- 검색 버튼 클릭 또는 Enter 입력 시에만 API를 호출한다.
+- 적용된 필터값은 `appliedFilters ref`로 관리하고, 입력 상태와 분리한다.
+- Stale 응답 방지를 위해 `reqId ref`로 최신 요청만 화면에 반영한다.
+
+### 상태 갱신 규칙
+
+- 문의 상태 배지(`inquiryStatus`)는 서버 응답의 `inquiryStatus` 기준으로만 갱신한다.
+- 답변 저장·처리 완료 후 목록을 재조회하거나 서버 응답으로 해당 행만 업데이트한다.
+- 낙관적 업데이트(Optimistic Update)를 사용하지 않는다.
+
+### 로딩·에러 처리
+
+- API 호출 중에는 테이블 영역에 로딩 표시를 한다.
+- CRUD 처리 중에는 모달 버튼을 `disabled` 처리한다.

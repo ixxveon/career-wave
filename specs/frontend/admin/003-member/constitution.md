@@ -109,3 +109,56 @@ REMOVED
 - 승인/반려 처리를 단일 클릭으로 즉시 실행하는 것을 금지한다. 반드시 확인 모달을 거쳐야 한다.
 - 개인 회원과 기업 회원 데이터를 동일 상태 변수에 혼합하는 것을 금지한다.
 - `ROLE_MENTOR` 등 ERD에 없는 role을 코드에서 가정하는 것을 금지한다.
+
+---
+
+## 7. 구현 패턴
+
+### API 호출 계층
+
+```
+Page 컴포넌트
+  → memberApi.ts (도메인 API 모듈)
+  → axiosInstance (공통 HTTP 클라이언트)
+```
+
+- Page 컴포넌트에서 `axios`, `fetch`를 직접 호출하지 않는다.
+- 모든 HTTP 호출은 `frontend/src/admin/api/memberApi.ts`를 통해서만 수행한다.
+
+### ApiResponse\<T\> 처리 패턴
+
+```ts
+const res = await memberApi.getMembers(params);
+if (!res.data.success) throw new Error(res.data.message);
+const { items, totalItems, totalPages } = res.data.data;
+```
+
+- `res.data.success` 를 먼저 확인한다.
+- 실제 데이터는 `res.data.data` 로 접근한다.
+- API 실패 시 `res.data.message` 를 에러 메시지로 표시한다.
+
+### 필터 상태 관리 패턴
+
+- 필터 드롭다운·입력값 변경이 즉시 API 호출을 트리거하지 않는다.
+- 검색 버튼 클릭 또는 Enter 입력 시에만 API를 호출한다.
+- 적용된 필터값은 `appliedMemberFilters ref`로 관리하고, 입력 상태(roleFilter, statusFilter 등)와 분리한다.
+- Stale 응답 방지를 위해 `memberReqId ref`로 최신 요청만 화면에 반영한다.
+
+```ts
+// 검색 적용 시에만 ref 갱신 후 fetch
+const applyMemberSearch = () => {
+  appliedMemberFilters.current = { role: roleFilter, status: statusFilter, ... };
+  fetchMembers(1);
+};
+```
+
+### 상태 갱신 규칙
+
+- 회원 상태 배지(`memberStatus`, `hrStatus`)는 서버 응답 기준으로만 갱신한다.
+- 제재·승인·반려 처리 성공 후 `fetchMembers` / `fetchHrManagers`를 재호출하여 목록을 갱신한다.
+- 낙관적 업데이트(Optimistic Update)를 사용하지 않는다.
+
+### 로딩·에러 처리
+
+- API 호출 중에는 테이블 영역에 "불러오는 중..." 텍스트를 표시한다.
+- 처리 모달(정지/승인/반려) 진행 중에는 버튼을 `disabled` 처리하고 "처리 중..." 텍스트를 표시한다.

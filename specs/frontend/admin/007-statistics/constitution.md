@@ -54,3 +54,41 @@
 - 프론트에서 `payments`, `subscriptions`, `members` raw 데이터를 직접 집계하는 것을 금지한다.
 - 차트 외부 라이브러리(Chart.js, Recharts 등)를 추가하는 것을 금지한다. (v2 재검토)
 - 통계 API 이외의 경로로 데이터를 조회하는 것을 금지한다.
+
+---
+
+## 6. 구현 패턴
+
+### API 호출 계층
+
+```
+Page 컴포넌트
+  → statsApi.ts (도메인 API 모듈)
+  → axiosInstance (공통 HTTP 클라이언트)
+```
+
+- Page 컴포넌트에서 `axios`, `fetch`를 직접 호출하지 않는다.
+- 모든 HTTP 호출은 `frontend/src/admin/api/statsApi.ts`를 통해서만 수행한다.
+
+### ApiResponse\<T\> 처리 패턴
+
+```ts
+const res = await statsApi.getSummary();
+if (!res.data.success) throw new Error(res.data.message);
+const data = res.data.data;
+```
+
+- `res.data.success` 를 먼저 확인한다.
+- 실제 데이터는 `res.data.data` 로 접근한다.
+- API 실패 시 `res.data.message` 를 에러 메시지로 표시한다.
+
+### 데이터 흐름
+
+- 페이지 마운트 시 5개 API를 병렬 호출한다 (summary, revenue/monthly, revenue/breakdown, subscribers/monthly, subscribers/recent).
+- 각 API 응답은 독립적으로 상태를 갱신하며, 하나 실패해도 나머지는 표시한다.
+- 차트 데이터 소스는 API 응답으로 교체하고, 컴포넌트 내부 상수를 제거한다.
+
+### 로딩·에러 처리
+
+- 각 섹션별로 독립적인 로딩/에러 상태를 관리한다.
+- API 실패 시 해당 섹션에 에러 메시지를 표시하되, 다른 섹션은 정상 표시한다.

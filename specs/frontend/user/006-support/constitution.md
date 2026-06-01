@@ -105,3 +105,46 @@ const INQUIRY_STATUS_LABEL: Record<InquiryStatus, string> = {
 - 조회수를 클라이언트에서 직접 증가시키는 것을 금지한다.
 - ERD에 없는 카테고리 값을 코드에서 가정하는 것을 금지한다.
 - 관리자 전용 API(`/api/admin/`)를 User 페이지에서 직접 호출하는 것을 금지한다.
+
+---
+
+## 7. 구현 패턴
+
+### API 호출 계층
+
+```
+Page 컴포넌트
+  → supportApi.ts (도메인 API 모듈)
+  → axiosInstance (공통 HTTP 클라이언트)
+```
+
+- Page 컴포넌트에서 `axios`, `fetch`를 직접 호출하지 않는다.
+- 모든 HTTP 호출은 `frontend/src/user/api/supportApi.ts`를 통해서만 수행한다.
+
+### ApiResponse\<T\> 처리 패턴
+
+```ts
+const res = await supportApi.getNotices(params);
+if (!res.data.success) throw new Error(res.data.message);
+const { items, totalItems, totalPages } = res.data.data;
+```
+
+- `res.data.success` 를 먼저 확인한다.
+- 실제 데이터는 `res.data.data` 로 접근한다.
+- API 실패 시 `res.data.message` 를 에러 메시지로 표시한다.
+
+### 카테고리 값 처리 규칙
+
+- API 송수신은 ERD 영문 값(`NOTICE`, `ACCOUNT` 등)을 사용한다.
+- UI 표시 시에만 매핑 상수(`NOTICE_CATEGORY_LABEL` 등)를 통해 한글로 변환한다.
+- 매핑 상수는 `constants/support.ts` 또는 컴포넌트 최상단에 선언하여 한 곳에서 관리한다.
+
+### 인증 필요 페이지 처리
+
+- 문의 목록·접수 API 호출 전 로그인 여부를 확인한다.
+- 미로그인 상태에서 문의 관련 기능 접근 시 `/auth/login`으로 리다이렉트한다.
+
+### 로딩·에러 처리
+
+- API 호출 중에는 해당 섹션에 로딩 표시를 한다.
+- API 실패 시 `res.data.message` 를 에러 메시지로 표시한다.
