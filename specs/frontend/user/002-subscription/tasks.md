@@ -3,6 +3,8 @@
 > `plan.md`의 Phase와 1:1 대응한다.  
 > 각 항목은 하나의 커밋 또는 PR 리뷰 단위로 쪼갤 수 있어야 한다.
 
+> PR 업로드는 팀 작업 지시의 `feature/user-billing-base` → `feature/user-subscription` → `feature/user-payment-history` → `feature/user-billing` → `feature/user-frontend-qa` 순서를 따른다.
+
 ---
 
 ## Phase 1 — 상품/구독/결제 타입 및 API 계약 정의

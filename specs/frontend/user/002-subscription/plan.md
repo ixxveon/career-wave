@@ -10,6 +10,18 @@
 
 사용자 마이페이지의 구독 현황, AI 서비스 사용량, 결제 내역, 구독 해지, checkout/success/fail 결제 플로우를 구현하고 Toss Payments 및 백엔드 결제 API와 연결 가능한 계약을 정의한다.
 
+## PR Phase Mapping
+
+팀 작업 지시에 따라 PR은 아래 Phase 기준으로 분리한다. 기존 문서의 세부 Phase는 기능 묶음 기준이며, 실제 구현 PR은 이 표를 우선한다.
+
+| PR Phase | Branch | Scope |
+|----------|--------|-------|
+| Phase 5 | `feature/user-billing-base` | 구독/결제 공통 타입, API 인터페이스, 상품 데이터 구조 정리 |
+| Phase 6 | `feature/user-subscription` | 구독 상태, 이용량, 구독 내역 기능 구현 및 API 연동 |
+| Phase 7 | `feature/user-payment-history` | 결제 내역 조회, 기간 필터, 페이지네이션 기능 구현 |
+| Phase 8 | `feature/user-billing` | 상품 선택, 결제 요청, 결제 성공/실패 처리 기능 구현 |
+| Phase 9 | `feature/user-frontend-qa` | 누락 기능 보완, 예외 처리, 반응형, QA |
+
 ---
 
 ## Technical Context

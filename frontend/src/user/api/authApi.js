@@ -1,17 +1,9 @@
-import { apiClient } from './apiClient';
+import { memberAuthApi, memberRegisterApi } from './member';
 
 export const authApi = {
-  login: (payload) =>
-    apiClient('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
+  login: (payload) => memberAuthApi.login(payload),
 
-  register: (payload) =>
-    apiClient('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
+  register: (payload) => memberRegisterApi.registerUser(payload),
 
-  getProfile: () => apiClient('/members/me'),
+  getProfile: () => memberAuthApi.getMyStatus(),
 };
