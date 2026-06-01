@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Bot, Clock, EyeOff, Flag, UserX } from 'lucide-react';
-import { reportApi, type ReportItem, type ReportSummary, type ReportStatus, type TargetType, type ReportReason } from '../../api/reportApi';
+import { reportApi, REPORT_STATUS, type ReportItem, type ReportSummary, type ReportStatus, type TargetType, type ReportReason, type ReportDetail } from '../../api/reportApi';
 import '../../styles/admin.css';
 import '../../styles/Report.css';
 
@@ -69,6 +69,10 @@ interface UserAiReview {
 interface ReportWithAi extends ReportItem {
   aiReview?: AiReview;
   userAiReview?: UserAiReview;
+  contentBody?: ReportDetail['contentBody'];
+  targetId?: ReportDetail['targetId'];
+  processedAt?: ReportDetail['processedAt'];
+  processedBy?: ReportDetail['processedBy'];
 }
 
 export default function ReportPage() {
@@ -93,6 +97,7 @@ export default function ReportPage() {
   const [suspendType, setSuspendType]     = useState<SuspendType>('WARNING');
   const [suspendDuration, setSuspendDuration] = useState<SuspendDuration>('THREE_DAYS');
   const [suspendReason, setSuspendReason] = useState('');
+  const [processing, setProcessing] = useState(false);
 
   // ── 적용 필터 ref (검색 버튼/Enter 시에만 갱신) ───────────
   const appliedFilters = useRef({ status: '', targetType: '', keyword: '' });
@@ -197,29 +202,39 @@ export default function ReportPage() {
 
   // ── 블라인드 처리 ──────────────────────────────────────────
   const handleBlind = async (reportId: number) => {
+    if (processing) return;
+    setProcessing(true);
     try {
       const res = await reportApi.blindReport(reportId);
+      if (!res.data.success) throw new Error(res.data.message);
       const { reportStatus } = res.data.data;
       setReports((prev) => prev.map((r) => r.reportId === reportId ? { ...r, reportStatus } : r));
       setSelected((prev) => prev && prev.reportId === reportId ? { ...prev, reportStatus } : prev);
       fetchSummary();
-    } catch (err: any) {
-      const msg = err.response?.data?.message;
+    } catch (err: unknown) {
+      const msg = (err as any).response?.data?.message ?? (err instanceof Error ? err.message : undefined);
       alert(msg || '블라인드 처리에 실패했습니다.');
+    } finally {
+      setProcessing(false);
     }
   };
 
   // ── 기각 처리 ──────────────────────────────────────────────
   const handleDismiss = async (reportId: number) => {
+    if (processing) return;
+    setProcessing(true);
     try {
       const res = await reportApi.dismissReport(reportId);
+      if (!res.data.success) throw new Error(res.data.message);
       const { reportStatus } = res.data.data;
       setReports((prev) => prev.map((r) => r.reportId === reportId ? { ...r, reportStatus } : r));
       setSelected((prev) => prev && prev.reportId === reportId ? { ...prev, reportStatus } : prev);
       fetchSummary();
-    } catch (err: any) {
-      const msg = err.response?.data?.message;
+    } catch (err: unknown) {
+      const msg = (err as any).response?.data?.message ?? (err instanceof Error ? err.message : undefined);
       alert(msg || '기각 처리에 실패했습니다.');
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -403,6 +418,14 @@ export default function ReportPage() {
                     {selected.contentTitle ?? '—'}
                   </strong>
                 </div>
+                {selected.contentBody !== undefined && (
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <span>신고 대상 본문</span>
+                    <strong style={{ display: 'block', marginTop: 8, lineHeight: 1.7, wordBreak: 'break-all' }}>
+                      {selected.contentBody ?? '—'}
+                    </strong>
+                  </div>
+                )}
                 <div>
                   <span>현재 상태</span>
                   <strong>
@@ -507,22 +530,22 @@ export default function ReportPage() {
             {/* Action */}
             <div className="modalAction" style={{ justifyContent: 'space-between' }}>
               {selected.targetType !== 'MEMBER' ? (
-                <button className="tableBtn tableBtn--danger">
+                <button className="tableBtn tableBtn--danger" disabled>
                   {selected.targetType === 'COMMENT' ? '댓글 삭제' : '게시글 삭제'}
                 </button>
               ) : (
                 <span />
               )}
               <div style={{ display: 'flex', gap: 8 }}>
-                {selected.reportStatus === 'PENDING' && (
+                {selected.reportStatus === REPORT_STATUS.PENDING && (
                   <>
-                    <button className="tableBtn tableBtn--approve" onClick={() => handleBlind(selected.reportId)}>블라인드</button>
-                    <button className="tableBtn" onClick={() => handleDismiss(selected.reportId)}>기각</button>
+                    <button className="tableBtn tableBtn--approve" disabled={processing} onClick={() => handleBlind(selected.reportId)}>블라인드</button>
+                    <button className="tableBtn" disabled={processing} onClick={() => handleDismiss(selected.reportId)}>기각</button>
                   </>
                 )}
                 <button
                   className="tableBtn tableBtn--warn"
-                  onClick={() => { setSuspendTarget(selected); setSuspendType('WARNING'); setSuspendReason(''); }}
+                  disabled
                 >
                   회원 제재
                 </button>
