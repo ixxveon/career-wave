@@ -176,15 +176,16 @@ export default function UserManagementPage() {
     setSuspendLoading(true);
     setSuspendError('');
     try {
-      await memberApi.sanctionMember(suspendTarget.memberId, {
+      const res = await memberApi.sanctionMember(suspendTarget.memberId, {
         sanctionType: 'SUSPEND',
         duration: suspendPeriod,
         reason: suspendReason,
       });
+      if (!res.data.success) throw new Error(res.data.message);
       setSuspendTarget(null);
       fetchMembers(memberPage);
     } catch (err: any) {
-      const msg = err.response?.data?.message;
+      const msg = err.response?.data?.message || (err instanceof Error ? err.message : '');
       setSuspendError(msg || '제재 처리에 실패했습니다.');
     } finally {
       setSuspendLoading(false);
@@ -208,11 +209,12 @@ export default function UserManagementPage() {
     setApproveLoading(true);
     setActionError('');
     try {
-      await memberApi.approveHrManager(approveTarget.memberId);
+      const res = await memberApi.approveHrManager(approveTarget.memberId);
+      if (!res.data.success) throw new Error(res.data.message);
       setApproveTarget(null);
       fetchHrManagers(hrPage);
     } catch (err: any) {
-      const msg = err.response?.data?.message;
+      const msg = err.response?.data?.message || (err instanceof Error ? err.message : '');
       setActionError(msg || '승인 처리에 실패했습니다.');
     } finally {
       setApproveLoading(false);
@@ -229,12 +231,13 @@ export default function UserManagementPage() {
     setRejectLoading(true);
     setActionError('');
     try {
-      await memberApi.rejectHrManager(rejectTarget.memberId, { rejectReason: rejectReasonInput });
+      const res = await memberApi.rejectHrManager(rejectTarget.memberId, { rejectReason: rejectReasonInput });
+      if (!res.data.success) throw new Error(res.data.message);
       setRejectTarget(null);
       setRejectReasonInput('');
       fetchHrManagers(hrPage);
     } catch (err: any) {
-      const msg = err.response?.data?.message;
+      const msg = err.response?.data?.message || (err instanceof Error ? err.message : '');
       setActionError(msg || '반려 처리에 실패했습니다.');
     } finally {
       setRejectLoading(false);
