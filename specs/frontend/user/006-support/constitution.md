@@ -112,7 +112,7 @@ const INQUIRY_STATUS_LABEL: Record<InquiryStatus, string> = {
 
 ### API 호출 계층
 
-```
+```text
 Page 컴포넌트
   → supportApi.ts (도메인 API 모듈)
   → axiosInstance (공통 HTTP 클라이언트)

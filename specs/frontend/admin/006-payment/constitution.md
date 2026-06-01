@@ -104,7 +104,7 @@ PENDING ──► COMPLETED  (환불 처리 확정)
 
 ### API 호출 계층
 
-```
+```text
 Page 컴포넌트
   → paymentApi.ts (도메인 API 모듈)
   → axiosInstance (공통 HTTP 클라이언트)
