@@ -18,6 +18,15 @@ import type { TTSQueueStatus } from './useTTSQueue';
 import type { SpringWSStatus }  from './useSpringWebSocket';
 import type { FastApiWSStatus } from './useFastApiWebSocket';
 
+/** DEV mock 자동 꼬리 질문 (백엔드 미연동 시) */
+const DEV_MOCK_REPLIES = [
+  '답변 감사합니다. 해당 기술적 선택의 근거는 무엇이었나요?',
+  '좋습니다. 팀 협업 시 의견 충돌이 생겼을 때 어떻게 해결하셨나요?',
+  '인상적이네요. 본인의 강점과 약점을 각각 말씀해 주세요.',
+  '마지막 질문입니다. 입사 후 3년간의 커리어 목표를 말씀해 주세요.',
+  '수고하셨습니다! AI가 답변을 분석하여 리포트를 생성하고 있습니다.',
+];
+
 // ── 리듀서 ────────────────────────────────────────────────────
 
 interface SessionReducerState {
@@ -297,14 +306,6 @@ export function useInterviewSession({
 
   // ── 액션 메서드 ────────────────────────────────────────────
 
-  const DEV_REPLIES = [
-    '답변 감사합니다. 해당 기술적 선택의 근거는 무엇이었나요?',
-    '좋습니다. 팀 협업 시 의견 충돌이 생겼을 때 어떻게 해결하셨나요?',
-    '인상적이네요. 본인의 강점과 약점을 각각 말씀해 주세요.',
-    '마지막 질문입니다. 입사 후 3년간의 커리어 목표를 말씀해 주세요.',
-    '수고하셨습니다! AI가 답변을 분석하여 리포트를 생성하고 있습니다.',
-  ];
-
   const sendTextAnswer = useCallback(async (text: string) => {
     if (!sessionId) return;
     if (text.trim()) {
@@ -327,7 +328,7 @@ export function useInterviewSession({
         dispatch({ type: 'SET_TYPING', typing: false });
         dispatch({
           type:    'ADD_MESSAGE',
-          message: { id: Date.now(), role: 'ai', text: DEV_REPLIES[Math.min(currentQ - 1, DEV_REPLIES.length - 1)] },
+          message: { id: Date.now(), role: 'ai', text: DEV_MOCK_REPLIES[Math.min(currentQ - 1, DEV_MOCK_REPLIES.length - 1)] },
         });
         dispatch({ type: 'SET_QUESTION_ORDER', order: currentQ + 1 });
       }, 1200);

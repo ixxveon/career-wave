@@ -18,7 +18,7 @@ import InterviewTimer  from '../../components/interview/InterviewTimer';
 import VoiceRecorder   from '../../components/interview/VoiceRecorder';
 import InterviewSetup  from '../../components/interview/InterviewSetup';
 
-import { loadInterviewSession }  from '../../utils/interview/sessionStorage';
+import { loadInterviewSession, clearInterviewSession } from '../../utils/interview/sessionStorage';
 import './TextInterviewPage.css';
 
 /* ── 상수 ── */
@@ -289,7 +289,6 @@ function InterviewRoom({ sessionId, company, job, sessionType, onExit }: Intervi
    메인 컴포넌트
 ───────────────────────────────────────────────────────────── */
 export default function TextInterviewPage() {
-  const navigate      = useNavigate();
   const [searchParams] = useSearchParams();
   const documentId    = searchParams.get('documentId');
 
@@ -389,6 +388,7 @@ export default function TextInterviewPage() {
         job={job}
         sessionType={sessionType}
         onExit={() => {
+          clearInterviewSession();
           setPhase('setup');
           setSessionId(null);
           setApiError(null);
