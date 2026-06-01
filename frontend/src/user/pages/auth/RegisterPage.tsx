@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { Apple, BadgeCheck, Building2, CheckCircle2, FileText, ShieldCheck, UserRound } from 'lucide-react';
 import {
   useLoginIdCheck,
@@ -20,6 +20,7 @@ import {
   validatePersonalRegisterForm,
   type RegisterFieldErrors,
 } from '../../utils/member/registerSchema';
+import { validateEmploymentCertificateFile } from '../../utils/member/fileValidation';
 import { LOGIN_ID_CHECK_STATE, type LoginIdCheckState } from '../../utils/member/validation';
 import './AuthPage.css';
 
@@ -429,6 +430,28 @@ function AuthButtonGroup({ input, buttonLabel, onClick, disabled = false, second
   );
 }
 
+function useVerificationNow() {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timerId);
+  }, []);
+
+  return now;
+}
+
+function getRemainingSeconds(target: string, now: number): number {
+  if (!target) return 0;
+  return Math.max(0, Math.ceil((new Date(target).getTime() - now) / 1000));
+}
+
+function formatRemaining(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const nextSeconds = seconds % 60;
+  return `${minutes}:${String(nextSeconds).padStart(2, '0')}`;
+}
+
 function PersonalTerms({ values, onChange }) {
   const [openDetails, setOpenDetails] = useState({});
   const allChecked = values.age && values.service && values.privacy && values.marketing;
@@ -606,8 +629,14 @@ function PersonalRegisterForm() {
   const [verification, setVerification] = useState({
     emailId: '',
     emailToken: '',
+    emailExpiresAt: '',
+    emailResendAvailableAt: '',
+    emailRemainingAttempts: 0,
     phoneId: '',
     phoneToken: '',
+    phoneExpiresAt: '',
+    phoneResendAvailableAt: '',
+    phoneRemainingAttempts: 0,
   });
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
   const [formMessage, setFormMessage] = useState('');
@@ -618,7 +647,12 @@ function PersonalRegisterForm() {
   const sendPhoneCode = useSendVerificationCode();
   const confirmPhoneCode = useConfirmVerificationCode();
   const registerUser = useRegisterUser();
+  const now = useVerificationNow();
   const passwordMismatch = form.passwordConfirm && form.password !== form.passwordConfirm;
+  const emailExpiresIn = getRemainingSeconds(verification.emailExpiresAt, now);
+  const emailResendIn = getRemainingSeconds(verification.emailResendAvailableAt, now);
+  const phoneExpiresIn = getRemainingSeconds(verification.phoneExpiresAt, now);
+  const phoneResendIn = getRemainingSeconds(verification.phoneResendAvailableAt, now);
   const personalSnapshot = {
     loginId: form.userId,
     password: form.password,
@@ -650,8 +684,26 @@ function PersonalRegisterForm() {
     setSuccessMessage('');
 
     if (key === 'userId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
-    if (key === 'email') setVerification((current) => ({ ...current, emailId: '', emailToken: '' }));
-    if (key === 'phone') setVerification((current) => ({ ...current, phoneId: '', phoneToken: '' }));
+    if (key === 'email') {
+      setVerification((current) => ({
+        ...current,
+        emailId: '',
+        emailToken: '',
+        emailExpiresAt: '',
+        emailResendAvailableAt: '',
+        emailRemainingAttempts: 0,
+      }));
+    }
+    if (key === 'phone') {
+      setVerification((current) => ({
+        ...current,
+        phoneId: '',
+        phoneToken: '',
+        phoneExpiresAt: '',
+        phoneResendAvailableAt: '',
+        phoneRemainingAttempts: 0,
+      }));
+    }
   };
 
   const handleLoginIdCheck = async () => {
@@ -683,7 +735,14 @@ function PersonalRegisterForm() {
 
     try {
       const result = await sendEmailCode.mutateAsync({ channel: 'EMAIL', target: form.email.trim(), purpose: 'REGISTER' });
-      setVerification((current) => ({ ...current, emailId: result.verificationId, emailToken: '' }));
+      setVerification((current) => ({
+        ...current,
+        emailId: result.verificationId,
+        emailToken: '',
+        emailExpiresAt: result.expiresAt,
+        emailResendAvailableAt: result.resendAvailableAt,
+        emailRemainingAttempts: result.remainingAttempts,
+      }));
       setFieldErrors((current) => ({ ...current, email: '', emailCode: '' }));
     } catch (error) {
       setFieldErrors((current) => ({ ...current, email: getErrorMessage(error, '이메일 인증번호 발송에 실패했습니다.') }));
@@ -693,6 +752,10 @@ function PersonalRegisterForm() {
   const handleConfirmEmailCode = async () => {
     if (!verification.emailId) {
       setFieldErrors((current) => ({ ...current, emailCode: '이메일 인증번호를 먼저 요청해주세요.' }));
+      return;
+    }
+    if (emailExpiresIn <= 0) {
+      setFieldErrors((current) => ({ ...current, emailCode: '인증번호가 만료되었습니다. 다시 전송해주세요.' }));
       return;
     }
     if (!isValidVerificationCode(form.emailCode)) {
@@ -717,7 +780,14 @@ function PersonalRegisterForm() {
 
     try {
       const result = await sendPhoneCode.mutateAsync({ channel: 'PHONE', target: form.phone.replace(/\D/g, ''), purpose: 'REGISTER' });
-      setVerification((current) => ({ ...current, phoneId: result.verificationId, phoneToken: '' }));
+      setVerification((current) => ({
+        ...current,
+        phoneId: result.verificationId,
+        phoneToken: '',
+        phoneExpiresAt: result.expiresAt,
+        phoneResendAvailableAt: result.resendAvailableAt,
+        phoneRemainingAttempts: result.remainingAttempts,
+      }));
       setFieldErrors((current) => ({ ...current, phone: '', phoneCode: '' }));
     } catch (error) {
       setFieldErrors((current) => ({ ...current, phone: getErrorMessage(error, '휴대폰 인증번호 발송에 실패했습니다.') }));
@@ -727,6 +797,10 @@ function PersonalRegisterForm() {
   const handleConfirmPhoneCode = async () => {
     if (!verification.phoneId) {
       setFieldErrors((current) => ({ ...current, phoneCode: '휴대폰 인증번호를 먼저 요청해주세요.' }));
+      return;
+    }
+    if (phoneExpiresIn <= 0) {
+      setFieldErrors((current) => ({ ...current, phoneCode: '인증번호가 만료되었습니다. 다시 전송해주세요.' }));
       return;
     }
     if (!isValidVerificationCode(form.phoneCode)) {
@@ -808,22 +882,27 @@ function PersonalRegisterForm() {
           <Field label="이메일" required wide>
             <AuthButtonGroup
               input={<TextInput type="email" value={form.email} onChange={(value) => update('email', value)} placeholder="이메일 주소 입력" />}
-              buttonLabel={sendEmailCode.isPending ? '전송 중' : verification.emailId ? '재전송' : '인증번호 전송'}
-              disabled={sendEmailCode.isPending}
+              buttonLabel={sendEmailCode.isPending ? '전송 중' : verification.emailId ? `재전송${emailResendIn > 0 ? ` ${formatRemaining(emailResendIn)}` : ''}` : '인증번호 전송'}
+              disabled={sendEmailCode.isPending || emailResendIn > 0}
               onClick={handleSendEmailCode}
             />
-            <StatusPill active={Boolean(verification.emailId) && !verification.emailToken}>인증번호가 발송되었습니다.</StatusPill>
+            <StatusPill active={Boolean(verification.emailId) && !verification.emailToken && emailExpiresIn > 0}>
+              인증번호 유효 시간 {formatRemaining(emailExpiresIn)}
+            </StatusPill>
             <StatusPill active={Boolean(verification.emailToken)}>이메일 인증이 완료되었습니다.</StatusPill>
+            {verification.emailId && !verification.emailToken && emailExpiresIn <= 0 && (
+              <p className="cw-register-error">이메일 인증번호가 만료되었습니다. 다시 전송해주세요.</p>
+            )}
             {fieldErrors.email && <p className="cw-register-error">{fieldErrors.email}</p>}
           </Field>
           <Field label="이메일 인증번호" required wide>
             <AuthButtonGroup
               input={<TextInput value={form.emailCode} onChange={(value) => update('emailCode', value)} placeholder="인증번호 6자리 입력" />}
               buttonLabel={confirmEmailCode.isPending ? '확인 중' : '인증 확인'}
-              disabled={confirmEmailCode.isPending || !verification.emailId}
+              disabled={confirmEmailCode.isPending || !verification.emailId || emailExpiresIn <= 0}
               onClick={handleConfirmEmailCode}
               secondButtonLabel="재전송"
-              secondDisabled={sendEmailCode.isPending}
+              secondDisabled={sendEmailCode.isPending || emailResendIn > 0}
               onSecondClick={handleSendEmailCode}
             />
             {fieldErrors.emailCode && <p className="cw-register-error">{fieldErrors.emailCode}</p>}
@@ -831,21 +910,26 @@ function PersonalRegisterForm() {
           <Field label="휴대폰 번호" required wide>
             <AuthButtonGroup
               input={<TextInput type="tel" value={form.phone} onChange={(value) => update('phone', value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" />}
-              buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? '재전송' : '인증번호 전송'}
-              disabled={sendPhoneCode.isPending}
+              buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
+              disabled={sendPhoneCode.isPending || phoneResendIn > 0}
               onClick={handleSendPhoneCode}
             />
-            <StatusPill active={Boolean(verification.phoneId) && !verification.phoneToken}>인증번호가 발송되었습니다.</StatusPill>
+            <StatusPill active={Boolean(verification.phoneId) && !verification.phoneToken && phoneExpiresIn > 0}>
+              인증번호 유효 시간 {formatRemaining(phoneExpiresIn)}
+            </StatusPill>
+            {verification.phoneId && !verification.phoneToken && phoneExpiresIn <= 0 && (
+              <p className="cw-register-error">휴대폰 인증번호가 만료되었습니다. 다시 전송해주세요.</p>
+            )}
             {fieldErrors.phone && <p className="cw-register-error">{fieldErrors.phone}</p>}
           </Field>
           <Field label="휴대폰 인증번호" required wide>
             <AuthButtonGroup
               input={<TextInput value={form.phoneCode} onChange={(value) => update('phoneCode', value)} placeholder="인증번호 6자리 입력" />}
               buttonLabel={confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
-              disabled={confirmPhoneCode.isPending || !verification.phoneId}
+              disabled={confirmPhoneCode.isPending || !verification.phoneId || phoneExpiresIn <= 0}
               onClick={handleConfirmPhoneCode}
               secondButtonLabel="재전송"
-              secondDisabled={sendPhoneCode.isPending}
+              secondDisabled={sendPhoneCode.isPending || phoneResendIn > 0}
               onSecondClick={handleSendPhoneCode}
             />
             <StatusPill active={Boolean(verification.phoneToken)}>휴대폰 인증이 완료되었습니다.</StatusPill>
@@ -899,8 +983,14 @@ function CompanyRegisterForm() {
   const [verification, setVerification] = useState({
     phoneId: '',
     phoneToken: '',
+    phoneExpiresAt: '',
+    phoneResendAvailableAt: '',
+    phoneRemainingAttempts: 0,
     emailId: '',
     emailToken: '',
+    emailExpiresAt: '',
+    emailResendAvailableAt: '',
+    emailRemainingAttempts: 0,
     employmentCertificateFileId: '',
   });
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
@@ -918,7 +1008,12 @@ function CompanyRegisterForm() {
   const confirmEmailCode = useConfirmVerificationCode();
   const uploadEmploymentCertificate = useUploadEmploymentCertificate();
   const registerCompany = useRegisterCompany();
+  const now = useVerificationNow();
   const passwordMismatch = form.managerPasswordConfirm && form.managerPassword !== form.managerPasswordConfirm;
+  const phoneExpiresIn = getRemainingSeconds(verification.phoneExpiresAt, now);
+  const phoneResendIn = getRemainingSeconds(verification.phoneResendAvailableAt, now);
+  const emailExpiresIn = getRemainingSeconds(verification.emailExpiresAt, now);
+  const emailResendIn = getRemainingSeconds(verification.emailResendAvailableAt, now);
   const companySnapshot = {
     loginId: form.managerId,
     password: form.managerPassword,
@@ -961,8 +1056,26 @@ function CompanyRegisterForm() {
     setSuccessMessage('');
 
     if (key === 'managerId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
-    if (key === 'managerPhone') setVerification((current) => ({ ...current, phoneId: '', phoneToken: '' }));
-    if (key === 'managerEmail') setVerification((current) => ({ ...current, emailId: '', emailToken: '' }));
+    if (key === 'managerPhone') {
+      setVerification((current) => ({
+        ...current,
+        phoneId: '',
+        phoneToken: '',
+        phoneExpiresAt: '',
+        phoneResendAvailableAt: '',
+        phoneRemainingAttempts: 0,
+      }));
+    }
+    if (key === 'managerEmail') {
+      setVerification((current) => ({
+        ...current,
+        emailId: '',
+        emailToken: '',
+        emailExpiresAt: '',
+        emailResendAvailableAt: '',
+        emailRemainingAttempts: 0,
+      }));
+    }
     if (key === 'certificateNumber') setVerified((current) => ({ ...current, company: false }));
   };
 
@@ -975,17 +1088,11 @@ function CompanyRegisterForm() {
       return;
     }
 
-    const fileValidation = validateCompanyRegisterForm(
-      {
-        ...companySnapshot,
-        employmentCertificate: selectedFile,
-      },
-      loginIdState,
-    );
+    const fileValidation = validateEmploymentCertificateFile(selectedFile);
 
-    if (fileValidation.employmentCertificate) {
+    if (!fileValidation.valid) {
       setEmploymentCertificate(null);
-      setEmploymentCertificateError(fileValidation.employmentCertificate);
+      setEmploymentCertificateError(fileValidation.message ?? '재직증명서 파일을 확인해주세요.');
       setVerification((current) => ({ ...current, employmentCertificateFileId: '' }));
       event.target.value = '';
       return;
@@ -1035,7 +1142,14 @@ function CompanyRegisterForm() {
 
     try {
       const result = await sendPhoneCode.mutateAsync({ channel: 'PHONE', target: form.managerPhone.replace(/\D/g, ''), purpose: 'REGISTER' });
-      setVerification((current) => ({ ...current, phoneId: result.verificationId, phoneToken: '' }));
+      setVerification((current) => ({
+        ...current,
+        phoneId: result.verificationId,
+        phoneToken: '',
+        phoneExpiresAt: result.expiresAt,
+        phoneResendAvailableAt: result.resendAvailableAt,
+        phoneRemainingAttempts: result.remainingAttempts,
+      }));
       setFieldErrors((current) => ({ ...current, managerPhone: '', managerPhoneCode: '' }));
     } catch (error) {
       setFieldErrors((current) => ({ ...current, managerPhone: getErrorMessage(error, '휴대폰 인증번호 발송에 실패했습니다.') }));
@@ -1045,6 +1159,10 @@ function CompanyRegisterForm() {
   const handleConfirmPhoneCode = async () => {
     if (!verification.phoneId) {
       setFieldErrors((current) => ({ ...current, managerPhoneCode: '휴대폰 인증번호를 먼저 요청해주세요.' }));
+      return;
+    }
+    if (phoneExpiresIn <= 0) {
+      setFieldErrors((current) => ({ ...current, managerPhoneCode: '인증번호가 만료되었습니다. 다시 전송해주세요.' }));
       return;
     }
     if (!isValidVerificationCode(form.managerPhoneCode)) {
@@ -1069,7 +1187,14 @@ function CompanyRegisterForm() {
 
     try {
       const result = await sendEmailCode.mutateAsync({ channel: 'EMAIL', target: form.managerEmail.trim(), purpose: 'REGISTER' });
-      setVerification((current) => ({ ...current, emailId: result.verificationId, emailToken: '' }));
+      setVerification((current) => ({
+        ...current,
+        emailId: result.verificationId,
+        emailToken: '',
+        emailExpiresAt: result.expiresAt,
+        emailResendAvailableAt: result.resendAvailableAt,
+        emailRemainingAttempts: result.remainingAttempts,
+      }));
       setFieldErrors((current) => ({ ...current, managerEmail: '', managerEmailCode: '' }));
     } catch (error) {
       setFieldErrors((current) => ({ ...current, managerEmail: getErrorMessage(error, '이메일 인증번호 발송에 실패했습니다.') }));
@@ -1079,6 +1204,10 @@ function CompanyRegisterForm() {
   const handleConfirmEmailCode = async () => {
     if (!verification.emailId) {
       setFieldErrors((current) => ({ ...current, managerEmailCode: '이메일 인증번호를 먼저 요청해주세요.' }));
+      return;
+    }
+    if (emailExpiresIn <= 0) {
+      setFieldErrors((current) => ({ ...current, managerEmailCode: '인증번호가 만료되었습니다. 다시 전송해주세요.' }));
       return;
     }
     if (!isValidVerificationCode(form.managerEmailCode)) {
@@ -1263,11 +1392,16 @@ function CompanyRegisterForm() {
                   placeholder="휴대폰번호('-' 없이 숫자만 입력)"
                 />
               }
-              buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? '재전송' : '인증번호 전송'}
-              disabled={sendPhoneCode.isPending}
+              buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
+              disabled={sendPhoneCode.isPending || phoneResendIn > 0}
               onClick={handleSendPhoneCode}
             />
-            <StatusPill active={Boolean(verification.phoneId) && !verification.phoneToken}>인증번호가 발송되었습니다.</StatusPill>
+            <StatusPill active={Boolean(verification.phoneId) && !verification.phoneToken && phoneExpiresIn > 0}>
+              인증번호 유효 시간 {formatRemaining(phoneExpiresIn)}
+            </StatusPill>
+            {verification.phoneId && !verification.phoneToken && phoneExpiresIn <= 0 && (
+              <p className="cw-register-error">휴대폰 인증번호가 만료되었습니다. 다시 전송해주세요.</p>
+            )}
             {fieldErrors.managerPhone && <p className="cw-register-error">{fieldErrors.managerPhone}</p>}
           </Field>
           <Field label="휴대폰 인증번호" required wide>
@@ -1280,10 +1414,10 @@ function CompanyRegisterForm() {
                 />
               }
               buttonLabel={confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
-              disabled={confirmPhoneCode.isPending || !verification.phoneId}
+              disabled={confirmPhoneCode.isPending || !verification.phoneId || phoneExpiresIn <= 0}
               onClick={handleConfirmPhoneCode}
               secondButtonLabel="재전송"
-              secondDisabled={sendPhoneCode.isPending}
+              secondDisabled={sendPhoneCode.isPending || phoneResendIn > 0}
               onSecondClick={handleSendPhoneCode}
             />
             <StatusPill active={Boolean(verification.phoneToken)}>휴대폰 인증이 완료되었습니다.</StatusPill>
@@ -1299,11 +1433,16 @@ function CompanyRegisterForm() {
                   placeholder="담당자 이메일 주소 입력"
                 />
               }
-              buttonLabel={sendEmailCode.isPending ? '전송 중' : verification.emailId ? '재전송' : '인증번호 전송'}
-              disabled={sendEmailCode.isPending}
+              buttonLabel={sendEmailCode.isPending ? '전송 중' : verification.emailId ? `재전송${emailResendIn > 0 ? ` ${formatRemaining(emailResendIn)}` : ''}` : '인증번호 전송'}
+              disabled={sendEmailCode.isPending || emailResendIn > 0}
               onClick={handleSendEmailCode}
             />
-            <StatusPill active={Boolean(verification.emailId) && !verification.emailToken}>인증번호가 발송되었습니다.</StatusPill>
+            <StatusPill active={Boolean(verification.emailId) && !verification.emailToken && emailExpiresIn > 0}>
+              인증번호 유효 시간 {formatRemaining(emailExpiresIn)}
+            </StatusPill>
+            {verification.emailId && !verification.emailToken && emailExpiresIn <= 0 && (
+              <p className="cw-register-error">이메일 인증번호가 만료되었습니다. 다시 전송해주세요.</p>
+            )}
             {fieldErrors.managerEmail && <p className="cw-register-error">{fieldErrors.managerEmail}</p>}
           </Field>
           <Field label="이메일 인증번호" required wide>
@@ -1316,10 +1455,10 @@ function CompanyRegisterForm() {
                 />
               }
               buttonLabel={confirmEmailCode.isPending ? '확인 중' : '인증 확인'}
-              disabled={confirmEmailCode.isPending || !verification.emailId}
+              disabled={confirmEmailCode.isPending || !verification.emailId || emailExpiresIn <= 0}
               onClick={handleConfirmEmailCode}
               secondButtonLabel="재전송"
-              secondDisabled={sendEmailCode.isPending}
+              secondDisabled={sendEmailCode.isPending || emailResendIn > 0}
               onSecondClick={handleSendEmailCode}
             />
             <StatusPill active={Boolean(verification.emailToken)}>이메일 인증이 완료되었습니다.</StatusPill>
