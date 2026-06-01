@@ -5,7 +5,7 @@ import {
 import { documentApi } from '../../api/documentApi';
 import DocumentResultView from './DocumentResultView';
 import type { DocumentResult } from '../../types/document';
-import './styles/ResumeAnalysisPage.css';
+import './ResumeAnalysisPage.css';
 
 /* ── 상수 ──────────────────────────────────────── */
 const ALLOWED_EXT = ['.pdf', '.doc', '.docx'];

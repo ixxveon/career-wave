@@ -27,9 +27,9 @@ import ApplicationStatusPage from '../user/pages/application/ApplicationStatusPa
 import ApplicantManagementPage from '../user/pages/application/ApplicantManagementPage';
 import ApplyPage from '../user/pages/application/ApplyPage';
 
-import ResumeAnalysisPage from '../user/pages/documentAnalysis/ResumeAnalysisPage';
-import CoverLetterAnalysisPage from '../user/pages/documentAnalysis/CoverLetterAnalysisPage';
-import DocumentReportPage from '../user/pages/documentAnalysis/DocumentReportPage';
+import ResumeAnalysisPage from '../user/pages/resume/ResumeAnalysisPage';
+import CoverLetterAnalysisPage from '../user/pages/resume/CoverLetterAnalysisPage';
+import DocumentReportPage from '../user/pages/resume/DocumentReportPage';
 
 import InterviewHomePage from '../user/pages/interview/InterviewHomePage';
 import TextInterviewPage from '../user/pages/interview/TextInterviewPage';

@@ -6,8 +6,8 @@ import {
 import { documentApi } from '../../api/documentApi';
 import DocumentResultView from './DocumentResultView';
 import type { DocumentResult, FeedbackDetail } from '../../types/document';
-import './styles/CoverLetterAnalysisPage.css';
-import './styles/ResumeAnalysisPage.css'; /* ra-quota-bar 공용 스타일 */
+import './CoverLetterAnalysisPage.css';
+import './ResumeAnalysisPage.css'; /* ra-quota-bar 공용 스타일 */
 
 /* ── 멤버십 한도 (서류 분석 이력서+자소서 통합 카운트) ── */
 const PLAN_LIMITS = { FREE: { document: 1 }, PREMIUM: { document: 20 } };
