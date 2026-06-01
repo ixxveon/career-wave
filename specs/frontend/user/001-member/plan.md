@@ -10,6 +10,17 @@
 
 사용자 로그인, 개인/기업회원 가입, 소셜 가입 추가정보, 계정 찾기, 비밀번호 재설정, 인증번호 검증, 기업회원 승인 상태 대응을 구현하고 백엔드 인증/회원 API와 연결 가능한 계약을 정의한다.
 
+## PR Phase Mapping
+
+팀 작업 지시에 따라 PR은 아래 Phase 기준으로 분리한다. 기존 문서의 세부 Phase는 기능 묶음 기준이며, 실제 구현 PR은 이 표를 우선한다.
+
+| PR Phase | Branch | Scope |
+|----------|--------|-------|
+| Phase 1 | `feature/user-auth-base` | 회원 인증 공통 타입, API 인터페이스, form schema, 공통 인증 컴포넌트/유틸 정리 |
+| Phase 2 | `feature/user-auth-signup` | 일반/기업 회원가입 기능 구현 및 인증 흐름 연동 |
+| Phase 3 | `feature/user-auth-login` | 일반/기업 로그인 기능 구현 및 토큰 처리 |
+| Phase 4 | `feature/user-auth-find-account` | 아이디 찾기, 비밀번호 찾기, 새 비밀번호 설정 기능 구현 |
+
 ---
 
 ## Technical Context
