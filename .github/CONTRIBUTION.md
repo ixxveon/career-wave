@@ -85,14 +85,14 @@ specs/fastapi/{scope}/{number}-{domain}/
 | `tasks.md` | 실제 작업 단위 목록 |
 | `constitution.md` | 도메인 원칙과 불변 규칙 정의 |
 | `checklist.md` | 구현 완료 후 최종 점검 항목 정의 |
-| `api-spec.json` | API 요청/응답 계약 정의 |
+| `api-spec.json` | API 요청/응답 계약 정의 (OpenAPI 자동화 시 추가) |
 
 ### 작성 규칙
 
 - 구현 전에 관련 Spec을 먼저 확인한다.
 - 신규 기능은 가능한 한 `spec.md`, `plan.md`, `tasks.md` 순서로 작성한다.
 - 도메인 원칙, 상태 전이, 불변 규칙은 `constitution.md`에 남긴다.
-- API 작업은 `api-spec.json`에 요청/응답 계약을 명확히 남긴다.
+- API 작업은 `api-schema.md`에 요청/응답 계약을 명확히 남긴다. (OpenAPI 자동화가 필요한 경우 `api-spec.json`을 별도로 추가한다)
 - 상태값이 있는 도메인은 상태 전이 규칙을 문서화한다.
 - 구현이 끝나면 `checklist.md` 기준으로 누락된 항목이 없는지 확인한다.
 - Spec에 없는 기능을 임의로 추가하지 않는다.

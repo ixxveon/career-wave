@@ -5,9 +5,10 @@ import {
   AlertCircle, Loader2, Wifi,
   Send, Clock, X, Keyboard,
 } from 'lucide-react';
-import { interviewApi } from '../../api/interviewApi';
+import { startSession } from '../../api/interview/startSession';
+import { SESSION_TYPE } from '../../types/interview';
 import type { Message, MicStatus, InputMode, Phase, Resume } from '../../types/interview';
-import './styles/TextInterviewPage.css';
+import './TextInterviewPage.css';
 
 /* ── Web Speech API 타입 선언 (TypeScript DOM lib 미포함 항목) ── */
 declare global {
@@ -565,15 +566,13 @@ export default function TextInterviewPage() {
   const [isLoading,     setIsLoading]     = useState(false);
   const [apiError,      setApiError]      = useState<string | null>(null);
 
-  /* 마운트 시 대표 이력서 조회 */
+  /* 대표 이력서 로드 — Phase 5에서 documentApi 연동 예정, 현재는 DEV 목업 사용
+   * 이력서 없이도 면접 진행 가능 (documentId는 선택 항목, api-schema.md §1) */
   useEffect(() => {
-    interviewApi.getSetup()
-      .then(data => setResume({ fileName: data.resumeFileName, s3Url: data.resumeS3Url }))
-      .catch(() => {
-        if (import.meta.env.DEV)
-          setResume({ fileName: MOCK_SETUP.resumeFileName, s3Url: MOCK_SETUP.resumeS3Url });
-      })
-      .finally(() => setResumeLoading(false));
+    if (import.meta.env.DEV) {
+      setResume({ fileName: MOCK_SETUP.resumeFileName, s3Url: MOCK_SETUP.resumeS3Url });
+    }
+    setResumeLoading(false);
   }, []);
 
   /* 마이크 권한 체크 */
@@ -611,15 +610,11 @@ export default function TextInterviewPage() {
 
   /* 면접 세션 시작 */
   async function handleStart() {
-    if (!company.trim() || resumeLoading || !resume) return;
+    if (!company.trim() || resumeLoading) return;
     setApiError(null);
     setIsLoading(true);
     try {
-      await interviewApi.startSession({
-        targetJob: job,
-        targetCompany: company,
-        resumeS3Url: resume?.s3Url ?? '',
-      });
+      await startSession({ sessionType: SESSION_TYPE.VOICE, targetCompany: company });
       setPhase('chat');
     } catch {
       if (import.meta.env.DEV) setPhase('chat');
@@ -740,7 +735,7 @@ export default function TextInterviewPage() {
         <button
           className="ti-setup__btn"
           onClick={handleStart}
-          disabled={!company.trim() || isLoading || resumeLoading || !resume}
+          disabled={!company.trim() || isLoading || resumeLoading}
         >
           {isLoading
             ? <><Loader2 size={15} className="ti-spin" /> 세션 생성 중...</>
