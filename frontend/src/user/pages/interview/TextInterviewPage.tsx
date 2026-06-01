@@ -412,7 +412,14 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
               onStart={handleMicStart}
               onStop={handleMicStop}
               onSwitchToText={() => {
-                if (recorder.status === 'recording') recorder.stop();
+                // 취소 경로 — 답변 제출 아닌 모드 전환
+                // cancel()로 잔여 청크 전송 차단 + onStop 미실행
+                if (recorder.status === 'recording') recorder.cancel();
+                // pending 음성 말풍선 제거 (텍스트 답변과 꼬임 방지)
+                if (pendingVoiceIdRef.current !== null) {
+                  setMessages(prev => prev.filter(m => m.id !== pendingVoiceIdRef.current));
+                  pendingVoiceIdRef.current = null;
+                }
                 setSttLive('');
                 stopCountdown();
                 setInputMode('text');

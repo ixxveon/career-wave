@@ -17,7 +17,10 @@ export interface UseAudioRecorderResult {
   status: RecorderStatus;
   error: RecorderError | null;
   start: () => Promise<void>;
+  /** 답변 제출 — isFinal: true 청크 전송 후 onStop 콜백 실행 */
   stop: () => void;
+  /** 모드 전환/취소 — 청크 전송 없이 녹음만 중단, onStop 미실행 */
+  cancel: () => void;
 }
 
 /** 5초 단위 청크 전송 (spec FR-003, constitution.md §7) */
@@ -160,6 +163,21 @@ export function useAudioRecorder({
     recorderRef.current.stop();
   }, []);
 
+  /**
+   * 취소 전용 — 모드 전환 시 사용
+   * ondataavailable �핸들러를 제거하여 잔여 청크 전송 차단
+   * onStop 콜백 미실행 → pending 말풍선 완료 처리 없음
+   */
+  const cancel = useCallback(() => {
+    if (!recorderRef.current || recorderRef.current.state === 'inactive') return;
+    // 잔여 데이터 전송 차단
+    recorderRef.current.ondataavailable = null;
+    recorderRef.current.onstop = null;
+    recorderRef.current.stop();
+    releaseStream();
+    setStatus('idle');
+  }, []);
+
   // 언마운트 시 스트림 강제 해제 (constitution.md §4 불변 규칙)
   useEffect(() => {
     return () => {
@@ -172,5 +190,5 @@ export function useAudioRecorder({
     };
   }, []);
 
-  return { status, error, start, stop };
+  return { status, error, start, stop, cancel };
 }
