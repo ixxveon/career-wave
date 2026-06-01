@@ -33,7 +33,7 @@ export function useTTSQueue(): UseTTSQueueResult {
    * onended에서 재귀 호출하여 순차 재생 보장 (constitution.md §4 오디오 재생 순서)
    * playNextRef 패턴으로 onended 내부 stale closure 방지
    */
-  const playNextRef = useRef<() => Promise<void>>();
+  const playNextRef = useRef<() => Promise<void>>(async () => {});
 
   const playNext = useCallback(async () => {
     if (isPlayingRef.current) return;
