@@ -171,6 +171,44 @@ export default function ReportPage() {
     setSuspendDuration('THREE_DAYS');
   };
 
+  // ── 신고 상세 조회 ─────────────────────────────────────────
+  const openDetail = async (item: ReportWithAi) => {
+    try {
+      const res = await reportApi.getReportDetail(item.reportId);
+      setSelected({ ...item, ...res.data.data });
+    } catch {
+      setSelected(item);
+    }
+  };
+
+  // ── 블라인드 처리 ──────────────────────────────────────────
+  const handleBlind = async (reportId: number) => {
+    try {
+      const res = await reportApi.blindReport(reportId);
+      const { reportStatus } = res.data.data;
+      setReports((prev) => prev.map((r) => r.reportId === reportId ? { ...r, reportStatus } : r));
+      setSelected((prev) => prev && prev.reportId === reportId ? { ...prev, reportStatus } : prev);
+      fetchSummary();
+    } catch (err: any) {
+      const msg = err.response?.data?.message;
+      alert(msg || '블라인드 처리에 실패했습니다.');
+    }
+  };
+
+  // ── 기각 처리 ──────────────────────────────────────────────
+  const handleDismiss = async (reportId: number) => {
+    try {
+      const res = await reportApi.dismissReport(reportId);
+      const { reportStatus } = res.data.data;
+      setReports((prev) => prev.map((r) => r.reportId === reportId ? { ...r, reportStatus } : r));
+      setSelected((prev) => prev && prev.reportId === reportId ? { ...prev, reportStatus } : prev);
+      fetchSummary();
+    } catch (err: any) {
+      const msg = err.response?.data?.message;
+      alert(msg || '기각 처리에 실패했습니다.');
+    }
+  };
+
   // ── 페이지네이션 ───────────────────────────────────────────
   const renderPagination = () => (
     <div className="pagination">
@@ -301,7 +339,7 @@ export default function ReportPage() {
                   <td>{new Date(r.createdAt).toLocaleDateString('ko-KR')}</td>
                   <td><span className={`statusBadge ${statusCls[r.reportStatus]}`}>{statusLabel[r.reportStatus]}</span></td>
                   <td>
-                    <button className="tableBtn" onClick={() => setSelected(r)}>상세보기</button>
+                    <button className="tableBtn" onClick={() => openDetail(r)}>상세보기</button>
                   </td>
                 </tr>
               ))}
@@ -461,8 +499,8 @@ export default function ReportPage() {
               <div style={{ display: 'flex', gap: 8 }}>
                 {selected.reportStatus === 'PENDING' && (
                   <>
-                    <button className="tableBtn tableBtn--approve">블라인드</button>
-                    <button className="tableBtn">기각</button>
+                    <button className="tableBtn tableBtn--approve" onClick={() => handleBlind(selected.reportId)}>블라인드</button>
+                    <button className="tableBtn" onClick={() => handleDismiss(selected.reportId)}>기각</button>
                   </>
                 )}
                 <button
