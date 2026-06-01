@@ -140,7 +140,7 @@ export function toUserRegisterRequest(form: PersonalRegisterFormSnapshot): UserR
   const terms: TermsAgreement = {
     service: form.terms.service,
     privacy: form.terms.privacy,
-    marketing: false,
+    marketing: form.terms.marketing,
   };
 
   return {
@@ -160,7 +160,7 @@ export function toCompanyRegisterRequest(form: CompanyRegisterFormSnapshot): Com
     service: form.terms.service,
     privacy: form.terms.privacy,
     companyVerification: form.terms.companyVerification,
-    marketing: false,
+    marketing: form.terms.marketing,
   };
 
   return {

@@ -23,6 +23,7 @@ export interface PersonalRegisterDraft {
   terms: {
     service: boolean;
     privacy: boolean;
+    marketing: boolean;
   };
 }
 
@@ -43,6 +44,7 @@ export interface CompanyRegisterDraft {
     service: boolean;
     privacy: boolean;
     companyVerification: boolean;
+    marketing: boolean;
   };
 }
 

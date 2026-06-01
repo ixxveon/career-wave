@@ -625,6 +625,7 @@ function CompanyTerms({ values, onChange }) {
 function PersonalRegisterForm() {
   const [form, setForm] = useState(initialPersonalForm);
   const [terms, setTerms] = useState(initialPersonalTerms);
+  const currentLoginIdRef = useRef(form.userId);
   const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>(LOGIN_ID_CHECK_STATE.UNCHECKED);
   const [verification, setVerification] = useState({
     emailId: '',
@@ -667,6 +668,7 @@ function PersonalRegisterForm() {
     terms: {
       service: terms.service,
       privacy: terms.privacy,
+      marketing: terms.marketing,
     },
   };
   const canSubmit =
@@ -684,6 +686,7 @@ function PersonalRegisterForm() {
     setSuccessMessage('');
 
     if (key === 'userId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
+    if (key === 'userId') currentLoginIdRef.current = typeof value === 'string' ? value : currentLoginIdRef.current;
     if (key === 'email') {
       setVerification((current) => ({
         ...current,
@@ -713,15 +716,18 @@ function PersonalRegisterForm() {
       return;
     }
 
+    const requestedLoginId = form.userId.trim();
     setLoginIdState(LOGIN_ID_CHECK_STATE.CHECKING);
     try {
-      const result = await checkLoginId.mutateAsync(form.userId.trim());
+      const result = await checkLoginId.mutateAsync(requestedLoginId);
+      if (requestedLoginId !== currentLoginIdRef.current.trim()) return;
       setLoginIdState(result.available ? LOGIN_ID_CHECK_STATE.AVAILABLE : LOGIN_ID_CHECK_STATE.DUPLICATED);
       setFieldErrors((current) => ({
         ...current,
         loginId: result.available ? '' : '이미 사용 중인 아이디입니다.',
       }));
     } catch (error) {
+      if (requestedLoginId !== currentLoginIdRef.current.trim()) return;
       setLoginIdState(LOGIN_ID_CHECK_STATE.ERROR);
       setFieldErrors((current) => ({ ...current, loginId: getErrorMessage(error, '아이디 중복 확인에 실패했습니다.') }));
     }
@@ -977,6 +983,7 @@ function PersonalRegisterForm() {
 function CompanyRegisterForm() {
   const [form, setForm] = useState<CompanyForm>(initialCompanyForm);
   const [terms, setTerms] = useState(initialCompanyTerms);
+  const currentLoginIdRef = useRef(form.managerId);
   const [employmentCertificate, setEmploymentCertificate] = useState<File | null>(null);
   const [employmentCertificateError, setEmploymentCertificateError] = useState('');
   const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>(LOGIN_ID_CHECK_STATE.UNCHECKED);
@@ -1039,6 +1046,7 @@ function CompanyRegisterForm() {
       service: terms.service,
       privacy: terms.privacy,
       companyVerification: terms.sms,
+      marketing: terms.marketing,
     },
   };
   const canSubmit =
@@ -1056,6 +1064,7 @@ function CompanyRegisterForm() {
     setSuccessMessage('');
 
     if (key === 'managerId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
+    if (key === 'managerId') currentLoginIdRef.current = typeof value === 'string' ? value : currentLoginIdRef.current;
     if (key === 'managerPhone') {
       setVerification((current) => ({
         ...current,
@@ -1120,15 +1129,18 @@ function CompanyRegisterForm() {
       return;
     }
 
+    const requestedLoginId = form.managerId.trim();
     setLoginIdState(LOGIN_ID_CHECK_STATE.CHECKING);
     try {
-      const result = await checkLoginId.mutateAsync(form.managerId.trim());
+      const result = await checkLoginId.mutateAsync(requestedLoginId);
+      if (requestedLoginId !== currentLoginIdRef.current.trim()) return;
       setLoginIdState(result.available ? LOGIN_ID_CHECK_STATE.AVAILABLE : LOGIN_ID_CHECK_STATE.DUPLICATED);
       setFieldErrors((current) => ({
         ...current,
         loginId: result.available ? '' : '이미 사용 중인 아이디입니다.',
       }));
     } catch (error) {
+      if (requestedLoginId !== currentLoginIdRef.current.trim()) return;
       setLoginIdState(LOGIN_ID_CHECK_STATE.ERROR);
       setFieldErrors((current) => ({ ...current, loginId: getErrorMessage(error, '아이디 중복 확인에 실패했습니다.') }));
     }
