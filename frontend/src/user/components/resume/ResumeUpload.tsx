@@ -53,7 +53,12 @@ export default function ResumeUpload({
         role="button"
         aria-label="이력서 파일 업로드 영역. 클릭하거나 파일을 드래그하세요."
         tabIndex={disabled ? -1 : 0}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click(); }}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (!file && !disabled) inputRef.current?.click();
+          }
+        }}
       >
         <input
           ref={inputRef}

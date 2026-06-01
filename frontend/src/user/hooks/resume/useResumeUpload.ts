@@ -103,12 +103,14 @@ export function useResumeUpload(): UseResumeUploadReturn {
       return;
     }
     setFileError(null);
+    setApiError(null); // 이전 업로드 실패 에러 초기화
     setFile(f);
   }
 
   function handleFileRemove() {
     setFile(null);
     setFileError(null);
+    setApiError(null); // 파일 제거 시 이전 에러 초기화
   }
 
   async function handleUpload() {
