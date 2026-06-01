@@ -195,6 +195,7 @@ export default function UserManagementPage() {
   const openCompanyDetail = async (item: HrManagerItem) => {
     try {
       const res = await memberApi.getHrManagerDetail(item.memberId);
+      if (!res.data.success) throw new Error(res.data.message);
       setSelectedCompany(res.data.data);
     } catch {
       setSelectedCompany({ ...item, rejectReason: null });
