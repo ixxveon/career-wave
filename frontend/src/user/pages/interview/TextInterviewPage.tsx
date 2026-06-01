@@ -367,13 +367,17 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
           <span className="ti-header__q">{done ? '완료' : `Q ${qNum} / ${TOTAL_Q}`}</span>
         </div>
         <div className="ti-header__right">
-          <TTSPlayer status={tts.status} />
           <div className="ti-header__timer"><Clock size={13} /> {formatTime(elapsed)}</div>
           <button className="ti-header__exit" onClick={() => setExitModal(true)}>
             <X size={14} /> 종료
           </button>
         </div>
       </header>
+
+      {/* TTS 재생 상태 표시 — 헤더 아래, 채팅창 위 */}
+      <div className="ti-tts-bar">
+        <TTSPlayer status={tts.status} />
+      </div>
 
       {/* 채팅 영역 */}
       <div className="ti-chat">
