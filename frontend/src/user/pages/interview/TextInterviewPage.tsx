@@ -118,7 +118,12 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
       // 실제 모드: FastAPI WS STT_RESULT 수신 시 pendingVoiceIdRef 메시지 업데이트 (Phase 4)
     },
     onError: () => {
-      // STT 오류 시 텍스트 입력 모드로 전환
+      // 녹음 시작 실패 시 pending 말풍선 제거 후 텍스트 모드 전환
+      if (pendingVoiceIdRef.current !== null) {
+        setMessages(prev => prev.filter(m => m.id !== pendingVoiceIdRef.current));
+        pendingVoiceIdRef.current = null;
+      }
+      stopCountdown();
       setInputMode('text');
       startCountdown();
     },
