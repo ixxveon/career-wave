@@ -3,6 +3,8 @@
 > `plan.md`의 Phase와 1:1 대응한다.  
 > 각 항목은 하나의 커밋 또는 PR 리뷰 단위로 쪼갤 수 있어야 한다.
 
+> PR 업로드는 팀 작업 지시의 `feature/user-auth-base` → `feature/user-auth-signup` → `feature/user-auth-login` → `feature/user-auth-find-account` 순서를 따른다.
+
 ---
 
 ## Phase 1 — 타입/API 계약 정의
