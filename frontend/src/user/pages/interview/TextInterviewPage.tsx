@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Clock, X, Loader2 } from 'lucide-react';
 
@@ -55,7 +55,12 @@ function InterviewRoom({ sessionId, company, job, sessionType, onExit }: Intervi
   const [sttLive,    setSttLive]    = useState('');
   const [elapsed,    setElapsed]    = useState(0);
   const [exitModal,  setExitModal]  = useState(false);
-  const [pendingVoiceId, setPendingVoiceId] = useState<number | null>(null);
+  const [pendingVoiceId, _setPendingVoiceId] = useState<number | null>(null);
+  const pendingVoiceIdRef = useRef<number | null>(null);
+  function setPendingVoiceId(id: number | null) {
+    pendingVoiceIdRef.current = id;
+    _setPendingVoiceId(id);
+  }
 
   /* ── DEV mock: 초기 AI 질문 + RUNNING 전환 ── */
   useEffect(() => {
@@ -108,18 +113,19 @@ function InterviewRoom({ sessionId, company, job, sessionType, onExit }: Intervi
     questionOrder: session.questionOrder,
     onStop: () => {
       // 실제: FastAPI WS STT_RESULT 수신 시 pending 메시지 업데이트
-      // DEV mock: 자동 진행
+      // DEV mock: ref로 최신 pendingVoiceId 참조 (stale closure 방지)
       if (import.meta.env.DEV) {
-        if (pendingVoiceId !== null) {
+        const pid = pendingVoiceIdRef.current;
+        if (pid !== null) {
           session.dispatch({
             type:    'UPDATE_MESSAGE',
-            id:      pendingVoiceId,
+            id:      pid,
             updates: { isPending: false, text: '(음성 답변 전송됨)' },
           });
           setPendingVoiceId(null);
         }
         setSttLive('');
-        session.sendTextAnswer(''); // mock: 빈 텍스트로 다음 질문 트리거
+        session.sendTextAnswer('');
       }
     },
     onError: () => {

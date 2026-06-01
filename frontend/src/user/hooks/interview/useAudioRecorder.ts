@@ -42,6 +42,15 @@ export function useAudioRecorder({
   const isStoppingRef     = useRef(false);   // stop() 호출 여부 추적 → 마지막 청크 isFinal 판단
   const questionOrderRef  = useRef(questionOrder);
 
+  /**
+   * 콜백 ref 패턴 — recorder.onstop이 항상 최신 onStop을 호출하도록 보장
+   * recorder.onstop은 start() 시점에 등록되므로 stale closure 위험이 있음
+   */
+  const onStopRef  = useRef(onStop);
+  const onErrorRef = useRef(onError);
+  useEffect(() => { onStopRef.current  = onStop;  }, [onStop]);
+  useEffect(() => { onErrorRef.current = onError; }, [onError]);
+
   // questionOrder가 바뀌면 ref 업데이트 (stale closure 방지)
   useEffect(() => {
     questionOrderRef.current = questionOrder;
@@ -136,14 +145,14 @@ export function useAudioRecorder({
     recorder.onstop = () => {
       releaseStream();
       setStatus('idle');
-      onStop?.();
+      onStopRef.current?.();  // ref 경유 → 항상 최신 onStop 호출
     };
 
     recorder.onerror = () => {
       releaseStream();
       setError('unknown');
       setStatus('error');
-      onError?.('unknown');
+      onErrorRef.current?.('unknown');  // ref 경유
     };
 
     try {
