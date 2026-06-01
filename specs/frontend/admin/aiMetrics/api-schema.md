@@ -9,6 +9,22 @@
 - 날짜 형식: ISO 8601
 - 비용 단위: USD 기준 추정치
 
+## 조회 기간 제약
+
+`GET /summary`, `GET /domain-usage`, `GET /token-trend`의 `from`, `to`는 아래 기준을 따른다.
+
+| Parameter | Default | Maximum Range | Validation |
+|-----------|---------|---------------|------------|
+| `from`, `to` | 최근 7일 | 최대 90일 | `to - from <= 90일` |
+
+- 조회 기간이 90일을 초과하면 400 응답을 반환한다.
+- `from`, `to`가 모두 없으면 서버는 최근 7일 기준으로 집계한다.
+
+## 비용 필드 규칙
+
+- 비용 단가를 알 수 없는 경우 비용 추정 필드는 `null`로 내려온다.
+- `estimatedCost`, `currentSpend`, `forecastSpend`는 모두 운영 참고용 추정치이며 정산 금액으로 사용하지 않는다.
+
 ## 공통 타입
 
 ```ts
@@ -39,12 +55,14 @@ type RagIndexStatus = 'SYNCED' | 'INDEXING' | 'FAILED';
   "failedRequests": 239,
   "totalInputTokens": 4230000,
   "totalOutputTokens": 1870000,
-  "estimatedCost": 1440.25,
+  "estimatedCost": null,
   "averageLatencyMs": 842,
   "healthStatus": "WARNING",
   "lastSyncedAt": "2026-06-01T09:10:00+09:00"
 }
 ```
+
+- `estimatedCost`: `number | null` (비용 단가를 알 수 없는 경우 `null`)
 
 ## GET /domain-usage
 
@@ -79,6 +97,8 @@ AI 서류 기능, AI 면접 기능, 관리자 AI 기능의 도메인별 사용�
 ]
 ```
 
+- `estimatedCost`: `number | null` (비용 단가를 알 수 없는 경우 `null`)
+
 ### Rules
 
 - 화면의 주요 카드, 차트, 필터는 `domain` 기준으로 구성한다.
@@ -111,6 +131,8 @@ AI 서류 기능, AI 면접 기능, 관리자 AI 기능의 도메인별 사용�
   }
 ]
 ```
+
+- `estimatedCost`: `number | null` (비용 단가를 알 수 없는 경우 `null`)
 
 ## GET /heavy-users
 
@@ -185,13 +207,16 @@ AI 서류 기능, AI 면접 기능, 관리자 AI 기능의 도메인별 사용�
 ```json
 {
   "monthlyBudget": 2000,
-  "currentSpend": 1440.25,
-  "forecastSpend": 1870,
+  "currentSpend": null,
+  "forecastSpend": null,
   "thresholdPercent": 85,
   "discordAlertEnabled": true,
   "rateLimitEnabled": false
 }
 ```
+
+- `currentSpend`: `number | null` (비용 단가를 알 수 없는 경우 `null`)
+- `forecastSpend`: `number | null` (비용 단가를 알 수 없는 경우 `null`)
 
 ## PATCH /budget
 
@@ -255,6 +280,7 @@ AI 사용량 제한 상태를 변경한다.
 | Status | Message |
 |--------|---------|
 | 400 | 조회 조건이 올바르지 않습니다. |
+| 400 | 조회 기간은 최대 90일을 초과할 수 없습니다. |
 | 401 | 인증이 필요합니다. |
 | 403 | 관리자 권한이 필요합니다. |
 | 500 | AI 매트릭스 조회 중 오류가 발생했습니다. |
