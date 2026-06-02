@@ -10,3 +10,4 @@ export { useFindPasswordRecovery } from './useFindPasswordRecovery';
 export { useLoginForm } from './useLoginForm';
 export { useVerificationNow } from './useVerificationNow';
 export { usePersonalRegisterForm } from './usePersonalRegisterForm';
+export { useCompanyRegisterForm } from './useCompanyRegisterForm';
