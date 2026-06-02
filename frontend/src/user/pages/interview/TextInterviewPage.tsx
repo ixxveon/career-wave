@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Clock, X, Loader2 } from 'lucide-react';
 
-import { startSession }          from '../../api/interview/startSession';
+import { interviewSessionApi }   from '../../api/interview';
 import { SESSION_TYPE }          from '../../types/interview';
 import type { SessionType, Resume, MicStatus } from '../../types/interview';
 
@@ -388,7 +388,7 @@ export default function TextInterviewPage() {
     setApiError(null);
     setIsLoading(true);
     try {
-      const result = await startSession({
+      const result = await interviewSessionApi.start({
         sessionType,
         targetCompany: company,
         documentId:    documentId ?? null,
