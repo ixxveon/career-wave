@@ -1,7 +1,7 @@
 import type { InputHTMLAttributes, ReactNode } from 'react';
 import { CheckCircle2 } from 'lucide-react';
-import type { VerificationState } from './recoveryViewUtils';
-import { formatRemaining } from './recoveryViewUtils';
+import type { VerificationState } from '../../utils/member/recoveryView';
+import { formatRemaining } from '../../utils/member/recoveryView';
 
 interface RecoveryContactFieldProps {
   label: string;

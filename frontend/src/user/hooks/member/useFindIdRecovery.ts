@@ -2,13 +2,13 @@ import { useRef, useState } from 'react';
 import { useConfirmVerificationCode } from './useVerificationCode';
 import { useFindId } from './useAccountRecovery';
 import { useSendVerificationCode } from './useVerificationCode';
+import { useVerificationNow } from './useVerificationNow';
 import {
   EMPTY_VERIFICATION,
   type VerificationState,
   getRecoveryErrorMessage,
   getRemainingSeconds,
-  useVerificationNow,
-} from '../../components/member/recoveryViewUtils';
+} from '../../utils/member/recoveryView';
 import { VERIFICATION_PURPOSE } from '../../types/member';
 import {
   RECOVERY_METHOD,

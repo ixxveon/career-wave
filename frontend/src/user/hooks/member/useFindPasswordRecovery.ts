@@ -4,6 +4,7 @@ import {
   useConfirmVerificationCode,
   useSendVerificationCode,
 } from './useVerificationCode';
+import { useVerificationNow } from './useVerificationNow';
 import {
   EMPTY_RESET_SESSION,
   EMPTY_VERIFICATION,
@@ -11,8 +12,7 @@ import {
   type VerificationState,
   getRecoveryErrorMessage,
   getRemainingSeconds,
-  useVerificationNow,
-} from '../../components/member/recoveryViewUtils';
+} from '../../utils/member/recoveryView';
 import { VERIFICATION_PURPOSE } from '../../types/member';
 import {
   RECOVERY_METHOD,

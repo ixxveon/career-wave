@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import type { MemberApiError } from '../../utils/member/errorMapping';
+import type { MemberApiError } from './errorMapping';
 
 export interface VerificationState {
   verificationId: string;
@@ -26,17 +25,6 @@ export const EMPTY_RESET_SESSION: ResetSessionState = {
   resetToken: '',
   expiresAt: '',
 };
-
-export function useVerificationNow() {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const timerId = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timerId);
-  }, []);
-
-  return now;
-}
 
 export function getRemainingSeconds(target: string, now: number): number {
   if (!target) return 0;

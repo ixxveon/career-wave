@@ -1,5 +1,5 @@
 import { CheckCircle2, LockKeyhole } from 'lucide-react';
-import { formatRemaining } from './recoveryViewUtils';
+import { formatRemaining } from '../../utils/member/recoveryView';
 
 interface RecoveryPasswordFieldsProps {
   password: string;
