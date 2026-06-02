@@ -149,6 +149,8 @@ export function useInterviewSession({
 
   const [springWsStatus,  setSpringWsStatus]  = useState<SpringWSStatus>('DISCONNECTED');
   const [fastApiWsStatus, setFastApiWsStatus] = useState<FastApiWSStatus>('DISCONNECTED');
+  const springWsStatusRef  = useRef<SpringWSStatus>('DISCONNECTED');
+  const fastApiWsStatusRef = useRef<FastApiWSStatus>('DISCONNECTED');
 
   /**
    * LLM_STREAM 타이핑 효과
@@ -196,6 +198,7 @@ export function useInterviewSession({
   }, []);
 
   const handleSpringStatusChange = useCallback((status: SpringWSStatus) => {
+    springWsStatusRef.current = status;
     setSpringWsStatus(status);
     if (status === 'RECONNECTING') dispatch({ type: 'RECONNECTING' });
     // DEV 모드: 백엔드 없을 때 WS ERROR를 무시하고 RUNNING으로 유지
@@ -203,7 +206,11 @@ export function useInterviewSession({
       if (import.meta.env.DEV) return;
       dispatch({ type: 'ERROR' });
     }
-    if (status === 'CONNECTED' && stateRef.current.sessionState === 'RECONNECTING') {
+    if (
+      status === 'CONNECTED' &&
+      fastApiWsStatusRef.current === 'CONNECTED' &&
+      stateRef.current.sessionState === 'RECONNECTING'
+    ) {
       dispatch({ type: 'RUNNING' });
     }
   }, []);
@@ -274,9 +281,14 @@ export function useInterviewSession({
   }, [tts]);
 
   const handleFastApiStatusChange = useCallback((status: FastApiWSStatus) => {
+    fastApiWsStatusRef.current = status;
     setFastApiWsStatus(status);
     if (status === 'RECONNECTING') dispatch({ type: 'RECONNECTING' });
-    if (status === 'CONNECTED' && stateRef.current.sessionState === 'RECONNECTING') {
+    if (
+      status === 'CONNECTED' &&
+      springWsStatusRef.current === 'CONNECTED' &&
+      stateRef.current.sessionState === 'RECONNECTING'
+    ) {
       dispatch({ type: 'RUNNING' });
     }
     if (status === 'ERROR') {
