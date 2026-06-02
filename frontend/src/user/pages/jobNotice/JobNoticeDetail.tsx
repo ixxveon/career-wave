@@ -26,7 +26,7 @@ const STACKS_BY_JOB_TYPE: Partial<Record<JobNotice['jobType'], string[]>> = {
   DevOps: ['AWS', 'Docker', 'Kubernetes', 'Linux', 'Terraform'],
 };
 
-const DETAIL_SECTIONS = [
+export const DETAIL_SECTIONS = [
   {
     title: '담당 업무',
     items: [
@@ -266,14 +266,13 @@ function DetailTabContent({ activeTab, job }: { activeTab: DetailTab; job: JobNo
 
   return (
     <article className="jnd-job-description">
-      {DETAIL_SECTIONS.map((section) => (
-        <section className="jnd-description-section" key={section.title}>
-          <h3>{section.title}</h3>
-          <ul>
-            {section.items.map((item) => <li key={item}>{item}</li>)}
-          </ul>
-        </section>
-      ))}
+      <section className="jnd-description-section">
+        <h3>마감 정보</h3>
+        <ul>
+          <li>{job.deadline}</li>
+          <li>상세 항목이 제공되지 않았습니다. 정확한 내용은 원본 공고에서 확인해 주세요.</li>
+        </ul>
+      </section>
     </article>
   );
 }

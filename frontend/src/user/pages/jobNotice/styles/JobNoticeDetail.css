@@ -209,7 +209,7 @@
 .jnd-status__actions button {
   min-height: 28px;
   padding: 0 10px;
-  border: 1px solid currentColor;
+  border: 1px solid currentcolor;
   border-radius: 8px;
   background: #ffffff;
   color: inherit;
