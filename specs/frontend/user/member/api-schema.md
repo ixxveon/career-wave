@@ -27,8 +27,8 @@ DB 컬럼명은 snake_case(`member_id`)를 따르며, Frontend API DTO는 기존
 비로그인 API를 제외한 모든 API는 **JWT Bearer access token** 인증을 사용한다.
 
 * access token은 브라우저 메모리 또는 인증 전용 상태에만 보관하고 `localStorage`에 저장하지 않는다.
-* refresh token이 필요한 경우 HttpOnly Secure SameSite cookie를 사용한다.
-* 앱 초기화 시 refresh cookie 또는 동등한 보안 전략을 사용해 세션 복원을 1회 시도할 수 있어야 한다.
+* refresh token은 HttpOnly Secure SameSite cookie를 우선 사용하며, 백엔드 제약이 있으면 `sessionStorage` 기반 탭 세션 복원을 보안 대안으로 사용할 수 있다.
+* 앱 초기화 시 refresh cookie, `sessionStorage` 보관 refresh token, 또는 동등한 보안 전략을 사용해 세션 복원을 1회 시도할 수 있어야 한다.
 * API client는 401 응답 수신 시 access token 갱신 또는 세션 복원을 1회 시도할 수 있다. 이 자동 재시도는 `GET`, `HEAD`, `OPTIONS` 같은 안전/멱등 요청에 한해 적용하며, `POST`, `PUT`, `PATCH`, `DELETE` 같은 상태 변경 요청은 idempotency key 또는 endpoint 계약으로 명시적 재전송 허용이 없는 한 자동 재전송하지 않는다. 재시도 또는 세션 복원에 실패하면 세션을 정리한 뒤 `/auth/login`으로 이동한다.
 * Bearer token 기반 API는 CSRF 토큰을 요구하지 않는다. 단, refresh cookie 기반 엔드포인트를 도입하는 경우 백엔드 보안 정책에 따라 SameSite 또는 CSRF 보호를 적용한다.
 

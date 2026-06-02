@@ -81,7 +81,7 @@
 
 ## 보안
 
-- [ ] access token, refresh token, password, verification code가 `localStorage`에 저장되지 않는가?
+- [ ] access token, refresh token, password, verification code가 `localStorage`에 저장되지 않는가? (`sessionStorage`는 refresh token의 탭 세션 복원 용도인지 별도 확인)
 - [ ] 비밀번호와 인증번호가 console/debug 로그로 출력되지 않는가?
 - [ ] `dangerouslySetInnerHTML`로 사용자/기업 입력값을 렌더링하지 않는가?
 - [ ] 로그인 실패 횟수, 블랙리스트 기준, 제재 상세 내부 사유가 노출되지 않는가?

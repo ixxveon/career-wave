@@ -1,4 +1,4 @@
-# Checklist: 고객센터 관리 API (Customer Service)
+                                                                                                    # Checklist: 고객센터 관리 API (Customer Service)
 
 > `spec.md`가 "무엇을 만들지"라면, 이 파일은 "제대로 만들어졌는지" 검증한다.
 > 구현 전 설계 검증 + 구현 후 동작 검증 항목을 포함한다.
