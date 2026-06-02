@@ -295,6 +295,9 @@ frontend/src/
 - 페이지 또는 컴포넌트에서 `axios`를 직접 호출하지 않는다.
 - 공통 설정은 `utils/axiosInstance.js` 또는 `utils/apiClient.js`를 사용한다.
 - 도메인별 API 호출은 `admin/api` 또는 `user/api`에 둔다.
+- 팀 API 주소는 역할별 base path를 통일해서 사용한다.
+  - 사용자 API: `/api/v1/user/{domain}`
+  - 관리자 API: `/api/v1/admin/{domain}`
 
 ```text
 admin/api/settlementApi.js
