@@ -8,7 +8,9 @@ import {
   INQUIRY_STATUS, INQUIRY_STATUS_LABEL,
   type NoticeCategory, type FaqCategory, type InquiryCategory, type InquiryStatus,
   type CsSummary, type NoticeItem,
-  type FaqItem, type NoticeListParams,
+  type FaqItem, type FaqListParams,
+  type InquiryItem, type InquiryDetail, type InquiryListParams,
+  type NoticeListParams,
 } from '../../api/csApi';
 import '../../styles/admin.css';
 import '../../styles/CustomerService.css';
@@ -97,7 +99,7 @@ function genInquiryDraft(inq: InquiryDummy): string {
   return header + bodies[inq.category] + footer;
 }
 
-// ── 공지사항 폼 상태 타입 ─────────────────────────────────────
+// ── 폼 상태 타입 ──────────────────────────────────────────────
 
 interface NoticeFormState {
   noticeId?: number;
@@ -105,6 +107,13 @@ interface NoticeFormState {
   title: string;
   content: string;
   isVisible: boolean;
+}
+
+interface FaqFormState {
+  faqId?: number;
+  category: FaqCategory;
+  question: string;
+  answer: string;
 }
 
 // ── Component ─────────────────────────────────────────────────
@@ -139,19 +148,43 @@ export default function CustomerServicePage() {
   const [aiNoticeLoading, setAiNoticeLoading]     = useState(false);
   const [deleteConfirmId, setDeleteConfirmId]     = useState<number | null>(null);
 
-  // ── FAQ 상태 (더미 — Phase 5-2 교체) ─────────────────────
-  const [faqs, setFaqs]         = useState<FaqItem[]>(initFaqs);
-  const [faqModal, setFaqModal] = useState<'create' | 'edit' | null>(null);
-  const [faqForm, setFaqForm]   = useState<Partial<FaqItem>>({});
-  const [aiFaqLoading, setAiFaqLoading] = useState(false);
+  // ── FAQ API 상태 ──────────────────────────────────────────
+  const [faqs, setFaqs]               = useState<FaqItem[]>([]);
+  const [faqTotalItems, setFaqTotalItems] = useState(0);
+  const [faqPage, setFaqPage]         = useState(1);
+  const [faqTotalPages, setFaqTotalPages] = useState(1);
+  const [faqLoading, setFaqLoading]   = useState(false);
+  const [faqError, setFaqError]       = useState('');
+  const faqReqId = useRef(0);
 
-  // ── 문의 상태 (더미 — Phase 5-2 교체) ────────────────────
-  const [inquiries, setInquiries]             = useState<InquiryDummy[]>(initInquiries);
-  const [selectedInquiry, setSelectedInquiry] = useState<InquiryDummy | null>(null);
-  const [inquiryReply, setInquiryReply]       = useState('');
+  const [faqCatFilter, setFaqCatFilter] = useState('');
+  const appliedFaqFilters = useRef<FaqListParams>({});
+
+  const [faqModal, setFaqModal]         = useState<'create' | 'edit' | null>(null);
+  const [faqForm, setFaqForm]           = useState<FaqFormState>({ category: 'ACCOUNT', question: '', answer: '' });
+  const [faqFormLoading, setFaqFormLoading] = useState(false);
+  const [faqFormError, setFaqFormError]     = useState('');
+  const [faqDeleteId, setFaqDeleteId]       = useState<number | null>(null);
+  const [aiFaqLoading, setAiFaqLoading]     = useState(false);
+
+  // ── 문의 API 상태 ─────────────────────────────────────────
+  const [inquiries, setInquiries]         = useState<InquiryItem[]>([]);
+  const [inqTotalItems, setInqTotalItems] = useState(0);
+  const [inqPage, setInqPage]             = useState(1);
+  const [inqTotalPages, setInqTotalPages] = useState(1);
+  const [inqLoading, setInqLoading]       = useState(false);
+  const [inqError, setInqError]           = useState('');
+  const inqReqId = useRef(0);
+
   const [inqCatFilter, setInqCatFilter]       = useState('');
   const [inqStatusFilter, setInqStatusFilter] = useState('');
-  const [aiInqLoading, setAiInqLoading]       = useState(false);
+  const appliedInqFilters = useRef<InquiryListParams>({});
+
+  const [selectedInquiry, setSelectedInquiry] = useState<InquiryDetail | null>(null);
+  const [inquiryReply, setInquiryReply]       = useState('');
+  const [inqActionLoading, setInqActionLoading] = useState(false);
+  const [inqActionError, setInqActionError]     = useState('');
+  const [aiInqLoading, setAiInqLoading]         = useState(false);
 
   // ── KPI 조회 ──────────────────────────────────────────────
   const fetchSummary = useCallback(async () => {
@@ -204,8 +237,75 @@ export default function CustomerServicePage() {
     fetchNotices(1);
   };
 
+  // ── FAQ 목록 조회 ─────────────────────────────────────────
+  const fetchFaqs = useCallback(async (page = 1) => {
+    const reqId = ++faqReqId.current;
+    const f = appliedFaqFilters.current;
+    setFaqLoading(true);
+    setFaqError('');
+    try {
+      const res = await csApi.getFaqs({ ...f, page, size: 20 });
+      if (reqId !== faqReqId.current) return;
+      if (!res.data.success) throw new Error(res.data.message);
+      const { items, totalItems, totalPages } = res.data.data;
+      setFaqs(items);
+      setFaqTotalItems(totalItems);
+      setFaqTotalPages(totalPages);
+      setFaqPage(page);
+    } catch (err: any) {
+      if (reqId !== faqReqId.current) return;
+      const status = err.response?.status;
+      if (status === 500) setFaqError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      else if (!status) setFaqError('네트워크 연결을 확인해주세요.');
+      else setFaqError('FAQ 목록을 불러오지 못했습니다.');
+    } finally {
+      if (reqId === faqReqId.current) setFaqLoading(false);
+    }
+  }, []);
+
+  const applyFaqSearch = () => {
+    appliedFaqFilters.current = { ...(faqCatFilter && { category: faqCatFilter as FaqCategory }) };
+    fetchFaqs(1);
+  };
+
+  // ── 문의 목록 조회 ────────────────────────────────────────
+  const fetchInquiries = useCallback(async (page = 1) => {
+    const reqId = ++inqReqId.current;
+    const f = appliedInqFilters.current;
+    setInqLoading(true);
+    setInqError('');
+    try {
+      const res = await csApi.getInquiries({ ...f, page, size: 20 });
+      if (reqId !== inqReqId.current) return;
+      if (!res.data.success) throw new Error(res.data.message);
+      const { items, totalItems, totalPages } = res.data.data;
+      setInquiries(items);
+      setInqTotalItems(totalItems);
+      setInqTotalPages(totalPages);
+      setInqPage(page);
+    } catch (err: any) {
+      if (reqId !== inqReqId.current) return;
+      const status = err.response?.status;
+      if (status === 500) setInqError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      else if (!status) setInqError('네트워크 연결을 확인해주세요.');
+      else setInqError('문의 목록을 불러오지 못했습니다.');
+    } finally {
+      if (reqId === inqReqId.current) setInqLoading(false);
+    }
+  }, []);
+
+  const applyInqSearch = () => {
+    appliedInqFilters.current = {
+      ...(inqCatFilter && { category: inqCatFilter as InquiryCategory }),
+      ...(inqStatusFilter && { status: inqStatusFilter as InquiryStatus }),
+    };
+    fetchInquiries(1);
+  };
+
   useEffect(() => { fetchSummary(); }, [fetchSummary]);
   useEffect(() => { fetchNotices(1); }, [fetchNotices]);
+  useEffect(() => { fetchFaqs(1); }, [fetchFaqs]);
+  useEffect(() => { fetchInquiries(1); }, [fetchInquiries]);
 
   // ── 공지사항 등록 모달 열기 ───────────────────────────────
   const openNoticeCreate = () => {
@@ -275,45 +375,126 @@ export default function CustomerServicePage() {
     }, 900);
   };
 
-  // ── FAQ handlers (더미) ──────────────────────────────────
-  const openFaqCreate = () => { setFaqForm({ category: 'ACCOUNT', question: '', answer: '' }); setFaqModal('create'); };
-  const openFaqEdit   = (f: FaqItem) => { setFaqForm({ ...f }); setFaqModal('edit'); };
-  const saveFaq = () => {
-    if (!faqForm.question?.trim()) return;
-    if (faqModal === 'create') {
-      setFaqs((p) => [...p, { faqId: Date.now(), category: faqForm.category ?? 'ETC', question: faqForm.question!, answer: faqForm.answer ?? '', createdAt: new Date().toISOString() }]);
-    } else {
-      setFaqs((p) => p.map((f) => (f.faqId === faqForm.faqId ? ({ ...f, ...faqForm } as FaqItem) : f)));
-    }
-    setFaqModal(null);
+  // ── FAQ handlers ──────────────────────────────────────────
+  const openFaqCreate = () => {
+    setFaqForm({ category: 'ACCOUNT', question: '', answer: '' });
+    setFaqFormError('');
+    setFaqModal('create');
   };
-  const deleteFaq = (id: number) => setFaqs((p) => p.filter((f) => f.faqId !== id));
+  const openFaqEdit = (f: FaqItem) => {
+    setFaqForm({ faqId: f.faqId, category: f.category, question: f.question, answer: f.answer });
+    setFaqFormError('');
+    setFaqModal('edit');
+  };
+  const saveFaq = async () => {
+    if (!faqForm.question.trim()) return;
+    setFaqFormLoading(true);
+    setFaqFormError('');
+    try {
+      const body = { category: faqForm.category, question: faqForm.question, answer: faqForm.answer };
+      if (faqModal === 'create') {
+        const res = await csApi.createFaq(body);
+        if (!res.data.success) throw new Error(res.data.message);
+      } else if (faqForm.faqId) {
+        const res = await csApi.updateFaq(faqForm.faqId, body);
+        if (!res.data.success) throw new Error(res.data.message);
+      }
+      setFaqModal(null);
+      fetchFaqs(faqPage);
+      fetchSummary();
+    } catch (err: any) {
+      setFaqFormError(err.response?.data?.message || err.message || '저장에 실패했습니다.');
+    } finally {
+      setFaqFormLoading(false);
+    }
+  };
+  const confirmDeleteFaq = async () => {
+    if (faqDeleteId === null) return;
+    try {
+      const res = await csApi.deleteFaq(faqDeleteId);
+      if (!res.data.success) throw new Error(res.data.message);
+      setFaqDeleteId(null);
+      fetchFaqs(faqPage);
+      fetchSummary();
+    } catch (err: any) {
+      alert(err.response?.data?.message || '삭제에 실패했습니다.');
+    }
+  };
   const handleAiFaqDraft = () => {
     setAiFaqLoading(true);
-    setTimeout(() => { setFaqForm((p) => ({ ...p, answer: genFaqDraft(p.question ?? '') })); setAiFaqLoading(false); }, 900);
+    setTimeout(() => { setFaqForm((p) => ({ ...p, answer: genFaqDraft(p.question) })); setAiFaqLoading(false); }, 900);
   };
 
-  // ── Inquiry handlers (더미) ──────────────────────────────
-  const openInquiry = (inq: InquiryDummy) => { setSelectedInquiry(inq); setInquiryReply(inq.reply ?? ''); };
-  const saveInquiryReplyDummy = () => {
+  // ── 문의 핸들러 ───────────────────────────────────────────
+  const openInquiry = async (item: InquiryItem) => {
+    setInqActionError('');
+    setInquiryReply('');
+    try {
+      const res = await csApi.getInquiryDetail(item.inquiryId);
+      if (!res.data.success) throw new Error(res.data.message);
+      setSelectedInquiry(res.data.data);
+      setInquiryReply(res.data.data.reply ?? '');
+    } catch {
+      // 상세 조회 실패 시 목록 데이터로 fallback
+      setSelectedInquiry({ ...item, content: '', reply: null, repliedAt: null, completedAt: null });
+    }
+  };
+
+  const saveInquiryReply = async () => {
     if (!selectedInquiry) return;
-    const nextStatus: InquiryStatus = inquiryReply.trim() && selectedInquiry.status === 'PENDING' ? 'IN_PROGRESS' : selectedInquiry.status;
-    setInquiries((p) => p.map((i) => i.id === selectedInquiry.id ? { ...i, reply: inquiryReply, status: nextStatus } : i));
-    setSelectedInquiry(null);
+    setInqActionLoading(true);
+    setInqActionError('');
+    try {
+      const res = await csApi.saveReply(selectedInquiry.inquiryId, { reply: inquiryReply });
+      if (!res.data.success) throw new Error(res.data.message);
+      // 서버 응답 기준으로 상태 갱신
+      setInquiries((p) => p.map((i) => i.inquiryId === selectedInquiry.inquiryId ? { ...i, inquiryStatus: res.data.data.inquiryStatus } : i));
+      setSelectedInquiry((p) => p ? { ...p, inquiryStatus: res.data.data.inquiryStatus, reply: inquiryReply } : p);
+      fetchSummary();
+    } catch (err: any) {
+      const status = err.response?.status;
+      if (status === 409) setInqActionError('이미 완료된 문의입니다.');
+      else setInqActionError(err.response?.data?.message || '답변 저장에 실패했습니다.');
+    } finally {
+      setInqActionLoading(false);
+    }
   };
-  const completeInquiryDummy = () => {
+
+  const completeInquiry = async () => {
     if (!selectedInquiry || !inquiryReply.trim()) return;
-    setInquiries((p) => p.map((i) => i.id === selectedInquiry.id ? { ...i, reply: inquiryReply, status: 'COMPLETED' } : i));
-    setSelectedInquiry(null);
+    setInqActionLoading(true);
+    setInqActionError('');
+    try {
+      const res = await csApi.completeInquiry(selectedInquiry.inquiryId);
+      if (!res.data.success) throw new Error(res.data.message);
+      setInquiries((p) => p.map((i) => i.inquiryId === selectedInquiry.inquiryId ? { ...i, inquiryStatus: res.data.data.inquiryStatus } : i));
+      setSelectedInquiry(null);
+      fetchSummary();
+    } catch (err: any) {
+      const status = err.response?.status;
+      if (status === 409) setInqActionError('이미 완료된 문의입니다.');
+      else if (err.response?.status === 400) setInqActionError('답변 저장 후 처리 완료할 수 있습니다.');
+      else setInqActionError(err.response?.data?.message || '처리 완료에 실패했습니다.');
+    } finally {
+      setInqActionLoading(false);
+    }
   };
+
   const handleAiInquiryDraft = () => {
     if (!selectedInquiry) return;
     setAiInqLoading(true);
-    setTimeout(() => { setInquiryReply(genInquiryDraft(selectedInquiry)); setAiInqLoading(false); }, 900);
+    setTimeout(() => {
+      const draftBodies: Record<InquiryCategory, string> = {
+        REFUND:        '환불 요청 접수해 주셔서 감사합니다.\n\n이용 내역 확인 후 영업일 기준 3~5일 이내에 처리 결과를 안내해 드리겠습니다.',
+        PAYMENT_ERROR: '결제 오류로 불편을 드려 죄송합니다.\n\n카드 한도 및 유효기간을 확인해 주시고, 다른 브라우저에서도 시도해 주세요.',
+        SERVICE:       '문의하신 내용을 기술팀에서 검토 중이며, 빠른 시일 내에 해결하여 안내드리겠습니다.',
+        ACCOUNT:       '계정 관련 문의 감사합니다. 보안을 위해 본인 확인 절차가 필요할 수 있습니다.',
+        ETC:           '내용을 확인하였으며 빠른 시일 내에 답변 드리겠습니다.',
+      };
+      setInquiryReply(`안녕하세요, ${selectedInquiry.memberName} 님.\nCareer Wave 고객센터입니다.\n\n${draftBodies[selectedInquiry.category]}\n\n추가 문의사항이 있으시면 언제든지 연락 주세요.\n감사합니다.`);
+      setAiInqLoading(false);
+    }, 900);
   };
-  const filteredInquiries = inquiries.filter(
-    (i) => (!inqCatFilter || i.category === inqCatFilter) && (!inqStatusFilter || i.status === inqStatusFilter),
-  );
 
   // ── 페이지네이션 ──────────────────────────────────────────
   const renderNoticePagination = () => (
@@ -431,34 +612,63 @@ export default function CustomerServicePage() {
 
       {/* ── FAQ 탭 ──────────────────────────────────────── */}
       {tab === 'faq' && (
-        <section className="admin-card memberTableCard">
-          <div className="memberTableHeader">
-            <h3>FAQ</h3>
-            <button onClick={openFaqCreate}>+ FAQ 등록</button>
-          </div>
-          <div className="tableScroll">
-            <table className="memberTable">
-              <thead>
-                <tr><th>카테고리</th><th>질문</th><th>등록일</th><th>관리</th></tr>
-              </thead>
-              <tbody>
-                {faqs.map((f) => (
-                  <tr key={f.faqId}>
-                    <td><span className="statusBadge normal csNoticeCat">{FAQ_CATEGORY_LABEL[f.category]}</span></td>
-                    <td>{f.question}</td>
-                    <td>{new Date(f.createdAt).toLocaleDateString('ko-KR')}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button className="tableBtn" onClick={() => openFaqEdit(f)}>수정</button>
-                        <button className="tableBtn tableBtn--danger" onClick={() => deleteFaq(f.faqId)}>삭제</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <>
+          <section className="admin-card memberFilter" style={{ marginBottom: 16 }}>
+            <select value={faqCatFilter} onChange={(e) => setFaqCatFilter(e.target.value)}>
+              <option value="">카테고리 전체</option>
+              {Object.entries(FAQ_CATEGORY_LABEL).map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
+            </select>
+            <button className="memberFilterBtn" onClick={applyFaqSearch}>검색</button>
+          </section>
+
+          <section className="admin-card memberTableCard">
+            <div className="memberTableHeader">
+              <h3>FAQ <span className="memberTotalCount">전체 {faqTotalItems}건</span></h3>
+              <button onClick={openFaqCreate}>+ FAQ 등록</button>
+            </div>
+            {faqError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{faqError}</p>}
+            <div className="tableScroll">
+              <table className="memberTable">
+                <thead>
+                  <tr><th>카테고리</th><th>질문</th><th>등록일</th><th>관리</th></tr>
+                </thead>
+                <tbody>
+                  {faqLoading ? (
+                    <tr><td colSpan={4} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
+                  ) : faqs.map((f) => (
+                    <tr key={f.faqId}>
+                      <td><span className="statusBadge normal csNoticeCat">{FAQ_CATEGORY_LABEL[f.category]}</span></td>
+                      <td>{f.question}</td>
+                      <td>{new Date(f.createdAt).toLocaleDateString('ko-KR')}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button className="tableBtn" onClick={() => openFaqEdit(f)}>수정</button>
+                          <button className="tableBtn tableBtn--danger" onClick={() => setFaqDeleteId(f.faqId)}>삭제</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="memberTableFooter">
+              <span className="memberTableCount">
+                {faqTotalItems === 0 ? '총 0건' : `표시 중: ${(faqPage - 1) * 20 + 1} - ${Math.min(faqPage * 20, faqTotalItems)} / 총 ${faqTotalItems}건`}
+              </span>
+              <div className="pagination">
+                <button disabled={faqLoading || faqPage <= 1} onClick={() => fetchFaqs(faqPage - 1)}>{'<'}</button>
+                {Array.from({ length: Math.min(faqTotalPages, 5) }, (_, i) => {
+                  const p = Math.max(1, faqPage - 2) + i;
+                  if (p > faqTotalPages) return null;
+                  return <button key={p} className={p === faqPage ? 'activePage' : ''} disabled={faqLoading} onClick={() => fetchFaqs(p)}>{p}</button>;
+                })}
+                <button disabled={faqLoading || faqPage >= faqTotalPages} onClick={() => fetchFaqs(faqPage + 1)}>{'>'}</button>
+              </div>
+            </div>
+          </section>
+        </>
       )}
 
       {/* ── 1:1 문의 탭 ─────────────────────────────────── */}
@@ -477,35 +687,53 @@ export default function CustomerServicePage() {
                 <option key={val} value={val}>{label}</option>
               ))}
             </select>
+            <button className="memberFilterBtn" onClick={applyInqSearch}>검색</button>
           </section>
 
           <section className="admin-card memberTableCard">
             <div className="memberTableHeader">
-              <h3>1:1 문의 <span className="payTotalCount">{filteredInquiries.length}건</span></h3>
+              <h3>1:1 문의 <span className="payTotalCount">{inqTotalItems}건</span></h3>
             </div>
+            {inqError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{inqError}</p>}
             <div className="tableScroll">
               <table className="memberTable">
                 <thead>
                   <tr><th>문의 ID</th><th>회원명</th><th>카테고리</th><th>제목</th><th>접수일</th><th>상태</th><th>관리</th></tr>
                 </thead>
                 <tbody>
-                  {filteredInquiries.map((inq) => (
-                    <tr key={inq.id}>
-                      <td>{inq.id}</td>
+                  {inqLoading ? (
+                    <tr><td colSpan={7} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
+                  ) : inquiries.map((inq) => (
+                    <tr key={inq.inquiryId}>
+                      <td style={{ color: '#7a8da4', fontSize: 13 }}>#{inq.inquiryId}</td>
                       <td>{inq.memberName}</td>
                       <td><span className={`csInqCatBadge ${INQ_CAT_CLS[inq.category]}`}>{INQUIRY_CATEGORY_LABEL[inq.category]}</span></td>
                       <td>{inq.title}</td>
                       <td>{new Date(inq.createdAt).toLocaleDateString('ko-KR')}</td>
-                      <td><span className={`statusBadge ${INQ_STATUS_CLS[inq.status]}`}>{INQUIRY_STATUS_LABEL[inq.status]}</span></td>
+                      <td><span className={`statusBadge ${INQ_STATUS_CLS[inq.inquiryStatus]}`}>{INQUIRY_STATUS_LABEL[inq.inquiryStatus]}</span></td>
                       <td>
-                        <button className={`tableBtn${inq.status === 'PENDING' ? ' tableBtn--refund' : ''}`} onClick={() => openInquiry(inq)}>
-                          {inq.status === 'PENDING' ? '답변하기' : '상세보기'}
+                        <button className={`tableBtn${inq.inquiryStatus === 'PENDING' ? ' tableBtn--refund' : ''}`} onClick={() => openInquiry(inq)}>
+                          {inq.inquiryStatus === 'PENDING' ? '답변하기' : '상세보기'}
                         </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="memberTableFooter">
+              <span className="memberTableCount">
+                {inqTotalItems === 0 ? '총 0건' : `표시 중: ${(inqPage - 1) * 20 + 1} - ${Math.min(inqPage * 20, inqTotalItems)} / 총 ${inqTotalItems}건`}
+              </span>
+              <div className="pagination">
+                <button disabled={inqLoading || inqPage <= 1} onClick={() => fetchInquiries(inqPage - 1)}>{'<'}</button>
+                {Array.from({ length: Math.min(inqTotalPages, 5) }, (_, i) => {
+                  const p = Math.max(1, inqPage - 2) + i;
+                  if (p > inqTotalPages) return null;
+                  return <button key={p} className={p === inqPage ? 'activePage' : ''} disabled={inqLoading} onClick={() => fetchInquiries(p)}>{p}</button>;
+                })}
+                <button disabled={inqLoading || inqPage >= inqTotalPages} onClick={() => fetchInquiries(inqPage + 1)}>{'>'}</button>
+              </div>
             </div>
           </section>
         </div>
@@ -609,26 +837,46 @@ export default function CustomerServicePage() {
                 <div className="csFormRow">
                   <label>질문</label>
                   <input className="csFormInput" type="text" placeholder="자주 묻는 질문을 입력하세요"
-                    value={faqForm.question ?? ''}
+                    value={faqForm.question}
                     onChange={(e) => setFaqForm((p) => ({ ...p, question: e.target.value }))} />
                 </div>
                 <div className="csFormRow">
                   <div className="csFormLabelRow">
                     <label>답변</label>
                     <button className="csAiBtn csAiBtn--inline" onClick={handleAiFaqDraft}
-                      disabled={aiFaqLoading || !faqForm.question?.trim()}>
+                      disabled={aiFaqLoading || !faqForm.question.trim()}>
                       <Sparkles size={13} />{aiFaqLoading ? 'AI 생성 중...' : 'AI 답변 초안'}
                     </button>
                   </div>
                   <textarea className="csFormTextarea csFormTextarea--tall" placeholder="답변 내용을 입력하세요"
-                    value={faqForm.answer ?? ''}
+                    value={faqForm.answer}
                     onChange={(e) => setFaqForm((p) => ({ ...p, answer: e.target.value }))} />
                 </div>
+                {faqFormError && <p style={{ fontSize: 13, color: '#9a4444' }}>{faqFormError}</p>}
               </div>
             </div>
             <div className="modalAction" style={{ flexShrink: 0 }}>
-              <button onClick={saveFaq}>{faqModal === 'create' ? '등록' : '저장'}</button>
-              <button onClick={() => setFaqModal(null)}>취소</button>
+              <button onClick={saveFaq} disabled={faqFormLoading || !faqForm.question.trim()}>
+                {faqFormLoading ? '저장 중...' : faqModal === 'create' ? '등록' : '저장'}
+              </button>
+              <button onClick={() => setFaqModal(null)} disabled={faqFormLoading}>취소</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FAQ 삭제 확인 모달 ───────────────────────────── */}
+      {faqDeleteId !== null && (
+        <div className="modalOverlay" onClick={() => setFaqDeleteId(null)}>
+          <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 400 }}>
+            <div className="modalHeader">
+              <div><h3>FAQ 삭제</h3></div>
+              <button onClick={() => setFaqDeleteId(null)}>닫기</button>
+            </div>
+            <p style={{ padding: '16px 24px', fontSize: 14, color: '#31475f' }}>해당 FAQ를 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.</p>
+            <div className="modalAction">
+              <button style={{ background: '#9a6767', color: 'white', borderColor: '#9a6767' }} onClick={confirmDeleteFaq}>삭제</button>
+              <button onClick={() => setFaqDeleteId(null)}>취소</button>
             </div>
           </div>
         </div>
