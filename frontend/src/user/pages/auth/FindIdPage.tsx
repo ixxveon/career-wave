@@ -19,16 +19,16 @@ import {
   validateUserRecoveryTarget,
   validateVerificationConfirm,
 } from '../../utils/member/recoverySchema';
+import { RecoveryCodeField, RecoveryContactField } from '../../components/member/RecoveryVerificationFields';
+import RecoveryResultPanel from '../../components/member/RecoveryResultPanel';
 import RecoverySupportPanel from './RecoverySupportPanel';
-import { RecoveryCodeField, RecoveryContactField } from './RecoveryVerificationFields';
-import RecoveryResultPanel from './RecoveryResultPanel';
 import {
   EMPTY_VERIFICATION,
   type VerificationState,
   getRecoveryErrorMessage,
   getRemainingSeconds,
   useVerificationNow,
-} from './recoveryViewUtils';
+} from '../../components/member/recoveryViewUtils';
 import './AuthPage.css';
 
 interface RecoveryResultState {

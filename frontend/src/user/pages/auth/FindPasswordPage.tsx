@@ -26,9 +26,9 @@ import {
   validateUserRecoveryTarget,
   validateVerificationConfirm,
 } from '../../utils/member/recoverySchema';
-import RecoveryPasswordFields from './RecoveryPasswordFields';
+import RecoveryPasswordFields from '../../components/member/RecoveryPasswordFields';
+import { RecoveryCodeField, RecoveryContactField } from '../../components/member/RecoveryVerificationFields';
 import RecoverySupportPanel from './RecoverySupportPanel';
-import { RecoveryCodeField, RecoveryContactField } from './RecoveryVerificationFields';
 import {
   EMPTY_RESET_SESSION,
   EMPTY_VERIFICATION,
@@ -37,7 +37,7 @@ import {
   getRecoveryErrorMessage,
   getRemainingSeconds,
   useVerificationNow,
-} from './recoveryViewUtils';
+} from '../../components/member/recoveryViewUtils';
 import './AuthPage.css';
 
 function FindPasswordPage() {
