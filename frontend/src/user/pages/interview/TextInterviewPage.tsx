@@ -1,39 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  FileText, Mic, MicOff, Volume2,
+  FileText, Mic, Volume2,
   AlertCircle, Loader2, Wifi,
-  Send, Clock, X, Keyboard,
+  Send, Clock, X,
 } from 'lucide-react';
 import { startSession } from '../../api/interview/startSession';
 import { SESSION_TYPE } from '../../types/interview';
 import type { Message, MicStatus, InputMode, Phase, Resume } from '../../types/interview';
 import { useTTSQueue } from '../../hooks/interview/useTTSQueue';
 import TTSPlayer from '../../components/interview/TTSPlayer';
+import { useAudioRecorder } from '../../hooks/interview/useAudioRecorder';
+import VoiceRecorder from '../../components/interview/VoiceRecorder';
 import './TextInterviewPage.css';
-
-/* ── Web Speech API 타입 선언 (TypeScript DOM lib 미포함 항목) ── */
-declare global {
-  interface Window {
-    SpeechRecognition?:       new () => SpeechRecognition;
-    webkitSpeechRecognition?: new () => SpeechRecognition;
-  }
-
-  interface SpeechRecognition extends EventTarget {
-    lang:            string;
-    continuous:      boolean;
-    interimResults:  boolean;
-    start(): void;
-    stop():  void;
-    onresult: ((event: SpeechRecognitionEvent) => void) | null;
-    onend:    (() => void) | null;
-    onerror:  ((event: Event) => void) | null;
-  }
-
-  interface SpeechRecognitionEvent extends Event {
-    readonly results: SpeechRecognitionResultList;
-  }
-}
 
 /* ── 상수 ──────────────────────────────────────── */
 const JOB_OPTIONS = [
@@ -105,7 +84,6 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
   const [inputMode,       setInputMode]       = useState<InputMode>('voice');
   const [input,           setInput]           = useState('');
   const [sttLive,         setSttLive]         = useState('');
-  const [isRecording,     setIsRecording]     = useState(false);
   /* 답변 제한 카운트다운 */
   const [countdown,       setCountdown]       = useState(ANSWER_LIMIT);
   const [countdownActive, setCountdownActive] = useState(false);
@@ -115,13 +93,41 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
   const elapsedRef        = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
   const replyRef          = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const recognitionRef    = useRef<SpeechRecognition | null>(null);
   const textareaRef       = useRef<HTMLTextAreaElement>(null);
   const pendingTextRef    = useRef('');
   const handleSendRef     = useRef<((text: string, opts?: SendOpts) => void) | null>(null);
   const qNumRef           = useRef(qNum);
-  const sendOnMicStopRef  = useRef(false);
   const pendingVoiceIdRef = useRef<number | null>(null);
+
+  /* ── MediaRecorder 기반 STT (useAudioRecorder) ── */
+  const recorder = useAudioRecorder({
+    sessionId: null, // Phase 4에서 실제 sessionId 주입
+    questionOrder: qNum,
+    onStop: () => {
+      // 녹음 종료 시 DEV mock 모드에서 다음 질문 자동 진행
+      if (import.meta.env.DEV) {
+        const pid = pendingVoiceIdRef.current;
+        pendingVoiceIdRef.current = null;
+        setMessages(prev => prev.map(m =>
+          m.id === pid ? { ...m, isPending: false, text: '(음성 답변 전송됨)' } : m
+        ));
+        setSttLive('');
+        pendingTextRef.current = '';
+        handleSendRef.current?.('', { skipAddMessage: true });
+      }
+      // 실제 모드: FastAPI WS STT_RESULT 수신 시 pendingVoiceIdRef 메시지 업데이트 (Phase 4)
+    },
+    onError: () => {
+      // 녹음 시작 실패 시 pending 말풍선 제거 후 텍스트 모드 전환
+      if (pendingVoiceIdRef.current !== null) {
+        setMessages(prev => prev.filter(m => m.id !== pendingVoiceIdRef.current));
+        pendingVoiceIdRef.current = null;
+      }
+      stopCountdown();
+      setInputMode('text');
+      startCountdown();
+    },
+  });
 
   useEffect(() => { qNumRef.current = qNum; }, [qNum]);
 
@@ -173,7 +179,7 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
       }
 
       setMessages(prev => [...prev, { id: Date.now() + 1, role: 'notice', text: '⏰ 답변 시간이 초과되었습니다.' }]);
-      stopRecognition();
+      if (recorder.status === 'recording') recorder.stop();
       handleSendRef.current?.('', { isTimeout: true });
       return;
     }
@@ -207,76 +213,24 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
   }
 
   /* ─────────────────────────────────────────────────
-     STT: SpeechRecognition 브라우저 폴백
+     STT: MediaRecorder 기반 마이크 토글
+     SpeechRecognition(브라우저 내장) 완전 제거
+     실제 STT 결과는 FastAPI WS STT_RESULT로 수신 (Phase 4 연동)
   ───────────────────────────────────────────────── */
-  function stopRecognition() {
-    sendOnMicStopRef.current = false;
-    try { recognitionRef.current?.stop(); } catch { /* ignore */ }
-    recognitionRef.current = null;
-    setIsRecording(false);
+  async function handleMicStart() {
+    if (recorder.status === 'recording') return;
+    startCountdown();
+    const pendingId = Date.now();
+    pendingVoiceIdRef.current = pendingId;
+    setMessages(prev => [...prev, {
+      id: pendingId, role: 'user', isVoice: true, isPending: true, text: '',
+    }]);
+    await recorder.start();
   }
 
-  function toggleMic() {
-    if (isRecording) {
-      stopCountdown();
-
-      const pendingId = Date.now();
-      pendingVoiceIdRef.current = pendingId;
-      setMessages(prev => [...prev, {
-        id: pendingId, role: 'user', isVoice: true, isPending: true, text: sttLive,
-      }]);
-
-      sendOnMicStopRef.current = true;
-      try { recognitionRef.current?.stop(); } catch { /* ignore */ }
-      recognitionRef.current = null;
-      setIsRecording(false);
-      return;
-    }
-
-    const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    if (!SR) { setInputMode('text'); startCountdown(); return; }
-
-    const rec = new SR();
-    rec.lang           = 'ko-KR';
-    rec.continuous     = true;
-    rec.interimResults = true;
-
-    rec.onresult = (e: SpeechRecognitionEvent) => {
-      const t = Array.from(e.results).map(r => (r as SpeechRecognitionResult)[0].transcript).join('');
-      setSttLive(t);
-      pendingTextRef.current = t;
-    };
-
-    rec.onend = () => {
-      setIsRecording(false);
-      if (sendOnMicStopRef.current) {
-        sendOnMicStopRef.current = false;
-        const finalText = pendingTextRef.current.trim();
-        const pid = pendingVoiceIdRef.current;
-        pendingVoiceIdRef.current = null;
-
-        setMessages(prev => prev.map(m =>
-          m.id === pid ? { ...m, isPending: false, text: finalText } : m
-        ));
-
-        setSttLive('');
-        pendingTextRef.current = '';
-
-        if (finalText) {
-          handleSendRef.current?.(finalText, { skipAddMessage: true });
-        }
-      }
-    };
-
-    rec.onerror = () => {
-      sendOnMicStopRef.current = false;
-      setIsRecording(false);
-    };
-
-    recognitionRef.current = rec;
-    rec.start();
-    setIsRecording(true);
-    startCountdown();
+  function handleMicStop() {
+    stopCountdown();
+    recorder.stop(); // isFinal: true 청크 전송 → onStop 콜백 발동
   }
 
   /* ─────────────────────────────────────────────────
@@ -292,8 +246,8 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
     if (typing || done) return;
     if (!isTimeout && !skipAddMessage && !text?.trim()) return;
     stopCountdown();
-    stopRecognition();
-    tts.clear(); // 현재 재생 중단 + 큐 전체 비우기 (잔여 청크 재생 방지)
+    if (recorder.status === 'recording') recorder.stop();
+    tts.clear();
 
     if (!isTimeout && !skipAddMessage) {
       const trimmed = text.trim();
@@ -334,7 +288,7 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
       if (elapsedRef.current !== null) clearInterval(elapsedRef.current);
       if (countdownRef.current !== null) clearTimeout(countdownRef.current);
       if (replyRef.current !== null) clearTimeout(replyRef.current);
-      stopRecognition();
+      recorder.stop();
       tts.clear();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -449,41 +403,29 @@ function ChatRoom({ company, job, onExit }: ChatRoomProps) {
             </div>
           )}
 
-          {/* ② 음성 입력 모드 (기본) */}
+          {/* ② 음성 입력 모드 (기본) — VoiceRecorder 컴포넌트 */}
           {inputMode === 'voice' && (
-            <div className="ti-voice-area">
-              <button
-                className={`ti-mic-main${isRecording ? ' ti-mic-main--on' : ''}`}
-                onClick={toggleMic}
-                type="button"
-                aria-label={isRecording ? '녹음 중지 및 전송' : '음성 답변 시작'}
-              >
-                {isRecording ? <MicOff size={32} /> : <Mic size={32} />}
-                {isRecording && <span className="ti-mic-main__ring" aria-hidden="true" />}
-              </button>
-
-              <div className="ti-voice-hint-wrap">
-                {isRecording ? (
-                  <>
-                    <span className="ti-voice-hint ti-voice-hint--on">
-                      <span className="ti-rec-dot" />
-                      녹음 중 · 버튼을 다시 누르면 전송됩니다
-                    </span>
-                    {sttLive && <p className="ti-stt-preview">{sttLive}</p>}
-                  </>
-                ) : (
-                  <span className="ti-voice-hint">마이크 버튼을 눌러 음성으로 답변하세요</span>
-                )}
-              </div>
-
-              <button
-                className="ti-switch-input"
-                onClick={() => { stopRecognition(); setSttLive(''); setInputMode('text'); startCountdown(); }}
-                type="button"
-              >
-                <Keyboard size={13} /> 키보드로 답변하기
-              </button>
-            </div>
+            <VoiceRecorder
+              status={recorder.status}
+              error={recorder.error}
+              sttLive={sttLive}
+              onStart={handleMicStart}
+              onStop={handleMicStop}
+              onSwitchToText={() => {
+                // 취소 경로 — 답변 제출 아닌 모드 전환
+                // cancel()로 잔여 청크 전송 차단 + onStop 미실행
+                if (recorder.status === 'recording') recorder.cancel();
+                // pending 음성 말풍선 제거 (텍스트 답변과 꼬임 방지)
+                if (pendingVoiceIdRef.current !== null) {
+                  setMessages(prev => prev.filter(m => m.id !== pendingVoiceIdRef.current));
+                  pendingVoiceIdRef.current = null;
+                }
+                setSttLive('');
+                stopCountdown();
+                setInputMode('text');
+                startCountdown();
+              }}
+            />
           )}
 
           {/* ③ 텍스트 입력 모드 (보조) */}
