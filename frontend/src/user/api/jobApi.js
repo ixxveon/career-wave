@@ -19,6 +19,9 @@ export const jobApi = {
     return apiClient(`${JOB_NOTICE_BASE_PATH}${query ? `?${query}` : ''}`);
   },
 
+  getJobNoticeDetail: (jobNoticeId) =>
+    apiClient(`${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(jobNoticeId)}`),
+
   getJobs: (params = {}) => {
     const query = createQueryString(params);
     return apiClient(`/jobs${query ? `?${query}` : ''}`);

@@ -74,6 +74,12 @@ type Bookmarks = JobNoticeBookmarkMap;
 type Period = (typeof PERIODS)[number];
 type SortOption = (typeof SORT_OPTIONS)[number];
 type JobNoticeListStatus = 'idle' | 'loading' | 'success' | 'empty' | 'error';
+type JobNoticeFilterParamKey =
+  | 'jobType'
+  | 'experience'
+  | 'employmentType'
+  | 'location'
+  | 'companySize';
 
 interface BannerStat {
   label: string;
@@ -254,7 +260,7 @@ function createJobNoticeQueryParams({
     params.keyword = keyword;
   }
 
-  (Object.entries(API_FILTER_PARAM_BY_LABEL) as Array<[FilterLabel, keyof JobNoticeQueryParams]>).forEach(([label, paramKey]) => {
+  (Object.entries(API_FILTER_PARAM_BY_LABEL) as Array<[FilterLabel, JobNoticeFilterParamKey]>).forEach(([label, paramKey]) => {
     const value = filters[label];
     if (value !== DEFAULT_FILTER_VALUE) {
       params[paramKey] = value;
