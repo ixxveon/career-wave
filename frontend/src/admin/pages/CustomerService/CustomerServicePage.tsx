@@ -183,7 +183,21 @@ export default function CustomerServicePage() {
       setNoticePage(page);
     } catch (err: any) {
       if (reqId !== noticeReqId.current) return;
-      setNoticeError(err.response?.data?.message || err.message || '공지사항 목록을 불러오지 못했습니다.');
+      const status = err.response?.status;
+      const serverMsg = err.response?.data?.message;
+      if (serverMsg) {
+        setNoticeError(serverMsg);
+      } else if (status === 500) {
+        setNoticeError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      } else if (status === 401) {
+        setNoticeError('인증이 필요합니다. 다시 로그인해주세요.');
+      } else if (status === 403) {
+        setNoticeError('접근 권한이 없습니다.');
+      } else if (!status) {
+        setNoticeError('네트워크 연결을 확인해주세요.');
+      } else {
+        setNoticeError('공지사항 목록을 불러오지 못했습니다.');
+      }
     } finally {
       if (reqId === noticeReqId.current) setNoticeLoading(false);
     }
