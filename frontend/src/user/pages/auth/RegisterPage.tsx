@@ -1074,7 +1074,7 @@ function CompanyRegisterForm() {
     managerEmail: form.managerEmail,
     managerEmailVerificationToken: verification.emailToken,
     managerPhone: form.managerPhone,
-    managerVerificationToken: verification.phoneToken,
+    managerPhoneVerificationToken: verification.phoneToken,
     companyName: form.companyName,
     businessNumber: form.businessNumber,
     ceoName: form.ceoName,

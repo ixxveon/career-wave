@@ -285,7 +285,7 @@ Authorization: Bearer {accessToken}
   "addressDetail": "10층",
   "companyType": "SME",
   "isAgency": false,
-  "managerVerificationToken": "short-lived-token",
+  "managerPhoneVerificationToken": "short-lived-token",
   "managerEmailVerificationToken": "short-lived-token",
   "employmentCertificateFileId": "uploaded-file-id",
   "terms": {

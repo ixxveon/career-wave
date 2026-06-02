@@ -156,7 +156,7 @@ export interface CompanyRegisterRequest {
   addressDetail: string;
   companyType: CompanyType;
   isAgency: boolean;
-  managerVerificationToken: string;
+  managerPhoneVerificationToken: string;
   managerEmailVerificationToken: string;
   employmentCertificateFileId: string;
   terms: CompanyRegisterTerms;
