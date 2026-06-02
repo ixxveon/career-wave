@@ -16,6 +16,30 @@ import "./MyPage.css";
 function UserMyPage() {
     const userProfile = mockUserProfile;
     const githubProfile = mockGithubProfile;
+    const ROLE_TYPE_LABELS = {
+        ROLE_USER: "일반 회원",
+        ROLE_COMPANY: "기업 회원",
+    };
+
+    const SUBSCRIPTION_STATUS_LABELS = {
+        FREE: "무료",
+        PREMIUM: "프리미엄",
+    };
+
+    const MEMBER_STATUS_CONFIG = {
+        ACTIVE: {
+            label: "정상",
+            className: "cw-connected",
+        },
+        SUSPENDED: {
+            label: "정지",
+            className: "cw-warning",
+        },
+        BANNED: {
+            label: "차단",
+            className: "cw-danger",
+        },
+    };
 
     return (
         <div className="cw-mypage-layout">
@@ -107,7 +131,9 @@ function UserMyPage() {
                         <div className="cw-info-list">
                             <div className="cw-info-row">
                                 <span>회원 유형</span>
-                                <strong>{userProfile.roleType}</strong>
+                                <strong>
+                                    {ROLE_TYPE_LABELS[userProfile.roleType]}
+                                </strong>
                             </div>
                             <div className="cw-info-row">
                                 <span>로그인 ID</span>
@@ -115,7 +141,9 @@ function UserMyPage() {
                             </div>
                             <div className="cw-info-row">
                                 <span>구독 상태</span>
-                                <strong>{userProfile.subscriptionStatus}</strong>
+                                <strong>
+                                    {SUBSCRIPTION_STATUS_LABELS[userProfile.subscriptionStatus]}
+                                </strong>
                             </div>
                             <div className="cw-info-row">
                                 <span>알림 수신</span>
@@ -126,7 +154,13 @@ function UserMyPage() {
                             <div className="cw-info-row">
                                 <span>계정 상태</span>
                                 <strong className="cw-connected">
-                                    {userProfile.memberStatus}
+                                    <strong
+                                        className={
+                                            MEMBER_STATUS_CONFIG[userProfile.memberStatus].className
+                                        }
+                                    >
+                                        {MEMBER_STATUS_CONFIG[userProfile.memberStatus].label}
+                                    </strong>
                                 </strong>
                             </div>
                         </div>

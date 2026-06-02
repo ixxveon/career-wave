@@ -100,7 +100,20 @@ function ScrappedJobPage() {
                                 <button
                                     type="button"
                                     className="cw-job-detail-button"
-                                    onClick={() => setSelectedJob(job)}
+                                    onClick={() =>
+                                        setSelectedJob({
+                                            id: job.jobNoticeId,
+                                            title: job.title,
+                                            company: job.companyName,
+                                            careerLevel: job.careerLevel,
+                                            location: job.location,
+                                            deadline: job.deadline,
+                                            noticeStatus: job.noticeStatus,
+                                            bookmarked: true,
+                                            stacks: [],
+                                            tags: [],
+                                        })
+                                    }
                                 >
                                     상세보기
                                 </button>
