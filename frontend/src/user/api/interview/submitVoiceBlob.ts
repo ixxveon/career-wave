@@ -18,7 +18,7 @@ export function submitVoiceBlob(
   fd.append('chunkIndex', String(chunkIndex));
   fd.append('isFinal', String(isFinal));
 
-  return apiClient(`/v1/interview/sessions/${sessionId}/answer/voice`, {
+  return apiClient(`/api/v1/user/interview/sessions/${sessionId}/answer/voice`, {
     method: 'POST',
     body: fd,
   }).then((res: { data: SubmitVoiceBlobResponse }) => res.data);

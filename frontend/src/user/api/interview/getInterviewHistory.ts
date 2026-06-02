@@ -6,8 +6,12 @@ export interface GetHistoryParams {
   size?: number;
 }
 
-export function getInterviewHistory({ page = 0, size = 10 }: GetHistoryParams = {}): Promise<InterviewHistoryResponse> {
-  return apiClient(`/v1/interview/history?page=${page}&size=${size}`).then(
+export function getInterviewHistory(
+  { page = 0, size = 10 }: GetHistoryParams = {},
+  signal?: AbortSignal,
+): Promise<InterviewHistoryResponse> {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  return apiClient(`/api/v1/user/interview/history?${params}`, { signal }).then(
     (res: { data: InterviewHistoryResponse }) => res.data,
   );
 }
