@@ -216,11 +216,13 @@ export default function CustomerServicePage() {
 
   // ── 공지사항 수정 모달 열기 ───────────────────────────────
   const openNoticeEdit = async (item: NoticeItem) => {
+    const reqId = ++noticeReqId.current;
     setNoticeFormError('');
     setNoticeModal('edit');
     setNoticeForm({ noticeId: item.noticeId, category: item.category, title: item.title, content: '', isVisible: item.isVisible });
     try {
       const res = await csApi.getNoticeDetail(item.noticeId);
+      if (reqId !== noticeReqId.current) return;
       if (!res.data.success) throw new Error(res.data.message);
       const d = res.data.data;
       setNoticeForm({ noticeId: d.noticeId, category: d.category, title: d.title, content: d.content, isVisible: d.isVisible });
