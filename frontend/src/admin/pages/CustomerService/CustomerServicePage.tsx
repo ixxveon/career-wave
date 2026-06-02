@@ -124,6 +124,7 @@ export default function CustomerServicePage() {
   const [noticeLoading, setNoticeLoading] = useState(false);
   const [noticeError, setNoticeError] = useState('');
   const noticeReqId = useRef(0);
+  const noticeDetailReqId = useRef(0);
 
   // 공지사항 필터 (입력 상태)
   const [noticeCatFilter, setNoticeCatFilter]         = useState('');
@@ -207,8 +208,15 @@ export default function CustomerServicePage() {
   useEffect(() => { fetchSummary(); }, [fetchSummary]);
   useEffect(() => { fetchNotices(1); }, [fetchNotices]);
 
+  // ── 공지사항 모달 닫기 ───────────────────────────────────
+  const closeNoticeModal = () => {
+    ++noticeDetailReqId.current; // pending 상세 요청 무효화
+    closeNoticeModal();
+  };
+
   // ── 공지사항 등록 모달 열기 ───────────────────────────────
   const openNoticeCreate = () => {
+    ++noticeDetailReqId.current; // pending 상세 요청 무효화
     setNoticeForm({ category: 'NOTICE', title: '', content: '', isVisible: true });
     setNoticeFormError('');
     setNoticeModal('create');
@@ -216,17 +224,18 @@ export default function CustomerServicePage() {
 
   // ── 공지사항 수정 모달 열기 ───────────────────────────────
   const openNoticeEdit = async (item: NoticeItem) => {
-    const reqId = ++noticeReqId.current;
+    const reqId = ++noticeDetailReqId.current;
     setNoticeFormError('');
     setNoticeModal('edit');
     setNoticeForm({ noticeId: item.noticeId, category: item.category, title: item.title, content: '', isVisible: item.isVisible });
     try {
       const res = await csApi.getNoticeDetail(item.noticeId);
-      if (reqId !== noticeReqId.current) return;
+      if (reqId !== noticeDetailReqId.current) return;
       if (!res.data.success) throw new Error(res.data.message);
       const d = res.data.data;
       setNoticeForm({ noticeId: d.noticeId, category: d.category, title: d.title, content: d.content, isVisible: d.isVisible });
     } catch (err: any) {
+      if (reqId !== noticeDetailReqId.current) return;
       setNoticeFormError(err.response?.data?.message || '공지 내용을 불러오지 못했습니다.');
     }
   };
@@ -245,7 +254,7 @@ export default function CustomerServicePage() {
         const res = await csApi.updateNotice(noticeForm.noticeId, body);
         if (!res.data.success) throw new Error(res.data.message);
       }
-      setNoticeModal(null);
+      closeNoticeModal();
       fetchNotices(noticePage);
       fetchSummary();
     } catch (err: any) {
@@ -515,11 +524,11 @@ export default function CustomerServicePage() {
 
       {/* ── 공지사항 모달 ────────────────────────────────── */}
       {noticeModal && (
-        <div className="modalOverlay" onClick={() => setNoticeModal(null)}>
+        <div className="modalOverlay" onClick={() => closeNoticeModal()}>
           <div className="memberModal modal--scrollable" style={{ width: 560 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0 }}>
               <div><h3>{noticeModal === 'create' ? '공지사항 등록' : '공지사항 수정'}</h3></div>
-              <button onClick={() => setNoticeModal(null)}>닫기</button>
+              <button onClick={() => closeNoticeModal()}>닫기</button>
             </div>
             <div className="modalBody">
               <div className="csFormRows">
@@ -566,7 +575,7 @@ export default function CustomerServicePage() {
               <button onClick={saveNotice} disabled={noticeFormLoading || !noticeForm.title.trim()}>
                 {noticeFormLoading ? '저장 중...' : noticeModal === 'create' ? '등록' : '저장'}
               </button>
-              <button onClick={() => setNoticeModal(null)} disabled={noticeFormLoading}>취소</button>
+              <button onClick={() => closeNoticeModal()} disabled={noticeFormLoading}>취소</button>
             </div>
           </div>
         </div>
