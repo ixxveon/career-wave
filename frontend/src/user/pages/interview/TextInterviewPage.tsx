@@ -84,9 +84,12 @@ function InterviewRoom({ sessionId, company, job, sessionType, onExit }: Intervi
 
   /* ── FINISHED → 리포트 페이지 이동 ── */
   useEffect(() => {
-    if (session.sessionState === 'FINISHED') {
-      setTimeout(() => navigate(`/interview/report?sessionId=${sessionId}`), 2000);
-    }
+    if (session.sessionState !== 'FINISHED') return;
+    const timer = setTimeout(
+      () => navigate(`/interview/report?sessionId=${sessionId}`),
+      2000,
+    );
+    return () => clearTimeout(timer);
   }, [session.sessionState, sessionId, navigate]);
 
   /* ── body 스크롤 잠금 ── */
