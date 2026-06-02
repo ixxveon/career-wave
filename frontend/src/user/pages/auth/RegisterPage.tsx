@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { Apple, BadgeCheck, Building2, CheckCircle2, FileText, ShieldCheck, UserRound } from 'lucide-react';
+import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../types/member';
 import {
   useLoginIdCheck,
   useRegisterUser,
@@ -626,6 +627,12 @@ function PersonalRegisterForm() {
   const [form, setForm] = useState(initialPersonalForm);
   const [terms, setTerms] = useState(initialPersonalTerms);
   const currentLoginIdRef = useRef(form.userId);
+  const currentEmailRef = useRef(form.email);
+  const currentPhoneRef = useRef(form.phone);
+  const emailVerificationIdRef = useRef('');
+  const phoneVerificationIdRef = useRef('');
+  const emailVerificationRequestRef = useRef(0);
+  const phoneVerificationRequestRef = useRef(0);
   const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>(LOGIN_ID_CHECK_STATE.UNCHECKED);
   const [verification, setVerification] = useState({
     emailId: '',
@@ -688,6 +695,8 @@ function PersonalRegisterForm() {
     if (key === 'userId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
     if (key === 'userId') currentLoginIdRef.current = typeof value === 'string' ? value : currentLoginIdRef.current;
     if (key === 'email') {
+      currentEmailRef.current = typeof value === 'string' ? value : currentEmailRef.current;
+      emailVerificationIdRef.current = '';
       setVerification((current) => ({
         ...current,
         emailId: '',
@@ -698,6 +707,8 @@ function PersonalRegisterForm() {
       }));
     }
     if (key === 'phone') {
+      currentPhoneRef.current = typeof value === 'string' ? value : currentPhoneRef.current;
+      phoneVerificationIdRef.current = '';
       setVerification((current) => ({
         ...current,
         phoneId: '',
@@ -739,8 +750,16 @@ function PersonalRegisterForm() {
       return;
     }
 
+    const target = form.email.trim();
+    const requestOrder = ++emailVerificationRequestRef.current;
     try {
-      const result = await sendEmailCode.mutateAsync({ channel: 'EMAIL', target: form.email.trim(), purpose: 'REGISTER' });
+      const result = await sendEmailCode.mutateAsync({
+        channel: VERIFICATION_CHANNEL.EMAIL,
+        target,
+        purpose: VERIFICATION_PURPOSE.REGISTER,
+      });
+      if (requestOrder !== emailVerificationRequestRef.current || target !== currentEmailRef.current.trim()) return;
+      emailVerificationIdRef.current = result.verificationId;
       setVerification((current) => ({
         ...current,
         emailId: result.verificationId,
@@ -751,12 +770,16 @@ function PersonalRegisterForm() {
       }));
       setFieldErrors((current) => ({ ...current, email: '', emailCode: '' }));
     } catch (error) {
+      if (requestOrder !== emailVerificationRequestRef.current || target !== currentEmailRef.current.trim()) return;
       setFieldErrors((current) => ({ ...current, email: getErrorMessage(error, '이메일 인증번호 발송에 실패했습니다.') }));
     }
   };
 
   const handleConfirmEmailCode = async () => {
-    if (!verification.emailId) {
+    const verificationId = emailVerificationIdRef.current;
+    const target = currentEmailRef.current.trim();
+
+    if (!verificationId) {
       setFieldErrors((current) => ({ ...current, emailCode: '이메일 인증번호를 먼저 요청해주세요.' }));
       return;
     }
@@ -770,10 +793,12 @@ function PersonalRegisterForm() {
     }
 
     try {
-      const result = await confirmEmailCode.mutateAsync({ verificationId: verification.emailId, code: form.emailCode.trim() });
+      const result = await confirmEmailCode.mutateAsync({ verificationId, code: form.emailCode.trim() });
+      if (verificationId !== emailVerificationIdRef.current || target !== currentEmailRef.current.trim()) return;
       setVerification((current) => ({ ...current, emailToken: result.verificationToken }));
       setFieldErrors((current) => ({ ...current, emailCode: '' }));
     } catch (error) {
+      if (verificationId !== emailVerificationIdRef.current || target !== currentEmailRef.current.trim()) return;
       setFieldErrors((current) => ({ ...current, emailCode: getErrorMessage(error, '이메일 인증 확인에 실패했습니다.') }));
     }
   };
@@ -784,8 +809,16 @@ function PersonalRegisterForm() {
       return;
     }
 
+    const target = form.phone.replace(/\D/g, '');
+    const requestOrder = ++phoneVerificationRequestRef.current;
     try {
-      const result = await sendPhoneCode.mutateAsync({ channel: 'PHONE', target: form.phone.replace(/\D/g, ''), purpose: 'REGISTER' });
+      const result = await sendPhoneCode.mutateAsync({
+        channel: VERIFICATION_CHANNEL.PHONE,
+        target,
+        purpose: VERIFICATION_PURPOSE.REGISTER,
+      });
+      if (requestOrder !== phoneVerificationRequestRef.current || target !== currentPhoneRef.current.replace(/\D/g, '')) return;
+      phoneVerificationIdRef.current = result.verificationId;
       setVerification((current) => ({
         ...current,
         phoneId: result.verificationId,
@@ -796,12 +829,16 @@ function PersonalRegisterForm() {
       }));
       setFieldErrors((current) => ({ ...current, phone: '', phoneCode: '' }));
     } catch (error) {
+      if (requestOrder !== phoneVerificationRequestRef.current || target !== currentPhoneRef.current.replace(/\D/g, '')) return;
       setFieldErrors((current) => ({ ...current, phone: getErrorMessage(error, '휴대폰 인증번호 발송에 실패했습니다.') }));
     }
   };
 
   const handleConfirmPhoneCode = async () => {
-    if (!verification.phoneId) {
+    const verificationId = phoneVerificationIdRef.current;
+    const target = currentPhoneRef.current.replace(/\D/g, '');
+
+    if (!verificationId) {
       setFieldErrors((current) => ({ ...current, phoneCode: '휴대폰 인증번호를 먼저 요청해주세요.' }));
       return;
     }
@@ -815,10 +852,12 @@ function PersonalRegisterForm() {
     }
 
     try {
-      const result = await confirmPhoneCode.mutateAsync({ verificationId: verification.phoneId, code: form.phoneCode.trim() });
+      const result = await confirmPhoneCode.mutateAsync({ verificationId, code: form.phoneCode.trim() });
+      if (verificationId !== phoneVerificationIdRef.current || target !== currentPhoneRef.current.replace(/\D/g, '')) return;
       setVerification((current) => ({ ...current, phoneToken: result.verificationToken }));
       setFieldErrors((current) => ({ ...current, phoneCode: '' }));
     } catch (error) {
+      if (verificationId !== phoneVerificationIdRef.current || target !== currentPhoneRef.current.replace(/\D/g, '')) return;
       setFieldErrors((current) => ({ ...current, phoneCode: getErrorMessage(error, '휴대폰 인증 확인에 실패했습니다.') }));
     }
   };
@@ -984,6 +1023,12 @@ function CompanyRegisterForm() {
   const [form, setForm] = useState<CompanyForm>(initialCompanyForm);
   const [terms, setTerms] = useState(initialCompanyTerms);
   const currentLoginIdRef = useRef(form.managerId);
+  const currentManagerPhoneRef = useRef(form.managerPhone);
+  const currentManagerEmailRef = useRef(form.managerEmail);
+  const managerPhoneVerificationIdRef = useRef('');
+  const managerEmailVerificationIdRef = useRef('');
+  const managerPhoneVerificationRequestRef = useRef(0);
+  const managerEmailVerificationRequestRef = useRef(0);
   const [employmentCertificate, setEmploymentCertificate] = useState<File | null>(null);
   const [employmentCertificateError, setEmploymentCertificateError] = useState('');
   const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>(LOGIN_ID_CHECK_STATE.UNCHECKED);
@@ -1066,6 +1111,8 @@ function CompanyRegisterForm() {
     if (key === 'managerId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
     if (key === 'managerId') currentLoginIdRef.current = typeof value === 'string' ? value : currentLoginIdRef.current;
     if (key === 'managerPhone') {
+      currentManagerPhoneRef.current = typeof value === 'string' ? value : currentManagerPhoneRef.current;
+      managerPhoneVerificationIdRef.current = '';
       setVerification((current) => ({
         ...current,
         phoneId: '',
@@ -1076,6 +1123,8 @@ function CompanyRegisterForm() {
       }));
     }
     if (key === 'managerEmail') {
+      currentManagerEmailRef.current = typeof value === 'string' ? value : currentManagerEmailRef.current;
+      managerEmailVerificationIdRef.current = '';
       setVerification((current) => ({
         ...current,
         emailId: '',
@@ -1152,8 +1201,16 @@ function CompanyRegisterForm() {
       return;
     }
 
+    const target = form.managerPhone.replace(/\D/g, '');
+    const requestOrder = ++managerPhoneVerificationRequestRef.current;
     try {
-      const result = await sendPhoneCode.mutateAsync({ channel: 'PHONE', target: form.managerPhone.replace(/\D/g, ''), purpose: 'REGISTER' });
+      const result = await sendPhoneCode.mutateAsync({
+        channel: VERIFICATION_CHANNEL.PHONE,
+        target,
+        purpose: VERIFICATION_PURPOSE.REGISTER,
+      });
+      if (requestOrder !== managerPhoneVerificationRequestRef.current || target !== currentManagerPhoneRef.current.replace(/\D/g, '')) return;
+      managerPhoneVerificationIdRef.current = result.verificationId;
       setVerification((current) => ({
         ...current,
         phoneId: result.verificationId,
@@ -1164,12 +1221,16 @@ function CompanyRegisterForm() {
       }));
       setFieldErrors((current) => ({ ...current, managerPhone: '', managerPhoneCode: '' }));
     } catch (error) {
+      if (requestOrder !== managerPhoneVerificationRequestRef.current || target !== currentManagerPhoneRef.current.replace(/\D/g, '')) return;
       setFieldErrors((current) => ({ ...current, managerPhone: getErrorMessage(error, '휴대폰 인증번호 발송에 실패했습니다.') }));
     }
   };
 
   const handleConfirmPhoneCode = async () => {
-    if (!verification.phoneId) {
+    const verificationId = managerPhoneVerificationIdRef.current;
+    const target = currentManagerPhoneRef.current.replace(/\D/g, '');
+
+    if (!verificationId) {
       setFieldErrors((current) => ({ ...current, managerPhoneCode: '휴대폰 인증번호를 먼저 요청해주세요.' }));
       return;
     }
@@ -1183,10 +1244,12 @@ function CompanyRegisterForm() {
     }
 
     try {
-      const result = await confirmPhoneCode.mutateAsync({ verificationId: verification.phoneId, code: form.managerPhoneCode.trim() });
+      const result = await confirmPhoneCode.mutateAsync({ verificationId, code: form.managerPhoneCode.trim() });
+      if (verificationId !== managerPhoneVerificationIdRef.current || target !== currentManagerPhoneRef.current.replace(/\D/g, '')) return;
       setVerification((current) => ({ ...current, phoneToken: result.verificationToken }));
       setFieldErrors((current) => ({ ...current, managerPhoneCode: '' }));
     } catch (error) {
+      if (verificationId !== managerPhoneVerificationIdRef.current || target !== currentManagerPhoneRef.current.replace(/\D/g, '')) return;
       setFieldErrors((current) => ({ ...current, managerPhoneCode: getErrorMessage(error, '휴대폰 인증 확인에 실패했습니다.') }));
     }
   };
@@ -1197,8 +1260,16 @@ function CompanyRegisterForm() {
       return;
     }
 
+    const target = form.managerEmail.trim();
+    const requestOrder = ++managerEmailVerificationRequestRef.current;
     try {
-      const result = await sendEmailCode.mutateAsync({ channel: 'EMAIL', target: form.managerEmail.trim(), purpose: 'REGISTER' });
+      const result = await sendEmailCode.mutateAsync({
+        channel: VERIFICATION_CHANNEL.EMAIL,
+        target,
+        purpose: VERIFICATION_PURPOSE.REGISTER,
+      });
+      if (requestOrder !== managerEmailVerificationRequestRef.current || target !== currentManagerEmailRef.current.trim()) return;
+      managerEmailVerificationIdRef.current = result.verificationId;
       setVerification((current) => ({
         ...current,
         emailId: result.verificationId,
@@ -1209,12 +1280,16 @@ function CompanyRegisterForm() {
       }));
       setFieldErrors((current) => ({ ...current, managerEmail: '', managerEmailCode: '' }));
     } catch (error) {
+      if (requestOrder !== managerEmailVerificationRequestRef.current || target !== currentManagerEmailRef.current.trim()) return;
       setFieldErrors((current) => ({ ...current, managerEmail: getErrorMessage(error, '이메일 인증번호 발송에 실패했습니다.') }));
     }
   };
 
   const handleConfirmEmailCode = async () => {
-    if (!verification.emailId) {
+    const verificationId = managerEmailVerificationIdRef.current;
+    const target = currentManagerEmailRef.current.trim();
+
+    if (!verificationId) {
       setFieldErrors((current) => ({ ...current, managerEmailCode: '이메일 인증번호를 먼저 요청해주세요.' }));
       return;
     }
@@ -1228,10 +1303,12 @@ function CompanyRegisterForm() {
     }
 
     try {
-      const result = await confirmEmailCode.mutateAsync({ verificationId: verification.emailId, code: form.managerEmailCode.trim() });
+      const result = await confirmEmailCode.mutateAsync({ verificationId, code: form.managerEmailCode.trim() });
+      if (verificationId !== managerEmailVerificationIdRef.current || target !== currentManagerEmailRef.current.trim()) return;
       setVerification((current) => ({ ...current, emailToken: result.verificationToken }));
       setFieldErrors((current) => ({ ...current, managerEmailCode: '' }));
     } catch (error) {
+      if (verificationId !== managerEmailVerificationIdRef.current || target !== currentManagerEmailRef.current.trim()) return;
       setFieldErrors((current) => ({ ...current, managerEmailCode: getErrorMessage(error, '이메일 인증 확인에 실패했습니다.') }));
     }
   };

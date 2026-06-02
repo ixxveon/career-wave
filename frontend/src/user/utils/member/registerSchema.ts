@@ -85,8 +85,11 @@ export function validatePersonalRegisterForm(
   const errors: RegisterFieldErrors = {};
   const password = validatePasswordPolicy(form.password, form.loginId);
 
-  if (!isValidLoginId(form.loginId)) errors.loginId = '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.';
-  if (loginIdState !== LOGIN_ID_CHECK_STATE.AVAILABLE) errors.loginId = '아이디 중복 확인을 완료해주세요.';
+  if (!isValidLoginId(form.loginId)) {
+    errors.loginId = '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.';
+  } else if (loginIdState !== LOGIN_ID_CHECK_STATE.AVAILABLE) {
+    errors.loginId = '아이디 중복 확인을 완료해주세요.';
+  }
   if (!form.name.trim()) errors.name = '이름을 입력해주세요.';
   if (!isValidEmail(form.email)) errors.email = '올바른 이메일 주소를 입력해주세요.';
   if (!form.emailVerificationToken?.trim()) errors.emailCode = '이메일 인증을 완료해주세요.';
@@ -112,8 +115,11 @@ export function validateCompanyRegisterForm(
   if (!form.ceoName.trim()) errors.ceoName = '대표자명을 입력해주세요.';
   if (!form.address.trim()) errors.address = '회사주소를 입력해주세요.';
   if (!form.certificateNumber.trim()) errors.certificateNumber = '기업인증을 완료해주세요.';
-  if (!isValidLoginId(form.loginId)) errors.loginId = '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.';
-  if (loginIdState !== LOGIN_ID_CHECK_STATE.AVAILABLE) errors.loginId = '아이디 중복 확인을 완료해주세요.';
+  if (!isValidLoginId(form.loginId)) {
+    errors.loginId = '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.';
+  } else if (loginIdState !== LOGIN_ID_CHECK_STATE.AVAILABLE) {
+    errors.loginId = '아이디 중복 확인을 완료해주세요.';
+  }
   if (!form.managerName.trim()) errors.managerName = '담당자명을 입력해주세요.';
   if (!isValidPhone(form.managerPhone)) errors.managerPhone = '담당자 전화번호를 올바르게 입력해주세요.';
   if (!form.managerVerificationToken?.trim()) errors.managerPhoneCode = '담당자 휴대폰 인증을 완료해주세요.';
@@ -177,6 +183,7 @@ export function toCompanyRegisterRequest(form: CompanyRegisterFormSnapshot): Com
     companyType: COMPANY_TYPE_BY_LABEL[form.companyType],
     isAgency: form.isAgency,
     managerVerificationToken: form.managerVerificationToken?.trim() ?? '',
+    managerEmailVerificationToken: form.managerEmailVerificationToken?.trim() ?? '',
     employmentCertificateFileId: form.employmentCertificateFileId?.trim() ?? '',
     terms,
   };
