@@ -2,6 +2,8 @@ import { useMutation } from '@tanstack/react-query';
 import { memberAuthApi } from '../../api/member';
 import {
   COMPANY_APPROVAL_STATUS,
+  MEMBER_STATUS,
+  MEMBER_TYPE,
   type CompanyApprovalStatus,
   type LoginRequest,
   type LoginResponse,
@@ -16,7 +18,7 @@ const COMPANY_BLOCK_REASON_BY_STATUS = {
 } as const;
 
 function isRestrictedStatus(status: MemberStatus): boolean {
-  return status !== 'ACTIVE';
+  return status !== MEMBER_STATUS.ACTIVE;
 }
 
 function getCompanyBlockReason(status: CompanyApprovalStatus): LoginRouteDecision | null {
@@ -31,7 +33,7 @@ export function getLoginRouteDecision(response: LoginResponse): LoginRouteDecisi
     return { type: 'BLOCK', reason: 'RESTRICTED' };
   }
 
-  if (member.memberType === 'COMPANY') {
+  if (member.memberType === MEMBER_TYPE.COMPANY) {
     const companyBlock = getCompanyBlockReason(member.companyApprovalStatus);
     if (companyBlock) return companyBlock;
     return { type: 'ALLOW', path: '/dashboard/company' };

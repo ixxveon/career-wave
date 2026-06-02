@@ -101,7 +101,7 @@ DRAFT -> SUBMITTED -> PENDING_REVIEW -> APPROVED
 | API 레이어 분리 | View 컴포넌트에서 `fetch`/`axios` 직접 호출 금지, `api/member/`와 `hooks/member/`로 분리 | 백엔드 연동 시 필드/에러 매핑 변경 범위 최소화 |
 | 서버 상태 관리 | 로그인 세션, 프로필 조회, 승인 상태 조회는 TanStack Query 또는 인증 전용 훅으로 관리 | 새로고침/재조회/에러 상태 일관성 |
 | 폼 상태 관리 | 로그인/가입/찾기 입력값은 React local state 또는 폼 훅으로 관리 | 단기 입력 상태이며 전역 공유 불필요 |
-| 토큰 저장 | access token은 메모리 또는 보안 쿠키 전략 우선, refresh token은 HttpOnly Secure SameSite 쿠키 권장 | XSS로 인한 토큰 탈취 방지 |
+| 토큰 저장 | access token은 메모리 또는 보안 쿠키 전략 우선, refresh token은 HttpOnly Secure SameSite 쿠키 권장. 단, 새로고침 후 세션 복원 bootstrap 경로를 함께 설계한다. | XSS로 인한 토큰 탈취를 줄이면서도 실사용 세션 복원력 확보 |
 | 임시 인증 상태 | 인증번호 확인 완료 상태는 서버 발급 `verificationToken` 또는 서버 세션을 기준으로 검증 | 프론트 boolean 조작 방지 |
 | 파일 업로드 | 재직증명서 PDF는 프론트 1차 검증 후 서버 2차 검증, 악성 파일 검사는 백엔드/스토리지 책임 | 확장자 위조 및 악성 업로드 방어 |
 | 오류 메시지 | 보안 민감 오류는 일반화된 문구, 사용자가 수정 가능한 입력 오류는 구체화 | UX와 보안 균형 |
@@ -113,6 +113,7 @@ DRAFT -> SUBMITTED -> PENDING_REVIEW -> APPROVED
 * API 호출 로직은 View 컴포넌트에 직접 작성하지 않는다.
 * 로그인 성공 후에도 `memberStatus`, `roleType`, `companyApprovalStatus`를 확인하기 전 protected route 접근을 허용하지 않는다.
 * 비밀번호, 인증번호, 토큰, 주민성 민감 데이터는 `localStorage`에 저장하지 않는다.
+* access token을 메모리에만 보관하더라도, 앱 초기 진입 시 refresh cookie 또는 동등한 보안 전략을 통해 세션 복원 가능 여부를 1회 확인해야 한다.
 * 아이디 찾기/비밀번호 찾기는 계정 존재 여부를 공격자가 추론할 수 있는 응답 문구를 사용하지 않는다.
 * 인증번호 재전송은 쿨다운과 요청 횟수 제한 UI를 가진다. 실제 rate limit은 백엔드가 강제한다.
 * 기업회원 가입은 재직증명서 PDF 첨부 및 기업정보 검증이 완료되어야 제출 가능하다.

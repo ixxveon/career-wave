@@ -17,6 +17,12 @@ export async function memberApiClient<T>(endpoint: string, options: MemberApiOpt
     requestHeaders.set('Content-Type', 'application/json');
   }
 
+  if (auth && !token) {
+    throw toMemberApiError(401, {
+      message: '인증 정보가 없습니다.',
+    });
+  }
+
   if (auth && token) {
     requestHeaders.set('Authorization', `Bearer ${token}`);
   }
