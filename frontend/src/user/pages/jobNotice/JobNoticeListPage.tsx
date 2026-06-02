@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowUp,
@@ -12,7 +12,13 @@ import {
   Search,
 } from 'lucide-react';
 import JobNoticeDetail from './JobNoticeDetail';
-import type { JobNotice, JobNoticeBookmarkMap } from './JobNoticeTypes';
+import {
+  mapJobNoticeApiToViewModel,
+  mapJobNoticeViewToApiModel,
+  type JobNotice,
+  type JobNoticeBookmarkMap,
+  type JobNoticeListResponse,
+} from './JobNoticeTypes';
 import './styles/JobNoticeListPage.css';
 
 const FILTER_GROUPS = [
@@ -28,6 +34,9 @@ const SORT_OPTIONS = ['추천순', '최신순', '조회순'];
 const DEFAULT_FILTER_VALUE = '전체';
 const POPULAR_SEARCH_TAGS = ['백엔드', '프론트엔드', 'Java', 'React', 'Spring Boot', 'AWS', 'Python'];
 
+const MOCK_PAGE = 1;
+const MOCK_PAGE_SIZE = 18;
+
 const FILTER_FIELD_BY_LABEL = {
   직무: 'jobType',
   경력: 'exp',
@@ -41,6 +50,7 @@ type Filters = Record<FilterLabel, string>;
 type Bookmarks = JobNoticeBookmarkMap;
 type Period = (typeof PERIODS)[number];
 type SortOption = (typeof SORT_OPTIONS)[number];
+type JobNoticeListStatus = 'idle' | 'loading' | 'success' | 'empty' | 'error';
 
 interface BannerStat {
   label: string;
@@ -291,6 +301,32 @@ function sortJobs(jobs: JobNotice[], sort: SortOption) {
   });
 }
 
+function createMockJobNoticeListResponse(items: JobNotice[]): JobNoticeListResponse {
+  const referenceDate = getReferenceDate(JOBS);
+  const todayNewCount = JOBS.filter((job) => matchesPeriod(job, PERIODS[0], referenceDate)).length;
+
+  return {
+    items: items.map(mapJobNoticeViewToApiModel),
+    page: MOCK_PAGE,
+    size: MOCK_PAGE_SIZE,
+    totalItems: items.length,
+    totalPages: Math.ceil(items.length / MOCK_PAGE_SIZE),
+    stats: {
+      totalOpenCount: JOBS.length,
+      todayNewCount,
+      todayNewDelta: todayNewCount,
+      todayNewRate: JOBS.length > 0 ? Math.round((todayNewCount / JOBS.length) * 1000) / 10 : 0,
+    },
+    filterOptions: {
+      jobType: [...FILTER_GROUPS[0].options],
+      experience: [...FILTER_GROUPS[1].options],
+      employmentType: [...FILTER_GROUPS[2].options],
+      location: [...FILTER_GROUPS[3].options],
+      companySize: [...FILTER_GROUPS[4].options],
+    },
+  };
+}
+
 function BannerSearch({ onSearch }: { onSearch: (searchText: string) => void }) {
   const [searchText, setSearchText] = useState('');
 
@@ -539,6 +575,8 @@ export default function JobNoticeListPage() {
   const [filters, setFilters] = useState(createInitialFilters);
   const [bookmarks, setBookmarks] = useState(createInitialBookmarks);
   const [searchQuery, setSearchQuery] = useState('');
+  const [listStatus, setListStatus] = useState<JobNoticeListStatus>('idle');
+  const [listRetryCount, setListRetryCount] = useState(0);
 
   function updateFilter(label: FilterLabel, value: string) {
     setFilters((current) => ({ ...current, [label]: value }));
@@ -561,7 +599,23 @@ export default function JobNoticeListPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  const filteredJobs = sortJobs(filterJobs(JOBS, filters, period, searchQuery), sort);
+  function retryJobNoticeList() {
+    setListRetryCount((count) => count + 1);
+  }
+
+  const filteredJobItems = sortJobs(filterJobs(JOBS, filters, period, searchQuery), sort);
+  const mockListResponse = createMockJobNoticeListResponse(filteredJobItems);
+  const filteredJobs = mockListResponse.items.map(mapJobNoticeApiToViewModel);
+
+  useEffect(() => {
+    setListStatus('loading');
+
+    const timer = window.setTimeout(() => {
+      setListStatus(filteredJobs.length > 0 ? 'success' : 'empty');
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [filteredJobs.length, filters, listRetryCount, period, searchQuery, sort]);
 
   return (
     <div className="jn">
@@ -599,23 +653,41 @@ export default function JobNoticeListPage() {
             </div>
           </div>
 
-          <div className="jn-job-grid">
-            {filteredJobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                bookmarked={bookmarks[job.id]}
-                onBookmark={toggleBookmark}
-                onClick={() => setSelectedJob(job)}
-              />
-            ))}
-          </div>
+          {listStatus === 'success' && (
+            <div className="jn-job-grid">
+              {filteredJobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  bookmarked={bookmarks[job.id]}
+                  onBookmark={toggleBookmark}
+                  onClick={() => setSelectedJob(job)}
+                />
+              ))}
+            </div>
+          )}
 
-          {filteredJobs.length === 0 && (
+          {listStatus === 'loading' && (
+            <div className="jn-empty" role="status" aria-live="polite">
+              <FileText size={18} />
+              <strong>채용 공고를 불러오는 중입니다.</strong>
+              <span>조건에 맞는 공고를 확인하고 있습니다.</span>
+            </div>
+          )}
+
+          {listStatus === 'empty' && (
             <div className="jn-empty">
               <Filter size={18} />
               <strong>조건에 맞는 공고가 없습니다.</strong>
               <span>필터를 줄이거나 검색어를 다시 입력해 주세요.</span>
+            </div>
+          )}
+          {listStatus === 'error' && (
+            <div className="jn-empty" role="alert">
+              <Filter size={18} />
+              <strong>채용 공고 목록을 불러올 수 없습니다.</strong>
+              <span>잠시 후 다시 시도해 주세요.</span>
+              <button type="button" onClick={retryJobNoticeList}>다시 시도</button>
             </div>
           )}
         </main>

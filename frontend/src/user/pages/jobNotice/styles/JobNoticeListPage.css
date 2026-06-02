@@ -616,6 +616,17 @@
   color: #26344a;
 }
 
+.jn-empty button {
+  min-height: 36px;
+  margin-top: 6px;
+  padding: 0 14px;
+  border-radius: 9px;
+  background: #e7f2ff;
+  color: #1f8eea;
+  font-size: 13px;
+  font-weight: 900;
+}
+
 .jn-scroll-top {
   position: fixed;
   right: 28px;

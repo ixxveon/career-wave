@@ -18,12 +18,12 @@
 
 **Implementation Branch**: `feature/user-jobNotice-list-flow`
 
-- [ ] 목록 조회 상태를 `idle`, `loading`, `success`, `empty`, `error`로 구분한다.
-- [ ] 목록 조회 호출은 `frontend/src/user/api` 하위 API 모듈에 둔다.
-- [ ] API 모듈은 프로젝트 공통 클라이언트(`utils/apiClient.js` 또는 채택된 공통 클라이언트)를 사용하고 페이지에서 직접 HTTP 호출을 작성하지 않는다.
-- [ ] API 연동 시 TanStack Query로 목록 조회 상태를 관리하는 방식을 우선 검토한다.
-- [ ] mock 데이터 사용 시에도 API 응답과 같은 `items`, `stats`, `filterOptions`, `page`, `size`, `totalItems`, `totalPages` 형태로 변환한다.
-- [ ] 목록 조회 실패 시 빈 결과 메시지가 아니라 오류 메시지와 재시도 액션을 표시한다.
+- [x] 목록 조회 상태를 `idle`, `loading`, `success`, `empty`, `error`로 구분한다.
+- [x] 목록 조회 호출은 `frontend/src/user/api` 하위 API 모듈에 둔다.
+- [x] API 모듈은 프로젝트 공통 클라이언트(`utils/apiClient.js` 또는 채택된 공통 클라이언트)를 사용하고 페이지에서 직접 HTTP 호출을 작성하지 않는다.
+- [x] API 연동 시 TanStack Query로 목록 조회 상태를 관리하는 방식을 우선 검토한다.
+- [x] mock 데이터 사용 시에도 API 응답과 같은 `items`, `stats`, `filterOptions`, `page`, `size`, `totalItems`, `totalPages` 형태로 변환한다.
+- [x] 목록 조회 실패 시 빈 결과 메시지가 아니라 오류 메시지와 재시도 액션을 표시한다.
 - [ ] 목록 헤더의 공고 수는 실제 필터링된 `items.length` 또는 API의 `totalItems`와 일치시킨다.
 - [ ] 검색, 필터, 기간, 정렬 조건을 API 쿼리 파라미터로 변환하는 유틸을 작성한다.
 - [ ] 검색어 입력은 Enter 키와 검색 버튼 모두에서 동일한 submit 함수를 사용한다.
