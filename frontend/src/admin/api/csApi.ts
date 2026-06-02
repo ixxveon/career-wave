@@ -166,51 +166,51 @@ export interface InquiryListParams {
 export const csApi = {
   // KPI 집계
   getSummary: () =>
-    axiosInstance.get<ApiResponse<CsSummary>>('/api/admin/cs/summary'),
+    axiosInstance.get<ApiResponse<CsSummary>>('/api/v1/admin/cs/summary'),
 
   // 공지사항
   getNotices: (params?: NoticeListParams) =>
-    axiosInstance.get<ApiResponse<NoticeListData>>('/api/admin/notices', { params }),
+    axiosInstance.get<ApiResponse<NoticeListData>>('/api/v1/admin/notices', { params }),
 
   getNoticeDetail: (noticeId: number) =>
-    axiosInstance.get<ApiResponse<NoticeDetail>>(`/api/admin/notices/${noticeId}`),
+    axiosInstance.get<ApiResponse<NoticeDetail>>(`/api/v1/admin/notices/${noticeId}`),
 
   createNotice: (body: { category: NoticeCategory; title: string; content: string; isVisible: boolean }) =>
-    axiosInstance.post<ApiResponse<{ noticeId: number }>>('/api/admin/notices', body),
+    axiosInstance.post<ApiResponse<{ noticeId: number }>>('/api/v1/admin/notices', body),
 
   updateNotice: (noticeId: number, body: { category: NoticeCategory; title: string; content: string; isVisible: boolean }) =>
-    axiosInstance.put<ApiResponse<{ noticeId: number; updatedAt: string }>>(`/api/admin/notices/${noticeId}`, body),
+    axiosInstance.put<ApiResponse<{ noticeId: number; updatedAt: string }>>(`/api/v1/admin/notices/${noticeId}`, body),
 
   deleteNotice: (noticeId: number) =>
-    axiosInstance.delete<ApiResponse<null>>(`/api/admin/notices/${noticeId}`),
+    axiosInstance.delete<ApiResponse<null>>(`/api/v1/admin/notices/${noticeId}`),
 
   // FAQ
   getFaqs: (params?: FaqListParams) =>
-    axiosInstance.get<ApiResponse<FaqListData>>('/api/admin/faqs', { params }),
+    axiosInstance.get<ApiResponse<FaqListData>>('/api/v1/admin/faqs', { params }),
 
   createFaq: (body: { category: FaqCategory; question: string; answer: string }) =>
-    axiosInstance.post<ApiResponse<{ faqId: number }>>('/api/admin/faqs', body),
+    axiosInstance.post<ApiResponse<{ faqId: number }>>('/api/v1/admin/faqs', body),
 
   updateFaq: (faqId: number, body: { category: FaqCategory; question: string; answer: string }) =>
-    axiosInstance.put<ApiResponse<{ faqId: number; updatedAt: string }>>(`/api/admin/faqs/${faqId}`, body),
+    axiosInstance.put<ApiResponse<{ faqId: number; updatedAt: string }>>(`/api/v1/admin/faqs/${faqId}`, body),
 
   deleteFaq: (faqId: number) =>
-    axiosInstance.delete<ApiResponse<null>>(`/api/admin/faqs/${faqId}`),
+    axiosInstance.delete<ApiResponse<null>>(`/api/v1/admin/faqs/${faqId}`),
 
   // 1:1 문의
   getInquiries: (params?: InquiryListParams) =>
-    axiosInstance.get<ApiResponse<InquiryListData>>('/api/admin/inquiries', { params }),
+    axiosInstance.get<ApiResponse<InquiryListData>>('/api/v1/admin/inquiries', { params }),
 
   getInquiryDetail: (inquiryId: number) =>
-    axiosInstance.get<ApiResponse<InquiryDetail>>(`/api/admin/inquiries/${inquiryId}`),
+    axiosInstance.get<ApiResponse<InquiryDetail>>(`/api/v1/admin/inquiries/${inquiryId}`),
 
   saveReply: (inquiryId: number, body: { reply: string }) =>
     axiosInstance.put<ApiResponse<{ inquiryId: number; inquiryStatus: InquiryStatus; repliedAt: string }>>(
-      `/api/admin/inquiries/${inquiryId}/reply`, body
+      `/api/v1/admin/inquiries/${inquiryId}/reply`, body
     ),
 
   completeInquiry: (inquiryId: number) =>
     axiosInstance.put<ApiResponse<{ inquiryId: number; inquiryStatus: InquiryStatus; completedAt: string }>>(
-      `/api/admin/inquiries/${inquiryId}/complete`
+      `/api/v1/admin/inquiries/${inquiryId}/complete`
     ),
 };
