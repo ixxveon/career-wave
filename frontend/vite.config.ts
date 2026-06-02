@@ -14,6 +14,11 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      // /v1/* — documentApi(/v1/documents/*)가 /api 미사용 경로로 호출
+      '/v1': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
       '/ws': {
         target: 'http://localhost:8080',
         changeOrigin: true,
