@@ -2,7 +2,7 @@
 
 ## Summary
 
-관리자 스크래핑 관리 화면을 API 기반 운영 모니터링 화면으로 전환한다. MVP는 파이프라인 목록 조회, 검색/상태 필터, 페이지네이션, 단일 액션 요청, 운영 로그 조회를 포함한다.
+관리자 스크래핑 관리 화면을 API 기반 운영 모니터링 화면으로 전환한다. MVP는 source 목록 조회, 검색/최근 실행 결과 필터, 페이지네이션, 단일 액션 요청, 운영 로그 조회를 포함한다.
 
 ## Technical Context
 
@@ -12,7 +12,8 @@
 - Server State: TanStack Query 우선
 - Auth: 관리자 JWT, `ROLE_ADMIN`
 - Response: `ApiResponse<T>`
-- Related Runtime: FastAPI scraping pipeline 또는 backend batch orchestration
+- Related Runtime: FastAPI scraping runner 또는 backend batch orchestration
+- ERD Alignment: `scraping_logs.scraping_status` 기준 `SUCCESS`, `FAILED`만 API 상태값으로 사용
 
 ## Project Structure
 
@@ -55,20 +56,20 @@ specs/frontend/admin/scraping/
 ### Phase 1 - API 계약 및 타입 정리
 
 - `frontend/src/admin/api/scrapingApi.ts`를 생성한다.
-- `ScrapingPipelineStatus`, `ScrapingLogLevel`, `ScrapingActionType` 타입을 정의한다.
+- `ScrapingStatus`, `ScrapingActionType` 타입을 정의한다.
 - 목록, 요약, 상세, 액션, 로그 응답 타입을 정의한다.
 - `ApiResponse<T>` 응답 구조에 맞춰 API 함수 계약을 정리한다.
 
-### Phase 2 - 파이프라인 목록, 검색, 필터
+### Phase 2 - source 목록, 검색, 필터
 
-- mock 기반 파이프라인 목록을 API 데이터 기반으로 전환한다.
+- mock 기반 source 목록을 API 데이터 기반으로 전환한다.
 - source명과 최근 오류 검색 조건을 API 조회 조건으로 연결한다.
-- 상태 필터와 페이지네이션을 API 조회 조건으로 연결한다.
+- 실행 결과 필터와 페이지네이션을 API 조회 조건으로 연결한다.
 - 로딩, 빈 데이터, 실패 상태를 화면에 반영한다.
 
-### Phase 3 - 파이프라인 제어 액션
+### Phase 3 - source 실행 액션
 
-- 단일 파이프라인 실행, 재시도, 테스트, 중지 액션을 API로 연결한다.
+- 단일 source 실행, 재시도, 테스트 액션을 API로 연결한다.
 - 액션 요청 중 중복 클릭을 방지한다.
 - 액션 성공 후 목록 또는 상세 데이터를 갱신한다.
 - 액션 실패 시 기존 상태를 유지하고 오류 안내를 표시한다.
@@ -76,9 +77,9 @@ specs/frontend/admin/scraping/
 ### Phase 4 - 운영 로그와 장애 원인 확인
 
 - 실시간 로그 영역을 API 데이터 기반으로 전환한다.
-- 로그 등급, 파이프라인, 페이지 조건을 API 조회 조건으로 연결한다.
+- 로그 상태, source, 페이지 조건을 API 조회 조건으로 연결한다.
 - 로그 상세에서 민감 정보가 노출되지 않는지 확인한다.
-- 실패 파이프라인의 최근 오류와 로그가 연결되어 보이도록 구성한다.
+- 실패 source의 최근 오류와 로그가 연결되어 보이도록 구성한다.
 
 ### Phase 5 - 검증 및 마감
 

@@ -12,10 +12,14 @@
 ## 공통 타입
 
 ```ts
-type ScrapingPipelineStatus = 'ACTIVE' | 'WARNING' | 'FAILED' | 'RECOVERING' | 'PAUSED';
-type ScrapingLogLevel = 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
-type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST' | 'PAUSE' | 'RESUME';
+type ScrapingStatus = 'SUCCESS' | 'FAILED';
+type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST';
 ```
+
+- `ScrapingStatus`는 ERD `scraping_logs.scraping_status` CHECK 제약(`SUCCESS`, `FAILED`)과 동일한 값을 사용한다.
+- 현재 ERD에는 별도 파이프라인 테이블과 `pipelineId`, `ACTIVE`, `WARNING`, `RECOVERING`, `PAUSED` 상태가 없으므로 API 계약에서 가정하지 않는다.
+- 화면의 "주의", "복구 중", "중지" 같은 표현이 필요하면 백엔드 DDL 확정 후 별도 상태 필드로 추가한다.
+- `cycleExpression`은 cron이 아닌 커스텀 interval 문자열이다. 허용 포맷은 `*/{number}m`, `*/{number}h`이며 `{number}`는 1 이상의 정수다. 예: `*/10m`, `*/2h`.
 
 ## GET /pipelines
 
@@ -26,7 +30,7 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST' | 'PAUSE' | 'RESUME';
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `keyword` | string | false | source 또는 최근 오류 검색어 |
-| `status` | ScrapingPipelineStatus | false | 상태 필터 |
+| `status` | ScrapingStatus | false | 최근 실행 결과 상태 필터 |
 | `page` | number | false | 1부터 시작 |
 | `size` | number | false | 기본 10 |
 
@@ -36,9 +40,8 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST' | 'PAUSE' | 'RESUME';
 {
   "content": [
     {
-      "pipelineId": "PL-001",
       "sourceName": "Wanted Feed",
-      "status": "ACTIVE",
+      "status": "SUCCESS",
       "successRate": 97.4,
       "averageDurationMs": 1380,
       "cycleExpression": "*/10m",
@@ -66,12 +69,9 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST' | 'PAUSE' | 'RESUME';
 
 ```json
 {
-  "totalPipelines": 6,
-  "activeCount": 2,
-  "warningCount": 2,
+  "totalSources": 6,
+  "successCount": 5,
   "failedCount": 1,
-  "recoveringCount": 1,
-  "pausedCount": 0,
   "totalCollectedCount": 4403,
   "averageSuccessRate": 77.4,
   "averageDurationMs": 2301,
@@ -79,21 +79,20 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST' | 'PAUSE' | 'RESUME';
 }
 ```
 
-## GET /pipelines/{pipelineId}
+## GET /pipelines/{sourceName}
 
-단일 파이프라인 상세 상태를 조회한다.
+단일 source의 상세 상태를 조회한다.
 
 ### Path
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `pipelineId` | string | true | 파이프라인 ID |
+| `sourceName` | string | true | ERD와 API에서 공통으로 식별 가능한 수집 source명 |
 
 ### Response Data
 
 ```json
 {
-  "pipelineId": "PL-002",
   "sourceName": "Saramin DOM",
   "status": "FAILED",
   "successRate": 12.4,
@@ -108,9 +107,9 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST' | 'PAUSE' | 'RESUME';
 }
 ```
 
-## POST /pipelines/{pipelineId}/actions
+## POST /pipelines/{sourceName}/actions
 
-단일 파이프라인 제어 액션을 요청한다.
+단일 source 기준 실행 액션을 요청한다.
 
 ### Request
 
@@ -125,11 +124,10 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST' | 'PAUSE' | 'RESUME';
 
 ```json
 {
-  "pipelineId": "PL-002",
+  "sourceName": "Saramin DOM",
   "requestedAction": "RETRY",
   "accepted": true,
   "runId": "RUN-20260601-002",
-  "nextStatus": "RECOVERING",
   "requestedAt": "2026-06-01T09:03:00+09:00"
 }
 ```
@@ -139,20 +137,18 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST' | 'PAUSE' | 'RESUME';
 - `RUN`: 즉시 수집 실행을 요청한다.
 - `RETRY`: 실패한 최근 실행을 기준으로 재시도를 요청한다.
 - `TEST`: 실제 저장 없이 selector/schema 검증 실행을 요청한다.
-- `PAUSE`: 주기 실행을 중지한다.
-- `RESUME`: 중지된 파이프라인을 다시 활성화한다.
 
-## POST /pipelines/actions
+## POST /pipelines/batch-actions
 
-선택된 여러 파이프라인에 동일 액션을 요청한다.
+선택된 여러 source에 동일 액션을 요청한다.
 
 ### Request
 
 ```json
 {
-  "pipelineIds": ["PL-001", "PL-002"],
-  "actionType": "PAUSE",
-  "reason": "외부 사이트 점검 대응"
+  "sourceNames": ["Wanted Feed", "Saramin DOM"],
+  "actionType": "TEST",
+  "reason": "외부 사이트 DOM 변경 여부 확인"
 }
 ```
 
@@ -165,9 +161,9 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST' | 'PAUSE' | 'RESUME';
   "failedCount": 0,
   "results": [
     {
-      "pipelineId": "PL-001",
+      "sourceName": "Wanted Feed",
       "accepted": true,
-      "message": "중지 요청이 접수되었습니다."
+      "message": "테스트 요청이 접수되었습니다."
     }
   ]
 }
@@ -181,8 +177,8 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST' | 'PAUSE' | 'RESUME';
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `pipelineId` | string | false | 특정 파이프라인 필터 |
-| `level` | ScrapingLogLevel | false | 로그 등급 필터 |
+| `sourceName` | string | false | 특정 source 필터 |
+| `status` | ScrapingStatus | false | ERD `scraping_status` 기준 필터 |
 | `page` | number | false | 1부터 시작 |
 | `size` | number | false | 기본 20 |
 
@@ -194,9 +190,8 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST' | 'PAUSE' | 'RESUME';
     {
       "logId": "LOG-001",
       "occurredAt": "2026-06-01T09:02:13+09:00",
-      "pipelineId": "PL-002",
       "sourceName": "Saramin DOM",
-      "level": "ERROR",
+      "status": "FAILED",
       "message": "셀렉터 매칭 실패",
       "detail": "DOM 구조 변경으로 상세 페이지 수집이 중단되었습니다.",
       "runId": "RUN-20260601-001"
