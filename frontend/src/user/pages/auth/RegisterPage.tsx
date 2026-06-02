@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
-import { Apple, BadgeCheck, Building2, CheckCircle2, FileText, ShieldCheck, UserRound } from 'lucide-react';
+import { useRef, useState, type ChangeEvent } from 'react';
+import { Apple, BadgeCheck, Building2, FileText, ShieldCheck, UserRound } from 'lucide-react';
+import { AuthButtonGroup, Field, SelectInput, StatusPill, TextInput } from '../../components/member/RegisterFormPrimitives';
 import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../types/member';
 import {
   useLoginIdCheck,
@@ -8,7 +9,9 @@ import {
   useUploadEmploymentCertificate,
   useSendVerificationCode,
   useConfirmVerificationCode,
+  useVerificationNow,
 } from '../../hooks/member';
+import { formatRemaining, getRemainingSeconds } from '../../utils/member/recoveryView';
 import {
   isValidEmail,
   isValidLoginId,
@@ -298,32 +301,6 @@ const companyTermDetails = {
   ],
 };
 
-type FieldProps = {
-  label: string;
-  children: ReactNode;
-  required?: boolean;
-  wide?: boolean;
-};
-
-type TextInputProps = {
-  type?: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-};
-
-type SelectInputProps = {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  options: string[];
-};
-
-type StatusPillProps = {
-  active: boolean;
-  children: ReactNode;
-};
-
 type PersonalTermsValues = typeof initialPersonalTerms;
 type PersonalTermKey = keyof PersonalTermsValues;
 type CompanyTermsValues = typeof initialCompanyTerms;
@@ -344,94 +321,6 @@ type CompanyTermItem = {
   label: string;
   details: TermSection[];
 };
-
-type AuthButtonGroupProps = {
-  input: ReactNode;
-  buttonLabel: string;
-  onClick: () => void;
-  disabled?: boolean;
-  secondButtonLabel?: string;
-  onSecondClick?: () => void;
-  secondDisabled?: boolean;
-};
-
-function Field({ label, children, required = false, wide = false }: FieldProps) {
-  return (
-    <label className={wide ? 'cw-register-field cw-register-field--wide' : 'cw-register-field'}>
-      <span className="cw-register-label">
-        {label}
-        {required && <em>*</em>}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-function TextInput({ type = 'text', value, onChange, placeholder }: TextInputProps) {
-  return <input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />;
-}
-
-function SelectInput({ value, onChange, placeholder, options }: SelectInputProps) {
-  return (
-    <select value={value} onChange={(event) => onChange(event.target.value)}>
-      <option value="">{placeholder}</option>
-      {options.map((option) => (
-        <option value={option} key={option}>
-          {option}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-function StatusPill({ active, children }: StatusPillProps) {
-  if (!active) return null;
-
-  return (
-    <span className="cw-register-status">
-      <CheckCircle2 size={15} />
-      {children}
-    </span>
-  );
-}
-
-function AuthButtonGroup({ input, buttonLabel, onClick, disabled = false, secondButtonLabel, onSecondClick, secondDisabled = false }: AuthButtonGroupProps) {
-  return (
-    <div className={secondButtonLabel ? 'cw-register-inline cw-register-inline--triple' : 'cw-register-inline'}>
-      {input}
-      <button className="cw-register-sub-button" disabled={disabled} type="button" onClick={onClick}>
-        {buttonLabel}
-      </button>
-      {secondButtonLabel && (
-        <button className="cw-register-sub-button cw-register-sub-button--ghost" disabled={secondDisabled} type="button" onClick={onSecondClick}>
-          {secondButtonLabel}
-        </button>
-      )}
-    </div>
-  );
-}
-
-function useVerificationNow() {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const timerId = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timerId);
-  }, []);
-
-  return now;
-}
-
-function getRemainingSeconds(target: string, now: number): number {
-  if (!target) return 0;
-  return Math.max(0, Math.ceil((new Date(target).getTime() - now) / 1000));
-}
-
-function formatRemaining(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const nextSeconds = seconds % 60;
-  return `${minutes}:${String(nextSeconds).padStart(2, '0')}`;
-}
 
 type PersonalTermsProps = {
   values: PersonalTermsValues;

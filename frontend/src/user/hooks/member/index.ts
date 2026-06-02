@@ -8,3 +8,4 @@ export { useFindId, useIssuePasswordToken, useResetPassword } from './useAccount
 export { useFindIdRecovery } from './useFindIdRecovery';
 export { useFindPasswordRecovery } from './useFindPasswordRecovery';
 export { useLoginForm } from './useLoginForm';
+export { useVerificationNow } from './useVerificationNow';
