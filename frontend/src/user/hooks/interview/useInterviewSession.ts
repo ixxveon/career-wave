@@ -274,6 +274,9 @@ export function useInterviewSession({
   const handleFastApiStatusChange = useCallback((status: FastApiWSStatus) => {
     setFastApiWsStatus(status);
     if (status === 'RECONNECTING') dispatch({ type: 'RECONNECTING' });
+    if (status === 'CONNECTED' && stateRef.current.sessionState === 'RECONNECTING') {
+      dispatch({ type: 'RUNNING' });
+    }
     if (status === 'ERROR') {
       if (import.meta.env.DEV) return;
       dispatch({ type: 'ERROR' });
