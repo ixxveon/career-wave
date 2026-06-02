@@ -7,9 +7,16 @@ import {
     ShieldCheck,
     Github,
 } from "lucide-react";
+import {
+    mockUserProfile,
+    mockGithubProfile,
+} from "@/user/mocks/dashboardMock";
 import "./MyPage.css";
 
 function UserMyPage() {
+    const userProfile = mockUserProfile;
+    const githubProfile = mockGithubProfile;
+
     return (
         <div className="cw-mypage-layout">
             <aside className="cw-mypage-sidebar">
@@ -39,7 +46,7 @@ function UserMyPage() {
                     </div>
 
                     <div className="cw-profile-main">
-                        <h3>김지원님</h3>
+                        <h3>{userProfile.name}님</h3>
                         <p>Career Wave에서 계정 정보와 연동 상태를 관리 중입니다.</p>
                     </div>
 
@@ -66,27 +73,27 @@ function UserMyPage() {
                         <div className="cw-info-list">
                             <div className="cw-info-row">
                                 <span>이름</span>
-                                <strong>김지원</strong>
+                                <strong>{userProfile.name}</strong>
                             </div>
                             <div className="cw-info-row">
                                 <span>이메일</span>
                                 <strong>
                                     <Mail size={15} />
-                                    jiwon.kim@example.com
+                                    {userProfile.email}
                                 </strong>
                             </div>
                             <div className="cw-info-row">
                                 <span>휴대폰 번호</span>
                                 <strong>
                                     <Phone size={15} />
-                                    010-1234-5678
+                                    {userProfile.phone}
                                 </strong>
                             </div>
                             <div className="cw-info-row">
                                 <span>가입일</span>
                                 <strong>
                                     <CalendarDays size={15} />
-                                    2026.05.20
+                                    {userProfile.createdAt}
                                 </strong>
                             </div>
                         </div>
@@ -101,19 +108,27 @@ function UserMyPage() {
                         <div className="cw-info-list">
                             <div className="cw-info-row">
                                 <span>회원 유형</span>
-                                <strong>일반 회원</strong>
+                                <strong>{userProfile.roleType}</strong>
                             </div>
                             <div className="cw-info-row">
-                                <span>로그인 방식</span>
-                                <strong>이메일 로그인</strong>
+                                <span>로그인 ID</span>
+                                <strong>{userProfile.loginId}</strong>
+                            </div>
+                            <div className="cw-info-row">
+                                <span>구독 상태</span>
+                                <strong>{userProfile.subscriptionStatus}</strong>
                             </div>
                             <div className="cw-info-row">
                                 <span>알림 수신</span>
-                                <strong>수신 동의</strong>
+                                <strong>
+                                    {userProfile.notificationEnabled ? "수신 동의" : "수신 거부"}
+                                </strong>
                             </div>
                             <div className="cw-info-row">
                                 <span>계정 상태</span>
-                                <strong className="cw-connected">정상</strong>
+                                <strong className="cw-connected">
+                                    {userProfile.memberStatus}
+                                </strong>
                             </div>
                         </div>
                     </section>
@@ -138,22 +153,30 @@ function UserMyPage() {
                     <div className="cw-github-simple-grid">
                         <div>
                             <span>GitHub ID</span>
-                            <strong>jiwon-dev</strong>
+                            <strong>
+                                {githubProfile.githubId ?? "연동된 GitHub ID가 없습니다."}
+                            </strong>
                         </div>
 
                         <div>
                             <span>GitHub URL</span>
-                            <strong>https://github.com/jiwon-dev</strong>
+                            <strong>
+                                {githubProfile.githubUrl ?? "연동된 GitHub URL이 없습니다."}
+                            </strong>
                         </div>
 
                         <div>
                             <span>연동 상태</span>
-                            <strong className="cw-connected">연동 완료</strong>
+                            <strong className={githubProfile.linked ? "cw-connected" : ""}>
+                                {githubProfile.linked ? "연동 완료" : "미연동"}
+                            </strong>
                         </div>
+
                         <button
                             type="button"
                             className="cw-github-profile-button"
                             onClick={() => alert("GitHub 연동 기능은 준비 중입니다.")}
+                            disabled={!githubProfile.linked}
                         >
                             GitHub 프로필 보기
                         </button>
