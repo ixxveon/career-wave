@@ -16,11 +16,8 @@ const TYPE_TABS: { label: string; value: FileType | 'ALL'; Icon: typeof FileText
 export default function ResumeHistoryPage() {
   const [page, setPage] = useState(0);
   const [activeType, setActiveType] = useState<FileType | 'ALL'>('ALL');
-  const { data, isLoading, isError } = useResumeHistory(page, PAGE_SIZE);
-
-  const filtered = data?.content.filter(
-    item => activeType === 'ALL' || item.fileType === activeType,
-  ) ?? [];
+  const fileTypeParam = activeType === 'ALL' ? undefined : activeType;
+  const { data, isLoading, isError, refetch } = useResumeHistory(page, PAGE_SIZE, fileTypeParam);
 
   function handleTabChange(type: FileType | 'ALL') {
     setActiveType(type);
@@ -72,7 +69,7 @@ export default function ResumeHistoryPage() {
           <div className="rh-state rh-state--error" role="alert">
             <FileSearch size={36} aria-hidden="true" />
             <p>이력을 불러오는 중 오류가 발생했습니다.</p>
-            <button type="button" className="rh-retry-btn" onClick={() => setPage(p => p)}>
+            <button type="button" className="rh-retry-btn" onClick={() => refetch()}>
               다시 시도
             </button>
           </div>
@@ -81,7 +78,7 @@ export default function ResumeHistoryPage() {
         {/* 목록 */}
         {!isLoading && !isError && data && (
           <>
-            {filtered.length === 0 ? (
+            {data.content.length === 0 ? (
               <div className="rh-state rh-state--empty">
                 <FileSearch size={40} aria-hidden="true" />
                 <p className="rh-state__title">분석 이력이 없습니다</p>
@@ -94,7 +91,7 @@ export default function ResumeHistoryPage() {
               <>
                 <p className="rh-count">총 {data.totalElements}건</p>
                 <ul className="rh-list" aria-label="분석 이력 목록">
-                  {filtered.map(item => (
+                  {data.content.map(item => (
                     <li key={item.documentId}>
                       <HistoryItem item={item} />
                     </li>

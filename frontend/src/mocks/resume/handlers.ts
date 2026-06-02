@@ -64,11 +64,17 @@ export const resumeHandlers = [
   // GET /api/v1/user/resume/history — 반드시 /:documentId/feedback 보다 앞에 등록
   http.get(`${BASE}/history`, async ({ request }) => {
     await delay(400);
-    const url     = new URL(request.url);
-    const page    = Number(url.searchParams.get('page')  ?? 0);
-    const size    = Number(url.searchParams.get('size')  ?? 10);
+    const url      = new URL(request.url);
+    const page     = Number(url.searchParams.get('page')     ?? 0);
+    const size     = Number(url.searchParams.get('size')     ?? 10);
+    const fileType = url.searchParams.get('fileType') ?? null;
+
+    const filtered = fileType
+      ? MOCK_HISTORY_ALL.filter(item => item.fileType === fileType)
+      : MOCK_HISTORY_ALL;
+
     const start   = page * size;
-    const content = MOCK_HISTORY_ALL.slice(start, start + size);
+    const content = filtered.slice(start, start + size);
 
     return HttpResponse.json({
       success: true,
@@ -78,8 +84,8 @@ export const resumeHandlers = [
         content,
         page,
         size,
-        totalElements: MOCK_HISTORY_ALL.length,
-        totalPages: Math.ceil(MOCK_HISTORY_ALL.length / size),
+        totalElements: filtered.length,
+        totalPages: Math.ceil(filtered.length / size),
       },
     });
   }),

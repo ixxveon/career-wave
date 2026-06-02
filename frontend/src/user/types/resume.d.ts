@@ -148,6 +148,7 @@ export interface ResumeHistoryItem {
 export interface ResumeHistoryParams {
   page?: number;
   size?: number;
+  fileType?: FileType;
 }
 
 /** GET /api/v1/user/resume/history — Response data */
