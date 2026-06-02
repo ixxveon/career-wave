@@ -43,10 +43,8 @@ export default function CoverLetterAnalysisPage() {
         subtitle={`${company} · ${job}`}
         onReset={reset}
         interviewDocumentId={analysisResult.documentId}
-        onRevise={(feedbackDetails) => {
-          reset();
-          // TODO: useCoverLetterForm에 setItemsFromFeedback 추가 시 개선안 자동 적용 연동
-        }}
+        // TODO: useCoverLetterForm에 setItemsFromFeedback 구현 후 onRevise 연동
+        // 구현 전까지 onRevise 미전달 → DocumentResultView에서 "수정 후 재분석" 버튼 미노출
       />
     );
   }
