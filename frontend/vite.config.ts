@@ -14,16 +14,6 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
-      // /v1/* — documentApi, interviewApi 등 /api 미사용 레거시 경로 대응
-      '/v1': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-      // /jobs/* — 채용공고 API 경로 대응
-      '/jobs': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
       '/ws': {
         target: 'http://localhost:8080',
         changeOrigin: true,
