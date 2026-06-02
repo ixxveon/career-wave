@@ -60,6 +60,7 @@
 - 휴대폰 인증번호 확인
 - 검색 자동완성
 - 서버 기반 field validation
+- 인증 방식 전환이 가능한 verification 요청
 
 권장 패턴:
 
@@ -69,6 +70,12 @@ const result = await mutation.mutateAsync(requestedValue);
 
 if (requestedValue !== currentValueRef.current.trim()) return;
 ```
+
+추가 규칙:
+
+- 요청 도중 탭/인증 방식 전환이 가능한 경우 `requestMethod`도 함께 snapshot으로 보관한다.
+- 응답 반영 전 `requestMethod === currentMethodRef.current`인지 확인한다.
+- 필요하면 `resetMethod` 시점에 in-flight request order 자체를 무효화한다.
 
 ---
 
