@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, Mail, Phone, UserRound, Building2 } from 'lucide-react';
+import { AlertCircle, Mail, Phone, UserRound, Building2 } from 'lucide-react';
 import { useConfirmVerificationCode, useFindId, useSendVerificationCode } from '../../hooks/member';
 import { VERIFICATION_PURPOSE, type ConfirmVerificationResponse, type SendVerificationResponse } from '../../types/member';
 import {
@@ -20,10 +20,10 @@ import {
   validateVerificationConfirm,
 } from '../../utils/member/recoverySchema';
 import RecoverySupportPanel from './RecoverySupportPanel';
+import { RecoveryCodeField, RecoveryContactField } from './RecoveryVerificationFields';
 import {
   EMPTY_VERIFICATION,
   type VerificationState,
-  formatRemaining,
   getRecoveryErrorMessage,
   getRemainingSeconds,
   useVerificationNow,
@@ -404,122 +404,55 @@ function FindIdPage() {
 
           <form className="cw-auth-form" noValidate>
             {!isCompany && userMethod === RECOVERY_METHOD.EMAIL && (
-              <label>
-                이메일
-                <div className="cw-auth-inline">
-                  <span>
-                    <Mail size={18} />
-                    <input
-                      aria-invalid={Boolean(fieldErrors.email)}
-                      type="email"
-                      placeholder="이메일 주소 입력"
-                      value={userForm.email}
-                      onChange={(event) => updateUser('email', event.target.value)}
-                    />
-                  </span>
-                  <button
-                    className="cw-auth-sub-button cw-auth-sub-button--send"
-                    disabled={sendVerification.isPending || userResendIn > 0}
-                    type="button"
-                    onClick={handleSendUserCode}
-                  >
-                    {sendVerification.isPending ? '전송 중' : userResendIn > 0 ? `${formatRemaining(userResendIn)}` : '인증번호 전송'}
-                  </button>
-                </div>
-                {fieldErrors.email && <p className="cw-register-error">{fieldErrors.email}</p>}
-                {activeUserVerification.verificationId && !fieldErrors.email && (
-                  <span className="cw-auth-feedback">
-                    <CheckCircle2 size={15} />
-                    이메일 인증번호가 발송되었습니다.
-                    {activeUserVerification.remainingAttempts > 0 && ` 남은 시도 ${activeUserVerification.remainingAttempts}회`}
-                  </span>
-                )}
-              </label>
+              <RecoveryContactField
+                label="이메일"
+                icon={<Mail size={18} />}
+                value={userForm.email}
+                placeholder="이메일 주소 입력"
+                error={fieldErrors.email}
+                verification={activeUserVerification}
+                feedbackText="이메일 인증번호가 발송되었습니다."
+                sendPending={sendVerification.isPending}
+                resendIn={userResendIn}
+                buttonClassName="cw-auth-sub-button cw-auth-sub-button--send"
+                inputType="email"
+                onChange={(value) => updateUser('email', value)}
+                onSend={handleSendUserCode}
+              />
             )}
 
             {!isCompany && userMethod === RECOVERY_METHOD.PHONE && (
-              <label>
-                휴대폰 번호
-                <div className="cw-auth-inline">
-                  <span>
-                    <Phone size={18} />
-                    <input
-                      aria-invalid={Boolean(fieldErrors.phone)}
-                      type="tel"
-                      inputMode="numeric"
-                      placeholder="휴대폰번호('-' 없이 숫자만 입력)"
-                      value={userForm.phone}
-                      onChange={(event) => updateUser('phone', event.target.value)}
-                    />
-                  </span>
-                  <button
-                    className="cw-auth-sub-button"
-                    disabled={sendVerification.isPending || userResendIn > 0}
-                    type="button"
-                    onClick={handleSendUserCode}
-                  >
-                    {sendVerification.isPending ? '전송 중' : userResendIn > 0 ? `${formatRemaining(userResendIn)}` : '인증번호 전송'}
-                  </button>
-                </div>
-                {fieldErrors.phone && <p className="cw-register-error">{fieldErrors.phone}</p>}
-                {activeUserVerification.verificationId && !fieldErrors.phone && (
-                  <span className="cw-auth-feedback">
-                    <CheckCircle2 size={15} />
-                    휴대폰 인증번호가 발송되었습니다.
-                    {activeUserVerification.remainingAttempts > 0 && ` 남은 시도 ${activeUserVerification.remainingAttempts}회`}
-                  </span>
-                )}
-              </label>
+              <RecoveryContactField
+                label="휴대폰 번호"
+                icon={<Phone size={18} />}
+                value={userForm.phone}
+                placeholder="휴대폰번호('-' 없이 숫자만 입력)"
+                error={fieldErrors.phone}
+                verification={activeUserVerification}
+                feedbackText="휴대폰 인증번호가 발송되었습니다."
+                sendPending={sendVerification.isPending}
+                resendIn={userResendIn}
+                inputType="tel"
+                inputMode="numeric"
+                onChange={(value) => updateUser('phone', value)}
+                onSend={handleSendUserCode}
+              />
             )}
 
             {!isCompany && (
-              <>
-                <label>
-                  인증번호 입력
-                  <div className="cw-auth-inline cw-auth-inline--triple">
-                    <span>
-                      <CheckCircle2 size={18} />
-                      <input
-                        aria-invalid={Boolean(fieldErrors.code)}
-                        inputMode="numeric"
-                        type="text"
-                        placeholder="인증번호 6자리 입력"
-                        value={userForm.code}
-                        onChange={(event) => updateUser('code', event.target.value)}
-                      />
-                    </span>
-                    <button
-                      className="cw-auth-button-secondary cw-auth-button-secondary--confirm"
-                      disabled={confirmVerification.isPending}
-                      type="button"
-                      onClick={handleConfirmUserCode}
-                    >
-                      {confirmVerification.isPending ? '확인 중' : '인증 확인'}
-                    </button>
-                    <button
-                      className="cw-auth-button-secondary cw-auth-button-secondary--resend"
-                      disabled={sendVerification.isPending || userResendIn > 0}
-                      type="button"
-                      onClick={handleSendUserCode}
-                    >
-                      재전송
-                    </button>
-                  </div>
-                  {fieldErrors.code && <p className="cw-register-error">{fieldErrors.code}</p>}
-                  {activeUserVerification.verificationToken && !fieldErrors.code && (
-                    <span className="cw-auth-feedback">
-                      <CheckCircle2 size={15} />
-                      인증이 완료되었습니다.
-                    </span>
-                  )}
-                  {!activeUserVerification.verificationToken && activeUserVerification.expiresAt && userExpiresIn > 0 && (
-                    <span className="cw-auth-feedback">
-                      <CheckCircle2 size={15} />
-                      인증번호 유효시간 {formatRemaining(userExpiresIn)}
-                    </span>
-                  )}
-                </label>
-              </>
+              <RecoveryCodeField
+                label="인증번호 입력"
+                code={userForm.code}
+                error={fieldErrors.code}
+                verification={activeUserVerification}
+                expiresIn={userExpiresIn}
+                resendIn={userResendIn}
+                confirmPending={confirmVerification.isPending}
+                sendPending={sendVerification.isPending}
+                onCodeChange={(value) => updateUser('code', value)}
+                onConfirm={handleConfirmUserCode}
+                onResend={handleSendUserCode}
+              />
             )}
 
             {isCompany && (
@@ -553,82 +486,34 @@ function FindIdPage() {
                   </span>
                   {fieldErrors.businessNumber && <p className="cw-register-error">{fieldErrors.businessNumber}</p>}
                 </label>
-                <label>
-                  담당자 이메일
-                  <div className="cw-auth-inline">
-                    <span>
-                      <Mail size={18} />
-                      <input
-                        aria-invalid={Boolean(fieldErrors.email)}
-                        type="email"
-                        placeholder="담당자 이메일 주소 입력"
-                        value={companyForm.email}
-                        onChange={(event) => updateCompany('email', event.target.value)}
-                      />
-                    </span>
-                    <button
-                      className="cw-auth-sub-button cw-auth-sub-button--send"
-                      disabled={sendVerification.isPending || companyResendIn > 0}
-                      type="button"
-                      onClick={handleSendCompanyCode}
-                    >
-                      {sendVerification.isPending ? '전송 중' : companyResendIn > 0 ? `${formatRemaining(companyResendIn)}` : '인증번호 전송'}
-                    </button>
-                  </div>
-                  {fieldErrors.email && <p className="cw-register-error">{fieldErrors.email}</p>}
-                  {companyVerification.verificationId && !fieldErrors.email && (
-                    <span className="cw-auth-feedback">
-                      <CheckCircle2 size={15} />
-                      이메일 인증번호가 발송되었습니다.
-                      {companyVerification.remainingAttempts > 0 && ` 남은 시도 ${companyVerification.remainingAttempts}회`}
-                    </span>
-                  )}
-                </label>
-                <label>
-                  이메일 인증번호 입력
-                  <div className="cw-auth-inline cw-auth-inline--triple">
-                    <span>
-                      <CheckCircle2 size={18} />
-                      <input
-                        aria-invalid={Boolean(fieldErrors.code)}
-                        inputMode="numeric"
-                        type="text"
-                        placeholder="인증번호 6자리 입력"
-                        value={companyForm.code}
-                        onChange={(event) => updateCompany('code', event.target.value)}
-                      />
-                    </span>
-                    <button
-                      className="cw-auth-button-secondary cw-auth-button-secondary--confirm"
-                      disabled={confirmVerification.isPending}
-                      type="button"
-                      onClick={handleConfirmCompanyCode}
-                    >
-                      {confirmVerification.isPending ? '확인 중' : '인증 확인'}
-                    </button>
-                    <button
-                      className="cw-auth-button-secondary cw-auth-button-secondary--resend"
-                      disabled={sendVerification.isPending || companyResendIn > 0}
-                      type="button"
-                      onClick={handleSendCompanyCode}
-                    >
-                      재전송
-                    </button>
-                  </div>
-                  {fieldErrors.code && <p className="cw-register-error">{fieldErrors.code}</p>}
-                  {companyVerification.verificationToken && !fieldErrors.code && (
-                    <span className="cw-auth-feedback">
-                      <CheckCircle2 size={15} />
-                      인증이 완료되었습니다.
-                    </span>
-                  )}
-                  {!companyVerification.verificationToken && companyVerification.expiresAt && companyExpiresIn > 0 && (
-                    <span className="cw-auth-feedback">
-                      <CheckCircle2 size={15} />
-                      인증번호 유효시간 {formatRemaining(companyExpiresIn)}
-                    </span>
-                  )}
-                </label>
+                <RecoveryContactField
+                  label="담당자 이메일"
+                  icon={<Mail size={18} />}
+                  value={companyForm.email}
+                  placeholder="담당자 이메일 주소 입력"
+                  error={fieldErrors.email}
+                  verification={companyVerification}
+                  feedbackText="이메일 인증번호가 발송되었습니다."
+                  sendPending={sendVerification.isPending}
+                  resendIn={companyResendIn}
+                  buttonClassName="cw-auth-sub-button cw-auth-sub-button--send"
+                  inputType="email"
+                  onChange={(value) => updateCompany('email', value)}
+                  onSend={handleSendCompanyCode}
+                />
+                <RecoveryCodeField
+                  label="이메일 인증번호 입력"
+                  code={companyForm.code}
+                  error={fieldErrors.code}
+                  verification={companyVerification}
+                  expiresIn={companyExpiresIn}
+                  resendIn={companyResendIn}
+                  confirmPending={confirmVerification.isPending}
+                  sendPending={sendVerification.isPending}
+                  onCodeChange={(value) => updateCompany('code', value)}
+                  onConfirm={handleConfirmCompanyCode}
+                  onResend={handleSendCompanyCode}
+                />
               </>
             )}
 
