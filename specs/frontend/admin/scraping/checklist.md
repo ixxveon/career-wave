@@ -46,6 +46,7 @@
 ## Phase 5 - 검증 및 마감
 
 - [ ] 관리자 JWT와 `ROLE_ADMIN` 권한 기준 접근 제어가 확인된다.
+- [ ] `SecurityConfig` 또는 동등한 보안 설정에서 `/api/admin/scraping/**`가 `hasRole("ADMIN")`, `hasAuthority("ROLE_ADMIN")` 또는 프로젝트 표준 방식으로 보호된다.
 - [ ] API 실패, 빈 목록, 검색 결과 없음 상태가 구분되어 표시된다.
 - [ ] 액션 실패와 액션 중복 클릭 방지 동작이 확인된다.
 - [ ] `FAILED` 여부와 요청 중 상태별 버튼 활성화 정책이 확인된다.
