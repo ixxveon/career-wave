@@ -1,4 +1,5 @@
 import type { MemberApiError } from './errorMapping';
+import { RECOVERY_METHOD, type RecoveryMethod } from './recoverySchema';
 
 export interface VerificationState {
   verificationId: string;
@@ -25,6 +26,22 @@ export const EMPTY_RESET_SESSION: ResetSessionState = {
   resetToken: '',
   expiresAt: '',
 };
+
+export function createUserVerificationState(): Record<RecoveryMethod, VerificationState> {
+  return {
+    [RECOVERY_METHOD.EMAIL]: { ...EMPTY_VERIFICATION },
+    [RECOVERY_METHOD.PHONE]: { ...EMPTY_VERIFICATION },
+  };
+}
+
+export function toVerificationSnapshot(verification: VerificationState): string {
+  return [
+    verification.verificationId,
+    verification.verificationToken,
+    verification.expiresAt,
+    verification.resendAvailableAt,
+  ].join('|');
+}
 
 export function getRemainingSeconds(target: string, now: number): number {
   if (!target) return 0;

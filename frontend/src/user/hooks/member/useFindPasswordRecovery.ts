@@ -6,12 +6,14 @@ import {
 } from './useVerificationCode';
 import { useVerificationNow } from './useVerificationNow';
 import {
+  createUserVerificationState,
   EMPTY_RESET_SESSION,
   EMPTY_VERIFICATION,
   type ResetSessionState,
   type VerificationState,
   getRecoveryErrorMessage,
   getRemainingSeconds,
+  toVerificationSnapshot,
 } from '../../utils/member/recoveryView';
 import { VERIFICATION_PURPOSE } from '../../types/member';
 import {
@@ -32,22 +34,6 @@ import {
   validateUserRecoveryTarget,
   validateVerificationConfirm,
 } from '../../utils/member/recoverySchema';
-
-function createUserVerificationState(): Record<RecoveryMethod, VerificationState> {
-  return {
-    [RECOVERY_METHOD.EMAIL]: { ...EMPTY_VERIFICATION },
-    [RECOVERY_METHOD.PHONE]: { ...EMPTY_VERIFICATION },
-  };
-}
-
-function toVerificationSnapshot(verification: VerificationState): string {
-  return [
-    verification.verificationId,
-    verification.verificationToken,
-    verification.expiresAt,
-    verification.resendAvailableAt,
-  ].join('|');
-}
 
 export function useFindPasswordRecovery(isCompany: boolean) {
   const now = useVerificationNow();
@@ -84,6 +70,7 @@ export function useFindPasswordRecovery(isCompany: boolean) {
 
   const userVerificationRef = useRef(userVerification);
   const companyVerificationRef = useRef(companyVerification);
+  const currentUserMethodRef = useRef(userMethod);
   const userEmailRequestRef = useRef(0);
   const userPhoneRequestRef = useRef(0);
   const companyEmailRequestRef = useRef(0);
@@ -214,7 +201,9 @@ export function useFindPasswordRecovery(isCompany: boolean) {
   };
 
   const resetUserMethod = (method: RecoveryMethod) => {
+    currentUserMethodRef.current = method;
     setUserMethod(method);
+    setUserVerification(() => createUserVerificationState());
     setFieldErrors({});
     clearMessages();
     clearUserResetSession();
@@ -454,6 +443,7 @@ export function useFindPasswordRecovery(isCompany: boolean) {
         });
       } else {
         const verificationToken = activeUserVerification.verificationToken;
+        const requestMethod = userMethod;
         const errors = validateUserPasswordTokenRequest(userForm, userMethod, verificationToken);
         if (hasRecoveryFieldErrors(errors)) {
           setFieldErrors((current) => ({ ...current, ...errors }));
@@ -462,8 +452,8 @@ export function useFindPasswordRecovery(isCompany: boolean) {
 
         const requestSnapshot = [
           currentUserLoginIdRef.current.trim(),
-          getRecoveryTarget(userMethod, currentUserEmailRef.current, currentUserPhoneRef.current),
-          userMethod,
+          getRecoveryTarget(requestMethod, currentUserEmailRef.current, currentUserPhoneRef.current),
+          requestMethod,
           verificationToken,
         ].join('|');
 
@@ -473,9 +463,13 @@ export function useFindPasswordRecovery(isCompany: boolean) {
 
         const currentSnapshot = [
           currentUserLoginIdRef.current.trim(),
-          getRecoveryTarget(userMethod, currentUserEmailRef.current, currentUserPhoneRef.current),
-          userMethod,
-          userVerificationRef.current[userMethod].verificationToken,
+          getRecoveryTarget(
+            currentUserMethodRef.current,
+            currentUserEmailRef.current,
+            currentUserPhoneRef.current,
+          ),
+          currentUserMethodRef.current,
+          userVerificationRef.current[currentUserMethodRef.current].verificationToken,
         ].join('|');
         if (requestSnapshot !== currentSnapshot) return;
 
@@ -494,6 +488,7 @@ export function useFindPasswordRecovery(isCompany: boolean) {
       setFormMessage('');
       setSuccessMessage('새 비밀번호를 입력한 뒤 저장해주세요.');
     } catch (error) {
+      setSuccessMessage('');
       setFormMessage(getRecoveryErrorMessage(error, '비밀번호 재설정 권한 확인에 실패했습니다. 잠시 후 다시 시도해주세요.'));
     }
   };
@@ -537,6 +532,7 @@ export function useFindPasswordRecovery(isCompany: boolean) {
         clearUserResetSession();
       }
     } catch (error) {
+      setSuccessMessage('');
       setFormMessage(getRecoveryErrorMessage(error, '비밀번호 재설정에 실패했습니다. 잠시 후 다시 시도해주세요.'));
     }
   };

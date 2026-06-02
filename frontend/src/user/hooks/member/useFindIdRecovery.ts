@@ -4,10 +4,12 @@ import { useFindId } from './useAccountRecovery';
 import { useSendVerificationCode } from './useVerificationCode';
 import { useVerificationNow } from './useVerificationNow';
 import {
+  createUserVerificationState,
   EMPTY_VERIFICATION,
   type VerificationState,
   getRecoveryErrorMessage,
   getRemainingSeconds,
+  toVerificationSnapshot,
 } from '../../utils/member/recoveryView';
 import { VERIFICATION_PURPOSE } from '../../types/member';
 import {
@@ -39,22 +41,6 @@ const EMPTY_RESULT: RecoveryResultState = {
   maskedLoginIds: [],
 };
 
-function createUserVerificationState(): Record<RecoveryMethod, VerificationState> {
-  return {
-    [RECOVERY_METHOD.EMAIL]: { ...EMPTY_VERIFICATION },
-    [RECOVERY_METHOD.PHONE]: { ...EMPTY_VERIFICATION },
-  };
-}
-
-function toVerificationSnapshot(verification: VerificationState): string {
-  return [
-    verification.verificationId,
-    verification.verificationToken,
-    verification.expiresAt,
-    verification.resendAvailableAt,
-  ].join('|');
-}
-
 export function useFindIdRecovery(isCompany: boolean) {
   const now = useVerificationNow();
   const sendVerification = useSendVerificationCode();
@@ -81,12 +67,15 @@ export function useFindIdRecovery(isCompany: boolean) {
 
   const userVerificationRef = useRef(userVerification);
   const companyVerificationRef = useRef(companyVerification);
+  const currentUserMethodRef = useRef(userMethod);
   const userEmailRequestRef = useRef(0);
   const userPhoneRequestRef = useRef(0);
   const companyEmailRequestRef = useRef(0);
   const currentUserEmailRef = useRef('');
   const currentUserPhoneRef = useRef('');
   const currentCompanyEmailRef = useRef('');
+  const currentCompanyManagerNameRef = useRef('');
+  const currentCompanyBusinessNumberRef = useRef('');
 
   const activeUserVerification = userVerification[userMethod];
   const userExpiresIn = getRemainingSeconds(activeUserVerification.expiresAt, now);
@@ -153,10 +142,20 @@ export function useFindIdRecovery(isCompany: boolean) {
       setCompanyVerification(() => ({ ...EMPTY_VERIFICATION }));
       setCompanyForm((current) => ({ ...current, code: '' }));
     }
+
+    if (key === 'managerName') {
+      currentCompanyManagerNameRef.current = value.trim();
+    }
+
+    if (key === 'businessNumber') {
+      currentCompanyBusinessNumberRef.current = value.replace(/\D/g, '');
+    }
   };
 
   const resetUserMethod = (method: RecoveryMethod) => {
+    currentUserMethodRef.current = method;
     setUserMethod(method);
+    setUserVerification(() => createUserVerificationState());
     setFieldErrors({});
     setFormMessage('');
     setResult(EMPTY_RESULT);
@@ -367,8 +366,8 @@ export function useFindIdRecovery(isCompany: boolean) {
         }
 
         const requestSnapshot = [
-          companyForm.managerName.trim(),
-          companyForm.businessNumber.replace(/\D/g, ''),
+          currentCompanyManagerNameRef.current.trim(),
+          currentCompanyBusinessNumberRef.current,
           currentCompanyEmailRef.current.trim(),
           verificationToken,
         ].join('|');
@@ -376,8 +375,8 @@ export function useFindIdRecovery(isCompany: boolean) {
           toFindIdRequest('company', verificationToken, companyForm),
         );
         const currentSnapshot = [
-          companyForm.managerName.trim(),
-          companyForm.businessNumber.replace(/\D/g, ''),
+          currentCompanyManagerNameRef.current.trim(),
+          currentCompanyBusinessNumberRef.current,
           currentCompanyEmailRef.current.trim(),
           companyVerificationRef.current.verificationToken,
         ].join('|');
@@ -390,6 +389,7 @@ export function useFindIdRecovery(isCompany: boolean) {
         });
       } else {
         const verificationToken = activeUserVerification.verificationToken;
+        const requestMethod = userMethod;
         const errors = validateUserFindIdSubmission(userForm, userMethod, verificationToken);
         if (hasRecoveryFieldErrors(errors)) {
           setFieldErrors((current) => ({ ...current, ...errors }));
@@ -397,17 +397,21 @@ export function useFindIdRecovery(isCompany: boolean) {
         }
 
         const requestSnapshot = [
-          userMethod,
-          getRecoveryTarget(userMethod, currentUserEmailRef.current, currentUserPhoneRef.current),
+          requestMethod,
+          getRecoveryTarget(requestMethod, currentUserEmailRef.current, currentUserPhoneRef.current),
           verificationToken,
         ].join('|');
         const response = await findIdMutation.mutateAsync(
           toFindIdRequest('user', verificationToken),
         );
         const currentSnapshot = [
-          userMethod,
-          getRecoveryTarget(userMethod, currentUserEmailRef.current, currentUserPhoneRef.current),
-          userVerificationRef.current[userMethod].verificationToken,
+          currentUserMethodRef.current,
+          getRecoveryTarget(
+            currentUserMethodRef.current,
+            currentUserEmailRef.current,
+            currentUserPhoneRef.current,
+          ),
+          userVerificationRef.current[currentUserMethodRef.current].verificationToken,
         ].join('|');
         if (requestSnapshot !== currentSnapshot) return;
 
