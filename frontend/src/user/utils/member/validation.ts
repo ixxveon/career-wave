@@ -1,7 +1,15 @@
 import { MEMBER_TYPE, type MemberType } from '../../types/member';
 import { isPasswordConfirmed, validatePasswordPolicy } from './passwordPolicy';
 
-export type LoginIdCheckState = 'unchecked' | 'checking' | 'available' | 'duplicated' | 'error';
+export const LOGIN_ID_CHECK_STATE = {
+  UNCHECKED: 'unchecked',
+  CHECKING: 'checking',
+  AVAILABLE: 'available',
+  DUPLICATED: 'duplicated',
+  ERROR: 'error',
+} as const;
+
+export type LoginIdCheckState = (typeof LOGIN_ID_CHECK_STATE)[keyof typeof LOGIN_ID_CHECK_STATE];
 
 export interface PersonalRegisterDraft {
   loginId: string;
@@ -15,6 +23,7 @@ export interface PersonalRegisterDraft {
   terms: {
     service: boolean;
     privacy: boolean;
+    marketing: boolean;
   };
 }
 
@@ -29,12 +38,13 @@ export interface CompanyRegisterDraft {
   businessNumber: string;
   ceoName: string;
   address: string;
-  managerVerificationToken?: string;
+  managerPhoneVerificationToken?: string;
   employmentCertificateFileId?: string;
   terms: {
     service: boolean;
     privacy: boolean;
     companyVerification: boolean;
+    marketing: boolean;
   };
 }
 
@@ -55,7 +65,7 @@ export function canSubmitPersonalRegister(form: PersonalRegisterDraft, loginIdSt
 
   return (
     form.loginId.trim().length > 0 &&
-    loginIdState === 'available' &&
+    loginIdState === LOGIN_ID_CHECK_STATE.AVAILABLE &&
     password.valid &&
     isPasswordConfirmed(form.password, form.passwordConfirm) &&
     form.name.trim().length > 0 &&
@@ -73,7 +83,7 @@ export function canSubmitCompanyRegister(form: CompanyRegisterDraft, loginIdStat
 
   return (
     form.loginId.trim().length > 0 &&
-    loginIdState === 'available' &&
+    loginIdState === LOGIN_ID_CHECK_STATE.AVAILABLE &&
     password.valid &&
     isPasswordConfirmed(form.password, form.passwordConfirm) &&
     form.managerName.trim().length > 0 &&
@@ -83,7 +93,7 @@ export function canSubmitCompanyRegister(form: CompanyRegisterDraft, loginIdStat
     form.businessNumber.trim().length > 0 &&
     form.ceoName.trim().length > 0 &&
     form.address.trim().length > 0 &&
-    hasValue(form.managerVerificationToken) &&
+    hasValue(form.managerPhoneVerificationToken) &&
     hasValue(form.employmentCertificateFileId) &&
     form.terms.service &&
     form.terms.privacy &&
