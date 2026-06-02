@@ -129,6 +129,14 @@ export interface SubscriptionListParams {
   size?: number;
 }
 
+// ── 환불 응답 타입 ─────────────────────────────────────────────
+
+export interface RefundResult {
+  paymentId: string;
+  paymentStatus: PayStatus;
+  refundStatus: RefundStatus;
+}
+
 // ── API 함수 ───────────────────────────────────────────────────
 
 export const paymentApi = {
@@ -146,13 +154,13 @@ export const paymentApi = {
 
   // 환불 처리 확정
   confirmRefund: (paymentId: string) =>
-    axiosInstance.post<ApiResponse<{ paymentId: string; paymentStatus: PayStatus; refundStatus: RefundStatus }>>(
+    axiosInstance.post<ApiResponse<RefundResult>>(
       `/api/v1/admin/payments/${paymentId}/refund`
     ),
 
   // 환불 불가 처리
   rejectRefund: (paymentId: string) =>
-    axiosInstance.post<ApiResponse<{ paymentId: string; paymentStatus: PayStatus; refundStatus: RefundStatus }>>(
+    axiosInstance.post<ApiResponse<RefundResult>>(
       `/api/v1/admin/payments/${paymentId}/refund-reject`
     ),
 

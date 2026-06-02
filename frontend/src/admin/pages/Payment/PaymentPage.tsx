@@ -12,9 +12,11 @@ import {
 } from 'lucide-react';
 import {
   paymentApi,
+  PAY_STATUS,
   PAY_STATUS_LABEL,
   REFUND_STATUS_LABEL,
   PAYMENT_TYPE_LABEL,
+  SUB_STATUS,
   SUB_STATUS_LABEL,
   type Payment,
   type PaymentSummary,
@@ -68,7 +70,7 @@ function daysSincePaid(paidAt: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   paid.setHours(0, 0, 0, 0);
-  return Math.floor((today.getTime() - paid.getTime()) / 86400000);
+  return Math.round((today.getTime() - paid.getTime()) / 86400000);
 }
 
 function checkRefundEligibility(p: Payment): { eligible: boolean; reason: string | null } {
@@ -235,10 +237,12 @@ export default function PaymentPage() {
   const openDetail = async (p: Payment) => {
     setRefundError('');
     setSelected(p);
+    const targetId = p.paymentId;
     try {
-      const res = await paymentApi.getPaymentDetail(p.paymentId);
+      const res = await paymentApi.getPaymentDetail(targetId);
       if (!res.data.success) throw new Error(res.data.message);
-      setSelected(res.data.data);
+      // 응답 도착 시점에 다른 결제가 선택됐을 수 있으므로 paymentId 검증
+      setSelected((cur) => cur?.paymentId === targetId ? res.data.data : cur);
     } catch {
       // 상세 조회 실패 시 목록 데이터로 fallback
     }
@@ -279,6 +283,7 @@ export default function PaymentPage() {
         prev.map((p) => p.paymentId === selected.paymentId ? { ...p, paymentStatus, refundStatus } : p)
       );
       setSelected(null);
+      fetchSummary();
       showToast('환불 불가 처리가 완료되었습니다.');
     } catch (err: any) {
       setRefundError(resolveErrorMsg(err, '환불 불가 처리에 실패했습니다.'));
@@ -294,7 +299,8 @@ export default function PaymentPage() {
     <div className="pagination">
       <button disabled={loading || page <= 1} onClick={() => onPage(page - 1)}>{'<'}</button>
       {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-        const p = Math.max(1, page - 2) + i;
+        const start = Math.min(Math.max(1, page - 2), Math.max(1, totalPages - 4));
+        const p = start + i;
         if (p > totalPages) return null;
         return (
           <button key={p} className={p === page ? 'activePage' : ''} disabled={loading} onClick={() => onPage(p)}>
@@ -385,10 +391,9 @@ export default function PaymentPage() {
             />
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">상태 전체</option>
-              <option value="DONE">결제 완료</option>
-              <option value="PENDING">결제 대기</option>
-              <option value="CANCELED">환불 완료</option>
-              <option value="FAILED">결제 실패</option>
+              {(Object.entries(PAY_STATUS) as [PayStatus, PayStatus][]).map(([, v]) => (
+                <option key={v} value={v}>{PAY_STATUS_LABEL[v]}</option>
+              ))}
             </select>
             <button className="memberFilterBtn" onClick={applyPaySearch}>검색</button>
           </section>
@@ -492,10 +497,9 @@ export default function PaymentPage() {
           <section className="admin-card memberFilter">
             <select value={subStatusFilter} onChange={(e) => setSubStatusFilter(e.target.value)}>
               <option value="">상태 전체</option>
-              <option value="ACTIVE">활성</option>
-              <option value="RENEWAL_SCHEDULED">갱신예정</option>
-              <option value="CANCEL_SCHEDULED">취소예정</option>
-              <option value="AT_RISK">이탈위험</option>
+              {(Object.entries(SUB_STATUS) as [SubStatus, SubStatus][]).map(([, v]) => (
+                <option key={v} value={v}>{SUB_STATUS_LABEL[v]}</option>
+              ))}
             </select>
             <button className="memberFilterBtn" onClick={applySubSearch}>검색</button>
           </section>
