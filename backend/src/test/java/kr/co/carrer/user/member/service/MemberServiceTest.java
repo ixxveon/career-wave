@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 class MemberServiceTest {
 
-    // TODO: specs/user-platform/001-member/spec.md 기반 비즈니스 사양 테스트 작성
+    // TODO: specs/frontend/user/member/spec.md 기반 비즈니스 사양 테스트 작성
 
     @Test
     @DisplayName("회원 가입 - 정상")

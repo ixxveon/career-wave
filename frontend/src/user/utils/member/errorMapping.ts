@@ -78,5 +78,5 @@ export function getSafeLoginMessage(error: MemberApiError): string {
   if (error.code === MEMBER_ERROR_CODE.LOCKED) return fallbackMessages.LOCKED;
   if (error.code === MEMBER_ERROR_CODE.RATE_LIMITED) return fallbackMessages.RATE_LIMITED;
   if (error.code === MEMBER_ERROR_CODE.FORBIDDEN) return fallbackMessages.FORBIDDEN;
-  return '아이디 또는 비밀번호를 확인해주세요.';
+  return fallbackMessages[MEMBER_ERROR_CODE.UNAUTHORIZED];
 }

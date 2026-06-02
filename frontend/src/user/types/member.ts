@@ -16,6 +16,8 @@ export const MEMBER_STATUS = {
 
 export type MemberStatus = (typeof MEMBER_STATUS)[keyof typeof MEMBER_STATUS];
 
+type NonRestrictedMemberStatus = typeof MEMBER_STATUS.ACTIVE | typeof MEMBER_STATUS.WITHDRAWN;
+
 export const COMPANY_APPROVAL_STATUS = {
   NONE: 'NONE',
   PENDING_REVIEW: 'PENDING_REVIEW',
@@ -26,9 +28,20 @@ export const COMPANY_APPROVAL_STATUS = {
 
 export type CompanyApprovalStatus = (typeof COMPANY_APPROVAL_STATUS)[keyof typeof COMPANY_APPROVAL_STATUS];
 
-export type VerificationChannel = 'EMAIL' | 'PHONE';
+export const VERIFICATION_CHANNEL = {
+  EMAIL: 'EMAIL',
+  PHONE: 'PHONE',
+} as const;
 
-export type VerificationPurpose = 'REGISTER' | 'FIND_ID' | 'RESET_PASSWORD';
+export type VerificationChannel = (typeof VERIFICATION_CHANNEL)[keyof typeof VERIFICATION_CHANNEL];
+
+export const VERIFICATION_PURPOSE = {
+  REGISTER: 'REGISTER',
+  FIND_ID: 'FIND_ID',
+  RESET_PASSWORD: 'RESET_PASSWORD',
+} as const;
+
+export type VerificationPurpose = (typeof VERIFICATION_PURPOSE)[keyof typeof VERIFICATION_PURPOSE];
 
 export type VerificationStatus =
   | 'SENT'
@@ -74,7 +87,7 @@ export interface MemberSummary {
 }
 
 export interface RestrictionSummary {
-  restrictionType: Exclude<MemberStatus, 'ACTIVE' | 'WITHDRAWN'>;
+  restrictionType: Exclude<MemberStatus, NonRestrictedMemberStatus>;
   recoverable: boolean;
   availableAt: string | null;
   messageCode: string;
@@ -149,7 +162,8 @@ export interface CompanyRegisterRequest {
   addressDetail: string;
   companyType: CompanyType;
   isAgency: boolean;
-  managerVerificationToken: string;
+  managerPhoneVerificationToken: string;
+  managerEmailVerificationToken: string;
   employmentCertificateFileId: string;
   terms: CompanyRegisterTerms;
 }
