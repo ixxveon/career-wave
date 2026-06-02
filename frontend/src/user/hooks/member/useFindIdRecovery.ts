@@ -154,6 +154,8 @@ export function useFindIdRecovery(isCompany: boolean) {
 
   const resetUserMethod = (method: RecoveryMethod) => {
     currentUserMethodRef.current = method;
+    userEmailRequestRef.current += 1;
+    userPhoneRequestRef.current += 1;
     setUserMethod(method);
     setUserVerification(() => createUserVerificationState());
     setFieldErrors({});
@@ -169,25 +171,26 @@ export function useFindIdRecovery(isCompany: boolean) {
       return;
     }
 
-    const target = getRecoveryTarget(userMethod, userForm.email, userForm.phone);
-    const requestOrder = userMethod === RECOVERY_METHOD.EMAIL
+    const requestMethod = userMethod;
+    const target = getRecoveryTarget(requestMethod, userForm.email, userForm.phone);
+    const requestOrder = requestMethod === RECOVERY_METHOD.EMAIL
       ? ++userEmailRequestRef.current
       : ++userPhoneRequestRef.current;
 
     try {
       const response = await sendVerification.mutateAsync({
-        channel: getVerificationChannel(userMethod),
+        channel: getVerificationChannel(requestMethod),
         target,
         purpose: VERIFICATION_PURPOSE.FIND_ID,
       });
 
-      const currentTarget = getRecoveryTarget(userMethod, currentUserEmailRef.current, currentUserPhoneRef.current);
-      const latestOrder = userMethod === RECOVERY_METHOD.EMAIL ? userEmailRequestRef.current : userPhoneRequestRef.current;
-      if (requestOrder !== latestOrder || target !== currentTarget) return;
+      const currentTarget = getRecoveryTarget(requestMethod, currentUserEmailRef.current, currentUserPhoneRef.current);
+      const latestOrder = requestMethod === RECOVERY_METHOD.EMAIL ? userEmailRequestRef.current : userPhoneRequestRef.current;
+      if (requestMethod !== currentUserMethodRef.current || requestOrder !== latestOrder || target !== currentTarget) return;
 
       setUserVerification((current) => ({
         ...current,
-        [userMethod]: {
+        [requestMethod]: {
           verificationId: response.verificationId,
           verificationToken: '',
           expiresAt: response.expiresAt,
@@ -204,11 +207,11 @@ export function useFindIdRecovery(isCompany: boolean) {
       }));
       setUserForm((current) => ({ ...current, code: '' }));
     } catch (error) {
-      const currentTarget = getRecoveryTarget(userMethod, currentUserEmailRef.current, currentUserPhoneRef.current);
-      const latestOrder = userMethod === RECOVERY_METHOD.EMAIL ? userEmailRequestRef.current : userPhoneRequestRef.current;
-      if (requestOrder !== latestOrder || target !== currentTarget) return;
+      const currentTarget = getRecoveryTarget(requestMethod, currentUserEmailRef.current, currentUserPhoneRef.current);
+      const latestOrder = requestMethod === RECOVERY_METHOD.EMAIL ? userEmailRequestRef.current : userPhoneRequestRef.current;
+      if (requestMethod !== currentUserMethodRef.current || requestOrder !== latestOrder || target !== currentTarget) return;
 
-      const errorField = userMethod === RECOVERY_METHOD.EMAIL ? 'email' : 'phone';
+      const errorField = requestMethod === RECOVERY_METHOD.EMAIL ? 'email' : 'phone';
       setFieldErrors((current) => ({
         ...current,
         [errorField]: getRecoveryErrorMessage(error, '인증번호 발송에 실패했습니다.', errorField),
