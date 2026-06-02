@@ -117,26 +117,26 @@ export const JOB_NOTICE_VIEW_FIELD_MAP = {
 } as const;
 
 export type JobNotice = Omit<JobNoticeDetail, 'experience' | 'employmentType'> & {
-  experience?: string;
-  employmentType?: string;
   exp: string;
   employment: string;
 };
 
 export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeDetail): JobNotice {
+  const { experience, employmentType, ...viewJobNotice } = jobNotice;
+
   return {
-    ...jobNotice,
-    exp: jobNotice.experience,
-    employment: jobNotice.employmentType,
+    ...viewJobNotice,
+    exp: experience,
+    employment: employmentType,
   };
 }
 
 export function mapJobNoticeViewToApiModel(jobNotice: JobNotice): JobNoticeDetail {
-  const { exp, employment, ...apiJobNotice } = jobNotice;
+  const { exp, employment, ...viewJobNotice } = jobNotice;
 
   return {
-    ...apiJobNotice,
-    experience: jobNotice.experience ?? exp,
-    employmentType: jobNotice.employmentType ?? employment,
+    ...viewJobNotice,
+    experience: exp,
+    employmentType: employment,
   };
 }
