@@ -132,8 +132,9 @@ function InterviewRoom({ sessionId, company, job, sessionType, onExit }: Intervi
       }
     },
     onError: () => {
-      if (pendingVoiceId !== null) {
-        session.dispatch({ type: 'REMOVE_MESSAGE', id: pendingVoiceId });
+      const pid = pendingVoiceIdRef.current;
+      if (pid !== null) {
+        session.dispatch({ type: 'REMOVE_MESSAGE', id: pid });
         setPendingVoiceId(null);
       }
       timer.stop();
