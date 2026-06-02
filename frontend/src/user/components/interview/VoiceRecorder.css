@@ -1,0 +1,152 @@
+.vr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+}
+
+/* ── 마이크 버튼 ── */
+.vr__mic {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+}
+
+.vr__mic:hover:not(:disabled) {
+  background: #e2e8f0;
+  transform: scale(1.05);
+}
+
+.vr__mic:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.vr__mic--on {
+  background: #ef4444;
+  color: #fff;
+}
+
+.vr__mic--on:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.vr__mic--err {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* ── 녹음 중 파동 애니메이션 ── */
+.vr__ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid #ef4444;
+  animation: vr-ring 1.2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes vr-ring {
+  0%   { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 0;   transform: scale(1.5); }
+}
+
+/* ── 스피너 ── */
+.vr__spin {
+  animation: vr-spin 1s linear infinite;
+}
+
+@keyframes vr-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── 상태 안내 ── */
+.vr__hint-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+}
+
+.vr__hint {
+  font-size: 13px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vr__hint--on {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+/* ── 녹음 중 빨간 점 ── */
+.vr__dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: vr-blink 1s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes vr-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ── STT 실시간 미리보기 ── */
+.vr__stt-preview {
+  font-size: 13px;
+  color: #475569;
+  text-align: center;
+  max-width: 400px;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin: 0;
+}
+
+/* ── 에러 메시지 ── */
+.vr__error {
+  font-size: 12px;
+  color: #ef4444;
+  text-align: center;
+  max-width: 320px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── 키보드 전환 버튼 ── */
+.vr__switch {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.vr__switch:hover {
+  color: #64748b;
+  background: #f1f5f9;
+}
