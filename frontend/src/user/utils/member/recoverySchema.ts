@@ -11,7 +11,6 @@ import {
 import { validatePasswordPolicy } from './passwordPolicy';
 import {
   isValidEmail,
-  isValidLoginId,
   isValidPhone,
   isValidVerificationCode,
   normalizePhone,
@@ -169,8 +168,8 @@ export function validateUserPasswordTokenRequest(
 ): RecoveryFieldErrors {
   const errors = validateUserRecoveryTarget(form, method);
 
-  if (!isValidLoginId(form.loginId)) {
-    errors.loginId = '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.';
+  if (!form.loginId.trim()) {
+    errors.loginId = '아이디를 입력해주세요.';
   }
 
   if (!verificationToken?.trim()) {
@@ -186,8 +185,8 @@ export function validateCompanyPasswordTokenRequest(
 ): RecoveryFieldErrors {
   const errors = validateCompanyRecoveryTarget(form);
 
-  if (!isValidLoginId(form.loginId)) {
-    errors.loginId = '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.';
+  if (!form.loginId.trim()) {
+    errors.loginId = '아이디를 입력해주세요.';
   }
 
   if (!verificationToken?.trim()) {
