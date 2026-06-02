@@ -1,10 +1,10 @@
 import { useRef, useState, type ChangeEvent } from 'react';
-import { Apple, BadgeCheck, Building2, FileText, ShieldCheck, UserRound } from 'lucide-react';
+import { BadgeCheck, Building2, FileText, ShieldCheck, UserRound } from 'lucide-react';
+import { PersonalRegisterForm } from '../../components/member/PersonalRegisterForm';
 import { AuthButtonGroup, Field, SelectInput, StatusPill, TextInput } from '../../components/member/RegisterFormPrimitives';
 import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../types/member';
 import {
   useLoginIdCheck,
-  useRegisterUser,
   useRegisterCompany,
   useUploadEmploymentCertificate,
   useSendVerificationCode,
@@ -19,34 +19,14 @@ import {
   isValidVerificationCode,
   COMPANY_TYPE_LABELS,
   toCompanyRegisterRequest,
-  toUserRegisterRequest,
   validateCompanyRegisterForm,
-  validatePersonalRegisterForm,
   type RegisterFieldErrors,
 } from '../../utils/member/registerSchema';
 import { validateEmploymentCertificateFile } from '../../utils/member/fileValidation';
 import { LOGIN_ID_CHECK_STATE, type LoginIdCheckState } from '../../utils/member/validation';
 import './AuthPage.css';
 
-const socialProviders = [
-  { id: 'kakao', label: '카카오', mark: 'K' },
-  { id: 'naver', label: '네이버', mark: 'N' },
-  { id: 'google', label: 'Google', mark: 'G' },
-  { id: 'apple', label: 'Apple' },
-];
-
 const companyTypes = Object.values(COMPANY_TYPE_LABELS);
-
-const initialPersonalForm = {
-  userId: '',
-  email: '',
-  emailCode: '',
-  password: '',
-  passwordConfirm: '',
-  name: '',
-  phone: '',
-  phoneCode: '',
-};
 
 const initialCompanyForm = {
   companyType: '',
@@ -67,22 +47,13 @@ const initialCompanyForm = {
   managerEmailCode: '',
 };
 
-type PersonalForm = typeof initialPersonalForm;
 type CompanyForm = typeof initialCompanyForm;
-type PersonalFormKey = keyof PersonalForm;
 type CompanyFormKey = keyof CompanyForm;
 
 const initialCompanyTerms = {
   service: false,
   companyVerification: false,
   sms: false,
-  privacy: false,
-  marketing: false,
-};
-
-const initialPersonalTerms = {
-  age: false,
-  service: false,
   privacy: false,
   marketing: false,
 };
@@ -301,19 +272,11 @@ const companyTermDetails = {
   ],
 };
 
-type PersonalTermsValues = typeof initialPersonalTerms;
-type PersonalTermKey = keyof PersonalTermsValues;
 type CompanyTermsValues = typeof initialCompanyTerms;
 type CompanyTermKey = keyof CompanyTermsValues;
 type TermSection = {
   title: string;
   body: string;
-};
-type PersonalTermItem = {
-  key: PersonalTermKey;
-  type: 'required' | 'optional';
-  label: string;
-  details?: TermSection[];
 };
 type CompanyTermItem = {
   key: CompanyTermKey;
@@ -321,97 +284,6 @@ type CompanyTermItem = {
   label: string;
   details: TermSection[];
 };
-
-type PersonalTermsProps = {
-  values: PersonalTermsValues;
-  onChange: React.Dispatch<React.SetStateAction<PersonalTermsValues>>;
-};
-
-function PersonalTerms({ values, onChange }: PersonalTermsProps) {
-  const [openDetails, setOpenDetails] = useState<Partial<Record<PersonalTermKey, boolean>>>({});
-  const allChecked = values.age && values.service && values.privacy && values.marketing;
-
-  const toggleAll = (checked: boolean) => {
-    onChange({
-      age: checked,
-      service: checked,
-      privacy: checked,
-      marketing: checked,
-    });
-  };
-
-  const toggleOne = (key: PersonalTermKey) => {
-    onChange({
-      ...values,
-      [key]: !values[key],
-    });
-  };
-
-  const toggleDetail = (key: PersonalTermKey) => {
-    setOpenDetails((current) => ({
-      ...current,
-      [key]: !current[key],
-    }));
-  };
-
-  const terms: PersonalTermItem[] = [
-    { key: 'age', type: 'required', label: '만 15세 이상입니다' },
-    { key: 'service', type: 'required', label: '이용약관 동의', details: personalTermDetails.service },
-    { key: 'privacy', type: 'required', label: '개인정보 수집 및 이용 동의', details: personalTermDetails.privacy },
-    { key: 'marketing', type: 'optional', label: '광고성 정보 수신 동의', details: personalTermDetails.marketing },
-  ];
-
-  return (
-    <div className="cw-register-terms cw-register-terms--detail">
-      <label className="cw-register-check cw-register-check--all">
-        <input type="checkbox" checked={allChecked} onChange={(event) => toggleAll(event.target.checked)} />
-        <span>전체 동의</span>
-      </label>
-
-      {terms.map((term) => (
-        <div className="cw-register-term-row" key={term.key}>
-          <div className="cw-register-term-line">
-            <span className="cw-register-term-name">
-              <strong className={`cw-register-term-type cw-register-term-type--${term.type}`}>
-                {term.type === 'required' ? '[필수]' : '[선택]'}
-              </strong>
-              {term.label}
-            </span>
-            <div className="cw-register-term-actions">
-              {term.details && (
-                <button
-                  className={`cw-register-detail-button ${openDetails[term.key] ? 'is-open' : ''}`}
-                  type="button"
-                  onClick={() => toggleDetail(term.key)}
-                >
-                  내용보기
-                </button>
-              )}
-              <input
-                aria-label={term.label}
-                type="checkbox"
-                checked={values[term.key]}
-                onChange={() => toggleOne(term.key)}
-              />
-            </div>
-          </div>
-          {term.details && openDetails[term.key] && (
-            <div className="cw-register-term-detail">
-              {term.details.map((section) => (
-                <section key={section.title}>
-                  <h3>{section.title}</h3>
-                  {section.body.split('\n').map((line, index) => (
-                    <p key={`${section.title}-${index}`}>{line || '\u00a0'}</p>
-                  ))}
-                </section>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 type CompanyTermsProps = {
   values: CompanyTermsValues;
@@ -501,406 +373,6 @@ function CompanyTerms({ values, onChange }: CompanyTermsProps) {
         </div>
       ))}
     </div>
-  );
-}
-
-function PersonalRegisterForm() {
-  const [form, setForm] = useState(initialPersonalForm);
-  const [terms, setTerms] = useState(initialPersonalTerms);
-  const currentLoginIdRef = useRef(form.userId);
-  const currentEmailRef = useRef(form.email);
-  const currentPhoneRef = useRef(form.phone);
-  const emailVerificationIdRef = useRef('');
-  const phoneVerificationIdRef = useRef('');
-  const emailVerificationRequestRef = useRef(0);
-  const phoneVerificationRequestRef = useRef(0);
-  const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>(LOGIN_ID_CHECK_STATE.UNCHECKED);
-  const [verification, setVerification] = useState({
-    emailId: '',
-    emailToken: '',
-    emailExpiresAt: '',
-    emailResendAvailableAt: '',
-    emailRemainingAttempts: 0,
-    phoneId: '',
-    phoneToken: '',
-    phoneExpiresAt: '',
-    phoneResendAvailableAt: '',
-    phoneRemainingAttempts: 0,
-  });
-  const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
-  const [formMessage, setFormMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const checkLoginId = useLoginIdCheck();
-  const sendEmailCode = useSendVerificationCode();
-  const confirmEmailCode = useConfirmVerificationCode();
-  const sendPhoneCode = useSendVerificationCode();
-  const confirmPhoneCode = useConfirmVerificationCode();
-  const registerUser = useRegisterUser();
-  const now = useVerificationNow();
-  const passwordMismatch = form.passwordConfirm && form.password !== form.passwordConfirm;
-  const emailExpiresIn = getRemainingSeconds(verification.emailExpiresAt, now);
-  const emailResendIn = getRemainingSeconds(verification.emailResendAvailableAt, now);
-  const phoneExpiresIn = getRemainingSeconds(verification.phoneExpiresAt, now);
-  const phoneResendIn = getRemainingSeconds(verification.phoneResendAvailableAt, now);
-  const personalSnapshot = {
-    loginId: form.userId,
-    password: form.password,
-    passwordConfirm: form.passwordConfirm,
-    name: form.name,
-    email: form.email,
-    emailCode: form.emailCode,
-    phone: form.phone,
-    phoneCode: form.phoneCode,
-    emailVerificationToken: verification.emailToken,
-    phoneVerificationToken: verification.phoneToken,
-    terms: {
-      service: terms.service,
-      privacy: terms.privacy,
-      marketing: terms.marketing,
-    },
-  };
-  const canSubmit =
-    terms.age &&
-    Object.keys(validatePersonalRegisterForm(personalSnapshot, loginIdState)).length === 0 &&
-    !registerUser.isPending;
-
-  const getErrorMessage = (error: unknown, fallback: string) =>
-    error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' ? error.message : fallback;
-
-  const update = (key: PersonalFormKey, value: PersonalForm[PersonalFormKey]) => {
-    setForm((current) => ({ ...current, [key]: value }));
-    setFieldErrors((current) => ({
-      ...current,
-      [key]: '',
-      ...(key === 'userId' ? { loginId: '' } : {}),
-    }));
-    setFormMessage('');
-    setSuccessMessage('');
-
-    if (key === 'userId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
-    if (key === 'userId') currentLoginIdRef.current = typeof value === 'string' ? value : currentLoginIdRef.current;
-    if (key === 'email') {
-      currentEmailRef.current = typeof value === 'string' ? value : currentEmailRef.current;
-      emailVerificationIdRef.current = '';
-      setVerification((current) => ({
-        ...current,
-        emailId: '',
-        emailToken: '',
-        emailExpiresAt: '',
-        emailResendAvailableAt: '',
-        emailRemainingAttempts: 0,
-      }));
-    }
-    if (key === 'phone') {
-      currentPhoneRef.current = typeof value === 'string' ? value : currentPhoneRef.current;
-      phoneVerificationIdRef.current = '';
-      setVerification((current) => ({
-        ...current,
-        phoneId: '',
-        phoneToken: '',
-        phoneExpiresAt: '',
-        phoneResendAvailableAt: '',
-        phoneRemainingAttempts: 0,
-      }));
-    }
-  };
-
-  const handleLoginIdCheck = async () => {
-    if (!isValidLoginId(form.userId)) {
-      setLoginIdState(LOGIN_ID_CHECK_STATE.ERROR);
-      setFieldErrors((current) => ({ ...current, loginId: '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.' }));
-      return;
-    }
-
-    const requestedLoginId = form.userId.trim();
-    setLoginIdState(LOGIN_ID_CHECK_STATE.CHECKING);
-    try {
-      const result = await checkLoginId.mutateAsync(requestedLoginId);
-      if (requestedLoginId !== currentLoginIdRef.current.trim()) return;
-      setLoginIdState(result.available ? LOGIN_ID_CHECK_STATE.AVAILABLE : LOGIN_ID_CHECK_STATE.DUPLICATED);
-      setFieldErrors((current) => ({
-        ...current,
-        loginId: result.available ? '' : '이미 사용 중인 아이디입니다.',
-      }));
-    } catch (error) {
-      if (requestedLoginId !== currentLoginIdRef.current.trim()) return;
-      setLoginIdState(LOGIN_ID_CHECK_STATE.ERROR);
-      setFieldErrors((current) => ({ ...current, loginId: getErrorMessage(error, '아이디 중복 확인에 실패했습니다.') }));
-    }
-  };
-
-  const handleSendEmailCode = async () => {
-    if (!isValidEmail(form.email)) {
-      setFieldErrors((current) => ({ ...current, email: '올바른 이메일 주소를 입력해주세요.' }));
-      return;
-    }
-
-    const target = form.email.trim();
-    const requestOrder = ++emailVerificationRequestRef.current;
-    try {
-      const result = await sendEmailCode.mutateAsync({
-        channel: VERIFICATION_CHANNEL.EMAIL,
-        target,
-        purpose: VERIFICATION_PURPOSE.REGISTER,
-      });
-      if (requestOrder !== emailVerificationRequestRef.current || target !== currentEmailRef.current.trim()) return;
-      emailVerificationIdRef.current = result.verificationId;
-      setVerification((current) => ({
-        ...current,
-        emailId: result.verificationId,
-        emailToken: '',
-        emailExpiresAt: result.expiresAt,
-        emailResendAvailableAt: result.resendAvailableAt,
-        emailRemainingAttempts: result.remainingAttempts,
-      }));
-      setFieldErrors((current) => ({ ...current, email: '', emailCode: '' }));
-    } catch (error) {
-      if (requestOrder !== emailVerificationRequestRef.current || target !== currentEmailRef.current.trim()) return;
-      setFieldErrors((current) => ({ ...current, email: getErrorMessage(error, '이메일 인증번호 발송에 실패했습니다.') }));
-    }
-  };
-
-  const handleConfirmEmailCode = async () => {
-    const verificationId = emailVerificationIdRef.current;
-    const target = currentEmailRef.current.trim();
-
-    if (!verificationId) {
-      setFieldErrors((current) => ({ ...current, emailCode: '이메일 인증번호를 먼저 요청해주세요.' }));
-      return;
-    }
-    if (emailExpiresIn <= 0) {
-      setFieldErrors((current) => ({ ...current, emailCode: '인증번호가 만료되었습니다. 다시 전송해주세요.' }));
-      return;
-    }
-    if (!isValidVerificationCode(form.emailCode)) {
-      setFieldErrors((current) => ({ ...current, emailCode: '인증번호 6자리를 입력해주세요.' }));
-      return;
-    }
-
-    try {
-      const result = await confirmEmailCode.mutateAsync({ verificationId, code: form.emailCode.trim() });
-      if (verificationId !== emailVerificationIdRef.current || target !== currentEmailRef.current.trim()) return;
-      setVerification((current) => ({ ...current, emailToken: result.verificationToken }));
-      setFieldErrors((current) => ({ ...current, emailCode: '' }));
-    } catch (error) {
-      if (verificationId !== emailVerificationIdRef.current || target !== currentEmailRef.current.trim()) return;
-      setFieldErrors((current) => ({ ...current, emailCode: getErrorMessage(error, '이메일 인증 확인에 실패했습니다.') }));
-    }
-  };
-
-  const handleSendPhoneCode = async () => {
-    if (!isValidPhone(form.phone)) {
-      setFieldErrors((current) => ({ ...current, phone: '휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해주세요.' }));
-      return;
-    }
-
-    const target = form.phone.replace(/\D/g, '');
-    const requestOrder = ++phoneVerificationRequestRef.current;
-    try {
-      const result = await sendPhoneCode.mutateAsync({
-        channel: VERIFICATION_CHANNEL.PHONE,
-        target,
-        purpose: VERIFICATION_PURPOSE.REGISTER,
-      });
-      if (requestOrder !== phoneVerificationRequestRef.current || target !== currentPhoneRef.current.replace(/\D/g, '')) return;
-      phoneVerificationIdRef.current = result.verificationId;
-      setVerification((current) => ({
-        ...current,
-        phoneId: result.verificationId,
-        phoneToken: '',
-        phoneExpiresAt: result.expiresAt,
-        phoneResendAvailableAt: result.resendAvailableAt,
-        phoneRemainingAttempts: result.remainingAttempts,
-      }));
-      setFieldErrors((current) => ({ ...current, phone: '', phoneCode: '' }));
-    } catch (error) {
-      if (requestOrder !== phoneVerificationRequestRef.current || target !== currentPhoneRef.current.replace(/\D/g, '')) return;
-      setFieldErrors((current) => ({ ...current, phone: getErrorMessage(error, '휴대폰 인증번호 발송에 실패했습니다.') }));
-    }
-  };
-
-  const handleConfirmPhoneCode = async () => {
-    const verificationId = phoneVerificationIdRef.current;
-    const target = currentPhoneRef.current.replace(/\D/g, '');
-
-    if (!verificationId) {
-      setFieldErrors((current) => ({ ...current, phoneCode: '휴대폰 인증번호를 먼저 요청해주세요.' }));
-      return;
-    }
-    if (phoneExpiresIn <= 0) {
-      setFieldErrors((current) => ({ ...current, phoneCode: '인증번호가 만료되었습니다. 다시 전송해주세요.' }));
-      return;
-    }
-    if (!isValidVerificationCode(form.phoneCode)) {
-      setFieldErrors((current) => ({ ...current, phoneCode: '인증번호 6자리를 입력해주세요.' }));
-      return;
-    }
-
-    try {
-      const result = await confirmPhoneCode.mutateAsync({ verificationId, code: form.phoneCode.trim() });
-      if (verificationId !== phoneVerificationIdRef.current || target !== currentPhoneRef.current.replace(/\D/g, '')) return;
-      setVerification((current) => ({ ...current, phoneToken: result.verificationToken }));
-      setFieldErrors((current) => ({ ...current, phoneCode: '' }));
-    } catch (error) {
-      if (verificationId !== phoneVerificationIdRef.current || target !== currentPhoneRef.current.replace(/\D/g, '')) return;
-      setFieldErrors((current) => ({ ...current, phoneCode: getErrorMessage(error, '휴대폰 인증 확인에 실패했습니다.') }));
-    }
-  };
-
-  const handleSubmit = async () => {
-    const errors = validatePersonalRegisterForm(personalSnapshot, loginIdState);
-    setFieldErrors(errors);
-    setFormMessage('');
-    setSuccessMessage('');
-
-    if (Object.keys(errors).length > 0) {
-      setFormMessage('입력값과 인증 완료 여부를 확인해주세요.');
-      return;
-    }
-
-    try {
-      await registerUser.mutateAsync(toUserRegisterRequest(personalSnapshot));
-      setSuccessMessage('회원가입이 완료되었습니다. 로그인 페이지에서 서비스를 시작해주세요.');
-    } catch (error) {
-      setFormMessage(getErrorMessage(error, '회원가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
-    }
-  };
-
-  return (
-    <form className="cw-register-form">
-      <section className="cw-register-section cw-register-section--social">
-        <div>
-          <h2>소셜 계정으로 간편 가입</h2>
-          <p>자주 쓰는 계정으로 시작하고 필요한 정보만 추가로 입력하세요.</p>
-        </div>
-        <div className="cw-social-login" aria-label="소셜 회원가입">
-          {socialProviders.map((provider) => (
-            <a
-              aria-label={`${provider.label} 회원가입`}
-              className={`cw-social-login__button cw-social-login__${provider.id}`}
-              href="/auth/register/verify"
-              key={provider.id}
-            >
-              {provider.id === 'apple' ? <Apple size={24} /> : provider.mark}
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <section className="cw-register-section">
-        <div className="cw-register-section__title">
-          <UserRound size={22} />
-          <div>
-            <h2>기본 정보</h2>
-            <p>Career Wave 개인회원 서비스를 이용하기 위한 필수 정보입니다.</p>
-          </div>
-        </div>
-        <div className="cw-register-grid">
-          <Field label="아이디" required wide>
-            <AuthButtonGroup
-              input={<TextInput value={form.userId} onChange={(value) => update('userId', value)} placeholder="아이디(영문, 숫자 조합 6~20자)" />}
-              buttonLabel={checkLoginId.isPending || loginIdState === LOGIN_ID_CHECK_STATE.CHECKING ? '확인 중' : '중복 확인'}
-              disabled={checkLoginId.isPending || loginIdState === LOGIN_ID_CHECK_STATE.CHECKING}
-              onClick={handleLoginIdCheck}
-            />
-            <StatusPill active={loginIdState === LOGIN_ID_CHECK_STATE.AVAILABLE}>사용 가능한 아이디입니다.</StatusPill>
-            {fieldErrors.loginId && <p className="cw-register-error">{fieldErrors.loginId}</p>}
-          </Field>
-          <Field label="이름" required wide>
-            <TextInput value={form.name} onChange={(value) => update('name', value)} placeholder="이름(실명)" />
-          </Field>
-          <Field label="이메일" required wide>
-            <AuthButtonGroup
-              input={<TextInput type="email" value={form.email} onChange={(value) => update('email', value)} placeholder="이메일 주소 입력" />}
-              buttonLabel={sendEmailCode.isPending ? '전송 중' : verification.emailId ? `재전송${emailResendIn > 0 ? ` ${formatRemaining(emailResendIn)}` : ''}` : '인증번호 전송'}
-              disabled={sendEmailCode.isPending || emailResendIn > 0}
-              onClick={handleSendEmailCode}
-            />
-            <StatusPill active={Boolean(verification.emailId) && !verification.emailToken && emailExpiresIn > 0}>
-              인증번호 유효 시간 {formatRemaining(emailExpiresIn)}
-            </StatusPill>
-            <StatusPill active={Boolean(verification.emailToken)}>이메일 인증이 완료되었습니다.</StatusPill>
-            {verification.emailId && !verification.emailToken && emailExpiresIn <= 0 && (
-              <p className="cw-register-error">이메일 인증번호가 만료되었습니다. 다시 전송해주세요.</p>
-            )}
-            {fieldErrors.email && <p className="cw-register-error">{fieldErrors.email}</p>}
-          </Field>
-          <Field label="이메일 인증번호" required wide>
-            <AuthButtonGroup
-              input={<TextInput value={form.emailCode} onChange={(value) => update('emailCode', value)} placeholder="인증번호 6자리 입력" />}
-              buttonLabel={confirmEmailCode.isPending ? '확인 중' : '인증 확인'}
-              disabled={confirmEmailCode.isPending || !verification.emailId || emailExpiresIn <= 0}
-              onClick={handleConfirmEmailCode}
-              secondButtonLabel="재전송"
-              secondDisabled={sendEmailCode.isPending || emailResendIn > 0}
-              onSecondClick={handleSendEmailCode}
-            />
-            {fieldErrors.emailCode && <p className="cw-register-error">{fieldErrors.emailCode}</p>}
-          </Field>
-          <Field label="휴대폰 번호" required wide>
-            <AuthButtonGroup
-              input={<TextInput type="tel" value={form.phone} onChange={(value) => update('phone', value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" />}
-              buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
-              disabled={sendPhoneCode.isPending || phoneResendIn > 0}
-              onClick={handleSendPhoneCode}
-            />
-            <StatusPill active={Boolean(verification.phoneId) && !verification.phoneToken && phoneExpiresIn > 0}>
-              인증번호 유효 시간 {formatRemaining(phoneExpiresIn)}
-            </StatusPill>
-            {verification.phoneId && !verification.phoneToken && phoneExpiresIn <= 0 && (
-              <p className="cw-register-error">휴대폰 인증번호가 만료되었습니다. 다시 전송해주세요.</p>
-            )}
-            {fieldErrors.phone && <p className="cw-register-error">{fieldErrors.phone}</p>}
-          </Field>
-          <Field label="휴대폰 인증번호" required wide>
-            <AuthButtonGroup
-              input={<TextInput value={form.phoneCode} onChange={(value) => update('phoneCode', value)} placeholder="인증번호 6자리 입력" />}
-              buttonLabel={confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
-              disabled={confirmPhoneCode.isPending || !verification.phoneId || phoneExpiresIn <= 0}
-              onClick={handleConfirmPhoneCode}
-              secondButtonLabel="재전송"
-              secondDisabled={sendPhoneCode.isPending || phoneResendIn > 0}
-              onSecondClick={handleSendPhoneCode}
-            />
-            <StatusPill active={Boolean(verification.phoneToken)}>휴대폰 인증이 완료되었습니다.</StatusPill>
-            {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
-          </Field>
-          <Field label="비밀번호" required wide>
-            <TextInput
-              type="password"
-              value={form.password}
-              onChange={(value) => update('password', value)}
-              placeholder="비밀번호(8~16자의 영문, 숫자, 특수기호)"
-            />
-            {fieldErrors.password && <p className="cw-register-error">{fieldErrors.password}</p>}
-          </Field>
-          <Field label="비밀번호 확인" required wide>
-            <TextInput type="password" value={form.passwordConfirm} onChange={(value) => update('passwordConfirm', value)} placeholder="비밀번호 재입력" />
-            {passwordMismatch && <p className="cw-register-error">비밀번호가 일치하지 않습니다.</p>}
-            {fieldErrors.passwordConfirm && <p className="cw-register-error">{fieldErrors.passwordConfirm}</p>}
-          </Field>
-        </div>
-      </section>
-
-      <section className="cw-register-section">
-        <div className="cw-register-section__title">
-          <BadgeCheck size={22} />
-          <div>
-            <h2>약관 동의</h2>
-            <p>필수 약관에 동의하면 가입을 완료할 수 있습니다.</p>
-          </div>
-        </div>
-        <PersonalTerms values={terms} onChange={setTerms} />
-        {fieldErrors.terms && <p className="cw-register-error">{fieldErrors.terms}</p>}
-      </section>
-
-      {formMessage && <p className="cw-register-error">{formMessage}</p>}
-      {successMessage && <StatusPill active>{successMessage}</StatusPill>}
-
-      <button className="cw-register-submit" disabled={!canSubmit} onClick={handleSubmit} type="button">
-        {registerUser.isPending ? '가입 처리 중' : '가입하기'}
-      </button>
-    </form>
   );
 }
 
@@ -1550,7 +1022,7 @@ function RegisterPage() {
           </button>
         </div>
 
-        {registerType === 'personal' ? <PersonalRegisterForm /> : <CompanyRegisterForm />}
+        {registerType === 'personal' ? <PersonalRegisterForm termDetails={personalTermDetails} /> : <CompanyRegisterForm />}
 
         <p className="cw-auth-bottom-text">
           이미 계정이 있나요? <a href="/auth/login">로그인</a>
