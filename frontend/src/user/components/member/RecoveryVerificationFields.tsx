@@ -128,7 +128,7 @@ export function RecoveryCodeField({
           type="button"
           onClick={onResend}
         >
-          재전송
+          {sendPending ? '전송 중' : resendIn > 0 ? `${formatRemaining(resendIn)}` : '재전송'}
         </button>
       </div>
       {error && <p className="cw-register-error">{error}</p>}
