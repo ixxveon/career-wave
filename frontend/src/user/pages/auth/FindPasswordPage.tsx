@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, LockKeyhole, Mail, Phone, UserRound, Building2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Mail, Phone, UserRound, Building2 } from 'lucide-react';
 import {
   useConfirmVerificationCode,
   useIssuePasswordToken,
@@ -26,6 +26,7 @@ import {
   validateUserRecoveryTarget,
   validateVerificationConfirm,
 } from '../../utils/member/recoverySchema';
+import RecoveryPasswordFields from './RecoveryPasswordFields';
 import RecoverySupportPanel from './RecoverySupportPanel';
 import { RecoveryCodeField, RecoveryContactField } from './RecoveryVerificationFields';
 import {
@@ -33,7 +34,6 @@ import {
   EMPTY_VERIFICATION,
   type ResetSessionState,
   type VerificationState,
-  formatRemaining,
   getRecoveryErrorMessage,
   getRemainingSeconds,
   useVerificationNow,
@@ -674,50 +674,24 @@ function FindPasswordPage() {
             )}
 
             {hasResetToken && (
-              <>
-                <label>
-                  새 비밀번호
-                  <span>
-                    <LockKeyhole size={18} />
-                    <input
-                      aria-invalid={Boolean(fieldErrors.nextPassword)}
-                      type="password"
-                      placeholder="비밀번호(8~64자의 영문, 숫자, 특수문자 포함)"
-                      value={isCompany ? companyForm.nextPassword : userForm.nextPassword}
-                      onChange={(event) =>
-                        isCompany
-                          ? updateCompany('nextPassword', event.target.value)
-                          : updateUser('nextPassword', event.target.value)
-                      }
-                    />
-                  </span>
-                  {fieldErrors.nextPassword && <p className="cw-register-error">{fieldErrors.nextPassword}</p>}
-                </label>
-                <label>
-                  새 비밀번호 확인
-                  <span>
-                    <LockKeyhole size={18} />
-                    <input
-                      aria-invalid={Boolean(fieldErrors.nextPasswordConfirm)}
-                      type="password"
-                      placeholder="비밀번호 재입력"
-                      value={isCompany ? companyForm.nextPasswordConfirm : userForm.nextPasswordConfirm}
-                      onChange={(event) =>
-                        isCompany
-                          ? updateCompany('nextPasswordConfirm', event.target.value)
-                          : updateUser('nextPasswordConfirm', event.target.value)
-                      }
-                    />
-                  </span>
-                  {fieldErrors.nextPasswordConfirm && <p className="cw-register-error">{fieldErrors.nextPasswordConfirm}</p>}
-                  {activeResetSession.expiresAt && activeResetExpiresIn > 0 && (
-                    <span className="cw-auth-feedback">
-                      <CheckCircle2 size={15} />
-                      재설정 가능 시간 {formatRemaining(activeResetExpiresIn)}
-                    </span>
-                  )}
-                </label>
-              </>
+              <RecoveryPasswordFields
+                password={isCompany ? companyForm.nextPassword : userForm.nextPassword}
+                passwordConfirm={isCompany ? companyForm.nextPasswordConfirm : userForm.nextPasswordConfirm}
+                passwordError={fieldErrors.nextPassword}
+                passwordConfirmError={fieldErrors.nextPasswordConfirm}
+                resetExpiresAt={activeResetSession.expiresAt}
+                resetExpiresIn={activeResetExpiresIn}
+                onPasswordChange={(value) =>
+                  isCompany
+                    ? updateCompany('nextPassword', value)
+                    : updateUser('nextPassword', value)
+                }
+                onPasswordConfirmChange={(value) =>
+                  isCompany
+                    ? updateCompany('nextPasswordConfirm', value)
+                    : updateUser('nextPasswordConfirm', value)
+                }
+              />
             )}
 
             {formMessage && (
