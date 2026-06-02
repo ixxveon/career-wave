@@ -392,7 +392,7 @@ export default function CustomerServicePage() {
             </div>
             {noticeError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{noticeError}</p>}
             <div className="tableScroll">
-              <table className="memberTable">
+              <table className="memberTable csNoticeTable">
                 <thead>
                   <tr>
                     <th>번호</th><th>카테고리</th><th>제목</th><th>등록일</th><th>노출</th><th>관리</th>
