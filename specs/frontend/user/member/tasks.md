@@ -63,7 +63,7 @@
 
 - [ ] 인증번호 요청 rate limit UI 확인: 쿨다운, 재시도 횟수, 429 메시지
 - [ ] 중복 제출 방지 확인: 로그인, 가입, 인증번호 확인, 비밀번호 재설정
-- [ ] 민감정보 저장소 점검: password/code/token이 localStorage/sessionStorage에 저장되지 않는지 확인
+- [ ] 민감정보 저장소 점검: password/code/token이 `localStorage`에 저장되지 않는지 확인하고, `sessionStorage` 사용 시 refresh token의 탭 세션 복원 용도인지 점검
 - [ ] XSS 방어 점검: 사용자/기업 입력값 렌더링 시 HTML 삽입 없음
 - [ ] 모바일 375px 기준 로그인/가입/찾기 화면 입력 UX 확인
 - [ ] 키보드 접근성 확인: 탭 전환, 약관 체크, 모달 포커스, 오류 메시지 연결
