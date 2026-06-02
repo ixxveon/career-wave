@@ -1,63 +1,56 @@
-import { Loader2, Send, AlertCircle } from 'lucide-react';
+import { Send, AlertCircle, WifiOff } from 'lucide-react';
 import CoverLetterForm from '../../components/resume/CoverLetterForm';
+import LoadingModal from '../../components/resume/LoadingModal';
 import { useCoverLetterForm } from '../../hooks/resume/useCoverLetterForm';
+import { PLAN_LIMITS, MOCK_QUOTA } from '../../utils/resume/quota';
 import './CoverLetterAnalysisPage.css';
-import './ResumeAnalysisPage.css'; /* ra-quota-bar 공용 스타일 */
+import './ResumeAnalysisPage.css'; /* ra-quota-bar + ra-toast 공용 스타일 */
 
-/* ── 멤버십 한도 (백엔드 연동 전 임시 목업) ── */
-const PLAN_LIMITS = { FREE: { document: 1 }, PREMIUM: { document: 20 } };
-const MOCK_QUOTA  = { membership: 'PREMIUM' as const, documentUsed: 7 };
-
-/* ── 메인 컴포넌트 ──────────────────────────────── */
 export default function CoverLetterAnalysisPage() {
   const {
-    company,
-    job,
-    items,
-    uiState,
-    apiError,
-    canSubmit,
-    setCompany,
-    setJob,
-    addItem,
-    removeItem,
-    updateItem,
-    handleSubmit,
-    reset,
+    company, job, items, uiState, apiError, networkError, wsMessage, canSubmit,
+    setCompany, setJob, addItem, removeItem, updateItem,
+    handleSubmit, reset, dismissNetworkError,
   } = useCoverLetterForm();
 
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  /* ── 할당량 계산 ── */
   const { membership, documentUsed } = MOCK_QUOTA;
   const docLimit    = PLAN_LIMITS[membership].document;
   const docLeft     = docLimit - documentUsed;
   const pct         = Math.min((documentUsed / docLimit) * 100, 100);
   const isExhausted = docLeft <= 0;
 
-  /* ── 분석 중 화면 (Phase 3에서 LoadingModal로 교체 예정) ── */
-  if (isAnalyzing) {
+  if (uiState === 'SUCCESS') {
     return (
       <div className="cl">
         <div className="cl-input-wrap" style={{ alignItems: 'center', textAlign: 'center', gap: 16 }}>
-          <Loader2 size={48} className="ra-overlay__spinner" style={{ color: 'var(--color-primary)' }} />
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 17 }}>AI가 자기소개서를 분석하고 있어요</p>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-secondary)' }}>잠시만 기다려주세요 (약 30초 소요)</p>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 20 }}>✅ 분석이 완료되었어요!</p>
+          <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-secondary)' }}>
+            Phase 4에서 리포트 화면이 구현될 예정입니다.
+          </p>
           <button type="button" className="cl-btn cl-btn--outline" onClick={reset}>
-            취소
+            다시 분석하기
           </button>
         </div>
       </div>
     );
   }
 
-  /* ── 입력 화면 ── */
   return (
     <div className="cl">
-      <div className="cl-input-wrap">
+      {isAnalyzing && <LoadingModal wsMessage={wsMessage} onCancel={reset} />}
 
-        {/* 할당량 표시 */}
+      {networkError && (
+        <div className="ra-toast" role="alert" aria-live="assertive">
+          <WifiOff size={14} aria-hidden="true" />
+          네트워크 연결이 끊겼습니다. 연결 상태를 확인해주세요.
+          <button type="button" className="ra-toast__close" onClick={dismissNetworkError} aria-label="알림 닫기">✕</button>
+        </div>
+      )}
+
+      <div className="cl-input-wrap">
         <div className="ra-quota-bar">
           <div className="ra-quota-bar__info">
             <span className="ra-quota-bar__label">이번 달 서류 분석</span>
@@ -82,7 +75,6 @@ export default function CoverLetterAnalysisPage() {
           최대 5개 문항까지 한 번에 분석할 수 있습니다.
         </p>
 
-        {/* 폼 컴포넌트 */}
         <CoverLetterForm
           company={company}
           job={job}
@@ -95,7 +87,6 @@ export default function CoverLetterAnalysisPage() {
           onUpdateItem={updateItem}
         />
 
-        {/* API 오류 메시지 */}
         {apiError && (
           <p className="cl-api-error" role="alert">
             <AlertCircle size={13} aria-hidden="true" /> {apiError}
@@ -109,12 +100,9 @@ export default function CoverLetterAnalysisPage() {
           onClick={handleSubmit}
           aria-busy={isSubmitting}
         >
-          {isSubmitting
-            ? <><Loader2 size={15} className="cl-btn__spinner" aria-hidden="true" /> 제출 중...</>
-            : <><Send size={15} aria-hidden="true" /> AI 분석 시작하기</>
-          }
+          <Send size={15} aria-hidden="true" />
+          {isSubmitting ? '제출 중...' : 'AI 분석 시작하기'}
         </button>
-
       </div>
     </div>
   );
