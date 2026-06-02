@@ -360,6 +360,82 @@ GitHub UI에 review thread가 unresolved로 남아 있지만, 실제 코드에�
 
 ---
 
+### 2.14 page는 JSX를 가질 수 있지만 저수준 구현 파일이 되면 안 되는 문제
+
+`page`를 얇게 만든다는 말을 "page 안에는 HTML/JSX가 없어야 한다"로 오해해서, 반대로 기준이 모호해지는 문제.
+
+대표 예시:
+
+- `RegisterPage.tsx` 안에 페이지 shell, 탭 전환, 하단 링크 정도만 남은 상태는 허용 가능
+- 반대로 `<label>`, `<input>`, 약관 체크박스군, 버튼 row, 인증번호 영역까지 page에 직접 남아 있으면 구조 분리가 덜 된 상태
+
+규칙:
+
+- `pages`는 route entry와 page-level composition JSX를 가진다.
+- page 안에 JSX가 있는 것 자체는 문제 아니다.
+- 다만 page가 저수준 form markup과 business orchestration을 함께 가지면 reviewer가 "큰 구현 파일"로 판단할 수 있다.
+- page에는 "어떤 섹션을 어떤 순서로 보여줄지"까지만 남기고, 입력군/액션영역/안내영역은 `components`로 내린다.
+
+실무 판단 기준:
+
+- `page = no JSX`는 과도한 규칙이다.
+- 더 정확한 기준은 `page = page-level JSX only`다.
+- 탭 전환, 섹션 조합, layout shell은 page에 남아도 되지만, 입력 필드 세부 구현과 submit 흐름은 page 밖으로 나가야 한다.
+
+---
+
+### 2.15 정적 약관/안내 문안이 page에 오래 머무는 문제
+
+business logic는 밖으로 뺐지만, 수십~수백 줄짜리 정적 약관/안내 문안이 계속 page에 남아 있어서 파일이 다시 비대해지는 문제.
+
+대표 예시:
+
+- `RegisterPage.tsx` 안에 개인/기업 약관 문안 상수가 그대로 들어 있어 page line 수가 불필요하게 커짐
+
+규칙:
+
+- 긴 약관 문안, 안내 copy, 정적 form metadata는 page에 두지 않는다.
+- 렌더링 로직이 아닌 정적 데이터라면 `utils/member` 또는 별도 content/data 파일로 분리한다.
+- "동작은 가벼워졌는데 파일은 여전히 거대하다"면 static content가 남아 있는지 먼저 본다.
+
+권장 분리:
+
+```text
+정적 약관/카피/metadata -> utils/member 또는 도메인 content 파일
+page -> layout + tab + form component 조합
+```
+
+---
+
+### 2.16 구조 정리 PR에서 commit 목적이 섞이는 문제
+
+refactor PR에서 "타입 에러 수정 + 공통 component 추출 + hook 추출 + import 정리"를 한 commit에 섞어 reviewer가 변경 의도를 따라가기 어려워지는 문제.
+
+대표 예시:
+
+- Auth 구조 정리 중 `LoginPage`, `RegisterPage`, TS 오류, static terms 이동을 한 번에 commit하는 경우
+
+규칙:
+
+- 구조 정리 PR일수록 commit 목적을 더 잘게 나눈다.
+- 최소한 아래 레벨은 분리한다.
+
+권장 순서:
+
+```text
+1. Auth 범위 TS/type/import 빨간줄 정리
+2. 페이지 1개 단위 역할 분리
+3. 공통 입력/section/component 추출
+4. form orchestration hook 추출
+5. 정적 약관/안내 문안 이동
+6. build fix
+```
+
+- reviewer가 commit log만 보고도 "무엇을 왜 옮겼는지" 이해할 수 있어야 한다.
+- 구조 이동과 동작 수정이 함께 들어가면 commit message에서 둘 다 드러나야 한다.
+
+---
+
 ## 3. 구현 전 체크리스트
 
 코드 작성 전에 아래를 먼저 확인한다.
@@ -369,6 +445,7 @@ GitHub UI에 review thread가 unresolved로 남아 있지만, 실제 코드에�
 - api-schema에 request / response / error code가 정의되어 있는가
 - 기존 UI state가 page 내부에만 있고 분리되지 않았다면 snapshot / util / hook / api 계층으로 나눌 수 있는가
 - page 안의 저수준 view block(탭, 입력군, 링크, action area)이 component로 분리 가능한가
+- page에 남아 있는 대형 정적 약관/안내 문안을 data/content 파일로 분리할 필요는 없는가
 - hook이 components를 역참조하는 구조가 생기지 않는가
 - 이번 변경이 현재 Phase 범위를 넘지 않는가
 
@@ -442,6 +519,7 @@ GitHub UI에 review thread가 unresolved로 남아 있지만, 실제 코드에�
 - [ ] `hooks -> components` 역의존이 없다
 - [ ] `components` 아래에 util/hook 혼합 파일이 없다
 - [ ] page에 남은 저수준 view block을 component로 빼야 하는지 점검했다
+- [ ] page가 page-level JSX만 가지는지, 저수준 form markup과 정적 약관 데이터까지 함께 떠안고 있지 않은지 확인했다
 - [ ] auth 요청에서 token 누락을 명확히 처리한다
 - [ ] token 저장 전략이 spec과 일치한다
 - [ ] token 저장 전략이 실사용 UX와 보안 기준 모두에서 납득 가능한지 확인했다
