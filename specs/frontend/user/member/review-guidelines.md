@@ -174,6 +174,115 @@ reviewer가 localStorage 저장 누락으로 오해할 수 있으나, 실제로�
 
 ---
 
+### 2.7 로그인 성공 전 session 선저장
+
+로그인 API 응답으로 token/member를 받았다는 이유만으로, 최종 라우팅 결정 전에 session을 먼저 저장하는 문제.
+
+대표 예시:
+
+- 기업회원 로그인 시 API는 성공했지만 최종 판정이 `BLOCK`인데도 token/member가 memory에 남음
+
+규칙:
+
+- 로그인 성공 응답을 받더라도 곧바로 session을 저장하지 않는다.
+- `memberStatus`, `memberType`, `companyApprovalStatus` 등 최종 접근 판정을 먼저 계산한다.
+- `ALLOW`일 때만 token/member를 저장한다.
+- `BLOCK`이면 session을 저장하지 않거나, 이미 저장된 값이 있다면 즉시 clear한다.
+
+권장 순서:
+
+```text
+1. login API 호출
+2. route decision 계산
+3. ALLOW -> session 저장 + redirect
+4. BLOCK -> session clear + 차단 안내 표시
+```
+
+---
+
+### 2.8 로그인 검증에 회원가입 규칙을 그대로 재사용
+
+회원가입에서 쓰는 아이디 포맷 규칙을 로그인에도 그대로 강제해서, 실제로 존재하는 legacy account가 로그인하지 못하게 되는 문제.
+
+대표 예시:
+
+- 로그인 화면에서 `loginId`가 회원가입 신규 규칙을 만족하지 않는다는 이유로 submit 자체가 막힘
+
+규칙:
+
+- 로그인 validation은 "입력 누락 방지"와 "기본적인 형식 오류 방지"에 집중한다.
+- 회원가입 규칙이 더 엄격하더라도, 로그인에서는 이미 존재하는 legacy 계정을 배제하지 않도록 분리한다.
+- `signupSchema`와 `loginSchema`는 같은 필드를 다루더라도 동일 규칙이라고 가정하지 않는다.
+
+실무 판단 기준:
+
+- 가입은 신규 데이터 품질을 관리하는 흐름이다.
+- 로그인은 기존 계정 접근을 허용하는 흐름이다.
+- 따라서 login validation이 signup validation보다 느슨한 것은 이상한 것이 아니라 오히려 자연스럽다.
+
+---
+
+### 2.9 브라우저별 file MIME 공백 케이스 누락
+
+실제 브라우저/OS 조합에서는 PDF를 올려도 `file.type`이 빈 문자열로 들어올 수 있는데, MIME만 엄격하게 검사해서 정상 파일을 막는 문제.
+
+대표 예시:
+
+- 재직증명서 PDF 업로드 시 `application/pdf`가 아니면 무조건 실패
+- Safari/일부 모바일 환경에서 빈 MIME 때문에 정상 PDF가 차단됨
+
+규칙:
+
+- 파일 검증은 확장자, MIME, 크기 제한을 함께 본다.
+- MIME이 비어 있는 브라우저 현실을 고려하되, 보안상 과도하게 풀어주지 않는다.
+- "엄격함"보다 "정상 사용자 차단 방지 + 우회 가능성 최소화"의 균형으로 판단한다.
+
+권장 방향:
+
+```text
+1. 확장자 .pdf 확인
+2. MIME이 있으면 application/pdf 검증
+3. MIME이 비어 있으면 확장자/크기 기준으로 허용 여부 판단
+```
+
+---
+
+### 2.10 세션 복원 전략은 코드와 문서를 함께 맞춘다
+
+token/session 관련 구현이 바뀌었는데, spec/constitution/api-schema/PR 설명이 예전 상태로 남아서 reviewer가 현재 의도를 파악하지 못하는 문제.
+
+대표 예시:
+
+- 코드에서는 refresh 기반 세션 복원을 추가했는데 문서에는 여전히 memory-only처럼 적혀 있음
+- reviewer는 localStorage 누락인지, 의도된 보안 설계인지 판단할 수 없음
+
+규칙:
+
+- token/session 전략을 건드리면 코드와 문서를 한 세트로 수정한다.
+- 아래 4개는 함께 확인한다.
+
+체크 대상:
+
+- `spec.md`
+- `constitution.md`
+- `api-schema.md`
+- PR body / reviewer 전달 사항
+
+현재 회원 도메인 구현 기준:
+
+- access token: memory 우선
+- refresh token: HttpOnly cookie 권장
+- backend 제약상 cookie 전략이 아직 확정되지 않았다면 `sessionStorage` 기반 tab-session restore fallback 허용
+- `localStorage`에는 token 저장 금지
+
+정리 원칙:
+
+- "보안 때문에 저장 안 함"만으로 끝내지 않는다.
+- "새로고침 후 복원 가능한가"까지 포함해 설명한다.
+- 구현이 임시 fallback인지, 최종 목표 구조인지 reviewer가 알 수 있게 남긴다.
+
+---
+
 ## 3. 구현 전 체크리스트
 
 코드 작성 전에 아래를 먼저 확인한다.
@@ -218,6 +327,19 @@ reviewer가 localStorage 저장 누락으로 오해할 수 있으나, 실제로�
 - 401 응답 시 session 정리 정책이 있는가
 - 새로고침 후 세션 복원 경로(refresh bootstrap 등)가 있는가
 
+### 4.6 login flow
+
+- 로그인 API 성공 직후 session을 바로 저장하지 않는가
+- `ALLOW / BLOCK` 판정 이후에만 session 저장 여부를 결정하는가
+- `BLOCK` 상태에서 token/member가 남지 않는가
+- login validation이 signup 신규 규칙을 과하게 재사용하지 않는가
+
+### 4.7 file validation
+
+- MIME이 비어 있는 실제 브라우저 케이스를 고려했는가
+- 확장자 / MIME / 크기 제한을 함께 확인하는가
+- 특정 브라우저에서 정상 파일이 과도하게 차단되지 않는가
+
 ---
 
 ## 5. PR 올리기 전 자가 점검
@@ -233,6 +355,10 @@ reviewer가 localStorage 저장 누락으로 오해할 수 있으나, 실제로�
 - [ ] token 저장 전략이 spec과 일치한다
 - [ ] token 저장 전략이 실사용 UX와 보안 기준 모두에서 납득 가능한지 확인했다
 - [ ] memory-only라면 새로고침 후 세션 복원 전략이 있는지 확인했다
+- [ ] 로그인 성공 후 최종 접근 판정 이전에는 session을 저장하지 않는다
+- [ ] `BLOCK` 로그인 결과에서 token/member가 남지 않는다
+- [ ] 로그인 validation이 legacy account를 불필요하게 차단하지 않는다
+- [ ] 파일 업로드 검증이 빈 MIME 브라우저 케이스를 과도하게 실패시키지 않는다
 
 ### 5.2 Git
 

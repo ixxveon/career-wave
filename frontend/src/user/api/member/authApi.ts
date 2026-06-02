@@ -4,15 +4,10 @@ import { memberApiClient } from './memberApiClient';
 
 export const memberAuthApi = {
   async login(payload: LoginRequest): Promise<LoginResponse> {
-    const data = await memberApiClient<LoginResponse>('/api/v1/members/login', {
+    return memberApiClient<LoginResponse>('/api/v1/members/login', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-
-    authSession.setAccessToken(data.accessToken);
-    authSession.setMember(data.member);
-
-    return data;
   },
 
   logout() {
