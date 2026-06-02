@@ -1,10 +1,15 @@
-import { Link, useParams } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, Mail, Phone, UserRound, Building2 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { Mail, Phone } from 'lucide-react';
 import { useFindPasswordRecovery } from '../../hooks/member';
 import { RECOVERY_METHOD } from '../../utils/member/recoverySchema';
+import RecoveryCompanyIdentityFields from '../../components/member/RecoveryCompanyIdentityFields';
+import RecoveryLoginIdField from '../../components/member/RecoveryLoginIdField';
+import RecoveryMethodTabs from '../../components/member/RecoveryMethodTabs';
+import RecoveryPasswordActionArea from '../../components/member/RecoveryPasswordActionArea';
 import RecoveryPasswordFields from '../../components/member/RecoveryPasswordFields';
+import RecoveryPageLinks from '../../components/member/RecoveryPageLinks';
+import RecoverySupportPanel from '../../components/member/RecoverySupportPanel';
 import { RecoveryCodeField, RecoveryContactField } from '../../components/member/RecoveryVerificationFields';
-import RecoverySupportPanel from './RecoverySupportPanel';
 import './AuthPage.css';
 
 function FindPasswordPage() {
@@ -55,45 +60,15 @@ function FindPasswordPage() {
         </div>
 
         <div className="cw-auth-card cw-auth-card--detail">
-          {!isCompany && (
-            <div className="cw-register-tabs cw-register-tabs--auth" role="tablist" aria-label="개인회원 인증 방식">
-              <button
-                className={userMethod === RECOVERY_METHOD.EMAIL ? 'is-active' : ''}
-                type="button"
-                role="tab"
-                aria-selected={userMethod === RECOVERY_METHOD.EMAIL}
-                onClick={() => resetUserMethod(RECOVERY_METHOD.EMAIL)}
-              >
-                이메일로 인증
-              </button>
-              <button
-                className={userMethod === RECOVERY_METHOD.PHONE ? 'is-active' : ''}
-                type="button"
-                role="tab"
-                aria-selected={userMethod === RECOVERY_METHOD.PHONE}
-                onClick={() => resetUserMethod(RECOVERY_METHOD.PHONE)}
-              >
-                휴대폰 번호로 인증
-              </button>
-            </div>
-          )}
+          {!isCompany && <RecoveryMethodTabs method={userMethod} onChange={resetUserMethod} />}
 
           <form className="cw-auth-form" noValidate>
             {!isCompany && (
-              <label>
-                아이디
-                <span>
-                  <UserRound size={18} />
-                  <input
-                    aria-invalid={Boolean(fieldErrors.loginId)}
-                    type="text"
-                    placeholder="아이디를 입력하세요"
-                    value={userForm.loginId}
-                    onChange={(event) => updateUser('loginId', event.target.value)}
-                  />
-                </span>
-                {fieldErrors.loginId && <p className="cw-register-error">{fieldErrors.loginId}</p>}
-              </label>
+              <RecoveryLoginIdField
+                value={userForm.loginId}
+                error={fieldErrors.loginId}
+                onChange={(value) => updateUser('loginId', value)}
+              />
             )}
 
             {!isCompany && userMethod === RECOVERY_METHOD.EMAIL && (
@@ -150,49 +125,17 @@ function FindPasswordPage() {
 
             {isCompany && (
               <>
-                <label>
-                  아이디
-                  <span>
-                    <UserRound size={18} />
-                    <input
-                      aria-invalid={Boolean(fieldErrors.loginId)}
-                      type="text"
-                      placeholder="아이디를 입력하세요"
-                      value={companyForm.loginId}
-                      onChange={(event) => updateCompany('loginId', event.target.value)}
-                    />
-                  </span>
-                  {fieldErrors.loginId && <p className="cw-register-error">{fieldErrors.loginId}</p>}
-                </label>
-                <label>
-                  담당자명
-                  <span>
-                    <UserRound size={18} />
-                    <input
-                      aria-invalid={Boolean(fieldErrors.managerName)}
-                      type="text"
-                      placeholder="담당자명(실명)"
-                      value={companyForm.managerName}
-                      onChange={(event) => updateCompany('managerName', event.target.value)}
-                    />
-                  </span>
-                  {fieldErrors.managerName && <p className="cw-register-error">{fieldErrors.managerName}</p>}
-                </label>
-                <label>
-                  사업자등록번호
-                  <span>
-                    <Building2 size={18} />
-                    <input
-                      aria-invalid={Boolean(fieldErrors.businessNumber)}
-                      inputMode="numeric"
-                      type="text"
-                      placeholder="사업자등록번호('-' 없이 숫자만 입력)"
-                      value={companyForm.businessNumber}
-                      onChange={(event) => updateCompany('businessNumber', event.target.value)}
-                    />
-                  </span>
-                  {fieldErrors.businessNumber && <p className="cw-register-error">{fieldErrors.businessNumber}</p>}
-                </label>
+                <RecoveryCompanyIdentityFields
+                  loginId={companyForm.loginId}
+                  loginIdError={fieldErrors.loginId}
+                  managerName={companyForm.managerName}
+                  managerNameError={fieldErrors.managerName}
+                  businessNumber={companyForm.businessNumber}
+                  businessNumberError={fieldErrors.businessNumber}
+                  onLoginIdChange={(value) => updateCompany('loginId', value)}
+                  onManagerNameChange={(value) => updateCompany('managerName', value)}
+                  onBusinessNumberChange={(value) => updateCompany('businessNumber', value)}
+                />
                 <RecoveryContactField
                   label="담당자 이메일"
                   icon={<Mail size={18} />}
@@ -245,42 +188,23 @@ function FindPasswordPage() {
               />
             )}
 
-            {formMessage && (
-              <p className="cw-auth-message cw-auth-message--error" role="alert">
-                <AlertCircle size={16} />
-                {formMessage}
-              </p>
-            )}
-            {successMessage && (
-              <p className="cw-auth-feedback" role="status" aria-live="polite">
-                <CheckCircle2 size={15} />
-                {successMessage}
-              </p>
-            )}
-
-            <button
-              className="cw-auth-main-button"
-              disabled={issuePasswordTokenPending || resetPasswordPending}
-              type="button"
-              onClick={hasResetToken ? handleResetPassword : handleIssueResetToken}
-            >
-              {hasResetToken
-                ? resetPasswordPending
-                  ? '저장 중'
-                  : '새 비밀번호 저장'
-                : issuePasswordTokenPending
-                  ? '확인 중'
-                  : '비밀번호 재설정 진행'}
-            </button>
+            <RecoveryPasswordActionArea
+              formMessage={formMessage}
+              successMessage={successMessage}
+              hasResetToken={hasResetToken}
+              issuePasswordTokenPending={issuePasswordTokenPending}
+              resetPasswordPending={resetPasswordPending}
+              onSubmit={hasResetToken ? handleResetPassword : handleIssueResetToken}
+            />
           </form>
 
-          <div className="cw-auth-links">
-            <Link to="/auth/find-account">선택 페이지로 돌아가기</Link>
-            <span aria-hidden="true">|</span>
-            <Link to={`/auth/find-id/${isCompany ? 'company' : 'user'}`}>아이디 찾기</Link>
-            <span aria-hidden="true">|</span>
-            <Link to="/auth/login">로그인</Link>
-          </div>
+          <RecoveryPageLinks
+            links={[
+              { to: '/auth/find-account', label: '선택 페이지로 돌아가기' },
+              { to: `/auth/find-id/${isCompany ? 'company' : 'user'}`, label: '아이디 찾기' },
+              { to: '/auth/login', label: '로그인' },
+            ]}
+          />
         </div>
 
         <RecoverySupportPanel />

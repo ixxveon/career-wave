@@ -1,10 +1,13 @@
-import { Link, useParams } from 'react-router-dom';
-import { AlertCircle, Mail, Phone, UserRound, Building2 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { AlertCircle, Mail, Phone } from 'lucide-react';
 import { useFindIdRecovery } from '../../hooks/member';
 import { RECOVERY_METHOD } from '../../utils/member/recoverySchema';
+import RecoveryCompanyIdentityFields from '../../components/member/RecoveryCompanyIdentityFields';
+import RecoveryMethodTabs from '../../components/member/RecoveryMethodTabs';
+import RecoveryPageLinks from '../../components/member/RecoveryPageLinks';
+import RecoverySupportPanel from '../../components/member/RecoverySupportPanel';
 import { RecoveryCodeField, RecoveryContactField } from '../../components/member/RecoveryVerificationFields';
 import RecoveryResultPanel from '../../components/member/RecoveryResultPanel';
-import RecoverySupportPanel from './RecoverySupportPanel';
 import './AuthPage.css';
 
 function FindIdPage() {
@@ -50,28 +53,7 @@ function FindIdPage() {
         </div>
 
         <div className="cw-auth-card cw-auth-card--detail">
-          {!isCompany && (
-            <div className="cw-register-tabs cw-register-tabs--auth" role="tablist" aria-label="개인회원 인증 방식">
-              <button
-                className={userMethod === RECOVERY_METHOD.EMAIL ? 'is-active' : ''}
-                type="button"
-                role="tab"
-                aria-selected={userMethod === RECOVERY_METHOD.EMAIL}
-                onClick={() => resetUserMethod(RECOVERY_METHOD.EMAIL)}
-              >
-                이메일로 인증
-              </button>
-              <button
-                className={userMethod === RECOVERY_METHOD.PHONE ? 'is-active' : ''}
-                type="button"
-                role="tab"
-                aria-selected={userMethod === RECOVERY_METHOD.PHONE}
-                onClick={() => resetUserMethod(RECOVERY_METHOD.PHONE)}
-              >
-                휴대폰 번호로 인증
-              </button>
-            </div>
-          )}
+          {!isCompany && <RecoveryMethodTabs method={userMethod} onChange={resetUserMethod} />}
 
           <form className="cw-auth-form" noValidate>
             {!isCompany && userMethod === RECOVERY_METHOD.EMAIL && (
@@ -128,35 +110,14 @@ function FindIdPage() {
 
             {isCompany && (
               <>
-                <label>
-                  담당자명
-                  <span>
-                    <UserRound size={18} />
-                    <input
-                      aria-invalid={Boolean(fieldErrors.managerName)}
-                      type="text"
-                      placeholder="담당자명(실명)"
-                      value={companyForm.managerName}
-                      onChange={(event) => updateCompany('managerName', event.target.value)}
-                    />
-                  </span>
-                  {fieldErrors.managerName && <p className="cw-register-error">{fieldErrors.managerName}</p>}
-                </label>
-                <label>
-                  사업자등록번호
-                  <span>
-                    <Building2 size={18} />
-                    <input
-                      aria-invalid={Boolean(fieldErrors.businessNumber)}
-                      inputMode="numeric"
-                      type="text"
-                      placeholder="사업자등록번호('-' 없이 숫자만 입력)"
-                      value={companyForm.businessNumber}
-                      onChange={(event) => updateCompany('businessNumber', event.target.value)}
-                    />
-                  </span>
-                  {fieldErrors.businessNumber && <p className="cw-register-error">{fieldErrors.businessNumber}</p>}
-                </label>
+                <RecoveryCompanyIdentityFields
+                  managerName={companyForm.managerName}
+                  managerNameError={fieldErrors.managerName}
+                  businessNumber={companyForm.businessNumber}
+                  businessNumberError={fieldErrors.businessNumber}
+                  onManagerNameChange={(value) => updateCompany('managerName', value)}
+                  onBusinessNumberChange={(value) => updateCompany('businessNumber', value)}
+                />
                 <RecoveryContactField
                   label="담당자 이메일"
                   icon={<Mail size={18} />}
@@ -212,11 +173,12 @@ function FindIdPage() {
             />
           )}
 
-          <div className="cw-auth-links">
-            <Link to="/auth/find-account">선택 페이지로 돌아가기</Link>
-            <span aria-hidden="true">|</span>
-            <Link to={`/auth/find-password/${isCompany ? 'company' : 'user'}`}>비밀번호 찾기</Link>
-          </div>
+          <RecoveryPageLinks
+            links={[
+              { to: '/auth/find-account', label: '선택 페이지로 돌아가기' },
+              { to: `/auth/find-password/${isCompany ? 'company' : 'user'}`, label: '비밀번호 찾기' },
+            ]}
+          />
         </div>
 
         <RecoverySupportPanel />
