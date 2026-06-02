@@ -243,7 +243,7 @@ export default function DocumentResultView({
         className="dr-cta"
         onClick={() => navigate(
           interviewDocumentId
-            ? `/interview/text?documentId=${interviewDocumentId}`
+            ? `/interview/text?documentId=${String(interviewDocumentId)}`
             : '/interview/text'
         )}
       >
