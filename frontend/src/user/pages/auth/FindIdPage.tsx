@@ -21,6 +21,7 @@ import {
 } from '../../utils/member/recoverySchema';
 import RecoverySupportPanel from './RecoverySupportPanel';
 import { RecoveryCodeField, RecoveryContactField } from './RecoveryVerificationFields';
+import RecoveryResultPanel from './RecoveryResultPanel';
 import {
   EMPTY_VERIFICATION,
   type VerificationState,
@@ -535,20 +536,10 @@ function FindIdPage() {
           </form>
 
           {result.submitted && (
-            <div className="cw-auth-result" aria-live="polite">
-              {result.found && result.maskedLoginIds.length > 0 ? (
-                <>
-                  <p>가입된 아이디를 확인했습니다.</p>
-                  <ul>
-                    {result.maskedLoginIds.map((loginId) => (
-                      <li key={loginId}>{loginId}</li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <p>입력하신 정보와 일치하는 계정을 바로 확인할 수 없습니다. 가입 정보를 다시 확인하거나 고객센터로 문의해주세요.</p>
-              )}
-            </div>
+            <RecoveryResultPanel
+              found={result.found}
+              maskedLoginIds={result.maskedLoginIds}
+            />
           )}
 
           <div className="cw-auth-links">
