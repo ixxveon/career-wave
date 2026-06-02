@@ -356,21 +356,22 @@ export function useFindIdRecovery(isCompany: boolean) {
   };
 
   const handleFindId = async () => {
-    try {
-      if (isCompany) {
-        const verificationToken = companyVerification.verificationToken;
-        const errors = validateCompanyFindIdSubmission(companyForm, verificationToken);
-        if (hasRecoveryFieldErrors(errors)) {
-          setFieldErrors((current) => ({ ...current, ...errors }));
-          return;
-        }
+    if (isCompany) {
+      const verificationToken = companyVerification.verificationToken;
+      const errors = validateCompanyFindIdSubmission(companyForm, verificationToken);
+      if (hasRecoveryFieldErrors(errors)) {
+        setFieldErrors((current) => ({ ...current, ...errors }));
+        return;
+      }
 
-        const requestSnapshot = [
-          currentCompanyManagerNameRef.current.trim(),
-          currentCompanyBusinessNumberRef.current,
-          currentCompanyEmailRef.current.trim(),
-          verificationToken,
-        ].join('|');
+      const requestSnapshot = [
+        currentCompanyManagerNameRef.current.trim(),
+        currentCompanyBusinessNumberRef.current,
+        currentCompanyEmailRef.current.trim(),
+        verificationToken,
+      ].join('|');
+
+      try {
         const response = await findIdMutation.mutateAsync(
           toFindIdRequest('company', verificationToken, companyForm),
         );
@@ -387,44 +388,71 @@ export function useFindIdRecovery(isCompany: boolean) {
           found: response.found,
           maskedLoginIds: response.maskedLoginIds,
         });
-      } else {
-        const verificationToken = activeUserVerification.verificationToken;
-        const requestMethod = userMethod;
-        const errors = validateUserFindIdSubmission(userForm, userMethod, verificationToken);
-        if (hasRecoveryFieldErrors(errors)) {
-          setFieldErrors((current) => ({ ...current, ...errors }));
-          return;
-        }
-
-        const requestSnapshot = [
-          requestMethod,
-          getRecoveryTarget(requestMethod, currentUserEmailRef.current, currentUserPhoneRef.current),
-          verificationToken,
-        ].join('|');
-        const response = await findIdMutation.mutateAsync(
-          toFindIdRequest('user', verificationToken),
-        );
+        setFormMessage('');
+        setFieldErrors({});
+      } catch (error) {
         const currentSnapshot = [
-          currentUserMethodRef.current,
-          getRecoveryTarget(
-            currentUserMethodRef.current,
-            currentUserEmailRef.current,
-            currentUserPhoneRef.current,
-          ),
-          userVerificationRef.current[currentUserMethodRef.current].verificationToken,
+          currentCompanyManagerNameRef.current.trim(),
+          currentCompanyBusinessNumberRef.current,
+          currentCompanyEmailRef.current.trim(),
+          companyVerificationRef.current.verificationToken,
         ].join('|');
         if (requestSnapshot !== currentSnapshot) return;
 
-        setResult({
-          submitted: true,
-          found: response.found,
-          maskedLoginIds: response.maskedLoginIds,
-        });
+        setFormMessage(getRecoveryErrorMessage(error, '아이디 찾기에 실패했습니다. 잠시 후 다시 시도해주세요.'));
       }
 
+      return;
+    }
+
+    const verificationToken = activeUserVerification.verificationToken;
+    const requestMethod = userMethod;
+    const errors = validateUserFindIdSubmission(userForm, userMethod, verificationToken);
+    if (hasRecoveryFieldErrors(errors)) {
+      setFieldErrors((current) => ({ ...current, ...errors }));
+      return;
+    }
+
+    const requestSnapshot = [
+      requestMethod,
+      getRecoveryTarget(requestMethod, currentUserEmailRef.current, currentUserPhoneRef.current),
+      verificationToken,
+    ].join('|');
+
+    try {
+      const response = await findIdMutation.mutateAsync(
+        toFindIdRequest('user', verificationToken),
+      );
+      const currentSnapshot = [
+        currentUserMethodRef.current,
+        getRecoveryTarget(
+          currentUserMethodRef.current,
+          currentUserEmailRef.current,
+          currentUserPhoneRef.current,
+        ),
+        userVerificationRef.current[currentUserMethodRef.current].verificationToken,
+      ].join('|');
+      if (requestSnapshot !== currentSnapshot) return;
+
+      setResult({
+        submitted: true,
+        found: response.found,
+        maskedLoginIds: response.maskedLoginIds,
+      });
       setFormMessage('');
       setFieldErrors({});
     } catch (error) {
+      const currentSnapshot = [
+        currentUserMethodRef.current,
+        getRecoveryTarget(
+          currentUserMethodRef.current,
+          currentUserEmailRef.current,
+          currentUserPhoneRef.current,
+        ),
+        userVerificationRef.current[currentUserMethodRef.current].verificationToken,
+      ].join('|');
+      if (requestSnapshot !== currentSnapshot) return;
+
       setFormMessage(getRecoveryErrorMessage(error, '아이디 찾기에 실패했습니다. 잠시 후 다시 시도해주세요.'));
     }
   };
