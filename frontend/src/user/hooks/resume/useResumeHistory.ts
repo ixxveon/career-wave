@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getResumeHistory } from '../../api/resume/getResumeHistory';
+import { getResumeHistory } from '../../api/resume/resumeHistoryApi';
 import { resumeQueryKeys } from './useAnalysisResult';
 
 /**

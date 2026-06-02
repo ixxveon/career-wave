@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { uploadResume } from '../../api/resume/uploadResume';
-import { getAnalysisResult } from '../../api/resume/getAnalysisResult';
+import { uploadResume } from '../../api/resume/resumeUploadApi';
+import { getAnalysisResult } from '../../api/resume/analysisResultApi';
 import { validateResumeFile } from '../../utils/resume/validation';
 import { resumeStorage } from '../../utils/resume/resumeStorage';
 import { useAnalysisWebSocket } from './useAnalysisWebSocket';

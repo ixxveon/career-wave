@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { submitCoverLetter } from '../../api/resume/submitCoverLetter';
-import { getAnalysisResult } from '../../api/resume/getAnalysisResult';
+import { submitCoverLetter } from '../../api/resume/coverLetterApi';
+import { getAnalysisResult } from '../../api/resume/analysisResultApi';
 import {
   validateCoverLetterForm,
   MAX_COVER_LETTER_ITEMS,
