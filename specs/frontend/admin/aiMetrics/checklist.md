@@ -3,7 +3,7 @@
 ## Spec Consistency
 
 - [ ] `spec.md`, `plan.md`, `tasks.md`, `api-schema.md`, `constitution.md`의 도메인 정의가 일치한다.
-- [ ] AI 도메인은 ERD의 `ai_usage_logs.feature_type` 기준인 `DOCUMENT`, `INTERVIEW`로 통일되어 있다.
+- [ ] 모니터링 도메인은 ERD의 `ai_usage_logs.feature_type` 기준인 `DOCUMENT`, `INTERVIEW`로 통일되어 있고, 관리자 기능 섹션(예: RAG 상태)은 별도 영역으로 구분되어 있다.
 - [ ] 모델명은 `displayModelName`과 `actualModelName`으로 분리되어 있다.
 - [ ] 비용은 정산 데이터가 아닌 운영 참고용 추정치로 명시되어 있다.
 - [ ] Phase별 스택 브랜치 작업 규칙이 문서에 반영되어 있다.
