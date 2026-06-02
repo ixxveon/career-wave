@@ -121,34 +121,34 @@ export interface RejectRequest {
 export const memberApi = {
   // 개인 회원 목록 조회
   getMembers: (params?: MemberListParams) =>
-    axiosInstance.get<ApiResponse<MemberListData>>('/api/admin/members', { params }),
+    axiosInstance.get<ApiResponse<MemberListData>>('/api/v1/admin/members', { params }),
 
   // 개인 회원 상세 조회
   getMemberDetail: (memberId: string) =>
-    axiosInstance.get<ApiResponse<MemberItem>>(`/api/admin/members/${memberId}`),
+    axiosInstance.get<ApiResponse<MemberItem>>(`/api/v1/admin/members/${memberId}`),
 
   // 회원 제재 처리
   sanctionMember: (memberId: string, data: SanctionRequest) =>
-    axiosInstance.post<ApiResponse<SanctionResult>>(`/api/admin/members/${memberId}/sanctions`, data),
+    axiosInstance.post<ApiResponse<SanctionResult>>(`/api/v1/admin/members/${memberId}/sanctions`, data),
 
   // 기업 회원 목록 조회
   getHrManagers: (params?: HrManagerListParams) =>
-    axiosInstance.get<ApiResponse<HrManagerListData>>('/api/admin/hr-managers', { params }),
+    axiosInstance.get<ApiResponse<HrManagerListData>>('/api/v1/admin/hr-managers', { params }),
 
   // 기업 회원 상세 조회
   getHrManagerDetail: (memberId: string) =>
-    axiosInstance.get<ApiResponse<HrManagerDetail>>(`/api/admin/hr-managers/${memberId}`),
+    axiosInstance.get<ApiResponse<HrManagerDetail>>(`/api/v1/admin/hr-managers/${memberId}`),
 
   // 기업 회원 승인
   approveHrManager: (memberId: string) =>
     axiosInstance.patch<ApiResponse<{ memberId: string; hrStatus: HrStatus; approvedAt: string }>>(
-      `/api/admin/hr-managers/${memberId}/approve`
+      `/api/v1/admin/hr-managers/${memberId}/approve`
     ),
 
   // 기업 회원 반려
   rejectHrManager: (memberId: string, data: RejectRequest) =>
     axiosInstance.patch<ApiResponse<{ memberId: string; hrStatus: HrStatus; rejectReason: string }>>(
-      `/api/admin/hr-managers/${memberId}/reject`,
+      `/api/v1/admin/hr-managers/${memberId}/reject`,
       data
     ),
 };

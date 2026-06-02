@@ -74,21 +74,21 @@ export interface ReportActionResult {
 export const reportApi = {
   // KPI 집계 조회
   getSummary: () =>
-    axiosInstance.get<ApiResponse<ReportSummary>>('/api/admin/reports/summary'),
+    axiosInstance.get<ApiResponse<ReportSummary>>('/api/v1/admin/reports/summary'),
 
   // 신고 목록 조회
   getReports: (params?: ReportListParams) =>
-    axiosInstance.get<ApiResponse<ReportListData>>('/api/admin/reports', { params }),
+    axiosInstance.get<ApiResponse<ReportListData>>('/api/v1/admin/reports', { params }),
 
   // 신고 상세 조회
   getReportDetail: (reportId: number) =>
-    axiosInstance.get<ApiResponse<ReportDetail>>(`/api/admin/reports/${reportId}`),
+    axiosInstance.get<ApiResponse<ReportDetail>>(`/api/v1/admin/reports/${reportId}`),
 
   // 블라인드 처리
   blindReport: (reportId: number) =>
-    axiosInstance.patch<ApiResponse<ReportActionResult>>(`/api/admin/reports/${reportId}/blind`),
+    axiosInstance.patch<ApiResponse<ReportActionResult>>(`/api/v1/admin/reports/${reportId}/blind`),
 
   // 기각 처리
   dismissReport: (reportId: number) =>
-    axiosInstance.patch<ApiResponse<ReportActionResult>>(`/api/admin/reports/${reportId}/dismiss`),
+    axiosInstance.patch<ApiResponse<ReportActionResult>>(`/api/v1/admin/reports/${reportId}/dismiss`),
 };
