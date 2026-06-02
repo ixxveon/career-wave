@@ -5,6 +5,17 @@ import JobNoticeDetail from "@/user/pages/jobNotice/JobNoticeDetail";
 import { mockScrapJobs } from "@/user/mocks/dashboardMock";
 import "./MyPage.css";
 
+const CAREER_LEVEL_LABELS = {
+    JUNIOR: "신입",
+    SENIOR: "경력",
+    ANY: "무관",
+};
+
+const NOTICE_STATUS_LABELS = {
+    ACTIVE: "채용중",
+    CLOSED: "마감",
+};
+
 function ScrappedJobPage() {
     const [selectedJob, setSelectedJob] = useState(null);
 
@@ -67,8 +78,8 @@ function ScrappedJobPage() {
                                 <div className="cw-scrap-company">
                                     <strong>{job.companyName}</strong>
                                     <span>
-                                        {job.careerLevel} · {job.location} ·{" "}
-                                        {job.noticeStatus}
+                                        {CAREER_LEVEL_LABELS[job.careerLevel]} · {job.location} ·{" "}
+                                        {NOTICE_STATUS_LABELS[job.noticeStatus]}
                                     </span>
                                 </div>
 
@@ -80,7 +91,7 @@ function ScrappedJobPage() {
                             <h3>{job.title}</h3>
 
                             <p className="cw-scrap-keywords">
-                                등록일 {job.createdAt}
+                                등록일 {new Date(job.createdAt).toLocaleDateString("ko-KR")}
                             </p>
 
                             <div className="cw-scrap-card-bottom">

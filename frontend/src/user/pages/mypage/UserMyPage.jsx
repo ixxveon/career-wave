@@ -92,8 +92,7 @@ function UserMyPage() {
                             <div className="cw-info-row">
                                 <span>가입일</span>
                                 <strong>
-                                    <CalendarDays size={15} />
-                                    {userProfile.createdAt}
+                                    {new Date(userProfile.createdAt).toLocaleDateString("ko-KR")}
                                 </strong>
                             </div>
                         </div>
