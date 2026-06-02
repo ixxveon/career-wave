@@ -1,4 +1,5 @@
 import { useReducer, useRef, useState, useCallback, useEffect } from 'react';
+import { useInvalidateInterviewHistory } from './useInterviewReport';
 import { useSpringWebSocket }  from './useSpringWebSocket';
 import { useFastApiWebSocket } from './useFastApiWebSocket';
 import { useTTSQueue }         from './useTTSQueue';
@@ -375,6 +376,8 @@ export function useInterviewSession({
     }
   }, [sessionId, tts]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const invalidateHistory = useInvalidateInterviewHistory();
+
   const finishSession = useCallback(async () => {
     if (!sessionId) return;
     tts.clear();
@@ -383,7 +386,8 @@ export function useInterviewSession({
       await endSession(sessionId);
     } catch { /* 클라이언트 상태는 FINISHED 유지 */ }
     clearInterviewSession();
-  }, [sessionId, tts]);
+    invalidateHistory();
+  }, [sessionId, tts, invalidateHistory]);
 
   return {
     sessionState:    state.sessionState,
