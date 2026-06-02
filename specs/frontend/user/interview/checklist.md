@@ -10,14 +10,14 @@
 
 ### 상태 설계
 
-- [ ] 서버 상태(리포트, 이력 목록)는 `TanStack Query`로 관리하고, 세션·실시간 UI 상태는 `useReducer`로 관리하는가?
+- [x] 서버 상태(리포트, 이력 목록)는 `TanStack Query`로 관리하고, 세션·실시간 UI 상태는 `useReducer`로 관리하는가?
 - [ ] TanStack Query 캐시 데이터를 컴포넌트 `useState`에 복사하여 동기화를 깨뜨리지 않았는가?
 - [x] 상태 머신 전이(`READY → RUNNING → RECONNECTING → FINISHED / ERROR`)가 누락 없이 처리되는가?
 - [x] `useReducer` 외부에서 액션 없이 상태를 강제 변경하는 코드가 없는가?
 
 ### 데이터 연동
 
-- [ ] 데이터 계약: `api-schema.md`에 정의된 JSON 구조와 실제 API 호출/응답 구조가 일치하는가?
+- [x] 데이터 계약: `api-schema.md`에 정의된 JSON 구조와 실제 API 호출/응답 구조가 일치하는가?
 - [x] 세션 유지: 페이지 새로고침 시에도 `sessionId` 및 면접 상태가 유실되지 않는가?
   > sessionStorage 적용 (탭 종료 시 자동 만료 의도 — localStorage 사용 금지)
 - [ ] 비정상 종료 후 재진입 시, `RUNNING` 상태가 `sessionStorage` 기반으로 복원되는가?

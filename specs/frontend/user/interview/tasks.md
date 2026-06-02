@@ -10,7 +10,7 @@
 
 - [x] `interview.d.ts` 정의 (세션 상태 머신, WebSocket 메시지 타입, 지표 모델링)
 - [x] `api/interview/` API 호출 인터페이스 설계
-- [ ] TanStack Query 커스텀 훅 세팅 (리포트·이력 조회용)
+- [x] TanStack Query 커스텀 훅 세팅 (리포트·이력 조회용)
 - [x] WebSocket 이중 연결 구조 설계 (Spring/FastAPI) 및 Heartbeat/Reconnect 정책 구현
 - [x] `audioUtils.ts` 구현 — MediaRecorder MIME 타입 분기 (Safari WebM 미지원 대응)
 - [x] 면접 환경 사전 진단 유틸리티 (`usePreflightCheck` 로직) 구현
