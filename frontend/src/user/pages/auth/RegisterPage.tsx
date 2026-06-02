@@ -77,6 +77,7 @@ const initialTerms = {
 
 const initialCompanyTerms = {
   service: false,
+  companyVerification: false,
   sms: false,
   privacy: false,
   marketing: false,
@@ -265,6 +266,16 @@ const companyTermDetails = {
     {
       title: '제 6 조 (서비스 해지 및 환불)',
       body: '문자서비스 해지는 기업회원이 언제든지 요청할 수 있습니다. 이미 사용된 문자 발송 건, 실제 발송이 완료된 서비스, 법령 또는 시스템상 환불이 제한되는 건에 대해서는 환불이 제한될 수 있습니다.',
+    },
+  ],
+  companyVerification: [
+    {
+      title: '기업 인증 정보 확인 동의',
+      body: '기업회원 가입 시 입력한 회사명, 사업자등록번호, 대표자명, 담당자 정보와 제출한 재직증명서 등 인증 자료를 Career Wave가 검토·확인하는 것에 동의합니다.',
+    },
+    {
+      title: '허위 정보 제출 제한',
+      body: '허위 또는 타인 명의의 사업자 정보, 위·변조 문서, 사실과 다른 담당자 정보를 제출할 경우 기업회원 가입이 거절되거나 서비스 이용이 제한될 수 있습니다.',
     },
   ],
   privacy: [
@@ -541,11 +552,12 @@ function PersonalTerms({ values, onChange }) {
 
 function CompanyTerms({ values, onChange }) {
   const [openDetails, setOpenDetails] = useState({});
-  const allChecked = values.service && values.sms && values.privacy && values.marketing;
+  const allChecked = values.service && values.companyVerification && values.sms && values.privacy && values.marketing;
 
   const toggleAll = (checked) => {
     onChange({
       service: checked,
+      companyVerification: checked,
       sms: checked,
       privacy: checked,
       marketing: checked,
@@ -568,6 +580,7 @@ function CompanyTerms({ values, onChange }) {
 
   const terms = [
     { key: 'service', type: 'required', label: '이용약관 동의', details: companyTermDetails.service },
+    { key: 'companyVerification', type: 'required', label: '기업 인증 정보 확인 동의', details: companyTermDetails.companyVerification },
     { key: 'sms', type: 'required', label: '문자서비스 이용약관 동의', details: companyTermDetails.sms },
     { key: 'privacy', type: 'required', label: '개인정보 수집 및 이용 동의', details: companyTermDetails.privacy },
     { key: 'marketing', type: 'optional', label: '광고성 정보 수신 동의', details: companyTermDetails.marketing },
@@ -688,7 +701,11 @@ function PersonalRegisterForm() {
 
   const update = (key: PersonalFormKey, value: PersonalForm[PersonalFormKey]) => {
     setForm((current) => ({ ...current, [key]: value }));
-    setFieldErrors((current) => ({ ...current, [key]: '' }));
+    setFieldErrors((current) => ({
+      ...current,
+      [key]: '',
+      ...(key === 'userId' ? { loginId: '' } : {}),
+    }));
     setFormMessage('');
     setSuccessMessage('');
 
@@ -1090,7 +1107,7 @@ function CompanyRegisterForm() {
     terms: {
       service: terms.service,
       privacy: terms.privacy,
-      companyVerification: terms.sms,
+      companyVerification: terms.companyVerification,
       marketing: terms.marketing,
     },
   };
@@ -1104,7 +1121,11 @@ function CompanyRegisterForm() {
 
   const update = (key: CompanyFormKey, value: CompanyForm[CompanyFormKey]) => {
     setForm((current) => ({ ...current, [key]: value }));
-    setFieldErrors((current) => ({ ...current, [key]: '' }));
+    setFieldErrors((current) => ({
+      ...current,
+      [key]: '',
+      ...(key === 'managerId' ? { loginId: '' } : {}),
+    }));
     setFormMessage('');
     setSuccessMessage('');
 

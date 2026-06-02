@@ -12,7 +12,7 @@ import {
   Search,
 } from 'lucide-react';
 import JobNoticeDetail from './JobNoticeDetail';
-import type { JobNotice } from './JobNoticeTypes';
+import type { JobNotice, JobNoticeBookmarkMap } from './JobNoticeTypes';
 import './styles/JobNoticeListPage.css';
 
 const FILTER_GROUPS = [
@@ -38,7 +38,7 @@ const FILTER_FIELD_BY_LABEL = {
 
 type FilterLabel = keyof typeof FILTER_FIELD_BY_LABEL;
 type Filters = Record<FilterLabel, string>;
-type Bookmarks = Record<number, boolean>;
+type Bookmarks = JobNoticeBookmarkMap;
 type Period = (typeof PERIODS)[number];
 type SortOption = (typeof SORT_OPTIONS)[number];
 
