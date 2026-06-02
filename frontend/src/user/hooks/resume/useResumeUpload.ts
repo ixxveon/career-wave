@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { uploadResume } from '../../api/resume/resumeUploadApi';
-import { getAnalysisResult } from '../../api/resume/analysisResultApi';
+import { resumeUploadApi } from '../../api/resume/resumeUploadApi';
+import { analysisResultApi } from '../../api/resume/analysisResultApi';
 import { validateResumeFile } from '../../utils/resume/validation';
 import { resumeStorage } from '../../utils/resume/resumeStorage';
 import { useAnalysisWebSocket } from './useAnalysisWebSocket';
@@ -56,7 +56,7 @@ export function useResumeUpload(): UseResumeUploadReturn {
     resumeStorage.removeUIState('RESUME');
     if (documentIdRef.current) {
       try {
-        const result = await getAnalysisResult(documentIdRef.current);
+        const result = await analysisResultApi.getFeedback(documentIdRef.current);
         setAnalysisResult(result);
       } catch {
         // 결과 조회 실패 시에도 SUCCESS로 전이 — 재조회는 Phase 4 리포트 페이지에서 처리
@@ -127,7 +127,7 @@ export function useResumeUpload(): UseResumeUploadReturn {
     abortRef.current = new AbortController();
 
     try {
-      const data = await uploadResume(file, abortRef.current.signal);
+      const data = await resumeUploadApi.upload(file, abortRef.current.signal);
 
       resumeStorage.saveDocumentId('RESUME', data.documentId);
       resumeStorage.saveUIState('RESUME', 'ANALYZING');

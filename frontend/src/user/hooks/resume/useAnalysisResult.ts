@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getAnalysisResult } from '../../api/resume/analysisResultApi';
+import { analysisResultApi } from '../../api/resume/analysisResultApi';
 
 // ── QueryKey 컨벤션 ─────────────────────────────────────────────
 // resume 도메인 전체에서 공유하는 queryKey 팩토리
@@ -23,7 +23,7 @@ export const resumeQueryKeys = {
 export const useAnalysisResult = (documentId: string | null) => {
   return useQuery({
     queryKey: resumeQueryKeys.feedback(documentId ?? ''),
-    queryFn: ({ signal }) => getAnalysisResult(documentId!, signal),
+    queryFn: ({ signal }) => analysisResultApi.getFeedback(documentId!, signal),
     enabled: !!documentId,
     retry: 1,
   });

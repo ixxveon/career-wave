@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { submitCoverLetter } from '../../api/resume/coverLetterApi';
-import { getAnalysisResult } from '../../api/resume/analysisResultApi';
+import { coverLetterApi } from '../../api/resume/coverLetterApi';
+import { analysisResultApi } from '../../api/resume/analysisResultApi';
 import {
   validateCoverLetterForm,
   MAX_COVER_LETTER_ITEMS,
@@ -81,7 +81,7 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
     resumeStorage.removeUIState('COVER_LETTER');
     if (documentIdRef.current) {
       try {
-        const result = await getAnalysisResult(documentIdRef.current);
+        const result = await analysisResultApi.getFeedback(documentIdRef.current);
         setAnalysisResult(result);
       } catch {
         // 결과 조회 실패 시에도 SUCCESS로 전이 — 재조회는 Phase 4 리포트 페이지에서 처리
@@ -150,7 +150,7 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
     abortRef.current = new AbortController();
 
     try {
-      const data = await submitCoverLetter(
+      const data = await coverLetterApi.submit(
         {
           company,
           job,

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getResumeHistory } from '../../api/resume/resumeHistoryApi';
+import { resumeHistoryApi } from '../../api/resume/resumeHistoryApi';
 import { resumeQueryKeys } from './useAnalysisResult';
 
 /**
@@ -11,7 +11,7 @@ import { resumeQueryKeys } from './useAnalysisResult';
 export const useResumeHistory = (page = 0, size = 10) => {
   return useQuery({
     queryKey: resumeQueryKeys.history(page, size),
-    queryFn: ({ signal }) => getResumeHistory({ page, size }, signal),
+    queryFn: ({ signal }) => resumeHistoryApi.getHistory({ page, size }, signal),
     retry: false, // MSW 환경에서 백엔드 미연동 시 재시도 억제 — 백엔드 연동 후 retry: 1로 변경
   });
 };
