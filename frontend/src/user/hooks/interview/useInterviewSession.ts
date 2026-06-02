@@ -16,6 +16,7 @@ import type {
 } from '../../types/interview';
 import {
   SPRING_WS_MESSAGE_TYPE,
+  SPRING_WS_SYSTEM_SUBTYPE,
   FASTAPI_WS_MESSAGE_TYPE,
 } from '../../types/interview';
 import type { TTSQueueStatus } from './useTTSQueue';
@@ -179,10 +180,10 @@ export function useInterviewSession({
           type:    'ADD_MESSAGE',
           message: { id: Date.now(), role: 'notice', text: msg.content },
         });
-        // TODO: 백엔드와 SYSTEM subType 필드 협의 후 content 파싱 제거 예정
-        if (msg.content.includes('시작')) {
+        // subType 기반 상태 전이 (api-schema.md §7)
+        if (msg.subType === SPRING_WS_SYSTEM_SUBTYPE.SESSION_START) {
           dispatch({ type: 'RUNNING' });
-        } else if (msg.content.includes('완료') || msg.content.includes('생성')) {
+        } else if (msg.subType === SPRING_WS_SYSTEM_SUBTYPE.REPORT_READY) {
           dispatch({ type: 'FINISH' });
         }
         break;

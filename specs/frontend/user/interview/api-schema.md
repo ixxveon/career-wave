@@ -388,7 +388,8 @@ WS /ws/interview/{sessionId}/chat?token={accessToken}
 {
   "type": "QUESTION",
   "content": "Spring에서 트랜잭션 전파 방식에 대해 설명해 주세요.",
-  "questionOrder": 2
+  "questionOrder": 2,
+  "subType": null
 }
 ```
 
@@ -397,14 +398,17 @@ WS /ws/interview/{sessionId}/chat?token={accessToken}
 | `type` | `string` | `QUESTION` \| `SYSTEM` \| `ERROR` |
 | `content` | `string` | 메시지 본문 |
 | `questionOrder` | `number` \| `null` | 질문 순서 (`QUESTION` 타입 시에만 포함) |
+| `subType` | `string` \| `null` | `SYSTEM` 타입 하위 분류 — `SESSION_START` \| `REPORT_READY` \| `SESSION_END` |
 
 #### `type` 별 예시
 
-| type | content 예시 | 비고 |
-|------|-------------|------|
-| `QUESTION` | `"지원 동기를 말씀해 주세요."` | 신규 질문 또는 꼬리 질문 |
-| `SYSTEM` | `"면접이 시작되었습니다."` | 세션 시작·종료·리포트 완료 안내 |
-| `ERROR` | `"세션 처리 중 오류가 발생했습니다."` | 수신 즉시 `ERROR` 상태 전이 |
+| type | subType | content 예시 | 비고 |
+|------|---------|-------------|------|
+| `QUESTION` | `null` | `"지원 동기를 말씀해 주세요."` | 신규 질문 또는 꼬리 질문 |
+| `SYSTEM` | `SESSION_START` | `"면접이 시작되었습니다."` | 세션 시작 → `RUNNING` 전이 |
+| `SYSTEM` | `REPORT_READY` | `"리포트 생성이 완료되었습니다."` | 리포트 완료 → `FINISHED` 전이 |
+| `SYSTEM` | `SESSION_END` | `"면접이 종료되었습니다."` | 세션 종료 안내 |
+| `ERROR` | `null` | `"세션 처리 중 오류가 발생했습니다."` | 수신 즉시 `ERROR` 상태 전이 |
 
 ### Error Cases
 

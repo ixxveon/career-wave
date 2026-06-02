@@ -27,6 +27,15 @@ export const SPRING_WS_MESSAGE_TYPE = {
   ERROR:    'ERROR',
 } as const;
 
+/** SYSTEM 메시지 하위 타입 (api-schema.md §7) */
+export const SPRING_WS_SYSTEM_SUBTYPE = {
+  SESSION_START: 'SESSION_START',
+  REPORT_READY:  'REPORT_READY',
+  SESSION_END:   'SESSION_END',
+} as const;
+
+export type SpringWSSystemSubType = typeof SPRING_WS_SYSTEM_SUBTYPE[keyof typeof SPRING_WS_SYSTEM_SUBTYPE];
+
 export const FASTAPI_WS_MESSAGE_TYPE = {
   STT_RESULT: 'STT_RESULT',
   LLM_STREAM: 'LLM_STREAM',
@@ -133,6 +142,7 @@ export interface SpringWSMessage {
   type: SpringWSMessageType;
   content: string;
   questionOrder: number | null;
+  subType: SpringWSSystemSubType | null;
 }
 
 export interface FastApiWSMessage {
