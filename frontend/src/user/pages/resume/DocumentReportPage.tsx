@@ -1,50 +1,45 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FileText, ScrollText } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { FileText, ScrollText, AlertCircle, Loader2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import DocumentResultView from './DocumentResultView';
+import { useAnalysisResult } from '../../hooks/resume/useAnalysisResult';
 import type { DocumentResult } from '../../types/document';
+import type { AnalysisResultResponse } from '../../types/resume.d';
 import './DocumentReportPage.css';
 
-/* ── Mock 데이터 ──────────────────────────────────────────────
-   실제 서비스에서는 documentId를 라우트 파라미터나 전역 상태로 받아
-   백엔드 GET /documents/{id}/result 로 불러옵니다.
-────────────────────────────────────────────────────────────── */
+// ── AnalysisResultResponse → DocumentResult 매핑 ─────────────
+function toDocumentResult(res: AnalysisResultResponse): DocumentResult {
+  return {
+    documentId: res.documentId,
+    evaluation: {
+      totalScore:        res.scores?.total                 ?? 0,
+      jobFitnessScore:   res.scores?.jobFitness            ?? 0,
+      techStackScore:    res.scores?.techStack              ?? 0,
+      quantifiedScore:   res.scores?.quantifiedAchievement ?? 0,
+      logicalScore:      res.scores?.logicalStructure       ?? 0,
+      overallReview:     res.overallReview,
+    },
+    feedbackDetails: res.feedbackDetails,
+  };
+}
+
+// ── documentId 없을 때 보여줄 정적 Mock 탭 (기존 유지) ────────
 const MOCK_RESUME: DocumentResult = {
   documentId: 2,
   evaluation: {
-    totalScore:      82,
-    jobFitnessScore: 90,
-    techStackScore:  80,
-    quantifiedScore: 65,
-    logicalScore:    85,
-    overallReview:
-      '전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다. ' +
-      '기술 스택 언급과 팀 협업 경험은 긍정적으로 평가됩니다.',
+    totalScore: 82, jobFitnessScore: 90, techStackScore: 80,
+    quantifiedScore: 65, logicalScore: 85,
+    overallReview: '전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다.',
   },
   feedbackDetails: [
     {
       sectionNumber: 1,
-      question:      '주요 프로젝트 경험',
-      originalText:  '결제 시스템 개발에 참여하였습니다. 팀원들과 협업하여 서비스를 개선했습니다.',
-      goodPoint:     '백엔드 프로젝트 경험과 팀 협업 이력이 명시되어 있어 기본 역량이 확인됩니다.',
-      badPoint:
-        '역할, 규모, 성과가 모두 빠져 있습니다. "참여", "개선"이라는 추상적 동사 대신 수치화된 임팩트를 작성해야 합니다.',
-      improvedText:
-        '월 거래액 50억 규모의 결제 시스템 API를 Spring Boot로 설계 및 구현, TPS 300 처리 안정화에 기여하였습니다. ' +
-        '5인 팀 스크럼 환경에서 백엔드 리드로 API 응답 속도를 평균 340ms → 80ms로 개선하였습니다.',
-    },
-    {
-      sectionNumber: 2,
-      question:      '자기소개 및 강점',
-      originalText:  '다양한 경험을 통해 성장하였습니다.',
-      goodPoint:     '성장 의지가 드러나는 문장 구성입니다.',
-      badPoint:
-        '"다양한 경험"이라는 추상적 표현만으로는 역량을 판단할 수 없습니다. ' +
-        '구체적 경력 사실로 대체해야 합니다.',
-      improvedText:
-        '스타트업 3곳에서 백엔드 풀사이클 개발(기획→설계→배포)을 수행하며 ' +
-        '서비스 런칭 5건의 경험을 쌓았습니다.',
+      question: '주요 프로젝트 경험',
+      originalText: '결제 시스템 개발에 참여하였습니다.',
+      goodPoint: '백엔드 프로젝트 경험과 팀 협업 이력이 명시되어 있어 기본 역량이 확인됩니다.',
+      badPoint: '역할, 규모, 성과가 모두 빠져 있습니다.',
+      improvedText: '월 거래액 50억 규모의 결제 시스템 API를 Spring Boot로 설계 및 구현하였습니다.',
     },
   ],
 };
@@ -52,67 +47,79 @@ const MOCK_RESUME: DocumentResult = {
 const MOCK_COVER: DocumentResult = {
   documentId: 1,
   evaluation: {
-    totalScore:      78,
-    jobFitnessScore: 85,
-    techStackScore:  75,
-    quantifiedScore: 60,
-    logicalScore:    82,
-    overallReview:
-      '직무 연관성과 논리 구조는 양호하나, 성과의 정량적 수치화가 전반적으로 부족합니다. ' +
-      '구체적인 숫자와 기술 스택을 명시하면 서류 경쟁력이 크게 올라갈 것입니다.',
+    totalScore: 78, jobFitnessScore: 85, techStackScore: 75,
+    quantifiedScore: 60, logicalScore: 82,
+    overallReview: '직무 연관성과 논리 구조는 양호하나, 성과의 정량적 수치화가 전반적으로 부족합니다.',
   },
   feedbackDetails: [
     {
       sectionNumber: 1,
-      question:      '지원 동기 및 입사 후 포부를 서술하시오.',
-      originalText:
-        '저는 카카오의 기술력과 문화에 매력을 느껴 지원하였습니다. 입사 후에는 열심히 노력하겠습니다.',
-      goodPoint:     '개발에 대한 열정과 팀원들과 소통하려는 태도가 본문에 잘 드러나 있습니다.',
-      badPoint:
-        '"열심히", "성공적"이라는 표현이 너무 추상적입니다. 어떤 성과(수치)를 냈는지 알 수 없습니다.',
-      improvedText:
-        '카카오의 대규모 트래픽 처리 아키텍처(Kakao Pub/Sub, Krane)를 기술 블로그로 꾸준히 학습해왔습니다. ' +
-        '입사 후 3년 내 핵심 API 서버 개발을 담당하고, 이후 아키텍처 설계까지 성장하는 것을 목표로 합니다.',
-    },
-    {
-      sectionNumber: 2,
-      question:      '본인의 강점을 바탕으로 팀에 기여한 경험을 서술하시오.',
-      originalText:
-        '저는 꼼꼼한 성격으로 코드 리뷰를 꼼꼼하게 하였으며, 팀 분위기를 좋게 만들었습니다.',
-      goodPoint:     'STAR 구조와 수치 기반 성과 서술이 잘 작성되어 있습니다. 역할과 기여가 명확히 드러납니다.',
-      badPoint:
-        '강점(코드 리뷰)과 결과(팀 분위기)의 인과관계가 불명확합니다. 성과를 수치로 표현하면 신뢰도가 높아집니다.',
-      improvedText:
-        '코드 리뷰 문화 정착을 주도하여 PR 사이클을 2일 → 6시간으로 단축, ' +
-        '릴리즈 주기 30% 개선에 기여하였습니다.',
+      question: '지원 동기 및 입사 후 포부를 서술하시오.',
+      originalText: '저는 카카오의 기술력과 문화에 매력을 느껴 지원하였습니다.',
+      goodPoint: '개발에 대한 열정과 소통하려는 태도가 잘 드러나 있습니다.',
+      badPoint: '"열심히"라는 표현이 너무 추상적입니다.',
+      improvedText: '카카오의 대규모 트래픽 처리 아키텍처를 기술 블로그로 꾸준히 학습해왔습니다.',
     },
   ],
 };
 
 type TabKey = 'resume' | 'cover';
-
-interface Tab {
-  key: TabKey;
-  label: string;
-  Icon: LucideIcon;
-  data: DocumentResult;
-  resetTo: string;
-  viewLabel: string;
-  subtitle: string;
-}
+interface Tab { key: TabKey; label: string; Icon: LucideIcon; data: DocumentResult; resetTo: string; viewLabel: string; subtitle: string; }
 
 const TABS: Tab[] = [
   { key: 'resume', label: '이력서 분석',    Icon: FileText,   data: MOCK_RESUME, resetTo: '/documents/resume',       viewLabel: 'RESUME ANALYSIS', subtitle: '이력서_최종본.pdf · 백엔드 개발자' },
   { key: 'cover',  label: '자기소개서 분석', Icon: ScrollText, data: MOCK_COVER,  resetTo: '/documents/cover-letter', viewLabel: 'COVER LETTER AI', subtitle: '카카오 · 백엔드 개발자' },
 ];
 
+// ── 메인 컴포넌트 ─────────────────────────────────────────────
 export default function DocumentReportPage() {
-  const navigate            = useNavigate();
-  const [active, setActive] = useState<TabKey>('resume');
+  const navigate               = useNavigate();
+  const [searchParams]         = useSearchParams();
+  const documentId             = searchParams.get('documentId');
+  const [active, setActive]    = useState<TabKey>('resume');
 
+  const { data, isLoading, isError } = useAnalysisResult(documentId);
+
+  // documentId가 있을 때 — 실제 분석 결과 조회
+  if (documentId) {
+    if (isLoading) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '80px 20px' }}>
+          <Loader2 size={40} style={{ color: 'var(--color-primary)', animation: 'spin 1s linear infinite' }} />
+          <p style={{ margin: 0, fontSize: 15, color: 'var(--color-text-secondary)' }}>리포트를 불러오는 중...</p>
+        </div>
+      );
+    }
+
+    if (isError || !data) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '80px 20px', textAlign: 'center' }}>
+          <AlertCircle size={40} style={{ color: '#dc2626', opacity: 0.5 }} />
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>리포트를 불러올 수 없습니다</p>
+          <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-secondary)' }}>유효하지 않은 문서이거나 접근 권한이 없습니다.</p>
+          <button
+            type="button"
+            onClick={() => navigate('/documents/history')}
+            style={{ padding: '10px 22px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-surface)', cursor: 'pointer', fontWeight: 600 }}
+          >
+            분석 이력으로 돌아가기
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <DocumentResultView
+        result={toDocumentResult(data)}
+        onReset={() => navigate('/documents/history')}
+        label={data.feedbackDetails.length > 0 ? 'RESUME ANALYSIS' : 'COVER LETTER AI'}
+        interviewDocumentId={documentId}
+      />
+    );
+  }
+
+  // documentId 없을 때 — 기존 Mock 탭 화면
   const tab = TABS.find(t => t.key === active)!;
-
-  /* 배너 안에 주입할 탭 슬롯 — 다크 배너 위에서 바로 눈에 띄도록 배치 */
   const typeSelector = (
     <div className="drp-type-tabs">
       {TABS.map(t => (
@@ -129,14 +136,13 @@ export default function DocumentReportPage() {
   );
 
   return (
-    /* DocumentResultView가 배너 포함 전체 레이아웃을 담당하므로 별도 래퍼 불필요 */
     <DocumentResultView
-      key={active}                        /* 탭 전환 시 내부 activeSection 초기화 */
+      key={active}
       result={tab.data}
       onReset={() => navigate(tab.resetTo)}
       label={tab.viewLabel}
       subtitle={tab.subtitle}
-      typeSelector={typeSelector}         /* 배너 상단에 탭 렌더링 */
+      typeSelector={typeSelector}
     />
   );
 }
