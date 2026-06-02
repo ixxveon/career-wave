@@ -7,3 +7,4 @@ export { useRegisterUser, useRegisterCompany, useUploadEmploymentCertificate } f
 export { useFindId, useIssuePasswordToken, useResetPassword } from './useAccountRecovery';
 export { useFindIdRecovery } from './useFindIdRecovery';
 export { useFindPasswordRecovery } from './useFindPasswordRecovery';
+export { useLoginForm } from './useLoginForm';
