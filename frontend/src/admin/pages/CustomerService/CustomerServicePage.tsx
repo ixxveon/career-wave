@@ -211,7 +211,7 @@ export default function CustomerServicePage() {
   // ── 공지사항 모달 닫기 ───────────────────────────────────
   const closeNoticeModal = () => {
     ++noticeDetailReqId.current; // pending 상세 요청 무효화
-    closeNoticeModal();
+    setNoticeModal(null);
   };
 
   // ── 공지사항 등록 모달 열기 ───────────────────────────────
