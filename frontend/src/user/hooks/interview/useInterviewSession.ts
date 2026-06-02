@@ -3,8 +3,7 @@ import { useInvalidateInterviewHistory } from './useInterviewReport';
 import { useSpringWebSocket }  from './useSpringWebSocket';
 import { useFastApiWebSocket } from './useFastApiWebSocket';
 import { useTTSQueue }         from './useTTSQueue';
-import { submitTextAnswer }    from '../../api/interview/submitTextAnswer';
-import { endSession }          from '../../api/interview/endSession';
+import { interviewSessionApi }  from '../../api/interview';
 import {
   saveInterviewSession,
   clearInterviewSession,
@@ -367,7 +366,7 @@ export function useInterviewSession({
     }
 
     try {
-      await submitTextAnswer(sessionId, {
+      await interviewSessionApi.submitTextAnswer(sessionId, {
         questionOrder:  stateRef.current.questionOrder,
         messageContent: text.trim(),
       });
@@ -383,7 +382,7 @@ export function useInterviewSession({
     tts.clear();
     dispatch({ type: 'FINISH' });
     try {
-      await endSession(sessionId);
+      await interviewSessionApi.end(sessionId);
     } catch { /* 클라이언트 상태는 FINISHED 유지 */ }
     clearInterviewSession();
     invalidateHistory();

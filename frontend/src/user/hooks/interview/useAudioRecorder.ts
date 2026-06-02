@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { getSupportedMimeType } from '../../utils/interview/audioUtils';
-import { submitVoiceBlob } from '../../api/interview/submitVoiceBlob';
+import { interviewSessionApi } from '../../api/interview';
 
 export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'error';
 export type RecorderError = 'permission_denied' | 'not_supported' | 'unknown';
@@ -72,11 +72,11 @@ export function useAudioRecorder({
       isFinal,
     };
     try {
-      await submitVoiceBlob(sessionId, params);
+      await interviewSessionApi.submitVoiceBlob(sessionId, params);
       onChunkSent?.(idx, isFinal);
     } catch {
       try {
-        await submitVoiceBlob(sessionId, params);
+        await interviewSessionApi.submitVoiceBlob(sessionId, params);
         onChunkSent?.(idx, isFinal);
       } catch {
         // 재시도도 실패 — isFinal 청크면 상위에 알려 pending 말풍선 정리 및 사용자 안내

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getInterviewReport } from '../../api/interview/getInterviewReport';
-import { getInterviewHistory } from '../../api/interview/getInterviewHistory';
+import { interviewReportApi }  from '../../api/interview';
+import { interviewHistoryApi } from '../../api/interview';
 import type { InterviewReportResponse, InterviewHistoryResponse } from '../../types/interview';
 
 // ── QueryKey 팩토리 ────────────────────────────────────────────────
@@ -16,7 +16,7 @@ export const interviewQueryKeys = {
 export const useInterviewReport = (sessionId: string | null) => {
   return useQuery<InterviewReportResponse>({
     queryKey: interviewQueryKeys.report(sessionId ?? ''),
-    queryFn: ({ signal }) => getInterviewReport(sessionId!, signal),
+    queryFn: ({ signal }) => interviewReportApi.get(sessionId!, signal),
     enabled: !!sessionId,
     retry: 1,
   });
@@ -27,7 +27,7 @@ export const useInterviewReport = (sessionId: string | null) => {
 export const useInterviewHistory = (page = 0, size = 10) => {
   return useQuery<InterviewHistoryResponse>({
     queryKey: interviewQueryKeys.history(page, size),
-    queryFn: ({ signal }) => getInterviewHistory({ page, size }, signal),
+    queryFn: ({ signal }) => interviewHistoryApi.list({ page, size }, signal),
     retry: 2,
   });
 };
