@@ -16,6 +16,28 @@ const NOTICE_STATUS_LABELS = {
     CLOSED: "마감",
 };
 
+const createJobNoticeViewModel = (job) => ({
+    id: job.jobNoticeId,
+    title: job.title,
+    company: job.companyName,
+    location: job.location,
+    deadline: job.deadline,
+
+    exp: CAREER_LEVEL_LABELS[job.careerLevel] ?? "무관",
+    employment: job.employment ?? "-",
+    source: job.source ?? "-",
+    jobType: job.jobType ?? "-",
+    companySize: job.companySize ?? "-",
+
+    careerLevel: job.careerLevel,
+    noticeStatus: job.noticeStatus,
+    bookmarked: true,
+
+    stacks: [],
+    tags: [],
+});
+
+
 function ScrappedJobPage() {
     const [selectedJob, setSelectedJob] = useState(null);
 
@@ -38,7 +60,10 @@ function ScrappedJobPage() {
                     <NavLink to="/mypage" end>
                         내 정보 관리
                     </NavLink>
-                    <NavLink to="/mypage/favorites" className="is-active">
+                    <NavLink
+                        to="/mypage/favorites"
+                        className={({ isActive }) => (isActive ? "is-active" : "")}
+                    >
                         스크랩 공고
                     </NavLink>
                     <NavLink to="/mypage/subscription">AI 서비스</NavLink>
@@ -57,14 +82,26 @@ function ScrappedJobPage() {
                     </div>
 
                     <div className="cw-scrap-search">
-                        <input type="text" placeholder="공고명 또는 회사명 검색" />
+                        <input
+                            type="text"
+                            placeholder="공고명 또는 회사명 검색"
+                            disabled
+                        />
+                        {/* TODO: Phase 3 - 스크랩 공고 검색 기능 구현 */}
                         <Search size={18} />
                     </div>
                 </div>
 
                 <div className="cw-scrap-toolbar">
                     <span>스크랩한 공고 {scrappedJobs.length}개</span>
-                    <button type="button">최근 스크랩순</button>
+                    {/* TODO: Phase 3 - 최신순 정렬 기능 구현 */}
+                    <button
+                        type="button"
+                        disabled
+                        aria-disabled="true"
+                    >
+                        최근 스크랩순
+                    </button>
                 </div>
 
                 <div className="cw-scrap-grid">
@@ -100,20 +137,7 @@ function ScrappedJobPage() {
                                 <button
                                     type="button"
                                     className="cw-job-detail-button"
-                                    onClick={() =>
-                                        setSelectedJob({
-                                            id: job.jobNoticeId,
-                                            title: job.title,
-                                            company: job.companyName,
-                                            careerLevel: job.careerLevel,
-                                            location: job.location,
-                                            deadline: job.deadline,
-                                            noticeStatus: job.noticeStatus,
-                                            bookmarked: true,
-                                            stacks: [],
-                                            tags: [],
-                                        })
-                                    }
+                                    onClick={() => setSelectedJob(createJobNoticeViewModel(job))}
                                 >
                                     상세보기
                                 </button>

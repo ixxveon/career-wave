@@ -46,7 +46,11 @@ function UserMyPage() {
             <aside className="cw-mypage-sidebar">
                 <strong>마이페이지</strong>
                 <nav>
-                    <NavLink to="/mypage" end className="is-active">
+                    <NavLink
+                        to="/mypage"
+                        end
+                        className={({ isActive }) => (isActive ? "is-active" : "")}
+                    >
                         내 정보 관리
                     </NavLink>
                     <NavLink to="/mypage/favorites">스크랩 공고</NavLink>
