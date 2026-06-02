@@ -286,6 +286,7 @@ Authorization: Bearer {accessToken}
   "companyType": "SME",
   "isAgency": false,
   "managerVerificationToken": "short-lived-token",
+  "managerEmailVerificationToken": "short-lived-token",
   "employmentCertificateFileId": "uploaded-file-id",
   "terms": {
     "service": true,
