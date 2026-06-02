@@ -72,8 +72,8 @@ function InterviewSetup({
 
         {/* 면접 유형 선택 */}
         <div className="is__section">
-          <label className="is__label">면접 방식</label>
-          <div className="is__type-btns">
+          <span className="is__label" id="is-session-type-label">면접 방식</span>
+          <div className="is__type-btns" role="group" aria-labelledby="is-session-type-label">
             <button
               className={`is__type-btn${sessionType === SESSION_TYPE.VOICE ? ' is__type-btn--on' : ''}`}
               onClick={() => onSessionTypeChange(SESSION_TYPE.VOICE)}
@@ -93,8 +93,8 @@ function InterviewSetup({
 
         {/* 목표 직무 */}
         <div className="is__section">
-          <label className="is__label">목표 직무</label>
-          <div className="is__chips">
+          <span className="is__label" id="is-job-label">목표 직무</span>
+          <div className="is__chips" role="group" aria-labelledby="is-job-label">
             {JOB_OPTIONS.map(j => (
               <button
                 key={j}
@@ -110,8 +110,9 @@ function InterviewSetup({
 
         {/* 타겟 기업 */}
         <div className="is__section">
-          <label className="is__label">타겟 기업</label>
+          <label className="is__label" htmlFor="is-company">타겟 기업</label>
           <input
+            id="is-company"
             className="is__input"
             placeholder="ex) 토스, 카카오, 네이버"
             value={company}
