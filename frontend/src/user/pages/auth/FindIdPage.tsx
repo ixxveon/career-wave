@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, Mail, Phone, UserRound, Building2 } from 'lucide-react';
 import { useConfirmVerificationCode, useFindId, useSendVerificationCode } from '../../hooks/member';
 import { VERIFICATION_PURPOSE, type ConfirmVerificationResponse, type SendVerificationResponse } from '../../types/member';
-import type { MemberApiError } from '../../utils/member/errorMapping';
 import {
   RECOVERY_METHOD,
   type CompanyFindIdForm,
@@ -21,15 +20,15 @@ import {
   validateVerificationConfirm,
 } from '../../utils/member/recoverySchema';
 import RecoverySupportPanel from './RecoverySupportPanel';
+import {
+  EMPTY_VERIFICATION,
+  type VerificationState,
+  formatRemaining,
+  getRecoveryErrorMessage,
+  getRemainingSeconds,
+  useVerificationNow,
+} from './recoveryViewUtils';
 import './AuthPage.css';
-
-interface VerificationState {
-  verificationId: string;
-  verificationToken: string;
-  expiresAt: string;
-  resendAvailableAt: string;
-  remainingAttempts: number;
-}
 
 interface RecoveryResultState {
   submitted: boolean;
@@ -37,52 +36,11 @@ interface RecoveryResultState {
   maskedLoginIds: string[];
 }
 
-const EMPTY_VERIFICATION: VerificationState = {
-  verificationId: '',
-  verificationToken: '',
-  expiresAt: '',
-  resendAvailableAt: '',
-  remainingAttempts: 0,
-};
-
 const EMPTY_RESULT: RecoveryResultState = {
   submitted: false,
   found: false,
   maskedLoginIds: [],
 };
-
-function useVerificationNow() {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const timerId = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timerId);
-  }, []);
-
-  return now;
-}
-
-function getRemainingSeconds(target: string, now: number): number {
-  if (!target) return 0;
-  return Math.max(0, Math.ceil((new Date(target).getTime() - now) / 1000));
-}
-
-function formatRemaining(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const nextSeconds = seconds % 60;
-  return `${minutes}:${String(nextSeconds).padStart(2, '0')}`;
-}
-
-function getErrorMessage(error: unknown, fallback: string, field?: string): string {
-  if (error && typeof error === 'object' && 'fieldErrors' in error && field) {
-    const fieldErrors = (error as MemberApiError).fieldErrors;
-    if (fieldErrors?.[field]) return fieldErrors[field];
-  }
-
-  return error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
-    ? error.message
-    : fallback;
-}
 
 function FindIdPage() {
   const { memberType } = useParams();
@@ -252,7 +210,7 @@ function FindIdPage() {
       const errorField = userMethod === RECOVERY_METHOD.EMAIL ? 'email' : 'phone';
       setFieldErrors((current) => ({
         ...current,
-        [errorField]: getErrorMessage(error, '인증번호 발송에 실패했습니다.', errorField),
+        [errorField]: getRecoveryErrorMessage(error, '인증번호 발송에 실패했습니다.', errorField),
       }));
     }
   };
@@ -298,7 +256,7 @@ function FindIdPage() {
 
       setFieldErrors((current) => ({
         ...current,
-        code: getErrorMessage(error, '인증 확인에 실패했습니다.', 'code'),
+        code: getRecoveryErrorMessage(error, '인증 확인에 실패했습니다.', 'code'),
       }));
     }
   };
@@ -328,7 +286,7 @@ function FindIdPage() {
       if (requestOrder !== companyEmailRequestRef.current || target !== currentCompanyEmailRef.current.trim()) return;
       setFieldErrors((current) => ({
         ...current,
-        email: getErrorMessage(error, '이메일 인증번호 발송에 실패했습니다.', 'email'),
+        email: getRecoveryErrorMessage(error, '이메일 인증번호 발송에 실패했습니다.', 'email'),
       }));
     }
   };
@@ -361,7 +319,7 @@ function FindIdPage() {
       if (verificationId !== companyVerification.verificationId || target !== currentCompanyEmailRef.current.trim()) return;
       setFieldErrors((current) => ({
         ...current,
-        code: getErrorMessage(error, '이메일 인증 확인에 실패했습니다.', 'code'),
+        code: getRecoveryErrorMessage(error, '이메일 인증 확인에 실패했습니다.', 'code'),
       }));
     }
   };
@@ -403,7 +361,7 @@ function FindIdPage() {
       setFormMessage('');
       setFieldErrors({});
     } catch (error) {
-      setFormMessage(getErrorMessage(error, '아이디 찾기에 실패했습니다. 잠시 후 다시 시도해주세요.'));
+      setFormMessage(getRecoveryErrorMessage(error, '아이디 찾기에 실패했습니다. 잠시 후 다시 시도해주세요.'));
     }
   };
 
