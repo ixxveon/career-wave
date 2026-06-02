@@ -19,18 +19,6 @@ import '../../styles/CustomerService.css';
 
 type CsTab = 'notice' | 'faq' | 'inquiry';
 
-// 더미 데이터용 문의 타입 (Phase 5-2 API 전환 전까지 유지)
-interface InquiryDummy {
-  id: string;
-  memberName: string;
-  category: InquiryCategory;
-  title: string;
-  content: string;
-  reply?: string;
-  createdAt: string;
-  status: InquiryStatus;
-}
-
 // ── CSS 클래스 맵 ─────────────────────────────────────────────
 
 const INQ_STATUS_CLS: Record<InquiryStatus, string> = {
@@ -55,18 +43,6 @@ const TAB_LABEL: Record<CsTab, string> = {
 
 // ── 더미 데이터 (FAQ / 문의 — Phase 5-2 교체 예정) ───────────
 
-const initFaqs: FaqItem[] = [
-  { faqId: 1, category: 'PAYMENT', question: '구독을 중간에 해지하면 환불이 되나요?', answer: '결제일 포함 7일 이내이며, 유료 AI 기능을 한 번도 이용하지 않으신 경우 전액 환불이 가능합니다.', createdAt: '2026-05-10T10:00:00Z' },
-  { faqId: 2, category: 'ACCOUNT', question: '비밀번호를 잊어버렸어요.', answer: '로그인 화면에서 "비밀번호 찾기"를 이용하시면 이메일로 재설정 링크를 전송합니다.', createdAt: '2026-05-10T10:00:00Z' },
-  { faqId: 3, category: 'SERVICE', question: 'AI 모의면접은 몇 번이나 이용할 수 있나요?', answer: '무료 회원은 월 1회, 프리미엄 회원은 무제한으로 이용하실 수 있습니다.', createdAt: '2026-05-11T10:00:00Z' },
-  { faqId: 4, category: 'ETC', question: '기업 회원과 개인 회원의 차이가 무엇인가요?', answer: '기업 회원은 채용공고 등록 및 지원자 관리 기능을 추가로 이용할 수 있습니다.', createdAt: '2026-05-12T10:00:00Z' },
-];
-
-const initInquiries: InquiryDummy[] = [
-  { id: 'INQ-501', memberName: '김민지', category: 'PAYMENT_ERROR', title: '결제 오류가 계속 발생합니다', content: '카드 결제 시도 시 "처리 실패" 오류가 반복됩니다.', createdAt: '2026-05-22T09:00:00Z', status: 'PENDING' },
-  { id: 'INQ-502', memberName: '이준호', category: 'SERVICE', title: 'AI 면접 영상이 저장이 안 돼요', content: 'AI 면접 종료 후 결과 페이지로 이동하지 않습니다.', createdAt: '2026-05-22T10:00:00Z', status: 'IN_PROGRESS', reply: '확인 중입니다.' },
-  { id: 'INQ-503', memberName: '박서연', category: 'REFUND', title: '구독 환불 요청드립니다', content: '이번 달 구독비 환불 요청드립니다.', createdAt: '2026-05-22T14:00:00Z', status: 'PENDING' },
-];
 
 // ── AI Mock 응답 생성 (v2에서 실제 API 전환 예정) ────────────
 
@@ -84,19 +60,6 @@ function genNoticeDraft(category: NoticeCategory, title: string): string {
 function genFaqDraft(question: string): string {
   if (!question.trim()) return '';
   return `안녕하세요, Career Wave 고객센터입니다.\n\n문의하신 "${question}"에 대한 답변입니다.\n\n[답변 내용을 입력해 주세요]\n\n추가 문의사항이 있으시면 언제든지 1:1 문의를 이용해 주세요.\n감사합니다.`;
-}
-
-function genInquiryDraft(inq: InquiryDummy): string {
-  const header = `안녕하세요, ${inq.memberName} 님.\nCareer Wave 고객센터입니다.\n\n`;
-  const footer = `\n\n추가 문의사항이 있으시면 언제든지 연락 주세요.\n감사합니다.`;
-  const bodies: Record<InquiryCategory, string> = {
-    REFUND:        '환불 요청 접수해 주셔서 감사합니다.\n\n이용 내역 확인 후 영업일 기준 3~5일 이내에 처리 결과를 안내해 드리겠습니다.',
-    PAYMENT_ERROR: '결제 오류로 불편을 드려 죄송합니다.\n\n카드 한도 및 유효기간을 확인해 주시고, 다른 브라우저에서도 시도해 주세요.',
-    SERVICE:       '문의하신 내용을 기술팀에서 검토 중이며, 빠른 시일 내에 해결하여 안내드리겠습니다.',
-    ACCOUNT:       '계정 관련 문의 감사합니다. 보안을 위해 본인 확인 절차가 필요할 수 있습니다.',
-    ETC:           '내용을 확인하였으며 빠른 시일 내에 답변 드리겠습니다.',
-  };
-  return header + bodies[inq.category] + footer;
 }
 
 // ── 폼 상태 타입 ──────────────────────────────────────────────
@@ -347,7 +310,10 @@ export default function CustomerServicePage() {
       fetchNotices(noticePage);
       fetchSummary();
     } catch (err: any) {
-      setNoticeFormError(err.response?.data?.message || err.message || '저장에 실패했습니다.');
+      const status = err.response?.status;
+      if (status === 500) setNoticeFormError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      else if (!status) setNoticeFormError('네트워크 연결을 확인해주세요.');
+      else setNoticeFormError(err.response?.data?.message || '저장에 실패했습니다.');
     } finally {
       setNoticeFormLoading(false);
     }
@@ -363,7 +329,8 @@ export default function CustomerServicePage() {
       fetchNotices(noticePage);
       fetchSummary();
     } catch (err: any) {
-      alert(err.response?.data?.message || '삭제에 실패했습니다.');
+      const status = err.response?.status;
+      alert(status === 500 ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' : err.response?.data?.message || '삭제에 실패했습니다.');
     }
   };
 
@@ -403,7 +370,10 @@ export default function CustomerServicePage() {
       fetchFaqs(faqPage);
       fetchSummary();
     } catch (err: any) {
-      setFaqFormError(err.response?.data?.message || err.message || '저장에 실패했습니다.');
+      const status = err.response?.status;
+      if (status === 500) setFaqFormError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      else if (!status) setFaqFormError('네트워크 연결을 확인해주세요.');
+      else setFaqFormError(err.response?.data?.message || '저장에 실패했습니다.');
     } finally {
       setFaqFormLoading(false);
     }
@@ -417,7 +387,8 @@ export default function CustomerServicePage() {
       fetchFaqs(faqPage);
       fetchSummary();
     } catch (err: any) {
-      alert(err.response?.data?.message || '삭제에 실패했습니다.');
+      const status = err.response?.status;
+      alert(status === 500 ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' : err.response?.data?.message || '삭제에 실패했습니다.');
     }
   };
   const handleAiFaqDraft = () => {
@@ -890,7 +861,7 @@ export default function CustomerServicePage() {
               <div>
                 <h3>{selectedInquiry.title}</h3>
                 <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>
-                  {selectedInquiry.id} · {selectedInquiry.memberName} · {new Date(selectedInquiry.createdAt).toLocaleDateString('ko-KR')}
+                  #{selectedInquiry.inquiryId} · {selectedInquiry.memberName} · {new Date(selectedInquiry.createdAt).toLocaleDateString('ko-KR')}
                 </p>
               </div>
               <button onClick={() => setSelectedInquiry(null)}>닫기</button>
@@ -903,7 +874,7 @@ export default function CustomerServicePage() {
                 </div>
                 <div>
                   <span>현재 상태</span>
-                  <span className={`statusBadge ${INQ_STATUS_CLS[selectedInquiry.status]}`}>{INQUIRY_STATUS_LABEL[selectedInquiry.status]}</span>
+                  <span className={`statusBadge ${INQ_STATUS_CLS[selectedInquiry.inquiryStatus]}`}>{INQUIRY_STATUS_LABEL[selectedInquiry.inquiryStatus]}</span>
                 </div>
               </div>
               <div className="csInqContent">
@@ -919,15 +890,18 @@ export default function CustomerServicePage() {
                 </div>
                 <textarea className="csFormTextarea csFormTextarea--reply" placeholder="답변 내용을 입력하세요"
                   value={inquiryReply} onChange={(e) => setInquiryReply(e.target.value)}
-                  disabled={selectedInquiry.status === 'COMPLETED'} />
+                  disabled={selectedInquiry.inquiryStatus === 'COMPLETED'} />
               </div>
             </div>
             <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
-              {selectedInquiry.status !== 'COMPLETED' && (
+              {inqActionError && <p style={{ fontSize: 13, color: '#9a4444', flex: '1 1 100%', marginBottom: 8 }}>{inqActionError}</p>}
+              {selectedInquiry.inquiryStatus !== 'COMPLETED' && (
                 <>
-                  <button onClick={saveInquiryReplyDummy}>답변 저장</button>
-                  {selectedInquiry.status === 'IN_PROGRESS' && (
-                    <button onClick={completeInquiryDummy} disabled={!inquiryReply.trim()}>처리 완료</button>
+                  <button onClick={saveInquiryReply} disabled={inqActionLoading || !inquiryReply.trim()}>
+                    {inqActionLoading ? '저장 중...' : '답변 저장'}
+                  </button>
+                  {selectedInquiry.inquiryStatus === 'IN_PROGRESS' && (
+                    <button onClick={completeInquiry} disabled={inqActionLoading || !inquiryReply.trim()}>처리 완료</button>
                   )}
                 </>
               )}
