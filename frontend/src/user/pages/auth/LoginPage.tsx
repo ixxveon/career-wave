@@ -31,7 +31,7 @@ const socialProviders: SocialProvider[] = [
   { id: 'kakao', label: '카카오', mark: 'K' },
   { id: 'naver', label: '네이버', mark: 'N' },
   { id: 'google', label: 'Google', mark: 'G' },
-  { id: 'apple', label: 'Apple', mark: null },
+  { id: 'apple', label: 'Apple' },
 ];
 
 const blockMessageByReason: Record<Extract<LoginRouteDecision, { type: 'BLOCK' }>['reason'], { title: string; description: string; actionLabel: string; actionPath: string }> = {

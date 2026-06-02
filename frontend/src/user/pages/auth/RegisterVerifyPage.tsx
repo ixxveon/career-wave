@@ -17,16 +17,22 @@ const initialTerms = {
   marketing: false,
 };
 
+type RegisterVerifyForm = typeof initialForm;
+type RegisterVerifyFormKey = keyof RegisterVerifyForm;
+type RegisterVerifyTerms = typeof initialTerms;
+type RegisterVerifyTermKey = keyof RegisterVerifyTerms;
+
 function RegisterVerifyPage() {
   const [form, setForm] = useState(initialForm);
   const [terms, setTerms] = useState(initialTerms);
   const [phoneVerified, setPhoneVerified] = useState(false);
   const canSubmit = terms.service && terms.privacy;
 
-  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const update = (key: RegisterVerifyFormKey, value: RegisterVerifyForm[RegisterVerifyFormKey]) =>
+    setForm((current) => ({ ...current, [key]: value }));
   const allTermsChecked = terms.service && terms.privacy && terms.marketing;
 
-  const toggleAll = (checked) => {
+  const toggleAll = (checked: boolean) => {
     setTerms({
       service: checked,
       privacy: checked,
@@ -34,7 +40,7 @@ function RegisterVerifyPage() {
     });
   };
 
-  const toggleTerm = (key) => {
+  const toggleTerm = (key: RegisterVerifyTermKey) => {
     setTerms((current) => ({
       ...current,
       [key]: !current[key],

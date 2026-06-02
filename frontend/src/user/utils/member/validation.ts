@@ -33,11 +33,14 @@ export interface CompanyRegisterDraft {
   passwordConfirm: string;
   managerName: string;
   managerEmail: string;
+  managerEmailVerificationToken?: string;
   managerPhone: string;
   companyName: string;
   businessNumber: string;
   ceoName: string;
   address: string;
+  addressDetail: string;
+  isAgency: boolean;
   managerPhoneVerificationToken?: string;
   employmentCertificateFileId?: string;
   terms: {

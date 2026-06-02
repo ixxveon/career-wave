@@ -69,12 +69,6 @@ type CompanyForm = typeof initialCompanyForm;
 type PersonalFormKey = keyof PersonalForm;
 type CompanyFormKey = keyof CompanyForm;
 
-const initialTerms = {
-  service: false,
-  privacy: false,
-  marketing: false,
-};
-
 const initialCompanyTerms = {
   service: false,
   companyVerification: false,
@@ -330,6 +324,27 @@ type StatusPillProps = {
   children: ReactNode;
 };
 
+type PersonalTermsValues = typeof initialPersonalTerms;
+type PersonalTermKey = keyof PersonalTermsValues;
+type CompanyTermsValues = typeof initialCompanyTerms;
+type CompanyTermKey = keyof CompanyTermsValues;
+type TermSection = {
+  title: string;
+  body: string;
+};
+type PersonalTermItem = {
+  key: PersonalTermKey;
+  type: 'required' | 'optional';
+  label: string;
+  details?: TermSection[];
+};
+type CompanyTermItem = {
+  key: CompanyTermKey;
+  type: 'required' | 'optional';
+  label: string;
+  details: TermSection[];
+};
+
 type AuthButtonGroupProps = {
   input: ReactNode;
   buttonLabel: string;
@@ -380,52 +395,6 @@ function StatusPill({ active, children }: StatusPillProps) {
   );
 }
 
-function RegisterTerms({ values, onChange, marketingLabel = '선택 마케팅 정보 수신 동의' }) {
-  const allChecked = values.service && values.privacy && values.marketing;
-
-  const toggleAll = (checked) => {
-    onChange({
-      service: checked,
-      privacy: checked,
-      marketing: checked,
-    });
-  };
-
-  const toggleOne = (key) => {
-    onChange({
-      ...values,
-      [key]: !values[key],
-    });
-  };
-
-  return (
-    <div className="cw-register-terms">
-      <label className="cw-register-check cw-register-check--all">
-        <input type="checkbox" checked={allChecked} onChange={(event) => toggleAll(event.target.checked)} />
-        <span>전체 동의</span>
-      </label>
-      <label className="cw-register-check">
-        <input type="checkbox" checked={values.service} onChange={() => toggleOne('service')} />
-        <span>
-          <strong>[필수]</strong> 이용약관 동의
-        </span>
-      </label>
-      <label className="cw-register-check">
-        <input type="checkbox" checked={values.privacy} onChange={() => toggleOne('privacy')} />
-        <span>
-          <strong>[필수]</strong> 개인정보 수집 및 이용 동의
-        </span>
-      </label>
-      <label className="cw-register-check">
-        <input type="checkbox" checked={values.marketing} onChange={() => toggleOne('marketing')} />
-        <span>
-          <strong>[선택]</strong> {marketingLabel}
-        </span>
-      </label>
-    </div>
-  );
-}
-
 function AuthButtonGroup({ input, buttonLabel, onClick, disabled = false, secondButtonLabel, onSecondClick, secondDisabled = false }: AuthButtonGroupProps) {
   return (
     <div className={secondButtonLabel ? 'cw-register-inline cw-register-inline--triple' : 'cw-register-inline'}>
@@ -464,11 +433,16 @@ function formatRemaining(seconds: number): string {
   return `${minutes}:${String(nextSeconds).padStart(2, '0')}`;
 }
 
-function PersonalTerms({ values, onChange }) {
-  const [openDetails, setOpenDetails] = useState({});
+type PersonalTermsProps = {
+  values: PersonalTermsValues;
+  onChange: React.Dispatch<React.SetStateAction<PersonalTermsValues>>;
+};
+
+function PersonalTerms({ values, onChange }: PersonalTermsProps) {
+  const [openDetails, setOpenDetails] = useState<Partial<Record<PersonalTermKey, boolean>>>({});
   const allChecked = values.age && values.service && values.privacy && values.marketing;
 
-  const toggleAll = (checked) => {
+  const toggleAll = (checked: boolean) => {
     onChange({
       age: checked,
       service: checked,
@@ -477,21 +451,21 @@ function PersonalTerms({ values, onChange }) {
     });
   };
 
-  const toggleOne = (key) => {
+  const toggleOne = (key: PersonalTermKey) => {
     onChange({
       ...values,
       [key]: !values[key],
     });
   };
 
-  const toggleDetail = (key) => {
+  const toggleDetail = (key: PersonalTermKey) => {
     setOpenDetails((current) => ({
       ...current,
       [key]: !current[key],
     }));
   };
 
-  const terms = [
+  const terms: PersonalTermItem[] = [
     { key: 'age', type: 'required', label: '만 15세 이상입니다' },
     { key: 'service', type: 'required', label: '이용약관 동의', details: personalTermDetails.service },
     { key: 'privacy', type: 'required', label: '개인정보 수집 및 이용 동의', details: personalTermDetails.privacy },
@@ -550,11 +524,16 @@ function PersonalTerms({ values, onChange }) {
   );
 }
 
-function CompanyTerms({ values, onChange }) {
-  const [openDetails, setOpenDetails] = useState({});
+type CompanyTermsProps = {
+  values: CompanyTermsValues;
+  onChange: React.Dispatch<React.SetStateAction<CompanyTermsValues>>;
+};
+
+function CompanyTerms({ values, onChange }: CompanyTermsProps) {
+  const [openDetails, setOpenDetails] = useState<Partial<Record<CompanyTermKey, boolean>>>({});
   const allChecked = values.service && values.companyVerification && values.sms && values.privacy && values.marketing;
 
-  const toggleAll = (checked) => {
+  const toggleAll = (checked: boolean) => {
     onChange({
       service: checked,
       companyVerification: checked,
@@ -564,21 +543,21 @@ function CompanyTerms({ values, onChange }) {
     });
   };
 
-  const toggleOne = (key) => {
+  const toggleOne = (key: CompanyTermKey) => {
     onChange({
       ...values,
       [key]: !values[key],
     });
   };
 
-  const toggleDetail = (key) => {
+  const toggleDetail = (key: CompanyTermKey) => {
     setOpenDetails((current) => ({
       ...current,
       [key]: !current[key],
     }));
   };
 
-  const terms = [
+  const terms: CompanyTermItem[] = [
     { key: 'service', type: 'required', label: '이용약관 동의', details: companyTermDetails.service },
     { key: 'companyVerification', type: 'required', label: '기업 인증 정보 확인 동의', details: companyTermDetails.companyVerification },
     { key: 'sms', type: 'required', label: '문자서비스 이용약관 동의', details: companyTermDetails.sms },
