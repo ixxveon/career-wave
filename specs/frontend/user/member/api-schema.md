@@ -414,6 +414,18 @@ Authorization: Bearer {accessToken}
 }
 ```
 
+기업회원은 추가 식별값을 포함한다.
+
+```json
+{
+  "memberType": "COMPANY",
+  "loginId": "company_hr01",
+  "managerName": "김담당",
+  "businessNumber": "1234567890",
+  "verificationToken": "short-lived-token"
+}
+```
+
 ### Response
 
 ```json
