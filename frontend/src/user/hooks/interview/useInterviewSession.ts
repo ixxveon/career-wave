@@ -14,6 +14,10 @@ import type {
   SpringWSMessage,
   FastApiWSMessage,
 } from '../../types/interview';
+import {
+  SPRING_WS_MESSAGE_TYPE,
+  FASTAPI_WS_MESSAGE_TYPE,
+} from '../../types/interview';
 import type { TTSQueueStatus } from './useTTSQueue';
 import type { SpringWSStatus }  from './useSpringWebSocket';
 import type { FastApiWSStatus } from './useFastApiWebSocket';
@@ -160,7 +164,7 @@ export function useInterviewSession({
 
   const handleSpringMessage = useCallback((msg: SpringWSMessage) => {
     switch (msg.type) {
-      case 'QUESTION':
+      case SPRING_WS_MESSAGE_TYPE.QUESTION:
         dispatch({ type: 'SET_TYPING', typing: false });
         dispatch({
           type:    'ADD_MESSAGE',
@@ -170,18 +174,19 @@ export function useInterviewSession({
           dispatch({ type: 'SET_QUESTION_ORDER', order: msg.questionOrder });
         }
         break;
-      case 'SYSTEM':
+      case SPRING_WS_MESSAGE_TYPE.SYSTEM:
         dispatch({
           type:    'ADD_MESSAGE',
           message: { id: Date.now(), role: 'notice', text: msg.content },
         });
+        // TODO: 백엔드와 SYSTEM subType 필드 협의 후 content 파싱 제거 예정
         if (msg.content.includes('시작')) {
           dispatch({ type: 'RUNNING' });
         } else if (msg.content.includes('완료') || msg.content.includes('생성')) {
           dispatch({ type: 'FINISH' });
         }
         break;
-      case 'ERROR':
+      case SPRING_WS_MESSAGE_TYPE.ERROR:
         dispatch({ type: 'ERROR' });
         break;
     }
@@ -204,7 +209,7 @@ export function useInterviewSession({
 
   const handleFastApiMessage = useCallback((msg: FastApiWSMessage) => {
     switch (msg.type) {
-      case 'STT_RESULT': {
+      case FASTAPI_WS_MESSAGE_TYPE.STT_RESULT: {
         const text = msg.content ?? '';
         if (msg.isFinal) {
           // 최종 STT 결과 — pending 말풍선 완료 처리
@@ -225,7 +230,7 @@ export function useInterviewSession({
         }
         break;
       }
-      case 'LLM_STREAM': {
+      case FASTAPI_WS_MESSAGE_TYPE.LLM_STREAM: {
         const token = msg.content ?? '';
         streamingAccRef.current += token;
         // RAF 배치 업데이트 — 같은 프레임의 토큰들 합산 후 한 번만 setState
@@ -252,10 +257,10 @@ export function useInterviewSession({
         }
         break;
       }
-      case 'TTS_AUDIO':
+      case FASTAPI_WS_MESSAGE_TYPE.TTS_AUDIO:
         if (msg.audioChunk) tts.enqueue(msg.audioChunk);
         break;
-      case 'ERROR':
+      case FASTAPI_WS_MESSAGE_TYPE.ERROR:
         // STT/LLM/TTS 처리 오류 — 연결은 유지, 토스트로 표시 (api-schema.md §8)
         dispatch({
           type:    'ADD_MESSAGE',
