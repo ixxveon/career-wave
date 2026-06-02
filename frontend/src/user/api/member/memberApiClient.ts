@@ -73,7 +73,7 @@ async function requestWithAuthRetry(endpoint: string, init: RequestInit, auth: b
 export async function memberApiClient<T>(endpoint: string, options: MemberApiOptions = {}): Promise<T> {
   const { auth = false, headers, body, ...rest } = options;
   const isFormData = body instanceof FormData;
-  const token = authSession.getAccessToken();
+  let token = authSession.getAccessToken();
   const requestHeaders = new Headers(headers);
 
   if (!isFormData && !requestHeaders.has('Content-Type')) {
@@ -81,12 +81,17 @@ export async function memberApiClient<T>(endpoint: string, options: MemberApiOpt
   }
 
   if (auth && !token) {
+    token = await requestAccessTokenRefresh();
+  }
+
+  if (auth && !token) {
+    authSession.clear();
     throw toMemberApiError(401, {
       message: '인증 정보가 없습니다.',
     });
   }
 
-  if (auth && token) {
+  if (auth) {
     requestHeaders.set('Authorization', `Bearer ${token}`);
   }
 

@@ -3,6 +3,7 @@ import { type FormEvent, useState } from 'react';
 import { AlertCircle, Apple, LockKeyhole, UserRound } from 'lucide-react';
 import { getLoginRouteDecision, useLogin } from '../../hooks/member';
 import type { LoginRouteDecision } from '../../types/member';
+import { authSession } from '../../utils/member/authSession';
 import { getSafeLoginMessage, type MemberApiError } from '../../utils/member/errorMapping';
 import {
   hasLoginFormErrors,
@@ -102,10 +103,16 @@ function LoginPage() {
       const decision = getLoginRouteDecision(response);
 
       if (decision.type === 'BLOCK') {
+        authSession.clear();
         setBlockedDecision(decision);
         return;
       }
 
+      authSession.setTokens({
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      });
+      authSession.setMember(response.member);
       navigate(decision.path, { replace: true });
     } catch (error) {
       setFieldErrors({

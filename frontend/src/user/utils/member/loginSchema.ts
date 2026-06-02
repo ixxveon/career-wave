@@ -1,5 +1,4 @@
 import { MEMBER_TYPE, type LoginRequest, type MemberType } from '../../types/member';
-import { isValidLoginId } from './registerSchema';
 
 export type LoginTab = 'personal' | 'company';
 
@@ -24,8 +23,6 @@ export function validateLoginForm(values: LoginFormValues): LoginFormErrors {
 
   if (!values.loginId.trim()) {
     errors.loginId = '아이디를 입력해주세요.';
-  } else if (!isValidLoginId(values.loginId)) {
-    errors.loginId = '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.';
   }
 
   if (!values.password) {
