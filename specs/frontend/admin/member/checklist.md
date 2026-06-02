@@ -95,3 +95,16 @@
 - [ ] 목록 API 호출 중 로딩 상태(스피너/스켈레톤)가 표시되는지 확인한다.
 - [ ] 페이지네이션이 API 응답의 `totalElements`, `totalPages`와 연동되는지 확인한다.
 - [ ] 제재·승인·반려 처리 성공/실패 후 토스트 알림이 표시되는지 확인한다.
+
+---
+
+## Phase 8 — 구현 패턴 검증
+
+- [ ] 필터 드롭다운·입력값 변경이 즉시 API 호출을 트리거하지 않는다.
+- [ ] 검색 버튼 클릭 또는 Enter 입력 시에만 `fetchMembers` / `fetchHrManagers`가 호출된다.
+- [ ] 적용 필터가 `appliedMemberFilters ref` / `appliedHrFilters ref`로 입력 상태와 분리되어 있다.
+- [ ] Stale 응답 방지를 위해 `memberReqId ref` / `hrReqId ref`가 사용된다.
+- [ ] API 응답 처리 시 `res.data.success`를 먼저 확인한 후 `res.data.data`에 접근한다.
+- [ ] API 실패 시 `res.data.message`를 에러 메시지로 표시한다.
+- [ ] 모든 HTTP 호출이 `memberApi.ts`를 통해서만 수행된다.
+- [ ] 제재·승인·반려 처리 중 버튼이 `disabled` 처리된다.

@@ -70,3 +70,34 @@ PaymentPage
 - [x] Phase 3: 구독 현황 탭 — KPI 카드, 상태 필터, 목록 테이블
 - [x] Phase 4: 정산 리포트 탭 — v2 블라인드 처리
 - [ ] Phase 5: API 연동 — `paymentApi.ts` 작성 및 더미 데이터 제거
+
+---
+
+## Data Flow
+
+1. 결제 내역·구독 현황 탭은 각각 독립적으로 로드한다.
+2. 필터 변경 → 검색 버튼 → `appliedFilters ref` 갱신 → fetch 호출.
+3. 환불 처리 확정·불가 성공 → 서버 응답 기준으로 목록 상태 배지 갱신.
+4. KPI는 페이지 마운트 시 조회한다.
+
+---
+
+## State Ownership
+
+| 상태 | 소유 위치 |
+|---|---|
+| KPI 집계 | `PaymentPage` |
+| 결제 목록 (`payments`) | `PaymentPage` |
+| 구독 목록 (`subscriptions`) | `PaymentPage` |
+| 필터 입력 상태 | `PaymentPage` (로컬) |
+| 적용 필터 | `appliedFilters ref` |
+| 환불 처리 모달 상태 | `PaymentPage` |
+
+---
+
+## Risks
+
+- **Toss 환불 API 의존**: 환불 처리 확정은 BE에서 Toss API 호출 → BE 구현 완료 전 실제 테스트 불가, Postman 기준 검증 예정.
+- **환불 가능 여부 판단**: 결제 상세 API 응답에 `aiUsage` (유료 이력서 분석·AI 면접 이용 횟수) 포함 필요 → BE 스펙 확인 필요.
+- **BE 미완성**: API 연동 전까지 더미 데이터 유지, `paymentApi.ts` 구조만 완성하여 전환 대비.
+- **409 REFUND_NOT_PENDING**: 중복 환불 요청 방지 → 별도 에러 메시지 처리 필요.

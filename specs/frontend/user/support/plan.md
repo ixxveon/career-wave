@@ -79,3 +79,34 @@ SupportPage (/support)
   - [ ] `inquiry_status` 매핑 상수 적용
   - [ ] `InquiryCreatePage` 카테고리에 `환불(REFUND)` 추가
   - [ ] `NoticePage` 카테고리에 `이벤트(EVENT)` 추가
+
+---
+
+## Data Flow
+
+1. 탭 전환 시 해당 탭 데이터만 독립적으로 로드한다.
+2. 공지사항 상세 진입 → `GET /api/notices/{noticeId}` 호출 (조회수 자동 증가).
+3. 문의 접수 성공 → 문의 목록 페이지로 이동.
+4. 필터·검색 변경 → 검색 버튼 → fetch 호출.
+
+---
+
+## State Ownership
+
+| 상태 | 소유 위치 |
+|---|---|
+| 공지 목록 | `NoticePage` |
+| 공지 상세 | `NoticeDetailPage` |
+| FAQ 목록 | `FaqPage` |
+| 문의 목록 | `InquiryListPage` |
+| 문의 접수 폼 | `InquiryCreatePage` |
+| 열린 FAQ 항목 ID | `FaqPage` (단일 아코디언) |
+
+---
+
+## Risks
+
+- **미로그인 사용자**: 문의 목록·접수 API 접근 시 401 응답 → `/auth/login` 리다이렉트 처리 필요.
+- **notices·faqs Entity 공유**: `admin/cs`와 동일 테이블 사용 → BE Entity 공유 전략 확인 필요.
+- **BE 미완성**: API 연동 전까지 더미 데이터 유지, `supportApi.ts` 구조만 완성하여 전환 대비.
+- **UI 선행 수정 필요**: API 연동 전 카테고리 추가 (`EVENT`, `REFUND`) 및 FAQ 카테고리 재구성 선행 필요.

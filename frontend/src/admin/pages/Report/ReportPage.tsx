@@ -1,13 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Bot, Clock, EyeOff, Flag, UserX } from 'lucide-react';
+import { reportApi, type ReportItem, type ReportSummary, type ReportStatus, type TargetType, type ReportReason } from '../../api/reportApi';
 import '../../styles/admin.css';
 import '../../styles/Report.css';
 
-// ── ERD 기반 타입 ────────────────────────────────────────────
-type ReportStatus   = 'PENDING' | 'BLINDED' | 'DISMISSED';
-type ReportType     = 'BOARD' | 'COMMENT' | 'MEMBER';
-type ReportReason   = 'SPAM' | 'ABUSE' | 'AD' | 'INAPPROPRIATE' | 'OTHER';
-type BoardCategory  = '취업 후기' | '면접 후기' | '자유 게시판' | '-';
+// ── 로컬 전용 타입 ───────────────────────────────────────────
+type ReportType     = TargetType;
 type Severity       = '낮음' | '중간' | '높음';
 type SuspendType    = 'WARNING' | 'SUSPEND' | 'BLACKLIST';
 type SuspendDuration = 'THREE_DAYS' | 'SEVEN_DAYS' | 'THIRTY_DAYS' | 'PERMANENT';
@@ -68,122 +66,114 @@ interface UserAiReview {
   summary: string;
 }
 
-interface Report {
-  id: string;
-  type: ReportType;
-  category: BoardCategory;
-  targetName: string;
-  reporterName: string;
-  reason: ReportReason;
-  content: string;
-  reportedAt: string;
-  status: ReportStatus;
+interface ReportWithAi extends ReportItem {
   aiReview?: AiReview;
   userAiReview?: UserAiReview;
 }
 
-// ── 더미 데이터 ──────────────────────────────────────────────
-const initial: Report[] = [
-  {
-    id: 'R-2001', type: 'BOARD', category: '자유 게시판',
-    targetName: '박서연', reporterName: '김민지', reason: 'ABUSE',
-    content: '이 플랫폼 진짜 쓸모없고 여기 사람들 다 가짜임...',
-    reportedAt: '2026.05.22', status: 'PENDING',
-    aiReview: { severity: '중간', recommendation: 'BLINDED', summary: '욕설 및 비방 표현이 포함되어 있으며 커뮤니티 가이드라인 위반으로 판단됩니다. 블라인드 처리를 권고합니다.' },
-    userAiReview: { reportCount: 2, warningCount: 2, riskLevel: '중간', recommendation: 'WARNING', summary: '최근 30일 내 2건의 신고가 접수되었습니다. 경고 수준으로 판단되며 추가 위반 시 활동정지를 권고합니다.' },
-  },
-  {
-    id: 'R-2002', type: 'COMMENT', category: '취업 후기',
-    targetName: '이준호', reporterName: '최도윤', reason: 'SPAM',
-    content: '카카오톡 오픈채팅 1234 들어오시면 취업 100% 보장!',
-    reportedAt: '2026.05.22', status: 'PENDING',
-    aiReview: { severity: '높음', recommendation: 'BLINDED', summary: '외부 링크 유도 및 허위 광고성 내용이 확인됩니다. 즉시 블라인드 처리를 권고합니다.' },
-    userAiReview: { reportCount: 7, warningCount: 3, riskLevel: '높음', recommendation: 'BLACKLIST', summary: '최근 30일 내 7건의 신고가 접수되었으며 스팸성 댓글 패턴이 반복 감지됩니다. 블랙리스트 등록을 강력 권고합니다.' },
-  },
-  {
-    id: 'R-2003', type: 'MEMBER', category: '-',
-    targetName: '홍길동', reporterName: '박서연', reason: 'INAPPROPRIATE',
-    content: '경력 10년이라 써놨지만 실제로는 신입으로 확인됨',
-    reportedAt: '2026.05.21', status: 'BLINDED',
-    aiReview: { severity: '중간', recommendation: 'BLINDED', summary: '허위 경력 기재 의혹이 있습니다. 추가 확인 후 처리를 권고합니다.' },
-    userAiReview: { reportCount: 1, warningCount: 0, riskLevel: '낮음', recommendation: 'WARNING', summary: '최초 신고 접수입니다. 허위 정보 기재 여부 확인 후 경고 처리를 권고합니다.' },
-  },
-  {
-    id: 'R-2004', type: 'BOARD', category: '면접 후기',
-    targetName: '이영희', reporterName: '김민지', reason: 'ABUSE',
-    content: '취업도 못하는 주제에 여기서 뭘 가르치려고...',
-    reportedAt: '2026.05.20', status: 'DISMISSED',
-    aiReview: { severity: '낮음', recommendation: 'DISMISSED', summary: '표현이 다소 거칠지만 직접적인 욕설이나 명예훼손으로 보기 어렵습니다. 기각이 적합합니다.' },
-    userAiReview: { reportCount: 1, warningCount: 0, riskLevel: '낮음', recommendation: 'NONE', summary: '신고 건이 기각 처리되었으며 회원 제재 사유가 없는 것으로 분류됩니다.' },
-  },
-  {
-    id: 'R-2005', type: 'COMMENT', category: '자유 게시판',
-    targetName: '최지수', reporterName: '이준호', reason: 'SPAM',
-    content: '동일 내용 댓글을 30분 간격으로 반복 게시 중',
-    reportedAt: '2026.05.19', status: 'PENDING',
-  },
-];
-
 export default function ReportPage() {
-  const [reports, setReports]             = useState<Report[]>(initial);
-  const [selected, setSelected]           = useState<Report | null>(null);
-  const [checkedIds, setCheckedIds]       = useState<string[]>([]);
-  const [keyword, setKeyword]             = useState('');
-  const [typeFilter, setTypeFilter]       = useState('');
-  const [statusFilter, setStatusFilter]   = useState('');
-  const [aiLoading, setAiLoading]         = useState<string | null>(null);
-  const [userAiLoading, setUserAiLoading] = useState<string | null>(null);
-  const [suspendTarget, setSuspendTarget] = useState<Report | null>(null);
+  // ── API 상태 ───────────────────────────────────────────────
+  const [reports, setReports]       = useState<ReportWithAi[]>([]);
+  const [summary, setSummary]       = useState<ReportSummary>({ totalCount: 0, pendingCount: 0, blindedCount: 0, highRiskCount: 0 });
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError]   = useState('');
+
+  const [selected, setSelected]     = useState<ReportWithAi | null>(null);
+  const [checkedIds, setCheckedIds] = useState<number[]>([]);
+  const [keyword, setKeyword]       = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
+  const [aiLoading, setAiLoading]         = useState<number | null>(null);
+  const [userAiLoading, setUserAiLoading] = useState<number | null>(null);
+  const [suspendTarget, setSuspendTarget] = useState<ReportWithAi | null>(null);
   const [suspendType, setSuspendType]     = useState<SuspendType>('WARNING');
   const [suspendDuration, setSuspendDuration] = useState<SuspendDuration>('THREE_DAYS');
   const [suspendReason, setSuspendReason] = useState('');
 
-  const filtered = reports.filter(
-    (r) =>
-      (!typeFilter   || r.type   === typeFilter) &&
-      (!statusFilter || r.status === statusFilter) &&
-      (r.id.includes(keyword) || r.targetName.includes(keyword) || r.reporterName.includes(keyword)),
-  );
+  // ── 적용 필터 ref (검색 버튼/Enter 시에만 갱신) ───────────
+  const appliedFilters = useRef({ status: '', targetType: '', keyword: '' });
+  const reportReqId = useRef(0);
 
+  // ── KPI 조회 ───────────────────────────────────────────────
+  const fetchSummary = useCallback(async () => {
+    try {
+      const res = await reportApi.getSummary();
+      setSummary(res.data.data);
+    } catch (err) {
+      console.error('fetchSummary failed:', err);
+    }
+  }, []);
+
+  // ── 목록 조회 ──────────────────────────────────────────────
+  const fetchReports = useCallback(async (page = 1) => {
+    const reqId = ++reportReqId.current;
+    const f = appliedFilters.current;
+    setListLoading(true);
+    setListError('');
+    try {
+      const res = await reportApi.getReports({
+        ...(f.status && { status: f.status as ReportStatus }),
+        ...(f.targetType && { targetType: f.targetType as TargetType }),
+        ...(f.keyword && { keyword: f.keyword }),
+        page,
+        size: 20,
+      });
+      if (reqId !== reportReqId.current) return;
+      const { items, totalItems, totalPages } = res.data.data;
+      setReports(items);
+      setTotalItems(totalItems);
+      setTotalPages(totalPages);
+      setCurrentPage(page);
+    } catch {
+      if (reqId !== reportReqId.current) return;
+      setListError('신고 목록을 불러오지 못했습니다.');
+    } finally {
+      if (reqId === reportReqId.current) setListLoading(false);
+    }
+  }, []);
+
+  // ── 검색 적용 핸들러 ───────────────────────────────────────
+  const applySearch = () => {
+    appliedFilters.current = { status: statusFilter, targetType: typeFilter, keyword };
+    fetchReports(1);
+  };
+
+  useEffect(() => { fetchSummary(); }, [fetchSummary]);
+  useEffect(() => { fetchReports(1); }, [fetchReports]);
+
+  // ── 체크박스 ───────────────────────────────────────────────
   const toggleAll = (checked: boolean) =>
-    setCheckedIds(checked ? filtered.map((r) => r.id) : []);
-  const toggleOne = (id: string, checked: boolean) =>
+    setCheckedIds(checked ? reports.map((r) => r.reportId) : []);
+  const toggleOne = (id: number, checked: boolean) =>
     setCheckedIds((prev) => (checked ? [...prev, id] : prev.filter((v) => v !== id)));
 
-  const applyStatus = (ids: string[], status: ReportStatus) => {
-    setReports((prev) => prev.map((r) => (ids.includes(r.id) ? { ...r, status } : r)));
-    setSelected((prev) => (prev && ids.includes(prev.id) ? { ...prev, status } : prev));
-    setCheckedIds([]);
-  };
-
-  const deleteItems = (ids: string[]) => {
-    setReports((prev) => prev.filter((r) => !ids.includes(r.id)));
-    if (selected && ids.includes(selected.id)) setSelected(null);
-    setCheckedIds([]);
-  };
-
-  const requestAiReview = (reportId: string) => {
+  // ── AI 검토 (mock — v2에서 실제 API 전환) ─────────────────
+  const requestAiReview = (reportId: number) => {
     setAiLoading(reportId);
     setTimeout(() => {
       const mockReview: AiReview = {
         severity: '중간', recommendation: 'BLINDED',
         summary: 'AI 검토 결과, 해당 콘텐츠에 커뮤니티 가이드라인 위반 요소가 감지되었습니다. 블라인드 처리를 권고합니다.',
       };
-      setReports((prev) => prev.map((r) => (r.id === reportId ? { ...r, aiReview: mockReview } : r)));
-      setSelected((prev) => (prev && prev.id === reportId ? { ...prev, aiReview: mockReview } : prev));
+      setReports((prev) => prev.map((r) => (r.reportId === reportId ? { ...r, aiReview: mockReview } : r)));
+      setSelected((prev) => (prev && prev.reportId === reportId ? { ...prev, aiReview: mockReview } : prev));
       setAiLoading(null);
     }, 1500);
   };
 
-  const requestUserAiReview = (reportId: string) => {
+  const requestUserAiReview = (reportId: number) => {
     setUserAiLoading(reportId);
     setTimeout(() => {
       const mockReview: UserAiReview = {
         reportCount: 3, warningCount: 1, riskLevel: '중간', recommendation: 'WARNING',
         summary: 'AI 분석 결과 최근 활동에서 반복적인 가이드라인 위반 패턴이 감지되었습니다. 경고 조치를 권고합니다.',
       };
-      setReports((prev) => prev.map((r) => (r.id === reportId ? { ...r, userAiReview: mockReview } : r)));
-      setSelected((prev) => (prev && prev.id === reportId ? { ...prev, userAiReview: mockReview } : prev));
+      setReports((prev) => prev.map((r) => (r.reportId === reportId ? { ...r, userAiReview: mockReview } : r)));
+      setSelected((prev) => (prev && prev.reportId === reportId ? { ...prev, userAiReview: mockReview } : prev));
       setUserAiLoading(null);
     }, 1500);
   };
@@ -195,9 +185,20 @@ export default function ReportPage() {
     setSuspendDuration('THREE_DAYS');
   };
 
-  const pendingCount  = reports.filter((r) => r.status === 'PENDING').length;
-  const blindedCount  = reports.filter((r) => r.status === 'BLINDED').length;
-  const highRiskCount = reports.filter((r) => r.aiReview?.severity === '높음').length;
+  // ── 페이지네이션 ───────────────────────────────────────────
+  const renderPagination = () => (
+    <div className="pagination">
+      <button disabled={listLoading || currentPage <= 1} onClick={() => fetchReports(currentPage - 1)}>{'<'}</button>
+      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+        const p = Math.max(1, currentPage - 2) + i;
+        if (p > totalPages) return null;
+        return (
+          <button key={p} className={p === currentPage ? 'activePage' : ''} disabled={listLoading} onClick={() => fetchReports(p)}>{p}</button>
+        );
+      })}
+      <button disabled={listLoading || currentPage >= totalPages} onClick={() => fetchReports(currentPage + 1)}>{'>'}</button>
+    </div>
+  );
 
   return (
     <section>
@@ -214,25 +215,25 @@ export default function ReportPage() {
         <section className="memberSummaryGrid">
           <article className="memberSummaryCard kpi-blue">
             <div className="memberKpiContent">
-              <p>전체 신고</p><h3>{reports.length}</h3><span>누적 접수</span>
+              <p>전체 신고</p><h3>{summary.totalCount.toLocaleString()}</h3><span>누적 접수</span>
             </div>
             <div className="memberKpiIcon kpi-blue"><Flag size={24} /></div>
           </article>
           <article className="memberSummaryCard kpi-yellow">
             <div className="memberKpiContent">
-              <p>처리 대기</p><h3>{pendingCount}</h3><span>즉시 검토 필요</span>
+              <p>처리 대기</p><h3>{summary.pendingCount}</h3><span>즉시 검토 필요</span>
             </div>
             <div className="memberKpiIcon kpi-yellow"><Clock size={24} /></div>
           </article>
           <article className="memberSummaryCard kpi-purple">
             <div className="memberKpiContent">
-              <p>블라인드 처리</p><h3>{blindedCount}</h3><span>처리 완료</span>
+              <p>블라인드 처리</p><h3>{summary.blindedCount}</h3><span>처리 완료</span>
             </div>
             <div className="memberKpiIcon kpi-purple"><EyeOff size={24} /></div>
           </article>
           <article className="memberSummaryCard kpi-green">
             <div className="memberKpiContent">
-              <p>AI 고위험 감지</p><h3>{highRiskCount}</h3><span>즉시 처리 권고</span>
+              <p>AI 고위험 감지</p><h3>{summary.highRiskCount}</h3><span>즉시 처리 권고</span>
             </div>
             <div className="memberKpiIcon kpi-green"><Bot size={24} /></div>
           </article>
@@ -245,6 +246,7 @@ export default function ReportPage() {
             placeholder="신고 ID, 대상, 신고자 검색"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && applySearch()}
           />
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
             <option value="">전체</option>
@@ -258,24 +260,25 @@ export default function ReportPage() {
             <option value="BLINDED">블라인드</option>
             <option value="DISMISSED">기각</option>
           </select>
-          <button className="memberFilterBtn">검색</button>
+          <button className="memberFilterBtn" onClick={applySearch}>검색</button>
         </section>
 
         {/* Bulk action bar */}
         {checkedIds.length > 0 && (
           <div className="bulkBar">
             <span>{checkedIds.length}건 선택됨</span>
-            <button onClick={() => applyStatus(checkedIds, 'BLINDED')}>일괄 블라인드</button>
-            <button onClick={() => applyStatus(checkedIds, 'DISMISSED')}>일괄 기각</button>
-            <button className="danger" onClick={() => deleteItems(checkedIds)}>일괄 삭제</button>
+            <button disabled>일괄 블라인드</button>
+            <button disabled>일괄 기각</button>
+            <button className="danger" disabled>일괄 삭제</button>
           </div>
         )}
 
         {/* Table */}
         <section className="admin-card memberTableCard">
           <div className="memberTableHeader">
-            <h3>신고 목록<span className="memberTotalCount">총 {filtered.length}건</span></h3>
+            <h3>신고 목록<span className="memberTotalCount">총 {totalItems.toLocaleString()}건</span></h3>
           </div>
+          {listError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{listError}</p>}
           <div className="tableScroll">
           <table className="memberTable">
             <thead>
@@ -283,33 +286,34 @@ export default function ReportPage() {
                 <th>
                   <input
                     type="checkbox"
-                    checked={filtered.length > 0 && checkedIds.length === filtered.length}
+                    checked={reports.length > 0 && checkedIds.length === reports.length}
                     onChange={(e) => toggleAll(e.target.checked)}
                   />
                 </th>
-                <th>신고 ID</th><th>유형</th><th>게시판</th>
-                <th>신고 대상</th><th>신고자</th><th>신고 사유</th>
+                <th>신고 ID</th><th>유형</th><th>신고 대상</th>
+                <th>신고자</th><th>신고 사유</th>
                 <th>접수일</th><th>상태</th><th>관리</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((r) => (
-                <tr key={r.id}>
+              {listLoading ? (
+                <tr><td colSpan={9} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
+              ) : reports.map((r) => (
+                <tr key={r.reportId}>
                   <td>
                     <input
                       type="checkbox"
-                      checked={checkedIds.includes(r.id)}
-                      onChange={(e) => toggleOne(r.id, e.target.checked)}
+                      checked={checkedIds.includes(r.reportId)}
+                      onChange={(e) => toggleOne(r.reportId, e.target.checked)}
                     />
                   </td>
-                  <td>{r.id}</td>
-                  <td><span className={`reportTypeBadge ${typeCls[r.type]}`}>{typeLabel[r.type]}</span></td>
-                  <td>{r.category}</td>
-                  <td>{r.targetName}</td>
+                  <td style={{ color: '#7a8da4', fontSize: 13 }}>#{r.reportId}</td>
+                  <td><span className={`reportTypeBadge ${typeCls[r.targetType]}`}>{typeLabel[r.targetType]}</span></td>
+                  <td>{r.reportedName}</td>
                   <td>{r.reporterName}</td>
                   <td>{reasonLabel[r.reason]}</td>
-                  <td>{r.reportedAt}</td>
-                  <td><span className={`statusBadge ${statusCls[r.status]}`}>{statusLabel[r.status]}</span></td>
+                  <td>{new Date(r.createdAt).toLocaleDateString('ko-KR')}</td>
+                  <td><span className={`statusBadge ${statusCls[r.reportStatus]}`}>{statusLabel[r.reportStatus]}</span></td>
                   <td>
                     <button className="tableBtn" onClick={() => setSelected(r)}>상세보기</button>
                   </td>
@@ -319,13 +323,13 @@ export default function ReportPage() {
           </table>
           </div>
           <div className="memberTableFooter">
-            <span className="memberTableCount">총 {filtered.length}건</span>
-            <div className="pagination">
-              <button>{'<'}</button>
-              <button className="activePage">1</button>
-              <button>2</button>
-              <button>{'>'}</button>
-            </div>
+            <span className="memberTableCount">
+              {totalItems === 0
+                ? '총 0건'
+                : `표시 중: ${(currentPage - 1) * 20 + 1} - ${Math.min(currentPage * 20, totalItems)} / 총 ${totalItems.toLocaleString()}건`
+              }
+            </span>
+            {renderPagination()}
           </div>
         </section>
       </div>
@@ -336,8 +340,8 @@ export default function ReportPage() {
           <div className="memberModal modal--scrollable" onClick={(e) => e.stopPropagation()} style={{ width: 600 }}>
             <div className="modalHeader">
               <div>
-                <h3>신고 상세 · {selected.id}</h3>
-                <p>{typeLabel[selected.type]} · {selected.reportedAt}</p>
+                <h3>신고 상세 · #{selected.reportId}</h3>
+                <p>{typeLabel[selected.targetType]} · {new Date(selected.createdAt).toLocaleDateString('ko-KR')}</p>
               </div>
               <button onClick={() => setSelected(null)}>닫기</button>
             </div>
@@ -348,24 +352,23 @@ export default function ReportPage() {
                 <div>
                   <span>유형</span>
                   <strong>
-                    <span className={`reportTypeBadge ${typeCls[selected.type]}`}>{typeLabel[selected.type]}</span>
+                    <span className={`reportTypeBadge ${typeCls[selected.targetType]}`}>{typeLabel[selected.targetType]}</span>
                   </strong>
                 </div>
                 <div><span>신고 사유</span><strong>{reasonLabel[selected.reason]}</strong></div>
-                <div><span>게시판</span><strong>{selected.category}</strong></div>
-                <div><span>접수일</span><strong>{selected.reportedAt}</strong></div>
-                <div><span>신고 대상</span><strong>{selected.targetName}</strong></div>
+                <div><span>접수일</span><strong>{new Date(selected.createdAt).toLocaleDateString('ko-KR')}</strong></div>
+                <div><span>신고 대상</span><strong>{selected.reportedName}</strong></div>
                 <div><span>신고자</span><strong>{selected.reporterName}</strong></div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <span>신고 대상 본문</span>
+                  <span>신고 대상 제목</span>
                   <strong style={{ display: 'block', marginTop: 8, lineHeight: 1.7, wordBreak: 'break-all' }}>
-                    {selected.content}
+                    {selected.contentTitle ?? '—'}
                   </strong>
                 </div>
                 <div>
                   <span>현재 상태</span>
                   <strong>
-                    <span className={`statusBadge ${statusCls[selected.status]}`}>{statusLabel[selected.status]}</span>
+                    <span className={`statusBadge ${statusCls[selected.reportStatus]}`}>{statusLabel[selected.reportStatus]}</span>
                   </strong>
                 </div>
               </div>
@@ -394,11 +397,11 @@ export default function ReportPage() {
                 ) : (
                   <button
                     className="aiReviewBtn"
-                    disabled={aiLoading === selected.id}
-                    onClick={() => requestAiReview(selected.id)}
+                    disabled={aiLoading === selected.reportId}
+                    onClick={() => requestAiReview(selected.reportId)}
                   >
                     <Bot size={14} />
-                    {aiLoading === selected.id ? 'AI 검토 중...' : 'AI 검토 요청'}
+                    {aiLoading === selected.reportId ? 'AI 검토 중...' : 'AI 검토 요청'}
                   </button>
                 )}
               </div>
@@ -453,11 +456,11 @@ export default function ReportPage() {
                 ) : (
                   <button
                     className="aiReviewBtn"
-                    disabled={userAiLoading === selected.id}
-                    onClick={() => requestUserAiReview(selected.id)}
+                    disabled={userAiLoading === selected.reportId}
+                    onClick={() => requestUserAiReview(selected.reportId)}
                   >
                     <UserX size={14} />
-                    {userAiLoading === selected.id ? '분석 중...' : '대상 회원 AI 검토 요청'}
+                    {userAiLoading === selected.reportId ? '분석 중...' : '대상 회원 AI 검토 요청'}
                   </button>
                 )}
               </div>
@@ -465,22 +468,18 @@ export default function ReportPage() {
 
             {/* Action */}
             <div className="modalAction" style={{ justifyContent: 'space-between' }}>
-              {selected.type !== 'MEMBER' ? (
-                <button className="tableBtn tableBtn--danger" onClick={() => deleteItems([selected.id])}>
-                  {selected.type === 'COMMENT' ? '댓글 삭제' : '게시글 삭제'}
+              {selected.targetType !== 'MEMBER' ? (
+                <button className="tableBtn tableBtn--danger">
+                  {selected.targetType === 'COMMENT' ? '댓글 삭제' : '게시글 삭제'}
                 </button>
               ) : (
                 <span />
               )}
               <div style={{ display: 'flex', gap: 8 }}>
-                {selected.status === 'PENDING' && (
+                {selected.reportStatus === 'PENDING' && (
                   <>
-                    <button className="tableBtn tableBtn--approve" onClick={() => applyStatus([selected.id], 'BLINDED')}>
-                      블라인드
-                    </button>
-                    <button className="tableBtn" onClick={() => applyStatus([selected.id], 'DISMISSED')}>
-                      기각
-                    </button>
+                    <button className="tableBtn tableBtn--approve">블라인드</button>
+                    <button className="tableBtn">기각</button>
                   </>
                 )}
                 <button
@@ -510,7 +509,7 @@ export default function ReportPage() {
 
             <div className="sanctionTarget">
               <span>제재 대상</span>
-              <strong>{suspendTarget.targetName}</strong>
+              <strong>{suspendTarget.reportedName}</strong>
             </div>
 
             <span className="sanctionTypeLabel">제재 유형</span>

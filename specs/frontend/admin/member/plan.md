@@ -81,3 +81,35 @@ specs/frontend/admin/member/
 - [ ] SUSPENDED 상태 회원 정지 해제 UI
 - [ ] 기업 회원 재직증명서 파일 실제 다운로드/미리보기
 - [ ] 기업 회원 반려 후 재신청 플로우 UI
+
+---
+
+## Data Flow
+
+1. 페이지 마운트 시 개인회원·기업회원 목록을 각각 초기 로드한다.
+2. 필터 드롭다운·입력값 변경은 로컬 상태만 업데이트한다.
+3. 검색 버튼 클릭 또는 Enter → `appliedMemberFilters ref` 갱신 → `fetchMembers(1)` 호출.
+4. 제재·승인·반려 처리 성공 → 목록 재조회하여 상태 배지 갱신.
+5. 기업회원 탭 배지는 `pendingCount` (목록 API 응답 포함) 기준으로 표시한다.
+
+---
+
+## State Ownership
+
+| 상태 | 소유 위치 |
+|---|---|
+| 개인회원 목록 (`members`) | `UserManagementPage` |
+| 기업회원 목록 (`hrManagers`) | `UserManagementPage` |
+| 필터 입력 상태 (`roleFilter`, `statusFilter` 등) | `UserManagementPage` (로컬) |
+| 적용 필터 | `appliedMemberFilters ref`, `appliedHrFilters ref` |
+| 페이지네이션 | `UserManagementPage` (`memberPage`, `hrPage`) |
+| 모달 상태 (상세/정지/승인/반려) | `UserManagementPage` |
+
+---
+
+## Risks
+
+- **BE 미완성**: API 연동 전까지 더미 데이터 유지, `memberApi.ts` 구조만 완성하여 전환 대비.
+- **KPI 일부 항목 API 없음**: 오늘 신규·프리미엄 구독·정지 회원 수 summary API 미제공 → `—` 표시 처리.
+- **기업회원 KPI 집계**: 승인완료·반려 건수는 현재 페이지 기준 집계 (전체 집계 API 없음) → 라벨 "현재 페이지 기준" 명시.
+- **재직증명서 파일**: 현재 파일명 표시만, 실제 파일 스토리지 연동은 v2 예정.
