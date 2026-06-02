@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowUp,
@@ -17,6 +17,8 @@ import {
   mapJobNoticeViewToApiModel,
   type JobNotice,
   type JobNoticeBookmarkMap,
+  type JobNoticeListStats,
+  type JobNoticeQueryParams,
   type JobNoticeListResponse,
 } from './JobNoticeTypes';
 import './styles/JobNoticeListPage.css';
@@ -29,8 +31,8 @@ const FILTER_GROUPS = [
   { label: '기업 규모', options: ['전체', '스타트업', '중견', '대기업'] },
 ] as const;
 
-const PERIODS = ['오늘', '7일', '30일', '기간 전체'];
-const SORT_OPTIONS = ['추천순', '최신순', '조회순'];
+const PERIODS = ['오늘', '7일', '30일', '기간 전체'] as const;
+const SORT_OPTIONS = ['추천순', '최신순', '조회순'] as const;
 const DEFAULT_FILTER_VALUE = '전체';
 const POPULAR_SEARCH_TAGS = ['백엔드', '프론트엔드', 'Java', 'React', 'Spring Boot', 'AWS', 'Python'];
 
@@ -43,6 +45,27 @@ const FILTER_FIELD_BY_LABEL = {
   '채용 유형': 'employment',
   지역: 'location',
   '기업 규모': 'companySize',
+} as const;
+
+const API_FILTER_PARAM_BY_LABEL = {
+  직무: 'jobType',
+  경력: 'experience',
+  '채용 유형': 'employmentType',
+  지역: 'location',
+  '기업 규모': 'companySize',
+} as const;
+
+const API_PERIOD_BY_LABEL = {
+  오늘: 'today',
+  '7일': '7d',
+  '30일': '30d',
+  '기간 전체': 'all',
+} as const;
+
+const API_SORT_BY_LABEL = {
+  추천순: 'recommend',
+  최신순: 'latest',
+  조회순: 'views',
 } as const;
 
 type FilterLabel = keyof typeof FILTER_FIELD_BY_LABEL;
@@ -62,24 +85,26 @@ interface BannerStat {
   valueClassName?: string;
 }
 
-const BANNER_STATS: BannerStat[] = [
-  {
-    label: '전체 공고',
-    value: '111,053',
-    description: '+2,342 오늘',
-    Icon: FileText,
-    iconClassName: 'jn-stat-card__icon--blue',
-  },
-  {
-    label: '오늘 신규 공고',
-    value: '2,342',
-    description: '(15.8%)',
-    highlight: '+320',
-    Icon: Flame,
-    iconClassName: 'jn-stat-card__icon--pink',
-    valueClassName: 'jn-stat-card__value--pink',
-  },
-];
+function createBannerStats(stats: JobNoticeListStats): BannerStat[] {
+  return [
+    {
+      label: '전체 공고',
+      value: stats.totalOpenCount.toLocaleString(),
+      description: `+${stats.todayNewCount.toLocaleString()} 오늘`,
+      Icon: FileText,
+      iconClassName: 'jn-stat-card__icon--blue',
+    },
+    {
+      label: '오늘 신규 공고',
+      value: stats.todayNewCount.toLocaleString(),
+      description: `(${stats.todayNewRate.toLocaleString()}%)`,
+      highlight: `+${stats.todayNewDelta.toLocaleString()}`,
+      Icon: Flame,
+      iconClassName: 'jn-stat-card__icon--pink',
+      valueClassName: 'jn-stat-card__value--pink',
+    },
+  ];
+}
 
 const JOBS: JobNotice[] = [
   {
@@ -206,6 +231,39 @@ function createInitialBookmarks(): Bookmarks {
   return Object.fromEntries(JOBS.map((job) => [job.id, job.bookmarked]));
 }
 
+function createJobNoticeQueryParams({
+  filters,
+  period,
+  searchQuery,
+  sort,
+}: {
+  filters: Filters;
+  period: Period;
+  searchQuery: string;
+  sort: SortOption;
+}): JobNoticeQueryParams {
+  const params: JobNoticeQueryParams = {
+    page: MOCK_PAGE,
+    size: MOCK_PAGE_SIZE,
+    period: API_PERIOD_BY_LABEL[period],
+    sort: API_SORT_BY_LABEL[sort],
+  };
+
+  const keyword = searchQuery.trim();
+  if (keyword) {
+    params.keyword = keyword;
+  }
+
+  (Object.entries(API_FILTER_PARAM_BY_LABEL) as Array<[FilterLabel, keyof JobNoticeQueryParams]>).forEach(([label, paramKey]) => {
+    const value = filters[label];
+    if (value !== DEFAULT_FILTER_VALUE) {
+      params[paramKey] = value;
+    }
+  });
+
+  return params;
+}
+
 function normalizeText(value: string) {
   return value.toLowerCase().replace(/\s+/g, '');
 }
@@ -280,7 +338,9 @@ function matchesPeriod(job: JobNotice, period: Period, referenceDate: Date) {
 
   if (period === '오늘') return diffDays === 0;
   if (period === '7일') return diffDays >= 0 && diffDays <= 7;
-  return diffDays >= 0 && diffDays <= 30;
+  if (period === '30일') return diffDays >= 0 && diffDays <= 30;
+
+  return false;
 }
 
 function filterJobs(jobs: JobNotice[], filters: Filters, period: Period, searchQuery: string) {
@@ -301,16 +361,18 @@ function sortJobs(jobs: JobNotice[], sort: SortOption) {
   });
 }
 
-function createMockJobNoticeListResponse(items: JobNotice[]): JobNoticeListResponse {
+function createMockJobNoticeListResponse(items: JobNotice[], queryParams: JobNoticeQueryParams): JobNoticeListResponse {
   const referenceDate = getReferenceDate(JOBS);
   const todayNewCount = JOBS.filter((job) => matchesPeriod(job, PERIODS[0], referenceDate)).length;
+  const page = queryParams.page ?? MOCK_PAGE;
+  const size = queryParams.size ?? MOCK_PAGE_SIZE;
 
   return {
     items: items.map(mapJobNoticeViewToApiModel),
-    page: MOCK_PAGE,
-    size: MOCK_PAGE_SIZE,
+    page,
+    size,
     totalItems: items.length,
-    totalPages: Math.ceil(items.length / MOCK_PAGE_SIZE),
+    totalPages: Math.ceil(items.length / size),
     stats: {
       totalOpenCount: JOBS.length,
       todayNewCount,
@@ -330,29 +392,34 @@ function createMockJobNoticeListResponse(items: JobNotice[]): JobNoticeListRespo
 function BannerSearch({ onSearch }: { onSearch: (searchText: string) => void }) {
   const [searchText, setSearchText] = useState('');
 
-  function submitSearch(value = searchText) {
+  function applySearch(value: string) {
     onSearch(value.trim());
+  }
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    applySearch(searchText);
+  }
+
+  function selectPopularSearchTag(tag: string) {
+    setSearchText(tag);
+    applySearch(tag);
   }
 
   return (
     <div className="jn-banner__search">
-      <label className="jn-hero-search">
+      <form className="jn-hero-search" onSubmit={submitSearch}>
         <span className="sr-only">채용 공고 검색</span>
         <input
           type="search"
           value={searchText}
           placeholder="회사명, 공고명, 기술 스택으로 검색하세요"
           onChange={(event) => setSearchText(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              submitSearch();
-            }
-          }}
         />
-        <button type="button" aria-label="검색" onClick={() => submitSearch()}>
+        <button type="submit" aria-label="검색">
           <Search size={21} />
         </button>
-      </label>
+      </form>
 
       <div className="jn-popular-tags" aria-label="인기 검색어">
         <span>인기 검색어</span>
@@ -360,10 +427,7 @@ function BannerSearch({ onSearch }: { onSearch: (searchText: string) => void }) 
           <button
             type="button"
             key={tag}
-            onClick={() => {
-              setSearchText(tag);
-              submitSearch(tag);
-            }}
+            onClick={() => selectPopularSearchTag(tag)}
           >
             {tag}
           </button>
@@ -391,10 +455,12 @@ function StatCard({ stat }: { stat: BannerStat }) {
   );
 }
 
-function BannerStats() {
+function BannerStats({ stats }: { stats: JobNoticeListStats }) {
+  const bannerStats = createBannerStats(stats);
+
   return (
     <div className="jn-banner__stats" aria-label="채용 공고 통계">
-      {BANNER_STATS.map((stat) => (
+      {bannerStats.map((stat) => (
         <StatCard key={stat.label} stat={stat} />
       ))}
     </div>
@@ -484,7 +550,7 @@ function FilterBlock({ group, value, onChange }: FilterBlockProps) {
     <details className="jn-filter-block" ref={detailsRef}>
       <summary>
         <span>{group.label}</span>
-        {value !== '전체' && <em>{value}</em>}
+        {value !== DEFAULT_FILTER_VALUE && <em>{value}</em>}
         <strong>+</strong>
       </summary>
       <div>
@@ -530,7 +596,7 @@ interface SortDropdownProps {
 function SortDropdown({ selected, isOpen, onToggle, onSelect }: SortDropdownProps) {
   return (
     <div className={`jn-sort${isOpen ? ' is-open' : ''}`}>
-      <button type="button" onClick={onToggle}>
+      <button type="button" aria-expanded={isOpen} aria-label={`정렬 기준: ${selected}`} onClick={onToggle}>
         {selected} <ChevronDown size={16} />
       </button>
       {isOpen && (
@@ -559,7 +625,7 @@ function ActiveFilterChips({ filters, onReset }: { filters: Filters; onReset: (l
   return (
     <div className="jn-active-filters">
       {activeFilters.map(([label, value]) => (
-        <button key={label} type="button" onClick={() => onReset(label)}>
+        <button key={label} type="button" aria-label={`${label} 필터 해제`} onClick={() => onReset(label)}>
           {value} ×
         </button>
       ))}
@@ -603,9 +669,11 @@ export default function JobNoticeListPage() {
     setListRetryCount((count) => count + 1);
   }
 
+  const jobNoticeQueryParams = createJobNoticeQueryParams({ filters, period, searchQuery, sort });
   const filteredJobItems = sortJobs(filterJobs(JOBS, filters, period, searchQuery), sort);
-  const mockListResponse = createMockJobNoticeListResponse(filteredJobItems);
+  const mockListResponse = createMockJobNoticeListResponse(filteredJobItems, jobNoticeQueryParams);
   const filteredJobs = mockListResponse.items.map(mapJobNoticeApiToViewModel);
+  const resultTotalItems = mockListResponse.totalItems;
 
   useEffect(() => {
     setListStatus('loading');
@@ -621,7 +689,7 @@ export default function JobNoticeListPage() {
     <div className="jn">
       <section className="jn-banner">
         <BannerSearch onSearch={setSearchQuery} />
-        <BannerStats />
+        <BannerStats stats={mockListResponse.stats} />
       </section>
 
       <div className="jn-layout">
@@ -639,7 +707,7 @@ export default function JobNoticeListPage() {
         <main className="jn-results">
           <div className="jn-results__head">
             <div>
-              <span>해당 공고 <b>{filteredJobs.length.toLocaleString()}</b>개</span>
+              <span>해당 공고 <b>{resultTotalItems.toLocaleString()}</b>개</span>
               <ActiveFilterChips filters={filters} onReset={resetFilter} />
             </div>
             <div className="jn-results__tools">

@@ -1,6 +1,6 @@
 import { apiClient } from '../../utils/apiClient';
 
-const JOB_NOTICE_BASE_PATH = '/user/job-notices';
+const JOB_NOTICE_BASE_PATH = '/v1/user/job-notices';
 
 function createQueryString(params = {}) {
   const query = new URLSearchParams();
