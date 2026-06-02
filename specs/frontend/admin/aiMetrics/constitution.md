@@ -8,9 +8,8 @@
 
 | Domain | Label | Description |
 |--------|-------|-------------|
-| `DOCUMENT_AI` | AI 서류 기능 | 자기소개서, 이력서, 서류 분석 등 사용자 서류 AI 사용량 |
-| `INTERVIEW_AI` | AI 면접 기능 | AI 면접 질문, 답변 분석, 피드백 등 면접 AI 사용량 |
-| `ADMIN_AI` | 관리자 AI 기능 | 관리자 운영 보조, RAG 지식 베이스, 내부 AI 도구 사용량 |
+| `DOCUMENT` | AI 서류 기능 | 자기소개서, 이력서, 서류 분석 등 사용자 서류 AI 사용량 |
+| `INTERVIEW` | AI 면접 기능 | AI 면접 질문, 답변 분석, 피드백 등 면접 AI 사용량 |
 
 ## 불변 규칙
 

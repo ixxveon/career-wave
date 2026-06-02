@@ -3,7 +3,7 @@
 ## Spec Consistency
 
 - [ ] `spec.md`, `plan.md`, `tasks.md`, `api-schema.md`, `constitution.md`의 도메인 정의가 일치한다.
-- [ ] AI 도메인은 `DOCUMENT_AI`, `INTERVIEW_AI`, `ADMIN_AI`로 통일되어 있다.
+- [ ] AI 도메인은 ERD의 `ai_usage_logs.feature_type` 기준인 `DOCUMENT`, `INTERVIEW`로 통일되어 있다.
 - [ ] 모델명은 `displayModelName`과 `actualModelName`으로 분리되어 있다.
 - [ ] 비용은 정산 데이터가 아닌 운영 참고용 추정치로 명시되어 있다.
 - [ ] Phase별 스택 브랜치 작업 규칙이 문서에 반영되어 있다.
@@ -20,7 +20,7 @@
 
 ## Phase 2 - 도메인별 사용량 대시보드
 
-- [ ] AI 서류 기능, AI 면접 기능, 관리자 AI 기능 카드가 표시된다.
+- [ ] AI 서류 기능, AI 면접 기능 카드가 표시된다.
 - [ ] 요청 수, 성공/실패 수, 실패율, 평균 응답 시간이 표시된다.
 - [ ] 입력/출력 토큰과 비용 추정치가 도메인별로 표시된다.
 - [ ] 도메인 위험도 상태가 명확히 구분된다.

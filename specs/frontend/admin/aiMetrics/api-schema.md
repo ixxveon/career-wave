@@ -9,9 +9,35 @@
 - 날짜 형식: ISO 8601
 - 비용 단위: USD 기준 추정치
 
+## Response Wrapper Format
+
+모든 endpoint는 `ApiResponse<T>`로 감싼 응답을 반환한다. 아래 endpoint별 JSON 예시는 가독성을 위해 `data` 내부 값만 표시한다.
+
+### Success
+
+```json
+{
+  "success": true,
+  "data": {},
+  "message": null,
+  "timestamp": "2026-06-01T09:10:00+09:00"
+}
+```
+
+### Error
+
+```json
+{
+  "success": false,
+  "data": null,
+  "message": "오류 메시지",
+  "timestamp": "2026-06-01T09:10:00+09:00"
+}
+```
+
 ## 조회 기간 제약
 
-`GET /summary`, `GET /domain-usage`, `GET /token-trend`의 `from`, `to`는 아래 기준을 따른다.
+`GET /summary`, `GET /domain-usage`, `GET /token-trend`, `GET /heavy-users`의 `from`, `to`는 아래 기준을 따른다.
 
 | Parameter | Default | Maximum Range | Validation |
 |-----------|---------|---------------|------------|
@@ -28,7 +54,7 @@
 ## 공통 타입
 
 ```ts
-type AiDomain = 'DOCUMENT_AI' | 'INTERVIEW_AI' | 'ADMIN_AI';
+type AiDomain = 'DOCUMENT' | 'INTERVIEW';
 type AiEventSeverity = 'INFO' | 'WARN' | 'ERROR';
 type AiHealthStatus = 'NORMAL' | 'WARNING' | 'CRITICAL';
 type AiUsageRiskLevel = 'NORMAL' | 'WARNING' | 'CRITICAL';
@@ -66,7 +92,7 @@ type RagIndexStatus = 'SYNCED' | 'INDEXING' | 'FAILED';
 
 ## GET /domain-usage
 
-AI 서류 기능, AI 면접 기능, 관리자 AI 기능의 도메인별 사용량을 조회한다.
+AI 서류 기능, AI 면접 기능의 도메인별 사용량을 조회한다.
 
 ### Query
 
@@ -80,7 +106,7 @@ AI 서류 기능, AI 면접 기능, 관리자 AI 기능의 도메인별 사용�
 ```json
 [
   {
-    "domain": "DOCUMENT_AI",
+    "domain": "DOCUMENT",
     "domainLabel": "AI 서류 기능",
     "requestCount": 5400,
     "successCount": 5320,
@@ -144,6 +170,8 @@ AI 서류 기능, AI 면접 기능, 관리자 AI 기능의 도메인별 사용�
 |------|------|----------|-------------|
 | `domain` | AiDomain | false | 특정 도메인 필터 |
 | `limit` | number | false | 기본 10 |
+| `from` | string | false | 조회 시작 일시 |
+| `to` | string | false | 조회 종료 일시 |
 
 ### Response Data
 
@@ -152,7 +180,7 @@ AI 서류 기능, AI 면접 기능, 관리자 AI 기능의 도메인별 사용�
   {
     "userId": "USR_8892",
     "maskedUserLabel": "USR_88**",
-    "domain": "INTERVIEW_AI",
+    "domain": "INTERVIEW",
     "domainLabel": "AI 면접 기능",
     "tokenUsage": 12403,
     "requestCount": 41,
@@ -172,7 +200,7 @@ AI 서류 기능, AI 면접 기능, 관리자 AI 기능의 도메인별 사용�
 |------|------|----------|-------------|
 | `domain` | AiDomain | false | 특정 도메인 필터 |
 | `severity` | AiEventSeverity | false | 로그 등급 필터 |
-| `page` | number | false | 1부터 시작 |
+| `page` | number | false | 0부터 시작 |
 | `size` | number | false | 기본 20 |
 
 ### Response Data
@@ -183,15 +211,15 @@ AI 서류 기능, AI 면접 기능, 관리자 AI 기능의 도메인별 사용�
     {
       "eventId": 101,
       "occurredAt": "2026-06-01T09:03:10+09:00",
-      "domain": "ADMIN_AI",
-      "domainLabel": "관리자 AI 기능",
+      "domain": "DOCUMENT",
+      "domainLabel": "AI 서류 기능",
       "severity": "WARN",
-      "message": "관리자 AI 기능 응답 시간이 기준치를 초과했습니다.",
-      "displayModelName": "관리자 보조 모델",
+      "message": "AI 서류 기능 응답 시간이 기준치를 초과했습니다.",
+      "displayModelName": "서류 분석 모델",
       "actualModelName": "actual-provider-model"
     }
   ],
-  "page": 1,
+  "page": 0,
   "size": 20,
   "totalElements": 52,
   "totalPages": 3
@@ -222,6 +250,13 @@ AI 서류 기능, AI 면접 기능, 관리자 AI 기능의 도메인별 사용�
 
 월간 예산과 알림 임계치를 수정한다.
 
+### Validation
+
+| Field | Constraint |
+|-------|------------|
+| `monthlyBudget` | 0 이상 |
+| `thresholdPercent` | 1 이상 100 이하 |
+
 ### Request
 
 ```json
@@ -243,7 +278,7 @@ AI 서류 기능, AI 면접 기능, 관리자 AI 기능의 도메인별 사용�
 }
 ```
 
-## POST /controls/rate-limit
+## PATCH /controls/rate-limit
 
 AI 사용량 제한 상태를 변경한다.
 
@@ -281,6 +316,7 @@ AI 사용량 제한 상태를 변경한다.
 |--------|---------|
 | 400 | 조회 조건이 올바르지 않습니다. |
 | 400 | 조회 기간은 최대 90일을 초과할 수 없습니다. |
+| 400 | 예산 또는 알림 임계치가 허용 범위를 벗어났습니다. |
 | 401 | 인증이 필요합니다. |
 | 403 | 관리자 권한이 필요합니다. |
 | 500 | AI 매트릭스 조회 중 오류가 발생했습니다. |

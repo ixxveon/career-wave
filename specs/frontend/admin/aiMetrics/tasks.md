@@ -16,7 +16,7 @@
 **Branch**: `feature/admin-ai-metrics-domain-usage`
 **Base**: `feature/admin-ai-metrics-api`
 
-- [ ] `DOCUMENT_AI`, `INTERVIEW_AI`, `ADMIN_AI` 도메인 카드 렌더링
+- [ ] `DOCUMENT`, `INTERVIEW` 도메인 카드 렌더링
 - [ ] 전체 요청 수, 성공/실패 수, 실패율, 평균 응답 시간 표시
 - [ ] 도메인별 입력/출력 토큰과 비용 추정치 표시
 - [ ] 도메인 위험도 `NORMAL`, `WARNING`, `CRITICAL` 표시
