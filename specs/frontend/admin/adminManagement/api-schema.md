@@ -117,7 +117,7 @@
 
 ```json
 {
-  "role": "AUDIT"
+  "role": "BACKEND"
 }
 ```
 
@@ -202,9 +202,6 @@
 | `MASTER` | 전체 권한 통제 및 보안 승인 |
 | `CS` | 회원 문의, 신고, 1차 조치 |
 | `BACKEND` | API, DB, 배포, 장애 대응 |
-| `OPS` | 공지, 배너, 서비스 운영 |
-| `BILLING` | 결제, 환불, 정산 확인 |
-| `AUDIT` | 로그, 정책, 권한 감사 |
 
 ### `AdminStatus`
 
