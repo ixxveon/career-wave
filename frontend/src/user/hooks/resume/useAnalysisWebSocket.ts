@@ -84,7 +84,12 @@ export function useAnalysisWebSocket({
       }
       errorFiredRef.current = false;
 
-      const url = `${WS_BASE_URL}/ws/resume/${documentId}/status`;
+      // api-schema.md §5: JWT를 쿼리 파라미터로 전달 (?token={accessToken})
+      // TODO: 인증 팀원(/user/member) 토큰 관리 방식 확정 후 토큰 조회 방법 교체 필요
+      const token = localStorage.getItem('accessToken');
+      const url   = token
+        ? `${WS_BASE_URL}/ws/user/resume/${documentId}/status?token=${encodeURIComponent(token)}`
+        : `${WS_BASE_URL}/ws/user/resume/${documentId}/status`;
       const ws  = new WebSocket(url);
       wsRef.current = ws;
 

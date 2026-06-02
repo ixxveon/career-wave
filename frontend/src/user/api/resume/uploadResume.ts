@@ -3,7 +3,7 @@ import type { ApiResponse, UploadResumeResponse } from '../../types/resume.d';
 
 /**
  * 이력서 파일 업로드
- * POST /api/v1/resume/upload
+ * POST /api/v1/user/resume/upload
  *
  * - multipart/form-data 전송 (apiClient가 Content-Type 자동 설정)
  * - 업로드 완료 즉시 서버에서 AI 분석 자동 트리거
@@ -16,7 +16,7 @@ export const uploadResume = (
   const formData = new FormData();
   formData.append('file', file);
 
-  return apiClient('/api/v1/resume/upload', {
+  return apiClient('/api/v1/user/resume/upload', {
     method: 'POST',
     body: formData,
     signal,

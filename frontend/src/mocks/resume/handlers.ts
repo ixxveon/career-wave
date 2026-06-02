@@ -8,10 +8,10 @@ import {
   MOCK_HISTORY_RESPONSE,
 } from './data';
 
-const BASE = '/api/v1/resume';
+const BASE = '/api/v1/user/resume';
 
 // WebSocket 핸들러 — 분석 상태 단계별 메시지 시뮬레이션
-const wsAnalysis = ws.link(`*/ws/resume/${MOCK_DOCUMENT_ID}/status`);
+const wsAnalysis = ws.link(`*/ws/user/resume/${MOCK_DOCUMENT_ID}/status`);
 
 const wsHandler = wsAnalysis.addEventListener('connection', ({ client }) => {
   const steps = [
@@ -39,7 +39,7 @@ const wsHandler = wsAnalysis.addEventListener('connection', ({ client }) => {
 export const resumeHandlers = [
   wsHandler,
 
-  // POST /api/v1/resume/upload
+  // POST /api/v1/user/resume/upload
   http.post(`${BASE}/upload`, async () => {
     await delay(800);
     return HttpResponse.json<ApiResponse<typeof MOCK_UPLOAD_RESPONSE>>({
@@ -50,7 +50,7 @@ export const resumeHandlers = [
     });
   }),
 
-  // POST /api/v1/resume/cover-letter
+  // POST /api/v1/user/resume/cover-letter
   http.post(`${BASE}/cover-letter`, async () => {
     await delay(600);
     return HttpResponse.json<ApiResponse<typeof MOCK_COVER_LETTER_RESPONSE>>({
@@ -61,7 +61,7 @@ export const resumeHandlers = [
     });
   }),
 
-  // GET /api/v1/resume/history — 반드시 /:documentId/feedback 보다 앞에 등록
+  // GET /api/v1/user/resume/history — 반드시 /:documentId/feedback 보다 앞에 등록
   http.get(`${BASE}/history`, async () => {
     await delay(400);
     return HttpResponse.json<ApiResponse<typeof MOCK_HISTORY_RESPONSE>>({
@@ -72,7 +72,7 @@ export const resumeHandlers = [
     });
   }),
 
-  // GET /api/v1/resume/:documentId/feedback
+  // GET /api/v1/user/resume/:documentId/feedback
   http.get(`${BASE}/:documentId/feedback`, async () => {
     await delay(400);
     return HttpResponse.json<ApiResponse<typeof MOCK_ANALYSIS_RESULT>>({

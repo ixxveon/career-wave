@@ -7,7 +7,7 @@ import type {
 
 /**
  * 분석 이력 목록 조회
- * GET /api/v1/resume/history
+ * GET /api/v1/user/resume/history
  *
  * - 최신순 페이징 조회 (0-based page)
  */
@@ -20,7 +20,7 @@ export const getResumeHistory = (
     size: String(size),
   });
 
-  return apiClient(`/api/v1/resume/history?${params}`, { signal }).then(
+  return apiClient(`/api/v1/user/resume/history?${params}`, { signal }).then(
     (res: ApiResponse<ResumeHistoryResponse>) => res.data,
   );
 };

@@ -7,7 +7,7 @@ import type {
 
 /**
  * 자기소개서 문항/답변 제출
- * POST /api/v1/resume/cover-letter
+ * POST /api/v1/user/resume/cover-letter
  *
  * - 제출 완료 즉시 서버에서 AI 분석 자동 트리거
  * - 응답의 data.documentId로 WebSocket 연결 시작
@@ -16,7 +16,7 @@ export const submitCoverLetter = (
   body: SubmitCoverLetterRequest,
   signal?: AbortSignal,
 ): Promise<SubmitCoverLetterResponse> => {
-  return apiClient('/api/v1/resume/cover-letter', {
+  return apiClient('/api/v1/user/resume/cover-letter', {
     method: 'POST',
     body: JSON.stringify(body),
     signal,

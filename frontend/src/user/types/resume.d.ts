@@ -39,7 +39,7 @@ export type FileType = 'RESUME' | 'COVER_LETTER';
 
 // ── 1. 이력서 업로드 ──────────────────────────────────────────
 
-/** POST /api/v1/resume/upload — Response data */
+/** POST /api/v1/user/resume/upload — Response data */
 export interface UploadResumeResponse {
   documentId: string;
   status: BackendDocumentStatus;
@@ -58,14 +58,14 @@ export interface CoverLetterItem {
   answer: string;
 }
 
-/** POST /api/v1/resume/cover-letter — Request body */
+/** POST /api/v1/user/resume/cover-letter — Request body */
 export interface SubmitCoverLetterRequest {
   company: string;
   job: string;
   content: CoverLetterItem[];
 }
 
-/** POST /api/v1/resume/cover-letter — Response data */
+/** POST /api/v1/user/resume/cover-letter — Response data */
 export interface SubmitCoverLetterResponse {
   documentId: string;
   status: BackendDocumentStatus;
@@ -120,7 +120,7 @@ export interface FeedbackDetail {
   quantAnalysis?: QuantAnalysis;
 }
 
-/** GET /api/v1/resume/{documentId}/feedback — Response data */
+/** GET /api/v1/user/resume/{documentId}/feedback — Response data */
 export interface AnalysisResultResponse {
   documentId: string;
   status: BackendDocumentStatus;
@@ -144,13 +144,13 @@ export interface ResumeHistoryItem {
   createdAt: string;
 }
 
-/** GET /api/v1/resume/history — Query params */
+/** GET /api/v1/user/resume/history — Query params */
 export interface ResumeHistoryParams {
   page?: number;
   size?: number;
 }
 
-/** GET /api/v1/resume/history — Response data */
+/** GET /api/v1/user/resume/history — Response data */
 export interface ResumeHistoryResponse {
   content: ResumeHistoryItem[];
   page: number;
@@ -161,7 +161,7 @@ export interface ResumeHistoryResponse {
 
 // ── 5. WebSocket 메시지 ───────────────────────────────────────
 
-/** WS /ws/resume/{documentId}/status — Server → Client 메시지 */
+/** WS /ws/user/resume/{documentId}/status — Server → Client 메시지 */
 export interface WsStatusMessage {
   status: WsAnalysisStatus;
   message: string;
