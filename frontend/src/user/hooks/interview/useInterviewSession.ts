@@ -117,7 +117,8 @@ function sessionReducer(
 // ── 훅 인터페이스 ──────────────────────────────────────────────
 
 export interface UseInterviewSessionOptions {
-  sessionId: string | null;
+  sessionId:   string | null;
+  sessionType: string;
 }
 
 export interface UseInterviewSessionResult {
@@ -141,6 +142,7 @@ export interface UseInterviewSessionResult {
 
 export function useInterviewSession({
   sessionId,
+  sessionType,
 }: UseInterviewSessionOptions): UseInterviewSessionResult {
   const [state, dispatch] = useReducer(sessionReducer, INIT_STATE);
   const tts = useTTSQueue();
@@ -303,7 +305,7 @@ export function useInterviewSession({
     if (!sessionId || state.sessionState !== 'RUNNING') return;
     saveInterviewSession({
       sessionId,
-      sessionType:   'VOICE',
+      sessionType,
       questionOrder: state.questionOrder,
       startedAt:     new Date().toISOString(),
     });

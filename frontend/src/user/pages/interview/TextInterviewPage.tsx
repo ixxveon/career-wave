@@ -47,7 +47,7 @@ interface InterviewRoomProps {
 function InterviewRoom({ sessionId, company, job, sessionType, onExit }: InterviewRoomProps) {
   const navigate = useNavigate();
 
-  const session = useInterviewSession({ sessionId });
+  const session = useInterviewSession({ sessionId, sessionType });
 
   const [inputMode,  setInputMode]  = useState<'voice' | 'text'>(
     sessionType === SESSION_TYPE.TEXT ? 'text' : 'voice',
