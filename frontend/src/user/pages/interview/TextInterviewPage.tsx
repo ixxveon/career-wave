@@ -131,6 +131,24 @@ function InterviewRoom({ sessionId, company, job, sessionType, onExit }: Intervi
         session.sendTextAnswer('');
       }
     },
+    onChunkFailed: (_idx, isFinal) => {
+      // 마지막 청크 전송 실패 — pending 말풍선 제거 후 텍스트 모드 전환
+      if (isFinal) {
+        const pid = pendingVoiceIdRef.current;
+        if (pid !== null) {
+          session.dispatch({ type: 'REMOVE_MESSAGE', id: pid });
+          setPendingVoiceId(null);
+        }
+        session.dispatch({
+          type:    'ADD_MESSAGE',
+          message: { id: Date.now(), role: 'notice', text: '⚠️ 음성 전송에 실패했습니다. 텍스트로 답변해주세요.' },
+        });
+        setSttLive('');
+        timer.stop();
+        setInputMode('text');
+        timer.start();
+      }
+    },
     onError: () => {
       const pid = pendingVoiceIdRef.current;
       if (pid !== null) {
