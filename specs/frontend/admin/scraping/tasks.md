@@ -27,12 +27,12 @@
 **Branch**: `feature/admin-scraping-actions`
 **Base**: `feature/admin-scraping-list`
 
-- [ ] 실행 액션 API 연결
-- [ ] 재시도 액션 API 연결
-- [ ] 테스트 액션 API 연결
-- [ ] 액션 요청 중 중복 클릭 방지
-- [ ] 액션 성공 후 목록 데이터 갱신
-- [ ] 액션 실패 안내 표시
+- [x] 실행 액션 API 연결
+- [x] 재시도 액션 API 연결
+- [x] 테스트 액션 API 연결
+- [x] 액션 요청 중 중복 클릭 방지
+- [x] 액션 성공 후 목록 데이터 갱신
+- [x] 액션 실패 안내 표시
 
 ## Phase 4 - 운영 로그와 장애 원인 확인
 
