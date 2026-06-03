@@ -146,11 +146,10 @@ export default function StatisticsPage() {
   // 차트 — 데이터 없으면 빈 배열로 처리
   const revenueData = monthlyRevenue.length > 0 ? monthlyRevenue : [];
   const revenueValues = revenueData.map(m => m.total);
-  const maxRevenue = revenueValues.length > 0 ? Math.max(...revenueValues) : LINE_MAX_VAL;
 
   const { line, area, pts } = buildSvgPath(
     revenueValues.length > 1 ? revenueValues : [0, 0],
-    maxRevenue || LINE_MAX_VAL
+    LINE_MAX_VAL
   );
   const peakIdx  = pts.reduce((max, p, i) => (p[1] < pts[max][1] ? i : max), 0);
   const tooltipX = Math.min(pts[peakIdx][0] - TOOLTIP_W / 2, LINE_VBW - TOOLTIP_W - 6);
@@ -282,7 +281,7 @@ export default function StatisticsPage() {
                     </div>
                     <span className="statsChannelName">{item.label}</span>
                     <span className="statsChannelAmt">
-                      {toM(up ? item.amount : -item.amount)}
+                      {toM(item.amount)}
                     </span>
                     <span className={`statsGrowthBadge ${up ? 'up' : 'down'}`}>
                       {up ? '+' : ''}{item.growth}%
