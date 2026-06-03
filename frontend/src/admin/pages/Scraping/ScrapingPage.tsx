@@ -17,6 +17,9 @@ type Tone = 'normal' | 'warning' | 'danger' | 'info';
 const PIPELINE_PAGE_SIZE = 5;
 const PIPELINE_TABLE_BODY_HEIGHT = 280;
 const LOG_PAGE_SIZE = 5;
+const FILTER_ALL = 'ALL' as const;
+
+type StatusFilter = typeof FILTER_ALL | ScrapingStatus;
 
 const statusTone: Record<ScrapingStatus, Tone> = {
   [SCRAPING_STATUS.SUCCESS]: 'normal',
@@ -32,6 +35,11 @@ const logStatusTone: Record<ScrapingStatus, Tone> = {
   [SCRAPING_STATUS.SUCCESS]: 'normal',
   [SCRAPING_STATUS.FAILED]: 'danger',
 };
+
+const toStatusFilter = (value: string): StatusFilter =>
+  value === SCRAPING_STATUS.SUCCESS || value === SCRAPING_STATUS.FAILED
+    ? value
+    : FILTER_ALL;
 
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 const formatDuration = (ms: number) => `${ms.toLocaleString()}ms`;
@@ -55,8 +63,8 @@ const sanitizeLogDetail = (detail: string) => {
 };
 const getLogMessage = (log: ScrapingLog) =>
   log.detail
-    ? `${log.sourceName} ${log.message} ${sanitizeLogDetail(log.detail)}`
-    : `${log.sourceName} ${log.message}`;
+    ? `${log.sourceName} ${sanitizeLogDetail(log.message)} ${sanitizeLogDetail(log.detail)}`
+    : `${log.sourceName} ${sanitizeLogDetail(log.message)}`;
 const getActionErrorMessage = (error: unknown) =>
   error instanceof Error && error.message
     ? error.message
@@ -70,12 +78,12 @@ const actionReason: Record<ScrapingActionType, string> = {
 export default function ScrapingPage() {
   const queryClient = useQueryClient();
   const [pipelineQuery, setPipelineQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | ScrapingStatus>('ALL');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(FILTER_ALL);
   const [selectedPipelineIds, setSelectedPipelineIds] = useState<string[]>([]);
   const [pipelinePage, setPipelinePage] = useState(1);
   const [updatedSeconds] = useState(35);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
-  const [logStatusFilter, setLogStatusFilter] = useState<'ALL' | ScrapingStatus>('ALL');
+  const [logStatusFilter, setLogStatusFilter] = useState<StatusFilter>(FILTER_ALL);
   const [logSourceFilter, setLogSourceFilter] = useState<string | null>(null);
   const [logPage, setLogPage] = useState(1);
   const pipelineKeyword = pipelineQuery.trim();
@@ -93,7 +101,7 @@ export default function ScrapingPage() {
     queryFn: async () => {
       const response = await scrapingApi.getSources({
         keyword: pipelineKeyword.length > 0 ? pipelineKeyword : undefined,
-        status: statusFilter === 'ALL' ? undefined : statusFilter,
+        status: statusFilter === FILTER_ALL ? undefined : statusFilter,
         page: pipelinePage,
         size: PIPELINE_PAGE_SIZE,
       });
@@ -113,12 +121,13 @@ export default function ScrapingPage() {
     queryFn: async () => {
       const response = await scrapingApi.getLogs({
         sourceName: logSourceFilter ?? undefined,
-        status: logStatusFilter === 'ALL' ? undefined : logStatusFilter,
+        status: logStatusFilter === FILTER_ALL ? undefined : logStatusFilter,
         page: logPage,
         size: LOG_PAGE_SIZE,
       });
       return response.data.data;
     },
+    placeholderData: (previousData) => previousData,
   });
 
   const sourceActionMutation = useMutation({
@@ -148,7 +157,7 @@ export default function ScrapingPage() {
   const pipelinePlaceholderCount = showSourceStateRow ? PIPELINE_PAGE_SIZE - 1 : Math.max(0, PIPELINE_PAGE_SIZE - pagedPipelines.length);
   const pipelineRowHeight = Math.floor(PIPELINE_TABLE_BODY_HEIGHT / PIPELINE_PAGE_SIZE);
   const sourceEmptyMessage =
-    pipelineKeyword.length > 0 || statusFilter !== 'ALL'
+    pipelineKeyword.length > 0 || statusFilter !== FILTER_ALL
       ? '조건에 맞는 스크래핑 source가 없습니다.'
       : '등록된 스크래핑 source가 없습니다.';
 
@@ -191,6 +200,7 @@ export default function ScrapingPage() {
 
   const clearLogSourceFilter = () => {
     setLogSourceFilter(null);
+    setLogStatusFilter(FILTER_ALL);
     setLogPage(1);
   };
 
@@ -233,11 +243,11 @@ export default function ScrapingPage() {
               <select
                 value={statusFilter}
                 onChange={(event) => {
-                  setStatusFilter(event.target.value as 'ALL' | ScrapingStatus);
+                  setStatusFilter(toStatusFilter(event.target.value));
                   setPipelinePage(1);
                 }}
               >
-                <option value="ALL">전체 상태</option>
+                <option value={FILTER_ALL}>전체 상태</option>
                 <option value={SCRAPING_STATUS.SUCCESS}>성공</option>
                 <option value={SCRAPING_STATUS.FAILED}>실패</option>
               </select>
@@ -415,11 +425,11 @@ export default function ScrapingPage() {
               <select
                 value={logStatusFilter}
                 onChange={(event) => {
-                  setLogStatusFilter(event.target.value as 'ALL' | ScrapingStatus);
+                  setLogStatusFilter(toStatusFilter(event.target.value));
                   setLogPage(1);
                 }}
               >
-                <option value="ALL">전체 로그</option>
+                <option value={FILTER_ALL}>전체 로그</option>
                 <option value={SCRAPING_STATUS.SUCCESS}>SUCCESS</option>
                 <option value={SCRAPING_STATUS.FAILED}>FAILED</option>
               </select>
