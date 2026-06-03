@@ -56,7 +56,7 @@ specs/frontend/admin/scraping/
 ### Backend Preconditions
 
 - `backend/src/main/java/kr/co/carrer/global/config/SecurityConfig.java` 또는 동등한 보안 설정에서 관리자 스크래핑 엔드포인트에 역할 기반 접근 제어를 적용해야 한다.
-- 단순 JWT 인증만으로는 충분하지 않으며, `/api/admin/scraping/**`는 `hasRole("ADMIN")`, `hasAuthority("ROLE_ADMIN")` 또는 프로젝트 표준에 맞는 동등한 방식으로 보호되어야 한다.
+- 단순 JWT 인증만으로는 충분하지 않으며, `/api/v1/admin/scraping/**`는 `hasRole("ADMIN")`, `hasAuthority("ROLE_ADMIN")` 또는 프로젝트 표준에 맞는 동등한 방식으로 보호되어야 한다.
 - 역할 검증이 확정되기 전까지 프론트엔드는 API 연동 시 403 응답 처리를 구현하되, 접근 제어가 완료되었다고 가정하지 않는다.
 
 ### Phase 1 - API 계약 및 타입 정리
