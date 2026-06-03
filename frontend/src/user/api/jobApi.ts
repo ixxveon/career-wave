@@ -1,7 +1,5 @@
 import { apiClient } from '../../utils/apiClient';
 import type {
-  ApiResponse,
-  JobNotice,
   JobNoticeDetailApiResponse,
   JobNoticeListApiResponse,
   JobNoticeQueryParams,
@@ -31,18 +29,4 @@ export const jobApi = {
 
   getJobNoticeDetail: (jobNoticeId: number | string): Promise<JobNoticeDetailApiResponse | null> =>
     apiClient(`${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}`),
-
-  getJobs: (params: QueryParams = {}): Promise<ApiResponse<JobNotice[]> | null> => {
-    const query = createQueryString(params);
-    return apiClient(`/jobs${query ? `?${query}` : ''}`);
-  },
-
-  getJobDetail: (jobId: number | string): Promise<ApiResponse<JobNotice> | null> =>
-    apiClient(`/jobs/${encodeURIComponent(String(jobId))}`),
-
-  createJob: (payload: unknown): Promise<ApiResponse<JobNotice> | null> =>
-    apiClient('/jobs', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
 };
