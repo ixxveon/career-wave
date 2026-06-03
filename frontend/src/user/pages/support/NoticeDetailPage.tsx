@@ -12,10 +12,15 @@ export default function NoticeDetailPage() {
   const [error,   setError]   = useState('');
 
   useEffect(() => {
-    if (!id) return;
+    const parsedId = Number(id);
+    if (!id || isNaN(parsedId)) {
+      setError('유효하지 않은 공지사항입니다.');
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError('');
-    supportApi.getNoticeDetail(Number(id))
+    supportApi.getNoticeDetail(parsedId)
       .then(res => setNotice(res))
       .catch(() => setError('공지사항을 불러오지 못했습니다.'))
       .finally(() => setLoading(false));
