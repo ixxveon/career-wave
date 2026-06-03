@@ -210,8 +210,9 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
     timer.start();
   }
 
-  const isDone   = session.sessionState === 'FINISHED';
-  const isError  = session.sessionState === 'ERROR';
+  const isDone          = session.sessionState === 'FINISHED';
+  const isError         = session.sessionState === 'ERROR';
+  const isReconnecting  = session.sessionState === 'RECONNECTING';
   const totalQ   = 5; // 서버 설정값으로 추후 대체 예정
 
   return (
@@ -256,6 +257,14 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
         isTyping={session.isTyping}
         streamingText={session.streamingText}
       />
+
+      {/* 재연결 중 안내 배너 (constitution §지속적 연결성) */}
+      {isReconnecting && (
+        <div className="ti-reconnect-bar" role="status" aria-live="assertive">
+          <Loader2 size={14} className="ti-spin" />
+          <span>네트워크 연결이 끊겼습니다. 자동으로 재연결을 시도하고 있습니다...</span>
+        </div>
+      )}
 
       {/* 하단 입력 영역 */}
       {isDone ? (
