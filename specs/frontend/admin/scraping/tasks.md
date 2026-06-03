@@ -25,7 +25,7 @@
 ## Phase 3 - source 실행 액션
 
 **Branch**: `feature/admin-scraping-actions`
-**Base**: `feature/admin-scraping-list`
+**Base**: `develop`
 
 - [x] 실행 액션 API 연결
 - [x] 재시도 액션 API 연결

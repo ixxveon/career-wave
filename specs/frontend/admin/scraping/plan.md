@@ -45,7 +45,7 @@ specs/frontend/admin/scraping/
 | Spec | `feature/admin-scraping-spec` | `develop` |
 | Phase 1 | `feature/admin-scraping-api` | `feature/admin-scraping-spec` |
 | Phase 2 | `feature/admin-scraping-list` | `feature/admin-scraping-api` |
-| Phase 3 | `feature/admin-scraping-actions` | `feature/admin-scraping-list` |
+| Phase 3 | `feature/admin-scraping-actions` | `develop` |
 | Phase 4 | `feature/admin-scraping-logs` | `feature/admin-scraping-actions` |
 | Phase 5 | `feature/admin-scraping-verify` | `feature/admin-scraping-logs` |
 
