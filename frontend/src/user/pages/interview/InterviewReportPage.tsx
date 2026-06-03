@@ -285,7 +285,7 @@ const ReportContent = memo(function ReportContent({
                   </div>
                   <div className="ir-metric-card__body">
                     <div className="ir-metric-card__value">
-                      {isNull ? '—' : m.value}
+                      {isNull || m.value === null ? '—' : m.value}
                       {!isNull && m.value !== null && <span className="ir-metric-card__unit">점</span>}
                     </div>
                     <div className="ir-metric-card__label">{m.label}</div>
