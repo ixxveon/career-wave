@@ -3,6 +3,7 @@
 **Feature Branch**: `feature/admin-management-spec`
 **Status**: Draft
 **공통 응답 래퍼**: `ApiResponse<T>`
+**Base Path**: `/api/v1/admin`
 
 ## Security
 
@@ -15,21 +16,21 @@
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/admin/admins/summary` | 관리자 관리 KPI 요약 조회 |
-| GET | `/api/admin/admins` | 관리자 계정 목록 조회 |
-| POST | `/api/admin/admins` | 관리자 계정 생성 |
-| PATCH | `/api/admin/admins/{adminId}/role` | 관리자 권한 변경 |
-| PATCH | `/api/admin/admins/{adminId}/status` | 관리자 잠금/해제 |
-| DELETE | `/api/admin/admins/{adminId}` | 관리자 계정 삭제 |
-| GET | `/api/admin/admin-acls` | IP ACL 목록 조회 |
-| POST | `/api/admin/admin-acls` | IP ACL 등록 |
-| PATCH | `/api/admin/admin-acls/{aclId}/enabled` | IP ACL 활성/비활성 전환 |
-| DELETE | `/api/admin/admin-acls/{aclId}` | IP ACL 삭제 |
-| GET | `/api/admin/admin-audit-logs` | 관리자 보안 감사 로그 조회 |
+| GET | `/api/v1/admin/admins/summary` | 관리자 관리 KPI 요약 조회 |
+| GET | `/api/v1/admin/admins` | 관리자 계정 목록 조회 |
+| POST | `/api/v1/admin/admins` | 관리자 계정 생성 |
+| PATCH | `/api/v1/admin/admins/{adminId}/role` | 관리자 권한 변경 |
+| PATCH | `/api/v1/admin/admins/{adminId}/status` | 관리자 잠금/해제 |
+| DELETE | `/api/v1/admin/admins/{adminId}` | 관리자 계정 삭제 |
+| GET | `/api/v1/admin/admin-acls` | IP ACL 목록 조회 |
+| POST | `/api/v1/admin/admin-acls` | IP ACL 등록 |
+| PATCH | `/api/v1/admin/admin-acls/{aclId}/enabled` | IP ACL 활성/비활성 전환 |
+| DELETE | `/api/v1/admin/admin-acls/{aclId}` | IP ACL 삭제 |
+| GET | `/api/v1/admin/admin-audit-logs` | 관리자 보안 감사 로그 조회 |
 
 ## Query Parameters
 
-### `GET /api/admin/admins`
+### `GET /api/v1/admin/admins`
 
 | Name | Type | Required | Description |
 |---|---|---|---|
@@ -39,14 +40,14 @@
 | `page` | `number` | N | 1부터 시작 |
 | `size` | `number` | N | 기본값 20 |
 
-### `GET /api/admin/admin-acls`
+### `GET /api/v1/admin/admin-acls`
 
 | Name | Type | Required | Description |
 |---|---|---|---|
 | `page` | `number` | N | 1부터 시작 |
 | `size` | `number` | N | 기본값 20 |
 
-### `GET /api/admin/admin-audit-logs`
+### `GET /api/v1/admin/admin-audit-logs`
 
 | Name | Type | Required | Description |
 |---|---|---|---|
