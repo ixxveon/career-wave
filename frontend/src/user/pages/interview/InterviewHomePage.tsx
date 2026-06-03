@@ -65,7 +65,7 @@ function InterviewHomePage() {
   const navigate = useNavigate();
   const [showComingSoon, setShowComingSoon] = useState(false);
 
-  const { data: historyData, isLoading: historyLoading } = useInterviewHistory(0, 3);
+  const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
 
   const { membership, documentUsed, interviewUsed } = MOCK_USER;
   const limits      = PLAN_LIMITS[membership];
@@ -226,6 +226,11 @@ function InterviewHomePage() {
         </h2>
         {historyLoading ? (
           <div className="iv-history-loading"><Loader2 size={20} className="iv-history-loading__spinner" /> 불러오는 중…</div>
+        ) : historyError ? (
+          <div className="iv-history-empty">
+            <p>이력을 불러오지 못했습니다.</p>
+            <button className="iv-tip__cta" onClick={() => refetchHistory()}>다시 시도 →</button>
+          </div>
         ) : !historyData?.content.length ? (
           <div className="iv-history-empty">
             <p>아직 면접 이력이 없어요.</p>
