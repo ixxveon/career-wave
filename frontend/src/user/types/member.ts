@@ -220,13 +220,19 @@ export interface FindIdResponse {
   found: boolean;
 }
 
-export interface PasswordTokenRequest {
-  memberType: MemberType;
-  loginId: string;
-  verificationToken: string;
-  managerName?: string;
-  businessNumber?: string;
-}
+export type PasswordTokenRequest =
+  | {
+      memberType: typeof MEMBER_TYPE.USER;
+      loginId: string;
+      verificationToken: string;
+    }
+  | {
+      memberType: typeof MEMBER_TYPE.COMPANY;
+      loginId: string;
+      verificationToken: string;
+      managerName: string;
+      businessNumber: string;
+    };
 
 export interface PasswordTokenResponse {
   resetToken: string;
