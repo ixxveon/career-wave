@@ -2,21 +2,9 @@ import { BadgeCheck, Building2, FileText, ShieldCheck, UserRound } from 'lucide-
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import { useCompanyRegisterForm } from '../../hooks/member/useCompanyRegisterForm';
 import { formatRemaining } from '../../utils/member/recoveryView';
+import type { CompanyTermDetails } from '../../utils/member/registerTerms';
 import { LOGIN_ID_CHECK_STATE } from '../../utils/member/validation';
 import { AuthButtonGroup, Field, SelectInput, StatusPill, TextInput } from './RegisterFormPrimitives';
-
-type TermSection = {
-  title: string;
-  body: string;
-};
-
-type CompanyTermDetails = {
-  service: TermSection[];
-  companyVerification: TermSection[];
-  sms: TermSection[];
-  privacy: TermSection[];
-  marketing: TermSection[];
-};
 
 type CompanyTermsValues = {
   service: boolean;

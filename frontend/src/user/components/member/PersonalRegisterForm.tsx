@@ -3,17 +3,7 @@ import { Apple, BadgeCheck, UserRound } from 'lucide-react';
 import { AuthButtonGroup, Field, StatusPill, TextInput } from './RegisterFormPrimitives';
 import { LOGIN_ID_CHECK_STATE } from '../../utils/member/validation';
 import { usePersonalRegisterForm } from '../../hooks/member/usePersonalRegisterForm';
-
-type TermSection = {
-  title: string;
-  body: string;
-};
-
-type PersonalTermDetails = {
-  service: TermSection[];
-  privacy: TermSection[];
-  marketing: TermSection[];
-};
+import type { PersonalTermDetails } from '../../utils/member/registerTerms';
 
 type PersonalTermsValues = {
   age: boolean;
