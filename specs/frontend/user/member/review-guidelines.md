@@ -60,6 +60,7 @@
 - 휴대폰 인증번호 확인
 - 검색 자동완성
 - 서버 기반 field validation
+- 인증 방식 전환이 가능한 verification 요청
 
 권장 패턴:
 
@@ -69,6 +70,12 @@ const result = await mutation.mutateAsync(requestedValue);
 
 if (requestedValue !== currentValueRef.current.trim()) return;
 ```
+
+추가 규칙:
+
+- 요청 도중 탭/인증 방식 전환이 가능한 경우 `requestMethod`도 함께 snapshot으로 보관한다.
+- 응답 반영 전 `requestMethod === currentMethodRef.current`인지 확인한다.
+- 필요하면 `resetMethod` 시점에 in-flight request order 자체를 무효화한다.
 
 ---
 
@@ -283,6 +290,76 @@ token/session 관련 구현이 바뀌었는데, spec/constitution/api-schema/PR 
 
 ---
 
+### 2.11 page에 business logic와 low-level view가 함께 남는 문제
+
+Auth 화면처럼 입력 필드가 많고 흐름이 긴 페이지에서, API/validation만 hook으로 옮기고 low-level JSX는 그대로 page에 남겨 두는 문제.
+
+대표 예시:
+
+- `FindIdPage.tsx`, `FindPasswordPage.tsx` 안에 탭 UI, 기업 식별 정보 입력, 하단 링크, action area가 직접 남아 있음
+- page 파일이 route entry라기보다 “큰 폼 구현 파일”처럼 계속 커짐
+
+규칙:
+
+- `pages`는 route entry와 page assembly에 집중한다.
+- page에서 반복되는 입력 블록, 탭, 하단 링크, action area, support panel은 `components`로 분리한다.
+- hook으로 business logic를 뺐다고 해서 구조 분리가 끝난 것으로 판단하지 않는다.
+- "상태/요청 로직 분리"와 "view block 분리"를 따로 점검한다.
+
+실무 판단 기준:
+
+- page가 200줄을 넘는다고 무조건 잘못은 아니다.
+- 하지만 page 안에 저수준 `<label>`, `<input>`, 버튼군, 조건 분기 JSX가 많이 남으면 reviewer가 구조 미완성으로 볼 가능성이 높다.
+- 특히 개인/기업 회원 두 갈래가 한 page에 공존하는 경우, 탭/식별정보/action block을 우선 분리한다.
+
+---
+
+### 2.12 hooks가 components를 역참조하는 의존 방향 문제
+
+구조 분리 도중 `components` 아래에 util/hook 성격 파일을 두고, 다시 `hooks`가 그 파일을 import하는 문제.
+
+대표 예시:
+
+- `components/member/recoveryViewUtils.ts` 안에 `useVerificationNow`, state type, formatter, error mapper가 함께 있음
+- `useFindIdRecovery.ts`, `useFindPasswordRecovery.ts`가 해당 파일을 import함
+
+규칙:
+
+- `hooks`는 `components`를 import하지 않는다.
+- `components`는 view 전용으로 유지한다.
+- hook이 필요로 하는 시간 계산, formatter, 상태 type, empty state는 `hooks` 또는 `utils`로 옮긴다.
+- "컴포넌트와 같은 화면에서 쓰인다"는 이유만으로 `components` 아래에 util을 두지 않는다.
+
+권장 분리:
+
+```text
+useXxx -> hooks/member
+format / empty state / error helper -> utils/member
+request/response/domain type -> types/member.ts 또는 도메인 util/type 파일
+view component -> components/member
+```
+
+---
+
+### 2.13 review thread가 unresolved로 남아 있어도 코드 기준으로 다시 판단해야 하는 문제
+
+GitHub UI에 review thread가 unresolved로 남아 있지만, 실제 코드에서는 이미 반영됐거나 push 이후 outdated 처리만 안 된 상태일 수 있다.
+
+대표 예시:
+
+- `setSuccessMessage('')` 추가
+- `createUserVerificationState()` 리셋 반영
+- reviewer thread는 남아 있지만 최신 commit에서는 이미 해결됨
+
+규칙:
+
+- thread 개수만 보고 "아직 수정 안 됨"으로 판단하지 않는다.
+- 항상 최신 branch 코드 기준으로 실제 반영 여부를 다시 확인한다.
+- 이미 반영된 경우에는 추가 코드를 넣지 말고 reviewer reply/PR body에 반영 위치를 적는다.
+- unresolved thread와 actionable issue를 구분한다.
+
+---
+
 ## 3. 구현 전 체크리스트
 
 코드 작성 전에 아래를 먼저 확인한다.
@@ -291,6 +368,8 @@ token/session 관련 구현이 바뀌었는데, spec/constitution/api-schema/PR 
 - constitution에 상태 관리 / 토큰 저장 / 보안 제약이 명시되어 있는가
 - api-schema에 request / response / error code가 정의되어 있는가
 - 기존 UI state가 page 내부에만 있고 분리되지 않았다면 snapshot / util / hook / api 계층으로 나눌 수 있는가
+- page 안의 저수준 view block(탭, 입력군, 링크, action area)이 component로 분리 가능한가
+- hook이 components를 역참조하는 구조가 생기지 않는가
 - 이번 변경이 현재 Phase 범위를 넘지 않는가
 
 ---
@@ -309,6 +388,14 @@ token/session 관련 구현이 바뀌었는데, spec/constitution/api-schema/PR 
 - stale response guard가 있는가
 - 만료 / 재전송 / 남은 횟수 상태가 분리되어 있는가
 - 실패 메시지가 field 단위로 표시되는가
+- success / error 메시지가 서로 stale 상태로 동시에 남지 않는가
+
+### 4.2.1 structure / dependency
+
+- `pages`가 route entry + assembly 역할에 머무르는가
+- `components` 아래에 util/hook 혼합 파일이 생기지 않았는가
+- `hooks`가 `components`를 import하고 있지 않은가
+- 공통 탭 / 링크 / 입력 block / action area가 page 내부에 과도하게 남아 있지 않은가
 
 ### 4.3 enum / branching
 
@@ -349,8 +436,12 @@ token/session 관련 구현이 바뀌었는데, spec/constitution/api-schema/PR 
 - [ ] spec 범위를 벗어난 기능이 섞이지 않았다
 - [ ] UI 값과 payload 값이 1:1로 연결된다
 - [ ] stale response 가능성이 있는 요청에 guard를 넣었다
+- [ ] stale response guard가 success path와 error path 모두에 들어갔다
 - [ ] 문자열 하드코딩 대신 상수를 사용했다
 - [ ] fallback 메시지를 중복 하드코딩하지 않았다
+- [ ] `hooks -> components` 역의존이 없다
+- [ ] `components` 아래에 util/hook 혼합 파일이 없다
+- [ ] page에 남은 저수준 view block을 component로 빼야 하는지 점검했다
 - [ ] auth 요청에서 token 누락을 명확히 처리한다
 - [ ] token 저장 전략이 spec과 일치한다
 - [ ] token 저장 전략이 실사용 UX와 보안 기준 모두에서 납득 가능한지 확인했다
@@ -432,6 +523,12 @@ review 반영 시 아래 원칙을 따른다.
 - 먼저 spec / constitution / api-schema 근거를 확인한다.
 - 그 다음 현재 spec이 실무적으로도 좋은지 한 번 더 검토한다.
 - 현재 설계가 의도된 것이어도 품질상 아쉬움이 있으면 그대로 인정하고, 이번 Phase 보류인지 후속 수정인지 구분해서 답한다.
+
+5. unresolved thread는 코드 기준으로 다시 확인한다.
+
+- 최신 commit에서 이미 해결된 내용인지 먼저 본다.
+- 이미 해결됐다면 중복 코드를 추가하지 않는다.
+- PR body / reviewer reply에 "어느 commit에서 반영됐는지"를 남긴다.
 - reviewer reply에서는 "spec상 맞다"와 "실무적으로도 충분히 좋은가"를 분리해서 설명한다.
 
 ---

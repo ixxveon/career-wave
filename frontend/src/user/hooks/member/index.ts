@@ -5,3 +5,5 @@ export { useLoginIdCheck } from './useLoginIdCheck';
 export { useSendVerificationCode, useConfirmVerificationCode } from './useVerificationCode';
 export { useRegisterUser, useRegisterCompany, useUploadEmploymentCertificate } from './useRegisterMember';
 export { useFindId, useIssuePasswordToken, useResetPassword } from './useAccountRecovery';
+export { useFindIdRecovery } from './useFindIdRecovery';
+export { useFindPasswordRecovery } from './useFindPasswordRecovery';
