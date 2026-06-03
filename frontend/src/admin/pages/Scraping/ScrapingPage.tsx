@@ -168,6 +168,10 @@ export default function ScrapingPage() {
     pipelineKeyword.length > 0 || statusFilter !== FILTER_ALL
       ? '조건에 맞는 스크래핑 source가 없습니다.'
       : '등록된 스크래핑 source가 없습니다.';
+  const logEmptyMessage =
+    logStatusFilter !== 'ALL' || logSourceFilter
+      ? '조건에 맞는 운영 로그가 없습니다.'
+      : '표시할 운영 로그가 없습니다.';
 
   useEffect(() => {
     setPipelinePage((prev) => Math.min(prev, pipelineTotalPages));
@@ -329,6 +333,7 @@ export default function ScrapingPage() {
 
                 {!isSourceListInitialLoading && !isSourceListError ? pagedPipelines.map((row) => {
                   const isRowActionPending = isSourceActionPending(row.sourceName);
+                  const canRetryRow = row.status === SCRAPING_STATUS.FAILED;
 
                   return (
                     <tr key={row.sourceName} style={{ height: `${pipelineRowHeight}px` }}>
@@ -374,7 +379,7 @@ export default function ScrapingPage() {
                           <button
                             type="button"
                             className="scrapeOpsActionButton primary"
-                            disabled={isRowActionPending}
+                            disabled={isRowActionPending || !canRetryRow}
                             onClick={() => handleSourceAction(row.sourceName, SCRAPING_ACTION_TYPE.RETRY)}
                           >
                             재시도
@@ -474,7 +479,7 @@ export default function ScrapingPage() {
             ) : null}
 
             {!isLogListLoading && !isLogListError && logs.length === 0 ? (
-              <div className="scrapeOpsConsoleState">표시할 운영 로그가 없습니다.</div>
+              <div className="scrapeOpsConsoleState">{logEmptyMessage}</div>
             ) : null}
 
             {!isLogListLoading && !isLogListError
@@ -642,7 +647,8 @@ export default function ScrapingPage() {
         }
 
         .scrapeOpsTableWrap.fixed {
-          overflow: hidden;
+          overflow-x: auto;
+          overflow-y: hidden;
           border: 1px solid #dfe8f2;
           background: #fff;
           min-height: 332px;
@@ -651,6 +657,7 @@ export default function ScrapingPage() {
 
         .scrapeOpsTable {
           width: 100%;
+          min-width: 980px;
           border-collapse: collapse;
           table-layout: fixed;
         }
@@ -868,6 +875,7 @@ export default function ScrapingPage() {
           display: flex;
           align-items: center;
           justify-content: center;
+          flex-wrap: wrap;
           gap: 10px;
           min-height: 54px;
           padding: 0 12px;
@@ -940,15 +948,38 @@ export default function ScrapingPage() {
         }
 
         @media (max-width: 820px) {
+          .scrapeOpsPanel {
+            padding: 14px;
+          }
+
+          .scrapeOpsPanelHeader,
+          .scrapeOpsPanelHeader.compact {
+            align-items: stretch;
+          }
+
+          .scrapeOpsFilters {
+            width: 100%;
+          }
+
           .scrapeOpsFilters input,
           .scrapeOpsFilters select {
             width: 100%;
+          }
+
+          .scrapeOpsLogScope {
+            width: 100%;
+            justify-content: space-between;
           }
 
           .scrapeOpsLogHead,
           .scrapeOpsConsoleRow {
             grid-template-columns: 1fr;
             gap: 6px;
+          }
+
+          .scrapeOpsConsoleState {
+            justify-content: flex-start;
+            text-align: left;
           }
         }
       `}</style>
