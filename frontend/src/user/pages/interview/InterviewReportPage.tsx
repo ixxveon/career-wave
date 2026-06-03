@@ -13,7 +13,15 @@ import { computeHybridScores, filterFeedbackScores } from '../../utils/interview
 import ReportChart         from '../../components/interview/ReportChart';
 import ScriptAnalysisView  from '../../components/interview/ScriptAnalysisView';
 import type { InterviewReportResponse, SessionType } from '../../types/interview';
+import { SESSION_TYPE } from '../../types/interview';
 import './InterviewReportPage.css';
+
+/* ── sessionType별 재연습 라우트 (as const 상수, constitution §금지패턴 문자열 하드코딩 방지) */
+const RETRY_ROUTE: Record<SessionType, string> = {
+  [SESSION_TYPE.TEXT]:  '/interview/text',
+  [SESSION_TYPE.VOICE]: '/interview/voice',
+  [SESSION_TYPE.VIDEO]: '/interview/video',
+};
 
 /* ── 등급 산정 ────────────────────────────────────── */
 function getGrade(score: number | null): string {
@@ -34,28 +42,24 @@ const IMPROVEMENT_POOL = [
     title:     '꼬리 질문 대응력 강화',
     desc:      'AI 질문의 의도를 빠르게 파악하고 핵심만 간결하게 답하는 연습을 해보세요.',
     cta:       '질문 의도 파악 연습',
-    to:        '/interview/text',
   },
   {
     metricKey: 'depth' as const,
     title:     '기술 면접 심화 연습',
     desc:      '프로젝트 경험을 CS 개념과 직접 연결하는 답변을 만들어보세요.',
     cta:       '기술 심화 질문 연습',
-    to:        '/interview/text',
   },
   {
     metricKey: 'delivery' as const,
     title:     '발성·자신감 향상',
     desc:      '목소리 크기와 톤을 일정하게 유지하는 발성 연습으로 면접관에게 신뢰감을 높여보세요.',
     cta:       '음성 면접 다시 연습하기',
-    to:        '/interview/text',
   },
   {
     metricKey: 'fluency' as const,
     title:     '지연어 제거 & 속도 교정',
     desc:      "'어...', '음...' 같은 지연어를 줄이고 적정 속도로 말하는 연습을 해보세요.",
     cta:       '음성 면접 다시 연습하기',
-    to:        '/interview/text',
   },
 ];
 
@@ -64,7 +68,6 @@ const FALLBACK_IMPROVEMENTS = [
     title: '압박·심층 질문 도전',
     desc:  '전반적으로 높은 수준을 유지하고 있습니다. 더 어려운 질문에 도전해 완성도를 높여보세요.',
     cta:   '다시 면접 연습하기',
-    to:    '/interview/text',
   },
 ];
 
@@ -146,6 +149,7 @@ const ReportContent = memo(function ReportContent({
   const filteredFeedbacks = useMemo(() => filterFeedbackScores(data.feedbacks), [data.feedbacks]);
   const hybridScores      = useMemo(() => computeHybridScores(data.feedbacks),  [data.feedbacks]);
   const grade             = getGrade(data.totalScore);
+  const retryRoute        = RETRY_ROUTE[data.sessionType];
 
   const improvements = useMemo(() => {
     const items = IMPROVEMENT_POOL.filter(def => {
@@ -222,7 +226,7 @@ const ReportContent = memo(function ReportContent({
             <button className="ir-btn ir-btn--outline" onClick={() => onNavigate('/interview')}>
               <Home size={14} /> 홈으로
             </button>
-            <button className="ir-btn ir-btn--white" onClick={() => onNavigate('/interview/text')}>
+            <button className="ir-btn ir-btn--white" onClick={() => onNavigate(retryRoute)}>
               <RotateCcw size={14} /> 다시 연습하기
             </button>
             <button className="ir-btn ir-btn--pdf-locked" onClick={onPdfClick}>
@@ -322,7 +326,7 @@ const ReportContent = memo(function ReportContent({
               <span className="ir-improve-card__num">{String(i + 1).padStart(2, '0')}</span>
               <p className="ir-improve-card__title">{item.title}</p>
               <p className="ir-improve-card__desc">{item.desc}</p>
-              <button className="ir-improve-card__cta" onClick={() => onNavigate(item.to)}>
+              <button className="ir-improve-card__cta" onClick={() => onNavigate(retryRoute)}>
                 {item.cta} →
               </button>
             </div>
