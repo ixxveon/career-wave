@@ -72,7 +72,7 @@ export type SessionAction =
   | { type: 'SET_STT_LIVE';        text: string }
   | { type: 'SET_PENDING_VOICE_ID'; id: number | null };
 
-const INIT_STATE: SessionReducerState = {
+export const INIT_STATE: SessionReducerState = {
   sessionState:   'READY',
   messages:       [],
   questionOrder:  1,
@@ -84,8 +84,9 @@ const INIT_STATE: SessionReducerState = {
 /**
  * 세션 상태 머신 리듀서 (constitution.md §2)
  * 모든 상태 전이는 이 함수를 통해서만 수행
+ * @internal — 테스트 전용 export
  */
-function sessionReducer(
+export function sessionReducer(
   state: SessionReducerState,
   action: SessionAction,
 ): SessionReducerState {
