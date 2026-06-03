@@ -24,13 +24,13 @@ export const initialLogs: LogLine[] = [
 ];
 
 const statusTone: Record<ScrapingStatus, Tone> = {
-  SUCCESS: 'normal',
-  FAILED: 'danger',
+  [SCRAPING_STATUS.SUCCESS]: 'normal',
+  [SCRAPING_STATUS.FAILED]: 'danger',
 };
 
 const statusLabel: Record<ScrapingStatus, string> = {
-  SUCCESS: '성공',
-  FAILED: '실패',
+  [SCRAPING_STATUS.SUCCESS]: '성공',
+  [SCRAPING_STATUS.FAILED]: '실패',
 };
 
 const levelTone: Record<LogLine['level'], Tone> = {
