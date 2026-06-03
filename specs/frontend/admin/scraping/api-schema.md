@@ -2,7 +2,7 @@
 
 ## 공통 규칙
 
-- Base Path: `/api/admin/scraping`
+- Base Path: `/api/v1/admin/scraping`
 - Auth: Bearer Token
 - Role: `ROLE_ADMIN`
 - Response: `ApiResponse<T>`
