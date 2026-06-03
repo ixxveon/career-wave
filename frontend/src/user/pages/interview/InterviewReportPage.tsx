@@ -148,7 +148,9 @@ const ReportContent = memo(function ReportContent({
 }: ReportContentProps) {
   const filteredFeedbacks = useMemo(() => filterFeedbackScores(data.feedbacks), [data.feedbacks]);
   const hybridScores      = useMemo(() => computeHybridScores(data.feedbacks),  [data.feedbacks]);
-  const grade             = getGrade(data.totalScore);
+  // 서버 totalScore 우선, 없으면 클라이언트 가중치 평균으로 대체
+  const displayScore      = data.totalScore ?? hybridScores.total;
+  const grade             = getGrade(displayScore);
   const retryRoute        = RETRY_ROUTE[data.sessionType];
 
   const improvements = useMemo(() => {
@@ -244,11 +246,11 @@ const ReportContent = memo(function ReportContent({
                 cx="60" cy="60" r="50"
                 className="ir-score-ring__fill"
                 strokeDasharray={`${2 * Math.PI * 50}`}
-                strokeDashoffset={`${2 * Math.PI * 50 * (1 - (data.totalScore ?? 0) / 100)}`}
+                strokeDashoffset={`${2 * Math.PI * 50 * (1 - (displayScore ?? 0) / 100)}`}
               />
             </svg>
             <div className="ir-score-ring__inner">
-              <span className="ir-score-ring__value">{data.totalScore ?? '—'}</span>
+              <span className="ir-score-ring__value">{displayScore ?? '—'}</span>
               <span className="ir-score-ring__label">/ 100</span>
             </div>
           </div>
