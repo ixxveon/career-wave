@@ -1,4 +1,4 @@
-import { type FormEvent, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowUp,
@@ -225,8 +225,8 @@ function createInitialFilters(): Filters {
   return Object.fromEntries(FILTER_GROUPS.map((group) => [group.label, DEFAULT_FILTER_VALUE])) as Filters;
 }
 
-function createInitialBookmarks(): Bookmarks {
-  return Object.fromEntries(JOBS.map((job) => [job.id, job.bookmarked]));
+function getJobBookmark(bookmarks: Bookmarks, job: JobNotice): boolean {
+  return bookmarks[job.id] ?? job.bookmarked;
 }
 
 function createJobNoticeQueryParams({
@@ -512,7 +512,7 @@ export default function JobNoticeListPage() {
   const [sortOpen, setSortOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobNotice | null>(null);
   const [filters, setFilters] = useState(createInitialFilters);
-  const [bookmarks, setBookmarks] = useState(createInitialBookmarks);
+  const [bookmarks, setBookmarks] = useState<Bookmarks>({});
   const [searchQuery, setSearchQuery] = useState('');
 
   function updateFilter(label: FilterLabel, value: string) {
@@ -554,6 +554,18 @@ export default function JobNoticeListPage() {
       : filteredJobs.length > 0
         ? 'success'
         : 'empty';
+
+  useEffect(() => {
+    if (!jobNoticeListResponse?.items.length) return;
+
+    setBookmarks((current) => {
+      const next = { ...current };
+      jobNoticeListResponse.items.forEach((job) => {
+        next[job.id] = current[job.id] ?? job.bookmarked;
+      });
+      return next;
+    });
+  }, [jobNoticeListResponse?.items]);
 
   function retryJobNoticeList() {
     void refetchJobNoticeList();
@@ -601,7 +613,7 @@ export default function JobNoticeListPage() {
                 <JobCard
                   key={job.id}
                   job={job}
-                  bookmarked={bookmarks[job.id]}
+                  bookmarked={getJobBookmark(bookmarks, job)}
                   onBookmark={toggleBookmark}
                   onClick={() => setSelectedJob(job)}
                 />
@@ -642,7 +654,7 @@ export default function JobNoticeListPage() {
       <JobNoticeDetail
         job={selectedJob}
         isOpen={Boolean(selectedJob)}
-        bookmarked={Boolean(selectedJob && bookmarks[selectedJob.id])}
+        bookmarked={selectedJob ? getJobBookmark(bookmarks, selectedJob) : false}
         onClose={() => setSelectedJob(null)}
         onBookmark={toggleBookmark}
       />
