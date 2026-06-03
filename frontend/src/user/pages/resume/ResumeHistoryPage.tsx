@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FileSearch, FileText, ScrollText } from 'lucide-react';
 import HistoryItem from '../../components/resume/HistoryItem';
 import { useResumeHistory } from '../../hooks/resume/useResumeHistory';
@@ -33,7 +34,7 @@ export default function ResumeHistoryPage() {
           <h1 className="rh-title">서류 분석 이력</h1>
           <p className="rh-desc">AI가 분석한 이력서 및 자기소개서 결과를 최신순으로 확인할 수 있습니다.</p>
         </div>
-        <a href="/documents/resume" className="rh-new-btn">+ 새 분석 시작</a>
+        <Link to="/documents/resume" className="rh-new-btn">+ 새 분석 시작</Link>
       </div>
 
       {/* 카드 영역 */}
@@ -85,7 +86,7 @@ export default function ResumeHistoryPage() {
                 <p className="rh-state__desc">
                   이력서 또는 자기소개서를 업로드하여 AI 분석을 시작해보세요.
                 </p>
-                <a href="/documents/resume" className="rh-cta-btn">분석 시작하기</a>
+                <Link to="/documents/resume" className="rh-cta-btn">분석 시작하기</Link>
               </div>
             ) : (
               <>
