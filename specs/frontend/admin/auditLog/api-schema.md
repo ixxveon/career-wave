@@ -45,7 +45,7 @@ type AuditLogLevel = 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
 }
 ```
 
-## GET /api/v1/admin/audit-logs
+## GET /
 
 감사 로그 목록을 조회한다.
 
