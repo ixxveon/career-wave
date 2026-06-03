@@ -135,7 +135,7 @@ export function validateCompanyRegisterForm(
     if (!fileValidation.valid) errors.employmentCertificate = fileValidation.message ?? '재직증명서 파일을 확인해주세요.';
   }
 
-  if (!form.terms.service || !form.terms.privacy || !form.terms.companyVerification) {
+  if (!form.terms.service || !form.terms.privacy || !form.terms.companyVerification || !form.terms.sms) {
     errors.terms = '필수 약관에 동의해주세요.';
   }
 
@@ -166,6 +166,7 @@ export function toCompanyRegisterRequest(form: CompanyRegisterFormSnapshot): Com
     service: form.terms.service,
     privacy: form.terms.privacy,
     companyVerification: form.terms.companyVerification,
+    sms: form.terms.sms,
     marketing: form.terms.marketing,
   };
 

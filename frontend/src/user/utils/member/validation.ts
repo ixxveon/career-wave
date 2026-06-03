@@ -47,6 +47,7 @@ export interface CompanyRegisterDraft {
     service: boolean;
     privacy: boolean;
     companyVerification: boolean;
+    sms: boolean;
     marketing: boolean;
   };
 }

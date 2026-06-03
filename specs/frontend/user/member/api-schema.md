@@ -292,6 +292,7 @@ Authorization: Bearer {accessToken}
     "service": true,
     "privacy": true,
     "companyVerification": true,
+    "sms": true,
     "marketing": false
   }
 }

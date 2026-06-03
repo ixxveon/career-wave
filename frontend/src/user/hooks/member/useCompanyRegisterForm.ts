@@ -123,6 +123,7 @@ export function useCompanyRegisterForm() {
       service: terms.service,
       privacy: terms.privacy,
       companyVerification: terms.companyVerification,
+      sms: terms.sms,
       marketing: terms.marketing,
     },
   };
