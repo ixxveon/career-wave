@@ -68,7 +68,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payl
  */
 const ReportChart = memo(function ReportChart({ scores, sessionType }: ReportChartProps) {
   const data = buildChartData(scores, sessionType);
-  const hasAnyScore = data.some(d => !d.isNull && d.value > 0);
+  const hasAnyScore = data.some(d => !d.isNull);
 
   if (!hasAnyScore) {
     return (
