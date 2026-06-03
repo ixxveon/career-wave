@@ -452,6 +452,7 @@
 }
 
 .iv-badge--text  { background: var(--color-sky);  color: var(--color-primary-dark); }
+.iv-badge--voice { background: #f0fdf4; color: #16a34a; }
 .iv-badge--video { background: #e0e7f7; color: #2a52a0; }
 
 .iv-score { font-weight: 800; font-size: 14px; }
