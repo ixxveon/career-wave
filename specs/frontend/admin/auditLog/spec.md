@@ -71,7 +71,7 @@
 
 ## Edge Cases
 
-- source 또는 level 필터가 전체인 경우 query parameter를 생략하거나 프로젝트 표준 방식으로 `ALL`을 전달한다.
+- source 또는 level 필터가 전체인 경우 query parameter를 생략한다. 별도의 전체 선택 값을 API에 전달하지 않는다.
 - keyword가 공백이면 검색 조건 없이 조회한다.
 - 기간 시작값이 종료값보다 늦으면 API 호출 전 검증하거나 400 응답 메시지를 표시한다.
 - 로그 카운트가 0이어도 누락으로 취급하지 않는다.
@@ -110,4 +110,3 @@
 - 프론트엔드는 관리자 감사 로그 조회와 표시만 담당한다.
 - v1에서는 `ADMIN`, `AI`, `SCRAPING` source를 우선 지원한다.
 - 스펙 경로는 최근 팀 논의에 따라 숫자 prefix 없이 `specs/frontend/admin/auditLog`를 사용한다.
-

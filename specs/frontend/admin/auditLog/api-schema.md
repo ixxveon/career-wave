@@ -6,7 +6,7 @@
 - Auth: Bearer Token
 - Role: `ROLE_ADMIN`
 - Response: `ApiResponse<T>`
-- 날짜 형식: ISO 8601
+- 날짜 형식: ISO 8601 UTC (`YYYY-MM-DDTHH:mm:ssZ`)
 - 감사 로그는 관리자 운영 행위, AI 운영 이벤트, 스크래핑 운영 이벤트를 통합 조회하기 위한 읽기 중심 API로 정의한다.
 
 ## 공통 타입
@@ -28,8 +28,8 @@ type AuditLogLevel = 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `from` | string | false | 조회 시작 일시 |
-| `to` | string | false | 조회 종료 일시 |
+| `from` | string | false | 조회 시작 일시. ISO 8601 UTC 기준이며 해당 시각 이상(`>=`)을 포함한다. 단독 제공 시 `from` 이후 전체 기간을 조회한다. |
+| `to` | string | false | 조회 종료 일시. ISO 8601 UTC 기준이며 해당 시각 이하(`<=`)를 포함한다. 단독 제공 시 `to` 이전 전체 기간을 조회한다. |
 
 ### Response Data
 
@@ -45,7 +45,7 @@ type AuditLogLevel = 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
 }
 ```
 
-## GET /
+## GET /api/v1/admin/audit-logs
 
 감사 로그 목록을 조회한다.
 
@@ -56,8 +56,8 @@ type AuditLogLevel = 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
 | `source` | AuditLogSource | false | `ADMIN`, `AI`, `SCRAPING` |
 | `level` | AuditLogLevel | false | `INFO`, `WARN`, `ERROR`, `SUCCESS` |
 | `keyword` | string | false | source label, 요약, 상세 요약 검색어 |
-| `from` | string | false | 조회 시작 일시 |
-| `to` | string | false | 조회 종료 일시 |
+| `from` | string | false | 조회 시작 일시. ISO 8601 UTC 기준이며 해당 시각 이상(`>=`)을 포함한다. 단독 제공 시 `from` 이후 전체 기간을 조회한다. |
+| `to` | string | false | 조회 종료 일시. ISO 8601 UTC 기준이며 해당 시각 이하(`<=`)를 포함한다. 단독 제공 시 `to` 이전 전체 기간을 조회한다. |
 | `page` | number | false | 1부터 시작 |
 | `size` | number | false | 기본 20 |
 
@@ -125,4 +125,3 @@ type AuditLogLevel = 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
 | 403 | 감사 로그 조회 권한이 없습니다. |
 | 404 | 감사 로그를 찾을 수 없습니다. |
 | 500 | 감사 로그 조회 중 오류가 발생했습니다. |
-
