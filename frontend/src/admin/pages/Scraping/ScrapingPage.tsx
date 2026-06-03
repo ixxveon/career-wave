@@ -56,6 +56,11 @@ const getActionErrorMessage = (error: unknown) =>
   error instanceof Error && error.message
     ? error.message
     : '액션 요청에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+const actionReason: Record<ScrapingActionType, string> = {
+  [SCRAPING_ACTION_TYPE.RUN]: '관리자 수동 실행 요청',
+  [SCRAPING_ACTION_TYPE.RETRY]: '관리자 수동 재시도 요청',
+  [SCRAPING_ACTION_TYPE.TEST]: '관리자 수동 테스트 요청',
+};
 
 export default function ScrapingPage() {
   const queryClient = useQueryClient();
@@ -93,7 +98,7 @@ export default function ScrapingPage() {
     mutationFn: ({ sourceName, actionType }: { sourceName: string; actionType: ScrapingActionType }) =>
       scrapingApi.requestAction(sourceName, {
         actionType,
-        reason: '관리자 수동 실행 요청',
+        reason: actionReason[actionType],
       }),
     onMutate: () => {
       setActionErrorMessage(null);
@@ -307,7 +312,15 @@ export default function ScrapingPage() {
                           >
                             테스트
                           </button>
-                          <button type="button" className="scrapeOpsActionButton dangerGhost" disabled={isRowActionPending}>중지</button>
+                          <button
+                            type="button"
+                            className="scrapeOpsActionButton dangerGhost"
+                            disabled
+                            title="미구현"
+                          >
+                            {/* TODO: 중지 액션은 백엔드 계약 확정 후 연결한다. */}
+                            중지
+                          </button>
                         </div>
                       </td>
                     </tr>
