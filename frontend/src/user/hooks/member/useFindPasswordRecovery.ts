@@ -410,6 +410,9 @@ export function useFindPasswordRecovery(isCompany: boolean) {
   };
 
   const handleIssueResetToken = async () => {
+    let companyIdentitySnapshot: string | null = null;
+    let userRequestSnapshot: string | null = null;
+
     try {
       if (isCompany) {
         const verificationToken = companyVerification.verificationToken;
@@ -419,7 +422,7 @@ export function useFindPasswordRecovery(isCompany: boolean) {
           return;
         }
 
-        const identitySnapshot = [
+        companyIdentitySnapshot = [
           currentCompanyLoginIdRef.current.trim(),
           currentCompanyManagerNameRef.current.trim(),
           currentCompanyBusinessNumberRef.current,
@@ -438,7 +441,7 @@ export function useFindPasswordRecovery(isCompany: boolean) {
           currentCompanyEmailRef.current.trim(),
           companyVerificationRef.current.verificationToken,
         ].join('|');
-        if (identitySnapshot !== currentSnapshot) return;
+        if (companyIdentitySnapshot !== currentSnapshot) return;
 
         setCompanyResetSession({
           resetToken: response.resetToken,
@@ -453,7 +456,7 @@ export function useFindPasswordRecovery(isCompany: boolean) {
           return;
         }
 
-        const requestSnapshot = [
+        userRequestSnapshot = [
           currentUserLoginIdRef.current.trim(),
           getRecoveryTarget(requestMethod, currentUserEmailRef.current, currentUserPhoneRef.current),
           requestMethod,
@@ -474,7 +477,7 @@ export function useFindPasswordRecovery(isCompany: boolean) {
           currentUserMethodRef.current,
           userVerificationRef.current[currentUserMethodRef.current].verificationToken,
         ].join('|');
-        if (requestSnapshot !== currentSnapshot) return;
+        if (userRequestSnapshot !== currentSnapshot) return;
 
         setUserResetSession({
           resetToken: response.resetToken,
@@ -491,6 +494,31 @@ export function useFindPasswordRecovery(isCompany: boolean) {
       setFormMessage('');
       setSuccessMessage('새 비밀번호를 입력한 뒤 저장해주세요.');
     } catch (error) {
+      if (isCompany) {
+        const currentSnapshot = [
+          currentCompanyLoginIdRef.current.trim(),
+          currentCompanyManagerNameRef.current.trim(),
+          currentCompanyBusinessNumberRef.current,
+          currentCompanyEmailRef.current.trim(),
+          companyVerificationRef.current.verificationToken,
+        ].join('|');
+
+        if (companyIdentitySnapshot !== currentSnapshot) return;
+      } else {
+        const currentSnapshot = [
+          currentUserLoginIdRef.current.trim(),
+          getRecoveryTarget(
+            currentUserMethodRef.current,
+            currentUserEmailRef.current,
+            currentUserPhoneRef.current,
+          ),
+          currentUserMethodRef.current,
+          userVerificationRef.current[currentUserMethodRef.current].verificationToken,
+        ].join('|');
+
+        if (userRequestSnapshot !== currentSnapshot) return;
+      }
+
       setSuccessMessage('');
       setFormMessage(getRecoveryErrorMessage(error, '비밀번호 재설정 권한 확인에 실패했습니다. 잠시 후 다시 시도해주세요.'));
     }
