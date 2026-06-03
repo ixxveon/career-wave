@@ -1,0 +1,196 @@
+.is {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 66px);
+  padding: 40px 16px;
+}
+
+.is__card {
+  width: 100%;
+  max-width: 560px;
+  padding: 40px 48px;
+  border-radius: var(--radius-xl, 16px);
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  box-shadow: 0 8px 40px rgba(30, 58, 110, 0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.is__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #3b82f6;
+  margin: 0;
+}
+
+.is__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: -12px 0 0;
+}
+
+.is__desc {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: -8px 0 0;
+}
+
+/* ── 이력서 ── */
+.is__resume {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.is__resume--warn { border-color: #fca5a5; background: #fff5f5; }
+.is__resume-badge {
+  margin-left: auto;
+  font-size: 11px;
+  background: #dcfce7;
+  color: #16a34a;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.is__resume-none { color: #ef4444; }
+
+/* ── 섹션 ── */
+.is__section { display: flex; flex-direction: column; gap: 8px; }
+.is__label   { font-size: 13px; font-weight: 600; color: #374151; }
+
+/* ── 면접 유형 ── */
+.is__type-btns { display: flex; gap: 8px; }
+.is__type-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.is__type-btn--on {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+.is__type-btn:hover:not(.is__type-btn--on) { border-color: #94a3b8; }
+
+/* ── 직무 칩 ── */
+.is__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.is__chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  font-size: 12px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.is__chip--on {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* ── 입력 ── */
+.is__input {
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.is__input:focus { border-color: #3b82f6; }
+
+/* ── 디바이스 테스트 ── */
+.is__device { display: flex; gap: 10px; flex-wrap: wrap; }
+.is__device-item { display: flex; flex-direction: column; gap: 4px; }
+
+.is__device-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 12px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.is__device-btn:hover:not(:disabled) { border-color: #94a3b8; }
+.is__device-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+.is__device-btn--ok { border-color: #86efac; background: #f0fdf4; color: #16a34a; }
+.is__device-btn--err { border-color: #fca5a5; background: #fff5f5; color: #ef4444; }
+.is__device-btn--playing { border-color: #93c5fd; background: #eff6ff; }
+
+.is__device-hint { font-size: 11px; color: #ef4444; margin: 0; }
+
+/* ── 파형 애니메이션 ── */
+.is__wave { display: flex; gap: 2px; align-items: center; height: 20px; }
+.is__wave-bar {
+  width: 3px;
+  height: 8px;
+  border-radius: 2px;
+  background: #22c55e;
+  animation: is-wave 0.6s ease-in-out infinite alternate;
+}
+@keyframes is-wave {
+  to { height: 16px; }
+}
+
+.is__spin { animation: is-spin 1s linear infinite; }
+@keyframes is-spin { to { transform: rotate(360deg); } }
+
+.is__api-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #ef4444;
+  margin: 0;
+}
+
+/* ── 시작 버튼 ── */
+.is__start-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: #1e3a6e;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.is__start-btn:hover:not(:disabled) { background: #1e40af; transform: translateY(-1px); }
+.is__start-btn:disabled { background: #94a3b8; cursor: not-allowed; }
