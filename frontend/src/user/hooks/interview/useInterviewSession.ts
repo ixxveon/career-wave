@@ -23,6 +23,18 @@ import type { TTSQueueStatus } from './useTTSQueue';
 import type { SpringWSStatus }  from './useSpringWebSocket';
 import type { FastApiWSStatus } from './useFastApiWebSocket';
 
+/**
+ * LLM 응답 타임아웃 시 사전 정의 폴백 질문 (spec FR-005)
+ * 8초 내 첫 스트리밍 토큰이 없으면 이 목록에서 순환 선택
+ */
+export const LLM_FALLBACK_QUESTIONS = [
+  '지원 동기에 대해 좀 더 구체적으로 말씀해 주시겠어요?',
+  '본인의 강점과 약점을 각각 하나씩 말씀해 주세요.',
+  '팀 프로젝트에서 갈등이 생겼을 때 어떻게 해결하셨나요?',
+  '가장 어려웠던 기술적 문제와 해결 방법을 설명해 주세요.',
+  '5년 후 커리어 목표를 말씀해 주세요.',
+];
+
 /** DEV mock 자동 꼬리 질문 (백엔드 미연동 시) */
 const DEV_MOCK_REPLIES = [
   '답변 감사합니다. 해당 기술적 선택의 근거는 무엇이었나요?',
@@ -165,6 +177,43 @@ export function useInterviewSession({
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
 
+  /**
+   * LLM 응답 타임아웃 (spec FR-005 / constitution.md §7)
+   * SET_TYPING(true) 후 LLM_STREAM_TIMEOUT_MS 내 첫 토큰 미수신 시
+   * 사전 정의 폴백 질문을 채팅창에 삽입하고 타이핑 상태를 해제한다.
+   */
+  const LLM_STREAM_TIMEOUT_MS = 8000;
+  const llmTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearLlmTimeout() {
+    if (llmTimeoutRef.current !== null) {
+      clearTimeout(llmTimeoutRef.current);
+      llmTimeoutRef.current = null;
+    }
+  }
+
+  function startLlmTimeout() {
+    clearLlmTimeout();
+    llmTimeoutRef.current = setTimeout(() => {
+      // 아직 typing 중이고 스트리밍이 시작 안 된 경우에만 폴백
+      if (!stateRef.current.isTyping) return;
+      if (streamingAccRef.current.length > 0) return;
+
+      streamingAccRef.current = '';
+      dispatch({ type: 'SET_TYPING', typing: false });
+      dispatch({
+        type:    'ADD_MESSAGE',
+        message: {
+          id:   Date.now(),
+          role: 'ai',
+          text: LLM_FALLBACK_QUESTIONS[
+            stateRef.current.questionOrder % LLM_FALLBACK_QUESTIONS.length
+          ],
+        },
+      });
+    }, LLM_STREAM_TIMEOUT_MS);
+  }
+
   // ── Spring WS 메시지 핸들러 ─────────────────────────────────
 
   const handleSpringMessage = useCallback((msg: SpringWSMessage) => {
@@ -230,6 +279,7 @@ export function useInterviewSession({
           }
           dispatch({ type: 'SET_STT_LIVE', text: '' });
           dispatch({ type: 'SET_TYPING',   typing: true });
+          startLlmTimeout();
         } else {
           // 부분 STT — 실시간 미리보기 업데이트
           dispatch({ type: 'SET_STT_LIVE', text });
@@ -242,6 +292,8 @@ export function useInterviewSession({
       }
       case FASTAPI_WS_MESSAGE_TYPE.LLM_STREAM: {
         const token = msg.content ?? '';
+        // 첫 토큰 수신 → 타임아웃 취소 (정상 응답 진행)
+        if (streamingAccRef.current.length === 0) clearLlmTimeout();
         streamingAccRef.current += token;
         // RAF 배치 업데이트 — 같은 프레임의 토큰들 합산 후 한 번만 setState
         if (!streamingRafRef.current) {
@@ -251,7 +303,8 @@ export function useInterviewSession({
           });
         }
         if (msg.isFinal) {
-          // 스트리밍 완료 — 정식 메시지로 커밋
+          // 스트리밍 완료 — 타임아웃 취소 후 정식 메시지로 커밋
+          clearLlmTimeout();
           if (streamingRafRef.current) {
             cancelAnimationFrame(streamingRafRef.current);
             streamingRafRef.current = null;
@@ -324,8 +377,14 @@ export function useInterviewSession({
   }, [sessionId, state.sessionState, state.questionOrder]);
 
   useEffect(() => {
-    if (state.sessionState === 'FINISHED') clearInterviewSession();
+    if (state.sessionState === 'FINISHED') {
+      clearInterviewSession();
+      clearLlmTimeout();
+    }
   }, [state.sessionState]);
+
+  // 언마운트 시 타임아웃 정리
+  useEffect(() => () => clearLlmTimeout(), []);
 
   // ── 액션 메서드 ────────────────────────────────────────────
 
@@ -339,6 +398,7 @@ export function useInterviewSession({
     }
     dispatch({ type: 'SET_TYPING', typing: true });
     tts.clear();
+    if (!import.meta.env.DEV) startLlmTimeout();
 
     // DEV mock: API 호출 없이 다음 질문 자동 생성
     if (import.meta.env.DEV) {
