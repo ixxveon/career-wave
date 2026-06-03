@@ -15,7 +15,7 @@
 - [ ] `frontend/src/admin/api/dashboardApi.ts`가 생성되어 있다.
 - [ ] `AdminDashboardSummary` 응답 타입이 정의되고 export되어 있다.
 - [ ] `DashboardKpi`, `DashboardAlert`, `DashboardActivity` 타입이 정의되고 export되어 있다.
-- [ ] `GET /api/admin/dashboard/summary` 호출 함수가 작성되어 있다.
+- [ ] `GET /api/v1/admin/dashboard/summary` 호출 함수가 작성되어 있다.
 - [ ] `ApiResponse<AdminDashboardSummary>` 래퍼 응답이 처리되어 있다.
 - [ ] API 실패 시 화면에 표시할 에러 메시지 매핑이 정의되어 있다.
 

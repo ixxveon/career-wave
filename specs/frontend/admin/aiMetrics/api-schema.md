@@ -2,7 +2,7 @@
 
 ## 공통 규칙
 
-- Base Path: `/api/admin/ai-metrics`
+- Base Path: `/api/v1/admin/ai-metrics`
 - Auth: Bearer Token
 - Role: `ROLE_ADMIN`
 - Response: `ApiResponse<T>`
