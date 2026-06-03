@@ -200,6 +200,7 @@ export function useInterviewSession({
       if (streamingAccRef.current.length > 0) return;
 
       streamingAccRef.current = '';
+      const nextOrder = stateRef.current.questionOrder + 1;
       dispatch({ type: 'SET_TYPING', typing: false });
       dispatch({
         type:    'ADD_MESSAGE',
@@ -211,6 +212,7 @@ export function useInterviewSession({
           ],
         },
       });
+      dispatch({ type: 'SET_QUESTION_ORDER', order: nextOrder });
     }, LLM_STREAM_TIMEOUT_MS);
   }
 
