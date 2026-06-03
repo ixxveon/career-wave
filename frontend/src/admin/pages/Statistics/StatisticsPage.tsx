@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { TrendingUp, DollarSign, Users, UserPlus, CreditCard, RefreshCw, Minus } from 'lucide-react';
 import '../../styles/admin.css';
 import '../../styles/Statistics.css';
-import { statsApi, type StatsSummary, type MonthlyRevenue, type RevenueBreakdownItem } from '../../api/statsApi';
+import { statsApi, type StatsSummary, type MonthlyRevenue, type RevenueBreakdownItem, type MonthlySubscribers, type RecentSubscriber } from '../../api/statsApi';
 
 // 구독 유형별 아이콘 매핑
 const BREAKDOWN_ICON_MAP: Record<string, React.ElementType> = {
@@ -11,24 +11,6 @@ const BREAKDOWN_ICON_MAP: Record<string, React.ElementType> = {
   RENEWAL: RefreshCw,
   REFUND_DEDUCTION: Minus,
 };
-
-// 더미 — Phase 7-2 연동 전까지 유지
-const monthlySubscribers = [
-  { month: '12월', newSubs: 212, churned: 45 },
-  { month: '1월',  newSubs: 248, churned: 38 },
-  { month: '2월',  newSubs: 236, churned: 52 },
-  { month: '3월',  newSubs: 285, churned: 41 },
-  { month: '4월',  newSubs: 307, churned: 48 },
-  { month: '5월',  newSubs: 314, churned: 55 },
-];
-
-const recentActivity = [
-  { initials: 'KM', name: '김민지', status: 'ACTIVE',  plan: '프리미엄 월정액', time: '5분 전'   },
-  { initials: 'LJ', name: '이준호', status: 'PENDING', plan: '프리미엄 월정액', time: '23분 전'  },
-  { initials: 'PS', name: '박서연', status: 'ACTIVE',  plan: '신규 가입',       time: '1시간 전' },
-  { initials: 'CD', name: '최도윤', status: 'ACTIVE',  plan: '프리미엄 월정액', time: '2시간 전' },
-  { initials: 'KH', name: '강하늘', status: 'PENDING', plan: '신규 가입',       time: '3시간 전' },
-];
 
 // ── 꺾은선 차트 공통 상수 ──────────────────────────────────────
 const LINE_MAX_VAL = 45_000_000;
@@ -85,12 +67,18 @@ export default function StatisticsPage() {
   const [summary, setSummary] = useState<StatsSummary | null>(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenue[]>([]);
   const [breakdown, setBreakdown] = useState<RevenueBreakdownItem[]>([]);
+  const [monthlySubscribers, setMonthlySubscribers] = useState<MonthlySubscribers[]>([]);
+  const [recentSubscribers, setRecentSubscribers] = useState<RecentSubscriber[]>([]);
   const [summaryError, setSummaryError] = useState('');
   const [revenueError, setRevenueError] = useState('');
   const [breakdownError, setBreakdownError] = useState('');
+  const [subsError, setSubsError] = useState('');
+  const [recentError, setRecentError] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [revenueLoading, setRevenueLoading] = useState(true);
   const [breakdownLoading, setBreakdownLoading] = useState(true);
+  const [subsLoading, setSubsLoading] = useState(true);
+  const [recentLoading, setRecentLoading] = useState(true);
 
   useEffect(() => {
     statsApi.getSummary()
@@ -107,6 +95,16 @@ export default function StatisticsPage() {
       .then(res => setBreakdown(res.data.data))
       .catch(() => setBreakdownError('구독 유형별 매출 데이터를 불러오지 못했습니다.'))
       .finally(() => setBreakdownLoading(false));
+
+    statsApi.getMonthlySubscribers()
+      .then(res => setMonthlySubscribers(res.data.data))
+      .catch(() => setSubsError('구독자 변동 데이터를 불러오지 못했습니다.'))
+      .finally(() => setSubsLoading(false));
+
+    statsApi.getRecentSubscribers()
+      .then(res => setRecentSubscribers(res.data.data))
+      .catch(() => setRecentError('최근 가입 피드를 불러오지 못했습니다.'))
+      .finally(() => setRecentLoading(false));
   }, []);
 
   // KPI 카드 데이터 구성
@@ -155,10 +153,16 @@ export default function StatisticsPage() {
   const peakIdx  = pts.reduce((max, p, i) => (p[1] < pts[max][1] ? i : max), 0);
   const tooltipX = Math.min(pts[peakIdx][0] - TOOLTIP_W / 2, LINE_VBW - TOOLTIP_W - 6);
 
-  const subNewPath   = buildSvgPath(monthlySubscribers.map(m => m.newSubs),  SUB_MAX_VAL);
-  const subChurnPath = buildSvgPath(monthlySubscribers.map(m => m.churned), SUB_MAX_VAL);
+  const subNewPath   = buildSvgPath(
+    monthlySubscribers.length > 1 ? monthlySubscribers.map(m => m.newSubs) : [0, 0],
+    SUB_MAX_VAL
+  );
+  const subChurnPath = buildSvgPath(
+    monthlySubscribers.length > 1 ? monthlySubscribers.map(m => m.churned) : [0, 0],
+    SUB_MAX_VAL
+  );
 
-  const subLast = monthlySubscribers[monthlySubscribers.length - 1];
+  const subLast = monthlySubscribers[monthlySubscribers.length - 1] ?? { newSubs: 0, churned: 0 };
 
   return (
     <section>
@@ -309,9 +313,11 @@ export default function StatisticsPage() {
                 <span className="coral">탈퇴 <strong>{subLast.churned}명</strong></span>
               </div>
             </div>
+            {subsLoading && <p className="stats-loading">구독자 데이터 로딩 중...</p>}
+            {subsError && <p className="stats-error">{subsError}</p>}
+            {!subsLoading && !subsError && (
             <div className="statsLineWrap">
               <div className="statsChartWithAxis">
-                {/* 5항목 Y축 — lineYAxis CSS 재사용 (동일 SVG 상수) */}
                 <div className="statsLineYAxis">
                   {subYLabels.map(lbl => <span key={lbl}>{lbl}</span>)}
                 </div>
@@ -329,8 +335,6 @@ export default function StatisticsPage() {
                         <stop offset="100%" stopColor="#c04c4c" stopOpacity="0"    />
                       </linearGradient>
                     </defs>
-
-                    {/* 수평 gridlines */}
                     {subGridSvgY.map((y, i) => (
                       <line key={y} x1="0" y1={y} x2={LINE_VBW} y2={y}
                         stroke={i === subGridSvgY.length - 1 ? '#c8d8ea' : '#dde8f2'}
@@ -338,21 +342,16 @@ export default function StatisticsPage() {
                         strokeDasharray={i === subGridSvgY.length - 1 ? '0' : '8 6'}
                       />
                     ))}
-
-                    {/* 신규 구독자 */}
                     <path d={subNewPath.area} fill="url(#subNewGrad)" />
                     <path d={subNewPath.line} fill="none" stroke="#3d8e6a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                     {subNewPath.pts.map(([cx, cy], i) => (
                       <circle key={`new-${i}`} cx={cx} cy={cy} r={4.5} fill="#3d8e6a" stroke="white" strokeWidth="2.5" />
                     ))}
-
-                    {/* 탈퇴 구독자 */}
                     <path d={subChurnPath.area} fill="url(#subChurnGrad)" />
                     <path d={subChurnPath.line} fill="none" stroke="#c04c4c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                     {subChurnPath.pts.map(([cx, cy], i) => (
                       <circle key={`churn-${i}`} cx={cx} cy={cy} r={4} fill="#c04c4c" stroke="white" strokeWidth="2" />
                     ))}
-
                   </svg>
                   <div className="statsLineLabels">
                     {monthlySubscribers.map(m => <span key={m.month}>{m.month}</span>)}
@@ -360,6 +359,7 @@ export default function StatisticsPage() {
                 </div>
               </div>
             </div>
+            )}
           </section>
 
           <section className="admin-card statsCard">
@@ -370,21 +370,25 @@ export default function StatisticsPage() {
               </div>
               <button className="statsViewAllBtn">전체보기</button>
             </div>
+            {recentLoading && <p className="stats-loading">피드 데이터 로딩 중...</p>}
+            {recentError && <p className="stats-error">{recentError}</p>}
+            {!recentLoading && !recentError && (
             <div className="statsFeed">
-              {recentActivity.map(item => (
-                <div className="statsFeedItem" key={item.name}>
+              {recentSubscribers.map(item => (
+                <div className="statsFeedItem" key={item.memberId}>
                   <div className="statsAvatar">{item.initials}</div>
                   <div className="statsFeedInfo">
-                    <strong>{item.name}</strong>
+                    <strong>{item.memberName}</strong>
                     <div>
-                      <span className={`statsStatusPill ${item.status.toLowerCase()}`}>{item.status}</span>
+                      <span className={`statsStatusPill ${item.subStatus.toLowerCase()}`}>{item.subStatus}</span>
                       <span>{item.plan}</span>
                     </div>
                   </div>
-                  <span className="statsFeedTime">{item.time}</span>
+                  <span className="statsFeedTime">{item.timeAgo}</span>
                 </div>
               ))}
             </div>
+            )}
           </section>
         </div>
 
