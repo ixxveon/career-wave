@@ -519,8 +519,11 @@ export default function JobNoticeListPage() {
     setFilters((current) => ({ ...current, [label]: value }));
   }
 
-  function toggleBookmark(id: number) {
-    setBookmarks((current) => ({ ...current, [id]: !current[id] }));
+  function toggleBookmark(id: number, fallbackBookmarked = false) {
+    setBookmarks((current) => {
+      const currentValue = current[id] ?? fallbackBookmarked;
+      return { ...current, [id]: !currentValue };
+    });
   }
 
   function resetFilter(label: FilterLabel) {
@@ -614,7 +617,7 @@ export default function JobNoticeListPage() {
                   key={job.id}
                   job={job}
                   bookmarked={getJobBookmark(bookmarks, job)}
-                  onBookmark={toggleBookmark}
+                  onBookmark={(id) => toggleBookmark(id, getJobBookmark(bookmarks, job))}
                   onClick={() => setSelectedJob(job)}
                 />
               ))}
@@ -656,7 +659,9 @@ export default function JobNoticeListPage() {
         isOpen={Boolean(selectedJob)}
         bookmarked={selectedJob ? getJobBookmark(bookmarks, selectedJob) : false}
         onClose={() => setSelectedJob(null)}
-        onBookmark={toggleBookmark}
+        onBookmark={(id) =>
+          toggleBookmark(id, selectedJob ? getJobBookmark(bookmarks, selectedJob) : false)
+        }
       />
     </div>
   );
