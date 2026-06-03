@@ -38,26 +38,26 @@
 - [x] `TTSPlayer` & `useTTSQueue` 구현 — 문항 단위 TTS 오디오 순차 재생 큐 및 재생 제어
 - [x] **스트리밍 타이핑 효과**: `requestAnimationFrame` 활용하여 텍스트 데이터 렌더링 최적화
 - [ ] LLM 꼬리/압박 질문 생성 로직 및 이력서 RAG 컨텍스트 연동
-- [ ] LLM 응답 지연/타임아웃 폴백 처리 — 로딩 UI 유지 및 사전 정의 질문으로 대체 로직 구현
+- [x] LLM 응답 지연/타임아웃 폴백 처리 — 로딩 UI 유지 및 사전 정의 질문으로 대체 로직 구현
 - [x] 면접 종료 시 전체 스크립트 서버 동기화 (`endSession`) 및 상태 머신 전이
 
 ---
 
 ## Phase 4 — 지표 분석 및 리포트 시각화
 
-- [ ] `voiceQuality.ts` — 음성 인식 유효 비율 계산 로직 구현 (50% 미만 문항 `null` 처리)
-- [ ] 하이브리드 점수 산정 유틸리티 구현 (음성 품질 필터링 반영한 평균점 산출)
-- [ ] `ReportChart` 컴포넌트 구현 (Recharts 레이더 차트, `null` 지표 마스킹 처리)
-- [ ] `ScriptAnalysisView` 구현 (스크립트 및 지표별 상세 분석 뷰)
-- [ ] 리포트 페이지 Profiler 최적화 — 대규모 데이터 렌더링 시 리렌더링 방지
-- [ ] 마스킹 지표(Delivery·Fluency) 미지원 시 안내 UI/UX 적용
+- [x] `voiceQuality.ts` — 음성 인식 유효 비율 계산 로직 구현 (50% 미만 문항 `null` 처리)
+- [x] 하이브리드 점수 산정 유틸리티 구현 (음성 품질 필터링 반영한 평균점 산출)
+- [x] `ReportChart` 컴포넌트 구현 (Recharts 레이더 차트, `null` 지표 마스킹 처리)
+- [x] `ScriptAnalysisView` 구현 (스크립트 및 지표별 상세 분석 뷰)
+- [x] 리포트 페이지 Profiler 최적화 — 대규모 데이터 렌더링 시 리렌더링 방지
+- [x] 마스킹 지표(Delivery·Fluency) 미지원 시 안내 UI/UX 적용
 
 ---
 
 ## Phase 5 — 도메인 통합 및 안정성
 
-- [ ] `useInterviewReport` 연동 — 리포트 조회 및 페이지 재진입 시 복구 로직 구현
-- [ ] **비정상 종료 세션 복구**: `sessionStorage` 기반 세션 상태 강제 복구 로직 구현
+- [x] `useInterviewReport` 연동 — 리포트 조회 및 페이지 재진입 시 복구 로직 구현
+- [x] **비정상 종료 세션 복구**: `sessionStorage` 기반 세션 상태 강제 복구 로직 구현
 - [ ] 서류 도메인 연동 테스트 — `documentId` 기반 403/404 예외 처리
 - [ ] iOS Safari getUserMedia 오디오 캡처 제약 대응 확인 및 예외 처리
 - [ ] 모바일/태블릿 반응형 레이아웃 검증 및 가로/세로 모드 대응 테스트

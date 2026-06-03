@@ -20,7 +20,7 @@
 - [x] 데이터 계약: `api-schema.md`에 정의된 JSON 구조와 실제 API 호출/응답 구조가 일치하는가?
 - [x] 세션 유지: 페이지 새로고침 시에도 `sessionId` 및 면접 상태가 유실되지 않는가?
   > sessionStorage 적용 (탭 종료 시 자동 만료 의도 — localStorage 사용 금지)
-- [ ] 비정상 종료 후 재진입 시, `RUNNING` 상태가 `sessionStorage` 기반으로 복원되는가?
+- [x] 비정상 종료 후 재진입 시, `RUNNING` 상태가 `sessionStorage` 기반으로 복원되는가?
 
 ### 에러 핸들링
 
@@ -78,10 +78,10 @@
 
 ### 리포트 시각화
 
-- [ ] Relevance·Depth·Delivery·Fluency 4개 지표 레이더 차트가 정상 렌더링되는가?
-- [ ] 음성 품질 50% 미만 또는 텍스트 면접 문항의 Delivery·Fluency 점수가 `null` 처리되고 마스킹 안내 UI가 노출되는가?
-- [ ] 문항별 AI 피드백(`aiFeedback`)이 스크립트와 함께 정상 표시되는가?
-- [ ] 불필요한 리렌더링이 없는가? (React DevTools Profiler로 확인, `memo`·`useMemo` 적용)
+- [x] Relevance·Depth·Delivery·Fluency 4개 지표 레이더 차트가 정상 렌더링되는가?
+- [x] 음성 품질 50% 미만 또는 텍스트 면접 문항의 Delivery·Fluency 점수가 `null` 처리되고 마스킹 안내 UI가 노출되는가?
+- [x] 문항별 AI 피드백(`aiFeedback`)이 스크립트와 함께 정상 표시되는가?
+- [x] 불필요한 리렌더링이 없는가? (React DevTools Profiler로 확인, `memo`·`useMemo` 적용)
 
 ---
 
