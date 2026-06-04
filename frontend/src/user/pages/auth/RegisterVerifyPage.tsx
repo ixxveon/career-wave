@@ -1,7 +1,11 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { CheckCircle2, ShieldCheck, UserRound } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE, type SocialProviderId } from '../../types/member';
+import { useCompleteSocialRegister, useConfirmVerificationCode, useSendVerificationCode, useVerificationNow } from '../../hooks/member';
 import { getSocialProviderLabel } from '../../utils/member/socialAuth';
+import { formatRemaining, getRecoveryErrorMessage, getRemainingSeconds } from '../../utils/member/recoveryView';
+import { isValidPhone, isValidVerificationCode, normalizePhone } from '../../utils/member/registerSchema';
 import './AuthPage.css';
 
 const carriers = ['SKT', 'KT', 'LG U+', '알뜰폰'];
@@ -25,24 +29,38 @@ type RegisterVerifyTerms = typeof initialTerms;
 type RegisterVerifyTermKey = keyof RegisterVerifyTerms;
 
 function RegisterVerifyPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const providerId = searchParams.get('provider') as SocialProviderId | null;
+  const provider = getSocialProviderLabel(providerId);
+  const socialEmail = searchParams.get('email')?.trim() || '';
   const [form, setForm] = useState(initialForm);
   const [terms, setTerms] = useState(initialTerms);
-  const [phoneVerified, setPhoneVerified] = useState(false);
-  const [verificationRequested, setVerificationRequested] = useState(false);
+  const [verification, setVerification] = useState({
+    verificationId: '',
+    verificationToken: '',
+    expiresAt: '',
+    resendAvailableAt: '',
+    remainingAttempts: 0,
+  });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const normalizedPhone = form.phone.replace(/\D/g, '');
-  const canSubmit =
-    form.name.trim().length > 0 &&
-    form.carrier.trim().length > 0 &&
-    normalizedPhone.length >= 10 &&
-    form.phoneCode.trim().length > 0 &&
-    phoneVerified &&
-    terms.service &&
-    terms.privacy;
-  const provider = getSocialProviderLabel(searchParams.get('provider'));
-  const socialEmail = searchParams.get('email');
+  const currentPhoneRef = useRef('');
+  const verificationRequestRef = useRef(0);
+  const sendPhoneCode = useSendVerificationCode();
+  const confirmPhoneCode = useConfirmVerificationCode();
+  const completeSocialRegister = useCompleteSocialRegister();
+  const now = useVerificationNow();
+  const phoneExpiresIn = getRemainingSeconds(verification.expiresAt, now);
+  const phoneResendIn = getRemainingSeconds(verification.resendAvailableAt, now);
+  const normalizedPhone = normalizePhone(form.phone);
+  const allTermsChecked = terms.service && terms.privacy && terms.marketing;
+
+  const clearMessages = () => {
+    setFormMessage('');
+    setSuccessMessage('');
+  };
 
   const update = (key: RegisterVerifyFormKey, value: RegisterVerifyForm[RegisterVerifyFormKey]) => {
     setForm((current) => ({
@@ -50,19 +68,32 @@ function RegisterVerifyPage() {
       [key]: value,
       ...(key === 'phone' ? { phoneCode: '' } : {}),
     }));
-    setFormMessage('');
-    setSuccessMessage('');
+    clearMessages();
+    setFieldErrors((current) => ({
+      ...current,
+      [key]: '',
+      ...(key === 'phone' ? { phoneCode: '' } : {}),
+    }));
 
     if (key === 'phone') {
-      setPhoneVerified(false);
-      setVerificationRequested(false);
+      currentPhoneRef.current = typeof value === 'string' ? normalizePhone(value) : currentPhoneRef.current;
+      verificationRequestRef.current += 1;
+      setVerification({
+        verificationId: '',
+        verificationToken: '',
+        expiresAt: '',
+        resendAvailableAt: '',
+        remainingAttempts: 0,
+      });
     }
 
     if (key === 'phoneCode') {
-      setPhoneVerified(false);
+      setVerification((current) => ({
+        ...current,
+        verificationToken: '',
+      }));
     }
   };
-  const allTermsChecked = terms.service && terms.privacy && terms.marketing;
 
   const toggleAll = (checked: boolean) => {
     setTerms({
@@ -70,6 +101,8 @@ function RegisterVerifyPage() {
       privacy: checked,
       marketing: checked,
     });
+    clearMessages();
+    setFieldErrors((current) => ({ ...current, terms: '' }));
   };
 
   const toggleTerm = (key: RegisterVerifyTermKey) => {
@@ -77,46 +110,140 @@ function RegisterVerifyPage() {
       ...current,
       [key]: !current[key],
     }));
+    clearMessages();
+    setFieldErrors((current) => ({ ...current, terms: '' }));
   };
 
-  const handleSendPhoneCode = () => {
-    if (normalizedPhone.length < 10) {
-      setFormMessage('휴대폰 번호를 먼저 입력해주세요.');
+  const validateForm = () => {
+    const nextErrors: Record<string, string> = {};
+
+    if (!providerId || !provider) {
+      nextErrors.provider = '유효한 소셜 가입 경로가 아닙니다. 다시 시도해주세요.';
+    }
+    if (!form.name.trim()) nextErrors.name = '이름을 입력해주세요.';
+    if (!form.carrier.trim()) nextErrors.carrier = '통신사를 선택해주세요.';
+    if (!isValidPhone(form.phone)) nextErrors.phone = '휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해주세요.';
+    if (!verification.verificationId) {
+      nextErrors.phoneCode = '휴대폰 인증번호를 먼저 요청해주세요.';
+    } else if (!verification.verificationToken.trim()) {
+      nextErrors.phoneCode = '휴대폰 인증을 완료해주세요.';
+    }
+    if (!terms.service || !terms.privacy) {
+      nextErrors.terms = '필수 약관에 동의해주세요.';
+    }
+
+    return nextErrors;
+  };
+
+  const handleSendPhoneCode = async () => {
+    if (!isValidPhone(form.phone)) {
+      setFieldErrors((current) => ({ ...current, phone: '휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해주세요.' }));
       return;
     }
 
-    setVerificationRequested(true);
-    setPhoneVerified(false);
-    setFormMessage('');
-    setSuccessMessage('인증번호를 입력한 뒤 인증 확인을 진행해주세요.');
+    const target = normalizePhone(form.phone);
+    currentPhoneRef.current = target;
+    const requestOrder = ++verificationRequestRef.current;
+    clearMessages();
+
+    try {
+      const result = await sendPhoneCode.mutateAsync({
+        channel: VERIFICATION_CHANNEL.PHONE,
+        target,
+        purpose: VERIFICATION_PURPOSE.REGISTER,
+      });
+      if (requestOrder !== verificationRequestRef.current || target !== currentPhoneRef.current) return;
+
+      setVerification({
+        verificationId: result.verificationId,
+        verificationToken: '',
+        expiresAt: result.expiresAt,
+        resendAvailableAt: result.resendAvailableAt,
+        remainingAttempts: result.remainingAttempts,
+      });
+      setFieldErrors((current) => ({ ...current, phone: '', phoneCode: '' }));
+      setSuccessMessage('인증번호를 전송했습니다. 유효 시간 내에 인증을 완료해주세요.');
+    } catch (error) {
+      if (requestOrder !== verificationRequestRef.current || target !== currentPhoneRef.current) return;
+      setFieldErrors((current) => ({ ...current, phone: getRecoveryErrorMessage(error, '휴대폰 인증번호 발송에 실패했습니다.') }));
+    }
   };
 
-  const handleConfirmPhoneCode = () => {
-    if (!verificationRequested) {
-      setFormMessage('먼저 인증번호를 전송해주세요.');
+  const handleConfirmPhoneCode = async () => {
+    const verificationId = verification.verificationId;
+    const target = currentPhoneRef.current;
+
+    if (!verificationId) {
+      setFieldErrors((current) => ({ ...current, phoneCode: '휴대폰 인증번호를 먼저 요청해주세요.' }));
+      return;
+    }
+    if (phoneExpiresIn <= 0) {
+      setFieldErrors((current) => ({ ...current, phoneCode: '인증번호가 만료되었습니다. 다시 전송해주세요.' }));
+      return;
+    }
+    if (!isValidVerificationCode(form.phoneCode)) {
+      setFieldErrors((current) => ({ ...current, phoneCode: '인증번호 6자리를 입력해주세요.' }));
       return;
     }
 
-    if (!form.phoneCode.trim()) {
-      setFormMessage('인증번호를 입력해주세요.');
-      return;
-    }
+    clearMessages();
 
-    setPhoneVerified(true);
-    setFormMessage('');
-    setSuccessMessage('');
+    try {
+      const result = await confirmPhoneCode.mutateAsync({
+        verificationId,
+        code: form.phoneCode.trim(),
+      });
+      if (verificationId !== verification.verificationId || target !== currentPhoneRef.current) return;
+
+      setVerification((current) => ({
+        ...current,
+        verificationToken: result.verificationToken,
+      }));
+      setFieldErrors((current) => ({ ...current, phoneCode: '' }));
+      setSuccessMessage('휴대폰 인증이 완료되었습니다.');
+    } catch (error) {
+      if (verificationId !== verification.verificationId || target !== currentPhoneRef.current) return;
+      setFieldErrors((current) => ({ ...current, phoneCode: getRecoveryErrorMessage(error, '휴대폰 인증 확인에 실패했습니다.') }));
+    }
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!canSubmit) {
-      setFormMessage('필수 정보와 휴대폰 인증 완료 여부를 확인해주세요.');
+    const nextErrors = validateForm();
+    setFieldErrors(nextErrors);
+    clearMessages();
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFormMessage('입력값과 휴대폰 인증 완료 여부를 확인해주세요.');
       return;
     }
 
-    setFormMessage('');
-    setSuccessMessage('소셜 가입 추가 정보 입력이 완료되었습니다.');
+    try {
+      const result = await completeSocialRegister.mutateAsync({
+        provider: providerId as SocialProviderId,
+        socialEmail: socialEmail || undefined,
+        name: form.name.trim(),
+        carrier: form.carrier.trim(),
+        phone: normalizedPhone,
+        phoneVerificationToken: verification.verificationToken,
+        terms: {
+          service: terms.service,
+          privacy: terms.privacy,
+          marketing: terms.marketing,
+        },
+      });
+      setSuccessMessage('소셜 가입 추가 정보 입력이 완료되었습니다. 로그인 페이지로 이동합니다.');
+      navigate(result.nextPath, {
+        replace: true,
+        state: {
+          socialRegisterCompleted: true,
+          provider,
+        },
+      });
+    } catch (error) {
+      setFormMessage(getRecoveryErrorMessage(error, '소셜 가입 완료 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
+    }
   };
 
   return (
@@ -140,13 +267,10 @@ function RegisterVerifyPage() {
             <div className="cw-register-social-summary">
               <span>가입 방식</span>
               <strong>{provider ? `${provider} 소셜 계정` : '소셜 계정'}</strong>
-              {socialEmail && (
-                <>
-                  <span>이메일</span>
-                  <strong>{socialEmail}</strong>
-                </>
-              )}
+              <span>이메일</span>
+              <strong>{socialEmail || '소셜 계정 이메일 확인 대기'}</strong>
             </div>
+            {fieldErrors.provider && <p className="cw-register-error">{fieldErrors.provider}</p>}
           </section>
 
           <section className="cw-register-section">
@@ -163,6 +287,7 @@ function RegisterVerifyPage() {
                   이름 <em>*</em>
                 </span>
                 <input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder="이름" />
+                {fieldErrors.name && <p className="cw-register-error">{fieldErrors.name}</p>}
               </label>
               <label className="cw-register-field">
                 <span className="cw-register-label">
@@ -176,6 +301,7 @@ function RegisterVerifyPage() {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.carrier && <p className="cw-register-error">{fieldErrors.carrier}</p>}
               </label>
               <label className="cw-register-field cw-register-field--wide">
                 <span className="cw-register-label">
@@ -183,25 +309,41 @@ function RegisterVerifyPage() {
                 </span>
                 <div className="cw-register-inline">
                   <input value={form.phone} onChange={(event) => update('phone', event.target.value)} placeholder="010-0000-0000" />
-                  <button className="cw-register-sub-button" type="button" onClick={handleSendPhoneCode}>
-                    인증번호 전송
+                  <button className="cw-register-sub-button" type="button" onClick={() => void handleSendPhoneCode()} disabled={sendPhoneCode.isPending || phoneResendIn > 0}>
+                    {sendPhoneCode.isPending ? '전송 중' : verification.verificationId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
                   </button>
                 </div>
+                {verification.verificationId && !verification.verificationToken && phoneExpiresIn > 0 && (
+                  <span className="cw-register-status">
+                    <CheckCircle2 size={15} />
+                    인증번호 유효 시간 {formatRemaining(phoneExpiresIn)}
+                  </span>
+                )}
+                {verification.verificationId && !verification.verificationToken && phoneExpiresIn <= 0 && (
+                  <p className="cw-register-error">휴대폰 인증번호가 만료되었습니다. 다시 전송해주세요.</p>
+                )}
+                {fieldErrors.phone && <p className="cw-register-error">{fieldErrors.phone}</p>}
               </label>
               <label className="cw-register-field cw-register-field--wide">
                 <span className="cw-register-label">휴대폰 인증번호</span>
                 <div className="cw-register-inline">
                   <input value={form.phoneCode} onChange={(event) => update('phoneCode', event.target.value)} placeholder="인증번호 입력" />
-                  <button className="cw-register-sub-button" type="button" onClick={handleConfirmPhoneCode}>
-                    인증 확인
+                  <button
+                    className="cw-register-sub-button"
+                    type="button"
+                    onClick={() => void handleConfirmPhoneCode()}
+                    disabled={confirmPhoneCode.isPending || !verification.verificationId || phoneExpiresIn <= 0}
+                  >
+                    {confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
                   </button>
                 </div>
-                {phoneVerified && (
+                {verification.verificationToken && (
                   <span className="cw-register-status">
                     <CheckCircle2 size={15} />
                     휴대폰 인증 완료
                   </span>
                 )}
+                {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
               </label>
             </div>
           </section>
@@ -238,6 +380,7 @@ function RegisterVerifyPage() {
                 </span>
               </label>
             </div>
+            {fieldErrors.terms && <p className="cw-register-error">{fieldErrors.terms}</p>}
           </section>
 
           {formMessage && <p className="cw-register-error">{formMessage}</p>}
@@ -248,8 +391,8 @@ function RegisterVerifyPage() {
             </span>
           )}
 
-          <button className="cw-register-submit" disabled={!canSubmit} type="submit">
-            가입 완료
+          <button className="cw-register-submit" disabled={completeSocialRegister.isPending} type="submit">
+            {completeSocialRegister.isPending ? '가입 처리 중' : '가입 완료'}
           </button>
         </form>
       </div>
