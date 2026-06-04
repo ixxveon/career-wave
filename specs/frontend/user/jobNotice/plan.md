@@ -32,7 +32,7 @@ frontend/src/user/pages/jobNotice/
     └── JobNoticeDetail.css
 
 frontend/src/user/api/
-└── jobApi.js  # 현행 주변 패턴을 따르는 채용 공고 목록/상세/스크랩 API 호출 계층
+└── jobApi.ts  # 현행 주변 패턴을 따르는 채용 공고 목록/상세/스크랩 API 호출 계층
 
 specs/frontend/user/jobNotice/
 ├── api-schema.md                # 목록/상세/스크랩 API 계약

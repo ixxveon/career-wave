@@ -115,11 +115,16 @@
 
 .jnd-icon-btn:hover,
 .jnd-icon-btn.is-active,
-.jnd-open-btn:hover {
+.jnd-open-btn:not(:disabled):hover {
   transform: translateY(-1px);
   border-color: #2f9cff;
   background: #e7f2ff;
   color: #1f8eea;
+}
+
+.jnd-open-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .jnd-close-btn:hover {
@@ -173,6 +178,61 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.jnd-status {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid #d8e3f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #526173;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.jnd-status > span {
+  min-width: 0;
+}
+
+.jnd-status__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.jnd-status__actions button {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid currentcolor;
+  border-radius: 8px;
+  background: #ffffff;
+  color: inherit;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.jnd-status--loading {
+  border-color: #b9dfff;
+  background: #f2f8ff;
+  color: #1f8eea;
+}
+
+.jnd-status--empty {
+  border-color: #e5e7eb;
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.jnd-status--error {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #be123c;
 }
 
 .jnd-tabs {
@@ -324,7 +384,7 @@
   text-decoration: none;
 }
 
-.jnd-action-btn:hover,
+.jnd-action-btn:not(:disabled):hover,
 .jnd-action-btn.is-active {
   border-color: #2f9cff;
   background: #e7f2ff;
@@ -332,11 +392,30 @@
 }
 
 .jnd-action-btn--primary,
-.jnd-action-btn--primary:hover {
+.jnd-action-btn--primary:not(:disabled):hover {
   border-color: transparent;
   background: linear-gradient(135deg, #2f9cff, #397df1);
   color: #ffffff;
   box-shadow: 0 12px 24px rgba(47, 156, 255, 0.24);
+}
+
+.jnd-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  box-shadow: none;
+}
+
+.jnd-action-disabled {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.jnd-action-disabled span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
 }
 
 .jnd-skeleton {
