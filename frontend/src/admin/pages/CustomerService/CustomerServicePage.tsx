@@ -1,48 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Bell, HelpCircle, MessageSquare, AlertCircle, Sparkles } from 'lucide-react';
+import {
+  csApi,
+  NOTICE_CATEGORY_LABEL,
+  FAQ_CATEGORY_LABEL,
+  INQUIRY_CATEGORY, INQUIRY_CATEGORY_LABEL,
+  INQUIRY_STATUS, INQUIRY_STATUS_LABEL,
+  type NoticeCategory, type FaqCategory, type InquiryCategory, type InquiryStatus,
+  type CsSummary, type NoticeItem,
+  type FaqItem, type NoticeListParams,
+} from '../../api/csApi';
 import '../../styles/admin.css';
 import '../../styles/CustomerService.css';
 
-// ── Types ────────────────────────────────────────────────────
+// ── 로컬 전용 타입 ────────────────────────────────────────────
 
 type CsTab = 'notice' | 'faq' | 'inquiry';
 
-type NoticeCategory = '공지' | '업데이트' | '이벤트' | '점검';
-interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  category: NoticeCategory;
-  createdAt: string;
-  visible: boolean;
-}
-
-type FaqCategory = '계정' | '결제' | '서비스' | '기타';
-interface Faq {
-  id: number;
-  category: FaqCategory;
-  question: string;
-  answer: string;
-  createdAt: string;
-}
-
-const INQUIRY_STATUS = {
-  PENDING:     '접수 중',
-  IN_PROGRESS: '답변 중',
-  COMPLETED:   '완료',
-} as const;
-type InquiryStatus = (typeof INQUIRY_STATUS)[keyof typeof INQUIRY_STATUS];
-
-const INQUIRY_CATEGORY = {
-  REFUND:        '환불',
-  PAYMENT_ERROR: '결제오류',
-  SERVICE:       '서비스',
-  ACCOUNT:       '계정',
-  OTHER:         '기타',
-} as const;
-type InquiryCategory = (typeof INQUIRY_CATEGORY)[keyof typeof INQUIRY_CATEGORY];
-
-interface Inquiry {
+// 더미 데이터용 문의 타입 (Phase 5-2 API 전환 전까지 유지)
+interface InquiryDummy {
   id: string;
   memberName: string;
   category: InquiryCategory;
@@ -53,24 +29,20 @@ interface Inquiry {
   status: InquiryStatus;
 }
 
-// ── Label / Class Maps ────────────────────────────────────────
-
-const NOTICE_CATS: NoticeCategory[] = ['공지', '업데이트', '이벤트', '점검'];
-const FAQ_CATS: FaqCategory[]       = ['계정', '결제', '서비스', '기타'];
-const INQ_CATS: InquiryCategory[]   = ['환불', '결제오류', '서비스', '계정', '기타'];
+// ── CSS 클래스 맵 ─────────────────────────────────────────────
 
 const INQ_STATUS_CLS: Record<InquiryStatus, string> = {
-  '접수 중': 'pending',
-  '답변 중': 'answering',
-  '완료':    'normal',
+  [INQUIRY_STATUS.PENDING]:     'pending',
+  [INQUIRY_STATUS.IN_PROGRESS]: 'answering',
+  [INQUIRY_STATUS.COMPLETED]:   'normal',
 };
 
 const INQ_CAT_CLS: Record<InquiryCategory, string> = {
-  '환불':    'csInqCat--refund',
-  '결제오류': 'csInqCat--error',
-  '서비스':  'csInqCat--service',
-  '계정':    'csInqCat--account',
-  '기타':    'csInqCat--etc',
+  [INQUIRY_CATEGORY.REFUND]:        'csInqCat--refund',
+  [INQUIRY_CATEGORY.PAYMENT_ERROR]: 'csInqCat--error',
+  [INQUIRY_CATEGORY.SERVICE]:       'csInqCat--service',
+  [INQUIRY_CATEGORY.ACCOUNT]:       'csInqCat--account',
+  [INQUIRY_CATEGORY.ETC]:           'csInqCat--etc',
 };
 
 const TAB_LABEL: Record<CsTab, string> = {
@@ -79,141 +51,30 @@ const TAB_LABEL: Record<CsTab, string> = {
   inquiry: '1:1 문의',
 };
 
-function formatDate(): string {
-  const d = new Date();
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
-}
+// ── 더미 데이터 (FAQ / 문의 — Phase 5-2 교체 예정) ───────────
 
-// ── Dummy Data ────────────────────────────────────────────────
-
-const initNotices: Notice[] = [
-  {
-    id: 1,
-    title: 'Career Wave 서비스 오픈 안내',
-    content:
-      'Career Wave 서비스가 정식 오픈되었습니다.\n프리미엄 구독을 통해 AI 이력서 분석과 AI 면접 서비스를 무제한으로 이용하세요.\n\n앞으로도 더 나은 서비스로 찾아뵙겠습니다. 감사합니다.',
-    category: '공지',
-    createdAt: '2026.05.20',
-    visible: true,
-  },
-  {
-    id: 2,
-    title: '5월 22일 새벽 서버 점검 안내',
-    content:
-      '안정적인 서비스 제공을 위해 서버 점검을 진행합니다.\n\n■ 점검 일시: 2026.05.22 (금) 02:00 ~ 04:00\n■ 점검 내용: 서버 업그레이드 및 보안 패치\n\n점검 시간 동안 서비스 이용이 제한됩니다. 이용에 불편을 드려 죄송합니다.',
-    category: '점검',
-    createdAt: '2026.05.21',
-    visible: true,
-  },
-  {
-    id: 3,
-    title: '이력서 AI 첨삭 기능 업데이트',
-    content:
-      '이력서 AI 첨삭 기능이 업데이트되었습니다.\n더욱 정교해진 AI 분석으로 맞춤형 피드백을 받아보세요.',
-    category: '업데이트',
-    createdAt: '2026.05.22',
-    visible: true,
-  },
-  {
-    id: 4,
-    title: '신규 회원 가입 이벤트 안내',
-    content:
-      '신규 회원 가입 시 프리미엄 1개월 무료 체험 혜택을 드립니다.\n\n■ 기간: 2026.06.01 ~ 2026.06.30\n■ 대상: 이벤트 기간 중 신규 가입 회원 전원\n\n많은 참여 부탁드립니다.',
-    category: '이벤트',
-    createdAt: '2026.05.22',
-    visible: false,
-  },
+const initFaqs: FaqItem[] = [
+  { faqId: 1, category: 'PAYMENT', question: '구독을 중간에 해지하면 환불이 되나요?', answer: '결제일 포함 7일 이내이며, 유료 AI 기능을 한 번도 이용하지 않으신 경우 전액 환불이 가능합니다.', createdAt: '2026-05-10T10:00:00Z' },
+  { faqId: 2, category: 'ACCOUNT', question: '비밀번호를 잊어버렸어요.', answer: '로그인 화면에서 "비밀번호 찾기"를 이용하시면 이메일로 재설정 링크를 전송합니다.', createdAt: '2026-05-10T10:00:00Z' },
+  { faqId: 3, category: 'SERVICE', question: 'AI 모의면접은 몇 번이나 이용할 수 있나요?', answer: '무료 회원은 월 1회, 프리미엄 회원은 무제한으로 이용하실 수 있습니다.', createdAt: '2026-05-11T10:00:00Z' },
+  { faqId: 4, category: 'ETC', question: '기업 회원과 개인 회원의 차이가 무엇인가요?', answer: '기업 회원은 채용공고 등록 및 지원자 관리 기능을 추가로 이용할 수 있습니다.', createdAt: '2026-05-12T10:00:00Z' },
 ];
 
-const initFaqs: Faq[] = [
-  {
-    id: 1,
-    category: '결제',
-    question: '구독을 중간에 해지하면 환불이 되나요?',
-    answer:
-      '결제일 포함 7일 이내이며, 유료 AI 기능(이력서 분석, AI 면접)을 한 번도 이용하지 않으신 경우 전액 환불이 가능합니다.\n환불을 원하시면 1:1 문의에서 환불 요청을 남겨주시면 CS 담당자가 확인 후 처리해 드립니다.',
-    createdAt: '2026.05.10',
-  },
-  {
-    id: 2,
-    category: '계정',
-    question: '비밀번호를 잊어버렸어요.',
-    answer:
-      '로그인 화면에서 "비밀번호 찾기"를 이용하시면 이메일로 재설정 링크를 전송합니다.',
-    createdAt: '2026.05.10',
-  },
-  {
-    id: 3,
-    category: '서비스',
-    question: 'AI 모의면접은 몇 번이나 이용할 수 있나요?',
-    answer:
-      '무료 회원은 월 1회, 프리미엄 회원은 무제한으로 이용하실 수 있습니다.',
-    createdAt: '2026.05.11',
-  },
-  {
-    id: 4,
-    category: '기타',
-    question: '기업 회원과 개인 회원의 차이가 무엇인가요?',
-    answer:
-      '기업 회원은 채용공고 등록 및 지원자 관리 기능을 추가로 이용할 수 있습니다.',
-    createdAt: '2026.05.12',
-  },
+const initInquiries: InquiryDummy[] = [
+  { id: 'INQ-501', memberName: '김민지', category: 'PAYMENT_ERROR', title: '결제 오류가 계속 발생합니다', content: '카드 결제 시도 시 "처리 실패" 오류가 반복됩니다.', createdAt: '2026-05-22T09:00:00Z', status: 'PENDING' },
+  { id: 'INQ-502', memberName: '이준호', category: 'SERVICE', title: 'AI 면접 영상이 저장이 안 돼요', content: 'AI 면접 종료 후 결과 페이지로 이동하지 않습니다.', createdAt: '2026-05-22T10:00:00Z', status: 'IN_PROGRESS', reply: '확인 중입니다.' },
+  { id: 'INQ-503', memberName: '박서연', category: 'REFUND', title: '구독 환불 요청드립니다', content: '이번 달 구독비 환불 요청드립니다.', createdAt: '2026-05-22T14:00:00Z', status: 'PENDING' },
 ];
 
-const initInquiries: Inquiry[] = [
-  {
-    id: 'INQ-501',
-    memberName: '김민지',
-    category: '결제오류',
-    title: '결제 오류가 계속 발생합니다',
-    content:
-      '카드 결제 시도 시 "처리 실패" 오류가 반복됩니다. 동일한 카드로 다른 사이트에서는 결제가 잘 됩니다.',
-    createdAt: '2026.05.22',
-    status: '접수 중',
-  },
-  {
-    id: 'INQ-502',
-    memberName: '이준호',
-    category: '서비스',
-    title: 'AI 면접 영상이 저장이 안 돼요',
-    content:
-      '면접 종료 후 영상 저장 버튼을 눌러도 반응이 없습니다. 크롬 브라우저를 사용 중입니다.',
-    reply:
-      '안녕하세요, 이준호 님.\nCareer Wave 고객센터입니다.\n\n불편을 드려 죄송합니다. 현재 해당 증상을 기술팀에서 확인 중이며 빠른 시일 내에 해결하겠습니다.',
-    createdAt: '2026.05.21',
-    status: '답변 중',
-  },
-  {
-    id: 'INQ-503',
-    memberName: '박서연',
-    category: '계정',
-    title: '탈퇴 후 재가입 가능 시점 문의',
-    content: '탈퇴 후 같은 이메일로 재가입은 얼마나 지나야 가능한가요?',
-    reply: '탈퇴 후 30일이 경과하면 동일 이메일로 재가입이 가능합니다.',
-    createdAt: '2026.05.20',
-    status: '완료',
-  },
-  {
-    id: 'INQ-504',
-    memberName: '최도윤',
-    category: '환불',
-    title: '구독 환불 요청드립니다',
-    content:
-      '이번 달 구독비 환불 요청드립니다. 결제한 지 3일밖에 안 됐고 AI 기능은 한 번도 사용하지 않았습니다.',
-    createdAt: '2026.05.22',
-    status: '접수 중',
-  },
-];
-
-// ── AI Mock 응답 생성 ─────────────────────────────────────────
+// ── AI Mock 응답 생성 (v2에서 실제 API 전환 예정) ────────────
 
 function genNoticeDraft(category: NoticeCategory, title: string): string {
   const base = title.trim() ? `"${title}" 관련 ` : '';
   const templates: Record<NoticeCategory, string> = {
-    공지: `안녕하세요, Career Wave입니다.\n\n${base}공지사항을 안내드립니다.\n\n[본문 내용을 입력해 주세요]\n\n항상 더 나은 서비스를 제공하기 위해 노력하겠습니다.\n감사합니다.`,
-    점검: `안녕하세요, Career Wave입니다.\n\n안정적인 서비스 제공을 위해 시스템 점검을 진행합니다.\n\n■ 점검 일시: 0000.00.00 (요일) 00:00 ~ 00:00\n■ 점검 내용: 서버 안정화 및 성능 개선\n\n점검 시간 동안 서비스 이용이 제한될 수 있습니다.\n이용에 불편을 드려 죄송합니다.`,
-    업데이트: `안녕하세요, Career Wave입니다.\n\n${base}업데이트 내용을 안내드립니다.\n\n■ 주요 변경 사항\n- [변경 내용 1]\n- [변경 내용 2]\n\n더 나은 서비스로 찾아뵙겠습니다. 감사합니다.`,
-    이벤트: `안녕하세요, Career Wave입니다.\n\n특별 이벤트를 진행합니다!\n\n■ 이벤트 기간: 0000.00.00 ~ 0000.00.00\n■ 이벤트 내용: ${base}[내용을 입력해 주세요]\n■ 대상: 이벤트 기간 중 참여 회원 전원\n\n많은 참여 부탁드립니다. 감사합니다.`,
+    NOTICE:      `안녕하세요, Career Wave입니다.\n\n${base}공지사항을 안내드립니다.\n\n[본문 내용을 입력해 주세요]\n\n항상 더 나은 서비스를 제공하기 위해 노력하겠습니다.\n감사합니다.`,
+    MAINTENANCE: `안녕하세요, Career Wave입니다.\n\n안정적인 서비스 제공을 위해 시스템 점검을 진행합니다.\n\n■ 점검 일시: 0000.00.00 00:00 ~ 00:00\n■ 점검 내용: 서버 안정화 및 성능 개선\n\n이용에 불편을 드려 죄송합니다.`,
+    UPDATE:      `안녕하세요, Career Wave입니다.\n\n${base}업데이트 내용을 안내드립니다.\n\n■ 주요 변경 사항\n- [변경 내용 1]\n- [변경 내용 2]\n\n더 나은 서비스로 찾아뵙겠습니다. 감사합니다.`,
+    EVENT:       `안녕하세요, Career Wave입니다.\n\n특별 이벤트를 진행합니다!\n\n■ 이벤트 기간: 0000.00.00 ~ 0000.00.00\n■ 이벤트 내용: ${base}[내용을 입력해 주세요]\n\n많은 참여 부탁드립니다. 감사합니다.`,
   };
   return templates[category];
 }
@@ -223,22 +84,27 @@ function genFaqDraft(question: string): string {
   return `안녕하세요, Career Wave 고객센터입니다.\n\n문의하신 "${question}"에 대한 답변입니다.\n\n[답변 내용을 입력해 주세요]\n\n추가 문의사항이 있으시면 언제든지 1:1 문의를 이용해 주세요.\n감사합니다.`;
 }
 
-function genInquiryDraft(inq: Inquiry): string {
+function genInquiryDraft(inq: InquiryDummy): string {
   const header = `안녕하세요, ${inq.memberName} 님.\nCareer Wave 고객센터입니다.\n\n`;
   const footer = `\n\n추가 문의사항이 있으시면 언제든지 연락 주세요.\n감사합니다.`;
   const bodies: Record<InquiryCategory, string> = {
-    환불:
-      '환불 요청 접수해 주셔서 감사합니다.\n\n저희 환불 정책에 따라 결제일 포함 7일 이내이며 유료 AI 기능(이력서 분석, AI 면접)을 이용하지 않으신 경우 전액 환불이 가능합니다.\n이용 내역 확인 후 영업일 기준 3~5일 이내에 처리 결과를 안내해 드리겠습니다.',
-    결제오류:
-      '결제 오류로 불편을 드려 죄송합니다.\n\n다음 사항을 순서대로 확인해 주시기 바랍니다.\n1. 카드 한도 및 유효기간 확인\n2. 브라우저 캐시 삭제 후 재시도\n3. 다른 브라우저 또는 시크릿 모드에서 시도\n\n위 방법으로도 해결되지 않으면 다른 결제 수단을 이용해 주시거나 카드사 고객센터에 문의해 주세요.',
-    서비스:
-      '문의해 주신 내용 확인하였습니다.\n\n현재 해당 내용을 기술팀에서 검토 중이며, 빠른 시일 내에 해결하여 안내드리겠습니다.\n불편을 드려 죄송합니다.',
-    계정:
-      '계정 관련 문의 감사합니다.\n\n문의하신 내용을 확인하였습니다. 보안을 위해 일부 처리는 본인 확인 절차가 필요할 수 있습니다.\n안내에 따라 진행해 주시면 빠르게 처리해 드리겠습니다.',
-    기타:
-      '문의해 주셔서 감사합니다.\n\n내용을 확인하였으며 빠른 시일 내에 답변 드리겠습니다.',
+    REFUND:        '환불 요청 접수해 주셔서 감사합니다.\n\n이용 내역 확인 후 영업일 기준 3~5일 이내에 처리 결과를 안내해 드리겠습니다.',
+    PAYMENT_ERROR: '결제 오류로 불편을 드려 죄송합니다.\n\n카드 한도 및 유효기간을 확인해 주시고, 다른 브라우저에서도 시도해 주세요.',
+    SERVICE:       '문의하신 내용을 기술팀에서 검토 중이며, 빠른 시일 내에 해결하여 안내드리겠습니다.',
+    ACCOUNT:       '계정 관련 문의 감사합니다. 보안을 위해 본인 확인 절차가 필요할 수 있습니다.',
+    ETC:           '내용을 확인하였으며 빠른 시일 내에 답변 드리겠습니다.',
   };
   return header + bodies[inq.category] + footer;
+}
+
+// ── 공지사항 폼 상태 타입 ─────────────────────────────────────
+
+interface NoticeFormState {
+  noticeId?: number;
+  category: NoticeCategory;
+  title: string;
+  content: string;
+  isVisible: boolean;
 }
 
 // ── Component ─────────────────────────────────────────────────
@@ -246,148 +112,236 @@ function genInquiryDraft(inq: Inquiry): string {
 export default function CustomerServicePage() {
   const [tab, setTab] = useState<CsTab>('notice');
 
-  // ── Notice state ─────────────────────────────────────────
-  const [notices, setNotices]         = useState<Notice[]>(initNotices);
-  const [noticeModal, setNoticeModal] = useState<'create' | 'edit' | null>(null);
-  const [noticeForm, setNoticeForm]   = useState<Partial<Notice>>({});
-  const [aiNoticeLoading, setAiNoticeLoading] = useState(false);
+  // ── KPI 상태 ─────────────────────────────────────────────
+  const [summary, setSummary] = useState<CsSummary>({ noticeCount: 0, faqCount: 0, pendingCount: 0, inProgressCount: 0 });
+  const summaryReqId = useRef(0);
 
-  // ── FAQ state ────────────────────────────────────────────
-  const [faqs, setFaqs]         = useState<Faq[]>(initFaqs);
+  // ── 공지사항 API 상태 ─────────────────────────────────────
+  const [notices, setNotices]         = useState<NoticeItem[]>([]);
+  const [noticeTotalItems, setNoticeTotalItems] = useState(0);
+  const [noticePage, setNoticePage]   = useState(1);
+  const [noticeTotalPages, setNoticeTotalPages] = useState(1);
+  const [noticeLoading, setNoticeLoading] = useState(false);
+  const [noticeError, setNoticeError] = useState('');
+  const noticeReqId = useRef(0);
+  const noticeDetailReqId = useRef(0);
+
+  // 공지사항 필터 (입력 상태)
+  const [noticeCatFilter, setNoticeCatFilter]         = useState('');
+  const [noticeVisibleFilter, setNoticeVisibleFilter] = useState('');
+  // 적용 필터 ref
+  const appliedNoticeFilters = useRef<NoticeListParams>({});
+
+  // 공지사항 모달
+  const [noticeModal, setNoticeModal] = useState<'create' | 'edit' | null>(null);
+  const [noticeForm, setNoticeForm]   = useState<NoticeFormState>({ category: 'NOTICE', title: '', content: '', isVisible: true });
+  const [noticeFormLoading, setNoticeFormLoading]   = useState(false);
+  const [noticeDetailLoading, setNoticeDetailLoading] = useState(false);
+  const [noticeFormError, setNoticeFormError]       = useState('');
+  const [aiNoticeLoading, setAiNoticeLoading]       = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId]       = useState<number | null>(null);
+
+  // ── FAQ 상태 (더미 — Phase 5-2 교체) ─────────────────────
+  const [faqs, setFaqs]         = useState<FaqItem[]>(initFaqs);
   const [faqModal, setFaqModal] = useState<'create' | 'edit' | null>(null);
-  const [faqForm, setFaqForm]   = useState<Partial<Faq>>({});
+  const [faqForm, setFaqForm]   = useState<Partial<FaqItem>>({});
   const [aiFaqLoading, setAiFaqLoading] = useState(false);
 
-  // ── Inquiry state ────────────────────────────────────────
-  const [inquiries, setInquiries]               = useState<Inquiry[]>(initInquiries);
-  const [selectedInquiry, setSelectedInquiry]   = useState<Inquiry | null>(null);
-  const [inquiryReply, setInquiryReply]         = useState('');
-  const [inqCatFilter, setInqCatFilter]         = useState('');
-  const [inqStatusFilter, setInqStatusFilter]   = useState('');
-  const [aiInqLoading, setAiInqLoading]         = useState(false);
+  // ── 문의 상태 (더미 — Phase 5-2 교체) ────────────────────
+  const [inquiries, setInquiries]             = useState<InquiryDummy[]>(initInquiries);
+  const [selectedInquiry, setSelectedInquiry] = useState<InquiryDummy | null>(null);
+  const [inquiryReply, setInquiryReply]       = useState('');
+  const [inqCatFilter, setInqCatFilter]       = useState('');
+  const [inqStatusFilter, setInqStatusFilter] = useState('');
+  const [aiInqLoading, setAiInqLoading]       = useState(false);
 
-  // ── KPI ──────────────────────────────────────────────────
-  const pendingCount   = inquiries.filter((i) => i.status === '접수 중').length;
-  const answeringCount = inquiries.filter((i) => i.status === '답변 중').length;
-
-  // ── Notice handlers ──────────────────────────────────────
-  const openNoticeCreate = () => {
-    setNoticeForm({ category: '공지', visible: true, title: '', content: '' });
-    setNoticeModal('create');
-  };
-  const openNoticeEdit = (n: Notice) => { setNoticeForm({ ...n }); setNoticeModal('edit'); };
-  const saveNotice = () => {
-    if (!noticeForm.title?.trim()) return;
-    if (noticeModal === 'create') {
-      setNotices((p) => [
-        ...p,
-        {
-          id: Date.now(),
-          title: noticeForm.title!,
-          content: noticeForm.content ?? '',
-          category: noticeForm.category ?? '공지',
-          createdAt: formatDate(),
-          visible: noticeForm.visible ?? true,
-        },
-      ]);
-    } else {
-      setNotices((p) => p.map((n) => (n.id === noticeForm.id ? ({ ...n, ...noticeForm } as Notice) : n)));
+  // ── KPI 조회 ──────────────────────────────────────────────
+  const fetchSummary = useCallback(async () => {
+    const reqId = ++summaryReqId.current;
+    try {
+      const res = await csApi.getSummary();
+      if (reqId !== summaryReqId.current) return;
+      if (!res.data.success) throw new Error(res.data.message);
+      setSummary(res.data.data);
+    } catch (err) {
+      console.error('fetchSummary failed:', err);
     }
+  }, []);
+
+  // ── 공지사항 목록 조회 ────────────────────────────────────
+  const fetchNotices = useCallback(async (page = 1) => {
+    const reqId = ++noticeReqId.current;
+    const f = appliedNoticeFilters.current;
+    setNoticeLoading(true);
+    setNoticeError('');
+    try {
+      const res = await csApi.getNotices({ ...f, page, size: 20 });
+      if (reqId !== noticeReqId.current) return;
+      if (!res.data.success) throw new Error(res.data.message);
+      const { items, totalItems, totalPages } = res.data.data;
+      setNotices(items);
+      setNoticeTotalItems(totalItems);
+      setNoticeTotalPages(totalPages);
+      setNoticePage(page);
+    } catch (err: any) {
+      if (reqId !== noticeReqId.current) return;
+      const status = err.response?.status;
+      if (status === 500) {
+        setNoticeError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      } else if (!status) {
+        setNoticeError('네트워크 연결을 확인해주세요.');
+      } else {
+        setNoticeError('공지사항 목록을 불러오지 못했습니다.');
+      }
+    } finally {
+      if (reqId === noticeReqId.current) setNoticeLoading(false);
+    }
+  }, []);
+
+  const applyNoticeSearch = () => {
+    appliedNoticeFilters.current = {
+      ...(noticeCatFilter && { category: noticeCatFilter as NoticeCategory }),
+      ...(noticeVisibleFilter !== '' && { visible: noticeVisibleFilter === 'true' }),
+    };
+    fetchNotices(1);
+  };
+
+  useEffect(() => { fetchSummary(); }, [fetchSummary]);
+  useEffect(() => { fetchNotices(1); }, [fetchNotices]);
+
+  // ── 공지사항 모달 닫기 ───────────────────────────────────
+  const closeNoticeModal = () => {
+    ++noticeDetailReqId.current; // pending 상세 요청 무효화
+    setNoticeDetailLoading(false);
     setNoticeModal(null);
   };
-  const deleteNotice = (id: number) => setNotices((p) => p.filter((n) => n.id !== id));
+
+  // ── 공지사항 등록 모달 열기 ───────────────────────────────
+  const openNoticeCreate = () => {
+    ++noticeDetailReqId.current; // pending 상세 요청 무효화
+    setNoticeForm({ category: 'NOTICE', title: '', content: '', isVisible: true });
+    setNoticeFormError('');
+    setNoticeModal('create');
+  };
+
+  // ── 공지사항 수정 모달 열기 ───────────────────────────────
+  const openNoticeEdit = async (item: NoticeItem) => {
+    const reqId = ++noticeDetailReqId.current;
+    setNoticeFormError('');
+    setNoticeDetailLoading(true);
+    setNoticeModal('edit');
+    setNoticeForm({ noticeId: item.noticeId, category: item.category, title: item.title, content: '', isVisible: item.isVisible });
+    try {
+      const res = await csApi.getNoticeDetail(item.noticeId);
+      if (reqId !== noticeDetailReqId.current) return;
+      if (!res.data.success) throw new Error(res.data.message);
+      const d = res.data.data;
+      setNoticeForm({ noticeId: d.noticeId, category: d.category, title: d.title, content: d.content, isVisible: d.isVisible });
+    } catch (err: any) {
+      if (reqId !== noticeDetailReqId.current) return;
+      setNoticeFormError(err.response?.data?.message || '공지 내용을 불러오지 못했습니다.');
+    } finally {
+      if (reqId === noticeDetailReqId.current) setNoticeDetailLoading(false);
+    }
+  };
+
+  // ── 공지사항 저장 ─────────────────────────────────────────
+  const saveNotice = async () => {
+    if (!noticeForm.title.trim()) return;
+    setNoticeFormLoading(true);
+    setNoticeFormError('');
+    try {
+      const body = { category: noticeForm.category, title: noticeForm.title, content: noticeForm.content, isVisible: noticeForm.isVisible };
+      if (noticeModal === 'create') {
+        const res = await csApi.createNotice(body);
+        if (!res.data.success) throw new Error(res.data.message);
+      } else if (noticeForm.noticeId) {
+        const res = await csApi.updateNotice(noticeForm.noticeId, body);
+        if (!res.data.success) throw new Error(res.data.message);
+      }
+      closeNoticeModal();
+      fetchNotices(noticePage);
+      fetchSummary();
+    } catch (err: any) {
+      setNoticeFormError(err.response?.data?.message || err.message || '저장에 실패했습니다.');
+    } finally {
+      setNoticeFormLoading(false);
+    }
+  };
+
+  // ── 공지사항 삭제 ─────────────────────────────────────────
+  const confirmDeleteNotice = async () => {
+    if (deleteConfirmId === null) return;
+    try {
+      const res = await csApi.deleteNotice(deleteConfirmId);
+      if (!res.data.success) throw new Error(res.data.message);
+      setDeleteConfirmId(null);
+      fetchNotices(noticePage);
+      fetchSummary();
+    } catch (err: any) {
+      alert(err.response?.data?.message || '삭제에 실패했습니다.');
+    }
+  };
 
   const handleAiNoticeDraft = () => {
     setAiNoticeLoading(true);
     setTimeout(() => {
-      setNoticeForm((p) => ({
-        ...p,
-        content: genNoticeDraft(p.category ?? '공지', p.title ?? ''),
-      }));
+      setNoticeForm((p) => ({ ...p, content: genNoticeDraft(p.category, p.title) }));
       setAiNoticeLoading(false);
     }, 900);
   };
 
-  // ── FAQ handlers ─────────────────────────────────────────
-  const openFaqCreate = () => { setFaqForm({ category: '계정', question: '', answer: '' }); setFaqModal('create'); };
-  const openFaqEdit   = (f: Faq) => { setFaqForm({ ...f }); setFaqModal('edit'); };
+  // ── FAQ handlers (더미) ──────────────────────────────────
+  const openFaqCreate = () => { setFaqForm({ category: 'ACCOUNT', question: '', answer: '' }); setFaqModal('create'); };
+  const openFaqEdit   = (f: FaqItem) => { setFaqForm({ ...f }); setFaqModal('edit'); };
   const saveFaq = () => {
     if (!faqForm.question?.trim()) return;
     if (faqModal === 'create') {
-      setFaqs((p) => [
-        ...p,
-        {
-          id: Date.now(),
-          category: faqForm.category ?? '계정',
-          question: faqForm.question!,
-          answer: faqForm.answer ?? '',
-          createdAt: formatDate(),
-        },
-      ]);
+      setFaqs((p) => [...p, { faqId: Date.now(), category: faqForm.category ?? 'ETC', question: faqForm.question!, answer: faqForm.answer ?? '', createdAt: new Date().toISOString() }]);
     } else {
-      setFaqs((p) => p.map((f) => (f.id === faqForm.id ? ({ ...f, ...faqForm } as Faq) : f)));
+      setFaqs((p) => p.map((f) => (f.faqId === faqForm.faqId ? ({ ...f, ...faqForm } as FaqItem) : f)));
     }
     setFaqModal(null);
   };
-  const deleteFaq = (id: number) => setFaqs((p) => p.filter((f) => f.id !== id));
-
+  const deleteFaq = (id: number) => setFaqs((p) => p.filter((f) => f.faqId !== id));
   const handleAiFaqDraft = () => {
     setAiFaqLoading(true);
-    setTimeout(() => {
-      setFaqForm((p) => ({ ...p, answer: genFaqDraft(p.question ?? '') }));
-      setAiFaqLoading(false);
-    }, 900);
+    setTimeout(() => { setFaqForm((p) => ({ ...p, answer: genFaqDraft(p.question ?? '') })); setAiFaqLoading(false); }, 900);
   };
 
-  // ── Inquiry handlers ─────────────────────────────────────
-  const openInquiry = (inq: Inquiry) => {
-    setSelectedInquiry(inq);
-    setInquiryReply(inq.reply ?? '');
-    setAiInqLoading(false);
-  };
-
-  const saveInquiryReply = () => {
+  // ── Inquiry handlers (더미) ──────────────────────────────
+  const openInquiry = (inq: InquiryDummy) => { setSelectedInquiry(inq); setInquiryReply(inq.reply ?? ''); };
+  const saveInquiryReplyDummy = () => {
     if (!selectedInquiry) return;
-    const hasReply = inquiryReply.trim().length > 0;
-    const nextStatus: InquiryStatus =
-      hasReply && selectedInquiry.status === '접수 중' ? '답변 중' : selectedInquiry.status;
-    setInquiries((p) =>
-      p.map((inq) =>
-        inq.id === selectedInquiry.id
-          ? { ...inq, reply: inquiryReply, status: nextStatus }
-          : inq,
-      ),
-    );
+    const nextStatus: InquiryStatus = inquiryReply.trim() && selectedInquiry.status === 'PENDING' ? 'IN_PROGRESS' : selectedInquiry.status;
+    setInquiries((p) => p.map((i) => i.id === selectedInquiry.id ? { ...i, reply: inquiryReply, status: nextStatus } : i));
     setSelectedInquiry(null);
   };
-
-  const completeInquiry = () => {
-    if (!selectedInquiry) return;
-    if (!inquiryReply.trim()) return;
-    setInquiries((p) =>
-      p.map((inq) =>
-        inq.id === selectedInquiry.id
-          ? { ...inq, reply: inquiryReply, status: '완료' }
-          : inq,
-      ),
-    );
+  const completeInquiryDummy = () => {
+    if (!selectedInquiry || !inquiryReply.trim()) return;
+    setInquiries((p) => p.map((i) => i.id === selectedInquiry.id ? { ...i, reply: inquiryReply, status: 'COMPLETED' } : i));
     setSelectedInquiry(null);
   };
-
   const handleAiInquiryDraft = () => {
     if (!selectedInquiry) return;
     setAiInqLoading(true);
-    setTimeout(() => {
-      setInquiryReply(genInquiryDraft(selectedInquiry));
-      setAiInqLoading(false);
-    }, 900);
+    setTimeout(() => { setInquiryReply(genInquiryDraft(selectedInquiry)); setAiInqLoading(false); }, 900);
   };
-
-  // ── Inquiry filtered ─────────────────────────────────────
   const filteredInquiries = inquiries.filter(
-    (i) =>
-      (!inqCatFilter    || i.category === inqCatFilter) &&
-      (!inqStatusFilter || i.status   === inqStatusFilter),
+    (i) => (!inqCatFilter || i.category === inqCatFilter) && (!inqStatusFilter || i.status === inqStatusFilter),
+  );
+
+  // ── 페이지네이션 ──────────────────────────────────────────
+  const renderNoticePagination = () => (
+    <div className="pagination">
+      <button disabled={noticeLoading || noticePage <= 1} onClick={() => fetchNotices(noticePage - 1)}>{'<'}</button>
+      {Array.from({ length: Math.min(noticeTotalPages, 5) }, (_, i) => {
+        const p = Math.max(1, noticePage - 2) + i;
+        if (p > noticeTotalPages) return null;
+        return <button key={p} className={p === noticePage ? 'activePage' : ''} disabled={noticeLoading} onClick={() => fetchNotices(p)}>{p}</button>;
+      })}
+      <button disabled={noticeLoading || noticePage >= noticeTotalPages} onClick={() => fetchNotices(noticePage + 1)}>{'>'}</button>
+    </div>
   );
 
   return (
@@ -402,35 +356,19 @@ export default function CustomerServicePage() {
       {/* KPI */}
       <div className="kpiGrid">
         <div className="kpiCard kpi-blue csKpiStatic">
-          <div className="kpiContent">
-            <p>공지사항</p>
-            <h3>{notices.length}</h3>
-            <span>등록된 공지</span>
-          </div>
+          <div className="kpiContent"><p>공지사항</p><h3>{summary.noticeCount}</h3><span>등록된 공지</span></div>
           <div className="kpiIcon kpi-blue"><Bell size={24} /></div>
         </div>
         <div className="kpiCard kpi-green csKpiStatic">
-          <div className="kpiContent">
-            <p>FAQ</p>
-            <h3>{faqs.length}</h3>
-            <span>등록된 항목</span>
-          </div>
+          <div className="kpiContent"><p>FAQ</p><h3>{summary.faqCount}</h3><span>등록된 항목</span></div>
           <div className="kpiIcon kpi-green"><HelpCircle size={24} /></div>
         </div>
         <div className="kpiCard kpi-yellow csKpiStatic">
-          <div className="kpiContent">
-            <p>미답변 문의</p>
-            <h3>{pendingCount}</h3>
-            <span>즉시 처리 필요</span>
-          </div>
+          <div className="kpiContent"><p>미답변 문의</p><h3>{summary.pendingCount}</h3><span>즉시 처리 필요</span></div>
           <div className="kpiIcon kpi-yellow"><AlertCircle size={24} /></div>
         </div>
         <div className="kpiCard kpi-purple csKpiStatic">
-          <div className="kpiContent">
-            <p>답변 진행 중</p>
-            <h3>{answeringCount}</h3>
-            <span>처리 중</span>
-          </div>
+          <div className="kpiContent"><p>답변 진행 중</p><h3>{summary.inProgressCount}</h3><span>처리 중</span></div>
           <div className="kpiIcon kpi-purple"><MessageSquare size={24} /></div>
         </div>
       </div>
@@ -438,11 +376,7 @@ export default function CustomerServicePage() {
       {/* Tab Bar */}
       <div className="csTabBar" style={{ marginBottom: 24 }}>
         {(['notice', 'faq', 'inquiry'] as CsTab[]).map((t) => (
-          <button
-            key={t}
-            className={`csTab${tab === t ? ' active' : ''}`}
-            onClick={() => setTab(t)}
-          >
+          <button key={t} className={`csTab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
             {TAB_LABEL[t]}
           </button>
         ))}
@@ -450,49 +384,65 @@ export default function CustomerServicePage() {
 
       {/* ── 공지사항 탭 ─────────────────────────────────── */}
       {tab === 'notice' && (
-        <section className="admin-card memberTableCard">
-          <div className="memberTableHeader">
-            <h3>공지사항</h3>
-            <button onClick={openNoticeCreate}>+ 공지 등록</button>
-          </div>
-          <div className="tableScroll">
-            <table className="memberTable">
-              <thead>
-                <tr>
-                  <th>번호</th>
-                  <th>카테고리</th>
-                  <th>제목</th>
-                  <th>등록일</th>
-                  <th>노출</th>
-                  <th>관리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {notices.map((n) => (
-                  <tr key={n.id}>
-                    <td>{n.id}</td>
-                    <td>
-                      <span className="statusBadge normal csNoticeCat">{n.category}</span>
-                    </td>
-                    <td>{n.title}</td>
-                    <td>{n.createdAt}</td>
-                    <td>
-                      <span className={`statusBadge ${n.visible ? 'normal' : 'dismissed'}`}>
-                        {n.visible ? '노출' : '숨김'}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button className="tableBtn" onClick={() => openNoticeEdit(n)}>수정</button>
-                        <button className="tableBtn" onClick={() => deleteNotice(n.id)}>삭제</button>
-                      </div>
-                    </td>
+        <>
+          {/* 필터 */}
+          <section className="admin-card memberFilter" style={{ marginBottom: 16 }}>
+            <select value={noticeCatFilter} onChange={(e) => setNoticeCatFilter(e.target.value)}>
+              <option value="">카테고리 전체</option>
+              {Object.entries(NOTICE_CATEGORY_LABEL).map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
+            </select>
+            <select value={noticeVisibleFilter} onChange={(e) => setNoticeVisibleFilter(e.target.value)}>
+              <option value="">노출 전체</option>
+              <option value="true">노출</option>
+              <option value="false">숨김</option>
+            </select>
+            <button className="memberFilterBtn" onClick={applyNoticeSearch}>검색</button>
+          </section>
+
+          <section className="admin-card memberTableCard">
+            <div className="memberTableHeader">
+              <h3>공지사항 <span className="memberTotalCount">전체 {noticeTotalItems}건</span></h3>
+              <button onClick={openNoticeCreate}>+ 공지 등록</button>
+            </div>
+            {noticeError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{noticeError}</p>}
+            <div className="tableScroll">
+              <table className="memberTable csNoticeTable">
+                <thead>
+                  <tr>
+                    <th>번호</th><th>카테고리</th><th>제목</th><th>등록일</th><th>노출</th><th>관리</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                </thead>
+                <tbody>
+                  {noticeLoading ? (
+                    <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
+                  ) : notices.map((n, idx) => (
+                    <tr key={n.noticeId}>
+                      <td style={{ color: '#7a8da4', fontSize: 13 }}>{(noticePage - 1) * 20 + idx + 1}</td>
+                      <td><span className="statusBadge normal csNoticeCat">{NOTICE_CATEGORY_LABEL[n.category]}</span></td>
+                      <td>{n.title}</td>
+                      <td>{new Date(n.createdAt).toLocaleDateString('ko-KR')}</td>
+                      <td><span className={`statusBadge ${n.isVisible ? 'normal' : 'dismissed'}`}>{n.isVisible ? '노출' : '숨김'}</span></td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button className="tableBtn" onClick={() => openNoticeEdit(n)}>수정</button>
+                          <button className="tableBtn tableBtn--danger" onClick={() => setDeleteConfirmId(n.noticeId)}>삭제</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="memberTableFooter">
+              <span className="memberTableCount">
+                {noticeTotalItems === 0 ? '총 0건' : `표시 중: ${(noticePage - 1) * 20 + 1} - ${Math.min(noticePage * 20, noticeTotalItems)} / 총 ${noticeTotalItems}건`}
+              </span>
+              {renderNoticePagination()}
+            </div>
+          </section>
+        </>
       )}
 
       {/* ── FAQ 탭 ──────────────────────────────────────── */}
@@ -505,25 +455,18 @@ export default function CustomerServicePage() {
           <div className="tableScroll">
             <table className="memberTable">
               <thead>
-                <tr>
-                  <th>카테고리</th>
-                  <th>질문</th>
-                  <th>등록일</th>
-                  <th>관리</th>
-                </tr>
+                <tr><th>카테고리</th><th>질문</th><th>등록일</th><th>관리</th></tr>
               </thead>
               <tbody>
                 {faqs.map((f) => (
-                  <tr key={f.id}>
-                    <td>
-                      <span className="statusBadge normal csNoticeCat">{f.category}</span>
-                    </td>
+                  <tr key={f.faqId}>
+                    <td><span className="statusBadge normal csNoticeCat">{FAQ_CATEGORY_LABEL[f.category]}</span></td>
                     <td>{f.question}</td>
-                    <td>{f.createdAt}</td>
+                    <td>{new Date(f.createdAt).toLocaleDateString('ko-KR')}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button className="tableBtn" onClick={() => openFaqEdit(f)}>수정</button>
-                        <button className="tableBtn" onClick={() => deleteFaq(f.id)}>삭제</button>
+                        <button className="tableBtn tableBtn--danger" onClick={() => deleteFaq(f.faqId)}>삭제</button>
                       </div>
                     </td>
                   </tr>
@@ -537,63 +480,42 @@ export default function CustomerServicePage() {
       {/* ── 1:1 문의 탭 ─────────────────────────────────── */}
       {tab === 'inquiry' && (
         <div className="memberPage">
-          {/* 필터 */}
           <section className="admin-card memberFilter">
             <select value={inqCatFilter} onChange={(e) => setInqCatFilter(e.target.value)}>
               <option value="">카테고리 전체</option>
-              {INQ_CATS.map((c) => <option key={c} value={c}>{c}</option>)}
+              {Object.entries(INQUIRY_CATEGORY_LABEL).map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
             </select>
             <select value={inqStatusFilter} onChange={(e) => setInqStatusFilter(e.target.value)}>
               <option value="">상태 전체</option>
-              <option value="접수 중">접수 중</option>
-              <option value="답변 중">답변 중</option>
-              <option value="완료">완료</option>
+              {Object.entries(INQUIRY_STATUS_LABEL).map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
             </select>
           </section>
 
           <section className="admin-card memberTableCard">
             <div className="memberTableHeader">
-              <h3>
-                1:1 문의
-                <span className="payTotalCount">{filteredInquiries.length}건</span>
-              </h3>
+              <h3>1:1 문의 <span className="payTotalCount">{filteredInquiries.length}건</span></h3>
             </div>
             <div className="tableScroll">
               <table className="memberTable">
                 <thead>
-                  <tr>
-                    <th>문의 ID</th>
-                    <th>회원명</th>
-                    <th>카테고리</th>
-                    <th>제목</th>
-                    <th>접수일</th>
-                    <th>상태</th>
-                    <th>관리</th>
-                  </tr>
+                  <tr><th>문의 ID</th><th>회원명</th><th>카테고리</th><th>제목</th><th>접수일</th><th>상태</th><th>관리</th></tr>
                 </thead>
                 <tbody>
                   {filteredInquiries.map((inq) => (
                     <tr key={inq.id}>
                       <td>{inq.id}</td>
                       <td>{inq.memberName}</td>
-                      <td>
-                        <span className={`csInqCatBadge ${INQ_CAT_CLS[inq.category]}`}>
-                          {inq.category}
-                        </span>
-                      </td>
+                      <td><span className={`csInqCatBadge ${INQ_CAT_CLS[inq.category]}`}>{INQUIRY_CATEGORY_LABEL[inq.category]}</span></td>
                       <td>{inq.title}</td>
-                      <td>{inq.createdAt}</td>
+                      <td>{new Date(inq.createdAt).toLocaleDateString('ko-KR')}</td>
+                      <td><span className={`statusBadge ${INQ_STATUS_CLS[inq.status]}`}>{INQUIRY_STATUS_LABEL[inq.status]}</span></td>
                       <td>
-                        <span className={`statusBadge ${INQ_STATUS_CLS[inq.status]}`}>
-                          {inq.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          className={`tableBtn${inq.status === '접수 중' ? ' tableBtn--refund' : ''}`}
-                          onClick={() => openInquiry(inq)}
-                        >
-                          {inq.status === '접수 중' ? '답변하기' : '상세보기'}
+                        <button className={`tableBtn${inq.status === 'PENDING' ? ' tableBtn--refund' : ''}`} onClick={() => openInquiry(inq)}>
+                          {inq.status === 'PENDING' ? '답변하기' : '상세보기'}
                         </button>
                       </td>
                     </tr>
@@ -607,93 +529,75 @@ export default function CustomerServicePage() {
 
       {/* ── 공지사항 모달 ────────────────────────────────── */}
       {noticeModal && (
-        <div className="modalOverlay" onClick={() => setNoticeModal(null)}>
-          <div
-            className="memberModal modal--scrollable"
-            style={{ width: 560 }}
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="modalOverlay" onClick={() => closeNoticeModal()}>
+          <div className="memberModal modal--scrollable" style={{ width: 560 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0 }}>
-              <div>
-                <h3>{noticeModal === 'create' ? '공지사항 등록' : '공지사항 수정'}</h3>
-              </div>
-              <button onClick={() => setNoticeModal(null)}>닫기</button>
+              <div><h3>{noticeModal === 'create' ? '공지사항 등록' : '공지사항 수정'}</h3></div>
+              <button onClick={() => closeNoticeModal()}>닫기</button>
             </div>
-
             <div className="modalBody">
               <div className="csFormRows">
                 <div className="csFormRow">
                   <label>카테고리</label>
-                  <select
-                    className="csFormSelect"
-                    value={noticeForm.category}
-                    onChange={(e) =>
-                      setNoticeForm((p) => ({ ...p, category: e.target.value as NoticeCategory }))
-                    }
-                  >
-                    {NOTICE_CATS.map((c) => <option key={c}>{c}</option>)}
+                  <select className="csFormSelect" value={noticeForm.category}
+                    onChange={(e) => setNoticeForm((p) => ({ ...p, category: e.target.value as NoticeCategory }))}>
+                    {Object.entries(NOTICE_CATEGORY_LABEL).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
                   </select>
                 </div>
-
                 <div className="csFormRow">
                   <label>제목</label>
-                  <input
-                    className="csFormInput"
-                    type="text"
-                    placeholder="공지 제목을 입력하세요"
-                    value={noticeForm.title ?? ''}
-                    onChange={(e) => setNoticeForm((p) => ({ ...p, title: e.target.value }))}
-                  />
+                  <input className="csFormInput" type="text" placeholder="공지 제목을 입력하세요"
+                    value={noticeForm.title}
+                    onChange={(e) => setNoticeForm((p) => ({ ...p, title: e.target.value }))} />
                 </div>
-
                 <div className="csFormRow">
                   <label>내용</label>
-                  <textarea
-                    className="csFormTextarea csFormTextarea--tall"
-                    placeholder="공지 내용을 입력하세요"
-                    value={noticeForm.content ?? ''}
-                    onChange={(e) => setNoticeForm((p) => ({ ...p, content: e.target.value }))}
-                  />
+                  <textarea className="csFormTextarea csFormTextarea--tall" placeholder="공지 내용을 입력하세요"
+                    value={noticeForm.content}
+                    onChange={(e) => setNoticeForm((p) => ({ ...p, content: e.target.value }))} />
                 </div>
-
-                {/* AI 작성 보조 */}
                 <div className="csAiSection">
-                  <div className="csAiLabel">
-                    <Sparkles size={13} />
-                    AI 작성 보조
-                  </div>
+                  <div className="csAiLabel"><Sparkles size={13} />AI 작성 보조</div>
                   <p className="csAiDesc">카테고리와 제목을 입력하면 AI가 공지 내용 초안을 생성합니다.</p>
-                  <button
-                    className="csAiBtn"
-                    onClick={handleAiNoticeDraft}
-                    disabled={aiNoticeLoading || !noticeForm.title?.trim()}
-                  >
-                    <Sparkles size={14} />
-                    {aiNoticeLoading ? 'AI 생성 중...' : '초안 생성'}
+                  <button className="csAiBtn" onClick={handleAiNoticeDraft} disabled={aiNoticeLoading || !noticeForm.title.trim()}>
+                    <Sparkles size={14} />{aiNoticeLoading ? 'AI 생성 중...' : '초안 생성'}
                   </button>
                 </div>
-
                 <div className="csFormRow">
                   <label>노출 여부</label>
                   <label className="csCheckLabel">
-                    <input
-                      type="checkbox"
-                      checked={noticeForm.visible ?? true}
-                      onChange={(e) =>
-                        setNoticeForm((p) => ({ ...p, visible: e.target.checked }))
-                      }
-                    />
+                    <input type="checkbox" checked={noticeForm.isVisible}
+                      onChange={(e) => setNoticeForm((p) => ({ ...p, isVisible: e.target.checked }))} />
                     사용자에게 노출
                   </label>
                 </div>
+                {noticeFormError && <p style={{ fontSize: 13, color: '#9a4444' }}>{noticeFormError}</p>}
               </div>
             </div>
-
             <div className="modalAction" style={{ flexShrink: 0 }}>
-              <button onClick={saveNotice}>
-                {noticeModal === 'create' ? '등록' : '저장'}
+              <button onClick={saveNotice} disabled={noticeFormLoading || noticeDetailLoading || !noticeForm.title.trim()}>
+                {noticeFormLoading ? '저장 중...' : noticeModal === 'create' ? '등록' : '저장'}
               </button>
-              <button onClick={() => setNoticeModal(null)}>취소</button>
+              <button onClick={() => closeNoticeModal()} disabled={noticeFormLoading}>취소</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 공지사항 삭제 확인 모달 ──────────────────────── */}
+      {deleteConfirmId !== null && (
+        <div className="modalOverlay" onClick={() => setDeleteConfirmId(null)}>
+          <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 400 }}>
+            <div className="modalHeader">
+              <div><h3>공지사항 삭제</h3></div>
+              <button onClick={() => setDeleteConfirmId(null)}>닫기</button>
+            </div>
+            <p style={{ padding: '16px 24px', fontSize: 14, color: '#31475f' }}>해당 공지사항을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.</p>
+            <div className="modalAction">
+              <button style={{ background: '#9a6767', color: 'white', borderColor: '#9a6767' }} onClick={confirmDeleteNotice}>삭제</button>
+              <button onClick={() => setDeleteConfirmId(null)}>취소</button>
             </div>
           </div>
         </div>
@@ -702,66 +606,42 @@ export default function CustomerServicePage() {
       {/* ── FAQ 모달 ─────────────────────────────────────── */}
       {faqModal && (
         <div className="modalOverlay" onClick={() => setFaqModal(null)}>
-          <div
-            className="memberModal modal--scrollable"
-            style={{ width: 580 }}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="memberModal modal--scrollable" style={{ width: 580 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0 }}>
-              <div>
-                <h3>{faqModal === 'create' ? 'FAQ 등록' : 'FAQ 수정'}</h3>
-              </div>
+              <div><h3>{faqModal === 'create' ? 'FAQ 등록' : 'FAQ 수정'}</h3></div>
               <button onClick={() => setFaqModal(null)}>닫기</button>
             </div>
-
             <div className="modalBody">
               <div className="csFormRows">
                 <div className="csFormRow">
                   <label>카테고리</label>
-                  <select
-                    className="csFormSelect"
-                    value={faqForm.category}
-                    onChange={(e) =>
-                      setFaqForm((p) => ({ ...p, category: e.target.value as FaqCategory }))
-                    }
-                  >
-                    {FAQ_CATS.map((c) => <option key={c}>{c}</option>)}
+                  <select className="csFormSelect" value={faqForm.category}
+                    onChange={(e) => setFaqForm((p) => ({ ...p, category: e.target.value as FaqCategory }))}>
+                    {Object.entries(FAQ_CATEGORY_LABEL).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
                   </select>
                 </div>
-
                 <div className="csFormRow">
                   <label>질문</label>
-                  <input
-                    className="csFormInput"
-                    type="text"
-                    placeholder="자주 묻는 질문을 입력하세요"
+                  <input className="csFormInput" type="text" placeholder="자주 묻는 질문을 입력하세요"
                     value={faqForm.question ?? ''}
-                    onChange={(e) => setFaqForm((p) => ({ ...p, question: e.target.value }))}
-                  />
+                    onChange={(e) => setFaqForm((p) => ({ ...p, question: e.target.value }))} />
                 </div>
-
                 <div className="csFormRow">
                   <div className="csFormLabelRow">
                     <label>답변</label>
-                    <button
-                      className="csAiBtn csAiBtn--inline"
-                      onClick={handleAiFaqDraft}
-                      disabled={aiFaqLoading || !faqForm.question?.trim()}
-                    >
-                      <Sparkles size={13} />
-                      {aiFaqLoading ? 'AI 생성 중...' : 'AI 답변 초안'}
+                    <button className="csAiBtn csAiBtn--inline" onClick={handleAiFaqDraft}
+                      disabled={aiFaqLoading || !faqForm.question?.trim()}>
+                      <Sparkles size={13} />{aiFaqLoading ? 'AI 생성 중...' : 'AI 답변 초안'}
                     </button>
                   </div>
-                  <textarea
-                    className="csFormTextarea csFormTextarea--tall"
-                    placeholder="답변 내용을 입력하세요"
+                  <textarea className="csFormTextarea csFormTextarea--tall" placeholder="답변 내용을 입력하세요"
                     value={faqForm.answer ?? ''}
-                    onChange={(e) => setFaqForm((p) => ({ ...p, answer: e.target.value }))}
-                  />
+                    onChange={(e) => setFaqForm((p) => ({ ...p, answer: e.target.value }))} />
                 </div>
               </div>
             </div>
-
             <div className="modalAction" style={{ flexShrink: 0 }}>
               <button onClick={saveFaq}>{faqModal === 'create' ? '등록' : '저장'}</button>
               <button onClick={() => setFaqModal(null)}>취소</button>
@@ -773,75 +653,49 @@ export default function CustomerServicePage() {
       {/* ── 1:1 문의 상세 모달 ───────────────────────────── */}
       {selectedInquiry && (
         <div className="modalOverlay" onClick={() => setSelectedInquiry(null)}>
-          <div
-            className="memberModal modal--scrollable"
-            style={{ width: 580 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* 헤더 */}
+          <div className="memberModal modal--scrollable" style={{ width: 580 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0, padding: '20px 24px 16px' }}>
               <div>
                 <h3>{selectedInquiry.title}</h3>
                 <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>
-                  {selectedInquiry.id} · {selectedInquiry.memberName} · {selectedInquiry.createdAt}
+                  {selectedInquiry.id} · {selectedInquiry.memberName} · {new Date(selectedInquiry.createdAt).toLocaleDateString('ko-KR')}
                 </p>
               </div>
               <button onClick={() => setSelectedInquiry(null)}>닫기</button>
             </div>
-
-            {/* 본문 */}
             <div className="modalBody">
-              {/* 문의 정보 */}
               <div className="modalInfoGrid">
                 <div>
                   <span>카테고리</span>
-                  <span className={`csInqCatBadge ${INQ_CAT_CLS[selectedInquiry.category]}`}>
-                    {selectedInquiry.category}
-                  </span>
+                  <span className={`csInqCatBadge ${INQ_CAT_CLS[selectedInquiry.category]}`}>{INQUIRY_CATEGORY_LABEL[selectedInquiry.category]}</span>
                 </div>
                 <div>
                   <span>현재 상태</span>
-                  <span className={`statusBadge ${INQ_STATUS_CLS[selectedInquiry.status]}`}>
-                    {selectedInquiry.status}
-                  </span>
+                  <span className={`statusBadge ${INQ_STATUS_CLS[selectedInquiry.status]}`}>{INQUIRY_STATUS_LABEL[selectedInquiry.status]}</span>
                 </div>
               </div>
-
-              {/* 문의 내용 */}
               <div className="csInqContent">
                 <p className="csInqContentLabel">문의 내용</p>
                 <p className="csInqContentBody">{selectedInquiry.content}</p>
               </div>
-
-              {/* 답변 작성 */}
               <div className="csReplySection">
                 <div className="csFormLabelRow">
                   <label className="csReplyLabel">답변 작성</label>
-                  <button
-                    className="csAiBtn csAiBtn--inline"
-                    onClick={handleAiInquiryDraft}
-                    disabled={aiInqLoading}
-                  >
-                    <Sparkles size={13} />
-                    {aiInqLoading ? 'AI 생성 중...' : 'AI 답변 초안'}
+                  <button className="csAiBtn csAiBtn--inline" onClick={handleAiInquiryDraft} disabled={aiInqLoading}>
+                    <Sparkles size={13} />{aiInqLoading ? 'AI 생성 중...' : 'AI 답변 초안'}
                   </button>
                 </div>
-                <textarea
-                  className="csFormTextarea csFormTextarea--reply"
-                  placeholder="답변 내용을 입력하세요"
-                  value={inquiryReply}
-                  onChange={(e) => setInquiryReply(e.target.value)}
-                />
+                <textarea className="csFormTextarea csFormTextarea--reply" placeholder="답변 내용을 입력하세요"
+                  value={inquiryReply} onChange={(e) => setInquiryReply(e.target.value)}
+                  disabled={selectedInquiry.status === 'COMPLETED'} />
               </div>
             </div>
-
-            {/* 액션 */}
             <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
-              {selectedInquiry.status !== '완료' && (
+              {selectedInquiry.status !== 'COMPLETED' && (
                 <>
-                  <button onClick={saveInquiryReply}>답변 저장</button>
-                  {selectedInquiry.status === '답변 중' && (
-                    <button onClick={completeInquiry} disabled={!inquiryReply.trim()}>처리 완료</button>
+                  <button onClick={saveInquiryReplyDummy}>답변 저장</button>
+                  {selectedInquiry.status === 'IN_PROGRESS' && (
+                    <button onClick={completeInquiryDummy} disabled={!inquiryReply.trim()}>처리 완료</button>
                   )}
                 </>
               )}

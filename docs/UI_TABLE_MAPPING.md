@@ -46,16 +46,19 @@
 ## 주의 사항
 
 ### 경로 변경
+
 | 변경 전 | 변경 후 | 사유 |
 |---|---|---|
 | `/admin/matching` | `/admin/stats` | 매칭 기능 제거, 통계 페이지로 대체 |
 
 ### 테이블명 주의
+
 | UI 문서 표기 | 실제 테이블명 | 비고 |
 |---|---|---|
 | tickets | inquiries + inquiry_answers | 고객센터 문의는 inquiries 테이블 사용 |
 
 ### 미확정 항목
+
 | 페이지 | 내용 |
 |---|---|
 | 멘토 페이지 `/community/mentor` | members 테이블에 ROLE_MENTOR 없음, 추후 기획 확정 필요 |
