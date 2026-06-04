@@ -1,4 +1,4 @@
-interface DomainCard {
+export interface DomainCard {
   title: string;
   description: string;
 }

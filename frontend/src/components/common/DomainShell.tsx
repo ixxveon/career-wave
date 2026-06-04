@@ -1,11 +1,7 @@
 import FeatureCard from './FeatureCard';
 import Button from './Button';
+import type { DomainCard } from '../../utils/domainData';
 import './DomainShell.css';
-
-interface DomainCard {
-  title: string;
-  description: string;
-}
 
 interface DomainShellProps {
   eyebrow?: string;
