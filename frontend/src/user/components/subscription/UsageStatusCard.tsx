@@ -1,6 +1,8 @@
 import { AlertCircle, CalendarDays, Star } from 'lucide-react';
 import { SUBSCRIPTION_STATUS, type UsageItem } from '../../types/subscription';
-import { formatBillingDate } from '../../utils/subscription/subscriptionView';
+import { formatBillingDate, formatUsageUnit } from '../../utils/subscription/subscriptionView';
+
+const MAX_USAGE_BOXES = 20;
 
 export function UsageStatusCard({ item }: { item: UsageItem }) {
   const limit = item.usage?.limit ?? 0;
@@ -8,7 +10,9 @@ export function UsageStatusCard({ item }: { item: UsageItem }) {
   const remaining = item.usage?.remaining ?? 0;
   const isOverLimit = used > limit;
   const percent = limit > 0 ? Math.min(Math.round((used / limit) * 100), 100) : 0;
-  const usageBoxes = limit > 0 ? Array.from({ length: limit }, (_, i) => i < used) : [];
+  const clampedLimit = Math.min(limit, MAX_USAGE_BOXES);
+  const usageBoxes = limit > 0 ? Array.from({ length: clampedLimit }, (_, i) => i < used) : [];
+  const unit = formatUsageUnit(item.usage?.unit);
   const nextBillingDate = formatBillingDate(item.subscription?.nextBillingAt ?? null);
   const isPaymentFailed = item.subscription?.status === SUBSCRIPTION_STATUS.PAYMENT_FAILED;
 
@@ -19,7 +23,7 @@ export function UsageStatusCard({ item }: { item: UsageItem }) {
           <h3>{item.title}</h3>
           {limit > 0 ? (
             <span className="cw-subscription-usage-card__meta">
-              {limit}회 중 {used}회 사용
+              {limit}{unit} 중 {used}{unit} 사용
             </span>
           ) : (
             <span className="cw-subscription-usage-card__meta">사용량 정보 준비 중</span>
@@ -42,7 +46,7 @@ export function UsageStatusCard({ item }: { item: UsageItem }) {
         <dl className="cw-subscription-usage-stats">
           <div>
             <dt>남은 횟수</dt>
-            <dd>{limit > 0 ? (isOverLimit ? '초과' : `${remaining}회`) : '—'}</dd>
+            <dd>{limit > 0 ? (isOverLimit ? '초과' : `${remaining}${unit}`) : '—'}</dd>
           </div>
           <div>
             <dt>사용률</dt>

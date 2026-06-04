@@ -32,11 +32,21 @@ const ACTIVE_STATUSES = new Set<SubscriptionStatus>([
   SUBSCRIPTION_STATUS.PAYMENT_FAILED,
 ]);
 
+const USAGE_UNIT_LABELS: Record<string, string> = {
+  analysis: '회',
+  session: '회',
+};
+
+export function formatUsageUnit(unit: string | undefined): string {
+  if (!unit) return '회';
+  return USAGE_UNIT_LABELS[unit] ?? unit;
+}
+
 export function formatBillingDate(isoDate: string | null): string {
   if (!isoDate) return '—';
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) return '—';
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+  return `${date.getUTCFullYear()}.${String(date.getUTCMonth() + 1).padStart(2, '0')}.${String(date.getUTCDate()).padStart(2, '0')}`;
 }
 
 export function buildUsageItems(
