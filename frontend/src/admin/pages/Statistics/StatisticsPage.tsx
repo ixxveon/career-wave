@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { TrendingUp, DollarSign, Users, UserPlus, CreditCard, RefreshCw, Minus } from 'lucide-react';
 import '../../styles/admin.css';
 import '../../styles/Statistics.css';
@@ -79,32 +79,35 @@ function buildSvgPath(values: number[], maxVal = LINE_MAX_VAL) {
 const TOOLTIP_W = 104;
 
 export default function StatisticsPage() {
-  const [summary, setSummary] = useState<StatsSummary | null>(null);
-  const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenue[]>([]);
-  const [breakdown, setBreakdown] = useState<RevenueBreakdownItem[]>([]);
-  const [summaryError, setSummaryError] = useState('');
-  const [revenueError, setRevenueError] = useState('');
-  const [breakdownError, setBreakdownError] = useState('');
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [revenueLoading, setRevenueLoading] = useState(true);
-  const [breakdownLoading, setBreakdownLoading] = useState(true);
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+    isError: summaryIsError,
+  } = useQuery<StatsSummary>({
+    queryKey: ['admin', 'stats', 'summary'],
+    queryFn: () => statsApi.getSummary().then(res => res.data.data),
+  });
 
-  useEffect(() => {
-    statsApi.getSummary()
-      .then(res => setSummary(res.data.data))
-      .catch(() => setSummaryError('KPI 데이터를 불러오지 못했습니다.'))
-      .finally(() => setSummaryLoading(false));
+  const {
+    data: monthlyRevenueData,
+    isLoading: revenueLoading,
+    isError: revenueIsError,
+  } = useQuery<MonthlyRevenue[]>({
+    queryKey: ['admin', 'stats', 'revenue', 'monthly'],
+    queryFn: () => statsApi.getMonthlyRevenue().then(res => res.data.data),
+  });
 
-    statsApi.getMonthlyRevenue()
-      .then(res => setMonthlyRevenue(res.data.data))
-      .catch(() => setRevenueError('월별 매출 데이터를 불러오지 못했습니다.'))
-      .finally(() => setRevenueLoading(false));
+  const {
+    data: breakdownData,
+    isLoading: breakdownLoading,
+    isError: breakdownIsError,
+  } = useQuery<RevenueBreakdownItem[]>({
+    queryKey: ['admin', 'stats', 'revenue', 'breakdown'],
+    queryFn: () => statsApi.getRevenueBreakdown().then(res => res.data.data),
+  });
 
-    statsApi.getRevenueBreakdown()
-      .then(res => setBreakdown(res.data.data))
-      .catch(() => setBreakdownError('구독 유형별 매출 데이터를 불러오지 못했습니다.'))
-      .finally(() => setBreakdownLoading(false));
-  }, []);
+  const monthlyRevenue = monthlyRevenueData ?? [];
+  const breakdown      = breakdownData ?? [];
 
   // KPI 카드 데이터 구성
   const kpis = summary
@@ -180,8 +183,8 @@ export default function StatisticsPage() {
         {/* KPI */}
         <section className="memberSummaryGrid">
           {summaryLoading && <p className="stats-loading">KPI 데이터 로딩 중...</p>}
-          {summaryError && <p className="stats-error">{summaryError}</p>}
-          {!summaryLoading && !summaryError && kpis.map(({ label, value, sub, color, Icon }) => (
+          {summaryIsError && <p className="stats-error">KPI 데이터를 불러오지 못했습니다.</p>}
+          {!summaryLoading && !summaryIsError && kpis.map(({ label, value, sub, color, Icon }) => (
             <article className={`memberSummaryCard ${color}`} key={label}>
               <div className="memberKpiContent">
                 <p>{label}</p>
@@ -211,8 +214,8 @@ export default function StatisticsPage() {
               )}
             </div>
             {revenueLoading && <p className="stats-loading">매출 데이터 로딩 중...</p>}
-            {revenueError && <p className="stats-error">{revenueError}</p>}
-            {!revenueLoading && !revenueError && (
+            {revenueIsError && <p className="stats-error">월별 매출 데이터를 불러오지 못했습니다.</p>}
+            {!revenueLoading && !revenueIsError && (
             <div className="statsLineWrap">
               <div className="statsChartWithAxis">
                 <div className="statsLineYAxis">
@@ -270,8 +273,8 @@ export default function StatisticsPage() {
               </div>
             </div>
             {breakdownLoading && <p className="stats-loading">구독 유형별 데이터 로딩 중...</p>}
-            {breakdownError && <p className="stats-error">{breakdownError}</p>}
-            {!breakdownLoading && !breakdownError && (
+            {breakdownIsError && <p className="stats-error">구독 유형별 매출 데이터를 불러오지 못했습니다.</p>}
+            {!breakdownLoading && !breakdownIsError && (
             <div className="statsChannelList">
               <div className="statsChannelTableHead">
                 <span>구독 유형</span>
