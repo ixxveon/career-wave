@@ -83,6 +83,7 @@
 
 - [ ] `ResumeDTO.RequestWebhook` DTO 작성 (`status`, `scores`, `feedbackDetails`, `errorMessage`)
 - [ ] Webhook 내부 보안 검증 구현 (IP 제한 또는 `X-Internal-Secret` 헤더 — 팀 협의 방식 적용)
+- [ ] 멱등성 처리 — `document.status`가 이미 `COMPLETED`/`FAILED`이면 DB 갱신 없이 `200 OK` 즉시 반환
 - [ ] `DocumentFeedback` 저장 + `document.status` 업데이트 (`@Transactional`)
 - [ ] 저장 완료 후 WebSocket 세션에 메시지 브로드캐스트 연동
 - [ ] `ResumeController.receiveWebhook()` 구현
@@ -98,7 +99,9 @@
 - [ ] WebSocket 핸들러 작성
   - 연결 시 `documentId` 소유권 검증 (불일치·토큰 오류 시 Close 1008)
   - Webhook Phase에서 호출하는 브로드캐스트 메서드 구현
-  - `COMPLETED` / `FAILED` 전송 후 서버 세션 종료
+  - `COMPLETED` / `FAILED` 전송 후 Grace Period 30초 타이머 시작
+  - 클라이언트가 먼저 연결을 닫으면 타이머 취소 후 즉시 세션 해제
+  - 30초 만료 시 Close 1000으로 서버에서 세션 정리
 - [ ] `WS /ws/resume/{documentId}/status` 엔드포인트 등록
 
 ---

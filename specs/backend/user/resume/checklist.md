@@ -63,6 +63,8 @@
 ## Webhook (`POST .../{documentId}/webhook`)
 
 - [ ] FastAPI 이외의 외부 호출을 차단하는 보안 검증이 적용되어 있다 (IP 제한 또는 Secret 헤더)
+- [ ] 멱등성: `document.status`가 이미 `COMPLETED`/`FAILED`인 경우 DB 갱신 없이 `200 OK`만 반환한다
+- [ ] 중복 Webhook 수신 시 예외가 발생하지 않고 정상 응답한다
 - [ ] `DocumentFeedback` 저장과 `document.status` 업데이트가 동일 트랜잭션으로 처리된다
 - [ ] 저장 완료 후 해당 `documentId` WebSocket 구독자에게 메시지가 정상 발송된다
 - [ ] `FAILED` 콜백 수신 시 `error_message`가 DB에 저장되고 WebSocket으로 전달된다
@@ -75,7 +77,9 @@
 - [ ] 토큰 없음·만료 시 Close 1008로 연결을 즉시 종료한다
 - [ ] 유효하지 않은 `documentId` 시 Close 1008로 연결을 즉시 종료한다
 - [ ] 본인 소유가 아닌 `documentId` 시 Close 1008로 연결을 즉시 종료한다
-- [ ] `COMPLETED` 또는 `FAILED` 메시지 전송 후 서버에서 연결을 종료한다
+- [ ] `COMPLETED` / `FAILED` 전송 후 즉시 끊지 않고 Grace Period(30초) 타이머가 시작된다
+- [ ] 클라이언트가 먼저 연결을 닫으면 타이머가 취소되고 즉시 세션이 해제된다
+- [ ] 30초 만료 시 서버가 Close 1000(정상 종료)으로 세션을 정리한다 (에러 코드 사용 금지)
 - [ ] 메시지 형식(`status`, `message`, `progress`)이 프론트 스펙과 일치한다
 
 ---

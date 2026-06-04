@@ -84,6 +84,7 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 
 - [ ] `ResumeDTO.RequestWebhook` DTO 작성 (status, scores, feedbackDetails, errorMessage)
 - [ ] Webhook 내부 보안 검증 로직 (IP 제한 또는 `X-Internal-Secret` 헤더)
+- [ ] 멱등성 처리: `document.status`가 이미 `COMPLETED`/`FAILED`이면 DB 갱신 없이 `200 OK` 반환
 - [ ] `DocumentFeedback` DB 저장 + `document.status` 업데이트 (`@Transactional`)
 - [ ] 저장 완료 후 WebSocket 세션에 상태 메시지 브로드캐스트
 - [ ] `POST /api/v1/user/resume/{documentId}/webhook` Controller 구현
@@ -93,7 +94,7 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 - [ ] `HandshakeInterceptor` 구현 — 쿼리 파라미터 `token` 파싱 및 JWT 검증, `Authentication` 객체 세션 속성 주입
 - [ ] WebSocket 핸들러 작성 — 연결 시 `documentId` 소유권 검증 (불일치 시 Close 1008)
 - [ ] Webhook 수신 시 해당 `documentId` 구독 세션에 메시지 발송
-- [ ] `COMPLETED` / `FAILED` 전송 후 서버에서 연결 종료
+- [ ] `COMPLETED` / `FAILED` 전송 후 Grace Period(30초) 적용 — 클라이언트 선종료 즉시 해제, 만료 시 Close 1000
 - [ ] `WS /ws/resume/{documentId}/status` 엔드포인트 등록
 
 ### Phase 8: 검증 및 문서화

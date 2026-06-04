@@ -42,6 +42,7 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 - 파일 검증(크기·MIME type 기반 확장자)은 서비스 레이어 진입 전에 처리. 검증 실패 시 S3 업로드 절대 수행 금지.
 - S3에 저장하는 파일명(`stored_file_name`)은 반드시 `{UUID}.{확장자}` 형식으로 생성. `original_name`을 S3 키로 직접 사용 금지.
 - `document.status`의 `PENDING` 이후 전이는 Webhook 콜백 또는 FastAPI만 수행. Spring 서비스 레이어에서 직접 변경 금지.
+- Webhook 멱등성 보장: `document.status`가 이미 `COMPLETED` 또는 `FAILED`인 경우 동일 Webhook 재수신 시 DB 덮어쓰기 및 예외 발생 없이 조용히 무시한다.
 
 ---
 
@@ -65,6 +66,8 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 | WebSocket 인증 | `HandshakeInterceptor` | 핸드셰이크 시점에 `Authentication` 객체 주입, REST와 동일한 보안 체계 유지 |
 | 페이징 기준 | 0-based (`page`, `size`) | Spring Data JPA `Pageable` 기본 규칙 |
 | `FAILED` 재시도 | v1 미지원 — UI에서 재업로드 유도 | v1 범위 최소화, v2 이후 재시도 정책 설계 |
+| WebSocket 종료 방식 | `COMPLETED`/`FAILED` 전송 후 30초 Grace Period 유지 후 서버 종료 | 즉시 종료 시 프론트 재연결 루프 유발 위험 방지 |
+| Webhook 멱등성 | 이미 최종 상태(`COMPLETED`/`FAILED`)인 문서 재수신 시 무시 | 네트워크 재시도로 인한 중복 요청 대응 |
 
 ---
 

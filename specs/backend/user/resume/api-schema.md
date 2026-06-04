@@ -380,6 +380,19 @@ FastAPI                              Spring
   │◀─ 200 OK ──────────────────────────│
 ```
 
+### 멱등성 (Idempotency)
+
+Webhook은 네트워크 재시도로 동일 요청이 중복 수신될 수 있다.
+
+```
+수신 시 document.status 확인
+  ├── COMPLETED 또는 FAILED → 이미 처리 완료 → 200 OK 반환 후 조용히 무시
+  └── 그 외 → 정상 처리 (DB 저장 + WebSocket 알림)
+```
+
+- 중복 수신 시 DB를 덮어쓰거나 예외를 발생시키지 않는다.
+- 중복 수신 여부와 관계없이 항상 `200 OK`를 반환하여 FastAPI의 재시도 루프를 방지한다.
+
 ### 보안
 
 - 외부 클라이언트에서 호출 불가하도록 내부망 IP 제한 또는 `X-Internal-Secret` 헤더 검증 적용
@@ -410,11 +423,20 @@ WS /ws/resume/{documentId}/status?token={accessToken}
    │◀─ {"status":"ANALYZING", ...} ──────│  분석 진행 중 (1회 이상)
    │◀─ {"status":"ANALYZING", ...} ──────│
    │                                     │
-   │◀─ {"status":"COMPLETED", ...} ──────│  완료 → 서버가 연결 종료
-   │   (또는 "FAILED")                   │
+   │◀─ {"status":"COMPLETED", ...} ──────│  완료 메시지 전송
+   │   (또는 "FAILED")                   │  ↓ Grace Period 시작 (30초)
    │                                     │
-   │  (클라이언트 연결 종료)              │
+   │── (클라이언트 정상 종료) ────────────▶│  클라이언트가 먼저 끊으면 즉시 세션 해제
+   │   또는 Grace Period 만료            │  30초 경과 시 서버에서 세션 정리
 ```
+
+**Grace Period 정책 (30초)**
+
+서버가 `COMPLETED` 또는 `FAILED` 메시지를 전송한 뒤 즉시 연결을 끊지 않고 30초간 세션을 유지한다.
+
+- 이유: 서버가 먼저 끊으면 프론트엔드가 `onclose` 이벤트를 "비정상 종료"로 판단해 재연결 루프에 빠질 수 있다.
+- 클라이언트가 `COMPLETED`/`FAILED` 수신 후 스스로 연결을 닫으면 서버는 즉시 세션을 해제한다.
+- 30초 내 클라이언트가 연결을 닫지 않으면 서버가 정상 종료 코드(Close 1000)로 세션을 정리한다.
 
 ### Server → Client 메시지 형식
 
