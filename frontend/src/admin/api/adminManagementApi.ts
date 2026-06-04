@@ -1,5 +1,6 @@
+import axios from 'axios';
 import axiosInstance from '../../utils/axiosInstance';
-import type { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
+import type { AxiosInstance, AxiosResponse } from 'axios';
 
 const ADMIN_MANAGEMENT_BASE_PATH = '/api/v1/admin';
 const adminHttpClient = axiosInstance as AxiosInstance;
@@ -87,6 +88,8 @@ export interface ApiResponse<TData> {
 export interface ApiErrorBody<TData = unknown> {
   success?: false;
   statusCode?: number;
+  code?: string;
+  errorCode?: string;
   message?: string;
   data?: TData;
 }
@@ -215,11 +218,21 @@ function getFieldErrors(data: unknown): Record<string, string> | undefined {
 }
 
 export function toAdminManagementApiError(error: unknown): AdminManagementApiError {
-  const axiosError = error as AxiosError<ApiErrorBody>;
+  if (!axios.isAxiosError<ApiErrorBody>(error)) {
+    return {
+      code: ADMIN_MANAGEMENT_ERROR_CODE.UNKNOWN,
+      statusCode: 0,
+      message: error instanceof Error ? error.message : adminManagementFallbackMessages.UNKNOWN,
+    };
+  }
+
+  const axiosError = error;
   const statusCode = axiosError.response?.data?.statusCode ?? axiosError.response?.status ?? 0;
   const body = axiosError.response?.data;
   const isMasterRoleError =
-    statusCode === 403 && typeof body?.message === 'string' && body.message.toUpperCase().includes('MASTER');
+    statusCode === 403
+    && (body?.code === ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED
+      || body?.errorCode === ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED);
   const code = isMasterRoleError
     ? ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED
     : getAdminManagementErrorCode(statusCode);

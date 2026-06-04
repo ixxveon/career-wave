@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LockKeyhole, Network, Plus, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
 import {
@@ -74,6 +74,8 @@ const ROLE_META: Record<AdminRole, { label: string; scope: string }> = {
 
 const roleColumns: AdminRole[] = ['MASTER', 'CS', 'BACKEND', 'OPS', 'BILLING', 'AUDIT'];
 const MAX_SECURITY_LOGS = 5;
+const ADMIN_PAGE_SIZE = 20;
+const ADMIN_SEARCH_DEBOUNCE_MS = 400;
 const ADMIN_MANAGEMENT_QUERY_KEY = ['adminManagement'] as const;
 const ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'summary'] as const;
 const ADMIN_MANAGEMENT_ADMINS_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'admins'] as const;
@@ -224,6 +226,20 @@ const formatNow = () => {
 
 const makeId = (prefix: string, value: number) => `${prefix}-${String(value).padStart(4, '0')}`;
 
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedValue(value);
+    }, delayMs);
+
+    return () => window.clearTimeout(timer);
+  }, [delayMs, value]);
+
+  return debouncedValue;
+}
+
 const splitDateTime = (value: string) => {
   const [date = '', time = ''] = value.split(' ');
   return { date, time };
@@ -277,6 +293,7 @@ export default function AdminManagementPage() {
   const [aclRules, setAclRules] = useState(initialAclRules);
   const [logs, setLogs] = useState(initialLogs);
   const [adminFilter, setAdminFilter] = useState('');
+  const debouncedAdminFilter = useDebouncedValue(adminFilter.trim(), ADMIN_SEARCH_DEBOUNCE_MS);
   const [roleFilter, setRoleFilter] = useState<'ALL' | AdminRole>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | AdminStatus>('ALL');
   const [auditActor, setAuditActor] = useState<string>('ALL');
@@ -285,13 +302,15 @@ export default function AdminManagementPage() {
   const [adminDraft, setAdminDraft] = useState<AdminDraft>(createEmptyAdminDraft);
   const [aclSeed, setAclSeed] = useState(4);
   const [aclPage, setAclPage] = useState(1);
+  const [adminPage, setAdminPage] = useState(1);
+  const logIdSeedRef = useRef(initialLogs.length + 1);
   const [aclDraft, setAclDraft] = useState<AclDraft>({ label: '', cidr: '', note: '' });
   const adminListQueryParams = {
-    keyword: adminFilter.trim() || undefined,
+    keyword: debouncedAdminFilter || undefined,
     role: roleFilter,
     status: statusFilter,
-    page: 1,
-    size: 20,
+    page: adminPage,
+    size: ADMIN_PAGE_SIZE,
   };
   const {
     data: adminAccounts,
@@ -304,7 +323,9 @@ export default function AdminManagementPage() {
   });
 
   const addLog = (log: Omit<AuditLog, 'id' | 'time'>) => {
-    setLogs((prev) => [{ ...log, id: makeId('LOG', prev.length + 1), time: formatNow() }, ...prev].slice(0, MAX_SECURITY_LOGS));
+    const nextLogId = logIdSeedRef.current;
+    logIdSeedRef.current += 1;
+    setLogs((prev) => [{ ...log, id: makeId('LOG', nextLogId), time: formatNow() }, ...prev].slice(0, MAX_SECURITY_LOGS));
   };
 
   const refreshAdminManagementQueries = () => {
@@ -321,6 +342,7 @@ export default function AdminManagementPage() {
       setAdminFilter('');
       setRoleFilter('ALL');
       setStatusFilter('ALL');
+      setAdminPage(1);
       closeCreateAdminPage();
 
       addLog({
@@ -504,22 +526,11 @@ export default function AdminManagementPage() {
   }, [adminAccounts]);
 
   useEffect(() => {
-    const events: Array<Omit<AuditLog, 'id' | 'time'>> = [
-      { actor: 'cs_admin', ip: '10.20.0.21', action: '회원 문의 처리', target: 'ticket:CS-1842', severity: 'INFO' },
-      { actor: 'backend_admin', ip: '10.20.0.22', action: 'DB 변경 감지', target: 'schema:member', severity: 'ERROR' },
-      { actor: 'super_admin', ip: '10.20.0.10', action: '권한 검토', target: 'role:CS', severity: 'INFO' },
-      { actor: 'ops_admin', ip: '10.20.0.23', action: 'IP ACL 갱신', target: 'ACL-001', severity: 'WARN' },
-    ];
-
-    let cursor = 0;
-    const timer = window.setInterval(() => {
-      const next = events[cursor];
-      cursor = (cursor + 1) % events.length;
-      setLogs((prev) => [{ ...next, id: makeId('LOG', prev.length + 1), time: formatNow() }, ...prev].slice(0, MAX_SECURITY_LOGS));
-    }, 8000);
-
-    return () => window.clearInterval(timer);
-  }, []);
+    const nextTotalPages = Math.max(1, adminAccounts?.totalPages ?? 1);
+    if (adminPage > nextTotalPages) {
+      setAdminPage(nextTotalPages);
+    }
+  }, [adminAccounts?.totalPages, adminPage]);
 
   useEffect(() => {
     const nextTotalPages = Math.max(1, Math.ceil(aclRules.length / 3));
@@ -578,6 +589,11 @@ export default function AdminManagementPage() {
   const activeAdminCount = summary?.activeAdminCount ?? 0;
   const lockedAdminCount = summary?.lockedAdminCount ?? 0;
   const activeAclCount = summary?.activeAclCount ?? 0;
+  const adminTotalItems = adminAccounts?.totalItems ?? filteredAdmins.length;
+  const adminTotalPages = Math.max(1, adminAccounts?.totalPages ?? 1);
+  const safeAdminPage = Math.min(adminPage, adminTotalPages);
+  const adminRangeStart = adminTotalItems > 0 ? (safeAdminPage - 1) * ADMIN_PAGE_SIZE + 1 : 0;
+  const adminRangeEnd = Math.min(safeAdminPage * ADMIN_PAGE_SIZE, adminTotalItems);
   const aclPageSize = 3;
   const aclTotalPages = Math.max(1, Math.ceil(aclRules.length / aclPageSize));
   const safeAclPage = Math.min(aclPage, aclTotalPages);
@@ -638,13 +654,22 @@ export default function AdminManagementPage() {
                 <input
                   type="text"
                   value={adminFilter}
-                  onChange={(e) => setAdminFilter(e.target.value)}
+                  onChange={(e) => {
+                    setAdminFilter(e.target.value);
+                    setAdminPage(1);
+                  }}
                   placeholder="이름, 이메일, 관리자 ID 검색"
                 />
               </div>
               <div className="amToolbarField select">
                 <span className="amToolbarLabel">권한 필터</span>
-                <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as 'ALL' | AdminRole)}>
+                <select
+                  value={roleFilter}
+                  onChange={(e) => {
+                    setRoleFilter(e.target.value as 'ALL' | AdminRole);
+                    setAdminPage(1);
+                  }}
+                >
                   <option value="ALL">전체 권한</option>
                   {roleColumns.map((role) => (
                     <option key={role} value={role}>
@@ -655,7 +680,13 @@ export default function AdminManagementPage() {
               </div>
               <div className="amToolbarField select">
                 <span className="amToolbarLabel">상태 필터</span>
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'ALL' | AdminStatus)}>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value as 'ALL' | AdminStatus);
+                    setAdminPage(1);
+                  }}
+                >
                   <option value="ALL">전체 상태</option>
                   <option value="ACTIVE">활성</option>
                   <option value="LOCKED">잠금</option>
@@ -777,16 +808,34 @@ export default function AdminManagementPage() {
 
             <div className="amPagination">
               <span>
-                총 {filteredAdmins.length.toLocaleString()}건 중 {filteredAdmins.length > 0 ? '1' : '0'}-
-                {filteredAdmins.length.toLocaleString()} 표시
+                총 {adminTotalItems.toLocaleString()}건 중 {adminRangeStart.toLocaleString()}-
+                {adminRangeEnd.toLocaleString()} 표시
               </span>
               <div>
-                <button type="button">{'<'}</button>
-                <button className="active" type="button">
-                  1
+                <button
+                  type="button"
+                  disabled={safeAdminPage <= 1}
+                  onClick={() => setAdminPage((page) => Math.max(1, page - 1))}
+                >
+                  {'<'}
                 </button>
-                <button type="button">2</button>
-                <button type="button">{'>'}</button>
+                {Array.from({ length: adminTotalPages }, (_, index) => index + 1).map((page) => (
+                  <button
+                    key={page}
+                    className={safeAdminPage === page ? 'active' : ''}
+                    type="button"
+                    onClick={() => setAdminPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  disabled={safeAdminPage >= adminTotalPages}
+                  onClick={() => setAdminPage((page) => Math.min(adminTotalPages, page + 1))}
+                >
+                  {'>'}
+                </button>
               </div>
             </div>
           </section>
