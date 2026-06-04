@@ -19,6 +19,7 @@ export default function AdminLoginPage() {
       const response = await adminAuthApi.login({ loginId, password });
       const { success, data } = response.data;
       if (!success || !data?.accessToken) {
+        adminSession.clearToken();
         throw new Error('INVALID_LOGIN_RESPONSE');
       }
       adminSession.setToken(data.accessToken);

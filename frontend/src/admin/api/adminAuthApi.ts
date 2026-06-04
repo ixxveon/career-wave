@@ -1,11 +1,8 @@
 import axiosInstance from '../../utils/axiosInstance';
 
-export interface ApiResponse<T> {
-  success: boolean;
-  statusCode: number;
-  message: string;
-  data: T;
-}
+export type ApiResponse<T> =
+  | { success: true;  statusCode: number; message: string; data: T }
+  | { success: false; statusCode: number; message: string; data: null };
 
 export interface AdminLoginRequest {
   loginId: string;
