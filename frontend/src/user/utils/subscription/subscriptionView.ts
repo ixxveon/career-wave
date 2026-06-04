@@ -1,4 +1,4 @@
-import { PRODUCT_CODE, SUBSCRIPTION_STATUS, type ProductCode, type Subscription, type UsageItem, type UsageSummary } from '../../types/subscription';
+import { PRODUCT_CODE, SUBSCRIPTION_STATUS, type ProductCode, type Subscription, type SubscriptionStatus, type UsageItem, type UsageSummary } from '../../types/subscription';
 
 export const PRODUCT_ACCENT: Record<ProductCode, 'document' | 'interview'> = {
   [PRODUCT_CODE.DOCUMENT_COACHING]: 'document',
@@ -26,7 +26,7 @@ export const ALL_PRODUCT_CODES: ProductCode[] = [
   PRODUCT_CODE.INTERVIEW,
 ];
 
-const ACTIVE_STATUSES = new Set<string>([
+const ACTIVE_STATUSES = new Set<SubscriptionStatus>([
   SUBSCRIPTION_STATUS.ACTIVE,
   SUBSCRIPTION_STATUS.CANCEL_SCHEDULED,
   SUBSCRIPTION_STATUS.PAYMENT_FAILED,
@@ -44,7 +44,11 @@ export function buildUsageItems(
   usages: UsageSummary[],
 ): UsageItem[] {
   return ALL_PRODUCT_CODES.map((code) => {
-    const subscription = subscriptions.find((s) => s.productCode === code) ?? null;
+    const productSubs = subscriptions.filter((s) => s.productCode === code);
+    const subscription =
+      productSubs.find((s) => ACTIVE_STATUSES.has(s.status)) ??
+      productSubs[productSubs.length - 1] ??
+      null;
     const usage = usages.find((u) => u.productCode === code) ?? null;
     const isSubscribed = subscription !== null && ACTIVE_STATUSES.has(subscription.status);
 
