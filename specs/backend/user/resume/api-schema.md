@@ -322,13 +322,79 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 
 ---
 
-## 5. 분석 상태 실시간 구독 (WebSocket)
+## 5. 분석 완료 콜백 수신 (Webhook — FastAPI → Spring 내부 전용)
+
+- **Endpoint**: `POST /api/v1/user/resume/{documentId}/webhook`
+- **호출 주체**: FastAPI (외부 클라이언트 호출 차단 — IP 제한 또는 내부 Secret 헤더 검증)
+- **Content-Type**: `application/json`
+
+> FastAPI가 분석을 마친 뒤 이 엔드포인트를 호출한다.  
+> Spring은 수신 즉시 DB를 업데이트하고, WebSocket으로 프론트엔드에 상태 알림을 발송한다.
+
+### Request
+
+```json
+{
+  "status": "COMPLETED",
+  "scores": {
+    "jobFitness": 78,
+    "techStack": 85,
+    "quantifiedAchievement": 60,
+    "logicalStructure": 72,
+    "total": 74
+  },
+  "overallReview": "전반적으로 백엔드 역량이 우수하나 ...",
+  "feedbackDetails": [ ... ],
+  "errorMessage": null
+}
+```
+
+| Field | Type | 설명 |
+|-------|------|------|
+| `status` | `string` | `COMPLETED` \| `FAILED` |
+| `scores` | `object` \| `null` | 분석 점수, `FAILED` 시 `null` |
+| `overallReview` | `string` \| `null` | AI 종합 총평 |
+| `feedbackDetails` | `array` \| `null` | 항목별 첨삭 결과, `FAILED` 시 `null` |
+| `errorMessage` | `string` \| `null` | 실패 시 오류 메시지 |
+
+### Response `200 OK`
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": null
+}
+```
+
+### 처리 흐름
+
+```
+FastAPI                              Spring
+  │                                    │
+  │── POST .../webhook ────────────────▶│  documentId 유효성 확인
+  │                                    │  DocumentFeedback DB 저장
+  │                                    │  document.status 업데이트
+  │                                    │  WebSocket 브로드캐스트
+  │◀─ 200 OK ──────────────────────────│
+```
+
+### 보안
+
+- 외부 클라이언트에서 호출 불가하도록 내부망 IP 제한 또는 `X-Internal-Secret` 헤더 검증 적용
+- `documentId` 존재하지 않을 경우 로그 기록 후 무시 (프론트 에러 노출 없음)
+
+---
+
+## 6. 분석 상태 실시간 구독 (WebSocket)
 
 - **Endpoint**: `WS /ws/resume/{documentId}/status`
 
 ### 인증
 
-JWT를 WebSocket 핸드셰이크 시 쿼리 파라미터로 전달.
+JWT를 WebSocket 핸드셰이크 시 쿼리 파라미터로 전달.  
+Spring의 `HandshakeInterceptor`에서 토큰 파싱 후 `Authentication` 객체를 세션 속성에 주입한다.
 
 ```
 WS /ws/resume/{documentId}/status?token={accessToken}

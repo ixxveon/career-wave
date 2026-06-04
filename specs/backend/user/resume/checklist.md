@@ -21,6 +21,8 @@
 - [ ] 파일 크기 10MB 초과 시 `INVALID_FILE_SIZE(400)` 반환
 - [ ] PDF·DOC·DOCX 외 파일 타입(MIME type 기반) 시 `INVALID_FILE_TYPE(400)` 반환
 - [ ] 검증 실패 시 S3 업로드가 수행되지 않는다
+- [ ] S3 저장 파일명이 `{UUID}.{확장자}` 형식이며 `original_name`을 S3 키로 사용하지 않는다
+- [ ] `stored_file_name`, `file_url`, `original_name` 세 컬럼이 각각 올바르게 저장된다
 - [ ] S3 업로드 성공 후 `Document` 저장 (`status = UPLOADED`)
 - [ ] FastAPI 분석 트리거가 비동기로 수행된다 (업로드 응답 지연 없음)
 - [ ] 응답에 `documentId` (UUID), `fileUrl`, `originalName`, `fileType`, `status`, `createdAt` 포함
@@ -58,9 +60,18 @@
 
 ---
 
+## Webhook (`POST .../{documentId}/webhook`)
+
+- [ ] FastAPI 이외의 외부 호출을 차단하는 보안 검증이 적용되어 있다 (IP 제한 또는 Secret 헤더)
+- [ ] `DocumentFeedback` 저장과 `document.status` 업데이트가 동일 트랜잭션으로 처리된다
+- [ ] 저장 완료 후 해당 `documentId` WebSocket 구독자에게 메시지가 정상 발송된다
+- [ ] `FAILED` 콜백 수신 시 `error_message`가 DB에 저장되고 WebSocket으로 전달된다
+
+---
+
 ## WebSocket (`WS /ws/resume/{documentId}/status`)
 
-- [ ] 핸드셰이크 시 `token` 쿼리 파라미터로 JWT 검증이 수행된다
+- [ ] `HandshakeInterceptor`에서 `token` 쿼리 파라미터 JWT 검증 및 `Authentication` 객체 세션 주입이 수행된다
 - [ ] 토큰 없음·만료 시 Close 1008로 연결을 즉시 종료한다
 - [ ] 유효하지 않은 `documentId` 시 Close 1008로 연결을 즉시 종료한다
 - [ ] 본인 소유가 아닌 `documentId` 시 Close 1008로 연결을 즉시 종료한다

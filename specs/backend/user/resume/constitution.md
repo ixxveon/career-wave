@@ -39,7 +39,9 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 - `document_feedbacks`는 `document_id` 기준 1:1 (UNIQUE 제약).
 - `cover_letter_contents`의 `order_num`은 동일 `document_id` 내에서 1~5 범위 내 중복 불가.
 - 이력서(`RESUME`) 타입 Document의 `file_url`은 null 불가; 자기소개서(`COVER_LETTER`) 타입의 `file_url`은 항상 null.
-- 파일 검증(크기·확장자)은 서비스 레이어 진입 전에 처리. 검증 실패 시 S3 업로드 절대 수행 금지.
+- 파일 검증(크기·MIME type 기반 확장자)은 서비스 레이어 진입 전에 처리. 검증 실패 시 S3 업로드 절대 수행 금지.
+- S3에 저장하는 파일명(`stored_file_name`)은 반드시 `{UUID}.{확장자}` 형식으로 생성. `original_name`을 S3 키로 직접 사용 금지.
+- `document.status`의 `PENDING` 이후 전이는 Webhook 콜백 또는 FastAPI만 수행. Spring 서비스 레이어에서 직접 변경 금지.
 
 ---
 
@@ -57,9 +59,12 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 |------|------|------|
 | `documentId` 타입 | UUID v4 | IDOR 방어, 노출 안전성 |
 | 파일 저장 | S3 (외부 스토리지) | DB 직접 저장 지양 |
-| 분석 트리거 | 비동기 (FastAPI 연동) | 업로드 응답 지연 방지 |
-| `feedback_details` 저장 | JSONB | 스키마 유연성 (AI 응답 구조 변경 대응) |
+| S3 파일명 | `{UUID}.{확장자}` | 한글·특수문자 파일명 깨짐 방지, 원본명은 DB 컬럼(`original_name`)에 별도 보존 |
+| 분석 결과 수신 | Webhook (FastAPI → Spring `POST .../webhook`) | Spring이 DB 저장 + WebSocket 알림을 한 흐름에서 처리 가능 |
+| `feedback_details` 저장 | JSONB + `AttributeConverter` 또는 `hypersistence-utils` | AI 응답 스키마 유연성 + JPA 변환 편의성 |
+| WebSocket 인증 | `HandshakeInterceptor` | 핸드셰이크 시점에 `Authentication` 객체 주입, REST와 동일한 보안 체계 유지 |
 | 페이징 기준 | 0-based (`page`, `size`) | Spring Data JPA `Pageable` 기본 규칙 |
+| `FAILED` 재시도 | v1 미지원 — UI에서 재업로드 유도 | v1 범위 최소화, v2 이후 재시도 정책 설계 |
 
 ---
 

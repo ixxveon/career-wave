@@ -26,12 +26,17 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 | 컬럼 | 타입 | 설명 |
 |------|------|------|
 | `document_id` | UUID PK | 문서 고유 식별자 |
-| `member_id` | UUID FK | 소유 회원 (members 테이블 참조) |
+| `member_id` | UUID FK NOT NULL | 소유 회원 (members 테이블 참조) |
 | `file_type` | VARCHAR(20) | `RESUME` \| `COVER_LETTER` |
+| `stored_file_name` | VARCHAR(255) NULL | S3 저장 파일명 (UUID 기반 생성, 자기소개서는 null) |
 | `file_url` | TEXT NULL | S3 파일 URL (자기소개서는 null) |
-| `original_name` | VARCHAR(255) NULL | 원본 파일명 (자기소개서는 null) |
+| `original_name` | VARCHAR(255) NULL | 원본 파일명 — DB에만 보존, URL에 미노출 (자기소개서는 null) |
 | `status` | VARCHAR(20) | `UPLOADED` \| `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
 | `created_at` | TIMESTAMPTZ | 생성일시 |
+
+> S3 저장 시 `original_name`을 그대로 사용하지 않는다.  
+> 한글·특수문자 포함 파일명은 S3 경로에서 깨질 수 있으므로,  
+> `stored_file_name`은 `{UUID}.{확장자}` 형식으로 별도 생성한다.
 
 ### cover_letter_contents
 
@@ -194,12 +199,13 @@ public class ResumeDTO {
 POST /api/v1/user/resume/upload
       Content-Type: multipart/form-data
       → ApiResponse<ResumeDTO.ResponseUpload>
-      파일 검증 (10MB / PDF·DOC·DOCX) → S3 업로드 → Document 저장 → FastAPI 분석 트리거
+      파일 검증 (10MB / PDF·DOC·DOCX / MIME type) → UUID 파일명 생성 → S3 업로드
+      → Document 저장 → FastAPI 분석 비동기 트리거
 
 POST /api/v1/user/resume/cover-letter
       Content-Type: application/json
       → ApiResponse<ResumeDTO.ResponseCoverLetter>
-      문항·답변 검증 → Document + CoverLetterContent 저장 → FastAPI 분석 트리거
+      문항·답변 검증 → Document + CoverLetterContent 저장 → FastAPI 분석 비동기 트리거
 
 GET  /api/v1/user/resume/{documentId}/feedback
       → ApiResponse<ResumeDTO.ResponseFeedback>
@@ -208,6 +214,9 @@ GET  /api/v1/user/resume/{documentId}/feedback
 GET  /api/v1/user/resume/history?page=0&size=10
       → ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>
       본인 문서 최신순 페이징 조회
+
+POST /api/v1/user/resume/{documentId}/webhook        [FastAPI → Spring 내부 전용]
+      → 분석 완료 콜백 수신 → DB 상태 업데이트 → WebSocket으로 프론트 알림
 
 WS   /ws/resume/{documentId}/status?token={accessToken}
       → 분석 상태 실시간 메시지 (ANALYZING / COMPLETED / FAILED)
@@ -223,10 +232,11 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 
 #### uploadResume(UUID memberId, MultipartFile file)
 - 파일 크기 10MB 초과 → `INVALID_FILE_SIZE(400)`
-- 확장자 PDF·DOC·DOCX 외 → `INVALID_FILE_TYPE(400)`
-- S3 업로드 후 `file_url` 저장
+- 확장자 PDF·DOC·DOCX 외 (MIME type 기반 검증) → `INVALID_FILE_TYPE(400)`
+- **검증 통과 후** UUID 기반 저장 파일명 생성 (`{UUID}.{확장자}`)
+- S3 업로드 후 `file_url`, `stored_file_name`, `original_name` 저장
 - `Document` 저장 (`status = UPLOADED`)
-- FastAPI 분석 비동기 트리거 (내부 HTTP 또는 메시지 큐)
+- FastAPI 분석 비동기 트리거 (내부 HTTP — Webhook 방식 적용)
 - 반환: `ResumeDTO.ResponseUpload`
 
 #### submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto)
@@ -267,7 +277,8 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 ## Assumptions
 
 - S3 업로드 방식(Presigned URL vs 서버 직접 전송)은 구현 단계에서 팀 협의
-- FastAPI 분석 트리거 방식(내부 HTTP 호출 vs 메시지 큐)은 구현 단계에서 팀 협의
-- WebSocket 구현은 Spring WebSocket(`@ServerEndpoint`) 또는 STOMP 방식 구현 단계에서 결정
-- `document_feedbacks` 데이터는 FastAPI가 직접 DB에 쓰거나 Spring 콜백 API를 통해 저장 — 구현 단계 협의
+- FastAPI 분석 트리거: Spring → FastAPI 분석 요청 후, FastAPI 완료 시 `POST .../webhook` 콜백 호출 (Webhook 방식 권장)
+- WebSocket 구현은 `HandshakeInterceptor` 기반 인증 적용 — `@ServerEndpoint` vs STOMP는 구현 단계 결정
+- `document_feedbacks` 데이터는 Webhook 콜백 수신 시 Spring이 DB에 저장 후 WebSocket 알림 발송
+- `FAILED` 상태의 재시도 정책은 v1 범위 외 (실패 시 UI에서 재업로드 유도)
 - members 테이블 PK 타입이 UUID임을 전제 (현재 코드 확인 필요)

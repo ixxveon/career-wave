@@ -17,9 +17,9 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 | 분류 | 선택 | 근거 |
 |------|------|------|
 | 파일 저장소 | AWS S3 | 기존 프로젝트 인프라 준수 |
-| 분석 트리거 | 내부 HTTP (FastAPI) 또는 메시지 큐 | 팀 협의 후 결정 |
-| WebSocket | Spring WebSocket | Spring Boot 내장 — 추가 의존성 없음 |
-| `feedback_details` 저장 | JSONB | AI 응답 스키마 유연성 확보 |
+| 분석 트리거 | Spring → FastAPI 분석 요청, FastAPI → Spring Webhook 콜백 | DB 저장과 WebSocket 알림을 Spring 한 곳에서 처리 |
+| WebSocket | Spring WebSocket + `HandshakeInterceptor` | 핸드셰이크 시점 JWT 검증 및 `Authentication` 객체 주입 |
+| `feedback_details` 저장 | JSONB + `AttributeConverter` (또는 `hypersistence-utils`) | AI 응답 스키마 유연성 + JPA 변환 편의성 |
 | 페이지네이션 | Spring Data JPA `Pageable` | 프로젝트 기존 패턴 준수 |
 | `documentId` 타입 | UUID v4 | IDOR 방어 |
 
@@ -30,9 +30,9 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 | 항목 | 상태 | 비고 |
 |------|------|------|
 | S3 업로드 방식 (Presigned URL vs 서버 직접 전송) | 협의 필요 | 구현 전 인프라 팀 확인 |
-| FastAPI 분석 트리거 방식 | 협의 필요 | 내부 HTTP 호출 vs 메시지 큐 |
-| FastAPI → Spring 결과 전달 방식 | 협의 필요 | 직접 DB 쓰기 vs 콜백 API |
+| Webhook 내부 보안 방식 | 협의 필요 | IP 제한 vs `X-Internal-Secret` 헤더 |
 | WebSocket 구현 방식 | 협의 필요 | `@ServerEndpoint` vs STOMP |
+| `hypersistence-utils` 의존성 추가 | 팀 합의 필요 | JSONB 처리용 — 기존 `AttributeConverter`로 대체 가능 |
 | members 테이블 PK 타입 | 코드 확인 필요 | UUID 전제 — 다를 경우 DTO 타입 조정 |
 | Base URL 최종 결정 | 프론트 팀 확인 필요 | `/api/v1/resume` vs `/api/v1/user/resume` |
 
@@ -53,8 +53,9 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 ### Phase 2: 이력서 업로드 API
 
 - [ ] `ResumeDTO.ResponseUpload` DTO 작성
-- [ ] 파일 검증 로직 (크기 10MB, 확장자 MIME type 기반)
-- [ ] S3 업로드 연동 (방식은 팀 협의 후 구현)
+- [ ] 파일 크기(10MB) + MIME type 기반 확장자 검증 유틸 작성
+- [ ] UUID 기반 S3 저장 파일명 생성 로직 (`{UUID}.{확장자}`)
+- [ ] S3 업로드 연동 — `stored_file_name`, `file_url`, `original_name` 분리 저장
 - [ ] `Document` 저장 (`status = UPLOADED`)
 - [ ] FastAPI 분석 비동기 트리거 (스텁으로 시작 후 실제 연동)
 - [ ] `POST /api/v1/user/resume/upload` Controller + Swagger Docs
@@ -79,14 +80,23 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 - [ ] `created_at DESC` 페이징 쿼리
 - [ ] `GET /api/v1/user/resume/history` Controller + Swagger Docs
 
-### Phase 6: WebSocket 분석 상태 구독
+### Phase 6: Webhook 수신 API (FastAPI → Spring)
 
-- [ ] WebSocket 핸들러 구현 (토큰 검증 + documentId 소유권 검증)
-- [ ] FastAPI → Spring 상태 수신 후 클라이언트 브로드캐스트
-- [ ] `COMPLETED` / `FAILED` 수신 시 연결 종료 처리
+- [ ] `ResumeDTO.RequestWebhook` DTO 작성 (status, scores, feedbackDetails, errorMessage)
+- [ ] Webhook 내부 보안 검증 로직 (IP 제한 또는 `X-Internal-Secret` 헤더)
+- [ ] `DocumentFeedback` DB 저장 + `document.status` 업데이트 (`@Transactional`)
+- [ ] 저장 완료 후 WebSocket 세션에 상태 메시지 브로드캐스트
+- [ ] `POST /api/v1/user/resume/{documentId}/webhook` Controller 구현
+
+### Phase 7: WebSocket 분석 상태 구독
+
+- [ ] `HandshakeInterceptor` 구현 — 쿼리 파라미터 `token` 파싱 및 JWT 검증, `Authentication` 객체 세션 속성 주입
+- [ ] WebSocket 핸들러 작성 — 연결 시 `documentId` 소유권 검증 (불일치 시 Close 1008)
+- [ ] Webhook 수신 시 해당 `documentId` 구독 세션에 메시지 발송
+- [ ] `COMPLETED` / `FAILED` 전송 후 서버에서 연결 종료
 - [ ] `WS /ws/resume/{documentId}/status` 엔드포인트 등록
 
-### Phase 7: 검증 및 문서화
+### Phase 8: 검증 및 문서화
 
 - [ ] `checklist.md` 전 항목 셀프 체크
 - [ ] Swagger 응답 예시 확인
