@@ -17,7 +17,11 @@ export default function AdminLoginPage() {
 
     try {
       const response = await adminAuthApi.login({ loginId, password });
-      adminSession.setToken(response.data.data.accessToken);
+      const { success, data } = response.data;
+      if (!success || !data?.accessToken) {
+        throw new Error('INVALID_LOGIN_RESPONSE');
+      }
+      adminSession.setToken(data.accessToken);
       navigate('/admin/dashboard', { replace: true });
     } catch {
       setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.');
