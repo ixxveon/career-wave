@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { TrendingUp, DollarSign, Users, UserPlus, CreditCard, RefreshCw, Minus } from 'lucide-react';
 import '../../styles/admin.css';
 import '../../styles/Statistics.css';
-import { statsApi, type StatsSummary, type MonthlyRevenue, type RevenueBreakdownItem, type MonthlySubscribers, type RecentSubscriber } from '../../api/statsApi';
+import { statsApi, REVENUE_TYPE, type RevenueType, type StatsSummary, type MonthlyRevenue, type RevenueBreakdownItem, type MonthlySubscribers, type RecentSubscriber } from '../../api/statsApi';
+import type { ElementType } from 'react';
 
 // 구독 유형별 아이콘 매핑
-const BREAKDOWN_ICON_MAP: Record<string, React.ElementType> = {
-  PREMIUM: CreditCard,
-  NEW_CONVERSION: UserPlus,
-  RENEWAL: RefreshCw,
-  REFUND_DEDUCTION: Minus,
+const BREAKDOWN_ICON_MAP: Record<RevenueType, ElementType> = {
+  [REVENUE_TYPE.PREMIUM]: CreditCard,
+  [REVENUE_TYPE.NEW_CONVERSION]: UserPlus,
+  [REVENUE_TYPE.RENEWAL]: RefreshCw,
+  [REVENUE_TYPE.REFUND_DEDUCTION]: Minus,
 };
 
 // ── 꺾은선 차트 공통 상수 ──────────────────────────────────────
@@ -20,11 +21,7 @@ const LINE_VBW     = 1000;
 const LINE_PAD_X   = 30;
 const LINE_CHART_H_SVG = LINE_VBH - LINE_PAD * 2; // 164
 
-// 매출 Y축 레이블 (4항목, padding 24px top/bottom → 위치 자동 정렬)
-const lineYLabels  = ['₩4,500만', '₩3,000만', '₩1,500만', '₩0'];
-const lineGridSvgY = [45_000_000, 30_000_000, 15_000_000, 0].map(
-  v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / LINE_MAX_VAL))
-); // [28, 83, 137, 192]
+// 매출 Y축 레이블 — 컴포넌트 내에서 axisMax 기준으로 동적 계산
 
 // 구독자 Y축 레이블 (5항목, 동일 padding → 동일 CSS 재사용)
 const SUB_MAX_VAL  = 400;
@@ -64,48 +61,80 @@ function buildSvgPath(values: number[], maxVal = LINE_MAX_VAL) {
 const TOOLTIP_W = 104;
 
 export default function StatisticsPage() {
-  const [summary, setSummary] = useState<StatsSummary | null>(null);
-  const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenue[]>([]);
-  const [breakdown, setBreakdown] = useState<RevenueBreakdownItem[]>([]);
-  const [monthlySubscribers, setMonthlySubscribers] = useState<MonthlySubscribers[]>([]);
-  const [recentSubscribers, setRecentSubscribers] = useState<RecentSubscriber[]>([]);
-  const [summaryError, setSummaryError] = useState('');
-  const [revenueError, setRevenueError] = useState('');
-  const [breakdownError, setBreakdownError] = useState('');
-  const [subsError, setSubsError] = useState('');
-  const [recentError, setRecentError] = useState('');
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [revenueLoading, setRevenueLoading] = useState(true);
-  const [breakdownLoading, setBreakdownLoading] = useState(true);
-  const [subsLoading, setSubsLoading] = useState(true);
-  const [recentLoading, setRecentLoading] = useState(true);
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+    isError: summaryIsError,
+    error: summaryError,
+  } = useQuery<StatsSummary, Error>({
+    queryKey: ['admin', 'stats', 'summary'],
+    queryFn: async () => {
+      const res = await statsApi.getSummary();
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data.data;
+    },
+  });
 
-  useEffect(() => {
-    statsApi.getSummary()
-      .then(res => setSummary(res.data.data))
-      .catch(() => setSummaryError('KPI 데이터를 불러오지 못했습니다.'))
-      .finally(() => setSummaryLoading(false));
+  const {
+    data: monthlyRevenueData,
+    isLoading: revenueLoading,
+    isError: revenueIsError,
+    error: revenueError,
+  } = useQuery<MonthlyRevenue[], Error>({
+    queryKey: ['admin', 'stats', 'revenue', 'monthly'],
+    queryFn: async () => {
+      const res = await statsApi.getMonthlyRevenue();
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data.data;
+    },
+  });
 
-    statsApi.getMonthlyRevenue()
-      .then(res => setMonthlyRevenue(res.data.data))
-      .catch(() => setRevenueError('월별 매출 데이터를 불러오지 못했습니다.'))
-      .finally(() => setRevenueLoading(false));
+  const {
+    data: breakdownData,
+    isLoading: breakdownLoading,
+    isError: breakdownIsError,
+    error: breakdownError,
+  } = useQuery<RevenueBreakdownItem[], Error>({
+    queryKey: ['admin', 'stats', 'revenue', 'breakdown'],
+    queryFn: async () => {
+      const res = await statsApi.getRevenueBreakdown();
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data.data;
+    },
+  });
 
-    statsApi.getRevenueBreakdown()
-      .then(res => setBreakdown(res.data.data))
-      .catch(() => setBreakdownError('구독 유형별 매출 데이터를 불러오지 못했습니다.'))
-      .finally(() => setBreakdownLoading(false));
+  const {
+    data: monthlySubscribersData,
+    isLoading: subsLoading,
+    isError: subsIsError,
+    error: subsError,
+  } = useQuery<MonthlySubscribers[], Error>({
+    queryKey: ['admin', 'stats', 'subscribers', 'monthly'],
+    queryFn: async () => {
+      const res = await statsApi.getMonthlySubscribers();
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data.data;
+    },
+  });
 
-    statsApi.getMonthlySubscribers()
-      .then(res => setMonthlySubscribers(res.data.data))
-      .catch(() => setSubsError('구독자 변동 데이터를 불러오지 못했습니다.'))
-      .finally(() => setSubsLoading(false));
+  const {
+    data: recentSubscribersData,
+    isLoading: recentLoading,
+    isError: recentIsError,
+    error: recentError,
+  } = useQuery<RecentSubscriber[], Error>({
+    queryKey: ['admin', 'stats', 'subscribers', 'recent'],
+    queryFn: async () => {
+      const res = await statsApi.getRecentSubscribers();
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data.data;
+    },
+  });
 
-    statsApi.getRecentSubscribers()
-      .then(res => setRecentSubscribers(res.data.data))
-      .catch(() => setRecentError('최근 가입 피드를 불러오지 못했습니다.'))
-      .finally(() => setRecentLoading(false));
-  }, []);
+  const monthlyRevenue     = monthlyRevenueData     ?? [];
+  const breakdown          = breakdownData          ?? [];
+  const monthlySubscribers = monthlySubscribersData ?? [];
+  const recentSubscribers  = recentSubscribersData  ?? [];
 
   // KPI 카드 데이터 구성
   const kpis = summary
@@ -142,13 +171,22 @@ export default function StatisticsPage() {
     : [];
 
   // 차트 — 데이터 없으면 빈 배열로 처리
-  const revenueData = monthlyRevenue.length > 0 ? monthlyRevenue : [];
+  const revenueData   = monthlyRevenue.length > 0 ? monthlyRevenue : [];
   const revenueValues = revenueData.map(m => m.total);
-  const maxRevenue = revenueValues.length > 0 ? Math.max(...revenueValues) : LINE_MAX_VAL;
+
+  const maxRevenue = revenueValues.length > 0 ? Math.max(...revenueValues) : 0;
+  const axisMax    = maxRevenue || LINE_MAX_VAL;
+
+  // Y축 레이블/그리드를 axisMax 기준으로 동적 계산 (차트와 동일 스케일 보장)
+  const lineGridValues = [axisMax, (axisMax * 2) / 3, axisMax / 3, 0];
+  const lineYLabels    = lineGridValues.map(v => toM(Math.round(v)));
+  const lineGridSvgY   = lineGridValues.map(
+    v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / axisMax))
+  );
 
   const { line, area, pts } = buildSvgPath(
     revenueValues.length > 1 ? revenueValues : [0, 0],
-    maxRevenue || LINE_MAX_VAL
+    axisMax
   );
   const peakIdx  = pts.reduce((max, p, i) => (p[1] < pts[max][1] ? i : max), 0);
   const tooltipX = Math.min(pts[peakIdx][0] - TOOLTIP_W / 2, LINE_VBW - TOOLTIP_W - 6);
@@ -178,8 +216,8 @@ export default function StatisticsPage() {
         {/* KPI */}
         <section className="memberSummaryGrid">
           {summaryLoading && <p className="stats-loading">KPI 데이터 로딩 중...</p>}
-          {summaryError && <p className="stats-error">{summaryError}</p>}
-          {!summaryLoading && !summaryError && kpis.map(({ label, value, sub, color, Icon }) => (
+          {summaryIsError && <p className="stats-error">{summaryError?.message ?? 'KPI 데이터를 불러오지 못했습니다.'}</p>}
+          {!summaryLoading && !summaryIsError && kpis.map(({ label, value, sub, color, Icon }) => (
             <article className={`memberSummaryCard ${color}`} key={label}>
               <div className="memberKpiContent">
                 <p>{label}</p>
@@ -203,14 +241,14 @@ export default function StatisticsPage() {
                 <h3>월별 매출 추이</h3>
               </div>
               {summary && (
-                <span className="statsTrendBadge up">
+                <span className={`statsTrendBadge ${summary.currentMonthRevenueGrowth >= 0 ? 'up' : 'down'}`}>
                   {summary.currentMonthRevenueGrowth >= 0 ? '▲' : '▼'} {summary.currentMonthRevenueGrowth >= 0 ? '+' : ''}{summary.currentMonthRevenueGrowth}%
                 </span>
               )}
             </div>
             {revenueLoading && <p className="stats-loading">매출 데이터 로딩 중...</p>}
-            {revenueError && <p className="stats-error">{revenueError}</p>}
-            {!revenueLoading && !revenueError && (
+            {revenueIsError && <p className="stats-error">{revenueError?.message ?? '월별 매출 데이터를 불러오지 못했습니다.'}</p>}
+            {!revenueLoading && !revenueIsError && (
             <div className="statsLineWrap">
               <div className="statsChartWithAxis">
                 <div className="statsLineYAxis">
@@ -268,8 +306,8 @@ export default function StatisticsPage() {
               </div>
             </div>
             {breakdownLoading && <p className="stats-loading">구독 유형별 데이터 로딩 중...</p>}
-            {breakdownError && <p className="stats-error">{breakdownError}</p>}
-            {!breakdownLoading && !breakdownError && (
+            {breakdownIsError && <p className="stats-error">{breakdownError?.message ?? '구독 유형별 매출 데이터를 불러오지 못했습니다.'}</p>}
+            {!breakdownLoading && !breakdownIsError && (
             <div className="statsChannelList">
               <div className="statsChannelTableHead">
                 <span>구독 유형</span>
@@ -286,7 +324,7 @@ export default function StatisticsPage() {
                     </div>
                     <span className="statsChannelName">{item.label}</span>
                     <span className="statsChannelAmt">
-                      {toM(up ? item.amount : -item.amount)}
+                      {toM(item.amount)}
                     </span>
                     <span className={`statsGrowthBadge ${up ? 'up' : 'down'}`}>
                       {up ? '+' : ''}{item.growth}%
@@ -314,8 +352,8 @@ export default function StatisticsPage() {
               </div>
             </div>
             {subsLoading && <p className="stats-loading">구독자 데이터 로딩 중...</p>}
-            {subsError && <p className="stats-error">{subsError}</p>}
-            {!subsLoading && !subsError && (
+            {subsIsError && <p className="stats-error">{subsError?.message ?? '구독자 변동 데이터를 불러오지 못했습니다.'}</p>}
+            {!subsLoading && !subsIsError && (
             <div className="statsLineWrap">
               <div className="statsChartWithAxis">
                 <div className="statsLineYAxis">
@@ -371,8 +409,8 @@ export default function StatisticsPage() {
               <button className="statsViewAllBtn">전체보기</button>
             </div>
             {recentLoading && <p className="stats-loading">피드 데이터 로딩 중...</p>}
-            {recentError && <p className="stats-error">{recentError}</p>}
-            {!recentLoading && !recentError && (
+            {recentIsError && <p className="stats-error">{recentError?.message ?? '최근 가입 피드를 불러오지 못했습니다.'}</p>}
+            {!recentLoading && !recentIsError && (
             <div className="statsFeed">
               {recentSubscribers.map(item => (
                 <div className="statsFeedItem" key={item.memberId}>
