@@ -186,6 +186,7 @@ function RegisterVerifyPage() {
       return;
     }
 
+    const requestOrder = verificationRequestRef.current;
     clearMessages();
 
     try {
@@ -193,7 +194,7 @@ function RegisterVerifyPage() {
         verificationId,
         code: form.phoneCode.trim(),
       });
-      if (verificationId !== verification.verificationId || target !== currentPhoneRef.current) return;
+      if (requestOrder !== verificationRequestRef.current || target !== currentPhoneRef.current) return;
 
       setVerification((current) => ({
         ...current,
@@ -202,7 +203,7 @@ function RegisterVerifyPage() {
       setFieldErrors((current) => ({ ...current, phoneCode: '' }));
       setSuccessMessage('휴대폰 인증이 완료되었습니다.');
     } catch (error) {
-      if (verificationId !== verification.verificationId || target !== currentPhoneRef.current) return;
+      if (requestOrder !== verificationRequestRef.current || target !== currentPhoneRef.current) return;
       setFieldErrors((current) => ({ ...current, phoneCode: getRecoveryErrorMessage(error, '휴대폰 인증 확인에 실패했습니다.') }));
     }
   };
