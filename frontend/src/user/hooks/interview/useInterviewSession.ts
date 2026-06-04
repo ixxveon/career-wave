@@ -18,6 +18,7 @@ import {
   SPRING_WS_MESSAGE_TYPE,
   SPRING_WS_SYSTEM_SUBTYPE,
   FASTAPI_WS_MESSAGE_TYPE,
+  SESSION_STATE,
 } from '../../types/interview';
 import type { TTSQueueStatus } from './useTTSQueue';
 import type { SpringWSStatus }  from './useSpringWebSocket';
@@ -73,7 +74,7 @@ export type SessionAction =
   | { type: 'SET_PENDING_VOICE_ID'; id: number | null };
 
 export const INIT_STATE: SessionReducerState = {
-  sessionState:   'READY',
+  sessionState:   SESSION_STATE.READY,
   messages:       [],
   questionOrder:  1,
   isTyping:       false,
@@ -92,15 +93,15 @@ export function sessionReducer(
 ): SessionReducerState {
   switch (action.type) {
     case 'RUNNING':
-      return { ...state, sessionState: 'RUNNING' };
+      return { ...state, sessionState: SESSION_STATE.RUNNING };
     case 'RECONNECTING':
-      return state.sessionState === 'RUNNING'
-        ? { ...state, sessionState: 'RECONNECTING' }
+      return state.sessionState === SESSION_STATE.RUNNING
+        ? { ...state, sessionState: SESSION_STATE.RECONNECTING }
         : state;
     case 'ERROR':
-      return { ...state, sessionState: 'ERROR' };
+      return { ...state, sessionState: SESSION_STATE.ERROR };
     case 'FINISH':
-      return { ...state, sessionState: 'FINISHED', isTyping: false };
+      return { ...state, sessionState: SESSION_STATE.FINISHED, isTyping: false };
     case 'RESET':
       return { ...INIT_STATE };
     case 'ADD_MESSAGE':
@@ -286,7 +287,7 @@ export function useInterviewSession({
     if (
       status === 'CONNECTED' &&
       fastApiWsStatusRef.current === 'CONNECTED' &&
-      stateRef.current.sessionState === 'RECONNECTING'
+      stateRef.current.sessionState === SESSION_STATE.RECONNECTING
     ) {
       dispatch({ type: 'RUNNING' });
     }
@@ -373,7 +374,7 @@ export function useInterviewSession({
     if (
       status === 'CONNECTED' &&
       springWsStatusRef.current === 'CONNECTED' &&
-      stateRef.current.sessionState === 'RECONNECTING'
+      stateRef.current.sessionState === SESSION_STATE.RECONNECTING
     ) {
       dispatch({ type: 'RUNNING' });
     }
@@ -400,7 +401,7 @@ export function useInterviewSession({
   // ── sessionStorage 저장 (비정상 종료 복구용, constitution.md §상태 복원력) ──
 
   useEffect(() => {
-    if (!sessionId || state.sessionState !== 'RUNNING') return;
+    if (!sessionId || state.sessionState !== SESSION_STATE.RUNNING) return;
     saveInterviewSession({
       sessionId,
       sessionType,
@@ -410,7 +411,7 @@ export function useInterviewSession({
   }, [sessionId, state.sessionState, state.questionOrder]);
 
   useEffect(() => {
-    if (state.sessionState === 'FINISHED') {
+    if (state.sessionState === SESSION_STATE.FINISHED) {
       clearInterviewSession();
       clearLlmTimeout();
     }

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Clock, X, Loader2 } from 'lucide-react';
 
 import { interviewSessionApi }   from '../../api/interview';
-import { SESSION_TYPE }          from '../../types/interview';
+import { SESSION_TYPE, SESSION_STATE }          from '../../types/interview';
 import type { SessionType, Resume, MicStatus } from '../../types/interview';
 
 import { usePreflightCheck }     from '../../hooks/interview/usePreflightCheck';
@@ -85,7 +85,7 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
 
   /* ── FINISHED → 리포트 페이지 이동 ── */
   useEffect(() => {
-    if (session.sessionState !== 'FINISHED') return;
+    if (session.sessionState !== SESSION_STATE.FINISHED) return;
     const timer = setTimeout(
       () => navigate(`/interview/report?sessionId=${sessionId}`),
       2000,
@@ -210,9 +210,9 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
     timer.start();
   }
 
-  const isDone          = session.sessionState === 'FINISHED';
-  const isError         = session.sessionState === 'ERROR';
-  const isReconnecting  = session.sessionState === 'RECONNECTING';
+  const isDone          = session.sessionState === SESSION_STATE.FINISHED;
+  const isError         = session.sessionState === SESSION_STATE.ERROR;
+  const isReconnecting  = session.sessionState === SESSION_STATE.RECONNECTING;
   const totalQ   = 5; // 서버 설정값으로 추후 대체 예정
 
   return (
