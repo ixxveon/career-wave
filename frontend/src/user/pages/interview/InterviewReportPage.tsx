@@ -17,6 +17,12 @@ import { SESSION_TYPE } from '../../types/interview';
 import './InterviewReportPage.css';
 
 /* ── sessionType별 재연습 라우트 (as const 상수, constitution §금지패턴 문자열 하드코딩 방지) */
+const SESSION_TYPE_LABEL: Record<SessionType, string> = {
+  TEXT:  'AI 텍스트 면접',
+  VOICE: 'AI 음성 면접',
+  VIDEO: 'AI 영상 면접',
+};
+
 const RETRY_ROUTE: Record<SessionType, string> = {
   [SESSION_TYPE.TEXT]:  '/interview/text',
   [SESSION_TYPE.VOICE]: '/interview/voice',
@@ -203,11 +209,6 @@ const ReportContent = memo(function ReportContent({
     return items.length > 0 ? items : FALLBACK_IMPROVEMENTS;
   }, [hybridScores]);
 
-  const sessionTypeLabel: Record<SessionType, string> = {
-    TEXT:  'AI 텍스트 면접',
-    VOICE: 'AI 음성 면접',
-    VIDEO: 'AI 영상 면접',
-  };
 
   const AI_METRICS = [
     {
@@ -256,7 +257,7 @@ const ReportContent = memo(function ReportContent({
         <div className="ir-banner__left">
           <div className="ir-banner__meta">
             <span className="ir-banner__type-badge">
-              <MessageSquare size={11} /> {sessionTypeLabel[data.sessionType]}
+              <MessageSquare size={11} /> {SESSION_TYPE_LABEL[data.sessionType]}
             </span>
             <span className="ir-banner__date">
               <Calendar size={11} /> {new Date(data.createdAt).toLocaleDateString('ko-KR')}

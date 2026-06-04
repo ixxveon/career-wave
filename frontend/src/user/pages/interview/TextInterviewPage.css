@@ -806,6 +806,21 @@
   flex-shrink: 0;
 }
 
+/* ─── 재연결 중 배너 ──────────────────────────── */
+.ti-reconnect-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #78350f;
+  color: #fde68a;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  border-bottom: 1px solid #92400e;
+}
+
 /* ─── 종료 모달 ───────────────────────────────── */
 .ti-exit-modal {
   width: 100%;

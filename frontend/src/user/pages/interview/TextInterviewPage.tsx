@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Clock, X, Loader2 } from 'lucide-react';
 
 import { interviewSessionApi }   from '../../api/interview';
-import { SESSION_TYPE }          from '../../types/interview';
+import { SESSION_TYPE, SESSION_STATE }          from '../../types/interview';
 import type { SessionType, Resume, MicStatus } from '../../types/interview';
 
 import { usePreflightCheck }     from '../../hooks/interview/usePreflightCheck';
@@ -85,7 +85,7 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
 
   /* ── FINISHED → 리포트 페이지 이동 ── */
   useEffect(() => {
-    if (session.sessionState !== 'FINISHED') return;
+    if (session.sessionState !== SESSION_STATE.FINISHED) return;
     const timer = setTimeout(
       () => navigate(`/interview/report?sessionId=${sessionId}`),
       2000,
@@ -210,8 +210,9 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
     timer.start();
   }
 
-  const isDone   = session.sessionState === 'FINISHED';
-  const isError  = session.sessionState === 'ERROR';
+  const isDone          = session.sessionState === SESSION_STATE.FINISHED;
+  const isError         = session.sessionState === SESSION_STATE.ERROR;
+  const isReconnecting  = session.sessionState === SESSION_STATE.RECONNECTING;
   const totalQ   = 5; // 서버 설정값으로 추후 대체 예정
 
   return (
@@ -256,6 +257,14 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
         isTyping={session.isTyping}
         streamingText={session.streamingText}
       />
+
+      {/* 재연결 중 안내 배너 (constitution §지속적 연결성) */}
+      {isReconnecting && (
+        <div className="ti-reconnect-bar" role="alert">
+          <Loader2 size={14} className="ti-spin" />
+          <span>네트워크 연결이 끊겼습니다. 자동으로 재연결을 시도하고 있습니다...</span>
+        </div>
+      )}
 
       {/* 하단 입력 영역 */}
       {isDone ? (
