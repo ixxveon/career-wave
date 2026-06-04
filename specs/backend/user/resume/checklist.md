@@ -62,7 +62,9 @@
 
 ## Webhook (`POST .../{documentId}/webhook`)
 
-- [ ] FastAPI 이외의 외부 호출을 차단하는 보안 검증이 적용되어 있다 (IP 제한 또는 Secret 헤더)
+- [ ] `X-Internal-Secret` 헤더가 환경 변수 `WEBHOOK_SECRET` 값과 일치하는지 검증한다
+- [ ] 헤더 누락 또는 값 불일치 시 `403 Forbidden`을 반환한다
+- [ ] `WEBHOOK_SECRET` 값이 코드에 하드코딩되지 않고 환경 변수로 관리된다
 - [ ] 멱등성: `document.status`가 이미 `COMPLETED`/`FAILED`인 경우 DB 갱신 없이 `200 OK`만 반환한다
 - [ ] 중복 Webhook 수신 시 예외가 발생하지 않고 정상 응답한다
 - [ ] `DocumentFeedback` 저장과 `document.status` 업데이트가 동일 트랜잭션으로 처리된다

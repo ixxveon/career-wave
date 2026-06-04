@@ -82,7 +82,7 @@
 ## Phase 6: Webhook 수신 API (FastAPI → Spring)
 
 - [ ] `ResumeDTO.RequestWebhook` DTO 작성 (`status`, `scores`, `feedbackDetails`, `errorMessage`)
-- [ ] Webhook 내부 보안 검증 구현 (IP 제한 또는 `X-Internal-Secret` 헤더 — 팀 협의 방식 적용)
+- [ ] `X-Internal-Secret` 헤더 검증 구현 — 환경 변수 `WEBHOOK_SECRET` 값과 비교, 불일치 시 `403` 반환
 - [ ] 멱등성 처리 — `document.status`가 이미 `COMPLETED`/`FAILED`이면 DB 갱신 없이 `200 OK` 즉시 반환
 - [ ] `DocumentFeedback` 저장 + `document.status` 업데이트 (`@Transactional`)
 - [ ] 저장 완료 후 WebSocket 세션에 메시지 브로드캐스트 연동

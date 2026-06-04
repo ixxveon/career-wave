@@ -50,6 +50,7 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 
 - `@AuthenticationPrincipal`로 `memberId`를 추출하며, Request body·Path variable의 `memberId`를 신뢰하지 않는다.
 - WebSocket 핸드셰이크 시 쿼리 파라미터 토큰 검증을 반드시 수행. 검증 실패 시 Close 1008로 즉시 종료.
+- Webhook 수신 시 `X-Internal-Secret` 헤더 값을 환경 변수 `WEBHOOK_SECRET`과 비교하여 검증. 헤더 누락 또는 불일치 시 즉시 `403` 반환. Secret Key를 코드에 하드코딩 금지.
 - 파일 확장자 검증은 MIME type 기반으로 수행 (파일명 확장자 단독 신뢰 금지).
 
 ---

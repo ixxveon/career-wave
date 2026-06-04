@@ -395,8 +395,15 @@ Webhook은 네트워크 재시도로 동일 요청이 중복 수신될 수 있�
 
 ### 보안
 
-- 외부 클라이언트에서 호출 불가하도록 내부망 IP 제한 또는 `X-Internal-Secret` 헤더 검증 적용
+- FastAPI는 모든 Webhook 요청 시 `X-Internal-Secret` 헤더에 사전 공유 키를 실어서 보낸다.
+- Spring은 요청 수신 즉시 헤더 값을 환경 변수에 저장된 키와 비교하여 검증한다.
+- 키 불일치 또는 헤더 누락 시 `403 Forbidden`으로 즉시 차단한다.
+- Secret Key는 코드에 하드코딩하지 않고 반드시 환경 변수(`WEBHOOK_SECRET`)로 관리한다.
 - `documentId` 존재하지 않을 경우 로그 기록 후 무시 (프론트 에러 노출 없음)
+
+```
+X-Internal-Secret: {WEBHOOK_SECRET 환경 변수 값}
+```
 
 ---
 
