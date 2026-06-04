@@ -249,6 +249,31 @@
   color: #708397;
 }
 
+/* ── 공지사항 테이블 컬럼 너비 ───────────────────────────────── */
+
+.csNoticeTable {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.csNoticeTable th:nth-child(1),
+.csNoticeTable td:nth-child(1) { width: 7%; }    /* 번호 */
+
+.csNoticeTable th:nth-child(2),
+.csNoticeTable td:nth-child(2) { width: 14%; }   /* 카테고리 */
+
+.csNoticeTable th:nth-child(3),
+.csNoticeTable td:nth-child(3) { width: auto; }  /* 제목 — 나머지 공간 */
+
+.csNoticeTable th:nth-child(4),
+.csNoticeTable td:nth-child(4) { width: 14%; }   /* 등록일 */
+
+.csNoticeTable th:nth-child(5),
+.csNoticeTable td:nth-child(5) { width: 9%; }    /* 노출 */
+
+.csNoticeTable th:nth-child(6),
+.csNoticeTable td:nth-child(6) { width: 14%; }   /* 관리 */
+
 /* ── 반응형 ──────────────────────────────────────────────────── */
 
 @media (max-width: 640px) {

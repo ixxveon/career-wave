@@ -1,32 +1,19 @@
+import { useQuery } from '@tanstack/react-query';
 import { TrendingUp, DollarSign, Users, UserPlus, CreditCard, RefreshCw, Minus } from 'lucide-react';
 import '../../styles/admin.css';
 import '../../styles/Statistics.css';
+import { statsApi, REVENUE_TYPE, type RevenueType, type StatsSummary, type MonthlyRevenue, type RevenueBreakdownItem } from '../../api/statsApi';
+import type { ElementType } from 'react';
 
-// TODO: 아래 데이터는 목업입니다. API 연동 시 교체 필요합니다.
-const kpis = [
-  { label: '이번 달 매출',      value: '₩38.5M',  sub: '전월 대비 +12.6%', color: 'kpi-green',  Icon: TrendingUp },
-  { label: '누적 총 매출',      value: '₩186.5M', sub: '서비스 오픈 이후',  color: 'kpi-blue',   Icon: DollarSign },
-  { label: '총 가입자 수',      value: '12,847명', sub: '서비스 오픈 이후',  color: 'kpi-purple', Icon: Users      },
-  { label: '이번 달 신규 가입', value: '314명',    sub: '전월 대비 +2.3%',  color: 'kpi-yellow', Icon: UserPlus   },
-];
+// 구독 유형별 아이콘 매핑
+const BREAKDOWN_ICON_MAP: Record<RevenueType, ElementType> = {
+  [REVENUE_TYPE.PREMIUM]: CreditCard,
+  [REVENUE_TYPE.NEW_CONVERSION]: UserPlus,
+  [REVENUE_TYPE.RENEWAL]: RefreshCw,
+  [REVENUE_TYPE.REFUND_DEDUCTION]: Minus,
+};
 
-const monthlyRevenue = [
-  { month: '12월', total: 24800000 },
-  { month: '1월',  total: 27500000 },
-  { month: '2월',  total: 29100000 },
-  { month: '3월',  total: 32400000 },
-  { month: '4월',  total: 34200000 },
-  { month: '5월',  total: 38500000 },
-];
-
-const subscriptionBreakdown = [
-  { Icon: CreditCard, label: '프리미엄 월정액', amount: 26900000, growth: 15.9, up: true  },
-  { Icon: UserPlus,   label: '신규 가입 전환',  amount:  3480000, growth: 22.1, up: true  },
-  { Icon: RefreshCw,  label: '갱신 결제',       amount: 23420000, growth: 11.3, up: true  },
-  { Icon: Minus,      label: '환불 차감',       amount:   580000, growth: -8.2, up: false },
-];
-
-// 신규 + 탈퇴 구독자 월별 데이터
+// 더미 — Phase 7-2 연동 전까지 유지
 const monthlySubscribers = [
   { month: '12월', newSubs: 212, churned: 45 },
   { month: '1월',  newSubs: 248, churned: 38 },
@@ -52,11 +39,7 @@ const LINE_VBW     = 1000;
 const LINE_PAD_X   = 30;
 const LINE_CHART_H_SVG = LINE_VBH - LINE_PAD * 2; // 164
 
-// 매출 Y축 레이블 (4항목, padding 24px top/bottom → 위치 자동 정렬)
-const lineYLabels  = ['₩4,500만', '₩3,000만', '₩1,500만', '₩0'];
-const lineGridSvgY = [45_000_000, 30_000_000, 15_000_000, 0].map(
-  v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / LINE_MAX_VAL))
-); // [28, 83, 137, 192]
+// 매출 Y축 레이블 — 컴포넌트 내에서 axisMax 기준으로 동적 계산
 
 // 구독자 Y축 레이블 (5항목, 동일 padding → 동일 CSS 재사용)
 const SUB_MAX_VAL  = 400;
@@ -96,7 +79,103 @@ function buildSvgPath(values: number[], maxVal = LINE_MAX_VAL) {
 const TOOLTIP_W = 104;
 
 export default function StatisticsPage() {
-  const { line, area, pts } = buildSvgPath(monthlyRevenue.map(m => m.total));
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+    isError: summaryIsError,
+    error: summaryError,
+  } = useQuery<StatsSummary, Error>({
+    queryKey: ['admin', 'stats', 'summary'],
+    queryFn: async () => {
+      const res = await statsApi.getSummary();
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data.data;
+    },
+  });
+
+  const {
+    data: monthlyRevenueData,
+    isLoading: revenueLoading,
+    isError: revenueIsError,
+    error: revenueError,
+  } = useQuery<MonthlyRevenue[], Error>({
+    queryKey: ['admin', 'stats', 'revenue', 'monthly'],
+    queryFn: async () => {
+      const res = await statsApi.getMonthlyRevenue();
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data.data;
+    },
+  });
+
+  const {
+    data: breakdownData,
+    isLoading: breakdownLoading,
+    isError: breakdownIsError,
+    error: breakdownError,
+  } = useQuery<RevenueBreakdownItem[], Error>({
+    queryKey: ['admin', 'stats', 'revenue', 'breakdown'],
+    queryFn: async () => {
+      const res = await statsApi.getRevenueBreakdown();
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data.data;
+    },
+  });
+
+  const monthlyRevenue = monthlyRevenueData ?? [];
+  const breakdown      = breakdownData ?? [];
+
+  // KPI 카드 데이터 구성
+  const kpis = summary
+    ? [
+        {
+          label: '이번 달 매출',
+          value: toM(summary.currentMonthRevenue),
+          sub: `전월 대비 ${summary.currentMonthRevenueGrowth >= 0 ? '+' : ''}${summary.currentMonthRevenueGrowth}%`,
+          color: 'kpi-green',
+          Icon: TrendingUp,
+        },
+        {
+          label: '누적 총 매출',
+          value: toM(summary.totalRevenue),
+          sub: '서비스 오픈 이후',
+          color: 'kpi-blue',
+          Icon: DollarSign,
+        },
+        {
+          label: '총 가입자 수',
+          value: `${summary.totalMembers.toLocaleString()}명`,
+          sub: '서비스 오픈 이후',
+          color: 'kpi-purple',
+          Icon: Users,
+        },
+        {
+          label: '이번 달 신규 가입',
+          value: `${summary.currentMonthNewMembers.toLocaleString()}명`,
+          sub: `전월 대비 ${summary.currentMonthNewMembersGrowth >= 0 ? '+' : ''}${summary.currentMonthNewMembersGrowth}%`,
+          color: 'kpi-yellow',
+          Icon: UserPlus,
+        },
+      ]
+    : [];
+
+  // 차트 — 데이터 없으면 빈 배열로 처리
+  const revenueData = monthlyRevenue.length > 0 ? monthlyRevenue : [];
+  const revenueValues = revenueData.map(m => m.total);
+
+  const maxRevenue = revenueValues.length > 0 ? Math.max(...revenueValues) : 0;
+  const axisMax = maxRevenue || LINE_MAX_VAL;
+
+  // Y축 레이블/그리드를 axisMax 기준으로 동적 계산 (차트와 동일 스케일 보장)
+  const lineGridValues = [axisMax, (axisMax * 2) / 3, axisMax / 3, 0];
+  const lineYLabels    = lineGridValues.map(v => toM(Math.round(v)));
+  const lineGridSvgY   = lineGridValues.map(
+    v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / axisMax))
+  );
+
+  const { line, area, pts } = buildSvgPath(
+    revenueValues.length > 1 ? revenueValues : [0, 0],
+    axisMax
+  );
   const peakIdx  = pts.reduce((max, p, i) => (p[1] < pts[max][1] ? i : max), 0);
   const tooltipX = Math.min(pts[peakIdx][0] - TOOLTIP_W / 2, LINE_VBW - TOOLTIP_W - 6);
 
@@ -118,7 +197,9 @@ export default function StatisticsPage() {
 
         {/* KPI */}
         <section className="memberSummaryGrid">
-          {kpis.map(({ label, value, sub, color, Icon }) => (
+          {summaryLoading && <p className="stats-loading">KPI 데이터 로딩 중...</p>}
+          {summaryIsError && <p className="stats-error">{summaryError?.message ?? 'KPI 데이터를 불러오지 못했습니다.'}</p>}
+          {!summaryLoading && !summaryIsError && kpis.map(({ label, value, sub, color, Icon }) => (
             <article className={`memberSummaryCard ${color}`} key={label}>
               <div className="memberKpiContent">
                 <p>{label}</p>
@@ -141,8 +222,15 @@ export default function StatisticsPage() {
                 <span className="statsEyebrow">월별 구독 매출 실적</span>
                 <h3>월별 매출 추이</h3>
               </div>
-              <span className="statsTrendBadge up">▲ +12.6%</span>
+              {summary && (
+                <span className={`statsTrendBadge ${summary.currentMonthRevenueGrowth >= 0 ? 'up' : 'down'}`}>
+                  {summary.currentMonthRevenueGrowth >= 0 ? '▲' : '▼'} {summary.currentMonthRevenueGrowth >= 0 ? '+' : ''}{summary.currentMonthRevenueGrowth}%
+                </span>
+              )}
             </div>
+            {revenueLoading && <p className="stats-loading">매출 데이터 로딩 중...</p>}
+            {revenueIsError && <p className="stats-error">{revenueError?.message ?? '월별 매출 데이터를 불러오지 못했습니다.'}</p>}
+            {!revenueLoading && !revenueIsError && (
             <div className="statsLineWrap">
               <div className="statsChartWithAxis">
                 <div className="statsLineYAxis">
@@ -173,18 +261,23 @@ export default function StatisticsPage() {
                         fill="#24496f" stroke="white" strokeWidth="2.5"
                       />
                     ))}
-                    <rect x={tooltipX} y={pts[peakIdx][1] - 36} width={TOOLTIP_W} height={24} rx="7" fill="#24496f" />
-                    <text x={tooltipX + TOOLTIP_W / 2} y={pts[peakIdx][1] - 19}
-                      textAnchor="middle" fill="white" fontSize="12" fontWeight="700" fontFamily="inherit">
-                      Peak: {toM(Math.max(...monthlyRevenue.map(m => m.total)))}
-                    </text>
+                    {revenueValues.length > 0 && (
+                      <>
+                        <rect x={tooltipX} y={pts[peakIdx][1] - 36} width={TOOLTIP_W} height={24} rx="7" fill="#24496f" />
+                        <text x={tooltipX + TOOLTIP_W / 2} y={pts[peakIdx][1] - 19}
+                          textAnchor="middle" fill="white" fontSize="12" fontWeight="700" fontFamily="inherit">
+                          Peak: {toM(Math.max(...revenueValues))}
+                        </text>
+                      </>
+                    )}
                   </svg>
                   <div className="statsLineLabels">
-                    {monthlyRevenue.map(m => <span key={m.month}>{m.month}</span>)}
+                    {revenueData.map(m => <span key={m.month}>{m.month}</span>)}
                   </div>
                 </div>
               </div>
             </div>
+            )}
           </section>
 
           <section className="admin-card statsCard">
@@ -194,27 +287,35 @@ export default function StatisticsPage() {
                 <h3>구독 유형별 매출 실적</h3>
               </div>
             </div>
+            {breakdownLoading && <p className="stats-loading">구독 유형별 데이터 로딩 중...</p>}
+            {breakdownIsError && <p className="stats-error">{breakdownError?.message ?? '구독 유형별 매출 데이터를 불러오지 못했습니다.'}</p>}
+            {!breakdownLoading && !breakdownIsError && (
             <div className="statsChannelList">
               <div className="statsChannelTableHead">
                 <span>구독 유형</span>
                 <span className="colAmt">매출액</span>
                 <span className="colDelta">증감</span>
               </div>
-              {subscriptionBreakdown.map(item => (
-                <div className="statsChannelRow" key={item.label}>
-                  <div className="statsChannelIcon">
-                    <item.Icon size={14} />
+              {breakdown.map(item => {
+                const up = item.growth >= 0;
+                const Icon = BREAKDOWN_ICON_MAP[item.type] ?? CreditCard;
+                return (
+                  <div className="statsChannelRow" key={item.type}>
+                    <div className="statsChannelIcon">
+                      <Icon size={14} />
+                    </div>
+                    <span className="statsChannelName">{item.label}</span>
+                    <span className="statsChannelAmt">
+                      {toM(item.amount)}
+                    </span>
+                    <span className={`statsGrowthBadge ${up ? 'up' : 'down'}`}>
+                      {up ? '+' : ''}{item.growth}%
+                    </span>
                   </div>
-                  <span className="statsChannelName">{item.label}</span>
-                  <span className="statsChannelAmt">
-                    {toM(item.up ? item.amount : -item.amount)}
-                  </span>
-                  <span className={`statsGrowthBadge ${item.up ? 'up' : 'down'}`}>
-                    {item.up ? '+' : ''}{item.growth}%
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
+            )}
           </section>
         </div>
 

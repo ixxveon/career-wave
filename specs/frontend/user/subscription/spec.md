@@ -1,9 +1,10 @@
 # Feature Specification: User Subscription & Billing
 
 > 작성일: 2026-05-31  
+> 최근 정리일: 2026-06-03  
 > 관련 문서: `plan.md` / `tasks.md` / `api-schema.md` / `constitution.md`  
-> **Feature Branch**: `feature/user-subscription-billing`  
-> **Status**: Draft
+> **Implementation Branch Pattern**: `feature/user-{subscription|payment-history|billing|frontend-qa}`  
+> **Status**: UI Implemented / Integration Pending
 
 ---
 
@@ -129,6 +130,7 @@
 
 - 실제 상품 가격, 할인, 다음 결제일, 구독 권한은 백엔드 응답을 기준으로 한다.
 - 현재 ERD 초안에는 결제/구독 모델이 부족하므로 backend spec에서 별도 설계가 필요하다.
+- 현재 프론트엔드에는 MVP 수준의 구독/결제 화면 UI가 존재하지만, 실제 API/Query/Type 구조는 아직 완성되지 않았다.
 - Toss Payments 실제 연동 전까지 mock success/fail flow는 개발 환경에서만 허용한다.
 - 결제 성공 후 AI 서비스 권한 반영은 구독 API 재조회 또는 entitlement API 응답으로 확인한다.
 - 환불 정책과 자동 결제 해지 시점은 서비스 정책 확정 후 문구와 상태를 보완한다.

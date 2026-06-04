@@ -1,9 +1,10 @@
 # Feature Specification: Member Auth
 
 > 작성일: 2026-05-31  
+> 최근 정리일: 2026-06-03  
 > 관련 문서: `plan.md` / `tasks.md` / `api-schema.md` / `constitution.md`  
-> **Feature Branch**: `feature/user-member-auth`  
-> **Status**: Draft
+> **Implementation Branch Pattern**: `feature/user-auth-{phase-or-scope}`  
+> **Status**: In Progress
 
 ---
 
@@ -26,6 +27,7 @@
 2. **Given** 사용자가 아이디 중복 확인을 완료하지 않았으면, **When** 가입하기를 시도할 때, **Then** 중복 확인 필요 메시지가 표시된다.
 3. **Given** 인증번호가 만료되면, **When** 사용자가 확인 버튼을 클릭할 때, **Then** 만료 안내와 재전송 CTA가 표시된다.
 4. **Given** 비밀번호와 비밀번호 확인이 다르면, **Then** 제출 전 오류 메시지가 표시되고 API 요청은 발생하지 않는다.
+5. **Given** 인증번호 요청 이후 사용자가 인증 수단을 전환하면, **Then** 이전 수단의 늦은 응답이 현재 verification 상태를 다시 채우지 않는다.
 
 ### User Story 3 — 기업회원 가입 및 승인 대기 (Priority: P1)
 > 기업 담당자는 기업정보, 담당자 정보, 재직증명서 PDF를 제출하고 승인 대기 상태를 확인하고 싶다.
@@ -107,6 +109,7 @@
 - **계정 존재 여부 추론 위험**: 로그인/찾기/재설정 실패 메시지는 기본적으로 일반화한다.
 - **인증번호 만료**: 입력 영역은 유지하되 확인 버튼은 실패 처리하고 재전송 CTA를 강조한다.
 - **인증번호 재전송 과다**: 429 응답 시 남은 시간 또는 고객센터 안내를 표시한다.
+- **인증 방식 전환 중 늦은 응답 도착**: 최신 method/member type 기준 snapshot과 일치할 때만 verification/recovery 상태를 갱신한다.
 - **중복 클릭**: 로그인, 가입, 인증 확인, 비밀번호 저장 버튼은 요청 중 disabled 처리한다.
 - **사업자등록번호 중복**: 이미 등록된 기업임을 안내하되 기존 담당자명/이메일은 노출하지 않는다.
 - **PDF 위장 파일**: 프론트 MIME 검증 실패 시 차단하고, 서버 악성 파일 검사 실패 응답도 오류로 표시한다.

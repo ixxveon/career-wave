@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { memberRegisterApi } from '../../api/member';
-import type { CompanyRegisterRequest, UserRegisterRequest } from '../../types/member';
+import { memberSocialRegisterApi } from '../../api/member';
+import type { CompanyRegisterRequest, SocialRegisterCompletionRequest, UserRegisterRequest } from '../../types/member';
 
 export function useRegisterUser() {
   return useMutation({
@@ -11,6 +12,12 @@ export function useRegisterUser() {
 export function useRegisterCompany() {
   return useMutation({
     mutationFn: (payload: CompanyRegisterRequest) => memberRegisterApi.registerCompany(payload),
+  });
+}
+
+export function useCompleteSocialRegister() {
+  return useMutation({
+    mutationFn: (payload: SocialRegisterCompletionRequest) => memberSocialRegisterApi.complete(payload),
   });
 }
 

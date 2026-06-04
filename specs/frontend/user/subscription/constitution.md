@@ -8,7 +8,11 @@
 
 ## 0. 컨벤션
 
-* **Feature Branch**: `feature/user-subscription-{기능명}` (예: `feature/user-subscription-billing`)
+* **Feature Branch**:
+  * `feature/user-subscription`
+  * `feature/user-payment-history`
+  * `feature/user-billing`
+  * `feature/user-frontend-qa`
 * **PR 제목 예시**: `[SUBSCRIPTION] 사용자 구독 및 결제 플로우 구현`
 * **파일 경로 원칙**:
   * 페이지: `src/user/pages/mypage/`, `src/user/pages/billing/`
@@ -16,6 +20,7 @@
   * 상태/사이드이펙트 훅: `src/user/hooks/subscription/`
   * 타입: `src/user/types/subscription.ts`
 * **문서 범위**: 마이페이지 구독 현황, AI 서비스 사용량, 결제 내역, 구독 해지, checkout/success/fail, 상품 선택, Toss Payments 연동 예정 계약을 포함한다.
+* **현재 프로젝트 Phase 순서**: `Phase 5 Subscription → Phase 6 Payment History → Phase 7 Billing → Phase 8 Frontend QA`
 
 ### 예외: 순차 의존 피처
 
