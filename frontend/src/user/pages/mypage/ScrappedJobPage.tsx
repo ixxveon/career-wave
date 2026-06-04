@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Search, Bookmark } from "lucide-react";
 import JobNoticeDetail from "@/user/pages/jobNotice/JobNoticeDetail";
@@ -45,20 +45,16 @@ const createJobNoticeViewModel = (job: ScrapJob): JobNoticeViewModel => ({
     company: job.companyName,
     location: job.location,
     deadline: job.deadline,
-
     exp: CAREER_LEVEL_LABELS[job.careerLevel] ?? "무관",
     employment: "-",
     source: "-",
     jobType: "-",
     companySize: "-",
-
     careerLevel: job.careerLevel,
     noticeStatus: job.noticeStatus,
     bookmarked: true,
-
     stacks: [],
     tags: [],
-
     postedAt: job.createdAt,
     recommended: false,
     recommendScore: 0,
@@ -67,15 +63,37 @@ const createJobNoticeViewModel = (job: ScrapJob): JobNoticeViewModel => ({
 
 function ScrappedJobPage() {
     const [selectedJob, setSelectedJob] = useState<JobNoticeViewModel | null>(null);
+    const [searchKeyword, setSearchKeyword] = useState("");
 
     const scrappedJobs: ScrapJob[] = mockScrapJobs;
+
+    const filteredScrapJobs = useMemo(() => {
+        const keyword = searchKeyword.trim().toLowerCase();
+
+        const sortedJobs = [...scrappedJobs].sort(
+            (a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+
+        if (!keyword) return sortedJobs;
+
+        return sortedJobs.filter((job) => {
+            const title = job.title.toLowerCase();
+            const companyName = job.companyName.toLowerCase();
+
+            return title.includes(keyword) || companyName.includes(keyword);
+        });
+    }, [scrappedJobs, searchKeyword]);
+
+    const hasScrapJobs = scrappedJobs.length > 0;
+    const hasSearchResult = filteredScrapJobs.length > 0;
 
     function closeDetail() {
         setSelectedJob(null);
     }
 
     function toggleBookmark() {
-        alert("스크랩 해제 기능은 준비 중입니다.");
+        alert("스크랩 해제 기능은 API 연동 후 처리됩니다.");
     }
 
     return (
@@ -112,65 +130,103 @@ function ScrappedJobPage() {
                         <input
                             type="text"
                             placeholder="공고명 또는 회사명 검색"
-                            disabled
+                            value={searchKeyword}
+                            onChange={(event) => setSearchKeyword(event.target.value)}
                         />
-                        {/* TODO: Phase 3 - 스크랩 공고 검색 기능 구현 */}
                         <Search size={18} />
                     </div>
                 </div>
 
                 <div className="cw-scrap-toolbar">
-                    <span>스크랩한 공고 {scrappedJobs.length}개</span>
-                    {/* TODO: Phase 3 - 최신순 정렬 기능 구현 */}
+                    <span>
+                        스크랩한 공고 {scrappedJobs.length}개
+                        {searchKeyword.trim() &&
+                            ` · 검색 결과 ${filteredScrapJobs.length}개`}
+                    </span>
+
                     <button type="button" disabled aria-disabled="true">
-                        최근 스크랩순
+                        최신순
                     </button>
                 </div>
 
-                <div className="cw-scrap-grid">
-                    {scrappedJobs.map((job) => (
-                        <div className="cw-scrap-card" key={job.bookmarkId}>
-                            <div className="cw-scrap-card-top">
-                                <div className="cw-scrap-logo">
-                                    {job.companyName.slice(0, 1)}
-                                </div>
+                {!hasScrapJobs ? (
+                    <div className="cw-state-box">
+                        아직 스크랩한 채용공고가 없습니다.
+                    </div>
+                ) : !hasSearchResult ? (
+                    <div className="cw-state-box">
+                        검색 조건에 맞는 스크랩 공고가 없습니다.
+                    </div>
+                ) : (
+                    <div className="cw-scrap-grid">
+                        {filteredScrapJobs.map((job) => {
+                            const isClosed = job.noticeStatus === "CLOSED";
 
-                                <div className="cw-scrap-company">
-                                    <strong>{job.companyName}</strong>
-                                    <span>
-                                        {CAREER_LEVEL_LABELS[job.careerLevel]} · {job.location} ·{" "}
-                                        {NOTICE_STATUS_LABELS[job.noticeStatus]}
-                                    </span>
-                                </div>
-
-                                <button type="button" className="cw-scrap-bookmark">
-                                    <Bookmark size={18} />
-                                </button>
-                            </div>
-
-                            <h3>{job.title}</h3>
-
-                            <p className="cw-scrap-keywords">
-                                등록일{" "}
-                                {new Date(job.createdAt).toLocaleDateString("ko-KR")}
-                            </p>
-
-                            <div className="cw-scrap-card-bottom">
-                                <span>{job.deadline}</span>
-
-                                <button
-                                    type="button"
-                                    className="cw-job-detail-button"
-                                    onClick={() =>
-                                        setSelectedJob(createJobNoticeViewModel(job))
-                                    }
+                            return (
+                                <div
+                                    className={`cw-scrap-card ${isClosed ? "is-closed" : ""
+                                        }`}
+                                    key={job.bookmarkId}
                                 >
-                                    상세보기
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                                    <div className="cw-scrap-card-top">
+                                        <div className="cw-scrap-logo">
+                                            {job.companyName.slice(0, 1)}
+                                        </div>
+
+                                        <div className="cw-scrap-company">
+                                            <strong>{job.companyName}</strong>
+                                            <span>
+                                                {CAREER_LEVEL_LABELS[job.careerLevel]} ·{" "}
+                                                {job.location} ·{" "}
+                                                {NOTICE_STATUS_LABELS[job.noticeStatus]}
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="cw-scrap-bookmark"
+                                            aria-label="스크랩 해제"
+                                            onClick={toggleBookmark}
+                                        >
+                                            <Bookmark size={18} />
+                                        </button>
+                                    </div>
+
+                                    <h3>{job.title}</h3>
+
+                                    <p className="cw-scrap-keywords">
+                                        등록일{" "}
+                                        {new Date(job.createdAt).toLocaleDateString(
+                                            "ko-KR",
+                                        )}
+                                    </p>
+
+                                    {isClosed && (
+                                        <p className="cw-scrap-closed-message">
+                                            마감되었거나 삭제된 공고일 수 있습니다.
+                                        </p>
+                                    )}
+
+                                    <div className="cw-scrap-card-bottom">
+                                        <span>{job.deadline}</span>
+
+                                        <button
+                                            type="button"
+                                            className="cw-job-detail-button"
+                                            onClick={() =>
+                                                setSelectedJob(
+                                                    createJobNoticeViewModel(job),
+                                                )
+                                            }
+                                        >
+                                            상세보기
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </section>
 
             {selectedJob && (
