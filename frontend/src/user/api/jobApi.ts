@@ -1,15 +1,17 @@
 import { apiClient } from '../../utils/apiClient';
 import type {
-  JobNoticeBookmarkApiResponse,
+  JobNoticeBookmarkResponse,
   JobNoticeDetailApiResponse,
   JobNoticeListApiResponse,
   JobNoticeQueryParams,
 } from '../pages/jobNotice/JobNoticeTypes';
-import { authSession } from '../utils/member/authSession';
+import { memberApiClient } from './member/memberApiClient';
 
 const JOB_NOTICE_BASE_PATH = '/api/v1/user/job-notices';
+type QueryValue = string | number | boolean | null | undefined;
+type QueryParams = Partial<Record<keyof JobNoticeQueryParams, QueryValue>>;
 
-function createQueryString(params: object = {}) {
+function createQueryString(params: QueryParams = {}) {
   const query = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
@@ -18,11 +20,6 @@ function createQueryString(params: object = {}) {
   });
 
   return query.toString();
-}
-
-function createAuthorizationHeaders() {
-  const token = authSession.getAccessToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export const jobApi = {
@@ -37,10 +34,10 @@ export const jobApi = {
   toggleJobNoticeBookmark: (
     jobNoticeId: number | string,
     bookmarked: boolean,
-  ): Promise<JobNoticeBookmarkApiResponse | null> =>
-    apiClient(`${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}/bookmark`, {
+  ): Promise<JobNoticeBookmarkResponse | null> =>
+    memberApiClient<JobNoticeBookmarkResponse | null>(`${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}/bookmark`, {
       method: 'PATCH',
-      headers: createAuthorizationHeaders(),
+      auth: true,
       body: JSON.stringify({ bookmarked }),
     }),
 };

@@ -15,14 +15,12 @@ import JobNoticeDetail from './JobNoticeDetail';
 import {
   mapJobNoticeApiToViewModel,
   type JobNotice,
-  type JobNoticeBookmarkApiResponse,
   type JobNoticeBookmarkMap,
   type JobNoticeListStats,
   type JobNoticeQueryParams,
 } from './JobNoticeTypes';
 import { jobApi } from '../../api/jobApi';
 import { useJobNoticeList } from '../../hooks/jobNotice/useJobNoticeList';
-import { authSession } from '../../utils/member/authSession';
 import './styles/JobNoticeListPage.css';
 
 const FILTER_GROUPS = [
@@ -445,13 +443,6 @@ export default function JobNoticeListPage() {
   async function toggleBookmark(id: number, fallbackBookmarked = false) {
     if (pendingBookmarkIdsRef.current.has(id)) return;
 
-    const hasAccessToken = Boolean(authSession.getAccessToken());
-
-    if (!hasAccessToken) {
-      setBookmarkErrorType('AUTH_REQUIRED');
-      return;
-    }
-
     const previousBookmarked = bookmarks[id] ?? fallbackBookmarked;
     const nextBookmarked = !previousBookmarked;
     pendingBookmarkIdsRef.current.add(id);
@@ -459,11 +450,10 @@ export default function JobNoticeListPage() {
 
     try {
       setBookmarkErrorType('');
-      const response = await jobApi.toggleJobNoticeBookmark(
+      const bookmarkResult = await jobApi.toggleJobNoticeBookmark(
         id,
         nextBookmarked,
-      ) as JobNoticeBookmarkApiResponse;
-      const bookmarkResult = response.data;
+      );
 
       if (!bookmarkResult) throw new Error('Bookmark response is empty.');
 
