@@ -97,10 +97,13 @@ export function canSubmitCompanyRegister(form: CompanyRegisterDraft, loginIdStat
     form.businessNumber.trim().length > 0 &&
     form.ceoName.trim().length > 0 &&
     form.address.trim().length > 0 &&
+    form.addressDetail.trim().length > 0 &&
+    hasValue(form.managerEmailVerificationToken) &&
     hasValue(form.managerPhoneVerificationToken) &&
     hasValue(form.employmentCertificateFileId) &&
     form.terms.service &&
     form.terms.privacy &&
-    form.terms.companyVerification
+    form.terms.companyVerification &&
+    form.terms.sms
   );
 }

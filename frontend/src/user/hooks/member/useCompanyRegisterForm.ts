@@ -133,7 +133,12 @@ export function useCompanyRegisterForm() {
     !registerCompany.isPending;
 
   const update = (key: CompanyFormKey, value: CompanyForm[CompanyFormKey]) => {
-    setForm((current) => ({ ...current, [key]: value }));
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+      ...(key === 'managerPhone' ? { managerPhoneCode: '' } : {}),
+      ...(key === 'managerEmail' ? { managerEmailCode: '' } : {}),
+    }));
     setFieldErrors((current) => ({
       ...current,
       [key]: '',
