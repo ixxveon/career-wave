@@ -18,15 +18,15 @@
 
 ## Phase 2 - 계정/RBAC 연동
 
-- [ ] `feature/admin-management-api` 브랜치를 기준으로 `feature/admin-management-account` 브랜치를 생성한다.
-- [ ] KPI summary를 API 응답 기반으로 교체한다.
-- [ ] 관리자 목록을 API 응답 기반으로 교체한다.
-- [ ] 검색어, 권한 필터, 상태 필터를 API query parameter와 연결한다.
-- [ ] 관리자 계정 생성 모달을 생성 API와 연결한다.
-- [ ] 권한 변경 select를 권한 변경 API와 연결한다.
-- [ ] 잠금/해제 버튼을 상태 변경 API와 연결한다.
-- [ ] 삭제 버튼을 삭제 API와 연결한다.
-- [ ] 변경 성공 후 관리자 목록과 summary를 재조회한다.
+- [x] `feature/admin-management-api` 브랜치를 기준으로 `feature/admin-management-account` 브랜치를 생성한다.
+- [x] KPI summary를 API 응답 기반으로 교체한다.
+- [x] 관리자 목록을 API 응답 기반으로 교체한다.
+- [x] 검색어, 권한 필터, 상태 필터를 API query parameter와 연결한다.
+- [x] 관리자 계정 생성 모달을 생성 API와 연결한다.
+- [x] 권한 변경 select를 권한 변경 API와 연결한다.
+- [x] 잠금/해제 버튼을 상태 변경 API와 연결한다.
+- [x] 삭제 버튼을 삭제 API와 연결한다.
+- [x] 변경 성공 후 관리자 목록과 summary를 재조회한다.
 
 ## Phase 3 - ACL 연동
 
