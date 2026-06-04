@@ -1,4 +1,4 @@
-import { memo, useState, useMemo } from 'react';
+import { memo, useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   RotateCcw, Home, Award,
@@ -73,13 +73,52 @@ const FALLBACK_IMPROVEMENTS = [
 
 /* ── PDF 모달 ─────────────────────────────────────── */
 const PdfModal = memo(function PdfModal({ onClose }: { onClose: () => void }) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  // 열릴 때 닫기 버튼으로 포커스 이동
+  useEffect(() => { closeRef.current?.focus(); }, []);
+
+  // ESC 키 닫기 + Tab 포커스 트랩
+  useEffect(() => {
+    const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key !== 'Tab' || !modalRef.current) return;
+
+      const focusable = Array.from(modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last  = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last)  { e.preventDefault(); first.focus(); }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
     <div className="ir-pdf-overlay" onClick={onClose}>
-      <div className="ir-pdf-modal" onClick={e => e.stopPropagation()}>
-        <button className="ir-pdf-modal__close" onClick={onClose}><X size={18} /></button>
+      {/* role/aria-modal은 backdrop이 아닌 모달 콘텐츠에 */}
+      <div
+        ref={modalRef}
+        className="ir-pdf-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ir-pdf-title"
+        onClick={e => e.stopPropagation()}
+      >
+        <button ref={closeRef} className="ir-pdf-modal__close" onClick={onClose}><X size={18} /></button>
         <div className="ir-pdf-modal__icon">PDF</div>
         <div className="ir-pdf-modal__badge">v2 COMING SOON</div>
-        <h3 className="ir-pdf-modal__title">PDF 리포트 다운로드</h3>
+        <h3 id="ir-pdf-title" className="ir-pdf-modal__title">PDF 리포트 다운로드</h3>
         <p className="ir-pdf-modal__desc">
           나만의 면접 답변을 소장할 수 있는<br />
           PDF 리포트 다운로드 기능은<br />
@@ -96,6 +135,7 @@ function InterviewReportPage() {
   const navigate                        = useNavigate();
   const [searchParams]                  = useSearchParams();
   const [showPdfModal, setShowPdfModal] = useState(false);
+  const pdfBtnRef = useRef<HTMLButtonElement>(null);
 
   // sessionId: URL 파라미터 우선 → sessionStorage 복구 순서 (spec §비정상 종료)
   const sessionId = useMemo(() => {
@@ -130,8 +170,8 @@ function InterviewReportPage() {
     );
   }
 
-  return <ReportContent data={data} onPdfClick={() => setShowPdfModal(true)} onNavigate={navigate}>
-    {showPdfModal && <PdfModal onClose={() => setShowPdfModal(false)} />}
+  return <ReportContent data={data} onPdfClick={() => setShowPdfModal(true)} onNavigate={navigate} pdfBtnRef={pdfBtnRef}>
+    {showPdfModal && <PdfModal onClose={() => { setShowPdfModal(false); pdfBtnRef.current?.focus(); }} />}
   </ReportContent>;
 }
 
@@ -140,11 +180,12 @@ interface ReportContentProps {
   data:       InterviewReportResponse;
   onPdfClick: () => void;
   onNavigate: (path: string) => void;
+  pdfBtnRef:  React.RefObject<HTMLButtonElement | null>;
   children?:  React.ReactNode;
 }
 
 const ReportContent = memo(function ReportContent({
-  data, onPdfClick, onNavigate, children,
+  data, onPdfClick, onNavigate, pdfBtnRef, children,
 }: ReportContentProps) {
   const filteredFeedbacks = useMemo(() => filterFeedbackScores(data.feedbacks), [data.feedbacks]);
   const hybridScores      = useMemo(() => computeHybridScores(data.feedbacks),  [data.feedbacks]);
@@ -231,7 +272,7 @@ const ReportContent = memo(function ReportContent({
             <button className="ir-btn ir-btn--white" onClick={() => onNavigate(retryRoute)}>
               <RotateCcw size={14} /> 다시 연습하기
             </button>
-            <button className="ir-btn ir-btn--pdf-locked" onClick={onPdfClick}>
+            <button ref={pdfBtnRef} className="ir-btn ir-btn--pdf-locked" onClick={onPdfClick}>
               <Lock size={13} /> PDF 리포트
               <span className="ir-btn__premium-badge">PREMIUM</span>
             </button>
