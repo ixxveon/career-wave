@@ -26,7 +26,7 @@ function TotalScoreRing({ score }: TotalScoreRingProps) {
       <circle
         cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="14"
         strokeLinecap="round"
-        strokeDasharray={`${dash} ${circ}`}
+        strokeDasharray={circ}
         strokeDashoffset={circ}
         transform={`rotate(-90 ${cx} ${cy})`}
         className="dr-ring__arc"

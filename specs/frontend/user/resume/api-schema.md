@@ -9,7 +9,7 @@
 
 ### Base URL
 ```
-/api/v1/resume
+/api/v1/user/resume
 ```
 
 ### 날짜 포맷
@@ -61,7 +61,7 @@ Authorization: Bearer {accessToken}
 
 ## 1. 이력서 업로드
 
-- **Endpoint**: `POST /api/v1/resume/upload`
+- **Endpoint**: `POST /api/v1/user/resume/upload`
 - **Description**: 이력서 파일 업로드 및 `documentId` 발급
 - **Content-Type**: `multipart/form-data`
 
@@ -89,7 +89,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 업로드 완료 즉시 서버에서 AI 분석 작업을 **자동 트리거**합니다.  
-> 클라이언트는 `data.documentId` 수신 후 즉시 WebSocket(`WS /ws/resume/{documentId}/status`) 연결을 시작합니다.
+> 클라이언트는 `data.documentId` 수신 후 즉시 WebSocket(`WS /ws/user/resume/{documentId}/status`) 연결을 시작합니다.
 
 ### Error Cases
 
@@ -103,7 +103,7 @@ Authorization: Bearer {accessToken}
 
 ## 2. 자기소개서 제출
 
-- **Endpoint**: `POST /api/v1/resume/cover-letter`
+- **Endpoint**: `POST /api/v1/user/resume/cover-letter`
 - **Description**: 문항 및 답변 데이터 제출 및 `documentId` 발급
 - **Content-Type**: `application/json`
 
@@ -146,7 +146,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 제출 완료 즉시 서버에서 AI 분석 작업을 **자동 트리거**합니다.  
-> 클라이언트는 `data.documentId` 수신 후 즉시 WebSocket(`WS /ws/resume/{documentId}/status`) 연결을 시작합니다.
+> 클라이언트는 `data.documentId` 수신 후 즉시 WebSocket(`WS /ws/user/resume/{documentId}/status`) 연결을 시작합니다.
 
 ### Error Cases
 
@@ -159,11 +159,11 @@ Authorization: Bearer {accessToken}
 
 ## 3. 분석 결과 조회
 
-- **Endpoint**: `GET /api/v1/resume/{documentId}/feedback`
+- **Endpoint**: `GET /api/v1/user/resume/{documentId}/feedback`
 - **Description**: 분석 완료 후 피드백 결과 조회 (페이지 재진입·새로고침 시 TanStack Query로 재조회)
 - **Content-Type**: `application/json`
 
-> ℹ️ 실시간 분석 상태 추적은 **WebSocket**을 사용한다 (`WS /ws/resume/{documentId}/status`).  
+> ℹ️ 실시간 분석 상태 추적은 **WebSocket**을 사용한다 (`WS /ws/user/resume/{documentId}/status`).  
 > 이 엔드포인트는 `COMPLETED` 상태의 전체 결과를 가져오거나 재진입 시 복원 용도로 사용한다.
 
 ### Response `200 OK`
@@ -244,7 +244,7 @@ Authorization: Bearer {accessToken}
 
 ## 4. 분석 이력 목록 조회
 
-- **Endpoint**: `GET /api/v1/resume/history`
+- **Endpoint**: `GET /api/v1/user/resume/history`
 - **Description**: 본인의 서류 분석 이력을 최신순으로 페이징 조회
 - **Content-Type**: `application/json`
 
@@ -308,7 +308,7 @@ Authorization: Bearer {accessToken}
 
 ## 5. 분석 상태 실시간 구독 (WebSocket)
 
-- **Endpoint**: `WS /ws/resume/{documentId}/status`
+- **Endpoint**: `WS /ws/user/resume/{documentId}/status`
 - **Description**: 업로드 또는 자기소개서 제출 후 AI 분석 상태를 실시간으로 수신
 
 ### 인증
@@ -316,7 +316,7 @@ Authorization: Bearer {accessToken}
 JWT를 WebSocket 핸드셰이크 시 쿼리 파라미터로 전달한다.
 
 ```
-WS /ws/resume/{documentId}/status?token={accessToken}
+WS /ws/user/resume/{documentId}/status?token={accessToken}
 ```
 
 ### Connection Lifecycle
@@ -364,7 +364,7 @@ WS /ws/resume/{documentId}/status?token={accessToken}
 | `FAILED` | `"분석 중 오류가 발생했어요"` | — |
 
 > ℹ️ `COMPLETED` 또는 `FAILED` 수신 즉시 서버가 WS 연결을 종료한다.  
-> 클라이언트는 `COMPLETED` 수신 후 `GET /api/v1/resume/{documentId}/feedback`으로 전체 결과를 조회한다.
+> 클라이언트는 `COMPLETED` 수신 후 `GET /api/v1/user/resume/{documentId}/feedback`으로 전체 결과를 조회한다.
 
 ### Error Cases
 

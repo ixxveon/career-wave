@@ -6,7 +6,7 @@
 
 ---
 
-## Phase 1 — 인프라 세팅 & 타입 정의
+## Phase 1 — 인프라 세팅 & 타입 정의 `feat(feature/user-resume-upload)`
 
 - [x] `types/resume.d.ts` 정의 (Request/Response DTO, AnalysisResult, 상태 머신 타입)
 - [x] `api/resume/` API 호출 함수 인터페이스 작성 (AbortController 지원) 및 공통 에러 핸들링 구조 세팅
@@ -17,13 +17,13 @@
 
 ## Phase 2 — 입력 UI 구현
 
-### 이력서 파일 업로드
+### 이력서 파일 업로드 `feat(feature/user-resume-upload)`
 - [x] `utils/resume/validation.ts` — 파일 용량(10MB) / 확장자(PDF·DOC·DOCX) / MIME 타입 검증
 - [x] `hooks/resume/useResumeUpload.ts` — 검증 → `POST /upload` 서버 전송 → `documentId` 저장 → 폴링 시작 흐름 구현
 - [x] `components/resume/ResumeUpload.tsx` — 드롭존 UI 구현, 업로드 중 중복 요청 방지
 - [x] 에러 처리 — 용량/확장자/네트워크 실패 메시지 분기 처리
 
-### 자기소개서 텍스트 입력
+### 자기소개서 텍스트 입력 `feat(feature/user-resume-cover-letter)`
 - [x] `utils/resume/validation.ts` — 문항(max 5) / 글자 수(max 1000) / 필수 필드 검증
 - [x] `hooks/resume/useCoverLetterForm.ts` — 폼 상태 관리 및 유효성 검사 로직
 - [x] `components/resume/CoverLetterForm.tsx` — 동적 문항 추가/삭제 UI 및 실시간 글자 수 표시
@@ -34,7 +34,7 @@
 
 ---
 
-## Phase 3 — AI 분석 로딩 흐름
+## Phase 3 — AI 분석 로딩 흐름 `feat(feature/user-resume-analysis)`
 
 - [x] `hooks/resume/useAnalysisResult.ts` — WebSocket 기반 상태 구독 구현 (`useAnalysisWebSocket.ts`로 구현)
 - [x] `components/resume/LoadingModal.tsx` — 상태 머신(`IDLE → SUBMITTING → ANALYZING → SUCCESS/ERROR`)에 따른 단계별 메시지 전환
@@ -44,25 +44,25 @@
 
 ---
 
-## Phase 4 — 결과 리포트 시각화
+## Phase 4 — 결과 리포트 시각화 `feat(feature/user-resume-report)`
 
-- [x] `components/resume/ReportChart.tsx` — 기존 `DocumentResultView` 재사용으로 대체 (링 차트 + 세부 점수 바)
-- [x] `components/resume/FeedbackList.tsx` — 기존 `DocumentResultView` 재사용으로 대체 (Good/Bad/Fix + STAR/KPI 분석)
+- [x] `components/resume/ReportChart.tsx` — `DocumentResultView`로 통합 (SVG 링 차트 + 세부 점수 바, Recharts 미사용)
+- [x] `components/resume/FeedbackList.tsx` — `DocumentResultView`로 통합 (Good/Bad/Fix + STAR 기법 + 수치화·정량화 체크)
 - [x] Empty State 처리 — 피드백 항목이 비어 있을 때 안내 UI 렌더링
 - [ ] 성능 최적화 — React DevTools Profiler 활용하여 불필요한 리렌더링 제거 (백엔드 연동 후 진행 예정)
 
 ---
 
-## Phase 5 — 리스트 페이징 & 도메인 통합
+## Phase 5 — 리스트 페이징 & 도메인 통합 `feat(feature/user-resume-history)`
 
-- [x] `hooks/resume/useResumeHistory.ts` — 최신순 페이징 조회 구현
+- [x] `hooks/resume/useResumeHistory.ts` — 최신순 페이징 + fileType 서버사이드 필터링 구현
 - [x] `components/resume/HistoryItem.tsx` — 이력 목록 아이템 렌더링 및 Empty State 대응
 - [x] 면접 도메인 연동 — `documentId`를 쿼리 파라미터로 전달 (`?documentId=xxx`)
 - [ ] 면접 도메인 연동 시 404/403 에러 처리 및 담당자 연동 테스트 (백엔드 구현 후 진행 예정)
 
 ---
 
-## Phase 6 — Polish & QA
+## Phase 6 — Polish & QA `feat(feature/user-resume-history)`
 
 - [x] 모바일/태블릿 반응형 CSS 작성 — 미디어쿼리 적용 (브라우저 검증은 백엔드 연동 후 예정)
 - [x] 통합 테스트 (MSW 활용) — 주요 시나리오(업로드/분석/조회) MSW 핸들러 구현 완료
