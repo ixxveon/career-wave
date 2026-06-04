@@ -4,7 +4,7 @@ import type {
   JobNoticeDetailApiResponse,
   JobNoticeListApiResponse,
   JobNoticeQueryParams,
-} from '../pages/jobNotice/JobNoticeTypes';
+} from '../types/jobNotice';
 import { memberApiClient } from './member/memberApiClient';
 
 const JOB_NOTICE_BASE_PATH = '/api/v1/user/job-notices';

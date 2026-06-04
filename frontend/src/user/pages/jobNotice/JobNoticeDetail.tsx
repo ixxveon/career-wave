@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import {
   Bookmark,
   BookmarkCheck,
@@ -12,12 +12,20 @@ import {
   X,
 } from 'lucide-react';
 import { useJobNoticeDetail } from '../../hooks/jobNotice/useJobNoticeDetail';
-import { mapJobNoticeApiToViewModel, type JobNotice } from './JobNoticeTypes';
+import { mapJobNoticeApiToViewModel, type JobNotice } from '../../types/jobNotice';
 import './styles/JobNoticeDetail.css';
 
 const TABS = ['공고 상세', '기업 정보'] as const;
 type DetailTab = (typeof TABS)[number];
 type DetailQueryStatus = 'loading' | 'success' | 'empty' | 'error';
+
+function getDetailTabId(tab: DetailTab) {
+  return `jobnotice-tab-${TABS.indexOf(tab)}`;
+}
+
+function getDetailPanelId(tab: DetailTab) {
+  return `jobnotice-panel-${TABS.indexOf(tab)}`;
+}
 
 const STACKS_BY_JOB_TYPE: Partial<Record<JobNotice['jobType'], string[]>> = {
   백엔드: ['Java', 'Spring Boot', 'AWS', 'Docker', 'MySQL'],
@@ -100,21 +108,36 @@ function DetailHeader({ job, bookmarked, onBookmark, onClose }: DetailHeaderProp
         <button
           type="button"
           className={`jnd-icon-btn${bookmarked ? ' is-active' : ''}`}
-          aria-label={bookmarked ? '북마크 해제' : '북마크'}
-          onClick={() => onBookmark(job.id)}
+          aria-label={`${job.title} ${bookmarked ? '북마크 해제' : '북마크'}`}
+          aria-pressed={bookmarked}
+          onClick={(event) => {
+            event.stopPropagation();
+            onBookmark(job.id);
+          }}
         >
           {bookmarked ? <BookmarkCheck size={19} /> : <Bookmark size={19} />}
         </button>
         {originalJobUrl ? (
-          <a className="jnd-open-btn" href={originalJobUrl} target="_blank" rel="noreferrer">
+          <a
+            className="jnd-open-btn"
+            href={originalJobUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`${job.title} 원본 공고 새 탭에서 열기`}
+          >
             원본 공고 <ExternalLink size={15} />
           </a>
         ) : (
-          <button type="button" className="jnd-open-btn" disabled>
+          <button
+            type="button"
+            className="jnd-open-btn"
+            aria-label={`${job.title} 원본 공고 URL 없음`}
+            disabled
+          >
             원본 없음 <ExternalLink size={15} />
           </button>
         )}
-        <button type="button" className="jnd-close-btn" aria-label="닫기" onClick={onClose}>
+        <button type="button" className="jnd-close-btn" aria-label="상세 닫기" onClick={onClose}>
           <X size={20} />
         </button>
       </div>
@@ -257,19 +280,49 @@ export default function JobNoticeDetail({
     return detailJob ? 'success' : 'loading';
   })();
 
+  function handleDetailTabKeyDown(
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    tab: DetailTab,
+  ) {
+    const currentIndex = TABS.indexOf(tab);
+    let nextIndex = currentIndex;
+
+    if (event.key === 'ArrowRight') {
+      nextIndex = (currentIndex + 1) % TABS.length;
+    } else if (event.key === 'ArrowLeft') {
+      nextIndex = (currentIndex - 1 + TABS.length) % TABS.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = TABS.length - 1;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    const nextTab = TABS[nextIndex];
+    setActiveTab(nextTab);
+    const tabButtons = event.currentTarget
+      .closest('[role="tablist"]')
+      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+
+    tabButtons?.[nextIndex]?.focus();
+  }
+
   useEffect(() => {
     if (!isOpen) return undefined;
 
+    const previousBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    function handleKeyDown(event: KeyboardEvent) {
+    function handleKeyDown(event: globalThis.KeyboardEvent) {
       if (event.key === 'Escape') onClose();
     }
 
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousBodyOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
@@ -309,39 +362,72 @@ export default function JobNoticeDetail({
                   void detailQuery.refetch();
                 }}
               />
-              <nav className="jnd-tabs" aria-label="공고 상세 탭">
+              <nav className="jnd-tabs" role="tablist" aria-label="공고 상세 탭">
                 {TABS.map((tab) => (
                   <button
                     type="button"
                     key={tab}
+                    id={getDetailTabId(tab)}
                     className={activeTab === tab ? 'is-active' : ''}
+                    role="tab"
+                    aria-selected={activeTab === tab}
+                    aria-controls={getDetailPanelId(tab)}
+                    aria-label={`${tab} 탭 보기`}
+                    tabIndex={activeTab === tab ? 0 : -1}
                     onClick={() => setActiveTab(tab)}
+                    onKeyDown={(event) => handleDetailTabKeyDown(event, tab)}
                   >
                     {tab}
                   </button>
                 ))}
               </nav>
-              <TechStackStrip job={displayJob} />
-              <DetailTabContent activeTab={activeTab} job={displayJob} />
+              {TABS.map((tab) => (
+                <section
+                  key={tab}
+                  id={getDetailPanelId(tab)}
+                  role="tabpanel"
+                  aria-labelledby={getDetailTabId(tab)}
+                  hidden={activeTab !== tab}
+                >
+                  <TechStackStrip job={displayJob} />
+                  <DetailTabContent activeTab={tab} job={displayJob} />
+                </section>
+              ))}
             </div>
 
             <footer className="jnd-action-bar">
               <button
                 type="button"
                 className={`jnd-action-btn${bookmarked ? ' is-active' : ''}`}
-                onClick={() => onBookmark(displayJob.id)}
+                aria-label={`${displayJob.title} ${bookmarked ? '북마크 해제' : '북마크'}`}
+                aria-pressed={bookmarked}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onBookmark(displayJob.id);
+                }}
               >
                 {bookmarked ? <BookmarkCheck size={17} /> : <Bookmark size={17} />}
                 북마크
               </button>
               {originalJobUrl ? (
-                <a className="jnd-action-btn jnd-action-btn--primary" href={originalJobUrl} target="_blank" rel="noreferrer">
+                <a
+                  className="jnd-action-btn jnd-action-btn--primary"
+                  href={originalJobUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`${displayJob.title} 원본 공고 새 탭에서 열기`}
+                >
                   <ExternalLink size={17} />
                   원본 공고 보러가기
                 </a>
               ) : (
                 <div className="jnd-action-disabled">
-                  <button type="button" className="jnd-action-btn jnd-action-btn--primary" disabled>
+                  <button
+                    type="button"
+                    className="jnd-action-btn jnd-action-btn--primary"
+                    aria-label={`${displayJob.title} 원본 공고 URL 없음`}
+                    disabled
+                  >
                     <ExternalLink size={17} />
                     원본 URL 없음
                   </button>
