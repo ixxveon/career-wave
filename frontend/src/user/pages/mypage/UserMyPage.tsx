@@ -87,6 +87,8 @@ function UserMyPage() {
     function saveProfileEdit() {
         if (!userProfile) return;
 
+        const normalizedGithubUrl = editForm.githubUrl.trim();
+
         setUserProfile({
             ...userProfile,
             name: editForm.name,
@@ -94,13 +96,37 @@ function UserMyPage() {
         });
 
         setGithubProfile({
-            githubId: githubProfile?.githubId ?? null,
-            githubUrl: editForm.githubUrl || null,
-            linked: Boolean(editForm.githubUrl),
+            githubId: normalizedGithubUrl
+                ? githubProfile?.githubId ?? null
+                : null,
+            githubUrl: normalizedGithubUrl || null,
+            linked: Boolean(normalizedGithubUrl),
         });
 
         setIsEditModalOpen(false);
         alert("회원 정보 수정 내용이 Mock 데이터에 반영되었습니다.");
+    }
+
+    if (isLoading) {
+        return (
+            <div className="cw-mypage-layout">
+                <section className="cw-account-section">
+                    <div className="cw-state-box">회원 정보를 불러오는 중입니다.</div>
+                </section>
+            </div>
+        );
+    }
+
+    if (hasUserProfileError) {
+        return (
+            <div className="cw-mypage-layout">
+                <section className="cw-account-section">
+                    <div className="cw-state-box is-error">
+                        사용자 정보를 불러오지 못했습니다.
+                    </div>
+                </section>
+            </div>
+        );
     }
 
     if (!userProfile) {
@@ -175,40 +201,32 @@ function UserMyPage() {
                             </button>
                         </div>
 
-                        {isLoading ? (
-                            <div className="cw-state-box">회원 정보를 불러오는 중입니다.</div>
-                        ) : hasUserProfileError ? (
-                            <div className="cw-state-box is-error">
-                                사용자 정보를 불러오지 못했습니다.
+                        <div className="cw-info-list">
+                            <div className="cw-info-row">
+                                <span>이름</span>
+                                <strong>{userProfile.name}</strong>
                             </div>
-                        ) : (
-                            <div className="cw-info-list">
-                                <div className="cw-info-row">
-                                    <span>이름</span>
-                                    <strong>{userProfile.name}</strong>
-                                </div>
-                                <div className="cw-info-row">
-                                    <span>이메일</span>
-                                    <strong>
-                                        <Mail size={15} />
-                                        {userProfile.email}
-                                    </strong>
-                                </div>
-                                <div className="cw-info-row">
-                                    <span>휴대폰 번호</span>
-                                    <strong>
-                                        <Phone size={15} />
-                                        {userProfile.phone || "등록된 휴대폰 번호가 없습니다."}
-                                    </strong>
-                                </div>
-                                <div className="cw-info-row">
-                                    <span>가입일</span>
-                                    <strong>
-                                        {new Date(userProfile.createdAt).toLocaleDateString("ko-KR")}
-                                    </strong>
-                                </div>
+                            <div className="cw-info-row">
+                                <span>이메일</span>
+                                <strong>
+                                    <Mail size={15} />
+                                    {userProfile.email}
+                                </strong>
                             </div>
-                        )}
+                            <div className="cw-info-row">
+                                <span>휴대폰 번호</span>
+                                <strong>
+                                    <Phone size={15} />
+                                    {userProfile.phone || "등록된 휴대폰 번호가 없습니다."}
+                                </strong>
+                            </div>
+                            <div className="cw-info-row">
+                                <span>가입일</span>
+                                <strong>
+                                    {new Date(userProfile.createdAt).toLocaleDateString("ko-KR")}
+                                </strong>
+                            </div>
+                        </div>
                     </section>
 
                     <section className="cw-account-card">
@@ -217,46 +235,38 @@ function UserMyPage() {
                             <h3>계정 상태</h3>
                         </div>
 
-                        {isLoading ? (
-                            <div className="cw-state-box">계정 상태를 불러오는 중입니다.</div>
-                        ) : hasUserProfileError ? (
-                            <div className="cw-state-box is-error">
-                                계정 상태를 불러오지 못했습니다.
+                        <div className="cw-info-list">
+                            <div className="cw-info-row">
+                                <span>회원 유형</span>
+                                <strong>
+                                    {ROLE_TYPE_LABELS[userProfile.roleType] ?? "일반 회원"}
+                                </strong>
                             </div>
-                        ) : (
-                            <div className="cw-info-list">
-                                <div className="cw-info-row">
-                                    <span>회원 유형</span>
-                                    <strong>
-                                        {ROLE_TYPE_LABELS[userProfile.roleType] ?? "일반 회원"}
-                                    </strong>
-                                </div>
-                                <div className="cw-info-row">
-                                    <span>로그인 ID</span>
-                                    <strong>{userProfile.loginId}</strong>
-                                </div>
-                                <div className="cw-info-row">
-                                    <span>구독 상태</span>
-                                    <strong>
-                                        {SUBSCRIPTION_STATUS_LABELS[
-                                            userProfile.subscriptionStatus
-                                        ] ?? "무료"}
-                                    </strong>
-                                </div>
-                                <div className="cw-info-row">
-                                    <span>알림 수신</span>
-                                    <strong>
-                                        {userProfile.notificationEnabled ? "수신 동의" : "수신 거부"}
-                                    </strong>
-                                </div>
-                                <div className="cw-info-row">
-                                    <span>계정 상태</span>
-                                    <strong className={memberStatus.className}>
-                                        {memberStatus.label}
-                                    </strong>
-                                </div>
+                            <div className="cw-info-row">
+                                <span>로그인 ID</span>
+                                <strong>{userProfile.loginId}</strong>
                             </div>
-                        )}
+                            <div className="cw-info-row">
+                                <span>구독 상태</span>
+                                <strong>
+                                    {SUBSCRIPTION_STATUS_LABELS[
+                                        userProfile.subscriptionStatus
+                                    ] ?? "무료"}
+                                </strong>
+                            </div>
+                            <div className="cw-info-row">
+                                <span>알림 수신</span>
+                                <strong>
+                                    {userProfile.notificationEnabled ? "수신 동의" : "수신 거부"}
+                                </strong>
+                            </div>
+                            <div className="cw-info-row">
+                                <span>계정 상태</span>
+                                <strong className={memberStatus.className}>
+                                    {memberStatus.label}
+                                </strong>
+                            </div>
+                        </div>
                     </section>
                 </div>
 
