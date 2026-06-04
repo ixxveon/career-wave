@@ -212,6 +212,8 @@ export function useInterviewSession({
 
   function startLlmTimeout() {
     clearLlmTimeout();
+    // 새 turn 시작 — 이전 turn의 폴백 플래그 초기화 (voice/text 경로 공통)
+    llmFallbackFiredRef.current = null;
     llmTimeoutRef.current = setTimeout(() => {
       // 아직 typing 중이고 스트리밍이 시작 안 된 경우에만 폴백
       if (!stateRef.current.isTyping) return;
