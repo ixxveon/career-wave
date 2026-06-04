@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react';
 import { TrendingUp, DollarSign, Users, UserPlus, CreditCard, RefreshCw, Minus } from 'lucide-react';
 import '../../styles/admin.css';
 import '../../styles/Statistics.css';
-import { statsApi, type StatsSummary, type MonthlyRevenue, type RevenueBreakdownItem } from '../../api/statsApi';
+import { statsApi, REVENUE_TYPE, type RevenueType, type StatsSummary, type MonthlyRevenue, type RevenueBreakdownItem } from '../../api/statsApi';
+import type { ElementType } from 'react';
 
 // 구독 유형별 아이콘 매핑
-const BREAKDOWN_ICON_MAP: Record<string, React.ElementType> = {
-  PREMIUM: CreditCard,
-  NEW_CONVERSION: UserPlus,
-  RENEWAL: RefreshCw,
-  REFUND_DEDUCTION: Minus,
+const BREAKDOWN_ICON_MAP: Record<RevenueType, ElementType> = {
+  [REVENUE_TYPE.PREMIUM]: CreditCard,
+  [REVENUE_TYPE.NEW_CONVERSION]: UserPlus,
+  [REVENUE_TYPE.RENEWAL]: RefreshCw,
+  [REVENUE_TYPE.REFUND_DEDUCTION]: Minus,
 };
 
 // 더미 — Phase 7-2 연동 전까지 유지
@@ -38,11 +39,7 @@ const LINE_VBW     = 1000;
 const LINE_PAD_X   = 30;
 const LINE_CHART_H_SVG = LINE_VBH - LINE_PAD * 2; // 164
 
-// 매출 Y축 레이블 (4항목, padding 24px top/bottom → 위치 자동 정렬)
-const lineYLabels  = ['₩4,500만', '₩3,000만', '₩1,500만', '₩0'];
-const lineGridSvgY = [45_000_000, 30_000_000, 15_000_000, 0].map(
-  v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / LINE_MAX_VAL))
-); // [28, 83, 137, 192]
+// 매출 Y축 레이블 — 컴포넌트 내에서 axisMax 기준으로 동적 계산
 
 // 구독자 Y축 레이블 (5항목, 동일 padding → 동일 CSS 재사용)
 const SUB_MAX_VAL  = 400;
@@ -147,9 +144,19 @@ export default function StatisticsPage() {
   const revenueData = monthlyRevenue.length > 0 ? monthlyRevenue : [];
   const revenueValues = revenueData.map(m => m.total);
 
+  const maxRevenue = revenueValues.length > 0 ? Math.max(...revenueValues) : 0;
+  const axisMax = maxRevenue || LINE_MAX_VAL;
+
+  // Y축 레이블/그리드를 axisMax 기준으로 동적 계산 (차트와 동일 스케일 보장)
+  const lineGridValues = [axisMax, (axisMax * 2) / 3, axisMax / 3, 0];
+  const lineYLabels    = lineGridValues.map(v => toM(Math.round(v)));
+  const lineGridSvgY   = lineGridValues.map(
+    v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / axisMax))
+  );
+
   const { line, area, pts } = buildSvgPath(
     revenueValues.length > 1 ? revenueValues : [0, 0],
-    LINE_MAX_VAL
+    axisMax
   );
   const peakIdx  = pts.reduce((max, p, i) => (p[1] < pts[max][1] ? i : max), 0);
   const tooltipX = Math.min(pts[peakIdx][0] - TOOLTIP_W / 2, LINE_VBW - TOOLTIP_W - 6);
@@ -198,7 +205,7 @@ export default function StatisticsPage() {
                 <h3>월별 매출 추이</h3>
               </div>
               {summary && (
-                <span className="statsTrendBadge up">
+                <span className={`statsTrendBadge ${summary.currentMonthRevenueGrowth >= 0 ? 'up' : 'down'}`}>
                   {summary.currentMonthRevenueGrowth >= 0 ? '▲' : '▼'} {summary.currentMonthRevenueGrowth >= 0 ? '+' : ''}{summary.currentMonthRevenueGrowth}%
                 </span>
               )}
