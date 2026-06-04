@@ -1,5 +1,5 @@
-import { CalendarDays, Star } from 'lucide-react';
-import { type UsageItem } from '../../types/subscription';
+import { AlertCircle, CalendarDays, Star } from 'lucide-react';
+import { SUBSCRIPTION_STATUS, type UsageItem } from '../../types/subscription';
 import { formatBillingDate } from '../../utils/subscription/subscriptionView';
 
 export function UsageStatusCard({ item }: { item: UsageItem }) {
@@ -10,6 +10,7 @@ export function UsageStatusCard({ item }: { item: UsageItem }) {
   const percent = limit > 0 ? Math.min(Math.round((used / limit) * 100), 100) : 0;
   const usageBoxes = limit > 0 ? Array.from({ length: limit }, (_, i) => i < used) : [];
   const nextBillingDate = formatBillingDate(item.subscription?.nextBillingAt ?? null);
+  const isPaymentFailed = item.subscription?.status === SUBSCRIPTION_STATUS.PAYMENT_FAILED;
 
   return (
     <article className={`cw-subscription-usage-card is-${item.accent}`}>
@@ -55,6 +56,13 @@ export function UsageStatusCard({ item }: { item: UsageItem }) {
             </dd>
           </div>
         </dl>
+
+        {isPaymentFailed && (
+          <p className="cw-subscription-usage-card__payment-failed" role="alert">
+            <AlertCircle size={14} />
+            자동 결제에 실패했습니다. 결제 수단을 확인해주세요.
+          </p>
+        )}
       </div>
     </article>
   );
