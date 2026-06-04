@@ -80,7 +80,9 @@ import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
 
 function ProtectedRoute() {
   if (!authSession.getAccessToken()) {
-    return <Navigate to="/auth/login" replace />;
+    const current = `${window.location.pathname}${window.location.search}`;
+    const next = current && current !== '/' ? `?next=${encodeURIComponent(current)}` : '';
+    return <Navigate to={`/auth/login${next}`} replace />;
   }
   return <Outlet />;
 }
