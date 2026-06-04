@@ -23,6 +23,21 @@ import type { TTSQueueStatus } from './useTTSQueue';
 import type { SpringWSStatus }  from './useSpringWebSocket';
 import type { FastApiWSStatus } from './useFastApiWebSocket';
 
+/**
+ * LLM 응답 타임아웃 시 사전 정의 폴백 질문 (spec FR-005)
+ * 8초 내 첫 스트리밍 토큰이 없으면 이 목록에서 순환 선택
+ */
+export const LLM_FALLBACK_QUESTIONS = [
+  '지원 동기에 대해 좀 더 구체적으로 말씀해 주시겠어요?',
+  '본인의 강점과 약점을 각각 하나씩 말씀해 주세요.',
+  '팀 프로젝트에서 갈등이 생겼을 때 어떻게 해결하셨나요?',
+  '가장 어려웠던 기술적 문제와 해결 방법을 설명해 주세요.',
+  '5년 후 커리어 목표를 말씀해 주세요.',
+];
+
+/** LLM 첫 토큰 대기 제한 시간 — 초과 시 폴백 질문 삽입 (spec FR-005) */
+export const LLM_STREAM_TIMEOUT_MS = 8_000;
+
 /** DEV mock 자동 꼬리 질문 (백엔드 미연동 시) */
 const DEV_MOCK_REPLIES = [
   '답변 감사합니다. 해당 기술적 선택의 근거는 무엇이었나요?',
@@ -117,8 +132,10 @@ function sessionReducer(
 // ── 훅 인터페이스 ──────────────────────────────────────────────
 
 export interface UseInterviewSessionOptions {
-  sessionId:   string | null;
-  sessionType: string;
+  sessionId:            string | null;
+  sessionType:          string;
+  /** sessionStorage 복구 시 이전 questionOrder 주입 (constitution §상태 복원력) */
+  initialQuestionOrder?: number;
 }
 
 export interface UseInterviewSessionResult {
@@ -143,9 +160,20 @@ export interface UseInterviewSessionResult {
 export function useInterviewSession({
   sessionId,
   sessionType,
+  initialQuestionOrder,
 }: UseInterviewSessionOptions): UseInterviewSessionResult {
-  const [state, dispatch] = useReducer(sessionReducer, INIT_STATE);
-  const tts = useTTSQueue();
+  const [state, dispatch] = useReducer(
+    sessionReducer,
+    initialQuestionOrder && initialQuestionOrder > 1
+      ? { ...INIT_STATE, questionOrder: initialQuestionOrder }
+      : INIT_STATE,
+  );
+  const tts = useTTSQueue({
+    onError: () => dispatch({
+      type:    'ADD_MESSAGE',
+      message: { id: Date.now(), role: 'notice', text: '⚠️ 음성 재생에 실패했습니다. 면접은 계속 진행됩니다.' },
+    }),
+  });
 
   const [springWsStatus,  setSpringWsStatus]  = useState<SpringWSStatus>('DISCONNECTED');
   const [fastApiWsStatus, setFastApiWsStatus] = useState<FastApiWSStatus>('DISCONNECTED');
@@ -160,10 +188,58 @@ export function useInterviewSession({
   const [streamingText, setStreamingText] = useState('');
   const streamingAccRef = useRef('');
   const streamingRafRef = useRef<number | null>(null);
+  /**
+   * 폴백이 발동된 questionOrder — turn 범위로 중복 메시지 방지
+   * null: 폴백 미발동 / 숫자: 해당 questionOrder turn의 isFinal 무시
+   */
+  const llmFallbackFiredRef = useRef<number | null>(null);
 
   // 리듀서 state를 ref로 보관 — WS 콜백 내부에서 최신 state 참조
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
+
+  /**
+   * LLM 응답 타임아웃 (spec FR-005 / constitution.md §7)
+   * SET_TYPING(true) 후 LLM_STREAM_TIMEOUT_MS 내 첫 토큰 미수신 시
+   * 사전 정의 폴백 질문을 채팅창에 삽입하고 타이핑 상태를 해제한다.
+   */
+
+  const llmTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearLlmTimeout() {
+    if (llmTimeoutRef.current !== null) {
+      clearTimeout(llmTimeoutRef.current);
+      llmTimeoutRef.current = null;
+    }
+  }
+
+  function startLlmTimeout() {
+    clearLlmTimeout();
+    // 새 turn 시작 — 이전 turn의 폴백 플래그 초기화 (voice/text 경로 공통)
+    llmFallbackFiredRef.current = null;
+    llmTimeoutRef.current = setTimeout(() => {
+      // 아직 typing 중이고 스트리밍이 시작 안 된 경우에만 폴백
+      if (!stateRef.current.isTyping) return;
+      if (streamingAccRef.current.length > 0) return;
+
+      streamingAccRef.current = '';
+      // 현재 questionOrder를 기록 — 이 turn의 늦은 isFinal만 suppress
+      llmFallbackFiredRef.current = stateRef.current.questionOrder;
+      const nextOrder = stateRef.current.questionOrder + 1;
+      dispatch({ type: 'SET_TYPING', typing: false });
+      dispatch({
+        type:    'ADD_MESSAGE',
+        message: {
+          id:   Date.now(),
+          role: 'ai',
+          text: LLM_FALLBACK_QUESTIONS[
+            stateRef.current.questionOrder % LLM_FALLBACK_QUESTIONS.length
+          ],
+        },
+      });
+      dispatch({ type: 'SET_QUESTION_ORDER', order: nextOrder });
+    }, LLM_STREAM_TIMEOUT_MS);
+  }
 
   // ── Spring WS 메시지 핸들러 ─────────────────────────────────
 
@@ -230,6 +306,7 @@ export function useInterviewSession({
           }
           dispatch({ type: 'SET_STT_LIVE', text: '' });
           dispatch({ type: 'SET_TYPING',   typing: true });
+          startLlmTimeout();
         } else {
           // 부분 STT — 실시간 미리보기 업데이트
           dispatch({ type: 'SET_STT_LIVE', text });
@@ -242,6 +319,8 @@ export function useInterviewSession({
       }
       case FASTAPI_WS_MESSAGE_TYPE.LLM_STREAM: {
         const token = msg.content ?? '';
+        // 첫 토큰 수신 → 타임아웃 취소 (정상 응답 진행)
+        if (streamingAccRef.current.length === 0) clearLlmTimeout();
         streamingAccRef.current += token;
         // RAF 배치 업데이트 — 같은 프레임의 토큰들 합산 후 한 번만 setState
         if (!streamingRafRef.current) {
@@ -251,7 +330,8 @@ export function useInterviewSession({
           });
         }
         if (msg.isFinal) {
-          // 스트리밍 완료 — 정식 메시지로 커밋
+          // 스트리밍 완료 — 타임아웃 취소 후 정식 메시지로 커밋
+          clearLlmTimeout();
           if (streamingRafRef.current) {
             cancelAnimationFrame(streamingRafRef.current);
             streamingRafRef.current = null;
@@ -259,6 +339,11 @@ export function useInterviewSession({
           const finalText = streamingAccRef.current;
           streamingAccRef.current = '';
           setStreamingText('');
+          // 이 turn에 폴백이 발동됐으면 늦게 도착한 isFinal은 무시 (turn 범위 suppress)
+          if (llmFallbackFiredRef.current === msg.questionOrder) {
+            llmFallbackFiredRef.current = null;
+            break;
+          }
           dispatch({ type: 'SET_TYPING',   typing: false });
           dispatch({
             type:    'ADD_MESSAGE',
@@ -324,8 +409,14 @@ export function useInterviewSession({
   }, [sessionId, state.sessionState, state.questionOrder]);
 
   useEffect(() => {
-    if (state.sessionState === 'FINISHED') clearInterviewSession();
+    if (state.sessionState === 'FINISHED') {
+      clearInterviewSession();
+      clearLlmTimeout();
+    }
   }, [state.sessionState]);
+
+  // 언마운트 시 타임아웃 정리
+  useEffect(() => () => clearLlmTimeout(), []);
 
   // ── 액션 메서드 ────────────────────────────────────────────
 
@@ -339,6 +430,8 @@ export function useInterviewSession({
     }
     dispatch({ type: 'SET_TYPING', typing: true });
     tts.clear();
+    llmFallbackFiredRef.current = null;
+    if (!import.meta.env.DEV) startLlmTimeout();
 
     // DEV mock: API 호출 없이 다음 질문 자동 생성
     if (import.meta.env.DEV) {

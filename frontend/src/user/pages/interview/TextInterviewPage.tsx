@@ -37,17 +37,18 @@ function formatTime(s: number) {
    면접 룸 컴포넌트
 ───────────────────────────────────────────────────────────── */
 interface InterviewRoomProps {
-  sessionId: string;
-  company:   string;
-  job:       string;
-  sessionType: SessionType;
-  onExit:    () => void;
+  sessionId:            string;
+  company:              string;
+  job:                  string;
+  sessionType:          SessionType;
+  initialQuestionOrder?: number;
+  onExit:               () => void;
 }
 
-function InterviewRoom({ sessionId, company, job, sessionType, onExit }: InterviewRoomProps) {
+function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOrder, onExit }: InterviewRoomProps) {
   const navigate = useNavigate();
 
-  const session = useInterviewSession({ sessionId, sessionType });
+  const session = useInterviewSession({ sessionId, sessionType, initialQuestionOrder });
 
   const [inputMode,  setInputMode]  = useState<'voice' | 'text'>(
     sessionType === SESSION_TYPE.TEXT ? 'text' : 'voice',
@@ -322,13 +323,14 @@ export default function TextInterviewPage() {
 
   const preflight = usePreflightCheck();
 
-  const [sessionId,     setSessionId]     = useState<string | null>(null);
-  const [phase,         setPhase]         = useState<'setup' | 'interview'>('setup');
-  const [resume,        setResume]        = useState<Resume | null>(null);
-  const [resumeLoading, setResumeLoading] = useState(true);
-  const [job,           setJob]           = useState('백엔드 개발자');
-  const [company,       setCompany]       = useState('');
-  const [sessionType,   setSessionType]   = useState<SessionType>(SESSION_TYPE.VOICE);
+  const [sessionId,            setSessionId]            = useState<string | null>(null);
+  const [phase,                setPhase]                = useState<'setup' | 'interview'>('setup');
+  const [resume,               setResume]               = useState<Resume | null>(null);
+  const [resumeLoading,        setResumeLoading]        = useState(true);
+  const [job,                  setJob]                  = useState('백엔드 개발자');
+  const [company,              setCompany]              = useState('');
+  const [sessionType,          setSessionType]          = useState<SessionType>(SESSION_TYPE.VOICE);
+  const [initialQuestionOrder, setInitialQuestionOrder] = useState<number | undefined>(undefined);
   const [micStatus,     setMicStatus]     = useState<MicStatus>('idle');
   const [audioPlaying,  setAudioPlaying]  = useState(false);
   const [isLoading,     setIsLoading]     = useState(false);
@@ -339,6 +341,8 @@ export default function TextInterviewPage() {
     const stored = loadInterviewSession();
     if (stored) {
       setSessionId(stored.sessionId);
+      if (stored.sessionType) setSessionType(stored.sessionType as SessionType);
+      if (stored.questionOrder > 1) setInitialQuestionOrder(stored.questionOrder);
       setPhase('interview');
     }
   }, []);
@@ -415,6 +419,7 @@ export default function TextInterviewPage() {
         company={company}
         job={job}
         sessionType={sessionType}
+        initialQuestionOrder={initialQuestionOrder}
         onExit={() => {
           clearInterviewSession();
           setPhase('setup');
