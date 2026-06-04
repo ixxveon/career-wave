@@ -18,7 +18,7 @@ interface ChartEntry {
   fullMark: number;
 }
 
-function buildChartData(scores: HybridScores, sessionType: string): ChartEntry[] {
+function buildChartData(scores: HybridScores, sessionType: ReportChartProps['sessionType']): ChartEntry[] {
   const isVoice = sessionType !== 'TEXT';
   return [
     {
