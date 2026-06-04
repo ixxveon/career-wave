@@ -2,7 +2,12 @@
 
 > 작성일: 2026-05-29  
 > 관련 문서: `plan.md` / `api-schema.md` / `constitution.md`  
-> **Feature Branch**: `feature/user-resume-analyze`  
+> **Feature Branches**:  
+> - `feature/user-resume-upload` — Phase 2 이력서 업로드  
+> - `feature/user-resume-cover-letter` — Phase 2 자기소개서 입력  
+> - `feature/user-resume-analysis` — Phase 3 AI 분석 로딩  
+> - `feature/user-resume-report` — Phase 4 결과 리포트  
+> - `feature/user-resume-history` — Phase 5 이력 목록  
 > **Status**: Final
 
 ---
