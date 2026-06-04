@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarClock, ChevronLeft, ChevronRight, Info, Sparkles } from 'lucide-react';
 import './MyPage.css';
+import {
+  PaymentHistorySubscriptionCard,
+  type PaymentHistorySubscriptionCardItem,
+} from '../../components/subscription/PaymentHistorySubscriptionCard';
 import { RecommendationCard } from '../../components/subscription/RecommendationCard';
 import {
   useCancelSubscription,
@@ -16,30 +20,7 @@ import {
   type ProductCode,
   type UsageItem,
 } from '../../types/subscription';
-import {
-  ALL_PRODUCT_CODES,
-  PRODUCT_ACCENT,
-  PRODUCT_TITLE,
-  formatBillingDate,
-} from '../../utils/subscription/subscriptionView';
-
-type SubscriptionCardItem = {
-  subscriptionId: string;
-  productCode: ProductCode;
-  name: string;
-  cancelScheduled: boolean;
-  nextBillingDate: string | null;
-  billingCycle: string;
-  monthlyPrice: string;
-  startedAt: string;
-  currentPeriodEnd: string;
-};
-
-type SubscriptionCardProps = {
-  subscription: SubscriptionCardItem;
-  isCanceling: boolean;
-  onCancel: (subscription: SubscriptionCardItem) => void;
-};
+import { ALL_PRODUCT_CODES, PRODUCT_ACCENT, PRODUCT_TITLE, formatBillingDate } from '../../utils/subscription/subscriptionView';
 
 const PERIOD_OPTIONS: Array<{ label: string; value: PaymentHistoryPeriod }> = [
   { label: '최근 1개월', value: PAYMENT_HISTORY_PERIOD.ONE_MONTH },
@@ -84,86 +65,12 @@ function buildRecommendationItem(productCode: ProductCode): UsageItem {
   };
 }
 
-function SubscriptionCard({
-  subscription,
-  isCanceling,
-  onCancel,
-}: SubscriptionCardProps) {
-  const currentPeriodEnd = formatBillingDate(subscription.currentPeriodEnd);
-
-  return (
-    <article className="cw-billing-subscription-card">
-      <div className="cw-billing-subscription-card__top">
-        <div>
-          <h4>{subscription.name}</h4>
-          <div className="cw-billing-subscription-card__status-row">
-            <span
-              className={`cw-billing-subscription-card__badge${
-                subscription.cancelScheduled ? ' is-pending' : ''
-              }`}
-            >
-              {subscription.cancelScheduled ? '해지 예약됨' : '이용중'}
-            </span>
-            {!subscription.cancelScheduled ? (
-              <button
-                type="button"
-                className="cw-billing-subscription-card__cancel"
-                onClick={() => onCancel(subscription)}
-                disabled={isCanceling}
-              >
-                구독 해지
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="cw-billing-subscription-card__cancel is-disabled"
-                disabled
-              >
-                해지 신청 완료
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <dl className="cw-billing-subscription-card__grid">
-        <div>
-          <dt>자동 결제 상태</dt>
-          <dd>{subscription.cancelScheduled ? '자동 결제 해지 예정' : '자동 결제 사용'}</dd>
-        </div>
-        <div>
-          <dt>다음 결제 예정일</dt>
-          <dd>{subscription.nextBillingDate ?? '—'}</dd>
-        </div>
-        <div>
-          <dt>결제 주기</dt>
-          <dd>{subscription.billingCycle}</dd>
-        </div>
-        <div>
-          <dt>월 결제 금액</dt>
-          <dd>{subscription.monthlyPrice}</dd>
-        </div>
-        <div className="is-wide">
-          <dt>구독 시작일</dt>
-          <dd>{formatBillingDate(subscription.startedAt)}부터 구독 시작</dd>
-        </div>
-      </dl>
-
-      {subscription.cancelScheduled && (
-        <p className="cw-billing-subscription-card__notice">
-          {currentPeriodEnd}까지는 계속 사용할 수 있고, 이후부터 자동 결제가 중단됩니다.
-        </p>
-      )}
-    </article>
-  );
-}
-
 function PaymentHistoryPage() {
   const [periodFilter, setPeriodFilter] = useState<PaymentHistoryPeriod>(
     PAYMENT_HISTORY_PERIOD.SIX_MONTHS
   );
   const [page, setPage] = useState(1);
-  const [cancelTarget, setCancelTarget] = useState<SubscriptionCardItem | null>(
+  const [cancelTarget, setCancelTarget] = useState<PaymentHistorySubscriptionCardItem | null>(
     null
   );
   const [successMessage, setSuccessMessage] = useState('');
@@ -318,7 +225,7 @@ function PaymentHistoryPage() {
               </div>
             ) : activeSubscriptions.length === 1 && singleRecommendation ? (
               <div className="cw-billing-subscription-layout is-single">
-                <SubscriptionCard
+                <PaymentHistorySubscriptionCard
                   subscription={activeSubscriptions[0]}
                   isCanceling={cancelSubscription.isPending}
                   onCancel={setCancelTarget}
@@ -328,7 +235,7 @@ function PaymentHistoryPage() {
             ) : (
               <div className="cw-billing-subscription-layout">
                 {activeSubscriptions.map((subscription) => (
-                  <SubscriptionCard
+                  <PaymentHistorySubscriptionCard
                     key={subscription.subscriptionId}
                     subscription={subscription}
                     isCanceling={cancelSubscription.isPending}
