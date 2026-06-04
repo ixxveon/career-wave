@@ -29,8 +29,8 @@
 ### 전제 조건
 
 - 업로드 시 백엔드에서 `documentId` 발급
-- 파일 업로드: `multipart/form-data` 직접 서버 전송 방식 (`POST /api/v1/resume/upload`)
-- 분석 상태 추적: **WebSocket** 확정 (`WS /ws/resume/{documentId}/status`)
+- 파일 업로드: `multipart/form-data` 직접 서버 전송 방식 (`POST /api/v1/user/resume/upload`)
+- 분석 상태 추적: **WebSocket** 확정 (`WS /ws/user/resume/{documentId}/status`)
 - 보안 검증: IDOR 방어를 위해 백엔드 API 단에서 `documentId` 소유권 검증 필수
 
 ---
