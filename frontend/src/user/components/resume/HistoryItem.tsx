@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { FileText, ScrollText, Calendar, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { ResumeHistoryItem } from '../../types/resume.d';
@@ -18,7 +19,7 @@ function formatDate(iso: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function HistoryItem({ item }: HistoryItemProps) {
+const HistoryItem = memo(function HistoryItem({ item }: HistoryItemProps) {
   const navigate = useNavigate();
   const isResume = item.fileType === 'RESUME';
 
@@ -71,4 +72,6 @@ export default function HistoryItem({ item }: HistoryItemProps) {
       </button>
     </div>
   );
-}
+});
+
+export default HistoryItem;

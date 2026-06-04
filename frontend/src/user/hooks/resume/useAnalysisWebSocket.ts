@@ -47,54 +47,54 @@ export function useAnalysisWebSocket({
   const errorFiredRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  const clearTimeout_ = () => {
+  const clearAnalysisTimeout = useCallback(() => {
     if (timeoutRef.current !== null) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const cleanupWs = (ws: WebSocket) => {
+  const cleanupWebSocket = useCallback((ws: WebSocket) => {
     ws.onopen    = null;
     ws.onmessage = null;
     ws.onerror   = null;
     ws.onclose   = null;
-  };
+  }, []);
 
   const disconnect = useCallback(() => {
-    clearTimeout_();
+    clearAnalysisTimeout();
     if (wsRef.current) {
-      cleanupWs(wsRef.current);
+      cleanupWebSocket(wsRef.current);
       wsRef.current.close();
       wsRef.current = null;
     }
     setIsConnected(false);
-  }, []);
+  }, [clearAnalysisTimeout, cleanupWebSocket]);
 
   const connect = useCallback(
     (documentId: string) => {
       // 기존 연결 정리
-      clearTimeout_();
+      clearAnalysisTimeout();
       if (wsRef.current) {
-        cleanupWs(wsRef.current);
+        cleanupWebSocket(wsRef.current);
         wsRef.current.close();
         wsRef.current = null;
       }
       errorFiredRef.current = false;
 
       // api-schema.md §5: JWT를 쿼리 파라미터로 전달 (?token={accessToken})
-      // TODO: 인증 팀원(/user/member) 토큰 관리 방식 확정 후 토큰 조회 방법 교체 필요
+      // TODO: 인증 팀원(/user/member) 토큰 관리 방식 확정 후 authSession.getAccessToken()으로 교체 필요
       const token = localStorage.getItem('accessToken');
       const url   = token
         ? `${WS_BASE_URL}/ws/user/resume/${documentId}/status?token=${encodeURIComponent(token)}`
         : `${WS_BASE_URL}/ws/user/resume/${documentId}/status`;
-      const ws  = new WebSocket(url);
+      const ws = new WebSocket(url);
       wsRef.current = ws;
 
-      // 30초 타임아웃 — 서버 무응답 시 에러 처리
+      // 30초 타임아웃 — 서버 무응답 시 에러 처리 (NFR-001)
       timeoutRef.current = setTimeout(() => {
         if (wsRef.current === ws) {
-          cleanupWs(ws);
+          cleanupWebSocket(ws);
           ws.close();
           wsRef.current = null;
           setIsConnected(false);
@@ -112,15 +112,15 @@ export function useAnalysisWebSocket({
           onMessage(msg);
 
           if (msg.status === 'COMPLETED') {
-            clearTimeout_();
-            cleanupWs(ws);
+            clearAnalysisTimeout();
+            cleanupWebSocket(ws);
             ws.close();
             wsRef.current = null;
             setIsConnected(false);
             onCompleted();
           } else if (msg.status === 'FAILED') {
-            clearTimeout_();
-            cleanupWs(ws);
+            clearAnalysisTimeout();
+            cleanupWebSocket(ws);
             ws.close();
             wsRef.current = null;
             setIsConnected(false);
@@ -134,16 +134,15 @@ export function useAnalysisWebSocket({
       // onerror: 네트워크 단절 토스트 + ERROR 상태 전이
       // onerror 이후 onclose가 항상 발화하므로 errorFiredRef로 중복 방지
       ws.onerror = () => {
-        clearTimeout_();
+        clearAnalysisTimeout();
         errorFiredRef.current = true;
         setIsConnected(false);
         onNetworkError();
-        // 네트워크 에러도 ERROR 상태로 전이 — LoadingModal 닫힘 보장
         onFailed('네트워크 연결이 끊겼습니다. 연결 상태를 확인 후 다시 시도해주세요.');
       };
 
       ws.onclose = (event: CloseEvent) => {
-        clearTimeout_();
+        clearAnalysisTimeout();
         setIsConnected(false);
         if (errorFiredRef.current) return;
         // Close 1008: policy violation — 인증 실패 또는 IDOR
@@ -152,7 +151,7 @@ export function useAnalysisWebSocket({
         }
       };
     },
-    [onMessage, onCompleted, onFailed, onNetworkError],
+    [clearAnalysisTimeout, cleanupWebSocket, onMessage, onCompleted, onFailed, onNetworkError],
   );
 
   return { connect, disconnect, isConnected };
