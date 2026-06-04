@@ -1,5 +1,5 @@
 import { http, HttpResponse, ws } from 'msw';
-import type { ApiResponse } from '../../user/types/resume.d';
+import type { ApiResponse } from '../../user/types/resume';
 import {
   MOCK_DOCUMENT_ID,
   MOCK_UPLOAD_RESPONSE,

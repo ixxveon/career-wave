@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
-import type { WsStatusMessage } from '../../types/resume.d';
+import type { WsStatusMessage } from '../../types/resume';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL
   ?? window.location.origin.replace(/^https/, 'wss').replace(/^http/, 'ws');

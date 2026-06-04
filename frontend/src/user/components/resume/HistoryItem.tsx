@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { FileText, ScrollText, Calendar, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { ResumeHistoryItem } from '../../types/resume.d';
+import type { ResumeHistoryItem } from '../../types/resume';
 import './HistoryItem.css';
 
 interface HistoryItemProps {
