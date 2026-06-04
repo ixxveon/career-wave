@@ -4,6 +4,7 @@ import { Clock, X, Loader2 } from 'lucide-react';
 
 import { interviewSessionApi }   from '../../api/interview';
 import { SESSION_TYPE, SESSION_STATE }          from '../../types/interview';
+import { ANSWER_LIMIT_SEC, MAX_QUESTION_COUNT } from '../../constants/interview';
 import type { SessionType, Resume, MicStatus } from '../../types/interview';
 
 import { usePreflightCheck }     from '../../hooks/interview/usePreflightCheck';
@@ -22,7 +23,7 @@ import { loadInterviewSession, clearInterviewSession } from '../../utils/intervi
 import './TextInterviewPage.css';
 
 /* ── 상수 ── */
-const ANSWER_LIMIT = 150; // 스펙 FR-004: 150초
+
 
 const MOCK_SETUP = {
   resumeFileName: '이력서_최종본.pdf',
@@ -101,7 +102,7 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
 
   /* ── 문항별 카운트다운 타이머 ── */
   const timer = useInterviewTimer({
-    duration: ANSWER_LIMIT,
+    duration: ANSWER_LIMIT_SEC,
     onExpire: () => {
       if (recorder.status === 'recording') recorder.stop();
       session.dispatch({ type: 'ADD_MESSAGE', message: {
@@ -213,7 +214,7 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
   const isDone          = session.sessionState === SESSION_STATE.FINISHED;
   const isError         = session.sessionState === SESSION_STATE.ERROR;
   const isReconnecting  = session.sessionState === SESSION_STATE.RECONNECTING;
-  const totalQ   = 5; // 서버 설정값으로 추후 대체 예정
+  const totalQ   = MAX_QUESTION_COUNT; // constants/interview.ts — 추후 API 응답값으로 대체
 
   return (
     <div className="ti">
@@ -281,7 +282,7 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
         <div className={`ti-bottom${timer.active && timer.remaining <= 30 ? ' ti-bottom--urgent' : ''}`}>
           <InterviewTimer
             remaining={timer.remaining}
-            duration={ANSWER_LIMIT}
+            duration={ANSWER_LIMIT_SEC}
             active={timer.active}
           />
           {inputMode === 'voice' ? (

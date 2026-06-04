@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { WS_PING_TIMEOUT_MS } from '../../constants/interview';
 
 export type CheckStatus = 'idle' | 'checking' | 'pass' | 'fail';
 
@@ -11,7 +12,6 @@ export interface PreflightResult {
   reset: () => void;
 }
 
-const WS_PING_TIMEOUT_MS = 5000;
 
 export function usePreflightCheck(): PreflightResult {
   const [micStatus, setMicStatus] = useState<CheckStatus>('idle');

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 
 import { useInterviewReport } from '../../hooks/interview/useInterviewReport';
+import { IMPROVEMENT_THRESHOLD } from '../../constants/interview';
 import { loadInterviewSession } from '../../utils/interview/sessionStorage';
 import { computeHybridScores, filterFeedbackScores } from '../../utils/interview/voiceQuality';
 import ReportChart         from '../../components/interview/ReportChart';
@@ -40,7 +41,6 @@ function getGrade(score: number | null): string {
 }
 
 /* ── 개선 추천 (점수 기반 동적 생성) ─────────────── */
-const IMPROVEMENT_THRESHOLD = 85;
 
 const IMPROVEMENT_POOL = [
   {
