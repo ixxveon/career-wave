@@ -5,6 +5,7 @@ import { LOGIN_ID_CHECK_STATE } from '../../utils/member/validation';
 import { usePersonalRegisterForm } from '../../hooks/member/usePersonalRegisterForm';
 import type { PersonalTermDetails, TermSection } from '../../utils/member/registerTerms';
 import { SOCIAL_PROVIDERS } from '../../utils/member/socialAuth';
+import { formatRemaining } from '../../utils/member/recoveryView';
 
 type PersonalTermsValues = {
   age: boolean;
@@ -31,7 +32,6 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
     fieldErrors,
     form,
     formMessage,
-    formatRemaining,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,
     handleLoginIdCheck,

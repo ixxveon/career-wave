@@ -9,7 +9,7 @@ import {
   validatePersonalRegisterForm,
   type RegisterFieldErrors,
 } from '../../utils/member/registerSchema';
-import { formatRemaining, getRecoveryErrorMessage, getRemainingSeconds } from '../../utils/member/recoveryView';
+import { getRecoveryErrorMessage, getRemainingSeconds } from '../../utils/member/recoveryView';
 import { LOGIN_ID_CHECK_STATE, type LoginIdCheckState } from '../../utils/member/validation';
 import {
   useConfirmVerificationCode,
@@ -309,7 +309,6 @@ export function usePersonalRegisterForm() {
     fieldErrors,
     form,
     formMessage,
-    formatRemaining,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,
     handleLoginIdCheck,
