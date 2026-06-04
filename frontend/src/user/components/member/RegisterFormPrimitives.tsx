@@ -39,13 +39,13 @@ type AuthButtonGroupProps = {
 
 export function Field({ label, children, required = false, wide = false }: FieldProps) {
   return (
-    <label className={wide ? 'cw-register-field cw-register-field--wide' : 'cw-register-field'}>
+    <div className={wide ? 'cw-register-field cw-register-field--wide' : 'cw-register-field'}>
       <span className="cw-register-label">
         {label}
         {required && <em>*</em>}
       </span>
       {children}
-    </label>
+    </div>
   );
 }
 

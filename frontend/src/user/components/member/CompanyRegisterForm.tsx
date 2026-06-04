@@ -1,5 +1,5 @@
 import { BadgeCheck, Building2, FileText, ShieldCheck, UserRound } from 'lucide-react';
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 import { useCompanyRegisterForm } from '../../hooks/member/useCompanyRegisterForm';
 import { formatRemaining } from '../../utils/member/recoveryView';
 import type { CompanyTermDetails } from '../../utils/member/registerTerms';
@@ -30,7 +30,6 @@ export function CompanyRegisterForm({
   termDetails: CompanyTermDetails;
 }) {
   const {
-    canSubmit,
     checkLoginId,
     confirmEmailCode,
     confirmPhoneCode,
@@ -68,9 +67,14 @@ export function CompanyRegisterForm({
     verified,
   } = useCompanyRegisterForm();
 
+  const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void handleSubmit();
+  };
+
   return (
     <>
-      <form className="cw-register-form">
+      <form className="cw-register-form" onSubmit={handleFormSubmit}>
         <section className="cw-register-section">
           <div className="cw-register-section__title">
             <Building2 size={22} />
@@ -251,7 +255,7 @@ export function CompanyRegisterForm({
         {formMessage && <p className="cw-register-error">{formMessage}</p>}
         {successMessage && <StatusPill active>{successMessage}</StatusPill>}
 
-        <button className="cw-register-submit" disabled={!canSubmit} onClick={handleSubmit} type="button">
+        <button className="cw-register-submit" disabled={uploadEmploymentCertificate.isPending || registerCompany.isPending} type="submit">
           {uploadEmploymentCertificate.isPending || registerCompany.isPending ? '가입 신청 처리 중' : '기업회원 가입하기'}
         </button>
       </form>

@@ -1,4 +1,4 @@
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 import { Apple, BadgeCheck, UserRound } from 'lucide-react';
 import { AuthButtonGroup, Field, StatusPill, TextInput } from './RegisterFormPrimitives';
 import { LOGIN_ID_CHECK_STATE } from '../../utils/member/validation';
@@ -29,7 +29,6 @@ const socialProviders = [
 
 export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTermDetails }) {
   const {
-    canSubmit,
     checkLoginId,
     confirmEmailCode,
     confirmPhoneCode,
@@ -59,8 +58,13 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
     verification,
   } = usePersonalRegisterForm();
 
+  const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void handleSubmit();
+  };
+
   return (
-    <form className="cw-register-form">
+    <form className="cw-register-form" onSubmit={handleFormSubmit}>
       <section className="cw-register-section cw-register-section--social">
         <div>
           <h2>소셜 계정으로 간편 가입</h2>
@@ -71,7 +75,7 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
             <a
               aria-label={`${provider.label} 회원가입`}
               className={`cw-social-login__button cw-social-login__${provider.id}`}
-              href="/auth/register/verify"
+              href={`/auth/register/verify?provider=${provider.id}`}
               key={provider.id}
             >
               {provider.id === 'apple' ? <Apple size={24} /> : provider.mark}
@@ -190,7 +194,7 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
       {formMessage && <p className="cw-register-error">{formMessage}</p>}
       {successMessage && <StatusPill active>{successMessage}</StatusPill>}
 
-      <button className="cw-register-submit" disabled={!canSubmit} onClick={handleSubmit} type="button">
+      <button className="cw-register-submit" disabled={registerUser.isPending} type="submit">
         {registerUser.isPending ? '가입 처리 중' : '가입하기'}
       </button>
     </form>
