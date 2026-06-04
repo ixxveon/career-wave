@@ -147,6 +147,7 @@ export interface UserRegisterResponse {
 
 export interface CompanyRegisterTerms extends TermsAgreement {
   companyVerification: boolean;
+  sms: boolean;
 }
 
 export interface CompanyRegisterRequest {
