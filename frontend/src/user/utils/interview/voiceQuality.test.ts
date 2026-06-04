@@ -4,6 +4,7 @@ import {
   computeHybridScores,
   getVoiceQualityLabel,
   VOICE_QUALITY_THRESHOLD,
+  SCORE_WEIGHTS,
 } from './voiceQuality';
 import type { FeedbackItem } from '../../types/interview';
 
@@ -110,12 +111,32 @@ describe('computeHybridScores', () => {
     expect(result.fluency).toBeNull();
   });
 
-  it('빈 배열이면 모든 지표가 null을 반환한다', () => {
+  it('빈 배열이면 모든 지표와 total이 null을 반환한다', () => {
     const result = computeHybridScores([]);
     expect(result.relevance).toBeNull();
     expect(result.depth).toBeNull();
     expect(result.delivery).toBeNull();
     expect(result.fluency).toBeNull();
+    expect(result.total).toBeNull();
+  });
+
+  it('total — 4개 지표 모두 유효할 때 가중치 평균을 반환한다', () => {
+    // relevance:80 * 0.35 + depth:80 * 0.35 + delivery:80 * 0.15 + fluency:80 * 0.15 = 80
+    const input = [makeFeedback({ relevanceScore: 80, depthScore: 80, deliveryScore: 80, fluencyScore: 80, voiceQualityRatio: 80 })];
+    const result = computeHybridScores(input);
+    expect(result.total).toBe(80);
+  });
+
+  it('total — delivery/fluency null 시 relevance+depth 가중치로 재정규화', () => {
+    // relevance:80 * 0.35 + depth:60 * 0.35 = 49, 총가중치 0.70 → 49/0.70 = 70
+    const input = [makeFeedback({ relevanceScore: 80, depthScore: 60, voiceQualityRatio: 10 })];
+    const result = computeHybridScores(input);
+    expect(result.total).toBe(70);
+  });
+
+  it('SCORE_WEIGHTS 합이 1.0이다', () => {
+    const sum = Object.values(SCORE_WEIGHTS).reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(1.0);
   });
 
   it('relevanceScore가 이미 null인 문항은 평균에서 제외된다', () => {

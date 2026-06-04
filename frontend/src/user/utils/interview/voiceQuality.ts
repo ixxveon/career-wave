@@ -32,17 +32,27 @@ export function getVoiceQualityLabel(ratio: number | null): '양호' | '부족' 
 }
 
 /**
- * 하이브리드 점수 산정 유틸 (spec §FR-007)
+ * 4대 지표 가중치 (spec §FR-007)
  *
- * - relevance / depth: 전체 문항 평균 (null 문항 제외)
- * - delivery / fluency: 음성 품질 통과 문항만 평균 (null 문항 제외)
- * - 전체 문항이 null이면 해당 지표 null 반환
+ * 텍스트 면접: 음성 지표 없으므로 relevance + depth 합산 후 재정규화
+ * 음성/영상 면접: 4개 지표 모두 반영
+ *
+ * 가중치 합 = 1.0
  */
+export const SCORE_WEIGHTS = {
+  relevance: 0.35,
+  depth:     0.35,
+  delivery:  0.15,
+  fluency:   0.15,
+} as const;
+
 export interface HybridScores {
   relevance: number | null;
   depth:     number | null;
   delivery:  number | null;
   fluency:   number | null;
+  /** 가중치 반영 종합 점수 (null 지표는 유효 가중치로 재정규화) */
+  total:     number | null;
 }
 
 function average(values: (number | null)[]): number | null {
@@ -51,12 +61,33 @@ function average(values: (number | null)[]): number | null {
   return Math.round(valid.reduce((sum, v) => sum + v, 0) / valid.length);
 }
 
+/**
+ * 가중치 평균 종합 점수 계산
+ * null 지표는 제외하고 유효 지표의 가중치 합으로 재정규화
+ * 전체 null이면 null 반환
+ */
+function computeWeightedTotal(scores: Omit<HybridScores, 'total'>): number | null {
+  const entries = [
+    { value: scores.relevance, weight: SCORE_WEIGHTS.relevance },
+    { value: scores.depth,     weight: SCORE_WEIGHTS.depth },
+    { value: scores.delivery,  weight: SCORE_WEIGHTS.delivery },
+    { value: scores.fluency,   weight: SCORE_WEIGHTS.fluency },
+  ].filter((e): e is { value: number; weight: number } => e.value !== null);
+
+  if (entries.length === 0) return null;
+
+  const totalWeight = entries.reduce((sum, e) => sum + e.weight, 0);
+  const weighted    = entries.reduce((sum, e) => sum + e.value * e.weight, 0);
+  return Math.round(weighted / totalWeight);
+}
+
 export function computeHybridScores(feedbacks: FeedbackItem[]): HybridScores {
   const filtered = filterFeedbackScores(feedbacks);
-  return {
+  const scores = {
     relevance: average(filtered.map(fb => fb.relevanceScore)),
     depth:     average(filtered.map(fb => fb.depthScore)),
     delivery:  average(filtered.map(fb => fb.deliveryScore)),
     fluency:   average(filtered.map(fb => fb.fluencyScore)),
   };
+  return { ...scores, total: computeWeightedTotal(scores) };
 }
