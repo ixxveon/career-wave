@@ -145,8 +145,30 @@ export interface UserRegisterResponse {
   memberStatus: MemberStatus;
 }
 
+export type SocialProviderId = 'kakao' | 'naver' | 'google' | 'apple';
+
+export interface SocialRegisterTerms extends TermsAgreement {}
+
+export interface SocialRegisterCompletionRequest {
+  provider: SocialProviderId;
+  socialEmail?: string;
+  name: string;
+  carrier: string;
+  phone: string;
+  phoneVerificationToken: string;
+  terms: SocialRegisterTerms;
+}
+
+export interface SocialRegisterCompletionResponse {
+  memberId: string;
+  memberType: 'USER';
+  memberStatus: MemberStatus;
+  nextPath: string;
+}
+
 export interface CompanyRegisterTerms extends TermsAgreement {
   companyVerification: boolean;
+  sms: boolean;
 }
 
 export interface CompanyRegisterRequest {
@@ -219,13 +241,19 @@ export interface FindIdResponse {
   found: boolean;
 }
 
-export interface PasswordTokenRequest {
-  memberType: MemberType;
-  loginId: string;
-  verificationToken: string;
-  managerName?: string;
-  businessNumber?: string;
-}
+export type PasswordTokenRequest =
+  | {
+      memberType: typeof MEMBER_TYPE.USER;
+      loginId: string;
+      verificationToken: string;
+    }
+  | {
+      memberType: typeof MEMBER_TYPE.COMPANY;
+      loginId: string;
+      verificationToken: string;
+      managerName: string;
+      businessNumber: string;
+    };
 
 export interface PasswordTokenResponse {
   resetToken: string;
