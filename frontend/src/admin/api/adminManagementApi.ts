@@ -11,9 +11,23 @@ export interface AdminManagementSummary {
   lockedAdminCount: number;
 }
 
-export type AdminRole = 'MASTER' | 'CS' | 'BACKEND';
+export const ADMIN_ROLE = {
+  MASTER: 'MASTER',
+  CS: 'CS',
+  BACKEND: 'BACKEND',
+  OPS: 'OPS',
+  BILLING: 'BILLING',
+  AUDIT: 'AUDIT',
+} as const;
 
-export type AdminStatus = 'ACTIVE' | 'LOCKED';
+export type AdminRole = (typeof ADMIN_ROLE)[keyof typeof ADMIN_ROLE];
+
+export const ADMIN_STATUS = {
+  ACTIVE: 'ACTIVE',
+  LOCKED: 'LOCKED',
+} as const;
+
+export type AdminStatus = (typeof ADMIN_STATUS)[keyof typeof ADMIN_STATUS];
 
 export interface AdminAccount {
   id: string;
@@ -27,7 +41,13 @@ export interface AdminAccount {
   status: AdminStatus;
 }
 
-export type AclRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+export const ACL_RISK_LEVEL = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+} as const;
+
+export type AclRiskLevel = (typeof ACL_RISK_LEVEL)[keyof typeof ACL_RISK_LEVEL];
 
 export interface AdminAclRule {
   id: string;
@@ -39,7 +59,13 @@ export interface AdminAclRule {
   updatedAt: string;
 }
 
-export type AuditSeverity = 'INFO' | 'WARN' | 'ERROR';
+export const AUDIT_SEVERITY = {
+  INFO: 'INFO',
+  WARN: 'WARN',
+  ERROR: 'ERROR',
+} as const;
+
+export type AuditSeverity = (typeof AUDIT_SEVERITY)[keyof typeof AUDIT_SEVERITY];
 
 export interface AdminAuditLog {
   id: string;
