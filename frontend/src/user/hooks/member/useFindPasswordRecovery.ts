@@ -140,6 +140,23 @@ export function useFindPasswordRecovery(isCompany: boolean) {
     }));
   };
 
+  const buildCompanyResetSnapshot = (verificationToken: string) =>
+    [
+      currentCompanyLoginIdRef.current.trim(),
+      currentCompanyManagerNameRef.current.trim(),
+      currentCompanyBusinessNumberRef.current,
+      currentCompanyEmailRef.current.trim(),
+      verificationToken,
+    ].join('|');
+
+  const buildUserResetSnapshot = (method: RecoveryMethod, verificationToken: string) =>
+    [
+      currentUserLoginIdRef.current.trim(),
+      getRecoveryTarget(method, currentUserEmailRef.current, currentUserPhoneRef.current),
+      method,
+      verificationToken,
+    ].join('|');
+
   const updateUser = (key: keyof UserFindPasswordForm, value: string) => {
     setUserForm((current) => ({ ...current, [key]: value }));
     setFieldErrors((current) => ({ ...current, [key]: '', form: '' }));
@@ -422,25 +439,13 @@ export function useFindPasswordRecovery(isCompany: boolean) {
           return;
         }
 
-        companyIdentitySnapshot = [
-          currentCompanyLoginIdRef.current.trim(),
-          currentCompanyManagerNameRef.current.trim(),
-          currentCompanyBusinessNumberRef.current,
-          currentCompanyEmailRef.current.trim(),
-          verificationToken,
-        ].join('|');
+        companyIdentitySnapshot = buildCompanyResetSnapshot(verificationToken);
 
         const response = await issuePasswordToken.mutateAsync(
           toPasswordTokenRequest('company', companyForm, verificationToken, companyForm),
         );
 
-        const currentSnapshot = [
-          currentCompanyLoginIdRef.current.trim(),
-          currentCompanyManagerNameRef.current.trim(),
-          currentCompanyBusinessNumberRef.current,
-          currentCompanyEmailRef.current.trim(),
-          companyVerificationRef.current.verificationToken,
-        ].join('|');
+        const currentSnapshot = buildCompanyResetSnapshot(companyVerificationRef.current.verificationToken);
         if (companyIdentitySnapshot !== currentSnapshot) return;
 
         setCompanyResetSession({
@@ -456,27 +461,16 @@ export function useFindPasswordRecovery(isCompany: boolean) {
           return;
         }
 
-        userRequestSnapshot = [
-          currentUserLoginIdRef.current.trim(),
-          getRecoveryTarget(requestMethod, currentUserEmailRef.current, currentUserPhoneRef.current),
-          requestMethod,
-          verificationToken,
-        ].join('|');
+        userRequestSnapshot = buildUserResetSnapshot(requestMethod, verificationToken);
 
         const response = await issuePasswordToken.mutateAsync(
           toPasswordTokenRequest('user', userForm, verificationToken),
         );
 
-        const currentSnapshot = [
-          currentUserLoginIdRef.current.trim(),
-          getRecoveryTarget(
-            currentUserMethodRef.current,
-            currentUserEmailRef.current,
-            currentUserPhoneRef.current,
-          ),
+        const currentSnapshot = buildUserResetSnapshot(
           currentUserMethodRef.current,
           userVerificationRef.current[currentUserMethodRef.current].verificationToken,
-        ].join('|');
+        );
         if (userRequestSnapshot !== currentSnapshot) return;
 
         setUserResetSession({
@@ -495,26 +489,14 @@ export function useFindPasswordRecovery(isCompany: boolean) {
       setSuccessMessage('새 비밀번호를 입력한 뒤 저장해주세요.');
     } catch (error) {
       if (isCompany) {
-        const currentSnapshot = [
-          currentCompanyLoginIdRef.current.trim(),
-          currentCompanyManagerNameRef.current.trim(),
-          currentCompanyBusinessNumberRef.current,
-          currentCompanyEmailRef.current.trim(),
-          companyVerificationRef.current.verificationToken,
-        ].join('|');
+        const currentSnapshot = buildCompanyResetSnapshot(companyVerificationRef.current.verificationToken);
 
         if (companyIdentitySnapshot !== currentSnapshot) return;
       } else {
-        const currentSnapshot = [
-          currentUserLoginIdRef.current.trim(),
-          getRecoveryTarget(
-            currentUserMethodRef.current,
-            currentUserEmailRef.current,
-            currentUserPhoneRef.current,
-          ),
+        const currentSnapshot = buildUserResetSnapshot(
           currentUserMethodRef.current,
           userVerificationRef.current[currentUserMethodRef.current].verificationToken,
-        ].join('|');
+        );
 
         if (userRequestSnapshot !== currentSnapshot) return;
       }
