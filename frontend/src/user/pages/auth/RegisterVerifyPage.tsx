@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { CheckCircle2, ShieldCheck, UserRound } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { getSocialProviderLabel } from '../../utils/member/socialAuth';
@@ -29,12 +29,39 @@ function RegisterVerifyPage() {
   const [form, setForm] = useState(initialForm);
   const [terms, setTerms] = useState(initialTerms);
   const [phoneVerified, setPhoneVerified] = useState(false);
-  const canSubmit = terms.service && terms.privacy;
+  const [verificationRequested, setVerificationRequested] = useState(false);
+  const [formMessage, setFormMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const normalizedPhone = form.phone.replace(/\D/g, '');
+  const canSubmit =
+    form.name.trim().length > 0 &&
+    form.carrier.trim().length > 0 &&
+    normalizedPhone.length >= 10 &&
+    form.phoneCode.trim().length > 0 &&
+    phoneVerified &&
+    terms.service &&
+    terms.privacy;
   const provider = getSocialProviderLabel(searchParams.get('provider'));
   const socialEmail = searchParams.get('email');
 
-  const update = (key: RegisterVerifyFormKey, value: RegisterVerifyForm[RegisterVerifyFormKey]) =>
-    setForm((current) => ({ ...current, [key]: value }));
+  const update = (key: RegisterVerifyFormKey, value: RegisterVerifyForm[RegisterVerifyFormKey]) => {
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+      ...(key === 'phone' ? { phoneCode: '' } : {}),
+    }));
+    setFormMessage('');
+    setSuccessMessage('');
+
+    if (key === 'phone') {
+      setPhoneVerified(false);
+      setVerificationRequested(false);
+    }
+
+    if (key === 'phoneCode') {
+      setPhoneVerified(false);
+    }
+  };
   const allTermsChecked = terms.service && terms.privacy && terms.marketing;
 
   const toggleAll = (checked: boolean) => {
@@ -52,6 +79,46 @@ function RegisterVerifyPage() {
     }));
   };
 
+  const handleSendPhoneCode = () => {
+    if (normalizedPhone.length < 10) {
+      setFormMessage('휴대폰 번호를 먼저 입력해주세요.');
+      return;
+    }
+
+    setVerificationRequested(true);
+    setPhoneVerified(false);
+    setFormMessage('');
+    setSuccessMessage('인증번호를 입력한 뒤 인증 확인을 진행해주세요.');
+  };
+
+  const handleConfirmPhoneCode = () => {
+    if (!verificationRequested) {
+      setFormMessage('먼저 인증번호를 전송해주세요.');
+      return;
+    }
+
+    if (!form.phoneCode.trim()) {
+      setFormMessage('인증번호를 입력해주세요.');
+      return;
+    }
+
+    setPhoneVerified(true);
+    setFormMessage('');
+    setSuccessMessage('');
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!canSubmit) {
+      setFormMessage('필수 정보와 휴대폰 인증 완료 여부를 확인해주세요.');
+      return;
+    }
+
+    setFormMessage('');
+    setSuccessMessage('소셜 가입 추가 정보 입력이 완료되었습니다.');
+  };
+
   return (
     <section className="cw-auth-page cw-register-page">
       <div className="cw-register-shell cw-register-shell--narrow">
@@ -61,7 +128,7 @@ function RegisterVerifyPage() {
           <p>Career Wave 이용을 위해 소셜 계정에 필요한 정보를 조금만 더 입력해주세요.</p>
         </div>
 
-        <form className="cw-register-form">
+        <form className="cw-register-form" onSubmit={handleSubmit}>
           <section className="cw-register-section">
             <div className="cw-register-section__title">
               <ShieldCheck size={22} />
@@ -116,7 +183,7 @@ function RegisterVerifyPage() {
                 </span>
                 <div className="cw-register-inline">
                   <input value={form.phone} onChange={(event) => update('phone', event.target.value)} placeholder="010-0000-0000" />
-                  <button className="cw-register-sub-button" type="button" onClick={() => alert('휴대폰 인증번호 전송 API 연결 예정')}>
+                  <button className="cw-register-sub-button" type="button" onClick={handleSendPhoneCode}>
                     인증번호 전송
                   </button>
                 </div>
@@ -125,7 +192,7 @@ function RegisterVerifyPage() {
                 <span className="cw-register-label">휴대폰 인증번호</span>
                 <div className="cw-register-inline">
                   <input value={form.phoneCode} onChange={(event) => update('phoneCode', event.target.value)} placeholder="인증번호 입력" />
-                  <button className="cw-register-sub-button" type="button" onClick={() => setPhoneVerified(true)}>
+                  <button className="cw-register-sub-button" type="button" onClick={handleConfirmPhoneCode}>
                     인증 확인
                   </button>
                 </div>
@@ -173,7 +240,15 @@ function RegisterVerifyPage() {
             </div>
           </section>
 
-          <button className="cw-register-submit" disabled={!canSubmit} type="button">
+          {formMessage && <p className="cw-register-error">{formMessage}</p>}
+          {successMessage && (
+            <span className="cw-register-status">
+              <CheckCircle2 size={15} />
+              {successMessage}
+            </span>
+          )}
+
+          <button className="cw-register-submit" disabled={!canSubmit} type="submit">
             가입 완료
           </button>
         </form>
