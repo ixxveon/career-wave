@@ -35,6 +35,9 @@ export const LLM_FALLBACK_QUESTIONS = [
   '5년 후 커리어 목표를 말씀해 주세요.',
 ];
 
+/** LLM 첫 토큰 대기 제한 시간 — 초과 시 폴백 질문 삽입 (spec FR-005) */
+export const LLM_STREAM_TIMEOUT_MS = 8_000;
+
 /** DEV mock 자동 꼬리 질문 (백엔드 미연동 시) */
 const DEV_MOCK_REPLIES = [
   '답변 감사합니다. 해당 기술적 선택의 근거는 무엇이었나요?',
@@ -200,7 +203,7 @@ export function useInterviewSession({
    * SET_TYPING(true) 후 LLM_STREAM_TIMEOUT_MS 내 첫 토큰 미수신 시
    * 사전 정의 폴백 질문을 채팅창에 삽입하고 타이핑 상태를 해제한다.
    */
-  const LLM_STREAM_TIMEOUT_MS = 8000;
+
   const llmTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function clearLlmTimeout() {
