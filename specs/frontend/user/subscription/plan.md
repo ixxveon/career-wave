@@ -1,6 +1,7 @@
-# Implementation Plan: User Subscription
+# Implementation Plan: User Subscription & Billing
 
 > 작성자: 마은재 | 작성일: 2026-05-31  
+> 최근 정리일: 2026-06-03  
 > 관련 문서: `constitution.md` / `tasks.md` / `spec.md` / `api-schema.md` / `checklist.md`  
 > 레이어: **Frontend Only / Backend Ready**
 
@@ -8,19 +9,39 @@
 
 ## Summary
 
-사용자 마이페이지의 구독 현황, AI 서비스 사용량, 결제 내역, 구독 해지, checkout/success/fail 결제 플로우를 구현하고 Toss Payments 및 백엔드 결제 API와 연결 가능한 계약을 정의한다.
+사용자 구독/결제 도메인은 마이페이지 구독 현황, AI 서비스 사용량, 결제 내역, checkout/success/fail, 구독 해지를 하나의 결제 경험으로 제공한다.  
+현재 코드베이스에는 구독/결제 화면 UI가 먼저 존재하지만, API 계층, 타입, query, 실제 결제 confirm 흐름은 아직 spec 수준에서만 정의된 부분이 많다.
 
-## PR Phase Mapping
+## Project Phase Alignment
 
-팀 작업 지시에 따라 PR은 아래 Phase 기준으로 분리한다. 기존 문서의 세부 Phase는 기능 묶음 기준이며, 실제 구현 PR은 이 표를 우선한다.
+팀에서 확정한 사용자 프론트 개발 순서를 기준으로 Subscription/Billing 도메인은 아래처럼 매핑한다.
 
-| PR Phase | Branch | Scope |
-|----------|--------|-------|
-| Phase 5 | `feature/user-billing-base` | 구독/결제 공통 타입, API 인터페이스, 상품 데이터 구조 정리 |
-| Phase 6 | `feature/user-subscription` | 구독 상태, 이용량, 구독 내역 기능 구현 및 API 연동 |
-| Phase 7 | `feature/user-payment-history` | 결제 내역 조회, 기간 필터, 페이지네이션 기능 구현 |
-| Phase 8 | `feature/user-billing` | 상품 선택, 결제 요청, 결제 성공/실패 처리 기능 구현 |
-| Phase 9 | `feature/user-frontend-qa` | 누락 기능 보완, 예외 처리, 반응형, QA |
+| Project Phase | Branch | Subscription/Billing Scope |
+|---------------|--------|----------------------------|
+| Phase 5 | `feature/user-subscription` | 구독 현황, 사용량, 상품 소개, 구독 상태 화면 구조 정리 |
+| Phase 6 | `feature/user-payment-history` | 결제 내역 조회, 기간 필터, 페이지네이션, 구독 해지 UI/상태 |
+| Phase 7 | `feature/user-billing` | checkout, order 생성, 결제 성공/실패, confirm 흐름 |
+| Phase 8 | `feature/user-frontend-qa` | 누락 기능 보완, 예외 처리, 접근성, 반응형, 실제 API 연동 QA |
+
+> 참고:
+> - 기존 문서의 `feature/user-billing-base`와 Phase 9는 현재 프로젝트 순서에 맞지 않으므로 더 이상 사용하지 않는다.
+> - 공통 타입/API 정리는 Phase 5~7 각 기능 구현에 포함해 진행한다.
+
+## Current Implementation Snapshot
+
+### 현재 존재하는 것
+
+- [x] `/mypage/subscription`, `/mypage/payment-history`, `/billing/checkout`, `/billing/success`, `/billing/fail` 화면
+- [x] static product 카드, mock subscription 상태, mock 결제 내역, checkout 동의 UI
+- [x] 구독 해지 confirm modal과 success message 수준의 프론트 상호작용
+
+### 현재 부족한 것
+
+- [ ] `api/subscription/`, `hooks/subscription/`, `types/subscription.ts` 구조
+- [ ] 실제 상품/구독/결제 contract 기반 데이터 흐름
+- [ ] checkout order 생성 / payment confirm / cancel API 연동
+- [ ] subscription entitlement 재조회
+- [ ] success URL 직접 접근 방어와 서버 상태 우선 처리
 
 ---
 
@@ -30,99 +51,81 @@
 |------|------|------|
 | 라우팅 | `/mypage/*`, `/billing/*` | 구독 관리와 결제 플로우를 사용자 마이페이지/결제 도메인으로 분리 |
 | 상품 진입 | URL query `?product=...` | 상품 CTA와 checkout 연결을 명확히 표현 |
-| 서버 상태 | `TanStack Query` | 상품, 구독, 사용량, 결제 내역, 결제 상태 재조회 및 캐시 무효화 |
-| 결제 연동 | Toss Payments + 백엔드 confirm | amount/order 검증과 중복 결제 방지는 백엔드에서 최종 처리 |
+| 서버 상태 | `TanStack Query` 예정 | 상품, 구독, 사용량, 결제 내역, 결제 상태 재조회 및 캐시 무효화 |
+| 결제 연동 | Toss Payments + 백엔드 confirm | amount/order 검증과 중복 결제 방지는 백엔드가 최종 처리 |
 | 세션 복원 | `orderId` 기반 상태 조회 | success/fail 새로고침 및 직접 접근 방어 |
-| 스타일링 | 기존 Career Wave UI/CSS 컨벤션 | 기존 마이페이지 톤 유지 |
-| 보안 저장소 | 브라우저 저장소 비사용 | paymentKey, billingKey, 카드 정보 노출 방지 |
+| 스타일링 | 기존 Career Wave UI/CSS 컨벤션 | 현재 MVP UI를 유지하면서 실제 계약 기반으로 전환 |
 
 ### 전제 조건
 
-- 상품 코드: `document-coaching`, `interview`
-- checkout은 query로 진입하지만, 최종 상품명/가격/결제 주기는 백엔드 상품 또는 order 응답을 기준으로 한다.
-- Toss Payments success redirect 후 `paymentKey`, `orderId`, `amount`는 백엔드 confirm API로 전달한다.
-- 결제 성공 후 구독 권한은 subscription/entitlement API 재조회로 확인한다.
-- Member 도메인의 제재/블랙리스트/기업 승인 대기 상태는 결제 요청을 차단할 수 있다.
-- ERD 초안에는 결제/구독 관련 테이블이 부족하므로 backend spec에서 `products`, `subscriptions`, `payments`, `payment_orders`, `subscription_usages` 계열 모델 재설계가 필요하다.
-
-### Phase 0 선행 조건
-
-- Backend spec에서 `products`, `subscriptions`, `payments`, `payment_orders`, `subscription_usages` 모델과 관계를 확정해야 한다.
-- 위 ERD 재설계는 실제 API 연동 전 blocking dependency다.
-- 단, frontend mock 구현은 `api-schema.md`의 계약을 기준으로 독립 진행할 수 있다.
-- Phase 0 완료 전까지 checkout/결제/구독 상태는 mock adapter를 사용하고, 실제 PG confirm 및 entitlement 부여는 연결하지 않는다.
+- 상품 코드는 `document-coaching`, `interview`를 사용한다.
+- checkout query는 진입 힌트일 뿐이며, 최종 상품명/가격/결제 주기는 서버 응답을 기준으로 한다.
+- Member 도메인의 제재/블랙리스트/승인 대기 상태는 결제 요청을 차단할 수 있다.
+- 현재 화면은 mock/static data에 의존하므로, 실제 API 연동 시 상태 소유 지점이 재정리되어야 한다.
 
 ---
 
 ## Project Structure
 
 ```txt
-src/user/
+frontend/src/user/
 ├── pages/mypage/
-│   ├── SubscriptionPage.jsx
-│   └── PaymentHistoryPage.jsx
+│   ├── SubscriptionPage.tsx
+│   └── PaymentHistoryPage.tsx
 ├── pages/billing/
-│   ├── CheckoutPage.jsx
-│   ├── BillingSuccessPage.jsx
-│   └── BillingFailPage.jsx
-├── api/subscription/
-│   ├── productApi.ts
-│   ├── subscriptionApi.ts
-│   ├── paymentApi.ts
-│   └── checkoutApi.ts
-├── hooks/subscription/
-│   ├── useProducts.ts
-│   ├── useMySubscriptions.ts
-│   ├── useUsageSummary.ts
-│   ├── usePaymentHistory.ts
-│   ├── useCheckout.ts
-│   └── useCancelSubscription.ts
-└── types/
-    └── subscription.ts
+│   ├── CheckoutPage.tsx
+│   ├── PaymentSuccessPage.tsx
+│   ├── PaymentFailPage.tsx
+│   ├── PricingPage.tsx
+│   ├── CompanyProductPage.tsx
+│   └── billingProducts.ts
+├── api/subscription/            # 아직 미구현, 도입 예정
+├── hooks/subscription/          # 아직 미구현, 도입 예정
+└── types/subscription.ts        # 아직 미구현, 도입 예정
 ```
 
 ---
 
-## Phases
+## Data Flow
 
-### Phase 1: 인프라 세팅 & 타입 정의
-- [ ] `subscription.ts` — 상품, 구독, 사용량, 결제 상태, 실패 사유 타입 정의
-- [ ] `api/subscription/` — 상품/구독/사용량/결제/해지 API 함수 인터페이스 작성
-- [ ] TanStack Query queryKey 컨벤션 정의 (`products`, `mySubscriptions`, `usageSummary`, `paymentHistory`, `paymentStatus`)
-- [ ] 결제 상태별 공통 에러 매핑 작성 (`400`, `403`, `409`, `422`, `500`)
-- [ ] mock 결제와 실제 Toss 결제 분리 구조 설계
+1. 사용자가 `/mypage/subscription`에서 상품 소개와 현재 구독 상태를 확인한다.
+2. 구매 CTA는 `/billing/checkout?product=...`로 이동한다.
+3. checkout은 query를 파싱하지만, 최종 상품 정보/가격/order는 서버 응답 기준으로 확정해야 한다.
+4. success/fail 화면은 URL 파라미터만으로 최종 상태를 확정하지 않고, `orderId` 또는 confirm API 결과를 기준으로 렌더링해야 한다.
+5. 구독 해지, 결제 내역, entitlement 반영은 query invalidation 또는 재조회 구조를 가져야 한다.
 
-### Phase 2: 마이페이지 구독 현황
-- [ ] `/mypage/subscription` 서비스 소개 및 상품 카드 구현
-- [ ] 구독 없음/1개/2개 상태별 UI 구현
-- [ ] 사용량 카드 구현: limit, used, remaining, resetAt, 초과/소진 상태
-- [ ] 상품 CTA에서 checkout query 전달 확인
-- [ ] AI 서비스 이용 안내/환불/문의 정적 영역 구현
+## Risks
 
-### Phase 3: 결제 내역 및 구독 해지
-- [ ] `/mypage/payment-history` 구독 내역 및 결제 내역 구현
-- [ ] 결제 내역 최신순 pagination 및 기간 필터 구현
-- [ ] 구독 해지 confirm modal 및 cancel API 연동
-- [ ] 해지 후 `CANCEL_SCHEDULED` 상태 반영과 query invalidation 구현
-- [ ] payment empty state 및 recommendation card 구현
+- 현재 페이지는 mock/static UI 중심이라 "실제 완료"로 오해하기 쉽다.
+- success/fail 페이지가 아직 서버 confirm 우선 구조가 아니므로 product query 기반 표시를 그대로 믿으면 안 된다.
+- subscription/payment history/billing이 auth 상태와 엮이므로 Member 도메인과의 route guard/제재 상태 연동이 필요하다.
 
-### Phase 4: Checkout / Success / Fail
-- [ ] `/billing/checkout` product query 파싱 및 서버 상품 조회
-- [ ] 자동 결제 동의, 결제 요약, order 생성 요청 구현
+---
+
+## Phase Breakdown
+
+### Phase 5 — Subscription
+- [ ] `types/subscription.ts` 도입 및 상품/구독/사용량 타입 정리
+- [ ] `/mypage/subscription` 구독 없음/1개/2개 상태를 실제 contract 기준으로 정리
+- [ ] 사용량 카드, empty state, recommendation card의 상태 소유 지점 정리
+- [ ] 상품 CTA와 checkout query 매핑 정리
+
+### Phase 6 — Payment History
+- [ ] `/mypage/payment-history` 구독 내역 영역을 실제 상태 기반으로 정리
+- [ ] 결제 내역 기간 필터와 pagination을 실제 데이터 구조 기준으로 정리
+- [ ] 구독 해지 confirm modal과 cancel state를 API 연동 가능한 구조로 정리
+- [ ] `CANCEL_SCHEDULED` 상태 재조회 및 복원 처리
+
+### Phase 7 — Billing
+- [ ] `/billing/checkout` product query 검증 및 서버 상품/order 정보 반영
+- [ ] order 생성 요청, 중복 클릭 방지, 동의 상태 처리
 - [ ] `/billing/success` confirm/loading/success 상태 구현
 - [ ] `/billing/fail` 실패 사유별 메시지 및 재시도 CTA 구현
 - [ ] success/fail 직접 접근 및 새로고침 상태 복원 처리
 
-### Phase 5: Toss Payments 연동 및 도메인 통합
-- [ ] Toss SDK/redirect 파라미터 처리
-- [ ] confirm API amount/order 검증 흐름 정렬
-- [ ] subscription entitlement 재조회 및 AI 서비스 권한 반영
-- [ ] Member 제재/블랙리스트 결제 제한 응답 처리
-- [ ] 결제 실패/취소/timeout reasonCode 매핑
-
-### Phase 6: Polish & QA
-- [ ] `checklist.md` 전 항목 셀프 체크
-- [ ] a11y — checkout 동의, 결제 상태, 해지 modal, 키보드 제어 검증
-- [ ] 보안 검증 — success URL 위조, query 가격 조작, 민감정보 저장 여부 확인
-- [ ] 반응형 검증 — 모바일 375px checkout/payment row 표시 확인
-- [ ] 최종 확인 — mock 결제 제거, console 제거, build 통과
+### Phase 8 — Frontend QA
+- [ ] Member 제재/승인 상태와 checkout 차단 연동 검증
+- [ ] 민감 결제 정보 비저장 검증
+- [ ] modal focus / keyboard control / mobile 375px 검증
+- [ ] mock/static 데이터를 실제 API 구조로 교체하며 남는 레거시 정리
+- [ ] build / 실사용 시나리오 QA
