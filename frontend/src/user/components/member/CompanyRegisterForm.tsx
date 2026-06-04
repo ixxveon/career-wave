@@ -42,7 +42,6 @@ export function CompanyRegisterForm({
     form,
     formMessage,
     handleCertificateChange,
-    handleCompanyVerification,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,
     handleLoginIdCheck,
@@ -64,7 +63,6 @@ export function CompanyRegisterForm({
     update,
     uploadEmploymentCertificate,
     verification,
-    verified,
   } = useCompanyRegisterForm();
 
   const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -118,16 +116,11 @@ export function CompanyRegisterForm({
             <ShieldCheck size={22} />
             <div>
               <h2>기업인증</h2>
-              <p>사업자등록증명원 발급번호 기반 인증 API 연결을 고려한 영역입니다.</p>
+              <p>가입 심사 단계에서 확인할 사업자등록증명원 발급번호를 입력해주세요.</p>
             </div>
           </div>
           <Field label="사업자등록증명원 발급번호" required wide>
-            <AuthButtonGroup
-              input={<TextInput value={form.certificateNumber} onChange={(value) => update('certificateNumber', value)} placeholder="사업자등록증명원 발급번호 입력" />}
-              buttonLabel="기업인증 확인"
-              onClick={handleCompanyVerification}
-            />
-            <StatusPill active={verified.company}>기업인증 완료</StatusPill>
+            <TextInput value={form.certificateNumber} onChange={(value) => update('certificateNumber', value)} placeholder="사업자등록증명원 발급번호 입력" />
             {fieldErrors.certificateNumber && <p className="cw-register-error">{fieldErrors.certificateNumber}</p>}
           </Field>
         </section>

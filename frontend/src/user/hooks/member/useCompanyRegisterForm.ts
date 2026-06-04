@@ -82,9 +82,6 @@ export function useCompanyRegisterForm() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitGuideOpen, setIsSubmitGuideOpen] = useState(false);
   const employmentCertificateInputRef = useRef<HTMLInputElement | null>(null);
-  const [verified, setVerified] = useState({
-    company: false,
-  });
   const checkLoginId = useLoginIdCheck();
   const sendPhoneCode = useSendVerificationCode();
   const confirmPhoneCode = useConfirmVerificationCode();
@@ -114,7 +111,7 @@ export function useCompanyRegisterForm() {
     addressDetail: form.addressDetail,
     isAgency: form.isAgency,
     companyType: form.companyType,
-    certificateNumber: verified.company ? form.certificateNumber : '',
+    certificateNumber: form.certificateNumber.trim(),
     managerPhoneCode: form.managerPhoneCode,
     managerEmailCode: form.managerEmailCode,
     employmentCertificate,
@@ -173,7 +170,6 @@ export function useCompanyRegisterForm() {
         emailRemainingAttempts: 0,
       }));
     }
-    if (key === 'certificateNumber') setVerified((current) => ({ ...current, company: false }));
   };
 
   const handleCertificateChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -199,15 +195,6 @@ export function useCompanyRegisterForm() {
     setVerification((current) => ({ ...current, employmentCertificateFileId: '' }));
     setEmploymentCertificateError('');
     setFieldErrors((current) => ({ ...current, employmentCertificate: '', employmentCertificateFileId: '' }));
-  };
-
-  const handleCompanyVerification = () => {
-    if (!form.certificateNumber.trim()) {
-      setFieldErrors((current) => ({ ...current, certificateNumber: '사업자등록증명원 발급번호를 입력해주세요.' }));
-      return;
-    }
-    setVerified((current) => ({ ...current, company: true }));
-    setFieldErrors((current) => ({ ...current, certificateNumber: '' }));
   };
 
   const handleLoginIdCheck = async () => {
@@ -412,7 +399,6 @@ export function useCompanyRegisterForm() {
     form,
     formMessage,
     handleCertificateChange,
-    handleCompanyVerification,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,
     handleLoginIdCheck,
@@ -434,6 +420,5 @@ export function useCompanyRegisterForm() {
     update,
     uploadEmploymentCertificate,
     verification,
-    verified,
   };
 }
