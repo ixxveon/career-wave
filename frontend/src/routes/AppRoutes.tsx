@@ -1,5 +1,6 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
+import { authSession } from '../user/utils/member/authSession';
 import ScrappedJobPage from '@/user/pages/mypage/ScrappedJobPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
@@ -77,6 +78,13 @@ import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
 import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
 
+function ProtectedRoute() {
+  if (!authSession.getAccessToken()) {
+    return <Navigate to="/auth/login" replace />;
+  }
+  return <Outlet />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -151,8 +159,10 @@ function AppRoutes() {
           <Route path="notices" element={<NoticePage />} />
           <Route path="notices/:id" element={<NoticeDetailPage />} />
           <Route path="faq" element={<FaqPage />} />
-          <Route path="inquiry" element={<InquiryListPage />} />
-          <Route path="inquiry/create" element={<InquiryCreatePage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="inquiry" element={<InquiryListPage />} />
+            <Route path="inquiry/create" element={<InquiryCreatePage />} />
+          </Route>
         </Route>
 
         <Route path="billing">
