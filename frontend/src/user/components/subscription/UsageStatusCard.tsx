@@ -11,7 +11,10 @@ export function UsageStatusCard({ item }: { item: UsageItem }) {
   const isOverLimit = used > limit;
   const percent = limit > 0 ? Math.min(Math.round((used / limit) * 100), 100) : 0;
   const clampedLimit = Math.min(limit, MAX_USAGE_BOXES);
-  const usageBoxes = limit > 0 ? Array.from({ length: clampedLimit }, (_, i) => i < used) : [];
+  const clampedUsed = limit > 0 ? Math.min(Math.max(used, 0), limit) : 0;
+  const filledBoxes =
+    limit > 0 ? Math.min(Math.round((clampedUsed / limit) * clampedLimit), clampedLimit) : 0;
+  const usageBoxes = limit > 0 ? Array.from({ length: clampedLimit }, (_, i) => i < filledBoxes) : [];
   const unit = formatUsageUnit(item.usage?.unit);
   const nextBillingDate = formatBillingDate(item.subscription?.nextBillingAt ?? null);
   const isPaymentFailed = item.subscription?.status === SUBSCRIPTION_STATUS.PAYMENT_FAILED;
