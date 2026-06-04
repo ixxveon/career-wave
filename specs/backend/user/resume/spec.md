@@ -281,4 +281,4 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 - WebSocket 구현은 `HandshakeInterceptor` 기반 인증 적용 — `@ServerEndpoint` vs STOMP는 구현 단계 결정
 - `document_feedbacks` 데이터는 Webhook 콜백 수신 시 Spring이 DB에 저장 후 WebSocket 알림 발송
 - `FAILED` 상태의 재시도 정책은 v1 범위 외 (실패 시 UI에서 재업로드 유도)
-- members 테이블 PK 타입이 UUID임을 전제 (현재 코드 확인 필요)
+- members 테이블 PK는 UUID (`gen_random_uuid()`) — `document.member_id` FK 타입 동일하게 UUID 적용
