@@ -129,8 +129,10 @@ function sessionReducer(
 // ── 훅 인터페이스 ──────────────────────────────────────────────
 
 export interface UseInterviewSessionOptions {
-  sessionId:   string | null;
-  sessionType: string;
+  sessionId:            string | null;
+  sessionType:          string;
+  /** sessionStorage 복구 시 이전 questionOrder 주입 (constitution §상태 복원력) */
+  initialQuestionOrder?: number;
 }
 
 export interface UseInterviewSessionResult {
@@ -155,9 +157,20 @@ export interface UseInterviewSessionResult {
 export function useInterviewSession({
   sessionId,
   sessionType,
+  initialQuestionOrder,
 }: UseInterviewSessionOptions): UseInterviewSessionResult {
-  const [state, dispatch] = useReducer(sessionReducer, INIT_STATE);
-  const tts = useTTSQueue();
+  const [state, dispatch] = useReducer(
+    sessionReducer,
+    initialQuestionOrder && initialQuestionOrder > 1
+      ? { ...INIT_STATE, questionOrder: initialQuestionOrder }
+      : INIT_STATE,
+  );
+  const tts = useTTSQueue({
+    onError: () => dispatch({
+      type:    'ADD_MESSAGE',
+      message: { id: Date.now(), role: 'notice', text: '⚠️ 음성 재생에 실패했습니다. 면접은 계속 진행됩니다.' },
+    }),
+  });
 
   const [springWsStatus,  setSpringWsStatus]  = useState<SpringWSStatus>('DISCONNECTED');
   const [fastApiWsStatus, setFastApiWsStatus] = useState<FastApiWSStatus>('DISCONNECTED');
