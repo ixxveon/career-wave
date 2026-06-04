@@ -1,6 +1,7 @@
 import { FileText, Mic } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { PRODUCT_RECOMMEND, type UsageItem } from '../../utils/subscription/subscriptionView';
+import { type UsageItem } from '../../types/subscription';
+import { PRODUCT_RECOMMEND } from '../../utils/subscription/subscriptionView';
 
 export function RecommendationCard({ item }: { item: UsageItem }) {
   const recommend = PRODUCT_RECOMMEND[item.productCode];

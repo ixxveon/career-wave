@@ -1,5 +1,6 @@
 import { CalendarDays, Star } from 'lucide-react';
-import { formatBillingDate, type UsageItem } from '../../utils/subscription/subscriptionView';
+import { type UsageItem } from '../../types/subscription';
+import { formatBillingDate } from '../../utils/subscription/subscriptionView';
 
 export function UsageStatusCard({ item }: { item: UsageItem }) {
   const limit = item.usage?.limit ?? 0;

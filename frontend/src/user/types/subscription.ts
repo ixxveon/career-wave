@@ -113,3 +113,13 @@ export interface PaymentFailure {
   displayMessage: string;
   retryable: boolean;
 }
+
+export type UsageItem = {
+  productCode: ProductCode;
+  key: 'document' | 'interview';
+  title: string;
+  accent: 'document' | 'interview';
+  isSubscribed: boolean;
+  subscription: Subscription | null;
+  usage: UsageSummary | null;
+};

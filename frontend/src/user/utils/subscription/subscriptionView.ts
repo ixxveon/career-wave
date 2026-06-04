@@ -1,4 +1,4 @@
-import { PRODUCT_CODE, SUBSCRIPTION_STATUS, type ProductCode, type Subscription, type UsageSummary } from '../../types/subscription';
+import { PRODUCT_CODE, SUBSCRIPTION_STATUS, type ProductCode, type Subscription, type UsageItem, type UsageSummary } from '../../types/subscription';
 
 export const PRODUCT_ACCENT: Record<ProductCode, 'document' | 'interview'> = {
   [PRODUCT_CODE.DOCUMENT_COACHING]: 'document',
@@ -31,16 +31,6 @@ const ACTIVE_STATUSES = new Set<string>([
   SUBSCRIPTION_STATUS.CANCEL_SCHEDULED,
   SUBSCRIPTION_STATUS.PAYMENT_FAILED,
 ]);
-
-export type UsageItem = {
-  productCode: ProductCode;
-  key: 'document' | 'interview';
-  title: string;
-  accent: 'document' | 'interview';
-  isSubscribed: boolean;
-  subscription: Subscription | null;
-  usage: UsageSummary | null;
-};
 
 export function formatBillingDate(isoDate: string | null): string {
   if (!isoDate) return '—';
