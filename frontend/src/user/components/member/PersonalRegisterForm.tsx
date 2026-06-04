@@ -4,6 +4,7 @@ import { AuthButtonGroup, Field, StatusPill, TextInput } from './RegisterFormPri
 import { LOGIN_ID_CHECK_STATE } from '../../utils/member/validation';
 import { usePersonalRegisterForm } from '../../hooks/member/usePersonalRegisterForm';
 import type { PersonalTermDetails, TermSection } from '../../utils/member/registerTerms';
+import { SOCIAL_PROVIDERS } from '../../utils/member/socialAuth';
 
 type PersonalTermsValues = {
   age: boolean;
@@ -19,13 +20,6 @@ type PersonalTermsProps = {
   onChange: Dispatch<SetStateAction<PersonalTermsValues>>;
   termDetails: PersonalTermDetails;
 };
-
-const socialProviders = [
-  { id: 'kakao', label: '카카오', mark: 'K' },
-  { id: 'naver', label: '네이버', mark: 'N' },
-  { id: 'google', label: 'Google', mark: 'G' },
-  { id: 'apple', label: 'Apple' },
-] as const;
 
 export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTermDetails }) {
   const {
@@ -71,7 +65,7 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
           <p>자주 쓰는 계정으로 시작하고 필요한 정보만 추가로 입력하세요.</p>
         </div>
         <div className="cw-social-login" aria-label="소셜 회원가입">
-          {socialProviders.map((provider) => (
+          {SOCIAL_PROVIDERS.map((provider) => (
             <a
               aria-label={`${provider.label} 회원가입`}
               className={`cw-social-login__button cw-social-login__${provider.id}`}

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle2, ShieldCheck, UserRound } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { getSocialProviderLabel } from '../../utils/member/socialAuth';
 import './AuthPage.css';
 
 const carriers = ['SKT', 'KT', 'LG U+', '알뜰폰'];
@@ -23,10 +25,13 @@ type RegisterVerifyTerms = typeof initialTerms;
 type RegisterVerifyTermKey = keyof RegisterVerifyTerms;
 
 function RegisterVerifyPage() {
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState(initialForm);
   const [terms, setTerms] = useState(initialTerms);
   const [phoneVerified, setPhoneVerified] = useState(false);
   const canSubmit = terms.service && terms.privacy;
+  const provider = getSocialProviderLabel(searchParams.get('provider'));
+  const socialEmail = searchParams.get('email');
 
   const update = (key: RegisterVerifyFormKey, value: RegisterVerifyForm[RegisterVerifyFormKey]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -62,14 +67,18 @@ function RegisterVerifyPage() {
               <ShieldCheck size={22} />
               <div>
                 <h2>소셜 계정 정보</h2>
-                <p>실제 소셜 연동 후에는 provider와 이메일 값이 자동으로 표시됩니다.</p>
+                <p>소셜 인증으로 전달된 계정 정보를 확인하고 추가 정보를 입력해주세요.</p>
               </div>
             </div>
             <div className="cw-register-social-summary">
               <span>가입 방식</span>
-              <strong>소셜 계정</strong>
-              <span>이메일</span>
-              <strong>social.user@careerwave.com</strong>
+              <strong>{provider ? `${provider} 소셜 계정` : '소셜 계정'}</strong>
+              {socialEmail && (
+                <>
+                  <span>이메일</span>
+                  <strong>{socialEmail}</strong>
+                </>
+              )}
             </div>
           </section>
 

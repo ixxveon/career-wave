@@ -1,7 +1,6 @@
 import { LoginForm } from '../../components/member/LoginForm';
 import { LoginPageLinks } from '../../components/member/LoginPageLinks';
 import { LoginTypeTabs } from '../../components/member/LoginTypeTabs';
-import { SocialLoginButtons } from '../../components/member/SocialLoginButtons';
 import { useLoginForm } from '../../hooks/member';
 import './AuthPage.css';
 
@@ -35,7 +34,6 @@ function LoginPage() {
           onCredentialChange={updateCredential}
           onSubmit={handleSubmit}
         />
-        <SocialLoginButtons />
         <LoginPageLinks />
       </div>
     </section>
