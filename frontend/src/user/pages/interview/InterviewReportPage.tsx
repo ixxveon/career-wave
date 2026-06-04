@@ -210,7 +210,7 @@ const ReportContent = memo(function ReportContent({
   }, [hybridScores]);
 
 
-  const AI_METRICS = [
+  const AI_METRICS = useMemo(() => [
     {
       Icon:      MessageSquare,
       label:     '답변 일치도',
@@ -243,7 +243,7 @@ const ReportContent = memo(function ReportContent({
       desc:      '말하기 속도(WPM)와 지연어(어, 음 등) 빈도를 분석한 지표입니다.',
       voiceOnly: true,
     },
-  ];
+  ], [hybridScores]);
 
   return (
     <div className="ir">

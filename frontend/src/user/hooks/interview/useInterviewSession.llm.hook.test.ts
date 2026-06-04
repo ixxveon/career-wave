@@ -3,7 +3,8 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { useInterviewSession, LLM_FALLBACK_QUESTIONS, LLM_STREAM_TIMEOUT_MS } from './useInterviewSession';
+import { useInterviewSession, LLM_FALLBACK_QUESTIONS } from './useInterviewSession';
+import { LLM_STREAM_TIMEOUT_MS } from '../../constants/interview';
 
 // interviewSessionApi mock — sendTextAnswer가 즉시 resolve되도록
 vi.mock('../../api/interview', () => ({
