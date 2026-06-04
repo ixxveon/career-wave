@@ -351,3 +351,40 @@
     font-size: 12px;
   }
 }
+
+@media (max-width: 520px) {
+  .cw-header__inner {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .cw-header__brand {
+    gap: 8px;
+    font-size: 16px;
+  }
+
+  .cw-header__brand img {
+    width: 38px;
+  }
+
+  .cw-header__account {
+    gap: 5px;
+  }
+
+  .cw-header__account a {
+    height: 34px;
+    padding: 0 9px;
+    font-size: 11px;
+  }
+
+  .cw-header__account a.is-primary {
+    display: none;
+  }
+
+  .cw-header__nav {
+    gap: 11px;
+    font-size: 12px;
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
