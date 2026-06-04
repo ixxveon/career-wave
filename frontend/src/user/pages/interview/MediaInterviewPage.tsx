@@ -99,7 +99,7 @@ function MediaInterviewPage() {
   /* ── 타이머 ─────────────────────────────────── */
   useEffect(() => {
     if (phase === 'interview') {
-      timerRef.current = setInterval(() => setSec(s => s + 1), 1000);
+      timerRef.current = window.setInterval(() => setSec(s => s + 1), 1000);
     }
     return () => {
       if (timerRef.current !== null) clearInterval(timerRef.current);

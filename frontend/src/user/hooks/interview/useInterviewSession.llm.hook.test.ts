@@ -31,12 +31,13 @@ const DEFAULT_OPTS = { sessionId: 'test-session', sessionType: 'TEXT' };
 
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.stubEnv('DEV', false as unknown as string);
+  // DEV mock 경로 우회 — import.meta.env.DEV를 false로 강제 설정
+  (import.meta.env as Record<string, unknown>).DEV = false;
 });
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
-  vi.unstubAllEnvs();
+  (import.meta.env as Record<string, unknown>).DEV = true;
 });
 
 /** sendTextAnswer 호출 → startLlmTimeout 트리거 헬퍼 */
