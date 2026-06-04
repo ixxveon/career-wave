@@ -62,6 +62,7 @@ export function useCompanyRegisterForm() {
   const managerPhoneVerificationRequestRef = useRef(0);
   const managerEmailVerificationRequestRef = useRef(0);
   const [employmentCertificate, setEmploymentCertificate] = useState<File | null>(null);
+  const currentEmploymentCertificateRef = useRef<File | null>(null);
   const [employmentCertificateError, setEmploymentCertificateError] = useState('');
   const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>(LOGIN_ID_CHECK_STATE.UNCHECKED);
   const [verification, setVerification] = useState({
@@ -177,6 +178,7 @@ export function useCompanyRegisterForm() {
 
     if (!selectedFile) {
       setEmploymentCertificate(null);
+      currentEmploymentCertificateRef.current = null;
       setEmploymentCertificateError('');
       return;
     }
@@ -185,6 +187,7 @@ export function useCompanyRegisterForm() {
 
     if (!fileValidation.valid) {
       setEmploymentCertificate(null);
+      currentEmploymentCertificateRef.current = null;
       setEmploymentCertificateError(fileValidation.message ?? '재직증명서 파일을 확인해주세요.');
       setVerification((current) => ({ ...current, employmentCertificateFileId: '' }));
       event.target.value = '';
@@ -192,6 +195,7 @@ export function useCompanyRegisterForm() {
     }
 
     setEmploymentCertificate(selectedFile);
+    currentEmploymentCertificateRef.current = selectedFile;
     setVerification((current) => ({ ...current, employmentCertificateFileId: '' }));
     setEmploymentCertificateError('');
     setFieldErrors((current) => ({ ...current, employmentCertificate: '', employmentCertificateFileId: '' }));
@@ -352,8 +356,12 @@ export function useCompanyRegisterForm() {
     }
 
     if (!nextSnapshot.employmentCertificateFileId && employmentCertificate) {
+      const uploadingFile = employmentCertificate;
       try {
-        const uploadResult = await uploadEmploymentCertificate.mutateAsync(employmentCertificate);
+        const uploadResult = await uploadEmploymentCertificate.mutateAsync(uploadingFile);
+        if (currentEmploymentCertificateRef.current !== uploadingFile) {
+          return;
+        }
         nextSnapshot = {
           ...nextSnapshot,
           employmentCertificateFileId: uploadResult.fileId,
