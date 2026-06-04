@@ -14,6 +14,7 @@ export async function apiClient(endpoint, options = {}) {
     const message = errorBody?.message || `요청 실패 (${response.status})`;
     const error = new Error(message);
     error.status = response.status;
+    error.body   = errorBody;
     throw error;
   }
 
