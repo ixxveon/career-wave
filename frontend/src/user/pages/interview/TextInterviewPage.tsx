@@ -260,7 +260,7 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
 
       {/* 재연결 중 안내 배너 (constitution §지속적 연결성) */}
       {isReconnecting && (
-        <div className="ti-reconnect-bar" role="status" aria-live="assertive">
+        <div className="ti-reconnect-bar" role="alert">
           <Loader2 size={14} className="ti-spin" />
           <span>네트워크 연결이 끊겼습니다. 자동으로 재연결을 시도하고 있습니다...</span>
         </div>
