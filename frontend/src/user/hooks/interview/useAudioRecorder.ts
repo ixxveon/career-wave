@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { getSupportedMimeType } from '../../utils/interview/audioUtils';
-import { submitVoiceBlob } from '../../api/interview/submitVoiceBlob';
+import { interviewSessionApi } from '../../api/interview';
 
 export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'error';
 export type RecorderError = 'permission_denied' | 'not_supported' | 'unknown';
@@ -9,6 +9,8 @@ export interface UseAudioRecorderOptions {
   sessionId: string | null;
   questionOrder: number;
   onChunkSent?: (chunkIndex: number, isFinal: boolean) => void;
+  /** 청크 전송 2회 모두 실패 시 호출 — isFinal: true 실패 시 pending 말풍선 정리 필요 */
+  onChunkFailed?: (chunkIndex: number, isFinal: boolean) => void;
   onError?: (error: RecorderError) => void;
   onStop?: () => void;
 }
@@ -30,6 +32,7 @@ export function useAudioRecorder({
   sessionId,
   questionOrder,
   onChunkSent,
+  onChunkFailed,
   onError,
   onStop,
 }: UseAudioRecorderOptions): UseAudioRecorderResult {
@@ -41,6 +44,17 @@ export function useAudioRecorder({
   const chunkIndexRef     = useRef(0);
   const isStoppingRef     = useRef(false);   // stop() 호출 여부 추적 → 마지막 청크 isFinal 판단
   const questionOrderRef  = useRef(questionOrder);
+
+  /**
+   * 콜백 ref 패턴 — recorder.onstop이 항상 최신 onStop을 호출하도록 보장
+   * recorder.onstop은 start() 시점에 등록되므로 stale closure 위험이 있음
+   */
+  const onStopRef        = useRef(onStop);
+  const onErrorRef       = useRef(onError);
+  const onChunkFailedRef = useRef(onChunkFailed);
+  useEffect(() => { onStopRef.current        = onStop;        }, [onStop]);
+  useEffect(() => { onErrorRef.current       = onError;       }, [onError]);
+  useEffect(() => { onChunkFailedRef.current = onChunkFailed; }, [onChunkFailed]);
 
   // questionOrder가 바뀌면 ref 업데이트 (stale closure 방지)
   useEffect(() => {
@@ -58,14 +72,15 @@ export function useAudioRecorder({
       isFinal,
     };
     try {
-      await submitVoiceBlob(sessionId, params);
+      await interviewSessionApi.submitVoiceBlob(sessionId, params);
       onChunkSent?.(idx, isFinal);
     } catch {
       try {
-        await submitVoiceBlob(sessionId, params);
+        await interviewSessionApi.submitVoiceBlob(sessionId, params);
         onChunkSent?.(idx, isFinal);
       } catch {
-        // 재시도도 실패 시 무시 — STT 실패는 FastAPI WS ERROR 메시지로 별도 처리
+        // 재시도도 실패 — isFinal 청크면 상위에 알려 pending 말풍선 정리 및 사용자 안내
+        onChunkFailedRef.current?.(idx, isFinal);
       }
     }
   }
@@ -136,14 +151,14 @@ export function useAudioRecorder({
     recorder.onstop = () => {
       releaseStream();
       setStatus('idle');
-      onStop?.();
+      onStopRef.current?.();  // ref 경유 → 항상 최신 onStop 호출
     };
 
     recorder.onerror = () => {
       releaseStream();
       setError('unknown');
       setStatus('error');
-      onError?.('unknown');
+      onErrorRef.current?.('unknown');  // ref 경유
     };
 
     try {

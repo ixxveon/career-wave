@@ -17,10 +17,20 @@ export function useSpringWebSocket({
   onMessage,
   onStatusChange,
 }: UseSpringWebSocketOptions) {
-  const wsRef = useRef<WebSocket | null>(null);
-  const attemptRef = useRef(0);
+  const wsRef             = useRef<WebSocket | null>(null);
+  const attemptRef        = useRef(0);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isManualCloseRef = useRef(false);
+  const isManualCloseRef  = useRef(false);
+
+  /**
+   * 콜백 ref 패턴 — connect()가 콜백을 deps로 갖지 않도록 ref 경유
+   * onMessage/onStatusChange가 바뀌어도 connect()는 재생성되지 않음
+   * → 불필요한 WebSocket 재연결 방지
+   */
+  const onMessageRef      = useRef(onMessage);
+  const onStatusChangeRef = useRef(onStatusChange);
+  useEffect(() => { onMessageRef.current = onMessage; }, [onMessage]);
+  useEffect(() => { onStatusChangeRef.current = onStatusChange; }, [onStatusChange]);
 
   const getWsUrl = (sid: string) => {
     const base =
@@ -30,55 +40,45 @@ export function useSpringWebSocket({
     return `${base}/ws/interview/${sid}/chat?token=${token}`;
   };
 
-  const connect = useCallback(
-    (sid: string) => {
-      // OPEN 또는 CONNECTING 상태면 중복 연결 방지
-      const state = wsRef.current?.readyState;
-      if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
+  const connect = useCallback((sid: string) => {
+    const state = wsRef.current?.readyState;
+    if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
 
-      onStatusChange(attemptRef.current === 0 ? 'CONNECTING' : 'RECONNECTING');
-      const ws = new WebSocket(getWsUrl(sid));
-      wsRef.current = ws;
+    onStatusChangeRef.current(attemptRef.current === 0 ? 'CONNECTING' : 'RECONNECTING');
+    const ws = new WebSocket(getWsUrl(sid));
+    wsRef.current = ws;
 
-      ws.onopen = () => {
-        // 연결 시점에 현재 소켓인지 확인 (sessionId 변경으로 교체된 경우 무시)
-        if (wsRef.current !== ws) return;
-        attemptRef.current = 0;
-        onStatusChange('CONNECTED');
-      };
+    ws.onopen = () => {
+      if (wsRef.current !== ws) return;
+      attemptRef.current = 0;
+      onStatusChangeRef.current('CONNECTED');
+    };
 
-      ws.onmessage = (event: MessageEvent) => {
-        if (wsRef.current !== ws) return;
-        try {
-          const msg = JSON.parse(event.data as string) as SpringWSMessage;
-          onMessage(msg);
-        } catch {
-          /* 파싱 실패는 무시 */
-        }
-      };
+    ws.onmessage = (event: MessageEvent) => {
+      if (wsRef.current !== ws) return;
+      try {
+        const msg = JSON.parse(event.data as string) as SpringWSMessage;
+        onMessageRef.current(msg);
+      } catch { /* 파싱 실패 무시 */ }
+    };
 
-      ws.onclose = () => {
-        // 이미 교체된 소켓의 onclose는 재연결 시도하지 않음
-        if (wsRef.current !== ws) return;
-        if (isManualCloseRef.current) {
-          onStatusChange('DISCONNECTED');
-          return;
-        }
-        if (attemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
-          onStatusChange('ERROR');
-          return;
-        }
-        attemptRef.current += 1;
-        onStatusChange('RECONNECTING');
-        reconnectTimerRef.current = setTimeout(() => connect(sid), RECONNECT_DELAY_MS);
-      };
+    ws.onclose = () => {
+      if (wsRef.current !== ws) return;
+      if (isManualCloseRef.current) {
+        onStatusChangeRef.current('DISCONNECTED');
+        return;
+      }
+      if (attemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
+        onStatusChangeRef.current('ERROR');
+        return;
+      }
+      attemptRef.current += 1;
+      onStatusChangeRef.current('RECONNECTING');
+      reconnectTimerRef.current = setTimeout(() => connect(sid), RECONNECT_DELAY_MS);
+    };
 
-      ws.onerror = () => {
-        ws.close();
-      };
-    },
-    [onMessage, onStatusChange],
-  );
+    ws.onerror = () => { ws.close(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const disconnect = useCallback(() => {
     isManualCloseRef.current = true;

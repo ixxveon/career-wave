@@ -1,0 +1,96 @@
+.pfc {
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 4px;
+}
+
+.pfc__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pfc__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pfc__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pfc__label {
+  font-size: 13px;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 80px;
+}
+
+.pfc__status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pfc__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+
+.pfc__icon--pass { color: #22c55e; }
+.pfc__icon--fail { color: #ef4444; }
+
+.pfc__spin {
+  animation: pfc-spin 1s linear infinite;
+  color: #3b82f6;
+}
+
+@keyframes pfc-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pfc__text         { font-size: 12px; color: #64748b; }
+.pfc__text--pass   { color: #22c55e; font-weight: 500; }
+.pfc__text--fail   { color: #ef4444; font-weight: 500; }
+.pfc__text--checking { color: #3b82f6; }
+
+.pfc__btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #3b82f6;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pfc__btn:hover {
+  background: #dbeafe;
+}
+
+.pfc__hint {
+  font-size: 11px;
+  color: #ef4444;
+  margin: 0;
+  flex-basis: 100%;
+  padding-left: 84px;
+}

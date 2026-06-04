@@ -8,7 +8,7 @@
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/admin/dashboard/summary` | 종합 대시보드 초기 표시 데이터 조회 |
+| GET | `/api/v1/admin/dashboard/summary` | 종합 대시보드 초기 표시 데이터 조회 |
 
 ## Query Parameters
 

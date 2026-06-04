@@ -41,9 +41,6 @@ const TAB_LABEL: Record<CsTab, string> = {
   inquiry: '1:1 문의',
 };
 
-// ── 더미 데이터 (FAQ / 문의 — Phase 5-2 교체 예정) ───────────
-
-
 // ── AI Mock 응답 생성 (v2에서 실제 API 전환 예정) ────────────
 
 function genNoticeDraft(category: NoticeCategory, title: string): string {
@@ -79,6 +76,8 @@ interface FaqFormState {
   answer: string;
 }
 
+// ── 공지사항 폼 상태 타입 ─────────────────────────────────────
+
 // ── Component ─────────────────────────────────────────────────
 
 export default function CustomerServicePage() {
@@ -96,6 +95,7 @@ export default function CustomerServicePage() {
   const [noticeLoading, setNoticeLoading] = useState(false);
   const [noticeError, setNoticeError] = useState('');
   const noticeReqId = useRef(0);
+  const noticeDetailReqId = useRef(0);
 
   // 공지사항 필터 (입력 상태)
   const [noticeCatFilter, setNoticeCatFilter]         = useState('');
@@ -106,10 +106,11 @@ export default function CustomerServicePage() {
   // 공지사항 모달
   const [noticeModal, setNoticeModal] = useState<'create' | 'edit' | null>(null);
   const [noticeForm, setNoticeForm]   = useState<NoticeFormState>({ category: 'NOTICE', title: '', content: '', isVisible: true });
-  const [noticeFormLoading, setNoticeFormLoading] = useState(false);
-  const [noticeFormError, setNoticeFormError]     = useState('');
-  const [aiNoticeLoading, setAiNoticeLoading]     = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId]     = useState<number | null>(null);
+  const [noticeFormLoading, setNoticeFormLoading]     = useState(false);
+  const [noticeDetailLoading, setNoticeDetailLoading] = useState(false);
+  const [noticeFormError, setNoticeFormError]         = useState('');
+  const [aiNoticeLoading, setAiNoticeLoading]         = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId]         = useState<number | null>(null);
 
   // ── FAQ API 상태 ──────────────────────────────────────────
   const [faqs, setFaqs]               = useState<FaqItem[]>([]);
@@ -270,8 +271,16 @@ export default function CustomerServicePage() {
   useEffect(() => { fetchFaqs(1); }, [fetchFaqs]);
   useEffect(() => { fetchInquiries(1); }, [fetchInquiries]);
 
+  // ── 공지사항 모달 닫기 ───────────────────────────────────
+  const closeNoticeModal = () => {
+    ++noticeDetailReqId.current; // pending 상세 요청 무효화
+    setNoticeDetailLoading(false);
+    setNoticeModal(null);
+  };
+
   // ── 공지사항 등록 모달 열기 ───────────────────────────────
   const openNoticeCreate = () => {
+    ++noticeDetailReqId.current;
     setNoticeForm({ category: 'NOTICE', title: '', content: '', isVisible: true });
     setNoticeFormError('');
     setNoticeModal('create');
@@ -279,16 +288,22 @@ export default function CustomerServicePage() {
 
   // ── 공지사항 수정 모달 열기 ───────────────────────────────
   const openNoticeEdit = async (item: NoticeItem) => {
+    const reqId = ++noticeDetailReqId.current;
     setNoticeFormError('');
+    setNoticeDetailLoading(true);
     setNoticeModal('edit');
     setNoticeForm({ noticeId: item.noticeId, category: item.category, title: item.title, content: '', isVisible: item.isVisible });
     try {
       const res = await csApi.getNoticeDetail(item.noticeId);
+      if (reqId !== noticeDetailReqId.current) return;
       if (!res.data.success) throw new Error(res.data.message);
       const d = res.data.data;
       setNoticeForm({ noticeId: d.noticeId, category: d.category, title: d.title, content: d.content, isVisible: d.isVisible });
     } catch (err: any) {
+      if (reqId !== noticeDetailReqId.current) return;
       setNoticeFormError(err.response?.data?.message || '공지 내용을 불러오지 못했습니다.');
+    } finally {
+      if (reqId === noticeDetailReqId.current) setNoticeDetailLoading(false);
     }
   };
 
@@ -306,14 +321,14 @@ export default function CustomerServicePage() {
         const res = await csApi.updateNotice(noticeForm.noticeId, body);
         if (!res.data.success) throw new Error(res.data.message);
       }
-      setNoticeModal(null);
+      closeNoticeModal();
       fetchNotices(noticePage);
       fetchSummary();
     } catch (err: any) {
       const status = err.response?.status;
       if (status === 500) setNoticeFormError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       else if (!status) setNoticeFormError('네트워크 연결을 확인해주세요.');
-      else setNoticeFormError(err.response?.data?.message || '저장에 실패했습니다.');
+      else setNoticeFormError(err.response?.data?.message || err.message || '저장에 실패했습니다.');
     } finally {
       setNoticeFormLoading(false);
     }
@@ -418,7 +433,6 @@ export default function CustomerServicePage() {
     try {
       const res = await csApi.saveReply(selectedInquiry.inquiryId, { reply: inquiryReply });
       if (!res.data.success) throw new Error(res.data.message);
-      // 서버 응답 기준으로 상태 갱신
       setInquiries((p) => p.map((i) => i.inquiryId === selectedInquiry.inquiryId ? { ...i, inquiryStatus: res.data.data.inquiryStatus } : i));
       setSelectedInquiry((p) => p ? { ...p, inquiryStatus: res.data.data.inquiryStatus, reply: inquiryReply } : p);
       fetchSummary();
@@ -712,11 +726,11 @@ export default function CustomerServicePage() {
 
       {/* ── 공지사항 모달 ────────────────────────────────── */}
       {noticeModal && (
-        <div className="modalOverlay" onClick={() => setNoticeModal(null)}>
+        <div className="modalOverlay" onClick={() => closeNoticeModal()}>
           <div className="memberModal modal--scrollable" style={{ width: 560 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0 }}>
               <div><h3>{noticeModal === 'create' ? '공지사항 등록' : '공지사항 수정'}</h3></div>
-              <button onClick={() => setNoticeModal(null)}>닫기</button>
+              <button onClick={() => closeNoticeModal()}>닫기</button>
             </div>
             <div className="modalBody">
               <div className="csFormRows">
@@ -760,10 +774,10 @@ export default function CustomerServicePage() {
               </div>
             </div>
             <div className="modalAction" style={{ flexShrink: 0 }}>
-              <button onClick={saveNotice} disabled={noticeFormLoading || !noticeForm.title.trim()}>
+              <button onClick={saveNotice} disabled={noticeFormLoading || noticeDetailLoading || !noticeForm.title.trim()}>
                 {noticeFormLoading ? '저장 중...' : noticeModal === 'create' ? '등록' : '저장'}
               </button>
-              <button onClick={() => setNoticeModal(null)} disabled={noticeFormLoading}>취소</button>
+              <button onClick={() => closeNoticeModal()} disabled={noticeFormLoading}>취소</button>
             </div>
           </div>
         </div>
