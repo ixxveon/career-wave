@@ -26,7 +26,7 @@ export const interviewSessionApi = {
   },
 
   end(sessionId: string, signal?: AbortSignal): Promise<EndSessionResponse> {
-    return memberApiClient<EndSessionResponse>(`/api/v1/user/interview/sessions/${sessionId}/end`, {
+    return memberApiClient<EndSessionResponse>(`/api/v1/user/interview/sessions/${encodeURIComponent(sessionId)}/end`, {
       method: 'POST',
       auth:   true,
       signal,
@@ -39,7 +39,7 @@ export const interviewSessionApi = {
     signal?: AbortSignal,
   ): Promise<SubmitTextAnswerResponse> {
     return memberApiClient<SubmitTextAnswerResponse>(
-      `/api/v1/user/interview/sessions/${sessionId}/answer/text`,
+      `/api/v1/user/interview/sessions/${encodeURIComponent(sessionId)}/answer/text`,
       {
         method: 'POST',
         auth:   true,
@@ -61,7 +61,7 @@ export const interviewSessionApi = {
     fd.append('isFinal', String(isFinal));
 
     return memberApiClient<SubmitVoiceBlobResponse>(
-      `/api/v1/user/interview/sessions/${sessionId}/answer/voice`,
+      `/api/v1/user/interview/sessions/${encodeURIComponent(sessionId)}/answer/voice`,
       {
         method: 'POST',
         auth:   true,
