@@ -15,11 +15,14 @@ import JobNoticeDetail from './JobNoticeDetail';
 import {
   mapJobNoticeApiToViewModel,
   type JobNotice,
+  type JobNoticeBookmarkApiResponse,
   type JobNoticeBookmarkMap,
   type JobNoticeListStats,
   type JobNoticeQueryParams,
 } from './JobNoticeTypes';
+import { jobApi } from '../../api/jobApi';
 import { useJobNoticeList } from '../../hooks/jobNotice/useJobNoticeList';
+import { authSession } from '../../utils/member/authSession';
 import './styles/JobNoticeListPage.css';
 
 const FILTER_GROUPS = [
@@ -71,7 +74,7 @@ type Filters = Record<FilterLabel, string>;
 type Bookmarks = JobNoticeBookmarkMap;
 type Period = (typeof PERIODS)[number];
 type SortOption = (typeof SORT_OPTIONS)[number];
-type JobNoticeListStatus = 'idle' | 'loading' | 'success' | 'empty' | 'error';
+type JobNoticeListStatus = 'loading' | 'success' | 'empty' | 'error';
 type JobNoticeFilterParamKey =
   | 'jobType'
   | 'experience'
@@ -110,122 +113,6 @@ function createBannerStats(stats: JobNoticeListStats): BannerStat[] {
   ];
 }
 
-const JOBS: JobNotice[] = [
-  {
-    id: 1,
-    company: '제너러티브랩',
-    title: '제너러티브랩 공개채용 [학력, 경력, 스펙 무관]',
-    jobType: '백엔드',
-    exp: '경력무관',
-    employment: '전환형인턴',
-    location: '서울',
-    companySize: '스타트업',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-05-28',
-    tags: ['프롬프트 엔지니어', '개발', 'AI 컨설턴트'],
-    source: '직행수집',
-    recommended: true,
-    recommendScore: 98,
-    views: 1756,
-    bookmarked: false,
-  },
-  {
-    id: 2,
-    company: '리빌더에이아이',
-    title: '[리빌더AI] QA 엔지니어',
-    jobType: '데이터',
-    exp: '3~20년',
-    employment: '정규직',
-    location: '경기',
-    companySize: '스타트업',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-05-27',
-    tags: ['테스트자동화', '이슈트래킹', 'QA프로세스'],
-    source: '그룹바이',
-    recommended: false,
-    recommendScore: 86,
-    views: 6,
-    bookmarked: false,
-  },
-  {
-    id: 3,
-    company: '코코네',
-    title: '[Cocone Internship] AI Engineer',
-    jobType: '데이터',
-    exp: '신입',
-    employment: '인턴',
-    location: '서울',
-    companySize: '중견',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-05-24',
-    tags: ['AI어시스턴트', '아바타메타버스', 'AI모델연구'],
-    source: '그룹바이',
-    recommended: false,
-    recommendScore: 82,
-    views: 102,
-    bookmarked: false,
-  },
-  {
-    id: 4,
-    company: '비전스페이스',
-    title: '산업용 로봇 AI 자율주행 & ROS & RMS 담당',
-    jobType: 'DevOps',
-    exp: '신입',
-    employment: '정규직',
-    location: '서울',
-    companySize: '스타트업',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-05-20',
-    tags: ['자율주행설계', '로봇'],
-    source: '그룹바이',
-    recommended: false,
-    recommendScore: 78,
-    views: 494,
-    bookmarked: false,
-  },
-  {
-    id: 5,
-    company: '어센트 AI',
-    title: '인프라 엔지니어 (IDC)',
-    jobType: 'DevOps',
-    exp: '4~10년',
-    employment: '정규직',
-    location: '서울',
-    companySize: '중견',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-05-12',
-    tags: ['인프라엔지니어', '쿠버네티스', '오픈소스운영'],
-    source: '그룹바이',
-    recommended: false,
-    recommendScore: 84,
-    views: 19,
-    bookmarked: false,
-  },
-  {
-    id: 6,
-    company: '(주)무아스',
-    title: '[무아스] 인플루언서 공동구매 MD 채용 공고',
-    jobType: '프론트엔드',
-    exp: '2~20년',
-    employment: '정규직',
-    location: '서울',
-    companySize: '중견',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-04-28',
-    tags: ['공동구매', '커머스', '인플루언서'],
-    source: '그룹바이',
-    recommended: false,
-    recommendScore: 72,
-    views: 1,
-    bookmarked: false,
-  },
-];
 
 function createInitialFilters(): Filters {
   return Object.fromEntries(FILTER_GROUPS.map((group) => [group.label, DEFAULT_FILTER_VALUE])) as Filters;
@@ -519,17 +406,45 @@ export default function JobNoticeListPage() {
   const [selectedJob, setSelectedJob] = useState<JobNotice | null>(null);
   const [filters, setFilters] = useState(createInitialFilters);
   const [bookmarks, setBookmarks] = useState<Bookmarks>({});
+  const [bookmarkErrorMessage, setBookmarkErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
   function updateFilter(label: FilterLabel, value: string) {
     setFilters((current) => ({ ...current, [label]: value }));
   }
 
-  function toggleBookmark(id: number, fallbackBookmarked = false) {
-    setBookmarks((current) => {
-      const currentValue = current[id] ?? fallbackBookmarked;
-      return { ...current, [id]: !currentValue };
-    });
+  async function toggleBookmark(id: number, fallbackBookmarked = false) {
+    const hasAccessToken = Boolean(authSession.getAccessToken());
+
+    if (!hasAccessToken) {
+      setBookmarkErrorMessage('북마크 기능은 로그인이 필요합니다.');
+      return;
+    }
+
+    const previousBookmarked = bookmarks[id] ?? fallbackBookmarked;
+    const nextBookmarked = !previousBookmarked;
+
+    try {
+      setBookmarkErrorMessage('');
+      const response = await jobApi.toggleJobNoticeBookmark(
+        id,
+        nextBookmarked,
+      ) as JobNoticeBookmarkApiResponse;
+      const bookmarkResult = response.data;
+
+      if (!bookmarkResult) throw new Error('북마크 응답이 비어 있습니다.');
+
+      setBookmarks((current) => ({
+        ...current,
+        [bookmarkResult.id]: bookmarkResult.bookmarked,
+      }));
+    } catch {
+      setBookmarks((current) => ({
+        ...current,
+        [id]: previousBookmarked,
+      }));
+      setBookmarkErrorMessage('북마크 상태를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    }
   }
 
   function resetFilter(label: FilterLabel) {
@@ -616,6 +531,15 @@ export default function JobNoticeListPage() {
             </div>
           </div>
 
+          {bookmarkErrorMessage && (
+            <div className="jn-feedback jn-feedback--error" role="alert">
+              <span>{bookmarkErrorMessage}</span>
+              {bookmarkErrorMessage.includes('로그인') && (
+                <a href="/auth/login">로그인</a>
+              )}
+            </div>
+          )}
+
           {listStatus === 'success' && (
             <div className="jn-job-grid">
               {filteredJobs.map((job) => (
@@ -623,7 +547,9 @@ export default function JobNoticeListPage() {
                   key={job.id}
                   job={job}
                   bookmarked={getJobBookmark(bookmarks, job)}
-                  onBookmark={(id) => toggleBookmark(id, getJobBookmark(bookmarks, job))}
+                  onBookmark={(id) => {
+                    void toggleBookmark(id, getJobBookmark(bookmarks, job));
+                  }}
                   onClick={() => setSelectedJob(job)}
                 />
               ))}
@@ -665,9 +591,9 @@ export default function JobNoticeListPage() {
         isOpen={Boolean(selectedJob)}
         bookmarked={selectedJob ? getJobBookmark(bookmarks, selectedJob) : false}
         onClose={() => setSelectedJob(null)}
-        onBookmark={(id) =>
-          toggleBookmark(id, selectedJob ? getJobBookmark(bookmarks, selectedJob) : false)
-        }
+        onBookmark={(id) => {
+          void toggleBookmark(id, selectedJob ? getJobBookmark(bookmarks, selectedJob) : false);
+        }}
       />
     </div>
   );
