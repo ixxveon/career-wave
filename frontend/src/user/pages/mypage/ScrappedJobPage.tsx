@@ -33,6 +33,10 @@ type JobNoticeViewModel = {
     bookmarked: boolean;
     stacks: string[];
     tags: string[];
+    postedAt: string;
+    recommended: boolean;
+    recommendScore: number;
+    views: number;
 };
 
 const createJobNoticeViewModel = (job: ScrapJob): JobNoticeViewModel => ({
@@ -43,10 +47,10 @@ const createJobNoticeViewModel = (job: ScrapJob): JobNoticeViewModel => ({
     deadline: job.deadline,
 
     exp: CAREER_LEVEL_LABELS[job.careerLevel] ?? "무관",
-    employment: job.employment ?? "-",
-    source: job.source ?? "-",
-    jobType: job.jobType ?? "-",
-    companySize: job.companySize ?? "-",
+    employment: "-",
+    source: "-",
+    jobType: "-",
+    companySize: "-",
 
     careerLevel: job.careerLevel,
     noticeStatus: job.noticeStatus,
@@ -54,6 +58,11 @@ const createJobNoticeViewModel = (job: ScrapJob): JobNoticeViewModel => ({
 
     stacks: [],
     tags: [],
+
+    postedAt: job.createdAt,
+    recommended: false,
+    recommendScore: 0,
+    views: 0,
 });
 
 function ScrappedJobPage() {
@@ -164,13 +173,15 @@ function ScrappedJobPage() {
                 </div>
             </section>
 
-            <JobNoticeDetail
-                job={selectedJob}
-                isOpen={Boolean(selectedJob)}
-                bookmarked={Boolean(selectedJob)}
-                onClose={closeDetail}
-                onBookmark={toggleBookmark}
-            />
+            {selectedJob && (
+                <JobNoticeDetail
+                    job={selectedJob}
+                    isOpen={true}
+                    bookmarked={selectedJob.bookmarked}
+                    onClose={closeDetail}
+                    onBookmark={toggleBookmark}
+                />
+            )}
         </div>
     );
 }
