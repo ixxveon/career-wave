@@ -3,20 +3,39 @@ import { NavLink } from "react-router-dom";
 import { Search, Bookmark } from "lucide-react";
 import JobNoticeDetail from "@/user/pages/jobNotice/JobNoticeDetail";
 import { mockScrapJobs } from "@/user/mocks/dashboardMock";
+import type { ScrapJob } from "@/user/types/dashboard";
 import "./MyPage.css";
 
-const CAREER_LEVEL_LABELS = {
+const CAREER_LEVEL_LABELS: Record<ScrapJob["careerLevel"], string> = {
     JUNIOR: "신입",
     SENIOR: "경력",
     ANY: "무관",
 };
 
-const NOTICE_STATUS_LABELS = {
+const NOTICE_STATUS_LABELS: Record<ScrapJob["noticeStatus"], string> = {
     ACTIVE: "채용중",
     CLOSED: "마감",
 };
 
-const createJobNoticeViewModel = (job) => ({
+type JobNoticeViewModel = {
+    id: number;
+    title: string;
+    company: string;
+    location: string;
+    deadline: string;
+    exp: string;
+    employment: string;
+    source: string;
+    jobType: string;
+    companySize: string;
+    careerLevel: ScrapJob["careerLevel"];
+    noticeStatus: ScrapJob["noticeStatus"];
+    bookmarked: boolean;
+    stacks: string[];
+    tags: string[];
+};
+
+const createJobNoticeViewModel = (job: ScrapJob): JobNoticeViewModel => ({
     id: job.jobNoticeId,
     title: job.title,
     company: job.companyName,
@@ -37,11 +56,10 @@ const createJobNoticeViewModel = (job) => ({
     tags: [],
 });
 
-
 function ScrappedJobPage() {
-    const [selectedJob, setSelectedJob] = useState(null);
+    const [selectedJob, setSelectedJob] = useState<JobNoticeViewModel | null>(null);
 
-    const scrappedJobs = mockScrapJobs;
+    const scrappedJobs: ScrapJob[] = mockScrapJobs;
 
     function closeDetail() {
         setSelectedJob(null);
@@ -95,11 +113,7 @@ function ScrappedJobPage() {
                 <div className="cw-scrap-toolbar">
                     <span>스크랩한 공고 {scrappedJobs.length}개</span>
                     {/* TODO: Phase 3 - 최신순 정렬 기능 구현 */}
-                    <button
-                        type="button"
-                        disabled
-                        aria-disabled="true"
-                    >
+                    <button type="button" disabled aria-disabled="true">
                         최근 스크랩순
                     </button>
                 </div>
@@ -128,7 +142,8 @@ function ScrappedJobPage() {
                             <h3>{job.title}</h3>
 
                             <p className="cw-scrap-keywords">
-                                등록일 {new Date(job.createdAt).toLocaleDateString("ko-KR")}
+                                등록일{" "}
+                                {new Date(job.createdAt).toLocaleDateString("ko-KR")}
                             </p>
 
                             <div className="cw-scrap-card-bottom">
@@ -137,7 +152,9 @@ function ScrappedJobPage() {
                                 <button
                                     type="button"
                                     className="cw-job-detail-button"
-                                    onClick={() => setSelectedJob(createJobNoticeViewModel(job))}
+                                    onClick={() =>
+                                        setSelectedJob(createJobNoticeViewModel(job))
+                                    }
                                 >
                                     상세보기
                                 </button>
