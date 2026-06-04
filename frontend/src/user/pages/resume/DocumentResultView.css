@@ -130,6 +130,20 @@
 
 .dr-ring__svg { width: 120px; }
 
+/* 0 → N 점수 채우기 애니메이션 */
+.dr-ring__arc {
+  animation: dr-ring-fill 1s cubic-bezier(0.4, 0, 0.2, 1) both 0.2s;
+}
+
+@keyframes dr-ring-fill {
+  from {
+    stroke-dashoffset: var(--dr-ring-circ);
+  }
+  to {
+    stroke-dashoffset: calc(var(--dr-ring-circ) - var(--dr-ring-dash));
+  }
+}
+
 .dr-summary__grade {
   margin: 8px 0 2px;
   font-size: 18px;

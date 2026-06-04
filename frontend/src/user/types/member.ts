@@ -223,6 +223,8 @@ export interface PasswordTokenRequest {
   memberType: MemberType;
   loginId: string;
   verificationToken: string;
+  managerName?: string;
+  businessNumber?: string;
 }
 
 export interface PasswordTokenResponse {
