@@ -12,6 +12,72 @@ import {
   Star,
 } from 'lucide-react';
 import './MyPage.css';
+import { useMySubscriptions, useUsages } from '../../hooks/subscription';
+import { PRODUCT_CODE, SUBSCRIPTION_STATUS, type ProductCode, type Subscription, type UsageSummary } from '../../types/subscription';
+
+const PRODUCT_ACCENT: Record<ProductCode, 'document' | 'interview'> = {
+  [PRODUCT_CODE.DOCUMENT_COACHING]: 'document',
+  [PRODUCT_CODE.INTERVIEW]: 'interview',
+};
+
+const PRODUCT_TITLE: Record<ProductCode, string> = {
+  [PRODUCT_CODE.DOCUMENT_COACHING]: '서류 AI 코칭',
+  [PRODUCT_CODE.INTERVIEW]: 'AI 모의면접',
+};
+
+const PRODUCT_RECOMMEND: Record<ProductCode, { description: string; button: string }> = {
+  [PRODUCT_CODE.DOCUMENT_COACHING]: {
+    description: '가이드와 피드백을 보면서 서류 완성도를 더 빠르게 끌어올릴 수 있어요.',
+    button: '서류 AI 코칭 알아보기',
+  },
+  [PRODUCT_CODE.INTERVIEW]: {
+    description: '실전처럼 면접을 연습하고 답변 분석 리포트를 받아볼 수 있어요.',
+    button: 'AI 모의면접 알아보기',
+  },
+};
+
+const ALL_PRODUCT_CODES: ProductCode[] = [PRODUCT_CODE.DOCUMENT_COACHING, PRODUCT_CODE.INTERVIEW];
+
+const ACTIVE_STATUSES = new Set<string>([
+  SUBSCRIPTION_STATUS.ACTIVE,
+  SUBSCRIPTION_STATUS.CANCEL_SCHEDULED,
+  SUBSCRIPTION_STATUS.PAYMENT_FAILED,
+]);
+
+function formatBillingDate(isoDate: string | null): string {
+  if (!isoDate) return '—';
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return '—';
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+}
+
+type UsageItem = {
+  productCode: ProductCode;
+  key: 'document' | 'interview';
+  title: string;
+  accent: 'document' | 'interview';
+  isSubscribed: boolean;
+  subscription: Subscription | null;
+  usage: UsageSummary | null;
+};
+
+function buildUsageItems(subscriptions: Subscription[], usages: UsageSummary[]): UsageItem[] {
+  return ALL_PRODUCT_CODES.map((code) => {
+    const subscription = subscriptions.find((s) => s.productCode === code) ?? null;
+    const usage = usages.find((u) => u.productCode === code) ?? null;
+    const isSubscribed = subscription !== null && ACTIVE_STATUSES.has(subscription.status);
+
+    return {
+      productCode: code,
+      key: PRODUCT_ACCENT[code],
+      title: PRODUCT_TITLE[code],
+      accent: PRODUCT_ACCENT[code],
+      isSubscribed,
+      subscription,
+      usage,
+    };
+  });
+}
 
 const serviceCards = [
   {
@@ -37,33 +103,6 @@ const serviceCards = [
     bullets: ['실전 면접 연습', '답변 분석', 'AI 피드백 리포트', '면접 결과 저장'],
   },
 ];
-
-const subscriptionUsage = {
-  documentCoaching: {
-    key: 'document',
-    title: '서류 AI 코칭',
-    isSubscribed: true,
-    total: 20,
-    used: 12,
-    nextBillingDate: '2026.06.28',
-    accent: 'document',
-    recommendHref: '/billing/document-coaching/plans',
-    recommendDescription: '가이드와 피드백을 보면서 서류 완성도를 더 빠르게 끌어올릴 수 있어요.',
-    recommendButton: '서류 AI 코칭 알아보기',
-  },
-  interview: {
-    key: 'interview',
-    title: 'AI 모의면접',
-    isSubscribed: true,
-    total: 10,
-    used: 0,
-    nextBillingDate: '2026.06.28',
-    accent: 'interview',
-    recommendHref: '/billing/interview/plans',
-    recommendDescription: '실전처럼 면접을 연습하고 답변 분석 리포트를 받아볼 수 있어요.',
-    recommendButton: 'AI 모의면접 알아보기',
-  },
-};
 
 const noticeSections = [
   {
@@ -106,44 +145,57 @@ const noticeSections = [
   },
 ];
 
-function UsageStatusCard({ item }) {
-  const remaining = item.total - item.used;
-  const percent = Math.round((item.used / item.total) * 100);
-  const usageBoxes = Array.from({ length: item.total }, (_, index) => index < item.used);
+function UsageStatusCard({ item }: { item: UsageItem }) {
+  const limit = item.usage?.limit ?? 0;
+  const used = item.usage?.used ?? 0;
+  const remaining = item.usage?.remaining ?? 0;
+  const isOverLimit = used > limit;
+  const percent = limit > 0 ? Math.min(Math.round((used / limit) * 100), 100) : 0;
+  const usageBoxes = limit > 0 ? Array.from({ length: limit }, (_, i) => i < used) : [];
+  const nextBillingDate = formatBillingDate(item.subscription?.nextBillingAt ?? null);
 
   return (
     <article className={`cw-subscription-usage-card is-${item.accent}`}>
       <div className="cw-subscription-usage-card__summary">
         <div className="cw-subscription-usage-card__heading">
           <h3>{item.title}</h3>
-          <span className="cw-subscription-usage-card__meta">
-            {item.total}회 중 {item.used}회 사용
-          </span>
+          {limit > 0 ? (
+            <span className="cw-subscription-usage-card__meta">
+              {limit}회 중 {used}회 사용
+            </span>
+          ) : (
+            <span className="cw-subscription-usage-card__meta">사용량 정보 준비 중</span>
+          )}
         </div>
         <strong>{percent}%</strong>
       </div>
 
       <div className="cw-subscription-usage-card__body">
-        <div className="cw-subscription-usage-track" aria-hidden="true">
-          {usageBoxes.map((filled, index) => (
-            <span key={`${item.key}-${index}`} className={filled ? 'is-filled' : ''}>
-              <Star size={18} fill="currentColor" strokeWidth={1.8} />
-            </span>
-          ))}
-        </div>
+        {limit > 0 && (
+          <div className="cw-subscription-usage-track" aria-hidden="true">
+            {usageBoxes.map((filled, index) => (
+              <span key={`${item.key}-${index}`} className={filled ? 'is-filled' : ''}>
+                <Star size={18} fill="currentColor" strokeWidth={1.8} />
+              </span>
+            ))}
+          </div>
+        )}
 
         <dl className="cw-subscription-usage-stats">
           <div>
             <dt>남은 횟수</dt>
-            <dd>{remaining}회</dd>
+            <dd>{limit > 0 ? (isOverLimit ? '초과' : `${remaining}회`) : '—'}</dd>
           </div>
           <div>
             <dt>사용률</dt>
-            <dd>{percent}%</dd>
+            <dd>{limit > 0 ? `${percent}%` : '—'}</dd>
           </div>
           <div>
             <dt>다음 결제일</dt>
-            <dd>{item.nextBillingDate}</dd>
+            <dd>
+              <CalendarDays size={13} />
+              {nextBillingDate}
+            </dd>
           </div>
         </dl>
       </div>
@@ -151,7 +203,9 @@ function UsageStatusCard({ item }) {
   );
 }
 
-function RecommendationCard({ item }) {
+function RecommendationCard({ item }: { item: UsageItem }) {
+  const recommend = PRODUCT_RECOMMEND[item.productCode];
+
   return (
     <article className={`cw-subscription-recommend-card is-${item.accent}`}>
       <div className="cw-subscription-recommend-card__icon">
@@ -160,19 +214,42 @@ function RecommendationCard({ item }) {
       <div className="cw-subscription-recommend-card__body">
         <span>추천 서비스</span>
         <h3>{item.title}도 함께 시작해보세요</h3>
-        <p>{item.recommendDescription}</p>
+        <p>{recommend.description}</p>
       </div>
-      <Link to={item.recommendHref} className="cw-subscription-recommend-card__button">
-        {item.recommendButton}
+      <Link
+        to={`/billing/checkout?product=${item.productCode}`}
+        className="cw-subscription-recommend-card__button"
+      >
+        {recommend.button}
       </Link>
     </article>
   );
 }
 
+function UsageSectionSkeleton() {
+  return (
+    <div className="cw-subscription-usage-grid" aria-busy="true" aria-label="구독 현황 불러오는 중">
+      {ALL_PRODUCT_CODES.map((code) => (
+        <div key={code} className="cw-subscription-usage-card is-loading" />
+      ))}
+    </div>
+  );
+}
+
 function SubscriptionPage() {
-  const usageItems = [subscriptionUsage.documentCoaching, subscriptionUsage.interview];
-  const subscribedItems = usageItems.filter((item) => item.isSubscribed);
-  const unsubscribedItems = usageItems.filter((item) => !item.isSubscribed);
+  const subscriptionsQuery = useMySubscriptions();
+  const usagesQuery = useUsages();
+
+  const isLoading = subscriptionsQuery.isLoading || usagesQuery.isLoading;
+  const isError = subscriptionsQuery.isError || usagesQuery.isError;
+
+  const allItems = buildUsageItems(
+    subscriptionsQuery.data ?? [],
+    usagesQuery.data ?? [],
+  );
+
+  const subscribedItems = allItems.filter((item) => item.isSubscribed);
+  const unsubscribedItems = allItems.filter((item) => !item.isSubscribed);
   const hasNoSubscription = subscribedItems.length === 0;
   const hasPartialSubscription = subscribedItems.length === 1;
 
@@ -247,7 +324,6 @@ function SubscriptionPage() {
 
             <div className="cw-subscription-carousel" role="list">
               {serviceCards.map((service) => {
-                const Icon = service.icon;
                 return (
                   <article
                     className={`cw-subscription-service-card is-${service.accent}`}
@@ -324,7 +400,13 @@ function SubscriptionPage() {
               </div>
             </div>
 
-            {hasNoSubscription ? (
+            {isLoading ? (
+              <UsageSectionSkeleton />
+            ) : isError ? (
+              <p className="cw-subscription-error" role="alert">
+                이용 현황을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
+              </p>
+            ) : hasNoSubscription ? (
               <div className="cw-subscription-empty cw-subscription-empty--plain">
                 <div className="cw-subscription-empty__illustration" aria-hidden="true">
                   <div className="cw-subscription-empty__device">
@@ -361,12 +443,12 @@ function SubscriptionPage() {
 
           <section className="cw-subscription-notice-grid">
             {noticeSections.map((section) => {
-              const Icon = section.icon;
+              const SectionIcon = section.icon;
               return (
                 <article className="cw-subscription-notice-card" key={section.title}>
                   <div className="cw-subscription-notice-card__title">
                     <span>
-                      <Icon size={18} />
+                      <SectionIcon size={18} />
                     </span>
                     <h4>{section.title}</h4>
                   </div>
