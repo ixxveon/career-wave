@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import {
   Bot,
-  CalendarDays,
   CheckCircle2,
   FileText,
   Headphones,
@@ -9,75 +8,13 @@ import {
   Mic,
   RefreshCw,
   Sparkles,
-  Star,
 } from 'lucide-react';
 import './MyPage.css';
 import { useMySubscriptions, useUsages } from '../../hooks/subscription';
-import { PRODUCT_CODE, SUBSCRIPTION_STATUS, type ProductCode, type Subscription, type UsageSummary } from '../../types/subscription';
-
-const PRODUCT_ACCENT: Record<ProductCode, 'document' | 'interview'> = {
-  [PRODUCT_CODE.DOCUMENT_COACHING]: 'document',
-  [PRODUCT_CODE.INTERVIEW]: 'interview',
-};
-
-const PRODUCT_TITLE: Record<ProductCode, string> = {
-  [PRODUCT_CODE.DOCUMENT_COACHING]: '서류 AI 코칭',
-  [PRODUCT_CODE.INTERVIEW]: 'AI 모의면접',
-};
-
-const PRODUCT_RECOMMEND: Record<ProductCode, { description: string; button: string }> = {
-  [PRODUCT_CODE.DOCUMENT_COACHING]: {
-    description: '가이드와 피드백을 보면서 서류 완성도를 더 빠르게 끌어올릴 수 있어요.',
-    button: '서류 AI 코칭 알아보기',
-  },
-  [PRODUCT_CODE.INTERVIEW]: {
-    description: '실전처럼 면접을 연습하고 답변 분석 리포트를 받아볼 수 있어요.',
-    button: 'AI 모의면접 알아보기',
-  },
-};
-
-const ALL_PRODUCT_CODES: ProductCode[] = [PRODUCT_CODE.DOCUMENT_COACHING, PRODUCT_CODE.INTERVIEW];
-
-const ACTIVE_STATUSES = new Set<string>([
-  SUBSCRIPTION_STATUS.ACTIVE,
-  SUBSCRIPTION_STATUS.CANCEL_SCHEDULED,
-  SUBSCRIPTION_STATUS.PAYMENT_FAILED,
-]);
-
-function formatBillingDate(isoDate: string | null): string {
-  if (!isoDate) return '—';
-  const date = new Date(isoDate);
-  if (Number.isNaN(date.getTime())) return '—';
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-}
-
-type UsageItem = {
-  productCode: ProductCode;
-  key: 'document' | 'interview';
-  title: string;
-  accent: 'document' | 'interview';
-  isSubscribed: boolean;
-  subscription: Subscription | null;
-  usage: UsageSummary | null;
-};
-
-function buildUsageItems(subscriptions: Subscription[], usages: UsageSummary[]): UsageItem[] {
-  return ALL_PRODUCT_CODES.map((code) => {
-    const subscription = subscriptions.find((s) => s.productCode === code) ?? null;
-    const usage = usages.find((u) => u.productCode === code) ?? null;
-    const isSubscribed = subscription !== null && ACTIVE_STATUSES.has(subscription.status);
-
-    return {
-      productCode: code,
-      key: PRODUCT_ACCENT[code],
-      title: PRODUCT_TITLE[code],
-      accent: PRODUCT_ACCENT[code],
-      isSubscribed,
-      subscription,
-      usage,
-    };
-  });
-}
+import { buildUsageItems } from '../../utils/subscription/subscriptionView';
+import { UsageStatusCard } from '../../components/subscription/UsageStatusCard';
+import { RecommendationCard } from '../../components/subscription/RecommendationCard';
+import { UsageSectionSkeleton } from '../../components/subscription/UsageSectionSkeleton';
 
 const serviceCards = [
   {
@@ -144,97 +81,6 @@ const noticeSections = [
     ],
   },
 ];
-
-function UsageStatusCard({ item }: { item: UsageItem }) {
-  const limit = item.usage?.limit ?? 0;
-  const used = item.usage?.used ?? 0;
-  const remaining = item.usage?.remaining ?? 0;
-  const isOverLimit = used > limit;
-  const percent = limit > 0 ? Math.min(Math.round((used / limit) * 100), 100) : 0;
-  const usageBoxes = limit > 0 ? Array.from({ length: limit }, (_, i) => i < used) : [];
-  const nextBillingDate = formatBillingDate(item.subscription?.nextBillingAt ?? null);
-
-  return (
-    <article className={`cw-subscription-usage-card is-${item.accent}`}>
-      <div className="cw-subscription-usage-card__summary">
-        <div className="cw-subscription-usage-card__heading">
-          <h3>{item.title}</h3>
-          {limit > 0 ? (
-            <span className="cw-subscription-usage-card__meta">
-              {limit}회 중 {used}회 사용
-            </span>
-          ) : (
-            <span className="cw-subscription-usage-card__meta">사용량 정보 준비 중</span>
-          )}
-        </div>
-        <strong>{percent}%</strong>
-      </div>
-
-      <div className="cw-subscription-usage-card__body">
-        {limit > 0 && (
-          <div className="cw-subscription-usage-track" aria-hidden="true">
-            {usageBoxes.map((filled, index) => (
-              <span key={`${item.key}-${index}`} className={filled ? 'is-filled' : ''}>
-                <Star size={18} fill="currentColor" strokeWidth={1.8} />
-              </span>
-            ))}
-          </div>
-        )}
-
-        <dl className="cw-subscription-usage-stats">
-          <div>
-            <dt>남은 횟수</dt>
-            <dd>{limit > 0 ? (isOverLimit ? '초과' : `${remaining}회`) : '—'}</dd>
-          </div>
-          <div>
-            <dt>사용률</dt>
-            <dd>{limit > 0 ? `${percent}%` : '—'}</dd>
-          </div>
-          <div>
-            <dt>다음 결제일</dt>
-            <dd>
-              <CalendarDays size={13} />
-              {nextBillingDate}
-            </dd>
-          </div>
-        </dl>
-      </div>
-    </article>
-  );
-}
-
-function RecommendationCard({ item }: { item: UsageItem }) {
-  const recommend = PRODUCT_RECOMMEND[item.productCode];
-
-  return (
-    <article className={`cw-subscription-recommend-card is-${item.accent}`}>
-      <div className="cw-subscription-recommend-card__icon">
-        {item.accent === 'document' ? <FileText size={22} /> : <Mic size={22} />}
-      </div>
-      <div className="cw-subscription-recommend-card__body">
-        <span>추천 서비스</span>
-        <h3>{item.title}도 함께 시작해보세요</h3>
-        <p>{recommend.description}</p>
-      </div>
-      <Link
-        to={`/billing/checkout?product=${item.productCode}`}
-        className="cw-subscription-recommend-card__button"
-      >
-        {recommend.button}
-      </Link>
-    </article>
-  );
-}
-
-function UsageSectionSkeleton() {
-  return (
-    <div className="cw-subscription-usage-grid" aria-busy="true" aria-label="구독 현황 불러오는 중">
-      {ALL_PRODUCT_CODES.map((code) => (
-        <div key={code} className="cw-subscription-usage-card is-loading" />
-      ))}
-    </div>
-  );
-}
 
 function SubscriptionPage() {
   const subscriptionsQuery = useMySubscriptions();
@@ -323,72 +169,70 @@ function SubscriptionPage() {
             </div>
 
             <div className="cw-subscription-carousel" role="list">
-              {serviceCards.map((service) => {
-                return (
-                  <article
-                    className={`cw-subscription-service-card is-${service.accent}`}
-                    key={service.key}
-                    role="listitem"
-                  >
-                    <div className="cw-subscription-service-card__hero">
-                      <div className="cw-subscription-service-card__copy">
-                        <h4>{service.title}</h4>
-                        <p>{service.description}</p>
+              {serviceCards.map((service) => (
+                <article
+                  className={`cw-subscription-service-card is-${service.accent}`}
+                  key={service.key}
+                  role="listitem"
+                >
+                  <div className="cw-subscription-service-card__hero">
+                    <div className="cw-subscription-service-card__copy">
+                      <h4>{service.title}</h4>
+                      <p>{service.description}</p>
+                    </div>
+                    <div className={`cw-subscription-service-card__visual is-${service.key}`}>
+                      {service.key === 'document' ? (
+                        <>
+                          <div className="cw-subscription-service-card__visual-doc">
+                            <FileText size={18} />
+                          </div>
+                          <div className="cw-subscription-service-card__visual-cloud">?</div>
+                          <div className="cw-subscription-service-card__visual-main is-bubble">
+                            <MessageSquareMore size={34} />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="cw-subscription-service-card__visual-chat is-middle">
+                            <Mic size={28} />
+                          </div>
+                          <div className="cw-subscription-service-card__visual-chat is-bottom">
+                            <Sparkles size={18} />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <ul>
+                    {service.bullets.map((bullet) => (
+                      <li key={bullet}>
+                        <CheckCircle2 size={15} />
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="cw-subscription-service-card__features">
+                    {service.highlights.map((highlight) => (
+                      <div key={highlight}>
+                        <strong>{highlight}</strong>
                       </div>
-                      <div className={`cw-subscription-service-card__visual is-${service.key}`}>
-                        {service.key === 'document' ? (
-                          <>
-                            <div className="cw-subscription-service-card__visual-doc">
-                              <FileText size={18} />
-                            </div>
-                            <div className="cw-subscription-service-card__visual-cloud">?</div>
-                            <div className="cw-subscription-service-card__visual-main is-bubble">
-                              <MessageSquareMore size={34} />
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="cw-subscription-service-card__visual-chat is-middle">
-                              <Mic size={28} />
-                            </div>
-                            <div className="cw-subscription-service-card__visual-chat is-bottom">
-                              <Sparkles size={18} />
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                    ))}
+                  </div>
 
-                    <ul>
-                      {service.bullets.map((bullet) => (
-                        <li key={bullet}>
-                          <CheckCircle2 size={15} />
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="cw-subscription-service-card__cta-wrap">
+                    <Link to={service.href} className="cw-subscription-service-card__button">
+                      구매하기
+                    </Link>
+                  </div>
 
-                    <div className="cw-subscription-service-card__features">
-                      {service.highlights.map((highlight) => (
-                        <div key={highlight}>
-                          <strong>{highlight}</strong>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="cw-subscription-service-card__cta-wrap">
-                      <Link to={service.href} className="cw-subscription-service-card__button">
-                        구매하기
-                      </Link>
-                    </div>
-
-                    <p className="cw-subscription-service-card__footer">
-                      <CheckCircle2 size={16} />
-                      <span>{service.footer}</span>
-                    </p>
-                  </article>
-                );
-              })}
+                  <p className="cw-subscription-service-card__footer">
+                    <CheckCircle2 size={16} />
+                    <span>{service.footer}</span>
+                  </p>
+                </article>
+              ))}
             </div>
           </section>
 
