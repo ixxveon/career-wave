@@ -4,20 +4,24 @@
 > 각 항목은 하나의 커밋 또는 하나의 PR 리뷰 단위로 쪼갤 수 있어야 한다.
 
 > 프로젝트 순서:
-> `feature/user-subscription` → `feature/user-payment-history` → `feature/user-billing` → `feature/user-frontend-qa`
+> `feature/user-subscription-setup` → `feature/user-payment-history` → `feature/user-billing` → `feature/user-frontend-qa`
 
 ---
 
 ## Phase 5 — Subscription
 
-- [ ] `types/subscription.ts` 타입 정의: `ProductCode`, `SubscriptionStatus`, `UsageSummary`, `PaymentStatus` 등
-- [ ] ERD 초안에서 누락된 결제/구독 테이블 요구사항 정리
-- [ ] 상품 목록/상세 API 응답 타입 정의
-- [ ] `/mypage/subscription` 상단 AI 서비스 소개와 CTA 상태 정리
-- [ ] 구독 없음 empty state와 2개 CTA 구현/정리
-- [ ] 단일 구독 상태: 구독중 상품 사용량 카드 + 다른 상품 추천 카드 구조 정리
-- [ ] 2개 구독 상태: 2개 사용량 카드 동시 표시 구조 정리
-- [ ] 사용량 progress/remaining UI에서 한도 초과/데이터 없음 상태 처리
+- [x] `types/subscription.ts` 타입 정의: `ProductCode`, `BillingCycle`, `SubscriptionStatus`, `PaymentStatus`, `PaymentFailureReason` enum + `Product`, `Subscription`, `UsageSummary`, `PaymentOrder`, `PaymentHistory`, `PaymentFailure`, `Entitlements` interface
+- [x] `api/subscription/subscriptionApi.ts` 신설: `getProducts`, `getMySubscriptions`, `getUsages`, `getEntitlements` 4개 endpoint (PR #179)
+- [x] `hooks/subscription/` 신설: `queryKeys.ts` + `useProducts`, `useMySubscriptions`, `useUsages`, `useEntitlements` TanStack Query 훅 (PR #179)
+- [x] `utils/subscription/subscriptionView.ts` 신설: 뷰 상수(PRODUCT_ACCENT, PRODUCT_TITLE 등), `formatBillingDate`, `buildUsageItems`, `UsageItem` 타입
+- [x] `components/subscription/` 신설: `UsageStatusCard`, `RecommendationCard`, `UsageSectionSkeleton`
+- [x] 상품 목록/상세 API 응답 타입 정의 (`Product` interface)
+- [x] `/mypage/subscription` 상단 AI 서비스 소개와 CTA 상태 정리
+- [x] 구독 없음 empty state와 2개 CTA 구현/정리
+- [x] 단일 구독 상태: 구독중 상품 사용량 카드 + 다른 상품 추천 카드 구조 정리
+- [x] 2개 구독 상태: 2개 사용량 카드 동시 표시 구조 정리
+- [x] 사용량 progress/remaining UI에서 한도 초과/데이터 없음 상태 처리
+- [ ] ERD 초안에서 누락된 결제/구독 테이블 요구사항 정리 (백엔드 계약 확정 후 진행)
 
 ## Phase 6 — Payment History
 

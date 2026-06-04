@@ -5,11 +5,11 @@
 **Branch**: `feature/admin-scraping-api`
 **Base**: `feature/admin-scraping-spec`
 
-- [ ] `frontend/src/admin/api/scrapingApi.ts` 생성
-- [ ] ERD 기준 `ScrapingStatus`(`SUCCESS`, `FAILED`)와 `ScrapingActionType` 타입 정의
-- [ ] `ScrapingSource`, `ScrapingSourceSummary`, `ScrapingActionRequest`, `ScrapingActionResult`, `ScrapingLog` 응답 타입 정의
-- [ ] `ApiResponse<T>` 응답 구조에 맞춘 API 함수 작성
-- [ ] 페이지에서 직접 API 호출하지 않도록 API 계층 경계 정의
+- [x] `frontend/src/admin/api/scrapingApi.ts` 생성
+- [x] ERD 기준 `ScrapingStatus`(`SUCCESS`, `FAILED`)와 `ScrapingActionType` 타입 정의
+- [x] `ScrapingSource`, `ScrapingSourceSummary`, `ScrapingActionRequest`, `ScrapingActionResult`, `ScrapingLog` 응답 타입 정의
+- [x] `ApiResponse<T>` 응답 구조에 맞춘 API 함수 작성
+- [x] 페이지에서 직접 API 호출하지 않도록 API 계층 경계 정의
 
 ## Phase 2 - source 목록, 검색, 필터
 

@@ -263,8 +263,8 @@
 |------|------|
 | 목록 페이지 | `frontend/src/user/pages/jobNotice/JobNoticeListPage.tsx` |
 | 상세 드로어 | `frontend/src/user/pages/jobNotice/JobNoticeDetail.tsx` |
-| 공유 타입 | `frontend/src/user/pages/jobNotice/JobNoticeTypes.ts` |
-| API 모듈 | `frontend/src/user/api/jobApi.ts` |
+| 공유 타입 | `frontend/src/user/types/jobNotice.ts` |
+| API 모듈 | `frontend/src/user/api/jobApi.js` |
 | API 클라이언트 | `frontend/src/utils/apiClient.js` |
 
 ## 8. Notes

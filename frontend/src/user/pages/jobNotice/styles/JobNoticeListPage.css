@@ -460,7 +460,6 @@
   border-radius: 12px;
   background: #ffffff;
   color: #26344a;
-  cursor: pointer;
   box-shadow: 0 10px 22px rgba(42, 62, 90, 0.05);
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
@@ -471,7 +470,7 @@
   box-shadow: 0 18px 34px rgba(47, 156, 255, 0.14);
 }
 
-.jn-card:focus-visible {
+.jn-card:has(:focus-visible) {
   outline: 3px solid rgba(47, 156, 255, 0.28);
   outline-offset: 3px;
   border-color: #2f9cff;
@@ -539,6 +538,38 @@
   transform: translateY(-1px);
 }
 
+.jn-feedback {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid #d8e3f0;
+  border-radius: 10px;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.jn-feedback > span {
+  min-width: 0;
+}
+
+.jn-feedback a {
+  flex: 0 0 auto;
+  color: inherit;
+  font-weight: 950;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.jn-feedback--error {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #be123c;
+}
+
 .jn-card h3 {
   margin: 4px 0 0;
   color: #1f2937;
@@ -546,6 +577,25 @@
   line-height: 1.38;
   font-weight: 950;
   letter-spacing: 0;
+}
+
+.jn-card__detail-button {
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.jn-card__detail-button:hover,
+.jn-card__detail-button:focus-visible {
+  color: #0f7edb;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .jn-card__tags {
@@ -734,5 +784,65 @@
 
   .jn-views {
     margin-left: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .jn {
+    overflow-x: hidden;
+  }
+
+  .jn-banner {
+    margin-inline: -4px;
+    padding: 20px 16px;
+    border-radius: 14px;
+  }
+
+  .jn-hero-search {
+    grid-template-columns: minmax(0, 1fr) 44px;
+    min-height: 48px;
+  }
+
+  .jn-hero-search input {
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .jn-hero-search button {
+    width: 44px;
+    height: 40px;
+  }
+
+  .jn-popular-tags {
+    gap: 7px;
+  }
+
+  .jn-popular-tags button {
+    padding: 0 10px;
+  }
+
+  .jn-results__head {
+    gap: 10px;
+  }
+
+  .jn-results__tools {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .jn-periods {
+    justify-content: flex-start;
+  }
+
+  .jn-card {
+    padding: 16px;
+  }
+
+  .jn-card h3 {
+    overflow-wrap: anywhere;
+  }
+
+  .jn-card__tags span {
+    overflow-wrap: anywhere;
   }
 }

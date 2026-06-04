@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { jobApi } from '../../api/jobApi';
-import type { JobNoticeQueryParams } from '../../pages/jobNotice/JobNoticeTypes';
+import type { JobNoticeListApiResponse, JobNoticeQueryParams } from '../../types/jobNotice';
 
 export const jobNoticeQueryKeys = {
   all: ['jobNotice'] as const,
@@ -14,6 +14,6 @@ export const jobNoticeQueryKeys = {
 export function useJobNoticeList(params: JobNoticeQueryParams) {
   return useQuery({
     queryKey: jobNoticeQueryKeys.list(params),
-    queryFn: () => jobApi.getJobNoticeList(params),
+    queryFn: () => jobApi.getJobNoticeList(params) as Promise<JobNoticeListApiResponse>,
   });
 }
