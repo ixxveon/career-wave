@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { adminAuthApi, adminSession } from '../api/adminAuthApi';
 import '../styles/admin.css';
 
 const menuGroups = [
@@ -35,6 +36,15 @@ const menuGroups = [
 export default function AdminSidebar() {
   const navigate = useNavigate();
 
+  const handleLogout = async () => {
+    try {
+      await adminAuthApi.logout();
+    } finally {
+      adminSession.clearToken();
+      navigate('/admin/login', { replace: true });
+    }
+  };
+
   return (
     <aside className="admin-sidebar">
       <span
@@ -63,6 +73,10 @@ export default function AdminSidebar() {
           </div>
         ))}
       </nav>
+
+      <button type="button" className="admin-logoutBtn" onClick={handleLogout}>
+        로그아웃
+      </button>
     </aside>
   );
 }
