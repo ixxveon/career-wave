@@ -3940,4 +3940,12 @@ a.cw-chart-filter {
   .cw-scrap-grid {
     grid-template-columns: 1fr;
   }
+
+  .cw-warning {
+    color: #f59e0b;
+  }
+
+  .cw-danger {
+    color: #ef4444;
+  }
 }
