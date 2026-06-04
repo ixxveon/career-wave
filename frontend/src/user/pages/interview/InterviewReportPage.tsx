@@ -7,7 +7,7 @@ import {
   Lock, Volume2, Gauge, X,
 } from 'lucide-react';
 import type { Report, Metric, Review, ImprovementItem } from '../../types/interview';
-import './styles/InterviewReportPage.css';
+import './InterviewReportPage.css';
 
 /* ── Mock Data ─────────────────────────────────── */
 const REPORT: Report = {

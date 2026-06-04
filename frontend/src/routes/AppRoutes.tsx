@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
-import FavoriteCompanyPage from '@/user/pages/mypage/FavoriteCompanyPage';
+import ScrappedJobPage from '@/user/pages/mypage/ScrappedJobPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
 import JobSeekerDashboardPage from '../user/pages/dashboard/JobSeekerDashboardPage';
@@ -28,9 +28,9 @@ import ApplicantManagementPage from '../user/pages/application/ApplicantManageme
 import ApplicantDetailPage from '../user/pages/application/ApplicantDetailPage';
 import ApplyPage from '../user/pages/application/ApplyPage';
 
-import ResumeAnalysisPage from '../user/pages/documentAnalysis/ResumeAnalysisPage';
-import CoverLetterAnalysisPage from '../user/pages/documentAnalysis/CoverLetterAnalysisPage';
-import DocumentReportPage from '../user/pages/documentAnalysis/DocumentReportPage';
+import ResumeAnalysisPage from '../user/pages/resume/ResumeAnalysisPage';
+import CoverLetterAnalysisPage from '../user/pages/resume/CoverLetterAnalysisPage';
+import DocumentReportPage from '../user/pages/resume/DocumentReportPage';
 
 import InterviewHomePage from '../user/pages/interview/InterviewHomePage';
 import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
@@ -86,7 +86,7 @@ function AppRoutes() {
         <Route index element={<JobSeekerDashboardPage />} />
         <Route path="dashboard/company" element={<CompanyDashboardPage />} />
         <Route path="mypage" element={<UserMyPage />} />
-        <Route path="mypage/favorites" element={<FavoriteCompanyPage />} />
+        <Route path="mypage/favorites" element={<ScrappedJobPage />} />
         <Route path="mypage/subscription" element={<SubscriptionPage />} />
         <Route path="mypage/payment-history" element={<PaymentHistoryPage />} />
 

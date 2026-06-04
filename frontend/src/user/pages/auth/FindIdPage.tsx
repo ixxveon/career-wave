@@ -1,57 +1,43 @@
-import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { CheckCircle2, Mail, Phone, UserRound, Building2 } from 'lucide-react';
-import RecoverySupportPanel from './RecoverySupportPanel';
+import { useParams } from 'react-router-dom';
+import { AlertCircle, Mail, Phone } from 'lucide-react';
+import { useFindIdRecovery } from '../../hooks/member';
+import { RECOVERY_METHOD } from '../../utils/member/recoverySchema';
+import RecoveryCompanyIdentityFields from '../../components/member/RecoveryCompanyIdentityFields';
+import RecoveryMethodTabs from '../../components/member/RecoveryMethodTabs';
+import RecoveryPageLinks from '../../components/member/RecoveryPageLinks';
+import RecoverySupportPanel from '../../components/member/RecoverySupportPanel';
+import { RecoveryCodeField, RecoveryContactField } from '../../components/member/RecoveryVerificationFields';
+import RecoveryResultPanel from '../../components/member/RecoveryResultPanel';
 import './AuthPage.css';
-
-interface UserForm {
-  email: string;
-  phone: string;
-  code: string;
-}
-
-interface CompanyForm {
-  managerName: string;
-  businessNumber: string;
-  email: string;
-  code: string;
-}
 
 function FindIdPage() {
   const { memberType } = useParams();
   const isCompany = memberType === 'company';
-
-  const [userMethod, setUserMethod] = useState('email');
-  const [userForm, setUserForm] = useState<UserForm>({
-    email: '',
-    phone: '',
-    code: '',
-  });
-  const [userStatus, setUserStatus] = useState({
-    sent: false,
-    verified: false,
-    result: false,
-  });
-
-  const [companyForm, setCompanyForm] = useState<CompanyForm>({
-    managerName: '',
-    businessNumber: '',
-    email: '',
-    code: '',
-  });
-  const [companyStatus, setCompanyStatus] = useState({
-    sent: false,
-    verified: false,
-    result: false,
-  });
-
-  const updateUser = (key: keyof UserForm, value: string) => {
-    setUserForm((current) => ({ ...current, [key]: value }));
-  };
-
-  const updateCompany = (key: keyof CompanyForm, value: string) => {
-    setCompanyForm((current) => ({ ...current, [key]: value }));
-  };
+  const {
+    userMethod,
+    userForm,
+    companyForm,
+    fieldErrors,
+    formMessage,
+    result,
+    activeUserVerification,
+    companyVerification,
+    userExpiresIn,
+    userResendIn,
+    companyExpiresIn,
+    companyResendIn,
+    sendVerificationPending,
+    confirmVerificationPending,
+    findIdPending,
+    updateUser,
+    updateCompany,
+    resetUserMethod,
+    handleSendUserCode,
+    handleConfirmUserCode,
+    handleSendCompanyCode,
+    handleConfirmCompanyCode,
+    handleFindId,
+  } = useFindIdRecovery(isCompany);
 
   return (
     <section className="cw-auth-page cw-auth-page--recovery">
@@ -67,240 +53,132 @@ function FindIdPage() {
         </div>
 
         <div className="cw-auth-card cw-auth-card--detail">
-          {!isCompany && (
-            <div className="cw-register-tabs cw-register-tabs--auth" role="tablist" aria-label="개인회원 인증 방식">
-              <button
-                className={userMethod === 'email' ? 'is-active' : ''}
-                type="button"
-                role="tab"
-                aria-selected={userMethod === 'email'}
-                onClick={() => setUserMethod('email')}
-              >
-                이메일로 인증
-              </button>
-              <button
-                className={userMethod === 'phone' ? 'is-active' : ''}
-                type="button"
-                role="tab"
-                aria-selected={userMethod === 'phone'}
-                onClick={() => setUserMethod('phone')}
-              >
-                휴대폰 번호로 인증
-              </button>
-            </div>
-          )}
+          {!isCompany && <RecoveryMethodTabs method={userMethod} onChange={resetUserMethod} />}
 
-          <form className="cw-auth-form">
-            {!isCompany && userMethod === 'email' && (
-              <label>
-                이메일
-                <div className="cw-auth-inline">
-                  <span>
-                    <Mail size={18} />
-                    <input
-                      type="email"
-                      placeholder="이메일 주소 입력"
-                      value={userForm.email}
-                      onChange={(event) => updateUser('email', event.target.value)}
-                    />
-                  </span>
-                  <button
-                    className="cw-auth-sub-button cw-auth-sub-button--send"
-                    type="button"
-                    onClick={() => setUserStatus((current) => ({ ...current, sent: true }))}
-                  >
-                    인증번호 전송
-                  </button>
-                </div>
-                {userStatus.sent && (
-                  <span className="cw-auth-feedback">
-                    <CheckCircle2 size={15} />
-                    이메일 인증번호가 발송되었습니다.
-                  </span>
-                )}
-              </label>
+          <form className="cw-auth-form" noValidate>
+            {!isCompany && userMethod === RECOVERY_METHOD.EMAIL && (
+              <RecoveryContactField
+                label="이메일"
+                icon={<Mail size={18} />}
+                value={userForm.email}
+                placeholder="이메일 주소 입력"
+                error={fieldErrors.email}
+                verification={activeUserVerification}
+                feedbackText="이메일 인증번호가 발송되었습니다."
+                sendPending={sendVerificationPending}
+                resendIn={userResendIn}
+                buttonClassName="cw-auth-sub-button cw-auth-sub-button--send"
+                inputType="email"
+                onChange={(value) => updateUser('email', value)}
+                onSend={handleSendUserCode}
+              />
             )}
 
-            {!isCompany && userMethod === 'phone' && (
-              <label>
-                휴대폰 번호
-                <div className="cw-auth-inline">
-                  <span>
-                    <Phone size={18} />
-                    <input
-                      type="tel"
-                      placeholder="휴대폰번호('-' 없이 숫자만 입력)"
-                      value={userForm.phone}
-                      onChange={(event) => updateUser('phone', event.target.value)}
-                    />
-                  </span>
-                  <button
-                    className="cw-auth-sub-button"
-                    type="button"
-                    onClick={() => setUserStatus((current) => ({ ...current, sent: true }))}
-                  >
-                    인증번호 전송
-                  </button>
-                </div>
-                {userStatus.sent && (
-                  <span className="cw-auth-feedback">
-                    <CheckCircle2 size={15} />
-                    휴대폰 인증번호가 발송되었습니다.
-                  </span>
-                )}
-              </label>
+            {!isCompany && userMethod === RECOVERY_METHOD.PHONE && (
+              <RecoveryContactField
+                label="휴대폰 번호"
+                icon={<Phone size={18} />}
+                value={userForm.phone}
+                placeholder="휴대폰번호('-' 없이 숫자만 입력)"
+                error={fieldErrors.phone}
+                verification={activeUserVerification}
+                feedbackText="휴대폰 인증번호가 발송되었습니다."
+                sendPending={sendVerificationPending}
+                resendIn={userResendIn}
+                inputType="tel"
+                inputMode="numeric"
+                onChange={(value) => updateUser('phone', value)}
+                onSend={handleSendUserCode}
+              />
             )}
 
             {!isCompany && (
-              <>
-                <label>
-                  인증번호 입력
-                  <div className="cw-auth-inline cw-auth-inline--triple">
-                    <span>
-                      <CheckCircle2 size={18} />
-                      <input
-                        type="text"
-                        placeholder="인증번호 6자리 입력"
-                        value={userForm.code}
-                        onChange={(event) => updateUser('code', event.target.value)}
-                      />
-                    </span>
-                    <button
-                      className="cw-auth-button-secondary cw-auth-button-secondary--confirm"
-                      type="button"
-                      onClick={() => setUserStatus((current) => ({ ...current, verified: true }))}
-                    >
-                      인증 확인
-                    </button>
-                    <button
-                      className="cw-auth-button-secondary cw-auth-button-secondary--resend"
-                      type="button"
-                      onClick={() => setUserStatus((current) => ({ ...current, sent: true }))}
-                    >
-                      재전송
-                    </button>
-                  </div>
-                </label>
-                {userStatus.verified && (
-                  <span className="cw-auth-feedback">
-                    <CheckCircle2 size={15} />
-                    인증이 완료되었습니다.
-                  </span>
-                )}
-              </>
+              <RecoveryCodeField
+                label="인증번호 입력"
+                code={userForm.code}
+                error={fieldErrors.code}
+                verification={activeUserVerification}
+                expiresIn={userExpiresIn}
+                resendIn={userResendIn}
+                confirmPending={confirmVerificationPending}
+                sendPending={sendVerificationPending}
+                onCodeChange={(value) => updateUser('code', value)}
+                onConfirm={handleConfirmUserCode}
+                onResend={handleSendUserCode}
+              />
             )}
 
             {isCompany && (
               <>
-                <label>
-                  담당자명
-                  <span>
-                    <UserRound size={18} />
-                    <input
-                      type="text"
-                      placeholder="담당자명(실명)"
-                      value={companyForm.managerName}
-                      onChange={(event) => updateCompany('managerName', event.target.value)}
-                    />
-                  </span>
-                </label>
-                <label>
-                  사업자등록번호
-                  <span>
-                    <Building2 size={18} />
-                    <input
-                      type="text"
-                      placeholder="사업자등록번호('-' 없이 숫자만 입력)"
-                      value={companyForm.businessNumber}
-                      onChange={(event) => updateCompany('businessNumber', event.target.value)}
-                    />
-                  </span>
-                </label>
-                <label>
-                  담당자 이메일
-                  <div className="cw-auth-inline">
-                    <span>
-                      <Mail size={18} />
-                      <input
-                        type="email"
-                        placeholder="담당자 이메일 주소 입력"
-                        value={companyForm.email}
-                        onChange={(event) => updateCompany('email', event.target.value)}
-                      />
-                    </span>
-                    <button
-                      className="cw-auth-sub-button cw-auth-sub-button--send"
-                      type="button"
-                      onClick={() => setCompanyStatus((current) => ({ ...current, sent: true }))}
-                    >
-                      인증번호 전송
-                    </button>
-                  </div>
-                  {companyStatus.sent && (
-                    <span className="cw-auth-feedback">
-                      <CheckCircle2 size={15} />
-                      이메일 인증번호가 발송되었습니다.
-                    </span>
-                  )}
-                </label>
-                <label>
-                  이메일 인증번호 입력
-                  <div className="cw-auth-inline cw-auth-inline--triple">
-                    <span>
-                      <CheckCircle2 size={18} />
-                      <input
-                        type="text"
-                        placeholder="인증번호 6자리 입력"
-                        value={companyForm.code}
-                        onChange={(event) => updateCompany('code', event.target.value)}
-                      />
-                    </span>
-                    <button
-                      className="cw-auth-button-secondary cw-auth-button-secondary--confirm"
-                      type="button"
-                      onClick={() => setCompanyStatus((current) => ({ ...current, verified: true }))}
-                    >
-                      인증 확인
-                    </button>
-                    <button
-                      className="cw-auth-button-secondary cw-auth-button-secondary--resend"
-                      type="button"
-                      onClick={() => setCompanyStatus((current) => ({ ...current, sent: true }))}
-                    >
-                      재전송
-                    </button>
-                  </div>
-                </label>
-                {companyStatus.verified && (
-                  <span className="cw-auth-feedback">
-                    <CheckCircle2 size={15} />
-                    인증이 완료되었습니다.
-                  </span>
-                )}
+                <RecoveryCompanyIdentityFields
+                  managerName={companyForm.managerName}
+                  managerNameError={fieldErrors.managerName}
+                  businessNumber={companyForm.businessNumber}
+                  businessNumberError={fieldErrors.businessNumber}
+                  onManagerNameChange={(value) => updateCompany('managerName', value)}
+                  onBusinessNumberChange={(value) => updateCompany('businessNumber', value)}
+                />
+                <RecoveryContactField
+                  label="담당자 이메일"
+                  icon={<Mail size={18} />}
+                  value={companyForm.email}
+                  placeholder="담당자 이메일 주소 입력"
+                  error={fieldErrors.email}
+                  verification={companyVerification}
+                  feedbackText="이메일 인증번호가 발송되었습니다."
+                  sendPending={sendVerificationPending}
+                  resendIn={companyResendIn}
+                  buttonClassName="cw-auth-sub-button cw-auth-sub-button--send"
+                  inputType="email"
+                  onChange={(value) => updateCompany('email', value)}
+                  onSend={handleSendCompanyCode}
+                />
+                <RecoveryCodeField
+                  label="이메일 인증번호 입력"
+                  code={companyForm.code}
+                  error={fieldErrors.code}
+                  verification={companyVerification}
+                  expiresIn={companyExpiresIn}
+                  resendIn={companyResendIn}
+                  confirmPending={confirmVerificationPending}
+                  sendPending={sendVerificationPending}
+                  onCodeChange={(value) => updateCompany('code', value)}
+                  onConfirm={handleConfirmCompanyCode}
+                  onResend={handleSendCompanyCode}
+                />
               </>
+            )}
+
+            {formMessage && (
+              <p className="cw-auth-message cw-auth-message--error" role="alert">
+                <AlertCircle size={16} />
+                {formMessage}
+              </p>
             )}
 
             <button
               className="cw-auth-main-button"
+              disabled={findIdPending}
               type="button"
-              onClick={() =>
-                isCompany
-                  ? setCompanyStatus((current) => ({ ...current, result: true }))
-                  : setUserStatus((current) => ({ ...current, result: true }))
-              }
+              onClick={handleFindId}
             >
-              아이디 찾기
+              {findIdPending ? '확인 중' : '아이디 찾기'}
             </button>
           </form>
 
-          {!isCompany && userStatus.result && <p className="cw-auth-result">가입된 아이디는 careerwave01 입니다.</p>}
-          {isCompany && companyStatus.result && <p className="cw-auth-result">가입된 기업회원 아이디는 companywave01 입니다.</p>}
+          {result.submitted && (
+            <RecoveryResultPanel
+              found={result.found}
+              maskedLoginIds={result.maskedLoginIds}
+            />
+          )}
 
-          <div className="cw-auth-links">
-            <Link to="/auth/find-account">선택 페이지로 돌아가기</Link>
-            <span aria-hidden="true">|</span>
-            <Link to={`/auth/find-password/${isCompany ? 'company' : 'user'}`}>비밀번호 찾기</Link>
-          </div>
+          <RecoveryPageLinks
+            links={[
+              { to: '/auth/find-account', label: '선택 페이지로 돌아가기' },
+              { to: `/auth/find-password/${isCompany ? 'company' : 'user'}`, label: '비밀번호 찾기' },
+            ]}
+          />
         </div>
 
         <RecoverySupportPanel />

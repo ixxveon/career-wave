@@ -102,7 +102,7 @@
   font-weight: 400;
 }
 
-.cw-streak-card > span {
+.cw-streak-card>span {
   margin-left: auto;
   font-size: 22px;
 }
@@ -545,6 +545,7 @@ a.cw-chart-filter {
 }
 
 @media (max-width: 1180px) {
+
   .cw-dashboard-summary,
   .cw-mypage-extra-grid {
     grid-template-columns: 1fr;
@@ -557,188 +558,6 @@ a.cw-chart-filter {
   .cw-mypage-sidebar {
     position: static;
   }
-}
-
-.cw-favorite-page {
-  padding: 32px 48px;
-}
-
-.cw-favorite-header h2 {
-  margin: 0 0 8px;
-  font-size: 30px;
-  font-weight: 800;
-  color: #08245c;
-}
-
-.cw-favorite-header p {
-  margin: 0 0 24px;
-  color: #61708a;
-}
-
-.cw-favorite-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid #dbe7f6;
-  padding-bottom: 16px;
-}
-
-.cw-favorite-toolbar button {
-  border: 0;
-  background: #f3f7fc;
-  color: #61708a;
-  padding: 10px 16px;
-  border-radius: 999px;
-  font-weight: 700;
-}
-
-.cw-favorite-toolbar button.is-active {
-  background: #e8f1ff;
-  color: #2563eb;
-}
-
-.cw-favorite-search {
-  display: flex;
-  align-items: center;
-  width: 260px;
-  height: 42px;
-  margin-left: auto;
-  padding: 0 14px;
-  border: 1px solid #dbe7f6;
-  border-radius: 12px;
-  background: #fff;
-}
-
-.cw-favorite-search input {
-  flex: 1;
-  border: 0;
-  outline: 0;
-  font-size: 14px;
-}
-
-.cw-favorite-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 360px;
-  border: 1px solid #dbe7f6;
-  border-radius: 22px;
-  background: #fff;
-  color: #61708a;
-  text-align: center;
-}
-
-.cw-favorite-empty-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 76px;
-  height: 76px;
-  margin-bottom: 18px;
-  border-radius: 24px;
-  background: #f3f7fc;
-  color: #7aa7e8;
-}
-
-.cw-favorite-empty h3 {
-  margin: 0 0 8px;
-  font-size: 22px;
-  color: #08245c;
-}
-
-.cw-favorite-empty p {
-  margin: 0 0 22px;
-  line-height: 1.6;
-}
-
-.cw-favorite-empty a {
-  color: #2563eb;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.cw-favorite-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  margin-top: 24px;
-}
-
-.cw-favorite-card {
-  min-height: 230px;
-  padding: 24px;
-  border: 1px solid #dbe7f6;
-  border-radius: 22px;
-  background: #ffffff;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-}
-
-.cw-favorite-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.cw-favorite-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: #edf5ff;
-  color: #2563eb;
-}
-
-.cw-favorite-star {
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 999px;
-  background: #fff8db;
-}
-
-.cw-favorite-badge {
-  display: inline-flex;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #eafaf1;
-  color: #15803d;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.cw-favorite-card h3 {
-  margin: 14px 0;
-  font-size: 22px;
-  color: #08245c;
-}
-
-.cw-favorite-info p {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 7px 0;
-  color: #61708a;
-  font-size: 14px;
-}
-
-.cw-favorite-card-bottom {
-  margin-top: 20px;
-}
-
-.cw-favorite-card-bottom a {
-  display: flex;
-  justify-content: center;
-  padding: 12px;
-  border-radius: 14px;
-  background: #f3f7fc;
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 800;
 }
 
 .cw-subscription-page {
@@ -1425,7 +1244,7 @@ a.cw-chart-filter {
   font-weight: 800;
 }
 
-.cw-subscription-usage-card__summary > strong {
+.cw-subscription-usage-card__summary>strong {
   color: #173765;
   font-size: 34px;
   font-weight: 800;
@@ -2064,7 +1883,7 @@ a.cw-chart-filter {
   letter-spacing: -0.03em;
 }
 
-.cw-payment-history-hero > div > p:last-child {
+.cw-payment-history-hero>div>p:last-child {
   margin: 14px 0 0;
   color: #64748f;
   font-size: 14px;
@@ -2319,6 +2138,7 @@ a.cw-chart-filter {
 }
 
 @media (max-width: 1180px) {
+
   .cw-subscription-hero__content,
   .cw-subscription-record__summary {
     grid-template-columns: 1fr;
@@ -2354,6 +2174,7 @@ a.cw-chart-filter {
 }
 
 @media (max-width: 820px) {
+
   .cw-subscription-section,
   .cw-subscription-hero,
   .cw-subscription-notice-card {
@@ -2864,6 +2685,7 @@ a.cw-chart-filter {
 }
 
 @media (max-width: 1180px) {
+
   .cw-billing-subscription-layout,
   .cw-billing-subscription-layout.is-single,
   .cw-billing-filters {
@@ -2905,5 +2727,1217 @@ a.cw-chart-filter {
 
   .cw-billing-payment-item__cell small {
     display: block;
+  }
+}
+
+/* 
+마이페이지 공통 레이아웃
+*/
+
+.cw-mypage-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cw-mypage-sidebar {
+  flex: 0 0 220px;
+  width: 220px;
+  box-sizing: border-box;
+}
+
+.cw-mypage-sidebar nav {
+  display: grid;
+  gap: 8px;
+}
+
+.cw-mypage-content {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 
+내 정보관리 페이지
+*/
+
+.cw-mypage-layout {
+  min-height: calc(100vh - 96px);
+  align-items: flex-start;
+}
+
+.cw-account-section {
+  min-width: 0;
+  display: grid;
+  gap: 20px;
+}
+
+.cw-account-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 28px 30px;
+  border: 1px solid #dfe8f5;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at right top, rgba(95, 150, 238, 0.16), transparent 30%),
+    linear-gradient(180deg, #ffffff, #f8fbff);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.cw-account-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #edf4ff;
+  color: #2f6fce;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.cw-account-header h2 {
+  margin: 14px 0 0;
+  color: #173765;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.cw-account-header p {
+  margin: 10px 0 0;
+  color: #64748f;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.cw-primary-button {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  color: #ffffff;
+  background: linear-gradient(180deg, #5f96ee, #3b77d7);
+  box-shadow: 0 12px 24px rgba(46, 109, 211, 0.18);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cw-account-profile-card,
+.cw-account-card {
+  border: 1px solid #dfe8f5;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.cw-account-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 26px;
+}
+
+.cw-profile-avatar {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  color: #2f6fce;
+  background: #edf4ff;
+}
+
+.cw-profile-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.cw-profile-main h3 {
+  margin: 0;
+  color: #173765;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.cw-profile-main p {
+  margin: 8px 0 0;
+  color: #64748f;
+  font-size: 14px;
+}
+
+.cw-profile-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 13px;
+  border-radius: 999px;
+  color: #247251;
+  background: #ebfbf2;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cw-account-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.cw-account-card {
+  padding: 24px 26px;
+}
+
+.cw-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+  color: #2f6fce;
+}
+
+.cw-card-title.has-action {
+  justify-content: space-between;
+}
+
+.cw-card-title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cw-card-title h3 {
+  margin: 0;
+  color: #173765;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.cw-info-list {
+  display: grid;
+  gap: 0;
+}
+
+.cw-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 48px;
+  border-bottom: 1px solid #eef3fa;
+}
+
+.cw-info-row:last-child {
+  border-bottom: 0;
+}
+
+.cw-info-row span {
+  color: #718096;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cw-info-row strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #173765;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.cw-muted-text {
+  color: #9aa7ba !important;
+}
+
+.cw-connected {
+  color: #247251 !important;
+}
+
+/* GitHub 연동 정보 */
+
+.cw-github-card {
+  background:
+    radial-gradient(circle at right top, rgba(95, 150, 238, 0.1), transparent 28%),
+    #ffffff;
+}
+
+.cw-github-simple-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr auto;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.cw-github-simple-grid div,
+.cw-github-profile-button {
+  min-width: 0;
+  min-height: 70px;
+  padding: 16px 14px;
+  border-radius: 16px;
+  background: #f8fbff;
+  box-shadow: inset 0 0 0 1px #e3edf8;
+}
+
+.cw-github-simple-grid span {
+  display: block;
+  color: #718096;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cw-github-simple-grid strong {
+  display: block;
+  margin-top: 8px;
+  color: #173765;
+  font-size: 14px;
+  font-weight: 800;
+  word-break: break-all;
+}
+
+.cw-github-profile-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 170px;
+  color: #2f6fce;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.cw-github-profile-button:hover {
+  background: #edf4ff;
+}
+
+.cw-setting-list {
+  display: grid;
+  gap: 10px;
+}
+
+.cw-setting-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid #dfe8f5;
+  border-radius: 14px;
+  color: #173765;
+  background: #f8fbff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cw-setting-list button:hover {
+  color: #2f6fce;
+  background: #f3f8ff;
+}
+
+.cw-card-edit-button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #edf4ff;
+  color: #2f6fce;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cw-card-edit-button:hover {
+  background: #dfeeff;
+}
+
+/* 
+스크랩 공고 페이지
+*/
+
+.cw-scrap-page {
+  flex: 1;
+  min-width: 0;
+  min-height: 760px;
+  display: grid;
+  gap: 20px;
+}
+
+.cw-scrap-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 30px;
+  padding: 24px 30px 32px;
+  border: 1px solid #dfe8f5;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at right top, rgba(95, 150, 238, 0.16), transparent 30%),
+    linear-gradient(180deg, #ffffff, #f8fbff);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.cw-scrap-header h2 {
+  margin: 14px 0 0;
+  color: #173765;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.cw-scrap-header p {
+  margin: 10px 0 0;
+  color: #64748f;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.cw-scrap-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 320px;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid #dfe8f5;
+  border-radius: 12px;
+  background: #ffffff;
+  margin-top: 95px;
+}
+
+.cw-scrap-search input {
+  flex: 1;
+  border: 0;
+  outline: none;
+  color: #173765;
+  font-size: 13px;
+  background: transparent;
+}
+
+.cw-scrap-toolbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cw-scrap-toolbar span {
+  color: #173765;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.cw-scrap-toolbar button {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #edf4ff;
+  color: #2f6fce;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cw-scrap-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.cw-scrap-card {
+  padding: 18px;
+  border: 1px solid #dfe8f5;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.cw-scrap-card:hover {
+  border-color: #9fc1f5;
+  box-shadow: 0 12px 28px rgba(46, 109, 211, 0.1);
+}
+
+.cw-scrap-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.cw-scrap-logo {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: #2f6fce;
+  background: #edf4ff;
+  font-size: 18px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.cw-scrap-company {
+  flex: 1;
+  min-width: 0;
+}
+
+.cw-scrap-company strong {
+  display: block;
+  color: #173765;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.cw-scrap-company span {
+  display: block;
+  margin-top: 4px;
+  color: #2f6fce;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cw-scrap-bookmark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: #f8fbff;
+  color: #8aa0bd;
+  cursor: pointer;
+}
+
+.cw-scrap-bookmark:hover {
+  color: #2f6fce;
+  background: #edf4ff;
+}
+
+.cw-scrap-card h3 {
+  margin: 18px 0 10px;
+  color: #173765;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+}
+
+.cw-scrap-keywords {
+  margin: 0;
+  color: #64748f;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.cw-scrap-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 22px;
+}
+
+.cw-scrap-card-bottom span {
+  color: #64748f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cw-job-detail-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 108px;
+  height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #5f96ee, #3b77d7);
+  box-shadow: 0 10px 18px rgba(59, 119, 215, 0.18);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cw-job-detail-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(59, 119, 215, 0.24);
+  opacity: 0.96;
+}
+
+.cw-job-detail-button:active {
+  transform: translateY(0);
+}
+
+/* 
+구독/결제 내역
+*/
+
+.cw-payment-history-card__bottom button {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid #dbe7f6;
+  color: #2f6fce;
+  background: #f8fbff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cw-billing-page {
+  display: grid;
+  gap: 20px;
+}
+
+.cw-billing-section {
+  gap: 20px;
+  padding: 8px 0 28px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.cw-billing-section .cw-subscription-section__head {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e6eef9;
+}
+
+.cw-billing-success-toast {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #d7e7da;
+  border-radius: 12px;
+  color: #247251;
+  background: #effbf3;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cw-billing-subscription-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.cw-billing-subscription-layout.is-single {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cw-billing-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  padding: 44px 28px;
+  border: 1px dashed #d9e4f3;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fcfdff 0%, #f8fbff 100%);
+  text-align: center;
+}
+
+.cw-billing-empty-state__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 24px;
+  color: #6a98eb;
+  background: linear-gradient(180deg, #f5f9ff 0%, #eef5ff 100%);
+}
+
+.cw-billing-empty-state strong {
+  display: block;
+  color: #173765;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.cw-billing-empty-state p {
+  margin: 10px 0 0;
+  color: #64748f;
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: none;
+}
+
+.cw-billing-empty-state__actions {
+  display: flex;
+  justify-content: center;
+}
+
+.cw-billing-empty-state__actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 160px;
+  min-height: 46px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(180deg, #5f96ee 0%, #3b77d7 100%);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.cw-billing-subscription-card {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid #dce7f4;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.cw-billing-subscription-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cw-billing-subscription-card__top h4 {
+  margin: 0;
+  color: #173765;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.cw-billing-subscription-card__status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.cw-billing-subscription-card__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: #247251;
+  background: #ebfbf2;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cw-billing-subscription-card__badge.is-pending {
+  color: #8a5c11;
+  background: #fff6de;
+}
+
+.cw-billing-subscription-card__cancel {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  color: #9c4460;
+  background: #fff0f4;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cw-billing-subscription-card__cancel.is-disabled {
+  color: #91a0b9;
+  background: #f5f8fc;
+}
+
+.cw-billing-subscription-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cw-billing-subscription-card__grid div {
+  padding: 14px 14px 12px;
+  border-radius: 16px;
+  background: #f8fbff;
+  box-shadow: inset 0 0 0 1px #e1ebf8;
+}
+
+.cw-billing-subscription-card__grid .is-wide {
+  grid-column: 1 / -1;
+}
+
+.cw-billing-subscription-card__grid dt {
+  color: #7b8798;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cw-billing-subscription-card__grid dd {
+  margin: 8px 0 0;
+  color: #173765;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cw-billing-subscription-card__notice {
+  margin: -2px 0 0;
+  color: #62728d;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.cw-billing-recommend-card {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 22px;
+  border: 1px dashed #d8e5f6;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fff 0%, #f9fbff 100%);
+  text-align: center;
+}
+
+.cw-billing-recommend-card span {
+  color: #6a98eb;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cw-billing-recommend-card h4 {
+  margin: 0;
+  color: #173765;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.cw-billing-recommend-card p {
+  margin: 0;
+  color: #61708a;
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: 34ch;
+}
+
+.cw-billing-recommend-card a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(180deg, #5f96ee 0%, #3b77d7 100%);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.cw-billing-filters {
+  display: grid;
+  grid-template-columns: 220px;
+  gap: 12px;
+}
+
+.cw-billing-filters label {
+  display: grid;
+  gap: 8px;
+}
+
+.cw-billing-filters span {
+  color: #61708a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cw-billing-filters select,
+.cw-billing-filters input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #dbe7f6;
+  border-radius: 12px;
+  color: #173765;
+  background: #fff;
+  font-size: 14px;
+}
+
+.cw-billing-payment-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 44px 24px;
+  border: 1px dashed #d9e4f3;
+  border-radius: 18px;
+  background: #fbfdff;
+  text-align: center;
+}
+
+.cw-billing-payment-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 22px;
+  color: #6a98eb;
+  background: linear-gradient(180deg, #f5f9ff 0%, #eef5ff 100%);
+}
+
+.cw-billing-payment-empty strong {
+  color: #173765;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.cw-billing-payment-empty p {
+  margin: 0;
+  color: #64748f;
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: none;
+}
+
+.cw-billing-payment-list {
+  overflow: hidden;
+  border: 1px solid #dce7f4;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.cw-billing-payment-list__head,
+.cw-billing-payment-item {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 0.9fr 0.9fr;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 18px;
+}
+
+.cw-billing-payment-list__head {
+  background: #f7faff;
+  color: #6f7e96;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cw-billing-payment-item {
+  border-top: 1px solid #eef3fa;
+}
+
+.cw-billing-payment-item__cell {
+  display: grid;
+  gap: 6px;
+  color: #173765;
+  font-size: 14px;
+}
+
+.cw-billing-payment-item__cell small {
+  display: none;
+  color: #7b8798;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cw-billing-payment-item__cell strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.cw-billing-payment-item__cell.is-action button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #dbe7f6;
+  border-radius: 12px;
+  color: #2f6fce;
+  background: #f8fbff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cw-billing-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.cw-billing-pagination button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #dbe7f6;
+  border-radius: 10px;
+  color: #4d617f;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cw-billing-pagination button:disabled {
+  opacity: 0.45;
+}
+
+.cw-billing-pagination span {
+  color: #173765;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.cw-billing-notice {
+  margin-top: 4px;
+}
+
+/* 
+반응형
+*/
+
+@media (max-width: 1180px) {
+
+  .cw-account-grid,
+  .cw-github-simple-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-account-header,
+  .cw-account-profile-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cw-github-profile-button {
+    min-width: 0;
+  }
+
+  .cw-scrap-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-scrap-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cw-scrap-search {
+    min-width: 0;
+  }
+
+  .cw-subscription-hero__content,
+  .cw-subscription-record__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-subscription-hero__visual {
+    min-height: 260px;
+  }
+
+  .cw-subscription-carousel {
+    grid-template-columns: repeat(2, minmax(320px, 1fr));
+  }
+
+  .cw-subscription-record-empty {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .cw-subscription-payment-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-subscription-payment-table__head,
+  .cw-subscription-payment-table__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cw-payment-history-hero,
+  .cw-payment-history-record__grid,
+  .cw-payment-history-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-billing-subscription-layout,
+  .cw-billing-subscription-layout.is-single,
+  .cw-billing-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .cw-mypage-layout {
+    flex-direction: column;
+  }
+
+  .cw-mypage-sidebar {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .cw-subscription-section,
+  .cw-subscription-hero,
+  .cw-subscription-notice-card {
+    padding: 22px 20px;
+  }
+
+  .cw-subscription-hero__copy h2 {
+    font-size: 34px;
+  }
+
+  .cw-subscription-hero__aside {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .cw-subscription-carousel {
+    grid-template-columns: minmax(260px, 1fr);
+  }
+
+  .cw-subscription-service-card__hero,
+  .cw-subscription-service-card__features {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-subscription-section--plain {
+    padding: 10px 0 0;
+  }
+
+  .cw-subscription-empty__actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .cw-subscription-empty__actions .cw-subscription-empty__button,
+  .cw-subscription-hero__cta {
+    width: 100%;
+  }
+
+  .cw-subscription-usage-card {
+    padding: 20px 18px;
+  }
+
+  .cw-subscription-usage-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-subscription-usage-card__summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cw-subscription-usage-track {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .cw-subscription-recommend-card {
+    padding: 20px 18px;
+  }
+
+  .cw-subscription-payment-table__head {
+    display: none;
+  }
+
+  .cw-subscription-payment-table__row {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-subscription-payment-table__cell small {
+    display: block;
+  }
+
+  .cw-subscription-record__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cw-subscription-record__cancel {
+    width: 100%;
+  }
+
+  .cw-subscription-record-empty__actions {
+    justify-items: stretch;
+    width: 100%;
+  }
+
+  .cw-subscription-record-empty__button {
+    width: 100%;
+  }
+
+  .cw-payment-history-hero {
+    padding: 22px 20px;
+  }
+
+  .cw-payment-history-hero h2 {
+    font-size: 28px;
+  }
+
+  .cw-payment-history-card__top,
+  .cw-payment-history-card__bottom,
+  .cw-payment-history-record__footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cw-payment-history-card__bottom button,
+  .cw-payment-history-record__footer .cw-subscription-record__cancel {
+    width: 100%;
+  }
+
+  .cw-billing-section {
+    padding: 22px 20px;
+  }
+
+  .cw-billing-empty-state__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .cw-billing-subscription-card__top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cw-billing-subscription-card__cancel,
+  .cw-billing-recommend-card a {
+    width: 100%;
+  }
+
+  .cw-billing-subscription-card__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-billing-payment-list__head {
+    display: none;
+  }
+
+  .cw-billing-payment-item {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-billing-payment-item__cell small {
+    display: block;
+  }
+
+  .cw-billing-payment-item__cell.is-action button {
+    width: 100%;
+  }
+
+  .cw-scrap-grid {
+    grid-template-columns: 1fr;
   }
 }
