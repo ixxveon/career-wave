@@ -97,7 +97,7 @@ export function validatePersonalRegisterForm(
   if (!form.phoneVerificationToken?.trim()) errors.phoneCode = '휴대폰 인증을 완료해주세요.';
   if (!password.valid) errors.password = password.errors[0];
   if (form.password !== form.passwordConfirm) errors.passwordConfirm = '비밀번호가 일치하지 않습니다.';
-  if (!form.terms.service || !form.terms.privacy) errors.terms = '필수 약관에 동의해주세요.';
+  if (!form.terms.age || !form.terms.service || !form.terms.privacy) errors.terms = '필수 약관에 동의해주세요.';
 
   return errors;
 }

@@ -21,6 +21,7 @@ export interface PersonalRegisterDraft {
   emailVerificationToken?: string;
   phoneVerificationToken?: string;
   terms: {
+    age: boolean;
     service: boolean;
     privacy: boolean;
     marketing: boolean;

@@ -90,13 +90,13 @@ export function usePersonalRegisterForm() {
     emailVerificationToken: verification.emailToken,
     phoneVerificationToken: verification.phoneToken,
     terms: {
+      age: terms.age,
       service: terms.service,
       privacy: terms.privacy,
       marketing: terms.marketing,
     },
   };
   const canSubmit =
-    terms.age &&
     Object.keys(validatePersonalRegisterForm(personalSnapshot, loginIdState)).length === 0 &&
     !registerUser.isPending;
 
