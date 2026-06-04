@@ -3,7 +3,6 @@
 > 작성자: 마은재 | 작성일: 2026-05-31  
 > 구현 완료 후 PR 올리기 전에 본인이 직접 체크합니다.  
 > PR 제목 형식: `[MEMBER] 사용자 인증 및 계정 복구 기능 구현`
->
 > 표기 기준: `[x]` 구현/확인 완료, `[-]` 부분 구현 또는 추가 검증 필요, `[ ]` 미구현 또는 미확인
 > 현재 프로젝트 순서:
 > `Phase 1 Auth Base → Phase 2 Login → Phase 3 Signup → Phase 4 Find Account → Phase 8 Frontend QA`

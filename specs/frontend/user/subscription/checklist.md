@@ -1,10 +1,8 @@
 # Checklist: User Subscription & Billing
 
 > 구현 완료 후 PR 올리기 전에 본인이 직접 체크한다.
-
 > 현재 프로젝트 순서:
 > `Phase 5 Subscription → Phase 6 Payment History → Phase 7 Billing → Phase 8 Frontend QA`
-
 > 표기 기준: `[x]` 구현/확인 완료, `[-]` 부분 구현 또는 추가 검증 필요, `[ ]` 미구현 또는 미확인
 
 ---
