@@ -14,8 +14,7 @@
 /api/v1/user/resume
 ```
 
-> Convention(`/api/v1/user/{domain}`) 기준으로 확정.  
-> 프론트 스펙의 `/api/v1/resume`는 구현 시 `/api/v1/user/resume`로 맞춰야 함.
+> Convention(`/api/v1/user/{domain}`) 기준으로 확정. 프론트 스펙도 동일하게 통일 완료.
 
 ### 인증
 

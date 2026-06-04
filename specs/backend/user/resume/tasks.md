@@ -111,5 +111,5 @@
 - [ ] `checklist.md` 전 항목 셀프 체크
 - [ ] Swagger UI에서 요청·응답 예시 확인
 - [ ] IDOR 시나리오 수동 테스트 (타인 documentId로 요청 시 403 확인)
-- [ ] 프론트 Base URL 최종 일치 여부 확인 (`/api/v1/resume` vs `/api/v1/user/resume`)
+- [x] 프론트 Base URL 일치 확인 — `/api/v1/user/resume` 통일 완료
 - [ ] 파일 MIME type 검증 우회 시도 테스트
