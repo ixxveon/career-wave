@@ -1,4 +1,4 @@
-import { apiClient } from '../../../utils/apiClient';
+import { memberApiClient } from '../member/memberApiClient';
 import type {
   StartSessionRequest,
   StartSessionResponse,
@@ -17,18 +17,20 @@ export interface SubmitVoiceBlobParams {
 
 export const interviewSessionApi = {
   start(params: StartSessionRequest, signal?: AbortSignal): Promise<StartSessionResponse> {
-    return apiClient('/api/v1/user/interview/sessions', {
+    return memberApiClient<StartSessionResponse>('/api/v1/user/interview/sessions', {
       method: 'POST',
-      body: JSON.stringify(params),
+      auth:   true,
+      body:   JSON.stringify(params),
       signal,
-    }).then((res: { data: StartSessionResponse }) => res.data);
+    });
   },
 
   end(sessionId: string, signal?: AbortSignal): Promise<EndSessionResponse> {
-    return apiClient(`/api/v1/user/interview/sessions/${sessionId}/end`, {
+    return memberApiClient<EndSessionResponse>(`/api/v1/user/interview/sessions/${sessionId}/end`, {
       method: 'POST',
+      auth:   true,
       signal,
-    }).then((res: { data: EndSessionResponse }) => res.data);
+    });
   },
 
   submitTextAnswer(
@@ -36,11 +38,15 @@ export const interviewSessionApi = {
     params: SubmitTextAnswerRequest,
     signal?: AbortSignal,
   ): Promise<SubmitTextAnswerResponse> {
-    return apiClient(`/api/v1/user/interview/sessions/${sessionId}/answer/text`, {
-      method: 'POST',
-      body: JSON.stringify(params),
-      signal,
-    }).then((res: { data: SubmitTextAnswerResponse }) => res.data);
+    return memberApiClient<SubmitTextAnswerResponse>(
+      `/api/v1/user/interview/sessions/${sessionId}/answer/text`,
+      {
+        method: 'POST',
+        auth:   true,
+        body:   JSON.stringify(params),
+        signal,
+      },
+    );
   },
 
   submitVoiceBlob(
@@ -54,10 +60,14 @@ export const interviewSessionApi = {
     fd.append('chunkIndex', String(chunkIndex));
     fd.append('isFinal', String(isFinal));
 
-    return apiClient(`/api/v1/user/interview/sessions/${sessionId}/answer/voice`, {
-      method: 'POST',
-      body: fd,
-      signal,
-    }).then((res: { data: SubmitVoiceBlobResponse }) => res.data);
+    return memberApiClient<SubmitVoiceBlobResponse>(
+      `/api/v1/user/interview/sessions/${sessionId}/answer/voice`,
+      {
+        method: 'POST',
+        auth:   true,
+        body:   fd,
+        signal,
+      },
+    );
   },
 };

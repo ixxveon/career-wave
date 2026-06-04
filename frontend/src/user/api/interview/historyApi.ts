@@ -1,4 +1,4 @@
-import { apiClient } from '../../../utils/apiClient';
+import { memberApiClient } from '../member/memberApiClient';
 import type { InterviewHistoryResponse } from '../../types/interview';
 
 export interface GetHistoryParams {
@@ -9,8 +9,9 @@ export interface GetHistoryParams {
 export const interviewHistoryApi = {
   list({ page = 0, size = 10 }: GetHistoryParams = {}, signal?: AbortSignal): Promise<InterviewHistoryResponse> {
     const params = new URLSearchParams({ page: String(page), size: String(size) });
-    return apiClient(`/api/v1/user/interview/history?${params}`, { signal }).then(
-      (res: { data: InterviewHistoryResponse }) => res.data,
+    return memberApiClient<InterviewHistoryResponse>(
+      `/api/v1/user/interview/history?${params}`,
+      { auth: true, signal },
     );
   },
 };

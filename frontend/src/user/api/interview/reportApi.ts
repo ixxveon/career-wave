@@ -1,10 +1,11 @@
-import { apiClient } from '../../../utils/apiClient';
+import { memberApiClient } from '../member/memberApiClient';
 import type { InterviewReportResponse } from '../../types/interview';
 
 export const interviewReportApi = {
   get(sessionId: string, signal?: AbortSignal): Promise<InterviewReportResponse> {
-    return apiClient(`/api/v1/user/interview/sessions/${sessionId}/report`, { signal }).then(
-      (res: { data: InterviewReportResponse }) => res.data,
+    return memberApiClient<InterviewReportResponse>(
+      `/api/v1/user/interview/sessions/${sessionId}/report`,
+      { auth: true, signal },
     );
   },
 };
