@@ -46,6 +46,8 @@ export function LoginForm({
           <input
             aria-invalid={Boolean(fieldErrors.loginId)}
             aria-describedby={fieldErrors.loginId ? 'login-id-error' : undefined}
+            autoComplete="username"
+            name="loginId"
             type="text"
             placeholder="아이디를 입력하세요"
             value={credentials.loginId}
@@ -65,6 +67,8 @@ export function LoginForm({
           <input
             aria-invalid={Boolean(fieldErrors.password)}
             aria-describedby={fieldErrors.password ? 'login-password-error' : undefined}
+            autoComplete="current-password"
+            name="password"
             type="password"
             placeholder="비밀번호를 입력하세요"
             value={credentials.password}
