@@ -6,6 +6,10 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    environmentMatchGlobs: [
+      ['src/**/*.hook.test.ts', 'jsdom'],
+      ['src/**/*.hook.test.tsx', 'jsdom'],
+    ],
   },
   resolve: {
     alias: {
