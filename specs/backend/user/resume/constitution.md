@@ -64,7 +64,8 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 | S3 파일명 | `{UUID}.{확장자}` | 한글·특수문자 파일명 깨짐 방지, 원본명은 DB 컬럼(`original_name`)에 별도 보존 |
 | 분석 결과 수신 | Webhook (FastAPI → Spring `POST .../webhook`) | Spring이 DB 저장 + WebSocket 알림을 한 흐름에서 처리 가능 |
 | `feedback_details` 저장 | JSONB + `AttributeConverter` 또는 `hypersistence-utils` | AI 응답 스키마 유연성 + JPA 변환 편의성 |
-| WebSocket 인증 | `HandshakeInterceptor` | 핸드셰이크 시점에 `Authentication` 객체 주입, REST와 동일한 보안 체계 유지 |
+| WebSocket 구현 | STOMP (`spring-boot-starter-websocket`) | 표준화된 메시지 프로토콜, 토픽 기반 구독 구조 |
+| WebSocket 인증 | STOMP `ChannelInterceptor` (`HandshakeInterceptor` 병행 가능) | 핸드셰이크 시점 또는 CONNECT 프레임 시점에 JWT 검증 및 `Authentication` 객체 주입 |
 | 페이징 기준 | 0-based (`page`, `size`) | Spring Data JPA `Pageable` 기본 규칙 |
 | `FAILED` 재시도 | v1 미지원 — UI에서 재업로드 유도 | v1 범위 최소화, v2 이후 재시도 정책 설계 |
 | WebSocket 종료 방식 | `COMPLETED`/`FAILED` 전송 후 30초 Grace Period 유지 후 서버 종료 | 즉시 종료 시 프론트 재연결 루프 유발 위험 방지 |

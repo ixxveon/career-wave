@@ -92,17 +92,17 @@
 
 ## Phase 7: WebSocket 분석 상태 구독
 
-- [ ] `WebSocketConfig` 설정 클래스 작성
-- [ ] `HandshakeInterceptor` 구현
-  - 쿼리 파라미터 `token` JWT 파싱 및 검증
-  - `Authentication` 객체를 WebSocket 세션 속성에 주입
-- [ ] WebSocket 핸들러 작성
-  - 연결 시 `documentId` 소유권 검증 (불일치·토큰 오류 시 Close 1008)
-  - Webhook Phase에서 호출하는 브로드캐스트 메서드 구현
-  - `COMPLETED` / `FAILED` 전송 후 Grace Period 30초 타이머 시작
+- [ ] `WebSocketConfig` 설정 클래스 작성 (STOMP 엔드포인트 `/ws/resume` 등록, 토픽 prefix `/topic` 설정)
+- [ ] `ChannelInterceptor` 구현
+  - CONNECT 프레임 수신 시 헤더의 JWT 검증
+  - 검증 실패 시 `MessageDeliveryException` 으로 연결 거부
+  - 검증 성공 시 `Authentication` 객체를 세션에 주입
+- [ ] `documentId` 소유권 검증 — SUBSCRIBE 프레임 수신 시 구독 토픽의 `documentId`와 인증 유저 비교
+- [ ] Webhook 수신 후 `SimpMessagingTemplate.convertAndSend("/topic/resume/{documentId}/status", message)` 연동
+- [ ] `COMPLETED` / `FAILED` 전송 후 Grace Period 30초 타이머 시작
   - 클라이언트가 먼저 연결을 닫으면 타이머 취소 후 즉시 세션 해제
   - 30초 만료 시 Close 1000으로 서버에서 세션 정리
-- [ ] `WS /ws/resume/{documentId}/status` 엔드포인트 등록
+- [ ] STOMP 구독 토픽 `/topic/resume/{documentId}/status` 동작 확인
 
 ---
 

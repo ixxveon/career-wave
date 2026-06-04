@@ -411,13 +411,26 @@ X-Internal-Secret: {WEBHOOK_SECRET 환경 변수 값}
 
 - **Endpoint**: `WS /ws/resume/{documentId}/status`
 
-### 인증
+### 구현 방식
 
-JWT를 WebSocket 핸드셰이크 시 쿼리 파라미터로 전달.  
-Spring의 `HandshakeInterceptor`에서 토큰 파싱 후 `Authentication` 객체를 세션 속성에 주입한다.
+STOMP (`spring-boot-starter-websocket`) 사용.  
+클라이언트는 STOMP 클라이언트(예: `@stomp/stompjs`)로 연결하며, 분석 상태는 토픽 구독 방식으로 수신한다.
 
 ```
-WS /ws/resume/{documentId}/status?token={accessToken}
+STOMP 연결 엔드포인트 : /ws/resume
+구독 토픽            : /topic/resume/{documentId}/status
+서버 → 클라이언트    : SimpMessagingTemplate.convertAndSend(...)
+```
+
+### 인증
+
+JWT를 STOMP CONNECT 프레임 헤더 또는 핸드셰이크 쿼리 파라미터로 전달.  
+`ChannelInterceptor`의 `preSend()`에서 CONNECT 프레임 수신 시 토큰을 검증하고 `Authentication` 객체를 세션에 주입한다.
+
+```
+// STOMP CONNECT 프레임 헤더
+CONNECT
+Authorization: Bearer {accessToken}
 ```
 
 ### Connection Lifecycle

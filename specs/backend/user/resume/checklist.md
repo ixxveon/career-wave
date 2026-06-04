@@ -75,10 +75,11 @@
 
 ## WebSocket (`WS /ws/resume/{documentId}/status`)
 
-- [ ] `HandshakeInterceptor`에서 `token` 쿼리 파라미터 JWT 검증 및 `Authentication` 객체 세션 주입이 수행된다
-- [ ] 토큰 없음·만료 시 Close 1008로 연결을 즉시 종료한다
-- [ ] 유효하지 않은 `documentId` 시 Close 1008로 연결을 즉시 종료한다
-- [ ] 본인 소유가 아닌 `documentId` 시 Close 1008로 연결을 즉시 종료한다
+- [ ] STOMP CONNECT 프레임 헤더의 JWT를 `ChannelInterceptor`에서 검증한다
+- [ ] 토큰 없음·만료 시 연결이 거부된다
+- [ ] SUBSCRIBE 프레임 수신 시 구독 토픽의 `documentId` 소유권을 검증한다
+- [ ] 본인 소유가 아닌 `documentId` 구독 시 연결이 거부된다
+- [ ] Webhook 수신 후 `SimpMessagingTemplate`으로 해당 토픽에 메시지가 정상 발송된다
 - [ ] `COMPLETED` / `FAILED` 전송 후 즉시 끊지 않고 Grace Period(30초) 타이머가 시작된다
 - [ ] 클라이언트가 먼저 연결을 닫으면 타이머가 취소되고 즉시 세션이 해제된다
 - [ ] 30초 만료 시 서버가 Close 1000(정상 종료)으로 세션을 정리한다 (에러 코드 사용 금지)
