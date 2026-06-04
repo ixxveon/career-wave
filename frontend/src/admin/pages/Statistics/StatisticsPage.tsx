@@ -83,27 +83,42 @@ export default function StatisticsPage() {
     data: summary,
     isLoading: summaryLoading,
     isError: summaryIsError,
-  } = useQuery<StatsSummary>({
+    error: summaryError,
+  } = useQuery<StatsSummary, Error>({
     queryKey: ['admin', 'stats', 'summary'],
-    queryFn: () => statsApi.getSummary().then(res => res.data.data),
+    queryFn: async () => {
+      const res = await statsApi.getSummary();
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data.data;
+    },
   });
 
   const {
     data: monthlyRevenueData,
     isLoading: revenueLoading,
     isError: revenueIsError,
-  } = useQuery<MonthlyRevenue[]>({
+    error: revenueError,
+  } = useQuery<MonthlyRevenue[], Error>({
     queryKey: ['admin', 'stats', 'revenue', 'monthly'],
-    queryFn: () => statsApi.getMonthlyRevenue().then(res => res.data.data),
+    queryFn: async () => {
+      const res = await statsApi.getMonthlyRevenue();
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data.data;
+    },
   });
 
   const {
     data: breakdownData,
     isLoading: breakdownLoading,
     isError: breakdownIsError,
-  } = useQuery<RevenueBreakdownItem[]>({
+    error: breakdownError,
+  } = useQuery<RevenueBreakdownItem[], Error>({
     queryKey: ['admin', 'stats', 'revenue', 'breakdown'],
-    queryFn: () => statsApi.getRevenueBreakdown().then(res => res.data.data),
+    queryFn: async () => {
+      const res = await statsApi.getRevenueBreakdown();
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data.data;
+    },
   });
 
   const monthlyRevenue = monthlyRevenueData ?? [];
@@ -183,7 +198,7 @@ export default function StatisticsPage() {
         {/* KPI */}
         <section className="memberSummaryGrid">
           {summaryLoading && <p className="stats-loading">KPI 데이터 로딩 중...</p>}
-          {summaryIsError && <p className="stats-error">KPI 데이터를 불러오지 못했습니다.</p>}
+          {summaryIsError && <p className="stats-error">{summaryError?.message ?? 'KPI 데이터를 불러오지 못했습니다.'}</p>}
           {!summaryLoading && !summaryIsError && kpis.map(({ label, value, sub, color, Icon }) => (
             <article className={`memberSummaryCard ${color}`} key={label}>
               <div className="memberKpiContent">
@@ -214,7 +229,7 @@ export default function StatisticsPage() {
               )}
             </div>
             {revenueLoading && <p className="stats-loading">매출 데이터 로딩 중...</p>}
-            {revenueIsError && <p className="stats-error">월별 매출 데이터를 불러오지 못했습니다.</p>}
+            {revenueIsError && <p className="stats-error">{revenueError?.message ?? '월별 매출 데이터를 불러오지 못했습니다.'}</p>}
             {!revenueLoading && !revenueIsError && (
             <div className="statsLineWrap">
               <div className="statsChartWithAxis">
@@ -273,7 +288,7 @@ export default function StatisticsPage() {
               </div>
             </div>
             {breakdownLoading && <p className="stats-loading">구독 유형별 데이터 로딩 중...</p>}
-            {breakdownIsError && <p className="stats-error">구독 유형별 매출 데이터를 불러오지 못했습니다.</p>}
+            {breakdownIsError && <p className="stats-error">{breakdownError?.message ?? '구독 유형별 매출 데이터를 불러오지 못했습니다.'}</p>}
             {!breakdownLoading && !breakdownIsError && (
             <div className="statsChannelList">
               <div className="statsChannelTableHead">
