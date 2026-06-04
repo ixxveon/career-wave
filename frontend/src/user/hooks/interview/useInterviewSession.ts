@@ -172,8 +172,11 @@ export function useInterviewSession({
   const [streamingText, setStreamingText] = useState('');
   const streamingAccRef = useRef('');
   const streamingRafRef = useRef<number | null>(null);
-  /** 폴백 발동 여부 — 늦게 도착한 LLM_STREAM isFinal 중복 메시지 방지 */
-  const llmFallbackFiredRef = useRef(false);
+  /**
+   * 폴백이 발동된 questionOrder — turn 범위로 중복 메시지 방지
+   * null: 폴백 미발동 / 숫자: 해당 questionOrder turn의 isFinal 무시
+   */
+  const llmFallbackFiredRef = useRef<number | null>(null);
 
   // 리듀서 state를 ref로 보관 — WS 콜백 내부에서 최신 state 참조
   const stateRef = useRef(state);
@@ -202,7 +205,8 @@ export function useInterviewSession({
       if (streamingAccRef.current.length > 0) return;
 
       streamingAccRef.current = '';
-      llmFallbackFiredRef.current = true;
+      // 현재 questionOrder를 기록 — 이 turn의 늦은 isFinal만 suppress
+      llmFallbackFiredRef.current = stateRef.current.questionOrder;
       const nextOrder = stateRef.current.questionOrder + 1;
       dispatch({ type: 'SET_TYPING', typing: false });
       dispatch({
@@ -317,9 +321,9 @@ export function useInterviewSession({
           const finalText = streamingAccRef.current;
           streamingAccRef.current = '';
           setStreamingText('');
-          // 폴백이 이미 발동된 경우 늦게 도착한 isFinal은 무시 (중복 메시지 방지)
-          if (llmFallbackFiredRef.current) {
-            llmFallbackFiredRef.current = false;
+          // 이 turn에 폴백이 발동됐으면 늦게 도착한 isFinal은 무시 (turn 범위 suppress)
+          if (llmFallbackFiredRef.current === msg.questionOrder) {
+            llmFallbackFiredRef.current = null;
             break;
           }
           dispatch({ type: 'SET_TYPING',   typing: false });
@@ -408,7 +412,7 @@ export function useInterviewSession({
     }
     dispatch({ type: 'SET_TYPING', typing: true });
     tts.clear();
-    llmFallbackFiredRef.current = false;
+    llmFallbackFiredRef.current = null;
     if (!import.meta.env.DEV) startLlmTimeout();
 
     // DEV mock: API 호출 없이 다음 질문 자동 생성
