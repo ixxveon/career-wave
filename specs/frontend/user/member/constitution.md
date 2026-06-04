@@ -1,6 +1,7 @@
 # Constitution: Member Auth 도메인
 
 > 작성자: 마은재 | 작성일: 2026-05-31  
+> 최근 정리일: 2026-06-03  
 > 관련 문서: `plan.md` / `tasks.md` / `spec.md` / `api-schema.md` / `checklist.md`  
 > 레이어: **Frontend Only / Backend Ready**
 
@@ -8,7 +9,7 @@
 
 ## 0. 컨벤션
 
-* **Feature Branch**: `feature/user-member-{기능명}` (예: `feature/user-member-auth`)
+* **Feature Branch**: `feature/user-auth-{phase-or-scope}` (예: `feature/user-auth-base`, `feature/user-auth-login`)
 * **PR 제목 예시**: `[MEMBER] 사용자 인증 및 계정 복구 기능 구현`
 * **파일 경로 원칙**:
   * 페이지: `src/user/pages/auth/`
@@ -17,6 +18,7 @@
   * 타입: `src/user/types/member.ts`
   * 유효성 검사: `src/user/utils/member/validation.ts`
 * **문서 범위**: 사용자 로그인, 회원가입, 소셜 가입 추가정보, 아이디 찾기, 비밀번호 재설정, 개인/기업회원 가입, 기업회원 승인 대기 상태, 인증/제재/블랙리스트 UI 대응을 포함한다.
+* **현재 프로젝트 Phase 순서**: `Phase 1 Auth Base → Phase 2 Login → Phase 3 Signup → Phase 4 Find Account → Phase 8 Frontend QA`
 
 ### 예외: 순차 의존 피처
 
@@ -99,6 +101,7 @@ DRAFT -> SUBMITTED -> PENDING_REVIEW -> APPROVED
 | 결정 | 내용 | 근거 |
 |------|------|------|
 | API 레이어 분리 | View 컴포넌트에서 `fetch`/`axios` 직접 호출 금지, `api/member/`와 `hooks/member/`로 분리 | 백엔드 연동 시 필드/에러 매핑 변경 범위 최소화 |
+| 페이지 책임 분리 | `pages/auth/*`는 route entry와 page assembly만 담당하고, 저수준 폼 markup·submit orchestration·API 조합은 `components/member/`, `hooks/member/`, `utils/member/`로 분리한다. | review 반복 이슈였던 page 비대화와 의존 방향 역전을 방지 |
 | 서버 상태 관리 | 로그인 세션, 프로필 조회, 승인 상태 조회는 TanStack Query 또는 인증 전용 훅으로 관리 | 새로고침/재조회/에러 상태 일관성 |
 | 폼 상태 관리 | 로그인/가입/찾기 입력값은 React local state 또는 폼 훅으로 관리 | 단기 입력 상태이며 전역 공유 불필요 |
 | 토큰 저장 | access token은 메모리 또는 보안 쿠키 전략 우선, refresh token은 HttpOnly Secure SameSite 쿠키 권장. 단, 백엔드 제약이 있으면 `sessionStorage` 기반 탭 세션 복원을 보안 대안으로 허용하며, 새로고침 후 세션 복원 bootstrap 경로를 함께 설계한다. | XSS로 인한 토큰 탈취를 줄이면서도 실사용 세션 복원력 확보 |
@@ -117,6 +120,8 @@ DRAFT -> SUBMITTED -> PENDING_REVIEW -> APPROVED
 * access token을 메모리에만 보관하더라도, 앱 초기 진입 시 refresh cookie 또는 동등한 보안 전략을 통해 세션 복원 가능 여부를 1회 확인해야 한다.
 * 아이디 찾기/비밀번호 찾기는 계정 존재 여부를 공격자가 추론할 수 있는 응답 문구를 사용하지 않는다.
 * 인증번호 재전송은 쿨다운과 요청 횟수 제한 UI를 가진다. 실제 rate limit은 백엔드가 강제한다.
+* 인증 방식, 회원 유형, recovery 단계가 변경되면 이전 verification UI 상태와 in-flight request는 무효화되어야 한다.
+* 늦게 도착한 이전 verification/recovery 응답은 최신 입력 상태 또는 최신 성공 상태를 덮어쓰면 안 된다. 응답 반영 전 request snapshot 또는 현재 method snapshot을 비교해야 한다.
 * 기업회원 가입은 재직증명서 PDF 첨부 및 기업정보 검증이 완료되어야 제출 가능하다.
 * 파일명, 기업명, 사용자 입력값은 화면 렌더링 시 escaping 전제를 가진 컴포넌트로만 표시한다. `dangerouslySetInnerHTML` 사용 금지.
 * 블랙리스트/제재/잠금 상태는 프론트에서 임의 해제하지 않는다.
@@ -150,6 +155,7 @@ DRAFT -> SUBMITTED -> PENDING_REVIEW -> APPROVED
 
 * **상태 복원력**: 회원가입·계정복구 도중 새로고침이 발생하면 비밀번호, 인증번호, 토큰을 제외한 비민감 입력값만 복원할 수 있다. 인증 완료 여부는 반드시 서버의 `verificationToken` 또는 재조회 결과로 복구한다.
 * **인증번호 타이머**: 인증번호 만료 시간과 재전송 가능 시간은 서버 응답(`expiresAt`, `resendAvailableAt`) 기준으로 표시한다. 프론트 로컬 타이머가 서버 상태를 대체하지 않는다.
+* **Recovery 무결성**: 아이디 찾기/비밀번호 찾기 플로우에서 resend, method switch, reset token 발급, 새 비밀번호 저장은 모두 최신 요청 기준으로만 상태를 갱신해야 한다. stale error가 최신 success panel을 덮어쓰면 안 된다.
 * **비밀번호 입력 UX**: 비밀번호 정책은 입력 중 즉시 피드백을 제공하되, 정확한 정책 우회 힌트가 되지 않도록 최소한의 조건만 표시한다.
 * **계정 제재 UX**: `SUSPENDED`, `BANNED`, `LOCKED`, `BLACKLISTED` 상태는 사용자가 다음 행동을 이해할 수 있게 안내한다. 다만 운영 내부 사유, 신고자 정보, 탐지 기준은 표시하지 않는다.
 * **접근성(a11y)**: 로그인/회원가입 폼의 모든 입력은 label 또는 `aria-label`을 가진다. 오류 메시지는 관련 input과 연결하고, 인증번호 만료 등 즉시성 안내는 `aria-live="polite"`로 전달한다.
