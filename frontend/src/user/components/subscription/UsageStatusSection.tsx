@@ -58,7 +58,7 @@ export function UsageStatusSection({
             </Link>
           </div>
         </div>
-      ) : hasPartialSubscription ? (
+      ) : hasPartialSubscription && subscribedItems[0] && unsubscribedItems[0] ? (
         <div className="cw-subscription-usage-grid">
           <UsageStatusCard item={subscribedItems[0]} />
           <RecommendationCard item={unsubscribedItems[0]} />
