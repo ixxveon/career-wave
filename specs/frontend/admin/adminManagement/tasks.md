@@ -4,17 +4,17 @@
 
 ## Phase 1 - 타입 및 API 계층
 
-- [ ] `feature/admin-management-spec` 브랜치를 기준으로 `feature/admin-management-api` 브랜치를 생성한다.
-- [ ] `frontend/src/admin/api/adminManagementApi.ts`를 생성한다.
-- [ ] `AdminManagementSummary` 타입을 정의하고 export한다.
-- [ ] `AdminAccount`, `AdminRole`, `AdminStatus` 타입을 정의하고 export한다.
-- [ ] `AdminAclRule`, `AclRiskLevel` 타입을 정의하고 export한다.
-- [ ] `AdminAuditLog`, `AuditSeverity` 타입을 정의하고 export한다.
-- [ ] 관리자 계정 조회/생성/권한 변경/상태 변경/삭제 API 함수를 작성한다.
-- [ ] ACL 조회/등록/활성 전환/삭제 API 함수를 작성한다.
-- [ ] 감사 로그 조회 API 함수를 작성한다.
-- [ ] `ApiResponse<T>` 래퍼 응답과 에러 메시지 매핑을 처리한다.
-- [ ] JWT 인증 만료, `ROLE_ADMIN` 권한 없음, `MASTER` 세부 역할 부족 에러 메시지를 분리한다.
+- [x] 최신 `develop` 브랜치를 기준으로 `feature/admin-management-api` 브랜치를 생성한다.
+- [x] `frontend/src/admin/api/adminManagementApi.ts`를 생성한다.
+- [x] `AdminManagementSummary` 타입을 정의하고 export한다.
+- [x] `AdminAccount`, `AdminRole`, `AdminStatus` 타입을 정의하고 export한다.
+- [x] `AdminAclRule`, `AclRiskLevel` 타입을 정의하고 export한다.
+- [x] `AdminAuditLog`, `AuditSeverity` 타입을 정의하고 export한다.
+- [x] 관리자 계정 조회/생성/권한 변경/상태 변경/삭제 API 함수를 작성한다.
+- [x] ACL 조회/등록/활성 전환/삭제 API 함수를 작성한다.
+- [x] 감사 로그 조회 API 함수를 작성한다.
+- [x] `ApiResponse<T>` 래퍼 응답과 에러 메시지 매핑을 처리한다.
+- [x] JWT 인증 만료, `ROLE_ADMIN` 권한 없음, `MASTER` 세부 역할 부족 에러 메시지를 분리한다.
 
 ## Phase 2 - 계정/RBAC 연동
 
