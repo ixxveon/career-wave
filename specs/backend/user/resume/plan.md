@@ -34,7 +34,7 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 | WebSocket 구현 방식 | **확정** | STOMP (`spring-boot-starter-websocket`) |
 | `hypersistence-utils` 의존성 추가 | 팀 합의 필요 | JSONB 처리용 — 기존 `AttributeConverter`로 대체 가능 |
 | members 테이블 PK 타입 | **확정** | UUID (`gen_random_uuid()`) — `document.member_id` FK 타입 UUID로 동일하게 적용 |
-| Base URL 최종 결정 | 프론트 팀 확인 필요 | `/api/v1/resume` vs `/api/v1/user/resume` |
+| Base URL | **확정** | `/api/v1/user/resume` — Convention(`/api/v1/user/{domain}`) 준수. 프론트 스펙의 `/api/v1/resume`는 구현 시 맞춰야 함 |
 
 ---
 

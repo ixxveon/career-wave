@@ -14,8 +14,8 @@
 /api/v1/user/resume
 ```
 
-> 프론트 스펙의 `/api/v1/resume`와 다르게 Convention에 따라 `/api/v1/user/resume`로 정의.  
-> 구현 전 프론트엔드 팀과 최종 Base URL 일치 여부 확인 필요.
+> Convention(`/api/v1/user/{domain}`) 기준으로 확정.  
+> 프론트 스펙의 `/api/v1/resume`는 구현 시 `/api/v1/user/resume`로 맞춰야 함.
 
 ### 인증
 
