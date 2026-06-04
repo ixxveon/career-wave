@@ -90,6 +90,9 @@ export default function TextInterviewPage() {
 
   async function handleStart() {
     if (!company.trim() || resumeLoading) return;
+    // pre-flight gate (spec FR-001) — 모드별 조건 분리
+    if (preflight.networkStatus === 'fail') return;
+    if (sessionType === SESSION_TYPE.VOICE && preflight.micStatus === 'fail') return;
     setApiError(null);
     setIsLoading(true);
     try {
