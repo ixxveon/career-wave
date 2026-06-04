@@ -388,11 +388,9 @@ export default function AdminManagementPage() {
   });
 
   const deleteAdminMutation = useMutation({
-    mutationFn: (id: string) => deleteAdminAccount(id),
-    onSuccess: (_, deletedId) => {
-      const target = filteredAdmins.find((item) => item.id === deletedId);
-
-      if (target && auditActor === target.name) {
+    mutationFn: ({ id }: { id: string; admin: AdminAccount }) => deleteAdminAccount(id),
+    onSuccess: (_, { id, admin }) => {
+      if (auditActor === admin.name) {
         setAuditActor('ALL');
       }
 
@@ -400,7 +398,7 @@ export default function AdminManagementPage() {
         actor: 'super_admin',
         ip: '10.20.0.10',
         action: '관리자 계정 삭제',
-        target: deletedId,
+        target: id,
         severity: 'ERROR',
       });
       refreshAdminManagementQueries();
@@ -431,7 +429,7 @@ export default function AdminManagementPage() {
   };
 
   const toggleAdminStatus = (id: string) => {
-    const target = admins.find((item) => item.id === id);
+    const target = filteredAdmins.find((item) => item.id === id);
     if (!target) return;
 
     const nextStatus = target.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
@@ -440,7 +438,7 @@ export default function AdminManagementPage() {
   };
 
   const removeAdminAccount = (admin: AdminAccount) => {
-    deleteAdminMutation.mutate(admin.id);
+    deleteAdminMutation.mutate({ id: admin.id, admin });
   };
 
   const openAdminActivity = (admin: AdminAccount) => {
@@ -724,7 +722,7 @@ export default function AdminManagementPage() {
                         updateAdminRoleMutation.isPending && updateAdminRoleMutation.variables?.id === admin.id;
                       const isStatusPending =
                         updateAdminStatusMutation.isPending && updateAdminStatusMutation.variables?.id === admin.id;
-                      const isDeletePending = deleteAdminMutation.isPending && deleteAdminMutation.variables === admin.id;
+                      const isDeletePending = deleteAdminMutation.isPending && deleteAdminMutation.variables?.id === admin.id;
 
                       return (
                         <tr key={admin.id}>
