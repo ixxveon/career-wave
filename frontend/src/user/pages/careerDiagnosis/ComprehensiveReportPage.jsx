@@ -75,11 +75,11 @@ function ComprehensiveReportPage() {
         if (!active) return;
 
         const requestedRecord = queryRecord || routeRecordId || '';
-        const requestedExists = historyRecords.some((record) => record.id === requestedRecord);
+        const requestedExists = historyRecords.some((record) => String(record.id) === String(requestedRecord));
         const nextRecordId = requestedExists ? requestedRecord : historyRecords[0]?.id || '';
 
         setRecords(historyRecords);
-        setSelectedRecord(nextRecordId);
+        setSelectedRecord(String(nextRecordId));
 
         const [detailData, previewData] = await Promise.all([
           nextRecordId ? careerHistoryApi.getHistoryDetail(nextRecordId) : Promise.resolve(null),
@@ -103,7 +103,7 @@ function ComprehensiveReportPage() {
   }, [queryRecord, routeRecordId]);
 
   const currentRecord = useMemo(
-    () => records.find((record) => record.id === selectedRecord) || records[0] || null,
+    () => records.find((record) => String(record.id) === String(selectedRecord)) || records[0] || null,
     [records, selectedRecord],
   );
 
