@@ -35,6 +35,7 @@
 
 - [ ] `ResumeDTO.ResponseUpload` 작성
 - [ ] 파일 MIME type 기반 확장자 검증 유틸 작성 (PDF·DOC·DOCX)
+  - 단순 확장자(.pdf) 체크는 우회 가능 — 파일 Magic Number 또는 Apache Tika로 실제 MIME 검증 권장
 - [ ] 파일 크기 10MB 초과 검증
 - [ ] UUID 기반 저장 파일명 생성 유틸 작성 (`{UUID}.{확장자}`)
 - [ ] S3 업로드 로직 구현 — `stored_file_name` 사용, `original_name` DB 별도 저장
@@ -51,6 +52,7 @@
 - [ ] `@Valid` + `@Size` 기반 문항 수(1~5), 답변 길이(1000자) 검증
 - [ ] `Document` 저장 (`status = UPLOADED`, `file_type = COVER_LETTER`, `file_url = null`)
 - [ ] `CoverLetterContent` 벌크 저장 (`@Transactional`)
+  - `saveAll()` 호출 시 `member_id`·`document_id` 매핑 로그 남기기 — 디버깅 편의
 - [ ] FastAPI 분석 트리거 (비동기)
 - [ ] `ResumeController.submitCoverLetter()` 구현
 - [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
@@ -62,6 +64,7 @@
 - [ ] `ResumeDTO.ResponseFeedback` 및 중첩 record 작성
   - `ScoreDetail`, `FeedbackDetail`, `StarAnalysis`, `QuantAnalysis`, `AnalysisItem`
 - [ ] JSONB `feedback_details` 역직렬화 처리 — `AttributeConverter` 구현 (`hypersistence-utils` 사용 시 팀 합의 필요)
+  - `ObjectMapper` 직접 구현 시 `JsonProcessingException` 전역 예외 처리 필수 — 미처리 시 AI 응답 파싱 실패로 500 에러 발생
 - [ ] IDOR 검증 — `document.member_id != memberId` 시 `DOCUMENT_ACCESS_DENIED(403)`
 - [ ] `DocumentFeedback` 없는 경우 status만 포함한 응답 반환
 - [ ] `ResumeController.getFeedback()` 구현
@@ -100,7 +103,9 @@
 - [ ] `documentId` 소유권 검증 — SUBSCRIBE 프레임 수신 시 구독 토픽의 `documentId`와 인증 유저 비교
 - [ ] Webhook 수신 후 `SimpMessagingTemplate.convertAndSend("/topic/resume/{documentId}/status", message)` 연동
 - [ ] `COMPLETED` / `FAILED` 전송 후 Grace Period 30초 타이머 시작
-  - 클라이언트가 먼저 연결을 닫으면 타이머 취소 후 즉시 세션 해제
+  - `Thread.sleep` 금지 — `TaskScheduler` 사용
+  - `scheduler.schedule()` 반환값 `ScheduledFuture` 보관
+  - 클라이언트가 먼저 연결을 닫으면 `ScheduledFuture.cancel(true)` 호출 후 즉시 세션 해제
   - 30초 만료 시 Close 1000으로 서버에서 세션 정리
 - [ ] STOMP 구독 토픽 `/topic/resume/{documentId}/status` 동작 확인
 
