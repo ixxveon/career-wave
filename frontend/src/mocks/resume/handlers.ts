@@ -5,13 +5,13 @@ import {
   MOCK_UPLOAD_RESPONSE,
   MOCK_COVER_LETTER_RESPONSE,
   MOCK_ANALYSIS_RESULT,
-  MOCK_HISTORY_RESPONSE,
+  MOCK_HISTORY_ALL,
 } from './data';
 
-const BASE = '/api/v1/resume';
+const BASE = '/api/v1/user/resume';
 
 // WebSocket 핸들러 — 분석 상태 단계별 메시지 시뮬레이션
-const wsAnalysis = ws.link(`*/ws/resume/${MOCK_DOCUMENT_ID}/status`);
+const wsAnalysis = ws.link(`*/ws/user/resume/${MOCK_DOCUMENT_ID}/status`);
 
 const wsHandler = wsAnalysis.addEventListener('connection', ({ client }) => {
   const steps = [
@@ -39,7 +39,7 @@ const wsHandler = wsAnalysis.addEventListener('connection', ({ client }) => {
 export const resumeHandlers = [
   wsHandler,
 
-  // POST /api/v1/resume/upload
+  // POST /api/v1/user/resume/upload
   http.post(`${BASE}/upload`, async () => {
     await delay(800);
     return HttpResponse.json<ApiResponse<typeof MOCK_UPLOAD_RESPONSE>>({
@@ -50,7 +50,7 @@ export const resumeHandlers = [
     });
   }),
 
-  // POST /api/v1/resume/cover-letter
+  // POST /api/v1/user/resume/cover-letter
   http.post(`${BASE}/cover-letter`, async () => {
     await delay(600);
     return HttpResponse.json<ApiResponse<typeof MOCK_COVER_LETTER_RESPONSE>>({
@@ -61,7 +61,36 @@ export const resumeHandlers = [
     });
   }),
 
-  // GET /api/v1/resume/:documentId/feedback
+  // GET /api/v1/user/resume/history — 반드시 /:documentId/feedback 보다 앞에 등록
+  http.get(`${BASE}/history`, async ({ request }) => {
+    await delay(400);
+    const url      = new URL(request.url);
+    const page     = Number(url.searchParams.get('page')     ?? 0);
+    const size     = Number(url.searchParams.get('size')     ?? 10);
+    const fileType = url.searchParams.get('fileType') ?? null;
+
+    const filtered = fileType
+      ? MOCK_HISTORY_ALL.filter(item => item.fileType === fileType)
+      : MOCK_HISTORY_ALL;
+
+    const start   = page * size;
+    const content = filtered.slice(start, start + size);
+
+    return HttpResponse.json({
+      success: true,
+      statusCode: 200,
+      message: '요청이 성공적으로 처리되었습니다.',
+      data: {
+        content,
+        page,
+        size,
+        totalElements: filtered.length,
+        totalPages: Math.ceil(filtered.length / size),
+      },
+    });
+  }),
+
+  // GET /api/v1/user/resume/:documentId/feedback
   http.get(`${BASE}/:documentId/feedback`, async () => {
     await delay(400);
     return HttpResponse.json<ApiResponse<typeof MOCK_ANALYSIS_RESULT>>({
@@ -69,17 +98,6 @@ export const resumeHandlers = [
       statusCode: 200,
       message: '요청이 성공적으로 처리되었습니다.',
       data: MOCK_ANALYSIS_RESULT,
-    });
-  }),
-
-  // GET /api/v1/resume/history
-  http.get(`${BASE}/history`, async () => {
-    await delay(400);
-    return HttpResponse.json<ApiResponse<typeof MOCK_HISTORY_RESPONSE>>({
-      success: true,
-      statusCode: 200,
-      message: '요청이 성공적으로 처리되었습니다.',
-      data: MOCK_HISTORY_RESPONSE,
     });
   }),
 ];

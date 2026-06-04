@@ -21,6 +21,7 @@ export interface PersonalRegisterDraft {
   emailVerificationToken?: string;
   phoneVerificationToken?: string;
   terms: {
+    age: boolean;
     service: boolean;
     privacy: boolean;
     marketing: boolean;
@@ -33,17 +34,21 @@ export interface CompanyRegisterDraft {
   passwordConfirm: string;
   managerName: string;
   managerEmail: string;
+  managerEmailVerificationToken?: string;
   managerPhone: string;
   companyName: string;
   businessNumber: string;
   ceoName: string;
   address: string;
+  addressDetail: string;
+  isAgency: boolean;
   managerPhoneVerificationToken?: string;
   employmentCertificateFileId?: string;
   terms: {
     service: boolean;
     privacy: boolean;
     companyVerification: boolean;
+    sms: boolean;
     marketing: boolean;
   };
 }
@@ -93,10 +98,13 @@ export function canSubmitCompanyRegister(form: CompanyRegisterDraft, loginIdStat
     form.businessNumber.trim().length > 0 &&
     form.ceoName.trim().length > 0 &&
     form.address.trim().length > 0 &&
+    form.addressDetail.trim().length > 0 &&
+    hasValue(form.managerEmailVerificationToken) &&
     hasValue(form.managerPhoneVerificationToken) &&
     hasValue(form.employmentCertificateFileId) &&
     form.terms.service &&
     form.terms.privacy &&
-    form.terms.companyVerification
+    form.terms.companyVerification &&
+    form.terms.sms
   );
 }

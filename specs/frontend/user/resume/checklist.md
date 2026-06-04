@@ -2,7 +2,8 @@
 
 > 작성자: 이가연 | 작성일: 2026-05-29  
 > 구현 완료 후 PR 올리기 전에 본인이 직접 체크합니다.  
-> PR 제목 형식: `[RESUME] 서류 분석 기능 구현`
+> PR 제목 형식: `feat(feature/user-resume-{phase}) : 내용`  
+> 실제 브랜치: `feature/user-resume-upload` / `feature/user-resume-cover-letter` / `feature/user-resume-analysis` / `feature/user-resume-report` / `feature/user-resume-history`
 
 ---
 

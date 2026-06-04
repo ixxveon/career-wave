@@ -24,6 +24,7 @@ export const serviceMenus: MenuItem[] = [
     children: [
       { label: '이력서 분석',    href: '/documents/resume' },
       { label: '자기소개서 분석', href: '/documents/cover-letter' },
+      { label: '분석 이력',      href: '/documents/history' },
       // { label: '서류 분석 리포트', href: '/documents/report' }, // TODO: 백엔드 연동 후 활성화
     ],
   },
