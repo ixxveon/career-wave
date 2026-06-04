@@ -68,6 +68,8 @@ export function useFindPasswordRecovery(isCompany: boolean) {
   const [userResetSession, setUserResetSessionState] = useState<ResetSessionState>({ ...EMPTY_RESET_SESSION });
   const [companyResetSession, setCompanyResetSessionState] = useState<ResetSessionState>({ ...EMPTY_RESET_SESSION });
 
+  const currentIsCompanyRef = useRef(isCompany);
+  currentIsCompanyRef.current = isCompany;
   const userVerificationRef = useRef(userVerification);
   const companyVerificationRef = useRef(companyVerification);
   const currentUserMethodRef = useRef(userMethod);
@@ -429,6 +431,7 @@ export function useFindPasswordRecovery(isCompany: boolean) {
   const handleIssueResetToken = async () => {
     let companyIdentitySnapshot: string | null = null;
     let userRequestSnapshot: string | null = null;
+    const capturedIsCompany = isCompany;
 
     try {
       if (isCompany) {
@@ -446,7 +449,7 @@ export function useFindPasswordRecovery(isCompany: boolean) {
         );
 
         const currentSnapshot = buildCompanyResetSnapshot(companyVerificationRef.current.verificationToken);
-        if (companyIdentitySnapshot !== currentSnapshot) return;
+        if (companyIdentitySnapshot !== currentSnapshot || capturedIsCompany !== currentIsCompanyRef.current) return;
 
         setCompanyResetSession({
           resetToken: response.resetToken,
@@ -471,7 +474,7 @@ export function useFindPasswordRecovery(isCompany: boolean) {
           currentUserMethodRef.current,
           userVerificationRef.current[currentUserMethodRef.current].verificationToken,
         );
-        if (userRequestSnapshot !== currentSnapshot) return;
+        if (userRequestSnapshot !== currentSnapshot || capturedIsCompany !== currentIsCompanyRef.current) return;
 
         setUserResetSession({
           resetToken: response.resetToken,
@@ -491,14 +494,14 @@ export function useFindPasswordRecovery(isCompany: boolean) {
       if (isCompany) {
         const currentSnapshot = buildCompanyResetSnapshot(companyVerificationRef.current.verificationToken);
 
-        if (companyIdentitySnapshot !== currentSnapshot) return;
+        if (companyIdentitySnapshot !== currentSnapshot || capturedIsCompany !== currentIsCompanyRef.current) return;
       } else {
         const currentSnapshot = buildUserResetSnapshot(
           currentUserMethodRef.current,
           userVerificationRef.current[currentUserMethodRef.current].verificationToken,
         );
 
-        if (userRequestSnapshot !== currentSnapshot) return;
+        if (userRequestSnapshot !== currentSnapshot || capturedIsCompany !== currentIsCompanyRef.current) return;
       }
 
       setSuccessMessage('');
