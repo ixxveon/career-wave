@@ -83,6 +83,31 @@ export interface UsageSummary {
 
 export type Entitlements = Record<ProductCode, boolean>;
 
+export interface PaymentOrder {
+  orderId: string;
+  idempotencyKey: string;
+  productCode: ProductCode;
+  productName: string;
+  amount: number;
+  currency: string;
+  billingCycle: BillingCycle;
+  customerName: string;
+  customerEmail: string;
+  expiresAt: string;
+}
+
+export interface PaymentHistory {
+  paymentId: string;
+  orderId: string;
+  productCode: ProductCode;
+  productName: string;
+  amount: number;
+  currency: string;
+  paymentStatus: PaymentStatus;
+  paidAt: string | null;
+  failureReason: PaymentFailureReason | null;
+}
+
 export interface PaymentFailure {
   reasonCode: PaymentFailureReason;
   displayMessage: string;
