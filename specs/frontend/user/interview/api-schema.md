@@ -9,7 +9,7 @@
 
 ### Base URL
 ```
-/api/v1/interview
+/api/v1/user/interview
 ```
 
 ### 날짜 포맷
@@ -61,7 +61,7 @@ Authorization: Bearer {accessToken}
 
 ## 1. 면접 세션 시작
 
-- **Endpoint**: `POST /api/v1/interview/sessions`
+- **Endpoint**: `POST /api/v1/user/interview/sessions`
 - **Description**: 면접 세션 생성 및 `sessionId` 발급
 - **Content-Type**: `application/json`
 
@@ -113,7 +113,7 @@ Authorization: Bearer {accessToken}
 
 ## 2. 텍스트 답변 제출
 
-- **Endpoint**: `POST /api/v1/interview/sessions/{sessionId}/answer/text`
+- **Endpoint**: `POST /api/v1/user/interview/sessions/{sessionId}/answer/text`
 - **Description**: 텍스트 입력 답변 저장
 - **Content-Type**: `application/json`
 
@@ -159,7 +159,7 @@ Authorization: Bearer {accessToken}
 
 ## 3. 음성 청크 제출
 
-- **Endpoint**: `POST /api/v1/interview/sessions/{sessionId}/answer/voice`
+- **Endpoint**: `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice`
 - **Description**: 5초 단위 음성 Blob 청크 전송 및 STT 파이프라인 트리거
 - **Content-Type**: `multipart/form-data`
 
@@ -201,7 +201,7 @@ Authorization: Bearer {accessToken}
 
 ## 4. 면접 세션 종료
 
-- **Endpoint**: `POST /api/v1/interview/sessions/{sessionId}/end`
+- **Endpoint**: `POST /api/v1/user/interview/sessions/{sessionId}/end`
 - **Description**: 면접 세션 종료 처리 및 AI 리포트 생성 트리거
 - **Content-Type**: `application/json`
 
@@ -235,7 +235,7 @@ Authorization: Bearer {accessToken}
 
 ## 5. 면접 리포트 조회
 
-- **Endpoint**: `GET /api/v1/interview/sessions/{sessionId}/report`
+- **Endpoint**: `GET /api/v1/user/interview/sessions/{sessionId}/report`
 - **Description**: 면접 완료 후 피드백 리포트 조회 (페이지 재진입·새로고침 시 TanStack Query로 재조회)
 - **Content-Type**: `application/json`
 
@@ -294,7 +294,7 @@ Authorization: Bearer {accessToken}
 
 ## 6. 면접 이력 목록 조회
 
-- **Endpoint**: `GET /api/v1/interview/history`
+- **Endpoint**: `GET /api/v1/user/interview/history`
 - **Description**: 본인의 면접 이력을 최신순으로 페이징 조회
 - **Content-Type**: `application/json`
 
@@ -388,7 +388,8 @@ WS /ws/interview/{sessionId}/chat?token={accessToken}
 {
   "type": "QUESTION",
   "content": "Spring에서 트랜잭션 전파 방식에 대해 설명해 주세요.",
-  "questionOrder": 2
+  "questionOrder": 2,
+  "subType": null
 }
 ```
 
@@ -397,14 +398,17 @@ WS /ws/interview/{sessionId}/chat?token={accessToken}
 | `type` | `string` | `QUESTION` \| `SYSTEM` \| `ERROR` |
 | `content` | `string` | 메시지 본문 |
 | `questionOrder` | `number` \| `null` | 질문 순서 (`QUESTION` 타입 시에만 포함) |
+| `subType` | `string` \| `null` | `SYSTEM` 타입 하위 분류 — `SESSION_START` \| `REPORT_READY` \| `SESSION_END` |
 
 #### `type` 별 예시
 
-| type | content 예시 | 비고 |
-|------|-------------|------|
-| `QUESTION` | `"지원 동기를 말씀해 주세요."` | 신규 질문 또는 꼬리 질문 |
-| `SYSTEM` | `"면접이 시작되었습니다."` | 세션 시작·종료·리포트 완료 안내 |
-| `ERROR` | `"세션 처리 중 오류가 발생했습니다."` | 수신 즉시 `ERROR` 상태 전이 |
+| type | subType | content 예시 | 비고 |
+|------|---------|-------------|------|
+| `QUESTION` | `null` | `"지원 동기를 말씀해 주세요."` | 신규 질문 또는 꼬리 질문 |
+| `SYSTEM` | `SESSION_START` | `"면접이 시작되었습니다."` | 세션 시작 → `RUNNING` 전이 |
+| `SYSTEM` | `REPORT_READY` | `"리포트 생성이 완료되었습니다."` | 리포트 완료 → `FINISHED` 전이 |
+| `SYSTEM` | `SESSION_END` | `"면접이 종료되었습니다."` | 세션 종료 안내 |
+| `ERROR` | `null` | `"세션 처리 중 오류가 발생했습니다."` | 수신 즉시 `ERROR` 상태 전이 |
 
 ### Error Cases
 

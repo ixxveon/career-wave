@@ -4,7 +4,7 @@
 - **Version**: `0.1.0`
 - **Locale**: `ko-KR`
 - **Owners**: `user-frontend`, `user-backend`
-- **Base Path**: `/api/user/job-notices`
+- **Base Path**: `/api/v1/user/job-notices`
 - **Shared By**: 목록 페이지, 상세 페이지
 
 ## 1. 개요
@@ -122,7 +122,7 @@
 |------|----|
 | ID | `getJobNoticeList` |
 | Method | `GET` |
-| Path | `/api/user/job-notices` |
+| Path | `/api/v1/user/job-notices` |
 | Auth | optional |
 | Response | `ApiResponse<JobNoticeListResponse>` |
 
@@ -203,7 +203,7 @@
 |------|----|
 | ID | `getJobNoticeDetail` |
 | Method | `GET` |
-| Path | `/api/user/job-notices/{jobNoticeId}` |
+| Path | `/api/v1/user/job-notices/{jobNoticeId}` |
 | Auth | optional |
 | Response | `ApiResponse<JobNoticeDetail>` |
 
@@ -226,7 +226,7 @@
 |------|----|
 | ID | `toggleJobNoticeBookmark` |
 | Method | `PATCH` |
-| Path | `/api/user/job-notices/{jobNoticeId}/bookmark` |
+| Path | `/api/v1/user/job-notices/{jobNoticeId}/bookmark` |
 | Auth | required |
 | Response | `ApiResponse<JobNoticeBookmarkResponse>` |
 

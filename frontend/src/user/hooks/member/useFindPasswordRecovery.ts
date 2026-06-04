@@ -68,6 +68,8 @@ export function useFindPasswordRecovery(isCompany: boolean) {
   const [userResetSession, setUserResetSessionState] = useState<ResetSessionState>({ ...EMPTY_RESET_SESSION });
   const [companyResetSession, setCompanyResetSessionState] = useState<ResetSessionState>({ ...EMPTY_RESET_SESSION });
 
+  const currentIsCompanyRef = useRef(isCompany);
+  currentIsCompanyRef.current = isCompany;
   const userVerificationRef = useRef(userVerification);
   const companyVerificationRef = useRef(companyVerification);
   const currentUserMethodRef = useRef(userMethod);
@@ -139,6 +141,23 @@ export function useFindPasswordRecovery(isCompany: boolean) {
       nextPasswordConfirm: '',
     }));
   };
+
+  const buildCompanyResetSnapshot = (verificationToken: string) =>
+    [
+      currentCompanyLoginIdRef.current.trim(),
+      currentCompanyManagerNameRef.current.trim(),
+      currentCompanyBusinessNumberRef.current,
+      currentCompanyEmailRef.current.trim(),
+      verificationToken,
+    ].join('|');
+
+  const buildUserResetSnapshot = (method: RecoveryMethod, verificationToken: string) =>
+    [
+      currentUserLoginIdRef.current.trim(),
+      getRecoveryTarget(method, currentUserEmailRef.current, currentUserPhoneRef.current),
+      method,
+      verificationToken,
+    ].join('|');
 
   const updateUser = (key: keyof UserFindPasswordForm, value: string) => {
     setUserForm((current) => ({ ...current, [key]: value }));
@@ -410,6 +429,10 @@ export function useFindPasswordRecovery(isCompany: boolean) {
   };
 
   const handleIssueResetToken = async () => {
+    let companyIdentitySnapshot: string | null = null;
+    let userRequestSnapshot: string | null = null;
+    const capturedIsCompany = isCompany;
+
     try {
       if (isCompany) {
         const verificationToken = companyVerification.verificationToken;
@@ -419,26 +442,14 @@ export function useFindPasswordRecovery(isCompany: boolean) {
           return;
         }
 
-        const identitySnapshot = [
-          currentCompanyLoginIdRef.current.trim(),
-          currentCompanyManagerNameRef.current.trim(),
-          currentCompanyBusinessNumberRef.current,
-          currentCompanyEmailRef.current.trim(),
-          verificationToken,
-        ].join('|');
+        companyIdentitySnapshot = buildCompanyResetSnapshot(verificationToken);
 
         const response = await issuePasswordToken.mutateAsync(
           toPasswordTokenRequest('company', companyForm, verificationToken, companyForm),
         );
 
-        const currentSnapshot = [
-          currentCompanyLoginIdRef.current.trim(),
-          currentCompanyManagerNameRef.current.trim(),
-          currentCompanyBusinessNumberRef.current,
-          currentCompanyEmailRef.current.trim(),
-          companyVerificationRef.current.verificationToken,
-        ].join('|');
-        if (identitySnapshot !== currentSnapshot) return;
+        const currentSnapshot = buildCompanyResetSnapshot(companyVerificationRef.current.verificationToken);
+        if (companyIdentitySnapshot !== currentSnapshot || capturedIsCompany !== currentIsCompanyRef.current) return;
 
         setCompanyResetSession({
           resetToken: response.resetToken,
@@ -453,28 +464,17 @@ export function useFindPasswordRecovery(isCompany: boolean) {
           return;
         }
 
-        const requestSnapshot = [
-          currentUserLoginIdRef.current.trim(),
-          getRecoveryTarget(requestMethod, currentUserEmailRef.current, currentUserPhoneRef.current),
-          requestMethod,
-          verificationToken,
-        ].join('|');
+        userRequestSnapshot = buildUserResetSnapshot(requestMethod, verificationToken);
 
         const response = await issuePasswordToken.mutateAsync(
           toPasswordTokenRequest('user', userForm, verificationToken),
         );
 
-        const currentSnapshot = [
-          currentUserLoginIdRef.current.trim(),
-          getRecoveryTarget(
-            currentUserMethodRef.current,
-            currentUserEmailRef.current,
-            currentUserPhoneRef.current,
-          ),
+        const currentSnapshot = buildUserResetSnapshot(
           currentUserMethodRef.current,
           userVerificationRef.current[currentUserMethodRef.current].verificationToken,
-        ].join('|');
-        if (requestSnapshot !== currentSnapshot) return;
+        );
+        if (userRequestSnapshot !== currentSnapshot || capturedIsCompany !== currentIsCompanyRef.current) return;
 
         setUserResetSession({
           resetToken: response.resetToken,
@@ -491,6 +491,19 @@ export function useFindPasswordRecovery(isCompany: boolean) {
       setFormMessage('');
       setSuccessMessage('새 비밀번호를 입력한 뒤 저장해주세요.');
     } catch (error) {
+      if (isCompany) {
+        const currentSnapshot = buildCompanyResetSnapshot(companyVerificationRef.current.verificationToken);
+
+        if (companyIdentitySnapshot !== currentSnapshot || capturedIsCompany !== currentIsCompanyRef.current) return;
+      } else {
+        const currentSnapshot = buildUserResetSnapshot(
+          currentUserMethodRef.current,
+          userVerificationRef.current[currentUserMethodRef.current].verificationToken,
+        );
+
+        if (userRequestSnapshot !== currentSnapshot || capturedIsCompany !== currentIsCompanyRef.current) return;
+      }
+
       setSuccessMessage('');
       setFormMessage(getRecoveryErrorMessage(error, '비밀번호 재설정 권한 확인에 실패했습니다. 잠시 후 다시 시도해주세요.'));
     }

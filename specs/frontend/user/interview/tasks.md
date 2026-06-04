@@ -8,38 +8,38 @@
 
 ## Phase 1 — 인프라 세팅 & 타입 정의
 
-- [ ] `interview.d.ts` 정의 (세션 상태 머신, WebSocket 메시지 타입, 지표 모델링)
-- [ ] `api/interview/` API 호출 인터페이스 설계 (AbortController 적용)
-- [ ] TanStack Query 커스텀 훅 세팅 (리포트·이력 조회용)
-- [ ] WebSocket 이중 연결 구조 설계 (Spring/FastAPI) 및 Heartbeat/Reconnect 정책 구현
-- [ ] `audioUtils.ts` 구현 — MediaRecorder MIME 타입 분기 (Safari WebM 미지원 대응)
-- [ ] 면접 환경 사전 진단 유틸리티 (`usePreflightCheck` 로직) 구현
-- [ ] `sessionStorage.ts` 헬퍼 구현 (세션 복구용 직렬화/역직렬화)
+- [x] `interview.d.ts` 정의 (세션 상태 머신, WebSocket 메시지 타입, 지표 모델링)
+- [x] `api/interview/` API 호출 인터페이스 설계
+- [x] TanStack Query 커스텀 훅 세팅 (리포트·이력 조회용)
+- [x] WebSocket 이중 연결 구조 설계 (Spring/FastAPI) 및 Heartbeat/Reconnect 정책 구현
+- [x] `audioUtils.ts` 구현 — MediaRecorder MIME 타입 분기 (Safari WebM 미지원 대응)
+- [x] 면접 환경 사전 진단 유틸리티 (`usePreflightCheck` 로직) 구현
+- [x] `sessionStorage.ts` 헬퍼 구현 (세션 복구용 직렬화/역직렬화)
 
 ---
 
 ## Phase 2 — 면접 입력 UI 구현
 
-- [ ] `?documentId=xxx` 쿼리 파라미터 파싱 및 면접 세션 유효성 검증 로직 구현
-- [ ] `InterviewSetup` 컴포넌트 — 면접 모드(텍스트/음성) 선택 및 사전 진단 결과 표시
-- [ ] `useAudioRecorder` 구현 (MediaRecorder 래핑 및 Safari/Chrome 브라우저별 MIME 타입 분기)
-- [ ] `VoiceRecorder` UI 구현 — 녹음 상태 시각화 및 마이크 권한 거부 시 예외 처리
-- [ ] `submitVoiceBlob` API 연동 — STT 실패 시 텍스트 전환 폴백 처리
-- [ ] `TextAnswerInput` 컴포넌트 — 텍스트 입력 및 전송 로직, 중복 요청 방지
-- [ ] `ChatWindow` 컴포넌트 — 실시간 대화 스크립트 렌더링
-- [ ] `InterviewTimer` 컴포넌트 — 문항당 타이머 로직 및 시간 초과 시 자동 종료 처리
+- [x] `?documentId=xxx` 쿼리 파라미터 파싱 및 면접 세션 유효성 검증 로직 구현
+- [x] `InterviewSetup` 컴포넌트 — 면접 모드(텍스트/음성) 선택 및 사전 진단 결과 표시
+- [x] `useAudioRecorder` 구현 (MediaRecorder 래핑 및 Safari/Chrome 브라우저별 MIME 타입 분기)
+- [x] `VoiceRecorder` UI 구현 — 녹음 상태 시각화 및 마이크 권한 거부 시 예외 처리
+- [x] `submitVoiceBlob` API 연동 — STT 실패 시 텍스트 전환 폴백 처리
+- [x] `TextAnswerInput` 컴포넌트 — 텍스트 입력 및 전송 로직, 중복 요청 방지
+- [x] `ChatWindow` 컴포넌트 — 실시간 대화 스크립트 렌더링
+- [x] `InterviewTimer` 컴포넌트 — 문항당 타이머 로직 및 시간 초과 시 자동 종료 처리
 
 ---
 
 ## Phase 3 — 실시간 WebSocket & LLM 흐름
 
-- [ ] `useSpringWebSocket` 구현 — 면접 세션 생명주기 이벤트(READY, RUNNING, FINISHED) 핸들링 및 RECONNECTING·ERROR 상태 전이 처리 (재연결 횟수 제한, 복구 불가 시 ERROR 전이)
-- [ ] `useFastApiWebSocket` 구현 — LLM 스트리밍 응답 수신 로직 및 연결 단절 시 RECONNECTING 상태 전이 처리
-- [ ] `TTSPlayer` & `useTTSQueue` 구현 — 문항 단위 TTS 오디오 순차 재생 큐 및 재생 제어
-- [ ] **스트리밍 타이핑 효과**: `requestAnimationFrame` 활용하여 텍스트 데이터 렌더링 최적화
+- [x] `useSpringWebSocket` 구현 — 면접 세션 생명주기 이벤트(READY, RUNNING, FINISHED) 핸들링 및 RECONNECTING·ERROR 상태 전이 처리 (재연결 횟수 제한, 복구 불가 시 ERROR 전이)
+- [x] `useFastApiWebSocket` 구현 — LLM 스트리밍 응답 수신 로직 및 연결 단절 시 RECONNECTING 상태 전이 처리
+- [x] `TTSPlayer` & `useTTSQueue` 구현 — 문항 단위 TTS 오디오 순차 재생 큐 및 재생 제어
+- [x] **스트리밍 타이핑 효과**: `requestAnimationFrame` 활용하여 텍스트 데이터 렌더링 최적화
 - [ ] LLM 꼬리/압박 질문 생성 로직 및 이력서 RAG 컨텍스트 연동
 - [ ] LLM 응답 지연/타임아웃 폴백 처리 — 로딩 UI 유지 및 사전 정의 질문으로 대체 로직 구현
-- [ ] 면접 종료 시 전체 스크립트 서버 동기화 (`endSession`) 및 상태 머신 전이
+- [x] 면접 종료 시 전체 스크립트 서버 동기화 (`endSession`) 및 상태 머신 전이
 
 ---
 

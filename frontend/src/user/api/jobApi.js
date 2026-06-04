@@ -1,8 +1,26 @@
-import { apiClient } from './apiClient';
+import { apiClient } from '../../utils/apiClient';
+
+const JOB_NOTICE_BASE_PATH = '/v1/user/job-notices';
+
+function createQueryString(params = {}) {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    query.set(key, String(value));
+  });
+
+  return query.toString();
+}
 
 export const jobApi = {
+  getJobNoticeList: (params = {}) => {
+    const query = createQueryString(params);
+    return apiClient(`${JOB_NOTICE_BASE_PATH}${query ? `?${query}` : ''}`);
+  },
+
   getJobs: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
+    const query = createQueryString(params);
     return apiClient(`/jobs${query ? `?${query}` : ''}`);
   },
 
