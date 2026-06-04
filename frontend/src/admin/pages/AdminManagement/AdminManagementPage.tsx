@@ -289,7 +289,6 @@ export default function AdminManagementPage() {
     queryKey: ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY,
     queryFn: getAdminManagementSummary,
   });
-  const [admins, setAdmins] = useState<AdminAccount[]>([]);
   const [aclRules, setAclRules] = useState(initialAclRules);
   const [logs, setLogs] = useState(initialLogs);
   const [adminFilter, setAdminFilter] = useState('');
@@ -321,6 +320,7 @@ export default function AdminManagementPage() {
     queryKey: [...ADMIN_MANAGEMENT_ADMINS_QUERY_KEY, adminListQueryParams],
     queryFn: () => getAdminAccounts(adminListQueryParams),
   });
+  const filteredAdmins = adminAccounts?.items.map(toAdminAccountRow) ?? [];
 
   const addLog = (log: Omit<AuditLog, 'id' | 'time'>) => {
     const nextLogId = logIdSeedRef.current;
@@ -338,7 +338,6 @@ export default function AdminManagementPage() {
     onSuccess: (createdAdmin) => {
       const nextAdmin = toAdminAccountRow(createdAdmin);
 
-      setAdmins((prev) => [nextAdmin, ...prev]);
       setAdminFilter('');
       setRoleFilter('ALL');
       setStatusFilter('ALL');
@@ -361,8 +360,6 @@ export default function AdminManagementPage() {
     onSuccess: (updatedAdmin) => {
       const nextAdmin = toAdminAccountRow(updatedAdmin);
 
-      setAdmins((prev) => prev.map((admin) => (admin.id === nextAdmin.id ? nextAdmin : admin)));
-
       addLog({
         actor: 'super_admin',
         ip: '10.20.0.10',
@@ -379,8 +376,6 @@ export default function AdminManagementPage() {
     onSuccess: (updatedAdmin) => {
       const nextAdmin = toAdminAccountRow(updatedAdmin);
 
-      setAdmins((prev) => prev.map((admin) => (admin.id === nextAdmin.id ? nextAdmin : admin)));
-
       addLog({
         actor: 'super_admin',
         ip: '10.20.0.10',
@@ -395,9 +390,7 @@ export default function AdminManagementPage() {
   const deleteAdminMutation = useMutation({
     mutationFn: (id: string) => deleteAdminAccount(id),
     onSuccess: (_, deletedId) => {
-      const target = admins.find((item) => item.id === deletedId);
-
-      setAdmins((prev) => prev.filter((admin) => admin.id !== deletedId));
+      const target = filteredAdmins.find((item) => item.id === deletedId);
 
       if (target && auditActor === target.name) {
         setAuditActor('ALL');
@@ -520,12 +513,6 @@ export default function AdminManagementPage() {
   };
 
   useEffect(() => {
-    if (!adminAccounts) return;
-
-    setAdmins(adminAccounts.items.map(toAdminAccountRow));
-  }, [adminAccounts]);
-
-  useEffect(() => {
     const nextTotalPages = Math.max(1, adminAccounts?.totalPages ?? 1);
     if (adminPage > nextTotalPages) {
       setAdminPage(nextTotalPages);
@@ -556,8 +543,6 @@ export default function AdminManagementPage() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isCreateAdminOpen]);
-
-  const filteredAdmins = admins;
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
