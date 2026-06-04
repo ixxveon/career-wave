@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Search, HelpCircle } from 'lucide-react';
 import { supportApi, FAQ_CATEGORY_LABEL, type FaqCategory, type FaqItem } from '../../api/supportApi';
+import { useDebounce } from '../../hooks/common/useDebounce';
 import './styles/FaqPage.css';
 
 const CATEGORY_FILTERS: { label: string; value: FaqCategory | '' }[] = [
@@ -19,14 +20,16 @@ export default function FaqPage() {
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
 
+  const debouncedSearch = useDebounce(search, 300);
+
   useEffect(() => {
     setLoading(true);
     setError('');
-    supportApi.getFaqs({ category: category || undefined, keyword: search || undefined })
+    supportApi.getFaqs({ category: category || undefined, keyword: debouncedSearch || undefined })
       .then(res => setFaqs(res))
       .catch(() => setError('FAQ를 불러오지 못했습니다.'))
       .finally(() => setLoading(false));
-  }, [category, search]);
+  }, [category, debouncedSearch]);
 
   function handleCategoryChange(val: FaqCategory | '') {
     setCategory(val);

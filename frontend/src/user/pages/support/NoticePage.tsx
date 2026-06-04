@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, ChevronRight, Search, Pin } from 'lucide-react';
 import { supportApi, NOTICE_CATEGORY_LABEL, type NoticeCategory, type NoticeItem } from '../../api/supportApi';
+import { useDebounce } from '../../hooks/common/useDebounce';
 import './styles/NoticePage.css';
 
 const CATEGORY_FILTERS: { label: string; value: NoticeCategory | '' }[] = [
@@ -23,17 +24,19 @@ export default function NoticePage() {
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
 
+  const debouncedSearch = useDebounce(search, 300);
+
   useEffect(() => {
     setLoading(true);
     setError('');
-    supportApi.getNotices({ category: category || undefined, keyword: search || undefined, page, size: PAGE_SIZE })
+    supportApi.getNotices({ category: category || undefined, keyword: debouncedSearch || undefined, page, size: PAGE_SIZE })
       .then(res => {
         setNotices(res.items);
         setTotalPages(res.totalPages);
       })
       .catch(() => setError('공지사항을 불러오지 못했습니다.'))
       .finally(() => setLoading(false));
-  }, [category, search, page]);
+  }, [category, debouncedSearch, page]);
 
   function handleCategoryChange(val: NoticeCategory | '') {
     setCategory(val);
