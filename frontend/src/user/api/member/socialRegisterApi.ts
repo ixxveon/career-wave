@@ -3,7 +3,7 @@ import { memberApiClient } from './memberApiClient';
 
 const SOCIAL_REGISTER_MOCK_STORAGE_KEY = 'cw:social-register:latest';
 
-function buildMockResponse(payload: SocialRegisterCompletionRequest): SocialRegisterCompletionResponse {
+function buildMockResponse(): SocialRegisterCompletionResponse {
   return {
     memberId: `social-${Date.now()}`,
     memberType: 'USER',
@@ -18,19 +18,23 @@ async function completeWithMock(payload: SocialRegisterCompletionRequest): Promi
       SOCIAL_REGISTER_MOCK_STORAGE_KEY,
       JSON.stringify({
         submittedAt: new Date().toISOString(),
-        payload,
+        payload: {
+          provider: payload.provider,
+          terms: payload.terms,
+          hasSocialEmail: Boolean(payload.socialEmail),
+        },
       }),
     );
   }
 
   await new Promise((resolve) => window.setTimeout(resolve, 200));
-  return buildMockResponse(payload);
+  return buildMockResponse();
 }
 
 export const memberSocialRegisterApi = {
   async complete(payload: SocialRegisterCompletionRequest): Promise<SocialRegisterCompletionResponse> {
     // TODO: 백엔드 OAuth 추가정보 완료 계약이 확정되면 실제 endpoint로 전환한다.
-    if (import.meta.env.VITE_USE_SOCIAL_REGISTER_MOCK !== 'false') {
+    if (import.meta.env.DEV && import.meta.env.VITE_USE_SOCIAL_REGISTER_MOCK === 'true') {
       return completeWithMock(payload);
     }
 
