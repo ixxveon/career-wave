@@ -138,7 +138,7 @@ export interface RequestUpdateAclEnabled {
 }
 
 export interface GetAdminAuditLogsParams {
-  actor?: string | 'ALL';
+  actor?: string;
   severity?: AuditSeverity | 'ALL';
   page?: number;
   size?: number;
@@ -172,7 +172,7 @@ const adminManagementFallbackMessages: Record<AdminManagementErrorCode, string> 
   FORBIDDEN: '관리자 관리 권한이 없습니다.',
   MASTER_ROLE_REQUIRED: '마스터 관리자만 수행할 수 있는 작업입니다.',
   NOT_FOUND: '대상을 찾을 수 없습니다.',
-  CONFLICT: '위험 작업이 차단되었습니다.',
+  CONFLICT: '이미 사용 중이거나 처리할 수 없는 요청입니다.',
   SERVER_ERROR: '관리자 관리 처리에 실패했습니다.',
   NETWORK_ERROR: '네트워크 연결을 확인해 주세요.',
   UNKNOWN: '요청을 처리할 수 없습니다.',
