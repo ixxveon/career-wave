@@ -539,6 +539,38 @@
   transform: translateY(-1px);
 }
 
+.jn-feedback {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid #d8e3f0;
+  border-radius: 10px;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.jn-feedback > span {
+  min-width: 0;
+}
+
+.jn-feedback a {
+  flex: 0 0 auto;
+  color: inherit;
+  font-weight: 950;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.jn-feedback--error {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #be123c;
+}
+
 .jn-card h3 {
   margin: 4px 0 0;
   color: #1f2937;

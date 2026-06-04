@@ -1,14 +1,15 @@
 import { apiClient } from '../../utils/apiClient';
 import type {
+  JobNoticeBookmarkResponse,
   JobNoticeDetailApiResponse,
   JobNoticeListApiResponse,
   JobNoticeQueryParams,
 } from '../pages/jobNotice/JobNoticeTypes';
-
-type QueryValue = string | number | boolean | null | undefined;
-type QueryParams = Record<string, QueryValue>;
+import { memberApiClient } from './member/memberApiClient';
 
 const JOB_NOTICE_BASE_PATH = '/api/v1/user/job-notices';
+type QueryValue = string | number | boolean | null | undefined;
+type QueryParams = Partial<Record<keyof JobNoticeQueryParams, QueryValue>>;
 
 function createQueryString(params: QueryParams = {}) {
   const query = new URLSearchParams();
@@ -29,4 +30,14 @@ export const jobApi = {
 
   getJobNoticeDetail: (jobNoticeId: number | string): Promise<JobNoticeDetailApiResponse | null> =>
     apiClient(`${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}`),
+
+  toggleJobNoticeBookmark: (
+    jobNoticeId: number | string,
+    bookmarked: boolean,
+  ): Promise<JobNoticeBookmarkResponse | null> =>
+    memberApiClient<JobNoticeBookmarkResponse | null>(`${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}/bookmark`, {
+      method: 'PATCH',
+      auth: true,
+      body: JSON.stringify({ bookmarked }),
+    }),
 };
