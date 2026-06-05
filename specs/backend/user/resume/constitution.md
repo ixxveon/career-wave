@@ -76,7 +76,31 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 
 ---
 
-## 6. 금지 패턴
+## 6. 트랜잭션 경계 주의사항
+
+**파일 업로드와 분석 트리거는 트랜잭션 단위가 다르다.**
+
+- `Document` DB 저장(`status = UPLOADED`)과 FastAPI 분석 트리거 호출은 **별개의 처리 단위**다.
+- DB 저장은 Spring 트랜잭션 안에서 보장되지만, FastAPI 호출 성공 여부는 트랜잭션으로 묶을 수 없다.
+- 따라서 FastAPI 서버가 다운된 경우, DB에는 `UPLOADED` 상태의 Document가 남지만 분석은 시작되지 않는 불일치 상태가 발생할 수 있다.
+
+**v1 최소 대응 전략 (구현 시 고려)**
+
+```
+FastAPI 분석 트리거 호출
+  ├── 202 Accepted 수신      → 정상 (FastAPI 큐 수신 완료)
+  └── 호출 실패 (타임아웃·5xx) → document.status = FAILED 마킹
+                               + 에러 로그 기록 (관리자 인지용)
+                               + 사용자에게 재시도 안내
+```
+
+> v1에서는 재시도 자동화(Retry Queue 등)는 구현하지 않는다.  
+> 호출 실패 시 `FAILED` 마킹 + 로그 기록까지만 처리하고, 재업로드는 사용자가 직접 수행한다.  
+> v2 이후 Dead Letter Queue 또는 Retry 정책 도입을 검토한다.
+
+---
+
+## 7. 금지 패턴
 
 - `admin/` 패키지 클래스 직접 import 금지.
 - Entity를 API 응답으로 직접 반환 금지 — 반드시 DTO 변환 후 반환.

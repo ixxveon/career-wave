@@ -237,7 +237,8 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 - S3 저장 경로: `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — 날짜별 폴더로 파일 분산 관리
 - S3 업로드 후 `file_url`, `stored_file_name`, `original_name` 저장
 - `Document` 저장 (`status = UPLOADED`)
-- FastAPI 분석 비동기 트리거 (내부 HTTP — Webhook 방식 적용)
+- FastAPI 분석 트리거 호출 → 202 Accepted 기대
+- FastAPI 호출 실패(타임아웃·5xx) 시 → `document.status = FAILED` 마킹 + 에러 로그 기록
 - 반환: `ResumeDTO.ResponseUpload`
 
 #### submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto)
@@ -245,7 +246,8 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 - 답변 1000자 초과 → `INVALID_CONTENT_LENGTH(400)`
 - `Document` 저장 (`status = UPLOADED`, `file_url = null`)
 - `CoverLetterContent` 벌크 저장
-- FastAPI 분석 비동기 트리거
+- FastAPI 분석 트리거 호출 → 202 Accepted 기대
+- FastAPI 호출 실패 시 → `document.status = FAILED` 마킹 + 에러 로그 기록
 - 반환: `ResumeDTO.ResponseCoverLetter`
 
 #### getFeedback(UUID memberId, UUID documentId)
