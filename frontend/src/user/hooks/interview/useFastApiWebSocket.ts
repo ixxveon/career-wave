@@ -1,5 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { FastApiWSMessage } from '../../types/interview';
+import { MAX_RECONNECT_ATTEMPTS } from '../../constants/interview';
 
 export type FastApiWSStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'RECONNECTING' | 'ERROR';
 
@@ -9,7 +10,6 @@ export interface UseFastApiWebSocketOptions {
   onStatusChange: (status: FastApiWSStatus) => void;
 }
 
-const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY_MS = 2000;
 
 export function useFastApiWebSocket({

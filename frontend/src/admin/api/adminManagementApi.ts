@@ -1,6 +1,7 @@
 import axios from 'axios';
 import axiosInstance from '../../utils/axiosInstance';
 import type { AxiosInstance, AxiosResponse } from 'axios';
+import type { ApiResponse, PagedResponse } from './types';
 
 const ADMIN_MANAGEMENT_BASE_PATH = '/api/v1/admin';
 const adminHttpClient = axiosInstance as AxiosInstance;
@@ -84,13 +85,6 @@ export interface AdminAuditLog {
   severity: AuditSeverity;
 }
 
-export interface ApiResponse<TData> {
-  success: boolean;
-  statusCode: number;
-  message: string;
-  data: TData;
-}
-
 export interface ApiErrorBody<TData = unknown> {
   success?: false;
   statusCode?: number;
@@ -98,14 +92,6 @@ export interface ApiErrorBody<TData = unknown> {
   errorCode?: string;
   message?: string;
   data?: TData;
-}
-
-export interface PagedResponse<TItem> {
-  items: TItem[];
-  page: number;
-  size: number;
-  totalItems: number;
-  totalPages: number;
 }
 
 export interface GetAdminAccountsParams {
@@ -175,23 +161,13 @@ export interface AdminManagementApiError {
   fieldErrors?: Record<string, string>;
 }
 
-function isAdminManagementApiError(error: unknown): error is AdminManagementApiError {
-  return (
-    !!error
-    && typeof error === 'object'
-    && 'code' in error
-    && 'statusCode' in error
-    && 'message' in error
-  );
-}
-
 const adminManagementFallbackMessages: Record<AdminManagementErrorCode, string> = {
   VALIDATION_ERROR: '요청 값이 올바르지 않습니다.',
   UNAUTHORIZED: '인증이 필요합니다.',
   FORBIDDEN: '관리자 관리 권한이 없습니다.',
   MASTER_ROLE_REQUIRED: '마스터 관리자만 수행할 수 있는 작업입니다.',
   NOT_FOUND: '대상을 찾을 수 없습니다.',
-  CONFLICT: '위험 작업이 차단되었습니다.',
+  CONFLICT: '이미 사용 중이거나 처리할 수 없는 요청입니다.',
   SERVER_ERROR: '관리자 관리 처리에 실패했습니다.',
   NETWORK_ERROR: '네트워크 연결을 확인해 주세요.',
   UNKNOWN: '요청을 처리할 수 없습니다.',
@@ -234,10 +210,6 @@ function getFieldErrors(data: unknown): Record<string, string> | undefined {
 }
 
 export function toAdminManagementApiError(error: unknown): AdminManagementApiError {
-  if (isAdminManagementApiError(error)) {
-    return error;
-  }
-
   if (!axios.isAxiosError<ApiErrorBody>(error)) {
     return {
       code: ADMIN_MANAGEMENT_ERROR_CODE.UNKNOWN,

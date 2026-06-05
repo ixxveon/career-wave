@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { getSupportedMimeType } from '../../utils/interview/audioUtils';
 import { interviewSessionApi } from '../../api/interview';
+import { CHUNK_INTERVAL_MS } from '../../constants/interview';
 
 export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'error';
 export type RecorderError = 'permission_denied' | 'not_supported' | 'unknown';
@@ -26,7 +27,6 @@ export interface UseAudioRecorderResult {
 }
 
 /** 5초 단위 청크 전송 (spec FR-003, constitution.md §7) */
-const CHUNK_INTERVAL_MS = 5000;
 
 export function useAudioRecorder({
   sessionId,

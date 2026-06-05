@@ -5,7 +5,8 @@
 
 ## 0. 컨벤션
 
-* **Feature Branch**: `feature/user-resume-{기능명}` (예: `feature/user-resume-analyze`)
+* **Feature Branch**: `feature/user-resume-{기능명}` (예: `feature/user-resume-upload`)
+* **Refactor Branch**: `refactor/user-resume`
 * **PR 작성**: `.github/pull_request_template.md` 형식 필수 준수 (CONTRIBUTION.md § 6)
 * **파일 경로**: `src/user/{api|components|hooks|types|utils}/resume/`
 

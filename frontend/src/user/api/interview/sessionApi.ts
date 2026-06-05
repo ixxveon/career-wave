@@ -19,8 +19,8 @@ export const interviewSessionApi = {
   start(params: StartSessionRequest, signal?: AbortSignal): Promise<StartSessionResponse> {
     return memberApiClient<StartSessionResponse>('/api/v1/user/interview/sessions', {
       method: 'POST',
-      auth:   true,
-      body:   JSON.stringify(params),
+      auth: true,
+      body: JSON.stringify(params),
       signal,
     });
   },
@@ -28,7 +28,7 @@ export const interviewSessionApi = {
   end(sessionId: string, signal?: AbortSignal): Promise<EndSessionResponse> {
     return memberApiClient<EndSessionResponse>(`/api/v1/user/interview/sessions/${encodeURIComponent(sessionId)}/end`, {
       method: 'POST',
-      auth:   true,
+      auth: true,
       signal,
     });
   },
@@ -42,8 +42,8 @@ export const interviewSessionApi = {
       `/api/v1/user/interview/sessions/${encodeURIComponent(sessionId)}/answer/text`,
       {
         method: 'POST',
-        auth:   true,
-        body:   JSON.stringify(params),
+        auth: true,
+        body: JSON.stringify(params),
         signal,
       },
     );
@@ -64,7 +64,7 @@ export const interviewSessionApi = {
       `/api/v1/user/interview/sessions/${encodeURIComponent(sessionId)}/answer/voice`,
       {
         method: 'POST',
-        auth:   true,
+        auth: true,
         body:   fd,
         signal,
       },
