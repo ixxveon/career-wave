@@ -1,19 +1,10 @@
-# 로컬 개발용 프로파일 - H2 인메��리 DB 사용 (MySQL 없이 기동 가능)
+# 로컬 개발용 프로파일 - 로컬 PostgreSQL 직접 연결 (DBeaver 연동 가능)
 spring:
   datasource:
-    url: jdbc:h2:mem:careerwave;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;NON_KEYWORDS=VALUE
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-
-  sql:
-    init:
-      mode: never
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -22,11 +13,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.H2Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   mail:
     host: localhost
     port: 1025
 
 jwt:
-  secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256
+  secret: ${JWT_SECRET}
