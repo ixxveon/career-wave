@@ -33,33 +33,33 @@
 
 ## Phase 6 — Payment History
 
-- [-] `/mypage/payment-history`에서 구독 카드, 결제 내역, 하단 안내가 표시되는가?
-- [ ] 결제 내역 없음 empty state가 표시되는가?
-- [ ] 결제 내역 있음 상태에서 기간 필터와 pagination이 실제 데이터 기준으로 동작하는가?
-- [-] 구독 해지 버튼 클릭 시 confirm modal이 먼저 표시되는가?
-- [ ] confirm 전에는 해지 API가 호출되지 않는가?
-- [ ] 해지 신청 완료 후 `CANCEL_SCHEDULED` 상태와 다음 결제 해지 예정 문구가 표시되는가?
-- [ ] 해지 후 구독 목록과 결제 내역이 재조회되는가?
+- [x] `/mypage/payment-history`에서 구독 카드, 결제 내역, 하단 안내가 표시되는가?
+- [x] 결제 내역 없음 empty state가 표시되는가?
+- [x] 결제 내역 있음 상태에서 기간 필터와 pagination이 실제 데이터 기준으로 동작하는가?
+- [x] 구독 해지 버튼 클릭 시 confirm modal이 먼저 표시되는가?
+- [x] confirm 전에는 해지 API가 호출되지 않는가?
+- [x] 해지 신청 완료 후 `CANCEL_SCHEDULED` 상태와 다음 결제 해지 예정 문구가 표시되는가?
+- [x] 해지 후 구독 목록과 결제 내역이 재조회되는가?
 
 ## Phase 7 — Billing
 
 ### Checkout
 
-- [-] product query 누락/오류 시 결제 진행이 차단되는가?
-- [ ] checkout 상품 정보가 query 하드코딩이 아니라 서버 상품 정보 또는 명확히 분리된 mock adapter에서 오는가?
-- [-] 자동 결제 동의 체크 전 결제 버튼 클릭 시 안내가 표시되는가?
-- [ ] order 생성 요청 중 결제 버튼이 disabled 되어 중복 요청이 방지되는가?
-- [ ] 가격/상품 정보는 서버 order 생성 응답 기준으로 결제에 사용되는가?
-- [ ] 제재/블랙리스트/승인 대기 회원의 결제 제한 응답이 안내 UI로 표시되는가?
+- [x] product query 누락/오류 시 결제 진행이 차단되는가?
+- [x] checkout 상품 정보가 query 하드코딩이 아니라 서버 상품 정보(useProducts)에서 오는가?
+- [x] 자동 결제 동의 체크 전 결제 버튼 클릭 시 안내가 표시되는가?
+- [x] order 생성 요청 중 결제 버튼이 disabled 되어 중복 요청이 방지되는가?
+- [x] 가격/상품 정보는 서버 order 생성 응답(createOrder) 기준으로 Toss SDK에 전달되는가?
+- [x] 제재/블랙리스트/승인 대기 회원의 결제 제한 응답(403)이 안내 UI로 표시되는가?
 
 ### Success / Fail
 
-- [ ] success 페이지가 URL 직접 접근만으로 성공 UI를 표시하지 않는가?
-- [ ] success 페이지에서 confirm API 또는 결제 상태 조회를 완료한 뒤 성공 UI를 표시하는가?
-- [ ] confirm 중 loading UI가 표시되고 중복 confirm 요청이 방지되는가?
-- [-] fail 페이지에서 다시 결제하기 CTA와 AI 서비스 복귀 CTA가 표시되는가?
-- [ ] 사용자 취소와 결제 실패가 구분되어 표시되는가?
-- [ ] PG raw error, billing key, payment key가 화면이나 로그에 노출되지 않는가?
+- [x] success 페이지가 URL 직접 접근만으로 성공 UI를 표시하지 않는가?
+- [x] success 페이지에서 confirmPayment API를 완료한 뒤 성공 UI를 표시하는가?
+- [x] confirm 중 loading UI가 표시되고 중복 confirm 요청이 방지되는가? (useRef guard)
+- [x] fail 페이지에서 다시 결제하기 CTA와 AI 서비스 복귀 CTA가 표시되는가?
+- [x] 사용자 취소(USER_CANCELED)와 결제 실패(CARD_DECLINED 등)가 구분되어 표시되는가?
+- [-] PG raw error, billing key, payment key가 화면이나 로그에 노출되지 않는가? (Phase 8 QA에서 최종 확인)
 
 ## Phase 8 — Frontend QA
 

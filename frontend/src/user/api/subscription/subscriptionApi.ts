@@ -1,5 +1,12 @@
 import { memberApiClient } from '../member/memberApiClient';
-import type { Entitlements, Product, Subscription, UsageSummary } from '../../types/subscription';
+import type {
+  CancelSubscriptionRequest,
+  CancelSubscriptionResponse,
+  Entitlements,
+  Product,
+  Subscription,
+  UsageSummary,
+} from '../../types/subscription';
 
 export const subscriptionApi = {
   getProducts(): Promise<Product[]> {
@@ -16,5 +23,13 @@ export const subscriptionApi = {
 
   getEntitlements(): Promise<{ entitlements: Entitlements }> {
     return memberApiClient<{ entitlements: Entitlements }>('/api/v1/subscriptions/me/entitlements', { auth: true });
+  },
+
+  cancelSubscription(subscriptionId: string, payload: CancelSubscriptionRequest): Promise<CancelSubscriptionResponse> {
+    return memberApiClient<CancelSubscriptionResponse>(`/api/v1/subscriptions/${subscriptionId}/cancel`, {
+      auth: true,
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 };

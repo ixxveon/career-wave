@@ -6,18 +6,18 @@ import type {
 } from '../types/document';
 
 export const documentApi = {
-  analyzeCoverLetter: ({ title, jobCategory, items }: AnalyzeCoverLetterParams): Promise<DocumentResult> =>
-    apiClient('/v1/documents/text', {
+  analyzeCoverLetter: ({ title, jobCategory, items }: AnalyzeCoverLetterParams): Promise<DocumentResult | null> =>
+    apiClient<DocumentResult>('/v1/documents/text', {
       method: 'POST',
       body: JSON.stringify({ title, jobCategory, items }),
     }),
 
-  analyzeResume: ({ file, targetCompany, jobCategory }: AnalyzeResumeParams): Promise<DocumentResult> => {
+  analyzeResume: ({ file, targetCompany, jobCategory }: AnalyzeResumeParams): Promise<DocumentResult | null> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('targetCompany', targetCompany);
     formData.append('jobCategory', jobCategory);
-    return apiClient('/v1/documents/file', {
+    return apiClient<DocumentResult>('/v1/documents/file', {
       method: 'POST',
       body: formData,
     });

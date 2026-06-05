@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.40.0",
+    "@tosspayments/tosspayments-sdk": "^2.7.0",
     "axios": "^1.7.2",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",

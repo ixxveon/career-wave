@@ -1,6 +1,15 @@
+import type { LucideIcon } from 'lucide-react';
 import './StatCard.css';
 
-function StatCard({ title, value, unit, description, icon: Icon }) {
+interface StatCardProps {
+  title?: string;
+  value?: string | number;
+  unit?: string;
+  description?: string;
+  icon?: LucideIcon;
+}
+
+function StatCard({ title, value, unit, description, icon: Icon }: StatCardProps) {
   return (
     <article className="cw-stat-card">
       <div>

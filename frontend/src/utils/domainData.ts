@@ -1,4 +1,19 @@
-export const domainCards = {
+export interface DomainCard {
+  title: string;
+  description: string;
+}
+
+type DomainKey =
+  | 'auth'
+  | 'company'
+  | 'jobs'
+  | 'application'
+  | 'document'
+  | 'interview'
+  | 'community'
+  | 'billing';
+
+export const domainCards: Record<DomainKey, DomainCard[]> = {
   auth: [
     {
       title: '회원가입 분기',

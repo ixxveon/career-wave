@@ -24,6 +24,7 @@ public class SecurityConfig {
                     "/api/admin/auth/**",
                     "/api/user/auth/**"
                 ).permitAll()
+                .requestMatchers("/api/v1/admin/scraping/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             );
         return http.build();
