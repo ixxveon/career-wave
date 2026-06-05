@@ -38,6 +38,7 @@
   - 단순 확장자(.pdf) 체크는 우회 가능 — 파일 Magic Number 또는 Apache Tika로 실제 MIME 검증 권장
 - [ ] 파일 크기 10MB 초과 검증
 - [ ] UUID 기반 저장 파일명 생성 유틸 작성 (`{UUID}.{확장자}`)
+- [ ] S3 경로 생성 로직 작성 (`resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — `LocalDate.now()` 활용)
 - [ ] S3 업로드 로직 구현 — `stored_file_name` 사용, `original_name` DB 별도 저장
 - [ ] `Document` 저장 (`status = UPLOADED`, `file_type = RESUME`)
 - [ ] FastAPI 분석 트리거 (비동기, 스텁 → 실제 연동)
@@ -64,7 +65,8 @@
 - [ ] `ResumeDTO.ResponseFeedback` 및 중첩 record 작성
   - `ScoreDetail`, `FeedbackDetail`, `StarAnalysis`, `QuantAnalysis`, `AnalysisItem`
 - [ ] JSONB `feedback_details` 역직렬화 처리 — `AttributeConverter` 구현 (`hypersistence-utils` 사용 시 팀 합의 필요)
-  - `ObjectMapper` 직접 구현 시 `JsonProcessingException` 전역 예외 처리 필수 — 미처리 시 AI 응답 파싱 실패로 500 에러 발생
+- [ ] `JsonProcessingException` 캐치 후 `CustomException(ErrorCode.FEEDBACK_PARSE_ERROR)` 변환 — 서버 크래시 방지
+- [ ] `GlobalExceptionHandler`에 `FEEDBACK_PARSE_ERROR` 핸들러 등록 ("분석 결과 변환 중 오류가 발생했습니다" 메시지 반환)
 - [ ] IDOR 검증 — `document.member_id != memberId` 시 `DOCUMENT_ACCESS_DENIED(403)`
 - [ ] `DocumentFeedback` 없는 경우 status만 포함한 응답 반환
 - [ ] `ResumeController.getFeedback()` 구현
@@ -118,3 +120,24 @@
 - [ ] IDOR 시나리오 수동 테스트 (타인 documentId로 요청 시 403 확인)
 - [x] 프론트 Base URL 일치 확인 — `/api/v1/user/resume` 통일 완료
 - [ ] 파일 MIME type 검증 우회 시도 테스트
+
+---
+
+## 권장 구현 시작 순서
+
+> 설계 Phase 순서와 별개. 실제 코딩 시작 시 아래 순서로 진행하면 흐름 검증이 빠르다.
+
+```
+[Step 1]  Phase 1 (엔티티 · Repository · ErrorCode)
+              ↓
+          Phase 2 (이력서 업로드 API)
+              ↓
+          검증: 프론트 → Spring → S3 흐름 확인
+              - S3 경로가 resumes/{날짜}/{UUID}.{확장자}로 저장되는가
+              - DB에 Document가 UPLOADED 상태로 저장되는가
+              - 응답에 documentId(UUID)가 내려오는가
+
+[Step 2]  Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
+              ↑
+          Phase 4 진입 전, FastAPI 팀과 feedback_details JSONB 스키마 합의 필수
+```

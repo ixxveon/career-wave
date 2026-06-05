@@ -22,6 +22,7 @@
 - [ ] PDF·DOC·DOCX 외 파일 타입(MIME type 기반) 시 `INVALID_FILE_TYPE(400)` 반환
 - [ ] 검증 실패 시 S3 업로드가 수행되지 않는다
 - [ ] S3 저장 파일명이 `{UUID}.{확장자}` 형식이며 `original_name`을 S3 키로 사용하지 않는다
+- [ ] S3 저장 경로가 `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` 형식이다 (루트 직접 저장 금지)
 - [ ] `stored_file_name`, `file_url`, `original_name` 세 컬럼이 각각 올바르게 저장된다
 - [ ] S3 업로드 성공 후 `Document` 저장 (`status = UPLOADED`)
 - [ ] FastAPI 분석 트리거가 비동기로 수행된다 (업로드 응답 지연 없음)
@@ -45,6 +46,8 @@
 - [ ] 본인 소유가 아닌 `documentId` 시 `DOCUMENT_ACCESS_DENIED(403)` 반환 (IDOR 방어)
 - [ ] 분석 미완료 시 `scores`, `feedbackDetails` 필드가 `null`로 반환된다
 - [ ] `feedbackDetails` JSONB 역직렬화가 정상 동작한다
+- [ ] JSONB 파싱 실패 시 500 서버 크래시 없이 `FEEDBACK_PARSE_ERROR` 에러 응답이 반환된다
+- [ ] `GlobalExceptionHandler`에 파싱 실패 핸들러가 등록되어 있다
 - [ ] `starAnalysis`, `quantAnalysis` 항목이 null인 경우 응답에서 처리된다
 
 ---

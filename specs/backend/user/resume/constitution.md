@@ -41,6 +41,8 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 - 이력서(`RESUME`) 타입 Document의 `file_url`은 null 불가; 자기소개서(`COVER_LETTER`) 타입의 `file_url`은 항상 null.
 - 파일 검증(크기·MIME type 기반 확장자)은 서비스 레이어 진입 전에 처리. 검증 실패 시 S3 업로드 절대 수행 금지.
 - S3에 저장하는 파일명(`stored_file_name`)은 반드시 `{UUID}.{확장자}` 형식으로 생성. `original_name`을 S3 키로 직접 사용 금지.
+- S3 저장 경로는 `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` 형식으로 날짜별 폴더에 분산 저장. 루트 직접 저장 금지.
+- `feedback_details` JSONB 역직렬화 실패 시 500으로 서버를 크래시시키지 않고 `FEEDBACK_PARSE_ERROR` ErrorCode로 처리. `GlobalExceptionHandler`에 파싱 예외 핸들러 등록 필수.
 - `document.status`의 `PENDING` 이후 전이는 Webhook 콜백 또는 FastAPI만 수행. Spring 서비스 레이어에서 직접 변경 금지.
 - Webhook 멱등성 보장: `document.status`가 이미 `COMPLETED` 또는 `FAILED`인 경우 동일 Webhook 재수신 시 DB 덮어쓰기 및 예외 발생 없이 조용히 무시한다.
 
@@ -62,6 +64,7 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 | `documentId` 타입 | UUID v4 | IDOR 방어, 노출 안전성 |
 | 파일 저장 | S3 (외부 스토리지) | DB 직접 저장 지양 |
 | S3 파일명 | `{UUID}.{확장자}` | 한글·특수문자 파일명 깨짐 방지, 원본명은 DB 컬럼(`original_name`)에 별도 보존 |
+| S3 경로 구조 | `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` | 파일 수만 개 시 루트 나열 성능 저하 방지, 날짜별 분산 관리 |
 | 분석 결과 수신 | Webhook (FastAPI → Spring `POST .../webhook`) | Spring이 DB 저장 + WebSocket 알림을 한 흐름에서 처리 가능 |
 | `feedback_details` 저장 | JSONB + `AttributeConverter` 또는 `hypersistence-utils` | AI 응답 스키마 유연성 + JPA 변환 편의성 |
 | WebSocket 구현 | STOMP (`spring-boot-starter-websocket`) | 표준화된 메시지 프로토콜, 토픽 기반 구독 구조 |

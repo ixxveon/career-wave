@@ -234,6 +234,7 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 - 파일 크기 10MB 초과 → `INVALID_FILE_SIZE(400)`
 - 확장자 PDF·DOC·DOCX 외 (MIME type 기반 검증) → `INVALID_FILE_TYPE(400)`
 - **검증 통과 후** UUID 기반 저장 파일명 생성 (`{UUID}.{확장자}`)
+- S3 저장 경로: `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — 날짜별 폴더로 파일 분산 관리
 - S3 업로드 후 `file_url`, `stored_file_name`, `original_name` 저장
 - `Document` 저장 (`status = UPLOADED`)
 - FastAPI 분석 비동기 트리거 (내부 HTTP — Webhook 방식 적용)
@@ -251,6 +252,7 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 - Document 존재하지 않음 → `DOCUMENT_NOT_FOUND(404)`
 - 소유자 불일치 → `DOCUMENT_ACCESS_DENIED(403)`
 - `DocumentFeedback` 조회 (없으면 status만 반환)
+- `feedback_details` JSONB 역직렬화 실패 시 → `FEEDBACK_PARSE_ERROR(500)` + 사용자 친화적 메시지 반환 (서버 전체 크래시 방지)
 - 반환: `ResumeDTO.ResponseFeedback`
 
 #### getHistory(UUID memberId, int page, int size)
@@ -270,6 +272,7 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 | `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 |
 | `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId |
 | `DOCUMENT_ACCESS_DENIED` | 403 | 본인 소유가 아닌 문서 접근 (IDOR) |
+| `FEEDBACK_PARSE_ERROR` | 500 | JSONB 역직렬화 실패 (FastAPI 응답 구조 변경 등) |
 | `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
 
 ---
