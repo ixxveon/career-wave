@@ -1,22 +1,30 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Send } from 'lucide-react';
+import { supportApi, INQUIRY_CATEGORY_LABEL, type InquiryCategory } from '../../api/supportApi';
 import './styles/InquiryCreatePage.css';
 
-const CATEGORIES = ['AI 이력서 분석', 'AI 면접', '구독/결제', '계정', '채용 공고', '기타'];
+const CATEGORY_OPTIONS = Object.entries(INQUIRY_CATEGORY_LABEL) as [InquiryCategory, string][];
 
 export default function InquiryCreatePage() {
   const navigate = useNavigate();
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState<InquiryCategory | ''>('');
   const [title,    setTitle]    = useState('');
   const [content,  setContent]  = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState('');
 
   const canSubmit = category && title.trim() && content.trim().length >= 10;
 
   function handleSubmit() {
-    if (!canSubmit) return;
-    setSubmitted(true);
+    if (!canSubmit || loading) return;
+    setLoading(true);
+    setError('');
+    supportApi.createInquiry({ category, title, content })
+      .then(() => setSubmitted(true))
+      .catch(() => setError('문의 접수 중 오류가 발생했습니다. 다시 시도해 주세요.'))
+      .finally(() => setLoading(false));
   }
 
   if (submitted) {
@@ -61,13 +69,13 @@ export default function InquiryCreatePage() {
           <div className="ic-field">
             <label className="ic-field__label">문의 유형 <span>*</span></label>
             <div className="ic-cats">
-              {CATEGORIES.map(c => (
+              {CATEGORY_OPTIONS.map(([value, label]) => (
                 <button
-                  key={c}
-                  className={`ic-cat${category === c ? ' ic-cat--on' : ''}`}
-                  onClick={() => setCategory(c)}
+                  key={value}
+                  className={`ic-cat${category === value ? ' ic-cat--on' : ''}`}
+                  onClick={() => setCategory(value)}
                 >
-                  {c}
+                  {label}
                 </button>
               ))}
             </div>
@@ -99,6 +107,8 @@ export default function InquiryCreatePage() {
             </span>
           </div>
 
+          {error && <p className="ic-error">{error}</p>}
+
           <div className="ic-notice">
             <p>· 문의 답변은 등록하신 이메일로도 발송됩니다.</p>
             <p>· 답변까지 영업일 기준 평균 1~2일이 소요됩니다.</p>
@@ -109,10 +119,10 @@ export default function InquiryCreatePage() {
             <button className="ic-btn ic-btn--outline" onClick={() => navigate('/support/inquiry')}>취소</button>
             <button
               className="ic-btn ic-btn--primary"
-              disabled={!canSubmit}
+              disabled={!canSubmit || loading}
               onClick={handleSubmit}
             >
-              <Send size={14} /> 문의 접수
+              <Send size={14} /> {loading ? '접수 중...' : '문의 접수'}
             </button>
           </div>
         </div>

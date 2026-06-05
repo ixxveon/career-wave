@@ -15,11 +15,14 @@ import JobNoticeDetail from './JobNoticeDetail';
 import {
   mapJobNoticeApiToViewModel,
   type JobNotice,
+  type JobNoticeBookmarkResponse,
   type JobNoticeBookmarkMap,
   type JobNoticeListStats,
   type JobNoticeQueryParams,
-} from './JobNoticeTypes';
+} from '../../types/jobNotice';
+import { jobApi } from '../../api/jobApi';
 import { useJobNoticeList } from '../../hooks/jobNotice/useJobNoticeList';
+import { authSession } from '../../utils/member/authSession';
 import './styles/JobNoticeListPage.css';
 
 const FILTER_GROUPS = [
@@ -72,6 +75,12 @@ type Bookmarks = JobNoticeBookmarkMap;
 type Period = (typeof PERIODS)[number];
 type SortOption = (typeof SORT_OPTIONS)[number];
 type JobNoticeListStatus = 'loading' | 'success' | 'empty' | 'error';
+type JobNoticeFilterParamKey =
+  | 'jobType'
+  | 'experience'
+  | 'employmentType'
+  | 'location'
+  | 'companySize';
 
 interface BannerStat {
   label: string;
@@ -104,122 +113,6 @@ function createBannerStats(stats: JobNoticeListStats): BannerStat[] {
   ];
 }
 
-const JOBS: JobNotice[] = [
-  {
-    id: 1,
-    company: '제너러티브랩',
-    title: '제너러티브랩 공개채용 [학력, 경력, 스펙 무관]',
-    jobType: '백엔드',
-    exp: '경력무관',
-    employment: '전환형인턴',
-    location: '서울',
-    companySize: '스타트업',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-05-28',
-    tags: ['프롬프트 엔지니어', '개발', 'AI 컨설턴트'],
-    source: '직행수집',
-    recommended: true,
-    recommendScore: 98,
-    views: 1756,
-    bookmarked: false,
-  },
-  {
-    id: 2,
-    company: '리빌더에이아이',
-    title: '[리빌더AI] QA 엔지니어',
-    jobType: '데이터',
-    exp: '3~20년',
-    employment: '정규직',
-    location: '경기',
-    companySize: '스타트업',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-05-27',
-    tags: ['테스트자동화', '이슈트래킹', 'QA프로세스'],
-    source: '그룹바이',
-    recommended: false,
-    recommendScore: 86,
-    views: 6,
-    bookmarked: false,
-  },
-  {
-    id: 3,
-    company: '코코네',
-    title: '[Cocone Internship] AI Engineer',
-    jobType: '데이터',
-    exp: '신입',
-    employment: '인턴',
-    location: '서울',
-    companySize: '중견',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-05-24',
-    tags: ['AI어시스턴트', '아바타메타버스', 'AI모델연구'],
-    source: '그룹바이',
-    recommended: false,
-    recommendScore: 82,
-    views: 102,
-    bookmarked: false,
-  },
-  {
-    id: 4,
-    company: '비전스페이스',
-    title: '산업용 로봇 AI 자율주행 & ROS & RMS 담당',
-    jobType: 'DevOps',
-    exp: '신입',
-    employment: '정규직',
-    location: '서울',
-    companySize: '스타트업',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-05-20',
-    tags: ['자율주행설계', '로봇'],
-    source: '그룹바이',
-    recommended: false,
-    recommendScore: 78,
-    views: 494,
-    bookmarked: false,
-  },
-  {
-    id: 5,
-    company: '어센트 AI',
-    title: '인프라 엔지니어 (IDC)',
-    jobType: 'DevOps',
-    exp: '4~10년',
-    employment: '정규직',
-    location: '서울',
-    companySize: '중견',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-05-12',
-    tags: ['인프라엔지니어', '쿠버네티스', '오픈소스운영'],
-    source: '그룹바이',
-    recommended: false,
-    recommendScore: 84,
-    views: 19,
-    bookmarked: false,
-  },
-  {
-    id: 6,
-    company: '(주)무아스',
-    title: '[무아스] 인플루언서 공동구매 MD 채용 공고',
-    jobType: '프론트엔드',
-    exp: '2~20년',
-    employment: '정규직',
-    location: '서울',
-    companySize: '중견',
-    salary: '협의',
-    deadline: '상시',
-    postedAt: '2026-04-28',
-    tags: ['공동구매', '커머스', '인플루언서'],
-    source: '그룹바이',
-    recommended: false,
-    recommendScore: 72,
-    views: 1,
-    bookmarked: false,
-  },
-];
 
 function createInitialFilters(): Filters {
   return Object.fromEntries(FILTER_GROUPS.map((group) => [group.label, DEFAULT_FILTER_VALUE])) as Filters;
@@ -252,7 +145,7 @@ function createJobNoticeQueryParams({
     params.keyword = keyword;
   }
 
-  (Object.entries(API_FILTER_PARAM_BY_LABEL) as Array<[FilterLabel, keyof JobNoticeQueryParams]>).forEach(([label, paramKey]) => {
+  (Object.entries(API_FILTER_PARAM_BY_LABEL) as Array<[FilterLabel, JobNoticeFilterParamKey]>).forEach(([label, paramKey]) => {
     const value = filters[label];
     if (value !== DEFAULT_FILTER_VALUE) {
       params[paramKey] = value;
@@ -262,8 +155,18 @@ function createJobNoticeQueryParams({
   return params;
 }
 
-function BannerSearch({ onSearch }: { onSearch: (searchText: string) => void }) {
-  const [searchText, setSearchText] = useState('');
+function BannerSearch({
+  value,
+  onSearch,
+}: {
+  value: string;
+  onSearch: (searchText: string) => void;
+}) {
+  const [searchText, setSearchText] = useState(value);
+
+  useEffect(() => {
+    setSearchText(value);
+  }, [value]);
 
   function applySearch(value: string) {
     onSearch(value.trim());
@@ -286,6 +189,7 @@ function BannerSearch({ onSearch }: { onSearch: (searchText: string) => void }) 
         <input
           type="search"
           value={searchText}
+          aria-label="채용 공고 검색어"
           placeholder="회사명, 공고명, 기술 스택으로 검색하세요"
           onChange={(event) => setSearchText(event.target.value)}
         />
@@ -300,6 +204,7 @@ function BannerSearch({ onSearch }: { onSearch: (searchText: string) => void }) 
           <button
             type="button"
             key={tag}
+            aria-label={`${tag} 인기 검색어로 검색`}
             onClick={() => selectPopularSearchTag(tag)}
           >
             {tag}
@@ -351,17 +256,6 @@ function JobCard({ job, bookmarked, onBookmark, onClick }: JobCardProps) {
   return (
     <article
       className={`jn-card${job.recommended ? ' jn-card--featured' : ''}`}
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(event) => {
-        if (event.target instanceof HTMLElement && event.target.closest('button')) return;
-
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onClick();
-        }
-      }}
     >
       <div className="jn-card__top">
         <div className="jn-card__logo">{job.company[0]}</div>
@@ -372,7 +266,8 @@ function JobCard({ job, bookmarked, onBookmark, onClick }: JobCardProps) {
         <button
           className={`jn-bookmark${bookmarked ? ' jn-bookmark--active' : ''}`}
           type="button"
-          aria-label={bookmarked ? '북마크 해제' : '북마크'}
+          aria-label={`${job.title} ${bookmarked ? '북마크 해제' : '북마크'}`}
+          aria-pressed={bookmarked}
           onClick={(event) => {
             event.stopPropagation();
             onBookmark(job.id);
@@ -382,7 +277,16 @@ function JobCard({ job, bookmarked, onBookmark, onClick }: JobCardProps) {
         </button>
       </div>
 
-      <h3>{job.title}</h3>
+      <h3>
+        <button
+          type="button"
+          className="jn-card__detail-button"
+          aria-label={`${job.company} ${job.title} 상세 보기`}
+          onClick={onClick}
+        >
+          {job.title}
+        </button>
+      </h3>
 
       <div className="jn-card__tags">
         {job.tags.map((tag) => <span key={tag}>#{tag}</span>)}
@@ -421,7 +325,7 @@ function FilterBlock({ group, value, onChange }: FilterBlockProps) {
 
   return (
     <details className="jn-filter-block" ref={detailsRef}>
-      <summary>
+      <summary aria-label={`${group.label} 필터 선택, 현재 값 ${value}`}>
         <span>{group.label}</span>
         {value !== DEFAULT_FILTER_VALUE && <em>{value}</em>}
         <strong>+</strong>
@@ -432,6 +336,8 @@ function FilterBlock({ group, value, onChange }: FilterBlockProps) {
             type="button"
             key={option}
             className={value === option ? 'is-active' : ''}
+            aria-label={`${group.label} 필터 ${option} 선택`}
+            aria-pressed={value === option}
             onClick={() => selectOption(option)}
           >
             {option}
@@ -450,6 +356,8 @@ function PeriodSelector({ period, onChange }: { period: Period; onChange: (perio
           key={item}
           type="button"
           className={period === item ? 'is-active' : ''}
+          aria-label={`${item} 기간으로 필터링`}
+          aria-pressed={period === item}
           onClick={() => onChange(item)}
         >
           {item}
@@ -479,6 +387,8 @@ function SortDropdown({ selected, isOpen, onToggle, onSelect }: SortDropdownProp
               type="button"
               key={option}
               className={selected === option ? 'is-active' : ''}
+              aria-label={`${option} 정렬 선택`}
+              aria-pressed={selected === option}
               onClick={() => onSelect(option)}
             >
               {option}
@@ -513,17 +423,44 @@ export default function JobNoticeListPage() {
   const [selectedJob, setSelectedJob] = useState<JobNotice | null>(null);
   const [filters, setFilters] = useState(createInitialFilters);
   const [bookmarks, setBookmarks] = useState<Bookmarks>({});
+  const [bookmarkErrorMessage, setBookmarkErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
   function updateFilter(label: FilterLabel, value: string) {
     setFilters((current) => ({ ...current, [label]: value }));
   }
 
-  function toggleBookmark(id: number, fallbackBookmarked = false) {
-    setBookmarks((current) => {
-      const currentValue = current[id] ?? fallbackBookmarked;
-      return { ...current, [id]: !currentValue };
-    });
+  async function toggleBookmark(id: number, fallbackBookmarked = false) {
+    const hasAccessToken = Boolean(authSession.getAccessToken());
+
+    if (!hasAccessToken) {
+      setBookmarkErrorMessage('북마크 기능은 로그인이 필요합니다.');
+      return;
+    }
+
+    const previousBookmarked = bookmarks[id] ?? fallbackBookmarked;
+    const nextBookmarked = !previousBookmarked;
+
+    try {
+      setBookmarkErrorMessage('');
+      const bookmarkResult = await jobApi.toggleJobNoticeBookmark(
+        id,
+        nextBookmarked,
+      ) as JobNoticeBookmarkResponse | null;
+
+      if (!bookmarkResult) throw new Error('북마크 응답이 비어 있습니다.');
+
+      setBookmarks((current) => ({
+        ...current,
+        [bookmarkResult.id]: bookmarkResult.bookmarked,
+      }));
+    } catch {
+      setBookmarks((current) => ({
+        ...current,
+        [id]: previousBookmarked,
+      }));
+      setBookmarkErrorMessage('북마크 상태를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    }
   }
 
   function resetFilter(label: FilterLabel) {
@@ -574,10 +511,16 @@ export default function JobNoticeListPage() {
     void refetchJobNoticeList();
   }
 
+  function resetSearchConditions() {
+    setSearchQuery('');
+    setFilters(createInitialFilters());
+    setPeriod('기간 전체');
+  }
+
   return (
     <div className="jn">
       <section className="jn-banner">
-        <BannerSearch onSearch={setSearchQuery} />
+        <BannerSearch value={searchQuery} onSearch={setSearchQuery} />
         <BannerStats stats={listStats} />
       </section>
 
@@ -610,6 +553,15 @@ export default function JobNoticeListPage() {
             </div>
           </div>
 
+          {bookmarkErrorMessage && (
+            <div className="jn-feedback jn-feedback--error" role="alert">
+              <span>{bookmarkErrorMessage}</span>
+              {bookmarkErrorMessage.includes('로그인') && (
+                <a href="/auth/login">로그인</a>
+              )}
+            </div>
+          )}
+
           {listStatus === 'success' && (
             <div className="jn-job-grid">
               {filteredJobs.map((job) => (
@@ -633,10 +585,11 @@ export default function JobNoticeListPage() {
           )}
 
           {listStatus === 'empty' && (
-            <div className="jn-empty">
+            <div className="jn-empty" role="status" aria-live="polite">
               <Filter size={18} />
               <strong>조건에 맞는 공고가 없습니다.</strong>
               <span>필터를 줄이거나 검색어를 다시 입력해 주세요.</span>
+              <button type="button" onClick={resetSearchConditions}>조건 초기화</button>
             </div>
           )}
           {listStatus === 'error' && (

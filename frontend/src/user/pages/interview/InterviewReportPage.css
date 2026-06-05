@@ -12,6 +12,24 @@
   margin: 0 auto;
 }
 
+/* ── 로딩 / 에러 상태 ── */
+.ir-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 60vh;
+  color: #6b7280;
+  font-size: 15px;
+}
+.ir-state--error { color: #ef4444; }
+.ir-state__spinner {
+  animation: ir-spin 1s linear infinite;
+  color: var(--color-primary, #6366f1);
+}
+@keyframes ir-spin { to { transform: rotate(360deg); } }
+
 /* ══════════════════════════════════════
    공통 버튼
 ══════════════════════════════════════ */

@@ -1,4 +1,4 @@
-import type { ResumeHistoryParams, ResumeHistoryResponse } from '../../types/resume.d';
+import type { ResumeHistoryParams, ResumeHistoryResponse } from '../../types/resume';
 import { memberApiClient } from '../member/memberApiClient';
 
 export const resumeHistoryApi = {

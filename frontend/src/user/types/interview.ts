@@ -51,8 +51,16 @@ export type SessionStatus       = typeof SESSION_STATUS[keyof typeof SESSION_STA
 export type SpringWSMessageType = typeof SPRING_WS_MESSAGE_TYPE[keyof typeof SPRING_WS_MESSAGE_TYPE];
 export type FastApiWSMessageType = typeof FASTAPI_WS_MESSAGE_TYPE[keyof typeof FASTAPI_WS_MESSAGE_TYPE];
 
-/** Frontend 상태 머신 (constitution.md §2) */
-export type InterviewSessionState = 'READY' | 'RUNNING' | 'RECONNECTING' | 'FINISHED' | 'ERROR';
+/** Frontend 상태 머신 상수 (SESSION_TYPE 패턴 동일, constitution.md §2) */
+export const SESSION_STATE = {
+  READY:        'READY',
+  RUNNING:      'RUNNING',
+  RECONNECTING: 'RECONNECTING',
+  FINISHED:     'FINISHED',
+  ERROR:        'ERROR',
+} as const;
+
+export type InterviewSessionState = typeof SESSION_STATE[keyof typeof SESSION_STATE];
 
 // ── API Request DTOs ──────────────────────────────────────────────
 

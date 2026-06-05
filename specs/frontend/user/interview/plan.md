@@ -47,12 +47,10 @@ src/
 └── user/
     ├── api/
     │   └── interview/
-    │       ├── startSession.ts              # 면접 세션 시작 및 documentId 연동
-    │       ├── submitTextAnswer.ts          # 텍스트 답변 전송
-    │       ├── submitVoiceBlob.ts           # 음성 Blob 전송 (STT 파이프라인)
-    │       ├── endSession.ts               # 면접 세션 종료 및 스크립트 동기화
-    │       ├── getInterviewReport.ts        # 면접 분석 리포트 조회
-    │       └── getInterviewHistory.ts       # 면접 이력 목록 페이징 조회
+    │       ├── index.ts                     # 단일 진입점 re-export
+    │       ├── sessionApi.ts               # 세션 시작·종료·텍스트/음성 답변 전송
+    │       ├── reportApi.ts                # 면접 분석 리포트 조회
+    │       └── historyApi.ts               # 면접 이력 목록 페이징 조회
     ├── components/
     │   └── interview/
     │       ├── PreflightCheck.tsx           # 면접 진입 전 권한·네트워크 사전 진단
@@ -64,23 +62,30 @@ src/
     │       ├── InterviewTimer.tsx           # 문항별 타이머
     │       ├── ReportChart.tsx             # Recharts 레이더 차트
     │       └── ScriptAnalysisView.tsx       # 스크립트 + 지표 분석 뷰
+    ├── constants/
+    │   └── interview.ts                     # 도메인 공통 상수 (타이머·WS·LLM·리포트)
     ├── hooks/
     │   └── interview/
     │       ├── usePreflightCheck.ts         # 마이크 권한·WebSocket 연결 사전 진단
     │       ├── useInterviewSession.ts       # 세션 생명주기 제어 (READY→RUNNING→FINISHED)
+    │       ├── useInterviewReport.ts        # TanStack Query 기반 리포트·이력 조회 훅
     │       ├── useSpringWebSocket.ts        # Spring WebSocket 연결 (세션/채팅)
     │       ├── useFastApiWebSocket.ts       # FastAPI WebSocket 연결 (LLM/STT/TTS)
     │       ├── useAudioRecorder.ts          # MediaRecorder 래핑, Safari MIME 분기
     │       ├── useTTSQueue.ts              # TTS 오디오 재생 큐 관리
-    │       ├── useInterviewTimer.ts         # 문항별 타이머 로직
-    │       ├── useInterviewReport.ts        # TanStack Query 기반 리포트 조회
-    │       └── useInterviewHistory.ts       # TanStack Query 기반 이력 목록 조회
+    │       └── useInterviewTimer.ts         # 문항별 타이머 로직
+    ├── pages/
+    │   └── interview/
+    │       ├── TextInterviewPage.tsx        # 면접 진입·설정 페이지
+    │       ├── InterviewRoom.tsx            # 면접 진행 UI (RUNNING 상태)
+    │       ├── InterviewReportPage.tsx      # 면접 결과 리포트 페이지
+    │       └── InterviewHomePage.tsx        # 면접 홈 (이력·퀵스타트)
     ├── types/
-    │   └── interview.d.ts                   # API DTO, 세션·상태 머신 타입, WS 메시지 포맷
+    │   └── interview.ts                     # API DTO, 세션·상태 머신 타입, WS 메시지 포맷
     └── utils/
         └── interview/
             ├── audioUtils.ts               # MIME 타입 분기 (Safari WebM 미지원 대응)
-            ├── voiceQuality.ts             # 음성 품질 유효성 필터링 (유효 비율 계산)
+            ├── voiceQuality.ts             # 음성 품질 유효성 필터링 및 하이브리드 점수 산정
             └── sessionStorage.ts           # 면접 세션 복구용 직렬화/역직렬화
 ```
 

@@ -5,7 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import DocumentResultView from './DocumentResultView';
 import { useAnalysisResult } from '../../hooks/resume/useAnalysisResult';
 import type { DocumentResult } from '../../types/document';
-import type { AnalysisResultResponse } from '../../types/resume.d';
+import type { AnalysisResultResponse } from '../../types/resume';
 import './DocumentReportPage.css';
 
 // ── AnalysisResultResponse → DocumentResult 매핑 ─────────────

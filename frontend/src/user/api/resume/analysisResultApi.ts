@@ -1,4 +1,4 @@
-import type { AnalysisResultResponse } from '../../types/resume.d';
+import type { AnalysisResultResponse } from '../../types/resume';
 import { memberApiClient } from '../member/memberApiClient';
 
 export const analysisResultApi = {

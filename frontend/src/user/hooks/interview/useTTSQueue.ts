@@ -2,6 +2,11 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 
 export type TTSQueueStatus = 'idle' | 'loading' | 'playing';
 
+export interface UseTTSQueueOptions {
+  /** 청크 디코딩/재생 실패 시 호출 — 에러 토스트 노출용 (checklist §TTS 재생 실패) */
+  onError?: () => void;
+}
+
 export interface UseTTSQueueResult {
   status: TTSQueueStatus;
   /** FastAPI WS에서 수신한 base64 인코딩 오디오 청크를 큐에 추가 */
@@ -12,7 +17,7 @@ export interface UseTTSQueueResult {
   clear: () => void;
 }
 
-export function useTTSQueue(): UseTTSQueueResult {
+export function useTTSQueue({ onError }: UseTTSQueueOptions = {}): UseTTSQueueResult {
   const [status, setStatus] = useState<TTSQueueStatus>('idle');
 
   const queueRef         = useRef<string[]>([]);
@@ -47,6 +52,9 @@ export function useTTSQueue(): UseTTSQueueResult {
    * playNextRef 패턴으로 onended 내부 stale closure 방지
    */
   const playNextRef = useRef<() => Promise<void>>(async () => {});
+
+  const onErrorRef = useRef(onError);
+  useEffect(() => { onErrorRef.current = onError; }, [onError]);
 
   const playNext = useCallback(async () => {
     if (isPlayingRef.current) return;
@@ -104,8 +112,9 @@ export function useTTSQueue(): UseTTSQueueResult {
         }
       };
     } catch {
-      // 디코딩 실패 시 해당 청크 스킵하고 다음 청크 재생 시도
+      // 디코딩/재생 실패 시 에러 토스트 콜백 호출 후 다음 청크 재생 시도 (checklist §TTS)
       isPlayingRef.current = false;
+      onErrorRef.current?.();
       if (generationRef.current === myGeneration) {
         playNextRef.current?.();
       }

@@ -13,7 +13,7 @@ import type {
   SubmitCoverLetterResponse,
   AnalysisResultResponse,
   WsStatusMessage,
-} from '../../types/resume.d';
+} from '../../types/resume';
 
 export interface CoverLetterFormItem {
   question: string;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Lightbulb, Mic, ThumbsUp, ThumbsDown, Wand2, Star,
@@ -15,7 +15,7 @@ interface TotalScoreRingProps {
   score: number;
 }
 
-function TotalScoreRing({ score }: TotalScoreRingProps) {
+const TotalScoreRing = memo(function TotalScoreRing({ score }: TotalScoreRingProps) {
   const r = 52, cx = 68, cy = 68;
   const circ = 2 * Math.PI * r;
   const color = scoreColor(score);
@@ -36,7 +36,7 @@ function TotalScoreRing({ score }: TotalScoreRingProps) {
       <text x={cx} y={cy + 14} textAnchor="middle" fontSize="11" fontWeight="600" fill="#64748b">/ 100점</text>
     </svg>
   );
-}
+});
 
 interface ScoreBarProps {
   label: string;
@@ -44,7 +44,7 @@ interface ScoreBarProps {
   color: string;
 }
 
-function ScoreBar({ label, value, color }: ScoreBarProps) {
+const ScoreBar = memo(function ScoreBar({ label, value, color }: ScoreBarProps) {
   return (
     <div className="dr-bar-row">
       <span className="dr-bar-row__label">{label}</span>
@@ -54,7 +54,7 @@ function ScoreBar({ label, value, color }: ScoreBarProps) {
       <span className="dr-bar-row__val" style={{ color }}>{value}</span>
     </div>
   );
-}
+});
 
 interface DocumentResultViewProps {
   result: DocumentResult;

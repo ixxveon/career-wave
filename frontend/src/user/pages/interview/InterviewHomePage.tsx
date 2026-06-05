@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import './InterviewHomePage.css';
 import {
   MessageSquare, Video, ChevronRight, Lightbulb,
-  FileText, User, Zap, ClipboardList, X,
+  FileText, User, Zap, ClipboardList, X, Loader2,
 } from 'lucide-react';
-import type { PlanLimits, MockUser, HistoryDisplayItem } from '../../types/interview';
+import type { PlanLimits, MockUser } from '../../types/interview';
+import { SESSION_TYPE } from '../../types/interview';
+import { useInterviewHistory } from '../../hooks/interview/useInterviewReport';
 
 /* ── 멤버십별 월 이용 한도 ─────────────────────────
    FREE    : 서류 분석  1회 / 면접 1회
@@ -24,15 +26,15 @@ const MOCK_USER: MockUser = {
   interviewUsed: 3,
 };
 
-const mockHistory: HistoryDisplayItem[] = [
-  { date: '05-22', type: 'video', typeLabel: '비디오 면접', target: '토스 (백엔드)', score: 88 },
-  { date: '05-20', type: 'text',  typeLabel: '텍스트 면접', target: '카카오 (백엔드)', score: 75 },
-  { date: '05-18', type: 'text',  typeLabel: '텍스트 면접', target: '네이버 (인턴)',   score: 62 },
-];
-
 function scoreClass(s: number): string {
   return s >= 80 ? 'iv-score--high' : s >= 65 ? 'iv-score--mid' : 'iv-score--low';
 }
+
+const SESSION_TYPE_LABEL: Record<string, string> = {
+  [SESSION_TYPE.TEXT]:  '텍스트 면접',
+  [SESSION_TYPE.VOICE]: '음성 면접',
+  [SESSION_TYPE.VIDEO]: '비디오 면접',
+};
 
 interface ComingSoonModalProps {
   onClose: () => void;
@@ -62,6 +64,8 @@ function ComingSoonModal({ onClose, onTextStart }: ComingSoonModalProps) {
 function InterviewHomePage() {
   const navigate = useNavigate();
   const [showComingSoon, setShowComingSoon] = useState(false);
+
+  const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
 
   const { membership, documentUsed, interviewUsed } = MOCK_USER;
   const limits      = PLAN_LIMITS[membership];
@@ -220,28 +224,59 @@ function InterviewHomePage() {
           최근 연습 히스토리
           <span className="iv-card__subtitle">최신 3개</span>
         </h2>
-        <div className="iv-table-wrap"><table className="iv-table">
-          <thead>
-            <tr>
-              <th>날짜</th>
-              <th>면접 종류</th>
-              <th>타겟 기업/직무</th>
-              <th>점수</th>
-              <th>리포트 보기</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockHistory.map((row, i) => (
-              <tr key={i}>
-                <td className="iv-table__date">{row.date}</td>
-                <td><span className={`iv-badge iv-badge--${row.type}`}>{row.typeLabel}</span></td>
-                <td>{row.target}</td>
-                <td><span className={`iv-score ${scoreClass(row.score)}`}>{row.score}점</span></td>
-                <td><button className="iv-report-btn" onClick={() => navigate('/interview/report')}>결과 보기</button></td>
+        {historyLoading ? (
+          <div className="iv-history-loading"><Loader2 size={20} className="iv-history-loading__spinner" /> 불러오는 중…</div>
+        ) : historyError ? (
+          <div className="iv-history-empty">
+            <p>이력을 불러오지 못했습니다.</p>
+            <button className="iv-tip__cta" onClick={() => refetchHistory()}>다시 시도 →</button>
+          </div>
+        ) : !historyData?.content.length ? (
+          <div className="iv-history-empty">
+            <p>아직 면접 이력이 없어요.</p>
+            <button className="iv-tip__cta" onClick={() => navigate('/interview/text')}>첫 면접 시작하기 →</button>
+          </div>
+        ) : (
+          <div className="iv-table-wrap"><table className="iv-table">
+            <thead>
+              <tr>
+                <th>날짜</th>
+                <th>면접 종류</th>
+                <th>타겟 기업</th>
+                <th>점수</th>
+                <th>리포트 보기</th>
               </tr>
-            ))}
-          </tbody>
-        </table></div>
+            </thead>
+            <tbody>
+              {historyData.content.map(row => (
+                <tr key={row.sessionId}>
+                  <td className="iv-table__date">
+                    {new Date(row.createdAt).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
+                  </td>
+                  <td>
+                    <span className={`iv-badge iv-badge--${row.sessionType.toLowerCase()}`}>
+                      {SESSION_TYPE_LABEL[row.sessionType] ?? row.sessionType}
+                    </span>
+                  </td>
+                  <td>{row.targetCompany ?? '—'}</td>
+                  <td>
+                    {row.totalScore !== null
+                      ? <span className={`iv-score ${scoreClass(row.totalScore)}`}>{row.totalScore}점</span>
+                      : <span className="iv-score iv-score--pending">집계 중</span>}
+                  </td>
+                  <td>
+                    <button
+                      className="iv-report-btn"
+                      onClick={() => navigate(`/interview/report?sessionId=${row.sessionId}`)}
+                    >
+                      결과 보기
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>
+        )}
       </div>
 
       {/* ── AI 팁 ── */}

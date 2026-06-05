@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FileSearch, FileText, ScrollText } from 'lucide-react';
 import HistoryItem from '../../components/resume/HistoryItem';
 import { useResumeHistory } from '../../hooks/resume/useResumeHistory';
-import type { FileType } from '../../types/resume.d';
+import type { FileType } from '../../types/resume';
 import './ResumeHistoryPage.css';
 
 const PAGE_SIZE = 10;

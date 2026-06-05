@@ -9,7 +9,7 @@ import type {
   UploadResumeResponse,
   AnalysisResultResponse,
   WsStatusMessage,
-} from '../../types/resume.d';
+} from '../../types/resume';
 
 export interface UseResumeUploadReturn {
   file: File | null;

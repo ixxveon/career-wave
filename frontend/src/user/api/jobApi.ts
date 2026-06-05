@@ -1,34 +1,68 @@
 import { apiClient } from '../../utils/apiClient';
+import type {
+    JobNoticeBookmarkResponse,
+    JobNoticeDetailApiResponse,
+    JobNoticeListApiResponse,
+    JobNoticeQueryParams,
+} from '../types/jobNotice';
+import { memberApiClient } from './member/memberApiClient';
 
-const JOB_NOTICE_BASE_PATH = '/v1/user/job-notices';
+const JOB_NOTICE_BASE_PATH = '/api/v1/user/job-notices';
 
-function createQueryString(params = {}) {
-  const query = new URLSearchParams();
+type QueryValue = string | number | boolean | null | undefined;
+type QueryParams = Partial<Record<keyof JobNoticeQueryParams, QueryValue>>;
+type JobPayload = Record<string, unknown>;
 
-  Object.entries(params).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === '') return;
-    query.set(key, String(value));
-  });
+function createQueryString(params: QueryParams = {}) {
+    const query = new URLSearchParams();
 
-  return query.toString();
+    Object.entries(params).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return;
+        query.set(key, String(value));
+    });
+
+    return query.toString();
 }
 
 export const jobApi = {
-  getJobNoticeList: (params = {}) => {
-    const query = createQueryString(params);
-    return apiClient(`${JOB_NOTICE_BASE_PATH}${query ? `?${query}` : ''}`);
-  },
+    getJobNoticeList: (params: JobNoticeQueryParams = {}): Promise<JobNoticeListApiResponse | null> => {
+        const query = createQueryString(params);
 
-  getJobs: (params = {}) => {
-    const query = createQueryString(params);
-    return apiClient(`/jobs${query ? `?${query}` : ''}`);
-  },
+        return apiClient<JobNoticeListApiResponse>(
+            `${JOB_NOTICE_BASE_PATH}${query ? `?${query}` : ''}`,
+        );
+    },
 
-  getJobDetail: (jobId) => apiClient(`/jobs/${jobId}`),
+    getJobNoticeDetail: (jobNoticeId: number | string): Promise<JobNoticeDetailApiResponse | null> =>
+        apiClient<JobNoticeDetailApiResponse>(
+            `${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}`,
+        ),
 
-  createJob: (payload) =>
-    apiClient('/jobs', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
+    toggleJobNoticeBookmark: (
+        jobNoticeId: number | string,
+        bookmarked: boolean,
+    ): Promise<JobNoticeBookmarkResponse | null> =>
+        memberApiClient<JobNoticeBookmarkResponse | null>(
+            `${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}/bookmark`,
+            {
+                method: 'PATCH',
+                auth: true,
+                body: JSON.stringify({ bookmarked }),
+            },
+        ),
+
+    getJobs: (params: QueryParams = {}): Promise<unknown | null> => {
+        const query = createQueryString(params);
+
+        return apiClient<unknown>(`/jobs${query ? `?${query}` : ''}`);
+    },
+
+    getJobDetail: (jobId: number | string): Promise<unknown | null> =>
+        apiClient<unknown>(`/jobs/${encodeURIComponent(String(jobId))}`),
+
+    createJob: (payload: JobPayload): Promise<unknown | null> =>
+        apiClient<unknown>('/jobs', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        }),
 };

@@ -1,4 +1,4 @@
-import type { UploadResumeResponse } from '../../types/resume.d';
+import type { UploadResumeResponse } from '../../types/resume';
 import { memberApiClient } from '../member/memberApiClient';
 
 export const resumeUploadApi = {
