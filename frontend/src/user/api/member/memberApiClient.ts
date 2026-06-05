@@ -24,8 +24,7 @@ async function requestAccessTokenRefresh(): Promise<string | null> {
   const headers = new Headers({ 'Content-Type': 'application/json' });
 
   try {
-    // TODO: 백엔드 refresh token 계약 확정 후 endpoint/body/cookie 전략을 최종 조정한다.
-    const response = await fetch(`${API_BASE_URL}/api/v1/members/token/refresh`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/user/members/token/refresh`, {
       method: 'POST',
       headers,
       body: refreshToken ? JSON.stringify({ refreshToken }) : undefined,
@@ -104,9 +103,7 @@ export async function memberApiClient<T>(endpoint: string, options: MemberApiOpt
       headers: requestHeaders,
     }, auth);
   } catch (error) {
-    if (auth) {
-      authSession.clear();
-    }
+    // 네트워크 단절/timeout 등 fetch 자체 실패는 세션과 무관하므로 세션을 유지한다.
     throw toMemberApiError(0, {
       message: error instanceof Error ? error.message : undefined,
     });
