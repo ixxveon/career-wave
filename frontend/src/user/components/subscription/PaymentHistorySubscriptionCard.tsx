@@ -1,17 +1,7 @@
+import { type PaymentHistorySubscriptionCardItem } from '../../types/subscription';
 import { formatBillingDate } from '../../utils/subscription/subscriptionView';
-import type { ProductCode } from '../../types/subscription';
 
-export type PaymentHistorySubscriptionCardItem = {
-  subscriptionId: string;
-  productCode: ProductCode;
-  name: string;
-  cancelScheduled: boolean;
-  nextBillingDate: string | null;
-  billingCycle: string;
-  monthlyPrice: string;
-  startedAt: string;
-  currentPeriodEnd: string;
-};
+export type { PaymentHistorySubscriptionCardItem };
 
 type PaymentHistorySubscriptionCardProps = {
   subscription: PaymentHistorySubscriptionCardItem;

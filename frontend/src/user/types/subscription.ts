@@ -149,6 +149,18 @@ export interface CancelSubscriptionResponse {
   cancelScheduledAt: string;
 }
 
+export type PaymentHistorySubscriptionCardItem = {
+  subscriptionId: string;
+  productCode: ProductCode;
+  name: string;
+  cancelScheduled: boolean;
+  nextBillingDate: string | null;
+  billingCycle: string;
+  monthlyPrice: string;
+  startedAt: string;
+  currentPeriodEnd: string;
+};
+
 export type UsageItem = {
   productCode: ProductCode;
   key: 'document' | 'interview';
