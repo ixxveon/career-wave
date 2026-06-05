@@ -24,7 +24,6 @@ async function requestAccessTokenRefresh(): Promise<string | null> {
   const headers = new Headers({ 'Content-Type': 'application/json' });
 
   try {
-    // TODO: 백엔드 refresh token 계약 확정 후 endpoint/body/cookie 전략을 최종 조정한다.
     const response = await fetch(`${API_BASE_URL}/api/v1/members/token/refresh`, {
       method: 'POST',
       headers,

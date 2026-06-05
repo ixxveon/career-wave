@@ -470,7 +470,44 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 11. 내 회원 상태 조회
+## 11. 토큰 갱신
+
+- **Endpoint**: `POST /api/v1/members/token/refresh`
+- **인증**: 불필요 (refresh token으로 처리)
+
+### Request
+
+refresh token은 HttpOnly cookie 우선, 불가 시 body로 전달한다.
+
+```json
+{
+  "refreshToken": "refresh-token-value"
+}
+```
+
+### Response `200 OK`
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "토큰이 갱신되었습니다.",
+  "data": {
+    "accessToken": "new-jwt-access-token",
+    "refreshToken": "new-refresh-token-value"
+  }
+}
+```
+
+### Error Cases
+
+| statusCode | 상황 |
+|------------|------|
+| `401` | refresh token 만료 또는 유효하지 않음 |
+
+---
+
+## 12. 내 회원 상태 조회
 
 - **Endpoint**: `GET /api/v1/members/me/status`
 - **인증**: 필요

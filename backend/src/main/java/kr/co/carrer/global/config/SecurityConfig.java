@@ -21,8 +21,19 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
-                    "/api/admin/auth/**",
-                    "/api/user/auth/**"
+                    // 회원 인증 — 비로그인 공개 API (/api/v1/members/*)
+                    "/api/v1/members/login",
+                    "/api/v1/members/login-id/check",
+                    "/api/v1/members/token/refresh",
+                    "/api/v1/members/register/user",
+                    "/api/v1/members/register/company",
+                    "/api/v1/members/register/social/complete",
+                    "/api/v1/members/company/employment-certificate",
+                    "/api/v1/members/verifications/send",
+                    "/api/v1/members/verifications/confirm",
+                    "/api/v1/members/recovery/find-id",
+                    "/api/v1/members/recovery/password-token",
+                    "/api/v1/members/recovery/reset-password"
                 ).permitAll()
                 .requestMatchers("/api/v1/admin/scraping/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
