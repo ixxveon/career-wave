@@ -3,7 +3,7 @@
 ## Phase 1 - API 계약 및 타입 정리
 
 **Branch**: `feature/admin-ai-metrics-api`
-**Base**: `feature/admin-ai-metrics-spec`
+**Base**: `develop` (원래 `feature/admin-ai-metrics-spec` 예정이었으나 브랜치 정리로 `develop` 기준으로 변경됨)
 
 - [x] `frontend/src/admin/api/aiMetricsApi.ts` 생성
 - [x] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입 정의
@@ -27,12 +27,12 @@
 **Branch**: `feature/admin-ai-metrics-cost-alert`
 **Base**: `feature/admin-ai-metrics-domain-usage`
 
-- [ ] 시간대별 입력/출력 토큰 차트를 API 데이터로 전환
-- [ ] 도메인 필터 변경 시 토큰 추이 재조회
-- [ ] 월간 예산, 현재 비용, 예상 비용, 임계치 표시
-- [ ] 예산 및 임계치 수정 API 연결
-- [ ] 디스코드 알림 토글 API 연결
-- [ ] 사용량 제한 제어 API 연결
+- [x] 시간대별 입력/출력 토큰 차트를 API 데이터로 전환
+- [x] 도메인 필터 변경 시 토큰 추이 재조회
+- [x] 월간 예산, 현재 비용, 예상 비용, 임계치 표시
+- [x] 예산 및 임계치 수정 API 연결
+- [x] 디스코드 알림 토글 API 연결
+- [x] 사용량 제한 제어 API 연결
 
 ## Phase 4 - 헤비 유저, 로그, RAG 상태
 
