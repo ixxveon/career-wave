@@ -21,6 +21,8 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
+                    // 관리자 인증 — 비로그인 공개 API (/api/v1/admin/{domain})
+                    "/api/v1/admin/auth/**",
                     // 회원 인증 — 비로그인 공개 API (/api/v1/user/members/*)
                     "/api/v1/user/members/login",
                     "/api/v1/user/members/login-id/check",
