@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../styles/admin.css';
 import MiniPagination from '../../components/MiniPagination';
@@ -83,6 +83,8 @@ export default function ScrapingPage() {
   const [pipelinePage, setPipelinePage] = useState(1);
   const [updatedSeconds] = useState(35);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
+  const [pendingSourceNames, setPendingSourceNames] = useState<Set<string>>(new Set());
+  const pendingSourceNamesRef = useRef<Set<string>>(new Set());
   const [logStatusFilter, setLogStatusFilter] = useState<StatusFilter>(FILTER_ALL);
   const [logSourceFilter, setLogSourceFilter] = useState<string | null>(null);
   const [logPage, setLogPage] = useState(1);
@@ -136,8 +138,10 @@ export default function ScrapingPage() {
         actionType,
         reason: actionReason[actionType],
       }),
-    onMutate: () => {
+    onMutate: ({ sourceName }) => {
       setActionErrorMessage(null);
+      pendingSourceNamesRef.current.add(sourceName);
+      setPendingSourceNames(new Set(pendingSourceNamesRef.current));
     },
     onSuccess: () => {
       setActionErrorMessage(null);
@@ -145,6 +149,10 @@ export default function ScrapingPage() {
     },
     onError: (error) => {
       setActionErrorMessage(getActionErrorMessage(error));
+    },
+    onSettled: (_data, _error, { sourceName }) => {
+      pendingSourceNamesRef.current.delete(sourceName);
+      setPendingSourceNames(new Set(pendingSourceNamesRef.current));
     },
   });
 
@@ -186,11 +194,12 @@ export default function ScrapingPage() {
   };
 
   const handleSourceAction = (sourceName: string, actionType: ScrapingActionType) => {
+    if (pendingSourceNamesRef.current.has(sourceName)) return;
+
     sourceActionMutation.mutate({ sourceName, actionType });
   };
 
-  const isSourceActionPending = (sourceName: string) =>
-    sourceActionMutation.isPending && sourceActionMutation.variables?.sourceName === sourceName;
+  const isSourceActionPending = (sourceName: string) => pendingSourceNames.has(sourceName);
 
   const handleRecentErrorClick = (source: ScrapingSource) => {
     setLogSourceFilter(source.sourceName);
