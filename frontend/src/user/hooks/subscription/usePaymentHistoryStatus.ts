@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  CANCEL_REASON,
   SUBSCRIPTION_STATUS,
   type PaymentHistory,
   type PaymentHistoryPeriod,
@@ -27,7 +28,6 @@ const ACTIVE_SUBSCRIPTION_STATUSES = new Set<SubscriptionStatus>([
 ]);
 
 const PAGE_SIZE = 5;
-const CANCEL_REASON = 'NO_LONGER_NEEDED';
 
 type UsePaymentHistoryStatusReturn = {
   periodFilter: PaymentHistoryPeriod;
@@ -125,7 +125,7 @@ export function usePaymentHistoryStatus(
     try {
       await cancelSubscription.mutateAsync({
         subscriptionId: cancelTarget.subscriptionId,
-        payload: { reason: CANCEL_REASON },
+        payload: { reason: CANCEL_REASON.NO_LONGER_NEEDED },
       });
       setSuccessMessage('구독 해지 신청이 완료되었습니다.');
       setCancelTarget(null);

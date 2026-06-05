@@ -137,8 +137,17 @@ export interface PaymentFailure {
   retryable: boolean;
 }
 
+export const CANCEL_REASON = {
+  NO_LONGER_NEEDED: 'NO_LONGER_NEEDED',
+  TOO_EXPENSIVE: 'TOO_EXPENSIVE',
+  NOT_USEFUL: 'NOT_USEFUL',
+  OTHER: 'OTHER',
+} as const;
+
+export type CancelReason = (typeof CANCEL_REASON)[keyof typeof CANCEL_REASON];
+
 export interface CancelSubscriptionRequest {
-  reason: string;
+  reason: CancelReason;
 }
 
 export interface CancelSubscriptionResponse {
