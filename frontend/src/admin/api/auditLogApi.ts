@@ -1,5 +1,6 @@
 import axiosInstance from '../../utils/axiosInstance';
 import { adminSecurityLogSeeds, aiMetricLogSeeds, scrapingLogSeeds } from '../data/logSeeds';
+import type { ApiResponse, PageResult } from './types';
 
 export const AUDIT_LOG_API_BASE_PATH = '/api/v1/admin/audit-logs';
 
@@ -61,24 +62,9 @@ export interface AuditLogPreview {
   detail: string;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  statusCode: number;
-  message: string;
-  data: T;
-}
-
 export interface AuditLogDateRangeParams {
   from?: string;
   to?: string;
-}
-
-export interface PageResult<T> {
-  content: T[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
 }
 
 export interface AuditLogListParams extends AuditLogDateRangeParams {
@@ -95,13 +81,19 @@ export const AUDIT_LOG_SOURCE_LABELS: Record<AuditLogSource, string> = {
   SCRAPING: '스크래핑 관리',
 };
 
+const isValidAuditLogLevel = (value: string): value is AuditLogLevel =>
+  Object.values(AUDIT_LOG_LEVEL).includes(value as AuditLogLevel);
+
+const toAuditLogLevel = (value: string): AuditLogLevel =>
+  isValidAuditLogLevel(value) ? value : AUDIT_LOG_LEVEL.INFO;
+
 export const auditLogPreviewSeeds: AuditLogPreview[] = [
   ...adminSecurityLogSeeds.map((log) => ({
     id: `ADMIN-${log.id}`,
     source: AUDIT_LOG_SOURCE.ADMIN,
     sourceLabel: AUDIT_LOG_SOURCE_LABELS.ADMIN,
     timestamp: log.time,
-    level: log.severity,
+    level: toAuditLogLevel(log.severity),
     summary: log.action,
     detail: `actor: ${log.actor} / target: ${log.target} / ip: ${log.ip}`,
   })),
@@ -110,7 +102,7 @@ export const auditLogPreviewSeeds: AuditLogPreview[] = [
     source: AUDIT_LOG_SOURCE.AI,
     sourceLabel: AUDIT_LOG_SOURCE_LABELS.AI,
     timestamp: `2026.05.25 ${log.time}`,
-    level: log.severity,
+    level: toAuditLogLevel(log.severity),
     summary: log.message,
     detail: 'AI 토큰 사용량 및 리소스 모니터링 이벤트',
   })),
@@ -119,7 +111,7 @@ export const auditLogPreviewSeeds: AuditLogPreview[] = [
     source: AUDIT_LOG_SOURCE.SCRAPING,
     sourceLabel: AUDIT_LOG_SOURCE_LABELS.SCRAPING,
     timestamp: `2026.05.25 ${log.time}`,
-    level: log.level,
+    level: toAuditLogLevel(log.level),
     summary: log.message,
     detail: log.detail ?? '스크래핑 파이프라인 상세 이벤트',
   })),
