@@ -168,6 +168,10 @@ export interface UpdateAiRateLimitRequest {
   reason: string;
 }
 
+export function getAiDisplayModelName(model: AiModelNameFields): string {
+  return model.displayModelName || model.actualModelName || '모델 정보 없음';
+}
+
 const AI_METRICS_API_BASE_PATH = '/api/v1/admin/ai-metrics';
 
 export const aiMetricsApi = {
