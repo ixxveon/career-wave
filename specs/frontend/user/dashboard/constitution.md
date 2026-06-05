@@ -1,6 +1,6 @@
 # Constitution: Dashboard
 
-**Feature Branch**: `feature/user-dashboard`
+**Feature Branch**: `feature/user-dashboard-*`
 
 ## 1. 도메인 원칙
 
