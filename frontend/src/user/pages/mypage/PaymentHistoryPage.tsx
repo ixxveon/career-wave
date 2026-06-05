@@ -1,132 +1,35 @@
-import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Info, Sparkles } from 'lucide-react';
 import './MyPage.css';
 import { CancelSubscriptionModal } from '../../components/subscription/CancelSubscriptionModal';
 import { PaymentHistoryList } from '../../components/subscription/PaymentHistoryList';
-import {
-  PaymentHistorySubscriptionCard,
-  type PaymentHistorySubscriptionCardItem,
-} from '../../components/subscription/PaymentHistorySubscriptionCard';
+import { PaymentHistorySubscriptionCard } from '../../components/subscription/PaymentHistorySubscriptionCard';
 import { RecommendationCard } from '../../components/subscription/RecommendationCard';
-import {
-  useCancelSubscription,
-  useMySubscriptions,
-  usePaymentHistory,
-  useProducts,
-} from '../../hooks/subscription';
-import {
-  PAYMENT_HISTORY_PERIOD,
-  SUBSCRIPTION_STATUS,
-  type PaymentHistoryPeriod,
-  type SubscriptionStatus,
-} from '../../types/subscription';
+import { usePaymentHistoryStatus } from '../../hooks/subscription';
+import { PAYMENT_HISTORY_PERIOD, type PaymentHistoryPeriod } from '../../types/subscription';
 import { BILLING_NOTICE_ITEMS, PAYMENT_HISTORY_PERIOD_OPTIONS } from '../../utils/subscription/subscriptionContent';
-import { ALL_PRODUCT_CODES, buildRecommendationItem, formatBillingDate, formatPrice } from '../../utils/subscription/subscriptionView';
-
-const ACTIVE_SUBSCRIPTION_STATUSES = new Set<SubscriptionStatus>([
-  SUBSCRIPTION_STATUS.ACTIVE,
-  SUBSCRIPTION_STATUS.CANCEL_SCHEDULED,
-]);
-
-const PAGE_SIZE = 5;
-const CANCEL_REASON = 'NO_LONGER_NEEDED';
-
 
 function PaymentHistoryPage() {
-  const [periodFilter, setPeriodFilter] = useState<PaymentHistoryPeriod>(
-    PAYMENT_HISTORY_PERIOD.SIX_MONTHS
-  );
-  const [page, setPage] = useState(1);
-  const [cancelTarget, setCancelTarget] = useState<PaymentHistorySubscriptionCardItem | null>(
-    null
-  );
-  const [successMessage, setSuccessMessage] = useState('');
-
   const {
-    data: subscriptions = [],
-    isLoading: isSubscriptionsLoading,
-    isError: isSubscriptionsError,
-  } = useMySubscriptions();
-  const { data: products = [] } = useProducts();
-  const {
-    data: paymentHistoryPage,
-    isLoading: isPaymentHistoryLoading,
-    isError: isPaymentHistoryError,
-  } = usePaymentHistory({
-    period: periodFilter,
-    page: page - 1,
-    size: PAGE_SIZE,
-  });
-  const cancelSubscription = useCancelSubscription();
-
-  const productMap = useMemo(
-    () => new Map(products.map((product) => [product.productCode, product])),
-    [products]
-  );
-
-  const activeSubscriptions = useMemo(() => {
-    return subscriptions
-      .filter((subscription) =>
-        ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status)
-      )
-      .map((subscription) => {
-        const product = productMap.get(subscription.productCode);
-        return {
-          subscriptionId: subscription.subscriptionId,
-          productCode: subscription.productCode,
-          name: subscription.productName,
-          cancelScheduled:
-            subscription.status === SUBSCRIPTION_STATUS.CANCEL_SCHEDULED,
-          nextBillingDate: formatBillingDate(subscription.nextBillingAt),
-          billingCycle: '매월 정기 결제',
-          monthlyPrice: formatPrice(product?.price),
-          startedAt: subscription.startedAt,
-          currentPeriodEnd: subscription.currentPeriodEnd,
-        };
-      });
-  }, [productMap, subscriptions]);
-
-  const recommendationItems = useMemo(() => {
-    const activeCodes = new Set(
-      activeSubscriptions.map((subscription) => subscription.productCode)
-    );
-
-    return ALL_PRODUCT_CODES.filter((productCode) => !activeCodes.has(productCode))
-      .map((productCode) => buildRecommendationItem(productCode));
-  }, [activeSubscriptions]);
-
-  const payments = paymentHistoryPage?.content ?? [];
-  const totalPages = Math.max(1, paymentHistoryPage?.totalPages ?? 1);
-  const noSubscriptions = activeSubscriptions.length === 0;
-  const singleRecommendation = recommendationItems[0] ?? null;
-
-  useEffect(() => {
-    if (page <= totalPages) return;
-    setPage(totalPages);
-  }, [page, totalPages]);
-
-  useEffect(() => {
-    if (!successMessage) return undefined;
-
-    const timer = window.setTimeout(() => setSuccessMessage(''), 2400);
-    return () => window.clearTimeout(timer);
-  }, [successMessage]);
-
-  async function handleCancelConfirm() {
-    if (!cancelTarget || cancelSubscription.isPending) return;
-
-    try {
-      await cancelSubscription.mutateAsync({
-        subscriptionId: cancelTarget.subscriptionId,
-        payload: { reason: CANCEL_REASON },
-      });
-      setSuccessMessage('구독 해지 신청이 완료되었습니다.');
-      setCancelTarget(null);
-    } catch {
-      setSuccessMessage('');
-    }
-  }
+    periodFilter,
+    page,
+    cancelTarget,
+    successMessage,
+    activeSubscriptions,
+    payments,
+    totalPages,
+    noSubscriptions,
+    singleRecommendation,
+    isSubscriptionsLoading,
+    isSubscriptionsError,
+    isPaymentHistoryLoading,
+    isPaymentHistoryError,
+    isCanceling,
+    setPeriodFilter,
+    setPage,
+    setCancelTarget,
+    handleCancelConfirm,
+  } = usePaymentHistoryStatus(PAYMENT_HISTORY_PERIOD.SIX_MONTHS);
 
   return (
     <>
@@ -195,7 +98,7 @@ function PaymentHistoryPage() {
               <div className="cw-billing-subscription-layout is-single">
                 <PaymentHistorySubscriptionCard
                   subscription={activeSubscriptions[0]}
-                  isCanceling={cancelSubscription.isPending}
+                  isCanceling={isCanceling}
                   onCancel={setCancelTarget}
                 />
                 <RecommendationCard item={singleRecommendation} />
@@ -206,7 +109,7 @@ function PaymentHistoryPage() {
                   <PaymentHistorySubscriptionCard
                     key={subscription.subscriptionId}
                     subscription={subscription}
-                    isCanceling={cancelSubscription.isPending}
+                    isCanceling={isCanceling}
                     onCancel={setCancelTarget}
                   />
                 ))}
@@ -318,7 +221,7 @@ function PaymentHistoryPage() {
       {cancelTarget && (
         <CancelSubscriptionModal
           productName={cancelTarget.name}
-          isPending={cancelSubscription.isPending}
+          isPending={isCanceling}
           onConfirm={handleCancelConfirm}
           onClose={() => setCancelTarget(null)}
         />
