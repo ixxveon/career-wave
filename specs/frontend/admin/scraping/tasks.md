@@ -39,12 +39,12 @@
 **Branch**: `feature/admin-scraping-logs`
 **Base**: `feature/admin-scraping-actions`
 
-- [ ] 운영 로그 콘솔을 API 데이터로 전환
-- [ ] 로그 상태 `SUCCESS`, `FAILED` 표시
-- [ ] source 또는 로그 상태 필터 연결
-- [ ] 로그 페이지네이션 연결
-- [ ] 실패 source의 최근 오류와 로그 상세 연결
-- [ ] 로그 상세에 토큰, 쿠키, 프록시 주소, 외부 응답 전문이 표시되지 않도록 확인
+- [x] 운영 로그 콘솔을 API 데이터로 전환
+- [x] 로그 상태 `SUCCESS`, `FAILED` 표시
+- [x] source 또는 로그 상태 필터 연결
+- [x] 로그 페이지네이션 연결
+- [x] 실패 source의 최근 오류와 로그 상세 연결
+- [x] 로그 상세에 토큰, 쿠키, 프록시 주소, 외부 응답 전문이 표시되지 않도록 확인
 
 ## Phase 5 - 검증 및 마감
 

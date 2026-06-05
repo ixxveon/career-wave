@@ -7,28 +7,19 @@ import {
   SCRAPING_STATUS,
   scrapingApi,
   type ScrapingActionType,
+  type ScrapingLog,
   type ScrapingSource,
   type ScrapingStatus,
 } from '../../api/scrapingApi';
 
 type Tone = 'normal' | 'warning' | 'danger' | 'info';
 
-interface LogLine {
-  id: string;
-  time: string;
-  level: 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
-  message: string;
-  detail?: string;
-}
-
 const PIPELINE_PAGE_SIZE = 5;
 const PIPELINE_TABLE_BODY_HEIGHT = 280;
+const LOG_PAGE_SIZE = 5;
+const FILTER_ALL = 'ALL' as const;
 
-export const initialLogs: LogLine[] = [
-  { id: 'LOG-001', time: '18:42:13', level: 'ERROR', message: 'Saramin 셀렉터 매칭 실패', detail: 'DOM 구조 변경으로 상세 페이지 수집이 중단되었습니다.' },
-  { id: 'LOG-002', time: '18:39:52', level: 'WARN', message: '검수 운영에서 QA 보정 검수 생성', detail: '331-Z 공고가 보정 제안 검수로 연결되었습니다.' },
-  { id: 'LOG-003', time: '18:34:10', level: 'SUCCESS', message: 'Wanted Feed 복구 완료', detail: '프록시 교체 이후 성공률이 91.8%로 회복되었습니다.' },
-];
+type StatusFilter = typeof FILTER_ALL | ScrapingStatus;
 
 const statusTone: Record<ScrapingStatus, Tone> = {
   [SCRAPING_STATUS.SUCCESS]: 'normal',
@@ -40,18 +31,40 @@ const statusLabel: Record<ScrapingStatus, string> = {
   [SCRAPING_STATUS.FAILED]: '실패',
 };
 
-const levelTone: Record<LogLine['level'], Tone> = {
-  INFO: 'info',
-  WARN: 'warning',
-  ERROR: 'danger',
-  SUCCESS: 'normal',
+const logStatusTone: Record<ScrapingStatus, Tone> = {
+  [SCRAPING_STATUS.SUCCESS]: 'normal',
+  [SCRAPING_STATUS.FAILED]: 'danger',
 };
+
+const toStatusFilter = (value: string): StatusFilter =>
+  value === SCRAPING_STATUS.SUCCESS || value === SCRAPING_STATUS.FAILED
+    ? value
+    : FILTER_ALL;
 
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 const formatDuration = (ms: number) => `${ms.toLocaleString()}ms`;
 const formatVolume = (value: number) => value.toLocaleString();
+const formatLogTime = (value: string) =>
+  Number.isNaN(new Date(value).getTime())
+    ? value
+    : new Date(value).toLocaleTimeString('ko-KR', { hour12: false });
 const getRecentErrorText = (source: ScrapingSource) =>
   source.recentErrorCode ?? source.recentErrorMessage ?? '-';
+const sanitizeLogDetail = (detail: string) => {
+  const hasSensitiveKey = /\b(token|accessToken|refreshToken|authorization|cookie|set-cookie|proxy|proxyUrl|proxyAddress)\b/i.test(detail);
+  const hasNetworkAddress = /\b(?:https?:\/\/|(?:\d{1,3}\.){3}\d{1,3})(?:[^\s]*)/i.test(detail);
+  const looksLikeRawResponse = /<\/?[a-z][\s\S]*>|^\s*[{[][\s\S]*[}\]]\s*$/i.test(detail);
+
+  if (hasSensitiveKey || hasNetworkAddress || looksLikeRawResponse) {
+    return '민감 정보가 포함될 수 있어 상세 원문을 숨겼습니다.';
+  }
+
+  return detail;
+};
+const getLogMessage = (log: ScrapingLog) =>
+  log.detail
+    ? `${log.sourceName} ${sanitizeLogDetail(log.message)} ${sanitizeLogDetail(log.detail)}`
+    : `${log.sourceName} ${sanitizeLogDetail(log.message)}`;
 const getActionErrorMessage = (error: unknown) =>
   error instanceof Error && error.message
     ? error.message
@@ -64,17 +77,20 @@ const actionReason: Record<ScrapingActionType, string> = {
 
 export default function ScrapingPage() {
   const queryClient = useQueryClient();
-  const [logs] = useState(initialLogs);
   const [pipelineQuery, setPipelineQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | ScrapingStatus>('ALL');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(FILTER_ALL);
   const [selectedPipelineIds, setSelectedPipelineIds] = useState<string[]>([]);
   const [pipelinePage, setPipelinePage] = useState(1);
   const [updatedSeconds] = useState(35);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
   const [pendingSourceNames, setPendingSourceNames] = useState<Set<string>>(new Set());
   const pendingSourceNamesRef = useRef<Set<string>>(new Set());
+  const [logStatusFilter, setLogStatusFilter] = useState<StatusFilter>(FILTER_ALL);
+  const [logSourceFilter, setLogSourceFilter] = useState<string | null>(null);
+  const [logPage, setLogPage] = useState(1);
   const pipelineKeyword = pipelineQuery.trim();
   const sourceListQueryKey = ['admin', 'scraping', 'sources', pipelineKeyword, statusFilter, pipelinePage] as const;
+  const logListQueryKey = ['admin', 'scraping', 'logs', logStatusFilter, logSourceFilter, logPage] as const;
 
   const {
     data: sourceListData,
@@ -87,9 +103,29 @@ export default function ScrapingPage() {
     queryFn: async () => {
       const response = await scrapingApi.getSources({
         keyword: pipelineKeyword.length > 0 ? pipelineKeyword : undefined,
-        status: statusFilter === 'ALL' ? undefined : statusFilter,
+        status: statusFilter === FILTER_ALL ? undefined : statusFilter,
         page: pipelinePage,
         size: PIPELINE_PAGE_SIZE,
+      });
+      return response.data.data;
+    },
+    placeholderData: (previousData) => previousData,
+  });
+
+  const {
+    data: logListData,
+    isError: isLogListError,
+    isFetching: isLogListFetching,
+    isLoading: isLogListLoading,
+    refetch: refetchLogList,
+  } = useQuery({
+    queryKey: logListQueryKey,
+    queryFn: async () => {
+      const response = await scrapingApi.getLogs({
+        sourceName: logSourceFilter ?? undefined,
+        status: logStatusFilter === FILTER_ALL ? undefined : logStatusFilter,
+        page: logPage,
+        size: LOG_PAGE_SIZE,
       });
       return response.data.data;
     },
@@ -121,19 +157,25 @@ export default function ScrapingPage() {
   });
 
   const pagedPipelines = sourceListData?.content ?? [];
+  const logs = logListData?.content ?? [];
   const pipelineTotalPages = Math.max(1, sourceListData?.totalPages ?? 1);
+  const logTotalPages = Math.max(1, logListData?.totalPages ?? 1);
   const isSourceListInitialLoading = isSourceListLoading && !sourceListData;
   const showSourceStateRow = isSourceListInitialLoading || isSourceListError || pagedPipelines.length === 0;
   const pipelinePlaceholderCount = showSourceStateRow ? PIPELINE_PAGE_SIZE - 1 : Math.max(0, PIPELINE_PAGE_SIZE - pagedPipelines.length);
   const pipelineRowHeight = Math.floor(PIPELINE_TABLE_BODY_HEIGHT / PIPELINE_PAGE_SIZE);
   const sourceEmptyMessage =
-    pipelineKeyword.length > 0 || statusFilter !== 'ALL'
+    pipelineKeyword.length > 0 || statusFilter !== FILTER_ALL
       ? '조건에 맞는 스크래핑 source가 없습니다.'
       : '등록된 스크래핑 source가 없습니다.';
 
   useEffect(() => {
     setPipelinePage((prev) => Math.min(prev, pipelineTotalPages));
   }, [pipelineTotalPages]);
+
+  useEffect(() => {
+    setLogPage((prev) => Math.min(prev, logTotalPages));
+  }, [logTotalPages]);
 
   const allVisibleSelected =
     pagedPipelines.length > 0 && pagedPipelines.every((item) => selectedPipelineIds.includes(item.sourceName));
@@ -158,6 +200,18 @@ export default function ScrapingPage() {
   };
 
   const isSourceActionPending = (sourceName: string) => pendingSourceNames.has(sourceName);
+
+  const handleRecentErrorClick = (source: ScrapingSource) => {
+    setLogSourceFilter(source.sourceName);
+    setLogStatusFilter(SCRAPING_STATUS.FAILED);
+    setLogPage(1);
+  };
+
+  const clearLogSourceFilter = () => {
+    setLogSourceFilter(null);
+    setLogStatusFilter(FILTER_ALL);
+    setLogPage(1);
+  };
 
   return (
     <section className="scrapeOpsPage">
@@ -198,11 +252,11 @@ export default function ScrapingPage() {
               <select
                 value={statusFilter}
                 onChange={(event) => {
-                  setStatusFilter(event.target.value as 'ALL' | ScrapingStatus);
+                  setStatusFilter(toStatusFilter(event.target.value));
                   setPipelinePage(1);
                 }}
               >
-                <option value="ALL">전체 상태</option>
+                <option value={FILTER_ALL}>전체 상태</option>
                 <option value={SCRAPING_STATUS.SUCCESS}>성공</option>
                 <option value={SCRAPING_STATUS.FAILED}>실패</option>
               </select>
@@ -294,7 +348,19 @@ export default function ScrapingPage() {
                       <td>{formatDuration(row.averageDurationMs)}</td>
                       <td>{row.cycleExpression}</td>
                       <td>{formatVolume(row.collectedCount)}</td>
-                      <td>{getRecentErrorText(row)}</td>
+                      <td>
+                        {row.status === SCRAPING_STATUS.FAILED && getRecentErrorText(row) !== '-' ? (
+                          <button
+                            type="button"
+                            className="scrapeOpsErrorLink"
+                            onClick={() => handleRecentErrorClick(row)}
+                          >
+                            {getRecentErrorText(row)}
+                          </button>
+                        ) : (
+                          getRecentErrorText(row)
+                        )}
+                      </td>
                       <td>
                         <div className="scrapeOpsActionGroup">
                           <button
@@ -363,7 +429,30 @@ export default function ScrapingPage() {
               <span className="scrapeOpsEyebrow">LOG</span>
               <h3>실시간 로그</h3>
             </div>
+
+            <div className="scrapeOpsFilters">
+              <select
+                value={logStatusFilter}
+                onChange={(event) => {
+                  setLogStatusFilter(toStatusFilter(event.target.value));
+                  setLogPage(1);
+                }}
+              >
+                <option value={FILTER_ALL}>전체 로그</option>
+                <option value={SCRAPING_STATUS.SUCCESS}>SUCCESS</option>
+                <option value={SCRAPING_STATUS.FAILED}>FAILED</option>
+              </select>
+            </div>
           </div>
+
+          {logSourceFilter ? (
+            <div className="scrapeOpsLogScope">
+              <span>{logSourceFilter} 실패 로그</span>
+              <button type="button" onClick={clearLogSourceFilter}>
+                해제
+              </button>
+            </div>
+          ) : null}
 
           <div className="scrapeOpsLogConsole">
             <div className="scrapeOpsLogHead">
@@ -371,14 +460,43 @@ export default function ScrapingPage() {
               <span>TYPE</span>
               <span>MESSAGE</span>
             </div>
-            {logs.map((log) => (
-              <article key={log.id} className="scrapeOpsConsoleRow">
-                <span className="time">[{log.time}]</span>
-                <span className={`scrapeOpsConsoleTag ${levelTone[log.level]}`}>[{log.level}]</span>
-                <strong>{log.detail ? `${log.message} ${log.detail}` : log.message}</strong>
-              </article>
-            ))}
+            {isLogListLoading ? (
+              <div className="scrapeOpsConsoleState">로그를 불러오는 중입니다.</div>
+            ) : null}
+
+            {isLogListError ? (
+              <div className="scrapeOpsConsoleState danger">
+                <span>운영 로그 조회에 실패했습니다.</span>
+                <button type="button" onClick={() => refetchLogList()}>
+                  다시 시도
+                </button>
+              </div>
+            ) : null}
+
+            {!isLogListLoading && !isLogListError && logs.length === 0 ? (
+              <div className="scrapeOpsConsoleState">표시할 운영 로그가 없습니다.</div>
+            ) : null}
+
+            {!isLogListLoading && !isLogListError
+              ? logs.map((log) => (
+                <article key={log.logId} className="scrapeOpsConsoleRow">
+                  <span className="time">[{formatLogTime(log.occurredAt)}]</span>
+                  <span className={`scrapeOpsConsoleTag ${logStatusTone[log.status]}`}>[{log.status}]</span>
+                  <strong>{getLogMessage(log)}</strong>
+                </article>
+              ))
+              : null}
           </div>
+
+          <MiniPagination
+            page={logPage}
+            totalPages={logTotalPages}
+            onChange={(nextPage) => {
+              if (!isLogListFetching) setLogPage(nextPage);
+            }}
+            className="pagination scrapeOpsPagination"
+            activeClassName="activePage"
+          />
         </section>
       </div>
 
@@ -627,6 +745,24 @@ export default function ScrapingPage() {
           color: #356eb6;
         }
 
+        .scrapeOpsErrorLink {
+          max-width: 100%;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color: var(--scrape-danger);
+          font-size: 12px;
+          font-weight: 800;
+          font-family: inherit;
+          text-align: left;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          cursor: pointer;
+        }
+
         .scrapeOpsActionGroup {
           display: flex;
           gap: 6px;
@@ -677,6 +813,34 @@ export default function ScrapingPage() {
           border: 1px solid #20344f;
         }
 
+        .scrapeOpsLogScope {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          align-self: flex-start;
+          min-height: 32px;
+          padding: 0 10px;
+          border-radius: 8px;
+          border: 1px solid #dfe8f2;
+          background: #f7fafe;
+          color: var(--scrape-primary);
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .scrapeOpsLogScope button {
+          height: 22px;
+          padding: 0 8px;
+          border: 1px solid #c8d9ee;
+          border-radius: 7px;
+          background: #fff;
+          color: #356eb6;
+          font-size: 11px;
+          font-weight: 800;
+          font-family: inherit;
+          cursor: pointer;
+        }
+
         .scrapeOpsLogHead,
         .scrapeOpsConsoleRow {
           display: grid;
@@ -698,6 +862,36 @@ export default function ScrapingPage() {
           min-height: 54px;
           padding: 0 12px;
           border-bottom: 1px solid rgba(84, 112, 148, 0.22);
+        }
+
+        .scrapeOpsConsoleState {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          min-height: 54px;
+          padding: 0 12px;
+          border-bottom: 1px solid rgba(84, 112, 148, 0.22);
+          color: #9ec1ff;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .scrapeOpsConsoleState.danger {
+          color: #ff9b9b;
+        }
+
+        .scrapeOpsConsoleState button {
+          height: 28px;
+          padding: 0 10px;
+          border: 1px solid rgba(255, 155, 155, 0.5);
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.08);
+          color: #ffb3b3;
+          font-size: 11px;
+          font-weight: 800;
+          font-family: inherit;
+          cursor: pointer;
         }
 
         .scrapeOpsConsoleRow:last-child {
