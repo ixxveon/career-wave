@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { CalendarClock } from 'lucide-react';
 
 type CancelSubscriptionModalProps = {
@@ -13,6 +14,20 @@ export function CancelSubscriptionModal({
   onConfirm,
   onClose,
 }: CancelSubscriptionModalProps) {
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    cancelButtonRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isPending) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isPending, onClose]);
+
   return (
     <div
       className="cw-subscription-modal"
@@ -44,6 +59,7 @@ export function CancelSubscriptionModal({
             {isPending ? '처리 중...' : '해지하기'}
           </button>
           <button
+            ref={cancelButtonRef}
             type="button"
             className="cw-subscription-modal__ghost"
             onClick={onClose}
