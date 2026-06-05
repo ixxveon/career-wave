@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ThumbsUp, MessageCircle, Bookmark, ChevronRight, Flame, Star, Clock, Database } from 'lucide-react';
 import './styles/CommunityPage.css';
@@ -6,7 +6,27 @@ import './styles/CommunityPage.css';
 const CATEGORIES = ['전체', '질문', '면접 후기', '이력서 팁', '합격 후기', '자유'];
 const PAGE_SIZE = 4;
 
-const MOCK_POSTS = [
+type CommunityPost = {
+  id: number;
+  category: string;
+  title: string;
+  preview: string;
+  author: string;
+  createdAt: string;
+  views: number;
+  likes: number;
+  comments: number;
+  bookmarked: boolean;
+  hot: boolean;
+  reportCount: number;
+};
+
+type PostCardProps = {
+  post: CommunityPost;
+  onClick: () => void;
+};
+
+const MOCK_POSTS: CommunityPost[] = [
   {
     id: 1,
     category: '면접 후기',
@@ -109,35 +129,69 @@ const MOCK_POSTS = [
 
 const POPULAR = MOCK_POSTS.slice(0, 3).sort((a, b) => b.likes - a.likes);
 
-function PostCard({ post, onClick }) {
+function PostCard({ post, onClick }: PostCardProps) {
   const [bookmarked, setBookmarked] = useState(post.bookmarked);
 
+  function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget) return;
+
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+      event.preventDefault();
+      onClick();
+    }
+  }
+
   return (
-    <div className="cm-post" onClick={onClick} role="button" tabIndex={0}>
-      <div className="cm-post__top">
-        <span className="cm-post__cat">{post.category}</span>
-        {post.hot && <span className="cm-post__hot"><Flame size={11} /> HOT</span>}
-        {post.reportCount > 0 && <span className="cm-post__report">신고 {post.reportCount}</span>}
-        <button
-          aria-label="게시글 북마크"
-          className={`cm-post__bookmark${bookmarked ? ' cm-post__bookmark--on' : ''}`}
-          type="button"
-          onClick={(event) => { event.stopPropagation(); setBookmarked((current) => !current); }}
-        >
-          <Bookmark size={14} fill={bookmarked ? 'currentColor' : 'none'} />
-        </button>
-      </div>
-      <p className="cm-post__title">{post.title}</p>
-      <p className="cm-post__preview">{post.preview}</p>
-      <div className="cm-post__footer">
-        <span className="cm-post__author">by {post.author}</span>
-        <div className="cm-post__meta">
-          <span><Clock size={11} /> {post.createdAt}</span>
-          <span><ThumbsUp size={11} /> {post.likes}</span>
-          <span><MessageCircle size={11} /> {post.comments}</span>
+      <div
+          className="cm-post"
+          onClick={onClick}
+          onKeyDown={handleCardKeyDown}
+          role="button"
+          tabIndex={0}
+      >
+        <div className="cm-post__top">
+          <span className="cm-post__cat">{post.category}</span>
+
+          {post.hot && (
+              <span className="cm-post__hot">
+            <Flame size={11} /> HOT
+          </span>
+          )}
+
+          {post.reportCount > 0 && <span className="cm-post__report">신고 {post.reportCount}</span>}
+
+          <button
+              aria-label="게시글 북마크"
+              className={`cm-post__bookmark${bookmarked ? ' cm-post__bookmark--on' : ''}`}
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setBookmarked((current) => !current);
+              }}
+          >
+            <Bookmark size={14} fill={bookmarked ? 'currentColor' : 'none'} />
+          </button>
+        </div>
+
+        <p className="cm-post__title">{post.title}</p>
+        <p className="cm-post__preview">{post.preview}</p>
+
+        <div className="cm-post__footer">
+          <span className="cm-post__author">by {post.author}</span>
+
+          <div className="cm-post__meta">
+          <span>
+            <Clock size={11} /> {post.createdAt}
+          </span>
+            <span>
+            <ThumbsUp size={11} /> {post.likes}
+          </span>
+            <span>
+            <MessageCircle size={11} /> {post.comments}
+          </span>
+          </div>
         </div>
       </div>
-    </div>
   );
 }
 
@@ -151,6 +205,7 @@ export default function CommunityPage() {
     return MOCK_POSTS.filter((post) => {
       if (category !== '전체' && post.category !== category) return false;
       if (search && !post.title.includes(search) && !post.preview.includes(search)) return false;
+
       return true;
     });
   }, [category, search]);
@@ -160,71 +215,90 @@ export default function CommunityPage() {
   const nextCursor = hasMore ? `cursor-${visiblePosts.at(-1)?.id}` : 'end';
 
   return (
-    <div className="cm-page">
-      <div className="cm-header">
-        <span className="cm-eyebrow">COMMUNITY</span>
-        <h1 className="cm-header__title">커뮤니티</h1>
-        <p className="cm-header__desc">취업 고민, 면접 후기, 이력서 팁, 합격 후기를 카테고리별로 나누어 공유합니다.</p>
-      </div>
-
-      <div className="cm-ops-panel">
-        <div>
-          <Database size={18} />
-          <strong>커서 기반 게시글 목록</strong>
-          <span>다음 커서: {nextCursor}</span>
+      <div className="cm-page">
+        <div className="cm-header">
+          <span className="cm-eyebrow">COMMUNITY</span>
+          <h1 className="cm-header__title">커뮤니티</h1>
+          <p className="cm-header__desc">취업 고민, 면접 후기, 이력서 팁, 합격 후기를 카테고리별로 나누어 공유합니다.</p>
         </div>
-        <p>인기 게시글과 카테고리 목록은 캐시 대상 데이터로 분리하고, 목록은 커서 기반 더보기 UI로 표현합니다.</p>
-      </div>
 
-      <div className="cm-popular-card">
-        <p className="cm-popular-card__title"><Star size={15} /> 이번 주 인기 글</p>
-        <div className="cm-popular-list">
-          {POPULAR.map((post, index) => (
-            <div key={post.id} className="cm-popular-item">
-              <span className="cm-popular-rank">{index + 1}</span>
-              <span className="cm-popular-title">{post.title}</span>
-              <span className="cm-popular-likes"><ThumbsUp size={11} /> {post.likes}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="cm-toolbar">
-        <div className="cm-cats" aria-label="게시글 카테고리">
-          {CATEGORIES.map((item) => (
-            <button
-              key={item}
-              className={`cm-cat${category === item ? ' cm-cat--on' : ''}`}
-              type="button"
-              onClick={() => { setCategory(item); setVisibleCount(PAGE_SIZE); }}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        <div className="cm-right">
-          <div className="cm-search">
-            <Search size={14} />
-            <input placeholder="게시글 검색" value={search} onChange={(event) => setSearch(event.target.value)} />
+        <div className="cm-ops-panel">
+          <div>
+            <Database size={18} />
+            <strong>커서 기반 게시글 목록</strong>
+            <span>다음 커서: {nextCursor}</span>
           </div>
-          <button className="cm-write-btn" type="button" onClick={() => navigate('/community/posts/create')}>
-            글 작성하기 <ChevronRight size={14} />
-          </button>
+          <p>인기 게시글과 카테고리 목록은 캐시 대상 데이터로 분리하고, 목록은 커서 기반 더보기 UI로 표현합니다.</p>
         </div>
-      </div>
 
-      <div className="cm-list">
-        {visiblePosts.map((post) => (
-          <PostCard key={post.id} post={post} onClick={() => navigate(`/community/posts/${post.id}`)} />
-        ))}
-        {filtered.length === 0 && <div className="cm-empty">검색 결과가 없습니다.</div>}
-      </div>
+        <div className="cm-popular-card">
+          <p className="cm-popular-card__title">
+            <Star size={15} /> 이번 주 인기 글
+          </p>
 
-      {hasMore && (
-        <button className="cm-load-more" type="button" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}>
-          더 보기 <span>{nextCursor}</span>
-        </button>
-      )}
-    </div>
+          <div className="cm-popular-list">
+            {POPULAR.map((post, index) => (
+                <div key={post.id} className="cm-popular-item">
+                  <span className="cm-popular-rank">{index + 1}</span>
+                  <span className="cm-popular-title">{post.title}</span>
+                  <span className="cm-popular-likes">
+                <ThumbsUp size={11} /> {post.likes}
+              </span>
+                </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="cm-toolbar">
+          <div className="cm-cats" aria-label="게시글 카테고리">
+            {CATEGORIES.map((item) => (
+                <button
+                    key={item}
+                    className={`cm-cat${category === item ? ' cm-cat--on' : ''}`}
+                    type="button"
+                    onClick={() => {
+                      setCategory(item);
+                      setVisibleCount(PAGE_SIZE);
+                    }}
+                >
+                  {item}
+                </button>
+            ))}
+          </div>
+
+          <div className="cm-right">
+            <div className="cm-search">
+              <Search size={14} />
+              <input
+                  placeholder="게시글 검색"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+              />
+            </div>
+
+            <button className="cm-write-btn" type="button" onClick={() => navigate('/community/posts/create')}>
+              글 작성하기 <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+
+        <div className="cm-list">
+          {visiblePosts.map((post) => (
+              <PostCard
+                  key={post.id}
+                  post={post}
+                  onClick={() => navigate(`/community/posts/${post.id}`)}
+              />
+          ))}
+
+          {filtered.length === 0 && <div className="cm-empty">검색 결과가 없습니다.</div>}
+        </div>
+
+        {hasMore && (
+            <button className="cm-load-more" type="button" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}>
+              더 보기 <span>{nextCursor}</span>
+            </button>
+        )}
+      </div>
   );
 }
