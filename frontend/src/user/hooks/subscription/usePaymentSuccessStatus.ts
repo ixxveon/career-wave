@@ -18,11 +18,13 @@ export function usePaymentSuccessStatus() {
 
   const paymentKey = searchParams.get('paymentKey');
   const orderId = searchParams.get('orderId');
-  const amount = searchParams.get('amount');
+  const rawAmount = searchParams.get('amount');
+  const parsedAmount = Number(rawAmount);
+
+  const isDirectAccess =
+    !paymentKey || !orderId || !rawAmount || !Number.isFinite(parsedAmount) || parsedAmount <= 0;
 
   const { mutate: confirmPayment, isPending, isSuccess, isError, data } = useConfirmPayment();
-
-  const isDirectAccess = !paymentKey || !orderId || !amount;
 
   useEffect(() => {
     if (isDirectAccess) {
@@ -35,18 +37,18 @@ export function usePaymentSuccessStatus() {
     confirmedRef.current = true;
 
     confirmPayment({
-      paymentKey,
-      orderId,
-      amount: Number(amount),
+      paymentKey: paymentKey!,
+      orderId: orderId!,
+      amount: parsedAmount,
     });
-  }, []);
+  }, [isDirectAccess, navigate, paymentKey, orderId, parsedAmount, confirmPayment]);
 
   // confirm 완료 후 paymentKey·orderId·amount를 URL 히스토리에서 제거
   useEffect(() => {
     if (isSuccess || isError) {
       navigate(location.pathname, { replace: true });
     }
-  }, [isSuccess, isError]);
+  }, [isSuccess, isError, navigate, location.pathname]);
 
   const state: SuccessState = (() => {
     if (isPending || (!isSuccess && !isError)) return { phase: 'confirming' };

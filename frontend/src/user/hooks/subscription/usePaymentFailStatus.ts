@@ -58,7 +58,7 @@ export function usePaymentFailStatus() {
       reasonCode,
       message: message ?? reasonCode,
     });
-  }, []);
+  }, [isDirectAccess, navigate, orderId, productCode, reasonCode, message]);
 
   return {
     reasonCode,
