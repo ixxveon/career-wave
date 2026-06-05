@@ -170,41 +170,6 @@ function AppRoutes() {
           <Route index element={<JobNoticeListPage />} />
         </Route>
 
-        <Route path="applications">
-          <Route index element={<Navigate to="/applications/status" replace />} />
-          <Route path="status" element={<ApplicationStatusPage />} />
-          <Route path="applicants" element={<ApplicantManagementPage />} />
-          <Route path="applicants/:applicationId" element={<ApplicantDetailPage />} />
-          <Route path="apply" element={<ApplyPage />} />
-        </Route>
-
-        <Route path="documents">
-          <Route index element={<Navigate to="/documents/resume" replace />} />
-          <Route path="resume" element={<ResumeAnalysisPage />} />
-          <Route path="cover-letter" element={<CoverLetterAnalysisPage />} />
-          <Route path="report" element={<DocumentReportPage />} />
-          <Route path="history" element={<ResumeHistoryPage />} />
-        </Route>
-
-        <Route path="interview">
-          <Route index element={<InterviewHomePage />} />
-          <Route path="history" element={<DiagnosisHistoryPage />} />
-          <Route path="detail/:id" element={<ComprehensiveReportPage />} />
-          <Route path="roadmap" element={<LearningRoadmapPage />} />
-          <Route path="report" element={<InterviewReportPage />} />
-          <Route path="report-export" element={<ComprehensiveReportPage />} />
-          <Route path="text" element={<TextInterviewPage />} />
-          <Route path="media" element={<MediaInterviewPage />} />
-        </Route>
-
-        <Route path="career-diagnosis">
-          <Route index element={<Navigate to="/career-diagnosis/report" replace />} />
-          <Route path="history" element={<DiagnosisHistoryPage />} />
-          <Route path="detail/:id" element={<ComprehensiveReportPage />} />
-          <Route path="roadmap" element={<LearningRoadmapPage />} />
-          <Route path="report" element={<ComprehensiveReportPage />} />
-        </Route>
-
         <Route path="community">
           <Route index element={<CommunityPage />} />
           <Route path="posts/create" element={<PostCreatePage />} />
@@ -241,6 +206,7 @@ function AppRoutes() {
             <Route index element={<Navigate to="/applications/status" replace />} />
             <Route path="status" element={<ApplicationStatusPage />} />
             <Route path="applicants" element={<ApplicantManagementPage />} />
+            <Route path="applicants/:applicationId" element={<ApplicantDetailPage />} />
             <Route path="apply" element={<ApplyPage />} />
           </Route>
 
@@ -254,7 +220,11 @@ function AppRoutes() {
 
           <Route path="interview">
             <Route index element={<InterviewHomePage />} />
+            <Route path="history" element={<DiagnosisHistoryPage />} />
+            <Route path="detail/:id" element={<ComprehensiveReportPage />} />
+            <Route path="roadmap" element={<LearningRoadmapPage />} />
             <Route path="report" element={<InterviewReportPage />} />
+            <Route path="report-export" element={<ComprehensiveReportPage />} />
             <Route path="text" element={<TextInterviewPage />} />
             <Route path="media" element={<MediaInterviewPage />} />
           </Route>
