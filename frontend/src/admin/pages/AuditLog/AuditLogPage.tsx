@@ -10,6 +10,7 @@ import {
 } from '../../api/auditLogApi';
 import type {
   AuditLogItem,
+  AuditLogDetail,
   AuditLogLevel,
   AuditLogLevelFilter,
   AuditLogPreview,
@@ -33,23 +34,24 @@ const splitTimestamp = (value: string) => {
 
 const AUDIT_LOG_SUMMARY_QUERY_KEY = ['admin', 'auditLog', 'summary'] as const;
 const AUDIT_LOG_LIST_QUERY_KEY = ['admin', 'auditLog', 'list'] as const;
+const AUDIT_LOG_DETAIL_QUERY_KEY = ['admin', 'auditLog', 'detail'] as const;
 const AUDIT_LOG_LIST_DEFAULT_PAGE = 0;
 const AUDIT_LOG_LIST_DEFAULT_SIZE = 20;
 
-const SOURCE_TABS = [
+const sourceTabs: Array<{ key: AuditLogSourceFilter; label: string }> = [
   { key: AUDIT_LOG_SOURCE_FILTER.ALL, label: '전체' },
   { key: AUDIT_LOG_SOURCE_FILTER.ADMIN, label: AUDIT_LOG_SOURCE_LABELS.ADMIN },
   { key: AUDIT_LOG_SOURCE_FILTER.AI, label: AUDIT_LOG_SOURCE_LABELS.AI },
   { key: AUDIT_LOG_SOURCE_FILTER.SCRAPING, label: AUDIT_LOG_SOURCE_LABELS.SCRAPING },
-] satisfies Array<{ key: AuditLogSourceFilter; label: string }>;
+];
 
-const LEVEL_FILTER_OPTIONS = [
+const levelOptions: Array<{ value: AuditLogLevelFilter; label: string }> = [
   { value: AUDIT_LOG_LEVEL_FILTER.ALL, label: '전체 유형' },
   { value: AUDIT_LOG_LEVEL_FILTER.INFO, label: 'INFO' },
   { value: AUDIT_LOG_LEVEL_FILTER.WARN, label: 'WARN' },
   { value: AUDIT_LOG_LEVEL_FILTER.ERROR, label: 'ERROR' },
   { value: AUDIT_LOG_LEVEL_FILTER.SUCCESS, label: 'SUCCESS' },
-] satisfies Array<{ value: AuditLogLevelFilter; label: string }>;
+];
 
 const toAuditLogPreview = (log: AuditLogItem): AuditLogPreview => ({
   id: log.id,
@@ -65,8 +67,17 @@ export default function AuditLogPage() {
   const [sourceFilter, setSourceFilter] = useState<AuditLogSourceFilter>(AUDIT_LOG_SOURCE_FILTER.ALL);
   const [levelFilter, setLevelFilter] = useState<AuditLogLevelFilter>(AUDIT_LOG_LEVEL_FILTER.ALL);
   const [query, setQuery] = useState('');
+  const [debouncedKeyword, setDebouncedKeyword] = useState('');
   const [selectedLogId, setSelectedLogId] = useState('');
-  const keyword = query.trim();
+
+  useEffect(() => {
+    const trimmedQuery = query.trim();
+    const debounceTimer = window.setTimeout(() => {
+      setDebouncedKeyword(trimmedQuery);
+    }, 300);
+
+    return () => window.clearTimeout(debounceTimer);
+  }, [query]);
 
   const {
     data: auditLogSummary,
@@ -93,7 +104,7 @@ export default function AuditLogPage() {
       ...AUDIT_LOG_LIST_QUERY_KEY,
       sourceFilter,
       levelFilter,
-      keyword,
+      debouncedKeyword,
       AUDIT_LOG_LIST_DEFAULT_PAGE,
       AUDIT_LOG_LIST_DEFAULT_SIZE,
     ],
@@ -103,7 +114,7 @@ export default function AuditLogPage() {
         size: AUDIT_LOG_LIST_DEFAULT_SIZE,
         ...(sourceFilter !== AUDIT_LOG_SOURCE_FILTER.ALL && { source: sourceFilter }),
         ...(levelFilter !== AUDIT_LOG_LEVEL_FILTER.ALL && { level: levelFilter }),
-        ...(keyword.length > 0 && { keyword }),
+        ...(debouncedKeyword.length > 0 && { keyword: debouncedKeyword }),
       });
 
       if (!response.data.success) {
@@ -128,9 +139,50 @@ export default function AuditLogPage() {
     () => auditLogs.find((log) => log.id === selectedLogId) ?? null,
     [auditLogs, selectedLogId]
   );
+  const {
+    data: selectedLogDetail,
+    isLoading: isAuditLogDetailLoading,
+    isError: isAuditLogDetailError,
+    refetch: refetchAuditLogDetail,
+  } = useQuery<AuditLogDetail, Error>({
+    queryKey: [...AUDIT_LOG_DETAIL_QUERY_KEY, selectedLogId],
+    enabled: selectedLogId.length > 0 && Boolean(selectedLog),
+    queryFn: async () => {
+      const response = await auditLogApi.getLogDetail(selectedLogId);
+
+      if (!response.data.success) {
+        throw new Error(response.data.message ?? '감사 로그 상세 조회에 실패했습니다.');
+      }
+
+      return response.data.data;
+    },
+  });
+  const selectedLogSourceLabel = selectedLogDetail?.sourceLabel ?? selectedLog?.sourceLabel;
+  const selectedLogDisplay = selectedLog
+    ? {
+        occurredAt: selectedLogDetail?.occurredAt ?? selectedLog.timestamp,
+        level: selectedLogDetail?.level ?? selectedLog.level,
+        summary: selectedLogDetail?.summary ?? selectedLog.summary,
+        detailSummary: selectedLogDetail?.detailSummary ?? selectedLog.detail,
+        actorId: selectedLogDetail?.actorId ?? '-',
+        target: selectedLogDetail ? `${selectedLogDetail.targetType}:${selectedLogDetail.targetId}` : '-',
+        ipAddressMasked: selectedLogDetail?.ipAddressMasked ?? '-',
+        requestId: selectedLogDetail?.requestId ?? '-',
+      }
+    : null;
+  const isAuditLogDetailEmpty =
+    Boolean(selectedLog) && !isAuditLogDetailLoading && !isAuditLogDetailError && !selectedLogDetail;
 
   useEffect(() => {
     const isSelectedVisible = filteredLogs.some((log) => log.id === selectedLogId);
+
+    if (filteredLogs.length === 0) {
+      if (selectedLogId.length > 0) {
+        setSelectedLogId('');
+      }
+      return;
+    }
+
     if (!isSelectedVisible && filteredLogs[0]) {
       setSelectedLogId(filteredLogs[0].id);
     }
@@ -194,7 +246,7 @@ export default function AuditLogPage() {
       <section className="admin-card auditOpsShell">
         <div className="auditOpsToolbar">
           <div className="auditOpsTabs">
-            {SOURCE_TABS.map((tab) => (
+            {sourceTabs.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
@@ -214,7 +266,7 @@ export default function AuditLogPage() {
               placeholder="로그 요약 또는 상세 내용 검색"
             />
             <select value={levelFilter} onChange={(event) => setLevelFilter(event.target.value as AuditLogLevelFilter)}>
-              {LEVEL_FILTER_OPTIONS.map((option) => (
+              {levelOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -237,7 +289,7 @@ export default function AuditLogPage() {
               {isAuditLogListError ? (
                 <div className="auditOpsEmpty error">
                   <span>감사 로그 조회에 실패했습니다.</span>
-                  <button type="button" onClick={() => void refetchAuditLogList()}>
+                  <button type="button" onClick={() => refetchAuditLogList()}>
                     다시 조회
                   </button>
                 </div>
@@ -268,30 +320,70 @@ export default function AuditLogPage() {
           <aside className="auditOpsDetail">
             <div className="auditOpsDetailHead">
               <span>선택 로그 상세</span>
-              {selectedLog ? <strong>{selectedLog.sourceLabel}</strong> : null}
+              {selectedLogSourceLabel ? <strong>{selectedLogSourceLabel}</strong> : null}
             </div>
 
-            {selectedLog ? (
+            {selectedLogDisplay ? (
               <div className="auditOpsDetailBody">
+                {isAuditLogDetailLoading ? (
+                  <div className="auditOpsDetailNotice">상세 정보를 조회 중입니다.</div>
+                ) : null}
+
+                {isAuditLogDetailError ? (
+                  <div className="auditOpsDetailNotice error">
+                    <span>상세 정보를 불러오지 못했습니다.</span>
+                    <button type="button" onClick={() => refetchAuditLogDetail()}>
+                      다시 조회
+                    </button>
+                  </div>
+                ) : null}
+
+                {isAuditLogDetailEmpty ? (
+                  <div className="auditOpsDetailNotice empty">
+                    상세 응답 데이터가 없어 목록 요약 정보를 표시합니다.
+                  </div>
+                ) : null}
+
                 <div className="auditOpsDetailMeta">
                   <div>
                     <span>발생 시각</span>
-                    <strong>{selectedLog.timestamp}</strong>
+                    <strong>{selectedLogDisplay.occurredAt}</strong>
                   </div>
                   <div>
                     <span>유형</span>
-                    <strong className={`auditOpsTag ${levelToneMap[selectedLog.level]}`}>[{selectedLog.level}]</strong>
+                    <strong className={`auditOpsTag ${levelToneMap[selectedLogDisplay.level]}`}>
+                      [{selectedLogDisplay.level}]
+                    </strong>
                   </div>
                 </div>
 
                 <div className="auditOpsDetailBlock">
                   <span>요약</span>
-                  <strong>{selectedLog.summary}</strong>
+                  <strong>{selectedLogDisplay.summary}</strong>
                 </div>
 
                 <div className="auditOpsDetailBlock">
                   <span>상세 로그</span>
-                  <p>{selectedLog.detail}</p>
+                  <p>{selectedLogDisplay.detailSummary}</p>
+                </div>
+
+                <div className="auditOpsDetailTrace">
+                  <div>
+                    <span>ACTOR</span>
+                    <strong>{selectedLogDisplay.actorId}</strong>
+                  </div>
+                  <div>
+                    <span>TARGET</span>
+                    <strong>{selectedLogDisplay.target}</strong>
+                  </div>
+                  <div>
+                    <span>IP</span>
+                    <strong>{selectedLogDisplay.ipAddressMasked}</strong>
+                  </div>
+                  <div>
+                    <span>REQUEST</span>
+                    <strong>{selectedLogDisplay.requestId}</strong>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -714,13 +806,71 @@ export default function AuditLogPage() {
         }
 
         .auditOpsDetailMeta div,
-        .auditOpsDetailBlock {
+        .auditOpsDetailBlock,
+        .auditOpsDetailTrace div {
           display: grid;
           gap: 6px;
           padding: 14px;
           border-radius: 14px;
           background: #f7fafe;
           border: 1px solid #e3ecf6;
+        }
+
+        .auditOpsDetailTrace {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .auditOpsDetailTrace span {
+          color: #6d859d;
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .auditOpsDetailTrace strong {
+          min-width: 0;
+          color: var(--audit-primary);
+          font-size: 12px;
+          font-weight: 800;
+          overflow-wrap: anywhere;
+        }
+
+        .auditOpsDetailNotice {
+          padding: 10px 12px;
+          border: 1px solid #c8d9ee;
+          border-radius: 10px;
+          background: #eef6ff;
+          color: #2563c9;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .auditOpsDetailNotice.error {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          border-color: #f0b8bd;
+          background: #fff0f0;
+          color: #d04545;
+        }
+
+        .auditOpsDetailNotice.error button {
+          height: 30px;
+          border: 1px solid #e5a6ad;
+          border-radius: 8px;
+          background: #fff;
+          color: #d04545;
+          padding: 0 10px;
+          font: inherit;
+          cursor: pointer;
+        }
+
+        .auditOpsDetailNotice.empty {
+          border-color: #e8d39b;
+          background: #fff8e8;
+          color: #9c6b16;
         }
 
         .auditOpsDetailBlock p {
