@@ -1,7 +1,7 @@
 export interface ApiResponse<TData> {
   success: boolean;
   statusCode: number;
-  message: string;
+  message: string | null;
   data: TData;
 }
 

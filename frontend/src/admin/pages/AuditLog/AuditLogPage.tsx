@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Bot, Database, FileText, ShieldCheck } from 'lucide-react';
 import '../../styles/admin.css';
-import { auditLogPreviewSeeds } from '../../api/auditLogApi';
+import { auditLogPreviewSeeds } from '../../data/auditLogSeeds';
 import type { AuditLogLevel, AuditLogLevelFilter, AuditLogSourceFilter } from '../../api/auditLogApi';
 
 type AuditTone = 'normal' | 'warning' | 'danger' | 'info';
