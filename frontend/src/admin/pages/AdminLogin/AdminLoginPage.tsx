@@ -25,6 +25,8 @@ export default function AdminLoginPage() {
       adminSession.setToken(data.accessToken);
       navigate('/admin/dashboard', { replace: true });
     } catch {
+      // axios 401 reject 포함 모든 실패 경로에서 stale 토큰 제거
+      adminSession.clearToken();
       setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.');
     } finally {
       setIsLoading(false);
