@@ -171,6 +171,67 @@ export type PaymentHistorySubscriptionCardItem = {
   currentPeriodEnd: string;
 };
 
+export interface CreateOrderRequest {
+  productCode: ProductCode;
+  successUrl: string;
+  failUrl: string;
+}
+
+export interface CreateOrderResponse {
+  orderId: string;
+  idempotencyKey: string;
+  productCode: ProductCode;
+  productName: string;
+  amount: number;
+  currency: string;
+  billingCycle: BillingCycle;
+  customerName: string;
+  customerEmail: string;
+  expiresAt: string;
+}
+
+export interface ConfirmPaymentRequest {
+  paymentKey: string;
+  orderId: string;
+  amount: number;
+}
+
+export interface ConfirmPaymentResponse {
+  paymentId: string;
+  orderId: string;
+  productCode: ProductCode;
+  productName: string;
+  amount: number;
+  currency: string;
+  paymentStatus: PaymentStatus;
+  subscriptionStatus: SubscriptionStatus;
+  paidAt: string;
+  nextBillingAt: string;
+}
+
+export interface PaymentStatusResponse {
+  orderId: string;
+  paymentStatus: PaymentStatus;
+  productCode: ProductCode;
+  productName: string;
+  amount: number;
+  paidAt: string | null;
+  failure: PaymentFailure | null;
+}
+
+export interface RecordPaymentFailRequest {
+  orderId: string;
+  productCode: ProductCode;
+  reasonCode: PaymentFailureReason;
+  message: string;
+}
+
+export interface RecordPaymentFailResponse {
+  orderId: string;
+  paymentStatus: PaymentStatus;
+  retryable: boolean;
+}
+
 export type UsageItem = {
   productCode: ProductCode;
   key: 'document' | 'interview';
