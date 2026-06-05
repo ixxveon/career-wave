@@ -4,9 +4,7 @@ import { usePaymentFailStatus } from '../../hooks/subscription/usePaymentFailSta
 import PaymentFailDetail from '../../components/subscription/PaymentFailDetail';
 
 function PaymentFailPage() {
-  const { displayMessage, reasonCode } = usePaymentFailStatus();
-
-  const checkoutUrl = `/billing/checkout`;
+  const { displayMessage, reasonCode, checkoutUrl } = usePaymentFailStatus();
 
   return (
     <div className="cw-billing-flow-page">

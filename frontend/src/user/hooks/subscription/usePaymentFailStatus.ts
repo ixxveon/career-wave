@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { billingApi } from '../../api/subscription/billingApi';
 import { PAYMENT_FAILURE_REASON, PRODUCT_CODE } from '../../types/subscription';
-import type { PaymentFailureReason } from '../../types/subscription';
+import type { PaymentFailureReason, ProductCode } from '../../types/subscription';
 
 const FAILURE_MESSAGES: Record<PaymentFailureReason, string> = {
   [PAYMENT_FAILURE_REASON.USER_CANCELED]: '결제를 취소하셨습니다.',
@@ -31,6 +31,11 @@ export function usePaymentFailStatus() {
   const code = searchParams.get('code');
   const message = searchParams.get('message');
   const orderId = searchParams.get('orderId');
+  const rawProductCode = searchParams.get('productCode');
+  const productCode =
+    rawProductCode && (Object.values(PRODUCT_CODE) as string[]).includes(rawProductCode)
+      ? (rawProductCode as ProductCode)
+      : PRODUCT_CODE.DOCUMENT_COACHING;
 
   const isDirectAccess = !orderId;
 
@@ -49,7 +54,7 @@ export function usePaymentFailStatus() {
 
     billingApi.recordPaymentFail({
       orderId,
-      productCode: PRODUCT_CODE.DOCUMENT_COACHING, // 서버에서 orderId로 상품 특정 가능하므로 placeholder
+      productCode,
       reasonCode,
       message: message ?? reasonCode,
     });
@@ -60,5 +65,6 @@ export function usePaymentFailStatus() {
     displayMessage,
     isUserCanceled,
     orderId,
+    checkoutUrl: `/billing/checkout?product=${productCode}`,
   };
 }

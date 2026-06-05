@@ -38,7 +38,7 @@ export function useCheckoutStatus() {
       const order = await createOrder({
         productCode,
         successUrl: `${window.location.origin}/billing/success`,
-        failUrl: `${window.location.origin}/billing/fail`,
+        failUrl: `${window.location.origin}/billing/fail?productCode=${productCode}`,
       });
 
       const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
