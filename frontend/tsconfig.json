@@ -13,7 +13,6 @@
     "allowJs": true,
     "checkJs": false,
     "jsx": "react-jsx",
-    "allowJs": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
