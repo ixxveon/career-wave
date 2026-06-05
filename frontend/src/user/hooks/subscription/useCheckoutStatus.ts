@@ -50,7 +50,7 @@ export function useCheckoutStatus() {
         orderId: order.orderId,
         orderName: order.productName,
         successUrl: `${window.location.origin}/billing/success`,
-        failUrl: `${window.location.origin}/billing/fail`,
+        failUrl: `${window.location.origin}/billing/fail?productCode=${productCode}`,
         customerEmail: order.customerEmail,
         customerName: order.customerName,
       });
