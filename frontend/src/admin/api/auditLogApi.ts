@@ -20,8 +20,19 @@ export const AUDIT_LOG_LEVEL = {
 
 export type AuditLogLevel = (typeof AUDIT_LOG_LEVEL)[keyof typeof AUDIT_LOG_LEVEL];
 
-export type AuditLogSourceFilter = AuditLogSource | 'ALL';
-export type AuditLogLevelFilter = AuditLogLevel | 'ALL';
+export const AUDIT_LOG_SOURCE_FILTER = {
+  ALL: 'ALL',
+  ...AUDIT_LOG_SOURCE,
+} as const;
+
+export type AuditLogSourceFilter = (typeof AUDIT_LOG_SOURCE_FILTER)[keyof typeof AUDIT_LOG_SOURCE_FILTER];
+
+export const AUDIT_LOG_LEVEL_FILTER = {
+  ALL: 'ALL',
+  ...AUDIT_LOG_LEVEL,
+} as const;
+
+export type AuditLogLevelFilter = (typeof AUDIT_LOG_LEVEL_FILTER)[keyof typeof AUDIT_LOG_LEVEL_FILTER];
 
 export interface AuditLogSummary {
   totalCount: number;

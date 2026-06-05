@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Bot, Database, FileText, ShieldCheck } from 'lucide-react';
 import '../../styles/admin.css';
 import { auditLogPreviewSeeds } from '../../data/auditLogSeeds';
+import { AUDIT_LOG_LEVEL_FILTER, AUDIT_LOG_SOURCE, AUDIT_LOG_SOURCE_FILTER } from '../../api/auditLogApi';
 import type { AuditLogLevel, AuditLogLevelFilter, AuditLogSourceFilter } from '../../api/auditLogApi';
 
 type AuditTone = 'normal' | 'warning' | 'danger' | 'info';
@@ -18,17 +19,32 @@ const splitTimestamp = (value: string) => {
   return { date, time };
 };
 
+const SOURCE_TABS = [
+  { key: AUDIT_LOG_SOURCE_FILTER.ALL, label: '전체' },
+  { key: AUDIT_LOG_SOURCE_FILTER.ADMIN, label: '관리자 관리' },
+  { key: AUDIT_LOG_SOURCE_FILTER.AI, label: 'AI 메트릭스' },
+  { key: AUDIT_LOG_SOURCE_FILTER.SCRAPING, label: '스크래핑 관리' },
+] satisfies Array<{ key: AuditLogSourceFilter; label: string }>;
+
+const LEVEL_FILTER_OPTIONS = [
+  { value: AUDIT_LOG_LEVEL_FILTER.ALL, label: '전체 유형' },
+  { value: AUDIT_LOG_LEVEL_FILTER.INFO, label: 'INFO' },
+  { value: AUDIT_LOG_LEVEL_FILTER.WARN, label: 'WARN' },
+  { value: AUDIT_LOG_LEVEL_FILTER.ERROR, label: 'ERROR' },
+  { value: AUDIT_LOG_LEVEL_FILTER.SUCCESS, label: 'SUCCESS' },
+] satisfies Array<{ value: AuditLogLevelFilter; label: string }>;
+
 export default function AuditLogPage() {
-  const [sourceFilter, setSourceFilter] = useState<AuditLogSourceFilter>('ALL');
-  const [levelFilter, setLevelFilter] = useState<AuditLogLevelFilter>('ALL');
+  const [sourceFilter, setSourceFilter] = useState<AuditLogSourceFilter>(AUDIT_LOG_SOURCE_FILTER.ALL);
+  const [levelFilter, setLevelFilter] = useState<AuditLogLevelFilter>(AUDIT_LOG_LEVEL_FILTER.ALL);
   const [query, setQuery] = useState('');
   const [selectedLogId, setSelectedLogId] = useState(auditLogPreviewSeeds[0]?.id ?? '');
 
   const filteredLogs = useMemo(() => {
     const keyword = query.trim().toLowerCase();
     return auditLogPreviewSeeds.filter((log) => {
-      const matchesSource = sourceFilter === 'ALL' || log.source === sourceFilter;
-      const matchesLevel = levelFilter === 'ALL' || log.level === levelFilter;
+      const matchesSource = sourceFilter === AUDIT_LOG_SOURCE_FILTER.ALL || log.source === sourceFilter;
+      const matchesLevel = levelFilter === AUDIT_LOG_LEVEL_FILTER.ALL || log.level === levelFilter;
       const matchesQuery =
         keyword.length === 0 ||
         log.summary.toLowerCase().includes(keyword) ||
@@ -54,9 +70,9 @@ export default function AuditLogPage() {
 
   const sourceCounts = useMemo(
     () => ({
-      ADMIN: auditLogPreviewSeeds.filter((log) => log.source === 'ADMIN').length,
-      AI: auditLogPreviewSeeds.filter((log) => log.source === 'AI').length,
-      SCRAPING: auditLogPreviewSeeds.filter((log) => log.source === 'SCRAPING').length,
+      ADMIN: auditLogPreviewSeeds.filter((log) => log.source === AUDIT_LOG_SOURCE.ADMIN).length,
+      AI: auditLogPreviewSeeds.filter((log) => log.source === AUDIT_LOG_SOURCE.AI).length,
+      SCRAPING: auditLogPreviewSeeds.filter((log) => log.source === AUDIT_LOG_SOURCE.SCRAPING).length,
     }),
     []
   );
@@ -119,17 +135,12 @@ export default function AuditLogPage() {
       <section className="admin-card auditOpsShell">
         <div className="auditOpsToolbar">
           <div className="auditOpsTabs">
-            {[
-              { key: 'ALL', label: '전체' },
-              { key: 'ADMIN', label: '관리자 관리' },
-              { key: 'AI', label: 'AI 메트릭스' },
-              { key: 'SCRAPING', label: '스크래핑 관리' },
-            ].map((tab) => (
+            {SOURCE_TABS.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 className={sourceFilter === tab.key ? 'active' : ''}
-                onClick={() => setSourceFilter(tab.key as AuditLogSourceFilter)}
+                onClick={() => setSourceFilter(tab.key)}
               >
                 {tab.label}
               </button>
@@ -144,11 +155,11 @@ export default function AuditLogPage() {
               placeholder="로그 요약 또는 상세 내용 검색"
             />
             <select value={levelFilter} onChange={(event) => setLevelFilter(event.target.value as AuditLogLevelFilter)}>
-              <option value="ALL">전체 유형</option>
-              <option value="INFO">INFO</option>
-              <option value="WARN">WARN</option>
-              <option value="ERROR">ERROR</option>
-              <option value="SUCCESS">SUCCESS</option>
+              {LEVEL_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
