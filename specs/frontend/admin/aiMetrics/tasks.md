@@ -3,7 +3,7 @@
 ## Phase 1 - API 계약 및 타입 정리
 
 **Branch**: `feature/admin-ai-metrics-api`
-**Base**: `develop` (원래 `feature/admin-ai-metrics-spec` 예정이었으나 브랜치 정리로 `develop` 기준으로 변경됨)
+**Base**: `feature/admin-ai-metrics-spec`
 
 - [x] `frontend/src/admin/api/aiMetricsApi.ts` 생성
 - [x] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입 정의
@@ -16,11 +16,11 @@
 **Branch**: `feature/admin-ai-metrics-domain-usage`
 **Base**: `feature/admin-ai-metrics-api`
 
-- [ ] `DOCUMENT`, `INTERVIEW` 도메인 카드 렌더링
-- [ ] 전체 요청 수, 성공/실패 수, 실패율, 평균 응답 시간 표시
-- [ ] 도메인별 입력/출력 토큰과 비용 추정치 표시
-- [ ] 도메인 위험도 `NORMAL`, `WARNING`, `CRITICAL` 표시
-- [ ] 로딩, 빈 데이터, API 실패 상태 처리
+- [x] `DOCUMENT`, `INTERVIEW` 도메인 카드 렌더링
+- [x] 전체 요청 수, 성공/실패 수, 실패율, 평균 응답 시간 표시
+- [x] 도메인별 입력/출력 토큰과 비용 추정치 표시
+- [x] 도메인 위험도 `NORMAL`, `WARNING`, `CRITICAL` 표시
+- [x] 로딩, 빈 데이터, API 실패 상태 처리
 
 ## Phase 3 - 토큰, 비용, 예산, 알림
 
