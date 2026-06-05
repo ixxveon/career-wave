@@ -11,7 +11,7 @@
 ### Base URL
 
 ```txt
-/api/v1/members
+/api/v1/user/members
 ```
 
 ### 날짜 포맷
@@ -81,7 +81,7 @@ Authorization: Bearer {accessToken}
 
 ## 1. 로그인
 
-- **Endpoint**: `POST /api/v1/members/login`
+- **Endpoint**: `POST /api/v1/user/members/login`
 - **Content-Type**: `application/json`
 
 ### Request
@@ -135,7 +135,7 @@ Authorization: Bearer {accessToken}
 
 ## 2. 아이디 중복 확인
 
-- **Endpoint**: `GET /api/v1/members/login-id/check?loginId={loginId}`
+- **Endpoint**: `GET /api/v1/user/members/login-id/check?loginId={loginId}`
 
 ### Response
 
@@ -154,7 +154,7 @@ Authorization: Bearer {accessToken}
 
 ## 3. 인증번호 발송
 
-- **Endpoint**: `POST /api/v1/members/verifications/send`
+- **Endpoint**: `POST /api/v1/user/members/verifications/send`
 
 ### Request
 
@@ -192,7 +192,7 @@ Authorization: Bearer {accessToken}
 
 ## 4. 인증번호 확인
 
-- **Endpoint**: `POST /api/v1/members/verifications/confirm`
+- **Endpoint**: `POST /api/v1/user/members/verifications/confirm`
 
 ### Request
 
@@ -223,7 +223,7 @@ Authorization: Bearer {accessToken}
 
 ## 5. 개인회원 가입
 
-- **Endpoint**: `POST /api/v1/members/register/user`
+- **Endpoint**: `POST /api/v1/user/members/register/user`
 
 ### Request
 
@@ -263,10 +263,10 @@ Authorization: Bearer {accessToken}
 
 ## 6. 기업회원 가입
 
-- **Endpoint**: `POST /api/v1/members/register/company`
+- **Endpoint**: `POST /api/v1/user/members/register/company`
 - **Content-Type**: `application/json`
 
-> 재직증명서 PDF는 먼저 `POST /api/v1/members/company/employment-certificate`로 업로드하고, 기업회원 가입 요청에는 서버가 반환한 `employmentCertificateFileId`만 포함한다.  
+> 재직증명서 PDF는 먼저 `POST /api/v1/user/members/company/employment-certificate`로 업로드하고, 기업회원 가입 요청에는 서버가 반환한 `employmentCertificateFileId`만 포함한다.  
 > 가입 정보 저장과 파일 업로드 실패를 분리하여 재시도/진행률/오류 메시지를 명확히 처리하기 위함이다.
 
 ### Request
@@ -318,7 +318,7 @@ Authorization: Bearer {accessToken}
 
 ## 7. 재직증명서 PDF 업로드
 
-- **Endpoint**: `POST /api/v1/members/company/employment-certificate`
+- **Endpoint**: `POST /api/v1/user/members/company/employment-certificate`
 - **Content-Type**: `multipart/form-data`
 
 ### Request
@@ -360,7 +360,7 @@ Authorization: Bearer {accessToken}
 
 ## 8. 아이디 찾기
 
-- **Endpoint**: `POST /api/v1/members/recovery/find-id`
+- **Endpoint**: `POST /api/v1/user/members/recovery/find-id`
 
 ### Request
 
@@ -402,7 +402,7 @@ Authorization: Bearer {accessToken}
 
 ## 9. 비밀번호 재설정 권한 발급
 
-- **Endpoint**: `POST /api/v1/members/recovery/password-token`
+- **Endpoint**: `POST /api/v1/user/members/recovery/password-token`
 
 ### Request
 
@@ -444,7 +444,7 @@ Authorization: Bearer {accessToken}
 
 ## 10. 비밀번호 재설정
 
-- **Endpoint**: `POST /api/v1/members/recovery/reset-password`
+- **Endpoint**: `POST /api/v1/user/members/recovery/reset-password`
 
 ### Request
 
@@ -470,9 +470,46 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 11. 내 회원 상태 조회
+## 11. 토큰 갱신
 
-- **Endpoint**: `GET /api/v1/members/me/status`
+- **Endpoint**: `POST /api/v1/user/members/token/refresh`
+- **인증**: 불필요 (refresh token으로 처리)
+
+### Request
+
+refresh token은 HttpOnly cookie 우선, 불가 시 body로 전달한다.
+
+```json
+{
+  "refreshToken": "refresh-token-value"
+}
+```
+
+### Response `200 OK`
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "토큰이 갱신되었습니다.",
+  "data": {
+    "accessToken": "new-jwt-access-token",
+    "refreshToken": "new-refresh-token-value"
+  }
+}
+```
+
+### Error Cases
+
+| statusCode | 상황 |
+|------------|------|
+| `401` | refresh token 만료 또는 유효하지 않음 |
+
+---
+
+## 12. 내 회원 상태 조회
+
+- **Endpoint**: `GET /api/v1/user/members/me/status`
 - **인증**: 필요
 
 ### Response

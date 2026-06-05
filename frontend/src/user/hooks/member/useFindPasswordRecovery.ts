@@ -35,6 +35,12 @@ import {
   validateVerificationConfirm,
 } from '../../utils/member/recoverySchema';
 
+// ── 책임 경계 ────────────────────────────────────────────────────
+// §1 인증번호 발송/확인 (user: email+phone 2채널, company: email 1채널)
+// §2 리셋 토큰 발급 (handleIssueResetToken)
+// §3 비밀번호 변경 (handleResetPassword)
+// 세 단계가 stale guard ref를 공유하므로 단일 훅으로 유지한다.
+// ─────────────────────────────────────────────────────────────────
 export function useFindPasswordRecovery(isCompany: boolean) {
   const now = useVerificationNow();
   const sendVerification = useSendVerificationCode();

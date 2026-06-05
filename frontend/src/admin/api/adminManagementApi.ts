@@ -161,16 +161,6 @@ export interface AdminManagementApiError {
   fieldErrors?: Record<string, string>;
 }
 
-function isAdminManagementApiError(error: unknown): error is AdminManagementApiError {
-  return (
-    !!error
-    && typeof error === 'object'
-    && 'code' in error
-    && 'statusCode' in error
-    && 'message' in error
-  );
-}
-
 const adminManagementFallbackMessages: Record<AdminManagementErrorCode, string> = {
   VALIDATION_ERROR: '요청 값이 올바르지 않습니다.',
   UNAUTHORIZED: '인증이 필요합니다.',
@@ -220,10 +210,6 @@ function getFieldErrors(data: unknown): Record<string, string> | undefined {
 }
 
 export function toAdminManagementApiError(error: unknown): AdminManagementApiError {
-  if (isAdminManagementApiError(error)) {
-    return error;
-  }
-
   if (!axios.isAxiosError<ApiErrorBody>(error)) {
     return {
       code: ADMIN_MANAGEMENT_ERROR_CODE.UNKNOWN,

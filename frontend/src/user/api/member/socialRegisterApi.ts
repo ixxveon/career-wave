@@ -38,7 +38,7 @@ export const memberSocialRegisterApi = {
       return completeWithMock(payload);
     }
 
-    return memberApiClient<SocialRegisterCompletionResponse>('/api/v1/members/register/social/complete', {
+    return memberApiClient<SocialRegisterCompletionResponse>('/api/v1/user/members/register/social/complete', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
