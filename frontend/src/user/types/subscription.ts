@@ -154,6 +154,7 @@ export type PaymentHistorySubscriptionCardItem = {
   productCode: ProductCode;
   name: string;
   cancelScheduled: boolean;
+  paymentFailed: boolean;
   nextBillingDate: string | null;
   billingCycle: string;
   monthlyPrice: string;

@@ -1,3 +1,4 @@
+import { AlertCircle } from 'lucide-react';
 import { type PaymentHistorySubscriptionCardItem } from '../../types/subscription';
 import { formatBillingDate } from '../../utils/subscription/subscriptionView';
 
@@ -73,6 +74,13 @@ export function PaymentHistorySubscriptionCard({
           <dd>{formatBillingDate(subscription.startedAt)}부터 구독 시작</dd>
         </div>
       </dl>
+
+      {subscription.paymentFailed && (
+        <p className="cw-billing-subscription-card__payment-failed" role="alert">
+          <AlertCircle size={14} />
+          자동 결제에 실패했습니다. 결제 수단을 확인해주세요.
+        </p>
+      )}
 
       {subscription.cancelScheduled && (
         <p className="cw-billing-subscription-card__notice">

@@ -23,6 +23,7 @@ import {
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set<SubscriptionStatus>([
   SUBSCRIPTION_STATUS.ACTIVE,
   SUBSCRIPTION_STATUS.CANCEL_SCHEDULED,
+  SUBSCRIPTION_STATUS.PAYMENT_FAILED,
 ]);
 
 const PAGE_SIZE = 5;
@@ -86,6 +87,7 @@ export function usePaymentHistoryStatus(
           productCode: s.productCode,
           name: s.productName,
           cancelScheduled: s.status === SUBSCRIPTION_STATUS.CANCEL_SCHEDULED,
+          paymentFailed: s.status === SUBSCRIPTION_STATUS.PAYMENT_FAILED,
           nextBillingDate: formatBillingDate(s.nextBillingAt),
           billingCycle: '매월 정기 결제',
           monthlyPrice: formatPrice(product?.price),
