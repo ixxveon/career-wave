@@ -2,7 +2,7 @@
 
 ## Summary
 
-관리자 감사 로그 화면을 mock seed 기반 통합 로그 화면에서 API 기반 감사 로그 조회 화면으로 전환한다. MVP는 감사 로그 요약 카운트, source/level/keyword/기간 필터, 페이지네이션, 선택 로그 상세, 권한 오류와 민감 정보 노출 방지 검증을 포함한다.
+관리자 감사 로그 화면을 mock seed 기반 통합 로그 화면에서 API 기반 감사 로그 조회 화면으로 전환한다. MVP는 감사 로그 요약 카운트, source/level/keyword/기간 필터, 스크롤 목록, 선택 로그 상세, 권한 오류와 민감 정보 노출 방지 검증을 포함한다.
 
 ## Technical Context
 
@@ -24,7 +24,7 @@ frontend/src/admin/
 │   └── AuditLog/
 │       └── AuditLogPage.tsx
 └── components/
-    └── MiniPagination.tsx
+    └── (추가 컴포넌트 없음)
 
 specs/frontend/admin/auditLog/
 ├── api-schema.md
@@ -64,7 +64,7 @@ specs/frontend/admin/auditLog/
 - 요약 카드 4개를 API 데이터 기반으로 전환한다.
 - 감사 로그 목록을 API 데이터로 렌더링한다.
 - source 탭, level 필터, keyword 검색 조건을 API 조회 조건과 동기화한다.
-- 페이지네이션 UI를 API 응답 메타데이터와 연결한다.
+- 현재 스크롤 목록 UI에 맞춰 API page/size 기본 조회 조건을 연결한다.
 
 ### Phase 3 - 상세 조회와 선택 상태
 
@@ -95,4 +95,3 @@ specs/frontend/admin/auditLog/
 - TypeScript interface는 PascalCase를 사용하고 `I` prefix를 사용하지 않는다.
 - 새 라이브러리는 팀 합의 없이 추가하지 않는다.
 - 관리자 API는 JWT와 `ROLE_ADMIN` 권한을 전제로 설계한다.
-
