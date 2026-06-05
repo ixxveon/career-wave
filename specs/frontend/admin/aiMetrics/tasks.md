@@ -3,13 +3,13 @@
 ## Phase 1 - API 계약 및 타입 정리
 
 **Branch**: `feature/admin-ai-metrics-api`
-**Base**: `feature/admin-ai-metrics-spec`
+**Base**: `develop` (원래 `feature/admin-ai-metrics-spec` 예정이었으나 브랜치 정리로 `develop` 기준으로 변경됨)
 
-- [ ] `frontend/src/admin/api/aiMetricsApi.ts` 생성
-- [ ] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입 정의
-- [ ] `AiMetricSummary`, `AiDomainUsage`, `AiTokenTrendPoint`, `AiHeavyUser`, `AiMetricLog`, `AiBudgetSetting` 응답 타입 정의
-- [ ] `displayModelName`과 `actualModelName`을 분리해 타입에 반영
-- [ ] `ApiResponse<T>` 응답 구조에 맞춘 API 함수 작성
+- [x] `frontend/src/admin/api/aiMetricsApi.ts` 생성
+- [x] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입 정의
+- [x] `AiMetricSummary`, `AiDomainUsage`, `AiTokenTrendPoint`, `AiHeavyUser`, `AiMetricLog`, `AiBudgetSetting` 응답 타입 정의
+- [x] `displayModelName`과 `actualModelName`을 분리해 타입에 반영
+- [x] `ApiResponse<T>` 응답 구조에 맞춘 API 함수 작성
 
 ## Phase 2 - 도메인별 사용량 대시보드
 

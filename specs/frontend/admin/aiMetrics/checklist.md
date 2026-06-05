@@ -4,19 +4,19 @@
 
 - [ ] `spec.md`, `plan.md`, `tasks.md`, `api-schema.md`, `constitution.md`의 도메인 정의가 일치한다.
 - [ ] 모니터링 도메인은 ERD의 `ai_usage_logs.feature_type` 기준인 `DOCUMENT`, `INTERVIEW`로 통일되어 있고, 관리자 기능 섹션(예: RAG 상태)은 별도 영역으로 구분되어 있다.
-- [ ] 모델명은 `displayModelName`과 `actualModelName`으로 분리되어 있다.
+- [x] 모델명은 `displayModelName`과 `actualModelName`으로 분리되어 있다.
 - [ ] 비용은 정산 데이터가 아닌 운영 참고용 추정치로 명시되어 있다.
 - [ ] Phase별 스택 브랜치 작업 규칙이 문서에 반영되어 있다.
 
 ## Phase 1 - API 계약 및 타입 정리
 
-- [ ] `frontend/src/admin/api/aiMetricsApi.ts`에서 관리자 AI 매트릭스 API를 관리한다.
-- [ ] 페이지 또는 컴포넌트에서 `axios`를 직접 호출하지 않는다.
-- [ ] `ApiResponse<T>` 응답 구조를 기준으로 처리한다.
-- [ ] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입이 정의되어 있다.
-- [ ] `AiMetricSummary`, `AiDomainUsage`, `AiTokenTrendPoint`, `AiHeavyUser`, `AiMetricLog`, `AiBudgetSetting` 응답 타입이 정의되어 있다.
-- [ ] TypeScript interface는 PascalCase를 사용하고 `I` prefix를 사용하지 않는다.
-- [ ] 모델 표시명과 실제 모델명 필드가 모두 수용된다.
+- [x] `frontend/src/admin/api/aiMetricsApi.ts`에서 관리자 AI 매트릭스 API를 관리한다.
+- [x] 페이지 또는 컴포넌트에서 `axios`를 직접 호출하지 않는다.
+- [x] `ApiResponse<T>` 응답 구조를 기준으로 처리한다.
+- [x] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입이 정의되어 있다.
+- [x] `AiMetricSummary`, `AiDomainUsage`, `AiTokenTrendPoint`, `AiHeavyUser`, `AiMetricLog`, `AiBudgetSetting` 응답 타입이 정의되어 있다.
+- [x] TypeScript interface는 PascalCase를 사용하고 `I` prefix를 사용하지 않는다.
+- [x] 모델 표시명과 실제 모델명 필드가 모두 수용된다.
 
 ## Phase 2 - 도메인별 사용량 대시보드
 
@@ -55,7 +55,7 @@
 
 ## Team Convention
 
-- [ ] 최신 `develop` 기준 브랜치 생성 원칙을 확인했다.
+- [x] 최신 `develop` 기준 브랜치 생성 원칙을 확인했다.
 - [ ] 스택 브랜치가 필요한 Phase 의존성을 문서에 명시했다.
 - [ ] PR은 하나의 Phase 목적만 포함한다.
 - [ ] PR 본문에는 Phase 범위와 검증 결과를 명시한다.
