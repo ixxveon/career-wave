@@ -30,14 +30,14 @@
 
 ## Phase 3 - ACL 연동
 
-- [ ] `feature/admin-management-account` 브랜치를 기준으로 `feature/admin-management-acl` 브랜치를 생성한다.
-- [ ] ACL 목록을 API 응답 기반으로 교체한다.
-- [ ] ACL 등록 폼을 등록 API와 연결한다.
-- [ ] ACL 활성/비활성 버튼을 상태 변경 API와 연결한다.
-- [ ] ACL 삭제 버튼을 삭제 API와 연결한다.
-- [ ] CIDR 형식 검증 실패 메시지를 표시한다.
-- [ ] ACL 변경 성공 후 ACL 목록과 summary를 재조회한다.
-- [ ] ACL 삭제 후 현재 페이지가 비면 이전 페이지로 보정한다.
+- [x] `feature/admin-management-account` 브랜치를 기준으로 `feature/admin-management-acl` 브랜치를 생성한다.
+- [x] ACL 목록을 API 응답 기반으로 교체한다.
+- [x] ACL 등록 폼을 등록 API와 연결한다.
+- [x] ACL 활성/비활성 버튼을 상태 변경 API와 연결한다.
+- [x] ACL 삭제 버튼을 삭제 API와 연결한다.
+- [x] CIDR 형식 검증 실패 메시지를 표시한다.
+- [x] ACL 변경 성공 후 ACL 목록과 summary를 재조회한다.
+- [x] ACL 삭제 후 현재 페이지가 비면 이전 페이지로 보정한다.
 
 ## Phase 4 - 감사 로그 및 상태 처리
 

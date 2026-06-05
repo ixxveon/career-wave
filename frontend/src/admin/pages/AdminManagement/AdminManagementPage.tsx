@@ -3,15 +3,22 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LockKeyhole, Network, Plus, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
 import {
   createAdminAccount as createAdminAccountRequest,
+  createAdminAclRule,
   deleteAdminAccount,
+  deleteAdminAclRule,
   getAdminAccounts,
+  getAdminAclRules,
   getAdminManagementAuthErrorMessage,
   getAdminManagementSummary,
   toAdminManagementApiError,
+  updateAdminAclEnabled,
   updateAdminRole,
   updateAdminStatus,
 } from '../../api/adminManagementApi';
-import type { AdminAccount as AdminAccountResponse } from '../../api/adminManagementApi';
+import type {
+  AdminAccount as AdminAccountResponse,
+  AdminAclRule as AdminAclRuleResponse,
+} from '../../api/adminManagementApi';
 import '../../styles/admin.css';
 import MiniPagination from '../../components/MiniPagination';
 
@@ -75,10 +82,12 @@ const ROLE_META: Record<AdminRole, { label: string; scope: string }> = {
 const roleColumns: AdminRole[] = ['MASTER', 'CS', 'BACKEND', 'OPS', 'BILLING', 'AUDIT'];
 const MAX_SECURITY_LOGS = 5;
 const ADMIN_PAGE_SIZE = 20;
+const ACL_PAGE_SIZE = 3;
 const ADMIN_SEARCH_DEBOUNCE_MS = 400;
 const ADMIN_MANAGEMENT_QUERY_KEY = ['adminManagement'] as const;
 const ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'summary'] as const;
 const ADMIN_MANAGEMENT_ADMINS_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'admins'] as const;
+const ADMIN_MANAGEMENT_ACLS_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'acls'] as const;
 
 const initialAdmins: AdminAccount[] = [
   {
@@ -245,6 +254,20 @@ const splitDateTime = (value: string) => {
   return { date, time };
 };
 
+const isValidCidr = (value: string) => {
+  const match = value.match(/^(\d{1,3})(?:\.(\d{1,3})){3}\/(\d{1,2})$/);
+  if (!match) return false;
+
+  const [ip, prefix] = value.split('/');
+  const prefixNumber = Number(prefix);
+  if (!Number.isInteger(prefixNumber) || prefixNumber < 0 || prefixNumber > 32) return false;
+
+  return ip.split('.').every((octet) => {
+    const octetNumber = Number(octet);
+    return Number.isInteger(octetNumber) && octetNumber >= 0 && octetNumber <= 255;
+  });
+};
+
 const getAclRiskMeta = (cidr: string) => {
   const size = Number(cidr.split('/')[1] ?? 32);
 
@@ -278,6 +301,15 @@ const toAdminAccountRow = (admin: AdminAccountResponse): AdminAccount => ({
   status: admin.status,
 });
 
+const toAclRuleRow = (aclRule: AdminAclRuleResponse): AclRule => ({
+  id: aclRule.id,
+  label: aclRule.label,
+  cidr: aclRule.cidr,
+  note: aclRule.note,
+  enabled: aclRule.enabled,
+  updatedAt: aclRule.updatedAt,
+});
+
 export default function AdminManagementPage() {
   const queryClient = useQueryClient();
   const {
@@ -299,11 +331,11 @@ export default function AdminManagementPage() {
   const [aclEnforced, setAclEnforced] = useState(true);
   const [isCreateAdminOpen, setIsCreateAdminOpen] = useState(false);
   const [adminDraft, setAdminDraft] = useState<AdminDraft>(createEmptyAdminDraft);
-  const [aclSeed, setAclSeed] = useState(4);
   const [aclPage, setAclPage] = useState(1);
   const [adminPage, setAdminPage] = useState(1);
   const logIdSeedRef = useRef(initialLogs.length + 1);
   const [aclDraft, setAclDraft] = useState<AclDraft>({ label: '', cidr: '', note: '' });
+  const [aclCidrErrorMessage, setAclCidrErrorMessage] = useState('');
   const adminListQueryParams = {
     keyword: debouncedAdminFilter || undefined,
     role: roleFilter,
@@ -321,6 +353,20 @@ export default function AdminManagementPage() {
     queryFn: () => getAdminAccounts(adminListQueryParams),
   });
   const filteredAdmins = adminAccounts?.items.map(toAdminAccountRow) ?? [];
+  const aclListQueryParams = {
+    page: aclPage,
+    size: ACL_PAGE_SIZE,
+  };
+  const {
+    data: adminAclRules,
+    error: adminAclRulesError,
+    isError: isAdminAclRulesError,
+    isLoading: isAdminAclRulesLoading,
+  } = useQuery({
+    queryKey: [...ADMIN_MANAGEMENT_ACLS_QUERY_KEY, aclListQueryParams],
+    queryFn: () => getAdminAclRules(aclListQueryParams),
+  });
+  const visibleAclRules = adminAclRules?.items.map(toAclRuleRow) ?? aclRules;
 
   const addLog = (log: Omit<AuditLog, 'id' | 'time'>) => {
     const nextLogId = logIdSeedRef.current;
@@ -331,6 +377,11 @@ export default function AdminManagementPage() {
   const refreshAdminManagementQueries = () => {
     void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY });
     void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_ADMINS_QUERY_KEY });
+  };
+
+  const refreshAclManagementQueries = () => {
+    void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_ACLS_QUERY_KEY });
   };
 
   const createAdminMutation = useMutation({
@@ -405,6 +456,61 @@ export default function AdminManagementPage() {
     },
   });
 
+  const createAclRuleMutation = useMutation({
+    mutationFn: createAdminAclRule,
+    onSuccess: (createdAclRule) => {
+      const nextRule = toAclRuleRow(createdAclRule);
+
+      setAclPage(1);
+      setAclDraft({ label: '', cidr: '', note: '' });
+      setAclCidrErrorMessage('');
+
+      addLog({
+        actor: 'super_admin',
+        ip: '10.20.0.10',
+        action: 'IP ACL 등록',
+        target: nextRule.id,
+        severity: 'WARN',
+      });
+      refreshAclManagementQueries();
+    },
+  });
+
+  const updateAclEnabledMutation = useMutation({
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => updateAdminAclEnabled(id, { enabled }),
+    onSuccess: (updatedAclRule) => {
+      const nextRule = toAclRuleRow(updatedAclRule);
+
+      addLog({
+        actor: 'super_admin',
+        ip: '10.20.0.10',
+        action: nextRule.enabled ? 'IP ACL 활성화' : 'IP ACL 비활성화',
+        target: nextRule.id,
+        severity: nextRule.enabled ? 'INFO' : 'WARN',
+      });
+      refreshAclManagementQueries();
+    },
+  });
+
+  const deleteAclRuleMutation = useMutation({
+    mutationFn: (id: string) => deleteAdminAclRule(id),
+    onSuccess: (_, deletedAclId) => {
+      const isCurrentPageEmptyAfterDelete = aclPage > 1 && visibleAclRules.length === 1;
+      if (isCurrentPageEmptyAfterDelete) {
+        setAclPage((page) => Math.max(1, page - 1));
+      }
+
+      addLog({
+        actor: 'super_admin',
+        ip: '10.20.0.10',
+        action: 'IP ACL 삭제',
+        target: deletedAclId,
+        severity: 'ERROR',
+      });
+      refreshAclManagementQueries();
+    },
+  });
+
   const changeAdminRole = (id: string, role: AdminRole) => {
     updateAdminRoleMutation.mutate({ id, role });
   };
@@ -453,61 +559,36 @@ export default function AdminManagementPage() {
   };
 
   const addAclRule = () => {
-    if (!aclDraft.label.trim() || !aclDraft.cidr.trim()) return;
+    const label = aclDraft.label.trim();
+    const cidr = aclDraft.cidr.trim();
+    const note = aclDraft.note.trim();
+    if (!label || !cidr) return;
+    if (!isValidCidr(cidr)) {
+      setAclCidrErrorMessage('CIDR 형식이 올바르지 않습니다. 예: 10.20.0.0/16');
+      return;
+    }
 
-    const nextRule: AclRule = {
-      id: makeId('ACL', aclSeed),
-      label: aclDraft.label.trim(),
-      cidr: aclDraft.cidr.trim(),
-      note: aclDraft.note.trim() || '설명 없음',
-      enabled: true,
-      updatedAt: formatNow(),
-    };
+    setAclCidrErrorMessage('');
 
-    setAclRules((prev) => [nextRule, ...prev]);
-    setAclSeed((prev) => prev + 1);
-    setAclPage(1);
-    setAclDraft({ label: '', cidr: '', note: '' });
-
-    addLog({
-      actor: 'super_admin',
-      ip: '10.20.0.10',
-      action: 'IP ACL 등록',
-      target: nextRule.id,
-      severity: 'WARN',
+    createAclRuleMutation.mutate({
+      label,
+      cidr,
+      note,
     });
   };
 
   const toggleAclRule = (id: string) => {
-    const target = aclRules.find((item) => item.id === id);
+    const target = visibleAclRules.find((item) => item.id === id);
     if (!target) return;
 
-    setAclRules((prev) =>
-      prev.map((rule) => (rule.id === id ? { ...rule, enabled: !rule.enabled, updatedAt: formatNow() } : rule))
-    );
-
-    addLog({
-      actor: 'super_admin',
-      ip: '10.20.0.10',
-      action: target.enabled ? 'IP ACL 비활성화' : 'IP ACL 활성화',
-      target: target.id,
-      severity: target.enabled ? 'WARN' : 'INFO',
-    });
+    updateAclEnabledMutation.mutate({ id, enabled: !target.enabled });
   };
 
   const removeAclRule = (id: string) => {
-    const target = aclRules.find((item) => item.id === id);
+    const target = visibleAclRules.find((item) => item.id === id);
     if (!target) return;
 
-    setAclRules((prev) => prev.filter((rule) => rule.id !== id));
-
-    addLog({
-      actor: 'super_admin',
-      ip: '10.20.0.10',
-      action: 'IP ACL 삭제',
-      target: target.id,
-      severity: 'ERROR',
-    });
+    deleteAclRuleMutation.mutate(target.id);
   };
 
   useEffect(() => {
@@ -518,11 +599,11 @@ export default function AdminManagementPage() {
   }, [adminAccounts?.totalPages, adminPage]);
 
   useEffect(() => {
-    const nextTotalPages = Math.max(1, Math.ceil(aclRules.length / 3));
+    const nextTotalPages = Math.max(1, adminAclRules?.totalPages ?? 1);
     if (aclPage > nextTotalPages) {
       setAclPage(nextTotalPages);
     }
-  }, [aclPage, aclRules.length]);
+  }, [adminAclRules?.totalPages, aclPage]);
 
   useEffect(() => {
     if (!isCreateAdminOpen) return undefined;
@@ -567,6 +648,18 @@ export default function AdminManagementPage() {
   const deleteAdminErrorMessage = deleteAdminMutation.isError
     ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(deleteAdminMutation.error))
     : '';
+  const aclRulesErrorMessage = isAdminAclRulesError
+    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(adminAclRulesError))
+    : '';
+  const createAclRuleErrorMessage = createAclRuleMutation.isError
+    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(createAclRuleMutation.error))
+    : '';
+  const updateAclEnabledErrorMessage = updateAclEnabledMutation.isError
+    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(updateAclEnabledMutation.error))
+    : '';
+  const deleteAclRuleErrorMessage = deleteAclRuleMutation.isError
+    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(deleteAclRuleMutation.error))
+    : '';
   const summaryStatusText = isSummaryLoading ? '요약을 불러오는 중' : summaryErrorMessage;
   const totalAdmins = summary?.totalAdminCount ?? 0;
   const activeAdminCount = summary?.activeAdminCount ?? 0;
@@ -577,10 +670,11 @@ export default function AdminManagementPage() {
   const safeAdminPage = Math.min(adminPage, adminTotalPages);
   const adminRangeStart = adminTotalItems > 0 ? (safeAdminPage - 1) * ADMIN_PAGE_SIZE + 1 : 0;
   const adminRangeEnd = Math.min(safeAdminPage * ADMIN_PAGE_SIZE, adminTotalItems);
-  const aclPageSize = 3;
-  const aclTotalPages = Math.max(1, Math.ceil(aclRules.length / aclPageSize));
+  const aclPageSize = ACL_PAGE_SIZE;
+  const aclTotalItems = adminAclRules?.totalItems ?? visibleAclRules.length;
+  const aclTotalPages = Math.max(1, adminAclRules?.totalPages ?? Math.ceil(visibleAclRules.length / aclPageSize));
   const safeAclPage = Math.min(aclPage, aclTotalPages);
-  const pagedAclRules = aclRules.slice((safeAclPage - 1) * aclPageSize, safeAclPage * aclPageSize);
+  const pagedAclRules = adminAclRules ? visibleAclRules : visibleAclRules.slice((safeAclPage - 1) * aclPageSize, safeAclPage * aclPageSize);
 
   const kpiItems = [
     { label: '전체 관리자', value: totalAdmins, desc: '등록된 관리자 계정', tone: 'kpi-blue', Icon: ShieldCheck },
@@ -849,6 +943,7 @@ export default function AdminManagementPage() {
                   value={aclDraft.label}
                   onChange={(e) => setAclDraft((prev) => ({ ...prev, label: e.target.value }))}
                   placeholder="예: 본사 사내망"
+                  disabled={createAclRuleMutation.isPending}
                 />
               </label>
               <label>
@@ -856,8 +951,12 @@ export default function AdminManagementPage() {
                 <input
                   type="text"
                   value={aclDraft.cidr}
-                  onChange={(e) => setAclDraft((prev) => ({ ...prev, cidr: e.target.value }))}
+                  onChange={(e) => {
+                    setAclDraft((prev) => ({ ...prev, cidr: e.target.value }));
+                    if (aclCidrErrorMessage) setAclCidrErrorMessage('');
+                  }}
                   placeholder="예: 10.20.0.0/16"
+                  disabled={createAclRuleMutation.isPending}
                 />
               </label>
               <label>
@@ -867,19 +966,36 @@ export default function AdminManagementPage() {
                   value={aclDraft.note}
                   onChange={(e) => setAclDraft((prev) => ({ ...prev, note: e.target.value }))}
                   placeholder="예: 사내 네트워크 전체 허용"
+                  disabled={createAclRuleMutation.isPending}
                 />
               </label>
-              <button className="amPrimaryButton" type="button" onClick={addAclRule}>
-                추가
+              <button
+                className="amPrimaryButton"
+                type="button"
+                disabled={createAclRuleMutation.isPending || !aclDraft.label.trim() || !aclDraft.cidr.trim()}
+                onClick={addAclRule}
+              >
+                {createAclRuleMutation.isPending ? '등록 중' : '추가'}
               </button>
             </div>
+            {aclCidrErrorMessage ? <p className="amInlineError">{aclCidrErrorMessage}</p> : null}
+            {createAclRuleErrorMessage ? <p className="amInlineError">{createAclRuleErrorMessage}</p> : null}
+            {updateAclEnabledErrorMessage ? <p className="amInlineError">{updateAclEnabledErrorMessage}</p> : null}
+            {deleteAclRuleErrorMessage ? <p className="amInlineError">{deleteAclRuleErrorMessage}</p> : null}
 
             <div className="amAclList">
-              {aclRules.length === 0 ? (
+              {isAdminAclRulesLoading ? (
+                <div className="amEmptyState">ACL 목록을 불러오는 중입니다.</div>
+              ) : isAdminAclRulesError ? (
+                <div className="amEmptyState">{aclRulesErrorMessage}</div>
+              ) : visibleAclRules.length === 0 ? (
                 <div className="amEmptyState">등록된 ACL 규칙이 없습니다.</div>
               ) : (
                 pagedAclRules.map((rule) => {
                   const riskMeta = getAclRiskMeta(rule.cidr);
+                  const isAclTogglePending =
+                    updateAclEnabledMutation.isPending && updateAclEnabledMutation.variables?.id === rule.id;
+                  const isAclDeletePending = deleteAclRuleMutation.isPending && deleteAclRuleMutation.variables === rule.id;
 
                   return (
                     <article className={`amAclRow ${rule.enabled ? 'enabled' : 'disabled'}`} key={rule.id}>
@@ -897,11 +1013,21 @@ export default function AdminManagementPage() {
                       <div className="amAclMeta">
                         <small>수정 {rule.updatedAt}</small>
                         <div className="amAclButtons">
-                          <button className="amGhostButton" type="button" onClick={() => toggleAclRule(rule.id)}>
-                            {rule.enabled ? '비활성화' : '활성화'}
+                          <button
+                            className="amGhostButton"
+                            type="button"
+                            disabled={isAclTogglePending}
+                            onClick={() => toggleAclRule(rule.id)}
+                          >
+                            {isAclTogglePending ? '처리 중' : rule.enabled ? '비활성화' : '활성화'}
                           </button>
-                          <button className="amDangerButton" type="button" onClick={() => removeAclRule(rule.id)}>
-                            삭제
+                          <button
+                            className="amDangerButton"
+                            type="button"
+                            disabled={isAclDeletePending}
+                            onClick={() => removeAclRule(rule.id)}
+                          >
+                            {isAclDeletePending ? '삭제 중' : '삭제'}
                           </button>
                         </div>
                       </div>
@@ -911,10 +1037,10 @@ export default function AdminManagementPage() {
               )}
             </div>
 
-            {aclRules.length > 0 && (
+            {!isAdminAclRulesLoading && !isAdminAclRulesError && aclTotalItems > 0 && (
               <div className="amPagination amAclPagination">
                 <span>
-                  총 {aclRules.length}건 중 {(safeAclPage - 1) * aclPageSize + 1}-{Math.min(safeAclPage * aclPageSize, aclRules.length)} 표시
+                  총 {aclTotalItems}건 중 {((safeAclPage - 1) * aclPageSize + 1)}-{Math.min(safeAclPage * aclPageSize, aclTotalItems)} 표시
                 </span>
                 <div>
                   <MiniPagination page={safeAclPage} totalPages={aclTotalPages} onChange={setAclPage} />
