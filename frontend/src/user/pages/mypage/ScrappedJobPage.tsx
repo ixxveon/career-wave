@@ -19,6 +19,7 @@ const NOTICE_STATUS_LABELS: Record<ScrapJob["noticeStatus"], string> = {
 
 type JobNoticeViewModel = {
   id: number;
+  bookmarkId: number;
   title: string;
   company: string;
   location: string;
@@ -41,6 +42,7 @@ type JobNoticeViewModel = {
 
 const createJobNoticeViewModel = (job: ScrapJob): JobNoticeViewModel => ({
   id: job.jobNoticeId,
+  bookmarkId: job.bookmarkId,
   title: job.title,
   company: job.companyName,
   location: job.location,
@@ -67,7 +69,7 @@ function ScrappedJobPage() {
   );
   const [searchKeyword, setSearchKeyword] = useState("");
 
-  const scrappedJobs: ScrapJob[] = mockScrapJobs;
+  const [scrappedJobs, setScrappedJobs] = useState<ScrapJob[]>(mockScrapJobs);
 
   const filteredScrapJobs = useMemo(() => {
     const keyword = searchKeyword.trim().toLowerCase();
@@ -94,8 +96,23 @@ function ScrappedJobPage() {
     setSelectedJob(null);
   }
 
-  function toggleBookmark() {
-    alert("스크랩 해제 기능은 API 연동 후 처리됩니다.");
+  function handleUnscrap(bookmarkId: number) {
+    const confirmed = window.confirm("스크랩을 해제하시겠습니까?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setScrappedJobs((prev) =>
+        prev.filter((job) => job.bookmarkId !== bookmarkId),
+      );
+      if (selectedJob?.bookmarkId === bookmarkId) {
+        setSelectedJob(null);
+      }
+    } catch {
+      alert("스크랩 해제에 실패했습니다.");
+    }
   }
 
   return (
@@ -183,7 +200,7 @@ function ScrappedJobPage() {
                       type="button"
                       className="cw-scrap-bookmark"
                       aria-label="스크랩 해제"
-                      onClick={toggleBookmark}
+                      onClick={() => handleUnscrap(job.bookmarkId)}
                     >
                       <Bookmark size={18} />
                     </button>
@@ -238,11 +255,10 @@ function ScrappedJobPage() {
           isOpen={true}
           bookmarked={selectedJob.bookmarked}
           onClose={closeDetail}
-          onBookmark={toggleBookmark}
+          onBookmark={() => handleUnscrap(selectedJob.bookmarkId)}
         />
       )}
     </div>
   );
 }
-
 export default ScrappedJobPage;
