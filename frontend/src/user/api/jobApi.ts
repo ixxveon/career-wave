@@ -4,7 +4,7 @@ import type {
   JobNoticeDetailApiResponse,
   JobNoticeListApiResponse,
   JobNoticeQueryParams,
-} from '../pages/jobNotice/JobNoticeTypes';
+} from '../types/jobNotice';
 import { memberApiClient } from './member/memberApiClient';
 
 const JOB_NOTICE_BASE_PATH = '/api/v1/user/job-notices';
@@ -25,11 +25,11 @@ function createQueryString(params: QueryParams = {}) {
 export const jobApi = {
   getJobNoticeList: (params: JobNoticeQueryParams = {}): Promise<JobNoticeListApiResponse | null> => {
     const query = createQueryString(params);
-    return apiClient(`${JOB_NOTICE_BASE_PATH}${query ? `?${query}` : ''}`);
+    return apiClient<JobNoticeListApiResponse>(`${JOB_NOTICE_BASE_PATH}${query ? `?${query}` : ''}`);
   },
 
   getJobNoticeDetail: (jobNoticeId: number | string): Promise<JobNoticeDetailApiResponse | null> =>
-    apiClient(`${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}`),
+    apiClient<JobNoticeDetailApiResponse>(`${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}`),
 
   toggleJobNoticeBookmark: (
     jobNoticeId: number | string,

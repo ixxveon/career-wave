@@ -1,6 +1,13 @@
+import type { LucideIcon } from 'lucide-react';
 import './FeatureCard.css';
 
-function FeatureCard({ title, description, icon: Icon }) {
+interface FeatureCardProps {
+  title?: string;
+  description?: string;
+  icon?: LucideIcon;
+}
+
+function FeatureCard({ title, description, icon: Icon }: FeatureCardProps) {
   return (
     <article className="cw-feature-card">
       {Icon && (

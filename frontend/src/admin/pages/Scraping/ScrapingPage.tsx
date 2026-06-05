@@ -1,21 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import '../../styles/admin.css';
 import MiniPagination from '../../components/MiniPagination';
+import { SCRAPING_STATUS, scrapingApi, type ScrapingSource, type ScrapingStatus } from '../../api/scrapingApi';
 
 type Tone = 'normal' | 'warning' | 'danger' | 'info';
-type PipelineStatus = 'ACTIVE' | 'WARNING' | 'FAILED' | 'RECOVERING' | 'PAUSED';
-
-interface PipelineRow {
-  id: string;
-  source: string;
-  status: PipelineStatus;
-  successRate: number;
-  avgDurationMs: number;
-  cycle: string;
-  volume: number;
-  recentError: string;
-  live?: boolean;
-}
 
 interface LogLine {
   id: string;
@@ -28,35 +17,20 @@ interface LogLine {
 const PIPELINE_PAGE_SIZE = 5;
 const PIPELINE_TABLE_BODY_HEIGHT = 280;
 
-const initialPipelines: PipelineRow[] = [
-  { id: 'PL-001', source: 'LinkedIn API', status: 'ACTIVE', successRate: 99.1, avgDurationMs: 1240, cycle: '*/15m', volume: 1402, recentError: '-', live: true },
-  { id: 'PL-002', source: 'Saramin DOM', status: 'FAILED', successRate: 12.4, avgDurationMs: 4810, cycle: '*/5m', volume: 0, recentError: 'SelectorMismatch', live: true },
-  { id: 'PL-003', source: 'Indeed Cloud', status: 'WARNING', successRate: 84.2, avgDurationMs: 2100, cycle: '*/30m', volume: 421, recentError: 'RateLimitApproach' },
-  { id: 'PL-004', source: 'Wanted Feed', status: 'RECOVERING', successRate: 91.8, avgDurationMs: 1620, cycle: '*/20m', volume: 1042, recentError: 'ProxyRecovered' },
-  { id: 'PL-005', source: 'JobKorea Sync', status: 'ACTIVE', successRate: 97.4, avgDurationMs: 1380, cycle: '*/10m', volume: 1184, recentError: '-' },
-  { id: 'PL-006', source: 'RocketPunch Feed', status: 'WARNING', successRate: 79.6, avgDurationMs: 2660, cycle: '*/30m', volume: 354, recentError: 'SchemaDrift' },
-];
-
 export const initialLogs: LogLine[] = [
   { id: 'LOG-001', time: '18:42:13', level: 'ERROR', message: 'Saramin 셀렉터 매칭 실패', detail: 'DOM 구조 변경으로 상세 페이지 수집이 중단되었습니다.' },
   { id: 'LOG-002', time: '18:39:52', level: 'WARN', message: '검수 운영에서 QA 보정 검수 생성', detail: '331-Z 공고가 보정 제안 검수로 연결되었습니다.' },
   { id: 'LOG-003', time: '18:34:10', level: 'SUCCESS', message: 'Wanted Feed 복구 완료', detail: '프록시 교체 이후 성공률이 91.8%로 회복되었습니다.' },
 ];
 
-const statusTone: Record<PipelineStatus, Tone> = {
-  ACTIVE: 'normal',
-  WARNING: 'warning',
-  FAILED: 'danger',
-  RECOVERING: 'info',
-  PAUSED: 'info',
+const statusTone: Record<ScrapingStatus, Tone> = {
+  [SCRAPING_STATUS.SUCCESS]: 'normal',
+  [SCRAPING_STATUS.FAILED]: 'danger',
 };
 
-const statusLabel: Record<PipelineStatus, string> = {
-  ACTIVE: '정상',
-  WARNING: '주의',
-  FAILED: '실패',
-  RECOVERING: '복구 중',
-  PAUSED: '중지',
+const statusLabel: Record<ScrapingStatus, string> = {
+  [SCRAPING_STATUS.SUCCESS]: '성공',
+  [SCRAPING_STATUS.FAILED]: '실패',
 };
 
 const levelTone: Record<LogLine['level'], Tone> = {
@@ -69,55 +43,63 @@ const levelTone: Record<LogLine['level'], Tone> = {
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 const formatDuration = (ms: number) => `${ms.toLocaleString()}ms`;
 const formatVolume = (value: number) => value.toLocaleString();
-
-const paginate = <T,>(items: T[], page: number, pageSize: number) => {
-  const start = (page - 1) * pageSize;
-  return items.slice(start, start + pageSize);
-};
+const getRecentErrorText = (source: ScrapingSource) =>
+  source.recentErrorCode ?? source.recentErrorMessage ?? '-';
 
 export default function ScrapingPage() {
-  const [pipelines] = useState(initialPipelines);
   const [logs] = useState(initialLogs);
   const [pipelineQuery, setPipelineQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | PipelineStatus>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | ScrapingStatus>('ALL');
   const [selectedPipelineIds, setSelectedPipelineIds] = useState<string[]>([]);
   const [pipelinePage, setPipelinePage] = useState(1);
   const [updatedSeconds] = useState(35);
+  const pipelineKeyword = pipelineQuery.trim();
 
-  const filteredPipelines = useMemo(() => {
-    const keyword = pipelineQuery.trim().toLowerCase();
-    return pipelines.filter((item) => {
-      const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
-      const matchesQuery =
-        keyword.length === 0 ||
-        item.source.toLowerCase().includes(keyword) ||
-        item.recentError.toLowerCase().includes(keyword);
-      return matchesStatus && matchesQuery;
-    });
-  }, [pipelineQuery, pipelines, statusFilter]);
+  const {
+    data: sourceListData,
+    isError: isSourceListError,
+    isFetching: isSourceListFetching,
+    isLoading: isSourceListLoading,
+    refetch: refetchSourceList,
+  } = useQuery({
+    queryKey: ['admin', 'scraping', 'sources', pipelineKeyword, statusFilter, pipelinePage],
+    queryFn: async () => {
+      const response = await scrapingApi.getSources({
+        keyword: pipelineKeyword.length > 0 ? pipelineKeyword : undefined,
+        status: statusFilter === 'ALL' ? undefined : statusFilter,
+        page: pipelinePage,
+        size: PIPELINE_PAGE_SIZE,
+      });
+      return response.data.data;
+    },
+    placeholderData: (previousData) => previousData,
+  });
 
-  const pipelineTotalPages = Math.max(1, Math.ceil(filteredPipelines.length / PIPELINE_PAGE_SIZE));
-  const pagedPipelines = useMemo(
-    () => paginate(filteredPipelines, pipelinePage, PIPELINE_PAGE_SIZE),
-    [filteredPipelines, pipelinePage]
-  );
-  const pipelinePlaceholderCount = Math.max(0, PIPELINE_PAGE_SIZE - pagedPipelines.length);
+  const pagedPipelines = sourceListData?.content ?? [];
+  const pipelineTotalPages = Math.max(1, sourceListData?.totalPages ?? 1);
+  const isSourceListInitialLoading = isSourceListLoading && !sourceListData;
+  const showSourceStateRow = isSourceListInitialLoading || isSourceListError || pagedPipelines.length === 0;
+  const pipelinePlaceholderCount = showSourceStateRow ? PIPELINE_PAGE_SIZE - 1 : Math.max(0, PIPELINE_PAGE_SIZE - pagedPipelines.length);
   const pipelineRowHeight = Math.floor(PIPELINE_TABLE_BODY_HEIGHT / PIPELINE_PAGE_SIZE);
+  const sourceEmptyMessage =
+    pipelineKeyword.length > 0 || statusFilter !== 'ALL'
+      ? '조건에 맞는 스크래핑 source가 없습니다.'
+      : '등록된 스크래핑 source가 없습니다.';
 
   useEffect(() => {
     setPipelinePage((prev) => Math.min(prev, pipelineTotalPages));
   }, [pipelineTotalPages]);
 
   const allVisibleSelected =
-    pagedPipelines.length > 0 && pagedPipelines.every((item) => selectedPipelineIds.includes(item.id));
+    pagedPipelines.length > 0 && pagedPipelines.every((item) => selectedPipelineIds.includes(item.sourceName));
 
   const toggleAllRows = () => {
     if (allVisibleSelected) {
-      setSelectedPipelineIds((prev) => prev.filter((id) => !pagedPipelines.some((item) => item.id === id)));
+      setSelectedPipelineIds((prev) => prev.filter((id) => !pagedPipelines.some((item) => item.sourceName === id)));
       return;
     }
 
-    setSelectedPipelineIds((prev) => Array.from(new Set([...prev, ...pagedPipelines.map((item) => item.id)])));
+    setSelectedPipelineIds((prev) => Array.from(new Set([...prev, ...pagedPipelines.map((item) => item.sourceName)])));
   };
 
   const toggleRow = (id: string) => {
@@ -163,16 +145,13 @@ export default function ScrapingPage() {
               <select
                 value={statusFilter}
                 onChange={(event) => {
-                  setStatusFilter(event.target.value as 'ALL' | PipelineStatus);
+                  setStatusFilter(event.target.value as 'ALL' | ScrapingStatus);
                   setPipelinePage(1);
                 }}
               >
                 <option value="ALL">전체 상태</option>
-                <option value="ACTIVE">정상</option>
-                <option value="WARNING">주의</option>
-                <option value="FAILED">실패</option>
-                <option value="RECOVERING">복구 중</option>
-                <option value="PAUSED">중지</option>
+                <option value={SCRAPING_STATUS.SUCCESS}>성공</option>
+                <option value={SCRAPING_STATUS.FAILED}>실패</option>
               </select>
             </div>
           </div>
@@ -197,6 +176,7 @@ export default function ScrapingPage() {
                       type="checkbox"
                       checked={allVisibleSelected}
                       onChange={toggleAllRows}
+                      disabled={showSourceStateRow}
                       aria-label="전체 선택"
                     />
                   </th>
@@ -211,25 +191,48 @@ export default function ScrapingPage() {
                 </tr>
               </thead>
               <tbody>
-                {pagedPipelines.map((row) => (
-                  <tr key={row.id} style={{ height: `${pipelineRowHeight}px` }}>
+                {isSourceListInitialLoading ? (
+                  <tr className="scrapeOpsStateRow" style={{ height: `${pipelineRowHeight}px` }}>
+                    <td colSpan={9}>스크래핑 source를 불러오는 중입니다.</td>
+                  </tr>
+                ) : null}
+
+                {isSourceListError ? (
+                  <tr className="scrapeOpsStateRow danger" style={{ height: `${pipelineRowHeight}px` }}>
+                    <td colSpan={9}>
+                      <span>스크래핑 source 조회에 실패했습니다.</span>
+                      <button type="button" onClick={() => refetchSourceList()}>
+                        다시 시도
+                      </button>
+                    </td>
+                  </tr>
+                ) : null}
+
+                {!isSourceListInitialLoading && !isSourceListError && pagedPipelines.length === 0 ? (
+                  <tr className="scrapeOpsStateRow" style={{ height: `${pipelineRowHeight}px` }}>
+                    <td colSpan={9}>{sourceEmptyMessage}</td>
+                  </tr>
+                ) : null}
+
+                {!isSourceListInitialLoading && !isSourceListError ? pagedPipelines.map((row) => (
+                  <tr key={row.sourceName} style={{ height: `${pipelineRowHeight}px` }}>
                     <td>
                       <input
                         type="checkbox"
-                        checked={selectedPipelineIds.includes(row.id)}
-                        onChange={() => toggleRow(row.id)}
-                        aria-label={`${row.source} 선택`}
+                        checked={selectedPipelineIds.includes(row.sourceName)}
+                        onChange={() => toggleRow(row.sourceName)}
+                        aria-label={`${row.sourceName} 선택`}
                       />
                     </td>
-                    <td>{row.source}</td>
+                    <td>{row.sourceName}</td>
                     <td>
                       <span className={`scrapeOpsBadge ${statusTone[row.status]}`}>{statusLabel[row.status]}</span>
                     </td>
                     <td>{formatPercent(row.successRate)}</td>
-                    <td>{formatDuration(row.avgDurationMs)}</td>
-                    <td>{row.cycle}</td>
-                    <td>{formatVolume(row.volume)}</td>
-                    <td>{row.recentError}</td>
+                    <td>{formatDuration(row.averageDurationMs)}</td>
+                    <td>{row.cycleExpression}</td>
+                    <td>{formatVolume(row.collectedCount)}</td>
+                    <td>{getRecentErrorText(row)}</td>
                     <td>
                       <div className="scrapeOpsActionGroup">
                         <button type="button" className="scrapeOpsActionButton subtle">실행</button>
@@ -239,7 +242,7 @@ export default function ScrapingPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )) : null}
                 {Array.from({ length: pipelinePlaceholderCount }, (_, index) => (
                   <tr key={`pipeline-placeholder-${index}`} className="scrapeOpsPlaceholderRow" aria-hidden="true" style={{ height: `${pipelineRowHeight}px` }}>
                     <td colSpan={9}>
@@ -254,7 +257,9 @@ export default function ScrapingPage() {
           <MiniPagination
             page={pipelinePage}
             totalPages={pipelineTotalPages}
-            onChange={setPipelinePage}
+            onChange={(nextPage) => {
+              if (!isSourceListFetching) setPipelinePage(nextPage);
+            }}
             className="pagination scrapeOpsPagination"
             activeClassName="activePage"
           />
@@ -454,6 +459,34 @@ export default function ScrapingPage() {
           display: block;
           width: 100%;
           height: 100%;
+        }
+
+        .scrapeOpsStateRow td {
+          text-align: center;
+          color: #6b86a3;
+          font-size: 12px;
+          font-weight: 800;
+          white-space: normal;
+          background: #fbfdff;
+        }
+
+        .scrapeOpsStateRow.danger td {
+          color: var(--scrape-danger);
+          background: var(--scrape-danger-bg);
+        }
+
+        .scrapeOpsStateRow button {
+          margin-left: 10px;
+          height: 28px;
+          padding: 0 10px;
+          border: 1px solid #efb4b4;
+          border-radius: 8px;
+          background: #fff;
+          color: var(--scrape-danger);
+          font-size: 11px;
+          font-weight: 800;
+          font-family: inherit;
+          cursor: pointer;
         }
 
         .scrapeOpsBadge {

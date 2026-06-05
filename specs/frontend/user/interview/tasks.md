@@ -58,7 +58,7 @@
 
 - [x] `useInterviewReport` 연동 — 리포트 조회 및 페이지 재진입 시 복구 로직 구현
 - [x] **비정상 종료 세션 복구**: `sessionStorage` 기반 세션 상태 강제 복구 로직 구현
-- [ ] 서류 도메인 연동 테스트 — `documentId` 기반 403/404 예외 처리
+- [x] 서류 도메인 연동 테스트 — `documentId` 기반 403/404 예외 처리
 - [ ] iOS Safari getUserMedia 오디오 캡처 제약 대응 확인 및 예외 처리
 - [ ] 모바일/태블릿 반응형 레이아웃 검증 및 가로/세로 모드 대응 테스트
 
@@ -67,9 +67,9 @@
 ## Phase 6 — Polish & QA
 
 - [ ] `checklist.md` 기반 최종 점검
-- [ ] a11y — 채팅/타이머 영역 `aria-live` 및 키보드 네비게이션 검증
+- [x] a11y — 채팅/타이머 영역 `aria-live` 및 키보드 네비게이션 검증
 - [ ] 보안 검증 — 타인 소유 `sessionId`로 세션·리포트 API 호출 시 403 차단 테스트 (sessionId IDOR)
 - [ ] 보안 검증 — 타인 소유 `documentId`로 면접 세션 시작 시 403 차단 테스트 (documentId IDOR)
 - [ ] 통합 테스트 (MSW 활용) — [사전 진단 → 시작 → 답변 → 종료 → 리포트] 전체 플로우 확인
 - [ ] Lighthouse 성능/접근성 최종 측정 (90/95점 목표)
-- [ ] 최종 클린업 — 하드코딩된 목업 데이터 제거 및 ESLint `no-console` 검사
+- [x] 최종 클린업 — 하드코딩된 목업 데이터 제거 및 ESLint `no-console` 검사

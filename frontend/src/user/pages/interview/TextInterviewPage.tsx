@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Clock, X, Loader2 } from 'lucide-react';
 
 import { interviewSessionApi }   from '../../api/interview';
-import { SESSION_TYPE }          from '../../types/interview';
+import { SESSION_TYPE, SESSION_STATE }          from '../../types/interview';
 import type { SessionType, Resume, MicStatus } from '../../types/interview';
 
 import { usePreflightCheck }     from '../../hooks/interview/usePreflightCheck';
@@ -85,7 +85,7 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
 
   /* ── FINISHED → 리포트 페이지 이동 ── */
   useEffect(() => {
-    if (session.sessionState !== 'FINISHED') return;
+    if (session.sessionState !== SESSION_STATE.FINISHED) return;
     const timer = setTimeout(
       () => navigate(`/interview/report?sessionId=${sessionId}`),
       2000,
@@ -210,8 +210,9 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
     timer.start();
   }
 
-  const isDone   = session.sessionState === 'FINISHED';
-  const isError  = session.sessionState === 'ERROR';
+  const isDone          = session.sessionState === SESSION_STATE.FINISHED;
+  const isError         = session.sessionState === SESSION_STATE.ERROR;
+  const isReconnecting  = session.sessionState === SESSION_STATE.RECONNECTING;
   const totalQ   = 5; // 서버 설정값으로 추후 대체 예정
 
   return (
@@ -256,6 +257,14 @@ function InterviewRoom({ sessionId, company, job, sessionType, initialQuestionOr
         isTyping={session.isTyping}
         streamingText={session.streamingText}
       />
+
+      {/* 재연결 중 안내 배너 (constitution §지속적 연결성) */}
+      {isReconnecting && (
+        <div className="ti-reconnect-bar" role="alert">
+          <Loader2 size={14} className="ti-spin" />
+          <span>네트워크 연결이 끊겼습니다. 자동으로 재연결을 시도하고 있습니다...</span>
+        </div>
+      )}
 
       {/* 하단 입력 영역 */}
       {isDone ? (
@@ -399,13 +408,20 @@ export default function TextInterviewPage() {
       });
       setSessionId(result.sessionId);
       setPhase('interview');
-    } catch {
+    } catch (err) {
       if (import.meta.env.DEV) {
         // DEV fallback: mock sessionId
         setSessionId(`dev-session-${Date.now()}`);
         setPhase('interview');
       } else {
-        setApiError('세션 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        const status = (err as { status?: number }).status;
+        if (status === 403) {
+          setApiError('연결된 서류에 접근 권한이 없습니다. 본인 소유의 서류인지 확인해주세요.');
+        } else if (status === 404) {
+          setApiError('연결된 서류를 찾을 수 없습니다. 서류 분석 페이지에서 다시 시도해주세요.');
+        } else {
+          setApiError('세션 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
       }
     } finally {
       setIsLoading(false);

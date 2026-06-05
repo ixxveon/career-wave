@@ -1,5 +1,28 @@
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import './ServicePage.css';
+
+interface Metric {
+  label: string;
+  value: string | number;
+}
+
+interface ServiceCard {
+  icon?: LucideIcon;
+  title: string;
+  text: string;
+}
+
+interface ServicePageProps {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  primaryAction?: string;
+  secondaryAction?: string;
+  metrics?: Metric[];
+  cards?: ServiceCard[];
+  steps?: string[];
+}
 
 function ServicePage({
   eyebrow,
@@ -10,7 +33,7 @@ function ServicePage({
   metrics = [],
   cards = [],
   steps = [],
-}) {
+}: ServicePageProps) {
   return (
     <section className="cw-service-page">
       <header className="cw-service-hero">

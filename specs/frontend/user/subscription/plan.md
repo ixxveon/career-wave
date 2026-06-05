@@ -35,10 +35,18 @@
 - [x] static product 카드, mock subscription 상태, mock 결제 내역, checkout 동의 UI
 - [x] 구독 해지 confirm modal과 success message 수준의 프론트 상호작용
 
+### Phase 5에서 추가된 것 (PR #179)
+
+- [x] `types/subscription.ts` — enum 5개 + interface 7개
+- [x] `api/subscription/subscriptionApi.ts` — 상품/구독/사용량/권한 GET 4개 endpoint
+- [x] `hooks/subscription/` — queryKeys + useProducts, useMySubscriptions, useUsages, useEntitlements
+- [x] `utils/subscription/subscriptionView.ts` — 뷰 상수, formatBillingDate, buildUsageItems
+- [x] `components/subscription/` — UsageStatusCard, RecommendationCard, UsageSectionSkeleton
+- [x] SubscriptionPage mock 제거 및 실제 훅 연결
+
 ### 현재 부족한 것
 
-- [ ] `api/subscription/`, `hooks/subscription/`, `types/subscription.ts` 구조
-- [ ] 실제 상품/구독/결제 contract 기반 데이터 흐름
+- [ ] 실제 상품/구독/결제 contract 기반 데이터 흐름 (백엔드 API 미연동 상태)
 - [ ] checkout order 생성 / payment confirm / cancel API 연동
 - [ ] subscription entitlement 재조회
 - [ ] success URL 직접 접근 방어와 서버 상태 우선 처리
@@ -79,9 +87,22 @@ frontend/src/user/
 │   ├── PricingPage.tsx
 │   ├── CompanyProductPage.tsx
 │   └── billingProducts.ts
-├── api/subscription/            # 아직 미구현, 도입 예정
-├── hooks/subscription/          # 아직 미구현, 도입 예정
-└── types/subscription.ts        # 아직 미구현, 도입 예정
+├── api/subscription/
+│   └── subscriptionApi.ts       # Phase 5 구현 완료
+├── components/subscription/
+│   ├── UsageStatusCard.tsx      # Phase 5 구현 완료
+│   ├── RecommendationCard.tsx   # Phase 5 구현 완료
+│   └── UsageSectionSkeleton.tsx # Phase 5 구현 완료
+├── hooks/subscription/
+│   ├── index.ts
+│   ├── queryKeys.ts             # Phase 5 구현 완료
+│   ├── useProducts.ts           # Phase 5 구현 완료
+│   ├── useMySubscriptions.ts    # Phase 5 구현 완료
+│   ├── useUsages.ts             # Phase 5 구현 완료
+│   └── useEntitlements.ts       # Phase 5 구현 완료
+├── utils/subscription/
+│   └── subscriptionView.ts      # Phase 5 구현 완료
+└── types/subscription.ts        # Phase 5 구현 완료
 ```
 
 ---

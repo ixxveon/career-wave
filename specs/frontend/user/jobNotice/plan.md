@@ -9,7 +9,7 @@
 - React + TypeScript 기반 사용자 프론트엔드 페이지
 - 목록 컴포넌트: `frontend/src/user/pages/jobNotice/JobNoticeListPage.tsx`
 - 상세 드로어 컴포넌트: `frontend/src/user/pages/jobNotice/JobNoticeDetail.tsx`
-- 공유 타입: `frontend/src/user/pages/jobNotice/JobNoticeTypes.ts`
+- 공유 타입: `frontend/src/user/types/jobNotice.ts`
 - 스타일: `frontend/src/user/pages/jobNotice/styles/JobNoticeListPage.css`, `frontend/src/user/pages/jobNotice/styles/JobNoticeDetail.css`
 - API 계층: `frontend/src/user/api` 하위 도메인 API 모듈
 - 공통 API 클라이언트: `frontend/src/utils/apiClient.js` 또는 프로젝트가 채택한 공통 클라이언트
@@ -26,13 +26,13 @@
 frontend/src/user/pages/jobNotice/
 ├── JobNoticeListPage.tsx        # 목록 페이지, 검색/필터/정렬/카드 선택
 ├── JobNoticeDetail.tsx          # 상세 드로어, 탭, 원본 이동, 상세 스크랩 액션
-├── JobNoticeTypes.ts            # JobNotice 공통 타입
+├── user/types/jobNotice.ts      # JobNotice 공통 타입
 └── styles/
     ├── JobNoticeListPage.css
     └── JobNoticeDetail.css
 
 frontend/src/user/api/
-└── jobApi.ts  # 현행 주변 패턴을 따르는 채용 공고 목록/상세/스크랩 API 호출 계층
+└── jobApi.js  # 현행 주변 패턴을 따르는 채용 공고 목록/상세/스크랩 API 호출 계층
 
 specs/frontend/user/jobNotice/
 ├── api-schema.md                # 목록/상세/스크랩 API 계약

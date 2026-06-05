@@ -15,12 +15,14 @@ import JobNoticeDetail from './JobNoticeDetail';
 import {
   mapJobNoticeApiToViewModel,
   type JobNotice,
+  type JobNoticeBookmarkResponse,
   type JobNoticeBookmarkMap,
   type JobNoticeListStats,
   type JobNoticeQueryParams,
-} from './JobNoticeTypes';
+} from '../../types/jobNotice';
 import { jobApi } from '../../api/jobApi';
 import { useJobNoticeList } from '../../hooks/jobNotice/useJobNoticeList';
+import { authSession } from '../../utils/member/authSession';
 import './styles/JobNoticeListPage.css';
 
 const FILTER_GROUPS = [
@@ -73,18 +75,12 @@ type Bookmarks = JobNoticeBookmarkMap;
 type Period = (typeof PERIODS)[number];
 type SortOption = (typeof SORT_OPTIONS)[number];
 type JobNoticeListStatus = 'loading' | 'success' | 'empty' | 'error';
-type BookmarkErrorType = '' | 'AUTH_REQUIRED' | 'UPDATE_FAILED';
 type JobNoticeFilterParamKey =
   | 'jobType'
   | 'experience'
   | 'employmentType'
   | 'location'
   | 'companySize';
-
-const BOOKMARK_ERROR_MESSAGES: Record<Exclude<BookmarkErrorType, ''>, string> = {
-  AUTH_REQUIRED: '북마크 기능은 로그인이 필요합니다.',
-  UPDATE_FAILED: '북마크 상태를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-};
 
 interface BannerStat {
   label: string;
@@ -126,23 +122,6 @@ function getJobBookmark(bookmarks: Bookmarks, job: JobNotice): boolean {
   return bookmarks[job.id] ?? job.bookmarked;
 }
 
-function getHttpStatus(error: unknown): number | undefined {
-  if (!error || typeof error !== 'object') return undefined;
-
-  const errorLike = error as {
-    status?: unknown;
-    statusCode?: unknown;
-    response?: { status?: unknown };
-  };
-  const status = errorLike.status ?? errorLike.statusCode ?? errorLike.response?.status;
-  return typeof status === 'number' ? status : undefined;
-}
-
-function isAuthBookmarkError(error: unknown): boolean {
-  const status = getHttpStatus(error);
-  return status === 401 || status === 403;
-}
-
 function createJobNoticeQueryParams({
   filters,
   period,
@@ -176,8 +155,18 @@ function createJobNoticeQueryParams({
   return params;
 }
 
-function BannerSearch({ onSearch }: { onSearch: (searchText: string) => void }) {
-  const [searchText, setSearchText] = useState('');
+function BannerSearch({
+  value,
+  onSearch,
+}: {
+  value: string;
+  onSearch: (searchText: string) => void;
+}) {
+  const [searchText, setSearchText] = useState(value);
+
+  useEffect(() => {
+    setSearchText(value);
+  }, [value]);
 
   function applySearch(value: string) {
     onSearch(value.trim());
@@ -200,6 +189,7 @@ function BannerSearch({ onSearch }: { onSearch: (searchText: string) => void }) 
         <input
           type="search"
           value={searchText}
+          aria-label="채용 공고 검색어"
           placeholder="회사명, 공고명, 기술 스택으로 검색하세요"
           onChange={(event) => setSearchText(event.target.value)}
         />
@@ -214,6 +204,7 @@ function BannerSearch({ onSearch }: { onSearch: (searchText: string) => void }) 
           <button
             type="button"
             key={tag}
+            aria-label={`${tag} 인기 검색어로 검색`}
             onClick={() => selectPopularSearchTag(tag)}
           >
             {tag}
@@ -257,26 +248,14 @@ function BannerStats({ stats }: { stats: JobNoticeListStats }) {
 interface JobCardProps {
   job: JobNotice;
   bookmarked: boolean;
-  bookmarkPending?: boolean;
   onBookmark: (id: number) => void;
   onClick: () => void;
 }
 
-function JobCard({ job, bookmarked, bookmarkPending = false, onBookmark, onClick }: JobCardProps) {
+function JobCard({ job, bookmarked, onBookmark, onClick }: JobCardProps) {
   return (
     <article
       className={`jn-card${job.recommended ? ' jn-card--featured' : ''}`}
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(event) => {
-        if (event.target instanceof HTMLElement && event.target.closest('button')) return;
-
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onClick();
-        }
-      }}
     >
       <div className="jn-card__top">
         <div className="jn-card__logo">{job.company[0]}</div>
@@ -287,9 +266,8 @@ function JobCard({ job, bookmarked, bookmarkPending = false, onBookmark, onClick
         <button
           className={`jn-bookmark${bookmarked ? ' jn-bookmark--active' : ''}`}
           type="button"
-          disabled={bookmarkPending}
-          aria-busy={bookmarkPending}
-          aria-label={bookmarked ? '북마크 해제' : '북마크'}
+          aria-label={`${job.title} ${bookmarked ? '북마크 해제' : '북마크'}`}
+          aria-pressed={bookmarked}
           onClick={(event) => {
             event.stopPropagation();
             onBookmark(job.id);
@@ -299,7 +277,16 @@ function JobCard({ job, bookmarked, bookmarkPending = false, onBookmark, onClick
         </button>
       </div>
 
-      <h3>{job.title}</h3>
+      <h3>
+        <button
+          type="button"
+          className="jn-card__detail-button"
+          aria-label={`${job.company} ${job.title} 상세 보기`}
+          onClick={onClick}
+        >
+          {job.title}
+        </button>
+      </h3>
 
       <div className="jn-card__tags">
         {job.tags.map((tag) => <span key={tag}>#{tag}</span>)}
@@ -338,7 +325,7 @@ function FilterBlock({ group, value, onChange }: FilterBlockProps) {
 
   return (
     <details className="jn-filter-block" ref={detailsRef}>
-      <summary>
+      <summary aria-label={`${group.label} 필터 선택, 현재 값 ${value}`}>
         <span>{group.label}</span>
         {value !== DEFAULT_FILTER_VALUE && <em>{value}</em>}
         <strong>+</strong>
@@ -349,6 +336,8 @@ function FilterBlock({ group, value, onChange }: FilterBlockProps) {
             type="button"
             key={option}
             className={value === option ? 'is-active' : ''}
+            aria-label={`${group.label} 필터 ${option} 선택`}
+            aria-pressed={value === option}
             onClick={() => selectOption(option)}
           >
             {option}
@@ -367,6 +356,8 @@ function PeriodSelector({ period, onChange }: { period: Period; onChange: (perio
           key={item}
           type="button"
           className={period === item ? 'is-active' : ''}
+          aria-label={`${item} 기간으로 필터링`}
+          aria-pressed={period === item}
           onClick={() => onChange(item)}
         >
           {item}
@@ -396,6 +387,8 @@ function SortDropdown({ selected, isOpen, onToggle, onSelect }: SortDropdownProp
               type="button"
               key={option}
               className={selected === option ? 'is-active' : ''}
+              aria-label={`${option} 정렬 선택`}
+              aria-pressed={selected === option}
               onClick={() => onSelect(option)}
             >
               {option}
@@ -430,52 +423,46 @@ export default function JobNoticeListPage() {
   const [selectedJob, setSelectedJob] = useState<JobNotice | null>(null);
   const [filters, setFilters] = useState(createInitialFilters);
   const [bookmarks, setBookmarks] = useState<Bookmarks>({});
-  const [bookmarkErrorType, setBookmarkErrorType] = useState<BookmarkErrorType>('');
-  const pendingBookmarkIdsRef = useRef<Set<number>>(new Set());
-  const [pendingBookmarkIds, setPendingBookmarkIds] = useState<Set<number>>(() => new Set());
+  const [bookmarkErrorMessage, setBookmarkErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const bookmarkErrorMessage = bookmarkErrorType ? BOOKMARK_ERROR_MESSAGES[bookmarkErrorType] : '';
 
   function updateFilter(label: FilterLabel, value: string) {
     setFilters((current) => ({ ...current, [label]: value }));
   }
 
   async function toggleBookmark(id: number, fallbackBookmarked = false) {
-    if (pendingBookmarkIdsRef.current.has(id)) return;
+    const hasAccessToken = Boolean(authSession.getAccessToken());
+
+    if (!hasAccessToken) {
+      setBookmarkErrorMessage('북마크 기능은 로그인이 필요합니다.');
+      return;
+    }
 
     const previousBookmarked = bookmarks[id] ?? fallbackBookmarked;
     const nextBookmarked = !previousBookmarked;
-    pendingBookmarkIdsRef.current.add(id);
-    setPendingBookmarkIds((current) => new Set(current).add(id));
 
     try {
-      setBookmarkErrorType('');
+      setBookmarkErrorMessage('');
       const bookmarkResult = await jobApi.toggleJobNoticeBookmark(
         id,
         nextBookmarked,
-      );
+      ) as JobNoticeBookmarkResponse | null;
 
-      if (!bookmarkResult) throw new Error('Bookmark response is empty.');
+      if (!bookmarkResult) throw new Error('북마크 응답이 비어 있습니다.');
 
       setBookmarks((current) => ({
         ...current,
         [bookmarkResult.id]: bookmarkResult.bookmarked,
       }));
-    } catch (error) {
+    } catch {
       setBookmarks((current) => ({
         ...current,
         [id]: previousBookmarked,
       }));
-      setBookmarkErrorType(isAuthBookmarkError(error) ? 'AUTH_REQUIRED' : 'UPDATE_FAILED');
-    } finally {
-      pendingBookmarkIdsRef.current.delete(id);
-      setPendingBookmarkIds((current) => {
-        const next = new Set(current);
-        next.delete(id);
-        return next;
-      });
+      setBookmarkErrorMessage('북마크 상태를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }
   }
+
   function resetFilter(label: FilterLabel) {
     updateFilter(label, DEFAULT_FILTER_VALUE);
   }
@@ -524,10 +511,16 @@ export default function JobNoticeListPage() {
     void refetchJobNoticeList();
   }
 
+  function resetSearchConditions() {
+    setSearchQuery('');
+    setFilters(createInitialFilters());
+    setPeriod('기간 전체');
+  }
+
   return (
     <div className="jn">
       <section className="jn-banner">
-        <BannerSearch onSearch={setSearchQuery} />
+        <BannerSearch value={searchQuery} onSearch={setSearchQuery} />
         <BannerStats stats={listStats} />
       </section>
 
@@ -563,7 +556,7 @@ export default function JobNoticeListPage() {
           {bookmarkErrorMessage && (
             <div className="jn-feedback jn-feedback--error" role="alert">
               <span>{bookmarkErrorMessage}</span>
-              {bookmarkErrorType === 'AUTH_REQUIRED' && (
+              {bookmarkErrorMessage.includes('로그인') && (
                 <a href="/auth/login">로그인</a>
               )}
             </div>
@@ -576,10 +569,7 @@ export default function JobNoticeListPage() {
                   key={job.id}
                   job={job}
                   bookmarked={getJobBookmark(bookmarks, job)}
-                  bookmarkPending={pendingBookmarkIds.has(job.id)}
-                  onBookmark={(id) => {
-                    void toggleBookmark(id, getJobBookmark(bookmarks, job));
-                  }}
+                  onBookmark={(id) => toggleBookmark(id, getJobBookmark(bookmarks, job))}
                   onClick={() => setSelectedJob(job)}
                 />
               ))}
@@ -595,10 +585,11 @@ export default function JobNoticeListPage() {
           )}
 
           {listStatus === 'empty' && (
-            <div className="jn-empty">
+            <div className="jn-empty" role="status" aria-live="polite">
               <Filter size={18} />
               <strong>조건에 맞는 공고가 없습니다.</strong>
               <span>필터를 줄이거나 검색어를 다시 입력해 주세요.</span>
+              <button type="button" onClick={resetSearchConditions}>조건 초기화</button>
             </div>
           )}
           {listStatus === 'error' && (
@@ -621,9 +612,9 @@ export default function JobNoticeListPage() {
         isOpen={Boolean(selectedJob)}
         bookmarked={selectedJob ? getJobBookmark(bookmarks, selectedJob) : false}
         onClose={() => setSelectedJob(null)}
-        onBookmark={(id) => {
-          void toggleBookmark(id, selectedJob ? getJobBookmark(bookmarks, selectedJob) : false);
-        }}
+        onBookmark={(id) =>
+          toggleBookmark(id, selectedJob ? getJobBookmark(bookmarks, selectedJob) : false)
+        }
       />
     </div>
   );

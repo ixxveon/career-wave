@@ -5,22 +5,22 @@
 **Branch**: `feature/admin-scraping-api`
 **Base**: `feature/admin-scraping-spec`
 
-- [ ] `frontend/src/admin/api/scrapingApi.ts` 생성
-- [ ] ERD 기준 `ScrapingStatus`(`SUCCESS`, `FAILED`)와 `ScrapingActionType` 타입 정의
-- [ ] `ScrapingSource`, `ScrapingSourceSummary`, `ScrapingActionRequest`, `ScrapingActionResult`, `ScrapingLog` 응답 타입 정의
-- [ ] `ApiResponse<T>` 응답 구조에 맞춘 API 함수 작성
-- [ ] 페이지에서 직접 API 호출하지 않도록 API 계층 경계 정의
+- [x] `frontend/src/admin/api/scrapingApi.ts` 생성
+- [x] ERD 기준 `ScrapingStatus`(`SUCCESS`, `FAILED`)와 `ScrapingActionType` 타입 정의
+- [x] `ScrapingSource`, `ScrapingSourceSummary`, `ScrapingActionRequest`, `ScrapingActionResult`, `ScrapingLog` 응답 타입 정의
+- [x] `ApiResponse<T>` 응답 구조에 맞춘 API 함수 작성
+- [x] 페이지에서 직접 API 호출하지 않도록 API 계층 경계 정의
 
 ## Phase 2 - source 목록, 검색, 필터
 
 **Branch**: `feature/admin-scraping-list`
 **Base**: `feature/admin-scraping-api`
 
-- [ ] source 목록을 API 데이터로 렌더링
-- [ ] source명 또는 최근 오류 검색 조건 연결
-- [ ] 실행 결과 필터 `SUCCESS`, `FAILED` 연결
-- [ ] 페이지네이션 조건과 응답 메타데이터 연결
-- [ ] 로딩, 빈 데이터, API 실패 상태 처리
+- [x] source 목록을 API 데이터로 렌더링
+- [x] source명 또는 최근 오류 검색 조건 연결
+- [x] 실행 결과 필터 `SUCCESS`, `FAILED` 연결
+- [x] 페이지네이션 조건과 응답 메타데이터 연결
+- [x] 로딩, 빈 데이터, API 실패 상태 처리
 
 ## Phase 3 - source 실행 액션
 

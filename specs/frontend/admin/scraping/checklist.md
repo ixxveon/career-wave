@@ -10,20 +10,20 @@
 
 ## Phase 1 - API 계약 및 타입 정리
 
-- [ ] `frontend/src/admin/api/scrapingApi.ts`에서 관리자 스크래핑 API를 관리한다.
-- [ ] 페이지 또는 컴포넌트에서 `axios`를 직접 호출하지 않는다.
-- [ ] `ScrapingStatus`, `ScrapingActionType` 타입이 정의되어 있다.
-- [ ] `ScrapingSource`, `ScrapingSourceSummary`, `ScrapingActionRequest`, `ScrapingActionResult`, `ScrapingLog` 응답 타입이 정의되어 있다.
-- [ ] `ApiResponse<T>` 응답 구조를 기준으로 처리한다.
-- [ ] TypeScript interface는 PascalCase를 사용하고 `I` prefix를 사용하지 않는다.
+- [x] `frontend/src/admin/api/scrapingApi.ts`에서 관리자 스크래핑 API를 관리한다.
+- [x] 페이지 또는 컴포넌트에서 `axios`를 직접 호출하지 않는다.
+- [x] `ScrapingStatus`, `ScrapingActionType` 타입이 정의되어 있다.
+- [x] `ScrapingSource`, `ScrapingSourceSummary`, `ScrapingActionRequest`, `ScrapingActionResult`, `ScrapingLog` 응답 타입이 정의되어 있다.
+- [x] `ApiResponse<T>` 응답 구조를 기준으로 처리한다.
+- [x] TypeScript interface는 PascalCase를 사용하고 `I` prefix를 사용하지 않는다.
 
 ## Phase 2 - source 목록, 검색, 필터
 
-- [ ] source 목록이 API 데이터로 렌더링된다.
-- [ ] source명 또는 최근 오류 검색 조건이 API 조회 조건과 동기화된다.
-- [ ] 실행 결과 필터(`SUCCESS`, `FAILED`)가 API 조회 조건과 동기화된다.
-- [ ] 페이지네이션 UI와 API 응답 메타데이터가 일치한다.
-- [ ] 로딩, 빈 데이터, API 실패 상태가 화면에 표시된다.
+- [x] source 목록이 API 데이터로 렌더링된다.
+- [x] source명 또는 최근 오류 검색 조건이 API 조회 조건과 동기화된다.
+- [x] 실행 결과 필터(`SUCCESS`, `FAILED`)가 API 조회 조건과 동기화된다.
+- [x] 페이지네이션 UI와 API 응답 메타데이터가 일치한다.
+- [x] 로딩, 빈 데이터, API 실패 상태가 화면에 표시된다.
 
 ## Phase 3 - source 실행 액션
 

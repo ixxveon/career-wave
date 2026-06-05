@@ -9,27 +9,27 @@
 
 ## 현재 상태 메모
 
-- 현재 구독/결제 화면 UI는 존재하지만, 실제 API/hook/type/query 구조는 아직 정리되지 않았다.
-- 따라서 아래 체크리스트는 "현재 코드가 이미 있는가"가 아니라 "실제 구현 완료 기준을 만족하는가"를 기준으로 본다.
+- Phase 5 완료: `types/subscription.ts`, `api/subscription/`, `hooks/subscription/`, `utils/subscription/subscriptionView.ts`, `components/subscription/` 신설 및 SubscriptionPage 훅 연결 (PR #179)
+- Phase 6~8은 미구현 상태이며 "실제 구현 완료 기준을 만족하는가"를 기준으로 체크한다.
 
 ## Phase 5 — Subscription
 
 ### 상태 설계
 
-- [ ] `api-schema.md`의 product/subscription/payment enum과 실제 프론트 타입이 일치하는가?
-- [ ] 구독 상태 `NONE`, `ACTIVE`, `CANCEL_SCHEDULED`, `EXPIRED`, `PAYMENT_FAILED`가 모두 UI에서 처리되는가?
+- [x] `api-schema.md`의 product/subscription/payment enum과 실제 프론트 타입이 일치하는가?
+- [-] 구독 상태 `NONE`, `ACTIVE`, `CANCEL_SCHEDULED`, `EXPIRED`, `PAYMENT_FAILED`가 모두 UI에서 처리되는가? (타입은 정의됨, UI 분기는 ACTIVE/CANCEL_SCHEDULED/PAYMENT_FAILED 기준 isSubscribed 처리 중. EXPIRED 별도 UI는 Phase 6에서 보완)
 - [ ] ERD 초안에 없는 결제/구독 모델이 backend 계약 필요 항목으로 정리되었는가?
-- [ ] mock 데이터와 실제 API 응답 매핑이 분리되어 있는가?
+- [x] mock 데이터와 실제 API 응답 매핑이 분리되어 있는가? (SubscriptionPage mock 제거, hooks/subscription/으로 분리 완료)
 
 ### 구독 현황 화면
 
-- [-] `/mypage/subscription` 상단 AI 서비스 소개와 CTA가 표시되는가?
-- [ ] 서류 AI 코칭 구매 CTA가 `/billing/checkout?product=document-coaching`으로 이동하는가?
-- [ ] AI 모의면접 구매 CTA가 `/billing/checkout?product=interview`로 이동하는가?
-- [ ] 구독 없음 상태에서 empty state와 2개 CTA가 표시되는가?
-- [ ] 상품 1개 구독 상태에서 사용량 카드와 미구독 상품 추천 카드가 표시되는가?
-- [ ] 상품 2개 구독 상태에서 두 사용량 카드가 동시에 표시되는가?
-- [ ] 사용량 0, 한도 초과, resetAt 없음 상태에서 UI가 깨지지 않는가?
+- [x] `/mypage/subscription` 상단 AI 서비스 소개와 CTA가 표시되는가?
+- [x] 서류 AI 코칭 구매 CTA가 `/billing/checkout?product=document-coaching`으로 이동하는가?
+- [x] AI 모의면접 구매 CTA가 `/billing/checkout?product=interview`로 이동하는가?
+- [x] 구독 없음 상태에서 empty state와 2개 CTA가 표시되는가?
+- [x] 상품 1개 구독 상태에서 사용량 카드와 미구독 상품 추천 카드가 표시되는가?
+- [x] 상품 2개 구독 상태에서 두 사용량 카드가 동시에 표시되는가?
+- [x] 사용량 0, 한도 초과, resetAt 없음 상태에서 UI가 깨지지 않는가?
 
 ## Phase 6 — Payment History
 
