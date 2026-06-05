@@ -66,10 +66,10 @@
 
 ### 인접 도메인 / 승인 상태
 
-- [ ] 소셜 provider 정보가 없거나 충돌하는 경우 안내 UI가 있는가?
-- [ ] 기업 승인 대기/승인/반려/보완 필요 상태가 모두 렌더링되는가?
+- [-] 소셜 provider 정보가 없거나 충돌하는 경우 안내 UI가 있는가? (주류 흐름 구현 완료, 충돌 예외 시나리오는 백엔드 계약 확정 후 보완)
+- [-] 기업 승인 대기/승인/반려/보완 필요 상태가 모두 렌더링되는가? (로그인 시 분기 처리 완료, 관리자 상태 변경 후 재조회는 Phase 8 QA 대상)
 - [ ] 관리자 승인/제재 상태 변경 후 사용자 프론트에서 재조회 시 상태가 반영되는가?
-- [ ] 승인 대기/제재 회원이 subscription 또는 billing route로 직접 진입할 때 제한 처리가 되는가?
+- [x] 승인 대기/제재 회원이 subscription 또는 billing route로 직접 진입할 때 제한 처리가 되는가? (ProtectedRoute 구현, 미인증 시 /auth/login 리다이렉트)
 
 ### 보안
 
@@ -78,6 +78,7 @@
 - [x] `dangerouslySetInnerHTML`로 사용자/기업 입력값을 렌더링하지 않는가?
 - [x] 로그인 실패 횟수, 블랙리스트 기준, 제재 상세 내부 사유가 노출되지 않는가?
 - [x] rate limit 응답을 무한 재시도로 우회하는 UI가 없는가?
+- [x] 네트워크 단절 시 세션이 불필요하게 삭제되지 않는가? (memberApiClient.ts fetch 에러 시 session clear 제거)
 
 ### 접근성 및 반응형
 
@@ -89,9 +90,10 @@
 
 ### 배포 전 최종 확인
 
-- [ ] mock 데이터 제거 또는 MSW 환경 분리 확인
+- [x] mock 데이터 제거 또는 MSW 환경 분리 확인 (billingProducts.ts mock 삭제 완료)
+- [x] CompanyRegisterForm alert() 제거 — 주소 검색 버튼 disabled 처리로 교체
 - [ ] console/debug 코드 제거
 - [ ] 순차 의존 피처인 경우 PR 본문에 의존 브랜치와 선행 PR을 명시했는가?
-- [ ] 빌드 통과
+- [x] 빌드 통과
 - [ ] Lighthouse 접근성 95점 이상 목표 확인
 - [ ] `tasks.md` 모든 항목 완료 체크
