@@ -104,9 +104,7 @@ export async function memberApiClient<T>(endpoint: string, options: MemberApiOpt
       headers: requestHeaders,
     }, auth);
   } catch (error) {
-    if (auth) {
-      authSession.clear();
-    }
+    // 네트워크 단절/timeout 등 fetch 자체 실패는 세션과 무관하므로 세션을 유지한다.
     throw toMemberApiError(0, {
       message: error instanceof Error ? error.message : undefined,
     });
