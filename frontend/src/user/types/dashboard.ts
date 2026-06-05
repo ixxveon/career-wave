@@ -22,10 +22,14 @@ export interface ScrapJob {
   jobNoticeId: number;
   companyName: string;
   title: string;
-  careerLevel: string;
+
+  careerLevel: "JUNIOR" | "SENIOR" | "ANY";
+
   location: string;
   deadline: string;
-  noticeStatus: string;
+
+  noticeStatus: "ACTIVE" | "CLOSED";
+
   deleted: boolean;
   createdAt: string;
 }
