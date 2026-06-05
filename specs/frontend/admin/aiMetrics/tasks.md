@@ -3,7 +3,7 @@
 ## Phase 1 - API 계약 및 타입 정리
 
 **Branch**: `feature/admin-ai-metrics-api`
-**Base**: `feature/admin-ai-metrics-spec`
+**Base**: `develop` (원래 `feature/admin-ai-metrics-spec` 예정이었으나 브랜치 정리로 `develop` 기준으로 변경됨)
 
 - [x] `frontend/src/admin/api/aiMetricsApi.ts` 생성
 - [x] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입 정의

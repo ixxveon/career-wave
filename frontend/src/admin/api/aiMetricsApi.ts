@@ -2,9 +2,9 @@ import axiosInstance from '../../utils/axiosInstance';
 
 export interface ApiResponse<T> {
   success: boolean;
-  statusCode: number;
+  statusCode?: number;
   message: string | null;
-  data: T;
+  data: T | null;
   timestamp?: string;
 }
 
@@ -37,12 +37,17 @@ export const RAG_INDEX_STATUS = {
   FAILED: 'FAILED',
 } as const;
 
+export const AI_METRIC_INTERVAL = {
+  HOURLY: 'HOURLY',
+  DAILY: 'DAILY',
+} as const;
+
 export type AiDomain = typeof AI_DOMAIN[keyof typeof AI_DOMAIN];
 export type AiEventSeverity = typeof AI_EVENT_SEVERITY[keyof typeof AI_EVENT_SEVERITY];
 export type AiHealthStatus = typeof AI_HEALTH_STATUS[keyof typeof AI_HEALTH_STATUS];
 export type AiUsageRiskLevel = typeof AI_USAGE_RISK_LEVEL[keyof typeof AI_USAGE_RISK_LEVEL];
 export type RagIndexStatus = typeof RAG_INDEX_STATUS[keyof typeof RAG_INDEX_STATUS];
-export type AiMetricInterval = 'HOURLY' | 'DAILY';
+export type AiMetricInterval = typeof AI_METRIC_INTERVAL[keyof typeof AI_METRIC_INTERVAL];
 
 export interface PageResult<T> {
   content: T[];
@@ -165,10 +170,6 @@ export interface UpdateAiDiscordAlertRequest {
 export interface UpdateAiRateLimitRequest {
   enabled: boolean;
   reason: string;
-}
-
-export function getAiDisplayModelName(model: AiModelNameFields): string {
-  return model.displayModelName || model.actualModelName || '모델 정보 없음';
 }
 
 const AI_METRICS_API_BASE_PATH = '/api/v1/admin/ai-metrics';
