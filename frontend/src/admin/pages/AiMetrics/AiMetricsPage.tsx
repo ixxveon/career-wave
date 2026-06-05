@@ -2,42 +2,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../styles/admin.css';
 import MiniPagination from '../../components/MiniPagination';
-import { AI_DOMAIN, AI_USAGE_RISK_LEVEL, aiMetricsApi } from '../../api/aiMetricsApi';
-import type { AiBudgetSetting, AiDomain, AiDomainUsage, AiTokenTrendPoint, AiUsageRiskLevel } from '../../api/aiMetricsApi';
+import { AI_DOMAIN, AI_EVENT_SEVERITY, AI_USAGE_RISK_LEVEL, RAG_INDEX_STATUS, aiMetricsApi } from '../../api/aiMetricsApi';
+import type { AiBudgetSetting, AiDomain, AiDomainUsage, AiEventSeverity, AiHeavyUser, AiMetricLog, AiTokenTrendPoint, AiUsageRiskLevel, PageResult, RagDocumentMetric, RagIndexStatus } from '../../api/aiMetricsApi';
 
 type Tone = 'normal' | 'warning' | 'danger';
-type UserStatus = '정상' | '주의' | '심각';
-type RagStatus = '동기화됨' | '인덱싱 중' | '실패';
-type EventSeverity = 'INFO' | 'WARN' | 'ERROR';
-
-interface HeavyUser {
-  id: string;
-  tokenUsage: number;
-  status: UserStatus;
-}
-
-interface RagDoc {
-  id: string;
-  name: string;
-  chunks: number;
-  progress: number;
-  status: RagStatus;
-}
-
-const getAiDisplayModelName = (model: { displayModelName?: string | null; actualModelName?: string | null }) =>
-  model.displayModelName || model.actualModelName || '모델 정보 없음';
-
-interface LogEvent {
-  time: string;
-  severity: EventSeverity;
-  message: string;
-}
+type EventSeverity = AiEventSeverity;
 
 const DOC_PAGE_SIZE = 3;
 
 const DOMAIN_USAGE_QUERY_KEY = ['admin', 'aiMetrics', 'domainUsage'] as const;
 const TOKEN_TREND_QUERY_KEY = ['admin', 'aiMetrics', 'tokenTrend'] as const;
 const BUDGET_QUERY_KEY = ['admin', 'aiMetrics', 'budget'] as const;
+const HEAVY_USERS_QUERY_KEY = ['admin', 'aiMetrics', 'heavyUsers'] as const;
+const LOGS_QUERY_KEY = ['admin', 'aiMetrics', 'logs'] as const;
+const RAG_DOCUMENTS_QUERY_KEY = ['admin', 'aiMetrics', 'ragDocuments'] as const;
 
 const DOMAIN_CARD_ORDER: AiDomain[] = [AI_DOMAIN.DOCUMENT, AI_DOMAIN.INTERVIEW];
 
@@ -60,6 +38,9 @@ const formatLatency = (value?: number) => (typeof value === 'number' ? `${Math.r
 
 const formatCost = (value?: number | null) => (typeof value === 'number' ? `$${value.toLocaleString()}` : '-');
 
+const getAiDisplayModelName = (model: { displayModelName?: string | null; actualModelName?: string | null }) =>
+  model.displayModelName || model.actualModelName || '모델 정보 없음';
+
 const formatBudgetPercent = (value: number) => `${Math.min(100, Math.max(0, Math.round(value))).toLocaleString()}%`;
 
 const formatCompactToken = (value: number) => {
@@ -73,6 +54,25 @@ const formatTrendBucket = (bucket: string) => {
   return bucket;
 };
 
+const formatDateTime = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+};
+
+const getMaskedHeavyUserLabel = (user: AiHeavyUser) => {
+  const label = user.maskedUserLabel.trim();
+  if (label) return label;
+  return `USER-${user.userId.slice(-4).padStart(4, '*')}`;
+};
+
+// Server responses should already mask sensitive fields; this is a UI fallback.
+const sanitizeLogMessage = (message: string) => {
+  const sensitivePattern = /(prompt|프롬프트|개인정보|주민등록|전화번호|이메일|email|면접 답변|answer|resume|이력서|자기소개서)/i;
+  if (sensitivePattern.test(message)) return '[민감정보 보호] 운영 로그 메시지가 요약 처리되었습니다.';
+  return message;
+};
+
 const getRiskTone = (riskLevel?: AiUsageRiskLevel) => {
   if (riskLevel === AI_USAGE_RISK_LEVEL.CRITICAL) return 'danger';
   if (riskLevel === AI_USAGE_RISK_LEVEL.WARNING) return 'warning';
@@ -80,33 +80,21 @@ const getRiskTone = (riskLevel?: AiUsageRiskLevel) => {
   return 'muted';
 };
 
-const heavyUsers: HeavyUser[] = [
-  { id: 'USR_8892', tokenUsage: 12403, status: '심각' },
-  { id: 'USR_2104', tokenUsage: 8110, status: '주의' },
-  { id: 'USR_4451', tokenUsage: 4200, status: '정상' },
-  { id: 'USR_5580', tokenUsage: 3960, status: '주의' },
-  { id: 'USR_6721', tokenUsage: 3584, status: '정상' },
-  { id: 'USR_7814', tokenUsage: 3310, status: '정상' },
-];
+const getRagStatusTone = (status: RagIndexStatus): Tone => {
+  if (status === RAG_INDEX_STATUS.FAILED) return 'danger';
+  if (status === RAG_INDEX_STATUS.INDEXING) return 'warning';
+  return 'normal';
+};
 
-const ragDocs: RagDoc[] = [
-  { id: 'DOC-001', name: 'cluster-provisioning-v3.pdf', chunks: 1420, progress: 79, status: '동기화됨' },
-  { id: 'DOC-002', name: 'api-endpoint-security.docx', chunks: 542, progress: 43, status: '인덱싱 중' },
-  { id: 'DOC-003', name: 'onboarding-schema-v1.json', chunks: 2100, progress: 8, status: '실패' },
-  { id: 'DOC-004', name: 'vector-search-playbook-v2.txt', chunks: 864, progress: 100, status: '동기화됨' },
-];
+const getRagStatusLabel = (status: RagIndexStatus) => {
+  if (status === RAG_INDEX_STATUS.FAILED) return '실패';
+  if (status === RAG_INDEX_STATUS.INDEXING) return '인덱싱 중';
+  return '동기화됨';
+};
 
-export const logEvents: LogEvent[] = [
-  { time: '17:12:24', severity: 'INFO', message: '[정보] 클러스터 상태 동기화 완료' },
-  { time: '17:13:24', severity: 'INFO', message: '[정보] 리소스 점검 루프 실행' },
-  { time: '17:14:24', severity: 'INFO', message: '[정보] RAG 인덱스 캐시 갱신' },
-  { time: '17:15:24', severity: 'WARN', message: '[경고] 응답 시간 상승 감지' },
-  { time: '17:16:24', severity: 'INFO', message: '[정보] 워커 헬스체크 통과' },
-];
-
-const toneForStatus = (value: UserStatus | RagStatus | EventSeverity): Tone => {
-  if (value === '심각' || value === '실패' || value === 'ERROR') return 'danger';
-  if (value === '주의' || value === '인덱싱 중' || value === 'WARN') return 'warning';
+const toneForStatus = (value: EventSeverity): Tone => {
+  if (value === AI_EVENT_SEVERITY.ERROR) return 'danger';
+  if (value === AI_EVENT_SEVERITY.WARN) return 'warning';
   return 'normal';
 };
 
@@ -114,7 +102,7 @@ export default function AiMetricsPage() {
   const queryClient = useQueryClient();
   const [secondsAgo, setSecondsAgo] = useState(12);
   const [docQuery, setDocQuery] = useState('');
-  const [selectedDocId, setSelectedDocId] = useState('DOC-001');
+  const [selectedDocId, setSelectedDocId] = useState('');
   const [selectedTrendDomain, setSelectedTrendDomain] = useState<'ALL' | AiDomain>('ALL');
   const [docPage, setDocPage] = useState(1);
   const [budgetDraft, setBudgetDraft] = useState('2000');
@@ -264,6 +252,54 @@ export default function AiMetricsPage() {
     },
   });
 
+  const {
+    data: heavyUsersData,
+    isLoading: heavyUsersLoading,
+    isError: heavyUsersIsError,
+  } = useQuery<AiHeavyUser[], Error>({
+    queryKey: HEAVY_USERS_QUERY_KEY,
+    queryFn: async () => {
+      const response = await aiMetricsApi.getHeavyUsers({ limit: 6 });
+      if (!response.data.success) throw new Error(response.data.message ?? 'AI 헤비 유저 조회에 실패했습니다.');
+      return response.data.data;
+    },
+  });
+
+  const heavyUsers = heavyUsersData ?? [];
+  const heavyUsersEmpty = !heavyUsersLoading && !heavyUsersIsError && heavyUsers.length === 0;
+
+  const {
+    data: metricLogsData,
+    isLoading: metricLogsLoading,
+    isError: metricLogsIsError,
+  } = useQuery<PageResult<AiMetricLog>, Error>({
+    queryKey: LOGS_QUERY_KEY,
+    queryFn: async () => {
+      const response = await aiMetricsApi.getLogs({ page: 0, size: 5 });
+      if (!response.data.success) throw new Error(response.data.message ?? 'AI 운영 로그 조회에 실패했습니다.');
+      return response.data.data;
+    },
+  });
+
+  const metricLogs = metricLogsData?.content ?? [];
+  const metricLogsEmpty = !metricLogsLoading && !metricLogsIsError && metricLogs.length === 0;
+
+  const {
+    data: ragDocumentsData,
+    isLoading: ragDocumentsLoading,
+    isError: ragDocumentsIsError,
+  } = useQuery<RagDocumentMetric[], Error>({
+    queryKey: RAG_DOCUMENTS_QUERY_KEY,
+    queryFn: async () => {
+      const response = await aiMetricsApi.getRagDocuments();
+      if (!response.data.success) throw new Error(response.data.message ?? 'RAG 지식 베이스 상태 조회에 실패했습니다.');
+      return response.data.data;
+    },
+  });
+
+  const ragDocs = ragDocumentsData ?? [];
+  const ragDocsEmpty = !ragDocumentsLoading && !ragDocumentsIsError && ragDocs.length === 0;
+
   useEffect(() => {
     const timer = window.setInterval(() => {
       setSecondsAgo((prev) => (prev >= 18 ? 12 : prev + 1));
@@ -275,11 +311,21 @@ export default function AiMetricsPage() {
     const keyword = docQuery.trim().toLowerCase();
     if (!keyword) return ragDocs;
     return ragDocs.filter((doc) => doc.name.toLowerCase().includes(keyword));
-  }, [docQuery]);
+  }, [docQuery, ragDocs]);
+
+  useEffect(() => {
+    if (ragDocs.length === 0) {
+      if (selectedDocId) setSelectedDocId('');
+      return;
+    }
+    if (!ragDocs.some((doc) => doc.documentId === selectedDocId)) {
+      setSelectedDocId(ragDocs[0].documentId);
+    }
+  }, [ragDocs, selectedDocId]);
 
   const selectedDoc = useMemo(
-    () => ragDocs.find((doc) => doc.id === selectedDocId) ?? ragDocs[0],
-    [selectedDocId]
+    () => ragDocs.find((doc) => doc.documentId === selectedDocId) ?? ragDocs[0],
+    [ragDocs, selectedDocId]
   );
 
   const docTotalPages = Math.max(1, Math.ceil(filteredDocs.length / DOC_PAGE_SIZE));
@@ -287,7 +333,7 @@ export default function AiMetricsPage() {
     const start = (docPage - 1) * DOC_PAGE_SIZE;
     return filteredDocs.slice(start, start + DOC_PAGE_SIZE);
   }, [docPage, filteredDocs]);
-  const emptyDocRows = DOC_PAGE_SIZE - pagedDocs.length;
+  const emptyDocRows = ragDocumentsLoading || ragDocumentsIsError || ragDocsEmpty ? 0 : DOC_PAGE_SIZE - pagedDocs.length;
 
   const axisMax = useMemo(
     () => {
@@ -315,12 +361,13 @@ export default function AiMetricsPage() {
     setDocPage((prev) => Math.min(prev, docTotalPages));
   }, [docTotalPages]);
 
-  const handleDownloadDocument = (doc: RagDoc) => {
+  const handleDownloadDocument = (doc: RagDocumentMetric) => {
     const content = [
       `Document: ${doc.name}`,
-      `Chunks: ${doc.chunks}`,
-      `Progress: ${doc.progress}%`,
+      `Chunks: ${doc.chunkCount}`,
+      `Progress: ${doc.progressPercent}%`,
       `Status: ${doc.status}`,
+      `Updated At: ${doc.updatedAt}`,
     ].join('\n');
 
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -622,8 +669,6 @@ export default function AiMetricsPage() {
                     <div className="aiOpsBudgetLine">
                       {budgetIsError
                         ? '예산 정보를 불러오지 못했습니다.'
-                        : budgetLoading
-                          ? '조회 중'
                         : `${formatCost(monthlyBudget)} 예산 중 ${formatBudgetPercent(budgetUsed)} 사용`}
                     </div>
                   </div>
@@ -712,30 +757,36 @@ export default function AiMetricsPage() {
               <table className="aiOpsTable">
                 <thead>
                   <tr>
-                    <th>사용자 ID</th>
-                    <th>누적 토큰 사용량</th>
+                    <th>사용자</th>
+                    <th>도메인</th>
+                    <th>누적 토큰</th>
+                    <th>요청 수</th>
                     <th>위험도</th>
-                    <th>조치</th>
+                    <th>최근 사용</th>
                   </tr>
                 </thead>
                 <tbody>
+                  {(heavyUsersLoading || heavyUsersIsError || heavyUsersEmpty) && (
+                    <tr className="placeholder">
+                      <td colSpan={6}>
+                        {heavyUsersIsError
+                          ? '헤비 유저 데이터를 불러오지 못했습니다.'
+                          : heavyUsersEmpty
+                            ? '표시할 헤비 유저 데이터가 없습니다.'
+                            : '헤비 유저 데이터를 불러오는 중입니다.'}
+                      </td>
+                    </tr>
+                  )}
                   {heavyUsers.map((user) => (
-                    <tr key={user.id}>
-                      <td>{user.id}</td>
+                    <tr key={`${user.userId}-${user.domain}`}>
+                      <td>{getMaskedHeavyUserLabel(user)}</td>
+                      <td>{user.domainLabel}</td>
                       <td>{user.tokenUsage.toLocaleString()}</td>
+                      <td>{user.requestCount.toLocaleString()}</td>
                       <td>
-                        <span className={`aiOpsBadge ${toneForStatus(user.status)}`}>{user.status}</span>
+                        <span className={`aiOpsBadge ${getRiskTone(user.riskLevel)}`}>{user.riskLevel}</span>
                       </td>
-                      <td>
-                        <div className="aiOpsActionIcons">
-                          <button type="button" className="aiOpsMiniIcon aiOpsMiniWarn" aria-label="경고">
-                            !
-                          </button>
-                          <button type="button" className="aiOpsMiniIcon aiOpsMiniBlock" aria-label="차단">
-                            -
-                          </button>
-                        </div>
-                      </td>
+                      <td>{formatDateTime(user.lastUsedAt)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -749,7 +800,7 @@ export default function AiMetricsPage() {
             <div className="aiOpsPanelHead compact">
               <div>
                 <span className="aiOpsEyebrow">RAG 지식 베이스 관리</span>
-                <h3>{selectedDoc.name}</h3>
+                <h3>{selectedDoc?.name ?? 'RAG 문서 상태'}</h3>
               </div>
             </div>
 
@@ -796,21 +847,32 @@ export default function AiMetricsPage() {
                       </tr>
                     </thead>
                     <tbody>
+                      {(ragDocumentsLoading || ragDocumentsIsError || ragDocsEmpty) && (
+                        <tr className="placeholder">
+                          <td colSpan={5}>
+                            {ragDocumentsIsError
+                              ? 'RAG 지식 베이스 상태를 불러오지 못했습니다.'
+                              : ragDocsEmpty
+                                ? '표시할 RAG 문서가 없습니다.'
+                                : 'RAG 지식 베이스 상태를 불러오는 중입니다.'}
+                          </td>
+                        </tr>
+                      )}
                       {pagedDocs.map((doc) => (
                         <tr
-                          key={doc.id}
-                          className={selectedDocId === doc.id ? 'selected' : ''}
-                          onClick={() => setSelectedDocId(doc.id)}
+                          key={doc.documentId}
+                          className={selectedDocId === doc.documentId ? 'selected' : ''}
+                          onClick={() => setSelectedDocId(doc.documentId)}
                         >
                           <td>{doc.name}</td>
-                          <td>{doc.chunks.toLocaleString()}</td>
+                          <td>{doc.chunkCount.toLocaleString()}</td>
                           <td>
                             <div className="aiOpsInlineProgress">
-                              <div style={{ width: `${doc.progress}%` }} />
+                              <div style={{ width: `${doc.progressPercent}%` }} />
                             </div>
                           </td>
                           <td>
-                            <span className={`aiOpsBadge ${toneForStatus(doc.status)}`}>{doc.status}</span>
+                            <span className={`aiOpsBadge ${getRagStatusTone(doc.status)}`}>{getRagStatusLabel(doc.status)}</span>
                           </td>
                           <td>
                             <button type="button" className="aiOpsTextButton">
@@ -870,14 +932,30 @@ export default function AiMetricsPage() {
             <div className="aiOpsLogConsole">
               <div className="aiOpsLogHead">
                 <span>TIMESTAMP</span>
+                <span>DOMAIN</span>
                 <span>TYPE</span>
                 <span>MESSAGE</span>
               </div>
-              {logEvents.map((event) => (
-                <article key={`${event.time}-${event.message}`} className="aiOpsLogRow">
-                  <span className="time">[{event.time}]</span>
+              {(metricLogsLoading || metricLogsIsError || metricLogsEmpty) && (
+                <article className="aiOpsLogRow placeholder">
+                  <span className="time">[-]</span>
+                  <span>-</span>
+                  <span className="aiOpsLogTag normal">[INFO]</span>
+                  <strong>
+                    {metricLogsIsError
+                      ? 'AI 운영 로그 데이터를 불러오지 못했습니다.'
+                      : metricLogsEmpty
+                        ? '표시할 AI 운영 로그가 없습니다.'
+                        : 'AI 운영 로그 데이터를 불러오는 중입니다.'}
+                  </strong>
+                </article>
+              )}
+              {metricLogs.map((event) => (
+                <article key={event.eventId} className="aiOpsLogRow">
+                  <span className="time">[{formatDateTime(event.occurredAt)}]</span>
+                  <span>{event.domainLabel}</span>
                   <span className={`aiOpsLogTag ${toneForStatus(event.severity)}`}>[{event.severity}]</span>
-                  <strong>{event.message}</strong>
+                  <strong>{sanitizeLogMessage(event.message)}</strong>
                 </article>
               ))}
             </div>
@@ -2129,7 +2207,7 @@ export default function AiMetricsPage() {
         .aiOpsLogHead,
         .aiOpsLogRow {
           display: grid;
-          grid-template-columns: 140px 90px minmax(0, 1fr);
+          grid-template-columns: 140px 120px 90px minmax(0, 1fr);
           column-gap: 18px;
           align-items: center;
           font-family: Consolas, 'SFMono-Regular', Menlo, monospace;
