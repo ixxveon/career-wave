@@ -1,8 +1,15 @@
 # Feature Specification: 관리자 관리
 
-**Feature Branch**: `feature/admin-management-spec`
+**Feature Branch**: `feature/admin-management-api`
 **Status**: Draft
 **대상 화면**: `frontend/src/admin/pages/AdminManagement/AdminManagementPage.tsx`
+
+## Branch Strategy
+
+- Phase 1 구현 브랜치는 최신 `develop`을 기준으로 `feature/admin-management-api`를 생성한다.
+- Phase 2 이후 구현 브랜치는 직전 Phase 브랜치를 기준으로 생성한다.
+- 선행 Phase PR이 `develop`에 병합되면 후속 Phase 브랜치는 최신 `develop` 기준으로 rebase하거나 PR base를 조정한다.
+- 각 Phase PR은 해당 Phase의 tasks 범위만 포함한다.
 
 ## Feature Overview
 
@@ -83,8 +90,7 @@
 **Acceptance Scenarios**:
 
 1. **Given** 감사 로그 목록 조회가 성공했을 때, **When** 로그 영역이 렌더링되면, **Then** 발생 시각, 행위자, IP, 액션, 대상, 심각도가 표시된다.
-2. **Given** 특정 관리자 활동 보기 버튼을 클릭했을 때, **When** 로그 필터가 적용되면, **Then** 해당 행위자의 로그만 표시된다.
-3. **Given** 로그가 없을 때, **When** 로그 영역이 렌더링되면, **Then** 최근 활동 없음 상태를 표시한다.
+2. **Given** 로그가 없을 때, **When** 로그 영역이 렌더링되면, **Then** 최근 활동 없음 상태를 표시한다.
 
 ## Edge Cases
 
@@ -107,7 +113,7 @@
 - **FR-005**: `MASTER` 관리자는 관리자 계정을 잠금/해제할 수 있어야 한다.
 - **FR-006**: `MASTER` 관리자는 관리자 계정을 삭제할 수 있어야 한다.
 - **FR-007**: `MASTER` 관리자는 IP ACL을 등록, 활성/비활성 전환, 삭제할 수 있어야 한다.
-- **FR-008**: 관리자는 관리자 보안 감사 로그를 조회하고 행위자 기준으로 필터링할 수 있어야 한다.
+- **FR-008**: 관리자는 관리자 보안 감사 로그를 조회할 수 있어야 한다.
 - **FR-009**: 프론트엔드는 변경 작업 성공 후 감사 로그 목록을 재조회하여 최신 이벤트를 표시해야 한다.
 - **FR-010**: 화면은 로딩, 빈 데이터, 검증 실패, 권한 실패, 부분 실패, 전체 실패 상태를 구분해 표시해야 한다.
 - **FR-011**: 프론트엔드는 `api-schema.md`의 `AdminAccount.role`/`scope` 등 서버 응답 권한 필드와 `401`/`403` API 실패 응답을 기준으로 인증 관리자 정보와 세부 역할을 판단해야 하며, 버튼 노출/비활성화 상태를 내부 추론이 아닌 해당 응답 필드와 명시적 오류 코드로 결정해야 한다.

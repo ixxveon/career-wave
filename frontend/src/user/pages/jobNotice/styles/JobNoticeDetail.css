@@ -209,7 +209,7 @@
 .jnd-status__actions button {
   min-height: 28px;
   padding: 0 10px;
-  border: 1px solid currentcolor;
+  border: 1px solid currentColor;
   border-radius: 8px;
   background: #ffffff;
   color: inherit;
@@ -595,5 +595,37 @@
   .jnd-action-bar {
     grid-template-columns: 1fr;
     padding: 12px 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .jnd-drawer {
+    width: 100%;
+  }
+
+  .jnd-scroll {
+    padding: 16px 14px;
+  }
+
+  .jnd-header {
+    gap: 10px;
+  }
+
+  .jnd-title h2 {
+    overflow-wrap: anywhere;
+  }
+
+  .jnd-header__actions {
+    gap: 8px;
+  }
+
+  .jnd-open-btn,
+  .jnd-action-btn {
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  .jnd-action-bar {
+    padding: 10px 14px;
   }
 }

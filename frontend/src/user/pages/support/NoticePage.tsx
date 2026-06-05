@@ -1,40 +1,55 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, ChevronRight, Search, Pin } from 'lucide-react';
+import { supportApi, NOTICE_CATEGORY_LABEL, type NoticeCategory, type NoticeItem } from '../../api/supportApi';
+import { useDebounce } from '../../hooks/common/useDebounce';
 import './styles/NoticePage.css';
 
-interface Notice {
-  id: number;
-  title: string;
-  createdAt: string;
-  pinned: boolean;
-  category: string;
-  views: number;
-}
-
-const MOCK_NOTICES: Notice[] = [
-  { id: 1, title: '[필독] Career-wave 서비스 이용약관 개정 안내', createdAt: '2025-05-25', pinned: true,  category: '공지', views: 4820 },
-  { id: 2, title: 'AI 면접 서비스 개선 안내 (v2.3 업데이트)',    createdAt: '2025-05-22', pinned: true,  category: '업데이트', views: 2310 },
-  { id: 3, title: '5월 정기 점검 일정 안내 (5/28 02:00~04:00)', createdAt: '2025-05-20', pinned: false, category: '점검', views: 1540 },
-  { id: 4, title: 'AI 이력서 분석 신규 항목 추가 안내',          createdAt: '2025-05-18', pinned: false, category: '업데이트', views: 980 },
-  { id: 5, title: '채용 공고 스크래핑 범위 확대 안내',            createdAt: '2025-05-15', pinned: false, category: '공지', views: 760 },
-  { id: 6, title: '개인정보처리방침 변경 안내 (2025-05-01)',      createdAt: '2025-05-01', pinned: false, category: '공지', views: 3200 },
+const CATEGORY_FILTERS: { label: string; value: NoticeCategory | '' }[] = [
+  { label: '전체',    value: '' },
+  { label: '공지',    value: 'NOTICE' },
+  { label: '업데이트', value: 'UPDATE' },
+  { label: '이벤트',  value: 'EVENT' },
+  { label: '점검',    value: 'MAINTENANCE' },
 ];
 
-const CATEGORIES = ['전체', '공지', '업데이트', '점검'];
+const PAGE_SIZE = 10;
 
 export default function NoticePage() {
   const [search,   setSearch]   = useState('');
-  const [category, setCategory] = useState('전체');
+  const [category, setCategory] = useState<NoticeCategory | ''>('');
+  const [notices,  setNotices]  = useState<NoticeItem[]>([]);
+  const [page,     setPage]     = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState('');
 
-  const filtered = MOCK_NOTICES.filter(n => {
-    if (category !== '전체' && n.category !== category) return false;
-    if (search && !n.title.includes(search)) return false;
-    return true;
-  });
+  const debouncedSearch = useDebounce(search, 300);
 
-  const pinned    = filtered.filter(n => n.pinned);
-  const regular   = filtered.filter(n => !n.pinned);
+  useEffect(() => {
+    setLoading(true);
+    setError('');
+    supportApi.getNotices({ category: category || undefined, keyword: debouncedSearch || undefined, page, size: PAGE_SIZE })
+      .then(res => {
+        setNotices(res.items);
+        setTotalPages(res.totalPages);
+      })
+      .catch(() => setError('공지사항을 불러오지 못했습니다.'))
+      .finally(() => setLoading(false));
+  }, [category, debouncedSearch, page]);
+
+  function handleCategoryChange(val: NoticeCategory | '') {
+    setCategory(val);
+    setPage(1);
+  }
+
+  function handleSearch(val: string) {
+    setSearch(val);
+    setPage(1);
+  }
+
+  const pinned  = notices.filter(n => n.isPinned);
+  const regular = notices.filter(n => !n.isPinned);
   const displayed = [...pinned, ...regular];
 
   return (
@@ -47,13 +62,13 @@ export default function NoticePage() {
 
       <div className="nt-toolbar">
         <div className="nt-cats">
-          {CATEGORIES.map(c => (
+          {CATEGORY_FILTERS.map(({ label, value }) => (
             <button
-              key={c}
-              className={`nt-cat${category === c ? ' nt-cat--on' : ''}`}
-              onClick={() => setCategory(c)}
+              key={label}
+              className={`nt-cat${category === value ? ' nt-cat--on' : ''}`}
+              onClick={() => handleCategoryChange(value)}
             >
-              {c}
+              {label}
             </button>
           ))}
         </div>
@@ -62,38 +77,56 @@ export default function NoticePage() {
           <input
             placeholder="공지사항 검색"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => handleSearch(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="nt-list">
-        {displayed.length === 0 ? (
-          <div className="nt-empty">검색 결과가 없습니다.</div>
-        ) : (
-          displayed.map(n => (
-            <Link
-              key={n.id}
-              className={`nt-item${n.pinned ? ' nt-item--pinned' : ''}`}
-              to={`/support/notices/${n.id}`}
-            >
-              <div className="nt-item__left">
-                {n.pinned && (
-                  <span className="nt-pin"><Pin size={11} /> 고정</span>
-                )}
-                <span className="nt-cat-badge">{n.category}</span>
-                <Bell size={14} className="nt-item__icon" />
-                <span className="nt-item__title">{n.title}</span>
-              </div>
-              <div className="nt-item__right">
-                <span className="nt-item__views">조회 {n.views.toLocaleString()}</span>
-                <span className="nt-item__date">{n.createdAt}</span>
-                <ChevronRight size={14} className="nt-item__arrow" />
-              </div>
-            </Link>
-          ))
-        )}
-      </div>
+      {loading && <div className="nt-empty">로딩 중...</div>}
+      {error   && <div className="nt-empty">{error}</div>}
+      {!loading && !error && (
+        <>
+          <div className="nt-list">
+            {displayed.length === 0 ? (
+              <div className="nt-empty">검색 결과가 없습니다.</div>
+            ) : (
+              displayed.map(n => (
+                <Link
+                  key={n.noticeId}
+                  className={`nt-item${n.isPinned ? ' nt-item--pinned' : ''}`}
+                  to={`/support/notices/${n.noticeId}`}
+                >
+                  <div className="nt-item__left">
+                    {n.isPinned && <span className="nt-pin"><Pin size={11} /> 고정</span>}
+                    <span className="nt-cat-badge">{NOTICE_CATEGORY_LABEL[n.category]}</span>
+                    <Bell size={14} className="nt-item__icon" />
+                    <span className="nt-item__title">{n.title}</span>
+                  </div>
+                  <div className="nt-item__right">
+                    <span className="nt-item__views">조회 {n.viewCount.toLocaleString()}</span>
+                    <span className="nt-item__date">{n.createdAt}</span>
+                    <ChevronRight size={14} className="nt-item__arrow" />
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="nt-pagination">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <button
+                  key={p}
+                  className={`nt-page-btn${page === p ? ' nt-page-btn--on' : ''}`}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

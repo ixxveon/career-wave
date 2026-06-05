@@ -35,10 +35,18 @@
 - [x] static product 카드, mock subscription 상태, mock 결제 내역, checkout 동의 UI
 - [x] 구독 해지 confirm modal과 success message 수준의 프론트 상호작용
 
+### Phase 5에서 추가된 것 (PR #179)
+
+- [x] `types/subscription.ts` — enum 5개 + interface 7개
+- [x] `api/subscription/subscriptionApi.ts` — 상품/구독/사용량/권한 GET 4개 endpoint
+- [x] `hooks/subscription/` — queryKeys + useProducts, useMySubscriptions, useUsages, useEntitlements
+- [x] `utils/subscription/subscriptionView.ts` — 뷰 상수, formatBillingDate, buildUsageItems
+- [x] `components/subscription/` — UsageStatusCard, RecommendationCard, UsageSectionSkeleton
+- [x] SubscriptionPage mock 제거 및 실제 훅 연결
+
 ### 현재 부족한 것
 
-- [ ] `api/subscription/`, `hooks/subscription/`, `types/subscription.ts` 구조
-- [ ] 실제 상품/구독/결제 contract 기반 데이터 흐름
+- [ ] 실제 상품/구독/결제 contract 기반 데이터 흐름 (백엔드 API 미연동 상태)
 - [ ] checkout order 생성 / payment confirm / cancel API 연동
 - [ ] subscription entitlement 재조회
 - [ ] success URL 직접 접근 방어와 서버 상태 우선 처리
@@ -79,9 +87,22 @@ frontend/src/user/
 │   ├── PricingPage.tsx
 │   ├── CompanyProductPage.tsx
 │   └── billingProducts.ts
-├── api/subscription/            # 아직 미구현, 도입 예정
-├── hooks/subscription/          # 아직 미구현, 도입 예정
-└── types/subscription.ts        # 아직 미구현, 도입 예정
+├── api/subscription/
+│   └── subscriptionApi.ts       # Phase 5 구현 완료
+├── components/subscription/
+│   ├── UsageStatusCard.tsx      # Phase 5 구현 완료
+│   ├── RecommendationCard.tsx   # Phase 5 구현 완료
+│   └── UsageSectionSkeleton.tsx # Phase 5 구현 완료
+├── hooks/subscription/
+│   ├── index.ts
+│   ├── queryKeys.ts             # Phase 5 구현 완료
+│   ├── useProducts.ts           # Phase 5 구현 완료
+│   ├── useMySubscriptions.ts    # Phase 5 구현 완료
+│   ├── useUsages.ts             # Phase 5 구현 완료
+│   └── useEntitlements.ts       # Phase 5 구현 완료
+├── utils/subscription/
+│   └── subscriptionView.ts      # Phase 5 구현 완료
+└── types/subscription.ts        # Phase 5 구현 완료
 ```
 
 ---
@@ -110,11 +131,16 @@ frontend/src/user/
 - [ ] 사용량 카드, empty state, recommendation card의 상태 소유 지점 정리
 - [ ] 상품 CTA와 checkout query 매핑 정리
 
-### Phase 6 — Payment History
-- [ ] `/mypage/payment-history` 구독 내역 영역을 실제 상태 기반으로 정리
-- [ ] 결제 내역 기간 필터와 pagination을 실제 데이터 구조 기준으로 정리
-- [ ] 구독 해지 confirm modal과 cancel state를 API 연동 가능한 구조로 정리
-- [ ] `CANCEL_SCHEDULED` 상태 재조회 및 복원 처리
+### Phase 6 — Payment History (PR #지정 예정, branch: feature/user-payment-history)
+- [x] `billingApi.ts` 신설: `getPaymentHistory`
+- [x] `subscriptionApi.ts`에 `cancelSubscription` 추가
+- [x] `usePaymentHistory`, `useCancelSubscription`, `usePaymentHistoryStatus` 훅
+- [x] `PaymentHistorySubscriptionCard`, `CancelSubscriptionModal`, `PaymentHistoryList` 컴포넌트
+- [x] `SubscriptionHistorySection`, `PaymentHistorySection`, `BillingNoticeSection` 섹션 컴포넌트
+- [x] 구독 없음/1개/2개 상태, `PAYMENT_FAILED` 경고, `CANCEL_SCHEDULED` 문구
+- [x] 결제 내역 기간 필터·pagination 실데이터 기준 전환
+- [x] 구독 해지 confirm modal ESC 키 + 포커스 처리
+- [x] 해지 후 query invalidation (`mySubscriptions`, `usages`, `entitlements`)
 
 ### Phase 7 — Billing
 - [ ] `/billing/checkout` product query 검증 및 서버 상품/order 정보 반영
