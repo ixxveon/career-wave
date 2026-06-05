@@ -468,7 +468,7 @@ export default function AdminManagementPage() {
       addLog({
         actor: 'super_admin',
         ip: '10.20.0.10',
-        action: 'IP ACL ?깅줉',
+        action: 'IP ACL 등록',
         target: nextRule.id,
         severity: 'WARN',
       });

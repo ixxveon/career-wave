@@ -68,6 +68,12 @@ export const AUDIT_SEVERITY = {
 
 export type AuditSeverity = (typeof AUDIT_SEVERITY)[keyof typeof AUDIT_SEVERITY];
 
+const FILTER_SENTINEL = {
+  ALL: 'ALL',
+} as const;
+
+type FilterSentinel = (typeof FILTER_SENTINEL)[keyof typeof FILTER_SENTINEL];
+
 export interface AdminAuditLog {
   id: string;
   occurredAt: string;
@@ -104,8 +110,8 @@ export interface PagedResponse<TItem> {
 
 export interface GetAdminAccountsParams {
   keyword?: string;
-  role?: AdminRole | 'ALL';
-  status?: AdminStatus | 'ALL';
+  role?: AdminRole | FilterSentinel;
+  status?: AdminStatus | FilterSentinel;
   page?: number;
   size?: number;
 }
@@ -141,8 +147,8 @@ export interface RequestUpdateAclEnabled {
 }
 
 export interface GetAdminAuditLogsParams {
-  actor?: string;
-  severity?: AuditSeverity | 'ALL';
+  actor?: string | FilterSentinel;
+  severity?: AuditSeverity | FilterSentinel;
   page?: number;
   size?: number;
 }
@@ -256,7 +262,25 @@ export function getAdminManagementAuthErrorMessage(error: AdminManagementApiErro
 }
 
 function unwrapApiResponse<TData>(response: AxiosResponse<ApiResponse<TData>>): TData {
-  return response.data.data;
+  const payload = response.data;
+
+  if (!payload.success) {
+    const code = getAdminManagementErrorCode(payload.statusCode);
+
+    throw {
+      code,
+      statusCode: payload.statusCode,
+      message: payload.message || adminManagementFallbackMessages[code],
+    } satisfies AdminManagementApiError;
+  }
+
+  return payload.data;
+}
+
+function normalizeAllSentinel<TParams extends object>(params: TParams): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== FILTER_SENTINEL.ALL && value !== undefined),
+  );
 }
 
 export const adminManagementApiClient = {
@@ -273,7 +297,9 @@ export const getAdminManagementSummary = () =>
   adminManagementApiClient.get<ApiResponse<AdminManagementSummary>>('/admins/summary').then(unwrapApiResponse);
 
 export const getAdminAccounts = (params: GetAdminAccountsParams = {}) =>
-  adminManagementApiClient.get<ApiResponse<PagedResponse<AdminAccount>>>('/admins', params).then(unwrapApiResponse);
+  adminManagementApiClient
+    .get<ApiResponse<PagedResponse<AdminAccount>>>('/admins', normalizeAllSentinel(params))
+    .then(unwrapApiResponse);
 
 export const createAdminAccount = (body: RequestCreateAdmin) =>
   adminManagementApiClient.post<ApiResponse<AdminAccount>, RequestCreateAdmin>('/admins', body).then(unwrapApiResponse);
@@ -311,5 +337,5 @@ export const deleteAdminAclRule = (aclId: string) =>
 
 export const getAdminAuditLogs = (params: GetAdminAuditLogsParams = {}) =>
   adminManagementApiClient
-    .get<ApiResponse<PagedResponse<AdminAuditLog>>>('/admin-audit-logs', params)
+    .get<ApiResponse<PagedResponse<AdminAuditLog>>>('/admin-audit-logs', normalizeAllSentinel(params))
     .then(unwrapApiResponse);
