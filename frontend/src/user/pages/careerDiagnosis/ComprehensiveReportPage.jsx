@@ -208,7 +208,7 @@ function ComprehensiveReportPage() {
           <p>서류 분석, AI 면접 결과, 취업 준비 기록과 학습 로드맵을 한 화면에서 확인합니다.</p>
         </div>
         <div className="support-hero__summary">
-          <span>선택 기록</span>
+          <span>선택한 기록일</span>
           <strong>{currentRecord?.practiceDate || '-'}</strong>
         </div>
       </header>
@@ -216,6 +216,7 @@ function ComprehensiveReportPage() {
       <section className="feedback-panel premium-report-panel">
         <div className="section-title">
           <Crown size={21} />
+
           <h2>PDF 리포트 저장</h2>
         </div>
         <p>PDF 다운로드와 보관은 유료 서비스입니다. 프리미엄 구독 후 종합 진단 리포트를 PDF 파일로 저장할 수 있습니다.</p>

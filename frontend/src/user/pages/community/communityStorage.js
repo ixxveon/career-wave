@@ -117,7 +117,11 @@ export const MOCK_POSTS = [
 
 export function getStoredPosts() {
   try {
-    return JSON.parse(localStorage.getItem(COMMUNITY_POSTS_STORAGE_KEY) || '[]');
+    const parsedPosts = JSON.parse(
+        localStorage.getItem(COMMUNITY_POSTS_STORAGE_KEY) || '[]'
+    );
+
+    return Array.isArray(parsedPosts) ? parsedPosts : [];
   } catch {
     return [];
   }
@@ -127,12 +131,10 @@ export function saveStoredPosts(posts) {
   localStorage.setItem(COMMUNITY_POSTS_STORAGE_KEY, JSON.stringify(posts));
 }
 
-export function getAllCommunityPosts() {
-  return [...getStoredPosts(), ...MOCK_POSTS];
-}
-
 export function getCommunityPost(postId) {
-  return getAllCommunityPosts().find((post) => String(post.id) === String(postId)) || MOCK_POSTS[0];
+  if (!postId) return null;
+
+  return getAllCommunityPosts().find((post) => String(post.id) === String(postId)) ?? null;
 }
 
 export function getPostPreview(content) {
