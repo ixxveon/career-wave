@@ -1,8 +1,17 @@
 import FeatureCard from './FeatureCard';
 import Button from './Button';
+import type { DomainCard } from '../../utils/domainData';
 import './DomainShell.css';
 
-function DomainShell({ eyebrow, title, description, cards = [], primaryAction = '시작' }) {
+interface DomainShellProps {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  cards?: DomainCard[];
+  primaryAction?: string;
+}
+
+function DomainShell({ eyebrow, title, description, cards = [], primaryAction = '시작' }: DomainShellProps) {
   return (
     <section className="cw-domain-shell">
       <header className="cw-domain-shell__header">

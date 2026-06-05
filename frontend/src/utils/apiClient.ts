@@ -1,4 +1,12 @@
-export async function apiClient(endpoint, options = {}) {
+interface ApiError extends Error {
+  status: number;
+  body: Record<string, unknown>;
+}
+
+export async function apiClient<T = unknown>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T | null> {
   const isFormData = options.body instanceof FormData;
 
   const response = await fetch(endpoint, {
@@ -12,7 +20,7 @@ export async function apiClient(endpoint, options = {}) {
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
     const message = errorBody?.message || `요청 실패 (${response.status})`;
-    const error = new Error(message);
+    const error = new Error(message) as ApiError;
     error.status = response.status;
     error.body = errorBody;
     throw error;
@@ -29,5 +37,5 @@ export async function apiClient(endpoint, options = {}) {
     return null;
   }
 
-  return response.json();
+  return response.json() as Promise<T>;
 }

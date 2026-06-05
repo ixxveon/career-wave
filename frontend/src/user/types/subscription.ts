@@ -11,6 +11,15 @@ export const BILLING_CYCLE = {
 
 export type BillingCycle = (typeof BILLING_CYCLE)[keyof typeof BILLING_CYCLE];
 
+export const PAYMENT_HISTORY_PERIOD = {
+  ONE_MONTH: '1M',
+  THREE_MONTHS: '3M',
+  SIX_MONTHS: '6M',
+  TWELVE_MONTHS: '12M',
+} as const;
+
+export type PaymentHistoryPeriod = (typeof PAYMENT_HISTORY_PERIOD)[keyof typeof PAYMENT_HISTORY_PERIOD];
+
 export const SUBSCRIPTION_STATUS = {
   NONE: 'NONE',
   ACTIVE: 'ACTIVE',
@@ -108,9 +117,118 @@ export interface PaymentHistory {
   failureReason: PaymentFailureReason | null;
 }
 
+export interface PaymentHistoryPageResponse {
+  content: PaymentHistory[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface PaymentHistoryQuery {
+  period: PaymentHistoryPeriod;
+  page: number;
+  size: number;
+}
+
 export interface PaymentFailure {
   reasonCode: PaymentFailureReason;
   displayMessage: string;
+  retryable: boolean;
+}
+
+export const CANCEL_REASON = {
+  NO_LONGER_NEEDED: 'NO_LONGER_NEEDED',
+  TOO_EXPENSIVE: 'TOO_EXPENSIVE',
+  NOT_USEFUL: 'NOT_USEFUL',
+  OTHER: 'OTHER',
+} as const;
+
+export type CancelReason = (typeof CANCEL_REASON)[keyof typeof CANCEL_REASON];
+
+export interface CancelSubscriptionRequest {
+  reason: CancelReason;
+}
+
+export interface CancelSubscriptionResponse {
+  subscriptionId: string;
+  productCode: ProductCode;
+  status: SubscriptionStatus;
+  currentPeriodEnd: string;
+  cancelScheduledAt: string;
+}
+
+export type PaymentHistorySubscriptionCardItem = {
+  subscriptionId: string;
+  productCode: ProductCode;
+  name: string;
+  cancelScheduled: boolean;
+  paymentFailed: boolean;
+  nextBillingDate: string | null;
+  billingCycle: string;
+  monthlyPrice: string;
+  startedAt: string;
+  currentPeriodEnd: string;
+};
+
+export interface CreateOrderRequest {
+  productCode: ProductCode;
+  successUrl: string;
+  failUrl: string;
+}
+
+export interface CreateOrderResponse {
+  orderId: string;
+  idempotencyKey: string;
+  productCode: ProductCode;
+  productName: string;
+  amount: number;
+  currency: string;
+  billingCycle: BillingCycle;
+  customerName: string;
+  customerEmail: string;
+  expiresAt: string;
+}
+
+export interface ConfirmPaymentRequest {
+  paymentKey: string;
+  orderId: string;
+  amount: number;
+}
+
+export interface ConfirmPaymentResponse {
+  paymentId: string;
+  orderId: string;
+  productCode: ProductCode;
+  productName: string;
+  amount: number;
+  currency: string;
+  paymentStatus: PaymentStatus;
+  subscriptionStatus: SubscriptionStatus;
+  paidAt: string;
+  nextBillingAt: string;
+}
+
+export interface PaymentStatusResponse {
+  orderId: string;
+  paymentStatus: PaymentStatus;
+  productCode: ProductCode;
+  productName: string;
+  amount: number;
+  paidAt: string | null;
+  failure: PaymentFailure | null;
+}
+
+export interface RecordPaymentFailRequest {
+  orderId: string;
+  productCode: ProductCode;
+  reasonCode: PaymentFailureReason;
+  message: string;
+}
+
+export interface RecordPaymentFailResponse {
+  orderId: string;
+  paymentStatus: PaymentStatus;
   retryable: boolean;
 }
 

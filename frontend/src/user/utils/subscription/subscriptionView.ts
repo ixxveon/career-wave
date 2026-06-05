@@ -1,4 +1,40 @@
-import { PRODUCT_CODE, SUBSCRIPTION_STATUS, type ProductCode, type Subscription, type SubscriptionStatus, type UsageItem, type UsageSummary } from '../../types/subscription';
+import { PAYMENT_STATUS, PRODUCT_CODE, SUBSCRIPTION_STATUS, type PaymentStatus, type ProductCode, type Subscription, type SubscriptionStatus, type UsageItem, type UsageSummary } from '../../types/subscription';
+
+const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
+  [PAYMENT_STATUS.PAID]: '결제 완료',
+  [PAYMENT_STATUS.FAILED]: '결제 실패',
+  [PAYMENT_STATUS.CANCELED]: '취소',
+  [PAYMENT_STATUS.REFUNDED]: '환불',
+  [PAYMENT_STATUS.READY]: '준비 중',
+  [PAYMENT_STATUS.AGREED]: '동의 완료',
+  [PAYMENT_STATUS.REQUESTING]: '요청 중',
+  [PAYMENT_STATUS.REDIRECTING]: '이동 중',
+  [PAYMENT_STATUS.CONFIRMING]: '승인 중',
+};
+
+const PAYMENT_STATUS_VARIANT: Record<PaymentStatus, 'success' | 'fail' | 'cancel' | 'neutral'> = {
+  [PAYMENT_STATUS.PAID]: 'success',
+  [PAYMENT_STATUS.FAILED]: 'fail',
+  [PAYMENT_STATUS.CANCELED]: 'cancel',
+  [PAYMENT_STATUS.REFUNDED]: 'cancel',
+  [PAYMENT_STATUS.READY]: 'neutral',
+  [PAYMENT_STATUS.AGREED]: 'neutral',
+  [PAYMENT_STATUS.REQUESTING]: 'neutral',
+  [PAYMENT_STATUS.REDIRECTING]: 'neutral',
+  [PAYMENT_STATUS.CONFIRMING]: 'neutral',
+};
+
+export function formatPaymentStatus(status: PaymentStatus): { label: string; variant: 'success' | 'fail' | 'cancel' | 'neutral' } {
+  return {
+    label: PAYMENT_STATUS_LABEL[status] ?? status,
+    variant: PAYMENT_STATUS_VARIANT[status] ?? 'neutral',
+  };
+}
+
+export function formatPrice(amount: number | null | undefined): string {
+  if (amount == null) return '—';
+  return `₩${Number(amount).toLocaleString('ko-KR')}`;
+}
 
 export const PRODUCT_ACCENT: Record<ProductCode, 'document' | 'interview'> = {
   [PRODUCT_CODE.DOCUMENT_COACHING]: 'document',
@@ -47,6 +83,18 @@ export function formatBillingDate(isoDate: string | null): string {
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) return '—';
   return `${date.getUTCFullYear()}.${String(date.getUTCMonth() + 1).padStart(2, '0')}.${String(date.getUTCDate()).padStart(2, '0')}`;
+}
+
+export function buildRecommendationItem(productCode: ProductCode): UsageItem {
+  return {
+    productCode,
+    key: PRODUCT_ACCENT[productCode],
+    title: PRODUCT_TITLE[productCode],
+    accent: PRODUCT_ACCENT[productCode],
+    isSubscribed: false,
+    subscription: null,
+    usage: null,
+  };
 }
 
 export function buildUsageItems(

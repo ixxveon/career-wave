@@ -10,8 +10,15 @@ import {
   CreditCard,
   Mic,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-export const navigationItems = [
+interface NavigationItem {
+  label: string;
+  path: string;
+  icon: LucideIcon;
+}
+
+export const navigationItems: NavigationItem[] = [
   {
     label: '대시보드',
     path: '/',
@@ -59,7 +66,7 @@ export const navigationItems = [
   },
 ];
 
-export const dashboardTabs = [
+export const dashboardTabs: NavigationItem[] = [
   {
     label: '구직자',
     path: '/',
