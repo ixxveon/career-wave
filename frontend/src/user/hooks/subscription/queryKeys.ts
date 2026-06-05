@@ -6,4 +6,6 @@ export const subscriptionQueryKeys = {
   entitlements: () => [...subscriptionQueryKeys.all, 'entitlements'] as const,
   paymentHistory: (period: string, page: number, size: number) =>
     [...subscriptionQueryKeys.all, 'payment-history', period, page, size] as const,
+  paymentStatus: (orderId: string) =>
+    [...subscriptionQueryKeys.all, 'payment-status', orderId] as const,
 };

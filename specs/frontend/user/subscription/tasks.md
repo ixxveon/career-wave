@@ -44,15 +44,18 @@
 
 ## Phase 7 — Billing
 
-- [ ] `/billing/checkout`에서 `product` query 파싱 및 유효성 검증 구현
-- [ ] 잘못된 product query 또는 누락 시 fallback/error state 구현
-- [ ] checkout 진입 시 서버 상품 정보 조회 또는 명확한 mock adapter 구현
-- [ ] 상품 정보 카드, 결제 요약 카드, 정기 구독 badge, 자동 결제 안내 문구 정리
-- [ ] 결제 동의 체크박스 및 미동의 클릭 안내 구현
-- [ ] 동의 후 order 생성 요청, 요청 중 중복 클릭 방지 구현
-- [ ] `/billing/success`에서 결제 승인/상태 조회 후 완료 UI 표시
-- [ ] `/billing/fail`에서 실패 사유, 다시 결제하기, AI 서비스로 돌아가기 CTA 구현
-- [ ] success/fail URL 직접 접근 방어 및 상태 복원 처리
+- [x] `/billing/checkout`에서 `product` query 파싱 및 유효성 검증 구현
+- [x] 잘못된 product query 또는 누락 시 fallback/error state 구현
+- [x] checkout 진입 시 서버 상품 정보 조회 (useProducts 훅, mock billingProducts.ts 제거)
+- [x] 상품 정보 카드(CheckoutProductCard), 결제 요약 카드(CheckoutSummaryCard), 자동 결제 안내 문구 정리
+- [x] 결제 동의 체크박스 및 미동의 클릭 안내 구현
+- [x] 동의 후 order 생성 요청(useCreateOrder), 요청 중 버튼 disabled 중복 클릭 방지 구현
+- [x] Toss Payments SDK requestPayment 연동 (createOrder 응답 기반)
+- [x] `/billing/success`에서 confirmPayment 후 loading·success·error 상태 UI 표시
+- [x] `/billing/fail`에서 PaymentFailureReason 6종 실패 사유 구분, 다시 결제하기·AI 서비스로 돌아가기 CTA 구현
+- [x] success/fail URL 직접 접근 방어 (orderId 없으면 /mypage/subscription 리다이렉트)
+- [x] useCheckoutStatus·usePaymentSuccessStatus·usePaymentFailStatus 훅으로 페이지 로직 캡슐화
+- [x] billingProducts.ts mock 파일 삭제
 
 ## Phase 8 — Frontend QA
 
