@@ -30,11 +30,8 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 | `file_type` | VARCHAR(20) | NOT NULL | `RESUME` \| `COVER_LETTER` |
 | `file_url` | VARCHAR(500) | NOT NULL | S3 저장 파일 URL |
 | `original_name` | VARCHAR(200) | NOT NULL | 업로드 원본 파일명 |
+| `status` | VARCHAR(20) | NOT NULL, DEFAULT 'UPLOADED' | `UPLOADED` \| `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 업로드 일시 |
-
-> ⚠️ **`status` 컬럼 없음** — 분석 상태 추적 방식을 FastAPI 팀과 협의 필요.  
-> 현재 스펙의 WebSocket 상태 메시지(ANALYZING/COMPLETED/FAILED)는 DB 컬럼 없이 실시간으로만 전달되는 구조.  
-> `document_feedbacks` 레코드 존재 여부로 완료 여부를 판단하는 방식 검토 중.
 
 > S3 저장 시 `original_name`을 그대로 파일명으로 사용하지 않는다.  
 > 한글·특수문자 파일명 깨짐 방지를 위해 S3 키는 `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` 형식으로 생성.  

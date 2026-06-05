@@ -42,7 +42,7 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 - 파일 검증(크기·MIME type 기반 확장자)은 서비스 레이어 진입 전에 처리. 검증 실패 시 S3 업로드 절대 수행 금지.
 - S3 저장 키는 `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` 형식으로 생성. `original_name`을 S3 키로 직접 사용 금지. `file_url`에는 완성된 S3 URL, `original_name`에는 사용자 원본 파일명을 저장.
 - `cover_letter_contents`의 `order_num`은 동일 `document_id` 내에서 UNIQUE 제약(`uq_clc_document_order`) — DB 레벨에서 중복 방지.
-- ⚠️ `documents` 테이블에 `status` 컬럼 없음 — 분석 완료 여부는 `document_feedbacks` 레코드 존재 여부로 판단하는 방식 검토 중. 팀 협의 후 확정.
+- `document.status`는 Spring이 `UPLOADED`로 초기 설정. `PENDING` 이후 전이는 Webhook 수신 시 Spring이 업데이트. 서비스 레이어에서 임의 변경 금지.
 - Webhook 멱등성 보장: `document.status`가 이미 `COMPLETED` 또는 `FAILED`인 경우 동일 Webhook 재수신 시 DB 덮어쓰기 및 예외 발생 없이 조용히 무시한다.
 
 ---
@@ -63,7 +63,7 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 | `documentId` 타입 | UUID v4 | IDOR 방어, 노출 안전성 |
 | 파일 저장 | S3 (외부 스토리지) | DB 직접 저장 지양 |
 | S3 키 생성 | `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` | 한글·특수문자 깨짐 방지, 날짜별 분산 관리, 원본명은 `original_name` 컬럼에 보존 |
-| ⚠️ `documents.status` 부재 | 팀 협의 필요 | DB에 status 컬럼 없음 — 분석 완료 여부 판단 방식 결정 필요 |
+| `documents.status` | VARCHAR(20), DEFAULT 'UPLOADED' | 프론트 스펙 상태 추적에 맞춰 추가 — Spring이 UPLOADED 설정, 이후 전이는 Webhook 책임 |
 | 분석 결과 수신 | Webhook (FastAPI → Spring `POST .../webhook`) | Spring이 DB 저장 + WebSocket 알림을 한 흐름에서 처리 가능 |
 | `feedback_details` 저장 | JSONB + `AttributeConverter` 또는 `hypersistence-utils` | AI 응답 스키마 유연성 + JPA 변환 편의성 |
 | WebSocket 구현 | STOMP (`spring-boot-starter-websocket`) | 표준화된 메시지 프로토콜, 토픽 기반 구독 구조 |
