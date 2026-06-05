@@ -61,19 +61,18 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 
 ---
 
-## 필요 환경 변수 (인프라 팀 사전 공유 필요)
+## 필요 환경 변수
 
-> 구현 시작 전 아래 값들을 인프라·운영 담당자에게 요청해두세요.  
-> 코드에 하드코딩하지 않고 모두 환경 변수로 주입받습니다.
+> 코드에 하드코딩하지 않고 모두 환경 변수로 관리합니다.
 
-| 환경 변수 | 설명 | 예시 |
-|-----------|------|------|
-| `AWS_S3_BUCKET_NAME` | 파일 업로드 대상 S3 버킷명 | `careerwave-files` |
-| `AWS_ACCESS_KEY_ID` | S3 접근 권한 Access Key | `AKIA...` |
-| `AWS_SECRET_ACCESS_KEY` | S3 접근 권한 Secret Key | `wJalrXUtn...` |
-| `AWS_REGION` | S3 버킷 리전 | `ap-northeast-2` |
-| `FASTAPI_BASE_URL` | Spring → FastAPI 분석 요청 내부 URL | `http://fastapi-service:8000` |
-| `WEBHOOK_SECRET` | FastAPI → Spring Webhook 인증 키 | `(임의 생성 비밀값)` |
+| 환경 변수 | 설명 | 담당 | 예시 |
+|-----------|------|------|------|
+| `AWS_S3_BUCKET_NAME` | 파일 업로드 대상 S3 버킷명 | 인프라 팀 요청 | `careerwave-files` |
+| `AWS_ACCESS_KEY_ID` | S3 접근 권한 Access Key | 인프라 팀 요청 | `AKIA...` |
+| `AWS_SECRET_ACCESS_KEY` | S3 접근 권한 Secret Key | 인프라 팀 요청 | `wJalrXUtn...` |
+| `AWS_REGION` | S3 버킷 리전 | 인프라 팀 요청 | `ap-northeast-2` |
+| `FASTAPI_BASE_URL` | Spring → FastAPI 분석 요청 내부 URL | 본인 직접 설정 | `http://localhost:8000` |
+| `WEBHOOK_SECRET` | FastAPI → Spring Webhook 인증 키 | 본인 직접 설정 | `(임의 생성 비밀값)` |
 
 ---
 
