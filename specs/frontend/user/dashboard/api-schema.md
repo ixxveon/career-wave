@@ -54,19 +54,19 @@ Authorization: Bearer {accessToken}
 
 ### 공통 Error Cases
 
-| statusCode | 상황                 | 프론트 처리       |
-| ---------- | ------------------ | ------------ |
-| `400`      | 잘못된 요청 또는 검색 조건 오류 | 입력값 확인 안내    |
-| `401`      | 인증 필요 또는 토큰 만료     | 로그인 페이지 이동   |
-| `403`      | 접근 권한 없음           | 접근 제한 안내     |
-| `404`      | 회원 정보 또는 공고 데이터 없음 | 빈 상태 UI 표시   |
-| `500`      | 서버 오류              | 재시도 또는 오류 안내 |
+| statusCode | 상황                            | 프론트 처리           |
+| ---------- | ------------------------------- | --------------------- |
+| `400`      | 잘못된 요청 또는 검색 조건 오류 | 입력값 확인 안내      |
+| `401`      | 인증 필요 또는 토큰 만료        | 로그인 페이지 이동    |
+| `403`      | 접근 권한 없음                  | 접근 제한 안내        |
+| `404`      | 회원 정보 또는 공고 데이터 없음 | 빈 상태 UI 표시       |
+| `500`      | 서버 오류                       | 재시도 또는 오류 안내 |
 
 ---
 
 ## 1. 내 정보 조회
 
-* **Endpoint**: `GET /api/v1/dashboard/profile`
+- **Endpoint**: `GET /api/v1/dashboard/profile`
 
 ### Response
 
@@ -94,7 +94,7 @@ Authorization: Bearer {accessToken}
 
 ## 2. GitHub 연동 정보 조회
 
-* **Endpoint**: `GET /api/v1/dashboard/github`
+- **Endpoint**: `GET /api/v1/dashboard/github`
 
 ### Linked Response
 
@@ -132,8 +132,8 @@ Authorization: Bearer {accessToken}
 
 ## 3. 회원 정보 수정
 
-* **Endpoint**: `PATCH /api/v1/dashboard/profile`
-* **Content-Type**: `application/json`
+- **Endpoint**: `PATCH /api/v1/dashboard/profile`
+- **Content-Type**: `application/json`
 
 ### Request
 
@@ -145,11 +145,11 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-| Field       | Type              | 필수 | 설명             |
-| ----------- | ----------------- | -- | -------------- |
-| `name`      | `string`          | Y  | 회원 이름          |
-| `phone`     | `string`          | N  | 휴대폰 번호         |
-| `githubUrl` | `string \| null` | N | GitHub 프로필 URL |
+| Field       | Type             | 필수 | 설명              |
+| ----------- | ---------------- | ---- | ----------------- |
+| `name`      | `string`         | Y    | 회원 이름         |
+| `phone`     | `string`         | N    | 휴대폰 번호       |
+| `githubUrl` | `string \| null` | N    | GitHub 프로필 URL |
 
 ### Response
 
@@ -169,26 +169,26 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황                           |
-| ---------- | ---------------------------- |
+| statusCode | 상황                                    |
+| ---------- | --------------------------------------- |
 | `400`      | 이름, 휴대폰 번호, GitHub URL 형식 오류 |
-| `401`      | 인증 필요 또는 토큰 만료               |
-| `404`      | 회원 정보 없음                     |
+| `401`      | 인증 필요 또는 토큰 만료                |
+| `404`      | 회원 정보 없음                          |
 
 ---
 
 ## 4. 스크랩 공고 목록 조회
 
-* **Endpoint**: `GET /api/v1/dashboard/bookmarks`
+- **Endpoint**: `GET /api/v1/dashboard/bookmarks`
 
 ### Query Parameters
 
-| Parameter | Type        | 필수 | 기본값      | 설명               |
-| --------- | ----------- | -- | -------- | ---------------- |
-| `keyword` | `string`    | N  | `""`     | 기업명 또는 공고 제목 검색어 |
-| `sort`    | `ScrapSort` | N  | `LATEST` | 정렬 기준            |
-| `page`    | `number`    | N  | `0`      | 0-based page     |
-| `size`    | `number`    | N  | `10`     | 페이지 크기           |
+| Parameter | Type        | 필수 | 기본값   | 설명                         |
+| --------- | ----------- | ---- | -------- | ---------------------------- |
+| `keyword` | `string`    | N    | `""`     | 기업명 또는 공고 제목 검색어 |
+| `sort`    | `ScrapSort` | N    | `LATEST` | 정렬 기준                    |
+| `page`    | `number`    | N    | `0`      | 0-based page                 |
+| `size`    | `number`    | N    | `10`     | 페이지 크기                  |
 
 ### Response
 
@@ -208,6 +208,7 @@ Authorization: Bearer {accessToken}
         "location": "서울",
         "deadline": "2026-06-30",
         "noticeStatus": "ACTIVE",
+        "deleted": false,
         "createdAt": "2026-05-20T10:00:00Z"
       }
     ],
@@ -240,7 +241,7 @@ Authorization: Bearer {accessToken}
 
 ## 5. 스크랩 취소
 
-* **Endpoint**: `DELETE /api/v1/dashboard/bookmarks/{bookmarkId}`
+- **Endpoint**: `DELETE /api/v1/dashboard/bookmarks/{bookmarkId}`
 
 ### Response
 
@@ -257,11 +258,11 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황             |
-| ---------- | -------------- |
+| statusCode | 상황                     |
+| ---------- | ------------------------ |
 | `401`      | 인증 필요 또는 토큰 만료 |
-| `404`      | 존재하지 않는 스크랩    |
-| `500`      | 서버 오류          |
+| `404`      | 존재하지 않는 스크랩     |
+| `500`      | 서버 오류                |
 
 ---
 
