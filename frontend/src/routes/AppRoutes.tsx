@@ -38,7 +38,9 @@ import InterviewHomePage from '../user/pages/interview/InterviewHomePage';
 import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
 import MediaInterviewPage from '../user/pages/interview/MediaInterviewPage';
 import InterviewReportPage from '../user/pages/interview/InterviewReportPage';
+
 import DiagnosisHistoryPage from '../user/pages/careerDiagnosis/DiagnosisHistoryPage';
+import DiagnosisDetailPage from '../user/pages/careerDiagnosis/DiagnosisDetailPage';
 import LearningRoadmapPage from '../user/pages/careerDiagnosis/LearningRoadmapPage';
 import ComprehensiveReportPage from '../user/pages/careerDiagnosis/ComprehensiveReportPage';
 
