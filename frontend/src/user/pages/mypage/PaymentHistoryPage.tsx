@@ -19,10 +19,9 @@ import {
   PAYMENT_HISTORY_PERIOD,
   SUBSCRIPTION_STATUS,
   type PaymentHistoryPeriod,
-  type ProductCode,
-  type UsageItem,
+  type SubscriptionStatus,
 } from '../../types/subscription';
-import { ALL_PRODUCT_CODES, PRODUCT_ACCENT, PRODUCT_TITLE, formatBillingDate } from '../../utils/subscription/subscriptionView';
+import { ALL_PRODUCT_CODES, buildRecommendationItem, formatBillingDate, formatPrice } from '../../utils/subscription/subscriptionView';
 
 const PERIOD_OPTIONS: Array<{ label: string; value: PaymentHistoryPeriod }> = [
   { label: '최근 1개월', value: PAYMENT_HISTORY_PERIOD.ONE_MONTH },
@@ -31,7 +30,7 @@ const PERIOD_OPTIONS: Array<{ label: string; value: PaymentHistoryPeriod }> = [
   { label: '최근 1년', value: PAYMENT_HISTORY_PERIOD.TWELVE_MONTHS },
 ];
 
-const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set<SubscriptionStatus>([
   SUBSCRIPTION_STATUS.ACTIVE,
   SUBSCRIPTION_STATUS.CANCEL_SCHEDULED,
 ]);
@@ -50,22 +49,6 @@ const noticeItems = [
   '결제 및 취소/환불 관련 상세 문의는 고객센터를 통해 접수할 수 있습니다.',
 ];
 
-function formatPrice(amount: number | null | undefined): string {
-  if (amount == null) return '—';
-  return `₩${Number(amount).toLocaleString('ko-KR')}`;
-}
-
-function buildRecommendationItem(productCode: ProductCode): UsageItem {
-  return {
-    productCode,
-    key: PRODUCT_ACCENT[productCode],
-    title: PRODUCT_TITLE[productCode],
-    accent: PRODUCT_ACCENT[productCode],
-    isSubscribed: false,
-    subscription: null,
-    usage: null,
-  };
-}
 
 function PaymentHistoryPage() {
   const [periodFilter, setPeriodFilter] = useState<PaymentHistoryPeriod>(

@@ -1,9 +1,5 @@
 import type { PaymentHistory } from '../../types/subscription';
-import { formatBillingDate } from '../../utils/subscription/subscriptionView';
-
-function formatPrice(amount: number): string {
-  return `₩${Number(amount).toLocaleString('ko-KR')}`;
-}
+import { formatBillingDate, formatPrice } from '../../utils/subscription/subscriptionView';
 
 export function PaymentHistoryList({ payments }: { payments: PaymentHistory[] }) {
   return (

@@ -1,5 +1,10 @@
 import { PRODUCT_CODE, SUBSCRIPTION_STATUS, type ProductCode, type Subscription, type SubscriptionStatus, type UsageItem, type UsageSummary } from '../../types/subscription';
 
+export function formatPrice(amount: number | null | undefined): string {
+  if (amount == null) return '—';
+  return `₩${Number(amount).toLocaleString('ko-KR')}`;
+}
+
 export const PRODUCT_ACCENT: Record<ProductCode, 'document' | 'interview'> = {
   [PRODUCT_CODE.DOCUMENT_COACHING]: 'document',
   [PRODUCT_CODE.INTERVIEW]: 'interview',
@@ -47,6 +52,18 @@ export function formatBillingDate(isoDate: string | null): string {
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) return '—';
   return `${date.getUTCFullYear()}.${String(date.getUTCMonth() + 1).padStart(2, '0')}.${String(date.getUTCDate()).padStart(2, '0')}`;
+}
+
+export function buildRecommendationItem(productCode: ProductCode): UsageItem {
+  return {
+    productCode,
+    key: PRODUCT_ACCENT[productCode],
+    title: PRODUCT_TITLE[productCode],
+    accent: PRODUCT_ACCENT[productCode],
+    isSubscribed: false,
+    subscription: null,
+    usage: null,
+  };
 }
 
 export function buildUsageItems(
