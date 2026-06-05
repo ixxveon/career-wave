@@ -141,7 +141,7 @@ export default function InterviewRoom({
   /* ── STT_RESULT WS 메시지로 sttLive 업데이트 ── */
   useEffect(() => {
     setSttLive(session.sttLiveText);
-    if (session.pendingVoiceId !== null) setPendingVoiceId(session.pendingVoiceId);
+    setPendingVoiceId(session.pendingVoiceId); // null 포함 항상 동기화
   }, [session.sttLiveText, session.pendingVoiceId]);
 
   /* ── 이벤트 핸들러 ── */
