@@ -1,12 +1,45 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminAuthApi, adminSession } from '../../api/adminAuthApi';
+import { ACCESS_TOKEN_STORAGE_KEY, ADMIN_ROLE } from '../../constants/authConstants';
 import '../../styles/admin-login.css';
+
+function toBase64Url(value: object) {
+  return window
+    .btoa(JSON.stringify(value))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+function createMockAdminAccessToken() {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const payload = {
+    sub: 'career-wave-admin',
+    role: ADMIN_ROLE,
+    roles: [ADMIN_ROLE],
+    exp: Math.floor(Date.now() / 1000) + 60 * 60,
+  };
+  const dummySignature = 'dev-mock-signature';
+
+  return `${toBase64Url(header)}.${toBase64Url(payload)}.${dummySignature}`;
+}
+
+function syncAdminToken(token: string) {
+  adminSession.setToken(token);
+  window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
+}
+
+function clearAdminToken() {
+  adminSession.clearToken();
+  window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+}
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
+  const [useMockAdminLogin, setUseMockAdminLogin] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -16,18 +49,28 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
+      if (import.meta.env.DEV && useMockAdminLogin) {
+        syncAdminToken(createMockAdminAccessToken());
+        navigate('/admin/dashboard', { replace: true });
+        return;
+      }
+
       const response = await adminAuthApi.login({ loginId, password });
       const { success, data } = response.data;
       if (!success || !data?.accessToken) {
-        adminSession.clearToken();
+        clearAdminToken();
         throw new Error('INVALID_LOGIN_RESPONSE');
       }
-      adminSession.setToken(data.accessToken);
+
+      syncAdminToken(data.accessToken);
       navigate('/admin/dashboard', { replace: true });
     } catch {
-      // axios 401 reject 포함 모든 실패 경로에서 stale 토큰 제거
-      adminSession.clearToken();
-      setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.');
+      clearAdminToken();
+      setErrorMessage(
+        import.meta.env.DEV && useMockAdminLogin
+          ? '개발용 mock 로그인 토큰을 생성하지 못했습니다.'
+          : '아이디 또는 비밀번호가 올바르지 않습니다.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -57,8 +100,23 @@ export default function AdminLoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          {import.meta.env.DEV && (
+            <label className="loginMockControl">
+              <input
+                type="checkbox"
+                checked={useMockAdminLogin}
+                onChange={(event) => {
+                  setUseMockAdminLogin(event.target.checked);
+                  setErrorMessage(null);
+                }}
+              />
+              <span>개발용 mock 로그인</span>
+            </label>
+          )}
           {errorMessage ? (
-            <p className="loginError">{errorMessage}</p>
+            <p className="loginError" role="alert">
+              {errorMessage}
+            </p>
           ) : null}
           <button type="submit" className="loginSubmitBtn" disabled={isLoading}>
             {isLoading ? '로그인 중...' : '로그인'}

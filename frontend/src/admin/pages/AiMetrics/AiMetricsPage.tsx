@@ -2,14 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../styles/admin.css';
 import MiniPagination from '../../components/MiniPagination';
-import { AI_DOMAIN, AI_EVENT_SEVERITY, AI_USAGE_RISK_LEVEL, RAG_INDEX_STATUS, aiMetricsApi } from '../../api/aiMetricsApi';
-import type { AiBudgetSetting, AiDomain, AiDomainUsage, AiEventSeverity, AiHeavyUser, AiMetricLog, AiTokenTrendPoint, AiUsageRiskLevel, PageResult, RagDocumentMetric, RagIndexStatus } from '../../api/aiMetricsApi';
+import { AI_DOMAIN, AI_EVENT_SEVERITY, AI_HEALTH_STATUS, AI_METRIC_INTERVAL, AI_USAGE_RISK_LEVEL, RAG_INDEX_STATUS, aiMetricsApi, getAiDisplayModelName } from '../../api/aiMetricsApi';
+import type { AiBudgetSetting, AiDomain, AiDomainUsage, AiEventSeverity, AiHealthStatus, AiHeavyUser, AiMetricLog, AiMetricSummary, AiTokenTrendPoint, AiUsageRiskLevel, PageResult, RagDocumentMetric, RagIndexStatus } from '../../api/aiMetricsApi';
+import { sanitizeLogMessage } from '../../utils/aiMetricsLogSanitizer';
 
 type Tone = 'normal' | 'warning' | 'danger';
 type EventSeverity = AiEventSeverity;
 
 const DOC_PAGE_SIZE = 3;
 
+const SUMMARY_QUERY_KEY = ['admin', 'aiMetrics', 'summary'] as const;
 const DOMAIN_USAGE_QUERY_KEY = ['admin', 'aiMetrics', 'domainUsage'] as const;
 const TOKEN_TREND_QUERY_KEY = ['admin', 'aiMetrics', 'tokenTrend'] as const;
 const BUDGET_QUERY_KEY = ['admin', 'aiMetrics', 'budget'] as const;
@@ -38,9 +40,6 @@ const formatLatency = (value?: number) => (typeof value === 'number' ? `${Math.r
 
 const formatCost = (value?: number | null) => (typeof value === 'number' ? `$${value.toLocaleString()}` : '-');
 
-const getAiDisplayModelName = (model: { displayModelName?: string | null; actualModelName?: string | null }) =>
-  model.displayModelName || model.actualModelName || '모델 정보 없음';
-
 const formatBudgetPercent = (value: number) => `${Math.min(100, Math.max(0, Math.round(value))).toLocaleString()}%`;
 
 const formatCompactToken = (value: number) => {
@@ -66,11 +65,23 @@ const getMaskedHeavyUserLabel = (user: AiHeavyUser) => {
   return `USER-${user.userId.slice(-4).padStart(4, '*')}`;
 };
 
-// Server responses should already mask sensitive fields; this is a UI fallback.
-const sanitizeLogMessage = (message: string) => {
-  const sensitivePattern = /(prompt|프롬프트|개인정보|주민등록|전화번호|이메일|email|면접 답변|answer|resume|이력서|자기소개서)/i;
-  if (sensitivePattern.test(message)) return '[민감정보 보호] 운영 로그 메시지가 요약 처리되었습니다.';
-  return message;
+const getApiErrorStatus = (error: unknown) => {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined;
+  return (error as { response?: { status?: number } }).response?.status;
+};
+
+const getApiStateMessage = (error: unknown, fallback: string) => {
+  const status = getApiErrorStatus(error);
+  if (status === 401) return '로그인이 만료되어 데이터를 처리할 수 없습니다. 다시 로그인해 주세요.';
+  if (status === 403) return '관리자 권한이 없어 데이터를 처리할 수 없습니다.';
+  return fallback;
+};
+
+const getHealthStatusLabel = (status?: AiHealthStatus) => {
+  if (status === AI_HEALTH_STATUS.CRITICAL) return 'OpenAI API 위험';
+  if (status === AI_HEALTH_STATUS.WARNING) return 'OpenAI API 주의';
+  if (status === AI_HEALTH_STATUS.NORMAL) return 'OpenAI API 정상';
+  return 'OpenAI API 상태 확인 중';
 };
 
 const getRiskTone = (riskLevel?: AiUsageRiskLevel) => {
@@ -100,7 +111,6 @@ const toneForStatus = (value: EventSeverity): Tone => {
 
 export default function AiMetricsPage() {
   const queryClient = useQueryClient();
-  const [secondsAgo, setSecondsAgo] = useState(12);
   const [docQuery, setDocQuery] = useState('');
   const [selectedDocId, setSelectedDocId] = useState('');
   const [selectedTrendDomain, setSelectedTrendDomain] = useState<'ALL' | AiDomain>('ALL');
@@ -110,7 +120,19 @@ export default function AiMetricsPage() {
   const [budgetEditorOpen, setBudgetEditorOpen] = useState(false);
   const [budgetMutationErrorMessage, setBudgetMutationErrorMessage] = useState('');
 
-  const tokensPerMinute = 128;
+  const {
+    data: summaryData,
+    isLoading: summaryLoading,
+    isError: summaryIsError,
+    error: summaryError,
+  } = useQuery<AiMetricSummary, Error>({
+    queryKey: SUMMARY_QUERY_KEY,
+    queryFn: async () => {
+      const response = await aiMetricsApi.getSummary();
+      if (!response.data.success) throw new Error(response.data.message ?? 'AI 요약 조회에 실패했습니다.');
+      return response.data.data;
+    },
+  });
 
   const {
     data: domainUsageData,
@@ -138,11 +160,12 @@ export default function AiMetricsPage() {
     data: tokenTrendData,
     isLoading: tokenTrendLoading,
     isError: tokenTrendIsError,
+    error: tokenTrendError,
   } = useQuery<AiTokenTrendPoint[], Error>({
     queryKey: [...TOKEN_TREND_QUERY_KEY, selectedTrendDomain],
     queryFn: async () => {
       const response = await aiMetricsApi.getTokenTrend({
-        interval: 'HOURLY',
+        interval: AI_METRIC_INTERVAL.HOURLY,
         domain: selectedTrendDomain === 'ALL' ? undefined : selectedTrendDomain,
       });
       if (!response.data.success) throw new Error(response.data.message ?? 'AI 토큰 추이 조회에 실패했습니다.');
@@ -173,6 +196,7 @@ export default function AiMetricsPage() {
     data: budgetSetting,
     isLoading: budgetLoading,
     isError: budgetIsError,
+    error: budgetError,
   } = useQuery<AiBudgetSetting, Error>({
     queryKey: BUDGET_QUERY_KEY,
     queryFn: async () => {
@@ -182,15 +206,17 @@ export default function AiMetricsPage() {
     },
   });
 
-  const monthlyBudget = budgetSetting?.monthlyBudget ?? 0;
-  const currentSpend = budgetSetting?.currentSpend ?? null;
-  const forecastSpend = budgetSetting?.forecastSpend ?? null;
-  const thresholdPercent = budgetSetting?.thresholdPercent ?? 0;
-  const discordAlertEnabled = Boolean(budgetSetting?.discordAlertEnabled);
-  const rateLimitEnabled = Boolean(budgetSetting?.rateLimitEnabled);
-  const budgetUsed = monthlyBudget > 0 && typeof currentSpend === 'number' ? (currentSpend / monthlyBudget) * 100 : 0;
-  const budgetProgress = Math.min(100, Math.max(0, budgetUsed));
-  const isBudgetRisk = thresholdPercent > 0 && budgetUsed >= thresholdPercent;
+  const isBudgetLoaded = budgetSetting != null;
+  const monthlyBudget = isBudgetLoaded ? budgetSetting.monthlyBudget : 0;
+  const currentSpend = isBudgetLoaded ? budgetSetting.currentSpend : null;
+  const forecastSpend = isBudgetLoaded ? budgetSetting.forecastSpend : null;
+  const thresholdPercent = isBudgetLoaded ? budgetSetting.thresholdPercent : 0;
+  const discordAlertEnabled = isBudgetLoaded ? budgetSetting.discordAlertEnabled : false;
+  const rateLimitEnabled = isBudgetLoaded ? budgetSetting.rateLimitEnabled : false;
+  const budgetUsed = isBudgetLoaded && monthlyBudget > 0 && typeof currentSpend === 'number' ? (currentSpend / monthlyBudget) * 100 : 0;
+  const budgetProgress = isBudgetLoaded ? Math.min(100, Math.max(0, budgetUsed)) : 0;
+  const isBudgetRisk = isBudgetLoaded && thresholdPercent > 0 && budgetUsed >= thresholdPercent;
+  const budgetMutationDisabled = !isBudgetLoaded || budgetLoading || budgetIsError;
 
   const updateBudgetMutation = useMutation<AiBudgetSetting, Error, { monthlyBudget: number; thresholdPercent: number }>({
     mutationFn: async (data) => {
@@ -209,7 +235,7 @@ export default function AiMetricsPage() {
       setBudgetMutationErrorMessage('');
     },
     onError: (error) => {
-      setBudgetMutationErrorMessage(error.message || 'AI 예산 설정 수정에 실패했습니다.');
+      setBudgetMutationErrorMessage(getApiStateMessage(error, 'AI 예산 설정 수정에 실패했습니다.'));
     },
   });
 
@@ -227,7 +253,7 @@ export default function AiMetricsPage() {
       setBudgetMutationErrorMessage('');
     },
     onError: (error) => {
-      setBudgetMutationErrorMessage(error.message || '디스코드 알림 설정 수정에 실패했습니다.');
+      setBudgetMutationErrorMessage(getApiStateMessage(error, '디스코드 알림 설정 수정에 실패했습니다.'));
     },
   });
 
@@ -248,7 +274,7 @@ export default function AiMetricsPage() {
       setBudgetMutationErrorMessage('');
     },
     onError: (error) => {
-      setBudgetMutationErrorMessage(error.message || '사용량 제한 설정 수정에 실패했습니다.');
+      setBudgetMutationErrorMessage(getApiStateMessage(error, '사용량 제한 설정 수정에 실패했습니다.'));
     },
   });
 
@@ -256,6 +282,7 @@ export default function AiMetricsPage() {
     data: heavyUsersData,
     isLoading: heavyUsersLoading,
     isError: heavyUsersIsError,
+    error: heavyUsersError,
   } = useQuery<AiHeavyUser[], Error>({
     queryKey: HEAVY_USERS_QUERY_KEY,
     queryFn: async () => {
@@ -272,6 +299,7 @@ export default function AiMetricsPage() {
     data: metricLogsData,
     isLoading: metricLogsLoading,
     isError: metricLogsIsError,
+    error: metricLogsError,
   } = useQuery<PageResult<AiMetricLog>, Error>({
     queryKey: LOGS_QUERY_KEY,
     queryFn: async () => {
@@ -288,6 +316,7 @@ export default function AiMetricsPage() {
     data: ragDocumentsData,
     isLoading: ragDocumentsLoading,
     isError: ragDocumentsIsError,
+    error: ragDocumentsError,
   } = useQuery<RagDocumentMetric[], Error>({
     queryKey: RAG_DOCUMENTS_QUERY_KEY,
     queryFn: async () => {
@@ -299,13 +328,6 @@ export default function AiMetricsPage() {
 
   const ragDocs = ragDocumentsData ?? [];
   const ragDocsEmpty = !ragDocumentsLoading && !ragDocumentsIsError && ragDocs.length === 0;
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setSecondsAgo((prev) => (prev >= 18 ? 12 : prev + 1));
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   const filteredDocs = useMemo(() => {
     const keyword = docQuery.trim().toLowerCase();
@@ -361,6 +383,12 @@ export default function AiMetricsPage() {
     setDocPage((prev) => Math.min(prev, docTotalPages));
   }, [docTotalPages]);
 
+  const summaryStatusLabel = summaryIsError
+    ? getApiStateMessage(summaryError, 'AI 요약 상태를 불러오지 못했습니다.')
+    : getHealthStatusLabel(summaryData?.healthStatus);
+  const summaryLastSyncedLabel = summaryData ? `${formatDateTime(summaryData.lastSyncedAt)} 동기화` : summaryLoading ? '요약 조회 중' : '동기화 정보 없음';
+  const totalTokens = summaryData ? summaryData.totalInputTokens + summaryData.totalOutputTokens : undefined;
+
   const handleDownloadDocument = (doc: RagDocumentMetric) => {
     const content = [
       `Document: ${doc.name}`,
@@ -382,6 +410,10 @@ export default function AiMetricsPage() {
   };
 
   const handleBudgetSave = () => {
+    if (!isBudgetLoaded) {
+      setBudgetMutationErrorMessage('예산 정보를 불러온 뒤 다시 시도해 주세요.');
+      return;
+    }
     const nextBudget = Number(budgetDraft.replace(/,/g, '').trim());
     const nextThreshold = Number(thresholdDraft.replace(/,/g, '').trim());
     if (!Number.isFinite(nextBudget) || nextBudget < 0) return;
@@ -390,6 +422,22 @@ export default function AiMetricsPage() {
       monthlyBudget: nextBudget,
       thresholdPercent: nextThreshold,
     });
+  };
+
+  const handleDiscordAlertToggle = () => {
+    if (!isBudgetLoaded) {
+      setBudgetMutationErrorMessage('예산 정보를 불러온 뒤 다시 시도해 주세요.');
+      return;
+    }
+    updateDiscordAlertMutation.mutate(!discordAlertEnabled);
+  };
+
+  const handleRateLimitToggle = () => {
+    if (!isBudgetLoaded) {
+      setBudgetMutationErrorMessage('예산 정보를 불러온 뒤 다시 시도해 주세요.');
+      return;
+    }
+    updateRateLimitMutation.mutate(!rateLimitEnabled);
   };
 
   return (
@@ -404,14 +452,15 @@ export default function AiMetricsPage() {
           <div className="aiOpsLiveState">
             <span className="aiOpsPulse" />
             <div>
-              <strong>LIVE 모니터링</strong>
-              <small>마지막 동기화 {secondsAgo}초 전</small>
+              <strong>{summaryIsError ? '요약 연결 실패' : 'LIVE 모니터링'}</strong>
+              <small>{summaryLastSyncedLabel}</small>
             </div>
           </div>
           <div className="aiOpsHeaderMeta">
-            <span>OpenAI API 정상</span>
-            <span>평균 응답 842ms</span>
-            <span>오늘 비용 $1,440.00</span>
+            <span>{summaryStatusLabel}</span>
+            <span>평균 응답 {summaryLoading ? '조회 중' : formatLatency(summaryData?.averageLatencyMs)}</span>
+            <span>누적 비용 {summaryLoading ? '조회 중' : formatCost(summaryData?.estimatedCost)}</span>
+            <span>전체 토큰 {typeof totalTokens === 'number' ? totalTokens.toLocaleString() : '-'}</span>
           </div>
         </div>
       </header>
@@ -422,7 +471,7 @@ export default function AiMetricsPage() {
             <div>
               <strong>
                 {domainUsageIsError
-                  ? '도메인 사용량을 불러오지 못했습니다.'
+                  ? getApiStateMessage(domainUsageError, '도메인 사용량을 불러오지 못했습니다.')
                   : domainUsageEmpty
                     ? '집계된 도메인 사용량이 없습니다.'
                     : '도메인 사용량을 불러오는 중입니다.'}
@@ -567,7 +616,7 @@ export default function AiMetricsPage() {
                             type="button"
                             className="aiOpsBudgetButton primary"
                             onClick={handleBudgetSave}
-                            disabled={updateBudgetMutation.isPending}
+                            disabled={budgetMutationDisabled || updateBudgetMutation.isPending}
                           >
                             {updateBudgetMutation.isPending ? '저장 중' : '저장'}
                           </button>
@@ -588,6 +637,7 @@ export default function AiMetricsPage() {
                         <button
                           type="button"
                           className="aiOpsBudgetButton"
+                          disabled={budgetMutationDisabled}
                           onClick={() => {
                             setBudgetDraft(String(monthlyBudget || ''));
                             setThresholdDraft(String(thresholdPercent || ''));
@@ -609,7 +659,7 @@ export default function AiMetricsPage() {
                   {(tokenTrendLoading || tokenTrendIsError || tokenTrendEmpty) && (
                     <div className={`aiOpsChartNotice ${tokenTrendIsError ? 'danger' : tokenTrendEmpty ? 'empty' : 'loading'}`}>
                       {tokenTrendIsError
-                        ? '토큰 추이 데이터를 불러오지 못했습니다.'
+                        ? getApiStateMessage(tokenTrendError, '토큰 추이 데이터를 불러오지 못했습니다.')
                         : tokenTrendEmpty
                           ? '표시할 토큰 추이 데이터가 없습니다.'
                           : '토큰 추이 데이터를 불러오는 중입니다.'}
@@ -668,7 +718,9 @@ export default function AiMetricsPage() {
                     <div className="aiOpsBudgetLabel">월간 사용 비용</div>
                     <div className="aiOpsBudgetLine">
                       {budgetIsError
-                        ? '예산 정보를 불러오지 못했습니다.'
+                        ? getApiStateMessage(budgetError, '예산 정보를 불러오지 못했습니다.')
+                        : !isBudgetLoaded
+                          ? '예산 정보를 불러오는 중입니다.'
                         : `${formatCost(monthlyBudget)} 예산 중 ${formatBudgetPercent(budgetUsed)} 사용`}
                     </div>
                   </div>
@@ -698,8 +750,8 @@ export default function AiMetricsPage() {
                       <strong>{thresholdPercent > 0 ? `${thresholdPercent}%` : '-'}</strong>
                     </div>
                     <div>
-                      <span>분당 토큰 사용량</span>
-                      <strong>{tokensPerMinute}</strong>
+                      <span>전체 토큰</span>
+                      <strong>{typeof totalTokens === 'number' ? formatCompactToken(totalTokens) : '-'}</strong>
                     </div>
                   </div>
 
@@ -712,8 +764,8 @@ export default function AiMetricsPage() {
                       <button
                         type="button"
                         className={`aiOpsSwitch compact ${discordAlertEnabled ? 'active' : ''}`}
-                        onClick={() => updateDiscordAlertMutation.mutate(!discordAlertEnabled)}
-                        disabled={budgetLoading || updateDiscordAlertMutation.isPending}
+                        onClick={handleDiscordAlertToggle}
+                        disabled={budgetMutationDisabled || updateDiscordAlertMutation.isPending}
                         aria-label="디스코드 알림 토글"
                       >
                         <i />
@@ -729,8 +781,8 @@ export default function AiMetricsPage() {
                   <button
                     type="button"
                     className={`aiOpsDangerButton ${rateLimitEnabled || isBudgetRisk ? 'danger' : 'neutral'}`}
-                    onClick={() => updateRateLimitMutation.mutate(!rateLimitEnabled)}
-                    disabled={budgetLoading || updateRateLimitMutation.isPending}
+                    onClick={handleRateLimitToggle}
+                    disabled={budgetMutationDisabled || updateRateLimitMutation.isPending}
                   >
                     {updateRateLimitMutation.isPending
                       ? '처리 중'
@@ -770,7 +822,7 @@ export default function AiMetricsPage() {
                     <tr className="placeholder">
                       <td colSpan={6}>
                         {heavyUsersIsError
-                          ? '헤비 유저 데이터를 불러오지 못했습니다.'
+                          ? getApiStateMessage(heavyUsersError, '헤비 유저 데이터를 불러오지 못했습니다.')
                           : heavyUsersEmpty
                             ? '표시할 헤비 유저 데이터가 없습니다.'
                             : '헤비 유저 데이터를 불러오는 중입니다.'}
@@ -851,7 +903,7 @@ export default function AiMetricsPage() {
                         <tr className="placeholder">
                           <td colSpan={5}>
                             {ragDocumentsIsError
-                              ? 'RAG 지식 베이스 상태를 불러오지 못했습니다.'
+                              ? getApiStateMessage(ragDocumentsError, 'RAG 지식 베이스 상태를 불러오지 못했습니다.')
                               : ragDocsEmpty
                                 ? '표시할 RAG 문서가 없습니다.'
                                 : 'RAG 지식 베이스 상태를 불러오는 중입니다.'}
@@ -943,7 +995,7 @@ export default function AiMetricsPage() {
                   <span className="aiOpsLogTag normal">[INFO]</span>
                   <strong>
                     {metricLogsIsError
-                      ? 'AI 운영 로그 데이터를 불러오지 못했습니다.'
+                      ? getApiStateMessage(metricLogsError, 'AI 운영 로그 데이터를 불러오지 못했습니다.')
                       : metricLogsEmpty
                         ? '표시할 AI 운영 로그가 없습니다.'
                         : 'AI 운영 로그 데이터를 불러오는 중입니다.'}
@@ -1492,6 +1544,8 @@ export default function AiMetricsPage() {
           flex-direction: column;
           gap: 6px;
           min-width: 0;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
         }
 
         .aiOpsBars {
@@ -1891,10 +1945,12 @@ export default function AiMetricsPage() {
 
         .aiOpsTable {
           width: 100%;
+          min-width: 680px;
           border-collapse: collapse;
         }
 
         .aiOpsTableWrap.ragFixed .aiOpsTable {
+          min-width: 720px;
           table-layout: fixed;
         }
 
@@ -2307,6 +2363,35 @@ export default function AiMetricsPage() {
           .aiOpsModelField select {
             width: 100%;
             min-width: 0;
+          }
+
+          .aiOpsChartPlot {
+            grid-template-columns: 34px minmax(0, 1fr);
+            gap: 8px;
+          }
+
+          .aiOpsYAxis {
+            height: 220px;
+            font-size: 9px;
+          }
+
+          .aiOpsBars {
+            min-width: 520px;
+            min-height: 220px;
+            height: 220px;
+          }
+
+          .aiOpsBarGroup {
+            height: 182px;
+          }
+
+          .aiOpsXAxisLabels {
+            min-width: 520px;
+          }
+
+          .aiOpsTableWrap.ragFixed {
+            max-height: none;
+            overflow: auto;
           }
 
           .aiOpsLogHead,

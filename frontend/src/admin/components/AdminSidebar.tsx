@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { adminAuthApi, adminSession } from '../api/adminAuthApi';
+import { ACCESS_TOKEN_STORAGE_KEY } from '../constants/authConstants';
 import '../styles/admin.css';
 
 const menuGroups = [
@@ -41,6 +42,7 @@ export default function AdminSidebar() {
       await adminAuthApi.logout();
     } finally {
       adminSession.clearToken();
+      window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
       navigate('/admin/login', { replace: true });
     }
   };

@@ -56,6 +56,28 @@
   box-shadow: 0 0 0 4px rgba(91, 135, 181, 0.12);
 }
 
+.loginMockControl {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #5d7288;
+  font-size: 13px;
+}
+
+.loginMockControl input {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+}
+
+.loginError {
+  margin: 0;
+  color: #c94d4d;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .loginSubmitBtn {
   height: 56px;
   border: none;
