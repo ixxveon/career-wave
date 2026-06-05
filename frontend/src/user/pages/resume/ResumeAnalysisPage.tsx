@@ -1,6 +1,7 @@
 import { Upload, AlertCircle, WifiOff } from 'lucide-react';
 import ResumeUpload from '../../components/resume/ResumeUpload';
 import LoadingModal from '../../components/resume/LoadingModal';
+import QuotaBar from '../../components/resume/QuotaBar';
 import DocumentResultView from './DocumentResultView';
 import { useResumeUpload } from '../../hooks/resume/useResumeUpload';
 import { PLAN_LIMITS, MOCK_QUOTA } from '../../utils/resume/quota';
@@ -18,9 +19,7 @@ export default function ResumeAnalysisPage() {
 
   const { membership, documentUsed } = MOCK_QUOTA;
   const docLimit    = PLAN_LIMITS[membership].document;
-  const docLeft     = docLimit - documentUsed;
-  const pct         = Math.min((documentUsed / docLimit) * 100, 100);
-  const isExhausted = docLeft <= 0;
+  const isExhausted = documentUsed >= docLimit;
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (
@@ -58,22 +57,7 @@ export default function ResumeAnalysisPage() {
       )}
 
       <div className="ra-upload-wrap">
-        <div className="ra-quota-bar">
-          <div className="ra-quota-bar__info">
-            <span className="ra-quota-bar__label">이번 달 서류 분석</span>
-            <span className={`ra-quota-bar__count${isExhausted ? ' ra-quota-bar__count--full' : docLeft <= 3 ? ' ra-quota-bar__count--warn' : ''}`}>
-              {documentUsed} / {docLimit}회 사용
-              {isExhausted  && <span className="ra-quota-bar__tag">한도 초과</span>}
-              {!isExhausted && docLeft <= 3 && <span className="ra-quota-bar__tag ra-quota-bar__tag--warn">잔여 {docLeft}회</span>}
-            </span>
-          </div>
-          <div className="ra-quota-bar__track">
-            <div
-              className={`ra-quota-bar__fill${isExhausted ? ' ra-quota-bar__fill--full' : pct >= 70 ? ' ra-quota-bar__fill--warn' : ''}`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-        </div>
+        <QuotaBar />
 
         <span className="ra-eyebrow">RESUME ANALYSIS</span>
         <h1 className="ra-upload__title">이력서 AI 분석</h1>

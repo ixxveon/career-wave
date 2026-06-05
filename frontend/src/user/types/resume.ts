@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────────────────────
-// resume.d.ts — 서류 코칭 도메인 타입 정의
+// resume.ts — 서류 코칭 도메인 타입 정의
 // api-schema.md 계약 기준으로 작성
 // ──────────────────────────────────────────────────────────────
 
@@ -14,21 +14,39 @@ export interface ApiResponse<T> {
 }
 
 /** 백엔드 문서 status 값 (DB/API 응답) */
-export type BackendDocumentStatus =
-  | 'UPLOADED'
-  | 'PENDING'
-  | 'ANALYZING'
-  | 'COMPLETED'
-  | 'FAILED';
+export const BACKEND_DOCUMENT_STATUS = {
+  UPLOADED:  'UPLOADED',
+  PENDING:   'PENDING',
+  ANALYZING: 'ANALYZING',
+  COMPLETED: 'COMPLETED',
+  FAILED:    'FAILED',
+} as const;
+export type BackendDocumentStatus = (typeof BACKEND_DOCUMENT_STATUS)[keyof typeof BACKEND_DOCUMENT_STATUS];
 
 /** WebSocket 서버 → 클라이언트 status 값 */
-export type WsAnalysisStatus = 'ANALYZING' | 'COMPLETED' | 'FAILED';
+export const WS_ANALYSIS_STATUS = {
+  ANALYZING: 'ANALYZING',
+  COMPLETED: 'COMPLETED',
+  FAILED:    'FAILED',
+} as const;
+export type WsAnalysisStatus = (typeof WS_ANALYSIS_STATUS)[keyof typeof WS_ANALYSIS_STATUS];
 
 /** 프론트엔드 UI 상태 머신 */
-export type ResumeUIState = 'IDLE' | 'SUBMITTING' | 'ANALYZING' | 'SUCCESS' | 'ERROR';
+export const RESUME_UI_STATE = {
+  IDLE:       'IDLE',
+  SUBMITTING: 'SUBMITTING',
+  ANALYZING:  'ANALYZING',
+  SUCCESS:    'SUCCESS',
+  ERROR:      'ERROR',
+} as const;
+export type ResumeUIState = (typeof RESUME_UI_STATE)[keyof typeof RESUME_UI_STATE];
 
 /** 파일 유형 */
-export type FileType = 'RESUME' | 'COVER_LETTER';
+export const FILE_TYPE = {
+  RESUME:       'RESUME',
+  COVER_LETTER: 'COVER_LETTER',
+} as const;
+export type FileType = (typeof FILE_TYPE)[keyof typeof FILE_TYPE];
 
 // ── 백엔드 status → 프론트 상태 매핑 (constitution.md §2) ─────
 // UPLOADED        → SUBMITTING → ANALYZING (WebSocket 연결 시작)
@@ -45,7 +63,7 @@ export interface UploadResumeResponse {
   status: BackendDocumentStatus;
   fileUrl: string;
   originalName: string;
-  fileType: 'RESUME';
+  fileType: typeof FILE_TYPE.RESUME;
   createdAt: string;
 }
 
@@ -69,7 +87,7 @@ export interface SubmitCoverLetterRequest {
 export interface SubmitCoverLetterResponse {
   documentId: string;
   status: BackendDocumentStatus;
-  fileType: 'COVER_LETTER';
+  fileType: typeof FILE_TYPE.COVER_LETTER;
   createdAt: string;
 }
 
@@ -102,10 +120,10 @@ export interface QuantItem {
   comment: string;
 }
 export interface QuantAnalysis {
-  numbers: QuantItem;
+  numbers:   QuantItem;
   timeframe: QuantItem;
-  scale: QuantItem;
-  impact: QuantItem;
+  scale:     QuantItem;
+  impact:    QuantItem;
 }
 
 /** 항목별 첨삭 가이드라인 */
