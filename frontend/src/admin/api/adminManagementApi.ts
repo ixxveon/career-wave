@@ -1,6 +1,7 @@
 import axios from 'axios';
 import axiosInstance from '../../utils/axiosInstance';
 import type { AxiosInstance, AxiosResponse } from 'axios';
+import type { ApiResponse, PagedResponse } from './types';
 
 const ADMIN_MANAGEMENT_BASE_PATH = '/api/v1/admin';
 const adminHttpClient = axiosInstance as AxiosInstance;
@@ -84,13 +85,6 @@ export interface AdminAuditLog {
   severity: AuditSeverity;
 }
 
-export interface ApiResponse<TData> {
-  success: boolean;
-  statusCode: number;
-  message: string;
-  data: TData;
-}
-
 export interface ApiErrorBody<TData = unknown> {
   success?: false;
   statusCode?: number;
@@ -98,14 +92,6 @@ export interface ApiErrorBody<TData = unknown> {
   errorCode?: string;
   message?: string;
   data?: TData;
-}
-
-export interface PagedResponse<TItem> {
-  items: TItem[];
-  page: number;
-  size: number;
-  totalItems: number;
-  totalPages: number;
 }
 
 export interface GetAdminAccountsParams {
