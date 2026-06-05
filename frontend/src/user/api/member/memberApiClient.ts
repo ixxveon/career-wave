@@ -24,7 +24,7 @@ async function requestAccessTokenRefresh(): Promise<string | null> {
   const headers = new Headers({ 'Content-Type': 'application/json' });
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/members/token/refresh`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/user/members/token/refresh`, {
       method: 'POST',
       headers,
       body: refreshToken ? JSON.stringify({ refreshToken }) : undefined,

@@ -4,7 +4,7 @@ import { resumeHandlers } from './resume/handlers';
 import { adminHandlers } from './admin/handlers';
 
 const devAuthHandlers = [
-  http.post('/api/v1/members/token/refresh', () =>
+  http.post('/api/v1/user/members/token/refresh', () =>
     HttpResponse.json({
       success: true,
       statusCode: 200,
