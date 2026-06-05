@@ -79,7 +79,9 @@ import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
 import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
 
 function ProtectedRoute() {
-  if (!authSession.getAccessToken()) {
+  // accessToken(메모리) 또는 refreshToken(sessionStorage) 중 하나라도 있으면 통과
+  // refreshToken이 있으면 memberApiClient가 자동으로 재발급을 시도하므로 redirect 불필요
+  if (!authSession.getAccessToken() && !authSession.getRefreshToken()) {
     const current = `${window.location.pathname}${window.location.search}`;
     const next = current && current !== '/' ? `?next=${encodeURIComponent(current)}` : '';
     return <Navigate to={`/auth/login${next}`} replace />;
