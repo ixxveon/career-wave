@@ -51,9 +51,8 @@ MVP의 중심은 로그 생성 로직 자체가 아니라, 이미 백엔드 또�
 - 도메인별 API 호출은 `frontend/src/admin/api/auditLogApi.ts`에 둔다.
 - 서버 상태는 TanStack Query 사용을 우선한다.
 - TypeScript interface는 PascalCase를 사용하고 `I` prefix를 붙이지 않는다.
-- 기존 관리자 레이아웃, 카드, 테이블, `MiniPagination` 패턴을 우선 재사용한다.
+- 기존 관리자 레이아웃, 카드, 테이블, 스크롤 목록 패턴을 우선 재사용한다.
 
 ## 브랜치 원칙
 
 팀 기본 규칙은 최신 `develop`에서 기능 브랜치를 생성하는 것이다. 다만 감사 로그 구현은 API 계약, 목록 조회, 상세/필터, 검증 순서로 의존성이 있으므로 팀 합의가 있는 경우 Phase별 스택 브랜치로 진행한다.
-
