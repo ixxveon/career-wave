@@ -30,12 +30,50 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 
 | 항목 | 상태 | 비고 |
 |------|------|------|
-| S3 업로드 방식 (Presigned URL vs 서버 직접 전송) | 협의 필요 | 구현 전 인프라 팀 확인 |
-| Webhook 내부 보안 방식 | **확정** | `X-Internal-Secret` 헤더 — FastAPI가 요청 시 항상 포함, Spring이 환경 변수(`WEBHOOK_SECRET`)와 비교 검증 |
+| S3 업로드 방식 | **팀 결정 필요** | 아래 옵션 비교 참고 |
+| `hypersistence-utils` 의존성 추가 | **팀 결정 필요** | 아래 옵션 비교 참고 |
+| Webhook 내부 보안 방식 | **확정** | `X-Internal-Secret` 헤더, 환경 변수 `WEBHOOK_SECRET` |
 | WebSocket 구현 방식 | **확정** | STOMP (`spring-boot-starter-websocket`) |
-| `hypersistence-utils` 의존성 추가 | 팀 합의 필요 | JSONB 처리용 — 기존 `AttributeConverter`로 대체 가능 |
-| members 테이블 PK 타입 | **확정** | UUID (`gen_random_uuid()`) — `document.member_id` FK 타입 UUID로 동일하게 적용 |
-| Base URL | **확정** | `/api/v1/user/resume` — Convention(`/api/v1/user/{domain}`) 준수. 프론트 스펙도 동일하게 통일 완료 |
+| members 테이블 PK 타입 | **확정** | UUID (`gen_random_uuid()`) |
+| Base URL | **확정** | `/api/v1/user/resume` |
+
+---
+
+## 팀 결정 필요 항목
+
+### A. S3 업로드 방식
+
+| 방식 | 설명 | 장점 | 단점 |
+|------|------|------|------|
+| **서버 경유** | 프론트 → Spring → S3 | 구현 간단, 보안 관리 Spring 중심 | 파일 데이터가 Spring 서버를 거쳐 트래픽 증가 |
+| **Presigned URL** | 프론트가 Spring에 URL 발급 요청 후 S3 직접 업로드 | Spring 서버 파일 트래픽 없음, 가벼움 | S3 버킷 CORS 설정 + 권한 설정 필요 |
+
+> 팀 내 S3 인프라 설정 가능 여부에 따라 결정. v1 기준으로는 **서버 경유 방식이 구현 난이도가 낮음**.
+
+### B. JSONB 처리 방식
+
+| 방식 | 설명 | 장점 | 단점 |
+|------|------|------|------|
+| **`AttributeConverter` 직접 구현** | `ObjectMapper`로 직렬화/역직렬화 코드 작성 | 외부 의존성 없음 | 보일러플레이트 코드 존재 |
+| **`hypersistence-utils`** | 라이브러리가 JSONB 변환을 자동 처리 | 코드 간결, 타입 안전 | 새 의존성 추가 — 팀 합의 필요 |
+
+> 팀 합의 후 결정. **의존성 추가가 부담스러우면 `AttributeConverter`로 충분히 구현 가능**.
+
+---
+
+## 필요 환경 변수 (인프라 팀 사전 공유 필요)
+
+> 구현 시작 전 아래 값들을 인프라·운영 담당자에게 요청해두세요.  
+> 코드에 하드코딩하지 않고 모두 환경 변수로 주입받습니다.
+
+| 환경 변수 | 설명 | 예시 |
+|-----------|------|------|
+| `AWS_S3_BUCKET_NAME` | 파일 업로드 대상 S3 버킷명 | `careerwave-files` |
+| `AWS_ACCESS_KEY_ID` | S3 접근 권한 Access Key | `AKIA...` |
+| `AWS_SECRET_ACCESS_KEY` | S3 접근 권한 Secret Key | `wJalrXUtn...` |
+| `AWS_REGION` | S3 버킷 리전 | `ap-northeast-2` |
+| `FASTAPI_BASE_URL` | Spring → FastAPI 분석 요청 내부 URL | `http://fastapi-service:8000` |
+| `WEBHOOK_SECRET` | FastAPI → Spring Webhook 인증 키 | `(임의 생성 비밀값)` |
 
 ---
 
