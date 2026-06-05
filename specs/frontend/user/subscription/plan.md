@@ -131,11 +131,16 @@ frontend/src/user/
 - [ ] 사용량 카드, empty state, recommendation card의 상태 소유 지점 정리
 - [ ] 상품 CTA와 checkout query 매핑 정리
 
-### Phase 6 — Payment History
-- [ ] `/mypage/payment-history` 구독 내역 영역을 실제 상태 기반으로 정리
-- [ ] 결제 내역 기간 필터와 pagination을 실제 데이터 구조 기준으로 정리
-- [ ] 구독 해지 confirm modal과 cancel state를 API 연동 가능한 구조로 정리
-- [ ] `CANCEL_SCHEDULED` 상태 재조회 및 복원 처리
+### Phase 6 — Payment History (PR #지정 예정, branch: feature/user-payment-history)
+- [x] `billingApi.ts` 신설: `getPaymentHistory`
+- [x] `subscriptionApi.ts`에 `cancelSubscription` 추가
+- [x] `usePaymentHistory`, `useCancelSubscription`, `usePaymentHistoryStatus` 훅
+- [x] `PaymentHistorySubscriptionCard`, `CancelSubscriptionModal`, `PaymentHistoryList` 컴포넌트
+- [x] `SubscriptionHistorySection`, `PaymentHistorySection`, `BillingNoticeSection` 섹션 컴포넌트
+- [x] 구독 없음/1개/2개 상태, `PAYMENT_FAILED` 경고, `CANCEL_SCHEDULED` 문구
+- [x] 결제 내역 기간 필터·pagination 실데이터 기준 전환
+- [x] 구독 해지 confirm modal ESC 키 + 포커스 처리
+- [x] 해지 후 query invalidation (`mySubscriptions`, `usages`, `entitlements`)
 
 ### Phase 7 — Billing
 - [ ] `/billing/checkout` product query 검증 및 서버 상품/order 정보 반영
