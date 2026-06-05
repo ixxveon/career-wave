@@ -3,7 +3,8 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { useInterviewSession, LLM_FALLBACK_QUESTIONS, LLM_STREAM_TIMEOUT_MS } from './useInterviewSession';
+import { useInterviewSession, LLM_FALLBACK_QUESTIONS } from './useInterviewSession';
+import { LLM_STREAM_TIMEOUT_MS } from '../../constants/interview';
 
 // interviewSessionApi mock — sendTextAnswer가 즉시 resolve되도록
 vi.mock('../../api/interview', () => ({
@@ -30,12 +31,13 @@ const DEFAULT_OPTS = { sessionId: 'test-session', sessionType: 'TEXT' };
 
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.stubEnv('DEV', false as unknown as string);
+  // DEV mock 경로 우회 — import.meta.env.DEV를 false로 강제 설정
+  (import.meta.env as Record<string, unknown>).DEV = false;
 });
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
-  vi.unstubAllEnvs();
+  (import.meta.env as Record<string, unknown>).DEV = true;
 });
 
 /** sendTextAnswer 호출 → startLlmTimeout 트리거 헬퍼 */

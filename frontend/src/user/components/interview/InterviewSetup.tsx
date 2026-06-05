@@ -171,10 +171,24 @@ function InterviewSetup({
           <p className="is__api-error"><AlertCircle size={13} /> {apiError}</p>
         )}
 
+        {/* 사전 진단 미통과 안내 */}
+        {networkCheckStatus === 'fail' && (
+          <p className="is__preflight-warn"><AlertCircle size={13} /> 네트워크 연결 진단을 통과해야 면접을 시작할 수 있습니다.</p>
+        )}
+        {sessionType === SESSION_TYPE.VOICE && micCheckStatus === 'fail' && (
+          <p className="is__preflight-warn"><AlertCircle size={13} /> 마이크 권한 진단을 통과해야 음성 면접을 시작할 수 있습니다.</p>
+        )}
+
         <button
           className="is__start-btn"
           onClick={onStart}
-          disabled={!company.trim() || isLoading || resumeLoading}
+          disabled={
+            !company.trim() ||
+            isLoading ||
+            resumeLoading ||
+            networkCheckStatus === 'fail' ||
+            (sessionType === SESSION_TYPE.VOICE && micCheckStatus === 'fail')
+          }
           type="button"
         >
           {isLoading

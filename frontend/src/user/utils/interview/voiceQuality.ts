@@ -72,7 +72,7 @@ function computeWeightedTotal(scores: Omit<HybridScores, 'total'>): number | nul
     { value: scores.depth,     weight: SCORE_WEIGHTS.depth },
     { value: scores.delivery,  weight: SCORE_WEIGHTS.delivery },
     { value: scores.fluency,   weight: SCORE_WEIGHTS.fluency },
-  ].filter((e): e is { value: number; weight: number } => e.value !== null);
+  ].filter(e => e.value !== null) as { value: number; weight: number }[];
 
   if (entries.length === 0) return null;
 

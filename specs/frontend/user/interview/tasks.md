@@ -66,7 +66,7 @@
 
 ## Phase 6 — Polish & QA
 
-- [ ] `checklist.md` 기반 최종 점검
+- [x] `checklist.md` 기반 최종 점검
 - [x] a11y — 채팅/타이머 영역 `aria-live` 및 키보드 네비게이션 검증
 - [ ] 보안 검증 — 타인 소유 `sessionId`로 세션·리포트 API 호출 시 403 차단 테스트 (sessionId IDOR)
 - [ ] 보안 검증 — 타인 소유 `documentId`로 면접 세션 시작 시 403 차단 테스트 (documentId IDOR)

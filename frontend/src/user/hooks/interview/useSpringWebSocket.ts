@@ -1,5 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { SpringWSMessage } from '../../types/interview';
+import { MAX_RECONNECT_ATTEMPTS } from '../../constants/interview';
 
 export type SpringWSStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'RECONNECTING' | 'ERROR';
 
@@ -9,7 +10,6 @@ export interface UseSpringWebSocketOptions {
   onStatusChange: (status: SpringWSStatus) => void;
 }
 
-const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY_MS = 2000;
 
 export function useSpringWebSocket({
