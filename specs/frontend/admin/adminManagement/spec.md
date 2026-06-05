@@ -1,8 +1,15 @@
 # Feature Specification: 관리자 관리
 
-**Feature Branch**: `feature/admin-management-spec`
+**Feature Branch**: `feature/admin-management-api`
 **Status**: Draft
 **대상 화면**: `frontend/src/admin/pages/AdminManagement/AdminManagementPage.tsx`
+
+## Branch Strategy
+
+- Phase 1 구현 브랜치는 최신 `develop`을 기준으로 `feature/admin-management-api`를 생성한다.
+- Phase 2 이후 구현 브랜치는 직전 Phase 브랜치를 기준으로 생성한다.
+- 선행 Phase PR이 `develop`에 병합되면 후속 Phase 브랜치는 최신 `develop` 기준으로 rebase하거나 PR base를 조정한다.
+- 각 Phase PR은 해당 Phase의 tasks 범위만 포함한다.
 
 ## Feature Overview
 

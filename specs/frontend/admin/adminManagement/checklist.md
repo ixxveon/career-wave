@@ -1,28 +1,28 @@
 # Checklist: 관리자 관리
 
-**Feature Branch**: `feature/admin-management-spec`
+**Feature Branch**: `feature/admin-management-api`
 **Status**: Draft
 
 ## 브랜치 전략
 
-- [ ] Phase별 구현 브랜치가 정의되어 있다.
-- [ ] Phase 1 브랜치는 `feature/admin-management-spec`을 기준으로 생성한다.
-- [ ] Phase 2 이후 브랜치는 직전 Phase 브랜치를 기준으로 생성한다.
-- [ ] 선행 Phase PR 병합 후 후속 Phase 브랜치의 rebase 또는 PR base 조정 기준이 명시되어 있다.
+- [x] Phase별 구현 브랜치가 정의되어 있다.
+- [x] Phase 1 브랜치는 최신 `develop`을 기준으로 생성한다.
+- [x] Phase 2 이후 브랜치는 직전 Phase 브랜치를 기준으로 생성한다.
+- [x] 선행 Phase PR 병합 후 후속 Phase 브랜치의 rebase 또는 PR base 조정 기준이 명시되어 있다.
 
 ## 타입 및 API 계층
 
-- [ ] `frontend/src/admin/api/adminManagementApi.ts`가 생성되어 있다.
-- [ ] `AdminManagementSummary` 타입이 정의되고 export되어 있다.
-- [ ] `AdminAccount`, `AdminRole`, `AdminStatus` 타입이 정의되고 export되어 있다.
-- [ ] `AdminAclRule`, `AclRiskLevel` 타입이 정의되고 export되어 있다.
-- [ ] `AdminAuditLog`, `AuditSeverity` 타입이 정의되고 export되어 있다.
-- [ ] 관리자 계정 API 함수가 작성되어 있다.
-- [ ] ACL API 함수가 작성되어 있다.
-- [ ] 감사 로그 API 함수가 작성되어 있다.
-- [ ] `ApiResponse<T>` 래퍼 응답이 처리되어 있다.
-- [ ] API 실패 시 화면에 표시할 에러 메시지 매핑이 정의되어 있다.
-- [ ] JWT 인증 만료, `ROLE_ADMIN` 권한 없음, `MASTER` 세부 역할 부족 에러 메시지가 구분되어 있다.
+- [x] `frontend/src/admin/api/adminManagementApi.ts`가 생성되어 있다.
+- [x] `AdminManagementSummary` 타입이 정의되고 export되어 있다.
+- [x] `AdminAccount`, `AdminRole`, `AdminStatus` 타입이 정의되고 export되어 있다.
+- [x] `AdminAclRule`, `AclRiskLevel` 타입이 정의되고 export되어 있다.
+- [x] `AdminAuditLog`, `AuditSeverity` 타입이 정의되고 export되어 있다.
+- [x] 관리자 계정 API 함수가 작성되어 있다.
+- [x] ACL API 함수가 작성되어 있다.
+- [x] 감사 로그 API 함수가 작성되어 있다.
+- [x] `ApiResponse<T>` 래퍼 응답이 처리되어 있다.
+- [x] API 실패 시 화면에 표시할 에러 메시지 매핑이 정의되어 있다.
+- [x] JWT 인증 만료, `ROLE_ADMIN` 권한 없음, `MASTER` 세부 역할 부족 에러 메시지가 구분되어 있다.
 
 ## 계정/RBAC 연동
 
