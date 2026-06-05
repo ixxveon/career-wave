@@ -16,11 +16,11 @@
 **Branch**: `feature/admin-scraping-list`
 **Base**: `feature/admin-scraping-api`
 
-- [ ] source 목록을 API 데이터로 렌더링
-- [ ] source명 또는 최근 오류 검색 조건 연결
-- [ ] 실행 결과 필터 `SUCCESS`, `FAILED` 연결
-- [ ] 페이지네이션 조건과 응답 메타데이터 연결
-- [ ] 로딩, 빈 데이터, API 실패 상태 처리
+- [x] source 목록을 API 데이터로 렌더링
+- [x] source명 또는 최근 오류 검색 조건 연결
+- [x] 실행 결과 필터 `SUCCESS`, `FAILED` 연결
+- [x] 페이지네이션 조건과 응답 메타데이터 연결
+- [x] 로딩, 빈 데이터, API 실패 상태 처리
 
 ## Phase 3 - source 실행 액션
 
