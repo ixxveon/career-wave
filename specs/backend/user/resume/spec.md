@@ -23,49 +23,58 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 
 ### documents
 
-| 컬럼 | 타입 | 설명 |
-|------|------|------|
-| `document_id` | UUID PK | 문서 고유 식별자 |
-| `member_id` | UUID FK NOT NULL | 소유 회원 (members 테이블 참조) |
-| `file_type` | VARCHAR(20) | `RESUME` \| `COVER_LETTER` |
-| `stored_file_name` | VARCHAR(255) NULL | S3 저장 파일명 (UUID 기반 생성, 자기소개서는 null) |
-| `file_url` | TEXT NULL | S3 파일 URL (자기소개서는 null) |
-| `original_name` | VARCHAR(255) NULL | 원본 파일명 — DB에만 보존, URL에 미노출 (자기소개서는 null) |
-| `status` | VARCHAR(20) | `UPLOADED` \| `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
-| `created_at` | TIMESTAMPTZ | 생성일시 |
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| `document_id` | UUID | PK, DEFAULT gen_random_uuid() | 문서 고유 식별자 |
+| `member_id` | UUID | NOT NULL | 회원 FK |
+| `file_type` | VARCHAR(20) | NOT NULL | `RESUME` \| `COVER_LETTER` |
+| `file_url` | VARCHAR(500) | NOT NULL | S3 저장 파일 URL |
+| `original_name` | VARCHAR(200) | NOT NULL | 업로드 원본 파일명 |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 업로드 일시 |
 
-> S3 저장 시 `original_name`을 그대로 사용하지 않는다.  
-> 한글·특수문자 포함 파일명은 S3 경로에서 깨질 수 있으므로,  
-> `stored_file_name`은 `{UUID}.{확장자}` 형식으로 별도 생성한다.
+> ⚠️ **`status` 컬럼 없음** — 분석 상태 추적 방식을 FastAPI 팀과 협의 필요.  
+> 현재 스펙의 WebSocket 상태 메시지(ANALYZING/COMPLETED/FAILED)는 DB 컬럼 없이 실시간으로만 전달되는 구조.  
+> `document_feedbacks` 레코드 존재 여부로 완료 여부를 판단하는 방식 검토 중.
 
-### cover_letter_contents
-
-| 컬럼 | 타입 | 설명 |
-|------|------|------|
-| `content_id` | BIGSERIAL PK | 문항 고유 식별자 |
-| `document_id` | UUID FK | documents 참조 |
-| `order_num` | SMALLINT | 문항 순서 (1~5) |
-| `question` | TEXT | 문항 내용 |
-| `answer` | TEXT | 답변 내용 (최대 1000자) |
-| `created_at` | TIMESTAMPTZ | 생성일시 |
+> S3 저장 시 `original_name`을 그대로 파일명으로 사용하지 않는다.  
+> 한글·특수문자 파일명 깨짐 방지를 위해 S3 키는 `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` 형식으로 생성.  
+> `file_url`에는 완성된 S3 URL, `original_name`에는 사용자 원본 파일명을 별도 저장.
 
 ### document_feedbacks
 
-| 컬럼 | 타입 | 설명 |
-|------|------|------|
-| `feedback_id` | BIGSERIAL PK | 피드백 고유 식별자 |
-| `document_id` | UUID FK UNIQUE | documents 참조 (1:1) |
-| `score_job_fitness` | SMALLINT NULL | 직무 적합도 점수 (0~100) |
-| `score_tech_stack` | SMALLINT NULL | 기술 스택 점수 (0~100) |
-| `score_quantified` | SMALLINT NULL | 경험 수치화 점수 (0~100) |
-| `score_logical` | SMALLINT NULL | 논리력 점수 (0~100) |
-| `score_total` | SMALLINT NULL | 종합 점수 (0~100) |
-| `overall_review` | TEXT NULL | AI 종합 총평 |
-| `feedback_details` | JSONB NULL | 항목별 첨삭 가이드라인 배열 |
-| `error_message` | TEXT NULL | 분석 실패 시 오류 메시지 |
-| `created_at` | TIMESTAMPTZ | 생성일시 |
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| `document_feedback_id` | BIGSERIAL | PK | 서류 피드백 고유 식별자 |
+| `document_id` | UUID | NOT NULL | 문서 FK |
+| `score` | INTEGER | | AI 서류 진단 점수 (0~100) |
+| `feedback_text` | TEXT | NOT NULL | AI 서류 피드백 텍스트 |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 생성 일시 |
 
-> `feedback_details` JSONB 구조는 `api-schema.md` § 3 참조.
+> ⚠️ **프론트 스펙과 구조 차이** — 프론트 스펙(`api-schema.md` § 3)은 복합 점수(`scores` 객체)와  
+> 항목별 첨삭 배열(`feedbackDetails`)을 기대하지만, 실제 DB는 단일 `score`와 `feedback_text` TEXT.  
+> API 응답 형식을 실제 DB 구조 기준으로 맞출지, 프론트 스펙을 축소할지 팀 협의 필요.
+
+### cover_letter_meta
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| `letter_meta_id` | BIGSERIAL | PK | 자소서 고유 식별자 |
+| `document_id` | UUID | NOT NULL | 문서 FK |
+| `company` | VARCHAR(100) | NOT NULL | 지원 회사명 |
+| `job` | VARCHAR(100) | NOT NULL | 지원 직무명 |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 생성 일시 |
+
+### cover_letter_contents
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| `content_id` | BIGSERIAL | PK | 문항 고유 식별자 |
+| `document_id` | UUID | NOT NULL | 문서 FK |
+| `order_num` | INTEGER | NOT NULL, CHECK (1~5) | 문항 순서 |
+| `question` | TEXT | NOT NULL | 문항 내용 |
+| `answer` | TEXT | NOT NULL | 답변 내용 (max 1000자) |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 생성 일시 |
+| UNIQUE | `(document_id, order_num)` | `CONSTRAINT uq_clc_document_order` | 동일 문서 내 순서 중복 방지 |
 
 ---
 
@@ -81,10 +90,12 @@ user/resume/
 │   └── ResumeDTO.java
 ├── entity/
 │   ├── Document.java
+│   ├── CoverLetterMeta.java
 │   ├── CoverLetterContent.java
 │   └── DocumentFeedback.java
 ├── repository/
 │   ├── DocumentRepository.java
+│   ├── CoverLetterMetaRepository.java
 │   ├── CoverLetterContentRepository.java
 │   └── DocumentFeedbackRepository.java
 ├── type/
@@ -108,7 +119,6 @@ public class ResumeDTO {
     // 이력서 업로드 응답
     public record ResponseUpload(
         UUID documentId,
-        String status,          // UPLOADED
         String fileUrl,
         String originalName,
         String fileType,        // RESUME
@@ -131,61 +141,27 @@ public class ResumeDTO {
     // 자기소개서 제출 응답
     public record ResponseCoverLetter(
         UUID documentId,
-        String status,          // UPLOADED
         String fileType,        // COVER_LETTER
         ZonedDateTime createdAt
     ) {}
 
     // 분석 결과 조회 응답
+    // ⚠️ 프론트 스펙과 피드백 구조 차이 — 팀 협의 후 확정
     public record ResponseFeedback(
         UUID documentId,
-        String status,
-        ScoreDetail scores,     // null if not COMPLETED
-        String overallReview,
-        List<FeedbackDetail> feedbackDetails,
-        String errorMessage,
+        Integer score,          // null: 분석 미완료
+        String feedbackText,    // null: 분석 미완료
         ZonedDateTime createdAt
-    ) {
-        public record ScoreDetail(
-            int jobFitness,
-            int techStack,
-            int quantifiedAchievement,
-            int logicalStructure,
-            int total
-        ) {}
-
-        public record FeedbackDetail(
-            int sectionNumber,
-            String question,
-            String originalText,
-            String goodPoint,
-            String badPoint,
-            String improvedText,
-            StarAnalysis starAnalysis,   // null 허용
-            QuantAnalysis quantAnalysis  // null 허용
-        ) {
-            public record StarAnalysis(
-                AnalysisItem s, AnalysisItem t,
-                AnalysisItem a, AnalysisItem r
-            ) {}
-
-            public record QuantAnalysis(
-                AnalysisItem numbers, AnalysisItem timeframe,
-                AnalysisItem scale,   AnalysisItem impact
-            ) {}
-
-            public record AnalysisItem(boolean ok, String comment) {}
-        }
-    }
+    ) {}
 
     // 이력 목록 조회 응답 (단건)
     public record HistoryItem(
         UUID documentId,
         String fileType,
-        String originalName,    // 자기소개서: null
-        String company,         // 이력서: null
-        String job,             // 이력서: null
-        Integer totalScore,     // 분석 미완료: null
+        String originalName,    // 자기소개서: null (cover_letter_meta 참조)
+        String company,         // 이력서: null (cover_letter_meta 참조)
+        String job,             // 이력서: null (cover_letter_meta 참조)
+        Integer score,          // 분석 미완료: null
         ZonedDateTime createdAt
     ) {}
 }

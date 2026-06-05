@@ -10,15 +10,23 @@
 - [ ] `FileType` Enum 작성 (`RESUME`, `COVER_LETTER`)
 - [ ] `DocumentStatus` Enum 작성 (`UPLOADED`, `PENDING`, `ANALYZING`, `COMPLETED`, `FAILED`)
 - [ ] `Document` Entity 작성
-  - UUID PK (`document_id`)
-  - `member_id` FK NOT NULL
-  - `file_type`, `stored_file_name (nullable)`, `file_url (nullable)`, `original_name (nullable)`, `status`, `created_at`
+  - UUID PK (`document_id`, DEFAULT gen_random_uuid())
+  - `member_id` UUID NOT NULL, `file_type` VARCHAR(20) NOT NULL
+  - `file_url` VARCHAR(500) NOT NULL, `original_name` VARCHAR(200) NOT NULL
+  - `created_at` TIMESTAMPTZ NOT NULL
   - `@NoArgsConstructor(access = AccessLevel.PROTECTED)`
+- [ ] `CoverLetterMeta` Entity 작성
+  - BIGSERIAL PK (`letter_meta_id`), `document_id` UUID NOT NULL
+  - `company` VARCHAR(100) NOT NULL, `job` VARCHAR(100) NOT NULL, `created_at`
 - [ ] `CoverLetterContent` Entity 작성
-  - BIGSERIAL PK, `document_id` FK, `order_num`, `question`, `answer`, `created_at`
+  - BIGSERIAL PK (`content_id`), `document_id` UUID NOT NULL
+  - `order_num` INTEGER NOT NULL (CHECK 1~5), `question` TEXT NOT NULL, `answer` TEXT NOT NULL
+  - UNIQUE 제약: `CONSTRAINT uq_clc_document_order UNIQUE (document_id, order_num)`
 - [ ] `DocumentFeedback` Entity 작성
-  - BIGSERIAL PK, `document_id` FK UNIQUE, 점수 5개 컬럼, `overall_review`, `feedback_details (JSONB)`, `error_message`, `created_at`
+  - BIGSERIAL PK (`document_feedback_id`), `document_id` UUID NOT NULL
+  - `score` INTEGER (nullable), `feedback_text` TEXT NOT NULL, `created_at`
 - [ ] `DocumentRepository` 작성
+- [ ] `CoverLetterMetaRepository` 작성
 - [ ] `CoverLetterContentRepository` 작성
 - [ ] `DocumentFeedbackRepository` 작성
 - [ ] `ErrorCode` 추가
