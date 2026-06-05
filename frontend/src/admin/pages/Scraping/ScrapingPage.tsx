@@ -1,8 +1,15 @@
-import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../styles/admin.css';
 import MiniPagination from '../../components/MiniPagination';
-import { SCRAPING_STATUS, scrapingApi, type ScrapingSource, type ScrapingStatus } from '../../api/scrapingApi';
+import {
+  SCRAPING_ACTION_TYPE,
+  SCRAPING_STATUS,
+  scrapingApi,
+  type ScrapingActionType,
+  type ScrapingSource,
+  type ScrapingStatus,
+} from '../../api/scrapingApi';
 
 type Tone = 'normal' | 'warning' | 'danger' | 'info';
 
@@ -45,15 +52,29 @@ const formatDuration = (ms: number) => `${ms.toLocaleString()}ms`;
 const formatVolume = (value: number) => value.toLocaleString();
 const getRecentErrorText = (source: ScrapingSource) =>
   source.recentErrorCode ?? source.recentErrorMessage ?? '-';
+const getActionErrorMessage = (error: unknown) =>
+  error instanceof Error && error.message
+    ? error.message
+    : '액션 요청에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+const actionReason: Record<ScrapingActionType, string> = {
+  [SCRAPING_ACTION_TYPE.RUN]: '관리자 수동 실행 요청',
+  [SCRAPING_ACTION_TYPE.RETRY]: '관리자 수동 재시도 요청',
+  [SCRAPING_ACTION_TYPE.TEST]: '관리자 수동 테스트 요청',
+};
 
 export default function ScrapingPage() {
+  const queryClient = useQueryClient();
   const [logs] = useState(initialLogs);
   const [pipelineQuery, setPipelineQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | ScrapingStatus>('ALL');
   const [selectedPipelineIds, setSelectedPipelineIds] = useState<string[]>([]);
   const [pipelinePage, setPipelinePage] = useState(1);
   const [updatedSeconds] = useState(35);
+  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
+  const [pendingSourceNames, setPendingSourceNames] = useState<Set<string>>(new Set());
+  const pendingSourceNamesRef = useRef<Set<string>>(new Set());
   const pipelineKeyword = pipelineQuery.trim();
+  const sourceListQueryKey = ['admin', 'scraping', 'sources', pipelineKeyword, statusFilter, pipelinePage] as const;
 
   const {
     data: sourceListData,
@@ -62,7 +83,7 @@ export default function ScrapingPage() {
     isLoading: isSourceListLoading,
     refetch: refetchSourceList,
   } = useQuery({
-    queryKey: ['admin', 'scraping', 'sources', pipelineKeyword, statusFilter, pipelinePage],
+    queryKey: sourceListQueryKey,
     queryFn: async () => {
       const response = await scrapingApi.getSources({
         keyword: pipelineKeyword.length > 0 ? pipelineKeyword : undefined,
@@ -73,6 +94,30 @@ export default function ScrapingPage() {
       return response.data.data;
     },
     placeholderData: (previousData) => previousData,
+  });
+
+  const sourceActionMutation = useMutation({
+    mutationFn: ({ sourceName, actionType }: { sourceName: string; actionType: ScrapingActionType }) =>
+      scrapingApi.requestAction(sourceName, {
+        actionType,
+        reason: actionReason[actionType],
+      }),
+    onMutate: ({ sourceName }) => {
+      setActionErrorMessage(null);
+      pendingSourceNamesRef.current.add(sourceName);
+      setPendingSourceNames(new Set(pendingSourceNamesRef.current));
+    },
+    onSuccess: () => {
+      setActionErrorMessage(null);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'scraping', 'sources'] });
+    },
+    onError: (error) => {
+      setActionErrorMessage(getActionErrorMessage(error));
+    },
+    onSettled: (_data, _error, { sourceName }) => {
+      pendingSourceNamesRef.current.delete(sourceName);
+      setPendingSourceNames(new Set(pendingSourceNamesRef.current));
+    },
   });
 
   const pagedPipelines = sourceListData?.content ?? [];
@@ -105,6 +150,14 @@ export default function ScrapingPage() {
   const toggleRow = (id: string) => {
     setSelectedPipelineIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
   };
+
+  const handleSourceAction = (sourceName: string, actionType: ScrapingActionType) => {
+    if (pendingSourceNamesRef.current.has(sourceName)) return;
+
+    sourceActionMutation.mutate({ sourceName, actionType });
+  };
+
+  const isSourceActionPending = (sourceName: string) => pendingSourceNames.has(sourceName);
 
   return (
     <section className="scrapeOpsPage">
@@ -155,6 +208,12 @@ export default function ScrapingPage() {
               </select>
             </div>
           </div>
+
+          {actionErrorMessage ? (
+            <div className="scrapeOpsAlert danger" role="alert">
+              {actionErrorMessage}
+            </div>
+          ) : null}
 
           <div className="scrapeOpsTableWrap fixed">
             <table className="scrapeOpsTable">
@@ -214,35 +273,68 @@ export default function ScrapingPage() {
                   </tr>
                 ) : null}
 
-                {!isSourceListInitialLoading && !isSourceListError ? pagedPipelines.map((row) => (
-                  <tr key={row.sourceName} style={{ height: `${pipelineRowHeight}px` }}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedPipelineIds.includes(row.sourceName)}
-                        onChange={() => toggleRow(row.sourceName)}
-                        aria-label={`${row.sourceName} 선택`}
-                      />
-                    </td>
-                    <td>{row.sourceName}</td>
-                    <td>
-                      <span className={`scrapeOpsBadge ${statusTone[row.status]}`}>{statusLabel[row.status]}</span>
-                    </td>
-                    <td>{formatPercent(row.successRate)}</td>
-                    <td>{formatDuration(row.averageDurationMs)}</td>
-                    <td>{row.cycleExpression}</td>
-                    <td>{formatVolume(row.collectedCount)}</td>
-                    <td>{getRecentErrorText(row)}</td>
-                    <td>
-                      <div className="scrapeOpsActionGroup">
-                        <button type="button" className="scrapeOpsActionButton subtle">실행</button>
-                        <button type="button" className="scrapeOpsActionButton primary">재시도</button>
-                        <button type="button" className="scrapeOpsActionButton subtle">테스트</button>
-                        <button type="button" className="scrapeOpsActionButton dangerGhost">중지</button>
-                      </div>
-                    </td>
-                  </tr>
-                )) : null}
+                {!isSourceListInitialLoading && !isSourceListError ? pagedPipelines.map((row) => {
+                  const isRowActionPending = isSourceActionPending(row.sourceName);
+
+                  return (
+                    <tr key={row.sourceName} style={{ height: `${pipelineRowHeight}px` }}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedPipelineIds.includes(row.sourceName)}
+                          onChange={() => toggleRow(row.sourceName)}
+                          aria-label={`${row.sourceName} 선택`}
+                        />
+                      </td>
+                      <td>{row.sourceName}</td>
+                      <td>
+                        <span className={`scrapeOpsBadge ${statusTone[row.status]}`}>{statusLabel[row.status]}</span>
+                      </td>
+                      <td>{formatPercent(row.successRate)}</td>
+                      <td>{formatDuration(row.averageDurationMs)}</td>
+                      <td>{row.cycleExpression}</td>
+                      <td>{formatVolume(row.collectedCount)}</td>
+                      <td>{getRecentErrorText(row)}</td>
+                      <td>
+                        <div className="scrapeOpsActionGroup">
+                          <button
+                            type="button"
+                            className="scrapeOpsActionButton subtle"
+                            disabled={isRowActionPending}
+                            onClick={() => handleSourceAction(row.sourceName, SCRAPING_ACTION_TYPE.RUN)}
+                          >
+                            실행
+                          </button>
+                          <button
+                            type="button"
+                            className="scrapeOpsActionButton primary"
+                            disabled={isRowActionPending}
+                            onClick={() => handleSourceAction(row.sourceName, SCRAPING_ACTION_TYPE.RETRY)}
+                          >
+                            재시도
+                          </button>
+                          <button
+                            type="button"
+                            className="scrapeOpsActionButton subtle"
+                            disabled={isRowActionPending}
+                            onClick={() => handleSourceAction(row.sourceName, SCRAPING_ACTION_TYPE.TEST)}
+                          >
+                            테스트
+                          </button>
+                          <button
+                            type="button"
+                            className="scrapeOpsActionButton dangerGhost"
+                            disabled
+                            title="미구현"
+                          >
+                            {/* TODO: 중지 액션은 백엔드 계약 확정 후 연결한다. */}
+                            중지
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }) : null}
                 {Array.from({ length: pipelinePlaceholderCount }, (_, index) => (
                   <tr key={`pipeline-placeholder-${index}`} className="scrapeOpsPlaceholderRow" aria-hidden="true" style={{ height: `${pipelineRowHeight}px` }}>
                     <td colSpan={9}>
@@ -415,6 +507,22 @@ export default function ScrapingPage() {
           width: 260px;
         }
 
+        .scrapeOpsAlert {
+          display: flex;
+          align-items: center;
+          min-height: 38px;
+          padding: 0 12px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .scrapeOpsAlert.danger {
+          border: 1px solid #efb4b4;
+          background: var(--scrape-danger-bg);
+          color: var(--scrape-danger);
+        }
+
         .scrapeOpsTableWrap.fixed {
           overflow: hidden;
           border: 1px solid #dfe8f2;
@@ -553,6 +661,11 @@ export default function ScrapingPage() {
         .scrapeOpsActionButton.dangerGhost {
           border-color: #e8c2c2;
           color: var(--scrape-danger);
+        }
+
+        .scrapeOpsActionButton:disabled {
+          opacity: 0.56;
+          cursor: not-allowed;
         }
 
         .scrapeOpsLogConsole {
