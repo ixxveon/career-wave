@@ -1,5 +1,6 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
+import { authSession } from '../user/utils/member/authSession';
 import ScrappedJobPage from '@/user/pages/mypage/ScrappedJobPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
@@ -77,6 +78,17 @@ import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
 import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
 
+function ProtectedRoute() {
+  // accessToken(메모리) 또는 refreshToken(sessionStorage) 중 하나라도 있으면 통과
+  // refreshToken이 있으면 memberApiClient가 자동으로 재발급을 시도하므로 redirect 불필요
+  if (!authSession.getAccessToken() && !authSession.getRefreshToken()) {
+    const current = `${window.location.pathname}${window.location.search}`;
+    const next = current && current !== '/' ? `?next=${encodeURIComponent(current)}` : '';
+    return <Navigate to={`/auth/login${next}`} replace />;
+  }
+  return <Outlet />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -151,8 +163,10 @@ function AppRoutes() {
           <Route path="notices" element={<NoticePage />} />
           <Route path="notices/:id" element={<NoticeDetailPage />} />
           <Route path="faq" element={<FaqPage />} />
-          <Route path="inquiry" element={<InquiryListPage />} />
-          <Route path="inquiry/create" element={<InquiryCreatePage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="inquiry" element={<InquiryListPage />} />
+            <Route path="inquiry/create" element={<InquiryCreatePage />} />
+          </Route>
         </Route>
 
         <Route path="billing">
