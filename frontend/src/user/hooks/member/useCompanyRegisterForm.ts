@@ -51,6 +51,13 @@ const initialCompanyTerms = {
 type CompanyForm = typeof initialCompanyForm;
 type CompanyFormKey = keyof CompanyForm;
 
+// ── 책임 경계 ────────────────────────────────────────────────────
+// §1 기업 정보 폼 (사업자번호·주소·대표자 등) 상태 관리
+// §2 담당자 인증번호 발송/확인 (휴대폰 + 이메일 2채널)
+// §3 재직증명서 PDF 업로드 및 유효성 검증
+// §4 기업회원 가입 제출 (handleSubmit)
+// 인증 stale guard ref가 폼 상태와 결합되어 있어 단일 훅으로 유지한다.
+// ─────────────────────────────────────────────────────────────────
 export function useCompanyRegisterForm() {
   const [form, setForm] = useState<CompanyForm>(initialCompanyForm);
   const [terms, setTerms] = useState(initialCompanyTerms);

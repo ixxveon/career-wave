@@ -96,9 +96,10 @@ export function CompanyRegisterForm({
             </Field>
             <Field label="회사주소" required wide>
               <AuthButtonGroup
-                input={<TextInput value={form.address} onChange={(value) => update('address', value)} placeholder="주소 검색을 이용해주세요" />}
+                input={<TextInput value={form.address} onChange={(value) => update('address', value)} placeholder="주소를 직접 입력해주세요 (주소 검색 준비 중)" />}
                 buttonLabel="주소 검색"
-                onClick={() => alert('주소 검색 API 연결 예정')}
+                disabled
+                onClick={() => {}}
               />
             </Field>
             <Field label="상세주소" wide>

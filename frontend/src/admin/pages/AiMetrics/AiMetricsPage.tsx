@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import '../../styles/admin.css';
 import MiniPagination from '../../components/MiniPagination';
+import { AI_DOMAIN, AI_USAGE_RISK_LEVEL, aiMetricsApi } from '../../api/aiMetricsApi';
+import type { AiDomain, AiDomainUsage, AiUsageRiskLevel } from '../../api/aiMetricsApi';
+import { getAiDisplayModelName } from '../../../utils/admin/aiMetrics';
 
 type Tone = 'normal' | 'warning' | 'danger';
 type UserStatus = '정상' | '주의' | '심각';
@@ -34,6 +38,30 @@ interface LogEvent {
 }
 
 const DOC_PAGE_SIZE = 3;
+
+const DOMAIN_USAGE_QUERY_KEY = ['admin', 'aiMetrics', 'domainUsage'] as const;
+
+const DOMAIN_CARD_ORDER: AiDomain[] = [AI_DOMAIN.DOCUMENT, AI_DOMAIN.INTERVIEW];
+
+const DOMAIN_CARD_LABELS: Record<AiDomain, string> = {
+  [AI_DOMAIN.DOCUMENT]: 'AI 서류 기능',
+  [AI_DOMAIN.INTERVIEW]: 'AI 면접 기능',
+};
+
+const formatNumber = (value?: number) => (typeof value === 'number' ? value.toLocaleString() : '-');
+
+const formatPercent = (value?: number) => (typeof value === 'number' ? `${value.toFixed(1)}%` : '-');
+
+const formatLatency = (value?: number) => (typeof value === 'number' ? `${Math.round(value).toLocaleString()}ms` : '-');
+
+const formatCost = (value?: number | null) => (typeof value === 'number' ? `$${value.toLocaleString()}` : '-');
+
+const getRiskTone = (riskLevel?: AiUsageRiskLevel) => {
+  if (riskLevel === AI_USAGE_RISK_LEVEL.CRITICAL) return 'danger';
+  if (riskLevel === AI_USAGE_RISK_LEVEL.WARNING) return 'warning';
+  if (riskLevel === AI_USAGE_RISK_LEVEL.NORMAL) return 'normal';
+  return 'muted';
+};
 
 const llmModelOptions = ['GPT-4-TURBO v2.1', 'GPT-4.1', 'GPT-4o', 'GPT-4o-mini'];
 
@@ -93,6 +121,28 @@ export default function AiMetricsPage() {
   const forecastSpend = 1870;
   const tokensPerMinute = 128;
   const isBudgetRisk = budgetUsed >= 90;
+
+  const {
+    data: domainUsageData,
+    isLoading: domainUsageLoading,
+    isFetching: domainUsageFetching,
+    isError: domainUsageIsError,
+    error: domainUsageError,
+    refetch: refetchDomainUsage,
+  } = useQuery<AiDomainUsage[], Error>({
+    queryKey: DOMAIN_USAGE_QUERY_KEY,
+    queryFn: async () => {
+      const response = await aiMetricsApi.getDomainUsage();
+      if (!response.data.success) throw new Error(response.data.message ?? 'AI 도메인 사용량 조회에 실패했습니다.');
+      return response.data.data;
+    },
+  });
+
+  const domainUsageByDomain = useMemo(() => {
+    return new Map((domainUsageData ?? []).map((usage) => [usage.domain, usage]));
+  }, [domainUsageData]);
+
+  const domainUsageEmpty = !domainUsageLoading && !domainUsageIsError && (domainUsageData?.length ?? 0) === 0;
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -183,6 +233,101 @@ export default function AiMetricsPage() {
           </div>
         </div>
       </header>
+
+      <section className="aiOpsDomainSection" aria-label="AI 도메인별 사용량">
+        {(domainUsageLoading || domainUsageIsError || domainUsageEmpty) && (
+          <div className={`aiOpsDomainNotice ${domainUsageIsError ? 'danger' : domainUsageEmpty ? 'empty' : 'loading'}`}>
+            <div>
+              <strong>
+                {domainUsageIsError
+                  ? '도메인 사용량을 불러오지 못했습니다.'
+                  : domainUsageEmpty
+                    ? '집계된 도메인 사용량이 없습니다.'
+                    : '도메인 사용량을 불러오는 중입니다.'}
+              </strong>
+              <span>
+                {domainUsageIsError
+                  ? domainUsageError?.message ?? '잠시 후 다시 시도해 주세요.'
+                  : domainUsageEmpty
+                    ? 'AI 서류 기능과 AI 면접 기능 사용량이 발생하면 카드에 표시됩니다.'
+                    : 'DOCUMENT와 INTERVIEW 사용량을 최신 데이터로 갱신하고 있습니다.'}
+              </span>
+            </div>
+            {domainUsageIsError && (
+              <button type="button" onClick={() => void refetchDomainUsage()} disabled={domainUsageFetching}>
+                {domainUsageFetching ? '재시도 중' : '다시 조회'}
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="aiOpsDomainGrid">
+        {DOMAIN_CARD_ORDER.map((domain) => {
+          const usage = domainUsageByDomain.get(domain);
+          const modelName = usage ? getAiDisplayModelName(usage) : '모델 정보 없음';
+
+          return (
+            <article className="admin-card aiOpsDomainCard" key={domain}>
+              <div className="aiOpsDomainCardHead">
+                <div>
+                  <span className="aiOpsEyebrow">{domain}</span>
+                  <h3>{usage?.domainLabel ?? DOMAIN_CARD_LABELS[domain]}</h3>
+                </div>
+                <span className={`aiOpsDomainState ${domainUsageIsError ? 'danger' : usage ? 'normal' : domainUsageLoading ? 'loading' : 'warning'}`}>
+                  {domainUsageIsError ? '연결 실패' : usage ? '연결됨' : domainUsageLoading ? '조회 중' : '데이터 없음'}
+                </span>
+              </div>
+
+              <div className="aiOpsDomainModel">
+                <div>
+                  <span>표시 모델</span>
+                  <strong>{domainUsageLoading ? '조회 중' : modelName}</strong>
+                </div>
+                <div className="aiOpsDomainRisk">
+                  <span>위험도</span>
+                  <strong className={getRiskTone(usage?.riskLevel)}>{usage?.riskLevel ?? '-'}</strong>
+                </div>
+              </div>
+
+              <dl className="aiOpsDomainMetrics">
+                <div>
+                  <dt>전체 요청</dt>
+                  <dd>{formatNumber(usage?.requestCount)}</dd>
+                </div>
+                <div>
+                  <dt>성공</dt>
+                  <dd>{formatNumber(usage?.successCount)}</dd>
+                </div>
+                <div>
+                  <dt>실패</dt>
+                  <dd>{formatNumber(usage?.failureCount)}</dd>
+                </div>
+                <div>
+                  <dt>실패율</dt>
+                  <dd>{formatPercent(usage?.failureRate)}</dd>
+                </div>
+                <div>
+                  <dt>평균 응답</dt>
+                  <dd>{formatLatency(usage?.averageLatencyMs)}</dd>
+                </div>
+                <div>
+                  <dt>입력 토큰</dt>
+                  <dd>{formatNumber(usage?.inputTokens)}</dd>
+                </div>
+                <div>
+                  <dt>출력 토큰</dt>
+                  <dd>{formatNumber(usage?.outputTokens)}</dd>
+                </div>
+                <div>
+                  <dt>추정 비용</dt>
+                  <dd>{formatCost(usage?.estimatedCost)}</dd>
+                </div>
+              </dl>
+            </article>
+          );
+        })}
+        </div>
+      </section>
 
       <section className="aiOpsBoard">
         <div className="aiOpsBoardRow aiOpsBoardTop">
@@ -623,6 +768,241 @@ export default function AiMetricsPage() {
           height: 4px;
           border-radius: 999px;
           background: #a5b7ca;
+        }
+
+        .aiOpsDomainSection {
+          display: grid;
+          gap: 12px;
+        }
+
+        .aiOpsDomainNotice {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          min-height: 64px;
+          padding: 14px 16px;
+          border: 1px solid #dbe6f2;
+          border-radius: 8px;
+          background: #f8fafc;
+        }
+
+        .aiOpsDomainNotice > div {
+          display: grid;
+          gap: 4px;
+          min-width: 0;
+        }
+
+        .aiOpsDomainNotice strong {
+          color: var(--ai-primary);
+          font-size: 14px;
+          line-height: 1.35;
+        }
+
+        .aiOpsDomainNotice span {
+          color: var(--ai-muted);
+          font-size: 12px;
+          line-height: 1.45;
+        }
+
+        .aiOpsDomainNotice.loading {
+          border-color: rgba(37, 99, 201, 0.22);
+          background: rgba(37, 99, 201, 0.06);
+        }
+
+        .aiOpsDomainNotice.empty {
+          border-color: rgba(100, 116, 139, 0.22);
+          background: rgba(100, 116, 139, 0.06);
+        }
+
+        .aiOpsDomainNotice.danger {
+          border-color: rgba(220, 38, 38, 0.22);
+          background: rgba(220, 38, 38, 0.06);
+        }
+
+        .aiOpsDomainNotice button {
+          flex: 0 0 auto;
+          height: 34px;
+          padding: 0 14px;
+          border: 1px solid #c8d5e5;
+          border-radius: 8px;
+          background: #ffffff;
+          color: var(--ai-primary);
+          font-size: 12px;
+          font-weight: 900;
+          font-family: inherit;
+          cursor: pointer;
+        }
+
+        .aiOpsDomainNotice button:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+        }
+
+        .aiOpsDomainGrid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .aiOpsDomainCard {
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+          min-width: 0;
+          padding: 18px;
+        }
+
+        .aiOpsDomainCardHead {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .aiOpsDomainCardHead h3 {
+          margin: 2px 0 0;
+          color: var(--ai-ink);
+          font-size: 20px;
+          line-height: 1.25;
+        }
+
+        .aiOpsDomainState {
+          flex: 0 0 auto;
+          display: inline-flex;
+          align-items: center;
+          min-height: 26px;
+          padding: 0 10px;
+          border-radius: 999px;
+          border: 1px solid #d8e0ea;
+          background: #f8fafc;
+          color: var(--ai-muted);
+          font-size: 12px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .aiOpsDomainState.normal {
+          border-color: rgba(22, 163, 74, 0.28);
+          background: rgba(22, 163, 74, 0.08);
+          color: #15803d;
+        }
+
+        .aiOpsDomainState.warning {
+          border-color: rgba(245, 158, 11, 0.32);
+          background: rgba(245, 158, 11, 0.1);
+          color: #b45309;
+        }
+
+        .aiOpsDomainState.loading {
+          border-color: rgba(100, 116, 139, 0.22);
+          background: rgba(100, 116, 139, 0.08);
+          color: #64748b;
+        }
+
+        .aiOpsDomainState.danger {
+          border-color: rgba(220, 38, 38, 0.28);
+          background: rgba(220, 38, 38, 0.08);
+          color: #b91c1c;
+        }
+
+        .aiOpsDomainModel {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 6px;
+          align-items: end;
+          min-width: 0;
+          padding-top: 14px;
+          border-top: 1px solid #e7edf4;
+        }
+
+        .aiOpsDomainModel > div {
+          display: grid;
+          gap: 6px;
+          min-width: 0;
+        }
+
+        .aiOpsDomainModel span {
+          color: var(--ai-muted);
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .aiOpsDomainModel strong {
+          min-width: 0;
+          color: var(--ai-ink);
+          font-size: 18px;
+          line-height: 1.25;
+          overflow-wrap: anywhere;
+        }
+
+        .aiOpsDomainRisk {
+          justify-items: end;
+        }
+
+        .aiOpsDomainRisk strong {
+          display: inline-flex;
+          align-items: center;
+          min-height: 28px;
+          padding: 0 10px;
+          border-radius: 999px;
+          border: 1px solid #d8e0ea;
+          background: #f8fafc;
+          color: var(--ai-muted);
+          font-size: 12px;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+
+        .aiOpsDomainRisk strong.normal {
+          border-color: rgba(22, 163, 74, 0.28);
+          background: rgba(22, 163, 74, 0.08);
+          color: #15803d;
+        }
+
+        .aiOpsDomainRisk strong.warning {
+          border-color: rgba(245, 158, 11, 0.32);
+          background: rgba(245, 158, 11, 0.1);
+          color: #b45309;
+        }
+
+        .aiOpsDomainRisk strong.danger {
+          border-color: rgba(220, 38, 38, 0.28);
+          background: rgba(220, 38, 38, 0.08);
+          color: #b91c1c;
+        }
+
+        .aiOpsDomainMetrics {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 8px;
+          margin: 0;
+        }
+
+        .aiOpsDomainMetrics div {
+          display: grid;
+          gap: 4px;
+          min-width: 0;
+          padding: 12px;
+          border: 1px solid #e3ebf4;
+          border-radius: 8px;
+          background: #f8fafc;
+        }
+
+        .aiOpsDomainMetrics dt {
+          color: var(--ai-muted);
+          font-size: 11px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .aiOpsDomainMetrics dd {
+          margin: 0;
+          color: var(--ai-primary);
+          font-size: 17px;
+          font-weight: 900;
+          line-height: 1.2;
+          overflow-wrap: anywhere;
         }
 
         .aiOpsBoard {
@@ -1556,7 +1936,33 @@ export default function AiMetricsPage() {
         }
 
         @media (max-width: 820px) {
+          .aiOpsDomainNotice {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .aiOpsDomainNotice button {
+            width: 100%;
+          }
+
+          .aiOpsDomainGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .aiOpsDomainMetrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .aiOpsDomainModel {
+            grid-template-columns: 1fr;
+          }
+
+          .aiOpsDomainRisk {
+            justify-items: start;
+          }
+
           .aiOpsHeaderStatus,
+          .aiOpsDomainCardHead,
           .aiOpsPanelHead,
           .aiOpsChartHead {
             flex-direction: column;

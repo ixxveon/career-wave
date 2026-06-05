@@ -31,13 +31,13 @@
 **Branch**: `feature/admin-audit-log-list`
 **Base**: `feature/admin-audit-log-api`
 
-- [ ] 요약 카드를 API 데이터로 렌더링
-- [ ] 감사 로그 목록을 API 데이터로 렌더링
-- [ ] source 탭 조건을 API 조회 조건과 동기화
-- [ ] level 필터 조건을 API 조회 조건과 동기화
-- [ ] keyword 검색 조건을 API 조회 조건과 동기화
-- [ ] 페이지네이션 UI와 API 응답 메타데이터 연결
-- [ ] 로딩, 빈 데이터, API 실패 상태 처리
+- [x] 요약 카드를 API 데이터로 렌더링
+- [x] 감사 로그 목록을 API 데이터로 렌더링
+- [x] source 탭 조건을 API 조회 조건과 동기화
+- [x] level 필터 조건을 API 조회 조건과 동기화
+- [x] keyword 검색 조건을 API 조회 조건과 동기화
+- [x] 스크롤 목록 UI에 맞춰 API page/size 기본 조회 조건 연결
+- [x] 로딩, 빈 데이터, API 실패 상태 처리
 
 ## Phase 3 - 상세 조회와 선택 상태
 
@@ -69,7 +69,7 @@
 **Base**: `feature/admin-audit-log-state-security`
 
 - [ ] `/admin/log` 진입 시 요약 카드와 로그 목록 표시 확인
-- [ ] source, level, keyword, page 변경이 API 조회 조건과 일치하는지 확인
+- [ ] source, level, keyword 변경과 기본 page/size 조회 조건이 API 조회 조건과 일치하는지 확인
 - [ ] 로그 선택 시 상세 패널 갱신 확인
 - [ ] API 실패, 빈 목록, 검색 결과 없음, 권한 오류 상태 확인
 - [ ] 모바일과 데스크톱에서 테이블, 필터, 상세 패널 레이아웃 확인

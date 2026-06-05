@@ -4,7 +4,7 @@ import { memberApiClient } from './memberApiClient';
 
 export const memberAuthApi = {
   async login(payload: LoginRequest): Promise<LoginResponse> {
-    return memberApiClient<LoginResponse>('/api/v1/members/login', {
+    return memberApiClient<LoginResponse>('/api/v1/user/members/login', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -15,7 +15,7 @@ export const memberAuthApi = {
   },
 
   getMyStatus(): Promise<MemberStatusResponse> {
-    return memberApiClient<MemberStatusResponse>('/api/v1/members/me/status', {
+    return memberApiClient<MemberStatusResponse>('/api/v1/user/members/me/status', {
       method: 'GET',
       auth: true,
     });
