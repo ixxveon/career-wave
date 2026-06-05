@@ -1,21 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../styles/admin.css';
 import MiniPagination from '../../components/MiniPagination';
 import { AI_DOMAIN, AI_USAGE_RISK_LEVEL, aiMetricsApi } from '../../api/aiMetricsApi';
-import type { AiDomain, AiDomainUsage, AiUsageRiskLevel } from '../../api/aiMetricsApi';
-import { getAiDisplayModelName } from '../../../utils/admin/aiMetrics';
+import type { AiBudgetSetting, AiDomain, AiDomainUsage, AiTokenTrendPoint, AiUsageRiskLevel } from '../../api/aiMetricsApi';
 
 type Tone = 'normal' | 'warning' | 'danger';
 type UserStatus = '정상' | '주의' | '심각';
 type RagStatus = '동기화됨' | '인덱싱 중' | '실패';
 type EventSeverity = 'INFO' | 'WARN' | 'ERROR';
-
-interface UsagePoint {
-  hour: string;
-  input: number;
-  output: number;
-}
 
 interface HeavyUser {
   id: string;
@@ -31,6 +24,9 @@ interface RagDoc {
   status: RagStatus;
 }
 
+const getAiDisplayModelName = (model: { displayModelName?: string | null; actualModelName?: string | null }) =>
+  model.displayModelName || model.actualModelName || '모델 정보 없음';
+
 interface LogEvent {
   time: string;
   severity: EventSeverity;
@@ -40,6 +36,8 @@ interface LogEvent {
 const DOC_PAGE_SIZE = 3;
 
 const DOMAIN_USAGE_QUERY_KEY = ['admin', 'aiMetrics', 'domainUsage'] as const;
+const TOKEN_TREND_QUERY_KEY = ['admin', 'aiMetrics', 'tokenTrend'] as const;
+const BUDGET_QUERY_KEY = ['admin', 'aiMetrics', 'budget'] as const;
 
 const DOMAIN_CARD_ORDER: AiDomain[] = [AI_DOMAIN.DOCUMENT, AI_DOMAIN.INTERVIEW];
 
@@ -47,6 +45,12 @@ const DOMAIN_CARD_LABELS: Record<AiDomain, string> = {
   [AI_DOMAIN.DOCUMENT]: 'AI 서류 기능',
   [AI_DOMAIN.INTERVIEW]: 'AI 면접 기능',
 };
+
+const DOMAIN_FILTER_OPTIONS: Array<{ value: 'ALL' | AiDomain; label: string }> = [
+  { value: 'ALL', label: '전체 도메인' },
+  { value: AI_DOMAIN.DOCUMENT, label: DOMAIN_CARD_LABELS[AI_DOMAIN.DOCUMENT] },
+  { value: AI_DOMAIN.INTERVIEW, label: DOMAIN_CARD_LABELS[AI_DOMAIN.INTERVIEW] },
+];
 
 const formatNumber = (value?: number) => (typeof value === 'number' ? value.toLocaleString() : '-');
 
@@ -56,24 +60,25 @@ const formatLatency = (value?: number) => (typeof value === 'number' ? `${Math.r
 
 const formatCost = (value?: number | null) => (typeof value === 'number' ? `$${value.toLocaleString()}` : '-');
 
+const formatBudgetPercent = (value: number) => `${Math.min(100, Math.max(0, Math.round(value))).toLocaleString()}%`;
+
+const formatCompactToken = (value: number) => {
+  if (value >= 1000) return `${Math.round(value / 100) / 10}K`;
+  return value.toLocaleString();
+};
+
+const formatTrendBucket = (bucket: string) => {
+  const date = new Date(bucket);
+  if (!Number.isNaN(date.getTime())) return `${String(date.getHours()).padStart(2, '0')}h`;
+  return bucket;
+};
+
 const getRiskTone = (riskLevel?: AiUsageRiskLevel) => {
   if (riskLevel === AI_USAGE_RISK_LEVEL.CRITICAL) return 'danger';
   if (riskLevel === AI_USAGE_RISK_LEVEL.WARNING) return 'warning';
   if (riskLevel === AI_USAGE_RISK_LEVEL.NORMAL) return 'normal';
   return 'muted';
 };
-
-const llmModelOptions = ['GPT-4-TURBO v2.1', 'GPT-4.1', 'GPT-4o', 'GPT-4o-mini'];
-
-const usageData: UsagePoint[] = [
-  { hour: '00', input: 34, output: 18 },
-  { hour: '04', input: 42, output: 24 },
-  { hour: '08', input: 46, output: 28 },
-  { hour: '12', input: 26, output: 16 },
-  { hour: '16', input: 64, output: 34 },
-  { hour: '20', input: 42, output: 23 },
-  { hour: '24', input: 18, output: 12 },
-];
 
 const heavyUsers: HeavyUser[] = [
   { id: 'USR_8892', tokenUsage: 12403, status: '심각' },
@@ -106,21 +111,18 @@ const toneForStatus = (value: UserStatus | RagStatus | EventSeverity): Tone => {
 };
 
 export default function AiMetricsPage() {
+  const queryClient = useQueryClient();
   const [secondsAgo, setSecondsAgo] = useState(12);
   const [docQuery, setDocQuery] = useState('');
   const [selectedDocId, setSelectedDocId] = useState('DOC-001');
-  const [selectedModel, setSelectedModel] = useState(llmModelOptions[0]);
-  const [discordAlertEnabled, setDiscordAlertEnabled] = useState(true);
+  const [selectedTrendDomain, setSelectedTrendDomain] = useState<'ALL' | AiDomain>('ALL');
   const [docPage, setDocPage] = useState(1);
-  const [monthlyBudget, setMonthlyBudget] = useState(2000);
   const [budgetDraft, setBudgetDraft] = useState('2000');
+  const [thresholdDraft, setThresholdDraft] = useState('85');
   const [budgetEditorOpen, setBudgetEditorOpen] = useState(false);
+  const [budgetMutationErrorMessage, setBudgetMutationErrorMessage] = useState('');
 
-  const monthlySpend = 1440;
-  const budgetUsed = Math.round((monthlySpend / monthlyBudget) * 100);
-  const forecastSpend = 1870;
   const tokensPerMinute = 128;
-  const isBudgetRisk = budgetUsed >= 90;
 
   const {
     data: domainUsageData,
@@ -143,6 +145,124 @@ export default function AiMetricsPage() {
   }, [domainUsageData]);
 
   const domainUsageEmpty = !domainUsageLoading && !domainUsageIsError && (domainUsageData?.length ?? 0) === 0;
+
+  const {
+    data: tokenTrendData,
+    isLoading: tokenTrendLoading,
+    isError: tokenTrendIsError,
+  } = useQuery<AiTokenTrendPoint[], Error>({
+    queryKey: [...TOKEN_TREND_QUERY_KEY, selectedTrendDomain],
+    queryFn: async () => {
+      const response = await aiMetricsApi.getTokenTrend({
+        interval: 'HOURLY',
+        domain: selectedTrendDomain === 'ALL' ? undefined : selectedTrendDomain,
+      });
+      if (!response.data.success) throw new Error(response.data.message ?? 'AI 토큰 추이 조회에 실패했습니다.');
+      return response.data.data;
+    },
+  });
+
+  const tokenTrendChartData = useMemo(
+    () =>
+      (tokenTrendData ?? []).map((point) => ({
+        bucket: point.bucket,
+        label: formatTrendBucket(point.bucket),
+        input: point.inputTokens,
+        output: point.outputTokens,
+        requestCount: point.requestCount,
+      })),
+    [tokenTrendData]
+  );
+
+  const tokenTrendEmpty = !tokenTrendLoading && !tokenTrendIsError && tokenTrendChartData.length === 0;
+
+  const selectedTrendDomainLabel = useMemo(
+    () => DOMAIN_FILTER_OPTIONS.find((option) => option.value === selectedTrendDomain)?.label ?? '전체 도메인',
+    [selectedTrendDomain]
+  );
+
+  const {
+    data: budgetSetting,
+    isLoading: budgetLoading,
+    isError: budgetIsError,
+  } = useQuery<AiBudgetSetting, Error>({
+    queryKey: BUDGET_QUERY_KEY,
+    queryFn: async () => {
+      const response = await aiMetricsApi.getBudget();
+      if (!response.data.success) throw new Error(response.data.message ?? 'AI 예산 설정 조회에 실패했습니다.');
+      return response.data.data;
+    },
+  });
+
+  const monthlyBudget = budgetSetting?.monthlyBudget ?? 0;
+  const currentSpend = budgetSetting?.currentSpend ?? null;
+  const forecastSpend = budgetSetting?.forecastSpend ?? null;
+  const thresholdPercent = budgetSetting?.thresholdPercent ?? 0;
+  const discordAlertEnabled = Boolean(budgetSetting?.discordAlertEnabled);
+  const rateLimitEnabled = Boolean(budgetSetting?.rateLimitEnabled);
+  const budgetUsed = monthlyBudget > 0 && typeof currentSpend === 'number' ? (currentSpend / monthlyBudget) * 100 : 0;
+  const budgetProgress = Math.min(100, Math.max(0, budgetUsed));
+  const isBudgetRisk = thresholdPercent > 0 && budgetUsed >= thresholdPercent;
+
+  const updateBudgetMutation = useMutation<AiBudgetSetting, Error, { monthlyBudget: number; thresholdPercent: number }>({
+    mutationFn: async (data) => {
+      const response = await aiMetricsApi.updateBudget(data);
+      if (!response.data.success) throw new Error(response.data.message ?? 'AI 예산 설정 수정에 실패했습니다.');
+      return response.data.data;
+    },
+    onMutate: () => {
+      setBudgetMutationErrorMessage('');
+    },
+    onSuccess: (nextBudgetSetting) => {
+      queryClient.setQueryData(BUDGET_QUERY_KEY, nextBudgetSetting);
+      setBudgetDraft(String(nextBudgetSetting.monthlyBudget));
+      setThresholdDraft(String(nextBudgetSetting.thresholdPercent));
+      setBudgetEditorOpen(false);
+      setBudgetMutationErrorMessage('');
+    },
+    onError: (error) => {
+      setBudgetMutationErrorMessage(error.message || 'AI 예산 설정 수정에 실패했습니다.');
+    },
+  });
+
+  const updateDiscordAlertMutation = useMutation<AiBudgetSetting, Error, boolean>({
+    mutationFn: async (enabled) => {
+      const response = await aiMetricsApi.updateDiscordAlert({ enabled });
+      if (!response.data.success) throw new Error(response.data.message ?? '디스코드 알림 설정 수정에 실패했습니다.');
+      return response.data.data;
+    },
+    onMutate: () => {
+      setBudgetMutationErrorMessage('');
+    },
+    onSuccess: (nextBudgetSetting) => {
+      queryClient.setQueryData(BUDGET_QUERY_KEY, nextBudgetSetting);
+      setBudgetMutationErrorMessage('');
+    },
+    onError: (error) => {
+      setBudgetMutationErrorMessage(error.message || '디스코드 알림 설정 수정에 실패했습니다.');
+    },
+  });
+
+  const updateRateLimitMutation = useMutation<AiBudgetSetting, Error, boolean>({
+    mutationFn: async (enabled) => {
+      const response = await aiMetricsApi.updateRateLimit({
+        enabled,
+        reason: enabled ? '관리자 AI Metrics 예산 제어에서 사용량 제한을 활성화했습니다.' : '관리자 AI Metrics 예산 제어에서 사용량 제한을 해제했습니다.',
+      });
+      if (!response.data.success) throw new Error(response.data.message ?? '사용량 제한 설정 수정에 실패했습니다.');
+      return response.data.data;
+    },
+    onMutate: () => {
+      setBudgetMutationErrorMessage('');
+    },
+    onSuccess: (nextBudgetSetting) => {
+      queryClient.setQueryData(BUDGET_QUERY_KEY, nextBudgetSetting);
+      setBudgetMutationErrorMessage('');
+    },
+    onError: (error) => {
+      setBudgetMutationErrorMessage(error.message || '사용량 제한 설정 수정에 실패했습니다.');
+    },
+  });
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -170,14 +290,26 @@ export default function AiMetricsPage() {
   const emptyDocRows = DOC_PAGE_SIZE - pagedDocs.length;
 
   const axisMax = useMemo(
-    () => Math.ceil(Math.max(...usageData.map((item) => Math.max(item.input, item.output))) / 10) * 10,
-    []
+    () => {
+      const maxValue = Math.max(0, ...tokenTrendChartData.map((item) => Math.max(item.input, item.output)));
+      if (maxValue <= 0) return 1;
+      return Math.ceil(maxValue / 10) * 10;
+    },
+    [tokenTrendChartData]
   );
 
   const axisTicks = useMemo(
-    () => [1, 0.75, 0.5, 0.25, 0].map((ratio) => `${Math.round(axisMax * ratio)}K`),
+    () => [1, 0.75, 0.5, 0.25, 0].map((ratio) => formatCompactToken(Math.round(axisMax * ratio))),
     [axisMax]
   );
+  const tokenTrendHighlightIndex = useMemo(() => {
+    if (tokenTrendChartData.length === 0) return -1;
+    return tokenTrendChartData.reduce((highlightIndex, item, index, items) => {
+      const itemTotal = item.input + item.output;
+      const highlightTotal = items[highlightIndex].input + items[highlightIndex].output;
+      return itemTotal > highlightTotal ? index : highlightIndex;
+    }, 0);
+  }, [tokenTrendChartData]);
 
   useEffect(() => {
     setDocPage((prev) => Math.min(prev, docTotalPages));
@@ -204,10 +336,13 @@ export default function AiMetricsPage() {
 
   const handleBudgetSave = () => {
     const nextBudget = Number(budgetDraft.replace(/,/g, '').trim());
-    if (!Number.isFinite(nextBudget) || nextBudget <= 0) return;
-    setMonthlyBudget(nextBudget);
-    setBudgetDraft(String(nextBudget));
-    setBudgetEditorOpen(false);
+    const nextThreshold = Number(thresholdDraft.replace(/,/g, '').trim());
+    if (!Number.isFinite(nextBudget) || nextBudget < 0) return;
+    if (!Number.isFinite(nextThreshold) || nextThreshold < 1 || nextThreshold > 100) return;
+    updateBudgetMutation.mutate({
+      monthlyBudget: nextBudget,
+      thresholdPercent: nextThreshold,
+    });
   };
 
   return (
@@ -273,7 +408,7 @@ export default function AiMetricsPage() {
                   <span className="aiOpsEyebrow">{domain}</span>
                   <h3>{usage?.domainLabel ?? DOMAIN_CARD_LABELS[domain]}</h3>
                 </div>
-                <span className={`aiOpsDomainState ${domainUsageIsError ? 'danger' : usage ? 'normal' : domainUsageLoading ? 'loading' : 'warning'}`}>
+                <span className={`aiOpsDomainState ${domainUsageIsError ? 'danger' : usage ? 'normal' : 'warning'}`}>
                   {domainUsageIsError ? '연결 실패' : usage ? '연결됨' : domainUsageLoading ? '조회 중' : '데이터 없음'}
                 </span>
               </div>
@@ -334,15 +469,18 @@ export default function AiMetricsPage() {
           <section className="admin-card aiOpsUsageCard">
             <div className="aiOpsPanelHead">
               <div>
-                <span className="aiOpsEyebrow">LLM API 비용 컨트롤러</span>
-                <h3>{selectedModel}</h3>
+                <span className="aiOpsEyebrow">LLM API 토큰 추이</span>
+                <h3>{selectedTrendDomainLabel}</h3>
               </div>
               <label className="aiOpsModelField">
-                <span>모델 변경</span>
-                <select value={selectedModel} onChange={(event) => setSelectedModel(event.target.value)}>
-                  {llmModelOptions.map((model) => (
-                    <option key={model} value={model}>
-                      {model}
+                <span>도메인 필터</span>
+                <select
+                  value={selectedTrendDomain}
+                  onChange={(event) => setSelectedTrendDomain(event.target.value as 'ALL' | AiDomain)}
+                >
+                  {DOMAIN_FILTER_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>
@@ -358,20 +496,41 @@ export default function AiMetricsPage() {
                     <div className="aiOpsBudgetControls">
                       {budgetEditorOpen ? (
                         <>
-                          <input
-                            type="text"
-                            value={budgetDraft}
-                            onChange={(event) => setBudgetDraft(event.target.value.replace(/[^\d,]/g, ''))}
-                            aria-label="총 예산 입력"
-                          />
-                          <button type="button" className="aiOpsBudgetButton primary" onClick={handleBudgetSave}>
-                            저장
+                          <div className="aiOpsBudgetEditFields">
+                            <label>
+                              <span>월간 예산</span>
+                              <input
+                                type="text"
+                                value={budgetDraft}
+                                onChange={(event) => setBudgetDraft(event.target.value.replace(/[^\d,]/g, ''))}
+                                aria-label="총 예산 입력"
+                              />
+                            </label>
+                            <label>
+                              <span>임계치</span>
+                              <input
+                                type="text"
+                                value={thresholdDraft}
+                                onChange={(event) => setThresholdDraft(event.target.value.replace(/[^\d]/g, ''))}
+                                aria-label="임계치 입력"
+                              />
+                            </label>
+                          </div>
+                          <button
+                            type="button"
+                            className="aiOpsBudgetButton primary"
+                            onClick={handleBudgetSave}
+                            disabled={updateBudgetMutation.isPending}
+                          >
+                            {updateBudgetMutation.isPending ? '저장 중' : '저장'}
                           </button>
                           <button
                             type="button"
                             className="aiOpsBudgetButton"
+                            disabled={updateBudgetMutation.isPending}
                             onClick={() => {
-                              setBudgetDraft(String(monthlyBudget));
+                              setBudgetDraft(String(monthlyBudget || ''));
+                              setThresholdDraft(String(thresholdPercent || ''));
                               setBudgetEditorOpen(false);
                             }}
                           >
@@ -383,7 +542,8 @@ export default function AiMetricsPage() {
                           type="button"
                           className="aiOpsBudgetButton"
                           onClick={() => {
-                            setBudgetDraft(String(monthlyBudget));
+                            setBudgetDraft(String(monthlyBudget || ''));
+                            setThresholdDraft(String(thresholdPercent || ''));
                             setBudgetEditorOpen(true);
                           }}
                         >
@@ -399,6 +559,16 @@ export default function AiMetricsPage() {
                 </div>
 
                 <div className="aiOpsChartPlot">
+                  {(tokenTrendLoading || tokenTrendIsError || tokenTrendEmpty) && (
+                    <div className={`aiOpsChartNotice ${tokenTrendIsError ? 'danger' : tokenTrendEmpty ? 'empty' : 'loading'}`}>
+                      {tokenTrendIsError
+                        ? '토큰 추이 데이터를 불러오지 못했습니다.'
+                        : tokenTrendEmpty
+                          ? '표시할 토큰 추이 데이터가 없습니다.'
+                          : '토큰 추이 데이터를 불러오는 중입니다.'}
+                    </div>
+                  )}
+
                   <div className="aiOpsYAxis">
                     {axisTicks.map((tick) => (
                       <span key={tick}>{tick}</span>
@@ -407,20 +577,20 @@ export default function AiMetricsPage() {
 
                   <div className="aiOpsChartPanel">
                     <div className="aiOpsBars">
-                      {usageData.map((item, index) => {
-                        const total = item.input + item.output;
+                      {tokenTrendChartData.map((item, index) => {
+                        const tone = index === tokenTrendHighlightIndex ? 'strong' : 'soft';
                         return (
-                          <div className="aiOpsBarItem" key={item.hour}>
+                          <div className="aiOpsBarItem" key={item.bucket}>
                             <div
                               className="aiOpsBarGroup"
-                              data-tooltip={`입력 ${item.input}K | 출력 ${item.output}K | 합계 ${total}K`}
+                              data-tooltip={`입력 ${formatCompactToken(item.input)} | 출력 ${formatCompactToken(item.output)} | 요청 ${item.requestCount.toLocaleString()}건`}
                             >
                               <div
-                                className={`aiOpsBar input tone-${index === 4 ? 'strong' : 'soft'}`}
+                                className={`aiOpsBar input tone-${tone}`}
                                 style={{ height: `${(item.input / axisMax) * 100}%` }}
                               />
                               <div
-                                className={`aiOpsBar output tone-${index === 4 ? 'strong' : 'soft'}`}
+                                className={`aiOpsBar output tone-${tone}`}
                                 style={{ height: `${(item.output / axisMax) * 100}%` }}
                               />
                             </div>
@@ -430,12 +600,12 @@ export default function AiMetricsPage() {
                     </div>
 
                     <div className="aiOpsXAxisLabels">
-                      {usageData.map((item) => {
+                      {tokenTrendChartData.map((item) => {
                         const total = item.input + item.output;
                         return (
-                          <div className="aiOpsXAxisItem" key={`${item.hour}-label`}>
-                            <span>{item.hour}h</span>
-                            <small>{total}K 요청</small>
+                          <div className="aiOpsXAxisItem" key={`${item.bucket}-label`}>
+                            <span>{item.label}</span>
+                            <small>{formatCompactToken(total)} 토큰</small>
                           </div>
                         );
                       })}
@@ -447,14 +617,26 @@ export default function AiMetricsPage() {
               <aside className="aiOpsBudgetBox">
                 <div className="aiOpsBudgetShell">
                   <div className="aiOpsBudgetMain">
-                    <div className="aiOpsBudgetValue">${monthlySpend.toLocaleString()}</div>
+                    <div className="aiOpsBudgetValue">{budgetLoading ? '조회 중' : formatCost(currentSpend)}</div>
                     <div className="aiOpsBudgetLabel">월간 사용 비용</div>
-                    <div className="aiOpsBudgetLine">${monthlyBudget.toLocaleString()} 예산 중 {budgetUsed}% 사용</div>
+                    <div className="aiOpsBudgetLine">
+                      {budgetIsError
+                        ? '예산 정보를 불러오지 못했습니다.'
+                        : budgetLoading
+                          ? '조회 중'
+                        : `${formatCost(monthlyBudget)} 예산 중 ${formatBudgetPercent(budgetUsed)} 사용`}
+                    </div>
                   </div>
 
                   <div className="aiOpsProgress">
-                    <div style={{ width: `${budgetUsed}%` }} />
+                    <div style={{ width: `${budgetProgress}%` }} />
                   </div>
+
+                  {budgetMutationErrorMessage ? (
+                    <div className="aiOpsBudgetError" role="alert">
+                      {budgetMutationErrorMessage}
+                    </div>
+                  ) : null}
 
                   <div className={`aiOpsStatusBadge ${isBudgetRisk ? 'danger' : 'stable'}`}>
                     <span />
@@ -464,11 +646,11 @@ export default function AiMetricsPage() {
                   <div className="aiOpsBudgetFacts">
                     <div>
                       <span>예상 비용</span>
-                      <strong>${forecastSpend.toLocaleString()}</strong>
+                      <strong>{budgetLoading ? '조회 중' : formatCost(forecastSpend)}</strong>
                     </div>
                     <div>
-                      <span>최고 비용 모델</span>
-                      <strong>{selectedModel}</strong>
+                      <span>임계치</span>
+                      <strong>{thresholdPercent > 0 ? `${thresholdPercent}%` : '-'}</strong>
                     </div>
                     <div>
                       <span>분당 토큰 사용량</span>
@@ -485,7 +667,8 @@ export default function AiMetricsPage() {
                       <button
                         type="button"
                         className={`aiOpsSwitch compact ${discordAlertEnabled ? 'active' : ''}`}
-                        onClick={() => setDiscordAlertEnabled((prev) => !prev)}
+                        onClick={() => updateDiscordAlertMutation.mutate(!discordAlertEnabled)}
+                        disabled={budgetLoading || updateDiscordAlertMutation.isPending}
                         aria-label="디스코드 알림 토글"
                       >
                         <i />
@@ -494,12 +677,23 @@ export default function AiMetricsPage() {
 
                     <div className="aiOpsThreshold">
                       <span>임계치</span>
-                      <strong>85%</strong>
+                      <strong>{thresholdPercent > 0 ? `${thresholdPercent}%` : '-'}</strong>
                     </div>
                   </div>
 
-                  <button type="button" className={`aiOpsDangerButton ${isBudgetRisk ? 'danger' : 'neutral'}`}>
-                    {isBudgetRisk ? '긴급 제한' : '속도 제한 제어'}
+                  <button
+                    type="button"
+                    className={`aiOpsDangerButton ${rateLimitEnabled || isBudgetRisk ? 'danger' : 'neutral'}`}
+                    onClick={() => updateRateLimitMutation.mutate(!rateLimitEnabled)}
+                    disabled={budgetLoading || updateRateLimitMutation.isPending}
+                  >
+                    {updateRateLimitMutation.isPending
+                      ? '처리 중'
+                      : rateLimitEnabled
+                        ? '사용량 제한 해제'
+                        : isBudgetRisk
+                          ? '긴급 제한'
+                          : '속도 제한 제어'}
                   </button>
                 </div>
               </aside>
@@ -894,12 +1088,6 @@ export default function AiMetricsPage() {
           color: #b45309;
         }
 
-        .aiOpsDomainState.loading {
-          border-color: rgba(100, 116, 139, 0.22);
-          background: rgba(100, 116, 139, 0.08);
-          color: #64748b;
-        }
-
         .aiOpsDomainState.danger {
           border-color: rgba(220, 38, 38, 0.28);
           background: rgba(220, 38, 38, 0.08);
@@ -1185,6 +1373,30 @@ export default function AiMetricsPage() {
           align-items: start;
         }
 
+        .aiOpsChartNotice {
+          grid-column: 1 / -1;
+          min-height: 42px;
+          padding: 12px 14px;
+          border: 1px solid rgba(37, 99, 201, 0.18);
+          border-radius: 8px;
+          background: rgba(37, 99, 201, 0.06);
+          color: var(--ai-primary);
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .aiOpsChartNotice.empty {
+          border-color: rgba(100, 116, 139, 0.22);
+          background: rgba(100, 116, 139, 0.06);
+          color: var(--ai-muted);
+        }
+
+        .aiOpsChartNotice.danger {
+          border-color: rgba(220, 38, 38, 0.22);
+          background: rgba(220, 38, 38, 0.06);
+          color: #b91c1c;
+        }
+
         .aiOpsYAxis {
           display: grid;
           grid-template-rows: repeat(5, 1fr);
@@ -1206,7 +1418,7 @@ export default function AiMetricsPage() {
 
         .aiOpsBars {
           display: grid;
-          grid-template-columns: repeat(7, minmax(0, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
           gap: 8px;
           align-items: end;
           min-height: 250px;
@@ -1286,7 +1498,7 @@ export default function AiMetricsPage() {
 
         .aiOpsXAxisLabels {
           display: grid;
-          grid-template-columns: repeat(7, minmax(0, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
           gap: 8px;
           padding: 0 10px;
         }
@@ -1334,12 +1546,38 @@ export default function AiMetricsPage() {
           font-weight: 700;
         }
 
+        .aiOpsBudgetError {
+          padding: 9px 10px;
+          border: 1px solid #f0caca;
+          border-radius: 8px;
+          background: var(--ai-danger-bg);
+          color: var(--ai-danger);
+          font-size: 11px;
+          font-weight: 800;
+          line-height: 1.4;
+        }
+
         .aiOpsBudgetControls {
           display: flex;
           align-items: center;
           gap: 8px;
           flex-wrap: wrap;
           margin-top: 10px;
+        }
+
+        .aiOpsBudgetEditFields {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .aiOpsBudgetEditFields label {
+          display: grid;
+          gap: 4px;
+          color: var(--ai-muted);
+          font-size: 10px;
+          font-weight: 800;
         }
 
         .aiOpsBudgetControls input {
@@ -1366,6 +1604,11 @@ export default function AiMetricsPage() {
           font-weight: 800;
           font-family: inherit;
           cursor: pointer;
+        }
+
+        .aiOpsBudgetButton:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
         }
 
         .aiOpsBudgetButton.primary {
@@ -1476,6 +1719,11 @@ export default function AiMetricsPage() {
           cursor: pointer;
         }
 
+        .aiOpsSwitch:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+        }
+
         .aiOpsSwitch i {
           position: relative;
           width: 24px;
@@ -1521,6 +1769,11 @@ export default function AiMetricsPage() {
 
         .aiOpsDangerButton {
           width: 100%;
+        }
+
+        .aiOpsDangerButton:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
         }
 
         .aiOpsDangerButton.neutral {
