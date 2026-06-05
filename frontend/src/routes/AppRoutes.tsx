@@ -47,9 +47,9 @@ import PostDetailPage from '../user/pages/community/PostDetailPage';
 import PostCreatePage from '../user/pages/community/PostCreatePage';
 import MentorPage from '../user/pages/community/MentorPage';
 
-import PricingPage from '../user/pages/billing/PricingPage';
+// [non-MVP] import PricingPage from '../user/pages/billing/PricingPage';
 import PaymentPage from '../user/pages/billing/PaymentPage';
-import CompanyProductPage from '../user/pages/billing/CompanyProductPage';
+// [non-MVP] import CompanyProductPage from '../user/pages/billing/CompanyProductPage';
 import CheckoutPage from '../user/pages/billing/CheckoutPage';
 import PaymentSuccessPage from '../user/pages/billing/PaymentSuccessPage';
 import PaymentFailPage from '../user/pages/billing/PaymentFailPage';
@@ -156,15 +156,15 @@ function AppRoutes() {
         </Route>
 
         <Route path="billing">
-          <Route index element={<Navigate to="/billing/pricing" replace />} />
-          <Route path="pricing" element={<PricingPage />} />
+          {/* [non-MVP] <Route index element={<Navigate to="/billing/pricing" replace />} /> */}
+          {/* [non-MVP] <Route path="pricing" element={<PricingPage />} /> */}
           <Route path="payment" element={<PaymentPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="success" element={<PaymentSuccessPage />} />
           <Route path="fail" element={<PaymentFailPage />} />
           <Route path="document-coaching/plans" element={<PaymentPage />} />
           <Route path="interview/plans" element={<PaymentPage />} />
-          <Route path="company-products" element={<CompanyProductPage />} />
+          {/* [non-MVP] <Route path="company-products" element={<CompanyProductPage />} /> */}
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
