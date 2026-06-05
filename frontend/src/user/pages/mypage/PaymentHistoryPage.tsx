@@ -21,14 +21,8 @@ import {
   type PaymentHistoryPeriod,
   type SubscriptionStatus,
 } from '../../types/subscription';
+import { BILLING_NOTICE_ITEMS, PAYMENT_HISTORY_PERIOD_OPTIONS } from '../../utils/subscription/subscriptionContent';
 import { ALL_PRODUCT_CODES, buildRecommendationItem, formatBillingDate, formatPrice } from '../../utils/subscription/subscriptionView';
-
-const PERIOD_OPTIONS: Array<{ label: string; value: PaymentHistoryPeriod }> = [
-  { label: '최근 1개월', value: PAYMENT_HISTORY_PERIOD.ONE_MONTH },
-  { label: '최근 3개월', value: PAYMENT_HISTORY_PERIOD.THREE_MONTHS },
-  { label: '최근 6개월', value: PAYMENT_HISTORY_PERIOD.SIX_MONTHS },
-  { label: '최근 1년', value: PAYMENT_HISTORY_PERIOD.TWELVE_MONTHS },
-];
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set<SubscriptionStatus>([
   SUBSCRIPTION_STATUS.ACTIVE,
@@ -37,17 +31,6 @@ const ACTIVE_SUBSCRIPTION_STATUSES = new Set<SubscriptionStatus>([
 
 const PAGE_SIZE = 5;
 const CANCEL_REASON = 'NO_LONGER_NEEDED';
-
-const noticeItems = [
-  '결제 관련 사항(결제일시, 결제 수단, 취소, 미납 여부 등)은 관련 법령에 따라 보관되며, 결제일로부터 최대 5년간 조회 가능합니다.',
-  '마일리지 등 적립받은 지급 수단으로 전액 결제하는 경우 현금영수증은 발급되지 않습니다.',
-  '결제 취소 및 환불 요청 시 아래 기준이 적용됩니다.',
-  '상품 이용기간 동안 해당 상품 전부를 이용하지 않은 경우에만 결제 취소 또는 환불이 가능할 수 있습니다.',
-  '상품 이용기간은 상품 상세 페이지 및 유의사항 등에서 안내한 상품 이용 가능 기간을 의미합니다.',
-  '구매한 상품의 일부라도 열람, 다운로드, 응시, 접속 등의 방법으로 확인했거나 이용 가능한 상태로 변경된 경우 상품 이용이 시작된 것으로 봅니다.',
-  '상품 이용이 시작되면 결제 취소 및 환불 여부는 상품 특성 및 안내사항에 따라 제한될 수 있습니다.',
-  '결제 및 취소/환불 관련 상세 문의는 고객센터를 통해 접수할 수 있습니다.',
-];
 
 
 function PaymentHistoryPage() {
@@ -249,7 +232,7 @@ function PaymentHistoryPage() {
                     setPage(1);
                   }}
                 >
-                  {PERIOD_OPTIONS.map((option) => (
+                  {PAYMENT_HISTORY_PERIOD_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -324,7 +307,7 @@ function PaymentHistoryPage() {
               <h4>결제내역 유의사항</h4>
             </div>
             <ul>
-              {noticeItems.map((item) => (
+              {BILLING_NOTICE_ITEMS.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
