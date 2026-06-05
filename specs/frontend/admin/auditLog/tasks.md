@@ -2,26 +2,29 @@
 
 ## Spec 검증
 
-- [ ] 관리자 감사 로그 API base path는 `/api/v1/admin/audit-logs`로 통일되어 있다.
-- [ ] 관리자 감사 로그 API는 `ApiResponse<T>` 응답 구조를 따른다.
-- [ ] source 값은 `ADMIN`, `AI`, `SCRAPING`으로 통일되어 있다.
-- [ ] level 값은 `INFO`, `WARN`, `ERROR`, `SUCCESS`로 통일되어 있다.
-- [ ] 프론트엔드는 감사 로그를 수정하거나 삭제하지 않는다.
-- [ ] 로그 상세에는 민감 정보가 노출되지 않는다고 명시되어 있다.
+- [x] 관리자 감사 로그 API base path는 `/api/v1/admin/audit-logs`로 통일되어 있다.
+- [x] 관리자 감사 로그 API는 `ApiResponse<T>` 응답 구조를 따른다.
+- [x] source 값은 `ADMIN`, `AI`, `SCRAPING`으로 통일되어 있다.
+- [x] level 값은 `INFO`, `WARN`, `ERROR`, `SUCCESS`로 통일되어 있다.
+- [x] 프론트엔드는 감사 로그를 수정하거나 삭제하지 않는다.
+- [x] 로그 상세에는 민감 정보가 노출되지 않는다고 명시되어 있다.
 
 ## Phase 1 - API 계약 및 타입 정리
 
 **Branch**: `feature/admin-audit-log-api`
 **Base**: `docs/admin-audit-log-spec`
 
-- [ ] `frontend/src/admin/api/auditLogApi.ts` 생성
-- [ ] `AuditLogSource`, `AuditLogLevel` 타입 정의
-- [ ] `AuditLogSummary`, `AuditLogItem`, `AuditLogDetail` 타입 정의 및 export
-- [ ] `GET /api/v1/admin/audit-logs/summary` 호출 함수 작성
-- [ ] `GET /api/v1/admin/audit-logs` 호출 함수 작성
-- [ ] `GET /api/v1/admin/audit-logs/{logId}` 호출 함수 작성
-- [ ] `ApiResponse<T>`와 페이지네이션 응답 구조 처리
-- [ ] 페이지에서 직접 API 호출하지 않도록 API 계층 경계 정의
+- [x] `frontend/src/admin/api/auditLogApi.ts` 생성
+- [x] `AuditLogSource`, `AuditLogLevel` 타입 정의
+- [x] `AuditLogSummary`, `AuditLogItem`, `AuditLogDetail` 타입 정의 및 export
+- [x] `GET /api/v1/admin/audit-logs/summary` 호출 함수 작성
+- [x] `GET /api/v1/admin/audit-logs` 호출 함수 작성
+- [x] `GET /api/v1/admin/audit-logs/{logId}` 호출 함수 작성
+- [x] `ApiResponse<T>`와 페이지네이션 응답 구조 처리
+- [x] 현재 감사 로그 페이지에서 `axios` 또는 `fetch`를 직접 호출하지 않는지 확인
+- [x] 감사 로그 API 호출 함수를 `auditLogApi` 객체로만 노출하도록 경계 정의
+- [x] 페이지에서 직접 API 호출하지 않도록 API 계층 경계 정의
+- [x] 현재 감사 로그 UI와 Phase 1 API 계약 tasks 일치 여부 확인
 
 ## Phase 2 - 요약과 목록 데이터 연동
 

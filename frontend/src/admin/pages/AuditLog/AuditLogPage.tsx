@@ -1,64 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Bot, Database, FileText, ShieldCheck } from 'lucide-react';
 import '../../styles/admin.css';
-import { adminSecurityLogSeeds, aiMetricLogSeeds, scrapingLogSeeds } from '../../data/logSeeds';
+import { auditLogPreviewSeeds } from '../../api/auditLogApi';
+import type { AuditLogLevel, AuditLogLevelFilter, AuditLogSourceFilter } from '../../api/auditLogApi';
 
-type AuditSource = 'ALL' | 'ADMIN' | 'AI' | 'SCRAPING';
-type AuditLevel = 'ALL' | 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
 type AuditTone = 'normal' | 'warning' | 'danger' | 'info';
 
-interface UnifiedLog {
-  id: string;
-  source: Exclude<AuditSource, 'ALL'>;
-  sourceLabel: string;
-  timestamp: string;
-  level: Exclude<AuditLevel, 'ALL'>;
-  summary: string;
-  detail: string;
-}
-
-const sourceLabelMap: Record<Exclude<AuditSource, 'ALL'>, string> = {
-  ADMIN: '관리자 관리',
-  AI: 'AI 메트릭스',
-  SCRAPING: '스크래핑 관리',
-};
-
-const levelToneMap: Record<Exclude<AuditLevel, 'ALL'>, AuditTone> = {
+const levelToneMap: Record<AuditLogLevel, AuditTone> = {
   INFO: 'info',
   WARN: 'warning',
   ERROR: 'danger',
   SUCCESS: 'normal',
 };
-
-const unifiedLogsSeed: UnifiedLog[] = [
-  ...adminSecurityLogSeeds.map((log) => ({
-    id: `ADMIN-${log.id}`,
-    source: 'ADMIN' as const,
-    sourceLabel: sourceLabelMap.ADMIN,
-    timestamp: log.time,
-    level: log.severity,
-    summary: log.action,
-    detail: `actor: ${log.actor} / target: ${log.target} / ip: ${log.ip}`,
-  })),
-  ...aiMetricLogSeeds.map((log, index) => ({
-    id: `AI-${index + 1}`,
-    source: 'AI' as const,
-    sourceLabel: sourceLabelMap.AI,
-    timestamp: `2026.05.25 ${log.time}`,
-    level: log.severity,
-    summary: log.message,
-    detail: 'AI 토큰 사용량 및 리소스 모니터링 이벤트',
-  })),
-  ...scrapingLogSeeds.map((log) => ({
-    id: `SCRAPING-${log.id}`,
-    source: 'SCRAPING' as const,
-    sourceLabel: sourceLabelMap.SCRAPING,
-    timestamp: `2026.05.25 ${log.time}`,
-    level: log.level,
-    summary: log.message,
-    detail: log.detail ?? '스크래핑 파이프라인 상세 이벤트',
-  })),
-];
 
 const splitTimestamp = (value: string) => {
   const [date = '', time = ''] = value.split(' ');
@@ -66,14 +19,14 @@ const splitTimestamp = (value: string) => {
 };
 
 export default function AuditLogPage() {
-  const [sourceFilter, setSourceFilter] = useState<AuditSource>('ALL');
-  const [levelFilter, setLevelFilter] = useState<AuditLevel>('ALL');
+  const [sourceFilter, setSourceFilter] = useState<AuditLogSourceFilter>('ALL');
+  const [levelFilter, setLevelFilter] = useState<AuditLogLevelFilter>('ALL');
   const [query, setQuery] = useState('');
-  const [selectedLogId, setSelectedLogId] = useState(unifiedLogsSeed[0]?.id ?? '');
+  const [selectedLogId, setSelectedLogId] = useState(auditLogPreviewSeeds[0]?.id ?? '');
 
   const filteredLogs = useMemo(() => {
     const keyword = query.trim().toLowerCase();
-    return unifiedLogsSeed.filter((log) => {
+    return auditLogPreviewSeeds.filter((log) => {
       const matchesSource = sourceFilter === 'ALL' || log.source === sourceFilter;
       const matchesLevel = levelFilter === 'ALL' || log.level === levelFilter;
       const matchesQuery =
@@ -85,7 +38,10 @@ export default function AuditLogPage() {
     });
   }, [levelFilter, query, sourceFilter]);
 
-  const selectedLog = useMemo(() => unifiedLogsSeed.find((log) => log.id === selectedLogId) ?? null, [selectedLogId]);
+  const selectedLog = useMemo(
+    () => auditLogPreviewSeeds.find((log) => log.id === selectedLogId) ?? null,
+    [selectedLogId]
+  );
 
   useEffect(() => {
     const isSelectedVisible = filteredLogs.some((log) => log.id === selectedLogId);
@@ -98,9 +54,9 @@ export default function AuditLogPage() {
 
   const sourceCounts = useMemo(
     () => ({
-      ADMIN: unifiedLogsSeed.filter((log) => log.source === 'ADMIN').length,
-      AI: unifiedLogsSeed.filter((log) => log.source === 'AI').length,
-      SCRAPING: unifiedLogsSeed.filter((log) => log.source === 'SCRAPING').length,
+      ADMIN: auditLogPreviewSeeds.filter((log) => log.source === 'ADMIN').length,
+      AI: auditLogPreviewSeeds.filter((log) => log.source === 'AI').length,
+      SCRAPING: auditLogPreviewSeeds.filter((log) => log.source === 'SCRAPING').length,
     }),
     []
   );
@@ -109,7 +65,7 @@ export default function AuditLogPage() {
     {
       Icon: FileText,
       title: '전체 로그',
-      value: unifiedLogsSeed.length,
+      value: auditLogPreviewSeeds.length,
       desc: '통합 감사 이벤트',
       theme: 'kpi-blue',
     },
@@ -173,7 +129,7 @@ export default function AuditLogPage() {
                 key={tab.key}
                 type="button"
                 className={sourceFilter === tab.key ? 'active' : ''}
-                onClick={() => setSourceFilter(tab.key as AuditSource)}
+                onClick={() => setSourceFilter(tab.key as AuditLogSourceFilter)}
               >
                 {tab.label}
               </button>
@@ -187,7 +143,7 @@ export default function AuditLogPage() {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="로그 요약 또는 상세 내용 검색"
             />
-            <select value={levelFilter} onChange={(event) => setLevelFilter(event.target.value as AuditLevel)}>
+            <select value={levelFilter} onChange={(event) => setLevelFilter(event.target.value as AuditLogLevelFilter)}>
               <option value="ALL">전체 유형</option>
               <option value="INFO">INFO</option>
               <option value="WARN">WARN</option>
