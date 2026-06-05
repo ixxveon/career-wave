@@ -30,34 +30,14 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 
 | 항목 | 상태 | 비고 |
 |------|------|------|
-| S3 업로드 방식 | **팀 결정 필요** | 아래 옵션 비교 참고 |
-| `hypersistence-utils` 의존성 추가 | **팀 결정 필요** | 아래 옵션 비교 참고 |
+| S3 업로드 방식 | **확정** | 서버 경유 — v1 구현 단순화 |
+| JSONB 처리 방식 | **확정** | `AttributeConverter` 직접 구현 — 외부 의존성 추가 없음 |
 | Webhook 내부 보안 방식 | **확정** | `X-Internal-Secret` 헤더, 환경 변수 `WEBHOOK_SECRET` |
 | WebSocket 구현 방식 | **확정** | STOMP (`spring-boot-starter-websocket`) |
 | members 테이블 PK 타입 | **확정** | UUID (`gen_random_uuid()`) |
 | Base URL | **확정** | `/api/v1/user/resume` |
 
 ---
-
-## 팀 결정 필요 항목
-
-### A. S3 업로드 방식
-
-| 방식 | 설명 | 장점 | 단점 |
-|------|------|------|------|
-| **서버 경유** | 프론트 → Spring → S3 | 구현 간단, 보안 관리 Spring 중심 | 파일 데이터가 Spring 서버를 거쳐 트래픽 증가 |
-| **Presigned URL** | 프론트가 Spring에 URL 발급 요청 후 S3 직접 업로드 | Spring 서버 파일 트래픽 없음, 가벼움 | S3 버킷 CORS 설정 + 권한 설정 필요 |
-
-> 팀 내 S3 인프라 설정 가능 여부에 따라 결정. v1 기준으로는 **서버 경유 방식이 구현 난이도가 낮음**.
-
-### B. JSONB 처리 방식
-
-| 방식 | 설명 | 장점 | 단점 |
-|------|------|------|------|
-| **`AttributeConverter` 직접 구현** | `ObjectMapper`로 직렬화/역직렬화 코드 작성 | 외부 의존성 없음 | 보일러플레이트 코드 존재 |
-| **`hypersistence-utils`** | 라이브러리가 JSONB 변환을 자동 처리 | 코드 간결, 타입 안전 | 새 의존성 추가 — 팀 합의 필요 |
-
-> 팀 합의 후 결정. **의존성 추가가 부담스러우면 `AttributeConverter`로 충분히 구현 가능**.
 
 ---
 

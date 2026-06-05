@@ -65,7 +65,8 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 | S3 키 생성 | `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` | 한글·특수문자 깨짐 방지, 날짜별 분산 관리, 원본명은 `original_name` 컬럼에 보존 |
 | `documents.status` | VARCHAR(20), DEFAULT 'UPLOADED' | 프론트 스펙 상태 추적에 맞춰 추가 — Spring이 UPLOADED 설정, 이후 전이는 Webhook 책임 |
 | 분석 결과 수신 | Webhook (FastAPI → Spring `POST .../webhook`) | Spring이 DB 저장 + WebSocket 알림을 한 흐름에서 처리 가능 |
-| `feedback_details` 저장 | JSONB + `AttributeConverter` 또는 `hypersistence-utils` | AI 응답 스키마 유연성 + JPA 변환 편의성 |
+| JSONB 처리 | `AttributeConverter` 직접 구현 (`ObjectMapper`) | 외부 의존성 추가 없음, 컨벤션 준수 |
+| S3 업로드 방식 | 서버 경유 (프론트 → Spring → S3) | v1 구현 단순화 |
 | WebSocket 구현 | STOMP (`spring-boot-starter-websocket`) | 표준화된 메시지 프로토콜, 토픽 기반 구독 구조 |
 | WebSocket 인증 | STOMP `ChannelInterceptor` (`HandshakeInterceptor` 병행 가능) | 핸드셰이크 시점 또는 CONNECT 프레임 시점에 JWT 검증 및 `Authentication` 객체 주입 |
 | 페이징 기준 | 0-based (`page`, `size`) | Spring Data JPA `Pageable` 기본 규칙 |
