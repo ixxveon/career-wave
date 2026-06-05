@@ -33,13 +33,13 @@
 
 ## Phase 6 — Payment History
 
-- [-] `/mypage/payment-history`에서 구독 카드, 결제 내역, 하단 안내가 표시되는가?
-- [ ] 결제 내역 없음 empty state가 표시되는가?
-- [ ] 결제 내역 있음 상태에서 기간 필터와 pagination이 실제 데이터 기준으로 동작하는가?
-- [-] 구독 해지 버튼 클릭 시 confirm modal이 먼저 표시되는가?
-- [ ] confirm 전에는 해지 API가 호출되지 않는가?
-- [ ] 해지 신청 완료 후 `CANCEL_SCHEDULED` 상태와 다음 결제 해지 예정 문구가 표시되는가?
-- [ ] 해지 후 구독 목록과 결제 내역이 재조회되는가?
+- [x] `/mypage/payment-history`에서 구독 카드, 결제 내역, 하단 안내가 표시되는가?
+- [x] 결제 내역 없음 empty state가 표시되는가?
+- [x] 결제 내역 있음 상태에서 기간 필터와 pagination이 실제 데이터 기준으로 동작하는가?
+- [x] 구독 해지 버튼 클릭 시 confirm modal이 먼저 표시되는가?
+- [x] confirm 전에는 해지 API가 호출되지 않는가?
+- [x] 해지 신청 완료 후 `CANCEL_SCHEDULED` 상태와 다음 결제 해지 예정 문구가 표시되는가?
+- [x] 해지 후 구독 목록과 결제 내역이 재조회되는가?
 
 ## Phase 7 — Billing
 

@@ -11,6 +11,15 @@ export const BILLING_CYCLE = {
 
 export type BillingCycle = (typeof BILLING_CYCLE)[keyof typeof BILLING_CYCLE];
 
+export const PAYMENT_HISTORY_PERIOD = {
+  ONE_MONTH: '1M',
+  THREE_MONTHS: '3M',
+  SIX_MONTHS: '6M',
+  TWELVE_MONTHS: '12M',
+} as const;
+
+export type PaymentHistoryPeriod = (typeof PAYMENT_HISTORY_PERIOD)[keyof typeof PAYMENT_HISTORY_PERIOD];
+
 export const SUBSCRIPTION_STATUS = {
   NONE: 'NONE',
   ACTIVE: 'ACTIVE',
@@ -108,11 +117,59 @@ export interface PaymentHistory {
   failureReason: PaymentFailureReason | null;
 }
 
+export interface PaymentHistoryPageResponse {
+  content: PaymentHistory[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface PaymentHistoryQuery {
+  period: PaymentHistoryPeriod;
+  page: number;
+  size: number;
+}
+
 export interface PaymentFailure {
   reasonCode: PaymentFailureReason;
   displayMessage: string;
   retryable: boolean;
 }
+
+export const CANCEL_REASON = {
+  NO_LONGER_NEEDED: 'NO_LONGER_NEEDED',
+  TOO_EXPENSIVE: 'TOO_EXPENSIVE',
+  NOT_USEFUL: 'NOT_USEFUL',
+  OTHER: 'OTHER',
+} as const;
+
+export type CancelReason = (typeof CANCEL_REASON)[keyof typeof CANCEL_REASON];
+
+export interface CancelSubscriptionRequest {
+  reason: CancelReason;
+}
+
+export interface CancelSubscriptionResponse {
+  subscriptionId: string;
+  productCode: ProductCode;
+  status: SubscriptionStatus;
+  currentPeriodEnd: string;
+  cancelScheduledAt: string;
+}
+
+export type PaymentHistorySubscriptionCardItem = {
+  subscriptionId: string;
+  productCode: ProductCode;
+  name: string;
+  cancelScheduled: boolean;
+  paymentFailed: boolean;
+  nextBillingDate: string | null;
+  billingCycle: string;
+  monthlyPrice: string;
+  startedAt: string;
+  currentPeriodEnd: string;
+};
 
 export type UsageItem = {
   productCode: ProductCode;

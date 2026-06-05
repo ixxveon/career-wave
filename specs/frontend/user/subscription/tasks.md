@@ -25,13 +25,22 @@
 
 ## Phase 6 — Payment History
 
-- [ ] `/mypage/payment-history` 내 구독 내역 영역을 contract 기준으로 정리
-- [ ] 구독 없음 상태 CTA와 recommendation card 정리
-- [ ] 구독 해지 버튼 및 confirm modal 구현 정리
-- [ ] 해지 신청 완료 후 `CANCEL_SCHEDULED` 상태, 자동 결제 해지 예정 문구, success message 처리
-- [ ] 최근 결제 내역 empty state 구현 정리
-- [ ] 결제 내역 있음 상태: 기간 필터, compact row, pagination을 실제 데이터 구조 기준으로 전환
-- [ ] 결제내역 유의사항 하단 안내 박스 유지 여부 정리
+- [x] `/mypage/payment-history` 내 구독 내역 영역을 contract 기준으로 정리
+- [x] 구독 없음 상태 CTA와 recommendation card 정리
+- [x] 구독 해지 버튼 및 confirm modal 구현 정리 (ESC 키 + 초기 포커스 포함)
+- [x] 해지 신청 완료 후 `CANCEL_SCHEDULED` 상태, 자동 결제 해지 예정 문구, success message 처리
+- [x] 최근 결제 내역 empty state 구현 정리
+- [x] 결제 내역 있음 상태: 기간 필터(1M/3M/6M/12M), compact row, pagination 실데이터 기준 전환
+- [x] 결제내역 유의사항 하단 안내 박스 유지
+- [x] `billingApi.ts` 신설: `getPaymentHistory` (GET /api/v1/billing/payments/history)
+- [x] `subscriptionApi.ts`에 `cancelSubscription` 추가 (POST /api/v1/subscriptions/{subscriptionId}/cancel)
+- [x] `usePaymentHistory` TanStack Query 훅
+- [x] `useCancelSubscription` mutation 훅 (해지 후 구독/사용량/권한 query invalidation)
+- [x] `usePaymentHistoryStatus` 훅 — 데이터 변환·분기·핸들러 캡슐화
+- [x] `PaymentHistorySubscriptionCard`, `CancelSubscriptionModal`, `PaymentHistoryList` 컴포넌트
+- [x] `SubscriptionHistorySection`, `PaymentHistorySection`, `BillingNoticeSection` 섹션 컴포넌트
+- [x] `PAYMENT_FAILED` 구독 카드 노출 및 결제 실패 경고 표시
+- [x] 결제 내역 행에 `paymentStatus` 배지 추가 (완료/실패/취소/환불 구분)
 
 ## Phase 7 — Billing
 
