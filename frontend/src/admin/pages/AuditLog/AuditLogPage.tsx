@@ -36,10 +36,12 @@ const splitTimestamp = (value: string) => {
 };
 
 const isUnauthorizedError = (error: unknown) =>
-  axios.isAxiosError(error) && (error.response?.status ?? error.response?.data?.statusCode) === 401;
+  axios.isAxiosError(error)
+  && (error.response?.status === 401 || error.response?.data?.statusCode === 401);
 
 const isForbiddenError = (error: unknown) =>
-  axios.isAxiosError(error) && (error.response?.status ?? error.response?.data?.statusCode) === 403;
+  axios.isAxiosError(error)
+  && (error.response?.status === 403 || error.response?.data?.statusCode === 403);
 
 const SENSITIVE_AUDIT_DETAIL_MESSAGE = '민감 정보는 감사 로그 상세에서 표시하지 않습니다.';
 const SENSITIVE_AUDIT_PATTERNS = [
@@ -62,6 +64,8 @@ const AUDIT_LOG_LIST_QUERY_KEY = ['admin', 'auditLog', 'list'] as const;
 const AUDIT_LOG_DETAIL_QUERY_KEY = ['admin', 'auditLog', 'detail'] as const;
 const AUDIT_LOG_LIST_DEFAULT_PAGE = 0;
 const AUDIT_LOG_LIST_DEFAULT_SIZE = 20;
+const buildUtcDateBoundary = (date: string, isEndOfDay: boolean) =>
+  `${date}${isEndOfDay ? 'T23:59:59.999Z' : 'T00:00:00Z'}`;
 
 const containsSensitiveAuditContent = (value: string) =>
   SENSITIVE_AUDIT_PATTERNS.some((pattern) => pattern.test(value));
@@ -141,8 +145,8 @@ export default function AuditLogPage() {
   }, [query]);
 
   const hasInvalidDateRange = fromDate.length > 0 && toDate.length > 0 && fromDate > toDate;
-  const fromDateTime = fromDate ? new Date(`${fromDate}T00:00:00`).toISOString() : '';
-  const toDateTime = toDate ? new Date(`${toDate}T23:59:59.999`).toISOString() : '';
+  const fromDateTime = fromDate ? buildUtcDateBoundary(fromDate, false) : '';
+  const toDateTime = toDate ? buildUtcDateBoundary(toDate, true) : '';
 
   const {
     data: auditLogSummary,
