@@ -7,10 +7,6 @@
 **/frontend/.env.local
 **/frontend/.env.*.local
 **/frontend/*.log
-*.log
-**/frontend/*.tsbuildinfo
-**/frontend/vite.config.js
-**/frontend/vite.config.d.ts
 
 # =====================
 # FastAPI (Python)
@@ -27,7 +23,6 @@
 # =====================
 **/backend/.gradle/
 **/backend/build/
-**/backend/bin/
 **/backend/out/
 **/backend/.env
 **/backend/*.log
