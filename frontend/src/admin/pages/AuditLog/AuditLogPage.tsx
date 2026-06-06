@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { Bot, Database, FileText, ShieldCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import '../../styles/admin.css';
+import { adminSession } from '../../api/adminAuthApi';
 import {
   AUDIT_LOG_LEVEL_FILTER,
   AUDIT_LOG_SOURCE_FILTER,
@@ -32,11 +35,70 @@ const splitTimestamp = (value: string) => {
   return { date, time };
 };
 
+const isUnauthorizedError = (error: unknown) =>
+  axios.isAxiosError(error)
+  && (error.response?.status === 401 || error.response?.data?.statusCode === 401);
+
+const isForbiddenError = (error: unknown) =>
+  axios.isAxiosError(error)
+  && (error.response?.status === 403 || error.response?.data?.statusCode === 403);
+
+const SENSITIVE_AUDIT_DETAIL_MESSAGE = '민감 정보는 감사 로그 상세에서 표시하지 않습니다.';
+const SENSITIVE_AUDIT_PATTERNS = [
+  /token/i,
+  /bearer/i,
+  /authorization/i,
+  /cookie/i,
+  /set-cookie/i,
+  /password/i,
+  /비밀번호/,
+  /개인정보/,
+  /프롬프트 원문/,
+  /prompt/i,
+  /외부 응답 전문/,
+  /response body/i,
+];
+
 const AUDIT_LOG_SUMMARY_QUERY_KEY = ['admin', 'auditLog', 'summary'] as const;
 const AUDIT_LOG_LIST_QUERY_KEY = ['admin', 'auditLog', 'list'] as const;
 const AUDIT_LOG_DETAIL_QUERY_KEY = ['admin', 'auditLog', 'detail'] as const;
 const AUDIT_LOG_LIST_DEFAULT_PAGE = 0;
 const AUDIT_LOG_LIST_DEFAULT_SIZE = 20;
+const buildUtcDateBoundary = (date: string, isEndOfDay: boolean) =>
+  `${date}${isEndOfDay ? 'T23:59:59.999Z' : 'T00:00:00Z'}`;
+
+const containsSensitiveAuditContent = (value: string) =>
+  SENSITIVE_AUDIT_PATTERNS.some((pattern) => pattern.test(value));
+
+const sanitizeAuditDetailText = (value: string) => {
+  const trimmedValue = value.trim();
+
+  if (trimmedValue.length === 0) {
+    return '-';
+  }
+
+  return containsSensitiveAuditContent(trimmedValue) ? SENSITIVE_AUDIT_DETAIL_MESSAGE : trimmedValue;
+};
+
+const maskAuditIpAddress = (value: string) => {
+  const trimmedValue = value.trim();
+
+  if (trimmedValue.length === 0 || trimmedValue === '-') {
+    return '-';
+  }
+
+  if (trimmedValue.includes('*')) {
+    return trimmedValue;
+  }
+
+  const ipv4Match = trimmedValue.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}$/);
+
+  if (ipv4Match) {
+    return `${ipv4Match[1]}.*`;
+  }
+
+  return trimmedValue;
+};
 
 const sourceTabs: Array<{ key: AuditLogSourceFilter; label: string }> = [
   { key: AUDIT_LOG_SOURCE_FILTER.ALL, label: '전체' },
@@ -64,8 +126,11 @@ const toAuditLogPreview = (log: AuditLogItem): AuditLogPreview => ({
 });
 
 export default function AuditLogPage() {
+  const navigate = useNavigate();
   const [sourceFilter, setSourceFilter] = useState<AuditLogSourceFilter>(AUDIT_LOG_SOURCE_FILTER.ALL);
   const [levelFilter, setLevelFilter] = useState<AuditLogLevelFilter>(AUDIT_LOG_LEVEL_FILTER.ALL);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [query, setQuery] = useState('');
   const [debouncedKeyword, setDebouncedKeyword] = useState('');
   const [selectedLogId, setSelectedLogId] = useState('');
@@ -79,14 +144,23 @@ export default function AuditLogPage() {
     return () => window.clearTimeout(debounceTimer);
   }, [query]);
 
+  const hasInvalidDateRange = fromDate.length > 0 && toDate.length > 0 && fromDate > toDate;
+  const fromDateTime = fromDate ? buildUtcDateBoundary(fromDate, false) : '';
+  const toDateTime = toDate ? buildUtcDateBoundary(toDate, true) : '';
+
   const {
     data: auditLogSummary,
     isLoading: isSummaryLoading,
     isError: isSummaryError,
+    error: summaryError,
   } = useQuery<AuditLogSummary, Error>({
-    queryKey: AUDIT_LOG_SUMMARY_QUERY_KEY,
+    queryKey: [...AUDIT_LOG_SUMMARY_QUERY_KEY, fromDateTime, toDateTime],
+    enabled: !hasInvalidDateRange,
     queryFn: async () => {
-      const response = await auditLogApi.getSummary();
+      const response = await auditLogApi.getSummary({
+        ...(fromDateTime && { from: fromDateTime }),
+        ...(toDateTime && { to: toDateTime }),
+      });
       if (!response.data.success) {
         throw new Error(response.data.message ?? '감사 로그 요약 조회에 실패했습니다.');
       }
@@ -98,20 +172,26 @@ export default function AuditLogPage() {
     data: auditLogItems,
     isLoading: isAuditLogListLoading,
     isError: isAuditLogListError,
+    error: auditLogListError,
     refetch: refetchAuditLogList,
   } = useQuery<AuditLogItem[], Error>({
     queryKey: [
       ...AUDIT_LOG_LIST_QUERY_KEY,
       sourceFilter,
       levelFilter,
+      fromDateTime,
+      toDateTime,
       debouncedKeyword,
       AUDIT_LOG_LIST_DEFAULT_PAGE,
       AUDIT_LOG_LIST_DEFAULT_SIZE,
     ],
+    enabled: !hasInvalidDateRange,
     queryFn: async () => {
       const response = await auditLogApi.getLogs({
         page: AUDIT_LOG_LIST_DEFAULT_PAGE,
         size: AUDIT_LOG_LIST_DEFAULT_SIZE,
+        ...(fromDateTime && { from: fromDateTime }),
+        ...(toDateTime && { to: toDateTime }),
         ...(sourceFilter !== AUDIT_LOG_SOURCE_FILTER.ALL && { source: sourceFilter }),
         ...(levelFilter !== AUDIT_LOG_LEVEL_FILTER.ALL && { level: levelFilter }),
         ...(debouncedKeyword.length > 0 && { keyword: debouncedKeyword }),
@@ -128,6 +208,16 @@ export default function AuditLogPage() {
   const auditLogs = useMemo(() => (auditLogItems ?? []).map(toAuditLogPreview), [auditLogItems]);
   const filteredLogs = auditLogs;
   const isAuditLogListEmpty = !isAuditLogListLoading && !isAuditLogListError && filteredLogs.length === 0;
+  const isAuditLogFiltered =
+    sourceFilter !== AUDIT_LOG_SOURCE_FILTER.ALL
+    || levelFilter !== AUDIT_LOG_LEVEL_FILTER.ALL
+    || fromDate.length > 0
+    || toDate.length > 0
+    || debouncedKeyword.length > 0;
+  const auditLogListEmptyMessage = isAuditLogFiltered
+    ? '조건에 맞는 감사 로그가 없습니다.'
+    : '표시할 감사 로그가 없습니다.';
+  const dateRangeErrorMessage = hasInvalidDateRange ? '시작일은 종료일보다 늦을 수 없습니다.' : '';
 
   const summaryValueLabel = (value: number) => {
     if (isSummaryLoading) return '조회 중';
@@ -143,6 +233,7 @@ export default function AuditLogPage() {
     data: selectedLogDetail,
     isLoading: isAuditLogDetailLoading,
     isError: isAuditLogDetailError,
+    error: auditLogDetailError,
     refetch: refetchAuditLogDetail,
   } = useQuery<AuditLogDetail, Error>({
     queryKey: [...AUDIT_LOG_DETAIL_QUERY_KEY, selectedLogId],
@@ -162,16 +253,31 @@ export default function AuditLogPage() {
     ? {
         occurredAt: selectedLogDetail?.occurredAt ?? selectedLog.timestamp,
         level: selectedLogDetail?.level ?? selectedLog.level,
-        summary: selectedLogDetail?.summary ?? selectedLog.summary,
-        detailSummary: selectedLogDetail?.detailSummary ?? selectedLog.detail,
+        summary: sanitizeAuditDetailText(selectedLogDetail?.summary ?? selectedLog.summary),
+        detailSummary: sanitizeAuditDetailText(selectedLogDetail?.detailSummary ?? selectedLog.detail),
         actorId: selectedLogDetail?.actorId ?? '-',
         target: selectedLogDetail ? `${selectedLogDetail.targetType}:${selectedLogDetail.targetId}` : '-',
-        ipAddressMasked: selectedLogDetail?.ipAddressMasked ?? '-',
+        ipAddressMasked: maskAuditIpAddress(selectedLogDetail?.ipAddressMasked ?? '-'),
         requestId: selectedLogDetail?.requestId ?? '-',
       }
     : null;
   const isAuditLogDetailEmpty =
     Boolean(selectedLog) && !isAuditLogDetailLoading && !isAuditLogDetailError && !selectedLogDetail;
+  const isAuditLogUnauthorized = [summaryError, auditLogListError, auditLogDetailError].some(isUnauthorizedError);
+  const isAuditLogForbidden = [summaryError, auditLogListError, auditLogDetailError].some(isForbiddenError);
+  const isAuditLogAuthBlocked = isAuditLogUnauthorized || isAuditLogForbidden;
+  const globalStateTitle = isAuditLogUnauthorized
+    ? '관리자 인증이 만료되었습니다.'
+    : '감사 로그 화면 접근 권한이 없습니다.';
+  const globalStateDescription = isAuditLogUnauthorized
+    ? '감사 로그를 계속 보려면 관리자 계정으로 다시 로그인해 주세요.'
+    : 'ROLE_ADMIN 권한이 있는 관리자 계정으로 다시 로그인해 주세요.';
+  const globalStateActionLabel = isAuditLogUnauthorized ? '다시 로그인' : '로그인 화면 이동';
+
+  const handleUnauthorizedAction = () => {
+    adminSession.clearToken();
+    navigate('/admin/login', { replace: true });
+  };
 
   useEffect(() => {
     const isSelectedVisible = filteredLogs.some((log) => log.id === selectedLogId);
@@ -228,22 +334,37 @@ export default function AuditLogPage() {
         </div>
       </header>
 
-      <div className="auditOpsSummary">
-        {summaryItems.map((item) => (
-          <article className={`admin-card auditOpsSummaryCard ${item.theme}`} key={item.title}>
-            <div className="auditOpsSummaryContent">
-              <span>{item.title}</span>
-              <strong>{summaryValueLabel(item.value)}</strong>
-              <small>{item.desc}</small>
-            </div>
-            <div className={`auditOpsSummaryIcon ${item.theme}`}>
-              <item.Icon size={26} strokeWidth={2.3} />
-            </div>
-          </article>
-        ))}
-      </div>
+      {isAuditLogAuthBlocked ? (
+        <section className="auditOpsGlobalState">
+          <div>
+            <strong>{globalStateTitle}</strong>
+            <span>{globalStateDescription}</span>
+          </div>
+          <button type="button" className="auditOpsPrimaryButton" onClick={handleUnauthorizedAction}>
+            {globalStateActionLabel}
+          </button>
+        </section>
+      ) : null}
 
-      <section className="admin-card auditOpsShell">
+      {!isAuditLogAuthBlocked ? (
+        <div className="auditOpsSummary">
+          {summaryItems.map((item) => (
+            <article className={`admin-card auditOpsSummaryCard ${item.theme}`} key={item.title}>
+              <div className="auditOpsSummaryContent">
+                <span>{item.title}</span>
+                <strong>{summaryValueLabel(item.value)}</strong>
+                <small>{item.desc}</small>
+              </div>
+              <div className={`auditOpsSummaryIcon ${item.theme}`}>
+                <item.Icon size={26} strokeWidth={2.3} />
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
+
+      {!isAuditLogAuthBlocked ? (
+        <section className="admin-card auditOpsShell">
         <div className="auditOpsToolbar">
           <div className="auditOpsTabs">
             {sourceTabs.map((tab) => (
@@ -260,6 +381,18 @@ export default function AuditLogPage() {
 
           <div className="auditOpsFilters">
             <input
+              type="date"
+              value={fromDate}
+              onChange={(event) => setFromDate(event.target.value)}
+              aria-label="조회 시작일"
+            />
+            <input
+              type="date"
+              value={toDate}
+              onChange={(event) => setToDate(event.target.value)}
+              aria-label="조회 종료일"
+            />
+            <input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -274,6 +407,8 @@ export default function AuditLogPage() {
             </select>
           </div>
         </div>
+
+        {dateRangeErrorMessage ? <div className="auditOpsFilterError">{dateRangeErrorMessage}</div> : null}
 
         <div className="auditOpsGrid">
           <div className="auditOpsTableWrap">
@@ -313,7 +448,7 @@ export default function AuditLogPage() {
                   })
                 : null}
 
-              {isAuditLogListEmpty ? <div className="auditOpsEmpty">조건에 맞는 감사 로그가 없습니다.</div> : null}
+              {isAuditLogListEmpty ? <div className="auditOpsEmpty">{auditLogListEmptyMessage}</div> : null}
             </div>
           </div>
 
@@ -391,7 +526,8 @@ export default function AuditLogPage() {
             )}
           </aside>
         </div>
-      </section>
+        </section>
+      ) : null}
 
       <style>{`
         .auditOpsPage {
@@ -415,6 +551,48 @@ export default function AuditLogPage() {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 18px;
+        }
+
+        .auditOpsGlobalState {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 18px 20px;
+          border: 1px solid #f0b8bd;
+          border-radius: 16px;
+          background: linear-gradient(135deg, #fff2f2 0%, #fff8f8 100%);
+        }
+
+        .auditOpsGlobalState div {
+          display: grid;
+          gap: 6px;
+        }
+
+        .auditOpsGlobalState strong {
+          color: #8e2630;
+          font-size: 18px;
+          font-weight: 800;
+        }
+
+        .auditOpsGlobalState span {
+          color: #a04a52;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .auditOpsPrimaryButton {
+          height: 40px;
+          border: 0;
+          border-radius: 10px;
+          background: #bf3f4c;
+          color: #fff;
+          padding: 0 16px;
+          font: inherit;
+          font-size: 12px;
+          font-weight: 800;
+          cursor: pointer;
+          flex: none;
         }
 
         .auditOpsSummaryCard {
@@ -619,6 +797,20 @@ export default function AuditLogPage() {
 
         .auditOpsFilters input {
           width: 260px;
+        }
+
+        .auditOpsFilters input[type='date'] {
+          width: 148px;
+        }
+
+        .auditOpsFilterError {
+          padding: 10px 12px;
+          border: 1px solid #f0d0a4;
+          border-radius: 10px;
+          background: #fff8e8;
+          color: #9c6b16;
+          font-size: 12px;
+          font-weight: 800;
         }
 
         .auditOpsGrid {
