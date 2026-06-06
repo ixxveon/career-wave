@@ -5,19 +5,19 @@
 
 ## 브랜치 전략
 
-- [ ] Phase별 구현 브랜치가 정의되어 있다.
-- [ ] Phase 1 브랜치는 `feature/admin-dashboard-spec`을 기준으로 생성한다.
-- [ ] Phase 2 이후 브랜치는 직전 Phase 브랜치를 기준으로 생성한다.
-- [ ] 선행 Phase PR 병합 후 후속 Phase 브랜치의 rebase 또는 PR base 조정 기준이 명시되어 있다.
+- [x] Phase별 구현 브랜치가 정의되어 있다.
+- [x] Phase 1 브랜치는 최신 `develop`을 기준으로 생성한다.
+- [x] Phase 2 이후 브랜치는 직전 Phase 브랜치를 기준으로 생성한다.
+- [x] 선행 Phase PR 병합 후 후속 Phase 브랜치의 rebase 또는 PR base 조정 기준이 명시되어 있다.
 
 ## 타입 및 API 계층
 
-- [ ] `frontend/src/admin/api/dashboardApi.ts`가 생성되어 있다.
-- [ ] `AdminDashboardSummary` 응답 타입이 정의되고 export되어 있다.
-- [ ] `DashboardKpi`, `DashboardAlert`, `DashboardActivity` 타입이 정의되고 export되어 있다.
-- [ ] `GET /api/v1/admin/dashboard/summary` 호출 함수가 작성되어 있다.
-- [ ] `ApiResponse<AdminDashboardSummary>` 래퍼 응답이 처리되어 있다.
-- [ ] API 실패 시 화면에 표시할 에러 메시지 매핑이 정의되어 있다.
+- [x] `frontend/src/admin/api/dashboardApi.ts`가 생성되어 있다.
+- [x] `AdminDashboardSummary` 응답 타입이 정의되고 export되어 있다.
+- [x] `DashboardKpi`, `DashboardAlert`, `DashboardActivity` 타입이 정의되고 export되어 있다.
+- [x] `GET /api/v1/admin/dashboard/summary` 호출 함수가 작성되어 있다.
+- [x] `ApiResponse<AdminDashboardSummary>` 래퍼 응답이 처리되어 있다.
+- [x] API 실패 시 화면에 표시할 에러 메시지 매핑이 정의되어 있다.
 
 ## 화면 데이터 연동
 
