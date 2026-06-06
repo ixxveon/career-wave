@@ -121,19 +121,11 @@ export default function AdminDashboardPage() {
     }
   }, [dashboardSummary]);
 
-  const { weeklySignups, hasWeeklySignupSectionError } = useMemo(() => {
-    try {
-      return {
-        weeklySignups: dashboardSummary?.weeklySignups ?? [],
-        hasWeeklySignupSectionError: false,
-      };
-    } catch {
-      return {
-        weeklySignups: [],
-        hasWeeklySignupSectionError: !!dashboardSummary,
-      };
-    }
-  }, [dashboardSummary]);
+  const weeklySignups = useMemo(
+    () => dashboardSummary?.weeklySignups ?? [],
+    [dashboardSummary]
+  );
+  const hasWeeklySignupSectionError = false;
 
   const weeklySignupMax = useMemo(
     () => weeklySignups.reduce((max, item) => Math.max(max, item.count), 0),
@@ -216,19 +208,11 @@ export default function AdminDashboardPage() {
     }
   }, [dashboardSummary]);
 
-  const { recentActivities, hasRecentActivitySectionError } = useMemo(() => {
-    try {
-      return {
-        recentActivities: dashboardSummary?.recentActivities ?? [],
-        hasRecentActivitySectionError: false,
-      };
-    } catch {
-      return {
-        recentActivities: [],
-        hasRecentActivitySectionError: !!dashboardSummary,
-      };
-    }
-  }, [dashboardSummary]);
+  const recentActivities = useMemo(
+    () => dashboardSummary?.recentActivities ?? [],
+    [dashboardSummary]
+  );
+  const hasRecentActivitySectionError = false;
 
   return (
     <>
@@ -324,10 +308,10 @@ export default function AdminDashboardPage() {
                     <div className="dashboardStateBox">현재 처리할 주요 알림이 없습니다.</div>
                   ) : (
                     alerts.map((item) => (
-                      <div className={`alertRow ${item.cls}`} key={`${item.type}-${item.text}`}>
+                      <div className={`alertRow ${item.cls}`} key={`${item.domain}-${item.id}`}>
                         <span className="alertIcon">{item.icon}</span>
                         <span className="alertLevel">{item.level}</span>
-                        <strong>{item.type}</strong>
+                        <strong>{item.domain}</strong>
                         <p>{item.text}</p>
                         <button onClick={() => navigate(item.path)}>{item.button}</button>
                       </div>
