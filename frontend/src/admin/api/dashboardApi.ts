@@ -47,8 +47,7 @@ export const DASHBOARD_PAYMENT_METHOD = {
 } as const;
 
 export type DashboardPaymentMethod =
-  | (typeof DASHBOARD_PAYMENT_METHOD)[keyof typeof DASHBOARD_PAYMENT_METHOD]
-  | string;
+  (typeof DASHBOARD_PAYMENT_METHOD)[keyof typeof DASHBOARD_PAYMENT_METHOD];
 
 export const DASHBOARD_SYSTEM_STATUS = {
   NORMAL: 'NORMAL',
