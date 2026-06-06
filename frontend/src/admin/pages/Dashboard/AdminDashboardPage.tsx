@@ -4,7 +4,6 @@ import { Activity, Bot, CreditCard, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   dashboardApi,
-  getDashboardSummaryErrorMessage,
   unwrapDashboardSummaryResponse,
 } from '../../api/dashboardApi';
 import '../../styles/admin.css';
@@ -37,18 +36,20 @@ const SYSTEM_STATUS_PRESENTATION = {
   CRITICAL: { dotClass: 'danger' },
 } as const;
 
+const formatOccurredAt = (iso: string) =>
+  new Date(iso).toLocaleTimeString('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const { data: dashboardSummary } = useQuery({
     queryKey: DASHBOARD_SUMMARY_QUERY_KEY,
     queryFn: async () => {
       const response = await dashboardApi.getSummary();
-
-      if (!response.data.success) {
-        throw new Error(getDashboardSummaryErrorMessage(response.data.message));
-      }
-
-      return unwrapDashboardSummaryResponse(response.data);
+      return unwrapDashboardSummaryResponse(response);
     },
   });
   const kpis = useMemo(
@@ -176,7 +177,7 @@ export default function AdminDashboardPage() {
 
       <section className="kpiGrid">
         {kpis.map((item) => (
-          <article className={`kpiCard ${item.theme}`} key={item.title}>
+          <article className={`kpiCard ${item.theme}`} key={item.key}>
             <div className="kpiContent">
               <p>{item.title}</p>
               <h3>{item.value}</h3>
@@ -199,10 +200,10 @@ export default function AdminDashboardPage() {
 
             <div className="alertList">
               {alerts.map((item) => (
-                <div className={`alertRow ${item.cls}`} key={item.text}>
+                <div className={`alertRow ${item.cls}`} key={item.id}>
                   <span className="alertIcon">{item.icon}</span>
                   <span className="alertLevel">{item.level}</span>
-                  <strong>{item.type}</strong>
+                  <strong>{item.domain}</strong>
                   <p>{item.text}</p>
                   <button onClick={() => navigate(item.path)}>{item.button}</button>
                 </div>
@@ -259,12 +260,12 @@ export default function AdminDashboardPage() {
 
           <section className="adminCardGrid adminCardGrid--dashboard">
             {adminCards.map((card) => (
-              <article className="adminCard" key={card.title}>
+              <article className="adminCard" key={card.key}>
                 <div className="adminTop">
                   <div className={`adminIcon ${card.cls}`}>{card.icon}</div>
                   <h3>{card.title}</h3>
                 </div>
-                <p>{card.desc}</p>
+                <p>{card.description}</p>
                 <div className="adminBottom">
                   <strong>{card.value}</strong>
                   <button onClick={() => navigate(card.path)}>상세 보기</button>
@@ -296,7 +297,7 @@ export default function AdminDashboardPage() {
                 key={activity.id}
                 onClick={() => navigate(activity.targetPath)}
               >
-                <span>{activity.occurredAt}</span>
+                <span>{formatOccurredAt(activity.occurredAt)}</span>
                 <strong>{activity.adminId}</strong>
                 <p>{activity.message}</p>
               </div>
