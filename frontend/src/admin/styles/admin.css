@@ -294,7 +294,7 @@ button {
   border-radius: 999px;
   background: linear-gradient(90deg, #d8e4ef 0%, #edf3f8 50%, #d8e4ef 100%);
   background-size: 200% 100%;
-  animation: dashboardPulse 1.2s ease-in-out infinite;
+  animation: dashboard-pulse 1.2s ease-in-out infinite;
 }
 
 .kpiContent {
@@ -928,7 +928,7 @@ button {
   overflow-wrap: anywhere;
 }
 
-@keyframes dashboardPulse {
+@keyframes dashboard-pulse {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }

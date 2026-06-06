@@ -4,7 +4,6 @@ import { Activity, Bot, CreditCard, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   dashboardApi,
-  getDashboardSummaryErrorMessage,
   unwrapDashboardSummaryResponse,
 } from '../../api/dashboardApi';
 import '../../styles/admin.css';
@@ -24,6 +23,8 @@ const ALERT_PRESENTATION = {
   NORMAL: { icon: 'i', cls: 'normal' },
 } as const;
 
+const WEEKLY_CHART_HEIGHT_PX = 168;
+const PAYMENT_RATIO_COLORS = ['#27577f', '#8daeca', '#d6e3ee'] as const;
 const PAYMENT_RATIO_CLASSES = ['c1', 'c2', 'c3'] as const;
 
 const SERVICE_CARD_PRESENTATION = {
@@ -53,11 +54,6 @@ export default function AdminDashboardPage() {
     queryKey: DASHBOARD_SUMMARY_QUERY_KEY,
     queryFn: async () => {
       const response = await dashboardApi.getSummary();
-
-      if (!response.data.success) {
-        throw new Error(getDashboardSummaryErrorMessage(response.data.message));
-      }
-
       return unwrapDashboardSummaryResponse(response.data);
     },
   });
@@ -160,9 +156,10 @@ export default function AdminDashboardPage() {
       .map((item, index) => {
         const start = offset;
         const end = offset + item.ratio;
+        const color = PAYMENT_RATIO_COLORS[index] ?? PAYMENT_RATIO_COLORS[PAYMENT_RATIO_COLORS.length - 1];
         offset = end;
 
-        return `var(--donut-${index + 1}) ${start}% ${end}%`;
+        return `${color} ${start}% ${end}%`;
       })
       .join(', ');
   }, [paymentRatio]);
@@ -347,7 +344,9 @@ export default function AdminDashboardPage() {
                           <div className="barItem" key={item.label}>
                             <div
                               style={{
-                                height: weeklySignupMax > 0 ? `${(item.count / weeklySignupMax) * 168}px` : '0px',
+                                height: weeklySignupMax > 0
+                                  ? `${(item.count / weeklySignupMax) * WEEKLY_CHART_HEIGHT_PX}px`
+                                  : '0px',
                               }}
                             />
                             <span>{item.label}</span>
