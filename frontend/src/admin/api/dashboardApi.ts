@@ -1,4 +1,5 @@
 import axiosInstance from '../../utils/axiosInstance';
+import type { AxiosResponse } from 'axios';
 import type { ApiResponse } from './types';
 
 export const DASHBOARD_API_BASE_PATH = '/api/v1/admin/dashboard';
@@ -11,6 +12,52 @@ export const DASHBOARD_RANGE = {
 
 export type DashboardRange = (typeof DASHBOARD_RANGE)[keyof typeof DASHBOARD_RANGE];
 
+export const DASHBOARD_SEVERITY = {
+  NORMAL: 'NORMAL',
+  WARNING: 'WARNING',
+  CRITICAL: 'CRITICAL',
+} as const;
+
+export type DashboardSeverity = (typeof DASHBOARD_SEVERITY)[keyof typeof DASHBOARD_SEVERITY];
+
+export const DASHBOARD_ALERT_LEVEL = {
+  URGENT: 'URGENT',
+  WARNING: 'WARNING',
+  NORMAL: 'NORMAL',
+} as const;
+
+export type DashboardAlertLevel = (typeof DASHBOARD_ALERT_LEVEL)[keyof typeof DASHBOARD_ALERT_LEVEL];
+
+export const DASHBOARD_ALERT_DOMAIN = {
+  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER',
+  REPORT: 'REPORT',
+  CS: 'CS',
+  PAYMENT: 'PAYMENT',
+  STATISTICS: 'STATISTICS',
+  AI_METRICS: 'AI_METRICS',
+  SCRAPING: 'SCRAPING',
+  AUDIT_LOG: 'AUDIT_LOG',
+} as const;
+
+export type DashboardAlertDomain = (typeof DASHBOARD_ALERT_DOMAIN)[keyof typeof DASHBOARD_ALERT_DOMAIN];
+
+export const DASHBOARD_PAYMENT_METHOD = {
+  CARD: 'CARD',
+} as const;
+
+export type DashboardPaymentMethod =
+  | (typeof DASHBOARD_PAYMENT_METHOD)[keyof typeof DASHBOARD_PAYMENT_METHOD]
+  | string;
+
+export const DASHBOARD_SYSTEM_STATUS = {
+  NORMAL: 'NORMAL',
+  WARNING: 'WARNING',
+  CRITICAL: 'CRITICAL',
+} as const;
+
+export type DashboardSystemStatus = (typeof DASHBOARD_SYSTEM_STATUS)[keyof typeof DASHBOARD_SYSTEM_STATUS];
+
 export interface DashboardSummaryParams {
   range?: DashboardRange;
 }
@@ -21,14 +68,14 @@ export interface DashboardKpi {
   value: number;
   unit: string;
   deltaText: string;
-  severity: string;
+  severity: DashboardSeverity;
   targetPath: string;
 }
 
 export interface DashboardAlert {
   id: number;
-  level: string;
-  domain: string;
+  level: DashboardAlertLevel;
+  domain: DashboardAlertDomain;
   title: string;
   message: string;
   targetPath: string;
@@ -52,7 +99,7 @@ export interface AdminDashboardSummary {
     count: number;
   }>;
   paymentRatio: Array<{
-    method: string;
+    method: DashboardPaymentMethod;
     label: string;
     ratio: number;
   }>;
@@ -66,14 +113,29 @@ export interface AdminDashboardSummary {
   systemStatus: Array<{
     key: string;
     label: string;
-    status: string;
+    status: DashboardSystemStatus;
     valueText: string;
   }>;
   recentActivities: DashboardActivity[];
 }
 
-export function unwrapDashboardSummaryResponse(response: ApiResponse<AdminDashboardSummary>) {
-  return response.data;
+export function unwrapDashboardSummaryResponse(
+  response: AxiosResponse<ApiResponse<AdminDashboardSummary>>
+): AdminDashboardSummary;
+export function unwrapDashboardSummaryResponse(response: ApiResponse<AdminDashboardSummary>): AdminDashboardSummary;
+export function unwrapDashboardSummaryResponse(
+  response: AxiosResponse<ApiResponse<AdminDashboardSummary>> | ApiResponse<AdminDashboardSummary>
+): AdminDashboardSummary {
+  const payload = 'success' in response ? response : response.data;
+
+  if (!payload.success) {
+    throw {
+      statusCode: payload.statusCode,
+      message: getDashboardSummaryErrorMessage(payload.message),
+    };
+  }
+
+  return payload.data;
 }
 
 export function getDashboardSummaryErrorMessage(message?: string | null) {
