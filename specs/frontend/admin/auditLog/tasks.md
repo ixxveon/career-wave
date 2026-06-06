@@ -68,9 +68,9 @@
 **Branch**: `feature/admin-audit-log-verify`
 **Base**: `feature/admin-audit-log-state-security`
 
-- [ ] `/admin/log` 진입 시 요약 카드와 로그 목록 표시 확인
-- [ ] source, level, keyword 변경과 기본 page/size 조회 조건이 API 조회 조건과 일치하는지 확인
-- [ ] 로그 선택 시 상세 패널 갱신 확인
-- [ ] API 실패, 빈 목록, 검색 결과 없음, 권한 오류 상태 확인
-- [ ] 모바일과 데스크톱에서 테이블, 필터, 상세 패널 레이아웃 확인
-- [ ] `npm run build` 또는 프로젝트에서 가능한 프론트엔드 검증 명령 실행
+- [x] `/admin/log` 진입 시 요약 카드와 로그 목록 표시 확인
+- [x] source, level, keyword 변경과 기본 page/size 조회 조건이 API 조회 조건과 일치하는지 확인
+- [x] 로그 선택 시 상세 패널 갱신 확인
+- [x] API 실패, 빈 목록, 검색 결과 없음, 권한 오류 상태 확인
+- [x] 모바일과 데스크톱에서 테이블, 필터, 상세 패널 레이아웃 확인
+- [x] `npm run build` 또는 프로젝트에서 가능한 프론트엔드 검증 명령 실행

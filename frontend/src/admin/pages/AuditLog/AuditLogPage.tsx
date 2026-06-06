@@ -62,7 +62,7 @@ const SENSITIVE_AUDIT_PATTERNS = [
 const AUDIT_LOG_SUMMARY_QUERY_KEY = ['admin', 'auditLog', 'summary'] as const;
 const AUDIT_LOG_LIST_QUERY_KEY = ['admin', 'auditLog', 'list'] as const;
 const AUDIT_LOG_DETAIL_QUERY_KEY = ['admin', 'auditLog', 'detail'] as const;
-const AUDIT_LOG_LIST_DEFAULT_PAGE = 0;
+const AUDIT_LOG_LIST_DEFAULT_PAGE = 1;
 const AUDIT_LOG_LIST_DEFAULT_SIZE = 20;
 const buildUtcDateBoundary = (date: string, isEndOfDay: boolean) =>
   `${date}${isEndOfDay ? 'T23:59:59.999Z' : 'T00:00:00Z'}`;
@@ -1119,13 +1119,20 @@ export default function AuditLogPage() {
             grid-template-columns: 1fr;
           }
 
+          .auditOpsToolbar,
+          .auditOpsFilters {
+            width: 100%;
+          }
+
           .auditOpsTableHead,
           .auditOpsTableRow {
             grid-template-columns: 1fr;
             gap: 6px;
           }
 
-          .auditOpsFilters input {
+          .auditOpsFilters input,
+          .auditOpsFilters input[type='date'],
+          .auditOpsFilters select {
             width: 100%;
           }
 
