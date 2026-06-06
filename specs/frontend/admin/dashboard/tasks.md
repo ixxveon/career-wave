@@ -14,14 +14,14 @@
 
 ## Phase 2 - 화면 데이터 연동
 
-- [ ] `feature/admin-dashboard-api` 브랜치를 기준으로 `feature/admin-dashboard-data` 브랜치를 생성한다.
-- [ ] `AdminDashboardPage.tsx`의 mock KPI 데이터를 API 응답 기반으로 교체한다.
-- [ ] 주요 알림 목록을 API 응답 기반으로 교체한다.
-- [ ] 주간 가입자 차트를 API 응답 기반으로 교체한다.
-- [ ] 결제 비중 차트를 API 응답 기반으로 교체한다.
-- [ ] 관리자 기능 카드의 값과 이동 경로를 API 응답 또는 라우트 상수와 연결한다.
-- [ ] 시스템 상태와 최근 관리자 활동을 API 응답 기반으로 교체한다.
-- [ ] TanStack Query를 서버 상태 조회에 우선 적용하고, 적용하지 않는 경우 사유를 남긴다.
+- [x] `feature/admin-dashboard-api` 브랜치를 기준으로 `feature/admin-dashboard-data` 브랜치를 생성한다.
+- [x] `AdminDashboardPage.tsx`의 mock KPI 데이터를 API 응답 기반으로 교체한다.
+- [x] 주요 알림 목록을 API 응답 기반으로 교체한다.
+- [x] 주간 가입자 차트를 API 응답 기반으로 교체한다.
+- [x] 결제 비중 차트를 API 응답 기반으로 교체한다.
+- [x] 관리자 기능 카드의 값과 이동 경로를 API 응답 또는 라우트 상수와 연결한다.
+- [x] 시스템 상태와 최근 관리자 활동을 API 응답 기반으로 교체한다.
+- [x] TanStack Query를 서버 상태 조회에 우선 적용하고, 적용하지 않는 경우 사유를 남긴다.
 
 ## Phase 3 - 상태 처리
 

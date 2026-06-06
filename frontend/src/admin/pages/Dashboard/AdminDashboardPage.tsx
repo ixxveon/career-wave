@@ -1,42 +1,153 @@
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Activity, Bot, CreditCard, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import {
+  dashboardApi,
+  getDashboardSummaryErrorMessage,
+  unwrapDashboardSummaryResponse,
+} from '../../api/dashboardApi';
 import '../../styles/admin.css';
 
-const kpis = [
-  { Icon: Users, title: '오늘 신규 가입자', value: '128', desc: '어제 대비 +14명', theme: 'kpi-blue' },
-  { Icon: Activity, title: '실시간 접속자', value: '1,042', desc: '최근 7일 평균 이상', theme: 'kpi-green' },
-  { Icon: Bot, title: 'AI 면접 세션', value: '37', desc: '평균 응답 안정', theme: 'kpi-purple' },
-  { Icon: CreditCard, title: '오늘 매출', value: '₩4.4M', desc: '구독 결제 증가', theme: 'kpi-yellow' },
-];
+const DASHBOARD_SUMMARY_QUERY_KEY = ['admin', 'dashboard', 'summary'] as const;
+const KPI_PRESENTATION = {
+  TODAY_NEW_MEMBERS: { Icon: Users, theme: 'kpi-blue' },
+  REALTIME_ACTIVE_USERS: { Icon: Activity, theme: 'kpi-green' },
+  AI_INTERVIEW_SESSIONS: { Icon: Bot, theme: 'kpi-purple' },
+  TODAY_REVENUE: { Icon: CreditCard, theme: 'kpi-yellow' },
+} as const;
 
-const alerts = [
-  { icon: '!', level: '긴급', type: '신고', text: '게시글 신고 3건 처리 대기 중', button: '신고 관리로 이동', cls: 'danger', path: '/admin/reports' },
-  { icon: '₩', level: '주의', type: '결제', text: '정기결제 실패 7건 확인 필요', button: '결제 및 정산으로 이동', cls: 'warning', path: '/admin/payments' },
-  { icon: 'Q', level: '일반', type: '문의', text: '1:1 문의 미답변 12건', button: '고객센터로 이동', cls: 'normal', path: '/admin/cs' },
-  { icon: 'AI', level: '주의', type: 'AI', text: '이상 토큰 사용 유저 2명 감지', button: 'AI 메트릭스으로 이동', cls: 'ai', path: '/admin/ai' },
-];
-
-const adminCards = [
-  { icon: 'USER', title: '회원 관리', desc: '가입자, 구독 상태, 권한, 정지 회원을 관리합니다.', value: '신규 128명', cls: 'blue', path: '/admin/members' },
-  { icon: 'REP', title: '신고 관리', desc: '커뮤니티 신고, 블라인드 처리, 스팸 게시글을 확인합니다.', value: '대기 3건', cls: 'red', path: '/admin/reports' },
-  { icon: 'CS', title: '고객센터', desc: '공지사항·FAQ 관리 및 1:1 문의 응대를 처리합니다.', value: '미답변 12건', cls: 'orange', path: '/admin/cs' },
-  { icon: 'PAY', title: '결제 및 정산', desc: '결제 내역, 정기결제 실패, 환불 요청을 관리합니다.', value: '실패 7건', cls: 'orange', path: '/admin/payments' },
-  { icon: 'STT', title: '서비스 통계', desc: '매출 현황과 가입자 증가 추이를 확인합니다.', value: '이번 달 매출', cls: 'green', path: '/admin/stats' },
-  { icon: 'AI', title: 'AI 메트릭스', desc: 'AI 토큰 사용량, 면접 세션, 이상 탐지를 모니터링합니다.', value: '세션 37건', cls: 'purple', path: '/admin/ai' },
-];
-
-const logs: [string, string, string, string][] = [
-  ['09:12', 'cs_admin', '환불 요청 1건 확인', '/admin/payments'],
-  ['09:18', 'backend_admin', '스크래핑 실패 로그 확인', '/admin/scraping'],
-  ['09:22', 'super_admin', '관리자 계정 권한 변경', '/admin/admins'],
-  ['09:31', 'cs_admin', '신고 게시글 블라인드 처리', '/admin/reports'],
-  ['09:45', 'backend_admin', 'AI 토큰 사용량 임계치 알림 설정', '/admin/ai'],
-];
-
-const weeklyBars = [70, 100, 85, 140, 128, 155, 168];
+const ALERT_PRESENTATION = {
+  URGENT: { icon: '!', cls: 'danger' },
+  WARNING: { icon: '!!', cls: 'warning' },
+  NORMAL: { icon: 'i', cls: 'normal' },
+} as const;
+const PAYMENT_RATIO_CLASSES = ['c1', 'c2', 'c3'] as const;
+const SERVICE_CARD_PRESENTATION = {
+  MEMBER: { icon: 'USER', cls: 'blue' },
+  REPORT: { icon: 'REP', cls: 'red' },
+  CS: { icon: 'CS', cls: 'orange' },
+  PAYMENT: { icon: 'PAY', cls: 'orange' },
+  STATISTICS: { icon: 'STT', cls: 'green' },
+  AI_METRICS: { icon: 'AI', cls: 'purple' },
+} as const;
+const SYSTEM_STATUS_PRESENTATION = {
+  NORMAL: { dotClass: 'normal' },
+  WARNING: { dotClass: 'warning' },
+  CRITICAL: { dotClass: 'danger' },
+} as const;
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
+  const { data: dashboardSummary } = useQuery({
+    queryKey: DASHBOARD_SUMMARY_QUERY_KEY,
+    queryFn: async () => {
+      const response = await dashboardApi.getSummary();
+
+      if (!response.data.success) {
+        throw new Error(getDashboardSummaryErrorMessage(response.data.message));
+      }
+
+      return unwrapDashboardSummaryResponse(response.data);
+    },
+  });
+  const kpis = useMemo(
+    () =>
+      (dashboardSummary?.kpis ?? []).map((item) => {
+        const presentation =
+          KPI_PRESENTATION[item.key as keyof typeof KPI_PRESENTATION] ?? KPI_PRESENTATION.TODAY_NEW_MEMBERS;
+
+        return {
+          ...item,
+          value: item.unit ? `${item.value.toLocaleString()}${item.unit}` : item.value.toLocaleString(),
+          desc: item.deltaText,
+          ...presentation,
+        };
+      }),
+    [dashboardSummary]
+  );
+  const alerts = useMemo(
+    () =>
+      (dashboardSummary?.alerts ?? []).map((item) => {
+        const presentation =
+          ALERT_PRESENTATION[item.level as keyof typeof ALERT_PRESENTATION] ?? ALERT_PRESENTATION.NORMAL;
+
+        return {
+          ...item,
+          icon: presentation.icon,
+          cls: presentation.cls,
+          text: item.message,
+          button: '상세 보기',
+          path: item.targetPath,
+        };
+      }),
+    [dashboardSummary]
+  );
+  const weeklySignups = dashboardSummary?.weeklySignups ?? [];
+  const weeklySignupMax = useMemo(
+    () => weeklySignups.reduce((max, item) => Math.max(max, item.count), 0),
+    [weeklySignups]
+  );
+  const weeklySignupTicks = useMemo(() => {
+    if (weeklySignupMax <= 0) {
+      return [0];
+    }
+
+    return [1, 0.75, 0.5, 0.25, 0].map((ratio) => Math.round(weeklySignupMax * ratio));
+  }, [weeklySignupMax]);
+  const paymentRatio = useMemo(
+    () =>
+      (dashboardSummary?.paymentRatio ?? []).map((item, index) => ({
+        ...item,
+        colorClass: PAYMENT_RATIO_CLASSES[index] ?? PAYMENT_RATIO_CLASSES[PAYMENT_RATIO_CLASSES.length - 1],
+      })),
+    [dashboardSummary]
+  );
+  const paymentRatioStops = useMemo(() => {
+    let offset = 0;
+
+    return paymentRatio
+      .map((item, index) => {
+        const start = offset;
+        const end = offset + item.ratio;
+        offset = end;
+
+        return `var(--donut-${index + 1}) ${start}% ${end}%`;
+      })
+      .join(', ');
+  }, [paymentRatio]);
+  const adminCards = useMemo(
+    () =>
+      (dashboardSummary?.serviceCards ?? []).map((item) => {
+        const presentation =
+          SERVICE_CARD_PRESENTATION[item.key as keyof typeof SERVICE_CARD_PRESENTATION]
+          ?? SERVICE_CARD_PRESENTATION.MEMBER;
+
+        return {
+          ...item,
+          icon: presentation.icon,
+          cls: presentation.cls,
+          value: item.summaryText,
+          path: item.targetPath,
+        };
+      }),
+    [dashboardSummary]
+  );
+  const systemStatus = useMemo(
+    () =>
+      (dashboardSummary?.systemStatus ?? []).map((item) => {
+        const presentation =
+          SYSTEM_STATUS_PRESENTATION[item.status as keyof typeof SYSTEM_STATUS_PRESENTATION]
+          ?? SYSTEM_STATUS_PRESENTATION.NORMAL;
+
+        return {
+          ...item,
+          dotClass: presentation.dotClass,
+        };
+      }),
+    [dashboardSummary]
+  );
+  const recentActivities = dashboardSummary?.recentActivities ?? [];
 
   return (
     <>
@@ -104,13 +215,19 @@ export default function AdminDashboardPage() {
               <h3>주간 가입자 추이</h3>
               <div className="chartArea">
                 <div className="yAxis">
-                  <span>200</span><span>150</span><span>100</span><span>50</span><span>0</span>
+                  {weeklySignupTicks.map((tick, index) => (
+                    <span key={`${tick}-${index}`}>{tick}</span>
+                  ))}
                 </div>
                 <div className="bars">
-                  {['월', '화', '수', '목', '금', '토', '일'].map((day, i) => (
-                    <div className="barItem" key={day}>
-                      <div style={{ height: weeklyBars[i] }} />
-                      <span>{day}</span>
+                  {weeklySignups.map((item) => (
+                    <div className="barItem" key={item.label}>
+                      <div
+                        style={{
+                          height: weeklySignupMax > 0 ? `${(item.count / weeklySignupMax) * 168}px` : '0px',
+                        }}
+                      />
+                      <span>{item.label}</span>
                     </div>
                   ))}
                 </div>
@@ -120,11 +237,21 @@ export default function AdminDashboardPage() {
             <article className="admin-card donutCard">
               <h3>결제 비중</h3>
               <div className="donutContent">
-                <div className="donut" />
+                <div
+                  className="donut"
+                  style={{
+                    background: paymentRatioStops
+                      ? `conic-gradient(${paymentRatioStops})`
+                      : undefined,
+                  }}
+                />
                 <ul>
-                  <li><i className="c1" />카드 <b>62%</b></li>
-                  <li><i className="c2" />간편결제 <b>28%</b></li>
-                  <li><i className="c3" />기타 <b>10%</b></li>
+                  {paymentRatio.map((item) => (
+                    <li key={item.method}>
+                      <i className={item.colorClass} />
+                      {item.label} <b>{item.ratio}%</b>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </article>
@@ -150,10 +277,12 @@ export default function AdminDashboardPage() {
         <aside className="rightColumn">
           <section className="admin-card statusCard">
             <h3>시스템 상태</h3>
-            <div className="statusRow"><span />AI API <b>정상</b></div>
-            <div className="statusRow"><span />WebSocket <b>안정</b></div>
-            <div className="statusRow"><span />CPU 사용률 <em>43%</em></div>
-            <div className="statusRow"><span />메모리 사용률 <em>61%</em></div>
+            {systemStatus.map((item) => (
+              <div className="statusRow" key={item.key}>
+                <span className={item.dotClass} />
+                {item.label} <b>{item.valueText}</b>
+              </div>
+            ))}
           </section>
 
           <section className="admin-card logCard">
@@ -161,11 +290,15 @@ export default function AdminDashboardPage() {
               <h3>최근 관리자 활동</h3>
               <button onClick={() => navigate('/admin/log')}>전체 보기</button>
             </div>
-            {logs.map((log) => (
-              <div className="logRow" key={log.join('')} onClick={() => navigate(log[3])}>
-                <span>{log[0]}</span>
-                <strong>{log[1]}</strong>
-                <p>{log[2]}</p>
+            {recentActivities.map((activity) => (
+              <div
+                className="logRow"
+                key={activity.id}
+                onClick={() => navigate(activity.targetPath)}
+              >
+                <span>{activity.occurredAt}</span>
+                <strong>{activity.adminId}</strong>
+                <p>{activity.message}</p>
               </div>
             ))}
           </section>
