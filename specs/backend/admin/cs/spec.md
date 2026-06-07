@@ -59,6 +59,9 @@ AI 초안 생성은 Spring → FastAPI 내부 호출 방식으로 처리하며, 
 | `content` | TEXT | NOT NULL | 문의 내용 |
 | `reply` | TEXT | NULL | 관리자 답변 |
 | `inquiry_status` | VARCHAR(20) | NOT NULL DEFAULT 'PENDING', CHECK IN ('PENDING','IN_PROGRESS','COMPLETED') | 처리 상태 |
+| `ai_summary` | TEXT | NULL | AI 문의 요약 |
+| `ai_draft` | TEXT | NULL | AI 답변 초안 |
+| `version` | BIGINT | NOT NULL DEFAULT 0 | 낙관적 락 버전 (동시 수정 충돌 감지) |
 | `created_at` | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | 접수 시각 |
 | `updated_at` | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | 수정 시각 |
 | `replied_at` | TIMESTAMPTZ | NULL | 최초 답변 시각 |
@@ -299,6 +302,16 @@ public class Inquiry {
 
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
+
+    @Column(name = "ai_summary", columnDefinition = "TEXT")
+    private String aiSummary;
+
+    @Column(name = "ai_draft", columnDefinition = "TEXT")
+    private String aiDraft;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;                    // 낙관적 락 — 동시 답변 수정 충돌 감지
 
     @Column(name = "replied_at")
     private ZonedDateTime repliedAt;
@@ -738,5 +751,6 @@ POST   /api/admin/ai/inquiry-draft
 | `INQUIRY_NOT_FOUND` | 404 | 문의 조회·답변·완료 처리 실패 |
 | `INQUIRY_ALREADY_COMPLETED` | 409 | COMPLETED 문의 답변 수정 시도 |
 | `INQUIRY_NOT_IN_PROGRESS` | 400 | IN_PROGRESS 아닌 문의 처리 완료 시도 |
+| `INQUIRY_CONFLICT` | 409 | 낙관적 락 충돌 — 동시 수정 감지 (`ObjectOptimisticLockingFailureException`) |
 | `AI_SERVER_UNAVAILABLE` | 503 | FastAPI 타임아웃(10초) 초과 또는 연결 실패 |
 | `UNAUTHORIZED` | 401 | 인증 실패 |
