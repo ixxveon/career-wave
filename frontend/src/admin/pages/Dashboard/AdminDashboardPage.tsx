@@ -18,9 +18,17 @@ const KPI_PRESENTATION = {
 } as const;
 
 const ALERT_PRESENTATION = {
-  URGENT: { icon: '!', cls: 'danger' },
-  WARNING: { icon: '!!', cls: 'warning' },
-  NORMAL: { icon: 'i', cls: 'normal' },
+  URGENT: { icon: '!', cls: 'danger', label: '긴급' },
+  WARNING: { icon: '!!', cls: 'warning', label: '주의' },
+  NORMAL: { icon: 'i', cls: 'normal', label: '일반' },
+} as const;
+const ALERT_DOMAIN_LABELS = {
+  MEMBER: '회원',
+  REPORT: '신고',
+  CS: '문의',
+  PAYMENT: '결제',
+  STATISTICS: '통계',
+  AI_METRICS: 'AI',
 } as const;
 
 const WEEKLY_CHART_HEIGHT_PX = 168;
@@ -41,6 +49,24 @@ const SYSTEM_STATUS_PRESENTATION = {
   WARNING: { dotClass: 'warning' },
   CRITICAL: { dotClass: 'danger' },
 } as const;
+
+const formatOccurredAt = (iso: string) => {
+  if (!iso) {
+    return '--:--';
+  }
+
+  const date = new Date(iso);
+
+  if (Number.isNaN(date.getTime())) {
+    return '--:--';
+  }
+
+  return date.toLocaleTimeString('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
@@ -105,6 +131,9 @@ export default function AdminDashboardPage() {
           ...item,
           icon: presentation.icon,
           cls: presentation.cls,
+          levelLabel: presentation.label,
+          domainLabel:
+            ALERT_DOMAIN_LABELS[item.domain as keyof typeof ALERT_DOMAIN_LABELS] ?? item.domain,
           text: item.message,
           button: '상세 보기',
           path: item.targetPath,
@@ -307,8 +336,8 @@ export default function AdminDashboardPage() {
                     alerts.map((item) => (
                       <div className={`alertRow ${item.cls}`} key={`${item.domain}-${item.id}`}>
                         <span className="alertIcon">{item.icon}</span>
-                        <span className="alertLevel">{item.level}</span>
-                        <strong>{item.domain}</strong>
+                        <span className="alertLevel">{item.levelLabel}</span>
+                        <strong>{item.domainLabel}</strong>
                         <p>{item.text}</p>
                         <button onClick={() => navigate(item.path)}>{item.button}</button>
                       </div>
@@ -412,12 +441,12 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                   adminCards.map((card) => (
-                    <article className="adminCard" key={card.title}>
+                    <article className="adminCard" key={card.key}>
                       <div className="adminTop">
                         <div className={`adminIcon ${card.cls}`}>{card.icon}</div>
                         <h3>{card.title}</h3>
                       </div>
-                      <p>{card.desc}</p>
+                      <p>{card.description}</p>
                       <div className="adminBottom">
                         <strong>{card.value}</strong>
                         <button onClick={() => navigate(card.path)}>상세 보기</button>
@@ -469,7 +498,7 @@ export default function AdminDashboardPage() {
                       key={activity.id}
                       onClick={() => navigate(activity.targetPath)}
                     >
-                      <span>{activity.occurredAt}</span>
+                      <span>{formatOccurredAt(activity.occurredAt)}</span>
                       <strong>{activity.adminId}</strong>
                       <p>{activity.message}</p>
                     </div>
