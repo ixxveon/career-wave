@@ -88,6 +88,7 @@
 - [ ] `InterviewSessionRepository.java`
   - [ ] `findBySessionId(UUID sessionId)` — 단순 조회
   - [ ] `findBySessionIdAndMemberId(UUID sessionId, UUID memberId)` — 소유권 검증용
+  - [ ] `findInProgressByMemberId(UUID memberId)` — `@Lock(PESSIMISTIC_WRITE)` 적용, 중복 세션 체크용
 
 - [ ] `InterviewMessageRepository.java`
   - [ ] `findBySessionIdOrderByCreatedAtAsc(UUID sessionId)` — 세션 메시지 전체 조회

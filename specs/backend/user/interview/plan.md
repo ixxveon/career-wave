@@ -44,6 +44,22 @@ AI 파이프라인(STT·LLM·TTS)은 FastAPI 서버가 전담한다.
 
 > FE 스펙(`specs/frontend/user/interview/`)을 기준으로 아래 항목이 확정되었다.
 
+### A-0. startSession 동시성 처리
+
+`startSession`에서 동일 회원의 `IN_PROGRESS` 세션 중복을 체크할 때, 두 요청이 동시에 들어오면 단순 조회 후 체크만으로는 Race Condition이 발생할 수 있다.
+
+**v1 채택 방식**: `InterviewSessionRepository`에서 `IN_PROGRESS` 세션 존재 여부를 조회할 때 **비관적 락(`SELECT FOR UPDATE`)**을 사용한다.
+
+```java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+Optional<InterviewSession> findInProgressByMemberId(UUID memberId);
+```
+
+- v1 단일 서버 환경에서는 이것으로 충분하다.
+- 추후 서버가 Scale-out될 경우 Redis 분산 락으로 전환을 검토한다 (v2 이후).
+
+---
+
 ### A. 세션 종료 → 리포트 생성 흐름 (Race Condition 대응)
 
 `endSession` 직후 FastAPI 리포트 생성은 비동기로 수행된다.
@@ -80,9 +96,17 @@ FE 스펙이 `POST /answer/voice` Multipart 전송으로 확정되어 있으므�
 FE → POST /answer/voice (Multipart) → Spring → FastAPI STT 파이프라인
 ```
 
-> **구현 시 주의**: `spring.servlet.multipart.max-file-size` 설정과 임시 파일 처리 전략을 반드시 사전 설정할 것.
-> 면접은 스트리밍에 가까워 청크가 연속 업로드되므로, Spring의 MultipartFile 임시 파일이 메모리를 점유하지 않도록
-> `max-file-size` / `max-request-size` 적정값과 디스크 기반 임시 저장 여부를 확인한다.
+**구현 시 필수 설정**: `application.yml`에 아래 값을 명시적으로 추가한다. 이 설정이 없으면 대용량 파일 업로드 시 메모리 고갈 또는 기본값(1MB) 초과 오류가 발생한다.
+
+```yaml
+spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+```
+
+면접은 청크가 연속 업로드되는 스트리밍 구조이므로, `MultipartFile`이 메모리에 올라가지 않도록 디스크 기반 임시 저장 여부도 확인한다.
 
 ---
 
@@ -127,7 +151,7 @@ FE → POST /answer/voice (Multipart) → Spring → FastAPI STT 파이프라인
 ### Phase 4 — Service 구현
 
 - [ ] `InterviewSessionService.java`
-  - [ ] `startSession(UUID memberId, RequestStartSession dto)` — 동시 세션 방어(IN_PROGRESS 중복 체크) + 세션 생성 + FastAPI 비동기 트리거
+  - [ ] `startSession(UUID memberId, RequestStartSession dto)` — 동시 세션 방어(IN_PROGRESS 중복 체크, **비관적 락 `SELECT FOR UPDATE`** 적용) + 세션 생성 + FastAPI 비동기 트리거
   - [ ] `submitTextAnswer(UUID memberId, String sessionId, RequestSubmitTextAnswer dto)` — 소유권 검증 + IN_PROGRESS 상태 확인 + 저장 + FastAPI 트리거
   - [ ] `submitVoiceChunk(UUID memberId, String sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal)` — 소유권 검증 + IN_PROGRESS 상태 확인 + FastAPI 전달 (트랜잭션 외부)
   - [ ] `endSession(UUID memberId, String sessionId)` — 소유권 검증 + 멱등성 체크(COMPLETED면 즉시 반환) + 상태 변경 + 리포트 트리거 1회 보장
@@ -155,6 +179,10 @@ FE → POST /answer/voice (Multipart) → Spring → FastAPI STT 파이프라인
   - [ ] `InterviewHistoryControllerDocs.java`
 
 ### Phase 6 — WebSocket 구현
+
+> **Scale-out 메모**: v1은 단일 서버이므로 `ConcurrentHashMap<String, WebSocketSession>`으로 세션을 관리하면 충분하다.
+> 추후 서버가 여러 대로 늘어날 경우, 어떤 서버에 WebSocket 세션이 연결되어 있는지 추적하기 위해
+> Redis Pub/Sub 기반 메시지 브로드캐스트 구조로의 전환을 고려한다 (v1 단계에서는 구현 불필요).
 
 - [ ] Spring WebSocket 핸들러 구현 (`/ws/interview/{sessionId}/chat`)
 - [ ] 연결 시 `sessionId` 소유권 + 토큰 검증, 실패 시 Close 1008
