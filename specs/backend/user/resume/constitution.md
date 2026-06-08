@@ -109,4 +109,6 @@ FastAPI 분석 트리거 호출
 - `document.status`를 Spring에서 `PENDING` 이후 상태로 직접 변경 금지 (FastAPI 책임 영역).
 - `new RuntimeException(...)` 직접 생성 금지 — 반드시 `CustomException(ErrorCode.*)` 사용.
 - 자기소개서 내용 수정(Update) API 구현 금지 (v1 범위 외) — 수정 필요 시 재제출로 신규 `documentId` 발급.
-- WebSocket 브로드캐스트를 `@Transactional` 트랜잭션 안에서 수행 금지 — 브로드캐스트 실패가 DB 롤백을 유발해서는 안 된다.
+- `SimpMessagingTemplate.convertAndSend()`를 `@Transactional` 메서드 안에서 직접 호출 금지.  
+  반드시 `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)`를 통해 커밋 완료 후 발행할 것.  
+  이유: 커밋 전에 메시지를 보내면 클라이언트는 수신했으나 DB에는 아직 미반영인 데이터 불일치 상태가 발생한다.

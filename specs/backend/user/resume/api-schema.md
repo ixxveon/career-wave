@@ -386,12 +386,14 @@ FastAPI                              Spring
   │                                    │  │  DocumentFeedback 저장             │
   │                                    │  │  document.status 업데이트          │
   │                                    │  └────────────────────────────────── ┘
-  │                                    │  WebSocket 브로드캐스트 (트랜잭션 외부)
+  │                                    │  @TransactionalEventListener(AFTER_COMMIT)
+  │                                    │  WebSocket 브로드캐스트 (커밋 완료 후 발행)
   │◀─ 200 OK ──────────────────────────│
 ```
 
 > **트랜잭션 경계**: `DocumentFeedback` 저장과 `document.status` 업데이트는 **하나의 `@Transactional` 안에서 처리**한다.  
-> WebSocket 브로드캐스트는 트랜잭션 커밋 이후 수행한다 — 브로드캐스트 실패 시 DB 롤백 방지 목적.  
+> WebSocket 브로드캐스트는 `@TransactionalEventListener(phase = AFTER_COMMIT)`으로 커밋 완료 후 발행한다.  
+> 구현 흐름: 서비스 내 `ApplicationEventPublisher.publishEvent()` → 리스너에서 `SimpMessagingTemplate.convertAndSend()` 호출.  
 > (WebSocket 전송 실패 시 클라이언트는 REST `GET .../feedback`으로 상태 복원 가능)
 
 ### 멱등성 (Idempotency)
