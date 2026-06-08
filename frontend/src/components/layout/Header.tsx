@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { serviceMenus } from '../../utils/serviceMenus';
-import { authSession } from '../../user/utils/member/authSession';
+import { useAuth } from '../../hooks/useAuth';
 import logo from '../../assets/logo.svg';
 import './Header.css';
 
@@ -42,8 +42,14 @@ function ComingSoonModal({ onClose }: ComingSoonModalProps) {
 
 function Header() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
-  const isLoggedIn = !!(authSession.getAccessToken() || authSession.getRefreshToken());
+  const { isLoggedIn, logout } = useAuth();
+
+  function handleLogout() {
+    logout();
+    navigate('/');
+  }
 
   const activeMenuLabel = serviceMenus
     .flatMap((item) => [
@@ -107,7 +113,10 @@ function Header() {
 
           <nav className="cw-header__account" aria-label="계정 메뉴">
             {isLoggedIn ? (
-              <NavLink to="/mypage">마이페이지</NavLink>
+              <>
+                <NavLink to="/mypage">마이페이지</NavLink>
+                <button onClick={handleLogout}>로그아웃</button>
+              </>
             ) : (
               <>
                 <NavLink to="/auth/login">로그인</NavLink>
