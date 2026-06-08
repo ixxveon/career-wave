@@ -36,63 +36,48 @@ AI 파이프라인(STT·LLM·TTS)은 FastAPI 서버가 전담한다.
 - `documentId` 유효성 검증 방법 (서류 도메인 Repository 참조 vs API 호출): **팀 합의 필요**
 - WebSocket 최대 재연결 횟수 및 heartbeat 주기: FE 스펙 기준 준수
 - `session_status = FAILED` 전이 조건 (비정상 종료 감지 시나리오): **v1 적용 범위 협의 필요**
-- 음성 청크 전달 방식 (Spring Multipart 중계 vs S3 Presigned URL 직접 업로드): **팀 합의 필요** (아래 설계 보완 포인트 참고)
+- 음성 청크 전달 방식: **FE 스펙 기준 확정** — `POST /answer/voice` Multipart 직접 전송 (S3 Presigned URL 미사용)
 
 ---
 
-## 설계 보완 포인트
+## 설계 확정 사항
 
-> 구현 착수 전 팀 내에서 아래 항목들을 결정하고 스펙에 반영한다.
+> FE 스펙(`specs/frontend/user/interview/`)을 기준으로 아래 항목이 확정되었다.
 
-### A. 세션 종료 → 리포트 생성 간 시간차 (Race Condition)
+### A. 세션 종료 → 리포트 생성 흐름 (Race Condition 대응)
 
-`endSession` 호출 직후 FastAPI 리포트 생성은 비동기로 수행된다.
-사용자가 종료 버튼을 누르자마자 결과 페이지로 이동하면 리포트가 아직 준비되지 않은 상태일 수 있다.
+`endSession` 직후 FastAPI 리포트 생성은 비동기로 수행된다.
+FE는 결과 페이지 진입 시 Spring WebSocket의 `REPORT_READY` 이벤트를 대기하는 방식으로 이미 구현되어 있다.
 
-**결정 필요 사항**
-
-- `endSession` 응답에 `sessionStatus: "PROCESSING"` 중간 상태를 추가할지 여부
-- `getReport` API가 리포트 미완료 시 `202 Accepted`(생성 중) vs `404 Not Found`를 명확히 구분하여 반환할지 여부
-- FE는 결과 페이지 진입 시 Spring WebSocket의 `REPORT_READY` 이벤트를 대기하는 방식으로 구현 (FE 스펙 이미 반영됨). 이 흐름을 백엔드 WebSocket 구현과 일치시킬 것.
-
-**권장 시나리오**
+**확정된 흐름**
 
 ```
 클라이언트                       Spring                        FastAPI
    │── POST /end ──────────────▶ │  session_status = COMPLETED  │
    │◀─ { sessionStatus: COMPLETED } ─ │                         │
    │                             │── 리포트 생성 트리거 ────────▶│
-   │  (결과 페이지 대기 중)       │                              │  AI 분석
+   │  (결과 페이지 REPORT_READY 대기)  │                         │  AI 분석
    │                             │◀─ 완료 콜백 ─────────────────│
    │◀─ WS: REPORT_READY ─────────│  career_histories INSERT      │
    │  (결과 페이지 렌더링)        │                              │
 ```
 
+- `endSession` 응답은 `sessionStatus: "COMPLETED"`만 반환 (별도 PROCESSING 상태 없음)
+- `getReport` 미완료 시 `INTERVIEW_REPORT_NOT_READY` 에러 반환 (HTTP 상태코드는 구현 시 확정)
+
 ### B. 답변 메시지 순서 무결성
 
-면접 중 네트워크 오류로 중간 답변이 누락되면 AI 리포트 생성 시 맥락이 깨질 수 있다.
+- 텍스트 답변: `interview_messages.created_at` 정밀도(milliseconds)로 순서 보장
+- 음성 청크: FE → Spring 전달 시 `chunkIndex`(0-based) 파라미터 포함 — FastAPI가 `chunkIndex` 기준으로 조립
+- 누락 청크 재전송 정책: 1회 재시도 후 폴백 처리 (FE 스펙 기준)
 
-**결정 필요 사항**
+### C. 음성 청크 전달 방식
 
-- `interview_messages` 테이블에 `question_order` 외에 답변 내 청크 순서를 보장하는 컬럼 필요 여부
-  - 텍스트 답변: `created_at` 정밀도(milliseconds)로 순서 보장 가능한지 확인
-  - 음성 청크: `chunk_index` (0-based) 필드가 이미 API에 존재 — FastAPI가 `chunk_index` 기준으로 조립하는지 확인
-- 누락된 청크 재전송 정책 (1회 재시도 후 폴백 처리) — FE 스펙 기준 준수
+FE 스펙이 `POST /answer/voice` Multipart 전송으로 확정되어 있으므로, v1은 **Spring 중계 방식**으로 구현한다.
 
-### C. 음성 청크 처리 방식
-
-현재 설계는 Spring이 Multipart로 오디오 청크를 받아 FastAPI로 중계하는 구조다.
-트래픽 집중 시 Spring 서버 메모리·대역폭 부담이 발생할 수 있다.
-
-**두 가지 옵션**
-
-| 옵션 | 흐름 | 장점 | 단점 |
-|------|------|------|------|
-| **현행 (v1)** | FE → Spring → FastAPI | 구현 단순, 인증 일원화 | Spring 메모리·대역폭 소비 |
-| **S3 Presigned URL** | FE → S3 직접 업로드, FastAPI가 S3에서 가져감 | Spring 부하 없음, 대용량 음성에 적합 | Presigned URL 발급 API 추가 필요, FastAPI S3 접근 설정 필요 |
-
-MVP(v1) 기준으로는 현행 방식을 유지하되, 트래픽이 증가하는 시점에 S3 Presigned URL 방식으로 전환을 검토한다.  
-**전환 조건 및 시점은 팀 합의 필요.**
+```
+FE → POST /answer/voice (Multipart) → Spring → FastAPI STT 파이프라인
+```
 
 ---
 
