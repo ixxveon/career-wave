@@ -56,6 +56,27 @@ Authorization: Bearer {accessToken}
 | `404` | 존재하지 않는 `sessionId` 또는 `documentId` |
 | `500` | 서버 내부 오류 |
 
+### Multipart 요청 필드명 계약
+
+모든 `multipart/form-data` 요청의 `Content-Disposition` 헤더 `name` 속성은 아래 명세와 **정확히 일치**해야 한다.  
+필드명이 다르면 Spring이 파라미터를 바인딩하지 못해 400 오류가 발생한다.
+
+> `audioChunk`, `questionOrder`, `chunkIndex`, `isFinal` — 대소문자 포함 일치 필수
+
+### WebSocket errorCode 상수 테이블
+
+WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리한다.  
+서버(`ErrorCode` enum)와 클라이언트(constants 파일) 양쪽 모두 이 테이블을 기준으로 동기화한다.
+
+| errorCode | 설명 |
+|-----------|------|
+| `INTERVIEW_AI_PIPELINE_ERROR` | FastAPI AI 파이프라인 처리 오류 |
+| `INTERVIEW_STT_FAILED` | 음성 인식(STT) 실패 |
+| `INTERVIEW_SESSION_EXPIRED` | 세션 타임아웃으로 강제 종료 |
+| `INTERVIEW_CALLBACK_FAILED` | FastAPI 콜백 처리 최종 실패 |
+
+> 새로운 errorCode 추가 시 이 테이블에 먼저 등록하고, 백엔드·프론트엔드 동시 반영한다.
+
 ---
 
 ## 1. 면접 세션 시작

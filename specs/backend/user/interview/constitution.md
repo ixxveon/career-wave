@@ -82,3 +82,15 @@
 - 음성 청크 전달(외부 I/O)을 `@Transactional` 범위 안에 포함하는 것을 금지한다.
 - `new RuntimeException(...)`을 직접 생성하는 것을 금지한다. `CustomException(ErrorCode.xxx)` 사용.
 - Entity 간 양방향 관계 매핑 시 순환 참조를 유발하는 것을 금지한다. `InterviewSession` ↔ `InterviewMessage` 등 양방향 매핑이 필요한 경우, `toString()` 및 JSON 직렬화에서 무한 루프가 발생하지 않도록 `@JsonIgnore` 또는 `@JsonManagedReference` / `@JsonBackReference`를 사전에 적용한다. 미적용 시 리포트 조회 등에서 `StackOverflowError`가 발생한다.
+
+---
+
+## 7. 이 명세서가 보장하는 것
+
+| 속성 | 보장 내용 |
+|------|-----------|
+| **불변성** | `COMPLETED` / `FAILED` 세션은 상태 재변경이 불가능하다. 한 번 종료된 면접 기록은 영구 보존된다. |
+| **투명성** | `voiceQualityRatio < 50.00` 조건부 null 처리를 통해 신뢰할 수 없는 AI 측정값을 정직하게 노출한다. `0`으로 은폐하지 않는다. |
+| **확장성** | WebSocket 메시지의 `data` / `errorCode` 필드 구조 덕분에 새로운 에러 코드나 메시지 타입이 추가되어도 기존 클라이언트 파싱 구조를 깨지 않고 확장할 수 있다. |
+| **안전성** | 모든 세션 API에 `memberId` 소유권 검증이 강제되어 IDOR 공격을 방어한다. |
+| **신뢰성** | 세션 타임아웃 스케줄러와 FastAPI 콜백 재시도 로직으로 방치된 세션과 유실된 리포트 알림을 시스템이 자동 처리한다. |
