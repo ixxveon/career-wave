@@ -385,17 +385,23 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 ```
 FastAPI                              Spring
   │                                    │
-  │── POST .../webhook ────────────────▶│  X-Internal-Secret 검증
+  │── POST .../webhook ────────────────▶│  ① X-Internal-Secret 검증 (트랜잭션 외부)
+  │                                    │  ② documentId 유효성 확인 (트랜잭션 외부)
   │                                    │  ┌─ @Transactional 시작 ─────────────┐
-  │                                    │  │  documentId 유효성 확인            │
-  │                                    │  │  멱등성 확인 (최종 상태이면 종료)    │
-  │                                    │  │  DocumentFeedback 저장             │
-  │                                    │  │  document.status 업데이트          │
+  │                                    │  │  ③ 멱등성 체크 ← 트랜잭션 최상단  │
+  │                                    │  │    status가 COMPLETED/FAILED?      │
+  │                                    │  │    YES → 즉시 return (DB 갱신 없음) │
+  │                                    │  │    NO  → 아래 처리 계속            │
+  │                                    │  │  ④ DocumentFeedback 저장           │
+  │                                    │  │  ⑤ document.status 업데이트        │
   │                                    │  └────────────────────────────────── ┘
-  │                                    │  @TransactionalEventListener(AFTER_COMMIT)
-  │                                    │  WebSocket 브로드캐스트 (커밋 완료 후 발행)
+  │                                    │  ⑥ @TransactionalEventListener(AFTER_COMMIT)
+  │                                    │     WebSocket 브로드캐스트
   │◀─ 200 OK ──────────────────────────│
 ```
+
+> **멱등성 체크(③)는 반드시 `@Transactional` 블록 최상단에서 수행한다.**  
+> 트랜잭션 진입 전 체크 시 동시 요청에서 race condition이 발생할 수 있으므로, DB lock이 보장되는 트랜잭션 안에서 상태를 읽고 판단한다.
 
 > **트랜잭션 경계**: `DocumentFeedback` 저장과 `document.status` 업데이트는 **하나의 `@Transactional` 안에서 처리**한다.  
 > WebSocket 브로드캐스트는 `@TransactionalEventListener(phase = AFTER_COMMIT)`으로 커밋 완료 후 발행한다.  
@@ -552,5 +558,22 @@ Authorization: Bearer {accessToken}
 | `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 | § 2 자기소개서 |
 | `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId | § 3 피드백 조회 |
 | `DOCUMENT_ACCESS_DENIED` | 403 | 본인 소유가 아닌 문서 접근 (IDOR) | § 3 피드백 조회, § 6 WebSocket |
-| `FEEDBACK_PARSE_ERROR` | 500 | JSONB 역직렬화 실패 | § 3 피드백 조회 |
+| `FEEDBACK_PARSE_ERROR` | 500 | feedback_text JSON 역직렬화 실패 | § 3 피드백 조회 |
 | `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 | 전체 API |
+
+---
+
+## 개발 유의사항 요약
+
+> 구현 시 아래 항목을 반드시 점검한다.
+
+| 항목 | 가이드라인 |
+|------|-----------|
+| **타임아웃** | 외부 호출(FastAPI 트리거, S3 업로드)은 Connection/Read Timeout을 **3~5초 이내**로 설정 — 미설정 시 외부 서비스 지연이 Spring 전체 응답 지연으로 전파 |
+| **비동기 호출** | FastAPI 분석 트리거는 `@Async` 또는 `WebClient` 비동기 호출 권장 — 동기 호출 시 타임아웃 필수 |
+| **트랜잭션** | Webhook 수신 시 멱등성 체크를 `@Transactional` 최상단에서 수행, DB 저장과 status 업데이트는 동일 트랜잭션 내 처리 |
+| **WebSocket 브로드캐스트** | `@TransactionalEventListener(AFTER_COMMIT)` — 트랜잭션 커밋 완료 후 발행, 트랜잭션 내부 직접 호출 금지 |
+| **보안** | `X-Internal-Secret` 키는 시스템 환경 변수(`WEBHOOK_SECRET`)로 관리 — 코드·설정 파일 평문 하드코딩 금지 |
+| **MIME 검증** | 파일 업로드 시 확장자 검사만으로는 불충분 — `Apache Tika` 등으로 실제 파일 속성 검증 |
+| **에러 로그** | `FEEDBACK_PARSE_ERROR` 발생 시 `documentId` + `rawBody`(feedback_text 원문)를 ERROR 레벨로 로그에 기록 — 디버깅 근거 보존 |
+| **DTO 유연성** | `FeedbackDetail`에 `@JsonIgnoreProperties(ignoreUnknown = true)` 적용 — FastAPI 필드 추가 시 Spring 서버 크래시 방지 |
