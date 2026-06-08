@@ -182,6 +182,15 @@ Authorization: Bearer {accessToken}
 | `chunkIndex` | `Integer` | ✅ | 청크 순서 인덱스 (0-based) |
 | `isFinal` | `Boolean` | ✅ | 해당 답변의 마지막 청크 여부 |
 
+#### 파일 업로드 제약사항
+
+| 항목 | 제약값 |
+|------|--------|
+| 청크당 최대 크기 | **5MB** (`spring.servlet.multipart.max-file-size: 5MB`) |
+| 요청당 최대 크기 | **10MB** (`spring.servlet.multipart.max-request-size: 10MB`) |
+| 허용 Content-Type | `audio/webm`, `audio/mp4` |
+| Content-Type 검증 | Spring Controller에서 `MultipartFile.getContentType()` 검증, 미일치 시 400 반환 |
+
 ### Response `200 OK`
 ```json
 {
@@ -326,7 +335,8 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-> `data.estimatedWaitSeconds`는 고정값(예: 15)으로 내려보내도 무방하다. FE는 이 값을 폴링 간격 힌트로 사용할 수 있다.
+> `data.estimatedWaitSeconds`는 고정값(예: 15)으로 내려보내도 무방하다. FE는 이 값을 폴링 간격 힌트로 사용할 수 있다.  
+> 응답 헤더에 `Retry-After: 15`를 함께 포함하여 HTTP 표준 방식으로도 대기 시간을 전달한다.
 
 ---
 

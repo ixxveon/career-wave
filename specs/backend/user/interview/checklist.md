@@ -53,6 +53,7 @@
 ### 음성·텍스트 답변
 - [ ] 답변 제출(`submitTextAnswer` / `submitVoiceChunk`) 시 해당 세션의 `session_status`가 `IN_PROGRESS`인지 DB에서 재검증한다.
 - [ ] `submitVoiceChunk` 호출 시 인증 토큰 유효성 외에 해당 `sessionId`가 요청자의 `IN_PROGRESS` 세션인지 재검증한다.
+- [ ] `submitVoiceChunk`에서 `audioChunk`의 Content-Type이 `audio/webm` 또는 `audio/mp4`인지 검증하며, 불일치 시 400을 반환한다.
 
 ### 리포트 생성
 - [ ] 리포트 생성이 완료될 때 `career_histories`에 레코드가 INSERT된다 (세션 종료 API 응답이 아닌 FastAPI 완료 콜백 시점).
@@ -92,6 +93,23 @@
 - [ ] WebSocket 연결 시 토큰 검증 실패가 Close 1008로 처리된다.
 - [ ] WebSocket 연결 시 소유권 검증 실패가 Close 1008로 처리된다.
 - [ ] 클라이언트 비정상 종료(브라우저 닫기·네트워크 끊김) 시 서버가 이를 감지하여 `FAILED` 마킹 또는 로그 기록 전략이 구현되어 있다 (`설계 보완 포인트 참고`).
+
+---
+
+## Phase 6-1 — 세션 타임아웃 스케줄러
+
+- [ ] `InterviewSessionScheduler`가 1시간 주기로 실행된다.
+- [ ] `started_at < NOW() - 24h` AND `IN_PROGRESS` 조건을 정확히 쿼리한다.
+- [ ] 타임아웃 처리된 세션이 `FAILED`로 전이된다.
+- [ ] 처리 건수 및 세션 ID가 `log.info`로 기록된다.
+
+## Phase 6-2 — FastAPI 콜백 수신
+
+- [ ] `POST /internal/api/v1/interview/callback/{sessionId}/report` 엔드포인트가 구현되어 있다.
+- [ ] `/internal/**` 경로가 Spring Security에서 외부 접근 차단된다.
+- [ ] 콜백 수신 후 `ai_interview_feedbacks` / `interview_sessions` / `career_histories` 세 곳이 모두 업데이트된다.
+- [ ] `REPORT_READY` WebSocket 메시지에 `data.reportUrl`이 포함된다.
+- [ ] 콜백 처리 실패 시 재시도 로직 및 `log.error` 기록이 동작한다.
 
 ---
 

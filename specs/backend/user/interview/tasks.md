@@ -203,11 +203,32 @@
 
 ---
 
+## Phase 6-1 — 세션 타임아웃 스케줄러
+
+- [ ] `InterviewSessionScheduler.java` 구현
+  - [ ] `@Scheduled(cron = "0 0 * * * *")` — 1시간 주기 실행
+  - [ ] `started_at < NOW() - INTERVAL '24 hours'` AND `session_status = 'IN_PROGRESS'` 인 세션 조회
+  - [ ] 해당 세션 일괄 `FAILED` 전이
+  - [ ] 처리 건수 `log.info` 기록
+
+## Phase 6-2 — FastAPI 콜백 수신 Controller
+
+- [ ] `InterviewCallbackController.java` — `POST /internal/api/v1/interview/callback/{sessionId}/report`
+  - [ ] `totalScore` + `feedbacks` 배열 수신
+  - [ ] `ai_interview_feedbacks` 저장
+  - [ ] `interview_sessions.total_score` 업데이트
+  - [ ] `career_histories` INSERT
+  - [ ] WebSocket `REPORT_READY` 전송 (`data.reportUrl` 포함)
+  - [ ] 실패 시 최소 1회 재시도 + `log.error` 기록
+
+---
+
 ## Phase 7 — Security & ErrorCode
 
 - [ ] Security 설정
   - [ ] `POST /api/v1/user/interview/**` → `hasRole('USER')`
   - [ ] `GET /api/v1/user/interview/**` → `hasRole('USER')`
+  - [ ] `POST /internal/**` → 외부 접근 차단 (내부망 전용)
 
 - [ ] ErrorCode 추가
   - [ ] `INTERVIEW_SESSION_NOT_FOUND` (404)

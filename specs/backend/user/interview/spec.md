@@ -228,6 +228,7 @@ POST /api/v1/user/interview/sessions/{sessionId}/answer/voice
      Body: multipart/form-data (audioChunk + questionOrder + chunkIndex + isFinal)
      → ApiResponse<InterviewDTO.ResponseSubmitVoiceChunk>  (200)
      소유권 검증 필수, FastAPI STT 파이프라인 트리거
+     제약: 청크당 최대 5MB / 허용 포맷: audio/webm, audio/mp4 / Content-Type 검증 필수
 
 POST /api/v1/user/interview/sessions/{sessionId}/end
      → ApiResponse<InterviewDTO.ResponseEndSession>  (200)
@@ -339,11 +340,61 @@ WS /ws/user/interview/{sessionId}/chat?token={accessToken}
 
 ---
 
+## 세션 타임아웃 정책
+
+- 세션 생성 후 **24시간** 동안 `endSession` 요청이 없으면 서버 스케줄러가 해당 세션을 강제로 `FAILED` 처리한다.
+- 배치 주기: 1시간 단위 (`@Scheduled` cron)로 `started_at < NOW() - INTERVAL '24 hours'` AND `session_status = 'IN_PROGRESS'` 인 세션 일괄 처리.
+- `FAILED` 전이 후 관련 리소스(FastAPI 파이프라인 세션 등) 정리 여부는 FastAPI 팀과 협의.
+
+---
+
+## FastAPI 콜백 인터페이스 계약
+
+FastAPI는 리포트 생성 완료 후 Spring 내부 API를 호출하여 결과를 전달한다.
+
+### Endpoint (Spring 수신)
+
+```
+POST /internal/api/v1/interview/callback/{sessionId}/report
+```
+
+### Request Body
+
+```json
+{
+  "sessionId": "uuid-v4",
+  "totalScore": 78,
+  "feedbacks": [
+    {
+      "questionOrder": 1,
+      "questionText": "...",
+      "answerText": "...",
+      "relevanceScore": 85,
+      "depthScore": 70,
+      "deliveryScore": 80,
+      "fluencyScore": 75,
+      "voiceQualityRatio": 92.5,
+      "aiFeedback": "..."
+    }
+  ]
+}
+```
+
+### Spring 처리 순서
+
+1. `ai_interview_feedbacks` 저장
+2. `interview_sessions.total_score` 업데이트
+3. `career_histories` INSERT
+4. WebSocket `REPORT_READY` 메시지 전송
+
+> 이 엔드포인트는 내부망 전용이며 외부 접근을 차단한다. (Spring Security에서 `/internal/**` 경로 별도 처리)
+
+---
+
 ## Assumptions
 
 - 음성 STT·LLM·TTS 처리는 FastAPI 서버가 전담하며, Spring은 결과 수신 및 저장만 담당한다
-- FastAPI와의 통신 방식(HTTP 비동기 / 내부 이벤트)은 구현 단계에서 팀 협의 필요
 - WebSocket 재연결 정책(heartbeat 주기, 최대 횟수)은 프론트엔드 스펙 기준 준수
 - `voiceQualityRatio` 계산은 FastAPI 파이프라인 결과를 그대로 저장하며, Spring에서 재산정하지 않는다
 - `document_id` 유효성 검증 방법(서류 도메인 연동 여부)은 구현 단계에서 협의 필요
-- 리포트 생성 완료 알림은 FastAPI → Spring 콜백 → Spring WebSocket 경유로 프론트엔드에 전달
+- 리포트 생성 완료 알림은 FastAPI → Spring 콜백(`/internal/api/v1/interview/callback/{sessionId}/report`) → Spring WebSocket 경유로 프론트엔드에 전달
