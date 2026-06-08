@@ -9,6 +9,44 @@ import { http, HttpResponse } from 'msw';
 
 const PRICE = 29000;
 
+interface MockSubscription {
+  subscriptionId: string;
+  productCode: string;
+  productName: string;
+  status: 'ACTIVE' | 'CANCEL_SCHEDULED' | 'EXPIRED';
+  startedAt: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  nextBillingAt: string;
+  cancelScheduledAt: string | null;
+}
+
+interface MockUsage {
+  productCode: string;
+  limit: number;
+  used: number;
+  remaining: number;
+  unit: string;
+  resetAt: string;
+}
+
+interface MockEntitlement {
+  'document-coaching': boolean;
+  interview: boolean;
+}
+
+interface MockPayment {
+  paymentId: string;
+  orderId: string;
+  productCode: string;
+  productName: string;
+  amount: number;
+  currency: string;
+  paymentStatus: string;
+  paidAt: string;
+  failureReason: string | null;
+}
+
 function monthsAgo(n: number): string {
   const d = new Date();
   d.setMonth(d.getMonth() - n);
@@ -21,7 +59,7 @@ function monthsLater(n: number): string {
   return d.toISOString();
 }
 
-const MOCK_SUBSCRIPTIONS: Record<string, object[]> = {
+const MOCK_SUBSCRIPTIONS: Record<string, MockSubscription[]> = {
   'mock-user-uuid-0001': [],
   'mock-user-uuid-0002': [
     {
@@ -76,7 +114,7 @@ const MOCK_SUBSCRIPTIONS: Record<string, object[]> = {
   'mock-company-uuid-0001': [],
 };
 
-const MOCK_USAGES: Record<string, object[]> = {
+const MOCK_USAGES: Record<string, MockUsage[]> = {
   'mock-user-uuid-0002': [
     { productCode: 'interview', limit: 20, used: 5, remaining: 15, unit: 'session', resetAt: monthsLater(1) },
   ],
@@ -89,7 +127,7 @@ const MOCK_USAGES: Record<string, object[]> = {
   ],
 };
 
-const MOCK_ENTITLEMENTS: Record<string, object> = {
+const MOCK_ENTITLEMENTS: Record<string, MockEntitlement> = {
   'mock-user-uuid-0001': { 'document-coaching': false, interview: false },
   'mock-user-uuid-0002': { 'document-coaching': false, interview: true },
   'mock-user-uuid-0003': { 'document-coaching': true, interview: false },
@@ -98,7 +136,7 @@ const MOCK_ENTITLEMENTS: Record<string, object> = {
 };
 
 // 구독 계정별 결제 내역 10개 (최신순)
-const MOCK_PAYMENT_HISTORY: Record<string, object[]> = {
+const MOCK_PAYMENT_HISTORY: Record<string, MockPayment[]> = {
   'mock-user-uuid-0002': Array.from({ length: 10 }, (_, i) => ({
     paymentId: `pay-interview-0002-${String(i + 1).padStart(3, '0')}`,
     orderId: `order-interview-0002-${String(i + 1).padStart(3, '0')}`,
