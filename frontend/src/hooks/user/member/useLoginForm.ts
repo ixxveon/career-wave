@@ -57,6 +57,11 @@ const BLOCK_MESSAGE_BY_REASON: Record<
   },
 };
 
+export const CROSS_TAB_ERROR_MESSAGES: Record<LoginTab, string> = {
+  company: '기업회원 탭에서 개인회원으로 로그인할 수 없습니다. 개인회원 탭에서 로그인해주세요.',
+  personal: '개인회원 탭에서 기업회원으로 로그인할 수 없습니다. 기업회원 탭에서 로그인해주세요.',
+};
+
 export function useLoginForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -111,11 +116,7 @@ export function useLoginForm() {
 
       if (response.member.memberType !== LOGIN_TAB_TO_MEMBER_TYPE[loginType]) {
         authSession.clear();
-        setFieldErrors({
-          form: loginType === 'company'
-            ? '기업회원 탭에서 개인회원으로 로그인할 수 없습니다. 개인회원 탭에서 로그인해주세요.'
-            : '개인회원 탭에서 기업회원으로 로그인할 수 없습니다. 기업회원 탭에서 로그인해주세요.',
-        });
+        setFieldErrors({ form: CROSS_TAB_ERROR_MESSAGES[loginType] });
         return;
       }
 
