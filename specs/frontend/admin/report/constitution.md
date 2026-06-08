@@ -70,11 +70,11 @@ DISMISSED
 ## 5. 연동 계약
 
 - `admin-backend`는 아래 API를 제공한다:
-  - `GET /api/admin/reports/summary` — KPI 집계 (전체·처리 대기·블라인드 건수, AI 고위험 건수는 목록에서 클라이언트 집계 또는 별도 파라미터 추가 검토)
-  - `GET /api/admin/reports?status=&targetType=&page=&size=` — 신고 목록 (페이지네이션)
-  - `GET /api/admin/reports/{reportId}` — 신고 상세 (신고자·피신고자·대상 콘텐츠)
-  - `PATCH /api/admin/reports/{reportId}/blind` — 블라인드 처리
-  - `PATCH /api/admin/reports/{reportId}/dismiss` — 기각 처리
+  - `GET /api/v1/admin/reports/summary` — KPI 집계 (전체·처리 대기·블라인드 건수, AI 고위험 건수는 목록에서 클라이언트 집계 또는 별도 파라미터 추가 검토)
+  - `GET /api/v1/admin/reports?status=&targetType=&page=&size=` — 신고 목록 (페이지네이션)
+  - `GET /api/v1/admin/reports/{reportId}` — 신고 상세 (신고자·피신고자·대상 콘텐츠)
+  - `PATCH /api/v1/admin/reports/{reportId}/blind` — 블라인드 처리
+  - `PATCH /api/v1/admin/reports/{reportId}/dismiss` — 기각 처리
 - 모든 응답은 `ApiResponse<T>` 형식 (`success`, `statusCode`, `message`, `data`)을 사용한다.
 - 처리 성공 시 응답 `data`에 변경된 `reportStatus`가 포함되며, 이를 기반으로 목록 상태 뱃지를 즉시 갱신한다.
 

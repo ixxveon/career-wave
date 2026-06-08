@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { serviceMenus } from '../../utils/serviceMenus';
+import { useAuth } from '../../hooks/useAuth';
 import logo from '../../assets/logo.svg';
 import './Header.css';
 
@@ -41,7 +42,14 @@ function ComingSoonModal({ onClose }: ComingSoonModalProps) {
 
 function Header() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
+  const { isLoggedIn, logout } = useAuth();
+
+  function handleLogout() {
+    logout();
+    navigate('/');
+  }
 
   const activeMenuLabel = serviceMenus
     .flatMap((item) => [
@@ -104,14 +112,19 @@ function Header() {
           </nav>
 
           <nav className="cw-header__account" aria-label="계정 메뉴">
-            {/* ===== 고유리: 마이페이지 UI 확인용 임시 버튼 ===== */}
-            <NavLink to="/mypage">마이페이지</NavLink>
-            {/* ===== 고유리: 마이페이지 UI 확인용 임시 버튼 ===== */}
-
-            <NavLink to="/auth/login">로그인</NavLink>
-            <NavLink className="is-primary" to="/auth/register">
-              회원가입
-            </NavLink>
+            {isLoggedIn ? (
+              <>
+                <NavLink to="/mypage">마이페이지</NavLink>
+                <button type="button" onClick={handleLogout}>로그아웃</button>
+              </>
+            ) : (
+              <>
+                <NavLink to="/auth/login">로그인</NavLink>
+                <NavLink className="is-primary" to="/auth/register">
+                  회원가입
+                </NavLink>
+              </>
+            )}
           </nav>
         </div>
       </header>
