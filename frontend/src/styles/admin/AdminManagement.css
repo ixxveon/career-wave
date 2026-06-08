@@ -13,6 +13,7 @@
   --am-warning-bg: #fbf4e6;
   --am-danger: #996767;
   --am-danger-bg: #fbeff0;
+
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -715,7 +716,7 @@
   height: 18px;
   flex: 0 0 18px;
   border-radius: 999px;
-  background: currentColor;
+  background: currentcolor;
   opacity: 0.85;
 }
 
@@ -948,7 +949,7 @@
   grid-template-columns: 140px 90px 160px minmax(260px, 1fr) 130px;
   column-gap: 18px;
   align-items: center;
-  font-family: Consolas, 'SFMono-Regular', Menlo, monospace;
+  font-family: Consolas, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   line-height: 1.55;
 }

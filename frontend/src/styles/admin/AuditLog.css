@@ -9,6 +9,7 @@
   --audit-warning-bg: #fdf3de;
   --audit-danger: #d04545;
   --audit-danger-bg: #fff0f0;
+
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -257,7 +258,7 @@
   grid-template-columns: 140px 90px minmax(0, 1fr);
   column-gap: 18px;
   align-items: center;
-  font-family: Consolas, 'SFMono-Regular', Menlo, monospace;
+  font-family: Consolas, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   line-height: 1.55;
 }
@@ -333,7 +334,7 @@
 
 .auditOpsTableRow .timestamp,
 .auditOpsTag {
-  font-family: Consolas, 'SFMono-Regular', Menlo, monospace;
+  font-family: Consolas, SFMono-Regular, Menlo, monospace;
 }
 
 .auditOpsTableRow .summary {

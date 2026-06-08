@@ -10,6 +10,7 @@
   --scrape-warning-bg: #fdf3de;
   --scrape-danger: #d04545;
   --scrape-danger-bg: #fff0f0;
+
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -407,7 +408,7 @@
 .scrapeOpsConsoleTag {
   font-size: 11px;
   font-weight: 800;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: Consolas, Monaco, monospace;
 }
 
 .scrapeOpsConsoleTag.normal {
