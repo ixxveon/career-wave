@@ -8,6 +8,11 @@ import lombok.NoArgsConstructor;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+/**
+ * [READ-ONLY] admin 도메인 전용 조회 매핑 엔티티.
+ * company_profiles 테이블의 INSERT/UPDATE는 user 도메인에서 담당합니다.
+ * 이 엔티티는 HR 담당자 목록/상세 조회 시 Native Query JOIN 용도로만 사용됩니다.
+ */
 @Entity
 @Table(name = "company_profiles")
 @Getter
