@@ -283,7 +283,7 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 | `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 |
 | `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId |
 | `DOCUMENT_ACCESS_DENIED` | 403 | 본인 소유가 아닌 문서 접근 (IDOR) |
-| `FEEDBACK_PARSE_ERROR` | 500 | JSONB 역직렬화 실패 (FastAPI 응답 구조 변경 등) |
+| `FEEDBACK_PARSE_ERROR` | 500 | feedback_text JSON 역직렬화 실패 (FastAPI 응답 구조 변경 등) |
 | `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
 
 ---
@@ -298,3 +298,37 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 - **`documentId` 생성 주체**: Spring 서버가 DB 저장 시 `gen_random_uuid()`로 생성 — 클라이언트 측 UUID 사전 생성 방식(Client-side generation) 사용하지 않음. 클라이언트는 `POST` 응답의 `documentId`를 수신하여 이후 API 및 WebSocket 연결에 사용
 - 자기소개서 수정(Update) API는 v1 미지원 — 수정 필요 시 재제출로 처리
 - members 테이블 PK는 UUID (`gen_random_uuid()`) — `document.member_id` FK 타입 동일하게 UUID 적용
+
+---
+
+## 구현 주의사항
+
+### 1. 트랜잭션 고립 (Partial Update 방지)
+
+Webhook 처리 시 `document.status` 업데이트와 `document_feedbacks` 저장은 반드시 **하나의 `@Transactional`** 로 묶는다.  
+둘 중 하나만 성공하는 부분 저장(Partial Update) 상태가 발생하면 DB와 클라이언트 상태가 영구적으로 불일치한다.
+
+### 2. 외부 자원 타임아웃 (스레드 고갈 방지)
+
+S3 업로드, FastAPI 분석 요청 등 외부 네트워크를 타는 모든 로직은 **Connection/Read Timeout을 3~5초 이내**로 반드시 설정한다.  
+타임아웃 미설정 시 외부 서비스 응답 지연이 Spring 서버 스레드를 점유하여 전체 서비스 응답 불능 상태로 이어질 수 있다.
+
+### 3. IDOR 방지 (소유권 이중 검증)
+
+모든 데이터 조회·수정 로직에서 `documentId` 단독 조회가 아닌, **`member_id`를 함께 조건(WHERE 절)으로 포함**하여 DB 쿼리를 작성한다.
+
+```java
+// Bad — documentId만으로 조회 후 서비스 레이어에서 비교
+documentRepository.findById(documentId)
+
+// Good — member_id를 쿼리 조건에 포함하여 DB 레벨에서 차단
+documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
+```
+
+서비스 레이어 비교만으로는 조회 쿼리 자체가 실행된다는 점에서 DB 부하와 정보 노출 가능성이 남는다.
+
+### 4. WebSocket 연결 안전성 (구독 시점 소유권 검증)
+
+JWT 인증 토큰이 유효하더라도 **아무 `documentId`나 구독할 수 있어서는 안 된다.**  
+`StompChannelInterceptor`의 SUBSCRIBE 프레임 처리 시 구독 토픽의 `documentId`와 인증 유저의 `memberId`를 `DocumentRepository`로 DB 재조회하여 소유권을 검증한다.  
+불일치 시 Close 1008로 즉시 연결을 거부한다.
