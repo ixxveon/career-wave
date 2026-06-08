@@ -10,7 +10,7 @@
 - **IDOR 방어 필수**: 모든 문서 조회·WebSocket 연결 시 `memberId`와 `document.member_id` 일치 여부를 서비스 레이어에서 검증. 불일치 시 `DOCUMENT_ACCESS_DENIED(403)` 반환.
 - **UUID 기반 식별자**: `documentId`는 UUID v4 사용. 순차 BIGINT 노출 시 순번 유추를 통한 타인 문서 접근 가능성 제거.
 - **도메인 경계 준수**: `user/resume/` 패키지는 `admin/` 패키지를 직접 참조하지 않는다.
-- **분석 결과 무결성**: FastAPI가 기록한 피드백 데이터는 Spring에서 수정하지 않는다. 결과 저장 방식(직접 DB 쓰기 vs 콜백 API)은 팀 협의 후 결정.
+- **분석 결과 무결성**: FastAPI가 기록한 피드백 데이터는 Spring에서 수정하지 않는다. 결과 저장 방식은 **Webhook 콜백(FastAPI → Spring `POST .../webhook`)으로 확정** — FastAPI가 분석 완료 후 Spring에 콜백을 보내면 Spring이 DB에 저장한다.
 
 ---
 
