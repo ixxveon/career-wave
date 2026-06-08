@@ -208,11 +208,14 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
   "data": {
     "documentId": "550e8400-e29b-41d4-a716-446655440000",
     "status": "COMPLETED",
-    "scoreJobFitness": 78,
-    "scoreTechStack": 85,
-    "scoreQuantified": 60,
-    "scoreLogical": 72,
-    "scoreTotal": 74,
+    "scores": {
+      "jobFitness": 78,
+      "techStack": 85,
+      "quantifiedAchievement": 60,
+      "logicalStructure": 72,
+      "total": 74
+    },
+    "overallReview": "전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다.",
     "feedbackDetails": [
       {
         "sectionNumber": 1,
@@ -235,25 +238,32 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
         }
       }
     ],
+    "errorMessage": null,
     "createdAt": "2026-05-29T14:55:00Z"
   }
 }
 ```
 
-> `feedback_text` 컬럼(TEXT)에 JSON 문자열로 저장 — Spring에서 `ObjectMapper`로 역직렬화하여 `feedbackDetails` 배열로 반환.  
-> 파싱 실패 시 `FEEDBACK_PARSE_ERROR(500)` — `GlobalExceptionHandler`에서 처리.
+> **scores 매핑**: DB `score_job_fitness` → `scores.jobFitness`, `score_tech_stack` → `scores.techStack`, `score_quantified` → `scores.quantifiedAchievement`, `score_logical` → `scores.logicalStructure`, `score_total` → `scores.total`.  
+> Spring에서 `ScoreDTO` inner record로 감싸 반환 — DB 컬럼명과 DTO 필드명이 다르므로 서비스 레이어에서 직접 매핑.  
+> `feedback_text` 컬럼(TEXT)에 JSON 문자열로 저장 — `ObjectMapper`로 역직렬화하여 `overallReview` + `feedbackDetails` 배열로 반환.  
+> 파싱 실패 시 `FEEDBACK_PARSE_ERROR(500)` — `GlobalExceptionHandler`에서 처리.  
+> `errorMessage`: `documents.error_message` 컬럼 값 — `FAILED` 상태가 아닌 경우 `null`.
 
 | Field | Type | 설명 |
 |-------|------|------|
 | `data.status` | `string` | `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
-| `data.scoreJobFitness` | `number` \| `null` | 직무 적합도 (0~100), 분석 미완료 시 `null` |
-| `data.scoreTechStack` | `number` \| `null` | 기술 스택 (0~100), 분석 미완료 시 `null` |
-| `data.scoreQuantified` | `number` \| `null` | 경험 수치화 (0~100), 분석 미완료 시 `null` |
-| `data.scoreLogical` | `number` \| `null` | 논리력 (0~100), 분석 미완료 시 `null` |
-| `data.scoreTotal` | `number` \| `null` | 종합 점수 (0~100), 분석 미완료 시 `null` |
+| `data.scores` | `object` \| `null` | 역량 점수 객체, 분석 미완료 시 `null` |
+| `data.scores.jobFitness` | `number` | 직무 적합도 (0~100) |
+| `data.scores.techStack` | `number` | 기술 스택 (0~100) |
+| `data.scores.quantifiedAchievement` | `number` | 경험 수치화 (0~100) |
+| `data.scores.logicalStructure` | `number` | 논리력 (0~100) |
+| `data.scores.total` | `number` | 종합 점수 (0~100) |
+| `data.overallReview` | `string` \| `null` | AI 종합 총평, 분석 미완료 시 `null` |
 | `data.feedbackDetails` | `array` \| `null` | 항목별 첨삭 결과, 분석 미완료 시 `null` |
 | `data.feedbackDetails[].starAnalysis` | `object` \| `null` | STAR 분석, 이력서 전용 (자기소개서는 `null`) |
 | `data.feedbackDetails[].quantAnalysis` | `object` \| `null` | 수치화 분석, 항목에 따라 `null` 허용 |
+| `data.errorMessage` | `string` \| `null` | 분석 실패 시 오류 메시지, 정상 완료 시 `null` |
 
 ### Error Cases
 
@@ -350,7 +360,8 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
   "scoreQuantified": 60,
   "scoreLogical": 72,
   "scoreTotal": 74,
-  "feedbackText": "전반적으로 백엔드 역량이 우수하나 ...",
+  "overallReview": "전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다.",
+  "feedbackText": "[{\"sectionNumber\":1,\"question\":\"...\",\"goodPoint\":\"...\", ...}]",
   "errorMessage": null
 }
 ```
@@ -363,10 +374,14 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 | `scoreQuantified` | `number` \| `null` | 경험 수치화 (0~100), `FAILED` 시 `null` |
 | `scoreLogical` | `number` \| `null` | 논리력 (0~100), `FAILED` 시 `null` |
 | `scoreTotal` | `number` \| `null` | 종합 점수 (0~100), `FAILED` 시 `null` |
+| `overallReview` | `string` \| `null` | AI 종합 총평, `FAILED` 시 `null` — `document_feedbacks.overall_review` 컬럼에 저장 |
 | `feedbackText` | `string` \| `null` | 항목별 첨삭 배열을 JSON 직렬화한 문자열, `FAILED` 시 `null` |
-| `errorMessage` | `string` \| `null` | 실패 시 오류 메시지 |
+| `errorMessage` | `string` \| `null` | 실패 시 오류 메시지 — `documents.error_message` 컬럼에 저장 |
 
-> `feedbackText`는 JSON 문자열로 확정 — `document_feedbacks.feedback_text TEXT` 컬럼에 저장.  
+> **DB 매핑**  
+> - `overallReview` → `document_feedbacks.overall_review TEXT NULL`  
+> - `feedbackText` → `document_feedbacks.feedback_text TEXT NOT NULL` (JSON 직렬화 문자열)  
+> - `errorMessage` → `documents.error_message TEXT NULL`  
 > Spring에서 `ObjectMapper.readValue(feedbackText, FeedbackDetail[].class)`로 역직렬화 후 응답 반환.
 
 ### Response `200 OK`
@@ -444,29 +459,28 @@ X-Internal-Secret: {WEBHOOK_SECRET 환경 변수 값}
 
 ## 6. 분석 상태 실시간 구독 (WebSocket)
 
-- **Endpoint**: `WS /ws/resume/{documentId}/status`
+- **클라이언트 연결 URL**: `WS /ws/user/resume/{documentId}/status?token={accessToken}`
+- **구현 방식**: STOMP (`spring-boot-starter-websocket`)
 
-### 구현 방식
-
-STOMP (`spring-boot-starter-websocket`) 사용.  
-클라이언트는 STOMP 클라이언트(예: `@stomp/stompjs`)로 연결하며, 분석 상태는 토픽 구독 방식으로 수신한다.
+> 위 URL은 프론트가 `@stomp/stompjs`로 연결할 때 사용하는 논리적 주소 표기다.  
+> 실제 STOMP 내부 구성은 아래와 같다.
 
 ```
-STOMP 연결 엔드포인트 : /ws/resume
-구독 토픽            : /topic/resume/{documentId}/status
-서버 → 클라이언트    : SimpMessagingTemplate.convertAndSend(...)
+STOMP 핸드셰이크 엔드포인트 : /ws/user/resume  (SockJS fallback 포함)
+구독 토픽                  : /topic/resume/{documentId}/status
+서버 → 클라이언트          : SimpMessagingTemplate.convertAndSend(...)
 ```
 
 ### 인증
 
-JWT를 STOMP CONNECT 프레임 헤더 또는 핸드셰이크 쿼리 파라미터로 전달.  
-`ChannelInterceptor`의 `preSend()`에서 CONNECT 프레임 수신 시 토큰을 검증하고 `Authentication` 객체를 세션에 주입한다.
+JWT를 **핸드셰이크 쿼리 파라미터**로 전달한다. (`?token={accessToken}`)  
+`HandshakeInterceptor`에서 쿼리 파라미터 `token`을 추출하여 검증하고, 이후 `ChannelInterceptor`의 `preSend()`에서 CONNECT 프레임 수신 시 세션에 주입된 `Authentication` 객체를 재검증한다.
 
 ```
-// STOMP CONNECT 프레임 헤더
-CONNECT
-Authorization: Bearer {accessToken}
+WS /ws/user/resume?token={accessToken}
 ```
+
+> 쿼리 파라미터 방식으로 확정한 이유: 프론트 `@stomp/stompjs`의 `connectHeaders`를 통한 CONNECT 프레임 헤더 전달과 쿼리 파라미터 전달 모두 가능하나, 프론트 api-schema.md 계약이 쿼리 파라미터 방식으로 확정되어 있으므로 이에 맞춘다.
 
 ### Connection Lifecycle
 

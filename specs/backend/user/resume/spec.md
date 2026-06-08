@@ -31,6 +31,7 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 | `file_url` | VARCHAR(500) | NOT NULL | S3 저장 파일 URL |
 | `original_name` | VARCHAR(200) | NOT NULL | 업로드 원본 파일명 |
 | `status` | VARCHAR(20) | NOT NULL, DEFAULT 'UPLOADED' | `UPLOADED` \| `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
+| `error_message` | TEXT | NULL | 분석 실패 시 오류 메시지 |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 업로드 일시 |
 
 > S3 저장 시 `original_name`을 그대로 파일명으로 사용하지 않는다.  
@@ -49,11 +50,13 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 | `score_logical` | INTEGER | | 논리력 점수 (0~100) |
 | `score_total` | INTEGER | | 종합 점수 (0~100) |
 | `feedback_text` | TEXT | NOT NULL | AI 서류 피드백 텍스트 |
+| `overall_review` | TEXT | NULL | AI 종합 총평 |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 생성 일시 |
 
 > 점수 컬럼 5개는 분석 완료 전까지 `null`. FastAPI Webhook 수신 시 저장됨.  
 > `feedback_text`는 항목별 첨삭 배열(`feedbackDetails`)을 JSON 직렬화한 문자열로 확정.  
-> Spring에서 `ObjectMapper.readValue()`로 역직렬화하여 `ResponseFeedback.feedbackDetails`로 반환.
+> Spring에서 `ObjectMapper.readValue()`로 역직렬화하여 `ResponseFeedback.feedbackDetails`로 반환.  
+> `overall_review`는 FastAPI Webhook이 함께 전달하는 AI 종합 총평 — `ResponseFeedback.overallReview`로 반환.
 
 ### cover_letter_meta
 
@@ -107,7 +110,8 @@ user/resume/
 
 global/websocket/               ← resume + interview 공통 WebSocket 인프라
 ├── WebSocketConfig.java        (STOMP 엔드포인트 등록, 토픽 prefix 설정)
-├── StompChannelInterceptor.java (JWT 검증, Authentication 주입)
+├── WebSocketHandshakeInterceptor.java (핸드셰이크 시 ?token 쿼리 파라미터 JWT 검증)
+├── StompChannelInterceptor.java (CONNECT 프레임 수신 시 세션 Authentication 재검증)
 └── WebSocketEventListener.java  (연결·구독·해제 이벤트 처리)
 ```
 
@@ -152,18 +156,31 @@ public class ResumeDTO {
     ) {}
 
     // 분석 결과 조회 응답
+    // DB score_* 컬럼 5개 → ScoreDTO로 감싸 반환 (필드명 camelCase 변환)
     // feedback_text(TEXT) → ObjectMapper 역직렬화 → feedbackDetails 배열로 반환
+    // overall_review(TEXT) → overallReview 필드로 반환
+    // documents.error_message → errorMessage 필드로 반환
     public record ResponseFeedback(
         UUID documentId,
         String status,
-        Integer scoreJobFitness,            // null: 분석 미완료
-        Integer scoreTechStack,             // null: 분석 미완료
-        Integer scoreQuantified,            // null: 분석 미완료
-        Integer scoreLogical,               // null: 분석 미완료
-        Integer scoreTotal,                 // null: 분석 미완료
+        ScoreDTO scores,                      // null: 분석 미완료
+        String overallReview,                 // null: 분석 미완료 — document_feedbacks.overall_review
         List<FeedbackDetail> feedbackDetails, // null: 분석 미완료, feedback_text JSON 파싱 결과
+        String errorMessage,                  // null: 정상 완료 — documents.error_message
         ZonedDateTime createdAt
     ) {
+
+        // DB score_* 컬럼 → 프론트 scores 중첩 객체 매핑
+        // score_job_fitness → jobFitness, score_tech_stack → techStack
+        // score_quantified → quantifiedAchievement, score_logical → logicalStructure
+        public record ScoreDTO(
+            Integer jobFitness,
+            Integer techStack,
+            Integer quantifiedAchievement,
+            Integer logicalStructure,
+            Integer total
+        ) {}
+
         // @JsonIgnoreProperties(ignoreUnknown = true) 적용 필수
         // → FastAPI가 필드를 추가해도 Spring 서버 크래시 없이 알려진 필드만 매핑
         @JsonIgnoreProperties(ignoreUnknown = true)
@@ -298,6 +315,8 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 - **`documentId` 생성 주체**: Spring 서버가 DB 저장 시 `gen_random_uuid()`로 생성 — 클라이언트 측 UUID 사전 생성 방식(Client-side generation) 사용하지 않음. 클라이언트는 `POST` 응답의 `documentId`를 수신하여 이후 API 및 WebSocket 연결에 사용
 - 자기소개서 수정(Update) API는 v1 미지원 — 수정 필요 시 재제출로 처리
 - members 테이블 PK는 UUID (`gen_random_uuid()`) — `document.member_id` FK 타입 동일하게 UUID 적용
+- `documents` 테이블에 `error_message TEXT NULL` 컬럼 추가 — 분석 `FAILED` 시 오류 메시지 저장, 정상 완료 시 `null`
+- `document_feedbacks` 테이블에 `overall_review TEXT NULL` 컬럼 추가 — FastAPI가 Webhook으로 전달하는 AI 종합 총평 저장
 
 ---
 

@@ -67,7 +67,7 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 | 분석 결과 수신 | Webhook (FastAPI → Spring `POST .../webhook`) | Spring이 DB 저장 + WebSocket 알림을 한 흐름에서 처리 가능 |
 | 분석 결과 저장 | 점수 5개 개별 INTEGER 컬럼 + `feedback_text` TEXT | 실제 DB 스키마 기준 (JSONB 미사용, `AttributeConverter` 불필요) |
 | WebSocket 구현 | STOMP (`spring-boot-starter-websocket`) | 표준화된 메시지 프로토콜, 토픽 기반 구독 구조 |
-| WebSocket 인증 | STOMP `ChannelInterceptor` (`HandshakeInterceptor` 병행 가능) | 핸드셰이크 시점 또는 CONNECT 프레임 시점에 JWT 검증 및 `Authentication` 객체 주입 |
+| WebSocket 인증 | `WebSocketHandshakeInterceptor` (1차) + `StompChannelInterceptor` (2차) | 핸드셰이크 시 `?token=` 쿼리 파라미터로 JWT 전달 — 프론트 `@stomp/stompjs` 연결 방식으로 확정. 1차 핸드셰이크에서 검증 후 세션 주입, CONNECT 프레임에서 재검증 |
 | 페이징 기준 | 0-based (`page`, `size`) | Spring Data JPA `Pageable` 기본 규칙 |
 | `FAILED` 재시도 | v1 미지원 — UI에서 재업로드 유도 | v1 범위 최소화, v2 이후 재시도 정책 설계 |
 | WebSocket 종료 방식 | `COMPLETED`/`FAILED` 전송 후 30초 Grace Period 유지 후 서버 종료 | 즉시 종료 시 프론트 재연결 루프 유발 위험 방지 |

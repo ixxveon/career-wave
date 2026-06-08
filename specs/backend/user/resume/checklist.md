@@ -97,8 +97,9 @@
 
 ## WebSocket (`WS /ws/resume/{documentId}/status`)
 
-- [ ] STOMP CONNECT 프레임 헤더의 JWT를 `ChannelInterceptor`에서 검증한다
-- [ ] 토큰 없음·만료 시 연결이 거부된다
+- [ ] 핸드셰이크 쿼리 파라미터 `?token=`에서 JWT를 `WebSocketHandshakeInterceptor`가 추출·검증한다
+- [ ] `StompChannelInterceptor`가 CONNECT 프레임 수신 시 세션 attributes의 `Authentication`을 재검증한다
+- [ ] 토큰 없음·만료 시 연결이 거부된다 (핸드셰이크 단계 HTTP 401 또는 CONNECT 프레임 거부)
 - [ ] SUBSCRIBE 프레임 수신 시 구독 토픽의 `documentId` 소유권을 `DocumentRepository`로 DB 재조회하여 검증한다
 - [ ] 본인 소유가 아닌 `documentId` 구독 시 Close 1008로 연결이 즉시 거부된다 (IDOR 방지 필수)
 - [ ] 구독 실패(`@MessageExceptionHandler`) 시 클라이언트에게 에러 메시지를 발송하도록 구현되어 있다 (연결 성공 후 특정 토픽 구독 오류 시 사용자에게 피드백 필수)

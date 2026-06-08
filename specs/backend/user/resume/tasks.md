@@ -111,11 +111,14 @@
 
 ## Phase 7: WebSocket 분석 상태 구독
 
-- [ ] `WebSocketConfig` 설정 클래스 작성 (STOMP 엔드포인트 `/ws/resume` 등록, 토픽 prefix `/topic` 설정)
-- [ ] `ChannelInterceptor` 구현
-  - CONNECT 프레임 수신 시 헤더의 JWT 검증
+- [ ] `WebSocketConfig` 설정 클래스 작성 (STOMP 엔드포인트 `/ws/user/resume` 등록, 토픽 prefix `/topic` 설정)
+- [ ] `WebSocketHandshakeInterceptor` 구현
+  - 핸드셰이크 시 쿼리 파라미터 `?token=` 추출 → JWT 검증
+  - 검증 성공 시 `Authentication` 객체를 WebSocket 세션 attributes에 주입
+  - 검증 실패 시 핸드셰이크 거부 (HTTP 401)
+- [ ] `StompChannelInterceptor` 구현
+  - CONNECT 프레임 수신 시 세션 attributes의 `Authentication` 재검증
   - 검증 실패 시 `MessageDeliveryException` 으로 연결 거부
-  - 검증 성공 시 `Authentication` 객체를 세션에 주입
 - [ ] `documentId` 소유권 검증 — SUBSCRIBE 프레임 수신 시 `DocumentRepository`로 DB 재조회하여 소유권 확인 (토큰의 userId ↔ document.member_id 비교)
   - 불일치 시 Close 1008로 즉시 연결 거부 (IDOR 방지)
 - [ ] Webhook 수신 후 `SimpMessagingTemplate.convertAndSend("/topic/resume/{documentId}/status", message)` 연동
