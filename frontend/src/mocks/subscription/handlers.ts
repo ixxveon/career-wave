@@ -7,9 +7,19 @@ import { http, HttpResponse } from 'msw';
 // testuser04: 두 상품 모두 구독
 // testcompany01: 구독 없음
 
-const NOW = new Date();
-const NEXT_MONTH = new Date(NOW.getFullYear(), NOW.getMonth() + 1, NOW.getDate()).toISOString();
-const LAST_MONTH = new Date(NOW.getFullYear(), NOW.getMonth() - 1, NOW.getDate()).toISOString();
+const PRICE = 29000;
+
+function monthsAgo(n: number): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - n);
+  return d.toISOString();
+}
+
+function monthsLater(n: number): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() + n);
+  return d.toISOString();
+}
 
 const MOCK_SUBSCRIPTIONS: Record<string, object[]> = {
   'mock-user-uuid-0001': [],
@@ -19,10 +29,10 @@ const MOCK_SUBSCRIPTIONS: Record<string, object[]> = {
       productCode: 'interview',
       productName: 'AI 모의면접',
       status: 'ACTIVE',
-      startedAt: LAST_MONTH,
-      currentPeriodStart: LAST_MONTH,
-      currentPeriodEnd: NEXT_MONTH,
-      nextBillingAt: NEXT_MONTH,
+      startedAt: monthsAgo(10),
+      currentPeriodStart: monthsAgo(1),
+      currentPeriodEnd: monthsLater(1),
+      nextBillingAt: monthsLater(1),
       cancelScheduledAt: null,
     },
   ],
@@ -32,10 +42,10 @@ const MOCK_SUBSCRIPTIONS: Record<string, object[]> = {
       productCode: 'document-coaching',
       productName: '서류 AI 코칭',
       status: 'ACTIVE',
-      startedAt: LAST_MONTH,
-      currentPeriodStart: LAST_MONTH,
-      currentPeriodEnd: NEXT_MONTH,
-      nextBillingAt: NEXT_MONTH,
+      startedAt: monthsAgo(10),
+      currentPeriodStart: monthsAgo(1),
+      currentPeriodEnd: monthsLater(1),
+      nextBillingAt: monthsLater(1),
       cancelScheduledAt: null,
     },
   ],
@@ -45,10 +55,10 @@ const MOCK_SUBSCRIPTIONS: Record<string, object[]> = {
       productCode: 'interview',
       productName: 'AI 모의면접',
       status: 'ACTIVE',
-      startedAt: LAST_MONTH,
-      currentPeriodStart: LAST_MONTH,
-      currentPeriodEnd: NEXT_MONTH,
-      nextBillingAt: NEXT_MONTH,
+      startedAt: monthsAgo(10),
+      currentPeriodStart: monthsAgo(1),
+      currentPeriodEnd: monthsLater(1),
+      nextBillingAt: monthsLater(1),
       cancelScheduledAt: null,
     },
     {
@@ -56,10 +66,10 @@ const MOCK_SUBSCRIPTIONS: Record<string, object[]> = {
       productCode: 'document-coaching',
       productName: '서류 AI 코칭',
       status: 'ACTIVE',
-      startedAt: LAST_MONTH,
-      currentPeriodStart: LAST_MONTH,
-      currentPeriodEnd: NEXT_MONTH,
-      nextBillingAt: NEXT_MONTH,
+      startedAt: monthsAgo(10),
+      currentPeriodStart: monthsAgo(1),
+      currentPeriodEnd: monthsLater(1),
+      nextBillingAt: monthsLater(1),
       cancelScheduledAt: null,
     },
   ],
@@ -68,14 +78,14 @@ const MOCK_SUBSCRIPTIONS: Record<string, object[]> = {
 
 const MOCK_USAGES: Record<string, object[]> = {
   'mock-user-uuid-0002': [
-    { productCode: 'interview', limit: 20, used: 5, remaining: 15, unit: 'session', resetAt: NEXT_MONTH },
+    { productCode: 'interview', limit: 20, used: 5, remaining: 15, unit: 'session', resetAt: monthsLater(1) },
   ],
   'mock-user-uuid-0003': [
-    { productCode: 'document-coaching', limit: 30, used: 8, remaining: 22, unit: 'analysis', resetAt: NEXT_MONTH },
+    { productCode: 'document-coaching', limit: 30, used: 8, remaining: 22, unit: 'analysis', resetAt: monthsLater(1) },
   ],
   'mock-user-uuid-0004': [
-    { productCode: 'interview', limit: 20, used: 3, remaining: 17, unit: 'session', resetAt: NEXT_MONTH },
-    { productCode: 'document-coaching', limit: 30, used: 12, remaining: 18, unit: 'analysis', resetAt: NEXT_MONTH },
+    { productCode: 'interview', limit: 20, used: 3, remaining: 17, unit: 'session', resetAt: monthsLater(1) },
+    { productCode: 'document-coaching', limit: 30, used: 12, remaining: 18, unit: 'analysis', resetAt: monthsLater(1) },
   ],
 };
 
@@ -85,6 +95,43 @@ const MOCK_ENTITLEMENTS: Record<string, object> = {
   'mock-user-uuid-0003': { 'document-coaching': true, interview: false },
   'mock-user-uuid-0004': { 'document-coaching': true, interview: true },
   'mock-company-uuid-0001': { 'document-coaching': false, interview: false },
+};
+
+// 구독 계정별 결제 내역 10개 (최신순)
+const MOCK_PAYMENT_HISTORY: Record<string, object[]> = {
+  'mock-user-uuid-0002': Array.from({ length: 10 }, (_, i) => ({
+    paymentId: `pay-interview-0002-${String(i + 1).padStart(3, '0')}`,
+    orderId: `order-interview-0002-${String(i + 1).padStart(3, '0')}`,
+    productCode: 'interview',
+    productName: 'AI 모의면접',
+    amount: PRICE,
+    currency: 'KRW',
+    paymentStatus: 'PAID',
+    paidAt: monthsAgo(i),
+    failureReason: null,
+  })),
+  'mock-user-uuid-0003': Array.from({ length: 10 }, (_, i) => ({
+    paymentId: `pay-document-0003-${String(i + 1).padStart(3, '0')}`,
+    orderId: `order-document-0003-${String(i + 1).padStart(3, '0')}`,
+    productCode: 'document-coaching',
+    productName: '서류 AI 코칭',
+    amount: PRICE,
+    currency: 'KRW',
+    paymentStatus: 'PAID',
+    paidAt: monthsAgo(i),
+    failureReason: null,
+  })),
+  'mock-user-uuid-0004': Array.from({ length: 10 }, (_, i) => ({
+    paymentId: `pay-both-0004-${String(i + 1).padStart(3, '0')}`,
+    orderId: `order-both-0004-${String(i + 1).padStart(3, '0')}`,
+    productCode: i % 2 === 0 ? 'interview' : 'document-coaching',
+    productName: i % 2 === 0 ? 'AI 모의면접' : '서류 AI 코칭',
+    amount: PRICE,
+    currency: 'KRW',
+    paymentStatus: 'PAID',
+    paidAt: monthsAgo(Math.floor(i / 2)),
+    failureReason: null,
+  })),
 };
 
 function getMemberId(request: Request): string {
@@ -100,12 +147,12 @@ export const subscriptionHandlers = [
       data: [
         {
           productCode: 'document-coaching', name: '서류 AI 코칭', description: '이력서와 자기소개서 AI 분석',
-          price: 9900, currency: 'KRW', billingCycle: 'MONTHLY',
+          price: PRICE, currency: 'KRW', billingCycle: 'MONTHLY',
           features: ['서류 분석', '피드백 리포트', '개선 제안'], active: true,
         },
         {
           productCode: 'interview', name: 'AI 모의면접', description: '텍스트/음성 기반 AI 면접 연습',
-          price: 12900, currency: 'KRW', billingCycle: 'MONTHLY',
+          price: PRICE, currency: 'KRW', billingCycle: 'MONTHLY',
           features: ['모의면접', 'AI 피드백', '리포트'], active: true,
         },
       ],
@@ -145,21 +192,20 @@ export const subscriptionHandlers = [
   // 결제 내역
   http.get('/api/v1/billing/payments/history', ({ request }) => {
     const memberId = getMemberId(request);
-    const hasSubscription = (MOCK_SUBSCRIPTIONS[memberId] ?? []).length > 0;
-    const content = hasSubscription
-      ? [
-          {
-            paymentId: `pay-${memberId}-001`, orderId: `order-${memberId}-001`,
-            productCode: (MOCK_SUBSCRIPTIONS[memberId] as Array<{productCode: string}>)[0]?.productCode,
-            productName: (MOCK_SUBSCRIPTIONS[memberId] as Array<{productName: string}>)[0]?.productName,
-            amount: 9900, currency: 'KRW', paymentStatus: 'PAID',
-            paidAt: LAST_MONTH, failureReason: null,
-          },
-        ]
-      : [];
+    const url = new URL(request.url);
+    const page = Number(url.searchParams.get('page') ?? '0');
+    const size = Number(url.searchParams.get('size') ?? '10');
+    const allContent = MOCK_PAYMENT_HISTORY[memberId] ?? [];
+    const content = allContent.slice(page * size, page * size + size);
     return HttpResponse.json({
       success: true, statusCode: 200, message: '요청이 성공적으로 처리되었습니다.',
-      data: { content, page: 0, size: 10, totalElements: content.length, totalPages: content.length > 0 ? 1 : 0 },
+      data: {
+        content,
+        page,
+        size,
+        totalElements: allContent.length,
+        totalPages: Math.ceil(allContent.length / size),
+      },
     });
   }),
 ];
