@@ -9,7 +9,24 @@ import {
   type LoginResponse,
   type LoginRouteDecision,
   type MemberStatus,
+  type MemberType,
 } from '../../../types/user/member';
+
+// 기업 회원 전용 경로 — 개인 회원은 next 파라미터로 진입 불가
+const COMPANY_ONLY_PATH_PREFIXES = [
+  '/dashboard/company',
+  '/company',
+  '/applications/applicants',
+] as const;
+
+export function isNextPathCompatible(nextPath: string, memberType: MemberType): boolean {
+  if (memberType === MEMBER_TYPE.USER) {
+    return !COMPANY_ONLY_PATH_PREFIXES.some(
+      (prefix) => nextPath === prefix || nextPath.startsWith(`${prefix}/`),
+    );
+  }
+  return true;
+}
 
 const COMPANY_BLOCK_REASON_BY_STATUS = {
   [COMPANY_APPROVAL_STATUS.PENDING_REVIEW]: 'COMPANY_PENDING',
