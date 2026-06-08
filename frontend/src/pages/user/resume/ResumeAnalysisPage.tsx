@@ -5,7 +5,7 @@ import QuotaBar from '../../../components/user/resume/QuotaBar';
 import DocumentResultView from './DocumentResultView';
 import { useResumeUpload } from '../../../hooks/user/resume/useResumeUpload';
 import { PLAN_LIMITS, MOCK_QUOTA } from '../../../utils/user/resume/quota';
-import './ResumeAnalysisPage.css';
+import '@/styles/user/resume/ResumeAnalysisPage.css';
 
 export default function ResumeAnalysisPage() {
   const {

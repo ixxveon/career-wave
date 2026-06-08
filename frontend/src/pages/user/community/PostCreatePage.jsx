@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronLeft, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './styles/PostCreatePage.css';
+import '@/styles/user/community/PostCreatePage.css';
 
 const CATEGORIES = ['질문', '면접 후기', '이력서 팁', '합격 후기', '자유'];
 

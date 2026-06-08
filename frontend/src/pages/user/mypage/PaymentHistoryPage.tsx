@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import './MyPage.css';
+import '@/styles/user/mypage/MyPage.css';
 import { BillingNoticeSection } from '../../../components/user/subscription/BillingNoticeSection';
 import { CancelSubscriptionModal } from '../../../components/user/subscription/CancelSubscriptionModal';
 import { PaymentHistorySection } from '../../../components/user/subscription/PaymentHistorySection';

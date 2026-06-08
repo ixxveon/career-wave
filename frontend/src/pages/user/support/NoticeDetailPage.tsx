@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Bell, Eye, ChevronRight } from 'lucide-react';
 import { supportApi, NOTICE_CATEGORY_LABEL, type NoticeDetail } from '../../../api/user/supportApi';
-import './styles/NoticeDetailPage.css';
+import '@/styles/user/support/NoticeDetailPage.css';
 
 export default function NoticeDetailPage() {
   const navigate = useNavigate();

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useJobNoticeDetail } from '../../../hooks/user/jobNotice/useJobNoticeDetail';
 import { mapJobNoticeApiToViewModel, type JobNotice } from '../../../types/user/jobNotice';
-import './styles/JobNoticeDetail.css';
+import '@/styles/user/jobNotice/JobNoticeDetail.css';
 
 const TABS = ['공고 상세', '기업 정보'] as const;
 type DetailTab = (typeof TABS)[number];

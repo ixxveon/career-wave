@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, BookOpenCheck, Download, FileText, Lightbulb, Target } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { careerHistoryApi } from '../../../api/user/careerHistoryApi';
-import './CareerDiagnosis.css';
+import '@/styles/user/careerDiagnosis/CareerDiagnosis.css';
 
 const roadmap = [
   { week: '1주차', title: 'JPA 기본 개념 복습', detail: '영속성 컨텍스트, 변경 감지, 지연 로딩 정리' },

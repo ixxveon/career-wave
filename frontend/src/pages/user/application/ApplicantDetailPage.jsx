@@ -4,7 +4,7 @@ import { ArrowLeft, Download, ExternalLink, FileCheck2, Save } from 'lucide-reac
 import { applicationApi } from '../../../api/user/applicationApi';
 import { careerHistoryApi } from '../../../api/user/careerHistoryApi';
 import { reportExportApi } from '../../../api/user/reportExportApi';
-import './styles/ApplicantDetailPage.css';
+import '@/styles/user/application/ApplicantDetailPage.css';
 
 const statusLabels = {
   APPLIED: '지원 접수',

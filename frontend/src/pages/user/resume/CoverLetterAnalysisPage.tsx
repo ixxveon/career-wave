@@ -5,7 +5,7 @@ import QuotaBar from '../../../components/user/resume/QuotaBar';
 import DocumentResultView from './DocumentResultView';
 import { useCoverLetterForm } from '../../../hooks/user/resume/useCoverLetterForm';
 import { PLAN_LIMITS, MOCK_QUOTA } from '../../../utils/user/resume/quota';
-import './CoverLetterAnalysisPage.css';
+import '@/styles/user/resume/CoverLetterAnalysisPage.css';
 
 export default function CoverLetterAnalysisPage() {
   const {

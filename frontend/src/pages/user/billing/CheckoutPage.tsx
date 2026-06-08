@@ -1,6 +1,6 @@
 import { AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import './Billing.css';
+import '@/styles/user/billing/Billing.css';
 import { useCheckoutStatus } from '../../../hooks/user/subscription/useCheckoutStatus';
 import CheckoutProductCard from '../../../components/user/subscription/CheckoutProductCard';
 import CheckoutSummaryCard from '../../../components/user/subscription/CheckoutSummaryCard';

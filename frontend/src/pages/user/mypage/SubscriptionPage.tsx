@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import './MyPage.css';
+import '@/styles/user/mypage/MyPage.css';
 import { useSubscriptionStatus } from '../../../hooks/user/subscription';
 import { SubscriptionHero } from '../../../components/user/subscription/SubscriptionHero';
 import { ServiceCardsSection } from '../../../components/user/subscription/ServiceCardsSection';

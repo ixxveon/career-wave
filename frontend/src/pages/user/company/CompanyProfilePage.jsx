@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Building2, MapPin, Users, Globe, Edit3, Eye, CheckCircle2, Plus, X, Briefcase } from 'lucide-react';
-import './styles/CompanyProfilePage.css';
+import '@/styles/user/company/CompanyProfilePage.css';
 
 const WELFARE_PRESETS = ['자율 출퇴근', '재택근무', '성과급', '스톡옵션', '건강검진', '점심 제공', '교육비 지원', '사내 카페'];
 

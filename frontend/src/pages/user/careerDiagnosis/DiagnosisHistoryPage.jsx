@@ -11,7 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import { careerHistoryApi } from '../../../api/user/careerHistoryApi';
-import './CareerDiagnosis.css';
+import '@/styles/user/careerDiagnosis/CareerDiagnosis.css';
 
 const filters = ['전체', '기술면접', '인성면접', '프로젝트면접'];
 const jobOptions = ['전체 직무', '백엔드 개발자', '프론트엔드 개발자', '풀스택 개발자', '서비스 기획자'];

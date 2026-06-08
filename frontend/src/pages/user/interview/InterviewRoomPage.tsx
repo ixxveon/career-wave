@@ -5,7 +5,7 @@ import {
   Briefcase, FileText, Video, MessageSquare, Camera,
   Mic, Eye, Activity, ChevronDown, ChevronUp,
 } from 'lucide-react';
-import './InterviewRoomPage.css';
+import '@/styles/user/interview/InterviewRoomPage.css';
 
 /* ── Types ── */
 interface Job {

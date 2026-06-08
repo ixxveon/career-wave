@@ -4,7 +4,7 @@ import { Search, Bookmark } from "lucide-react";
 import JobNoticeDetail from "@/pages/user/jobNotice/JobNoticeDetail";
 import { mockScrapJobs } from "@/mocks/user/dashboardMock";
 import type { ScrapJob } from "@/types/user/dashboard";
-import "./MyPage.css";
+import "@/styles/user/mypage/MyPage.css";
 
 const CAREER_LEVEL_LABELS: Record<ScrapJob["careerLevel"], string> = {
   JUNIOR: "신입",

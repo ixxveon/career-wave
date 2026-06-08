@@ -1,5 +1,5 @@
 import { CheckCircle2, Circle, Clock, FileText, ChevronRight, Building2 } from 'lucide-react';
-import './styles/ApplicationStatusPage.css';
+import '@/styles/user/application/ApplicationStatusPage.css';
 
 const MOCK_APPLICATIONS = [
   {

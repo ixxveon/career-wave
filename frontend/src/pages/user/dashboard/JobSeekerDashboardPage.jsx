@@ -18,7 +18,7 @@ import {
   UsersRound,
   Github,
 } from 'lucide-react';
-import './DashboardPage.css';
+import '@/styles/user/dashboard/DashboardPage.css';
 
 const featureCards = [
   {

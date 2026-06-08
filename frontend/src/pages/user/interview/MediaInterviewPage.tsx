@@ -6,7 +6,7 @@ import {
   BarChart2, Lightbulb, List,
   type LucideIcon,
 } from 'lucide-react';
-import './MediaInterviewPage.css';
+import '@/styles/user/interview/MediaInterviewPage.css';
 
 interface MetricItem {
   Icon: LucideIcon;

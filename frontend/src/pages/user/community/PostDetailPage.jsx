@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, ThumbsUp, Bookmark, MessageCircle, Flag, Send } from 'lucide-react';
 import { getCommunityPost } from './communityStorage';
-import './styles/PostDetailPage.css';
+import '@/styles/user/community/PostDetailPage.css';
 
 const MOCK_COMMENTS = [
   {

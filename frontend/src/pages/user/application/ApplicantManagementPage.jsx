@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, FileText, Search, XCircle } from 'lucide-react';
 import { applicationApi } from '../../../api/user/applicationApi';
-import './styles/ApplicantManagementPage.css';
+import '@/styles/user/application/ApplicantManagementPage.css';
 
 const STATUS_OPTIONS = [
   { value: 'ALL', label: '전체' },

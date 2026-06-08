@@ -6,7 +6,7 @@ import DocumentResultView from './DocumentResultView';
 import { useAnalysisResult } from '../../../hooks/user/resume/useAnalysisResult';
 import type { DocumentResult } from '../../../types/user/document';
 import type { AnalysisResultResponse } from '../../../types/user/resume';
-import './DocumentReportPage.css';
+import '@/styles/user/resume/DocumentReportPage.css';
 
 // ── AnalysisResultResponse → DocumentResult 매핑 ─────────────
 function toDocumentResult(res: AnalysisResultResponse): DocumentResult {

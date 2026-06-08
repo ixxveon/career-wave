@@ -1,5 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
-import './Billing.css';
+import '@/styles/user/billing/Billing.css';
 import { usePaymentFailStatus } from '../../../hooks/user/subscription/usePaymentFailStatus';
 import PaymentFailDetail from '../../../components/user/subscription/PaymentFailDetail';
 

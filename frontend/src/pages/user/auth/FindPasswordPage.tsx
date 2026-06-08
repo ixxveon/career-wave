@@ -10,7 +10,7 @@ import RecoveryPasswordFields from '../../../components/user/member/RecoveryPass
 import RecoveryPageLinks from '../../../components/user/member/RecoveryPageLinks';
 import RecoverySupportPanel from '../../../components/user/member/RecoverySupportPanel';
 import { RecoveryCodeField, RecoveryContactField } from '../../../components/user/member/RecoveryVerificationFields';
-import './AuthPage.css';
+import '@/styles/user/auth/AuthPage.css';
 
 function FindPasswordPage() {
   const { memberType } = useParams();

@@ -11,7 +11,7 @@ import InterviewSetup from '../../../components/user/interview/InterviewSetup';
 import InterviewRoom  from './InterviewRoom';
 
 import { loadInterviewSession, clearInterviewSession } from '../../../utils/user/interview/sessionStorage';
-import './TextInterviewPage.css';
+import '@/styles/user/interview/TextInterviewPage.css';
 
 const MOCK_SETUP = {
   resumeFileName: '이력서_최종본.pdf',

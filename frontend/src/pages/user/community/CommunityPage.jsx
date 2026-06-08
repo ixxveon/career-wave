@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ThumbsUp, MessageCircle, Bookmark, ChevronRight, Flame, Star, Clock } from 'lucide-react';
-import './styles/CommunityPage.css';
+import '@/styles/user/community/CommunityPage.css';
 
 const CATEGORIES = ['전체', '질문', '면접 후기', '이력서 팁', '합격 후기', '자유'];
 

@@ -23,7 +23,7 @@ import {
 import { jobApi } from '../../../api/user/jobApi';
 import { useJobNoticeList } from '../../../hooks/user/jobNotice/useJobNoticeList';
 import { authSession } from '../../../utils/user/member/authSession';
-import './styles/JobNoticeListPage.css';
+import '@/styles/user/jobNotice/JobNoticeListPage.css';
 
 const FILTER_GROUPS = [
   { label: '직무', options: ['전체', '백엔드', '프론트엔드', '데이터', 'DevOps'] },

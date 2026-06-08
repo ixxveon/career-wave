@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Building2, UserRound } from 'lucide-react';
-import './AuthPage.css';
+import '@/styles/user/auth/AuthPage.css';
 
 function FindAccountPage() {
   return (

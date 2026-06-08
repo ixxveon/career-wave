@@ -10,7 +10,7 @@ import {
   type InquiryStatus,
   type InquiryItem,
 } from '../../../api/user/supportApi';
-import './styles/InquiryListPage.css';
+import '@/styles/user/support/InquiryListPage.css';
 
 const CATEGORY_FILTERS: { label: string; value: InquiryCategory | '' }[] = [
   { label: '전체',      value: '' },

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Search, HelpCircle } from 'lucide-react';
 import { supportApi, FAQ_CATEGORY_LABEL, type FaqCategory, type FaqItem } from '../../../api/user/supportApi';
 import { useDebounce } from '../../../hooks/user/common/useDebounce';
-import './styles/FaqPage.css';
+import '@/styles/user/support/FaqPage.css';
 
 const CATEGORY_FILTERS: { label: string; value: FaqCategory | '' }[] = [
   { label: '전체',      value: '' },

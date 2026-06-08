@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronLeft, FileText, User, ShieldCheck, Send, CheckCircle2, ChevronDown } from 'lucide-react';
-import './styles/ApplyPage.css';
+import '@/styles/user/application/ApplyPage.css';
 
 const MOCK_RESUMES = [
   { id: 1, title: '백엔드 개발자 이력서 v3', updatedAt: '2025-05-18', score: 88 },

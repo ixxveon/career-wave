@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './InterviewHomePage.css';
+import '@/styles/user/interview/InterviewHomePage.css';
 import {
   MessageSquare, Video, ChevronRight, Lightbulb,
   FileText, User, Zap, ClipboardList, X, Loader2,

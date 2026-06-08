@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, Hash, PenLine,
 } from 'lucide-react';
 import type { DocumentResult, FeedbackDetail } from '../../../types/user/document';
-import './DocumentResultView.css';
+import '@/styles/user/resume/DocumentResultView.css';
 
 function scoreColor(v: number): string {
   return v >= 80 ? '#16a34a' : v >= 65 ? '#7c3aed' : '#dc2626';

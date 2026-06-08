@@ -3,7 +3,7 @@ import { CompanyRegisterForm } from '../../../components/user/member/CompanyRegi
 import { PersonalRegisterForm } from '../../../components/user/member/PersonalRegisterForm';
 import { COMPANY_TYPE_LABELS } from '../../../utils/user/member/registerSchema';
 import { companyTermDetails, personalTermDetails } from '../../../utils/user/member/registerTerms';
-import './AuthPage.css';
+import '@/styles/user/auth/AuthPage.css';
 
 const companyTypes = Object.values(COMPANY_TYPE_LABELS);
 

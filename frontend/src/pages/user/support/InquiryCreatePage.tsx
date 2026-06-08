@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Send } from 'lucide-react';
 import { supportApi, INQUIRY_CATEGORY_LABEL, type InquiryCategory } from '../../../api/user/supportApi';
-import './styles/InquiryCreatePage.css';
+import '@/styles/user/support/InquiryCreatePage.css';
 
 const CATEGORY_OPTIONS = Object.entries(INQUIRY_CATEGORY_LABEL) as [InquiryCategory, string][];
 

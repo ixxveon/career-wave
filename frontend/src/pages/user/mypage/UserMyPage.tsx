@@ -12,7 +12,7 @@ import {
     mockGithubProfile,
 } from "@/mocks/user/dashboardMock";
 import type { GithubProfile, UserProfile } from "@/types/user/dashboard";
-import "./MyPage.css";
+import "@/styles/user/mypage/MyPage.css";
 
 const ROLE_TYPE_LABELS: Record<UserProfile["roleType"], string> = {
     ROLE_USER: "일반 회원",

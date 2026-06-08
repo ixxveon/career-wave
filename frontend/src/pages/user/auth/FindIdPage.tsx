@@ -8,7 +8,7 @@ import RecoveryPageLinks from '../../../components/user/member/RecoveryPageLinks
 import RecoverySupportPanel from '../../../components/user/member/RecoverySupportPanel';
 import { RecoveryCodeField, RecoveryContactField } from '../../../components/user/member/RecoveryVerificationFields';
 import RecoveryResultPanel from '../../../components/user/member/RecoveryResultPanel';
-import './AuthPage.css';
+import '@/styles/user/auth/AuthPage.css';
 
 function FindIdPage() {
   const { memberType } = useParams();

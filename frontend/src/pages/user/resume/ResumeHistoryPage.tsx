@@ -4,7 +4,7 @@ import { FileSearch, FileText, ScrollText } from 'lucide-react';
 import HistoryItem from '../../../components/user/resume/HistoryItem';
 import { useResumeHistory } from '../../../hooks/user/resume/useResumeHistory';
 import type { FileType } from '../../../types/user/resume';
-import './ResumeHistoryPage.css';
+import '@/styles/user/resume/ResumeHistoryPage.css';
 
 const PAGE_SIZE = 10;
 

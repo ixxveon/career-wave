@@ -2,7 +2,7 @@ import { LoginForm } from '../../../components/user/member/LoginForm';
 import { LoginPageLinks } from '../../../components/user/member/LoginPageLinks';
 import { LoginTypeTabs } from '../../../components/user/member/LoginTypeTabs';
 import { useLoginForm } from '../../../hooks/user/member';
-import './AuthPage.css';
+import '@/styles/user/auth/AuthPage.css';
 
 function LoginPage() {
   const {

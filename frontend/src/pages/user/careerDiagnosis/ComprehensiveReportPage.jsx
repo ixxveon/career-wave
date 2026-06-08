@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { careerHistoryApi } from '../../../api/user/careerHistoryApi';
 import { reportExportApi } from '../../../api/user/reportExportApi';
-import './CareerDiagnosis.css';
+import '@/styles/user/careerDiagnosis/CareerDiagnosis.css';
 
 const reportOptions = [
   { key: 'document', label: '서류 분석 결과' },

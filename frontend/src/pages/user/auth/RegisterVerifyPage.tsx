@@ -6,7 +6,7 @@ import { useCompleteSocialRegister, useConfirmVerificationCode, useSendVerificat
 import { getSocialProviderLabel } from '../../../utils/user/member/socialAuth';
 import { formatRemaining, getRecoveryErrorMessage, getRemainingSeconds } from '../../../utils/user/member/recoveryView';
 import { isValidPhone, isValidVerificationCode, normalizePhone } from '../../../utils/user/member/registerSchema';
-import './AuthPage.css';
+import '@/styles/user/auth/AuthPage.css';
 
 const carriers = ['SKT', 'KT', 'LG U+', '알뜰폰'];
 

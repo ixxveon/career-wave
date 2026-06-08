@@ -1,6 +1,6 @@
 import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import './Billing.css';
+import '@/styles/user/billing/Billing.css';
 import { usePaymentSuccessStatus } from '../../../hooks/user/subscription/usePaymentSuccessStatus';
 import PaymentSuccessDetail from '../../../components/user/subscription/PaymentSuccessDetail';
 

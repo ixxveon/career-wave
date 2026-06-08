@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { UserPlus, ShieldCheck, Trash2, MoreHorizontal, Mail, Clock } from 'lucide-react';
-import './styles/HrManagerPage.css';
+import '@/styles/user/company/HrManagerPage.css';
 
 const ROLES = ['공고 관리', '지원자 열람', '결제/정산', '전체 관리자'];
 

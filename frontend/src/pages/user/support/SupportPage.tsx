@@ -1,6 +1,6 @@
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Bell, HelpCircle, MessageSquare } from 'lucide-react';
-import './styles/SupportPage.css';
+import '@/styles/user/support/SupportPage.css';
 
 const TABS = [
   { to: '/support/notices',  label: '공지사항',  icon: <Bell size={15} /> },

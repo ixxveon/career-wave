@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Bell, ChevronRight, Search, Pin } from 'lucide-react';
 import { supportApi, NOTICE_CATEGORY_LABEL, type NoticeCategory, type NoticeItem } from '../../../api/user/supportApi';
 import { useDebounce } from '../../../hooks/user/common/useDebounce';
-import './styles/NoticePage.css';
+import '@/styles/user/support/NoticePage.css';
 
 const CATEGORY_FILTERS: { label: string; value: NoticeCategory | '' }[] = [
   { label: '전체',    value: '' },

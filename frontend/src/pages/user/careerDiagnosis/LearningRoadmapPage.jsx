@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, BookOpenCheck, CheckCircle2, Circle, FileText, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { careerHistoryApi } from '../../../api/user/careerHistoryApi';
-import './CareerDiagnosis.css';
+import '@/styles/user/careerDiagnosis/CareerDiagnosis.css';
 
 function LearningRoadmapPage() {
   const [roadmap, setRoadmap] = useState(null);

@@ -15,7 +15,7 @@ import ReportChart         from '../../../components/user/interview/ReportChart'
 import ScriptAnalysisView  from '../../../components/user/interview/ScriptAnalysisView';
 import type { InterviewReportResponse, SessionType } from '../../../types/user/interview';
 import { SESSION_TYPE } from '../../../types/user/interview';
-import './InterviewReportPage.css';
+import '@/styles/user/interview/InterviewReportPage.css';
 
 /* ── sessionType별 재연습 라우트 (as const 상수, constitution §금지패턴 문자열 하드코딩 방지) */
 const SESSION_TYPE_LABEL: Record<SessionType, string> = {
