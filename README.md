@@ -1,5 +1,14 @@
 # Career Wave
 
+CareerWave는 AI 기반 면접 코칭·서류 분석·커리어 진단 기능을 제공하는 취업 지원 통합 플랫폼입니다.
+구직자와 기업 회원을 위한 사용자 플랫폼과 운영팀을 위한 관리자 백오피스로 구성되어 있습니다.
+
+## 컨트리뷰션 가이드
+
+브랜치 전략, 커밋 컨벤션, PR 규칙은 아래 문서를 참고해 주세요.
+
+👉 [CONTRIBUTION.md](.github/CONTRIBUTION.md)
+
 ## 기술 스택 (Tech Stack)
 
 본 프로젝트는 하나의 저장소(Repository)에서 전체 플랫폼 서비스를 관리하는 모노레포(Monorepo) 아키처로 구성되어 있으며, 모듈별 기술 스택은 다음과 같습니다.
@@ -22,44 +31,12 @@
 
 ```text
 career-wave/
-├── .github/                  # GitHub 이슈/PR 템플릿 및 자동화 워크플로우 (CI)
-├── backend/                  # 스프링 부트 백엔드 시스템 루트
-│   ├── admin-backend/        # 관리자 백오피스 비즈니스 로직 및 API
-│   └── user-backend/         # 일반 사용자 서비스 비즈니스 로직 및 API
-├── fastapi/                  # 파이썬 FastAPI 시스템 루트
-│   ├── admin-fastapi/        # 외부 채용 사이트 공고 수집 크롤링 엔진
-│   └── user-fastapi/         # 사용자 답변 데이터 분석 및 AI 피드백 엔진
-└── frontend/                 # 리액트 프론트엔드 시스템 루트 (user + admin 통합)
-    ├── public/               # 정적 파일 (MSW 서비스워커 등)
-    └── src/
-        ├── api/              # API 호출 함수
-        │   ├── admin/
-        │   └── user/
-        ├── components/       # 재사용 컴포넌트
-        │   ├── admin/
-        │   └── user/
-        ├── constants/        # 상수 정의
-        ├── data/             # 목 데이터
-        ├── hooks/            # 커스텀 훅
-        │   └── user/
-        ├── layouts/          # 레이아웃 컴포넌트
-        │   └── admin/
-        ├── mocks/            # MSW 핸들러
-        │   ├── admin/
-        │   └── user/
-        ├── pages/            # 페이지 컴포넌트
-        │   ├── admin/
-        │   └── user/
-        ├── routes/           # 라우팅 설정
-        ├── styles/           # 전역 및 도메인별 스타일
-        │   ├── admin/
-        │   └── user/
-        ├── types/            # TypeScript 타입 정의
-        │   ├── admin/
-        │   └── user/
-        └── utils/            # 유틸리티 함수
-            ├── admin/
-            └── user/
+├── .github/        # CI/CD 워크플로우 및 PR 템플릿
+├── frontend/       # React + Vite (TypeScript) — user / admin 통합
+├── backend/        # Spring Boot (Java 17) — 단일 서버
+├── fastapi/        # FastAPI (Python) — AI 엔진 및 스크래핑
+├── specs/          # 스펙 명세 문서
+└── README.md
 ```
 
 ## 실행 방법
@@ -70,6 +47,11 @@ cd frontend
 npm install
 npm run dev
 ```
+
+| 플랫폼 | URL |
+| :--- | :--- |
+| 사용자 | http://localhost:5173 |
+| 관리자 | http://localhost:5173/admin |
 
 ### FastAPI
 ```bash
