@@ -60,22 +60,22 @@
 ### 개인 회원
 
 - [ ] `frontend/src/admin/api/memberApi.ts` API 모듈 작성
-- [ ] 개인 회원 목록 API 연동 및 더미 데이터 제거 (`GET /api/admin/members`)
+- [ ] 개인 회원 목록 API 연동 및 더미 데이터 제거 (`GET /api/v1/admin/members`)
 - [ ] 권한·구독·상태 필터 드롭다운 쿼리 파라미터 연결
 - [ ] 가입일 범위 필터 쿼리 파라미터 연결
 - [ ] 페이지네이션 API 연결 (page, size)
-- [ ] 개인 회원 상세 API 연동 (`GET /api/admin/members/{memberId}`)
-- [ ] 제재 처리 API 연동 (`POST /api/admin/members/{memberId}/sanctions`)
+- [ ] 개인 회원 상세 API 연동 (`GET /api/v1/admin/members/{memberId}`)
+- [ ] 제재 처리 API 연동 (`POST /api/v1/admin/members/{memberId}/sanctions`)
 - [ ] 제재 처리 성공 후 목록 상태 뱃지 즉시 갱신
 - [ ] API 실패 시 에러 메시지 표시 (`ApiResponse.message` 활용)
 
 ### 기업 회원
 
-- [ ] 기업 회원 목록 API 연동 및 더미 데이터 제거 (`GET /api/admin/hr-managers`)
+- [ ] 기업 회원 목록 API 연동 및 더미 데이터 제거 (`GET /api/v1/admin/hr-managers`)
 - [ ] `hrStatus` 한국어 → ERD enum (`PENDING / ACTIVE / REMOVED`) 전환
-- [ ] 기업 회원 상세 API 연동 (`GET /api/admin/hr-managers/{memberId}`)
-- [ ] 승인 API 연동 (`PATCH /api/admin/hr-managers/{memberId}/approve`)
-- [ ] 반려 API 연동 (`PATCH /api/admin/hr-managers/{memberId}/reject`) + 반려 사유 미입력 유효성 검증 추가
+- [ ] 기업 회원 상세 API 연동 (`GET /api/v1/admin/hr-managers/{memberId}`)
+- [ ] 승인 API 연동 (`PATCH /api/v1/admin/hr-managers/{memberId}/approve`)
+- [ ] 반려 API 연동 (`PATCH /api/v1/admin/hr-managers/{memberId}/reject`) + 반려 사유 미입력 유효성 검증 추가
 - [ ] 처리 관리자 ID 로그인 세션 기반으로 전환
 
 ---
