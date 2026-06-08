@@ -53,10 +53,11 @@ export function hasAdminRouteAccess(
   currentAdminRole: AdminDetailRole | null,
   path: (typeof ADMIN_ROUTE_PATHS)[keyof typeof ADMIN_ROUTE_PATHS]
 ) {
-  if (!currentAdminRole) return PUBLIC_ADMIN_ROUTES.has(path);
-
   const allowedRoles = ADMIN_ROUTE_ALLOWED_ROLES[path];
-  if (!allowedRoles || allowedRoles.length === 0) return PUBLIC_ADMIN_ROUTES.has(path);
+  if (!allowedRoles || allowedRoles.length === 0) {
+    return PUBLIC_ADMIN_ROUTES.has(path);
+  }
+  if (!currentAdminRole) return false;
 
   return allowedRoles.includes(currentAdminRole);
 }
