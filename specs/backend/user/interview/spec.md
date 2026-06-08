@@ -343,7 +343,9 @@ WS /ws/user/interview/{sessionId}/chat?token={accessToken}
 ## 세션 타임아웃 정책
 
 - 세션 생성 후 **24시간** 동안 `endSession` 요청이 없으면 서버 스케줄러가 해당 세션을 강제로 `FAILED` 처리한다.
-- 배치 주기: 1시간 단위 (`@Scheduled` cron)로 `started_at < NOW() - INTERVAL '24 hours'` AND `session_status = 'IN_PROGRESS'` 인 세션 일괄 처리.
+- 배치 주기: 1시간 단위 (`@Scheduled` cron)
+- 쿼리 조건: `started_at < NOW() - INTERVAL '24 hours'` **AND** `session_status = 'IN_PROGRESS'` **AND** `updated_at < NOW() - INTERVAL '5 minutes'`
+  - `updated_at` 조건은 방금 답변을 제출한 세션이 배치 실행 타이밍과 겹쳐 의도치 않게 `FAILED` 처리되는 상황을 방지하는 유예 조건이다.
 - `FAILED` 전이 후 관련 리소스(FastAPI 파이프라인 세션 등) 정리 여부는 FastAPI 팀과 협의.
 
 ---
@@ -380,14 +382,28 @@ POST /internal/api/v1/interview/callback/{sessionId}/report
 }
 ```
 
-### Spring 처리 순서
+### 인증
 
-1. `ai_interview_feedbacks` 저장
-2. `interview_sessions.total_score` 업데이트
-3. `career_histories` INSERT
-4. WebSocket `REPORT_READY` 메시지 전송
+내부망 통신이라도 외부 호출을 반드시 차단해야 한다. 아래 두 가지 중 하나를 적용한다.
 
-> 이 엔드포인트는 내부망 전용이며 외부 접근을 차단한다. (Spring Security에서 `/internal/**` 경로 별도 처리)
+| 방식 | 설명 |
+|------|------|
+| `X-Internal-Secret` 헤더 | FastAPI가 요청 헤더에 사전 공유 시크릿 값을 포함. Spring이 검증 후 불일치 시 401 반환 |
+| IP 화이트리스트 | Spring Security에서 FastAPI 서버 IP만 허용, 그 외 403 반환 |
+
+> v1에서는 `X-Internal-Secret` 헤더 방식을 권장한다. 시크릿 값은 환경 변수로 관리하며 코드에 하드코딩하지 않는다.
+
+### Spring 처리 순서 (멱등성 보장)
+
+1. `AIInterviewFeedbackRepository.existsBySessionId(sessionId)` 확인
+   - **이미 존재하면**: 중복 콜백으로 판단하고 `200 OK`를 반환한 뒤 이하 로직을 건너뛴다
+   - **존재하지 않으면**: 아래 순서 진행
+2. `ai_interview_feedbacks` 저장
+3. `interview_sessions.total_score` 업데이트
+4. `career_histories` INSERT
+5. WebSocket `REPORT_READY` 메시지 전송
+
+> FastAPI가 네트워크 오류로 콜백을 2회 이상 호출할 수 있다. 멱등성 체크 없이 구현하면 피드백 데이터 중복 및 리포트 오염이 발생한다.
 
 ---
 

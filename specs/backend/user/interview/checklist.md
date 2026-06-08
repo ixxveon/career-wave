@@ -99,14 +99,17 @@
 ## Phase 6-1 — 세션 타임아웃 스케줄러
 
 - [ ] `InterviewSessionScheduler`가 1시간 주기로 실행된다.
-- [ ] `started_at < NOW() - 24h` AND `IN_PROGRESS` 조건을 정확히 쿼리한다.
+- [ ] 쿼리 조건에 `started_at < NOW() - 24h` AND `IN_PROGRESS` AND `updated_at < NOW() - 5min` 세 조건이 모두 포함된다.
+- [ ] `updated_at < NOW() - 5min` 유예 조건이 없으면 현재 답변 중인 세션이 강제 종료될 수 있다 — 반드시 포함.
 - [ ] 타임아웃 처리된 세션이 `FAILED`로 전이된다.
 - [ ] 처리 건수 및 세션 ID가 `log.info`로 기록된다.
 
 ## Phase 6-2 — FastAPI 콜백 수신
 
 - [ ] `POST /internal/api/v1/interview/callback/{sessionId}/report` 엔드포인트가 구현되어 있다.
+- [ ] `X-Internal-Secret` 헤더 검증이 구현되어 있으며, 시크릿 값이 환경 변수로 관리된다 (코드 하드코딩 금지).
 - [ ] `/internal/**` 경로가 Spring Security에서 외부 접근 차단된다.
+- [ ] `existsBySessionId` 멱등성 체크가 구현되어 있다 — 콜백 2회 수신 시 피드백 중복 저장이 발생하지 않는다.
 - [ ] 콜백 수신 후 `ai_interview_feedbacks` / `interview_sessions` / `career_histories` 세 곳이 모두 업데이트된다.
 - [ ] `REPORT_READY` WebSocket 메시지에 `data.reportUrl`이 포함된다.
 - [ ] 콜백 처리 실패 시 재시도 로직 및 `log.error` 기록이 동작한다.

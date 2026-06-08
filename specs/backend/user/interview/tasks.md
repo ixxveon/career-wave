@@ -207,14 +207,15 @@
 
 - [ ] `InterviewSessionScheduler.java` 구현
   - [ ] `@Scheduled(cron = "0 0 * * * *")` — 1시간 주기 실행
-  - [ ] `started_at < NOW() - INTERVAL '24 hours'` AND `session_status = 'IN_PROGRESS'` 인 세션 조회
+  - [ ] 조회 조건: `started_at < NOW() - 24h` AND `session_status = 'IN_PROGRESS'` AND `updated_at < NOW() - 5min`
   - [ ] 해당 세션 일괄 `FAILED` 전이
   - [ ] 처리 건수 `log.info` 기록
 
 ## Phase 6-2 — FastAPI 콜백 수신 Controller
 
 - [ ] `InterviewCallbackController.java` — `POST /internal/api/v1/interview/callback/{sessionId}/report`
-  - [ ] `totalScore` + `feedbacks` 배열 수신
+  - [ ] `X-Internal-Secret` 헤더 검증 — 불일치 시 401 반환 (값은 환경 변수로 관리)
+  - [ ] `AIInterviewFeedbackRepository.existsBySessionId(sessionId)` 멱등성 체크 — 이미 존재하면 200 즉시 반환
   - [ ] `ai_interview_feedbacks` 저장
   - [ ] `interview_sessions.total_score` 업데이트
   - [ ] `career_histories` INSERT
