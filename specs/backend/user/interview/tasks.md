@@ -104,6 +104,10 @@
 
 ## Phase 4 — Service 구현
 
+> **@Transactional 범위 원칙**: `@Transactional`은 DB 저장에만 짧게 적용하고, FastAPI 호출은 트랜잭션 종료 후 수행한다.
+> DB Connection이 외부 네트워크 통신을 기다리면 Connection Pool 고갈로 서버 전체가 응답 불가 상태가 될 수 있다.
+> `submitTextAnswer` / `endSession` 모두 동일 원칙 적용.
+
 ### InterviewSessionService
 
 - [ ] `startSession(UUID memberId, RequestStartSession dto)`
@@ -181,6 +185,9 @@
 
 ## Phase 6 — WebSocket 구현
 
+> **REPORT_READY 유실 방지**: 클라이언트 재연결 시 해당 세션의 `career_histories` 레코드 존재 여부를 DB에서 확인하여
+> 이미 완료 상태라면 `REPORT_READY` 메시지를 즉시 재전송한다.
+
 - [ ] Spring WebSocket 핸들러 구현
   - [ ] 엔드포인트: `WS /ws/interview/{sessionId}/chat?token={accessToken}`
   - [ ] 연결 시 토큰 검증 — 실패 시 Close 1008
@@ -215,6 +222,12 @@
 ---
 
 ## Phase 8 — 검증
+
+> **먼저 작성할 JUnit 테스트 3가지** — 다른 기능 추가 중 가장 쉽게 깨지는 핵심 불변 규칙이다.
+>
+> 1. `endSession` 멱등성 — 이미 `COMPLETED`인 세션 재종료 시 `INTERVIEW_SESSION_ALREADY_ENDED(400)` 반환
+> 2. 소유권 검증 — 타인 `sessionId`로 API 호출 시 `INTERVIEW_SESSION_FORBIDDEN(403)` 반환
+> 3. `voiceQualityRatio` null 처리 — `49.99`이면 delivery/fluency null, `50.00`이면 정상값 반환
 
 - [ ] `checklist.md` 전 항목 셀프 체크
 - [ ] Swagger UI에서 전체 API 요청/응답 확인
