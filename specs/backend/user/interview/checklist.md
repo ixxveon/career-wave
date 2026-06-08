@@ -95,6 +95,16 @@
 
 ---
 
+## Phase 7-1 — 응답 포맷 최종 점검
+
+- [ ] `getReport` 409 응답에 `data.status = "ANALYZING"`, `data.estimatedWaitSeconds` 필드가 포함되어 있다.
+- [ ] WebSocket `REPORT_READY` 메시지에 `data.reportUrl` 필드가 포함되어 있다.
+- [ ] WebSocket `ERROR` 메시지에 `errorCode` 필드가 포함되어 있다 (예: `INTERVIEW_AI_PIPELINE_ERROR`).
+- [ ] 모든 WebSocket 메시지에 `data` / `errorCode` 필드가 일관되게 포함되어 있다 (없으면 `null`).
+- [ ] `ZonedDateTime` 직렬화 설정 확인 — Jackson `JavaTimeModule`이 등록되어 ISO 8601 형식으로 직렬화된다.
+
+---
+
 ## Phase 8 — Swagger & 계약 일치
 
 - [ ] Swagger Annotation이 Controller가 아닌 `docs/` 패키지 인터페이스로 분리되어 있다.

@@ -316,10 +316,10 @@ WS /ws/user/interview/{sessionId}/chat?token={accessToken}
 ### Server → Client 메시지
 
 ```json
-{ "type": "SYSTEM", "content": "면접이 시작되었습니다.", "questionOrder": null, "subType": "SESSION_START" }
-{ "type": "QUESTION", "content": "지원 동기를 말씀해 주세요.", "questionOrder": 1, "subType": null }
-{ "type": "SYSTEM", "content": "리포트 생성이 완료되었습니다.", "questionOrder": null, "subType": "REPORT_READY" }
-{ "type": "ERROR", "content": "세션 처리 중 오류가 발생했습니다.", "questionOrder": null, "subType": null }
+{ "type": "SYSTEM",   "content": "면접이 시작되었습니다.",           "questionOrder": null, "subType": "SESSION_START",  "data": null,                                                               "errorCode": null }
+{ "type": "QUESTION", "content": "지원 동기를 말씀해 주세요.",       "questionOrder": 1,    "subType": null,             "data": null,                                                               "errorCode": null }
+{ "type": "SYSTEM",   "content": "리포트 생성이 완료되었습니다.",     "questionOrder": null, "subType": "REPORT_READY",   "data": { "reportUrl": "/api/v1/user/interview/sessions/{sessionId}/report" }, "errorCode": null }
+{ "type": "ERROR",    "content": "세션 처리 중 오류가 발생했습니다.", "questionOrder": null, "subType": null,             "data": null,                                                               "errorCode": "INTERVIEW_AI_PIPELINE_ERROR" }
 ```
 
 ---

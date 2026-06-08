@@ -298,8 +298,10 @@ Authorization: Bearer {accessToken}
 | `data.feedbacks[].fluencyScore` | `Integer` \| `null` | 유창성 점수 — 텍스트 면접 또는 `voiceQualityRatio < 50.00` 시 `null` |
 | `data.feedbacks[].voiceQualityRatio` | `Number` \| `null` | 음성 인식 유효 비율 (0.00~100.00) — 텍스트 면접 시 `null` |
 
-> `voiceQualityRatio` 50.00 미만 문항은 `deliveryScore` / `fluencyScore`가 `null`로 반환된다.  
-> Service 계층에서 DTO 조립 시 처리한다. `0`으로 대체하지 않는다. (constitution.md §4)
+> **`voiceQualityRatio` null 처리 규칙 (비즈니스 로직에 따른 의도된 null)**  
+> `voiceQualityRatio`가 `50.00 미만`이거나 `null`인 문항은 `deliveryScore` / `fluencyScore`를 **강제로 null 처리**하여 반환한다.  
+> 이는 음성 인식 품질이 신뢰하기 어려운 수준임을 의미하며, `0`으로 대체하지 않는다. (constitution.md §4)  
+> Service 계층에서 DTO 조립 시 처리한다.
 
 ### Error Cases
 
@@ -307,7 +309,24 @@ Authorization: Bearer {accessToken}
 |-----------|-----------|------|
 | `403` | `INTERVIEW_SESSION_FORBIDDEN` | 본인 소유가 아닌 세션 |
 | `404` | `INTERVIEW_SESSION_NOT_FOUND` | 존재하지 않는 `sessionId` |
+| `409` | `INTERVIEW_REPORT_NOT_READY` | 리포트 아직 생성 중 |
 | `401` | `UNAUTHORIZED` | 토큰 없음 또는 만료 |
+
+#### 409 응답 예시
+
+```json
+{
+  "success": false,
+  "statusCode": 409,
+  "message": "리포트가 아직 생성 중입니다.",
+  "data": {
+    "status": "ANALYZING",
+    "estimatedWaitSeconds": 15
+  }
+}
+```
+
+> `data.estimatedWaitSeconds`는 고정값(예: 15)으로 내려보내도 무방하다. FE는 이 값을 폴링 간격 힌트로 사용할 수 있다.
 
 ---
 
@@ -425,16 +444,44 @@ WS /ws/user/interview/{sessionId}/chat?token={accessToken}
 | `content` | `String` | 메시지 본문 |
 | `questionOrder` | `Integer` \| `null` | 질문 순서 (`QUESTION` 타입 시에만 포함) |
 | `subType` | `String` \| `null` | `SESSION_START` \| `REPORT_READY` \| `SESSION_END` |
+| `data` | `Object` \| `null` | 타입별 추가 데이터 (아래 참고) |
+| `errorCode` | `String` \| `null` | `ERROR` 타입 시 에러 식별 코드 |
 
 #### `type` 별 예시
 
-| type | subType | content 예시 | 비고 |
-|------|---------|-------------|------|
-| `QUESTION` | `null` | `"지원 동기를 말씀해 주세요."` | 신규 질문 또는 꼬리 질문 |
-| `SYSTEM` | `SESSION_START` | `"면접이 시작되었습니다."` | 세션 시작 |
-| `SYSTEM` | `REPORT_READY` | `"리포트 생성이 완료되었습니다."` | FastAPI 콜백 수신 후 전송 |
-| `SYSTEM` | `SESSION_END` | `"면접이 종료되었습니다."` | 세션 종료 안내 |
-| `ERROR` | `null` | `"세션 처리 중 오류가 발생했습니다."` | 처리 오류 시 전송 (연결 유지) |
+**REPORT_READY** — `data`에 리포트 조회 URL 포함
+```json
+{
+  "type": "SYSTEM",
+  "content": "리포트 생성이 완료되었습니다.",
+  "questionOrder": null,
+  "subType": "REPORT_READY",
+  "data": {
+    "reportUrl": "/api/v1/user/interview/sessions/{sessionId}/report"
+  },
+  "errorCode": null
+}
+```
+
+**ERROR** — `errorCode`로 FE가 에러별 대응 가능
+```json
+{
+  "type": "ERROR",
+  "content": "면접 중 오류가 발생했습니다.",
+  "questionOrder": null,
+  "subType": null,
+  "data": null,
+  "errorCode": "INTERVIEW_AI_PIPELINE_ERROR"
+}
+```
+
+| type | subType | 비고 |
+|------|---------|------|
+| `QUESTION` | `null` | 신규 질문 또는 꼬리 질문 |
+| `SYSTEM` | `SESSION_START` | 세션 시작 |
+| `SYSTEM` | `REPORT_READY` | FastAPI 콜백 수신 후 전송, `data.reportUrl` 포함 |
+| `SYSTEM` | `SESSION_END` | 세션 종료 안내 |
+| `ERROR` | `null` | 처리 오류 시 전송 (연결 유지), `errorCode` 포함 |
 
 ### Error Cases
 
