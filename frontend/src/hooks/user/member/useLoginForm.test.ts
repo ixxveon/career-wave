@@ -173,5 +173,20 @@ describe('useLoginForm', () => {
       expect(mockIsNextPathCompatible).toHaveBeenCalledWith('/mypage', MEMBER_TYPE.USER);
       expect(mockNavigate).toHaveBeenCalledWith('/mypage', { replace: true });
     });
+
+    it('기업 회원은 개인 회원 전용 next 경로를 무시하고 decision.path로 이동한다', async () => {
+      mockMutateAsync.mockResolvedValue({ ...BASE_RESPONSE, member: COMPANY_MEMBER });
+      mockGetLoginRouteDecision.mockReturnValue({ type: 'ALLOW', path: '/dashboard/company' });
+      mockSearchParamsGet.mockReturnValue('/mypage');
+      mockIsNextPathCompatible.mockReturnValue(false);
+
+      const { result } = renderHook(() => useLoginForm());
+      act(() => { result.current.updateLoginType('company'); });
+      setValidCredentials(result);
+      await submitForm(result);
+
+      expect(mockIsNextPathCompatible).toHaveBeenCalledWith('/mypage', MEMBER_TYPE.COMPANY);
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard/company', { replace: true });
+    });
   });
 });
