@@ -19,8 +19,8 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 | 파일 저장소 | AWS S3, 경로 `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` | 날짜별 분산 관리, 루트 나열 성능 저하 방지 |
 | 분석 트리거 | Spring → FastAPI 분석 요청, FastAPI → Spring Webhook 콜백 | DB 저장과 WebSocket 알림을 Spring 한 곳에서 처리 |
 | WebSocket | STOMP (`spring-boot-starter-websocket`) + `ChannelInterceptor` | CONNECT 프레임 시점 JWT 검증 |
-| `feedback_details` 저장 | JSONB + `AttributeConverter` (또는 `hypersistence-utils`) | AI 응답 스키마 유연성 + JPA 변환 편의성 |
-| JSONB 파싱 실패 | `FEEDBACK_PARSE_ERROR(500)` + `GlobalExceptionHandler` 등록 | FastAPI 응답 구조 변경 등 외부 요인으로 인한 서버 크래시 방지 |
+| `feedback_details` 저장 | `feedback_text TEXT` (JSON 직렬화 문자열) + `ObjectMapper` 역직렬화 | 외부 의존성 없음, 점수 5개 컬럼 별도 분리 |
+| 피드백 파싱 실패 | `FEEDBACK_PARSE_ERROR(500)` + `GlobalExceptionHandler` 등록 | FastAPI 응답 구조 변경 등 외부 요인으로 인한 서버 크래시 방지 |
 | 페이지네이션 | Spring Data JPA `Pageable` | 프로젝트 기존 패턴 준수 |
 | `documentId` 타입 | UUID v4 | IDOR 방어 |
 
@@ -31,7 +31,7 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 | 항목 | 상태 | 비고 |
 |------|------|------|
 | S3 업로드 방식 | **팀 결정 필요** | 아래 옵션 비교 참고 |
-| `hypersistence-utils` 의존성 추가 | **팀 결정 필요** | 아래 옵션 비교 참고 |
+| `feedback_text` 저장 방식 | **확정** | `TEXT` 컬럼에 JSON 직렬화, `ObjectMapper`로 역직렬화 |
 | Webhook 내부 보안 방식 | **확정** | `X-Internal-Secret` 헤더, 환경 변수 `WEBHOOK_SECRET` |
 | WebSocket 구현 방식 | **확정** | STOMP (`spring-boot-starter-websocket`) |
 | members 테이블 PK 타입 | **확정** | UUID (`gen_random_uuid()`) |
@@ -50,14 +50,10 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 
 > 팀 내 S3 인프라 설정 가능 여부에 따라 결정. v1 기준으로는 **서버 경유 방식이 구현 난이도가 낮음**.
 
-### B. JSONB 처리 방식
+### B. 피드백 텍스트 저장 방식 (확정)
 
-| 방식 | 설명 | 장점 | 단점 |
-|------|------|------|------|
-| **`AttributeConverter` 직접 구현** | `ObjectMapper`로 직렬화/역직렬화 코드 작성 | 외부 의존성 없음 | 보일러플레이트 코드 존재 |
-| **`hypersistence-utils`** | 라이브러리가 JSONB 변환을 자동 처리 | 코드 간결, 타입 안전 | 새 의존성 추가 — 팀 합의 필요 |
-
-> 팀 합의 후 결정. **의존성 추가가 부담스러우면 `AttributeConverter`로 충분히 구현 가능**.
+> `feedback_text TEXT` 컬럼에 JSON 직렬화 문자열로 저장. 점수 5개(`score_job_fitness` 등)는 별도 INTEGER 컬럼으로 분리.  
+> Spring에서 `ObjectMapper.readValue()`로 `List<FeedbackDetail>` 역직렬화 — `hypersistence-utils` 등 외부 의존성 불필요.
 
 ---
 
@@ -84,7 +80,7 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 - [ ] `DocumentStatus` Enum 정의 (`UPLOADED`, `PENDING`, `ANALYZING`, `COMPLETED`, `FAILED`)
 - [ ] `Document` Entity 작성 (UUID PK, `@NoArgsConstructor(PROTECTED)`)
 - [ ] `CoverLetterContent` Entity 작성
-- [ ] `DocumentFeedback` Entity 작성 (JSONB `feedback_details` 처리 방식 결정)
+- [ ] `DocumentFeedback` Entity 작성 (`feedback_text TEXT` + 점수 5개 INTEGER 컬럼 + `overall_review TEXT`)
 - [ ] Repository 3개 작성 (`DocumentRepository`, `CoverLetterContentRepository`, `DocumentFeedbackRepository`)
 - [ ] ErrorCode 추가 (`INVALID_FILE_SIZE`, `INVALID_FILE_TYPE`, `INVALID_CONTENT_COUNT`, `INVALID_CONTENT_LENGTH`, `DOCUMENT_NOT_FOUND`, `DOCUMENT_ACCESS_DENIED`)
 
@@ -108,7 +104,7 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 
 ### Phase 4: 분석 결과 조회 API
 
-- [ ] `ResumeDTO.ResponseFeedback` DTO 작성 (JSONB 역직렬화 포함)
+- [ ] `ResumeDTO.ResponseFeedback` DTO 작성 (`ObjectMapper`로 `feedback_text` 역직렬화 포함)
 - [ ] IDOR 검증 로직 구현
 - [ ] `GET /api/v1/user/resume/{documentId}/feedback` Controller + Swagger Docs
 
@@ -170,5 +166,5 @@ Phase 3 (자기소개서) → Phase 4 (피드백 조회) → Phase 5 (이력 목
 → Phase 6 (Webhook) → Phase 7 (STOMP WebSocket) → Phase 8 (검증)
 ```
 
-> Phase 4 진입 전 FastAPI 팀과 `feedback_details` JSONB 스키마를 반드시 합의한다.  
-> JSONB 구조가 확정되지 않은 상태에서 역직렬화 코드를 작성하면 재작업 가능성이 높다.
+> Phase 4 진입 전 FastAPI 팀과 Webhook 페이로드 스키마(`feedbackDetails` 배열 구조)를 반드시 합의한다.  
+> 구조가 확정되지 않은 상태에서 역직렬화 코드를 작성하면 재작업 가능성이 높다.
