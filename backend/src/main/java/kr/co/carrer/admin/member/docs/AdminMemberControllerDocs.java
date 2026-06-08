@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.co.carrer.admin.member.dto.HrManagerDTO;
 import kr.co.carrer.admin.member.dto.MemberDTO;
 import kr.co.carrer.global.response.ApiResponse;
+import kr.co.carrer.global.response.PaginationResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,14 +15,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
-import java.util.Map;
 import java.util.UUID;
 
 @Tag(name = "Admin Member", description = "관리자 회원관리 API")
 public interface AdminMemberControllerDocs {
 
     @Operation(summary = "개인 회원 목록 조회")
-    ResponseEntity<ApiResponse<Map<String, Object>>> getMembers(
+    ResponseEntity<ApiResponse<PaginationResponse<MemberDTO.ResponseList>>> getMembers(
         @Parameter(description = "역할 (ROLE_USER / ROLE_COMPANY)") @RequestParam(required = false) String role,
         @Parameter(description = "상태 (ACTIVE / SUSPENDED / BANNED)") @RequestParam(required = false) String status,
         @Parameter(description = "구독 (FREE / PREMIUM)") @RequestParam(required = false) String plan,
@@ -45,7 +45,7 @@ public interface AdminMemberControllerDocs {
     );
 
     @Operation(summary = "기업 회원 목록 조회")
-    ResponseEntity<ApiResponse<Map<String, Object>>> getHrManagers(
+    ResponseEntity<ApiResponse<HrManagerDTO.ResponsePage>> getHrManagers(
         @Parameter(description = "기업 회원 상태 (PENDING / ACTIVE / REMOVED)") @RequestParam(required = false) String hrStatus,
         @Parameter(description = "HR 담당자명·기업명·이메일 통합 검색") @RequestParam(required = false) String keyword,
         @Parameter(description = "가입일 시작 (yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,

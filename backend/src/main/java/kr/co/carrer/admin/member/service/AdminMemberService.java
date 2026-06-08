@@ -26,7 +26,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -75,13 +74,24 @@ public class AdminMemberService {
         }
 
         SanctionType sanctionType = dto.sanctionType();
+        if (sanctionType == null) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
         SuspendDuration duration = dto.duration();
         LocalDate today = LocalDate.now();
         LocalDate endDate = null;
 
         switch (sanctionType) {
-            case WARNING -> member.increaseWarningCount();
+            case WARNING -> {
+                if (member.getWarningCount() >= 3) {
+                    throw new CustomException(ErrorCode.MAX_WARNING_EXCEEDED);
+                }
+                member.increaseWarningCount();
+            }
             case SUSPEND -> {
+                if (member.getMemberStatus() == MemberStatus.SUSPENDED) {
+                    throw new CustomException(ErrorCode.ALREADY_SUSPENDED);
+                }
                 if (duration == null || duration == SuspendDuration.PERMANENT) {
                     throw new CustomException(ErrorCode.INVALID_SANCTION_DURATION);
                 }
@@ -91,8 +101,10 @@ public class AdminMemberService {
             case BLACKLIST -> member.ban();
         }
 
+        // WARNING / BLACKLIST 는 duration 무관 — 이력에 null 저장
+        SuspendDuration historyDuration = (sanctionType == SanctionType.SUSPEND) ? duration : null;
         SuspendHistory history = SuspendHistory.create(
-            memberId, adminId, sanctionType, duration, reason,
+            memberId, adminId, sanctionType, historyDuration, reason,
             sanctionType == SanctionType.SUSPEND ? today : null,
             endDate
         );
@@ -117,9 +129,9 @@ public class AdminMemberService {
         };
     }
 
-    public Map<String, Object> getHrManagers(HrStatus hrStatus, String keyword,
-                                              LocalDate startDate, LocalDate endDate,
-                                              int page, int size) {
+    public HrManagerDTO.ResponsePage getHrManagers(HrStatus hrStatus, String keyword,
+                                                    LocalDate startDate, LocalDate endDate,
+                                                    int page, int size) {
         int offset = (page - 1) * size;
         ZonedDateTime from = startDate != null ? startDate.atStartOfDay(java.time.ZoneId.systemDefault()) : null;
         ZonedDateTime to = endDate != null ? endDate.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()) : null;
@@ -129,13 +141,13 @@ public class AdminMemberService {
         long pendingCount = hrManagerRepository.countByHrStatus(HrStatus.PENDING);
 
         PaginationResponse<HrManagerDTO.ResponseList> pagination = PaginationResponse.of(items, page, size, total);
-        return Map.of(
-            "items", pagination.items(),
-            "page", pagination.page(),
-            "size", pagination.size(),
-            "totalItems", pagination.totalItems(),
-            "totalPages", pagination.totalPages(),
-            "pendingCount", pendingCount
+        return new HrManagerDTO.ResponsePage(
+            pagination.items(),
+            pagination.page(),
+            pagination.size(),
+            pagination.totalItems(),
+            pagination.totalPages(),
+            pendingCount
         );
     }
 

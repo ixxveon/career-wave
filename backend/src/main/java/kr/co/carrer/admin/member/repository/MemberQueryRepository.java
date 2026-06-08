@@ -24,6 +24,14 @@ public class MemberQueryRepository {
     @PersistenceContext
     private EntityManager em;
 
+    private ZonedDateTime toZonedDateTime(Object value) {
+        if (value == null) return null;
+        if (value instanceof java.sql.Timestamp ts) return ts.toInstant().atZone(java.time.ZoneId.systemDefault());
+        if (value instanceof java.time.Instant instant) return instant.atZone(java.time.ZoneId.systemDefault());
+        if (value instanceof java.time.OffsetDateTime odt) return odt.toZonedDateTime();
+        throw new IllegalArgumentException("Unsupported timestamp type: " + value.getClass());
+    }
+
     public List<MemberDTO.ResponseList> findMembers(RoleType role, MemberStatus status,
                                                      SubscriptionStatus plan, String keyword,
                                                      ZonedDateTime startDate, ZonedDateTime endDate,
@@ -64,7 +72,7 @@ public class MemberQueryRepository {
             params.add(startDate);
         }
         if (endDate != null) {
-            sql.append(" AND m.created_at <= ?").append(idx++);
+            sql.append(" AND m.created_at < ?").append(idx++);
             params.add(endDate);
         }
 
@@ -91,8 +99,8 @@ public class MemberQueryRepository {
                 MemberStatus.valueOf((String) row[6]),
                 ((Number) row[7]).intValue(),
                 ((Number) row[8]).longValue(),
-                row[9] != null ? ((java.sql.Timestamp) row[9]).toInstant().atZone(java.time.ZoneId.systemDefault()) : null,
-                row[10] != null ? ((java.sql.Timestamp) row[10]).toInstant().atZone(java.time.ZoneId.systemDefault()) : null
+                toZonedDateTime(row[9]),
+                toZonedDateTime(row[10])
             ));
         }
         return result;
@@ -129,7 +137,7 @@ public class MemberQueryRepository {
             params.add(startDate);
         }
         if (endDate != null) {
-            sql.append(" AND m.created_at <= ?").append(idx++);
+            sql.append(" AND m.created_at < ?").append(idx++);
             params.add(endDate);
         }
 
@@ -166,8 +174,8 @@ public class MemberQueryRepository {
             MemberStatus.valueOf((String) row[6]),
             ((Number) row[7]).intValue(),
             ((Number) row[8]).longValue(),
-            row[9] != null ? ((java.sql.Timestamp) row[9]).toInstant().atZone(java.time.ZoneId.systemDefault()) : null,
-            row[10] != null ? ((java.sql.Timestamp) row[10]).toInstant().atZone(java.time.ZoneId.systemDefault()) : null
+            toZonedDateTime(row[9]),
+            toZonedDateTime(row[10])
         ));
     }
 
@@ -204,7 +212,7 @@ public class MemberQueryRepository {
             params.add(startDate);
         }
         if (endDate != null) {
-            sql.append(" AND m.created_at <= ?").append(idx++);
+            sql.append(" AND m.created_at < ?").append(idx++);
             params.add(endDate);
         }
 
@@ -230,8 +238,8 @@ public class MemberQueryRepository {
                 row[5] != null ? PermissionLevel.valueOf((String) row[5]) : null,
                 (String) row[6],
                 (String) row[7],
-                row[8] != null ? ((java.sql.Timestamp) row[8]).toInstant().atZone(java.time.ZoneId.systemDefault()) : null,
-                row[9] != null ? ((java.sql.Timestamp) row[9]).toInstant().atZone(java.time.ZoneId.systemDefault()) : null,
+                toZonedDateTime(row[8]),
+                toZonedDateTime(row[9]),
                 HrStatus.valueOf((String) row[10])
             ));
         }
@@ -267,7 +275,7 @@ public class MemberQueryRepository {
             params.add(startDate);
         }
         if (endDate != null) {
-            sql.append(" AND m.created_at <= ?").append(idx++);
+            sql.append(" AND m.created_at < ?").append(idx++);
             params.add(endDate);
         }
 
@@ -305,8 +313,8 @@ public class MemberQueryRepository {
             row[5] != null ? PermissionLevel.valueOf((String) row[5]) : null,
             (String) row[6],
             (String) row[7],
-            row[8] != null ? ((java.sql.Timestamp) row[8]).toInstant().atZone(java.time.ZoneId.systemDefault()) : null,
-            row[9] != null ? ((java.sql.Timestamp) row[9]).toInstant().atZone(java.time.ZoneId.systemDefault()) : null,
+            toZonedDateTime(row[8]),
+            toZonedDateTime(row[9]),
             HrStatus.valueOf((String) row[10]),
             (String) row[11]
         ));

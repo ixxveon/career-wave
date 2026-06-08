@@ -187,6 +187,40 @@ class AdminMemberServiceTest {
         }
 
         @Test
+        @DisplayName("이미 SUSPENDED 회원에게 SUSPEND 시 ALREADY_SUSPENDED 예외")
+        void suspend_alreadySuspended_throws() {
+            UUID memberId = UUID.randomUUID();
+            Member member = createSuspendedMember(memberId);
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+            MemberDTO.RequestSanction request = new MemberDTO.RequestSanction(
+                SanctionType.SUSPEND, SuspendDuration.THREE_DAYS, "테스트 사유입니다. 최소 열 글자."
+            );
+
+            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.ALREADY_SUSPENDED);
+        }
+
+        @Test
+        @DisplayName("경고 3회 누적 회원에게 WARNING 시 MAX_WARNING_EXCEEDED 예외")
+        void warning_maxExceeded_throws() {
+            UUID memberId = UUID.randomUUID();
+            Member member = createMaxWarnedMember(memberId);
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+            MemberDTO.RequestSanction request = new MemberDTO.RequestSanction(
+                SanctionType.WARNING, null, "테스트 사유입니다. 최소 열 글자."
+            );
+
+            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.MAX_WARNING_EXCEEDED);
+        }
+
+        @Test
         @DisplayName("존재하지 않는 회원 제재 시 MEMBER_NOT_FOUND 예외")
         void memberNotFound_throws() {
             UUID memberId = UUID.randomUUID();
@@ -322,6 +356,36 @@ class AdminMemberServiceTest {
             setField(member, "memberId", memberId);
             setField(member, "memberStatus", MemberStatus.ACTIVE);
             setField(member, "warningCount", 0);
+            return member;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Member createSuspendedMember(UUID memberId) {
+        try {
+            var constructor = Member.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            Member member = constructor.newInstance();
+
+            setField(member, "memberId", memberId);
+            setField(member, "memberStatus", MemberStatus.SUSPENDED);
+            setField(member, "warningCount", 0);
+            return member;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Member createMaxWarnedMember(UUID memberId) {
+        try {
+            var constructor = Member.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            Member member = constructor.newInstance();
+
+            setField(member, "memberId", memberId);
+            setField(member, "memberStatus", MemberStatus.ACTIVE);
+            setField(member, "warningCount", 3);
             return member;
         } catch (Exception e) {
             throw new RuntimeException(e);
