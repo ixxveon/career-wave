@@ -308,34 +308,49 @@ Authorization: Bearer {accessToken}
 
 ## 5. 분석 상태 실시간 구독 (WebSocket)
 
-- **Endpoint**: `WS /ws/user/resume/{documentId}/status`
 - **Description**: 업로드 또는 자기소개서 제출 후 AI 분석 상태를 실시간으로 수신
+- **프로토콜**: STOMP (`@stomp/stompjs` 사용)
+
+```
+STOMP 핸드셰이크 : WS /ws/user/resume?token={accessToken}
+구독 토픽        : /topic/resume/{documentId}/status
+```
 
 ### 인증
 
-JWT를 WebSocket 핸드셰이크 시 쿼리 파라미터로 전달한다.
+JWT를 STOMP 핸드셰이크 쿼리 파라미터로 전달한다.
 
-```
-WS /ws/user/resume/{documentId}/status?token={accessToken}
+```ts
+const client = new Client({
+  brokerURL: `wss://{host}/ws/user/resume?token=${accessToken}`,
+  onConnect: () => {
+    client.subscribe(`/topic/resume/${documentId}/status`, (message) => {
+      const payload = JSON.parse(message.body)
+      // payload: { status, message, progress }
+    })
+  }
+})
+client.activate()
 ```
 
 ### Connection Lifecycle
 
 ```
-클라이언트                          서버
-   │                                │
-   │── WS 연결 요청 ────────────────▶│  documentId 소유권 검증
-   │                                │
-   │◀─ {"status":"ANALYZING", ...} ─│  분석 진행 중 (1회 이상)
-   │◀─ {"status":"ANALYZING", ...} ─│
-   │                                │
-   │◀─ {"status":"COMPLETED", ...} ─│  분석 완료 → 서버가 연결 종료
-   │   (또는 "FAILED")              │
-   │                                │
-   │  (클라이언트 연결 종료)         │
+클라이언트                               서버
+   │                                     │
+   │── STOMP CONNECT ────────────────────▶│  ?token 검증 + memberId 세션 저장
+   │── STOMP SUBSCRIBE ──────────────────▶│  documentId 소유권 검증
+   │◀─ {"status":"ANALYZING", ...} ──────│  ← SUBSCRIBE 직후 현재 상태 1회 수신 (재연결 복원)
+   │◀─ {"status":"ANALYZING", ...} ──────│  분석 진행 중
+   │                                     │
+   │◀─ {"status":"COMPLETED", ...} ──────│  분석 완료
+   │   (또는 "FAILED")                   │  ↓ 서버 Grace Period 30초 유지 후 Close 1000
+   │                                     │
+   │── (클라이언트 DISCONNECT) ───────────▶│  즉시 세션 해제
 ```
 
-> ℹ️ 클라이언트가 먼저 연결을 끊을 경우(탭 이탈 / 분석 취소): 서버 측 별도 취소 API 없음 — 클라이언트만 WS 연결을 닫고 UI 상태를 `IDLE`로 초기화한다.
+> ℹ️ 클라이언트가 먼저 연결을 끊을 경우(탭 이탈 / 분석 취소): 서버 측 별도 취소 API 없음 — 클라이언트만 `client.deactivate()`로 연결을 닫고 UI 상태를 `IDLE`로 초기화한다.  
+> ℹ️ `COMPLETED` 수신 후 `GET /api/v1/user/resume/{documentId}/feedback`으로 전체 결과를 조회한다.
 
 ### Server → Client 메시지 형식
 
@@ -362,9 +377,6 @@ WS /ws/user/resume/{documentId}/status?token={accessToken}
 | `ANALYZING` | `"피드백을 생성하고 있어요"` | 70 |
 | `COMPLETED` | `"분석이 완료되었어요"` | 100 |
 | `FAILED` | `"분석 중 오류가 발생했어요"` | — |
-
-> ℹ️ `COMPLETED` 또는 `FAILED` 수신 즉시 서버가 WS 연결을 종료한다.  
-> 클라이언트는 `COMPLETED` 수신 후 `GET /api/v1/user/resume/{documentId}/feedback`으로 전체 결과를 조회한다.
 
 ### Error Cases
 

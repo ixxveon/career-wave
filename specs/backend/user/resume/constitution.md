@@ -66,8 +66,8 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 | `documents.status` | VARCHAR(20), DEFAULT 'UPLOADED' | 프론트 스펙 상태 추적에 맞춰 추가 — Spring이 UPLOADED 설정, 이후 전이는 Webhook 책임 |
 | 분석 결과 수신 | Webhook (FastAPI → Spring `POST .../webhook`) | Spring이 DB 저장 + WebSocket 알림을 한 흐름에서 처리 가능 |
 | 분석 결과 저장 | 점수 5개 개별 INTEGER 컬럼 + `feedback_text` TEXT | 실제 DB 스키마 기준 (JSONB 미사용, `AttributeConverter` 불필요) |
-| WebSocket 구현 | Spring `WebSocketHandler` (raw WebSocket, STOMP 미사용) | 프론트 api-schema.md 계약 기준 — CONNECT/SUBSCRIBE 단계 없이 연결 즉시 JSON 메시지 송수신 |
-| WebSocket 인증 | `HandshakeInterceptor` — `?token=` 쿼리 파라미터 JWT 검증 | 핸드셰이크 단계에서 토큰과 `documentId` 소유권을 동시에 검증, 실패 시 연결 거부 (Close 1008) |
+| WebSocket 구현 | STOMP (`spring-boot-starter-websocket`) | interview 도메인도 WebSocket 사용 — `global/websocket/` 공통 인프라 재사용 가능, 브로커 교체 확장성 확보 |
+| WebSocket 인증 | `HandshakeInterceptor` (1차, `?token=` 쿼리 파라미터) + `StompChannelInterceptor` (2차, CONNECT 프레임) | 2단계 검증으로 핸드셰이크·CONNECT 양쪽 모두 방어. SUBSCRIBE 시 `documentId` 소유권 DB 재조회 |
 | 페이징 기준 | 0-based (`page`, `size`) | Spring Data JPA `Pageable` 기본 규칙 |
 | `FAILED` 재시도 | v1 미지원 — UI에서 재업로드 유도 | v1 범위 최소화, v2 이후 재시도 정책 설계 |
 | WebSocket 종료 방식 | `COMPLETED`/`FAILED` 전송 후 30초 Grace Period 유지 후 서버 종료 | 즉시 종료 시 프론트 재연결 루프 유발 위험 방지 |
@@ -109,7 +109,7 @@ FastAPI 분석 트리거 호출
 - `document.status`를 Spring에서 `PENDING` 이후 상태로 직접 변경 금지 (FastAPI 책임 영역).
 - `new RuntimeException(...)` 직접 생성 금지 — 반드시 `CustomException(ErrorCode.*)` 사용.
 - 자기소개서 내용 수정(Update) API 구현 금지 (v1 범위 외) — 수정 필요 시 재제출로 신규 `documentId` 발급.
-- `WebSocketSession.sendMessage()`를 `@Transactional` 메서드 안에서 직접 호출 금지.  
+- `SimpMessagingTemplate.convertAndSend()`를 `@Transactional` 메서드 안에서 직접 호출 금지.  
   반드시 `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)`를 통해 커밋 완료 후 발행할 것.  
   이유: 커밋 전에 메시지를 보내면 클라이언트는 수신했으나 DB에는 아직 미반영인 데이터 불일치 상태가 발생한다.
 - `document_feedbacks` 컬럼을 JSONB나 `AttributeConverter`로 처리 금지 — 점수 5개 INTEGER 컬럼은 직접 매핑, `feedback_text`는 `ObjectMapper`로 JSON 역직렬화.

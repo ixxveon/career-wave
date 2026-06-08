@@ -459,28 +459,23 @@ X-Internal-Secret: {WEBHOOK_SECRET 환경 변수 값}
 
 ## 6. 분석 상태 실시간 구독 (WebSocket)
 
-- **Endpoint**: `WS /ws/user/resume/{documentId}/status?token={accessToken}`
-- **구현 방식**: Spring `WebSocketHandler` (raw WebSocket — STOMP 미사용)
-
-> 프론트 api-schema.md 계약 기준 raw WebSocket. STOMP CONNECT / SUBSCRIBE 단계 없이  
-> 핸드셰이크 직후 서버가 바로 JSON 메시지를 전송한다.  
-> Spring 구현: `WebSocketHandler` + `HandshakeInterceptor` (STOMP 브로커 불필요).
+- **구현 방식**: STOMP (`spring-boot-starter-websocket`)
+- **프론트 클라이언트**: `@stomp/stompjs`
 
 ```
-연결 엔드포인트   : /ws/user/resume/{documentId}/status
-인증             : ?token={accessToken} 쿼리 파라미터
-메시지 전송       : WebSocketSession.sendMessage(new TextMessage(json))
-세션 저장         : ConcurrentHashMap<UUID documentId, WebSocketSession>
+STOMP 핸드셰이크 엔드포인트 : /ws/user/resume
+구독 토픽                  : /topic/resume/{documentId}/status
+서버 → 클라이언트          : SimpMessagingTemplate.convertAndSend(...)
 ```
 
 ### 인증
 
 JWT를 핸드셰이크 쿼리 파라미터 `?token=`으로 전달한다.  
-`HandshakeInterceptor.beforeHandshake()`에서 토큰을 검증하고 `memberId`를 세션 attributes에 저장.  
-검증 실패 시 핸드셰이크를 거부한다 (HTTP 401).
+`HandshakeInterceptor`에서 쿼리 파라미터 `token`을 추출하여 검증하고 세션 attributes에 `memberId`를 저장.  
+이후 `ChannelInterceptor`의 `preSend()`에서 CONNECT 프레임 수신 시 세션의 `memberId`를 재검증한다.
 
 ```
-WS /ws/user/resume/{documentId}/status?token={accessToken}
+WS /ws/user/resume?token={accessToken}
 ```
 
 ### Connection Lifecycle
@@ -488,15 +483,17 @@ WS /ws/user/resume/{documentId}/status?token={accessToken}
 ```
 클라이언트                               서버
    │                                     │
-   │── WS 연결 요청 ─────────────────────▶│  HandshakeInterceptor: ?token 검증 + documentId 소유권 확인
-   │                                     │  afterConnectionEstablished: 현재 status Snapshot 1회 전송
-   │◀─ {"status":"ANALYZING", ...} ──────│  ← 연결 직후 현재 상태 (재연결 시 UI 즉시 복원)
+   │── STOMP CONNECT ────────────────────▶│  HandshakeInterceptor: ?token 검증 + memberId 세션 저장
+   │                                     │  ChannelInterceptor: CONNECT 프레임 재검증
+   │── STOMP SUBSCRIBE ──────────────────▶│  documentId 소유권 DB 재조회 (IDOR 방지)
+   │◀─ {"status":"ANALYZING", ...} ──────│  ← SUBSCRIBE 직후 현재 상태 Snapshot 1회 발행
+   │                                     │    (재연결 시 UI 즉시 복원)
    │◀─ {"status":"ANALYZING", ...} ──────│  분석 진행 중 (Webhook 수신마다 발행)
    │                                     │
    │◀─ {"status":"COMPLETED", ...} ──────│  완료 메시지 전송
    │   (또는 "FAILED")                   │  ↓ Grace Period 시작 (30초, TaskScheduler)
    │                                     │
-   │── (클라이언트 정상 종료) ────────────▶│  afterConnectionClosed: 즉시 세션 해제, 타이머 취소
+   │── (클라이언트 정상 종료) ────────────▶│  클라이언트가 먼저 끊으면 즉시 세션 해제, 타이머 취소
    │   또는 Grace Period 만료            │  30초 경과 시 서버에서 Close 1000으로 세션 정리
 ```
 
