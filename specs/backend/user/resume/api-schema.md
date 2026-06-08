@@ -133,7 +133,9 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 - **Endpoint**: `POST /api/v1/user/resume/cover-letter`
 - **Content-Type**: `application/json`
 
-> 자기소개서는 파일이 없으므로 `documents` 테이블의 `file_url`, `original_name` 컬럼은 nullable.
+> 자기소개서는 파일이 없으므로 `documents` 테이블의 `file_url`, `original_name` 컬럼은 nullable.  
+> **수정(Update) 미지원 (v1)**: 제출 후 내용 수정 API는 제공하지 않는다. 수정이 필요한 경우 재제출(`POST .../cover-letter`)로 새 `documentId`를 발급받는다.  
+> PUT `/api/v1/user/resume/cover-letter/{documentId}` 엔드포인트는 v1 범위 외 — v2 이후 요구사항 확정 시 추가한다.
 
 ### Request
 

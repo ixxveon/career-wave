@@ -108,3 +108,5 @@ FastAPI 분석 트리거 호출
 - `memberId`를 Request body 또는 Path variable에서 파싱하여 소유권 확인에 사용 금지.
 - `document.status`를 Spring에서 `PENDING` 이후 상태로 직접 변경 금지 (FastAPI 책임 영역).
 - `new RuntimeException(...)` 직접 생성 금지 — 반드시 `CustomException(ErrorCode.*)` 사용.
+- 자기소개서 내용 수정(Update) API 구현 금지 (v1 범위 외) — 수정 필요 시 재제출로 신규 `documentId` 발급.
+- WebSocket 브로드캐스트를 `@Transactional` 트랜잭션 안에서 수행 금지 — 브로드캐스트 실패가 DB 롤백을 유발해서는 안 된다.
