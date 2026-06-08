@@ -23,7 +23,7 @@ import type {
   AdminAuditLog as AdminAuditLogResponse,
 } from '../../../api/admin/adminManagementApi';
 import '../../../styles/admin/admin.css';
-import '../../../styles/admin/AdminManagement.css';
+import '../../../styles/admin/admin-management.css';
 import MiniPagination from '../../../components/admin/MiniPagination';
 
 type AdminRole = 'MASTER' | 'CS' | 'BACKEND' | 'OPS' | 'BILLING' | 'AUDIT';
