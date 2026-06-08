@@ -134,10 +134,22 @@ const MOCK_PAYMENT_HISTORY: Record<string, object[]> = {
   })),
 };
 
-function getMemberId(request: Request): string {
+function getMemberId(request: Request): string | null {
   const auth = request.headers.get('Authorization') ?? '';
-  return auth.replace('Bearer mock-access-token-', '');
+  const prefix = 'Bearer mock-access-token-';
+  if (!auth.startsWith(prefix)) return null;
+  const memberId = auth.slice(prefix.length);
+  const known =
+    memberId in MOCK_SUBSCRIPTIONS ||
+    memberId in MOCK_USAGES ||
+    memberId in MOCK_ENTITLEMENTS;
+  return known ? memberId : null;
 }
+
+const UNAUTHORIZED = HttpResponse.json(
+  { success: false, statusCode: 401, message: '인증이 필요합니다.' },
+  { status: 401 },
+);
 
 export const subscriptionHandlers = [
   // 상품 목록
@@ -162,6 +174,7 @@ export const subscriptionHandlers = [
   // 내 구독 목록
   http.get('/api/v1/user/subscriptions/me', ({ request }) => {
     const memberId = getMemberId(request);
+    if (!memberId) return UNAUTHORIZED;
     const subscriptions = MOCK_SUBSCRIPTIONS[memberId] ?? [];
     return HttpResponse.json({
       success: true, statusCode: 200, message: '요청이 성공적으로 처리되었습니다.',
@@ -172,6 +185,7 @@ export const subscriptionHandlers = [
   // 사용량
   http.get('/api/v1/user/subscriptions/me/usages', ({ request }) => {
     const memberId = getMemberId(request);
+    if (!memberId) return UNAUTHORIZED;
     const usages = MOCK_USAGES[memberId] ?? [];
     return HttpResponse.json({
       success: true, statusCode: 200, message: '요청이 성공적으로 처리되었습니다.',
@@ -182,6 +196,7 @@ export const subscriptionHandlers = [
   // 권한
   http.get('/api/v1/user/subscriptions/me/entitlements', ({ request }) => {
     const memberId = getMemberId(request);
+    if (!memberId) return UNAUTHORIZED;
     const entitlements = MOCK_ENTITLEMENTS[memberId] ?? { 'document-coaching': false, interview: false };
     return HttpResponse.json({
       success: true, statusCode: 200, message: '요청이 성공적으로 처리되었습니다.',
@@ -192,9 +207,12 @@ export const subscriptionHandlers = [
   // 결제 내역
   http.get('/api/v1/user/billing/payments/history', ({ request }) => {
     const memberId = getMemberId(request);
+    if (!memberId) return UNAUTHORIZED;
     const url = new URL(request.url);
-    const page = Number(url.searchParams.get('page') ?? '0');
-    const size = Number(url.searchParams.get('size') ?? '10');
+    const rawPage = Number(url.searchParams.get('page') ?? '0');
+    const rawSize = Number(url.searchParams.get('size') ?? '10');
+    const page = Number.isFinite(rawPage) && rawPage >= 0 ? Math.floor(rawPage) : 0;
+    const size = Number.isFinite(rawSize) && rawSize > 0 ? Math.floor(rawSize) : 10;
     const allContent = MOCK_PAYMENT_HISTORY[memberId] ?? [];
     const content = allContent.slice(page * size, page * size + size);
     return HttpResponse.json({
