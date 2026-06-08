@@ -323,6 +323,15 @@ Content-Type: `multipart/form-data`
 | `file` | File | true | 업로드할 RAG 원본 문서 |
 | `name` | string | false | 화면에 표시할 문서명. 없으면 원본 파일명을 사용 |
 
+### Validation
+
+| Field | Constraint |
+|-------|------------|
+| `file` | 허용 확장자: `.pdf`, `.txt`, `.md` |
+| `file` | 허용 MIME: `application/pdf`, `text/plain`, `text/markdown` |
+| `file` | 최대 크기: 10MB |
+| `name` | 미입력 시 원본 파일명을 사용 |
+
 ### Response Data
 
 ```json
@@ -336,9 +345,20 @@ Content-Type: `multipart/form-data`
 }
 ```
 
+### Error Cases
+
+| Status | Message |
+|--------|---------|
+| 400 | 업로드 파일 또는 문서명이 올바르지 않습니다. |
+| 413 | 업로드 가능한 최대 파일 크기를 초과했습니다. |
+| 415 | 지원하지 않는 문서 형식입니다. |
+
 ## GET /rag-documents/{documentId}/download
 
 업로드된 RAG 원본 문서를 다운로드한다.
+
+- 예외: 이 endpoint는 `ApiResponse<T>`로 감싸지지 않는 raw binary response를 반환한다.
+- 프론트는 `blob` 응답으로 처리하고, `Content-Type` 및 `Content-Disposition` 헤더를 사용해 다운로드를 구성한다.
 
 ### Path
 
