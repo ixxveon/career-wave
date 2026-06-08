@@ -234,7 +234,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > 세션 종료 즉시 서버에서 FastAPI 리포트 생성 작업을 **비동기로 트리거**한다.  
-> 리포트 완료 알림은 Spring WebSocket(`WS /ws/interview/{sessionId}/chat`)으로 클라이언트에 전달한다.
+> 리포트 완료 알림은 Spring WebSocket(`WS /ws/user/interview/{sessionId}/chat`)으로 클라이언트에 전달한다.
 
 ### Error Cases
 
@@ -380,13 +380,13 @@ Authorization: Bearer {accessToken}
 
 ## 7. 실시간 채널 — Spring WebSocket
 
-- **Endpoint**: `WS /ws/interview/{sessionId}/chat`
+- **Endpoint**: `WS /ws/user/interview/{sessionId}/chat`
 - **Description**: 면접 세션 생명주기 이벤트 및 AI 질문 전달 채널 (Spring 담당)
 
 ### 인증
 
 ```
-WS /ws/interview/{sessionId}/chat?token={accessToken}
+WS /ws/user/interview/{sessionId}/chat?token={accessToken}
 ```
 
 연결 시 토큰 검증 및 `sessionId` 소유권 검증을 수행한다.  

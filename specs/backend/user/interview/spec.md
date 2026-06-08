@@ -308,7 +308,7 @@ GET /api/v1/user/interview/history?page=0&size=10
 
 ### 연결
 ```
-WS /ws/interview/{sessionId}/chat?token={accessToken}
+WS /ws/user/interview/{sessionId}/chat?token={accessToken}
 ```
 - 연결 시 `sessionId` 소유권 + 토큰 검증
 - 검증 실패 시 Close 1008

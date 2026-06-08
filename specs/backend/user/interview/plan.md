@@ -32,7 +32,7 @@ AI 파이프라인(STT·LLM·TTS)은 FastAPI 서버가 전담한다.
 
 ### 전제 조건 및 협의 사항
 
-- FastAPI와의 내부 통신 방식: **FE 스펙 기준 확정** — FastAPI WebSocket(`WS /ws/interview/{sessionId}/ai`)으로 LLM·STT·TTS 결과 직접 전달
+- FastAPI와의 내부 통신 방식: **FE 스펙 기준 확정** — FastAPI WebSocket(`WS /ws/user/interview/{sessionId}/ai`)으로 LLM·STT·TTS 결과 직접 전달
 - `documentId` 유효성 검증: **FE 스펙 기준 확정** — 서버에서 검증 후 유효하지 않으면 403/404 반환, 없으면 RAG 없이 일반 면접 진행
 - WebSocket 최대 재연결 횟수 및 heartbeat 주기: FE 스펙 기준 준수
 - `session_status = FAILED` 전이 조건: **FE 스펙 기준 확정** — 클라이언트 비정상 종료 시 `sessionStorage` 기반 복구, 재진입 시 `IN_PROGRESS` 상태면 복구 안내 노출. 서버는 비정상 종료를 감지하여 `FAILED` 마킹 또는 로그 기록
@@ -237,7 +237,7 @@ log.error("FastAPI callback failed after retry: sessionId={}", sessionId);
 >
 > **REPORT_READY 유실 방지**: 클라이언트가 재연결될 때, 연결 직후 해당 세션의 `career_histories` 레코드 존재 여부(또는 `session_status = COMPLETED` + 피드백 존재 여부)를 DB에서 확인하여 이미 완료 상태라면 `REPORT_READY` 메시지를 즉시 재전송한다. 이렇게 하면 네트워크 순단으로 메시지를 놓친 사용자도 결과 페이지로 정상 진입할 수 있다.
 
-- [ ] Spring WebSocket 핸들러 구현 (`/ws/interview/{sessionId}/chat`)
+- [ ] Spring WebSocket 핸들러 구현 (`/ws/user/interview/{sessionId}/chat`)
 - [ ] 연결 시 `sessionId` 소유권 + 토큰 검증, 실패 시 Close 1008
 - [ ] `SYSTEM(SESSION_START)` / `QUESTION` / `SYSTEM(REPORT_READY)` / `ERROR` 메시지 전송 구현
 - [ ] FastAPI 리포트 완료 콜백 수신 후 `career_histories` INSERT + `REPORT_READY` 메시지 전송

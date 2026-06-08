@@ -66,7 +66,7 @@
 ## 5. 연동 계약
 
 - **프론트엔드 HTTP 계약**: `specs/frontend/user/interview/api-schema.md`
-- **FastAPI 연동**: LLM 응답, STT 결과, TTS 오디오는 FastAPI WebSocket(`WS /ws/interview/{sessionId}/ai`)으로 클라이언트에 직접 전달되며, Spring은 세션 종료 및 리포트 완료 알림만 담당한다.
+- **FastAPI 연동**: LLM 응답, STT 결과, TTS 오디오는 FastAPI WebSocket(`WS /ws/user/interview/{sessionId}/ai`)으로 클라이언트에 직접 전달되며, Spring은 세션 종료 및 리포트 완료 알림만 담당한다.
 - **서류 도메인 연동**: `documentId` 유효성 검증은 `document_id` 존재 여부 확인으로 처리. 유효하지 않으면 `INTERVIEW_DOCUMENT_NOT_FOUND(404)` 반환.
 - **이력 캐시 무효화**: 면접 종료(`COMPLETED`) 후 `career_histories`에 이력이 저장되며, 이력 목록이 최신 상태를 반영할 수 있도록 응답에 종료 정보를 포함한다.
 

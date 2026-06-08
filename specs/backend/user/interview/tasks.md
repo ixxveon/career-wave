@@ -189,7 +189,7 @@
 > 이미 완료 상태라면 `REPORT_READY` 메시지를 즉시 재전송한다.
 
 - [ ] Spring WebSocket 핸들러 구현
-  - [ ] 엔드포인트: `WS /ws/interview/{sessionId}/chat?token={accessToken}`
+  - [ ] 엔드포인트: `WS /ws/user/interview/{sessionId}/chat?token={accessToken}`
   - [ ] 연결 시 토큰 검증 — 실패 시 Close 1008
   - [ ] 연결 시 `sessionId` 소유권 검증 — 실패 시 Close 1008
 - [ ] 메시지 전송 구현

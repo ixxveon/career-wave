@@ -99,8 +99,8 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 세션 생성 직후 클라이언트는 `data.sessionId` 수신 후 즉시  
-> Spring WebSocket(`WS /ws/interview/{sessionId}/chat`) 및  
-> FastAPI WebSocket(`WS /ws/interview/{sessionId}/ai`) 연결을 시작합니다.
+> Spring WebSocket(`WS /ws/user/interview/{sessionId}/chat`) 및  
+> FastAPI WebSocket(`WS /ws/user/interview/{sessionId}/ai`) 연결을 시작합니다.
 
 ### Error Cases
 
@@ -144,7 +144,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 답변 저장 완료 후 AI의 다음 질문 또는 꼬리 질문은  
-> FastAPI WebSocket(`WS /ws/interview/{sessionId}/ai`)으로 스트리밍 전달됩니다.
+> FastAPI WebSocket(`WS /ws/user/interview/{sessionId}/ai`)으로 스트리밍 전달됩니다.
 
 ### Error Cases
 
@@ -164,7 +164,7 @@ Authorization: Bearer {accessToken}
 - **Content-Type**: `multipart/form-data`
 
 > ℹ️ constitution 정책: 마이크 녹음 데이터는 **5초 단위 Chunk**로 분할하여 전송한다.  
-> STT 변환 결과는 FastAPI WebSocket(`WS /ws/interview/{sessionId}/ai`)으로 수신한다.
+> STT 변환 결과는 FastAPI WebSocket(`WS /ws/user/interview/{sessionId}/ai`)으로 수신한다.
 
 ### Request
 
@@ -220,7 +220,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 세션 종료 즉시 서버에서 AI 리포트 생성 작업을 **자동 트리거**합니다.  
-> 리포트 완료 알림은 Spring WebSocket(`WS /ws/interview/{sessionId}/chat`)으로 수신합니다.
+> 리포트 완료 알림은 Spring WebSocket(`WS /ws/user/interview/{sessionId}/chat`)으로 수신합니다.
 
 ### Error Cases
 
@@ -357,13 +357,13 @@ Authorization: Bearer {accessToken}
 
 ## 7. 면접 실시간 채널 — Spring WebSocket
 
-- **Endpoint**: `WS /ws/interview/{sessionId}/chat`
+- **Endpoint**: `WS /ws/user/interview/{sessionId}/chat`
 - **Description**: 면접 세션 생명주기 제어 및 AI 질문 실시간 수신 (Spring 담당)
 
 ### 인증
 
 ```
-WS /ws/interview/{sessionId}/chat?token={accessToken}
+WS /ws/user/interview/{sessionId}/chat?token={accessToken}
 ```
 
 ### Connection Lifecycle
@@ -423,13 +423,13 @@ WS /ws/interview/{sessionId}/chat?token={accessToken}
 
 ## 8. AI 파이프라인 채널 — FastAPI WebSocket
 
-- **Endpoint**: `WS /ws/interview/{sessionId}/ai`
+- **Endpoint**: `WS /ws/user/interview/{sessionId}/ai`
 - **Description**: LLM 스트리밍 응답 수신, STT 변환 결과 수신, TTS 오디오 스트리밍 (FastAPI 담당)
 
 ### 인증
 
 ```
-WS /ws/interview/{sessionId}/ai?token={accessToken}
+WS /ws/user/interview/{sessionId}/ai?token={accessToken}
 ```
 
 ### Server → Client 메시지 형식
