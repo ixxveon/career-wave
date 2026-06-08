@@ -52,7 +52,8 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 생성 일시 |
 
 > 점수 컬럼 5개는 분석 완료 전까지 `null`. FastAPI Webhook 수신 시 저장됨.  
-> `feedback_text`의 상세 구조(JSON 문자열 vs 순수 텍스트)는 FastAPI 팀과 합의 필요 — 항목별 첨삭(`feedbackDetails` 배열) 포함 여부 확인 후 응답 DTO 확정.
+> `feedback_text`는 항목별 첨삭 배열(`feedbackDetails`)을 JSON 직렬화한 문자열로 확정.  
+> Spring에서 `ObjectMapper.readValue()`로 역직렬화하여 `ResponseFeedback.feedbackDetails`로 반환.
 
 ### cover_letter_meta
 
