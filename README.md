@@ -1,4 +1,4 @@
-# Career Wave Admin
+# Career Wave
 
 ## 기술 스택 (Tech Stack)
 
@@ -13,7 +13,7 @@
 | **데이터베이스** | `Data` | PostgreSQL | 관계형 데이터베이스 통합 인프라 구축 |
 | **백엔드** | `user-backend`<br>`admin-backend` | Java 17<br>Spring Boot 3.x<br>Gradle | Spring Data JPA, Spring Security, JWT, Lombok |
 | **AI 및 엔진** | `user-fastapi`<br>`admin-fastapi` | Python 3.x<br>FastAPI | 실시간 AI 면접 분석 피드백, 채용 공고 스크래핑 스케줄러 |
-| **프론트엔드** | `user-frontend`<br>`admin-frontend` | JavaScript / TypeScript<br>React | 컴포넌트 기반 웹 아키텍처, Tailwind CSS |
+| **프론트엔드** | `frontend` | TypeScript<br>React | TanStack Query, React Router, MSW, Vite |
 
 
 ### 2. 모노레포 프로젝트 디렉토리 구조
@@ -29,9 +29,37 @@ career-wave/
 ├── fastapi/                  # 파이썬 FastAPI 시스템 루트
 │   ├── admin-fastapi/        # 외부 채용 사이트 공고 수집 크롤링 엔진
 │   └── user-fastapi/         # 사용자 답변 데이터 분석 및 AI 피드백 엔진
-└── frontend/                 # 리액트 프론트엔드 시스템 루트
-    ├── admin-frontend/       # 관리자 대시보드 웹 애플리케이션
-    └── user-frontend/        # 일반 사용자 서비스 웹 애플리케이션
+└── frontend/                 # 리액트 프론트엔드 시스템 루트 (user + admin 통합)
+    ├── public/               # 정적 파일 (MSW 서비스워커 등)
+    └── src/
+        ├── api/              # API 호출 함수
+        │   ├── admin/
+        │   └── user/
+        ├── components/       # 재사용 컴포넌트
+        │   ├── admin/
+        │   └── user/
+        ├── constants/        # 상수 정의
+        ├── data/             # 목 데이터
+        ├── hooks/            # 커스텀 훅
+        │   └── user/
+        ├── layouts/          # 레이아웃 컴포넌트
+        │   └── admin/
+        ├── mocks/            # MSW 핸들러
+        │   ├── admin/
+        │   └── user/
+        ├── pages/            # 페이지 컴포넌트
+        │   ├── admin/
+        │   └── user/
+        ├── routes/           # 라우팅 설정
+        ├── styles/           # 전역 및 도메인별 스타일
+        │   ├── admin/
+        │   └── user/
+        ├── types/            # TypeScript 타입 정의
+        │   ├── admin/
+        │   └── user/
+        └── utils/            # 유틸리티 함수
+            ├── admin/
+            └── user/
 ```
 
 ## 실행 방법
@@ -55,6 +83,17 @@ uvicorn main:app --reload --port 8001
 cd backend
 ./gradlew bootRun
 ```
+
+## 테스트 계정
+
+| 아이디 | 비밀번호 | 설명 |
+| :--- | :--- | :--- |
+| `testuser01` | `Test1234!` | 개인 회원 — 구독 없음 |
+| `testuser02` | `Test1234!` | 개인 회원 — AI 모의면접만 구독 |
+| `testuser03` | `Test1234!` | 개인 회원 — 서류 AI 코칭만 구독 |
+| `testuser04` | `Test1234!` | 개인 회원 — 두 상품 모두 구독 |
+| `testcompany01` | `Test1234!` | 기업 회원 — 구독 없음 |
+| `admin` | `1234` | 관리자 (기존) |
 
 ## 환경 변수
 

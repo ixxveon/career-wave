@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import type { AdminLoginRequest, AdminLoginResponse, ApiResponse } from '../../admin/api/adminAuthApi';
+import type { AdminLoginRequest, AdminLoginResponse, ApiResponse } from '../../api/admin/adminAuthApi';
 
 function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
