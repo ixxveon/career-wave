@@ -27,7 +27,7 @@ function PaymentHistoryPage() {
     setPage,
     setCancelTarget,
     handleCancelConfirm,
-  } = usePaymentHistoryStatus(PAYMENT_HISTORY_PERIOD.SIX_MONTHS);
+  } = usePaymentHistoryStatus(PAYMENT_HISTORY_PERIOD.TWELVE_MONTHS);
 
   return (
     <>
