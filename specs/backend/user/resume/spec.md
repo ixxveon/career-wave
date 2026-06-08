@@ -129,6 +129,7 @@ public class ResumeDTO {
     // 이력서 업로드 응답
     public record ResponseUpload(
         UUID documentId,
+        String status,          // UPLOADED
         String fileUrl,
         String originalName,
         String fileType,        // RESUME
@@ -151,6 +152,7 @@ public class ResumeDTO {
     // 자기소개서 제출 응답
     public record ResponseCoverLetter(
         UUID documentId,
+        String status,          // UPLOADED
         String fileType,        // COVER_LETTER
         ZonedDateTime createdAt
     ) {}
