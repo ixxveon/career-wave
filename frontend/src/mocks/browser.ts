@@ -1,8 +1,8 @@
 import { http, HttpResponse } from 'msw';
 import { setupWorker } from 'msw/browser';
-import { memberHandlers } from './member/handlers';
-import { subscriptionHandlers } from './subscription/handlers';
-import { resumeHandlers } from './resume/handlers';
+import { memberHandlers } from './user/memberHandlers';
+import { subscriptionHandlers } from './user/subscriptionHandlers';
+import { resumeHandlers } from './user/resumeHandlers';
 import { adminHandlers } from './admin/handlers';
 
 const devAuthHandlers = [
