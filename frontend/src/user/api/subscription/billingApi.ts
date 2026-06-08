@@ -24,13 +24,13 @@ function buildPaymentHistorySearchParams(query: PaymentHistoryQuery): string {
 export const billingApi = {
   getPaymentHistory(query: PaymentHistoryQuery): Promise<PaymentHistoryPageResponse> {
     const search = buildPaymentHistorySearchParams(query);
-    return memberApiClient<PaymentHistoryPageResponse>(`/api/v1/billing/payments/history?${search}`, {
+    return memberApiClient<PaymentHistoryPageResponse>(`/api/v1/user/billing/payments/history?${search}`, {
       auth: true,
     });
   },
 
   createOrder(body: CreateOrderRequest): Promise<CreateOrderResponse> {
-    return memberApiClient<CreateOrderResponse>('/api/v1/billing/checkout/orders', {
+    return memberApiClient<CreateOrderResponse>('/api/v1/user/billing/checkout/orders', {
       method: 'POST',
       body: JSON.stringify(body),
       auth: true,
@@ -38,7 +38,7 @@ export const billingApi = {
   },
 
   confirmPayment(body: ConfirmPaymentRequest): Promise<ConfirmPaymentResponse> {
-    return memberApiClient<ConfirmPaymentResponse>('/api/v1/billing/payments/confirm', {
+    return memberApiClient<ConfirmPaymentResponse>('/api/v1/user/billing/payments/confirm', {
       method: 'POST',
       body: JSON.stringify(body),
       auth: true,
@@ -46,13 +46,13 @@ export const billingApi = {
   },
 
   getPaymentStatus(orderId: string): Promise<PaymentStatusResponse> {
-    return memberApiClient<PaymentStatusResponse>(`/api/v1/billing/payments/orders/${orderId}`, {
+    return memberApiClient<PaymentStatusResponse>(`/api/v1/user/billing/payments/orders/${orderId}`, {
       auth: true,
     });
   },
 
   recordPaymentFail(body: RecordPaymentFailRequest): Promise<RecordPaymentFailResponse> {
-    return memberApiClient<RecordPaymentFailResponse>('/api/v1/billing/payments/fail', {
+    return memberApiClient<RecordPaymentFailResponse>('/api/v1/user/billing/payments/fail', {
       method: 'POST',
       body: JSON.stringify(body),
       auth: true,
