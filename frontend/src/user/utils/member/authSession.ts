@@ -31,9 +31,11 @@ let accessToken: string | null = null;
 let refreshToken: string | null = readRefreshTokenFromSessionStorage();
 let currentMember: MemberSummary | null = null;
 
+export const AUTH_CHANGE_EVENT = 'career-wave:auth-change';
+
 function notifyAuthChange() {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('career-wave:auth-change'));
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
   }
 }
 

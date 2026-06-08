@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { authSession } from '../user/utils/member/authSession';
-
-const AUTH_CHANGE_EVENT = 'career-wave:auth-change';
+import { authSession, AUTH_CHANGE_EVENT } from '../user/utils/member/authSession';
 
 function getIsLoggedIn() {
   return !!(authSession.getAccessToken() || authSession.getRefreshToken());

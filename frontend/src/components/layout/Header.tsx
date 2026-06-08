@@ -115,7 +115,7 @@ function Header() {
             {isLoggedIn ? (
               <>
                 <NavLink to="/mypage">마이페이지</NavLink>
-                <button onClick={handleLogout}>로그아웃</button>
+                <button type="button" onClick={handleLogout}>로그아웃</button>
               </>
             ) : (
               <>
