@@ -19,13 +19,29 @@ const COMPANY_ONLY_PATH_PREFIXES = [
   '/applications/applicants',
 ] as const;
 
+// 개인 회원 전용 경로 — 기업 회원은 next 파라미터로 진입 불가
+const USER_ONLY_PATH_PREFIXES = [
+  '/mypage',
+  '/documents',
+  '/interview',
+  '/career-diagnosis',
+] as const;
+
 export function isNextPathCompatible(nextPath: string, memberType: MemberType): boolean {
+  const pathOnly = nextPath.split('?')[0].split('#')[0];
+
   if (memberType === MEMBER_TYPE.USER) {
-    const pathOnly = nextPath.split('?')[0].split('#')[0];
     return !COMPANY_ONLY_PATH_PREFIXES.some(
       (prefix) => pathOnly === prefix || pathOnly.startsWith(`${prefix}/`),
     );
   }
+
+  if (memberType === MEMBER_TYPE.COMPANY) {
+    return !USER_ONLY_PATH_PREFIXES.some(
+      (prefix) => pathOnly === prefix || pathOnly.startsWith(`${prefix}/`),
+    );
+  }
+
   return true;
 }
 
