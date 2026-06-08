@@ -37,7 +37,7 @@
 - [x] `useFastApiWebSocket` 구현 — LLM 스트리밍 응답 수신 로직 및 연결 단절 시 RECONNECTING 상태 전이 처리
 - [x] `TTSPlayer` & `useTTSQueue` 구현 — 문항 단위 TTS 오디오 순차 재생 큐 및 재생 제어
 - [x] **스트리밍 타이핑 효과**: `requestAnimationFrame` 활용하여 텍스트 데이터 렌더링 최적화
-- [ ] LLM 꼬리/압박 질문 생성 로직 및 이력서 RAG 컨텍스트 연동
+- [x] LLM 꼬리/압박 질문 생성 로직 및 이력서 RAG 컨텍스트 연동
 - [x] LLM 응답 지연/타임아웃 폴백 처리 — 로딩 UI 유지 및 사전 정의 질문으로 대체 로직 구현
 - [x] 면접 종료 시 전체 스크립트 서버 동기화 (`endSession`) 및 상태 머신 전이
 
@@ -66,7 +66,7 @@
 
 ## Phase 6 — Polish & QA
 
-- [ ] `checklist.md` 기반 최종 점검
+- [x] `checklist.md` 기반 최종 점검
 - [x] a11y — 채팅/타이머 영역 `aria-live` 및 키보드 네비게이션 검증
 - [ ] 보안 검증 — 타인 소유 `sessionId`로 세션·리포트 API 호출 시 403 차단 테스트 (sessionId IDOR)
 - [ ] 보안 검증 — 타인 소유 `documentId`로 면접 세션 시작 시 403 차단 테스트 (documentId IDOR)

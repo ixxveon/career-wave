@@ -99,7 +99,7 @@
 ## Success Criteria
 
 - **SC-001**: `/admin/log` 진입 후 요약 카드와 감사 로그 목록이 API 응답 기반으로 표시된다.
-- **SC-002**: source, level, keyword, page 변경이 API 조회 조건과 일치한다.
+- **SC-002**: source, level, keyword 변경과 기본 page/size 조회 조건이 API 조회 조건과 일치한다.
 - **SC-003**: 로그 선택 시 상세 패널이 API 상세 데이터로 갱신된다.
 - **SC-004**: API 실패, 빈 목록, 검색 결과 없음, 권한 오류 상태가 구분되어 표시된다.
 - **SC-005**: 로그 목록과 상세에 민감 정보가 노출되지 않는다.

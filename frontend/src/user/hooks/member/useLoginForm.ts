@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type FormEvent, useMemo, useState } from 'react';
 import type { LoginRouteDecision } from '../../types/member';
 import { authSession } from '../../utils/member/authSession';
@@ -58,6 +58,7 @@ const BLOCK_MESSAGE_BY_REASON: Record<
 
 export function useLoginForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const loginMutation = useLogin();
   const [loginType, setLoginType] = useState<LoginTab>('personal');
   const [credentials, setCredentials] = useState<Credentials>({
@@ -112,7 +113,12 @@ export function useLoginForm() {
         refreshToken: response.refreshToken,
       });
       authSession.setMember(response.member);
-      navigate(decision.path, { replace: true });
+
+      // ?next= 파라미터가 있고 안전한 내부 경로면 해당 경로로 이동
+      // startsWith('/') && !startsWith('//') — //evil.com 같은 프로토콜 상대 URL 차단
+      const nextPath = searchParams.get('next');
+      const safePath = nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
+      navigate(safePath ?? decision.path, { replace: true });
     } catch (error) {
       setFieldErrors({
         form: getSafeLoginMessage(error as MemberApiError),

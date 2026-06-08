@@ -48,7 +48,7 @@ specs/frontend/admin/dashboard/
 
 | Phase | Branch | Base |
 |---|---|---|
-| Phase 1 - 타입 및 API 계층 | `feature/admin-dashboard-api` | `feature/admin-dashboard-spec` |
+| Phase 1 - 타입 및 API 계층 | `feature/admin-dashboard-api` | `develop` |
 | Phase 2 - 화면 데이터 연동 | `feature/admin-dashboard-data` | `feature/admin-dashboard-api` |
 | Phase 3 - 상태 처리 | `feature/admin-dashboard-state` | `feature/admin-dashboard-data` |
 | Phase 4 - 라우팅 및 권한 | `feature/admin-dashboard-route-auth` | `feature/admin-dashboard-state` |
@@ -60,7 +60,7 @@ PR은 각 브랜치의 base 관계를 유지해 생성한다. 선행 Phase PR이
 
 ### Phase 1 - 타입 및 API 계층
 
-- [ ] `feature/admin-dashboard-spec` 브랜치를 기준으로 `feature/admin-dashboard-api` 브랜치를 생성한다.
+- [ ] 최신 `develop` 브랜치를 기준으로 `feature/admin-dashboard-api` 브랜치를 생성한다.
 - [ ] `dashboardApi.ts`를 생성하고 대시보드 요약 조회 함수를 작성한다.
 - [ ] `AdminDashboardSummary`, `DashboardKpi`, `DashboardAlert`, `DashboardActivity` 타입을 정의한다.
 - [ ] `ApiResponse<T>` 래퍼 응답과 API 실패 메시지 매핑을 처리한다.

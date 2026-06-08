@@ -1,4 +1,4 @@
-import type { SubmitCoverLetterRequest, SubmitCoverLetterResponse } from '../../types/resume.d';
+import type { SubmitCoverLetterRequest, SubmitCoverLetterResponse } from '../../types/resume';
 import { memberApiClient } from '../member/memberApiClient';
 
 export const coverLetterApi = {

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LockKeyhole, Network, Plus, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
 import {
+  ADMIN_MANAGEMENT_ERROR_CODE,
   createAdminAccount as createAdminAccountRequest,
   createAdminAclRule,
   deleteAdminAccount,
@@ -20,7 +21,6 @@ import type {
   AdminAccount as AdminAccountResponse,
   AdminAclRule as AdminAclRuleResponse,
   AdminAuditLog as AdminAuditLogResponse,
-  AclRiskLevel,
 } from '../../api/adminManagementApi';
 import '../../styles/admin.css';
 import MiniPagination from '../../components/MiniPagination';
@@ -46,7 +46,6 @@ interface AclRule {
   label: string;
   cidr: string;
   note: string;
-  riskLevel: AclRiskLevel;
   enabled: boolean;
   updatedAt: string;
 }
@@ -94,6 +93,93 @@ const ADMIN_MANAGEMENT_ADMINS_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'admin
 const ADMIN_MANAGEMENT_ACLS_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'acls'] as const;
 const ADMIN_MANAGEMENT_AUDIT_LOGS_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'auditLogs'] as const;
 
+const initialAclRules: AclRule[] = [
+  {
+    id: 'ACL-001',
+    label: '본사 사내망',
+    cidr: '10.20.0.0/16',
+    note: '사내 네트워크 전체 허용',
+    enabled: true,
+    updatedAt: '2026.05.25 08:30:00',
+  },
+  {
+    id: 'ACL-002',
+    label: '운영 VPN',
+    cidr: '172.16.5.0/24',
+    note: '원격 운영자 접속 허용',
+    enabled: true,
+    updatedAt: '2026.05.25 08:32:00',
+  },
+  {
+    id: 'ACL-003',
+    label: '점프 서버',
+    cidr: '203.0.113.24/32',
+    note: '배포 및 장애 대응용 고정 IP',
+    enabled: true,
+    updatedAt: '2026.05.25 08:34:00',
+  },
+];
+
+export const initialLogs: AuditLog[] = [
+  {
+    id: 'LOG-001',
+    time: '2026.05.25 14:29:12',
+    actor: 'super_admin',
+    ip: '10.20.0.10',
+    action: '권한 변경 승인',
+    target: 'member:U-1007 / role:CS',
+    severity: 'WARN',
+  },
+  {
+    id: 'LOG-002',
+    time: '2026.05.25 14:22:49',
+    actor: 'backend_admin',
+    ip: '10.20.0.22',
+    action: 'DB 변경 감지',
+    target: 'schema:member',
+    severity: 'ERROR',
+  },
+  {
+    id: 'LOG-003',
+    time: '2026.05.25 14:18:27',
+    actor: 'cs_admin',
+    ip: '10.20.0.21',
+    action: '회원 문의 처리',
+    target: 'ticket:CS-1842',
+    severity: 'INFO',
+  },
+  {
+    id: 'LOG-004',
+    time: '2026.05.25 14:12:08',
+    actor: 'ops_admin',
+    ip: '10.20.0.23',
+    action: 'IP ACL 갱신',
+    target: 'ACL-002',
+    severity: 'WARN',
+  },
+  {
+    id: 'LOG-005',
+    time: '2026.05.25 13:58:41',
+    actor: 'audit_admin',
+    ip: '10.20.10.8',
+    action: '감사 정책 검토',
+    target: 'policy:admin-access',
+    severity: 'INFO',
+  },
+];
+
+const formatNow = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
+};
+
+const makeId = (prefix: string, value: number) => `${prefix}-${String(value).padStart(4, '0')}`;
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -128,14 +214,18 @@ const isValidCidr = (value: string) => {
   });
 };
 
-const ACL_RISK_META: Record<AclRiskLevel, { label: string; tone: 'low' | 'medium' | 'high' }> = {
-  LOW: { label: '고정 IP', tone: 'low' },
-  MEDIUM: { label: '제한 대역', tone: 'medium' },
-  HIGH: { label: '광범위 대역', tone: 'high' },
-};
+const getAclRiskMeta = (cidr: string) => {
+  const size = Number(cidr.split('/')[1] ?? 32);
 
-const getAclRiskMeta = (riskLevel: AclRiskLevel) => {
-  return ACL_RISK_META[riskLevel];
+  if (size === 32) {
+    return { label: '고정 IP', tone: 'low' as const };
+  }
+
+  if (size === 24) {
+    return { label: '제한 대역', tone: 'medium' as const };
+  }
+
+  return { label: '넓은 대역', tone: 'high' as const };
 };
 
 const createEmptyAdminDraft = (): AdminDraft => ({
@@ -162,7 +252,6 @@ const toAclRuleRow = (aclRule: AdminAclRuleResponse): AclRule => ({
   label: aclRule.label,
   cidr: aclRule.cidr,
   note: aclRule.note,
-  riskLevel: aclRule.riskLevel,
   enabled: aclRule.enabled,
   updatedAt: aclRule.updatedAt,
 });
@@ -188,6 +277,8 @@ export default function AdminManagementPage() {
     queryKey: ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY,
     queryFn: getAdminManagementSummary,
   });
+  const [aclRules] = useState(initialAclRules);
+  const [logs, setLogs] = useState(initialLogs);
   const [adminFilter, setAdminFilter] = useState('');
   const debouncedAdminFilter = useDebouncedValue(adminFilter.trim(), ADMIN_SEARCH_DEBOUNCE_MS);
   const [roleFilter, setRoleFilter] = useState<'ALL' | AdminRole>('ALL');
@@ -197,6 +288,8 @@ export default function AdminManagementPage() {
   const [adminDraft, setAdminDraft] = useState<AdminDraft>(createEmptyAdminDraft);
   const [aclPage, setAclPage] = useState(1);
   const [adminPage, setAdminPage] = useState(1);
+  const logIdSeedRef = useRef(initialLogs.length + 1);
+  const createAdminPendingRef = useRef(false);
   const [aclDraft, setAclDraft] = useState<AclDraft>({ label: '', cidr: '', note: '' });
   const [aclCidrErrorMessage, setAclCidrErrorMessage] = useState('');
   const adminListQueryParams = {
@@ -229,7 +322,7 @@ export default function AdminManagementPage() {
     queryKey: [...ADMIN_MANAGEMENT_ACLS_QUERY_KEY, aclListQueryParams],
     queryFn: () => getAdminAclRules(aclListQueryParams),
   });
-  const visibleAclRules = adminAclRules?.items.map(toAclRuleRow) ?? [];
+  const visibleAclRules = adminAclRules?.items.map(toAclRuleRow) ?? aclRules;
   const auditLogQueryParams = {
     page: 1,
     size: MAX_SECURITY_LOGS,
@@ -243,7 +336,13 @@ export default function AdminManagementPage() {
     queryKey: [...ADMIN_MANAGEMENT_AUDIT_LOGS_QUERY_KEY, auditLogQueryParams],
     queryFn: () => getAdminAuditLogs(auditLogQueryParams),
   });
-  const visibleLogs = adminAuditLogs?.items.map(toAuditLogRow) ?? [];
+  const visibleLogs = adminAuditLogs?.items.map(toAuditLogRow) ?? logs;
+
+  const addLog = (log: Omit<AuditLog, 'id' | 'time'>) => {
+    const nextLogId = logIdSeedRef.current;
+    logIdSeedRef.current += 1;
+    setLogs((prev) => [{ ...log, id: makeId('LOG', nextLogId), time: formatNow() }, ...prev].slice(0, MAX_SECURITY_LOGS));
+  };
 
   const refreshAdminManagementQueries = () => {
     void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY });
@@ -265,13 +364,22 @@ export default function AdminManagementPage() {
 
   const createAdminMutation = useMutation({
     mutationFn: createAdminAccountRequest,
-    onSuccess: () => {
+    onSuccess: (createdAdmin) => {
+      const nextAdmin = toAdminAccountRow(createdAdmin);
+
       setAdminFilter('');
       setRoleFilter('ALL');
       setStatusFilter('ALL');
       setAdminPage(1);
-      closeCreateAdminPage();
+      closeCreateAdminPage({ force: true });
 
+      addLog({
+        actor: 'super_admin',
+        ip: '10.20.0.10',
+        action: '관리자 계정 생성',
+        target: nextAdmin.id,
+        severity: 'WARN',
+      });
       refreshAdminManagementQueries();
       refreshAuditLogQueries();
     },
@@ -279,7 +387,16 @@ export default function AdminManagementPage() {
 
   const updateAdminRoleMutation = useMutation({
     mutationFn: ({ id, role }: { id: string; role: AdminRole }) => updateAdminRole(id, { role }),
-    onSuccess: () => {
+    onSuccess: (updatedAdmin) => {
+      const nextAdmin = toAdminAccountRow(updatedAdmin);
+
+      addLog({
+        actor: 'super_admin',
+        ip: '10.20.0.10',
+        action: '권한 변경',
+        target: `${nextAdmin.id} / ${ROLE_META[nextAdmin.role].label}`,
+        severity: 'WARN',
+      });
       refreshAdminManagementQueries();
       refreshAuditLogQueries();
     },
@@ -287,7 +404,16 @@ export default function AdminManagementPage() {
 
   const updateAdminStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: AdminStatus }) => updateAdminStatus(id, { status }),
-    onSuccess: () => {
+    onSuccess: (updatedAdmin) => {
+      const nextAdmin = toAdminAccountRow(updatedAdmin);
+
+      addLog({
+        actor: 'super_admin',
+        ip: '10.20.0.10',
+        action: nextAdmin.status === 'LOCKED' ? '계정 잠금' : '계정 잠금 해제',
+        target: nextAdmin.id,
+        severity: nextAdmin.status === 'LOCKED' ? 'WARN' : 'INFO',
+      });
       refreshAdminManagementQueries();
       refreshAuditLogQueries();
     },
@@ -295,7 +421,14 @@ export default function AdminManagementPage() {
 
   const deleteAdminMutation = useMutation({
     mutationFn: (id: string) => deleteAdminAccount(id),
-    onSuccess: () => {
+    onSuccess: (_, deletedId) => {
+      addLog({
+        actor: 'super_admin',
+        ip: '10.20.0.10',
+        action: '관리자 계정 삭제',
+        target: deletedId,
+        severity: 'ERROR',
+      });
       refreshAdminManagementQueries();
       refreshAuditLogQueries();
     },
@@ -303,11 +436,20 @@ export default function AdminManagementPage() {
 
   const createAclRuleMutation = useMutation({
     mutationFn: createAdminAclRule,
-    onSuccess: () => {
+    onSuccess: (createdAclRule) => {
+      const nextRule = toAclRuleRow(createdAclRule);
+
       setAclPage(1);
       setAclDraft({ label: '', cidr: '', note: '' });
       setAclCidrErrorMessage('');
 
+      addLog({
+        actor: 'super_admin',
+        ip: '10.20.0.10',
+        action: 'IP ACL 등록',
+        target: nextRule.id,
+        severity: 'WARN',
+      });
       refreshAclManagementQueries();
       refreshAuditLogQueries();
     },
@@ -315,7 +457,16 @@ export default function AdminManagementPage() {
 
   const updateAclEnabledMutation = useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => updateAdminAclEnabled(id, { enabled }),
-    onSuccess: () => {
+    onSuccess: (updatedAclRule) => {
+      const nextRule = toAclRuleRow(updatedAclRule);
+
+      addLog({
+        actor: 'super_admin',
+        ip: '10.20.0.10',
+        action: nextRule.enabled ? 'IP ACL 활성화' : 'IP ACL 비활성화',
+        target: nextRule.id,
+        severity: nextRule.enabled ? 'INFO' : 'WARN',
+      });
       refreshAclManagementQueries();
       refreshAuditLogQueries();
     },
@@ -323,45 +474,53 @@ export default function AdminManagementPage() {
 
   const deleteAclRuleMutation = useMutation({
     mutationFn: (id: string) => deleteAdminAclRule(id),
-    onSuccess: () => {
+    onSuccess: (_, deletedAclId) => {
       const isCurrentPageEmptyAfterDelete = aclPage > 1 && visibleAclRules.length === 1;
       if (isCurrentPageEmptyAfterDelete) {
         setAclPage((page) => Math.max(1, page - 1));
       }
 
+      addLog({
+        actor: 'super_admin',
+        ip: '10.20.0.10',
+        action: 'IP ACL 삭제',
+        target: deletedAclId,
+        severity: 'ERROR',
+      });
       refreshAclManagementQueries();
       refreshAuditLogQueries();
     },
   });
 
-  const isAdminMutationPending = (id: string) => {
-    return (
-      (updateAdminRoleMutation.isPending && updateAdminRoleMutation.variables?.id === id)
-      || (updateAdminStatusMutation.isPending && updateAdminStatusMutation.variables?.id === id)
-      || (deleteAdminMutation.isPending && deleteAdminMutation.variables === id)
-    );
+  const resetAccountMasterRoleRequired = () => {
+    createAdminMutation.reset();
+    updateAdminRoleMutation.reset();
+    updateAdminStatusMutation.reset();
+    deleteAdminMutation.reset();
   };
 
-  const isAclMutationPending = (id: string) => {
-    return (
-      (updateAclEnabledMutation.isPending && updateAclEnabledMutation.variables?.id === id)
-      || (deleteAclRuleMutation.isPending && deleteAclRuleMutation.variables === id)
-    );
+  const resetAclMasterRoleRequired = () => {
+    createAclRuleMutation.reset();
+    updateAclEnabledMutation.reset();
+    deleteAclRuleMutation.reset();
   };
 
   const changeAdminRole = (id: string, role: AdminRole) => {
-    if (isAdminMutationPending(id)) return;
-
+    if (isAccountMasterRoleRequired) return;
     updateAdminRoleMutation.mutate({ id, role });
   };
 
-  const closeCreateAdminPage = () => {
+  const closeCreateAdminPage = ({ force = false }: { force?: boolean } = {}) => {
+    if (!force && createAdminPendingRef.current) return;
+
     createAdminMutation.reset();
     setAdminDraft(createEmptyAdminDraft());
     setIsCreateAdminOpen(false);
   };
 
   const handleCreateAdminAccount = () => {
+    if (isAccountMasterRoleRequired) return;
+
     const email = adminDraft.email.trim();
     const name = adminDraft.name.trim();
     const password = adminDraft.password.trim();
@@ -376,23 +535,24 @@ export default function AdminManagementPage() {
   };
 
   const toggleAdminStatus = (id: string) => {
-    if (isAdminMutationPending(id)) return;
+    if (isAccountMasterRoleRequired) return;
 
     const target = filteredAdmins.find((item) => item.id === id);
     if (!target) return;
 
     const nextStatus = target.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
-
     updateAdminStatusMutation.mutate({ id, status: nextStatus });
   };
 
   const removeAdminAccount = (admin: AdminAccount) => {
-    if (isAdminMutationPending(admin.id)) return;
+    if (isAccountMasterRoleRequired) return;
 
     deleteAdminMutation.mutate(admin.id);
   };
 
   const addAclRule = () => {
+    if (isAclMasterRoleRequired) return;
+
     const label = aclDraft.label.trim();
     const cidr = aclDraft.cidr.trim();
     const note = aclDraft.note.trim();
@@ -412,7 +572,7 @@ export default function AdminManagementPage() {
   };
 
   const toggleAclRule = (id: string) => {
-    if (isAclMutationPending(id)) return;
+    if (isAclMasterRoleRequired) return;
 
     const target = visibleAclRules.find((item) => item.id === id);
     if (!target) return;
@@ -421,7 +581,7 @@ export default function AdminManagementPage() {
   };
 
   const removeAclRule = (id: string) => {
-    if (isAclMutationPending(id)) return;
+    if (isAclMasterRoleRequired) return;
 
     const target = visibleAclRules.find((item) => item.id === id);
     if (!target) return;
@@ -444,6 +604,10 @@ export default function AdminManagementPage() {
   }, [adminAclRules?.totalPages, aclPage]);
 
   useEffect(() => {
+    createAdminPendingRef.current = createAdminMutation.isPending;
+  }, [createAdminMutation.isPending]);
+
+  useEffect(() => {
     if (!isCreateAdminOpen) return undefined;
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -463,39 +627,28 @@ export default function AdminManagementPage() {
 
   const filteredLogs = visibleLogs;
 
-  const summaryErrorMessage = isSummaryError
-    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(summaryError))
-    : '';
-  const adminAccountsErrorMessage = isAdminAccountsError
-    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(adminAccountsError))
-    : '';
-  const createAdminErrorMessage = createAdminMutation.isError
-    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(createAdminMutation.error))
-    : '';
-  const updateAdminRoleErrorMessage = updateAdminRoleMutation.isError
-    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(updateAdminRoleMutation.error))
-    : '';
-  const updateAdminStatusErrorMessage = updateAdminStatusMutation.isError
-    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(updateAdminStatusMutation.error))
-    : '';
-  const deleteAdminErrorMessage = deleteAdminMutation.isError
-    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(deleteAdminMutation.error))
-    : '';
-  const auditLogsErrorMessage = isAdminAuditLogsError
-    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(adminAuditLogsError))
-    : '';
-  const aclRulesErrorMessage = isAdminAclRulesError
-    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(adminAclRulesError))
-    : '';
-  const createAclRuleErrorMessage = createAclRuleMutation.isError
-    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(createAclRuleMutation.error))
-    : '';
-  const updateAclEnabledErrorMessage = updateAclEnabledMutation.isError
-    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(updateAclEnabledMutation.error))
-    : '';
-  const deleteAclRuleErrorMessage = deleteAclRuleMutation.isError
-    ? getAdminManagementAuthErrorMessage(toAdminManagementApiError(deleteAclRuleMutation.error))
-    : '';
+  const summaryApiError = isSummaryError ? toAdminManagementApiError(summaryError) : null;
+  const adminAccountsApiError = isAdminAccountsError ? toAdminManagementApiError(adminAccountsError) : null;
+  const adminAuditLogsApiError = isAdminAuditLogsError ? toAdminManagementApiError(adminAuditLogsError) : null;
+  const adminAclRulesApiError = isAdminAclRulesError ? toAdminManagementApiError(adminAclRulesError) : null;
+  const summaryErrorMessage = summaryApiError ? getAdminManagementAuthErrorMessage(summaryApiError) : '';
+  const adminAccountsErrorMessage = adminAccountsApiError ? getAdminManagementAuthErrorMessage(adminAccountsApiError) : '';
+  const createAdminApiError = createAdminMutation.isError ? toAdminManagementApiError(createAdminMutation.error) : null;
+  const updateAdminRoleApiError = updateAdminRoleMutation.isError ? toAdminManagementApiError(updateAdminRoleMutation.error) : null;
+  const updateAdminStatusApiError = updateAdminStatusMutation.isError ? toAdminManagementApiError(updateAdminStatusMutation.error) : null;
+  const deleteAdminApiError = deleteAdminMutation.isError ? toAdminManagementApiError(deleteAdminMutation.error) : null;
+  const createAdminErrorMessage = createAdminApiError ? getAdminManagementAuthErrorMessage(createAdminApiError) : '';
+  const updateAdminRoleErrorMessage = updateAdminRoleApiError ? getAdminManagementAuthErrorMessage(updateAdminRoleApiError) : '';
+  const updateAdminStatusErrorMessage = updateAdminStatusApiError ? getAdminManagementAuthErrorMessage(updateAdminStatusApiError) : '';
+  const deleteAdminErrorMessage = deleteAdminApiError ? getAdminManagementAuthErrorMessage(deleteAdminApiError) : '';
+  const auditLogsErrorMessage = adminAuditLogsApiError ? getAdminManagementAuthErrorMessage(adminAuditLogsApiError) : '';
+  const aclRulesErrorMessage = adminAclRulesApiError ? getAdminManagementAuthErrorMessage(adminAclRulesApiError) : '';
+  const createAclRuleApiError = createAclRuleMutation.isError ? toAdminManagementApiError(createAclRuleMutation.error) : null;
+  const updateAclEnabledApiError = updateAclEnabledMutation.isError ? toAdminManagementApiError(updateAclEnabledMutation.error) : null;
+  const deleteAclRuleApiError = deleteAclRuleMutation.isError ? toAdminManagementApiError(deleteAclRuleMutation.error) : null;
+  const createAclRuleErrorMessage = createAclRuleApiError ? getAdminManagementAuthErrorMessage(createAclRuleApiError) : '';
+  const updateAclEnabledErrorMessage = updateAclEnabledApiError ? getAdminManagementAuthErrorMessage(updateAclEnabledApiError) : '';
+  const deleteAclRuleErrorMessage = deleteAclRuleApiError ? getAdminManagementAuthErrorMessage(deleteAclRuleApiError) : '';
   const summaryStatusText = isSummaryLoading ? '요약을 불러오는 중' : summaryErrorMessage;
   const totalAdmins = summary?.totalAdminCount ?? 0;
   const activeAdminCount = summary?.activeAdminCount ?? 0;
@@ -510,9 +663,28 @@ export default function AdminManagementPage() {
   const aclTotalItems = adminAclRules?.totalItems ?? visibleAclRules.length;
   const aclTotalPages = Math.max(1, adminAclRules?.totalPages ?? Math.ceil(visibleAclRules.length / aclPageSize));
   const safeAclPage = Math.min(aclPage, aclTotalPages);
-  const pagedAclRules = visibleAclRules;
+  const pagedAclRules = adminAclRules ? visibleAclRules : visibleAclRules.slice((safeAclPage - 1) * aclPageSize, safeAclPage * aclPageSize);
   const isAllAdminManagementQueryError =
     isSummaryError && isAdminAccountsError && isAdminAclRulesError && isAdminAuditLogsError;
+  const isRoleAdminAccessDenied =
+    isAllAdminManagementQueryError
+    && [summaryApiError, adminAccountsApiError, adminAclRulesApiError, adminAuditLogsApiError].every(
+      (error) => error?.code === ADMIN_MANAGEMENT_ERROR_CODE.FORBIDDEN,
+    );
+  const isAccountMasterRoleRequired =
+    [createAdminApiError, updateAdminRoleApiError, updateAdminStatusApiError, deleteAdminApiError].some(
+      (error) => error?.code === ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED,
+    );
+  const isAclMasterRoleRequired =
+    [createAclRuleApiError, updateAclEnabledApiError, deleteAclRuleApiError].some(
+      (error) => error?.code === ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED,
+    );
+  const globalErrorTitle = isRoleAdminAccessDenied
+    ? '관리자 관리 화면 접근 권한이 없습니다.'
+    : '관리자 관리 데이터를 불러오지 못했습니다.';
+  const globalErrorDescription = isRoleAdminAccessDenied
+    ? 'ROLE_ADMIN 권한이 있는 관리자 계정으로 다시 로그인해 주세요.'
+    : '네트워크 상태를 확인한 뒤 다시 시도해 주세요.';
 
   const kpiItems = [
     { label: '전체 관리자', value: totalAdmins, desc: '등록된 관리자 계정', tone: 'kpi-blue', Icon: ShieldCheck },
@@ -533,8 +705,8 @@ export default function AdminManagementPage() {
       {isAllAdminManagementQueryError ? (
         <section className="amGlobalErrorState">
           <div>
-            <strong>관리자 관리 데이터를 불러오지 못했습니다.</strong>
-            <span>네트워크 상태를 확인한 뒤 다시 시도해 주세요.</span>
+            <strong>{globalErrorTitle}</strong>
+            <span>{globalErrorDescription}</span>
           </div>
           <button className="amHeaderButton" type="button" onClick={retryAdminManagementQueries}>
             재시도
@@ -568,6 +740,7 @@ export default function AdminManagementPage() {
               <button
                 className="amHeaderButton amCreateAdminButton"
                 type="button"
+                disabled={isAccountMasterRoleRequired}
                 onClick={() => setIsCreateAdminOpen(true)}
               >
                 <Plus size={16} />
@@ -624,6 +797,11 @@ export default function AdminManagementPage() {
             {updateAdminRoleErrorMessage ? <p className="amInlineError">{updateAdminRoleErrorMessage}</p> : null}
             {updateAdminStatusErrorMessage ? <p className="amInlineError">{updateAdminStatusErrorMessage}</p> : null}
             {deleteAdminErrorMessage ? <p className="amInlineError">{deleteAdminErrorMessage}</p> : null}
+            {isAccountMasterRoleRequired ? (
+              <button className="amHeaderButton" type="button" onClick={resetAccountMasterRoleRequired}>
+                권한 오류 상태 초기화
+              </button>
+            ) : null}
 
             <div className="amTableWrap">
               <table className="amCompactTable">
@@ -667,8 +845,6 @@ export default function AdminManagementPage() {
                       const isStatusPending =
                         updateAdminStatusMutation.isPending && updateAdminStatusMutation.variables?.id === admin.id;
                       const isDeletePending = deleteAdminMutation.isPending && deleteAdminMutation.variables === admin.id;
-                      const isAdminPending = isRolePending || isStatusPending || isDeletePending;
-
                       return (
                         <tr key={admin.id}>
                           <td>
@@ -680,7 +856,7 @@ export default function AdminManagementPage() {
                             <select
                               className="amInlineSelect"
                               value={admin.role}
-                              disabled={admin.role === 'MASTER' || isAdminPending}
+                              disabled={isAccountMasterRoleRequired || admin.role === 'MASTER' || isRolePending}
                               onChange={(e) => changeAdminRole(admin.id, e.target.value as AdminRole)}
                             >
                               {roleColumns.map((role) => (
@@ -706,7 +882,7 @@ export default function AdminManagementPage() {
                               <button
                                 className="amRowButton"
                                 type="button"
-                                disabled={isAdminPending}
+                                disabled={isAccountMasterRoleRequired || isStatusPending}
                                 onClick={() => toggleAdminStatus(admin.id)}
                               >
                                 {isStatusPending ? '처리 중' : admin.status === 'ACTIVE' ? '잠금' : '해제'}
@@ -714,7 +890,7 @@ export default function AdminManagementPage() {
                               <button
                                 className="amRowButton danger"
                                 type="button"
-                                disabled={isAdminPending}
+                                disabled={isAccountMasterRoleRequired || isDeletePending}
                                 onClick={() => removeAdminAccount(admin)}
                               >
                                 <Trash2 size={14} />
@@ -737,7 +913,30 @@ export default function AdminManagementPage() {
                 {adminRangeEnd.toLocaleString()} 표시
               </span>
               <div>
-                <MiniPagination page={safeAdminPage} totalPages={adminTotalPages} onChange={setAdminPage} />
+                <button
+                  type="button"
+                  disabled={safeAdminPage <= 1}
+                  onClick={() => setAdminPage((page) => Math.max(1, page - 1))}
+                >
+                  {'<'}
+                </button>
+                {Array.from({ length: adminTotalPages }, (_, index) => index + 1).map((page) => (
+                  <button
+                    key={page}
+                    className={safeAdminPage === page ? 'active' : ''}
+                    type="button"
+                    onClick={() => setAdminPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  disabled={safeAdminPage >= adminTotalPages}
+                  onClick={() => setAdminPage((page) => Math.min(adminTotalPages, page + 1))}
+                >
+                  {'>'}
+                </button>
               </div>
             </div>
           </section>
@@ -753,6 +952,7 @@ export default function AdminManagementPage() {
               <button
                 className={`amToggle ${aclEnforced ? 'on' : 'off'}`}
                 type="button"
+                aria-pressed={aclEnforced}
                 onClick={() => setAclEnforced((prev) => !prev)}
               >
                 <span className="amToggleKnob" />
@@ -768,7 +968,7 @@ export default function AdminManagementPage() {
                   value={aclDraft.label}
                   onChange={(e) => setAclDraft((prev) => ({ ...prev, label: e.target.value }))}
                   placeholder="예: 본사 사내망"
-                  disabled={createAclRuleMutation.isPending}
+                  disabled={isAclMasterRoleRequired || createAclRuleMutation.isPending}
                 />
               </label>
               <label>
@@ -781,7 +981,7 @@ export default function AdminManagementPage() {
                     if (aclCidrErrorMessage) setAclCidrErrorMessage('');
                   }}
                   placeholder="예: 10.20.0.0/16"
-                  disabled={createAclRuleMutation.isPending}
+                  disabled={isAclMasterRoleRequired || createAclRuleMutation.isPending}
                 />
               </label>
               <label>
@@ -791,13 +991,13 @@ export default function AdminManagementPage() {
                   value={aclDraft.note}
                   onChange={(e) => setAclDraft((prev) => ({ ...prev, note: e.target.value }))}
                   placeholder="예: 사내 네트워크 전체 허용"
-                  disabled={createAclRuleMutation.isPending}
+                  disabled={isAclMasterRoleRequired || createAclRuleMutation.isPending}
                 />
               </label>
               <button
                 className="amPrimaryButton"
                 type="button"
-                disabled={createAclRuleMutation.isPending || !aclDraft.label.trim() || !aclDraft.cidr.trim()}
+                disabled={isAclMasterRoleRequired || createAclRuleMutation.isPending || !aclDraft.label.trim() || !aclDraft.cidr.trim()}
                 onClick={addAclRule}
               >
                 {createAclRuleMutation.isPending ? '등록 중' : '추가'}
@@ -807,6 +1007,11 @@ export default function AdminManagementPage() {
             {createAclRuleErrorMessage ? <p className="amInlineError">{createAclRuleErrorMessage}</p> : null}
             {updateAclEnabledErrorMessage ? <p className="amInlineError">{updateAclEnabledErrorMessage}</p> : null}
             {deleteAclRuleErrorMessage ? <p className="amInlineError">{deleteAclRuleErrorMessage}</p> : null}
+            {isAclMasterRoleRequired ? (
+              <button className="amHeaderButton" type="button" onClick={resetAclMasterRoleRequired}>
+                ACL 권한 오류 상태 초기화
+              </button>
+            ) : null}
 
             <div className="amAclList">
               {isAdminAclRulesLoading ? (
@@ -817,11 +1022,10 @@ export default function AdminManagementPage() {
                 <div className="amEmptyState">등록된 ACL 규칙이 없습니다.</div>
               ) : (
                 pagedAclRules.map((rule) => {
-                  const riskMeta = getAclRiskMeta(rule.riskLevel);
+                  const riskMeta = getAclRiskMeta(rule.cidr);
                   const isAclTogglePending =
                     updateAclEnabledMutation.isPending && updateAclEnabledMutation.variables?.id === rule.id;
                   const isAclDeletePending = deleteAclRuleMutation.isPending && deleteAclRuleMutation.variables === rule.id;
-                  const isAclPending = isAclTogglePending || isAclDeletePending;
 
                   return (
                     <article className={`amAclRow ${rule.enabled ? 'enabled' : 'disabled'}`} key={rule.id}>
@@ -842,7 +1046,7 @@ export default function AdminManagementPage() {
                           <button
                             className="amGhostButton"
                             type="button"
-                            disabled={isAclPending}
+                            disabled={isAclMasterRoleRequired || isAclTogglePending}
                             onClick={() => toggleAclRule(rule.id)}
                           >
                             {isAclTogglePending ? '처리 중' : rule.enabled ? '비활성화' : '활성화'}
@@ -850,7 +1054,7 @@ export default function AdminManagementPage() {
                           <button
                             className="amDangerButton"
                             type="button"
-                            disabled={isAclPending}
+                            disabled={isAclMasterRoleRequired || isAclDeletePending}
                             onClick={() => removeAclRule(rule.id)}
                           >
                             {isAclDeletePending ? '삭제 중' : '삭제'}
@@ -922,7 +1126,7 @@ export default function AdminManagementPage() {
       </section>
 
       {isCreateAdminOpen && (
-        <div className="amCreatePageOverlay" role="presentation" onMouseDown={closeCreateAdminPage}>
+        <div className="amCreatePageOverlay" role="presentation" onMouseDown={() => closeCreateAdminPage()}>
           <form
             className="amCreatePage"
             role="dialog"
@@ -940,7 +1144,7 @@ export default function AdminManagementPage() {
                 <h3 id="amCreatePageTitle">관리자 계정 생성</h3>
                 <p>새 관리자에게 로그인 정보와 초기 권한을 부여합니다.</p>
               </div>
-              <button className="amGhostButton" type="button" onClick={closeCreateAdminPage}>
+              <button className="amGhostButton" type="button" onClick={() => closeCreateAdminPage()}>
                 닫기
               </button>
             </div>
@@ -996,7 +1200,7 @@ export default function AdminManagementPage() {
             {createAdminErrorMessage ? <p className="amCreatePageError">{createAdminErrorMessage}</p> : null}
 
             <div className="amCreatePageActions">
-              <button className="amGhostButton" type="button" onClick={closeCreateAdminPage} disabled={createAdminMutation.isPending}>
+              <button className="amGhostButton" type="button" onClick={() => closeCreateAdminPage()} disabled={createAdminMutation.isPending}>
                 취소
               </button>
               <button
@@ -1004,6 +1208,7 @@ export default function AdminManagementPage() {
                 type="submit"
                 disabled={
                   createAdminMutation.isPending ||
+                  isAccountMasterRoleRequired ||
                   !adminDraft.email.trim() ||
                   !adminDraft.password.trim() ||
                   !adminDraft.name.trim()
@@ -1248,6 +1453,7 @@ export default function AdminManagementPage() {
         .amPagination button:focus-visible,
         .amGhostButton:focus-visible,
         .amDangerButton:focus-visible,
+        .amToggle:focus-visible,
         .amToolbar input:focus,
         .amToolbar select:focus,
         .amAclForm input:focus,
@@ -1262,6 +1468,8 @@ export default function AdminManagementPage() {
         }
 
         .amRowButton:disabled,
+        .amHeaderButton:disabled,
+        .amInlineSelect:disabled,
         .amPrimaryButton:disabled,
         .amGhostButton:disabled,
         .amDangerButton:disabled {
@@ -1517,6 +1725,7 @@ export default function AdminManagementPage() {
 
         .amTableWrap {
           overflow-x: hidden;
+          min-height: 316px;
           border-radius: 12px;
           border: 1px solid #e5edf6;
           background: #fff;
@@ -1752,7 +1961,7 @@ export default function AdminManagementPage() {
           flex-direction: column;
           gap: 10px;
           flex: 1;
-          min-height: 0;
+          min-height: 280px;
           justify-content: flex-start;
         }
 
@@ -1949,7 +2158,7 @@ export default function AdminManagementPage() {
           display: flex;
           flex-direction: column;
           height: auto;
-          min-height: 0;
+          min-height: 320px;
           background: #162a43;
           border: 1px solid #203a59;
           border-radius: 14px;
@@ -2043,6 +2252,13 @@ export default function AdminManagementPage() {
         .amEmptyCell,
         .amEmptyState {
           color: #7a8ea5;
+        }
+
+        .amEmptyState {
+          display: flex;
+          min-height: 220px;
+          align-items: center;
+          justify-content: center;
         }
 
         .amDarkEmptyState {

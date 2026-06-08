@@ -3,7 +3,7 @@ import type {
   SubmitCoverLetterResponse,
   AnalysisResultResponse,
   ResumeHistoryResponse,
-} from '../../user/types/resume.d';
+} from '../../user/types/resume';
 
 export const MOCK_DOCUMENT_ID = 'mock-document-uuid-1234';
 

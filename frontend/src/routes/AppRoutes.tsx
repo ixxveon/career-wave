@@ -1,5 +1,6 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
+import ProtectedRoute from '../components/common/ProtectedRoute';
 import ScrappedJobPage from '@/user/pages/mypage/ScrappedJobPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
@@ -25,6 +26,7 @@ import JobNoticeListPage from '../user/pages/jobNotice/JobNoticeListPage';
 
 import ApplicationStatusPage from '../user/pages/application/ApplicationStatusPage';
 import ApplicantManagementPage from '../user/pages/application/ApplicantManagementPage';
+import ApplicantDetailPage from '../user/pages/application/ApplicantDetailPage';
 import ApplyPage from '../user/pages/application/ApplyPage';
 
 import ResumeAnalysisPage from '../user/pages/resume/ResumeAnalysisPage';
@@ -76,18 +78,83 @@ import StatisticsPage from '../admin/pages/Statistics/StatisticsPage';
 import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
 import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
+import AdminCompanyListPage from '../admin/pages/Company/CompanyListPage';
+import AdminJobNoticeListPage from '../admin/pages/JobNotice/JobNoticeListPage';
+import AdminSettlementListPage from '../admin/pages/Settlement/SettlementListPage';
+import { ACCESS_TOKEN_STORAGE_KEY, ADMIN_ROLE } from '../admin/constants/authConstants';
+
+type JwtPayload = Record<string, unknown>;
+
+function decodeJwtPayload(token: string): JwtPayload | null {
+  const payload = token.split('.')[1];
+  if (!payload) return null;
+
+  try {
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedBase64 = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+    const binary = window.atob(paddedBase64);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes)) as JwtPayload;
+  } catch {
+    return null;
+  }
+}
+
+function readRoleClaims(value: unknown): string[] {
+  if (typeof value === 'string') {
+    return value.split(/[\s,]+/).filter(Boolean);
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(readRoleClaims);
+  }
+
+  return [];
+}
+
+function hasAdminRoleClaim(payload: JwtPayload | null) {
+  if (!payload) return false;
+
+  const claims = [
+    payload.role,
+    payload.roles,
+    payload.authority,
+    payload.authorities,
+    payload.scope,
+    payload.scp,
+  ].flatMap(readRoleClaims);
+
+  return claims.includes(ADMIN_ROLE);
+}
+
+function isExpired(payload: JwtPayload | null) {
+  if (!payload) return true;
+  const exp = payload.exp;
+  if (typeof exp !== 'number') return true;
+  return Date.now() >= exp * 1000;
+}
+
+function hasAdminRole() {
+  if (typeof window === 'undefined') return false;
+  const token = window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  if (!token) return false;
+  const payload = decodeJwtPayload(token);
+  if (isExpired(payload)) return false;
+  return hasAdminRoleClaim(payload);
+}
+
+function AdminProtectedRoute() {
+  return hasAdminRole() ? <Outlet /> : <Navigate to="/admin/login" replace />;
+}
 
 function AppRoutes() {
   return (
     <Routes>
       {/* 사용자 플랫폼 */}
       <Route element={<MainLayout />}>
+
+        {/* 공개 라우트 — 인증 불필요 */}
         <Route index element={<JobSeekerDashboardPage />} />
-        <Route path="dashboard/company" element={<CompanyDashboardPage />} />
-        <Route path="mypage" element={<UserMyPage />} />
-        <Route path="mypage/favorites" element={<ScrappedJobPage />} />
-        <Route path="mypage/subscription" element={<SubscriptionPage />} />
-        <Route path="mypage/payment-history" element={<PaymentHistoryPage />} />
 
         <Route path="auth">
           <Route index element={<Navigate to="/auth/login" replace />} />
@@ -100,44 +167,8 @@ function AppRoutes() {
           <Route path="profile" element={<ProfilePage />} />
         </Route>
 
-        <Route path="company">
-          <Route index element={<Navigate to="/company/profile" replace />} />
-          <Route path="profile" element={<CompanyProfilePage />} />
-          <Route path="hr-managers" element={<HrManagerPage />} />
-        </Route>
-
         <Route path="jobs">
           <Route index element={<JobNoticeListPage />} />
-        </Route>
-
-        <Route path="applications">
-          <Route index element={<Navigate to="/applications/status" replace />} />
-          <Route path="status" element={<ApplicationStatusPage />} />
-          <Route path="applicants" element={<ApplicantManagementPage />} />
-          <Route path="apply" element={<ApplyPage />} />
-        </Route>
-
-        <Route path="documents">
-          <Route index element={<Navigate to="/documents/resume" replace />} />
-          <Route path="resume" element={<ResumeAnalysisPage />} />
-          <Route path="cover-letter" element={<CoverLetterAnalysisPage />} />
-          <Route path="report" element={<DocumentReportPage />} />
-          <Route path="history" element={<ResumeHistoryPage />} />
-        </Route>
-
-        <Route path="interview">
-          <Route index element={<InterviewHomePage />} />
-          <Route path="report" element={<InterviewReportPage />} />
-          <Route path="text" element={<TextInterviewPage />} />
-          <Route path="media" element={<MediaInterviewPage />} />
-        </Route>
-
-        <Route path="career-diagnosis">
-          <Route index element={<Navigate to="/career-diagnosis/report" replace />} />
-          <Route path="history" element={<DiagnosisHistoryPage />} />
-          <Route path="detail/:id" element={<DiagnosisDetailPage />} />
-          <Route path="roadmap" element={<LearningRoadmapPage />} />
-          <Route path="report" element={<ComprehensiveReportPage />} />
         </Route>
 
         <Route path="community">
@@ -151,20 +182,73 @@ function AppRoutes() {
           <Route path="notices" element={<NoticePage />} />
           <Route path="notices/:id" element={<NoticeDetailPage />} />
           <Route path="faq" element={<FaqPage />} />
-          <Route path="inquiry" element={<InquiryListPage />} />
-          <Route path="inquiry/create" element={<InquiryCreatePage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="inquiry" element={<InquiryListPage />} />
+            <Route path="inquiry/create" element={<InquiryCreatePage />} />
+          </Route>
         </Route>
 
-        <Route path="billing">
-          {/* [non-MVP] <Route index element={<Navigate to="/billing/pricing" replace />} /> */}
-          {/* [non-MVP] <Route path="pricing" element={<PricingPage />} /> */}
-          <Route path="payment" element={<PaymentPage />} />
-          <Route path="checkout" element={<CheckoutPage />} />
-          <Route path="success" element={<PaymentSuccessPage />} />
-          <Route path="fail" element={<PaymentFailPage />} />
-          <Route path="document-coaching/plans" element={<PaymentPage />} />
-          <Route path="interview/plans" element={<PaymentPage />} />
-          {/* [non-MVP] <Route path="company-products" element={<CompanyProductPage />} /> */}
+        {/* 인증 필요 라우트 — 미로그인 시 /auth/login?next=... 리다이렉트 */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="dashboard/company" element={<CompanyDashboardPage />} />
+
+          <Route path="mypage" element={<UserMyPage />} />
+          <Route path="mypage/favorites" element={<ScrappedJobPage />} />
+          <Route path="mypage/subscription" element={<SubscriptionPage />} />
+          <Route path="mypage/payment-history" element={<PaymentHistoryPage />} />
+
+          <Route path="company">
+            <Route index element={<Navigate to="/company/profile" replace />} />
+            <Route path="profile" element={<CompanyProfilePage />} />
+            <Route path="hr-managers" element={<HrManagerPage />} />
+          </Route>
+
+          <Route path="applications">
+            <Route index element={<Navigate to="/applications/status" replace />} />
+            <Route path="status" element={<ApplicationStatusPage />} />
+            <Route path="applicants" element={<ApplicantManagementPage />} />
+            <Route path="applicants/:applicationId" element={<ApplicantDetailPage />} />
+            <Route path="apply" element={<ApplyPage />} />
+          </Route>
+
+          <Route path="documents">
+            <Route index element={<Navigate to="/documents/resume" replace />} />
+            <Route path="resume" element={<ResumeAnalysisPage />} />
+            <Route path="cover-letter" element={<CoverLetterAnalysisPage />} />
+            <Route path="report" element={<DocumentReportPage />} />
+            <Route path="history" element={<ResumeHistoryPage />} />
+          </Route>
+
+          <Route path="interview">
+            <Route index element={<InterviewHomePage />} />
+            <Route path="history" element={<DiagnosisHistoryPage />} />
+            <Route path="detail/:id" element={<ComprehensiveReportPage />} />
+            <Route path="roadmap" element={<LearningRoadmapPage />} />
+            <Route path="report" element={<InterviewReportPage />} />
+            <Route path="report-export" element={<ComprehensiveReportPage />} />
+            <Route path="text" element={<TextInterviewPage />} />
+            <Route path="media" element={<MediaInterviewPage />} />
+          </Route>
+
+          <Route path="career-diagnosis">
+            <Route index element={<Navigate to="/career-diagnosis/report" replace />} />
+            <Route path="history" element={<DiagnosisHistoryPage />} />
+            <Route path="detail/:id" element={<DiagnosisDetailPage />} />
+            <Route path="roadmap" element={<LearningRoadmapPage />} />
+            <Route path="report" element={<ComprehensiveReportPage />} />
+          </Route>
+
+          <Route path="billing">
+            {/* [non-MVP] <Route index element={<Navigate to="/billing/pricing" replace />} /> */}
+            {/* [non-MVP] <Route path="pricing" element={<PricingPage />} /> */}
+            <Route path="payment" element={<PaymentPage />} />
+            <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="success" element={<PaymentSuccessPage />} />
+            <Route path="fail" element={<PaymentFailPage />} />
+            <Route path="document-coaching/plans" element={<PaymentPage />} />
+            <Route path="interview/plans" element={<PaymentPage />} />
+            {/* [non-MVP] <Route path="company-products" element={<CompanyProductPage />} /> */}
+          </Route>
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
@@ -175,17 +259,22 @@ function AppRoutes() {
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="login" element={<AdminLoginPage />} />
 
-        <Route element={<AdminLayout />}>
-          <Route path="dashboard" element={<AdminDashboardPage />} />
-          <Route path="admins"    element={<AdminManagementPage />} />
-          <Route path="members"   element={<UserManagementPage />} />
-          <Route path="reports"   element={<ReportPage />} />
-          <Route path="cs"        element={<CustomerServicePage />} />
-          <Route path="payments"  element={<AdminPaymentPage />} />
-          <Route path="stats"     element={<StatisticsPage />} />
-          <Route path="ai"        element={<AiMetricsPage />} />
-          <Route path="scraping"  element={<ScrapingPage />} />
-          <Route path="log"       element={<AuditLogPage />} />
+        <Route element={<AdminProtectedRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="admins"    element={<AdminManagementPage />} />
+            <Route path="members"   element={<UserManagementPage />} />
+            <Route path="reports"   element={<ReportPage />} />
+            <Route path="cs"        element={<CustomerServicePage />} />
+            <Route path="payments"  element={<AdminPaymentPage />} />
+            <Route path="stats"     element={<StatisticsPage />} />
+            <Route path="ai"        element={<AiMetricsPage />} />
+            <Route path="scraping"  element={<ScrapingPage />} />
+            <Route path="log"       element={<AuditLogPage />} />
+            <Route path="companies" element={<AdminCompanyListPage />} />
+            <Route path="job-notices" element={<AdminJobNoticeListPage />} />
+            <Route path="settlements" element={<AdminSettlementListPage />} />
+          </Route>
         </Route>
       </Route>
     </Routes>

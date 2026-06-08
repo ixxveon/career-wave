@@ -1,42 +1,317 @@
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Activity, Bot, CreditCard, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { adminAuthApi, adminSession } from '../../api/adminAuthApi';
+import {
+  dashboardApi,
+  getDashboardSummaryErrorMessage,
+  unwrapDashboardSummaryResponse,
+} from '../../api/dashboardApi';
+import { ACCESS_TOKEN_STORAGE_KEY } from '../../constants/authConstants';
+import { ADMIN_ROUTE_PATHS, isAdminNavigationPath } from '../../constants/adminRouteConstants';
+import { ADMIN_DETAIL_ROLE, type AdminDetailRole } from '../../constants/adminRoleConstants';
 import '../../styles/admin.css';
 
-const kpis = [
-  { Icon: Users, title: '오늘 신규 가입자', value: '128', desc: '어제 대비 +14명', theme: 'kpi-blue' },
-  { Icon: Activity, title: '실시간 접속자', value: '1,042', desc: '최근 7일 평균 이상', theme: 'kpi-green' },
-  { Icon: Bot, title: 'AI 면접 세션', value: '37', desc: '평균 응답 안정', theme: 'kpi-purple' },
-  { Icon: CreditCard, title: '오늘 매출', value: '₩4.4M', desc: '구독 결제 증가', theme: 'kpi-yellow' },
-];
+const DASHBOARD_SUMMARY_QUERY_KEY = ['admin', 'dashboard', 'summary'] as const;
 
-const alerts = [
-  { icon: '!', level: '긴급', type: '신고', text: '게시글 신고 3건 처리 대기 중', button: '신고 관리로 이동', cls: 'danger', path: '/admin/reports' },
-  { icon: '₩', level: '주의', type: '결제', text: '정기결제 실패 7건 확인 필요', button: '결제 및 정산으로 이동', cls: 'warning', path: '/admin/payments' },
-  { icon: 'Q', level: '일반', type: '문의', text: '1:1 문의 미답변 12건', button: '고객센터로 이동', cls: 'normal', path: '/admin/cs' },
-  { icon: 'AI', level: '주의', type: 'AI', text: '이상 토큰 사용 유저 2명 감지', button: 'AI 메트릭스으로 이동', cls: 'ai', path: '/admin/ai' },
-];
+const KPI_PRESENTATION = {
+  TODAY_NEW_MEMBERS: { Icon: Users, theme: 'kpi-blue' },
+  REALTIME_ACTIVE_USERS: { Icon: Activity, theme: 'kpi-green' },
+  AI_INTERVIEW_SESSIONS: { Icon: Bot, theme: 'kpi-purple' },
+  TODAY_REVENUE: { Icon: CreditCard, theme: 'kpi-yellow' },
+} as const;
 
-const adminCards = [
-  { icon: 'USER', title: '회원 관리', desc: '가입자, 구독 상태, 권한, 정지 회원을 관리합니다.', value: '신규 128명', cls: 'blue', path: '/admin/members' },
-  { icon: 'REP', title: '신고 관리', desc: '커뮤니티 신고, 블라인드 처리, 스팸 게시글을 확인합니다.', value: '대기 3건', cls: 'red', path: '/admin/reports' },
-  { icon: 'CS', title: '고객센터', desc: '공지사항·FAQ 관리 및 1:1 문의 응대를 처리합니다.', value: '미답변 12건', cls: 'orange', path: '/admin/cs' },
-  { icon: 'PAY', title: '결제 및 정산', desc: '결제 내역, 정기결제 실패, 환불 요청을 관리합니다.', value: '실패 7건', cls: 'orange', path: '/admin/payments' },
-  { icon: 'STT', title: '서비스 통계', desc: '매출 현황과 가입자 증가 추이를 확인합니다.', value: '이번 달 매출', cls: 'green', path: '/admin/stats' },
-  { icon: 'AI', title: 'AI 메트릭스', desc: 'AI 토큰 사용량, 면접 세션, 이상 탐지를 모니터링합니다.', value: '세션 37건', cls: 'purple', path: '/admin/ai' },
-];
+const ALERT_PRESENTATION = {
+  URGENT: { icon: '!', cls: 'danger' },
+  WARNING: { icon: '!!', cls: 'warning' },
+  NORMAL: { icon: 'i', cls: 'normal' },
+} as const;
 
-const logs: [string, string, string, string][] = [
-  ['09:12', 'cs_admin', '환불 요청 1건 확인', '/admin/payments'],
-  ['09:18', 'backend_admin', '스크래핑 실패 로그 확인', '/admin/scraping'],
-  ['09:22', 'super_admin', '관리자 계정 권한 변경', '/admin/admins'],
-  ['09:31', 'cs_admin', '신고 게시글 블라인드 처리', '/admin/reports'],
-  ['09:45', 'backend_admin', 'AI 토큰 사용량 임계치 알림 설정', '/admin/ai'],
-];
+const PAYMENT_RATIO_CLASSES = ['c1', 'c2', 'c3'] as const;
 
-const weeklyBars = [70, 100, 85, 140, 128, 155, 168];
+const SERVICE_CARD_PRESENTATION = {
+  ADMIN: { icon: 'ADM', cls: 'blue' },
+  MEMBER: { icon: 'USER', cls: 'blue' },
+  REPORT: { icon: 'REP', cls: 'red' },
+  CS: { icon: 'CS', cls: 'orange' },
+  PAYMENT: { icon: 'PAY', cls: 'orange' },
+  STATISTICS: { icon: 'STT', cls: 'green' },
+  AI_METRICS: { icon: 'AI', cls: 'purple' },
+  SCRAPING: { icon: 'BOT', cls: 'green' },
+  AUDIT_LOG: { icon: 'LOG', cls: 'red' },
+} as const;
+
+const SYSTEM_STATUS_PRESENTATION = {
+  NORMAL: { dotClass: 'normal' },
+  WARNING: { dotClass: 'warning' },
+  CRITICAL: { dotClass: 'danger' },
+} as const;
+
+const DASHBOARD_ACCESS_KEY = {
+  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER',
+  REPORT: 'REPORT',
+  CS: 'CS',
+  PAYMENT: 'PAYMENT',
+  STATISTICS: 'STATISTICS',
+  AI_METRICS: 'AI_METRICS',
+  SCRAPING: 'SCRAPING',
+  AUDIT_LOG: 'AUDIT_LOG',
+} as const;
+
+type DashboardAccessKey = (typeof DASHBOARD_ACCESS_KEY)[keyof typeof DASHBOARD_ACCESS_KEY];
+
+const DASHBOARD_DOMAIN_ALLOWED_ROLES = {
+  ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
+  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.OPS],
+  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.AUDIT],
+  CS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BILLING],
+  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.OPS, ADMIN_DETAIL_ROLE.BACKEND],
+  AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND, ADMIN_DETAIL_ROLE.OPS],
+  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.AUDIT],
+} satisfies Record<DashboardAccessKey, AdminDetailRole[]>;
+
+const DASHBOARD_CARD_ALLOWED_ROLES = {
+  ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
+  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.OPS],
+  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.AUDIT],
+  CS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BILLING],
+  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.OPS, ADMIN_DETAIL_ROLE.BACKEND],
+  AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND, ADMIN_DETAIL_ROLE.OPS],
+  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.AUDIT],
+} satisfies Partial<Record<DashboardAccessKey, AdminDetailRole[]>>;
+
+function hasDashboardRoleAccess(
+  currentAdminRole: AdminDetailRole | null,
+  allowedRoles: AdminDetailRole[] | undefined
+) {
+  if (!currentAdminRole) return false;
+  if (!allowedRoles || allowedRoles.length === 0) return true;
+  return allowedRoles.includes(currentAdminRole);
+}
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
+  const currentAdminRole = adminSession.getRole();
+  const handleLogout = async () => {
+    try {
+      await adminAuthApi.logout();
+    } finally {
+      adminSession.clearToken();
+      adminSession.clearRole();
+      window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+      navigate(ADMIN_ROUTE_PATHS.login, { replace: true });
+    }
+  };
+  const {
+    data: dashboardSummary,
+    isLoading: isDashboardLoading,
+    isError: isDashboardError,
+    error: dashboardError,
+    refetch: refetchDashboardSummary,
+  } = useQuery({
+    queryKey: DASHBOARD_SUMMARY_QUERY_KEY,
+    queryFn: async () => {
+      const response = await dashboardApi.getSummary();
+
+      if (!response.data.success) {
+        throw new Error(getDashboardSummaryErrorMessage(response.data.message));
+      }
+
+      return unwrapDashboardSummaryResponse(response.data);
+    },
+  });
+
+  const isDashboardInitialLoading = isDashboardLoading && !dashboardSummary;
+  const dashboardErrorMessage =
+    dashboardError instanceof Error
+      ? dashboardError.message
+      : '대시보드 요약 조회에 실패했습니다.';
+
+  const isDashboardCompletelyEmpty =
+    !isDashboardInitialLoading &&
+    !isDashboardError &&
+    !!dashboardSummary &&
+    dashboardSummary.kpis.length === 0 &&
+    dashboardSummary.alerts.length === 0 &&
+    dashboardSummary.weeklySignups.length === 0 &&
+    dashboardSummary.paymentRatio.length === 0 &&
+    dashboardSummary.serviceCards.length === 0 &&
+    dashboardSummary.systemStatus.length === 0 &&
+    dashboardSummary.recentActivities.length === 0;
+
+  const { kpis, hasKpiSectionError } = useMemo(() => {
+    try {
+      const items = (dashboardSummary?.kpis ?? []).map((item) => {
+        const presentation =
+          KPI_PRESENTATION[item.key as keyof typeof KPI_PRESENTATION] ?? KPI_PRESENTATION.TODAY_NEW_MEMBERS;
+
+        return {
+          ...item,
+          value: item.unit ? `${item.value.toLocaleString()}${item.unit}` : item.value.toLocaleString(),
+          desc: item.deltaText,
+          ...presentation,
+        };
+      });
+
+      return { kpis: items, hasKpiSectionError: false };
+    } catch {
+      return { kpis: [], hasKpiSectionError: !!dashboardSummary };
+    }
+  }, [dashboardSummary]);
+
+  const { alerts, hasAlertSectionError } = useMemo(() => {
+    try {
+      const items = (dashboardSummary?.alerts ?? []).map((item) => {
+        const presentation =
+          ALERT_PRESENTATION[item.level as keyof typeof ALERT_PRESENTATION] ?? ALERT_PRESENTATION.NORMAL;
+        const hasRoleAccess = hasDashboardRoleAccess(
+          currentAdminRole,
+          DASHBOARD_DOMAIN_ALLOWED_ROLES[item.domain as DashboardAccessKey]
+        );
+
+        return {
+          ...item,
+          icon: presentation.icon,
+          cls: presentation.cls,
+          text: item.message,
+          button: '상세 보기',
+          path: item.targetPath,
+          hasValidTargetPath: isAdminNavigationPath(item.targetPath),
+          hasRoleAccess,
+        };
+      }).filter((item) => item.hasRoleAccess);
+
+      return { alerts: items, hasAlertSectionError: false };
+    } catch {
+      return { alerts: [], hasAlertSectionError: !!dashboardSummary };
+    }
+  }, [currentAdminRole, dashboardSummary]);
+
+  const { weeklySignups, hasWeeklySignupSectionError } = useMemo(() => {
+    try {
+      return {
+        weeklySignups: dashboardSummary?.weeklySignups ?? [],
+        hasWeeklySignupSectionError: false,
+      };
+    } catch {
+      return {
+        weeklySignups: [],
+        hasWeeklySignupSectionError: !!dashboardSummary,
+      };
+    }
+  }, [dashboardSummary]);
+
+  const weeklySignupMax = useMemo(
+    () => weeklySignups.reduce((max, item) => Math.max(max, item.count), 0),
+    [weeklySignups]
+  );
+
+  const weeklySignupTicks = useMemo(() => {
+    if (weeklySignupMax <= 0) {
+      return [0];
+    }
+
+    return [1, 0.75, 0.5, 0.25, 0].map((ratio) => Math.round(weeklySignupMax * ratio));
+  }, [weeklySignupMax]);
+
+  const { paymentRatio, hasPaymentRatioSectionError } = useMemo(() => {
+    try {
+      const items = (dashboardSummary?.paymentRatio ?? []).map((item, index) => ({
+        ...item,
+        colorClass: PAYMENT_RATIO_CLASSES[index] ?? PAYMENT_RATIO_CLASSES[PAYMENT_RATIO_CLASSES.length - 1],
+      }));
+
+      return { paymentRatio: items, hasPaymentRatioSectionError: false };
+    } catch {
+      return { paymentRatio: [], hasPaymentRatioSectionError: !!dashboardSummary };
+    }
+  }, [dashboardSummary]);
+
+  const paymentRatioStops = useMemo(() => {
+    let offset = 0;
+
+    return paymentRatio
+      .map((item, index) => {
+        const start = offset;
+        const end = offset + item.ratio;
+        offset = end;
+
+        return `var(--donut-${index + 1}) ${start}% ${end}%`;
+      })
+      .join(', ');
+  }, [paymentRatio]);
+
+  const { adminCards, hasAdminCardSectionError } = useMemo(() => {
+    try {
+      const items = (dashboardSummary?.serviceCards ?? []).map((item) => {
+        const presentation =
+          SERVICE_CARD_PRESENTATION[item.key as keyof typeof SERVICE_CARD_PRESENTATION]
+          ?? SERVICE_CARD_PRESENTATION.MEMBER;
+        const hasRoleAccess = hasDashboardRoleAccess(
+          currentAdminRole,
+          DASHBOARD_CARD_ALLOWED_ROLES[item.key as DashboardAccessKey]
+        );
+
+        return {
+          ...item,
+          icon: presentation.icon,
+          cls: presentation.cls,
+          value: item.summaryText,
+          path: item.targetPath,
+          hasValidTargetPath: isAdminNavigationPath(item.targetPath),
+          hasRoleAccess,
+        };
+      }).filter((item) => item.hasRoleAccess);
+
+      return { adminCards: items, hasAdminCardSectionError: false };
+    } catch {
+      return { adminCards: [], hasAdminCardSectionError: !!dashboardSummary };
+    }
+  }, [currentAdminRole, dashboardSummary]);
+
+  const { systemStatus, hasSystemStatusSectionError } = useMemo(() => {
+    try {
+      const items = (dashboardSummary?.systemStatus ?? []).map((item) => {
+        const presentation =
+          SYSTEM_STATUS_PRESENTATION[item.status as keyof typeof SYSTEM_STATUS_PRESENTATION]
+          ?? SYSTEM_STATUS_PRESENTATION.NORMAL;
+
+        return {
+          ...item,
+          dotClass: presentation.dotClass,
+        };
+      });
+
+      return { systemStatus: items, hasSystemStatusSectionError: false };
+    } catch {
+      return { systemStatus: [], hasSystemStatusSectionError: !!dashboardSummary };
+    }
+  }, [dashboardSummary]);
+
+  const { recentActivities, hasRecentActivitySectionError } = useMemo(() => {
+    try {
+      const items = (dashboardSummary?.recentActivities ?? []).map((item) => ({
+        ...item,
+        hasValidTargetPath: isAdminNavigationPath(item.targetPath),
+      }));
+
+      return {
+        recentActivities: items,
+        hasRecentActivitySectionError: false,
+      };
+    } catch {
+      return {
+        recentActivities: [],
+        hasRecentActivitySectionError: !!dashboardSummary,
+      };
+    }
+  }, [dashboardSummary]);
 
   return (
     <>
@@ -57,120 +332,274 @@ export default function AdminDashboardPage() {
             <small>최근 로그인 09:12</small>
           </div>
 
-          <button className="admin-logoutButton" onClick={() => navigate('/admin/login')}>
+          <button className="admin-logoutButton" onClick={handleLogout}>
             로그아웃
           </button>
         </div>
       </header>
 
-      <section className="kpiGrid">
-        {kpis.map((item) => (
-          <article className={`kpiCard ${item.theme}`} key={item.title}>
-            <div className="kpiContent">
-              <p>{item.title}</p>
-              <h3>{item.value}</h3>
-              <span>{item.desc}</span>
-            </div>
-            <div className={`kpiIcon ${item.theme}`}>
-              <item.Icon size={26} strokeWidth={2.3} />
-            </div>
-          </article>
-        ))}
-      </section>
-
-      <section className="layoutGrid">
-        <div className="leftColumn">
-          <section className="admin-card alertPanel">
-            <div className="sectionHead">
-              <h3>오늘 처리할 주요 알림</h3>
-              <button>전체 보기</button>
-            </div>
-
-            <div className="alertList">
-              {alerts.map((item) => (
-                <div className={`alertRow ${item.cls}`} key={item.text}>
-                  <span className="alertIcon">{item.icon}</span>
-                  <span className="alertLevel">{item.level}</span>
-                  <strong>{item.type}</strong>
-                  <p>{item.text}</p>
-                  <button onClick={() => navigate(item.path)}>{item.button}</button>
-                </div>
-              ))}
-            </div>
+      {isDashboardError ? (
+        <section className="dashboardEmptyPage">
+          <div className="dashboardEmptyPage__card dashboardEmptyPage__card--error">
+            <h3>대시보드 데이터를 불러오지 못했습니다.</h3>
+            <p>{dashboardErrorMessage}</p>
+            <button className="dashboardRetryButton" onClick={() => refetchDashboardSummary()}>
+              다시 시도
+            </button>
+          </div>
+        </section>
+      ) : isDashboardCompletelyEmpty ? (
+        <section className="dashboardEmptyPage">
+          <div className="dashboardEmptyPage__card">
+            <h3>표시할 대시보드 데이터가 없습니다.</h3>
+            <p>요약, 알림, 차트, 관리자 활동 데이터가 아직 집계되지 않았습니다.</p>
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="kpiGrid">
+            {isDashboardInitialLoading ? (
+              Array.from({ length: 4 }, (_, index) => (
+                <article className="kpiCard kpi-blue dashboardLoadingCard" key={`kpi-loading-${index}`}>
+                  <div className="kpiContent">
+                    <p className="dashboardLoadingPulse">데이터를 불러오는 중입니다.</p>
+                    <h3>-</h3>
+                    <span>잠시만 기다려 주세요.</span>
+                  </div>
+                </article>
+              ))
+            ) : hasKpiSectionError ? (
+              <div className="dashboardStateBox dashboardStateBox--error">KPI 데이터를 표시하지 못했습니다.</div>
+            ) : (
+              kpis.map((item) => (
+                <article className={`kpiCard ${item.theme}`} key={item.title}>
+                  <div className="kpiContent">
+                    <p>{item.title}</p>
+                    <h3>{item.value}</h3>
+                    <span>{item.desc}</span>
+                  </div>
+                  <div className={`kpiIcon ${item.theme}`}>
+                    <item.Icon size={26} strokeWidth={2.3} />
+                  </div>
+                </article>
+              ))
+            )}
           </section>
 
-          <section className="chartGrid">
-            <article className="admin-card chartCard">
-              <h3>주간 가입자 추이</h3>
-              <div className="chartArea">
-                <div className="yAxis">
-                  <span>200</span><span>150</span><span>100</span><span>50</span><span>0</span>
+          <section className="layoutGrid">
+            <div className="leftColumn">
+              <section className="admin-card alertPanel">
+                <div className="sectionHead">
+                  <h3>오늘 처리할 주요 알림</h3>
+                  <button disabled>전체 보기</button>
                 </div>
-                <div className="bars">
-                  {['월', '화', '수', '목', '금', '토', '일'].map((day, i) => (
-                    <div className="barItem" key={day}>
-                      <div style={{ height: weeklyBars[i] }} />
-                      <span>{day}</span>
+
+                <div className="alertList">
+                  {isDashboardInitialLoading ? (
+                    <div className="dashboardStateBox">주요 알림을 불러오는 중입니다.</div>
+                  ) : hasAlertSectionError ? (
+                    <div className="dashboardStateBox dashboardStateBox--error">
+                      주요 알림 데이터를 표시하지 못했습니다.
                     </div>
-                  ))}
+                  ) : alerts.length === 0 ? (
+                    <div className="dashboardStateBox">현재 처리할 주요 알림이 없습니다.</div>
+                  ) : (
+                    alerts.map((item) => (
+                      <div className={`alertRow ${item.cls}`} key={`${item.domain}-${item.id}`}>
+                        <span className="alertIcon">{item.icon}</span>
+                        <span className="alertLevel">{item.level}</span>
+                        <strong>{item.domain}</strong>
+                        <p>{item.text}</p>
+                        <button
+                          type="button"
+                          disabled={!item.hasValidTargetPath}
+                          onClick={() => {
+                            if (!item.hasValidTargetPath) return;
+                            navigate(item.path);
+                          }}
+                        >
+                          {item.button}
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
-              </div>
-            </article>
+              </section>
 
-            <article className="admin-card donutCard">
-              <h3>결제 비중</h3>
-              <div className="donutContent">
-                <div className="donut" />
-                <ul>
-                  <li><i className="c1" />카드 <b>62%</b></li>
-                  <li><i className="c2" />간편결제 <b>28%</b></li>
-                  <li><i className="c3" />기타 <b>10%</b></li>
-                </ul>
-              </div>
-            </article>
-          </section>
+              <section className="chartGrid">
+                <article className="admin-card chartCard">
+                  <h3>주간 가입자 추이</h3>
+                  {isDashboardInitialLoading ? (
+                    <div className="dashboardStateBox dashboardStateBox--chart">
+                      주간 가입자 차트를 불러오는 중입니다.
+                    </div>
+                  ) : hasWeeklySignupSectionError ? (
+                    <div className="dashboardStateBox dashboardStateBox--chart dashboardStateBox--error">
+                      주간 가입자 차트를 표시하지 못했습니다.
+                    </div>
+                  ) : weeklySignups.length === 0 ? (
+                    <div className="dashboardStateBox dashboardStateBox--chart">
+                      표시할 주간 가입자 데이터가 없습니다.
+                    </div>
+                  ) : (
+                    <div className="chartArea">
+                      <div className="yAxis">
+                        {weeklySignupTicks.map((tick, index) => (
+                          <span key={`${tick}-${index}`}>{tick}</span>
+                        ))}
+                      </div>
+                      <div className="bars">
+                        {weeklySignups.map((item) => (
+                          <div className="barItem" key={item.label}>
+                            <div
+                              style={{
+                                height: weeklySignupMax > 0 ? `${(item.count / weeklySignupMax) * 168}px` : '0px',
+                              }}
+                            />
+                            <span>{item.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </article>
 
-          <section className="adminCardGrid adminCardGrid--dashboard">
-            {adminCards.map((card) => (
-              <article className="adminCard" key={card.title}>
-                <div className="adminTop">
-                  <div className={`adminIcon ${card.cls}`}>{card.icon}</div>
-                  <h3>{card.title}</h3>
-                </div>
-                <p>{card.desc}</p>
-                <div className="adminBottom">
-                  <strong>{card.value}</strong>
-                  <button onClick={() => navigate(card.path)}>상세 보기</button>
-                </div>
-              </article>
-            ))}
-          </section>
-        </div>
+                <article className="admin-card donutCard">
+                  <h3>결제 비중</h3>
+                  {isDashboardInitialLoading ? (
+                    <div className="dashboardStateBox dashboardStateBox--chart">
+                      결제 비중을 불러오는 중입니다.
+                    </div>
+                  ) : hasPaymentRatioSectionError ? (
+                    <div className="dashboardStateBox dashboardStateBox--chart dashboardStateBox--error">
+                      결제 비중 데이터를 표시하지 못했습니다.
+                    </div>
+                  ) : paymentRatio.length === 0 ? (
+                    <div className="dashboardStateBox dashboardStateBox--chart">
+                      표시할 결제 비중 데이터가 없습니다.
+                    </div>
+                  ) : (
+                    <div className="donutContent">
+                      <div
+                        className="donut"
+                        style={{
+                          background: paymentRatioStops ? `conic-gradient(${paymentRatioStops})` : undefined,
+                        }}
+                      />
+                      <ul>
+                        {paymentRatio.map((item) => (
+                          <li key={item.method}>
+                            <i className={item.colorClass} />
+                            {item.label} <b>{item.ratio}%</b>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </article>
+              </section>
 
-        <aside className="rightColumn">
-          <section className="admin-card statusCard">
-            <h3>시스템 상태</h3>
-            <div className="statusRow"><span />AI API <b>정상</b></div>
-            <div className="statusRow"><span />WebSocket <b>안정</b></div>
-            <div className="statusRow"><span />CPU 사용률 <em>43%</em></div>
-            <div className="statusRow"><span />메모리 사용률 <em>61%</em></div>
-          </section>
-
-          <section className="admin-card logCard">
-            <div className="sectionHead">
-              <h3>최근 관리자 활동</h3>
-              <button onClick={() => navigate('/admin/log')}>전체 보기</button>
+              <section className="adminCardGrid adminCardGrid--dashboard">
+                {isDashboardInitialLoading ? (
+                  Array.from({ length: 3 }, (_, index) => (
+                    <article className="adminCard dashboardLoadingCard" key={`card-loading-${index}`}>
+                      <div className="adminTop">
+                        <div className="adminIcon blue">...</div>
+                        <h3>데이터 준비 중</h3>
+                      </div>
+                      <p>관리자 기능 카드를 불러오고 있습니다.</p>
+                      <div className="adminBottom">
+                        <strong>잠시만 기다려 주세요.</strong>
+                      </div>
+                    </article>
+                  ))
+                ) : hasAdminCardSectionError ? (
+                  <div className="dashboardStateBox dashboardStateBox--inline dashboardStateBox--error">
+                    관리자 기능 카드를 표시하지 못했습니다.
+                  </div>
+                ) : (
+                  adminCards.map((card) => (
+                    <article className="adminCard" key={card.key}>
+                      <div className="adminTop">
+                        <div className={`adminIcon ${card.cls}`}>{card.icon}</div>
+                        <h3>{card.title}</h3>
+                      </div>
+                      <p>{card.description}</p>
+                      <div className="adminBottom">
+                        <strong>{card.value}</strong>
+                        <button
+                          type="button"
+                          disabled={!card.hasValidTargetPath}
+                          onClick={() => {
+                            if (!card.hasValidTargetPath) return;
+                            navigate(card.path);
+                          }}
+                        >
+                          상세 보기
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                )}
+              </section>
             </div>
-            {logs.map((log) => (
-              <div className="logRow" key={log.join('')} onClick={() => navigate(log[3])}>
-                <span>{log[0]}</span>
-                <strong>{log[1]}</strong>
-                <p>{log[2]}</p>
-              </div>
-            ))}
+
+            <aside className="rightColumn">
+              <section className="admin-card statusCard">
+                <h3>시스템 상태</h3>
+                {isDashboardInitialLoading ? (
+                  <div className="dashboardStateBox dashboardStateBox--inline">
+                    시스템 상태를 불러오는 중입니다.
+                  </div>
+                ) : hasSystemStatusSectionError ? (
+                  <div className="dashboardStateBox dashboardStateBox--inline dashboardStateBox--error">
+                    시스템 상태를 표시하지 못했습니다.
+                  </div>
+                ) : (
+                  systemStatus.map((item) => (
+                    <div className="statusRow" key={item.key}>
+                      <span className={item.dotClass} />
+                      {item.label} <b>{item.valueText}</b>
+                    </div>
+                  ))
+                )}
+              </section>
+
+              <section className="admin-card logCard">
+                <div className="sectionHead">
+                  <h3>최근 관리자 활동</h3>
+                  <button onClick={() => navigate(ADMIN_ROUTE_PATHS.log)}>전체 보기</button>
+                </div>
+                {isDashboardInitialLoading ? (
+                  <div className="dashboardStateBox dashboardStateBox--inline">
+                    최근 관리자 활동을 불러오는 중입니다.
+                  </div>
+                ) : hasRecentActivitySectionError ? (
+                  <div className="dashboardStateBox dashboardStateBox--inline dashboardStateBox--error">
+                    최근 관리자 활동을 표시하지 못했습니다.
+                  </div>
+                ) : (
+                  recentActivities.map((activity) => (
+                    <div
+                      className="logRow"
+                      key={activity.id}
+                      style={{ cursor: activity.hasValidTargetPath ? 'pointer' : 'default' }}
+                      onClick={() => {
+                        if (!activity.hasValidTargetPath) return;
+                        navigate(activity.targetPath);
+                      }}
+                    >
+                      <span>{activity.occurredAt}</span>
+                      <strong>{activity.adminId}</strong>
+                      <p>{activity.message}</p>
+                    </div>
+                  ))
+                )}
+              </section>
+            </aside>
           </section>
-        </aside>
-      </section>
+        </>
+      )}
     </>
   );
 }

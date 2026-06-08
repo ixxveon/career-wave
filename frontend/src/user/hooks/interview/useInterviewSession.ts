@@ -1,4 +1,5 @@
 import { useReducer, useRef, useState, useCallback, useEffect } from 'react';
+import { LLM_STREAM_TIMEOUT_MS } from '../../constants/interview';
 import { useInvalidateInterviewHistory } from './useInterviewReport';
 import { useSpringWebSocket }  from './useSpringWebSocket';
 import { useFastApiWebSocket } from './useFastApiWebSocket';
@@ -36,8 +37,6 @@ export const LLM_FALLBACK_QUESTIONS = [
   '5년 후 커리어 목표를 말씀해 주세요.',
 ];
 
-/** LLM 첫 토큰 대기 제한 시간 — 초과 시 폴백 질문 삽입 (spec FR-005) */
-export const LLM_STREAM_TIMEOUT_MS = 8_000;
 
 /** DEV mock 자동 꼬리 질문 (백엔드 미연동 시) */
 const DEV_MOCK_REPLIES = [

@@ -41,6 +41,11 @@ const EMPTY_RESULT: RecoveryResultState = {
   maskedLoginIds: [],
 };
 
+// ── 책임 경계 ────────────────────────────────────────────────────
+// §1 인증번호 발송/확인 (user: email+phone 2채널, company: email 1채널)
+// §2 아이디 찾기 제출 및 결과 표시 (handleSubmit)
+// 인증 상태와 제출 결과가 stale guard ref를 공유하므로 단일 훅으로 유지한다.
+// ─────────────────────────────────────────────────────────────────
 export function useFindIdRecovery(isCompany: boolean) {
   const now = useVerificationNow();
   const sendVerification = useSendVerificationCode();

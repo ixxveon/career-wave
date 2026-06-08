@@ -10,7 +10,7 @@
 // - 키에 fileType을 포함시켜 독립된 세션을 보장한다
 // ──────────────────────────────────────────────────────────────
 
-import type { FileType } from '../../types/resume.d';
+import type { FileType } from '../../types/resume';
 
 const keys = (fileType: FileType) => ({
   DOCUMENT_ID: `resume:documentId:${fileType}`,
