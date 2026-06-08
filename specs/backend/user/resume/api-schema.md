@@ -383,10 +383,17 @@ FastAPI                              Spring
 
 Webhook은 네트워크 재시도로 동일 요청이 중복 수신될 수 있다.
 
+**최종 상태 판단 기준**: `COMPLETED` 또는 `FAILED`를 "최종 상태"로 간주한다.  
+처리 중 상태(`PENDING`, `ANALYZING`)에서 들어오는 동일 `documentId`의 Webhook은 순차적으로 DB에 반영하되,  
+최종 상태에 도달한 이후의 재수신 요청부터 무시한다.
+
+> `ANALYZING` 중 Webhook이 중복 수신되더라도 무조건 무시하면 정상 상태 업데이트가 누락될 수 있으므로,  
+> 최종 상태 진입 이전까지는 정상 처리 경로를 따른다.
+
 ```
 수신 시 document.status 확인
-  ├── COMPLETED 또는 FAILED → 이미 처리 완료 → 200 OK 반환 후 조용히 무시
-  └── 그 외 → 정상 처리 (DB 저장 + WebSocket 알림)
+  ├── COMPLETED 또는 FAILED (최종 상태) → 이미 처리 완료 → 200 OK 반환 후 조용히 무시
+  └── UPLOADED / PENDING / ANALYZING   → 정상 처리 (DB 저장 + WebSocket 알림)
 ```
 
 - 중복 수신 시 DB를 덮어쓰거나 예외를 발생시키지 않는다.
@@ -438,9 +445,9 @@ Authorization: Bearer {accessToken}
 클라이언트                               서버
    │                                     │
    │── WS 연결 요청 ──────────────────────▶│  documentId 소유권 + 토큰 검증
-   │                                     │
+   │◀─ {"status":"ANALYZING", ...} ──────│  ← 최초 연결 성공 즉시 현재 상태 1회 전송
+   │                                     │    (재연결 시에도 현재 상태를 바로 알 수 있도록)
    │◀─ {"status":"ANALYZING", ...} ──────│  분석 진행 중 (1회 이상)
-   │◀─ {"status":"ANALYZING", ...} ──────│
    │                                     │
    │◀─ {"status":"COMPLETED", ...} ──────│  완료 메시지 전송
    │   (또는 "FAILED")                   │  ↓ Grace Period 시작 (30초)
@@ -496,12 +503,16 @@ Authorization: Bearer {accessToken}
 
 ## ErrorCode → HTTP 매핑
 
-| ErrorCode | HTTP | 발생 시점 |
-|-----------|------|-----------|
-| `INVALID_FILE_SIZE` | 400 | 파일 크기 10MB 초과 |
-| `INVALID_FILE_TYPE` | 400 | PDF·DOC·DOCX 외 확장자 |
-| `INVALID_CONTENT_COUNT` | 400 | 문항 수 범위(1~5) 위반 |
-| `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 |
-| `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId |
-| `DOCUMENT_ACCESS_DENIED` | 403 | 본인 소유가 아닌 문서 접근 |
-| `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
+> 각 API 섹션의 **Error Cases 표**를 Swagger `@ApiResponse` 어노테이션 작성 시 그대로 참고하면 된다.  
+> 아래 표는 전체 도메인의 에러 코드를 한 번에 조회할 때 사용한다.
+
+| ErrorCode | HTTP | 발생 시점 | 관련 API |
+|-----------|------|-----------|---------|
+| `INVALID_FILE_SIZE` | 400 | 파일 크기 10MB 초과 | § 1 업로드 |
+| `INVALID_FILE_TYPE` | 400 | PDF·DOC·DOCX 외 확장자 | § 1 업로드 |
+| `INVALID_CONTENT_COUNT` | 400 | 문항 수 범위(1~5) 위반 | § 2 자기소개서 |
+| `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 | § 2 자기소개서 |
+| `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId | § 3 피드백 조회 |
+| `DOCUMENT_ACCESS_DENIED` | 403 | 본인 소유가 아닌 문서 접근 (IDOR) | § 3 피드백 조회, § 6 WebSocket |
+| `FEEDBACK_PARSE_ERROR` | 500 | JSONB 역직렬화 실패 | § 3 피드백 조회 |
+| `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 | 전체 API |

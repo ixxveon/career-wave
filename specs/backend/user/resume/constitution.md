@@ -71,7 +71,8 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 | 페이징 기준 | 0-based (`page`, `size`) | Spring Data JPA `Pageable` 기본 규칙 |
 | `FAILED` 재시도 | v1 미지원 — UI에서 재업로드 유도 | v1 범위 최소화, v2 이후 재시도 정책 설계 |
 | WebSocket 종료 방식 | `COMPLETED`/`FAILED` 전송 후 30초 Grace Period 유지 후 서버 종료 | 즉시 종료 시 프론트 재연결 루프 유발 위험 방지 |
-| Webhook 멱등성 | 이미 최종 상태(`COMPLETED`/`FAILED`)인 문서 재수신 시 무시 | 네트워크 재시도로 인한 중복 요청 대응 |
+| WebSocket 초기 상태 전송 | STOMP 연결 성공 직후 현재 `document.status`를 1회 브로드캐스트 | 재연결 시 프론트가 현재 진행 상태를 즉시 파악 가능 |
+| Webhook 멱등성 | 이미 최종 상태(`COMPLETED`/`FAILED`)인 문서 재수신 시 무시. 처리 중 상태(`PENDING`/`ANALYZING`)는 정상 처리 | 네트워크 재시도로 인한 중복 요청 대응, ANALYZING 중 정상 업데이트 누락 방지 |
 
 ---
 
