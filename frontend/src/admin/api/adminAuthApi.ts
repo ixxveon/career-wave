@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ADMIN_DETAIL_ROLE, type AdminDetailRole } from '../constants/adminRoleConstants';
 
 export type ApiResponse<T> =
   | { success: true;  statusCode: number; message: string; data: T }
@@ -14,13 +15,14 @@ export interface AdminLoginResponse {
   adminInfo: {
     id: string;
     name: string;
-    role: 'MASTER' | 'CS' | 'BACKEND';
+    role: AdminDetailRole;
   };
 }
 
 // XSS 방어를 위해 localStorage 대신 sessionStorage 사용
 // 탭/브라우저 종료 시 자동 만료, JS로는 접근 가능하나 localStorage보다 노출 범위 제한
 const ADMIN_TOKEN_KEY = 'career-wave.admin.accessToken';
+const ADMIN_ROLE_KEY = 'career-wave.admin.role';
 
 export const adminSession = {
   setToken(token: string) {
@@ -33,6 +35,25 @@ export const adminSession = {
 
   clearToken() {
     sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+  },
+
+  setRole(role: AdminDetailRole) {
+    sessionStorage.setItem(ADMIN_ROLE_KEY, role);
+  },
+
+  getRole() {
+    const role = sessionStorage.getItem(ADMIN_ROLE_KEY);
+    if (!role) {
+      return null;
+    }
+
+    return Object.values(ADMIN_DETAIL_ROLE).includes(role as AdminDetailRole)
+      ? (role as AdminDetailRole)
+      : null;
+  },
+
+  clearRole() {
+    sessionStorage.removeItem(ADMIN_ROLE_KEY);
   },
 };
 
