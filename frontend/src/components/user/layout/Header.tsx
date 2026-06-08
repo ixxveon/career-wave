@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
 import { serviceMenus } from '../../../utils/serviceMenus';
 import { useAuth } from '../../../hooks/user/useAuth';
@@ -43,11 +44,13 @@ function ComingSoonModal({ onClose }: ComingSoonModalProps) {
 function Header() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
   const { isLoggedIn, logout } = useAuth();
 
   function handleLogout() {
     logout();
+    queryClient.clear();
     navigate('/');
   }
 
