@@ -3096,6 +3096,8 @@ a.cw-chart-filter {
   box-shadow: inset 0 0 0 1px #e3edf8;
 }
 
+
+
 .cw-github-simple-grid span {
   display: block;
   color: #718096;
@@ -3829,6 +3831,13 @@ a.cw-chart-filter {
   .cw-account-profile-card {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .cw-github-simple-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr auto;
+    gap: 12px;
+    align-items: center;
   }
 
   .cw-github-profile-button {
