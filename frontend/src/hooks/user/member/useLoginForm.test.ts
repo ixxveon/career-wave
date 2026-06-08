@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import type { FormEvent } from 'react';
 
 // ── vi.hoisted: mock 팩토리 내에서 사용할 변수 선언 ────────────────
 const {
@@ -87,7 +86,7 @@ async function submitForm(result: ReturnType<typeof renderHook<ReturnType<typeof
   await act(async () => {
     await result.current.handleSubmit({
       preventDefault: vi.fn(),
-    } as unknown as FormEvent<HTMLFormElement>);
+    } as never);
   });
 }
 
@@ -157,6 +156,7 @@ describe('useLoginForm', () => {
       setValidCredentials(result);
       await submitForm(result);
 
+      expect(mockIsNextPathCompatible).toHaveBeenCalledWith('/dashboard/company', MEMBER_TYPE.USER);
       expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
     });
 
@@ -170,6 +170,7 @@ describe('useLoginForm', () => {
       setValidCredentials(result);
       await submitForm(result);
 
+      expect(mockIsNextPathCompatible).toHaveBeenCalledWith('/mypage', MEMBER_TYPE.USER);
       expect(mockNavigate).toHaveBeenCalledWith('/mypage', { replace: true });
     });
   });
