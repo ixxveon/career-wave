@@ -44,8 +44,8 @@
 
 - [ ] `ResumeDTO.ResponseUpload` 작성
 - [ ] 파일 MIME type 기반 확장자 검증 유틸 작성 (PDF·DOC·DOCX)
-  - `Apache Tika` (`Tika.detect(InputStream)`)로 실제 파일 속성 검증 — 확장자 위조 차단 (팀 합의 필요)
-  - Tika 미사용 시 Magic Number(파일 앞 바이트) 기반 검증으로 대체
+  - `Apache Tika` (`org.apache.tika:tika-core`) 사용 확정 — `Tika.detect(InputStream)`으로 실제 MIME 검증
+  - `build.gradle`에 의존성 추가 후 팀 공유
 - [ ] 파일 크기 10MB 초과 검증
 - [ ] UUID 기반 저장 파일명 생성 유틸 작성 (`{UUID}.{확장자}`)
 - [ ] S3 경로 생성 로직 작성 (`resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — `LocalDate.now()` 활용)

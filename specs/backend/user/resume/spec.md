@@ -236,8 +236,8 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 - 파일 크기 10MB 초과 → `INVALID_FILE_SIZE(400)`
 - 확장자 PDF·DOC·DOCX 외 → `INVALID_FILE_TYPE(400)`
   - **MIME type 기반 검증 필수** — 확장자 위조 파일 차단 목적
-  - `Apache Tika` (`org.apache.tika`) 로 실제 파일 속성 검증 권장 (팀 합의 필요 시 명시)
-  - `ContentInfo` 또는 `Tika.detect(InputStream)` 으로 `application/pdf` 등 실제 MIME 확인
+  - `Apache Tika` (`org.apache.tika:tika-core`) 사용 확정 — `build.gradle` 의존성 추가 필요, 팀 공유 예정
+  - `Tika.detect(InputStream)` 으로 `application/pdf` 등 실제 MIME 확인
 - **검증 통과 후** UUID 기반 저장 파일명 생성 (`{UUID}.{확장자}`)
 - S3 저장 경로: `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — 날짜별 폴더로 파일 분산 관리
 - S3 업로드 후 `file_url`, `original_name` 저장 (S3 Connection Timeout 3~5초 설정 필수)
