@@ -38,9 +38,9 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 - `document.member_id`는 최초 생성 시 설정 후 변경 불가.
 - `document_feedbacks`는 `document_id` 기준 1:1 (UNIQUE 제약).
 - `cover_letter_contents`의 `order_num`은 동일 `document_id` 내에서 1~5 범위 내 중복 불가.
-- `documents.file_url`과 `documents.original_name`은 둘 다 NOT NULL — 이력서·자기소개서 모두 필수 저장.
+- `documents.file_url`과 `documents.original_name`은 `RESUME`(이력서)일 때만 필수. `COVER_LETTER`(자기소개서)는 파일이 없으므로 두 컬럼 모두 `null` 저장.
 - 파일 검증(크기·MIME type 기반 확장자)은 서비스 레이어 진입 전에 처리. 검증 실패 시 S3 업로드 절대 수행 금지.
-- S3 저장 키는 `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` 형식으로 생성. `original_name`을 S3 키로 직접 사용 금지. `file_url`에는 완성된 S3 URL, `original_name`에는 사용자 원본 파일명을 저장.
+- S3 저장 키는 `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` 형식으로 생성. `original_name`을 S3 키로 직접 사용 금지. `file_url`에는 완성된 S3 URL, `original_name`에는 사용자 원본 파일명을 저장 (`RESUME`에만 해당).
 - `cover_letter_contents`의 `order_num`은 동일 `document_id` 내에서 UNIQUE 제약(`uq_clc_document_order`) — DB 레벨에서 중복 방지.
 - `document.status`는 Spring이 `UPLOADED`로 초기 설정. `PENDING` 이후 전이는 Webhook 수신 시 Spring이 업데이트. 서비스 레이어에서 임의 변경 금지.
 - Webhook 멱등성 보장: `document.status`가 이미 `COMPLETED` 또는 `FAILED`인 경우 동일 Webhook 재수신 시 DB 덮어쓰기 및 예외 발생 없이 조용히 무시한다.
