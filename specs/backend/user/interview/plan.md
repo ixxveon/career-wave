@@ -110,6 +110,40 @@ spring:
 
 ---
 
+## 개발 전략
+
+### 1. 작은 성공 반복 (Small Wins)
+
+Phase 1~8을 한 번에 완성하려 하지 않는다. 아래 단계별로 동작을 확인하면서 진행한다.
+
+```
+Phase 1~2 완료 → Swagger에서 Entity 저장·조회 확인
+Phase 3~4 완료 → 세션 생성·종료·소유권 검증 동작 확인
+Phase 5 완료   → 전체 REST API Swagger 확인
+Phase 6 완료   → WebSocket 연결·메시지 수신 확인
+Phase 7~8 완료 → 인증·권한·경계값 테스트 통과 확인
+```
+
+### 2. 테스트 코드는 문서보다 빠르다
+
+Phase 8에 명시된 JUnit 테스트 3가지를 개발 중에 작성해두고, 코드 수정 시마다 실행한다.
+테스트가 통과하면 "어제 짠 기능을 오늘 망가뜨리지 않았다"는 확신을 갖고 다음 단계로 넘어갈 수 있다.
+
+### 3. 로그는 디버깅의 지도
+
+Phase 4 서비스 계층에서 FastAPI와 연동되는 지점마다 아래와 같이 로그를 남긴다.
+배포 후 "왜 안 되지?" 상황이 오면 로그가 원인을 바로 가리킨다.
+
+```java
+log.info("FastAPI RAG context registration: sessionId={}", sessionId);
+log.info("FastAPI LLM pipeline triggered: sessionId={}, questionOrder={}", sessionId, questionOrder);
+log.info("FastAPI report generation triggered: sessionId={}", sessionId);
+log.warn("FastAPI callback retry: sessionId={}, attempt={}", sessionId, attempt);
+log.error("FastAPI callback failed after retry: sessionId={}", sessionId);
+```
+
+---
+
 ## Phases
 
 ### Phase 1 — Entity & Type 정의
