@@ -21,8 +21,9 @@ const COMPANY_ONLY_PATH_PREFIXES = [
 
 export function isNextPathCompatible(nextPath: string, memberType: MemberType): boolean {
   if (memberType === MEMBER_TYPE.USER) {
+    const pathOnly = nextPath.split('?')[0].split('#')[0];
     return !COMPANY_ONLY_PATH_PREFIXES.some(
-      (prefix) => nextPath === prefix || nextPath.startsWith(`${prefix}/`),
+      (prefix) => pathOnly === prefix || pathOnly.startsWith(`${prefix}/`),
     );
   }
   return true;
