@@ -58,3 +58,16 @@
 - [x] 실제 모델명이 바뀌어도 도메인별 통계가 유지되는지 확인
 - [x] 모바일과 데스크톱에서 카드, 차트, 테이블 레이아웃 확인
 - [x] `npm run build` 또는 프로젝트에서 가능한 검증 명령 실행
+
+## Phase 6 - 누락된 기능 구현
+
+**Branch**: `feature/admin-ai-metrics-rag-documents`
+**Base**: `feature/admin-ai-metrics-verify`
+
+- [ ] `POST /api/v1/admin/ai-metrics/rag-documents` 문서 업로드 API 연동
+- [ ] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download` 문서 다운로드 API 연동
+- [ ] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}` 문서 삭제 API 연동
+- [ ] 업로드 파일 형식, 크기, 필수값 검증 상태 처리
+- [ ] 업로드 후 RAG 인덱싱 상태(`INDEXING`, `SYNCED`, `FAILED`) 갱신 흐름 확인
+- [ ] 삭제 요청 후 목록/상태 갱신 및 `DELETING` 상태 표시 여부 확인
+- [ ] 업로드/다운로드/삭제 실패 시 관리자 화면 오류 메시지 처리
