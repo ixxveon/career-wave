@@ -208,49 +208,30 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
   "data": {
     "documentId": "550e8400-e29b-41d4-a716-446655440000",
     "status": "COMPLETED",
-    "scores": {
-      "jobFitness": 78,
-      "techStack": 85,
-      "quantifiedAchievement": 60,
-      "logicalStructure": 72,
-      "total": 74
-    },
-    "overallReview": "전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다.",
-    "feedbackDetails": [
-      {
-        "sectionNumber": 1,
-        "question": "주요 프로젝트 경험",
-        "originalText": "결제 시스템 개발에 참여하였습니다.",
-        "goodPoint": "백엔드 프로젝트 경험이 확인됩니다.",
-        "badPoint": "역할, 규모, 성과가 빠져 있습니다.",
-        "improvedText": "월 거래액 50억 규모의 결제 시스템 API를 설계 및 구현...",
-        "starAnalysis": {
-          "s": { "ok": true,  "comment": "상황 설명이 적절합니다." },
-          "t": { "ok": false, "comment": "과제가 구체적으로 드러나지 않습니다." },
-          "a": { "ok": true,  "comment": "행동이 명시되어 있습니다." },
-          "r": { "ok": false, "comment": "결과가 수치로 표현되지 않았습니다." }
-        },
-        "quantAnalysis": {
-          "numbers":   { "ok": false, "comment": "수치가 사용되지 않았습니다." },
-          "timeframe": { "ok": false, "comment": "기간 표현이 없습니다." },
-          "scale":     { "ok": true,  "comment": "규모 언급이 있습니다." },
-          "impact":    { "ok": false, "comment": "성과가 수치로 측정되지 않았습니다." }
-        }
-      }
-    ],
-    "errorMessage": null,
+    "scoreJobFitness": 78,
+    "scoreTechStack": 85,
+    "scoreQuantified": 60,
+    "scoreLogical": 72,
+    "scoreTotal": 74,
+    "feedbackText": "전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다.",
     "createdAt": "2026-05-29T14:55:00Z"
   }
 }
 ```
 
+> ⚠️ `feedbackText` 내부 구조(순수 텍스트 vs JSON 문자열로 항목별 첨삭 포함)는 FastAPI 팀과 합의 필요.  
+> 합의 결과에 따라 응답 필드 추가 가능.
+```
+
 | Field | Type | 설명 |
 |-------|------|------|
 | `data.status` | `string` | `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
-| `data.scores` | `object` \| `null` | 분석 미완료 시 `null` |
-| `data.feedbackDetails` | `array` \| `null` | 분석 미완료 시 `null` |
-| `data.feedbackDetails[].starAnalysis` | `object` \| `null` | 이력서 파일 분석 시 제공, 자기소개서는 null일 수 있음 |
-| `data.feedbackDetails[].quantAnalysis` | `object` \| `null` | 항목에 따라 null 허용 |
+| `data.scoreJobFitness` | `number` \| `null` | 직무 적합도 (0~100), 분석 미완료 시 `null` |
+| `data.scoreTechStack` | `number` \| `null` | 기술 스택 (0~100), 분석 미완료 시 `null` |
+| `data.scoreQuantified` | `number` \| `null` | 경험 수치화 (0~100), 분석 미완료 시 `null` |
+| `data.scoreLogical` | `number` \| `null` | 논리력 (0~100), 분석 미완료 시 `null` |
+| `data.scoreTotal` | `number` \| `null` | 종합 점수 (0~100), 분석 미완료 시 `null` |
+| `data.feedbackText` | `string` \| `null` | AI 피드백 텍스트, 분석 미완료 시 `null` |
 
 ### Error Cases
 
@@ -342,15 +323,12 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 ```json
 {
   "status": "COMPLETED",
-  "scores": {
-    "jobFitness": 78,
-    "techStack": 85,
-    "quantifiedAchievement": 60,
-    "logicalStructure": 72,
-    "total": 74
-  },
-  "overallReview": "전반적으로 백엔드 역량이 우수하나 ...",
-  "feedbackDetails": [ ... ],
+  "scoreJobFitness": 78,
+  "scoreTechStack": 85,
+  "scoreQuantified": 60,
+  "scoreLogical": 72,
+  "scoreTotal": 74,
+  "feedbackText": "전반적으로 백엔드 역량이 우수하나 ...",
   "errorMessage": null
 }
 ```
@@ -358,10 +336,15 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 | Field | Type | 설명 |
 |-------|------|------|
 | `status` | `string` | `COMPLETED` \| `FAILED` |
-| `scores` | `object` \| `null` | 분석 점수, `FAILED` 시 `null` |
-| `overallReview` | `string` \| `null` | AI 종합 총평 |
-| `feedbackDetails` | `array` \| `null` | 항목별 첨삭 결과, `FAILED` 시 `null` |
+| `scoreJobFitness` | `number` \| `null` | 직무 적합도 (0~100), `FAILED` 시 `null` |
+| `scoreTechStack` | `number` \| `null` | 기술 스택 (0~100), `FAILED` 시 `null` |
+| `scoreQuantified` | `number` \| `null` | 경험 수치화 (0~100), `FAILED` 시 `null` |
+| `scoreLogical` | `number` \| `null` | 논리력 (0~100), `FAILED` 시 `null` |
+| `scoreTotal` | `number` \| `null` | 종합 점수 (0~100), `FAILED` 시 `null` |
+| `feedbackText` | `string` \| `null` | AI 피드백 텍스트, `FAILED` 시 `null` |
 | `errorMessage` | `string` \| `null` | 실패 시 오류 메시지 |
+
+> ⚠️ `feedbackText` 내부 구조(순수 텍스트 vs JSON 문자열)는 FastAPI 팀과 합의 필요 — 합의 전까지는 TEXT로 그대로 저장.
 
 ### Response `200 OK`
 
@@ -525,11 +508,11 @@ Authorization: Bearer {accessToken}
 
 | 테이블 | 제약 | 설명 |
 |--------|------|------|
-| `document_feedbacks` | `document_id` UNIQUE | 문서당 피드백 1:1 관계 — 중복 저장 불가 |
-| `cover_letter_contents` | `(document_id, order_num)` UNIQUE | 동일 문서 내 문항 순서 중복 불가 (`uq_clc_document_order`) |
+| `document_feedbacks` | `feedback_text` NOT NULL | 피드백 텍스트는 항상 존재 — 점수 5개 컬럼은 nullable |
+| `document_feedbacks` | `score_*` 5개 컬럼 INTEGER | 분석 완료 시 저장, 미완료 시 `null` — `FAILED` 시도 `null` |
+| `cover_letter_contents` | `(document_id, order_num)` UNIQUE | 동일 문서 내 문항 순서 중복 불가 (`UK_DOCUMENT_ORDER`) |
 | `cover_letter_contents` | `order_num` CHECK (1~5) | 문항 순서 범위 DB 레벨 제한 |
 | `cover_letter_contents` | `answer` 최대 1000자 | 서비스 레이어에서 `@Size(max=1000)` 검증 후 저장 |
-| `document_feedbacks` | `feedback_details` JSONB NOT NULL | FastAPI 응답 전체를 JSONB로 저장 — `AttributeConverter` 역직렬화 |
 
 ---
 

@@ -23,8 +23,9 @@
   - `order_num` INTEGER NOT NULL (CHECK 1~5), `question` TEXT NOT NULL, `answer` TEXT NOT NULL
   - UNIQUE 제약: `CONSTRAINT uq_clc_document_order UNIQUE (document_id, order_num)`
 - [ ] `DocumentFeedback` Entity 작성
-  - BIGSERIAL PK (`document_feedback_id`), `document_id` UUID NOT NULL UNIQUE (1:1)
-  - `feedback_details` JSONB NOT NULL — `AttributeConverter` 적용, `created_at`
+  - BIGSERIAL PK (`document_feedback_id`), `document_id` UUID NOT NULL
+  - `score_job_fitness`, `score_tech_stack`, `score_quantified`, `score_logical`, `score_total` INTEGER (nullable)
+  - `feedback_text` TEXT NOT NULL, `created_at`
 - [ ] `DocumentRepository` 작성
 - [ ] `CoverLetterMetaRepository` 작성
 - [ ] `CoverLetterContentRepository` 작성
@@ -70,13 +71,11 @@
 
 ## Phase 4: 분석 결과 조회 API
 
-- [ ] `ResumeDTO.ResponseFeedback` 및 중첩 record 작성
-  - `ScoreDetail`, `FeedbackDetail`, `StarAnalysis`, `QuantAnalysis`, `AnalysisItem`
-- [ ] JSONB `feedback_details` 역직렬화 처리 — `AttributeConverter` 구현 (`hypersistence-utils` 사용 시 팀 합의 필요)
-- [ ] `JsonProcessingException` 캐치 후 `CustomException(ErrorCode.FEEDBACK_PARSE_ERROR)` 변환 — 서버 크래시 방지
-- [ ] `GlobalExceptionHandler`에 `FEEDBACK_PARSE_ERROR` 핸들러 등록 ("분석 결과 변환 중 오류가 발생했습니다" 메시지 반환)
+- [ ] `ResumeDTO.ResponseFeedback` record 작성 (점수 5개 INTEGER + `feedbackText` String)
+- [ ] `DocumentFeedback` 조회 → score 컬럼 5개 + `feedback_text` 직접 매핑 (JSONB 불필요)
 - [ ] IDOR 검증 — `document.member_id != memberId` 시 `DOCUMENT_ACCESS_DENIED(403)`
-- [ ] `DocumentFeedback` 없는 경우 status만 포함한 응답 반환
+- [ ] `DocumentFeedback` 없는 경우 score 필드 전체 `null` + status만 포함한 응답 반환
+- [ ] ⚠️ `feedback_text` 내부 구조(순수 텍스트 vs JSON 문자열) FastAPI 팀 합의 후 응답 DTO 확정
 - [ ] `ResumeController.getFeedback()` 구현
 - [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
 

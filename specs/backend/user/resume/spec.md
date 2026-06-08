@@ -42,14 +42,17 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
 | `document_feedback_id` | BIGSERIAL | PK | 서류 피드백 고유 식별자 |
-| `document_id` | UUID | NOT NULL, UNIQUE | 문서 FK (1:1) |
-| `feedback_details` | JSONB | NOT NULL | AI 분석 결과 전체 (scores, overallReview, feedbackDetails 등) |
+| `document_id` | UUID | NOT NULL | 문서 FK |
+| `score_job_fitness` | INTEGER | | 직무 적합도 점수 (0~100) |
+| `score_tech_stack` | INTEGER | | 기술 스택 점수 (0~100) |
+| `score_quantified` | INTEGER | | 경험 수치화 점수 (0~100) |
+| `score_logical` | INTEGER | | 논리력 점수 (0~100) |
+| `score_total` | INTEGER | | 종합 점수 (0~100) |
+| `feedback_text` | TEXT | NOT NULL | AI 서류 피드백 텍스트 |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 생성 일시 |
 
-> **컬럼명 확정**: 기존 DB의 `score`, `feedback_text` 컬럼 대신 `feedback_details` JSONB 단일 컬럼으로 통일.  
-> FastAPI가 내려주는 복합 점수(`scores` 객체)·항목별 첨삭 배열(`feedbackDetails`)을 JSONB 그대로 저장하고,  
-> Spring에서 `AttributeConverter`로 역직렬화하여 프론트 스펙(`api-schema.md § 3`) 응답 형식으로 반환.  
-> ⚠️ DB 스키마 변경이 필요하므로 팀 공유 후 마이그레이션 스크립트 반영 필요.
+> 점수 컬럼 5개는 분석 완료 전까지 `null`. FastAPI Webhook 수신 시 저장됨.  
+> `feedback_text`의 상세 구조(JSON 문자열 vs 순수 텍스트)는 FastAPI 팀과 합의 필요 — 항목별 첨삭(`feedbackDetails` 배열) 포함 여부 확인 후 응답 DTO 확정.
 
 ### cover_letter_meta
 
@@ -142,16 +145,19 @@ public class ResumeDTO {
         ZonedDateTime createdAt
     ) {}
 
-    // 분석 결과 조회 응답 — feedback_details JSONB 역직렬화 결과를 그대로 반환
+    // 분석 결과 조회 응답
     public record ResponseFeedback(
         UUID documentId,
         String status,
-        ScoreDetail scores,         // null: 분석 미완료
-        String overallReview,       // null: 분석 미완료
-        List<FeedbackDetail> feedbackDetails,   // null: 분석 미완료
-        String errorMessage,        // FAILED 시 오류 메시지
+        Integer scoreJobFitness,    // null: 분석 미완료
+        Integer scoreTechStack,     // null: 분석 미완료
+        Integer scoreQuantified,    // null: 분석 미완료
+        Integer scoreLogical,       // null: 분석 미완료
+        Integer scoreTotal,         // null: 분석 미완료
+        String feedbackText,        // null: 분석 미완료
         ZonedDateTime createdAt
     ) {}
+    // ⚠️ feedbackDetails 배열(항목별 첨삭) 포함 여부는 FastAPI 팀과 feedback_text 구조 합의 후 확정
 
     // 이력 목록 조회 응답 (단건)
     public record HistoryItem(
@@ -161,7 +167,7 @@ public class ResumeDTO {
         String originalName,    // 자기소개서: null (cover_letter_meta 참조)
         String company,         // 이력서: null (cover_letter_meta 참조)
         String job,             // 이력서: null (cover_letter_meta 참조)
-        Integer totalScore,     // 분석 미완료: null (feedback_details.scores.total)
+        Integer scoreTotal,     // 분석 미완료: null (document_feedbacks.score_total)
         ZonedDateTime createdAt
     ) {}
 }

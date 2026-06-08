@@ -65,7 +65,7 @@ UPLOADED → PENDING → ANALYZING → COMPLETED
 | S3 키 생성 | `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` | 한글·특수문자 깨짐 방지, 날짜별 분산 관리, 원본명은 `original_name` 컬럼에 보존 |
 | `documents.status` | VARCHAR(20), DEFAULT 'UPLOADED' | 프론트 스펙 상태 추적에 맞춰 추가 — Spring이 UPLOADED 설정, 이후 전이는 Webhook 책임 |
 | 분석 결과 수신 | Webhook (FastAPI → Spring `POST .../webhook`) | Spring이 DB 저장 + WebSocket 알림을 한 흐름에서 처리 가능 |
-| `feedback_details` 저장 | JSONB + `AttributeConverter` 또는 `hypersistence-utils` | AI 응답 스키마 유연성 + JPA 변환 편의성 |
+| 분석 결과 저장 | 점수 5개 개별 INTEGER 컬럼 + `feedback_text` TEXT | 실제 DB 스키마 기준 (JSONB 미사용, `AttributeConverter` 불필요) |
 | WebSocket 구현 | STOMP (`spring-boot-starter-websocket`) | 표준화된 메시지 프로토콜, 토픽 기반 구독 구조 |
 | WebSocket 인증 | STOMP `ChannelInterceptor` (`HandshakeInterceptor` 병행 가능) | 핸드셰이크 시점 또는 CONNECT 프레임 시점에 JWT 검증 및 `Authentication` 객체 주입 |
 | 페이징 기준 | 0-based (`page`, `size`) | Spring Data JPA `Pageable` 기본 규칙 |
@@ -112,3 +112,4 @@ FastAPI 분석 트리거 호출
 - `SimpMessagingTemplate.convertAndSend()`를 `@Transactional` 메서드 안에서 직접 호출 금지.  
   반드시 `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)`를 통해 커밋 완료 후 발행할 것.  
   이유: 커밋 전에 메시지를 보내면 클라이언트는 수신했으나 DB에는 아직 미반영인 데이터 불일치 상태가 발생한다.
+- `document_feedbacks` 컬럼을 JSONB나 `AttributeConverter`로 처리 금지 — 점수 5개 INTEGER 컬럼 + `feedback_text` TEXT로 직접 매핑.
