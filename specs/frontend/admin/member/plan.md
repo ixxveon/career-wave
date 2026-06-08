@@ -61,15 +61,15 @@ specs/frontend/admin/member/
 
 ### ⬜ Phase 2 — API 연동 (v1 진행 예정)
 
-- [ ] 개인 회원 목록 API 연동 (`GET /api/admin/members`)
-- [ ] 개인 회원 상세 API 연동 (`GET /api/admin/members/{memberId}`)
-- [ ] 제재 처리 API 연동 (`POST /api/admin/members/{memberId}/sanctions`)
+- [ ] 개인 회원 목록 API 연동 (`GET /api/v1/admin/members`)
+- [ ] 개인 회원 상세 API 연동 (`GET /api/v1/admin/members/{memberId}`)
+- [ ] 제재 처리 API 연동 (`POST /api/v1/admin/members/{memberId}/sanctions`)
 - [ ] 권한·구독·상태·가입일 범위 필터 쿼리 파라미터 연결
 - [ ] 페이지네이션 API 연결
-- [ ] 기업 회원 목록 API 연동 (`GET /api/admin/hr-managers`)
-- [ ] 기업 회원 상세 API 연동 (`GET /api/admin/hr-managers/{memberId}`)
-- [ ] 기업 회원 승인 API 연동 (`PATCH /api/admin/hr-managers/{memberId}/approve`)
-- [ ] 기업 회원 반려 API 연동 (`PATCH /api/admin/hr-managers/{memberId}/reject`)
+- [ ] 기업 회원 목록 API 연동 (`GET /api/v1/admin/hr-managers`)
+- [ ] 기업 회원 상세 API 연동 (`GET /api/v1/admin/hr-managers/{memberId}`)
+- [ ] 기업 회원 승인 API 연동 (`PATCH /api/v1/admin/hr-managers/{memberId}/approve`)
+- [ ] 기업 회원 반려 API 연동 (`PATCH /api/v1/admin/hr-managers/{memberId}/reject`)
 - [ ] 기업 회원 `hrStatus` 한국어 → ERD enum (`PENDING / ACTIVE / REMOVED`) 전환
 - [ ] 처리 관리자 ID 하드코딩 → 로그인 세션 기반 전환
 - [ ] API 실패 시 에러 메시지 처리 (`ApiResponse.message` 활용)

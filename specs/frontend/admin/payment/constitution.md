@@ -79,12 +79,12 @@ PENDING ──► COMPLETED  (환불 처리 확정)
 ## 5. 연동 계약
 
 - `admin-backend`는 아래 API를 제공한다:
-  - `GET /api/admin/payments/summary` — KPI 집계
-  - `GET /api/admin/payments` — 결제 목록 (keyword, status, page, size)
-  - `GET /api/admin/payments/{paymentId}` — 결제 상세 (aiUsage 포함)
-  - `POST /api/admin/payments/{paymentId}/refund` — 환불 처리 확정
-  - `POST /api/admin/payments/{paymentId}/refund-reject` — 환불 불가 처리
-  - `GET /api/admin/subscriptions` — 구독 현황 목록 (status, page, size)
+  - `GET /api/v1/admin/payments/summary` — KPI 집계
+  - `GET /api/v1/admin/payments` — 결제 목록 (keyword, status, page, size)
+  - `GET /api/v1/admin/payments/{paymentId}` — 결제 상세 (aiUsage 포함)
+  - `POST /api/v1/admin/payments/{paymentId}/refund` — 환불 처리 확정
+  - `POST /api/v1/admin/payments/{paymentId}/refund-reject` — 환불 불가 처리
+  - `GET /api/v1/admin/subscriptions` — 구독 현황 목록 (status, page, size)
 - 모든 응답은 `ApiResponse<T>` 형식 (`success`, `statusCode`, `message`, `data`)을 사용한다.
 - 모든 HTTP 호출은 `frontend/src/admin/api/paymentApi.ts`를 통해서만 수행한다.
 
