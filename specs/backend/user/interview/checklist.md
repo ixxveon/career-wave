@@ -118,13 +118,22 @@
 > 이 도메인은 상태 머신·WebSocket·비동기 파이프라인이 얽혀 있어 테스트 코드 없이 유지보수가 어렵다.
 > Phase 4~6 구현 항목마다 테스트 작성 여부를 함께 체크한다.
 
+**먼저 작성할 3가지** (핵심 불변 규칙 — 다른 기능 추가 시 가장 쉽게 깨짐)
+
+- [ ] `InterviewSessionService.endSession` — ★ 이미 `COMPLETED`인 세션 재종료 시 `INTERVIEW_SESSION_ALREADY_ENDED(400)` 반환
+- [ ] `InterviewReportService.getReport` — ★ 타인 `sessionId`로 호출 시 `INTERVIEW_SESSION_FORBIDDEN(403)` 반환 (소유권)
+- [ ] `InterviewReportService.getReport` — ★ `voiceQualityRatio = 49.99`이면 delivery/fluency null, `50.00`이면 정상값
+
+**이후 순서대로 작성**
+
 - [ ] `InterviewSessionService.startSession` — 정상 생성 / 중복 세션(409) 단위 테스트
-- [ ] `InterviewSessionService.endSession` — 정상 종료 / 멱등성(2회 호출 시 트리거 1회) / 이미 종료된 세션(400) 단위 테스트
-- [ ] `InterviewSessionService.submitTextAnswer` — 소유권 검증(403) / IN_PROGRESS 아닌 세션 거부 단위 테스트
-- [ ] `InterviewReportService.getReport` — 리포트 미완료(409) / voiceQualityRatio < 50 null 처리 단위 테스트
+- [ ] `InterviewSessionService.endSession` — 멱등성(2회 호출 시 트리거 1회) 단위 테스트
+- [ ] `InterviewSessionService.submitTextAnswer` — IN_PROGRESS 아닌 세션 거부 단위 테스트
+- [ ] `InterviewReportService.getReport` — 리포트 미완료(409) 단위 테스트
 - [ ] `InterviewHistoryService.getHistory` — 본인 기록만 반환 / 페이징 단위 테스트
 - [ ] FastAPI 콜백 처리 — `career_histories` INSERT 성공 / 실패 시 재시도 로그 기록 단위 테스트
 - [ ] WebSocket 핸들러 — 토큰 검증 실패(Close 1008) / 소유권 검증 실패(Close 1008) 통합 테스트
+- [ ] WebSocket 재연결 시 `REPORT_READY` 재전송 — `career_histories` 존재 시 연결 직후 즉시 전송 확인
 
 ---
 

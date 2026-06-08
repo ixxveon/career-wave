@@ -150,6 +150,23 @@ spring:
 
 ### Phase 4 — Service 구현
 
+> **@Transactional 범위 원칙**: DB 저장 로직에만 짧게 적용하고, FastAPI 호출은 트랜잭션 종료 후 수행한다.
+> DB 트랜잭션이 외부 네트워크 통신을 기다리면 DB Connection Pool이 고갈되어 서버 전체가 응답 불가 상태가 될 수 있다.
+>
+> ```
+> // 올바른 구조
+> @Transactional
+> public ResponseXxx saveAndReturn(...) { ... DB 저장만 ... }
+>
+> public ResponseXxx handleRequest(...) {
+>     var result = saveAndReturn(...);   // 트랜잭션 종료
+>     fastApiClient.send(...);           // 트랜잭션 밖에서 FastAPI 호출
+>     return result;
+> }
+> ```
+>
+> `submitTextAnswer` / `endSession` 모두 동일 원칙 적용.
+
 - [ ] `InterviewSessionService.java`
   - [ ] `startSession(UUID memberId, RequestStartSession dto)` — 동시 세션 방어(IN_PROGRESS 중복 체크, **비관적 락 `SELECT FOR UPDATE`** 적용) + 세션 생성 + FastAPI 비동기 트리거
   - [ ] `submitTextAnswer(UUID memberId, String sessionId, RequestSubmitTextAnswer dto)` — 소유권 검증 + IN_PROGRESS 상태 확인 + 저장 + FastAPI 트리거
@@ -183,6 +200,8 @@ spring:
 > **Scale-out 메모**: v1은 단일 서버이므로 `ConcurrentHashMap<String, WebSocketSession>`으로 세션을 관리하면 충분하다.
 > 추후 서버가 여러 대로 늘어날 경우, 어떤 서버에 WebSocket 세션이 연결되어 있는지 추적하기 위해
 > Redis Pub/Sub 기반 메시지 브로드캐스트 구조로의 전환을 고려한다 (v1 단계에서는 구현 불필요).
+>
+> **REPORT_READY 유실 방지**: 클라이언트가 재연결될 때, 연결 직후 해당 세션의 `career_histories` 레코드 존재 여부(또는 `session_status = COMPLETED` + 피드백 존재 여부)를 DB에서 확인하여 이미 완료 상태라면 `REPORT_READY` 메시지를 즉시 재전송한다. 이렇게 하면 네트워크 순단으로 메시지를 놓친 사용자도 결과 페이지로 정상 진입할 수 있다.
 
 - [ ] Spring WebSocket 핸들러 구현 (`/ws/interview/{sessionId}/chat`)
 - [ ] 연결 시 `sessionId` 소유권 + 토큰 검증, 실패 시 Close 1008
@@ -205,6 +224,13 @@ spring:
   - [ ] `INTERVIEW_REPORT_NOT_READY` (409) — 리포트 생성 중 상태에서 `getReport` 호출 시
 
 ### Phase 8 — 검증
+
+> **우선 작성할 테스트 코드 3가지** — 아래 항목은 다른 기능 추가 중 실수로 깨뜨리기 쉬운 핵심 불변 규칙이다.
+> 나머지 검증 항목보다 먼저 JUnit 테스트로 작성해둔다.
+>
+> 1. `endSession` 멱등성 — 이미 `COMPLETED`인 세션 재종료 시 `INTERVIEW_SESSION_ALREADY_ENDED(400)` 반환 확인
+> 2. 소유권 검증 — 타인의 `sessionId`로 API 호출 시 `INTERVIEW_SESSION_FORBIDDEN(403)` 반환 확인
+> 3. `voiceQualityRatio` 조건부 null 처리 — `49.99`이면 delivery/fluency null, `50.00`이면 정상값 반환 확인
 
 - [ ] `checklist.md` 전 항목 셀프 체크
 - [ ] Swagger UI에서 전체 API 요청/응답 확인
