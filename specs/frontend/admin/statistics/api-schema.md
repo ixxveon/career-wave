@@ -57,7 +57,7 @@ interface RecentSubscriber {
 ### KPI 집계
 
 ```http
-GET /api/admin/statistics/summary
+GET /api/v1/admin/statistics/summary
 응답: ApiResponse<StatsSummary>
 ```
 
@@ -83,7 +83,7 @@ GET /api/admin/statistics/summary
 ### 월별 매출 추이
 
 ```http
-GET /api/admin/statistics/revenue/monthly
+GET /api/v1/admin/statistics/revenue/monthly
 응답: ApiResponse<MonthlyRevenue[]>
 ```
 
@@ -108,7 +108,7 @@ GET /api/admin/statistics/revenue/monthly
 ### 구독 유형별 매출 실적
 
 ```http
-GET /api/admin/statistics/revenue/breakdown
+GET /api/v1/admin/statistics/revenue/breakdown
 응답: ApiResponse<RevenueBreakdownItem[]>
 ```
 
@@ -119,7 +119,7 @@ GET /api/admin/statistics/revenue/breakdown
 ### 구독자 변동 추이
 
 ```http
-GET /api/admin/statistics/subscribers/monthly
+GET /api/v1/admin/statistics/subscribers/monthly
 응답: ApiResponse<MonthlySubscribers[]>
 ```
 
@@ -130,7 +130,7 @@ GET /api/admin/statistics/subscribers/monthly
 ### 최근 가입 피드
 
 ```http
-GET /api/admin/statistics/subscribers/recent
+GET /api/v1/admin/statistics/subscribers/recent
 응답: ApiResponse<RecentSubscriber[]>
 ```
 

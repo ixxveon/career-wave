@@ -55,7 +55,7 @@
 ## 1. KPI 집계 조회
 
 ```http
-GET /api/admin/reports/summary
+GET /api/v1/admin/reports/summary
 ```
 
 ### Response
@@ -94,7 +94,7 @@ GET /api/admin/reports/summary
 ## 2. 신고 목록 조회
 
 ```http
-GET /api/admin/reports
+GET /api/v1/admin/reports
 ```
 
 ### Query Parameters
@@ -148,7 +148,7 @@ GET /api/admin/reports
 ## 3. 신고 상세 조회
 
 ```http
-GET /api/admin/reports/{reportId}
+GET /api/v1/admin/reports/{reportId}
 ```
 
 ### Path Parameters
@@ -197,7 +197,7 @@ GET /api/admin/reports/{reportId}
 ## 4. 블라인드 처리
 
 ```http
-PATCH /api/admin/reports/{reportId}/blind
+PATCH /api/v1/admin/reports/{reportId}/blind
 ```
 
 ### Path Parameters
@@ -234,7 +234,7 @@ PATCH /api/admin/reports/{reportId}/blind
 ## 5. 기각 처리
 
 ```http
-PATCH /api/admin/reports/{reportId}/dismiss
+PATCH /api/v1/admin/reports/{reportId}/dismiss
 ```
 
 ### Path Parameters

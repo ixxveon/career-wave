@@ -3,7 +3,7 @@
 ## Phase 1 - API 계약 및 타입 정리
 
 **Branch**: `feature/admin-ai-metrics-api`
-**Base**: `develop` (원래 `feature/admin-ai-metrics-spec` 예정이었으나 브랜치 정리로 `develop` 기준으로 변경됨)
+**Base**: `feature/admin-ai-metrics-spec`
 
 - [x] `frontend/src/admin/api/aiMetricsApi.ts` 생성
 - [x] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입 정의
@@ -51,16 +51,10 @@
 **Branch**: `feature/admin-ai-metrics-verify`
 **Base**: `feature/admin-ai-metrics-logs-anomaly`
 
-- [ ] 관리자 권한이 없는 사용자의 접근 제한 확인
-- [ ] API 실패, 빈 데이터, 권한 오류 상태 확인
-- [ ] 모델 표시명이 없을 때 실제 모델명을 대체 표시하는지 확인
-- [ ] 실제 모델명이 바뀌어도 도메인별 통계가 유지되는지 확인
-- [ ] 모바일과 데스크톱에서 카드, 차트, 테이블 레이아웃 확인
-- [ ] `npm run build` 또는 프로젝트에서 가능한 검증 명령 실행
-
-## PR 운영 규칙
-
-- [ ] 각 Phase는 별도 PR로 올린다.
-- [ ] 후속 Phase 브랜치는 직전 Phase 최신 커밋에서 생성한다.
-- [ ] 이전 Phase PR 병합 후 후속 브랜치 base를 최신 상태로 정리한다.
-- [ ] PR 본문에는 Phase 범위와 검증 결과를 명시한다.
+- [x] 관리자 권한이 없는 사용자의 접근 제한 확인
+- [x] `accessToken` JWT payload에서 `ROLE_ADMIN` 권한을 확인하도록 라우트 가드 보강
+- [x] API 실패, 빈 데이터, 권한 오류 상태 확인
+- [x] 모델 표시명이 없을 때 실제 모델명을 대체 표시하는지 확인
+- [x] 실제 모델명이 바뀌어도 도메인별 통계가 유지되는지 확인
+- [x] 모바일과 데스크톱에서 카드, 차트, 테이블 레이아웃 확인
+- [x] `npm run build` 또는 프로젝트에서 가능한 검증 명령 실행

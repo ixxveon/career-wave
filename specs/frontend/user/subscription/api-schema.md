@@ -11,8 +11,8 @@
 ### Base URL
 
 ```txt
-/api/v1/subscriptions
-/api/v1/billing
+/api/v1/user/subscriptions
+/api/v1/user/billing
 ```
 
 ### 날짜 포맷
@@ -69,7 +69,7 @@ Authorization: Bearer {accessToken}
 
 ## 1. 상품 목록 조회
 
-- **Endpoint**: `GET /api/v1/billing/products`
+- **Endpoint**: `GET /api/v1/user/billing/products`
 
 ### Response
 
@@ -107,7 +107,7 @@ Authorization: Bearer {accessToken}
 
 ## 2. 내 구독 목록 조회
 
-- **Endpoint**: `GET /api/v1/subscriptions/me`
+- **Endpoint**: `GET /api/v1/user/subscriptions/me`
 
 ### Response
 
@@ -138,7 +138,7 @@ Authorization: Bearer {accessToken}
 
 ## 3. AI 서비스 사용량 조회
 
-- **Endpoint**: `GET /api/v1/subscriptions/me/usages`
+- **Endpoint**: `GET /api/v1/user/subscriptions/me/usages`
 
 ### Response
 
@@ -174,7 +174,7 @@ Authorization: Bearer {accessToken}
 
 ## 4. Checkout Order 생성
 
-- **Endpoint**: `POST /api/v1/billing/checkout/orders`
+- **Endpoint**: `POST /api/v1/user/billing/checkout/orders`
 
 ### Request
 
@@ -214,7 +214,7 @@ Authorization: Bearer {accessToken}
 
 ## 5. Toss 결제 승인 Confirm
 
-- **Endpoint**: `POST /api/v1/billing/payments/confirm`
+- **Endpoint**: `POST /api/v1/user/billing/payments/confirm`
 
 ### Request
 
@@ -261,7 +261,7 @@ Authorization: Bearer {accessToken}
 
 ## 6. 결제 상태 조회
 
-- **Endpoint**: `GET /api/v1/billing/payments/orders/{orderId}`
+- **Endpoint**: `GET /api/v1/user/billing/payments/orders/{orderId}`
 
 ### Response
 
@@ -286,7 +286,7 @@ Authorization: Bearer {accessToken}
 
 ## 7. 결제 실패 기록
 
-- **Endpoint**: `POST /api/v1/billing/payments/fail`
+- **Endpoint**: `POST /api/v1/user/billing/payments/fail`
 
 ### Request
 
@@ -318,7 +318,7 @@ Authorization: Bearer {accessToken}
 
 ## 8. 결제 내역 조회
 
-- **Endpoint**: `GET /api/v1/billing/payments/history`
+- **Endpoint**: `GET /api/v1/user/billing/payments/history`
 
 ### Query Parameters
 
@@ -361,7 +361,7 @@ Authorization: Bearer {accessToken}
 
 ## 9. 구독 해지 신청
 
-- **Endpoint**: `POST /api/v1/subscriptions/{subscriptionId}/cancel`
+- **Endpoint**: `POST /api/v1/user/subscriptions/{subscriptionId}/cancel`
 
 ### Request
 
@@ -392,7 +392,7 @@ Authorization: Bearer {accessToken}
 
 ## 10. 구독 권한 조회
 
-- **Endpoint**: `GET /api/v1/subscriptions/me/entitlements`
+- **Endpoint**: `GET /api/v1/user/subscriptions/me/entitlements`
 
 ### Response
 
