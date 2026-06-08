@@ -26,9 +26,11 @@ function createMockAdminAccessToken() {
   return `${toBase64Url(header)}.${toBase64Url(payload)}.${dummySignature}`;
 }
 
-function syncAdminToken(token: string, role: AdminDetailRole) {
+function syncAdminToken(token: string, role?: AdminDetailRole) {
   adminSession.setToken(token);
-  adminSession.setRole(role);
+  if (role) {
+    adminSession.setRole(role);
+  }
   window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
 }
 
