@@ -118,8 +118,6 @@ export interface AdminDashboardSummary {
   recentActivities: DashboardActivity[];
 }
 
-export type DashboardSummaryError = Error & { statusCode?: number };
-
 export function unwrapDashboardSummaryResponse(
   response: AxiosResponse<ApiResponse<AdminDashboardSummary>>
 ): AdminDashboardSummary;
@@ -130,9 +128,10 @@ export function unwrapDashboardSummaryResponse(
   const payload = 'success' in response ? response : response.data;
 
   if (!payload.success) {
-    const error = new Error(getDashboardSummaryErrorMessage(payload.message)) as DashboardSummaryError;
-    error.statusCode = payload.statusCode;
-    throw error;
+    throw {
+      statusCode: payload.statusCode,
+      message: getDashboardSummaryErrorMessage(payload.message),
+    };
   }
 
   return payload.data;
@@ -146,3 +145,5 @@ export const dashboardApi = {
   getSummary: (params?: DashboardSummaryParams) =>
     axiosInstance.get<ApiResponse<AdminDashboardSummary>>(`${DASHBOARD_API_BASE_PATH}/summary`, { params }),
 };
+
+export { axiosInstance };
