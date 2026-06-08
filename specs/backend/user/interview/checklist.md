@@ -56,7 +56,7 @@
 
 ### 리포트 생성
 - [ ] 리포트 생성이 완료될 때 `career_histories`에 레코드가 INSERT된다 (세션 종료 API 응답이 아닌 FastAPI 완료 콜백 시점).
-- [ ] `getReport` 호출 시 리포트가 아직 생성 중인 경우 `INTERVIEW_REPORT_NOT_READY`를 반환하며, HTTP 상태코드는 `설계 보완 포인트 A` 결정값을 따른다.
+- [ ] `getReport` 호출 시 리포트가 아직 생성 중인 경우 `INTERVIEW_REPORT_NOT_READY`를 반환하며, HTTP 상태코드는 **409 Conflict**이다.
 - [ ] `voiceQualityRatio < 50.00`인 피드백 항목의 `deliveryScore` / `fluencyScore`가 `null`로 반환된다.
 - [ ] `voiceQualityRatio`가 `null`인 피드백 항목의 `deliveryScore` / `fluencyScore`가 `null`로 반환된다.
 - [ ] 피드백이 `question_order ASC` 순으로 정렬되어 반환된다.
@@ -113,7 +113,22 @@
 
 ---
 
-## Phase 10 — 면접 도메인 핵심 시나리오 검증
+## Phase 10 — 테스트 코드
+
+> 이 도메인은 상태 머신·WebSocket·비동기 파이프라인이 얽혀 있어 테스트 코드 없이 유지보수가 어렵다.
+> Phase 4~6 구현 항목마다 테스트 작성 여부를 함께 체크한다.
+
+- [ ] `InterviewSessionService.startSession` — 정상 생성 / 중복 세션(409) 단위 테스트
+- [ ] `InterviewSessionService.endSession` — 정상 종료 / 멱등성(2회 호출 시 트리거 1회) / 이미 종료된 세션(400) 단위 테스트
+- [ ] `InterviewSessionService.submitTextAnswer` — 소유권 검증(403) / IN_PROGRESS 아닌 세션 거부 단위 테스트
+- [ ] `InterviewReportService.getReport` — 리포트 미완료(409) / voiceQualityRatio < 50 null 처리 단위 테스트
+- [ ] `InterviewHistoryService.getHistory` — 본인 기록만 반환 / 페이징 단위 테스트
+- [ ] FastAPI 콜백 처리 — `career_histories` INSERT 성공 / 실패 시 재시도 로그 기록 단위 테스트
+- [ ] WebSocket 핸들러 — 토큰 검증 실패(Close 1008) / 소유권 검증 실패(Close 1008) 통합 테스트
+
+---
+
+## Phase 11 — 면접 도메인 핵심 시나리오 검증
 
 > 기능 구현 완료 후 아래 시나리오를 수동 또는 통합 테스트로 검증한다.
 

@@ -160,6 +160,7 @@ FE → POST /answer/voice (Multipart) → Spring → FastAPI STT 파이프라인
 - [ ] 연결 시 `sessionId` 소유권 + 토큰 검증, 실패 시 Close 1008
 - [ ] `SYSTEM(SESSION_START)` / `QUESTION` / `SYSTEM(REPORT_READY)` / `ERROR` 메시지 전송 구현
 - [ ] FastAPI 리포트 완료 콜백 수신 후 `career_histories` INSERT + `REPORT_READY` 메시지 전송
+- [ ] FastAPI 콜백 처리 실패 시 재시도(Retry) 로직 구현 — `career_histories` INSERT 또는 WebSocket 전송 실패 시 Spring 트랜잭션 에러 로그 확인 및 재시도 전략 적용 (최소 1회 재시도 + 실패 로그 기록)
 - [ ] 클라이언트 비정상 종료(브라우저 닫기·네트워크 끊김) 감지 전략 수립 — `onClose` / heartbeat timeout 기준으로 `FAILED` 마킹 또는 로그 기록 여부 결정 (설계 보완 포인트 참고)
 
 ### Phase 7 — Security & ErrorCode
@@ -173,7 +174,7 @@ FE → POST /answer/voice (Multipart) → Spring → FastAPI STT 파이프라인
   - [ ] `INTERVIEW_INVALID_SESSION_TYPE` (400)
   - [ ] `INTERVIEW_DOCUMENT_NOT_FOUND` (404)
   - [ ] `INTERVIEW_SESSION_DUPLICATE` (409) — 동일 회원이 IN_PROGRESS 세션을 이미 보유한 경우
-  - [ ] `INTERVIEW_REPORT_NOT_READY` (설계 보완 포인트 A 결정 후 HTTP 상태코드 확정)
+  - [ ] `INTERVIEW_REPORT_NOT_READY` (409) — 리포트 생성 중 상태에서 `getReport` 호출 시
 
 ### Phase 8 — 검증
 

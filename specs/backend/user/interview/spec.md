@@ -333,6 +333,8 @@ WS /ws/interview/{sessionId}/chat?token={accessToken}
 | `INTERVIEW_SESSION_ALREADY_ENDED` | 400 | 이미 종료된 세션 재종료 시도 |
 | `INTERVIEW_INVALID_SESSION_TYPE` | 400 | 유효하지 않은 `sessionType` 값 |
 | `INTERVIEW_DOCUMENT_NOT_FOUND` | 404 | 유효하지 않은 `documentId` |
+| `INTERVIEW_SESSION_DUPLICATE` | 409 | 동일 회원이 `IN_PROGRESS` 세션을 이미 보유한 상태에서 신규 세션 시작 시도 |
+| `INTERVIEW_REPORT_NOT_READY` | 409 | 리포트 생성 중 상태에서 `getReport` 호출 |
 | `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
 
 ---

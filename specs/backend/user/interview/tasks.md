@@ -116,7 +116,7 @@
 - [ ] `submitTextAnswer(UUID memberId, String sessionId, RequestSubmitTextAnswer dto)`
   - [ ] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
   - [ ] 존재하지 않으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
-  - [ ] `InterviewMessage` 저장 (`sender = USER`, `message_type = ANSWER_TEXT`)
+  - [ ] `InterviewMessage` 저장 (`sender = USER`, `message_type = ANSWER`)
   - [ ] FastAPI LLM 파이프라인 비동기 트리거
   - [ ] `@Transactional` 적용
   - [ ] 반환: `ResponseSubmitTextAnswer`
@@ -189,6 +189,9 @@
   - [ ] `QUESTION` — AI 질문 전달 (FastAPI 콜백 수신 후 릴레이)
   - [ ] `SYSTEM(REPORT_READY)` — 리포트 생성 완료 알림
   - [ ] `ERROR` — 처리 오류 발생 시 클라이언트에 전송
+- [ ] FastAPI 콜백 처리 실패 시 재시도 로직
+  - [ ] `career_histories` INSERT 실패 시 최소 1회 재시도 + 실패 로그 기록
+  - [ ] `REPORT_READY` WebSocket 전송 실패 시 최소 1회 재시도 + 실패 로그 기록
 
 ---
 
@@ -204,6 +207,8 @@
   - [ ] `INTERVIEW_SESSION_ALREADY_ENDED` (400)
   - [ ] `INTERVIEW_INVALID_SESSION_TYPE` (400)
   - [ ] `INTERVIEW_DOCUMENT_NOT_FOUND` (404)
+  - [ ] `INTERVIEW_SESSION_DUPLICATE` (409) — 동일 회원이 `IN_PROGRESS` 세션을 이미 보유한 경우
+  - [ ] `INTERVIEW_REPORT_NOT_READY` (409) — 리포트 생성 중 상태에서 `getReport` 호출 시
   - [ ] 중복 선언 금지 — 기존 ErrorCode 재사용 여부 먼저 확인
 
 ---
