@@ -158,6 +158,9 @@ public class ResumeDTO {
         List<FeedbackDetail> feedbackDetails, // null: 분석 미완료, feedback_text JSON 파싱 결과
         ZonedDateTime createdAt
     ) {
+        // @JsonIgnoreProperties(ignoreUnknown = true) 적용 필수
+        // → FastAPI가 필드를 추가해도 Spring 서버 크래시 없이 알려진 필드만 매핑
+        @JsonIgnoreProperties(ignoreUnknown = true)
         public record FeedbackDetail(
             int sectionNumber,
             String question,
@@ -225,13 +228,17 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 
 #### uploadResume(UUID memberId, MultipartFile file)
 - 파일 크기 10MB 초과 → `INVALID_FILE_SIZE(400)`
-- 확장자 PDF·DOC·DOCX 외 (MIME type 기반 검증) → `INVALID_FILE_TYPE(400)`
+- 확장자 PDF·DOC·DOCX 외 → `INVALID_FILE_TYPE(400)`
+  - **MIME type 기반 검증 필수** — 확장자 위조 파일 차단 목적
+  - `Apache Tika` (`org.apache.tika`) 로 실제 파일 속성 검증 권장 (팀 합의 필요 시 명시)
+  - `ContentInfo` 또는 `Tika.detect(InputStream)` 으로 `application/pdf` 등 실제 MIME 확인
 - **검증 통과 후** UUID 기반 저장 파일명 생성 (`{UUID}.{확장자}`)
 - S3 저장 경로: `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — 날짜별 폴더로 파일 분산 관리
-- S3 업로드 후 `file_url`, `stored_file_name`, `original_name` 저장
+- S3 업로드 후 `file_url`, `original_name` 저장 (S3 Connection Timeout 3~5초 설정 필수)
 - `Document` 저장 (`status = UPLOADED`)
-- FastAPI 분석 트리거 호출 → 202 Accepted 기대
-- FastAPI 호출 실패(타임아웃·5xx) 시 → `document.status = FAILED` 마킹 + 에러 로그 기록
+- FastAPI 분석 트리거 비동기 호출 (`@Async` + `WebClient` 또는 별도 스레드)
+  - 동기 호출 시 반드시 Connection/Read Timeout 3초 이내 설정 — 미설정 시 FastAPI 지연이 Spring 전체 지연으로 전파
+  - 202 Accepted 기대, 호출 실패(타임아웃·5xx) 시 → `document.status = FAILED` 마킹 + 에러 로그 기록
 - 반환: `ResumeDTO.ResponseUpload`
 
 #### submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto)
