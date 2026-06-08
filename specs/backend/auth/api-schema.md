@@ -104,7 +104,10 @@
       "restrictionType": "SUSPENDED",
       "recoverable": true,
       "availableAt": "2026-06-16T00:00:00Z",
-      "messageCode": "ACCOUNT_RESTRICTED"
+      "messageCode": "ACCOUNT_RESTRICTED",
+      "reason": "커뮤니티 운영정책 위반",
+      "startedAt": "2026-06-09T00:00:00Z",
+      "duration": "SEVEN_DAYS"
     }
   }
 }
@@ -124,6 +127,9 @@
 | restriction.recoverable | SUSPENDED / LOCKED → `true`, BANNED / WITHDRAWN → `false` |
 | restriction.availableAt | LOCKED: members.locked_until, SUSPENDED: suspend_histories.end_date (NULL = 영구정지) |
 | restriction.messageCode | 고정값 `"ACCOUNT_RESTRICTED"` |
+| restriction.reason | suspend_histories.reason (최근 이력 1건, BANNED/WITHDRAWN도 포함) |
+| restriction.startedAt | suspend_histories.start_date (LOCKED는 null) |
+| restriction.duration | suspend_histories.duration — `THREE_DAYS` / `SEVEN_DAYS` / `THIRTY_DAYS` / `PERMANENT` (SUSPEND일 때만, 그 외 null) |
 
 ---
 
