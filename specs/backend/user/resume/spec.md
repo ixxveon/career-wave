@@ -104,9 +104,14 @@ user/resume/
 │   └── DocumentStatus.java
 └── docs/
     └── ResumeControllerDocs.java
+
+global/websocket/               ← resume + interview 공통 WebSocket 인프라
+├── WebSocketConfig.java        (STOMP 엔드포인트 등록, 토픽 prefix 설정)
+├── StompChannelInterceptor.java (JWT 검증, Authentication 주입)
+└── WebSocketEventListener.java  (연결·구독·해제 이벤트 처리)
 ```
 
-> WebSocket 핸들러는 `global/websocket/` 또는 별도 패키지 분리 여부를 구현 시 팀 협의.
+> WebSocket 설정·인터셉터는 `global/websocket/`에 위치 — interview 도메인(실시간 텍스트 면접)에서도 WebSocket을 사용하므로 공통 인프라로 분리 확정.
 
 ---
 
