@@ -19,13 +19,16 @@
 ## 이력서 업로드 (`POST .../upload`)
 
 - [ ] 파일 크기 10MB 초과 시 `INVALID_FILE_SIZE(400)` 반환
-- [ ] PDF·DOC·DOCX 외 파일 타입(MIME type 기반) 시 `INVALID_FILE_TYPE(400)` 반환
+- [ ] PDF·DOC·DOCX 외 파일 타입 시 `INVALID_FILE_TYPE(400)` 반환
+- [ ] MIME type 검증이 확장자가 아닌 실제 파일 속성(`Apache Tika` 또는 Magic Number) 기반으로 수행된다
 - [ ] 검증 실패 시 S3 업로드가 수행되지 않는다
 - [ ] S3 저장 파일명이 `{UUID}.{확장자}` 형식이며 `original_name`을 S3 키로 사용하지 않는다
 - [ ] S3 저장 경로가 `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` 형식이다 (루트 직접 저장 금지)
-- [ ] `stored_file_name`, `file_url`, `original_name` 세 컬럼이 각각 올바르게 저장된다
+- [ ] `file_url`, `original_name` 컬럼이 각각 올바르게 저장된다
+- [ ] S3 업로드 Connection/Read Timeout이 3~5초 이내로 설정되어 있다
 - [ ] S3 업로드 성공 후 `Document` 저장 (`status = UPLOADED`)
-- [ ] FastAPI 분석 트리거가 비동기로 수행된다 (업로드 응답 지연 없음)
+- [ ] FastAPI 분석 트리거가 비동기(`@Async` 또는 `WebClient`)로 수행된다 (업로드 응답 지연 없음)
+- [ ] 동기 호출 선택 시 Connection/Read Timeout이 3초 이내로 설정되어 있다
 - [ ] 응답에 `documentId` (UUID), `fileUrl`, `originalName`, `fileType`, `status`, `createdAt` 포함
 
 ---

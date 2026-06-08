@@ -44,13 +44,15 @@
 
 - [ ] `ResumeDTO.ResponseUpload` 작성
 - [ ] 파일 MIME type 기반 확장자 검증 유틸 작성 (PDF·DOC·DOCX)
-  - 단순 확장자(.pdf) 체크는 우회 가능 — 파일 Magic Number 또는 Apache Tika로 실제 MIME 검증 권장
+  - `Apache Tika` (`Tika.detect(InputStream)`)로 실제 파일 속성 검증 — 확장자 위조 차단 (팀 합의 필요)
+  - Tika 미사용 시 Magic Number(파일 앞 바이트) 기반 검증으로 대체
 - [ ] 파일 크기 10MB 초과 검증
 - [ ] UUID 기반 저장 파일명 생성 유틸 작성 (`{UUID}.{확장자}`)
 - [ ] S3 경로 생성 로직 작성 (`resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — `LocalDate.now()` 활용)
-- [ ] S3 업로드 로직 구현 — `stored_file_name` 사용, `original_name` DB 별도 저장
+- [ ] S3 업로드 로직 구현 — `original_name` DB 별도 저장, S3 Connection/Read Timeout 3~5초 설정
 - [ ] `Document` 저장 (`status = UPLOADED`, `file_type = RESUME`)
-- [ ] FastAPI 분석 트리거 (비동기, 스텁 → 실제 연동)
+- [ ] FastAPI 분석 트리거 — `@Async` + `WebClient` 비동기 호출 (스텁 → 실제 연동)
+  - 동기 호출 선택 시 Connection/Read Timeout 3초 이내 필수 설정
 - [ ] `ResumeController.uploadResume()` 구현
 - [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
 
