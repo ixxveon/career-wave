@@ -61,6 +61,10 @@ type AiUsageRiskLevel = 'NORMAL' | 'WARNING' | 'CRITICAL';
 type RagIndexStatus = 'SYNCED' | 'INDEXING' | 'FAILED' | 'DELETING';
 ```
 
+- 상태 전이:
+  - `SYNCED | FAILED -> DELETING -> (삭제 성공 시 목록에서 제거)`
+  - `DELETING -> FAILED` (삭제 실패 시)
+
 ## GET /summary
 
 전체 AI 사용량 요약을 조회한다.
