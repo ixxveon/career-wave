@@ -81,3 +81,4 @@
 - Entity를 API 응답으로 직접 반환하는 것을 금지한다.
 - 음성 청크 전달(외부 I/O)을 `@Transactional` 범위 안에 포함하는 것을 금지한다.
 - `new RuntimeException(...)`을 직접 생성하는 것을 금지한다. `CustomException(ErrorCode.xxx)` 사용.
+- Entity 간 양방향 관계 매핑 시 순환 참조를 유발하는 것을 금지한다. `InterviewSession` ↔ `InterviewMessage` 등 양방향 매핑이 필요한 경우, `toString()` 및 JSON 직렬화에서 무한 루프가 발생하지 않도록 `@JsonIgnore` 또는 `@JsonManagedReference` / `@JsonBackReference`를 사전에 적용한다. 미적용 시 리포트 조회 등에서 `StackOverflowError`가 발생한다.
