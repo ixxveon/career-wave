@@ -254,10 +254,12 @@
   white-space: nowrap;
 }
 
-.cw-header__account a {
+.cw-header__account a,
+.cw-header__account button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   min-width: 72px;
   height: 38px;
   padding: 0 16px;
@@ -265,6 +267,9 @@
   border-radius: 8px;
   color: #304664;
   background: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 .cw-header__account a.is-primary {
@@ -344,12 +349,6 @@
   .cw-header__account {
     gap: 6px;
   }
-
-  .cw-header__account a {
-    min-width: auto;
-    padding: 0 12px;
-    font-size: 12px;
-  }
 }
 
 @media (max-width: 520px) {
@@ -369,12 +368,6 @@
 
   .cw-header__account {
     gap: 5px;
-  }
-
-  .cw-header__account a {
-    height: 34px;
-    padding: 0 9px;
-    font-size: 11px;
   }
 
   .cw-header__account a.is-primary {
