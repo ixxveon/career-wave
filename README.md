@@ -48,6 +48,11 @@ npm install
 npm run dev
 ```
 
+| 플랫폼 | URL |
+| :--- | :--- |
+| 사용자 | http://localhost:5173 |
+| 관리자 | http://localhost:5173/admin |
+
 ### FastAPI
 ```bash
 cd fastapi
