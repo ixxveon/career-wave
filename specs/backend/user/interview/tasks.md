@@ -20,39 +20,50 @@
   - [ ] `AI` / `USER`
 
 - [ ] `MessageType.java` Enum
-  - [ ] `QUESTION` / `ANSWER_TEXT` / `ANSWER_VOICE` / `SYSTEM`
+  - [ ] `QUESTION` / `ANSWER` / `SYSTEM`
 
 - [ ] `InterviewSession.java` Entity
-  - [ ] `session_id` UUID PK (`@GeneratedValue` 전략 UUID 사용)
-  - [ ] `member_id` UUID (FK, nullable false)
-  - [ ] `document_id` UUID (nullable)
+  - [ ] `session_id` UUID PK (DB DEFAULT gen_random_uuid())
+  - [ ] `member_id` UUID nullable — 비회원 세션 허용
+  - [ ] `document_id` UUID nullable
   - [ ] `session_type` SessionType Enum (`@Enumerated(EnumType.STRING)`)
   - [ ] `session_status` SessionStatus Enum (`@Enumerated(EnumType.STRING)`)
-  - [ ] `interview_type` InterviewType Enum (nullable)
-  - [ ] `target_company` VARCHAR(100) (nullable)
-  - [ ] `total_score` INT (nullable)
-  - [ ] `started_at` / `ended_at` / `created_at` ZonedDateTime
+  - [ ] `interview_type` InterviewType Enum nullable
+  - [ ] `target_company` VARCHAR(100) nullable
+  - [ ] `total_score` INTEGER nullable
+  - [ ] `started_at` / `ended_at` / `created_at` / `updated_at` ZonedDateTime
   - [ ] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
   - [ ] `complete(ZonedDateTime endedAt)` 상태 전이 메서드
 
 - [ ] `InterviewMessage.java` Entity
   - [ ] `message_id` BIGSERIAL PK
-  - [ ] `session_id` UUID FK
-  - [ ] `sender` MessageSender Enum
-  - [ ] `message_type` MessageType Enum
-  - [ ] `message_content` TEXT
-  - [ ] `created_at` ZonedDateTime
+  - [ ] `session_id` UUID NOT NULL FK
+  - [ ] `sender` MessageSender Enum NOT NULL
+  - [ ] `message_type` MessageType Enum NOT NULL (`QUESTION` / `ANSWER` / `SYSTEM`)
+  - [ ] `message_content` TEXT NOT NULL
+  - [ ] `created_at` ZonedDateTime NOT NULL
   - [ ] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
 
 - [ ] `AIInterviewFeedback.java` Entity
-  - [ ] `feedback_id` BIGSERIAL PK
-  - [ ] `session_id` UUID FK
-  - [ ] `question_order` INT
-  - [ ] `question_text` / `answer_text` TEXT
-  - [ ] `relevance_score` / `depth_score` / `delivery_score` / `fluency_score` INT (nullable)
-  - [ ] `voice_quality_ratio` DECIMAL(5,2) (nullable)
-  - [ ] `ai_feedback` TEXT
-  - [ ] `created_at` ZonedDateTime
+  - [ ] `interviewFeedbackId` BIGSERIAL PK (컬럼명 `interview_feedback_id`)
+  - [ ] `session_id` UUID NOT NULL FK
+  - [ ] `question_order` INTEGER NOT NULL
+  - [ ] `question_text` / `answer_text` TEXT NOT NULL
+  - [ ] `relevance_score` / `depth_score` / `delivery_score` / `fluency_score` INTEGER nullable, CHECK (0~100)
+  - [ ] `voice_quality_ratio` DECIMAL(5,2) nullable, CHECK (0.00~100.00)
+  - [ ] `ai_feedback` TEXT nullable
+  - [ ] `created_at` ZonedDateTime NOT NULL
+  - [ ] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
+
+- [ ] `CareerHistory.java` Entity
+  - [ ] `career_history_id` BIGSERIAL PK
+  - [ ] `member_id` UUID NOT NULL FK
+  - [ ] `session_id` UUID NOT NULL FK
+  - [ ] `document_id` UUID nullable FK
+  - [ ] `total_score` INTEGER nullable
+  - [ ] `feedback` TEXT nullable
+  - [ ] `pdf_url` VARCHAR(500) nullable
+  - [ ] `created_at` ZonedDateTime NOT NULL
   - [ ] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
 
 ---
@@ -68,7 +79,7 @@
   - [ ] `ResponseEndSession` — sessionId / sessionStatus / endedAt
   - [ ] `FeedbackItem` — questionOrder / questionText / answerText / relevanceScore / depthScore / deliveryScore(nullable) / fluencyScore(nullable) / voiceQualityRatio(nullable) / aiFeedback / createdAt
   - [ ] `ResponseReport` — sessionId / sessionStatus / sessionType / totalScore(nullable) / feedbacks / createdAt
-  - [ ] `HistoryItem` — sessionId / sessionType / interviewType(nullable) / targetCompany(nullable) / sessionStatus / totalScore(nullable) / createdAt
+  - [ ] `HistoryItem` — careerHistoryId / sessionId / sessionType / interviewType(nullable) / targetCompany(nullable) / sessionStatus / totalScore(nullable) / pdfUrl(nullable) / createdAt
 
 ---
 
@@ -77,13 +88,16 @@
 - [ ] `InterviewSessionRepository.java`
   - [ ] `findBySessionId(UUID sessionId)` — 단순 조회
   - [ ] `findBySessionIdAndMemberId(UUID sessionId, UUID memberId)` — 소유권 검증용
-  - [ ] `findByMemberIdOrderByCreatedAtDesc(UUID memberId, Pageable pageable)` — 이력 페이징
 
 - [ ] `InterviewMessageRepository.java`
   - [ ] `findBySessionIdOrderByCreatedAtAsc(UUID sessionId)` — 세션 메시지 전체 조회
 
 - [ ] `AIInterviewFeedbackRepository.java`
   - [ ] `findBySessionIdOrderByQuestionOrderAsc(UUID sessionId)` — 리포트 피드백 조회
+
+- [ ] `CareerHistoryRepository.java`
+  - [ ] `findByMemberIdOrderByCreatedAtDesc(UUID memberId, Pageable pageable)` — 이력 페이징
+  - [ ] `findByMemberIdAndSessionId(UUID memberId, UUID sessionId)` — 단건 조회
 
 ---
 
@@ -134,8 +148,9 @@
 ### InterviewHistoryService
 
 - [ ] `getHistory(UUID memberId, int page, int size)`
-  - [ ] `member_id = memberId` 필터 필수 (타인 조회 차단)
-  - [ ] `created_at DESC` 정렬, PageRequest 0-based
+  - [ ] `career_histories` 기반 조회 — `member_id = memberId` 필터 필수 (타인 조회 차단)
+  - [ ] `interview_sessions` JOIN — `session_type` / `interview_type` / `target_company` / `session_status` 취득
+  - [ ] `career_histories.created_at DESC` 정렬, PageRequest 0-based
   - [ ] 반환: `PaginationResponse<HistoryItem>`
 
 ---

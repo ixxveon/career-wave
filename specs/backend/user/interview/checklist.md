@@ -10,8 +10,14 @@
 - [ ] `SessionType` / `SessionStatus` / `InterviewType` / `MessageSender` / `MessageType` Enum이 `type/` 패키지에 선언되어 있다.
 - [ ] 모든 Enum 필드에 `@Enumerated(EnumType.STRING)`이 적용되어 있다.
 - [ ] `InterviewSession` Entity에 `@NoArgsConstructor(access = AccessLevel.PROTECTED)`가 있다.
-- [ ] `InterviewSession.session_id`가 UUID 타입으로 선언되어 있다.
+- [ ] `InterviewSession.session_id`가 UUID 타입으로 선언되어 있고, DB DEFAULT `gen_random_uuid()`를 사용한다.
+- [ ] `InterviewSession.member_id`가 nullable로 선언되어 있다 (비회원 세션 허용).
+- [ ] `InterviewSession.updated_at` 필드가 선언되어 있다.
 - [ ] `InterviewSession`의 상태 변경이 `complete()` 등 의미 있는 메서드로만 수행된다.
+- [ ] `InterviewMessage.message_type`이 `QUESTION` / `ANSWER` / `SYSTEM` 3종으로 선언되어 있다 (`ANSWER_TEXT`·`ANSWER_VOICE` 없음).
+- [ ] `AIInterviewFeedback` Entity의 PK 필드명이 `interviewFeedbackId` (컬럼명 `interview_feedback_id`)이다.
+- [ ] `AIInterviewFeedback.ai_feedback`이 nullable이다.
+- [ ] `CareerHistory` Entity가 `career_histories` 테이블과 매핑되어 있다.
 - [ ] Entity 필드에 public setter가 없다.
 
 ---
@@ -44,7 +50,9 @@
 - [ ] `voiceQualityRatio < 50.00`인 피드백 항목의 `deliveryScore` / `fluencyScore`가 `null`로 반환된다.
 - [ ] `voiceQualityRatio`가 `null`인 피드백 항목의 `deliveryScore` / `fluencyScore`가 `null`로 반환된다.
 - [ ] 피드백이 `question_order ASC` 순으로 정렬되어 반환된다.
-- [ ] 이력 목록이 `created_at DESC` 최신순으로 반환된다.
+- [ ] 이력 목록이 `career_histories.created_at DESC` 최신순으로 반환된다.
+- [ ] 이력 목록이 `career_histories` 기반으로 조회되며, `interview_sessions` JOIN으로 세션 정보를 가져온다.
+- [ ] 이력 목록에서 본인(`career_histories.member_id`) 기록만 반환된다.
 
 ---
 

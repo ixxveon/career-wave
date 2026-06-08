@@ -333,21 +333,25 @@ Authorization: Bearer {accessToken}
   "data": {
     "content": [
       {
+        "careerHistoryId": 1,
         "sessionId": "uuid-v4",
         "sessionType": "VOICE",
         "interviewType": "TECHNICAL",
         "targetCompany": "카카오",
         "sessionStatus": "COMPLETED",
         "totalScore": 78,
+        "pdfUrl": "https://s3.amazonaws.com/.../report.pdf",
         "createdAt": "2026-05-29T14:53:44Z"
       },
       {
+        "careerHistoryId": 2,
         "sessionId": "uuid-v4-2",
         "sessionType": "TEXT",
         "interviewType": "PERSONALITY",
         "targetCompany": null,
         "sessionStatus": "COMPLETED",
         "totalScore": 82,
+        "pdfUrl": null,
         "createdAt": "2026-05-28T10:20:00Z"
       }
     ],
@@ -364,6 +368,7 @@ Authorization: Bearer {accessToken}
 | `data.content[].interviewType` | `String` \| `null` | 미입력 시 `null` |
 | `data.content[].targetCompany` | `String` \| `null` | 미입력 시 `null` |
 | `data.content[].totalScore` | `Integer` \| `null` | 리포트 미완료 또는 `FAILED` 시 `null` |
+| `data.content[].pdfUrl` | `String` \| `null` | 종합 진단 PDF URL (S3), 미생성 시 `null` |
 
 ### Error Cases
 

@@ -48,11 +48,10 @@ AI 파이프라인(STT·LLM·TTS)은 FastAPI 서버가 전담한다.
 - [ ] `InterviewType.java` Enum — `TECHNICAL` / `PERSONALITY` / `PROJECT`
 - [ ] `MessageSender.java` Enum — `AI` / `USER`
 - [ ] `MessageType.java` Enum — `QUESTION` / `ANSWER_TEXT` / `ANSWER_VOICE` / `SYSTEM`
-- [ ] `InterviewSession.java` Entity
-  - `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
-  - `session_id` UUID, `session_status` 변경은 의미 있는 메서드로 처리
-- [ ] `InterviewMessage.java` Entity
-- [ ] `AIInterviewFeedback.java` Entity
+- [ ] `InterviewSession.java` Entity — `member_id` nullable, `updated_at` 포함
+- [ ] `InterviewMessage.java` Entity — `message_type`: `QUESTION` / `ANSWER` / `SYSTEM`
+- [ ] `AIInterviewFeedback.java` Entity — PK `interview_feedback_id`, `ai_feedback` nullable
+- [ ] `CareerHistory.java` Entity — 이력 누적 보관 테이블
 
 ### Phase 2 — DTO 정의
 
@@ -71,11 +70,12 @@ AI 파이프라인(STT·LLM·TTS)은 FastAPI 서버가 전담한다.
 
 - [ ] `InterviewSessionRepository.java`
   - [ ] `findBySessionIdAndMemberId(UUID sessionId, UUID memberId)` — 소유권 검증용
-  - [ ] `findByMemberIdOrderByCreatedAtDesc(UUID memberId, Pageable pageable)` — 이력 페이징
 - [ ] `InterviewMessageRepository.java`
   - [ ] `findBySessionIdOrderByCreatedAtAsc(UUID sessionId)` — 세션 메시지 조회
 - [ ] `AIInterviewFeedbackRepository.java`
   - [ ] `findBySessionIdOrderByQuestionOrderAsc(UUID sessionId)` — 리포트 피드백 조회
+- [ ] `CareerHistoryRepository.java`
+  - [ ] `findByMemberIdOrderByCreatedAtDesc(UUID memberId, Pageable pageable)` — 이력 페이징
 
 ### Phase 4 — Service 구현
 

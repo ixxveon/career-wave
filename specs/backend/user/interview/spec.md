@@ -23,47 +23,61 @@
 
 ### interview_sessions
 
-| 컬럼 | 타입 | 설명 |
-|------|------|------|
-| `session_id` | UUID PK | 외부 노출 식별자 (UUID) |
-| `member_id` | UUID FK | 소유 회원 |
-| `document_id` | UUID NULL | RAG 컨텍스트용 서류 참조 (없으면 NULL) |
-| `session_type` | VARCHAR(10) | `TEXT` \| `VOICE` \| `VIDEO` |
-| `session_status` | VARCHAR(20) | `IN_PROGRESS` \| `COMPLETED` \| `FAILED` |
-| `interview_type` | VARCHAR(20) NULL | `TECHNICAL` \| `PERSONALITY` \| `PROJECT` |
-| `target_company` | VARCHAR(100) NULL | 준비 대상 기업명 |
-| `total_score` | INT NULL | 종합 점수 (리포트 완료 후 산정) |
-| `started_at` | TIMESTAMPTZ NULL | 면접 시작 시각 |
-| `ended_at` | TIMESTAMPTZ NULL | 면접 종료 시각 |
-| `created_at` | TIMESTAMPTZ | 세션 생성 시각 |
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| `session_id` | UUID | PK, DEFAULT gen_random_uuid() | 면접 세션 고유 식별자 |
+| `member_id` | UUID | NULL | 회원 FK (비회원 세션 허용) |
+| `document_id` | UUID | NULL | RAG 컨텍스트용 서류 FK |
+| `session_type` | VARCHAR(10) | NOT NULL | `TEXT` \| `VOICE` \| `VIDEO` |
+| `session_status` | VARCHAR(20) | NOT NULL, DEFAULT 'IN_PROGRESS' | `IN_PROGRESS` \| `COMPLETED` \| `FAILED` |
+| `interview_type` | VARCHAR(20) | NULL | `TECHNICAL` \| `PERSONALITY` \| `PROJECT` |
+| `target_company` | VARCHAR(100) | NULL | 준비 대상 기업명 |
+| `total_score` | INTEGER | NULL | 종합 점수 (리포트 완료 후 산정) |
+| `started_at` | TIMESTAMPTZ | NULL | 면접 시작 일시 |
+| `ended_at` | TIMESTAMPTZ | NULL | 면접 종료 일시 |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 세션 생성 일시 |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 상태·점수 변경 일시 |
 
 ### interview_messages
 
-| 컬럼 | 타입 | 설명 |
-|------|------|------|
-| `message_id` | BIGSERIAL PK | 메시지 식별자 |
-| `session_id` | UUID FK | 소속 세션 |
-| `sender` | VARCHAR(10) | `AI` \| `USER` |
-| `message_type` | VARCHAR(20) | `QUESTION` \| `ANSWER_TEXT` \| `ANSWER_VOICE` \| `SYSTEM` |
-| `message_content` | TEXT | 메시지 본문 |
-| `created_at` | TIMESTAMPTZ | 생성 시각 |
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| `message_id` | BIGSERIAL | PK | 메시지 식별자 |
+| `session_id` | UUID | NOT NULL | 소속 세션 FK |
+| `sender` | VARCHAR(10) | NOT NULL | `AI` \| `USER` |
+| `message_type` | VARCHAR(20) | NOT NULL | `QUESTION` \| `ANSWER` \| `SYSTEM` |
+| `message_content` | TEXT | NOT NULL | 메시지 본문 |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 메시지 전송 일시 |
 
 ### ai_interview_feedbacks
 
-| 컬럼 | 타입 | 설명 |
-|------|------|------|
-| `feedback_id` | BIGSERIAL PK | 피드백 식별자 |
-| `session_id` | UUID FK | 소속 세션 |
-| `question_order` | INT | 질문 순서 (1-based) |
-| `question_text` | TEXT | 질문 본문 |
-| `answer_text` | TEXT | 답변 본문 (STT 변환 결과 포함) |
-| `relevance_score` | INT NULL | 직무 연관성 (0~100) |
-| `depth_score` | INT NULL | 답변 깊이 (0~100) |
-| `delivery_score` | INT NULL | 전달력 — 음성 품질 미달 시 NULL |
-| `fluency_score` | INT NULL | 유창성 — 음성 품질 미달 시 NULL |
-| `voice_quality_ratio` | DECIMAL(5,2) NULL | 음성 인식 유효 비율 (0.00~100.00), 텍스트 면접 시 NULL |
-| `ai_feedback` | TEXT | AI 피드백 본문 |
-| `created_at` | TIMESTAMPTZ | 생성 시각 |
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| `interview_feedback_id` | BIGSERIAL | PK | 피드백 고유 식별자 |
+| `session_id` | UUID | NOT NULL | 소속 세션 FK |
+| `question_order` | INTEGER | NOT NULL | 질문 순서 (1-based) |
+| `question_text` | TEXT | NOT NULL | 질문 본문 |
+| `answer_text` | TEXT | NOT NULL | 답변 본문 (STT 변환 결과 포함) |
+| `relevance_score` | INTEGER | NULL, CHECK (0~100) | 직무 연관성 점수 |
+| `depth_score` | INTEGER | NULL, CHECK (0~100) | 답변 깊이 점수 |
+| `delivery_score` | INTEGER | NULL, CHECK (0~100) | 전달력 점수 — 텍스트 면접 또는 음성 품질 미달 시 NULL |
+| `fluency_score` | INTEGER | NULL, CHECK (0~100) | 유창성 점수 — 텍스트 면접 또는 음성 품질 미달 시 NULL |
+| `voice_quality_ratio` | DECIMAL(5,2) | NULL, CHECK (0.00~100.00) | 음성 인식 유효 비율 — 텍스트 면접 시 NULL |
+| `ai_feedback` | TEXT | NULL | 질문별 AI 피드백 |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 생성 일시 |
+
+### career_histories
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| `career_history_id` | BIGSERIAL | PK | 기록 고유 식별자 |
+| `member_id` | UUID | NOT NULL | 회원 FK |
+| `session_id` | UUID | NOT NULL | 면접 세션 FK |
+| `document_id` | UUID | NULL | 연결 서류 FK |
+| `total_score` | INTEGER | NULL | 최종 종합 점수 |
+| `feedback` | TEXT | NULL | AI 종합 피드백 |
+| `pdf_url` | VARCHAR(500) | NULL | 종합 진단 PDF URL (S3) |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 기록 생성 일시 |
 
 ---
 
@@ -82,11 +96,13 @@ user/interview/
 ├── repository/
 │   ├── InterviewSessionRepository.java
 │   ├── InterviewMessageRepository.java
-│   └── AIInterviewFeedbackRepository.java
+│   ├── AIInterviewFeedbackRepository.java
+│   └── CareerHistoryRepository.java
 ├── entity/
 │   ├── InterviewSession.java
 │   ├── InterviewMessage.java
-│   └── AIInterviewFeedback.java
+│   ├── AIInterviewFeedback.java
+│   └── CareerHistory.java
 ├── type/
 │   ├── SessionType.java
 │   ├── SessionStatus.java
@@ -176,14 +192,16 @@ public class InterviewDTO {
         ZonedDateTime createdAt
     ) {}
 
-    // 이력 목록 항목
+    // 이력 목록 항목 (career_histories 기반)
     public record HistoryItem(
+        Long careerHistoryId,
         String sessionId,
         String sessionType,
         String interviewType,        // nullable
         String targetCompany,        // nullable
         String sessionStatus,
-        Integer totalScore,          // 리포트 미완료 또는 FAILED 시 null
+        Integer totalScore,          // nullable
+        String pdfUrl,               // nullable — 종합 진단 PDF URL
         ZonedDateTime createdAt
     ) {}
 }
@@ -229,7 +247,7 @@ GET /api/v1/user/interview/sessions/{sessionId}/report
 ```http
 GET /api/v1/user/interview/history?page=0&size=10
     → ApiResponse<PaginationResponse<InterviewDTO.HistoryItem>>
-    본인 세션만 created_at DESC 페이징 반환
+    career_histories 기반 본인 기록만 created_at DESC 페이징 반환
 ```
 
 ---
@@ -247,7 +265,7 @@ GET /api/v1/user/interview/history?page=0&size=10
 
 #### submitTextAnswer(UUID memberId, String sessionId, RequestSubmitTextAnswer dto)
 - `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-- `InterviewMessage` 저장 (`sender = USER`, `message_type = ANSWER_TEXT`)
+- `InterviewMessage` 저장 (`sender = USER`, `message_type = ANSWER`)
 - FastAPI WebSocket으로 LLM 파이프라인 트리거 (비동기)
 - `@Transactional` 적용
 - 반환: `ResponseSubmitTextAnswer`
@@ -279,8 +297,9 @@ GET /api/v1/user/interview/history?page=0&size=10
 ### InterviewHistoryService
 
 #### getHistory(UUID memberId, int page, int size)
-- `member_id = memberId` 필터 필수 (타인 조회 차단)
-- `created_at DESC`, 페이징 처리
+- `career_histories` 기반 조회 — `member_id = memberId` 필터 필수 (타인 조회 차단)
+- `interview_sessions` JOIN — `session_type` / `interview_type` / `target_company` / `session_status` 취득
+- `career_histories.created_at DESC`, 페이징 처리
 - 반환: `PaginationResponse<HistoryItem>`
 
 ---
