@@ -101,6 +101,8 @@
 - [ ] 응답 필드명이 FE `api-schema.md` 계약과 일치한다 (`sessionId`, `sessionStatus`, `sessionType` 등 camelCase).
 - [ ] 날짜 포맷이 ISO 8601 형식으로 반환된다 (`ZonedDateTime` → JSON 직렬화 확인).
 - [ ] 이력 목록의 `page` / `size` / `totalElements` / `totalPages` 필드가 응답에 포함된다.
+- [ ] `POST /end` API의 멱등성 검증 — 동일 `sessionId`로 2회 이상 호출해도 리포트 생성 트리거가 1회만 동작하는지 확인.
+- [ ] `IN_PROGRESS` 세션 중복 방지 — 동일 회원이 `startSession`을 2번 호출했을 때 `409 INTERVIEW_SESSION_DUPLICATE`가 반환되는지 확인.
 
 ---
 

@@ -63,7 +63,8 @@ FE는 결과 페이지 진입 시 Spring WebSocket의 `REPORT_READY` 이벤트�
 ```
 
 - `endSession` 응답은 `sessionStatus: "COMPLETED"`만 반환 (별도 PROCESSING 상태 없음)
-- `getReport` 미완료 시 `INTERVIEW_REPORT_NOT_READY` 에러 반환 (HTTP 상태코드는 구현 시 확정)
+- `endSession`은 멱등성을 보장한다 — 이미 `COMPLETED` 세션이면 리포트 트리거 없이 즉시 기존 응답 반환 (`if (session.isCompleted()) return;`)
+- `getReport` 미완료 시 `INTERVIEW_REPORT_NOT_READY` 에러 반환 — **HTTP 409 Conflict** ("리소스가 생성 중이라 처리할 수 없음")
 
 ### B. 답변 메시지 순서 무결성
 
@@ -78,6 +79,10 @@ FE 스펙이 `POST /answer/voice` Multipart 전송으로 확정되어 있으므�
 ```
 FE → POST /answer/voice (Multipart) → Spring → FastAPI STT 파이프라인
 ```
+
+> **구현 시 주의**: `spring.servlet.multipart.max-file-size` 설정과 임시 파일 처리 전략을 반드시 사전 설정할 것.
+> 면접은 스트리밍에 가까워 청크가 연속 업로드되므로, Spring의 MultipartFile 임시 파일이 메모리를 점유하지 않도록
+> `max-file-size` / `max-request-size` 적정값과 디스크 기반 임시 저장 여부를 확인한다.
 
 ---
 
@@ -125,7 +130,7 @@ FE → POST /answer/voice (Multipart) → Spring → FastAPI STT 파이프라인
   - [ ] `startSession(UUID memberId, RequestStartSession dto)` — 동시 세션 방어(IN_PROGRESS 중복 체크) + 세션 생성 + FastAPI 비동기 트리거
   - [ ] `submitTextAnswer(UUID memberId, String sessionId, RequestSubmitTextAnswer dto)` — 소유권 검증 + IN_PROGRESS 상태 확인 + 저장 + FastAPI 트리거
   - [ ] `submitVoiceChunk(UUID memberId, String sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal)` — 소유권 검증 + IN_PROGRESS 상태 확인 + FastAPI 전달 (트랜잭션 외부)
-  - [ ] `endSession(UUID memberId, String sessionId)` — 소유권 검증 + 상태 변경 + 리포트 트리거
+  - [ ] `endSession(UUID memberId, String sessionId)` — 소유권 검증 + 멱등성 체크(COMPLETED면 즉시 반환) + 상태 변경 + 리포트 트리거 1회 보장
 - [ ] `InterviewReportService.java`
   - [ ] `getReport(UUID memberId, String sessionId)` — 소유권 검증 + 리포트 미완료 시 응답 처리 (설계 보완 포인트 A 결정 후 반영) + 피드백 조회 + null 처리
 - [ ] `InterviewHistoryService.java`
