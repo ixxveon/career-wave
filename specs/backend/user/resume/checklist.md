@@ -26,6 +26,7 @@
 - [ ] 모든 API 응답이 `ApiResponse<T>` 래퍼 형식을 따른다
 - [ ] 에러 로깅 정책: `GlobalExceptionHandler`에서 반환하는 응답 body에 Stack Trace가 포함되지 않는다. 서버 로그에는 `documentId`와 `memberId`가 함께 기록되어 디버깅이 가능하다
 - [ ] JPA N+1 방지: `getHistory` 페이징 조회 시 `JOIN FETCH` 또는 `@EntityGraph`를 사용하여 연관 데이터를 단일 쿼리로 가져온다
+- [ ] 비즈니스 로깅: 분석 시작(`PENDING` 전이), Webhook 수신(`COMPLETED`/`FAILED`), 분석 실패 시점에 INFO 레벨로 `documentId`·`memberId`를 포함한 로그를 남겨 추후 ELK 등 로그 수집기로 평균 분석 소요 시간·성공률 추적이 가능하도록 한다
 
 ---
 
@@ -90,6 +91,7 @@
 - [ ] `DocumentFeedback` 저장과 `document.status` 업데이트가 동일 트랜잭션으로 처리된다
 - [ ] 저장 완료 후 해당 `documentId` WebSocket 구독자에게 메시지가 정상 발송된다
 - [ ] `FAILED` 콜백 수신 시 `error_message`가 DB에 저장되고 WebSocket으로 전달된다
+- [ ] Webhook 요청 데이터 검증: 수신된 JSON의 필수 필드(`score_*`, `feedback_text` 등)가 `null`이 아닌지 `@Valid`로 검증하여, 유실된 데이터가 DB에 저장되어 추후 조회 시 NPE가 발생하는 상황을 방지한다
 
 ---
 
@@ -107,6 +109,7 @@
 - [ ] 클라이언트가 먼저 연결을 닫으면 `ScheduledFuture.cancel(true)`로 타이머가 취소되고 즉시 세션이 해제된다
 - [ ] 30초 만료 시 서버가 Close 1000(정상 종료)으로 세션을 정리한다 (에러 코드 사용 금지)
 - [ ] 세션 종료 후 `TaskScheduler` 리소스가 누수 없이 해제되는지 확인한다
+- [ ] STOMP Heartbeat 설정: `registry.enableSimpleBroker().setHeartbeatValue(...)` 설정을 통해 비정상적으로 끊긴 클라이언트 연결을 즉시 감지하고 좀비 세션이 서버 메모리를 점유하지 않도록 한다
 - [ ] 메시지 형식(`status`, `message`, `progress`)이 프론트 스펙과 일치한다
 
 ---
