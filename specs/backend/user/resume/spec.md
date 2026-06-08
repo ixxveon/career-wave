@@ -28,8 +28,8 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 | `document_id` | UUID | PK, DEFAULT gen_random_uuid() | 문서 고유 식별자 |
 | `member_id` | UUID | NOT NULL | 회원 FK |
 | `file_type` | VARCHAR(20) | NOT NULL | `RESUME` \| `COVER_LETTER` |
-| `file_url` | VARCHAR(500) | NOT NULL | S3 저장 파일 URL |
-| `original_name` | VARCHAR(200) | NOT NULL | 업로드 원본 파일명 |
+| `file_url` | VARCHAR(500) | NULL | S3 저장 파일 URL (COVER_LETTER는 null) |
+| `original_name` | VARCHAR(200) | NULL | 업로드 원본 파일명 (COVER_LETTER는 null) |
 | `status` | VARCHAR(20) | NOT NULL, DEFAULT 'UPLOADED' | `UPLOADED` \| `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
 | `error_message` | TEXT | NULL | 분석 실패 시 오류 메시지 |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 업로드 일시 |
