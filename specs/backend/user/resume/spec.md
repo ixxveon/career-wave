@@ -109,10 +109,9 @@ user/resume/
     └── ResumeControllerDocs.java
 
 global/websocket/               ← resume + interview 공통 WebSocket 인프라
-├── WebSocketConfig.java        (STOMP 엔드포인트 등록, 토픽 prefix 설정)
-├── WebSocketHandshakeInterceptor.java (핸드셰이크 시 ?token 쿼리 파라미터 JWT 검증)
-├── StompChannelInterceptor.java (CONNECT 프레임 수신 시 세션 Authentication 재검증)
-└── WebSocketEventListener.java  (연결·구독·해제 이벤트 처리)
+├── WebSocketConfig.java        (WebSocketHandler 엔드포인트 등록)
+├── ResumeWebSocketHandler.java (raw WS 연결·메시지·종료 처리, 세션 Map 관리)
+└── WebSocketHandshakeInterceptor.java (?token 쿼리 파라미터 JWT 검증, memberId 세션 주입)
 ```
 
 > WebSocket 설정·인터셉터는 `global/websocket/`에 위치 — interview 도메인(실시간 텍스트 면접)에서도 WebSocket을 사용하므로 공통 인프라로 분리 확정.
