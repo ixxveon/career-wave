@@ -377,12 +377,20 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 ```
 FastAPI                              Spring
   │                                    │
-  │── POST .../webhook ────────────────▶│  documentId 유효성 확인
-  │                                    │  DocumentFeedback DB 저장
-  │                                    │  document.status 업데이트
-  │                                    │  WebSocket 브로드캐스트
+  │── POST .../webhook ────────────────▶│  X-Internal-Secret 검증
+  │                                    │  ┌─ @Transactional 시작 ─────────────┐
+  │                                    │  │  documentId 유효성 확인            │
+  │                                    │  │  멱등성 확인 (최종 상태이면 종료)    │
+  │                                    │  │  DocumentFeedback 저장             │
+  │                                    │  │  document.status 업데이트          │
+  │                                    │  └────────────────────────────────── ┘
+  │                                    │  WebSocket 브로드캐스트 (트랜잭션 외부)
   │◀─ 200 OK ──────────────────────────│
 ```
+
+> **트랜잭션 경계**: `DocumentFeedback` 저장과 `document.status` 업데이트는 **하나의 `@Transactional` 안에서 처리**한다.  
+> WebSocket 브로드캐스트는 트랜잭션 커밋 이후 수행한다 — 브로드캐스트 실패 시 DB 롤백 방지 목적.  
+> (WebSocket 전송 실패 시 클라이언트는 REST `GET .../feedback`으로 상태 복원 가능)
 
 ### 멱등성 (Idempotency)
 
@@ -449,10 +457,11 @@ Authorization: Bearer {accessToken}
 ```
 클라이언트                               서버
    │                                     │
-   │── WS 연결 요청 ──────────────────────▶│  documentId 소유권 + 토큰 검증
-   │◀─ {"status":"ANALYZING", ...} ──────│  ← 최초 연결 성공 즉시 현재 상태 1회 전송
-   │                                     │    (재연결 시에도 현재 상태를 바로 알 수 있도록)
-   │◀─ {"status":"ANALYZING", ...} ──────│  분석 진행 중 (1회 이상)
+   │── STOMP CONNECT ────────────────────▶│  JWT 검증 (ChannelInterceptor)
+   │── STOMP SUBSCRIBE ──────────────────▶│  documentId 소유권 검증
+   │◀─ {"status":"ANALYZING", ...} ──────│  ← SUBSCRIBE 직후 현재 상태 Snapshot 1회 발행
+   │                                     │    (재연결 시 UI 즉시 복원 가능)
+   │◀─ {"status":"ANALYZING", ...} ──────│  분석 진행 중 (Webhook 수신마다 발행)
    │                                     │
    │◀─ {"status":"COMPLETED", ...} ──────│  완료 메시지 전송
    │   (또는 "FAILED")                   │  ↓ Grace Period 시작 (30초)
