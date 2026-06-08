@@ -231,6 +231,8 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 - 소유자 불일치 → `DOCUMENT_ACCESS_DENIED(403)`
 - `DocumentFeedback` 조회 — 없으면 `scores`, `feedbackDetails` 모두 `null`로 반환 (status만 포함)
 - `feedback_details` JSONB `AttributeConverter` 역직렬화 실패 시 → `FEEDBACK_PARSE_ERROR(500)` + 사용자 친화적 메시지 반환 (서버 전체 크래시 방지)
+  - 이 에러는 클라이언트 문제가 아니라 FastAPI ↔ Spring 데이터 계약 파손 신호 — 서버 로그에 `documentId`·실패 원인을 ERROR 레벨로 반드시 기록
+  - TODO(v2): Slack 등 운영 알림 연동 검토 — 파싱 실패 발생 즉시 담당자에게 알림
 - 반환: `ResumeDTO.ResponseFeedback`
 
 #### getHistory(UUID memberId, int page, int size)
