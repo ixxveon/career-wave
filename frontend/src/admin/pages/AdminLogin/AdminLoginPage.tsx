@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminAuthApi, adminSession } from '../../api/adminAuthApi';
 import { ACCESS_TOKEN_STORAGE_KEY, ADMIN_ROLE } from '../../constants/authConstants';
+import { ADMIN_DETAIL_ROLE, type AdminDetailRole } from '../../constants/adminRoleConstants';
 import '../../styles/admin-login.css';
 
 function toBase64Url(value: object) {
@@ -25,13 +26,15 @@ function createMockAdminAccessToken() {
   return `${toBase64Url(header)}.${toBase64Url(payload)}.${dummySignature}`;
 }
 
-function syncAdminToken(token: string) {
+function syncAdminToken(token: string, role: AdminDetailRole) {
   adminSession.setToken(token);
+  adminSession.setRole(role);
   window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
 }
 
 function clearAdminToken() {
   adminSession.clearToken();
+  adminSession.clearRole();
   window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
 }
 
@@ -50,7 +53,7 @@ export default function AdminLoginPage() {
 
     try {
       if (import.meta.env.DEV && useMockAdminLogin) {
-        syncAdminToken(createMockAdminAccessToken());
+        syncAdminToken(createMockAdminAccessToken(), ADMIN_DETAIL_ROLE.MASTER);
         navigate('/admin/dashboard', { replace: true });
         return;
       }
@@ -62,7 +65,7 @@ export default function AdminLoginPage() {
         throw new Error('INVALID_LOGIN_RESPONSE');
       }
 
-      syncAdminToken(data.accessToken);
+      syncAdminToken(data.accessToken, data.adminInfo.role);
       navigate('/admin/dashboard', { replace: true });
     } catch {
       clearAdminToken();

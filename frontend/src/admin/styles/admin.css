@@ -91,6 +91,27 @@ button {
   color: #1f4e79;
 }
 
+.admin-menuItem.disabled {
+  opacity: 0.5;
+}
+
+.admin-menuItem.disabled:hover {
+  background: #f6f8fb;
+  color: #23384f;
+}
+
+.admin-menuNotice {
+  margin: 10px 14px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ebd3d3;
+  background: #fff8f8;
+  color: #8a4e4e;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
 /* main */
 
 .admin-main {
@@ -492,6 +513,17 @@ button {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.sectionHead button:disabled,
+.alertRow button:disabled,
+.adminCard button:disabled,
+.logCard button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+  background: #f5f7fa;
+  color: #8b99a8;
+  border-color: #dbe5ee;
 }
 
 .alertList {

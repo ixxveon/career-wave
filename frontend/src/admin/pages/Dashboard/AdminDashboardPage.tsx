@@ -2,10 +2,15 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Activity, Bot, CreditCard, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { adminAuthApi, adminSession } from '../../api/adminAuthApi';
 import {
   dashboardApi,
+  getDashboardSummaryErrorMessage,
   unwrapDashboardSummaryResponse,
 } from '../../api/dashboardApi';
+import { ACCESS_TOKEN_STORAGE_KEY } from '../../constants/authConstants';
+import { ADMIN_ROUTE_PATHS, isAdminNavigationPath } from '../../constants/adminRouteConstants';
+import { ADMIN_DETAIL_ROLE, type AdminDetailRole } from '../../constants/adminRoleConstants';
 import '../../styles/admin.css';
 
 const DASHBOARD_SUMMARY_QUERY_KEY = ['admin', 'dashboard', 'summary'] as const;
@@ -18,30 +23,23 @@ const KPI_PRESENTATION = {
 } as const;
 
 const ALERT_PRESENTATION = {
-  URGENT: { icon: '!', cls: 'danger', label: '긴급' },
-  WARNING: { icon: '!!', cls: 'warning', label: '주의' },
-  NORMAL: { icon: 'i', cls: 'normal', label: '일반' },
-} as const;
-const ALERT_DOMAIN_LABELS = {
-  MEMBER: '회원',
-  REPORT: '신고',
-  CS: '문의',
-  PAYMENT: '결제',
-  STATISTICS: '통계',
-  AI_METRICS: 'AI',
+  URGENT: { icon: '!', cls: 'danger' },
+  WARNING: { icon: '!!', cls: 'warning' },
+  NORMAL: { icon: 'i', cls: 'normal' },
 } as const;
 
-const WEEKLY_CHART_HEIGHT_PX = 168;
-const PAYMENT_RATIO_COLORS = ['#27577f', '#8daeca', '#d6e3ee'] as const;
 const PAYMENT_RATIO_CLASSES = ['c1', 'c2', 'c3'] as const;
 
 const SERVICE_CARD_PRESENTATION = {
+  ADMIN: { icon: 'ADM', cls: 'blue' },
   MEMBER: { icon: 'USER', cls: 'blue' },
   REPORT: { icon: 'REP', cls: 'red' },
   CS: { icon: 'CS', cls: 'orange' },
   PAYMENT: { icon: 'PAY', cls: 'orange' },
   STATISTICS: { icon: 'STT', cls: 'green' },
   AI_METRICS: { icon: 'AI', cls: 'purple' },
+  SCRAPING: { icon: 'BOT', cls: 'green' },
+  AUDIT_LOG: { icon: 'LOG', cls: 'red' },
 } as const;
 
 const SYSTEM_STATUS_PRESENTATION = {
@@ -50,26 +48,66 @@ const SYSTEM_STATUS_PRESENTATION = {
   CRITICAL: { dotClass: 'danger' },
 } as const;
 
-const formatOccurredAt = (iso: string) => {
-  if (!iso) {
-    return '--:--';
-  }
+const DASHBOARD_ACCESS_KEY = {
+  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER',
+  REPORT: 'REPORT',
+  CS: 'CS',
+  PAYMENT: 'PAYMENT',
+  STATISTICS: 'STATISTICS',
+  AI_METRICS: 'AI_METRICS',
+  SCRAPING: 'SCRAPING',
+  AUDIT_LOG: 'AUDIT_LOG',
+} as const;
 
-  const date = new Date(iso);
+type DashboardAccessKey = (typeof DASHBOARD_ACCESS_KEY)[keyof typeof DASHBOARD_ACCESS_KEY];
 
-  if (Number.isNaN(date.getTime())) {
-    return '--:--';
-  }
+const DASHBOARD_DOMAIN_ALLOWED_ROLES = {
+  ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
+  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.OPS],
+  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.AUDIT],
+  CS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BILLING],
+  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.OPS, ADMIN_DETAIL_ROLE.BACKEND],
+  AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND, ADMIN_DETAIL_ROLE.OPS],
+  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.AUDIT],
+} satisfies Record<DashboardAccessKey, AdminDetailRole[]>;
 
-  return date.toLocaleTimeString('ko-KR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-};
+const DASHBOARD_CARD_ALLOWED_ROLES = {
+  ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
+  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.OPS],
+  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.AUDIT],
+  CS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BILLING],
+  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.OPS, ADMIN_DETAIL_ROLE.BACKEND],
+  AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND, ADMIN_DETAIL_ROLE.OPS],
+  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.AUDIT],
+} satisfies Partial<Record<DashboardAccessKey, AdminDetailRole[]>>;
+
+function hasDashboardRoleAccess(
+  currentAdminRole: AdminDetailRole | null,
+  allowedRoles: AdminDetailRole[] | undefined
+) {
+  if (!currentAdminRole) return false;
+  if (!allowedRoles || allowedRoles.length === 0) return true;
+  return allowedRoles.includes(currentAdminRole);
+}
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
+  const currentAdminRole = adminSession.getRole();
+  const handleLogout = async () => {
+    try {
+      await adminAuthApi.logout();
+    } finally {
+      adminSession.clearToken();
+      adminSession.clearRole();
+      window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+      navigate(ADMIN_ROUTE_PATHS.login, { replace: true });
+    }
+  };
   const {
     data: dashboardSummary,
     isLoading: isDashboardLoading,
@@ -80,6 +118,11 @@ export default function AdminDashboardPage() {
     queryKey: DASHBOARD_SUMMARY_QUERY_KEY,
     queryFn: async () => {
       const response = await dashboardApi.getSummary();
+
+      if (!response.data.success) {
+        throw new Error(getDashboardSummaryErrorMessage(response.data.message));
+      }
+
       return unwrapDashboardSummaryResponse(response.data);
     },
   });
@@ -89,6 +132,7 @@ export default function AdminDashboardPage() {
     dashboardError instanceof Error
       ? dashboardError.message
       : '대시보드 요약 조회에 실패했습니다.';
+
   const isDashboardCompletelyEmpty =
     !isDashboardInitialLoading &&
     !isDashboardError &&
@@ -126,31 +170,42 @@ export default function AdminDashboardPage() {
       const items = (dashboardSummary?.alerts ?? []).map((item) => {
         const presentation =
           ALERT_PRESENTATION[item.level as keyof typeof ALERT_PRESENTATION] ?? ALERT_PRESENTATION.NORMAL;
+        const hasRoleAccess = hasDashboardRoleAccess(
+          currentAdminRole,
+          DASHBOARD_DOMAIN_ALLOWED_ROLES[item.domain as DashboardAccessKey]
+        );
 
         return {
           ...item,
           icon: presentation.icon,
           cls: presentation.cls,
-          levelLabel: presentation.label,
-          domainLabel:
-            ALERT_DOMAIN_LABELS[item.domain as keyof typeof ALERT_DOMAIN_LABELS] ?? item.domain,
           text: item.message,
           button: '상세 보기',
           path: item.targetPath,
+          hasValidTargetPath: isAdminNavigationPath(item.targetPath),
+          hasRoleAccess,
         };
-      });
+      }).filter((item) => item.hasRoleAccess);
 
       return { alerts: items, hasAlertSectionError: false };
     } catch {
       return { alerts: [], hasAlertSectionError: !!dashboardSummary };
     }
-  }, [dashboardSummary]);
+  }, [currentAdminRole, dashboardSummary]);
 
-  const weeklySignups = useMemo(
-    () => dashboardSummary?.weeklySignups ?? [],
-    [dashboardSummary]
-  );
-  const hasWeeklySignupSectionError = false;
+  const { weeklySignups, hasWeeklySignupSectionError } = useMemo(() => {
+    try {
+      return {
+        weeklySignups: dashboardSummary?.weeklySignups ?? [],
+        hasWeeklySignupSectionError: false,
+      };
+    } catch {
+      return {
+        weeklySignups: [],
+        hasWeeklySignupSectionError: !!dashboardSummary,
+      };
+    }
+  }, [dashboardSummary]);
 
   const weeklySignupMax = useMemo(
     () => weeklySignups.reduce((max, item) => Math.max(max, item.count), 0),
@@ -185,10 +240,9 @@ export default function AdminDashboardPage() {
       .map((item, index) => {
         const start = offset;
         const end = offset + item.ratio;
-        const color = PAYMENT_RATIO_COLORS[index] ?? PAYMENT_RATIO_COLORS[PAYMENT_RATIO_COLORS.length - 1];
         offset = end;
 
-        return `${color} ${start}% ${end}%`;
+        return `var(--donut-${index + 1}) ${start}% ${end}%`;
       })
       .join(', ');
   }, [paymentRatio]);
@@ -199,6 +253,10 @@ export default function AdminDashboardPage() {
         const presentation =
           SERVICE_CARD_PRESENTATION[item.key as keyof typeof SERVICE_CARD_PRESENTATION]
           ?? SERVICE_CARD_PRESENTATION.MEMBER;
+        const hasRoleAccess = hasDashboardRoleAccess(
+          currentAdminRole,
+          DASHBOARD_CARD_ALLOWED_ROLES[item.key as DashboardAccessKey]
+        );
 
         return {
           ...item,
@@ -206,14 +264,16 @@ export default function AdminDashboardPage() {
           cls: presentation.cls,
           value: item.summaryText,
           path: item.targetPath,
+          hasValidTargetPath: isAdminNavigationPath(item.targetPath),
+          hasRoleAccess,
         };
-      });
+      }).filter((item) => item.hasRoleAccess);
 
       return { adminCards: items, hasAdminCardSectionError: false };
     } catch {
       return { adminCards: [], hasAdminCardSectionError: !!dashboardSummary };
     }
-  }, [dashboardSummary]);
+  }, [currentAdminRole, dashboardSummary]);
 
   const { systemStatus, hasSystemStatusSectionError } = useMemo(() => {
     try {
@@ -234,11 +294,24 @@ export default function AdminDashboardPage() {
     }
   }, [dashboardSummary]);
 
-  const recentActivities = useMemo(
-    () => dashboardSummary?.recentActivities ?? [],
-    [dashboardSummary]
-  );
-  const hasRecentActivitySectionError = false;
+  const { recentActivities, hasRecentActivitySectionError } = useMemo(() => {
+    try {
+      const items = (dashboardSummary?.recentActivities ?? []).map((item) => ({
+        ...item,
+        hasValidTargetPath: isAdminNavigationPath(item.targetPath),
+      }));
+
+      return {
+        recentActivities: items,
+        hasRecentActivitySectionError: false,
+      };
+    } catch {
+      return {
+        recentActivities: [],
+        hasRecentActivitySectionError: !!dashboardSummary,
+      };
+    }
+  }, [dashboardSummary]);
 
   return (
     <>
@@ -259,7 +332,7 @@ export default function AdminDashboardPage() {
             <small>최근 로그인 09:12</small>
           </div>
 
-          <button className="admin-logoutButton" onClick={() => navigate('/admin/login')}>
+          <button className="admin-logoutButton" onClick={handleLogout}>
             로그아웃
           </button>
         </div>
@@ -296,9 +369,7 @@ export default function AdminDashboardPage() {
                 </article>
               ))
             ) : hasKpiSectionError ? (
-              <div className="dashboardStateBox dashboardStateBox--error">
-                KPI 데이터를 표시하지 못했습니다.
-              </div>
+              <div className="dashboardStateBox dashboardStateBox--error">KPI 데이터를 표시하지 못했습니다.</div>
             ) : (
               kpis.map((item) => (
                 <article className={`kpiCard ${item.theme}`} key={item.title}>
@@ -320,7 +391,7 @@ export default function AdminDashboardPage() {
               <section className="admin-card alertPanel">
                 <div className="sectionHead">
                   <h3>오늘 처리할 주요 알림</h3>
-                  <button>전체 보기</button>
+                  <button disabled>전체 보기</button>
                 </div>
 
                 <div className="alertList">
@@ -336,10 +407,19 @@ export default function AdminDashboardPage() {
                     alerts.map((item) => (
                       <div className={`alertRow ${item.cls}`} key={`${item.domain}-${item.id}`}>
                         <span className="alertIcon">{item.icon}</span>
-                        <span className="alertLevel">{item.levelLabel}</span>
-                        <strong>{item.domainLabel}</strong>
+                        <span className="alertLevel">{item.level}</span>
+                        <strong>{item.domain}</strong>
                         <p>{item.text}</p>
-                        <button onClick={() => navigate(item.path)}>{item.button}</button>
+                        <button
+                          type="button"
+                          disabled={!item.hasValidTargetPath}
+                          onClick={() => {
+                            if (!item.hasValidTargetPath) return;
+                            navigate(item.path);
+                          }}
+                        >
+                          {item.button}
+                        </button>
                       </div>
                     ))
                   )}
@@ -373,9 +453,7 @@ export default function AdminDashboardPage() {
                           <div className="barItem" key={item.label}>
                             <div
                               style={{
-                                height: weeklySignupMax > 0
-                                  ? `${(item.count / weeklySignupMax) * WEEKLY_CHART_HEIGHT_PX}px`
-                                  : '0px',
+                                height: weeklySignupMax > 0 ? `${(item.count / weeklySignupMax) * 168}px` : '0px',
                               }}
                             />
                             <span>{item.label}</span>
@@ -449,7 +527,16 @@ export default function AdminDashboardPage() {
                       <p>{card.description}</p>
                       <div className="adminBottom">
                         <strong>{card.value}</strong>
-                        <button onClick={() => navigate(card.path)}>상세 보기</button>
+                        <button
+                          type="button"
+                          disabled={!card.hasValidTargetPath}
+                          onClick={() => {
+                            if (!card.hasValidTargetPath) return;
+                            navigate(card.path);
+                          }}
+                        >
+                          상세 보기
+                        </button>
                       </div>
                     </article>
                   ))
@@ -481,7 +568,7 @@ export default function AdminDashboardPage() {
               <section className="admin-card logCard">
                 <div className="sectionHead">
                   <h3>최근 관리자 활동</h3>
-                  <button onClick={() => navigate('/admin/log')}>전체 보기</button>
+                  <button onClick={() => navigate(ADMIN_ROUTE_PATHS.log)}>전체 보기</button>
                 </div>
                 {isDashboardInitialLoading ? (
                   <div className="dashboardStateBox dashboardStateBox--inline">
@@ -496,9 +583,13 @@ export default function AdminDashboardPage() {
                     <div
                       className="logRow"
                       key={activity.id}
-                      onClick={() => navigate(activity.targetPath)}
+                      style={{ cursor: activity.hasValidTargetPath ? 'pointer' : 'default' }}
+                      onClick={() => {
+                        if (!activity.hasValidTargetPath) return;
+                        navigate(activity.targetPath);
+                      }}
                     >
-                      <span>{formatOccurredAt(activity.occurredAt)}</span>
+                      <span>{activity.occurredAt}</span>
                       <strong>{activity.adminId}</strong>
                       <p>{activity.message}</p>
                     </div>
