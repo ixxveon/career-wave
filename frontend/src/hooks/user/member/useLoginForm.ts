@@ -10,7 +10,7 @@ import {
   type LoginFormErrors,
   type LoginTab,
 } from '../../../utils/user/member/loginSchema';
-import { getLoginRouteDecision, useLogin } from './useLogin';
+import { getLoginRouteDecision, isNextPathCompatible, useLogin } from './useLogin';
 
 type CredentialKey = 'loginId' | 'password';
 
@@ -114,11 +114,12 @@ export function useLoginForm() {
       });
       authSession.setMember(response.member);
 
-      // ?next= 파라미터가 있고 안전한 내부 경로면 해당 경로로 이동
+      // ?next= 파라미터가 있고, 안전한 내부 경로이며, 회원 유형과 호환될 때만 해당 경로로 이동
       // startsWith('/') && !startsWith('//') — //evil.com 같은 프로토콜 상대 URL 차단
       const nextPath = searchParams.get('next');
       const safePath = nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
-      navigate(safePath ?? decision.path, { replace: true });
+      const compatiblePath = safePath && isNextPathCompatible(safePath, response.member.memberType) ? safePath : null;
+      navigate(compatiblePath ?? decision.path, { replace: true });
     } catch (error) {
       setFieldErrors({
         form: getSafeLoginMessage(error as MemberApiError),
