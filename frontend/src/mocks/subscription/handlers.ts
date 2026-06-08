@@ -141,7 +141,7 @@ function getMemberId(request: Request): string {
 
 export const subscriptionHandlers = [
   // 상품 목록
-  http.get('/api/v1/billing/products', () =>
+  http.get('/api/v1/user/billing/products', () =>
     HttpResponse.json({
       success: true, statusCode: 200, message: '요청이 성공적으로 처리되었습니다.',
       data: [
@@ -160,7 +160,7 @@ export const subscriptionHandlers = [
   ),
 
   // 내 구독 목록
-  http.get('/api/v1/subscriptions/me', ({ request }) => {
+  http.get('/api/v1/user/subscriptions/me', ({ request }) => {
     const memberId = getMemberId(request);
     const subscriptions = MOCK_SUBSCRIPTIONS[memberId] ?? [];
     return HttpResponse.json({
@@ -170,7 +170,7 @@ export const subscriptionHandlers = [
   }),
 
   // 사용량
-  http.get('/api/v1/subscriptions/me/usages', ({ request }) => {
+  http.get('/api/v1/user/subscriptions/me/usages', ({ request }) => {
     const memberId = getMemberId(request);
     const usages = MOCK_USAGES[memberId] ?? [];
     return HttpResponse.json({
@@ -180,7 +180,7 @@ export const subscriptionHandlers = [
   }),
 
   // 권한
-  http.get('/api/v1/subscriptions/me/entitlements', ({ request }) => {
+  http.get('/api/v1/user/subscriptions/me/entitlements', ({ request }) => {
     const memberId = getMemberId(request);
     const entitlements = MOCK_ENTITLEMENTS[memberId] ?? { 'document-coaching': false, interview: false };
     return HttpResponse.json({
@@ -190,7 +190,7 @@ export const subscriptionHandlers = [
   }),
 
   // 결제 내역
-  http.get('/api/v1/billing/payments/history', ({ request }) => {
+  http.get('/api/v1/user/billing/payments/history', ({ request }) => {
     const memberId = getMemberId(request);
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') ?? '0');
