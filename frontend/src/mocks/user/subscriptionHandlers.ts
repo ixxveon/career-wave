@@ -249,18 +249,27 @@ export const subscriptionHandlers = [
     const url = new URL(request.url);
     const rawPage = Number(url.searchParams.get('page') ?? '0');
     const rawSize = Number(url.searchParams.get('size') ?? '10');
+    const period = url.searchParams.get('period') ?? '12M';
     const page = Number.isFinite(rawPage) && rawPage >= 0 ? Math.floor(rawPage) : 0;
     const size = Number.isFinite(rawSize) && rawSize > 0 ? Math.floor(rawSize) : 10;
-    const allContent = MOCK_PAYMENT_HISTORY[memberId] ?? [];
-    const content = allContent.slice(page * size, page * size + size);
+
+    const periodMonths: Record<string, number> = { '1M': 1, '3M': 3, '6M': 6, '12M': 12 };
+    const months = periodMonths[period] ?? 12;
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - months);
+
+    const filtered = (MOCK_PAYMENT_HISTORY[memberId] ?? []).filter(
+      (p) => new Date(p.paidAt) >= cutoff,
+    );
+    const content = filtered.slice(page * size, page * size + size);
     return HttpResponse.json({
       success: true, statusCode: 200, message: '요청이 성공적으로 처리되었습니다.',
       data: {
         content,
         page,
         size,
-        totalElements: allContent.length,
-        totalPages: Math.ceil(allContent.length / size),
+        totalElements: filtered.length,
+        totalPages: Math.ceil(filtered.length / size),
       },
     });
   }),
