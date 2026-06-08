@@ -42,14 +42,14 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
 | `document_feedback_id` | BIGSERIAL | PK | 서류 피드백 고유 식별자 |
-| `document_id` | UUID | NOT NULL | 문서 FK |
-| `score` | INTEGER | | AI 서류 진단 점수 (0~100) |
-| `feedback_text` | TEXT | NOT NULL | AI 서류 피드백 텍스트 |
+| `document_id` | UUID | NOT NULL, UNIQUE | 문서 FK (1:1) |
+| `feedback_details` | JSONB | NOT NULL | AI 분석 결과 전체 (scores, overallReview, feedbackDetails 등) |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 생성 일시 |
 
-> ⚠️ **프론트 스펙과 구조 차이** — 프론트 스펙(`api-schema.md` § 3)은 복합 점수(`scores` 객체)와  
-> 항목별 첨삭 배열(`feedbackDetails`)을 기대하지만, 실제 DB는 단일 `score`와 `feedback_text` TEXT.  
-> API 응답 형식을 실제 DB 구조 기준으로 맞출지, 프론트 스펙을 축소할지 팀 협의 필요.
+> **컬럼명 확정**: 기존 DB의 `score`, `feedback_text` 컬럼 대신 `feedback_details` JSONB 단일 컬럼으로 통일.  
+> FastAPI가 내려주는 복합 점수(`scores` 객체)·항목별 첨삭 배열(`feedbackDetails`)을 JSONB 그대로 저장하고,  
+> Spring에서 `AttributeConverter`로 역직렬화하여 프론트 스펙(`api-schema.md § 3`) 응답 형식으로 반환.  
+> ⚠️ DB 스키마 변경이 필요하므로 팀 공유 후 마이그레이션 스크립트 반영 필요.
 
 ### cover_letter_meta
 
@@ -142,12 +142,14 @@ public class ResumeDTO {
         ZonedDateTime createdAt
     ) {}
 
-    // 분석 결과 조회 응답
-    // ⚠️ 프론트 스펙과 피드백 구조 차이 — 팀 협의 후 확정
+    // 분석 결과 조회 응답 — feedback_details JSONB 역직렬화 결과를 그대로 반환
     public record ResponseFeedback(
         UUID documentId,
-        Integer score,          // null: 분석 미완료
-        String feedbackText,    // null: 분석 미완료
+        String status,
+        ScoreDetail scores,         // null: 분석 미완료
+        String overallReview,       // null: 분석 미완료
+        List<FeedbackDetail> feedbackDetails,   // null: 분석 미완료
+        String errorMessage,        // FAILED 시 오류 메시지
         ZonedDateTime createdAt
     ) {}
 
@@ -155,10 +157,11 @@ public class ResumeDTO {
     public record HistoryItem(
         UUID documentId,
         String fileType,
+        String status,
         String originalName,    // 자기소개서: null (cover_letter_meta 참조)
         String company,         // 이력서: null (cover_letter_meta 참조)
         String job,             // 이력서: null (cover_letter_meta 참조)
-        Integer score,          // 분석 미완료: null
+        Integer totalScore,     // 분석 미완료: null (feedback_details.scores.total)
         ZonedDateTime createdAt
     ) {}
 }
@@ -226,8 +229,8 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 #### getFeedback(UUID memberId, UUID documentId)
 - Document 존재하지 않음 → `DOCUMENT_NOT_FOUND(404)`
 - 소유자 불일치 → `DOCUMENT_ACCESS_DENIED(403)`
-- `DocumentFeedback` 조회 (없으면 status만 반환)
-- `feedback_details` JSONB 역직렬화 실패 시 → `FEEDBACK_PARSE_ERROR(500)` + 사용자 친화적 메시지 반환 (서버 전체 크래시 방지)
+- `DocumentFeedback` 조회 — 없으면 `scores`, `feedbackDetails` 모두 `null`로 반환 (status만 포함)
+- `feedback_details` JSONB `AttributeConverter` 역직렬화 실패 시 → `FEEDBACK_PARSE_ERROR(500)` + 사용자 친화적 메시지 반환 (서버 전체 크래시 방지)
 - 반환: `ResumeDTO.ResponseFeedback`
 
 #### getHistory(UUID memberId, int page, int size)

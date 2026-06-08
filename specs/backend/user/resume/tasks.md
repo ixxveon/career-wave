@@ -23,8 +23,8 @@
   - `order_num` INTEGER NOT NULL (CHECK 1~5), `question` TEXT NOT NULL, `answer` TEXT NOT NULL
   - UNIQUE 제약: `CONSTRAINT uq_clc_document_order UNIQUE (document_id, order_num)`
 - [ ] `DocumentFeedback` Entity 작성
-  - BIGSERIAL PK (`document_feedback_id`), `document_id` UUID NOT NULL
-  - `score` INTEGER (nullable), `feedback_text` TEXT NOT NULL, `created_at`
+  - BIGSERIAL PK (`document_feedback_id`), `document_id` UUID NOT NULL UNIQUE (1:1)
+  - `feedback_details` JSONB NOT NULL — `AttributeConverter` 적용, `created_at`
 - [ ] `DocumentRepository` 작성
 - [ ] `CoverLetterMetaRepository` 작성
 - [ ] `CoverLetterContentRepository` 작성

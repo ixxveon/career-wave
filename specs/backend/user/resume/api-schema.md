@@ -150,12 +150,17 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 
 | Field | Type | 필수 | 제약 |
 |-------|------|------|------|
-| `company` | `string` | ✅ | 지원 회사명 |
-| `job` | `string` | ✅ | 지원 직무명 |
-| `content` | `array` | ✅ | 최소 1개, 최대 5개 |
-| `content[].order` | `number` | ✅ | 문항 순서 (1~5) |
-| `content[].question` | `string` | ✅ | 문항 내용 |
-| `content[].answer` | `string` | ✅ | 답변 내용, 최대 1000자 |
+| `company` | `string` | ✅ | 지원 회사명 → `cover_letter_meta.company` 저장 |
+| `job` | `string` | ✅ | 지원 직무명 → `cover_letter_meta.job` 저장 |
+| `content` | `array` | ✅ | 최소 1개, 최대 5개 → `cover_letter_contents` 테이블에 행 단위 반복 저장 |
+| `content[].order` | `number` | ✅ | 문항 순서 (1~5 범위 필수, 동일 document 내 중복 불가 — DB UNIQUE 제약) |
+| `content[].question` | `string` | ✅ | 문항 내용 → `cover_letter_contents.question` |
+| `content[].answer` | `string` | ✅ | 답변 내용, 최대 1000자 → `cover_letter_contents.answer` |
+
+> **DB 매핑 요약**  
+> - `company`, `job` → `cover_letter_meta` 테이블 1행 저장  
+> - `content[]` 배열 → `cover_letter_contents` 테이블 배열 길이만큼 행 삽입 (`saveAll()`)  
+> - `cover_letter_contents.order_num`은 동일 `document_id` 내 UNIQUE 제약 (`uq_clc_document_order`) — 프론트에서 중복 order 전송 시 DB 레벨에서 에러 발생
 
 ### Response `200 OK`
 
@@ -498,6 +503,20 @@ Authorization: Bearer {accessToken}
 | 본인 소유가 아닌 `documentId` | 연결 즉시 종료 (Close 1008) |
 | 토큰 없음 또는 만료 | 연결 즉시 종료 (Close 1008) |
 | AI 분석 타임아웃 | `FAILED` 메시지 전송 후 연결 종료 |
+
+---
+
+## Database Constraints (구현 참고)
+
+> 프론트엔드 유효성 검증 로직 및 백엔드 구현 시 아래 DB 제약 조건을 반드시 준수한다.
+
+| 테이블 | 제약 | 설명 |
+|--------|------|------|
+| `document_feedbacks` | `document_id` UNIQUE | 문서당 피드백 1:1 관계 — 중복 저장 불가 |
+| `cover_letter_contents` | `(document_id, order_num)` UNIQUE | 동일 문서 내 문항 순서 중복 불가 (`uq_clc_document_order`) |
+| `cover_letter_contents` | `order_num` CHECK (1~5) | 문항 순서 범위 DB 레벨 제한 |
+| `cover_letter_contents` | `answer` 최대 1000자 | 서비스 레이어에서 `@Size(max=1000)` 검증 후 저장 |
+| `document_feedbacks` | `feedback_details` JSONB NOT NULL | FastAPI 응답 전체를 JSONB로 저장 — `AttributeConverter` 역직렬화 |
 
 ---
 
