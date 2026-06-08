@@ -41,6 +41,7 @@ public class AdminMemberService {
                                                                    SubscriptionStatus plan, String keyword,
                                                                    LocalDate startDate, LocalDate endDate,
                                                                    int page, int size) {
+        size = Math.min(size, 100);
         int offset = (page - 1) * size;
         ZonedDateTime from = startDate != null ? startDate.atStartOfDay(java.time.ZoneId.systemDefault()) : null;
         ZonedDateTime to = endDate != null ? endDate.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()) : null;
@@ -132,6 +133,7 @@ public class AdminMemberService {
     public HrManagerDTO.ResponsePage getHrManagers(HrStatus hrStatus, String keyword,
                                                     LocalDate startDate, LocalDate endDate,
                                                     int page, int size) {
+        size = Math.min(size, 100);
         int offset = (page - 1) * size;
         ZonedDateTime from = startDate != null ? startDate.atStartOfDay(java.time.ZoneId.systemDefault()) : null;
         ZonedDateTime to = endDate != null ? endDate.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()) : null;
