@@ -113,13 +113,15 @@
   - CONNECT 프레임 수신 시 헤더의 JWT 검증
   - 검증 실패 시 `MessageDeliveryException` 으로 연결 거부
   - 검증 성공 시 `Authentication` 객체를 세션에 주입
-- [ ] `documentId` 소유권 검증 — SUBSCRIBE 프레임 수신 시 구독 토픽의 `documentId`와 인증 유저 비교
+- [ ] `documentId` 소유권 검증 — SUBSCRIBE 프레임 수신 시 `DocumentRepository`로 DB 재조회하여 소유권 확인 (토큰의 userId ↔ document.member_id 비교)
+  - 불일치 시 Close 1008로 즉시 연결 거부 (IDOR 방지)
 - [ ] Webhook 수신 후 `SimpMessagingTemplate.convertAndSend("/topic/resume/{documentId}/status", message)` 연동
 - [ ] `COMPLETED` / `FAILED` 전송 후 Grace Period 30초 타이머 시작
-  - `Thread.sleep` 금지 — `TaskScheduler` 사용
-  - `scheduler.schedule()` 반환값 `ScheduledFuture` 보관
+  - `Thread.sleep` 금지 — `TaskScheduler`(`ThreadPoolTaskScheduler`) 빈 등록 후 사용
+  - `scheduler.schedule()` 반환값 `ScheduledFuture` 보관 (세션 ID 키로 Map 관리)
   - 클라이언트가 먼저 연결을 닫으면 `ScheduledFuture.cancel(true)` 호출 후 즉시 세션 해제
   - 30초 만료 시 Close 1000으로 서버에서 세션 정리
+  - 세션 종료 시 Map에서 해당 `ScheduledFuture` 제거 — 리소스 누수 방지
 - [ ] STOMP 구독 토픽 `/topic/resume/{documentId}/status` 동작 확인
 
 ---

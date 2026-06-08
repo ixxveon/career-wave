@@ -80,13 +80,15 @@
 
 - [ ] STOMP CONNECT 프레임 헤더의 JWT를 `ChannelInterceptor`에서 검증한다
 - [ ] 토큰 없음·만료 시 연결이 거부된다
-- [ ] SUBSCRIBE 프레임 수신 시 구독 토픽의 `documentId` 소유권을 검증한다
-- [ ] 본인 소유가 아닌 `documentId` 구독 시 연결이 거부된다
+- [ ] SUBSCRIBE 프레임 수신 시 구독 토픽의 `documentId` 소유권을 `DocumentRepository`로 DB 재조회하여 검증한다
+- [ ] 본인 소유가 아닌 `documentId` 구독 시 Close 1008로 연결이 즉시 거부된다 (IDOR 방지 필수)
 - [ ] 연결 성공 직후 해당 `documentId`의 현재 `status`를 1회 브로드캐스트한다 (재연결 대응)
 - [ ] Webhook 수신 후 `SimpMessagingTemplate`으로 해당 토픽에 메시지가 정상 발송된다
 - [ ] `COMPLETED` / `FAILED` 전송 후 즉시 끊지 않고 Grace Period(30초) 타이머가 시작된다
-- [ ] 클라이언트가 먼저 연결을 닫으면 타이머가 취소되고 즉시 세션이 해제된다
+- [ ] Grace Period 타이머는 `TaskScheduler`(또는 `ScheduledExecutorService`)로 구현한다 (`Thread.sleep` 금지)
+- [ ] 클라이언트가 먼저 연결을 닫으면 `ScheduledFuture.cancel(true)`로 타이머가 취소되고 즉시 세션이 해제된다
 - [ ] 30초 만료 시 서버가 Close 1000(정상 종료)으로 세션을 정리한다 (에러 코드 사용 금지)
+- [ ] 세션 종료 후 `TaskScheduler` 리소스가 누수 없이 해제되는지 확인한다
 - [ ] 메시지 형식(`status`, `message`, `progress`)이 프론트 스펙과 일치한다
 
 ---
@@ -96,6 +98,17 @@
 - [ ] IDOR 방어 시나리오: 다른 회원의 `documentId`로 REST API 요청 시 403 확인
 - [ ] IDOR 방어 시나리오: 다른 회원의 `documentId`로 WebSocket 연결 시도 시 Close 1008 확인
 - [ ] 파일 확장자를 .pdf로 위조한 비정상 파일 업로드 시 MIME type 검증으로 차단 확인
+- [ ] `WEBHOOK_SECRET` 값이 `application-prod.yml` 또는 시스템 환경 변수로 분리되고 코드·설정 파일에 평문 노출이 없는지 확인
+
+---
+
+## 단위 테스트
+
+- [ ] `DocumentFeedback` `AttributeConverter` — FastAPI JSON 구조 ↔ Java 객체 1:1 매핑 단위 테스트 작성
+  - 정상 JSON 역직렬화 성공 케이스
+  - 필드 누락·타입 불일치 시 `FEEDBACK_PARSE_ERROR` 예외 발생 케이스
+- [ ] Webhook 멱등성 — `COMPLETED` 상태에서 재수신 시 DB 갱신 없이 `200 OK` 반환 확인
+- [ ] IDOR — 타인 `documentId`로 피드백 조회 시 `403` 반환 확인
 
 ---
 
