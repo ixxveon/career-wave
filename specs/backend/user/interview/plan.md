@@ -32,10 +32,10 @@ AI 파이프라인(STT·LLM·TTS)은 FastAPI 서버가 전담한다.
 
 ### 전제 조건 및 협의 사항
 
-- FastAPI와의 내부 통신 방식 (HTTP 비동기 / 이벤트 메시지): **구현 착수 전 팀 협의 필요**
-- `documentId` 유효성 검증 방법 (서류 도메인 Repository 참조 vs API 호출): **팀 합의 필요**
+- FastAPI와의 내부 통신 방식: **FE 스펙 기준 확정** — FastAPI WebSocket(`WS /ws/interview/{sessionId}/ai`)으로 LLM·STT·TTS 결과 직접 전달
+- `documentId` 유효성 검증: **FE 스펙 기준 확정** — 서버에서 검증 후 유효하지 않으면 403/404 반환, 없으면 RAG 없이 일반 면접 진행
 - WebSocket 최대 재연결 횟수 및 heartbeat 주기: FE 스펙 기준 준수
-- `session_status = FAILED` 전이 조건 (비정상 종료 감지 시나리오): **v1 적용 범위 협의 필요**
+- `session_status = FAILED` 전이 조건: **FE 스펙 기준 확정** — 클라이언트 비정상 종료 시 `sessionStorage` 기반 복구, 재진입 시 `IN_PROGRESS` 상태면 복구 안내 노출. 서버는 비정상 종료를 감지하여 `FAILED` 마킹 또는 로그 기록
 - 음성 청크 전달 방식: **FE 스펙 기준 확정** — `POST /answer/voice` Multipart 직접 전송 (S3 Presigned URL 미사용)
 
 ---
