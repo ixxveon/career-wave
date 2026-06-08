@@ -11,6 +11,10 @@ import type { LoginRequest } from '../../user/types/member';
 
 const MOCK_PASSWORD = 'Test1234!';
 
+const MOCK_PASSWORD_OVERRIDES: Record<string, string> = {
+  admin: '1234',
+};
+
 const MOCK_ACCOUNTS: Record<string, {
   memberId: string;
   loginId: string;
@@ -53,15 +57,30 @@ const MOCK_ACCOUNTS: Record<string, {
     memberType: 'COMPANY',
     companyApprovalStatus: 'APPROVED',
   },
+  admin: {
+    memberId: 'mock-admin-uuid-0001',
+    loginId: 'admin',
+    name: '관리자',
+    memberType: 'USER',
+    companyApprovalStatus: 'NONE',
+  },
 };
 
 export const memberHandlers = [
   // 로그인
   http.post('/api/v1/user/members/login', async ({ request }) => {
-    const body = await request.json() as LoginRequest;
-    const account = MOCK_ACCOUNTS[body.loginId];
+    const body = await request.json() as unknown;
+    if (!body || typeof body !== 'object' || !('loginId' in body)) {
+      return HttpResponse.json(
+        { success: false, statusCode: 400, message: '잘못된 요청입니다.' },
+        { status: 400 },
+      );
+    }
+    const { loginId, password } = body as LoginRequest;
+    const account = MOCK_ACCOUNTS[loginId];
+    const expectedPassword = MOCK_PASSWORD_OVERRIDES[loginId] ?? MOCK_PASSWORD;
 
-    if (!account || body.password !== MOCK_PASSWORD) {
+    if (!account || password !== expectedPassword) {
       return HttpResponse.json(
         { success: false, statusCode: 401, message: '아이디 또는 비밀번호가 올바르지 않습니다.' },
         { status: 401 },
