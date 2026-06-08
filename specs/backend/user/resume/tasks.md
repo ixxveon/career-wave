@@ -12,7 +12,8 @@
 - [ ] `Document` Entity 작성
   - UUID PK (`document_id`, DEFAULT gen_random_uuid())
   - `member_id` UUID NOT NULL, `file_type` VARCHAR(20) NOT NULL
-  - `file_url` VARCHAR(500) NOT NULL, `original_name` VARCHAR(200) NOT NULL
+  - `file_url` VARCHAR(500) NULL, `original_name` VARCHAR(200) NULL (COVER_LETTER는 null, RESUME는 NOT NULL)
+  - CHECK 제약: `RESUME`이면 두 컬럼 NOT NULL, `COVER_LETTER`이면 두 컬럼 NULL
   - `created_at` TIMESTAMPTZ NOT NULL
   - `@NoArgsConstructor(access = AccessLevel.PROTECTED)`
 - [ ] `CoverLetterMeta` Entity 작성

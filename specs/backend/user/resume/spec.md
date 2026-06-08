@@ -36,7 +36,17 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 
 > S3 저장 시 `original_name`을 그대로 파일명으로 사용하지 않는다.  
 > 한글·특수문자 파일명 깨짐 방지를 위해 S3 키는 `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` 형식으로 생성.  
-> `file_url`에는 완성된 S3 URL, `original_name`에는 사용자 원본 파일명을 별도 저장.
+> `file_url`에는 완성된 S3 URL, `original_name`에는 사용자 원본 파일명을 별도 저장.  
+> CHECK 제약 조건: `RESUME`이면 두 컬럼 모두 NOT NULL, `COVER_LETTER`이면 두 컬럼 모두 NULL.
+> ```sql
+> ALTER TABLE documents
+>   ADD CONSTRAINT chk_file_columns
+>   CHECK (
+>     (file_type = 'RESUME' AND file_url IS NOT NULL AND original_name IS NOT NULL)
+>     OR
+>     (file_type = 'COVER_LETTER' AND file_url IS NULL AND original_name IS NULL)
+>   );
+> ```
 
 ### document_feedbacks
 
