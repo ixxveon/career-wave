@@ -228,7 +228,7 @@ POST /api/v1/user/interview/sessions/{sessionId}/answer/voice
      Body: multipart/form-data (audioChunk + questionOrder + chunkIndex + isFinal)
      → ApiResponse<InterviewDTO.ResponseSubmitVoiceChunk>  (200)
      소유권 검증 필수, FastAPI STT 파이프라인 트리거
-     제약: 청크당 최대 5MB / 허용 포맷: audio/webm, audio/mp4 / Content-Type 검증 필수
+     제약: 청크당 최대 5MB / 허용 포맷: audio/webm, audio/mp4, audio/ogg / Content-Type 검증 필수
 
 POST /api/v1/user/interview/sessions/{sessionId}/end
      → ApiResponse<InterviewDTO.ResponseEndSession>  (200)

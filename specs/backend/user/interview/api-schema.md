@@ -209,7 +209,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 |------|--------|
 | 청크당 최대 크기 | **5MB** (`spring.servlet.multipart.max-file-size: 5MB`) |
 | 요청당 최대 크기 | **10MB** (`spring.servlet.multipart.max-request-size: 10MB`) |
-| 허용 Content-Type | `audio/webm`, `audio/mp4` |
+| 허용 Content-Type | `audio/webm`, `audio/mp4`, `audio/ogg` |
 | Content-Type 검증 | Spring Controller에서 `MultipartFile.getContentType()` 검증, 미일치 시 400 반환 |
 
 ### Response `200 OK`
