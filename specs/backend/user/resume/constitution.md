@@ -112,4 +112,4 @@ FastAPI 분석 트리거 호출
 - `SimpMessagingTemplate.convertAndSend()`를 `@Transactional` 메서드 안에서 직접 호출 금지.  
   반드시 `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)`를 통해 커밋 완료 후 발행할 것.  
   이유: 커밋 전에 메시지를 보내면 클라이언트는 수신했으나 DB에는 아직 미반영인 데이터 불일치 상태가 발생한다.
-- `document_feedbacks` 컬럼을 JSONB나 `AttributeConverter`로 처리 금지 — 점수 5개 INTEGER 컬럼 + `feedback_text` TEXT로 직접 매핑.
+- `document_feedbacks` 컬럼을 JSONB나 `AttributeConverter`로 처리 금지 — 점수 5개 INTEGER 컬럼은 직접 매핑, `feedback_text`는 `ObjectMapper`로 JSON 역직렬화.

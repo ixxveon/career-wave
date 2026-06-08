@@ -146,18 +146,29 @@ public class ResumeDTO {
     ) {}
 
     // 분석 결과 조회 응답
+    // feedback_text(TEXT) → ObjectMapper 역직렬화 → feedbackDetails 배열로 반환
     public record ResponseFeedback(
         UUID documentId,
         String status,
-        Integer scoreJobFitness,    // null: 분석 미완료
-        Integer scoreTechStack,     // null: 분석 미완료
-        Integer scoreQuantified,    // null: 분석 미완료
-        Integer scoreLogical,       // null: 분석 미완료
-        Integer scoreTotal,         // null: 분석 미완료
-        String feedbackText,        // null: 분석 미완료
+        Integer scoreJobFitness,            // null: 분석 미완료
+        Integer scoreTechStack,             // null: 분석 미완료
+        Integer scoreQuantified,            // null: 분석 미완료
+        Integer scoreLogical,               // null: 분석 미완료
+        Integer scoreTotal,                 // null: 분석 미완료
+        List<FeedbackDetail> feedbackDetails, // null: 분석 미완료, feedback_text JSON 파싱 결과
         ZonedDateTime createdAt
-    ) {}
-    // ⚠️ feedbackDetails 배열(항목별 첨삭) 포함 여부는 FastAPI 팀과 feedback_text 구조 합의 후 확정
+    ) {
+        public record FeedbackDetail(
+            int sectionNumber,
+            String question,
+            String originalText,
+            String goodPoint,
+            String badPoint,
+            String improvedText,
+            StarAnalysis starAnalysis,   // 이력서 전용, 자기소개서는 null
+            QuantAnalysis quantAnalysis  // 항목별 null 허용
+        ) {}
+    }
 
     // 이력 목록 조회 응답 (단건)
     public record HistoryItem(
@@ -236,7 +247,8 @@ WS   /ws/resume/{documentId}/status?token={accessToken}
 - Document 존재하지 않음 → `DOCUMENT_NOT_FOUND(404)`
 - 소유자 불일치 → `DOCUMENT_ACCESS_DENIED(403)`
 - `DocumentFeedback` 조회 — 없으면 `scores`, `feedbackDetails` 모두 `null`로 반환 (status만 포함)
-- `feedback_details` JSONB `AttributeConverter` 역직렬화 실패 시 → `FEEDBACK_PARSE_ERROR(500)` + 사용자 친화적 메시지 반환 (서버 전체 크래시 방지)
+- `feedback_text`(TEXT) → `ObjectMapper.readValue(feedbackText, FeedbackDetail[].class)` 역직렬화
+- JSON 파싱 실패 시 → `FEEDBACK_PARSE_ERROR(500)` + 사용자 친화적 메시지 반환 (서버 전체 크래시 방지)
   - 이 에러는 클라이언트 문제가 아니라 FastAPI ↔ Spring 데이터 계약 파손 신호 — 서버 로그에 `documentId`·실패 원인을 ERROR 레벨로 반드시 기록
   - TODO(v2): Slack 등 운영 알림 연동 검토 — 파싱 실패 발생 즉시 담당자에게 알림
 - 반환: `ResumeDTO.ResponseFeedback`

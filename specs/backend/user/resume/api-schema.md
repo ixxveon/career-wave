@@ -213,15 +213,35 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
     "scoreQuantified": 60,
     "scoreLogical": 72,
     "scoreTotal": 74,
-    "feedbackText": "전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다.",
+    "feedbackDetails": [
+      {
+        "sectionNumber": 1,
+        "question": "주요 프로젝트 경험",
+        "originalText": "결제 시스템 개발에 참여하였습니다.",
+        "goodPoint": "백엔드 프로젝트 경험이 확인됩니다.",
+        "badPoint": "역할, 규모, 성과가 빠져 있습니다.",
+        "improvedText": "월 거래액 50억 규모의 결제 시스템 API를 설계 및 구현...",
+        "starAnalysis": {
+          "s": { "ok": true,  "comment": "상황 설명이 적절합니다." },
+          "t": { "ok": false, "comment": "과제가 구체적으로 드러나지 않습니다." },
+          "a": { "ok": true,  "comment": "행동이 명시되어 있습니다." },
+          "r": { "ok": false, "comment": "결과가 수치로 표현되지 않았습니다." }
+        },
+        "quantAnalysis": {
+          "numbers":   { "ok": false, "comment": "수치가 사용되지 않았습니다." },
+          "timeframe": { "ok": false, "comment": "기간 표현이 없습니다." },
+          "scale":     { "ok": true,  "comment": "규모 언급이 있습니다." },
+          "impact":    { "ok": false, "comment": "성과가 수치로 측정되지 않았습니다." }
+        }
+      }
+    ],
     "createdAt": "2026-05-29T14:55:00Z"
   }
 }
 ```
 
-> ⚠️ `feedbackText` 내부 구조(순수 텍스트 vs JSON 문자열로 항목별 첨삭 포함)는 FastAPI 팀과 합의 필요.  
-> 합의 결과에 따라 응답 필드 추가 가능.
-```
+> `feedback_text` 컬럼(TEXT)에 JSON 문자열로 저장 — Spring에서 `ObjectMapper`로 역직렬화하여 `feedbackDetails` 배열로 반환.  
+> 파싱 실패 시 `FEEDBACK_PARSE_ERROR(500)` — `GlobalExceptionHandler`에서 처리.
 
 | Field | Type | 설명 |
 |-------|------|------|
@@ -231,7 +251,9 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 | `data.scoreQuantified` | `number` \| `null` | 경험 수치화 (0~100), 분석 미완료 시 `null` |
 | `data.scoreLogical` | `number` \| `null` | 논리력 (0~100), 분석 미완료 시 `null` |
 | `data.scoreTotal` | `number` \| `null` | 종합 점수 (0~100), 분석 미완료 시 `null` |
-| `data.feedbackText` | `string` \| `null` | AI 피드백 텍스트, 분석 미완료 시 `null` |
+| `data.feedbackDetails` | `array` \| `null` | 항목별 첨삭 결과, 분석 미완료 시 `null` |
+| `data.feedbackDetails[].starAnalysis` | `object` \| `null` | STAR 분석, 이력서 전용 (자기소개서는 `null`) |
+| `data.feedbackDetails[].quantAnalysis` | `object` \| `null` | 수치화 분석, 항목에 따라 `null` 허용 |
 
 ### Error Cases
 
@@ -341,10 +363,11 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 | `scoreQuantified` | `number` \| `null` | 경험 수치화 (0~100), `FAILED` 시 `null` |
 | `scoreLogical` | `number` \| `null` | 논리력 (0~100), `FAILED` 시 `null` |
 | `scoreTotal` | `number` \| `null` | 종합 점수 (0~100), `FAILED` 시 `null` |
-| `feedbackText` | `string` \| `null` | AI 피드백 텍스트, `FAILED` 시 `null` |
+| `feedbackText` | `string` \| `null` | 항목별 첨삭 배열을 JSON 직렬화한 문자열, `FAILED` 시 `null` |
 | `errorMessage` | `string` \| `null` | 실패 시 오류 메시지 |
 
-> ⚠️ `feedbackText` 내부 구조(순수 텍스트 vs JSON 문자열)는 FastAPI 팀과 합의 필요 — 합의 전까지는 TEXT로 그대로 저장.
+> `feedbackText`는 JSON 문자열로 확정 — `document_feedbacks.feedback_text TEXT` 컬럼에 저장.  
+> Spring에서 `ObjectMapper.readValue(feedbackText, FeedbackDetail[].class)`로 역직렬화 후 응답 반환.
 
 ### Response `200 OK`
 

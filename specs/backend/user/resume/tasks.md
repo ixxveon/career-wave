@@ -71,11 +71,13 @@
 
 ## Phase 4: 분석 결과 조회 API
 
-- [ ] `ResumeDTO.ResponseFeedback` record 작성 (점수 5개 INTEGER + `feedbackText` String)
-- [ ] `DocumentFeedback` 조회 → score 컬럼 5개 + `feedback_text` 직접 매핑 (JSONB 불필요)
+- [ ] `ResumeDTO.ResponseFeedback` + `FeedbackDetail` inner record 작성
+- [ ] `DocumentFeedback` 조회 → score 컬럼 5개 직접 매핑
+- [ ] `feedback_text`(TEXT) → `ObjectMapper.readValue()` → `List<FeedbackDetail>` 역직렬화
+- [ ] `JsonProcessingException` 캐치 후 `CustomException(ErrorCode.FEEDBACK_PARSE_ERROR)` 변환
+- [ ] `GlobalExceptionHandler`에 `FEEDBACK_PARSE_ERROR(500)` 핸들러 등록
 - [ ] IDOR 검증 — `document.member_id != memberId` 시 `DOCUMENT_ACCESS_DENIED(403)`
-- [ ] `DocumentFeedback` 없는 경우 score 필드 전체 `null` + status만 포함한 응답 반환
-- [ ] ⚠️ `feedback_text` 내부 구조(순수 텍스트 vs JSON 문자열) FastAPI 팀 합의 후 응답 DTO 확정
+- [ ] `DocumentFeedback` 없는 경우 score 필드 전체 `null` + `feedbackDetails = null` + status만 포함한 응답 반환
 - [ ] `ResumeController.getFeedback()` 구현
 - [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
 

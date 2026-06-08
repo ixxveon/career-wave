@@ -104,9 +104,9 @@
 
 ## 단위 테스트
 
-- [ ] `DocumentFeedback` 저장 — Webhook 수신 시 점수 5개 컬럼 + `feedback_text`가 올바르게 저장되는지 확인
-  - 점수 컬럼이 `null`인 상태에서 `COMPLETED` Webhook 수신 후 정상 저장 케이스
-  - `FAILED` Webhook 수신 시 점수 컬럼 `null` 유지, `feedback_text` 저장 케이스
+- [ ] `feedback_text` JSON 역직렬화 — `ObjectMapper.readValue()` → `List<FeedbackDetail>` 정상 변환 케이스
+- [ ] `feedback_text` JSON 파싱 실패 시 `FEEDBACK_PARSE_ERROR(500)` 반환 (서버 크래시 없음) 케이스
+- [ ] Webhook 수신 시 점수 5개 컬럼 + `feedback_text` 올바르게 저장되는지 확인
 - [ ] Webhook 멱등성 — `COMPLETED` 상태에서 재수신 시 DB 갱신 없이 `200 OK` 반환 확인
 - [ ] IDOR — 타인 `documentId`로 피드백 조회 시 `403` 반환 확인
 
