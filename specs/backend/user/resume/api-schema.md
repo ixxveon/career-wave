@@ -380,7 +380,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 | `scoreLogical` | `number` \| `null` | 논리력 (0~100), `FAILED` 시 `null` |
 | `scoreTotal` | `number` \| `null` | 종합 점수 (0~100), `FAILED` 시 `null` |
 | `overallReview` | `string` \| `null` | AI 종합 총평, `FAILED` 시 `null` — `document_feedbacks.overall_review` 컬럼에 저장 |
-| `feedbackText` | `string` \| `null` | 항목별 첨삭 배열을 JSON 직렬화한 문자열, `FAILED` 시 `null` |
+| `feedbackText` | `string` \| `null` | 항목별 첨삭 배열을 JSON 직렬화한 문자열. `FAILED` 시 `document_feedbacks` 행 미생성 → `null` 반환 |
 | `errorMessage` | `string` \| `null` | 실패 시 오류 메시지 — `documents.error_message` 컬럼에 저장 |
 
 > **DB 매핑**  
@@ -553,8 +553,8 @@ WS /ws/user/resume?token={accessToken}
 
 | 테이블 | 제약 | 설명 |
 |--------|------|------|
-| `document_feedbacks` | `feedback_text` NOT NULL | 피드백 텍스트는 항상 존재 — 점수 5개 컬럼은 nullable |
-| `document_feedbacks` | `score_*` 5개 컬럼 INTEGER | 분석 완료 시 저장, 미완료 시 `null` — `FAILED` 시도 `null` |
+| `document_feedbacks` | `feedback_text` NOT NULL | `COMPLETED` 시에만 행 생성 — `FAILED` 시 행 미생성, API 응답에서 `null` 반환 |
+| `document_feedbacks` | `score_*` 5개 컬럼 INTEGER | 분석 완료 시 저장, 미완료 시 `null` — `FAILED` 시 행 자체 미생성 |
 | `cover_letter_contents` | `(document_id, order_num)` UNIQUE | 동일 문서 내 문항 순서 중복 불가 (`UK_DOCUMENT_ORDER`) |
 | `cover_letter_contents` | `order_num` CHECK (1~5) | 문항 순서 범위 DB 레벨 제한 |
 | `cover_letter_contents` | `answer` 최대 1000자 | 서비스 레이어에서 `@Size(max=1000)` 검증 후 저장 |
