@@ -45,19 +45,18 @@
 
 ## Phase 2: 이력서 업로드 API
 
-- [ ] `ResumeDTO.ResponseUpload` 작성
-- [ ] 파일 MIME type 기반 확장자 검증 유틸 작성 (PDF·DOC·DOCX)
+- [x] `ResumeDTO.ResponseUpload` 작성
+- [x] 파일 MIME type 기반 확장자 검증 유틸 작성 (PDF·DOC·DOCX)
   - `Apache Tika` (`org.apache.tika:tika-core`) 사용 확정 — `Tika.detect(InputStream)`으로 실제 MIME 검증
   - `build.gradle`에 의존성 추가 후 팀 공유
-- [ ] 파일 크기 10MB 초과 검증
-- [ ] UUID 기반 저장 파일명 생성 유틸 작성 (`{UUID}.{확장자}`)
-- [ ] S3 경로 생성 로직 작성 (`resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — `LocalDate.now()` 활용)
-- [ ] S3 업로드 로직 구현 — `original_name` DB 별도 저장, S3 Connection/Read Timeout 3~5초 설정
-- [ ] `Document` 저장 (`status = UPLOADED`, `file_type = RESUME`)
-- [ ] FastAPI 분석 트리거 — `@Async` + `WebClient` 비동기 호출 (스텁 → 실제 연동)
-  - 동기 호출 선택 시 Connection/Read Timeout 3초 이내 필수 설정
-- [ ] `ResumeController.uploadResume()` 구현
-- [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
+- [x] 파일 크기 10MB 초과 검증
+- [x] UUID 기반 저장 파일명 생성 유틸 작성 (`{UUID}.{확장자}`)
+- [x] S3 경로 생성 로직 작성 (`resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — `LocalDate.now()` 활용)
+- [x] S3 업로드 로직 구현 — `original_name` DB 별도 저장
+- [x] `Document` 저장 (`status = UPLOADED`, `file_type = RESUME`)
+- [x] FastAPI 분석 트리거 — `WebClient` 비동기 호출 (3초 타임아웃, 실패 시 FAILED 마킹)
+- [x] `ResumeController.uploadResume()` 구현
+- [x] `ResumeControllerDocs` Swagger 인터페이스 작성
 
 ---
 
