@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { FastApiWSMessage } from '../../../types/user/interview';
 import { MAX_RECONNECT_ATTEMPTS } from '../../../constants/user/interview';
+import { authSession } from '../../../utils/user/member/authSession';
 
 export type FastApiWSStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'RECONNECTING' | 'ERROR';
 
@@ -32,13 +33,14 @@ export function useFastApiWebSocket({
   useEffect(() => { onMessageRef.current = onMessage; }, [onMessage]);
   useEffect(() => { onStatusChangeRef.current = onStatusChange; }, [onStatusChange]);
 
-  const getWsUrl = (sid: string) => {
+  const getWsUrl = (sid: string): string => {
+    const token = authSession.getAccessToken();
+    if (!token) throw new Error('인증 토큰이 없습니다. 로그인 후 다시 시도해주세요.');
     const base =
       import.meta.env.VITE_FASTAPI_WS_URL ||
       import.meta.env.VITE_FASTAPI_BASE_URL?.replace(/^http/, 'ws') ||
       'ws://localhost:8000';
-    const token = encodeURIComponent(localStorage.getItem('accessToken') ?? '');
-    return `${base}/ws/interview/${sid}/ai?token=${token}`;
+    return `${base}/ws/interview/${sid}/ai?token=${encodeURIComponent(token)}`;
   };
 
   const connect = useCallback((sid: string) => {
@@ -46,7 +48,13 @@ export function useFastApiWebSocket({
     if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
 
     onStatusChangeRef.current(attemptRef.current === 0 ? 'CONNECTING' : 'RECONNECTING');
-    const ws = new WebSocket(getWsUrl(sid));
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(getWsUrl(sid));
+    } catch {
+      onStatusChangeRef.current('ERROR');
+      return;
+    }
     wsRef.current = ws;
 
     ws.onopen = () => {
