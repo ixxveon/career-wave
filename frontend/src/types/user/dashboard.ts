@@ -1,3 +1,10 @@
+export type MemberStatus =
+  | "ACTIVE"
+  | "SUSPENDED"
+  | "BANNED"
+  | "LOCKED"
+  | "WITHDRAWN";
+
 export interface UserProfile {
   memberId: string;
   loginId: string;
@@ -5,7 +12,7 @@ export interface UserProfile {
   name: string;
   phone: string;
   roleType: string;
-  memberStatus: string;
+  memberStatus: MemberStatus;
   subscriptionStatus: string;
   notificationEnabled: boolean;
   createdAt: string;
