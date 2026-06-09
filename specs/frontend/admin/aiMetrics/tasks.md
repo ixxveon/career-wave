@@ -52,7 +52,7 @@
 **Base**: `feature/admin-ai-metrics-logs-anomaly`
 
 - [x] 관리자 권한이 없는 사용자의 접근 제한 확인
-- [x] `accessToken` JWT payload에서 `ROLE_ADMIN` 권한을 확인하도록 라우트 가드 보강
+- [x] `accessToken` JWT payload에서 endpoint별 `MASTER`, `BACKEND` 권한을 확인하도록 라우트 가드 보강
 - [x] API 실패, 빈 데이터, 권한 오류 상태 확인
 - [x] 모델 표시명이 없을 때 실제 모델명을 대체 표시하는지 확인
 - [x] 실제 모델명이 바뀌어도 도메인별 통계가 유지되는지 확인
