@@ -1,3 +1,4 @@
+// @admin-only — admin API 파일들만 import해서 사용한다. user 도메인에서 직접 import 금지.
 import axios from 'axios';
 import { adminSession } from '../admin/api/adminAuthApi';
 

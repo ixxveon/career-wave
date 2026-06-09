@@ -12,6 +12,11 @@ function isSafeMethod(method: string | undefined): boolean {
 
 export interface MemberApiOptions extends RequestInit {
   auth?: boolean;
+  /**
+   * true로 설정하면 POST/PUT/PATCH/DELETE 요청도 401 후 1회 재시도를 허용한다.
+   * 호출자가 해당 endpoint의 멱등성(idempotency)을 직접 보장해야 한다.
+   * 주문 생성 등 멱등성이 없는 요청에 사용 시 중복 실행 위험이 있다.
+   */
   allowRetry?: boolean;
 }
 
