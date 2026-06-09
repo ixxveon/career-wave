@@ -7,10 +7,27 @@
 
 ## Security
 
-- 모든 endpoint는 JWT 인증과 `ROLE_ADMIN` 권한을 필요로 한다.
+- 모든 endpoint는 JWT 인증과 endpoint별 `MASTER`, `BACKEND`, `CS` 세부 권한을 필요로 한다.
 - 계정 생성, 권한 변경, 잠금/해제, 삭제, ACL 변경 endpoint는 관리자 세부 역할 `MASTER`만 수행할 수 있다.
 - 서버는 인증 관리자 ID를 Security Context 또는 공통 인증 유틸에서 추출한다.
 - 프론트엔드는 `AdminAccount.role`/`scope` 등 응답으로 내려온 권한 필드와 `401`/`403` API 실패 응답을 기준으로 버튼 노출/비활성화 상태를 결정한다.
+
+## Permissions
+
+문서상 권한 표기는 `MASTER`, `BACKEND`, `CS`, `USER`를 사용한다. Spring Security에서는 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`, `ROLE_USER`로 매핑한다.
+
+| Method | Path | Allowed Roles |
+|---|---|---|
+| GET | `/api/v1/admin/admins/summary` | `MASTER` |
+| GET | `/api/v1/admin/admins` | `MASTER` |
+| POST | `/api/v1/admin/admins` | `MASTER` |
+| PATCH | `/api/v1/admin/admins/{adminId}/role` | `MASTER` |
+| PATCH | `/api/v1/admin/admins/{adminId}/status` | `MASTER` |
+| DELETE | `/api/v1/admin/admins/{adminId}` | `MASTER` |
+| GET | `/api/v1/admin/admin-acls` | `MASTER`, `BACKEND` |
+| POST | `/api/v1/admin/admin-acls` | `MASTER` |
+| PATCH | `/api/v1/admin/admin-acls/{aclId}/enabled` | `MASTER` |
+| DELETE | `/api/v1/admin/admin-acls/{aclId}` | `MASTER` |
 
 ## Endpoints
 
