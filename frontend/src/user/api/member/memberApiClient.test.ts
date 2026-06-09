@@ -70,6 +70,23 @@ describe('refresh 요청 URL 검증', () => {
 });
 
 // ─────────────────────────────────────────────
+// refresh 응답 실패 (토큰 만료) 엣지케이스
+// ─────────────────────────────────────────────
+describe('refresh 응답 실패 — 원래 401 전파', () => {
+  it('refresh 응답이 401이면 setTokens 없이 원래 401 에러가 전파된다', async () => {
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }));
+
+    await expect(
+      memberApiClient('/api/test', { method: 'GET', auth: true }),
+    ).rejects.toMatchObject({ statusCode: 401 });
+
+    expect(vi.mocked(authSession.setTokens)).not.toHaveBeenCalled();
+  });
+});
+
+// ─────────────────────────────────────────────
 // GET 401 → refresh 후 1회 retry
 // ─────────────────────────────────────────────
 describe('GET 요청 — 401 시 refresh 후 retry', () => {
