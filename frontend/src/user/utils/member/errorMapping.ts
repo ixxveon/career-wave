@@ -1,4 +1,4 @@
-import type { ApiErrorBody } from '../../types/member';
+import type { ApiErrorBody, LoginRouteDecision } from '../../types/member';
 
 export const MEMBER_ERROR_CODE = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
@@ -18,7 +18,25 @@ export interface MemberApiError {
   code: MemberErrorCode;
   statusCode: number;
   message: string;
+  serverCode?: string;
   fieldErrors?: Record<string, string>;
+}
+
+const ACCOUNT_RESTRICTION_SERVER_CODES: Record<string, LoginRouteDecision & { type: 'BLOCK' }> = {
+  AUTH_ACCOUNT_SUSPENDED:       { type: 'BLOCK', reason: 'RESTRICTED' },
+  AUTH_ACCOUNT_BANNED:          { type: 'BLOCK', reason: 'RESTRICTED' },
+  AUTH_ACCOUNT_WITHDRAWN:       { type: 'BLOCK', reason: 'RESTRICTED' },
+  AUTH_COMPANY_PENDING_REVIEW:  { type: 'BLOCK', reason: 'COMPANY_PENDING' },
+  AUTH_COMPANY_REJECTED:        { type: 'BLOCK', reason: 'COMPANY_REJECTED' },
+  AUTH_COMPANY_NEEDS_REVISION:  { type: 'BLOCK', reason: 'COMPANY_NEEDS_REVISION' },
+};
+
+export function parseLoginBlockedDecision(
+  error: MemberApiError,
+): (LoginRouteDecision & { type: 'BLOCK' }) | null {
+  if (error.statusCode !== 403) return null;
+  if (!error.serverCode) return null;
+  return ACCOUNT_RESTRICTION_SERVER_CODES[error.serverCode] ?? null;
 }
 
 const fallbackMessages: Record<MemberErrorCode, string> = {
@@ -68,6 +86,7 @@ export function toMemberApiError(statusCode: number, body?: ApiErrorBody): Membe
     code,
     statusCode,
     message: body?.message || fallbackMessages[code],
+    serverCode: body?.code,
     fieldErrors,
   };
 }
