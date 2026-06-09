@@ -89,13 +89,13 @@ REMOVED
 ## 5. 연동 계약
 
 - `admin-backend`는 아래 API를 제공한다:
-  - `GET /api/admin/members?role=&status=&plan=&keyword=&page=&size=` — 개인 회원 목록 (페이지네이션)
-  - `GET /api/admin/members/{memberId}` — 개인 회원 상세
-  - `POST /api/admin/members/{memberId}/sanctions` — 제재 처리 (sanctionType, duration, reason)
-  - `GET /api/admin/hr-managers?hrStatus=&keyword=&page=&size=` — 기업 회원 목록
-  - `GET /api/admin/hr-managers/{memberId}` — 기업 회원 상세
-  - `PATCH /api/admin/hr-managers/{memberId}/approve` — 기업 회원 승인
-  - `PATCH /api/admin/hr-managers/{memberId}/reject` — 기업 회원 반려 (rejectReason 필수, hr_status → REMOVED, reject_reason 저장)
+  - `GET /api/v1/admin/members?role=&status=&plan=&keyword=&page=&size=` — 개인 회원 목록 (페이지네이션)
+  - `GET /api/v1/admin/members/{memberId}` — 개인 회원 상세
+  - `POST /api/v1/admin/members/{memberId}/sanctions` — 제재 처리 (sanctionType, duration, reason)
+  - `GET /api/v1/admin/hr-managers?hrStatus=&keyword=&page=&size=` — 기업 회원 목록
+  - `GET /api/v1/admin/hr-managers/{memberId}` — 기업 회원 상세
+  - `PATCH /api/v1/admin/hr-managers/{memberId}/approve` — 기업 회원 승인
+  - `PATCH /api/v1/admin/hr-managers/{memberId}/reject` — 기업 회원 반려 (rejectReason 필수, hr_status → REMOVED, reject_reason 저장)
 - 모든 응답은 `ApiResponse<T>` 형식 (`success`, `statusCode`, `message`, `data`)을 사용한다.
 - 제재 처리 성공 시 해당 회원의 `member_status`가 즉시 변경되어 목록에 반영된다.
 

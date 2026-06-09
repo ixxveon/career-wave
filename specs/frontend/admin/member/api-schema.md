@@ -43,7 +43,7 @@
 ## 1. 개인 회원 목록 조회
 
 ```http
-GET /api/admin/members
+GET /api/v1/admin/members
 ```
 
 ### Query Parameters
@@ -102,7 +102,7 @@ GET /api/admin/members
 ## 2. 개인 회원 상세 조회
 
 ```http
-GET /api/admin/members/{memberId}
+GET /api/v1/admin/members/{memberId}
 ```
 
 ### Path Parameters
@@ -145,7 +145,7 @@ GET /api/admin/members/{memberId}
 ## 3. 회원 제재 처리
 
 ```http
-POST /api/admin/members/{memberId}/sanctions
+POST /api/v1/admin/members/{memberId}/sanctions
 ```
 
 ### Request Body
@@ -197,7 +197,7 @@ POST /api/admin/members/{memberId}/sanctions
 ## 4. 기업 회원 목록 조회
 
 ```http
-GET /api/admin/hr-managers
+GET /api/v1/admin/hr-managers
 ```
 
 ### Query Parameters
@@ -250,7 +250,7 @@ GET /api/admin/hr-managers
 ## 5. 기업 회원 상세 조회
 
 ```http
-GET /api/admin/hr-managers/{memberId}
+GET /api/v1/admin/hr-managers/{memberId}
 ```
 
 ### Response
@@ -282,7 +282,7 @@ GET /api/admin/hr-managers/{memberId}
 ## 6. 기업 회원 승인
 
 ```http
-PATCH /api/admin/hr-managers/{memberId}/approve
+PATCH /api/v1/admin/hr-managers/{memberId}/approve
 ```
 
 ### Response
@@ -312,7 +312,7 @@ PATCH /api/admin/hr-managers/{memberId}/approve
 ## 7. 기업 회원 반려
 
 ```http
-PATCH /api/admin/hr-managers/{memberId}/reject
+PATCH /api/v1/admin/hr-managers/{memberId}/reject
 ```
 
 ### Request Body

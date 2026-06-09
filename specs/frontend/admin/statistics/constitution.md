@@ -40,11 +40,11 @@
 ## 4. 연동 계약
 
 - `admin-backend`는 아래 API를 제공한다:
-  - `GET /api/admin/statistics/summary` — KPI 집계
-  - `GET /api/admin/statistics/revenue/monthly` — 월별 매출 추이 (최근 6개월)
-  - `GET /api/admin/statistics/revenue/breakdown` — 구독 유형별 매출 실적
-  - `GET /api/admin/statistics/subscribers/monthly` — 구독자 변동 추이 (최근 6개월)
-  - `GET /api/admin/statistics/subscribers/recent` — 최근 가입 피드 (최대 5건)
+  - `GET /api/v1/admin/statistics/summary` — KPI 집계
+  - `GET /api/v1/admin/statistics/revenue/monthly` — 월별 매출 추이 (최근 6개월)
+  - `GET /api/v1/admin/statistics/revenue/breakdown` — 구독 유형별 매출 실적
+  - `GET /api/v1/admin/statistics/subscribers/monthly` — 구독자 변동 추이 (최근 6개월)
+  - `GET /api/v1/admin/statistics/subscribers/recent` — 최근 가입 피드 (최대 5건)
 - 모든 응답은 `ApiResponse<T>` 형식 (`success`, `statusCode`, `message`, `data`)을 사용한다.
 - 모든 HTTP 호출은 `frontend/src/admin/api/statsApi.ts`를 통해서만 수행한다.
 

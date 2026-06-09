@@ -1,4 +1,13 @@
-# Career Wave Admin
+# Career Wave
+
+CareerWave는 AI 기반 면접 코칭·서류 분석·커리어 진단 기능을 제공하는 취업 지원 통합 플랫폼입니다.
+구직자와 기업 회원을 위한 사용자 플랫폼과 운영팀을 위한 관리자 백오피스로 구성되어 있습니다.
+
+## 컨트리뷰션 가이드
+
+브랜치 전략, 커밋 컨벤션, PR 규칙은 아래 문서를 참고해 주세요.
+
+👉 [CONTRIBUTION.md](.github/CONTRIBUTION.md)
 
 ## 기술 스택 (Tech Stack)
 
@@ -13,7 +22,7 @@
 | **데이터베이스** | `Data` | PostgreSQL | 관계형 데이터베이스 통합 인프라 구축 |
 | **백엔드** | `user-backend`<br>`admin-backend` | Java 17<br>Spring Boot 3.x<br>Gradle | Spring Data JPA, Spring Security, JWT, Lombok |
 | **AI 및 엔진** | `user-fastapi`<br>`admin-fastapi` | Python 3.x<br>FastAPI | 실시간 AI 면접 분석 피드백, 채용 공고 스크래핑 스케줄러 |
-| **프론트엔드** | `user-frontend`<br>`admin-frontend` | JavaScript / TypeScript<br>React | 컴포넌트 기반 웹 아키텍처, Tailwind CSS |
+| **프론트엔드** | `frontend` | TypeScript<br>React | TanStack Query, React Router, MSW, Vite |
 
 
 ### 2. 모노레포 프로젝트 디렉토리 구조
@@ -22,16 +31,12 @@
 
 ```text
 career-wave/
-├── .github/                  # GitHub 이슈/PR 템플릿 및 자동화 워크플로우 (CI)
-├── backend/                  # 스프링 부트 백엔드 시스템 루트
-│   ├── admin-backend/        # 관리자 백오피스 비즈니스 로직 및 API
-│   └── user-backend/         # 일반 사용자 서비스 비즈니스 로직 및 API
-├── fastapi/                  # 파이썬 FastAPI 시스템 루트
-│   ├── admin-fastapi/        # 외부 채용 사이트 공고 수집 크롤링 엔진
-│   └── user-fastapi/         # 사용자 답변 데이터 분석 및 AI 피드백 엔진
-└── frontend/                 # 리액트 프론트엔드 시스템 루트
-    ├── admin-frontend/       # 관리자 대시보드 웹 애플리케이션
-    └── user-frontend/        # 일반 사용자 서비스 웹 애플리케이션
+├── .github/        # CI/CD 워크플로우 및 PR 템플릿
+├── frontend/       # React + Vite (TypeScript) — user / admin 통합
+├── backend/        # Spring Boot (Java 17) — 단일 서버
+├── fastapi/        # FastAPI (Python) — AI 엔진 및 스크래핑
+├── specs/          # 스펙 명세 문서
+└── README.md
 ```
 
 ## 실행 방법
@@ -42,6 +47,11 @@ cd frontend
 npm install
 npm run dev
 ```
+
+| 플랫폼 | URL |
+| :--- | :--- |
+| 사용자 | http://localhost:5173 |
+| 관리자 | http://localhost:5173/admin |
 
 ### FastAPI
 ```bash
@@ -55,6 +65,17 @@ uvicorn main:app --reload --port 8001
 cd backend
 ./gradlew bootRun
 ```
+
+## 테스트 계정
+
+| 아이디 | 비밀번호 | 설명 |
+| :--- | :--- | :--- |
+| `testuser01` | `Test1234!` | 개인 회원 — 구독 없음 |
+| `testuser02` | `Test1234!` | 개인 회원 — AI 모의면접만 구독 |
+| `testuser03` | `Test1234!` | 개인 회원 — 서류 AI 코칭만 구독 |
+| `testuser04` | `Test1234!` | 개인 회원 — 두 상품 모두 구독 |
+| `testcompany01` | `Test1234!` | 기업 회원 — 구독 없음 |
+| `admin` | `1234` | 관리자 (기존) |
 
 ## 환경 변수
 

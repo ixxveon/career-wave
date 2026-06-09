@@ -1,87 +1,86 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
-import MainLayout from '../components/layout/MainLayout';
-import ProtectedRoute from '../components/common/ProtectedRoute';
-import ScrappedJobPage from '@/user/pages/mypage/ScrappedJobPage';
+import MainLayout from '../components/user/layout/MainLayout';
+import ProtectedRoute from '../components/user/common/ProtectedRoute';
+import ScrappedJobPage from '../pages/user/mypage/ScrappedJobPage';
 
 // ── 사용자 플랫폼 ──────────────────────────────────────────────
-import JobSeekerDashboardPage from '../user/pages/dashboard/JobSeekerDashboardPage';
-import CompanyDashboardPage from '../user/pages/dashboard/CompanyDashboardPage';
-import UserMyPage from '../user/pages/mypage/UserMyPage';
-import SubscriptionPage from '../user/pages/mypage/SubscriptionPage';
-import PaymentHistoryPage from '../user/pages/mypage/PaymentHistoryPage';
+import JobSeekerDashboardPage from '../pages/user/dashboard/JobSeekerDashboardPage';
+import CompanyDashboardPage from '../pages/user/dashboard/CompanyDashboardPage';
+import UserMyPage from '../pages/user/mypage/UserMyPage';
+import SubscriptionPage from '../pages/user/mypage/SubscriptionPage';
+import PaymentHistoryPage from '../pages/user/mypage/PaymentHistoryPage';
 
+import LoginPage from '../pages/user/auth/LoginPage';
+import FindAccountPage from '../pages/user/auth/FindAccountPage';
+import RegisterPage from '../pages/user/auth/RegisterPage';
+import RegisterVerifyPage from '../pages/user/auth/RegisterVerifyPage';
+import FindIdPage from '../pages/user/auth/FindIdPage';
+import FindPasswordPage from '../pages/user/auth/FindPasswordPage';
+import ProfilePage from '../pages/user/auth/ProfilePage';
 
-import LoginPage from '../user/pages/auth/LoginPage';
-import FindAccountPage from '../user/pages/auth/FindAccountPage';
-import RegisterPage from '../user/pages/auth/RegisterPage';
-import RegisterVerifyPage from '../user/pages/auth/RegisterVerifyPage';
-import FindIdPage from '../user/pages/auth/FindIdPage';
-import FindPasswordPage from '../user/pages/auth/FindPasswordPage';
-import ProfilePage from '../user/pages/auth/ProfilePage';
+import CompanyProfilePage from '../pages/user/company/CompanyProfilePage';
+import HrManagerPage from '../pages/user/company/HrManagerPage';
 
-import CompanyProfilePage from '../user/pages/company/CompanyProfilePage';
-import HrManagerPage from '../user/pages/company/HrManagerPage';
+import JobNoticeListPage from '../pages/user/jobNotice/JobNoticeListPage';
 
-import JobNoticeListPage from '../user/pages/jobNotice/JobNoticeListPage';
+import ApplicationStatusPage from '../pages/user/application/ApplicationStatusPage';
+import ApplicantManagementPage from '../pages/user/application/ApplicantManagementPage';
+import ApplicantDetailPage from '../pages/user/application/ApplicantDetailPage';
+import ApplyPage from '../pages/user/application/ApplyPage';
 
-import ApplicationStatusPage from '../user/pages/application/ApplicationStatusPage';
-import ApplicantManagementPage from '../user/pages/application/ApplicantManagementPage';
-import ApplicantDetailPage from '../user/pages/application/ApplicantDetailPage';
-import ApplyPage from '../user/pages/application/ApplyPage';
+import ResumeAnalysisPage from '../pages/user/resume/ResumeAnalysisPage';
+import CoverLetterAnalysisPage from '../pages/user/resume/CoverLetterAnalysisPage';
+import DocumentReportPage from '../pages/user/resume/DocumentReportPage';
+import ResumeHistoryPage from '../pages/user/resume/ResumeHistoryPage';
 
-import ResumeAnalysisPage from '../user/pages/resume/ResumeAnalysisPage';
-import CoverLetterAnalysisPage from '../user/pages/resume/CoverLetterAnalysisPage';
-import DocumentReportPage from '../user/pages/resume/DocumentReportPage';
-import ResumeHistoryPage from '../user/pages/resume/ResumeHistoryPage';
+import InterviewHomePage from '../pages/user/interview/InterviewHomePage';
+import TextInterviewPage from '../pages/user/interview/TextInterviewPage';
+import MediaInterviewPage from '../pages/user/interview/MediaInterviewPage';
+import InterviewReportPage from '../pages/user/interview/InterviewReportPage';
 
-import InterviewHomePage from '../user/pages/interview/InterviewHomePage';
-import TextInterviewPage from '../user/pages/interview/TextInterviewPage';
-import MediaInterviewPage from '../user/pages/interview/MediaInterviewPage';
-import InterviewReportPage from '../user/pages/interview/InterviewReportPage';
+import DiagnosisHistoryPage from '../pages/user/careerDiagnosis/DiagnosisHistoryPage';
+import DiagnosisDetailPage from '../pages/user/careerDiagnosis/DiagnosisDetailPage';
+import LearningRoadmapPage from '../pages/user/careerDiagnosis/LearningRoadmapPage';
+import ComprehensiveReportPage from '../pages/user/careerDiagnosis/ComprehensiveReportPage';
 
-import DiagnosisHistoryPage from '../user/pages/careerDiagnosis/DiagnosisHistoryPage';
-import DiagnosisDetailPage from '../user/pages/careerDiagnosis/DiagnosisDetailPage';
-import LearningRoadmapPage from '../user/pages/careerDiagnosis/LearningRoadmapPage';
-import ComprehensiveReportPage from '../user/pages/careerDiagnosis/ComprehensiveReportPage';
+import CommunityPage from '../pages/user/community/CommunityPage';
+import PostDetailPage from '../pages/user/community/PostDetailPage';
+import PostCreatePage from '../pages/user/community/PostCreatePage';
+import MentorPage from '../pages/user/community/MentorPage';
 
-import CommunityPage from '../user/pages/community/CommunityPage';
-import PostDetailPage from '../user/pages/community/PostDetailPage';
-import PostCreatePage from '../user/pages/community/PostCreatePage';
-import MentorPage from '../user/pages/community/MentorPage';
+// [non-MVP] import PricingPage from '../pages/user/billing/PricingPage';
+import PaymentPage from '../pages/user/billing/PaymentPage';
+// [non-MVP] import CompanyProductPage from '../pages/user/billing/CompanyProductPage';
+import CheckoutPage from '../pages/user/billing/CheckoutPage';
+import PaymentSuccessPage from '../pages/user/billing/PaymentSuccessPage';
+import PaymentFailPage from '../pages/user/billing/PaymentFailPage';
 
-// [non-MVP] import PricingPage from '../user/pages/billing/PricingPage';
-import PaymentPage from '../user/pages/billing/PaymentPage';
-// [non-MVP] import CompanyProductPage from '../user/pages/billing/CompanyProductPage';
-import CheckoutPage from '../user/pages/billing/CheckoutPage';
-import PaymentSuccessPage from '../user/pages/billing/PaymentSuccessPage';
-import PaymentFailPage from '../user/pages/billing/PaymentFailPage';
+import SupportPage from '../pages/user/support/SupportPage';
+import NoticePage from '../pages/user/support/NoticePage';
+import NoticeDetailPage from '../pages/user/support/NoticeDetailPage';
+import FaqPage from '../pages/user/support/FaqPage';
+import InquiryListPage from '../pages/user/support/InquiryListPage';
+import InquiryCreatePage from '../pages/user/support/InquiryCreatePage';
 
-import SupportPage from '../user/pages/support/SupportPage';
-import NoticePage from '../user/pages/support/NoticePage';
-import NoticeDetailPage from '../user/pages/support/NoticeDetailPage';
-import FaqPage from '../user/pages/support/FaqPage';
-import InquiryListPage from '../user/pages/support/InquiryListPage';
-import InquiryCreatePage from '../user/pages/support/InquiryCreatePage';
-
-import NotFoundPage from '../user/pages/common/NotFoundPage';
+import NotFoundPage from '../pages/user/common/NotFoundPage';
 
 // ── 어드민 플랫폼 ──────────────────────────────────────────────
-import AdminLayout from '../admin/layouts/AdminLayout';
-import AdminLoginPage from '../admin/pages/AdminLogin/AdminLoginPage';
-import AdminDashboardPage from '../admin/pages/Dashboard/AdminDashboardPage';
-import AdminManagementPage from '../admin/pages/AdminManagement/AdminManagementPage';
-import UserManagementPage from '../admin/pages/UserManagement/UserManagementPage';
-import ReportPage from '../admin/pages/Report/ReportPage';
-import CustomerServicePage from '../admin/pages/CustomerService/CustomerServicePage';
-import AdminPaymentPage from '../admin/pages/Payment/PaymentPage';
-import StatisticsPage from '../admin/pages/Statistics/StatisticsPage';
-import AiMetricsPage from '../admin/pages/AiMetrics/AiMetricsPage';
-import ScrapingPage from '../admin/pages/Scraping/ScrapingPage';
-import AuditLogPage from '../admin/pages/AuditLog/AuditLogPage';
-import AdminCompanyListPage from '../admin/pages/Company/CompanyListPage';
-import AdminJobNoticeListPage from '../admin/pages/JobNotice/JobNoticeListPage';
-import AdminSettlementListPage from '../admin/pages/Settlement/SettlementListPage';
-import { ACCESS_TOKEN_STORAGE_KEY, ADMIN_ROLE } from '../admin/constants/authConstants';
+import AdminLayout from '../layouts/admin/AdminLayout';
+import AdminLoginPage from '../pages/admin/AdminLogin/AdminLoginPage';
+import AdminDashboardPage from '../pages/admin/Dashboard/AdminDashboardPage';
+import AdminManagementPage from '../pages/admin/AdminManagement/AdminManagementPage';
+import UserManagementPage from '../pages/admin/UserManagement/UserManagementPage';
+import ReportPage from '../pages/admin/Report/ReportPage';
+import CustomerServicePage from '../pages/admin/CustomerService/CustomerServicePage';
+import AdminPaymentPage from '../pages/admin/Payment/PaymentPage';
+import StatisticsPage from '../pages/admin/Statistics/StatisticsPage';
+import AiMetricsPage from '../pages/admin/AiMetrics/AiMetricsPage';
+import ScrapingPage from '../pages/admin/Scraping/ScrapingPage';
+import AuditLogPage from '../pages/admin/AuditLog/AuditLogPage';
+import AdminCompanyListPage from '../pages/admin/Company/CompanyListPage';
+import AdminJobNoticeListPage from '../pages/admin/JobNotice/JobNoticeListPage';
+import AdminSettlementListPage from '../pages/admin/Settlement/SettlementListPage';
+import { ACCESS_TOKEN_STORAGE_KEY, ADMIN_ROLE } from '../constants/admin/authConstants';
 
 type JwtPayload = Record<string, unknown>;
 

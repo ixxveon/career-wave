@@ -27,5 +27,5 @@
 ## Phases
 
 - [x] Phase 1: UI 구현 — 신고 목록 테이블, 상세 모달, AI 검토, 회원 제재 모달, 일괄 처리
-- [ ] Phase 2: API 연동 — `GET /api/admin/reports/summary`, `GET /api/admin/reports`, `GET /api/admin/reports/{reportId}`, `PATCH /api/admin/reports/{reportId}/blind`, `PATCH /api/admin/reports/{reportId}/dismiss`
+- [ ] Phase 2: API 연동 — `GET /api/v1/admin/reports/summary`, `GET /api/v1/admin/reports`, `GET /api/v1/admin/reports/{reportId}`, `PATCH /api/v1/admin/reports/{reportId}/blind`, `PATCH /api/v1/admin/reports/{reportId}/dismiss`
 - [ ] Phase 3: 추가 기능 (v2) — 신고 사유 필터, 일괄 처리 API 연동, AI 서버 연동
