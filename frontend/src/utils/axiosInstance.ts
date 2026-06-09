@@ -22,6 +22,7 @@ axiosInstance.interceptors.response.use(
       adminSession.clearRole();
       if (typeof window !== 'undefined' && window.location.pathname !== '/admin/login') {
         window.location.assign('/admin/login');
+        return new Promise(() => {});
       }
     }
     return Promise.reject(error);
