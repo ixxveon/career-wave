@@ -60,6 +60,24 @@ describe('order 생성 pending 중 중복 클릭 방지', () => {
 // isPaymentRequesting — Toss SDK 구간 재진입 방지
 // ─────────────────────────────────────────────
 describe('isPaymentRequesting — Toss SDK 구간 재진입 방지', () => {
+  it('Toss SDK loading 중 중복 클릭해도 createOrder가 1번만 실행된다', async () => {
+    let resolveSDK!: (v: unknown) => void;
+    const sdkPending = new Promise((res) => { resolveSDK = res; });
+    const createOrderMock = vi.fn().mockResolvedValue(mockOrder);
+    setupCreateOrder({ mutateAsync: createOrderMock });
+    vi.mocked(loadTossPayments).mockReturnValue(sdkPending as ReturnType<typeof loadTossPayments>);
+
+    const { result } = renderHook(() => useCheckoutStatus());
+    act(() => { result.current.handleAgreeChange(true); });
+
+    await act(async () => { result.current.handleCheckout(); });
+    act(() => { result.current.handleCheckout(); });
+
+    expect(createOrderMock).toHaveBeenCalledTimes(1);
+
+    resolveSDK({ payment: () => ({ requestPayment: vi.fn().mockResolvedValue(undefined) }) });
+  });
+
   it('handleCheckout 진행 중 재호출해도 createOrder가 1번만 실행된다', async () => {
     const createOrderMock = vi.fn().mockResolvedValue(mockOrder);
     const requestPaymentMock = vi.fn().mockImplementation(() => new Promise(() => {}));
