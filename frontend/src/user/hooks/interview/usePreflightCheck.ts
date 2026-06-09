@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { WS_PING_TIMEOUT_MS } from '../../constants/interview';
+import { authSession } from '../../utils/member/authSession';
 
 export type CheckStatus = 'idle' | 'checking' | 'pass' | 'fail';
 
@@ -37,7 +38,12 @@ export function usePreflightCheck(): PreflightResult {
     const wsBase =
       import.meta.env.VITE_WS_BASE_URL ||
       (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/^http/, 'ws');
-    const token = encodeURIComponent(localStorage.getItem('accessToken') ?? '');
+    const rawToken = authSession.getAccessToken();
+    if (!rawToken) {
+      setNetworkStatus('fail');
+      return;
+    }
+    const token = encodeURIComponent(rawToken);
 
     await new Promise<void>(resolve => {
       let ws: WebSocket;

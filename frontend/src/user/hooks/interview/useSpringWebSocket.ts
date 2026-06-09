@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { SpringWSMessage } from '../../types/interview';
 import { MAX_RECONNECT_ATTEMPTS } from '../../constants/interview';
+import { authSession } from '../../utils/member/authSession';
 
 export type SpringWSStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'RECONNECTING' | 'ERROR';
 
@@ -36,13 +37,18 @@ export function useSpringWebSocket({
     const base =
       import.meta.env.VITE_WS_BASE_URL ||
       (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/^http/, 'ws');
-    const token = encodeURIComponent(localStorage.getItem('accessToken') ?? '');
+    const token = encodeURIComponent(authSession.getAccessToken() ?? '');
     return `${base}/ws/interview/${sid}/chat?token=${token}`;
   };
 
   const connect = useCallback((sid: string) => {
     const state = wsRef.current?.readyState;
     if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
+
+    if (!authSession.getAccessToken()) {
+      onStatusChangeRef.current('ERROR');
+      return;
+    }
 
     onStatusChangeRef.current(attemptRef.current === 0 ? 'CONNECTING' : 'RECONNECTING');
     const ws = new WebSocket(getWsUrl(sid));
