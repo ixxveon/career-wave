@@ -15,19 +15,6 @@ export interface UserProfile {
   createdAt: string;
 }
 
-export interface UserProfile {
-  memberId: string;
-  loginId: string;
-  email: string;
-  name: string;
-  phone: string;
-  roleType: string;
-  memberStatus: MemberStatus;
-  subscriptionStatus: string;
-  notificationEnabled: boolean;
-  createdAt: string;
-}
-
 export interface GithubProfile {
   githubId: string | null;
   githubUrl: string | null;
