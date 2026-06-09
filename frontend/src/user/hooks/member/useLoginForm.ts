@@ -2,7 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type FormEvent, useMemo, useState } from 'react';
 import type { LoginRouteDecision } from '../../types/member';
 import { authSession } from '../../utils/member/authSession';
-import { getSafeLoginMessage, type MemberApiError } from '../../utils/member/errorMapping';
+import { getSafeLoginMessage, parseLoginBlockedDecision, type MemberApiError } from '../../utils/member/errorMapping';
 import {
   hasLoginFormErrors,
   toLoginRequest,
@@ -120,9 +120,14 @@ export function useLoginForm() {
       const safePath = nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
       navigate(safePath ?? decision.path, { replace: true });
     } catch (error) {
-      setFieldErrors({
-        form: getSafeLoginMessage(error as MemberApiError),
-      });
+      const apiError = error as MemberApiError;
+      const blockedFromError = parseLoginBlockedDecision(apiError);
+      if (blockedFromError) {
+        authSession.clear();
+        setBlockedDecision(blockedFromError);
+      } else {
+        setFieldErrors({ form: getSafeLoginMessage(apiError) });
+      }
     }
   };
 
