@@ -90,7 +90,10 @@ user/resume/
 ├── controller/
 │   └── ResumeController.java
 ├── service/
-│   └── ResumeService.java
+│   ├── ResumeService.java          ← 인터페이스
+│   ├── ResumeServiceImpl.java      ← 구현체
+│   ├── FileValidator.java          ← Tika MIME 검증 + 크기 검증
+│   └── FastApiClient.java          ← FastAPI 분석 트리거 (WebClient)
 ├── dto/
 │   └── ResumeDTO.java
 ├── entity/
@@ -103,11 +106,25 @@ user/resume/
 │   ├── CoverLetterMetaRepository.java
 │   ├── CoverLetterContentRepository.java
 │   └── DocumentFeedbackRepository.java
+├── exception/
+│   └── ResumeErrorCode.java        ← resume 전용 에러코드 (BaseErrorCode 구현)
 ├── type/
 │   ├── FileType.java
 │   └── DocumentStatus.java
 └── docs/
     └── ResumeControllerDocs.java
+
+global/
+├── exception/
+│   └── BaseErrorCode.java          ← 도메인별 ErrorCode 공통 인터페이스
+├── s3/
+│   ├── S3Config.java               ← AWS S3Client 빈 등록
+│   └── S3Uploader.java             ← S3 업로드 (resumes/{날짜}/{UUID}.{확장자})
+└── websocket/                      ← resume + interview 공통 WebSocket 인프라
+    ├── WebSocketConfig.java
+    ├── WebSocketHandshakeInterceptor.java
+    ├── StompChannelInterceptor.java
+    └── WebSocketEventListener.java
 
 global/websocket/               ← resume + interview 공통 WebSocket 인프라
 ├── WebSocketConfig.java        (STOMP 엔드포인트 /ws/user/resume 등록, 토픽 prefix /topic 설정)
