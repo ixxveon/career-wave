@@ -84,15 +84,23 @@ const DASHBOARD_CARD_ALLOWED_ROLES = {
   AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
   SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
   AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-} satisfies Partial<Record<DashboardAccessKey, AdminDetailRole[]>>;
+} satisfies Record<DashboardAccessKey, AdminDetailRole[]>;
 
 function hasDashboardRoleAccess(
   currentAdminRole: AdminDetailRole | null,
   allowedRoles: AdminDetailRole[] | undefined
 ) {
   if (!currentAdminRole) return false;
-  if (!allowedRoles || allowedRoles.length === 0) return true;
-  return allowedRoles.includes(currentAdminRole);
+  return !!allowedRoles && allowedRoles.includes(currentAdminRole);
+}
+
+function getAllowedDashboardRoles(
+  accessKey: string,
+  allowedRoleMap: Record<DashboardAccessKey, AdminDetailRole[]>
+) {
+  if (!(accessKey in allowedRoleMap)) return undefined;
+
+  return allowedRoleMap[accessKey as DashboardAccessKey];
 }
 
 export default function AdminDashboardPage() {
@@ -170,9 +178,10 @@ export default function AdminDashboardPage() {
       const items = (dashboardSummary?.alerts ?? []).map((item) => {
         const presentation =
           ALERT_PRESENTATION[item.level as keyof typeof ALERT_PRESENTATION] ?? ALERT_PRESENTATION.NORMAL;
+        const allowedRoles = getAllowedDashboardRoles(item.domain, DASHBOARD_DOMAIN_ALLOWED_ROLES);
         const hasRoleAccess = hasDashboardRoleAccess(
           currentAdminRole,
-          DASHBOARD_DOMAIN_ALLOWED_ROLES[item.domain as DashboardAccessKey]
+          allowedRoles
         );
 
         return {
@@ -253,9 +262,10 @@ export default function AdminDashboardPage() {
         const presentation =
           SERVICE_CARD_PRESENTATION[item.key as keyof typeof SERVICE_CARD_PRESENTATION]
           ?? SERVICE_CARD_PRESENTATION.MEMBER;
+        const allowedRoles = getAllowedDashboardRoles(item.key, DASHBOARD_CARD_ALLOWED_ROLES);
         const hasRoleAccess = hasDashboardRoleAccess(
           currentAdminRole,
-          DASHBOARD_CARD_ALLOWED_ROLES[item.key as DashboardAccessKey]
+          allowedRoles
         );
 
         return {
