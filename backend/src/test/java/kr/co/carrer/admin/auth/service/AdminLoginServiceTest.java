@@ -7,6 +7,8 @@ import kr.co.carrer.admin.auth.entity.Admin;
 import kr.co.carrer.admin.auth.repository.AdminRepository;
 import kr.co.carrer.admin.auth.type.AdminRole;
 import kr.co.carrer.admin.auth.type.AdminStatus;
+import io.jsonwebtoken.Claims;
+import kr.co.carrer.global.auth.jwt.AccountType;
 import kr.co.carrer.global.auth.jwt.JwtProperties;
 import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.global.exception.CustomException;
@@ -119,7 +121,21 @@ class AdminLoginServiceTest {
         AdminLoginRequest req = new AdminLoginRequest("admin@test.com", "adminpw123");
         AdminLoginResponse result = service.login(req, httpResponse);
 
-        assertThat(result.accessToken()).contains(".");
         assertThat(result.adminInfo().role()).isEqualTo(AdminRole.MASTER.name());
+
+        // JWT를 직접 파싱해 adminRole claim 검증
+        JwtProperties props = new JwtProperties();
+        props.getAdmin().setSecret("test-admin-secret-key-must-be-at-least-32-bytes!");
+        props.getAdmin().setAccessExpiration(900000L);
+        props.getAdmin().setRefreshExpiration(86400000L);
+        props.getUser().setSecret("test-user-secret-key-must-be-at-least-32-bytes!!");
+        props.getUser().setAccessExpiration(1800000L);
+        props.getUser().setRefreshExpiration(1209600000L);
+        JwtTokenProvider provider = new JwtTokenProvider(props);
+
+        Claims claims = provider.parse(result.accessToken(), AccountType.ADMIN);
+        assertThat(claims.get("adminRole", String.class)).isEqualTo(AdminRole.MASTER.name());
+        assertThat(claims.get("roleType", String.class)).isEqualTo("ROLE_ADMIN");
+        assertThat(claims.getSubject()).isEqualTo("1");
     }
 }
