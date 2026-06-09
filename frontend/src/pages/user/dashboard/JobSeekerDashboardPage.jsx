@@ -135,14 +135,6 @@ function JobSeekerDashboardPage() {
           <Link className="btn btn-primary" to={isLoggedIn ? '/documents/resume' : '/auth/login'}>
             서류 분석 시작하기
           </Link>
-          <div className="cw-profile-avatars">
-            <span style={{ backgroundImage: 'linear-gradient(135deg, #ffe2bf, #a86f4c)' }} />
-            <span style={{ backgroundImage: 'linear-gradient(135deg, #d6ecff, #2b6fb3)' }} />
-            <span style={{ backgroundImage: 'linear-gradient(135deg, #ffe8ef, #b64d78)' }} />
-            <span style={{ backgroundImage: 'linear-gradient(135deg, #e8efe1, #536f3d)' }} />
-            <small>오늘도 수많은 지원자가<br />AI 서류 분석을 활용하고 있어요</small>
-            <ChevronRight size={16} />
-          </div>
         </article>
       </section>
 
