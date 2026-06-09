@@ -7,30 +7,30 @@
 
 ## Phase 1: 도메인 기반 세팅
 
-- [ ] `FileType` Enum 작성 (`RESUME`, `COVER_LETTER`)
-- [ ] `DocumentStatus` Enum 작성 (`UPLOADED`, `PENDING`, `ANALYZING`, `COMPLETED`, `FAILED`)
-- [ ] `Document` Entity 작성
+- [x] `FileType` Enum 작성 (`RESUME`, `COVER_LETTER`)
+- [x] `DocumentStatus` Enum 작성 (`UPLOADED`, `PENDING`, `ANALYZING`, `COMPLETED`, `FAILED`)
+- [x] `Document` Entity 작성
   - UUID PK (`document_id`, DEFAULT gen_random_uuid())
   - `member_id` UUID NOT NULL, `file_type` VARCHAR(20) NOT NULL
   - `file_url` VARCHAR(500) NULL, `original_name` VARCHAR(200) NULL (RESUME 필수, COVER_LETTER는 null — 애플리케이션 레벨 보장)
   - `created_at` TIMESTAMPTZ NOT NULL
   - `@NoArgsConstructor(access = AccessLevel.PROTECTED)`
-- [ ] `CoverLetterMeta` Entity 작성
+- [x] `CoverLetterMeta` Entity 작성
   - BIGSERIAL PK (`letter_meta_id`), `document_id` UUID NOT NULL
   - `company` VARCHAR(100) NOT NULL, `job` VARCHAR(100) NOT NULL, `created_at`
-- [ ] `CoverLetterContent` Entity 작성
+- [x] `CoverLetterContent` Entity 작성
   - BIGSERIAL PK (`content_id`), `document_id` UUID NOT NULL
   - `order_num` INTEGER NOT NULL (CHECK 1~5), `question` TEXT NOT NULL, `answer` TEXT NOT NULL
   - UNIQUE 제약: `CONSTRAINT uq_clc_document_order UNIQUE (document_id, order_num)`
-- [ ] `DocumentFeedback` Entity 작성
+- [x] `DocumentFeedback` Entity 작성
   - BIGSERIAL PK (`document_feedback_id`), `document_id` UUID NOT NULL
   - `score_job_fitness`, `score_tech_stack`, `score_quantified`, `score_logical`, `score_total` INTEGER (nullable)
   - `feedback_text` TEXT NOT NULL, `created_at`
-- [ ] `DocumentRepository` 작성
-- [ ] `CoverLetterMetaRepository` 작성
-- [ ] `CoverLetterContentRepository` 작성
-- [ ] `DocumentFeedbackRepository` 작성
-- [ ] `ErrorCode` 추가
+- [x] `DocumentRepository` 작성
+- [x] `CoverLetterMetaRepository` 작성
+- [x] `CoverLetterContentRepository` 작성
+- [x] `DocumentFeedbackRepository` 작성
+- [x] `ErrorCode` 추가
   - `INVALID_FILE_SIZE` (400)
   - `INVALID_FILE_TYPE` (400)
   - `INVALID_CONTENT_COUNT` (400)
