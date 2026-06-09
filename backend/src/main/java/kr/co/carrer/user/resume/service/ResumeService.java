@@ -1,61 +1,13 @@
 package kr.co.carrer.user.resume.service;
 
-import kr.co.carrer.global.s3.S3Uploader;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
-import kr.co.carrer.user.resume.entity.Document;
-import kr.co.carrer.user.resume.repository.DocumentRepository;
-import kr.co.carrer.user.resume.type.FileType;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
-@Slf4j
-@Service
-@RequiredArgsConstructor
-public class ResumeService {
+public interface ResumeService {
 
-    private final DocumentRepository documentRepository;
-    private final FileValidator fileValidator;
-    private final S3Uploader s3Uploader;
-    private final FastApiClient fastApiClient;
+    ResumeDTO.ResponseUpload uploadResume(UUID memberId, MultipartFile file);
 
-    @Transactional
-    public ResumeDTO.ResponseUpload uploadResume(UUID memberId, MultipartFile file) {
-        fileValidator.validate(file);
-        String extension = fileValidator.extractExtension(file);
-
-        String fileUrl = s3Uploader.upload(file, extension);
-        String originalName = file.getOriginalFilename();
-
-        Document document = Document.ofResume(memberId, fileUrl, originalName);
-        documentRepository.save(document);
-
-        fastApiClient.triggerAnalysis(
-                document.getDocumentId(),
-                FileType.RESUME.name(),
-                () -> markDocumentFailed(document.getDocumentId(), "FastAPI 분석 트리거 실패")
-        );
-
-        return new ResumeDTO.ResponseUpload(
-                document.getDocumentId(),
-                document.getStatus().name(),
-                document.getFileUrl(),
-                document.getOriginalName(),
-                document.getFileType().name(),
-                document.getCreatedAt()
-        );
-    }
-
-    // 트랜잭션 외부에서 호출되므로 별도 트랜잭션으로 처리
-    @Transactional
-    public void markDocumentFailed(UUID documentId, String errorMessage) {
-        documentRepository.findById(documentId).ifPresent(doc -> {
-            doc.markFailed(errorMessage);
-            log.warn("[분석 실패 마킹] documentId: {}, 원인: {}", documentId, errorMessage);
-        });
-    }
+    void markDocumentFailed(UUID documentId, String errorMessage);
 }
