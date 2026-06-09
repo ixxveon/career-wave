@@ -135,7 +135,8 @@ public class UserLoginService {
             case "PENDING" -> CompanyApprovalStatus.PENDING_REVIEW;
             case "ACTIVE" -> CompanyApprovalStatus.APPROVED;
             case "REMOVED" -> CompanyApprovalStatus.REJECTED;
-            default -> CompanyApprovalStatus.NONE;
+            // 알 수 없는 hr_status 값은 안전하게 차단 (fail-close)
+            default -> throw new CustomException(ErrorCode.FORBIDDEN);
         };
     }
 
