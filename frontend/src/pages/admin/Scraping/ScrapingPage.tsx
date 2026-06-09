@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../../styles/admin/admin.css';
-import '../../../styles/admin/Scraping.css';
+import '../../../styles/admin/scraping.css';
 import MiniPagination from '../../../components/admin/MiniPagination';
 import {
   SCRAPING_ACTION_TYPE,

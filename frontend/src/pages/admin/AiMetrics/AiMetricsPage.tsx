@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../../styles/admin/admin.css';
-import '../../../styles/admin/AiMetrics.css';
+import '../../../styles/admin/ai-metrics.css';
 import MiniPagination from '../../../components/admin/MiniPagination';
 import { AI_DOMAIN, AI_EVENT_SEVERITY, AI_HEALTH_STATUS, AI_METRIC_INTERVAL, AI_USAGE_RISK_LEVEL, RAG_INDEX_STATUS, aiMetricsApi, getAiDisplayModelName } from '../../../api/admin/aiMetricsApi';
 import type { AiBudgetSetting, AiDomain, AiDomainUsage, AiEventSeverity, AiHealthStatus, AiHeavyUser, AiMetricLog, AiMetricSummary, AiTokenTrendPoint, AiUsageRiskLevel, PageResult, RagDocumentMetric, RagIndexStatus } from '../../../api/admin/aiMetricsApi';

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Bot, Database, FileText, ShieldCheck } from 'lucide-react';
 import '../../../styles/admin/admin.css';
-import '../../../styles/admin/AuditLog.css';
+import '../../../styles/admin/audit-log.css';
 import {
   AUDIT_LOG_LEVEL_FILTER,
   AUDIT_LOG_SOURCE_FILTER,

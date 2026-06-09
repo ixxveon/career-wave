@@ -2,7 +2,9 @@
 
 ## Summary
 
-관리자 AI 매트릭스 화면을 도메인별 AI 사용량 모니터링 중심으로 구현한다. MVP는 `DOCUMENT`(AI 서류 기능), `INTERVIEW`(AI 면접 기능)의 요청 수, 토큰, 비용 추정치, 실패율, 헤비 유저, 운영 로그를 조회하고 위험 상태를 표시한다. 관리자 RAG 지식 베이스 상태는 `ai_usage_logs.feature_type` 도메인이 아닌 별도 관리자 기능 섹션으로 표시한다.
+관리자 AI 매트릭스 화면을 도메인별 AI 사용량 모니터링 중심으로 구현한다.  
+MVP는 `DOCUMENT`(AI 서류 기능), `INTERVIEW`(AI 면접 기능)의 요청 수, 토큰, 비용 추정치, 실패율, 헤비 유저, 운영 로그를 조회하고 위험 상태를 표시하는 데 초점을 둔다.  
+관리자 RAG 지식 베이스 상태는 `ai_usage_logs.feature_type` 도메인이 아닌 별도 관리자 기능 섹션으로 표시한다.
 
 ## Technical Context
 
@@ -17,35 +19,36 @@
 
 ```text
 frontend/src/admin/
-├── api/
-│   └── aiMetricsApi.ts
-├── pages/
-│   └── AiMetrics/
-│       └── AiMetricsPage.tsx
-└── components/
-    └── MiniPagination.tsx
+├─ api/
+│  └─ aiMetricsApi.ts
+├─ pages/
+│  └─ AiMetrics/
+│     └─ AiMetricsPage.tsx
+└─ components/
+   └─ MiniPagination.tsx
 
 specs/frontend/admin/aiMetrics/
-├── api-schema.md
-├── checklist.md
-├── constitution.md
-├── plan.md
-├── spec.md
-└── tasks.md
+├─ api-schema.md
+├─ checklist.md
+├─ constitution.md
+├─ plan.md
+├─ spec.md
+└─ tasks.md
 ```
 
 ## Branch Strategy
 
-기본 팀 규칙은 최신 `develop`에서 기능 브랜치를 생성하는 것이다. 이 작업은 Phase별 산출물이 다음 Phase의 기반이 되므로 팀 합의가 있는 경우 아래 스택 브랜치 전략을 사용한다.
+기본 팀 규칙은 최신 `develop`에서 기능 브랜치를 생성하는 것이다.  
+다만 이 작업은 Phase별 산출물이 다음 Phase의 기반이 되므로 팀 합의가 있는 경우 아래 스택 브랜치 전략을 사용한다.
 
 | Phase | Branch | Base |
 |-------|--------|------|
-| Spec | `feature/admin-ai-metrics-spec` | `develop` |
-| Phase 1 | `feature/admin-ai-metrics-api` | `feature/admin-ai-metrics-spec` |
+| Phase 1 | `feature/admin-ai-metrics-api` | `develop` |
 | Phase 2 | `feature/admin-ai-metrics-domain-usage` | `feature/admin-ai-metrics-api` |
 | Phase 3 | `feature/admin-ai-metrics-cost-alert` | `feature/admin-ai-metrics-domain-usage` |
 | Phase 4 | `feature/admin-ai-metrics-logs-anomaly` | `feature/admin-ai-metrics-cost-alert` |
 | Phase 5 | `feature/admin-ai-metrics-verify` | `feature/admin-ai-metrics-logs-anomaly` |
+| Phase 6 | `feature/admin-ai-metrics-rag-documents` | `feature/admin-ai-metrics-verify` |
 
 이전 Phase PR이 병합되면 다음 Phase 브랜치는 병합된 최신 base에 맞춰 rebase 또는 base 변경을 진행한다.
 
@@ -73,15 +76,22 @@ specs/frontend/admin/aiMetrics/
 ### Phase 4 - 헤비 유저, 로그, RAG 상태
 
 - 헤비 유저 테이블을 도메인 기준으로 조회한다.
-- 운영 로그 콘솔을 도메인/등급 필터와 페이지네이션 기준으로 정리한다.
+- 운영 로그 콘솔을 도메인과 등급 기준으로 정리한다.
 - 관리자 AI 기능에 포함된 RAG 지식 베이스 인덱싱 상태를 조회한다.
 
 ### Phase 5 - 검증 및 마감
 
-- 권한 오류, API 실패, 빈 데이터, 긴 조회 기간을 검증한다.
+- 권한 오류, API 실패, 빈 데이터, 기간 조회 조건을 검증한다.
 - 민감 정보가 화면에 노출되지 않는지 확인한다.
 - 모바일과 데스크톱에서 카드, 차트, 테이블 레이아웃을 확인한다.
 - `npm run build` 또는 프로젝트에서 가능한 프론트엔드 검증 명령을 실행한다.
+
+### Phase 6 - RAG 문서 관리 보강
+
+- RAG 문서 업로드, 다운로드, 삭제 API를 관리자 AI 매트릭스 화면에 연결한다.
+- 업로드 파일 형식, 크기, 필수값 검증과 실패 상태를 화면에 반영한다.
+- 업로드 이후 인덱싱 상태(`INDEXING`, `SYNCED`, `FAILED`) 갱신 흐름을 확인한다.
+- 삭제 요청 이후 목록/상태 갱신과 `DELETING` 상태 표시를 반영한다.
 
 ## Convention Alignment
 
