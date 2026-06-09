@@ -4,6 +4,14 @@
 **Status**: Draft
 **공통 응답 래퍼**: `ApiResponse<T>`
 
+## Permissions
+
+문서상 권한 표기는 `MASTER`, `BACKEND`, `CS`, `USER`를 사용한다. Spring Security에서는 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`, `ROLE_USER`로 매핑한다.
+
+| Method | Path | Allowed Roles |
+|---|---|---|
+| GET | `/api/v1/admin/dashboard/summary` | `MASTER`, `BACKEND`, `CS` |
+
 ## Endpoints
 
 | Method | Path | Description |

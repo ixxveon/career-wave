@@ -12,7 +12,7 @@ MVP는 `DOCUMENT`(AI 서류 기능), `INTERVIEW`(AI 면접 기능)의 요청 수
 - Page: `frontend/src/pages/admin/AiMetrics/AiMetricsPage.tsx`
 - API Module: `frontend/src/api/admin/aiMetricsApi.ts`
 - Server State: TanStack Query 우선
-- Auth: 관리자 JWT, `ROLE_ADMIN`
+- Auth: 관리자 JWT, endpoint별 `MASTER`/`BACKEND`
 - Response: `ApiResponse<T>`
 
 ## Project Structure
@@ -101,4 +101,4 @@ specs/frontend/admin/aiMetrics/
 - 관리자 API는 `frontend/src/api/admin` 하위로 분리한다.
 - TypeScript interface는 PascalCase를 사용하고 `I` prefix를 사용하지 않는다.
 - 새 라이브러리는 팀 합의 없이 추가하지 않는다.
-- 관리자 API는 JWT와 `ROLE_ADMIN` 권한을 전제로 설계한다.
+- 관리자 API는 JWT와 endpoint별 `MASTER`, `BACKEND` 권한을 전제로 설계한다.
