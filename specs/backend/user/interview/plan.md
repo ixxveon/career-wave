@@ -8,6 +8,34 @@
 
 ---
 
+## 브랜치 전략
+
+> 각 브랜치는 독립 PR로 머지한다. 순서 의존이 있는 경우 이전 브랜치 머지 후 분기한다.
+
+| 순서 | 브랜치명 | 작업 내용 | 대응 Phase |
+|------|---------|----------|-----------|
+| 1 | `feature/user-interview-be-setup` | Entity·Enum·DTO·Repository 기반 공사, ErrorCode 등록, Security 설정 | Phase 1·2·3·7 |
+| 2 | `feature/user-interview-be-session` | `InterviewSessionService` + `InterviewSessionController` (세션 시작·텍스트 답변·세션 종료) | Phase 4-session·5 |
+| 3 | `feature/user-interview-be-voice` | `submitVoiceChunk` Multipart 수신 + FastAPI STT 비동기 전달 | Phase 4-voice·5 |
+| 4 | `feature/user-interview-be-websocket` | Spring WebSocket 핸들러 + FastAPI 콜백 수신 Controller (`/internal/callback`) | Phase 6·6-1·6-2 |
+| 5 | `feature/user-interview-be-report` | `InterviewReportService` + `InterviewReportController` + null 처리 로직 | Phase 4-report·5 |
+| 6 | `feature/user-interview-be-history` | `InterviewHistoryService` + `InterviewHistoryController` + `CareerHistory` 이력 조회 | Phase 4-history·5 |
+| 7 | `feature/user-interview-be-qa` | 세션 타임아웃 스케줄러, Swagger 분리, checklist 전 항목 검증 | Phase 6-1·8 |
+
+### 브랜치 의존 관계
+
+```
+be-setup
+  └─▶ be-session
+        ├─▶ be-voice
+        ├─▶ be-websocket   ← be-session 머지 후 분기 (sessionId 소유권 검증 공유)
+        ├─▶ be-report
+        └─▶ be-history
+              └─▶ be-qa    ← 전체 머지 후 최종 검증
+```
+
+---
+
 ## Summary
 
 회원이 AI 면접관과 텍스트 또는 음성으로 모의 면접을 진행하고, 종료 후
