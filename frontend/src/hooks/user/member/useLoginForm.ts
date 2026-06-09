@@ -4,13 +4,14 @@ import type { LoginRouteDecision } from '../../../types/user/member';
 import { authSession } from '../../../utils/user/member/authSession';
 import { getSafeLoginMessage, type MemberApiError } from '../../../utils/user/member/errorMapping';
 import {
+  LOGIN_TAB_TO_MEMBER_TYPE,
   hasLoginFormErrors,
   toLoginRequest,
   validateLoginForm,
   type LoginFormErrors,
   type LoginTab,
 } from '../../../utils/user/member/loginSchema';
-import { getLoginRouteDecision, useLogin } from './useLogin';
+import { getLoginRouteDecision, isNextPathCompatible, useLogin } from './useLogin';
 
 type CredentialKey = 'loginId' | 'password';
 
@@ -54,6 +55,11 @@ const BLOCK_MESSAGE_BY_REASON: Record<
     actionLabel: '고객센터로 이동',
     actionPath: '/support',
   },
+};
+
+export const CROSS_TAB_ERROR_MESSAGES: Record<LoginTab, string> = {
+  company: '기업회원 탭에서 개인회원으로 로그인할 수 없습니다. 개인회원 탭에서 로그인해주세요.',
+  personal: '개인회원 탭에서 기업회원으로 로그인할 수 없습니다. 기업회원 탭에서 로그인해주세요.',
 };
 
 export function useLoginForm() {
@@ -108,17 +114,24 @@ export function useLoginForm() {
         return;
       }
 
+      if (response.member.memberType !== LOGIN_TAB_TO_MEMBER_TYPE[loginType]) {
+        authSession.clear();
+        setFieldErrors({ form: CROSS_TAB_ERROR_MESSAGES[loginType] });
+        return;
+      }
+
       authSession.setTokens({
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
       });
       authSession.setMember(response.member);
 
-      // ?next= 파라미터가 있고 안전한 내부 경로면 해당 경로로 이동
+      // ?next= 파라미터가 있고, 안전한 내부 경로이며, 회원 유형과 호환될 때만 해당 경로로 이동
       // startsWith('/') && !startsWith('//') — //evil.com 같은 프로토콜 상대 URL 차단
       const nextPath = searchParams.get('next');
       const safePath = nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
-      navigate(safePath ?? decision.path, { replace: true });
+      const compatiblePath = safePath && isNextPathCompatible(safePath, response.member.memberType) ? safePath : null;
+      navigate(compatiblePath ?? decision.path, { replace: true });
     } catch (error) {
       setFieldErrors({
         form: getSafeLoginMessage(error as MemberApiError),
