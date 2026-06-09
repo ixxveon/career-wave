@@ -17,9 +17,6 @@ export const ADMIN_ROLE = {
   MASTER: 'MASTER',
   CS: 'CS',
   BACKEND: 'BACKEND',
-  OPS: 'OPS',
-  BILLING: 'BILLING',
-  AUDIT: 'AUDIT',
 } as const;
 
 export type AdminRole = (typeof ADMIN_ROLE)[keyof typeof ADMIN_ROLE];

@@ -443,16 +443,15 @@ export default function JobNoticeListPage() {
 
     try {
       setBookmarkErrorMessage('');
-      const bookmarkResult = await jobApi.toggleJobNoticeBookmark(
-        id,
-        nextBookmarked,
-      ) as JobNoticeBookmarkResponse | null;
+      const bookmarkResult = nextBookmarked
+        ? await jobApi.addJobNoticeBookmark(id) as JobNoticeBookmarkResponse | null
+        : await jobApi.deleteJobNoticeBookmark(id) as JobNoticeBookmarkResponse | null;
 
-      if (!bookmarkResult) throw new Error('북마크 응답이 비어 있습니다.');
+      if (nextBookmarked && !bookmarkResult) throw new Error('북마크 응답이 비어 있습니다.');
 
       setBookmarks((current) => ({
         ...current,
-        [bookmarkResult.id]: bookmarkResult.bookmarked,
+        [bookmarkResult?.id ?? id]: bookmarkResult?.bookmarked ?? nextBookmarked,
       }));
     } catch {
       setBookmarks((current) => ({

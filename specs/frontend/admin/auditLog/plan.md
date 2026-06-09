@@ -11,7 +11,7 @@
 - Route: `/admin/log`
 - API Module: `frontend/src/admin/api/auditLogApi.ts`
 - Server State: TanStack Query 우선
-- Auth: 관리자 JWT, `ROLE_ADMIN`
+- Auth: 관리자 JWT, `MASTER`/`BACKEND`
 - Response: `ApiResponse<T>`
 
 ## Project Structure
@@ -94,4 +94,4 @@ specs/frontend/admin/auditLog/
 - 관리자 API는 `frontend/src/admin/api` 하위로 분리한다.
 - TypeScript interface는 PascalCase를 사용하고 `I` prefix를 사용하지 않는다.
 - 새 라이브러리는 팀 합의 없이 추가하지 않는다.
-- 관리자 API는 JWT와 `ROLE_ADMIN` 권한을 전제로 설계한다.
+- 관리자 API는 JWT와 `MASTER`, `BACKEND` 권한을 전제로 설계한다.

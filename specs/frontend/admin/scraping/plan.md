@@ -10,7 +10,7 @@
 - Page: `frontend/src/admin/pages/Scraping/ScrapingPage.tsx`
 - API Module: `frontend/src/admin/api/scrapingApi.ts`
 - Server State: TanStack Query 우선
-- Auth: 관리자 JWT, `ROLE_ADMIN` 백엔드 역할 검증 필요
+- Auth: 관리자 JWT, `MASTER`/`BACKEND` 백엔드 역할 검증 필요
 - Response: `ApiResponse<T>`
 - Related Runtime: FastAPI scraping runner 또는 backend batch orchestration
 - ERD Alignment: `scraping_logs.scraping_status` 기준 `SUCCESS`, `FAILED`만 API 상태값으로 사용
@@ -56,7 +56,7 @@ specs/frontend/admin/scraping/
 ### Backend Preconditions
 
 - `backend/src/main/java/kr/co/carrer/global/config/SecurityConfig.java` 또는 동등한 보안 설정에서 관리자 스크래핑 엔드포인트에 역할 기반 접근 제어를 적용해야 한다.
-- 단순 JWT 인증만으로는 충분하지 않으며, `/api/v1/admin/scraping/**`는 `hasRole("ADMIN")`, `hasAuthority("ROLE_ADMIN")` 또는 프로젝트 표준에 맞는 동등한 방식으로 보호되어야 한다.
+- 단순 JWT 인증만으로는 충분하지 않으며, `/api/v1/admin/scraping/**`는 `ROLE_MASTER` 또는 `ROLE_BACKEND`에 해당하는 방식으로 보호되어야 한다.
 - 역할 검증이 확정되기 전까지 프론트엔드는 API 연동 시 403 응답 처리를 구현하되, 접근 제어가 완료되었다고 가정하지 않는다.
 
 ### Phase 1 - API 계약 및 타입 정리
@@ -99,4 +99,4 @@ specs/frontend/admin/scraping/
 - 관리자 API는 `frontend/src/admin/api` 하위로 분리한다.
 - TypeScript interface는 PascalCase를 사용하고 `I` prefix를 사용하지 않는다.
 - 새 라이브러리는 팀 합의 없이 추가하지 않는다.
-- 관리자 API는 JWT 인증과 백엔드 `ROLE_ADMIN` 역할 검증 구현을 선행 조건으로 설계한다.
+- 관리자 API는 JWT 인증과 백엔드 `ROLE_MASTER`/`ROLE_BACKEND` 역할 검증 구현을 선행 조건으로 설계한다.

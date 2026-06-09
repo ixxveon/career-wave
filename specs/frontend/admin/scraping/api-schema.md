@@ -4,8 +4,22 @@
 
 - Base Path: `/api/v1/admin/scraping`
 - Auth: Bearer Token
-- Role: `ROLE_ADMIN`
+- Role: See `Permissions`.
 - Response: `ApiResponse<T>`
+
+## Permissions
+
+문서상 권한 표기는 `MASTER`, `BACKEND`, `CS`, `USER`를 사용한다. Spring Security에서는 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`, `ROLE_USER`로 매핑한다.
+
+| Method | Path | Allowed Roles |
+|---|---|---|
+| GET | `/api/v1/admin/scraping/pipelines` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/scraping/pipelines/summary` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/scraping/pipelines/{sourceName}` | `MASTER`, `BACKEND` |
+| POST | `/api/v1/admin/scraping/pipelines/{sourceName}/actions` | `MASTER`, `BACKEND` |
+| POST | `/api/v1/admin/scraping/pipelines/batch-actions` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/scraping/logs` | `MASTER`, `BACKEND` |
+
 - 날짜 형식: ISO 8601
 - 실제 수집 실행은 백엔드 또는 FastAPI 파이프라인이 담당하고, 프론트엔드는 관리자 API를 통해 상태 조회와 제어 요청만 수행한다.
 
