@@ -17,7 +17,7 @@ public class ReportBoardRepository {
             .setParameter(1, boardId)
             .executeUpdate();
         if (updated == 0) {
-            throw new CustomException(ErrorCode.BOARD_NOT_FOUND);
+            throw new CustomException(ErrorCode.NOT_FOUND);
         }
     }
 
