@@ -53,6 +53,23 @@ describe('Authorization 헤더 주입', () => {
 });
 
 // ─────────────────────────────────────────────
+// refresh 요청 URL 검증
+// ─────────────────────────────────────────────
+describe('refresh 요청 URL 검증', () => {
+  it('401 후 refresh 요청을 /token/refresh 엔드포인트로 보낸다', async () => {
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(jsonResponse({ data: { accessToken: 'new-token' } }))
+      .mockResolvedValueOnce(jsonResponse({ data: { ok: true } }));
+
+    await memberApiClient('/api/test', { method: 'GET', auth: true });
+
+    const refreshCallUrl = String(vi.mocked(fetch).mock.calls[1][0]);
+    expect(refreshCallUrl).toContain('/token/refresh');
+  });
+});
+
+// ─────────────────────────────────────────────
 // GET 401 → refresh 후 1회 retry
 // ─────────────────────────────────────────────
 describe('GET 요청 — 401 시 refresh 후 retry', () => {
