@@ -68,7 +68,7 @@ interface PageInfo {
 ### KPI 집계
 
 ```http
-GET /api/admin/payments/summary
+GET /api/v1/admin/payments/summary
 응답: ApiResponse<PaymentSummary>
 ```
 
@@ -92,7 +92,7 @@ GET /api/admin/payments/summary
 ### 결제 목록 조회
 
 ```
-GET /api/admin/payments?keyword=&status=&page=1&size=20
+GET /api/v1/admin/payments?keyword=&status=&page=1&size=20
 응답: ApiResponse<{ items: Payment[]; page: number; size: number; totalItems: number; totalPages: number }>
 ```
 
@@ -109,7 +109,7 @@ GET /api/admin/payments?keyword=&status=&page=1&size=20
 ### 결제 상세 조회
 
 ```
-GET /api/admin/payments/{paymentId}
+GET /api/v1/admin/payments/{paymentId}
 응답: ApiResponse<Payment>
 ```
 
@@ -120,7 +120,7 @@ GET /api/admin/payments/{paymentId}
 ### 환불 처리 확정
 
 ```
-POST /api/admin/payments/{paymentId}/refund
+POST /api/v1/admin/payments/{paymentId}/refund
 응답: ApiResponse<{ paymentId: string; paymentStatus: PayStatus; refundStatus: RefundStatus }>
 ```
 
@@ -131,7 +131,7 @@ POST /api/admin/payments/{paymentId}/refund
 ### 환불 불가 처리
 
 ```
-POST /api/admin/payments/{paymentId}/refund-reject
+POST /api/v1/admin/payments/{paymentId}/refund-reject
 응답: ApiResponse<{ paymentId: string; paymentStatus: PayStatus; refundStatus: RefundStatus }>
 ```
 
@@ -142,7 +142,7 @@ POST /api/admin/payments/{paymentId}/refund-reject
 ### 구독 현황 목록 조회
 
 ```
-GET /api/admin/subscriptions?status=&page=1&size=20
+GET /api/v1/admin/subscriptions?status=&page=1&size=20
 응답: ApiResponse<{ items: Subscription[]; page: number; size: number; totalItems: number; totalPages: number }>
 ```
 

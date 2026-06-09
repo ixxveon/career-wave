@@ -59,13 +59,13 @@
 ## Phase 2 — API 연동
 
 - [ ] `frontend/src/admin/api/reportApi.ts` API 모듈 작성
-- [ ] KPI 집계 API 연동 및 더미 데이터 제거 (`GET /api/admin/reports/summary`)
-- [ ] 신고 목록 API 연동 및 더미 데이터 제거 (`GET /api/admin/reports`)
+- [ ] KPI 집계 API 연동 및 더미 데이터 제거 (`GET /api/v1/admin/reports/summary`)
+- [ ] 신고 목록 API 연동 및 더미 데이터 제거 (`GET /api/v1/admin/reports`)
 - [ ] 처리 상태·신고 유형 필터 쿼리 파라미터 연결
 - [ ] 페이지네이션 API 연결 (page, size)
-- [ ] 신고 상세 API 연동 (`GET /api/admin/reports/{reportId}`)
-- [ ] 블라인드 처리 API 연동 (`PATCH /api/admin/reports/{reportId}/blind`)
-- [ ] 기각 처리 API 연동 (`PATCH /api/admin/reports/{reportId}/dismiss`)
+- [ ] 신고 상세 API 연동 (`GET /api/v1/admin/reports/{reportId}`)
+- [ ] 블라인드 처리 API 연동 (`PATCH /api/v1/admin/reports/{reportId}/blind`)
+- [ ] 기각 처리 API 연동 (`PATCH /api/v1/admin/reports/{reportId}/dismiss`)
 - [ ] 처리 성공 후 목록의 상태 뱃지 즉시 갱신 (서버 응답 기반)
 - [ ] API 실패 시 에러 메시지 표시 (`ApiResponse.message` 활용)
 - [ ] 서버 409 응답(이미 처리된 신고) 처리
@@ -77,5 +77,5 @@
 - [ ] 신고 사유 필터 드롭다운 (SPAM / ABUSE / AD / INAPPROPRIATE / OTHER) 추가
 - [ ] 일괄 블라인드·기각 처리 API 연동
 - [ ] AI 검토 서버 API 연동 (현재 mock setTimeout 방식 → 실제 AI API 전환)
-- [ ] 회원 제재 API 연동 (`POST /api/admin/members/{memberId}/sanctions`)
+- [ ] 회원 제재 API 연동 (`POST /api/v1/admin/members/{memberId}/sanctions`)
 - [ ] 게시글/댓글 삭제 API 연동

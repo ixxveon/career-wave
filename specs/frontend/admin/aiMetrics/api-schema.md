@@ -58,8 +58,12 @@ type AiDomain = 'DOCUMENT' | 'INTERVIEW';
 type AiEventSeverity = 'INFO' | 'WARN' | 'ERROR';
 type AiHealthStatus = 'NORMAL' | 'WARNING' | 'CRITICAL';
 type AiUsageRiskLevel = 'NORMAL' | 'WARNING' | 'CRITICAL';
-type RagIndexStatus = 'SYNCED' | 'INDEXING' | 'FAILED';
+type RagIndexStatus = 'SYNCED' | 'INDEXING' | 'FAILED' | 'DELETING';
 ```
+
+- 상태 전이:
+  - `SYNCED | FAILED -> DELETING -> (삭제 성공 시 목록에서 제거)`
+  - `DELETING -> FAILED` (삭제 실패 시)
 
 ## GET /summary
 
@@ -308,6 +312,83 @@ AI 사용량 제한 상태를 변경한다.
     "updatedAt": "2026-06-01T08:50:00+09:00"
   }
 ]
+```
+
+## POST /rag-documents
+
+RAG 지식 베이스 인덱싱에 사용할 문서를 업로드한다.
+
+### Request
+
+Content-Type: `multipart/form-data`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `file` | File | true | 업로드할 RAG 원본 문서 |
+| `name` | string | false | 화면에 표시할 문서명. 없으면 원본 파일명을 사용 |
+
+### Validation
+
+| Field | Constraint |
+|-------|------------|
+| `file` | 허용 확장자: `.pdf`, `.txt`, `.md` |
+| `file` | 허용 MIME: `application/pdf`, `text/plain`, `text/markdown` |
+| `file` | 최대 크기: 10MB |
+| `name` | 미입력 시 원본 파일명을 사용 |
+
+### Response Data
+
+```json
+{
+  "documentId": "DOC-002",
+  "name": "interview-guide.pdf",
+  "chunkCount": 0,
+  "progressPercent": 0,
+  "status": "INDEXING",
+  "updatedAt": "2026-06-01T09:10:00+09:00"
+}
+```
+
+### Error Cases
+
+| Status | Message |
+|--------|---------|
+| 400 | 업로드 파일 또는 문서명이 올바르지 않습니다. |
+| 413 | 업로드 가능한 최대 파일 크기를 초과했습니다. |
+| 415 | 지원하지 않는 문서 형식입니다. |
+
+## GET /rag-documents/{documentId}/download
+
+업로드된 RAG 원본 문서를 다운로드한다.
+
+- 예외: 이 endpoint는 `ApiResponse<T>`로 감싸지지 않는 raw binary response를 반환한다.
+- 프론트는 `blob` 응답으로 처리하고, `Content-Type` 및 `Content-Disposition` 헤더를 사용해 다운로드를 구성한다.
+
+### Path
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `documentId` | string | true | RAG 문서 ID |
+
+### Response
+
+- `Content-Type`: 원본 문서 MIME 타입
+- `Content-Disposition`: `attachment; filename="{originalFileName}"`
+
+## DELETE /rag-documents/{documentId}
+
+RAG 문서와 연결된 인덱스 데이터를 삭제한다.
+
+### Path
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `documentId` | string | true | RAG 문서 ID |
+
+### Response Data
+
+```json
+null
 ```
 
 ## Error Cases
