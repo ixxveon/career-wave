@@ -34,26 +34,24 @@ export function useSpringWebSocket({
   useEffect(() => { onStatusChangeRef.current = onStatusChange; }, [onStatusChange]);
 
   const getWsUrl = (sid: string): string => {
-    const token = authSession.getAccessToken();
-    if (!token) throw new Error('인증 토큰이 없습니다. 로그인 후 다시 시도해주세요.');
     const base =
       import.meta.env.VITE_WS_BASE_URL ||
       (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/^http/, 'ws');
-    return `${base}/ws/interview/${sid}/chat?token=${encodeURIComponent(token)}`;
+    const token = encodeURIComponent(authSession.getAccessToken() ?? '');
+    return `${base}/ws/interview/${sid}/chat?token=${token}`;
   };
 
   const connect = useCallback((sid: string) => {
     const state = wsRef.current?.readyState;
     if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
 
-    onStatusChangeRef.current(attemptRef.current === 0 ? 'CONNECTING' : 'RECONNECTING');
-    let ws: WebSocket;
-    try {
-      ws = new WebSocket(getWsUrl(sid));
-    } catch {
+    if (!authSession.getAccessToken()) {
       onStatusChangeRef.current('ERROR');
       return;
     }
+
+    onStatusChangeRef.current(attemptRef.current === 0 ? 'CONNECTING' : 'RECONNECTING');
+    const ws = new WebSocket(getWsUrl(sid));
     wsRef.current = ws;
 
     ws.onopen = (): void => {
