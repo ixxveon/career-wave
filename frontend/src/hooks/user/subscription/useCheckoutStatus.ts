@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 import { useProducts } from './useProducts';
@@ -15,6 +15,7 @@ export function useCheckoutStatus() {
   const [warning, setWarning] = useState('');
   const [checkoutError, setCheckoutError] = useState('');
   const [isPaymentRequesting, setIsPaymentRequesting] = useState(false);
+  const isPaymentRequestingRef = useRef(false);
 
   const requestedCode = searchParams.get('product');
   const isKnownProduct = requestedCode !== null && (KNOWN_PRODUCT_CODES as string[]).includes(requestedCode);
@@ -31,10 +32,11 @@ export function useCheckoutStatus() {
       return;
     }
     if (!productCode) return;
-    if (isPaymentRequesting) return;
+    if (isPaymentRequestingRef.current) return;
 
     setWarning('');
     setCheckoutError('');
+    isPaymentRequestingRef.current = true;
     setIsPaymentRequesting(true);
 
     try {
@@ -58,6 +60,7 @@ export function useCheckoutStatus() {
         customerName: order.customerName,
       });
     } catch (err: unknown) {
+      isPaymentRequestingRef.current = false;
       setIsPaymentRequesting(false);
       const error = err as { status?: number };
       if (error.status === 403) {
