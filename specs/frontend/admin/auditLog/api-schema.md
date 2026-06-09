@@ -4,8 +4,18 @@
 
 - Base Path: `/api/v1/admin/audit-logs`
 - Auth: Bearer Token
-- Role: `ROLE_ADMIN`
+- Role: See `Permissions`.
 - Response: `ApiResponse<T>`
+
+## Permissions
+
+문서상 권한 표기는 `MASTER`, `BACKEND`, `CS`, `USER`를 사용한다. Spring Security에서는 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`, `ROLE_USER`로 매핑한다.
+
+| Method | Path | Allowed Roles |
+|---|---|---|
+| GET | `/api/v1/admin/audit-logs/summary` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/audit-logs` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/audit-logs/{logId}` | `MASTER`, `BACKEND` |
 - 날짜 형식: ISO 8601 UTC (`YYYY-MM-DDTHH:mm:ssZ`)
 - 감사 로그는 관리자 운영 행위, AI 운영 이벤트, 스크래핑 운영 이벤트를 통합 조회하기 위한 읽기 중심 API로 정의한다.
 

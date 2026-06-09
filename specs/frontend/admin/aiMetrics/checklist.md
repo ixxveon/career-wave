@@ -47,7 +47,7 @@
 
 ## Phase 5 - 검증 및 마감
 
-- [x] 관리자 JWT의 `ROLE_ADMIN` 기준 접근 제어가 확인된다.
+- [x] 관리자 JWT의 endpoint별 `MASTER`, `BACKEND` 기준 접근 제어가 확인된다.
 - [x] 실제 모델명이 변경되어도 도메인별 통계가 유지된다.
 - [x] `displayModelName`이 있으면 화면 표시명으로 우선 노출된다.
 - [x] `displayModelName`이 없으면 MVP 대체 표시가 정상 동작한다.

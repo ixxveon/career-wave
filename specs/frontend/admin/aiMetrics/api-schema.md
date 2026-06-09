@@ -4,8 +4,28 @@
 
 - Base Path: `/api/v1/admin/ai-metrics`
 - Auth: Bearer Token
-- Role: `ROLE_ADMIN`
+- Role: See `Permissions`.
 - Response: `ApiResponse<T>`
+
+## Permissions
+
+문서상 권한 표기는 `MASTER`, `BACKEND`, `CS`, `USER`를 사용한다. Spring Security에서는 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`, `ROLE_USER`로 매핑한다.
+
+| Method | Path | Allowed Roles |
+|---|---|---|
+| GET | `/api/v1/admin/ai-metrics/summary` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/ai-metrics/domain-usage` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/ai-metrics/token-trend` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/ai-metrics/heavy-users` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/ai-metrics/logs` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/ai-metrics/budget` | `MASTER`, `BACKEND` |
+| PATCH | `/api/v1/admin/ai-metrics/budget` | `MASTER` |
+| PATCH | `/api/v1/admin/ai-metrics/alerts/discord` | `MASTER`, `BACKEND` |
+| PATCH | `/api/v1/admin/ai-metrics/controls/rate-limit` | `MASTER` |
+| GET | `/api/v1/admin/ai-metrics/rag-documents` | `MASTER`, `BACKEND` |
+| POST | `/api/v1/admin/ai-metrics/rag-documents` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/ai-metrics/rag-documents/{documentId}/download` | `MASTER`, `BACKEND` |
+| DELETE | `/api/v1/admin/ai-metrics/rag-documents/{documentId}` | `MASTER` |
 - 날짜 형식: ISO 8601
 - 비용 단위: USD 기준 추정치
 
