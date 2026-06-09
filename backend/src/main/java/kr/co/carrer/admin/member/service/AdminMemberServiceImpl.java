@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -43,11 +44,10 @@ public class AdminMemberServiceImpl implements AdminMemberService {
                                                                   int page, int size) {
         size = Math.min(size, 100);
         int offset = (page - 1) * size;
-        ZonedDateTime from = startDate != null ? startDate.atStartOfDay(java.time.ZoneId.systemDefault()) : null;
-        ZonedDateTime to   = endDate   != null ? endDate.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()) : null;
+        DateRange range = toDateRange(startDate, endDate);
 
-        List<MemberDTO.ResponseList> items = memberQueryRepository.findMembers(role, status, plan, keyword, from, to, offset, size);
-        long total = memberQueryRepository.countMembers(role, status, plan, keyword, from, to);
+        List<MemberDTO.ResponseList> items = memberQueryRepository.findMembers(role, status, plan, keyword, range.from(), range.to(), offset, size);
+        long total = memberQueryRepository.countMembers(role, status, plan, keyword, range.from(), range.to());
 
         return PaginationResponse.of(items, page, size, total);
     }
@@ -69,12 +69,7 @@ public class AdminMemberServiceImpl implements AdminMemberService {
         }
 
         String reason = dto.reason();
-        if (reason == null || reason.isBlank()) {
-            throw new CustomException(ErrorCode.REASON_REQUIRED);
-        }
-        if (reason.strip().length() < 10) {
-            throw new CustomException(ErrorCode.REASON_TOO_SHORT);
-        }
+        validateReason(reason);
 
         SanctionType sanctionType = dto.sanctionType();
         if (sanctionType == null) {
@@ -137,11 +132,10 @@ public class AdminMemberServiceImpl implements AdminMemberService {
                                                     int page, int size) {
         size = Math.min(size, 100);
         int offset = (page - 1) * size;
-        ZonedDateTime from = startDate != null ? startDate.atStartOfDay(java.time.ZoneId.systemDefault()) : null;
-        ZonedDateTime to   = endDate   != null ? endDate.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()) : null;
+        DateRange range = toDateRange(startDate, endDate);
 
-        List<HrManagerDTO.ResponseList> items = memberQueryRepository.findHrManagers(hrStatus, keyword, from, to, offset, size);
-        long total = memberQueryRepository.countHrManagers(hrStatus, keyword, from, to);
+        List<HrManagerDTO.ResponseList> items = memberQueryRepository.findHrManagers(hrStatus, keyword, range.from(), range.to(), offset, size);
+        long total = memberQueryRepository.countHrManagers(hrStatus, keyword, range.from(), range.to());
         long pendingCount = hrManagerRepository.countByHrStatus(HrStatus.PENDING);
 
         PaginationResponse<HrManagerDTO.ResponseList> pagination = PaginationResponse.of(items, page, size, total);
@@ -187,15 +181,27 @@ public class AdminMemberServiceImpl implements AdminMemberService {
         }
 
         String rejectReason = dto.rejectReason();
-        if (rejectReason == null || rejectReason.isBlank()) {
-            throw new CustomException(ErrorCode.REASON_REQUIRED);
-        }
-        if (rejectReason.strip().length() < 10) {
-            throw new CustomException(ErrorCode.REASON_TOO_SHORT);
-        }
+        validateReason(rejectReason);
 
         hrManager.reject(rejectReason);
 
         return new HrManagerDTO.ResponseReject(memberId, hrManager.getHrStatus(), hrManager.getRejectReason());
+    }
+
+    private void validateReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new CustomException(ErrorCode.REASON_REQUIRED);
+        }
+        if (reason.strip().length() < 10) {
+            throw new CustomException(ErrorCode.REASON_TOO_SHORT);
+        }
+    }
+
+    private record DateRange(ZonedDateTime from, ZonedDateTime to) {}
+
+    private DateRange toDateRange(LocalDate startDate, LocalDate endDate) {
+        ZonedDateTime from = startDate != null ? startDate.atStartOfDay(ZoneId.systemDefault()) : null;
+        ZonedDateTime to   = endDate   != null ? endDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()) : null;
+        return new DateRange(from, to);
     }
 }
