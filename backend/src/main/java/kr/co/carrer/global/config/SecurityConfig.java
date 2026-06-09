@@ -21,6 +21,7 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
+                    "/swagger-ui.html",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
                     // 관리자 인증 — 비로그인 공개 API (/api/v1/admin/{domain})
@@ -41,6 +42,7 @@ public class SecurityConfig {
                 ).permitAll()
                 // TODO: 스웨거 테스트용 임시 허용 — JWT 필터 구현 후 인증 객체로 교체 예정
                 .requestMatchers("/api/v1/admin/**").permitAll()
+                .requestMatchers("/api/v1/user/resume/**").permitAll()
                 .anyRequest().authenticated()
             );
         return http.build();
