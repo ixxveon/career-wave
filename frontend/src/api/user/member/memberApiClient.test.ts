@@ -83,6 +83,7 @@ describe('refresh 응답 실패 — 원래 401 전파', () => {
     ).rejects.toMatchObject({ statusCode: 401 });
 
     expect(vi.mocked(authSession.setTokens)).not.toHaveBeenCalled();
+    expect(vi.mocked(authSession.clear)).toHaveBeenCalled();
   });
 });
 
