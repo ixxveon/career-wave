@@ -20,13 +20,13 @@
 
 ```text
 [IN_PROGRESS] → [COMPLETED]
-[IN_PROGRESS] → [FAILED]     # 비정상 종료 시 (v1 범위 협의 필요)
+[IN_PROGRESS] → [FAILED]     # 비정상 종료 시 (24h 타임아웃 스케줄러)
 ```
 
 | 전이 | 허용 여부 | 사유 |
 |------|-----------|------|
 | IN_PROGRESS → COMPLETED | 허용 | 정상 세션 종료 (`/end` API 호출) |
-| IN_PROGRESS → FAILED | 허용 | 비정상 종료 감지 시 (v1 적용 범위 협의 필요) |
+| IN_PROGRESS → FAILED | 허용 | 24시간 타임아웃 스케줄러에 의한 강제 종료 |
 | COMPLETED → 任 | 금지 | 한 번 종료된 세션은 상태 변경 불가 |
 | FAILED → 任 | 금지 | 한 번 실패한 세션은 상태 변경 불가 |
 

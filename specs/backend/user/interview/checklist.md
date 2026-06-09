@@ -68,7 +68,7 @@ Phase 10 "먼저 작성할 3가지 ★"를 구현 코드보다 먼저 작성한�
 ### 음성·텍스트 답변
 - [ ] 답변 제출(`submitTextAnswer` / `submitVoiceChunk`) 시 해당 세션의 `session_status`가 `IN_PROGRESS`인지 DB에서 재검증한다.
 - [ ] `submitVoiceChunk` 호출 시 인증 토큰 유효성 외에 해당 `sessionId`가 요청자의 `IN_PROGRESS` 세션인지 재검증한다.
-- [ ] `submitVoiceChunk`에서 `audioChunk`의 Content-Type이 `audio/webm` 또는 `audio/mp4`인지 검증하며, 불일치 시 400을 반환한다.
+- [ ] `submitVoiceChunk`에서 `audioChunk`의 Content-Type이 `audio/webm`, `audio/mp4`, `audio/ogg` 중 하나인지 검증하며, 불일치 시 400을 반환한다.
 
 ### 리포트 생성
 - [ ] 리포트 생성이 완료될 때 `career_histories`에 레코드가 INSERT된다 (세션 종료 API 응답이 아닌 FastAPI 완료 콜백 시점).

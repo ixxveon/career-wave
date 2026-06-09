@@ -259,7 +259,7 @@ GET /api/v1/user/interview/history?page=0&size=10
 
 #### startSession(UUID memberId, RequestStartSession dto)
 - `session_id` UUID 생성
-- `document_id`가 있으면 FastAPI 측 RAG 컨텍스트 비동기 등록 요청 (v1 구현 범위 협의 필요)
+- `document_id`가 있으면 FastAPI 측 RAG 컨텍스트 비동기 등록 요청
 - `session_status = IN_PROGRESS`, `started_at = 현재 시각`으로 저장
 - `@Transactional` 적용
 - 반환: `ResponseStartSession`
@@ -282,7 +282,6 @@ GET /api/v1/user/interview/history?page=0&size=10
 - 이미 종료된 세션(`COMPLETED` / `FAILED`) 재종료 시 `INTERVIEW_SESSION_ALREADY_ENDED(400)`
 - `session_status = COMPLETED`, `ended_at = 현재 시각` 업데이트
 - FastAPI 리포트 생성 비동기 트리거
-- Spring WebSocket `REPORT_READY` 메시지 전송 (리포트 완료 콜백)
 - `@Transactional` 적용
 - 반환: `ResponseEndSession`
 
@@ -346,7 +345,7 @@ WS /ws/user/interview/{sessionId}/chat?token={accessToken}
 - 배치 주기: 1시간 단위 (`@Scheduled` cron)
 - 쿼리 조건: `started_at < NOW() - INTERVAL '24 hours'` **AND** `session_status = 'IN_PROGRESS'` **AND** `updated_at < NOW() - INTERVAL '5 minutes'`
   - `updated_at` 조건은 방금 답변을 제출한 세션이 배치 실행 타이밍과 겹쳐 의도치 않게 `FAILED` 처리되는 상황을 방지하는 유예 조건이다.
-- `FAILED` 전이 후 관련 리소스(FastAPI 파이프라인 세션 등) 정리 여부는 FastAPI 팀과 협의.
+- `FAILED` 전이 후 FastAPI 파이프라인 세션 별도 정리 요청은 하지 않는다. FastAPI가 자체 TTL로 만료 처리하며, Spring은 FAILED 마킹 + 처리 건수 `log.info` 기록만 담당한다.
 
 ---
 

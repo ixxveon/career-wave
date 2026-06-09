@@ -114,7 +114,7 @@
   - [ ] `SessionType` 유효성 검증 — 유효하지 않으면 `INTERVIEW_INVALID_SESSION_TYPE(400)`
   - [ ] `documentId` 존재 시 유효성 검증 — 없으면 `INTERVIEW_DOCUMENT_NOT_FOUND(404)`
   - [ ] `InterviewSession` 저장 (`session_status = IN_PROGRESS`, `started_at = 현재 시각`)
-  - [ ] FastAPI RAG 컨텍스트 비동기 등록 (documentId 있는 경우, 구현 방식 팀 협의)
+  - [ ] FastAPI RAG 컨텍스트 비동기 등록 (documentId 있는 경우)
   - [ ] `@Transactional` 적용
   - [ ] 반환: `ResponseStartSession`
 
@@ -135,7 +135,7 @@
 - [ ] `endSession(UUID memberId, String sessionId)`
   - [ ] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
   - [ ] 존재하지 않으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
-  - [ ] `COMPLETED` / `FAILED` 세션 재종료 시 `INTERVIEW_SESSION_ALREADY_ENDED(400)`
+  - [ ] `COMPLETED` / `FAILED` 세션 재종료 시 `INTERVIEW_SESSION_ALREADY_ENDED(400)` — 멱등성 체크: FastAPI 리포트 트리거가 2회 이상 발생하지 않도록 반드시 상태 확인 후 얼리 리턴
   - [ ] `complete(endedAt)` 메서드로 상태 변경 (`COMPLETED`, `ended_at = 현재 시각`)
   - [ ] FastAPI 리포트 생성 비동기 트리거
   - [ ] `@Transactional` 적용
