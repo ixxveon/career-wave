@@ -86,6 +86,7 @@ public class UserLoginService {
                 member.getName(),
                 member.getRoleType(),
                 member.getMemberStatus(),
+                member.getSubscriptionStatus(),
                 approvalStatus,
                 member.getLastLoginAt()
         );
