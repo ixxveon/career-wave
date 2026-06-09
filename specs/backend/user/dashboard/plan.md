@@ -21,19 +21,15 @@
 
 ## Project Structure
 
+```text
 backend/src/main/java/kr/co/carrer/user/dashboard/
 ├── controller/
-│ └── DashboardController.java
 ├── service/
-│ └── DashboardService.java
 ├── dto/
-│ └── DashboardDTO.java
 └── docs/
-└── DashboardControllerDocs.java
 
 backend/src/test/java/kr/co/carrer/user/dashboard/
-└── service/
-└── DashboardServiceTest.java
+```
 
 > Repository, type 패키지는 실제 구현 시 기존 도메인 구조와 ERD 매핑을 확인한 뒤 필요한 경우에만 추가한다.
 > 존재하지 않는 클래스나 패키지는 추측해서 생성하지 않는다.
