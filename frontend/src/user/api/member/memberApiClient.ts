@@ -4,8 +4,15 @@ import type { TokenRefreshResponse } from '../../types/member';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+function isSafeMethod(method: string | undefined): boolean {
+  return SAFE_METHODS.has((method ?? 'GET').toUpperCase());
+}
+
 export interface MemberApiOptions extends RequestInit {
   auth?: boolean;
+  allowRetry?: boolean;
 }
 
 function redirectToLoginOnSessionExpired() {
@@ -52,10 +59,11 @@ async function requestAccessTokenRefresh(): Promise<string | null> {
   }
 }
 
-async function requestWithAuthRetry(endpoint: string, init: RequestInit, auth: boolean): Promise<Response> {
+async function requestWithAuthRetry(endpoint: string, init: RequestInit, auth: boolean, allowRetry = false): Promise<Response> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, init);
 
   if (!auth || response.status !== 401) return response;
+  if (!isSafeMethod(init.method) && !allowRetry) return response;
 
   const refreshedToken = await requestAccessTokenRefresh();
   if (!refreshedToken) return response;
@@ -70,7 +78,7 @@ async function requestWithAuthRetry(endpoint: string, init: RequestInit, auth: b
 }
 
 export async function memberApiClient<T>(endpoint: string, options: MemberApiOptions = {}): Promise<T> {
-  const { auth = false, headers, body, ...rest } = options;
+  const { auth = false, allowRetry = false, headers, body, ...rest } = options;
   const isFormData = body instanceof FormData;
   let token = authSession.getAccessToken();
   const requestHeaders = new Headers(headers);
@@ -101,7 +109,7 @@ export async function memberApiClient<T>(endpoint: string, options: MemberApiOpt
       ...rest,
       body,
       headers: requestHeaders,
-    }, auth);
+    }, auth, allowRetry);
   } catch (error) {
     // 네트워크 단절/timeout 등 fetch 자체 실패는 세션과 무관하므로 세션을 유지한다.
     throw toMemberApiError(0, {
