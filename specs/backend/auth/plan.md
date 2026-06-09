@@ -7,7 +7,7 @@ global/auth/
 ├── jwt/         JwtTokenProvider, JwtProperties
 ├── filter/      JwtAuthenticationFilter, AccountStatusAuthorizationFilter
 ├── principal/   AuthPrincipal (CustomUserDetails 대체)
-├── config/      SecurityConfig (User/Admin FilterChain), SwaggerConfig
+├── config/      SecurityConfig (단일 FilterChain, Role 기반), SwaggerConfig
 ├── exception/   AuthErrorCode, AuthExceptionHandler, EntryPoint, AccessDeniedHandler
 └── store/       RefreshTokenStore(Redis), TokenBlacklistStore(Redis), LoginAttemptStore(Redis)
 
@@ -44,19 +44,20 @@ admin/auth/      AdminLoginService, AdminAuthController
 - 공통 인증 주체 표현. 필드: id(String — UUID or BIGINT 문자열), accountType, roleType, authorities, adminRole(관리자만, 그 외 null).
 - Controller에서는 `@AuthenticationPrincipal AuthPrincipal`로만 주체 조회(토큰 직접 파싱 금지).
 
-### SecurityConfig — FilterChain 2개 분리
-- `adminSecurityFilterChain` (`@Order(1)`, `securityMatcher("/api/v1/admin/**")`): admin secret, hasRole("ADMIN").
-- `userSecurityFilterChain` (`@Order(2)`, `securityMatcher("/api/v1/**")`): user secret.
-- 공통: CSRF disable, 세션 STATELESS, CORS 설정(아래 CORS 항목), EntryPoint/AccessDeniedHandler 등록.
-- **[SS-1] JwtAuthenticationFilter 등록 위치**: 각 체인에서 `http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)`로 삽입한다. (요청 진입 시 폼 로그인 필터보다 먼저 JWT로 인증 처리)
+### SecurityConfig — 단일 FilterChain (Role 기반)
+- **단일 `SecurityFilterChain` 빈**으로 user/admin 요청을 함께 처리한다. `@Order`나 `securityMatcher`로 체인을 분리하지 않는다.
+- 기존 user 쪽 JWT 코드(`JwtTokenProvider`, `JwtAuthenticationFilter`)를 admin에서도 그대로 재사용하고, `roleType`(USER/COMPANY/ADMIN)으로 접근을 구분한다.
+- CSRF disable, 세션 STATELESS, CORS 설정(아래 CORS 항목), EntryPoint/AccessDeniedHandler 등록.
+- **[SS-1] JwtAuthenticationFilter 등록**: `http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)`로 단일 등록. (폼 로그인 필터보다 먼저 JWT 인증 처리)
 - 권한:
   - permitAll: api-schema 8번 목록.
+  - `/api/v1/admin/**` → `hasRole("ADMIN")` — URL 경로 단위 굵은 권한은 SecurityConfig에서 집중 관리.
   - `/api/v1/user/members/me/status`: **authenticated + AccountStatus 예외**. 정지/차단 회원도 유효 토큰이면 통과.
   - `/api/v1/user/members/logout`: **authenticated + AccountStatus 예외**. 정지/차단 회원도 본인 세션 폐기 가능.
-  - URL 경로 단위 굵은 권한(예: `/api/v1/admin/**` → hasRole("ADMIN"))은 `requestMatchers().hasRole()`로 SecurityConfig에서 집중 관리.
 - **[SS-3] 관리자 등급(MASTER/CS/BACKEND) 세분 권한**: 메서드 단위 `@PreAuthorize`로 처리한다. 이를 위해 설정 클래스에 `@EnableMethodSecurity`를 **반드시** 추가한다(누락 시 어노테이션이 조용히 무시됨).
   - 예: `@PreAuthorize("hasRole('ADMIN') and @authz.hasAdminRole('BACKEND')")` 또는 커스텀 권한 표현식. adminRole은 AuthPrincipal/Authentication authority로 노출.
   - 등급별 접근 매트릭스는 spec.md 7번(팀 정렬 필요) 확정 후 각 admin API에 적용.
+  - 세분 권한 설계는 admin 페이지 담당자와 협의 후 확정한다.
 
 ### RefreshTokenStore (Redis)
 - key: `refresh:{accountType}:{subjectId}:{sessionId}`, value = token hash(SHA-256), TTL = refresh 만료시간.
