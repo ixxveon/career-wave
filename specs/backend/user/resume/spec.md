@@ -240,7 +240,7 @@ GET  /api/v1/user/resume/history?page=0&size=10
 POST /api/v1/user/resume/{documentId}/webhook        [FastAPI → Spring 내부 전용]
       → 분석 완료 콜백 수신 → DB 상태 업데이트 → WebSocket으로 프론트 알림
 
-WS   /ws/resume/{documentId}/status?token={accessToken}
+STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{documentId}/status
       → 분석 상태 실시간 메시지 (ANALYZING / COMPLETED / FAILED)
 ```
 

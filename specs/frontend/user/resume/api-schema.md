@@ -89,7 +89,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 업로드 완료 즉시 서버에서 AI 분석 작업을 **자동 트리거**합니다.  
-> 클라이언트는 `data.documentId` 수신 후 즉시 WebSocket(`WS /ws/user/resume/{documentId}/status`) 연결을 시작합니다.
+> 클라이언트는 `data.documentId` 수신 후 즉시 STOMP WebSocket(`/ws/user/resume?token=...`, 구독 토픽 `/topic/resume/{documentId}/status`) 연결을 시작합니다.
 
 ### Error Cases
 
@@ -146,7 +146,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 제출 완료 즉시 서버에서 AI 분석 작업을 **자동 트리거**합니다.  
-> 클라이언트는 `data.documentId` 수신 후 즉시 WebSocket(`WS /ws/user/resume/{documentId}/status`) 연결을 시작합니다.
+> 클라이언트는 `data.documentId` 수신 후 즉시 STOMP WebSocket(`/ws/user/resume?token=...`, 구독 토픽 `/topic/resume/{documentId}/status`) 연결을 시작합니다.
 
 ### Error Cases
 

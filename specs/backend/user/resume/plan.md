@@ -129,7 +129,7 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 - [ ] WebSocket 핸들러 작성 — 연결 시 `documentId` 소유권 검증 (불일치 시 Close 1008)
 - [ ] Webhook 수신 시 해당 `documentId` 구독 세션에 메시지 발송
 - [ ] `COMPLETED` / `FAILED` 전송 후 Grace Period(30초) 적용 — 클라이언트 선종료 즉시 해제, 만료 시 Close 1000
-- [ ] `WS /ws/resume/{documentId}/status` 엔드포인트 등록
+- [ ] STOMP 엔드포인트 `/ws/user/resume` 등록, 구독 토픽 `/topic/resume/{documentId}/status` 확인
 
 ### Phase 8: 검증 및 문서화
 
