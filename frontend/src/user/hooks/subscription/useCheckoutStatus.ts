@@ -14,6 +14,7 @@ export function useCheckoutStatus() {
   const [agreed, setAgreed] = useState(false);
   const [warning, setWarning] = useState('');
   const [checkoutError, setCheckoutError] = useState('');
+  const [isPaymentRequesting, setIsPaymentRequesting] = useState(false);
 
   const requestedCode = searchParams.get('product');
   const isKnownProduct = requestedCode !== null && (KNOWN_PRODUCT_CODES as string[]).includes(requestedCode);
@@ -30,9 +31,11 @@ export function useCheckoutStatus() {
       return;
     }
     if (!productCode) return;
+    if (isPaymentRequesting) return;
 
     setWarning('');
     setCheckoutError('');
+    setIsPaymentRequesting(true);
 
     try {
       const order = await createOrder({
@@ -55,6 +58,7 @@ export function useCheckoutStatus() {
         customerName: order.customerName,
       });
     } catch (err: unknown) {
+      setIsPaymentRequesting(false);
       const error = err as { status?: number };
       if (error.status === 403) {
         setCheckoutError('결제가 제한된 계정입니다. 고객센터에 문의해주세요.');
@@ -79,6 +83,7 @@ export function useCheckoutStatus() {
     warning,
     checkoutError,
     isCreatingOrder,
+    isPaymentRequesting,
     handleAgreeChange,
     handleCheckout,
   };
