@@ -62,6 +62,11 @@ public class UserAuthController implements UserAuthControllerDocs {
             throw new CustomException(ErrorCode.AUTH_REFRESH_INVALID);
         }
 
+        // user 엔드포인트에서 ADMIN 토큰 재발급 차단
+        if (accountType == AccountType.ADMIN) {
+            throw new CustomException(ErrorCode.AUTH_REFRESH_INVALID);
+        }
+
         if (!jwtTokenProvider.validate(refreshToken, accountType)) {
             throw new CustomException(ErrorCode.AUTH_REFRESH_INVALID);
         }
