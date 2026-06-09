@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
 class AdminReportServiceTest {
 
     @InjectMocks
-    private AdminReportService adminReportService;
+    private AdminReportServiceImpl adminReportService;
 
     @Mock private ReportRepository reportRepository;
     @Mock private ReportQueryRepository reportQueryRepository;

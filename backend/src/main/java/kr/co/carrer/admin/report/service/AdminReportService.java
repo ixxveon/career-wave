@@ -1,111 +1,22 @@
 package kr.co.carrer.admin.report.service;
 
 import kr.co.carrer.admin.report.dto.ReportDetailDTO;
-import kr.co.carrer.admin.report.entity.Report;
-import kr.co.carrer.admin.report.repository.ReportBoardRepository;
-import kr.co.carrer.admin.report.repository.ReportCommentRepository;
-import kr.co.carrer.admin.report.repository.ReportQueryRepository;
-import kr.co.carrer.admin.report.repository.ReportRepository;
 import kr.co.carrer.admin.report.type.ReportReason;
 import kr.co.carrer.admin.report.type.ReportStatus;
 import kr.co.carrer.admin.report.type.TargetType;
-import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+public interface AdminReportService {
 
-@Service
-@RequiredArgsConstructor
-public class AdminReportService {
+    ReportDetailDTO.ResponseSummary getSummary();
 
-    private final ReportRepository reportRepository;
-    private final ReportQueryRepository reportQueryRepository;
-    private final ReportBoardRepository reportBoardRepository;
-    private final ReportCommentRepository reportCommentRepository;
+    PaginationResponse<ReportDetailDTO.ResponseList> getReports(ReportStatus status, TargetType targetType,
+                                                                ReportReason reason, String keyword,
+                                                                int page, int size);
 
-    public ReportDetailDTO.ResponseSummary getSummary() {
-        long totalCount   = reportRepository.count();
-        long pendingCount = reportRepository.countByReportStatus(ReportStatus.PENDING);
-        long blindedCount = reportRepository.countByReportStatus(ReportStatus.BLINDED);
-        long highRiskCount = reportRepository.countHighRisk();
-        return new ReportDetailDTO.ResponseSummary(totalCount, pendingCount, blindedCount, highRiskCount);
-    }
+    ReportDetailDTO.ResponseDetail getReportDetail(Long reportId);
 
-    public PaginationResponse<ReportDetailDTO.ResponseList> getReports(ReportStatus status, TargetType targetType,
-                                                                        ReportReason reason, String keyword,
-                                                                        int page, int size) {
-        size = Math.min(size, 100);
-        int offset = (page - 1) * size;
+    ReportDetailDTO.ResponseProcess blindReport(Long reportId, Long adminId);
 
-        List<ReportDetailDTO.ResponseList> items =
-            reportQueryRepository.findReports(status, targetType, reason, keyword, offset, size);
-        long total = reportQueryRepository.countReports(status, targetType, reason, keyword);
-
-        return PaginationResponse.of(items, page, size, total);
-    }
-
-    public ReportDetailDTO.ResponseDetail getReportDetail(Long reportId) {
-        ReportDetailDTO.ResponseDetail base = reportQueryRepository.findReportDetail(reportId)
-            .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
-
-        String contentTitle = null;
-        String contentBody  = null;
-
-        if (base.targetType() == TargetType.BOARD) {
-            contentTitle = reportBoardRepository.findTitleById(base.targetId());
-            contentBody  = reportBoardRepository.findContentById(base.targetId());
-        } else if (base.targetType() == TargetType.COMMENT) {
-            contentBody = reportCommentRepository.findContentById(base.targetId());
-        }
-
-        return new ReportDetailDTO.ResponseDetail(
-            base.reportId(), base.targetType(), base.targetId(),
-            base.reason(), base.reportStatus(),
-            base.reporterName(), base.reportedName(),
-            contentTitle, contentBody,
-            base.createdAt(), base.processedAt(), base.processedBy()
-        );
-    }
-
-    @Transactional
-    public ReportDetailDTO.ResponseProcess blindReport(Long reportId, Long adminId) {
-        Report report = reportRepository.findById(reportId)
-            .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
-
-        if (report.getReportStatus() != ReportStatus.PENDING) {
-            throw new CustomException(ErrorCode.ALREADY_PROCESSED);
-        }
-
-        if (report.getTargetType() == TargetType.BOARD) {
-            reportBoardRepository.blind(report.getTargetId());
-        } else if (report.getTargetType() == TargetType.COMMENT) {
-            reportCommentRepository.blind(report.getTargetId());
-        }
-
-        report.blind(adminId);
-
-        return new ReportDetailDTO.ResponseProcess(
-            report.getReportId(), report.getReportStatus(), report.getProcessedAt()
-        );
-    }
-
-    @Transactional
-    public ReportDetailDTO.ResponseProcess dismissReport(Long reportId, Long adminId) {
-        Report report = reportRepository.findById(reportId)
-            .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
-
-        if (report.getReportStatus() != ReportStatus.PENDING) {
-            throw new CustomException(ErrorCode.ALREADY_PROCESSED);
-        }
-
-        report.dismiss(adminId);
-
-        return new ReportDetailDTO.ResponseProcess(
-            report.getReportId(), report.getReportStatus(), report.getProcessedAt()
-        );
-    }
+    ReportDetailDTO.ResponseProcess dismissReport(Long reportId, Long adminId);
 }
