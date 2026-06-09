@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 class AdminMemberServiceTest {
 
     @InjectMocks
-    private AdminMemberService adminMemberService;
+    private AdminMemberServiceImpl adminMemberService;
 
     @Mock private MemberRepository memberRepository;
     @Mock private MemberQueryRepository memberQueryRepository;
