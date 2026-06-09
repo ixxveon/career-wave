@@ -28,6 +28,30 @@ public class ReportQueryRepository {
         throw new IllegalArgumentException("Unsupported timestamp type: " + value.getClass());
     }
 
+    private void appendFilters(StringBuilder sql, List<Object> params,
+                               ReportStatus status, TargetType targetType,
+                               ReportReason reason, String keyword) {
+        if (status != null) {
+            sql.append(" AND r.report_status = ?").append(params.size() + 1);
+            params.add(status.name());
+        }
+        if (targetType != null) {
+            sql.append(" AND r.target_type = ?").append(params.size() + 1);
+            params.add(targetType.name());
+        }
+        if (reason != null) {
+            sql.append(" AND r.reason = ?").append(params.size() + 1);
+            params.add(reason.name());
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            int idx = params.size() + 1;
+            sql.append(" AND (CAST(r.report_id AS TEXT) ILIKE ?").append(idx)
+               .append(" OR reporter.name ILIKE ?").append(idx)
+               .append(" OR victim.name ILIKE ?").append(idx).append(")");
+            params.add("%" + keyword + "%");
+        }
+    }
+
     public List<ReportDetailDTO.ResponseList> findReports(ReportStatus status, TargetType targetType,
                                                            ReportReason reason, String keyword,
                                                            int offset, int size) {
@@ -44,29 +68,10 @@ public class ReportQueryRepository {
             """);
 
         List<Object> params = new ArrayList<>();
-        int idx = 1;
+        appendFilters(sql, params, status, targetType, reason, keyword);
 
-        if (status != null) {
-            sql.append(" AND r.report_status = ?").append(idx++);
-            params.add(status.name());
-        }
-        if (targetType != null) {
-            sql.append(" AND r.target_type = ?").append(idx++);
-            params.add(targetType.name());
-        }
-        if (reason != null) {
-            sql.append(" AND r.reason = ?").append(idx++);
-            params.add(reason.name());
-        }
-        if (keyword != null && !keyword.isBlank()) {
-            sql.append(" AND (CAST(r.report_id AS TEXT) ILIKE ?").append(idx)
-               .append(" OR reporter.name ILIKE ?").append(idx)
-               .append(" OR victim.name ILIKE ?").append(idx).append(")");
-            params.add("%" + keyword + "%");
-            idx++;
-        }
-
-        sql.append(" ORDER BY r.created_at DESC LIMIT ?").append(idx).append(" OFFSET ?").append(idx + 1);
+        sql.append(" ORDER BY r.created_at DESC LIMIT ?").append(params.size() + 1)
+           .append(" OFFSET ?").append(params.size() + 2);
         params.add(size);
         params.add(offset);
 
@@ -103,27 +108,7 @@ public class ReportQueryRepository {
             """);
 
         List<Object> params = new ArrayList<>();
-        int idx = 1;
-
-        if (status != null) {
-            sql.append(" AND r.report_status = ?").append(idx++);
-            params.add(status.name());
-        }
-        if (targetType != null) {
-            sql.append(" AND r.target_type = ?").append(idx++);
-            params.add(targetType.name());
-        }
-        if (reason != null) {
-            sql.append(" AND r.reason = ?").append(idx++);
-            params.add(reason.name());
-        }
-        if (keyword != null && !keyword.isBlank()) {
-            sql.append(" AND (CAST(r.report_id AS TEXT) ILIKE ?").append(idx)
-               .append(" OR reporter.name ILIKE ?").append(idx)
-               .append(" OR victim.name ILIKE ?").append(idx).append(")");
-            params.add("%" + keyword + "%");
-            idx++;
-        }
+        appendFilters(sql, params, status, targetType, reason, keyword);
 
         Query query = em.createNativeQuery(sql.toString());
         for (int i = 0; i < params.size(); i++) {
