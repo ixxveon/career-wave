@@ -30,7 +30,7 @@
 - [x] `CoverLetterMetaRepository` 작성
 - [x] `CoverLetterContentRepository` 작성
 - [x] `DocumentFeedbackRepository` 작성
-- [x] `ErrorCode` 추가
+- [x] `ResumeErrorCode` 작성 (`user/resume/exception/ResumeErrorCode.java`, `BaseErrorCode` 구현)
   - `INVALID_FILE_SIZE` (400)
   - `INVALID_FILE_TYPE` (400)
   - `INVALID_CONTENT_COUNT` (400)
@@ -38,6 +38,8 @@
   - `DOCUMENT_NOT_FOUND` (404)
   - `DOCUMENT_ACCESS_DENIED` (403)
   - `FEEDBACK_PARSE_ERROR` (500)
+- [x] `BaseErrorCode` 인터페이스 작성 (`global/exception/BaseErrorCode.java`)
+- [x] `CustomException`, `GlobalExceptionHandler` → `BaseErrorCode` 기반으로 리팩토링
 
 ---
 

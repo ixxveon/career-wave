@@ -19,18 +19,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<Object>> handleCustomException(CustomException e) {
-        ErrorCode errorCode = e.getErrorCode();
+        BaseErrorCode errorCode = e.getErrorCode();
+        String errorCodeName = errorCode instanceof Enum<?> ? ((Enum<?>) errorCode).name() : errorCode.getClass().getSimpleName();
 
         if (e.getCause() != null) {
             log.error(
                 "[비즈니스 예외 발생] 에러코드: {} | 사유: {} -> [하부 원인 예외]: {} (상세 메시지: {})",
-                errorCode.name(),
+                errorCodeName,
                 e.getMessage(),
                 e.getCause().getClass().getSimpleName(),
                 e.getCause().getMessage()
             );
         } else {
-            log.warn("[비즈니스 제재/검증 실패] 에러코드: {} | 사유: {}", errorCode.name(), e.getMessage());
+            log.warn("[비즈니스 제재/검증 실패] 에러코드: {} | 사유: {}", errorCodeName, e.getMessage());
         }
 
         return ResponseEntity
