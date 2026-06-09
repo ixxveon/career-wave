@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { authSession } from '@/utils/user/member/authSession';
 import {
   Bell,
   Bookmark,
@@ -87,18 +88,8 @@ const stats = [
   { icon: Building2, title: '기업 5,000+', text: '다양한 기업과 함께' },
 ];
 
-const authTokenKeys = ['careerWaveToken', 'careerWaveUser'];
-
-function hasAuthToken() {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  return authTokenKeys.some((key) => localStorage.getItem(key) || sessionStorage.getItem(key));
-}
-
 function JobSeekerDashboardPage() {
-  const isLoggedIn = hasAuthToken();
+  const isLoggedIn = !!authSession.getAccessToken();
 
   return (
     <div className="cw-page cw-home">
@@ -134,18 +125,18 @@ function JobSeekerDashboardPage() {
         </div>
 
         <article className="cw-home-profile-card">
-          <Sparkles className="cw-profile-spark" size={18} />
-          <h2>지금 바로<br />내 프로필로 매칭 시작하기</h2>
-          <p>프로필을 등록하면 AI가 당신에게 꼭 맞는 공고와 커리어 인사이트를 제공해 드려요.</p>
-          <Link className="btn btn-primary" to="/auth/register">
-            프로필 등록하고 매칭 시작하기
+          <FileSearch className="cw-profile-spark" size={18} />
+          <h2>지금 바로<br />서류 분석 시작하기</h2>
+          <p>이력서와 자기소개서를 AI로 분석해 합격 가능성과 개선 포인트를 확인해보세요.</p>
+          <Link className="btn btn-primary" to={isLoggedIn ? '/documents/resume' : '/auth/login'}>
+            서류 분석 시작하기
           </Link>
           <div className="cw-profile-avatars">
             <span style={{ backgroundImage: 'linear-gradient(135deg, #ffe2bf, #a86f4c)' }} />
             <span style={{ backgroundImage: 'linear-gradient(135deg, #d6ecff, #2b6fb3)' }} />
             <span style={{ backgroundImage: 'linear-gradient(135deg, #ffe8ef, #b64d78)' }} />
             <span style={{ backgroundImage: 'linear-gradient(135deg, #e8efe1, #536f3d)' }} />
-            <small>1,248명의 구직자가<br />오늘 매칭을 시작했어요</small>
+            <small>오늘도 수많은 지원자가<br />AI 서류 분석을 활용하고 있어요</small>
             <ChevronRight size={16} />
           </div>
         </article>
