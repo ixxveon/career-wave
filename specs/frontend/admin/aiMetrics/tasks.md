@@ -64,10 +64,10 @@
 **Branch**: `feature/admin-ai-metrics-rag-documents`  
 **Base**: `feature/admin-ai-metrics-verify`
 
-- [ ] `POST /api/v1/admin/ai-metrics/rag-documents` 문서 업로드 API 연동
-- [ ] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download` 문서 다운로드 API 연동
-- [ ] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}` 문서 삭제 API 연동
-- [ ] 업로드 파일 형식, 크기, 필수값 검증 상태 처리
-- [ ] 업로드 후 RAG 인덱싱 상태(`INDEXING`, `SYNCED`, `FAILED`) 갱신 흐름 확인
-- [ ] 삭제 요청 후 목록/상태 갱신 및 `DELETING` 상태 표시 여부 확인
-- [ ] 업로드/다운로드/삭제 실패 시 관리자 화면 오류 메시지 처리
+- [x] `POST /api/v1/admin/ai-metrics/rag-documents` 문서 업로드 API 연동
+- [x] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download` 문서 다운로드 API 연동
+- [x] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}` 문서 삭제 API 연동
+- [x] 업로드 파일 형식, 크기, 필수값 검증 상태 처리
+- [x] 업로드 후 RAG 인덱싱 상태(`INDEXING`, `SYNCED`, `FAILED`) 갱신 흐름 확인
+- [x] 삭제 요청 후 목록/상태 갱신 및 `DELETING` 상태 표시 여부 확인
+- [x] 업로드/다운로드/삭제 실패 시 관리자 화면 오류 메시지 처리
