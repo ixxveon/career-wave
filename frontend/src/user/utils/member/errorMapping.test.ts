@@ -50,6 +50,11 @@ describe('parseLoginBlockedDecision — 계정 제한 판별', () => {
     expect(parseLoginBlockedDecision(error)).toEqual({ type: 'BLOCK', reason: 'COMPANY_REJECTED' });
   });
 
+  it('403 + AUTH_COMPANY_NEEDS_REVISION → COMPANY_NEEDS_REVISION blockedDecision 반환', () => {
+    const error = toMemberApiError(403, { code: 'AUTH_COMPANY_NEEDS_REVISION' });
+    expect(parseLoginBlockedDecision(error)).toEqual({ type: 'BLOCK', reason: 'COMPANY_NEEDS_REVISION' });
+  });
+
   it('403이지만 serverCode 없으면 null 반환 (generic 403)', () => {
     const error = { code: MEMBER_ERROR_CODE.FORBIDDEN, statusCode: 403, message: '권한 없음' };
     expect(parseLoginBlockedDecision(error)).toBeNull();
