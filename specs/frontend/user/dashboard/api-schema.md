@@ -206,7 +206,7 @@ Authorization: Bearer {accessToken}
         "location": "서울",
         "deadline": "2026-06-30",
         "noticeStatus": "ACTIVE",
-        "deleted": false,
+        "source": "WANTED",
         "createdAt": "2026-05-20T10:00:00Z"
       }
     ],

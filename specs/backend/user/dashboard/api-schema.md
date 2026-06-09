@@ -79,22 +79,22 @@ ROLE_USER
 
 ### 공통 Error Cases
 
-| statusCode | ErrorCode                     | 상황                 |
-| ---------: | ----------------------------- | ------------------ |
+| statusCode | ErrorCode                     | 상황                            |
+| ---------: | ----------------------------- | ------------------------------- |
 |      `400` | `INVALID_DASHBOARD_REQUEST`   | 잘못된 요청 또는 검색 조건 오류 |
-|      `401` | `UNAUTHORIZED`                | 인증 필요 또는 토큰 만료     |
-|      `403` | `DASHBOARD_FORBIDDEN_ACCESS`  | 본인 소유가 아닌 데이터 접근   |
-|      `404` | `DASHBOARD_PROFILE_NOT_FOUND` | 회원 또는 프로필 정보 없음    |
-|      `404` | `DASHBOARD_SCRAP_NOT_FOUND`   | 존재하지 않는 스크랩        |
-|      `500` | `INTERNAL_SERVER_ERROR`       | 서버 오류              |
+|      `401` | `UNAUTHORIZED`                | 인증 필요 또는 토큰 만료        |
+|      `403` | `DASHBOARD_FORBIDDEN_ACCESS`  | 본인 소유가 아닌 데이터 접근    |
+|      `404` | `DASHBOARD_PROFILE_NOT_FOUND` | 회원 또는 프로필 정보 없음      |
+|      `404` | `DASHBOARD_SCRAP_NOT_FOUND`   | 존재하지 않는 스크랩            |
+|      `500` | `INTERNAL_SERVER_ERROR`       | 서버 오류                       |
 
 ---
 
 ## 1. 내 정보 조회
 
-* **Endpoint**: `GET /api/v1/user/dashboard/profile`
-* **Auth**: Required
-* **Role**: `ROLE_USER`
+- **Endpoint**: `GET /api/v1/user/dashboard/profile`
+- **Auth**: Required
+- **Role**: `ROLE_USER`
 
 ### Response
 
@@ -112,7 +112,6 @@ ROLE_USER
     "roleType": "ROLE_USER",
     "memberStatus": "ACTIVE",
     "subscriptionStatus": "FREE",
-    "notificationEnabled": true,
     "createdAt": "2026-05-01T12:00:00Z"
   }
 }
@@ -120,18 +119,18 @@ ROLE_USER
 
 ### Error Cases
 
-| statusCode | ErrorCode                     | 상황              |
-| ---------: | ----------------------------- | --------------- |
-|      `401` | `UNAUTHORIZED`                | 인증 필요 또는 토큰 만료  |
+| statusCode | ErrorCode                     | 상황                       |
+| ---------: | ----------------------------- | -------------------------- |
+|      `401` | `UNAUTHORIZED`                | 인증 필요 또는 토큰 만료   |
 |      `404` | `DASHBOARD_PROFILE_NOT_FOUND` | 회원 또는 프로필 정보 없음 |
 
 ---
 
 ## 2. GitHub 연동 정보 조회
 
-* **Endpoint**: `GET /api/v1/user/dashboard/github`
-* **Auth**: Required
-* **Role**: `ROLE_USER`
+- **Endpoint**: `GET /api/v1/user/dashboard/github`
+- **Auth**: Required
+- **Role**: `ROLE_USER`
 
 ### Linked Response
 
@@ -141,7 +140,6 @@ ROLE_USER
   "statusCode": 200,
   "message": "GitHub 정보를 조회했습니다.",
   "data": {
-    "githubId": "careerwave-user",
     "githubUrl": "https://github.com/careerwave-user",
     "linked": true
   }
@@ -156,7 +154,6 @@ ROLE_USER
   "statusCode": 200,
   "message": "GitHub 정보가 없습니다.",
   "data": {
-    "githubId": null,
     "githubUrl": null,
     "linked": false
   }
@@ -165,26 +162,25 @@ ROLE_USER
 
 ### Notes
 
-* 프론트는 `linked` 값을 기준으로 GitHub 연동 상태를 표시한다.
-* v1에서는 `personal_profiles.github_url` 존재 여부를 기준으로 `linked` 값을 판단한다.
-* GitHub OAuth 기반 실제 연동 및 GitHub ID 동기화는 v1 범위에 포함하지 않는다.
-* `githubId`는 v1에서 제공 가능한 값이 없을 경우 `null`을 반환할 수 있다.
+- 프론트는 `linked` 값을 기준으로 GitHub 연동 상태를 표시한다.
+- v1에서는 `personal_profiles.github_url` 존재 여부를 기준으로 `linked` 값을 판단한다.
+- GitHub OAuth 기반 실제 연동 및 GitHub ID 동기화는 v1 범위에 포함하지 않는다.
 
 ### Error Cases
 
-| statusCode | ErrorCode                     | 상황              |
-| ---------: | ----------------------------- | --------------- |
-|      `401` | `UNAUTHORIZED`                | 인증 필요 또는 토큰 만료  |
+| statusCode | ErrorCode                     | 상황                       |
+| ---------: | ----------------------------- | -------------------------- |
+|      `401` | `UNAUTHORIZED`                | 인증 필요 또는 토큰 만료   |
 |      `404` | `DASHBOARD_PROFILE_NOT_FOUND` | 회원 또는 프로필 정보 없음 |
 
 ---
 
 ## 3. 회원 정보 수정
 
-* **Endpoint**: `PATCH /api/v1/user/dashboard/profile`
-* **Content-Type**: `application/json`
-* **Auth**: Required
-* **Role**: `ROLE_USER`
+- **Endpoint**: `PATCH /api/v1/user/dashboard/profile`
+- **Content-Type**: `application/json`
+- **Auth**: Required
+- **Role**: `ROLE_USER`
 
 ### Request
 
@@ -198,11 +194,11 @@ ROLE_USER
 
 ### Request Fields
 
-| Field       | Type             |  필수 | 설명             |
-| ----------- | ---------------- | :-: | -------------- |
-| `name`      | `string`         |  Y  | 회원 이름          |
-| `phone`     | `string`         |  N  | 휴대폰 번호         |
-| `githubUrl` | `string \| null` |  N  | GitHub 프로필 URL |
+| Field       | Type             | 필수 | 설명              |
+| ----------- | ---------------- | :--: | ----------------- |
+| `name`      | `string`         |  Y   | 회원 이름         |
+| `phone`     | `string`         |  N   | 휴대폰 번호       |
+| `githubUrl` | `string \| null` |  N   | GitHub 프로필 URL |
 
 ### Response
 
@@ -222,28 +218,28 @@ ROLE_USER
 
 ### Error Cases
 
-| statusCode | ErrorCode                     | 상황                           |
-| ---------: | ----------------------------- | ---------------------------- |
+| statusCode | ErrorCode                     | 상황                                    |
+| ---------: | ----------------------------- | --------------------------------------- |
 |      `400` | `INVALID_DASHBOARD_REQUEST`   | 이름, 휴대폰 번호, GitHub URL 형식 오류 |
-|      `401` | `UNAUTHORIZED`                | 인증 필요 또는 토큰 만료               |
+|      `401` | `UNAUTHORIZED`                | 인증 필요 또는 토큰 만료                |
 |      `404` | `DASHBOARD_PROFILE_NOT_FOUND` | 회원 또는 프로필 정보 없음              |
 
 ---
 
 ## 4. 스크랩 공고 목록 조회
 
-* **Endpoint**: `GET /api/v1/user/dashboard/bookmarks`
-* **Auth**: Required
-* **Role**: `ROLE_USER`
+- **Endpoint**: `GET /api/v1/user/dashboard/bookmarks`
+- **Auth**: Required
+- **Role**: `ROLE_USER`
 
 ### Query Parameters
 
-| Parameter | Type        |  필수 | 기본값      | 설명               |
-| --------- | ----------- | :-: | -------- | ---------------- |
-| `keyword` | `string`    |  N  | `""`     | 기업명 또는 공고 제목 검색어 |
-| `sort`    | `ScrapSort` |  N  | `LATEST` | 정렬 기준            |
-| `page`    | `number`    |  N  | `0`      | 0-based page     |
-| `size`    | `number`    |  N  | `10`     | 페이지 크기           |
+| Parameter | Type        | 필수 | 기본값   | 설명                         |
+| --------- | ----------- | :--: | -------- | ---------------------------- |
+| `keyword` | `string`    |  N   | `""`     | 기업명 또는 공고 제목 검색어 |
+| `sort`    | `ScrapSort` |  N   | `LATEST` | 정렬 기준                    |
+| `page`    | `number`    |  N   | `0`      | 0-based page                 |
+| `size`    | `number`    |  N   | `10`     | 페이지 크기                  |
 
 ### Response
 
@@ -263,7 +259,7 @@ ROLE_USER
         "location": "서울",
         "deadline": "2026-06-30",
         "noticeStatus": "ACTIVE",
-        "deleted": false,
+        "source": "WANTED",
         "createdAt": "2026-05-20T10:00:00Z"
       }
     ],
@@ -275,21 +271,23 @@ ROLE_USER
 }
 ```
 
-### Deleted Job Notice Response Example
+### Job Notice Status Policy
 
-기업에 의해 삭제된 채용공고가 사용자의 스크랩 목록에 남아 있는 경우, 목록에서는 삭제 상태를 표시할 수 있도록 `deleted` 값을 `true`로 반환한다.
+Dashboard 스크랩 목록은 `bookmarks`와 `job_notices`를 조회하여 `noticeStatus`를 반환한다.
+
+현재 Dashboard는 `ACTIVE`, `CLOSED` 상태만 직접 반환하며, 삭제 또는 비공개 처리된 채용공고의 노출 여부와 상세 진입 정책은 JobNotice 도메인 정책을 따른다.
 
 ```json
 {
   "bookmarkId": 2,
   "jobNoticeId": 102,
-  "companyName": "삭제된 공고",
-  "title": "삭제된 채용공고입니다.",
+  "companyName": "커리어웨이브",
+  "title": "마감된 채용공고입니다.",
   "careerLevel": null,
   "location": null,
   "deadline": null,
   "noticeStatus": "CLOSED",
-  "deleted": true,
+  "source": "JUMPIT",
   "createdAt": "2026-05-21T10:00:00Z"
 }
 ```
@@ -313,24 +311,24 @@ ROLE_USER
 
 ### Error Cases
 
-| statusCode | ErrorCode                    | 상황                  |
-| ---------: | ---------------------------- | ------------------- |
+| statusCode | ErrorCode                    | 상황                              |
+| ---------: | ---------------------------- | --------------------------------- |
 |      `400` | `INVALID_DASHBOARD_REQUEST`  | 잘못된 검색 조건 또는 페이지 요청 |
-|      `401` | `UNAUTHORIZED`               | 인증 필요 또는 토큰 만료      |
-|      `403` | `DASHBOARD_FORBIDDEN_ACCESS` | 본인 소유가 아닌 데이터 접근    |
+|      `401` | `UNAUTHORIZED`               | 인증 필요 또는 토큰 만료          |
+|      `403` | `DASHBOARD_FORBIDDEN_ACCESS` | 본인 소유가 아닌 데이터 접근      |
 
 ---
 
 ## 5. 스크랩 취소
 
-* **Endpoint**: `DELETE /api/v1/user/dashboard/bookmarks/{bookmarkId}`
-* **Auth**: Required
-* **Role**: `ROLE_USER`
+- **Endpoint**: `DELETE /api/v1/user/dashboard/bookmarks/{bookmarkId}`
+- **Auth**: Required
+- **Role**: `ROLE_USER`
 
 ### Path Variables
 
-| Name         | Type     | 설명      |
-| ------------ | -------- | ------- |
+| Name         | Type     | 설명          |
+| ------------ | -------- | ------------- |
 | `bookmarkId` | `number` | 스크랩 식별자 |
 
 ### Response
@@ -348,12 +346,12 @@ ROLE_USER
 
 ### Error Cases
 
-| statusCode | ErrorCode                    | 상황               |
-| ---------: | ---------------------------- | ---------------- |
-|      `401` | `UNAUTHORIZED`               | 인증 필요 또는 토큰 만료   |
+| statusCode | ErrorCode                    | 상황                         |
+| ---------: | ---------------------------- | ---------------------------- |
+|      `401` | `UNAUTHORIZED`               | 인증 필요 또는 토큰 만료     |
 |      `403` | `DASHBOARD_FORBIDDEN_ACCESS` | 본인 소유가 아닌 스크랩 접근 |
-|      `404` | `DASHBOARD_SCRAP_NOT_FOUND`  | 존재하지 않는 스크랩      |
-|      `500` | `INTERNAL_SERVER_ERROR`      | 서버 오류            |
+|      `404` | `DASHBOARD_SCRAP_NOT_FOUND`  | 존재하지 않는 스크랩         |
+|      `500` | `INTERNAL_SERVER_ERROR`      | 서버 오류                    |
 
 ---
 
@@ -371,6 +369,6 @@ ROLE_USER
 
 ### Notes
 
-* Dashboard 도메인은 스크랩 목록 조회 및 스크랩 해제까지만 담당한다.
-* 채용공고 상세 조회 API는 JobNotice 도메인에서 제공한다.
-* 삭제된 채용공고의 상세 진입 정책은 JobNotice 도메인 정책을 따른다.
+- Dashboard 도메인은 스크랩 목록 조회 및 스크랩 해제까지만 담당한다.
+- 채용공고 상세 조회 API는 JobNotice 도메인에서 제공한다.
+- 삭제 또는 비공개 처리된 채용공고의 노출 여부와 상세 진입 정책은 JobNotice 도메인 정책을 따른다.
