@@ -319,7 +319,7 @@ export default function AiMetricsPage() {
   } = useQuery<PageResult<AiMetricLog>, Error>({
     queryKey: LOGS_QUERY_KEY,
     queryFn: async () => {
-      const response = await aiMetricsApi.getLogs({ page: 0, size: 5 });
+      const response = await aiMetricsApi.getLogs({ page: 1, size: 5 });
       if (!response.data.success) throw new Error(response.data.message ?? 'AI 운영 로그 조회에 실패했습니다.');
       return response.data.data;
     },

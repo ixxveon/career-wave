@@ -21,6 +21,17 @@
 | 스크랩 저장/해제 | 로그인 필요 |
 | 로그인 유도 경로 | `/auth/login` |
 
+## Permissions
+
+문서상 권한 표기는 `MASTER`, `BACKEND`, `CS`, `USER`를 사용한다. Spring Security에서는 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`, `ROLE_USER`로 매핑한다.
+
+| Method | Path | Allowed Roles |
+|---|---|---|
+| GET | `/api/v1/user/job-notices` | `Optional` |
+| GET | `/api/v1/user/job-notices/{jobNoticeId}` | `Optional` |
+| POST | `/api/v1/user/job-notices/{jobNoticeId}/bookmarks` | `USER` |
+| DELETE | `/api/v1/user/job-notices/{jobNoticeId}/bookmarks` | `USER` |
+
 ## 3. 응답 래퍼
 
 모든 Backend API 응답은 팀 Convention에 따라 `ApiResponse<T>` 형식을 사용한다.
@@ -220,13 +231,13 @@
 | `JOB_NOTICE_NOT_FOUND` | 404 | 공고 정보를 찾을 수 없습니다. |
 | `JOB_NOTICE_CLOSED` | 410 | 마감되었거나 비공개 처리된 공고입니다. |
 
-### 6.3 채용 공고 스크랩 토글
+### 6.3 채용 공고 스크랩 저장
 
 | 항목 | 값 |
 |------|----|
-| ID | `toggleJobNoticeBookmark` |
-| Method | `PATCH` |
-| Path | `/api/v1/user/job-notices/{jobNoticeId}/bookmark` |
+| ID | `addJobNoticeBookmark` |
+| Method | `POST` |
+| Path | `/api/v1/user/job-notices/{jobNoticeId}/bookmarks` |
 | Auth | required |
 | Response | `ApiResponse<JobNoticeBookmarkResponse>` |
 
@@ -234,13 +245,31 @@
 
 | 이름 | 타입 | 필수 | 설명 |
 |------|------|------|------|
-| `jobNoticeId` | number | O | 스크랩 저장 또는 해제할 공고 ID |
+| `jobNoticeId` | number | O | 저장할 공고 ID |
 
 #### Request Body
 
-| 필드 | 타입 | 필수 | 설명 |
+없음
+
+### 6.4 채용 공고 스크랩 삭제
+
+| 항목 | 값 |
+|------|----|
+| ID | `deleteJobNoticeBookmark` |
+| Method | `DELETE` |
+| Path | `/api/v1/user/job-notices/{jobNoticeId}/bookmarks` |
+| Auth | required |
+| Response | `ApiResponse<JobNoticeBookmarkResponse>` |
+
+#### Path Parameters
+
+| 이름 | 타입 | 필수 | 설명 |
 |------|------|------|------|
-| `bookmarked` | boolean | O | `true`면 스크랩 저장, `false`면 스크랩 해제 |
+| `jobNoticeId` | number | O | 스크랩 해제할 공고 ID |
+
+#### Request Body
+
+없음
 
 #### Response Data
 

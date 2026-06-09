@@ -14,7 +14,7 @@
 - [x] ACL 조회/등록/활성 전환/삭제 API 함수를 작성한다.
 - [x] 감사 로그 조회 API 함수를 작성한다.
 - [x] `ApiResponse<T>` 래퍼 응답과 에러 메시지 매핑을 처리한다.
-- [x] JWT 인증 만료, `ROLE_ADMIN` 권한 없음, `MASTER` 세부 역할 부족 에러 메시지를 분리한다.
+- [x] JWT 인증 만료, endpoint별 권한 없음, `MASTER` 세부 역할 부족 에러 메시지를 분리한다.
 
 ## Phase 2 - 계정/RBAC 연동
 
@@ -52,7 +52,7 @@
 ## Phase 5 - 권한 및 검증
 
 - [x] `feature/admin-management-audit-state` 브랜치를 기준으로 `feature/admin-management-auth-verify` 브랜치를 생성한다.
-- [x] `ROLE_ADMIN` 권한이 아닌 경우 관리자 관리 화면 접근 또는 API 호출 실패 상태를 검증한다.
+- [x] endpoint별 권한이 아닌 경우 관리자 관리 화면 접근 또는 API 호출 실패 상태를 검증한다.
 - [x] `MASTER` 권한이 아닌 경우 계정 생성/변경/삭제 버튼을 숨기거나 비활성화한다.
 - [x] `MASTER` 권한이 아닌 경우 ACL 등록/변경/삭제 버튼을 숨기거나 비활성화한다.
 - [x] 마지막 `MASTER` 계정 잠금/삭제 요청이 차단되는지 확인한다.

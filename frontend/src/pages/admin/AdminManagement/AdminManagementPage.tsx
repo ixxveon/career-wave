@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LockKeyhole, Network, Plus, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
 import {
+  ADMIN_ROLE,
   ADMIN_MANAGEMENT_ERROR_CODE,
   createAdminAccount as createAdminAccountRequest,
   createAdminAclRule,
@@ -17,16 +18,17 @@ import {
   updateAdminRole,
   updateAdminStatus,
 } from '../../../api/admin/adminManagementApi';
+import { adminSession } from '../../../api/admin/adminAuthApi';
 import type {
   AdminAccount as AdminAccountResponse,
   AdminAclRule as AdminAclRuleResponse,
   AdminAuditLog as AdminAuditLogResponse,
+  AdminRole,
 } from '../../../api/admin/adminManagementApi';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/admin-management.css';
 import MiniPagination from '../../../components/admin/MiniPagination';
 
-type AdminRole = 'MASTER' | 'CS' | 'BACKEND' | 'OPS' | 'BILLING' | 'AUDIT';
 type AdminStatus = 'ACTIVE' | 'LOCKED';
 type AuditSeverity = 'INFO' | 'WARN' | 'ERROR';
 
@@ -78,12 +80,9 @@ const ROLE_META: Record<AdminRole, { label: string; scope: string }> = {
   MASTER: { label: '마스터 관리자', scope: '전체 권한 통제 및 보안 승인' },
   CS: { label: 'CS 담당', scope: '회원 문의, 신고, 1차 조치' },
   BACKEND: { label: '백엔드 개발', scope: 'API, DB, 배포, 장애 대응' },
-  OPS: { label: '운영 담당', scope: '공지, 배너, 서비스 운영' },
-  BILLING: { label: '정산 담당', scope: '결제, 환불, 정산 확인' },
-  AUDIT: { label: '감사 담당', scope: '로그, 정책, 권한 감사' },
 };
 
-const roleColumns: AdminRole[] = ['MASTER', 'CS', 'BACKEND', 'OPS', 'BILLING', 'AUDIT'];
+const roleColumns: AdminRole[] = [ADMIN_ROLE.MASTER, ADMIN_ROLE.CS, ADMIN_ROLE.BACKEND];
 const MAX_SECURITY_LOGS = 5;
 const ADMIN_PAGE_SIZE = 20;
 const ACL_PAGE_SIZE = 3;
@@ -269,6 +268,8 @@ const toAuditLogRow = (auditLog: AdminAuditLogResponse): AuditLog => ({
 
 export default function AdminManagementPage() {
   const queryClient = useQueryClient();
+  const currentAdminRole = adminSession.getRole();
+  const isCurrentAdminMaster = currentAdminRole === 'MASTER';
   const {
     data: summary,
     error: summaryError,
@@ -507,7 +508,7 @@ export default function AdminManagementPage() {
   };
 
   const changeAdminRole = (id: string, role: AdminRole) => {
-    if (isAccountMasterRoleRequired) return;
+    if (shouldBlockAccountMasterAction) return;
     updateAdminRoleMutation.mutate({ id, role });
   };
 
@@ -520,7 +521,7 @@ export default function AdminManagementPage() {
   };
 
   const handleCreateAdminAccount = () => {
-    if (isAccountMasterRoleRequired) return;
+    if (shouldBlockAccountMasterAction) return;
 
     const email = adminDraft.email.trim();
     const name = adminDraft.name.trim();
@@ -536,7 +537,7 @@ export default function AdminManagementPage() {
   };
 
   const toggleAdminStatus = (id: string) => {
-    if (isAccountMasterRoleRequired) return;
+    if (shouldBlockAccountMasterAction) return;
 
     const target = filteredAdmins.find((item) => item.id === id);
     if (!target) return;
@@ -546,13 +547,13 @@ export default function AdminManagementPage() {
   };
 
   const removeAdminAccount = (admin: AdminAccount) => {
-    if (isAccountMasterRoleRequired) return;
+    if (shouldBlockAccountMasterAction) return;
 
     deleteAdminMutation.mutate(admin.id);
   };
 
   const addAclRule = () => {
-    if (isAclMasterRoleRequired) return;
+    if (shouldBlockAclMasterAction) return;
 
     const label = aclDraft.label.trim();
     const cidr = aclDraft.cidr.trim();
@@ -573,7 +574,7 @@ export default function AdminManagementPage() {
   };
 
   const toggleAclRule = (id: string) => {
-    if (isAclMasterRoleRequired) return;
+    if (shouldBlockAclMasterAction) return;
 
     const target = visibleAclRules.find((item) => item.id === id);
     if (!target) return;
@@ -582,7 +583,7 @@ export default function AdminManagementPage() {
   };
 
   const removeAclRule = (id: string) => {
-    if (isAclMasterRoleRequired) return;
+    if (shouldBlockAclMasterAction) return;
 
     const target = visibleAclRules.find((item) => item.id === id);
     if (!target) return;
@@ -680,6 +681,8 @@ export default function AdminManagementPage() {
     [createAclRuleApiError, updateAclEnabledApiError, deleteAclRuleApiError].some(
       (error) => error?.code === ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED,
     );
+  const shouldBlockAccountMasterAction = !isCurrentAdminMaster || isAccountMasterRoleRequired;
+  const shouldBlockAclMasterAction = !isCurrentAdminMaster || isAclMasterRoleRequired;
   const globalErrorTitle = isRoleAdminAccessDenied
     ? '관리자 관리 화면 접근 권한이 없습니다.'
     : '관리자 관리 데이터를 불러오지 못했습니다.';
@@ -741,7 +744,7 @@ export default function AdminManagementPage() {
               <button
                 className="amHeaderButton amCreateAdminButton"
                 type="button"
-                disabled={isAccountMasterRoleRequired}
+                disabled={shouldBlockAccountMasterAction}
                 onClick={() => setIsCreateAdminOpen(true)}
               >
                 <Plus size={16} />
@@ -857,7 +860,7 @@ export default function AdminManagementPage() {
                             <select
                               className="amInlineSelect"
                               value={admin.role}
-                              disabled={isAccountMasterRoleRequired || admin.role === 'MASTER' || isRolePending}
+                              disabled={shouldBlockAccountMasterAction || admin.role === 'MASTER' || isRolePending}
                               onChange={(e) => changeAdminRole(admin.id, e.target.value as AdminRole)}
                             >
                               {roleColumns.map((role) => (
@@ -883,7 +886,7 @@ export default function AdminManagementPage() {
                               <button
                                 className="amRowButton"
                                 type="button"
-                                disabled={isAccountMasterRoleRequired || isStatusPending}
+                                disabled={shouldBlockAccountMasterAction || isStatusPending}
                                 onClick={() => toggleAdminStatus(admin.id)}
                               >
                                 {isStatusPending ? '처리 중' : admin.status === 'ACTIVE' ? '잠금' : '해제'}
@@ -891,7 +894,7 @@ export default function AdminManagementPage() {
                               <button
                                 className="amRowButton danger"
                                 type="button"
-                                disabled={isAccountMasterRoleRequired || isDeletePending}
+                                disabled={shouldBlockAccountMasterAction || isDeletePending}
                                 onClick={() => removeAdminAccount(admin)}
                               >
                                 <Trash2 size={14} />
@@ -969,7 +972,7 @@ export default function AdminManagementPage() {
                   value={aclDraft.label}
                   onChange={(e) => setAclDraft((prev) => ({ ...prev, label: e.target.value }))}
                   placeholder="예: 본사 사내망"
-                  disabled={isAclMasterRoleRequired || createAclRuleMutation.isPending}
+                  disabled={shouldBlockAclMasterAction || createAclRuleMutation.isPending}
                 />
               </label>
               <label>
@@ -982,7 +985,7 @@ export default function AdminManagementPage() {
                     if (aclCidrErrorMessage) setAclCidrErrorMessage('');
                   }}
                   placeholder="예: 10.20.0.0/16"
-                  disabled={isAclMasterRoleRequired || createAclRuleMutation.isPending}
+                  disabled={shouldBlockAclMasterAction || createAclRuleMutation.isPending}
                 />
               </label>
               <label>
@@ -992,13 +995,13 @@ export default function AdminManagementPage() {
                   value={aclDraft.note}
                   onChange={(e) => setAclDraft((prev) => ({ ...prev, note: e.target.value }))}
                   placeholder="예: 사내 네트워크 전체 허용"
-                  disabled={isAclMasterRoleRequired || createAclRuleMutation.isPending}
+                  disabled={shouldBlockAclMasterAction || createAclRuleMutation.isPending}
                 />
               </label>
               <button
                 className="amPrimaryButton"
                 type="button"
-                disabled={isAclMasterRoleRequired || createAclRuleMutation.isPending || !aclDraft.label.trim() || !aclDraft.cidr.trim()}
+                disabled={shouldBlockAclMasterAction || createAclRuleMutation.isPending || !aclDraft.label.trim() || !aclDraft.cidr.trim()}
                 onClick={addAclRule}
               >
                 {createAclRuleMutation.isPending ? '등록 중' : '추가'}
@@ -1047,7 +1050,7 @@ export default function AdminManagementPage() {
                           <button
                             className="amGhostButton"
                             type="button"
-                            disabled={isAclMasterRoleRequired || isAclTogglePending}
+                            disabled={shouldBlockAclMasterAction || isAclTogglePending}
                             onClick={() => toggleAclRule(rule.id)}
                           >
                             {isAclTogglePending ? '처리 중' : rule.enabled ? '비활성화' : '활성화'}
@@ -1055,7 +1058,7 @@ export default function AdminManagementPage() {
                           <button
                             className="amDangerButton"
                             type="button"
-                            disabled={isAclMasterRoleRequired || isAclDeletePending}
+                            disabled={shouldBlockAclMasterAction || isAclDeletePending}
                             onClick={() => removeAclRule(rule.id)}
                           >
                             {isAclDeletePending ? '삭제 중' : '삭제'}
@@ -1209,7 +1212,7 @@ export default function AdminManagementPage() {
                 type="submit"
                 disabled={
                   createAdminMutation.isPending ||
-                  isAccountMasterRoleRequired ||
+                  shouldBlockAccountMasterAction ||
                   !adminDraft.email.trim() ||
                   !adminDraft.password.trim() ||
                   !adminDraft.name.trim()
