@@ -28,6 +28,7 @@ public class AdminReportServiceImpl implements AdminReportService {
     private final ReportCommentRepository reportCommentRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public ReportDetailDTO.ResponseSummary getSummary() {
         long totalCount    = reportRepository.count();
         long pendingCount  = reportRepository.countByReportStatus(ReportStatus.PENDING);
@@ -37,6 +38,7 @@ public class AdminReportServiceImpl implements AdminReportService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PaginationResponse<ReportDetailDTO.ResponseList> getReports(ReportStatus status, TargetType targetType,
                                                                         ReportReason reason, String keyword,
                                                                         int page, int size) {
@@ -51,6 +53,7 @@ public class AdminReportServiceImpl implements AdminReportService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ReportDetailDTO.ResponseDetail getReportDetail(Long reportId) {
         ReportDetailDTO.ResponseDetail base = reportQueryRepository.findReportDetail(reportId)
             .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
