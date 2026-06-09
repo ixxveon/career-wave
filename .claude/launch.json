@@ -1,0 +1,26 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Frontend (React + Vite)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceRoot}/frontend",
+      "port": 5173
+    },
+    {
+      "name": "Backend (Spring Boot)",
+      "runtimeExecutable": "gradlew.bat",
+      "runtimeArgs": ["bootRun"],
+      "cwd": "${workspaceRoot}/backend",
+      "port": 8080
+    },
+    {
+      "name": "FastAPI (AI Engine)",
+      "runtimeExecutable": "uvicorn",
+      "runtimeArgs": ["main:app", "--reload", "--port", "8000"],
+      "cwd": "${workspaceRoot}/fastapi",
+      "port": 8000
+    }
+  ]
+}
