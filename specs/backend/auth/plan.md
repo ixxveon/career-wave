@@ -5,7 +5,7 @@
 ```
 global/auth/
 ├── jwt/         JwtTokenProvider, JwtProperties
-├── filter/      JwtAuthenticationFilter
+├── filter/      JwtAuthenticationFilter, AccountStatusAuthorizationFilter
 ├── principal/   AuthPrincipal (CustomUserDetails 대체)
 ├── config/      SecurityConfig (User/Admin FilterChain), SwaggerConfig
 ├── exception/   AuthErrorCode, AuthExceptionHandler, EntryPoint, AccessDeniedHandler
@@ -29,7 +29,16 @@ admin/auth/      AdminLoginService, AdminAuthController
 - `OncePerRequestFilter` 상속.
 - 흐름: Authorization 헤더에서 Bearer 추출 → 서명/만료/위조 검증 → **Blacklist(jti) 조회(Redis)** → accountType별 주체 조회 → AuthPrincipal 생성(관리자는 adminRole 포함) → Authentication 만들어 SecurityContext 저장.
 - 토큰 없으면 그대로 통과(다음 단계에서 EntryPoint가 401 처리). 위조/만료/blacklist면 EntryPoint로 401.
-- **[SS-2] 계정 상태(ACTIVE/SUSPENDED/...) 검증을 이 필터에 절대 넣지 않는다.** 필터는 토큰 진위·만료·blacklist만 본다. 상태 검증을 필터에 넣으면 정지 회원의 유효 토큰이 차단되어 `me/status` 접근이 불가능해진다. 상태 검증은 로그인 서비스에서만 수행한다.
+- **[SS-2] 계정 상태(ACTIVE/SUSPENDED/...) 검증을 이 필터에 넣지 않는다.** 이 필터는 토큰 진위·만료·blacklist와 인증 주체 구성만 담당한다. 상태 검증은 아래 AccountStatusAuthorizationFilter에서 수행한다.
+
+### AccountStatusAuthorizationFilter
+- `JwtAuthenticationFilter` 이후 실행한다.
+- SecurityContext의 AuthPrincipal을 기준으로 DB 권위 상태(`members.member_status`, `admins.status`)를 조회한다.
+- 기본 정책: 인증 필요 API는 ACTIVE 상태만 통과한다. SUSPENDED / BANNED / LOCKED / WITHDRAWN 회원, LOCKED 관리자는 403(또는 LOCKED는 423)으로 차단한다.
+- 예외 경로:
+  - `GET /api/v1/user/members/me/status`: 비ACTIVE 회원도 자신의 상태·제재 사유 조회 가능.
+  - `POST /api/v1/user/members/logout`: 비ACTIVE 회원도 본인 세션 폐기 가능.
+- refresh 재발급은 permitAll이지만 refresh token 검증 후 새 토큰 발급 전 계정 상태를 확인한다. 비ACTIVE 상태면 재발급하지 않는다.
 
 ### AuthPrincipal
 - 공통 인증 주체 표현. 필드: id(String — UUID or BIGINT 문자열), accountType, roleType, authorities, adminRole(관리자만, 그 외 null).
@@ -42,7 +51,8 @@ admin/auth/      AdminLoginService, AdminAuthController
 - **[SS-1] JwtAuthenticationFilter 등록 위치**: 각 체인에서 `http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)`로 삽입한다. (요청 진입 시 폼 로그인 필터보다 먼저 JWT로 인증 처리)
 - 권한:
   - permitAll: api-schema 8번 목록.
-  - `/api/v1/user/members/me/status`: **authenticated**. 정지/차단 회원도 유효 토큰이면 통과(상태 검증을 필터에 넣지 않으므로 자동 보장 — SS-2).
+  - `/api/v1/user/members/me/status`: **authenticated + AccountStatus 예외**. 정지/차단 회원도 유효 토큰이면 통과.
+  - `/api/v1/user/members/logout`: **authenticated + AccountStatus 예외**. 정지/차단 회원도 본인 세션 폐기 가능.
   - URL 경로 단위 굵은 권한(예: `/api/v1/admin/**` → hasRole("ADMIN"))은 `requestMatchers().hasRole()`로 SecurityConfig에서 집중 관리.
 - **[SS-3] 관리자 등급(MASTER/CS/BACKEND) 세분 권한**: 메서드 단위 `@PreAuthorize`로 처리한다. 이를 위해 설정 클래스에 `@EnableMethodSecurity`를 **반드시** 추가한다(누락 시 어노테이션이 조용히 무시됨).
   - 예: `@PreAuthorize("hasRole('ADMIN') and @authz.hasAdminRole('BACKEND')")` 또는 커스텀 권한 표현식. adminRole은 AuthPrincipal/Authentication authority로 노출.
@@ -58,6 +68,7 @@ admin/auth/      AdminLoginService, AdminAuthController
   - USER/COMPANY: `refresh:{accountType}:{subjectId}:*` 활성 key 5개 상한. 초과 시 가장 오래된 세션 key 삭제 + 해당 access jti를 blacklist 등록.
   - ADMIN: 단일 세션. 신규 로그인 시 기존 `refresh:ADMIN:{adminId}:*` 전부 삭제 후 새 세션 생성.
 - 로그아웃: 해당 sessionId key 삭제 + 현재 access jti blacklist 등록.
+- refresh 재발급 요청은 HttpOnly cookie로만 받는다. body fallback은 허용하지 않는다.
 
 ### TokenBlacklistStore (Redis)
 - 로그아웃 시 현재 accessToken의 jti를 `blacklist:{jti}`로 저장, TTL = 잔여 만료시간.
@@ -78,10 +89,21 @@ admin/auth/      AdminLoginService, AdminAuthController
 4. 실패 카운트 처리 / 성공 시 초기화 + last_login_at 갱신.
 5. accessToken + refreshToken 발급, refresh를 Redis에 저장(sessionId 단위).
 
+### UserRefreshService
+1. HttpOnly cookie에서 refreshToken 추출(body fallback 없음).
+2. refresh token 서명/만료 검증 + Redis hash 비교 + rotation/reuse 탐지.
+3. member_status ACTIVE 검증. ACTIVE가 아니면 새 access/refresh token을 발급하지 않는다.
+4. accessToken + 새 refreshToken 발급, 같은 sessionId Redis key를 새 hash로 교체.
+
 ### AdminLoginService
 - email로 admins 조회, password_hash 비교, status ACTIVE 검증.
 - last_login_at / last_login_ip 갱신. (audit_logs 연계는 checklist 참고)
 - ADMIN 토큰 발급(admin secret, 15분/1일). **admin_role(MASTER/CS/BACKEND)을 `adminRole` claim으로 토큰에 포함.**
+
+### AdminRefreshService
+- HttpOnly cookie에서 refreshToken 추출(body fallback 없음).
+- refresh token 검증 후 admins.status ACTIVE 검증. ACTIVE가 아니면 새 토큰을 발급하지 않는다.
+- ADMIN 단일 세션 정책에 맞춰 rotation 처리.
 
 ## 4. CORS
 - 사용자/관리자 두 프론트 도메인을 allowed origins로 등록(구체 값은 `application.yml` 또는 CorsConfig에서 관리).

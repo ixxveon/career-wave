@@ -15,7 +15,8 @@
 { "loginId": "string", "password": "string", "memberType": "USER" }
 ```
 
-> `memberType`: `USER` / `COMPANY`
+> `memberType`: 필수. `USER` / `COMPANY`
+> 프론트 `LoginRequest`, `useLogin.ts`의 `toLoginRequest`, MSW `memberHandlers.ts`도 이 필드를 전송하도록 동기화한다.
 
 **Response 200**
 ```json
@@ -40,7 +41,7 @@
 ```
 
 > `refreshToken`은 응답 body가 아닌 **Set-Cookie 헤더**로 전달한다.
-> `Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/user/members/token`
+> `Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/user/members`
 >
 > `companyApprovalStatus` 변환 규칙: `ROLE_USER`는 항상 `NONE`. `ROLE_COMPANY`는 `hr_managers.hr_status` 기준 — `PENDING`→`PENDING_REVIEW`, `ACTIVE`→`APPROVED`, `REMOVED`→`REJECTED`.
 
@@ -55,13 +56,9 @@
 
 `POST /api/v1/user/members/token/refresh` — 인증 불필요(permitAll)
 
-**Request**
+**Request Body**: 없음
 
-> refreshToken은 HttpOnly cookie에서 자동 전달. cookie 사용 불가 환경에서는 body로 전달 가능.
-
-```json
-{ "refreshToken": "eyJ..." }
-```
+> refreshToken은 HttpOnly cookie에서만 자동 전달한다. body fallback은 허용하지 않는다.
 
 **Response 200**
 ```json
@@ -80,6 +77,8 @@
 **Error**
 - 401 `AUTH_REFRESH_INVALID` — 위조/만료/폐기됨 → 재로그인 유도
 - 401 `AUTH_REFRESH_REUSE_DETECTED` — 이미 폐기된 토큰 재사용(탈취 의심) → 해당 회원 전체 세션 폐기
+- 403 `AUTH_ACCOUNT_SUSPENDED` / `AUTH_ACCOUNT_BANNED` / `AUTH_ACCOUNT_WITHDRAWN`
+- 423 `AUTH_ACCOUNT_LOCKED`
 
 ---
 
@@ -87,7 +86,7 @@
 
 `GET /api/v1/user/members/me/status` — 인증 필요(Bearer)
 
-> 제재는 access token을 blacklist에 넣지 않으므로, 유효한 토큰은 인증 필터를 통과한다. 계정 상태 검증은 로그인 시점에만 수행하므로 별도 우회 로직 불필요 — plan.md(SS-2) 참고.
+> 이 API는 AccountStatus 검증 예외다. SUSPENDED / BANNED / LOCKED / WITHDRAWN 회원도 유효한 access token이 있으면 자신의 상태와 제재 사유를 조회할 수 있다 — plan.md(SS-2) 참고.
 
 **Response 200**
 ```json
@@ -162,7 +161,7 @@
 ```
 
 > `refreshToken`은 **Set-Cookie 헤더**로 전달.
-> `Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/admin/auth/token`
+> `Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/admin/auth`
 
 **Error**
 - 401 `AUTH_INVALID_CREDENTIALS`
@@ -174,7 +173,7 @@
 
 `POST /api/v1/admin/auth/refresh` — 인증 불필요(permitAll)
 
-요청/응답 구조는 사용자 재발급(2번)과 동일. 단 만료/키는 관리자 정책 적용(아래 7번).
+요청/응답 구조는 사용자 재발급(2번)과 동일. refreshToken은 HttpOnly cookie에서만 받으며 body fallback은 허용하지 않는다. 단 만료/키는 관리자 정책 적용(아래 7번).
 
 ---
 
@@ -188,7 +187,7 @@
 **처리**
 - cookie의 refreshToken에 해당하는 Redis 세션 key 삭제 (해당 기기 세션만 폐기)
 - 현재 accessToken의 jti를 `blacklist:{jti}`에 등록, TTL = access token 잔여 수명
-- Set-Cookie로 refreshToken cookie 만료 처리 (`Max-Age=0`)
+- Set-Cookie로 refreshToken cookie 만료 처리 (`Max-Age=0`). 삭제 시 발급 때와 동일한 Path를 사용한다.
 
 **Response 200**
 ```json

@@ -5,7 +5,7 @@
 - accessToken은 어디에도 영속 저장하지 않는다. (무효화는 Redis blacklist의 jti로 처리)
 - refreshToken은 원문 저장 금지, **Redis에 hash(SHA-256) 저장** (TTL = 만료시간).
 - JWT 만료 / 위조 / blacklist → 401, 권한 없음 → 403. 둘을 섞지 않는다.
-- Access Token Blacklist는 **로그아웃 시에만** 등록한다. 제재/정지는 blacklist를 쓰지 않고 `member_status` 변경으로 처리한다(다음 로그인 시 차단).
+- Access Token Blacklist는 로그아웃 시 현재 access token의 jti를 등록한다. 제재/정지는 `member_status` 변경 후 AccountStatus 검증 단계에서 일반 authenticated API 접근을 차단한다.
 - 로그인 실패 시 계정 존재 여부가 노출되지 않도록 **공통 메시지** 반환.
 - 사용자 secret과 관리자 secret은 **분리**한다. (aud claim으로 교차 사용 차단)
 
@@ -14,7 +14,7 @@
 - user 패키지와 admin 패키지는 서로 직접 참조하지 않는다. 공통 로직은 global/auth에 둔다.
 - SecurityFilterChain은 user / admin 두 개로 분리한다.
 - 세션은 STATELESS. 서버 세션 저장 금지.
-- **계정 상태 검증은 JwtAuthenticationFilter에 넣지 않는다.** 필터는 토큰 진위·만료·blacklist만 검증. 상태 검증은 로그인 서비스에서만. (정지 회원의 `me/status` 접근 보장)
+- **계정 상태 검증은 JwtAuthenticationFilter에 넣지 않는다.** 필터는 토큰 진위·만료·blacklist와 인증 주체 구성만 담당한다. 상태 검증은 별도 AccountStatus 검증 단계에서 수행한다.
 - 관리자 등급(MASTER/CS/BACKEND) 세분 권한은 `@PreAuthorize`로 처리하며, 이를 위해 `@EnableMethodSecurity`를 반드시 활성화한다.
 
 ## 데이터 원칙
@@ -27,4 +27,6 @@
 
 ## 상태 원칙
 - 로그인 허용은 ACTIVE 상태에 한한다.
-- 정지/차단(SUSPENDED/BANNED/LOCKED/WITHDRAWN) 계정은 로그인 차단하되, `me/status`로 사유 확인은 허용한다.
+- refresh 재발급 허용은 ACTIVE 상태에 한한다.
+- 정지/차단(SUSPENDED/BANNED/LOCKED/WITHDRAWN) 계정은 로그인 및 일반 authenticated API 접근을 차단하되, `me/status`로 사유 확인은 허용한다.
+- 정지/차단 계정도 logout은 허용하여 본인 세션을 폐기할 수 있어야 한다.

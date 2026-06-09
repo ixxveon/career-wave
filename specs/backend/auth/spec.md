@@ -26,8 +26,9 @@
 - 관리자 내부 등급(MASTER / CS / BACKEND) 구분 → JWT `adminRole` claim + `@PreAuthorize` 기반 접근 제어
 - 인증 필요 API에서 memberId / adminId 조회 (SecurityContext 경유)
 - Refresh Token 재발급 (rotation 적용)
-- 로그아웃 시 Refresh Token 폐기 + 해당 Access Token 즉시 무효화(Blacklist) — Blacklist는 **로그아웃 시에만** 사용
+- 로그아웃 시 Refresh Token 폐기 + 해당 Access Token 즉시 무효화(Blacklist)
 - 계정 상태(ACTIVE / SUSPENDED / BANNED / LOCKED / WITHDRAWN) 기반 로그인 차단
+- 인증 필요 API에서 계정 상태 검증(ACTIVE만 허용, `me/status` 예외)
 - 정지/차단 계정의 상태·제재 사유 조회 API (`GET /api/v1/user/members/me/status`)
 - 로그인 실패 횟수 누적 및 LOCKED 자동 처리
 - 테스트 계정으로 Swagger에서 Bearer 인증 테스트 가능
@@ -47,7 +48,7 @@
 ## 4. 저장 전략 (확정)
 
 - **Refresh Token: Redis 저장.** key `refresh:{accountType}:{subjectId}:{sessionId}`, value = token hash, TTL = refresh 만료시간. 원문 저장 금지, hash 저장. rotation·폐기·만료를 TTL과 key 삭제로 처리.
-- **Access Token Blacklist: Redis 저장.** key `blacklist:{jti}`, TTL = Access Token 잔여 수명. **로그아웃 시에만** jti를 등록하며, 매 요청 조회한다. (제재/정지는 Blacklist를 사용하지 않는다 — 아래 5절 참고)
+- **Access Token Blacklist: Redis 저장.** key `blacklist:{jti}`, TTL = Access Token 잔여 수명. 로그아웃 시 현재 access token의 jti를 등록하며, 매 요청 조회한다.
 - **로그인 실패 카운트(login_fail_count): Redis 저장.** 고빈도·임시 데이터이며 ERD에 대응 컬럼이 없으므로 Redis로 관리. 로그인 성공 시 초기화.
 - **계정 잠금 시각(locked_until): DB 저장.** `members.locked_until` 컬럼 사용. 잠금 상태는 계정의 권위 상태이므로 영속 저장하며, Redis 장애에도 유지되어야 한다.
 
@@ -58,10 +59,12 @@
 
 - `members.member_status`: ACTIVE / SUSPENDED / BANNED / LOCKED / WITHDRAWN
 - `admins.status`: ACTIVE / LOCKED
-- ACTIVE만 로그인 허용, 그 외 전부 차단.
-- 계정 상태 검증은 **로그인 시점**(로그인 서비스)에서만 수행한다. JWT 인증 필터는 토큰 진위/만료만 검증하고 계정 상태는 보지 않는다. (SS-2 참고)
-- **제재(SUSPEND/BAN) 시 Access Token을 Blacklist에 넣지 않는다.** 제재는 `member_status`를 변경하는 것으로 충분하며, 다음 로그인 시점에 차단된다. Blacklist는 로그아웃 전용이다.
-- 따라서 이미 발급된 access token을 가진 정지/차단 회원은 토큰 유효기간 동안 `GET /api/v1/user/members/me/status`에 접근하여 자신의 상태·사유를 확인할 수 있다. (로그인 폼 → 고객센터 안내 → 상태 확인 흐름 보장)
+- ACTIVE만 로그인/토큰 재발급 허용, 그 외 전부 차단.
+- JWT 인증 필터는 토큰 진위/만료/blacklist만 검증하고 SecurityContext를 만든다. 계정 상태 검증은 별도 AccountStatus 검증 단계에서 수행한다. (SS-2 참고)
+- 인증 필요 API는 기본적으로 계정 상태가 ACTIVE인 주체만 접근 가능하다.
+- 예외: `GET /api/v1/user/members/me/status`는 SUSPENDED / BANNED / LOCKED / WITHDRAWN 회원도 유효한 access token이 있으면 접근 가능하다. (로그인 폼 → 고객센터 안내 → 상태 확인 흐름 보장)
+- 예외: `POST /api/v1/user/members/logout`은 비ACTIVE 회원도 접근 가능하다. 이미 발급된 refresh/access token을 사용자가 직접 폐기할 수 있어야 한다.
+- 제재(SUSPENDED/BANNED/LOCKED/WITHDRAWN) 상태로 변경된 뒤에는 이미 발급된 access token이 남아 있어도 일반 authenticated API 접근은 AccountStatus 검증 단계에서 403으로 차단한다.
 - 제재 사유/기간은 `suspend_histories`에서 최근 이력 조회.
 
 ## 6. 범위 밖 (Out of Scope)
