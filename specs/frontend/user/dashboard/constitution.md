@@ -27,10 +27,10 @@
 > 항상 참이어야 하는 조건
 
 * API Schema와 TypeScript 타입은 항상 동일한 필드 구조를 유지해야 한다.
-* Mock 데이터 구조는 API 응답 구조와 동일해야 한다.
-* GitHub 연동 여부는 `linked` 값을 기준으로 판단한다.
-* API Schema와 TypeScript 타입은 실제 API 연동 시 동일한 필드 구조를 유지해야 한다.
 * Mock 데이터 구조는 실제 API 연동 전환 시 API 응답 구조와 동일하게 정리해야 한다.
+* GitHub 연동 여부는 `linked` 값을 기준으로 판단한다.
+* 채용공고 노출 정책은 JobNotice 도메인 정책을 따른다.
+* Dashboard는 조회 가능한 채용공고 정보를 그대로 표시한다.
 * 스크랩 공고 상세보기는 반드시 JobNoticeDetail 컴포넌트를 사용한다.
 * Empty State, Error State, Loading State는 항상 제공되어야 한다.
 
