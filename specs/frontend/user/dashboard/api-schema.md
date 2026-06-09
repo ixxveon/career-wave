@@ -10,9 +10,7 @@
 
 ### Base URL
 
-```txt
-/api/v1/dashboard
-```
+/api/v1/user/dashboard
 
 ### 날짜 포맷
 
@@ -66,7 +64,7 @@ Authorization: Bearer {accessToken}
 
 ## 1. 내 정보 조회
 
-- **Endpoint**: `GET /api/v1/dashboard/profile`
+- **Endpoint**: `GET /api/v1/user/dashboard/profile`
 
 ### Response
 
@@ -94,7 +92,7 @@ Authorization: Bearer {accessToken}
 
 ## 2. GitHub 연동 정보 조회
 
-- **Endpoint**: `GET /api/v1/dashboard/github`
+- **Endpoint**: `GET /api/v1/user/dashboard/github`
 
 ### Linked Response
 
@@ -132,7 +130,7 @@ Authorization: Bearer {accessToken}
 
 ## 3. 회원 정보 수정
 
-- **Endpoint**: `PATCH /api/v1/dashboard/profile`
+- **Endpoint**: `PATCH /api/v1/user/dashboard/profile`
 - **Content-Type**: `application/json`
 
 ### Request
@@ -179,7 +177,7 @@ Authorization: Bearer {accessToken}
 
 ## 4. 스크랩 공고 목록 조회
 
-- **Endpoint**: `GET /api/v1/dashboard/bookmarks`
+- **Endpoint**: `GET /api/v1/user/dashboard/bookmarks`
 
 ### Query Parameters
 
@@ -241,7 +239,7 @@ Authorization: Bearer {accessToken}
 
 ## 5. 스크랩 취소
 
-- **Endpoint**: `DELETE /api/v1/dashboard/bookmarks/{bookmarkId}`
+- **Endpoint**: `DELETE /api/v1/user/dashboard/bookmarks/{bookmarkId}`
 
 ### Response
 

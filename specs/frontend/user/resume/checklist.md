@@ -91,6 +91,8 @@
 - [ ] 분석 결과 API가 본인 소유의 `documentId`만 조회 가능한가? (타인의 `documentId` 직접 입력 시 차단 — IDOR 방어, 백엔드 담당)
 - [x] 브라우저 전역 객체(`window`)에 세션 정보나 민감 데이터를 직접 저장하지 않았는가?
 - [x] 업로드 URL 또는 API 응답에 민감 정보가 query parameter로 노출되지 않는가?
+- [x] `useAnalysisWebSocket`이 `localStorage.accessToken`을 직접 참조하지 않고 `authSession.getAccessToken()`을 사용하는가?
+- [x] WebSocket 연결 시 토큰이 없으면 소켓 생성 전 `onFailed`로 명확하게 실패 처리하는가?
 
 ---
 

@@ -80,41 +80,41 @@ import axiosInstance from '@/utils/axiosInstance';
 
 // KPI 집계 — 반환: ApiResponse<StatsSummary>.data
 export const fetchStatsSummary = (): Promise<StatsSummary> =>
-  axiosInstance.get('/api/admin/statistics/summary').then(r => r.data.data);
+  axiosInstance.get('/api/v1/admin/statistics/summary').then(r => r.data.data);
 
 // 월별 매출 추이 — 반환: ApiResponse<MonthlyRevenue[]>.data
 export const fetchMonthlyRevenue = (): Promise<MonthlyRevenue[]> =>
-  axiosInstance.get('/api/admin/statistics/revenue/monthly').then(r => r.data.data);
+  axiosInstance.get('/api/v1/admin/statistics/revenue/monthly').then(r => r.data.data);
 
 // 구독 유형별 매출 실적 — 반환: ApiResponse<RevenueBreakdownItem[]>.data
 export const fetchRevenueBreakdown = (): Promise<RevenueBreakdownItem[]> =>
-  axiosInstance.get('/api/admin/statistics/revenue/breakdown').then(r => r.data.data);
+  axiosInstance.get('/api/v1/admin/statistics/revenue/breakdown').then(r => r.data.data);
 
 // 구독자 변동 추이 — 반환: ApiResponse<MonthlySubscribers[]>.data
 export const fetchMonthlySubscribers = (): Promise<MonthlySubscribers[]> =>
-  axiosInstance.get('/api/admin/statistics/subscribers/monthly').then(r => r.data.data);
+  axiosInstance.get('/api/v1/admin/statistics/subscribers/monthly').then(r => r.data.data);
 
 // 최근 가입 피드 — 반환: ApiResponse<RecentSubscriber[]>.data
 export const fetchRecentSubscribers = (): Promise<RecentSubscriber[]> =>
-  axiosInstance.get('/api/admin/statistics/subscribers/recent').then(r => r.data.data);
+  axiosInstance.get('/api/v1/admin/statistics/subscribers/recent').then(r => r.data.data);
 ```
 
 ### API 연동 체크리스트
 
 - [ ] `statsApi.ts` 파일 작성
-- [ ] KPI 집계 API 연동 및 더미 데이터 교체 (`GET /api/admin/statistics/summary`)
+- [ ] KPI 집계 API 연동 및 더미 데이터 교체 (`GET /api/v1/admin/statistics/summary`)
   - [ ] 이번 달 매출 + 전월 대비 증감률 표시
   - [ ] 누적 총 매출 표시
   - [ ] 총 가입자 수 표시
   - [ ] 이번 달 신규 가입 + 전월 대비 증감률 표시
-- [ ] 월별 매출 추이 API 연동 및 더미 데이터 교체 (`GET /api/admin/statistics/revenue/monthly`)
+- [ ] 월별 매출 추이 API 연동 및 더미 데이터 교체 (`GET /api/v1/admin/statistics/revenue/monthly`)
   - [ ] SVG 차트 데이터 소스를 API 응답으로 교체
   - [ ] X축 레이블을 API 응답 `month` 필드로 교체
-- [ ] 구독 유형별 매출 실적 API 연동 및 더미 데이터 교체 (`GET /api/admin/statistics/revenue/breakdown`)
-- [ ] 구독자 변동 추이 API 연동 및 더미 데이터 교체 (`GET /api/admin/statistics/subscribers/monthly`)
+- [ ] 구독 유형별 매출 실적 API 연동 및 더미 데이터 교체 (`GET /api/v1/admin/statistics/revenue/breakdown`)
+- [ ] 구독자 변동 추이 API 연동 및 더미 데이터 교체 (`GET /api/v1/admin/statistics/subscribers/monthly`)
   - [ ] 신규 / 탈퇴 SVG 차트 데이터 소스를 API 응답으로 교체
   - [ ] 이번 달 신규/탈퇴 수 범례 API 응답 기준으로 표시
-- [ ] 최근 가입 피드 API 연동 및 더미 데이터 교체 (`GET /api/admin/statistics/subscribers/recent`)
+- [ ] 최근 가입 피드 API 연동 및 더미 데이터 교체 (`GET /api/v1/admin/statistics/subscribers/recent`)
 - [ ] `ApiResponse<T>` 형식 기반 성공·실패 처리 (`r.data.data` 언랩)
 - [ ] API 실패 시 에러 메시지 표시
 - [ ] API 호출 중 로딩 상태(스피너) 표시
