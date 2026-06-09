@@ -39,7 +39,8 @@ public class SecurityConfig {
                     "/api/v1/user/members/recovery/password-token",
                     "/api/v1/user/members/recovery/reset-password"
                 ).permitAll()
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                // TODO: 스웨거 테스트용 임시 허용 — JWT 필터 구현 후 인증 객체로 교체 예정
+                .requestMatchers("/api/v1/admin/**").permitAll()
                 .anyRequest().authenticated()
             );
         return http.build();
