@@ -10,7 +10,7 @@
 
 ## Phase 1 - API 계약 및 타입 정리
 
-- [x] `frontend/src/admin/api/aiMetricsApi.ts`에서 관리자 AI 매트릭스 API를 관리한다.
+- [x] `frontend/src/api/admin/aiMetricsApi.ts`에서 관리자 AI 매트릭스 API를 관리한다.
 - [x] 페이지 또는 컴포넌트에서 `axios`를 직접 호출하지 않는다.
 - [x] `ApiResponse<T>` 응답 구조를 기준으로 처리한다.
 - [x] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입이 정의되어 있다.

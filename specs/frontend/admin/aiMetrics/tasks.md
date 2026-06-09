@@ -5,7 +5,7 @@
 **Branch**: `feature/admin-ai-metrics-api`  
 **Base**: `develop`
 
-- [x] `frontend/src/admin/api/aiMetricsApi.ts` 생성
+- [x] `frontend/src/api/admin/aiMetricsApi.ts` 생성
 - [x] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입 정의
 - [x] `AiMetricSummary`, `AiDomainUsage`, `AiTokenTrendPoint`, `AiHeavyUser`, `AiMetricLog`, `AiBudgetSetting` 응답 타입 정의
 - [x] `displayModelName`과 `actualModelName`을 분리해 타입에 반영

@@ -1,8 +1,8 @@
 # Feature Specification: 관리자 AI 매트릭스
 
-**Feature Branch**: `feature/admin-ai-metrics-spec`  
+**Feature Branch**: `feature/admin-ai-metrics-rag-documents`  
 **Status**: 스펙 완료  
-**Page**: `frontend/src/admin/pages/AiMetrics/AiMetricsPage.tsx`  
+**Page**: `frontend/src/pages/admin/AiMetrics/AiMetricsPage.tsx`  
 **Route**: `/admin/ai`
 
 ## Overview
@@ -77,7 +77,7 @@
 
 1. **Given** 관리자가 유효한 문서를 선택하면, **When** 업로드 API가 성공하면, **Then** 문서가 목록에 추가되고 초기 상태는 `INDEXING`으로 표시된다.
 2. **Given** 관리자가 목록의 문서를 다운로드하면, **When** 다운로드 API가 성공하면, **Then** 원본 문서가 브라우저 다운로드로 제공된다.
-3. **Given** 관리자가 문서 삭제를 요청하면, **When** 삭제 API 요청이 성공하고 백엔드 삭제 완료 응답을 기다리는 동안, **Then** 문서 상태는 목록에서 `DELETING`으로 표시되고 삭제 버튼은 비활성화된다.
+3. **Given** 관리자가 문서 삭제를 요청하면, **When** 삭제 요청이 시작되면, **Then** 문서 상태는 즉시 `DELETING`으로 표시되고 삭제 버튼은 비활성화된다. 삭제 실패 시 이전 상태로 롤백된다.
 4. **Given** 업로드 파일 형식, 크기, 필수값이 유효하지 않으면, **When** 업로드를 시도하면, **Then** 화면에 적절한 오류 메시지가 표시된다.
 5. **Given** 문서 인덱싱이 완료되면, **When** 상태가 갱신되면, **Then** 문서 상태는 `INDEXING`에서 `SYNCED`로 변경된다.
 6. **Given** 문서 인덱싱이 실패하면, **When** 상태가 갱신되면, **Then** 문서 상태는 `FAILED`로 표시되고 실패 원인을 확인할 수 있다.
