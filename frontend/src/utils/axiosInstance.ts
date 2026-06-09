@@ -14,4 +14,18 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      adminSession.clearToken();
+      adminSession.clearRole();
+      if (typeof window !== 'undefined' && window.location.pathname !== '/admin/login') {
+        window.location.assign('/admin/login');
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
 export default axiosInstance;
