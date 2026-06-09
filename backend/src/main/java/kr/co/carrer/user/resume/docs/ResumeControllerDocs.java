@@ -11,6 +11,8 @@ import kr.co.carrer.user.resume.dto.ResumeDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.UUID;
+
 @Tag(name = "Resume", description = "서류 분석 API")
 public interface ResumeControllerDocs {
 
@@ -48,5 +50,24 @@ public interface ResumeControllerDocs {
     ResponseEntity<ApiResponse<ResumeDTO.ResponseCoverLetter>> submitCoverLetter(
             @Parameter(description = "자기소개서 제출 요청 body", required = true)
             ResumeDTO.RequestCoverLetter request
+    );
+
+    @Operation(
+            summary = "분석 결과 조회",
+            description = "documentId로 AI 분석 결과를 조회합니다. 분석 미완료 시 scores·feedbackDetails는 null로 반환됩니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = ResumeDTO.ResponseFeedback.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 소유가 아닌 문서 접근 (IDOR)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 documentId"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    ResponseEntity<ApiResponse<ResumeDTO.ResponseFeedback>> getFeedback(
+            @Parameter(description = "문서 고유 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
+            UUID documentId
     );
 }
