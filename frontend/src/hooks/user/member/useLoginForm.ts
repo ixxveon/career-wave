@@ -57,13 +57,17 @@ const BLOCK_MESSAGE_BY_REASON: Record<
   },
 };
 
+const MEMBER_ERROR_CODE_VALUES = new Set(Object.values(MEMBER_ERROR_CODE));
+
 function isMemberApiError(e: unknown): e is MemberApiError {
+  if (typeof e !== 'object' || e === null) return false;
+  const obj = e as Record<string, unknown>;
   return (
-    typeof e === 'object' &&
-    e !== null &&
     'statusCode' in e &&
     'code' in e &&
-    'message' in e
+    'message' in e &&
+    typeof obj.code === 'string' &&
+    MEMBER_ERROR_CODE_VALUES.has(obj.code)
   );
 }
 
