@@ -31,4 +31,22 @@ public interface ResumeControllerDocs {
             @Parameter(description = "업로드할 이력서 파일 (PDF·DOC·DOCX, 최대 10MB)", required = true)
             MultipartFile file
     );
+
+    @Operation(
+            summary = "자기소개서 제출",
+            description = "자기소개서 문항·답변을 입력하고 AI 분석을 시작합니다. 문항 1~5개, 답변 최대 1000자."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201",
+                    description = "제출 성공",
+                    content = @Content(schema = @Schema(implementation = ResumeDTO.ResponseCoverLetter.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 검증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    ResponseEntity<ApiResponse<ResumeDTO.ResponseCoverLetter>> submitCoverLetter(
+            @Parameter(description = "자기소개서 제출 요청 body", required = true)
+            ResumeDTO.RequestCoverLetter request
+    );
 }

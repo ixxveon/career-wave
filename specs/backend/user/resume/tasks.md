@@ -62,14 +62,14 @@
 
 ## Phase 3: 자기소개서 제출 API
 
-- [ ] `ResumeDTO.RequestCoverLetter`, `ResumeDTO.ResponseCoverLetter` 작성
-- [ ] `@Valid` + `@Size` 기반 문항 수(1~5), 답변 길이(1000자) 검증
-- [ ] `Document` 저장 (`status = UPLOADED`, `file_type = COVER_LETTER`, `file_url = null`)
-- [ ] `CoverLetterContent` 벌크 저장 (`@Transactional`)
-  - `saveAll()` 호출 시 `member_id`·`document_id` 매핑 로그 남기기 — 디버깅 편의
-- [ ] FastAPI 분석 트리거 (비동기)
-- [ ] `ResumeController.submitCoverLetter()` 구현
-- [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
+- [x] `ResumeDTO.RequestCoverLetter`, `ResumeDTO.ResponseCoverLetter` 작성
+- [x] `@Valid` + `@Size` 기반 문항 수(1~5), 답변 길이(1000자) 검증
+- [x] `Document` 저장 (`status = UPLOADED`, `file_type = COVER_LETTER`, `file_url = null`)
+- [x] `CoverLetterMeta` 저장 (company, job)
+- [x] `CoverLetterContent` 벌크 저장 (`saveAll()`, `@Transactional`)
+- [x] FastAPI 분석 트리거 (비동기)
+- [x] `ResumeController.submitCoverLetter()` 구현
+- [x] `ResumeControllerDocs` Swagger 인터페이스 작성
 
 ---
 
