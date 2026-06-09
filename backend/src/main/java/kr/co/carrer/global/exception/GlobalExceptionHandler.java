@@ -33,9 +33,10 @@ public class GlobalExceptionHandler {
             log.warn("[비즈니스 제재/검증 실패] 에러코드: {} | 사유: {}", errorCode.name(), e.getMessage());
         }
 
+        // AUTH 에러는 프론트엔드가 body.code 필드로 계정 상태를 판별하므로 errorCode.name()을 포함
         return ResponseEntity
                 .status(errorCode.getStatus())
-                .body(ApiResponse.fail(errorCode.getStatus().value(), e.getMessage()));
+                .body(ApiResponse.fail(errorCode.getStatus().value(), e.getMessage(), errorCode.name()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
