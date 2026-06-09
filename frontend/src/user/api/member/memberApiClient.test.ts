@@ -26,6 +26,33 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 // ─────────────────────────────────────────────
+// Authorization 헤더 주입
+// ─────────────────────────────────────────────
+describe('Authorization 헤더 주입', () => {
+  it('auth: true이고 token이 있으면 요청에 Authorization: Bearer 헤더가 설정된다', async () => {
+    vi.mocked(authSession.getAccessToken).mockReturnValue('user-access-token');
+    vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ data: { ok: true } }));
+
+    await memberApiClient('/api/test', { method: 'GET', auth: true });
+
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    const headers = new Headers(init?.headers as HeadersInit);
+    expect(headers.get('Authorization')).toBe('Bearer user-access-token');
+  });
+
+  it('auth: false이면 token이 있어도 Authorization 헤더를 설정하지 않는다', async () => {
+    vi.mocked(authSession.getAccessToken).mockReturnValue('user-access-token');
+    vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ data: null }));
+
+    await memberApiClient('/api/test', { method: 'GET', auth: false });
+
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    const headers = new Headers(init?.headers as HeadersInit);
+    expect(headers.get('Authorization')).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────
 // GET 401 → refresh 후 1회 retry
 // ─────────────────────────────────────────────
 describe('GET 요청 — 401 시 refresh 후 retry', () => {
