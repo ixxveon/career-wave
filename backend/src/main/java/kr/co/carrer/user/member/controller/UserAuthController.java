@@ -10,6 +10,7 @@ import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
+import kr.co.carrer.user.member.docs.UserAuthControllerDocs;
 import kr.co.carrer.user.member.dto.UserLoginRequest;
 import kr.co.carrer.user.member.dto.UserLoginResponse;
 import kr.co.carrer.user.member.service.UserLoginService;
@@ -21,7 +22,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/user/members")
-public class UserAuthController {
+public class UserAuthController implements UserAuthControllerDocs {
 
     private final UserLoginService userLoginService;
     private final JwtTokenProvider jwtTokenProvider;
