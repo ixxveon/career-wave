@@ -65,7 +65,7 @@ public class AdminAuthController implements AdminAuthControllerDocs {
 
         String newAccessToken = jwtTokenProvider.createAccessToken(
                 subject, AccountType.ADMIN, "ROLE_ADMIN", adminRole);
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(subject, AccountType.ADMIN);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(subject, AccountType.ADMIN, adminRole);
 
         ResponseCookie cookie = ResponseCookie.from("refreshToken", newRefreshToken)
                 .httpOnly(true)

@@ -73,7 +73,8 @@ public class UserLoginService {
 
         String refreshToken = jwtTokenProvider.createRefreshToken(
                 member.getMemberId().toString(),
-                accountType
+                accountType,
+                null
         );
 
         setRefreshTokenCookie(response, refreshToken);

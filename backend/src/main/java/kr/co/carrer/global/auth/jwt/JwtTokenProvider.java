@@ -26,17 +26,22 @@ public class JwtTokenProvider {
         return buildToken(subject, accountType, roleType, adminRole, config.getSecret(), config.getAccessExpiration());
     }
 
-    public String createRefreshToken(String subject, AccountType accountType) {
+    public String createRefreshToken(String subject, AccountType accountType, String adminRole) {
         JwtProperties.TokenConfig config = resolveConfig(accountType);
         Date now = new Date();
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(subject)
                 .claim("accountType", accountType.name())
                 .claim("jti", UUID.randomUUID().toString())
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + config.getRefreshExpiration()))
-                .signWith(resolveKey(config.getSecret()))
-                .compact();
+                .signWith(resolveKey(config.getSecret()));
+
+        if (adminRole != null) {
+            builder.claim("adminRole", adminRole);
+        }
+
+        return builder.compact();
     }
 
     public Claims parse(String token, AccountType accountType) {

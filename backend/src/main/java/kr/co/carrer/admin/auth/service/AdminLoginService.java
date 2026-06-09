@@ -61,7 +61,8 @@ public class AdminLoginService {
 
         String refreshToken = jwtTokenProvider.createRefreshToken(
                 String.valueOf(admin.getAdminId()),
-                AccountType.ADMIN
+                AccountType.ADMIN,
+                admin.getAdminRole().name()
         );
 
         setRefreshTokenCookie(response, refreshToken);

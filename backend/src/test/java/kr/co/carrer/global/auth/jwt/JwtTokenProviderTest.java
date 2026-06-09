@@ -81,7 +81,7 @@ class JwtTokenProviderTest {
 
     @Test
     void createRefreshToken_유효한_토큰_생성() {
-        String token = provider.createRefreshToken("uuid-1234", AccountType.USER);
+        String token = provider.createRefreshToken("uuid-1234", AccountType.USER, null);
         assertThat(provider.validate(token, AccountType.USER)).isTrue();
         Claims claims = provider.parse(token, AccountType.USER);
         assertThat(claims.getSubject()).isEqualTo("uuid-1234");

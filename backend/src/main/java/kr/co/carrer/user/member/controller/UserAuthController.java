@@ -72,7 +72,7 @@ public class UserAuthController implements UserAuthControllerDocs {
                 : accountType == AccountType.COMPANY ? "ROLE_COMPANY" : "ROLE_USER";
 
         String newAccessToken = jwtTokenProvider.createAccessToken(subject, accountType, roleType, null);
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(subject, accountType);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(subject, accountType, null);
 
         ResponseCookie cookie = ResponseCookie.from("refreshToken", newRefreshToken)
                 .httpOnly(true)
