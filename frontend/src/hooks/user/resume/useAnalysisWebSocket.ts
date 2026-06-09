@@ -33,9 +33,6 @@ export interface UseAnalysisWebSocketReturn {
  * - FAILED 수신 시 onFailed 콜백 호출 후 연결 종료
  * - Close 1008 (auth/IDOR 에러) 시 onFailed 호출
  * - 30초 타임아웃 초과 시 onFailed 호출 (NFR-001)
- *
- * TODO: JWT 토큰 연동 — 백엔드 인증 방식 확정 후
- * `?token={accessToken}` 쿼리 파라미터 추가 필요
  */
 export function useAnalysisWebSocket({
   onMessage,
@@ -86,6 +83,7 @@ export function useAnalysisWebSocket({
       // api-schema.md §5: JWT를 쿼리 파라미터로 전달 (?token={accessToken})
       const token = authSession.getAccessToken();
       if (!token) {
+        setIsConnected(false);
         onFailed('인증 토큰이 없습니다. 로그인 후 다시 시도해주세요.');
         return;
       }
