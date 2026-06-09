@@ -23,7 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ResumeController implements ResumeControllerDocs {
 
-    private final ResumeService resumeService;
+    private final ResumeService resumeService; // ResumeServiceImpl 주입
 
     @PostMapping("/upload")
     public ResponseEntity<ApiResponse<ResumeDTO.ResponseUpload>> uploadResume(

@@ -37,7 +37,7 @@ class ResumeServiceCoverLetterTest {
     @Mock private FastApiClient fastApiClient;
 
     @InjectMocks
-    private ResumeService resumeService;
+    private ResumeServiceImpl resumeService;
 
     @Test
     @DisplayName("자기소개서 제출 시 Document, CoverLetterMeta, CoverLetterContent가 모두 저장된다")
