@@ -58,7 +58,13 @@ const BLOCK_MESSAGE_BY_REASON: Record<
 };
 
 function isMemberApiError(e: unknown): e is MemberApiError {
-  return typeof e === 'object' && e !== null && 'statusCode' in e;
+  return (
+    typeof e === 'object' &&
+    e !== null &&
+    'statusCode' in e &&
+    'code' in e &&
+    'message' in e
+  );
 }
 
 export const CROSS_TAB_ERROR_MESSAGES: Record<LoginTab, string> = {
