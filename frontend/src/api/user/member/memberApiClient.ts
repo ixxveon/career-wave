@@ -1,6 +1,6 @@
-import { authSession } from '../../utils/member/authSession';
-import { toMemberApiError } from '../../utils/member/errorMapping';
-import type { TokenRefreshResponse } from '../../types/member';
+import { authSession } from '../../../utils/user/member/authSession';
+import { toMemberApiError } from '../../../utils/user/member/errorMapping';
+import type { TokenRefreshResponse } from '../../../types/user/member';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 

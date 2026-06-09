@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { memberApiClient } from './memberApiClient';
-import { authSession } from '../../utils/member/authSession';
+import { authSession } from '../../../utils/user/member/authSession';
 
-vi.mock('../../utils/member/authSession', () => ({
+vi.mock('../../../utils/user/member/authSession', () => ({
   authSession: {
     getAccessToken: vi.fn(),
     getRefreshToken: vi.fn(),
