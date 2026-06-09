@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   Sparkles,
   Users,
-  UserSearch,
   ClipboardList,
   FilePenLine,
   UsersRound,
@@ -35,13 +34,6 @@ const featureCards = [
     text: 'AI가 예상 질문을 제시하고 실시간 피드백으로 완벽한 면접을 도와요.',
     tone: 'violet',
     to: '/interview',
-  },
-  {
-    icon: UserSearch,
-    title: '스마트 채용 매칭',
-    text: '당신의 역량과 성향에 맞는 최적의 기업과 공고를 매칭해 드려요.',
-    tone: 'blue',
-    to: '/jobs',
   },
   {
     icon: Bell,
