@@ -100,3 +100,4 @@ ANY → [IDLE]  # 폼 초기화 및 재시도
 * **DOM 직접 접근**: `document.getElementById` 등 원시적인 DOM 접근 금지 (React Ref 활용).
 * **데이터 직접 저장**: 분석 결과 및 세션 정보를 `localStorage`에 저장 금지 (`sessionStorage` 강제).
 * **window 전역 오염**: 세션 정보나 상태를 `window` 객체에 직접 저장 금지.
+* **WebSocket 토큰 직접 참조**: `useAnalysisWebSocket` 등 WebSocket 훅에서 `localStorage.getItem('accessToken')` 직접 참조 금지. 반드시 `authSession.getAccessToken()`을 통해 토큰을 획득하며, 토큰이 없을 경우 소켓 생성 전 `onFailed` 콜백으로 명확하게 실패 처리한다.

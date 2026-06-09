@@ -9,8 +9,8 @@ MVP는 `DOCUMENT`(AI 서류 기능), `INTERVIEW`(AI 면접 기능)의 요청 수
 ## Technical Context
 
 - Frontend: React + Vite + TypeScript
-- Page: `frontend/src/admin/pages/AiMetrics/AiMetricsPage.tsx`
-- API Module: `frontend/src/admin/api/aiMetricsApi.ts`
+- Page: `frontend/src/pages/admin/AiMetrics/AiMetricsPage.tsx`
+- API Module: `frontend/src/api/admin/aiMetricsApi.ts`
 - Server State: TanStack Query 우선
 - Auth: 관리자 JWT, `ROLE_ADMIN`
 - Response: `ApiResponse<T>`
@@ -18,14 +18,16 @@ MVP는 `DOCUMENT`(AI 서류 기능), `INTERVIEW`(AI 면접 기능)의 요청 수
 ## Project Structure
 
 ```text
-frontend/src/admin/
+frontend/src/
 ├─ api/
-│  └─ aiMetricsApi.ts
+│  └─ admin/
+│     └─ aiMetricsApi.ts
 ├─ pages/
-│  └─ AiMetrics/
-│     └─ AiMetricsPage.tsx
+│  └─ admin/
+│     └─ AiMetrics/
+│        └─ AiMetricsPage.tsx
 └─ components/
-   └─ MiniPagination.tsx
+    └─ MiniPagination.tsx
 
 specs/frontend/admin/aiMetrics/
 ├─ api-schema.md
@@ -56,7 +58,7 @@ specs/frontend/admin/aiMetrics/
 
 ### Phase 1 - API 계약 및 타입 정리
 
-- `frontend/src/admin/api/aiMetricsApi.ts`를 생성한다.
+- `frontend/src/api/admin/aiMetricsApi.ts`를 생성한다.
 - `AiDomain`, `AiDomainUsage`, `AiMetricSummary`, `AiTokenTrendPoint`, `AiMetricLog` 타입을 정의한다.
 - `displayModelName`과 `actualModelName`을 분리한 응답 타입을 사용한다.
 - 페이지에서 mock 데이터와 직접 상태 관리에 의존하던 부분을 API 연결 가능한 구조로 정리한다.
@@ -96,7 +98,7 @@ specs/frontend/admin/aiMetrics/
 ## Convention Alignment
 
 - 페이지 또는 컴포넌트에서 `axios`를 직접 호출하지 않는다.
-- 관리자 API는 `frontend/src/admin/api` 하위로 분리한다.
+- 관리자 API는 `frontend/src/api/admin` 하위로 분리한다.
 - TypeScript interface는 PascalCase를 사용하고 `I` prefix를 사용하지 않는다.
 - 새 라이브러리는 팀 합의 없이 추가하지 않는다.
 - 관리자 API는 JWT와 `ROLE_ADMIN` 권한을 전제로 설계한다.

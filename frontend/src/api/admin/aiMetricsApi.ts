@@ -31,6 +31,7 @@ export const RAG_INDEX_STATUS = {
   SYNCED: 'SYNCED',
   INDEXING: 'INDEXING',
   FAILED: 'FAILED',
+  DELETING: 'DELETING',
 } as const;
 
 export const AI_METRIC_INTERVAL = {
@@ -130,6 +131,11 @@ export interface RagDocumentMetric {
   updatedAt: string;
 }
 
+export interface UploadRagDocumentRequest {
+  file: File;
+  name?: string;
+}
+
 export interface AiDateRangeParams {
   from?: string;
   to?: string;
@@ -204,4 +210,22 @@ export const aiMetricsApi = {
 
   getRagDocuments: () =>
     axiosInstance.get<ApiResponse<RagDocumentMetric[]>>(`${AI_METRICS_API_BASE_PATH}/rag-documents`),
+
+  uploadRagDocument: ({ file, name }: UploadRagDocumentRequest) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (name?.trim()) {
+      formData.append('name', name.trim());
+    }
+
+    return axiosInstance.post<ApiResponse<RagDocumentMetric>>(`${AI_METRICS_API_BASE_PATH}/rag-documents`, formData);
+  },
+
+  downloadRagDocument: (documentId: string) =>
+    axiosInstance.get<Blob>(`${AI_METRICS_API_BASE_PATH}/rag-documents/${documentId}/download`, {
+      responseType: 'blob',
+    }),
+
+  deleteRagDocument: (documentId: string) =>
+    axiosInstance.delete<ApiResponse<null>>(`${AI_METRICS_API_BASE_PATH}/rag-documents/${documentId}`),
 };
