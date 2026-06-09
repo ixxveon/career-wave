@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;
 import jakarta.validation.Valid;
+import kr.co.carrer.admin.auth.docs.AdminAuthControllerDocs;
 import kr.co.carrer.admin.auth.dto.AdminLoginRequest;
 import kr.co.carrer.admin.auth.dto.AdminLoginResponse;
 import kr.co.carrer.admin.auth.service.AdminLoginService;
@@ -21,7 +22,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/admin/auth")
-public class AdminAuthController {
+public class AdminAuthController implements AdminAuthControllerDocs {
 
     private final AdminLoginService adminLoginService;
     private final JwtTokenProvider jwtTokenProvider;
