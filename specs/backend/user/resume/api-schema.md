@@ -121,7 +121,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 ```
 
 > 업로드 완료 즉시 서버에서 FastAPI 분석 작업을 비동기 트리거.  
-> 클라이언트는 `documentId` 수신 후 WebSocket(`WS /ws/resume/{documentId}/status`) 연결 시작.
+> 클라이언트는 `documentId` 수신 후 STOMP(`/ws/user/resume?token=...`) 연결 후 `/topic/resume/{documentId}/status` 토픽 구독 시작.
 
 ### Error Cases
 
