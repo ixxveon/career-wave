@@ -4,6 +4,7 @@ import {
   parseLoginBlockedDecision,
   toMemberApiError,
   MEMBER_ERROR_CODE,
+  LOGIN_BLOCK_SERVER_CODE,
 } from './errorMapping';
 
 // ─────────────────────────────────────────────
@@ -11,8 +12,8 @@ import {
 // ─────────────────────────────────────────────
 describe('toMemberApiError — serverCode 전파', () => {
   it('body에 code가 있으면 serverCode로 전파된다', () => {
-    const error = toMemberApiError(403, { code: 'AUTH_ACCOUNT_SUSPENDED', message: '정지된 계정입니다.' });
-    expect(error.serverCode).toBe('AUTH_ACCOUNT_SUSPENDED');
+    const error = toMemberApiError(403, { code: LOGIN_BLOCK_SERVER_CODE.AUTH_ACCOUNT_SUSPENDED, message: '정지된 계정입니다.' });
+    expect(error.serverCode).toBe(LOGIN_BLOCK_SERVER_CODE.AUTH_ACCOUNT_SUSPENDED);
   });
 
   it('body에 code가 없으면 serverCode가 undefined이다', () => {
@@ -26,32 +27,32 @@ describe('toMemberApiError — serverCode 전파', () => {
 // ─────────────────────────────────────────────
 describe('parseLoginBlockedDecision — 계정 제한 판별', () => {
   it('403 + AUTH_ACCOUNT_SUSPENDED → RESTRICTED blockedDecision 반환', () => {
-    const error = toMemberApiError(403, { code: 'AUTH_ACCOUNT_SUSPENDED' });
+    const error = toMemberApiError(403, { code: LOGIN_BLOCK_SERVER_CODE.AUTH_ACCOUNT_SUSPENDED });
     expect(parseLoginBlockedDecision(error)).toEqual({ type: 'BLOCK', reason: 'RESTRICTED' });
   });
 
   it('403 + AUTH_ACCOUNT_BANNED → RESTRICTED blockedDecision 반환', () => {
-    const error = toMemberApiError(403, { code: 'AUTH_ACCOUNT_BANNED' });
+    const error = toMemberApiError(403, { code: LOGIN_BLOCK_SERVER_CODE.AUTH_ACCOUNT_BANNED });
     expect(parseLoginBlockedDecision(error)).toEqual({ type: 'BLOCK', reason: 'RESTRICTED' });
   });
 
   it('403 + AUTH_ACCOUNT_WITHDRAWN → RESTRICTED blockedDecision 반환', () => {
-    const error = toMemberApiError(403, { code: 'AUTH_ACCOUNT_WITHDRAWN' });
+    const error = toMemberApiError(403, { code: LOGIN_BLOCK_SERVER_CODE.AUTH_ACCOUNT_WITHDRAWN });
     expect(parseLoginBlockedDecision(error)).toEqual({ type: 'BLOCK', reason: 'RESTRICTED' });
   });
 
   it('403 + AUTH_COMPANY_PENDING_REVIEW → COMPANY_PENDING blockedDecision 반환', () => {
-    const error = toMemberApiError(403, { code: 'AUTH_COMPANY_PENDING_REVIEW' });
+    const error = toMemberApiError(403, { code: LOGIN_BLOCK_SERVER_CODE.AUTH_COMPANY_PENDING_REVIEW });
     expect(parseLoginBlockedDecision(error)).toEqual({ type: 'BLOCK', reason: 'COMPANY_PENDING' });
   });
 
   it('403 + AUTH_COMPANY_REJECTED → COMPANY_REJECTED blockedDecision 반환', () => {
-    const error = toMemberApiError(403, { code: 'AUTH_COMPANY_REJECTED' });
+    const error = toMemberApiError(403, { code: LOGIN_BLOCK_SERVER_CODE.AUTH_COMPANY_REJECTED });
     expect(parseLoginBlockedDecision(error)).toEqual({ type: 'BLOCK', reason: 'COMPANY_REJECTED' });
   });
 
   it('403 + AUTH_COMPANY_NEEDS_REVISION → COMPANY_NEEDS_REVISION blockedDecision 반환', () => {
-    const error = toMemberApiError(403, { code: 'AUTH_COMPANY_NEEDS_REVISION' });
+    const error = toMemberApiError(403, { code: LOGIN_BLOCK_SERVER_CODE.AUTH_COMPANY_NEEDS_REVISION });
     expect(parseLoginBlockedDecision(error)).toEqual({ type: 'BLOCK', reason: 'COMPANY_NEEDS_REVISION' });
   });
 
@@ -61,7 +62,7 @@ describe('parseLoginBlockedDecision — 계정 제한 판별', () => {
   });
 
   it('401이면 null 반환', () => {
-    const error = toMemberApiError(401, { code: 'AUTH_INVALID_CREDENTIALS' });
+    const error = toMemberApiError(401, {});
     expect(parseLoginBlockedDecision(error)).toBeNull();
   });
 

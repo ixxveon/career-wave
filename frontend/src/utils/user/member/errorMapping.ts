@@ -31,7 +31,7 @@ export const LOGIN_BLOCK_SERVER_CODE = {
   AUTH_COMPANY_NEEDS_REVISION: 'AUTH_COMPANY_NEEDS_REVISION',
 } as const;
 
-const ACCOUNT_RESTRICTION_SERVER_CODES: Record<string, LoginRouteDecision & { type: 'BLOCK' }> = {
+const ACCOUNT_RESTRICTION_SERVER_CODES: Record<(typeof LOGIN_BLOCK_SERVER_CODE)[keyof typeof LOGIN_BLOCK_SERVER_CODE], LoginRouteDecision & { type: 'BLOCK' }> = {
   [LOGIN_BLOCK_SERVER_CODE.AUTH_ACCOUNT_SUSPENDED]:      { type: 'BLOCK', reason: 'RESTRICTED' },
   [LOGIN_BLOCK_SERVER_CODE.AUTH_ACCOUNT_BANNED]:         { type: 'BLOCK', reason: 'RESTRICTED' },
   [LOGIN_BLOCK_SERVER_CODE.AUTH_ACCOUNT_WITHDRAWN]:      { type: 'BLOCK', reason: 'RESTRICTED' },
@@ -40,12 +40,18 @@ const ACCOUNT_RESTRICTION_SERVER_CODES: Record<string, LoginRouteDecision & { ty
   [LOGIN_BLOCK_SERVER_CODE.AUTH_COMPANY_NEEDS_REVISION]: { type: 'BLOCK', reason: 'COMPANY_NEEDS_REVISION' },
 };
 
+type LoginBlockServerCode = (typeof LOGIN_BLOCK_SERVER_CODE)[keyof typeof LOGIN_BLOCK_SERVER_CODE];
+
+function isLoginBlockServerCode(code: string): code is LoginBlockServerCode {
+  return Object.values(LOGIN_BLOCK_SERVER_CODE).includes(code as LoginBlockServerCode);
+}
+
 export function parseLoginBlockedDecision(
   error: MemberApiError,
 ): (LoginRouteDecision & { type: 'BLOCK' }) | null {
   if (error.statusCode !== 403) return null;
-  if (!error.serverCode) return null;
-  return ACCOUNT_RESTRICTION_SERVER_CODES[error.serverCode] ?? null;
+  if (!error.serverCode || !isLoginBlockServerCode(error.serverCode)) return null;
+  return ACCOUNT_RESTRICTION_SERVER_CODES[error.serverCode];
 }
 
 const fallbackMessages: Record<MemberErrorCode, string> = {
