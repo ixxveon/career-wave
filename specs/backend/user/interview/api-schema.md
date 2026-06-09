@@ -98,7 +98,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 | Field | Type | 필수 | 제약 |
 |-------|------|------|------|
-| `documentId` | `String` | ❌ | RAG 컨텍스트용 서류 ID, 없으면 null |
+| `documentId` | `String` | ❌ | RAG 컨텍스트용 서류 ID. null/생략 시 RAG 없이 일반 면접 진행. 값이 있으면 존재하는 서류여야 하며, 유효하지 않으면 `404 INTERVIEW_DOCUMENT_NOT_FOUND` 반환 |
 | `sessionType` | `String` | ✅ | `@NotBlank`, `TEXT` \| `VOICE` \| `VIDEO` |
 | `interviewType` | `String` | ❌ | `TECHNICAL` \| `PERSONALITY` \| `PROJECT` |
 | `targetCompany` | `String` | ❌ | `@Size(max=100)` |
