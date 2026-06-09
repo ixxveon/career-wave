@@ -1,9 +1,19 @@
-export type MemberStatus =
-  | "ACTIVE"
-  | "SUSPENDED"
-  | "BANNED"
-  | "LOCKED"
-  | "WITHDRAWN";
+import type { MemberStatus } from "@/types/user/member";
+
+export type { MemberStatus } from "@/types/user/member";
+
+export interface UserProfile {
+  memberId: string;
+  loginId: string;
+  email: string;
+  name: string;
+  phone: string;
+  roleType: string;
+  memberStatus: MemberStatus;
+  subscriptionStatus: string;
+  notificationEnabled: boolean;
+  createdAt: string;
+}
 
 export interface UserProfile {
   memberId: string;

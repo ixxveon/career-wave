@@ -2,11 +2,12 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { UserRound, Mail, Phone, ShieldCheck, Github } from "lucide-react";
 import { mockUserProfile, mockGithubProfile } from "@/mocks/user/dashboardMock";
+
 import type {
   GithubProfile,
   UserProfile,
-  MemberStatus,
 } from "@/types/user/dashboard";
+
 import "@/styles/user/mypage/MyPage.css";
 
 const ROLE_TYPE_LABELS: Record<UserProfile["roleType"], string> = {
@@ -23,7 +24,7 @@ const SUBSCRIPTION_STATUS_LABELS: Record<
 };
 
 const MEMBER_STATUS_CONFIG: Record<
-  MemberStatus,
+  UserProfile["memberStatus"],
   { label: string; className: string }
 > = {
   ACTIVE: { label: "정상", className: "cw-connected" },
@@ -31,6 +32,7 @@ const MEMBER_STATUS_CONFIG: Record<
   BANNED: { label: "차단", className: "cw-danger" },
   LOCKED: { label: "잠김", className: "cw-warning" },
   WITHDRAWN: { label: "탈퇴", className: "cw-danger" },
+  BLACKLISTED: { label: "블랙리스트", className: "cw-danger" },
 };
 
 type EditProfileForm = {
