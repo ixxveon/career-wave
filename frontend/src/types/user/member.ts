@@ -73,6 +73,7 @@ export interface ApiErrorBody<T = unknown> {
   success?: false;
   statusCode?: number;
   message?: string;
+  code?: string;
   data?: T;
 }
 
