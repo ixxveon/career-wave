@@ -1,8 +1,8 @@
 package kr.co.carrer.admin.auth.controller;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseCookie;
 import jakarta.validation.Valid;
 import kr.co.carrer.admin.auth.dto.AdminLoginRequest;
 import kr.co.carrer.admin.auth.dto.AdminLoginResponse;
@@ -65,12 +65,14 @@ public class AdminAuthController {
                 subject, AccountType.ADMIN, "ROLE_ADMIN", adminRole);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(subject, AccountType.ADMIN);
 
-        Cookie cookie = new Cookie("refreshToken", newRefreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/api/v1/admin/auth");
-        cookie.setMaxAge((int) (jwtProperties.getAdmin().getRefreshExpiration() / 1000));
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", newRefreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/v1/admin/auth")
+                .maxAge(jwtProperties.getAdmin().getRefreshExpiration() / 1000)
+                .sameSite("Strict")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
 
         return ResponseEntity.ok(ApiResponse.success("토큰이 갱신되었습니다.", Map.of("accessToken", newAccessToken)));
     }

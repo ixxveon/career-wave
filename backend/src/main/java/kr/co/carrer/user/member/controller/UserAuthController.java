@@ -1,8 +1,8 @@
 package kr.co.carrer.user.member.controller;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseCookie;
 import jakarta.validation.Valid;
 import kr.co.carrer.global.auth.jwt.AccountType;
 import kr.co.carrer.global.auth.jwt.JwtProperties;
@@ -72,12 +72,14 @@ public class UserAuthController {
         String newAccessToken = jwtTokenProvider.createAccessToken(subject, accountType, roleType, null);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(subject, accountType);
 
-        Cookie cookie = new Cookie("refreshToken", newRefreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/api/v1/user/members");
-        cookie.setMaxAge((int) (jwtProperties.getUser().getRefreshExpiration() / 1000));
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", newRefreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/v1/user/members")
+                .maxAge(jwtProperties.getUser().getRefreshExpiration() / 1000)
+                .sameSite("Strict")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
 
         return ResponseEntity.ok(ApiResponse.success("토큰이 갱신되었습니다.", Map.of("accessToken", newAccessToken)));
     }

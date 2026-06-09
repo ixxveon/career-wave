@@ -1,7 +1,7 @@
 package kr.co.carrer.admin.auth.service;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseCookie;
 import kr.co.carrer.admin.auth.dto.AdminInfo;
 import kr.co.carrer.admin.auth.dto.AdminLoginRequest;
 import kr.co.carrer.admin.auth.dto.AdminLoginResponse;
@@ -76,11 +76,13 @@ public class AdminLoginService {
     }
 
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/api/v1/admin/auth");
-        cookie.setMaxAge((int) (jwtProperties.getAdmin().getRefreshExpiration() / 1000));
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/v1/admin/auth")
+                .maxAge(jwtProperties.getAdmin().getRefreshExpiration() / 1000)
+                .sameSite("Strict")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
     }
 }

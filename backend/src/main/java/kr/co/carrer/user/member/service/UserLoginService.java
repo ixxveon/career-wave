@@ -1,8 +1,8 @@
 package kr.co.carrer.user.member.service;
 
 import jakarta.persistence.EntityManager;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseCookie;
 import kr.co.carrer.global.auth.jwt.AccountType;
 import kr.co.carrer.global.auth.jwt.JwtProperties;
 import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
@@ -139,11 +139,13 @@ public class UserLoginService {
     }
 
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/api/v1/user/members");
-        cookie.setMaxAge((int) (jwtProperties.getUser().getRefreshExpiration() / 1000));
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/v1/user/members")
+                .maxAge(jwtProperties.getUser().getRefreshExpiration() / 1000)
+                .sameSite("Strict")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
     }
 }
