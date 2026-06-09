@@ -24,6 +24,11 @@ Authorization: Bearer {accessToken}
 
 모든 API는 JWT 인증 + `ROLE_USER` 권한 필수. `memberId`는 `@AuthenticationPrincipal`로 추출.
 
+> **예외 — Webhook** (`POST /api/v1/user/resume/{documentId}/webhook`):  
+> FastAPI 내부 호출 전용으로, JWT/ROLE_USER 인증 대상에서 제외한다.  
+> 대신 `X-Internal-Secret` 헤더로 내부 보안을 검증한다.  
+> `SecurityConfig`에서 해당 경로를 `permitAll()` + IP 제한(또는 Secret 검증 필터)로 별도 처리한다.
+
 ### 응답 공통 포맷
 
 ```java
