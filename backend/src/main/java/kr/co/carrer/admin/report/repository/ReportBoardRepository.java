@@ -2,6 +2,8 @@ package kr.co.carrer.admin.report.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -11,9 +13,12 @@ public class ReportBoardRepository {
     private EntityManager em;
 
     public void blind(Long boardId) {
-        em.createNativeQuery("UPDATE boards SET is_blind = TRUE, updated_at = NOW() WHERE board_id = ?1")
+        int updated = em.createNativeQuery("UPDATE boards SET is_blind = TRUE, updated_at = NOW() WHERE board_id = ?1")
             .setParameter(1, boardId)
             .executeUpdate();
+        if (updated == 0) {
+            throw new CustomException(ErrorCode.BOARD_NOT_FOUND);
+        }
     }
 
     public String findTitleById(Long boardId) {
