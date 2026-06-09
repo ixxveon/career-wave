@@ -42,7 +42,7 @@ MVP의 중심은 실제 모델 비용 정산이나 모델 관리가 아니라, �
 ## 프론트엔드 원칙
 
 - 페이지 또는 컴포넌트에서 `axios`를 직접 호출하지 않는다.
-- 도메인별 API 호출은 `frontend/src/admin/api/aiMetricsApi.ts`에 둔다.
+- 도메인별 API 호출은 `frontend/src/api/admin/aiMetricsApi.ts`에 둔다.
 - 서버 상태는 TanStack Query 사용을 우선한다.
 - TypeScript interface는 PascalCase를 사용하고 `I` prefix를 붙이지 않는다.
 - 기존 관리자 레이아웃, 카드, 테이블, 페이지네이션 패턴을 우선 재사용한다.

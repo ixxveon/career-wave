@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/ai-metrics.css';
@@ -11,6 +12,9 @@ type Tone = 'normal' | 'warning' | 'danger';
 type EventSeverity = AiEventSeverity;
 
 const DOC_PAGE_SIZE = 3;
+const MAX_RAG_UPLOAD_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_RAG_UPLOAD_EXTENSIONS = ['pdf', 'txt', 'md'] as const;
+const ALLOWED_RAG_UPLOAD_MIME_TYPES = ['application/pdf', 'text/plain', 'text/markdown'] as const;
 
 const SUMMARY_QUERY_KEY = ['admin', 'aiMetrics', 'summary'] as const;
 const DOMAIN_USAGE_QUERY_KEY = ['admin', 'aiMetrics', 'domainUsage'] as const;
@@ -94,13 +98,20 @@ const getRiskTone = (riskLevel?: AiUsageRiskLevel) => {
 
 const getRagStatusTone = (status: RagIndexStatus): Tone => {
   if (status === RAG_INDEX_STATUS.FAILED) return 'danger';
-  if (status === RAG_INDEX_STATUS.INDEXING) return 'warning';
+  if (status === RAG_INDEX_STATUS.INDEXING || status === RAG_INDEX_STATUS.DELETING) return 'warning';
   return 'normal';
 };
 
 const getRagStatusLabel = (status: RagIndexStatus) => {
   if (status === RAG_INDEX_STATUS.FAILED) return '실패';
   if (status === RAG_INDEX_STATUS.INDEXING) return '인덱싱 중';
+  return '동기화됨';
+};
+
+const getRagStatusDisplayLabel = (status: RagIndexStatus) => {
+  if (status === RAG_INDEX_STATUS.FAILED) return '실패';
+  if (status === RAG_INDEX_STATUS.INDEXING) return '인덱싱 중';
+  if (status === RAG_INDEX_STATUS.DELETING) return '삭제 중';
   return '동기화됨';
 };
 
@@ -112,10 +123,14 @@ const toneForStatus = (value: EventSeverity): Tone => {
 
 export default function AiMetricsPage() {
   const queryClient = useQueryClient();
+  const ragUploadInputRef = useRef<HTMLInputElement | null>(null);
   const [docQuery, setDocQuery] = useState('');
   const [selectedDocId, setSelectedDocId] = useState('');
+  const [deletingDocId, setDeletingDocId] = useState('');
   const [selectedTrendDomain, setSelectedTrendDomain] = useState<'ALL' | AiDomain>('ALL');
   const [docPage, setDocPage] = useState(1);
+  const [ragUploadErrorMessage, setRagUploadErrorMessage] = useState('');
+  const [ragActionErrorMessage, setRagActionErrorMessage] = useState('');
   const [budgetDraft, setBudgetDraft] = useState('2000');
   const [thresholdDraft, setThresholdDraft] = useState('85');
   const [budgetEditorOpen, setBudgetEditorOpen] = useState(false);
@@ -325,10 +340,76 @@ export default function AiMetricsPage() {
       if (!response.data.success) throw new Error(response.data.message ?? 'RAG 지식 베이스 상태 조회에 실패했습니다.');
       return response.data.data;
     },
+    refetchInterval: (query) => {
+      const docs = query.state.data ?? [];
+      return docs.some((doc) => doc.status === RAG_INDEX_STATUS.INDEXING) ? 3000 : false;
+    },
   });
 
   const ragDocs = ragDocumentsData ?? [];
   const ragDocsEmpty = !ragDocumentsLoading && !ragDocumentsIsError && ragDocs.length === 0;
+
+  const uploadRagDocumentMutation = useMutation<RagDocumentMetric, Error, File>({
+    mutationFn: async (file) => {
+      const response = await aiMetricsApi.uploadRagDocument({ file });
+      if (!response.data.success) throw new Error(response.data.message ?? 'RAG 문서 업로드에 실패했습니다.');
+      return response.data.data;
+    },
+    onMutate: () => {
+      setRagActionErrorMessage('');
+    },
+    onSuccess: async (uploadedDocument) => {
+      setDocQuery('');
+      setDocPage(1);
+      setSelectedDocId(uploadedDocument.documentId);
+      setRagActionErrorMessage('');
+      await queryClient.invalidateQueries({ queryKey: RAG_DOCUMENTS_QUERY_KEY });
+    },
+    onError: (error) => {
+      setRagActionErrorMessage(getApiStateMessage(error, 'RAG 문서 업로드에 실패했습니다.'));
+    },
+  });
+
+  const deleteRagDocumentMutation = useMutation<null, Error, string>({
+    mutationFn: async (documentId) => {
+      const response = await aiMetricsApi.deleteRagDocument(documentId);
+      if (!response.data.success) throw new Error(response.data.message ?? 'RAG 문서 삭제에 실패했습니다.');
+      return response.data.data;
+    },
+    onMutate: async (documentId) => {
+      setRagActionErrorMessage('');
+      await queryClient.cancelQueries({ queryKey: RAG_DOCUMENTS_QUERY_KEY });
+      const previousRagDocuments = queryClient.getQueryData<RagDocumentMetric[]>(RAG_DOCUMENTS_QUERY_KEY);
+      setDeletingDocId(documentId);
+      queryClient.setQueryData<RagDocumentMetric[]>(RAG_DOCUMENTS_QUERY_KEY, (current = []) =>
+        current.map((doc) =>
+          doc.documentId === documentId
+            ? {
+                ...doc,
+                status: RAG_INDEX_STATUS.DELETING,
+              }
+            : doc
+        )
+      );
+      return { previousRagDocuments };
+    },
+    onSuccess: async (_, documentId) => {
+      if (selectedDocId === documentId) {
+        setSelectedDocId('');
+      }
+      setRagActionErrorMessage('');
+      await queryClient.invalidateQueries({ queryKey: RAG_DOCUMENTS_QUERY_KEY });
+    },
+    onError: (error, _documentId, context) => {
+      if (context?.previousRagDocuments) {
+        queryClient.setQueryData(RAG_DOCUMENTS_QUERY_KEY, context.previousRagDocuments);
+      }
+      setRagActionErrorMessage(getApiStateMessage(error, 'RAG 문서 삭제에 실패했습니다.'));
+    },
+    onSettled: () => {
+      setDeletingDocId('');
+    },
+  });
 
   const filteredDocs = useMemo(() => {
     const keyword = docQuery.trim().toLowerCase();
@@ -391,23 +472,60 @@ export default function AiMetricsPage() {
   const totalTokens = summaryData ? summaryData.totalInputTokens + summaryData.totalOutputTokens : undefined;
 
   const handleDownloadDocument = (doc: RagDocumentMetric) => {
-    const content = [
-      `Document: ${doc.name}`,
-      `Chunks: ${doc.chunkCount}`,
-      `Progress: ${doc.progressPercent}%`,
-      `Status: ${doc.status}`,
-      `Updated At: ${doc.updatedAt}`,
-    ].join('\n');
+    void (async () => {
+      try {
+        setRagActionErrorMessage('');
+        const response = await aiMetricsApi.downloadRagDocument(doc.documentId);
+        const contentDisposition = response.headers['content-disposition'];
+        const fileNameMatch = contentDisposition?.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+        const downloadedFileName = fileNameMatch?.[1] ? decodeURIComponent(fileNameMatch[1]) : doc.name;
+        const objectUrl = URL.createObjectURL(response.data);
+        const anchor = document.createElement('a');
+        anchor.href = objectUrl;
+        anchor.download = downloadedFileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(objectUrl);
+      } catch (error) {
+        setRagActionErrorMessage(getApiStateMessage(error, 'RAG 문서 다운로드에 실패했습니다.'));
+      }
+    })();
+  };
 
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const objectUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = doc.name;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(objectUrl);
+  const handleUploadButtonClick = () => {
+    ragUploadInputRef.current?.click();
+  };
+
+  const handleUploadFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    const fileExtension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const hasAllowedExtension = ALLOWED_RAG_UPLOAD_EXTENSIONS.includes(fileExtension as (typeof ALLOWED_RAG_UPLOAD_EXTENSIONS)[number]);
+    const hasAllowedMimeType = ALLOWED_RAG_UPLOAD_MIME_TYPES.includes(file.type as (typeof ALLOWED_RAG_UPLOAD_MIME_TYPES)[number]);
+
+    if (!file.name.trim()) {
+      setRagUploadErrorMessage('업로드할 문서 파일을 다시 선택해 주세요.');
+      return;
+    }
+
+    if (!hasAllowedExtension || !hasAllowedMimeType) {
+      setRagUploadErrorMessage('PDF, TXT, MD 형식의 문서만 업로드할 수 있습니다.');
+      return;
+    }
+
+    if (file.size > MAX_RAG_UPLOAD_FILE_SIZE) {
+      setRagUploadErrorMessage('업로드 가능한 최대 파일 크기인 10MB를 초과했습니다.');
+      return;
+    }
+
+    setRagUploadErrorMessage('');
+    await uploadRagDocumentMutation.mutateAsync(file);
+  };
+
+  const handleDeleteDocument = (documentId: string) => {
+    void deleteRagDocumentMutation.mutateAsync(documentId);
   };
 
   const handleBudgetSave = () => {
@@ -859,12 +977,37 @@ export default function AiMetricsPage() {
 
             <div className="aiOpsRagLayout">
               <aside className="aiOpsUploadCard">
+                <input
+                  ref={ragUploadInputRef}
+                  type="file"
+                  className="aiOpsUploadInput"
+                  accept=".pdf,.txt,.md"
+                  onChange={(event) => {
+                    void handleUploadFileChange(event);
+                  }}
+                />
                 <div className="aiOpsUploadIcon">
                   <span />
                 </div>
                 <strong>인프라 문서 업로드</strong>
-                <span>PDF, TXT, DOCX 최대 50MB</span>
-                <button type="button">업로드 및 임베딩</button>
+                <span>PDF, TXT, MD 최대 10MB</span>
+                {ragUploadErrorMessage ? (
+                  <div className="aiOpsUploadError" role="alert">
+                    {ragUploadErrorMessage}
+                  </div>
+                ) : null}
+                {ragActionErrorMessage ? (
+                  <div className="aiOpsUploadError" role="alert">
+                    {ragActionErrorMessage}
+                  </div>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={handleUploadButtonClick}
+                  disabled={uploadRagDocumentMutation.isPending}
+                >
+                  {uploadRagDocumentMutation.isPending ? '업로드 중' : '업로드 및 임베딩'}
+                </button>
               </aside>
 
               <div className="aiOpsRagTableBlock">
@@ -925,7 +1068,7 @@ export default function AiMetricsPage() {
                             </div>
                           </td>
                           <td>
-                            <span className={`aiOpsBadge ${getRagStatusTone(doc.status)}`}>{getRagStatusLabel(doc.status)}</span>
+                            <span className={`aiOpsBadge ${getRagStatusTone(doc.status)}`}>{getRagStatusDisplayLabel(doc.status)}</span>
                           </td>
                           <td>
                             <button type="button" className="aiOpsTextButton">
@@ -941,8 +1084,16 @@ export default function AiMetricsPage() {
                             >
                               다운로드
                             </button>
-                            <button type="button" className="aiOpsTextButton danger">
-                              삭제
+                            <button
+                              type="button"
+                              className="aiOpsTextButton danger"
+                              disabled={deleteRagDocumentMutation.isPending}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleDeleteDocument(doc.documentId);
+                              }}
+                            >
+                              {deleteRagDocumentMutation.isPending && deletingDocId === doc.documentId ? '삭제 중' : '삭제'}
                             </button>
                           </td>
                         </tr>
