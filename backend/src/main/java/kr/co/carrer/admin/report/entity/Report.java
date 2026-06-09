@@ -58,17 +58,20 @@ public class Report {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = ZonedDateTime.now();
+    }
+
     public void blind(Long adminId) {
         this.reportStatus = ReportStatus.BLINDED;
         this.processedBy = adminId;
         this.processedAt = ZonedDateTime.now();
-        this.updatedAt = ZonedDateTime.now();
     }
 
     public void dismiss(Long adminId) {
         this.reportStatus = ReportStatus.DISMISSED;
         this.processedBy = adminId;
         this.processedAt = ZonedDateTime.now();
-        this.updatedAt = ZonedDateTime.now();
     }
 }
