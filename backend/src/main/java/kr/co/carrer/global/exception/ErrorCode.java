@@ -14,7 +14,19 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "이미 존재하는 데이터입니다."),
 
-    // --- 1. 회원관리 (admin/member) ---
+    // --- 1. 인증 (auth) ---
+    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다."),
+    AUTH_ACCOUNT_SUSPENDED(HttpStatus.FORBIDDEN, "계정이 일시 정지되었습니다."),
+    AUTH_ACCOUNT_BANNED(HttpStatus.FORBIDDEN, "계정이 영구 정지되었습니다."),
+    AUTH_ACCOUNT_WITHDRAWN(HttpStatus.FORBIDDEN, "탈퇴한 계정입니다."),
+    AUTH_ACCOUNT_LOCKED(HttpStatus.LOCKED, "로그인 시도 횟수를 초과하여 계정이 잠겼습니다."),
+    AUTH_COMPANY_PENDING_REVIEW(HttpStatus.FORBIDDEN, "기업회원 승인 검토 중입니다."),
+    AUTH_COMPANY_REJECTED(HttpStatus.FORBIDDEN, "기업회원 가입이 반려되었습니다."),
+    AUTH_COMPANY_NEEDS_REVISION(HttpStatus.FORBIDDEN, "기업 정보 보완이 필요합니다."),
+    AUTH_REFRESH_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
+    AUTH_UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다."),
+
+    // --- 2. 회원관리 (admin/member) ---
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."),
     HR_MANAGER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 기업 회원입니다."),
     ALREADY_BANNED(HttpStatus.CONFLICT, "이미 영구 정지된 회원입니다."),
