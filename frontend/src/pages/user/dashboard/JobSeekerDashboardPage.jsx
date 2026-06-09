@@ -27,24 +27,28 @@ const featureCards = [
     title: 'AI 서류 분석',
     text: '이력서와 자기소개서를 분석해 합격 가능성과 개선 포인트를 알려드려요.',
     tone: 'blue',
+    to: '/documents/resume',
   },
   {
     icon: Mic,
     title: '실시간 면접 코칭',
     text: 'AI가 예상 질문을 제시하고 실시간 피드백으로 완벽한 면접을 도와요.',
     tone: 'violet',
+    to: '/interview',
   },
   {
     icon: UserSearch,
     title: '스마트 채용 매칭',
     text: '당신의 역량과 성향에 맞는 최적의 기업과 공고를 매칭해 드려요.',
     tone: 'blue',
+    to: '/jobs',
   },
   {
     icon: Bell,
     title: '맞춤 공고 추천',
     text: '관심 키워드와 직무를 기반으로 새로운 공고를 실시간으로 추천해요.',
     tone: 'sky',
+    to: '/jobs',
   },
 ];
 
@@ -143,8 +147,8 @@ function JobSeekerDashboardPage() {
       </section>
 
       <section className="cw-home-feature-grid" aria-label="주요 서비스">
-        {featureCards.map(({ icon: Icon, title, text, tone }) => (
-          <Link className="cw-home-feature" key={title} to="/documents/resume">
+        {featureCards.map(({ icon: Icon, title, text, tone, to }) => (
+          <Link className="cw-home-feature" key={title} to={to}>
             <span className={`cw-home-feature__icon is-${tone}`}>
               <Icon size={30} />
             </span>
