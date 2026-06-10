@@ -87,7 +87,7 @@ class UserLoginServiceTest {
         UserLoginDto.Response result = service.login(req, httpResponse);
 
         assertThat(result.getAccessToken()).isNotBlank();
-        assertThat(result.getMember().getMemberType()).isEqualTo("USER");
+        assertThat(result.getMember().getRoleType()).isEqualTo("USER");
     }
 
     @Test
@@ -112,7 +112,7 @@ class UserLoginServiceTest {
     }
 
     @Test
-    void memberType_불일치_AUTH_INVALID_CREDENTIALS() throws Exception {
+    void roleType_불일치_AUTH_INVALID_CREDENTIALS() throws Exception {
         Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
         UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.COMPANY);

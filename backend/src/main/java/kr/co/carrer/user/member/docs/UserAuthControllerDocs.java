@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface UserAuthControllerDocs {
 
     @Operation(summary = "사용자 로그인",
-            description = "loginId + password + memberType(USER|COMPANY)으로 로그인. " +
+            description = "loginId + password + roleType(USER|COMPANY)으로 로그인. " +
                     "성공 시 accessToken 반환, refreshToken은 HttpOnly Set-Cookie로 발급.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "로그인 성공"),
-            @ApiResponse(responseCode = "401", description = "아이디/비밀번호 불일치 또는 memberType 불일치",
+            @ApiResponse(responseCode = "401", description = "아이디/비밀번호 불일치 또는 roleType 불일치",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":401,\"message\":\"아이디 또는 비밀번호가 올바르지 않습니다.\",\"code\":\"AUTH_INVALID_CREDENTIALS\"}"))),
             @ApiResponse(responseCode = "403", description = "계정 상태 제한 (SUSPENDED/BANNED/WITHDRAWN/기업 미승인)",

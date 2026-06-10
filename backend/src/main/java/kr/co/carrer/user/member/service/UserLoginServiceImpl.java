@@ -56,8 +56,8 @@ public class UserLoginServiceImpl implements UserLoginService {
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
-        // memberType 일치 검증 (프론트 탭과 실제 role_type이 같아야 함)
-        RoleType expectedRole = request.getMemberType() == MemberType.USER
+        // roleType 일치 검증 (프론트 탭과 실제 role_type이 같아야 함)
+        RoleType expectedRole = request.getRoleType() == MemberType.USER
                 ? RoleType.USER : RoleType.COMPANY;
         if (member.getRoleType() != expectedRole) {
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);

@@ -13,12 +13,12 @@ public class UserLoginDto {
     public static class Request {
         @NotBlank private final String loginId;
         @NotBlank private final String password;
-        @NotNull  private final MemberType memberType;
+        @NotNull  private final MemberType roleType;
 
-        public Request(String loginId, String password, MemberType memberType) {
+        public Request(String loginId, String password, MemberType roleType) {
             this.loginId = loginId;
             this.password = password;
-            this.memberType = memberType;
+            this.roleType = roleType;
         }
     }
 
@@ -38,20 +38,20 @@ public class UserLoginDto {
         private final UUID memberId;
         private final String loginId;
         private final String name;
-        private final String memberType;
+        private final String roleType;
         private final String memberStatus;
         private final String subscriptionStatus;
         private final String companyApprovalStatus;
         private final Instant lastLoginAt;
 
         public MemberInfo(UUID memberId, String loginId, String name,
-                          String memberType, String memberStatus,
+                          String roleType, String memberStatus,
                           String subscriptionStatus, String companyApprovalStatus,
                           Instant lastLoginAt) {
             this.memberId = memberId;
             this.loginId = loginId;
             this.name = name;
-            this.memberType = memberType;
+            this.roleType = roleType;
             this.memberStatus = memberStatus;
             this.subscriptionStatus = subscriptionStatus;
             this.companyApprovalStatus = companyApprovalStatus;
