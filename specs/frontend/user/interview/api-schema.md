@@ -55,6 +55,7 @@ Authorization: Bearer {accessToken}
 | `401` | 인증 토큰 없음 또는 만료 |
 | `403` | 본인 소유가 아닌 세션 접근 (IDOR 방어) |
 | `404` | 존재하지 않는 `sessionId` |
+| `409` | 중복 세션 생성 시도 또는 리포트 아직 생성 중 |
 | `500` | 서버 내부 오류 |
 
 ---
@@ -99,14 +100,15 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 세션 생성 직후 클라이언트는 `data.sessionId` 수신 후 즉시  
-> Spring WebSocket(`WS /ws/interview/{sessionId}/chat`) 및  
-> FastAPI WebSocket(`WS /ws/interview/{sessionId}/ai`) 연결을 시작합니다.
+> Spring WebSocket(`WS /ws/user/interview/{sessionId}/chat`) 및  
+> FastAPI WebSocket(`WS /ws/user/interview/{sessionId}/ai`) 연결을 시작합니다.
 
 ### Error Cases
 
 | statusCode | 상황 |
 |-----------|------|
 | `400` | 유효하지 않은 `sessionType` 값 |
+| `409` | 동일 회원이 이미 `IN_PROGRESS` 세션 보유 (`INTERVIEW_SESSION_DUPLICATE`) |
 | `401` | 토큰 없음 또는 만료 |
 
 ---
@@ -144,7 +146,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 답변 저장 완료 후 AI의 다음 질문 또는 꼬리 질문은  
-> FastAPI WebSocket(`WS /ws/interview/{sessionId}/ai`)으로 스트리밍 전달됩니다.
+> FastAPI WebSocket(`WS /ws/user/interview/{sessionId}/ai`)으로 스트리밍 전달됩니다.
 
 ### Error Cases
 
@@ -164,13 +166,13 @@ Authorization: Bearer {accessToken}
 - **Content-Type**: `multipart/form-data`
 
 > ℹ️ constitution 정책: 마이크 녹음 데이터는 **5초 단위 Chunk**로 분할하여 전송한다.  
-> STT 변환 결과는 FastAPI WebSocket(`WS /ws/interview/{sessionId}/ai`)으로 수신한다.
+> STT 변환 결과는 FastAPI WebSocket(`WS /ws/user/interview/{sessionId}/ai`)으로 수신한다.
 
 ### Request
 
 | Field | Type | 필수 | 설명 |
 |-------|------|------|------|
-| `audioChunk` | `File` (Blob) | ✅ | 5초 단위 음성 청크 (WebM / MP4 / OGG — 브라우저 지원 포맷) |
+| `audioChunk` | `File` (Blob) | ✅ | 5초 단위 음성 청크 (`audio/webm`, `audio/mp4`, `audio/ogg`) |
 | `questionOrder` | `number` | ✅ | 현재 답변 중인 질문 순서 (1~N) |
 | `chunkIndex` | `number` | ✅ | 청크 순서 인덱스 (0-based) |
 | `isFinal` | `boolean` | ✅ | 해당 답변의 마지막 청크 여부 |
@@ -220,7 +222,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 세션 종료 즉시 서버에서 AI 리포트 생성 작업을 **자동 트리거**합니다.  
-> 리포트 완료 알림은 Spring WebSocket(`WS /ws/interview/{sessionId}/chat`)으로 수신합니다.
+> 리포트 완료 알림은 Spring WebSocket(`WS /ws/user/interview/{sessionId}/chat`)으로 수신합니다.
 
 ### Error Cases
 
@@ -288,6 +290,7 @@ Authorization: Bearer {accessToken}
 |-----------|------|
 | `403` | 본인 소유가 아닌 세션 |
 | `404` | 존재하지 않는 `sessionId` |
+| `409` | 리포트 아직 생성 중 (`INTERVIEW_REPORT_NOT_READY`) — `data.estimatedWaitSeconds` 참고 |
 | `401` | 토큰 없음 또는 만료 |
 
 ---
@@ -314,21 +317,25 @@ Authorization: Bearer {accessToken}
   "data": {
     "content": [
       {
+        "careerHistoryId": 1,
         "sessionId": "uuid-v4",
         "sessionType": "VOICE",
         "interviewType": "TECHNICAL",
         "targetCompany": "카카오",
         "sessionStatus": "COMPLETED",
         "totalScore": 78,
+        "pdfUrl": "https://s3.amazonaws.com/.../report.pdf",
         "createdAt": "2026-05-29T14:53:44Z"
       },
       {
+        "careerHistoryId": 2,
         "sessionId": "uuid-v4-2",
         "sessionType": "TEXT",
         "interviewType": "PERSONALITY",
         "targetCompany": null,
         "sessionStatus": "COMPLETED",
         "totalScore": 82,
+        "pdfUrl": null,
         "createdAt": "2026-05-28T10:20:00Z"
       }
     ],
@@ -342,10 +349,12 @@ Authorization: Bearer {accessToken}
 
 | Field | Type | 설명 |
 |-------|------|------|
+| `data.content[].careerHistoryId` | `number` | 이력 고유 식별자 |
 | `data.content[].sessionType` | `string` | `TEXT` \| `VOICE` \| `VIDEO` |
 | `data.content[].interviewType` | `string` \| `null` | `TECHNICAL` \| `PERSONALITY` \| `PROJECT`, 미입력 시 `null` |
 | `data.content[].targetCompany` | `string` \| `null` | 미입력 시 `null` |
 | `data.content[].totalScore` | `number` \| `null` | 리포트 미완료 또는 `FAILED` 시 `null` |
+| `data.content[].pdfUrl` | `string` \| `null` | 종합 진단 PDF URL (S3), 미생성 시 `null` |
 
 ### Error Cases
 
@@ -357,13 +366,13 @@ Authorization: Bearer {accessToken}
 
 ## 7. 면접 실시간 채널 — Spring WebSocket
 
-- **Endpoint**: `WS /ws/interview/{sessionId}/chat`
+- **Endpoint**: `WS /ws/user/interview/{sessionId}/chat`
 - **Description**: 면접 세션 생명주기 제어 및 AI 질문 실시간 수신 (Spring 담당)
 
 ### 인증
 
 ```
-WS /ws/interview/{sessionId}/chat?token={accessToken}
+WS /ws/user/interview/{sessionId}/chat?token={accessToken}
 ```
 
 ### Connection Lifecycle
@@ -399,16 +408,18 @@ WS /ws/interview/{sessionId}/chat?token={accessToken}
 | `content` | `string` | 메시지 본문 |
 | `questionOrder` | `number` \| `null` | 질문 순서 (`QUESTION` 타입 시에만 포함) |
 | `subType` | `string` \| `null` | `SYSTEM` 타입 하위 분류 — `SESSION_START` \| `REPORT_READY` \| `SESSION_END` |
+| `data` | `object` \| `null` | 타입별 추가 데이터 — `REPORT_READY` 시 `{ reportUrl: string }` 포함 |
+| `errorCode` | `string` \| `null` | `ERROR` 타입 시 에러 식별 코드 (예: `INTERVIEW_AI_PIPELINE_ERROR`) |
 
 #### `type` 별 예시
 
-| type | subType | content 예시 | 비고 |
-|------|---------|-------------|------|
-| `QUESTION` | `null` | `"지원 동기를 말씀해 주세요."` | 신규 질문 또는 꼬리 질문 |
-| `SYSTEM` | `SESSION_START` | `"면접이 시작되었습니다."` | 세션 시작 → `RUNNING` 전이 |
-| `SYSTEM` | `REPORT_READY` | `"리포트 생성이 완료되었습니다."` | 리포트 완료 → `FINISHED` 전이 |
-| `SYSTEM` | `SESSION_END` | `"면접이 종료되었습니다."` | 세션 종료 안내 |
-| `ERROR` | `null` | `"세션 처리 중 오류가 발생했습니다."` | 수신 즉시 `ERROR` 상태 전이 |
+| type | subType | 비고 |
+|------|---------|------|
+| `QUESTION` | `null` | 신규 질문 또는 꼬리 질문 |
+| `SYSTEM` | `SESSION_START` | 세션 시작 → `RUNNING` 전이 |
+| `SYSTEM` | `REPORT_READY` | 리포트 완료 → `FINISHED` 전이, `data.reportUrl`로 리다이렉트 가능 |
+| `SYSTEM` | `SESSION_END` | 세션 종료 안내 |
+| `ERROR` | `null` | 수신 즉시 `ERROR` 상태 전이, `errorCode`로 에러 종류 구분 |
 
 ### Error Cases
 
@@ -423,13 +434,13 @@ WS /ws/interview/{sessionId}/chat?token={accessToken}
 
 ## 8. AI 파이프라인 채널 — FastAPI WebSocket
 
-- **Endpoint**: `WS /ws/interview/{sessionId}/ai`
+- **Endpoint**: `WS /ws/user/interview/{sessionId}/ai`
 - **Description**: LLM 스트리밍 응답 수신, STT 변환 결과 수신, TTS 오디오 스트리밍 (FastAPI 담당)
 
 ### 인증
 
 ```
-WS /ws/interview/{sessionId}/ai?token={accessToken}
+WS /ws/user/interview/{sessionId}/ai?token={accessToken}
 ```
 
 ### Server → Client 메시지 형식

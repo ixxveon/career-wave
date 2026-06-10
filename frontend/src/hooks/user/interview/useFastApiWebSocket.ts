@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { FastApiWSMessage } from '../../../types/user/interview';
 import { MAX_RECONNECT_ATTEMPTS } from '../../../constants/user/interview';
+import { authSession } from '../../../utils/user/member/authSession';
 
 export type FastApiWSStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'RECONNECTING' | 'ERROR';
 
@@ -32,18 +33,23 @@ export function useFastApiWebSocket({
   useEffect(() => { onMessageRef.current = onMessage; }, [onMessage]);
   useEffect(() => { onStatusChangeRef.current = onStatusChange; }, [onStatusChange]);
 
-  const getWsUrl = (sid: string) => {
+  const getWsUrl = (sid: string): string => {
     const base =
       import.meta.env.VITE_FASTAPI_WS_URL ||
       import.meta.env.VITE_FASTAPI_BASE_URL?.replace(/^http/, 'ws') ||
       'ws://localhost:8000';
-    const token = encodeURIComponent(localStorage.getItem('accessToken') ?? '');
+    const token = encodeURIComponent(authSession.getAccessToken() ?? '');
     return `${base}/ws/interview/${sid}/ai?token=${token}`;
   };
 
   const connect = useCallback((sid: string) => {
     const state = wsRef.current?.readyState;
     if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
+
+    if (!authSession.getAccessToken()) {
+      onStatusChangeRef.current('ERROR');
+      return;
+    }
 
     onStatusChangeRef.current(attemptRef.current === 0 ? 'CONNECTING' : 'RECONNECTING');
     const ws = new WebSocket(getWsUrl(sid));

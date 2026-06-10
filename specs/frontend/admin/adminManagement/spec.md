@@ -121,7 +121,7 @@
 ### Key Entities
 
 - **AdminAccount**: `id`, `name`, `email`, `role`, `scope`, `ip`, `createdAt`, `lastLoginAt`, `status`
-- **AdminAclRule**: `id`, `label`, `cidr`, `note`, `enabled`, `riskLevel`, `updatedAt`
+- **AdminAclRule**: `ipAclId`, `label`, `ipRange`, `isEnabled`, `description`, `createdAt`, `updatedAt`
 - **AdminAuditLog**: `id`, `occurredAt`, `actor`, `ip`, `action`, `target`, `severity`
 - **AdminManagementSummary**: `totalAdminCount`, `activeAdminCount`, `activeAclCount`, `lockedAdminCount`
 

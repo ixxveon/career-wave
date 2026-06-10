@@ -108,6 +108,8 @@
 - [ ] 리포트·세션 API가 본인 소유의 `sessionId`만 조회 가능한가? (타인의 `sessionId` 직접 입력 시 403 차단 — IDOR 방어)
 - [x] 브라우저 전역 객체(`window`)에 세션 정보나 소켓 인스턴스를 직접 저장하지 않았는가?
 - [x] 세션 정보가 `localStorage`가 아닌 `sessionStorage`에만 저장되는가?
+- [x] `useSpringWebSocket` / `useFastApiWebSocket` / `usePreflightCheck`가 `localStorage.accessToken`을 직접 참조하지 않고 `authSession.getAccessToken()`을 사용하는가?
+- [x] WebSocket 연결 시 토큰이 없으면 소켓 생성 전 `ERROR` 또는 `fail` 상태로 명확하게 실패 처리하는가?
 
 ---
 
