@@ -20,8 +20,8 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
     @Query("""
             SELECT new kr.co.carrer.user.resume.dto.ResumeDTO$HistoryItem(
                 d.documentId,
-                CAST(d.fileType AS string),
-                CAST(d.status AS string),
+                d.fileType,
+                d.status,
                 d.originalName,
                 m.company,
                 m.job,
