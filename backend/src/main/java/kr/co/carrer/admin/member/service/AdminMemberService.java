@@ -17,6 +17,7 @@ import kr.co.carrer.admin.member.type.SubscriptionStatus;
 import kr.co.carrer.admin.member.type.SuspendDuration;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.admin.member.exception.MemberErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -54,24 +55,24 @@ public class AdminMemberService {
 
     public MemberDTO.ResponseDetail getMemberDetail(UUID memberId) {
         return memberQueryRepository.findMemberDetail(memberId)
-            .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
     @Transactional
     public MemberDTO.ResponseSanction sanctionMember(UUID memberId, MemberDTO.RequestSanction dto, Long adminId) {
         Member member = memberRepository.findById(memberId)
-            .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         if (member.getMemberStatus() == MemberStatus.BANNED) {
-            throw new CustomException(ErrorCode.ALREADY_BANNED);
+            throw new CustomException(MemberErrorCode.ALREADY_BANNED);
         }
 
         String reason = dto.reason();
         if (reason == null || reason.isBlank()) {
-            throw new CustomException(ErrorCode.REASON_REQUIRED);
+            throw new CustomException(MemberErrorCode.REASON_REQUIRED);
         }
         if (reason.strip().length() < 10) {
-            throw new CustomException(ErrorCode.REASON_TOO_SHORT);
+            throw new CustomException(MemberErrorCode.REASON_TOO_SHORT);
         }
 
         SanctionType sanctionType = dto.sanctionType();
@@ -85,16 +86,16 @@ public class AdminMemberService {
         switch (sanctionType) {
             case WARNING -> {
                 if (member.getWarningCount() >= 3) {
-                    throw new CustomException(ErrorCode.MAX_WARNING_EXCEEDED);
+                    throw new CustomException(MemberErrorCode.MAX_WARNING_EXCEEDED);
                 }
                 member.increaseWarningCount();
             }
             case SUSPEND -> {
                 if (member.getMemberStatus() == MemberStatus.SUSPENDED) {
-                    throw new CustomException(ErrorCode.ALREADY_SUSPENDED);
+                    throw new CustomException(MemberErrorCode.ALREADY_SUSPENDED);
                 }
                 if (duration == null || duration == SuspendDuration.PERMANENT) {
-                    throw new CustomException(ErrorCode.INVALID_SANCTION_DURATION);
+                    throw new CustomException(MemberErrorCode.INVALID_SANCTION_DURATION);
                 }
                 endDate = calculateSuspendEndDate(today, duration);
                 member.suspend(endDate);
@@ -126,7 +127,7 @@ public class AdminMemberService {
             case THREE_DAYS -> from.plusDays(3);
             case SEVEN_DAYS -> from.plusDays(7);
             case THIRTY_DAYS -> from.plusDays(30);
-            default -> throw new CustomException(ErrorCode.INVALID_SANCTION_DURATION);
+            default -> throw new CustomException(MemberErrorCode.INVALID_SANCTION_DURATION);
         };
     }
 
@@ -155,16 +156,16 @@ public class AdminMemberService {
 
     public HrManagerDTO.ResponseDetail getHrManagerDetail(UUID memberId) {
         return memberQueryRepository.findHrManagerDetail(memberId)
-            .orElseThrow(() -> new CustomException(ErrorCode.HR_MANAGER_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(MemberErrorCode.HR_MANAGER_NOT_FOUND));
     }
 
     @Transactional
     public HrManagerDTO.ResponseApprove approveHrManager(UUID memberId) {
         HrManager hrManager = hrManagerRepository.findByMemberId(memberId)
-            .orElseThrow(() -> new CustomException(ErrorCode.HR_MANAGER_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(MemberErrorCode.HR_MANAGER_NOT_FOUND));
 
         if (hrManager.getHrStatus() != HrStatus.PENDING) {
-            throw new CustomException(ErrorCode.ALREADY_PROCESSED);
+            throw new CustomException(MemberErrorCode.ALREADY_PROCESSED);
         }
 
         hrManager.approve();
@@ -175,18 +176,18 @@ public class AdminMemberService {
     @Transactional
     public HrManagerDTO.ResponseReject rejectHrManager(UUID memberId, HrManagerDTO.RequestReject dto) {
         HrManager hrManager = hrManagerRepository.findByMemberId(memberId)
-            .orElseThrow(() -> new CustomException(ErrorCode.HR_MANAGER_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(MemberErrorCode.HR_MANAGER_NOT_FOUND));
 
         if (hrManager.getHrStatus() != HrStatus.PENDING) {
-            throw new CustomException(ErrorCode.ALREADY_PROCESSED);
+            throw new CustomException(MemberErrorCode.ALREADY_PROCESSED);
         }
 
         String rejectReason = dto.rejectReason();
         if (rejectReason == null || rejectReason.isBlank()) {
-            throw new CustomException(ErrorCode.REASON_REQUIRED);
+            throw new CustomException(MemberErrorCode.REASON_REQUIRED);
         }
         if (rejectReason.strip().length() < 10) {
-            throw new CustomException(ErrorCode.REASON_TOO_SHORT);
+            throw new CustomException(MemberErrorCode.REASON_TOO_SHORT);
         }
 
         hrManager.reject(rejectReason);

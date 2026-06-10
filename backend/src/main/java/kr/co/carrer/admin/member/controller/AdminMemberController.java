@@ -10,6 +10,7 @@ import kr.co.carrer.admin.member.type.RoleType;
 import kr.co.carrer.admin.member.type.SubscriptionStatus;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.admin.member.exception.MemberErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
@@ -112,7 +113,7 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         try {
             return Enum.valueOf(enumClass, value.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new CustomException(ErrorCode.INVALID_MEMBER_FILTER);
+            throw new CustomException(MemberErrorCode.INVALID_MEMBER_FILTER);
         }
     }
 }
