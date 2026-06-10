@@ -7,7 +7,7 @@ import kr.co.carrer.admin.member.entity.Member;
 import kr.co.carrer.admin.member.entity.SuspendHistory;
 import kr.co.carrer.admin.member.repository.HrManagerRepository;
 import kr.co.carrer.admin.member.repository.MemberQueryRepository;
-import kr.co.carrer.admin.member.repository.MemberRepository;
+import kr.co.carrer.admin.member.repository.AdminMemberRepository;
 import kr.co.carrer.admin.member.repository.SuspendHistoryRepository;
 import kr.co.carrer.admin.member.type.HrStatus;
 import kr.co.carrer.admin.member.type.MemberStatus;
@@ -40,7 +40,7 @@ class AdminMemberServiceTest {
     @InjectMocks
     private AdminMemberService adminMemberService;
 
-    @Mock private MemberRepository memberRepository;
+    @Mock private AdminMemberRepository memberRepository;
     @Mock private MemberQueryRepository memberQueryRepository;
     @Mock private HrManagerRepository hrManagerRepository;
     @Mock private SuspendHistoryRepository suspendHistoryRepository;

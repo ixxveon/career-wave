@@ -136,7 +136,7 @@ class AdminLoginServiceTest {
 
         Claims claims = provider.parse(result.getAccessToken(), AccountType.ADMIN);
         assertThat(claims.get("adminRole", String.class)).isEqualTo(AdminRole.MASTER.name());
-        assertThat(claims.get("roleType", String.class)).isEqualTo("ROLE_ADMIN");
+        assertThat(claims.get("roleType", String.class)).isEqualTo("ADMIN");
         assertThat(claims.getSubject()).isEqualTo("1");
     }
 }
