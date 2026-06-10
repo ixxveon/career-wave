@@ -63,7 +63,7 @@ public interface ResumeControllerDocs {
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = {
-                                    @ExampleObject(name = "파일 크기 초과", value = """
+                                    @ExampleObject(name = "파일 크기 초과", summary = "파일 크기 초과 (10MB 이상)", value = """
                                             {
                                               "success": false,
                                               "statusCode": 400,
@@ -71,7 +71,7 @@ public interface ResumeControllerDocs {
                                               "data": null
                                             }
                                             """),
-                                    @ExampleObject(name = "지원하지 않는 형식", value = """
+                                    @ExampleObject(name = "지원하지 않는 형식", summary = "지원하지 않는 파일 형식 (PDF·DOC·DOCX 외)", value = """
                                             {
                                               "success": false,
                                               "statusCode": 400,
