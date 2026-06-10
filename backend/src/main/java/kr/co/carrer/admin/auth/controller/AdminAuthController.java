@@ -43,7 +43,7 @@ public class AdminAuthController implements AdminAuthControllerDocs {
             @Valid @RequestBody AdminLoginDto.Request request,
             HttpServletResponse response) {
         AdminLoginDto.Response result = adminLoginService.login(request, response);
-        return ResponseEntity.ok(ApiResponse.success("로그인되었습니다.", result));
+        return ResponseEntity.ok(ApiResponse.ok("로그인되었습니다.", result));
     }
 
     @PostMapping("/refresh")
@@ -77,7 +77,7 @@ public class AdminAuthController implements AdminAuthControllerDocs {
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
 
-        return ResponseEntity.ok(ApiResponse.success("토큰이 갱신되었습니다.", Map.of("accessToken", newAccessToken)));
+        return ResponseEntity.ok(ApiResponse.ok("토큰이 갱신되었습니다.", Map.of("accessToken", newAccessToken)));
     }
 
     private String extractRefreshTokenCookie(HttpServletRequest request) {

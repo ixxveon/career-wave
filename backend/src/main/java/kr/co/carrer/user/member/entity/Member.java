@@ -1,9 +1,9 @@
 package kr.co.carrer.user.member.entity;
 
 import jakarta.persistence.*;
-import kr.co.carrer.user.member.dto.MemberStatus;
-import kr.co.carrer.user.member.dto.RoleType;
-import kr.co.carrer.user.member.dto.SubscriptionStatus;
+import kr.co.carrer.user.member.type.MemberStatus;
+import kr.co.carrer.user.member.type.RoleType;
+import kr.co.carrer.user.member.type.SubscriptionStatus;
 
 import java.time.Instant;
 import java.util.UUID;

@@ -13,11 +13,12 @@ import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
-import kr.co.carrer.user.member.dto.CompanyApprovalStatus;
-import kr.co.carrer.user.member.dto.MemberStatus;
-import kr.co.carrer.user.member.dto.MemberType;
-import kr.co.carrer.user.member.dto.RoleType;
+import kr.co.carrer.user.member.type.CompanyApprovalStatus;
+import kr.co.carrer.user.member.type.MemberStatus;
+import kr.co.carrer.user.member.type.MemberType;
+import kr.co.carrer.user.member.type.RoleType;
 import kr.co.carrer.user.member.service.UserLoginService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 
 @Service
+@RequiredArgsConstructor
 public class UserLoginServiceImpl implements UserLoginService {
 
     private final UserMemberRepository memberRepository;
@@ -32,18 +34,6 @@ public class UserLoginServiceImpl implements UserLoginService {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
     private final EntityManager entityManager;
-
-    public UserLoginServiceImpl(UserMemberRepository memberRepository,
-                            PasswordEncoder passwordEncoder,
-                            JwtTokenProvider jwtTokenProvider,
-                            JwtProperties jwtProperties,
-                            EntityManager entityManager) {
-        this.memberRepository = memberRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.jwtProperties = jwtProperties;
-        this.entityManager = entityManager;
-    }
 
     @Transactional
     public UserLoginDto.Response login(UserLoginDto.Request request, HttpServletResponse response) {

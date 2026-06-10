@@ -6,13 +6,14 @@ import org.springframework.http.ResponseCookie;
 
 import kr.co.carrer.admin.auth.entity.Admin;
 import kr.co.carrer.admin.auth.repository.AdminRepository;
-import kr.co.carrer.admin.auth.dto.AdminStatus;
+import kr.co.carrer.admin.auth.type.AdminStatus;
 import kr.co.carrer.admin.auth.service.AdminLoginService;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,22 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 
 @Service
+@RequiredArgsConstructor
 public class AdminLoginServiceImpl implements AdminLoginService {
 
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
-
-    public AdminLoginServiceImpl(AdminRepository adminRepository,
-                              PasswordEncoder passwordEncoder,
-                              JwtTokenProvider jwtTokenProvider,
-                              JwtProperties jwtProperties) {
-        this.adminRepository = adminRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.jwtProperties = jwtProperties;
-    }
 
     @Transactional
     public AdminLoginDto.Response login(AdminLoginDto.Request request, HttpServletResponse response) {

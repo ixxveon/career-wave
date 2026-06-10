@@ -1,6 +1,7 @@
 package kr.co.carrer.admin.auth.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import kr.co.carrer.admin.auth.type.AdminRole;
 import lombok.Getter;
 
 public class AdminLoginDto {

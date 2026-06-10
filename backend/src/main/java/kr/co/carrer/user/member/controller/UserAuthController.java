@@ -44,7 +44,7 @@ public class UserAuthController implements UserAuthControllerDocs {
             @Valid @RequestBody UserLoginDto.Request request,
             HttpServletResponse response) {
         UserLoginDto.Response result = userLoginService.login(request, response);
-        return ResponseEntity.ok(ApiResponse.success("로그인되었습니다.", result));
+        return ResponseEntity.ok(ApiResponse.ok("로그인되었습니다.", result));
     }
 
     @PostMapping("/token/refresh")
@@ -90,7 +90,7 @@ public class UserAuthController implements UserAuthControllerDocs {
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
 
-        return ResponseEntity.ok(ApiResponse.success("토큰이 갱신되었습니다.", Map.of("accessToken", newAccessToken)));
+        return ResponseEntity.ok(ApiResponse.ok("토큰이 갱신되었습니다.", Map.of("accessToken", newAccessToken)));
     }
 
     private String extractRefreshTokenCookie(HttpServletRequest request) {

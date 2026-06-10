@@ -2,6 +2,11 @@ package kr.co.carrer.user.member.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import kr.co.carrer.user.member.type.CompanyApprovalStatus;
+import kr.co.carrer.user.member.type.MemberStatus;
+import kr.co.carrer.user.member.type.MemberType;
+import kr.co.carrer.user.member.type.RoleType;
+import kr.co.carrer.user.member.type.SubscriptionStatus;
 import lombok.Getter;
 
 import java.time.Instant;
