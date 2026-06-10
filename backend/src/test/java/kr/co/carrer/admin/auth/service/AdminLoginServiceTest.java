@@ -1,8 +1,8 @@
 package kr.co.carrer.admin.auth.service;
 
 import jakarta.servlet.http.HttpServletResponse;
-import kr.co.carrer.admin.auth.dto.AdminLoginRequest;
-import kr.co.carrer.admin.auth.dto.AdminLoginResponse;
+
+
 import kr.co.carrer.admin.auth.entity.Admin;
 import kr.co.carrer.admin.auth.repository.AdminRepository;
 import kr.co.carrer.admin.auth.dto.AdminRole;
@@ -73,8 +73,8 @@ class AdminLoginServiceTest {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
 
-        AdminLoginRequest req = new AdminLoginRequest("admin@test.com", "adminpw123");
-        AdminLoginResponse result = service.login(req, httpResponse);
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
+        AdminLoginDto.Response result = service.login(req, httpResponse);
 
         assertThat(result.accessToken()).isNotBlank();
         assertThat(result.adminInfo().role()).isEqualTo("MASTER");
@@ -84,7 +84,7 @@ class AdminLoginServiceTest {
     @Test
     void 존재하지_않는_loginId_AUTH_INVALID_CREDENTIALS() {
         when(adminRepository.findByLoginId(anyString())).thenReturn(Optional.empty());
-        AdminLoginRequest req = new AdminLoginRequest("wrong@test.com", "pw");
+        AdminLoginDto.Request req = new AdminLoginDto.Request("wrong@test.com", "pw");
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
@@ -95,7 +95,7 @@ class AdminLoginServiceTest {
     void 비밀번호_불일치_AUTH_INVALID_CREDENTIALS() throws Exception {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
-        AdminLoginRequest req = new AdminLoginRequest("admin@test.com", "wrongpw");
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
@@ -106,7 +106,7 @@ class AdminLoginServiceTest {
     void LOCKED_관리자_AUTH_ACCOUNT_LOCKED() throws Exception {
         Admin admin = createAdmin(AdminStatus.LOCKED);
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
-        AdminLoginRequest req = new AdminLoginRequest("admin@test.com", "adminpw123");
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
@@ -118,8 +118,8 @@ class AdminLoginServiceTest {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
 
-        AdminLoginRequest req = new AdminLoginRequest("admin@test.com", "adminpw123");
-        AdminLoginResponse result = service.login(req, httpResponse);
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
+        AdminLoginDto.Response result = service.login(req, httpResponse);
 
         assertThat(result.adminInfo().role()).isEqualTo(AdminRole.MASTER.name());
 

@@ -6,8 +6,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;
 import jakarta.validation.Valid;
 import kr.co.carrer.admin.auth.docs.AdminAuthControllerDocs;
-import kr.co.carrer.admin.auth.dto.AdminLoginRequest;
-import kr.co.carrer.admin.auth.dto.AdminLoginResponse;
+
+
 import kr.co.carrer.admin.auth.service.AdminLoginService;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
@@ -38,10 +38,10 @@ public class AdminAuthController implements AdminAuthControllerDocs {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AdminLoginResponse>> login(
-            @Valid @RequestBody AdminLoginRequest request,
+    public ResponseEntity<ApiResponse<AdminLoginDto.Response>> login(
+            @Valid @RequestBody AdminLoginDto.Request request,
             HttpServletResponse response) {
-        AdminLoginResponse result = adminLoginService.login(request, response);
+        AdminLoginDto.Response result = adminLoginService.login(request, response);
         return ResponseEntity.ok(ApiResponse.success("로그인되었습니다.", result));
     }
 
