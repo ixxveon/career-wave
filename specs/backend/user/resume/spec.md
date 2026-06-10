@@ -90,10 +90,11 @@ user/resume/
 ├── controller/
 │   └── ResumeController.java
 ├── service/
-│   ├── ResumeService.java          ← 인터페이스
-│   ├── ResumeServiceImpl.java      ← 구현체
-│   ├── FileValidator.java          ← Tika MIME 검증 + 크기 검증
-│   └── FastApiClient.java          ← FastAPI 분석 트리거 (WebClient)
+│   ├── ResumeService.java              ← 인터페이스
+│   ├── FileValidator.java              ← Tika MIME 검증 + 크기 검증
+│   ├── FastApiClient.java              ← FastAPI 분석 트리거 (WebClient)
+│   └── impl/
+│       └── ResumeServiceImpl.java      ← 구현체
 ├── dto/
 │   └── ResumeDTO.java
 ├── entity/
