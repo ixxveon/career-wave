@@ -12,7 +12,19 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
-    DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "이미 존재하는 데이터입니다.");
+    DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "이미 존재하는 데이터입니다."),
+
+    // --- 1. 회원관리 (admin/member) ---
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."),
+    HR_MANAGER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 기업 회원입니다."),
+    ALREADY_BANNED(HttpStatus.CONFLICT, "이미 영구 정지된 회원입니다."),
+    ALREADY_PROCESSED(HttpStatus.CONFLICT, "이미 처리된 신청입니다."),
+    INVALID_MEMBER_FILTER(HttpStatus.BAD_REQUEST, "지원하지 않는 필터 값입니다."),
+    INVALID_SANCTION_DURATION(HttpStatus.BAD_REQUEST, "SUSPEND 제재 시 유효하지 않은 기간입니다."),
+    REASON_REQUIRED(HttpStatus.BAD_REQUEST, "사유는 필수입니다."),
+    REASON_TOO_SHORT(HttpStatus.BAD_REQUEST, "사유는 최소 10자 이상 입력해주세요."),
+    ALREADY_SUSPENDED(HttpStatus.CONFLICT, "이미 정지된 회원입니다."),
+    MAX_WARNING_EXCEEDED(HttpStatus.CONFLICT, "경고는 최대 3회까지만 부여할 수 있습니다.");
 
     private final HttpStatus status;
     private final String message;
