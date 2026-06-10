@@ -77,9 +77,9 @@ class AdminLoginServiceTest {
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
         AdminLoginDto.Response result = service.login(req, httpResponse);
 
-        assertThat(result.accessToken()).isNotBlank();
-        assertThat(result.adminInfo().role()).isEqualTo("MASTER");
-        assertThat(result.adminInfo().id()).isEqualTo(1L);
+        assertThat(result.getAccessToken()).isNotBlank();
+        assertThat(result.getAdminInfo().getRole()).isEqualTo("MASTER");
+        assertThat(result.getAdminInfo().getId()).isEqualTo(1L);
     }
 
     @Test
@@ -122,7 +122,7 @@ class AdminLoginServiceTest {
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
         AdminLoginDto.Response result = service.login(req, httpResponse);
 
-        assertThat(result.adminInfo().role()).isEqualTo(AdminRole.MASTER.name());
+        assertThat(result.getAdminInfo().getRole()).isEqualTo(AdminRole.MASTER.name());
 
         // JWT를 직접 파싱해 adminRole claim 검증
         JwtProperties props = new JwtProperties();
@@ -134,7 +134,7 @@ class AdminLoginServiceTest {
         props.getUser().setRefreshExpiration(1209600000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
 
-        Claims claims = provider.parse(result.accessToken(), AccountType.ADMIN);
+        Claims claims = provider.parse(result.getAccessToken(), AccountType.ADMIN);
         assertThat(claims.get("adminRole", String.class)).isEqualTo(AdminRole.MASTER.name());
         assertThat(claims.get("roleType", String.class)).isEqualTo("ROLE_ADMIN");
         assertThat(claims.getSubject()).isEqualTo("1");

@@ -85,8 +85,8 @@ class UserLoginServiceTest {
         UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", RoleType.ROLE_USER);
         UserLoginDto.Response result = service.login(req, httpResponse);
 
-        assertThat(result.accessToken()).isNotBlank();
-        assertThat(result.member().memberType()).isEqualTo("USER");
+        assertThat(result.getAccessToken()).isNotBlank();
+        assertThat(result.getMember().getMemberType()).isEqualTo("USER");
     }
 
     @Test
