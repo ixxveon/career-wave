@@ -106,9 +106,7 @@ export default function AdminSidebar() {
         ) : null}
       </nav>
 
-      <button type="button" className="admin-logoutBtn" onClick={handleLogout}>
-        로그아웃
-      </button>
+
     </aside>
   );
 }
