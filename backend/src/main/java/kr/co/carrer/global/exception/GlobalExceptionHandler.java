@@ -65,9 +65,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiResponse<Object>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
         log.warn("[파일 크기 초과] 최대 허용 크기를 초과한 파일 업로드 시도 | 상세: {}", e.getMessage());
+        ErrorCode errorCode = ErrorCode.FILE_SIZE_EXCEEDED;
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), "파일 크기가 최대 허용 용량(10MB)을 초과했습니다."));
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getMessage()));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
