@@ -27,7 +27,7 @@ function getDetailPanelId(tab: DetailTab) {
   return `jobnotice-panel-${TABS.indexOf(tab)}`;
 }
 
-const STACKS_BY_JOB_TYPE: Partial<Record<JobNotice['jobType'], string[]>> = {
+const STACKS_BY_JOB_CATEGORY: Partial<Record<JobNotice['jobCategory'], string[]>> = {
   백엔드: ['Java', 'Spring Boot', 'AWS', 'Docker', 'MySQL'],
   프론트엔드: ['React', 'TypeScript', 'Next.js', 'CSS', 'Vite'],
   데이터: ['Python', 'SQL', 'TensorFlow', 'Airflow', 'AWS'],
@@ -182,7 +182,7 @@ function DetailTabContent({ activeTab, job }: { activeTab: DetailTab; job: JobNo
           <h3><Building2 size={17} /> 기업 정보</h3>
           <ul>
             <li>회사명: {job.company}</li>
-            <li>업종: {job.industry || `${job.jobType} 서비스`}</li>
+            <li>업종: {job.industry || `${job.jobCategory} 서비스`}</li>
             <li>기업 규모: {job.companySize}</li>
           </ul>
         </section>
@@ -239,7 +239,7 @@ function DetailTabContent({ activeTab, job }: { activeTab: DetailTab; job: JobNo
 }
 
 function TechStackStrip({ job }: { job: JobNotice }) {
-  const stacks = job.stacks || STACKS_BY_JOB_TYPE[job.jobType] || job.tags;
+  const stacks = job.stacks || STACKS_BY_JOB_CATEGORY[job.jobCategory] || job.tags;
 
   return (
     <section className="jnd-stack-strip" aria-label="기술 스택">

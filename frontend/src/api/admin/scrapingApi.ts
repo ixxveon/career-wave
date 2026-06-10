@@ -19,9 +19,18 @@ export interface PageResult<T> {
 
 // ── Enum 상수 ──────────────────────────────────────────────────
 
-export const SCRAPING_STATUS = {
+const SCRAPING_BASE_STATUS = {
+  IDLE: 'IDLE',
+  RUNNING: 'RUNNING',
   SUCCESS: 'SUCCESS',
   FAILED: 'FAILED',
+} as const;
+
+export const PIPELINE_STATUS = SCRAPING_BASE_STATUS;
+
+export const SCRAPING_STATUS = {
+  SUCCESS: SCRAPING_BASE_STATUS.SUCCESS,
+  FAILED: SCRAPING_BASE_STATUS.FAILED,
 } as const;
 
 export const SCRAPING_ACTION_TYPE = {
@@ -31,13 +40,14 @@ export const SCRAPING_ACTION_TYPE = {
 } as const;
 
 export type ScrapingStatus = typeof SCRAPING_STATUS[keyof typeof SCRAPING_STATUS];
+export type PipelineStatus = typeof PIPELINE_STATUS[keyof typeof PIPELINE_STATUS];
 export type ScrapingActionType = typeof SCRAPING_ACTION_TYPE[keyof typeof SCRAPING_ACTION_TYPE];
 
 // ── 도메인 인터페이스 ──────────────────────────────────────────
 
 export interface ScrapingSource {
   sourceName: string;
-  status: ScrapingStatus;
+  status: PipelineStatus;
   successRate: number;
   averageDurationMs: number;
   cycleExpression: string;
@@ -108,7 +118,7 @@ export interface ScrapingLog {
 
 export interface ScrapingSourceListParams {
   keyword?: string;
-  status?: ScrapingStatus;
+  status?: PipelineStatus;
   page?: number;
   size?: number;
 }
@@ -157,4 +167,3 @@ export const scrapingApi = {
   getLogs: (params?: ScrapingLogListParams) =>
     axiosInstance.get<ApiResponse<PageResult<ScrapingLog>>>(`${SCRAPING_API_BASE_PATH}/logs`, { params }),
 };
-

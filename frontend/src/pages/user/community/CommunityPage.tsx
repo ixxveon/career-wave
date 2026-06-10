@@ -1,6 +1,6 @@
-import { useMemo, useState, type KeyboardEvent } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ThumbsUp, MessageCircle, Bookmark, ChevronRight, Flame, Star, Clock, Database } from 'lucide-react';
+import { Search, ThumbsUp, MessageCircle, Bookmark, Flame, Star, Clock, Database } from 'lucide-react';
 import '@/styles/user/community/CommunityPage.css';
 
 const CATEGORIES = ['전체', '질문', '면접 후기', '이력서 팁', '합격 후기', '자유'];
@@ -132,32 +132,15 @@ type PostCardProps = {
 function PostCard({ post, onClick }: PostCardProps) {
   const [bookmarked, setBookmarked] = useState(post.bookmarked);
 
-  function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.target !== event.currentTarget) return;
-
-    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
-      event.preventDefault();
-      onClick();
-    }
-  }
-
   return (
-      <div
-          className="cm-post"
-          onClick={onClick}
-          onKeyDown={handleCardKeyDown}
-          role="button"
-          tabIndex={0}
-      >
+      <div className="cm-post" onClick={onClick} role="button" tabIndex={0}>
         <div className="cm-post__top">
           <span className="cm-post__cat">{post.category}</span>
-
           {post.hot && (
               <span className="cm-post__hot">
             <Flame size={11} /> HOT
           </span>
           )}
-
           {post.reportCount > 0 && <span className="cm-post__report">신고 {post.reportCount}</span>}
 
           <button
@@ -178,7 +161,6 @@ function PostCard({ post, onClick }: PostCardProps) {
 
         <div className="cm-post__footer">
           <span className="cm-post__author">by {post.author}</span>
-
           <div className="cm-post__meta">
           <span>
             <Clock size={11} /> {post.createdAt}
@@ -209,10 +191,10 @@ export default function CommunityPage() {
     });
   }, [category, search]);
 
-  const visiblePosts: CommunityPost[] = filtered.slice(0, visibleCount);
-  const hasMore: boolean = visibleCount < filtered.length;
+  const visiblePosts = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
   const lastVisiblePost = visiblePosts[visiblePosts.length - 1];
-  const nextCursor: string = hasMore && lastVisiblePost ? `cursor-${lastVisiblePost.id}` : 'end';
+  const nextCursor = hasMore && lastVisiblePost ? `cursor-${lastVisiblePost.id}` : 'end';
 
   return (
       <div className="cm-page">
@@ -231,70 +213,57 @@ export default function CommunityPage() {
           <p>인기 게시글과 카테고리 목록은 캐시 대상 데이터로 분리하고, 목록은 커서 기반 더보기 UI로 표현합니다.</p>
         </div>
 
-        <div className="cm-popular-card">
-          <p className="cm-popular-card__title">
-            <Star size={15} /> 이번 주 인기 글
-          </p>
-
-          <div className="cm-popular-list">
-            {POPULAR.map((post, index) => (
-                <div key={post.id} className="cm-popular-item">
-                  <span className="cm-popular-rank">{index + 1}</span>
-                  <span className="cm-popular-title">{post.title}</span>
-                  <span className="cm-popular-likes">
-                <ThumbsUp size={11} /> {post.likes}
-              </span>
-                </div>
-            ))}
+        <div className="cm-toolbar">
+          <div className="cm-search">
+            <Search size={16} />
+            <input
+                type="search"
+                placeholder="게시글 검색"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setVisibleCount(PAGE_SIZE);
+                }}
+            />
           </div>
+
+          <button className="cm-write" type="button" onClick={() => navigate('/community/new')}>
+            글쓰기
+          </button>
         </div>
 
-        <div className="cm-toolbar">
-          <div className="cm-cats" aria-label="게시글 카테고리">
-            {CATEGORIES.map((item) => (
-                <button
-                    key={item}
-                    className={`cm-cat${category === item ? ' cm-cat--on' : ''}`}
-                    type="button"
-                    onClick={() => {
-                      setCategory(item);
-                      setVisibleCount(PAGE_SIZE);
-                    }}
-                >
-                  {item}
-                </button>
-            ))}
-          </div>
-
-          <div className="cm-right">
-            <div className="cm-search">
-              <Search size={14} />
-              <input
-                  placeholder="게시글 검색"
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
+        <div className="cm-categories">
+          {CATEGORIES.map((item) => (
+              <button
+                  key={item}
+                  className={category === item ? 'is-active' : ''}
+                  type="button"
+                  onClick={() => {
+                    setCategory(item);
                     setVisibleCount(PAGE_SIZE);
                   }}
-              />
-            </div>
-
-            <button className="cm-write-btn" type="button" onClick={() => navigate('/community/posts/create')}>
-              글 작성하기 <ChevronRight size={14} />
-            </button>
-          </div>
+              >
+                {item}
+              </button>
+          ))}
         </div>
 
-        <div className="cm-list">
-          {visiblePosts.map((post) => (
-              <PostCard
-                  key={post.id}
-                  post={post}
-                  onClick={() => navigate(`/community/posts/${post.id}`)}
-              />
+        <section className="cm-highlight">
+          {POPULAR.map((post) => (
+              <article key={post.id}>
+                <Star size={14} />
+                <strong>{post.title}</strong>
+                <span>{post.likes}명이 도움됨</span>
+              </article>
           ))}
+        </section>
 
+        <div className="cm-list">
           {filtered.length === 0 && <div className="cm-empty">검색 결과가 없습니다.</div>}
+
+          {visiblePosts.map((post) => (
+              <PostCard key={post.id} post={post} onClick={() => navigate(`/community/${post.id}`)} />
+          ))}
         </div>
 
         {hasMore && (
