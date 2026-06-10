@@ -1,3 +1,19 @@
+export interface Post {
+  id: number;
+  category: string;
+  title: string;
+  preview: string;
+  content: string;
+  authorId: string;
+  author: string;
+  createdAt: string;
+  views: number;
+  likes: number;
+  comments: number;
+  bookmarked: boolean;
+  hot: boolean;
+}
+
 export const CURRENT_USER = { id: 'me', name: '나' };
 
 export const COMMUNITY_POSTS_STORAGE_KEY = 'careerWaveCommunityPosts';
@@ -115,29 +131,33 @@ export const MOCK_POSTS = [
   },
 ];
 
-export function getStoredPosts() {
+export function getStoredPosts(): Post[] {
   try {
     const parsedPosts = JSON.parse(
         localStorage.getItem(COMMUNITY_POSTS_STORAGE_KEY) || '[]'
     );
 
-    return Array.isArray(parsedPosts) ? parsedPosts : [];
+    return Array.isArray(parsedPosts) ? (parsedPosts as Post[]) : [];
   } catch {
     return [];
   }
 }
 
-export function saveStoredPosts(posts) {
+export function getAllCommunityPosts(): Post[] {
+  return [...MOCK_POSTS, ...getStoredPosts()];
+}
+
+export function saveStoredPosts(posts: Post[]): void {
   localStorage.setItem(COMMUNITY_POSTS_STORAGE_KEY, JSON.stringify(posts));
 }
 
-export function getCommunityPost(postId) {
+export function getCommunityPost(postId: string | number | null | undefined): Post | null {
   if (!postId) return null;
 
   return getAllCommunityPosts().find((post) => String(post.id) === String(postId)) ?? null;
 }
 
-export function getPostPreview(content) {
+export function getPostPreview(content: string): string {
   const preview = content.replace(/\s+/g, ' ').trim();
   return preview.length > 90 ? `${preview.slice(0, 90)}...` : preview;
 }
