@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, ThumbsUp, Bookmark, MessageCircle, Flag, Send, Pencil, Trash2 } from 'lucide-react';
-import './styles/PostDetailPage.css';
+import '@/styles/user/community/PostDetailPage.css';
 
 const REPORT_TYPE = {
   BOARD: 'BOARD',
   COMMENT: 'COMMENT',
   MEMBER: 'MEMBER',
-};
+} as const;
 
 const REPORT_LABELS = {
   [REPORT_TYPE.BOARD]: '게시글',
@@ -25,16 +25,62 @@ const REPORT_REASON_LABELS = {
   OTHER: '기타',
 };
 
-const MOCK_POST = {
-  id: 1,
-  category: '면접 후기',
-  title: '카카오 백엔드 1차 면접 후기',
-  author: '개발자지망생',
-  createdAt: '2026-05-20',
-  views: 1240,
-  likes: 87,
-  reportCount: 1,
-  content: `안녕하세요. 카카오 백엔드 1차 면접 후기를 공유합니다.
+type ReportType = (typeof REPORT_TYPE)[keyof typeof REPORT_TYPE];
+type ReportReason = keyof typeof REPORT_REASON_LABELS;
+
+type ReportTarget = {
+  type: ReportType;
+  id: number;
+};
+
+type Reply = {
+  id: number;
+  author: string;
+  createdAt: string;
+  content: string;
+  likes: number;
+  reportCount: number;
+};
+
+type Comment = {
+  id: number;
+  author: string;
+  createdAt: string;
+  content: string;
+  likes: number;
+  reportCount: number;
+  replies: Reply[];
+};
+
+type CommunityPost = {
+  id: number;
+  category: string;
+  title: string;
+  author: string;
+  createdAt: string;
+  views: number;
+  likes: number;
+  reportCount: number;
+  content: string;
+};
+
+type CommentItemProps = {
+  comment: Comment;
+  onReply: (commentId: number, content: string) => void;
+  onReport: (type: ReportType, id: number) => void;
+};
+
+const MOCK_POSTS: CommunityPost[] = [
+  {
+    id: 1,
+    category: '면접 후기',
+    title: '카카오 백엔드 1차 면접 후기',
+    author: '개발자지망생',
+    createdAt: '2026-05-20',
+    views: 1240,
+    likes: 87,
+    reportCount: 1,
+    content: `안녕하세요. 카카오 백엔드 1차 면접 후기를 공유합니다.
 
 **면접 구성**
 - 시간: 약 50분
@@ -51,9 +97,111 @@ const MOCK_POST = {
 
 **후기**
 CS 기본기를 충실히 준비하면 충분히 대응 가능한 수준이었습니다. 프로젝트 경험은 기술 선택 이유와 장애 대응 과정을 구체적으로 물어봤습니다.`,
-};
+  },
+  {
+    id: 2,
+    category: '합격 후기',
+    title: '토스 프론트엔드 최종 합격 후기와 준비 방법',
+    author: 'toss_fe_21',
+    createdAt: '2026-05-19',
+    views: 3560,
+    likes: 215,
+    reportCount: 1,
+    content: `3개월 준비 끝에 토스 프론트엔드 최종 합격 후기를 공유합니다.
 
-const INITIAL_COMMENTS = [
+**준비 과정**
+- JavaScript 기본기 정리
+- React 상태 관리 패턴 학습
+- 과제 전형 대비 프로젝트 리팩토링
+- 컬처핏 예상 질문 정리
+
+**후기**
+과제 전형에서는 상태 관리 선택 근거와 성능 측정 방식을 설명한 것이 가장 도움이 됐습니다.`,
+  },
+  {
+    id: 3,
+    category: '질문',
+    title: 'Spring Boot에서 @Transactional 내부 호출 문제 해결법',
+    author: 'java_dev_kim',
+    createdAt: '2026-05-18',
+    views: 840,
+    likes: 42,
+    reportCount: 0,
+    content: `Spring Boot에서 @Transactional 내부 호출 문제를 어떻게 해결하는지 궁금합니다.
+
+같은 클래스 내부 메서드 호출에서는 프록시가 적용되지 않는다고 들었는데, 실무에서는 서비스 분리나 자기 주입 방식 중 어떤 방식을 주로 사용하시나요?`,
+  },
+  {
+    id: 4,
+    category: '이력서 팁',
+    title: '신입 백엔드 이력서 통과율 높이는 5가지 방법',
+    author: '취준컨설턴트',
+    createdAt: '2026-05-17',
+    views: 2100,
+    likes: 130,
+    reportCount: 0,
+    content: `신입 백엔드 이력서에서 중요한 것은 기술 나열보다 문제 해결 과정입니다.
+
+**추천 구성**
+1. 프로젝트 목적
+2. 맡은 역할
+3. 사용 기술
+4. 기술 선택 이유
+5. 문제 상황과 해결 방법
+6. 결과와 개선점
+
+프로젝트 설명보다 성과 수치, 트러블슈팅 근거, 기술 선택 이유를 먼저 보이게 구성해보세요.`,
+  },
+  {
+    id: 5,
+    category: '질문',
+    title: '네이버 공채 코딩테스트 난이도 어느 정도인가요?',
+    author: 'algo_beginner',
+    createdAt: '2026-05-16',
+    views: 580,
+    likes: 21,
+    reportCount: 0,
+    content: `네이버 공채 코딩테스트를 처음 준비하고 있습니다.
+
+그래프, DP, 구현 문제 비중이 어느 정도인지 궁금합니다. 최근 응시하신 분들이 있다면 준비 방향 조언 부탁드립니다.`,
+  },
+  {
+    id: 6,
+    category: '자유',
+    title: '취준 6개월 차, 멘탈 관리하는 법 공유합니다',
+    author: '버티는중',
+    createdAt: '2026-05-15',
+    views: 1890,
+    likes: 178,
+    reportCount: 2,
+    content: `취준 6개월 차에 멘탈 관리했던 방법을 공유합니다.
+
+서류 탈락이 반복될 때마다 감정적으로 무너지기 쉬웠는데, 저는 지원 기록을 남기고 하루 루틴을 작게 쪼개면서 버텼습니다.
+
+결과보다 오늘 한 행동을 체크하는 방식이 생각보다 도움이 됐습니다.`,
+  },
+  {
+    id: 7,
+    category: '면접 후기',
+    title: '대기업 인성 면접에서 STAR 답변 구조가 중요했던 이유',
+    author: 'star_practice',
+    createdAt: '2026-05-14',
+    views: 960,
+    likes: 64,
+    reportCount: 0,
+    content: `대기업 인성 면접에서 STAR 답변 구조를 사용했던 후기를 공유합니다.
+
+**STAR 구조**
+- Situation: 상황
+- Task: 과제
+- Action: 행동
+- Result: 결과
+
+갈등 상황 질문에서 상황, 행동, 결과를 짧게 정리하니 꼬리 질문 대응이 훨씬 쉬웠습니다.`,
+  },
+];
+
+const INITIAL_COMMENTS: Comment[] = [
   {
     id: 1,
     author: 'spring_master',
@@ -83,7 +231,7 @@ const INITIAL_COMMENTS = [
   },
 ];
 
-function CommentItem({ comment, onReply, onReport }) {
+function CommentItem({ comment, onReply, onReport }: CommentItemProps) {
   const [replyText, setReplyText] = useState('');
   const [replyOpen, setReplyOpen] = useState(false);
 
@@ -126,7 +274,7 @@ function CommentItem({ comment, onReply, onReport }) {
             </button>
           </div>
 
-          {!!comment.replies?.length && (
+          {!!comment.replies.length && (
               <div className="pd-replies">
                 {comment.replies.map((reply) => (
                     <div key={reply.id} className="pd-reply">
@@ -182,19 +330,35 @@ function CommentItem({ comment, onReply, onReport }) {
 
 export default function PostDetailPage() {
   const navigate = useNavigate();
+  const { postId } = useParams();
+
+  const post = useMemo(() => {
+    return MOCK_POSTS.find((item) => String(item.id) === String(postId)) ?? null;
+  }, [postId]);
 
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
-  const [likeCount, setLikeCount] = useState(MOCK_POST.likes);
+  const [likeCount, setLikeCount] = useState(post?.likes ?? 0);
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState(INITIAL_COMMENTS);
-  const [reportTarget, setReportTarget] = useState(null);
-  const [reportReason, setReportReason] = useState('AD');
-  const [postReportCount, setPostReportCount] = useState(MOCK_POST.reportCount);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [reportReason, setReportReason] = useState<ReportReason>('AD');
+  const [postReportCount, setPostReportCount] = useState(post?.reportCount ?? 0);
+
+  useEffect(() => {
+    setLiked(false);
+    setBookmarked(false);
+    setLikeCount(post?.likes ?? 0);
+    setPostReportCount(post?.reportCount ?? 0);
+    setReportTarget(null);
+    setReportReason('AD');
+  }, [post?.id, post?.likes, post?.reportCount]);
 
   function handleLike() {
-    setLiked((current) => !current);
-    setLikeCount((count) => (liked ? count - 1 : count + 1));
+    setLiked((current) => {
+      setLikeCount((count) => (current ? count - 1 : count + 1));
+      return !current;
+    });
   }
 
   function submitComment() {
@@ -216,14 +380,14 @@ export default function PostDetailPage() {
     setComment('');
   }
 
-  function submitReply(commentId, content) {
+  function submitReply(commentId: number, content: string) {
     setComments((current) =>
         current.map((item) =>
             item.id === commentId
                 ? {
                   ...item,
                   replies: [
-                    ...(item.replies || []),
+                    ...item.replies,
                     {
                       id: Date.now(),
                       author: '나',
@@ -252,17 +416,21 @@ export default function PostDetailPage() {
             if (item.id === reportTarget.id) {
               return {
                 ...item,
-                reportCount: (item.reportCount ?? 0) + 1,
+                reportCount: item.reportCount + 1,
               };
+            }
+
+            if (!item.replies.some((reply) => reply.id === reportTarget.id)) {
+              return item;
             }
 
             return {
               ...item,
-              replies: item.replies?.map((reply) =>
+              replies: item.replies.map((reply) =>
                   reply.id === reportTarget.id
                       ? {
                         ...reply,
-                        reportCount: (reply.reportCount ?? 0) + 1,
+                        reportCount: reply.reportCount + 1,
                       }
                       : reply,
               ),
@@ -279,6 +447,20 @@ export default function PostDetailPage() {
     setReportReason('AD');
   }
 
+  if (!post) {
+    return (
+        <div className="pd-page">
+          <button className="pd-back" type="button" onClick={() => navigate('/community')}>
+            <ChevronLeft size={14} /> 커뮤니티로
+          </button>
+
+          <div className="empty-state empty-state--error">
+            존재하지 않는 게시글입니다.
+          </div>
+        </div>
+    );
+  }
+
   return (
       <div className="pd-page">
         <button className="pd-back" type="button" onClick={() => navigate('/community')}>
@@ -287,15 +469,15 @@ export default function PostDetailPage() {
 
         <article className="pd-article">
           <div className="pd-article__header">
-            <span className="pd-cat">{MOCK_POST.category}</span>
-            <h1 className="pd-title">{MOCK_POST.title}</h1>
+            <span className="pd-cat">{post.category}</span>
+            <h1 className="pd-title">{post.title}</h1>
 
             <div className="pd-meta">
-              <span className="pd-meta__author">by {MOCK_POST.author}</span>
+              <span className="pd-meta__author">by {post.author}</span>
               <span className="pd-meta__dot">·</span>
-              <span>{MOCK_POST.createdAt}</span>
+              <span>{post.createdAt}</span>
               <span className="pd-meta__dot">·</span>
-              <span>조회 {MOCK_POST.views.toLocaleString()}</span>
+              <span>조회 {post.views.toLocaleString()}</span>
               <span className="pd-meta__dot">·</span>
               <span>신고 {postReportCount}</span>
             </div>
@@ -312,7 +494,7 @@ export default function PostDetailPage() {
           </div>
 
           <div className="pd-body">
-            {MOCK_POST.content.split('\n').map((line, index) => {
+            {post.content.split('\n').map((line, index) => {
               if (!line.trim()) return <br key={index} />;
 
               if (line.startsWith('**') && line.endsWith('**')) {
@@ -343,7 +525,7 @@ export default function PostDetailPage() {
             <button
                 className="pd-action-btn pd-action-btn--report"
                 type="button"
-                onClick={() => setReportTarget({ type: REPORT_TYPE.BOARD, id: MOCK_POST.id })}
+                onClick={() => setReportTarget({ type: REPORT_TYPE.BOARD, id: post.id })}
             >
               <Flag size={13} /> 신고
             </button>
@@ -393,7 +575,10 @@ export default function PostDetailPage() {
 
                 <label>
                   신고 사유
-                  <select value={reportReason} onChange={(event) => setReportReason(event.target.value)}>
+                  <select
+                      value={reportReason}
+                      onChange={(event) => setReportReason(event.target.value as ReportReason)}
+                  >
                     {Object.entries(REPORT_REASON_LABELS).map(([reasonKey, label]) => (
                         <option key={reasonKey} value={reasonKey}>
                           {label}
