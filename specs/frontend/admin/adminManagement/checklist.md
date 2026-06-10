@@ -15,7 +15,7 @@
 - [x] `frontend/src/admin/api/adminManagementApi.ts`가 생성되어 있다.
 - [x] `AdminManagementSummary` 타입이 정의되고 export되어 있다.
 - [x] `AdminAccount`, `AdminRole`, `AdminStatus` 타입이 정의되고 export되어 있다.
-- [x] `AdminAclRule`, `AclRiskLevel` 타입이 정의되고 export되어 있다.
+- [x] `AdminAclRule` 타입은 ERD 기준 필드로 정의되고 export되어 있다.
 - [x] `AdminAuditLog`, `AuditSeverity` 타입이 정의되고 export되어 있다.
 - [x] 관리자 계정 API 함수가 작성되어 있다.
 - [x] ACL API 함수가 작성되어 있다.

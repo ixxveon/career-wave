@@ -26,8 +26,8 @@
 | DELETE | `/api/v1/admin/admins/{adminId}` | `MASTER` |
 | GET | `/api/v1/admin/admin-acls` | `MASTER`, `BACKEND` |
 | POST | `/api/v1/admin/admin-acls` | `MASTER` |
-| PATCH | `/api/v1/admin/admin-acls/{aclId}/enabled` | `MASTER` |
-| DELETE | `/api/v1/admin/admin-acls/{aclId}` | `MASTER` |
+| PATCH | `/api/v1/admin/admin-acls/{ipAclId}/enabled` | `MASTER` |
+| DELETE | `/api/v1/admin/admin-acls/{ipAclId}` | `MASTER` |
 | GET | `/api/v1/admin/admin-audit-logs` | `MASTER`, `BACKEND` |
 
 ## Endpoints
@@ -42,8 +42,8 @@
 | DELETE | `/api/v1/admin/admins/{adminId}` | 관리자 계정 삭제 |
 | GET | `/api/v1/admin/admin-acls` | IP ACL 목록 조회 |
 | POST | `/api/v1/admin/admin-acls` | IP ACL 등록 |
-| PATCH | `/api/v1/admin/admin-acls/{aclId}/enabled` | IP ACL 활성/비활성 전환 |
-| DELETE | `/api/v1/admin/admin-acls/{aclId}` | IP ACL 삭제 |
+| PATCH | `/api/v1/admin/admin-acls/{ipAclId}/enabled` | IP ACL 활성/비활성 전환 |
+| DELETE | `/api/v1/admin/admin-acls/{ipAclId}` | IP ACL 삭제 |
 | GET | `/api/v1/admin/admin-audit-logs` | 관리자 보안 감사 로그 조회 |
 
 ## Query Parameters
@@ -158,12 +158,12 @@
   "data": {
     "items": [
       {
-        "id": "ACL-001",
+        "ipAclId": "ACL-001",
         "label": "본사 사내망",
-        "cidr": "10.20.0.0/16",
-        "note": "사내 네트워크 전체 허용",
-        "enabled": true,
-        "riskLevel": "HIGH",
+        "ipRange": "10.20.0.0/16",
+        "isEnabled": true,
+        "description": "사내 네트워크 전체 허용",
+        "createdAt": "2026-05-25T08:30:00+09:00",
         "updatedAt": "2026-05-25T08:30:00+09:00"
       }
     ],
@@ -180,8 +180,8 @@
 ```json
 {
   "label": "운영 VPN",
-  "cidr": "172.16.5.0/24",
-  "note": "원격 운영자 접속 허용"
+  "ipRange": "172.16.5.0/24",
+  "description": "원격 운영자 접속 허용"
 }
 ```
 
@@ -229,14 +229,6 @@
 | `ACTIVE` | 접근 가능 |
 | `LOCKED` | 접근 제한 |
 
-### `AclRiskLevel`
-
-| Value | Description |
-|---|---|
-| `LOW` | `/32` 단일 고정 IP |
-| `MEDIUM` | `/24` 제한 대역 |
-| `HIGH` | `/24`보다 넓은 대역 |
-
 ### `AuditSeverity`
 
 | Value | Description |
@@ -250,7 +242,8 @@
 - 관리자 목록 응답은 비밀번호 또는 비밀번호 해시를 절대 포함하지 않는다.
 - `MASTER` 계정이 1개뿐인 경우 해당 계정은 잠금 또는 삭제할 수 없다.
 - 권한 변경, 상태 변경, 삭제, ACL 변경은 감사 로그를 생성해야 한다.
-- ACL `cidr`는 CIDR 형식 검증을 통과해야 한다.
+- ACL `ipRange`는 CIDR 형식 검증을 통과해야 한다.
+- ACL 위험도 배지는 API 응답 필드가 아니라 프론트엔드가 `ipRange` prefix로 계산해 표시한다.
 - 빈 목록은 `null` 대신 빈 배열과 pagination 필드를 반환한다.
 
 ## Error Cases
