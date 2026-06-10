@@ -3,8 +3,9 @@ package kr.co.carrer.user.resume.websocket;
 import kr.co.carrer.user.resume.dto.WebSocketMessage;
 import kr.co.carrer.user.resume.entity.Document;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageDeliveryException;
@@ -25,7 +26,6 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ResumeStompChannelInterceptor implements ChannelInterceptor {
 
     private static final String TOPIC_PREFIX = "/topic/resume/";
@@ -33,6 +33,17 @@ public class ResumeStompChannelInterceptor implements ChannelInterceptor {
 
     private final DocumentRepository documentRepository;
     private final SimpMessagingTemplate messagingTemplate;
+
+    // SimpMessagingTemplate은 WebSocket 브로커 초기화 이후에만 사용 가능하므로
+    // 순환 참조 방지를 위해 @Lazy로 지연 주입한다
+    @Autowired
+    public ResumeStompChannelInterceptor(
+            DocumentRepository documentRepository,
+            @Lazy SimpMessagingTemplate messagingTemplate
+    ) {
+        this.documentRepository = documentRepository;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {

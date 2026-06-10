@@ -2,8 +2,9 @@ package kr.co.carrer.user.resume.websocket;
 
 import kr.co.carrer.user.resume.dto.WebSocketMessage;
 import kr.co.carrer.user.resume.event.DocumentAnalysisCompletedEvent;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
@@ -25,13 +26,21 @@ import java.util.concurrent.ScheduledFuture;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class DocumentAnalysisEventListener {
 
     private static final long GRACE_PERIOD_MS = 30_000L;
 
     private final SimpMessagingTemplate messagingTemplate;
     private final TaskScheduler taskScheduler;
+
+    @Autowired
+    public DocumentAnalysisEventListener(
+            @Lazy SimpMessagingTemplate messagingTemplate,
+            TaskScheduler taskScheduler
+    ) {
+        this.messagingTemplate = messagingTemplate;
+        this.taskScheduler = taskScheduler;
+    }
 
     // Grace Period 타이머 관리: documentId → ScheduledFuture
     private final Map<UUID, ScheduledFuture<?>> gracePeriodTimers = new ConcurrentHashMap<>();
