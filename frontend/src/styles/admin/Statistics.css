@@ -342,6 +342,15 @@
 }
 .statsViewAllBtn:hover { background: #e8f0f9; }
 
+/* ── error message ───────────────────────────────────────────── */
+.statsErrorMsg {
+  margin: 20px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9a4444;
+}
+
+
 /* ── responsive ──────────────────────────────────────────────── */
 /*
  * 사이드바(220px)는 1100px에서 사라짐 → 콘텐츠 영역이 그 시점에 더 넓어짐
