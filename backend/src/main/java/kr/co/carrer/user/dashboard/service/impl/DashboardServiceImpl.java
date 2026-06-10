@@ -22,6 +22,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final PersonalProfileRepository personalProfileRepository;
 
     @Override
+    // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
     public DashboardDTO.ProfileResponse getProfile(UUID memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -40,6 +41,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
+    // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
     public DashboardDTO.GithubResponse getGithubProfile(UUID memberId) {
         memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -61,29 +63,36 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private String extractGithubId(String githubUrl) {
-        if (githubUrl == null || githubUrl.isBlank()) {
+    if (githubUrl == null || githubUrl.isBlank()) {
+        return null;
+    }
+
+    try {
+        URI uri = URI.create(githubUrl.trim());
+
+        String host = uri.getHost();
+        if (host == null ||
+                (!host.equals("github.com")
+                        && !host.equals("www.github.com"))) {
             return null;
         }
 
-        try {
-            URI uri = URI.create(githubUrl.trim());
-            String path = uri.getPath();
+        String path = uri.getPath();
 
-            if (path == null || path.isBlank() || "/".equals(path)) {
-                return null;
-            }
-
-            String[] segments = path.split("/");
-
-            for (String segment : segments) {
-                if (!segment.isBlank()) {
-                    return segment;
-                }
-            }
-
-            return null;
-        } catch (Exception e) {
+        if (path == null || path.isBlank() || "/".equals(path)) {
             return null;
         }
+
+        String[] segments = path.split("/");
+
+        for (String segment : segments) {
+            if (!segment.isBlank()) {
+                return segment;
+            }
+        }
+
+        return null;
+    } catch (Exception e) {
+        return null;
     }
 }
