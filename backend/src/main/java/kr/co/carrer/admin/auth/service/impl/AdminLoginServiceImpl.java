@@ -1,14 +1,13 @@
-package kr.co.carrer.admin.auth.service;
+package kr.co.carrer.admin.auth.service.impl;
 
 import kr.co.carrer.admin.auth.dto.AdminLoginDto;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;
 
-
-
 import kr.co.carrer.admin.auth.entity.Admin;
 import kr.co.carrer.admin.auth.repository.AdminRepository;
 import kr.co.carrer.admin.auth.dto.AdminStatus;
+import kr.co.carrer.admin.auth.service.AdminLoginService;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
@@ -43,8 +42,6 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         Admin admin = adminRepository.findByLoginId(request.getLoginId())
                 .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS));
 
-        // 계정 상태 먼저 체크 — 비밀번호 검증 전에 수행해야
-        // 응답 코드 차이로 잠긴 계정의 비밀번호 일치 여부가 노출되지 않음
         if (admin.getStatus() == AdminStatus.LOCKED) {
             throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
         }

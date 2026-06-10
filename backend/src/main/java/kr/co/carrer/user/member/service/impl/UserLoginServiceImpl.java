@@ -1,4 +1,4 @@
-package kr.co.carrer.user.member.service;
+package kr.co.carrer.user.member.service.impl;
 
 import kr.co.carrer.user.member.dto.UserLoginDto;
 import jakarta.persistence.EntityManager;
@@ -11,15 +11,13 @@ import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
-
-
-
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.dto.CompanyApprovalStatus;
 import kr.co.carrer.user.member.dto.MemberStatus;
 import kr.co.carrer.user.member.dto.MemberType;
 import kr.co.carrer.user.member.dto.RoleType;
+import kr.co.carrer.user.member.service.UserLoginService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,22 +102,20 @@ public class UserLoginServiceImpl implements UserLoginService {
     private void validateAccountStatus(Member member) {
         switch (member.getMemberStatus()) {
             case SUSPENDED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED);
-            case BANNED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
+            case BANNED    -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
             case WITHDRAWN -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
             case LOCKED -> {
-                // locked_until이 지났으면 자동 복구
                 if (member.getLockedUntil() != null && Instant.now().isBefore(member.getLockedUntil())) {
                     throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
                 }
             }
             default -> {}
         }
-        // 기업 회원 승인 상태 체크
         if (member.getRoleType() == RoleType.COMPANY) {
             CompanyApprovalStatus status = resolveCompanyApprovalStatus(member);
             switch (status) {
                 case PENDING_REVIEW -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_PENDING_REVIEW);
-                case REJECTED -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_REJECTED);
+                case REJECTED       -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_REJECTED);
                 case NEEDS_REVISION -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_NEEDS_REVISION);
                 default -> {}
             }
@@ -130,7 +126,6 @@ public class UserLoginServiceImpl implements UserLoginService {
         if (member.getRoleType() != RoleType.COMPANY) {
             return CompanyApprovalStatus.NONE;
         }
-        // hr_managers.hr_status를 native query로 조회 (admin 패키지 직접 참조 방지)
         Object result = entityManager.createNativeQuery(
                 "SELECT hr_status FROM hr_managers WHERE member_id = :memberId LIMIT 1"
         ).setParameter("memberId", member.getMemberId()).getResultList()
@@ -139,9 +134,8 @@ public class UserLoginServiceImpl implements UserLoginService {
         if (result == null) return CompanyApprovalStatus.NONE;
         return switch (result.toString()) {
             case "PENDING" -> CompanyApprovalStatus.PENDING_REVIEW;
-            case "ACTIVE" -> CompanyApprovalStatus.APPROVED;
+            case "ACTIVE"  -> CompanyApprovalStatus.APPROVED;
             case "REMOVED" -> CompanyApprovalStatus.REJECTED;
-            // 알 수 없는 hr_status 값은 안전하게 차단 (fail-close)
             default -> throw new CustomException(ErrorCode.FORBIDDEN);
         };
     }

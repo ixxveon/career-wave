@@ -1,4 +1,4 @@
-package kr.co.carrer.user.member.service;
+package kr.co.carrer.user.member.service.impl;
 
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletResponse;
@@ -8,8 +8,6 @@ import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
-
-
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.dto.MemberStatus;
@@ -17,6 +15,7 @@ import kr.co.carrer.user.member.dto.MemberType;
 import kr.co.carrer.user.member.dto.RoleType;
 import kr.co.carrer.user.member.dto.SubscriptionStatus;
 import kr.co.carrer.user.member.dto.UserLoginDto;
+import kr.co.carrer.user.member.service.UserLoginService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,18 +25,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class UserLoginServiceTest {
+class UserLoginServiceImplTest {
 
     @Mock UserMemberRepository memberRepository;
     @Mock HttpServletResponse httpResponse;

@@ -1,13 +1,12 @@
-package kr.co.carrer.admin.auth.service;
+package kr.co.carrer.admin.auth.service.impl;
 
 import jakarta.servlet.http.HttpServletResponse;
-
-
 import kr.co.carrer.admin.auth.entity.Admin;
 import kr.co.carrer.admin.auth.repository.AdminRepository;
 import kr.co.carrer.admin.auth.dto.AdminLoginDto;
 import kr.co.carrer.admin.auth.dto.AdminRole;
 import kr.co.carrer.admin.auth.dto.AdminStatus;
+import kr.co.carrer.admin.auth.service.AdminLoginService;
 import io.jsonwebtoken.Claims;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
@@ -31,7 +30,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class AdminLoginServiceTest {
+class AdminLoginServiceImplTest {
 
     @Mock AdminRepository adminRepository;
     @Mock HttpServletResponse httpResponse;
@@ -124,7 +123,6 @@ class AdminLoginServiceTest {
 
         assertThat(result.getAdminInfo().getRole()).isEqualTo(AdminRole.MASTER.name());
 
-        // JWT를 직접 파싱해 adminRole claim 검증
         JwtProperties props = new JwtProperties();
         props.getAdmin().setSecret("test-admin-secret-key-must-be-at-least-32-bytes!");
         props.getAdmin().setAccessExpiration(900000L);
