@@ -18,9 +18,17 @@ button {
 .admin-root {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   background:
     radial-gradient(circle at 35% 5%, rgba(221, 232, 244, 0.45), transparent 32%),
     #f6f8fb;
+}
+
+.admin-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* sidebar */
@@ -28,27 +36,59 @@ button {
 .admin-sidebar {
   width: 220px;
   min-width: 220px;
-  height: 100vh;
-  position: fixed;
-  inset: 0 auto 0 0;
+  flex-shrink: 0;
+  overflow-y: auto;
   background: rgba(255, 255, 255, 0.96);
   border-right: 1px solid #dbe5ee;
   display: flex;
   flex-direction: column;
 }
 
+.admin-logoRow {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #dbe5ee;
+}
+
+.admin-drawerClose {
+  display: none;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-right: 12px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #7a8da4;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.admin-drawerClose:hover {
+  background: #edf3f9;
+  color: #24496f;
+}
+
 .admin-logo {
   height: 84px;
+  flex: 1;
   margin: 0;
   padding: 0 30px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #dbe5ee;
   font-size: 19px;
   font-weight: 800;
   color: #1c3e63;
   cursor: pointer;
   text-decoration: none;
+}
+
+.admin-topbar {
+  display: none;
+}
+
+.admin-drawerOverlay {
+  display: none;
 }
 
 .admin-menu {
@@ -184,8 +224,9 @@ button {
 /* main */
 
 .admin-main {
-  margin-left: 220px;
-  width: calc(100% - 220px);
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
   padding: clamp(18px, 2.5vw, 36px);
 }
 
@@ -1400,11 +1441,71 @@ button {
   }
 
   .admin-sidebar {
-    display: none;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 300;
+  }
+
+  .admin-sidebar--open {
+    transform: translateX(0);
+  }
+
+  .admin-drawerOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 25, 45, 0.35);
+    z-index: 299;
+  }
+
+  .admin-drawerClose {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .admin-topbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.97);
+    border-bottom: 1px solid #dbe5ee;
+    padding: 0 18px;
+    flex-shrink: 0;
+  }
+
+  .admin-topbar-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1c3e63;
+  }
+
+  .admin-hamburger {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+
+  .admin-hamburger span {
+    display: block;
+    height: 2px;
+    background: #24496f;
+    border-radius: 2px;
   }
 
   .admin-main {
-    margin-left: 0;
     width: 100%;
   }
 }
