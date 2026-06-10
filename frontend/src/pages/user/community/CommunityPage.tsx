@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ThumbsUp, MessageCircle, Bookmark, Flame, Star, Clock, Database } from 'lucide-react';
 import '@/styles/user/community/CommunityPage.css';
@@ -132,8 +132,23 @@ type PostCardProps = {
 function PostCard({ post, onClick }: PostCardProps) {
   const [bookmarked, setBookmarked] = useState(post.bookmarked);
 
+  function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget) return;
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClick();
+    }
+  }
+
   return (
-      <div className="cm-post" onClick={onClick} role="button" tabIndex={0}>
+      <div
+          className="cm-post"
+          onClick={onClick}
+          onKeyDown={handleCardKeyDown}
+          role="button"
+          tabIndex={0}
+      >
         <div className="cm-post__top">
           <span className="cm-post__cat">{post.category}</span>
           {post.hot && (
@@ -227,7 +242,7 @@ export default function CommunityPage() {
             />
           </div>
 
-          <button className="cm-write" type="button" onClick={() => navigate('/community/new')}>
+          <button className="cm-write" type="button" onClick={() => navigate('/community/posts/create')}>
             글쓰기
           </button>
         </div>
@@ -262,7 +277,7 @@ export default function CommunityPage() {
           {filtered.length === 0 && <div className="cm-empty">검색 결과가 없습니다.</div>}
 
           {visiblePosts.map((post) => (
-              <PostCard key={post.id} post={post} onClick={() => navigate(`/community/${post.id}`)} />
+              <PostCard key={post.id} post={post} onClick={() => navigate(`/community/posts/${post.id}`)} />
           ))}
         </div>
 
