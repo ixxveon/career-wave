@@ -4,28 +4,27 @@ import { Bot, Database, FileText, ShieldCheck } from 'lucide-react';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/audit-log.css';
 import {
-  AUDIT_LOG_LEVEL_FILTER,
-  AUDIT_LOG_SOURCE_FILTER,
-  AUDIT_LOG_SOURCE_LABELS,
+  AUDIT_LOG_SEVERITY_FILTER,
+  AUDIT_LOG_TYPE_FILTER,
+  AUDIT_LOG_TYPE_LABELS,
   auditLogApi,
 } from '../../../api/admin/auditLogApi';
 import type {
   AuditLogItem,
   AuditLogDetail,
-  AuditLogLevel,
-  AuditLogLevelFilter,
+  AuditLogSeverity,
+  AuditLogSeverityFilter,
   AuditLogPreview,
-  AuditLogSourceFilter,
+  AuditLogTypeFilter,
   AuditLogSummary,
 } from '../../../api/admin/auditLogApi';
 
 type AuditTone = 'normal' | 'warning' | 'danger' | 'info';
 
-const levelToneMap: Record<AuditLogLevel, AuditTone> = {
+const severityToneMap: Record<AuditLogSeverity, AuditTone> = {
   INFO: 'info',
   WARN: 'warning',
   ERROR: 'danger',
-  SUCCESS: 'normal',
 };
 
 const splitTimestamp = (value: string) => {
@@ -39,34 +38,33 @@ const AUDIT_LOG_DETAIL_QUERY_KEY = ['admin', 'auditLog', 'detail'] as const;
 const AUDIT_LOG_LIST_DEFAULT_PAGE = 1;
 const AUDIT_LOG_LIST_DEFAULT_SIZE = 20;
 
-const sourceTabs: Array<{ key: AuditLogSourceFilter; label: string }> = [
-  { key: AUDIT_LOG_SOURCE_FILTER.ALL, label: '전체' },
-  { key: AUDIT_LOG_SOURCE_FILTER.ADMIN, label: AUDIT_LOG_SOURCE_LABELS.ADMIN },
-  { key: AUDIT_LOG_SOURCE_FILTER.AI, label: AUDIT_LOG_SOURCE_LABELS.AI },
-  { key: AUDIT_LOG_SOURCE_FILTER.SCRAPING, label: AUDIT_LOG_SOURCE_LABELS.SCRAPING },
+const logTypeTabs: Array<{ key: AuditLogTypeFilter; label: string }> = [
+  { key: AUDIT_LOG_TYPE_FILTER.ALL, label: '전체' },
+  { key: AUDIT_LOG_TYPE_FILTER.ADMIN_ACTIVITY, label: AUDIT_LOG_TYPE_LABELS.ADMIN_ACTIVITY },
+  { key: AUDIT_LOG_TYPE_FILTER.AI_METRICS_SYSTEM, label: AUDIT_LOG_TYPE_LABELS.AI_METRICS_SYSTEM },
+  { key: AUDIT_LOG_TYPE_FILTER.SCRAPING_SYSTEM, label: AUDIT_LOG_TYPE_LABELS.SCRAPING_SYSTEM },
 ];
 
-const levelOptions: Array<{ value: AuditLogLevelFilter; label: string }> = [
-  { value: AUDIT_LOG_LEVEL_FILTER.ALL, label: '전체 유형' },
-  { value: AUDIT_LOG_LEVEL_FILTER.INFO, label: 'INFO' },
-  { value: AUDIT_LOG_LEVEL_FILTER.WARN, label: 'WARN' },
-  { value: AUDIT_LOG_LEVEL_FILTER.ERROR, label: 'ERROR' },
-  { value: AUDIT_LOG_LEVEL_FILTER.SUCCESS, label: 'SUCCESS' },
+const severityOptions: Array<{ value: AuditLogSeverityFilter; label: string }> = [
+  { value: AUDIT_LOG_SEVERITY_FILTER.ALL, label: '전체 유형' },
+  { value: AUDIT_LOG_SEVERITY_FILTER.INFO, label: 'INFO' },
+  { value: AUDIT_LOG_SEVERITY_FILTER.WARN, label: 'WARN' },
+  { value: AUDIT_LOG_SEVERITY_FILTER.ERROR, label: 'ERROR' },
 ];
 
 const toAuditLogPreview = (log: AuditLogItem): AuditLogPreview => ({
   id: log.id,
-  source: log.source,
-  sourceLabel: log.sourceLabel,
+  logType: log.logType,
+  logTypeLabel: log.logTypeLabel,
   timestamp: log.occurredAt,
-  level: log.level,
+  severity: log.severity,
   summary: log.summary,
   detail: log.detailSummary,
 });
 
 export default function AuditLogPage() {
-  const [sourceFilter, setSourceFilter] = useState<AuditLogSourceFilter>(AUDIT_LOG_SOURCE_FILTER.ALL);
-  const [levelFilter, setLevelFilter] = useState<AuditLogLevelFilter>(AUDIT_LOG_LEVEL_FILTER.ALL);
+  const [logTypeFilter, setLogTypeFilter] = useState<AuditLogTypeFilter>(AUDIT_LOG_TYPE_FILTER.ALL);
+  const [severityFilter, setSeverityFilter] = useState<AuditLogSeverityFilter>(AUDIT_LOG_SEVERITY_FILTER.ALL);
   const [query, setQuery] = useState('');
   const [debouncedKeyword, setDebouncedKeyword] = useState('');
   const [selectedLogId, setSelectedLogId] = useState('');
@@ -103,8 +101,8 @@ export default function AuditLogPage() {
   } = useQuery<AuditLogItem[], Error>({
     queryKey: [
       ...AUDIT_LOG_LIST_QUERY_KEY,
-      sourceFilter,
-      levelFilter,
+      logTypeFilter,
+      severityFilter,
       debouncedKeyword,
       AUDIT_LOG_LIST_DEFAULT_PAGE,
       AUDIT_LOG_LIST_DEFAULT_SIZE,
@@ -113,8 +111,8 @@ export default function AuditLogPage() {
       const response = await auditLogApi.getLogs({
         page: AUDIT_LOG_LIST_DEFAULT_PAGE,
         size: AUDIT_LOG_LIST_DEFAULT_SIZE,
-        ...(sourceFilter !== AUDIT_LOG_SOURCE_FILTER.ALL && { source: sourceFilter }),
-        ...(levelFilter !== AUDIT_LOG_LEVEL_FILTER.ALL && { level: levelFilter }),
+        ...(logTypeFilter !== AUDIT_LOG_TYPE_FILTER.ALL && { logType: logTypeFilter }),
+        ...(severityFilter !== AUDIT_LOG_SEVERITY_FILTER.ALL && { severity: severityFilter }),
         ...(debouncedKeyword.length > 0 && { keyword: debouncedKeyword }),
       });
 
@@ -158,11 +156,11 @@ export default function AuditLogPage() {
       return response.data.data;
     },
   });
-  const selectedLogSourceLabel = selectedLogDetail?.sourceLabel ?? selectedLog?.sourceLabel;
+  const selectedLogTypeLabel = selectedLogDetail?.logTypeLabel ?? selectedLog?.logTypeLabel;
   const selectedLogDisplay = selectedLog
     ? {
         occurredAt: selectedLogDetail?.occurredAt ?? selectedLog.timestamp,
-        level: selectedLogDetail?.level ?? selectedLog.level,
+        severity: selectedLogDetail?.severity ?? selectedLog.severity,
         summary: selectedLogDetail?.summary ?? selectedLog.summary,
         detailSummary: selectedLogDetail?.detailSummary ?? selectedLog.detail,
         actorId: selectedLogDetail?.actorId ?? '-',
@@ -247,12 +245,12 @@ export default function AuditLogPage() {
       <section className="admin-card auditOpsShell">
         <div className="auditOpsToolbar">
           <div className="auditOpsTabs">
-            {sourceTabs.map((tab) => (
+            {logTypeTabs.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
-                className={sourceFilter === tab.key ? 'active' : ''}
-                onClick={() => setSourceFilter(tab.key)}
+                className={logTypeFilter === tab.key ? 'active' : ''}
+                onClick={() => setLogTypeFilter(tab.key)}
               >
                 {tab.label}
               </button>
@@ -266,8 +264,8 @@ export default function AuditLogPage() {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="로그 요약 또는 상세 내용 검색"
             />
-            <select value={levelFilter} onChange={(event) => setLevelFilter(event.target.value as AuditLogLevelFilter)}>
-              {levelOptions.map((option) => (
+            <select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value as AuditLogSeverityFilter)}>
+              {severityOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -307,8 +305,8 @@ export default function AuditLogPage() {
                         onClick={() => setSelectedLogId(log.id)}
                       >
                         <span className="timestamp">[{time || date}]</span>
-                        <span className={`auditOpsTag ${levelToneMap[log.level]}`}>[{log.level}]</span>
-                        <strong className="summary">{`[${log.sourceLabel}] ${log.summary}`}</strong>
+                        <span className={`auditOpsTag ${severityToneMap[log.severity]}`}>[{log.severity}]</span>
+                        <strong className="summary">{`[${log.logTypeLabel}] ${log.summary}`}</strong>
                       </button>
                     );
                   })
@@ -321,7 +319,7 @@ export default function AuditLogPage() {
           <aside className="auditOpsDetail">
             <div className="auditOpsDetailHead">
               <span>선택 로그 상세</span>
-              {selectedLogSourceLabel ? <strong>{selectedLogSourceLabel}</strong> : null}
+              {selectedLogTypeLabel ? <strong>{selectedLogTypeLabel}</strong> : null}
             </div>
 
             {selectedLogDisplay ? (
@@ -352,8 +350,8 @@ export default function AuditLogPage() {
                   </div>
                   <div>
                     <span>유형</span>
-                    <strong className={`auditOpsTag ${levelToneMap[selectedLogDisplay.level]}`}>
-                      [{selectedLogDisplay.level}]
+                    <strong className={`auditOpsTag ${severityToneMap[selectedLogDisplay.severity]}`}>
+                      [{selectedLogDisplay.severity}]
                     </strong>
                   </div>
                 </div>

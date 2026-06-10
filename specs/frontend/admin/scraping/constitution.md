@@ -33,7 +33,8 @@ MVP의 중심은 스크래핑 로직 자체 구현이 아니라, FastAPI 또는 
 
 상태 전이 원칙:
 
-- 상태 값은 ERD `scraping_logs.scraping_status` CHECK 제약 기준 `SUCCESS`와 `FAILED`만 사용한다.
+- 파이프라인 상태 값은 ERD `scraping_pipelines.pipeline_status` CHECK 제약 기준 `IDLE`, `RUNNING`, `SUCCESS`, `FAILED`를 사용한다.
+- 로그 상태 값은 ERD `scraping_logs.scraping_status` CHECK 제약 기준 `SUCCESS`, `FAILED`를 사용한다.
 - `ACTIVE`, `WARNING`, `RECOVERING`, `PAUSED` 같은 파이프라인 수명주기 상태는 현재 ERD에 없으므로 프론트 계약에서 가정하지 않는다.
 - 재시도 또는 테스트 요청 중 상태 표시는 별도 DDL/API 계약이 확정되기 전까지 버튼 loading 상태와 요청 결과 메시지로 표현한다.
 
