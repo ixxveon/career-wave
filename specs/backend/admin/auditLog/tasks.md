@@ -1,47 +1,73 @@
 # Tasks: auditLog
 
 > `plan.md`의 Phase와 1:1 대응한다.
-> 각 항목은 하나의 커밋 또는 PR 리뷰 단위로 쪼갤 수 있어야 한다.
+> 각 작업은 1~3시간 내 완료 가능한 단일 책임 단위로 분해한다.
 
-## Phase 1 - Entity 정의
+## Phase 1 - Query
 
-- [ ] `AuditLogType.java`, `AuditLogSeverity.java` 정의 — ERD의 CHECK 제약조건과 동일한 enum 값 반영
-- [ ] `AuditLog.java` 작성 — `audit_logs` 테이블 매핑, `logType`/`severity`를 `EnumType.STRING`으로 관리
-- [ ] 감사 로그 엔티티 필드 정리 — `auditLogId`, `adminId`, `action`, `targetType`, `targetId`, `ipAddress`, `detail`, `createdAt` 컬럼 매핑 반영
+- [ ] `AuditLogType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [ ] `AuditLogSeverity.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [ ] `AuditLog.java` 엔티티를 `audit_logs` ERD 컬럼 기준으로 작성한다.
+- [ ] `AuditLogRepository.java` 기본 조회 인터페이스를 작성한다.
+- [ ] 감사 로그 요약 집계를 위한 조회 쿼리를 작성한다.
+- [ ] 감사 로그 목록 `logType` 필터 조회 조건을 구현한다.
+- [ ] 감사 로그 목록 `severity` 필터 조회 조건을 구현한다.
+- [ ] 감사 로그 목록 `keyword` 필터 조회 조건을 구현한다.
+- [ ] `keyword` 공백-only 입력을 필터 미적용으로 해석하는 규칙을 구현한다.
+- [ ] 감사 로그 목록 `from`, `to` 기간 필터 조회 조건을 구현한다.
+- [ ] 감사 로그 목록 페이지네이션 조회 조건을 정리한다.
+- [ ] 감사 로그 상세 단건 조회 메서드를 작성한다.
 
-## Phase 2 - Repository 구현
+## Phase 2 - Service
 
-- [ ] `AuditLogRepository.java` 작성 — 감사 로그 목록 조회와 단건 상세 조회 메서드 구성
-- [ ] 감사 로그 요약 집계 쿼리 구현 — `logType`, `severity` 기준 집계 조회 구성
-- [ ] 감사 로그 목록 필터링 쿼리 구현 — `logType`, `severity`, `keyword`, `from`, `to`, 페이지네이션 조건 반영
+- [ ] `AuditLogService.java` 인터페이스를 작성한다.
+- [ ] 감사 로그 요약 조회 서비스 로직을 구현한다.
+- [ ] 감사 로그 목록 조회 서비스 로직을 구현한다.
+- [ ] 감사 로그 상세 조회 서비스 로직을 구현한다.
+- [ ] `from`, `to` 기간 조건 공통 검증 로직을 구현한다.
+- [ ] `from > to` 요청을 공통 요청 검증 실패 `400`으로 처리하는 로직을 구현한다.
+- [ ] `page`, `size` 공통 요청 검증 로직을 구현한다.
+- [ ] `keyword` 100자 초과 요청을 공통 요청 검증 실패 `400`으로 처리하는 로직을 구현한다.
+- [ ] `logType` 값 검증과 `INVALID_AUDIT_LOG_TYPE` 매핑을 구현한다.
+- [ ] `severity` 값 검증과 `INVALID_AUDIT_LOG_SEVERITY` 매핑을 구현한다.
+- [ ] 1-based `page`를 내부 Pageable로 변환하는 로직을 구현한다.
+- [ ] 상세 미존재 조회에 대한 `AUDIT_LOG_NOT_FOUND` 예외 처리를 구현한다.
+- [ ] `AuditLogErrorCode.java` 도메인 오류 코드를 작성한다.
 
-## Phase 3 - Service 구현
+## Phase 3 - API
 
-- [ ] `AuditLogService.java` 인터페이스 작성 — 요약, 목록, 상세 조회 메서드 계약 정의
-- [ ] `AuditLogServiceImpl.java`에 요약 조회 구현 — 기간 조건 검증과 집계 응답 구성 반영
-- [ ] `AuditLogServiceImpl.java`에 목록 조회 구현 — 검색 조건 검증(`keyword` 빈 문자열 미입력 처리, 길이 제한 검증 포함)과 1-based 페이지 변환 반영
-- [ ] `AuditLogServiceImpl.java`에 상세 조회 구현 — `AUDIT_LOG_NOT_FOUND` 예외 처리 반영
-- [ ] `AuditLogErrorCode.java` 작성 및 도메인 전용 ErrorCode 설계 — 공통 `global.exception.ErrorCode`와 분리하여 Service 예외 매핑 정리
-- [ ] 감사 로그 조회 권한 검증 로직 정리 — `MASTER`, `BACKEND` 접근 범위 반영
+- [ ] `AuditLogDTO.java`를 작성한다.
+- [ ] `GET /api/v1/admin/audit-logs/summary` Controller endpoint를 작성한다.
+- [ ] `GET /api/v1/admin/audit-logs` Controller endpoint를 작성한다.
+- [ ] `GET /api/v1/admin/audit-logs/{logId}` Controller endpoint를 작성한다.
+- [ ] `AuditLogController.java`의 응답을 `ApiResponse<T>` 기준으로 정리한다.
+- [ ] `AuditLogDocs.java` Swagger 인터페이스를 작성한다.
+- [ ] JWT 인증과 `MASTER`, `BACKEND` 역할 접근 제어를 API 계층에 반영한다.
 
-## Phase 4 - API 구현
+## Phase 4 - Documentation
 
-- [ ] `AuditLogDTO.java` 작성 — 요약, 목록, 상세 응답 및 조회 조건 계약 정의
-- [ ] `AuditLogController.java` 작성 — 감사 로그 요약/목록/상세 엔드포인트와 `ApiResponse` 반환 구조 구현
-- [ ] `AuditLogDocs.java` 작성 — Swagger 어노테이션을 Controller에서 분리
-- [ ] JWT 기반 인증/인가 및 `MASTER`/`BACKEND` 역할 접근 제어를 API 진입점에 연결
+- [ ] `api-schema.md`와 요청/응답 계약 필드 정합성을 점검한다.
+- [ ] `spec.md`와 구현 범위 정합성을 점검한다.
+- [ ] `constitution.md`와 권한/책임 경계 정합성을 점검한다.
+- [ ] 감사 로그 API의 도메인 ErrorCode 문서를 정리한다.
+- [ ] Swagger 문서가 `docs` 인터페이스 기준으로 분리되어 노출되는지 점검한다.
 
-## Phase 5 - 문서화
+## Phase 5 - Test
 
-- [ ] `api-schema.md`와 실제 요청 조건/응답 DTO 필드 명칭 일치 여부 점검
-- [ ] 감사 로그 API의 ErrorCode 목록과 실패 조건 문서 정리
-- [ ] Swagger 문서가 docs 인터페이스 기준으로 분리되어 노출되는지 점검
-- [ ] `ApiResponse` 래퍼와 페이지네이션 응답 형식(`content`, `page`, `size`, `totalElements`, `totalPages`) 문서 일치 여부 정리
-
-## Phase 6 - 테스트
-
-- [ ] 감사 로그 요약 조회 서비스 테스트 작성 — 기간 조건과 집계 응답 검증
-- [ ] 감사 로그 목록 조회 서비스 테스트 작성 — 필터 조건과 1-based 페이지 변환 검증
-- [ ] 감사 로그 상세 조회 서비스 테스트 작성 — `AUDIT_LOG_NOT_FOUND` 예외 처리 검증
-- [ ] 권한 분기 테스트 작성 — `MASTER`, `BACKEND` 허용 및 그 외 권한 거부 검증
-- [ ] Controller/API 테스트 작성 — `ApiResponse` 구조와 요약/목록/상세 응답 계약 검증
+- [ ] 감사 로그 요약 조회 테스트를 작성한다.
+- [ ] 감사 로그 목록 조회 테스트를 작성한다.
+- [ ] 감사 로그 상세 조회 테스트를 작성한다.
+- [ ] `logType` 필터 테스트를 작성한다.
+- [ ] `severity` 필터 테스트를 작성한다.
+- [ ] `keyword` 필터 테스트를 작성한다.
+- [ ] `keyword` 공백-only 입력 시 필터 미적용 테스트를 작성한다.
+- [ ] `keyword` 100자 초과 요청의 공통 검증 실패 테스트를 작성한다.
+- [ ] `from`, `to` 기간 필터 테스트를 작성한다.
+- [ ] `from > to` 요청의 공통 검증 실패 테스트를 작성한다.
+- [ ] 1-based 페이지네이션 변환 테스트를 작성한다.
+- [ ] `AUDIT_LOG_NOT_FOUND` 예외 테스트를 작성한다.
+- [ ] `INVALID_AUDIT_LOG_TYPE` 예외 테스트를 작성한다.
+- [ ] `INVALID_AUDIT_LOG_SEVERITY` 예외 테스트를 작성한다.
+- [ ] `MASTER`, `BACKEND` 권한 허용 테스트를 작성한다.
+- [ ] 그 외 권한 차단 테스트를 작성한다.
+- [ ] `ApiResponse<T>` 응답 구조 테스트를 작성한다.
