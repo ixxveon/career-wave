@@ -2,10 +2,10 @@ package kr.co.carrer.user.member.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletResponse;
-import kr.co.carrer.global.auth.jwt.AccountType;
-import kr.co.carrer.global.auth.jwt.JwtProperties;
-import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.global.auth.exception.AuthErrorCode;
+import kr.co.carrer.auth.jwt.AccountType;
+import kr.co.carrer.auth.jwt.JwtProperties;
+import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.dto.UserLoginRequest;

@@ -1,6 +1,6 @@
-package kr.co.carrer.global.auth.principal;
+package kr.co.carrer.auth.principal;
 
-import kr.co.carrer.global.auth.jwt.AccountType;
+import kr.co.carrer.auth.jwt.AccountType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

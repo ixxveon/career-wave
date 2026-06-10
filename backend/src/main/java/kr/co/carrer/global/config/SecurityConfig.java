@@ -1,7 +1,7 @@
 package kr.co.carrer.global.config;
 
-import kr.co.carrer.global.auth.filter.JwtAuthenticationFilter;
-import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
+import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;

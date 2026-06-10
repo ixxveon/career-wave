@@ -1,4 +1,4 @@
-package kr.co.carrer.global.auth.jwt;
+package kr.co.carrer.auth.jwt;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;

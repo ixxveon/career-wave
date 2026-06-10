@@ -1,4 +1,4 @@
-package kr.co.carrer.global.auth.jwt;
+package kr.co.carrer.auth.jwt;
 
 public enum AccountType {
     USER, COMPANY, ADMIN

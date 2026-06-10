@@ -1,4 +1,4 @@
-package kr.co.carrer.global.auth.exception;
+package kr.co.carrer.auth.exception;
 
 import kr.co.carrer.global.exception.BaseErrorCode;
 import lombok.Getter;

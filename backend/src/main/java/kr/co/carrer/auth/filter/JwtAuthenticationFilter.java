@@ -1,4 +1,4 @@
-package kr.co.carrer.global.auth.filter;
+package kr.co.carrer.auth.filter;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -6,9 +6,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import kr.co.carrer.global.auth.jwt.AccountType;
-import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.global.auth.principal.AuthPrincipal;
+import kr.co.carrer.auth.jwt.AccountType;
+import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
