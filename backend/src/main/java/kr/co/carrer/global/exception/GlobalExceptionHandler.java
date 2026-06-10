@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<Object>> handleCustomException(CustomException e) {
         BaseErrorCode errorCode = e.getErrorCode();
-        String codeName = ((Enum<?>) errorCode).name();
+        String codeName = errorCode.name();
 
         if (e.getCause() != null) {
             log.error(

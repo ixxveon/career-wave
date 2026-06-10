@@ -83,7 +83,7 @@ specs/frontend/user/jobNotice/
 
 ## Risks
 
-- 목록 타입의 `exp`, `employment` 같은 화면 필드와 API의 `experience`, `employmentType` 필드가 다르므로 매핑 규칙이 필요하다.
+- 목록 타입의 `exp`, `employment` 같은 화면 필드와 API의 `careerLevel`, `jobType` 필드가 다르므로 매핑 규칙이 필요하다.
 - 상세 mock 섹션을 오래 유지하면 실제 API 필드와 어긋날 수 있으므로 `JobNoticeDetail` 타입 전환 시점을 명확히 해야 한다.
 - 상세 드로어가 열린 상태에서 배경 스크롤, 포커스 이동, Escape 닫기 처리가 깨지면 모바일과 키보드 사용성이 나빠진다.
 - 스크랩 낙관 업데이트 실패 시 목록과 상세 중 한쪽만 롤백되는 상태를 방지해야 한다.

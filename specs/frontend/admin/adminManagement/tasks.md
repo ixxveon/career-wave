@@ -8,7 +8,7 @@
 - [x] `frontend/src/admin/api/adminManagementApi.ts`를 생성한다.
 - [x] `AdminManagementSummary` 타입을 정의하고 export한다.
 - [x] `AdminAccount`, `AdminRole`, `AdminStatus` 타입을 정의하고 export한다.
-- [x] `AdminAclRule`, `AclRiskLevel` 타입을 정의하고 export한다.
+- [x] `AdminAclRule` 타입을 ERD 기준 필드로 정의하고 export한다.
 - [x] `AdminAuditLog`, `AuditSeverity` 타입을 정의하고 export한다.
 - [x] 관리자 계정 조회/생성/권한 변경/상태 변경/삭제 API 함수를 작성한다.
 - [x] ACL 조회/등록/활성 전환/삭제 API 함수를 작성한다.

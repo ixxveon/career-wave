@@ -4,12 +4,14 @@ import '../../../styles/admin/admin.css';
 import '../../../styles/admin/scraping.css';
 import MiniPagination from '../../../components/admin/MiniPagination';
 import {
+  PIPELINE_STATUS,
   SCRAPING_ACTION_TYPE,
   SCRAPING_STATUS,
   scrapingApi,
   type ScrapingActionType,
   type ScrapingLog,
   type ScrapingSource,
+  type PipelineStatus,
   type ScrapingStatus,
 } from '../../../api/admin/scrapingApi';
 
@@ -20,16 +22,21 @@ const PIPELINE_TABLE_BODY_HEIGHT = 280;
 const LOG_PAGE_SIZE = 5;
 const FILTER_ALL = 'ALL' as const;
 
-type StatusFilter = typeof FILTER_ALL | ScrapingStatus;
+type PipelineStatusFilter = typeof FILTER_ALL | PipelineStatus;
+type LogStatusFilter = typeof FILTER_ALL | ScrapingStatus;
 
-const statusTone: Record<ScrapingStatus, Tone> = {
-  [SCRAPING_STATUS.SUCCESS]: 'normal',
-  [SCRAPING_STATUS.FAILED]: 'danger',
+const statusTone: Record<PipelineStatus, Tone> = {
+  [PIPELINE_STATUS.IDLE]: 'info',
+  [PIPELINE_STATUS.RUNNING]: 'warning',
+  [PIPELINE_STATUS.SUCCESS]: 'normal',
+  [PIPELINE_STATUS.FAILED]: 'danger',
 };
 
-const statusLabel: Record<ScrapingStatus, string> = {
-  [SCRAPING_STATUS.SUCCESS]: '성공',
-  [SCRAPING_STATUS.FAILED]: '실패',
+const statusLabel: Record<PipelineStatus, string> = {
+  [PIPELINE_STATUS.IDLE]: 'IDLE',
+  [PIPELINE_STATUS.RUNNING]: 'RUNNING',
+  [PIPELINE_STATUS.SUCCESS]: 'SUCCESS',
+  [PIPELINE_STATUS.FAILED]: 'FAILED',
 };
 
 const logStatusTone: Record<ScrapingStatus, Tone> = {
@@ -37,7 +44,12 @@ const logStatusTone: Record<ScrapingStatus, Tone> = {
   [SCRAPING_STATUS.FAILED]: 'danger',
 };
 
-const toStatusFilter = (value: string): StatusFilter =>
+const toPipelineStatusFilter = (value: string): PipelineStatusFilter =>
+  Object.values(PIPELINE_STATUS).includes(value as PipelineStatus)
+    ? value as PipelineStatus
+    : FILTER_ALL;
+
+const toLogStatusFilter = (value: string): LogStatusFilter =>
   value === SCRAPING_STATUS.SUCCESS || value === SCRAPING_STATUS.FAILED
     ? value
     : FILTER_ALL;
@@ -79,14 +91,14 @@ const actionReason: Record<ScrapingActionType, string> = {
 export default function ScrapingPage() {
   const queryClient = useQueryClient();
   const [pipelineQuery, setPipelineQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>(FILTER_ALL);
+  const [statusFilter, setStatusFilter] = useState<PipelineStatusFilter>(FILTER_ALL);
   const [selectedPipelineIds, setSelectedPipelineIds] = useState<string[]>([]);
   const [pipelinePage, setPipelinePage] = useState(1);
   const [updatedSeconds] = useState(35);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
   const [pendingSourceNames, setPendingSourceNames] = useState<Set<string>>(new Set());
   const pendingSourceNamesRef = useRef<Set<string>>(new Set());
-  const [logStatusFilter, setLogStatusFilter] = useState<StatusFilter>(FILTER_ALL);
+  const [logStatusFilter, setLogStatusFilter] = useState<LogStatusFilter>(FILTER_ALL);
   const [logSourceFilter, setLogSourceFilter] = useState<string | null>(null);
   const [logPage, setLogPage] = useState(1);
   const pipelineKeyword = pipelineQuery.trim();
@@ -257,13 +269,15 @@ export default function ScrapingPage() {
               <select
                 value={statusFilter}
                 onChange={(event) => {
-                  setStatusFilter(toStatusFilter(event.target.value));
+                  setStatusFilter(toPipelineStatusFilter(event.target.value));
                   setPipelinePage(1);
                 }}
               >
                 <option value={FILTER_ALL}>전체 상태</option>
-                <option value={SCRAPING_STATUS.SUCCESS}>성공</option>
-                <option value={SCRAPING_STATUS.FAILED}>실패</option>
+                <option value={PIPELINE_STATUS.IDLE}>IDLE</option>
+                <option value={PIPELINE_STATUS.RUNNING}>RUNNING</option>
+                <option value={PIPELINE_STATUS.SUCCESS}>SUCCESS</option>
+                <option value={PIPELINE_STATUS.FAILED}>FAILED</option>
               </select>
             </div>
           </div>
@@ -334,7 +348,7 @@ export default function ScrapingPage() {
 
                 {!isSourceListInitialLoading && !isSourceListError ? pagedPipelines.map((row) => {
                   const isRowActionPending = isSourceActionPending(row.sourceName);
-                  const canRetryRow = row.status === SCRAPING_STATUS.FAILED;
+                  const canRetryRow = row.status === PIPELINE_STATUS.FAILED;
 
                   return (
                     <tr key={row.sourceName} style={{ height: `${pipelineRowHeight}px` }}>
@@ -355,7 +369,7 @@ export default function ScrapingPage() {
                       <td>{row.cycleExpression}</td>
                       <td>{formatVolume(row.collectedCount)}</td>
                       <td>
-                        {row.status === SCRAPING_STATUS.FAILED && getRecentErrorText(row) !== '-' ? (
+                        {row.status === PIPELINE_STATUS.FAILED && getRecentErrorText(row) !== '-' ? (
                           <button
                             type="button"
                             className="scrapeOpsErrorLink"
@@ -440,7 +454,7 @@ export default function ScrapingPage() {
               <select
                 value={logStatusFilter}
                 onChange={(event) => {
-                  setLogStatusFilter(toStatusFilter(event.target.value));
+                  setLogStatusFilter(toLogStatusFilter(event.target.value));
                   setLogPage(1);
                 }}
               >
