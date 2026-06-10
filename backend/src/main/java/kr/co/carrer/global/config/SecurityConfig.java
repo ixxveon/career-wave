@@ -69,6 +69,8 @@ public class SecurityConfig {
                     "/api/v1/user/members/recovery/password-token",
                     "/api/v1/user/members/recovery/reset-password"
                 ).permitAll()
+                // WebSocket 엔드포인트 — JWT는 HandshakeInterceptor에서 처리
+                .requestMatchers("/ws/**").permitAll()
                 // logout / me/status 는 인증 필요 but AccountStatus 예외 (비ACTIVE도 허용)
                 .requestMatchers(
                     "/api/v1/user/members/logout",

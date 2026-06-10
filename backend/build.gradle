@@ -58,6 +58,9 @@ dependencies {
     // WebClient (FastAPI 분석 트리거 비동기 호출)
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+    // WebSocket + STOMP (분석 상태 실시간 알림)
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
     // DB
     runtimeOnly 'org.postgresql:postgresql'
     testRuntimeOnly 'com.h2database:h2'
