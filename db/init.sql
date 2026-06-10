@@ -1134,9 +1134,11 @@ CREATE TABLE scraping_pipelines (
     created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_scraping_pipelines    PRIMARY KEY (scraping_pipeline_id),
-    CONSTRAINT uq_scraping_source_name  UNIQUE (source_name),
-    CONSTRAINT chk_pipeline_status      CHECK (pipeline_status IN ('IDLE', 'RUNNING', 'SUCCESS', 'FAILED'))
+    CONSTRAINT pk_scraping_pipelines              PRIMARY KEY (scraping_pipeline_id),
+    CONSTRAINT uq_scraping_source_name            UNIQUE (source_name),
+    CONSTRAINT chk_pipeline_status                CHECK (pipeline_status IN ('IDLE', 'RUNNING', 'SUCCESS', 'FAILED')),
+    CONSTRAINT chk_pipeline_last_duration_ms      CHECK (last_duration_ms IS NULL OR last_duration_ms >= 0),
+    CONSTRAINT chk_pipeline_last_total_count      CHECK (last_total_count IS NULL OR last_total_count >= 0)
 );
 COMMENT ON TABLE  scraping_pipelines                      IS '스크래핑 파이프라인 테이블';
 COMMENT ON COLUMN scraping_pipelines.scraping_pipeline_id IS '파이프라인 고유 식별자';
@@ -1165,10 +1167,11 @@ CREATE TABLE scraping_logs (
     error_message   TEXT        NULL,
     executed_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_scraping_logs    PRIMARY KEY (scraping_log_id),
-    CONSTRAINT chk_scraping_status CHECK (scraping_status IN ('SUCCESS', 'FAILED')),
+    CONSTRAINT pk_scraping_logs          PRIMARY KEY (scraping_log_id),
+    CONSTRAINT chk_scraping_status      CHECK (scraping_status IN ('SUCCESS', 'FAILED')),
     CONSTRAINT fk_scraping_logs_pipeline FOREIGN KEY (scraping_pipeline_id) REFERENCES scraping_pipelines (scraping_pipeline_id)
 );
+CREATE INDEX idx_scraping_logs_pipeline_id ON scraping_logs (scraping_pipeline_id);
 COMMENT ON TABLE  scraping_logs                 IS '채용 공고 스크래핑 실행 로그 테이블';
 COMMENT ON COLUMN scraping_logs.scraping_log_id      IS '스크래핑 로그 고유 식별자';
 COMMENT ON COLUMN scraping_logs.scraping_pipeline_id IS '연결된 파이프라인 ID (NULL 허용)';

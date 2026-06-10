@@ -206,6 +206,11 @@ global/exception/
 - 두 enum 모두 `BaseErrorCode` 인터페이스를 구현한다.
 - `CustomException`은 `BaseErrorCode`를 받도록 구성한다.
 
+> **⚠️ 마이그레이션 진행 중**
+> 현재 일부 도메인(admin/member)에 `BaseErrorCode` 인터페이스 및 `{Domain}ErrorCode` 패턴이 적용되어 있으며,
+> 나머지 도메인은 구현 시점에 순차적으로 전환한다.
+> 신규 도메인 구현 시에는 반드시 이 컨벤션을 따른다.
+
 ### Rules
 
 - Controller 내부에서 반복적인 `try-catch`를 작성하지 않는다.
