@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.UUID;
@@ -45,7 +44,7 @@ public class ResumeController implements ResumeControllerDocs {
 
     @PostMapping("/cover-letter")
     public ResponseEntity<ApiResponse<ResumeDTO.ResponseCoverLetter>> submitCoverLetter(
-            @RequestBody @Valid ResumeDTO.RequestCoverLetter request
+            @RequestBody ResumeDTO.RequestCoverLetter request
     ) {
         // TODO: JWT 연동 완료 후 @AuthenticationPrincipal로 memberId 추출
         UUID tempMemberId = UUID.fromString("00000000-0000-0000-0000-000000000001");
