@@ -27,8 +27,8 @@
 
 ## 불변 규칙
 
-- 모든 관리자 관리 API는 JWT 인증과 `ROLE_ADMIN` 권한 검증을 전제로 한다.
-- `MASTER`, `CS`, `BACKEND`는 `ROLE_ADMIN` 내부의 관리자 세부 역할로 취급한다.
+- 모든 관리자 관리 API는 JWT 인증과 endpoint별 `MASTER`, `BACKEND`, `CS` 권한 검증을 전제로 한다.
+- 문서상 `MASTER`, `CS`, `BACKEND`는 Spring Security에서 각각 `ROLE_MASTER`, `ROLE_CS`, `ROLE_BACKEND`로 매핑한다.
 - 인증 관리자 정보는 서버의 Security Context 또는 공통 인증 유틸에서 추출되어야 하며, 프론트에서 임의로 확정하지 않는다.
 - 관리자 계정 생성, 권한 변경, 잠금/해제, 삭제는 `MASTER` 권한 관리자만 수행할 수 있다.
 - `MASTER` 계정은 자기 자신 또는 마지막 남은 `MASTER` 계정을 잠금/삭제할 수 없다.

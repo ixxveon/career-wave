@@ -17,9 +17,6 @@ export const ADMIN_ROLE = {
   MASTER: 'MASTER',
   CS: 'CS',
   BACKEND: 'BACKEND',
-  OPS: 'OPS',
-  BILLING: 'BILLING',
-  AUDIT: 'AUDIT',
 } as const;
 
 export type AdminRole = (typeof ADMIN_ROLE)[keyof typeof ADMIN_ROLE];
@@ -43,21 +40,13 @@ export interface AdminAccount {
   status: AdminStatus;
 }
 
-export const ACL_RISK_LEVEL = {
-  LOW: 'LOW',
-  MEDIUM: 'MEDIUM',
-  HIGH: 'HIGH',
-} as const;
-
-export type AclRiskLevel = (typeof ACL_RISK_LEVEL)[keyof typeof ACL_RISK_LEVEL];
-
 export interface AdminAclRule {
-  id: string;
+  ipAclId: string;
   label: string;
-  cidr: string;
-  note: string;
-  enabled: boolean;
-  riskLevel: AclRiskLevel;
+  ipRange: string;
+  isEnabled: boolean;
+  description: string;
+  createdAt: string;
   updatedAt: string;
 }
 
@@ -124,12 +113,12 @@ export interface GetAdminAclRulesParams {
 
 export interface RequestCreateAclRule {
   label: string;
-  cidr: string;
-  note: string;
+  ipRange: string;
+  description: string;
 }
 
 export interface RequestUpdateAclEnabled {
-  enabled: boolean;
+  isEnabled: boolean;
 }
 
 export interface GetAdminAuditLogsParams {
@@ -314,14 +303,14 @@ export const createAdminAclRule = (body: RequestCreateAclRule) =>
     .post<ApiResponse<AdminAclRule>, RequestCreateAclRule>('/admin-acls', body)
     .then(unwrapApiResponse);
 
-export const updateAdminAclEnabled = (aclId: string, body: RequestUpdateAclEnabled) =>
+export const updateAdminAclEnabled = (ipAclId: string, body: RequestUpdateAclEnabled) =>
   adminManagementApiClient.patch<ApiResponse<AdminAclRule>, RequestUpdateAclEnabled>(
-    `/admin-acls/${aclId}/enabled`,
+    `/admin-acls/${ipAclId}/enabled`,
     body,
   ).then(unwrapApiResponse);
 
-export const deleteAdminAclRule = (aclId: string) =>
-  adminManagementApiClient.delete<ApiResponse<null>>(`/admin-acls/${aclId}`).then(unwrapApiResponse);
+export const deleteAdminAclRule = (ipAclId: string) =>
+  adminManagementApiClient.delete<ApiResponse<null>>(`/admin-acls/${ipAclId}`).then(unwrapApiResponse);
 
 export const getAdminAuditLogs = (params: GetAdminAuditLogsParams = {}) =>
   adminManagementApiClient

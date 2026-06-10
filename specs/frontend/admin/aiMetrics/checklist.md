@@ -10,7 +10,7 @@
 
 ## Phase 1 - API 계약 및 타입 정리
 
-- [x] `frontend/src/admin/api/aiMetricsApi.ts`에서 관리자 AI 매트릭스 API를 관리한다.
+- [x] `frontend/src/api/admin/aiMetricsApi.ts`에서 관리자 AI 매트릭스 API를 관리한다.
 - [x] 페이지 또는 컴포넌트에서 `axios`를 직접 호출하지 않는다.
 - [x] `ApiResponse<T>` 응답 구조를 기준으로 처리한다.
 - [x] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입이 정의되어 있다.
@@ -47,7 +47,7 @@
 
 ## Phase 5 - 검증 및 마감
 
-- [x] 관리자 JWT의 `ROLE_ADMIN` 기준 접근 제어가 확인된다.
+- [x] 관리자 JWT의 endpoint별 `MASTER`, `BACKEND` 기준 접근 제어가 확인된다.
 - [x] 실제 모델명이 변경되어도 도메인별 통계가 유지된다.
 - [x] `displayModelName`이 있으면 화면 표시명으로 우선 노출된다.
 - [x] `displayModelName`이 없으면 MVP 대체 표시가 정상 동작한다.
@@ -56,13 +56,20 @@
 
 ## Phase 6 - RAG 문서 관리 보강
 
-- [ ] RAG 문서 업로드 API가 화면에 연결된다.
-- [ ] RAG 문서 다운로드 API가 화면에 연결된다.
-- [ ] RAG 문서 삭제 API가 화면에 연결된다.
-- [ ] 업로드 파일 형식, 크기, 필수값 검증 오류가 표시된다.
-- [ ] 업로드 후 `INDEXING`, `SYNCED`, `FAILED` 상태 갱신 흐름이 확인된다.
-- [ ] 삭제 요청 후 목록/상태 갱신과 `DELETING` 상태 표시가 확인된다.
-- [ ] 업로드/다운로드/삭제 실패 시 관리자 화면 오류 메시지가 표시된다.
+- [x] RAG 문서 업로드 API가 화면에 연결된다.
+- [x] RAG 문서 다운로드 API가 화면에 연결된다.
+- [x] RAG 문서 삭제 API가 화면에 연결된다.
+- [x] 업로드 파일 형식, 크기, 필수값 검증 오류 표시가 구현된다.
+- [x] 업로드 후 `INDEXING`, `SYNCED`, `FAILED` 상태 갱신 흐름이 구현된다.
+- [x] 삭제 요청 후 목록/상태 갱신과 `DELETING` 상태 표시가 구현된다.
+- [x] 업로드/다운로드/삭제 실패 시 관리자 화면 오류 메시지 표시가 구현된다.
+- [ ] RAG 문서 업로드 API 연동 수동 검증
+- [ ] RAG 문서 다운로드 API 연동 수동 검증
+- [ ] RAG 문서 삭제 API 연동 수동 검증
+- [ ] 업로드 파일 형식, 크기, 필수값 검증 오류 표시 수동 검증
+- [ ] 업로드 후 `INDEXING`, `SYNCED`, `FAILED` 상태 갱신 흐름 수동 검증
+- [ ] 삭제 요청 후 목록/상태 갱신과 `DELETING` 상태 표시 수동 검증
+- [ ] 업로드/다운로드/삭제 실패 시 관리자 화면 오류 메시지 표시 수동 검증
 
 ## Team Convention
 

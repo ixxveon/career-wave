@@ -13,7 +13,7 @@
 
 ## Feature Overview
 
-관리자 관리는 어드민 사용자 계정, 역할 기반 접근 제어, IP ACL, 보안 감사 로그를 관리하는 화면이다. 모든 API는 JWT 인증과 `ROLE_ADMIN` 권한을 전제로 하며, `MASTER`는 `ROLE_ADMIN` 내부의 관리자 세부 역할로 관리자 계정 생성, 권한 변경, 계정 잠금/삭제, ACL 변경을 수행할 수 있다. 모든 보안 민감 작업은 감사 로그로 남아야 한다.
+관리자 관리는 어드민 사용자 계정, 역할 기반 접근 제어, IP ACL, 보안 감사 로그를 관리하는 화면이다. 모든 API는 JWT 인증과 endpoint별 `MASTER`, `BACKEND`, `CS` 권한을 전제로 하며, 관리자 계정 생성, 권한 변경, 계정 잠금/삭제, ACL 변경은 `MASTER`만 수행할 수 있다. 모든 보안 민감 작업은 감사 로그로 남아야 한다.
 
 ## User Stories & Acceptance Scenarios
 
@@ -95,7 +95,7 @@
 ## Edge Cases
 
 - 인증 토큰이 만료되면 관리자 로그인 페이지로 이동한다.
-- `ROLE_ADMIN`이 아닌 사용자가 관리자 관리 API에 접근하면 권한 없음 안내를 표시한다.
+- endpoint별 권한이 없는 사용자가 관리자 관리 API에 접근하면 권한 없음 안내를 표시한다.
 - `MASTER` 권한이 아닌 관리자가 생성, 권한 변경, 삭제, ACL 변경을 시도하면 권한 없음 안내를 표시한다.
 - 마지막 남은 `MASTER` 계정은 잠금/삭제할 수 없다.
 - 관리자 생성 화면에서 Escape 키를 누르면 입력값을 초기화하고 닫는다.
@@ -121,7 +121,7 @@
 ### Key Entities
 
 - **AdminAccount**: `id`, `name`, `email`, `role`, `scope`, `ip`, `createdAt`, `lastLoginAt`, `status`
-- **AdminAclRule**: `id`, `label`, `cidr`, `note`, `enabled`, `riskLevel`, `updatedAt`
+- **AdminAclRule**: `ipAclId`, `label`, `ipRange`, `isEnabled`, `description`, `createdAt`, `updatedAt`
 - **AdminAuditLog**: `id`, `occurredAt`, `actor`, `ip`, `action`, `target`, `severity`
 - **AdminManagementSummary**: `totalAdminCount`, `activeAdminCount`, `activeAclCount`, `lockedAdminCount`
 
@@ -136,7 +136,7 @@
 ## Assumptions
 
 - v1에서는 `MASTER` 권한만 관리자 계정과 ACL을 변경할 수 있다.
-- `MASTER`는 백엔드 `ROLE_ADMIN` 권한 내 세부 역할이며, 일반 사용자 권한과 분리된다.
+- 문서상 `MASTER`, `BACKEND`, `CS`는 Spring Security에서 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`로 매핑되며, 일반 사용자 권한과 분리된다.
 - 관리자 로그인/토큰 발급은 별도 인증 도메인에서 처리한다.
 - 비밀번호 정책은 백엔드 검증 결과를 화면에 표시한다.
 - 문서 참조 경로는 숫자 prefix 제거 후 구조를 기준으로 작성한다.

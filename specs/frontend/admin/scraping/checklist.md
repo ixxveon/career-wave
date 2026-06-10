@@ -3,7 +3,8 @@
 ## Spec Consistency
 
 - [x] `spec.md`, `plan.md`, `tasks.md`, `api-schema.md`, `constitution.md`의 상태 정의가 일치한다.
-- [x] 스크래핑 상태는 ERD `scraping_logs.scraping_status` 기준 `SUCCESS`, `FAILED`로 통일되어 있다.
+- [x] 파이프라인 상태는 ERD `scraping_pipelines.pipeline_status` 기준 `IDLE`, `RUNNING`, `SUCCESS`, `FAILED`로 통일되어 있다.
+- [x] 로그 상태는 ERD `scraping_logs.scraping_status` 기준 `SUCCESS`, `FAILED`로 통일되어 있다.
 - [x] 현재 ERD에 없는 `pipelineId`, `ACTIVE`, `WARNING`, `RECOVERING`, `PAUSED` 값을 API 계약에서 가정하지 않는다.
 - [x] 실제 스크래핑 로직은 프론트엔드 범위가 아니라고 명시되어 있다.
 - [x] Phase별 스택 브랜치 작업 규칙이 문서에 반영되어 있다.
@@ -12,7 +13,7 @@
 
 - [x] `frontend/src/admin/api/scrapingApi.ts`에서 관리자 스크래핑 API를 관리한다.
 - [x] 페이지 또는 컴포넌트에서 `axios`를 직접 호출하지 않는다.
-- [x] `ScrapingStatus`, `ScrapingActionType` 타입이 정의되어 있다.
+- [x] `PipelineStatus`, `ScrapingStatus`, `ScrapingActionType` 타입이 정의되어 있다.
 - [x] `ScrapingSource`, `ScrapingSourceSummary`, `ScrapingActionRequest`, `ScrapingActionResult`, `ScrapingLog` 응답 타입이 정의되어 있다.
 - [x] `ApiResponse<T>` 응답 구조를 기준으로 처리한다.
 - [x] TypeScript interface는 PascalCase를 사용하고 `I` prefix를 사용하지 않는다.
@@ -21,7 +22,7 @@
 
 - [x] source 목록이 API 데이터로 렌더링된다.
 - [x] source명 또는 최근 오류 검색 조건이 API 조회 조건과 동기화된다.
-- [x] 실행 결과 필터(`SUCCESS`, `FAILED`)가 API 조회 조건과 동기화된다.
+- [x] 파이프라인 상태 필터(`IDLE`, `RUNNING`, `SUCCESS`, `FAILED`)가 API 조회 조건과 동기화된다.
 - [x] 페이지네이션 UI와 API 응답 메타데이터가 일치한다.
 - [x] 로딩, 빈 데이터, API 실패 상태가 화면에 표시된다.
 
@@ -45,8 +46,8 @@
 
 ## Phase 5 - 검증 및 마감
 
-- [x] 관리자 JWT와 `ROLE_ADMIN` 권한 기준 접근 제어가 확인된다.
-- [x] `SecurityConfig` 또는 동등한 보안 설정에서 `/api/v1/admin/scraping/**`가 `hasRole("ADMIN")`, `hasAuthority("ROLE_ADMIN")` 또는 프로젝트 표준 방식으로 보호된다.
+- [x] 관리자 JWT와 `MASTER`, `BACKEND` 권한 기준 접근 제어가 확인된다.
+- [x] `SecurityConfig` 또는 동등한 보안 설정에서 `/api/v1/admin/scraping/**`가 `ROLE_MASTER` 또는 `ROLE_BACKEND` 방식으로 보호된다.
 - [x] API 실패, 빈 목록, 검색 결과 없음 상태가 구분되어 표시된다.
 - [x] 액션 실패와 액션 중복 클릭 방지 동작이 확인된다.
 - [x] `FAILED` 여부와 요청 중 상태별 버튼 활성화 정책이 확인된다.

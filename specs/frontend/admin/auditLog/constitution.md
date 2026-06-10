@@ -9,7 +9,7 @@ MVP의 중심은 로그 생성 로직 자체가 아니라, 이미 백엔드 또�
 ## 범위
 
 - 감사 로그 요약 카운트 조회
-- source별 로그 목록 조회
+- logType별 로그 목록 조회
 - 등급, 키워드, 기간 필터
 - 로그 상세 조회
 - 로딩, 빈 데이터, 검색 결과 없음, API 실패, 권한 오류 상태 표시
@@ -39,8 +39,8 @@ MVP의 중심은 로그 생성 로직 자체가 아니라, 이미 백엔드 또�
 
 ## 보안 원칙
 
-- 모든 관리자 감사 로그 API는 JWT 인증과 `ROLE_ADMIN` 권한을 요구한다.
-- 백엔드는 `SecurityConfig` 또는 동등한 보안 설정에서 `/api/v1/admin/audit-logs/**`에 `hasRole("ADMIN")`, `hasAuthority("ROLE_ADMIN")` 또는 프로젝트 표준에 맞는 역할 검증을 명시적으로 적용해야 한다.
+- 모든 관리자 감사 로그 API는 JWT 인증과 `MASTER`, `BACKEND` 권한을 요구한다.
+- 백엔드는 `SecurityConfig` 또는 동등한 보안 설정에서 `/api/v1/admin/audit-logs/**`에 `ROLE_MASTER` 또는 `ROLE_BACKEND` 역할 검증을 명시적으로 적용해야 한다.
 - 로그 상세에는 토큰, 쿠키, 비밀번호, 개인정보, 프롬프트 원문, 외부 응답 전문을 노출하지 않는다.
 - IP 주소는 화면 표시용으로 마스킹된 값을 사용한다.
 - 로그는 감사 목적의 기록이므로 프론트엔드에서 수정하거나 삭제하지 않는다.
@@ -48,7 +48,7 @@ MVP의 중심은 로그 생성 로직 자체가 아니라, 이미 백엔드 또�
 ## 프론트엔드 원칙
 
 - 페이지 또는 컴포넌트에서 `axios`를 직접 호출하지 않는다.
-- 도메인별 API 호출은 `frontend/src/admin/api/auditLogApi.ts`에 둔다.
+- 도메인별 API 호출은 `frontend/src/api/admin/auditLogApi.ts`에 둔다.
 - 서버 상태는 TanStack Query 사용을 우선한다.
 - TypeScript interface는 PascalCase를 사용하고 `I` prefix를 붙이지 않는다.
 - 기존 관리자 레이아웃, 카드, 테이블, 스크롤 목록 패턴을 우선 재사용한다.

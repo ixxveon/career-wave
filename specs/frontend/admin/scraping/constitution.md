@@ -33,14 +33,15 @@ MVP의 중심은 스크래핑 로직 자체 구현이 아니라, FastAPI 또는 
 
 상태 전이 원칙:
 
-- 상태 값은 ERD `scraping_logs.scraping_status` CHECK 제약 기준 `SUCCESS`와 `FAILED`만 사용한다.
+- 파이프라인 상태 값은 ERD `scraping_pipelines.pipeline_status` CHECK 제약 기준 `IDLE`, `RUNNING`, `SUCCESS`, `FAILED`를 사용한다.
+- 로그 상태 값은 ERD `scraping_logs.scraping_status` CHECK 제약 기준 `SUCCESS`, `FAILED`를 사용한다.
 - `ACTIVE`, `WARNING`, `RECOVERING`, `PAUSED` 같은 파이프라인 수명주기 상태는 현재 ERD에 없으므로 프론트 계약에서 가정하지 않는다.
 - 재시도 또는 테스트 요청 중 상태 표시는 별도 DDL/API 계약이 확정되기 전까지 버튼 loading 상태와 요청 결과 메시지로 표현한다.
 
 ## 보안 원칙
 
-- 모든 관리자 스크래핑 API는 JWT 인증과 `ROLE_ADMIN` 권한을 요구한다.
-- 백엔드는 `SecurityConfig` 또는 동등한 보안 설정에서 `/api/v1/admin/scraping/**`에 `hasRole("ADMIN")`, `hasAuthority("ROLE_ADMIN")` 또는 프로젝트 표준에 맞는 역할 검증을 명시적으로 적용해야 한다.
+- 모든 관리자 스크래핑 API는 JWT 인증과 `MASTER`, `BACKEND` 권한을 요구한다.
+- 백엔드는 `SecurityConfig` 또는 동등한 보안 설정에서 `/api/v1/admin/scraping/**`에 `ROLE_MASTER` 또는 `ROLE_BACKEND` 역할 검증을 명시적으로 적용해야 한다.
 - 단순 인증 통과만으로 관리자 권한이 보장된다고 가정하지 않는다.
 - 인증 사용자 정보는 Controller에서 임의 파싱하지 않고 Security Context 또는 공통 인증 유틸리티로 조회한다.
 - 관리자 API는 `ApiResponse<T>` 형식을 따른다.

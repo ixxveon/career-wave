@@ -15,14 +15,14 @@
 - [x] `frontend/src/admin/api/adminManagementApi.ts`가 생성되어 있다.
 - [x] `AdminManagementSummary` 타입이 정의되고 export되어 있다.
 - [x] `AdminAccount`, `AdminRole`, `AdminStatus` 타입이 정의되고 export되어 있다.
-- [x] `AdminAclRule`, `AclRiskLevel` 타입이 정의되고 export되어 있다.
+- [x] `AdminAclRule` 타입은 ERD 기준 필드로 정의되고 export되어 있다.
 - [x] `AdminAuditLog`, `AuditSeverity` 타입이 정의되고 export되어 있다.
 - [x] 관리자 계정 API 함수가 작성되어 있다.
 - [x] ACL API 함수가 작성되어 있다.
 - [x] 감사 로그 API 함수가 작성되어 있다.
 - [x] `ApiResponse<T>` 래퍼 응답이 처리되어 있다.
 - [x] API 실패 시 화면에 표시할 에러 메시지 매핑이 정의되어 있다.
-- [x] JWT 인증 만료, `ROLE_ADMIN` 권한 없음, `MASTER` 세부 역할 부족 에러 메시지가 구분되어 있다.
+- [x] JWT 인증 만료, endpoint별 권한 없음, `MASTER` 세부 역할 부족 에러 메시지가 구분되어 있다.
 
 ## 계정/RBAC 연동
 
@@ -56,7 +56,7 @@
 
 ## 권한 및 검증
 
-- [x] `ROLE_ADMIN` 권한이 아닌 경우 관리자 관리 화면 접근 또는 API 호출 실패 상태가 표시된다.
+- [x] endpoint별 권한이 아닌 경우 관리자 관리 화면 접근 또는 API 호출 실패 상태가 표시된다.
 - [x] `MASTER` 권한이 아닌 경우 계정 위험 작업 버튼이 숨겨지거나 비활성화된다.
 - [x] `MASTER` 권한이 아닌 경우 ACL 위험 작업 버튼이 숨겨지거나 비활성화된다.
 - [x] 마지막 `MASTER` 계정 잠금/삭제 요청이 차단된다.

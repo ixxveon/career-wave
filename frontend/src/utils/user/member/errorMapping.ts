@@ -1,4 +1,4 @@
-import type { ApiErrorBody } from '../../../types/user/member';
+import type { ApiErrorBody, LoginRouteDecision } from '../../../types/user/member';
 
 export const MEMBER_ERROR_CODE = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
@@ -18,7 +18,40 @@ export interface MemberApiError {
   code: MemberErrorCode;
   statusCode: number;
   message: string;
+  serverCode?: string;
   fieldErrors?: Record<string, string>;
+}
+
+export const LOGIN_BLOCK_SERVER_CODE = {
+  AUTH_ACCOUNT_SUSPENDED:      'AUTH_ACCOUNT_SUSPENDED',
+  AUTH_ACCOUNT_BANNED:         'AUTH_ACCOUNT_BANNED',
+  AUTH_ACCOUNT_WITHDRAWN:      'AUTH_ACCOUNT_WITHDRAWN',
+  AUTH_COMPANY_PENDING_REVIEW: 'AUTH_COMPANY_PENDING_REVIEW',
+  AUTH_COMPANY_REJECTED:       'AUTH_COMPANY_REJECTED',
+  AUTH_COMPANY_NEEDS_REVISION: 'AUTH_COMPANY_NEEDS_REVISION',
+} as const;
+
+const ACCOUNT_RESTRICTION_SERVER_CODES: Record<(typeof LOGIN_BLOCK_SERVER_CODE)[keyof typeof LOGIN_BLOCK_SERVER_CODE], LoginRouteDecision & { type: 'BLOCK' }> = {
+  [LOGIN_BLOCK_SERVER_CODE.AUTH_ACCOUNT_SUSPENDED]:      { type: 'BLOCK', reason: 'RESTRICTED' },
+  [LOGIN_BLOCK_SERVER_CODE.AUTH_ACCOUNT_BANNED]:         { type: 'BLOCK', reason: 'RESTRICTED' },
+  [LOGIN_BLOCK_SERVER_CODE.AUTH_ACCOUNT_WITHDRAWN]:      { type: 'BLOCK', reason: 'RESTRICTED' },
+  [LOGIN_BLOCK_SERVER_CODE.AUTH_COMPANY_PENDING_REVIEW]: { type: 'BLOCK', reason: 'COMPANY_PENDING' },
+  [LOGIN_BLOCK_SERVER_CODE.AUTH_COMPANY_REJECTED]:       { type: 'BLOCK', reason: 'COMPANY_REJECTED' },
+  [LOGIN_BLOCK_SERVER_CODE.AUTH_COMPANY_NEEDS_REVISION]: { type: 'BLOCK', reason: 'COMPANY_NEEDS_REVISION' },
+};
+
+type LoginBlockServerCode = (typeof LOGIN_BLOCK_SERVER_CODE)[keyof typeof LOGIN_BLOCK_SERVER_CODE];
+
+function isLoginBlockServerCode(code: string): code is LoginBlockServerCode {
+  return Object.values(LOGIN_BLOCK_SERVER_CODE).includes(code as LoginBlockServerCode);
+}
+
+export function parseLoginBlockedDecision(
+  error: MemberApiError,
+): (LoginRouteDecision & { type: 'BLOCK' }) | null {
+  if (error.statusCode !== 403) return null;
+  if (!error.serverCode || !isLoginBlockServerCode(error.serverCode)) return null;
+  return ACCOUNT_RESTRICTION_SERVER_CODES[error.serverCode];
 }
 
 const fallbackMessages: Record<MemberErrorCode, string> = {
@@ -68,6 +101,7 @@ export function toMemberApiError(statusCode: number, body?: ApiErrorBody): Membe
     code,
     statusCode,
     message: body?.message || fallbackMessages[code],
+    serverCode: body?.code,
     fieldErrors,
   };
 }

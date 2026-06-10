@@ -2,7 +2,7 @@
 
 ## Summary
 
-관리자 감사 로그 화면을 mock seed 기반 통합 로그 화면에서 API 기반 감사 로그 조회 화면으로 전환한다. MVP는 감사 로그 요약 카운트, source/level/keyword/기간 필터, 스크롤 목록, 선택 로그 상세, 권한 오류와 민감 정보 노출 방지 검증을 포함한다.
+관리자 감사 로그 화면을 mock seed 기반 통합 로그 화면에서 API 기반 감사 로그 조회 화면으로 전환한다. MVP는 감사 로그 요약 카운트, logType/severity/keyword/기간 필터, 스크롤 목록, 선택 로그 상세, 권한 오류와 민감 정보 노출 방지 검증을 포함한다.
 
 ## Technical Context
 
@@ -11,7 +11,7 @@
 - Route: `/admin/log`
 - API Module: `frontend/src/admin/api/auditLogApi.ts`
 - Server State: TanStack Query 우선
-- Auth: 관리자 JWT, `ROLE_ADMIN`
+- Auth: 관리자 JWT, `MASTER`/`BACKEND`
 - Response: `ApiResponse<T>`
 
 ## Project Structure
@@ -55,7 +55,7 @@ specs/frontend/admin/auditLog/
 ### Phase 1 - API 계약 및 타입 정리
 
 - `frontend/src/admin/api/auditLogApi.ts`를 생성한다.
-- `AuditLogSource`, `AuditLogLevel`, `AuditLogSummary`, `AuditLogItem`, `AuditLogDetail` 타입을 정의한다.
+- `AuditLogType`, `AuditLogSeverity`, `AuditLogSummary`, `AuditLogItem`, `AuditLogDetail` 타입을 정의한다.
 - `ApiResponse<T>`와 페이지네이션 응답 구조를 처리한다.
 - 페이지에서 mock seed를 직접 참조하지 않도록 API 계층 경계를 만든다.
 
@@ -63,14 +63,14 @@ specs/frontend/admin/auditLog/
 
 - 요약 카드 4개를 API 데이터 기반으로 전환한다.
 - 감사 로그 목록을 API 데이터로 렌더링한다.
-- source 탭, level 필터, keyword 검색 조건을 API 조회 조건과 동기화한다.
+- logType 탭, severity 필터, keyword 검색 조건을 API 조회 조건과 동기화한다.
 - 현재 스크롤 목록 UI에 맞춰 API page/size 기본 조회 조건을 연결한다.
 
 ### Phase 3 - 상세 조회와 선택 상태
 
 - 로그 행 선택 시 상세 API를 호출한다.
 - 목록 필터 변경 시 선택 로그를 현재 결과의 첫 항목 또는 빈 상태로 정리한다.
-- 상세 패널에 발생 시각, source, 등급, 요약, 마스킹된 IP, requestId를 표시한다.
+- 상세 패널에 발생 시각, logType, 등급, 요약, 마스킹된 IP, requestId를 표시한다.
 - 상세 데이터가 없는 경우와 상세 조회 실패 상태를 구분한다.
 
 ### Phase 4 - 상태 처리와 보안 검증
@@ -94,4 +94,4 @@ specs/frontend/admin/auditLog/
 - 관리자 API는 `frontend/src/admin/api` 하위로 분리한다.
 - TypeScript interface는 PascalCase를 사용하고 `I` prefix를 사용하지 않는다.
 - 새 라이브러리는 팀 합의 없이 추가하지 않는다.
-- 관리자 API는 JWT와 `ROLE_ADMIN` 권한을 전제로 설계한다.
+- 관리자 API는 JWT와 `MASTER`, `BACKEND` 권한을 전제로 설계한다.

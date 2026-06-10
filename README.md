@@ -41,6 +41,25 @@ career-wave/
 
 ## 실행 방법
 
+### Database (로컬 PostgreSQL)
+
+```bash
+# 1. .env 파일 생성 후 DB_PASSWORD 값 채우기
+copy .env.example .env
+
+# 2. PostgreSQL 컨테이너 실행 (최초 1회 init.sql 자동 적용)
+docker-compose up -d
+```
+
+> ⚠️ `init.sql`은 볼륨이 비어있는 **최초 실행 시에만** 자동 적용됩니다.
+> DDL이 변경된 경우 아래 명령어로 볼륨을 초기화한 뒤 다시 실행하세요.
+
+```bash
+# 볼륨 초기화 (데이터 전체 삭제 후 재생성)
+docker-compose down -v
+docker-compose up -d
+```
+
 ### Frontend
 ```bash
 cd frontend

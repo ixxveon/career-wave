@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback } from 'react';
 import type { WsStatusMessage } from '../../../types/user/resume';
+import { authSession } from '../../../utils/user/member/authSession';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL
   ?? window.location.origin.replace(/^https/, 'wss').replace(/^http/, 'ws');
@@ -32,9 +33,6 @@ export interface UseAnalysisWebSocketReturn {
  * - FAILED 수신 시 onFailed 콜백 호출 후 연결 종료
  * - Close 1008 (auth/IDOR 에러) 시 onFailed 호출
  * - 30초 타임아웃 초과 시 onFailed 호출 (NFR-001)
- *
- * TODO: JWT 토큰 연동 — 백엔드 인증 방식 확정 후
- * `?token={accessToken}` 쿼리 파라미터 추가 필요
  */
 export function useAnalysisWebSocket({
   onMessage,
@@ -80,14 +78,17 @@ export function useAnalysisWebSocket({
         wsRef.current.close();
         wsRef.current = null;
       }
+      setIsConnected(false);
       errorFiredRef.current = false;
 
       // api-schema.md §5: JWT를 쿼리 파라미터로 전달 (?token={accessToken})
-      // TODO: 인증 팀원(/user/member) 토큰 관리 방식 확정 후 authSession.getAccessToken()으로 교체 필요
-      const token = localStorage.getItem('accessToken');
-      const url   = token
-        ? `${WS_BASE_URL}/ws/user/resume/${documentId}/status?token=${encodeURIComponent(token)}`
-        : `${WS_BASE_URL}/ws/user/resume/${documentId}/status`;
+      const token = authSession.getAccessToken();
+      if (!token) {
+        setIsConnected(false);
+        onFailed('인증 토큰이 없습니다. 로그인 후 다시 시도해주세요.');
+        return;
+      }
+      const url = `${WS_BASE_URL}/ws/user/resume/${documentId}/status?token=${encodeURIComponent(token)}`;
       const ws = new WebSocket(url);
       wsRef.current = ws;
 

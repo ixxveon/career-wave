@@ -21,6 +21,17 @@
 | 스크랩 저장/해제 | 로그인 필요 |
 | 로그인 유도 경로 | `/auth/login` |
 
+## Permissions
+
+문서상 권한 표기는 `MASTER`, `BACKEND`, `CS`, `USER`를 사용한다. Spring Security에서는 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`, `ROLE_USER`로 매핑한다.
+
+| Method | Path | Allowed Roles |
+|---|---|---|
+| GET | `/api/v1/user/job-notices` | `Optional` |
+| GET | `/api/v1/user/job-notices/{jobNoticeId}` | `Optional` |
+| POST | `/api/v1/user/job-notices/{jobNoticeId}/bookmarks` | `USER` |
+| DELETE | `/api/v1/user/job-notices/{jobNoticeId}/bookmarks` | `USER` |
+
 ## 3. 응답 래퍼
 
 모든 Backend API 응답은 팀 Convention에 따라 `ApiResponse<T>` 형식을 사용한다.
@@ -64,9 +75,9 @@
 
 | 이름 | 값 |
 |------|----|
-| `jobType` | `전체`, `백엔드`, `프론트엔드`, `데이터`, `DevOps` |
-| `experience` | `전체`, `신입`, `1~3년`, `3~5년`, `5년 이상`, `경력무관` |
-| `employmentType` | `전체`, `정규직`, `인턴`, `계약직` |
+| `jobType` | `FULLTIME`, `INTERN`, `CONTRACT` |
+| `jobCategory` | `BACKEND`, `FRONTEND`, `DATA`, `DEVOPS` |
+| `careerLevel` | `JUNIOR`, `SENIOR`, `ANY` |
 | `location` | `전체`, `서울`, `경기`, `원격` |
 | `companySize` | `전체`, `스타트업`, `중견`, `대기업` |
 | `period` | `today`, `7d`, `30d`, `all` |
@@ -83,9 +94,9 @@
 | `id` | number | O | 공고 고유 ID |
 | `company` | string | O | 회사명 |
 | `title` | string | O | 공고 제목 |
-| `jobType` | string | O | 직무 분류 |
-| `experience` | string | O | 경력 조건 |
-| `employmentType` | string | O | 고용 형태 |
+| `jobType` | string | O | Employment type. ERD `job_type` |
+| `jobCategory` | string | O | Job category. ERD `job_category` |
+| `careerLevel` | string | O | Career level. ERD `career_level` |
 | `location` | string | O | 근무 지역 |
 | `companySize` | string | O | 기업 규모 |
 | `salary` | string | - | 급여 정보. 공개되지 않은 경우 `협의`로 내려온다. |
@@ -131,9 +142,9 @@
 | 이름 | 타입 | 필수 | 기본값 | 설명 |
 |------|------|------|--------|------|
 | `keyword` | string | N | - | 회사명, 공고명, 직무, 기술 스택, 출처 통합 검색어 |
-| `jobType` | string | N | - | 직무 필터. `전체` 선택 시 생략 |
-| `experience` | string | N | - | 경력 필터. 서버는 선택한 `experience` 범위와 공고 경력 범위가 겹치면 포함한다. 경계값은 포함하며, 정규화 예시는 `constitution.md`의 경력 범위 규칙을 따른다. |
-| `employmentType` | string | N | - | 채용 유형 필터 |
+| `jobCategory` | string | N | - | Job category filter. ERD `job_category`. Omit when ALL. |
+| `careerLevel` | string | N | - | Career level filter. ERD `career_level`. |
+| `jobType` | string | N | - | Employment type filter. ERD `job_type`. |
 | `location` | string | N | - | 지역 필터 |
 | `companySize` | string | N | - | 기업 규모 필터 |
 | `period` | string | N | `all` | 게시일 기준 기간 필터 |
@@ -154,9 +165,9 @@
 | `stats.todayNewCount` | number | 오늘 신규 공고 수 |
 | `stats.todayNewDelta` | number | 전일 대비 신규 공고 증감 |
 | `stats.todayNewRate` | number | 오늘 신규 공고 비율 |
-| `filterOptions.jobType` | string[] | 직무 필터 옵션 |
-| `filterOptions.experience` | string[] | 경력 필터 옵션 |
-| `filterOptions.employmentType` | string[] | 채용 유형 필터 옵션 |
+| `filterOptions.jobType` | string[] | Employment type filter options. ERD `job_type` |
+| `filterOptions.careerLevel` | string[] | Career level filter options. ERD `career_level` |
+| `filterOptions.jobCategory` | string[] | Job category filter options. ERD `job_category` |
 | `filterOptions.location` | string[] | 지역 필터 옵션 |
 | `filterOptions.companySize` | string[] | 기업 규모 필터 옵션 |
 
@@ -180,9 +191,9 @@
       "todayNewRate": 0
     },
     "filterOptions": {
-      "jobType": ["전체", "백엔드", "프론트엔드", "데이터", "DevOps"],
-      "experience": ["전체", "신입", "1~3년", "3~5년", "5년 이상", "경력무관"],
-      "employmentType": ["전체", "정규직", "인턴", "계약직"],
+      "jobType": ["FULLTIME", "INTERN", "CONTRACT"],
+      "jobCategory": ["BACKEND", "FRONTEND", "DATA", "DEVOPS"],
+      "careerLevel": ["JUNIOR", "SENIOR", "ANY"],
       "location": ["전체", "서울", "경기", "원격"],
       "companySize": ["전체", "스타트업", "중견", "대기업"]
     }
@@ -220,13 +231,13 @@
 | `JOB_NOTICE_NOT_FOUND` | 404 | 공고 정보를 찾을 수 없습니다. |
 | `JOB_NOTICE_CLOSED` | 410 | 마감되었거나 비공개 처리된 공고입니다. |
 
-### 6.3 채용 공고 스크랩 토글
+### 6.3 채용 공고 스크랩 저장
 
 | 항목 | 값 |
 |------|----|
-| ID | `toggleJobNoticeBookmark` |
-| Method | `PATCH` |
-| Path | `/api/v1/user/job-notices/{jobNoticeId}/bookmark` |
+| ID | `addJobNoticeBookmark` |
+| Method | `POST` |
+| Path | `/api/v1/user/job-notices/{jobNoticeId}/bookmarks` |
 | Auth | required |
 | Response | `ApiResponse<JobNoticeBookmarkResponse>` |
 
@@ -234,13 +245,31 @@
 
 | 이름 | 타입 | 필수 | 설명 |
 |------|------|------|------|
-| `jobNoticeId` | number | O | 스크랩 저장 또는 해제할 공고 ID |
+| `jobNoticeId` | number | O | 저장할 공고 ID |
 
 #### Request Body
 
-| 필드 | 타입 | 필수 | 설명 |
+없음
+
+### 6.4 채용 공고 스크랩 삭제
+
+| 항목 | 값 |
+|------|----|
+| ID | `deleteJobNoticeBookmark` |
+| Method | `DELETE` |
+| Path | `/api/v1/user/job-notices/{jobNoticeId}/bookmarks` |
+| Auth | required |
+| Response | `ApiResponse<JobNoticeBookmarkResponse>` |
+
+#### Path Parameters
+
+| 이름 | 타입 | 필수 | 설명 |
 |------|------|------|------|
-| `bookmarked` | boolean | O | `true`면 스크랩 저장, `false`면 스크랩 해제 |
+| `jobNoticeId` | number | O | 스크랩 해제할 공고 ID |
+
+#### Request Body
+
+없음
 
 #### Response Data
 

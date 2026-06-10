@@ -536,6 +536,9 @@ refresh token은 HttpOnly cookie 우선, 불가 시 body로 전달한다.
   "restrictionType": "SUSPENDED",
   "recoverable": true,
   "availableAt": "2026-06-07T00:00:00Z",
-  "messageCode": "ACCOUNT_RESTRICTED"
+  "messageCode": "ACCOUNT_RESTRICTED",
+  "reason": "커뮤니티 운영정책 위반",
+  "startedAt": "2026-05-31T00:00:00Z",
+  "duration": "SEVEN_DAYS"
 }
 ```

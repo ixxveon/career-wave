@@ -29,7 +29,7 @@
 **Acceptance Scenarios**:
 
 1. **Given** 검색어가 입력되면, **When** 목록 API가 다시 호출된다, **Then** source 또는 최근 오류에 검색어가 포함된 source만 표시된다.
-2. **Given** 실행 결과 필터가 선택되면, **When** 목록 API가 다시 호출된다, **Then** 선택한 `SUCCESS` 또는 `FAILED` 결과의 source만 표시된다.
+2. **Given** 파이프라인 상태 필터가 선택되면, **When** 목록 API가 다시 호출된다, **Then** 선택한 `IDLE`, `RUNNING`, `SUCCESS`, `FAILED` 상태의 source만 표시된다.
 3. **Given** 결과가 여러 페이지이면, **When** 관리자가 페이지를 변경한다, **Then** 해당 페이지의 source가 표시된다.
 
 ### User Story 3 - source 실행 액션 요청 (Priority: P2)
@@ -75,13 +75,13 @@
 - **FR-001**: 관리자는 스크래핑 source 목록을 조회할 수 있어야 한다.
 - **FR-002**: 관리자는 source별 최근 실행 결과, 성공률, 평균 응답 시간, 주기, 수집 건수, 최근 오류를 확인할 수 있어야 한다.
 - **FR-003**: 관리자는 source명 또는 최근 오류 기준으로 검색할 수 있어야 한다.
-- **FR-004**: 관리자는 ERD `scraping_status` 기준 `SUCCESS` 또는 `FAILED`로 source를 필터링할 수 있어야 한다.
+- **FR-004**: 관리자는 ERD `pipeline_status` 기준 `IDLE`, `RUNNING`, `SUCCESS`, `FAILED`로 source를 필터링할 수 있어야 한다.
 - **FR-005**: 관리자는 source 목록 페이지를 이동할 수 있어야 한다.
 - **FR-006**: 관리자는 단일 source 실행, 재시도, 테스트를 요청할 수 있어야 한다.
 - **FR-007**: 관리자는 스크래핑 운영 로그를 조회할 수 있어야 한다.
 - **FR-008**: 관리자는 로그 실행 결과와 메시지를 기준으로 장애 원인을 파악할 수 있어야 한다.
 - **FR-009**: 화면은 로딩, 빈 데이터, API 실패, 액션 실패 상태를 구분해 표시해야 한다.
-- **FR-010**: 관리자 API는 JWT와 `ROLE_ADMIN` 권한을 기준으로 보호되어야 한다.
+- **FR-010**: 관리자 API는 JWT와 `MASTER`, `BACKEND` 권한을 기준으로 보호되어야 한다.
 
 ## Key Entities
 

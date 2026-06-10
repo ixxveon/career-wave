@@ -2,7 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type FormEvent, useMemo, useState } from 'react';
 import type { LoginRouteDecision } from '../../../types/user/member';
 import { authSession } from '../../../utils/user/member/authSession';
-import { getSafeLoginMessage, type MemberApiError } from '../../../utils/user/member/errorMapping';
+import { MEMBER_ERROR_CODE, getSafeLoginMessage, parseLoginBlockedDecision, type MemberApiError } from '../../../utils/user/member/errorMapping';
 import {
   LOGIN_TAB_TO_MEMBER_TYPE,
   hasLoginFormErrors,
@@ -56,6 +56,20 @@ const BLOCK_MESSAGE_BY_REASON: Record<
     actionPath: '/support',
   },
 };
+
+const MEMBER_ERROR_CODE_VALUES = new Set(Object.values(MEMBER_ERROR_CODE));
+
+function isMemberApiError(e: unknown): e is MemberApiError {
+  if (typeof e !== 'object' || e === null) return false;
+  const obj = e as Record<string, unknown>;
+  return (
+    'statusCode' in e &&
+    'code' in e &&
+    'message' in e &&
+    typeof obj.code === 'string' &&
+    MEMBER_ERROR_CODE_VALUES.has(obj.code)
+  );
+}
 
 export const CROSS_TAB_ERROR_MESSAGES: Record<LoginTab, string> = {
   company: '기업회원 탭에서 개인회원으로 로그인할 수 없습니다. 개인회원 탭에서 로그인해주세요.',
@@ -133,9 +147,17 @@ export function useLoginForm() {
       const compatiblePath = safePath && isNextPathCompatible(safePath, response.member.memberType) ? safePath : null;
       navigate(compatiblePath ?? decision.path, { replace: true });
     } catch (error) {
-      setFieldErrors({
-        form: getSafeLoginMessage(error as MemberApiError),
-      });
+      if (!isMemberApiError(error)) {
+        setFieldErrors({ form: getSafeLoginMessage({ code: MEMBER_ERROR_CODE.NETWORK_ERROR, statusCode: 0, message: '' }) });
+        return;
+      }
+      const blockedFromError = parseLoginBlockedDecision(error);
+      if (blockedFromError) {
+        authSession.clear();
+        setBlockedDecision(blockedFromError);
+      } else {
+        setFieldErrors({ form: getSafeLoginMessage(error) });
+      }
     }
   };
 

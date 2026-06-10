@@ -5,7 +5,7 @@
 **Branch**: `feature/admin-ai-metrics-api`  
 **Base**: `develop`
 
-- [x] `frontend/src/admin/api/aiMetricsApi.ts` 생성
+- [x] `frontend/src/api/admin/aiMetricsApi.ts` 생성
 - [x] `AiDomain`, `AiEventSeverity`, `AiHealthStatus`, `AiUsageRiskLevel` 타입 정의
 - [x] `AiMetricSummary`, `AiDomainUsage`, `AiTokenTrendPoint`, `AiHeavyUser`, `AiMetricLog`, `AiBudgetSetting` 응답 타입 정의
 - [x] `displayModelName`과 `actualModelName`을 분리해 타입에 반영
@@ -52,7 +52,7 @@
 **Base**: `feature/admin-ai-metrics-logs-anomaly`
 
 - [x] 관리자 권한이 없는 사용자의 접근 제한 확인
-- [x] `accessToken` JWT payload에서 `ROLE_ADMIN` 권한을 확인하도록 라우트 가드 보강
+- [x] `accessToken` JWT payload에서 endpoint별 `MASTER`, `BACKEND` 권한을 확인하도록 라우트 가드 보강
 - [x] API 실패, 빈 데이터, 권한 오류 상태 확인
 - [x] 모델 표시명이 없을 때 실제 모델명을 대체 표시하는지 확인
 - [x] 실제 모델명이 바뀌어도 도메인별 통계가 유지되는지 확인
@@ -64,10 +64,10 @@
 **Branch**: `feature/admin-ai-metrics-rag-documents`  
 **Base**: `feature/admin-ai-metrics-verify`
 
-- [ ] `POST /api/v1/admin/ai-metrics/rag-documents` 문서 업로드 API 연동
-- [ ] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download` 문서 다운로드 API 연동
-- [ ] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}` 문서 삭제 API 연동
-- [ ] 업로드 파일 형식, 크기, 필수값 검증 상태 처리
-- [ ] 업로드 후 RAG 인덱싱 상태(`INDEXING`, `SYNCED`, `FAILED`) 갱신 흐름 확인
-- [ ] 삭제 요청 후 목록/상태 갱신 및 `DELETING` 상태 표시 여부 확인
-- [ ] 업로드/다운로드/삭제 실패 시 관리자 화면 오류 메시지 처리
+- [x] `POST /api/v1/admin/ai-metrics/rag-documents` 문서 업로드 API 연동
+- [x] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download` 문서 다운로드 API 연동
+- [x] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}` 문서 삭제 API 연동
+- [x] 업로드 파일 형식, 크기, 필수값 검증 상태 처리
+- [x] 업로드 후 RAG 인덱싱 상태(`INDEXING`, `SYNCED`, `FAILED`) 갱신 흐름 확인
+- [x] 삭제 요청 후 목록/상태 갱신 및 `DELETING` 상태 표시 여부 확인
+- [x] 업로드/다운로드/삭제 실패 시 관리자 화면 오류 메시지 처리

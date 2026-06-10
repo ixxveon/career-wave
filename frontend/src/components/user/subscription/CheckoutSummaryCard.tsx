@@ -7,11 +7,12 @@ interface Props {
   warning: string;
   checkoutError: string;
   isCreatingOrder: boolean;
+  isPaymentRequesting: boolean;
   onAgreeChange: (checked: boolean) => void;
   onCheckout: () => void;
 }
 
-function CheckoutSummaryCard({ product, agreed, warning, checkoutError, isCreatingOrder, onAgreeChange, onCheckout }: Props) {
+function CheckoutSummaryCard({ product, agreed, warning, checkoutError, isCreatingOrder, isPaymentRequesting, onAgreeChange, onCheckout }: Props) {
   return (
     <aside className="cw-billing-card cw-billing-summary-card">
       <span className="cw-billing-summary-card__eyebrow">결제 요약</span>
@@ -59,9 +60,9 @@ function CheckoutSummaryCard({ product, agreed, warning, checkoutError, isCreati
         type="button"
         className="cw-billing-primary-button"
         onClick={onCheckout}
-        disabled={isCreatingOrder}
+        disabled={isCreatingOrder || isPaymentRequesting}
       >
-        {isCreatingOrder ? '결제 요청 중...' : 'Toss Payments로 결제하기'}
+        {isCreatingOrder || isPaymentRequesting ? '결제 요청 중...' : 'Toss Payments로 결제하기'}
       </button>
     </aside>
   );

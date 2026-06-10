@@ -9,7 +9,11 @@ import {
   unwrapDashboardSummaryResponse,
 } from '../../../api/admin/dashboardApi';
 import { ACCESS_TOKEN_STORAGE_KEY } from '../../../constants/admin/authConstants';
-import { ADMIN_ROUTE_PATHS, isAdminNavigationPath } from '../../../constants/admin/adminRouteConstants';
+import {
+  ADMIN_ROUTE_PATHS,
+  hasAdminRouteAccess,
+  isAdminNavigationPath,
+} from '../../../constants/admin/adminRouteConstants';
 import { ADMIN_DETAIL_ROLE, type AdminDetailRole } from '../../../constants/admin/adminRoleConstants';
 import '../../../styles/admin/admin.css';
 
@@ -64,26 +68,26 @@ type DashboardAccessKey = (typeof DASHBOARD_ACCESS_KEY)[keyof typeof DASHBOARD_A
 
 const DASHBOARD_DOMAIN_ALLOWED_ROLES = {
   ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
-  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.OPS],
-  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.AUDIT],
+  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
   CS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BILLING],
-  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.OPS, ADMIN_DETAIL_ROLE.BACKEND],
+  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER],
+  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER],
   AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND, ADMIN_DETAIL_ROLE.OPS],
-  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.AUDIT],
+  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
 } satisfies Record<DashboardAccessKey, AdminDetailRole[]>;
 
 const DASHBOARD_CARD_ALLOWED_ROLES = {
   ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
-  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.OPS],
-  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.AUDIT],
+  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
   CS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BILLING],
-  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.OPS, ADMIN_DETAIL_ROLE.BACKEND],
+  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER],
+  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER],
   AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND, ADMIN_DETAIL_ROLE.OPS],
-  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.AUDIT],
+  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
 } satisfies Partial<Record<DashboardAccessKey, AdminDetailRole[]>>;
 
 function hasDashboardRoleAccess(
@@ -91,8 +95,13 @@ function hasDashboardRoleAccess(
   allowedRoles: AdminDetailRole[] | undefined
 ) {
   if (!currentAdminRole) return false;
-  if (!allowedRoles || allowedRoles.length === 0) return true;
+  if (!allowedRoles) return false;
+  if (allowedRoles.length === 0) return true;
   return allowedRoles.includes(currentAdminRole);
+}
+
+function hasAccessibleAdminTarget(currentAdminRole: AdminDetailRole | null, targetPath: string) {
+  return isAdminNavigationPath(targetPath) && hasAdminRouteAccess(currentAdminRole, targetPath);
 }
 
 export default function AdminDashboardPage() {
@@ -173,7 +182,7 @@ export default function AdminDashboardPage() {
         const hasRoleAccess = hasDashboardRoleAccess(
           currentAdminRole,
           DASHBOARD_DOMAIN_ALLOWED_ROLES[item.domain as DashboardAccessKey]
-        );
+        ) && hasAccessibleAdminTarget(currentAdminRole, item.targetPath);
 
         return {
           ...item,
@@ -256,7 +265,7 @@ export default function AdminDashboardPage() {
         const hasRoleAccess = hasDashboardRoleAccess(
           currentAdminRole,
           DASHBOARD_CARD_ALLOWED_ROLES[item.key as DashboardAccessKey]
-        );
+        ) && hasAccessibleAdminTarget(currentAdminRole, item.targetPath);
 
         return {
           ...item,
@@ -298,7 +307,7 @@ export default function AdminDashboardPage() {
     try {
       const items = (dashboardSummary?.recentActivities ?? []).map((item) => ({
         ...item,
-        hasValidTargetPath: isAdminNavigationPath(item.targetPath),
+        hasAccessibleTarget: hasAccessibleAdminTarget(currentAdminRole, item.targetPath),
       }));
 
       return {
@@ -311,7 +320,7 @@ export default function AdminDashboardPage() {
         hasRecentActivitySectionError: !!dashboardSummary,
       };
     }
-  }, [dashboardSummary]);
+  }, [currentAdminRole, dashboardSummary]);
 
   return (
     <>
@@ -568,7 +577,15 @@ export default function AdminDashboardPage() {
               <section className="admin-card logCard">
                 <div className="sectionHead">
                   <h3>최근 관리자 활동</h3>
-                  <button onClick={() => navigate(ADMIN_ROUTE_PATHS.log)}>전체 보기</button>
+                  <button
+                    disabled={!hasAccessibleAdminTarget(currentAdminRole, ADMIN_ROUTE_PATHS.log)}
+                    onClick={() => {
+                      if (!hasAccessibleAdminTarget(currentAdminRole, ADMIN_ROUTE_PATHS.log)) return;
+                      navigate(ADMIN_ROUTE_PATHS.log);
+                    }}
+                  >
+                    전체 보기
+                  </button>
                 </div>
                 {isDashboardInitialLoading ? (
                   <div className="dashboardStateBox dashboardStateBox--inline">
@@ -583,9 +600,9 @@ export default function AdminDashboardPage() {
                     <div
                       className="logRow"
                       key={activity.id}
-                      style={{ cursor: activity.hasValidTargetPath ? 'pointer' : 'default' }}
+                      style={{ cursor: activity.hasAccessibleTarget ? 'pointer' : 'default' }}
                       onClick={() => {
-                        if (!activity.hasValidTargetPath) return;
+                        if (!activity.hasAccessibleTarget) return;
                         navigate(activity.targetPath);
                       }}
                     >

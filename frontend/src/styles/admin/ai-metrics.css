@@ -1057,6 +1057,10 @@
   text-align: center;
 }
 
+.aiOpsUploadInput {
+  display: none;
+}
+
 .aiOpsUploadIcon {
   position: relative;
   width: 44px;
@@ -1094,6 +1098,19 @@
 .aiOpsUploadCard span {
   color: var(--ai-muted);
   font-size: 11px;
+}
+
+.aiOpsUploadError {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #f0caca;
+  border-radius: 8px;
+  background: var(--ai-danger-bg);
+  color: var(--ai-danger);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: left;
 }
 
 .aiOpsUploadCard button {
@@ -1169,6 +1186,11 @@
 .aiOpsTextButton {
   margin-right: 6px;
   color: var(--ai-accent);
+}
+
+.aiOpsTextButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .aiOpsTextButton.danger {
