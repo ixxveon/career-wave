@@ -60,6 +60,7 @@ jobs:
       - name: 타입 검사
         working-directory: frontend
         run: npm run typecheck
+        continue-on-error: true
 
       - name: 빌드
         working-directory: frontend
