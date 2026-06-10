@@ -12,6 +12,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @Slf4j
 @RestControllerAdvice
@@ -20,18 +21,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<Object>> handleCustomException(CustomException e) {
         BaseErrorCode errorCode = e.getErrorCode();
-        String errorCodeName = errorCode instanceof Enum<?> ? ((Enum<?>) errorCode).name() : errorCode.getClass().getSimpleName();
 
         if (e.getCause() != null) {
             log.error(
                 "[비즈니스 예외 발생] 에러코드: {} | 사유: {} -> [하부 원인 예외]: {} (상세 메시지: {})",
-                errorCodeName,
+                errorCode.name(),
                 e.getMessage(),
                 e.getCause().getClass().getSimpleName(),
                 e.getCause().getMessage()
             );
         } else {
-            log.warn("[비즈니스 제재/검증 실패] 에러코드: {} | 사유: {}", errorCodeName, e.getMessage());
+            log.warn("[비즈니스 제재/검증 실패] 에러코드: {} | 사유: {}", errorCode.name(), e.getMessage());
         }
 
         return ResponseEntity
@@ -60,6 +60,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), "요청 본문을 읽을 수 없습니다. JSON 형식 및 필드값을 확인해주세요."));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        log.warn("[파일 크기 초과] 최대 허용 크기를 초과한 파일 업로드 시도 | 상세: {}", e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), "파일 크기가 최대 허용 용량(10MB)을 초과했습니다."));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
