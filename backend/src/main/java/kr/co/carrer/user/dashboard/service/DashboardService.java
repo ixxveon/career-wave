@@ -10,6 +10,7 @@ import kr.co.carrer.user.dashboard.repository.PersonalProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.util.UUID;
 
 @Service
@@ -61,14 +62,25 @@ public class DashboardService {
             return null;
         }
 
-        String normalizedUrl = githubUrl.trim();
+        try {
+            URI uri = URI.create(githubUrl.trim());
+            String path = uri.getPath();
 
-        if (normalizedUrl.endsWith("/")) {
-            normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - 1);
+            if (path == null || path.isBlank() || "/".equals(path)) {
+                return null;
+            }
+
+            String[] segments = path.split("/");
+
+            for (String segment : segments) {
+                if (!segment.isBlank()) {
+                    return segment;
+                }
+            }
+
+            return null;
+        } catch (Exception e) {
+            return null;
         }
-
-        String[] parts = normalizedUrl.split("/");
-
-        return parts.length == 0 ? null : parts[parts.length - 1];
     }
 }
