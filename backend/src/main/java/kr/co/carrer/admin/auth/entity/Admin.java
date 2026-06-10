@@ -15,8 +15,7 @@ public class Admin {
     @Column(name = "admin_id")
     private Long adminId;
 
-    // DB 컬럼명은 email이지만 loginId로 사용 (담당자가 DDL 수정 예정)
-    @Column(name = "email", nullable = false, unique = true, length = 100)
+    @Column(name = "login_id", nullable = false, unique = true, length = 100)
     private String loginId;
 
     @Column(name = "password_hash", nullable = false, length = 255)

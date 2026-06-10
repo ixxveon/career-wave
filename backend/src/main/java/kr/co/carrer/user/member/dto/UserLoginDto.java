@@ -13,9 +13,9 @@ public class UserLoginDto {
     public static class Request {
         @NotBlank private final String loginId;
         @NotBlank private final String password;
-        @NotNull  private final RoleType memberType;
+        @NotNull  private final MemberType memberType;
 
-        public Request(String loginId, String password, RoleType memberType) {
+        public Request(String loginId, String password, MemberType memberType) {
             this.loginId = loginId;
             this.password = password;
             this.memberType = memberType;

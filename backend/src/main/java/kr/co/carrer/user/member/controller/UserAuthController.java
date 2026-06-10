@@ -13,7 +13,7 @@ import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.member.docs.UserAuthControllerDocs;
-
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import kr.co.carrer.user.member.service.UserLoginService;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 import java.util.Map;
 
+@Tag(name = "User Auth", description = "사용자 로그인 / 토큰 재발급 API")
 @RestController
 @RequestMapping("/api/v1/user/members")
 public class UserAuthController implements UserAuthControllerDocs {

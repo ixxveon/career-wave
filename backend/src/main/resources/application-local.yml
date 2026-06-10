@@ -1,23 +1,25 @@
-# 로컬 개발용 프로파일 - 로컬 PostgreSQL 직접 연결 (DBeaver 연동 가능)
+# 로컬 개발용 프로파일 — PostgreSQL (Homebrew localhost:5432)
 spring:
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/careerwave}
+    username: ${DB_USERNAME:careerwave}
+    password: ${DB_PASSWORD:Mrq0827!}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-
-  mail:
-    host: localhost
-    port: 1025
 
 jwt:
-  secret: ${JWT_SECRET}
+  user:
+    secret: ${JWT_USER_SECRET:local-user-secret-key-must-be-at-least-32-bytes!!}
+    access-expiration: 1800000
+    refresh-expiration: 1209600000
+  admin:
+    secret: ${JWT_ADMIN_SECRET:local-admin-secret-key-must-be-at-least-32-bytes!}
+    access-expiration: 900000
+    refresh-expiration: 86400000

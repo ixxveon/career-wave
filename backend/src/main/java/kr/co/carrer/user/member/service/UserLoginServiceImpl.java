@@ -18,6 +18,7 @@ import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.MemberRepository;
 import kr.co.carrer.user.member.dto.CompanyApprovalStatus;
 import kr.co.carrer.user.member.dto.MemberStatus;
+import kr.co.carrer.user.member.dto.MemberType;
 import kr.co.carrer.user.member.dto.RoleType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,9 @@ public class UserLoginServiceImpl implements UserLoginService {
         }
 
         // memberType 일치 검증 (프론트 탭과 실제 role_type이 같아야 함)
-        if (member.getRoleType() != request.getMemberType()) {
+        RoleType expectedRole = request.getMemberType() == MemberType.USER
+                ? RoleType.ROLE_USER : RoleType.ROLE_COMPANY;
+        if (member.getRoleType() != expectedRole) {
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 

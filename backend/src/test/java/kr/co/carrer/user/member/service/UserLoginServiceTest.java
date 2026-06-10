@@ -13,6 +13,7 @@ import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.MemberRepository;
 import kr.co.carrer.user.member.dto.MemberStatus;
+import kr.co.carrer.user.member.dto.MemberType;
 import kr.co.carrer.user.member.dto.RoleType;
 import kr.co.carrer.user.member.dto.SubscriptionStatus;
 import kr.co.carrer.user.member.dto.UserLoginDto;
@@ -82,7 +83,7 @@ class UserLoginServiceTest {
         Member member = createMember(RoleType.ROLE_USER, MemberStatus.ACTIVE);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
 
-        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", RoleType.ROLE_USER);
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
         UserLoginDto.Response result = service.login(req, httpResponse);
 
         assertThat(result.getAccessToken()).isNotBlank();
@@ -92,7 +93,7 @@ class UserLoginServiceTest {
     @Test
     void 존재하지_않는_아이디_AUTH_INVALID_CREDENTIALS() {
         when(memberRepository.findByLoginId(anyString())).thenReturn(Optional.empty());
-        UserLoginDto.Request req = new UserLoginDto.Request("wrong", "pw", RoleType.ROLE_USER);
+        UserLoginDto.Request req = new UserLoginDto.Request("wrong", "pw", MemberType.USER);
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
@@ -103,7 +104,7 @@ class UserLoginServiceTest {
     void 비밀번호_불일치_AUTH_INVALID_CREDENTIALS() throws Exception {
         Member member = createMember(RoleType.ROLE_USER, MemberStatus.ACTIVE);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
-        UserLoginDto.Request req = new UserLoginDto.Request("user01", "wrongpw", RoleType.ROLE_USER);
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "wrongpw", MemberType.USER);
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
@@ -114,7 +115,7 @@ class UserLoginServiceTest {
     void memberType_불일치_AUTH_INVALID_CREDENTIALS() throws Exception {
         Member member = createMember(RoleType.ROLE_USER, MemberStatus.ACTIVE);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
-        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", RoleType.ROLE_COMPANY);
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.COMPANY);
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
@@ -125,7 +126,7 @@ class UserLoginServiceTest {
     void SUSPENDED_계정_AUTH_ACCOUNT_SUSPENDED() throws Exception {
         Member member = createMember(RoleType.ROLE_USER, MemberStatus.SUSPENDED);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
-        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", RoleType.ROLE_USER);
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
@@ -136,7 +137,7 @@ class UserLoginServiceTest {
     void BANNED_계정_AUTH_ACCOUNT_BANNED() throws Exception {
         Member member = createMember(RoleType.ROLE_USER, MemberStatus.BANNED);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
-        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", RoleType.ROLE_USER);
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
@@ -147,7 +148,7 @@ class UserLoginServiceTest {
     void WITHDRAWN_계정_AUTH_ACCOUNT_WITHDRAWN() throws Exception {
         Member member = createMember(RoleType.ROLE_USER, MemberStatus.WITHDRAWN);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
-        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", RoleType.ROLE_USER);
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
