@@ -99,6 +99,7 @@ ANY → [READY]  # 세션 초기화 및 재시도
 * **서버 상태 직접 관리**: TanStack Query로 관리하는 서버 상태를 컴포넌트 내부 `useState`에 복사하여 동기화를 깨뜨리는 행위 금지.
 * **데이터 직접 저장**: 세션 정보를 `localStorage`에 저장 금지 (`sessionStorage` 강제).
 * **window 전역 오염**: 세션 정보나 소켓 인스턴스를 `window` 객체에 직접 저장 금지.
+* **WebSocket 토큰 직접 참조**: `useSpringWebSocket`, `useFastApiWebSocket`, `usePreflightCheck` 등 WebSocket 훅에서 `localStorage.getItem('accessToken')` 직접 참조 금지. 반드시 `authSession.getAccessToken()`을 통해 토큰을 획득하며, 토큰이 없을 경우 소켓 생성 전 `ERROR` 또는 `fail` 상태로 명확하게 실패 처리한다.
 
 ---
 
