@@ -7,7 +7,7 @@ import kr.co.carrer.admin.auth.dto.AdminLoginRequest;
 import kr.co.carrer.admin.auth.dto.AdminLoginResponse;
 import kr.co.carrer.admin.auth.entity.Admin;
 import kr.co.carrer.admin.auth.repository.AdminRepository;
-import kr.co.carrer.admin.auth.type.AdminStatus;
+import kr.co.carrer.admin.auth.dto.AdminStatus;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;

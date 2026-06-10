@@ -1,8 +1,8 @@
 package kr.co.carrer.admin.auth.entity;
 
 import jakarta.persistence.*;
-import kr.co.carrer.admin.auth.type.AdminRole;
-import kr.co.carrer.admin.auth.type.AdminStatus;
+import kr.co.carrer.admin.auth.dto.AdminRole;
+import kr.co.carrer.admin.auth.dto.AdminStatus;
 
 import java.time.Instant;
 
