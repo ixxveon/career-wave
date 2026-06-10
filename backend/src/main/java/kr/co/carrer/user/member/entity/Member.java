@@ -8,7 +8,7 @@ import kr.co.carrer.user.member.dto.SubscriptionStatus;
 import java.time.Instant;
 import java.util.UUID;
 
-@Entity
+@Entity(name = "UserMember")
 @Table(name = "members")
 public class Member {
 
