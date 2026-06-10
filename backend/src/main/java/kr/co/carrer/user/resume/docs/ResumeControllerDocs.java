@@ -1,5 +1,6 @@
 package kr.co.carrer.user.resume.docs;
 
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -190,7 +191,7 @@ public interface ResumeControllerDocs {
     })
     ResponseEntity<ApiResponse<ResumeDTO.ResponseCoverLetter>> submitCoverLetter(
             @Parameter(description = "자기소개서 제출 요청 body", required = true)
-            ResumeDTO.RequestCoverLetter request
+            @Valid ResumeDTO.RequestCoverLetter request
     );
 
     @Operation(
