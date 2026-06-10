@@ -78,7 +78,6 @@ import AiMetricsPage from '../pages/admin/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../pages/admin/Scraping/ScrapingPage';
 import AuditLogPage from '../pages/admin/AuditLog/AuditLogPage';
 import AdminCompanyListPage from '../pages/admin/Company/CompanyListPage';
-import AdminJobNoticeListPage from '../pages/admin/JobNotice/JobNoticeListPage';
 import AdminSettlementListPage from '../pages/admin/Settlement/SettlementListPage';
 import { ACCESS_TOKEN_STORAGE_KEY, ADMIN_ROLE } from '../constants/admin/authConstants';
 
@@ -271,7 +270,6 @@ function AppRoutes() {
             <Route path="scraping"  element={<ScrapingPage />} />
             <Route path="log"       element={<AuditLogPage />} />
             <Route path="companies" element={<AdminCompanyListPage />} />
-            <Route path="job-notices" element={<AdminJobNoticeListPage />} />
             <Route path="settlements" element={<AdminSettlementListPage />} />
           </Route>
         </Route>

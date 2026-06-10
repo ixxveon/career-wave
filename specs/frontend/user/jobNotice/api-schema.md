@@ -75,9 +75,9 @@
 
 | 이름 | 값 |
 |------|----|
-| `jobType` | `전체`, `백엔드`, `프론트엔드`, `데이터`, `DevOps` |
-| `experience` | `전체`, `신입`, `1~3년`, `3~5년`, `5년 이상`, `경력무관` |
-| `employmentType` | `전체`, `정규직`, `인턴`, `계약직` |
+| `jobType` | `FULLTIME`, `INTERN`, `CONTRACT` |
+| `jobCategory` | `BACKEND`, `FRONTEND`, `DATA`, `DEVOPS` |
+| `careerLevel` | `JUNIOR`, `SENIOR`, `ANY` |
 | `location` | `전체`, `서울`, `경기`, `원격` |
 | `companySize` | `전체`, `스타트업`, `중견`, `대기업` |
 | `period` | `today`, `7d`, `30d`, `all` |
@@ -94,9 +94,9 @@
 | `id` | number | O | 공고 고유 ID |
 | `company` | string | O | 회사명 |
 | `title` | string | O | 공고 제목 |
-| `jobType` | string | O | 직무 분류 |
-| `experience` | string | O | 경력 조건 |
-| `employmentType` | string | O | 고용 형태 |
+| `jobType` | string | O | Employment type. ERD `job_type` |
+| `jobCategory` | string | O | Job category. ERD `job_category` |
+| `careerLevel` | string | O | Career level. ERD `career_level` |
 | `location` | string | O | 근무 지역 |
 | `companySize` | string | O | 기업 규모 |
 | `salary` | string | - | 급여 정보. 공개되지 않은 경우 `협의`로 내려온다. |
@@ -142,9 +142,9 @@
 | 이름 | 타입 | 필수 | 기본값 | 설명 |
 |------|------|------|--------|------|
 | `keyword` | string | N | - | 회사명, 공고명, 직무, 기술 스택, 출처 통합 검색어 |
-| `jobType` | string | N | - | 직무 필터. `전체` 선택 시 생략 |
-| `experience` | string | N | - | 경력 필터. 서버는 선택한 `experience` 범위와 공고 경력 범위가 겹치면 포함한다. 경계값은 포함하며, 정규화 예시는 `constitution.md`의 경력 범위 규칙을 따른다. |
-| `employmentType` | string | N | - | 채용 유형 필터 |
+| `jobCategory` | string | N | - | Job category filter. ERD `job_category`. Omit when ALL. |
+| `careerLevel` | string | N | - | Career level filter. ERD `career_level`. |
+| `jobType` | string | N | - | Employment type filter. ERD `job_type`. |
 | `location` | string | N | - | 지역 필터 |
 | `companySize` | string | N | - | 기업 규모 필터 |
 | `period` | string | N | `all` | 게시일 기준 기간 필터 |
@@ -165,9 +165,9 @@
 | `stats.todayNewCount` | number | 오늘 신규 공고 수 |
 | `stats.todayNewDelta` | number | 전일 대비 신규 공고 증감 |
 | `stats.todayNewRate` | number | 오늘 신규 공고 비율 |
-| `filterOptions.jobType` | string[] | 직무 필터 옵션 |
-| `filterOptions.experience` | string[] | 경력 필터 옵션 |
-| `filterOptions.employmentType` | string[] | 채용 유형 필터 옵션 |
+| `filterOptions.jobType` | string[] | Employment type filter options. ERD `job_type` |
+| `filterOptions.careerLevel` | string[] | Career level filter options. ERD `career_level` |
+| `filterOptions.jobCategory` | string[] | Job category filter options. ERD `job_category` |
 | `filterOptions.location` | string[] | 지역 필터 옵션 |
 | `filterOptions.companySize` | string[] | 기업 규모 필터 옵션 |
 
@@ -191,9 +191,9 @@
       "todayNewRate": 0
     },
     "filterOptions": {
-      "jobType": ["전체", "백엔드", "프론트엔드", "데이터", "DevOps"],
-      "experience": ["전체", "신입", "1~3년", "3~5년", "5년 이상", "경력무관"],
-      "employmentType": ["전체", "정규직", "인턴", "계약직"],
+      "jobType": ["FULLTIME", "INTERN", "CONTRACT"],
+      "jobCategory": ["BACKEND", "FRONTEND", "DATA", "DEVOPS"],
+      "careerLevel": ["JUNIOR", "SENIOR", "ANY"],
       "location": ["전체", "서울", "경기", "원격"],
       "companySize": ["전체", "스타트업", "중견", "대기업"]
     }
