@@ -98,15 +98,15 @@
 
 ## Phase 6: Webhook 수신 API (FastAPI → Spring)
 
-- [ ] `ResumeDTO.RequestWebhook` DTO 작성 (`status`, `scoreJobFitness`, `scoreTechStack`, `scoreQuantified`, `scoreLogical`, `scoreTotal`, `overallReview`, `feedbackText`, `errorMessage`)
-- [ ] `X-Internal-Secret` 헤더 검증 구현 — 환경 변수 `WEBHOOK_SECRET` 값과 비교, 불일치 시 `403` 반환
-- [ ] 멱등성 처리 — `document.status`가 이미 `COMPLETED`/`FAILED`이면 DB 갱신 없이 `200 OK` 즉시 반환
-- [ ] `DocumentFeedback` 저장 + `document.status` 업데이트 (`@Transactional`)
-- [ ] DB 커밋 완료 후 WebSocket 브로드캐스트 — `@TransactionalEventListener(phase = AFTER_COMMIT)` 사용
+- [x] `ResumeDTO.RequestWebhook` DTO 작성 (`status`, `scoreJobFitness`, `scoreTechStack`, `scoreQuantified`, `scoreLogical`, `scoreTotal`, `overallReview`, `feedbackText`, `errorMessage`)
+- [x] `X-Internal-Secret` 헤더 검증 구현 — 환경 변수 `WEBHOOK_SECRET` 값과 비교, 불일치 시 `403` 반환
+- [x] 멱등성 처리 — `document.status`가 이미 `COMPLETED`/`FAILED`이면 DB 갱신 없이 `200 OK` 즉시 반환
+- [x] `DocumentFeedback` 저장 + `document.status` 업데이트 (`@Transactional`)
+- [x] DB 커밋 완료 후 WebSocket 브로드캐스트 — `@TransactionalEventListener(phase = AFTER_COMMIT)` 사용
   - 서비스 내부에서 `ApplicationEventPublisher.publishEvent()`로 이벤트 발행
-  - 이벤트 리스너에서 `SimpMessagingTemplate.convertAndSend()` 호출
+  - 이벤트 리스너에서 `SimpMessagingTemplate.convertAndSend()` 호출 (Phase 7에서 리스너 구현)
   - ⚠️ `SimpMessagingTemplate`을 `@Transactional` 메서드 안에서 직접 호출 금지
-- [ ] `ResumeController.receiveWebhook()` 구현
+- [x] `ResumeController.receiveWebhook()` 구현
 
 ---
 

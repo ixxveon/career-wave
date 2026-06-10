@@ -10,14 +10,18 @@ import kr.co.carrer.user.resume.entity.CoverLetterContent;
 import kr.co.carrer.user.resume.entity.CoverLetterMeta;
 import kr.co.carrer.user.resume.entity.Document;
 import kr.co.carrer.user.resume.entity.DocumentFeedback;
+import kr.co.carrer.user.resume.event.DocumentAnalysisCompletedEvent;
 import kr.co.carrer.user.resume.exception.ResumeErrorCode;
 import kr.co.carrer.user.resume.repository.CoverLetterContentRepository;
 import kr.co.carrer.user.resume.repository.CoverLetterMetaRepository;
 import kr.co.carrer.user.resume.repository.DocumentFeedbackRepository;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
+import kr.co.carrer.user.resume.type.DocumentStatus;
 import kr.co.carrer.user.resume.type.FileType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +46,10 @@ public class ResumeServiceImpl implements ResumeService {
     private final S3Uploader s3Uploader;
     private final FastApiClient fastApiClient;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Value("${webhook.secret}")
+    private String configuredWebhookSecret;
 
     @Transactional
     @Override
@@ -168,6 +176,43 @@ public class ResumeServiceImpl implements ResumeService {
             log.error("[피드백 파싱 실패] documentId: {}, 원인: {}", documentId, e.getMessage());
             throw new CustomException(ResumeErrorCode.FEEDBACK_PARSE_ERROR);
         }
+    }
+
+    @Transactional
+    @Override
+    public void receiveWebhook(String webhookSecret, ResumeDTO.RequestWebhook dto) {
+        if (!configuredWebhookSecret.equals(webhookSecret)) {
+            throw new CustomException(ResumeErrorCode.WEBHOOK_SECRET_INVALID);
+        }
+
+        Document document = documentRepository.findById(dto.documentId())
+                .orElseThrow(() -> new CustomException(ResumeErrorCode.DOCUMENT_NOT_FOUND));
+
+        // 멱등성 처리 — 이미 최종 상태면 DB 갱신 없이 반환
+        if (document.getStatus() == DocumentStatus.COMPLETED || document.getStatus() == DocumentStatus.FAILED) {
+            log.info("[Webhook 멱등성] 이미 처리된 documentId: {}, 현재 상태: {}", dto.documentId(), document.getStatus());
+            return;
+        }
+
+        if ("COMPLETED".equals(dto.status())) {
+            DocumentFeedback feedback = DocumentFeedback.of(
+                    dto.documentId(),
+                    dto.scoreJobFitness(),
+                    dto.scoreTechStack(),
+                    dto.scoreQuantified(),
+                    dto.scoreLogical(),
+                    dto.scoreTotal(),
+                    dto.overallReview(),
+                    dto.feedbackText()
+            );
+            documentFeedbackRepository.save(feedback);
+            document.updateStatus(DocumentStatus.COMPLETED);
+        } else {
+            document.markFailed(dto.errorMessage());
+        }
+
+        // DB 커밋 후 WebSocket 브로드캐스트 (Phase 7에서 리스너 구현)
+        eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(dto.documentId(), dto.status()));
     }
 
     @Transactional
