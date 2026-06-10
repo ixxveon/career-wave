@@ -54,6 +54,75 @@ button {
 .admin-menu {
   padding: 24px 14px;
   flex: 1;
+  overflow-y: auto;
+}
+
+.admin-sidebarProfile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid #dbe5ee;
+  flex-shrink: 0;
+}
+
+.admin-sidebarAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #edf3f9;
+  border: 1px solid #d8e3ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #24496f;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.admin-sidebarInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-sidebarInfo strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #10243f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-sidebarInfo span {
+  display: block;
+  font-size: 11px;
+  color: #7a8da4;
+  margin-top: 2px;
+}
+
+.admin-sidebarLogout {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid #d7e4f0;
+  border-radius: 8px;
+  background: white;
+  color: #47627d;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: 0.2s ease;
+}
+
+.admin-sidebarLogout:hover {
+  background: #f3f7fb;
+  border-color: #b8cce0;
+  color: #24496d;
 }
 
 .admin-menuGroup {

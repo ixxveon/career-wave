@@ -341,9 +341,6 @@ export default function AdminDashboardPage() {
             <small>최근 로그인 09:12</small>
           </div>
 
-          <button className="admin-logoutButton" onClick={handleLogout}>
-            로그아웃
-          </button>
         </div>
       </header>
 
