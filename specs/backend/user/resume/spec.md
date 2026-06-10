@@ -285,8 +285,8 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 - 반환: `ResumeDTO.ResponseUpload`
 
 #### submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto)
-- 문항 수 1~5개 외 → `INVALID_CONTENT_COUNT(400)`
-- 답변 1000자 초과 → `INVALID_CONTENT_LENGTH(400)`
+- 문항 수 1~5개 외 → Bean Validation `@Size(min=1, max=5)` 에서 400 반환 (메시지: "자기소개서 문항은 1개 이상 5개 이하로 입력해주세요.")
+- 답변 1000자 초과 → Bean Validation `@Size(max=1000)` 에서 400 반환 (메시지: "자기소개서 답변은 1000자를 초과할 수 없습니다.")
 - `Document` 저장 (`status = UPLOADED`, `file_url = null`)
 - `CoverLetterContent` 벌크 저장
 - FastAPI 분석 트리거 호출 → 202 Accepted 기대
