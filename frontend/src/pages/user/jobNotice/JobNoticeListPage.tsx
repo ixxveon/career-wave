@@ -13,6 +13,11 @@ import {
 } from 'lucide-react';
 import JobNoticeDetail from './JobNoticeDetail';
 import {
+  CAREER_LEVEL_LABELS,
+  JOB_CATEGORY_LABELS,
+  JOB_NOTICE_ALL_FILTER_VALUE,
+  JOB_NOTICE_FILTER_OPTIONS,
+  JOB_TYPE_LABELS,
   mapJobNoticeApiToViewModel,
   type JobNotice,
   type JobNoticeBookmarkResponse,
@@ -25,26 +30,18 @@ import { useJobNoticeList } from '../../../hooks/user/jobNotice/useJobNoticeList
 import { authSession } from '../../../utils/user/member/authSession';
 import '@/styles/user/jobNotice/JobNoticeListPage.css';
 
-const FILTER_GROUPS = [
-  { label: '직무', options: ['전체', '백엔드', '프론트엔드', '데이터', 'DevOps'] },
-  { label: '경력', options: ['전체', '신입', '1~3년', '3~5년', '5년 이상'] },
-  { label: '채용 유형', options: ['전체', '정규직', '인턴', '계약직'] },
-  { label: '지역', options: ['전체', '서울', '경기', '원격'] },
-  { label: '기업 규모', options: ['전체', '스타트업', '중견', '대기업'] },
-] as const;
-
 const PERIODS = ['오늘', '7일', '30일', '기간 전체'] as const;
 const SORT_OPTIONS = ['추천순', '최신순', '조회순'] as const;
-const DEFAULT_FILTER_VALUE = '전체';
+const DEFAULT_FILTER_VALUE = JOB_NOTICE_ALL_FILTER_VALUE;
 const POPULAR_SEARCH_TAGS = ['백엔드', '프론트엔드', 'Java', 'React', 'Spring Boot', 'AWS', 'Python'];
 
 const MOCK_PAGE = 1;
 const MOCK_PAGE_SIZE = 18;
 
 const API_FILTER_PARAM_BY_LABEL = {
-  직무: 'jobType',
-  경력: 'experience',
-  '채용 유형': 'employmentType',
+  직무: 'jobCategory',
+  경력: 'careerLevel',
+  '채용 유형': 'jobType',
   지역: 'location',
   '기업 규모': 'companySize',
 } as const;
@@ -76,11 +73,25 @@ type Period = (typeof PERIODS)[number];
 type SortOption = (typeof SORT_OPTIONS)[number];
 type JobNoticeListStatus = 'loading' | 'success' | 'empty' | 'error';
 type JobNoticeFilterParamKey =
+  | 'jobCategory'
+  | 'careerLevel'
   | 'jobType'
-  | 'experience'
-  | 'employmentType'
   | 'location'
   | 'companySize';
+
+const FILTER_GROUPS = [
+  { label: '직무', options: JOB_NOTICE_FILTER_OPTIONS.jobCategory },
+  { label: '경력', options: JOB_NOTICE_FILTER_OPTIONS.careerLevel },
+  { label: '채용 유형', options: JOB_NOTICE_FILTER_OPTIONS.jobType },
+  { label: '지역', options: JOB_NOTICE_FILTER_OPTIONS.location },
+  { label: '기업 규모', options: JOB_NOTICE_FILTER_OPTIONS.companySize },
+] as const;
+
+const FILTER_OPTION_LABELS = {
+  ...JOB_TYPE_LABELS,
+  ...JOB_CATEGORY_LABELS,
+  ...CAREER_LEVEL_LABELS,
+} as const;
 
 interface BannerStat {
   label: string;
@@ -120,6 +131,10 @@ function createInitialFilters(): Filters {
 
 function getJobBookmark(bookmarks: Bookmarks, job: JobNotice): boolean {
   return bookmarks[job.id] ?? job.bookmarked;
+}
+
+function getFilterOptionLabel(value: string) {
+  return FILTER_OPTION_LABELS[value as keyof typeof FILTER_OPTION_LABELS] ?? value;
 }
 
 function createJobNoticeQueryParams({
@@ -327,7 +342,7 @@ function FilterBlock({ group, value, onChange }: FilterBlockProps) {
     <details className="jn-filter-block" ref={detailsRef}>
       <summary aria-label={`${group.label} 필터 선택, 현재 값 ${value}`}>
         <span>{group.label}</span>
-        {value !== DEFAULT_FILTER_VALUE && <em>{value}</em>}
+        {value !== DEFAULT_FILTER_VALUE && <em>{getFilterOptionLabel(value)}</em>}
         <strong>+</strong>
       </summary>
       <div>
@@ -336,11 +351,11 @@ function FilterBlock({ group, value, onChange }: FilterBlockProps) {
             type="button"
             key={option}
             className={value === option ? 'is-active' : ''}
-            aria-label={`${group.label} 필터 ${option} 선택`}
+            aria-label={`${group.label} 필터 ${getFilterOptionLabel(option)} 선택`}
             aria-pressed={value === option}
             onClick={() => selectOption(option)}
           >
-            {option}
+            {getFilterOptionLabel(option)}
           </button>
         ))}
       </div>
@@ -409,7 +424,7 @@ function ActiveFilterChips({ filters, onReset }: { filters: Filters; onReset: (l
     <div className="jn-active-filters">
       {activeFilters.map(([label, value]) => (
         <button key={label} type="button" aria-label={`${label} 필터 해제`} onClick={() => onReset(label)}>
-          {value} ×
+          {getFilterOptionLabel(value)} ×
         </button>
       ))}
     </div>

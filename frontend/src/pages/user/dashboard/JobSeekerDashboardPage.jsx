@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { authSession } from '@/utils/user/member/authSession';
 import {
   Bell,
   Bookmark,
@@ -12,7 +13,6 @@ import {
   ShieldCheck,
   Sparkles,
   Users,
-  UserSearch,
   ClipboardList,
   FilePenLine,
   UsersRound,
@@ -26,24 +26,21 @@ const featureCards = [
     title: 'AI 서류 분석',
     text: '이력서와 자기소개서를 분석해 합격 가능성과 개선 포인트를 알려드려요.',
     tone: 'blue',
+    to: '/documents/resume',
   },
   {
     icon: Mic,
     title: '실시간 면접 코칭',
     text: 'AI가 예상 질문을 제시하고 실시간 피드백으로 완벽한 면접을 도와요.',
     tone: 'violet',
-  },
-  {
-    icon: UserSearch,
-    title: '스마트 채용 매칭',
-    text: '당신의 역량과 성향에 맞는 최적의 기업과 공고를 매칭해 드려요.',
-    tone: 'blue',
+    to: '/interview',
   },
   {
     icon: Bell,
     title: '맞춤 공고 추천',
     text: '관심 키워드와 직무를 기반으로 새로운 공고를 실시간으로 추천해요.',
     tone: 'sky',
+    to: '/jobs',
   },
 ];
 
@@ -87,18 +84,8 @@ const stats = [
   { icon: Building2, title: '기업 5,000+', text: '다양한 기업과 함께' },
 ];
 
-const authTokenKeys = ['careerWaveToken', 'careerWaveUser'];
-
-function hasAuthToken() {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  return authTokenKeys.some((key) => localStorage.getItem(key) || sessionStorage.getItem(key));
-}
-
 function JobSeekerDashboardPage() {
-  const isLoggedIn = hasAuthToken();
+  const isLoggedIn = !!(authSession.getAccessToken() || authSession.getRefreshToken());
 
   return (
     <div className="cw-page cw-home">
@@ -134,26 +121,18 @@ function JobSeekerDashboardPage() {
         </div>
 
         <article className="cw-home-profile-card">
-          <Sparkles className="cw-profile-spark" size={18} />
-          <h2>지금 바로<br />내 프로필로 매칭 시작하기</h2>
-          <p>프로필을 등록하면 AI가 당신에게 꼭 맞는 공고와 커리어 인사이트를 제공해 드려요.</p>
-          <Link className="btn btn-primary" to="/auth/register">
-            프로필 등록하고 매칭 시작하기
+          <FileSearch className="cw-profile-spark" size={18} />
+          <h2>지금 바로<br />서류 분석 시작하기</h2>
+          <p>이력서와 자기소개서를 AI로 분석해 합격 가능성과 개선 포인트를 확인해보세요.</p>
+          <Link className="btn btn-primary" to={isLoggedIn ? '/documents/resume' : '/auth/login'}>
+            서류 분석 시작하기
           </Link>
-          <div className="cw-profile-avatars">
-            <span style={{ backgroundImage: 'linear-gradient(135deg, #ffe2bf, #a86f4c)' }} />
-            <span style={{ backgroundImage: 'linear-gradient(135deg, #d6ecff, #2b6fb3)' }} />
-            <span style={{ backgroundImage: 'linear-gradient(135deg, #ffe8ef, #b64d78)' }} />
-            <span style={{ backgroundImage: 'linear-gradient(135deg, #e8efe1, #536f3d)' }} />
-            <small>1,248명의 구직자가<br />오늘 매칭을 시작했어요</small>
-            <ChevronRight size={16} />
-          </div>
         </article>
       </section>
 
       <section className="cw-home-feature-grid" aria-label="주요 서비스">
-        {featureCards.map(({ icon: Icon, title, text, tone }) => (
-          <Link className="cw-home-feature" key={title} to="/documents/resume">
+        {featureCards.map(({ icon: Icon, title, text, tone, to }) => (
+          <Link className="cw-home-feature" key={title} to={to}>
             <span className={`cw-home-feature__icon is-${tone}`}>
               <Icon size={30} />
             </span>

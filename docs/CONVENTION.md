@@ -50,6 +50,7 @@ backend/src/main/java/kr/co/carrer/
 │     ├─ entity
 │     ├─ repository
 │     ├─ type
+│     ├─ exception    (when needed)
 │     ├─ service      (when needed)
 │     ├─ controller   (when needed)
 │     ├─ dto          (when needed)
@@ -59,6 +60,7 @@ backend/src/main/java/kr/co/carrer/
       ├─ entity
       ├─ repository
       ├─ type
+      ├─ exception    (when needed)
       ├─ service
       ├─ controller
       ├─ dto
@@ -80,7 +82,7 @@ backend/src/main/java/kr/co/carrer/
 | Component | Rule | Example |
 |-----------|------|---------|
 | Controller | `{Domain}Controller` | `MemberController` |
-| Service | `{Domain}Service` | `SettlementService` |
+| Service | `{Domain}Service` / `{Domain}ServiceImpl` | `AdminMemberService` / `AdminMemberServiceImpl` |
 | Repository | `{Domain}Repository` | `CompanyRepository` |
 | DTO | `{Domain}DTO` | `MemberDTO` |
 | Enum | 의미가 드러나는 PascalCase | `CompanyStatus`, `ManagerRole` |
@@ -88,6 +90,26 @@ backend/src/main/java/kr/co/carrer/
 | Java constant | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
 | Table | lowercase snake_case plural | `job_notices` |
 | Column | snake_case | `business_number` |
+
+### Service Rules
+
+- 인터페이스(`{Domain}Service`)는 `service/` 패키지에 둔다.
+- 구현체(`{Domain}ServiceImpl`)는 `service/impl/` 서브패키지에 둔다.
+- Controller는 인터페이스 타입으로 주입받는다.
+- 구현체에 `@Service`를 선언하고 인터페이스를 `implements`한다.
+
+```java
+// service/{Domain}Service.java — 인터페이스
+public interface AdminMemberService { ... }
+
+// service/impl/{Domain}ServiceImpl.java — 구현체
+@Service
+@RequiredArgsConstructor
+public class AdminMemberServiceImpl implements AdminMemberService { ... }
+
+// Controller — 인터페이스 타입으로 주입
+private final AdminMemberService adminMemberService;
+```
 
 ### TypeScript
 
@@ -164,18 +186,47 @@ ApiResponse.fail(statusCode, message, data);
 
 ## 7. Exception Convention
 
+### Error Code 구조
+
+에러코드는 범위에 따라 두 계층으로 분리한다.
+
+```text
+global/exception/
+├─ BaseErrorCode.java         (interface — ErrorCode, 도메인 ErrorCode 공통 타입)
+├─ ErrorCode.java             (전역 공통 에러코드 enum — BAD_REQUEST, NOT_FOUND 등)
+├─ CustomException.java
+└─ GlobalExceptionHandler.java
+
+{domain}/exception/
+└─ {Domain}ErrorCode.java     (도메인 전용 에러코드 enum)
+```
+
+- `global/exception/ErrorCode`는 도메인에 무관한 공통 에러코드만 포함한다.
+- 도메인 전용 에러코드는 해당 도메인의 `exception/` 패키지에 `{Domain}ErrorCode` enum으로 정의한다.
+- 두 enum 모두 `BaseErrorCode` 인터페이스를 구현한다.
+- `CustomException`은 `BaseErrorCode`를 받도록 구성한다.
+
+> **⚠️ 마이그레이션 진행 중**
+> 현재 일부 도메인(admin/member)에 `BaseErrorCode` 인터페이스 및 `{Domain}ErrorCode` 패턴이 적용되어 있으며,
+> 나머지 도메인은 구현 시점에 순차적으로 전환한다.
+> 신규 도메인 구현 시에는 반드시 이 컨벤션을 따른다.
+
 ### Rules
 
 - Controller 내부에서 반복적인 `try-catch`를 작성하지 않는다.
 - 공통 예외 처리는 `GlobalExceptionHandler`에서 처리한다.
-- 비즈니스 예외는 `CustomException`과 `ErrorCode` 기반으로 처리한다.
+- 비즈니스 예외는 `CustomException`과 `ErrorCode` 또는 도메인 `ErrorCode` 기반으로 처리한다.
 - `new RuntimeException(...)` 직접 생성은 금지한다.
-- 예상 가능한 예외는 `ErrorCode`를 추가한 뒤 `CustomException`으로 던진다.
+- 예상 가능한 예외는 적절한 `ErrorCode`를 추가한 뒤 `CustomException`으로 던진다.
 
 ### Example
 
 ```java
-throw new CustomException(ErrorCode.USER_NOT_FOUND);
+// 전역 공통 에러코드 사용
+throw new CustomException(ErrorCode.BAD_REQUEST);
+
+// 도메인 전용 에러코드 사용
+throw new CustomException(AdminMemberErrorCode.MEMBER_NOT_FOUND);
 ```
 
 ---

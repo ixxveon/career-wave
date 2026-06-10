@@ -9,7 +9,7 @@
 
 - [x] `api-schema.md`의 `JobNoticeSummary`, `JobNoticeDetail`, `JobNoticeBookmarkResponse` 필드를 프론트엔드 타입과 비교한다.
 - [x] API 성공/실패 응답이 `ApiResponse<T>`의 `success`, `statusCode`, `message`, `data` 필드를 기준으로 문서화되어 있는지 확인한다.
-- [x] `jobNotice.ts`의 `exp`, `employment` 화면 필드와 API의 `experience`, `employmentType` 필드 매핑 규칙을 정한다.
+- [x] `jobNotice.ts`의 `exp`, `employment` 화면 필드와 API의 `careerLevel`, `jobType` 필드 매핑 규칙을 정한다.
 - [x] 상세 필드 `industry`, `responsibilities`, `requirements`, `preferredQualifications`, `process`, `workConditions`, `companyDescription` 타입을 추가하거나 변환 계층에서 보강한다.
 - [x] 필터 enum(`직무`, `경력`, `채용 유형`, `지역`, `기업 규모`)과 정렬 enum(`추천순`, `최신순`, `조회순`)을 상수로 고정한다.
 - [x] 목록과 상세가 같은 공고 `id`와 `bookmarked` 값을 참조하도록 상태 소유 지점을 정한다.
