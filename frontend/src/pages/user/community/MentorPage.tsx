@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Star, Clock, MessageSquareHeart, ChevronRight, Briefcase, MapPin } from 'lucide-react';
+import { Search, Star, Clock, MessageSquareHeart, ChevronRight, Briefcase } from 'lucide-react';
 import '@/styles/user/community/MentorPage.css';
 
 const FIELDS = ['전체', '백엔드', '프론트엔드', '데이터', 'DevOps', 'PM/기획', 'AI/ML'];

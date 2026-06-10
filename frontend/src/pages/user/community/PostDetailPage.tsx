@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, ThumbsUp, Bookmark, MessageCircle, Flag, Send, Pencil, Trash2 } from 'lucide-react';
-import './styles/PostDetailPage.css';
+import '@/styles/user/community/PostDetailPage.css';
 
 const REPORT_TYPE = {
   BOARD: 'BOARD',

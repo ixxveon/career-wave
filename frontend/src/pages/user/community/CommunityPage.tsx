@@ -1,7 +1,7 @@
 import { useMemo, useState, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ThumbsUp, MessageCircle, Bookmark, ChevronRight, Flame, Star, Clock, Database } from 'lucide-react';
-import './styles/CommunityPage.css';
+import '@/styles/user/community/CommunityPage.css';
 
 const CATEGORIES = ['전체', '질문', '면접 후기', '이력서 팁', '합격 후기', '자유'];
 const PAGE_SIZE = 4;
@@ -210,9 +210,10 @@ export default function CommunityPage() {
     });
   }, [category, search]);
 
-  const visiblePosts = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
-  const nextCursor = hasMore ? `cursor-${visiblePosts.at(-1)?.id}` : 'end';
+  const visiblePosts: CommunityPost[] = filtered.slice(0, visibleCount);
+  const hasMore: boolean = visibleCount < filtered.length;
+  const lastVisiblePost = visiblePosts[visiblePosts.length - 1];
+  const nextCursor: string = hasMore && lastVisiblePost ? `cursor-${lastVisiblePost.id}` : 'end';
 
   return (
       <div className="cm-page">
