@@ -10,9 +10,9 @@ import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
-import kr.co.carrer.user.member.dto.MemberSummary;
-import kr.co.carrer.user.member.dto.UserLoginRequest;
-import kr.co.carrer.user.member.dto.UserLoginResponse;
+
+
+
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.MemberRepository;
 import kr.co.carrer.user.member.dto.CompanyApprovalStatus;
@@ -46,7 +46,7 @@ public class UserLoginService {
     }
 
     @Transactional
-    public UserLoginResponse login(UserLoginRequest request, HttpServletResponse response) {
+    public UserLoginDto.Response login(UserLoginDto.Request request, HttpServletResponse response) {
         Member member = memberRepository.findByLoginId(request.loginId())
                 .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS));
 
@@ -83,7 +83,7 @@ public class UserLoginService {
 
         CompanyApprovalStatus approvalStatus = resolveCompanyApprovalStatus(member);
 
-        MemberSummary summary = MemberSummary.of(
+        UserLoginDto.MemberInfo summary = UserLoginDto.MemberInfo.of(
                 member.getMemberId(),
                 member.getLoginId(),
                 member.getName(),
@@ -94,7 +94,7 @@ public class UserLoginService {
                 member.getLastLoginAt()
         );
 
-        return new UserLoginResponse(accessToken, summary);
+        return new UserLoginDto.Response(accessToken, summary);
     }
 
     private void validateAccountStatus(Member member) {

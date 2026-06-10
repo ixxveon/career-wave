@@ -12,8 +12,8 @@ import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.member.docs.UserAuthControllerDocs;
-import kr.co.carrer.user.member.dto.UserLoginRequest;
-import kr.co.carrer.user.member.dto.UserLoginResponse;
+
+
 import kr.co.carrer.user.member.service.UserLoginService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,10 +38,10 @@ public class UserAuthController implements UserAuthControllerDocs {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserLoginResponse>> login(
-            @Valid @RequestBody UserLoginRequest request,
+    public ResponseEntity<ApiResponse<UserLoginDto.Response>> login(
+            @Valid @RequestBody UserLoginDto.Request request,
             HttpServletResponse response) {
-        UserLoginResponse result = userLoginService.login(request, response);
+        UserLoginDto.Response result = userLoginService.login(request, response);
         return ResponseEntity.ok(ApiResponse.success("로그인되었습니다.", result));
     }
 

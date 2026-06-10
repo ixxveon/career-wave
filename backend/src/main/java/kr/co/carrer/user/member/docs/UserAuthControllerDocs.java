@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import kr.co.carrer.user.member.dto.UserLoginRequest;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -31,7 +31,7 @@ public interface UserAuthControllerDocs {
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":423,\"message\":\"계정이 잠겼습니다.\",\"code\":\"AUTH_ACCOUNT_LOCKED\"}")))
     })
-    ResponseEntity<?> login(@Valid @RequestBody UserLoginRequest request, HttpServletResponse response);
+    ResponseEntity<?> login(@Valid @RequestBody UserLoginDto.Request request, HttpServletResponse response);
 
     @Operation(summary = "사용자 토큰 재발급",
             description = "HttpOnly Cookie의 refreshToken으로 새 accessToken 발급. " +
