@@ -31,7 +31,7 @@ jobs:
         working-directory: backend
         run: ./gradlew test --no-daemon --stacktrace --info
         env:
-          SPRING_PROFILES_ACTIVE: local
+          SPRING_PROFILES_ACTIVE: test
 
   frontend:
     name: Frontend Build
