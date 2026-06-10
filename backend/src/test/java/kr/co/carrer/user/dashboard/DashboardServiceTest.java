@@ -1,4 +1,4 @@
-package kr.co.carrer.user.dashboard.service;
+package kr.co.carrer.user.dashboard;
 
 import kr.co.carrer.admin.member.entity.Member;
 import kr.co.carrer.admin.member.repository.MemberRepository;
@@ -9,6 +9,7 @@ import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.dashboard.dto.DashboardDTO;
 import kr.co.carrer.user.dashboard.entity.PersonalProfile;
 import kr.co.carrer.user.dashboard.repository.PersonalProfileRepository;
+import kr.co.carrer.user.dashboard.service.impl.DashboardServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,7 +36,7 @@ class DashboardServiceTest {
     private PersonalProfileRepository personalProfileRepository;
 
     @InjectMocks
-    private DashboardService dashboardService;
+    private DashboardServiceImpl dashboardService;
 
     @Test
     @DisplayName("프로필 조회 - 정상")
@@ -103,10 +104,10 @@ class DashboardServiceTest {
     }
 
     private Member createMember(UUID memberId) throws Exception {
-    var constructor = Member.class.getDeclaredConstructor();
-    constructor.setAccessible(true);
+        var constructor = Member.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
 
-    Member member = constructor.newInstance();
+        Member member = constructor.newInstance();
 
         setField(member, "memberId", memberId);
         setField(member, "loginId", "user01");
@@ -125,10 +126,10 @@ class DashboardServiceTest {
     }
 
     private PersonalProfile createPersonalProfile(UUID memberId, String githubUrl) throws Exception {
-    var constructor = PersonalProfile.class.getDeclaredConstructor();
-    constructor.setAccessible(true);
+        var constructor = PersonalProfile.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
 
-    PersonalProfile personalProfile = constructor.newInstance();
+        PersonalProfile personalProfile = constructor.newInstance();
 
         setField(personalProfile, "personalProfileId", 1L);
         setField(personalProfile, "memberId", memberId);
