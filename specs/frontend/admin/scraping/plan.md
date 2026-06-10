@@ -13,7 +13,7 @@
 - Auth: 관리자 JWT, `MASTER`/`BACKEND` 백엔드 역할 검증 필요
 - Response: `ApiResponse<T>`
 - Related Runtime: FastAPI scraping runner 또는 backend batch orchestration
-- ERD Alignment: `scraping_logs.scraping_status` 기준 `SUCCESS`, `FAILED`만 API 상태값으로 사용
+- ERD Alignment: 파이프라인 목록은 `scraping_pipelines.pipeline_status` 기준 `IDLE`, `RUNNING`, `SUCCESS`, `FAILED`를 사용하고, 로그 목록은 `scraping_logs.scraping_status` 기준 `SUCCESS`, `FAILED`를 사용
 
 ## Project Structure
 
@@ -62,7 +62,7 @@ specs/frontend/admin/scraping/
 ### Phase 1 - API 계약 및 타입 정리
 
 - `frontend/src/admin/api/scrapingApi.ts`를 생성한다.
-- `ScrapingStatus`, `ScrapingActionType` 타입을 정의한다.
+- `PipelineStatus`, `ScrapingStatus`, `ScrapingActionType` 타입을 정의한다.
 - 목록, 요약, 상세, 액션, 로그 응답 타입을 정의한다.
 - `ApiResponse<T>` 응답 구조에 맞춰 API 함수 계약을 정리한다.
 
@@ -70,7 +70,7 @@ specs/frontend/admin/scraping/
 
 - mock 기반 source 목록을 API 데이터 기반으로 전환한다.
 - source명과 최근 오류 검색 조건을 API 조회 조건으로 연결한다.
-- 실행 결과 필터와 페이지네이션을 API 조회 조건으로 연결한다.
+- 파이프라인 상태 필터와 페이지네이션을 API 조회 조건으로 연결한다.
 - 로딩, 빈 데이터, 실패 상태를 화면에 반영한다.
 
 ### Phase 3 - source 실행 액션

@@ -28,6 +28,7 @@ type JobNoticeViewModel = {
   employment: string;
   source: string;
   jobType: string;
+  jobCategory: string;
   companySize: string;
   careerLevel: ScrapJob["careerLevel"];
   noticeStatus: ScrapJob["noticeStatus"];
@@ -51,6 +52,7 @@ const createJobNoticeViewModel = (job: ScrapJob): JobNoticeViewModel => ({
   employment: "-",
   source: "-",
   jobType: "-",
+  jobCategory: "-",
   companySize: "-",
   careerLevel: job.careerLevel,
   noticeStatus: job.noticeStatus,
