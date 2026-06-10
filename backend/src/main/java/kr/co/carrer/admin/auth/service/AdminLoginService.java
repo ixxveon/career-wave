@@ -11,8 +11,8 @@ import kr.co.carrer.admin.auth.type.AdminStatus;
 import kr.co.carrer.global.auth.jwt.AccountType;
 import kr.co.carrer.global.auth.jwt.JwtProperties;
 import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.global.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,16 +40,16 @@ public class AdminLoginService {
     @Transactional
     public AdminLoginResponse login(AdminLoginRequest request, HttpServletResponse response) {
         Admin admin = adminRepository.findByLoginId(request.loginId())
-                .orElseThrow(() -> new CustomException(ErrorCode.AUTH_INVALID_CREDENTIALS));
+                .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS));
 
         // 계정 상태 먼저 체크 — 비밀번호 검증 전에 수행해야
         // 응답 코드 차이로 잠긴 계정의 비밀번호 일치 여부가 노출되지 않음
         if (admin.getStatus() == AdminStatus.LOCKED) {
-            throw new CustomException(ErrorCode.AUTH_ACCOUNT_LOCKED);
+            throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
         }
 
         if (!passwordEncoder.matches(request.password(), admin.getPasswordHash())) {
-            throw new CustomException(ErrorCode.AUTH_INVALID_CREDENTIALS);
+            throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
         admin.updateLastLoginAt(Instant.now());

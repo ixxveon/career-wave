@@ -12,8 +12,8 @@ import kr.co.carrer.admin.auth.service.AdminLoginService;
 import kr.co.carrer.global.auth.jwt.AccountType;
 import kr.co.carrer.global.auth.jwt.JwtProperties;
 import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.global.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -52,11 +52,11 @@ public class AdminAuthController implements AdminAuthControllerDocs {
 
         String refreshToken = extractRefreshTokenCookie(request);
         if (refreshToken == null) {
-            throw new CustomException(ErrorCode.AUTH_REFRESH_INVALID);
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         }
 
         if (!jwtTokenProvider.validate(refreshToken, AccountType.ADMIN)) {
-            throw new CustomException(ErrorCode.AUTH_REFRESH_INVALID);
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         }
 
         var claims = jwtTokenProvider.parse(refreshToken, AccountType.ADMIN);

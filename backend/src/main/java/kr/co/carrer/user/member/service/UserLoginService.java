@@ -6,8 +6,11 @@ import org.springframework.http.ResponseCookie;
 import kr.co.carrer.global.auth.jwt.AccountType;
 import kr.co.carrer.global.auth.jwt.JwtProperties;
 import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.global.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.user.member.exception.UserAuthErrorCode;
+import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.dto.MemberSummary;
 import kr.co.carrer.user.member.dto.UserLoginRequest;
 import kr.co.carrer.user.member.dto.UserLoginResponse;
@@ -46,15 +49,15 @@ public class UserLoginService {
     @Transactional
     public UserLoginResponse login(UserLoginRequest request, HttpServletResponse response) {
         Member member = memberRepository.findByLoginId(request.loginId())
-                .orElseThrow(() -> new CustomException(ErrorCode.AUTH_INVALID_CREDENTIALS));
+                .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS));
 
         if (!passwordEncoder.matches(request.password(), member.getPassword())) {
-            throw new CustomException(ErrorCode.AUTH_INVALID_CREDENTIALS);
+            throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
         // memberType 일치 검증 (프론트 탭과 실제 role_type이 같아야 함)
         if (member.getRoleType() != request.memberType()) {
-            throw new CustomException(ErrorCode.AUTH_INVALID_CREDENTIALS);
+            throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
         validateAccountStatus(member);
@@ -97,13 +100,13 @@ public class UserLoginService {
 
     private void validateAccountStatus(Member member) {
         switch (member.getMemberStatus()) {
-            case SUSPENDED -> throw new CustomException(ErrorCode.AUTH_ACCOUNT_SUSPENDED);
-            case BANNED -> throw new CustomException(ErrorCode.AUTH_ACCOUNT_BANNED);
-            case WITHDRAWN -> throw new CustomException(ErrorCode.AUTH_ACCOUNT_WITHDRAWN);
+            case SUSPENDED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED);
+            case BANNED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
+            case WITHDRAWN -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
             case LOCKED -> {
                 // locked_until이 지났으면 자동 복구
                 if (member.getLockedUntil() != null && Instant.now().isBefore(member.getLockedUntil())) {
-                    throw new CustomException(ErrorCode.AUTH_ACCOUNT_LOCKED);
+                    throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
                 }
             }
             default -> {}
@@ -112,9 +115,9 @@ public class UserLoginService {
         if (member.getRoleType() == RoleType.ROLE_COMPANY) {
             CompanyApprovalStatus status = resolveCompanyApprovalStatus(member);
             switch (status) {
-                case PENDING_REVIEW -> throw new CustomException(ErrorCode.AUTH_COMPANY_PENDING_REVIEW);
-                case REJECTED -> throw new CustomException(ErrorCode.AUTH_COMPANY_REJECTED);
-                case NEEDS_REVISION -> throw new CustomException(ErrorCode.AUTH_COMPANY_NEEDS_REVISION);
+                case PENDING_REVIEW -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_PENDING_REVIEW);
+                case REJECTED -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_REJECTED);
+                case NEEDS_REVISION -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_NEEDS_REVISION);
                 default -> {}
             }
         }

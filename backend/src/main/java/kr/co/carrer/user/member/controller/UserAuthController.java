@@ -8,8 +8,8 @@ import jakarta.validation.Valid;
 import kr.co.carrer.global.auth.jwt.AccountType;
 import kr.co.carrer.global.auth.jwt.JwtProperties;
 import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.global.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.member.docs.UserAuthControllerDocs;
 import kr.co.carrer.user.member.dto.UserLoginRequest;
@@ -52,23 +52,23 @@ public class UserAuthController implements UserAuthControllerDocs {
 
         String refreshToken = extractRefreshTokenCookie(request);
         if (refreshToken == null) {
-            throw new CustomException(ErrorCode.AUTH_REFRESH_INVALID);
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         }
 
         AccountType accountType;
         try {
             accountType = jwtTokenProvider.extractAccountType(refreshToken);
         } catch (IllegalArgumentException e) {
-            throw new CustomException(ErrorCode.AUTH_REFRESH_INVALID);
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         }
 
         // user 엔드포인트에서 ADMIN 토큰 재발급 차단
         if (accountType == AccountType.ADMIN) {
-            throw new CustomException(ErrorCode.AUTH_REFRESH_INVALID);
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         }
 
         if (!jwtTokenProvider.validate(refreshToken, accountType)) {
-            throw new CustomException(ErrorCode.AUTH_REFRESH_INVALID);
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         }
 
         var claims = jwtTokenProvider.parse(refreshToken, accountType);
