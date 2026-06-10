@@ -82,8 +82,7 @@ backend/src/main/java/kr/co/carrer/
 | Component | Rule | Example |
 |-----------|------|---------|
 | Controller | `{Domain}Controller` | `MemberController` |
-| Service Interface | `{Domain}Service` | `AdminMemberService` |
-| Service Implementation | `{Domain}ServiceImpl` | `AdminMemberServiceImpl` |
+| Service | `{Domain}Service` / `{Domain}ServiceImpl` | `AdminMemberService` / `AdminMemberServiceImpl` |
 | Repository | `{Domain}Repository` | `CompanyRepository` |
 | DTO | `{Domain}DTO` | `MemberDTO` |
 | Enum | 의미가 드러나는 PascalCase | `CompanyStatus`, `ManagerRole` |
@@ -94,20 +93,21 @@ backend/src/main/java/kr/co/carrer/
 
 ### Service Rules
 
-- Service는 인터페이스(`{Domain}Service`)와 구현체(`{Domain}ServiceImpl`)로 분리한다.
+- 인터페이스(`{Domain}Service`)는 `service/` 패키지에 둔다.
+- 구현체(`{Domain}ServiceImpl`)는 `service/impl/` 서브패키지에 둔다.
 - Controller는 인터페이스 타입으로 주입받는다.
 - 구현체에 `@Service`를 선언하고 인터페이스를 `implements`한다.
 
 ```java
-// 인터페이스
+// service/{Domain}Service.java — 인터페이스
 public interface AdminMemberService { ... }
 
-// 구현체
+// service/impl/{Domain}ServiceImpl.java — 구현체
 @Service
 @RequiredArgsConstructor
 public class AdminMemberServiceImpl implements AdminMemberService { ... }
 
-// 컨트롤러 주입
+// Controller — 인터페이스 타입으로 주입
 private final AdminMemberService adminMemberService;
 ```
 
