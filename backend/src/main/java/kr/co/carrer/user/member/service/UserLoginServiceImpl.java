@@ -33,7 +33,7 @@ public class UserLoginServiceImpl implements UserLoginService {
     private final JwtProperties jwtProperties;
     private final EntityManager entityManager;
 
-    public UserLoginService(MemberRepository memberRepository,
+    public UserLoginServiceImpl(MemberRepository memberRepository,
                             PasswordEncoder passwordEncoder,
                             JwtTokenProvider jwtTokenProvider,
                             JwtProperties jwtProperties,

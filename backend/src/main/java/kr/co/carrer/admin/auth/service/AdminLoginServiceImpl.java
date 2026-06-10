@@ -27,7 +27,7 @@ public class AdminLoginServiceImpl implements AdminLoginService {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
 
-    public AdminLoginService(AdminRepository adminRepository,
+    public AdminLoginServiceImpl(AdminRepository adminRepository,
                               PasswordEncoder passwordEncoder,
                               JwtTokenProvider jwtTokenProvider,
                               JwtProperties jwtProperties) {
