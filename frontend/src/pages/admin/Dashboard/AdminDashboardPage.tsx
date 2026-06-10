@@ -63,36 +63,47 @@ const DASHBOARD_ACCESS_KEY = {
 type DashboardAccessKey = (typeof DASHBOARD_ACCESS_KEY)[keyof typeof DASHBOARD_ACCESS_KEY];
 
 const DASHBOARD_DOMAIN_ALLOWED_ROLES = {
-  ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
-  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.OPS],
-  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.AUDIT],
-  CS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BILLING],
-  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.OPS, ADMIN_DETAIL_ROLE.BACKEND],
-  AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  [DASHBOARD_ACCESS_KEY.ADMIN]: [ADMIN_DETAIL_ROLE.MASTER],
+  [DASHBOARD_ACCESS_KEY.MEMBER]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  [DASHBOARD_ACCESS_KEY.REPORT]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  [DASHBOARD_ACCESS_KEY.CS]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  [DASHBOARD_ACCESS_KEY.PAYMENT]: [ADMIN_DETAIL_ROLE.MASTER],
+  [DASHBOARD_ACCESS_KEY.STATISTICS]: [ADMIN_DETAIL_ROLE.MASTER],
+  [DASHBOARD_ACCESS_KEY.AI_METRICS]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  [DASHBOARD_ACCESS_KEY.SCRAPING]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  [DASHBOARD_ACCESS_KEY.AUDIT_LOG]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
 } satisfies Record<DashboardAccessKey, AdminDetailRole[]>;
 
 const DASHBOARD_CARD_ALLOWED_ROLES = {
-  ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
-  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.OPS],
-  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS, ADMIN_DETAIL_ROLE.AUDIT],
-  CS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BILLING],
-  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.OPS, ADMIN_DETAIL_ROLE.BACKEND],
-  AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-} satisfies Partial<Record<DashboardAccessKey, AdminDetailRole[]>>;
+  [DASHBOARD_ACCESS_KEY.ADMIN]: [ADMIN_DETAIL_ROLE.MASTER],
+  [DASHBOARD_ACCESS_KEY.MEMBER]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  [DASHBOARD_ACCESS_KEY.REPORT]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  [DASHBOARD_ACCESS_KEY.CS]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  [DASHBOARD_ACCESS_KEY.PAYMENT]: [ADMIN_DETAIL_ROLE.MASTER],
+  [DASHBOARD_ACCESS_KEY.STATISTICS]: [ADMIN_DETAIL_ROLE.MASTER],
+  [DASHBOARD_ACCESS_KEY.AI_METRICS]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  [DASHBOARD_ACCESS_KEY.SCRAPING]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  [DASHBOARD_ACCESS_KEY.AUDIT_LOG]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+} satisfies Record<DashboardAccessKey, AdminDetailRole[]>;
 
 function hasDashboardRoleAccess(
   currentAdminRole: AdminDetailRole | null,
   allowedRoles: AdminDetailRole[] | undefined
 ) {
   if (!currentAdminRole) return false;
-  if (!allowedRoles || allowedRoles.length === 0) return true;
-  return allowedRoles.includes(currentAdminRole);
+  return !!allowedRoles && allowedRoles.includes(currentAdminRole);
+}
+
+function getAllowedDashboardRoles(
+  accessKey: string,
+  allowedRoleMap: Record<DashboardAccessKey, AdminDetailRole[]>
+) {
+  if (!Object.prototype.hasOwnProperty.call(allowedRoleMap, accessKey)) {
+    return undefined;
+  }
+
+  const allowedRoles = allowedRoleMap[accessKey as DashboardAccessKey];
+  return Array.isArray(allowedRoles) ? allowedRoles : undefined;
 }
 
 export default function AdminDashboardPage() {
@@ -170,9 +181,10 @@ export default function AdminDashboardPage() {
       const items = (dashboardSummary?.alerts ?? []).map((item) => {
         const presentation =
           ALERT_PRESENTATION[item.level as keyof typeof ALERT_PRESENTATION] ?? ALERT_PRESENTATION.NORMAL;
+        const allowedRoles = getAllowedDashboardRoles(item.domain, DASHBOARD_DOMAIN_ALLOWED_ROLES);
         const hasRoleAccess = hasDashboardRoleAccess(
           currentAdminRole,
-          DASHBOARD_DOMAIN_ALLOWED_ROLES[item.domain as DashboardAccessKey]
+          allowedRoles
         );
 
         return {
@@ -253,9 +265,10 @@ export default function AdminDashboardPage() {
         const presentation =
           SERVICE_CARD_PRESENTATION[item.key as keyof typeof SERVICE_CARD_PRESENTATION]
           ?? SERVICE_CARD_PRESENTATION.MEMBER;
+        const allowedRoles = getAllowedDashboardRoles(item.key, DASHBOARD_CARD_ALLOWED_ROLES);
         const hasRoleAccess = hasDashboardRoleAccess(
           currentAdminRole,
-          DASHBOARD_CARD_ALLOWED_ROLES[item.key as DashboardAccessKey]
+          allowedRoles
         );
 
         return {

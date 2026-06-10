@@ -63,6 +63,9 @@ import InquiryListPage from '../pages/user/support/InquiryListPage';
 import InquiryCreatePage from '../pages/user/support/InquiryCreatePage';
 
 import NotFoundPage from '../pages/user/common/NotFoundPage';
+import AboutPage from '../pages/user/info/AboutPage';
+import TermsPage from '../pages/user/info/TermsPage';
+import PrivacyPage from '../pages/user/info/PrivacyPage';
 
 // ── 어드민 플랫폼 ──────────────────────────────────────────────
 import AdminLayout from '../layouts/admin/AdminLayout';
@@ -249,6 +252,10 @@ function AppRoutes() {
             {/* [non-MVP] <Route path="company-products" element={<CompanyProductPage />} /> */}
           </Route>
         </Route>
+
+        <Route path="about"   element={<AboutPage />} />
+        <Route path="terms"   element={<TermsPage />} />
+        <Route path="privacy" element={<PrivacyPage />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Route>
