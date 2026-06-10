@@ -62,14 +62,24 @@ public interface ResumeControllerDocs {
                     description = "파일 크기 초과 또는 형식 오류",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            examples = @ExampleObject(value = """
-                                    {
-                                      "success": false,
-                                      "statusCode": 400,
-                                      "message": "지원하지 않는 파일 형식입니다.",
-                                      "data": null
-                                    }
-                                    """)
+                            examples = {
+                                    @ExampleObject(name = "파일 크기 초과", value = """
+                                            {
+                                              "success": false,
+                                              "statusCode": 400,
+                                              "message": "파일 크기가 최대 허용 용량(10MB)을 초과했습니다.",
+                                              "data": null
+                                            }
+                                            """),
+                                    @ExampleObject(name = "지원하지 않는 형식", value = """
+                                            {
+                                              "success": false,
+                                              "statusCode": 400,
+                                              "message": "지원하지 않는 파일 형식입니다.",
+                                              "data": null
+                                            }
+                                            """)
+                            }
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
