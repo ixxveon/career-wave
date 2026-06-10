@@ -34,7 +34,7 @@ MVP의 중심은 실제 모델 비용 정산이나 모델 관리가 아니라, �
 
 ## 보안 원칙
 
-- 모든 관리자 AI 매트릭스 API는 JWT 인증과 `ROLE_ADMIN` 권한을 요구한다.
+- 모든 관리자 AI 매트릭스 API는 JWT 인증과 endpoint별 `MASTER`, `BACKEND` 권한을 요구한다.
 - 인증 사용자 정보는 Controller에서 임의 파싱하지 않고 Security Context 또는 공통 인증 유틸리티로 조회한다.
 - 관리자 API는 `ApiResponse<T>` 형식을 따른다.
 - 민감 정보가 포함될 수 있는 원문 데이터는 API 응답에 포함하지 않는다.

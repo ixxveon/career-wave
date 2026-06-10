@@ -73,6 +73,7 @@ export interface ApiErrorBody<T = unknown> {
   success?: false;
   statusCode?: number;
   message?: string;
+  code?: string;
   data?: T;
 }
 
@@ -91,6 +92,9 @@ export interface RestrictionSummary {
   recoverable: boolean;
   availableAt: string | null;
   messageCode: string;
+  reason: string | null;
+  startedAt: string | null;
+  duration: string | null;
 }
 
 export interface MemberStatusResponse {

@@ -40,8 +40,8 @@
 * 모든 API는 로그인 사용자 기준으로 동작해야 한다.
 * 본인 소유 데이터만 조회 및 수정할 수 있어야 한다.
 * 스크랩 취소는 본인 소유 스크랩에 대해서만 가능해야 한다.
-* 삭제된 채용공고는 스크랩 목록에 유지되어야 한다.
-* 삭제된 채용공고는 `deleted=true` 상태로 반환되어야 한다.
+* 마감 또는 비공개 처리된 채용공고의 노출 정책은 JobNotice 도메인 정책을 따른다.
+* 채용공고 상태 정보는 `noticeStatus` 기준으로 반환되어야 한다.
 * Entity를 API 응답으로 직접 반환해서는 안 된다.
 * 예상 가능한 예외는 반드시 ErrorCode를 통해 관리해야 한다.
 * Controller 내부에서 반복적인 try-catch를 작성하지 않는다.
@@ -55,6 +55,7 @@
 * 회원 정보는 `members` 테이블 데이터를 사용한다.
 * 프로필 정보는 `personal_profiles` 테이블 데이터를 사용한다.
 * 스크랩 공고 정보는 `bookmarks` 및 `job_notices` 데이터를 사용한다.
+* 채용공고 상태 정보는 `job_notices.notice_status`를 기준으로 제공한다.
 * 채용공고 상세 정보는 JobNotice 도메인 정책을 따른다.
 * 인증 사용자 정보는 Security Context 또는 공통 인증 유틸을 통해 조회한다.
 * Dashboard는 FastAPI와 직접 통신하지 않는다.
@@ -73,6 +74,6 @@
 * Admin 도메인 직접 참조 금지
 * JobNotice 상세 데이터를 Dashboard 내부에서 직접 구현하는 것 금지
 * 타인 회원의 Dashboard 데이터 접근 허용 금지
-* 삭제된 채용공고를 스크랩 목록에서 제거하는 처리 금지
+* JobNotice 도메인 정책과 다른 채용공고 노출 정책을 Dashboard에서 별도 구현하는 것 금지
 * ApiResponse 형식을 벗어난 응답 반환 금지
-* ErrorCode 없이 비즈니스 예외를 처리하는 것 금지
+* JobNotice 도메인 정책과 다른 채용공고 상태 처리 로직을 Dashboard에서 별도 구현하는 것 금지

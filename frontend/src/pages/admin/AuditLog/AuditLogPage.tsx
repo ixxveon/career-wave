@@ -36,7 +36,7 @@ const splitTimestamp = (value: string) => {
 const AUDIT_LOG_SUMMARY_QUERY_KEY = ['admin', 'auditLog', 'summary'] as const;
 const AUDIT_LOG_LIST_QUERY_KEY = ['admin', 'auditLog', 'list'] as const;
 const AUDIT_LOG_DETAIL_QUERY_KEY = ['admin', 'auditLog', 'detail'] as const;
-const AUDIT_LOG_LIST_DEFAULT_PAGE = 0;
+const AUDIT_LOG_LIST_DEFAULT_PAGE = 1;
 const AUDIT_LOG_LIST_DEFAULT_SIZE = 20;
 
 const sourceTabs: Array<{ key: AuditLogSourceFilter; label: string }> = [

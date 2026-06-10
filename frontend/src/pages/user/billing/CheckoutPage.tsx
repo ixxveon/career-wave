@@ -13,6 +13,7 @@ function CheckoutPage() {
     warning,
     checkoutError,
     isCreatingOrder,
+    isPaymentRequesting,
     handleAgreeChange,
     handleCheckout,
   } = useCheckoutStatus();
@@ -68,6 +69,7 @@ function CheckoutPage() {
             warning={warning}
             checkoutError={checkoutError}
             isCreatingOrder={isCreatingOrder}
+            isPaymentRequesting={isPaymentRequesting}
             onAgreeChange={handleAgreeChange}
             onCheckout={handleCheckout}
           />

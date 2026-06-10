@@ -38,16 +38,21 @@ export const jobApi = {
             `${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}`,
         ),
 
-    toggleJobNoticeBookmark: (
-        jobNoticeId: number | string,
-        bookmarked: boolean,
-    ): Promise<JobNoticeBookmarkResponse | null> =>
+    addJobNoticeBookmark: (jobNoticeId: number | string): Promise<JobNoticeBookmarkResponse | null> =>
         memberApiClient<JobNoticeBookmarkResponse | null>(
-            `${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}/bookmark`,
+            `${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}/bookmarks`,
             {
-                method: 'PATCH',
+                method: 'POST',
                 auth: true,
-                body: JSON.stringify({ bookmarked }),
+            },
+        ),
+
+    deleteJobNoticeBookmark: (jobNoticeId: number | string): Promise<JobNoticeBookmarkResponse | null> =>
+        memberApiClient<JobNoticeBookmarkResponse | null>(
+            `${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}/bookmarks`,
+            {
+                method: 'DELETE',
+                auth: true,
             },
         ),
 
