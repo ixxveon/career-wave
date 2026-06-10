@@ -19,9 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.UUID;
 
+@Validated
 @RestController
 @RequestMapping("/api/v1/user/resume")
 @RequiredArgsConstructor
