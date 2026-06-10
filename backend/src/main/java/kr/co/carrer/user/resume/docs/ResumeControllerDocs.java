@@ -4,11 +4,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,9 +19,22 @@ import java.util.UUID;
 @Tag(name = "Resume", description = "서류 분석 API")
 public interface ResumeControllerDocs {
 
+    // Swagger multipart/form-data 스키마용 내부 클래스
+    class FileUploadRequest {
+        @Schema(type = "string", format = "binary", description = "이력서 파일 (PDF·DOC·DOCX, 최대 10MB)")
+        public MultipartFile file;
+    }
+
     @Operation(
             summary = "이력서 업로드",
             description = "PDF·DOC·DOCX 이력서 파일을 업로드하고 AI 분석을 시작합니다. 최대 10MB."
+    )
+    @RequestBody(
+            required = true,
+            content = @Content(
+                    mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                    schema = @Schema(implementation = FileUploadRequest.class)
+            )
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -31,8 +46,7 @@ public interface ResumeControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     ResponseEntity<ApiResponse<ResumeDTO.ResponseUpload>> uploadResume(
-            @Parameter(description = "업로드할 이력서 파일 (PDF·DOC·DOCX, 최대 10MB)", required = true)
-            MultipartFile file
+            @Parameter(hidden = true) MultipartFile file
     );
 
     @Operation(
