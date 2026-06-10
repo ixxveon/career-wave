@@ -28,6 +28,9 @@
 ## Phase 3 - Service
 
 - [ ] `UserJobNoticeService.java` 인터페이스를 작성한다.
+- [ ] `JobNoticeDTO.ResponseList` DTO를 작성한다.
+- [ ] `JobNoticeDTO.ResponseDetail` DTO를 작성한다.
+- [ ] `JobNoticeDTO.ResponseBookmark` DTO를 작성한다.
 - [ ] 목록 조회 서비스 로직을 구현한다.
 - [ ] 상세 조회 서비스 로직을 구현한다.
 - [ ] 로그인 사용자 북마크 여부 계산 로직을 구현한다.
