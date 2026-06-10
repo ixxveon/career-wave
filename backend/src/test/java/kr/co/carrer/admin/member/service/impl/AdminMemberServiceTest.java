@@ -1,4 +1,4 @@
-package kr.co.carrer.admin.member.service;
+package kr.co.carrer.admin.member.service.impl;
 
 import kr.co.carrer.admin.member.dto.HrManagerDTO;
 import kr.co.carrer.admin.member.dto.MemberDTO;

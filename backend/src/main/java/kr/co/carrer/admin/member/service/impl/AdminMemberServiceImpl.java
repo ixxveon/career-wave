@@ -1,4 +1,4 @@
-package kr.co.carrer.admin.member.service;
+package kr.co.carrer.admin.member.service.impl;
 
 import kr.co.carrer.admin.member.dto.HrManagerDTO;
 import kr.co.carrer.admin.member.dto.MemberDTO;
@@ -16,6 +16,7 @@ import kr.co.carrer.admin.member.type.SanctionType;
 import kr.co.carrer.admin.member.type.SubscriptionStatus;
 import kr.co.carrer.admin.member.type.SuspendDuration;
 import kr.co.carrer.admin.member.exception.AdminMemberErrorCode;
+import kr.co.carrer.admin.member.service.AdminMemberService;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
