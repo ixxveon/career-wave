@@ -248,11 +248,11 @@ const toAdminAccountRow = (admin: AdminAccountResponse): AdminAccount => ({
 });
 
 const toAclRuleRow = (aclRule: AdminAclRuleResponse): AclRule => ({
-  id: aclRule.id,
+  id: String(aclRule.ipAclId),
   label: aclRule.label,
-  cidr: aclRule.cidr,
-  note: aclRule.note,
-  enabled: aclRule.enabled,
+  cidr: aclRule.ipRange,
+  note: aclRule.description,
+  enabled: aclRule.isEnabled,
   updatedAt: aclRule.updatedAt,
 });
 
@@ -458,7 +458,7 @@ export default function AdminManagementPage() {
   });
 
   const updateAclEnabledMutation = useMutation({
-    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => updateAdminAclEnabled(id, { enabled }),
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => updateAdminAclEnabled(id, { isEnabled: enabled }),
     onSuccess: (updatedAclRule) => {
       const nextRule = toAclRuleRow(updatedAclRule);
 
@@ -568,8 +568,8 @@ export default function AdminManagementPage() {
 
     createAclRuleMutation.mutate({
       label,
-      cidr,
-      note,
+      ipRange: cidr,
+      description: note,
     });
   };
 

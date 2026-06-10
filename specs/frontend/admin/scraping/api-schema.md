@@ -26,10 +26,12 @@
 ## 공통 타입
 
 ```ts
+type PipelineStatus = 'IDLE' | 'RUNNING' | 'SUCCESS' | 'FAILED';
 type ScrapingStatus = 'SUCCESS' | 'FAILED';
 type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST';
 ```
 
+- `PipelineStatus`는 ERD `scraping_pipelines.pipeline_status` CHECK 제약(`IDLE`, `RUNNING`, `SUCCESS`, `FAILED`)과 동일한 값을 사용한다.
 - `ScrapingStatus`는 ERD `scraping_logs.scraping_status` CHECK 제약(`SUCCESS`, `FAILED`)과 동일한 값을 사용한다.
 - 현재 ERD에는 별도 파이프라인 테이블과 `pipelineId`, `ACTIVE`, `WARNING`, `RECOVERING`, `PAUSED` 상태가 없으므로 API 계약에서 가정하지 않는다.
 - 화면의 "주의", "복구 중", "중지" 같은 표현이 필요하면 백엔드 DDL 확정 후 별도 상태 필드로 추가한다.
@@ -44,7 +46,7 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST';
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `keyword` | string | false | source 또는 최근 오류 검색어 |
-| `status` | ScrapingStatus | false | 최근 실행 결과 상태 필터 |
+| `status` | PipelineStatus | false | ERD `pipeline_status` 기준 필터 |
 | `page` | number | false | 1부터 시작 |
 | `size` | number | false | 기본 10 |
 

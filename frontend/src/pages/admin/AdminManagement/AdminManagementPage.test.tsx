@@ -108,12 +108,12 @@ function seedApiMocks() {
   adminManagementApiMock.getAdminAclRules.mockResolvedValue({
     items: [
       {
-        id: 'ACL-001',
+        ipAclId: 'ACL-001',
         label: 'Office Network',
-        cidr: '10.20.0.0/16',
-        note: 'Office allowlist',
-        enabled: true,
-        riskLevel: 'LOW',
+        ipRange: '10.20.0.0/16',
+        description: 'Office allowlist',
+        isEnabled: true,
+        createdAt: '2026.06.09 09:00:00',
         updatedAt: '2026.06.09 09:00:00',
       },
     ],

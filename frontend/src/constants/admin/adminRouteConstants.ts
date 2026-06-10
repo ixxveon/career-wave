@@ -13,7 +13,6 @@ export const ADMIN_ROUTE_PATHS = {
   scraping: '/admin/scraping',
   log: '/admin/log',
   companies: '/admin/companies',
-  jobNotices: '/admin/job-notices',
   settlements: '/admin/settlements',
 } as const;
 
@@ -38,7 +37,6 @@ export const ADMIN_ROUTE_ALLOWED_ROLES: Partial<Record<(typeof ADMIN_ROUTE_PATHS
   [ADMIN_ROUTE_PATHS.scraping]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
   [ADMIN_ROUTE_PATHS.log]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
   [ADMIN_ROUTE_PATHS.companies]: [ADMIN_DETAIL_ROLE.MASTER],
-  [ADMIN_ROUTE_PATHS.jobNotices]: [ADMIN_DETAIL_ROLE.MASTER],
   [ADMIN_ROUTE_PATHS.settlements]: [ADMIN_DETAIL_ROLE.MASTER],
 };
 

@@ -63,9 +63,6 @@ import InquiryListPage from '../pages/user/support/InquiryListPage';
 import InquiryCreatePage from '../pages/user/support/InquiryCreatePage';
 
 import NotFoundPage from '../pages/user/common/NotFoundPage';
-import AboutPage from '../pages/user/info/AboutPage';
-import TermsPage from '../pages/user/info/TermsPage';
-import PrivacyPage from '../pages/user/info/PrivacyPage';
 
 // ── 어드민 플랫폼 ──────────────────────────────────────────────
 import AdminLayout from '../layouts/admin/AdminLayout';
@@ -81,7 +78,6 @@ import AiMetricsPage from '../pages/admin/AiMetrics/AiMetricsPage';
 import ScrapingPage from '../pages/admin/Scraping/ScrapingPage';
 import AuditLogPage from '../pages/admin/AuditLog/AuditLogPage';
 import AdminCompanyListPage from '../pages/admin/Company/CompanyListPage';
-import AdminJobNoticeListPage from '../pages/admin/JobNotice/JobNoticeListPage';
 import AdminSettlementListPage from '../pages/admin/Settlement/SettlementListPage';
 import { ACCESS_TOKEN_STORAGE_KEY, ADMIN_ROLE } from '../constants/admin/authConstants';
 
@@ -253,10 +249,6 @@ function AppRoutes() {
           </Route>
         </Route>
 
-        <Route path="about"   element={<AboutPage />} />
-        <Route path="terms"   element={<TermsPage />} />
-        <Route path="privacy" element={<PrivacyPage />} />
-
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
@@ -278,7 +270,6 @@ function AppRoutes() {
             <Route path="scraping"  element={<ScrapingPage />} />
             <Route path="log"       element={<AuditLogPage />} />
             <Route path="companies" element={<AdminCompanyListPage />} />
-            <Route path="job-notices" element={<AdminJobNoticeListPage />} />
             <Route path="settlements" element={<AdminSettlementListPage />} />
           </Route>
         </Route>

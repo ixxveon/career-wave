@@ -9,7 +9,11 @@ import {
   unwrapDashboardSummaryResponse,
 } from '../../../api/admin/dashboardApi';
 import { ACCESS_TOKEN_STORAGE_KEY } from '../../../constants/admin/authConstants';
-import { ADMIN_ROUTE_PATHS, isAdminNavigationPath } from '../../../constants/admin/adminRouteConstants';
+import {
+  ADMIN_ROUTE_PATHS,
+  hasAdminRouteAccess,
+  isAdminNavigationPath,
+} from '../../../constants/admin/adminRouteConstants';
 import { ADMIN_DETAIL_ROLE, type AdminDetailRole } from '../../../constants/admin/adminRoleConstants';
 import '../../../styles/admin/admin.css';
 
@@ -63,47 +67,41 @@ const DASHBOARD_ACCESS_KEY = {
 type DashboardAccessKey = (typeof DASHBOARD_ACCESS_KEY)[keyof typeof DASHBOARD_ACCESS_KEY];
 
 const DASHBOARD_DOMAIN_ALLOWED_ROLES = {
-  [DASHBOARD_ACCESS_KEY.ADMIN]: [ADMIN_DETAIL_ROLE.MASTER],
-  [DASHBOARD_ACCESS_KEY.MEMBER]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  [DASHBOARD_ACCESS_KEY.REPORT]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  [DASHBOARD_ACCESS_KEY.CS]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  [DASHBOARD_ACCESS_KEY.PAYMENT]: [ADMIN_DETAIL_ROLE.MASTER],
-  [DASHBOARD_ACCESS_KEY.STATISTICS]: [ADMIN_DETAIL_ROLE.MASTER],
-  [DASHBOARD_ACCESS_KEY.AI_METRICS]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  [DASHBOARD_ACCESS_KEY.SCRAPING]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  [DASHBOARD_ACCESS_KEY.AUDIT_LOG]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
+  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  CS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER],
+  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER],
+  AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
 } satisfies Record<DashboardAccessKey, AdminDetailRole[]>;
 
 const DASHBOARD_CARD_ALLOWED_ROLES = {
-  [DASHBOARD_ACCESS_KEY.ADMIN]: [ADMIN_DETAIL_ROLE.MASTER],
-  [DASHBOARD_ACCESS_KEY.MEMBER]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  [DASHBOARD_ACCESS_KEY.REPORT]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  [DASHBOARD_ACCESS_KEY.CS]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  [DASHBOARD_ACCESS_KEY.PAYMENT]: [ADMIN_DETAIL_ROLE.MASTER],
-  [DASHBOARD_ACCESS_KEY.STATISTICS]: [ADMIN_DETAIL_ROLE.MASTER],
-  [DASHBOARD_ACCESS_KEY.AI_METRICS]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  [DASHBOARD_ACCESS_KEY.SCRAPING]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  [DASHBOARD_ACCESS_KEY.AUDIT_LOG]: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-} satisfies Record<DashboardAccessKey, AdminDetailRole[]>;
+  ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
+  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  CS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
+  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER],
+  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER],
+  AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
+} satisfies Partial<Record<DashboardAccessKey, AdminDetailRole[]>>;
 
 function hasDashboardRoleAccess(
   currentAdminRole: AdminDetailRole | null,
   allowedRoles: AdminDetailRole[] | undefined
 ) {
   if (!currentAdminRole) return false;
-  return !!allowedRoles && allowedRoles.includes(currentAdminRole);
+  if (!allowedRoles) return false;
+  if (allowedRoles.length === 0) return true;
+  return allowedRoles.includes(currentAdminRole);
 }
 
-function getAllowedDashboardRoles(
-  accessKey: string,
-  allowedRoleMap: Record<DashboardAccessKey, AdminDetailRole[]>
-) {
-  if (!Object.prototype.hasOwnProperty.call(allowedRoleMap, accessKey)) {
-    return undefined;
-  }
-
-  const allowedRoles = allowedRoleMap[accessKey as DashboardAccessKey];
-  return Array.isArray(allowedRoles) ? allowedRoles : undefined;
+function hasAccessibleAdminTarget(currentAdminRole: AdminDetailRole | null, targetPath: string) {
+  return isAdminNavigationPath(targetPath) && hasAdminRouteAccess(currentAdminRole, targetPath);
 }
 
 export default function AdminDashboardPage() {
@@ -181,11 +179,10 @@ export default function AdminDashboardPage() {
       const items = (dashboardSummary?.alerts ?? []).map((item) => {
         const presentation =
           ALERT_PRESENTATION[item.level as keyof typeof ALERT_PRESENTATION] ?? ALERT_PRESENTATION.NORMAL;
-        const allowedRoles = getAllowedDashboardRoles(item.domain, DASHBOARD_DOMAIN_ALLOWED_ROLES);
         const hasRoleAccess = hasDashboardRoleAccess(
           currentAdminRole,
-          allowedRoles
-        );
+          DASHBOARD_DOMAIN_ALLOWED_ROLES[item.domain as DashboardAccessKey]
+        ) && hasAccessibleAdminTarget(currentAdminRole, item.targetPath);
 
         return {
           ...item,
@@ -265,11 +262,10 @@ export default function AdminDashboardPage() {
         const presentation =
           SERVICE_CARD_PRESENTATION[item.key as keyof typeof SERVICE_CARD_PRESENTATION]
           ?? SERVICE_CARD_PRESENTATION.MEMBER;
-        const allowedRoles = getAllowedDashboardRoles(item.key, DASHBOARD_CARD_ALLOWED_ROLES);
         const hasRoleAccess = hasDashboardRoleAccess(
           currentAdminRole,
-          allowedRoles
-        );
+          DASHBOARD_CARD_ALLOWED_ROLES[item.key as DashboardAccessKey]
+        ) && hasAccessibleAdminTarget(currentAdminRole, item.targetPath);
 
         return {
           ...item,
@@ -311,7 +307,7 @@ export default function AdminDashboardPage() {
     try {
       const items = (dashboardSummary?.recentActivities ?? []).map((item) => ({
         ...item,
-        hasValidTargetPath: isAdminNavigationPath(item.targetPath),
+        hasAccessibleTarget: hasAccessibleAdminTarget(currentAdminRole, item.targetPath),
       }));
 
       return {
@@ -324,7 +320,7 @@ export default function AdminDashboardPage() {
         hasRecentActivitySectionError: !!dashboardSummary,
       };
     }
-  }, [dashboardSummary]);
+  }, [currentAdminRole, dashboardSummary]);
 
   return (
     <>
@@ -581,7 +577,15 @@ export default function AdminDashboardPage() {
               <section className="admin-card logCard">
                 <div className="sectionHead">
                   <h3>최근 관리자 활동</h3>
-                  <button onClick={() => navigate(ADMIN_ROUTE_PATHS.log)}>전체 보기</button>
+                  <button
+                    disabled={!hasAccessibleAdminTarget(currentAdminRole, ADMIN_ROUTE_PATHS.log)}
+                    onClick={() => {
+                      if (!hasAccessibleAdminTarget(currentAdminRole, ADMIN_ROUTE_PATHS.log)) return;
+                      navigate(ADMIN_ROUTE_PATHS.log);
+                    }}
+                  >
+                    전체 보기
+                  </button>
                 </div>
                 {isDashboardInitialLoading ? (
                   <div className="dashboardStateBox dashboardStateBox--inline">
@@ -596,9 +600,9 @@ export default function AdminDashboardPage() {
                     <div
                       className="logRow"
                       key={activity.id}
-                      style={{ cursor: activity.hasValidTargetPath ? 'pointer' : 'default' }}
+                      style={{ cursor: activity.hasAccessibleTarget ? 'pointer' : 'default' }}
                       onClick={() => {
-                        if (!activity.hasValidTargetPath) return;
+                        if (!activity.hasAccessibleTarget) return;
                         navigate(activity.targetPath);
                       }}
                     >
