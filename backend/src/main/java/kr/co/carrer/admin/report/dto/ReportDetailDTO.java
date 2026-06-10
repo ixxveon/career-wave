@@ -13,7 +13,7 @@ public class ReportDetailDTO {
     public record ResponseList(
         @Schema(description = "신고 ID") Long reportId,
         @Schema(description = "신고 대상 유형", allowableValues = {"BOARD", "COMMENT", "MEMBER"}) TargetType targetType,
-        @Schema(description = "신고 사유", allowableValues = {"SPAM", "ABUSE", "OBSCENE", "FRAUD", "OTHER"}) ReportReason reason,
+        @Schema(description = "신고 사유", allowableValues = {"SPAM", "ABUSE", "AD", "INAPPROPRIATE", "OTHER"}) ReportReason reason,
         @Schema(description = "신고 처리 상태", allowableValues = {"PENDING", "BLINDED", "DISMISSED"}) ReportStatus reportStatus,
         @Schema(description = "신고자 이름") String reporterName,
         @Schema(description = "피신고자 이름") String reportedName,
@@ -34,7 +34,7 @@ public class ReportDetailDTO {
         @Schema(description = "신고 ID") Long reportId,
         @Schema(description = "신고 대상 유형", allowableValues = {"BOARD", "COMMENT", "MEMBER"}) TargetType targetType,
         @Schema(description = "신고 대상 ID") Long targetId,
-        @Schema(description = "신고 사유", allowableValues = {"SPAM", "ABUSE", "OBSCENE", "FRAUD", "OTHER"}) ReportReason reason,
+        @Schema(description = "신고 사유", allowableValues = {"SPAM", "ABUSE", "AD", "INAPPROPRIATE", "OTHER"}) ReportReason reason,
         @Schema(description = "신고 처리 상태", allowableValues = {"PENDING", "BLINDED", "DISMISSED"}) ReportStatus reportStatus,
         @Schema(description = "신고자 이름") String reporterName,
         @Schema(description = "피신고자 이름") String reportedName,
