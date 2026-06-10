@@ -58,7 +58,7 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         String accessToken = jwtTokenProvider.createAccessToken(
                 String.valueOf(admin.getAdminId()),
                 AccountType.ADMIN,
-                "ROLE_ADMIN",
+                "ADMIN",
                 admin.getAdminRole().name()
         );
 

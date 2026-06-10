@@ -29,7 +29,7 @@ public class AuthPrincipal implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(roleType));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + roleType));
     }
 
     @Override public String getPassword() { return null; }

@@ -58,7 +58,7 @@ public class UserLoginServiceImpl implements UserLoginService {
 
         // memberType 일치 검증 (프론트 탭과 실제 role_type이 같아야 함)
         RoleType expectedRole = request.getMemberType() == MemberType.USER
-                ? RoleType.ROLE_USER : RoleType.ROLE_COMPANY;
+                ? RoleType.USER : RoleType.COMPANY;
         if (member.getRoleType() != expectedRole) {
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
@@ -67,7 +67,7 @@ public class UserLoginServiceImpl implements UserLoginService {
 
         member.updateLastLoginAt(Instant.now());
 
-        AccountType accountType = member.getRoleType() == RoleType.ROLE_USER
+        AccountType accountType = member.getRoleType() == RoleType.USER
                 ? AccountType.USER : AccountType.COMPANY;
 
         String accessToken = jwtTokenProvider.createAccessToken(
@@ -115,7 +115,7 @@ public class UserLoginServiceImpl implements UserLoginService {
             default -> {}
         }
         // 기업 회원 승인 상태 체크
-        if (member.getRoleType() == RoleType.ROLE_COMPANY) {
+        if (member.getRoleType() == RoleType.COMPANY) {
             CompanyApprovalStatus status = resolveCompanyApprovalStatus(member);
             switch (status) {
                 case PENDING_REVIEW -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_PENDING_REVIEW);
@@ -127,7 +127,7 @@ public class UserLoginServiceImpl implements UserLoginService {
     }
 
     private CompanyApprovalStatus resolveCompanyApprovalStatus(Member member) {
-        if (member.getRoleType() != RoleType.ROLE_COMPANY) {
+        if (member.getRoleType() != RoleType.COMPANY) {
             return CompanyApprovalStatus.NONE;
         }
         // hr_managers.hr_status를 native query로 조회 (admin 패키지 직접 참조 방지)

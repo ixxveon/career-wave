@@ -65,7 +65,7 @@ public class UserLoginDto {
                                     Instant lastLoginAt) {
             return new MemberInfo(
                     memberId, loginId, name,
-                    roleType == RoleType.ROLE_USER ? "USER" : "COMPANY",
+                    roleType == RoleType.USER ? "USER" : "COMPANY",
                     memberStatus.name(),
                     subscriptionStatus.name(),
                     companyApprovalStatus.name(),

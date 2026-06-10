@@ -9,34 +9,34 @@ DELETE FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','t
 DELETE FROM admins  WHERE login_id = 'admin';
 
 -- ────────────────────────────────────────────
--- 일반 회원 (ROLE_USER / 비밀번호: Test1234!)
+-- 일반 회원 (USER / 비밀번호: Test1234!)
 -- ────────────────────────────────────────────
 INSERT INTO members (member_id, login_id, email, password, name, role_type, member_status, subscription_status, warning_count, created_at, updated_at)
 VALUES
   (gen_random_uuid(), 'testuser01', 'testuser01@test.com',
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
-   '테스트유저(구독없음)', 'ROLE_USER', 'ACTIVE', 'FREE',    0, NOW(), NOW()),
+   '테스트유저(구독없음)', 'USER', 'ACTIVE', 'FREE',    0, NOW(), NOW()),
 
   (gen_random_uuid(), 'testuser02', 'testuser02@test.com',
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
-   '테스트유저(면접구독)', 'ROLE_USER', 'ACTIVE', 'PREMIUM', 0, NOW(), NOW()),
+   '테스트유저(면접구독)', 'USER', 'ACTIVE', 'PREMIUM', 0, NOW(), NOW()),
 
   (gen_random_uuid(), 'testuser03', 'testuser03@test.com',
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
-   '테스트유저(서류구독)', 'ROLE_USER', 'ACTIVE', 'FREE',    0, NOW(), NOW()),
+   '테스트유저(서류구독)', 'USER', 'ACTIVE', 'PREMIUM', 0, NOW(), NOW()),
 
   (gen_random_uuid(), 'testuser04', 'testuser04@test.com',
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
-   '테스트유저(전체구독)', 'ROLE_USER', 'ACTIVE', 'PREMIUM', 0, NOW(), NOW());
+   '테스트유저(전체구독)', 'USER', 'ACTIVE', 'PREMIUM', 0, NOW(), NOW());
 
 -- ────────────────────────────────────────────
--- 기업 회원 (ROLE_COMPANY / 비밀번호: Test1234!)
+-- 기업 회원 (COMPANY / 비밀번호: Test1234!)
 -- ────────────────────────────────────────────
 INSERT INTO members (member_id, login_id, email, password, name, role_type, member_status, subscription_status, warning_count, created_at, updated_at)
 VALUES
   (gen_random_uuid(), 'testcompany01', 'testcompany01@test.com',
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
-   '테스트기업담당자', 'ROLE_COMPANY', 'ACTIVE', 'FREE', 0, NOW(), NOW());
+   '테스트기업담당자', 'COMPANY', 'ACTIVE', 'FREE', 0, NOW(), NOW());
 
 -- ────────────────────────────────────────────
 -- 관리자 (loginId=admin / 비밀번호: 1234)

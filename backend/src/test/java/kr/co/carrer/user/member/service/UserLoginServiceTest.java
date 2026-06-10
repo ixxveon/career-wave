@@ -80,7 +80,7 @@ class UserLoginServiceTest {
 
     @Test
     void 정상_로그인_USER_accessToken_반환() throws Exception {
-        Member member = createMember(RoleType.ROLE_USER, MemberStatus.ACTIVE);
+        Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
 
         UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
@@ -102,7 +102,7 @@ class UserLoginServiceTest {
 
     @Test
     void 비밀번호_불일치_AUTH_INVALID_CREDENTIALS() throws Exception {
-        Member member = createMember(RoleType.ROLE_USER, MemberStatus.ACTIVE);
+        Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
         UserLoginDto.Request req = new UserLoginDto.Request("user01", "wrongpw", MemberType.USER);
 
@@ -113,7 +113,7 @@ class UserLoginServiceTest {
 
     @Test
     void memberType_불일치_AUTH_INVALID_CREDENTIALS() throws Exception {
-        Member member = createMember(RoleType.ROLE_USER, MemberStatus.ACTIVE);
+        Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
         UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.COMPANY);
 
@@ -124,7 +124,7 @@ class UserLoginServiceTest {
 
     @Test
     void SUSPENDED_계정_AUTH_ACCOUNT_SUSPENDED() throws Exception {
-        Member member = createMember(RoleType.ROLE_USER, MemberStatus.SUSPENDED);
+        Member member = createMember(RoleType.USER, MemberStatus.SUSPENDED);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
         UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
 
@@ -135,7 +135,7 @@ class UserLoginServiceTest {
 
     @Test
     void BANNED_계정_AUTH_ACCOUNT_BANNED() throws Exception {
-        Member member = createMember(RoleType.ROLE_USER, MemberStatus.BANNED);
+        Member member = createMember(RoleType.USER, MemberStatus.BANNED);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
         UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
 
@@ -146,7 +146,7 @@ class UserLoginServiceTest {
 
     @Test
     void WITHDRAWN_계정_AUTH_ACCOUNT_WITHDRAWN() throws Exception {
-        Member member = createMember(RoleType.ROLE_USER, MemberStatus.WITHDRAWN);
+        Member member = createMember(RoleType.USER, MemberStatus.WITHDRAWN);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
         UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
 
