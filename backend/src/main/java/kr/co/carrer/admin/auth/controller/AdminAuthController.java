@@ -1,5 +1,6 @@
 package kr.co.carrer.admin.auth.controller;
 
+import kr.co.carrer.admin.auth.dto.AdminLoginDto;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

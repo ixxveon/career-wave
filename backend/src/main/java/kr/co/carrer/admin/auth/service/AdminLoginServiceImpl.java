@@ -1,5 +1,6 @@
 package kr.co.carrer.admin.auth.service;
 
+import kr.co.carrer.admin.auth.dto.AdminLoginDto;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;
 

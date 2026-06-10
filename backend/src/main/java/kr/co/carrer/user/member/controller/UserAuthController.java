@@ -1,5 +1,6 @@
 package kr.co.carrer.user.member.controller;
 
+import kr.co.carrer.user.member.dto.UserLoginDto;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

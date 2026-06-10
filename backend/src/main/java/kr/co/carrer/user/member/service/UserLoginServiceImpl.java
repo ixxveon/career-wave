@@ -1,5 +1,6 @@
 package kr.co.carrer.user.member.service;
 
+import kr.co.carrer.user.member.dto.UserLoginDto;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;

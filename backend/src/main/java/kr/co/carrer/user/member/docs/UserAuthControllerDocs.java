@@ -1,5 +1,6 @@
 package kr.co.carrer.user.member.docs;
 
+import kr.co.carrer.user.member.dto.UserLoginDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
