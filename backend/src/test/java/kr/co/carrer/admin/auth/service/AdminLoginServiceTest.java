@@ -48,7 +48,7 @@ class AdminLoginServiceTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new AdminLoginService(adminRepository, encoder, provider, props);
+        service = new AdminLoginServiceImplImpl(adminRepository, encoder, provider, props);
     }
 
     private Admin createAdmin(AdminStatus status) throws Exception {

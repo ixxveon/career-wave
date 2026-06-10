@@ -55,7 +55,7 @@ class UserLoginServiceTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new UserLoginService(memberRepository, encoder, provider, props, entityManager);
+        service = new UserLoginServiceImplImpl(memberRepository, encoder, provider, props, entityManager);
     }
 
     private Member createMember(RoleType roleType, MemberStatus status) throws Exception {
