@@ -1,9 +1,10 @@
-# 로컬 개발용 프로파일 — PostgreSQL (Homebrew localhost:5432)
+# 로컬 개발용 프로파일 — PostgreSQL (localhost:5432)
+# 실행 전 backend/.env 파일에 환경변수를 설정하세요 (backend/.env.example 참고)
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/careerwave}
-    username: ${DB_USERNAME:careerwave}
-    password: ${DB_PASSWORD:Mrq0827!}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -16,10 +17,10 @@ spring:
 
 jwt:
   user:
-    secret: ${JWT_USER_SECRET:local-user-secret-key-must-be-at-least-32-bytes!!}
+    secret: ${JWT_USER_SECRET}
     access-expiration: 1800000
     refresh-expiration: 1209600000
   admin:
-    secret: ${JWT_ADMIN_SECRET:local-admin-secret-key-must-be-at-least-32-bytes!}
+    secret: ${JWT_ADMIN_SECRET}
     access-expiration: 900000
     refresh-expiration: 86400000
