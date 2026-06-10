@@ -10,6 +10,8 @@ import kr.co.carrer.user.resume.entity.Document;
 import kr.co.carrer.user.resume.repository.CoverLetterContentRepository;
 import kr.co.carrer.user.resume.repository.CoverLetterMetaRepository;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
+import kr.co.carrer.user.resume.service.FastApiClient;
+import kr.co.carrer.user.resume.service.FileValidator;
 import kr.co.carrer.user.resume.type.FileType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
