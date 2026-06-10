@@ -13,8 +13,8 @@ import kr.co.carrer.admin.member.type.HrStatus;
 import kr.co.carrer.admin.member.type.MemberStatus;
 import kr.co.carrer.admin.member.type.SanctionType;
 import kr.co.carrer.admin.member.type.SuspendDuration;
+import kr.co.carrer.admin.member.exception.AdminMemberErrorCode;
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -115,7 +115,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.INVALID_SANCTION_DURATION);
+                .isEqualTo(AdminMemberErrorCode.INVALID_SANCTION_DURATION);
         }
 
         @Test
@@ -132,7 +132,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.INVALID_SANCTION_DURATION);
+                .isEqualTo(AdminMemberErrorCode.INVALID_SANCTION_DURATION);
         }
 
         @Test
@@ -149,7 +149,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.ALREADY_BANNED);
+                .isEqualTo(AdminMemberErrorCode.ALREADY_BANNED);
         }
 
         @Test
@@ -166,7 +166,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.REASON_REQUIRED);
+                .isEqualTo(AdminMemberErrorCode.REASON_REQUIRED);
         }
 
         @Test
@@ -183,7 +183,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.REASON_TOO_SHORT);
+                .isEqualTo(AdminMemberErrorCode.REASON_TOO_SHORT);
         }
 
         @Test
@@ -200,7 +200,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.ALREADY_SUSPENDED);
+                .isEqualTo(AdminMemberErrorCode.ALREADY_SUSPENDED);
         }
 
         @Test
@@ -217,7 +217,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.MAX_WARNING_EXCEEDED);
+                .isEqualTo(AdminMemberErrorCode.MAX_WARNING_EXCEEDED);
         }
 
         @Test
@@ -233,7 +233,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
+                .isEqualTo(AdminMemberErrorCode.MEMBER_NOT_FOUND);
         }
     }
 
@@ -264,7 +264,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.approveHrManager(memberId))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.ALREADY_PROCESSED);
+                .isEqualTo(AdminMemberErrorCode.ALREADY_PROCESSED);
         }
 
         @Test
@@ -276,7 +276,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.approveHrManager(memberId))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.HR_MANAGER_NOT_FOUND);
+                .isEqualTo(AdminMemberErrorCode.HR_MANAGER_NOT_FOUND);
         }
     }
 
@@ -311,7 +311,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.rejectHrManager(memberId, request))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.ALREADY_PROCESSED);
+                .isEqualTo(AdminMemberErrorCode.ALREADY_PROCESSED);
         }
 
         @Test
@@ -326,7 +326,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.rejectHrManager(memberId, request))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.REASON_REQUIRED);
+                .isEqualTo(AdminMemberErrorCode.REASON_REQUIRED);
         }
 
         @Test
@@ -341,7 +341,7 @@ class AdminMemberServiceTest {
             assertThatThrownBy(() -> adminMemberService.rejectHrManager(memberId, request))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.REASON_TOO_SHORT);
+                .isEqualTo(AdminMemberErrorCode.REASON_TOO_SHORT);
         }
     }
 
