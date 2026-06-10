@@ -98,6 +98,7 @@ Swagger 문서와 API 계약 문서를 구현 결과와 일치하도록 정리�
 - [ ] `api-schema.md`와 DTO 계약 일치 여부 점검
 - [ ] Service 인터페이스/구현체 구조 반영 여부 점검
 - [ ] 공통 ErrorCode와 도메인 ErrorCode 분리 반영 여부 점검
+- [ ] 프론트엔드 구계약과의 breaking change 및 migration note 반영
 - [ ] `spec.md`, `constitution.md`와 구현 범위 일치 여부 점검
 
 ### Phase 6: 테스트
@@ -109,6 +110,18 @@ Swagger 문서와 API 계약 문서를 구현 결과와 일치하도록 정리�
 - [ ] 북마크 등록/해제 테스트
 - [ ] 인증/권한 테스트
 - [ ] `ApiResponse<T>` 및 `ErrorCode` 검증
+
+---
+
+## Frontend Migration Follow-up
+
+최신 JobNotice 백엔드 스펙 확정 후, 프론트엔드는 기존 구계약 의존 코드를 최신 계약으로 정렬해야 한다.
+
+- [ ] `PATCH /api/v1/user/job-notices/{jobNoticeId}/bookmark` 호출 제거
+- [ ] `POST /api/v1/user/job-notices/{jobNoticeId}/bookmarks`, `DELETE /api/v1/user/job-notices/{jobNoticeId}/bookmarks` 호출 반영
+- [ ] JobNotice 프론트 타입을 최신 백엔드 DTO 필드명 기준으로 갱신
+- [ ] 페이지 응답 필드(`content`, `totalElements`) 기준으로 파싱 로직 정렬
+- [ ] 북마크 응답 및 목록 응답 매퍼, mock, fixture 정리
 
 ---
 

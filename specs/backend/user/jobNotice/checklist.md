@@ -82,6 +82,15 @@
 
 ---
 
+## Frontend Migration Check
+
+- [ ] 프론트엔드가 최신 JobNotice 스펙 계약 기준으로 정렬되었거나, 후속 마이그레이션 범위가 문서에 명시되어 있다.
+- [ ] 기존 `PATCH /api/v1/user/job-notices/{jobNoticeId}/bookmark` 구계약 의존 여부가 검토되었다.
+- [ ] 북마크 등록/해제 호출이 최신 스펙 기준 `POST /bookmarks`, `DELETE /bookmarks`로 반영될 계획이 명시되어 있다.
+- [ ] 프론트 타입의 구필드(`id`, `company`, `tags`, `postedAt`, `views`, `items`, `totalItems`)와 최신 스펙 필드 간 차이가 문서에 정리되어 있다.
+
+---
+
 ## 최종 확인
 
 - [ ] `spec.md`의 Acceptance Scenario와 구현 결과가 충돌하지 않는다.

@@ -60,6 +60,8 @@
 - [ ] Swagger 요청/응답 및 ErrorCode 문서화 정리
 - [ ] Service 인터페이스/구현체 구조 문서 반영
 - [ ] 공통/도메인 ErrorCode 분리 문서 반영
+- [ ] 프론트엔드 구계약 대비 breaking change 안내 문구 반영
+- [ ] 프론트엔드 마이그레이션 후속 작업 항목 정리
 - [ ] `api-schema.md` 구현 반영 정리
 
 ---

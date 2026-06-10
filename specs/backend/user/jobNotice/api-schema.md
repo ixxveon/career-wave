@@ -367,3 +367,33 @@ Spring Security에서는 각각 Optional 인증 처리와 `ROLE_USER` 권한으�
 | `JOB_NOTICE_CLOSED` | 410 | 공개 중이 아닌 채용 공고임 |
 | `BOOKMARK_ALREADY_EXISTS` | 409 | 동일 사용자와 동일 공고의 북마크가 이미 존재함 |
 | `BOOKMARK_NOT_FOUND` | 404 | 해제 대상 북마크가 존재하지 않음 |
+
+---
+
+## 6. Migration Note
+
+본 문서는 JobNotice 사용자 백엔드의 최신 API 계약을 기준으로 한다. 현재 프론트엔드에 남아 있는 구계약과 차이가 있을 수 있으며, 프론트엔드는 후속 작업에서 아래 기준으로 정렬되어야 한다.
+
+### 6.1 Breaking Changes
+
+- 북마크 API는 단일 토글 방식 `PATCH /api/v1/user/job-notices/{jobNoticeId}/bookmark` 구계약 대신 아래 최신 계약을 사용한다.
+  - `POST /api/v1/user/job-notices/{jobNoticeId}/bookmarks`
+  - `DELETE /api/v1/user/job-notices/{jobNoticeId}/bookmarks`
+- JobNotice 응답 DTO 필드명은 최신 스펙 기준을 사용한다.
+  - `id` -> `jobNoticeId`
+  - `company` -> `companyName`
+  - `tags` -> `skillTags`
+  - `postedAt` -> `createdAt`
+  - `views` -> `viewCount`
+- 페이지 응답 필드명은 최신 스펙 기준을 사용한다.
+  - `items` -> `content`
+  - `totalItems` -> `totalElements`
+- 기존 프론트 타입의 `scrapCount`, `stats`, `filterOptions`는 본 JobNotice 사용자 백엔드 스펙 범위에 포함되지 않으므로, 필요 시 별도 프론트 후속 작업에서 정렬한다.
+
+### 6.2 Frontend Follow-up Scope
+
+- `frontend/src/types/user/jobNotice.ts` 타입 정의 갱신
+- JobNotice API client 요청/응답 매핑 수정
+- 북마크 토글 UI를 create/delete 호출 방식으로 변경
+- 페이지네이션 및 목록 렌더링 필드명 반영
+- 구계약 의존 mock/test fixture 제거 또는 갱신
