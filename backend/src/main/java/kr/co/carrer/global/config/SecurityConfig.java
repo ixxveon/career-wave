@@ -41,6 +41,8 @@ public class SecurityConfig {
                 ).permitAll()
                 // TODO: 스웨거 테스트용 임시 허용 — JWT 필터 구현 후 인증 객체로 교체 예정
                 .requestMatchers("/api/v1/admin/**").permitAll()
+                // TODO: 스웨거 테스트용 임시 허용 — JWT 필터 구현 후 인증 객체로 교체 예정
+                .requestMatchers("/api/v1/user/resume/**").permitAll()
                 .anyRequest().authenticated()
             );
         return http.build();
