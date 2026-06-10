@@ -9,8 +9,8 @@ import kr.co.carrer.admin.report.repository.ReportRepository;
 import kr.co.carrer.admin.report.type.ReportReason;
 import kr.co.carrer.admin.report.type.ReportStatus;
 import kr.co.carrer.admin.report.type.TargetType;
+import kr.co.carrer.admin.report.exception.AdminReportErrorCode;
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -56,7 +56,7 @@ public class AdminReportServiceImpl implements AdminReportService {
     @Transactional(readOnly = true)
     public ReportDetailDTO.ResponseDetail getReportDetail(Long reportId) {
         ReportDetailDTO.ResponseDetail base = reportQueryRepository.findReportDetail(reportId)
-            .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(AdminReportErrorCode.REPORT_NOT_FOUND));
 
         String contentTitle = null;
         String contentBody  = null;
@@ -81,10 +81,10 @@ public class AdminReportServiceImpl implements AdminReportService {
     @Transactional
     public ReportDetailDTO.ResponseProcess blindReport(Long reportId, Long adminId) {
         Report report = reportRepository.findById(reportId)
-            .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(AdminReportErrorCode.REPORT_NOT_FOUND));
 
         if (report.getReportStatus() != ReportStatus.PENDING) {
-            throw new CustomException(ErrorCode.ALREADY_PROCESSED);
+            throw new CustomException(AdminReportErrorCode.ALREADY_PROCESSED);
         }
 
         if (report.getTargetType() == TargetType.BOARD) {
@@ -104,10 +104,10 @@ public class AdminReportServiceImpl implements AdminReportService {
     @Transactional
     public ReportDetailDTO.ResponseProcess dismissReport(Long reportId, Long adminId) {
         Report report = reportRepository.findById(reportId)
-            .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(AdminReportErrorCode.REPORT_NOT_FOUND));
 
         if (report.getReportStatus() != ReportStatus.PENDING) {
-            throw new CustomException(ErrorCode.ALREADY_PROCESSED);
+            throw new CustomException(AdminReportErrorCode.ALREADY_PROCESSED);
         }
 
         report.dismiss(adminId);
