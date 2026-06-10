@@ -1,4 +1,4 @@
-package kr.co.carrer.admin.report.service;
+package kr.co.carrer.admin.report.service.impl;
 
 import kr.co.carrer.admin.report.dto.ReportDetailDTO;
 import kr.co.carrer.admin.report.entity.Report;
@@ -28,7 +28,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class AdminReportServiceTest {
+class AdminReportServiceImplTest {
 
     @InjectMocks
     private AdminReportServiceImpl adminReportService;
