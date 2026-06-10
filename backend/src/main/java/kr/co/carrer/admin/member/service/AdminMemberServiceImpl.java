@@ -38,6 +38,7 @@ public class AdminMemberServiceImpl implements AdminMemberService {
     private final SuspendHistoryRepository suspendHistoryRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public PaginationResponse<MemberDTO.ResponseList> getMembers(RoleType role, MemberStatus status,
                                                                   SubscriptionStatus plan, String keyword,
                                                                   LocalDate startDate, LocalDate endDate,
@@ -53,6 +54,7 @@ public class AdminMemberServiceImpl implements AdminMemberService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MemberDTO.ResponseDetail getMemberDetail(UUID memberId) {
         return memberQueryRepository.findMemberDetail(memberId)
             .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -127,6 +129,7 @@ public class AdminMemberServiceImpl implements AdminMemberService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public HrManagerDTO.ResponsePage getHrManagers(HrStatus hrStatus, String keyword,
                                                     LocalDate startDate, LocalDate endDate,
                                                     int page, int size) {
@@ -150,6 +153,7 @@ public class AdminMemberServiceImpl implements AdminMemberService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public HrManagerDTO.ResponseDetail getHrManagerDetail(UUID memberId) {
         return memberQueryRepository.findHrManagerDetail(memberId)
             .orElseThrow(() -> new CustomException(ErrorCode.HR_MANAGER_NOT_FOUND));
