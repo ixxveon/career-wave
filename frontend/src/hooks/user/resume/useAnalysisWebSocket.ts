@@ -78,6 +78,7 @@ export function useAnalysisWebSocket({
         wsRef.current.close();
         wsRef.current = null;
       }
+      setIsConnected(false);
       errorFiredRef.current = false;
 
       // api-schema.md §5: JWT를 쿼리 파라미터로 전달 (?token={accessToken})
@@ -87,7 +88,6 @@ export function useAnalysisWebSocket({
         onFailed('인증 토큰이 없습니다. 로그인 후 다시 시도해주세요.');
         return;
       }
-
       const url = `${WS_BASE_URL}/ws/user/resume/${documentId}/status?token=${encodeURIComponent(token)}`;
       const ws = new WebSocket(url);
       wsRef.current = ws;
