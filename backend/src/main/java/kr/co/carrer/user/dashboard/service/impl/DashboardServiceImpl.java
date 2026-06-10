@@ -25,7 +25,7 @@ public class DashboardServiceImpl implements DashboardService {
     // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
     public DashboardDTO.ProfileResponse getProfile(UUID memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         return new DashboardDTO.ProfileResponse(
                 member.getMemberId(),
@@ -44,7 +44,7 @@ public class DashboardServiceImpl implements DashboardService {
     // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
     public DashboardDTO.GithubResponse getGithubProfile(UUID memberId) {
         memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         return personalProfileRepository.findByMemberId(memberId)
                 .map(this::toGithubResponse)
