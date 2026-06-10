@@ -34,7 +34,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class AdminMemberServiceTest {
+class AdminMemberServiceImplTest {
 
     @InjectMocks
     private AdminMemberServiceImpl adminMemberService;
