@@ -106,12 +106,7 @@ public interface ResumeControllerDocs {
             )
     })
     ResponseEntity<ApiResponse<ResumeDTO.ResponseUpload>> uploadResume(
-            @Parameter(
-                    description = "이력서 파일 (PDF·DOC·DOCX, 최대 10MB)",
-                    required = true,
-                    schema = @Schema(type = "string", format = "binary")
-            )
-            MultipartFile file
+            @Parameter(hidden = true) MultipartFile file
     );
 
     @Operation(
