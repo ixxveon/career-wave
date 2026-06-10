@@ -40,16 +40,16 @@ public class ResumeDTO {
             @Schema(description = "지원 직무명", example = "백엔드 개발자")
             @NotBlank String job,
             @Schema(description = "문항 목록 (1~5개)")
-            @NotNull @Size(min = 1, max = 5) @Valid List<ContentItem> content
+            @NotNull @Size(min = 1, max = 5, message = "자기소개서 문항은 1개 이상 5개 이하로 입력해주세요.") @Valid List<ContentItem> content
     ) {
         @Schema(description = "자기소개서 문항 단건")
         public record ContentItem(
                 @Schema(description = "문항 순서 (1~5)", example = "1")
-                @Min(1) @Max(5) int order,
+                @Min(value = 1, message = "문항 순서는 1 이상이어야 합니다.") @Max(value = 5, message = "문항 순서는 5 이하이어야 합니다.") int order,
                 @Schema(description = "문항 내용", example = "지원 동기를 작성해주세요.")
-                @NotBlank String question,
+                @NotBlank(message = "문항 내용을 입력해주세요.") String question,
                 @Schema(description = "답변 내용 (최대 1000자)", example = "저는 대규모 트래픽 처리에 관심이 많아 카카오에 지원하게 되었습니다.")
-                @NotBlank @Size(max = 1000) String answer
+                @NotBlank(message = "답변 내용을 입력해주세요.") @Size(max = 1000, message = "자기소개서 답변은 1000자를 초과할 수 없습니다.") String answer
         ) {}
     }
 
