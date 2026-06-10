@@ -20,7 +20,7 @@ CareerWave는 AI 기반 면접 코칭·서류 분석·커리어 진단 기능을
 | :--- | :--- | :--- | :--- |
 | **인프라** | `Common` | GitHub, GitHub Actions | 모노레포 CI/CD, 빌드 및 테스트 자동화 파이프라인 |
 | **데이터베이스** | `Data` | PostgreSQL | 관계형 데이터베이스 통합 인프라 구축 |
-| **백엔드** | `user-backend`<br>`admin-backend` | Java 17<br>Spring Boot 3.x<br>Gradle | Spring Data JPA, Spring Security, JWT, Lombok |
+| **백엔드** | `user-backend`<br>`admin-backend` | Java 21<br>Spring Boot 3.x<br>Gradle | Spring Data JPA, Spring Security, JWT, Lombok |
 | **AI 및 엔진** | `user-fastapi`<br>`admin-fastapi` | Python 3.x<br>FastAPI | 실시간 AI 면접 분석 피드백, 채용 공고 스크래핑 스케줄러 |
 | **프론트엔드** | `frontend` | TypeScript<br>React | TanStack Query, React Router, MSW, Vite |
 
@@ -33,7 +33,7 @@ CareerWave는 AI 기반 면접 코칭·서류 분석·커리어 진단 기능을
 career-wave/
 ├── .github/        # CI/CD 워크플로우 및 PR 템플릿
 ├── frontend/       # React + Vite (TypeScript) — user / admin 통합
-├── backend/        # Spring Boot (Java 17) — 단일 서버
+├── backend/        # Spring Boot (Java 21) — 단일 서버
 ├── fastapi/        # FastAPI (Python) — AI 엔진 및 스크래핑
 ├── specs/          # 스펙 명세 문서
 └── README.md
@@ -80,21 +80,37 @@ uvicorn main:app --reload --port 8001
 ```
 
 ### Backend
+
+> **전제 조건**: JDK 21 이상이 설치되어 있어야 합니다.
+> Gradle toolchain이 Java 21을 사용하므로 JDK 21 미만 환경에서는 빌드가 실패할 수 있습니다.
+> 로컬 환경 세팅 상세는 `backend/LOCAL_DEV_SETUP.md`를 참고하세요.
+
 ```bash
+# 1. 환경 변수 파일 생성 (최초 1회)
+copy backend/.env.example backend/.env
+# .env 파일에 DB, JWT secret 등 필요한 값 입력
+
+# 2. 서버 실행
 cd backend
 ./gradlew bootRun
 ```
 
+| 항목 | URL |
+| :--- | :--- |
+| Swagger UI | http://localhost:8080/swagger-ui.html |
+
 ## 테스트 계정
 
-| 아이디 | 비밀번호 | 설명 |
-| :--- | :--- | :--- |
-| `testuser01` | `Test1234!` | 개인 회원 — 구독 없음 |
-| `testuser02` | `Test1234!` | 개인 회원 — AI 모의면접만 구독 |
-| `testuser03` | `Test1234!` | 개인 회원 — 서류 AI 코칭만 구독 |
-| `testuser04` | `Test1234!` | 개인 회원 — 두 상품 모두 구독 |
-| `testcompany01` | `Test1234!` | 기업 회원 — 구독 없음 |
-| `admin` | `1234` | 관리자 (기존) |
+로컬 DB 시드 데이터는 `backend/seed-local.sql`을 참고하세요.
+
+| 아이디 | 비밀번호 | roleType | 설명 |
+| :--- | :--- | :--- | :--- |
+| `testuser01` | `Test1234!` | `USER` | 개인 회원 — FREE |
+| `testuser02` | `Test1234!` | `USER` | 개인 회원 — PREMIUM |
+| `testuser03` | `Test1234!` | `USER` | 개인 회원 — PREMIUM |
+| `testuser04` | `Test1234!` | `USER` | 개인 회원 — PREMIUM |
+| `testcompany01` | `Test1234!` | `COMPANY` | 기업 회원 |
+| `admin` | `1234` | — | 관리자 MASTER |
 
 ## 환경 변수
 
