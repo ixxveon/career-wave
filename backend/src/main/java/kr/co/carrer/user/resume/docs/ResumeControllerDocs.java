@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -222,8 +224,8 @@ public interface ResumeControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistory(
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") int page,
-            @Parameter(description = "페이지 크기 (최대 50)", example = "10") int size
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @Min(0) int page,
+            @Parameter(description = "페이지 크기 (최대 50)", example = "10") @Min(1) @Max(50) int size
     );
 
     @Operation(
