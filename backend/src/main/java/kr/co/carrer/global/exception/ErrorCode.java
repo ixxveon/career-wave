@@ -26,6 +26,9 @@ public enum ErrorCode implements BaseErrorCode {
     ALREADY_SUSPENDED(HttpStatus.CONFLICT, "이미 정지된 회원입니다."),
     MAX_WARNING_EXCEEDED(HttpStatus.CONFLICT, "경고는 최대 3회까지만 부여할 수 있습니다."),
 
+    // --- 2. 파일 업로드 ---
+    FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기가 최대 허용 용량을 초과했습니다."),
+
     ;
 
     private final HttpStatus status;
