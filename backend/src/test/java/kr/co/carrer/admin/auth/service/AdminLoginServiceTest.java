@@ -11,8 +11,8 @@ import io.jsonwebtoken.Claims;
 import kr.co.carrer.global.auth.jwt.AccountType;
 import kr.co.carrer.global.auth.jwt.JwtProperties;
 import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.global.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -88,7 +88,7 @@ class AdminLoginServiceTest {
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_INVALID_CREDENTIALS);
+                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     @Test
@@ -99,7 +99,7 @@ class AdminLoginServiceTest {
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_INVALID_CREDENTIALS);
+                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     @Test
@@ -110,7 +110,7 @@ class AdminLoginServiceTest {
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_ACCOUNT_LOCKED);
+                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_ACCOUNT_LOCKED);
     }
 
     @Test

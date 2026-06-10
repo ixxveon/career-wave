@@ -5,8 +5,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.global.auth.jwt.AccountType;
 import kr.co.carrer.global.auth.jwt.JwtProperties;
 import kr.co.carrer.global.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.global.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.dto.UserLoginRequest;
 import kr.co.carrer.user.member.dto.UserLoginResponse;
 import kr.co.carrer.user.member.entity.Member;
@@ -94,7 +95,7 @@ class UserLoginServiceTest {
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_INVALID_CREDENTIALS);
+                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     @Test
@@ -105,7 +106,7 @@ class UserLoginServiceTest {
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_INVALID_CREDENTIALS);
+                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     @Test
@@ -116,7 +117,7 @@ class UserLoginServiceTest {
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_INVALID_CREDENTIALS);
+                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     @Test
@@ -127,7 +128,7 @@ class UserLoginServiceTest {
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_ACCOUNT_SUSPENDED);
+                .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED);
     }
 
     @Test
@@ -138,7 +139,7 @@ class UserLoginServiceTest {
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_ACCOUNT_BANNED);
+                .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
     }
 
     @Test
@@ -149,6 +150,6 @@ class UserLoginServiceTest {
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_ACCOUNT_WITHDRAWN);
+                .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
     }
 }
