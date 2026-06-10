@@ -1,6 +1,7 @@
 package kr.co.carrer.user.resume.controller;
 
 import kr.co.carrer.global.response.ApiResponse;
+import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.resume.docs.ResumeControllerDocs;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
 import kr.co.carrer.user.resume.service.ResumeService;
@@ -14,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
@@ -59,6 +63,18 @@ public class ResumeController implements ResumeControllerDocs {
         UUID tempMemberId = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
         ResumeDTO.ResponseFeedback response = resumeService.getFeedback(tempMemberId, documentId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistory(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size
+    ) {
+        // TODO: JWT 연동 완료 후 @AuthenticationPrincipal로 memberId 추출
+        UUID tempMemberId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+
+        PaginationResponse<ResumeDTO.HistoryItem> response = resumeService.getHistory(tempMemberId, page, size);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

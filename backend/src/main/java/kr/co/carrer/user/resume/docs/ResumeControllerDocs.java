@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.co.carrer.global.response.ApiResponse;
+import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -69,5 +70,21 @@ public interface ResumeControllerDocs {
     ResponseEntity<ApiResponse<ResumeDTO.ResponseFeedback>> getFeedback(
             @Parameter(description = "문서 고유 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
             UUID documentId
+    );
+
+    @Operation(
+            summary = "서류 분석 이력 목록 조회",
+            description = "본인이 제출한 이력서·자기소개서 목록을 최신순으로 페이징 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistory(
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") int page,
+            @Parameter(description = "페이지 크기 (최대 50)", example = "10") int size
     );
 }

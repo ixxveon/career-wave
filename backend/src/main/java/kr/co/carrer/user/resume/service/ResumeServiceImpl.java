@@ -3,6 +3,7 @@ package kr.co.carrer.user.resume.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.global.s3.S3Uploader;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
 import kr.co.carrer.user.resume.entity.CoverLetterContent;
@@ -24,6 +25,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 @Slf4j
 @Service
@@ -146,6 +150,15 @@ public class ResumeServiceImpl implements ResumeService {
                 document.getErrorMessage(),
                 feedback.getCreatedAt()
         );
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public PaginationResponse<ResumeDTO.HistoryItem> getHistory(UUID memberId, int page, int size) {
+        Page<ResumeDTO.HistoryItem> result = documentRepository.findHistoryByMemberId(
+                memberId, PageRequest.of(page, size)
+        );
+        return PaginationResponse.of(result.getContent(), page, size, result.getTotalElements());
     }
 
     private List<ResumeDTO.ResponseFeedback.FeedbackDetail> parseFeedbackDetails(String feedbackText, UUID documentId) {
