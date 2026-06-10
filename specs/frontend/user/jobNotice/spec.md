@@ -114,9 +114,9 @@
 
 ### Key Entities
 
-- **JobNoticeSummary**: id, company, title, jobType, experience, employmentType, location, companySize, salary, deadline, postedAt, tags, source, recommended, recommendScore, views, bookmarked, originalUrl, stacks
+- **JobNoticeSummary**: id, company, title, jobType, jobCategory, careerLevel, location, companySize, salary, deadline, postedAt, tags, source, recommended, recommendScore, views, bookmarked, originalUrl, stacks
 - **JobNoticeDetail**: JobNoticeSummary 필드 전체, industry, responsibilities, requirements, preferredQualifications, process, workConditions, companyDescription
-- **JobNoticeFilter**: keyword, jobType, experience, employmentType, location, companySize, period, sort
+- **JobNoticeFilter**: keyword, jobType, jobCategory, careerLevel, location, companySize, period, sort
 - **JobNoticeListStats**: totalOpenCount, todayNewCount, todayNewDelta, todayNewRate
 - **BookmarkState**: id, bookmarked, scrapCount
 

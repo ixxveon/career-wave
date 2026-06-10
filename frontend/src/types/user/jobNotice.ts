@@ -10,8 +10,8 @@ export interface JobNoticeSummary {
   company: string;
   title: string;
   jobType: string;
-  experience: string;
-  employmentType: string;
+  jobCategory: string;
+  careerLevel: string;
   location: string;
   companySize: string;
   salary?: string;
@@ -54,8 +54,8 @@ export interface JobNoticeListStats {
 
 export interface JobNoticeFilterOptions {
   jobType: string[];
-  experience: string[];
-  employmentType: string[];
+  jobCategory: string[];
+  careerLevel: string[];
   location: string[];
   companySize: string[];
 }
@@ -73,11 +73,30 @@ export interface JobNoticeListResponse {
 export const JOB_NOTICE_ALL_FILTER_VALUE = '전체';
 
 export const JOB_NOTICE_FILTER_OPTIONS = {
-  jobType: [JOB_NOTICE_ALL_FILTER_VALUE, '백엔드', '프론트엔드', '데이터', 'DevOps'],
-  experience: [JOB_NOTICE_ALL_FILTER_VALUE, '신입', '1~3년', '3~5년', '5년 이상', '경력무관'],
-  employmentType: [JOB_NOTICE_ALL_FILTER_VALUE, '정규직', '인턴', '계약직'],
+  jobType: [JOB_NOTICE_ALL_FILTER_VALUE, 'FULLTIME', 'INTERN', 'CONTRACT'],
+  jobCategory: [JOB_NOTICE_ALL_FILTER_VALUE, 'BACKEND', 'FRONTEND', 'DATA', 'DEVOPS'],
+  careerLevel: [JOB_NOTICE_ALL_FILTER_VALUE, 'JUNIOR', 'SENIOR', 'ANY'],
   location: [JOB_NOTICE_ALL_FILTER_VALUE, '서울', '경기', '원격'],
   companySize: [JOB_NOTICE_ALL_FILTER_VALUE, '스타트업', '중견', '대기업'],
+} as const;
+
+export const JOB_TYPE_LABELS = {
+  FULLTIME: '정규직',
+  INTERN: '인턴',
+  CONTRACT: '계약직',
+} as const;
+
+export const JOB_CATEGORY_LABELS = {
+  BACKEND: '백엔드',
+  FRONTEND: '프론트엔드',
+  DATA: '데이터',
+  DEVOPS: 'DevOps',
+} as const;
+
+export const CAREER_LEVEL_LABELS = {
+  JUNIOR: '신입',
+  SENIOR: '경력',
+  ANY: '경력무관',
 } as const;
 
 export const JOB_NOTICE_PERIOD_OPTIONS = ['today', '7d', '30d', 'all'] as const;
@@ -97,8 +116,8 @@ export type JobNoticeSort = (typeof JOB_NOTICE_SORT_OPTIONS)[number];
 export interface JobNoticeQueryParams {
   keyword?: string;
   jobType?: string;
-  experience?: string;
-  employmentType?: string;
+  jobCategory?: string;
+  careerLevel?: string;
   location?: string;
   companySize?: string;
   period?: JobNoticePeriod;
@@ -112,22 +131,22 @@ export type JobNoticeDetailApiResponse = ApiResponse<JobNoticeDetail>;
 export type JobNoticeBookmarkApiResponse = ApiResponse<JobNoticeBookmarkResponse>;
 
 export const JOB_NOTICE_VIEW_FIELD_MAP = {
-  experience: 'exp',
-  employmentType: 'employment',
+  careerLevel: 'exp',
+  jobType: 'employment',
 } as const;
 
-export type JobNotice = Omit<JobNoticeDetail, 'experience' | 'employmentType'> & {
+export type JobNotice = Omit<JobNoticeDetail, 'careerLevel' | 'jobType'> & {
   exp: string;
   employment: string;
 };
 
 export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeDetail): JobNotice {
-  const { experience, employmentType, ...viewJobNotice } = jobNotice;
+  const { careerLevel, jobType, ...viewJobNotice } = jobNotice;
 
   return {
     ...viewJobNotice,
-    exp: experience,
-    employment: employmentType,
+    exp: careerLevel,
+    employment: jobType,
   };
 }
 
@@ -136,7 +155,7 @@ export function mapJobNoticeViewToApiModel(jobNotice: JobNotice): JobNoticeDetai
 
   return {
     ...viewJobNotice,
-    experience: exp,
-    employmentType: employment,
+    careerLevel: exp,
+    jobType: employment,
   };
 }
