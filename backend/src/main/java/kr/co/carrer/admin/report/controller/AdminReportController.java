@@ -6,6 +6,7 @@ import kr.co.carrer.admin.report.service.AdminReportService;
 import kr.co.carrer.admin.report.type.ReportReason;
 import kr.co.carrer.admin.report.type.ReportStatus;
 import kr.co.carrer.admin.report.type.TargetType;
+import kr.co.carrer.admin.report.exception.AdminReportErrorCode;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
@@ -77,7 +78,7 @@ public class AdminReportController implements AdminReportControllerDocs {
         try {
             return Enum.valueOf(enumClass, value.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new CustomException(ErrorCode.INVALID_REPORT_FILTER);
+            throw new CustomException(AdminReportErrorCode.INVALID_REPORT_FILTER);
         }
     }
 }

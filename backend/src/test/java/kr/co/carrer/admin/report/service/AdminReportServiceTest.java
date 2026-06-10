@@ -9,8 +9,8 @@ import kr.co.carrer.admin.report.repository.ReportRepository;
 import kr.co.carrer.admin.report.type.ReportReason;
 import kr.co.carrer.admin.report.type.ReportStatus;
 import kr.co.carrer.admin.report.type.TargetType;
+import kr.co.carrer.admin.report.exception.AdminReportErrorCode;
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -132,7 +132,7 @@ class AdminReportServiceTest {
             assertThatThrownBy(() -> adminReportService.getReportDetail(999L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.REPORT_NOT_FOUND);
+                .isEqualTo(AdminReportErrorCode.REPORT_NOT_FOUND);
         }
     }
 
@@ -189,7 +189,7 @@ class AdminReportServiceTest {
             assertThatThrownBy(() -> adminReportService.blindReport(999L, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.REPORT_NOT_FOUND);
+                .isEqualTo(AdminReportErrorCode.REPORT_NOT_FOUND);
         }
 
         @Test
@@ -201,7 +201,7 @@ class AdminReportServiceTest {
             assertThatThrownBy(() -> adminReportService.blindReport(1L, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.ALREADY_PROCESSED);
+                .isEqualTo(AdminReportErrorCode.ALREADY_PROCESSED);
         }
 
         @Test
@@ -213,7 +213,7 @@ class AdminReportServiceTest {
             assertThatThrownBy(() -> adminReportService.blindReport(1L, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.ALREADY_PROCESSED);
+                .isEqualTo(AdminReportErrorCode.ALREADY_PROCESSED);
         }
     }
 
@@ -243,7 +243,7 @@ class AdminReportServiceTest {
             assertThatThrownBy(() -> adminReportService.dismissReport(999L, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.REPORT_NOT_FOUND);
+                .isEqualTo(AdminReportErrorCode.REPORT_NOT_FOUND);
         }
 
         @Test
@@ -255,7 +255,7 @@ class AdminReportServiceTest {
             assertThatThrownBy(() -> adminReportService.dismissReport(1L, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.ALREADY_PROCESSED);
+                .isEqualTo(AdminReportErrorCode.ALREADY_PROCESSED);
         }
     }
 
