@@ -15,7 +15,7 @@ import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 
 
 import kr.co.carrer.user.member.entity.Member;
-import kr.co.carrer.user.member.repository.MemberRepository;
+import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.dto.CompanyApprovalStatus;
 import kr.co.carrer.user.member.dto.MemberStatus;
 import kr.co.carrer.user.member.dto.MemberType;
@@ -29,13 +29,13 @@ import java.time.Instant;
 @Service
 public class UserLoginServiceImpl implements UserLoginService {
 
-    private final MemberRepository memberRepository;
+    private final UserMemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
     private final EntityManager entityManager;
 
-    public UserLoginServiceImpl(MemberRepository memberRepository,
+    public UserLoginServiceImpl(UserMemberRepository memberRepository,
                             PasswordEncoder passwordEncoder,
                             JwtTokenProvider jwtTokenProvider,
                             JwtProperties jwtProperties,

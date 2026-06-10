@@ -11,7 +11,7 @@ import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 
 
 import kr.co.carrer.user.member.entity.Member;
-import kr.co.carrer.user.member.repository.MemberRepository;
+import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.dto.MemberStatus;
 import kr.co.carrer.user.member.dto.MemberType;
 import kr.co.carrer.user.member.dto.RoleType;
@@ -39,7 +39,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UserLoginServiceTest {
 
-    @Mock MemberRepository memberRepository;
+    @Mock UserMemberRepository memberRepository;
     @Mock HttpServletResponse httpResponse;
     @Mock EntityManager entityManager;
     @Mock jakarta.persistence.Query nativeQuery;
