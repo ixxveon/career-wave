@@ -642,7 +642,7 @@ COMMENT ON COLUMN payments.created_at      IS '결제 요청 생성 일시';
 -- ================================================
 CREATE TABLE admins (
     admin_id      BIGSERIAL    NOT NULL,
-    email         VARCHAR(100) NOT NULL,
+    login_id      VARCHAR(100) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     name          VARCHAR(50)  NOT NULL,
     admin_role    VARCHAR(20)  NOT NULL,
@@ -652,14 +652,14 @@ CREATE TABLE admins (
     created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_admins        PRIMARY KEY (admin_id),
-    CONSTRAINT uq_admins_email  UNIQUE (email),
-    CONSTRAINT chk_admin_role   CHECK (admin_role IN ('MASTER', 'CS', 'BACKEND')),
-    CONSTRAINT chk_admin_status CHECK (status     IN ('ACTIVE', 'LOCKED'))
+    CONSTRAINT pk_admins         PRIMARY KEY (admin_id),
+    CONSTRAINT uq_admins_login_id UNIQUE (login_id),
+    CONSTRAINT chk_admin_role    CHECK (admin_role IN ('MASTER', 'CS', 'BACKEND')),
+    CONSTRAINT chk_admin_status  CHECK (status     IN ('ACTIVE', 'LOCKED'))
 );
 COMMENT ON TABLE  admins                IS '관리자 계정 테이블';
 COMMENT ON COLUMN admins.admin_id       IS '관리자 고유 식별자';
-COMMENT ON COLUMN admins.email          IS '관리자 로그인 이메일 (UNIQUE)';
+COMMENT ON COLUMN admins.login_id       IS '관리자 로그인 ID (UNIQUE)';
 COMMENT ON COLUMN admins.password_hash  IS '해시 처리된 비밀번호';
 COMMENT ON COLUMN admins.name           IS '관리자 이름';
 COMMENT ON COLUMN admins.admin_role     IS '관리자 권한 (MASTER / CS / BACKEND)';
@@ -1117,23 +1117,64 @@ COMMENT ON COLUMN rag_documents.created_at         IS '문서 등록 시간';
 COMMENT ON COLUMN rag_documents.updated_at         IS '문서 수정 시간';
 
 -- ================================================
--- 36. scraping_logs
+-- 36. scraping_pipelines
+-- ================================================
+CREATE TABLE scraping_pipelines (
+    scraping_pipeline_id BIGSERIAL    NOT NULL,
+    source_name          VARCHAR(50)  NOT NULL,
+    display_name         VARCHAR(100) NOT NULL,
+    pipeline_status      VARCHAR(20)  NOT NULL DEFAULT 'IDLE',
+    is_enabled           BOOLEAN      NOT NULL DEFAULT TRUE,
+    last_started_at      TIMESTAMPTZ  NULL,
+    last_success_at      TIMESTAMPTZ  NULL,
+    last_failed_at       TIMESTAMPTZ  NULL,
+    last_duration_ms     INTEGER      NULL,
+    last_total_count     INTEGER      NULL,
+    last_error_message   TEXT         NULL,
+    created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT pk_scraping_pipelines    PRIMARY KEY (scraping_pipeline_id),
+    CONSTRAINT uq_scraping_source_name  UNIQUE (source_name),
+    CONSTRAINT chk_pipeline_status      CHECK (pipeline_status IN ('IDLE', 'RUNNING', 'SUCCESS', 'FAILED'))
+);
+COMMENT ON TABLE  scraping_pipelines                      IS '스크래핑 파이프라인 테이블';
+COMMENT ON COLUMN scraping_pipelines.scraping_pipeline_id IS '파이프라인 고유 식별자';
+COMMENT ON COLUMN scraping_pipelines.source_name         IS '스크래핑 대상 사이트 식별자';
+COMMENT ON COLUMN scraping_pipelines.display_name        IS '파이프라인 표시 이름';
+COMMENT ON COLUMN scraping_pipelines.pipeline_status     IS '파이프라인 현재 상태 (IDLE / RUNNING / SUCCESS / FAILED)';
+COMMENT ON COLUMN scraping_pipelines.is_enabled          IS '파이프라인 활성화 여부 (기본값 TRUE)';
+COMMENT ON COLUMN scraping_pipelines.last_started_at     IS '마지막 실행 시작 시각';
+COMMENT ON COLUMN scraping_pipelines.last_success_at     IS '마지막 성공 시각';
+COMMENT ON COLUMN scraping_pipelines.last_failed_at      IS '마지막 실패 시각';
+COMMENT ON COLUMN scraping_pipelines.last_duration_ms    IS '마지막 실행 소요 시간 (ms)';
+COMMENT ON COLUMN scraping_pipelines.last_total_count    IS '마지막 실행 시 수집된 공고 수';
+COMMENT ON COLUMN scraping_pipelines.last_error_message  IS '최근 실행 시 발생한 오류 메시지';
+COMMENT ON COLUMN scraping_pipelines.created_at          IS '생성 일시';
+COMMENT ON COLUMN scraping_pipelines.updated_at          IS '수정 일시';
+
+-- ================================================
+-- 37. scraping_logs
 -- ================================================
 CREATE TABLE scraping_logs (
-    scraping_log_id BIGSERIAL   NOT NULL,
-    target_site     VARCHAR(50) NOT NULL,
+    scraping_log_id      BIGSERIAL   NOT NULL,
+    scraping_pipeline_id BIGINT      NULL,
+    target_site          VARCHAR(50) NOT NULL,
     scraping_status VARCHAR(10) NOT NULL,
     total_count     INTEGER     NULL,
     error_message   TEXT        NULL,
     executed_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_scraping_logs    PRIMARY KEY (scraping_log_id),
-    CONSTRAINT chk_scraping_status CHECK (scraping_status IN ('SUCCESS', 'FAILED'))
+    CONSTRAINT chk_scraping_status CHECK (scraping_status IN ('SUCCESS', 'FAILED')),
+    CONSTRAINT fk_scraping_logs_pipeline FOREIGN KEY (scraping_pipeline_id) REFERENCES scraping_pipelines (scraping_pipeline_id)
 );
 COMMENT ON TABLE  scraping_logs                 IS '채용 공고 스크래핑 실행 로그 테이블';
-COMMENT ON COLUMN scraping_logs.scraping_log_id IS '스크래핑 로그 고유 식별자';
-COMMENT ON COLUMN scraping_logs.target_site     IS '스크래핑 대상 사이트 (WANTED / JUMPIT 등)';
+COMMENT ON COLUMN scraping_logs.scraping_log_id      IS '스크래핑 로그 고유 식별자';
+COMMENT ON COLUMN scraping_logs.scraping_pipeline_id IS '연결된 파이프라인 ID (NULL 허용)';
+COMMENT ON COLUMN scraping_logs.target_site          IS '스크래핑 대상 사이트 (WANTED / JUMPIT 등)';
 COMMENT ON COLUMN scraping_logs.scraping_status IS '수행 결과 (SUCCESS / FAILED)';
 COMMENT ON COLUMN scraping_logs.total_count     IS '수집된 공고 수';
 COMMENT ON COLUMN scraping_logs.error_message   IS '실패 시 오류 메시지';
 COMMENT ON COLUMN scraping_logs.executed_at     IS '스크래핑 실행 일시';
+
