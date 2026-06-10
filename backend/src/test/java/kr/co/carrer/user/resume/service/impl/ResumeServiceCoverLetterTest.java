@@ -1,4 +1,4 @@
-package kr.co.carrer.user.resume.service;
+package kr.co.carrer.user.resume.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.s3.S3Uploader;
