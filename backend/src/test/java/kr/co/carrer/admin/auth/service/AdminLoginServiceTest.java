@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import kr.co.carrer.admin.auth.entity.Admin;
 import kr.co.carrer.admin.auth.repository.AdminRepository;
+import kr.co.carrer.admin.auth.dto.AdminLoginDto;
 import kr.co.carrer.admin.auth.dto.AdminRole;
 import kr.co.carrer.admin.auth.dto.AdminStatus;
 import io.jsonwebtoken.Claims;
@@ -48,7 +49,7 @@ class AdminLoginServiceTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new AdminLoginServiceImplImpl(adminRepository, encoder, provider, props);
+        service = new AdminLoginServiceImpl(adminRepository, encoder, provider, props);
     }
 
     private Admin createAdmin(AdminStatus status) throws Exception {

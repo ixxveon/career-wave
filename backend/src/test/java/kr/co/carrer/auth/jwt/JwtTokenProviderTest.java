@@ -1,4 +1,4 @@
-package kr.co.carrer.global.auth.jwt;
+package kr.co.carrer.auth.jwt;
 
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;

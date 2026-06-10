@@ -15,6 +15,7 @@ import kr.co.carrer.user.member.repository.MemberRepository;
 import kr.co.carrer.user.member.dto.MemberStatus;
 import kr.co.carrer.user.member.dto.RoleType;
 import kr.co.carrer.user.member.dto.SubscriptionStatus;
+import kr.co.carrer.user.member.dto.UserLoginDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,7 +56,7 @@ class UserLoginServiceTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new UserLoginServiceImplImpl(memberRepository, encoder, provider, props, entityManager);
+        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, entityManager);
     }
 
     private Member createMember(RoleType roleType, MemberStatus status) throws Exception {
