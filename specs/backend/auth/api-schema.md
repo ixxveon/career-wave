@@ -210,8 +210,8 @@
 |---|---|---|---|
 | sub | memberId(UUID) | adminId(BIGINT 문자열) | 주체 식별자 |
 | accountType | USER / COMPANY | ADMIN | 주체 타입 분기용 |
-| roleType | ROLE_USER / ROLE_COMPANY | ROLE_ADMIN | 권한 |
-| roles | ["ROLE_USER"] 등 | ["ROLE_ADMIN"] | Authority 매핑 |
+| roleType | USER / COMPANY | ADMIN | 권한 (ROLE_ prefix 없이 저장 — Issue #339 fix, AuthPrincipal에서만 ROLE_ 부여) |
+| roles | ["USER"] 등 | ["ADMIN"] | Authority 매핑 (AuthPrincipal에서 ROLE_ prefix 추가) |
 | adminRole | (없음) | MASTER / CS / BACKEND | 관리자 내부 등급 (관리자 토큰에만 포함) |
 | jti | UUID | UUID | Blacklist / 재사용 탐지 |
 | aud | "user" | "admin" | 키 분리 검증용 |
