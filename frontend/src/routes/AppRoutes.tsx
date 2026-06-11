@@ -158,8 +158,8 @@ function AppRoutes() {
           <Route index element={<Navigate to="/auth/login" replace />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="find-account" element={<FindAccountPage />} />
-          <Route path="find-id/:memberType" element={<FindIdPage />} />
-          <Route path="find-password/:memberType" element={<FindPasswordPage />} />
+          <Route path="find-id/:roleType" element={<FindIdPage />} />
+          <Route path="find-password/:roleType" element={<FindPasswordPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register/verify" element={<RegisterVerifyPage />} />
           <Route path="profile" element={<ProfilePage />} />

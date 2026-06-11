@@ -1,8 +1,32 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, BookOpenCheck, Download, FileText, Lightbulb, Target } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { careerHistoryApi } from '../../../api/user/careerHistoryApi';
+import { careerHistoryApi, CareerHistory } from '../../../api/user/careerHistoryApi';
 import '@/styles/user/careerDiagnosis/CareerDiagnosis.css';
+
+interface ScoreItem {
+  label: string;
+  value: number;
+  note: string;
+}
+
+interface QuestionItem {
+  id?: string;
+  question: string;
+  answer: string;
+  feedback?: string;
+  highlightedIssue?: string;
+  improvement?: string;
+  needsImprovement?: boolean;
+}
+
+interface CareerDetail {
+  history: CareerHistory;
+  script?: string;
+  scores: ScoreItem[];
+  overallFeedback?: string;
+  questions?: QuestionItem[];
+}
 
 const roadmap = [
   { week: '1주차', title: 'JPA 기본 개념 복습', detail: '영속성 컨텍스트, 변경 감지, 지연 로딩 정리' },
@@ -11,18 +35,24 @@ const roadmap = [
   { week: '4주차', title: '프로젝트 경험 STAR 정리', detail: '상황, 행동, 결과를 1분 답변으로 압축' },
 ];
 
-function DiagnosisDetailPage() {
+function DiagnosisDetailPage(): React.ReactElement {
   const { id } = useParams();
-  const [detail, setDetail] = useState(null);
+  const [detail, setDetail] = useState<CareerDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!id) {
+      setError('잘못된 접근입니다.');
+      setLoading(false);
+      return;
+    }
+
     let active = true;
     setLoading(true);
     careerHistoryApi.getHistoryDetail(id)
       .then((result) => {
-        if (active) setDetail(result);
+        if (active) setDetail(result as CareerDetail | null);
       })
       .catch(() => {
         if (active) setError('기록 상세 정보를 불러오지 못했습니다.');
