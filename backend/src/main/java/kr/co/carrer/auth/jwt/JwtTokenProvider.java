@@ -101,8 +101,10 @@ public class JwtTokenProvider {
 
     public Duration remainingTtl(String token, AccountType accountType) {
         Date expiration = parse(token, accountType).getExpiration();
-        long remaining = expiration.toInstant().getEpochSecond() - Instant.now().getEpochSecond();
-        return remaining > 0 ? Duration.ofSeconds(remaining) : Duration.ZERO;
+        // parse()가 LEEWAY_SECONDS만큼 여유를 허용하므로 blacklist TTL도 동일하게 포함해야 한다.
+        Duration remaining = Duration.between(Instant.now(), expiration.toInstant())
+                .plusSeconds(LEEWAY_SECONDS);
+        return remaining.isNegative() ? Duration.ZERO : remaining;
     }
 
     private String resolveAud(AccountType accountType) {
