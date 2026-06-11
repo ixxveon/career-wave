@@ -82,15 +82,24 @@ public class UserLoginServiceImpl implements UserLoginService {
                 sessionId
         );
 
-        // USER 5세션 상한 — 초과 세션 삭제
-        refreshTokenStore.enforceSessionLimit(accountType, member.getMemberId().toString())
-                .forEach(expiredKey -> refreshTokenStore.delete(accountType,
-                        member.getMemberId().toString(),
-                        expiredKey.substring(expiredKey.lastIndexOf(':') + 1)));
+        // USER 5세션 상한 — 초과 세션 퇴출 + 해당 access token blacklist 등록
+        String memberId = member.getMemberId().toString();
+        Duration accessTtl = Duration.ofMillis(jwtProperties.getUser().getAccessExpiration());
+        refreshTokenStore.enforceSessionLimit(accountType, memberId)
+                .forEach(expiredKey -> {
+                    String expiredSessionId = expiredKey.substring(expiredKey.lastIndexOf(':') + 1);
+                    String expiredJti = refreshTokenStore.getAndDeleteAccessJti(accountType, memberId, expiredSessionId);
+                    if (expiredJti != null) tokenBlacklistStore.add(expiredJti, accessTtl);
+                    refreshTokenStore.delete(accountType, memberId, expiredSessionId);
+                });
 
         // refresh token Redis 저장 (SHA-256 hash, TTL = refresh 만료시간)
-        refreshTokenStore.save(accountType, member.getMemberId().toString(), sessionId,
+        refreshTokenStore.save(accountType, memberId, sessionId,
                 refreshToken, Duration.ofMillis(jwtProperties.getUser().getRefreshExpiration()));
+
+        // access token jti 저장 — 이후 세션 퇴출 시 blacklist 등록에 사용
+        String jti = jwtTokenProvider.extractJti(accessToken, accountType);
+        refreshTokenStore.saveAccessJti(accountType, memberId, sessionId, jti, accessTtl);
 
         setRefreshTokenCookie(response, refreshToken);
 
