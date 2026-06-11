@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.UUID;
 
-public interface MemberRepository extends JpaRepository<Member, UUID>, JpaSpecificationExecutor<Member> {
+public interface AdminMemberRepository extends JpaRepository<Member, UUID>, JpaSpecificationExecutor<Member> {
 }
