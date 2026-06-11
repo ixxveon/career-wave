@@ -1,0 +1,54 @@
+package kr.co.carrer.user.dashboard.dto;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import kr.co.carrer.user.member.type.MemberStatus;
+import kr.co.carrer.user.member.type.RoleType;
+import kr.co.carrer.user.member.type.SubscriptionStatus;
+
+import java.time.ZonedDateTime;
+import java.util.UUID;
+
+public class DashboardDTO {
+
+    @Schema(description = "사용자 프로필 조회 응답")
+    public record ProfileResponse(
+            @Schema(description = "회원 UUID")
+            UUID memberId,
+
+            @Schema(description = "로그인 ID")
+            String loginId,
+
+            @Schema(description = "이메일")
+            String email,
+
+            @Schema(description = "이름")
+            String name,
+
+            @Schema(description = "휴대폰 번호")
+            String phone,
+
+            @Schema(description = "회원 유형")
+            RoleType roleType,
+
+            @Schema(description = "회원 상태")
+            MemberStatus memberStatus,
+
+            @Schema(description = "구독 상태")
+            SubscriptionStatus subscriptionStatus,
+
+            @Schema(description = "가입일")
+            ZonedDateTime createdAt
+    ) {}
+
+    @Schema(description = "GitHub 연동 정보 조회 응답")
+    public record GithubResponse(
+            @Schema(description = "GitHub ID")
+            String githubId,
+
+            @Schema(description = "GitHub URL")
+            String githubUrl,
+
+            @Schema(description = "연동 여부")
+            boolean linked
+    ) {}
+}
