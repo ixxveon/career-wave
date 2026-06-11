@@ -12,15 +12,15 @@
 커뮤니티 게시글·댓글·회원에 대한 신고 내역을 관리자가 조회하고,
 블라인드 처리 또는 기각 처리를 수행하는 어드민 API.
 
-- `target_type = BOARD` 블라인드 처리: `reports_details.report_status → BLINDED` + `boards.is_blind → TRUE` (동일 트랜잭션)
-- `target_type = COMMENT` 블라인드 처리: `reports_details.report_status → BLINDED` + `comments.is_blind → TRUE` (동일 트랜잭션)
-- `target_type = MEMBER` 블라인드 처리: `reports_details.report_status → BLINDED`만 변경 (콘텐츠 블라인드 없음)
+- `target_type = BOARD` 블라인드 처리: `reports.report_status → BLINDED` + `boards.is_blind → TRUE` (동일 트랜잭션)
+- `target_type = COMMENT` 블라인드 처리: `reports.report_status → BLINDED` + `comments.is_blind → TRUE` (동일 트랜잭션)
+- `target_type = MEMBER` 블라인드 처리: `reports.report_status → BLINDED`만 변경 (콘텐츠 블라인드 없음)
 
 ---
 
 ## ERD
 
-### reports_details
+### reports
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
@@ -57,19 +57,26 @@
 ```text
 admin/report/
 ├── entity/
-│   └── ReportDetail.java
+│   └── Report.java
 ├── repository/
-│   └── ReportDetailRepository.java
+│   ├── ReportRepository.java
+│   ├── ReportQueryRepository.java
+│   ├── ReportBoardRepository.java
+│   └── ReportCommentRepository.java
 ├── type/
 │   ├── ReportStatus.java      — PENDING / BLINDED / DISMISSED
 │   ├── TargetType.java        — BOARD / COMMENT / MEMBER
 │   └── ReportReason.java      — SPAM / ABUSE / AD / INAPPROPRIATE / OTHER
 ├── service/
-│   └── AdminReportService.java
+│   ├── AdminReportService.java
+│   └── impl/
+│       └── AdminReportServiceImpl.java
 ├── controller/
 │   └── AdminReportController.java
 ├── dto/
 │   └── ReportDetailDTO.java
+├── exception/
+│   └── AdminReportErrorCode.java
 └── docs/
     └── AdminReportControllerDocs.java
 ```
@@ -78,11 +85,11 @@ admin/report/
 
 ## Entity
 
-### ReportDetail.java
+### Report.java
 
 ```java
 @Entity
-@Table(name = "reports_details")
+@Table(name = "reports")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ReportDetail {
 
