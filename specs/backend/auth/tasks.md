@@ -18,11 +18,11 @@
 - [ ] userSecurityFilterChain 골격 (CSRF off, STATELESS, CORS, addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class))
 - [ ] @EnableMethodSecurity 활성화 (이후 @PreAuthorize 대비)
 - [ ] AccountStatusAuthorizationFilter/Guard 골격 (일반 authenticated API는 ACTIVE만 허용, 예외 경로 분리)
-- [ ] UserLoginService (조회·hash 비교·상태 검증, `memberType` 필수 검증)
+- [ ] UserLoginService (조회·hash 비교·상태 검증, `roleType` 필수 검증)
 - [ ] POST /api/v1/user/members/login
 - [ ] LoginResponse DTO (member 포함, camelCase)
-- [ ] FE LoginRequest / `useLogin.ts` / MSW `memberHandlers.ts`의 `memberType` 전송 계약 확인
-- [ ] 통합 테스트: 토큰 없음→401, 유효 토큰→200, 로그인 성공→accessToken 발급, `memberType` 누락/오류 검증
+- [ ] FE LoginRequest / `useLogin.ts` / MSW `memberHandlers.ts`의 `roleType` 전송 계약 확인
+- [ ] 통합 테스트: 토큰 없음→401, 유효 토큰→200, 로그인 성공→accessToken 발급, `roleType` 누락/오류 검증
 
 ## Phase 3: Refresh token 저장 / 재발급
 - [ ] RefreshTokenStore (Redis, key `refresh:{accountType}:{subjectId}:{sessionId}`, hash 저장 + TTL)
