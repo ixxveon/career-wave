@@ -88,14 +88,15 @@ const isRefundPending = (p: Payment) => p.refundStatus === 'PENDING';
 
 // ── 에러 메시지 헬퍼 ──────────────────────────────────────────
 
-function resolveErrorMsg(err: any, fallback: string): string {
+function resolveErrorMsg(err: any, fallback: string, domain?: 'refund'): string {
   const status = err.response?.status;
-  if (status === 409) return '이미 처리된 환불 건입니다.';
-  if (status === 400) return '환불 조건을 충족하지 않는 건입니다.';
-  if (status === 404) return '결제 건을 찾을 수 없습니다.';
-  if (status === 500) return '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-  if (!status)        return '네트워크 연결을 확인해주세요.';
-  return err.response?.data?.message || fallback;
+  if (domain === 'refund') {
+    if (status === 409) return '이미 처리된 환불 건입니다. (409)';
+    if (status === 400) return '환불 조건을 충족하지 않는 건입니다. (400)';
+    if (status === 404) return '결제 건을 찾을 수 없습니다. (404)';
+  }
+  if (!status) return '네트워크 연결을 확인해주세요.';
+  return err.response?.data?.message || `${fallback} (${status})`;
 }
 
 // ── Toast ─────────────────────────────────────────────────────
@@ -264,7 +265,7 @@ export default function PaymentPage() {
       fetchSummary();
       showToast('환불 처리가 완료되었습니다.');
     } catch (err: any) {
-      setRefundError(resolveErrorMsg(err, '환불 처리에 실패했습니다.'));
+      setRefundError(resolveErrorMsg(err, '환불 처리에 실패했습니다.', 'refund'));
     } finally {
       setRefundLoading(false);
     }
@@ -286,7 +287,7 @@ export default function PaymentPage() {
       fetchSummary();
       showToast('환불 불가 처리가 완료되었습니다.');
     } catch (err: any) {
-      setRefundError(resolveErrorMsg(err, '환불 불가 처리에 실패했습니다.'));
+      setRefundError(resolveErrorMsg(err, '환불 불가 처리에 실패했습니다.', 'refund'));
     } finally {
       setRefundLoading(false);
     }

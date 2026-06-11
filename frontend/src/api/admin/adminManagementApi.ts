@@ -108,7 +108,7 @@ interface BackendAdminAccountDto {
   updatedAt: string;
 }
 
-interface BackendAdminAclRuleDto {
+export interface BackendAdminAclRuleDto {
   ipAclId: number;
   label: string;
   ipRange: string;
@@ -339,8 +339,15 @@ function toAdminAccount(dto: BackendAdminAccountDto): AdminAccount {
   };
 }
 
-function toAdminAclRule(dto: BackendAdminAclRuleDto): AdminAclRule {
-  const cidrSuffix = Number(dto.ipRange.split('/')[1] ?? 32);
+export function getAclRiskLevel(cidr: unknown): AclRiskLevel {
+  if (typeof cidr !== 'string' || cidr.trim() === '') return ACL_RISK_LEVEL.HIGH;
+
+  const [, suffix] = cidr.split('/');
+  if (suffix == null || suffix.trim() === '') return ACL_RISK_LEVEL.HIGH;
+
+  const cidrSuffix = Number(suffix);
+  if (!Number.isInteger(cidrSuffix)) return ACL_RISK_LEVEL.HIGH;
+
   let riskLevel: AclRiskLevel = ACL_RISK_LEVEL.HIGH;
   if (cidrSuffix === 32) {
     riskLevel = ACL_RISK_LEVEL.LOW;
@@ -348,13 +355,19 @@ function toAdminAclRule(dto: BackendAdminAclRuleDto): AdminAclRule {
     riskLevel = ACL_RISK_LEVEL.MEDIUM;
   }
 
+  return riskLevel;
+}
+
+export function toAdminAclRule(dto: BackendAdminAclRuleDto): AdminAclRule {
+  const cidr = typeof dto.ipRange === 'string' ? dto.ipRange : '';
+
   return {
     id: String(dto.ipAclId),
     label: dto.label,
-    cidr: dto.ipRange,
+    cidr,
     note: dto.description ?? '',
     enabled: dto.isEnabled,
-    riskLevel,
+    riskLevel: getAclRiskLevel(cidr),
     updatedAt: dto.updatedAt,
   };
 }

@@ -1,0 +1,101 @@
+package kr.co.carrer.user.dashboard.service.impl;
+
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.user.dashboard.dto.DashboardDTO;
+import kr.co.carrer.user.dashboard.entity.PersonalProfile;
+import kr.co.carrer.user.dashboard.repository.PersonalProfileRepository;
+import kr.co.carrer.user.dashboard.service.DashboardService;
+import kr.co.carrer.user.member.entity.Member;
+import kr.co.carrer.user.member.repository.UserMemberRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import java.time.ZoneId;
+
+import java.net.URI;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class DashboardServiceImpl implements DashboardService {
+
+    private final UserMemberRepository memberRepository;
+    private final PersonalProfileRepository personalProfileRepository;
+
+    @Override
+    // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
+    public DashboardDTO.ProfileResponse getProfile(UUID memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        return new DashboardDTO.ProfileResponse(
+                member.getMemberId(),
+                member.getLoginId(),
+                member.getEmail(),
+                member.getName(),
+                // TODO: user.member.Member에 phone 필드 또는 프로필 연락처 저장 위치 확정 후 매핑
+                null,
+                member.getRoleType(),
+                member.getMemberStatus(),
+                member.getSubscriptionStatus(),
+                member.getCreatedAt().atZone(ZoneId.systemDefault())
+        );
+    }
+
+    @Override
+    // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
+    public DashboardDTO.GithubResponse getGithubProfile(UUID memberId) {
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        return personalProfileRepository.findByMemberId(memberId)
+                .map(this::toGithubResponse)
+                .orElseGet(() -> new DashboardDTO.GithubResponse(null, null, false));
+    }
+
+    private DashboardDTO.GithubResponse toGithubResponse(PersonalProfile personalProfile) {
+        String githubUrl = personalProfile.getGithubUrl();
+        boolean linked = githubUrl != null && !githubUrl.isBlank();
+
+        return new DashboardDTO.GithubResponse(
+                extractGithubId(githubUrl),
+                githubUrl,
+                linked
+        );
+    }
+
+    private String extractGithubId(String githubUrl) {
+        if (githubUrl == null || githubUrl.isBlank()) {
+            return null;
+        }
+
+        try {
+            URI uri = URI.create(githubUrl.trim());
+
+            String host = uri.getHost();
+            if (host == null ||
+                    (!host.equals("github.com")
+                            && !host.equals("www.github.com"))) {
+                return null;
+            }
+
+            String path = uri.getPath();
+
+            if (path == null || path.isBlank() || "/".equals(path)) {
+                return null;
+            }
+
+            String[] segments = path.split("/");
+
+            for (String segment : segments) {
+                if (!segment.isBlank()) {
+                    return segment;
+                }
+            }
+
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+}

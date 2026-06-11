@@ -1,34 +1,8 @@
 import type { MemberSummary } from '../../../types/user/member';
 
-const REFRESH_TOKEN_STORAGE_KEY = 'career-wave.member.refreshToken';
-
-function readRefreshTokenFromSessionStorage(): string | null {
-  if (typeof window === 'undefined') return null;
-
-  try {
-    return window.sessionStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function writeRefreshTokenToSessionStorage(token: string | null) {
-  if (typeof window === 'undefined') return;
-
-  try {
-    if (token) {
-      window.sessionStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
-      return;
-    }
-
-    window.sessionStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-  } catch {
-    // Ignore browser storage failures and keep the in-memory fallback.
-  }
-}
-
 let accessToken: string | null = null;
-let refreshToken: string | null = readRefreshTokenFromSessionStorage();
+// Phase 3: refreshToken은 HttpOnly cookie로 관리된다. JS 접근 불가이므로 sessionStorage 영속화 없이 in-memory만 유지한다.
+let refreshToken: string | null = null;
 let currentMember: MemberSummary | null = null;
 
 export const AUTH_CHANGE_EVENT = 'career-wave:auth-change';
@@ -43,7 +17,6 @@ export const authSession = {
   setTokens(tokens: { accessToken: string; refreshToken?: string }) {
     accessToken = tokens.accessToken;
     refreshToken = tokens.refreshToken ?? null;
-    writeRefreshTokenToSessionStorage(refreshToken);
     notifyAuthChange();
   },
 
@@ -72,7 +45,6 @@ export const authSession = {
     accessToken = null;
     refreshToken = null;
     currentMember = null;
-    writeRefreshTokenToSessionStorage(null);
     notifyAuthChange();
   },
 };

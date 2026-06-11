@@ -1,5 +1,6 @@
 package kr.co.carrer.global.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;
 import kr.co.carrer.global.response.ApiResponse;
@@ -41,16 +42,21 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(errorCode.getStatus().value(), e.getMessage(), codeName));
     }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleConstraintViolationException(ConstraintViolationException e) {
+        log.warn("[파라미터 검증 실패] {}", e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), "요청 파라미터 값이 유효하지 않습니다."));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(MethodArgumentNotValidException e) {
         Map<String, String> errors = new HashMap<>();
-
         for (FieldError fieldError : e.getBindingResult().getFieldErrors()) {
             errors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
-
         log.warn("[입력값 검증 실패] 검증 오류 필드 수: {}개", errors.size());
-
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), "입력값 검증에 실패했습니다.", errors));

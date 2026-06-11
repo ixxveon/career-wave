@@ -2,13 +2,12 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Activity, Bot, CreditCard, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { adminAuthApi, adminSession } from '../../../api/admin/adminAuthApi';
+import { adminSession } from '../../../api/admin/adminAuthApi';
 import {
   dashboardApi,
   getDashboardSummaryErrorMessage,
   unwrapDashboardSummaryResponse,
 } from '../../../api/admin/dashboardApi';
-import { ACCESS_TOKEN_STORAGE_KEY } from '../../../constants/admin/authConstants';
 import {
   ADMIN_ROUTE_PATHS,
   hasAdminRouteAccess,
@@ -107,16 +106,6 @@ function hasAccessibleAdminTarget(currentAdminRole: AdminDetailRole | null, targ
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const currentAdminRole = adminSession.getRole();
-  const handleLogout = async () => {
-    try {
-      await adminAuthApi.logout();
-    } finally {
-      adminSession.clearToken();
-      adminSession.clearRole();
-      window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
-      navigate(ADMIN_ROUTE_PATHS.login, { replace: true });
-    }
-  };
   const {
     data: dashboardSummary,
     isLoading: isDashboardLoading,
@@ -341,9 +330,6 @@ export default function AdminDashboardPage() {
             <small>최근 로그인 09:12</small>
           </div>
 
-          <button className="admin-logoutButton" onClick={handleLogout}>
-            로그아웃
-          </button>
         </div>
       </header>
 

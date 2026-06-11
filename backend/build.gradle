@@ -30,6 +30,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
@@ -41,6 +42,15 @@ dependencies {
 
     // Thymeleaf (이메일 템플릿)
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // AWS S3
+    implementation 'software.amazon.awssdk:s3:2.25.60'
+
+    // Apache Tika (MIME type 기반 파일 검증)
+    implementation 'org.apache.tika:tika-core:3.2.2'
+
+    // WebClient (FastAPI 분석 트리거 비동기 호출)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     // DB
     runtimeOnly 'org.postgresql:postgresql'

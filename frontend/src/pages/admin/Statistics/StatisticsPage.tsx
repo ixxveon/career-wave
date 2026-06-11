@@ -60,6 +60,7 @@ function buildSvgPath(values: number[], maxVal = LINE_MAX_VAL) {
 
 const TOOLTIP_W = 104;
 
+
 export default function StatisticsPage() {
   const {
     data: summary,
@@ -216,7 +217,7 @@ export default function StatisticsPage() {
         {/* KPI */}
         <section className="memberSummaryGrid">
           {summaryLoading && <p className="stats-loading">KPI 데이터 로딩 중...</p>}
-          {summaryIsError && <p className="stats-error">{summaryError?.message ?? 'KPI 데이터를 불러오지 못했습니다.'}</p>}
+          {summaryIsError && <p className="statsErrorMsg">{summaryError?.message ?? 'KPI 데이터를 불러오지 못했습니다.'}</p>}
           {!summaryLoading && !summaryIsError && kpis.map(({ label, value, sub, color, Icon }) => (
             <article className={`memberSummaryCard ${color}`} key={label}>
               <div className="memberKpiContent">
@@ -247,7 +248,7 @@ export default function StatisticsPage() {
               )}
             </div>
             {revenueLoading && <p className="stats-loading">매출 데이터 로딩 중...</p>}
-            {revenueIsError && <p className="stats-error">{revenueError?.message ?? '월별 매출 데이터를 불러오지 못했습니다.'}</p>}
+            {revenueIsError && <p className="statsErrorMsg">{revenueError?.message ?? '월별 매출 데이터를 불러오지 못했습니다.'}</p>}
             {!revenueLoading && !revenueIsError && (
             <div className="statsLineWrap">
               <div className="statsChartWithAxis">
@@ -306,7 +307,7 @@ export default function StatisticsPage() {
               </div>
             </div>
             {breakdownLoading && <p className="stats-loading">구독 유형별 데이터 로딩 중...</p>}
-            {breakdownIsError && <p className="stats-error">{breakdownError?.message ?? '구독 유형별 매출 데이터를 불러오지 못했습니다.'}</p>}
+            {breakdownIsError && <p className="statsErrorMsg">{breakdownError?.message ?? '구독 유형별 매출 데이터를 불러오지 못했습니다.'}</p>}
             {!breakdownLoading && !breakdownIsError && (
             <div className="statsChannelList">
               <div className="statsChannelTableHead">
@@ -352,7 +353,7 @@ export default function StatisticsPage() {
               </div>
             </div>
             {subsLoading && <p className="stats-loading">구독자 데이터 로딩 중...</p>}
-            {subsIsError && <p className="stats-error">{subsError?.message ?? '구독자 변동 데이터를 불러오지 못했습니다.'}</p>}
+            {subsIsError && <p className="statsErrorMsg">{subsError?.message ?? '구독자 변동 데이터를 불러오지 못했습니다.'}</p>}
             {!subsLoading && !subsIsError && (
             <div className="statsLineWrap">
               <div className="statsChartWithAxis">
@@ -409,7 +410,7 @@ export default function StatisticsPage() {
               <button className="statsViewAllBtn">전체보기</button>
             </div>
             {recentLoading && <p className="stats-loading">피드 데이터 로딩 중...</p>}
-            {recentIsError && <p className="stats-error">{recentError?.message ?? '최근 가입 피드를 불러오지 못했습니다.'}</p>}
+            {recentIsError && <p className="statsErrorMsg">{recentError?.message ?? '최근 가입 피드를 불러오지 못했습니다.'}</p>}
             {!recentLoading && !recentIsError && (
             <div className="statsFeed">
               {recentSubscribers.map(item => (
