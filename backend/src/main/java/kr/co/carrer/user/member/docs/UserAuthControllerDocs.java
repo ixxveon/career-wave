@@ -46,11 +46,11 @@ public interface UserAuthControllerDocs {
     ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response);
 
     @Operation(summary = "사용자 로그아웃",
-            description = "refresh Redis key 삭제 + access token jti blacklist 등록. " +
+            description = "refresh Redis key 삭제 + access token jti blacklist 등록 + refreshToken cookie 만료(Max-Age=0). " +
                     "비ACTIVE 회원도 허용.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
             @ApiResponse(responseCode = "401", description = "유효한 access token 없음")
     })
-    ResponseEntity<?> logout(HttpServletRequest request);
+    ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response);
 }

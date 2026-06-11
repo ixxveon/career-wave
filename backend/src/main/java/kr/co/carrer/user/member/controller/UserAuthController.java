@@ -42,14 +42,21 @@ public class UserAuthController implements UserAuthControllerDocs {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request,
+                                                     HttpServletResponse response) {
         String refreshToken = extractRefreshTokenCookie(request);
         String accessToken = extractBearerToken(request);
         userLoginService.logout(
                 refreshToken != null ? refreshToken : "",
                 accessToken  != null ? accessToken  : ""
         );
+        clearRefreshTokenCookie(response);
         return ResponseEntity.ok(ApiResponse.ok("로그아웃 되었습니다."));
+    }
+
+    private void clearRefreshTokenCookie(HttpServletResponse response) {
+        response.addHeader("Set-Cookie",
+                "refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secure; SameSite=Strict");
     }
 
     private String extractRefreshTokenCookie(HttpServletRequest request) {
