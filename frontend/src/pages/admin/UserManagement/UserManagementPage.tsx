@@ -113,7 +113,7 @@ export default function UserManagementPage() {
       setMemberPage(page);
     } catch (err: any) {
       if (reqId !== memberReqId.current) return;
-      setMemberError(err.response?.data?.message || err.message || '회원 목록을 불러오지 못했습니다.');
+      setMemberError(err.response?.data?.message || (err.response ? `회원 목록을 불러오지 못했습니다. (${err.response.status})` : err.message) || '회원 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === memberReqId.current) setMemberLoading(false);
     }
@@ -142,7 +142,7 @@ export default function UserManagementPage() {
       setHrPage(page);
     } catch (err: any) {
       if (reqId !== hrReqId.current) return;
-      setHrError(err.response?.data?.message || err.message || '기업 회원 목록을 불러오지 못했습니다.');
+      setHrError(err.response?.data?.message || (err.response ? `기업 회원 목록을 불러오지 못했습니다. (${err.response.status})` : err.message) || '기업 회원 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === hrReqId.current) setHrLoading(false);
     }
@@ -355,9 +355,9 @@ export default function UserManagementPage() {
               <option value="SUSPENDED">정지</option>
               <option value="BANNED">영구정지</option>
             </select>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ maxWidth: 160 }} />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             <span style={{ fontSize: 13, color: '#7a8da4', fontWeight: 600 }}>~</span>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ maxWidth: 160 }} />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             <button className="memberFilterBtn" onClick={applyMemberSearch}>검색</button>
           </section>
 
