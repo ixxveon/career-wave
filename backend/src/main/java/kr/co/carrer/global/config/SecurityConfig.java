@@ -1,5 +1,7 @@
 package kr.co.carrer.global.config;
 
+import kr.co.carrer.auth.filter.AccountStatusAuthorizationFilter;
+import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
@@ -17,6 +19,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -27,6 +31,7 @@ public class SecurityConfig {
     private final TokenBlacklistStore tokenBlacklistStore;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
+    private final List<AccountStatusPort> accountStatusPorts;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -79,6 +84,10 @@ public class SecurityConfig {
             .addFilterBefore(
                 new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
                 UsernamePasswordAuthenticationFilter.class
+            )
+            .addFilterAfter(
+                new AccountStatusAuthorizationFilter(accountStatusPorts),
+                JwtAuthenticationFilter.class
             );
 
         return http.build();
