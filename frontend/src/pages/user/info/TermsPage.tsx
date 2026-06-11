@@ -1,4 +1,6 @@
-function TermsPage(): JSX.Element {
+import React from 'react';
+
+function TermsPage(): React.ReactElement {
   return (
     <main className="cw-page cw-info-page">
       <div className="cw-info-page__inner">
