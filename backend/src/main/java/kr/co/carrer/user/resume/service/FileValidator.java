@@ -52,8 +52,8 @@ public class FileValidator {
     }
 
     private void validateMimeType(MultipartFile file) {
-        try {
-            String detectedMime = tika.detect(file.getInputStream());
+        try (var in = file.getInputStream()) {
+            String detectedMime = tika.detect(in);
             if (!ALLOWED_MIME_TYPES.contains(detectedMime)) {
                 log.warn("[파일 검증 실패] 허용되지 않는 MIME type: {}, 파일명: {}", detectedMime, file.getOriginalFilename());
                 throw new CustomException(ResumeErrorCode.INVALID_FILE_TYPE);
