@@ -9,6 +9,7 @@ import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import io.jsonwebtoken.JwtException;
+import kr.co.carrer.auth.store.LoginAttemptStore;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import lombok.extern.slf4j.Slf4j;
@@ -42,30 +43,44 @@ public class UserLoginServiceImpl implements UserLoginService {
     private final JwtProperties jwtProperties;
     private final RefreshTokenStore refreshTokenStore;
     private final TokenBlacklistStore tokenBlacklistStore;
+    private final LoginAttemptStore loginAttemptStore;
     private final EntityManager entityManager;
+
+    private static final long LOCK_DURATION_MINUTES = 15L;
 
     @Transactional
     public UserLoginDto.Response login(UserLoginDto.Request request, HttpServletResponse response) {
-        Member member = memberRepository.findByLoginId(request.getLoginId())
+        AccountType accountType = request.getRoleType() == MemberType.USER
+                ? AccountType.USER : AccountType.COMPANY;
+        String loginId = request.getLoginId();
+
+        Member member = memberRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS));
 
+        // 계정 상태 체크 — 비밀번호 검증 이전 수행 (공격자 비밀번호 일치 여부 식별 방지)
+        CompanyApprovalStatus approvalStatus = validateAccountStatus(member);
+
+        // 비밀번호 검증 + 실패 카운트
         if (!passwordEncoder.matches(request.getPassword(), member.getPassword())) {
+            long count = loginAttemptStore.increment(accountType, loginId);
+            if (count >= loginAttemptStore.getMaxAttempts()) {
+                member.lockAccount(Instant.now().plusSeconds(LOCK_DURATION_MINUTES * 60));
+                loginAttemptStore.clear(accountType, loginId);
+                throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
+            }
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
         // roleType 일치 검증 (프론트 탭과 실제 role_type이 같아야 함)
-        RoleType expectedRole = request.getRoleType() == MemberType.USER
-                ? RoleType.USER : RoleType.COMPANY;
+        RoleType expectedRole = accountType == AccountType.USER ? RoleType.USER : RoleType.COMPANY;
         if (member.getRoleType() != expectedRole) {
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
-        CompanyApprovalStatus approvalStatus = validateAccountStatus(member);
+        // 로그인 성공 — 실패 카운트 초기화
+        loginAttemptStore.clear(accountType, loginId);
 
         member.updateLastLoginAt(Instant.now());
-
-        AccountType accountType = member.getRoleType() == RoleType.USER
-                ? AccountType.USER : AccountType.COMPANY;
 
         String accessToken = jwtTokenProvider.createAccessToken(
                 member.getMemberId().toString(),
@@ -126,8 +141,12 @@ public class UserLoginServiceImpl implements UserLoginService {
                 if (member.getLockedUntil() != null && Instant.now().isBefore(member.getLockedUntil())) {
                     throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
                 }
-                // locked_until 경과 → ACTIVE 자동 복구 (dirty checking으로 DB 반영)
+                // locked_until 경과 → ACTIVE 자동 복구 (dirty checking으로 DB 반영) + Redis 카운트 초기화
                 member.recoverFromLock();
+                loginAttemptStore.clear(
+                        member.getRoleType() == RoleType.USER ? AccountType.USER : AccountType.COMPANY,
+                        member.getLoginId()
+                );
             }
             default -> {}
         }
