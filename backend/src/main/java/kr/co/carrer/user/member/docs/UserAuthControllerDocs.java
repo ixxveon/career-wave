@@ -14,7 +14,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "User Auth", description = "사용자 로그인 / 토큰 재발급 API")
+@Tag(name = "User Auth", description = "사용자 로그인 / 토큰 재발급 / 로그아웃 API")
 public interface UserAuthControllerDocs {
 
     @Operation(summary = "사용자 로그인",
@@ -52,5 +52,5 @@ public interface UserAuthControllerDocs {
             @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
             @ApiResponse(responseCode = "401", description = "유효한 access token 없음")
     })
-    ResponseEntity<?> logout(HttpServletRequest request, Object principal);
+    ResponseEntity<?> logout(HttpServletRequest request);
 }

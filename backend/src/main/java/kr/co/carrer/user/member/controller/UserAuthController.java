@@ -9,7 +9,6 @@ import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.member.docs.UserAuthControllerDocs;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.co.carrer.user.member.service.UserLoginService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 import java.util.Map;
 
-@Tag(name = "User Auth", description = "사용자 로그인 / 토큰 재발급 / 로그아웃 API")
 @RestController
 @RequestMapping("/api/v1/user/members")
 @RequiredArgsConstructor
@@ -44,8 +42,7 @@ public class UserAuthController implements UserAuthControllerDocs {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(
-            HttpServletRequest request, Object principal) {
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
         String refreshToken = extractRefreshTokenCookie(request);
         String accessToken = extractBearerToken(request);
         userLoginService.logout(
