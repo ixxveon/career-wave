@@ -8,8 +8,10 @@ import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
+import io.jsonwebtoken.JwtException;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
+import lombok.extern.slf4j.Slf4j;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
@@ -29,6 +31,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserLoginServiceImpl implements UserLoginService {
@@ -204,7 +207,9 @@ public class UserLoginServiceImpl implements UserLoginService {
                     refreshTokenStore.delete(accountType, subject, sessionId);
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("[로그아웃] refresh token 처리 실패 (이미 만료/무효) — 무시하고 계속: {}", e.getMessage());
+        }
 
         // access token blacklist 등록
         try {
@@ -214,7 +219,9 @@ public class UserLoginServiceImpl implements UserLoginService {
                 Duration ttl = jwtTokenProvider.remainingTtl(accessToken, accountType);
                 tokenBlacklistStore.add(jti, ttl);
             }
-        } catch (Exception ignored) {}
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("[로그아웃] access token blacklist 등록 실패 (이미 만료/무효) — 무시하고 계속: {}", e.getMessage());
+        }
     }
 
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {

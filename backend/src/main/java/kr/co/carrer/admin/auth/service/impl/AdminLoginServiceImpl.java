@@ -11,9 +11,11 @@ import kr.co.carrer.admin.auth.service.AdminLoginService;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import io.jsonwebtoken.JwtException;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
+import lombok.extern.slf4j.Slf4j;
 import kr.co.carrer.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminLoginServiceImpl implements AdminLoginService {
@@ -123,7 +126,9 @@ public class AdminLoginServiceImpl implements AdminLoginService {
                     refreshTokenStore.delete(AccountType.ADMIN, claims.getSubject(), sessionId);
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("[관리자 로그아웃] refresh token 처리 실패 (이미 만료/무효) — 무시하고 계속: {}", e.getMessage());
+        }
 
         try {
             if (jwtTokenProvider.validate(accessToken, AccountType.ADMIN)) {
@@ -131,7 +136,9 @@ public class AdminLoginServiceImpl implements AdminLoginService {
                 Duration ttl = jwtTokenProvider.remainingTtl(accessToken, AccountType.ADMIN);
                 tokenBlacklistStore.add(jti, ttl);
             }
-        } catch (Exception ignored) {}
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("[관리자 로그아웃] access token blacklist 등록 실패 (이미 만료/무효) — 무시하고 계속: {}", e.getMessage());
+        }
     }
 
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {

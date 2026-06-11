@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
 
     private static final String AUD_USER  = "user";
@@ -22,10 +24,6 @@ public class JwtTokenProvider {
     private static final long   LEEWAY_SECONDS = 60L;
 
     private final JwtProperties jwtProperties;
-
-    public JwtTokenProvider(JwtProperties jwtProperties) {
-        this.jwtProperties = jwtProperties;
-    }
 
     public String createAccessToken(String subject, AccountType accountType, String roleType, String adminRole) {
         JwtProperties.TokenConfig config = resolveConfig(accountType);
