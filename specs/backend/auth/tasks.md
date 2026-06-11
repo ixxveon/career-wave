@@ -36,7 +36,10 @@
 - [ ] `application.yml` / `application-local.yml` — Redis 설정 추가
 - [ ] `auth/store/` 패키지 생성
 
-### JwtTokenProvider 개선 (스펙 누락 항목)
+### JwtTokenProvider 개선 (스펙 누락 + 버그 수정)
+- [ ] **[Issue #339] roleType claim 형식 통일** — `USER`/`COMPANY`/`ADMIN` (ROLE_ prefix 없이 저장, AuthPrincipal에서만 부여)
+  - `UserAuthController.refresh()` / `AdminAuthController.refresh()` 에서 `ROLE_` prefix 제거
+  - 로그인·refresh·AuthPrincipal 모두 동일 형식 보장 테스트 추가
 - [ ] refresh token에 `sessionId` claim 추가 (UUID, key 조합용)
 - [ ] access/refresh token에 `aud` claim 추가 — "user" / "admin" (교차 사용 차단)
 - [ ] `parse()` 시 `aud` claim 검증 적용
@@ -89,6 +92,10 @@
 - [ ] adminRole(MASTER/CS/BACKEND) 권한 표현식 + @PreAuthorize 적용 기반 마련
 - [ ] 관리자 실패 잠금(5회) 적용
 - [ ] 테스트: admin 로그인/재발급/권한 격리(USER 토큰으로 admin API→403) / adminRole별 접근 제어
+
+## 별도 처리 — admin-frontend (Issue #281)
+- [ ] `AdminProtectedRoute` → `adminSession` token + `hasAdminRouteAccess()` 세부 role 검사로 교체
+  - Phase 5 admin auth 백엔드 완료 이후 별도 PR로 처리
 
 ## Phase 6: Swagger / Test / 문서 검증
 - [ ] SpringDoc Bearer SecurityScheme 등록
