@@ -20,7 +20,7 @@ import java.util.UUID;
         name = "bookmarks",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_bookmarks_member_job_notice",
+                        name = "uq_bookmark",
                         columnNames = {"member_id", "job_notice_id"}
                 )
         }

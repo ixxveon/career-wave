@@ -34,10 +34,10 @@ public class JobNotice {
     @Column(name = "job_notice_id")
     private Long jobNoticeId;
 
-    @Column(name = "company_name", length = 255)
+    @Column(name = "company_name", length = 100)
     private String companyName;
 
-    @Column(name = "title", nullable = false, length = 255)
+    @Column(name = "title", nullable = false, length = 200)
     private String title;
 
     @Column(name = "description", columnDefinition = "TEXT")
@@ -63,24 +63,24 @@ public class JobNotice {
     @Column(name = "career_level", length = 20)
     private CareerLevel careerLevel;
 
-    @Column(name = "location", length = 255)
+    @Column(name = "location", length = 100)
     private String location;
 
-    @Column(name = "salary", length = 255)
+    @Column(name = "salary", length = 50)
     private String salary;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "notice_status", nullable = false, length = 20)
     private JobNoticeStatus noticeStatus;
 
-    @Column(name = "original_url", nullable = false, length = 1000)
+    @Column(name = "original_url", nullable = false, columnDefinition = "TEXT")
     private String originalUrl;
 
-    @Column(name = "source", nullable = false, length = 100)
+    @Column(name = "source", nullable = false, length = 20)
     private String source;
 
     @Column(name = "view_count", nullable = false)
-    private Long viewCount;
+    private Integer viewCount;
 
     @Column(name = "deadline")
     private LocalDate deadline;
@@ -97,7 +97,7 @@ public class JobNotice {
         this.createdAt = now;
         this.updatedAt = now;
         if (this.viewCount == null) {
-            this.viewCount = 0L;
+            this.viewCount = 0;
         }
     }
 
