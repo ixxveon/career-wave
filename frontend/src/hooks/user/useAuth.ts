@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { authSession, AUTH_CHANGE_EVENT } from '../../utils/user/member/authSession';
 
 function getIsLoggedIn() {
-  return !!(authSession.getAccessToken() || authSession.getRefreshToken());
+  return authSession.getAccessToken() !== null;
 }
 
 export function useAuth() {

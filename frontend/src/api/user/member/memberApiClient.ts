@@ -74,6 +74,12 @@ async function requestWithAuthRetry(endpoint: string, init: RequestInit, auth: b
   });
 }
 
+/** HttpOnly cookie가 유효한지 확인한다. 새로고침 후 ProtectedRoute에서 사용. */
+export async function probeAuth(): Promise<boolean> {
+  const token = await requestAccessTokenRefresh();
+  return token !== null;
+}
+
 export async function memberApiClient<T>(endpoint: string, options: MemberApiOptions = {}): Promise<T> {
   const { auth = false, allowRetry = false, headers, body, ...rest } = options;
   const isFormData = body instanceof FormData;
