@@ -80,6 +80,7 @@ public class InterviewSession {
             String targetCompany
     ) {
         InterviewSession session = new InterviewSession();
+        session.sessionId = UUID.randomUUID();
         session.memberId = memberId;
         session.documentId = documentId;
         session.sessionType = sessionType;
@@ -87,6 +88,7 @@ public class InterviewSession {
         session.interviewType = interviewType;
         session.targetCompany = targetCompany;
         session.startedAt = ZonedDateTime.now();
+        session.createdAt = ZonedDateTime.now();
         return session;
     }
 
