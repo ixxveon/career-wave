@@ -1,7 +1,5 @@
 package kr.co.carrer.admin.member.controller;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import kr.co.carrer.admin.member.docs.AdminMemberControllerDocs;
 import kr.co.carrer.admin.member.dto.HrManagerDTO;
 import kr.co.carrer.admin.member.dto.MemberDTO;
@@ -43,8 +41,8 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-        @RequestParam(defaultValue = "1") @Min(1) int page,
-        @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "20") int size
     ) {
         RoleType roleType = parseEnum(RoleType.class, role);
         MemberStatus memberStatus = parseEnum(MemberStatus.class, status);
@@ -80,8 +78,8 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-        @RequestParam(defaultValue = "1") @Min(1) int page,
-        @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "20") int size
     ) {
         HrStatus hrStatusEnum = parseEnum(HrStatus.class, hrStatus);
         return ResponseEntity.ok(ApiResponse.ok(
