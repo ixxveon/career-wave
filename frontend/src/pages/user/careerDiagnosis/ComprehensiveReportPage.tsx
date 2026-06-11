@@ -1,11 +1,18 @@
+import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpenCheck, Crown, FileCheck2, FileText, Lock, Settings2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { careerHistoryApi } from '../../../api/user/careerHistoryApi';
+import { careerHistoryApi, CareerHistory } from '../../../api/user/careerHistoryApi';
 import { reportExportApi } from '../../../api/user/reportExportApi';
 import '@/styles/user/careerDiagnosis/CareerDiagnosis.css';
 
-const reportOptions = [
+type OptionsKey = 'document' | 'interview' | 'history' | 'roadmap' | 'growth';
+
+interface ReportOption {
+  key: OptionsKey;
+  label: string;
+}
+
+const reportOptions: ReportOption[] = [
   { key: 'document', label: '서류 분석 결과' },
   { key: 'interview', label: '면접 분석 결과' },
   { key: 'history', label: '취업 준비 기록' },
@@ -13,9 +20,49 @@ const reportOptions = [
   { key: 'growth', label: '성장 추이' },
 ];
 
-const fallback = (value) => value || '아직 연결된 분석 데이터가 없습니다.';
+interface ScoreItem {
+  label: string;
+  value: number | string;
+  note: string;
+}
 
-function getCurrentMembership() {
+interface QuestionItem {
+  id?: string;
+  question: string;
+  answer: string;
+  feedback?: string;
+  highlightedIssue?: string;
+  improvement?: string;
+  needsImprovement?: boolean;
+}
+
+interface CareerDetail {
+  history: CareerHistory;
+  script?: string;
+  scores: ScoreItem[];
+  overallFeedback?: string;
+  questions?: QuestionItem[];
+}
+
+interface ReportPreview {
+  id: string;
+  reportTitle?: string;
+  fileName?: string;
+  pdfUrl?: string;
+  status?: string;
+  selectedRecordId?: string | null;
+  userProfile?: { name: string; targetRole: string };
+  documentAnalysisData?: { documentScore: number; contentFeedback?: string; keywordFeedback?: string };
+  interviewAnalysisData?: { interviewScore: number };
+  careerHistoryData?: { totalPracticeCount: number; averageScore: number; roadmapSummary?: string };
+  strengths?: string[];
+  weaknesses?: string[];
+  roadmap?: Array<{ step: number; label: string; title: string; targetSkill: string; done: boolean }>;
+}
+
+const fallback = (value: unknown): string => (value ? String(value) : '아직 연결된 분석 데이터가 없습니다.');
+
+function getCurrentMembership(): string {
   const storedMembership =
       localStorage.getItem('membership') ||
       localStorage.getItem('userMembership') ||
@@ -25,7 +72,7 @@ function getCurrentMembership() {
   return storedMembership.toUpperCase();
 }
 
-function appendTextElement(documentRef, parent, tagName, text, className) {
+function appendTextElement(documentRef: Document, parent: HTMLElement, tagName: string, text: string, className?: string): HTMLElement {
   const element = documentRef.createElement(tagName);
   if (className) element.className = className;
   element.textContent = text;
@@ -33,7 +80,7 @@ function appendTextElement(documentRef, parent, tagName, text, className) {
   return element;
 }
 
-function appendReportRow(documentRef, parent, label, value) {
+function appendReportRow(documentRef: Document, parent: HTMLElement, label: string, value: string | undefined): void {
   const row = documentRef.createElement('div');
   const term = documentRef.createElement('dt');
   const description = documentRef.createElement('dd');
@@ -44,14 +91,14 @@ function appendReportRow(documentRef, parent, label, value) {
   parent.appendChild(row);
 }
 
-function ComprehensiveReportPage() {
+function ComprehensiveReportPage(): React.ReactElement {
   const navigate = useNavigate();
   const { id: routeRecordId } = useParams();
   const queryRecord = new URLSearchParams(useLocation().search).get('record');
   const [selectedRecord, setSelectedRecord] = useState('');
-  const [records, setRecords] = useState([]);
-  const [detail, setDetail] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [records, setRecords] = useState<CareerHistory[]>([]);
+  const [detail, setDetail] = useState<CareerDetail | null>(null);
+  const [preview, setPreview] = useState<ReportPreview | null>(null);
   const [membership, setMembership] = useState('FREE');
   const [options, setOptions] = useState({
     document: true,
@@ -87,8 +134,8 @@ function ComprehensiveReportPage() {
           ]);
 
           if (!active) return;
-          setDetail(detailData);
-          setPreview(previewData);
+          setDetail(detailData as CareerDetail | null);
+          setPreview(previewData as ReportPreview | null);
         })
         .catch(() => {
           if (active) setError('종합 진단 리포트를 불러오지 못했습니다.');
@@ -117,7 +164,7 @@ function ComprehensiveReportPage() {
 
   const isPremium = membership === 'PREMIUM';
 
-  const changeRecord = async (recordId) => {
+  const changeRecord = async (recordId: string): Promise<void> => {
     setSelectedRecord(recordId);
     setLoading(true);
     setError('');
@@ -127,8 +174,8 @@ function ComprehensiveReportPage() {
         careerHistoryApi.getHistoryDetail(recordId),
         reportExportApi.getPreview(recordId),
       ]);
-      setDetail(detailData);
-      setPreview(previewData);
+      setDetail(detailData as CareerDetail | null);
+      setPreview(previewData as ReportPreview | null);
       navigate(`/career-diagnosis/report?record=${recordId}`, { replace: true });
     } catch {
       setError('선택한 진단 기록을 불러오지 못했습니다.');
@@ -137,7 +184,7 @@ function ComprehensiveReportPage() {
     }
   };
 
-  const toggleOption = (key) => {
+  const toggleOption = (key: OptionsKey): void => {
     setOptions((current) => ({ ...current, [key]: !current[key] }));
   };
 
