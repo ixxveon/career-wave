@@ -1,3 +1,10 @@
+/**
+ * [Transport 경계]
+ * user 도메인은 fetch를 사용한다. axios 인터셉터 대신 직접 retry/refresh 로직을
+ * 구현하여 멱등성 여부(allowRetry)를 호출자가 명시적으로 제어할 수 있게 한다.
+ * admin 도메인은 axiosInstance(utils/axiosInstance.ts)를 사용하며
+ * 인터셉터로 인증 헤더 주입과 401 처리를 중앙화한다.
+ */
 import { authSession } from '../../../utils/user/member/authSession';
 import { toMemberApiError } from '../../../utils/user/member/errorMapping';
 import type { TokenRefreshResponse } from '../../../types/user/member';
