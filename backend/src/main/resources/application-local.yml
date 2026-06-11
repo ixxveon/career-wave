@@ -20,6 +20,9 @@ spring:
       hibernate:
         format_sql: true
 
+interview:
+  internal-secret: ${INTERVIEW_INTERNAL_SECRET}
+
 jwt:
   user:
     secret: ${JWT_USER_SECRET}
