@@ -12,7 +12,7 @@
 ## 권한
 - [x] ROLE_USER 토큰으로 admin API(`/api/v1/admin/**`) 접근 → 403 ← PR #351
 - [ ] ROLE_ADMIN 토큰으로 사용자 전용 정책 동작 확인
-- [ ] ROLE_COMPANY 전용 / ROLE_USER 전용 API 분리 확인 ← Phase 4
+- [x] ROLE_COMPANY 전용 / ROLE_USER 전용 API 분리 확인 ← Phase 4 구현 완료
 - [x] permitAll 목록(로그인/재발급/Swagger) 인증 없이 접근 가능 ← PR #323
 - [x] 관리자 토큰에 adminRole(MASTER/CS/BACKEND) claim 포함 확인 ← PR #323
 - [x] @EnableMethodSecurity 활성화 + @PreAuthorize 동작 확인 ← PR #323
@@ -33,13 +33,13 @@
 ## 계정 상태
 - [x] SUSPENDED / BANNED / WITHDRAWN / LOCKED 로그인 차단 ← PR #323
 - [x] SUSPENDED / BANNED / WITHDRAWN / LOCKED refresh 재발급 차단 ← PR #361
-- [ ] SUSPENDED / BANNED / WITHDRAWN / LOCKED 일반 authenticated API 접근 차단 ← Phase 4
-- [ ] 로그인 실패 5회 → LOCKED 처리 + locked_until DB 저장 ← Phase 4
-- [ ] LOCKED 15분(locked_until) 경과 후 로그인 시 ACTIVE 자동 복구 + 카운트 초기화 ← Phase 4
-- [ ] 실패 카운트는 Redis, locked_until은 DB (이중 저장 아님) 확인 ← Phase 4
-- [ ] `me/status` 응답에 memberStatus / restriction.reason / startedAt 포함 ← Phase 4
-- [ ] 정지/차단 회원도 `me/status` 접근 가능 (AccountStatus 예외 확인) ← Phase 4
-- [x] 계정 상태 검증이 JwtAuthenticationFilter가 아닌 별도 AccountStatus 단계에 있음 ← Phase 4에서 구현 예정 (plan.md SS-2)
+- [x] SUSPENDED / BANNED / WITHDRAWN / LOCKED 일반 authenticated API 접근 차단 ← Phase 4 AccountStatusAuthorizationFilter
+- [x] 로그인 실패 5회 → LOCKED 처리 + locked_until DB 저장 ← Phase 4 LoginAttemptStore
+- [x] LOCKED 15분(locked_until) 경과 후 로그인 시 ACTIVE 자동 복구 + 카운트 초기화 ← Phase 4
+- [x] 실패 카운트는 Redis, locked_until은 DB (이중 저장 아님) 확인 ← Phase 4
+- [x] `me/status` 응답에 memberStatus / restriction.reason / startedAt 포함 ← Phase 4
+- [x] 정지/차단 회원도 `me/status` 접근 가능 (AccountStatus 예외 확인) ← Phase 4
+- [x] 계정 상태 검증이 JwtAuthenticationFilter가 아닌 별도 AccountStatus 단계에 있음 ← Phase 4 AccountStatusAuthorizationFilter
 
 ## 프론트 연동 / 도구
 - [x] FE api-schema와 응답 필드명(camelCase) 일치 ← PR #345
@@ -51,6 +51,6 @@
 - [ ] Controller에서 token 직접 파싱 없음 (@AuthenticationPrincipal 사용)
 - [x] refresh token Redis hash 저장(원문 저장 없음) ← PR #361
 - [x] access token 영속 저장 없음 (blacklist는 로그아웃 전용) ← PR #361
-- [ ] locked_until은 DB 저장, 실패 카운트는 Redis ← Phase 4
+- [x] locked_until은 DB 저장, 실패 카운트는 Redis ← Phase 4
 - [x] `member_refresh_tokens` 테이블 미사용 ← PR #361
 - [x] user/admin 패키지 직접 참조 없음
