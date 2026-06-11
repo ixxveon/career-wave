@@ -2,7 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type FormEvent, useMemo, useState } from 'react';
 import type { LoginRouteDecision } from '../../../types/user/member';
 import { authSession } from '../../../utils/user/member/authSession';
-import { MEMBER_ERROR_CODE, getSafeLoginMessage, parseLoginBlockedDecision, type MemberApiError } from '../../../utils/user/member/errorMapping';
+import { MEMBER_ERROR_CODE, getSafeLoginMessage, parseLoginBlockedDecision, type MemberApiError, type MemberErrorCode } from '../../../utils/user/member/errorMapping';
 import {
   LOGIN_TAB_TO_MEMBER_TYPE,
   hasLoginFormErrors,
@@ -67,7 +67,7 @@ function isMemberApiError(e: unknown): e is MemberApiError {
     'code' in e &&
     'message' in e &&
     typeof obj.code === 'string' &&
-    MEMBER_ERROR_CODE_VALUES.has(obj.code)
+    MEMBER_ERROR_CODE_VALUES.has(obj.code as MemberErrorCode)
   );
 }
 
