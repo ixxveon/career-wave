@@ -80,6 +80,7 @@ public class Member {
     public SubscriptionStatus getSubscriptionStatus() { return subscriptionStatus; }
     public Instant getLockedUntil() { return lockedUntil; }
     public Instant getLastLoginAt() { return lastLoginAt; }
+    public Instant getCreatedAt() { return createdAt; }
 
     public void updateLastLoginAt(Instant time) { this.lastLoginAt = time; }
 

@@ -7,54 +7,56 @@
 
 ## Phase 1: 도메인 기반 세팅
 
-- [ ] `FileType` Enum 작성 (`RESUME`, `COVER_LETTER`)
-- [ ] `DocumentStatus` Enum 작성 (`UPLOADED`, `PENDING`, `ANALYZING`, `COMPLETED`, `FAILED`)
-- [ ] `Document` Entity 작성
+- [x] `FileType` Enum 작성 (`RESUME`, `COVER_LETTER`)
+- [x] `DocumentStatus` Enum 작성 (`UPLOADED`, `PENDING`, `ANALYZING`, `COMPLETED`, `FAILED`)
+- [x] `Document` Entity 작성
   - UUID PK (`document_id`, DEFAULT gen_random_uuid())
   - `member_id` UUID NOT NULL, `file_type` VARCHAR(20) NOT NULL
   - `file_url` VARCHAR(500) NULL, `original_name` VARCHAR(200) NULL (RESUME 필수, COVER_LETTER는 null — 애플리케이션 레벨 보장)
   - `created_at` TIMESTAMPTZ NOT NULL
   - `@NoArgsConstructor(access = AccessLevel.PROTECTED)`
-- [ ] `CoverLetterMeta` Entity 작성
+- [x] `CoverLetterMeta` Entity 작성
   - BIGSERIAL PK (`letter_meta_id`), `document_id` UUID NOT NULL
   - `company` VARCHAR(100) NOT NULL, `job` VARCHAR(100) NOT NULL, `created_at`
-- [ ] `CoverLetterContent` Entity 작성
+- [x] `CoverLetterContent` Entity 작성
   - BIGSERIAL PK (`content_id`), `document_id` UUID NOT NULL
   - `order_num` INTEGER NOT NULL (CHECK 1~5), `question` TEXT NOT NULL, `answer` TEXT NOT NULL
   - UNIQUE 제약: `CONSTRAINT uq_clc_document_order UNIQUE (document_id, order_num)`
-- [ ] `DocumentFeedback` Entity 작성
+- [x] `DocumentFeedback` Entity 작성
   - BIGSERIAL PK (`document_feedback_id`), `document_id` UUID NOT NULL
   - `score_job_fitness`, `score_tech_stack`, `score_quantified`, `score_logical`, `score_total` INTEGER (nullable)
   - `feedback_text` TEXT NOT NULL, `created_at`
-- [ ] `DocumentRepository` 작성
-- [ ] `CoverLetterMetaRepository` 작성
-- [ ] `CoverLetterContentRepository` 작성
-- [ ] `DocumentFeedbackRepository` 작성
-- [ ] `ErrorCode` 추가
+- [x] `DocumentRepository` 작성
+- [x] `CoverLetterMetaRepository` 작성
+- [x] `CoverLetterContentRepository` 작성
+- [x] `DocumentFeedbackRepository` 작성
+- [x] `ResumeErrorCode` 작성 (`user/resume/exception/ResumeErrorCode.java`, `BaseErrorCode` 구현)
   - `INVALID_FILE_SIZE` (400)
   - `INVALID_FILE_TYPE` (400)
   - `INVALID_CONTENT_COUNT` (400)
   - `INVALID_CONTENT_LENGTH` (400)
   - `DOCUMENT_NOT_FOUND` (404)
   - `DOCUMENT_ACCESS_DENIED` (403)
+  - `FEEDBACK_PARSE_ERROR` (500)
+- [x] `BaseErrorCode` 인터페이스 작성 (`global/exception/BaseErrorCode.java`)
+- [x] `CustomException`, `GlobalExceptionHandler` → `BaseErrorCode` 기반으로 리팩토링
 
 ---
 
 ## Phase 2: 이력서 업로드 API
 
-- [ ] `ResumeDTO.ResponseUpload` 작성
-- [ ] 파일 MIME type 기반 확장자 검증 유틸 작성 (PDF·DOC·DOCX)
+- [x] `ResumeDTO.ResponseUpload` 작성
+- [x] 파일 MIME type 기반 확장자 검증 유틸 작성 (PDF·DOC·DOCX)
   - `Apache Tika` (`org.apache.tika:tika-core`) 사용 확정 — `Tika.detect(InputStream)`으로 실제 MIME 검증
   - `build.gradle`에 의존성 추가 후 팀 공유
-- [ ] 파일 크기 10MB 초과 검증
-- [ ] UUID 기반 저장 파일명 생성 유틸 작성 (`{UUID}.{확장자}`)
-- [ ] S3 경로 생성 로직 작성 (`resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — `LocalDate.now()` 활용)
-- [ ] S3 업로드 로직 구현 — `original_name` DB 별도 저장, S3 Connection/Read Timeout 3~5초 설정
-- [ ] `Document` 저장 (`status = UPLOADED`, `file_type = RESUME`)
-- [ ] FastAPI 분석 트리거 — `@Async` + `WebClient` 비동기 호출 (스텁 → 실제 연동)
-  - 동기 호출 선택 시 Connection/Read Timeout 3초 이내 필수 설정
-- [ ] `ResumeController.uploadResume()` 구현
-- [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
+- [x] 파일 크기 10MB 초과 검증
+- [x] UUID 기반 저장 파일명 생성 유틸 작성 (`{UUID}.{확장자}`)
+- [x] S3 경로 생성 로직 작성 (`resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — `LocalDate.now()` 활용)
+- [x] S3 업로드 로직 구현 — `original_name` DB 별도 저장
+- [x] `Document` 저장 (`status = UPLOADED`, `file_type = RESUME`)
+- [x] FastAPI 분석 트리거 — `WebClient` 비동기 호출 (3초 타임아웃, 실패 시 FAILED 마킹)
+- [x] `ResumeController.uploadResume()` 구현
+- [x] `ResumeControllerDocs` Swagger 인터페이스 작성
 
 ---
 

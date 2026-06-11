@@ -1,9 +1,15 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { adminAuthApi, adminSession } from '../../api/admin/adminAuthApi';
-import { ACCESS_TOKEN_STORAGE_KEY } from '../../constants/admin/authConstants';
+import { adminSession } from '../../api/admin/adminAuthApi';
 import { ADMIN_ROUTE_PATHS, hasAdminRouteAccess } from '../../constants/admin/adminRouteConstants';
+import { ADMIN_DETAIL_ROLE } from '../../constants/admin/adminRoleConstants';
 import '../../styles/admin/admin.css';
+
+const ROLE_LABEL: Record<string, string> = {
+  [ADMIN_DETAIL_ROLE.MASTER]:  '전체 권한',
+  [ADMIN_DETAIL_ROLE.CS]:      '고객센터',
+  [ADMIN_DETAIL_ROLE.BACKEND]: '백엔드',
+};
 
 const menuGroups = [
   {
@@ -36,38 +42,36 @@ const menuGroups = [
   },
 ];
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  drawerOpen: boolean;
+  onDrawerClose: () => void;
+  onLogout: () => void;
+}
+
+export default function AdminSidebar({ drawerOpen, onDrawerClose, onLogout }: AdminSidebarProps) {
   const navigate = useNavigate();
   const currentAdminRole = adminSession.getRole();
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
 
-  const handleLogout = async () => {
-    try {
-      await adminAuthApi.logout();
-    } finally {
-      adminSession.clearToken();
-      adminSession.clearRole();
-      window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
-      navigate(ADMIN_ROUTE_PATHS.login, { replace: true });
-    }
-  };
-
   return (
-    <aside className="admin-sidebar">
-      <span
-        className="admin-logo"
-        onClick={() => navigate(ADMIN_ROUTE_PATHS.dashboard)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-            e.preventDefault();
-            navigate(ADMIN_ROUTE_PATHS.dashboard);
-          }
-        }}
-      >
-        Career Admin
-      </span>
+    <aside className={`admin-sidebar${drawerOpen ? ' admin-sidebar--open' : ''}`}>
+      <div className="admin-logoRow">
+        <span
+          className="admin-logo"
+          onClick={() => navigate(ADMIN_ROUTE_PATHS.dashboard)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+              e.preventDefault();
+              navigate(ADMIN_ROUTE_PATHS.dashboard);
+            }
+          }}
+        >
+          Career Admin
+        </span>
+        <button className="admin-drawerClose" onClick={onDrawerClose} aria-label="메뉴 닫기">✕</button>
+      </div>
 
       <nav className="admin-menu">
         {menuGroups.map((group) => (
@@ -75,7 +79,6 @@ export default function AdminSidebar() {
             <p>{group.title}</p>
             {group.items.map((item) => {
               const hasAccess = hasAdminRouteAccess(currentAdminRole, item.path);
-
               return (
                 <NavLink
                   key={item.path}
@@ -85,7 +88,6 @@ export default function AdminSidebar() {
                       setAccessNotice(null);
                       return;
                     }
-
                     event.preventDefault();
                     setAccessNotice('해당 메뉴에 접근할 권한이 없습니다.');
                   }}
@@ -99,16 +101,19 @@ export default function AdminSidebar() {
           </div>
         ))}
 
-        {accessNotice ? (
-          <p className="admin-menuNotice" role="alert">
-            {accessNotice}
-          </p>
-        ) : null}
+        {accessNotice && (
+          <p className="admin-menuNotice" role="alert">{accessNotice}</p>
+        )}
       </nav>
 
-      <button type="button" className="admin-logoutBtn" onClick={handleLogout}>
-        로그아웃
-      </button>
+      <div className="admin-sidebarProfile">
+        <div className="admin-sidebarAvatar">{currentAdminRole?.slice(0, 2) ?? 'AD'}</div>
+        <div className="admin-sidebarInfo">
+          <strong>{currentAdminRole ?? 'ADMIN'}</strong>
+          <span>{currentAdminRole ? ROLE_LABEL[currentAdminRole] : ''}</span>
+        </div>
+        <button type="button" className="admin-sidebarLogout" onClick={onLogout}>로그아웃</button>
+      </div>
     </aside>
   );
 }
