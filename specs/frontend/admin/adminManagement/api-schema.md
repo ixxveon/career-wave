@@ -246,6 +246,15 @@
 - ACL 위험도 배지는 API 응답 필드가 아니라 프론트엔드가 `ipRange` prefix로 계산해 표시한다.
 - 빈 목록은 `null` 대신 빈 배열과 pagination 필드를 반환한다.
 
+## ACL DTO Boundary
+
+- Spring API raw ACL 응답 필드는 `ipAclId`, `ipRange`, `isEnabled`, `description`이다.
+- `frontend/src/api/admin/adminManagementApi.ts`는 raw ACL DTO를 프론트 public type으로 변환한다.
+- AdminManagement 페이지와 페이지 테스트는 raw DTO를 직접 사용하지 않고 `AdminAclRule` public type만 사용한다.
+- `AdminAclRule` public type 필드는 `id`, `cidr`, `enabled`, `note`, `riskLevel`, `updatedAt`이다.
+- raw DTO 변환 검증은 페이지 테스트가 아니라 `adminManagementApi` mapper 단위 테스트에서 수행한다.
+- 화면 계층은 `cidr` 값이 비어 있거나 잘못된 suffix를 포함해도 렌더링이 중단되지 않도록 기본 위험도 `HIGH`로 표시한다.
+
 ## Error Cases
 
 | statusCode | message | UI Handling |

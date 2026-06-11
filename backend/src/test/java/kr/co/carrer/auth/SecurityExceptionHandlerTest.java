@@ -8,6 +8,7 @@ import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,9 @@ class SecurityExceptionHandlerTest {
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private TokenBlacklistStore tokenBlacklistStore;
 
     @MockBean
     private AdminMemberService adminMemberService;
@@ -83,10 +87,13 @@ class SecurityExceptionHandlerTest {
         when(claims.getSubject()).thenReturn("uuid-1234");
         when(claims.get("roleType", String.class)).thenReturn("USER");
         when(claims.get("adminRole", String.class)).thenReturn(null);
+        // jti가 없으면 fail-closed(401)로 빠지므로 유효한 jti를 설정한다.
+        when(claims.get("jti", String.class)).thenReturn("test-jti-user");
 
         when(jwtTokenProvider.extractAccountType(anyString())).thenReturn(AccountType.USER);
         when(jwtTokenProvider.validate(anyString(), any(AccountType.class))).thenReturn(true);
         when(jwtTokenProvider.parse(anyString(), any(AccountType.class))).thenReturn(claims);
+        when(tokenBlacklistStore.isBlacklisted("test-jti-user")).thenReturn(false);
 
         mockMvc.perform(get("/api/v1/admin/members")
                         .header("Authorization", "Bearer user.access.token"))

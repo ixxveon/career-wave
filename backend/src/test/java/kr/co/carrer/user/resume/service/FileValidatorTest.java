@@ -35,12 +35,12 @@ class FileValidatorTest {
 
     @Test
     @DisplayName("허용되지 않는 확장자 파일 업로드 시 INVALID_FILE_TYPE 예외가 발생한다")
-    void extractExtension_invalidExtension_throwsException() {
+    void validate_invalidExtension_throwsException() {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "malware.exe", "application/octet-stream", new byte[]{1, 2, 3}
         );
 
-        assertThatThrownBy(() -> fileValidator.extractExtension(file))
+        assertThatThrownBy(() -> fileValidator.validate(file))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(ResumeErrorCode.INVALID_FILE_TYPE));
@@ -54,6 +54,21 @@ class FileValidatorTest {
         );
 
         assertThatThrownBy(() -> fileValidator.extractExtension(file))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(ResumeErrorCode.INVALID_FILE_TYPE));
+    }
+
+    @Test
+    @DisplayName("확장자를 .pdf로 위조한 EXE 파일 업로드 시 INVALID_FILE_TYPE 예외가 발생한다")
+    void validate_mimeTypeForgery_throwsException() {
+        // EXE 파일 시그니처(MZ 헤더)를 .pdf 확장자로 위장
+        byte[] exeHeader = new byte[]{0x4D, 0x5A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "malicious.pdf", "application/pdf", exeHeader
+        );
+
+        assertThatThrownBy(() -> fileValidator.validate(file))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(ResumeErrorCode.INVALID_FILE_TYPE));

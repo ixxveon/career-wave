@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LockKeyhole, Network, Plus, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
+import { adminSession } from '../../../api/admin/adminAuthApi';
 import {
+  ADMIN_ROLE,
+  ACL_RISK_LEVEL,
   ADMIN_MANAGEMENT_ERROR_CODE,
   createAdminAccount as createAdminAccountRequest,
   createAdminAclRule,
@@ -16,6 +19,7 @@ import {
   updateAdminAclEnabled,
   updateAdminRole,
   updateAdminStatus,
+  getAclRiskLevel,
 } from '../../../api/admin/adminManagementApi';
 import type {
   AdminAccount as AdminAccountResponse,
@@ -211,14 +215,14 @@ const isValidCidr = (value: string) => {
   });
 };
 
-const getAclRiskMeta = (cidr: string) => {
-  const size = Number(cidr.split('/')[1] ?? 32);
+const getAclRiskMeta = (cidr?: string | null) => {
+  const riskLevel = getAclRiskLevel(cidr);
 
-  if (size === 32) {
+  if (riskLevel === ACL_RISK_LEVEL.LOW) {
     return { label: '고정 IP', tone: 'low' as const };
   }
 
-  if (size === 24) {
+  if (riskLevel === ACL_RISK_LEVEL.MEDIUM) {
     return { label: '제한 대역', tone: 'medium' as const };
   }
 
@@ -289,6 +293,7 @@ export default function AdminManagementPage() {
   const createAdminPendingRef = useRef(false);
   const [aclDraft, setAclDraft] = useState<AclDraft>({ label: '', cidr: '', note: '' });
   const [aclCidrErrorMessage, setAclCidrErrorMessage] = useState('');
+  const isCurrentAdminMaster = adminSession.getRole() === ADMIN_ROLE.MASTER;
   const adminListQueryParams = {
     keyword: debouncedAdminFilter || undefined,
     role: roleFilter,
@@ -669,11 +674,11 @@ export default function AdminManagementPage() {
       (error) => error?.code === ADMIN_MANAGEMENT_ERROR_CODE.FORBIDDEN,
     );
   const isAccountMasterRoleRequired =
-    [createAdminApiError, updateAdminRoleApiError, updateAdminStatusApiError, deleteAdminApiError].some(
+    !isCurrentAdminMaster || [createAdminApiError, updateAdminRoleApiError, updateAdminStatusApiError, deleteAdminApiError].some(
       (error) => error?.code === ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED,
     );
   const isAclMasterRoleRequired =
-    [createAclRuleApiError, updateAclEnabledApiError, deleteAclRuleApiError].some(
+    !isCurrentAdminMaster || [createAclRuleApiError, updateAclEnabledApiError, deleteAclRuleApiError].some(
       (error) => error?.code === ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED,
     );
   const globalErrorTitle = isRoleAdminAccessDenied

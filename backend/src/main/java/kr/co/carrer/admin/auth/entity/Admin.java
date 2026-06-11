@@ -3,11 +3,14 @@ package kr.co.carrer.admin.auth.entity;
 import jakarta.persistence.*;
 import kr.co.carrer.admin.auth.type.AdminRole;
 import kr.co.carrer.admin.auth.type.AdminStatus;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "admins")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Admin {
 
     @Id

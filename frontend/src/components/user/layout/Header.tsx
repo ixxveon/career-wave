@@ -46,7 +46,7 @@ function Header() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, isChecking, logout } = useAuth();
 
   function handleLogout() {
     logout();
@@ -115,7 +115,7 @@ function Header() {
           </nav>
 
           <nav className="cw-header__account" aria-label="계정 메뉴">
-            {isLoggedIn ? (
+            {!isChecking && (isLoggedIn ? (
               <>
                 <NavLink to="/mypage">마이페이지</NavLink>
                 <button type="button" onClick={handleLogout}>로그아웃</button>
@@ -127,7 +127,7 @@ function Header() {
                   회원가입
                 </NavLink>
               </>
-            )}
+            ))}
           </nav>
         </div>
       </header>

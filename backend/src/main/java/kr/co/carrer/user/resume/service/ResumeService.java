@@ -12,6 +12,4 @@ public interface ResumeService {
     ResumeDTO.ResponseCoverLetter submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto);
 
     ResumeDTO.ResponseFeedback getFeedback(UUID memberId, UUID documentId);
-
-    void markDocumentFailed(UUID documentId, String errorMessage);
 }

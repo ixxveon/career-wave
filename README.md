@@ -20,7 +20,7 @@ CareerWave는 AI 기반 면접 코칭·서류 분석·커리어 진단 기능을
 | :--- | :--- | :--- | :--- |
 | **인프라** | `Common` | GitHub, GitHub Actions | 모노레포 CI/CD, 빌드 및 테스트 자동화 파이프라인 |
 | **데이터베이스** | `Data` | PostgreSQL | 관계형 데이터베이스 통합 인프라 구축 |
-| **백엔드** | `user-backend`<br>`admin-backend` | Java 17<br>Spring Boot 3.x<br>Gradle | Spring Data JPA, Spring Security, JWT, Lombok |
+| **백엔드** | `user-backend`<br>`admin-backend` | Java 21<br>Spring Boot 3.x<br>Gradle | Spring Data JPA, Spring Security, JWT, Lombok |
 | **AI 및 엔진** | `user-fastapi`<br>`admin-fastapi` | Python 3.x<br>FastAPI | 실시간 AI 면접 분석 피드백, 채용 공고 스크래핑 스케줄러 |
 | **프론트엔드** | `frontend` | TypeScript<br>React | TanStack Query, React Router, MSW, Vite |
 
@@ -33,7 +33,7 @@ CareerWave는 AI 기반 면접 코칭·서류 분석·커리어 진단 기능을
 career-wave/
 ├── .github/        # CI/CD 워크플로우 및 PR 템플릿
 ├── frontend/       # React + Vite (TypeScript) — user / admin 통합
-├── backend/        # Spring Boot (Java 17) — 단일 서버
+├── backend/        # Spring Boot (Java 21) — 단일 서버
 ├── fastapi/        # FastAPI (Python) — AI 엔진 및 스크래핑
 ├── specs/          # 스펙 명세 문서
 └── README.md
@@ -81,9 +81,12 @@ uvicorn main:app --reload --port 8001
 
 ### Backend
 
+> **전제 조건**: JDK 21 이상이 설치되어 있어야 합니다.
+> 로컬 환경 세팅 상세는 [`backend/LOCAL_DEV_SETUP.md`](backend/LOCAL_DEV_SETUP.md)를 참고하세요.
+
 ```bash
 cd backend
-./gradlew bootRun
+./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
 > **IntelliJ 환경 변수 설정**
@@ -92,21 +95,30 @@ cd backend
 > 3. `Environment variables` 항목에 `backend/.env` 파일 내용 입력
 >    (또는 [EnvFile 플러그인](https://plugins.jetbrains.com/plugin/7861-envfile) 설치 후 `.env` 파일 경로 지정)
 
-| URL | 설명 |
+| 항목 | URL |
 | :--- | :--- |
-| http://localhost:8080 | Spring Boot API 서버 |
-| http://localhost:8080/swagger-ui.html | Swagger UI (API 문서) |
+| Spring Boot API 서버 | http://localhost:8080 |
+| Swagger UI | http://localhost:8080/swagger-ui.html |
 
 ## 테스트 계정
 
-| 아이디 | 비밀번호 | 설명 |
-| :--- | :--- | :--- |
-| `testuser01` | `Test1234!` | 개인 회원 — 구독 없음 |
-| `testuser02` | `Test1234!` | 개인 회원 — AI 모의면접만 구독 |
-| `testuser03` | `Test1234!` | 개인 회원 — 서류 AI 코칭만 구독 |
-| `testuser04` | `Test1234!` | 개인 회원 — 두 상품 모두 구독 |
-| `testcompany01` | `Test1234!` | 기업 회원 — 구독 없음 |
-| `admin` | `1234` | 관리자 (기존) |
+로컬 DB에 테스트 데이터를 넣으려면 아래 명령어를 실행하세요.
+
+```bash
+# backend/ 디렉토리에서 실행
+psql -U careerwave -d careerwave -f src/main/resources/db/seed-local.sql
+```
+
+> 재실행해도 안전합니다 (기존 데이터 DELETE 후 재삽입).
+
+| 아이디 | 비밀번호 | roleType | 설명 |
+| :--- | :--- | :--- | :--- |
+| `testuser01` | `Test1234!` | `USER` | 일반회원 FREE |
+| `testuser02` | `Test1234!` | `USER` | 일반회원 PREMIUM (면접) |
+| `testuser03` | `Test1234!` | `USER` | 일반회원 PREMIUM (서류) |
+| `testuser04` | `Test1234!` | `USER` | 일반회원 PREMIUM (전체) |
+| `testcompany01` | `Test1234!` | `COMPANY` | 기업회원 |
+| `admin` | `1234` | — | 관리자 MASTER |
 
 ## 환경 변수
 

@@ -17,6 +17,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -27,6 +28,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 // TODO: 스웨거 테스트용 임시 비활성화 — JWT 필터 구현 후 롤백 필요
 // @PreAuthorize("hasRole('ADMIN')")
+@Validated
 public class AdminMemberController implements AdminMemberControllerDocs {
 
     private final AdminMemberService adminMemberService;

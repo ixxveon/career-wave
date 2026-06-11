@@ -1,5 +1,7 @@
 package kr.co.carrer.global.s3;
 
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,7 +55,8 @@ public class S3Uploader {
 
             s3Client.putObject(request, RequestBody.fromBytes(file.getBytes()));
         } catch (IOException e) {
-            throw new RuntimeException("S3 업로드 중 파일 읽기 실패: " + e.getMessage(), e);
+            log.error("[S3] 파일 읽기 실패 — key: {}, error: {}", s3Key, e.getMessage());
+            throw new CustomException(ErrorCode.S3_UPLOAD_FAILED);
         }
 
         return buildFileUrl(s3Key);
