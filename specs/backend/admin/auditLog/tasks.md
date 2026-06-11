@@ -26,8 +26,6 @@
 - [ ] 감사 로그 상세 조회 서비스 로직을 구현한다.
 - [ ] `from`, `to` 기간 조건 공통 검증 로직을 구현한다.
 - [ ] `from > to` 요청을 공통 요청 검증 실패 `400`으로 처리하는 로직을 구현한다.
-- [ ] `page`, `size` 공통 요청 검증 로직을 구현한다.
-- [ ] `keyword` 100자 초과 요청을 공통 요청 검증 실패 `400`으로 처리하는 로직을 구현한다.
 - [ ] `logType` 값 검증과 `INVALID_AUDIT_LOG_TYPE` 매핑을 구현한다.
 - [ ] `severity` 값 검증과 `INVALID_AUDIT_LOG_SEVERITY` 매핑을 구현한다.
 - [ ] 1-based `page`를 내부 Pageable로 변환하는 로직을 구현한다.
@@ -37,6 +35,9 @@
 ## Phase 3 - API
 
 - [ ] `AuditLogDTO.java`를 작성한다.
+- [ ] 목록 조회 Request DTO에 `page >= 1`, `size >= 1` Bean Validation을 적용한다.
+- [ ] 목록 조회 Request DTO에 `keyword` 최대 100자 Bean Validation을 적용한다.
+- [ ] `from > to` 교차 필드 검증은 Service 계층에서 처리하고 DTO 단순 필드 검증과 분리한다.
 - [ ] `GET /api/v1/admin/audit-logs/summary` Controller endpoint를 작성한다.
 - [ ] `GET /api/v1/admin/audit-logs` Controller endpoint를 작성한다.
 - [ ] `GET /api/v1/admin/audit-logs/{logId}` Controller endpoint를 작성한다.

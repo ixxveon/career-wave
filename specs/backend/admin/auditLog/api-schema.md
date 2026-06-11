@@ -71,7 +71,7 @@
 | Enum | Values | ERD CHECK 제약 |
 |---|---|---|
 | `AuditLogType` | `ADMIN_ACTIVITY`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` | `audit_logs.log_type` |
-| `AuditLogSeverityType` | `INFO`, `WARN`, `ERROR`, `SUCCESS` | `audit_logs.severity` |
+| `AuditLogSeverity` | `INFO`, `WARN`, `ERROR`, `SUCCESS` | `audit_logs.severity` |
 
 ---
 
