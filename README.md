@@ -89,8 +89,15 @@ cd backend
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
+> **IntelliJ 환경 변수 설정**
+> 1. `Run > Edit Configurations` 선택
+> 2. `CareerWaveApplication` 실행 설정 클릭
+> 3. `Environment variables` 항목에 `backend/.env` 파일 내용 입력
+>    (또는 [EnvFile 플러그인](https://plugins.jetbrains.com/plugin/7861-envfile) 설치 후 `.env` 파일 경로 지정)
+
 | 항목 | URL |
 | :--- | :--- |
+| Spring Boot API 서버 | http://localhost:8080 |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 
 ## 테스트 계정
@@ -116,3 +123,50 @@ psql -U careerwave -d careerwave -f src/main/resources/db/seed-local.sql
 ## 환경 변수
 
 각 모듈 디렉토리의 `.env.example` 파일을 참고하여 `.env` 파일을 생성하세요.
+
+### 루트 `.env` (Docker DB 설정)
+
+```bash
+copy .env.example .env
+```
+
+| 변수명 | 설명 | 예시 |
+| :--- | :--- | :--- |
+| `DB_NAME` | PostgreSQL 데이터베이스명 | `careerwave` |
+| `DB_USER` | DB 접속 유저명 | `careerwave` |
+| `DB_PASSWORD` | DB 접속 비밀번호 | `(직접 설정)` |
+| `DB_PORT` | 로컬 포트 (기본 5432) | `5432` |
+
+### `backend/.env` (Spring Boot 설정)
+
+```bash
+copy backend/.env.example backend/.env
+```
+
+| 변수명 | 설명 | 예시 |
+| :--- | :--- | :--- |
+| `DB_URL` | JDBC 접속 URL | `jdbc:postgresql://localhost:5432/careerwave` |
+| `DB_USERNAME` | DB 접속 유저명 | `careerwave` |
+| `DB_PASSWORD` | DB 접속 비밀번호 | `(루트 .env와 동일)` |
+| `JWT_SECRET` | JWT 서명 비밀키 (256bit 이상) | `(임의 생성)` |
+| `AWS_S3_BUCKET_NAME` | S3 버킷명 | `careerwave-files` |
+| `AWS_ACCESS_KEY_ID` | AWS Access Key | `AKIA...` |
+| `AWS_SECRET_ACCESS_KEY` | AWS Secret Key | `(인프라 팀 요청)` |
+| `AWS_REGION` | S3 버킷 리전 | `ap-northeast-2` |
+| `FASTAPI_BASE_URL` | FastAPI 내부 통신 URL | `http://localhost:8000` |
+| `WEBHOOK_SECRET` | FastAPI → Spring Webhook 인증키 | `(임의 생성, FastAPI와 공유)` |
+
+### `fastapi/.env` (FastAPI 설정)
+
+```bash
+copy fastapi/.env.example fastapi/.env
+```
+
+| 변수명 | 설명 | 예시 |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | PostgreSQL 접속 URL | `postgresql://careerwave:pw@localhost:5432/careerwave` |
+| `OPENAI_API_KEY` | OpenAI API Key | `sk-...` |
+| `SPRING_BASE_URL` | Spring 서버 내부 URL | `http://localhost:8080` |
+| `WEBHOOK_SECRET` | Spring Webhook 인증키 | `(backend/.env와 동일 값 사용)` |
+
+> ⚠️ `.env` 파일은 절대 Git에 커밋하지 마세요. `.gitignore`에 등록되어 있습니다.

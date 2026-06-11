@@ -90,7 +90,11 @@ user/resume/
 ├── controller/
 │   └── ResumeController.java
 ├── service/
-│   └── ResumeService.java
+│   ├── ResumeService.java              ← 인터페이스
+│   ├── FileValidator.java              ← Tika MIME 검증 + 크기 검증
+│   ├── FastApiClient.java              ← FastAPI 분석 트리거 (WebClient)
+│   └── impl/
+│       └── ResumeServiceImpl.java      ← 구현체
 ├── dto/
 │   └── ResumeDTO.java
 ├── entity/
@@ -103,11 +107,25 @@ user/resume/
 │   ├── CoverLetterMetaRepository.java
 │   ├── CoverLetterContentRepository.java
 │   └── DocumentFeedbackRepository.java
+├── exception/
+│   └── ResumeErrorCode.java        ← resume 전용 에러코드 (BaseErrorCode 구현)
 ├── type/
 │   ├── FileType.java
 │   └── DocumentStatus.java
 └── docs/
     └── ResumeControllerDocs.java
+
+global/
+├── exception/
+│   └── BaseErrorCode.java          ← 도메인별 ErrorCode 공통 인터페이스
+├── s3/
+│   ├── S3Config.java               ← AWS S3Client 빈 등록
+│   └── S3Uploader.java             ← S3 업로드 (resumes/{날짜}/{UUID}.{확장자})
+└── websocket/                      ← resume + interview 공통 WebSocket 인프라
+    ├── WebSocketConfig.java
+    ├── WebSocketHandshakeInterceptor.java
+    ├── StompChannelInterceptor.java
+    └── WebSocketEventListener.java
 
 global/websocket/               ← resume + interview 공통 WebSocket 인프라
 ├── WebSocketConfig.java        (STOMP 엔드포인트 /ws/user/resume 등록, 토픽 prefix /topic 설정)
@@ -268,8 +286,8 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 - 반환: `ResumeDTO.ResponseUpload`
 
 #### submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto)
-- 문항 수 1~5개 외 → `INVALID_CONTENT_COUNT(400)`
-- 답변 1000자 초과 → `INVALID_CONTENT_LENGTH(400)`
+- 문항 수 1~5개 외 → Bean Validation `@Size(min=1, max=5)` 에서 400 반환 (메시지: "자기소개서 문항은 1개 이상 5개 이하로 입력해주세요.")
+- 답변 1000자 초과 → Bean Validation `@Size(max=1000)` 에서 400 반환 (메시지: "자기소개서 답변은 1000자를 초과할 수 없습니다.")
 - `Document` 저장 (`status = UPLOADED`, `file_url = null`)
 - `CoverLetterContent` 벌크 저장
 - FastAPI 분석 트리거 호출 → 202 Accepted 기대
@@ -299,8 +317,6 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 |-----------|------|-----------|
 | `INVALID_FILE_SIZE` | 400 | 파일 크기 10MB 초과 |
 | `INVALID_FILE_TYPE` | 400 | PDF·DOC·DOCX 외 확장자 |
-| `INVALID_CONTENT_COUNT` | 400 | 문항 수 범위(1~5) 위반 |
-| `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 |
 | `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId |
 | `DOCUMENT_ACCESS_DENIED` | 403 | 본인 소유가 아닌 문서 접근 (IDOR) |
 | `FEEDBACK_PARSE_ERROR` | 500 | feedback_text JSON 역직렬화 실패 (FastAPI 응답 구조 변경 등) |

@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface ResumeService {
 
     ResumeDTO.ResponseUpload uploadResume(UUID memberId, MultipartFile file);
+
+    ResumeDTO.ResponseCoverLetter submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto);
 }

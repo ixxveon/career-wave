@@ -43,7 +43,7 @@ public interface ResumeControllerDocs {
                             examples = @ExampleObject(value = """
                                     {
                                       "success": true,
-                                      "statusCode": 200,
+                                      "statusCode": 201,
                                       "message": "이력서가 업로드되었습니다.",
                                       "data": {
                                         "documentId": "46f85686-eeb6-49b0-867f-e36908b5f0ed",
@@ -100,5 +100,90 @@ public interface ResumeControllerDocs {
     })
     ResponseEntity<ApiResponse<ResumeDTO.ResponseUpload>> uploadResume(
             @Parameter(hidden = true) MultipartFile file
+    );
+
+    @Operation(
+            summary = "자기소개서 제출",
+            description = "자기소개서 문항·답변을 입력하고 AI 분석을 시작합니다. 문항 1~5개, 답변 최대 1000자."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201",
+                    description = "제출 성공",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "statusCode": 201,
+                                      "message": "자기소개서가 제출되었습니다.",
+                                      "data": {
+                                        "documentId": "46f85686-eeb6-49b0-867f-e36908b5f0ed",
+                                        "status": "UPLOADED",
+                                        "fileType": "COVER_LETTER",
+                                        "createdAt": "2026-06-10T11:11:54.2581841+09:00"
+                                      }
+                                    }
+                                    """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "입력값 검증 실패",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = {
+                                    @ExampleObject(name = "문항 수 초과", summary = "문항 6개 이상 제출", value = """
+                                            {
+                                              "success": false,
+                                              "statusCode": 400,
+                                              "message": "입력값 검증에 실패했습니다.",
+                                              "data": {
+                                                "content": "자기소개서 문항은 1개 이상 5개 이하로 입력해주세요."
+                                              }
+                                            }
+                                            """),
+                                    @ExampleObject(name = "빈 문항 제출", summary = "content 빈 배열 제출", value = """
+                                            {
+                                              "success": false,
+                                              "statusCode": 400,
+                                              "message": "입력값 검증에 실패했습니다.",
+                                              "data": {
+                                                "content": "자기소개서 문항은 1개 이상 5개 이하로 입력해주세요."
+                                              }
+                                            }
+                                            """),
+                                    @ExampleObject(name = "답변 1000자 초과", summary = "답변 1001자 이상 제출", value = """
+                                            {
+                                              "success": false,
+                                              "statusCode": 400,
+                                              "message": "입력값 검증에 실패했습니다.",
+                                              "data": {
+                                                "content[0].answer": "자기소개서 답변은 1000자를 초과할 수 없습니다."
+                                              }
+                                            }
+                                            """)
+                            }
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 필요",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": false,
+                                      "statusCode": 401,
+                                      "message": "인증이 필요합니다.",
+                                      "data": null
+                                    }
+                                    """)
+                    )
+            )
+    })
+    ResponseEntity<ApiResponse<ResumeDTO.ResponseCoverLetter>> submitCoverLetter(
+            @Parameter(description = "자기소개서 제출 요청 body", required = true)
+            ResumeDTO.RequestCoverLetter request
     );
 }
