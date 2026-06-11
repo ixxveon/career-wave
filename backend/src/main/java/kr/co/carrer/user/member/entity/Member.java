@@ -22,6 +22,9 @@ public class Member {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    @Column(length = 20)
+    private String phone;
+
     @Column(nullable = false, length = 255)
     private String password;
 
@@ -69,6 +72,7 @@ public class Member {
     public UUID getMemberId() { return memberId; }
     public String getLoginId() { return loginId; }
     public String getEmail() { return email; }
+    public String getPhone() { return phone; }
     public String getPassword() { return password; }
     public String getName() { return name; }
     public RoleType getRoleType() { return roleType; }
