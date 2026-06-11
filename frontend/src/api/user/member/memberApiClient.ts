@@ -32,14 +32,9 @@ function redirectToLoginOnSessionExpired() {
 }
 
 async function requestAccessTokenRefresh(): Promise<string | null> {
-  const refreshToken = authSession.getRefreshToken();
-  const headers = new Headers({ 'Content-Type': 'application/json' });
-
   try {
     const response = await fetch(`${API_BASE_URL}/api/v1/user/members/token/refresh`, {
       method: 'POST',
-      headers,
-      body: refreshToken ? JSON.stringify({ refreshToken }) : undefined,
       credentials: 'include',
     });
 
@@ -53,10 +48,7 @@ async function requestAccessTokenRefresh(): Promise<string | null> {
 
     if (!tokenData?.accessToken) return null;
 
-    authSession.setTokens({
-      accessToken: tokenData.accessToken,
-      refreshToken: tokenData.refreshToken ?? refreshToken ?? undefined,
-    });
+    authSession.setAccessToken(tokenData.accessToken);
 
     return tokenData.accessToken;
   } catch {
