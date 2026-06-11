@@ -6,7 +6,7 @@ const SOCIAL_REGISTER_MOCK_STORAGE_KEY = 'cw:social-register:latest';
 function buildMockResponse(): SocialRegisterCompletionResponse {
   return {
     memberId: `social-${Date.now()}`,
-    memberType: 'USER',
+    roleType: 'USER',
     memberStatus: 'ACTIVE',
     nextPath: '/auth/login?registered=social',
   };
