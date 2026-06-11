@@ -139,12 +139,12 @@
 
 ### InterviewReportService
 
-- [ ] `getReport(UUID memberId, String sessionId)`
-  - [ ] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-  - [ ] 존재하지 않으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
-  - [ ] `ai_interview_feedbacks` 조회 (`question_order ASC`)
-  - [ ] `voiceQualityRatio`가 null이거나 50.00 미만인 피드백 → `deliveryScore` / `fluencyScore` null 처리
-  - [ ] 반환: `ResponseReport`
+- [x] `getReport(UUID memberId, String sessionId)`
+  - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
+  - [x] 피드백 미존재 시 `INTERVIEW_REPORT_NOT_READY(409)`
+  - [x] `ai_interview_feedbacks` 조회 (`question_order ASC`)
+  - [x] `voiceQualityRatio`가 null이거나 50.00 미만인 피드백 → `deliveryScore` / `fluencyScore` null 처리
+  - [x] 반환: `ResponseReport`
 
 ### InterviewHistoryService
 
@@ -166,15 +166,15 @@
   - [x] 모든 메서드에 `@AuthenticationPrincipal AuthPrincipal` 적용
   - [x] Controller에서 `try-catch` 사용 금지
 
-- [ ] `InterviewReportController.java`
-  - [ ] `GET /api/v1/user/interview/sessions/{sessionId}/report`
+- [x] `InterviewReportController.java`
+  - [x] `GET /api/v1/user/interview/sessions/{sessionId}/report`
 
 - [ ] `InterviewHistoryController.java`
   - [ ] `GET /api/v1/user/interview/history` — `@RequestParam(defaultValue="0") int page`, `@RequestParam(defaultValue="10") int size`
 
 - [x] Swagger Docs 인터페이스 분리
   - [x] `InterviewSessionControllerDocs.java`
-  - [ ] `InterviewReportControllerDocs.java`
+  - [x] `InterviewReportControllerDocs.java`
   - [ ] `InterviewHistoryControllerDocs.java`
 
 ---
