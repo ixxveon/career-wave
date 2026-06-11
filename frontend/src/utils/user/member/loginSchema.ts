@@ -40,6 +40,6 @@ export function toLoginRequest(values: LoginFormValues, tab: LoginTab): LoginReq
   return {
     loginId: values.loginId.trim(),
     password: values.password,
-    memberType: LOGIN_TAB_TO_MEMBER_TYPE[tab],
+    roleType: LOGIN_TAB_TO_MEMBER_TYPE[tab],
   };
 }

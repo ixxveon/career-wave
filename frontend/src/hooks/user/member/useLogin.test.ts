@@ -9,7 +9,7 @@ function makeResponse(overrides: Partial<LoginResponse['member']>): LoginRespons
       memberId: 'uuid',
       loginId: 'user01',
       name: '홍길동',
-      memberType: MEMBER_TYPE.USER,
+      roleType: MEMBER_TYPE.USER,
       memberStatus: MEMBER_STATUS.ACTIVE,
       companyApprovalStatus: COMPANY_APPROVAL_STATUS.NONE,
       lastLoginAt: null,
@@ -28,7 +28,7 @@ describe('getLoginRouteDecision — 성공 응답 기반 blocked login', () => {
 
   it('ACTIVE COMPANY + APPROVED → ALLOW /dashboard/company', () => {
     expect(
-      getLoginRouteDecision(makeResponse({ memberType: MEMBER_TYPE.COMPANY, companyApprovalStatus: COMPANY_APPROVAL_STATUS.APPROVED })),
+      getLoginRouteDecision(makeResponse({ roleType: MEMBER_TYPE.COMPANY, companyApprovalStatus: COMPANY_APPROVAL_STATUS.APPROVED })),
     ).toEqual({ type: 'ALLOW', path: '/dashboard/company' });
   });
 
@@ -62,19 +62,19 @@ describe('getLoginRouteDecision — 성공 응답 기반 blocked login', () => {
 
   it('ACTIVE COMPANY + PENDING_REVIEW → BLOCK COMPANY_PENDING', () => {
     expect(
-      getLoginRouteDecision(makeResponse({ memberType: MEMBER_TYPE.COMPANY, companyApprovalStatus: COMPANY_APPROVAL_STATUS.PENDING_REVIEW })),
+      getLoginRouteDecision(makeResponse({ roleType: MEMBER_TYPE.COMPANY, companyApprovalStatus: COMPANY_APPROVAL_STATUS.PENDING_REVIEW })),
     ).toEqual({ type: 'BLOCK', reason: 'COMPANY_PENDING' });
   });
 
   it('ACTIVE COMPANY + REJECTED → BLOCK COMPANY_REJECTED', () => {
     expect(
-      getLoginRouteDecision(makeResponse({ memberType: MEMBER_TYPE.COMPANY, companyApprovalStatus: COMPANY_APPROVAL_STATUS.REJECTED })),
+      getLoginRouteDecision(makeResponse({ roleType: MEMBER_TYPE.COMPANY, companyApprovalStatus: COMPANY_APPROVAL_STATUS.REJECTED })),
     ).toEqual({ type: 'BLOCK', reason: 'COMPANY_REJECTED' });
   });
 
   it('ACTIVE COMPANY + NEEDS_REVISION → BLOCK COMPANY_NEEDS_REVISION', () => {
     expect(
-      getLoginRouteDecision(makeResponse({ memberType: MEMBER_TYPE.COMPANY, companyApprovalStatus: COMPANY_APPROVAL_STATUS.NEEDS_REVISION })),
+      getLoginRouteDecision(makeResponse({ roleType: MEMBER_TYPE.COMPANY, companyApprovalStatus: COMPANY_APPROVAL_STATUS.NEEDS_REVISION })),
     ).toEqual({ type: 'BLOCK', reason: 'COMPANY_NEEDS_REVISION' });
   });
 });
