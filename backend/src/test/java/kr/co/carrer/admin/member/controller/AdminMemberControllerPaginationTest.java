@@ -4,6 +4,7 @@ import kr.co.carrer.admin.member.service.AdminMemberService;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,6 +29,9 @@ class AdminMemberControllerPaginationTest {
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private TokenBlacklistStore tokenBlacklistStore;
 
     @MockBean
     private AdminMemberService adminMemberService;
