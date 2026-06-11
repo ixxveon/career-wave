@@ -17,8 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -102,6 +104,32 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
 
         InterviewMessage message = InterviewMessage.createAnswer(sessionId, dto.messageContent());
         return messageRepository.save(message);
+    }
+
+    private static final List<String> ALLOWED_AUDIO_TYPES = List.of("audio/webm", "audio/mp4", "audio/ogg");
+
+    @Override
+    public InterviewDTO.ResponseSubmitVoiceChunk submitVoiceChunk(UUID memberId, UUID sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal) {
+        validateAudioContentType(audioChunk);
+        validateSessionOwnership(memberId, sessionId);
+        fastApiClient.triggerSttPipeline(sessionId, audioChunk, questionOrder, chunkIndex, isFinal);
+        return new InterviewDTO.ResponseSubmitVoiceChunk(chunkIndex, true);
+    }
+
+    @Transactional(readOnly = true)
+    protected void validateSessionOwnership(UUID memberId, UUID sessionId) {
+        InterviewSession session = sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)
+                .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN));
+        if (!session.isInProgress()) {
+            throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_ALREADY_ENDED);
+        }
+    }
+
+    private void validateAudioContentType(MultipartFile audioChunk) {
+        String contentType = audioChunk.getContentType();
+        if (contentType == null || !ALLOWED_AUDIO_TYPES.contains(contentType)) {
+            throw new CustomException(InterviewErrorCode.INTERVIEW_INVALID_AUDIO_FORMAT);
+        }
     }
 
     @Override

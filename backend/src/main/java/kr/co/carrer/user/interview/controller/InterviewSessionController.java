@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -40,6 +41,22 @@ public class InterviewSessionController implements InterviewSessionControllerDoc
         UUID memberId = UUID.fromString(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(
                 interviewSessionService.submitTextAnswer(memberId, sessionId, dto)
+        ));
+    }
+
+    @Override
+    @PostMapping("/{sessionId}/answer/voice")
+    public ResponseEntity<ApiResponse<InterviewDTO.ResponseSubmitVoiceChunk>> submitVoiceChunk(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable String sessionId,
+            @RequestParam MultipartFile audioChunk,
+            @RequestParam int questionOrder,
+            @RequestParam int chunkIndex,
+            @RequestParam boolean isFinal
+    ) {
+        UUID memberId = UUID.fromString(principal.getId());
+        return ResponseEntity.ok(ApiResponse.ok(
+                interviewSessionService.submitVoiceChunk(memberId, UUID.fromString(sessionId), audioChunk, questionOrder, chunkIndex, isFinal)
         ));
     }
 
