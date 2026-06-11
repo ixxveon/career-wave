@@ -49,7 +49,7 @@ class JwtTokenProviderTest {
     void validate_만료된_토큰_false_반환() {
         JwtProperties shortProps = new JwtProperties();
         shortProps.getUser().setSecret("test-user-secret-key-must-be-at-least-32-bytes!!");
-        shortProps.getUser().setAccessExpiration(-1000L); // 이미 만료
+        shortProps.getUser().setAccessExpiration(-70000L); // leeway(60s) 초과 만료
         shortProps.getUser().setRefreshExpiration(1000L);
         shortProps.getAdmin().setSecret("test-admin-secret-key-must-be-at-least-32-bytes!");
         shortProps.getAdmin().setAccessExpiration(900000L);
@@ -81,7 +81,7 @@ class JwtTokenProviderTest {
 
     @Test
     void createRefreshToken_유효한_토큰_생성() {
-        String token = provider.createRefreshToken("uuid-1234", AccountType.USER, null);
+        String token = provider.createRefreshToken("uuid-1234", AccountType.USER, null, "test-session-id");
         assertThat(provider.validate(token, AccountType.USER)).isTrue();
         Claims claims = provider.parse(token, AccountType.USER);
         assertThat(claims.getSubject()).isEqualTo("uuid-1234");

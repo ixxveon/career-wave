@@ -44,4 +44,13 @@ public interface UserAuthControllerDocs {
                             value = "{\"success\":false,\"statusCode\":401,\"message\":\"유효하지 않은 리프레시 토큰입니다.\",\"code\":\"AUTH_REFRESH_INVALID\"}")))
     })
     ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response);
+
+    @Operation(summary = "사용자 로그아웃",
+            description = "refresh Redis key 삭제 + access token jti blacklist 등록. " +
+                    "비ACTIVE 회원도 허용.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+            @ApiResponse(responseCode = "401", description = "유효한 access token 없음")
+    })
+    ResponseEntity<?> logout(HttpServletRequest request, Object principal);
 }

@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.principal.AuthPrincipal;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -19,9 +20,12 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenBlacklistStore tokenBlacklistStore;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
+                                    TokenBlacklistStore tokenBlacklistStore) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.tokenBlacklistStore = tokenBlacklistStore;
     }
 
     @Override
@@ -36,6 +40,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 if (jwtTokenProvider.validate(token, accountType)) {
                     Claims claims = jwtTokenProvider.parse(token, accountType);
+                    String jti = claims.get("jti", String.class);
+
+                    // blacklist 등록된 jti(로그아웃된 토큰) → SecurityContext 비워둠 → EntryPoint 401
+                    if (jti != null && tokenBlacklistStore.isBlacklisted(jti)) {
+                        request.setAttribute("jwtException", "Token has been revoked (logout)");
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
 
                     String id = claims.getSubject();
                     String roleType = claims.get("roleType", String.class);

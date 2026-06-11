@@ -77,6 +77,11 @@ public class Member {
     public Instant getLockedUntil() { return lockedUntil; }
     public Instant getLastLoginAt() { return lastLoginAt; }
 
-    // Setter (lastLoginAt 갱신용)
     public void updateLastLoginAt(Instant time) { this.lastLoginAt = time; }
+
+    // locked_until 경과 시 ACTIVE 자동 복구 — dirty checking으로 DB 저장
+    public void recoverFromLock() {
+        this.memberStatus = MemberStatus.ACTIVE;
+        this.lockedUntil = null;
+    }
 }
