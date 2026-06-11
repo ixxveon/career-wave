@@ -87,7 +87,7 @@ export const applicationApi = {
   getApplications: (params: ApplicationQuery = {}): Promise<Applicant[]> => {
     if (!useMockData) {
       const query = new URLSearchParams(params as Record<string, string>).toString();
-      return apiClient(`/applications${query ? `?${query}` : ''}`);
+      return apiClient<Applicant[]>(`/applications${query ? `?${query}` : ''}`) as Promise<Applicant[]>;
     }
 
     const keyword = (params.keyword || '').trim().toLowerCase();
