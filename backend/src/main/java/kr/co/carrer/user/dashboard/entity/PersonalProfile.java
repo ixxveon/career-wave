@@ -36,4 +36,16 @@ public class PersonalProfile {
 
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        ZonedDateTime now = ZonedDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = ZonedDateTime.now();
+    }
 }

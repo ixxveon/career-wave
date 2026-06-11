@@ -1,34 +1,37 @@
 package kr.co.carrer.user.dashboard;
 
-import kr.co.carrer.user.member.entity.Member;
-import kr.co.carrer.user.member.repository.UserMemberRepository;
-import kr.co.carrer.user.member.type.MemberStatus;
-import kr.co.carrer.user.member.type.RoleType;
-import kr.co.carrer.user.member.type.SubscriptionStatus;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.dashboard.dto.DashboardDTO;
 import kr.co.carrer.user.dashboard.entity.PersonalProfile;
 import kr.co.carrer.user.dashboard.repository.PersonalProfileRepository;
 import kr.co.carrer.user.dashboard.service.impl.DashboardServiceImpl;
+import kr.co.carrer.user.member.entity.Member;
+import kr.co.carrer.user.member.repository.UserMemberRepository;
+import kr.co.carrer.user.member.type.MemberStatus;
+import kr.co.carrer.user.member.type.RoleType;
+import kr.co.carrer.user.member.type.SubscriptionStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
-import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-    class DashboardServiceTest {
+class DashboardServiceTest {
 
     @Mock
     private UserMemberRepository memberRepository;
@@ -76,7 +79,10 @@ import static org.mockito.Mockito.when;
     void getGithubProfile_success() throws Exception {
         UUID memberId = UUID.randomUUID();
         Member member = createMember(memberId);
-        PersonalProfile personalProfile = createPersonalProfile(memberId, "https://github.com/career-wave?tab=repositories");
+        PersonalProfile personalProfile = createPersonalProfile(
+                memberId,
+                "https://github.com/career-wave?tab=repositories"
+        );
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
         when(personalProfileRepository.findByMemberId(memberId)).thenReturn(Optional.of(personalProfile));
@@ -102,6 +108,36 @@ import static org.mockito.Mockito.when;
         assertThat(response.githubId()).isNull();
         assertThat(response.githubUrl()).isNull();
         assertThat(response.linked()).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "https://github.com/career-wave, career-wave",
+            "https://www.github.com/career-wave, career-wave",
+            "https://github.com/career-wave?tab=repositories, career-wave"
+    })
+    @DisplayName("GitHub ID 파싱 - 정상 URL")
+    void extractGithubId_validGithubUrls_returnGithubId(String githubUrl, String expected) throws Exception {
+        assertThat(invokeExtractGithubId(githubUrl)).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {
+            "https://github.com/|",
+            "https://github.com|",
+            "https://api.github.com/username|",
+            "not-a-url|",
+            "https://gitlab.com/username|"
+    }, delimiter = '|')
+    @DisplayName("GitHub ID 파싱 - 비정상 URL")
+    void extractGithubId_invalidUrls_returnNull(String githubUrl, String ignored) throws Exception {
+        assertThat(invokeExtractGithubId(githubUrl)).isNull();
+    }
+
+    private String invokeExtractGithubId(String githubUrl) throws Exception {
+        Method method = DashboardServiceImpl.class.getDeclaredMethod("extractGithubId", String.class);
+        method.setAccessible(true);
+        return (String) method.invoke(dashboardService, githubUrl);
     }
 
     private Member createMember(UUID memberId) throws Exception {

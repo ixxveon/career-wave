@@ -51,16 +51,4 @@ public class DashboardDTO {
             @Schema(description = "연동 여부")
             boolean linked
     ) {}
-
-    @Schema(description = "프로필 수정 요청")
-    public record ProfileUpdateRequest(
-            @Schema(description = "이름")
-            String name,
-
-            @Schema(description = "휴대폰 번호")
-            String phone,
-
-            @Schema(description = "GitHub URL")
-            String githubUrl
-    ) {}
 }

@@ -19,7 +19,7 @@ import java.util.UUID;
 public class DashboardController implements DashboardControllerDocs {
 
     private final DashboardService dashboardService;
-    // TODO: userJWT 구현 완료 후 RequestParam memberId 제거하고 인증 객체 기반 조회로 변경
+
     @Override
     // TODO: userJWT 구현 완료 후 RequestParam memberId 제거 및 인증 객체 기반 조회로 변경
     @GetMapping("/profile")
@@ -32,9 +32,9 @@ public class DashboardController implements DashboardControllerDocs {
                 )
         );
     }
-     // TODO: userJWT 구현 완료 후 RequestParam memberId 제거하고 인증 객체 기반 조회로 변경
+
     @Override
-    // TODO: userJWT 구현 완료 후 RequestParam memberId 제거하고 인증 객체 기반 조회로 변경
+    /// TODO: userJWT 구현 완료 후 RequestParam memberId 제거 및 인증 객체 기반 조회로 변경
     @GetMapping("/github")
     public ResponseEntity<ApiResponse<DashboardDTO.GithubResponse>> getGithubProfile(
             @RequestParam UUID memberId
