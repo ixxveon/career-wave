@@ -13,7 +13,6 @@ public enum ErrorCode implements BaseErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "이미 존재하는 데이터입니다."),
-<<<<<<< HEAD
 
     // --- 1. 회원관리 (admin/member) ---
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."),
@@ -28,12 +27,7 @@ public enum ErrorCode implements BaseErrorCode {
     MAX_WARNING_EXCEEDED(HttpStatus.CONFLICT, "경고는 최대 3회까지만 부여할 수 있습니다."),
 
     // --- 2. 파일 업로드 ---
-    FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기가 최대 허용 용량을 초과했습니다."),
-
-    ;
-=======
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기가 최대 허용 용량을 초과했습니다.");
->>>>>>> origin/develop
 
     private final HttpStatus status;
     private final String message;
