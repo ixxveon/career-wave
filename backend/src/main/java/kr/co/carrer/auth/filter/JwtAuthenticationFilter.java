@@ -42,8 +42,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     Claims claims = jwtTokenProvider.parse(token, accountType);
                     String jti = claims.get("jti", String.class);
 
+                    // jti 누락 토큰은 fail-closed: blacklist 조회 불가이므로 인증 거부
+                    if (!StringUtils.hasText(jti)) {
+                        request.setAttribute("jwtException", "Missing jti claim");
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+
                     // blacklist 등록된 jti(로그아웃된 토큰) → SecurityContext 비워둠 → EntryPoint 401
-                    if (jti != null && tokenBlacklistStore.isBlacklisted(jti)) {
+                    if (tokenBlacklistStore.isBlacklisted(jti)) {
                         request.setAttribute("jwtException", "Token has been revoked (logout)");
                         filterChain.doFilter(request, response);
                         return;
