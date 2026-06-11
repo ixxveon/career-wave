@@ -1,8 +1,9 @@
 package kr.co.carrer.admin.report.repository;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
+import kr.co.carrer.admin.report.exception.AdminReportErrorCode;
+import kr.co.carrer.global.exception.CustomException;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -16,7 +17,7 @@ public class ReportCommentRepository {
             .setParameter(1, commentId)
             .executeUpdate();
         if (updated == 0) {
-            throw new EntityNotFoundException("댓글을 찾을 수 없습니다. commentId=" + commentId);
+            throw new CustomException(AdminReportErrorCode.COMMENT_NOT_FOUND);
         }
     }
 
