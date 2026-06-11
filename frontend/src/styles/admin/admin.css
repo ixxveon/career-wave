@@ -1461,6 +1461,7 @@ button {
   }
 
   .admin-drawerOverlay {
+    display: block;
     position: fixed;
     inset: 0;
     background: rgba(10, 25, 45, 0.35);
