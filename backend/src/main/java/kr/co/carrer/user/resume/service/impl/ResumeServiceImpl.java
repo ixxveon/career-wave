@@ -8,6 +8,7 @@ import kr.co.carrer.user.resume.entity.Document;
 import kr.co.carrer.user.resume.repository.CoverLetterContentRepository;
 import kr.co.carrer.user.resume.repository.CoverLetterMetaRepository;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
+import kr.co.carrer.user.resume.service.DocumentStatusService;
 import kr.co.carrer.user.resume.service.FastApiClient;
 import kr.co.carrer.user.resume.service.FileValidator;
 import kr.co.carrer.user.resume.service.ResumeService;
@@ -32,6 +33,7 @@ public class ResumeServiceImpl implements ResumeService {
     private final FileValidator fileValidator;
     private final S3Uploader s3Uploader;
     private final FastApiClient fastApiClient;
+    private final DocumentStatusService documentStatusService;
 
     @Transactional
     @Override
@@ -48,7 +50,7 @@ public class ResumeServiceImpl implements ResumeService {
         fastApiClient.triggerAnalysis(
                 document.getDocumentId(),
                 FileType.RESUME.name(),
-                () -> markDocumentFailed(document.getDocumentId(), "FastAPI 분석 트리거 실패")
+                () -> documentStatusService.markFailed(document.getDocumentId(), "FastAPI 분석 트리거 실패")
         );
 
         return new ResumeDTO.ResponseUpload(
@@ -83,7 +85,7 @@ public class ResumeServiceImpl implements ResumeService {
         fastApiClient.triggerAnalysis(
                 document.getDocumentId(),
                 FileType.COVER_LETTER.name(),
-                () -> markDocumentFailed(document.getDocumentId(), "FastAPI 분석 트리거 실패")
+                () -> documentStatusService.markFailed(document.getDocumentId(), "FastAPI 분석 트리거 실패")
         );
 
         return new ResumeDTO.ResponseCoverLetter(
@@ -92,14 +94,5 @@ public class ResumeServiceImpl implements ResumeService {
                 document.getFileType().name(),
                 document.getCreatedAt()
         );
-    }
-
-    @Transactional
-    @Override
-    public void markDocumentFailed(UUID documentId, String errorMessage) {
-        documentRepository.findById(documentId).ifPresent(doc -> {
-            doc.markFailed(errorMessage);
-            log.warn("[분석 실패 마킹] documentId: {}, 원인: {}", documentId, errorMessage);
-        });
     }
 }

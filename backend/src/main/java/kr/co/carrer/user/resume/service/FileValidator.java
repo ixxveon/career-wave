@@ -26,6 +26,7 @@ public class FileValidator {
 
     public void validate(MultipartFile file) {
         validateFileSize(file);
+        validateExtension(file);
         validateMimeType(file);
     }
 
@@ -34,11 +35,14 @@ public class FileValidator {
         if (originalName == null || !originalName.contains(".")) {
             throw new CustomException(ResumeErrorCode.INVALID_FILE_TYPE);
         }
-        String extension = originalName.substring(originalName.lastIndexOf('.') + 1).toLowerCase();
+        return originalName.substring(originalName.lastIndexOf('.') + 1).toLowerCase();
+    }
+
+    private void validateExtension(MultipartFile file) {
+        String extension = extractExtension(file);
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
             throw new CustomException(ResumeErrorCode.INVALID_FILE_TYPE);
         }
-        return extension;
     }
 
     private void validateFileSize(MultipartFile file) {

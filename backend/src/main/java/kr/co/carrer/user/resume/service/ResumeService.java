@@ -10,6 +10,4 @@ public interface ResumeService {
     ResumeDTO.ResponseUpload uploadResume(UUID memberId, MultipartFile file);
 
     ResumeDTO.ResponseCoverLetter submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto);
-
-    void markDocumentFailed(UUID documentId, String errorMessage);
 }
