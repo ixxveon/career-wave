@@ -4,6 +4,7 @@ import { LockKeyhole, Network, Plus, ShieldCheck, Trash2, UserCheck } from 'luci
 import { adminSession } from '../../../api/admin/adminAuthApi';
 import {
   ADMIN_ROLE,
+  ACL_RISK_LEVEL,
   ADMIN_MANAGEMENT_ERROR_CODE,
   createAdminAccount as createAdminAccountRequest,
   createAdminAclRule,
@@ -18,6 +19,7 @@ import {
   updateAdminAclEnabled,
   updateAdminRole,
   updateAdminStatus,
+  getAclRiskLevel,
 } from '../../../api/admin/adminManagementApi';
 import type {
   AdminAccount as AdminAccountResponse,
@@ -213,14 +215,14 @@ const isValidCidr = (value: string) => {
   });
 };
 
-const getAclRiskMeta = (cidr: string) => {
-  const size = Number(cidr.split('/')[1] ?? 32);
+const getAclRiskMeta = (cidr?: string | null) => {
+  const riskLevel = getAclRiskLevel(cidr);
 
-  if (size === 32) {
+  if (riskLevel === ACL_RISK_LEVEL.LOW) {
     return { label: '고정 IP', tone: 'low' as const };
   }
 
-  if (size === 24) {
+  if (riskLevel === ACL_RISK_LEVEL.MEDIUM) {
     return { label: '제한 대역', tone: 'medium' as const };
   }
 

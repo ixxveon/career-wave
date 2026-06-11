@@ -26,6 +26,11 @@ vi.mock('../../../api/admin/adminManagementApi', () => ({
     CS: 'CS',
     BACKEND: 'BACKEND',
   },
+  ACL_RISK_LEVEL: {
+    LOW: 'LOW',
+    MEDIUM: 'MEDIUM',
+    HIGH: 'HIGH',
+  },
   ADMIN_MANAGEMENT_ERROR_CODE: {
     UNAUTHORIZED: 'UNAUTHORIZED',
     FORBIDDEN: 'FORBIDDEN',
@@ -47,6 +52,16 @@ vi.mock('../../../api/admin/adminManagementApi', () => ({
     if (error.code === 'MASTER_ROLE_REQUIRED') return '마스터 관리자만 수행할 수 있는 작업입니다.';
     if (error.code === 'FORBIDDEN') return '관리자 관리 권한이 없습니다.';
     return error.message ?? '요청을 처리할 수 없습니다.';
+  },
+  getAclRiskLevel: (cidr: unknown) => {
+    if (typeof cidr !== 'string' || cidr.trim() === '') return 'HIGH';
+    const [, suffix] = cidr.split('/');
+    if (suffix == null || suffix.trim() === '') return 'HIGH';
+    const cidrSuffix = Number(suffix);
+    if (!Number.isInteger(cidrSuffix)) return 'HIGH';
+    if (cidrSuffix === 32) return 'LOW';
+    if (cidrSuffix === 24) return 'MEDIUM';
+    return 'HIGH';
   },
 }));
 
@@ -229,5 +244,31 @@ describe('AdminManagementPage master-only controls', () => {
     await waitFor(() => expect(getBackendRoleSelect(container).disabled).toBe(true));
     expect(getCreateAdminButton(container).disabled).toBe(true);
     getAclInputs(container).forEach((input) => expect(input.disabled).toBe(true));
+  });
+
+  it('renders ACL rows safely when CIDR is malformed', async () => {
+    adminSession.setRole(ADMIN_ROLE.MASTER);
+    adminManagementApiMock.getAdminAclRules.mockResolvedValueOnce({
+      items: [
+        {
+          id: 'ACL-BAD',
+          label: 'Malformed Network',
+          cidr: undefined,
+          note: 'Malformed allowlist',
+          enabled: true,
+          riskLevel: 'HIGH',
+          updatedAt: '2026.06.09 09:00:00',
+        },
+      ],
+      page: 1,
+      size: 3,
+      totalItems: 1,
+      totalPages: 1,
+    });
+
+    const { findByText } = renderPage();
+
+    expect(await findByText('Malformed Network')).toBeTruthy();
+    expect(await findByText('넓은 대역')).toBeTruthy();
   });
 });

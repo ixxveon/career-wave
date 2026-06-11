@@ -661,6 +661,8 @@
 | `createdAt` | `string` | Y | `ip_acl.created_at` | 생성 시각 |
 | `updatedAt` | `string` | Y | `ip_acl.updated_at` | 수정 시각 |
 
+> Boundary: 위 필드는 Spring Boot가 FastAPI/프론트엔드 게이트웨이에 제공하는 raw API DTO 계약이다. 프론트엔드 API wrapper는 이 응답을 `AdminAclRule` public type으로 정규화하며, `ipAclId -> id`, `ipRange -> cidr`, `isEnabled -> enabled`, `description -> note`로 매핑한다. 화면 계층과 페이지 테스트는 raw DTO 대신 정규화된 public type을 사용한다.
+
 ### 6.8 `AdminAclDTO.ResponseList`
 
 | Field | Type | Required | ERD 컬럼 | Description |
