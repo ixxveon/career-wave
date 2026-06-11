@@ -1,11 +1,11 @@
 package kr.co.carrer.user.resume.service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Map;
@@ -23,14 +23,20 @@ public class FastApiClient {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(3);
 
+    private WebClient webClient;
+
+    @PostConstruct
+    void init() {
+        this.webClient = webClientBuilder.baseUrl(fastApiBaseUrl).build();
+    }
+
     /**
      * FastAPI 분석 트리거 비동기 호출.
      * 실패 시 document.status = FAILED 마킹을 위해 콜백을 받는다.
      */
     public void triggerAnalysis(UUID documentId, String fileType, Runnable onFailure) {
-        webClientBuilder.build()
-                .post()
-                .uri(fastApiBaseUrl + "/api/v1/analyze")
+        webClient.post()
+                .uri("/api/v1/analyze")
                 .bodyValue(Map.of(
                         "documentId", documentId.toString(),
                         "fileType", fileType
