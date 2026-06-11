@@ -53,23 +53,33 @@ public class AdminLoginServiceImpl implements AdminLoginService {
 
         admin.updateLastLoginAt(Instant.now());
 
+        String adminId = String.valueOf(admin.getAdminId());
+        String adminRole = admin.getAdminRole().name();
+        Duration accessTtl = Duration.ofMillis(jwtProperties.getAdmin().getAccessExpiration());
+
+        // 단일 세션 정책: 기존 세션의 access token을 blacklist 등록 후 전체 삭제
+        refreshTokenStore.getAllSessionIds(AccountType.ADMIN, adminId)
+                .forEach(existingSessionId -> {
+                    String expiredJti = refreshTokenStore.getAndDeleteAccessJti(AccountType.ADMIN, adminId, existingSessionId);
+                    if (expiredJti != null) tokenBlacklistStore.add(expiredJti, accessTtl);
+                });
+        refreshTokenStore.deleteAll(AccountType.ADMIN, adminId);
+
         String accessToken = jwtTokenProvider.createAccessToken(
-                String.valueOf(admin.getAdminId()),
-                AccountType.ADMIN,
-                "ADMIN",
-                admin.getAdminRole().name()
+                adminId, AccountType.ADMIN, "ADMIN", adminRole
         );
 
-        String adminId = String.valueOf(admin.getAdminId());
         String sessionId = UUID.randomUUID().toString();
         String refreshToken = jwtTokenProvider.createRefreshToken(
-                adminId, AccountType.ADMIN, admin.getAdminRole().name(), sessionId
+                adminId, AccountType.ADMIN, adminRole, sessionId
         );
 
-        // 단일 세션 정책: 기존 admin 세션 전부 삭제 후 새 세션 저장
-        refreshTokenStore.deleteAll(AccountType.ADMIN, adminId);
         refreshTokenStore.save(AccountType.ADMIN, adminId, sessionId,
                 refreshToken, Duration.ofMillis(jwtProperties.getAdmin().getRefreshExpiration()));
+
+        // access token jti 저장 — 다음 로그인 시 단일 세션 정책으로 blacklist 등록에 사용
+        String jti = jwtTokenProvider.extractJti(accessToken, AccountType.ADMIN);
+        refreshTokenStore.saveAccessJti(AccountType.ADMIN, adminId, sessionId, jti, accessTtl);
 
         setRefreshTokenCookie(response, refreshToken);
 
@@ -89,7 +99,6 @@ public class AdminLoginServiceImpl implements AdminLoginService {
 
         var claims = jwtTokenProvider.parse(refreshToken, AccountType.ADMIN);
         String subject = claims.getSubject();
-        String adminRole = claims.get("adminRole", String.class);
         String sessionId = claims.get("sessionId", String.class);
         if (sessionId == null) throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
 
@@ -106,10 +115,12 @@ public class AdminLoginServiceImpl implements AdminLoginService {
             throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         }
 
+        // adminRole은 DB 최신값 사용 — claim의 stale role 방지
+        String currentAdminRole = admin.getAdminRole().name();
         String newAccessToken = jwtTokenProvider.createAccessToken(
-                subject, AccountType.ADMIN, "ADMIN", adminRole);
+                subject, AccountType.ADMIN, "ADMIN", currentAdminRole);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(
-                subject, AccountType.ADMIN, adminRole, sessionId);
+                subject, AccountType.ADMIN, currentAdminRole, sessionId);
 
         refreshTokenStore.rotate(AccountType.ADMIN, subject, sessionId,
                 newRefreshToken, Duration.ofMillis(jwtProperties.getAdmin().getRefreshExpiration()));
