@@ -1,7 +1,7 @@
-package kr.co.carrer.user.jobNotice.repository;
+package kr.co.carrer.user.jobnotice.repository;
 
-import kr.co.carrer.user.jobNotice.entity.JobNotice;
-import kr.co.carrer.user.jobNotice.type.JobNoticeStatus;
+import kr.co.carrer.user.jobnotice.entity.JobNotice;
+import kr.co.carrer.user.jobnotice.type.JobNoticeStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

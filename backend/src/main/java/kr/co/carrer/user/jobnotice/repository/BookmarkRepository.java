@@ -1,6 +1,6 @@
-package kr.co.carrer.user.jobNotice.repository;
+package kr.co.carrer.user.jobnotice.repository;
 
-import kr.co.carrer.user.jobNotice.entity.Bookmark;
+import kr.co.carrer.user.jobnotice.entity.Bookmark;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
