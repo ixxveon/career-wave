@@ -19,49 +19,49 @@ const MOCK_ACCOUNTS: Record<string, {
   memberId: string;
   loginId: string;
   name: string;
-  memberType: 'USER' | 'COMPANY';
+  roleType: 'USER' | 'COMPANY';
   companyApprovalStatus: 'NONE' | 'APPROVED';
 }> = {
   testuser01: {
     memberId: 'mock-user-uuid-0001',
     loginId: 'testuser01',
     name: '테스트유저(구독없음)',
-    memberType: 'USER',
+    roleType: 'USER',
     companyApprovalStatus: 'NONE',
   },
   testuser02: {
     memberId: 'mock-user-uuid-0002',
     loginId: 'testuser02',
     name: '테스트유저(면접구독)',
-    memberType: 'USER',
+    roleType: 'USER',
     companyApprovalStatus: 'NONE',
   },
   testuser03: {
     memberId: 'mock-user-uuid-0003',
     loginId: 'testuser03',
     name: '테스트유저(서류구독)',
-    memberType: 'USER',
+    roleType: 'USER',
     companyApprovalStatus: 'NONE',
   },
   testuser04: {
     memberId: 'mock-user-uuid-0004',
     loginId: 'testuser04',
     name: '테스트유저(전체구독)',
-    memberType: 'USER',
+    roleType: 'USER',
     companyApprovalStatus: 'NONE',
   },
   testcompany01: {
     memberId: 'mock-company-uuid-0001',
     loginId: 'testcompany01',
     name: '테스트기업담당자',
-    memberType: 'COMPANY',
+    roleType: 'COMPANY',
     companyApprovalStatus: 'APPROVED',
   },
   admin: {
     memberId: 'mock-admin-uuid-0001',
     loginId: 'admin',
     name: '관리자',
-    memberType: 'USER',
+    roleType: 'USER',
     companyApprovalStatus: 'NONE',
   },
 };
@@ -122,7 +122,7 @@ export const memberHandlers = [
       message: '요청이 성공적으로 처리되었습니다.',
       data: {
         memberId: account.memberId,
-        memberType: account.memberType,
+        roleType: account.roleType,
         memberStatus: 'ACTIVE',
         companyApprovalStatus: account.companyApprovalStatus,
         restriction: null,

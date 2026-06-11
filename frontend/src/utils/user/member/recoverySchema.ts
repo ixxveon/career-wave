@@ -221,26 +221,26 @@ export function validateResetPassword(
 }
 
 export function toFindIdRequest(
-  memberType: 'company',
+  roleType: 'company',
   verificationToken: string,
   companyForm: Pick<CompanyFindIdForm, 'managerName' | 'businessNumber'>,
 ): FindIdRequest;
 export function toFindIdRequest(
-  memberType: 'user',
+  roleType: 'user',
   verificationToken: string,
 ): FindIdRequest;
 export function toFindIdRequest(
-  memberType: 'user' | 'company',
+  roleType: 'user' | 'company',
   verificationToken: string,
   companyForm?: Pick<CompanyFindIdForm, 'managerName' | 'businessNumber'>,
 ): FindIdRequest {
-  if (memberType === 'company') {
+  if (roleType === 'company') {
     if (!companyForm) {
       throw new Error('기업회원 아이디 찾기에는 담당자명과 사업자등록번호가 필요합니다.');
     }
 
     return {
-      memberType: MEMBER_TYPE.COMPANY,
+      roleType: MEMBER_TYPE.COMPANY,
       managerName: companyForm.managerName.trim(),
       businessNumber: normalizeBusinessNumber(companyForm.businessNumber),
       verificationToken: verificationToken.trim(),
@@ -248,35 +248,35 @@ export function toFindIdRequest(
   }
 
   return {
-    memberType: MEMBER_TYPE.USER,
+    roleType: MEMBER_TYPE.USER,
     verificationToken: verificationToken.trim(),
   };
 }
 
 export function toPasswordTokenRequest(
-  memberType: 'company',
+  roleType: 'company',
   form: Pick<CompanyFindPasswordForm, 'loginId'>,
   verificationToken: string,
   companyIdentity: Pick<CompanyFindPasswordForm, 'managerName' | 'businessNumber'>,
 ): PasswordTokenRequest;
 export function toPasswordTokenRequest(
-  memberType: 'user',
+  roleType: 'user',
   form: Pick<UserFindPasswordForm, 'loginId'>,
   verificationToken: string,
 ): PasswordTokenRequest;
 export function toPasswordTokenRequest(
-  memberType: 'user' | 'company',
+  roleType: 'user' | 'company',
   form: Pick<UserFindPasswordForm | CompanyFindPasswordForm, 'loginId'>,
   verificationToken: string,
   companyIdentity?: Pick<CompanyFindPasswordForm, 'managerName' | 'businessNumber'>,
 ): PasswordTokenRequest {
-  if (memberType === 'company') {
+  if (roleType === 'company') {
     if (!companyIdentity) {
       throw new Error('기업회원 비밀번호 찾기에는 담당자명과 사업자등록번호가 필요합니다.');
     }
 
     return {
-      memberType: MEMBER_TYPE.COMPANY,
+      roleType: MEMBER_TYPE.COMPANY,
       loginId: form.loginId.trim(),
       verificationToken: verificationToken.trim(),
       managerName: companyIdentity.managerName.trim(),
@@ -285,7 +285,7 @@ export function toPasswordTokenRequest(
   }
 
   return {
-    memberType: MEMBER_TYPE.USER,
+    roleType: MEMBER_TYPE.USER,
     loginId: form.loginId.trim(),
     verificationToken: verificationToken.trim(),
   };

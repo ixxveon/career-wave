@@ -81,7 +81,7 @@ export interface MemberSummary {
   memberId: string;
   loginId: string;
   name: string;
-  memberType: MemberType;
+  roleType: MemberType;
   memberStatus: MemberStatus;
   companyApprovalStatus: CompanyApprovalStatus;
   lastLoginAt: string | null;
@@ -99,7 +99,7 @@ export interface RestrictionSummary {
 
 export interface MemberStatusResponse {
   memberId: string;
-  memberType: MemberType;
+  roleType: MemberType;
   memberStatus: MemberStatus;
   companyApprovalStatus: CompanyApprovalStatus;
   restriction: RestrictionSummary | null;
@@ -108,7 +108,7 @@ export interface MemberStatusResponse {
 export interface LoginRequest {
   loginId: string;
   password: string;
-  memberType: MemberType;
+  roleType: MemberType;
 }
 
 export interface LoginResponse {
@@ -145,7 +145,7 @@ export interface UserRegisterRequest {
 
 export interface UserRegisterResponse {
   memberId: string;
-  memberType: 'USER';
+  roleType: 'USER';
   memberStatus: MemberStatus;
 }
 
@@ -165,7 +165,7 @@ export interface SocialRegisterCompletionRequest {
 
 export interface SocialRegisterCompletionResponse {
   memberId: string;
-  memberType: 'USER';
+  roleType: 'USER';
   memberStatus: MemberStatus;
   nextPath: string;
 }
@@ -197,7 +197,7 @@ export interface CompanyRegisterRequest {
 export interface CompanyRegisterResponse {
   memberId: string;
   companyProfileId: string;
-  memberType: 'COMPANY';
+  roleType: 'COMPANY';
   memberStatus: MemberStatus;
   companyApprovalStatus: CompanyApprovalStatus;
 }
@@ -234,7 +234,7 @@ export interface ConfirmVerificationResponse {
 }
 
 export interface FindIdRequest {
-  memberType: MemberType;
+  roleType: MemberType;
   verificationToken: string;
   managerName?: string;
   businessNumber?: string;
@@ -247,12 +247,12 @@ export interface FindIdResponse {
 
 export type PasswordTokenRequest =
   | {
-      memberType: typeof MEMBER_TYPE.USER;
+      roleType: typeof MEMBER_TYPE.USER;
       loginId: string;
       verificationToken: string;
     }
   | {
-      memberType: typeof MEMBER_TYPE.COMPANY;
+      roleType: typeof MEMBER_TYPE.COMPANY;
       loginId: string;
       verificationToken: string;
       managerName: string;

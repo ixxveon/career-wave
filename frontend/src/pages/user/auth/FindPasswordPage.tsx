@@ -13,8 +13,8 @@ import { RecoveryCodeField, RecoveryContactField } from '../../../components/use
 import '@/styles/user/auth/AuthPage.css';
 
 function FindPasswordPage() {
-  const { memberType } = useParams();
-  const isCompany = memberType === 'company';
+  const { roleType } = useParams();
+  const isCompany = roleType === 'company';
   const {
     userMethod,
     userForm,
