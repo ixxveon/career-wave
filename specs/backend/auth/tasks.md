@@ -73,21 +73,21 @@
 - [ ] logout 후 refresh token 재사용 → 401
 
 ## Phase 4: Security filter + 권한 처리
+> `TokenBlacklistStore` / logout endpoint는 Phase 3에서 구현 완료. Phase 4는 계정 상태 필터·권한 제어·me/status에 집중.
 - [ ] LoginAttemptStore (Redis 실패 카운트) + locked_until DB 저장 (5회→LOCKED+locked_until 15분)
 - [ ] 잠금 자동 복구 (locked_until 경과 시 ACTIVE 복구 + 카운트 초기화)
 - [ ] 계정 상태 검증 통합 (로그인/refresh/일반 authenticated API는 ACTIVE만 허용, 상태별 403/423)
-- [ ] TokenBlacklistStore (Redis, 로그아웃 전용) + Filter 연동
-- [ ] POST /api/v1/user/members/logout (refresh Redis key 삭제 + access jti blacklist, 비ACTIVE 회원도 허용)
+- [ ] JwtAuthenticationFilter ↔ TokenBlacklistStore 연동 확인 (Phase 3에서 구현한 store 기반 blacklist 조회 동작 검증)
 - [ ] ROLE_USER / ROLE_COMPANY 전용 API 접근 제어 (requestMatchers().hasRole())
 - [ ] GET /api/v1/user/members/me/status (suspend_histories 최근 이력 조인, AccountStatus 예외로 정지 회원도 접근 가능 확인)
 - [ ] 테스트: 상태별 차단 / 비ACTIVE 일반 API 403 / LOCKED 자동잠금 / 로그아웃 후 토큰 재사용 차단 / 정지 회원 me/status 접근 / 비ACTIVE logout 허용 / 권한 매트릭스
 
 ## Phase 5: Admin auth 연결
+> `POST /api/v1/admin/auth/logout`은 Phase 3에서 구현 완료. Phase 5는 단일 세션 정책 고도화·adminRole 권한·실패 잠금에 집중.
 - [ ] adminSecurityFilterChain (@Order(1), admin secret, hasRole("ADMIN"), addFilterBefore)
 - [ ] AdminLoginService (admins 조회·status 검증·last_login_ip 갱신·adminRole claim 포함)
 - [ ] POST /api/v1/admin/auth/login (응답에 adminRole 포함)
-- [ ] POST /api/v1/admin/auth/refresh (단일 세션 정책, HttpOnly cookie only)
-- [ ] POST /api/v1/admin/auth/logout + blacklist
+- [ ] POST /api/v1/admin/auth/refresh (단일 세션 정책 고도화, HttpOnly cookie only)
 - [ ] refreshToken Set-Cookie Path `/api/v1/admin/auth` 적용 및 삭제 시 동일 Path 사용
 - [ ] adminRole(MASTER/CS/BACKEND) 권한 표현식 + @PreAuthorize 적용 기반 마련
 - [ ] 관리자 실패 잠금(5회) 적용
