@@ -60,6 +60,21 @@ class FileValidatorTest {
     }
 
     @Test
+    @DisplayName("확장자를 .pdf로 위조한 EXE 파일 업로드 시 INVALID_FILE_TYPE 예외가 발생한다")
+    void validate_mimeTypeForgery_throwsException() {
+        // EXE 파일 시그니처(MZ 헤더)를 .pdf 확장자로 위장
+        byte[] exeHeader = new byte[]{0x4D, 0x5A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "malicious.pdf", "application/pdf", exeHeader
+        );
+
+        assertThatThrownBy(() -> fileValidator.validate(file))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(ResumeErrorCode.INVALID_FILE_TYPE));
+    }
+
+    @Test
     @DisplayName("유효한 PDF 확장자 파일의 extension을 올바르게 추출한다")
     void extractExtension_validPdf_returnsExtension() {
         MockMultipartFile file = new MockMultipartFile(
