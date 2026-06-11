@@ -90,7 +90,7 @@ Authorization: Bearer {accessToken}
 {
   "loginId": "career_user01",
   "password": "Password123!",
-  "memberType": "USER"
+  "roleType": "USER"
 }
 ```
 
@@ -98,7 +98,7 @@ Authorization: Bearer {accessToken}
 |-------|------|------|------|
 | `loginId` | `string` | Y | 로그인 아이디 |
 | `password` | `string` | Y | 비밀번호 |
-| `memberType` | `MemberType` | Y | 개인/기업 로그인 탭 값 |
+| `roleType` | `MemberType` | Y | 개인/기업 로그인 탭 값 |
 
 ### Response `200 OK`
 
@@ -113,7 +113,7 @@ Authorization: Bearer {accessToken}
       "memberId": "uuid-v4",
       "loginId": "career_user01",
       "name": "홍길동",
-      "memberType": "USER",
+      "roleType": "USER",
       "memberStatus": "ACTIVE",
       "companyApprovalStatus": "NONE",
       "lastLoginAt": "2026-05-31T12:30:00Z"
@@ -253,7 +253,7 @@ Authorization: Bearer {accessToken}
   "message": "회원가입이 완료되었습니다.",
   "data": {
     "memberId": "uuid-v4",
-    "memberType": "USER",
+    "roleType": "USER",
     "memberStatus": "ACTIVE"
   }
 }
@@ -307,7 +307,7 @@ Authorization: Bearer {accessToken}
   "data": {
     "memberId": "uuid-v4",
     "companyProfileId": "uuid-v4",
-    "memberType": "COMPANY",
+    "roleType": "COMPANY",
     "memberStatus": "ACTIVE",
     "companyApprovalStatus": "PENDING_REVIEW"
   }
@@ -366,7 +366,7 @@ Authorization: Bearer {accessToken}
 
 ```json
 {
-  "memberType": "USER",
+  "roleType": "USER",
   "verificationToken": "short-lived-token"
 }
 ```
@@ -375,7 +375,7 @@ Authorization: Bearer {accessToken}
 
 ```json
 {
-  "memberType": "COMPANY",
+  "roleType": "COMPANY",
   "managerName": "김담당",
   "businessNumber": "1234567890",
   "verificationToken": "short-lived-token"
@@ -408,7 +408,7 @@ Authorization: Bearer {accessToken}
 
 ```json
 {
-  "memberType": "USER",
+  "roleType": "USER",
   "loginId": "career_user01",
   "verificationToken": "short-lived-token"
 }
@@ -418,7 +418,7 @@ Authorization: Bearer {accessToken}
 
 ```json
 {
-  "memberType": "COMPANY",
+  "roleType": "COMPANY",
   "loginId": "company_hr01",
   "managerName": "김담당",
   "businessNumber": "1234567890",
@@ -521,7 +521,7 @@ refresh token은 HttpOnly cookie 우선, 불가 시 body로 전달한다.
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "memberId": "uuid-v4",
-    "memberType": "COMPANY",
+    "roleType": "COMPANY",
     "memberStatus": "ACTIVE",
     "companyApprovalStatus": "PENDING_REVIEW",
     "restriction": null
