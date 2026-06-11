@@ -27,16 +27,16 @@ const USER_ONLY_PATH_PREFIXES = [
   '/career-diagnosis',
 ] as const;
 
-export function isNextPathCompatible(nextPath: string, memberType: MemberType): boolean {
+export function isNextPathCompatible(nextPath: string, roleType: MemberType): boolean {
   const pathOnly = nextPath.split('?')[0].split('#')[0];
 
-  if (memberType === MEMBER_TYPE.USER) {
+  if (roleType === MEMBER_TYPE.USER) {
     return !COMPANY_ONLY_PATH_PREFIXES.some(
       (prefix) => pathOnly === prefix || pathOnly.startsWith(`${prefix}/`),
     );
   }
 
-  if (memberType === MEMBER_TYPE.COMPANY) {
+  if (roleType === MEMBER_TYPE.COMPANY) {
     return !USER_ONLY_PATH_PREFIXES.some(
       (prefix) => pathOnly === prefix || pathOnly.startsWith(`${prefix}/`),
     );
@@ -67,7 +67,7 @@ export function getLoginRouteDecision(response: LoginResponse): LoginRouteDecisi
     return { type: 'BLOCK', reason: 'RESTRICTED' };
   }
 
-  if (member.memberType === MEMBER_TYPE.COMPANY) {
+  if (member.roleType === MEMBER_TYPE.COMPANY) {
     const companyBlock = getCompanyBlockReason(member.companyApprovalStatus);
     if (companyBlock) return companyBlock;
     return { type: 'ALLOW', path: '/dashboard/company' };

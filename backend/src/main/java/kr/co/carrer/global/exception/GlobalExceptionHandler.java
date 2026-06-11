@@ -21,22 +21,24 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<Object>> handleCustomException(CustomException e) {
         BaseErrorCode errorCode = e.getErrorCode();
+        String codeName = errorCode.name();
 
         if (e.getCause() != null) {
             log.error(
                 "[비즈니스 예외 발생] 에러코드: {} | 사유: {} -> [하부 원인 예외]: {} (상세 메시지: {})",
-                errorCode.name(),
+                codeName,
                 e.getMessage(),
                 e.getCause().getClass().getSimpleName(),
                 e.getCause().getMessage()
             );
         } else {
-            log.warn("[비즈니스 제재/검증 실패] 에러코드: {} | 사유: {}", errorCode.name(), e.getMessage());
+            log.warn("[비즈니스 제재/검증 실패] 에러코드: {} | 사유: {}", codeName, e.getMessage());
         }
 
+        // 프론트엔드가 body.code 필드로 에러 종류를 판별하므로 enum name 포함
         return ResponseEntity
                 .status(errorCode.getStatus())
-                .body(ApiResponse.fail(errorCode.getStatus().value(), e.getMessage()));
+                .body(ApiResponse.fail(errorCode.getStatus().value(), e.getMessage(), codeName));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -128,7 +128,7 @@ export function useLoginForm() {
         return;
       }
 
-      if (response.member.memberType !== LOGIN_TAB_TO_MEMBER_TYPE[loginType]) {
+      if (response.member.roleType !== LOGIN_TAB_TO_MEMBER_TYPE[loginType]) {
         authSession.clear();
         setFieldErrors({ form: CROSS_TAB_ERROR_MESSAGES[loginType] });
         return;
@@ -144,7 +144,7 @@ export function useLoginForm() {
       // startsWith('/') && !startsWith('//') — //evil.com 같은 프로토콜 상대 URL 차단
       const nextPath = searchParams.get('next');
       const safePath = nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
-      const compatiblePath = safePath && isNextPathCompatible(safePath, response.member.memberType) ? safePath : null;
+      const compatiblePath = safePath && isNextPathCompatible(safePath, response.member.roleType) ? safePath : null;
       navigate(compatiblePath ?? decision.path, { replace: true });
     } catch (error) {
       if (!isMemberApiError(error)) {
