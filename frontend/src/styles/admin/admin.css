@@ -1118,6 +1118,7 @@ button {
 .memberFilter {
   padding: 20px;
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
 }
@@ -1134,9 +1135,14 @@ button {
   font-family: inherit;
 }
 
-.memberFilter input {
+.memberFilter input[type="text"] {
   flex: 1;
-  min-width: 240px;
+  min-width: 200px;
+}
+
+.memberFilter input[type="date"] {
+  flex: 0 1 150px;
+  min-width: 130px;
 }
 
 .memberFilter input:focus,

@@ -90,12 +90,11 @@ const isRefundPending = (p: Payment) => p.refundStatus === 'PENDING';
 
 function resolveErrorMsg(err: any, fallback: string): string {
   const status = err.response?.status;
-  if (status === 409) return '이미 처리된 환불 건입니다.';
-  if (status === 400) return '환불 조건을 충족하지 않는 건입니다.';
-  if (status === 404) return '결제 건을 찾을 수 없습니다.';
-  if (status === 500) return '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+  if (status === 409) return '이미 처리된 환불 건입니다. (409)';
+  if (status === 400) return '환불 조건을 충족하지 않는 건입니다. (400)';
+  if (status === 404) return '결제 건을 찾을 수 없습니다. (404)';
   if (!status)        return '네트워크 연결을 확인해주세요.';
-  return err.response?.data?.message || fallback;
+  return err.response?.data?.message || `${fallback} (${status})`;
 }
 
 // ── Toast ─────────────────────────────────────────────────────
