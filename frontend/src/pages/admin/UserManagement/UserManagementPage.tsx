@@ -21,10 +21,10 @@ const durationLabel: Record<SuspendDuration, string> = {
   THREE_DAYS: '3일', SEVEN_DAYS: '7일', THIRTY_DAYS: '30일', PERMANENT: '영구',
 };
 const memberStatusLabel: Record<MemberStatus, string> = {
-  ACTIVE: '정상', SUSPENDED: '정지', BANNED: '영구정지',
+  ACTIVE: '정상', SUSPENDED: '정지', BANNED: '영구정지', LOCKED: '잠금', WITHDRAWN: '탈퇴',
 };
 const memberStatusCls: Record<MemberStatus, string> = {
-  ACTIVE: 'normal', SUSPENDED: 'blinded', BANNED: 'dismissed',
+  ACTIVE: 'normal', SUSPENDED: 'blinded', BANNED: 'dismissed', LOCKED: 'pending', WITHDRAWN: 'dismissed',
 };
 const hrStatusLabel: Record<HrStatus, string> = {
   PENDING: '승인 대기', ACTIVE: '승인 완료', REMOVED: '반려',
@@ -354,6 +354,8 @@ export default function UserManagementPage() {
               <option value="ACTIVE">정상</option>
               <option value="SUSPENDED">정지</option>
               <option value="BANNED">영구정지</option>
+              <option value="LOCKED">잠금</option>
+              <option value="WITHDRAWN">탈퇴</option>
             </select>
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ maxWidth: 160 }} />
             <span style={{ fontSize: 13, color: '#7a8da4', fontWeight: 600 }}>~</span>
@@ -419,7 +421,7 @@ export default function UserManagementPage() {
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="tableBtn" onClick={() => setSelectedMember(m)}>상세보기</button>
-                          <button className="tableBtn tableBtn--danger" onClick={() => openSuspend(m)}>정지처리</button>
+                          <button className="tableBtn tableBtn--danger" onClick={() => openSuspend(m)} disabled={m.memberStatus === 'WITHDRAWN'}>정지처리</button>
                         </div>
                       </td>
                     </tr>
@@ -602,7 +604,7 @@ export default function UserManagementPage() {
               </div>
             </div>
             <div className="modalAction">
-              <button onClick={() => openSuspend(selectedMember)}>활동 정지</button>
+              <button onClick={() => openSuspend(selectedMember)} disabled={selectedMember?.memberStatus === 'WITHDRAWN'}>활동 정지</button>
               <button onClick={() => setSelectedMember(null)}>닫기</button>
             </div>
           </div>
