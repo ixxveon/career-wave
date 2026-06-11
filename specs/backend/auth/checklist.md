@@ -42,7 +42,7 @@
 
 ## 프론트 연동 / 도구
 - [ ] FE api-schema와 응답 필드명(camelCase) 일치
-- [ ] 사용자 로그인 요청의 `memberType`은 필수이며 FE LoginRequest / `useLogin.ts` / MSW `memberHandlers.ts`와 일치
+- [ ] 사용자 로그인 요청의 `roleType`은 필수이며 FE LoginRequest / `useLogin.ts` / MSW `memberHandlers.ts`와 일치
 - [ ] Swagger에서 Bearer token Authorize로 인증 API 테스트 가능
 - [ ] 테스트 계정으로 전체 로그인→호출 플로우 검증
 
