@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BarChart3, Building2, CalendarDays, Download, Search, SlidersHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -10,8 +10,25 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { careerHistoryApi } from '../../../api/user/careerHistoryApi';
+import { careerHistoryApi, CareerHistory } from '../../../api/user/careerHistoryApi';
 import '@/styles/user/careerDiagnosis/CareerDiagnosis.css';
+
+interface GrowthTrendPoint {
+  label: string;
+  score: number;
+  company: string;
+  type: string;
+}
+
+interface CompetencyReport {
+  id: string;
+  documentScore: number;
+  interviewScore: number;
+  totalScore: number;
+  weaknesses: string[];
+  priorityTargets: string[];
+  growthTrend: Record<string, GrowthTrendPoint[]>;
+}
 
 const filters = ['전체', '기술면접', '인성면접', '프로젝트면접'];
 const jobOptions = ['전체 직무', '백엔드 개발자', '프론트엔드 개발자', '풀스택 개발자', '서비스 기획자'];
@@ -22,14 +39,20 @@ const periodTabs = [
   { key: 'yearly', label: '연도별' },
 ];
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   CREATED: '기록 생성',
   ANALYZED: '분석 완료',
   COMPLETED: '로드맵 완료',
   ARCHIVED: '보관됨',
 };
 
-function GrowthTooltip({ active, payload, label }) {
+interface GrowthTooltipProps {
+  active?: boolean;
+  payload?: Array<{ payload: GrowthTrendPoint }>;
+  label?: string;
+}
+
+function GrowthTooltip({ active, payload, label }: GrowthTooltipProps): React.ReactElement | null {
   if (!active || !payload?.length) {
     return null;
   }
@@ -46,14 +69,14 @@ function GrowthTooltip({ active, payload, label }) {
   );
 }
 
-function DiagnosisHistoryPage() {
+function DiagnosisHistoryPage(): React.ReactElement {
   const [period, setPeriod] = useState('weekly');
   const [activeFilter, setActiveFilter] = useState('전체');
   const [companyName, setCompanyName] = useState('');
   const [practiceDate, setPracticeDate] = useState('');
   const [jobTitle, setJobTitle] = useState('전체 직무');
-  const [records, setRecords] = useState([]);
-  const [competency, setCompetency] = useState(null);
+  const [records, setRecords] = useState<CareerHistory[]>([]);
+  const [competency, setCompetency] = useState<CompetencyReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -73,8 +96,8 @@ function DiagnosisHistoryPage() {
     ])
       .then(([historyRecords, competencyReport]) => {
         if (!active) return;
-        setRecords(historyRecords);
-        setCompetency(competencyReport);
+        setRecords(historyRecords as CareerHistory[]);
+        setCompetency(competencyReport as CompetencyReport | null);
       })
       .catch(() => {
         if (active) setError('취업 준비 기록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
@@ -92,7 +115,7 @@ function DiagnosisHistoryPage() {
   const growthStats = useMemo(() => {
     const scores = records.map((record) => record.score);
     if (!scores.length) return [];
-    const latestDifference = records[0].score - records[0].previousScore;
+    const latestDifference = records[0].score - (records[0].previousScore ?? 0);
     return [
       { label: '최고 점수', value: `${Math.max(...scores)}점` },
       { label: '최저 점수', value: `${Math.min(...scores)}점` },
@@ -118,8 +141,8 @@ function DiagnosisHistoryPage() {
       <section className="insight-grid" aria-label="누적 성장 요약">
         <article>
           <span>최근 성장</span>
-          <strong>{records[0] ? `${records[0].score - records[0].previousScore >= 0 ? '+' : ''}${records[0].score - records[0].previousScore}점` : '-'}</strong>
-          <p>{records[0] ? `직전 면접 ${records[0].previousScore}점 -> 최근 면접 ${records[0].score}점` : '분석할 기록이 없습니다.'}</p>
+          <strong>{records[0] ? `${records[0].score - (records[0].previousScore ?? 0) >= 0 ? '+' : ''}${records[0].score - (records[0].previousScore ?? 0)}점` : '-'}</strong>
+          <p>{records[0] ? `직전 면접 ${records[0].previousScore ?? 0}점 -> 최근 면접 ${records[0].score}점` : '분석할 기록이 없습니다.'}</p>
         </article>
         <article>
           <span>반복 약점</span>
@@ -167,7 +190,7 @@ function DiagnosisHistoryPage() {
         {!loading && error && <div className="empty-state empty-state--error">{error}</div>}
         {!loading && !error && records.length === 0 && <div className="empty-state">조건에 맞는 취업 준비 기록이 없습니다.</div>}
         {!loading && !error && records.map((record) => {
-          const scoreDiff = record.score - record.previousScore;
+          const scoreDiff = record.score - (record.previousScore ?? 0);
 
           return (
             <article className="record-card" key={record.id}>
