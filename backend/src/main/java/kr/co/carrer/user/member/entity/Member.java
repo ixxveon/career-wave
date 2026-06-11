@@ -76,6 +76,7 @@ public class Member {
     public SubscriptionStatus getSubscriptionStatus() { return subscriptionStatus; }
     public Instant getLockedUntil() { return lockedUntil; }
     public Instant getLastLoginAt() { return lastLoginAt; }
+    public Instant getCreatedAt() { return createdAt; }
 
     // Setter (lastLoginAt 갱신용)
     public void updateLastLoginAt(Instant time) { this.lastLoginAt = time; }

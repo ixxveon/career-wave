@@ -1,10 +1,10 @@
 package kr.co.carrer.user.dashboard;
 
-import kr.co.carrer.admin.member.entity.Member;
-import kr.co.carrer.admin.member.repository.MemberRepository;
-import kr.co.carrer.admin.member.type.MemberStatus;
-import kr.co.carrer.admin.member.type.RoleType;
-import kr.co.carrer.admin.member.type.SubscriptionStatus;
+import kr.co.carrer.user.member.entity.Member;
+import kr.co.carrer.user.member.repository.UserMemberRepository;
+import kr.co.carrer.user.member.type.MemberStatus;
+import kr.co.carrer.user.member.type.RoleType;
+import kr.co.carrer.user.member.type.SubscriptionStatus;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.dashboard.dto.DashboardDTO;
 import kr.co.carrer.user.dashboard.entity.PersonalProfile;
@@ -21,16 +21,17 @@ import java.lang.reflect.Field;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class DashboardServiceTest {
+    class DashboardServiceTest {
 
     @Mock
-    private MemberRepository memberRepository;
+    private UserMemberRepository memberRepository;
 
     @Mock
     private PersonalProfileRepository personalProfileRepository;
@@ -52,8 +53,8 @@ class DashboardServiceTest {
         assertThat(response.loginId()).isEqualTo("user01");
         assertThat(response.email()).isEqualTo("user01@test.com");
         assertThat(response.name()).isEqualTo("김지원");
-        assertThat(response.phone()).isEqualTo("010-1234-5678");
-        assertThat(response.roleType()).isEqualTo(RoleType.ROLE_USER);
+        assertThat(response.phone()).isNull();
+        assertThat(response.roleType()).isEqualTo(RoleType.USER);
         assertThat(response.memberStatus()).isEqualTo(MemberStatus.ACTIVE);
         assertThat(response.subscriptionStatus()).isEqualTo(SubscriptionStatus.FREE);
         assertThat(response.createdAt()).isNotNull();
@@ -114,13 +115,11 @@ class DashboardServiceTest {
         setField(member, "email", "user01@test.com");
         setField(member, "password", "encoded-password");
         setField(member, "name", "김지원");
-        setField(member, "phone", "010-1234-5678");
-        setField(member, "roleType", RoleType.ROLE_USER);
+        setField(member, "roleType", RoleType.USER);
         setField(member, "memberStatus", MemberStatus.ACTIVE);
         setField(member, "subscriptionStatus", SubscriptionStatus.FREE);
-        setField(member, "warningCount", 0);
-        setField(member, "createdAt", ZonedDateTime.now());
-        setField(member, "updatedAt", ZonedDateTime.now());
+        setField(member, "createdAt", Instant.now());
+        setField(member, "updatedAt", Instant.now());
 
         return member;
     }

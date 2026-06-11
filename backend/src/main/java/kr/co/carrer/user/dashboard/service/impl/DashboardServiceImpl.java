@@ -1,15 +1,16 @@
 package kr.co.carrer.user.dashboard.service.impl;
 
-import kr.co.carrer.admin.member.entity.Member;
-import kr.co.carrer.admin.member.repository.MemberRepository;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.user.dashboard.dto.DashboardDTO;
 import kr.co.carrer.user.dashboard.entity.PersonalProfile;
 import kr.co.carrer.user.dashboard.repository.PersonalProfileRepository;
 import kr.co.carrer.user.dashboard.service.DashboardService;
+import kr.co.carrer.user.member.entity.Member;
+import kr.co.carrer.user.member.repository.UserMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.time.ZoneId;
 
 import java.net.URI;
 import java.util.UUID;
@@ -18,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
-    private final MemberRepository memberRepository;
+    private final UserMemberRepository memberRepository;
     private final PersonalProfileRepository personalProfileRepository;
 
     @Override
@@ -32,11 +33,12 @@ public class DashboardServiceImpl implements DashboardService {
                 member.getLoginId(),
                 member.getEmail(),
                 member.getName(),
-                member.getPhone(),
+                // TODO: user.member.Member에 phone 필드 또는 프로필 연락처 저장 위치 확정 후 매핑
+                null,
                 member.getRoleType(),
                 member.getMemberStatus(),
                 member.getSubscriptionStatus(),
-                member.getCreatedAt()
+                member.getCreatedAt().atZone(ZoneId.systemDefault())
         );
     }
 
@@ -63,37 +65,37 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private String extractGithubId(String githubUrl) {
-    if (githubUrl == null || githubUrl.isBlank()) {
-        return null;
-    }
-
-    try {
-        URI uri = URI.create(githubUrl.trim());
-
-        String host = uri.getHost();
-        if (host == null ||
-                (!host.equals("github.com")
-                        && !host.equals("www.github.com"))) {
+        if (githubUrl == null || githubUrl.isBlank()) {
             return null;
         }
 
-        String path = uri.getPath();
+        try {
+            URI uri = URI.create(githubUrl.trim());
 
-        if (path == null || path.isBlank() || "/".equals(path)) {
-            return null;
-        }
-
-        String[] segments = path.split("/");
-
-        for (String segment : segments) {
-            if (!segment.isBlank()) {
-                return segment;
+            String host = uri.getHost();
+            if (host == null ||
+                    (!host.equals("github.com")
+                            && !host.equals("www.github.com"))) {
+                return null;
             }
-        }
 
-        return null;
-    } catch (Exception e) {
-        return null;
+            String path = uri.getPath();
+
+            if (path == null || path.isBlank() || "/".equals(path)) {
+                return null;
+            }
+
+            String[] segments = path.split("/");
+
+            for (String segment : segments) {
+                if (!segment.isBlank()) {
+                    return segment;
+                }
+            }
+
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
     }
-}
 }

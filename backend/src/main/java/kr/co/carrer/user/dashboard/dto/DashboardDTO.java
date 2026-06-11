@@ -1,9 +1,9 @@
 package kr.co.carrer.user.dashboard.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import kr.co.carrer.admin.member.type.MemberStatus;
-import kr.co.carrer.admin.member.type.RoleType;
-import kr.co.carrer.admin.member.type.SubscriptionStatus;
+import kr.co.carrer.user.member.type.MemberStatus;
+import kr.co.carrer.user.member.type.RoleType;
+import kr.co.carrer.user.member.type.SubscriptionStatus;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
