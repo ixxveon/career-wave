@@ -317,8 +317,6 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 |-----------|------|-----------|
 | `INVALID_FILE_SIZE` | 400 | 파일 크기 10MB 초과 |
 | `INVALID_FILE_TYPE` | 400 | PDF·DOC·DOCX 외 확장자 |
-| `INVALID_CONTENT_COUNT` | 400 | 문항 수 범위(1~5) 위반 |
-| `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 |
 | `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId |
 | `DOCUMENT_ACCESS_DENIED` | 403 | 본인 소유가 아닌 문서 접근 (IDOR) |
 | `FEEDBACK_PARSE_ERROR` | 500 | feedback_text JSON 역직렬화 실패 (FastAPI 응답 구조 변경 등) |
