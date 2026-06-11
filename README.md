@@ -100,7 +100,13 @@ cd backend
 
 ## 테스트 계정
 
-로컬 DB 시드 데이터는 `backend/seed-local.sql`을 참고하세요.
+로컬 DB에 테스트 데이터를 넣으려면 아래 명령어를 실행하세요.
+
+```bash
+psql -U careerwave -d careerwave -f backend/src/main/resources/db/seed-local.sql
+```
+
+> 재실행해도 안전합니다 (기존 데이터 DELETE 후 재삽입).
 
 | 아이디 | 비밀번호 | roleType | 설명 |
 | :--- | :--- | :--- | :--- |
