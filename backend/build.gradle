@@ -46,7 +46,7 @@ dependencies {
     implementation 'software.amazon.awssdk:s3:2.25.60'
 
     // Apache Tika (MIME type 기반 파일 검증)
-    implementation 'org.apache.tika:tika-core:2.9.2'
+    implementation 'org.apache.tika:tika-core:3.2.2'
 
     // WebClient (FastAPI 분석 트리거 비동기 호출)
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
