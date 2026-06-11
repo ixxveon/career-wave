@@ -24,53 +24,52 @@
 - [x] FE LoginRequest / `useLogin.ts` / MSW `memberHandlers.ts`의 `roleType` 전송 계약 확인 ← PR #345
 - [x] 통합 테스트: 토큰 없음→401, 유효 토큰→200, 로그인 성공→accessToken 발급, `roleType` 누락/오류 검증
 
-## Phase 3: Refresh token 저장 / 재발급 + Logout + Blacklist (이번 PR)
+## Phase 3: Refresh token 저장 / 재발급 + Logout + Blacklist ✅ PR #361
 
 ### PR #323 이월 항목 (선처리)
-- [ ] `Admin.java` — `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 추가
-- [ ] `UserLoginServiceImpl` — LOCKED 자동 복구 시 `member.setMemberStatus(ACTIVE)` + DB 저장(dirty checking)
-- [ ] `UserLoginServiceImpl` — `resolveCompanyApprovalStatus()` 중복 호출 제거 (login()·validateAccountStatus() 각 1회씩 호출 중)
+- [x] `Admin.java` — `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 추가
+- [x] `UserLoginServiceImpl` — LOCKED 자동 복구 시 `member.recoverFromLock()` → DB 저장(dirty checking)
+- [x] `UserLoginServiceImpl` — `resolveCompanyApprovalStatus()` 중복 호출 제거
 
 ### 인프라
-- [ ] `build.gradle` — `spring-boot-starter-data-redis` 의존성 추가
-- [ ] `application.yml` / `application-local.yml` — Redis 설정 추가
-- [ ] `auth/store/` 패키지 생성
+- [x] `build.gradle` — `spring-boot-starter-data-redis` 의존성 추가
+- [x] `application.yml` / `application-local.yml` — Redis 설정 추가
+- [x] `auth/store/` 패키지 생성
 
 ### JwtTokenProvider 개선 (스펙 누락 + 버그 수정)
-- [ ] **[Issue #339] roleType claim 형식 통일** — `USER`/`COMPANY`/`ADMIN` (ROLE_ prefix 없이 저장, AuthPrincipal에서만 부여)
-  - `UserAuthController.refresh()` / `AdminAuthController.refresh()` 에서 `ROLE_` prefix 제거
-  - 로그인·refresh·AuthPrincipal 모두 동일 형식 보장 테스트 추가
-- [ ] refresh token에 `sessionId` claim 추가 (UUID, key 조합용)
-- [ ] access/refresh token에 `aud` claim 추가 — "user" / "admin" (교차 사용 차단)
-- [ ] `parse()` 시 `aud` claim 검증 적용
-- [ ] clock skew leeway 적용 (30~60초)
-- [ ] `AuthErrorCode` — `AUTH_REFRESH_REUSE_DETECTED` (401) 추가
+- [x] **[Issue #339] roleType claim 형식 통일** — `USER`/`COMPANY`/`ADMIN` (ROLE_ prefix 없이 저장, AuthPrincipal에서만 부여)
+- [x] refresh token에 `sessionId` claim 추가 (UUID, key 조합용)
+- [x] access/refresh token에 `aud` claim 추가 — "user" / "admin" (교차 사용 차단)
+- [x] `parse()` 시 `aud` claim 검증 적용
+- [x] clock skew leeway 적용 (60초)
+- [x] `AuthErrorCode` — `AUTH_REFRESH_REUSE_DETECTED` (401) 추가
 
 ### RefreshTokenStore + Logout
-- [ ] `RefreshTokenStore` (Redis, key `refresh:{accountType}:{subjectId}:{sessionId}`, SHA-256 hash 저장 + TTL)
-- [ ] `TokenBlacklistStore` (Redis, key `blacklist:{jti}`, TTL = access token 잔여 수명)
-- [ ] User 로그인 시 RefreshTokenStore에 저장 (sessionId 포함)
-- [ ] Admin 로그인 시 RefreshTokenStore에 저장 (단일 세션 — 신규 로그인 시 기존 세션 전부 삭제)
-- [ ] `POST /api/v1/user/members/token/refresh` 개선 (Redis rotation + 재사용 탐지 + 비ACTIVE 차단)
-- [ ] `POST /api/v1/admin/auth/refresh` 개선 (Redis rotation + admins.status ACTIVE 검증)
-- [ ] rotation 적용 (같은 sessionId key를 새 hash로 교체, TTL 갱신)
-- [ ] 재사용 탐지 (key 없음/hash 불일치) → 해당 subject 전체 세션 폐기 + 401 REUSE_DETECTED
-- [ ] USER 5세션 상한 처리 (초과 시 가장 오래된 세션 key 삭제 + 해당 access jti blacklist 등록)
-- [ ] refreshToken Set-Cookie Path — user `/api/v1/user/members`, admin `/api/v1/admin/auth`
-- [ ] `POST /api/v1/user/members/logout` (refresh Redis key 삭제 + access jti blacklist, 비ACTIVE 허용)
-- [ ] `POST /api/v1/admin/auth/logout` (동일 처리)
-- [ ] `JwtAuthenticationFilter` — blacklist jti 조회 추가 (blacklist 등록된 jti → 401)
+- [x] `RefreshTokenStore` (Redis, key `refresh:{accountType}:{subjectId}:{sessionId}`, SHA-256 hash 저장 + TTL)
+- [x] `TokenBlacklistStore` (Redis, key `blacklist:{jti}`, TTL = access token 잔여 수명 + leeway)
+- [x] User 로그인 시 RefreshTokenStore에 저장 (sessionId 포함) + access jti 저장 (5세션 퇴출 시 blacklist 등록용)
+- [x] Admin 로그인 시 RefreshTokenStore에 저장 (단일 세션 — 신규 로그인 시 기존 세션 전부 삭제 + access jti blacklist)
+- [x] `POST /api/v1/user/members/token/refresh` 개선 (Redis rotation + 재사용 탐지 + 비ACTIVE 차단)
+- [x] `POST /api/v1/admin/auth/refresh` 개선 (Redis rotation + admins.status ACTIVE 검증 + adminRole DB 최신값 조회)
+- [x] rotation 적용 (같은 sessionId key를 새 hash로 교체, TTL 갱신)
+- [x] 재사용 탐지 (key 없음/hash 불일치) → 해당 subject 전체 세션 폐기 + 401 REUSE_DETECTED
+- [x] USER 5세션 상한 처리 (초과 시 가장 오래된 세션 key 삭제 + 해당 access jti blacklist 등록)
+- [x] refreshToken Set-Cookie Path — user `/api/v1/user/members`, admin `/api/v1/admin/auth`
+- [x] `POST /api/v1/user/members/logout` (refresh Redis key 삭제 + access jti blacklist + cookie Max-Age=0, 비ACTIVE 허용)
+- [x] `POST /api/v1/admin/auth/logout` (동일 처리)
+- [x] `JwtAuthenticationFilter` — blacklist jti 조회 추가 + jti null fail-closed
 
 ### 테스트
-- [ ] 재발급 성공 (rotation 확인)
-- [ ] body refreshToken 거부 (cookie only)
-- [ ] 만료·폐기 refresh → 401
-- [ ] 비ACTIVE 재발급 차단 → 401/403
-- [ ] 재사용 탐지 → 전체 세션 폐기 + 401
-- [ ] USER 5세션 상한 → 오래된 세션 삭제
-- [ ] ADMIN 단일 세션 → 신규 로그인 시 기존 세션 폐기
-- [ ] logout 후 access token(blacklist) 재사용 → 401
-- [ ] logout 후 refresh token 재사용 → 401
+- [x] 재발급 성공 (rotation 확인)
+- [x] body refreshToken 거부 (cookie only) — endpoint에 body 파라미터 없으므로 구조적으로 충족
+- [x] 만료·폐기 refresh → 401
+- [x] 비ACTIVE 재발급 차단 → 401
+- [x] 재사용 탐지 → 전체 세션 폐기 + 401
+- [ ] USER 5세션 상한 → 오래된 세션 삭제 ← 테스트 미작성
+- [ ] ADMIN 단일 세션 → 신규 로그인 시 기존 세션 폐기 ← 테스트 미작성
+- [x] logout 후 access token(blacklist) 재사용 → 401
+- [x] logout 후 refresh token 재사용 → 401 (재사용 탐지로 간접 커버)
+- [ ] admin logout 후 access token(blacklist) 재사용 → 401 ← 테스트 미작성
 
 ## Phase 4: Security filter + 권한 처리
 > `TokenBlacklistStore` / logout endpoint는 Phase 3에서 구현 완료. Phase 4는 계정 상태 필터·권한 제어·me/status에 집중.
@@ -86,16 +85,15 @@
 > `POST /api/v1/admin/auth/logout`은 Phase 3에서 구현 완료. Phase 5는 단일 세션 정책 고도화·adminRole 권한·실패 잠금에 집중.
 - [ ] adminSecurityFilterChain (@Order(1), admin secret, hasRole("ADMIN"), addFilterBefore)
 - [ ] AdminLoginService (admins 조회·status 검증·last_login_ip 갱신·adminRole claim 포함)
-- [ ] POST /api/v1/admin/auth/login (응답에 adminRole 포함)
-- [ ] POST /api/v1/admin/auth/refresh (단일 세션 정책 고도화, HttpOnly cookie only)
-- [ ] refreshToken Set-Cookie Path `/api/v1/admin/auth` 적용 및 삭제 시 동일 Path 사용
+- [x] POST /api/v1/admin/auth/login (응답에 adminRole 포함) ← PR #361 선처리
+- [x] POST /api/v1/admin/auth/refresh (단일 세션 정책, HttpOnly cookie only) ← PR #361 선처리
+- [x] refreshToken Set-Cookie Path `/api/v1/admin/auth` 적용 및 삭제 시 동일 Path 사용 ← PR #361 + 이번 PR
 - [ ] adminRole(MASTER/CS/BACKEND) 권한 표현식 + @PreAuthorize 적용 기반 마련
 - [ ] 관리자 실패 잠금(5회) 적용
 - [ ] 테스트: admin 로그인/재발급/권한 격리(USER 토큰으로 admin API→403) / adminRole별 접근 제어
 
 ## 별도 처리 — admin-frontend (Issue #281)
-- [ ] `AdminProtectedRoute` → `adminSession` token + `hasAdminRouteAccess()` 세부 role 검사로 교체
-  - Phase 5 admin auth 백엔드 완료 이후 별도 PR로 처리
+- [x] `AdminProtectedRoute` → `adminSession` token + `hasAdminRouteAccess()` 세부 role 검사로 교체 ← PR #384
 
 ## Phase 6: Swagger / Test / 문서 검증
 - [ ] SpringDoc Bearer SecurityScheme 등록
