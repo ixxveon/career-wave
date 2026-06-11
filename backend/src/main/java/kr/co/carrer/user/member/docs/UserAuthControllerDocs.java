@@ -14,7 +14,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "User Auth", description = "사용자 로그인 / 토큰 재발급 API")
+@Tag(name = "User Auth", description = "사용자 로그인 / 토큰 재발급 / 로그아웃 API")
 public interface UserAuthControllerDocs {
 
     @Operation(summary = "사용자 로그인",
@@ -44,4 +44,13 @@ public interface UserAuthControllerDocs {
                             value = "{\"success\":false,\"statusCode\":401,\"message\":\"유효하지 않은 리프레시 토큰입니다.\",\"code\":\"AUTH_REFRESH_INVALID\"}")))
     })
     ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response);
+
+    @Operation(summary = "사용자 로그아웃",
+            description = "refresh Redis key 삭제 + access token jti blacklist 등록. " +
+                    "비ACTIVE 회원도 허용.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+            @ApiResponse(responseCode = "401", description = "유효한 access token 없음")
+    })
+    ResponseEntity<?> logout(HttpServletRequest request);
 }

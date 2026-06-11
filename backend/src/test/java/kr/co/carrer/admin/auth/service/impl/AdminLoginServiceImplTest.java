@@ -12,6 +12,8 @@ import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
+import kr.co.carrer.auth.store.RefreshTokenStore;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +36,8 @@ class AdminLoginServiceImplTest {
 
     @Mock AdminRepository adminRepository;
     @Mock HttpServletResponse httpResponse;
+    @Mock RefreshTokenStore refreshTokenStore;
+    @Mock TokenBlacklistStore tokenBlacklistStore;
 
     private AdminLoginService service;
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -48,11 +52,11 @@ class AdminLoginServiceImplTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new AdminLoginServiceImpl(adminRepository, encoder, provider, props);
+        service = new AdminLoginServiceImpl(adminRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore);
     }
 
     private Admin createAdmin(AdminStatus status) throws Exception {
-        Admin a = new Admin();
+        Admin a = createAdminInstance();
         setField(a, "adminId", 1L);
         setField(a, "loginId", "admin@test.com");
         setField(a, "passwordHash", encoder.encode("adminpw123"));
@@ -60,6 +64,12 @@ class AdminLoginServiceImplTest {
         setField(a, "adminRole", AdminRole.MASTER);
         setField(a, "status", status);
         return a;
+    }
+
+    private Admin createAdminInstance() throws Exception {
+        java.lang.reflect.Constructor<Admin> ctor = Admin.class.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        return ctor.newInstance();
     }
 
     private void setField(Object obj, String fieldName, Object value) throws Exception {
