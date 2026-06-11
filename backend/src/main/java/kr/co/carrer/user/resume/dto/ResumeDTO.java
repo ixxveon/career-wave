@@ -1,9 +1,6 @@
 package kr.co.carrer.user.resume.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.UUID;
 
 public class ResumeDTO {
