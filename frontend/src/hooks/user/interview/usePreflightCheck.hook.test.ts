@@ -3,6 +3,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { usePreflightCheck } from './usePreflightCheck';
 
+vi.mock('../../../utils/user/member/authSession', () => ({
+  authSession: {
+    getAccessToken: vi.fn(() => 'mock-access-token'),
+    getRefreshToken: vi.fn(() => null),
+  },
+}));
+
 // ══════════════════════════════════════════════════
 // 마이크 권한 (checkMic)
 // ══════════════════════════════════════════════════

@@ -1,7 +1,12 @@
 import axios from 'axios';
 import axiosInstance from '../../utils/axiosInstance';
 import type { AxiosInstance, AxiosResponse } from 'axios';
-import type { ApiResponse, PagedResponse } from '../../types/admin/index';
+import {
+  mapPageResultToPagedResponse,
+  type ApiResponse,
+  type PageResult,
+  type PagedResponse,
+} from '../../types/admin/index';
 
 const ADMIN_MANAGEMENT_BASE_PATH = '/api/v1/admin';
 const adminHttpClient = axiosInstance as AxiosInstance;
@@ -34,19 +39,27 @@ export interface AdminAccount {
   email: string;
   role: AdminRole;
   scope: string;
-  ip: string;
+  ip: string | null;
   createdAt: string;
   lastLoginAt: string;
   status: AdminStatus;
 }
 
+export const ACL_RISK_LEVEL = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+} as const;
+
+export type AclRiskLevel = (typeof ACL_RISK_LEVEL)[keyof typeof ACL_RISK_LEVEL];
+
 export interface AdminAclRule {
-  ipAclId: string;
+  id: string;
   label: string;
-  ipRange: string;
-  isEnabled: boolean;
-  description: string;
-  createdAt: string;
+  cidr: string;
+  note: string;
+  enabled: boolean;
+  riskLevel: AclRiskLevel;
   updatedAt: string;
 }
 
@@ -83,6 +96,49 @@ export interface ApiErrorBody<TData = unknown> {
   data?: TData;
 }
 
+interface BackendAdminAccountDto {
+  adminId: number;
+  email: string;
+  name: string;
+  adminRole: AdminRole;
+  status: AdminStatus;
+  lastLoginAt: string | null;
+  lastLoginIp: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BackendAdminAclRuleDto {
+  ipAclId: number;
+  label: string;
+  ipRange: string;
+  isEnabled: boolean;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BackendRequestCreateAdmin {
+  email: string;
+  password: string;
+  name: string;
+  adminRole: AdminRole;
+}
+
+interface BackendRequestUpdateAdminRole {
+  adminRole: AdminRole;
+}
+
+interface BackendRequestCreateAclRule {
+  label: string;
+  ipRange: string;
+  description: string | null;
+}
+
+interface BackendRequestUpdateAclEnabled {
+  isEnabled: boolean;
+}
+
 export interface GetAdminAccountsParams {
   keyword?: string;
   role?: AdminRole | FilterSentinel;
@@ -113,12 +169,12 @@ export interface GetAdminAclRulesParams {
 
 export interface RequestCreateAclRule {
   label: string;
-  ipRange: string;
-  description: string;
+  cidr: string;
+  note: string;
 }
 
 export interface RequestUpdateAclEnabled {
-  isEnabled: boolean;
+  enabled: boolean;
 }
 
 export interface GetAdminAuditLogsParams {
@@ -258,6 +314,51 @@ function normalizeAllSentinel<TParams extends object>(params: TParams): Record<s
   );
 }
 
+function getAdminRoleScope(role: AdminRole): string {
+  switch (role) {
+    case ADMIN_ROLE.MASTER:
+      return '전체 권한 통제 및 보안 승인';
+    case ADMIN_ROLE.CS:
+      return '회원 문의, 신고, 1차 조치';
+    case ADMIN_ROLE.BACKEND:
+      return 'API, DB, 배포, 장애 대응';
+  }
+}
+
+function toAdminAccount(dto: BackendAdminAccountDto): AdminAccount {
+  return {
+    id: String(dto.adminId),
+    name: dto.name,
+    email: dto.email,
+    role: dto.adminRole,
+    scope: getAdminRoleScope(dto.adminRole),
+    ip: dto.lastLoginIp,
+    createdAt: dto.createdAt,
+    lastLoginAt: dto.lastLoginAt ?? '',
+    status: dto.status,
+  };
+}
+
+function toAdminAclRule(dto: BackendAdminAclRuleDto): AdminAclRule {
+  const cidrSuffix = Number(dto.ipRange.split('/')[1] ?? 32);
+  let riskLevel: AclRiskLevel = ACL_RISK_LEVEL.HIGH;
+  if (cidrSuffix === 32) {
+    riskLevel = ACL_RISK_LEVEL.LOW;
+  } else if (cidrSuffix === 24) {
+    riskLevel = ACL_RISK_LEVEL.MEDIUM;
+  }
+
+  return {
+    id: String(dto.ipAclId),
+    label: dto.label,
+    cidr: dto.ipRange,
+    note: dto.description ?? '',
+    enabled: dto.isEnabled,
+    riskLevel,
+    updatedAt: dto.updatedAt,
+  };
+}
+
 export const adminManagementApiClient = {
   get: <TData>(path: string, params?: Record<string, unknown>) =>
     adminHttpClient.get<TData>(`${ADMIN_MANAGEMENT_BASE_PATH}${path}`, { params }),
@@ -273,44 +374,72 @@ export const getAdminManagementSummary = () =>
 
 export const getAdminAccounts = (params: GetAdminAccountsParams = {}) =>
   adminManagementApiClient
-    .get<ApiResponse<PagedResponse<AdminAccount>>>('/admins', normalizeAllSentinel(params))
-    .then(unwrapApiResponse);
+    .get<ApiResponse<PageResult<BackendAdminAccountDto>>>('/admins', normalizeAllSentinel(params))
+    .then(unwrapApiResponse)
+    .then((page) => mapPageResultToPagedResponse(page))
+    .then((page) => ({
+      ...page,
+      items: page.items.map(toAdminAccount),
+    }));
 
 export const createAdminAccount = (body: RequestCreateAdmin) =>
-  adminManagementApiClient.post<ApiResponse<AdminAccount>, RequestCreateAdmin>('/admins', body).then(unwrapApiResponse);
+  adminManagementApiClient
+    .post<ApiResponse<BackendAdminAccountDto>, BackendRequestCreateAdmin>('/admins', {
+      email: body.email,
+      password: body.password,
+      name: body.name,
+      adminRole: body.role,
+    })
+    .then(unwrapApiResponse)
+    .then(toAdminAccount);
 
 export const updateAdminRole = (adminId: string, body: RequestUpdateAdminRole) =>
   adminManagementApiClient
-    .patch<ApiResponse<AdminAccount>, RequestUpdateAdminRole>(`/admins/${adminId}/role`, body)
-    .then(unwrapApiResponse);
+    .patch<ApiResponse<BackendAdminAccountDto>, BackendRequestUpdateAdminRole>(`/admins/${adminId}/role`, {
+      adminRole: body.role,
+    })
+    .then(unwrapApiResponse)
+    .then(toAdminAccount);
 
 export const updateAdminStatus = (adminId: string, body: RequestUpdateAdminStatus) =>
-  adminManagementApiClient.patch<ApiResponse<AdminAccount>, RequestUpdateAdminStatus>(
-    `/admins/${adminId}/status`,
-    body,
-  ).then(unwrapApiResponse);
+  adminManagementApiClient
+    .patch<ApiResponse<BackendAdminAccountDto>, RequestUpdateAdminStatus>(`/admins/${adminId}/status`, body)
+    .then(unwrapApiResponse)
+    .then(toAdminAccount);
 
 export const deleteAdminAccount = (adminId: string) =>
   adminManagementApiClient.delete<ApiResponse<null>>(`/admins/${adminId}`).then(unwrapApiResponse);
 
 export const getAdminAclRules = (params: GetAdminAclRulesParams = {}) =>
   adminManagementApiClient
-    .get<ApiResponse<PagedResponse<AdminAclRule>>>('/admin-acls', { ...params })
-    .then(unwrapApiResponse);
+    .get<ApiResponse<PageResult<BackendAdminAclRuleDto>>>('/admin-acls', { ...params })
+    .then(unwrapApiResponse)
+    .then((page) => mapPageResultToPagedResponse(page))
+    .then((page) => ({
+      ...page,
+      items: page.items.map(toAdminAclRule),
+    }));
 
 export const createAdminAclRule = (body: RequestCreateAclRule) =>
   adminManagementApiClient
-    .post<ApiResponse<AdminAclRule>, RequestCreateAclRule>('/admin-acls', body)
-    .then(unwrapApiResponse);
+    .post<ApiResponse<BackendAdminAclRuleDto>, BackendRequestCreateAclRule>('/admin-acls', {
+      label: body.label,
+      ipRange: body.cidr,
+      description: body.note || null,
+    })
+    .then(unwrapApiResponse)
+    .then(toAdminAclRule);
 
-export const updateAdminAclEnabled = (ipAclId: string, body: RequestUpdateAclEnabled) =>
-  adminManagementApiClient.patch<ApiResponse<AdminAclRule>, RequestUpdateAclEnabled>(
-    `/admin-acls/${ipAclId}/enabled`,
-    body,
-  ).then(unwrapApiResponse);
+export const updateAdminAclEnabled = (aclId: string, body: RequestUpdateAclEnabled) =>
+  adminManagementApiClient
+    .patch<ApiResponse<BackendAdminAclRuleDto>, BackendRequestUpdateAclEnabled>(`/admin-acls/${aclId}/enabled`, {
+      isEnabled: body.enabled,
+    })
+    .then(unwrapApiResponse)
+    .then(toAdminAclRule);
 
-export const deleteAdminAclRule = (ipAclId: string) =>
-  adminManagementApiClient.delete<ApiResponse<null>>(`/admin-acls/${ipAclId}`).then(unwrapApiResponse);
+export const deleteAdminAclRule = (aclId: string) =>
+  adminManagementApiClient.delete<ApiResponse<null>>(`/admin-acls/${aclId}`).then(unwrapApiResponse);
 
 export const getAdminAuditLogs = (params: GetAdminAuditLogsParams = {}) =>
   adminManagementApiClient

@@ -1,4 +1,6 @@
-function PrivacyPage(): JSX.Element {
+import React from 'react';
+
+function PrivacyPage(): React.ReactElement {
   return (
     <main className="cw-page cw-info-page">
       <div className="cw-info-page__inner">

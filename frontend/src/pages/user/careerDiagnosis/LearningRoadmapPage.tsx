@@ -1,11 +1,34 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, BookOpenCheck, CheckCircle2, Circle, FileText, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { careerHistoryApi } from '../../../api/user/careerHistoryApi';
 import '@/styles/user/careerDiagnosis/CareerDiagnosis.css';
 
-function LearningRoadmapPage() {
-  const [roadmap, setRoadmap] = useState(null);
+interface WeaknessItem {
+  title: string;
+  reason: string;
+  level: string;
+}
+
+interface RoadmapStep {
+  step: number;
+  label: string;
+  title: string;
+  description: string;
+  recommendedActions: string[];
+  done: boolean;
+}
+
+interface Roadmap {
+  sufficientData: boolean;
+  priorityTarget: string;
+  weaknesses: WeaknessItem[];
+  steps: RoadmapStep[];
+  resources: string[];
+}
+
+function LearningRoadmapPage(): React.ReactElement {
+  const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -13,7 +36,7 @@ function LearningRoadmapPage() {
     let active = true;
     careerHistoryApi.getRoadmap()
       .then((result) => {
-        if (active) setRoadmap(result);
+        if (active) setRoadmap(result as Roadmap | null);
       })
       .catch(() => {
         if (active) setError('학습 로드맵을 불러오지 못했습니다.');

@@ -27,14 +27,20 @@ jobs:
           java -version
           ./gradlew --version --no-daemon
 
-      - name: 빌드 및 테스트 실행
+      - name: 테스트 실행
         working-directory: backend
         run: ./gradlew test --no-daemon --stacktrace --info
         env:
           SPRING_PROFILES_ACTIVE: test
 
+      - name: 패키징 검증
+        working-directory: backend
+        run: ./gradlew bootJar --no-daemon
+        env:
+          SPRING_PROFILES_ACTIVE: test
+
   frontend:
-    name: Frontend Build
+    name: Frontend Typecheck & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -51,9 +57,17 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: 타입 검사
+        working-directory: frontend
+        run: npm run typecheck
+
       - name: 빌드
         working-directory: frontend
         run: npm run build
+
+      - name: 테스트
+        working-directory: frontend
+        run: npm test
 
   fastapi:
     name: FastAPI Lint & Check
@@ -73,6 +87,6 @@ jobs:
         working-directory: fastapi
         run: pip install -r requirements.txt
 
-      - name: 문법 검사
+      - name: 전체 모듈 문법 검사
         working-directory: fastapi
-        run: python -m py_compile main.py
+        run: python -m compileall .
