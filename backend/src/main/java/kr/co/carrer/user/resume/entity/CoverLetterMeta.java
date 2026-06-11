@@ -19,7 +19,7 @@ public class CoverLetterMeta {
     @Column(name = "letter_meta_id")
     private Long letterMetaId;
 
-    @Column(name = "document_id", nullable = false, columnDefinition = "UUID")
+    @Column(name = "document_id", nullable = false, unique = true, columnDefinition = "UUID")
     private UUID documentId;
 
     @Column(name = "company", nullable = false, length = 100)
