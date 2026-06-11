@@ -47,8 +47,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
-            } catch (JwtException | IllegalArgumentException ignored) {
-                // 유효하지 않은 토큰 — SecurityContext 비워두고 다음 필터로 (EntryPoint가 401 처리)
+            } catch (JwtException | IllegalArgumentException e) {
+                // EntryPoint가 request attribute를 읽어 로그에 원인을 남길 수 있도록 저장
+                request.setAttribute("jwtException", e.getMessage());
             }
         }
 
