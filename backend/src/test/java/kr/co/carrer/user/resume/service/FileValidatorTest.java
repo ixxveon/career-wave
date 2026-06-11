@@ -35,12 +35,12 @@ class FileValidatorTest {
 
     @Test
     @DisplayName("허용되지 않는 확장자 파일 업로드 시 INVALID_FILE_TYPE 예외가 발생한다")
-    void extractExtension_invalidExtension_throwsException() {
+    void validate_invalidExtension_throwsException() {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "malware.exe", "application/octet-stream", new byte[]{1, 2, 3}
         );
 
-        assertThatThrownBy(() -> fileValidator.extractExtension(file))
+        assertThatThrownBy(() -> fileValidator.validate(file))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(ResumeErrorCode.INVALID_FILE_TYPE));
