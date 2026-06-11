@@ -370,7 +370,7 @@ export default function AiMetricsPage() {
     },
   });
 
-  const deleteRagDocumentMutation = useMutation<null, Error, string>({
+  const deleteRagDocumentMutation = useMutation<null, Error, string, { previousRagDocuments?: RagDocumentMetric[] }>({
     mutationFn: async (documentId) => {
       const response = await aiMetricsApi.deleteRagDocument(documentId);
       if (!response.data.success) throw new Error(response.data.message ?? 'RAG 문서 삭제에 실패했습니다.');
@@ -1068,7 +1068,9 @@ export default function AiMetricsPage() {
                             </div>
                           </td>
                           <td>
-                            <span className={`aiOpsBadge ${getRagStatusTone(doc.status)}`}>{getRagStatusDisplayLabel(doc.status)}</span>
+                            <span className={`aiOpsBadge ${getRagStatusTone(doc.status)}`}>
+                              {doc.status === RAG_INDEX_STATUS.DELETING ? getRagStatusDisplayLabel(doc.status) : getRagStatusLabel(doc.status)}
+                            </span>
                           </td>
                           <td>
                             <button type="button" className="aiOpsTextButton">

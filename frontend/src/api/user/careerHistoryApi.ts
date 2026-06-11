@@ -41,7 +41,7 @@ export const careerHistoryApi = {
   getHistories: (params: CareerHistoryQuery = {}): Promise<CareerHistory[]> => {
     if (!useMockData) {
       const query = new URLSearchParams(params as Record<string, string>).toString();
-      return apiClient(`/career-histories${query ? `?${query}` : ''}`);
+      return apiClient<CareerHistory[]>(`/career-histories${query ? `?${query}` : ''}`) as Promise<CareerHistory[]>;
     }
 
     const { activityType = '전체', companyName = '', practiceDate = '', jobTitle = '전체 직무' } = params;
