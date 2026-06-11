@@ -1,6 +1,7 @@
 package kr.co.carrer.auth.jwt;
 
 import io.jsonwebtoken.Claims;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,17 +25,64 @@ class JwtTokenProviderTest {
 
     @Test
     void createAccessToken_USER_유효한_토큰_생성() {
-        String token = provider.createAccessToken("uuid-1234", AccountType.USER, "ROLE_USER", null);
+        String token = provider.createAccessToken("uuid-1234", AccountType.USER, "USER", null);
         assertThat(token).isNotBlank();
         assertThat(provider.validate(token, AccountType.USER)).isTrue();
     }
 
     @Test
     void createAccessToken_ADMIN_adminRole_claim_포함() {
-        String token = provider.createAccessToken("1", AccountType.ADMIN, "ROLE_ADMIN", "MASTER");
+        String token = provider.createAccessToken("1", AccountType.ADMIN, "ADMIN", "MASTER");
         Claims claims = provider.parse(token, AccountType.ADMIN);
         assertThat(claims.get("adminRole", String.class)).isEqualTo("MASTER");
-        assertThat(claims.get("roleType", String.class)).isEqualTo("ROLE_ADMIN");
+        assertThat(claims.get("roleType", String.class)).isEqualTo("ADMIN");
+    }
+
+    // ── Issue #339: roleType claim ROLE_ prefix 중복 방지 ───────────────────
+
+    @Test
+    void roleType_claim_ROLE_prefix_없이_저장_USER() {
+        // 로그인/refresh 모두 "USER" 저장, AuthPrincipal에서만 "ROLE_USER" 생성
+        String token = provider.createAccessToken("uuid-1", AccountType.USER, "USER", null);
+        Claims claims = provider.parse(token, AccountType.USER);
+        String roleType = claims.get("roleType", String.class);
+        assertThat(roleType).isEqualTo("USER");
+        assertThat(roleType).doesNotStartWith("ROLE_");
+    }
+
+    @Test
+    void roleType_claim_ROLE_prefix_없이_저장_COMPANY() {
+        String token = provider.createAccessToken("uuid-2", AccountType.COMPANY, "COMPANY", null);
+        Claims claims = provider.parse(token, AccountType.COMPANY);
+        String roleType = claims.get("roleType", String.class);
+        assertThat(roleType).isEqualTo("COMPANY");
+        assertThat(roleType).doesNotStartWith("ROLE_");
+    }
+
+    @Test
+    void roleType_claim_ROLE_prefix_없이_저장_ADMIN() {
+        String token = provider.createAccessToken("1", AccountType.ADMIN, "ADMIN", "MASTER");
+        Claims claims = provider.parse(token, AccountType.ADMIN);
+        String roleType = claims.get("roleType", String.class);
+        assertThat(roleType).isEqualTo("ADMIN");
+        assertThat(roleType).doesNotStartWith("ROLE_");
+    }
+
+    @Test
+    void AuthPrincipal이_ROLE_prefix_추가해_authority_생성() {
+        // claim "USER" → getAuthorities() = ["ROLE_USER"]
+        AuthPrincipal principal = new AuthPrincipal("uuid-1", AccountType.USER, "USER", null);
+        String authority = principal.getAuthorities().iterator().next().getAuthority();
+        assertThat(authority).isEqualTo("ROLE_USER");
+        assertThat(authority).doesNotStartWith("ROLE_ROLE_");
+    }
+
+    @Test
+    void AuthPrincipal이_ROLE_prefix_추가해_authority_생성_ADMIN() {
+        AuthPrincipal principal = new AuthPrincipal("1", AccountType.ADMIN, "ADMIN", "MASTER");
+        String authority = principal.getAuthorities().iterator().next().getAuthority();
+        assertThat(authority).isEqualTo("ROLE_ADMIN");
+        assertThat(authority).doesNotStartWith("ROLE_ROLE_");
     }
 
     @Test

@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import kr.co.carrer.admin.auth.docs.AdminAuthControllerDocs;
 import kr.co.carrer.admin.auth.service.AdminLoginService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 import java.util.Map;
 
+@Tag(name = "Admin Auth", description = "관리자 로그인 / 토큰 재발급 / 로그아웃 API")
 @RestController
 @RequestMapping("/api/v1/admin/auth")
 @RequiredArgsConstructor
