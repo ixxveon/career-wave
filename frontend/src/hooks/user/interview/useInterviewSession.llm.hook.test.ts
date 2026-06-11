@@ -7,7 +7,7 @@ import { useInterviewSession, LLM_FALLBACK_QUESTIONS } from './useInterviewSessi
 import { LLM_STREAM_TIMEOUT_MS } from '../../../constants/user/interview';
 
 // interviewSessionApi mock — sendTextAnswer가 즉시 resolve되도록
-vi.mock('../../api/interview', () => ({
+vi.mock('../../../api/user/interview', () => ({
   interviewSessionApi: {
     submitTextAnswer: vi.fn().mockResolvedValue({}),
     submitVoiceBlob:  vi.fn().mockResolvedValue({}),
