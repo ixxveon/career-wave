@@ -83,7 +83,6 @@ uvicorn main:app --reload --port 8001
 
 > **전제 조건**: JDK 21 이상이 설치되어 있어야 합니다.
 > Gradle toolchain이 Java 21을 사용하므로 JDK 21 미만 환경에서는 빌드가 실패할 수 있습니다.
-> 로컬 환경 세팅 상세는 [`backend/LOCAL_DEV_SETUP.md`](backend/LOCAL_DEV_SETUP.md)를 참고하세요.
 
 ```bash
 # 1. 환경 변수 파일 생성 (최초 1회)
