@@ -2,6 +2,7 @@ package kr.co.carrer.user.interview.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -22,5 +23,11 @@ public class InterviewFastApiClient {
     public void triggerReportGeneration(UUID sessionId) {
         log.info("FastAPI report generation triggered: sessionId={}", sessionId);
         // TODO: FastAPI 연동 시 실제 HTTP 호출로 교체
+    }
+
+    public void triggerSttPipeline(UUID sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal) {
+        log.info("FastAPI STT pipeline triggered: sessionId={}, questionOrder={}, chunkIndex={}, isFinal={}, size={}bytes",
+                sessionId, questionOrder, chunkIndex, isFinal, audioChunk.getSize());
+        // TODO: FastAPI 연동 시 실제 Multipart HTTP 호출로 교체
     }
 }

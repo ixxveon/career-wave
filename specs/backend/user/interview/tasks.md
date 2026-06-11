@@ -124,11 +124,11 @@
   - [x] FastAPI LLM 파이프라인 비동기 트리거 (트랜잭션 외부)
   - [x] 반환: `ResponseSubmitTextAnswer`
 
-- [ ] `submitVoiceChunk(UUID memberId, String sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal)`
-  - [ ] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-  - [ ] FastAPI STT 파이프라인으로 오디오 청크 비동기 전달 (트랜잭션 외부)
-  - [ ] `isFinal = true`이면 해당 질문 답변 완료 처리
-  - [ ] 반환: `ResponseSubmitVoiceChunk`
+- [x] `submitVoiceChunk(UUID memberId, String sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal)`
+  - [x] Content-Type 검증 — audio/webm, audio/mp4, audio/ogg만 허용 (`INTERVIEW_INVALID_AUDIO_FORMAT(400)`)
+  - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
+  - [x] FastAPI STT 파이프라인으로 오디오 청크 비동기 전달 (트랜잭션 외부)
+  - [x] 반환: `ResponseSubmitVoiceChunk`
 
 - [x] `endSession(UUID memberId, String sessionId)`
   - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
@@ -161,7 +161,7 @@
 - [x] `InterviewSessionController.java`
   - [x] `POST /api/v1/user/interview/sessions` — `@RequestBody @Valid RequestStartSession`
   - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/text` — `@RequestBody @Valid RequestSubmitTextAnswer`
-  - [ ] `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice` — `@RequestParam MultipartFile audioChunk` + 파라미터
+  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice` — `@RequestParam MultipartFile audioChunk` + 파라미터
   - [x] `POST /api/v1/user/interview/sessions/{sessionId}/end`
   - [x] 모든 메서드에 `@AuthenticationPrincipal AuthPrincipal` 적용
   - [x] Controller에서 `try-catch` 사용 금지
