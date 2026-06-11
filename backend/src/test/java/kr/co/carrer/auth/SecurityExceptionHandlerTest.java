@@ -57,6 +57,7 @@ class SecurityExceptionHandlerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.message").value("인증 정보가 없습니다."))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
     }
 
@@ -72,6 +73,7 @@ class SecurityExceptionHandlerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.message").value("인증 정보가 없습니다."))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
     }
 
