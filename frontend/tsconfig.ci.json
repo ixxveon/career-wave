@@ -1,17 +1,6 @@
 {
   "extends": "./tsconfig.json",
   "exclude": [
-    "node_modules",
-    "src/api/user/applicationApi.ts",
-    "src/api/user/careerHistoryApi.ts",
-    "src/api/user/reportExportApi.ts",
-    "src/hooks/user/member/useLoginForm.ts",
-    "src/pages/admin/AdminManagement/AdminManagementPage.test.tsx",
-    "src/pages/admin/AiMetrics/AiMetricsPage.tsx",
-    "src/pages/user/careerDiagnosis/ComprehensiveReportPage.tsx",
-    "src/pages/user/careerDiagnosis/DiagnosisDetailPage.tsx",
-    "src/pages/user/careerDiagnosis/DiagnosisHistoryPage.tsx",
-    "src/pages/user/careerDiagnosis/LearningRoadmapPage.tsx",
-    "src/pages/user/community/communityStorage.ts"
+    "node_modules"
   ]
 }
