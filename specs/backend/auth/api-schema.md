@@ -12,10 +12,10 @@
 
 **Request**
 ```json
-{ "loginId": "string", "password": "string", "memberType": "USER" }
+{ "loginId": "string", "password": "string", "roleType": "USER" }
 ```
 
-> `memberType`: 필수. `USER` / `COMPANY`
+> `roleType`: 필수. `USER` / `COMPANY`
 > 프론트 `LoginRequest`, `useLogin.ts`의 `toLoginRequest`, MSW `memberHandlers.ts`도 이 필드를 전송하도록 동기화한다.
 
 **Response 200**
@@ -30,7 +30,7 @@
       "memberId": "uuid",
       "loginId": "string",
       "name": "string",
-      "memberType": "USER",
+      "roleType": "USER",
       "memberStatus": "ACTIVE",
       "subscriptionStatus": "FREE",
       "companyApprovalStatus": "NONE",
@@ -96,7 +96,7 @@
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "memberId": "uuid",
-    "memberType": "USER",
+    "roleType": "USER",
     "memberStatus": "SUSPENDED",
     "companyApprovalStatus": "NONE",
     "restriction": {
@@ -119,7 +119,7 @@
 | 응답 필드 | 출처 |
 |---|---|
 | memberId | members.member_id |
-| memberType | members.role_type → `ROLE_USER`→`USER`, `ROLE_COMPANY`→`COMPANY` |
+| roleType | members.role_type → `USER`, `COMPANY` |
 | memberStatus | members.member_status |
 | companyApprovalStatus | hr_managers.hr_status → `PENDING_REVIEW` / `APPROVED` / `REJECTED`. ROLE_USER는 `NONE` |
 | restriction.restrictionType | members.member_status |
@@ -138,8 +138,10 @@
 
 **Request**
 ```json
-{ "email": "string", "password": "string" }
+{ "loginId": "string", "password": "string" }
 ```
+
+> `loginId`: 관리자 로그인 ID (이메일 형식 아님)
 
 **Response 200**
 ```json
@@ -149,12 +151,10 @@
   "message": "로그인되었습니다.",
   "data": {
     "accessToken": "eyJ...",
-    "admin": {
-      "adminId": 1,
-      "email": "string",
+    "adminInfo": {
+      "id": 1,
       "name": "string",
-      "adminRole": "MASTER",
-      "status": "ACTIVE"
+      "role": "MASTER"
     }
   }
 }
