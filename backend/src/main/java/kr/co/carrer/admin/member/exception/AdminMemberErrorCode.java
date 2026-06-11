@@ -2,9 +2,11 @@ package kr.co.carrer.admin.member.exception;
 
 import kr.co.carrer.global.exception.BaseErrorCode;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 @Getter
+@RequiredArgsConstructor
 public enum AdminMemberErrorCode implements BaseErrorCode {
 
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."),
@@ -20,9 +22,4 @@ public enum AdminMemberErrorCode implements BaseErrorCode {
 
     private final HttpStatus status;
     private final String message;
-
-    AdminMemberErrorCode(HttpStatus status, String message) {
-        this.status = status;
-        this.message = message;
-    }
 }

@@ -143,6 +143,8 @@ public class MemberDTO {
 - Request / Response는 Inner Class 사용을 우선한다.
 - DTO가 과도하게 커지거나 하위 기능이 명확히 분리되는 경우 `{Feature}DTO` 분리를 허용한다.
 - Entity를 API 응답으로 직접 반환하지 않는다.
+- DTO 클래스와 필드에는 `@Schema` 어노테이션으로 Swagger 설명을 추가한다.
+- Enum 타입 필드는 `allowableValues`로 허용 값을 명시한다.
 
 ---
 
