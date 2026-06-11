@@ -1,4 +1,4 @@
-# Implementation Plan: jobNotice
+﻿# Implementation Plan: jobNotice
 
 ## Summary
 
@@ -33,7 +33,7 @@ global/
 
 ## Phases
 
-- [ ] Phase 1: Entity — `job_notices`, `bookmarks` ERD 기준 엔티티와 Enum 매핑을 먼저 고정한다.
+- [x] Phase 1: Entity — `job_notices`, `bookmarks` ERD 기준 엔티티와 Enum 매핑을 먼저 고정한다.
 - [ ] Phase 2: Repository & QueryDSL — 공개 공고 조회, 동적 검색 조건, 북마크 존재 확인에 필요한 저장소 계약과 QueryDSL 쿼리를 정의한다.
 - [ ] Phase 3: Service — 공개 상태 필터링, Optional 인증 응답 계산, 북마크 비즈니스 규칙을 서비스 계층에 구현한다.
 - [ ] Phase 4: API — 사용자 JobNotice 조회/북마크 엔드포인트와 `ROLE_USER` 권한 정책을 API 계층에 반영한다.

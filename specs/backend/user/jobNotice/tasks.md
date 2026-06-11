@@ -1,16 +1,16 @@
-# Tasks: jobNotice
+﻿# Tasks: jobNotice
 
 > plan.md의 Phase와 1:1 대응한다.
 > 각 항목은 하나의 커밋 또는 PR 리뷰 단위로 쪼갤 수 있어야 한다.
 
 ## Phase 1 - Entity
 
-- [ ] `JobNotice.java` 엔티티를 ERD 컬럼 기준으로 작성한다.
-- [ ] `Bookmark.java` 엔티티를 ERD 컬럼 기준으로 작성한다.
-- [ ] `JobNoticeStatus.java` Enum을 작성한다.
-- [ ] `JobType.java` Enum을 작성한다.
-- [ ] `CompanySize.java` Enum을 작성한다.
-- [ ] `CareerLevel.java` Enum을 작성한다.
+- [x] `JobNotice.java` 엔티티를 ERD 컬럼 기준으로 작성한다.
+- [x] `Bookmark.java` 엔티티를 ERD 컬럼 기준으로 작성한다.
+- [x] `JobNoticeStatus.java` Enum을 작성한다.
+- [x] `JobType.java` Enum을 작성한다.
+- [x] `CompanySize.java` Enum을 작성한다.
+- [x] `CareerLevel.java` Enum을 작성한다.
 
 ## Phase 2 - Repository & QueryDSL
 
