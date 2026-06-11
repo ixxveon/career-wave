@@ -16,9 +16,14 @@ function ProtectedRoute() {
 
   useEffect(() => {
     if (status !== 'checking') return;
+    let cancelled = false;
 
     // Phase 3: accessToken이 없으면 HttpOnly cookie로 refresh를 시도한다.
-    probeAuth().then((ok) => setStatus(ok ? 'ok' : 'redirect'));
+    probeAuth().then((ok) => {
+      if (!cancelled) setStatus(ok ? 'ok' : 'redirect');
+    });
+
+    return () => { cancelled = true; };
   }, [status]);
 
   if (status === 'checking') return null;
