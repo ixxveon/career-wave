@@ -3,6 +3,8 @@ package kr.co.carrer.admin.member.docs;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import kr.co.carrer.admin.member.dto.HrManagerDTO;
 import kr.co.carrer.admin.member.dto.MemberDTO;
 import kr.co.carrer.global.response.ApiResponse;
@@ -28,8 +30,8 @@ public interface AdminMemberControllerDocs {
         @Parameter(description = "이름·이메일·로그인ID 통합 검색") @RequestParam(required = false) String keyword,
         @Parameter(description = "가입일 시작 (yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
         @Parameter(description = "가입일 종료 (yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-        @Parameter(description = "페이지 번호 (1-based)") @RequestParam(defaultValue = "1") int page,
-        @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size
+        @Parameter(description = "페이지 번호 (1-based)") @RequestParam(defaultValue = "1") @Min(1) int page,
+        @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     );
 
     @Operation(summary = "개인 회원 상세 조회")
@@ -50,8 +52,8 @@ public interface AdminMemberControllerDocs {
         @Parameter(description = "HR 담당자명·기업명·이메일 통합 검색") @RequestParam(required = false) String keyword,
         @Parameter(description = "가입일 시작 (yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
         @Parameter(description = "가입일 종료 (yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-        @Parameter(description = "페이지 번호 (1-based)") @RequestParam(defaultValue = "1") int page,
-        @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size
+        @Parameter(description = "페이지 번호 (1-based)") @RequestParam(defaultValue = "1") @Min(1) int page,
+        @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     );
 
     @Operation(summary = "기업 회원 상세 조회")

@@ -1,3 +1,10 @@
+/**
+ * [Transport 경계]
+ * user 도메인은 fetch를 사용한다. axios 인터셉터 대신 직접 retry/refresh 로직을
+ * 구현하여 멱등성 여부(allowRetry)를 호출자가 명시적으로 제어할 수 있게 한다.
+ * admin 도메인은 axiosInstance(utils/axiosInstance.ts)를 사용하며
+ * 인터셉터로 인증 헤더 주입과 401 처리를 중앙화한다.
+ */
 import { authSession } from '../../../utils/user/member/authSession';
 import { toMemberApiError } from '../../../utils/user/member/errorMapping';
 import type { TokenRefreshResponse } from '../../../types/user/member';
@@ -32,14 +39,9 @@ function redirectToLoginOnSessionExpired() {
 }
 
 async function requestAccessTokenRefresh(): Promise<string | null> {
-  const refreshToken = authSession.getRefreshToken();
-  const headers = new Headers({ 'Content-Type': 'application/json' });
-
   try {
     const response = await fetch(`${API_BASE_URL}/api/v1/user/members/token/refresh`, {
       method: 'POST',
-      headers,
-      body: refreshToken ? JSON.stringify({ refreshToken }) : undefined,
       credentials: 'include',
     });
 
@@ -53,10 +55,7 @@ async function requestAccessTokenRefresh(): Promise<string | null> {
 
     if (!tokenData?.accessToken) return null;
 
-    authSession.setTokens({
-      accessToken: tokenData.accessToken,
-      refreshToken: tokenData.refreshToken ?? refreshToken ?? undefined,
-    });
+    authSession.setAccessToken(tokenData.accessToken);
 
     return tokenData.accessToken;
   } catch {
@@ -80,6 +79,12 @@ async function requestWithAuthRetry(endpoint: string, init: RequestInit, auth: b
     ...init,
     headers: retryHeaders,
   });
+}
+
+/** HttpOnly cookie가 유효한지 확인한다. 새로고침 후 ProtectedRoute에서 사용. */
+export async function probeAuth(): Promise<boolean> {
+  const token = await requestAccessTokenRefresh();
+  return token !== null;
 }
 
 export async function memberApiClient<T>(endpoint: string, options: MemberApiOptions = {}): Promise<T> {

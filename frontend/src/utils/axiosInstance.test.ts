@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { type InternalAxiosRequestConfig } from 'axios';
 
-vi.mock('../api/admin/adminAuthApi', () => ({
+vi.mock('../api/admin/adminSession', () => ({
   adminSession: {
     getToken: vi.fn(),
     clearToken: vi.fn(),
@@ -10,7 +10,7 @@ vi.mock('../api/admin/adminAuthApi', () => ({
   },
 }));
 
-import { adminSession } from '../api/admin/adminAuthApi';
+import { adminSession } from '../api/admin/adminSession';
 import { applyAdminAuthHeader, handleAdminAuthError } from './axiosInstance';
 
 beforeEach(() => {

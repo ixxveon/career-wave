@@ -4,6 +4,7 @@ import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +24,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenBlacklistStore tokenBlacklistStore;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
 
@@ -59,9 +61,14 @@ public class SecurityConfig {
                     "/api/v1/user/members/recovery/password-token",
                     "/api/v1/user/members/recovery/reset-password"
                 ).permitAll()
+                // logout / me/status 는 인증 필요 but AccountStatus 예외 (비ACTIVE도 허용)
+                .requestMatchers(
+                    "/api/v1/user/members/logout",
+                    "/api/v1/admin/auth/logout",
+                    "/api/v1/user/members/me/status"
+                ).authenticated()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                // TODO: 스웨거 테스트용 임시 허용 — JWT 필터 구현 후 인증 객체로 교체 예정
-                .requestMatchers("/api/v1/user/resume/**").permitAll()
+                .requestMatchers("/api/v1/user/resume/**").authenticated()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
@@ -69,7 +76,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .addFilterBefore(
-                new JwtAuthenticationFilter(jwtTokenProvider),
+                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
                 UsernamePasswordAuthenticationFilter.class
             );
 

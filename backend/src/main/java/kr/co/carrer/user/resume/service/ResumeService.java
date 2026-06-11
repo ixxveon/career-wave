@@ -15,6 +15,4 @@ public interface ResumeService {
     ResumeDTO.ResponseFeedback getFeedback(UUID memberId, UUID documentId);
 
     PaginationResponse<ResumeDTO.HistoryItem> getHistory(UUID memberId, int page, int size);
-
-    void markDocumentFailed(UUID documentId, String errorMessage);
 }

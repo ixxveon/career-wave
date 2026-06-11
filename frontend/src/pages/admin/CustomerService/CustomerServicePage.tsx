@@ -181,13 +181,8 @@ export default function CustomerServicePage() {
     } catch (err: any) {
       if (reqId !== noticeReqId.current) return;
       const status = err.response?.status;
-      if (status === 500) {
-        setNoticeError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-      } else if (!status) {
-        setNoticeError('네트워크 연결을 확인해주세요.');
-      } else {
-        setNoticeError('공지사항 목록을 불러오지 못했습니다.');
-      }
+      if (!status) setNoticeError('네트워크 연결을 확인해주세요.');
+      else setNoticeError(err.response?.data?.message || `공지사항 목록을 불러오지 못했습니다. (${status})`);
     } finally {
       if (reqId === noticeReqId.current) setNoticeLoading(false);
     }
@@ -219,9 +214,8 @@ export default function CustomerServicePage() {
     } catch (err: any) {
       if (reqId !== faqReqId.current) return;
       const status = err.response?.status;
-      if (status === 500) setFaqError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-      else if (!status) setFaqError('네트워크 연결을 확인해주세요.');
-      else setFaqError('FAQ 목록을 불러오지 못했습니다.');
+      if (!status) setFaqError('네트워크 연결을 확인해주세요.');
+      else setFaqError(err.response?.data?.message || `FAQ 목록을 불러오지 못했습니다. (${status})`);
     } finally {
       if (reqId === faqReqId.current) setFaqLoading(false);
     }
@@ -250,9 +244,8 @@ export default function CustomerServicePage() {
     } catch (err: any) {
       if (reqId !== inqReqId.current) return;
       const status = err.response?.status;
-      if (status === 500) setInqError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-      else if (!status) setInqError('네트워크 연결을 확인해주세요.');
-      else setInqError('문의 목록을 불러오지 못했습니다.');
+      if (!status) setInqError('네트워크 연결을 확인해주세요.');
+      else setInqError(err.response?.data?.message || `문의 목록을 불러오지 못했습니다. (${status})`);
     } finally {
       if (reqId === inqReqId.current) setInqLoading(false);
     }

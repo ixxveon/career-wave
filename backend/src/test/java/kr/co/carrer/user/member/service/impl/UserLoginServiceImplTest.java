@@ -6,6 +6,8 @@ import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
+import kr.co.carrer.auth.store.RefreshTokenStore;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.entity.Member;
@@ -38,6 +40,8 @@ class UserLoginServiceImplTest {
 
     @Mock UserMemberRepository memberRepository;
     @Mock HttpServletResponse httpResponse;
+    @Mock RefreshTokenStore refreshTokenStore;
+    @Mock TokenBlacklistStore tokenBlacklistStore;
     @Mock EntityManager entityManager;
     @Mock jakarta.persistence.Query nativeQuery;
 
@@ -54,7 +58,7 @@ class UserLoginServiceImplTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, entityManager);
+        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, entityManager);
     }
 
     private Member createMember(RoleType roleType, MemberStatus status) throws Exception {
