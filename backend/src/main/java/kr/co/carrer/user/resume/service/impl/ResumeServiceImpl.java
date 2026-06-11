@@ -1,5 +1,6 @@
 package kr.co.carrer.user.resume.service.impl;
 
+import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.s3.S3Uploader;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
 import kr.co.carrer.user.resume.entity.CoverLetterContent;
@@ -11,6 +12,7 @@ import kr.co.carrer.user.resume.repository.DocumentRepository;
 import kr.co.carrer.user.resume.service.DocumentStatusService;
 import kr.co.carrer.user.resume.service.FastApiClient;
 import kr.co.carrer.user.resume.service.FileValidator;
+import kr.co.carrer.user.resume.exception.ResumeErrorCode;
 import kr.co.carrer.user.resume.service.ResumeService;
 import kr.co.carrer.user.resume.type.FileType;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -66,6 +70,13 @@ public class ResumeServiceImpl implements ResumeService {
     @Transactional
     @Override
     public ResumeDTO.ResponseCoverLetter submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto) {
+        Set<Integer> orderSet = new HashSet<>();
+        dto.content().forEach(item -> {
+            if (!orderSet.add(item.order())) {
+                throw new CustomException(ResumeErrorCode.DUPLICATE_CONTENT_ORDER);
+            }
+        });
+
         Document document = Document.ofCoverLetter(memberId);
         documentRepository.save(document);
 

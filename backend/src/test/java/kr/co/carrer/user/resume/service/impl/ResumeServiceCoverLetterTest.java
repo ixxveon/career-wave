@@ -2,6 +2,7 @@ package kr.co.carrer.user.resume.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.s3.S3Uploader;
+import kr.co.carrer.user.resume.exception.ResumeErrorCode;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
 import kr.co.carrer.user.resume.entity.CoverLetterContent;
 import kr.co.carrer.user.resume.entity.CoverLetterMeta;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
@@ -93,5 +95,24 @@ class ResumeServiceCoverLetterTest {
         resumeService.submitCoverLetter(memberId, request);
 
         verify(coverLetterContentRepository).saveAll(argThat((List<CoverLetterContent> list) -> list.size() == 3));
+    }
+
+    @Test
+    @DisplayName("문항 순서가 중복되면 DUPLICATE_CONTENT_ORDER 예외가 발생한다")
+    void submitCoverLetter_duplicateOrder_throwsException() {
+        UUID memberId = UUID.randomUUID();
+        ResumeDTO.RequestCoverLetter request = new ResumeDTO.RequestCoverLetter(
+                "카카오",
+                "백엔드 개발자",
+                List.of(
+                        new ResumeDTO.RequestCoverLetter.ContentItem(1, "Q1", "A1"),
+                        new ResumeDTO.RequestCoverLetter.ContentItem(1, "Q2", "A2")
+                )
+        );
+
+        assertThatThrownBy(() -> resumeService.submitCoverLetter(memberId, request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(ResumeErrorCode.DUPLICATE_CONTENT_ORDER));
     }
 }
