@@ -17,7 +17,7 @@
 - [x] JwtAuthenticationFilter (Bearer 추출 → 검증 → SecurityContext 저장, 상태 검증은 AccountStatus 단계로 분리)
 - [x] userSecurityFilterChain 골격 (CSRF off, STATELESS, CORS, addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class))
 - [x] @EnableMethodSecurity 활성화 (이후 @PreAuthorize 대비)
-- [ ] AccountStatusAuthorizationFilter/Guard 골격 (일반 authenticated API는 ACTIVE만 허용, 예외 경로 분리) ← Phase 4로 이월
+- [x] AccountStatusAuthorizationFilter/Guard 골격 (일반 authenticated API는 ACTIVE만 허용, 예외 경로 분리) ← Phase 4에서 구현 완료
 - [x] UserLoginService (조회·hash 비교·상태 검증, `roleType` 필수 검증)
 - [x] POST /api/v1/user/members/login
 - [x] LoginResponse DTO (member 포함, camelCase)
