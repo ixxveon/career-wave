@@ -6,8 +6,7 @@ import { authSession } from '../../../utils/user/member/authSession';
 vi.mock('../../../utils/user/member/authSession', () => ({
   authSession: {
     getAccessToken: vi.fn(),
-    getRefreshToken: vi.fn(),
-    setTokens: vi.fn(),
+    setAccessToken: vi.fn(),
     clear: vi.fn(),
   },
 }));
@@ -15,7 +14,6 @@ vi.mock('../../../utils/user/member/authSession', () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(authSession.getAccessToken).mockReturnValue('valid-token');
-  vi.mocked(authSession.getRefreshToken).mockReturnValue('valid-refresh');
 });
 
 function jsonResponse(body: unknown, status = 200) {
@@ -73,7 +71,7 @@ describe('refresh 요청 URL 검증', () => {
 // refresh 응답 실패 (토큰 만료) 엣지케이스
 // ─────────────────────────────────────────────
 describe('refresh 응답 실패 — 원래 401 전파', () => {
-  it('refresh 응답이 401이면 setTokens 없이 원래 401 에러가 전파된다', async () => {
+  it('refresh 응답이 401이면 setAccessToken 없이 원래 401 에러가 전파된다', async () => {
     vi.spyOn(global, 'fetch')
       .mockResolvedValueOnce(new Response(null, { status: 401 }))
       .mockResolvedValueOnce(new Response(null, { status: 401 }));
@@ -82,7 +80,7 @@ describe('refresh 응답 실패 — 원래 401 전파', () => {
       memberApiClient('/api/test', { method: 'GET', auth: true }),
     ).rejects.toMatchObject({ statusCode: 401 });
 
-    expect(vi.mocked(authSession.setTokens)).not.toHaveBeenCalled();
+    expect(vi.mocked(authSession.setAccessToken)).not.toHaveBeenCalled();
     expect(vi.mocked(authSession.clear)).toHaveBeenCalled();
   });
 });
@@ -100,9 +98,7 @@ describe('GET 요청 — 401 시 refresh 후 retry', () => {
     const result = await memberApiClient('/api/test', { method: 'GET', auth: true });
 
     expect(result).toEqual({ ok: true });
-    expect(vi.mocked(authSession.setTokens)).toHaveBeenCalledWith(
-      expect.objectContaining({ accessToken: 'new-token' }),
-    );
+    expect(vi.mocked(authSession.setAccessToken)).toHaveBeenCalledWith('new-token');
     expect(fetch).toHaveBeenCalledTimes(3);
   });
 });
