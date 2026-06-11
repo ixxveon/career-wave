@@ -10,6 +10,7 @@ import kr.co.carrer.user.resume.entity.Document;
 import kr.co.carrer.user.resume.repository.CoverLetterContentRepository;
 import kr.co.carrer.user.resume.repository.CoverLetterMetaRepository;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
+import kr.co.carrer.user.resume.service.DocumentStatusService;
 import kr.co.carrer.user.resume.service.FastApiClient;
 import kr.co.carrer.user.resume.service.FileValidator;
 import kr.co.carrer.user.resume.type.FileType;
@@ -37,6 +38,7 @@ class ResumeServiceCoverLetterTest {
     @Mock private FileValidator fileValidator;
     @Mock private S3Uploader s3Uploader;
     @Mock private FastApiClient fastApiClient;
+    @Mock private DocumentStatusService documentStatusService;
 
     @InjectMocks
     private ResumeServiceImpl resumeService;
