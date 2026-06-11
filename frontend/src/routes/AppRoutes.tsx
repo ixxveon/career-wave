@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import MainLayout from '../components/user/layout/MainLayout';
 import ProtectedRoute from '../components/user/common/ProtectedRoute';
 import ScrappedJobPage from '../pages/user/mypage/ScrappedJobPage';
@@ -79,70 +79,29 @@ import ScrapingPage from '../pages/admin/Scraping/ScrapingPage';
 import AuditLogPage from '../pages/admin/AuditLog/AuditLogPage';
 import AdminCompanyListPage from '../pages/admin/Company/CompanyListPage';
 import AdminSettlementListPage from '../pages/admin/Settlement/SettlementListPage';
-import { ACCESS_TOKEN_STORAGE_KEY, ADMIN_ROLE } from '../constants/admin/authConstants';
-
-type JwtPayload = Record<string, unknown>;
-
-function decodeJwtPayload(token: string): JwtPayload | null {
-  const payload = token.split('.')[1];
-  if (!payload) return null;
-
-  try {
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const paddedBase64 = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
-    const binary = window.atob(paddedBase64);
-    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-    return JSON.parse(new TextDecoder().decode(bytes)) as JwtPayload;
-  } catch {
-    return null;
-  }
-}
-
-function readRoleClaims(value: unknown): string[] {
-  if (typeof value === 'string') {
-    return value.split(/[\s,]+/).filter(Boolean);
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap(readRoleClaims);
-  }
-
-  return [];
-}
-
-function hasAdminRoleClaim(payload: JwtPayload | null) {
-  if (!payload) return false;
-
-  const claims = [
-    payload.role,
-    payload.roles,
-    payload.authority,
-    payload.authorities,
-    payload.scope,
-    payload.scp,
-  ].flatMap(readRoleClaims);
-
-  return claims.includes(ADMIN_ROLE);
-}
-
-function isExpired(payload: JwtPayload | null) {
-  if (!payload) return true;
-  const exp = payload.exp;
-  if (typeof exp !== 'number') return true;
-  return Date.now() >= exp * 1000;
-}
-
-function hasAdminRole() {
-  if (typeof window === 'undefined') return false;
-  const token = window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-  if (!token) return false;
-  const payload = decodeJwtPayload(token);
-  if (isExpired(payload)) return false;
-  return hasAdminRoleClaim(payload);
-}
+import { adminSession } from '../api/admin/adminSession';
+import { ADMIN_ROUTE_PATHS, hasAdminRouteAccess, isAdminNavigationPath } from '../constants/admin/adminRouteConstants';
 
 function AdminProtectedRoute() {
-  return hasAdminRole() ? <Outlet /> : <Navigate to="/admin/login" replace />;
+  const { pathname } = useLocation();
+  const token = adminSession.getToken();
+  const role = adminSession.getRole();
+
+  if (!token) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  // 현재 경로에 매핑되는 가장 구체적인 admin route를 찾아 role 접근 권한 확인
+  const matchedRoute = Object.values(ADMIN_ROUTE_PATHS)
+    .filter(p => p !== ADMIN_ROUTE_PATHS.login)
+    .sort((a, b) => b.length - a.length)
+    .find(p => pathname === p || pathname.startsWith(`${p}/`));
+
+  if (matchedRoute && isAdminNavigationPath(matchedRoute) && !hasAdminRouteAccess(role, matchedRoute)) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  return <Outlet />;
 }
 
 function AppRoutes() {
