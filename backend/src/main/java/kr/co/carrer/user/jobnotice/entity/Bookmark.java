@@ -1,4 +1,4 @@
-package kr.co.carrer.user.jobNotice.entity;
+package kr.co.carrer.user.jobnotice.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

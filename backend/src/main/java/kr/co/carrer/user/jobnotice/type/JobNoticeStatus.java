@@ -1,4 +1,4 @@
-package kr.co.carrer.user.jobNotice.type;
+package kr.co.carrer.user.jobnotice.type;
 
 public enum JobNoticeStatus {
     ACTIVE,

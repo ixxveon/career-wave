@@ -1,4 +1,4 @@
-package kr.co.carrer.user.jobNotice.entity;
+package kr.co.carrer.user.jobnotice.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,10 +10,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import kr.co.carrer.user.jobNotice.type.CareerLevel;
-import kr.co.carrer.user.jobNotice.type.CompanySize;
-import kr.co.carrer.user.jobNotice.type.JobNoticeStatus;
-import kr.co.carrer.user.jobNotice.type.JobType;
+import kr.co.carrer.user.jobnotice.type.CareerLevel;
+import kr.co.carrer.user.jobnotice.type.CompanySize;
+import kr.co.carrer.user.jobnotice.type.JobNoticeStatus;
+import kr.co.carrer.user.jobnotice.type.JobType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
