@@ -11,13 +11,13 @@
 
 ## Phase 2 — Repository & QueryDSL
 
-- [ ] `JobNoticeRepository`가 공개 공고 목록 조회와 상세 조회에 필요한 쿼리를 제공한다.
-- [ ] `JobNoticeQueryRepository`가 QueryDSL 기반 동적 검색 조건, 정렬, 페이지네이션 쿼리를 제공한다.
-- [ ] `BookmarkRepository`가 북마크 존재 여부 확인과 삭제 대상 조회에 필요한 쿼리를 제공한다.
-- [ ] 목록 조회 Query Parameter와 Repository 쿼리 조건의 ERD 컬럼 매핑이 `api-schema.md`와 일치한다.
-- [ ] `jobCategory` Query Parameter가 `job_notices.job_category` 배열 컬럼 조건으로 해석된다.
-- [ ] `keyword` 검색 범위가 `title`, `description`, `company_name`, `skill_tags`, `job_category`, `source`에 대해 일관되게 적용된다.
-- [ ] Repository / QueryDSL 계층의 페이지네이션 구현이 외부 API의 1-based `page` 계약을 지원할 수 있도록 내부 `page - 1` 변환 기준과 일치한다.
+- [x] `JobNoticeRepository`가 기본 조회 인터페이스와 공개 공고 상태 기반 단건 조회 계약을 제공한다.
+- [x] `JobNoticeQueryRepository`가 QueryDSL 기반 동적 검색 조건, 정렬, 페이지네이션 쿼리를 제공한다.
+- [x] `BookmarkRepository`가 북마크 존재 여부 확인과 삭제 대상 조회에 필요한 쿼리를 제공한다.
+- [x] 목록 조회 Query Parameter와 Repository 쿼리 조건의 ERD 컬럼 매핑이 `api-schema.md`와 일치한다.
+- [x] `jobCategory` Query Parameter가 `job_notices.job_category` 배열 컬럼 조건으로 해석된다.
+- [x] `keyword` 검색 범위가 `title`, `description`, `company_name`, `skill_tags`, `job_category`, `source`에 대해 일관되게 적용된다.
+- [x] Repository / QueryDSL 계층의 페이지네이션 구현이 외부 API의 1-based `page` 계약을 지원할 수 있도록 내부 `page - 1` 변환 기준과 일치한다.
 
 ## Phase 3 — Service
 

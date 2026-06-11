@@ -14,16 +14,16 @@
 
 ## Phase 2 - Repository & QueryDSL
 
-- [ ] `JobNoticeRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] QueryDSL 설정을 적용한다.
-- [ ] `JobNoticeQueryRepository.java`를 작성한다.
-- [ ] 공개 채용 공고 목록 동적 검색 조건 쿼리를 구현한다.
-- [ ] 목록 조회 정렬 조건 쿼리를 구현한다.
-- [ ] 목록 조회 페이지네이션 쿼리를 구현한다.
-- [ ] 공개 채용 공고 상세 조회 쿼리를 구현한다.
-- [ ] `BookmarkRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] 북마크 존재 여부 조회 쿼리를 구현한다.
-- [ ] 북마크 삭제 대상 조회 쿼리를 구현한다.
+- [x] `JobNoticeRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] QueryDSL 설정을 적용한다.
+- [x] `JobNoticeQueryRepository.java`를 작성한다.
+- [x] 공개 채용 공고 목록 동적 검색 조건 쿼리를 구현한다.
+- [x] 목록 조회 정렬 조건 쿼리를 구현한다.
+- [x] 목록 조회 페이지네이션 쿼리를 구현한다.
+- [x] 공개 채용 공고 상세 조회 쿼리를 구현한다.
+- [x] `BookmarkRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] 북마크 존재 여부 조회 쿼리를 구현한다.
+- [x] 북마크 삭제 대상 조회 쿼리를 구현한다.
 
 ## Phase 3 - Service
 
