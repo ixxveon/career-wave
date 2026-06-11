@@ -23,7 +23,7 @@ public class WebSocketJwtValidator {
 
     private final SecretKey secretKey;
 
-    public WebSocketJwtValidator(@Value("${jwt.secret}") String secret) {
+    public WebSocketJwtValidator(@Value("${jwt.user.secret}") String secret) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
