@@ -2,7 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type FormEvent, useMemo, useState } from 'react';
 import type { LoginRouteDecision } from '../../../types/user/member';
 import { authSession } from '../../../utils/user/member/authSession';
-import { MEMBER_ERROR_CODE, getSafeLoginMessage, parseLoginBlockedDecision, type MemberApiError } from '../../../utils/user/member/errorMapping';
+import { MEMBER_ERROR_CODE, getSafeLoginMessage, parseLoginBlockedDecision, type MemberApiError, type MemberErrorCode } from '../../../utils/user/member/errorMapping';
 import {
   LOGIN_TAB_TO_MEMBER_TYPE,
   hasLoginFormErrors,
@@ -67,7 +67,7 @@ function isMemberApiError(e: unknown): e is MemberApiError {
     'code' in e &&
     'message' in e &&
     typeof obj.code === 'string' &&
-    MEMBER_ERROR_CODE_VALUES.has(obj.code)
+    MEMBER_ERROR_CODE_VALUES.has(obj.code as MemberErrorCode)
   );
 }
 
@@ -128,7 +128,7 @@ export function useLoginForm() {
         return;
       }
 
-      if (response.member.memberType !== LOGIN_TAB_TO_MEMBER_TYPE[loginType]) {
+      if (response.member.roleType !== LOGIN_TAB_TO_MEMBER_TYPE[loginType]) {
         authSession.clear();
         setFieldErrors({ form: CROSS_TAB_ERROR_MESSAGES[loginType] });
         return;
@@ -144,7 +144,7 @@ export function useLoginForm() {
       // startsWith('/') && !startsWith('//') — //evil.com 같은 프로토콜 상대 URL 차단
       const nextPath = searchParams.get('next');
       const safePath = nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
-      const compatiblePath = safePath && isNextPathCompatible(safePath, response.member.memberType) ? safePath : null;
+      const compatiblePath = safePath && isNextPathCompatible(safePath, response.member.roleType) ? safePath : null;
       navigate(compatiblePath ?? decision.path, { replace: true });
     } catch (error) {
       if (!isMemberApiError(error)) {

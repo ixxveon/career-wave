@@ -11,8 +11,8 @@ import RecoveryResultPanel from '../../../components/user/member/RecoveryResultP
 import '@/styles/user/auth/AuthPage.css';
 
 function FindIdPage() {
-  const { memberType } = useParams();
-  const isCompany = memberType === 'company';
+  const { roleType } = useParams();
+  const isCompany = roleType === 'company';
   const {
     userMethod,
     userForm,

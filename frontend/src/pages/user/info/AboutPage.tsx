@@ -1,4 +1,6 @@
-function AboutPage(): JSX.Element {
+import React from 'react';
+
+function AboutPage(): React.ReactElement {
   return (
     <main className="cw-page cw-info-page">
       <div className="cw-info-page__inner">
