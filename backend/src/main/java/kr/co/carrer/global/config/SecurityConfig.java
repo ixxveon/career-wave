@@ -31,7 +31,10 @@ public class SecurityConfig {
     private final TokenBlacklistStore tokenBlacklistStore;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
-    private final List<AccountStatusPort> accountStatusPorts;
+
+    // @WebMvcTest 환경에서는 domain 빈이 없으므로 required=false; 없으면 빈 리스트 — 필터 통과
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private List<AccountStatusPort> accountStatusPorts = List.of();
 
     @Bean
     public PasswordEncoder passwordEncoder() {

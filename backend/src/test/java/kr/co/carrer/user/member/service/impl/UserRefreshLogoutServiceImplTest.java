@@ -57,7 +57,8 @@ class UserRefreshLogoutServiceImplTest {
         props.getAdmin().setRefreshExpiration(86400000L);
         provider = new JwtTokenProvider(props);
         service = new UserLoginServiceImpl(memberRepository, encoder, provider, props,
-                refreshTokenStore, tokenBlacklistStore, entityManager);
+                refreshTokenStore, tokenBlacklistStore,
+                mock(kr.co.carrer.auth.store.LoginAttemptStore.class), entityManager);
     }
 
     private Member createActiveMember() throws Exception {

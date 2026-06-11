@@ -30,6 +30,9 @@ class AdminMemberControllerPaginationTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @MockBean
+    private kr.co.carrer.auth.store.TokenBlacklistStore tokenBlacklistStore;
+
+    @MockBean
     private AdminMemberService adminMemberService;
 
     @Nested
