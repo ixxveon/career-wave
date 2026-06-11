@@ -51,8 +51,16 @@ docker-compose up -d
 
 ## 3. 테스트 데이터 시드
 
+**psql CLI가 설치된 경우** (backend/ 디렉토리에서 실행):
+
 ```bash
 psql -U careerwave -d careerwave -f src/main/resources/db/seed-local.sql
+```
+
+**Docker만 사용하는 경우** (프로젝트 루트에서 실행):
+
+```bash
+docker exec -i careerwave-db psql -U careerwave -d careerwave < backend/src/main/resources/db/seed-local.sql
 ```
 
 > 재실행해도 안전합니다 (기존 데이터 DELETE 후 재삽입).
