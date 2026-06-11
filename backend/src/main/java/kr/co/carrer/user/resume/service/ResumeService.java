@@ -8,6 +8,4 @@ import java.util.UUID;
 public interface ResumeService {
 
     ResumeDTO.ResponseUpload uploadResume(UUID memberId, MultipartFile file);
-
-    void markDocumentFailed(UUID documentId, String errorMessage);
 }
