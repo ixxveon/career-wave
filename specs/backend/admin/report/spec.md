@@ -91,7 +91,7 @@ admin/report/
 @Entity
 @Table(name = "reports")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ReportDetail {
+public class Report {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -268,7 +268,7 @@ PATCH /api/admin/reports/{reportId}/dismiss
 ### AdminReportService
 
 #### getSummary()
-- `reports_details` 테이블에서 전체·상태별 COUNT 집계
+- `reports` 테이블에서 전체·상태별 COUNT 집계
 
 #### getReports(status, targetType, reason, page, size)
 - 동적 필터 조건 (null이면 필터 미적용)
