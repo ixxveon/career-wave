@@ -30,6 +30,7 @@ import java.util.Optional;
 public class JobNoticeQueryRepository {
 
     private static final QJobNotice jobNotice = QJobNotice.jobNotice;
+    private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
 
     private final JPAQueryFactory queryFactory;
 
@@ -178,13 +179,13 @@ public class JobNoticeQueryRepository {
             return null;
         }
 
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+        ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
         ZonedDateTime from;
         LocalDate deadlineFrom;
 
         switch (period.trim().toLowerCase()) {
             case "today" -> {
-                from = now.toLocalDate().atStartOfDay(ZoneId.systemDefault());
+                from = now.toLocalDate().atStartOfDay(SERVICE_ZONE_ID);
                 deadlineFrom = now.toLocalDate();
             }
             case "7d" -> {
