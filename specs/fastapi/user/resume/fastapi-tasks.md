@@ -64,6 +64,7 @@
   - OpenAI 응답 파싱 → `FeedbackDetail[]` 생성
   - `feedbackText`: `json.dumps(feedback_details, ensure_ascii=False)` 직렬화
   - COMPLETED 또는 FAILED 콜백 전송 시 `logger.info(f"Analysis completed/failed for {document_id}")` 로그 기록
+  - OpenAI 응답의 `completion.usage`에서 토큰 소모량 추출 → `logger.info(f"[{document_id}] Token Usage: {usage}")` 기록 (비용 분석 원천 데이터)
   - 모든 오류 (`FileParseError`, `OpenAI 타임아웃` 등) → FAILED 콜백 + ERROR 로그
   - 컨테이너 비정상 종료 시 Spring Boot의 Watchdog 배치(30분 타임아웃)가 FAILED 처리하는 것을 전제로 한다 — FastAPI 자체 복구 로직은 MVP 범위 외
 
@@ -72,7 +73,12 @@
 ## Phase 5: 검증 및 문서화
 
 - [ ] `checklist.md` 전 항목 셀프 체크
-- [ ] 로컬 통합 테스트
+- [ ] `fastapi/tests/fixtures/` 디렉토리 생성 및 테스트 픽스처 작성
+  - `mock_resume_request.json` — RESUME 타입 분석 트리거 요청 샘플
+  - `mock_cover_letter_request.json` — COVER_LETTER 타입 분석 트리거 요청 샘플
+  - `mock_completed_webhook.json` — COMPLETED 콜백 페이로드 샘플
+  - `mock_failed_webhook.json` — FAILED 콜백 페이로드 샘플
+- [ ] 로컬 통합 테스트 (위 픽스처 활용)
   - `POST /internal/user/resume/analyze` (RESUME 타입) — Webhook 콜백 수신 확인
   - `POST /internal/user/resume/analyze` (COVER_LETTER 타입) — Webhook 콜백 수신 확인
   - `X-Internal-Secret` 누락 시 `403` 응답 확인
