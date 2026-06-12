@@ -20,19 +20,16 @@
 
 ### 처리 책임 분리
 
-**FastAPI 책임**
-- S3에서 파일 다운로드 및 텍스트 추출 (이력서)
-- AI 분석 수행 (OpenAI API 호출)
-- 점수 5개 산출 (`scoreJobFitness`, `scoreTechStack`, `scoreQuantified`, `scoreLogical`, `scoreTotal`)
-- 항목별 피드백(`feedbackDetails`) 및 종합 총평(`overallReview`) 생성
-- 분석 단계별 중간 상태 Webhook 콜백 전송
-
-**Spring Boot 책임**
-- 파일 업로드 수신 및 S3 저장
-- JWT 인증/인가 처리
-- `ApiResponse<T>` 외부 응답 래핑
-- DB 상태 업데이트 (Webhook 수신 시)
-- WebSocket 브로드캐스트 (Webhook 수신 후 AFTER_COMMIT)
+| 책임 영역 | Spring Boot | FastAPI |
+|-----------|-------------|---------|
+| 파일 수신 | 프론트엔드로부터 `multipart/form-data` 수신 및 S3 저장 | — |
+| 인증/인가 | JWT 검증, 사용자 권한 확인 | `X-Internal-Secret` 헤더 검증 |
+| 분석 트리거 | FastAPI 내부 API 호출 | `202 Accepted` 즉시 반환 |
+| AI 분석 | — | S3 파일 다운로드, 텍스트 추출, OpenAI 호출, 점수·피드백 생성 |
+| 상태 전이 | Webhook 수신 후 DB 업데이트 | 단계별 Webhook 콜백 전송 (PENDING → ANALYZING → COMPLETED/FAILED) |
+| 프론트 알림 | Webhook 수신 후 WebSocket 브로드캐스트 (AFTER_COMMIT) | — |
+| 외부 응답 | `ApiResponse<T>` 래핑 | 내부 JSON 계약만 사용 |
+| DB 쓰기 | `resume_documents` 상태 갱신, 점수·피드백 저장 | 없음 (Webhook 패턴으로 분리) |
 
 ### 비동기 처리 원칙
 
@@ -311,13 +308,16 @@ FastAPI가 `FeedbackDetail` 구조에 새 필드를 추가해도 Spring Boot는 
 ```text
 fastapi/user/
 ├── api/
-│   └── resume_router.py        POST /internal/user/resume/analyze
-├── prompts/
-│   └── resume_prompts.py       이력서·자기소개서 분석 프롬프트 템플릿
-└── service/
-    ├── resume_service.py       분석 오케스트레이션 (파싱 → AI → 콜백)
-    ├── file_parser.py          S3 다운로드 + 텍스트 추출 (PDF/DOC/DOCX)
-    └── webhook_client.py       Spring Boot Webhook 콜백 HTTP 클라이언트
+│   └── resume_router.py        POST /internal/user/resume/analyze 라우터
+├── schema/
+│   ├── request.py              AnalyzeResumeRequest, AnalyzeCoverLetterRequest (Pydantic)
+│   └── response.py             TriggerAcceptedResponse, WebhookCallbackPayload (Pydantic)
+├── service/
+│   ├── resume_service.py       분석 오케스트레이션 (파싱 → AI → 콜백)
+│   ├── file_parser.py          S3 다운로드 + 텍스트 추출 (pdfplumber / python-docx)
+│   └── webhook_client.py       Spring Boot Webhook 콜백 HTTP 클라이언트
+└── prompts/
+    └── resume_prompts.py       이력서·자기소개서 분석 프롬프트 템플릿
 
 fastapi/core/
 └── config.py                   환경 변수 로딩 (Settings 클래스)
@@ -327,7 +327,46 @@ fastapi/core/
 
 ---
 
-## 7. DB 접근 범위
+## 7. 내부 오류 계약
+
+### 공통 내부 오류 응답 형식
+
+```json
+{
+  "success": false,
+  "errorCode": "FILE_PARSE_FAILED",
+  "message": "파일에서 텍스트를 추출할 수 없습니다.",
+  "detail": {
+    "documentId": "550e8400-e29b-41d4-a716-446655440000",
+    "reason": "ENCRYPTED_PDF"
+  }
+}
+```
+
+- `success`: FastAPI 내부 처리 성공 여부
+- `errorCode`: Spring Boot가 도메인 ErrorCode로 변환할 수 있는 내부 식별자
+- `message`: 내부 오류 설명
+- `detail`: 선택 필드 — 디버깅용 추가 정보
+
+### FastAPI ErrorCode → Spring Boot ErrorCode 매핑
+
+| FastAPI ErrorCode | HTTP | Spring ErrorCode | 설명 |
+|-------------------|------|------------------|------|
+| `INVALID_FILE_TYPE` | 400 | `DOCUMENT_INVALID_FILE_TYPE` | `fileType`이 `RESUME`·`COVER_LETTER` 외 값 |
+| `MISSING_FILE_URL` | 400 | `DOCUMENT_MISSING_FILE_URL` | `fileType: RESUME`인데 `fileUrl` 누락 |
+| `MISSING_COVER_LETTER_CONTENT` | 400 | `DOCUMENT_MISSING_CONTENT` | `fileType: COVER_LETTER`인데 `content` 누락 |
+| `DOCUMENT_ALREADY_PROCESSING` | 409 | `DOCUMENT_ALREADY_PROCESSING` | 동일 `documentId` 중복 요청 |
+| `S3_DOWNLOAD_FAILED` | 500 | `DOCUMENT_ANALYSIS_FAILED` | S3 파일 다운로드 실패 |
+| `FILE_PARSE_FAILED` | 500 | `DOCUMENT_ANALYSIS_FAILED` | 파일 텍스트 추출 실패 (암호화 PDF 등) |
+| `OPENAI_API_ERROR` | 500 | `DOCUMENT_ANALYSIS_FAILED` | OpenAI API 호출 실패 또는 타임아웃 |
+| `WEBHOOK_CALLBACK_FAILED` | 500 | — | Webhook 콜백 3회 재시도 후 최종 실패 (Spring에 전달 불가 — 로그만 기록) |
+| `INTERNAL_ANALYSIS_ERROR` | 500 | `DOCUMENT_ANALYSIS_FAILED` | 그 외 FastAPI 내부 오류 |
+
+> Spring Boot ErrorCode는 `specs/backend/user/resume/` 문서 기준으로 확인한다. 위 매핑은 참고용이며 백엔드 구현과 동기화 필요.
+
+---
+
+## 8. DB 접근 범위
 
 FastAPI는 `user/resume` 도메인에서 DB를 직접 쓰지 않는다.
 모든 상태 갱신은 Spring Boot Webhook 콜백을 통해 Spring Boot가 처리한다.
