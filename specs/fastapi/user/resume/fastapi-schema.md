@@ -293,7 +293,8 @@ FastAPI가 `FeedbackDetail` 구조에 새 필드를 추가해도 Spring Boot는 
 | `SPRING_BASE_URL` | Spring Boot 내부 URL (Webhook 콜백 대상) | `http://localhost:8080` |
 | `WEBHOOK_SECRET` | 내부 인증 공유 키 (Spring Boot와 동일 값) | `(임의 생성 비밀값)` |
 | `OPENAI_API_KEY` | OpenAI API 키 | `sk-...` |
-| `OPENAI_MODEL` | 사용할 OpenAI 모델명 | `gpt-4o-mini` |
+| `OPENAI_MODEL_LIGHT` | 텍스트 추출·요약 단계 모델 | `gpt-4o-mini` |
+| `OPENAI_MODEL_DEEP` | 심층 피드백·STAR 분석 단계 모델 | `gpt-4o` |
 | `AWS_ACCESS_KEY_ID` | S3 접근 Access Key | `AKIA...` |
 | `AWS_SECRET_ACCESS_KEY` | S3 접근 Secret Key | `wJalrXUtn...` |
 | `AWS_REGION` | S3 버킷 리전 | `ap-northeast-2` |
