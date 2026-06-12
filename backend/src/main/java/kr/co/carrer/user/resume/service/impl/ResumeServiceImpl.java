@@ -16,6 +16,7 @@ import kr.co.carrer.user.resume.repository.CoverLetterContentRepository;
 import kr.co.carrer.user.resume.repository.CoverLetterMetaRepository;
 import kr.co.carrer.user.resume.repository.DocumentFeedbackRepository;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
+import kr.co.carrer.user.resume.service.DocumentStatusService;
 import kr.co.carrer.user.resume.service.FastApiClient;
 import kr.co.carrer.user.resume.service.FileValidator;
 import kr.co.carrer.user.resume.service.ResumeService;
@@ -25,16 +26,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 
 @Slf4j
 @Service
@@ -49,6 +51,7 @@ public class ResumeServiceImpl implements ResumeService {
     private final S3Uploader s3Uploader;
     private final FastApiClient fastApiClient;
     private final ObjectMapper objectMapper;
+    private final DocumentStatusService documentStatusService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Value("${webhook.secret}")
@@ -69,7 +72,7 @@ public class ResumeServiceImpl implements ResumeService {
         fastApiClient.triggerAnalysis(
                 document.getDocumentId(),
                 FileType.RESUME.name(),
-                () -> markDocumentFailed(document.getDocumentId(), "FastAPI 분석 트리거 실패")
+                () -> documentStatusService.markFailed(document.getDocumentId(), "FastAPI 분석 트리거 실패")
         );
 
         return new ResumeDTO.ResponseUpload(
@@ -85,6 +88,13 @@ public class ResumeServiceImpl implements ResumeService {
     @Transactional
     @Override
     public ResumeDTO.ResponseCoverLetter submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto) {
+        Set<Integer> orderSet = new HashSet<>();
+        dto.content().forEach(item -> {
+            if (!orderSet.add(item.order())) {
+                throw new CustomException(ResumeErrorCode.DUPLICATE_CONTENT_ORDER);
+            }
+        });
+
         Document document = Document.ofCoverLetter(memberId);
         documentRepository.save(document);
 
@@ -104,7 +114,7 @@ public class ResumeServiceImpl implements ResumeService {
         fastApiClient.triggerAnalysis(
                 document.getDocumentId(),
                 FileType.COVER_LETTER.name(),
-                () -> markDocumentFailed(document.getDocumentId(), "FastAPI 분석 트리거 실패")
+                () -> documentStatusService.markFailed(document.getDocumentId(), "FastAPI 분석 트리거 실패")
         );
 
         return new ResumeDTO.ResponseCoverLetter(
@@ -120,7 +130,6 @@ public class ResumeServiceImpl implements ResumeService {
     public ResumeDTO.ResponseFeedback getFeedback(UUID memberId, UUID documentId) {
         Document document = documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
                 .orElseThrow(() -> {
-                    // documentId 자체가 없는지, 소유자 불일치인지 구분 없이 보안상 동일 처리
                     boolean exists = documentRepository.findById(documentId).isPresent();
                     return exists
                             ? new CustomException(ResumeErrorCode.DOCUMENT_ACCESS_DENIED)
@@ -172,15 +181,6 @@ public class ResumeServiceImpl implements ResumeService {
         return PaginationResponse.of(result.getContent(), page, size, result.getTotalElements());
     }
 
-    private List<ResumeDTO.ResponseFeedback.FeedbackDetail> parseFeedbackDetails(String feedbackText, UUID documentId) {
-        try {
-            return List.of(objectMapper.readValue(feedbackText, ResumeDTO.ResponseFeedback.FeedbackDetail[].class));
-        } catch (JsonProcessingException e) {
-            log.error("[피드백 파싱 실패] documentId: {}, 원인: {}", documentId, e.getMessage());
-            throw new CustomException(ResumeErrorCode.FEEDBACK_PARSE_ERROR);
-        }
-    }
-
     @Transactional
     @Override
     public void receiveWebhook(String webhookSecret, ResumeDTO.RequestWebhook dto) {
@@ -218,12 +218,12 @@ public class ResumeServiceImpl implements ResumeService {
         eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(dto.documentId(), dto.status()));
     }
 
-    @Transactional
-    @Override
-    public void markDocumentFailed(UUID documentId, String errorMessage) {
-        documentRepository.findById(documentId).ifPresent(doc -> {
-            doc.markFailed(errorMessage);
-            log.warn("[분석 실패 마킹] documentId: {}, 원인: {}", documentId, errorMessage);
-        });
+    private List<ResumeDTO.ResponseFeedback.FeedbackDetail> parseFeedbackDetails(String feedbackText, UUID documentId) {
+        try {
+            return List.of(objectMapper.readValue(feedbackText, ResumeDTO.ResponseFeedback.FeedbackDetail[].class));
+        } catch (JsonProcessingException e) {
+            log.error("[피드백 파싱 실패] documentId: {}, 원인: {}", documentId, e.getMessage());
+            throw new CustomException(ResumeErrorCode.FEEDBACK_PARSE_ERROR);
+        }
     }
 }

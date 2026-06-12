@@ -58,7 +58,35 @@ JWT_ADMIN_SECRET=local-admin-secret-32bytes-or-more!
 
 ---
 
-## Step 3. PostgreSQL DB 생성
+## Step 3. Redis 설치 및 실행 (Phase 3 이후 필수)
+
+### Mac — Homebrew
+```bash
+brew install redis
+brew services start redis
+
+# 실행 확인
+redis-cli ping
+# → PONG 이 나와야 정상
+```
+
+### Windows
+1. [Redis for Windows (MSI)](https://github.com/microsoftarchive/redis/releases) 설치
+2. 서비스 시작:
+   ```cmd
+   redis-server
+   ```
+3. 확인:
+   ```cmd
+   redis-cli ping
+   ```
+
+> `.env` 파일의 `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`를 서버 설정에 맞게 채웁니다.  
+> 로컬 기본값은 `localhost:6379`, 비밀번호 없음입니다.
+
+---
+
+## Step 4. PostgreSQL DB 생성
 
 ### Mac — Homebrew
 ```bash
@@ -81,7 +109,7 @@ CREATE DATABASE careerwave OWNER careerwave;
 
 ---
 
-## Step 4. 테이블 생성 + 테스트 데이터 시드
+## Step 5. 테이블 생성 + 테스트 데이터 시드
 
 ### 테이블 생성 (최초 1회)
 
@@ -114,7 +142,7 @@ psql -U careerwave -d careerwave -f src\main\resources\db\seed-local.sql
 
 ---
 
-## Step 5. 백엔드 실행
+## Step 6. 백엔드 실행
 
 ### Mac
 ```bash
@@ -131,7 +159,7 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 
 ---
 
-## Step 6. 테스트 실행
+## Step 7. 테스트 실행
 
 ### Mac
 ```bash
@@ -148,7 +176,7 @@ gradlew.bat test
 
 ---
 
-## Step 7. Swagger로 API 확인
+## Step 8. Swagger로 API 확인
 
 1. `http://localhost:8080/swagger-ui.html` 접속
 2. 로그인 API 호출 → 응답의 `accessToken` 복사

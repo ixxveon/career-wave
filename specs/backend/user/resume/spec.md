@@ -317,12 +317,14 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 |-----------|------|-----------|
 | `INVALID_FILE_SIZE` | 400 | 파일 크기 10MB 초과 |
 | `INVALID_FILE_TYPE` | 400 | PDF·DOC·DOCX 외 확장자 |
-| `INVALID_CONTENT_COUNT` | 400 | 문항 수 범위(1~5) 위반 |
-| `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 |
 | `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId |
 | `DOCUMENT_ACCESS_DENIED` | 403 | 본인 소유가 아닌 문서 접근 (IDOR) |
 | `FEEDBACK_PARSE_ERROR` | 500 | feedback_text JSON 역직렬화 실패 (FastAPI 응답 구조 변경 등) |
 | `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
+| `WEBHOOK_SECRET_INVALID` | 403 | 유효하지 않은 Webhook 인증 키 |
+
+> `MaxUploadSizeExceededException` (Tomcat 레벨 파일 크기 초과) 은 `GlobalExceptionHandler`에서 별도 처리하여 400 반환.  
+> `application.properties`에 `server.tomcat.max-swallow-size=-1` 설정 필수 — 미설정 시 Tomcat이 응답 전송 전에 커넥션을 끊어 클라이언트가 "Failed to fetch" 수신.
 
 ---
 
@@ -338,6 +340,38 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 - members 테이블 PK는 UUID (`gen_random_uuid()`) — `document.member_id` FK 타입 동일하게 UUID 적용
 - `documents` 테이블에 `error_message TEXT NULL` 컬럼 추가 — 분석 `FAILED` 시 오류 메시지 저장, 정상 완료 시 `null`
 - `document_feedbacks` 테이블에 `overall_review TEXT NULL` 컬럼 추가 — FastAPI가 Webhook으로 전달하는 AI 종합 총평 저장
+
+---
+
+## 로컬 개발 환경 설정
+
+### S3 Mock 업로드
+
+AWS 자격증명 없이 로컬에서 Swagger 테스트 시 `.env`에 아래 값을 추가한다.
+
+```properties
+AWS_S3_MOCK_UPLOAD=true
+```
+
+`true`로 설정하면 실제 S3 업로드 없이 가짜 URL(`https://dummy-bucket.s3...`)을 반환한다.  
+기본값 `false` — 프로덕션 환경에서는 해당 환경변수를 설정하지 않으면 자동으로 실제 S3 업로드 동작.
+
+### 테스트용 Member 데이터
+
+JWT 필터 구현 전까지 `tempMemberId = 00000000-0000-0000-0000-000000000001`을 사용하며,  
+`documents.member_id`의 FK 제약 충족을 위해 아래 SQL을 로컬 DB에 한 번 실행해야 한다.
+
+```sql
+INSERT INTO members (member_id, login_id, password, name, role_type, member_status, subscription_status)
+VALUES ('00000000-0000-0000-0000-000000000001', 'test_resume_user', 'dummy_hash', '테스트유저', 'ROLE_USER', 'ACTIVE', 'FREE')
+ON CONFLICT DO NOTHING;
+```
+
+```bash
+docker exec careerwave-db psql -U careerwave -d careerwave -c "<위 SQL>"
+```
+
+> JWT 필터 PR 머지 후 `tempMemberId` → `@AuthenticationPrincipal` 교체 시 이 데이터는 불필요.
 
 ---
 

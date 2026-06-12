@@ -26,6 +26,7 @@ public class FileValidator {
 
     public void validate(MultipartFile file) {
         validateFileSize(file);
+        validateExtension(file);
         validateMimeType(file);
     }
 
@@ -34,11 +35,14 @@ public class FileValidator {
         if (originalName == null || !originalName.contains(".")) {
             throw new CustomException(ResumeErrorCode.INVALID_FILE_TYPE);
         }
-        String extension = originalName.substring(originalName.lastIndexOf('.') + 1).toLowerCase();
+        return originalName.substring(originalName.lastIndexOf('.') + 1).toLowerCase();
+    }
+
+    private void validateExtension(MultipartFile file) {
+        String extension = extractExtension(file);
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
             throw new CustomException(ResumeErrorCode.INVALID_FILE_TYPE);
         }
-        return extension;
     }
 
     private void validateFileSize(MultipartFile file) {
@@ -48,8 +52,8 @@ public class FileValidator {
     }
 
     private void validateMimeType(MultipartFile file) {
-        try {
-            String detectedMime = tika.detect(file.getInputStream());
+        try (var in = file.getInputStream()) {
+            String detectedMime = tika.detect(in);
             if (!ALLOWED_MIME_TYPES.contains(detectedMime)) {
                 log.warn("[파일 검증 실패] 허용되지 않는 MIME type: {}, 파일명: {}", detectedMime, file.getOriginalFilename());
                 throw new CustomException(ResumeErrorCode.INVALID_FILE_TYPE);

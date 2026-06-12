@@ -1,4 +1,5 @@
 import type { ApiErrorBody, LoginRouteDecision } from '../../../types/user/member';
+import type { ApiError } from '../../../types/apiError';
 
 export const MEMBER_ERROR_CODE = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
@@ -14,11 +15,8 @@ export const MEMBER_ERROR_CODE = {
 
 export type MemberErrorCode = (typeof MEMBER_ERROR_CODE)[keyof typeof MEMBER_ERROR_CODE];
 
-export interface MemberApiError {
+export interface MemberApiError extends ApiError {
   code: MemberErrorCode;
-  statusCode: number;
-  message: string;
-  serverCode?: string;
   fieldErrors?: Record<string, string>;
 }
 

@@ -50,7 +50,7 @@ public interface ResumeControllerDocs {
                             examples = @ExampleObject(value = """
                                     {
                                       "success": true,
-                                      "statusCode": 200,
+                                      "statusCode": 201,
                                       "message": "이력서가 업로드되었습니다.",
                                       "data": {
                                         "documentId": "46f85686-eeb6-49b0-867f-e36908b5f0ed",
@@ -122,8 +122,8 @@ public interface ResumeControllerDocs {
                             examples = @ExampleObject(value = """
                                     {
                                       "success": true,
-                                      "statusCode": 200,
-                                      "message": "요청이 성공적으로 처리되었습니다.",
+                                      "statusCode": 201,
+                                      "message": "자기소개서가 제출되었습니다.",
                                       "data": {
                                         "documentId": "46f85686-eeb6-49b0-867f-e36908b5f0ed",
                                         "status": "UPLOADED",

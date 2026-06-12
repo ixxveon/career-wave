@@ -16,7 +16,5 @@ public interface ResumeService {
 
     PaginationResponse<ResumeDTO.HistoryItem> getHistory(UUID memberId, int page, int size);
 
-    void markDocumentFailed(UUID documentId, String errorMessage);
-
     void receiveWebhook(String webhookSecret, ResumeDTO.RequestWebhook dto);
 }
