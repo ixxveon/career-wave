@@ -57,13 +57,15 @@
   - JSON 형식 응답 강제 (`response_format` 또는 프롬프트 내 JSON 스키마 명시)
 - [ ] `fastapi/user/service/resume_service.py` 작성
   - 분석 오케스트레이션 함수 (`analyze_document(request)`)
+  - 분석 시작 시 `logger.info(f"Analysis started for {document_id}")` 로그 기록 — 컨테이너 재시작/OOM 발생 시 디버깅 기준점
   - PENDING 콜백 전송 (분석 시작 직후)
   - RESUME 분기: `file_parser.py` 호출 → ANALYZING 콜백 전송 → OpenAI 분석
   - COVER_LETTER 분기: ANALYZING 콜백 전송 → OpenAI 분석
   - OpenAI 응답 파싱 → `FeedbackDetail[]` 생성
   - `feedbackText`: `json.dumps(feedback_details, ensure_ascii=False)` 직렬화
-  - COMPLETED 또는 FAILED 콜백 전송
+  - COMPLETED 또는 FAILED 콜백 전송 시 `logger.info(f"Analysis completed/failed for {document_id}")` 로그 기록
   - 모든 오류 (`FileParseError`, `OpenAI 타임아웃` 등) → FAILED 콜백 + ERROR 로그
+  - 컨테이너 비정상 종료 시 Spring Boot의 Watchdog 배치(30분 타임아웃)가 FAILED 처리하는 것을 전제로 한다 — FastAPI 자체 복구 로직은 MVP 범위 외
 
 ---
 
