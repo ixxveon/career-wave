@@ -364,6 +364,21 @@ fastapi/core/
 
 > Spring Boot ErrorCode는 `specs/backend/user/resume/` 문서 기준으로 확인한다. 위 매핑은 참고용이며 백엔드 구현과 동기화 필요.
 
+### 사용자 노출용 errorMessage 매핑 기준
+
+`errorMessage`는 프론트엔드에 최종 노출된다. 예외 종류에 따라 아래 공통 메시지군으로 매핑하고, 내부 스택 트레이스·파일 경로·DB 쿼리는 절대 포함하지 않는다.
+
+| 예외 상황 | errorMessage (사용자 노출) | 개발자 로그 |
+|-----------|--------------------------|------------|
+| 지원하지 않는 파일 형식 | `"지원하지 않는 파일 형식입니다. PDF 또는 DOCX 파일을 업로드해주세요."` | `logger.error(..., exc_info=True)` |
+| 암호화된 PDF | `"암호화된 파일은 분석할 수 없습니다. 암호 해제 후 다시 업로드해주세요."` | `logger.error(..., exc_info=True)` |
+| 텍스트 추출 불가 (이미지 기반 PDF 등) | `"파일에서 텍스트를 읽을 수 없습니다. 텍스트가 포함된 파일로 다시 업로드해주세요."` | `logger.error(..., exc_info=True)` |
+| S3 다운로드 실패 | `"파일을 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."` | `logger.error(..., exc_info=True)` |
+| OpenAI API 오류 / 타임아웃 | `"AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."` | `logger.error(..., exc_info=True)` |
+| 그 외 예기치 못한 오류 (Fallback) | `"분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."` | `logger.error(..., exc_info=True)` |
+
+> `errorMessage`가 빈 문자열이거나 `null`인 FAILED 콜백은 허용하지 않는다. 항상 위 표 중 하나의 문구를 사용한다.
+
 ---
 
 ## 8. DB 접근 범위
