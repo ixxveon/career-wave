@@ -1,5 +1,6 @@
 package kr.co.carrer.admin.cs.service.impl;
 
+import jakarta.annotation.PostConstruct;
 import kr.co.carrer.admin.cs.dto.AiDTO;
 import kr.co.carrer.admin.cs.exception.AdminCsErrorCode;
 import kr.co.carrer.admin.cs.service.AdminAiService;
@@ -24,6 +25,13 @@ public class AdminAiServiceImpl implements AdminAiService {
     private String fastApiBaseUrl;
 
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
+
+    private WebClient webClient;
+
+    @PostConstruct
+    void init() {
+        this.webClient = webClientBuilder.baseUrl(fastApiBaseUrl).build();
+    }
 
     @Override
     public AiDTO.ResponseDraft generateNoticeDraft(AiDTO.RequestNoticeDraft dto) {
@@ -51,8 +59,7 @@ public class AdminAiServiceImpl implements AdminAiService {
 
     private AiDTO.ResponseDraft callFastApi(String path, Map<String, Object> body) {
         try {
-            Map<?, ?> response = webClientBuilder.baseUrl(fastApiBaseUrl).build()
-                .post()
+            Map<?, ?> response = webClient.post()
                 .uri(path)
                 .bodyValue(body)
                 .retrieve()
