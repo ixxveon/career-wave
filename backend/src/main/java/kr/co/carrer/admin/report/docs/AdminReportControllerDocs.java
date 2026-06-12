@@ -3,7 +3,9 @@ package kr.co.carrer.admin.report.docs;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
 import kr.co.carrer.admin.report.dto.ReportDetailDTO;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import org.springframework.http.ResponseEntity;
@@ -35,12 +37,12 @@ public interface AdminReportControllerDocs {
     @Operation(summary = "신고 블라인드 처리")
     ResponseEntity<ApiResponse<ReportDetailDTO.ResponseProcess>> blindReport(
         @Parameter(description = "신고 ID") @PathVariable Long reportId,
-        @AuthenticationPrincipal Long adminId
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
     );
 
     @Operation(summary = "신고 기각 처리")
     ResponseEntity<ApiResponse<ReportDetailDTO.ResponseProcess>> dismissReport(
         @Parameter(description = "신고 ID") @PathVariable Long reportId,
-        @AuthenticationPrincipal Long adminId
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
     );
 }

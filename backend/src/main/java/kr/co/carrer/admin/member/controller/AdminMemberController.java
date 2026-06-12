@@ -9,6 +9,7 @@ import kr.co.carrer.admin.member.type.MemberStatus;
 import kr.co.carrer.admin.member.type.RoleType;
 import kr.co.carrer.admin.member.type.SubscriptionStatus;
 import kr.co.carrer.admin.member.exception.AdminMemberErrorCode;
+import io.swagger.v3.oas.annotations.Parameter;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
@@ -65,7 +66,7 @@ public class AdminMemberController implements AdminMemberControllerDocs {
     public ResponseEntity<ApiResponse<MemberDTO.ResponseSanction>> sanctionMember(
         @PathVariable UUID memberId,
         @RequestBody MemberDTO.RequestSanction request,
-        @AuthenticationPrincipal AuthPrincipal principal
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
     ) {
         Long adminId = Long.parseLong(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(adminMemberService.sanctionMember(memberId, request, adminId)));
