@@ -16,6 +16,10 @@ type MemberTab = 'user' | 'company';
 
 const WARN_THRESHOLD = 3;
 
+const MEMBER_STATUS: Record<MemberStatus, MemberStatus> = {
+  ACTIVE: 'ACTIVE', SUSPENDED: 'SUSPENDED', BANNED: 'BANNED', LOCKED: 'LOCKED', WITHDRAWN: 'WITHDRAWN',
+};
+
 const SUSPEND_PERIODS: SuspendDuration[] = ['THREE_DAYS', 'SEVEN_DAYS', 'THIRTY_DAYS', 'PERMANENT'];
 const durationLabel: Record<SuspendDuration, string> = {
   THREE_DAYS: '3일', SEVEN_DAYS: '7일', THIRTY_DAYS: '30일', PERMANENT: '영구',
@@ -421,7 +425,7 @@ export default function UserManagementPage() {
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="tableBtn" onClick={() => setSelectedMember(m)}>상세보기</button>
-                          <button className="tableBtn tableBtn--danger" onClick={() => openSuspend(m)} disabled={m.memberStatus === 'WITHDRAWN'}>정지처리</button>
+                          <button className="tableBtn tableBtn--danger" onClick={() => openSuspend(m)} disabled={m.memberStatus === MEMBER_STATUS.WITHDRAWN}>정지처리</button>
                         </div>
                       </td>
                     </tr>
@@ -604,7 +608,7 @@ export default function UserManagementPage() {
               </div>
             </div>
             <div className="modalAction">
-              <button onClick={() => openSuspend(selectedMember)} disabled={selectedMember?.memberStatus === 'WITHDRAWN'}>활동 정지</button>
+              <button onClick={() => openSuspend(selectedMember)} disabled={selectedMember?.memberStatus === MEMBER_STATUS.WITHDRAWN}>활동 정지</button>
               <button onClick={() => setSelectedMember(null)}>닫기</button>
             </div>
           </div>
