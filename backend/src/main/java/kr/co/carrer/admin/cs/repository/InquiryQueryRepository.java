@@ -74,11 +74,7 @@ public class InquiryQueryRepository {
     }
 
     public long countInquiries(InquiryCategory category, InquiryStatus status) {
-        StringBuilder sql = new StringBuilder("""
-            SELECT COUNT(*) FROM inquiries i
-            JOIN members m ON m.member_id = i.member_id
-            WHERE 1=1
-            """);
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM inquiries i WHERE 1=1");
         List<Object> params = new ArrayList<>();
         int idx = 1;
 
