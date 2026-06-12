@@ -379,6 +379,34 @@ fastapi/core/
 
 > `errorMessage`가 빈 문자열이거나 `null`인 FAILED 콜백은 허용하지 않는다. 항상 위 표 중 하나의 문구를 사용한다.
 
+### Error Registry 구조 가이드
+
+`if-else`가 코드 곳곳에 흩어지지 않도록 `user/service/error_registry.py`에 중앙 매핑 테이블을 두고 관리한다.
+
+```python
+# user/service/error_registry.py
+ERROR_MESSAGES: dict[str, str] = {
+    "PDF_ENCRYPTION":      "암호화된 파일은 분석할 수 없습니다. 암호를 해제 후 다시 업로드해주세요.",
+    "FILE_PARSE_FAILED":   "파일에서 텍스트를 읽을 수 없습니다. 텍스트가 포함된 파일로 다시 업로드해주세요.",
+    "UNSUPPORTED_FORMAT":  "지원하지 않는 파일 형식입니다. PDF 또는 DOCX 파일을 업로드해주세요.",
+    "S3_DOWNLOAD_FAILED":  "파일을 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+    "OPENAI_API_ERROR":    "AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+    "ANALYSIS_TIMEOUT":    "분석에 너무 많은 시간이 소요되고 있습니다. 잠시 후 다시 시도해주세요.",
+    "INTERNAL_SERVER_ERROR": "분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",  # Fallback
+}
+
+def get_user_message(error_code: str) -> str:
+    return ERROR_MESSAGES.get(error_code, ERROR_MESSAGES["INTERNAL_SERVER_ERROR"])
+```
+
+### Webhook 3회 재시도 최종 실패 처리
+
+3회 재시도 후에도 Spring Boot 콜백 전달이 실패한 경우:
+
+- Spring Boot 측 DB 상태가 갱신되지 않아 Zombie Task 위험이 있음
+- `WEBHOOK_CALLBACK_FAILED` ERROR 레벨 로그를 반드시 기록한다
+- MVP 범위: 로그 기록으로 대응, 운영 알림(Slack 등) 연동은 aiMetrics 운영 정책과 합산하여 추후 결정
+
 ---
 
 ## 8. DB 접근 범위
