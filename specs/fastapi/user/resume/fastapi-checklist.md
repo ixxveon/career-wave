@@ -32,6 +32,7 @@
 - [ ] COMPLETED 콜백에 점수 5개, `overallReview`, `feedbackText`, `errorMessage: null`이 포함되는가?
 - [ ] FAILED 콜백에 점수 5개가 `null`, `errorMessage`가 문자열로 포함되는가?
 - [ ] Webhook 콜백 실패 시 최대 3회 재시도 후 에러 로그를 기록하는가?
+- [ ] 3회 재시도 모두 실패 시 후속 동작이 정의되어 있는가? (예: ERROR 레벨 로그 + 운영팀 알림 또는 자동 FAILED 전환)
 
 ## feedbackText 직렬화 계약
 
@@ -67,6 +68,7 @@
 - [ ] ANALYZING 중간 콜백 수신 시 WebSocket 메시지가 전송되는가?
 - [ ] WebSocket 브로드캐스트가 트랜잭션 커밋 이후(`@TransactionalEventListener` 등)에 호출되는가? (DB 반영 전 프론트 수신 방지)
 - [ ] WebSocket으로 전송되는 메시지 구조가 `status`, `progress`, `result`(또는 null)를 포함한 통합 스키마를 사용하는가?
+- [ ] WebSocket 페이로드 필드명이 프론트엔드 상태 관리(Zustand 등)의 상태값과 1:1 매핑되는지 프론트엔드 담당자와 사전 합의되었는가?
 
 ## 데이터 정합성
 
@@ -80,3 +82,4 @@
 - [ ] 보안 처리: `errorMessage`에 서버 파일 경로, Python 스택 트레이스, DB 쿼리 등 내부 정보가 포함되지 않는가?
 - [ ] Fallback 메시지: 예기치 못한 예외 발생 시 빈 문자열 대신 기본 메시지(예: `"분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."`)를 반환하는가?
 - [ ] 에러 계층 분리: `logger.error(..., exc_info=True)`로 개발자용 스택 트레이스를 서버 로그에 기록하고, `errorMessage`에는 사용자용 문구만 포함하는가?
+- [ ] Error Registry: 에러 코드 → 사용자 메시지 매핑이 `if-else` 분산 없이 중앙 테이블(예: `ERROR_MESSAGES` dict)로 관리되는가?
