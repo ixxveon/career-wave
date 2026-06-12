@@ -91,3 +91,5 @@ COMPLETED (콜백 전송) 또는 FAILED (콜백 전송)
 - Spring Boot API 외에 외부 HTTP 엔드포인트를 FastAPI에서 직접 노출 금지 (내부 전용 `/internal/*`만 허용). 모든 트래픽은 Spring Boot를 거쳐야 한다.
 - S3 다운로드 시 스트리밍 없이 전체 파일을 메모리에 로드하는 방식(`response.read()`) 금지.
 - Webhook 콜백 시 `httpx.AsyncClient` 타임아웃을 생략하거나 무제한으로 설정 금지.
+- 서비스·서비스 레이어의 모든 로그에 `documentId`를 반드시 포함한다. (예: `logger.info(f"[{document_id}] 분석 시작")`) — 구조화된 컨텍스트 로그 없이는 멀티 요청 환경에서 추적 불가.
+- AI 분석 완료 후 토큰 소모량(input/output token)을 로그에 반드시 기록한다. 향후 aiMetrics 비용 분석의 원천 데이터가 된다. (예: `logger.info(f"[{document_id}] tokens input={input_tokens} output={output_tokens}")`)
