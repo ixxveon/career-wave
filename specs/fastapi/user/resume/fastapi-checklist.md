@@ -12,6 +12,7 @@
 - [ ] 모든 환경 변수 접근이 `core/config.py` 설정 계층을 통해 이루어지는가?
 - [ ] `admin/` 패키지를 `user/` 에서 직접 참조하지 않는가?
 - [ ] 임시 파일이 분석 완료·실패 후 즉시 삭제되는가?
+- [ ] 파일 파싱 로직에서 예외 발생 시에도 파일 핸들이 반드시 닫히는가? (`with` 구문 또는 `finally` 블록 사용 — Open File Handle 누수 방지)
 
 ## 내부 인증
 
@@ -73,6 +74,7 @@
 ## 데이터 정합성
 
 - [ ] Spring Boot Webhook 수신 시, 현재 DB 상태보다 이전 상태(예: COMPLETED 이후 도착한 ANALYZING)는 무시하는 로직이 있는가? (Out-of-order Webhook 방지)
+- [ ] Webhook 멱등성: 동일한 `documentId` + `status` 조합이 중복 수신될 경우, 재처리 없이 `200 OK`를 즉시 반환하는가? (네트워크 재시도로 인한 중복 처리 방지)
 - [ ] Spring Boot에서 분석 요청 후 일정 시간(예: 30분) 이내에 COMPLETED 또는 FAILED 콜백이 오지 않으면 FAILED 처리하는 감시 배치(Watchdog)가 있는가? (Zombie Task 방지)
 
 ## 사용자 경험
