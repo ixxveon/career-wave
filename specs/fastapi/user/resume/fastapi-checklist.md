@@ -65,3 +65,14 @@
 - [ ] Spring Boot `POST /api/v1/user/resume/{documentId}/webhook` 수신 후 DB 상태가 업데이트되는가?
 - [ ] WebSocket `/topic/resume/{documentId}/status`로 메시지가 브로드캐스트되는가?
 - [ ] ANALYZING 중간 콜백 수신 시 WebSocket 메시지가 전송되는가?
+- [ ] WebSocket 브로드캐스트가 트랜잭션 커밋 이후(`@TransactionalEventListener` 등)에 호출되는가? (DB 반영 전 프론트 수신 방지)
+- [ ] WebSocket으로 전송되는 메시지 구조가 `status`, `progress`, `result`(또는 null)를 포함한 통합 스키마를 사용하는가?
+
+## 데이터 정합성
+
+- [ ] Spring Boot Webhook 수신 시, 현재 DB 상태보다 이전 상태(예: COMPLETED 이후 도착한 ANALYZING)는 무시하는 로직이 있는가? (Out-of-order Webhook 방지)
+- [ ] Spring Boot에서 분석 요청 후 일정 시간(예: 30분) 이내에 COMPLETED 또는 FAILED 콜백이 오지 않으면 FAILED 처리하는 감시 배치(Watchdog)가 있는가? (Zombie Task 방지)
+
+## 사용자 경험
+
+- [ ] FastAPI가 전송하는 `errorMessage`가 사용자에게 노출 가능한 친화적 문구인가? (예: `"파일 형식이 올바르지 않습니다"` — 내부 스택 트레이스 미포함)
