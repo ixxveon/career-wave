@@ -69,7 +69,7 @@ COMPLETED (콜백 전송) 또는 FAILED (콜백 전송)
 | 비동기 처리 방식 | FastAPI `BackgroundTasks` 또는 asyncio 기반 비동기 함수 | Spring이 블로킹되지 않도록 즉시 응답 필요 |
 | DB 직접 접근 | 금지 — Webhook 콜백 패턴으로 분리 | Spring Boot가 DB 트랜잭션 + WebSocket 알림을 통합 처리 |
 | Webhook 콜백 재시도 | 최대 3회 지수 백오프 (1s, 2s, 4s) | Spring이 일시적으로 다운된 경우 재시도 허용 |
-| 파일 파싱 라이브러리 | `PyMuPDF`(PDF), `python-docx`(DOCX) 우선 검토 | **팀 합의 필요** — 의존성 추가 전 확인 |
+| 파일 파싱 라이브러리 | `pdfplumber`(PDF), `python-docx`(DOCX) | MIT 라이선스. PyMuPDF는 AGPL 이슈로 제외 |
 | AI 모델 | 환경 변수 `OPENAI_MODEL`로 주입 | 코드 변경 없이 모델 교체 가능 |
 | 중간 상태 전송 | 분석 단계별 Webhook 콜백 | 프론트엔드 실시간 진행 표시 지원 |
 
