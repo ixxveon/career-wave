@@ -2,7 +2,6 @@ package kr.co.carrer.user.interview.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.co.carrer.user.interview.repository.AIInterviewFeedbackRepository;
-import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -10,7 +9,6 @@ import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -19,7 +17,6 @@ import java.util.UUID;
 public class InterviewWebSocketHandler extends TextWebSocketHandler {
 
     private final InterviewWebSocketSessionRegistry registry;
-    private final InterviewSessionRepository sessionRepository;
     private final AIInterviewFeedbackRepository feedbackRepository;
     private final ObjectMapper objectMapper;
 
@@ -36,11 +33,10 @@ public class InterviewWebSocketHandler extends TextWebSocketHandler {
 
         // 재연결 시 이미 리포트가 완성된 세션이면 REPORT_READY 즉시 재전송
         if (feedbackRepository.existsBySessionId(UUID.fromString(sessionId))) {
-            sendMessage(session, WebSocketMessageType.REPORT_READY,
-                    Map.of("sessionId", sessionId, "message", "리포트가 준비되었습니다."));
+            String reportUrl = "/api/v1/user/interview/sessions/" + sessionId + "/report";
+            sendMessage(session, WebSocketMessage.reportReady(reportUrl));
         } else {
-            sendMessage(session, WebSocketMessageType.SESSION_START,
-                    Map.of("sessionId", sessionId, "message", "면접 세션이 시작되었습니다."));
+            sendMessage(session, WebSocketMessage.sessionStart());
         }
     }
 
@@ -55,7 +51,7 @@ public class InterviewWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
-        // 클라이언트 → 서버 방향 메시지는 현재 v1에서 사용하지 않음
+        // 클라이언트 → 서버 방향 메시지는 v1에서 사용하지 않음
         log.debug("Received WebSocket message (ignored): {}", message.getPayload());
     }
 
@@ -64,8 +60,7 @@ public class InterviewWebSocketHandler extends TextWebSocketHandler {
         String sessionId = extractSessionId(session);
         log.error("WebSocket transport error: sessionId={}, error={}", sessionId, exception.getMessage());
         if (session.isOpen()) {
-            sendMessage(session, WebSocketMessageType.ERROR,
-                    Map.of("message", "연결 오류가 발생했습니다."));
+            sendMessage(session, WebSocketMessage.error("연결 오류가 발생했습니다.", "INTERVIEW_AI_PIPELINE_ERROR"));
         }
     }
 
@@ -76,15 +71,14 @@ public class InterviewWebSocketHandler extends TextWebSocketHandler {
             return;
         }
         try {
-            sendMessage(ws, WebSocketMessageType.REPORT_READY,
-                    Map.of("sessionId", sessionId, "reportUrl", reportUrl != null ? reportUrl : ""));
+            sendMessage(ws, WebSocketMessage.reportReady(reportUrl));
         } catch (IOException e) {
             log.error("Failed to send REPORT_READY: sessionId={}", sessionId, e);
         }
     }
 
-    private void sendMessage(WebSocketSession session, WebSocketMessageType type, Object data) throws IOException {
-        String payload = objectMapper.writeValueAsString(Map.of("type", type.name(), "data", data));
+    private void sendMessage(WebSocketSession session, WebSocketMessage message) throws IOException {
+        String payload = objectMapper.writeValueAsString(message);
         session.sendMessage(new TextMessage(payload));
     }
 
