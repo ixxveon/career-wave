@@ -31,15 +31,17 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
 
     @Override
     public void processReportCallback(UUID sessionId, InterviewDTO.RequestReportCallback dto) {
+        String reportUrl = "/api/v1/user/interview/sessions/" + sessionId + "/report";
+
         // 멱등성 체크 — 이미 저장된 피드백이 있으면 REPORT_READY만 재전송
         if (feedbackRepository.existsBySessionId(sessionId)) {
             log.info("Report callback already processed (idempotent): sessionId={}", sessionId);
-            webSocketHandler.sendReportReady(sessionId.toString(), null);
+            webSocketHandler.sendReportReady(sessionId.toString(), reportUrl);
             return;
         }
 
         saveReportData(sessionId, dto);
-        webSocketHandler.sendReportReady(sessionId.toString(), null);
+        webSocketHandler.sendReportReady(sessionId.toString(), reportUrl);
     }
 
     @Transactional
