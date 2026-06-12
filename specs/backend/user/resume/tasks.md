@@ -75,15 +75,14 @@
 
 ## Phase 4: 분석 결과 조회 API
 
-- [ ] `ResumeDTO.ResponseFeedback` + `FeedbackDetail` inner record 작성
-- [ ] `DocumentFeedback` 조회 → score 컬럼 5개 직접 매핑
-- [ ] `feedback_text`(TEXT) → `ObjectMapper.readValue()` → `List<FeedbackDetail>` 역직렬화
-- [ ] `JsonProcessingException` 캐치 후 `CustomException(ErrorCode.FEEDBACK_PARSE_ERROR)` 변환
-- [ ] `GlobalExceptionHandler`에 `FEEDBACK_PARSE_ERROR(500)` 핸들러 등록
-- [ ] IDOR 검증 — `document.member_id != memberId` 시 `DOCUMENT_ACCESS_DENIED(403)`
-- [ ] `DocumentFeedback` 없는 경우 score 필드 전체 `null` + `feedbackDetails = null` + status만 포함한 응답 반환
-- [ ] `ResumeController.getFeedback()` 구현
-- [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
+- [x] `ResumeDTO.ResponseFeedback` + `ScoreDTO`, `FeedbackDetail`, `StarAnalysis`, `QuantAnalysis` inner record 작성
+- [x] `DocumentFeedback` 조회 → score 컬럼 5개 `ScoreDTO`로 매핑
+- [x] `feedback_text`(TEXT) → `ObjectMapper.readValue()` → `List<FeedbackDetail>` 역직렬화
+- [x] `JsonProcessingException` 캐치 후 `CustomException(ResumeErrorCode.FEEDBACK_PARSE_ERROR)` 변환
+- [x] IDOR 검증 — `findByDocumentIdAndMemberId()` DB 레벨 차단, 불일치 시 `DOCUMENT_ACCESS_DENIED(403)`
+- [x] `DocumentFeedback` 없는 경우 scores·feedbackDetails·overallReview null 반환
+- [x] `ResumeController.getFeedback()` 구현
+- [x] `ResumeControllerDocs` Swagger 인터페이스 작성
 
 ---
 
