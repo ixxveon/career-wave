@@ -48,7 +48,7 @@ OpenAI 분석을 수행한 뒤 단계별 Webhook 콜백으로 Spring Boot에 결
 |-----------|------|------|
 | `SPRING_BASE_URL` | Spring Boot 내부 URL | 본인 직접 설정 |
 | `WEBHOOK_SECRET` | 내부 인증 공유 키 | Spring Boot와 동일 값으로 설정 |
-| `OPENAI_API_KEY` | OpenAI API 키 | 인프라 팀 요청 |
+| `OPENAI_API_KEY` | OpenAI API 키 | 본인 직접 발급 및 관리 |
 | `OPENAI_MODEL_LIGHT` | 텍스트 추출·요약 단계 모델 | 기본값: `gpt-4o-mini` |
 | `OPENAI_MODEL_DEEP` | 심층 피드백·STAR 분석 단계 모델 | 기본값: `gpt-4o` |
 | `AWS_ACCESS_KEY_ID` | S3 Access Key | 인프라 팀 요청 |
