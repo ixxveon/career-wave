@@ -68,4 +68,5 @@
 - [ ] 존재하지 않는 북마크 해제 예외 테스트를 작성한다.
 - [ ] QueryDSL 동적 검색 조건 테스트를 작성한다.
 - [ ] QueryDSL 정렬 조건 테스트를 작성한다.
+- [ ] 배열 컬럼(`skill_tags`, `job_category`) QueryDSL 조건 테스트의 실행 환경을 PostgreSQL 호환 기준(Testcontainers 등)으로 정리한다.
 - [ ] `ApiResponse<T>`와 1-based 페이지네이션 응답 형식 테스트를 작성한다.

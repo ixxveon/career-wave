@@ -181,7 +181,9 @@ public class JobNoticeQueryRepository {
 
         ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
         ZonedDateTime from;
+        ZonedDateTime to = now;
         LocalDate deadlineFrom;
+        LocalDate deadlineTo = now.toLocalDate();
 
         switch (period.trim().toLowerCase()) {
             case "today" -> {
@@ -201,8 +203,8 @@ public class JobNoticeQueryRepository {
             }
         }
 
-        return jobNotice.createdAt.goe(from)
-                .or(jobNotice.deadline.goe(deadlineFrom));
+        return jobNotice.createdAt.between(from, to)
+                .or(jobNotice.deadline.between(deadlineFrom, deadlineTo));
     }
 
     private OrderSpecifier<?>[] resolveOrderSpecifiers(String sort) {
