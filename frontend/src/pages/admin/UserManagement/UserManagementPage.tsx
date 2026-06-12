@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Building2, CheckCircle, Clock, UserPlus, UserX, Users, XCircle } from 'lucide-react';
 import {
   memberApi,
+  MEMBER_STATUS,
   type MemberItem,
   type MemberStatus,
   type SuspendDuration,
@@ -16,9 +17,6 @@ type MemberTab = 'user' | 'company';
 
 const WARN_THRESHOLD = 3;
 
-const MEMBER_STATUS: Record<MemberStatus, MemberStatus> = {
-  ACTIVE: 'ACTIVE', SUSPENDED: 'SUSPENDED', BANNED: 'BANNED', LOCKED: 'LOCKED', WITHDRAWN: 'WITHDRAWN',
-};
 
 const SUSPEND_PERIODS: SuspendDuration[] = ['THREE_DAYS', 'SEVEN_DAYS', 'THIRTY_DAYS', 'PERMANENT'];
 const durationLabel: Record<SuspendDuration, string> = {
