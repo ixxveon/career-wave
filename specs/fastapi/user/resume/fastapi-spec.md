@@ -44,6 +44,7 @@ Spring Boot로부터 서류 분석 트리거를 수신하고, OpenAI를 활용�
 2. **Given** `content[]` 배열의 문항 수가 1~5개 범위를 벗어난 경우,
    **Then** FastAPI는 즉시 `INVALID_CONTENT_COUNT` 내부 오류를 반환해야 한다.
    (실제로 Spring Boot가 사전 검증하므로 FastAPI는 방어 체크 수준으로 처리)
+   모든 예외 상황에서 FastAPI가 반환하는 `errorCode`는 `specs/backend/user/resume/`의 에러 매핑 표를 기준으로 한다.
 
 ### User Story 3 — 분석 진행 상태 중간 알림 (Priority: P2)
 
@@ -62,7 +63,7 @@ Spring Boot로부터 서류 분석 트리거를 수신하고, OpenAI를 활용�
 ## Functional Requirements
 
 - **FR-001**: FastAPI는 `POST /internal/user/resume/analyze` 요청을 수신해 분석 작업을 비동기로 시작하고 `202 Accepted`를 즉시 반환해야 한다.
-- **FR-002**: FastAPI는 `fileType: RESUME`인 경우 `fileUrl`로 S3에서 파일을 다운로드하고 텍스트를 추출해야 한다. 지원 포맷: PDF, DOC, DOCX.
+- **FR-002**: FastAPI는 `fileType: RESUME`인 경우 `fileUrl`로 S3에서 파일을 다운로드하고 텍스트를 추출해야 한다. 지원 포맷: PDF, DOC, DOCX. 텍스트 레이어가 없는 이미지 기반 PDF는 `FILE_PARSE_FAILED` 처리한다. (OCR은 MVP 범위 외 — 향후 확장을 위해 `file_parser.py`는 파서 교체 가능한 구조로 설계한다.)
 - **FR-003**: FastAPI는 `fileType: COVER_LETTER`인 경우 전달받은 `content[]` 텍스트를 직접 분석 입력으로 사용해야 한다.
 - **FR-004**: FastAPI는 분석 완료 후 `scoreJobFitness`, `scoreTechStack`, `scoreQuantified`, `scoreLogical`, `scoreTotal`을 산출해야 한다. 각 점수는 0~100 정수.
 - **FR-005**: FastAPI는 항목별 `feedbackDetails` 배열을 생성해야 한다. 이력서는 `starAnalysis` 포함, 자기소개서는 `starAnalysis: null`.
@@ -92,6 +93,7 @@ Spring Boot로부터 서류 분석 트리거를 수신하고, OpenAI를 활용�
 - **SC-003**: `COMPLETED` 콜백의 `feedbackText`는 Spring Boot의 `ObjectMapper.readValue(feedbackText, FeedbackDetail[].class)`로 역직렬화 가능한 JSON 문자열이다.
 - **SC-004**: 이력서 분석 결과의 `feedbackDetails` 각 항목에 `starAnalysis` (S·T·A·R 4개 항목 `ok/comment`)가 포함된다.
 - **SC-005**: 자기소개서 분석 결과의 `feedbackDetails` 각 항목에 `starAnalysis: null`이 포함된다.
+- **SC-006**: `FeedbackDetail` 직렬화 결과에 대한 단위 테스트를 작성하여, 생성된 JSON이 Spring Boot DTO 스키마(`FeedbackDetail[].class`)와 완전히 호환됨을 검증한다.
 
 ---
 
