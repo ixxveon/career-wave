@@ -324,7 +324,7 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 | `WEBHOOK_SECRET_INVALID` | 403 | 유효하지 않은 Webhook 인증 키 |
 
 > `MaxUploadSizeExceededException` (Tomcat 레벨 파일 크기 초과) 은 `GlobalExceptionHandler`에서 별도 처리하여 400 반환.  
-> `application.properties`에 `server.tomcat.max-swallow-size=-1` 설정 필수 — 미설정 시 Tomcat이 응답 전송 전에 커넥션을 끊어 클라이언트가 "Failed to fetch" 수신.
+> 실제 업로드 상한은 `spring.servlet.multipart.max-file-size=10MB` / `max-request-size=11MB`(Spring)이 강제하며, `server.tomcat.max-swallow-size=11MB`는 초과 요청을 Tomcat이 배수(drain)하는 동작만 제어한다 — 미설정 시 Tomcat이 응답 전송 전에 커넥션을 끊어 클라이언트가 "Failed to fetch" 수신.
 
 ---
 
