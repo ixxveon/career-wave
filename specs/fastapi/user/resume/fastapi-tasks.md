@@ -41,8 +41,8 @@
 
 - [ ] `fastapi/user/service/file_parser.py` 작성
   - `boto3.client('s3')`로 S3 파일 스트림 다운로드
-  - PDF 텍스트 추출 (팀 합의 라이브러리로 구현)
-  - DOCX 텍스트 추출 (팀 합의 라이브러리로 구현)
+  - PDF 텍스트 추출 (`pdfplumber` 사용)
+  - DOCX 텍스트 추출 (`python-docx` 사용)
   - 암호화 PDF 또는 텍스트 추출 불가 파일 → `FileParseError` 예외 발생
   - 임시 파일 생성 시 `finally` 블록에서 반드시 삭제
 

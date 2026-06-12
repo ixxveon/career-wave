@@ -18,8 +18,8 @@ OpenAI 분석을 수행한 뒤 단계별 Webhook 콜백으로 Spring Boot에 결
 |------|------|------|
 | 분석 트리거 수신 | `POST /internal/user/resume/analyze` | Spring Boot 내부 호출 전용, 비동기 202 응답 |
 | 비동기 처리 | FastAPI `BackgroundTasks` | 즉시 응답 후 백그라운드 분석 |
-| 파일 파싱 (PDF) | **팀 합의 필요** — `PyMuPDF` 또는 `pdfplumber` 후보 | 텍스트 추출 정확도 및 암호화 PDF 처리 여부 확인 필요 |
-| 파일 파싱 (DOCX) | **팀 합의 필요** — `python-docx` 후보 | 팀 Python 의존성 목록 확인 필요 |
+| 파일 파싱 (PDF) | `pdfplumber` | MIT 라이선스, 이력서 텍스트 추출 안정적. PyMuPDF는 AGPL 라이선스 이슈로 제외 |
+| 파일 파싱 (DOCX) | `python-docx` | 표준 선택, MIT 라이선스 |
 | AI 분석 | OpenAI API (`openai` SDK) | 기존 프로젝트 방향성 기준 |
 | 내부 인증 | `X-Internal-Secret` 헤더 | Spring Boot와 동일 시크릿 공유 |
 | Webhook 재시도 | 최대 3회 지수 백오프 | Spring 일시 다운 대응 |
@@ -31,9 +31,9 @@ OpenAI 분석을 수행한 뒤 단계별 Webhook 콜백으로 Spring Boot에 결
 
 | 항목 | 상태 | 비고 |
 |------|------|------|
-| 파일 파싱 라이브러리 | **팀 합의 필요** | `PyMuPDF`, `pdfplumber`, `python-docx` 중 결정 |
-| OpenAI 모델 선택 | **팀 합의 필요** | `gpt-4o`, `gpt-4o-mini` 등 비용/품질 트레이드오프 |
-| 분석 프롬프트 설계 | **FastAPI 팀 작성 필요** | `user/prompts/resume_prompts.py`에 프롬프트 템플릿 정의 |
+| 파일 파싱 라이브러리 | **확정** | PDF: `pdfplumber` (MIT), DOCX: `python-docx` (MIT) |
+| OpenAI 모델 선택 | **확정** | `gpt-4o-mini` 기본 사용. `OPENAI_MODEL` 환경 변수로 `gpt-4o` 전환 가능 (약 17배 비용 차이) |
+| 분석 프롬프트 설계 | **구현 필요** | `user/prompts/resume_prompts.py` — 구조화된 JSON 응답 강제 방식으로 작성 |
 | S3 접근 방식 | **확정** | FastAPI가 환경 변수 자격증명으로 직접 S3 접근 (`boto3`) |
 | Webhook 콜백 URL | **확정** | `{SPRING_BASE_URL}/api/v1/user/resume/{documentId}/webhook` |
 | 내부 인증 방식 | **확정** | `X-Internal-Secret` 헤더, `WEBHOOK_SECRET` 환경 변수 |
@@ -80,8 +80,8 @@ OpenAI 분석을 수행한 뒤 단계별 Webhook 콜백으로 Spring Boot에 결
 
 - [ ] `fastapi/user/service/file_parser.py` — S3 다운로드 + 텍스트 추출 서비스
   - `boto3`로 S3에서 파일 스트림 다운로드
-  - PDF 파싱 (팀 합의 라이브러리 확정 후 구현)
-  - DOCX 파싱 (팀 합의 라이브러리 확정 후 구현)
+  - PDF 파싱 (`pdfplumber` 사용)
+  - DOCX 파싱 (`python-docx` 사용)
   - 텍스트 추출 실패 시 `FileParseError` 예외 발생
   - 임시 파일 사용 시 처리 후 즉시 삭제
 
