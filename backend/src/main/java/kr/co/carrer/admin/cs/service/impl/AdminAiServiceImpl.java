@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientRequestException;
 
 import java.time.Duration;
 import java.util.Map;
@@ -62,7 +61,13 @@ public class AdminAiServiceImpl implements AdminAiService {
                 .block();
 
             String draft = response != null ? (String) response.get("draft") : null;
+            if (draft == null || draft.isBlank()) {
+                log.error("[AdminAiService] FastAPI 응답에 draft 누락 또는 비어있음: path={}", path);
+                throw new CustomException(AdminCsErrorCode.AI_SERVER_UNAVAILABLE);
+            }
             return new AiDTO.ResponseDraft(draft);
+        } catch (CustomException e) {
+            throw e;
         } catch (Exception e) {
             log.error("[AdminAiService] FastAPI 호출 실패: path={}, 원인={}", path, e.getMessage());
             throw new CustomException(AdminCsErrorCode.AI_SERVER_UNAVAILABLE);
