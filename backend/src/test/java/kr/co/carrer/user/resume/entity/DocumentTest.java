@@ -40,6 +40,7 @@ class DocumentTest {
         assertThat(doc.getFileUrl()).isNull();
         assertThat(doc.getOriginalName()).isNull();
         assertThat(doc.getStatus()).isEqualTo(DocumentStatus.UPLOADED);
+        assertThat(doc.getCreatedAt()).isNotNull();
     }
 
     @Test

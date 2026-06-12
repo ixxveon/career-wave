@@ -294,7 +294,8 @@ CREATE TABLE cover_letter_meta (
     job            VARCHAR(100) NOT NULL,
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_cover_letter_meta PRIMARY KEY (letter_meta_id),
+    CONSTRAINT pk_cover_letter_meta  PRIMARY KEY (letter_meta_id),
+    CONSTRAINT uq_clm_document_id   UNIQUE      (document_id),
     CONSTRAINT fk_clm_document      FOREIGN KEY (document_id) REFERENCES documents (document_id)
 );
 COMMENT ON TABLE  cover_letter_meta                IS '자기소개서 기본 정보 (지원 회사 및 직무)';

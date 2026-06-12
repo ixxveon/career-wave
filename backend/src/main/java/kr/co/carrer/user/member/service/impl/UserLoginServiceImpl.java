@@ -8,6 +8,10 @@ import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
+import io.jsonwebtoken.JwtException;
+import kr.co.carrer.auth.store.RefreshTokenStore;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
+import lombok.extern.slf4j.Slf4j;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
@@ -23,8 +27,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserLoginServiceImpl implements UserLoginService {
@@ -33,6 +40,8 @@ public class UserLoginServiceImpl implements UserLoginService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
+    private final RefreshTokenStore refreshTokenStore;
+    private final TokenBlacklistStore tokenBlacklistStore;
     private final EntityManager entityManager;
 
     @Transactional
@@ -51,7 +60,7 @@ public class UserLoginServiceImpl implements UserLoginService {
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
-        validateAccountStatus(member);
+        CompanyApprovalStatus approvalStatus = validateAccountStatus(member);
 
         member.updateLastLoginAt(Instant.now());
 
@@ -65,15 +74,34 @@ public class UserLoginServiceImpl implements UserLoginService {
                 null
         );
 
+        String sessionId = UUID.randomUUID().toString();
         String refreshToken = jwtTokenProvider.createRefreshToken(
                 member.getMemberId().toString(),
                 accountType,
-                null
+                null,
+                sessionId
         );
 
-        setRefreshTokenCookie(response, refreshToken);
+        // USER 5세션 상한 — 초과 세션 퇴출 + 해당 access token blacklist 등록
+        String memberId = member.getMemberId().toString();
+        Duration accessTtl = Duration.ofMillis(jwtProperties.getUser().getAccessExpiration());
+        refreshTokenStore.enforceSessionLimit(accountType, memberId)
+                .forEach(expiredKey -> {
+                    String expiredSessionId = expiredKey.substring(expiredKey.lastIndexOf(':') + 1);
+                    String expiredJti = refreshTokenStore.getAndDeleteAccessJti(accountType, memberId, expiredSessionId);
+                    if (expiredJti != null) tokenBlacklistStore.add(expiredJti, accessTtl);
+                    refreshTokenStore.delete(accountType, memberId, expiredSessionId);
+                });
 
-        CompanyApprovalStatus approvalStatus = resolveCompanyApprovalStatus(member);
+        // refresh token Redis 저장 (SHA-256 hash, TTL = refresh 만료시간)
+        refreshTokenStore.save(accountType, memberId, sessionId,
+                refreshToken, Duration.ofMillis(jwtProperties.getUser().getRefreshExpiration()));
+
+        // access token jti 저장 — 이후 세션 퇴출 시 blacklist 등록에 사용
+        String jti = jwtTokenProvider.extractJti(accessToken, accountType);
+        refreshTokenStore.saveAccessJti(accountType, memberId, sessionId, jti, accessTtl);
+
+        setRefreshTokenCookie(response, refreshToken);
 
         UserLoginDto.MemberInfo summary = UserLoginDto.MemberInfo.of(
                 member.getMemberId(),
@@ -89,7 +117,7 @@ public class UserLoginServiceImpl implements UserLoginService {
         return new UserLoginDto.Response(accessToken, summary);
     }
 
-    private void validateAccountStatus(Member member) {
+    private CompanyApprovalStatus validateAccountStatus(Member member) {
         switch (member.getMemberStatus()) {
             case SUSPENDED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED);
             case BANNED    -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
@@ -98,6 +126,8 @@ public class UserLoginServiceImpl implements UserLoginService {
                 if (member.getLockedUntil() != null && Instant.now().isBefore(member.getLockedUntil())) {
                     throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
                 }
+                // locked_until 경과 → ACTIVE 자동 복구 (dirty checking으로 DB 반영)
+                member.recoverFromLock();
             }
             default -> {}
         }
@@ -109,7 +139,9 @@ public class UserLoginServiceImpl implements UserLoginService {
                 case NEEDS_REVISION -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_NEEDS_REVISION);
                 default -> {}
             }
+            return status;
         }
+        return CompanyApprovalStatus.NONE;
     }
 
     private CompanyApprovalStatus resolveCompanyApprovalStatus(Member member) {
@@ -128,6 +160,77 @@ public class UserLoginServiceImpl implements UserLoginService {
             case "REMOVED" -> CompanyApprovalStatus.REJECTED;
             default -> throw new CustomException(ErrorCode.FORBIDDEN);
         };
+    }
+
+    @Transactional
+    public String refresh(String refreshToken, HttpServletResponse response) {
+        AccountType accountType;
+        try {
+            accountType = jwtTokenProvider.extractAccountType(refreshToken);
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
+        }
+        if (accountType == AccountType.ADMIN) {
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
+        }
+        if (!jwtTokenProvider.validate(refreshToken, accountType)) {
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
+        }
+
+        var claims = jwtTokenProvider.parse(refreshToken, accountType);
+        String subject = claims.getSubject();
+        String sessionId = claims.get("sessionId", String.class);
+        if (sessionId == null) throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
+
+        // 재사용 탐지: hash 불일치 → 전체 세션 폐기 + 401
+        if (!refreshTokenStore.matches(accountType, subject, sessionId, refreshToken)) {
+            refreshTokenStore.deleteAll(accountType, subject);
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_REUSE_DETECTED);
+        }
+
+        // 계정 상태 검증: ACTIVE만 재발급
+        Member member = memberRepository.findById(java.util.UUID.fromString(subject))
+                .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID));
+        if (member.getMemberStatus() != MemberStatus.ACTIVE) {
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
+        }
+
+        String roleType = accountType == AccountType.COMPANY ? "COMPANY" : "USER";
+        String newAccessToken = jwtTokenProvider.createAccessToken(subject, accountType, roleType, null);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(subject, accountType, null, sessionId);
+
+        refreshTokenStore.rotate(accountType, subject, sessionId,
+                newRefreshToken, Duration.ofMillis(jwtProperties.getUser().getRefreshExpiration()));
+        setRefreshTokenCookie(response, newRefreshToken);
+        return newAccessToken;
+    }
+
+    public void logout(String refreshToken, String accessToken) {
+        try {
+            AccountType accountType = jwtTokenProvider.extractAccountType(refreshToken);
+            if (jwtTokenProvider.validate(refreshToken, accountType)) {
+                var claims = jwtTokenProvider.parse(refreshToken, accountType);
+                String subject = claims.getSubject();
+                String sessionId = claims.get("sessionId", String.class);
+                if (sessionId != null) {
+                    refreshTokenStore.delete(accountType, subject, sessionId);
+                }
+            }
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("[로그아웃] refresh token 처리 실패 (이미 만료/무효) — 무시하고 계속: {}", e.getMessage());
+        }
+
+        // access token blacklist 등록
+        try {
+            AccountType accountType = jwtTokenProvider.extractAccountType(accessToken);
+            if (jwtTokenProvider.validate(accessToken, accountType)) {
+                String jti = jwtTokenProvider.extractJti(accessToken, accountType);
+                Duration ttl = jwtTokenProvider.remainingTtl(accessToken, accountType);
+                tokenBlacklistStore.add(jti, ttl);
+            }
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("[로그아웃] access token blacklist 등록 실패 (이미 만료/무효) — 무시하고 계속: {}", e.getMessage());
+        }
     }
 
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
