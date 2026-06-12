@@ -5,6 +5,8 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import kr.co.carrer.admin.cs.dto.NoticeDTO;
 import kr.co.carrer.admin.cs.type.NoticeCategory;
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
 import org.springframework.stereotype.Repository;
 
 import java.time.ZonedDateTime;
@@ -23,7 +25,7 @@ public class NoticeQueryRepository {
         if (value instanceof java.sql.Timestamp ts) return ts.toInstant().atZone(java.time.ZoneId.systemDefault());
         if (value instanceof java.time.Instant i) return i.atZone(java.time.ZoneId.systemDefault());
         if (value instanceof java.time.OffsetDateTime odt) return odt.toZonedDateTime();
-        throw new IllegalArgumentException("Unsupported timestamp type: " + value.getClass());
+        throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     public List<NoticeDTO.ResponseList> findNotices(NoticeCategory category, Boolean visible,

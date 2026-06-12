@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/admin/notices")
 @RequiredArgsConstructor
 @Validated
+// TODO: JWT 필터 구현 후 이슈 #310에서 활성화 예정
+// @PreAuthorize("hasRole('ADMIN')")
 public class AdminNoticeController implements AdminNoticeControllerDocs {
 
     private final AdminNoticeService adminNoticeService;

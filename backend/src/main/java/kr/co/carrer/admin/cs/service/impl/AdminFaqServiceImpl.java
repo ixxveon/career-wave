@@ -10,6 +10,7 @@ import kr.co.carrer.admin.cs.repository.FaqRepository;
 import kr.co.carrer.admin.cs.service.AdminFaqService;
 import kr.co.carrer.admin.cs.type.FaqCategory;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,12 +35,13 @@ public class AdminFaqServiceImpl implements AdminFaqService {
         if (value instanceof java.sql.Timestamp ts) return ts.toInstant().atZone(ZoneId.systemDefault());
         if (value instanceof java.time.Instant i) return i.atZone(ZoneId.systemDefault());
         if (value instanceof java.time.OffsetDateTime odt) return odt.toZonedDateTime();
-        throw new IllegalArgumentException("Unsupported timestamp type: " + value.getClass());
+        throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PaginationResponse<FaqDTO.ResponseList> getFaqs(FaqCategory category, int page, int size) {
+        if (page < 1 || size < 1) throw new CustomException(ErrorCode.BAD_REQUEST);
         size = Math.min(size, 100);
         int offset = (page - 1) * size;
 
@@ -98,6 +100,7 @@ public class AdminFaqServiceImpl implements AdminFaqService {
         Faq faq = faqRepository.findById(faqId)
             .orElseThrow(() -> new CustomException(AdminCsErrorCode.FAQ_NOT_FOUND));
         faq.update(dto.category(), dto.question(), dto.answer());
+        em.flush();
         return new FaqDTO.ResponseResult(faq.getFaqId(), faq.getUpdatedAt());
     }
 

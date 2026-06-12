@@ -9,6 +9,7 @@ import kr.co.carrer.admin.cs.service.AdminInquiryService;
 import kr.co.carrer.admin.cs.type.InquiryCategory;
 import kr.co.carrer.admin.cs.type.InquiryStatus;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -28,6 +29,7 @@ public class AdminInquiryServiceImpl implements AdminInquiryService {
     @Transactional(readOnly = true)
     public PaginationResponse<InquiryDTO.ResponseList> getInquiries(InquiryCategory category, InquiryStatus status,
                                                                      int page, int size) {
+        if (page < 1 || size < 1) throw new CustomException(ErrorCode.BAD_REQUEST);
         size = Math.min(size, 100);
         int offset = (page - 1) * size;
         List<InquiryDTO.ResponseList> items = inquiryQueryRepository.findInquiries(category, status, offset, size);
@@ -71,7 +73,12 @@ public class AdminInquiryServiceImpl implements AdminInquiryService {
             throw new CustomException(AdminCsErrorCode.INQUIRY_NOT_IN_PROGRESS);
         }
 
-        inquiry.complete();
+        try {
+            inquiry.complete();
+            inquiryRepository.saveAndFlush(inquiry);
+        } catch (OptimisticLockingFailureException e) {
+            throw new CustomException(AdminCsErrorCode.INQUIRY_CONFLICT);
+        }
         return new InquiryDTO.ResponseComplete(inquiry.getInquiryId(), inquiry.getInquiryStatus(), inquiry.getCompletedAt());
     }
 }

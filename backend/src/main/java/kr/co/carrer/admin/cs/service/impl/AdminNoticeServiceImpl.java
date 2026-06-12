@@ -26,6 +26,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Transactional(readOnly = true)
     public PaginationResponse<NoticeDTO.ResponseList> getNotices(NoticeCategory category, Boolean visible,
                                                                   String keyword, int page, int size) {
+        if (page < 1 || size < 1) throw new CustomException(kr.co.carrer.global.exception.ErrorCode.BAD_REQUEST);
         size = Math.min(size, 100);
         int offset = (page - 1) * size;
         List<NoticeDTO.ResponseList> items = noticeQueryRepository.findNotices(category, visible, keyword, offset, size);

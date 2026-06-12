@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/cs")
 @RequiredArgsConstructor
+// TODO: JWT 필터 구현 후 이슈 #310에서 활성화 예정
+// @PreAuthorize("hasRole('ADMIN')")
 public class AdminCsController implements AdminCsControllerDocs {
 
     private final AdminCsService adminCsService;

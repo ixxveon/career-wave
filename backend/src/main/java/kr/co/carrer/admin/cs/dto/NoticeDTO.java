@@ -14,14 +14,14 @@ public class NoticeDTO {
         @NotNull NoticeCategory category,
         @NotBlank @Size(max = 200) String title,
         @NotBlank String content,
-        boolean isVisible
+        @NotNull Boolean isVisible
     ) {}
 
     public record RequestUpdate(
         @NotNull NoticeCategory category,
         @NotBlank @Size(max = 200) String title,
         @NotBlank String content,
-        boolean isVisible
+        @NotNull Boolean isVisible
     ) {}
 
     @Schema(description = "공지사항 목록 응답")

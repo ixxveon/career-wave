@@ -1,6 +1,7 @@
 package kr.co.carrer.admin.cs.docs;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.co.carrer.admin.cs.dto.FaqDTO;
@@ -24,7 +25,7 @@ public interface AdminFaqControllerDocs {
     @Operation(summary = "FAQ 등록")
     ResponseEntity<ApiResponse<FaqDTO.ResponseResult>> createFaq(
         @RequestBody @Valid FaqDTO.RequestCreate dto,
-        Long adminId
+        @Parameter(hidden = true) Long adminId
     );
 
     @Operation(summary = "FAQ 수정")
