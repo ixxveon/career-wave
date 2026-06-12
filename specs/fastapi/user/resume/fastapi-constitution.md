@@ -74,7 +74,7 @@ COMPLETED (콜백 전송) 또는 FAILED (콜백 전송)
 | Webhook 요청 타임아웃 | 단건 요청당 최대 5초 | Spring이 응답 없을 시 이벤트 루프 블로킹 방지 — 타임아웃 시 실패로 간주 후 로그 기록 |
 | 파일 파싱 라이브러리 | `pdfplumber`(PDF), `python-docx`(DOCX) | MIT 라이선스. PyMuPDF는 AGPL 이슈로 제외 |
 | S3 파일 다운로드 | 스트리밍 방식 + 최대 용량 제한 (예: 10MB) | 대용량 파일에 의한 OOM 방지, 초과 시 즉시 FAILED 처리 |
-| AI 모델 | 환경 변수 `OPENAI_MODEL`로 주입 | 코드 변경 없이 모델 교체 가능 |
+| AI 모델 전략 | 하이브리드 모델 믹스 — `OPENAI_MODEL_LIGHT`(텍스트 추출·요약) / `OPENAI_MODEL_DEEP`(심층 피드백·STAR 분석) | 비용 최적화 + 품질 균형. 단계별 모델을 환경 변수로 분리하여 코드 변경 없이 교체 가능 |
 | 중간 상태 전송 | 분석 단계별 Webhook 콜백 | 프론트엔드 실시간 진행 표시 지원 |
 | 네트워크 격리 | FastAPI는 Private Subnet에서만 구동 | 외부 인터넷에서 FastAPI 직접 접근 원천 차단 |
 

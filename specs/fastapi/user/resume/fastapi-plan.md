@@ -20,7 +20,8 @@ OpenAI 분석을 수행한 뒤 단계별 Webhook 콜백으로 Spring Boot에 결
 | 비동기 처리 | FastAPI `BackgroundTasks` | 즉시 응답 후 백그라운드 분석 |
 | 파일 파싱 (PDF) | `pdfplumber` | MIT 라이선스, 이력서 텍스트 추출 안정적. PyMuPDF는 AGPL 라이선스 이슈로 제외 |
 | 파일 파싱 (DOCX) | `python-docx` | 표준 선택, MIT 라이선스 |
-| AI 분석 | OpenAI API (`openai` SDK) | 기존 프로젝트 방향성 기준 |
+| AI 분석 (텍스트 추출·요약) | `gpt-4o-mini` (`OPENAI_MODEL_LIGHT`) | 빠르고 저렴. 정형화된 데이터 파싱·요약에 최적 |
+| AI 분석 (심층 피드백·STAR) | `gpt-4o` (`OPENAI_MODEL_DEEP`) | 추론 능력 우수. 구직자 체감 품질에 직결 |
 | 내부 인증 | `X-Internal-Secret` 헤더 | Spring Boot와 동일 시크릿 공유 |
 | Webhook 재시도 | 최대 3회 지수 백오프 | Spring 일시 다운 대응 |
 | 환경 변수 | `core/config.py` Settings 클래스 | Convention § 12 준수 |
@@ -32,7 +33,7 @@ OpenAI 분석을 수행한 뒤 단계별 Webhook 콜백으로 Spring Boot에 결
 | 항목 | 상태 | 비고 |
 |------|------|------|
 | 파일 파싱 라이브러리 | **확정** | PDF: `pdfplumber` (MIT), DOCX: `python-docx` (MIT) |
-| OpenAI 모델 선택 | **확정** | `gpt-4o-mini` 기본 사용. `OPENAI_MODEL` 환경 변수로 `gpt-4o` 전환 가능 (약 17배 비용 차이) |
+| OpenAI 모델 선택 | **확정** | 하이브리드 전략 — 텍스트 추출·요약: `gpt-4o-mini`, 심층 피드백·STAR 분석: `gpt-4o`. 환경 변수 `OPENAI_MODEL_LIGHT` / `OPENAI_MODEL_DEEP`으로 각각 주입 |
 | 분석 프롬프트 설계 | **구현 필요** | `user/prompts/resume_prompts.py` — 구조화된 JSON 응답 강제 방식으로 작성 |
 | S3 접근 방식 | **확정** | FastAPI가 환경 변수 자격증명으로 직접 S3 접근 (`boto3`) |
 | Webhook 콜백 URL | **확정** | `{SPRING_BASE_URL}/api/v1/user/resume/{documentId}/webhook` |
@@ -48,7 +49,8 @@ OpenAI 분석을 수행한 뒤 단계별 Webhook 콜백으로 Spring Boot에 결
 | `SPRING_BASE_URL` | Spring Boot 내부 URL | 본인 직접 설정 |
 | `WEBHOOK_SECRET` | 내부 인증 공유 키 | Spring Boot와 동일 값으로 설정 |
 | `OPENAI_API_KEY` | OpenAI API 키 | 인프라 팀 요청 |
-| `OPENAI_MODEL` | 사용 모델명 | 팀 합의 후 설정 |
+| `OPENAI_MODEL_LIGHT` | 텍스트 추출·요약 단계 모델 | 기본값: `gpt-4o-mini` |
+| `OPENAI_MODEL_DEEP` | 심층 피드백·STAR 분석 단계 모델 | 기본값: `gpt-4o` |
 | `AWS_ACCESS_KEY_ID` | S3 Access Key | 인프라 팀 요청 |
 | `AWS_SECRET_ACCESS_KEY` | S3 Secret Key | 인프라 팀 요청 |
 | `AWS_REGION` | S3 리전 | 인프라 팀 요청 |
