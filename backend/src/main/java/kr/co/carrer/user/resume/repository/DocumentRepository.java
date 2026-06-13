@@ -32,7 +32,7 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
             LEFT JOIN CoverLetterMeta m ON m.documentId = d.documentId
             LEFT JOIN DocumentFeedback f ON f.documentId = d.documentId
             WHERE d.memberId = :memberId
-            ORDER BY d.createdAt DESC
+            ORDER BY d.createdAt DESC, d.documentId DESC
             """)
     Page<ResumeDTO.HistoryItem> findHistoryByMemberId(@Param("memberId") UUID memberId, Pageable pageable);
 }
