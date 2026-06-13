@@ -29,6 +29,7 @@
   - [ ] `WS /ws/user/interview/{sessionId}/ai` 엔드포인트 정의
   - [ ] JWT 토큰 검증 (`?token=`) — 실패 시 Close 1008
   - [ ] `sessionId` 세션 저장 및 중복 연결 시 이전 연결 종료
+    - [ ] 교체 직전 기존 소켓에 `{"type": "ERROR", "errorCode": "INTERVIEW_DUPLICATED_CONNECTION"}` 전송 후 `close(code=1000)` 호출 — 클라이언트가 종료 이유를 수신할 수 있도록 보장
   - [ ] 세션별 WebSocket 저장: `active_sessions: dict[str, WebSocket]`
   - [ ] 메시지 전송 헬퍼 구현
     - [ ] `send_stt_partial(session_id, content, question_order, chunk_index)`
@@ -66,6 +67,7 @@
   - [ ] 이전 답변 이력 컨텍스트 조합 로직
   - [ ] `asyncio.wait_for`로 LLM 타임아웃 처리 (`OPENAI_LLM_TIMEOUT_SECONDS`)
   - [ ] 타임아웃 시 폴백 질문 반환
+  - [ ] 세션별 `used_fallback_questions: set[str]` 메모리로 이미 사용한 폴백 질문 추적 — 중복 폴백 질문 재출제 방지
   - [ ] LLM 실패 시 `INTERVIEW_LLM_FAILED` WebSocket 메시지 전송
 - [ ] `fastapi/user/pipeline/tts_pipeline.py` 생성
   - [ ] `synthesize_and_stream(text, session_id, question_order)` — OpenAI TTS 호출 + WebSocket 스트리밍
@@ -92,6 +94,7 @@
   - [ ] 리포트 생성 실패 시 빈 feedbacks + `totalScore: null` 부분 콜백 전송
 - [ ] `fastapi/core/spring_client.py` 업데이트
   - [ ] `send_report_callback` 지수 백오프 구현 (1초, 3초 대기)
+  - [ ] 콜백 전송 직전 Pydantic 모델(`ReportCallbackPayload`)로 페이로드 유효성 검증 — 필수 필드 누락 시 Spring 전송 차단 및 `log.error` 기록
   - [ ] `duplicated: true` 응답 시 정상 처리 (중복 콜백 허용)
 - [ ] `fastapi/user/api/interview_router.py` 업데이트
   - [ ] `POST /internal/user/interview/sessions/{sessionId}/trigger/report` 라우터
