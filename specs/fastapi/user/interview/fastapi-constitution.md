@@ -55,6 +55,7 @@ FastAPI는 세션 상태를 직접 관리하지 않는다. Spring Boot가 `inter
 - **재시도 상한**: Spring 콜백 재시도는 최대 3회를 초과하지 않는다. 재시도 초과 후 `log.error`로 기록하고 무한 재시도하지 않는다.
 - **WebSocket 오류 전달 필수**: STT·LLM·TTS·리포트 파이프라인 오류 발생 시 반드시 해당 `errorCode`를 클라이언트 WebSocket으로 전송한다. 오류를 무시하고 연결을 유지하는 것을 금지한다.
 - **시크릿 하드코딩 금지**: `WEBHOOK_SECRET`, `JWT_SECRET`, `OPENAI_API_KEY` 등 모든 시크릿 값은 환경 변수로만 관리한다.
+- **Structured Logging 필수**: 모든 `pipeline/` 계층 및 서비스 클래스의 로그는 `logging.LoggerAdapter`를 통해 `sessionId`를 컨텍스트로 주입한다. `f"[{sessionId}] ..."` 형태로 수동 문자열을 생성하여 로깅하는 것을 금지한다.
 - **내부 API 전용**: `POST /internal/user/interview/**` 라우터는 Spring Boot에서만 호출 가능해야 한다. IP 화이트리스트 또는 `X-Internal-Secret` 검증을 적용한다.
 
 ---
@@ -80,6 +81,7 @@ FastAPI는 세션 상태를 직접 관리하지 않는다. Spring Boot가 `inter
 - FastAPI 라우터에 AI 파이프라인 비즈니스 로직을 직접 작성하는 것을 금지한다. `pipeline/` 계층으로 분리한다.
 - FastAPI WebSocket(`/ai`)에서 Spring WebSocket(`/chat`) 이벤트를 대신 전송하는 것을 금지한다. 채널 역할을 혼재하지 않는다.
 - 환경 변수를 `os.environ.get()` 직접 호출로 읽는 것을 금지한다. `core/config.py`의 `settings` 객체를 통해서만 접근한다.
+- `pipeline/` 계층 내에서 `requests` 등 동기 방식 HTTP 클라이언트 또는 동기식 파일 I/O를 사용하는 것을 금지한다. 반드시 `httpx.AsyncClient` 및 `aiofiles` 등 비동기 라이브러리를 사용한다. 동기 호출 1건이 FastAPI 이벤트 루프 전체를 블로킹한다.
 
 ---
 
