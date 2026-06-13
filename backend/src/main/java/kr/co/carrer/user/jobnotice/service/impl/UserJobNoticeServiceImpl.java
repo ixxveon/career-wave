@@ -14,13 +14,17 @@ import kr.co.carrer.user.jobnotice.type.CompanySize;
 import kr.co.carrer.user.jobnotice.type.JobNoticeStatus;
 import kr.co.carrer.user.jobnotice.type.JobType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -64,8 +68,9 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 PageRequest.of(normalizedPage - 1, normalizedSize)
         );
 
+        Set<Long> bookmarkedJobNoticeIds = getBookmarkedJobNoticeIds(memberId, result.getContent());
         List<JobNoticeDTO.ResponseSummary> content = result.getContent().stream()
-                .map(jobNotice -> toResponseSummary(jobNotice, memberId))
+                .map(jobNotice -> toResponseSummary(jobNotice, bookmarkedJobNoticeIds))
                 .toList();
 
         return new JobNoticeDTO.ResponseList(
@@ -112,12 +117,12 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
         jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(jobNoticeId, JobNoticeStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(JobNoticeErrorCode.JOB_NOTICE_NOT_FOUND));
 
-        if (bookmarkRepository.existsByMemberIdAndJobNoticeId(memberId, jobNoticeId)) {
+        try {
+            Bookmark bookmark = bookmarkRepository.save(Bookmark.of(memberId, jobNoticeId));
+            return new JobNoticeDTO.ResponseBookmark(bookmark.getJobNoticeId(), true);
+        } catch (DataIntegrityViolationException exception) {
             throw new CustomException(JobNoticeErrorCode.BOOKMARK_ALREADY_EXISTS);
         }
-
-        Bookmark bookmark = bookmarkRepository.save(Bookmark.of(memberId, jobNoticeId));
-        return new JobNoticeDTO.ResponseBookmark(bookmark.getJobNoticeId(), true);
     }
 
     @Override
@@ -133,7 +138,7 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
         return new JobNoticeDTO.ResponseBookmark(jobNoticeId, false);
     }
 
-    private JobNoticeDTO.ResponseSummary toResponseSummary(JobNotice jobNotice, UUID memberId) {
+    private JobNoticeDTO.ResponseSummary toResponseSummary(JobNotice jobNotice, Set<Long> bookmarkedJobNoticeIds) {
         return new JobNoticeDTO.ResponseSummary(
                 jobNotice.getJobNoticeId(),
                 jobNotice.getCompanyName(),
@@ -150,8 +155,22 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 jobNotice.getViewCount(),
                 jobNotice.getDeadline(),
                 jobNotice.getCreatedAt(),
-                isBookmarked(memberId, jobNotice.getJobNoticeId())
+                bookmarkedJobNoticeIds.contains(jobNotice.getJobNoticeId())
         );
+    }
+
+    private Set<Long> getBookmarkedJobNoticeIds(UUID memberId, List<JobNotice> jobNotices) {
+        if (memberId == null || jobNotices.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        List<Long> jobNoticeIds = jobNotices.stream()
+                .map(JobNotice::getJobNoticeId)
+                .toList();
+
+        return bookmarkRepository.findByMemberIdAndJobNoticeIdIn(memberId, jobNoticeIds).stream()
+                .map(Bookmark::getJobNoticeId)
+                .collect(HashSet::new, HashSet::add, HashSet::addAll);
     }
 
     private boolean isBookmarked(UUID memberId, Long jobNoticeId) {
