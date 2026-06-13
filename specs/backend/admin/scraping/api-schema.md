@@ -1,59 +1,59 @@
 # API Schema: scraping
 
-> `scraping` ê´€ë¦¬ì ?¸ë? API ê³„ì•½ ë¬¸ì„œ??  
-> Spring Boot???¸ë? ê´€ë¦¬ì API, ?¸ì¦/?¸ê?, DTO ê³„ì•½, `ApiResponse<T>` ?˜í•‘???´ë‹¹?˜ê³ , ?¤ì œ ?¤í¬?˜í•‘ ?¤í–‰ê³??íƒœ ê°±ì‹ ?€ FastAPI???„ì„?œë‹¤.
+> `scraping` ê´€ë¦¬ì ì™¸ë¶€ API ê³„ì•½ ë¬¸ì„œë‹¤.  
+> Spring BootëŠ” ì™¸ë¶€ ê´€ë¦¬ì API, ì¸ì¦/ì¸ê°€, DTO ê³„ì•½, `ApiResponse<T>` ë˜í•‘ì„ ë‹´ë‹¹í•˜ê³ , ì‹¤ì œ ìŠ¤í¬ë˜í•‘ ì‹¤í–‰ê³¼ ìƒíƒœ ê°±ì‹ ì€ FastAPIì— ìœ„ì„í•œë‹¤.
 
 ---
 
 ## 1. ê³µí†µ ê·œì¹™
 
-- ?„ë¡œ?íŠ¸ êµ¬ì¡°: Spring Boot + PostgreSQL + React
-- ëª¨ë“  ?¸ë? API ?‘ë‹µ?€ `ApiResponse<T>`ë¥??¬ìš©?œë‹¤.
-- ëª©ë¡ ì¡°íšŒ API??`page`??1-based??
-- Spring ?´ë? `Pageable` ë³€???œì—ë§?`page - 1`???ìš©?œë‹¤.
-- Swagger ?´ë…¸?Œì´?˜ì? Controllerê°€ ?„ë‹ˆ??`docs` ?¸í„°?˜ì´?¤ì— ?‘ì„±?œë‹¤.
-- ë³?ë¬¸ì„œ?ëŠ” `scraping` ?„ë©”??ErrorCodeë§??‘ì„±?œë‹¤.
+- í”„ë¡œì íŠ¸ êµ¬ì¡°: Spring Boot + PostgreSQL + React
+- ëª¨ë“  ì™¸ë¶€ API ì‘ë‹µì€ `ApiResponse<T>`ë¥¼ ì‚¬ìš©í•œë‹¤.
+- ëª©ë¡ ì¡°íšŒ APIì˜ `page`ëŠ” 1-basedë‹¤.
+- Spring ë‚´ë¶€ `Pageable` ë³€í™˜ ì‹œì—ë§Œ `page - 1`ì„ ì ìš©í•œë‹¤.
+- Swagger ì–´ë…¸í…Œì´ì…˜ì€ Controllerê°€ ì•„ë‹ˆë¼ `docs` ì¸í„°í˜ì´ìŠ¤ì— ì‘ì„±í•œë‹¤.
+- ë³¸ ë¬¸ì„œì—ëŠ” `scraping` ë„ë©”ì¸ ErrorCodeë§Œ ì‘ì„±í•œë‹¤.
 
-### ê¶Œí•œ ?œê¸°
+### ê¶Œí•œ í‘œê¸°
 
-- ë¬¸ì„œ??ê¶Œí•œ ?œê¸°??`MASTER`, `BACKEND`ë§??¬ìš©?œë‹¤.
-- Spring Security?ì„œ??`MASTER -> ROLE_MASTER`, `BACKEND -> ROLE_BACKEND`ë¡?ë§¤í•‘?œë‹¤.
+- ë¬¸ì„œìƒ ê¶Œí•œ í‘œê¸°ëŠ” `MASTER`, `BACKEND`ë§Œ ì‚¬ìš©í•œë‹¤.
+- Spring Securityì—ì„œëŠ” `MASTER -> ROLE_MASTER`, `BACKEND -> ROLE_BACKEND`ë¡œ ë§¤í•‘í•œë‹¤.
 
 ### Pagination ê·œì¹™
 
-- ëª©ë¡ ì¡°íšŒ APIë§?`page`, `size`ë¥??¬ìš©?œë‹¤.
-- ?ì„¸ ì¡°íšŒ API??`page`, `size`ë¥??¬ìš©?˜ì? ?ŠëŠ”??
-- ?¤í–‰/?¬ì‹œ???ŒìŠ¤???¼ê´„ ?¤í–‰ API??`page`, `size`ë¥??¬ìš©?˜ì? ?ŠëŠ”??
+- ëª©ë¡ ì¡°íšŒ APIë§Œ `page`, `size`ë¥¼ ì‚¬ìš©í•œë‹¤.
+- ìƒì„¸ ì¡°íšŒ APIëŠ” `page`, `size`ë¥¼ ì‚¬ìš©í•˜ì§€ ì•ŠëŠ”ë‹¤.
+- ì‹¤í–‰/ì¬ì‹œë„/í…ŒìŠ¤íŠ¸/ì¼ê´„ ì‹¤í–‰ APIëŠ” `page`, `size`ë¥¼ ì‚¬ìš©í•˜ì§€ ì•ŠëŠ”ë‹¤.
 
-### Spring API ??FastAPI ?´ë? API ë§¤í•‘
+### Spring API â†” FastAPI ë‚´ë¶€ API ë§¤í•‘
 
-| Spring API | FastAPI Internal API | ?¤ëª… |
+| Spring API | FastAPI Internal API | ì„¤ëª… |
 |---|---|---|
-| `GET /api/v1/admin/scraping/pipelines` | `GET /internal/scraping/pipelines` | ?Œì´?„ë¼??ëª©ë¡ ì¡°íšŒ |
-| `GET /api/v1/admin/scraping/pipelines/summary` | `GET /internal/scraping/pipelines/summary` | ?Œì´?„ë¼???”ì•½ ì¡°íšŒ |
-| `GET /api/v1/admin/scraping/pipelines/{sourceName}` | `GET /internal/scraping/pipelines/{sourceName}` | ?Œì´?„ë¼???ì„¸ ì¡°íšŒ |
-| `GET /api/v1/admin/scraping/logs` | `GET /internal/scraping/logs` | ?¤í¬?˜í•‘ ?¤í–‰ ë¡œê·¸ ì¡°íšŒ |
-| `POST /api/v1/admin/scraping/pipelines/{sourceName}/actions` | `POST /internal/scraping/pipelines/{sourceName}/run` | ?¨ì¼ ?¤í–‰ |
-| `POST /api/v1/admin/scraping/pipelines/{sourceName}/actions` | `POST /internal/scraping/pipelines/{sourceName}/retry` | ?¨ì¼ ?¬ì‹œ??|
-| `POST /api/v1/admin/scraping/pipelines/{sourceName}/actions` | `POST /internal/scraping/pipelines/{sourceName}/test` | ?¨ì¼ ?ŒìŠ¤???¤í–‰ |
-| `POST /api/v1/admin/scraping/pipelines/batch-actions` | `POST /internal/scraping/pipelines/batch-run` | ?¼ê´„ ?¡ì…˜ ?¤í–‰ |
+| `GET /api/v1/admin/scraping/pipelines` | `GET /internal/scraping/pipelines` | íŒŒì´í”„ë¼ì¸ ëª©ë¡ ì¡°íšŒ |
+| `GET /api/v1/admin/scraping/pipelines/summary` | `GET /internal/scraping/pipelines/summary` | íŒŒì´í”„ë¼ì¸ ìš”ì•½ ì¡°íšŒ |
+| `GET /api/v1/admin/scraping/pipelines/{sourceName}` | `GET /internal/scraping/pipelines/{sourceName}` | íŒŒì´í”„ë¼ì¸ ìƒì„¸ ì¡°íšŒ |
+| `GET /api/v1/admin/scraping/logs` | `GET /internal/scraping/logs` | ìŠ¤í¬ë˜í•‘ ì‹¤í–‰ ë¡œê·¸ ì¡°íšŒ |
+| `POST /api/v1/admin/scraping/pipelines/{sourceName}/actions` | `POST /internal/scraping/pipelines/{sourceName}/run` | ë‹¨ì¼ ì‹¤í–‰ |
+| `POST /api/v1/admin/scraping/pipelines/{sourceName}/actions` | `POST /internal/scraping/pipelines/{sourceName}/retry` | ë‹¨ì¼ ì¬ì‹œë„ |
+| `POST /api/v1/admin/scraping/pipelines/{sourceName}/actions` | `POST /internal/scraping/pipelines/{sourceName}/test` | ë‹¨ì¼ í…ŒìŠ¤íŠ¸ ì‹¤í–‰ |
+| `POST /api/v1/admin/scraping/pipelines/batch-actions` | `POST /internal/scraping/pipelines/batch-run` | ì¼ê´„ ì•¡ì…˜ ì‹¤í–‰ |
 
-### ê³µí†µ ?±ê³µ ?‘ë‹µ ?ˆì‹œ
+### ê³µí†µ ì„±ê³µ ì‘ë‹µ ì˜ˆì‹œ
 
 ```json
 {
   "success": true,
-  "message": "?”ì²­???±ê³µ?ˆìŠµ?ˆë‹¤.",
+  "message": "ìš”ì²­ì´ ì„±ê³µí–ˆìŠµë‹ˆë‹¤.",
   "data": {}
 }
 ```
 
-### ê³µí†µ ?˜ì´ì§€ ?‘ë‹µ ?ˆì‹œ
+### ê³µí†µ í˜ì´ì§€ ì‘ë‹µ ì˜ˆì‹œ
 
 ```json
 {
   "success": true,
-  "message": "?”ì²­???±ê³µ?ˆìŠµ?ˆë‹¤.",
+  "message": "ìš”ì²­ì´ ì„±ê³µí–ˆìŠµë‹ˆë‹¤.",
   "data": {
     "content": [],
     "page": 1,
@@ -64,13 +64,13 @@
 }
 ```
 
-### ê³µí†µ ?¤íŒ¨ ?‘ë‹µ ?ˆì‹œ
+### ê³µí†µ ì‹¤íŒ¨ ì‘ë‹µ ì˜ˆì‹œ
 
 ```json
 {
   "success": false,
   "status": 404,
-  "message": "?¤í¬?˜í•‘ ?Œì´?„ë¼?¸ì„ ì°¾ì„ ???†ìŠµ?ˆë‹¤.",
+  "message": "ìŠ¤í¬ë˜í•‘ íŒŒì´í”„ë¼ì¸ì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.",
   "data": null
 }
 ```
@@ -79,39 +79,39 @@
 
 ## 2. Enum ê³„ì•½
 
-| Enum | Values | ê¸°ì? |
+| Enum | Values | ê¸°ì¤€ |
 |---|---|---|
 | `ScrapingPipelineStatusType` | `IDLE`, `RUNNING`, `SUCCESS`, `FAILED` | `scraping_pipelines.pipeline_status` |
 | `ScrapingStatusType` | `SUCCESS`, `FAILED` | `scraping_logs.scraping_status` |
-| `ScrapingActionType` | `RUN`, `RETRY`, `TEST` | ?”ì²­ Body ?„ìš© ê³„ì•½ |
+| `ScrapingActionType` | `RUN`, `RETRY`, `TEST` | ìš”ì²­ Body ì „ìš© ê³„ì•½ |
 
 ---
 
-## 3. Query Parameter ??ERD ì»¬ëŸ¼ ë§¤í•‘
+## 3. Query Parameter â†’ ERD ì»¬ëŸ¼ ë§¤í•‘
 
 ### GET /api/v1/admin/scraping/pipelines
 
-| Query Parameter | Type | ERD ì»¬ëŸ¼ | ?¤ëª… |
+| Query Parameter | Type | ERD ì»¬ëŸ¼ | ì„¤ëª… |
 |---|---|---|---|
-| `keyword` | `string` | FastAPI ?´ë? ì¡°íšŒ ê¸°ì? `scraping_pipelines.source_name`, `scraping_pipelines.display_name`, `scraping_pipelines.last_error_message` | ê²€?‰ì–´ |
-| `status` | `IDLE \| RUNNING \| SUCCESS \| FAILED` | FastAPI ?´ë? ì¡°íšŒ ê¸°ì? `scraping_pipelines.pipeline_status` | ?Œì´?„ë¼???íƒœ |
-| `page` | `number` | ?†ìŒ | ?˜ì´ì§€ ë²ˆí˜¸, 1-based |
-| `size` | `number` | ?†ìŒ | ?˜ì´ì§€ ?¬ê¸° |
+| `keyword` | `string` | FastAPI ë‚´ë¶€ ì¡°íšŒ ê¸°ì¤€ `scraping_pipelines.source_name`, `scraping_pipelines.display_name`, `scraping_pipelines.last_error_message` | ê²€ìƒ‰ì–´ |
+| `status` | `IDLE \| RUNNING \| SUCCESS \| FAILED` | FastAPI ë‚´ë¶€ ì¡°íšŒ ê¸°ì¤€ `scraping_pipelines.pipeline_status` | íŒŒì´í”„ë¼ì¸ ìƒíƒœ |
+| `page` | `number` | ì—†ìŒ | í˜ì´ì§€ ë²ˆí˜¸, 1-based |
+| `size` | `number` | ì—†ìŒ | í˜ì´ì§€ í¬ê¸° |
 
 ### GET /api/v1/admin/scraping/logs
 
-| Query Parameter | Type | ERD ì»¬ëŸ¼ | ?¤ëª… |
+| Query Parameter | Type | ERD ì»¬ëŸ¼ | ì„¤ëª… |
 |---|---|---|---|
-| `sourceName` | `string` | FastAPI ?´ë? ì¡°íšŒ ê¸°ì? `scraping_pipelines.source_name` | ?Œì´?„ë¼???ŒìŠ¤ëª?|
-| `status` | `SUCCESS \| FAILED` | FastAPI ?´ë? ì¡°íšŒ ê¸°ì? `scraping_logs.scraping_status` | ?¤í–‰ ê²°ê³¼ ?íƒœ |
-| `page` | `number` | ?†ìŒ | ?˜ì´ì§€ ë²ˆí˜¸, 1-based |
-| `size` | `number` | ?†ìŒ | ?˜ì´ì§€ ?¬ê¸° |
+| `sourceName` | `string` | FastAPI ë‚´ë¶€ ì¡°íšŒ ê¸°ì¤€ `scraping_pipelines.source_name` | íŒŒì´í”„ë¼ì¸ ì†ŒìŠ¤ëª… |
+| `status` | `SUCCESS \| FAILED` | FastAPI ë‚´ë¶€ ì¡°íšŒ ê¸°ì¤€ `scraping_logs.scraping_status` | ì‹¤í–‰ ê²°ê³¼ ìƒíƒœ |
+| `page` | `number` | ì—†ìŒ | í˜ì´ì§€ ë²ˆí˜¸, 1-based |
+| `size` | `number` | ì—†ìŒ | í˜ì´ì§€ í¬ê¸° |
 
-> ?Œì´?„ë¼??ëª©ë¡/?”ì•½/?ì„¸/ë¡œê·¸ ì¡°íšŒ ê²°ê³¼??FastAPI ?´ë? API ?‘ë‹µ??ê¸°ì??¼ë¡œ ?˜ë©°, Spring Repositoryê°€ ì§ì ‘ ì§‘ê³„?˜ì? ?ŠëŠ”??
+> íŒŒì´í”„ë¼ì¸ ëª©ë¡/ìš”ì•½/ìƒì„¸/ë¡œê·¸ ì¡°íšŒ ê²°ê³¼ëŠ” FastAPI ë‚´ë¶€ API ì‘ë‹µì„ ê¸°ì¤€ìœ¼ë¡œ í•˜ë©°, Spring Repositoryê°€ ì§ì ‘ ì§‘ê³„í•˜ì§€ ì•ŠëŠ”ë‹¤.
 
 ---
 
-## 4. ?Œì´?„ë¼??API
+## 4. íŒŒì´í”„ë¼ì¸ API
 
 ### 4.1 GET /api/v1/admin/scraping/pipelines
 
@@ -123,14 +123,14 @@
 
 | Name | Type | Required | Description |
 |---|---|---|---|
-| `keyword` | `string` | N | ê²€?‰ì–´ |
-| `status` | `IDLE \| RUNNING \| SUCCESS \| FAILED` | N | ?Œì´?„ë¼???íƒœ |
-| `page` | `number` | N | ?˜ì´ì§€ ë²ˆí˜¸, 1-based |
-| `size` | `number` | N | ?˜ì´ì§€ ?¬ê¸° |
+| `keyword` | `string` | N | ê²€ìƒ‰ì–´ |
+| `status` | `IDLE \| RUNNING \| SUCCESS \| FAILED` | N | íŒŒì´í”„ë¼ì¸ ìƒíƒœ |
+| `page` | `number` | N | í˜ì´ì§€ ë²ˆí˜¸, 1-based |
+| `size` | `number` | N | í˜ì´ì§€ í¬ê¸° |
 
 #### Request Body
 
-- Request DTO: ?†ìŒ
+- Request DTO: ì—†ìŒ
 
 #### Response Body
 
@@ -139,13 +139,13 @@
 ```json
 {
   "success": true,
-  "message": "?¤í¬?˜í•‘ ?Œì´?„ë¼??ëª©ë¡ ì¡°íšŒ???±ê³µ?ˆìŠµ?ˆë‹¤.",
+  "message": "ìŠ¤í¬ë˜í•‘ íŒŒì´í”„ë¼ì¸ ëª©ë¡ ì¡°íšŒì— ì„±ê³µí–ˆìŠµë‹ˆë‹¤.",
   "data": {
     "content": [
       {
         "scrapingPipelineId": 1,
         "sourceName": "wanted",
-        "displayName": "?í‹°??,
+        "displayName": "ì›í‹°ë“œ",
         "pipelineStatus": "SUCCESS",
         "isEnabled": true,
         "lastStartedAt": "2026-06-11T00:00:00Z",
@@ -168,7 +168,7 @@
 
 #### Error Response
 
-?†ìŒ
+ì—†ìŒ
 
 ---
 
@@ -180,11 +180,11 @@
 
 #### Query Parameter
 
-?†ìŒ
+ì—†ìŒ
 
 #### Request Body
 
-- Request DTO: ?†ìŒ
+- Request DTO: ì—†ìŒ
 
 #### Response Body
 
@@ -193,7 +193,7 @@
 ```json
 {
   "success": true,
-  "message": "?¤í¬?˜í•‘ ?Œì´?„ë¼???”ì•½ ì¡°íšŒ???±ê³µ?ˆìŠµ?ˆë‹¤.",
+  "message": "ìŠ¤í¬ë˜í•‘ íŒŒì´í”„ë¼ì¸ ìš”ì•½ ì¡°íšŒì— ì„±ê³µí–ˆìŠµë‹ˆë‹¤.",
   "data": {
     "totalCount": 4,
     "idleCount": 1,
@@ -208,7 +208,7 @@
 
 #### Error Response
 
-?†ìŒ
+ì—†ìŒ
 
 ---
 
@@ -222,15 +222,15 @@
 
 | Name | Type | Required | Description |
 |---|---|---|---|
-| `sourceName` | `string` | Y | ?Œì´?„ë¼???ŒìŠ¤ëª?|
+| `sourceName` | `string` | Y | íŒŒì´í”„ë¼ì¸ ì†ŒìŠ¤ëª… |
 
 #### Query Parameter
 
-?†ìŒ
+ì—†ìŒ
 
 #### Request Body
 
-- Request DTO: ?†ìŒ
+- Request DTO: ì—†ìŒ
 
 #### Response Body
 
@@ -239,11 +239,11 @@
 ```json
 {
   "success": true,
-  "message": "?¤í¬?˜í•‘ ?Œì´?„ë¼???ì„¸ ì¡°íšŒ???±ê³µ?ˆìŠµ?ˆë‹¤.",
+  "message": "ìŠ¤í¬ë˜í•‘ íŒŒì´í”„ë¼ì¸ ìƒì„¸ ì¡°íšŒì— ì„±ê³µí–ˆìŠµë‹ˆë‹¤.",
   "data": {
     "scrapingPipelineId": 1,
     "sourceName": "wanted",
-    "displayName": "?í‹°??,
+    "displayName": "ì›í‹°ë“œ",
     "pipelineStatus": "FAILED",
     "isEnabled": true,
     "lastStartedAt": "2026-06-11T00:00:00Z",
@@ -262,8 +262,8 @@
 
 | ErrorCode | Status | Description |
 |---|---|---|
-| `SCRAPING_PIPELINE_NOT_FOUND` | 404 | ?Œì´?„ë¼?¸ì´ ì¡´ì¬?˜ì? ?ŠëŠ”?? |
-| `SCRAPING_SOURCE_NOT_FOUND` | 404 | FastAPIê°€ ì§€?í•˜ì§€ ?ŠëŠ” `sourceName`?´ë‹¤. |
+| `SCRAPING_PIPELINE_NOT_FOUND` | 404 | íŒŒì´í”„ë¼ì¸ì´ ì¡´ì¬í•˜ì§€ ì•ŠëŠ”ë‹¤. |
+| `SCRAPING_SOURCE_NOT_FOUND` | 404 | FastAPIê°€ ì§€ì›í•˜ì§€ ì•ŠëŠ” `sourceName`ì´ë‹¤. |
 
 ---
 
@@ -277,11 +277,11 @@
 
 | Name | Type | Required | Description |
 |---|---|---|---|
-| `sourceName` | `string` | Y | ?¡ì…˜ ?€???Œì´?„ë¼???ŒìŠ¤ëª?|
+| `sourceName` | `string` | Y | ì•¡ì…˜ ëŒ€ìƒ íŒŒì´í”„ë¼ì¸ ì†ŒìŠ¤ëª… |
 
 #### Query Parameter
 
-?†ìŒ
+ì—†ìŒ
 
 #### Request Body
 
@@ -290,7 +290,7 @@
 ```json
 {
   "actionType": "RUN",
-  "reason": "±ä±Ş Á¡°Ë ÈÄ ¼öµ¿ Àç½ÇÇà"
+  "reason": "ê¸´ê¸‰ ì ê²€ í›„ ìˆ˜ë™ ì¬ì‹¤í–‰"
 }
 ```
 
@@ -301,7 +301,7 @@
 ```json
 {
   "success": true,
-  "message": "½ºÅ©·¡ÇÎ ÆÄÀÌÇÁ¶óÀÎ ¾×¼Ç ¿äÃ»¿¡ ¼º°øÇß½À´Ï´Ù.",
+  "message": "ìŠ¤í¬ë˜í•‘ íŒŒì´í”„ë¼ì¸ ì•¡ì…˜ ìš”ì²­ì— ì„±ê³µí–ˆìŠµë‹ˆë‹¤.",
   "data": {
     "sourceName": "wanted",
     "requestedAction": "RUN",
@@ -316,11 +316,11 @@
 
 | ErrorCode | Status | Description |
 |---|---|---|
-| `SCRAPING_PIPELINE_NOT_FOUND` | 404 | ?Œì´?„ë¼?¸ì´ ì¡´ì¬?˜ì? ?ŠëŠ”?? |
-| `SCRAPING_SOURCE_NOT_FOUND` | 404 | FastAPIê°€ ì§€?í•˜ì§€ ?ŠëŠ” `sourceName`?´ë‹¤. |
-| `SCRAPING_ALREADY_RUNNING` | 409 | ?´ë? ?¤í–‰ ì¤‘ì¸ ?Œì´?„ë¼?¸ì´?? |
-| `SCRAPING_EXECUTION_FAILED` | 500 | ?¤í–‰ ?ëŠ” ?¬ì‹œ???”ì²­ ì²˜ë¦¬???¤íŒ¨?ˆë‹¤. |
-| `SCRAPING_TEST_FAILED` | 500 | ?ŒìŠ¤???¤í–‰ ?”ì²­ ì²˜ë¦¬???¤íŒ¨?ˆë‹¤. |
+| `SCRAPING_PIPELINE_NOT_FOUND` | 404 | íŒŒì´í”„ë¼ì¸ì´ ì¡´ì¬í•˜ì§€ ì•ŠëŠ”ë‹¤. |
+| `SCRAPING_SOURCE_NOT_FOUND` | 404 | FastAPIê°€ ì§€ì›í•˜ì§€ ì•ŠëŠ” `sourceName`ì´ë‹¤. |
+| `SCRAPING_ALREADY_RUNNING` | 409 | ì´ë¯¸ ì‹¤í–‰ ì¤‘ì¸ íŒŒì´í”„ë¼ì¸ì´ë‹¤. |
+| `SCRAPING_EXECUTION_FAILED` | 500 | ì‹¤í–‰ ë˜ëŠ” ì¬ì‹œë„ ìš”ì²­ ì²˜ë¦¬ì— ì‹¤íŒ¨í–ˆë‹¤. |
+| `SCRAPING_TEST_FAILED` | 500 | í…ŒìŠ¤íŠ¸ ì‹¤í–‰ ìš”ì²­ ì²˜ë¦¬ì— ì‹¤íŒ¨í–ˆë‹¤. |
 
 ---
 
@@ -332,15 +332,16 @@
 
 #### Query Parameter
 
-?†ìŒ
+ì—†ìŒ
 
 #### Request Body
 
 - Request DTO: `ScrapingPipelineDTO.RequestBatchAction`
+
 ```json
 {
   "actionType": "RETRY",
-  "reason": "¹èÄ¡ Àç½Ãµµ ¿äÃ»",
+  "reason": "ë°°ì¹˜ ì¬ì‹œë„ ìš”ì²­",
   "sourceNames": [
     "wanted",
     "saramin"
@@ -355,7 +356,7 @@
 ```json
 {
   "success": true,
-  "message": "½ºÅ©·¡ÇÎ ÆÄÀÌÇÁ¶óÀÎ ÀÏ°ı ¾×¼Ç ¿äÃ»¿¡ ¼º°øÇß½À´Ï´Ù.",
+  "message": "ìŠ¤í¬ë˜í•‘ íŒŒì´í”„ë¼ì¸ ì¼ê´„ ì•¡ì…˜ ìš”ì²­ì— ì„±ê³µí–ˆìŠµë‹ˆë‹¤.",
   "data": {
     "requestedCount": 2,
     "acceptedCount": 2,
@@ -364,31 +365,30 @@
       {
         "sourceName": "wanted",
         "accepted": true,
-        "message": "½ÇÇà ¿äÃ»ÀÌ Á¢¼öµÇ¾ú½À´Ï´Ù."
+        "message": "ì‹¤í–‰ ìš”ì²­ì´ ì ‘ìˆ˜ë˜ì—ˆìŠµë‹ˆë‹¤."
       },
       {
         "sourceName": "saramin",
         "accepted": true,
-        "message": "½ÇÇà ¿äÃ»ÀÌ Á¢¼öµÇ¾ú½À´Ï´Ù."
+        "message": "ì‹¤í–‰ ìš”ì²­ì´ ì ‘ìˆ˜ë˜ì—ˆìŠµë‹ˆë‹¤."
       }
     ]
   }
 }
-```
 ```
 
 #### Error Response
 
 | ErrorCode | Status | Description |
 |---|---|---|
-| `SCRAPING_SOURCE_NOT_FOUND` | 404 | ?”ì²­ ëª©ë¡??ë¯¸ì???`sourceName`???¬í•¨?˜ì–´ ?ˆë‹¤. |
-| `SCRAPING_ALREADY_RUNNING` | 409 | ?”ì²­ ëª©ë¡ ì¤??´ë? ?¤í–‰ ì¤‘ì¸ ?Œì´?„ë¼?¸ì´ ?ˆë‹¤. |
-| `SCRAPING_EXECUTION_FAILED` | 500 | ?¤í–‰ ?ëŠ” ?¬ì‹œ???”ì²­ ì²˜ë¦¬???¤íŒ¨?ˆë‹¤. |
-| `SCRAPING_TEST_FAILED` | 500 | ?ŒìŠ¤???¤í–‰ ?”ì²­ ì²˜ë¦¬???¤íŒ¨?ˆë‹¤. |
+| `SCRAPING_SOURCE_NOT_FOUND` | 404 | ìš”ì²­ ëª©ë¡ì— ë¯¸ì§€ì› `sourceName`ì´ í¬í•¨ë˜ì–´ ìˆë‹¤. |
+| `SCRAPING_ALREADY_RUNNING` | 409 | ìš”ì²­ ëª©ë¡ ì¤‘ ì´ë¯¸ ì‹¤í–‰ ì¤‘ì¸ íŒŒì´í”„ë¼ì¸ì´ ìˆë‹¤. |
+| `SCRAPING_EXECUTION_FAILED` | 500 | ì‹¤í–‰ ë˜ëŠ” ì¬ì‹œë„ ìš”ì²­ ì²˜ë¦¬ì— ì‹¤íŒ¨í–ˆë‹¤. |
+| `SCRAPING_TEST_FAILED` | 500 | í…ŒìŠ¤íŠ¸ ì‹¤í–‰ ìš”ì²­ ì²˜ë¦¬ì— ì‹¤íŒ¨í–ˆë‹¤. |
 
 ---
 
-## 5. ?¤í¬?˜í•‘ ?¤í–‰ ë¡œê·¸ API
+## 5. ìŠ¤í¬ë˜í•‘ ì‹¤í–‰ ë¡œê·¸ API
 
 ### 5.1 GET /api/v1/admin/scraping/logs
 
@@ -400,22 +400,23 @@
 
 | Name | Type | Required | Description |
 |---|---|---|---|
-| `sourceName` | `string` | N | ?Œì´?„ë¼???ŒìŠ¤ëª?|
-| `status` | `SUCCESS \| FAILED` | N | ?¤í–‰ ê²°ê³¼ ?íƒœ |
-| `page` | `number` | N | ?˜ì´ì§€ ë²ˆí˜¸, 1-based |
-| `size` | `number` | N | ?˜ì´ì§€ ?¬ê¸° |
+| `sourceName` | `string` | N | íŒŒì´í”„ë¼ì¸ ì†ŒìŠ¤ëª… |
+| `status` | `SUCCESS \| FAILED` | N | ì‹¤í–‰ ê²°ê³¼ ìƒíƒœ |
+| `page` | `number` | N | í˜ì´ì§€ ë²ˆí˜¸, 1-based |
+| `size` | `number` | N | í˜ì´ì§€ í¬ê¸° |
 
 #### Request Body
 
-- Request DTO: ?†ìŒ
+- Request DTO: ì—†ìŒ
 
 #### Response Body
 
 - Response DTO: `ApiResponse<ScrapingLogDTO.ResponseLogPage>`
+
 ```json
 {
   "success": true,
-  "message": "½ºÅ©·¡ÇÎ ½ÇÇà ·Î±× Á¶È¸¿¡ ¼º°øÇß½À´Ï´Ù.",
+  "message": "ìŠ¤í¬ë˜í•‘ ì‹¤í–‰ ë¡œê·¸ ì¡°íšŒì— ì„±ê³µí–ˆìŠµë‹ˆë‹¤.",
   "data": {
     "content": [
       {
@@ -423,7 +424,7 @@
         "occurredAt": "2026-06-11T00:01:10Z",
         "sourceName": "wanted",
         "status": "SUCCESS",
-        "message": "½ºÅ©·¡ÇÎ ½ÇÇàÀÌ ¼º°øÇß½À´Ï´Ù.",
+        "message": "ìŠ¤í¬ë˜í•‘ ì‹¤í–‰ì´ ì„±ê³µí–ˆìŠµë‹ˆë‹¤.",
         "detail": null,
         "runId": "run_20260611_000001"
       }
@@ -438,112 +439,111 @@
 
 #### Error Response
 
-¾øÀ½
+ì—†ìŒ
 
 ---
 
-## 6. DTO °è¾à
+## 6. DTO ê³„ì•½
 
 ### 6.1 `ScrapingPipelineDTO.RequestAction`
 
 | Field | Type | Required | Mapping | Description |
 |---|---|---|---|---|
-| `actionType` | `RUN \| RETRY \| TEST` | Y | ¾øÀ½ | ´ÜÀÏ ÆÄÀÌÇÁ¶óÀÎ ¾×¼Ç À¯Çü |
-| `reason` | `string` | Y | ¾øÀ½ | ¾×¼Ç ¿äÃ» »çÀ¯ |
+| `actionType` | `RUN \| RETRY \| TEST` | Y | ì—†ìŒ | ë‹¨ì¼ íŒŒì´í”„ë¼ì¸ ì•¡ì…˜ ìœ í˜• |
+| `reason` | `string` | Y | ì—†ìŒ | ì•¡ì…˜ ìš”ì²­ ì‚¬ìœ  |
 
 ### 6.2 `ScrapingPipelineDTO.RequestBatchAction`
 
 | Field | Type | Required | Mapping | Description |
 |---|---|---|---|---|
-| `actionType` | `RUN \| RETRY \| TEST` | Y | ¾øÀ½ | ÀÏ°ı ¾×¼Ç À¯Çü |
-| `reason` | `string` | Y | ¾øÀ½ | ÀÏ°ı ¾×¼Ç ¿äÃ» »çÀ¯ |
-| `sourceNames` | `string[]` | Y | ¾øÀ½ | ¾×¼Ç ´ë»ó `sourceName` ¸ñ·Ï |
+| `actionType` | `RUN \| RETRY \| TEST` | Y | ì—†ìŒ | ì¼ê´„ ì•¡ì…˜ ìœ í˜• |
+| `reason` | `string` | Y | ì—†ìŒ | ì¼ê´„ ì•¡ì…˜ ìš”ì²­ ì‚¬ìœ  |
+| `sourceNames` | `string[]` | Y | ì—†ìŒ | ì•¡ì…˜ ëŒ€ìƒ `sourceName` ëª©ë¡ |
 
 ### 6.3 `ScrapingPipelineDTO.ResponsePipelineItem`
 
 | Field | Type | Required | Mapping | Description |
 |---|---|---|---|---|
-| `scrapingPipelineId` | `number` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.scraping_pipeline_id` | ÆÄÀÌÇÁ¶óÀÎ ID |
-| `sourceName` | `string` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.source_name` | ¼Ò½º¸í |
-| `displayName` | `string` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.display_name` | Ç¥½Ã¸í |
-| `pipelineStatus` | `IDLE \| RUNNING \| SUCCESS \| FAILED` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.pipeline_status` | ÆÄÀÌÇÁ¶óÀÎ »óÅÂ |
-| `isEnabled` | `boolean` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.is_enabled` | È°¼º ¿©ºÎ |
-| `lastStartedAt` | `string` | N | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.last_started_at` | ÃÖ±Ù ½ÃÀÛ ½Ã°¢ |
-| `lastSuccessAt` | `string` | N | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.last_success_at` | ÃÖ±Ù ¼º°ø ½Ã°¢ |
-| `lastFailedAt` | `string` | N | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.last_failed_at` | ÃÖ±Ù ½ÇÆĞ ½Ã°¢ |
-| `lastDurationMs` | `number` | N | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.last_duration_ms` | ÃÖ±Ù ½ÇÇà ½Ã°£ |
-| `lastTotalCount` | `number` | N | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.last_total_count` | ÃÖ±Ù ¼öÁı °Ç¼ö |
-| `lastErrorMessage` | `string` | N | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.last_error_message` | ÃÖ±Ù ¿À·ù ¸Ş½ÃÁö |
-| `createdAt` | `string` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.created_at` | »ı¼º ½Ã°¢ |
-| `updatedAt` | `string` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.updated_at` | ¼öÁ¤ ½Ã°¢ |
+| `scrapingPipelineId` | `number` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.scraping_pipeline_id` | íŒŒì´í”„ë¼ì¸ ID |
+| `sourceName` | `string` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.source_name` | ì†ŒìŠ¤ëª… |
+| `displayName` | `string` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.display_name` | í‘œì‹œëª… |
+| `pipelineStatus` | `IDLE \| RUNNING \| SUCCESS \| FAILED` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.pipeline_status` | íŒŒì´í”„ë¼ì¸ ìƒíƒœ |
+| `isEnabled` | `boolean` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.is_enabled` | í™œì„± ì—¬ë¶€ |
+| `lastStartedAt` | `string` | N | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.last_started_at` | ìµœê·¼ ì‹œì‘ ì‹œê° |
+| `lastSuccessAt` | `string` | N | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.last_success_at` | ìµœê·¼ ì„±ê³µ ì‹œê° |
+| `lastFailedAt` | `string` | N | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.last_failed_at` | ìµœê·¼ ì‹¤íŒ¨ ì‹œê° |
+| `lastDurationMs` | `number` | N | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.last_duration_ms` | ìµœê·¼ ì‹¤í–‰ ì‹œê°„ |
+| `lastTotalCount` | `number` | N | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.last_total_count` | ìµœê·¼ ìˆ˜ì§‘ ê±´ìˆ˜ |
+| `lastErrorMessage` | `string` | N | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.last_error_message` | ìµœê·¼ ì˜¤ë¥˜ ë©”ì‹œì§€ |
+| `createdAt` | `string` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.created_at` | ìƒì„± ì‹œê° |
+| `updatedAt` | `string` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.updated_at` | ìˆ˜ì • ì‹œê° |
 
 ### 6.4 `ScrapingPipelineDTO.ResponseSummary`
 
 | Field | Type | Required | Mapping | Description |
 |---|---|---|---|---|
-| `totalCount` | `number` | Y | FastAPI Áı°è ÀÀ´ä | ÀüÃ¼ ¼ö |
-| `idleCount` | `number` | Y | FastAPI Áı°è ÀÀ´ä | IDLE ¼ö |
-| `runningCount` | `number` | Y | FastAPI Áı°è ÀÀ´ä | RUNNING ¼ö |
-| `successCount` | `number` | Y | FastAPI Áı°è ÀÀ´ä | SUCCESS ¼ö |
-| `failedCount` | `number` | Y | FastAPI Áı°è ÀÀ´ä | FAILED ¼ö |
-| `enabledCount` | `number` | Y | FastAPI Áı°è ÀÀ´ä | È°¼º ¼ö |
-| `disabledCount` | `number` | Y | FastAPI Áı°è ÀÀ´ä | ºñÈ°¼º ¼ö |
+| `totalCount` | `number` | Y | FastAPI ì§‘ê³„ ì‘ë‹µ | ì „ì²´ ìˆ˜ |
+| `idleCount` | `number` | Y | FastAPI ì§‘ê³„ ì‘ë‹µ | IDLE ìˆ˜ |
+| `runningCount` | `number` | Y | FastAPI ì§‘ê³„ ì‘ë‹µ | RUNNING ìˆ˜ |
+| `successCount` | `number` | Y | FastAPI ì§‘ê³„ ì‘ë‹µ | SUCCESS ìˆ˜ |
+| `failedCount` | `number` | Y | FastAPI ì§‘ê³„ ì‘ë‹µ | FAILED ìˆ˜ |
+| `enabledCount` | `number` | Y | FastAPI ì§‘ê³„ ì‘ë‹µ | í™œì„± ìˆ˜ |
+| `disabledCount` | `number` | Y | FastAPI ì§‘ê³„ ì‘ë‹µ | ë¹„í™œì„± ìˆ˜ |
 
 ### 6.5 `ScrapingPipelineDTO.ResponseAction`
 
 | Field | Type | Required | Mapping | Description |
 |---|---|---|---|---|
-| `sourceName` | `string` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.source_name` | ´ë»ó ¼Ò½º¸í |
-| `requestedAction` | `RUN \| RETRY \| TEST` | Y | ¾øÀ½ | ¿äÃ»ÇÑ ¾×¼Ç À¯Çü |
-| `accepted` | `boolean` | Y | ¾øÀ½ | Á¢¼ö ¿©ºÎ |
-| `runId` | `string` | N | FastAPI ½ÇÇà ¿äÃ» run identifier | Á¢¼öµÈ ½ÇÇà ID |
-| `requestedAt` | `string` | Y | ¾øÀ½ | ¿äÃ» ½Ã°¢ |
+| `sourceName` | `string` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.source_name` | ëŒ€ìƒ ì†ŒìŠ¤ëª… |
+| `requestedAction` | `RUN \| RETRY \| TEST` | Y | ì—†ìŒ | ìš”ì²­í•œ ì•¡ì…˜ ìœ í˜• |
+| `accepted` | `boolean` | Y | ì—†ìŒ | ì ‘ìˆ˜ ì—¬ë¶€ |
+| `runId` | `string` | N | FastAPI ì‹¤í–‰ ìš”ì²­ run identifier | ì ‘ìˆ˜ëœ ì‹¤í–‰ ID |
+| `requestedAt` | `string` | Y | ì—†ìŒ | ìš”ì²­ ì‹œê° |
 
 ### 6.6 `ScrapingPipelineDTO.ResponseBatchAction`
 
 | Field | Type | Required | Mapping | Description |
 |---|---|---|---|---|
-| `requestedCount` | `number` | Y | ¾øÀ½ | ¿äÃ» ´ë»ó ¼ö |
-| `acceptedCount` | `number` | Y | ¾øÀ½ | Á¢¼ö ¼ö |
-| `failedCount` | `number` | Y | ¾øÀ½ | ½ÇÆĞ ¼ö |
-| `results` | `array` | Y | ¾øÀ½ | ´ë»óº° Á¢¼ö °á°ú |
-| `results[].sourceName` | `string` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.source_name` | ´ë»ó ¼Ò½º¸í |
-| `results[].accepted` | `boolean` | Y | ¾øÀ½ | Á¢¼ö ¿©ºÎ |
-| `results[].message` | `string` | Y | ¾øÀ½ | Á¢¼ö °á°ú ¸Ş½ÃÁö |
+| `requestedCount` | `number` | Y | ì—†ìŒ | ìš”ì²­ ëŒ€ìƒ ìˆ˜ |
+| `acceptedCount` | `number` | Y | ì—†ìŒ | ì ‘ìˆ˜ ìˆ˜ |
+| `failedCount` | `number` | Y | ì—†ìŒ | ì‹¤íŒ¨ ìˆ˜ |
+| `results` | `array` | Y | ì—†ìŒ | ëŒ€ìƒë³„ ì ‘ìˆ˜ ê²°ê³¼ |
+| `results[].sourceName` | `string` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.source_name` | ëŒ€ìƒ ì†ŒìŠ¤ëª… |
+| `results[].accepted` | `boolean` | Y | ì—†ìŒ | ì ‘ìˆ˜ ì—¬ë¶€ |
+| `results[].message` | `string` | Y | ì—†ìŒ | ì ‘ìˆ˜ ê²°ê³¼ ë©”ì‹œì§€ |
 
 ### 6.7 `ScrapingLogDTO.ResponseLogItem`
 
 | Field | Type | Required | Mapping | Description |
 |---|---|---|---|---|
-| `logId` | `string` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_logs.scraping_log_id` | ·Î±× ID |
-| `occurredAt` | `string` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_logs.executed_at` | ½ÇÇà ½Ã°¢ |
-| `sourceName` | `string` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_pipelines.source_name` | ¼Ò½º¸í |
-| `status` | `SUCCESS \| FAILED` | Y | FastAPI ÀÀ´ä ±âÁØ `scraping_logs.scraping_status` | ½ÇÇà °á°ú »óÅÂ |
-| `message` | `string` | Y | FastAPI ½ÇÇà °á°ú ¸Ş½ÃÁö | ¿ä¾à ¸Ş½ÃÁö |
-| `detail` | `string` | N | FastAPI ÀÀ´ä ±âÁØ `scraping_logs.error_message` | »ó¼¼ ¸Ş½ÃÁö |
-| `runId` | `string` | N | FastAPI ½ÇÇà run identifier | ½ÇÇà ID |
+| `logId` | `string` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_logs.scraping_log_id` | ë¡œê·¸ ID |
+| `occurredAt` | `string` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_logs.executed_at` | ì‹¤í–‰ ì‹œê° |
+| `sourceName` | `string` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_pipelines.source_name` | ì†ŒìŠ¤ëª… |
+| `status` | `SUCCESS \| FAILED` | Y | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_logs.scraping_status` | ì‹¤í–‰ ê²°ê³¼ ìƒíƒœ |
+| `message` | `string` | Y | FastAPI ì‹¤í–‰ ê²°ê³¼ ë©”ì‹œì§€ | ìš”ì•½ ë©”ì‹œì§€ |
+| `detail` | `string` | N | FastAPI ì‘ë‹µ ê¸°ì¤€ `scraping_logs.error_message` | ìƒì„¸ ë©”ì‹œì§€ |
+| `runId` | `string` | N | FastAPI ì‹¤í–‰ run identifier | ì‹¤í–‰ ID |
 
----
 ---
 
 ## 7. ErrorCode ê³„ì•½
 
 | ErrorCode | Status | Description |
 |---|---|---|
-| `SCRAPING_PIPELINE_NOT_FOUND` | 404 | ?Œì´?„ë¼?¸ì´ ì¡´ì¬?˜ì? ?ŠëŠ”?? |
-| `SCRAPING_SOURCE_NOT_FOUND` | 404 | ì§€?í•˜ì§€ ?ŠëŠ” `sourceName`?´ë‹¤. |
-| `SCRAPING_ALREADY_RUNNING` | 409 | ?´ë? ?¤í–‰ ì¤‘ì¸ ?Œì´?„ë¼?¸ì´?? |
-| `SCRAPING_EXECUTION_FAILED` | 500 | ?¤í–‰ ?ëŠ” ?¬ì‹œ???”ì²­ ì²˜ë¦¬???¤íŒ¨?ˆë‹¤. |
-| `SCRAPING_TEST_FAILED` | 500 | ?ŒìŠ¤???¤í–‰ ?”ì²­ ì²˜ë¦¬???¤íŒ¨?ˆë‹¤. |
+| `SCRAPING_PIPELINE_NOT_FOUND` | 404 | íŒŒì´í”„ë¼ì¸ì´ ì¡´ì¬í•˜ì§€ ì•ŠëŠ”ë‹¤. |
+| `SCRAPING_SOURCE_NOT_FOUND` | 404 | ì§€ì›í•˜ì§€ ì•ŠëŠ” `sourceName`ì´ë‹¤. |
+| `SCRAPING_ALREADY_RUNNING` | 409 | ì´ë¯¸ ì‹¤í–‰ ì¤‘ì¸ íŒŒì´í”„ë¼ì¸ì´ë‹¤. |
+| `SCRAPING_EXECUTION_FAILED` | 500 | ì‹¤í–‰ ë˜ëŠ” ì¬ì‹œë„ ìš”ì²­ ì²˜ë¦¬ì— ì‹¤íŒ¨í–ˆë‹¤. |
+| `SCRAPING_TEST_FAILED` | 500 | í…ŒìŠ¤íŠ¸ ì‹¤í–‰ ìš”ì²­ ì²˜ë¦¬ì— ì‹¤íŒ¨í–ˆë‹¤. |
 
-### FastAPI ErrorCode ??Spring ErrorCode ë§¤í•‘
+### FastAPI ErrorCode â†’ Spring ErrorCode ë§¤í•‘
 
-| FastAPI ErrorCode | Spring ErrorCode | ?¤ëª… |
+| FastAPI ErrorCode | Spring ErrorCode | ì„¤ëª… |
 |---|---|---|
-| `SCRAPING_PIPELINE_NOT_FOUND` | `SCRAPING_PIPELINE_NOT_FOUND` | ?Œì´?„ë¼???†ìŒ |
-| `SCRAPING_SOURCE_NOT_FOUND` | `SCRAPING_SOURCE_NOT_FOUND` | ë¯¸ì???sourceName |
-| `SCRAPING_ALREADY_RUNNING` | `SCRAPING_ALREADY_RUNNING` | ?´ë? ?¤í–‰ ì¤?|
-| `SCRAPING_EXECUTION_FAILED` | `SCRAPING_EXECUTION_FAILED` | ?¤í–‰ ?¤íŒ¨ |
-| `SCRAPING_TEST_FAILED` | `SCRAPING_TEST_FAILED` | ?ŒìŠ¤???¤í–‰ ?¤íŒ¨ |
-| `FASTAPI_INTERNAL_ERROR` | `SCRAPING_EXECUTION_FAILED` | FastAPI ?´ë? ì²˜ë¦¬ ?¤íŒ¨ |
-| `DISCORD_ALERT_SEND_FAILED` | `SCRAPING_EXECUTION_FAILED` | ? íƒ ê¸°ëŠ¥???¤íŒ¨ ?Œë¦¼ ?„ì†¡ ?¤íŒ¨ |
+| `SCRAPING_PIPELINE_NOT_FOUND` | `SCRAPING_PIPELINE_NOT_FOUND` | íŒŒì´í”„ë¼ì¸ ì—†ìŒ |
+| `SCRAPING_SOURCE_NOT_FOUND` | `SCRAPING_SOURCE_NOT_FOUND` | ë¯¸ì§€ì› sourceName |
+| `SCRAPING_ALREADY_RUNNING` | `SCRAPING_ALREADY_RUNNING` | ì´ë¯¸ ì‹¤í–‰ ì¤‘ |
+| `SCRAPING_EXECUTION_FAILED` | `SCRAPING_EXECUTION_FAILED` | ì‹¤í–‰ ì‹¤íŒ¨ |
+| `SCRAPING_TEST_FAILED` | `SCRAPING_TEST_FAILED` | í…ŒìŠ¤íŠ¸ ì‹¤í–‰ ì‹¤íŒ¨ |
+| `FASTAPI_INTERNAL_ERROR` | `SCRAPING_EXECUTION_FAILED` | FastAPI ë‚´ë¶€ ì²˜ë¦¬ ì‹¤íŒ¨ |
+| `DISCORD_ALERT_SEND_FAILED` | `SCRAPING_EXECUTION_FAILED` | ì„ íƒ ê¸°ëŠ¥ì¸ ì‹¤íŒ¨ ì•Œë¦¼ ì „ì†¡ ì‹¤íŒ¨ |
