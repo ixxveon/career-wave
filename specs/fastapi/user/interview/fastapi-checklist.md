@@ -8,6 +8,7 @@
 ## Phase 1 — 설정 & 구조
 
 - [ ] `fastapi/core/config.py`에서 `pydantic-settings BaseSettings`로 환경 변수를 읽는다 (`os.environ.get()` 직접 호출 없음).
+- [ ] `logging.LoggerAdapter`를 사용한 세션별 로거가 구현되어 있으며, 모든 파이프라인 로그에 `[Session: {sessionId}]` 컨텍스트가 자동으로 포함된다 (로깅 코드마다 `sessionId`를 수동으로 전달하지 않음).
 - [ ] `WEBHOOK_SECRET`, `JWT_SECRET`, `OPENAI_API_KEY` 값이 소스 코드에 하드코딩되지 않았다.
 - [ ] `.env.example`에 면접 도메인 환경 변수 (`WEBHOOK_SECRET`, `JWT_SECRET`, `OPENAI_MODEL_INTERVIEW`, `OPENAI_MODEL_STT`, `OPENAI_MODEL_TTS`, `OPENAI_TTS_VOICE`, `OPENAI_LLM_TIMEOUT_SECONDS`)가 명시되어 있다.
 - [ ] `fastapi/user/api/interview_router.py`에 비즈니스 로직이 직접 작성되지 않고 `pipeline/` 계층을 호출한다.
@@ -123,3 +124,4 @@
 - [ ] 5분 내에 재연결이 성공하면 기존 세션 컨텍스트(이전 답변 이력, RAG 컨텍스트)가 복원되어 면접이 이어진다.
 - [ ] 5분 경과 후에도 재연결이 없으면 FastAPI가 해당 세션의 마지막 상태로 Spring에 리포트 콜백을 전송하고 세션 리소스를 해제한다.
 - [ ] 좀비 세션 강제 종료 및 리소스 해제 시 `log.info`로 `sessionId`와 강제 종료 사유가 기록된다.
+- [ ] 재연결 성공 시 클라이언트가 전송한 `lastReceivedSequenceNumber` 기준으로 그 이후 미전달 메시지만 재전송하며, 이미 수신한 메시지를 중복 전송하지 않는다. (v1은 서버 메모리 기반 `lastProcessedSequenceNumber` 유지, Scale-out 시 Redis 전환 고려)
