@@ -2,8 +2,8 @@ package kr.co.carrer.global.s3;
 
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,10 +17,11 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class S3Uploader {
 
-    private final S3Client s3Client;
+    // mock-upload=true 시 S3Client 빈이 존재하지 않으므로 optional 주입
+    @Autowired(required = false)
+    private S3Client s3Client;
 
     @Value("${aws.s3.bucket-name}")
     private String bucketName;
