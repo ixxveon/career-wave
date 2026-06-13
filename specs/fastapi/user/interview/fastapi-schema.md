@@ -448,21 +448,6 @@ v1은 서버 메모리에 세션별 미전달 메시지 목록을 보관한다 (
 ```json
 {
   "type": "TTS_AUDIO_END",
-  "content": null,
-  "questionOrder": 2,
-  "chunkIndex": null,
-  "isFinal": true,
-  "voiceQualityRatio": null,
-  "audioData": null,
-  "errorCode": null
-}
-```
-
-**TTS_AUDIO_END** — TTS 오디오 전송 완료
-
-```json
-{
-  "type": "TTS_AUDIO_END",
   "sequenceNumber": 12,
   "content": null,
   "questionOrder": 2,
@@ -500,6 +485,7 @@ v1은 서버 메모리에 세션별 미전달 메시지 목록을 보관한다 (
 | `INTERVIEW_LLM_FAILED` | LLM 질문 생성 실패 (폴백 사용) |
 | `INTERVIEW_SESSION_EXPIRED` | 세션 타임아웃 (FastAPI 감지) |
 | `INTERVIEW_CALLBACK_FAILED` | Spring 콜백 최종 실패 |
+| `INTERVIEW_DUPLICATED_CONNECTION` | 동일 sessionId로 중복 WebSocket 연결 시도 — 기존 연결에 전송 후 `close(code=1000)` |
 
 ---
 
@@ -517,6 +503,7 @@ OPENAI_MODEL_STT=whisper-1             # STT 모델
 OPENAI_MODEL_TTS=tts-1                 # TTS 모델
 OPENAI_TTS_VOICE=alloy                 # TTS 음성 종류 (alloy / echo / fable / onyx / nova / shimmer)
 OPENAI_LLM_TIMEOUT_SECONDS=10         # LLM 응답 타임아웃 (초)
+VOICE_QUALITY_THRESHOLD=50.0          # voiceQualityRatio 하한값 — 미달 시 delivery/fluency null 처리
 
 # JWT (Spring 공유 시크릿)
 JWT_SECRET=                            # FastAPI WebSocket 연결 시 토큰 검증용
