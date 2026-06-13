@@ -144,6 +144,23 @@ POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer
 - TTS 변환 후 FastAPI WebSocket으로 클라이언트에 오디오 스트리밍 (음성 모드 시)
 - 타임아웃 시 폴백 질문으로 대체
 
+#### LLM 응답 JSON 포맷 계약
+
+FastAPI는 LLM에게 아래 JSON 형식으로만 응답하도록 시스템 프롬프트에 명시한다.  
+`json.JSONDecodeError` 발생 시 "JSON 형식으로만 답해줘" 재요청을 1회 시도하고, 재시도 후에도 실패하면 폴백 질문을 사용한다.
+
+```json
+{
+  "question": "Spring에서 트랜잭션 전파 방식에 대해 설명해 주세요.",
+  "questionType": "FOLLOW_UP"
+}
+```
+
+| Field | Type | 허용값 | 설명 |
+|-------|------|--------|------|
+| `question` | `String` | — | 다음 질문 텍스트 |
+| `questionType` | `String` | `FOLLOW_UP` \| `PRESSURE` \| `NEXT` | 꼬리 질문 / 압박 질문 / 다음 주제 |
+
 #### 비동기 여부
 
 - 비동기
@@ -335,20 +352,33 @@ Spring은 멱등성 처리 후 200 OK를 반환한다. FastAPI는 `duplicated: t
 ### 채널
 
 ```
-WS /ws/user/interview/{sessionId}/ai?token={accessToken}
+WS /ws/user/interview/{sessionId}/ai?token={accessToken}[&lastReceivedSequenceNumber={N}]
 ```
 
 클라이언트가 직접 연결. FastAPI가 STT 결과·TTS 오디오·AI 오류를 Push.
+
+| 쿼리 파라미터 | Type | 설명 |
+|-------------|------|------|
+| `token` | `String` | JWT 액세스 토큰 (필수) |
+| `lastReceivedSequenceNumber` | `Integer` | 재연결 시 마지막으로 수신한 sequenceNumber. 생략 시 최초 연결로 간주. |
 
 ### 인증
 
 연결 시 `token` 쿼리 파라미터로 JWT 검증. 실패 시 Close 1008.
 
+### 재연결 메시지 재전송
+
+`lastReceivedSequenceNumber`가 전달된 경우, FastAPI는 해당 번호보다 큰 `sequenceNumber`를 가진 미전달 메시지를 순서대로 즉시 재전송한다.  
+v1은 서버 메모리에 세션별 미전달 메시지 목록을 보관한다 (Scale-out 시 Redis 전환).
+
 ### Server → Client 메시지 형식
+
+모든 서버 Push 메시지에 `sequenceNumber`가 포함된다.
 
 ```json
 {
-  "type": "STT_RESULT",
+  "type": "STT_PARTIAL",
+  "sequenceNumber": 3,
   "content": "저는 Spring Boot와 JPA를 활용한...",
   "questionOrder": 1,
   "chunkIndex": 2,
@@ -359,6 +389,10 @@ WS /ws/user/interview/{sessionId}/ai?token={accessToken}
 }
 ```
 
+| Field | Type | 설명 |
+|-------|------|------|
+| `sequenceNumber` | `Integer` | 세션 내 단조 증가 메시지 순서 번호 (1-based). 재연결 시 미전달 메시지 재전송 기준. |
+
 #### 메시지 타입별 정의
 
 **STT_PARTIAL** — 중간 STT 결과 (실시간 자막)
@@ -366,6 +400,7 @@ WS /ws/user/interview/{sessionId}/ai?token={accessToken}
 ```json
 {
   "type": "STT_PARTIAL",
+  "sequenceNumber": 3,
   "content": "저는 Spring...",
   "questionOrder": 1,
   "chunkIndex": 2,
@@ -381,6 +416,7 @@ WS /ws/user/interview/{sessionId}/ai?token={accessToken}
 ```json
 {
   "type": "STT_FINAL",
+  "sequenceNumber": 7,
   "content": "저는 Spring Boot와 JPA를 활용한 백엔드 개발 경험이 있습니다.",
   "questionOrder": 1,
   "chunkIndex": null,
@@ -396,6 +432,7 @@ WS /ws/user/interview/{sessionId}/ai?token={accessToken}
 ```json
 {
   "type": "TTS_AUDIO",
+  "sequenceNumber": 8,
   "content": null,
   "questionOrder": 2,
   "chunkIndex": 0,
@@ -421,11 +458,28 @@ WS /ws/user/interview/{sessionId}/ai?token={accessToken}
 }
 ```
 
+**TTS_AUDIO_END** — TTS 오디오 전송 완료
+
+```json
+{
+  "type": "TTS_AUDIO_END",
+  "sequenceNumber": 12,
+  "content": null,
+  "questionOrder": 2,
+  "chunkIndex": null,
+  "isFinal": true,
+  "voiceQualityRatio": null,
+  "audioData": null,
+  "errorCode": null
+}
+```
+
 **ERROR** — AI 파이프라인 오류
 
 ```json
 {
   "type": "ERROR",
+  "sequenceNumber": 9,
   "content": "음성 인식 처리 중 오류가 발생했습니다.",
   "questionOrder": 1,
   "chunkIndex": null,
