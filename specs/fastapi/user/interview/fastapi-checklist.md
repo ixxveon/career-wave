@@ -22,6 +22,7 @@
 - [ ] `sessionId` 기반으로 세션별 WebSocket을 저장하고 중복 연결 시 이전 연결을 종료한다.
 - [ ] `send_stt_partial` / `send_stt_final` / `send_tts_audio` / `send_error` 헬퍼가 정의되어 있다.
 - [ ] 모든 WebSocket 메시지에 `type` / `errorCode` 필드가 포함된다 (없으면 `null`).
+- [ ] 클라이언트로부터 수신되는 모든 WebSocket 메시지에 `sequenceNumber` 필드가 포함되며, FastAPI는 수신 순서가 어긋난 메시지를 감지하여 `log.warn`으로 기록한다 (네트워크 불안정 환경의 패킷 순서 역전 방어).
 
 ---
 
@@ -47,6 +48,7 @@
 - [ ] RAG 인덱싱이 비동기로 처리되며, 실패 시 세션을 중단하지 않고 일반 면접 모드로 폴백한다.
 - [ ] TTS 오디오가 `TTS_AUDIO` → `TTS_AUDIO_END` 순으로 순차 전송된다.
 - [ ] TTS 실패 시 텍스트 질문만 전달하고 `INTERVIEW_TTS_FAILED` 메시지를 전송한다.
+- [ ] TTS 생성 모듈이 Generator 기반 스트리밍 방식으로 구현되어 있으며, 세션 WebSocket 연결이 끊기면 진행 중인 TTS `asyncio.Task`가 즉시 취소(`task.cancel()`)되어 오디오 버퍼가 메모리에 잔류하지 않는다.
 - [ ] 폴백 질문 목록이 `fastapi/user/prompts/interview_prompts.py`에 정의되어 있다 (각 유형 최소 5개).
 
 ---
@@ -114,3 +116,10 @@
 - [ ] STT 실패 시 `INTERVIEW_STT_FAILED` WebSocket 메시지가 클라이언트에 전달된다.
 - [ ] Spring 콜백 최종 실패 시 `log.error`가 기록되고 서버가 종료되지 않는다.
 - [ ] RAG 인덱싱 실패 시 세션이 중단되지 않고 일반 면접 모드로 진행된다.
+
+### 좀비 세션 처리
+
+- [ ] 클라이언트 WebSocket 연결이 끊어졌을 때 FastAPI가 해당 `sessionId`에 대해 5분간 재연결 대기(`Reconnection Window`)를 유지한다.
+- [ ] 5분 내에 재연결이 성공하면 기존 세션 컨텍스트(이전 답변 이력, RAG 컨텍스트)가 복원되어 면접이 이어진다.
+- [ ] 5분 경과 후에도 재연결이 없으면 FastAPI가 해당 세션의 마지막 상태로 Spring에 리포트 콜백을 전송하고 세션 리소스를 해제한다.
+- [ ] 좀비 세션 강제 종료 및 리소스 해제 시 `log.info`로 `sessionId`와 강제 종료 사유가 기록된다.
