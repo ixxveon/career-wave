@@ -1,6 +1,7 @@
 package kr.co.carrer.user.support.controller;
 
 import jakarta.validation.Valid;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
@@ -26,22 +27,22 @@ public class UserInquiryController implements UserInquiryControllerDocs {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<SupportDTO.InquiryList>>> getMyInquiries(
-        @RequestParam(required = false) String category
+        @RequestParam(required = false) String category,
+        @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        // TODO: JWT 연동 완료 후 @AuthenticationPrincipal로 memberId 추출
-        UUID tempMemberId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID memberId = UUID.fromString(principal.getId());
         InquiryCategory cat = parseEnum(InquiryCategory.class, category);
-        return ResponseEntity.ok(ApiResponse.ok(userInquiryService.getMyInquiries(tempMemberId, cat)));
+        return ResponseEntity.ok(ApiResponse.ok(userInquiryService.getMyInquiries(memberId, cat)));
     }
 
     @PostMapping
     public ResponseEntity<ApiResponse<SupportDTO.ResponseCreateInquiry>> createInquiry(
-        @RequestBody @Valid SupportDTO.RequestCreateInquiry dto
+        @RequestBody @Valid SupportDTO.RequestCreateInquiry dto,
+        @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        // TODO: JWT 연동 완료 후 @AuthenticationPrincipal로 memberId 추출
-        UUID tempMemberId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID memberId = UUID.fromString(principal.getId());
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.ok("문의가 접수되었습니다.", userInquiryService.createInquiry(tempMemberId, dto)));
+            .body(ApiResponse.ok("문의가 접수되었습니다.", userInquiryService.createInquiry(memberId, dto)));
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {
