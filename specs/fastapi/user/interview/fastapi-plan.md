@@ -138,7 +138,8 @@ log.error("Spring callback failed after all retries: sessionId=%s", session_id)
 - [ ] `fastapi/user/websocket/interview_ws_handler.py`
   - [ ] `WS /ws/user/interview/{sessionId}/ai` 엔드포인트 등록
   - [ ] 연결 시 JWT 토큰 검증 (Close 1008 처리)
-  - [ ] `ConcurrentDict[str, WebSocket]` 세션별 WebSocket 관리
+  - [ ] `dict[str, WebSocket]` 세션별 WebSocket 관리
+  - [ ] 신규 연결 수립 전, 동일 `sessionId` 키가 이미 존재하면 `await existing_ws.close(code=1000)` 호출로 이전 소켓을 안전하게 정리한 뒤 교체
   - [ ] 메시지 전송 헬퍼: `send_stt_partial`, `send_stt_final`, `send_tts_audio`, `send_error`
 - [ ] `fastapi/main.py` — 면접 WebSocket 라우터 등록
 
@@ -158,10 +159,13 @@ log.error("Spring callback failed after all retries: sessionId=%s", session_id)
 
 - [ ] `fastapi/user/prompts/interview_prompts.py`
   - [ ] 시스템 프롬프트 (직무 유형별: TECHNICAL / PERSONALITY / PROJECT)
+  - [ ] 모든 프롬프트에 `temperature` 고정값 명시 (예: `temperature=0.7`) — 응답 재현성 확보
+  - [ ] 시스템 프롬프트에 "반드시 JSON 형식으로만 응답" 명시 — 예외적 텍스트 혼입 방지
   - [ ] 폴백 질문 목록 (최소 5개/유형)
   - [ ] RAG 컨텍스트 주입 프롬프트 템플릿
 - [ ] `fastapi/user/pipeline/llm_pipeline.py`
-  - [ ] `generate_next_question(session_id, question_order, answer_text, context)` — GPT-4o 호출
+  - [ ] `generate_next_question(session_id, question_order, answer_text, context)` — GPT-4o 호출 (`temperature` 고정)
+  - [ ] LLM 응답 파싱 시 `json.JSONDecodeError` 포착 → "JSON 형식으로만 답변" 재요청 1회 후 최종 실패 시 폴백 전환
   - [ ] RAG 컨텍스트 벡터 검색 + 프롬프트 조합
   - [ ] 타임아웃(`OPENAI_LLM_TIMEOUT_SECONDS`) 처리 → 폴백 질문 대체
   - [ ] LLM 실패 시 WebSocket `INTERVIEW_LLM_FAILED` 전송
