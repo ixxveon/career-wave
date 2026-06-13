@@ -147,3 +147,49 @@ Spring Boot는 세션 생명주기와 답변 저장을 담당하고, AI 처리 �
 - FastAPI는 DB를 직접 읽거나 쓰지 않고 Spring과의 내부 API 계약을 통해서만 데이터를 교환한다.
 - LLM 폴백 질문 목록은 `fastapi/user/prompts/` 하위 파일로 관리한다.
 - 인증 토큰 검증 방식은 Spring과 공유한 시크릿 키 기반 JWT 검증을 사용한다.
+
+---
+
+## 6. 구현 유의사항
+
+### Graceful Shutdown
+
+`asyncio.create_task`로 실행된 STT·LLM·TTS·리포트 파이프라인 태스크는 서버가 갑자기 종료되면 중단된다.  
+`lifespan` 이벤트의 shutdown 단계에서 실행 중인 태스크를 최대 10~20초 대기(`asyncio.gather` + timeout)한 뒤 종료한다.
+
+```python
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    # shutdown: 진행 중인 파이프라인 태스크 우아하게 종료
+    pending = [t for t in asyncio.all_tasks() if not t.done()]
+    if pending:
+        await asyncio.wait(pending, timeout=15)
+```
+
+### `voiceQualityRatio` 임계치 환경 변수화
+
+`50.00` 임계치를 `core/config.py`의 `Settings`에 환경 변수로 분리한다.  
+코드 수정 없이 환경 변수 튜닝만으로 임계치를 조정할 수 있다.
+
+```python
+class Settings(BaseSettings):
+    voice_quality_threshold: float = 50.0   # VOICE_QUALITY_THRESHOLD 환경 변수로 오버라이드 가능
+```
+
+### WebSocket 에러 코드 Enum 중앙화
+
+에러 코드를 `Enum` 클래스로 정의하여 `send_error` 헬퍼에서 타입 체킹을 강제한다.  
+오타로 인한 버그를 컴파일 타임에 차단한다.
+
+```python
+from enum import Enum
+
+class InterviewErrorCode(str, Enum):
+    AI_PIPELINE_ERROR = "INTERVIEW_AI_PIPELINE_ERROR"
+    STT_FAILED        = "INTERVIEW_STT_FAILED"
+    TTS_FAILED        = "INTERVIEW_TTS_FAILED"
+    LLM_FAILED        = "INTERVIEW_LLM_FAILED"
+    SESSION_EXPIRED   = "INTERVIEW_SESSION_EXPIRED"
+    CALLBACK_FAILED   = "INTERVIEW_CALLBACK_FAILED"
+```
