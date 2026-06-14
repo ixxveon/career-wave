@@ -23,10 +23,10 @@ public class S3Uploader {
     @Autowired(required = false)
     private S3Client s3Client;
 
-    @Value("${aws.s3.bucket-name}")
+    @Value("${aws.s3.bucket-name:mock-bucket}")
     private String bucketName;
 
-    @Value("${aws.s3.region}")
+    @Value("${aws.s3.region:ap-northeast-2}")
     private String region;
 
     // 로컬 개발 환경에서 S3 업로드를 건너뛸지 여부 (기본값: false)
