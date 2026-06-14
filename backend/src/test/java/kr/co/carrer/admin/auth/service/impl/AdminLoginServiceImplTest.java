@@ -25,6 +25,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -151,6 +152,39 @@ class AdminLoginServiceImplTest {
         service.login(req, httpResponse);
 
         verify(loginAttemptStore).clear(AccountType.ADMIN, "admin@test.com");
+    }
+
+    @Test
+    void ADMIN_단일세션_신규_로그인_시_기존_세션_jti_blacklist_등록() throws Exception {
+        Admin admin = createAdmin(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+
+        String existingSessionId = "existing-session";
+        String existingJti = "existing-jti";
+        when(refreshTokenStore.getAllSessionIds(AccountType.ADMIN, "1"))
+                .thenReturn(List.of(existingSessionId));
+        when(refreshTokenStore.getAndDeleteAccessJti(AccountType.ADMIN, "1", existingSessionId))
+                .thenReturn(existingJti);
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
+        service.login(req, httpResponse);
+
+        verify(tokenBlacklistStore).add(eq(existingJti), any());
+        verify(refreshTokenStore).deleteAll(AccountType.ADMIN, "1");
+    }
+
+    @Test
+    void admin_logout_후_access_token_blacklist_등록() throws Exception {
+        Admin admin = createAdmin(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
+        AdminLoginDto.Response loginResult = service.login(req, httpResponse);
+
+        String accessToken = loginResult.getAccessToken();
+        service.logout(null, accessToken);
+
+        verify(tokenBlacklistStore, atLeastOnce()).add(anyString(), any());
     }
 
     @Test
