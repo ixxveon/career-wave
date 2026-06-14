@@ -30,7 +30,6 @@ public enum ErrorCode implements BaseErrorCode {
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기가 최대 허용 용량을 초과했습니다."),
     S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드 중 오류가 발생했습니다.");
 
-
     private final HttpStatus status;
     private final String message;
 

@@ -79,7 +79,7 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 | `question` | TEXT | NOT NULL | 문항 내용 |
 | `answer` | TEXT | NOT NULL | 답변 내용 (max 1000자) |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 생성 일시 |
-| UNIQUE | `(document_id, order_num)` | `CONSTRAINT uq_clc_document_order` | 동일 문서 내 순서 중복 방지 |
+| UNIQUE | `(document_id, order_num)` | | 동일 문서 내 순서 중복 방지 |
 
 ---
 
@@ -90,7 +90,11 @@ user/resume/
 ├── controller/
 │   └── ResumeController.java
 ├── service/
-│   └── ResumeService.java
+│   ├── ResumeService.java              ← 인터페이스
+│   ├── FileValidator.java              ← Tika MIME 검증 + 크기 검증
+│   ├── FastApiClient.java              ← FastAPI 분석 트리거 (WebClient)
+│   └── impl/
+│       └── ResumeServiceImpl.java      ← 구현체
 ├── dto/
 │   └── ResumeDTO.java
 ├── entity/
@@ -103,11 +107,25 @@ user/resume/
 │   ├── CoverLetterMetaRepository.java
 │   ├── CoverLetterContentRepository.java
 │   └── DocumentFeedbackRepository.java
+├── exception/
+│   └── ResumeErrorCode.java        ← resume 전용 에러코드 (BaseErrorCode 구현)
 ├── type/
 │   ├── FileType.java
 │   └── DocumentStatus.java
 └── docs/
     └── ResumeControllerDocs.java
+
+global/
+├── exception/
+│   └── BaseErrorCode.java          ← 도메인별 ErrorCode 공통 인터페이스
+├── s3/
+│   ├── S3Config.java               ← AWS S3Client 빈 등록
+│   └── S3Uploader.java             ← S3 업로드 (resumes/{날짜}/{UUID}.{확장자})
+└── websocket/                      ← resume + interview 공통 WebSocket 인프라
+    ├── WebSocketConfig.java
+    ├── WebSocketHandshakeInterceptor.java
+    ├── StompChannelInterceptor.java
+    └── WebSocketEventListener.java
 
 global/websocket/               ← resume + interview 공통 WebSocket 인프라
 ├── WebSocketConfig.java        (STOMP 엔드포인트 /ws/user/resume 등록, 토픽 prefix /topic 설정)
@@ -256,7 +274,7 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 - 파일 크기 10MB 초과 → `INVALID_FILE_SIZE(400)`
 - 확장자 PDF·DOC·DOCX 외 → `INVALID_FILE_TYPE(400)`
   - **MIME type 기반 검증 필수** — 확장자 위조 파일 차단 목적
-  - `Apache Tika` (`org.apache.tika:tika-core`) 사용 확정 — `build.gradle` 의존성 추가 필요, 팀 공유 예정
+  - `Apache Tika` (`org.apache.tika:tika-core:3.2.2`) 사용 확정 — `build.gradle` 의존성 추가 완료
   - `Tika.detect(InputStream)` 으로 `application/pdf` 등 실제 MIME 확인
 - **검증 통과 후** UUID 기반 저장 파일명 생성 (`{UUID}.{확장자}`)
 - S3 저장 경로: `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — 날짜별 폴더로 파일 분산 관리
@@ -268,8 +286,8 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 - 반환: `ResumeDTO.ResponseUpload`
 
 #### submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto)
-- 문항 수 1~5개 외 → `INVALID_CONTENT_COUNT(400)`
-- 답변 1000자 초과 → `INVALID_CONTENT_LENGTH(400)`
+- 문항 수 1~5개 외 → Bean Validation `@Size(min=1, max=5)` 에서 400 반환 (메시지: "자기소개서 문항은 1개 이상 5개 이하로 입력해주세요.")
+- 답변 1000자 초과 → Bean Validation `@Size(max=1000)` 에서 400 반환 (메시지: "자기소개서 답변은 1000자를 초과할 수 없습니다.")
 - `Document` 저장 (`status = UPLOADED`, `file_url = null`)
 - `CoverLetterContent` 벌크 저장
 - FastAPI 분석 트리거 호출 → 202 Accepted 기대
@@ -299,16 +317,16 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 |-----------|------|-----------|
 | `INVALID_FILE_SIZE` | 400 | 파일 크기 10MB 초과 |
 | `INVALID_FILE_TYPE` | 400 | PDF·DOC·DOCX 외 확장자 |
-| `INVALID_CONTENT_COUNT` | 400 | 문항 수 범위(1~5) 위반 |
-| `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 |
+| `DUPLICATE_CONTENT_ORDER` | 400 | 자기소개서 문항 순서(order) 중복 |
 | `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId |
 | `DOCUMENT_ACCESS_DENIED` | 403 | 본인 소유가 아닌 문서 접근 (IDOR) |
 | `FEEDBACK_PARSE_ERROR` | 500 | feedback_text JSON 역직렬화 실패 (FastAPI 응답 구조 변경 등) |
 | `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
 | `WEBHOOK_SECRET_INVALID` | 403 | 유효하지 않은 Webhook 인증 키 |
+| `S3_UPLOAD_FAILED` | 500 | S3 파일 업로드 실패 |
 
 > `MaxUploadSizeExceededException` (Tomcat 레벨 파일 크기 초과) 은 `GlobalExceptionHandler`에서 별도 처리하여 400 반환.  
-> `application.properties`에 `server.tomcat.max-swallow-size=-1` 설정 필수 — 미설정 시 Tomcat이 응답 전송 전에 커넥션을 끊어 클라이언트가 "Failed to fetch" 수신.
+> 실제 업로드 상한은 `spring.servlet.multipart.max-file-size=10MB` / `max-request-size=11MB`(Spring)이 강제하며, `server.tomcat.max-swallow-size=11MB`는 초과 요청을 Tomcat이 배수(drain)하는 동작만 제어한다 — 미설정 시 Tomcat이 응답 전송 전에 커넥션을 끊어 클라이언트가 "Failed to fetch" 수신.
 
 ---
 

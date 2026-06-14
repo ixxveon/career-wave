@@ -21,7 +21,7 @@
 - [x] `CoverLetterContent` Entity 작성
   - BIGSERIAL PK (`content_id`), `document_id` UUID NOT NULL
   - `order_num` INTEGER NOT NULL (CHECK 1~5), `question` TEXT NOT NULL, `answer` TEXT NOT NULL
-  - UNIQUE 제약: `CONSTRAINT uq_clc_document_order UNIQUE (document_id, order_num)`
+  - UNIQUE 제약: `(document_id, order_num)`
 - [x] `DocumentFeedback` Entity 작성
   - BIGSERIAL PK (`document_feedback_id`), `document_id` UUID NOT NULL
   - `score_job_fitness`, `score_tech_stack`, `score_quantified`, `score_logical`, `score_total` INTEGER (nullable)
@@ -35,9 +35,12 @@
   - `INVALID_FILE_TYPE` (400)
   - `INVALID_CONTENT_COUNT` (400)
   - `INVALID_CONTENT_LENGTH` (400)
+  - `DUPLICATE_CONTENT_ORDER` (400)
   - `DOCUMENT_NOT_FOUND` (404)
   - `DOCUMENT_ACCESS_DENIED` (403)
   - `FEEDBACK_PARSE_ERROR` (500)
+  - `WEBHOOK_SECRET_INVALID` (403)
+  - `WEBHOOK_INVALID_STATUS` (400)
 - [x] `BaseErrorCode` 인터페이스 작성 (`global/exception/BaseErrorCode.java`)
 - [x] `CustomException`, `GlobalExceptionHandler` → `BaseErrorCode` 기반으로 리팩토링
 
@@ -62,52 +65,52 @@
 
 ## Phase 3: 자기소개서 제출 API
 
-- [ ] `ResumeDTO.RequestCoverLetter`, `ResumeDTO.ResponseCoverLetter` 작성
-- [ ] `@Valid` + `@Size` 기반 문항 수(1~5), 답변 길이(1000자) 검증
-- [ ] `Document` 저장 (`status = UPLOADED`, `file_type = COVER_LETTER`, `file_url = null`)
-- [ ] `CoverLetterContent` 벌크 저장 (`@Transactional`)
-  - `saveAll()` 호출 시 `member_id`·`document_id` 매핑 로그 남기기 — 디버깅 편의
-- [ ] FastAPI 분석 트리거 (비동기)
-- [ ] `ResumeController.submitCoverLetter()` 구현
-- [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
+- [x] `ResumeDTO.RequestCoverLetter`, `ResumeDTO.ResponseCoverLetter` 작성
+- [x] `@Valid` + `@Size` 기반 문항 수(1~5), 답변 길이(1000자) 검증
+- [x] `Document` 저장 (`status = UPLOADED`, `file_type = COVER_LETTER`, `file_url = null`)
+- [x] `CoverLetterMeta` 저장 (company, job)
+- [x] `CoverLetterContent` 벌크 저장 (`saveAll()`, `@Transactional`)
+- [x] FastAPI 분석 트리거 (비동기)
+- [x] `ResumeController.submitCoverLetter()` 구현
+- [x] `ResumeControllerDocs` Swagger 인터페이스 작성
 
 ---
 
 ## Phase 4: 분석 결과 조회 API
 
-- [ ] `ResumeDTO.ResponseFeedback` + `FeedbackDetail` inner record 작성
-- [ ] `DocumentFeedback` 조회 → score 컬럼 5개 직접 매핑
-- [ ] `feedback_text`(TEXT) → `ObjectMapper.readValue()` → `List<FeedbackDetail>` 역직렬화
-- [ ] `JsonProcessingException` 캐치 후 `CustomException(ErrorCode.FEEDBACK_PARSE_ERROR)` 변환
-- [ ] `GlobalExceptionHandler`에 `FEEDBACK_PARSE_ERROR(500)` 핸들러 등록
-- [ ] IDOR 검증 — `document.member_id != memberId` 시 `DOCUMENT_ACCESS_DENIED(403)`
-- [ ] `DocumentFeedback` 없는 경우 score 필드 전체 `null` + `feedbackDetails = null` + status만 포함한 응답 반환
-- [ ] `ResumeController.getFeedback()` 구현
-- [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
+- [x] `ResumeDTO.ResponseFeedback` + `ScoreDTO`, `FeedbackDetail`, `StarAnalysis`, `QuantAnalysis` inner record 작성
+- [x] `DocumentFeedback` 조회 → score 컬럼 5개 `ScoreDTO`로 매핑
+- [x] `feedback_text`(TEXT) → `ObjectMapper.readValue()` → `List<FeedbackDetail>` 역직렬화
+- [x] `JsonProcessingException` 캐치 후 `CustomException(ResumeErrorCode.FEEDBACK_PARSE_ERROR)` 변환
+- [x] IDOR 검증 — `findByDocumentIdAndMemberId()` DB 레벨 차단, 불일치 시 `DOCUMENT_ACCESS_DENIED(403)`
+- [x] `DocumentFeedback` 없는 경우 scores·feedbackDetails·overallReview null 반환
+- [x] `ResumeController.getFeedback()` 구현
+- [x] `ResumeControllerDocs` Swagger 인터페이스 작성
 
 ---
 
 ## Phase 5: 이력 목록 조회 API
 
-- [ ] `ResumeDTO.HistoryItem` 작성
-- [ ] `DocumentRepository` 커스텀 쿼리 작성 (member_id + created_at DESC + LEFT JOIN feedback)
-- [ ] `PaginationResponse<ResumeDTO.HistoryItem>` 변환
-- [ ] `ResumeController.getHistory()` 구현
-- [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
+- [x] `ResumeDTO.HistoryItem` 작성
+- [x] `DocumentRepository` 커스텀 쿼리 작성 (member_id + created_at DESC, document_id DESC + LEFT JOIN feedback)
+- [x] `PaginationResponse<ResumeDTO.HistoryItem>` 변환
+- [x] `ResumeController.getHistory()` 구현
+- [x] `ResumeControllerDocs` Swagger 인터페이스 작성
 
 ---
 
 ## Phase 6: Webhook 수신 API (FastAPI → Spring)
 
-- [ ] `ResumeDTO.RequestWebhook` DTO 작성 (`status`, `scoreJobFitness`, `scoreTechStack`, `scoreQuantified`, `scoreLogical`, `scoreTotal`, `overallReview`, `feedbackText`, `errorMessage`)
-- [ ] `X-Internal-Secret` 헤더 검증 구현 — 환경 변수 `WEBHOOK_SECRET` 값과 비교, 불일치 시 `403` 반환
-- [ ] 멱등성 처리 — `document.status`가 이미 `COMPLETED`/`FAILED`이면 DB 갱신 없이 `200 OK` 즉시 반환
-- [ ] `DocumentFeedback` 저장 + `document.status` 업데이트 (`@Transactional`)
-- [ ] DB 커밋 완료 후 WebSocket 브로드캐스트 — `@TransactionalEventListener(phase = AFTER_COMMIT)` 사용
+- [x] `ResumeDTO.RequestWebhook` DTO 작성 (`status`, `scoreJobFitness`, `scoreTechStack`, `scoreQuantified`, `scoreLogical`, `scoreTotal`, `overallReview`, `feedbackText`, `errorMessage`)
+- [x] `X-Internal-Secret` 헤더 검증 구현 — 환경 변수 `WEBHOOK_SECRET` 값과 비교, 불일치 시 `403` 반환
+- [x] 멱등성 처리 — `document.status`가 이미 `COMPLETED`/`FAILED`이면 DB 갱신 없이 `200 OK` 즉시 반환
+- [x] `DocumentFeedback` 저장 + `document.status` 업데이트 (`@Transactional`)
+- [x] DB 커밋 완료 후 WebSocket 브로드캐스트 — `@TransactionalEventListener(phase = AFTER_COMMIT)` 사용
   - 서비스 내부에서 `ApplicationEventPublisher.publishEvent()`로 이벤트 발행
-  - 이벤트 리스너에서 `SimpMessagingTemplate.convertAndSend()` 호출
+  - 이벤트 리스너에서 `SimpMessagingTemplate.convertAndSend()` 호출 (Phase 7에서 리스너 구현)
   - ⚠️ `SimpMessagingTemplate`을 `@Transactional` 메서드 안에서 직접 호출 금지
-- [ ] `ResumeController.receiveWebhook()` 구현
+- [x] `ResumeController.receiveWebhook()` 구현 (`POST /api/v1/user/resume/webhook`)
+- [x] `COMPLETED`·`FAILED` 외 알 수 없는 status 값은 `WEBHOOK_INVALID_STATUS(400)` 예외 처리
 
 ---
 
