@@ -6,7 +6,6 @@ import { usePreflightCheck } from './usePreflightCheck';
 vi.mock('../../../utils/user/member/authSession', () => ({
   authSession: {
     getAccessToken: vi.fn(() => 'mock-access-token'),
-    getRefreshToken: vi.fn(() => null),
   },
 }));
 
