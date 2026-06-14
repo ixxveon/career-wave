@@ -11,12 +11,12 @@
 
 ## 권한
 - [x] ROLE_USER 토큰으로 admin API(`/api/v1/admin/**`) 접근 → 403 ← PR #351
-- [ ] ROLE_ADMIN 토큰으로 사용자 전용 정책 동작 확인
+- [x] ROLE_ADMIN 토큰으로 사용자 전용 정책 동작 확인 ← SecurityConfig hasAnyRole("USER","COMPANY") 로 admin 토큰 차단
 - [x] ROLE_COMPANY 전용 / ROLE_USER 전용 API 분리 확인 ← Phase 4 구현 완료
 - [x] permitAll 목록(로그인/재발급/Swagger) 인증 없이 접근 가능 ← PR #323
 - [x] 관리자 토큰에 adminRole(MASTER/CS/BACKEND) claim 포함 확인 ← PR #323
 - [x] @EnableMethodSecurity 활성화 + @PreAuthorize 동작 확인 ← PR #323
-- [ ] CS 관리자가 BACKEND 전용 API 접근 시 403 (등급별 제어 동작) ← Phase 5
+- [x] CS 관리자가 BACKEND 전용 API 접근 시 403 (등급별 제어 동작) ← Phase 5 @PreAuthorize 적용 완료
 
 ## Refresh / 로그아웃
 - [x] refresh token 재발급 성공 ← PR #361
@@ -44,11 +44,11 @@
 ## 프론트 연동 / 도구
 - [x] FE api-schema와 응답 필드명(camelCase) 일치 ← PR #345
 - [x] 사용자 로그인 요청의 `roleType`은 필수이며 FE LoginRequest / `useLogin.ts` / MSW `memberHandlers.ts`와 일치 ← PR #345
-- [ ] Swagger에서 Bearer token Authorize로 인증 API 테스트 가능 ← Phase 6
-- [ ] 테스트 계정으로 전체 로그인→호출 플로우 검증 ← Phase 6
+- [x] Swagger에서 Bearer token Authorize로 인증 API 테스트 가능 ← SwaggerConfig Bearer SecurityScheme 등록 완료 (Phase 5)
+- [ ] 테스트 계정으로 전체 로그인→호출 플로우 검증 ← 수동 확인 필요
 
 ## 코드 규칙 점검
-- [ ] Controller에서 token 직접 파싱 없음 (@AuthenticationPrincipal 사용)
+- [x] Controller에서 token 직접 파싱 없음 (@AuthenticationPrincipal 사용) ← me/status는 @AuthenticationPrincipal 사용; logout의 extractBearerToken은 raw token 추출 (blacklist 등록 목적), JWT 파싱은 service 계층에서만
 - [x] refresh token Redis hash 저장(원문 저장 없음) ← PR #361
 - [x] access token 영속 저장 없음 (blacklist는 로그아웃 전용) ← PR #361
 - [x] locked_until은 DB 저장, 실패 카운트는 Redis ← Phase 4
