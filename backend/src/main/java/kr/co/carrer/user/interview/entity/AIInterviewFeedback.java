@@ -12,6 +12,13 @@ import java.util.UUID;
 @Getter
 @Entity
 @Table(name = "ai_interview_feedbacks")
+@org.hibernate.annotations.Check(constraints =
+        "(relevance_score IS NULL OR (relevance_score >= 0 AND relevance_score <= 100)) AND " +
+        "(depth_score IS NULL OR (depth_score >= 0 AND depth_score <= 100)) AND " +
+        "(delivery_score IS NULL OR (delivery_score >= 0 AND delivery_score <= 100)) AND " +
+        "(fluency_score IS NULL OR (fluency_score >= 0 AND fluency_score <= 100)) AND " +
+        "(voice_quality_ratio IS NULL OR (voice_quality_ratio >= 0.00 AND voice_quality_ratio <= 100.00))"
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AIInterviewFeedback {
 
