@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
+
 @Tag(name = "Resume", description = "서류 분석 API")
 public interface ResumeControllerDocs {
 
@@ -226,5 +227,21 @@ public interface ResumeControllerDocs {
     ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistory(
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @Min(0) int page,
             @Parameter(description = "페이지 크기 (최대 50)", example = "10") @Min(1) @Max(50) int size
+    );
+
+    @Operation(
+            summary = "분석 결과 Webhook 수신 (FastAPI 전용)",
+            description = "FastAPI에서 분석 완료 후 호출하는 내부 API입니다. X-Internal-Secret 헤더로 인증합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "처리 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Webhook 시크릿 불일치"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 documentId")
+    })
+    ResponseEntity<ApiResponse<Void>> receiveWebhook(
+            @Parameter(description = "내부 인증 시크릿 (환경 변수 WEBHOOK_SECRET)", required = true)
+            String webhookSecret,
+            @Parameter(description = "분석 결과 body", required = true)
+            ResumeDTO.RequestWebhook request
     );
 }

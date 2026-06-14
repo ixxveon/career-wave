@@ -15,4 +15,6 @@ public interface ResumeService {
     ResumeDTO.ResponseFeedback getFeedback(UUID memberId, UUID documentId);
 
     PaginationResponse<ResumeDTO.HistoryItem> getHistory(UUID memberId, int page, int size);
+
+    void receiveWebhook(String webhookSecret, ResumeDTO.RequestWebhook dto);
 }
