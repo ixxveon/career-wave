@@ -1,15 +1,18 @@
 package kr.co.carrer.global.config;
 
+import kr.co.carrer.admin.auth.filter.AdminAccountStatusPort;
 import kr.co.carrer.auth.filter.AccountStatusAuthorizationFilter;
-import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
+import kr.co.carrer.user.member.filter.UserAccountStatusPort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -32,9 +35,12 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
 
-    // @WebMvcTest에서는 UserAccountStatusPort 등을 @MockBean으로 명시적으로 등록해야 한다.
-    @org.springframework.beans.factory.annotation.Autowired(required = false)
-    private List<AccountStatusPort> accountStatusPorts = List.of();
+    // @WebMvcTest에서는 해당 체인의 Port를 @MockBean으로 명시적으로 등록해야 한다.
+    @Autowired(required = false)
+    private AdminAccountStatusPort adminAccountStatusPort;
+
+    @Autowired(required = false)
+    private UserAccountStatusPort userAccountStatusPort;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -42,7 +48,42 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/v1/admin/**")
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/api/v1/admin/auth/login",
+                    "/api/v1/admin/auth/refresh"
+                ).permitAll()
+                .requestMatchers("/api/v1/admin/auth/logout").authenticated()
+                .anyRequest().hasRole("ADMIN")
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(authenticationEntryPoint)
+                .accessDeniedHandler(accessDeniedHandler)
+            )
+            .addFilterBefore(
+                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
+                UsernamePasswordAuthenticationFilter.class
+            )
+            .addFilterAfter(
+                new AccountStatusAuthorizationFilter(
+                    adminAccountStatusPort != null ? List.of(adminAccountStatusPort) : List.of()
+                ),
+                JwtAuthenticationFilter.class
+            );
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain userSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
@@ -52,10 +93,6 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
-                    // admin 인증 — permitAll
-                    "/api/v1/admin/auth/login",
-                    "/api/v1/admin/auth/refresh",
-                    // user 인증 — permitAll
                     "/api/v1/user/members/login",
                     "/api/v1/user/members/token/refresh",
                     "/api/v1/user/members/login-id/check",
@@ -72,10 +109,8 @@ public class SecurityConfig {
                 // logout / me/status 는 인증 필요 but AccountStatus 예외 (비ACTIVE도 허용)
                 .requestMatchers(
                     "/api/v1/user/members/logout",
-                    "/api/v1/admin/auth/logout",
                     "/api/v1/user/members/me/status"
                 ).authenticated()
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/user/**").hasAnyRole("USER", "COMPANY")
                 .anyRequest().authenticated()
             )
@@ -88,7 +123,9 @@ public class SecurityConfig {
                 UsernamePasswordAuthenticationFilter.class
             )
             .addFilterAfter(
-                new AccountStatusAuthorizationFilter(accountStatusPorts),
+                new AccountStatusAuthorizationFilter(
+                    userAccountStatusPort != null ? List.of(userAccountStatusPort) : List.of()
+                ),
                 JwtAuthenticationFilter.class
             );
 

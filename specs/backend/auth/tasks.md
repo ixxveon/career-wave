@@ -87,7 +87,7 @@
 > `POST /api/v1/admin/auth/logout`은 Phase 3에서 구현 완료. Phase 5는 adminRole 권한·실패 잠금·Swagger·문서 검증 포함.
 
 ### Admin auth 연결
-- [ ] adminSecurityFilterChain (@Order(1)) 분리 ← 현재 단일 filterChain으로 동작 중; 팀 협의 후 결정
+- [x] adminSecurityFilterChain (@Order(1)) 분리 ← Phase 5 구현 완료 (securityMatcher("/api/v1/admin/**"))
 - [ ] `Admin.lastLoginIp` 갱신 ← Admin entity에 last_login_ip 컬럼 없음; ERD 확인 후 결정
 - [x] POST /api/v1/admin/auth/login (adminRole claim 포함) ← PR #361
 - [x] POST /api/v1/admin/auth/refresh (단일 세션 rotation, admins.status 검증) ← PR #361

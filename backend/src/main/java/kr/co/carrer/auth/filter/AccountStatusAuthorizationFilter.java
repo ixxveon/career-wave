@@ -4,9 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.principal.AuthPrincipal;
-import kr.co.carrer.global.exception.CustomException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.AntPathMatcher;
@@ -56,11 +54,12 @@ public class AccountStatusAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // 분리된 체인에서 account type 불일치(예: USER 토큰 → admin 체인)는
+        // ifPresent로 통과시켜 Spring Security authorization(hasRole)이 403으로 처리하게 한다.
         statusPorts.stream()
                 .filter(port -> port.supports(principal.getAccountType()))
                 .findFirst()
-                .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED))
-                .validateActive(principal.getId());
+                .ifPresent(port -> port.validateActive(principal.getId()));
 
         filterChain.doFilter(request, response);
     }
