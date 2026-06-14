@@ -97,6 +97,7 @@
   - MASTER+CS: `AdminMemberController`, `AdminReportController`, `AdminCsController`, `AdminFaqController`, `AdminNoticeController`, `AdminInquiryController`
   - MASTER+BACKEND: `AdminAiController`
   - [ ] 미구현 컨트롤러 생성 시 동일 패턴 적용 필요: `admins`(MASTER), `payments`(MASTER), `stats`(MASTER), `scraping`(MASTER+BACKEND), `log`(MASTER+BACKEND), `companies`(MASTER), `settlements`(MASTER)
+    > 📌 **미처리 사유**: 위 경로에 해당하는 백엔드 Controller가 아직 각 도메인 팀에서 미구현 상태. Auth PR 범위 밖이며, 해당 Controller 생성 시 `@PreAuthorize("hasRole('ADMIN') and hasRole('MASTER')")` 패턴을 동일하게 적용할 것.
 - [x] 관리자 로그인 실패 잠금 5회 — LoginAttemptStore ADMIN 연동
 
 ### 테스트
@@ -109,7 +110,6 @@
 - [x] SpringDoc Bearer SecurityScheme 등록 ← SwaggerConfig 기존 구현
 - [ ] 테스트 계정으로 Swagger Authorize 동작 수동 확인
 - [x] checklist.md 전 항목 완료 점검
-- [ ] (선택) audit_logs 연계 — admin 로그인/로그아웃 기록
 
 ## 별도 처리 — admin-frontend (Issue #281)
 - [x] `AdminProtectedRoute` → `adminSession` token + `hasAdminRouteAccess()` 세부 role 검사로 교체 ← PR #384

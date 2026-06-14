@@ -41,14 +41,18 @@ career-wave/
 
 ## 실행 방법
 
-### Database (로컬 PostgreSQL)
+### Local Infra (PostgreSQL + Redis)
 
 ```bash
-# 1. .env 파일 생성 후 DB_PASSWORD 값 채우기
-copy .env.example .env
+# 1. 루트 .env 파일 생성 후 DB_PASSWORD 값 채우기
+cp .env.example .env
 
-# 2. PostgreSQL 컨테이너 실행 (최초 1회 init.sql 자동 적용)
-docker-compose up -d
+# 2. PostgreSQL + Redis 컨테이너 실행
+docker compose up -d
+
+# 3. 실행 확인
+docker compose ps
+docker compose exec redis redis-cli ping
 ```
 
 > ⚠️ `init.sql`은 볼륨이 비어있는 **최초 실행 시에만** 자동 적용됩니다.
@@ -56,8 +60,8 @@ docker-compose up -d
 
 ```bash
 # 볼륨 초기화 (데이터 전체 삭제 후 재생성)
-docker-compose down -v
-docker-compose up -d
+docker compose down -v
+docker compose up -d
 ```
 
 ### Frontend
