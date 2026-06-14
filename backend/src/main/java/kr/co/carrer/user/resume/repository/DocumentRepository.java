@@ -20,8 +20,8 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
     @Query("""
             SELECT new kr.co.carrer.user.resume.dto.ResumeDTO$HistoryItem(
                 d.documentId,
-                CAST(d.fileType AS string),
-                CAST(d.status AS string),
+                d.fileType,
+                d.status,
                 d.originalName,
                 m.company,
                 m.job,
@@ -32,7 +32,7 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
             LEFT JOIN CoverLetterMeta m ON m.documentId = d.documentId
             LEFT JOIN DocumentFeedback f ON f.documentId = d.documentId
             WHERE d.memberId = :memberId
-            ORDER BY d.createdAt DESC
+            ORDER BY d.createdAt DESC, d.documentId DESC
             """)
     Page<ResumeDTO.HistoryItem> findHistoryByMemberId(@Param("memberId") UUID memberId, Pageable pageable);
 }

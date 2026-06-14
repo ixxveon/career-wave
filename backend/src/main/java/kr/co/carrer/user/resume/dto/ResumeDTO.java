@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import kr.co.carrer.user.resume.type.DocumentStatus;
+import kr.co.carrer.user.resume.type.FileType;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -194,5 +196,11 @@ public class ResumeDTO {
             Integer scoreTotal,
             @Schema(description = "생성 일시", example = "2026-06-10T12:00:00+09:00")
             ZonedDateTime createdAt
-    ) {}
+    ) {
+        // JPQL SELECT new 생성자용 — Enum → String 변환
+        public HistoryItem(UUID documentId, FileType fileType, DocumentStatus status, String originalName,
+                           String company, String job, Integer scoreTotal, ZonedDateTime createdAt) {
+            this(documentId, fileType.name(), status.name(), originalName, company, job, scoreTotal, createdAt);
+        }
+    }
 }
