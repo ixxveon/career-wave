@@ -91,6 +91,12 @@ function AdminProtectedRoute() {
     return <Navigate to="/admin/login" replace />;
   }
 
+  if (!role) {
+    adminSession.clearToken();
+    adminSession.clearRole();
+    return <Navigate to="/admin/login" replace />;
+  }
+
   // 현재 경로에 매핑되는 가장 구체적인 admin route를 찾아 role 접근 권한 확인
   const matchedRoute = Object.values(ADMIN_ROUTE_PATHS)
     .filter(p => p !== ADMIN_ROUTE_PATHS.login)
