@@ -210,8 +210,10 @@ public class ResumeServiceImpl implements ResumeService {
             );
             documentFeedbackRepository.save(feedback);
             document.updateStatus(DocumentStatus.COMPLETED);
-        } else {
+        } else if ("FAILED".equals(dto.status())) {
             document.markFailed(dto.errorMessage());
+        } else {
+            throw new CustomException(ResumeErrorCode.WEBHOOK_INVALID_STATUS);
         }
 
         // DB 커밋 후 WebSocket 브로드캐스트 (Phase 7에서 리스너 구현)

@@ -15,7 +15,8 @@ public enum ResumeErrorCode implements BaseErrorCode {
     DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 문서입니다."),
     DOCUMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 문서에 대한 접근 권한이 없습니다."),
     FEEDBACK_PARSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "피드백 데이터 처리 중 오류가 발생했습니다."),
-    WEBHOOK_SECRET_INVALID(HttpStatus.FORBIDDEN, "유효하지 않은 Webhook 인증 키입니다.");
+    WEBHOOK_SECRET_INVALID(HttpStatus.FORBIDDEN, "유효하지 않은 Webhook 인증 키입니다."),
+    WEBHOOK_INVALID_STATUS(HttpStatus.BAD_REQUEST, "지원하지 않는 Webhook status 값입니다.");
 
     private final HttpStatus status;
     private final String message;
