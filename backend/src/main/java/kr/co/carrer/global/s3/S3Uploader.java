@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -56,6 +57,9 @@ public class S3Uploader {
             s3Client.putObject(request, RequestBody.fromBytes(file.getBytes()));
         } catch (IOException e) {
             log.error("[S3] 파일 읽기 실패 — key: {}, error: {}", s3Key, e.getMessage());
+            throw new CustomException(ErrorCode.S3_UPLOAD_FAILED);
+        } catch (S3Exception e) {
+            log.error("[S3] 업로드 실패 — key: {}, statusCode: {}, error: {}", s3Key, e.statusCode(), e.getMessage());
             throw new CustomException(ErrorCode.S3_UPLOAD_FAILED);
         }
 
