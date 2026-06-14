@@ -33,7 +33,8 @@
   - [x] `total_score` INTEGER nullable
   - [x] `started_at` / `ended_at` / `created_at` / `updated_at` ZonedDateTime
   - [x] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
-  - [x] `complete(ZonedDateTime endedAt)` 상태 전이 메서드
+  - [x] `complete(ZonedDateTime endedAt)` 상태 전이 메서드 — COMPLETED + endedAt 기록
+  - [x] `fail(ZonedDateTime endedAt)` 상태 전이 메서드 — FAILED + endedAt 기록
 
 - [x] `InterviewMessage.java` Entity
   - [x] `message_id` BIGSERIAL PK
@@ -51,6 +52,7 @@
   - [x] `question_text` / `answer_text` TEXT NOT NULL
   - [x] `relevance_score` / `depth_score` / `delivery_score` / `fluency_score` INTEGER nullable, CHECK (0~100)
   - [x] `voice_quality_ratio` DECIMAL(5,2) nullable, CHECK (0.00~100.00)
+  - [x] `@org.hibernate.annotations.Check` — 5개 점수 필드 범위 DB CHECK 제약 적용
   - [x] `ai_feedback` TEXT nullable
   - [x] `created_at` ZonedDateTime NOT NULL
   - [x] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
