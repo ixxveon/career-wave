@@ -221,6 +221,10 @@ public class ResumeServiceImpl implements ResumeService {
     }
 
     private List<ResumeDTO.ResponseFeedback.FeedbackDetail> parseFeedbackDetails(String feedbackText, UUID documentId) {
+        if (feedbackText == null) {
+            log.error("[피드백 파싱 실패] feedbackText가 null입니다 — documentId: {}", documentId);
+            throw new CustomException(ResumeErrorCode.FEEDBACK_PARSE_ERROR);
+        }
         try {
             return List.of(objectMapper.readValue(feedbackText, ResumeDTO.ResponseFeedback.FeedbackDetail[].class));
         } catch (JsonProcessingException e) {
