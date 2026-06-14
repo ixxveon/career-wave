@@ -42,19 +42,19 @@
 
 ## Phase 4 - API
 
-- [ ] `AdminManagementDTO.java`를 작성한다.
-- [ ] `AdminAclDTO.java`를 작성한다.
-- [ ] `GET /api/v1/admin/admins/summary` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/admins` Controller endpoint를 작성한다.
-- [ ] `POST /api/v1/admin/admins` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/admins/{adminId}/role` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/admins/{adminId}/status` Controller endpoint를 작성한다.
-- [ ] `DELETE /api/v1/admin/admins/{adminId}` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
-- [ ] `POST /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/admin-acls/{aclId}/enabled` Controller endpoint를 작성한다.
-- [ ] `DELETE /api/v1/admin/admin-acls/{aclId}` Controller endpoint를 작성한다.
-- [ ] `MASTER`, `BACKEND` 역할 정책과 JWT 인증 진입 조건을 API 계층에 반영한다.
+- [x] `AdminManagementDTO.java`를 작성한다.
+- [x] `AdminAclDTO.java`를 작성한다.
+- [x] `GET /api/v1/admin/admins/summary` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/admins` Controller endpoint를 작성한다.
+- [x] `POST /api/v1/admin/admins` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/admins/{adminId}/role` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/admins/{adminId}/status` Controller endpoint를 작성한다.
+- [x] `DELETE /api/v1/admin/admins/{adminId}` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
+- [x] `POST /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/admin-acls/{aclId}/enabled` Controller endpoint를 작성한다.
+- [x] `DELETE /api/v1/admin/admin-acls/{aclId}` Controller endpoint를 작성한다.
+- [x] `MASTER`, `BACKEND` 역할 정책과 JWT 인증 진입 조건을 API 계층에 반영한다.
 
 ## Phase 5 - Documentation
 
