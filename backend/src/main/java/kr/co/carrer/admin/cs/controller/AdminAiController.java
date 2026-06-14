@@ -7,12 +7,14 @@ import kr.co.carrer.admin.cs.service.AdminAiService;
 import kr.co.carrer.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/admin/ai")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('BACKEND'))")
 @Validated
 public class AdminAiController implements AdminAiControllerDocs {
 
