@@ -118,6 +118,27 @@ class ResumeServiceWebhookTest {
     }
 
     @Test
+    @DisplayName("COMPLETED·FAILED 외의 알 수 없는 status 값은 WEBHOOK_INVALID_STATUS 예외가 발생한다")
+    void receiveWebhook_unknownStatus_throwsException() {
+        UUID documentId = UUID.randomUUID();
+        stubAnalyzingDocument(documentId);
+
+        ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
+                documentId, "ANALYZING",
+                null, null, null, null, null,
+                null, null, null
+        );
+
+        assertThatThrownBy(() -> resumeService.receiveWebhook(VALID_SECRET, request))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ResumeErrorCode.WEBHOOK_INVALID_STATUS);
+
+        verify(documentFeedbackRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
     @DisplayName("이미 COMPLETED 상태인 문서는 멱등성 처리로 DB 갱신 없이 반환된다")
     void receiveWebhook_alreadyCompleted_idempotent() {
         UUID documentId = UUID.randomUUID();
