@@ -23,7 +23,8 @@
 - [ ] `sessionId` 기반으로 세션별 WebSocket을 저장하고 중복 연결 시 이전 연결을 종료한다.
 - [ ] `send_stt_partial` / `send_stt_final` / `send_tts_audio` / `send_error` 헬퍼가 정의되어 있다.
 - [ ] 모든 WebSocket 메시지에 `type` / `errorCode` 필드가 포함된다 (없으면 `null`).
-- [ ] 클라이언트로부터 수신되는 모든 WebSocket 메시지에 `sequenceNumber` 필드가 포함되며, FastAPI는 수신 순서가 어긋난 메시지를 감지하여 `log.warn`으로 기록한다 (네트워크 불안정 환경의 패킷 순서 역전 방어).
+- [ ] FastAPI WebSocket(`/ai`)은 Server → Client 단방향 Push 채널이다. 클라이언트는 연결만 수립하며 메시지를 업링크로 전송하지 않는다. `sequenceNumber`는 서버가 Push하는 메시지에만 포함된다.
+- [ ] 서버가 Push하는 메시지의 `sequenceNumber`가 세션 내 단조 증가하며, 재연결 시 `lastReceivedSequenceNumber` 이후 메시지를 순서대로 재전송한다.
 
 ---
 

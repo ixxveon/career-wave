@@ -41,7 +41,7 @@ Spring Boot는 세션 생명주기와 DB 저장을 담당하고, FastAPI는 AI �
 | 분류 | 선택 | 근거 |
 |------|------|------|
 | STT 엔진 | OpenAI Whisper (`whisper-1`) | 기존 `openai` 라이브러리 사용 (requirements.txt 기존 의존성) |
-| LLM | OpenAI GPT-4o (`gpt-4o`) | 복잡한 꼬리 질문 생성·리포트 분석 — `OPENAI_MODEL_DEEP` |
+| LLM | OpenAI GPT-4o (`gpt-4o`) | 복잡한 꼬리 질문 생성·리포트 분석 — `OPENAI_MODEL_INTERVIEW` |
 | TTS | OpenAI TTS (`tts-1`) | 동일 OpenAI SDK 내 지원, 낮은 지연 |
 | RAG | LangChain (`langchain==0.2.0`) | 기존 의존성, 벡터 검색 추상화 |
 | 벡터 스토어 | LangChain 추상 클라이언트 | MVP는 인메모리 또는 파일 기반, 추후 교체 가능 |

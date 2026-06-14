@@ -498,7 +498,7 @@ WEBHOOK_SECRET=                        # X-Internal-Secret 헤더 값 (필수)
 
 # OpenAI
 OPENAI_API_KEY=
-OPENAI_MODEL_INTERVIEW=gpt-4o          # LLM 질문 생성·리포트 분석 모델 (OPENAI_MODEL_DEEP)
+OPENAI_MODEL_INTERVIEW=gpt-4o          # LLM 질문 생성·리포트 분석 모델
 OPENAI_MODEL_STT=whisper-1             # STT 모델
 OPENAI_MODEL_TTS=tts-1                 # TTS 모델
 OPENAI_TTS_VOICE=alloy                 # TTS 음성 종류 (alloy / echo / fable / onyx / nova / shimmer)
