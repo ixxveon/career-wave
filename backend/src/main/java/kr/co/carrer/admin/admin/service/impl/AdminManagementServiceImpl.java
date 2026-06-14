@@ -16,12 +16,14 @@ import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -94,7 +96,15 @@ public class AdminManagementServiceImpl implements AdminManagementService {
                 command.adminRole()
         );
 
-        Admin savedAdmin = adminRepository.save(admin);
+        Admin savedAdmin;
+        try {
+            savedAdmin = adminRepository.saveAndFlush(admin);
+        } catch (DataIntegrityViolationException exception) {
+            if (isUniqueConstraintViolation(exception, "admins_email_key")) {
+                throw new CustomException(AdminManagementErrorCode.ADMIN_EMAIL_ALREADY_EXISTS);
+            }
+            throw exception;
+        }
         saveAuditLog(actorAdminId, "CREATE_ADMIN", TARGET_TYPE_ADMIN, savedAdmin.getAdminId(), ipAddress, SEVERITY_INFO);
         return toAdminDetailResult(savedAdmin);
     }
@@ -173,7 +183,15 @@ public class AdminManagementServiceImpl implements AdminManagementService {
                 command.description()
         );
 
-        IpAcl savedIpAcl = ipAclRepository.save(ipAcl);
+        IpAcl savedIpAcl;
+        try {
+            savedIpAcl = ipAclRepository.saveAndFlush(ipAcl);
+        } catch (DataIntegrityViolationException exception) {
+            if (isUniqueConstraintViolation(exception, "ip_acl_ip_range_key")) {
+                throw new CustomException(AdminManagementErrorCode.IP_ACL_DUPLICATED_RANGE);
+            }
+            throw exception;
+        }
         saveAuditLog(actorAdminId, "CREATE_IP_ACL", TARGET_TYPE_IP_ACL, savedIpAcl.getIpAclId(), ipAddress, SEVERITY_INFO);
         return toIpAclDetailResult(savedIpAcl);
     }
@@ -226,6 +244,24 @@ public class AdminManagementServiceImpl implements AdminManagementService {
                 null
         );
         auditLogRepository.save(auditLog);
+    }
+
+    private boolean isUniqueConstraintViolation(Throwable throwable, String constraintName) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof SQLException sqlException) {
+                if ("23505".equals(sqlException.getSQLState())) {
+                    if (constraintName == null || sqlException.getMessage() == null || sqlException.getMessage().contains(constraintName)) {
+                        return true;
+                    }
+                }
+            }
+            if (current.getMessage() != null && current.getMessage().contains(constraintName)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private AdminListItem toAdminListItem(Admin admin) {
