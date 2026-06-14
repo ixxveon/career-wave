@@ -67,7 +67,10 @@ public class DocumentAnalysisEventListener {
             log.info("[WebSocket Grace Period 만료] documentId: {}", documentId);
         }, triggerAt);
 
-        gracePeriodTimers.put(documentId, future);
+        gracePeriodTimers.merge(documentId, future, (prev, next) -> {
+            prev.cancel(false);
+            return next;
+        });
     }
 
     /**
