@@ -10,6 +10,7 @@ import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,8 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/admin/faqs")
 @RequiredArgsConstructor
 @Validated
-// TODO: JWT 필터 구현 후 이슈 #310에서 활성화 예정
-// @PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('CS'))")
 public class AdminFaqController implements AdminFaqControllerDocs {
 
     private final AdminFaqService adminFaqService;

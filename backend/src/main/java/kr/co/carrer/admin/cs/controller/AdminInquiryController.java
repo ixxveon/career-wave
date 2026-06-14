@@ -12,6 +12,7 @@ import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin/inquiries")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('CS'))")
 @Validated
 public class AdminInquiryController implements AdminInquiryControllerDocs {
 
