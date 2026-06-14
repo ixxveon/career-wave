@@ -13,6 +13,7 @@ import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import io.jsonwebtoken.JwtException;
 import kr.co.carrer.auth.exception.AuthErrorCode;
+import kr.co.carrer.auth.store.LoginAttemptStore;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import lombok.extern.slf4j.Slf4j;
@@ -31,12 +32,15 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminLoginServiceImpl implements AdminLoginService {
 
+    private static final int MAX_ATTEMPTS = 5;
+
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
     private final RefreshTokenStore refreshTokenStore;
     private final TokenBlacklistStore tokenBlacklistStore;
+    private final LoginAttemptStore loginAttemptStore;
 
     @Transactional
     public AdminLoginDto.Response login(AdminLoginDto.Request request, HttpServletResponse response) {
@@ -48,9 +52,15 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         }
 
         if (!passwordEncoder.matches(request.getPassword(), admin.getPasswordHash())) {
+            int count = loginAttemptStore.increment(AccountType.ADMIN, request.getLoginId());
+            if (count >= MAX_ATTEMPTS) {
+                admin.lockAccount();
+                loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
+            }
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
+        loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
         admin.updateLastLoginAt(Instant.now());
 
         String adminId = String.valueOf(admin.getAdminId());
