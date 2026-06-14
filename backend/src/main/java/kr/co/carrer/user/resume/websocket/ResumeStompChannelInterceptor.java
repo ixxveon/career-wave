@@ -5,6 +5,7 @@ import kr.co.carrer.user.resume.entity.Document;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -14,35 +15,44 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * STOMP 프레임 인터셉터.
  * - CONNECT: 세션에 저장된 memberId 존재 여부 재검증
  * - SUBSCRIBE: 구독 토픽의 documentId 소유권을 DB로 확인 (IDOR 방지)
+ * - DISCONNECT: SessionDisconnectEvent로 Grace Period 타이머 취소
  */
 @Slf4j
 @Component
-public class ResumeStompChannelInterceptor implements ChannelInterceptor {
+public class ResumeStompChannelInterceptor implements ChannelInterceptor, ApplicationListener<SessionDisconnectEvent> {
 
     private static final String TOPIC_PREFIX = "/topic/resume/";
     private static final String STATUS_SUFFIX = "/status";
 
     private final DocumentRepository documentRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final DocumentAnalysisEventListener eventListener;
+
+    // 세션 ID → documentId 매핑 (SUBSCRIBE 시 저장, DISCONNECT 시 제거)
+    private final Map<String, UUID> sessionDocumentMap = new ConcurrentHashMap<>();
 
     // SimpMessagingTemplate은 WebSocket 브로커 초기화 이후에만 사용 가능하므로
     // 순환 참조 방지를 위해 @Lazy로 지연 주입한다
     @Autowired
     public ResumeStompChannelInterceptor(
             DocumentRepository documentRepository,
-            @Lazy SimpMessagingTemplate messagingTemplate
+            @Lazy SimpMessagingTemplate messagingTemplate,
+            DocumentAnalysisEventListener eventListener
     ) {
         this.documentRepository = documentRepository;
         this.messagingTemplate = messagingTemplate;
+        this.eventListener = eventListener;
     }
 
     @Override
@@ -57,6 +67,16 @@ public class ResumeStompChannelInterceptor implements ChannelInterceptor {
             case SUBSCRIBE -> handleSubscribe(message, accessor);
             default -> message;
         };
+    }
+
+    @Override
+    public void onApplicationEvent(SessionDisconnectEvent event) {
+        String sessionId = event.getSessionId();
+        UUID documentId = sessionDocumentMap.remove(sessionId);
+        if (documentId != null) {
+            log.debug("[STOMP DISCONNECT] sessionId: {}, documentId: {} — Grace Period 취소", sessionId, documentId);
+            eventListener.cancelGracePeriod(documentId);
+        }
     }
 
     private Message<?> handleConnect(Message<?> message, StompHeaderAccessor accessor) {
@@ -91,6 +111,11 @@ public class ResumeStompChannelInterceptor implements ChannelInterceptor {
         if (!owned) {
             log.warn("[STOMP SUBSCRIBE 거부] IDOR 탐지 — memberId: {}, documentId: {}", memberId, documentId);
             throw new MessageDeliveryException("해당 문서에 대한 구독 권한이 없습니다.");
+        }
+
+        String sessionId = accessor.getSessionId();
+        if (sessionId != null) {
+            sessionDocumentMap.put(sessionId, documentId);
         }
 
         log.debug("[STOMP SUBSCRIBE] memberId: {}, documentId: {}", memberId, documentId);
