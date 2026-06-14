@@ -13,14 +13,14 @@ import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-// TODO: JWT 필터 구현 후 이슈 #310에서 활성화 예정
-// @PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('CS'))")
 public class AdminReportController implements AdminReportControllerDocs {
 
     private final AdminReportService adminReportService;

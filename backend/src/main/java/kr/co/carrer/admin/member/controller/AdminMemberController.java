@@ -26,8 +26,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-// TODO: 스웨거 테스트용 임시 비활성화 — JWT 필터 구현 후 롤백 필요
-// @PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('CS'))")
 @Validated
 public class AdminMemberController implements AdminMemberControllerDocs {
 
