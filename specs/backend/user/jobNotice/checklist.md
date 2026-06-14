@@ -21,15 +21,15 @@
 
 ## Phase 3 — Service
 
-- [ ] 비즈니스 로직이 Controller가 아니라 Service Layer에 위치한다.
-- [ ] Service가 인터페이스와 `impl` 구현체로 분리되어 있다.
-- [ ] `notice_status` 노출 정책과 북마크 중복 정책이 Service Layer에서 일관되게 적용된다.
-- [ ] 사용자 조회 서비스가 `notice_status = ACTIVE` 공고만 노출하도록 일관되게 처리한다.
-- [ ] 비로그인 목록/상세 조회 응답의 `bookmarked` 값이 항상 `false`다.
-- [ ] 로그인 목록/상세 조회 응답의 `bookmarked` 값이 현재 사용자 기준으로 계산된다.
-- [ ] 비즈니스 예외가 `CustomException(ErrorCode)` 또는 도메인 ErrorCode 매핑 방식으로 처리된다.
-- [ ] JobNotice 도메인 오류 코드 `JOB_NOTICE_NOT_FOUND`, `BOOKMARK_ALREADY_EXISTS`, `BOOKMARK_NOT_FOUND`가 구현과 문서에 반영되어 있다.
-- [ ] 공통 ErrorCode와 도메인 ErrorCode의 역할 분리가 유지된다.
+- [x] 비즈니스 로직이 Controller가 아니라 Service Layer에 위치한다.
+- [x] Service가 인터페이스와 `impl` 구현체로 분리되어 있다.
+- [x] `notice_status` 노출 정책과 북마크 중복 정책이 Service Layer에서 일관되게 적용된다.
+- [x] 사용자 조회 서비스가 `notice_status = ACTIVE` 공고만 노출하도록 일관되게 처리한다.
+- [x] 비로그인 목록/상세 조회 응답의 `bookmarked` 값이 항상 `false`다.
+- [x] 로그인 목록/상세 조회 응답의 `bookmarked` 값이 현재 사용자 기준으로 계산된다.
+- [x] 비즈니스 예외가 `CustomException(ErrorCode)` 또는 도메인 ErrorCode 매핑 방식으로 처리된다.
+- [x] JobNotice 도메인 오류 코드 `JOB_NOTICE_NOT_FOUND`, `BOOKMARK_ALREADY_EXISTS`, `BOOKMARK_NOT_FOUND`가 구현과 문서에 반영되어 있다.
+- [x] 공통 ErrorCode와 도메인 ErrorCode의 역할 분리가 유지된다.
 
 ## Phase 4 — API
 

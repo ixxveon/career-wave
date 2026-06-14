@@ -13,7 +13,7 @@
 ## Project Structure
 
 ```text
-user/jobNotice/
+user/jobnotice/
 ├── controller/   UserJobNoticeController.java
 ├── service/      UserJobNoticeService.java
 ├── service/impl/ UserJobNoticeServiceImpl.java

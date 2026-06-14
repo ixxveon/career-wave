@@ -11,6 +11,7 @@ import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,7 +44,7 @@ public interface AdminMemberControllerDocs {
     ResponseEntity<ApiResponse<MemberDTO.ResponseSanction>> sanctionMember(
         @Parameter(description = "회원 UUID") @PathVariable UUID memberId,
         @RequestBody MemberDTO.RequestSanction request,
-        @AuthenticationPrincipal Long adminId
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
     );
 
     @Operation(summary = "기업 회원 목록 조회")
