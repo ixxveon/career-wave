@@ -48,9 +48,15 @@ public class UserAuthController implements UserAuthControllerDocs {
     @GetMapping("/me/status")
     public ResponseEntity<ApiResponse<MemberStatusDto.Response>> getMemberStatus(
             @AuthenticationPrincipal AuthPrincipal principal) {
+        java.util.UUID memberId;
+        try {
+            memberId = java.util.UUID.fromString(principal.getId());
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED);
+        }
         return ResponseEntity.ok(ApiResponse.ok(
                 "요청이 성공적으로 처리되었습니다.",
-                memberStatusService.getMemberStatus(java.util.UUID.fromString(principal.getId()))
+                memberStatusService.getMemberStatus(memberId)
         ));
     }
 

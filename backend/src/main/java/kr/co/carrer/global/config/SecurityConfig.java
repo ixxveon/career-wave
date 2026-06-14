@@ -8,7 +8,6 @@ import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -33,10 +32,10 @@ public class SecurityConfig {
     private final TokenBlacklistStore tokenBlacklistStore;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
-
-    // @WebMvcTest에서는 AccountStatusPort 구현체를 @MockBean으로 명시적으로 등록해야 한다.
-    @Autowired(required = false)
-    private List<AccountStatusPort> accountStatusPorts = List.of();
+    // Spring이 AccountStatusPort 빈을 자동 수집. 빈 없으면 빈 리스트 주입(collection injection 동작).
+    // @WebMvcTest에서 JWT 인증 테스트 시: @WithMockUser는 AuthPrincipal이 아니므로 필터 통과,
+    // JWT 토큰 기반 테스트는 AdminAccountStatusPort / UserAccountStatusPort @MockBean 필요.
+    private final List<AccountStatusPort> accountStatusPorts;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
