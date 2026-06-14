@@ -12,6 +12,7 @@ import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
+import kr.co.carrer.auth.store.LoginAttemptStore;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
@@ -28,7 +29,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +41,7 @@ class AdminLoginServiceImplTest {
     @Mock HttpServletResponse httpResponse;
     @Mock RefreshTokenStore refreshTokenStore;
     @Mock TokenBlacklistStore tokenBlacklistStore;
+    @Mock LoginAttemptStore loginAttemptStore;
 
     private AdminLoginService service;
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -52,7 +56,7 @@ class AdminLoginServiceImplTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new AdminLoginServiceImpl(adminRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore);
+        service = new AdminLoginServiceImpl(adminRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore);
     }
 
     private Admin createAdmin(AdminStatus status) throws Exception {
@@ -121,6 +125,32 @@ class AdminLoginServiceImplTest {
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_ACCOUNT_LOCKED);
+    }
+
+    @Test
+    void 비밀번호_5회_실패_시_LOCKED_처리() throws Exception {
+        Admin admin = createAdmin(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+        when(loginAttemptStore.increment(any(), anyString())).thenReturn(5);
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
+        assertThatThrownBy(() -> service.login(req, httpResponse))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
+
+        assertThat(admin.getStatus()).isEqualTo(AdminStatus.LOCKED);
+        verify(loginAttemptStore).clear(AccountType.ADMIN, "admin@test.com");
+    }
+
+    @Test
+    void 로그인_성공_시_실패_카운터_초기화() throws Exception {
+        Admin admin = createAdmin(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
+        service.login(req, httpResponse);
+
+        verify(loginAttemptStore).clear(AccountType.ADMIN, "admin@test.com");
     }
 
     @Test
