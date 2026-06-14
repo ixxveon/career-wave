@@ -58,7 +58,8 @@ public class AdminAuthController implements AdminAuthControllerDocs {
     private String extractClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+            String ip = forwarded.split(",")[0].trim();
+            if (!ip.isBlank()) return ip;
         }
         return request.getRemoteAddr();
     }

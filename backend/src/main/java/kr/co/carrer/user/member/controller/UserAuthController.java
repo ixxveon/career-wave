@@ -48,6 +48,7 @@ public class UserAuthController implements UserAuthControllerDocs {
     @GetMapping("/me/status")
     public ResponseEntity<ApiResponse<MemberStatusDto.Response>> getMemberStatus(
             @AuthenticationPrincipal AuthPrincipal principal) {
+        if (principal == null) throw new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED);
         java.util.UUID memberId;
         try {
             memberId = java.util.UUID.fromString(principal.getId());
