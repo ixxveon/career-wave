@@ -83,23 +83,30 @@
 - [x] logout cookie Max-Age=0 클리어 (spec 누락 수정)
 - [x] api-schema.md roleType claim 형식 수정 (spec 오류 수정)
 
-## Phase 5: Admin auth 연결
-> `POST /api/v1/admin/auth/logout`은 Phase 3에서 구현 완료. Phase 5는 단일 세션 정책 고도화·adminRole 권한·실패 잠금에 집중.
-- [ ] adminSecurityFilterChain (@Order(1), admin secret, hasRole("ADMIN"), addFilterBefore)
-- [ ] AdminLoginService (admins 조회·status 검증·last_login_ip 갱신·adminRole claim 포함)
-- [x] POST /api/v1/admin/auth/login (응답에 adminRole 포함) ← PR #361 선처리
-- [x] POST /api/v1/admin/auth/refresh (단일 세션 정책, HttpOnly cookie only) ← PR #361 선처리
-- [x] refreshToken Set-Cookie Path `/api/v1/admin/auth` 적용 및 삭제 시 동일 Path 사용 ← PR #361 + 이번 PR
-- [ ] adminRole(MASTER/CS/BACKEND) 권한 표현식 + @PreAuthorize 적용 기반 마련
-- [ ] 관리자 실패 잠금(5회) 적용
-- [ ] 테스트: admin 로그인/재발급/권한 격리(USER 토큰으로 admin API→403) / adminRole별 접근 제어
+## Phase 5: Admin auth 연결 + Swagger / Test / 문서 검증 ✅ 이번 브랜치 (feature/auth-phase5-admin-swagger)
+> `POST /api/v1/admin/auth/logout`은 Phase 3에서 구현 완료. Phase 5는 adminRole 권한·실패 잠금·Swagger·문서 검증 포함.
+
+### Admin auth 연결
+- [ ] adminSecurityFilterChain (@Order(1)) 분리 ← 현재 단일 filterChain으로 동작 중; 팀 협의 후 결정
+- [ ] `Admin.lastLoginIp` 갱신 ← Admin entity에 last_login_ip 컬럼 없음; ERD 확인 후 결정
+- [x] POST /api/v1/admin/auth/login (adminRole claim 포함) ← PR #361
+- [x] POST /api/v1/admin/auth/refresh (단일 세션 rotation, admins.status 검증) ← PR #361
+- [x] refreshToken Set-Cookie Path `/api/v1/admin/auth` + 삭제 동일 Path ← PR #361 + PR #406
+- [x] AuthPrincipal에 ROLE_MASTER/CS/BACKEND authority 추가
+- [x] adminRole(MASTER/CS/BACKEND) @PreAuthorize 적용 (프론트 access matrix 기준)
+- [x] 관리자 로그인 실패 잠금 5회 — LoginAttemptStore ADMIN 연동
+
+### 테스트
+- [x] admin 로그인 실패 5회 → LOCKED, 성공 시 카운터 초기화
+- [x] ADMIN 단일세션 — 신규 로그인 시 기존 세션 폐기 + jti blacklist
+- [x] admin logout 후 access token blacklist 재사용 → 401
+- [x] USER 5세션 상한 — 6번째 로그인 시 오래된 세션 삭제
+
+### Swagger / 문서 검증
+- [x] SpringDoc Bearer SecurityScheme 등록 ← SwaggerConfig 기존 구현
+- [ ] 테스트 계정으로 Swagger Authorize 동작 수동 확인
+- [x] checklist.md 전 항목 완료 점검
+- [ ] (선택) audit_logs 연계 — admin 로그인/로그아웃 기록
 
 ## 별도 처리 — admin-frontend (Issue #281)
 - [x] `AdminProtectedRoute` → `adminSession` token + `hasAdminRouteAccess()` 세부 role 검사로 교체 ← PR #384
-
-## Phase 6: Swagger / Test / 문서 검증
-- [ ] SpringDoc Bearer SecurityScheme 등록
-- [ ] 테스트 계정으로 Swagger Authorize 동작 확인
-- [ ] api-schema.md ↔ 실제 응답 필드명 일치 검증
-- [ ] checklist.md 전 항목 점검
-- [ ] (선택) audit_logs 연계 — admin 로그인/로그아웃 기록
