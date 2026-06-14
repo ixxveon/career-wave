@@ -27,17 +27,17 @@
 
 ## Phase 3 - Service
 
-- [ ] `UserJobNoticeService.java` 인터페이스를 작성한다.
-- [ ] `JobNoticeDTO.ResponseList` DTO를 작성한다.
-- [ ] `JobNoticeDTO.ResponseDetail` DTO를 작성한다.
-- [ ] `JobNoticeDTO.ResponseBookmark` DTO를 작성한다.
-- [ ] 목록 조회 서비스 로직을 구현한다.
-- [ ] 상세 조회 서비스 로직을 구현한다.
-- [ ] 로그인 사용자 북마크 여부 계산 로직을 구현한다.
-- [ ] 북마크 등록 서비스 로직을 구현한다.
-- [ ] 북마크 해제 서비스 로직을 구현한다.
-- [ ] `JobNoticeErrorCode.java`를 작성한다.
-- [ ] JobNotice 도메인 예외 매핑 정책을 정리한다.
+- [x] `UserJobNoticeService.java` 인터페이스를 작성한다.
+- [x] `JobNoticeDTO.ResponseList` DTO를 작성한다.
+- [x] `JobNoticeDTO.ResponseDetail` DTO를 작성한다.
+- [x] `JobNoticeDTO.ResponseBookmark` DTO를 작성한다.
+- [x] 목록 조회 서비스 로직을 구현한다.
+- [x] 상세 조회 서비스 로직을 구현한다.
+- [x] 로그인 사용자 북마크 여부 계산 로직을 구현한다.
+- [x] 북마크 등록 서비스 로직을 구현한다.
+- [x] 북마크 해제 서비스 로직을 구현한다.
+- [x] `JobNoticeErrorCode.java`를 작성한다.
+- [x] JobNotice 도메인 예외 매핑 정책을 정리한다.
 
 ## Phase 4 - API
 
