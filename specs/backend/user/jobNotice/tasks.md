@@ -14,16 +14,16 @@
 
 ## Phase 2 - Repository & QueryDSL
 
-- [ ] `JobNoticeRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] QueryDSL 설정을 적용한다.
-- [ ] `JobNoticeQueryRepository.java`를 작성한다.
-- [ ] 공개 채용 공고 목록 동적 검색 조건 쿼리를 구현한다.
-- [ ] 목록 조회 정렬 조건 쿼리를 구현한다.
-- [ ] 목록 조회 페이지네이션 쿼리를 구현한다.
-- [ ] 공개 채용 공고 상세 조회 쿼리를 구현한다.
-- [ ] `BookmarkRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] 북마크 존재 여부 조회 쿼리를 구현한다.
-- [ ] 북마크 삭제 대상 조회 쿼리를 구현한다.
+- [x] `JobNoticeRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] QueryDSL 설정을 적용한다.
+- [x] `JobNoticeQueryRepository.java`를 작성한다.
+- [x] 공개 채용 공고 목록 동적 검색 조건 쿼리를 구현한다.
+- [x] 목록 조회 정렬 조건 쿼리를 구현한다.
+- [x] 목록 조회 페이지네이션 쿼리를 구현한다.
+- [x] 공개 채용 공고 상세 조회 쿼리를 구현한다.
+- [x] `BookmarkRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] 북마크 존재 여부 조회 쿼리를 구현한다.
+- [x] 북마크 삭제 대상 조회 쿼리를 구현한다.
 
 ## Phase 3 - Service
 
@@ -68,4 +68,5 @@
 - [ ] 존재하지 않는 북마크 해제 예외 테스트를 작성한다.
 - [ ] QueryDSL 동적 검색 조건 테스트를 작성한다.
 - [ ] QueryDSL 정렬 조건 테스트를 작성한다.
+- [ ] 배열 컬럼(`skill_tags`, `job_category`) QueryDSL 조건 테스트의 실행 환경을 PostgreSQL 호환 기준(Testcontainers 등)으로 정리한다.
 - [ ] `ApiResponse<T>`와 1-based 페이지네이션 응답 형식 테스트를 작성한다.
