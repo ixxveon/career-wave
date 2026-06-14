@@ -32,6 +32,8 @@ class ResumeStompChannelInterceptorTest {
 
     @Mock private DocumentRepository documentRepository;
     @Mock private SimpMessagingTemplate messagingTemplate;
+    @Mock private DocumentAnalysisEventListener eventListener;
+    @Mock private WebSocketSessionRegistry sessionRegistry;
 
     @InjectMocks
     private ResumeStompChannelInterceptor interceptor;
@@ -74,7 +76,7 @@ class ResumeStompChannelInterceptorTest {
         Message<?> result = interceptor.preSend(message, null);
 
         assertThat(result).isNotNull();
-        verify(messagingTemplate).convertAndSend(eq(destination), any(Object.class));
+        verify(messagingTemplate).convertAndSendToUser(eq("test-session"), any(String.class), any(Object.class), any(Map.class));
     }
 
     @Test
