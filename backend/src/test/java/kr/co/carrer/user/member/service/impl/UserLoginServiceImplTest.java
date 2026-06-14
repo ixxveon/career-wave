@@ -30,9 +30,11 @@ import java.lang.reflect.Field;
 import java.util.Optional;
 import java.util.UUID;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -158,5 +160,25 @@ class UserLoginServiceImplTest {
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
+    }
+
+    @Test
+    void USER_5세션_상한_초과_시_오래된_세션_퇴출() throws Exception {
+        Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
+        when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
+        when(nativeQuery.getResultList()).thenReturn(List.of());
+        when(entityManager.createNativeQuery(anyString())).thenReturn(nativeQuery);
+
+        String oldSessionKey = "refresh:USER:" + member.getMemberId() + ":old-session-id";
+        when(refreshTokenStore.enforceSessionLimit(eq(AccountType.USER), anyString()))
+                .thenReturn(List.of(oldSessionKey));
+        when(refreshTokenStore.getAndDeleteAccessJti(eq(AccountType.USER), anyString(), eq("old-session-id")))
+                .thenReturn("old-jti");
+
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
+        service.login(req, httpResponse);
+
+        verify(tokenBlacklistStore).add(eq("old-jti"), any());
+        verify(refreshTokenStore).delete(eq(AccountType.USER), anyString(), eq("old-session-id"));
     }
 }
