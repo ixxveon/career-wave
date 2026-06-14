@@ -3,6 +3,7 @@ package kr.co.carrer.global.exception;
 import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import kr.co.carrer.global.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -43,11 +44,22 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResponse<Object>> handleConstraintViolationException(ConstraintViolationException e) {
-        log.warn("[파라미터 검증 실패] {}", e.getMessage());
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleConstraintViolationException(ConstraintViolationException e) {
+        Map<String, String> errors = e.getConstraintViolations().stream()
+                .collect(Collectors.toMap(
+                        v -> {
+                            String path = v.getPropertyPath().toString();
+                            return path.contains(".") ? path.substring(path.lastIndexOf('.') + 1) : path;
+                        },
+                        v -> v.getMessage(),
+                        (a, b) -> a + "; " + b
+                ));
+
+        log.warn("[파라미터 검증 실패] 검증 오류 수: {}개", errors.size());
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), "요청 파라미터 값이 유효하지 않습니다."));
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), "입력값 검증에 실패했습니다.", errors));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

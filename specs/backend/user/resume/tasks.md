@@ -88,11 +88,11 @@
 
 ## Phase 5: 이력 목록 조회 API
 
-- [ ] `ResumeDTO.HistoryItem` 작성
-- [ ] `DocumentRepository` 커스텀 쿼리 작성 (member_id + created_at DESC + LEFT JOIN feedback)
-- [ ] `PaginationResponse<ResumeDTO.HistoryItem>` 변환
-- [ ] `ResumeController.getHistory()` 구현
-- [ ] `ResumeControllerDocs` Swagger 인터페이스 작성
+- [x] `ResumeDTO.HistoryItem` 작성
+- [x] `DocumentRepository` 커스텀 쿼리 작성 (member_id + created_at DESC + LEFT JOIN feedback)
+- [x] `PaginationResponse<ResumeDTO.HistoryItem>` 변환
+- [x] `ResumeController.getHistory()` 구현
+- [x] `ResumeControllerDocs` Swagger 인터페이스 작성
 
 ---
 
