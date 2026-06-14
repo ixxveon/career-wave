@@ -43,7 +43,7 @@
 > `refreshToken`은 응답 body가 아닌 **Set-Cookie 헤더**로 전달한다.
 > `Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/user/members`
 >
-> `companyApprovalStatus` 변환 규칙: `ROLE_USER`는 항상 `NONE`. `ROLE_COMPANY`는 `hr_managers.hr_status` 기준 — `PENDING`→`PENDING_REVIEW`, `ACTIVE`→`APPROVED`, `REMOVED`→`REJECTED`.
+> `companyApprovalStatus` 변환 규칙: roleType이 `USER`이면 항상 `NONE`. roleType이 `COMPANY`이면 `hr_managers.hr_status` 기준 — `PENDING`→`PENDING_REVIEW`, `ACTIVE`→`APPROVED`, `REMOVED`→`REJECTED`.
 
 **Error**
 - 401 `AUTH_INVALID_CREDENTIALS` — 아이디/비밀번호 불일치 (계정 존재 여부 비노출, 공통 메시지)
@@ -121,7 +121,7 @@
 | memberId | members.member_id |
 | roleType | members.role_type → `USER`, `COMPANY` |
 | memberStatus | members.member_status |
-| companyApprovalStatus | hr_managers.hr_status → `PENDING_REVIEW` / `APPROVED` / `REJECTED`. ROLE_USER는 `NONE` |
+| companyApprovalStatus | hr_managers.hr_status → `PENDING_REVIEW` / `APPROVED` / `REJECTED`. roleType=USER 또는 hr_managers 행 미존재·hr_status 미매핑 시 `NONE` |
 | restriction.restrictionType | members.member_status |
 | restriction.recoverable | SUSPENDED / LOCKED → `true`, BANNED / WITHDRAWN → `false` |
 | restriction.availableAt | LOCKED: members.locked_until, SUSPENDED: suspend_histories.end_date (NULL = 영구정지) |
@@ -210,8 +210,8 @@
 |---|---|---|---|
 | sub | memberId(UUID) | adminId(BIGINT 문자열) | 주체 식별자 |
 | accountType | USER / COMPANY | ADMIN | 주체 타입 분기용 |
-| roleType | ROLE_USER / ROLE_COMPANY | ROLE_ADMIN | 권한 |
-| roles | ["ROLE_USER"] 등 | ["ROLE_ADMIN"] | Authority 매핑 |
+| roleType | USER / COMPANY | ADMIN | 권한 (ROLE_ prefix 없이 저장 — Issue #339 fix, AuthPrincipal에서만 ROLE_ 부여) |
+| roles | ["USER"] 등 | ["ADMIN"] | Authority 매핑 (AuthPrincipal에서 ROLE_ prefix 추가) |
 | adminRole | (없음) | MASTER / CS / BACKEND | 관리자 내부 등급 (관리자 토큰에만 포함) |
 | jti | UUID | UUID | Blacklist / 재사용 탐지 |
 | aud | "user" | "admin" | 키 분리 검증용 |

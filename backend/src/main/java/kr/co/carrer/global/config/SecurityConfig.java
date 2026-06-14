@@ -1,5 +1,7 @@
 package kr.co.carrer.global.config;
 
+import kr.co.carrer.auth.filter.AccountStatusAuthorizationFilter;
+import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
@@ -17,6 +19,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -27,6 +31,10 @@ public class SecurityConfig {
     private final TokenBlacklistStore tokenBlacklistStore;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
+
+    // @WebMvcTest에서는 UserAccountStatusPort 등을 @MockBean으로 명시적으로 등록해야 한다.
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private List<AccountStatusPort> accountStatusPorts = List.of();
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -68,7 +76,7 @@ public class SecurityConfig {
                     "/api/v1/user/members/me/status"
                 ).authenticated()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/v1/user/resume/**").authenticated()
+                .requestMatchers("/api/v1/user/**").hasAnyRole("USER", "COMPANY")
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
@@ -78,6 +86,10 @@ public class SecurityConfig {
             .addFilterBefore(
                 new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
                 UsernamePasswordAuthenticationFilter.class
+            )
+            .addFilterAfter(
+                new AccountStatusAuthorizationFilter(accountStatusPorts),
+                JwtAuthenticationFilter.class
             );
 
         return http.build();

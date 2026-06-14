@@ -44,10 +44,10 @@ public interface AdminAuthControllerDocs {
     ResponseEntity<?> refresh(HttpServletRequest request, HttpServletResponse response);
 
     @Operation(summary = "관리자 로그아웃",
-            description = "refresh Redis key 삭제 + access token jti blacklist 등록.")
+            description = "refresh Redis key 삭제 + access token jti blacklist 등록 + refreshToken cookie 만료(Max-Age=0).")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
             @ApiResponse(responseCode = "401", description = "유효한 access token 없음")
     })
-    ResponseEntity<?> logout(HttpServletRequest request);
+    ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response);
 }

@@ -10,6 +10,7 @@ import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.user.member.filter.UserAccountStatusPort;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -40,6 +41,9 @@ class SecurityExceptionHandlerTest {
 
     @MockBean
     private AdminMemberService adminMemberService;
+
+    @MockBean
+    private UserAccountStatusPort userAccountStatusPort;
 
     @Test
     void 토큰_없음_401_ApiResponse_반환() throws Exception {
@@ -94,6 +98,8 @@ class SecurityExceptionHandlerTest {
         when(jwtTokenProvider.validate(anyString(), any(AccountType.class))).thenReturn(true);
         when(jwtTokenProvider.parse(anyString(), any(AccountType.class))).thenReturn(claims);
         when(tokenBlacklistStore.isBlacklisted("test-jti-user")).thenReturn(false);
+        // AccountStatusAuthorizationFilter: USER 포트가 매칭되어야 orElseThrow 미발생; validateActive는 기본 no-op
+        when(userAccountStatusPort.supports(AccountType.USER)).thenReturn(true);
 
         mockMvc.perform(get("/api/v1/admin/members")
                         .header("Authorization", "Bearer user.access.token"))

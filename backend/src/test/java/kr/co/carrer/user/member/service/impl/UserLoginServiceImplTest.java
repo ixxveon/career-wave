@@ -42,6 +42,7 @@ class UserLoginServiceImplTest {
     @Mock HttpServletResponse httpResponse;
     @Mock RefreshTokenStore refreshTokenStore;
     @Mock TokenBlacklistStore tokenBlacklistStore;
+    @Mock kr.co.carrer.auth.store.LoginAttemptStore loginAttemptStore;
     @Mock EntityManager entityManager;
     @Mock jakarta.persistence.Query nativeQuery;
 
@@ -58,7 +59,10 @@ class UserLoginServiceImplTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, entityManager);
+        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore, entityManager);
+        // loginAttemptStore 기본 stub — 실패 카운트 테스트가 아닌 경우 5회 미만으로 설정
+        lenient().when(loginAttemptStore.increment(any(), anyString())).thenReturn(1L);
+        lenient().when(loginAttemptStore.getMaxAttempts()).thenReturn(5);
     }
 
     private Member createMember(RoleType roleType, MemberStatus status) throws Exception {

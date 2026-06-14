@@ -22,7 +22,7 @@
 - 사용자 로그인 후 JWT(accessToken / refreshToken) 발급
 - 관리자 로그인 후 JWT 발급
 - JWT 검증 후 SecurityContext에 인증 정보 저장
-- ROLE_USER / ROLE_COMPANY / ROLE_ADMIN 권한 구분
+- USER / COMPANY / ADMIN 역할 구분 (DB/JWT claim 값; Spring Security Authority는 ROLE_ prefix 포함)
 - 관리자 내부 등급(MASTER / CS / BACKEND) 구분 → JWT `adminRole` claim + `@PreAuthorize` 기반 접근 제어
 - 인증 필요 API에서 memberId / adminId 조회 (SecurityContext 경유)
 - Refresh Token 재발급 (rotation 적용)
@@ -35,12 +35,13 @@
 
 ## 3. 인증 주체
 
-| 주체 | role_type / role | 테이블 | PK 타입 |
-|---|---|---|---|
-| 일반 사용자 | ROLE_USER | members | UUID |
-| 기업 사용자 | ROLE_COMPANY | members | UUID |
-| 관리자 | ROLE_ADMIN (+ adminRole) | admins | BIGINT(BIGSERIAL) |
+| 주체 | role_type (DB 컬럼) | roleType (JWT claim) | Spring Security Authority | 테이블 | PK 타입 |
+|---|---|---|---|---|---|
+| 일반 사용자 | USER | USER | ROLE_USER | members | UUID |
+| 기업 사용자 | COMPANY | COMPANY | ROLE_COMPANY | members | UUID |
+| 관리자 | ADMIN | ADMIN (+ adminRole) | ROLE_ADMIN | admins | BIGINT(BIGSERIAL) |
 
+> JWT `roleType` claim은 ROLE_ prefix 없이 `USER` / `COMPANY` / `ADMIN`으로 저장한다. Spring Security Authority는 `AuthPrincipal`에서 ROLE_ prefix를 부여한다 (Issue #339 fix).
 > 사용자(USER/COMPANY)는 `members` 한 테이블에서 `role_type`으로 구분된다.
 > 관리자는 `admins` 별도 테이블이며 PK 타입이 BIGINT이므로 JWT subject 처리 시 주체 타입 분기가 필요하다.
 > 관리자는 기본 권한 `ROLE_ADMIN`에 더해 `admins.admin_role`(MASTER / CS / BACKEND)을 JWT `adminRole` claim으로 실어, 관리자 전용 API 내부에서 등급별 접근 제어를 수행한다.

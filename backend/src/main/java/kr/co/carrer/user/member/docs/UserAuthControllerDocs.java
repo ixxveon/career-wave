@@ -45,12 +45,21 @@ public interface UserAuthControllerDocs {
     })
     ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response);
 
+    @Operation(summary = "계정 상태 조회",
+            description = "인증된 사용자 자신의 memberStatus + 제재 사유 조회. " +
+                    "SUSPENDED/BANNED/LOCKED/WITHDRAWN 회원도 접근 가능 (AccountStatus 예외 경로).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "401", description = "유효한 access token 없음")
+    })
+    ResponseEntity<?> getMemberStatus(kr.co.carrer.auth.principal.AuthPrincipal principal);
+
     @Operation(summary = "사용자 로그아웃",
-            description = "refresh Redis key 삭제 + access token jti blacklist 등록. " +
+            description = "refresh Redis key 삭제 + access token jti blacklist 등록 + refreshToken cookie 만료(Max-Age=0). " +
                     "비ACTIVE 회원도 허용.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
             @ApiResponse(responseCode = "401", description = "유효한 access token 없음")
     })
-    ResponseEntity<?> logout(HttpServletRequest request);
+    ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response);
 }
