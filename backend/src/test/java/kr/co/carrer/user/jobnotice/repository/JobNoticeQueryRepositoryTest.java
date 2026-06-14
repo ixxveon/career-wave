@@ -127,8 +127,8 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 CareerLevel.JUNIOR,
                 "Seoul",
                 JobNoticeStatus.ACTIVE,
-                10,
-                LocalDate.of(2026, 6, 25),
+                300,
+                LocalDate.of(2026, 6, 27),
                 ZonedDateTime.of(2026, 6, 10, 0, 0, 0, 0, SERVICE_ZONE_ID)
         );
         persistJobNotice(
@@ -140,7 +140,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 CareerLevel.JUNIOR,
                 "Seoul",
                 JobNoticeStatus.ACTIVE,
-                200,
+                100,
                 LocalDate.of(2026, 6, 20),
                 ZonedDateTime.of(2026, 6, 12, 0, 0, 0, 0, SERVICE_ZONE_ID)
         );
@@ -153,8 +153,8 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 CareerLevel.JUNIOR,
                 "Seoul",
                 JobNoticeStatus.ACTIVE,
-                100,
-                LocalDate.of(2026, 6, 20),
+                200,
+                LocalDate.of(2026, 6, 18),
                 ZonedDateTime.of(2026, 6, 11, 0, 0, 0, 0, SERVICE_ZONE_ID)
         );
 
@@ -177,11 +177,11 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
 
         assertThat(viewsResult.getContent())
                 .extracting(JobNotice::getTitle)
-                .containsExactly("공고 B", "공고 C", "공고 A");
+                .containsExactly("공고 A", "공고 C", "공고 B");
 
         assertThat(recommendResult.getContent())
                 .extracting(JobNotice::getTitle)
-                .containsExactly("공고 B", "공고 C", "공고 A");
+                .containsExactly("공고 C", "공고 B", "공고 A");
     }
 
     private void persistJobNotice(
