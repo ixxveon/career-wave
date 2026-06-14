@@ -10,6 +10,7 @@ import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.type.MemberStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -26,6 +27,7 @@ public class UserAccountStatusPort implements AccountStatusPort {
     }
 
     @Override
+    @Transactional
     public void validateActive(String subjectId) {
         UUID id;
         try {
@@ -44,6 +46,8 @@ public class UserAccountStatusPort implements AccountStatusPort {
                 if (member.getLockedUntil() != null && Instant.now().isBefore(member.getLockedUntil())) {
                     throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
                 }
+                // 잠금 만료 시 로그인 경로와 동일하게 ACTIVE로 복구 (DB 정합성 유지)
+                member.recoverFromLock();
             }
             default -> {}
         }

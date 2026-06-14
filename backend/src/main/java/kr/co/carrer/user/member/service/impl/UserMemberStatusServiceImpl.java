@@ -1,11 +1,11 @@
 package kr.co.carrer.user.member.service.impl;
 
-import jakarta.persistence.EntityManager;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.user.member.dto.MemberStatusDto;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
+import kr.co.carrer.user.member.repository.UserMemberStatusQueryRepository;
 import kr.co.carrer.user.member.service.UserMemberStatusService;
 import kr.co.carrer.user.member.type.CompanyApprovalStatus;
 import kr.co.carrer.user.member.type.MemberStatus;
@@ -15,9 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -25,7 +22,7 @@ import java.util.UUID;
 public class UserMemberStatusServiceImpl implements UserMemberStatusService {
 
     private final UserMemberRepository memberRepository;
-    private final EntityManager entityManager;
+    private final UserMemberStatusQueryRepository statusQueryRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -58,19 +55,13 @@ public class UserMemberStatusServiceImpl implements UserMemberStatusService {
         if (status == MemberStatus.LOCKED) {
             availableAt = member.getLockedUntil();
         } else {
-            // suspend_histories에서 최근 이력 1건 조회 (cross-domain: native query 사용)
-            List<?> rows = entityManager.createNativeQuery(
-                    "SELECT reason, start_date, end_date, duration " +
-                    "FROM suspend_histories WHERE member_id = :memberId " +
-                    "ORDER BY created_at DESC LIMIT 1"
-            ).setParameter("memberId", member.getMemberId()).getResultList();
-
-            if (!rows.isEmpty()) {
-                Object[] row = (Object[]) rows.get(0);
-                reason = (String) row[0];
-                startedAt = row[1] != null ? toInstant(row[1]) : null;
-                availableAt = row[2] != null ? toInstant(row[2]) : null;
-                duration = row[3] != null ? row[3].toString() : null;
+            UserMemberStatusQueryRepository.SuspendHistoryRow row =
+                    statusQueryRepository.findLatestSuspendHistory(member.getMemberId());
+            if (row != null) {
+                reason = row.reason();
+                startedAt = row.startedAt();
+                availableAt = row.availableAt();
+                duration = row.duration();
             }
         }
 
@@ -85,30 +76,8 @@ public class UserMemberStatusServiceImpl implements UserMemberStatusService {
         );
     }
 
-    private Instant toInstant(Object dateObj) {
-        if (dateObj instanceof java.sql.Date sqlDate) {
-            return sqlDate.toLocalDate().atStartOfDay().toInstant(ZoneOffset.UTC);
-        }
-        if (dateObj instanceof LocalDate localDate) {
-            return localDate.atStartOfDay().toInstant(ZoneOffset.UTC);
-        }
-        return null;
-    }
-
     private CompanyApprovalStatus resolveApprovalStatus(Member member) {
         if (member.getRoleType() != RoleType.COMPANY) return CompanyApprovalStatus.NONE;
-
-        Object result = entityManager.createNativeQuery(
-                "SELECT hr_status FROM hr_managers WHERE member_id = :memberId LIMIT 1"
-        ).setParameter("memberId", member.getMemberId()).getResultList()
-                .stream().findFirst().orElse(null);
-
-        if (result == null) return CompanyApprovalStatus.NONE;
-        return switch (result.toString()) {
-            case "PENDING" -> CompanyApprovalStatus.PENDING_REVIEW;
-            case "ACTIVE"  -> CompanyApprovalStatus.APPROVED;
-            case "REMOVED" -> CompanyApprovalStatus.REJECTED;
-            default -> CompanyApprovalStatus.NONE;
-        };
+        return statusQueryRepository.findCompanyApprovalStatus(member.getMemberId());
     }
 }

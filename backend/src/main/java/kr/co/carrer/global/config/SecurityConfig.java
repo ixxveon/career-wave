@@ -32,7 +32,7 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
 
-    // @WebMvcTest 환경에서는 domain 빈이 없으므로 required=false; 없으면 빈 리스트 — 필터 통과
+    // @WebMvcTest에서는 UserAccountStatusPort 등을 @MockBean으로 명시적으로 등록해야 한다.
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private List<AccountStatusPort> accountStatusPorts = List.of();
 
@@ -77,7 +77,6 @@ public class SecurityConfig {
                 ).authenticated()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/user/**").hasAnyRole("USER", "COMPANY")
-                .requestMatchers("/api/v1/user/resume/**").authenticated()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex

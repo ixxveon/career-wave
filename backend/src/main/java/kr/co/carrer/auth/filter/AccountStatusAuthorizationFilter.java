@@ -56,13 +56,11 @@ public class AccountStatusAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (!statusPorts.isEmpty()) {
-            statusPorts.stream()
-                    .filter(port -> port.supports(principal.getAccountType()))
-                    .findFirst()
-                    .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED))
-                    .validateActive(principal.getId());
-        }
+        statusPorts.stream()
+                .filter(port -> port.supports(principal.getAccountType()))
+                .findFirst()
+                .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED))
+                .validateActive(principal.getId());
 
         filterChain.doFilter(request, response);
     }
