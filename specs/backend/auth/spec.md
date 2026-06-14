@@ -35,11 +35,11 @@
 
 ## 3. 인증 주체
 
-| 주체 | role_type (DB / JWT claim) | Spring Security Authority | 테이블 | PK 타입 |
-|---|---|---|---|---|
-| 일반 사용자 | USER | ROLE_USER | members | UUID |
-| 기업 사용자 | COMPANY | ROLE_COMPANY | members | UUID |
-| 관리자 | ADMIN (+ adminRole) | ROLE_ADMIN | admins | BIGINT(BIGSERIAL) |
+| 주체 | role_type (DB 컬럼) | roleType (JWT claim) | Spring Security Authority | 테이블 | PK 타입 |
+|---|---|---|---|---|---|
+| 일반 사용자 | USER | USER | ROLE_USER | members | UUID |
+| 기업 사용자 | COMPANY | COMPANY | ROLE_COMPANY | members | UUID |
+| 관리자 | ADMIN | ADMIN (+ adminRole) | ROLE_ADMIN | admins | BIGINT(BIGSERIAL) |
 
 > JWT `roleType` claim은 ROLE_ prefix 없이 `USER` / `COMPANY` / `ADMIN`으로 저장한다. Spring Security Authority는 `AuthPrincipal`에서 ROLE_ prefix를 부여한다 (Issue #339 fix).
 > 사용자(USER/COMPANY)는 `members` 한 테이블에서 `role_type`으로 구분된다.

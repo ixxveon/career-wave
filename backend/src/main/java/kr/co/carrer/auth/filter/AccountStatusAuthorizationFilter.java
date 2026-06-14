@@ -4,7 +4,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.principal.AuthPrincipal;
+import kr.co.carrer.global.exception.CustomException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.AntPathMatcher;
@@ -57,7 +59,8 @@ public class AccountStatusAuthorizationFilter extends OncePerRequestFilter {
         statusPorts.stream()
                 .filter(port -> port.supports(principal.getAccountType()))
                 .findFirst()
-                .ifPresent(port -> port.validateActive(principal.getId()));
+                .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED))
+                .validateActive(principal.getId());
 
         filterChain.doFilter(request, response);
     }

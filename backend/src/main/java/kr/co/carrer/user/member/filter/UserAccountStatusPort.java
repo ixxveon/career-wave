@@ -27,8 +27,14 @@ public class UserAccountStatusPort implements AccountStatusPort {
 
     @Override
     public void validateActive(String subjectId) {
-        Member member = memberRepository.findById(UUID.fromString(subjectId)).orElse(null);
-        if (member == null) return;
+        UUID id;
+        try {
+            id = UUID.fromString(subjectId);
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED);
+        }
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED));
 
         switch (member.getMemberStatus()) {
             case SUSPENDED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED);

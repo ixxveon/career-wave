@@ -75,7 +75,7 @@
 > `TokenBlacklistStore` / logout endpoint는 Phase 3에서 구현 완료. Phase 4는 계정 상태 필터·권한 제어·me/status에 집중.
 - [x] LoginAttemptStore (Redis 실패 카운트) + locked_until DB 저장 (5회→LOCKED+locked_until 15분)
 - [x] 잠금 자동 복구 (locked_until 경과 시 ACTIVE 복구 + 카운트 초기화)
-- [x] 계정 상태 검증 통합 — AccountStatusAuthorizationFilter (ACTIVE만 허용, SUSPENDED/BANNED→403, LOCKED→423)
+- [x] 계정 상태 검증 통합 — AccountStatusAuthorizationFilter (ACTIVE만 허용, SUSPENDED/BANNED/WITHDRAWN→403, LOCKED→423)
 - [x] JwtAuthenticationFilter ↔ TokenBlacklistStore 연동 확인 (Phase 3에서 구현, 이번 PR에서 동작 검증)
 - [x] ROLE_USER / ROLE_COMPANY 전용 API 접근 제어 (requestMatchers().hasAnyRole())
 - [x] GET /api/v1/user/members/me/status (suspend_histories 최근 이력 조인, AccountStatus 예외로 정지 회원도 접근 가능)

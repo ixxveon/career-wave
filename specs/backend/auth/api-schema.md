@@ -121,7 +121,7 @@
 | memberId | members.member_id |
 | roleType | members.role_type → `USER`, `COMPANY` |
 | memberStatus | members.member_status |
-| companyApprovalStatus | hr_managers.hr_status → `PENDING_REVIEW` / `APPROVED` / `REJECTED`. roleType=USER는 `NONE` |
+| companyApprovalStatus | hr_managers.hr_status → `PENDING_REVIEW` / `APPROVED` / `REJECTED`. roleType=USER 또는 hr_managers 행 미존재·hr_status 미매핑 시 `NONE` |
 | restriction.restrictionType | members.member_status |
 | restriction.recoverable | SUSPENDED / LOCKED → `true`, BANNED / WITHDRAWN → `false` |
 | restriction.availableAt | LOCKED: members.locked_until, SUSPENDED: suspend_histories.end_date (NULL = 영구정지) |

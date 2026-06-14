@@ -23,8 +23,14 @@ public class AdminAccountStatusPort implements AccountStatusPort {
 
     @Override
     public void validateActive(String subjectId) {
-        Admin admin = adminRepository.findById(Long.parseLong(subjectId)).orElse(null);
-        if (admin == null) return;
+        Long adminId;
+        try {
+            adminId = Long.parseLong(subjectId);
+        } catch (NumberFormatException e) {
+            throw new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED);
+        }
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED));
 
         if (admin.getStatus() == AdminStatus.LOCKED) {
             throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
