@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
 
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
+    private long originalUrlSequence = 1L;
 
     @Autowired
     private JobNoticeQueryRepository jobNoticeQueryRepository;
@@ -41,7 +42,6 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
     @DisplayName("동적 검색 조건과 ACTIVE 상태 필터를 적용해 공개 공고만 조회한다")
     void findActiveJobNotices_filtersByDynamicConditions() {
         persistJobNotice(
-                101L,
                 "CareerWave",
                 "백엔드 개발자",
                 JobType.FULLTIME,
@@ -54,7 +54,6 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 ZonedDateTime.of(2026, 6, 10, 0, 0, 0, 0, SERVICE_ZONE_ID)
         );
         persistJobNotice(
-                102L,
                 "CareerWave",
                 "백엔드 인턴",
                 JobType.INTERN,
@@ -67,7 +66,6 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 ZonedDateTime.of(2026, 6, 10, 0, 0, 0, 0, SERVICE_ZONE_ID)
         );
         persistJobNotice(
-                103L,
                 "CareerWave",
                 "백엔드 개발자",
                 JobType.FULLTIME,
@@ -80,7 +78,6 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 ZonedDateTime.of(2026, 6, 10, 0, 0, 0, 0, SERVICE_ZONE_ID)
         );
         persistJobNotice(
-                104L,
                 "CareerWave",
                 "백엔드 개발자",
                 JobType.FULLTIME,
@@ -119,7 +116,6 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
     @DisplayName("정렬 조건 latest, views, recommend를 계약대로 적용한다")
     void findActiveJobNotices_sortsByContract() {
         persistJobNotice(
-                201L,
                 "CareerWave",
                 "공고 A",
                 JobType.FULLTIME,
@@ -132,7 +128,6 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 ZonedDateTime.of(2026, 6, 10, 0, 0, 0, 0, SERVICE_ZONE_ID)
         );
         persistJobNotice(
-                202L,
                 "CareerWave",
                 "공고 B",
                 JobType.FULLTIME,
@@ -145,7 +140,6 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 ZonedDateTime.of(2026, 6, 12, 0, 0, 0, 0, SERVICE_ZONE_ID)
         );
         persistJobNotice(
-                203L,
                 "CareerWave",
                 "공고 C",
                 JobType.FULLTIME,
@@ -185,7 +179,6 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
     }
 
     private void persistJobNotice(
-            Long jobNoticeId,
             String companyName,
             String title,
             JobType jobType,
@@ -213,7 +206,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
             setField(jobNotice, "location", location);
             setField(jobNotice, "salary", "면접 후 협의");
             setField(jobNotice, "noticeStatus", noticeStatus);
-            setField(jobNotice, "originalUrl", "https://example.com/job/" + jobNoticeId);
+            setField(jobNotice, "originalUrl", "https://example.com/job/" + originalUrlSequence++);
             setField(jobNotice, "source", "WANTED");
             setField(jobNotice, "viewCount", viewCount);
             setField(jobNotice, "deadline", deadline);
