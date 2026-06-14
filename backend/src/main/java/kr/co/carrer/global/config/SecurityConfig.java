@@ -77,6 +77,7 @@ public class SecurityConfig {
                 ).authenticated()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/user/**").hasAnyRole("USER", "COMPANY")
+                .requestMatchers("/api/v1/user/resume/**").authenticated()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
