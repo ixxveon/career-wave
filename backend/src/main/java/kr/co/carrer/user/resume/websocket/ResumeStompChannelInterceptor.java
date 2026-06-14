@@ -10,10 +10,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageDeliveryException;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
@@ -116,22 +118,22 @@ public class ResumeStompChannelInterceptor implements ChannelInterceptor, Applic
         String sessionId = accessor.getSessionId();
         if (sessionId != null) {
             sessionDocumentMap.put(sessionId, documentId);
+            log.debug("[STOMP SUBSCRIBE] memberId: {}, documentId: {}", memberId, documentId);
+            // 재연결 대응 — 구독한 세션에게만 현재 status snapshot 1회 전송
+            sendStatusSnapshot(sessionId, documentId);
         }
-
-        log.debug("[STOMP SUBSCRIBE] memberId: {}, documentId: {}", memberId, documentId);
-
-        // 재연결 대응 — 현재 status snapshot 1회 즉시 전송
-        sendStatusSnapshot(documentId);
 
         return message;
     }
 
-    private void sendStatusSnapshot(UUID documentId) {
+    // 구독한 세션에게만 전송 — convertAndSend는 토픽 전체 브로드캐스트이므로 사용 금지
+    private void sendStatusSnapshot(String sessionId, UUID documentId) {
         Optional<Document> documentOpt = documentRepository.findById(documentId);
         documentOpt.ifPresent(doc -> {
-            String destination = "/topic/resume/" + documentId + "/status";
-            messagingTemplate.convertAndSend(destination, new WebSocketMessage(documentId, doc.getStatus().name()));
-            log.debug("[WebSocket Snapshot] documentId: {}, status: {}", documentId, doc.getStatus());
+            Map<String, Object> headers = Map.of(SimpMessageHeaderAccessor.SESSION_ID_HEADER, sessionId);
+            String destination = "/queue/resume/" + documentId + "/status";
+            messagingTemplate.convertAndSendToUser(sessionId, destination, new WebSocketMessage(documentId, doc.getStatus().name()), headers);
+            log.debug("[WebSocket Snapshot] sessionId: {}, documentId: {}, status: {}", sessionId, documentId, doc.getStatus());
         });
     }
 
