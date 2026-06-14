@@ -93,7 +93,10 @@
 - [x] POST /api/v1/admin/auth/refresh (단일 세션 rotation, admins.status 검증) ← PR #361
 - [x] refreshToken Set-Cookie Path `/api/v1/admin/auth` + 삭제 동일 Path ← PR #361 + PR #406
 - [x] AuthPrincipal에 ROLE_MASTER/CS/BACKEND authority 추가
-- [x] adminRole(MASTER/CS/BACKEND) @PreAuthorize 적용 (프론트 access matrix 기준)
+- [x] adminRole(MASTER/CS/BACKEND) @PreAuthorize 적용 — 현재 존재하는 컨트롤러에 적용 완료
+  - MASTER+CS: `AdminMemberController`, `AdminReportController`, `AdminCsController`, `AdminFaqController`, `AdminNoticeController`, `AdminInquiryController`
+  - MASTER+BACKEND: `AdminAiController`
+  - [ ] 미구현 컨트롤러 생성 시 동일 패턴 적용 필요: `admins`(MASTER), `payments`(MASTER), `stats`(MASTER), `scraping`(MASTER+BACKEND), `log`(MASTER+BACKEND), `companies`(MASTER), `settlements`(MASTER)
 - [x] 관리자 로그인 실패 잠금 5회 — LoginAttemptStore ADMIN 연동
 
 ### 테스트

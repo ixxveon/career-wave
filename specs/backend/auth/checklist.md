@@ -16,13 +16,13 @@
 - [x] permitAll 목록(로그인/재발급/Swagger) 인증 없이 접근 가능 ← PR #323
 - [x] 관리자 토큰에 adminRole(MASTER/CS/BACKEND) claim 포함 확인 ← PR #323
 - [x] @EnableMethodSecurity 활성화 + @PreAuthorize 동작 확인 ← PR #323
-- [x] CS 관리자가 BACKEND 전용 API 접근 시 403 (등급별 제어 동작) ← Phase 5 @PreAuthorize 적용 완료
+- [x] CS 관리자가 BACKEND 전용 API 접근 시 403 (등급별 제어 동작) ← Phase 5 존재하는 컨트롤러에 @PreAuthorize 적용; 미구현 컨트롤러는 생성 시 동일 패턴 적용 필요
 
 ## Refresh / 로그아웃
 - [x] refresh token 재발급 성공 ← PR #361
 - [x] refresh token은 HttpOnly cookie에서만 수신(body fallback 없음) ← PR #361
 - [x] refreshToken cookie Path: user `/api/v1/user/members`, admin `/api/v1/admin/auth` ← PR #361
-- [x] refreshToken cookie 삭제 시 발급과 동일한 Path 사용 (Max-Age=0) ← 이번 PR
+- [x] refreshToken cookie 삭제 시 발급과 동일한 Path 사용 (Max-Age=0) ← PR #406
 - [x] refresh token 만료/폐기 시 401 + 재로그인 유도 ← PR #361
 - [x] rotation 후 구 refresh token 사용 불가 ← PR #361
 - [x] revoked token 재사용 시 전체 세션 폐기(재사용 탐지) ← PR #361
