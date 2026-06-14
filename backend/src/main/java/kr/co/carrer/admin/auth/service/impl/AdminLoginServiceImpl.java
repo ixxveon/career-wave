@@ -118,7 +118,13 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         }
 
         // admin 계정 상태 검증: ACTIVE만 재발급
-        Admin admin = adminRepository.findById(Long.parseLong(subject))
+        long adminId;
+        try {
+            adminId = Long.parseLong(subject);
+        } catch (NumberFormatException e) {
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
+        }
+        Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID));
         if (admin.getStatus() != AdminStatus.ACTIVE) {
             throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);

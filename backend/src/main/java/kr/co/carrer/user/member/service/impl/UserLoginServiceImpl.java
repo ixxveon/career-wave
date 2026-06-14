@@ -196,7 +196,13 @@ public class UserLoginServiceImpl implements UserLoginService {
         }
 
         // 계정 상태 검증: ACTIVE만 재발급
-        Member member = memberRepository.findById(java.util.UUID.fromString(subject))
+        UUID memberId;
+        try {
+            memberId = UUID.fromString(subject);
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
+        }
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID));
         if (member.getMemberStatus() != MemberStatus.ACTIVE) {
             throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
