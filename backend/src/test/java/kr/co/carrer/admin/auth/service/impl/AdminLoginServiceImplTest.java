@@ -132,7 +132,7 @@ class AdminLoginServiceImplTest {
     void 비밀번호_5회_실패_시_LOCKED_처리() throws Exception {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
-        when(loginAttemptStore.increment(any(), anyString())).thenReturn(5);
+        when(loginAttemptStore.increment(any(), anyString())).thenReturn(5L);
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
         assertThatThrownBy(() -> service.login(req, httpResponse))

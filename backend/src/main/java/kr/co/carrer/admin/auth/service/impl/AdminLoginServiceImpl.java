@@ -32,8 +32,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminLoginServiceImpl implements AdminLoginService {
 
-    private static final int MAX_ATTEMPTS = 5;
-
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -52,8 +50,8 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         }
 
         if (!passwordEncoder.matches(request.getPassword(), admin.getPasswordHash())) {
-            int count = loginAttemptStore.increment(AccountType.ADMIN, request.getLoginId());
-            if (count >= MAX_ATTEMPTS) {
+            long count = loginAttemptStore.increment(AccountType.ADMIN, request.getLoginId());
+            if (count >= loginAttemptStore.getMaxAttempts()) {
                 admin.lockAccount();
                 loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
             }

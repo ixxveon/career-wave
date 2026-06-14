@@ -65,13 +65,13 @@
 - [x] 만료·폐기 refresh → 401
 - [x] 비ACTIVE 재발급 차단 → 401
 - [x] 재사용 탐지 → 전체 세션 폐기 + 401
-- [ ] USER 5세션 상한 → 오래된 세션 삭제 ← 테스트 미작성
-- [ ] ADMIN 단일 세션 → 신규 로그인 시 기존 세션 폐기 ← 테스트 미작성
+- [x] USER 5세션 상한 → 오래된 세션 삭제 ← Phase 5 테스트 작성
+- [x] ADMIN 단일 세션 → 신규 로그인 시 기존 세션 폐기 ← Phase 5 테스트 작성
 - [x] logout 후 access token(blacklist) 재사용 → 401
 - [x] logout 후 refresh token 재사용 → 401 (재사용 탐지로 간접 커버)
-- [ ] admin logout 후 access token(blacklist) 재사용 → 401 ← 테스트 미작성
+- [x] admin logout 후 access token(blacklist) 재사용 → 401 ← Phase 5 테스트 작성
 
-## Phase 4: Security filter + 권한 처리 ✅ 이번 PR
+## Phase 4: Security filter + 권한 처리 ✅ PR #406
 > `TokenBlacklistStore` / logout endpoint는 Phase 3에서 구현 완료. Phase 4는 계정 상태 필터·권한 제어·me/status에 집중.
 - [x] LoginAttemptStore (Redis 실패 카운트) + locked_until DB 저장 (5회→LOCKED+locked_until 15분)
 - [x] 잠금 자동 복구 (locked_until 경과 시 ACTIVE 복구 + 카운트 초기화)
