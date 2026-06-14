@@ -5,11 +5,11 @@
 
 ## Phase 1 - Entity
 
-- [ ] `AdminRole.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `AdminStatus.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `Admin.java` 엔티티를 `admins` ERD 컬럼 기준으로 작성한다.
-- [ ] `IpAcl.java` 엔티티를 `ip_acl` ERD 컬럼 기준으로 작성한다.
-- [ ] `AuditLog.java` 엔티티를 `audit_logs` ERD 컬럼 기준으로 작성한다.
+- [x] `AdminRole.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `AdminStatus.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `Admin.java` 엔티티를 `admins` ERD 컬럼 기준으로 작성한다.
+- [x] `IpAcl.java` 엔티티를 `ip_acl` ERD 컬럼 기준으로 작성한다.
+- [x] `AuditLog.java` 엔티티를 `audit_logs` ERD 컬럼 기준으로 작성한다.
 
 ## Phase 2 - Repository
 

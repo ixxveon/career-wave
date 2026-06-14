@@ -5,9 +5,9 @@
 
 ## Phase 1 - Entity
 
-- [ ] `Admin`, `IpAcl`, `AuditLog` 엔티티 필드가 ERD 컬럼명, null 허용 여부, PK/UNIQUE/FK/CHECK 제약과 일치한다.
-- [ ] `AdminRole`, `AdminStatus` Enum 값이 DB CHECK 제약조건(`MASTER`, `CS`, `BACKEND` / `ACTIVE`, `LOCKED`)과 일치한다.
-- [ ] JPA Enum 매핑이 `EnumType.STRING`으로 적용되어 있다.
+- [x] `Admin`, `IpAcl`, `AuditLog` 엔티티 필드가 ERD 컬럼명, null 허용 여부, PK/UNIQUE 제약과 일치한다.
+- [x] `AdminRole`, `AdminStatus` Enum 값이 DB CHECK 제약조건(`MASTER`, `CS`, `BACKEND` / `ACTIVE`, `LOCKED`)과 일치한다.
+- [x] JPA Enum 매핑이 `EnumType.STRING`으로 적용되어 있다.
 
 ## Phase 2 - Repository
 
