@@ -4,7 +4,7 @@ import java.util.UUID;
 
 /**
  * WebSocket 브로드캐스트 메시지.
- * status: ANALYZING / COMPLETED / FAILED / SESSION_CLOSE
+ * status: ANALYZING / COMPLETED / FAILED
  */
 public record WebSocketMessage(
         UUID documentId,

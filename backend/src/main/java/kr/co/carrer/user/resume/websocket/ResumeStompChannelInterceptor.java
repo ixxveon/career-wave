@@ -15,7 +15,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
-import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
@@ -40,8 +39,9 @@ public class ResumeStompChannelInterceptor implements ChannelInterceptor, Applic
     private final DocumentRepository documentRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final DocumentAnalysisEventListener eventListener;
+    private final WebSocketSessionRegistry sessionRegistry;
 
-    // 세션 ID → documentId 매핑 (SUBSCRIBE 시 저장, DISCONNECT 시 제거)
+    // 세션 ID → documentId 매핑 (DISCONNECT 시 cancelGracePeriod 호출용)
     private final Map<String, UUID> sessionDocumentMap = new ConcurrentHashMap<>();
 
     // SimpMessagingTemplate은 WebSocket 브로커 초기화 이후에만 사용 가능하므로
@@ -50,11 +50,13 @@ public class ResumeStompChannelInterceptor implements ChannelInterceptor, Applic
     public ResumeStompChannelInterceptor(
             DocumentRepository documentRepository,
             @Lazy SimpMessagingTemplate messagingTemplate,
-            DocumentAnalysisEventListener eventListener
+            DocumentAnalysisEventListener eventListener,
+            WebSocketSessionRegistry sessionRegistry
     ) {
         this.documentRepository = documentRepository;
         this.messagingTemplate = messagingTemplate;
         this.eventListener = eventListener;
+        this.sessionRegistry = sessionRegistry;
     }
 
     @Override
@@ -77,6 +79,7 @@ public class ResumeStompChannelInterceptor implements ChannelInterceptor, Applic
         UUID documentId = sessionDocumentMap.remove(sessionId);
         if (documentId != null) {
             log.debug("[STOMP DISCONNECT] sessionId: {}, documentId: {} — Grace Period 취소", sessionId, documentId);
+            sessionRegistry.unbindDocument(documentId);
             eventListener.cancelGracePeriod(documentId);
         }
     }
@@ -118,6 +121,7 @@ public class ResumeStompChannelInterceptor implements ChannelInterceptor, Applic
         String sessionId = accessor.getSessionId();
         if (sessionId != null) {
             sessionDocumentMap.put(sessionId, documentId);
+            sessionRegistry.bindDocumentToSession(documentId, sessionId);
             log.debug("[STOMP SUBSCRIBE] memberId: {}, documentId: {}", memberId, documentId);
             // 재연결 대응 — 구독한 세션에게만 현재 status snapshot 1회 전송
             sendStatusSnapshot(sessionId, documentId);

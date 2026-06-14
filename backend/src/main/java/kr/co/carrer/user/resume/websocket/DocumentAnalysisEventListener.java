@@ -20,7 +20,7 @@ import java.util.concurrent.ScheduledFuture;
 /**
  * DB 커밋 완료 후 WebSocket 브로드캐스트를 수행한다.
  * COMPLETED/FAILED 전송 후 30초 Grace Period 타이머를 시작한다.
- * 타이머 만료 전 클라이언트가 연결을 끊으면 취소된다.
+ * 타이머 만료 시 WebSocketSessionRegistry를 통해 Close 1000으로 세션을 정상 종료한다.
  *
  * ⚠️ SimpMessagingTemplate은 @Transactional 메서드 내부에서 직접 호출하지 않는다.
  */
@@ -32,14 +32,17 @@ public class DocumentAnalysisEventListener {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final TaskScheduler taskScheduler;
+    private final WebSocketSessionRegistry sessionRegistry;
 
     @Autowired
     public DocumentAnalysisEventListener(
             @Lazy SimpMessagingTemplate messagingTemplate,
-            TaskScheduler taskScheduler
+            TaskScheduler taskScheduler,
+            WebSocketSessionRegistry sessionRegistry
     ) {
         this.messagingTemplate = messagingTemplate;
         this.taskScheduler = taskScheduler;
+        this.sessionRegistry = sessionRegistry;
     }
 
     // Grace Period 타이머 관리: documentId → ScheduledFuture
@@ -53,7 +56,7 @@ public class DocumentAnalysisEventListener {
         messagingTemplate.convertAndSend(destination, message);
         log.info("[WebSocket 브로드캐스트] documentId: {}, status: {}", event.documentId(), event.status());
 
-        // COMPLETED / FAILED 시 Grace Period 30초 후 세션 정리 알림 발송
+        // COMPLETED / FAILED 시 Grace Period 30초 후 세션 정상 종료 (Close 1000)
         scheduleGracePeriod(event.documentId());
     }
 
@@ -61,10 +64,9 @@ public class DocumentAnalysisEventListener {
         Instant triggerAt = Instant.now().plusMillis(GRACE_PERIOD_MS);
 
         ScheduledFuture<?> future = taskScheduler.schedule(() -> {
-            String destination = "/topic/resume/" + documentId + "/status";
-            messagingTemplate.convertAndSend(destination, new WebSocketMessage(documentId, "SESSION_CLOSE"));
             gracePeriodTimers.remove(documentId);
-            log.info("[WebSocket Grace Period 만료] documentId: {}", documentId);
+            sessionRegistry.closeSession(documentId);
+            log.info("[WebSocket Grace Period 만료] documentId: {} — Close 1000 전송", documentId);
         }, triggerAt);
 
         gracePeriodTimers.merge(documentId, future, (prev, next) -> {
