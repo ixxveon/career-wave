@@ -118,7 +118,6 @@ export interface LoginResponse {
 
 export interface TokenRefreshResponse {
   accessToken: string;
-  refreshToken?: string;
 }
 
 export interface CheckLoginIdResponse {
