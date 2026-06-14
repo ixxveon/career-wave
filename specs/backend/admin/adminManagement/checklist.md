@@ -21,16 +21,16 @@
 
 ## Phase 3 - Service
 
-- [ ] 비즈니스 로직이 Controller나 Repository가 아니라 Service Layer에 위치한다.
-- [ ] Service가 인터페이스와 `impl` 구현체로 분리되어 있다.
-- [ ] 관리자 이메일 중복 검증이 Service Layer에서 수행된다.
-- [ ] IP ACL 범위 중복 검증이 Service Layer에서 수행된다.
-- [ ] 관리자 상태 중복 변경(`ACTIVE`, `LOCKED`)이 Service Layer에서 차단된다.
-- [ ] IP ACL 활성 상태 중복 변경(`isEnabled`)이 Service Layer에서 차단된다.
-- [ ] `GET /api/v1/admin/admin-acls`의 페이지네이션 조회가 `page`, `size` 1-based 외부 계약과 일치한다.
-- [ ] 관리자 계정과 IP ACL의 주요 변경 작업 시 Audit Log 기록 로직이 Service Layer에서 수행된다.
-- [ ] 비즈니스 예외가 `CustomException(ErrorCode)` 또는 도메인 ErrorCode 매핑 방식으로 처리된다.
-- [ ] `AdminManagementErrorCode`가 `global.exception.ErrorCode`와 분리되어 있다.
+- [x] 비즈니스 로직이 Controller나 Repository가 아니라 Service Layer에 위치한다.
+- [x] Service가 인터페이스와 `impl` 구현체로 분리되어 있다.
+- [x] 관리자 이메일 중복 검증이 Service Layer에서 수행된다.
+- [x] IP ACL 범위 중복 검증이 Service Layer에서 수행된다.
+- [x] 관리자 상태 중복 변경(`ACTIVE`, `LOCKED`)이 Service Layer에서 차단된다.
+- [x] IP ACL 활성 상태 중복 변경(`isEnabled`)이 Service Layer에서 차단된다.
+- [x] `GET /api/v1/admin/admin-acls`의 페이지네이션 조회가 `page`, `size` 1-based 외부 계약과 일치한다.
+- [x] 관리자 계정과 IP ACL의 주요 변경 작업 시 Audit Log 기록 로직이 Service Layer에서 수행된다.
+- [x] 비즈니스 예외가 `CustomException(ErrorCode)` 또는 도메인 ErrorCode 매핑 방식으로 처리된다.
+- [x] `AdminManagementErrorCode`가 `global.exception.ErrorCode`와 분리되어 있다.
 
 ## Phase 4 - API
 
@@ -69,17 +69,15 @@
 - [ ] `ApiResponse<T>`와 1-based 페이지네이션 응답 형식 테스트가 존재한다.
 - [ ] Audit Log 기록 검증 테스트가 존재한다.
 
-## FastAPI / 외부 연동 검증
+## 외부 연동 검증
 
-- [ ] `adminManagement` 구현에 Spring ↔ FastAPI 호출 코드가 없다.
-- [ ] FastAPI가 본 도메인 기능을 위해 DB에 직접 접근하지 않도록 설계되어 있다.
 - [ ] 외부 보안 장비나 별도 ACL 시스템과의 직접 동기화 코드가 본 도메인 구현에 포함되지 않는다.
 
 ## 코드 품질
 
-- [ ] Entity를 API 응답으로 직접 반환하지 않는다.
-- [ ] `new RuntimeException(...)` 직접 생성 없이 공통/도메인 ErrorCode 기반 예외 처리만 사용한다.
-- [ ] Repository에서 벌크 업데이트나 직접 상태 변경으로 `Admin.status`, `Admin.adminRole`, `IpAcl.isEnabled`를 우회 수정하지 않는다.
+- [x] Entity를 API 응답으로 직접 반환하지 않는다.
+- [x] `new RuntimeException(...)` 직접 생성 없이 공통/도메인 ErrorCode 기반 예외 처리만 사용한다.
+- [x] Repository에서 벌크 업데이트나 직접 상태 변경으로 `Admin.status`, `Admin.adminRole`, `IpAcl.isEnabled`를 우회 수정하지 않는다.
 
 ## 머지 전 최종 확인
 
