@@ -1,13 +1,12 @@
 package kr.co.carrer.global.config;
 
-import kr.co.carrer.admin.auth.filter.AdminAccountStatusPort;
 import kr.co.carrer.auth.filter.AccountStatusAuthorizationFilter;
+import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
-import kr.co.carrer.user.member.filter.UserAccountStatusPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -35,12 +34,9 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
 
-    // @WebMvcTest에서는 해당 체인의 Port를 @MockBean으로 명시적으로 등록해야 한다.
+    // @WebMvcTest에서는 AccountStatusPort 구현체를 @MockBean으로 명시적으로 등록해야 한다.
     @Autowired(required = false)
-    private AdminAccountStatusPort adminAccountStatusPort;
-
-    @Autowired(required = false)
-    private UserAccountStatusPort userAccountStatusPort;
+    private List<AccountStatusPort> accountStatusPorts = List.of();
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -72,9 +68,7 @@ public class SecurityConfig {
                 UsernamePasswordAuthenticationFilter.class
             )
             .addFilterAfter(
-                new AccountStatusAuthorizationFilter(
-                    adminAccountStatusPort != null ? List.of(adminAccountStatusPort) : List.of()
-                ),
+                new AccountStatusAuthorizationFilter(accountStatusPorts),
                 JwtAuthenticationFilter.class
             );
 
@@ -106,7 +100,6 @@ public class SecurityConfig {
                     "/api/v1/user/members/recovery/password-token",
                     "/api/v1/user/members/recovery/reset-password"
                 ).permitAll()
-                // logout / me/status 는 인증 필요 but AccountStatus 예외 (비ACTIVE도 허용)
                 .requestMatchers(
                     "/api/v1/user/members/logout",
                     "/api/v1/user/members/me/status"
@@ -123,9 +116,7 @@ public class SecurityConfig {
                 UsernamePasswordAuthenticationFilter.class
             )
             .addFilterAfter(
-                new AccountStatusAuthorizationFilter(
-                    userAccountStatusPort != null ? List.of(userAccountStatusPort) : List.of()
-                ),
+                new AccountStatusAuthorizationFilter(accountStatusPorts),
                 JwtAuthenticationFilter.class
             );
 

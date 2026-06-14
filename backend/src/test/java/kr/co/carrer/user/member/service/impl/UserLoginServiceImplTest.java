@@ -1,6 +1,5 @@
 package kr.co.carrer.user.member.service.impl;
 
-import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
@@ -45,8 +44,7 @@ class UserLoginServiceImplTest {
     @Mock RefreshTokenStore refreshTokenStore;
     @Mock TokenBlacklistStore tokenBlacklistStore;
     @Mock kr.co.carrer.auth.store.LoginAttemptStore loginAttemptStore;
-    @Mock EntityManager entityManager;
-    @Mock jakarta.persistence.Query nativeQuery;
+    @Mock kr.co.carrer.user.member.repository.UserMemberStatusQueryRepository statusQueryRepository;
 
     private UserLoginService service;
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -61,7 +59,7 @@ class UserLoginServiceImplTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore, entityManager);
+        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore, statusQueryRepository);
         // loginAttemptStore 기본 stub — 실패 카운트 테스트가 아닌 경우 5회 미만으로 설정
         lenient().when(loginAttemptStore.increment(any(), anyString())).thenReturn(1L);
         lenient().when(loginAttemptStore.getMaxAttempts()).thenReturn(5);
@@ -166,8 +164,6 @@ class UserLoginServiceImplTest {
     void USER_5세션_상한_초과_시_오래된_세션_퇴출() throws Exception {
         Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
-        when(nativeQuery.getResultList()).thenReturn(List.of());
-        when(entityManager.createNativeQuery(anyString())).thenReturn(nativeQuery);
 
         String oldSessionKey = "refresh:USER:" + member.getMemberId() + ":old-session-id";
         when(refreshTokenStore.enforceSessionLimit(eq(AccountType.USER), anyString()))

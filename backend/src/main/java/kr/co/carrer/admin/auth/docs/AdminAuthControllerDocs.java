@@ -30,7 +30,7 @@ public interface AdminAuthControllerDocs {
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":423,\"message\":\"계정이 잠겼습니다.\",\"code\":\"AUTH_ACCOUNT_LOCKED\"}")))
     })
-    ResponseEntity<?> login(@Valid @RequestBody AdminLoginDto.Request request, HttpServletResponse response);
+    ResponseEntity<?> login(@Valid @RequestBody AdminLoginDto.Request request, HttpServletRequest httpRequest, HttpServletResponse response);
 
     @Operation(summary = "관리자 토큰 재발급",
             description = "HttpOnly Cookie의 refreshToken으로 새 accessToken 발급. " +

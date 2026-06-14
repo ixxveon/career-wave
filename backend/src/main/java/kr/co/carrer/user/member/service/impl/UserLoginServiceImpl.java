@@ -1,7 +1,6 @@
 package kr.co.carrer.user.member.service.impl;
 
 import kr.co.carrer.user.member.dto.UserLoginDto;
-import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;
 import kr.co.carrer.auth.jwt.AccountType;
@@ -14,10 +13,10 @@ import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import lombok.extern.slf4j.Slf4j;
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
+import kr.co.carrer.user.member.repository.UserMemberStatusQueryRepository;
 import kr.co.carrer.user.member.type.CompanyApprovalStatus;
 import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.MemberType;
@@ -44,7 +43,7 @@ public class UserLoginServiceImpl implements UserLoginService {
     private final RefreshTokenStore refreshTokenStore;
     private final TokenBlacklistStore tokenBlacklistStore;
     private final LoginAttemptStore loginAttemptStore;
-    private final EntityManager entityManager;
+    private final UserMemberStatusQueryRepository statusQueryRepository;
 
     private static final long LOCK_DURATION_MINUTES = 15L;
 
@@ -167,18 +166,7 @@ public class UserLoginServiceImpl implements UserLoginService {
         if (member.getRoleType() != RoleType.COMPANY) {
             return CompanyApprovalStatus.NONE;
         }
-        Object result = entityManager.createNativeQuery(
-                "SELECT hr_status FROM hr_managers WHERE member_id = :memberId LIMIT 1"
-        ).setParameter("memberId", member.getMemberId()).getResultList()
-                .stream().findFirst().orElse(null);
-
-        if (result == null) return CompanyApprovalStatus.NONE;
-        return switch (result.toString()) {
-            case "PENDING" -> CompanyApprovalStatus.PENDING_REVIEW;
-            case "ACTIVE"  -> CompanyApprovalStatus.APPROVED;
-            case "REMOVED" -> CompanyApprovalStatus.REJECTED;
-            default -> throw new CustomException(ErrorCode.FORBIDDEN);
-        };
+        return statusQueryRepository.findCompanyApprovalStatus(member.getMemberId());
     }
 
     @Transactional
@@ -214,8 +202,7 @@ public class UserLoginServiceImpl implements UserLoginService {
             throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         }
 
-        String roleType = accountType == AccountType.COMPANY ? "COMPANY" : "USER";
-        String newAccessToken = jwtTokenProvider.createAccessToken(subject, accountType, roleType, null);
+        String newAccessToken = jwtTokenProvider.createAccessToken(subject, accountType, member.getRoleType().name(), null);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(subject, accountType, null, sessionId);
 
         refreshTokenStore.rotate(accountType, subject, sessionId,

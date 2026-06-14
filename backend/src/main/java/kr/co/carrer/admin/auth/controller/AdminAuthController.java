@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/admin/auth")
@@ -34,13 +33,13 @@ public class AdminAuthController implements AdminAuthControllerDocs {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<Map<String, String>>> refresh(
+    public ResponseEntity<ApiResponse<AdminLoginDto.TokenRefreshResponse>> refresh(
             HttpServletRequest request,
             HttpServletResponse response) {
         String refreshToken = extractRefreshTokenCookie(request);
         if (refreshToken == null) throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         String newAccessToken = adminLoginService.refresh(refreshToken, response);
-        return ResponseEntity.ok(ApiResponse.ok("토큰이 갱신되었습니다.", Map.of("accessToken", newAccessToken)));
+        return ResponseEntity.ok(ApiResponse.ok("토큰이 갱신되었습니다.", new AdminLoginDto.TokenRefreshResponse(newAccessToken)));
     }
 
     @PostMapping("/logout")
