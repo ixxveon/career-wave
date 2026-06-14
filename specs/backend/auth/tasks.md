@@ -88,7 +88,7 @@
 
 ### Admin auth 연결
 - [x] adminSecurityFilterChain (@Order(1)) 분리 ← Phase 5 구현 완료 (securityMatcher("/api/v1/admin/**"))
-- [ ] `Admin.lastLoginIp` 갱신 ← Admin entity에 last_login_ip 컬럼 없음; ERD 확인 후 결정
+- [x] `Admin.lastLoginIp` 갱신 ← DB에 last_login_ip VARCHAR(45) 컬럼 확인, Admin entity + AdminLoginServiceImpl + AdminAuthController 구현 완료
 - [x] POST /api/v1/admin/auth/login (adminRole claim 포함) ← PR #361
 - [x] POST /api/v1/admin/auth/refresh (단일 세션 rotation, admins.status 검증) ← PR #361
 - [x] refreshToken Set-Cookie Path `/api/v1/admin/auth` + 삭제 동일 Path ← PR #361 + PR #406

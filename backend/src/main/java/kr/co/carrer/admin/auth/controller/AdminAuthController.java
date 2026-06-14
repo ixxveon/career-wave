@@ -27,8 +27,10 @@ public class AdminAuthController implements AdminAuthControllerDocs {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AdminLoginDto.Response>> login(
             @Valid @RequestBody AdminLoginDto.Request request,
+            HttpServletRequest httpRequest,
             HttpServletResponse response) {
-        return ResponseEntity.ok(ApiResponse.ok("로그인되었습니다.", adminLoginService.login(request, response)));
+        String clientIp = extractClientIp(httpRequest);
+        return ResponseEntity.ok(ApiResponse.ok("로그인되었습니다.", adminLoginService.login(request, response, clientIp)));
     }
 
     @PostMapping("/refresh")
@@ -52,6 +54,14 @@ public class AdminAuthController implements AdminAuthControllerDocs {
         );
         clearRefreshTokenCookie(response);
         return ResponseEntity.ok(ApiResponse.ok("로그아웃 되었습니다."));
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     private void clearRefreshTokenCookie(HttpServletResponse response) {

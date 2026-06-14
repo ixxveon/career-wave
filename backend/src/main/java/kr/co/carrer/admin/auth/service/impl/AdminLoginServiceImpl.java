@@ -41,7 +41,7 @@ public class AdminLoginServiceImpl implements AdminLoginService {
     private final LoginAttemptStore loginAttemptStore;
 
     @Transactional
-    public AdminLoginDto.Response login(AdminLoginDto.Request request, HttpServletResponse response) {
+    public AdminLoginDto.Response login(AdminLoginDto.Request request, HttpServletResponse response, String clientIp) {
         Admin admin = adminRepository.findByLoginId(request.getLoginId())
                 .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS));
 
@@ -60,6 +60,7 @@ public class AdminLoginServiceImpl implements AdminLoginService {
 
         loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
         admin.updateLastLoginAt(Instant.now());
+        admin.updateLastLoginIp(clientIp);
 
         String adminId = String.valueOf(admin.getAdminId());
         String adminRole = admin.getAdminRole().name();

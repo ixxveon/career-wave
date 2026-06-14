@@ -89,7 +89,7 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
-        AdminLoginDto.Response result = service.login(req, httpResponse);
+        AdminLoginDto.Response result = service.login(req, httpResponse, "127.0.0.1");
 
         assertThat(result.getAccessToken()).isNotBlank();
         assertThat(result.getAdminInfo().getRole()).isEqualTo("MASTER");
@@ -101,7 +101,7 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId(anyString())).thenReturn(Optional.empty());
         AdminLoginDto.Request req = new AdminLoginDto.Request("wrong@test.com", "pw");
 
-        assertThatThrownBy(() -> service.login(req, httpResponse))
+        assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
     }
@@ -112,7 +112,7 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
 
-        assertThatThrownBy(() -> service.login(req, httpResponse))
+        assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
     }
@@ -123,7 +123,7 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
 
-        assertThatThrownBy(() -> service.login(req, httpResponse))
+        assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_ACCOUNT_LOCKED);
     }
@@ -135,7 +135,7 @@ class AdminLoginServiceImplTest {
         when(loginAttemptStore.increment(any(), anyString())).thenReturn(5L);
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
-        assertThatThrownBy(() -> service.login(req, httpResponse))
+        assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
 
@@ -149,7 +149,7 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
-        service.login(req, httpResponse);
+        service.login(req, httpResponse, "127.0.0.1");
 
         verify(loginAttemptStore).clear(AccountType.ADMIN, "admin@test.com");
     }
@@ -167,7 +167,7 @@ class AdminLoginServiceImplTest {
                 .thenReturn(existingJti);
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
-        service.login(req, httpResponse);
+        service.login(req, httpResponse, "127.0.0.1");
 
         verify(tokenBlacklistStore).add(eq(existingJti), any());
         verify(refreshTokenStore).deleteAll(AccountType.ADMIN, "1");
@@ -179,7 +179,7 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
-        AdminLoginDto.Response loginResult = service.login(req, httpResponse);
+        AdminLoginDto.Response loginResult = service.login(req, httpResponse, "127.0.0.1");
 
         String accessToken = loginResult.getAccessToken();
         service.logout(null, accessToken);
@@ -193,7 +193,7 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
-        AdminLoginDto.Response result = service.login(req, httpResponse);
+        AdminLoginDto.Response result = service.login(req, httpResponse, "127.0.0.1");
 
         assertThat(result.getAdminInfo().getRole()).isEqualTo(AdminRole.MASTER.name());
 
