@@ -44,7 +44,7 @@ Spring Boot로부터 서류 분석 트리거를 수신하고, OpenAI를 활용�
 2. **Given** `content[]` 배열의 문항 수가 1~5개 범위를 벗어난 경우,
    **Then** FastAPI는 즉시 `INVALID_CONTENT_COUNT` 내부 오류를 반환해야 한다.
    (실제로 Spring Boot가 사전 검증하므로 FastAPI는 방어 체크 수준으로 처리)
-   모든 예외 상황에서 FastAPI가 반환하는 `errorCode`는 `specs/backend/user/resume/`의 에러 매핑 표를 기준으로 한다.
+   FastAPI는 내부 전용 `errorCode`(`MISSING_FILE_URL`, `INVALID_FILE_TYPE` 등)를 반환하며, Spring Boot가 이를 도메인 `ErrorCode`(`INVALID_FILE_TYPE`, `WEBHOOK_SECRET_INVALID` 등)로 변환한다. FastAPI 내부 코드 → Spring 매핑 기준은 `fastapi-schema.md` 섹션 7을 따른다.
 
 ### User Story 3 — 분석 진행 상태 중간 알림 (Priority: P2)
 
@@ -63,7 +63,7 @@ Spring Boot로부터 서류 분석 트리거를 수신하고, OpenAI를 활용�
 ## Functional Requirements
 
 - **FR-001**: FastAPI는 `POST /internal/user/resume/analyze` 요청을 수신해 분석 작업을 비동기로 시작하고 `202 Accepted`를 즉시 반환해야 한다.
-- **FR-002**: FastAPI는 `fileType: RESUME`인 경우 `fileUrl`로 S3에서 파일을 다운로드하고 텍스트를 추출해야 한다. 지원 포맷: PDF, DOC, DOCX. 텍스트 레이어가 없는 이미지 기반 PDF는 `FILE_PARSE_FAILED` 처리한다. (OCR은 MVP 범위 외 — 향후 확장을 위해 `file_parser.py`는 파서 교체 가능한 구조로 설계한다.)
+- **FR-002**: FastAPI는 `fileType: RESUME`인 경우 `fileUrl`로 S3에서 파일을 다운로드하고 텍스트를 추출해야 한다. FastAPI 파싱 지원 포맷: **PDF, DOCX**. DOC(legacy)는 `python-docx`로 처리 불가 — MVP 범위 외로 제외하며 추후 별도 파서 전략 확정 시 추가한다. (Spring Boot는 `PDF·DOC·DOCX`를 허용하나 FastAPI 파싱 범위는 `PDF·DOCX`로 한정. DOC 파일 수신 시 `FILE_PARSE_FAILED` 처리.) 텍스트 레이어가 없는 이미지 기반 PDF도 `FILE_PARSE_FAILED` 처리한다. (OCR은 MVP 범위 외 — 향후 확장을 위해 `file_parser.py`는 파서 교체 가능한 구조로 설계한다.)
 - **FR-003**: FastAPI는 `fileType: COVER_LETTER`인 경우 전달받은 `content[]` 텍스트를 직접 분석 입력으로 사용해야 한다.
 - **FR-004**: FastAPI는 분석 완료 후 `scoreJobFitness`, `scoreTechStack`, `scoreQuantified`, `scoreLogical`, `scoreTotal`을 산출해야 한다. 각 점수는 0~100 정수.
 - **FR-005**: FastAPI는 항목별 `feedbackDetails` 배열을 생성해야 한다. 이력서는 `starAnalysis` 포함, 자기소개서는 `starAnalysis: null`.
