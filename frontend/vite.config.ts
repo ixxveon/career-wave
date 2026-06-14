@@ -3,6 +3,19 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-query': ['@tanstack/react-query', 'axios'],
+          'vendor-charts': ['recharts'],
+          'vendor-icons': ['lucide-react'],
+          'vendor-payments': ['@tosspayments/tosspayments-sdk'],
+        },
+      },
+    },
+  },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
@@ -29,7 +42,7 @@ export default defineConfig({
       '/ws': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        ws: true, // WebSocket 프록시 활성화
+        ws: true,
       },
     },
   },
