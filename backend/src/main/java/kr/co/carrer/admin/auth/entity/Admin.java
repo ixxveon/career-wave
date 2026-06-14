@@ -66,4 +66,8 @@ public class Admin {
     public Instant getLastLoginAt() { return lastLoginAt; }
 
     public void updateLastLoginAt(Instant time) { this.lastLoginAt = time; }
+
+    public void lockAccount() { this.status = AdminStatus.LOCKED; }
+
+    public void recoverFromLock() { this.status = AdminStatus.ACTIVE; }
 }
