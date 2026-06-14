@@ -81,7 +81,7 @@
 
 ---
 
-## Webhook (`POST .../{documentId}/webhook`)
+## Webhook (`POST .../webhook`)
 
 - [ ] `X-Internal-Secret` 헤더가 환경 변수 `WEBHOOK_SECRET` 값과 일치하는지 검증한다
 - [ ] 헤더 누락 또는 값 불일치 시 `403 Forbidden`을 반환한다

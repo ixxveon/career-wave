@@ -21,7 +21,7 @@
 - [x] `CoverLetterContent` Entity 작성
   - BIGSERIAL PK (`content_id`), `document_id` UUID NOT NULL
   - `order_num` INTEGER NOT NULL (CHECK 1~5), `question` TEXT NOT NULL, `answer` TEXT NOT NULL
-  - UNIQUE 제약: `CONSTRAINT uq_clc_document_order UNIQUE (document_id, order_num)`
+  - UNIQUE 제약: `(document_id, order_num)`
 - [x] `DocumentFeedback` Entity 작성
   - BIGSERIAL PK (`document_feedback_id`), `document_id` UUID NOT NULL
   - `score_job_fitness`, `score_tech_stack`, `score_quantified`, `score_logical`, `score_total` INTEGER (nullable)
@@ -35,9 +35,12 @@
   - `INVALID_FILE_TYPE` (400)
   - `INVALID_CONTENT_COUNT` (400)
   - `INVALID_CONTENT_LENGTH` (400)
+  - `DUPLICATE_CONTENT_ORDER` (400)
   - `DOCUMENT_NOT_FOUND` (404)
   - `DOCUMENT_ACCESS_DENIED` (403)
   - `FEEDBACK_PARSE_ERROR` (500)
+  - `WEBHOOK_SECRET_INVALID` (403)
+  - `WEBHOOK_INVALID_STATUS` (400)
 - [x] `BaseErrorCode` 인터페이스 작성 (`global/exception/BaseErrorCode.java`)
 - [x] `CustomException`, `GlobalExceptionHandler` → `BaseErrorCode` 기반으로 리팩토링
 
@@ -89,7 +92,7 @@
 ## Phase 5: 이력 목록 조회 API
 
 - [x] `ResumeDTO.HistoryItem` 작성
-- [x] `DocumentRepository` 커스텀 쿼리 작성 (member_id + created_at DESC + LEFT JOIN feedback)
+- [x] `DocumentRepository` 커스텀 쿼리 작성 (member_id + created_at DESC, document_id DESC + LEFT JOIN feedback)
 - [x] `PaginationResponse<ResumeDTO.HistoryItem>` 변환
 - [x] `ResumeController.getHistory()` 구현
 - [x] `ResumeControllerDocs` Swagger 인터페이스 작성
@@ -106,7 +109,8 @@
   - 서비스 내부에서 `ApplicationEventPublisher.publishEvent()`로 이벤트 발행
   - 이벤트 리스너에서 `SimpMessagingTemplate.convertAndSend()` 호출 (Phase 7에서 리스너 구현)
   - ⚠️ `SimpMessagingTemplate`을 `@Transactional` 메서드 안에서 직접 호출 금지
-- [x] `ResumeController.receiveWebhook()` 구현
+- [x] `ResumeController.receiveWebhook()` 구현 (`POST /api/v1/user/resume/webhook`)
+- [x] `COMPLETED`·`FAILED` 외 알 수 없는 status 값은 `WEBHOOK_INVALID_STATUS(400)` 예외 처리
 
 ---
 
