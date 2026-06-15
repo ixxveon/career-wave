@@ -15,6 +15,8 @@ import kr.co.carrer.user.resume.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -38,7 +40,14 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         InterviewSession saved = saveNewSession(memberId, documentId, sessionType, interviewType, dto.targetCompany());
 
         if (documentId != null) {
-            fastApiClient.triggerRagContext(saved.getSessionId(), documentId);
+            UUID sessionId = saved.getSessionId();
+            UUID finalDocumentId = documentId;
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    fastApiClient.triggerRagContext(sessionId, finalDocumentId);
+                }
+            });
         }
 
         return new InterviewDTO.ResponseStartSession(
@@ -68,7 +77,13 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     @Transactional
     public InterviewDTO.ResponseSubmitTextAnswer submitTextAnswer(UUID memberId, UUID sessionId, InterviewDTO.RequestSubmitTextAnswer dto) {
         InterviewMessage saved = saveAnswerMessage(memberId, sessionId, dto);
-        fastApiClient.triggerLlmPipeline(sessionId, dto.questionOrder());
+        int questionOrder = dto.questionOrder();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                fastApiClient.triggerLlmPipeline(sessionId, questionOrder);
+            }
+        });
         return new InterviewDTO.ResponseSubmitTextAnswer(saved.getMessageId(), saved.getCreatedAt());
     }
 
@@ -89,7 +104,12 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     @Transactional
     public InterviewDTO.ResponseEndSession endSession(UUID memberId, UUID sessionId) {
         ZonedDateTime endedAt = completeSession(memberId, sessionId);
-        fastApiClient.triggerReportGeneration(sessionId);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                fastApiClient.triggerReportGeneration(sessionId);
+            }
+        });
         return new InterviewDTO.ResponseEndSession(sessionId.toString(), "COMPLETED", endedAt);
     }
 
