@@ -7,10 +7,10 @@ import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.RoleType;
 import kr.co.carrer.user.member.type.SubscriptionStatus;
 
-
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
-import java.time.LocalDate;
+
 
 public class DashboardDTO {
 
@@ -46,11 +46,14 @@ public class DashboardDTO {
 
         @Schema(description = "사용자 프로필 수정 요청")
         public record ProfileUpdateRequest(
-                        @Schema(description = "이름") @Size(max = 50) String name,
 
-                        @Schema(description = "휴대폰 번호") @Pattern(regexp = "^01[0-9]-?\\d{3,4}-?\\d{4}$") String phone,
+                        @Schema(description = "이름", example = "홍길동") @Size(min = 2, max = 20) String name,
 
-                        @Schema(description = "GitHub URL") @Size(max = 300) @Pattern(regexp = "^https://(www\\.)?github\\.com/[A-Za-z0-9-]+/?$") String githubUrl) {
+                        @Schema(description = "휴대폰 번호", example = "01012345678") @Pattern(regexp = "^01[0-9]{8,9}$", message = "휴대폰 번호 형식이 올바르지 않습니다.") String phone,
+
+                        @Schema(description = "GitHub URL", example = "https://github.com/octocat") @Size(max = 300) @Pattern(regexp = "^https://(www\\.)?github\\.com/[A-Za-z0-9-]+/?$", message = "GitHub URL 형식이 올바르지 않습니다.") String githubUrl
+
+        ) {
         }
 
         @Schema(description = "대시보드 스크랩 공고 응답")
