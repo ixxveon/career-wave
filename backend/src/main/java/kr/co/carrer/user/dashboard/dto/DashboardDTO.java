@@ -49,6 +49,6 @@ public class DashboardDTO {
 
                         @Schema(description = "휴대폰 번호") @NotBlank @Pattern(regexp = "^01[0-9]-?\\d{3,4}-?\\d{4}$") String phone,
 
-                        @Schema(description = "GitHub URL") @Pattern(regexp = "^(https?://)?(www\\.)?github\\.com/[A-Za-z0-9-]+/?$") String githubUrl) {
+                        @Schema(description = "GitHub URL") @Size(max = 300) @Pattern(regexp = "^https://(www\\.)?github\\.com/[A-Za-z0-9-]+/?$") String githubUrl) {
         }
 }
