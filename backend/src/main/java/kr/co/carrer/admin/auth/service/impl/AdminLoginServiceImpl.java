@@ -13,6 +13,7 @@ import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import io.jsonwebtoken.JwtException;
 import kr.co.carrer.auth.exception.AuthErrorCode;
+import kr.co.carrer.auth.store.LoginAttemptStore;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +38,10 @@ public class AdminLoginServiceImpl implements AdminLoginService {
     private final JwtProperties jwtProperties;
     private final RefreshTokenStore refreshTokenStore;
     private final TokenBlacklistStore tokenBlacklistStore;
+    private final LoginAttemptStore loginAttemptStore;
 
     @Transactional
-    public AdminLoginDto.Response login(AdminLoginDto.Request request, HttpServletResponse response) {
+    public AdminLoginDto.Response login(AdminLoginDto.Request request, HttpServletResponse response, String clientIp) {
         Admin admin = adminRepository.findByLoginId(request.getLoginId())
                 .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS));
 
@@ -48,10 +50,18 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         }
 
         if (!passwordEncoder.matches(request.getPassword(), admin.getPasswordHash())) {
+            long count = loginAttemptStore.increment(AccountType.ADMIN, request.getLoginId());
+            if (count >= loginAttemptStore.getMaxAttempts()) {
+                admin.lockAccount();
+                loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
+                throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
+            }
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
+        loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
         admin.updateLastLoginAt(Instant.now());
+        admin.updateLastLoginIp(clientIp);
 
         String adminId = String.valueOf(admin.getAdminId());
         String adminRole = admin.getAdminRole().name();
@@ -109,7 +119,13 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         }
 
         // admin 계정 상태 검증: ACTIVE만 재발급
-        Admin admin = adminRepository.findById(Long.parseLong(subject))
+        long adminId;
+        try {
+            adminId = Long.parseLong(subject);
+        } catch (NumberFormatException e) {
+            throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
+        }
+        Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID));
         if (admin.getStatus() != AdminStatus.ACTIVE) {
             throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);

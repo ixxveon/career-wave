@@ -116,25 +116,24 @@
 
 ## Phase 7: WebSocket 분석 상태 구독
 
-- [ ] `WebSocketConfig` 설정 클래스 작성
+- [x] `WebSocketConfig` 설정 클래스 작성
   - STOMP 엔드포인트 `/ws/user/resume` 등록, 토픽 prefix `/topic` 설정
-  - `WebSocketHandshakeInterceptor` + `StompChannelInterceptor` 등록
-- [ ] `WebSocketHandshakeInterceptor` 구현
+  - `ResumeHandshakeInterceptor` + `ResumeStompChannelInterceptor` 등록
+- [x] `ResumeHandshakeInterceptor` 구현
   - `beforeHandshake()`: 쿼리 파라미터 `?token=` 추출 → JWT 검증 → `memberId` 세션 attributes 저장
   - 검증 실패 시 `false` 반환으로 핸드셰이크 거부
-- [ ] `StompChannelInterceptor` 구현
+- [x] `ResumeStompChannelInterceptor` 구현
   - CONNECT 프레임: 세션 attributes의 `memberId` 재검증, 실패 시 `MessageDeliveryException` 거부
   - SUBSCRIBE 프레임: 구독 토픽의 `documentId` 소유권을 `DocumentRepository`로 DB 재조회 (IDOR 방지)
-    — 불일치 시 Close 1008로 즉시 연결 거부
-- [ ] SUBSCRIBE 직후 현재 `document.status` Snapshot 1회 브로드캐스트 (재연결 대응)
-- [ ] Webhook 수신 후 `SimpMessagingTemplate.convertAndSend("/topic/resume/{documentId}/status", message)` 연동
-- [ ] `COMPLETED` / `FAILED` 전송 후 Grace Period 30초 타이머 시작
-  - `Thread.sleep` 금지 — `TaskScheduler`(`ThreadPoolTaskScheduler`) 빈 등록 후 사용
-  - `scheduler.schedule()` 반환값 `ScheduledFuture` 보관 (세션 ID 키로 Map 관리)
-  - 클라이언트가 먼저 연결을 닫으면 `ScheduledFuture.cancel(true)` 호출 후 즉시 세션 해제
-  - 30초 만료 시 Close 1000으로 서버에서 세션 정리
-  - 세션 종료 시 Map에서 해당 `ScheduledFuture` 제거 — 리소스 누수 방지
-- [ ] STOMP 구독 토픽 `/topic/resume/{documentId}/status` 동작 확인
+- [x] SUBSCRIBE 직후 현재 `document.status` Snapshot 1회 브로드캐스트 (재연결 대응)
+- [x] Webhook 수신 후 `SimpMessagingTemplate.convertAndSend("/topic/resume/{documentId}/status", message)` 연동
+  - `DocumentAnalysisEventListener` — `@TransactionalEventListener(AFTER_COMMIT)` 에서 브로드캐스트
+- [x] `COMPLETED` / `FAILED` 전송 후 Grace Period 30초 타이머 시작
+  - `Thread.sleep` 금지 — `TaskSchedulerConfig`(`ThreadPoolTaskScheduler`) 빈 등록
+  - `scheduler.schedule()` 반환값 `ScheduledFuture` 보관 (`ConcurrentHashMap` 관리)
+  - 클라이언트가 먼저 연결을 닫으면 `cancelGracePeriod()` → `ScheduledFuture.cancel(true)`
+  - 30초 만료 시 `SESSION_CLOSE` 메시지 전송 후 Map에서 제거
+- [x] STOMP 구독 토픽 `/topic/resume/{documentId}/status` 동작 확인
 
 ---
 

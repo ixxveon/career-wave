@@ -39,19 +39,20 @@
 |---|---|---|---|---|---|
 | 일반 사용자 | USER | USER | ROLE_USER | members | UUID |
 | 기업 사용자 | COMPANY | COMPANY | ROLE_COMPANY | members | UUID |
-| 관리자 | ADMIN | ADMIN (+ adminRole) | ROLE_ADMIN | admins | BIGINT(BIGSERIAL) |
+| 관리자 | ADMIN | ADMIN (+ adminRole) | ROLE_ADMIN + ROLE_MASTER/CS/BACKEND | admins | BIGINT(BIGSERIAL) |
 
 > JWT `roleType` claim은 ROLE_ prefix 없이 `USER` / `COMPANY` / `ADMIN`으로 저장한다. Spring Security Authority는 `AuthPrincipal`에서 ROLE_ prefix를 부여한다 (Issue #339 fix).
 > 사용자(USER/COMPANY)는 `members` 한 테이블에서 `role_type`으로 구분된다.
 > 관리자는 `admins` 별도 테이블이며 PK 타입이 BIGINT이므로 JWT subject 처리 시 주체 타입 분기가 필요하다.
-> 관리자는 기본 권한 `ROLE_ADMIN`에 더해 `admins.admin_role`(MASTER / CS / BACKEND)을 JWT `adminRole` claim으로 실어, 관리자 전용 API 내부에서 등급별 접근 제어를 수행한다.
+> 관리자는 기본 권한 `ROLE_ADMIN`에 더해 `admins.admin_role`(MASTER / CS / BACKEND)을 JWT `adminRole` claim으로 실어, `AuthPrincipal.getAuthorities()`에 `ROLE_MASTER` / `ROLE_CS` / `ROLE_BACKEND`를 추가 부여한다. 이를 기반으로 컨트롤러 `@PreAuthorize`에서 등급별 접근 제어를 수행한다.
 
 ## 4. 저장 전략 (확정)
 
-- **Refresh Token: Redis 저장.** key `refresh:{accountType}:{subjectId}:{sessionId}`, value = token hash, TTL = refresh 만료시간. 원문 저장 금지, hash 저장. rotation·폐기·만료를 TTL과 key 삭제로 처리.
+- **Refresh Token: Redis 저장.** key `refresh:{ACCOUNT_TYPE}:{subjectId}:{sessionId}`, value = SHA-256 hash, TTL = refresh 만료시간. 원문 저장 금지. rotation·폐기·만료를 TTL과 key 삭제로 처리.
+- **Session JTI (세션 퇴출용): Redis 저장.** key `session_jti:{ACCOUNT_TYPE}:{subjectId}:{sessionId}`, value = access token jti, TTL = access token 만료시간. 신규 로그인(ADMIN 단일 세션) / 5세션 초과(USER) 시 퇴출 대상 jti를 blacklist에 등록하는 데 사용.
 - **Access Token Blacklist: Redis 저장.** key `blacklist:{jti}`, TTL = Access Token 잔여 수명. 로그아웃 시 현재 access token의 jti를 등록하며, 매 요청 조회한다.
-- **로그인 실패 카운트(login_fail_count): Redis 저장.** 고빈도·임시 데이터이며 ERD에 대응 컬럼이 없으므로 Redis로 관리. 로그인 성공 시 초기화.
-- **계정 잠금 시각(locked_until): DB 저장.** `members.locked_until` 컬럼 사용. 잠금 상태는 계정의 권위 상태이므로 영속 저장하며, Redis 장애에도 유지되어야 한다.
+- **로그인 실패 카운트: Redis 저장.** key `login:fail:{ACCOUNT_TYPE}:{loginKey}`. 고빈도·임시 데이터이며 ERD에 대응 컬럼이 없으므로 Redis로 관리. 로그인 성공 또는 잠금 처리 시 초기화. USER/ADMIN 모두 적용.
+- **계정 잠금: DB 저장.** USER는 `members.locked_until` 컬럼에 잠금 해제 시각 저장 (15분 후 자동 복구). ADMIN은 `admins.status = LOCKED` (수동 해제). Redis 장애에도 잠금 상태가 유지되어야 한다.
 
 > `member_refresh_tokens` 테이블은 사용하지 않는다. Refresh 저장·폐기·만료가 모두 Redis로 대체된다. (`password_reset_tokens`는 저빈도 + 사용 이력 추적 목적으로 DB 유지)
 > Redis 장애 시 재발급/로그인 실패 처리 → 재로그인 유도. Blacklist 조회 실패 시 관리자는 보수적 거부, 사용자는 설정 가능.
@@ -77,7 +78,7 @@
 
 ## 7. 미해결 / 팀 확인 필요
 
-- [ ] Redis key 네이밍 컨벤션을 조원 spec과 정렬 (prefix 규칙)
-- [ ] 관리자 로그인 실패 잠금 기준(횟수/시간) — 본 spec 기본값 5회/15분 적용
-- [ ] 다중기기 정책: USER 최대 5세션 / ADMIN 단일 세션 — 확정
-- [ ] 관리자 등급별(MASTER/CS/BACKEND) API 접근 매트릭스 — 각 admin 도메인 담당자와 정렬 필요
+- [x] Redis key 네이밍 컨벤션을 조원 spec과 정렬 (prefix 규칙) ← auth가 유일한 Redis 사용 모듈 확인 완료, 전체 key 패턴 section 4에 문서화
+- [x] 관리자 로그인 실패 잠금 기준(횟수/시간) ← 5회 잠금 구현 완료 (Phase 5). USER: 15분 후 자동 복구, ADMIN: 수동 해제 (lockedUntil 없음)
+- [x] 다중기기 정책: USER 최대 5세션 / ADMIN 단일 세션 ← PR #361 구현 완료
+- [x] 관리자 등급별(MASTER/CS/BACKEND) API 접근 매트릭스 ← 프론트 access matrix 기준으로 @PreAuthorize 적용 완료 (Phase 5). 미구현 백엔드 컨트롤러(payments, stats, scraping, log, companies, settlements)는 생성 시 동일 패턴 적용 필요

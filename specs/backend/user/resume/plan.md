@@ -68,6 +68,7 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 | `FASTAPI_BASE_URL` | Spring → FastAPI 분석 요청 내부 URL | 본인 직접 설정 | `http://localhost:8000` |
 | `WEBHOOK_SECRET` | FastAPI → Spring Webhook 인증 키 | 본인 직접 설정 | `(임의 생성 비밀값)` |
 | `AWS_S3_MOCK_UPLOAD` | `true` 설정 시 S3 실제 업로드 없이 가짜 URL 반환 (로컬 개발용) | 본인 직접 설정 | `true` \| `false` (기본값 `false`) |
+| `WEBSOCKET_ALLOWED_ORIGINS` | WebSocket CORS 허용 출처 (기본값 `*`, 프로덕션에서는 명시 필요) | 인프라 팀 요청 | `https://careerwave.co.kr` |
 
 ---
 

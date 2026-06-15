@@ -2,6 +2,7 @@ package kr.co.carrer.user.jobnotice.controller;
 
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.response.ApiResponse;
+import kr.co.carrer.user.jobnotice.docs.UserJobNoticeControllerDocs;
 import kr.co.carrer.user.jobnotice.dto.JobNoticeDTO;
 import kr.co.carrer.user.jobnotice.service.UserJobNoticeService;
 import kr.co.carrer.user.jobnotice.type.CareerLevel;
@@ -23,10 +24,11 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user/job-notices")
-public class UserJobNoticeController {
+public class UserJobNoticeController implements UserJobNoticeControllerDocs {
 
     private final UserJobNoticeService userJobNoticeService;
 
+    @Override
     @GetMapping
     public ResponseEntity<ApiResponse<JobNoticeDTO.ResponseList>> getJobNotices(
             @RequestParam(required = false) String keyword,
@@ -63,6 +65,7 @@ public class UserJobNoticeController {
         );
     }
 
+    @Override
     @GetMapping("/{jobNoticeId}")
     public ResponseEntity<ApiResponse<JobNoticeDTO.ResponseDetail>> getJobNoticeDetail(
             @PathVariable Long jobNoticeId,
@@ -78,6 +81,7 @@ public class UserJobNoticeController {
         );
     }
 
+    @Override
     @PostMapping("/{jobNoticeId}/bookmarks")
     public ResponseEntity<ApiResponse<JobNoticeDTO.ResponseBookmark>> createBookmark(
             @PathVariable Long jobNoticeId,
@@ -87,12 +91,13 @@ public class UserJobNoticeController {
 
         return ResponseEntity.ok(
                 ApiResponse.ok(
-                        "북마크가 등록되었습니다.",
+                        "북마크를 등록했습니다.",
                         userJobNoticeService.createBookmark(jobNoticeId, memberId)
                 )
         );
     }
 
+    @Override
     @DeleteMapping("/{jobNoticeId}/bookmarks")
     public ResponseEntity<ApiResponse<JobNoticeDTO.ResponseBookmark>> deleteBookmark(
             @PathVariable Long jobNoticeId,
@@ -102,7 +107,7 @@ public class UserJobNoticeController {
 
         return ResponseEntity.ok(
                 ApiResponse.ok(
-                        "북마크가 해제되었습니다.",
+                        "북마크를 해제했습니다.",
                         userJobNoticeService.deleteBookmark(jobNoticeId, memberId)
                 )
         );
