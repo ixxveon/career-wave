@@ -49,12 +49,12 @@
 
 ## Phase 5 - Documentation
 
-- [ ] `UserJobNoticeControllerDocs.java` Swagger 인터페이스를 작성한다.
-- [ ] 목록 조회 API의 요청/응답 문서를 정리한다.
-- [ ] 상세 조회 API의 요청/응답 문서를 정리한다.
-- [ ] 북마크 등록/해제 API의 요청/응답 문서를 정리한다.
-- [ ] `api-schema.md`와 구현 대상 API 계약의 정합성을 점검한다.
-- [ ] `spec.md`, `constitution.md`, `plan.md`와 구현 범위 정합성을 점검한다.
+- [x] `UserJobNoticeControllerDocs.java` Swagger 인터페이스를 작성한다.
+- [x] 목록 조회 API의 요청/응답 문서를 정리한다.
+- [x] 상세 조회 API의 요청/응답 문서를 정리한다.
+- [x] 북마크 등록/해제 API의 요청/응답 문서를 정리한다.
+- [x] `api-schema.md`와 구현 대상 API 계약의 정합성을 점검한다.
+- [x] `spec.md`, `constitution.md`, `plan.md`와 구현 범위 정합성을 점검한다.
 
 ## Phase 6 - Test
 
