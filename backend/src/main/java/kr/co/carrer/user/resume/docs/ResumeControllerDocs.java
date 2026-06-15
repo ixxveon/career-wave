@@ -1,5 +1,6 @@
 package kr.co.carrer.user.resume.docs;
 
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -106,6 +107,7 @@ public interface ResumeControllerDocs {
             )
     })
     ResponseEntity<ApiResponse<ResumeDTO.ResponseUpload>> uploadResume(
+            @Parameter(hidden = true) AuthPrincipal principal,
             @Parameter(hidden = true) MultipartFile file
     );
 
@@ -190,6 +192,7 @@ public interface ResumeControllerDocs {
             )
     })
     ResponseEntity<ApiResponse<ResumeDTO.ResponseCoverLetter>> submitCoverLetter(
+            @Parameter(hidden = true) AuthPrincipal principal,
             @Parameter(description = "자기소개서 제출 요청 body", required = true)
             @Valid ResumeDTO.RequestCoverLetter request
     );
@@ -209,6 +212,7 @@ public interface ResumeControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     ResponseEntity<ApiResponse<ResumeDTO.ResponseFeedback>> getFeedback(
+            @Parameter(hidden = true) AuthPrincipal principal,
             @Parameter(description = "문서 고유 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
             UUID documentId
     );
@@ -225,6 +229,7 @@ public interface ResumeControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistory(
+            @Parameter(hidden = true) AuthPrincipal principal,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @Min(0) int page,
             @Parameter(description = "페이지 크기 (최대 50)", example = "10") @Min(1) @Max(50) int size
     );

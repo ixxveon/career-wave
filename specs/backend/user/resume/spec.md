@@ -121,20 +121,23 @@ global/
 ├── s3/
 │   ├── S3Config.java               ← AWS S3Client 빈 등록
 │   └── S3Uploader.java             ← S3 업로드 (resumes/{날짜}/{UUID}.{확장자})
-└── websocket/                      ← resume + interview 공통 WebSocket 인프라
-    ├── WebSocketConfig.java
-    ├── WebSocketHandshakeInterceptor.java
-    ├── StompChannelInterceptor.java
-    └── WebSocketEventListener.java
+└── config/
+    └── WebSocketConfig.java        ← STOMP 엔드포인트 등록, broker prefix 설정
 
-global/websocket/               ← resume + interview 공통 WebSocket 인프라
-├── WebSocketConfig.java        (STOMP 엔드포인트 /ws/user/resume 등록, 토픽 prefix /topic 설정)
-├── WebSocketHandshakeInterceptor.java (?token 쿼리 파라미터 JWT 검증, memberId 세션 주입)
-├── StompChannelInterceptor.java (CONNECT 프레임 수신 시 세션 memberId 재검증, SUBSCRIBE 시 소유권 검증)
-└── WebSocketEventListener.java  (연결·구독·해제 이벤트 처리, Grace Period TaskScheduler 관리)
+user/resume/websocket/              ← resume 전용 WebSocket 인프라
+├── ResumeHandshakeInterceptor.java  (?token 쿼리 파라미터 JWT 검증, memberId 세션 주입)
+├── ResumeStompChannelInterceptor.java (CONNECT 재검증, SUBSCRIBE IDOR 검증, Snapshot 전송, DisconnectEvent 처리)
+├── DocumentAnalysisEventListener.java (@TransactionalEventListener AFTER_COMMIT 브로드캐스트, Grace Period 타이머)
+├── WebSocketSessionRegistry.java   (sessionId↔WebSocketSession / documentId↔sessionId 양방향 매핑, session.close 호출)
+├── ResumeWebSocketHandlerDecoratorFactory.java (afterConnectionEstablished/Closed에서 Registry 등록/해제)
+└── WebSocketMessage.java           (payload DTO — documentId, status: ANALYZING|COMPLETED|FAILED)
 ```
 
-> WebSocket 설정·인터셉터는 `global/websocket/`에 위치 — interview 도메인(실시간 텍스트 면접)에서도 WebSocket을 사용하므로 공통 인프라로 분리 확정.
+**WebSocketConfig 주요 설정:**
+- STOMP 엔드포인트: `/ws/user/resume`
+- Simple Broker prefix: `/topic`, `/queue`
+- User Destination prefix: `/user`
+- `setAllowedOriginPatterns`: 환경 변수 `WEBSOCKET_ALLOWED_ORIGINS` 주입 (기본값 `*`)
 
 ---
 
@@ -255,10 +258,13 @@ GET  /api/v1/user/resume/history?page=0&size=10
       → ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>
       본인 문서 최신순 페이징 조회
 
-POST /api/v1/user/resume/{documentId}/webhook        [FastAPI → Spring 내부 전용]
+POST /api/v1/user/resume/webhook                      [FastAPI → Spring 내부 전용]
+      X-Internal-Secret: {WEBHOOK_SECRET}
       → 분석 완료 콜백 수신 → DB 상태 업데이트 → WebSocket으로 프론트 알림
 
-STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{documentId}/status
+STOMP /ws/user/resume?token={accessToken}
+      구독 ① /topic/resume/{documentId}/status       ← Webhook 수신 후 브로드캐스트
+      구독 ② /user/queue/resume/{documentId}/status  ← SUBSCRIBE 직후 1회 개인 Snapshot (재연결 대응)
       → 분석 상태 실시간 메시지 (ANALYZING / COMPLETED / FAILED)
 ```
 
@@ -358,22 +364,12 @@ AWS_S3_MOCK_UPLOAD=true
 `true`로 설정하면 실제 S3 업로드 없이 가짜 URL(`https://dummy-bucket.s3...`)을 반환한다.  
 기본값 `false` — 프로덕션 환경에서는 해당 환경변수를 설정하지 않으면 자동으로 실제 S3 업로드 동작.
 
-### 테스트용 Member 데이터
+### JWT 인증
 
-JWT 필터 구현 전까지 `tempMemberId = 00000000-0000-0000-0000-000000000001`을 사용하며,  
-`documents.member_id`의 FK 제약 충족을 위해 아래 SQL을 로컬 DB에 한 번 실행해야 한다.
+`ResumeController`는 `@AuthenticationPrincipal AuthPrincipal principal`로 `memberId`를 추출한다.  
+Phase 8에서 `tempMemberId` 임시 코드는 완전히 제거되었으며, JWT 필터(`JwtAuthenticationFilter`)가 모든 `/api/v1/user/**` 요청에 적용된다.
 
-```sql
-INSERT INTO members (member_id, login_id, password, name, role_type, member_status, subscription_status)
-VALUES ('00000000-0000-0000-0000-000000000001', 'test_resume_user', 'dummy_hash', '테스트유저', 'ROLE_USER', 'ACTIVE', 'FREE')
-ON CONFLICT DO NOTHING;
-```
-
-```bash
-docker exec careerwave-db psql -U careerwave -d careerwave -c "<위 SQL>"
-```
-
-> JWT 필터 PR 머지 후 `tempMemberId` → `@AuthenticationPrincipal` 교체 시 이 데이터는 불필요.
+로컬 개발 시 Swagger에서 테스트하려면 `POST /api/v1/user/members/login` 로그인 후 발급된 Access Token을 Bearer 헤더에 설정한다.
 
 ---
 
@@ -406,5 +402,17 @@ documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
 ### 4. WebSocket 연결 안전성 (구독 시점 소유권 검증)
 
 JWT 인증 토큰이 유효하더라도 **아무 `documentId`나 구독할 수 있어서는 안 된다.**  
-`StompChannelInterceptor`의 SUBSCRIBE 프레임 처리 시 구독 토픽의 `documentId`와 인증 유저의 `memberId`를 `DocumentRepository`로 DB 재조회하여 소유권을 검증한다.  
+`ResumeStompChannelInterceptor`의 SUBSCRIBE 프레임 처리 시 구독 토픽의 `documentId`와 인증 유저의 `memberId`를 `DocumentRepository`로 DB 재조회하여 소유권을 검증한다.  
 불일치 시 Close 1008로 즉시 연결을 거부한다.
+
+### 5. Snapshot은 구독 세션에만 전송 (convertAndSendToUser)
+
+SUBSCRIBE 직후 전송하는 현재 상태 Snapshot은 **해당 세션에만** 전달해야 한다.  
+`SimpMessagingTemplate.convertAndSend()`는 토픽 구독자 전원에게 브로드캐스트하므로 사용 금지.  
+반드시 `convertAndSendToUser(sessionId, destination, payload, headers)` + `SESSION_ID_HEADER`를 활용한다.
+
+### 6. 세션 종료는 WebSocketSessionRegistry를 통해 수행
+
+Grace Period 만료 후 서버가 세션을 닫을 때 `SESSION_CLOSE` 메시지를 payload로 전송하지 않는다.  
+`WebSocketSessionRegistry.closeSession(documentId)` → `WebSocketSession.close(CloseStatus.NORMAL)` 으로 Close 1000을 전송한다.  
+`WebSocketSession`은 `ResumeWebSocketHandlerDecoratorFactory`의 `afterConnectionEstablished`에서 Registry에 등록된다.
