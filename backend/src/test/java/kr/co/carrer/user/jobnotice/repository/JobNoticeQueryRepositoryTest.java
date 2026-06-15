@@ -7,6 +7,7 @@ import kr.co.carrer.user.jobnotice.type.CareerLevel;
 import kr.co.carrer.user.jobnotice.type.CompanySize;
 import kr.co.carrer.user.jobnotice.type.JobNoticeStatus;
 import kr.co.carrer.user.jobnotice.type.JobType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,6 @@ import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfig
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ContextConfiguration;
@@ -33,7 +33,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 @ContextConfiguration(classes = JobNoticeQueryRepositoryTest.TestJpaConfig.class)
-@Import(JobNoticeQueryRepository.class)
 @TestPropertySource(properties = {
         "spring.sql.init.mode=never"
 })
@@ -48,11 +47,15 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
     private long originalUrlSequence = 1L;
 
-    @Autowired
     private JobNoticeQueryRepository jobNoticeQueryRepository;
 
     @Autowired
     private EntityManager entityManager;
+
+    @BeforeEach
+    void setUp() {
+        jobNoticeQueryRepository = new JobNoticeQueryRepository(entityManager);
+    }
 
     @Test
     @DisplayName("filters active notices by dynamic scalar conditions")
