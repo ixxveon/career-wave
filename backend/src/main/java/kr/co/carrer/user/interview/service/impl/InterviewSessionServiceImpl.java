@@ -42,7 +42,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         if (documentId != null) {
             UUID sessionId = saved.getSessionId();
             UUID finalDocumentId = documentId;
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
                     fastApiClient.triggerRagContext(sessionId, finalDocumentId);
@@ -78,7 +78,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     public InterviewDTO.ResponseSubmitTextAnswer submitTextAnswer(UUID memberId, UUID sessionId, InterviewDTO.RequestSubmitTextAnswer dto) {
         InterviewMessage saved = saveAnswerMessage(memberId, sessionId, dto);
         int questionOrder = dto.questionOrder();
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
                 fastApiClient.triggerLlmPipeline(sessionId, questionOrder);
@@ -104,7 +104,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     @Transactional
     public InterviewDTO.ResponseEndSession endSession(UUID memberId, UUID sessionId) {
         ZonedDateTime endedAt = completeSession(memberId, sessionId);
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
                 fastApiClient.triggerReportGeneration(sessionId);
