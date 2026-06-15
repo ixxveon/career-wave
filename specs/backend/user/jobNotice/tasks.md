@@ -41,11 +41,11 @@
 
 ## Phase 4 - API
 
-- [ ] `GET /api/v1/user/job-notices` Controller 엔드포인트를 작성한다.
-- [ ] `GET /api/v1/user/job-notices/{jobNoticeId}` Controller 엔드포인트를 작성한다.
-- [ ] `POST /api/v1/user/job-notices/{jobNoticeId}/bookmarks` Controller 엔드포인트를 작성한다.
-- [ ] `DELETE /api/v1/user/job-notices/{jobNoticeId}/bookmarks` Controller 엔드포인트를 작성한다.
-- [ ] `ROLE_USER` 권한 정책과 Optional 인증 정책을 API 계층에 반영한다.
+- [x] `GET /api/v1/user/job-notices` Controller 엔드포인트를 작성한다.
+- [x] `GET /api/v1/user/job-notices/{jobNoticeId}` Controller 엔드포인트를 작성한다.
+- [x] `POST /api/v1/user/job-notices/{jobNoticeId}/bookmarks` Controller 엔드포인트를 작성한다.
+- [x] `DELETE /api/v1/user/job-notices/{jobNoticeId}/bookmarks` Controller 엔드포인트를 작성한다.
+- [x] `ROLE_USER` 권한 정책과 Optional 인증 정책을 API 계층에 반영한다.
 
 ## Phase 5 - Documentation
 

@@ -33,16 +33,16 @@
 
 ## Phase 4 — API
 
-- [ ] `GET /api/v1/user/job-notices`가 구현되어 정상 응답을 반환한다.
-- [ ] `GET /api/v1/user/job-notices/{jobNoticeId}`가 구현되어 정상 응답을 반환한다.
-- [ ] `POST /api/v1/user/job-notices/{jobNoticeId}/bookmarks`가 구현되어 정상 응답을 반환한다.
-- [ ] `DELETE /api/v1/user/job-notices/{jobNoticeId}/bookmarks`가 구현되어 정상 응답을 반환한다.
-- [ ] 모든 성공 응답이 `ApiResponse<T>` 래퍼 형식을 사용한다.
-- [ ] 모든 성공 응답이 `success`, `message`, `data` 필드만 사용하고 `statusCode`를 포함하지 않는다.
-- [ ] 목록 조회 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 사용한다.
-- [ ] 외부 API 응답의 `page` 값이 1-based 계약으로 노출된다.
-- [ ] 상세 조회 및 북마크 API에 `page`, `size` Query Parameter가 노출되지 않는다.
-- [ ] 북마크 등록/해제 API의 권한 정책이 문서상 `USER`, 구현상 `ROLE_USER`와 일치한다.
+- [x] `GET /api/v1/user/job-notices`가 구현되어 정상 응답을 반환한다.
+- [x] `GET /api/v1/user/job-notices/{jobNoticeId}`가 구현되어 정상 응답을 반환한다.
+- [x] `POST /api/v1/user/job-notices/{jobNoticeId}/bookmarks`가 구현되어 정상 응답을 반환한다.
+- [x] `DELETE /api/v1/user/job-notices/{jobNoticeId}/bookmarks`가 구현되어 정상 응답을 반환한다.
+- [x] 모든 성공 응답이 `ApiResponse<T>` 래퍼 형식을 사용한다.
+- [x] 모든 성공 응답이 `success`, `message`, `data` 필드만 사용하고 `statusCode`를 포함하지 않는다.
+- [x] 목록 조회 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 사용한다.
+- [x] 외부 API 응답의 `page` 값이 1-based 계약으로 노출된다.
+- [x] 상세 조회 및 북마크 API에 `page`, `size` Query Parameter가 노출되지 않는다.
+- [x] 북마크 등록/해제 API의 권한 정책이 문서상 `USER`, 구현상 `ROLE_USER`와 일치한다.
 
 ## Phase 5 — Documentation
 
