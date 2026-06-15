@@ -12,6 +12,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -28,6 +29,8 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Bookmark {
+
+    private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,6 +55,6 @@ public class Bookmark {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = ZonedDateTime.now();
+        this.createdAt = ZonedDateTime.now(SERVICE_ZONE_ID);
     }
 }

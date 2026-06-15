@@ -1,6 +1,6 @@
 package kr.co.carrer.user.member.service.impl;
 
-import jakarta.persistence.EntityManager;
+import kr.co.carrer.user.member.repository.UserMemberStatusQueryRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.jwt.JwtProperties;
@@ -44,7 +44,7 @@ class LoginAttemptServiceImplTest {
     @Mock RefreshTokenStore refreshTokenStore;
     @Mock TokenBlacklistStore tokenBlacklistStore;
     @Mock LoginAttemptStore loginAttemptStore;
-    @Mock EntityManager entityManager;
+    @Mock UserMemberStatusQueryRepository statusQueryRepository;
 
     private UserLoginService service;
     private JwtProperties props;
@@ -62,7 +62,7 @@ class LoginAttemptServiceImplTest {
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
         service = new UserLoginServiceImpl(memberRepository, encoder, provider, props,
-                refreshTokenStore, tokenBlacklistStore, loginAttemptStore, entityManager);
+                refreshTokenStore, tokenBlacklistStore, loginAttemptStore, statusQueryRepository);
     }
 
     // ── 로그인 실패 카운트 ───────────────────────────────────────
