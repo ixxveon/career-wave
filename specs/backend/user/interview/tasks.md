@@ -166,7 +166,7 @@
 - [x] `InterviewSessionController.java`
   - [x] `POST /api/v1/user/interview/sessions` — `@RequestBody @Valid RequestStartSession`
   - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/text` — `@PathVariable UUID`, `@RequestBody @Valid RequestSubmitTextAnswer`
-  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice` — `@PathVariable UUID`, `@RequestParam MultipartFile audioChunk` + 파라미터, `consumes = MULTIPART_FORM_DATA`
+  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice` — `@PathVariable UUID`, `@RequestParam MultipartFile audioChunk` + 파라미터, `consumes = MULTIPART_FORM_DATA`, `questionOrder @Min(1)` / `chunkIndex @Min(0)` 하한값 검증 (`@Validated` 적용)
   - [x] `POST /api/v1/user/interview/sessions/{sessionId}/end` — `@PathVariable UUID`
   - [x] 모든 메서드에 `@AuthenticationPrincipal AuthPrincipal` 적용
   - [x] Controller에서 `try-catch` 사용 금지
