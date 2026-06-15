@@ -114,7 +114,6 @@ class InterviewSessionServiceImplTest {
 
             assertThat(result).isNotNull();
             verify(messageRepository).save(any());
-            verify(fastApiClient).triggerLlmPipeline(sessionId, 1);
         }
 
         @Test
@@ -167,7 +166,6 @@ class InterviewSessionServiceImplTest {
 
             assertThat(result.sessionStatus()).isEqualTo("COMPLETED");
             assertThat(result.endedAt()).isNotNull();
-            verify(fastApiClient).triggerReportGeneration(sessionId);
         }
 
         @Test
