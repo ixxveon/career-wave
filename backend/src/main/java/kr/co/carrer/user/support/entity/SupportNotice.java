@@ -47,7 +47,4 @@ public class SupportNotice {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
-    public void incrementViewCount() {
-        this.viewCount++;
-    }
 }

@@ -4,7 +4,6 @@ import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.support.dto.SupportDTO;
-import kr.co.carrer.user.support.entity.SupportNotice;
 import kr.co.carrer.user.support.exception.UserSupportErrorCode;
 import kr.co.carrer.user.support.repository.UserNoticeQueryRepository;
 import kr.co.carrer.user.support.repository.UserNoticeRepository;
@@ -26,7 +25,7 @@ public class UserNoticeServiceImpl implements UserNoticeService {
     @Override
     @Transactional(readOnly = true)
     public PaginationResponse<SupportDTO.NoticeList> getNotices(NoticeCategory category, String keyword, int page, int size) {
-        if (page < 1) throw new CustomException(ErrorCode.BAD_REQUEST);
+        if (page < 1 || size < 1) throw new CustomException(ErrorCode.BAD_REQUEST);
         size = Math.min(size, 100);
         int offset = (page - 1) * size;
 
@@ -38,11 +37,9 @@ public class UserNoticeServiceImpl implements UserNoticeService {
     @Override
     @Transactional
     public SupportDTO.NoticeDetail getNoticeDetail(Long noticeId) {
-        SupportDTO.NoticeDetail detail = noticeQueryRepository.findDetail(noticeId)
+        noticeRepository.incrementViewCountById(noticeId);
+
+        return noticeQueryRepository.findDetail(noticeId)
             .orElseThrow(() -> new CustomException(UserSupportErrorCode.NOTICE_NOT_FOUND));
-
-        noticeRepository.findById(noticeId).ifPresent(SupportNotice::incrementViewCount);
-
-        return detail;
     }
 }
