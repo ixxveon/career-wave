@@ -10,6 +10,8 @@ import kr.co.carrer.user.jobnotice.type.JobType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -17,6 +19,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -29,13 +32,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest(excludeAutoConfiguration = JpaRepositoriesAutoConfiguration.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
+@ContextConfiguration(classes = JobNoticeQueryRepositoryTest.TestJpaConfig.class)
 @Import(JobNoticeQueryRepository.class)
-@EntityScan(basePackageClasses = JobNotice.class)
 @TestPropertySource(properties = {
-        "spring.sql.init.mode=never",
-        "spring.main.allow-bean-definition-overriding=true"
+        "spring.sql.init.mode=never"
 })
 class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
+
+    @SpringBootConfiguration
+    @EnableAutoConfiguration(exclude = JpaRepositoriesAutoConfiguration.class)
+    @EntityScan(basePackageClasses = JobNotice.class)
+    static class TestJpaConfig {
+    }
 
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
     private long originalUrlSequence = 1L;
