@@ -212,8 +212,8 @@ export const subscriptionHandlers = [
   // 내 구독 목록
   // 구독 해지
   http.post('/api/v1/user/subscriptions/:subscriptionId/cancel', ({ request, params }) => {
-    const auth = request.headers.get('Authorization') ?? '';
-    const memberId = auth.replace('Bearer mock-access-token-', '');
+    const memberId = getMemberId(request);
+    if (!memberId) return UNAUTHORIZED;
     const { subscriptionId } = params;
     const subs = MOCK_SUBSCRIPTIONS[memberId];
     if (!subs) {

@@ -1,13 +1,21 @@
 const FILL_COLOR = 'rgba(120,168,238,0.22)';
 
+let measureContext: CanvasRenderingContext2D | null = null;
+
+function getMeasureContext(): CanvasRenderingContext2D | null {
+  if (measureContext) return measureContext;
+  const canvas = document.createElement('canvas');
+  measureContext = canvas.getContext('2d');
+  return measureContext;
+}
+
 export function applyInputFill(input: HTMLInputElement) {
   const text = input.type === 'password' ? '•'.repeat(input.value.length) : input.value;
   if (!text) {
     input.style.removeProperty('background-image');
     return;
   }
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+  const ctx = getMeasureContext();
   if (!ctx) return;
   const style = getComputedStyle(input);
   ctx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;

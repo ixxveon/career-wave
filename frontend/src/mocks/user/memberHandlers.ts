@@ -115,13 +115,13 @@ export const memberHandlers = [
   // 토큰 갱신 - 쿠키에 세션이 있을 때만 성공 (F5 새로고침 후에도 유지됨)
   http.post('/api/v1/user/members/token/refresh', ({ cookies }) => {
     const session = cookies['mock-session'];
-    if (!session) {
+    const prefix = 'mock-refresh-token-';
+    if (!session || !session.startsWith(prefix)) {
       return HttpResponse.json(
         { success: false, statusCode: 401, message: '세션이 만료되었습니다.' },
         { status: 401 },
       );
     }
-    const prefix = 'mock-refresh-token-';
     const accessToken = `mock-access-token-${session.slice(prefix.length)}`;
     return HttpResponse.json({
       success: true,
