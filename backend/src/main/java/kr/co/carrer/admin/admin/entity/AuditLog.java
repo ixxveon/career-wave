@@ -39,8 +39,8 @@ public class AuditLog {
     @Column(name = "target_type", nullable = false, length = 50)
     private String targetType;
 
-    @Column(name = "target_id", nullable = false)
-    private Long targetId;
+    @Column(name = "target_id", length = 100)
+    private String targetId;
 
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
@@ -59,7 +59,7 @@ public class AuditLog {
             String logType,
             String action,
             String targetType,
-            Long targetId,
+            String targetId,
             String ipAddress,
             String severity,
             String detail
