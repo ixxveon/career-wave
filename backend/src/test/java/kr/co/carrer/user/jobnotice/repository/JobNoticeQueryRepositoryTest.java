@@ -39,11 +39,11 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
     private EntityManager entityManager;
 
     @Test
-    @DisplayName("동적 검색 조건과 ACTIVE 상태 필터를 적용해 공개 공고만 조회한다")
+    @DisplayName("filters active notices by dynamic scalar conditions")
     void findActiveJobNotices_filtersByDynamicConditions() {
         persistJobNotice(
                 "CareerWave",
-                "백엔드 개발자",
+                "Backend Developer",
                 JobType.FULLTIME,
                 CompanySize.STARTUP,
                 CareerLevel.JUNIOR,
@@ -55,7 +55,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
         );
         persistJobNotice(
                 "CareerWave",
-                "백엔드 인턴",
+                "Backend Intern",
                 JobType.INTERN,
                 CompanySize.STARTUP,
                 CareerLevel.JUNIOR,
@@ -67,7 +67,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
         );
         persistJobNotice(
                 "CareerWave",
-                "백엔드 개발자",
+                "Closed Backend Developer",
                 JobType.FULLTIME,
                 CompanySize.STARTUP,
                 CareerLevel.JUNIOR,
@@ -79,7 +79,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
         );
         persistJobNotice(
                 "CareerWave",
-                "백엔드 개발자",
+                "Senior Backend Developer",
                 JobType.FULLTIME,
                 CompanySize.LARGE,
                 CareerLevel.SENIOR,
@@ -90,8 +90,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 ZonedDateTime.of(2026, 6, 10, 0, 0, 0, 0, SERVICE_ZONE_ID)
         );
 
-        entityManager.flush();
-        entityManager.clear();
+        flushAndClear();
 
         Page<JobNotice> result = jobNoticeQueryRepository.findActiveJobNotices(
                 null,
@@ -107,17 +106,17 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
 
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent().getFirst().getTitle()).isEqualTo("백엔드 개발자");
+        assertThat(result.getContent().getFirst().getTitle()).isEqualTo("Backend Developer");
         assertThat(result.getContent().getFirst().getCompanyName()).isEqualTo("CareerWave");
         assertThat(result.getContent().getFirst().getNoticeStatus()).isEqualTo(JobNoticeStatus.ACTIVE);
     }
 
     @Test
-    @DisplayName("정렬 조건 latest, views, recommend를 계약대로 적용한다")
+    @DisplayName("applies latest, views, and recommend sort contracts")
     void findActiveJobNotices_sortsByContract() {
         persistJobNotice(
                 "CareerWave",
-                "공고 A",
+                "Notice A",
                 JobType.FULLTIME,
                 CompanySize.STARTUP,
                 CareerLevel.JUNIOR,
@@ -129,7 +128,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
         );
         persistJobNotice(
                 "CareerWave",
-                "공고 B",
+                "Notice B",
                 JobType.FULLTIME,
                 CompanySize.STARTUP,
                 CareerLevel.JUNIOR,
@@ -141,7 +140,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
         );
         persistJobNotice(
                 "CareerWave",
-                "공고 C",
+                "Notice C",
                 JobType.FULLTIME,
                 CompanySize.STARTUP,
                 CareerLevel.JUNIOR,
@@ -152,30 +151,227 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 ZonedDateTime.of(2026, 6, 11, 0, 0, 0, 0, SERVICE_ZONE_ID)
         );
 
-        entityManager.flush();
-        entityManager.clear();
+        flushAndClear();
 
-        Page<JobNotice> latestResult = jobNoticeQueryRepository.findActiveJobNotices(
-                null, null, null, null, null, null, "all", "latest", PageRequest.of(0, 20)
-        );
-        Page<JobNotice> viewsResult = jobNoticeQueryRepository.findActiveJobNotices(
-                null, null, null, null, null, null, "all", "views", PageRequest.of(0, 20)
-        );
-        Page<JobNotice> recommendResult = jobNoticeQueryRepository.findActiveJobNotices(
-                null, null, null, null, null, null, "all", "recommend", PageRequest.of(0, 20)
-        );
+        Page<JobNotice> latestResult = findAllSortedBy("latest");
+        Page<JobNotice> viewsResult = findAllSortedBy("views");
+        Page<JobNotice> recommendResult = findAllSortedBy("recommend");
 
         assertThat(latestResult.getContent())
                 .extracting(JobNotice::getTitle)
-                .containsExactly("공고 B", "공고 C", "공고 A");
-
+                .containsExactly("Notice B", "Notice C", "Notice A");
         assertThat(viewsResult.getContent())
                 .extracting(JobNotice::getTitle)
-                .containsExactly("공고 A", "공고 C", "공고 B");
-
+                .containsExactly("Notice A", "Notice C", "Notice B");
         assertThat(recommendResult.getContent())
                 .extracting(JobNotice::getTitle)
-                .containsExactly("공고 C", "공고 B", "공고 A");
+                .containsExactly("Notice C", "Notice B", "Notice A");
+    }
+
+    @Test
+    @DisplayName("matches keyword against skill_tags with PostgreSQL unnest")
+    void findActiveJobNotices_filtersKeywordBySkillTagsArray() {
+        persistJobNotice(
+                "Skill Co",
+                "Platform Engineer",
+                new String[]{"Kotlin", "Spring Boot", "PostgreSQL"},
+                new String[]{"BACKEND"}
+        );
+        persistJobNotice(
+                "Skill Co",
+                "Frontend Engineer",
+                new String[]{"React", "TypeScript"},
+                new String[]{"FRONTEND"}
+        );
+
+        flushAndClear();
+
+        Page<JobNotice> result = jobNoticeQueryRepository.findActiveJobNotices(
+                "postgre",
+                null,
+                null,
+                null,
+                null,
+                null,
+                "all",
+                "latest",
+                PageRequest.of(0, 20)
+        );
+
+        assertThat(result.getContent())
+                .extracting(JobNotice::getTitle)
+                .containsExactly("Platform Engineer");
+    }
+
+    @Test
+    @DisplayName("matches keyword against job_category with PostgreSQL unnest")
+    void findActiveJobNotices_filtersKeywordByJobCategoryArray() {
+        persistJobNotice(
+                "Category Co",
+                "Data Platform Engineer",
+                new String[]{"Python", "Airflow"},
+                new String[]{"DATA", "BACKEND"}
+        );
+        persistJobNotice(
+                "Category Co",
+                "Product Designer",
+                new String[]{"Figma"},
+                new String[]{"DESIGN"}
+        );
+
+        flushAndClear();
+
+        Page<JobNotice> result = jobNoticeQueryRepository.findActiveJobNotices(
+                "data",
+                null,
+                null,
+                null,
+                null,
+                null,
+                "all",
+                "latest",
+                PageRequest.of(0, 20)
+        );
+
+        assertThat(result.getContent())
+                .extracting(JobNotice::getTitle)
+                .containsExactly("Data Platform Engineer");
+    }
+
+    @Test
+    @DisplayName("filters job_category with PostgreSQL array_position")
+    void findActiveJobNotices_filtersByJobCategoryArrayPosition() {
+        persistJobNotice(
+                "Category Co",
+                "Backend Platform Engineer",
+                new String[]{"Java"},
+                new String[]{"BACKEND", "INFRA"}
+        );
+        persistJobNotice(
+                "Category Co",
+                "Mobile Engineer",
+                new String[]{"Kotlin"},
+                new String[]{"MOBILE"}
+        );
+
+        flushAndClear();
+
+        Page<JobNotice> result = jobNoticeQueryRepository.findActiveJobNotices(
+                null,
+                null,
+                "INFRA",
+                null,
+                null,
+                null,
+                "all",
+                "latest",
+                PageRequest.of(0, 20)
+        );
+
+        assertThat(result.getContent())
+                .extracting(JobNotice::getTitle)
+                .containsExactly("Backend Platform Engineer");
+    }
+
+    @Test
+    @DisplayName("filters period by today, 7d, and 30d contracts")
+    void findActiveJobNotices_filtersByPeriodContract() {
+        ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
+
+        persistJobNotice(
+                "Period Co",
+                "Today Notice",
+                JobType.FULLTIME,
+                CompanySize.STARTUP,
+                CareerLevel.JUNIOR,
+                "Seoul",
+                JobNoticeStatus.ACTIVE,
+                10,
+                now.toLocalDate().plusDays(10),
+                now.minusHours(1)
+        );
+        persistJobNotice(
+                "Period Co",
+                "Seven Days Notice",
+                JobType.FULLTIME,
+                CompanySize.STARTUP,
+                CareerLevel.JUNIOR,
+                "Seoul",
+                JobNoticeStatus.ACTIVE,
+                20,
+                now.toLocalDate().plusDays(10),
+                now.minusDays(3)
+        );
+        persistJobNotice(
+                "Period Co",
+                "Thirty Days Notice",
+                JobType.FULLTIME,
+                CompanySize.STARTUP,
+                CareerLevel.JUNIOR,
+                "Seoul",
+                JobNoticeStatus.ACTIVE,
+                30,
+                now.toLocalDate().plusDays(10),
+                now.minusDays(20)
+        );
+        persistJobNotice(
+                "Period Co",
+                "Old Notice",
+                JobType.FULLTIME,
+                CompanySize.STARTUP,
+                CareerLevel.JUNIOR,
+                "Seoul",
+                JobNoticeStatus.ACTIVE,
+                40,
+                now.toLocalDate().plusDays(10),
+                now.minusDays(40)
+        );
+
+        flushAndClear();
+
+        assertThat(findByPeriod("today").getContent())
+                .extracting(JobNotice::getTitle)
+                .containsExactly("Today Notice");
+        assertThat(findByPeriod("7d").getContent())
+                .extracting(JobNotice::getTitle)
+                .containsExactly("Today Notice", "Seven Days Notice");
+        assertThat(findByPeriod("30d").getContent())
+                .extracting(JobNotice::getTitle)
+                .containsExactly("Today Notice", "Seven Days Notice", "Thirty Days Notice");
+    }
+
+    private Page<JobNotice> findAllSortedBy(String sort) {
+        return jobNoticeQueryRepository.findActiveJobNotices(
+                null, null, null, null, null, null, "all", sort, PageRequest.of(0, 20)
+        );
+    }
+
+    private Page<JobNotice> findByPeriod(String period) {
+        return jobNoticeQueryRepository.findActiveJobNotices(
+                null, null, null, null, null, null, period, "latest", PageRequest.of(0, 20)
+        );
+    }
+
+    private void persistJobNotice(
+            String companyName,
+            String title,
+            String[] skillTags,
+            String[] jobCategory
+    ) {
+        persistJobNotice(
+                companyName,
+                title,
+                JobType.FULLTIME,
+                CompanySize.STARTUP,
+                CareerLevel.JUNIOR,
+                "Seoul",
+                JobNoticeStatus.ACTIVE,
+                10,
+                LocalDate.of(2026, 6, 30),
+                ZonedDateTime.of(2026, 6, 10, 0, 0, 0, 0, SERVICE_ZONE_ID),
+                skillTags,
+                jobCategory
+        );
     }
 
     private void persistJobNotice(
@@ -190,6 +386,36 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
             LocalDate deadline,
             ZonedDateTime createdAt
     ) {
+        persistJobNotice(
+                companyName,
+                title,
+                jobType,
+                companySize,
+                careerLevel,
+                location,
+                noticeStatus,
+                viewCount,
+                deadline,
+                createdAt,
+                new String[]{"Java", "Spring Boot"},
+                new String[]{"BACKEND"}
+        );
+    }
+
+    private void persistJobNotice(
+            String companyName,
+            String title,
+            JobType jobType,
+            CompanySize companySize,
+            CareerLevel careerLevel,
+            String location,
+            JobNoticeStatus noticeStatus,
+            Integer viewCount,
+            LocalDate deadline,
+            ZonedDateTime createdAt,
+            String[] skillTags,
+            String[] jobCategory
+    ) {
         try {
             var constructor = JobNotice.class.getDeclaredConstructor();
             constructor.setAccessible(true);
@@ -197,14 +423,14 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
             JobNotice jobNotice = constructor.newInstance();
             setField(jobNotice, "companyName", companyName);
             setField(jobNotice, "title", title);
-            setField(jobNotice, "description", title + " 설명");
-            setField(jobNotice, "skillTags", new String[]{"Java", "Spring Boot"});
+            setField(jobNotice, "description", title + " description");
+            setField(jobNotice, "skillTags", skillTags);
             setField(jobNotice, "jobType", jobType);
             setField(jobNotice, "companySize", companySize);
-            setField(jobNotice, "jobCategory", new String[]{"BACKEND"});
+            setField(jobNotice, "jobCategory", jobCategory);
             setField(jobNotice, "careerLevel", careerLevel);
             setField(jobNotice, "location", location);
-            setField(jobNotice, "salary", "면접 후 협의");
+            setField(jobNotice, "salary", "Negotiable");
             setField(jobNotice, "noticeStatus", noticeStatus);
             setField(jobNotice, "originalUrl", "https://example.com/job/" + originalUrlSequence++);
             setField(jobNotice, "source", "WANTED");
@@ -217,6 +443,11 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
+    }
+
+    private void flushAndClear() {
+        entityManager.flush();
+        entityManager.clear();
     }
 
     private void setField(Object target, String fieldName, Object value) throws Exception {
