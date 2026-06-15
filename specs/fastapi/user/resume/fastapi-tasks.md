@@ -6,13 +6,13 @@
 
 ## Phase 1: 기반 설정
 
-- [ ] `fastapi/core/config.py` — Settings 클래스 작성
+- [x] `fastapi/core/config.py` — Settings 클래스 작성
   - `SPRING_BASE_URL`, `WEBHOOK_SECRET`, `OPENAI_API_KEY`, `OPENAI_MODEL`, AWS S3 환경 변수 로딩
   - `pydantic-settings` 또는 `python-dotenv` 기반 (팀 의존성 확인 필요)
-- [ ] `X-Internal-Secret` 헤더 검증 FastAPI 의존성 함수 작성
+- [x] `X-Internal-Secret` 헤더 검증 FastAPI 의존성 함수 작성
   - 헤더 누락 또는 값 불일치 시 `403 Forbidden` 반환
   - `core/` 또는 공통 미들웨어 위치에 배치
-- [ ] `fastapi/user/service/webhook_client.py` 작성
+- [x] `fastapi/user/service/webhook_client.py` 작성
   - `httpx.AsyncClient` 비동기 POST 구현
   - 재시도 3회 지수 백오프 구현 (1s → 2s → 4s)
   - `X-Internal-Secret` 헤더 자동 포함
