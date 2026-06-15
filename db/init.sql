@@ -26,8 +26,9 @@ CREATE TABLE members (
     CONSTRAINT pk_members              PRIMARY KEY (member_id),
     CONSTRAINT uq_members_login_id     UNIQUE (login_id),
     CONSTRAINT uq_members_email        UNIQUE (email),
-    CONSTRAINT chk_members_role        CHECK (role_type           IN ('ROLE_USER', 'ROLE_COMPANY')),
-    CONSTRAINT chk_members_status      CHECK (member_status       IN ('ACTIVE', 'SUSPENDED', 'BANNED', 'LOCKED', 'WITHDRAWN')),
+    CONSTRAINT uq_members_phone        UNIQUE (phone),
+    CONSTRAINT chk_members_role        CHECK (role_type           IN ('USER', 'COMPANY')),
+    CONSTRAINT chk_members_status      CHECK (member_status       IN ('ACTIVE', 'SUSPENDED', 'BANNED', 'LOCKED', 'WITHDRAWN', 'BLACKLISTED')),
     CONSTRAINT chk_subscription_status CHECK (subscription_status IN ('FREE', 'PREMIUM'))
 );
 COMMENT ON TABLE  members                     IS '회원 마스터 테이블';
@@ -36,9 +37,9 @@ COMMENT ON COLUMN members.login_id            IS '로그인 계정 (UNIQUE)';
 COMMENT ON COLUMN members.email               IS '이메일 주소 (UNIQUE, NULL 허용)';
 COMMENT ON COLUMN members.password            IS '암호화된 비밀번호';
 COMMENT ON COLUMN members.name                IS '회원 이름';
-COMMENT ON COLUMN members.phone               IS '휴대폰 번호';
-COMMENT ON COLUMN members.role_type           IS '회원 유형 (ROLE_USER / ROLE_COMPANY)';
-COMMENT ON COLUMN members.member_status       IS '계정 상태 (ACTIVE / SUSPENDED / BANNED / LOCKED / WITHDRAWN)';
+COMMENT ON COLUMN members.phone               IS '휴대폰 번호 (UNIQUE, NULL 허용)';
+COMMENT ON COLUMN members.role_type           IS '회원 유형 (USER / COMPANY)';
+COMMENT ON COLUMN members.member_status       IS '계정 상태 (ACTIVE / SUSPENDED / BANNED / LOCKED / WITHDRAWN / BLACKLISTED)';
 COMMENT ON COLUMN members.subscription_status IS '구독 상태 (FREE / PREMIUM)';
 COMMENT ON COLUMN members.suspend_end_date    IS '정지 종료일 (NULL = 영구정지)';
 COMMENT ON COLUMN members.warning_count       IS '경고 누적 횟수';
@@ -63,7 +64,7 @@ CREATE TABLE personal_profiles (
     CONSTRAINT uq_personal_member_id UNIQUE (member_id),
     CONSTRAINT fk_personal_member    FOREIGN KEY (member_id) REFERENCES members (member_id)
 );
-COMMENT ON TABLE  personal_profiles                      IS '개인 회원 프로필 (ROLE_USER)';
+COMMENT ON TABLE  personal_profiles                      IS '개인 회원 프로필 (USER)';
 COMMENT ON COLUMN personal_profiles.personal_profile_id IS '개인 프로필 고유 식별자';
 COMMENT ON COLUMN personal_profiles.member_id           IS '회원 FK';
 COMMENT ON COLUMN personal_profiles.target_job          IS '목표 직무';
@@ -83,11 +84,14 @@ CREATE TABLE company_profiles (
     business_number    VARCHAR(20)  NOT NULL,
     ceo_name           VARCHAR(50)  NOT NULL,
     address            VARCHAR(200) NOT NULL,
+    postal_code        VARCHAR(10)  NOT NULL,
+    road_address       VARCHAR(200) NOT NULL,
+    jibun_address      VARCHAR(200) NULL,
     address_detail     VARCHAR(200) NULL,
     is_agency          BOOLEAN      NOT NULL DEFAULT FALSE,
-    certificate_number VARCHAR(50)  NULL,
-    cert_file_url      VARCHAR(500) NULL,
-    cert_file_name     VARCHAR(200) NULL,
+    certificate_number VARCHAR(50)  NOT NULL,
+    cert_file_url      VARCHAR(500) NOT NULL,
+    cert_file_name     VARCHAR(200) NOT NULL,
     created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
@@ -96,7 +100,7 @@ CREATE TABLE company_profiles (
     CONSTRAINT uq_business_number   UNIQUE (business_number),
     CONSTRAINT fk_company_member    FOREIGN KEY (member_id) REFERENCES members (member_id)
 );
-COMMENT ON TABLE  company_profiles                     IS '기업 회원 프로필 (ROLE_COMPANY)';
+COMMENT ON TABLE  company_profiles                     IS '기업 회원 프로필 (COMPANY)';
 COMMENT ON COLUMN company_profiles.company_profile_id IS '기업 프로필 고유 식별자';
 COMMENT ON COLUMN company_profiles.member_id          IS '회원 FK';
 COMMENT ON COLUMN company_profiles.company_type       IS '기업 규모 (대기업 / 중소기업 등)';
@@ -104,6 +108,9 @@ COMMENT ON COLUMN company_profiles.company_name       IS '회사명';
 COMMENT ON COLUMN company_profiles.business_number    IS '사업자등록번호 (UNIQUE)';
 COMMENT ON COLUMN company_profiles.ceo_name           IS '대표자명';
 COMMENT ON COLUMN company_profiles.address            IS '회사 주소';
+COMMENT ON COLUMN company_profiles.postal_code        IS '우편번호';
+COMMENT ON COLUMN company_profiles.road_address       IS '도로명주소';
+COMMENT ON COLUMN company_profiles.jibun_address      IS '지번주소';
 COMMENT ON COLUMN company_profiles.address_detail     IS '상세 주소';
 COMMENT ON COLUMN company_profiles.is_agency          IS '파견/도급/채용대행 여부 (기본값 FALSE)';
 COMMENT ON COLUMN company_profiles.certificate_number IS '사업자등록증명원 발급번호';
@@ -120,7 +127,7 @@ CREATE TABLE hr_managers (
     member_id          UUID        NOT NULL,
     company_profile_id UUID        NOT NULL,
     permission_level   VARCHAR(10) NOT NULL DEFAULT 'FULL',
-    hr_status          VARCHAR(10) NOT NULL DEFAULT 'PENDING',
+    hr_status          VARCHAR(20) NOT NULL DEFAULT 'PENDING_REVIEW',
     reject_reason      TEXT        NULL,
     created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     approved_at        TIMESTAMPTZ NULL,
@@ -130,15 +137,15 @@ CREATE TABLE hr_managers (
     CONSTRAINT fk_hr_member         FOREIGN KEY (member_id)          REFERENCES members (member_id),
     CONSTRAINT fk_hr_company        FOREIGN KEY (company_profile_id) REFERENCES company_profiles (company_profile_id),
     CONSTRAINT chk_permission_level CHECK (permission_level IN ('FULL', 'NOTICE', 'VIEWER')),
-    CONSTRAINT chk_hr_status        CHECK (hr_status        IN ('PENDING', 'ACTIVE', 'REMOVED'))
+    CONSTRAINT chk_hr_status        CHECK (hr_status        IN ('PENDING_REVIEW', 'APPROVED', 'REJECTED', 'NEEDS_REVISION', 'REMOVED'))
 );
 COMMENT ON TABLE  hr_managers                    IS '기업 HR 담당자 테이블';
 COMMENT ON COLUMN hr_managers.hr_manager_id      IS 'HR 담당자 고유 식별자';
 COMMENT ON COLUMN hr_managers.member_id          IS '회원 FK';
 COMMENT ON COLUMN hr_managers.company_profile_id IS '소속 기업 FK';
 COMMENT ON COLUMN hr_managers.permission_level   IS '권한 (FULL / NOTICE / VIEWER)';
-COMMENT ON COLUMN hr_managers.hr_status          IS '상태 (PENDING / ACTIVE / REMOVED)';
-COMMENT ON COLUMN hr_managers.reject_reason      IS '반려 사유 (hr_status = REMOVED일 때 저장)';
+COMMENT ON COLUMN hr_managers.hr_status          IS '상태 (PENDING_REVIEW / APPROVED / REJECTED / NEEDS_REVISION / REMOVED)';
+COMMENT ON COLUMN hr_managers.reject_reason      IS '반려 또는 보완 요청 사유';
 COMMENT ON COLUMN hr_managers.created_at         IS '가입 신청 일시';
 COMMENT ON COLUMN hr_managers.approved_at        IS '관리자 승인 일시';
 
@@ -222,12 +229,42 @@ COMMENT ON COLUMN member_terms_agreements.member_id                   IS '회원
 COMMENT ON COLUMN member_terms_agreements.service_agreed              IS '서비스 이용약관 동의 여부';
 COMMENT ON COLUMN member_terms_agreements.privacy_agreed              IS '개인정보 처리방침 동의 여부';
 COMMENT ON COLUMN member_terms_agreements.marketing_agreed            IS '마케팅 수신 동의 여부 (기본값 FALSE)';
-COMMENT ON COLUMN member_terms_agreements.company_verification_agreed IS '기업 인증 약관 동의 여부 (기업 회원만 사용)';
-COMMENT ON COLUMN member_terms_agreements.sms_agreed                  IS 'SMS 수신 동의 여부 (기업 회원만 사용)';
+COMMENT ON COLUMN member_terms_agreements.company_verification_agreed IS '기업 인증 약관 동의 여부 (기업 회원 필수, 개인 회원 NULL)';
+COMMENT ON COLUMN member_terms_agreements.sms_agreed                  IS 'SMS 수신 동의 여부 (기업 회원 필수, 개인 회원 NULL)';
 COMMENT ON COLUMN member_terms_agreements.agreed_at                   IS '약관 동의 일시';
 
 -- ================================================
--- 8. documents
+-- 8. social_accounts
+-- ================================================
+CREATE TABLE social_accounts (
+    social_account_id UUID         NOT NULL DEFAULT gen_random_uuid(),
+    member_id         UUID         NOT NULL,
+    provider          VARCHAR(20)  NOT NULL,
+    provider_user_id  VARCHAR(255) NOT NULL,
+    provider_email    VARCHAR(255) NULL,
+    linked_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT pk_social_accounts            PRIMARY KEY (social_account_id),
+    CONSTRAINT fk_social_accounts_member     FOREIGN KEY (member_id) REFERENCES members (member_id) ON DELETE CASCADE,
+    CONSTRAINT uq_social_provider_user       UNIQUE (provider, provider_user_id),
+    CONSTRAINT uq_social_member_provider     UNIQUE (member_id, provider),
+    CONSTRAINT chk_social_provider           CHECK (provider IN ('KAKAO', 'NAVER', 'GOOGLE'))
+);
+COMMENT ON TABLE  social_accounts                    IS '소셜 provider 계정 연결 테이블';
+COMMENT ON COLUMN social_accounts.social_account_id  IS '소셜 계정 연결 고유 식별자';
+COMMENT ON COLUMN social_accounts.member_id          IS '회원 FK';
+COMMENT ON COLUMN social_accounts.provider           IS '소셜 provider (KAKAO / NAVER / GOOGLE)';
+COMMENT ON COLUMN social_accounts.provider_user_id   IS 'provider가 제공하는 고유 사용자 ID';
+COMMENT ON COLUMN social_accounts.provider_email     IS 'provider에서 받은 이메일 (NULL 허용)';
+COMMENT ON COLUMN social_accounts.linked_at          IS '소셜 계정 연결 일시';
+COMMENT ON COLUMN social_accounts.created_at         IS '생성 일시';
+COMMENT ON COLUMN social_accounts.updated_at         IS '최종 수정 일시';
+CREATE INDEX idx_social_accounts_member_id ON social_accounts(member_id);
+
+-- ================================================
+-- 9. documents
 -- ================================================
 CREATE TABLE documents (
     document_id   UUID         NOT NULL DEFAULT gen_random_uuid(),
@@ -255,7 +292,7 @@ COMMENT ON COLUMN documents.error_message IS '분석 실패 시 에러 사유 �
 COMMENT ON COLUMN documents.created_at    IS '업로드 일시';
 
 -- ================================================
--- 9. document_feedbacks
+-- 10. document_feedbacks
 -- ================================================
 CREATE TABLE document_feedbacks (
     document_feedback_id BIGSERIAL   NOT NULL,
@@ -285,7 +322,7 @@ COMMENT ON COLUMN document_feedbacks.feedback_text        IS 'AI 상세 첨삭 �
 COMMENT ON COLUMN document_feedbacks.created_at           IS '생성 일시';
 
 -- ================================================
--- 10. cover_letter_meta
+-- 11. cover_letter_meta
 -- ================================================
 CREATE TABLE cover_letter_meta (
     letter_meta_id BIGSERIAL    NOT NULL,
@@ -306,7 +343,7 @@ COMMENT ON COLUMN cover_letter_meta.job            IS '지원 직무명';
 COMMENT ON COLUMN cover_letter_meta.created_at     IS '생성 일시';
 
 -- ================================================
--- 11. cover_letter_contents
+-- 12. cover_letter_contents
 -- ================================================
 CREATE TABLE cover_letter_contents (
     content_id  BIGSERIAL   NOT NULL,
@@ -330,7 +367,7 @@ COMMENT ON COLUMN cover_letter_contents.answer      IS '답변 내용 (max 1000�
 COMMENT ON COLUMN cover_letter_contents.created_at  IS '생성 일시';
 
 -- ================================================
--- 12. interview_sessions
+-- 13. interview_sessions
 -- ================================================
 CREATE TABLE interview_sessions (
     session_id     UUID         NOT NULL DEFAULT gen_random_uuid(),
@@ -368,7 +405,7 @@ COMMENT ON COLUMN interview_sessions.created_at     IS '세션 생성 일시';
 COMMENT ON COLUMN interview_sessions.updated_at     IS '상태 및 점수 변경 일시';
 
 -- ================================================
--- 13. interview_messages
+-- 14. interview_messages
 -- ================================================
 CREATE TABLE interview_messages (
     message_id      BIGSERIAL   NOT NULL,
@@ -392,7 +429,7 @@ COMMENT ON COLUMN interview_messages.message_content IS '메시지 본문';
 COMMENT ON COLUMN interview_messages.created_at      IS '메시지 전송 일시';
 
 -- ================================================
--- 14. ai_interview_feedbacks
+-- 15. ai_interview_feedbacks
 -- ================================================
 CREATE TABLE ai_interview_feedbacks (
     interview_feedback_id BIGSERIAL    NOT NULL,
@@ -431,7 +468,7 @@ COMMENT ON COLUMN ai_interview_feedbacks.ai_feedback           IS '질문별 AI 
 COMMENT ON COLUMN ai_interview_feedbacks.created_at            IS '생성 일시';
 
 -- ================================================
--- 15. career_histories
+-- 16. career_histories
 -- ================================================
 CREATE TABLE career_histories (
     career_history_id BIGSERIAL    NOT NULL,
@@ -459,7 +496,7 @@ COMMENT ON COLUMN career_histories.pdf_url           IS '종합 진단 PDF URL (
 COMMENT ON COLUMN career_histories.created_at        IS '기록 생성 일시';
 
 -- ================================================
--- 16. job_notices
+-- 17. job_notices
 -- ================================================
 CREATE TABLE job_notices (
     job_notice_id BIGSERIAL    NOT NULL,
@@ -509,7 +546,7 @@ COMMENT ON COLUMN job_notices.created_at    IS '공고 등록 일시';
 COMMENT ON COLUMN job_notices.updated_at    IS '공고 수정 일시 (재스크래핑 포함)';
 
 -- ================================================
--- 17. bookmarks
+-- 18. bookmarks
 -- ================================================
 CREATE TABLE bookmarks (
     bookmark_id   BIGSERIAL   NOT NULL,
@@ -529,7 +566,7 @@ COMMENT ON COLUMN bookmarks.job_notice_id IS '공고 FK';
 COMMENT ON COLUMN bookmarks.created_at    IS '북마크 일시';
 
 -- ================================================
--- 18. plans
+-- 19. plans
 -- ================================================
 CREATE TABLE plans (
     plan_id       BIGSERIAL    NOT NULL,
@@ -556,7 +593,7 @@ COMMENT ON COLUMN plans.is_active     IS '현재 판매 여부 (기본값 TRUE)'
 COMMENT ON COLUMN plans.created_at    IS '생성 일시';
 
 -- ================================================
--- 19. subscriptions
+-- 20. subscriptions
 -- ================================================
 CREATE TABLE subscriptions (
     subscription_id      UUID        NOT NULL DEFAULT gen_random_uuid(),
@@ -594,7 +631,7 @@ COMMENT ON COLUMN subscriptions.created_at           IS '생성 일시';
 COMMENT ON COLUMN subscriptions.updated_at           IS '구독 상태 변경 일시';
 
 -- ================================================
--- 20. payments
+-- 21. payments
 -- ================================================
 CREATE TABLE payments (
     payment_id      UUID         NOT NULL DEFAULT gen_random_uuid(),
@@ -639,7 +676,7 @@ COMMENT ON COLUMN payments.approved_at     IS '결제 승인 일시';
 COMMENT ON COLUMN payments.created_at      IS '결제 요청 생성 일시';
 
 -- ================================================
--- 21. admins
+-- 22. admins
 -- ================================================
 CREATE TABLE admins (
     admin_id      BIGSERIAL    NOT NULL,
@@ -671,7 +708,7 @@ COMMENT ON COLUMN admins.created_at     IS '계정 생성 일시';
 COMMENT ON COLUMN admins.updated_at     IS '최종 수정 일시';
 
 -- ================================================
--- 22. refunds
+-- 23. refunds
 -- ================================================
 CREATE TABLE refunds (
     refund_id     BIGSERIAL   NOT NULL,
@@ -703,7 +740,7 @@ COMMENT ON COLUMN refunds.refunded_at   IS '환불 완료 일시';
 COMMENT ON COLUMN refunds.created_at    IS '환불 요청 일시';
 
 -- ================================================
--- 23. boards
+-- 24. boards
 -- ================================================
 CREATE TABLE boards (
     board_id   BIGSERIAL    NOT NULL,
@@ -731,7 +768,7 @@ COMMENT ON COLUMN boards.created_at IS '작성 일시';
 COMMENT ON COLUMN boards.updated_at IS '최종 수정 일시';
 
 -- ================================================
--- 24. comments
+-- 25. comments
 -- ================================================
 CREATE TABLE comments (
     comment_id BIGSERIAL   NOT NULL,
@@ -759,7 +796,7 @@ COMMENT ON COLUMN comments.created_at IS '작성 일시';
 COMMENT ON COLUMN comments.updated_at IS '댓글 수정 일시';
 
 -- ================================================
--- 25. suspend_histories
+-- 26. suspend_histories
 -- ================================================
 CREATE TABLE suspend_histories (
     suspend_history_id BIGSERIAL   NOT NULL,
@@ -790,7 +827,7 @@ COMMENT ON COLUMN suspend_histories.end_date           IS '정지 종료일 (NUL
 COMMENT ON COLUMN suspend_histories.created_at         IS '제재 처리 일시';
 
 -- ================================================
--- 26. audit_logs
+-- 27. audit_logs
 -- ================================================
 CREATE TABLE audit_logs (
     audit_log_id BIGSERIAL    NOT NULL,
@@ -822,7 +859,7 @@ COMMENT ON COLUMN audit_logs.detail       IS '변경 상세 내용 (변경 전�
 COMMENT ON COLUMN audit_logs.created_at   IS '로그 기록 일시';
 
 -- ================================================
--- 27. ip_acl
+-- 28. ip_acl
 -- ================================================
 CREATE TABLE ip_acl (
     ip_acl_id   BIGSERIAL    NOT NULL,
@@ -849,7 +886,7 @@ COMMENT ON COLUMN ip_acl.created_at  IS '등록 일시';
 COMMENT ON COLUMN ip_acl.updated_at  IS '수정 일시';
 
 -- ================================================
--- 28. reports
+-- 29. reports
 -- ================================================
 CREATE TABLE reports (
     report_id     BIGSERIAL   NOT NULL,
@@ -888,7 +925,7 @@ COMMENT ON COLUMN reports.created_at    IS '신고 접수 일시';
 COMMENT ON COLUMN reports.updated_at    IS '처리 상태 변경 일시';
 
 -- ================================================
--- 29. inquiries
+-- 30. inquiries
 -- ================================================
 CREATE TABLE inquiries (
     inquiry_id     BIGSERIAL    NOT NULL,
@@ -932,7 +969,7 @@ COMMENT ON COLUMN inquiries.replied_at     IS '최초 답변 일시';
 COMMENT ON COLUMN inquiries.completed_at   IS '처리 완료 일시';
 
 -- ================================================
--- 30. notices
+-- 31. notices
 -- ================================================
 CREATE TABLE notices (
     notice_id  BIGSERIAL    NOT NULL,
@@ -963,7 +1000,7 @@ COMMENT ON COLUMN notices.created_at IS '작성 일시';
 COMMENT ON COLUMN notices.updated_at IS '최종 수정 일시';
 
 -- ================================================
--- 31. faqs
+-- 32. faqs
 -- ================================================
 CREATE TABLE faqs (
     faq_id     BIGSERIAL    NOT NULL,
@@ -988,7 +1025,7 @@ COMMENT ON COLUMN faqs.created_at IS '작성 일시';
 COMMENT ON COLUMN faqs.updated_at IS '최종 수정 일시';
 
 -- ================================================
--- 32. ai_models
+-- 33. ai_models
 -- ================================================
 CREATE TABLE ai_models (
     ai_model_id        BIGSERIAL    NOT NULL,
@@ -1018,7 +1055,7 @@ COMMENT ON COLUMN ai_models.created_at         IS '모델 등록 시간';
 COMMENT ON COLUMN ai_models.updated_at         IS '모델 수정 시간';
 
 -- ================================================
--- 33. ai_usage_logs
+-- 34. ai_usage_logs
 -- ================================================
 CREATE TABLE ai_usage_logs (
     ai_usage_log_id BIGSERIAL   NOT NULL,
@@ -1049,7 +1086,7 @@ COMMENT ON COLUMN ai_usage_logs.cost            IS '소모 비용 (원 단위)';
 COMMENT ON COLUMN ai_usage_logs.created_at      IS '사용 기록 일시';
 
 -- ================================================
--- 34. ai_ops_settings  ※ 싱글톤 테이블 (row = 1개)
+-- 35. ai_ops_settings  ※ 싱글톤 테이블 (row = 1개)
 -- ================================================
 CREATE TABLE ai_ops_settings (
     ai_ops_setting_id  BIGINT      NOT NULL DEFAULT 1,
@@ -1079,7 +1116,7 @@ COMMENT ON COLUMN ai_ops_settings.rate_limit_enabled IS '속도 제한 제어 �
 COMMENT ON COLUMN ai_ops_settings.updated_at         IS '운영 설정 수정 일시';
 
 -- ================================================
--- 35. rag_documents
+-- 36. rag_documents
 -- ================================================
 CREATE TABLE rag_documents (
     rag_document_id    BIGSERIAL    NOT NULL,
@@ -1118,7 +1155,7 @@ COMMENT ON COLUMN rag_documents.created_at         IS '문서 등록 시간';
 COMMENT ON COLUMN rag_documents.updated_at         IS '문서 수정 시간';
 
 -- ================================================
--- 36. scraping_pipelines
+-- 37. scraping_pipelines
 -- ================================================
 CREATE TABLE scraping_pipelines (
     scraping_pipeline_id BIGSERIAL    NOT NULL,
@@ -1157,7 +1194,7 @@ COMMENT ON COLUMN scraping_pipelines.created_at          IS '생성 일시';
 COMMENT ON COLUMN scraping_pipelines.updated_at          IS '수정 일시';
 
 -- ================================================
--- 37. scraping_logs
+-- 38. scraping_logs
 -- ================================================
 CREATE TABLE scraping_logs (
     scraping_log_id      BIGSERIAL   NOT NULL,
@@ -1181,4 +1218,3 @@ COMMENT ON COLUMN scraping_logs.scraping_status IS '수행 결과 (SUCCESS / FAI
 COMMENT ON COLUMN scraping_logs.total_count     IS '수집된 공고 수';
 COMMENT ON COLUMN scraping_logs.error_message   IS '실패 시 오류 메시지';
 COMMENT ON COLUMN scraping_logs.executed_at     IS '스크래핑 실행 일시';
-
