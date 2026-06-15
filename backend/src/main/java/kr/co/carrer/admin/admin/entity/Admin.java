@@ -35,13 +35,13 @@ public class Admin {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "login_id", nullable = false, unique = true, length = 100)
+    @Column(name = "login_id", nullable = false, unique = true, length = 255)
     private String loginId;
 
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 50)
     private String name;
 
     @Enumerated(EnumType.STRING)
