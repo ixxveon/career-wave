@@ -37,7 +37,7 @@ public class IpAcl {
     @Column(name = "is_enabled", nullable = false)
     private Boolean isEnabled;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", length = 200)
     private String description;
 
     @Column(name = "created_at", nullable = false, updatable = false)

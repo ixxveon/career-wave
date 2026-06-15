@@ -27,25 +27,25 @@ public class AuditLog {
     @Column(name = "audit_log_id")
     private Long auditLogId;
 
-    @Column(name = "admin_id", nullable = false)
+    @Column(name = "admin_id")
     private Long adminId;
 
-    @Column(name = "log_type", nullable = false, length = 50)
+    @Column(name = "log_type", nullable = false, length = 30)
     private String logType;
 
-    @Column(name = "action", nullable = false, length = 100)
+    @Column(name = "action", nullable = false, length = 50)
     private String action;
 
-    @Column(name = "target_type", nullable = false, length = 50)
+    @Column(name = "target_type", length = 30)
     private String targetType;
 
-    @Column(name = "target_id", nullable = false)
-    private Long targetId;
+    @Column(name = "target_id", length = 100)
+    private String targetId;
 
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
-    @Column(name = "severity", nullable = false, length = 20)
+    @Column(name = "severity", nullable = false, length = 10)
     private String severity;
 
     @Column(name = "detail", columnDefinition = "TEXT")
@@ -59,7 +59,7 @@ public class AuditLog {
             String logType,
             String action,
             String targetType,
-            Long targetId,
+            String targetId,
             String ipAddress,
             String severity,
             String detail
