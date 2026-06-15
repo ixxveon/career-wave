@@ -46,12 +46,12 @@
 
 ## Phase 5 — Documentation
 
-- [ ] `UserJobNoticeControllerDocs` 인터페이스가 작성되어 있다.
-- [ ] Swagger 어노테이션이 Controller에 직접 작성되지 않고 `docs` 인터페이스에 분리되어 있다.
-- [ ] Swagger 문서의 Method, Path, Auth, Query Parameter, Request Body, Response Body, Error Response가 실제 구현과 일치한다.
-- [ ] `api-schema.md`에 `sort`, `period` 허용값이 최신 계약 기준으로 명시되어 있다.
-- [ ] 최신 스펙과 프론트엔드 구계약 간 Breaking Change / Migration Note가 문서에 명시되어 있다.
-- [ ] `spec.md`, `constitution.md`, `plan.md`, `tasks.md`의 구현 범위와 실제 구현 범위가 일치한다.
+- [x] `UserJobNoticeControllerDocs` 인터페이스가 작성되어 있다.
+- [x] Swagger 어노테이션이 Controller에 직접 작성되지 않고 `docs` 인터페이스에 분리되어 있다.
+- [x] Swagger 문서의 Method, Path, Auth, Query Parameter, Request Body, Response Body, Error Response가 실제 구현과 일치한다.
+- [x] `api-schema.md`에 `sort`, `period` 허용값이 최신 계약 기준으로 명시되어 있다.
+- [x] 최신 스펙과 프론트엔드 구계약 간 Breaking Change / Migration Note가 문서에 명시되어 있다.
+- [x] `spec.md`, `constitution.md`, `plan.md`, `tasks.md`의 구현 범위와 실제 구현 범위가 일치한다.
 
 ## Phase 6 — Test
 
