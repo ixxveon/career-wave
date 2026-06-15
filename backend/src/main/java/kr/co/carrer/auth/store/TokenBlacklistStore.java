@@ -36,7 +36,13 @@ public class TokenBlacklistStore {
         }
     }
 
-    public boolean isBlacklisted(String jti) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(PREFIX + jti));
+    public boolean isBlacklisted(String jti, boolean conservativeOnFailure) {
+        try {
+            return Boolean.TRUE.equals(redisTemplate.hasKey(PREFIX + jti));
+        } catch (DataAccessException e) {
+            log.warn("[blacklist] Redis 조회 실패 — jti={}: {}", jti, e.getMessage());
+            // 관리자(conservativeOnFailure=true): 보수적 거부, 사용자: 가용성 우선 허용
+            return conservativeOnFailure;
+        }
     }
 }

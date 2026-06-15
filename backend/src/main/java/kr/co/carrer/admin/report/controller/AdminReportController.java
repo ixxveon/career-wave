@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('CS'))")
 public class AdminReportController implements AdminReportControllerDocs {
 
     private final AdminReportService adminReportService;

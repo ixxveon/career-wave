@@ -19,7 +19,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/user/members")
@@ -37,21 +36,28 @@ public class UserAuthController implements UserAuthControllerDocs {
     }
 
     @PostMapping("/token/refresh")
-    public ResponseEntity<ApiResponse<Map<String, String>>> refreshToken(
+    public ResponseEntity<ApiResponse<UserLoginDto.TokenRefreshResponse>> refreshToken(
             HttpServletRequest request,
             HttpServletResponse response) {
         String refreshToken = extractRefreshTokenCookie(request);
         if (refreshToken == null) throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         String newAccessToken = userLoginService.refresh(refreshToken, response);
-        return ResponseEntity.ok(ApiResponse.ok("토큰이 갱신되었습니다.", Map.of("accessToken", newAccessToken)));
+        return ResponseEntity.ok(ApiResponse.ok("토큰이 갱신되었습니다.", new UserLoginDto.TokenRefreshResponse(newAccessToken)));
     }
 
     @GetMapping("/me/status")
     public ResponseEntity<ApiResponse<MemberStatusDto.Response>> getMemberStatus(
             @AuthenticationPrincipal AuthPrincipal principal) {
+        if (principal == null) throw new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED);
+        java.util.UUID memberId;
+        try {
+            memberId = java.util.UUID.fromString(principal.getId());
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED);
+        }
         return ResponseEntity.ok(ApiResponse.ok(
                 "요청이 성공적으로 처리되었습니다.",
-                memberStatusService.getMemberStatus(java.util.UUID.fromString(principal.getId()))
+                memberStatusService.getMemberStatus(memberId)
         ));
     }
 

@@ -230,11 +230,26 @@
 
 ## 8. 인증 제외(permitAll) 목록
 
+**auth**
 - `POST /api/v1/user/members/login`
 - `POST /api/v1/user/members/token/refresh`
 - `POST /api/v1/admin/auth/login`
 - `POST /api/v1/admin/auth/refresh`
-- Swagger: `/swagger-ui/**`, `/v3/api-docs/**`
-- 헬스체크, 공개 리소스
+
+**회원가입 / 본인인증 / 계정 찾기**
+- `GET  /api/v1/user/members/login-id/check`
+- `POST /api/v1/user/members/register/user`
+- `POST /api/v1/user/members/register/company`
+- `POST /api/v1/user/members/register/social/complete`
+- `GET  /api/v1/user/members/company/employment-certificate`
+- `POST /api/v1/user/members/verifications/send`
+- `POST /api/v1/user/members/verifications/confirm`
+- `GET  /api/v1/user/members/recovery/find-id`
+- `POST /api/v1/user/members/recovery/password-token`
+- `POST /api/v1/user/members/recovery/reset-password`
+
+**Swagger**
+- `/swagger-ui.html`, `/swagger-ui/**`, `/v3/api-docs/**`
 
 > 로그아웃(`/logout`)과 `me/status`는 **인증 필요** API이므로 permitAll에 포함하지 않는다.
+> `me/status`와 `/logout`은 AccountStatusAuthorizationFilter 예외 경로로 등록되어 비ACTIVE 회원도 접근 가능하다.

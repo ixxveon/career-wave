@@ -92,44 +92,35 @@
 
 ---
 
-## PR 3 — Phase 5 : Admin Auth 완성
-**브랜치**: `feature/auth-phase5-admin-auth` (베이스: PR 2 브랜치)
+## PR 3 — Phase 5 : Admin Auth 완성 + Swagger / 문서
+**브랜치**: `feature/auth-phase5-admin-swagger` (베이스: PR 2 브랜치)
+**상태**: 구현 완료, PR 준비 중
 
-### Admin 로그인 개선
-- [ ] `AdminLoginService` `last_login_ip` 갱신
-- [x] 단일 세션 정책: 신규 로그인 시 기존 `refresh:ADMIN:{adminId}:*` 전부 삭제 ← PR #361 선처리
-- [x] 로그인 시 `RefreshTokenStore` 저장 ← PR #361 선처리
-
-### Admin Refresh 고도화
-> `POST /api/v1/admin/auth/logout`은 Phase 3에서 구현 완료
-- [x] `POST /api/v1/admin/auth/refresh` 개선
-  - 단일 세션 rotation + `admins.status` ACTIVE 검증 ← PR #361 선처리
-
-### 권한
-- [ ] `adminRole`(MASTER/CS/BACKEND) `@PreAuthorize` 기반 마련
-- [ ] 관리자 로그인 실패 잠금 5회 적용
+### Admin auth
+- [ ] `AdminLoginService` `last_login_ip` 갱신 ← Admin entity에 컬럼 없음; ERD 확인 후 결정
+- [x] 단일 세션 정책 + RefreshTokenStore 저장 ← PR #361 선처리
+- [x] `POST /api/v1/admin/auth/refresh` — rotation + admins.status 검증 ← PR #361 선처리
+- [x] AuthPrincipal에 ROLE_MASTER/CS/BACKEND authority 추가
+- [x] adminRole(MASTER/CS/BACKEND) @PreAuthorize 적용 (프론트 access matrix 기준)
+- [x] 관리자 로그인 실패 잠금 5회 — LoginAttemptStore ADMIN 연동
 
 ### 테스트
-- [ ] admin 로그인/재발급/권한 격리 (USER 토큰 → admin API 403)
-- [ ] 단일 세션 정책 (신규 로그인 시 기존 세션 폐기)
-- [ ] adminRole별 접근 제어
+- [x] admin 5회 실패 → LOCKED, 성공 시 카운터 초기화
+- [x] ADMIN 단일세션 — 신규 로그인 시 기존 세션 폐기 + jti blacklist
+- [x] admin logout 후 access token blacklist 재사용 → 401
+- [x] USER 5세션 상한 — 6번째 로그인 시 오래된 세션 삭제
 
----
-
-## PR 4 — Phase 6 : Swagger / 최종 검증
-**브랜치**: `feature/auth-phase6-swagger-doc` (베이스: PR 3 브랜치)
-
-- [ ] SpringDoc Bearer `SecurityScheme` 등록
-- [ ] Swagger UI `Authorize` 버튼 동작 확인
-- [ ] `api-schema.md` ↔ 실제 응답 필드명 일치 검증
-- [ ] `checklist.md` 전 항목 점검 후 완료 체크
+### Swagger / 문서
+- [x] SpringDoc Bearer SecurityScheme 등록 ← SwaggerConfig 기존 구현
+- [ ] Swagger Authorize 수동 동작 확인
+- [x] checklist.md 전 항목 완료 점검
 
 ---
 
 ## 별도 PR — Issue #281 (admin-frontend)
-**상태**: PR #384 open ← Phase 5 완료 전 선처리
+**상태**: PR #384 MERGED ✅
 - [x] `AdminProtectedRoute` → `adminSession.getToken()` / `adminSession.getRole()` 기반으로 교체
 - [x] `hasAdminRouteAccess(currentAdminRole, path)` 적용
 - [x] `localStorage.accessToken` 의존 제거
-- [x] `/admin/admins` — MASTER만 접근 가능 검증
+- [x] token 있음 + role null → 세션 정리 후 login redirect (redirect loop 방지)
 - [x] role별 route 접근 테스트 추가

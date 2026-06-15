@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import { adminAuthApi, adminSession } from '../../api/admin/adminAuthApi';
-import { ACCESS_TOKEN_STORAGE_KEY } from '../../constants/admin/authConstants';
 import { ADMIN_ROUTE_PATHS } from '../../constants/admin/adminRouteConstants';
 import '../../styles/admin/admin.css';
 
@@ -23,7 +22,6 @@ export default function AdminLayout() {
     } finally {
       adminSession.clearToken();
       adminSession.clearRole();
-      window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
       navigate(ADMIN_ROUTE_PATHS.login, { replace: true });
     }
   };

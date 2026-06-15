@@ -93,7 +93,6 @@ export const memberHandlers = [
       message: '로그인되었습니다.',
       data: {
         accessToken: `mock-access-token-${account.memberId}`,
-        refreshToken: `mock-refresh-token-${account.memberId}`,
         member: {
           ...account,
           memberStatus: 'ACTIVE',
