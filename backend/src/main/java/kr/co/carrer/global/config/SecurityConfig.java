@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -99,6 +100,9 @@ public class SecurityConfig {
                     "/api/v1/user/members/recovery/password-token",
                     "/api/v1/user/members/recovery/reset-password"
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/user/job-notices", "/api/v1/user/job-notices/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
                 .requestMatchers(
                     "/api/v1/user/members/logout",
                     "/api/v1/user/members/me/status"
