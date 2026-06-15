@@ -21,28 +21,28 @@
 
 ## Phase 3 — Service
 
-- [ ] 비즈니스 로직이 Controller가 아니라 Service Layer에 위치한다.
-- [ ] Service가 인터페이스와 `impl` 구현체로 분리되어 있다.
-- [ ] `notice_status` 노출 정책과 북마크 중복 정책이 Service Layer에서 일관되게 적용된다.
-- [ ] 사용자 조회 서비스가 `notice_status = ACTIVE` 공고만 노출하도록 일관되게 처리한다.
-- [ ] 비로그인 목록/상세 조회 응답의 `bookmarked` 값이 항상 `false`다.
-- [ ] 로그인 목록/상세 조회 응답의 `bookmarked` 값이 현재 사용자 기준으로 계산된다.
-- [ ] 비즈니스 예외가 `CustomException(ErrorCode)` 또는 도메인 ErrorCode 매핑 방식으로 처리된다.
-- [ ] JobNotice 도메인 오류 코드 `JOB_NOTICE_NOT_FOUND`, `BOOKMARK_ALREADY_EXISTS`, `BOOKMARK_NOT_FOUND`가 구현과 문서에 반영되어 있다.
-- [ ] 공통 ErrorCode와 도메인 ErrorCode의 역할 분리가 유지된다.
+- [x] 비즈니스 로직이 Controller가 아니라 Service Layer에 위치한다.
+- [x] Service가 인터페이스와 `impl` 구현체로 분리되어 있다.
+- [x] `notice_status` 노출 정책과 북마크 중복 정책이 Service Layer에서 일관되게 적용된다.
+- [x] 사용자 조회 서비스가 `notice_status = ACTIVE` 공고만 노출하도록 일관되게 처리한다.
+- [x] 비로그인 목록/상세 조회 응답의 `bookmarked` 값이 항상 `false`다.
+- [x] 로그인 목록/상세 조회 응답의 `bookmarked` 값이 현재 사용자 기준으로 계산된다.
+- [x] 비즈니스 예외가 `CustomException(ErrorCode)` 또는 도메인 ErrorCode 매핑 방식으로 처리된다.
+- [x] JobNotice 도메인 오류 코드 `JOB_NOTICE_NOT_FOUND`, `BOOKMARK_ALREADY_EXISTS`, `BOOKMARK_NOT_FOUND`가 구현과 문서에 반영되어 있다.
+- [x] 공통 ErrorCode와 도메인 ErrorCode의 역할 분리가 유지된다.
 
 ## Phase 4 — API
 
-- [ ] `GET /api/v1/user/job-notices`가 구현되어 정상 응답을 반환한다.
-- [ ] `GET /api/v1/user/job-notices/{jobNoticeId}`가 구현되어 정상 응답을 반환한다.
-- [ ] `POST /api/v1/user/job-notices/{jobNoticeId}/bookmarks`가 구현되어 정상 응답을 반환한다.
-- [ ] `DELETE /api/v1/user/job-notices/{jobNoticeId}/bookmarks`가 구현되어 정상 응답을 반환한다.
-- [ ] 모든 성공 응답이 `ApiResponse<T>` 래퍼 형식을 사용한다.
-- [ ] 모든 성공 응답이 `success`, `message`, `data` 필드만 사용하고 `statusCode`를 포함하지 않는다.
-- [ ] 목록 조회 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 사용한다.
-- [ ] 외부 API 응답의 `page` 값이 1-based 계약으로 노출된다.
-- [ ] 상세 조회 및 북마크 API에 `page`, `size` Query Parameter가 노출되지 않는다.
-- [ ] 북마크 등록/해제 API의 권한 정책이 문서상 `USER`, 구현상 `ROLE_USER`와 일치한다.
+- [x] `GET /api/v1/user/job-notices`가 구현되어 정상 응답을 반환한다.
+- [x] `GET /api/v1/user/job-notices/{jobNoticeId}`가 구현되어 정상 응답을 반환한다.
+- [x] `POST /api/v1/user/job-notices/{jobNoticeId}/bookmarks`가 구현되어 정상 응답을 반환한다.
+- [x] `DELETE /api/v1/user/job-notices/{jobNoticeId}/bookmarks`가 구현되어 정상 응답을 반환한다.
+- [x] 모든 성공 응답이 `ApiResponse<T>` 래퍼 형식을 사용한다.
+- [x] 모든 성공 응답이 `success`, `message`, `data` 필드만 사용하고 `statusCode`를 포함하지 않는다.
+- [x] 목록 조회 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 사용한다.
+- [x] 외부 API 응답의 `page` 값이 1-based 계약으로 노출된다.
+- [x] 상세 조회 및 북마크 API에 `page`, `size` Query Parameter가 노출되지 않는다.
+- [x] 북마크 등록/해제 API의 권한 정책이 문서상 `USER`, 구현상 `ROLE_USER`와 일치한다.
 
 ## Phase 5 — Documentation
 

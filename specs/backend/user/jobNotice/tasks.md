@@ -27,25 +27,25 @@
 
 ## Phase 3 - Service
 
-- [ ] `UserJobNoticeService.java` 인터페이스를 작성한다.
-- [ ] `JobNoticeDTO.ResponseList` DTO를 작성한다.
-- [ ] `JobNoticeDTO.ResponseDetail` DTO를 작성한다.
-- [ ] `JobNoticeDTO.ResponseBookmark` DTO를 작성한다.
-- [ ] 목록 조회 서비스 로직을 구현한다.
-- [ ] 상세 조회 서비스 로직을 구현한다.
-- [ ] 로그인 사용자 북마크 여부 계산 로직을 구현한다.
-- [ ] 북마크 등록 서비스 로직을 구현한다.
-- [ ] 북마크 해제 서비스 로직을 구현한다.
-- [ ] `JobNoticeErrorCode.java`를 작성한다.
-- [ ] JobNotice 도메인 예외 매핑 정책을 정리한다.
+- [x] `UserJobNoticeService.java` 인터페이스를 작성한다.
+- [x] `JobNoticeDTO.ResponseList` DTO를 작성한다.
+- [x] `JobNoticeDTO.ResponseDetail` DTO를 작성한다.
+- [x] `JobNoticeDTO.ResponseBookmark` DTO를 작성한다.
+- [x] 목록 조회 서비스 로직을 구현한다.
+- [x] 상세 조회 서비스 로직을 구현한다.
+- [x] 로그인 사용자 북마크 여부 계산 로직을 구현한다.
+- [x] 북마크 등록 서비스 로직을 구현한다.
+- [x] 북마크 해제 서비스 로직을 구현한다.
+- [x] `JobNoticeErrorCode.java`를 작성한다.
+- [x] JobNotice 도메인 예외 매핑 정책을 정리한다.
 
 ## Phase 4 - API
 
-- [ ] `GET /api/v1/user/job-notices` Controller 엔드포인트를 작성한다.
-- [ ] `GET /api/v1/user/job-notices/{jobNoticeId}` Controller 엔드포인트를 작성한다.
-- [ ] `POST /api/v1/user/job-notices/{jobNoticeId}/bookmarks` Controller 엔드포인트를 작성한다.
-- [ ] `DELETE /api/v1/user/job-notices/{jobNoticeId}/bookmarks` Controller 엔드포인트를 작성한다.
-- [ ] `ROLE_USER` 권한 정책과 Optional 인증 정책을 API 계층에 반영한다.
+- [x] `GET /api/v1/user/job-notices` Controller 엔드포인트를 작성한다.
+- [x] `GET /api/v1/user/job-notices/{jobNoticeId}` Controller 엔드포인트를 작성한다.
+- [x] `POST /api/v1/user/job-notices/{jobNoticeId}/bookmarks` Controller 엔드포인트를 작성한다.
+- [x] `DELETE /api/v1/user/job-notices/{jobNoticeId}/bookmarks` Controller 엔드포인트를 작성한다.
+- [x] `ROLE_USER` 권한 정책과 Optional 인증 정책을 API 계층에 반영한다.
 
 ## Phase 5 - Documentation
 

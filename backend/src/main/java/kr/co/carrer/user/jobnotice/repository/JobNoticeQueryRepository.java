@@ -1,21 +1,21 @@
 package kr.co.carrer.user.jobnotice.repository;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import kr.co.carrer.user.jobnotice.entity.JobNotice;
 import kr.co.carrer.user.jobnotice.entity.QJobNotice;
-import kr.co.carrer.user.jobnotice.type.JobNoticeStatus;
 import kr.co.carrer.user.jobnotice.type.CareerLevel;
 import kr.co.carrer.user.jobnotice.type.CompanySize;
+import kr.co.carrer.user.jobnotice.type.JobNoticeStatus;
 import kr.co.carrer.user.jobnotice.type.JobType;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
