@@ -107,7 +107,7 @@ class InterviewSessionServiceImplTest {
             InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
             InterviewMessage message = InterviewMessage.createAnswer(sessionId, "답변 내용입니다.");
 
-            given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.of(session));
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
             given(messageRepository.save(any())).willReturn(message);
 
             InterviewDTO.ResponseSubmitTextAnswer result = interviewSessionService.submitTextAnswer(memberId, sessionId, dto);
@@ -117,13 +117,30 @@ class InterviewSessionServiceImplTest {
         }
 
         @Test
-        @DisplayName("타인 세션에 접근하면 INTERVIEW_SESSION_FORBIDDEN(403)을 던진다")
-        void submitTextAnswer_forbidden_throwsException() {
+        @DisplayName("존재하지 않는 세션 ID면 INTERVIEW_SESSION_NOT_FOUND(404)을 던진다")
+        void submitTextAnswer_notFound_throwsException() {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
             InterviewDTO.RequestSubmitTextAnswer dto = new InterviewDTO.RequestSubmitTextAnswer(1, "답변");
 
-            given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.empty());
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> interviewSessionService.submitTextAnswer(memberId, sessionId, dto))
+                    .isInstanceOf(CustomException.class)
+                    .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                            .isEqualTo(InterviewErrorCode.INTERVIEW_SESSION_NOT_FOUND));
+        }
+
+        @Test
+        @DisplayName("타인 세션에 접근하면 INTERVIEW_SESSION_FORBIDDEN(403)을 던진다")
+        void submitTextAnswer_forbidden_throwsException() {
+            UUID memberId = UUID.randomUUID();
+            UUID otherMemberId = UUID.randomUUID();
+            UUID sessionId = UUID.randomUUID();
+            InterviewDTO.RequestSubmitTextAnswer dto = new InterviewDTO.RequestSubmitTextAnswer(1, "답변");
+            InterviewSession session = InterviewSession.create(otherMemberId, null, SessionType.TEXT, null, null);
+
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
 
             assertThatThrownBy(() -> interviewSessionService.submitTextAnswer(memberId, sessionId, dto))
                     .isInstanceOf(CustomException.class)
@@ -140,7 +157,7 @@ class InterviewSessionServiceImplTest {
             InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
             session.complete(java.time.ZonedDateTime.now());
 
-            given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.of(session));
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
 
             assertThatThrownBy(() -> interviewSessionService.submitTextAnswer(memberId, sessionId, dto))
                     .isInstanceOf(CustomException.class)
@@ -160,12 +177,26 @@ class InterviewSessionServiceImplTest {
             UUID sessionId = UUID.randomUUID();
             InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
 
-            given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.of(session));
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
 
             InterviewDTO.ResponseEndSession result = interviewSessionService.endSession(memberId, sessionId);
 
             assertThat(result.sessionStatus()).isEqualTo("COMPLETED");
             assertThat(result.endedAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 세션 ID면 INTERVIEW_SESSION_NOT_FOUND(404)을 던진다")
+        void endSession_notFound_throwsException() {
+            UUID memberId = UUID.randomUUID();
+            UUID sessionId = UUID.randomUUID();
+
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> interviewSessionService.endSession(memberId, sessionId))
+                    .isInstanceOf(CustomException.class)
+                    .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                            .isEqualTo(InterviewErrorCode.INTERVIEW_SESSION_NOT_FOUND));
         }
 
         @Test
@@ -176,7 +207,7 @@ class InterviewSessionServiceImplTest {
             InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
             session.complete(java.time.ZonedDateTime.now());
 
-            given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.of(session));
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
 
             assertThatThrownBy(() -> interviewSessionService.endSession(memberId, sessionId))
                     .isInstanceOf(CustomException.class)
@@ -190,9 +221,11 @@ class InterviewSessionServiceImplTest {
         @DisplayName("타인 세션 종료 시도 시 INTERVIEW_SESSION_FORBIDDEN(403)을 던진다")
         void endSession_forbidden_throwsException() {
             UUID memberId = UUID.randomUUID();
+            UUID otherMemberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
+            InterviewSession session = InterviewSession.create(otherMemberId, null, SessionType.TEXT, null, null);
 
-            given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.empty());
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
 
             assertThatThrownBy(() -> interviewSessionService.endSession(memberId, sessionId))
                     .isInstanceOf(CustomException.class)
