@@ -187,14 +187,19 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
     private boolean isBookmarkUniqueConstraintViolation(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
+            String message = current.getMessage();
             if (current instanceof SQLException sqlException) {
                 if ("23505".equals(sqlException.getSQLState())
-                        || (sqlException.getMessage() != null && sqlException.getMessage().contains("uq_bookmark"))) {
+                        || (message != null && message.contains("uq_bookmark"))) {
                     return true;
                 }
             }
-            if (current.getMessage() != null && current.getMessage().contains("uq_bookmark")) {
-                return true;
+            if (message != null) {
+                String normalizedMessage = message.toLowerCase();
+                if (normalizedMessage.contains("uq_bookmark")
+                        || (normalizedMessage.contains("duplicate") && normalizedMessage.contains("bookmark"))) {
+                    return true;
+                }
             }
             current = current.getCause();
         }
