@@ -9,7 +9,7 @@ function getMeasureContext(): CanvasRenderingContext2D | null {
   return measureContext;
 }
 
-export function applyInputFill(input: HTMLInputElement) {
+export function applyInputFill(input: HTMLInputElement): void {
   const text = input.type === 'password' ? '•'.repeat(input.value.length) : input.value;
   if (!text) {
     input.style.removeProperty('background-image');
@@ -25,6 +25,6 @@ export function applyInputFill(input: HTMLInputElement) {
   input.style.backgroundImage = `linear-gradient(to right, ${FILL_COLOR} 0px, ${FILL_COLOR} ${end}px, transparent ${end}px)`;
 }
 
-export function clearInputFill(input: HTMLInputElement) {
+export function clearInputFill(input: HTMLInputElement): void {
   input.style.removeProperty('background-image');
 }
