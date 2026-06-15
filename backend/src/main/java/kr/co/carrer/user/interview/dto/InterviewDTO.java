@@ -58,7 +58,7 @@ public class InterviewDTO {
             Integer questionOrder,
 
             @NotBlank
-            @Schema(description = "텍스트 답변 본문")
+            @Schema(description = "텍스트 답변 본문", example = "저는 Java와 Spring Boot를 주로 사용합니다.")
             String messageContent
     ) {}
 
