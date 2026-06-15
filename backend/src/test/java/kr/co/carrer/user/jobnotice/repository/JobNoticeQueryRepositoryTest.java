@@ -1,6 +1,5 @@
 package kr.co.carrer.user.jobnotice.repository;
 
-import jakarta.persistence.EntityManager;
 import kr.co.carrer.support.PostgreSqlTestContainerSupport;
 import kr.co.carrer.user.jobnotice.entity.JobNotice;
 import kr.co.carrer.user.jobnotice.type.CareerLevel;
@@ -16,6 +15,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -50,11 +50,11 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
     private JobNoticeQueryRepository jobNoticeQueryRepository;
 
     @Autowired
-    private EntityManager entityManager;
+    private TestEntityManager testEntityManager;
 
     @BeforeEach
     void setUp() {
-        jobNoticeQueryRepository = new JobNoticeQueryRepository(entityManager);
+        jobNoticeQueryRepository = new JobNoticeQueryRepository(testEntityManager.getEntityManager());
     }
 
     @Test
@@ -458,7 +458,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
             setField(jobNotice, "createdAt", createdAt);
             setField(jobNotice, "updatedAt", createdAt);
 
-            entityManager.persist(jobNotice);
+            testEntityManager.persist(jobNotice);
             setField(jobNotice, "createdAt", createdAt);
             setField(jobNotice, "updatedAt", createdAt);
         } catch (Exception exception) {
@@ -467,8 +467,8 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
     }
 
     private void flushAndClear() {
-        entityManager.flush();
-        entityManager.clear();
+        testEntityManager.flush();
+        testEntityManager.clear();
     }
 
     private void setField(Object target, String fieldName, Object value) throws Exception {
