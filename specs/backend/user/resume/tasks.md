@@ -132,8 +132,15 @@
   - `Thread.sleep` 금지 — `TaskSchedulerConfig`(`ThreadPoolTaskScheduler`) 빈 등록
   - `scheduler.schedule()` 반환값 `ScheduledFuture` 보관 (`ConcurrentHashMap` 관리)
   - 클라이언트가 먼저 연결을 닫으면 `cancelGracePeriod()` → `ScheduledFuture.cancel(true)`
-  - 30초 만료 시 `SESSION_CLOSE` 메시지 전송 후 Map에서 제거
-- [x] STOMP 구독 토픽 `/topic/resume/{documentId}/status` 동작 확인
+  - 30초 만료 시 `WebSocketSessionRegistry.closeSession()` → `session.close(CloseStatus.NORMAL)` (Close 1000, SESSION_CLOSE 메시지 전송 방식 미사용)
+- [x] 클라이언트 연결 종료 감지: `ApplicationListener<SessionDisconnectEvent>` 구현 → `sessionDocumentMap`(ConcurrentHashMap)으로 sessionId→documentId 역추적 → `cancelGracePeriod()` 호출
+- [x] `WebSocketSessionRegistry` 구현 — sessionId→WebSocketSession, documentId→sessionId 양방향 매핑 관리
+- [x] `ResumeWebSocketHandlerDecoratorFactory` 구현 — `afterConnectionEstablished` / `afterConnectionClosed` 에서 registry 등록/해제
+- [x] `WebSocketConfig`에 `WebSocketHandlerDecoratorFactory` 등록 + `/queue` 브로커 prefix 추가 + userDestinationPrefix("/user") 설정
+- [x] SUBSCRIBE 직후 Snapshot을 구독한 세션에만 `convertAndSendToUser`로 `/user/queue/resume/{documentId}/status` 전송 (전체 브로드캐스트 금지)
+- [x] `WebSocketConfig.setAllowedOriginPatterns()` → 환경 변수 `WEBSOCKET_ALLOWED_ORIGINS` 주입 (기본값 `*`)
+- [x] 30초 만료 시 `WebSocketSessionRegistry.closeSession(documentId)` 호출 → `session.close(CloseStatus.NORMAL)` (Close 1000)
+- [x] STOMP 구독 토픽 이중 구조 확정: `/topic/resume/{documentId}/status` (브로드캐스트) + `/user/queue/resume/{documentId}/status` (개인 Snapshot)
 
 ---
 

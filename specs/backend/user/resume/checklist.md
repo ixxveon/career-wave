@@ -95,23 +95,35 @@
 
 ---
 
-## WebSocket (STOMP `/ws/user/resume` → `/topic/resume/{documentId}/status`)
+## WebSocket (STOMP `/ws/user/resume`)
 
-- [ ] `WebSocketHandshakeInterceptor.beforeHandshake()`에서 `?token=` 쿼리 파라미터 JWT를 검증하고 `memberId`를 세션에 저장한다
-- [ ] `StompChannelInterceptor`가 CONNECT 프레임 수신 시 세션 `memberId`를 재검증한다
+구독 토픽 이중 구조:
+- `①` `/topic/resume/{documentId}/status` — Webhook 수신 후 브로드캐스트
+- `②` `/user/queue/resume/{documentId}/status` — SUBSCRIBE 직후 1회 개인 Snapshot (재연결 대응)
+
+클라이언트는 두 토픽을 **모두 구독**해야 분석 완료 브로드캐스트와 초기 Snapshot을 함께 수신할 수 있다.
+
+- [ ] `ResumeHandshakeInterceptor.beforeHandshake()`에서 `?token=` 쿼리 파라미터 JWT를 검증하고 `memberId`를 세션에 저장한다
+- [ ] `ResumeStompChannelInterceptor`가 CONNECT 프레임 수신 시 세션 `memberId`를 재검증한다
 - [ ] 토큰 없음·만료 시 연결이 거부된다
 - [ ] SUBSCRIBE 프레임 수신 시 구독 토픽의 `documentId` 소유권을 `DocumentRepository`로 DB 재조회하여 검증한다
 - [ ] 본인 소유가 아닌 `documentId` 구독 시 Close 1008로 연결이 즉시 거부된다 (IDOR 방지 필수)
-- [ ] 구독 실패(`@MessageExceptionHandler`) 시 클라이언트에게 에러 메시지를 발송하도록 구현되어 있다
-- [ ] 연결 성공 직후 해당 `documentId`의 현재 `status`를 1회 브로드캐스트한다 (재연결 대응)
-- [ ] Webhook 수신 후 `SimpMessagingTemplate`으로 해당 토픽에 메시지가 정상 발송된다
+- [ ] SUBSCRIBE 직후 현재 `document.status` Snapshot을 `convertAndSendToUser` + `SESSION_ID_HEADER`로 구독 세션에만 전송한다 — `/user/queue/resume/{documentId}/status` 목적지 (전체 브로드캐스트 금지)
+- [ ] `sessionDocumentMap` (ConcurrentHashMap)에 sessionId → documentId 매핑을 저장한다 (`SessionDisconnectEvent` 역추적 용도)
+- [ ] `WebSocketSessionRegistry`에 documentId → sessionId 매핑을 등록한다 (`bindDocumentToSession`)
+- [ ] `ApplicationListener<SessionDisconnectEvent>` 구현: 연결 종료 시 `sessionDocumentMap`에서 documentId를 역추적하여 `cancelGracePeriod()` 호출
+- [ ] `ResumeWebSocketHandlerDecoratorFactory` 구현: `afterConnectionEstablished` / `afterConnectionClosed`에서 `WebSocketSessionRegistry` 등록/해제
+- [ ] `WebSocketConfig`에 `WebSocketHandlerDecoratorFactory` 등록, `/queue` 브로커 prefix 추가, `userDestinationPrefix("/user")` 설정
+- [ ] `WebSocketConfig.setAllowedOriginPatterns()` 값이 환경 변수 `WEBSOCKET_ALLOWED_ORIGINS`에서 주입된다 (기본값 `*`)
+- [ ] Webhook 수신 후 `@TransactionalEventListener(AFTER_COMMIT)`에서 `convertAndSend("/topic/resume/{documentId}/status", ...)` 브로드캐스트
 - [ ] `COMPLETED` / `FAILED` 전송 후 즉시 끊지 않고 Grace Period(30초) 타이머가 시작된다
-- [ ] Grace Period 타이머는 `TaskScheduler`(또는 `ScheduledExecutorService`)로 구현한다 (`Thread.sleep` 금지)
-- [ ] 클라이언트가 먼저 연결을 닫으면 `ScheduledFuture.cancel(true)`로 타이머가 취소되고 즉시 세션이 해제된다
-- [ ] 30초 만료 시 서버가 Close 1000(정상 종료)으로 세션을 정리한다 (에러 코드 사용 금지)
+- [ ] Grace Period 타이머는 `TaskScheduler`(`ThreadPoolTaskScheduler`)로 구현한다 (`Thread.sleep` 금지)
+- [ ] 클라이언트가 먼저 연결을 닫으면 `SessionDisconnectEvent` → `ScheduledFuture.cancel(true)`로 타이머가 취소된다
+- [ ] 30초 만료 시 `WebSocketSessionRegistry.closeSession(documentId)` → `session.close(CloseStatus.NORMAL)` (Close 1000, 에러 코드 사용 금지)
+- [ ] `SESSION_CLOSE` 상태값을 WebSocket 메시지 payload로 전송하지 않는다 (spec 외 값)
 - [ ] 세션 종료 후 `TaskScheduler` 리소스가 누수 없이 해제되는지 확인한다
 - [ ] STOMP Heartbeat 설정: `registry.enableSimpleBroker().setHeartbeatValue(...)` 설정을 통해 비정상적으로 끊긴 클라이언트 연결을 즉시 감지하고 좀비 세션이 서버 메모리를 점유하지 않도록 한다
-- [ ] 메시지 형식(`status`, `message`, `progress`)이 프론트 스펙과 일치한다
+- [ ] 메시지 payload `status` 값이 `ANALYZING` / `COMPLETED` / `FAILED` 중 하나이며 프론트 스펙과 일치한다
 
 ---
 
