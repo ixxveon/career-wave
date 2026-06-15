@@ -10,20 +10,21 @@ import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.time.ZoneId;
 
 import java.net.URI;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
+    private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
+
     private final UserMemberRepository memberRepository;
     private final PersonalProfileRepository personalProfileRepository;
 
     @Override
-    // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
     public DashboardDTO.ProfileResponse getProfile(UUID memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
@@ -37,11 +38,10 @@ public class DashboardServiceImpl implements DashboardService {
                 member.getRoleType(),
                 member.getMemberStatus(),
                 member.getSubscriptionStatus(),
-                member.getCreatedAt().atZone(ZoneId.systemDefault()));
+                member.getCreatedAt().atZone(SERVICE_ZONE_ID));
     }
 
     @Override
-    // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
     public DashboardDTO.GithubResponse getGithubProfile(UUID memberId) {
         memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
@@ -52,7 +52,6 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
     public DashboardDTO.ProfileResponse updateProfile(
             UUID memberId,
             DashboardDTO.ProfileUpdateRequest request) {
@@ -76,7 +75,7 @@ public class DashboardServiceImpl implements DashboardService {
                 member.getRoleType(),
                 member.getMemberStatus(),
                 member.getSubscriptionStatus(),
-                member.getCreatedAt().atZone(ZoneId.systemDefault()));
+                member.getCreatedAt().atZone(SERVICE_ZONE_ID));
     }
 
     private DashboardDTO.GithubResponse toGithubResponse(PersonalProfile personalProfile) {

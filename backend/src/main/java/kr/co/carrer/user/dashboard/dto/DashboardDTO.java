@@ -1,7 +1,6 @@
 package kr.co.carrer.user.dashboard.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import kr.co.carrer.user.member.type.MemberStatus;
@@ -45,10 +44,13 @@ public class DashboardDTO {
 
         @Schema(description = "사용자 프로필 수정 요청")
         public record ProfileUpdateRequest(
-                        @Schema(description = "이름") @NotBlank @Size(max = 50) String name,
 
-                        @Schema(description = "휴대폰 번호") @NotBlank @Pattern(regexp = "^01[0-9]-?\\d{3,4}-?\\d{4}$") String phone,
+                        @Schema(description = "이름", example = "홍길동") @Size(min = 2, max = 20) String name,
 
-                        @Schema(description = "GitHub URL") @Size(max = 300) @Pattern(regexp = "^https://(www\\.)?github\\.com/[A-Za-z0-9-]+/?$") String githubUrl) {
+                        @Schema(description = "휴대폰 번호", example = "01012345678") @Pattern(regexp = "^01[0-9]{8,9}$", message = "휴대폰 번호 형식이 올바르지 않습니다.") String phone,
+
+                        @Schema(description = "GitHub URL", example = "https://github.com/octocat") @Size(max = 300) @Pattern(regexp = "^https://(www\\.)?github\\.com/[A-Za-z0-9-]+/?$", message = "GitHub URL 형식이 올바르지 않습니다.") String githubUrl
+
+        ) {
         }
 }

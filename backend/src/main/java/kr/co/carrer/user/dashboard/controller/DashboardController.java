@@ -2,6 +2,8 @@ package kr.co.carrer.user.dashboard.controller;
 
 import jakarta.validation.Valid;
 import kr.co.carrer.auth.principal.AuthPrincipal;
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.dashboard.docs.DashboardControllerDocs;
 import kr.co.carrer.user.dashboard.dto.DashboardDTO;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 
 import java.util.UUID;
 
@@ -28,7 +31,7 @@ public class DashboardController implements DashboardControllerDocs {
         @GetMapping("/profile")
         public ResponseEntity<ApiResponse<DashboardDTO.ProfileResponse>> getProfile(
                         @AuthenticationPrincipal AuthPrincipal principal) {
-                UUID memberId = UUID.fromString(principal.getId());
+                UUID memberId = getMemberId(principal);
 
                 return ResponseEntity.ok(
                                 ApiResponse.ok(
@@ -39,7 +42,7 @@ public class DashboardController implements DashboardControllerDocs {
         @GetMapping("/github")
         public ResponseEntity<ApiResponse<DashboardDTO.GithubResponse>> getGithubProfile(
                         @AuthenticationPrincipal AuthPrincipal principal) {
-                UUID memberId = UUID.fromString(principal.getId());
+                UUID memberId = getMemberId(principal);
 
                 return ResponseEntity.ok(
                                 ApiResponse.ok(
@@ -51,10 +54,18 @@ public class DashboardController implements DashboardControllerDocs {
         public ResponseEntity<ApiResponse<DashboardDTO.ProfileResponse>> updateProfile(
                         @AuthenticationPrincipal AuthPrincipal principal,
                         @RequestBody @Valid DashboardDTO.ProfileUpdateRequest request) {
-                UUID memberId = UUID.fromString(principal.getId());
+                UUID memberId = getMemberId(principal);
 
                 return ResponseEntity.ok(
                                 ApiResponse.ok(
                                                 dashboardService.updateProfile(memberId, request)));
+        }
+
+        private UUID getMemberId(AuthPrincipal principal) {
+                try {
+                        return UUID.fromString(principal.getId());
+                } catch (IllegalArgumentException e) {
+                        throw new CustomException(ErrorCode.BAD_REQUEST);
+                }
         }
 }
