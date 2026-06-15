@@ -1,5 +1,7 @@
 package kr.co.carrer.user.support.controller;
 
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.support.docs.UserFaqControllerDocs;
 import kr.co.carrer.user.support.dto.SupportDTO;
@@ -28,6 +30,11 @@ public class UserFaqController implements UserFaqControllerDocs {
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {
-        return SupportControllerHelper.parseEnum(enumClass, value);
+        if (value == null || value.isBlank()) return null;
+        try {
+            return Enum.valueOf(enumClass, value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
     }
 }
