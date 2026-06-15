@@ -7,12 +7,11 @@ import kr.co.carrer.user.resume.dto.ResumeDTO;
 import kr.co.carrer.user.resume.entity.CoverLetterContent;
 import kr.co.carrer.user.resume.entity.CoverLetterMeta;
 import kr.co.carrer.user.resume.entity.Document;
-
+import kr.co.carrer.user.resume.event.DocumentAnalysisTriggerEvent;
 import kr.co.carrer.user.resume.repository.CoverLetterContentRepository;
 import kr.co.carrer.user.resume.repository.CoverLetterMetaRepository;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
 import kr.co.carrer.user.resume.service.DocumentStatusService;
-import kr.co.carrer.user.resume.service.FastApiClient;
 import kr.co.carrer.user.resume.service.FileValidator;
 import kr.co.carrer.user.resume.type.FileType;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.UUID;
@@ -39,8 +39,8 @@ class ResumeServiceCoverLetterTest {
     @Mock private CoverLetterContentRepository coverLetterContentRepository;
     @Mock private FileValidator fileValidator;
     @Mock private S3Uploader s3Uploader;
-    @Mock private FastApiClient fastApiClient;
     @Mock private DocumentStatusService documentStatusService;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ResumeServiceImpl resumeService;
@@ -71,7 +71,8 @@ class ResumeServiceCoverLetterTest {
         verify(documentRepository).save(any(Document.class));
         verify(coverLetterMetaRepository).save(any(CoverLetterMeta.class));
         verify(coverLetterContentRepository).saveAll(anyList());
-        verify(fastApiClient).triggerAnalysis(any(), eq(FileType.COVER_LETTER.name()), any());
+        verify(eventPublisher).publishEvent(argThat((DocumentAnalysisTriggerEvent e) ->
+                e.fileType().equals(FileType.COVER_LETTER.name())));
     }
 
     @Test
