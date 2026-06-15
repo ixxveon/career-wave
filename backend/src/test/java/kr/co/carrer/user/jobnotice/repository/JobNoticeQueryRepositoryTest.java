@@ -28,7 +28,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 @Import(JobNoticeQueryRepository.class)
-@TestPropertySource(properties = "spring.sql.init.mode=never")
+@TestPropertySource(properties = {
+        "spring.sql.init.mode=never",
+        "spring.main.allow-bean-definition-overriding=true"
+})
 class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
 
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
