@@ -280,7 +280,7 @@ POST /api/v1/user/inquiries
 
 | ErrorCode | HTTP | 발생 시점 |
 |---|---|---|
-| `USER_SUPPORT_NOTICE_NOT_FOUND` | 404 | 공지사항 조회 실패 또는 is_visible=false |
+| `NOTICE_NOT_FOUND` | 404 | 공지사항 조회 실패 또는 is_visible=false |
 | `UNAUTHORIZED` | 401 | 문의 목록·접수 시 미인증 |
 | `BAD_REQUEST` | 400 | page < 1, size < 1 |
 | `INVALID_INQUIRY_CONTENT` | 400 | 문의 내용 10자 미만 (Phase 2) |
