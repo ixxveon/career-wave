@@ -92,7 +92,9 @@ user/support/
 │   └── SupportDTO.java
 ├── repository/
 │   ├── UserNoticeRepository.java       ← user 전용 (admin/cs 참조 금지)
+│   ├── UserNoticeQueryRepository.java  ← Native Query (동적 필터·페이지네이션)
 │   ├── UserFaqRepository.java
+│   ├── UserFaqQueryRepository.java     ← Native Query (동적 필터)
 │   └── UserInquiryRepository.java
 └── service/
     ├── UserNoticeService.java
@@ -208,7 +210,7 @@ GET /api/v1/user/notices/{noticeId}
 GET /api/v1/user/faqs?category=&keyword=
       → ApiResponse<List<SupportDTO.FaqItem>>
       페이지네이션 없음, 전체 목록 반환
-      keyword: question OR answer LIKE 검색
+      keyword: question OR answer ILIKE 검색
       created_at ASC 정렬
 ```
 
@@ -234,8 +236,8 @@ POST /api/v1/user/inquiries
 #### getNotices(category, keyword, page, size)
 - `is_visible = true` 필터 필수
 - `is_pinned = true` 건 우선 정렬 후 `created_at DESC`
-- `keyword` → `title LIKE %keyword%`
-- `page < 1` → `BAD_REQUEST(400)` 예외
+- `keyword` → `title ILIKE %keyword%` OR `content ILIKE %keyword%`
+- `page < 1` 또는 `size < 1` → `BAD_REQUEST(400)` 예외
 - `size > 100` → 100으로 clamp
 - page 1-based → 0-based 변환
 - 반환: `PaginationResponse<SupportDTO.NoticeList>`
@@ -252,7 +254,7 @@ POST /api/v1/user/inquiries
 
 #### getFaqs(category, keyword)
 - `category` null이면 전체
-- `keyword` → `question LIKE %keyword%` OR `answer LIKE %keyword%`
+- `keyword` → `question ILIKE %keyword%` OR `answer ILIKE %keyword%`
 - `created_at ASC` 정렬 (FAQ는 오래된 순)
 - 반환: `List<SupportDTO.FaqItem>`
 
@@ -280,7 +282,8 @@ POST /api/v1/user/inquiries
 |---|---|---|
 | `USER_SUPPORT_NOTICE_NOT_FOUND` | 404 | 공지사항 조회 실패 또는 is_visible=false |
 | `UNAUTHORIZED` | 401 | 문의 목록·접수 시 미인증 |
-| `BAD_REQUEST` | 400 | page < 1, 문의 내용 유효성 실패 |
+| `BAD_REQUEST` | 400 | page < 1, size < 1 |
+| `INVALID_INQUIRY_CONTENT` | 400 | 문의 내용 10자 미만 (Phase 2) |
 
 > ErrorCode는 `user/support/exception/UserSupportErrorCode.java`에 정의한다.
 
