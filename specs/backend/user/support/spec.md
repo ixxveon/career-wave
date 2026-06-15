@@ -93,7 +93,6 @@ user/support/
 ├── repository/
 │   ├── UserNoticeRepository.java       ← user 전용 (admin/cs 참조 금지)
 │   ├── UserNoticeQueryRepository.java  ← Native Query (동적 필터·페이지네이션)
-│   ├── UserFaqRepository.java
 │   ├── UserFaqQueryRepository.java     ← Native Query (동적 필터)
 │   └── UserInquiryRepository.java
 └── service/
