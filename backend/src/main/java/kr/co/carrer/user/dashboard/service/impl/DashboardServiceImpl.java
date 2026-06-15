@@ -33,13 +33,11 @@ public class DashboardServiceImpl implements DashboardService {
                 member.getLoginId(),
                 member.getEmail(),
                 member.getName(),
-                // TODO: user.member.Member에 phone 필드 또는 프로필 연락처 저장 위치 확정 후 매핑
-                null,
+                member.getPhone(),
                 member.getRoleType(),
                 member.getMemberStatus(),
                 member.getSubscriptionStatus(),
-                member.getCreatedAt().atZone(ZoneId.systemDefault())
-        );
+                member.getCreatedAt().atZone(ZoneId.systemDefault()));
     }
 
     @Override
@@ -53,6 +51,34 @@ public class DashboardServiceImpl implements DashboardService {
                 .orElseGet(() -> new DashboardDTO.GithubResponse(null, null, false));
     }
 
+    @Override
+    // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
+    public DashboardDTO.ProfileResponse updateProfile(
+            UUID memberId,
+            DashboardDTO.ProfileUpdateRequest request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        member.updateProfile(request.name(), request.phone());
+
+        PersonalProfile personalProfile = personalProfileRepository.findByMemberId(memberId)
+                .orElseGet(() -> PersonalProfile.create(memberId));
+
+        personalProfile.updateGithubUrl(request.githubUrl());
+        personalProfileRepository.save(personalProfile);
+
+        return new DashboardDTO.ProfileResponse(
+                member.getMemberId(),
+                member.getLoginId(),
+                member.getEmail(),
+                member.getName(),
+                member.getPhone(),
+                member.getRoleType(),
+                member.getMemberStatus(),
+                member.getSubscriptionStatus(),
+                member.getCreatedAt().atZone(ZoneId.systemDefault()));
+    }
+
     private DashboardDTO.GithubResponse toGithubResponse(PersonalProfile personalProfile) {
         String githubUrl = personalProfile.getGithubUrl();
         boolean linked = githubUrl != null && !githubUrl.isBlank();
@@ -60,8 +86,7 @@ public class DashboardServiceImpl implements DashboardService {
         return new DashboardDTO.GithubResponse(
                 extractGithubId(githubUrl),
                 githubUrl,
-                linked
-        );
+                linked);
     }
 
     private String extractGithubId(String githubUrl) {
