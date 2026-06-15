@@ -1,5 +1,6 @@
 import { CheckCircle2, LockKeyhole } from 'lucide-react';
 import { formatRemaining } from '../../../utils/user/member/recoveryView';
+import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
 
 interface RecoveryPasswordFieldsProps {
   password: string;
@@ -33,7 +34,8 @@ function RecoveryPasswordFields({
             type="password"
             placeholder="비밀번호(8~64자의 영문, 숫자, 특수문자 포함)"
             value={password}
-            onChange={(event) => onPasswordChange(event.target.value)}
+            onChange={(event) => { onPasswordChange(event.target.value); applyInputFill(event.target); }}
+            onBlur={(event) => clearInputFill(event.target)}
           />
         </span>
         {passwordError && <p className="cw-register-error">{passwordError}</p>}
@@ -47,7 +49,8 @@ function RecoveryPasswordFields({
             type="password"
             placeholder="비밀번호 재입력"
             value={passwordConfirm}
-            onChange={(event) => onPasswordConfirmChange(event.target.value)}
+            onChange={(event) => { onPasswordConfirmChange(event.target.value); applyInputFill(event.target); }}
+            onBlur={(event) => clearInputFill(event.target)}
           />
         </span>
         {passwordConfirmError && <p className="cw-register-error">{passwordConfirmError}</p>}
