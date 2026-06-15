@@ -44,9 +44,11 @@ public class UserNoticeQueryRepository {
             params.add(category.name());
         }
         if (keyword != null && !keyword.isBlank()) {
-            sql.append(" AND (title ILIKE ?").append(idx).append(" OR content ILIKE ?").append(idx).append(")");
+            sql.append(" AND (title ILIKE ?").append(idx)
+               .append(" OR content ILIKE ?").append(idx + 1).append(")");
             params.add("%" + keyword + "%");
-            idx++;
+            params.add("%" + keyword + "%");
+            idx += 2;
         }
 
         sql.append(" ORDER BY is_pinned DESC, created_at DESC LIMIT ?").append(idx).append(" OFFSET ?").append(idx + 1);
@@ -82,9 +84,11 @@ public class UserNoticeQueryRepository {
             params.add(category.name());
         }
         if (keyword != null && !keyword.isBlank()) {
-            sql.append(" AND (title ILIKE ?").append(idx).append(" OR content ILIKE ?").append(idx).append(")");
+            sql.append(" AND (title ILIKE ?").append(idx)
+               .append(" OR content ILIKE ?").append(idx + 1).append(")");
             params.add("%" + keyword + "%");
-            idx++;
+            params.add("%" + keyword + "%");
+            idx += 2;
         }
 
         Query query = em.createNativeQuery(sql.toString());
