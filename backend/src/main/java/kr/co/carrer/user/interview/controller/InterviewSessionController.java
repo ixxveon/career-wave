@@ -45,10 +45,10 @@ public class InterviewSessionController implements InterviewSessionControllerDoc
     }
 
     @Override
-    @PostMapping("/{sessionId}/answer/voice")
+    @PostMapping(value = "/{sessionId}/answer/voice", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<InterviewDTO.ResponseSubmitVoiceChunk>> submitVoiceChunk(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable String sessionId,
+            @PathVariable UUID sessionId,
             @RequestParam MultipartFile audioChunk,
             @RequestParam int questionOrder,
             @RequestParam int chunkIndex,
@@ -56,7 +56,7 @@ public class InterviewSessionController implements InterviewSessionControllerDoc
     ) {
         UUID memberId = UUID.fromString(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(
-                interviewSessionService.submitVoiceChunk(memberId, UUID.fromString(sessionId), audioChunk, questionOrder, chunkIndex, isFinal)
+                interviewSessionService.submitVoiceChunk(memberId, sessionId, audioChunk, questionOrder, chunkIndex, isFinal)
         ));
     }
 
