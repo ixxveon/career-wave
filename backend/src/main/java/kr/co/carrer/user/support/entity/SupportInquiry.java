@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -51,11 +52,14 @@ public class SupportInquiry {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
+    private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
+
     @PrePersist
     private void prePersist() {
         this.inquiryStatus = InquiryStatus.PENDING;
-        this.createdAt = ZonedDateTime.now();
-        this.updatedAt = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
+        this.createdAt = now;
+        this.updatedAt = now;
     }
 
     public static SupportInquiry create(UUID memberId, InquiryCategory category, String title, String content) {
