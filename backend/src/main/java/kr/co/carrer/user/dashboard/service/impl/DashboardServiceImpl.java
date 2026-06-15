@@ -58,14 +58,18 @@ public class DashboardServiceImpl implements DashboardService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        member.updateProfile(request.name(), request.phone());
+        String name = request.name() != null ? request.name() : member.getName();
+        String phone = request.phone() != null ? request.phone() : member.getPhone();
 
-        PersonalProfile personalProfile = personalProfileRepository.findByMemberId(memberId)
-                .orElseGet(() -> PersonalProfile.create(memberId));
+        member.updateProfile(name, phone);
 
-        personalProfile.updateGithubUrl(request.githubUrl());
-        personalProfileRepository.save(personalProfile);
+        if (request.githubUrl() != null) {
+            PersonalProfile personalProfile = personalProfileRepository.findByMemberId(memberId)
+                    .orElseGet(() -> PersonalProfile.create(memberId));
 
+            personalProfile.updateGithubUrl(request.githubUrl());
+            personalProfileRepository.save(personalProfile);
+        }
         return new DashboardDTO.ProfileResponse(
                 member.getMemberId(),
                 member.getLoginId(),
