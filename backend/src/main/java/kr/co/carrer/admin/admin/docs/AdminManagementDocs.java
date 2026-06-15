@@ -25,6 +25,7 @@ public interface AdminManagementDocs {
     String UNAUTHORIZED_EXAMPLE = "{\"success\":false,\"statusCode\":401,\"message\":\"인증이 필요합니다.\",\"code\":\"AUTH_UNAUTHENTICATED\",\"data\":null}";
     String FORBIDDEN_EXAMPLE = "{\"success\":false,\"statusCode\":403,\"message\":\"접근 권한이 없습니다.\",\"code\":\"AUTH_FORBIDDEN\",\"data\":null}";
     String BAD_REQUEST_BODY_EXAMPLE = "{\"success\":false,\"statusCode\":400,\"message\":\"요청 본문을 읽을 수 없습니다. JSON 형식 및 필드값을 확인해주세요.\",\"data\":null}";
+    String BAD_REQUEST_QUERY_EXAMPLE = "{\"success\":false,\"statusCode\":400,\"message\":\"요청 파라미터가 올바르지 않습니다.\",\"data\":null}";
 
     @Operation(summary = "관리자 관리 KPI 요약 조회")
     @ApiResponses({
@@ -37,7 +38,7 @@ public interface AdminManagementDocs {
     @Operation(summary = "관리자 계정 목록 조회")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "관리자 계정 목록 조회 성공"),
-        @ApiResponse(responseCode = "400", description = "잘못된 필터 값", content = @Content(examples = @ExampleObject(value = BAD_REQUEST_BODY_EXAMPLE))),
+        @ApiResponse(responseCode = "400", description = "잘못된 필터 값", content = @Content(examples = @ExampleObject(value = BAD_REQUEST_QUERY_EXAMPLE))),
         @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(examples = @ExampleObject(value = UNAUTHORIZED_EXAMPLE))),
         @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(examples = @ExampleObject(value = FORBIDDEN_EXAMPLE)))
     })
