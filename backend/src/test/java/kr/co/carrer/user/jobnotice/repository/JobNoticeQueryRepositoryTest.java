@@ -442,6 +442,8 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
             setField(jobNotice, "updatedAt", createdAt);
 
             entityManager.persist(jobNotice);
+            setField(jobNotice, "createdAt", createdAt);
+            setField(jobNotice, "updatedAt", createdAt);
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }

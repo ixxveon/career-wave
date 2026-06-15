@@ -3,6 +3,7 @@ package kr.co.carrer.user.jobnotice.controller;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
 import kr.co.carrer.user.jobnotice.dto.JobNoticeDTO;
 import kr.co.carrer.user.jobnotice.service.UserJobNoticeService;
@@ -40,6 +41,9 @@ class UserJobNoticeControllerTest {
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private TokenBlacklistStore tokenBlacklistStore;
 
     @Test
     @DisplayName("목록 조회 응답은 ApiResponse 래퍼와 1-based 페이지 형식을 유지한다")

@@ -233,7 +233,7 @@ public class JobNoticeQueryRepository {
     private BooleanExpression arrayContainsIgnoreCase(com.querydsl.core.types.dsl.ArrayPath<String[], String> arrayPath, String value) {
         String escapedValue = escapeLikePattern(value);
         return Expressions.booleanTemplate(
-                "exists (select 1 from unnest({0}) as element where lower(element) like lower({1}) escape '\\')",
+                "exists (select 1 from unnest({0}) as element(item) where lower(item) like lower({1}) escape '\\')",
                 arrayPath,
                 "%" + escapedValue + "%"
         );
