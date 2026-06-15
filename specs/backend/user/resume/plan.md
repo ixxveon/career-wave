@@ -30,7 +30,7 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 
 | 항목 | 상태 | 비고 |
 |------|------|------|
-| S3 업로드 방식 | **팀 결정 필요** | 아래 옵션 비교 참고 |
+| S3 업로드 방식 | **확정** | 서버 경유 방식 (`Spring → S3`) |
 | `feedback_text` 저장 방식 | **확정** | `TEXT` 컬럼에 JSON 직렬화, `ObjectMapper`로 역직렬화 |
 | Webhook 내부 보안 방식 | **확정** | `X-Internal-Secret` 헤더, 환경 변수 `WEBHOOK_SECRET` |
 | WebSocket 구현 방식 | **확정** | STOMP (`spring-boot-starter-websocket`) |
@@ -64,11 +64,11 @@ WebSocket으로 실시간 상태를 전달하며, 최종 결과를 REST API로 �
 | 환경 변수 | 설명 | 담당 | 예시 |
 |-----------|------|------|------|
 | `AWS_S3_BUCKET_NAME` | 파일 업로드 대상 S3 버킷명 | 인프라 팀 요청 | `careerwave-files` |
-| `AWS_ACCESS_KEY_ID` | S3 접근 권한 Access Key | 인프라 팀 요청 | `AKIA...` |
-| `AWS_SECRET_ACCESS_KEY` | S3 접근 권한 Secret Key | 인프라 팀 요청 | `wJalrXUtn...` |
 | `AWS_REGION` | S3 버킷 리전 | 인프라 팀 요청 | `ap-northeast-2` |
 | `FASTAPI_BASE_URL` | Spring → FastAPI 분석 요청 내부 URL | 본인 직접 설정 | `http://localhost:8000` |
 | `WEBHOOK_SECRET` | FastAPI → Spring Webhook 인증 키 | 본인 직접 설정 | `(임의 생성 비밀값)` |
+| `AWS_S3_MOCK_UPLOAD` | `true` 설정 시 S3 실제 업로드 없이 가짜 URL 반환 (로컬 개발용) | 본인 직접 설정 | `true` \| `false` (기본값 `false`) |
+| `WEBSOCKET_ALLOWED_ORIGINS` | WebSocket CORS 허용 출처 (기본값 `*`, 프로덕션에서는 명시 필요) | 인프라 팀 요청 | `https://careerwave.co.kr` |
 
 ---
 

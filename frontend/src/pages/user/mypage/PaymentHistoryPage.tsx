@@ -12,6 +12,7 @@ function PaymentHistoryPage() {
     periodFilter,
     page,
     cancelTarget,
+    cancelSuccess,
     successMessage,
     activeSubscriptions,
     payments,
@@ -27,6 +28,7 @@ function PaymentHistoryPage() {
     setPage,
     setCancelTarget,
     handleCancelConfirm,
+    handleCancelClose,
   } = usePaymentHistoryStatus(PAYMENT_HISTORY_PERIOD.TWELVE_MONTHS);
 
   return (
@@ -73,8 +75,9 @@ function PaymentHistoryPage() {
         <CancelSubscriptionModal
           productName={cancelTarget.name}
           isPending={isCanceling}
+          isSuccess={cancelSuccess}
           onConfirm={handleCancelConfirm}
-          onClose={() => setCancelTarget(null)}
+          onClose={handleCancelClose}
         />
       )}
     </>

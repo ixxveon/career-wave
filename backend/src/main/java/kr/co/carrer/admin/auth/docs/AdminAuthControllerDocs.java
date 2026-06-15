@@ -30,7 +30,7 @@ public interface AdminAuthControllerDocs {
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":423,\"message\":\"계정이 잠겼습니다.\",\"code\":\"AUTH_ACCOUNT_LOCKED\"}")))
     })
-    ResponseEntity<?> login(@Valid @RequestBody AdminLoginDto.Request request, HttpServletResponse response);
+    ResponseEntity<?> login(@Valid @RequestBody AdminLoginDto.Request request, HttpServletRequest httpRequest, HttpServletResponse response);
 
     @Operation(summary = "관리자 토큰 재발급",
             description = "HttpOnly Cookie의 refreshToken으로 새 accessToken 발급. " +
@@ -44,10 +44,10 @@ public interface AdminAuthControllerDocs {
     ResponseEntity<?> refresh(HttpServletRequest request, HttpServletResponse response);
 
     @Operation(summary = "관리자 로그아웃",
-            description = "refresh Redis key 삭제 + access token jti blacklist 등록.")
+            description = "refresh Redis key 삭제 + access token jti blacklist 등록 + refreshToken cookie 만료(Max-Age=0).")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
             @ApiResponse(responseCode = "401", description = "유효한 access token 없음")
     })
-    ResponseEntity<?> logout(HttpServletRequest request);
+    ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response);
 }

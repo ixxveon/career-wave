@@ -134,10 +134,7 @@ export function useLoginForm() {
         return;
       }
 
-      authSession.setTokens({
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-      });
+      authSession.setTokens({ accessToken: response.accessToken });
       authSession.setMember(response.member);
 
       // ?next= 파라미터가 있고, 안전한 내부 경로이며, 회원 유형과 호환될 때만 해당 경로로 이동

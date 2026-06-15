@@ -50,7 +50,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
 
                     // blacklist 등록된 jti(로그아웃된 토큰) → SecurityContext 비워둠 → EntryPoint 401
-                    if (tokenBlacklistStore.isBlacklisted(jti)) {
+                    // Redis 장애 시: 관리자 보수적 거부, 사용자 허용 (spec 장애 정책)
+                    boolean adminConservative = accountType == AccountType.ADMIN;
+                    if (tokenBlacklistStore.isBlacklisted(jti, adminConservative)) {
                         request.setAttribute("jwtException", "Token has been revoked (logout)");
                         filterChain.doFilter(request, response);
                         return;
