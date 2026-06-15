@@ -4,7 +4,6 @@ import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.support.dto.SupportDTO;
-import kr.co.carrer.user.support.entity.SupportNotice;
 import kr.co.carrer.user.support.exception.UserSupportErrorCode;
 import kr.co.carrer.user.support.repository.UserNoticeQueryRepository;
 import kr.co.carrer.user.support.repository.UserNoticeRepository;
@@ -27,6 +26,7 @@ public class UserNoticeServiceImpl implements UserNoticeService {
     @Transactional(readOnly = true)
     public PaginationResponse<SupportDTO.NoticeList> getNotices(NoticeCategory category, String keyword, int page, int size) {
         if (page < 1) throw new CustomException(ErrorCode.BAD_REQUEST);
+        if (size < 1) throw new CustomException(ErrorCode.BAD_REQUEST);
         size = Math.min(size, 100);
         int offset = (page - 1) * size;
 
@@ -41,7 +41,7 @@ public class UserNoticeServiceImpl implements UserNoticeService {
         SupportDTO.NoticeDetail detail = noticeQueryRepository.findDetail(noticeId)
             .orElseThrow(() -> new CustomException(UserSupportErrorCode.NOTICE_NOT_FOUND));
 
-        noticeRepository.findById(noticeId).ifPresent(SupportNotice::incrementViewCount);
+        noticeRepository.incrementViewCountById(noticeId);
 
         return detail;
     }
