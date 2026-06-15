@@ -53,7 +53,7 @@ class InterviewSessionServiceVoiceTest {
             InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null);
             MultipartFile audioChunk = new MockMultipartFile("audioChunk", "chunk.webm", "audio/webm", new byte[1024]);
 
-            given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.of(session));
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
 
             InterviewDTO.ResponseSubmitVoiceChunk result = interviewSessionService.submitVoiceChunk(memberId, sessionId, audioChunk, 1, 0, false);
 
@@ -70,7 +70,7 @@ class InterviewSessionServiceVoiceTest {
             InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null);
             MultipartFile audioChunk = new MockMultipartFile("audioChunk", "chunk.mp4", "audio/mp4", new byte[512]);
 
-            given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.of(session));
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
 
             InterviewDTO.ResponseSubmitVoiceChunk result = interviewSessionService.submitVoiceChunk(memberId, sessionId, audioChunk, 1, 1, true);
 
@@ -106,13 +106,30 @@ class InterviewSessionServiceVoiceTest {
         }
 
         @Test
-        @DisplayName("타인 세션에 접근하면 INTERVIEW_SESSION_FORBIDDEN(403)을 던진다")
-        void submitVoiceChunk_forbidden_throwsException() {
+        @DisplayName("존재하지 않는 세션 ID면 INTERVIEW_SESSION_NOT_FOUND(404)을 던진다")
+        void submitVoiceChunk_notFound_throwsException() {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
             MultipartFile audioChunk = new MockMultipartFile("audioChunk", "chunk.webm", "audio/webm", new byte[1024]);
 
-            given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.empty());
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> interviewSessionService.submitVoiceChunk(memberId, sessionId, audioChunk, 1, 0, false))
+                    .isInstanceOf(CustomException.class)
+                    .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                            .isEqualTo(InterviewErrorCode.INTERVIEW_SESSION_NOT_FOUND));
+        }
+
+        @Test
+        @DisplayName("타인 세션에 접근하면 INTERVIEW_SESSION_FORBIDDEN(403)을 던진다")
+        void submitVoiceChunk_forbidden_throwsException() {
+            UUID memberId = UUID.randomUUID();
+            UUID otherMemberId = UUID.randomUUID();
+            UUID sessionId = UUID.randomUUID();
+            InterviewSession session = InterviewSession.create(otherMemberId, null, SessionType.VOICE, null, null);
+            MultipartFile audioChunk = new MockMultipartFile("audioChunk", "chunk.webm", "audio/webm", new byte[1024]);
+
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
 
             assertThatThrownBy(() -> interviewSessionService.submitVoiceChunk(memberId, sessionId, audioChunk, 1, 0, false))
                     .isInstanceOf(CustomException.class)
@@ -129,7 +146,7 @@ class InterviewSessionServiceVoiceTest {
             session.complete(java.time.ZonedDateTime.now());
             MultipartFile audioChunk = new MockMultipartFile("audioChunk", "chunk.webm", "audio/webm", new byte[1024]);
 
-            given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.of(session));
+            given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
 
             assertThatThrownBy(() -> interviewSessionService.submitVoiceChunk(memberId, sessionId, audioChunk, 1, 0, false))
                     .isInstanceOf(CustomException.class)

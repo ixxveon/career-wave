@@ -118,8 +118,11 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
 
     @Transactional(readOnly = true)
     protected void validateSessionOwnership(UUID memberId, UUID sessionId) {
-        InterviewSession session = sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)
-                .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN));
+        InterviewSession session = sessionRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_NOT_FOUND));
+        if (!session.getMemberId().equals(memberId)) {
+            throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN);
+        }
         if (!session.isInProgress()) {
             throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_ALREADY_ENDED);
         }
