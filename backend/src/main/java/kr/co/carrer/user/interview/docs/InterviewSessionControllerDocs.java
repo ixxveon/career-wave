@@ -55,7 +55,7 @@ public interface InterviewSessionControllerDocs {
     })
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<InterviewDTO.ResponseSubmitTextAnswer>> submitTextAnswer(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
-            @Parameter(description = "면접 세션 ID (UUID)") @PathVariable String sessionId,
+            @Parameter(description = "면접 세션 ID (UUID)") @PathVariable UUID sessionId,
             @RequestBody InterviewDTO.RequestSubmitTextAnswer dto
     );
 
@@ -75,6 +75,6 @@ public interface InterviewSessionControllerDocs {
     })
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<InterviewDTO.ResponseEndSession>> endSession(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
-            @Parameter(description = "면접 세션 ID (UUID)") @PathVariable String sessionId
+            @Parameter(description = "면접 세션 ID (UUID)") @PathVariable UUID sessionId
     );
 }

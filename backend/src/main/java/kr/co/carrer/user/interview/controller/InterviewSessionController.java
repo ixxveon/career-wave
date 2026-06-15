@@ -34,12 +34,12 @@ public class InterviewSessionController implements InterviewSessionControllerDoc
     @PostMapping("/{sessionId}/answer/text")
     public ResponseEntity<ApiResponse<InterviewDTO.ResponseSubmitTextAnswer>> submitTextAnswer(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable String sessionId,
+            @PathVariable UUID sessionId,
             @RequestBody @Valid InterviewDTO.RequestSubmitTextAnswer dto
     ) {
         UUID memberId = UUID.fromString(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(
-                interviewSessionService.submitTextAnswer(memberId, UUID.fromString(sessionId), dto)
+                interviewSessionService.submitTextAnswer(memberId, sessionId, dto)
         ));
     }
 
@@ -47,11 +47,11 @@ public class InterviewSessionController implements InterviewSessionControllerDoc
     @PostMapping("/{sessionId}/end")
     public ResponseEntity<ApiResponse<InterviewDTO.ResponseEndSession>> endSession(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable String sessionId
+            @PathVariable UUID sessionId
     ) {
         UUID memberId = UUID.fromString(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(
-                interviewSessionService.endSession(memberId, UUID.fromString(sessionId))
+                interviewSessionService.endSession(memberId, sessionId)
         ));
     }
 }
