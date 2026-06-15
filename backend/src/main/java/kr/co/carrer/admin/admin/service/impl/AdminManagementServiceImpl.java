@@ -119,6 +119,10 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new CustomException(AdminManagementErrorCode.ADMIN_NOT_FOUND));
 
+        if (admin.getAdminRole() == command.adminRole()) {
+            throw new CustomException(AdminManagementErrorCode.ADMIN_ROLE_ALREADY_ASSIGNED);
+        }
+
         admin.updateRole(command.adminRole());
         saveAuditLog(actorAdminId, "UPDATE_ADMIN_ROLE", TARGET_TYPE_ADMIN, admin.getAdminId(), ipAddress, SEVERITY_INFO);
         return toAdminDetailResult(admin);

@@ -12,6 +12,7 @@ public enum AdminManagementErrorCode implements BaseErrorCode {
     ADMIN_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 관리자 계정입니다."),
     ADMIN_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 중인 관리자 이메일입니다."),
     INVALID_ADMIN_ROLE(HttpStatus.BAD_REQUEST, "유효하지 않은 관리자 권한입니다."),
+    ADMIN_ROLE_ALREADY_ASSIGNED(HttpStatus.CONFLICT, "이미 동일한 관리자 권한입니다."),
     INVALID_ADMIN_STATUS(HttpStatus.BAD_REQUEST, "유효하지 않은 관리자 상태입니다."),
     ADMIN_ALREADY_LOCKED(HttpStatus.CONFLICT, "이미 잠금 상태인 관리자 계정입니다."),
     ADMIN_ALREADY_ACTIVE(HttpStatus.CONFLICT, "이미 활성 상태인 관리자 계정입니다."),
