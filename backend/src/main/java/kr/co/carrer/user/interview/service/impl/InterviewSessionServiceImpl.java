@@ -29,6 +29,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     private final InterviewFastApiClient fastApiClient;
 
     @Override
+    @Transactional
     public InterviewDTO.ResponseStartSession startSession(UUID memberId, InterviewDTO.RequestStartSession dto) {
         SessionType sessionType = parseSessionType(dto.sessionType());
         InterviewType interviewType = parseInterviewType(dto.interviewType());
@@ -64,6 +65,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     }
 
     @Override
+    @Transactional
     public InterviewDTO.ResponseSubmitTextAnswer submitTextAnswer(UUID memberId, UUID sessionId, InterviewDTO.RequestSubmitTextAnswer dto) {
         InterviewMessage saved = saveAnswerMessage(memberId, sessionId, dto);
         fastApiClient.triggerLlmPipeline(sessionId, dto.questionOrder());
@@ -84,6 +86,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     }
 
     @Override
+    @Transactional
     public InterviewDTO.ResponseEndSession endSession(UUID memberId, UUID sessionId) {
         ZonedDateTime endedAt = completeSession(memberId, sessionId);
         fastApiClient.triggerReportGeneration(sessionId);
