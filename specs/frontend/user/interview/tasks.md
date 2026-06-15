@@ -33,7 +33,7 @@
 
 ## Phase 3 — 실시간 WebSocket & LLM 흐름
 
-- [x] `useSpringWebSocket` 구현 — 면접 세션 생명주기 이벤트(READY, RUNNING, FINISHED) 핸들링 및 RECONNECTING·ERROR 상태 전이 처리 (재연결 횟수 제한, 복구 불가 시 ERROR 전이)
+- [x] `useSpringWebSocket` 구현 — STOMP 방식(`WS /ws/user/interview`, 구독: `/user/queue/interview/{sessionId}`) 면접 세션 생명주기 이벤트(READY, RUNNING, FINISHED) 핸들링 및 RECONNECTING·ERROR 상태 전이 처리 (재연결 횟수 제한, 복구 불가 시 ERROR 전이)
 - [x] `useFastApiWebSocket` 구현 — LLM 스트리밍 응답 수신 로직 및 연결 단절 시 RECONNECTING 상태 전이 처리
 - [x] `TTSPlayer` & `useTTSQueue` 구현 — 문항 단위 TTS 오디오 순차 재생 큐 및 재생 제어
 - [x] **스트리밍 타이핑 효과**: `requestAnimationFrame` 활용하여 텍스트 데이터 렌더링 최적화
