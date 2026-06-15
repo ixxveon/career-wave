@@ -56,7 +56,7 @@ COMPLETED (콜백 전송) 또는 FAILED (콜백 전송)
 
 - `X-Internal-Secret` 헤더 검증은 모든 `/internal/*` 라우터에서 공통으로 수행한다. 환경 변수 `WEBHOOK_SECRET`과 비교하며, 키를 코드에 하드코딩 금지.
 - FastAPI → Spring Webhook 콜백 시에도 동일한 `X-Internal-Secret` 헤더를 포함한다.
-- 모든 환경 변수는 `core/config.py`(또는 `core/settings.py`)를 통해 접근한다. 라우터·서비스 레이어에서 `os.environ` 직접 접근 금지.
+- 모든 환경 변수는 `core/config.py`를 통해 접근한다. 라우터·서비스 레이어에서 `os.environ` 직접 접근 금지.
 - OpenAI API 키, AWS 자격증명, WEBHOOK_SECRET은 절대 로그에 출력하지 않는다.
 - S3 파일 URL에서 직접 파일을 다운로드한다. 임시 파일은 분석 완료 후 즉시 삭제한다.
 - FastAPI는 내부 네트워크(Private Subnet)에서만 구동하며, 모든 외부 호출은 반드시 Spring Boot API Gateway를 통한다. 보안 그룹 또는 Nginx 레벨에서 외부 인터넷의 FastAPI 직접 접근을 원천 차단한다.

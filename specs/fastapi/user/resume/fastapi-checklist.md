@@ -17,7 +17,7 @@
 
 ## Convention 준수
 
-- [ ] FastAPI 코드가 `fastapi/user/` 하위에 위치하는가?
+- [ ] FastAPI 코드가 `fastapi/user/resume/` 하위에 위치하는가?
 - [ ] `api/` 라우터에 비즈니스 로직이 직접 작성되지 않았는가? (서비스 레이어 위임 여부)
 - [ ] 모든 환경 변수 접근이 `core/config.py` 설정 계층을 통해 이루어지는가?
 - [ ] `admin/` 패키지를 `user/` 에서 직접 참조하지 않는가?

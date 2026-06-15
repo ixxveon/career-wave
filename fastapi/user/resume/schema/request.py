@@ -8,6 +8,12 @@ class CoverLetterContentItem(BaseModel):
     question: str
     answer: str = Field(..., max_length=1000)
 
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{"order": 1, "question": "지원 동기를 작성하세요.", "answer": "저는 ..."}]
+        }
+    }
+
 
 class AnalyzeDocumentRequest(BaseModel):
     document_id: str = Field(..., alias="documentId")
@@ -22,7 +28,35 @@ class AnalyzeDocumentRequest(BaseModel):
     job: str | None = None
     content: list[CoverLetterContentItem] | None = None
 
-    model_config = {"populate_by_name": True}
+    model_config = {
+        "populate_by_name": True,
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "summary": "이력서 분석 요청",
+                    "value": {
+                        "documentId": "550e8400-e29b-41d4-a716-446655440000",
+                        "fileType": "RESUME",
+                        "fileUrl": "https://s3.bucket/resumes/2026-06-15/uuid.pdf",
+                        "originalName": "이력서_홍길동.pdf",
+                    },
+                },
+                {
+                    "summary": "자기소개서 분석 요청",
+                    "value": {
+                        "documentId": "660f9511-f30c-52e5-b827-557766551111",
+                        "fileType": "COVER_LETTER",
+                        "company": "카카오",
+                        "job": "백엔드 개발자",
+                        "content": [
+                            {"order": 1, "question": "지원 동기를 작성하세요.", "answer": "저는 ..."},
+                            {"order": 2, "question": "성장 과정을 작성하세요.", "answer": "..."},
+                        ],
+                    },
+                },
+            ]
+        },
+    }
 
     @model_validator(mode="after")
     def validate_by_file_type(self) -> "AnalyzeDocumentRequest":
