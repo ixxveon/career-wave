@@ -93,6 +93,21 @@ class InterviewSessionServiceVoiceTest {
         }
 
         @Test
+        @DisplayName("빈 파일이면 INTERVIEW_INVALID_AUDIO_FORMAT(400)을 던진다")
+        void submitVoiceChunk_emptyFile_throwsException() {
+            UUID memberId = UUID.randomUUID();
+            UUID sessionId = UUID.randomUUID();
+            MultipartFile audioChunk = new MockMultipartFile("audioChunk", "empty.webm", "audio/webm", new byte[0]);
+
+            assertThatThrownBy(() -> interviewSessionService.submitVoiceChunk(memberId, sessionId, audioChunk, 1, 0, false))
+                    .isInstanceOf(CustomException.class)
+                    .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                            .isEqualTo(InterviewErrorCode.INTERVIEW_INVALID_AUDIO_FORMAT));
+
+            verify(fastApiClient, never()).triggerSttPipeline(any(), any(), anyInt(), anyInt(), anyBoolean());
+        }
+
+        @Test
         @DisplayName("Content-Type이 null이면 INTERVIEW_INVALID_AUDIO_FORMAT(400)을 던진다")
         void submitVoiceChunk_nullContentType_throwsException() {
             UUID memberId = UUID.randomUUID();

@@ -129,6 +129,9 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     }
 
     private void validateAudioContentType(MultipartFile audioChunk) {
+        if (audioChunk.isEmpty()) {
+            throw new CustomException(InterviewErrorCode.INTERVIEW_INVALID_AUDIO_FORMAT);
+        }
         String contentType = audioChunk.getContentType();
         if (contentType == null || !ALLOWED_AUDIO_TYPES.contains(contentType)) {
             throw new CustomException(InterviewErrorCode.INTERVIEW_INVALID_AUDIO_FORMAT);
