@@ -1,5 +1,7 @@
 package kr.co.carrer.global.config;
 
+import kr.co.carrer.user.interview.websocket.InterviewHandshakeInterceptor;
+import kr.co.carrer.user.interview.websocket.InterviewStompChannelInterceptor;
 import kr.co.carrer.user.resume.websocket.ResumeHandshakeInterceptor;
 import kr.co.carrer.user.resume.websocket.ResumeStompChannelInterceptor;
 import kr.co.carrer.user.resume.websocket.ResumeWebSocketHandlerDecoratorFactory;
@@ -24,6 +26,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final ResumeHandshakeInterceptor resumeHandshakeInterceptor;
     private final ResumeStompChannelInterceptor resumeStompChannelInterceptor;
     private final ResumeWebSocketHandlerDecoratorFactory resumeWebSocketHandlerDecoratorFactory;
+    private final InterviewHandshakeInterceptor interviewHandshakeInterceptor;
+    private final InterviewStompChannelInterceptor interviewStompChannelInterceptor;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -37,6 +41,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws/user/resume")
                 .addInterceptors(resumeHandshakeInterceptor)
                 .setAllowedOriginPatterns(allowedOrigins);
+        registry.addEndpoint("/ws/user/interview")
+                .addInterceptors(interviewHandshakeInterceptor)
+                .setAllowedOriginPatterns(allowedOrigins);
     }
 
     @Override
@@ -46,6 +53,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(resumeStompChannelInterceptor);
+        registration.interceptors(resumeStompChannelInterceptor, interviewStompChannelInterceptor);
     }
 }

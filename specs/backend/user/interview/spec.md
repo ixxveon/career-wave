@@ -87,12 +87,16 @@
 user/interview/
 ├── controller/
 │   ├── InterviewSessionController.java
+│   ├── InterviewCallbackController.java
 │   ├── InterviewReportController.java
 │   └── InterviewHistoryController.java
 ├── service/
 │   ├── InterviewSessionService.java
+│   ├── InterviewCallbackService.java
 │   ├── InterviewReportService.java
 │   └── InterviewHistoryService.java
+├── scheduler/
+│   └── InterviewSessionScheduler.java       ← 24시간 타임아웃 배치
 ├── repository/
 │   ├── InterviewSessionRepository.java
 │   ├── InterviewMessageRepository.java
@@ -111,11 +115,17 @@ user/interview/
 │   └── MessageType.java
 ├── dto/
 │   └── InterviewDTO.java
+├── websocket/
+│   ├── InterviewHandshakeInterceptor.java   ← JWT 핸드셰이크 검증
+│   ├── InterviewStompChannelInterceptor.java ← SUBSCRIBE 소유권 검증 + 스냅샷 전송
+│   └── WebSocketMessage.java                ← STOMP 메시지 구조체
 └── docs/
     ├── InterviewSessionControllerDocs.java
     ├── InterviewReportControllerDocs.java
     └── InterviewHistoryControllerDocs.java
 ```
+
+> **WebSocket 설정**: `global/config/WebSocketConfig.java`에 resume STOMP 설정과 함께 통합. 별도 `InterviewWebSocketConfig`는 없다.
 
 ---
 
@@ -304,22 +314,33 @@ GET /api/v1/user/interview/history?page=0&size=10
 
 ---
 
-## WebSocket 채널 (Spring 담당)
+## WebSocket 채널 (Spring 담당, STOMP)
 
-### 연결
+> resume 도메인과 동일하게 STOMP 프로토콜을 사용한다. `WebSocketConfig`의 단일 STOMP 브로커에 통합되어 있다.
+
+### 연결 엔드포인트
 ```
-WS /ws/user/interview/{sessionId}/chat?token={accessToken}
+WS /ws/user/interview?token={accessToken}
 ```
-- 연결 시 `sessionId` 소유권 + 토큰 검증
-- 검증 실패 시 Close 1008
+- 핸드셰이크 시 `?token=` 쿼리 파라미터로 JWT 검증 → `memberId`를 세션 attributes에 저장
+- 검증 실패 시 연결 거부
+
+### 구독 경로
+```
+SUBSCRIBE /user/queue/interview/{sessionId}
+```
+- SUBSCRIBE 시 `sessionId` 소유권 검증 (IDOR 방지)
+- 소유권 불일치 시 `MessageDeliveryException` 발생 → 연결 종료
+- 구독 직후 현재 상태 스냅샷 1회 전송
+  - 리포트 완성 여부에 따라 `REPORT_READY` 또는 `SESSION_START` 메시지 전송
 
 ### Server → Client 메시지
 
 ```json
-{ "type": "SYSTEM",   "content": "면접이 시작되었습니다.",           "questionOrder": null, "subType": "SESSION_START",  "data": null,                                                               "errorCode": null }
-{ "type": "QUESTION", "content": "지원 동기를 말씀해 주세요.",       "questionOrder": 1,    "subType": null,             "data": null,                                                               "errorCode": null }
-{ "type": "SYSTEM",   "content": "리포트 생성이 완료되었습니다.",     "questionOrder": null, "subType": "REPORT_READY",   "data": { "reportUrl": "/api/v1/user/interview/sessions/{sessionId}/report" }, "errorCode": null }
-{ "type": "ERROR",    "content": "세션 처리 중 오류가 발생했습니다.", "questionOrder": null, "subType": null,             "data": null,                                                               "errorCode": "INTERVIEW_AI_PIPELINE_ERROR" }
+{ "type": "SYSTEM",   "content": "면접 세션이 시작되었습니다.",       "questionOrder": null, "subType": "SESSION_START",  "data": null,                                                               "errorCode": null }
+{ "type": "QUESTION", "content": "지원 동기를 말씀해 주세요.",         "questionOrder": 1,    "subType": null,             "data": null,                                                               "errorCode": null }
+{ "type": "SYSTEM",   "content": "리포트 생성이 완료되었습니다.",       "questionOrder": null, "subType": "REPORT_READY",   "data": { "reportUrl": "/api/v1/user/interview/sessions/{sessionId}/report" }, "errorCode": null }
+{ "type": "ERROR",    "content": "세션 처리 중 오류가 발생했습니다.",   "questionOrder": null, "subType": null,             "data": null,                                                               "errorCode": "INTERVIEW_AI_PIPELINE_ERROR" }
 ```
 
 ---

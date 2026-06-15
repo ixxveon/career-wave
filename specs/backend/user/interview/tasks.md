@@ -184,21 +184,22 @@
 
 ---
 
-## Phase 6 — WebSocket 구현
+## Phase 6 — WebSocket 구현 (STOMP)
 
-> **REPORT_READY 유실 방지**: 클라이언트 재연결 시 해당 세션의 `career_histories` 레코드 존재 여부를 DB에서 확인하여
-> 이미 완료 상태라면 `REPORT_READY` 메시지를 즉시 재전송한다.
+> resume 도메인과 동일하게 STOMP 프로토콜 사용. `global/config/WebSocketConfig.java`에 통합.
+> **REPORT_READY 유실 방지**: 구독(`SUBSCRIBE`) 시점에 피드백 존재 여부를 DB로 확인하여
+> 이미 완료 상태라면 `REPORT_READY`, 진행 중이면 `SESSION_START`를 스냅샷으로 즉시 전송한다.
 
-- [x] Spring WebSocket 핸들러 구현
-  - [x] 엔드포인트: `WS /ws/user/interview/{sessionId}/chat?token={accessToken}`
-  - [x] 연결 시 토큰 검증 — 실패 시 handshake 거절 (false 반환)
-  - [x] 연결 시 `sessionId` 소유권 검증 — 실패 시 handshake 거절
-  - [x] 재연결 시 피드백 존재 여부 확인 → `REPORT_READY` 즉시 재전송
-- [x] 메시지 전송 구현
+- [x] STOMP 엔드포인트 등록 — `WebSocketConfig`에 `/ws/user/interview` 추가
+- [x] `InterviewHandshakeInterceptor` — `?token=` JWT 검증 → `memberId`를 세션 attributes에 저장
+- [x] `InterviewStompChannelInterceptor` — STOMP 프레임 인터셉터
+  - [x] `CONNECT`: `memberId` 존재 여부 재검증
+  - [x] `SUBSCRIBE /user/queue/interview/{sessionId}`: sessionId 소유권 검증 (IDOR 방지)
+  - [x] 구독 직후 상태 스냅샷 전송 — `REPORT_READY` 또는 `SESSION_START`
+- [x] 메시지 전송 (`SimpMessagingTemplate`)
   - [x] `SESSION_START` — 세션 시작 안내
-  - [x] `REPORT_READY` — 리포트 생성 완료 알림
+  - [x] `REPORT_READY` — 리포트 생성 완료 알림 (`data.reportUrl` 포함)
   - [x] `ERROR` — 처리 오류 발생 시 클라이언트에 전송
-- [x] `InterviewWebSocketSessionRegistry` — ConcurrentHashMap 기반 세션 관리
 
 ---
 

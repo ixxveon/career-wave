@@ -26,7 +26,8 @@ public class InterviewSessionScheduler {
         ZonedDateTime recentCutoff = ZonedDateTime.now().minusMinutes(5);
 
         List<InterviewSession> timedOut = sessionRepository.findTimedOutSessions(cutoff, recentCutoff);
-        timedOut.forEach(InterviewSession::fail);
+        ZonedDateTime now = ZonedDateTime.now();
+        timedOut.forEach(session -> session.fail(now));
 
         if (!timedOut.isEmpty()) {
             log.info("Timed out sessions marked as FAILED: count={}", timedOut.size());
