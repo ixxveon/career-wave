@@ -34,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -60,6 +61,9 @@ class AdminLoginServiceImplTest {
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
         service = new AdminLoginServiceImpl(adminRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore);
+        // 잠금 카운트 테스트가 아닌 경우 MAX 미달로 설정
+        lenient().when(loginAttemptStore.increment(any(), anyString())).thenReturn(1L);
+        lenient().when(loginAttemptStore.getMaxAttempts()).thenReturn(5);
     }
 
     private Admin createAdmin(AdminStatus status) throws Exception {
