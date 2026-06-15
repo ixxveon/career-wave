@@ -233,7 +233,7 @@ public class JobNoticeQueryRepository {
     private BooleanExpression arrayContainsIgnoreCase(com.querydsl.core.types.dsl.ArrayPath<String[], String> arrayPath, String value) {
         String escapedValue = escapeLikePattern(value);
         return Expressions.booleanTemplate(
-                "exists (select 1 from unnest({0}) as element(item) where lower(item) like lower({1}) escape '\\')",
+                "lower(function('array_to_string', {0}, ',')) like lower({1}) escape '\\'",
                 arrayPath,
                 "%" + escapedValue + "%"
         );
@@ -248,7 +248,7 @@ public class JobNoticeQueryRepository {
 
     private BooleanExpression arrayContains(com.querydsl.core.types.dsl.ArrayPath<String[], String> arrayPath, String value) {
         return Expressions.booleanTemplate(
-                "array_position({0}, {1}) is not null",
+                "concat(',', function('array_to_string', {0}, ','), ',') like concat('%,', {1}, ',%')",
                 arrayPath,
                 value
         );
