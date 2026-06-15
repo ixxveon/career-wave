@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -18,6 +19,8 @@ import java.time.ZonedDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AuditLog {
+
+    private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -75,6 +78,6 @@ public class AuditLog {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = ZonedDateTime.now();
+        this.createdAt = ZonedDateTime.now(SERVICE_ZONE_ID);
     }
 }
