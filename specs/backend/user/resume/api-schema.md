@@ -476,9 +476,13 @@ X-Internal-Secret: {WEBHOOK_SECRET 환경 변수 값}
 
 ```
 STOMP 핸드셰이크 엔드포인트 : /ws/user/resume
-구독 토픽                  : /topic/resume/{documentId}/status
-서버 → 클라이언트          : SimpMessagingTemplate.convertAndSend(...)
+구독 토픽 ①               : /topic/resume/{documentId}/status       ← 브로드캐스트 (진행 상태, 완료/실패)
+구독 토픽 ②               : /user/queue/resume/{documentId}/status  ← 개인 Snapshot (SUBSCRIBE 직후 1회)
 ```
+
+> 클라이언트는 **두 토픽을 모두 구독**해야 합니다.  
+> - ① `topic`은 Webhook 수신 시 서버가 브로드캐스트하는 ANALYZING/COMPLETED/FAILED 메시지를 수신합니다.  
+> - ② `user/queue`는 SUBSCRIBE 직후 서버가 해당 세션에만 1회 전송하는 현재 상태 Snapshot을 수신합니다. 재연결 시 UI 즉시 복원에 활용합니다.
 
 ### 인증
 
@@ -493,20 +497,22 @@ WS /ws/user/resume?token={accessToken}
 ### Connection Lifecycle
 
 ```
-클라이언트                               서버
-   │                                     │
-   │── STOMP CONNECT ────────────────────▶│  HandshakeInterceptor: ?token 검증 + memberId 세션 저장
-   │                                     │  ChannelInterceptor: CONNECT 프레임 재검증
-   │── STOMP SUBSCRIBE ──────────────────▶│  documentId 소유권 DB 재조회 (IDOR 방지)
-   │◀─ {"status":"ANALYZING", ...} ──────│  ← SUBSCRIBE 직후 현재 상태 Snapshot 1회 발행
-   │                                     │    (재연결 시 UI 즉시 복원)
-   │◀─ {"status":"ANALYZING", ...} ──────│  분석 진행 중 (Webhook 수신마다 발행)
-   │                                     │
-   │◀─ {"status":"COMPLETED", ...} ──────│  완료 메시지 전송
-   │   (또는 "FAILED")                   │  ↓ Grace Period 시작 (30초, TaskScheduler)
-   │                                     │
-   │── (클라이언트 정상 종료) ────────────▶│  클라이언트가 먼저 끊으면 즉시 세션 해제, 타이머 취소
-   │   또는 Grace Period 만료            │  30초 경과 시 서버에서 Close 1000으로 세션 정리
+클라이언트                                          서버
+   │                                                │
+   │── STOMP CONNECT ─────────────────────────────▶│  HandshakeInterceptor: ?token 검증 + memberId 세션 저장
+   │                                                │  ChannelInterceptor: CONNECT 프레임 재검증
+   │── STOMP SUBSCRIBE /topic/resume/{id}/status ──▶│  documentId 소유권 DB 재조회 (IDOR 방지)
+   │── STOMP SUBSCRIBE /user/queue/resume/{id}/status ▶│
+   │                                                │
+   │◀─ [user/queue] {"status":"ANALYZING"} ─────────│  ← SUBSCRIBE 직후 현재 상태 Snapshot 1회 (세션 전용)
+   │                                                │    (재연결 시 UI 즉시 복원)
+   │◀─ [topic] {"status":"ANALYZING"} ──────────────│  분석 진행 중 (Webhook 수신마다 브로드캐스트)
+   │                                                │
+   │◀─ [topic] {"status":"COMPLETED"} ──────────────│  완료 메시지 브로드캐스트
+   │   (또는 "FAILED")                              │  ↓ Grace Period 시작 (30초, TaskScheduler)
+   │                                                │
+   │── (클라이언트 정상 종료) ───────────────────────▶│  즉시 세션 해제, 타이머 취소
+   │   또는 Grace Period 만료                       │  30초 경과 시 서버에서 Close 1000으로 세션 정리
 ```
 
 **Grace Period 정책 (30초)**

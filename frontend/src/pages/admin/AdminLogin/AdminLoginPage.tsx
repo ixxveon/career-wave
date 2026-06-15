@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminAuthApi, adminSession } from '../../../api/admin/adminAuthApi';
-import { ACCESS_TOKEN_STORAGE_KEY, ADMIN_ROLE } from '../../../constants/admin/authConstants';
+import { ADMIN_ROLE } from '../../../constants/admin/authConstants';
 import { ADMIN_DETAIL_ROLE, type AdminDetailRole } from '../../../constants/admin/adminRoleConstants';
 import '../../../styles/admin/admin-login.css';
 
@@ -31,13 +31,11 @@ function syncAdminToken(token: string, role?: AdminDetailRole) {
   if (role) {
     adminSession.setRole(role);
   }
-  window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
 }
 
 function clearAdminToken() {
   adminSession.clearToken();
   adminSession.clearRole();
-  window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
 }
 
 export default function AdminLoginPage() {

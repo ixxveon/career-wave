@@ -1,7 +1,5 @@
 # Career Wave Backend — 로컬 실행 가이드
 
-> PR #323 기준 작성 (2026-06-11)
-
 ---
 
 ## Step 1. Java 21 설정 (⚠️ 필수 — Java 25 사용 시 Gradle 빌드 실패)
@@ -31,7 +29,16 @@ java -version
 
 ---
 
-## Step 2. 환경변수 설정 (.env)
+## Step 2. 환경변수 설정
+
+이 프로젝트는 로컬에서 `.env` 파일을 두 개 사용합니다.
+
+- 루트 `.env`: Docker Compose가 PostgreSQL / Redis 컨테이너를 띄울 때 사용
+- `backend/.env`: Spring Boot 백엔드가 DB / Redis / JWT 설정을 읽을 때 사용
+
+### 2-1. 루트 `.env` 생성 (Docker Compose용)
+
+프로젝트 루트에서 실행합니다.
 
 ### Mac
 ```bash
@@ -43,12 +50,42 @@ cp .env.example .env
 copy .env.example .env
 ```
 
-`.env` 파일을 열어 아래 항목을 채웁니다.
+루트 `.env` 파일을 열어 아래 항목을 채웁니다.
+
+```env
+DB_NAME=careerwave
+DB_USER=careerwave
+DB_PASSWORD=your_password
+DB_PORT=5432
+REDIS_PORT=6379
+```
+
+### 2-2. `backend/.env` 생성 (Spring Boot용)
+
+`backend` 디렉터리에서 실행합니다.
+
+### Mac
+```bash
+cd backend
+cp .env.example .env
+```
+
+### Windows
+```cmd
+cd backend
+copy .env.example .env
+```
+
+`backend/.env` 파일을 열어 아래 항목을 채웁니다.
 
 ```env
 DB_URL=jdbc:postgresql://localhost:5432/careerwave
 DB_USERNAME=careerwave
 DB_PASSWORD=your_password
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
 
 JWT_USER_SECRET=local-user-secret-32bytes-or-more!!
 JWT_ADMIN_SECRET=local-admin-secret-32bytes-or-more!
@@ -58,7 +95,37 @@ JWT_ADMIN_SECRET=local-admin-secret-32bytes-or-more!
 
 ---
 
-## Step 3. Redis 설치 및 실행 (Phase 3 이후 필수)
+## Step 3. Docker Desktop으로 PostgreSQL + Redis 실행
+
+Docker Desktop을 켠 뒤 프로젝트 루트에서 아래 명령을 실행합니다.
+
+```bash
+docker compose up -d
+```
+
+실행 확인:
+
+```bash
+docker compose ps
+```
+
+정상이라면 아래 두 컨테이너가 `Up` 상태여야 합니다.
+
+```text
+careerwave-db
+careerwave-redis
+```
+
+Redis 연결 확인:
+
+```bash
+docker compose exec redis redis-cli ping
+# → PONG 이 나와야 정상
+```
+
+> Docker Compose 기본값은 PostgreSQL `localhost:5432`, Redis `localhost:6379`, Redis 비밀번호 없음입니다.
+
+### Docker를 사용하지 않는 경우 (Docker 사용 권장: Step 3. Redis 실행 내용 참고)
 
 ### Mac — Homebrew
 ```bash
@@ -81,7 +148,7 @@ redis-cli ping
    redis-cli ping
    ```
 
-> `.env` 파일의 `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`를 서버 설정에 맞게 채웁니다.  
+> `backend/.env` 파일의 `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`를 서버 설정에 맞게 채웁니다.  
 > 로컬 기본값은 `localhost:6379`, 비밀번호 없음입니다.
 
 ---
