@@ -12,6 +12,7 @@ import kr.co.carrer.user.interview.dto.InterviewDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Interview Session", description = "AI 면접 세션 API")
