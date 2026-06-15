@@ -54,6 +54,7 @@ public class AdminLoginServiceImpl implements AdminLoginService {
             if (count >= loginAttemptStore.getMaxAttempts()) {
                 admin.lockAccount();
                 loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
+                throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
             }
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }

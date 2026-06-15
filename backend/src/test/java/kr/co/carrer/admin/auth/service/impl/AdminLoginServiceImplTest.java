@@ -139,7 +139,7 @@ class AdminLoginServiceImplTest {
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
         assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
+                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_ACCOUNT_LOCKED);
 
         assertThat(admin.getStatus()).isEqualTo(AdminStatus.LOCKED);
         verify(loginAttemptStore).clear(AccountType.ADMIN, "admin@test.com");
