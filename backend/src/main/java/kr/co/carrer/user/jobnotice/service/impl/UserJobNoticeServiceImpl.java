@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -121,7 +122,10 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
             Bookmark bookmark = bookmarkRepository.save(Bookmark.of(memberId, jobNoticeId));
             return new JobNoticeDTO.ResponseBookmark(bookmark.getJobNoticeId(), true);
         } catch (DataIntegrityViolationException exception) {
-            throw new CustomException(JobNoticeErrorCode.BOOKMARK_ALREADY_EXISTS);
+            if (isBookmarkUniqueConstraintViolation(exception)) {
+                throw new CustomException(JobNoticeErrorCode.BOOKMARK_ALREADY_EXISTS);
+            }
+            throw exception;
         }
     }
 
@@ -178,6 +182,28 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
             return false;
         }
         return bookmarkRepository.existsByMemberIdAndJobNoticeId(memberId, jobNoticeId);
+    }
+
+    private boolean isBookmarkUniqueConstraintViolation(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            String message = current.getMessage();
+            if (current instanceof SQLException sqlException) {
+                if ("23505".equals(sqlException.getSQLState())
+                        || (message != null && message.contains("uq_bookmark"))) {
+                    return true;
+                }
+            }
+            if (message != null) {
+                String normalizedMessage = message.toLowerCase();
+                if (normalizedMessage.contains("uq_bookmark")
+                        || (normalizedMessage.contains("duplicate") && normalizedMessage.contains("bookmark"))) {
+                    return true;
+                }
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private List<String> toList(String[] values) {

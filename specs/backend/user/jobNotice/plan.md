@@ -38,4 +38,4 @@ global/
 - [x] Phase 3: Service — 공개 상태 필터링, Optional 인증 응답 계산, 북마크 비즈니스 규칙을 서비스 계층에 구현한다.
 - [x] Phase 4: API — 사용자 JobNotice 조회/북마크 엔드포인트와 `ROLE_USER` 권한 정책을 API 계층에 반영한다.
 - [x] Phase 5: Documentation — Swagger docs 인터페이스와 스펙 문서를 최종 API 계약 기준으로 정렬한다.
-- [ ] Phase 6: Test — 공개 노출 규칙, 북마크 예외 처리, `ApiResponse<T>`, 1-based 페이지네이션 계약을 검증한다.
+- [x] Phase 6: Test — 공개 노출 규칙, 북마크 예외 처리, `ApiResponse<T>`, 1-based 페이지네이션 계약을 검증한다.
