@@ -308,17 +308,18 @@ FastAPI가 `FeedbackDetail` 구조에 새 필드를 추가해도 Spring Boot는 
 
 ```text
 fastapi/user/
-├── api/
-│   └── resume_router.py        POST /internal/user/resume/analyze 라우터
-├── schema/
-│   ├── request.py              AnalyzeResumeRequest, AnalyzeCoverLetterRequest (Pydantic)
-│   └── response.py             TriggerAcceptedResponse, WebhookCallbackPayload (Pydantic)
-├── service/
-│   ├── resume_service.py       분석 오케스트레이션 (파싱 → AI → 콜백)
-│   ├── file_parser.py          S3 다운로드 + 텍스트 추출 (pdfplumber / python-docx)
-│   └── webhook_client.py       Spring Boot Webhook 콜백 HTTP 클라이언트
-└── prompts/
-    └── resume_prompts.py       이력서·자기소개서 분석 프롬프트 템플릿
+└── resume/
+    ├── api/
+    │   └── resume_router.py        POST /internal/user/resume/analyze 라우터
+    ├── schema/
+    │   ├── request.py              AnalyzeDocumentRequest (Pydantic)
+    │   └── response.py             TriggerAcceptedResponse (Pydantic)
+    ├── service/
+    │   ├── resume_service.py       분석 오케스트레이션 (파싱 → AI → 콜백)
+    │   ├── file_parser.py          S3 다운로드 + 텍스트 추출 (pdfplumber / python-docx)
+    │   └── webhook_client.py       Spring Boot Webhook 콜백 HTTP 클라이언트
+    └── prompts/
+        └── resume_prompts.py       이력서·자기소개서 분석 프롬프트 템플릿
 
 fastapi/core/
 └── config.py                   환경 변수 로딩 (Settings 클래스)
