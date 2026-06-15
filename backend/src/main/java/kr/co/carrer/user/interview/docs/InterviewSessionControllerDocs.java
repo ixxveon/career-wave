@@ -23,7 +23,7 @@ public interface InterviewSessionControllerDocs {
             @ApiResponse(responseCode = "200", description = "세션 생성 성공"),
             @ApiResponse(responseCode = "400", description = "유효하지 않은 sessionType",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":400,"message":"유효하지 않은 세션 타입입니다.","code":"INTERVIEW_INVALID_SESSION_TYPE","data":null}"""))),
+                            {"success":false,"statusCode":400,"message":"유효하지 않은 면접 세션 타입입니다.","code":"INTERVIEW_INVALID_SESSION_TYPE","data":null}"""))),
             @ApiResponse(responseCode = "401", description = "인증 토큰 없음 또는 만료",
                     content = @Content(examples = @ExampleObject(value = """
                             {"success":false,"statusCode":401,"message":"인증이 필요합니다.","code":"UNAUTHORIZED","data":null}"""))),
@@ -51,7 +51,7 @@ public interface InterviewSessionControllerDocs {
                             {"success":false,"statusCode":401,"message":"인증이 필요합니다.","code":"UNAUTHORIZED","data":null}"""))),
             @ApiResponse(responseCode = "403", description = "본인 소유가 아닌 세션",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":403,"message":"해당 세션에 접근 권한이 없습니다.","code":"INTERVIEW_SESSION_FORBIDDEN","data":null}""")))
+                            {"success":false,"statusCode":403,"message":"본인 소유의 면접 세션만 접근할 수 있습니다.","code":"INTERVIEW_SESSION_FORBIDDEN","data":null}""")))
     })
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<InterviewDTO.ResponseSubmitTextAnswer>> submitTextAnswer(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
@@ -71,7 +71,7 @@ public interface InterviewSessionControllerDocs {
                             {"success":false,"statusCode":401,"message":"인증이 필요합니다.","code":"UNAUTHORIZED","data":null}"""))),
             @ApiResponse(responseCode = "403", description = "본인 소유가 아닌 세션",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":403,"message":"해당 세션에 접근 권한이 없습니다.","code":"INTERVIEW_SESSION_FORBIDDEN","data":null}""")))
+                            {"success":false,"statusCode":403,"message":"본인 소유의 면접 세션만 접근할 수 있습니다.","code":"INTERVIEW_SESSION_FORBIDDEN","data":null}""")))
     })
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<InterviewDTO.ResponseEndSession>> endSession(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
