@@ -5,24 +5,24 @@
 
 ## Phase 1 - Entity
 
-- [ ] `AdminRole.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `AdminStatus.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `Admin.java` 엔티티를 `admins` ERD 컬럼 기준으로 작성한다.
-- [ ] `IpAcl.java` 엔티티를 `ip_acl` ERD 컬럼 기준으로 작성한다.
-- [ ] `AuditLog.java` 엔티티를 `audit_logs` ERD 컬럼 기준으로 작성한다.
+- [x] `AdminRole.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `AdminStatus.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `Admin.java` 엔티티를 `admins` ERD 컬럼 기준으로 작성한다.
+- [x] `IpAcl.java` 엔티티를 `ip_acl` ERD 컬럼 기준으로 작성한다.
+- [x] `AuditLog.java` 엔티티를 `audit_logs` ERD 컬럼 기준으로 작성한다.
 
 ## Phase 2 - Repository
 
-- [ ] `AdminRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] 관리자 이메일 중복 확인 조회 메서드를 추가한다.
-- [ ] 관리자 목록 `keyword` 필터 조회 조건을 구현한다.
-- [ ] 관리자 목록 `role` 필터 조회 조건을 구현한다.
-- [ ] 관리자 목록 `status` 필터 조회 조건을 구현한다.
-- [ ] 관리자 목록 페이지네이션 조회 조건을 정리한다.
-- [ ] `IpAclRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] IP ACL 중복 범위 확인 조회 메서드를 추가한다.
-- [ ] IP ACL 목록 페이지네이션 조회 조건을 정리한다.
-- [ ] `AuditLogRepository.java` 감사 로그 저장 인터페이스를 작성한다.
+- [x] `AdminRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] 관리자 이메일 중복 확인 조회 메서드를 추가한다.
+- [x] 관리자 목록 `keyword` 필터 조회 조건을 구현한다.
+- [x] 관리자 목록 `role` 필터 조회 조건을 구현한다.
+- [x] 관리자 목록 `status` 필터 조회 조건을 구현한다.
+- [x] 관리자 목록 페이지네이션 조회 조건을 정리한다.
+- [x] `IpAclRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] IP ACL 중복 범위 확인 조회 메서드를 추가한다.
+- [x] IP ACL 목록 페이지네이션 조회 조건을 정리한다.
+- [x] `AuditLogRepository.java` 감사 로그 저장 인터페이스를 작성한다.
 
 ## Phase 3 - Service
 

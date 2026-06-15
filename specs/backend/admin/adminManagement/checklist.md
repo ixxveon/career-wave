@@ -5,20 +5,19 @@
 
 ## Phase 1 - Entity
 
-- [ ] `Admin`, `IpAcl`, `AuditLog` 엔티티 필드가 ERD 컬럼명, null 허용 여부, PK/UNIQUE/FK/CHECK 제약과 일치한다.
-- [ ] `AdminRole`, `AdminStatus` Enum 값이 DB CHECK 제약조건(`MASTER`, `CS`, `BACKEND` / `ACTIVE`, `LOCKED`)과 일치한다.
-- [ ] JPA Enum 매핑이 `EnumType.STRING`으로 적용되어 있다.
+- [x] `Admin`, `IpAcl`, `AuditLog` 엔티티 필드가 ERD 컬럼명, null 허용 여부, PK/UNIQUE 제약과 일치한다.
+- [x] `AdminRole`, `AdminStatus` Enum 값이 DB CHECK 제약조건(`MASTER`, `CS`, `BACKEND` / `ACTIVE`, `LOCKED`)과 일치한다.
+- [x] JPA Enum 매핑이 `EnumType.STRING`으로 적용되어 있다.
 
 ## Phase 2 - Repository
 
-- [ ] `AdminRepository`가 관리자 이메일 중복 확인과 관리자 목록 조회에 필요한 메서드를 제공한다.
-- [ ] `IpAclRepository`가 IP ACL 범위 중복 확인과 ACL 목록 조회에 필요한 메서드를 제공한다.
-- [ ] `AuditLogRepository`가 감사 로그 기록 저장에 필요한 메서드를 제공한다.
-- [ ] `GET /api/v1/admin/admins` Query Parameter가 `admins.email`, `admins.name`, `admins.admin_role`, `admins.status` 매핑과 일치한다.
-- [ ] 관리자 목록 `keyword` 필터가 `admins.email`, `admins.name` 기준으로 동작한다.
-- [ ] 관리자 목록 `role` 필터가 `admins.admin_role` 기준으로 동작한다.
-- [ ] 관리자 목록 `status` 필터가 `admins.status` 기준으로 동작한다.
-- [ ] `GET /api/v1/admin/admin-acls`의 페이지네이션 조회가 `page`, `size` 1-based 외부 계약과 일치한다.
+- [x] `AdminRepository`가 관리자 이메일 중복 확인과 관리자 목록 조회에 필요한 메서드를 제공한다.
+- [x] `IpAclRepository`가 IP ACL 범위 중복 확인과 ACL 목록 조회에 필요한 메서드를 제공한다.
+- [x] `AuditLogRepository`가 감사 로그 기록 저장에 필요한 메서드를 제공한다.
+- [x] `GET /api/v1/admin/admins` Query Parameter가 `admins.email`, `admins.name`, `admins.admin_role`, `admins.status` 매핑과 일치한다.
+- [x] 관리자 목록 `keyword` 필터가 `admins.email`, `admins.name` 기준으로 동작한다.
+- [x] 관리자 목록 `role` 필터가 `admins.admin_role` 기준으로 동작한다.
+- [x] 관리자 목록 `status` 필터가 `admins.status` 기준으로 동작한다.
 
 ## Phase 3 - Service
 
@@ -28,6 +27,7 @@
 - [ ] IP ACL 범위 중복 검증이 Service Layer에서 수행된다.
 - [ ] 관리자 상태 중복 변경(`ACTIVE`, `LOCKED`)이 Service Layer에서 차단된다.
 - [ ] IP ACL 활성 상태 중복 변경(`isEnabled`)이 Service Layer에서 차단된다.
+- [ ] `GET /api/v1/admin/admin-acls`의 페이지네이션 조회가 `page`, `size` 1-based 외부 계약과 일치한다.
 - [ ] 관리자 계정과 IP ACL의 주요 변경 작업 시 Audit Log 기록 로직이 Service Layer에서 수행된다.
 - [ ] 비즈니스 예외가 `CustomException(ErrorCode)` 또는 도메인 ErrorCode 매핑 방식으로 처리된다.
 - [ ] `AdminManagementErrorCode`가 `global.exception.ErrorCode`와 분리되어 있다.
