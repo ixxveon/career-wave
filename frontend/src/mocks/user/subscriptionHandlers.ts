@@ -210,6 +210,24 @@ export const subscriptionHandlers = [
   ),
 
   // 내 구독 목록
+  // 구독 해지
+  http.post('/api/v1/user/subscriptions/:subscriptionId/cancel', ({ request, params }) => {
+    const auth = request.headers.get('Authorization') ?? '';
+    const memberId = auth.replace('Bearer mock-access-token-', '');
+    const { subscriptionId } = params;
+    const subs = MOCK_SUBSCRIPTIONS[memberId];
+    if (!subs) {
+      return HttpResponse.json({ success: false, statusCode: 401, message: '인증이 필요합니다.' }, { status: 401 });
+    }
+    const sub = subs.find((s) => s.subscriptionId === subscriptionId);
+    if (!sub) {
+      return HttpResponse.json({ success: false, statusCode: 404, message: '구독 정보를 찾을 수 없습니다.' }, { status: 404 });
+    }
+    sub.status = 'CANCEL_SCHEDULED';
+    sub.cancelScheduledAt = sub.currentPeriodEnd;
+    return HttpResponse.json({ success: true, statusCode: 200, message: '구독 해지 신청이 완료되었습니다.', data: null });
+  }),
+
   http.get('/api/v1/user/subscriptions/me', ({ request }) => {
     const memberId = getMemberId(request);
     if (!memberId) return UNAUTHORIZED;

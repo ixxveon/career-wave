@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { CheckCircle2 } from 'lucide-react';
+import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
 
 type FieldProps = {
   label: string;
@@ -50,7 +51,18 @@ export function Field({ label, children, required = false, wide = false }: Field
 }
 
 export function TextInput({ type = 'text', value, onChange, placeholder }: TextInputProps) {
-  return <input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />;
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={(event) => {
+        onChange(event.target.value);
+        applyInputFill(event.target);
+      }}
+      onBlur={(event) => clearInputFill(event.target)}
+      placeholder={placeholder}
+    />
+  );
 }
 
 export function SelectInput({ value, onChange, placeholder, options }: SelectInputProps) {

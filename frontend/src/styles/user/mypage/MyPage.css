@@ -49,6 +49,7 @@
 }
 
 .cw-dashboard-section {
+  flex: 1;
   min-width: 0;
   margin: 0;
 }
@@ -1917,6 +1918,11 @@ a.cw-chart-filter {
   background: #edf4ff;
 }
 
+.cw-subscription-modal__icon--success {
+  color: #247251;
+  background: #effbf3;
+}
+
 .cw-subscription-modal__dialog h3 {
   margin: 0;
   color: #173765;
@@ -2879,6 +2885,7 @@ a.cw-chart-filter {
 }
 
 .cw-account-section {
+  flex: 1;
   min-width: 0;
   display: grid;
   gap: 20px;
