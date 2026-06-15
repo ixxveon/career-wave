@@ -21,7 +21,7 @@
 - [x] `keyword` 공백-only 입력을 필터 미적용으로 처리하는가
 - [x] 유효하지 않은 `logType` 요청을 `INVALID_AUDIT_LOG_TYPE`으로 처리하는가
 - [x] 유효하지 않은 `severity` 요청을 `INVALID_AUDIT_LOG_SEVERITY`로 처리하는가
-- [x] 존재하지 않는 `logId` 요청을 `AUDIT_LOG_NOT_FOUND`로 처리하는가
+- [x] 존재하지 않는 `logId` 요청을 `AUDIT_LOG_NOT_FOUND`로 처리하는가    
 - [x] 공통 `ErrorCode`와 도메인 `AuditLogErrorCode`가 분리되어 사용되는가
 - [x] 조회 조건 검증, 페이지 번호 변환, 권한 분기가 Controller나 Repository가 아닌 Service 계층에 위치하는가
 
