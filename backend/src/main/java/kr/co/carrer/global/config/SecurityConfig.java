@@ -10,6 +10,7 @@ import kr.co.carrer.auth.store.TokenBlacklistStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,7 +24,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(proxyTargetClass = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -32,7 +33,6 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
 
-    // @WebMvcTest에서는 UserAccountStatusPort 등을 @MockBean으로 명시적으로 등록해야 한다.
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private List<AccountStatusPort> accountStatusPorts = List.of();
 
@@ -69,7 +69,9 @@ public class SecurityConfig {
                     "/api/v1/user/members/recovery/password-token",
                     "/api/v1/user/members/recovery/reset-password"
                 ).permitAll()
-                // logout / me/status 는 인증 필요 but AccountStatus 예외 (비ACTIVE도 허용)
+                .requestMatchers(HttpMethod.GET, "/api/v1/user/job-notices", "/api/v1/user/job-notices/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
                 .requestMatchers(
                     "/api/v1/user/members/logout",
                     "/api/v1/admin/auth/logout",

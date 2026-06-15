@@ -9,6 +9,8 @@ import kr.co.carrer.admin.member.type.MemberStatus;
 import kr.co.carrer.admin.member.type.RoleType;
 import kr.co.carrer.admin.member.type.SubscriptionStatus;
 import kr.co.carrer.admin.member.exception.AdminMemberErrorCode;
+import io.swagger.v3.oas.annotations.Parameter;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
@@ -26,8 +28,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-// TODO: 스웨거 테스트용 임시 비활성화 — JWT 필터 구현 후 롤백 필요
-// @PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 @Validated
 public class AdminMemberController implements AdminMemberControllerDocs {
 
@@ -65,11 +66,10 @@ public class AdminMemberController implements AdminMemberControllerDocs {
     public ResponseEntity<ApiResponse<MemberDTO.ResponseSanction>> sanctionMember(
         @PathVariable UUID memberId,
         @RequestBody MemberDTO.RequestSanction request,
-        @AuthenticationPrincipal Long adminId
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        // TODO: 스웨거 테스트용 임시 fallback — JWT 필터 구현 후 제거 필요
-        Long resolvedAdminId = (adminId != null) ? adminId : 1L;
-        return ResponseEntity.ok(ApiResponse.ok(adminMemberService.sanctionMember(memberId, request, resolvedAdminId)));
+        Long adminId = Long.parseLong(principal.getId());
+        return ResponseEntity.ok(ApiResponse.ok(adminMemberService.sanctionMember(memberId, request, adminId)));
     }
 
     @GetMapping("/hr-managers")
