@@ -132,18 +132,49 @@
   - `Thread.sleep` 금지 — `TaskSchedulerConfig`(`ThreadPoolTaskScheduler`) 빈 등록
   - `scheduler.schedule()` 반환값 `ScheduledFuture` 보관 (`ConcurrentHashMap` 관리)
   - 클라이언트가 먼저 연결을 닫으면 `cancelGracePeriod()` → `ScheduledFuture.cancel(true)`
-  - 30초 만료 시 `SESSION_CLOSE` 메시지 전송 후 Map에서 제거
-- [x] STOMP 구독 토픽 `/topic/resume/{documentId}/status` 동작 확인
+  - 30초 만료 시 `WebSocketSessionRegistry.closeSession()` → `session.close(CloseStatus.NORMAL)` (Close 1000, SESSION_CLOSE 메시지 전송 방식 미사용)
+- [x] 클라이언트 연결 종료 감지: `ApplicationListener<SessionDisconnectEvent>` 구현 → `sessionDocumentMap`(ConcurrentHashMap)으로 sessionId→documentId 역추적 → `cancelGracePeriod()` 호출
+- [x] `WebSocketSessionRegistry` 구현 — sessionId→WebSocketSession, documentId→sessionId 양방향 매핑 관리
+- [x] `ResumeWebSocketHandlerDecoratorFactory` 구현 — `afterConnectionEstablished` / `afterConnectionClosed` 에서 registry 등록/해제
+- [x] `WebSocketConfig`에 `WebSocketHandlerDecoratorFactory` 등록 + `/queue` 브로커 prefix 추가 + userDestinationPrefix("/user") 설정
+- [x] SUBSCRIBE 직후 Snapshot을 구독한 세션에만 `convertAndSendToUser`로 `/user/queue/resume/{documentId}/status` 전송 (전체 브로드캐스트 금지)
+- [x] `WebSocketConfig.setAllowedOriginPatterns()` → 환경 변수 `WEBSOCKET_ALLOWED_ORIGINS` 주입 (기본값 `*`)
+- [x] 30초 만료 시 `WebSocketSessionRegistry.closeSession(documentId)` 호출 → `session.close(CloseStatus.NORMAL)` (Close 1000)
+- [x] STOMP 구독 토픽 이중 구조 확정: `/topic/resume/{documentId}/status` (브로드캐스트) + `/user/queue/resume/{documentId}/status` (개인 Snapshot)
 
 ---
 
 ## Phase 8: 검증 및 문서화
 
-- [ ] `checklist.md` 전 항목 셀프 체크
-- [ ] Swagger UI에서 요청·응답 예시 확인
-- [ ] IDOR 시나리오 수동 테스트 (타인 documentId로 요청 시 403 확인)
+- [x] `spec.md` 패키지 구조·API 명세·ErrorCode 실제 구현 기준으로 업데이트
+- [x] 전체 테스트 suite 통과 확인 (`./gradlew test` BUILD SUCCESSFUL)
+- [x] `checklist.md` 셀프 체크 완료 (하단 참조)
 - [x] 프론트 Base URL 일치 확인 — `/api/v1/user/resume` 통일 완료
-- [ ] 파일 MIME type 검증 우회 시도 테스트
+- [x] Swagger UI에서 요청·응답 예시 확인 (DB 연동 후 수동 검증)
+- [x] IDOR 시나리오 수동 테스트 (타인 documentId로 요청 시 403 확인)
+- [x] 파일 MIME type 검증 우회 시도 테스트 (확장자 위조 파일 업로드)
+- [x] SecurityConfig `permitAll("/api/v1/user/resume/**")` 제거
+
+---
+
+### Phase 8 체크리스트 셀프 체크
+
+| 항목 | 결과 |
+|------|------|
+| Controller에서 Entity 직접 반환 없음 | ✅ DTO(record) 반환 |
+| 모든 API 응답 `ApiResponse<T>` 사용 | ✅ |
+| `RuntimeException` 직접 생성 없음 | ✅ `CustomException(ResumeErrorCode.xxx)` |
+| Entity `@NoArgsConstructor(PROTECTED)` | ✅ |
+| Entity setter 미사용, 의미 있는 메서드로 상태 변경 | ✅ `markFailed()`, `updateStatus()` |
+| PK 전략 `GenerationType.IDENTITY` + Long (또는 UUID) | ✅ Document: UUID, 나머지: IDENTITY+Long |
+| Swagger 인터페이스 분리 (`docs/ResumeControllerDocs.java`) | ✅ |
+| N+1 쿼리 없음 (이력 조회 JPQL LEFT JOIN) | ✅ |
+| 페이지네이션 있는 목록 조회 | ✅ `PaginationResponse` |
+| IDOR — DB 레벨 `findByDocumentIdAndMemberId` | ✅ |
+| WebSocket SUBSCRIBE IDOR 방지 | ✅ `ResumeStompChannelInterceptor` |
+| `@Transactional` 메서드에서 WebSocket 직접 호출 없음 | ✅ `@TransactionalEventListener(AFTER_COMMIT)` |
+| 환경 변수 하드코딩 없음 | ✅ `application.properties` + `.env` |
+| 보안 정보 커밋 없음 | ✅ `.gitignore` 확인 완료 |
 
 ---
 

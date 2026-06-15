@@ -12,7 +12,6 @@ import kr.co.carrer.user.resume.repository.CoverLetterContentRepository;
 import kr.co.carrer.user.resume.repository.CoverLetterMetaRepository;
 import kr.co.carrer.user.resume.repository.DocumentFeedbackRepository;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
-import kr.co.carrer.user.resume.service.FastApiClient;
 import kr.co.carrer.user.resume.service.FileValidator;
 import kr.co.carrer.user.resume.type.DocumentStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +43,6 @@ class ResumeServiceWebhookTest {
     @Mock private DocumentFeedbackRepository documentFeedbackRepository;
     @Mock private FileValidator fileValidator;
     @Mock private S3Uploader s3Uploader;
-    @Mock private FastApiClient fastApiClient;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Spy  private ObjectMapper objectMapper;
 

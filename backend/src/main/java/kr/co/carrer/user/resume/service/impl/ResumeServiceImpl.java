@@ -11,13 +11,13 @@ import kr.co.carrer.user.resume.entity.CoverLetterMeta;
 import kr.co.carrer.user.resume.entity.Document;
 import kr.co.carrer.user.resume.entity.DocumentFeedback;
 import kr.co.carrer.user.resume.event.DocumentAnalysisCompletedEvent;
+import kr.co.carrer.user.resume.event.DocumentAnalysisTriggerEvent;
 import kr.co.carrer.user.resume.exception.ResumeErrorCode;
 import kr.co.carrer.user.resume.repository.CoverLetterContentRepository;
 import kr.co.carrer.user.resume.repository.CoverLetterMetaRepository;
 import kr.co.carrer.user.resume.repository.DocumentFeedbackRepository;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
 import kr.co.carrer.user.resume.service.DocumentStatusService;
-import kr.co.carrer.user.resume.service.FastApiClient;
 import kr.co.carrer.user.resume.service.FileValidator;
 import kr.co.carrer.user.resume.service.ResumeService;
 import kr.co.carrer.user.resume.type.DocumentStatus;
@@ -49,7 +49,6 @@ public class ResumeServiceImpl implements ResumeService {
     private final DocumentFeedbackRepository documentFeedbackRepository;
     private final FileValidator fileValidator;
     private final S3Uploader s3Uploader;
-    private final FastApiClient fastApiClient;
     private final ObjectMapper objectMapper;
     private final DocumentStatusService documentStatusService;
     private final ApplicationEventPublisher eventPublisher;
@@ -69,11 +68,7 @@ public class ResumeServiceImpl implements ResumeService {
         Document document = Document.ofResume(memberId, fileUrl, originalName);
         documentRepository.save(document);
 
-        fastApiClient.triggerAnalysis(
-                document.getDocumentId(),
-                FileType.RESUME.name(),
-                () -> documentStatusService.markFailed(document.getDocumentId(), "FastAPI 분석 트리거 실패")
-        );
+        eventPublisher.publishEvent(new DocumentAnalysisTriggerEvent(document.getDocumentId(), FileType.RESUME.name()));
 
         return new ResumeDTO.ResponseUpload(
                 document.getDocumentId(),
@@ -111,11 +106,7 @@ public class ResumeServiceImpl implements ResumeService {
                 .toList();
         coverLetterContentRepository.saveAll(contents);
 
-        fastApiClient.triggerAnalysis(
-                document.getDocumentId(),
-                FileType.COVER_LETTER.name(),
-                () -> documentStatusService.markFailed(document.getDocumentId(), "FastAPI 분석 트리거 실패")
-        );
+        eventPublisher.publishEvent(new DocumentAnalysisTriggerEvent(document.getDocumentId(), FileType.COVER_LETTER.name()));
 
         return new ResumeDTO.ResponseCoverLetter(
                 document.getDocumentId(),

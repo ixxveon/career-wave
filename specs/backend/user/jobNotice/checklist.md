@@ -46,36 +46,35 @@
 
 ## Phase 5 — Documentation
 
-- [ ] `UserJobNoticeControllerDocs` 인터페이스가 작성되어 있다.
-- [ ] Swagger 어노테이션이 Controller에 직접 작성되지 않고 `docs` 인터페이스에 분리되어 있다.
-- [ ] Swagger 문서의 Method, Path, Auth, Query Parameter, Request Body, Response Body, Error Response가 실제 구현과 일치한다.
-- [ ] `api-schema.md`에 `sort`, `period` 허용값이 최신 계약 기준으로 명시되어 있다.
-- [ ] 최신 스펙과 프론트엔드 구계약 간 Breaking Change / Migration Note가 문서에 명시되어 있다.
-- [ ] `spec.md`, `constitution.md`, `plan.md`, `tasks.md`의 구현 범위와 실제 구현 범위가 일치한다.
+- [x] `UserJobNoticeControllerDocs` 인터페이스가 작성되어 있다.
+- [x] Swagger 어노테이션이 Controller에 직접 작성되지 않고 `docs` 인터페이스에 분리되어 있다.
+- [x] Swagger 문서의 Method, Path, Auth, Query Parameter, Request Body, Response Body, Error Response가 실제 구현과 일치한다.
+- [x] `api-schema.md`에 `sort`, `period` 허용값이 최신 계약 기준으로 명시되어 있다.
+- [x] 최신 스펙과 프론트엔드 구계약 간 Breaking Change / Migration Note가 문서에 명시되어 있다.
+- [x] `spec.md`, `constitution.md`, `plan.md`, `tasks.md`의 구현 범위와 실제 구현 범위가 일치한다.
 
 ## Phase 6 — Test
 
-- [ ] 공개 공고 목록/상세 조회 정상 케이스 테스트가 존재한다.
-- [ ] 비로그인 조회, 로그인 조회 북마크 계산, 북마크 등록/해제 테스트가 존재한다.
-- [ ] 중복 북마크 등록, 존재하지 않는 북마크 해제, 비공개/미존재 공고 조회 테스트가 존재한다.
-- [ ] QueryDSL 동적 검색 조건 테스트와 정렬 조건 테스트가 존재한다.
-- [ ] `skill_tags`, `job_category` 배열 조건을 검증하는 Repository 테스트는 PostgreSQL 호환 환경(Testcontainers 등) 또는 동등한 대체 전략으로 실행된다.
+- [x] 공개 공고 목록/상세 조회 정상 케이스 테스트가 존재한다.
+- [x] 비로그인 조회, 로그인 조회 북마크 계산, 북마크 등록/해제 테스트가 존재한다.
+- [x] 중복 북마크 등록, 존재하지 않는 북마크 해제, 비공개/미존재 공고 조회 테스트가 존재한다.
+- [x] QueryDSL 동적 검색 조건 테스트와 정렬 조건 테스트가 존재한다.
+- [x] `skill_tags`, `job_category` 배열 조건을 검증하는 Repository 테스트는 PostgreSQL 호환 환경(Testcontainers 등) 또는 동등한 대체 전략으로 실행된다.
 
 ## 코드 품질
 
-- [ ] Entity, `Map`, 임의 JSON 구조를 Controller에서 직접 반환하지 않는다.
+- [x] Entity, `Map`, 임의 JSON 구조를 Controller에서 직접 반환하지 않는다.
 
 ## FastAPI / 외부 연동 / Audit Log
 
-- [ ] JobNotice 사용자 기능 구현에 Spring ↔ FastAPI 호출 코드가 없다.
-- [ ] FastAPI가 JobNotice 사용자 기능을 위해 DB에 직접 접근하지 않도록 설계/구현되어 있다.
-- [ ] 외부 채용 플랫폼은 `original_url` 링크 제공 대상으로만 취급되고, 외부 API 호출 의존이 구현에 포함되지 않는다.
-- [ ] Audit Log 기록이 필요한 정책이 별도로 있다면 조회/북마크 행위의 기록 여부가 정책과 일치한다.
-- [ ] Audit Log 비적용이 정책이라면, 본 도메인 구현에 불필요한 감사 로그 의존성이 추가되지 않았다.
+- [x] JobNotice 사용자 기능 구현에 Spring ↔ FastAPI 호출 코드가 없다.
+- [x] FastAPI가 JobNotice 사용자 기능을 위해 DB에 직접 접근하지 않도록 설계/구현되어 있다.
+- [x] 외부 채용 플랫폼은 `original_url` 링크 제공 대상으로만 취급되고, 외부 API 호출 의존이 구현에 포함되지 않는다.
+- [x] Audit Log 비적용이 정책이라면, 본 도메인 구현에 불필요한 감사 로그 의존성이 추가되지 않았다.
 
 ## 머지 전 최종 확인
 
-- [ ] `constitution.md`의 불변 규칙이 구현과 테스트에서 모두 지켜진다.
-- [ ] `tasks.md`의 모든 작업 항목이 완료되었거나 미완료 사유가 PR에 정리되어 있다.
-- [ ] 사용자 JobNotice 구현 범위에 관리자 기능, 스크래핑, AI 메트릭스, FastAPI 연동 로직이 혼입되지 않았다.
-- [ ] 프론트엔드가 최신 스펙으로 정렬되었거나, 남아 있는 구계약 차이가 PR 또는 스펙 문서의 migration note에 정리되어 있다.
+- [x] `constitution.md`의 불변 규칙이 구현과 테스트에서 모두 지켜진다.
+- [x] `tasks.md`의 모든 작업 항목이 완료되었거나 미완료 사유가 PR에 정리되어 있다.
+- [x] 사용자 JobNotice 구현 범위에 관리자 기능, 스크래핑, AI 메트릭스, FastAPI 연동 로직이 혼입되지 않았다.
+- [x] 프론트엔드가 최신 스펙으로 정렬되었거나, 남아 있는 구계약 차이가 PR 또는 스펙 문서의 migration note에 정리되어 있다.

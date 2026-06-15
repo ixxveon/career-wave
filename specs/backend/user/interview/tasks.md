@@ -112,21 +112,19 @@
 
 ### InterviewSessionService
 
-- [ ] `startSession(UUID memberId, RequestStartSession dto)`
-  - [ ] `SessionType` 유효성 검증 — 유효하지 않으면 `INTERVIEW_INVALID_SESSION_TYPE(400)`
-  - [ ] `documentId` 존재 시 유효성 검증 — 없으면 `INTERVIEW_DOCUMENT_NOT_FOUND(404)`
-  - [ ] `InterviewSession` 저장 (`session_status = IN_PROGRESS`, `started_at = 현재 시각`)
-  - [ ] FastAPI RAG 컨텍스트 비동기 등록 (documentId 있는 경우)
-  - [ ] `@Transactional` 적용
-  - [ ] 반환: `ResponseStartSession`
+- [x] `startSession(UUID memberId, RequestStartSession dto)`
+  - [x] `SessionType` 유효성 검증 — 유효하지 않으면 `INTERVIEW_INVALID_SESSION_TYPE(400)`
+  - [x] `documentId` 존재 시 유효성 검증 — 없으면 `INTERVIEW_DOCUMENT_NOT_FOUND(404)`
+  - [x] `InterviewSession` 저장 (`session_status = IN_PROGRESS`, `started_at = 현재 시각`)
+  - [x] FastAPI RAG 컨텍스트 비동기 등록 (documentId 있는 경우, 트랜잭션 외부)
+  - [x] DB 저장은 `@Transactional` 내부 메서드로 분리, FastAPI 호출은 트랜잭션 외부
+  - [x] 반환: `ResponseStartSession`
 
-- [ ] `submitTextAnswer(UUID memberId, String sessionId, RequestSubmitTextAnswer dto)`
-  - [ ] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-  - [ ] 존재하지 않으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
-  - [ ] `InterviewMessage` 저장 (`sender = USER`, `message_type = ANSWER`)
-  - [ ] FastAPI LLM 파이프라인 비동기 트리거
-  - [ ] `@Transactional` 적용
-  - [ ] 반환: `ResponseSubmitTextAnswer`
+- [x] `submitTextAnswer(UUID memberId, UUID sessionId, RequestSubmitTextAnswer dto)`
+  - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
+  - [x] `InterviewMessage` 저장 (`sender = USER`, `message_type = ANSWER`)
+  - [x] FastAPI LLM 파이프라인 비동기 트리거 (트랜잭션 외부)
+  - [x] 반환: `ResponseSubmitTextAnswer`
 
 - [ ] `submitVoiceChunk(UUID memberId, String sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal)`
   - [ ] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
@@ -134,14 +132,12 @@
   - [ ] `isFinal = true`이면 해당 질문 답변 완료 처리
   - [ ] 반환: `ResponseSubmitVoiceChunk`
 
-- [ ] `endSession(UUID memberId, String sessionId)`
-  - [ ] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-  - [ ] 존재하지 않으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
-  - [ ] `COMPLETED` / `FAILED` 세션 재종료 시 `INTERVIEW_SESSION_ALREADY_ENDED(400)` — 멱등성 체크: FastAPI 리포트 트리거가 2회 이상 발생하지 않도록 반드시 상태 확인 후 얼리 리턴
-  - [ ] `complete(endedAt)` 메서드로 상태 변경 (`COMPLETED`, `ended_at = 현재 시각`)
-  - [ ] FastAPI 리포트 생성 비동기 트리거
-  - [ ] `@Transactional` 적용
-  - [ ] 반환: `ResponseEndSession`
+- [x] `endSession(UUID memberId, UUID sessionId)`
+  - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
+  - [x] `COMPLETED` / `FAILED` 세션 재종료 시 `INTERVIEW_SESSION_ALREADY_ENDED(400)` — 멱등성 체크
+  - [x] `complete(endedAt)` 메서드로 상태 변경 (`COMPLETED`, `ended_at = 현재 시각`)
+  - [x] FastAPI 리포트 생성 비동기 트리거 (트랜잭션 외부)
+  - [x] 반환: `ResponseEndSession`
 
 ### InterviewReportService
 
@@ -164,13 +160,13 @@
 
 ## Phase 5 — Controller & Swagger Docs
 
-- [ ] `InterviewSessionController.java`
-  - [ ] `POST /api/v1/user/interview/sessions` — `@RequestBody @Valid RequestStartSession`
-  - [ ] `POST /api/v1/user/interview/sessions/{sessionId}/answer/text` — `@RequestBody @Valid RequestSubmitTextAnswer`
+- [x] `InterviewSessionController.java`
+  - [x] `POST /api/v1/user/interview/sessions` — `@RequestBody @Valid RequestStartSession`
+  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/text` — `@RequestBody @Valid RequestSubmitTextAnswer`
   - [ ] `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice` — `@RequestParam MultipartFile audioChunk` + 파라미터
-  - [ ] `POST /api/v1/user/interview/sessions/{sessionId}/end`
-  - [ ] 모든 메서드에 `@AuthenticationPrincipal UserPrincipal` 적용
-  - [ ] Controller에서 `try-catch` 사용 금지
+  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/end`
+  - [x] 모든 메서드에 `@AuthenticationPrincipal AuthPrincipal` 적용
+  - [x] Controller에서 `try-catch` 사용 금지
 
 - [ ] `InterviewReportController.java`
   - [ ] `GET /api/v1/user/interview/sessions/{sessionId}/report`
@@ -178,8 +174,8 @@
 - [ ] `InterviewHistoryController.java`
   - [ ] `GET /api/v1/user/interview/history` — `@RequestParam(defaultValue="0") int page`, `@RequestParam(defaultValue="10") int size`
 
-- [ ] Swagger Docs 인터페이스 분리
-  - [ ] `InterviewSessionControllerDocs.java`
+- [x] Swagger Docs 인터페이스 분리
+  - [x] `InterviewSessionControllerDocs.java`
   - [ ] `InterviewReportControllerDocs.java`
   - [ ] `InterviewHistoryControllerDocs.java`
 

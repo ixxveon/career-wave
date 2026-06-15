@@ -49,24 +49,26 @@
 
 ## Phase 5 - Documentation
 
-- [ ] `UserJobNoticeControllerDocs.java` Swagger 인터페이스를 작성한다.
-- [ ] 목록 조회 API의 요청/응답 문서를 정리한다.
-- [ ] 상세 조회 API의 요청/응답 문서를 정리한다.
-- [ ] 북마크 등록/해제 API의 요청/응답 문서를 정리한다.
-- [ ] `api-schema.md`와 구현 대상 API 계약의 정합성을 점검한다.
-- [ ] `spec.md`, `constitution.md`, `plan.md`와 구현 범위 정합성을 점검한다.
+- [x] `UserJobNoticeControllerDocs.java` Swagger 인터페이스를 작성한다.
+- [x] 목록 조회 API의 요청/응답 문서를 정리한다.
+- [x] 상세 조회 API의 요청/응답 문서를 정리한다.
+- [x] 북마크 등록/해제 API의 요청/응답 문서를 정리한다.
+- [x] `api-schema.md`와 구현 대상 API 계약의 정합성을 점검한다.
+- [x] `spec.md`, `constitution.md`, `plan.md`와 구현 범위 정합성을 점검한다.
 
 ## Phase 6 - Test
 
-- [ ] 공개 채용 공고 목록 조회 테스트를 작성한다.
-- [ ] 공개 채용 공고 상세 조회 테스트를 작성한다.
-- [ ] 비로그인 조회 시 `bookmarked = false` 검증 테스트를 작성한다.
-- [ ] 로그인 조회 시 `bookmarked` 계산 테스트를 작성한다.
-- [ ] 북마크 등록 성공 테스트를 작성한다.
-- [ ] 북마크 해제 성공 테스트를 작성한다.
-- [ ] 중복 북마크 등록 예외 테스트를 작성한다.
-- [ ] 존재하지 않는 북마크 해제 예외 테스트를 작성한다.
-- [ ] QueryDSL 동적 검색 조건 테스트를 작성한다.
-- [ ] QueryDSL 정렬 조건 테스트를 작성한다.
-- [ ] 배열 컬럼(`skill_tags`, `job_category`) QueryDSL 조건 테스트의 실행 환경을 PostgreSQL 호환 기준(Testcontainers 등)으로 정리한다.
-- [ ] `ApiResponse<T>`와 1-based 페이지네이션 응답 형식 테스트를 작성한다.
+- [x] 공개 채용 공고 목록 조회 테스트를 작성한다.
+- [x] 공개 채용 공고 상세 조회 테스트를 작성한다.
+- [x] 비로그인 조회 시 `bookmarked = false` 검증 테스트를 작성한다.
+- [x] 로그인 조회 시 `bookmarked` 계산 테스트를 작성한다.
+- [x] 북마크 등록 성공 테스트를 작성한다.
+- [x] 북마크 해제 성공 테스트를 작성한다.
+- [x] 중복 북마크 등록 예외 테스트를 작성한다.
+- [x] 존재하지 않는 북마크 해제 예외 테스트를 작성한다.
+- [x] QueryDSL 동적 검색 조건 테스트를 작성한다.
+- [x] QueryDSL 정렬 조건 테스트를 작성한다.
+- [x] 배열 컬럼(`skill_tags`, `job_category`) QueryDSL 조건 테스트의 실행 환경을 PostgreSQL 호환 기준(Testcontainers 등)으로 정리한다.
+- [x] `ApiResponse<T>`와 1-based 페이지네이션 응답 형식 테스트를 작성한다.
+- [x] 비공개 또는 존재하지 않는 공고 상세 조회 시 `JOB_NOTICE_NOT_FOUND` 예외 테스트를 작성한다.
+- [x] 비공개 또는 존재하지 않는 공고 북마크 등록/해제 시 `JOB_NOTICE_NOT_FOUND` 예외 테스트를 작성한다.

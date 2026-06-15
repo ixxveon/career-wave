@@ -33,9 +33,6 @@ public class SecurityConfig {
     private final TokenBlacklistStore tokenBlacklistStore;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
-    // Spring이 AccountStatusPort 빈을 자동 수집. 빈 없으면 빈 리스트 주입(collection injection 동작).
-    // @WebMvcTest에서 JWT 인증 테스트 시: @WithMockUser는 AuthPrincipal이 아니므로 필터 통과,
-    // JWT 토큰 기반 테스트는 AdminAccountStatusPort / UserAccountStatusPort @MockBean 필요.
     private final List<AccountStatusPort> accountStatusPorts;
 
     @Bean
@@ -100,12 +97,12 @@ public class SecurityConfig {
                     "/api/v1/user/members/recovery/password-token",
                     "/api/v1/user/members/recovery/reset-password"
                 ).permitAll()
-                // WebSocket 엔드포인트 — JWT는 HandshakeInterceptor에서 처리
                 .requestMatchers("/ws/**").permitAll()
+                // FastAPI 내부 콜백 — X-Internal-Secret 헤더로 보안 검증 (컨트롤러 레이어)
+                .requestMatchers(HttpMethod.POST, "/api/v1/user/resume/webhook").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/user/job-notices", "/api/v1/user/job-notices/*").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
-                // logout / me/status 는 인증 필요 but AccountStatus 예외 (비ACTIVE도 허용)
                 .requestMatchers(
                     "/api/v1/user/members/logout",
                     "/api/v1/user/members/me/status"
