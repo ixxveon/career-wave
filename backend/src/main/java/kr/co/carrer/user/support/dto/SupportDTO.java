@@ -1,6 +1,11 @@
 package kr.co.carrer.user.support.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import kr.co.carrer.user.support.type.FaqCategory;
+import kr.co.carrer.user.support.type.InquiryCategory;
+import kr.co.carrer.user.support.type.InquiryStatus;
 import kr.co.carrer.user.support.type.NoticeCategory;
 
 import java.time.ZonedDateTime;
@@ -37,5 +42,26 @@ public class SupportDTO {
         String question,
         String answer,
         ZonedDateTime createdAt
+    ) {}
+
+    public record InquiryList(
+        Long inquiryId,
+        InquiryCategory category,
+        String title,
+        String contentPreview,
+        String reply,
+        InquiryStatus inquiryStatus,
+        ZonedDateTime createdAt
+    ) {}
+
+    public record RequestCreateInquiry(
+        @NotNull InquiryCategory category,
+        @NotBlank @Size(max = 200) String title,
+        @NotBlank String content
+    ) {}
+
+    public record ResponseCreateInquiry(
+        Long inquiryId,
+        InquiryStatus inquiryStatus
     ) {}
 }
