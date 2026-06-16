@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -267,7 +268,7 @@ class AdminManagementServiceImplTest {
             assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
             assertThat(auditLog.getAction()).isEqualTo("CREATE_ADMIN");
             assertThat(auditLog.getTargetType()).isEqualTo("ADMIN");
-            assertThat(auditLog.getTargetId()).isEqualTo(10L);
+            assertThat(auditLog.getTargetId()).isEqualTo("10");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.2");
             assertThat(auditLog.getSeverity()).isEqualTo("INFO");
 
@@ -341,9 +342,36 @@ class AdminManagementServiceImplTest {
             assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
             assertThat(auditLog.getAction()).isEqualTo("UPDATE_ADMIN_ROLE");
             assertThat(auditLog.getTargetType()).isEqualTo("ADMIN");
-            assertThat(auditLog.getTargetId()).isEqualTo(20L);
+            assertThat(auditLog.getTargetId()).isEqualTo("20");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.3");
             assertThat(auditLog.getSeverity()).isEqualTo("INFO");
+        }
+
+        @Test
+        @DisplayName("동일한 권한으로 변경 요청 시 ADMIN_ROLE_ALREADY_ASSIGNED 예외를 반환한다")
+        void throwsWhenAdminRoleAlreadyAssigned() {
+            Admin admin = createAdmin(
+                21L,
+                "backend@career-wave.com",
+                "backend-admin",
+                AdminRole.BACKEND,
+                AdminStatus.ACTIVE,
+                null,
+                null,
+                ZonedDateTime.parse("2026-06-15T09:00:00Z"),
+                ZonedDateTime.parse("2026-06-15T09:30:00Z")
+            );
+            given(adminRepository.findById(21L)).willReturn(Optional.of(admin));
+
+            assertThatThrownBy(() -> adminManagementService.updateAdminRole(
+                21L,
+                new AdminManagementService.UpdateAdminRoleCommand(AdminRole.BACKEND),
+                1L,
+                "10.0.0.3"
+            ))
+                .isInstanceOf(kr.co.carrer.global.exception.CustomException.class)
+                .extracting(exception -> ((kr.co.carrer.global.exception.CustomException) exception).getErrorCode())
+                .isEqualTo(AdminManagementErrorCode.ADMIN_ROLE_ALREADY_ASSIGNED);
         }
     }
 
@@ -388,7 +416,7 @@ class AdminManagementServiceImplTest {
             assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
             assertThat(auditLog.getAction()).isEqualTo("UPDATE_ADMIN_STATUS");
             assertThat(auditLog.getTargetType()).isEqualTo("ADMIN");
-            assertThat(auditLog.getTargetId()).isEqualTo(30L);
+            assertThat(auditLog.getTargetId()).isEqualTo("30");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.4");
             assertThat(auditLog.getSeverity()).isEqualTo("INFO");
         }
@@ -429,9 +457,22 @@ class AdminManagementServiceImplTest {
             assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
             assertThat(auditLog.getAction()).isEqualTo("DELETE_ADMIN");
             assertThat(auditLog.getTargetType()).isEqualTo("ADMIN");
-            assertThat(auditLog.getTargetId()).isEqualTo(40L);
+            assertThat(auditLog.getTargetId()).isEqualTo("40");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.5");
             assertThat(auditLog.getSeverity()).isEqualTo("INFO");
+        }
+
+        @Test
+        @DisplayName("본인 관리자 계정 삭제 요청 시 CANNOT_DELETE_SELF 예외를 반환한다")
+        void throwsWhenDeletingSelf() {
+            assertThatThrownBy(() -> adminManagementService.deleteAdmin(1L, 1L, "10.0.0.5"))
+                .isInstanceOf(kr.co.carrer.global.exception.CustomException.class)
+                .extracting(exception -> ((kr.co.carrer.global.exception.CustomException) exception).getErrorCode())
+                .isEqualTo(AdminManagementErrorCode.CANNOT_DELETE_SELF);
+
+            verify(adminRepository, never()).findById(org.mockito.ArgumentMatchers.anyLong());
+            verify(adminRepository, never()).delete(org.mockito.ArgumentMatchers.any(Admin.class));
+            verify(auditLogRepository, never()).save(org.mockito.ArgumentMatchers.any());
         }
     }
 
@@ -520,7 +561,7 @@ class AdminManagementServiceImplTest {
             assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
             assertThat(auditLog.getAction()).isEqualTo("CREATE_IP_ACL");
             assertThat(auditLog.getTargetType()).isEqualTo("IP_ACL");
-            assertThat(auditLog.getTargetId()).isEqualTo(200L);
+            assertThat(auditLog.getTargetId()).isEqualTo("200");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.6");
             assertThat(auditLog.getSeverity()).isEqualTo("INFO");
 
@@ -591,7 +632,7 @@ class AdminManagementServiceImplTest {
             assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
             assertThat(auditLog.getAction()).isEqualTo("UPDATE_IP_ACL_ENABLED");
             assertThat(auditLog.getTargetType()).isEqualTo("IP_ACL");
-            assertThat(auditLog.getTargetId()).isEqualTo(300L);
+            assertThat(auditLog.getTargetId()).isEqualTo("300");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.7");
             assertThat(auditLog.getSeverity()).isEqualTo("INFO");
         }
@@ -655,7 +696,7 @@ class AdminManagementServiceImplTest {
             assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
             assertThat(auditLog.getAction()).isEqualTo("DELETE_IP_ACL");
             assertThat(auditLog.getTargetType()).isEqualTo("IP_ACL");
-            assertThat(auditLog.getTargetId()).isEqualTo(400L);
+            assertThat(auditLog.getTargetId()).isEqualTo("400");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.8");
             assertThat(auditLog.getSeverity()).isEqualTo("INFO");
         }
@@ -882,7 +923,7 @@ class AdminManagementServiceImplTest {
             assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
             assertThat(auditLog.getAction()).isEqualTo("CREATE_ADMIN");
             assertThat(auditLog.getTargetType()).isEqualTo("ADMIN");
-            assertThat(auditLog.getTargetId()).isEqualTo(700L);
+            assertThat(auditLog.getTargetId()).isEqualTo("700");
             assertThat(auditLog.getIpAddress()).isEqualTo("192.168.0.10");
             assertThat(auditLog.getSeverity()).isEqualTo("INFO");
             assertThat(auditLog.getDetail()).isNull();
@@ -911,8 +952,6 @@ class AdminManagementServiceImplTest {
     }
 
     private void setField(Object target, String fieldName, Object value) throws Exception {
-        var field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
+        ReflectionTestUtils.setField(target, fieldName, value);
     }
 }
