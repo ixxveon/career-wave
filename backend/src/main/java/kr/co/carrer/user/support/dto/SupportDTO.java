@@ -57,7 +57,7 @@ public class SupportDTO {
     public record RequestCreateInquiry(
         @NotNull InquiryCategory category,
         @NotBlank @Size(max = 200) String title,
-        @NotBlank @Size(min = 10) String content
+        @NotBlank String content
     ) {}
 
     public record ResponseCreateInquiry(

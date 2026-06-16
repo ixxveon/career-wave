@@ -1,7 +1,9 @@
 package kr.co.carrer.user.support.service.impl;
 
+import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.support.dto.SupportDTO;
 import kr.co.carrer.user.support.entity.SupportInquiry;
+import kr.co.carrer.user.support.exception.UserSupportErrorCode;
 import kr.co.carrer.user.support.repository.UserInquiryRepository;
 import kr.co.carrer.user.support.service.UserInquiryService;
 import kr.co.carrer.user.support.type.InquiryCategory;
@@ -38,6 +40,9 @@ public class UserInquiryServiceImpl implements UserInquiryService {
     @Override
     @Transactional
     public SupportDTO.ResponseCreateInquiry createInquiry(UUID memberId, SupportDTO.RequestCreateInquiry dto) {
+        if (dto.content().length() < 10) {
+            throw new CustomException(UserSupportErrorCode.INVALID_INQUIRY_CONTENT);
+        }
         SupportInquiry inquiry = SupportInquiry.create(memberId, dto.category(), dto.title(), dto.content());
         inquiryRepository.save(inquiry);
         return new SupportDTO.ResponseCreateInquiry(inquiry.getInquiryId(), inquiry.getInquiryStatus());
