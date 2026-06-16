@@ -104,10 +104,10 @@ admin/cs/
 │   ├── AdminFaqService.java
 │   └── AdminInquiryService.java
 ├── controller/
-│   ├── AdminCsController.java      — GET /api/admin/cs/summary
-│   ├── AdminNoticeController.java  — /api/admin/notices
-│   ├── AdminFaqController.java     — /api/admin/faqs
-│   └── AdminInquiryController.java — /api/admin/inquiries + AI 초안
+│   ├── AdminCsController.java      — GET /api/v1/admin/cs/summary
+│   ├── AdminNoticeController.java  — /api/v1/admin/notices
+│   ├── AdminFaqController.java     — /api/v1/admin/faqs
+│   └── AdminInquiryController.java — /api/v1/admin/inquiries + AI 초안
 ├── dto/
 │   ├── NoticeDTO.java
 │   ├── FaqDTO.java
@@ -554,78 +554,78 @@ public class AiDTO {
 ### KPI 집계
 
 ```http
-GET /api/admin/cs/summary
+GET /api/v1/admin/cs/summary
 응답: ApiResponse<CsDTO.ResponseSummary>
 ```
 
 ### 공지사항
 
 ```http
-GET    /api/admin/notices?category=&visible=&page=&size=
+GET    /api/v1/admin/notices?category=&visible=&page=&size=
          → ApiResponse<PaginationResponse<NoticeDTO.ResponseList>>
 
-GET    /api/admin/notices/{noticeId}
+GET    /api/v1/admin/notices/{noticeId}
          → ApiResponse<NoticeDTO.ResponseDetail>
 
-POST   /api/admin/notices
+POST   /api/v1/admin/notices
          Body: NoticeDTO.RequestCreate
          → ApiResponse<NoticeDTO.ResponseResult>  (201)
 
-PUT    /api/admin/notices/{noticeId}
+PUT    /api/v1/admin/notices/{noticeId}
          Body: NoticeDTO.RequestUpdate
          → ApiResponse<NoticeDTO.ResponseResult>
 
-DELETE /api/admin/notices/{noticeId}
+DELETE /api/v1/admin/notices/{noticeId}
          → ApiResponse<Void>  (200, data: null)
 ```
 
 ### FAQ
 
 ```http
-GET    /api/admin/faqs?category=&page=&size=
+GET    /api/v1/admin/faqs?category=&page=&size=
          → ApiResponse<PaginationResponse<FaqDTO.ResponseList>>
 
-POST   /api/admin/faqs
+POST   /api/v1/admin/faqs
          Body: FaqDTO.RequestCreate
          → ApiResponse<FaqDTO.ResponseResult>  (201)
 
-PUT    /api/admin/faqs/{faqId}
+PUT    /api/v1/admin/faqs/{faqId}
          Body: FaqDTO.RequestUpdate
          → ApiResponse<FaqDTO.ResponseResult>
 
-DELETE /api/admin/faqs/{faqId}
+DELETE /api/v1/admin/faqs/{faqId}
          → ApiResponse<Void>  (200, data: null)
 ```
 
 ### 1:1 문의
 
 ```http
-GET    /api/admin/inquiries?category=&status=&page=&size=
+GET    /api/v1/admin/inquiries?category=&status=&page=&size=
          → ApiResponse<PaginationResponse<InquiryDTO.ResponseList>>
 
-GET    /api/admin/inquiries/{inquiryId}
+GET    /api/v1/admin/inquiries/{inquiryId}
          → ApiResponse<InquiryDTO.ResponseDetail>
 
-PUT    /api/admin/inquiries/{inquiryId}/reply
+PUT    /api/v1/admin/inquiries/{inquiryId}/reply
          Body: InquiryDTO.RequestReply
          → ApiResponse<InquiryDTO.ResponseReply>
 
-PUT    /api/admin/inquiries/{inquiryId}/complete
+PUT    /api/v1/admin/inquiries/{inquiryId}/complete
          → ApiResponse<InquiryDTO.ResponseComplete>
 ```
 
 ### AI 초안 (FastAPI 연동)
 
 ```http
-POST   /api/admin/ai/notice-draft
+POST   /api/v1/admin/ai/notice-draft
          Body: AiDTO.RequestNoticeDraft  (category, title)
          → ApiResponse<AiDTO.ResponseDraft>
 
-POST   /api/admin/ai/faq-draft
+POST   /api/v1/admin/ai/faq-draft
          Body: AiDTO.RequestFaqDraft  (question)
          → ApiResponse<AiDTO.ResponseDraft>
 
-POST   /api/admin/ai/inquiry-draft
+POST   /api/v1/admin/ai/inquiry-draft
          Body: AiDTO.RequestInquiryDraft  (category, title, content)
          → ApiResponse<AiDTO.ResponseDraft>
 ```
@@ -767,12 +767,12 @@ POST   /api/admin/ai/inquiry-draft
 
 **Scenario 1**: 정상 조회
 - Given CS 데이터가 존재할 때
-- When GET /api/admin/cs/summary 요청 시
+- When GET /api/v1/admin/cs/summary 요청 시
 - Then noticeCount, faqCount, pendingCount, inProgressCount를 반환한다
 
 **Scenario 2**: 데이터 없음
 - Given 등록된 데이터가 없을 때
-- When GET /api/admin/cs/summary 요청 시
+- When GET /api/v1/admin/cs/summary 요청 시
 - Then 모든 카운트를 0으로 반환한다
 
 ---
@@ -785,12 +785,12 @@ POST   /api/admin/ai/inquiry-draft
 
 **Scenario 1**: 목록 조회 (필터 없음)
 - Given 공지사항 데이터가 존재할 때
-- When GET /api/admin/notices 요청 시
+- When GET /api/v1/admin/notices 요청 시
 - Then 전체 공지사항 목록을 createdAt DESC 순으로 반환한다
 
 **Scenario 2**: 공지사항 등록
 - Given category, title, isVisible 값으로 요청 시
-- When POST /api/admin/notices 요청 시
+- When POST /api/v1/admin/notices 요청 시
 - Then 201 응답과 함께 noticeId를 반환한다
 
 ---
@@ -803,12 +803,12 @@ POST   /api/admin/ai/inquiry-draft
 
 **Scenario 1**: FAQ 등록
 - Given category, question, answer 값으로 요청 시
-- When POST /api/admin/faqs 요청 시
+- When POST /api/v1/admin/faqs 요청 시
 - Then 201 응답과 함께 faqId를 반환한다
 
 **Scenario 2**: 존재하지 않는 FAQ 수정
 - Given 존재하지 않는 faqId로 요청 시
-- When PUT /api/admin/faqs/{faqId} 요청 시
+- When PUT /api/v1/admin/faqs/{faqId} 요청 시
 - Then 404 FAQ_NOT_FOUND를 반환한다
 
 ---
@@ -821,17 +821,17 @@ POST   /api/admin/ai/inquiry-draft
 
 **Scenario 1**: 문의 목록 조회
 - Given 문의 데이터가 존재할 때
-- When GET /api/admin/inquiries?status=PENDING 요청 시
+- When GET /api/v1/admin/inquiries?status=PENDING 요청 시
 - Then PENDING 상태 문의 목록을 createdAt DESC 순으로 반환한다
 
 **Scenario 2**: 답변 저장
 - Given PENDING 또는 IN_PROGRESS 상태 문의에 reply 포함하여 요청 시
-- When PUT /api/admin/inquiries/{inquiryId}/reply 요청 시
+- When PUT /api/v1/admin/inquiries/{inquiryId}/reply 요청 시
 - Then inquiry_status = IN_PROGRESS, repliedAt이 설정되고 결과를 반환한다
 
 **Scenario 3**: 이미 완료된 문의 답변 수정 시도
 - Given COMPLETED 상태 문의에 대해
-- When PUT /api/admin/inquiries/{inquiryId}/reply 요청 시
+- When PUT /api/v1/admin/inquiries/{inquiryId}/reply 요청 시
 - Then 409 INQUIRY_ALREADY_COMPLETED를 반환한다
 
 **Scenario 4**: 답변 동시 수정 충돌
@@ -849,12 +849,12 @@ POST   /api/admin/ai/inquiry-draft
 
 **Scenario 1**: 정상 완료 처리
 - Given IN_PROGRESS 상태 문의에 대해
-- When PUT /api/admin/inquiries/{inquiryId}/complete 요청 시
+- When PUT /api/v1/admin/inquiries/{inquiryId}/complete 요청 시
 - Then inquiry_status = COMPLETED, completedAt이 설정되고 결과를 반환한다
 
 **Scenario 2**: IN_PROGRESS 아닌 문의 완료 시도
 - Given PENDING 상태 문의에 대해
-- When PUT /api/admin/inquiries/{inquiryId}/complete 요청 시
+- When PUT /api/v1/admin/inquiries/{inquiryId}/complete 요청 시
 - Then 400 INQUIRY_NOT_IN_PROGRESS를 반환한다
 
 ---
@@ -867,12 +867,12 @@ POST   /api/admin/ai/inquiry-draft
 
 **Scenario 1**: 문의 초안 생성
 - Given category, title, content 값으로 요청 시
-- When POST /api/admin/ai/inquiry-draft 요청 시
+- When POST /api/v1/admin/ai/inquiry-draft 요청 시
 - Then AI 생성 답변 초안을 반환한다
 
 **Scenario 2**: FastAPI 타임아웃
 - Given FastAPI 응답이 10초 초과 시
-- When POST /api/admin/ai/inquiry-draft 요청 시
+- When POST /api/v1/admin/ai/inquiry-draft 요청 시
 - Then 503 AI_SERVER_UNAVAILABLE을 반환한다
 
 ---
