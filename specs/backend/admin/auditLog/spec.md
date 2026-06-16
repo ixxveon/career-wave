@@ -66,7 +66,7 @@
 - **FR-014**: 시스템은 `from`, `to`, `page`, `size`가 유효하지 않은 요청을 공통 요청 검증 실패 `400`으로 처리해야 하며, 유효하지 않은 요청에는 ISO 8601 UTC 형식이 아닌 `from` 또는 `to`, `from > to`, `page < 1`, `size < 1`, `keyword` 100자 초과가 포함되어야 한다.
 - **FR-015**: 시스템은 모든 감사 로그 API에 JWT 기반 인증과 역할 기반 인가를 적용해야 한다.
 - **FR-016**: 시스템은 문서상 권한 표기 `MASTER`, `BACKEND`, `CS`를 Spring Security의 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`와 일치하도록 해석해야 한다.
-- **FR-017**: 시스템은 `audit_logs.log_type` 값을 `ADMIN_ACTIVITY`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` 범위로 해석해야 한다.
+- **FR-017**: 시스템은 `audit_logs.log_type` 값을 `ADMIN_ACTIVITY`, `ADMIN_MANAGEMENT`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` 범위로 해석해야 한다.
 - **FR-018**: 시스템은 `audit_logs.severity` 값을 `INFO`, `WARN`, `ERROR`, `SUCCESS` 범위로 해석해야 한다.
 - **FR-019**: 시스템은 `auditLog` 도메인을 조회 전용 범위로 유지해야 하며, 감사 로그 생성, 수정, 삭제 기능 요구사항을 포함하지 않아야 한다.
 - **FR-020**: 시스템은 `auditLog` 기능을 관리자 패키지 범위에서 유지해야 하며 사용자 기능 요구사항을 포함하지 않아야 한다.
