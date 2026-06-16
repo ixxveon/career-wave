@@ -194,8 +194,8 @@
 - [x] `InterviewHandshakeInterceptor` — `?token=` JWT 검증 → `memberId`를 세션 attributes에 저장
 - [x] `InterviewStompChannelInterceptor` — STOMP 프레임 인터셉터
   - [x] `CONNECT`: `memberId` 존재 여부 재검증
-  - [x] `SUBSCRIBE /user/queue/interview/{sessionId}`: sessionId 소유권 검증 (IDOR 방지)
-  - [x] 구독 직후 상태 스냅샷 전송 — `REPORT_READY` 또는 `SESSION_START`
+  - [x] `SUBSCRIBE /topic/interview/{sessionId}`: sessionId 소유권 검증 (IDOR 방지)
+  - [x] 구독 완료 후 스냅샷 전송 (`SessionSubscribeEvent` 기반) — `REPORT_READY` 또는 `SESSION_START`
 - [x] 메시지 전송 (`SimpMessagingTemplate`)
   - [x] `SESSION_START` — 세션 시작 안내
   - [x] `REPORT_READY` — 리포트 생성 완료 알림 (`data.reportUrl` 포함)

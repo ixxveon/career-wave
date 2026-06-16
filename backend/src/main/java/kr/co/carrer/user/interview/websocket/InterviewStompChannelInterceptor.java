@@ -5,15 +5,16 @@ import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageDeliveryException;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
 import java.util.Map;
 import java.util.UUID;
@@ -22,7 +23,7 @@ import java.util.UUID;
 @Component
 public class InterviewStompChannelInterceptor implements ChannelInterceptor {
 
-    private static final String QUEUE_PREFIX = "/user/queue/interview/";
+    private static final String TOPIC_PREFIX = "/topic/interview/";
 
     private final InterviewSessionRepository sessionRepository;
     private final AIInterviewFeedbackRepository feedbackRepository;
@@ -65,7 +66,7 @@ public class InterviewStompChannelInterceptor implements ChannelInterceptor {
 
     private Message<?> handleSubscribe(Message<?> message, StompHeaderAccessor accessor) {
         String destination = accessor.getDestination();
-        if (destination == null || !destination.startsWith(QUEUE_PREFIX)) {
+        if (destination == null || !destination.startsWith(TOPIC_PREFIX)) {
             return message;
         }
 
@@ -87,25 +88,28 @@ public class InterviewStompChannelInterceptor implements ChannelInterceptor {
             throw new MessageDeliveryException("해당 면접 세션에 대한 구독 권한이 없습니다.");
         }
 
-        log.debug("[Interview STOMP SUBSCRIBE] memberId={}, sessionId={}", memberId, sessionId);
-        sendSnapshot(accessor.getSessionId(), sessionId);
+        log.debug("[Interview STOMP SUBSCRIBE 승인] memberId={}, sessionId={}", memberId, sessionId);
         return message;
     }
 
-    // 구독 즉시 현재 상태 스냅샷 전송 (재연결 대응)
-    private void sendSnapshot(String stompSessionId, UUID sessionId) {
-        if (stompSessionId == null) return;
+    // 구독 완료 후 스냅샷 전송 (preSend에서 보내면 구독 등록 전이라 못 받음)
+    @EventListener
+    public void handleSessionSubscribe(SessionSubscribeEvent event) {
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        String destination = accessor.getDestination();
+
+        if (destination == null || !destination.startsWith(TOPIC_PREFIX)) return;
+
+        UUID sessionId = extractSessionId(destination);
+        if (sessionId == null) return;
 
         String reportUrl = "/api/v1/user/interview/sessions/" + sessionId + "/report";
-        Map<String, Object> headers = Map.of(SimpMessageHeaderAccessor.SESSION_ID_HEADER, stompSessionId);
-        String destination = "/queue/interview/" + sessionId;
-
         WebSocketMessage snapshot = feedbackRepository.existsBySessionId(sessionId)
                 ? WebSocketMessage.reportReady(reportUrl)
                 : WebSocketMessage.sessionStart();
 
-        messagingTemplate.convertAndSend(destination, snapshot, headers);
-        log.debug("[Interview STOMP SUBSCRIBE Snapshot] stompSessionId={}, sessionId={}", stompSessionId, sessionId);
+        messagingTemplate.convertAndSend(TOPIC_PREFIX + sessionId, snapshot);
+        log.debug("[Interview Snapshot 전송] sessionId={}", sessionId);
     }
 
     private UUID extractMemberId(StompHeaderAccessor accessor) {
@@ -116,10 +120,8 @@ public class InterviewStompChannelInterceptor implements ChannelInterceptor {
     }
 
     private UUID extractSessionId(String destination) {
-        // /user/queue/interview/{sessionId}
         try {
-            String sessionIdStr = destination.substring(QUEUE_PREFIX.length());
-            return UUID.fromString(sessionIdStr);
+            return UUID.fromString(destination.substring(TOPIC_PREFIX.length()));
         } catch (IllegalArgumentException e) {
             return null;
         }

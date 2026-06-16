@@ -267,7 +267,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```
 
 > 세션 종료 즉시 서버에서 FastAPI 리포트 생성 작업을 **비동기로 트리거**한다.  
-> 리포트 완료 알림은 Spring STOMP(`/user/queue/interview/{sessionId}`)로 클라이언트에 전달한다.
+> 리포트 완료 알림은 Spring STOMP(`/topic/interview/{sessionId}`)로 클라이언트에 전달한다.
 
 ### Error Cases
 
@@ -450,12 +450,14 @@ SUBSCRIBE 시 `sessionId` 소유권을 DB로 재검증 (IDOR 방지).
 ### 구독 경로
 
 ```
-SUBSCRIBE /user/queue/interview/{sessionId}
+SUBSCRIBE /topic/interview/{sessionId}
 ```
 
-구독 직후 현재 상태 스냅샷 1회 전송:
+구독 직후 현재 상태 스냅샷 1회 전송 (`SessionSubscribeEvent` 기반):
 - 리포트 완료 → `REPORT_READY` 즉시 전송
 - 진행 중 → `SESSION_START` 전송
+
+> `/topic/` prefix 사용 이유: 서버(FastAPI 콜백)가 stompSessionId 없이도 브로드캐스트 가능. 소유권 검증은 SUBSCRIBE 인터셉터(`InterviewStompChannelInterceptor`)에서 수행.
 
 ### Connection Lifecycle
 
@@ -464,8 +466,8 @@ SUBSCRIBE /user/queue/interview/{sessionId}
    │                                                │
    │── STOMP CONNECT (/ws/user/interview?token=...) ▶│  JWT 검증 → memberId 추출
    │                                                │
-   │── SUBSCRIBE /user/queue/interview/{sessionId} ─▶│  sessionId 소유권 검증
-   │◀─ {"type":"SYSTEM","subType":"SESSION_START",...} │  구독 직후 스냅샷 전송
+   │── SUBSCRIBE /topic/interview/{sessionId} ──────▶│  sessionId 소유권 검증
+   │◀─ {"type":"SYSTEM","subType":"SESSION_START",...} │  구독 직후 스냅샷 전송 (SessionSubscribeEvent)
    │                                                │
    │◀─ {"type":"QUESTION","questionOrder":1,...} ────│  AI 첫 질문 (FastAPI → Spring → WS)
    │◀─ {"type":"QUESTION","questionOrder":2,...} ────│  꼬리 질문

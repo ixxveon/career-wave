@@ -62,7 +62,7 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
     private void sendReportReady(UUID sessionId, String reportUrl) {
         // /user/queue/interview/{sessionId} 구독자에게 전송
         messagingTemplate.convertAndSend(
-                "/queue/interview/" + sessionId,
+                "/topic/interview/" + sessionId,
                 WebSocketMessage.reportReady(reportUrl)
         );
         log.info("REPORT_READY sent: sessionId={}", sessionId);

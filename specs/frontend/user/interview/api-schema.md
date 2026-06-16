@@ -100,7 +100,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 세션 생성 직후 클라이언트는 `data.sessionId` 수신 후 즉시  
-> Spring STOMP(`WS /ws/user/interview`, 구독: `/user/queue/interview/{sessionId}`) 및  
+> Spring STOMP(`WS /ws/user/interview`, 구독: `/topic/interview/{sessionId}`) 및  
 > FastAPI WebSocket(`WS /ws/user/interview/{sessionId}/ai`) 연결을 시작합니다.
 
 ### Error Cases
@@ -222,7 +222,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 세션 종료 즉시 서버에서 AI 리포트 생성 작업을 **자동 트리거**합니다.  
-> 리포트 완료 알림은 Spring STOMP(`/user/queue/interview/{sessionId}`)로 수신합니다.
+> 리포트 완료 알림은 Spring STOMP(`/topic/interview/{sessionId}`)로 수신합니다.
 
 ### Error Cases
 
@@ -377,7 +377,7 @@ Authorization: Bearer {accessToken}
 WS /ws/user/interview?token={accessToken}
 
 // 2. 세션 구독
-SUBSCRIBE /user/queue/interview/{sessionId}
+SUBSCRIBE /topic/interview/{sessionId}
 ```
 
 - 핸드셰이크 시 JWT 검증 → 실패 시 연결 거부
@@ -390,7 +390,7 @@ SUBSCRIBE /user/queue/interview/{sessionId}
 클라이언트                                       Spring 서버
    │                                             │
    │── STOMP CONNECT (/ws/user/interview?token=) ▶│  JWT 검증
-   │── SUBSCRIBE /user/queue/interview/{sessionId} ▶│  소유권 검증
+   │── SUBSCRIBE /topic/interview/{sessionId} ───▶│  소유권 검증
    │◀─ {"type":"SYSTEM","subType":"SESSION_START"} │  구독 직후 스냅샷
    │                                             │
    │◀─ {"type":"QUESTION", ...} ─────────────────│  AI 첫 질문
