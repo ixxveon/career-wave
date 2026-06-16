@@ -12,9 +12,153 @@
 커뮤니티 게시글·댓글·회원에 대한 신고 내역을 관리자가 조회하고,
 블라인드 처리 또는 기각 처리를 수행하는 어드민 API.
 
-- `target_type = BOARD` 블라인드 처리: `reports.report_status → BLINDED` + `boards.is_blind → TRUE` (동일 트랜잭션)
-- `target_type = COMMENT` 블라인드 처리: `reports.report_status → BLINDED` + `comments.is_blind → TRUE` (동일 트랜잭션)
-- `target_type = MEMBER` 블라인드 처리: `reports.report_status → BLINDED`만 변경 (콘텐츠 블라인드 없음)
+- target_type = BOARD 블라인드 처리: reports.report_status → BLINDED + boards.is_blind → TRUE (동일 트랜잭션)
+- target_type = COMMENT 블라인드 처리: reports.report_status → BLINDED + comments.is_blind → TRUE (동일 트랜잭션)
+- target_type = MEMBER 블라인드 처리: reports.report_status → BLINDED만 변경 (콘텐츠 블라인드 없음)
+
+---
+
+## User Stories
+
+### Story 1 — 신고 현황 요약 조회 (P1)
+
+**As** 관리자
+**I want** 전체 신고 건수와 처리 대기 건수를 한눈에 보고 싶다
+**So that** 처리가 필요한 신고 현황을 빠르게 파악할 수 있다
+
+**Scenario 1**: 정상 조회
+- Given 신고 데이터가 존재할 때
+- When GET /api/admin/reports/summary 요청 시
+- Then 전체, 대기, 블라인드, 기각 건수를 반환한다
+
+**Scenario 2**: 데이터 없음
+- Given 신고 데이터가 하나도 없을 때
+- When GET /api/admin/reports/summary 요청 시
+- Then 모든 카운트를 0으로 반환한다
+
+---
+
+### Story 2 — 신고 목록 조회 (P1)
+
+**As** 관리자
+**I want** 신고 목록을 상태, 유형, 사유별로 필터링하여 조회하고 싶다
+**So that** 처리가 필요한 신고를 빠르게 찾을 수 있다
+
+**Scenario 1**: 정상 조회 (필터 없음)
+- Given 신고 데이터가 존재할 때
+- When GET /api/admin/reports 요청 시
+- Then 전체 신고 목록을 created_at DESC 순으로 반환한다
+
+**Scenario 2**: 상태 필터 적용
+- Given status=PENDING으로 요청 시
+- When GET /api/admin/reports?status=PENDING 요청 시
+- Then PENDING 상태 신고만 반환한다
+
+**Scenario 3**: 잘못된 필터 값
+- Given status=INVALID로 요청 시
+- When GET /api/admin/reports?status=INVALID 요청 시
+- Then 400 INVALID_REPORT_FILTER를 반환한다
+
+---
+
+### Story 3 — 신고 상세 조회 (P1)
+
+**As** 관리자
+**I want** 신고된 콘텐츠 상세 내용을 확인하고 싶다
+**So that** 블라인드 또는 기각 처리 여부를 판단할 수 있다
+
+**Scenario 1**: 정상 조회
+- Given 유효한 reportId로 요청 시
+- When GET /api/admin/reports/{reportId} 요청 시
+- Then 신고 상세 정보와 대상 콘텐츠 내용을 반환한다
+
+**Scenario 2**: 대상 콘텐츠 삭제됨
+- Given 신고 대상 게시글이 이미 삭제된 경우
+- When GET /api/admin/reports/{reportId} 요청 시
+- Then contentTitle, contentBody를 null로 반환한다
+
+**Scenario 3**: 신고 없음
+- Given 존재하지 않는 reportId로 요청 시
+- When GET /api/admin/reports/{reportId} 요청 시
+- Then 404 REPORT_NOT_FOUND를 반환한다
+
+---
+
+### Story 4 — 블라인드 처리 (P1)
+
+**As** 관리자
+**I want** 신고된 게시글 또는 댓글을 블라인드 처리하고 싶다
+**So that** 유해 콘텐츠를 즉시 숨길 수 있다
+
+**Scenario 1**: BOARD 블라인드 처리
+- Given target_type = BOARD인 PENDING 신고에 대해
+- When PATCH /api/admin/reports/{reportId}/blind 요청 시
+- Then report_status = BLINDED, boards.is_blind = TRUE가 동일 트랜잭션에서 변경되고 처리 결과를 반환한다
+
+**Scenario 2**: COMMENT 블라인드 처리
+- Given target_type = COMMENT인 PENDING 신고에 대해
+- When PATCH /api/admin/reports/{reportId}/blind 요청 시
+- Then report_status = BLINDED, comments.is_blind = TRUE가 동일 트랜잭션에서 변경된다
+
+**Scenario 3**: MEMBER 블라인드 처리
+- Given target_type = MEMBER인 PENDING 신고에 대해
+- When PATCH /api/admin/reports/{reportId}/blind 요청 시
+- Then report_status = BLINDED만 변경되며 members 테이블은 수정되지 않는다
+
+**Scenario 4**: 이미 처리된 신고
+- Given BLINDED 또는 DISMISSED 상태인 신고에 대해
+- When PATCH /api/admin/reports/{reportId}/blind 요청 시
+- Then 409 ALREADY_PROCESSED를 반환한다
+
+---
+
+### Story 5 — 기각 처리 (P1)
+
+**As** 관리자
+**I want** 근거 없는 신고를 기각 처리하고 싶다
+**So that** 허위 신고로 인한 콘텐츠 삭제를 방지할 수 있다
+
+**Scenario 1**: 정상 기각 처리
+- Given PENDING 상태인 신고에 대해
+- When PATCH /api/admin/reports/{reportId}/dismiss 요청 시
+- Then report_status = DISMISSED로 변경되고 처리 결과를 반환한다
+
+**Scenario 2**: 이미 처리된 신고
+- Given BLINDED 또는 DISMISSED 상태인 신고에 대해
+- When PATCH /api/admin/reports/{reportId}/dismiss 요청 시
+- Then 409 ALREADY_PROCESSED를 반환한다
+
+---
+
+## Functional Requirements
+
+- FR-001: KPI 요약 API는 전체, 대기(PENDING), 블라인드(BLINDED), 기각(DISMISSED) 건수를 반환해야 한다
+- FR-002: 신고 목록은 status, targetType, reason, keyword 필터를 지원해야 한다
+- FR-003: 필터 조건이 null이면 해당 조건을 무시하고 전체를 조회해야 한다
+- FR-004: 잘못된 Enum 필터 값 입력 시 400 INVALID_REPORT_FILTER를 반환해야 한다
+- FR-005: 목록 기본 정렬은 created_at DESC이어야 한다
+- FR-006: page는 1-based로 받아 Service에서 0-based로 변환해야 한다
+- FR-007: 신고 상세 조회 시 target_type에 따라 boards 또는 comments 테이블에서 콘텐츠를 조회해야 한다
+- FR-008: 대상 콘텐츠가 삭제된 경우 contentTitle, contentBody를 null로 반환해야 한다
+- FR-009: PENDING이 아닌 신고에 블라인드 또는 기각 처리 시도 시 409 ALREADY_PROCESSED를 반환해야 한다
+- FR-010: BOARD 블라인드 처리 시 boards.is_blind = TRUE 변경이 동일 트랜잭션 안에 포함되어야 한다
+- FR-011: COMMENT 블라인드 처리 시 comments.is_blind = TRUE 변경이 동일 트랜잭션 안에 포함되어야 한다
+- FR-012: MEMBER 블라인드 처리 시 members 테이블을 수정하지 않아야 한다
+- FR-013: 처리 응답에는 변경된 reportStatus와 processedAt이 포함되어야 한다
+- FR-014: processedBy는 Security Context에서 추출한 관리자 ID를 사용해야 한다
+- FR-015: 모든 응답은 ApiResponse<T> 래퍼를 사용해야 한다
+
+---
+
+## Edge Cases
+
+- EC-001: PENDING이 아닌 신고에 블라인드 시도 → 409 ALREADY_PROCESSED
+- EC-002: PENDING이 아닌 신고에 기각 시도 → 409 ALREADY_PROCESSED
+- EC-003: 신고 대상 게시글이 이미 삭제된 경우 → contentTitle, contentBody null 반환
+- EC-004: target_type = MEMBER 블라인드 처리 시 members.member_status 변경 금지
+- EC-005: 잘못된 Enum 필터 값(status, targetType, reason) 입력 시 → 400 반환
+- EC-006: 존재하지 않는 reportId 조회 시 → 404 REPORT_NOT_FOUND
+- EC-007: 블라인드 처리 중 boards/comments 업데이트 실패 시 → 전체 트랜잭션 롤백
 
 ---
 
@@ -24,31 +168,31 @@
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
-| `report_id` | BIGSERIAL | PK | 신고 고유 식별자 |
-| `member_id` | UUID | FK → members, NOT NULL | 신고당한 회원 |
-| `reporter_id` | UUID | FK → members, NOT NULL | 신고한 회원 |
-| `target_type` | VARCHAR(20) | NOT NULL | `BOARD` / `COMMENT` / `MEMBER` |
-| `target_id` | BIGINT | NOT NULL | 신고 대상 레코드 ID |
-| `reason` | VARCHAR(30) | NOT NULL | `SPAM` / `ABUSE` / `AD` / `INAPPROPRIATE` / `OTHER` |
-| `report_status` | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | `PENDING` / `BLINDED` / `DISMISSED` |
-| `ai_suggestion` | TEXT | NULL | AI 검토 의견 (v2 UI 표시 예정) |
-| `processed_by` | BIGINT | FK → admins, NULL | 처리 관리자 |
-| `processed_at` | TIMESTAMPTZ | NULL | 처리 완료 일시 |
-| `created_at` | TIMESTAMPTZ | NOT NULL | 신고 접수 일시 |
+| report_id | BIGSERIAL | PK | 신고 고유 식별자 |
+| member_id | UUID | FK → members, NOT NULL | 신고당한 회원 |
+| reporter_id | UUID | FK → members, NOT NULL | 신고한 회원 |
+| target_type | VARCHAR(20) | NOT NULL | BOARD / COMMENT / MEMBER |
+| target_id | BIGINT | NOT NULL | 신고 대상 레코드 ID |
+| reason | VARCHAR(30) | NOT NULL | SPAM / ABUSE / AD / INAPPROPRIATE / OTHER |
+| report_status | VARCHAR(20) | NOT NULL, DEFAULT PENDING | PENDING / BLINDED / DISMISSED |
+| ai_suggestion | TEXT | NULL | AI 검토 의견 (v2 UI 표시 예정) |
+| processed_by | BIGINT | FK → admins, NULL | 처리 관리자 |
+| processed_at | TIMESTAMPTZ | NULL | 처리 완료 일시 |
+| created_at | TIMESTAMPTZ | NOT NULL | 신고 접수 일시 |
 
 ### boards (연관)
 
-| 컬럼 | 타입 | 제약 | 설명 |
-|---|---|---|---|
-| `board_id` | BIGSERIAL | PK | 게시글 고유 식별자 |
-| `is_blind` | BOOLEAN | NOT NULL, DEFAULT FALSE | 블라인드 처리 여부 |
+| 컬럼 | 타입 | 설명 |
+|---|---|---|
+| board_id | BIGSERIAL | PK |
+| is_blind | BOOLEAN | 블라인드 처리 여부 |
 
 ### comments (연관)
 
-| 컬럼 | 타입 | 제약 | 설명 |
-|---|---|---|---|
-| `comment_id` | BIGSERIAL | PK | 댓글 고유 식별자 |
-| `is_blind` | BOOLEAN | NOT NULL, DEFAULT FALSE | 블라인드 처리 여부 |
+| 컬럼 | 타입 | 설명 |
+|---|---|---|
+| comment_id | BIGSERIAL | PK |
+| is_blind | BOOLEAN | 블라인드 처리 여부 |
 
 ---
 
@@ -64,9 +208,9 @@ admin/report/
 │   ├── ReportBoardRepository.java
 │   └── ReportCommentRepository.java
 ├── type/
-│   ├── ReportStatus.java      — PENDING / BLINDED / DISMISSED
-│   ├── TargetType.java        — BOARD / COMMENT / MEMBER
-│   └── ReportReason.java      — SPAM / ABUSE / AD / INAPPROPRIATE / OTHER
+│   ├── ReportStatus.java
+│   ├── TargetType.java
+│   └── ReportReason.java
 ├── service/
 │   ├── AdminReportService.java
 │   └── impl/
@@ -83,216 +227,15 @@ admin/report/
 
 ---
 
-## Entity
+## Success Criteria
 
-### Report.java
-
-```java
-@Entity
-@Table(name = "reports")
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Report {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "report_id")
-    private Long reportId;
-
-    @Column(name = "member_id", nullable = false)
-    private UUID memberId;       // 피신고자
-
-    @Column(name = "reporter_id", nullable = false)
-    private UUID reporterId;     // 신고자
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "target_type", nullable = false)
-    private TargetType targetType;
-
-    @Column(name = "target_id", nullable = false)
-    private Long targetId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "reason", nullable = false)
-    private ReportReason reason;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "report_status", nullable = false)
-    private ReportStatus reportStatus;
-
-    @Column(name = "ai_suggestion")
-    private String aiSuggestion;
-
-    @Column(name = "processed_by")
-    private Long processedBy;
-
-    @Column(name = "processed_at")
-    private ZonedDateTime processedAt;
-
-    @Column(name = "created_at", nullable = false)
-    private ZonedDateTime createdAt;
-
-    // 블라인드 처리
-    public void blind(Long adminId) {
-        this.reportStatus = ReportStatus.BLINDED;
-        this.processedBy = adminId;
-        this.processedAt = ZonedDateTime.now();
-    }
-
-    // 기각 처리
-    public void dismiss(Long adminId) {
-        this.reportStatus = ReportStatus.DISMISSED;
-        this.processedBy = adminId;
-        this.processedAt = ZonedDateTime.now();
-    }
-}
-```
-
----
-
-## DTO 구조
-
-```java
-public class ReportDetailDTO {
-
-    // 목록 항목
-    public record ResponseList(
-        Long reportId,
-        TargetType targetType,
-        ReportReason reason,
-        ReportStatus reportStatus,
-        String reporterName,    // 신고자 이름
-        String reportedName,    // 피신고자 이름
-        String contentTitle,    // 신고 대상 콘텐츠 제목 (BOARD 시 게시글 제목, 그 외 null)
-        ZonedDateTime createdAt
-    ) {}
-
-    // KPI 집계
-    public record ResponseSummary(
-        long totalCount,
-        long pendingCount,
-        long blindedCount,
-        long highRiskCount   // ai_suggestion 심각도 '높음' 건수
-    ) {}
-
-    // 상세 조회
-    public record ResponseDetail(
-        Long reportId,
-        TargetType targetType,
-        Long targetId,
-        ReportReason reason,
-        ReportStatus reportStatus,
-        String reporterName,
-        String reportedName,
-        String contentTitle,   // BOARD 시 게시글 제목, 그 외 null
-        String contentBody,    // 대상 콘텐츠 본문 (삭제 시 null)
-        ZonedDateTime createdAt,
-        ZonedDateTime processedAt,
-        Long processedBy
-    ) {}
-
-    // 블라인드·기각 처리 응답
-    public record ResponseProcess(
-        Long reportId,
-        ReportStatus reportStatus,
-        ZonedDateTime processedAt
-    ) {}
-}
-```
-
----
-
-## API 명세
-
-### 1. KPI 집계 조회
-
-```http
-GET /api/admin/reports/summary
-```
-
-- **응답**: `ApiResponse<ReportDetailDTO.ResponseSummary>`
-- 전체·접수·블라인드·기각 건수 반환
-
----
-
-### 2. 신고 목록 조회
-
-```http
-GET /api/admin/reports?status=&targetType=&reason=&keyword=&page=&size=
-```
-
-- **응답**: `ApiResponse<Map<String, Object>>` (`items`, `page`, `size`, `totalItems`, `totalPages`)
-- 필터 조건 없으면 전체 반환
-- 기본 정렬: `created_at DESC`
-
----
-
-### 3. 신고 상세 조회
-
-```http
-GET /api/admin/reports/{reportId}
-```
-
-- **응답**: `ApiResponse<ReportDetailDTO.ResponseDetail>`
-- `target_type`에 따라 boards 또는 comments 테이블에서 콘텐츠 조회
-- 대상 콘텐츠가 삭제된 경우 `contentTitle`, `contentBody` → null 반환
-
----
-
-### 4. 블라인드 처리
-
-```http
-PATCH /api/admin/reports/{reportId}/blind
-```
-
-- **응답**: `ApiResponse<ReportDetailDTO.ResponseProcess>`
-- `PENDING` 신고만 처리 가능
-- `target_type = BOARD` → `boards.is_blind = TRUE` 동시 변경 (동일 트랜잭션)
-- `target_type = COMMENT` → `comments.is_blind = TRUE` 동시 변경 (동일 트랜잭션)
-- `target_type = MEMBER` → `report_status = BLINDED`만 변경
-
----
-
-### 5. 기각 처리
-
-```http
-PATCH /api/admin/reports/{reportId}/dismiss
-```
-
-- **응답**: `ApiResponse<ReportDetailDTO.ResponseProcess>`
-- `PENDING` 신고만 처리 가능
-
----
-
-## 서비스 로직
-
-### AdminReportService
-
-#### getSummary()
-- `reports` 테이블에서 전체·상태별 COUNT 집계
-
-#### getReports(status, targetType, reason, page, size)
-- 동적 필터 조건 (null이면 필터 미적용)
-- `page`는 1-based → 0-based 변환 후 Pageable에 전달
-- 기본 정렬: `createdAt DESC`
-
-#### getReportDetail(Long reportId)
-- `REPORT_NOT_FOUND` 예외 처리
-- `targetType`에 따라 boards 또는 comments 테이블에서 콘텐츠 조회
-
-#### blindReport(Long reportId, Long adminId)
-- `REPORT_NOT_FOUND` 예외 처리
-- `PENDING`이 아니면 `ALREADY_PROCESSED` 예외
-- `targetType = BOARD` → `boardRepository.findById(targetId)`에서 `is_blind = true` 변경
-- `targetType = COMMENT` → `commentRepository.findById(targetId)`에서 `is_blind = true` 변경
-- `targetType = MEMBER` → is_blind 변경 없음
-- `reportDetail.blind(adminId)` 호출
-- `@Transactional` 적용
-
-#### dismissReport(Long reportId, Long adminId)
-- `REPORT_NOT_FOUND` 예외 처리
-- `PENDING`이 아니면 `ALREADY_PROCESSED` 예외
-- `reportDetail.dismiss(adminId)` 호출
-- `@Transactional` 적용
+- SC-001: PENDING이 아닌 신고 처리 시 409가 반환된다
+- SC-002: BOARD 블라인드 처리 시 boards.is_blind가 동일 트랜잭션에서 변경된다
+- SC-003: MEMBER 블라인드 처리 시 members 테이블이 수정되지 않는다
+- SC-004: 삭제된 콘텐츠 신고 상세 조회 시 contentTitle, contentBody가 null로 반환된다
+- SC-005: 잘못된 필터 값 입력 시 400이 반환된다
+- SC-006: 처리 응답에 reportStatus와 processedAt이 포함된다
+- SC-007: 모든 응답이 ApiResponse<T> 래퍼로 감싸진다
 
 ---
 
@@ -300,7 +243,7 @@ PATCH /api/admin/reports/{reportId}/dismiss
 
 | ErrorCode | HTTP | 발생 시점 |
 |---|---|---|
-| `REPORT_NOT_FOUND` | 404 | 신고 조회 실패 |
-| `ALREADY_PROCESSED` | 409 | PENDING 아닌 신고 처리 시도 |
-| `INVALID_REPORT_FILTER` | 400 | 잘못된 필터 Enum 값 |
-| `UNAUTHORIZED` | 401 | 인증 실패 |
+| REPORT_NOT_FOUND | 404 | 신고 조회 실패 |
+| ALREADY_PROCESSED | 409 | PENDING 아닌 신고 처리 시도 |
+| INVALID_REPORT_FILTER | 400 | 잘못된 필터 Enum 값 |
+| UNAUTHORIZED | 401 | 인증 실패 |
