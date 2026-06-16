@@ -20,13 +20,25 @@ import java.time.ZonedDateTime;
 @RequiredArgsConstructor
 public class AuditLogServiceImpl implements AuditLogService {
 
+    private static final int MAX_PAGE_SIZE = 100;
+
     private final AuditLogQueryRepository auditLogQueryRepository;
 
     @Override
     @Transactional(readOnly = true)
-    public AuditLogQueryRepository.SummaryAggregate getSummary(ZonedDateTime from, ZonedDateTime to) {
+    public ResponseSummary getSummary(ZonedDateTime from, ZonedDateTime to) {
         validateDateRange(from, to);
-        return auditLogQueryRepository.getSummary(from, to);
+        AuditLogQueryRepository.SummaryAggregate summary = auditLogQueryRepository.getSummary(from, to);
+        return new ResponseSummary(
+            summary.totalCount(),
+            summary.adminActivityCount(),
+            summary.aiMetricsSystemCount(),
+            summary.scrapingSystemCount(),
+            summary.infoCount(),
+            summary.warnCount(),
+            summary.errorCount(),
+            summary.successCount()
+        );
     }
 
     @Override
@@ -94,7 +106,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     private void validatePageSize(int page, int size) {
-        if (page < 1 || size < 1) {
+        if (page < 1 || size < 1 || size > MAX_PAGE_SIZE) {
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
     }
