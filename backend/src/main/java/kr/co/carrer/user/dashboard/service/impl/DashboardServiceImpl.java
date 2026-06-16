@@ -81,12 +81,18 @@ public class DashboardServiceImpl implements DashboardService {
             String keyword,
             int page,
             int size) {
-        Page<DashboardDTO.BookmarkResponse> result = dashboardBookmarkQueryRepository.findBookmarks(memberId, keyword,
-                page, size);
+
+        int safePage = Math.max(page, 1);
+
+        Page<DashboardDTO.BookmarkResponse> result = dashboardBookmarkQueryRepository.findBookmarks(
+                memberId,
+                keyword,
+                safePage,
+                size);
 
         return PaginationResponse.of(
                 result.getContent(),
-                page,
+                safePage,
                 size,
                 result.getTotalElements());
     }

@@ -33,6 +33,7 @@ public class DashboardBookmarkQueryRepository {
 
                 BooleanBuilder predicate = new BooleanBuilder();
                 predicate.and(bookmark.memberId.eq(memberId));
+                predicate.and(jobNotice.isNotNull());
 
                 if (keyword != null && !keyword.isBlank()) {
                         String normalizedKeyword = keyword.trim();
@@ -55,7 +56,7 @@ public class DashboardBookmarkQueryRepository {
                                                 jobNotice.deadline,
                                                 bookmark.createdAt))
                                 .from(bookmark)
-                                .join(jobNotice).on(bookmark.jobNoticeId.eq(jobNotice.jobNoticeId))
+                                .leftJoin(jobNotice).on(bookmark.jobNoticeId.eq(jobNotice.jobNoticeId))
                                 .where(predicate)
                                 .orderBy(bookmark.createdAt.desc())
                                 .offset((long) normalizedPage * normalizedSize)
@@ -65,7 +66,7 @@ public class DashboardBookmarkQueryRepository {
                 Long total = queryFactory
                                 .select(bookmark.count())
                                 .from(bookmark)
-                                .join(jobNotice).on(bookmark.jobNoticeId.eq(jobNotice.jobNoticeId))
+                                .leftJoin(jobNotice).on(bookmark.jobNoticeId.eq(jobNotice.jobNoticeId))
                                 .where(predicate)
                                 .fetchOne();
 
