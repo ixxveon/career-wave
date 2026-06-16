@@ -10,40 +10,76 @@ import kr.co.carrer.user.interview.repository.AIInterviewFeedbackRepository;
 import kr.co.carrer.user.interview.repository.CareerHistoryRepository;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import kr.co.carrer.user.interview.service.InterviewCallbackService;
-import kr.co.carrer.user.interview.websocket.InterviewWebSocketHandler;
-import lombok.RequiredArgsConstructor;
+import kr.co.carrer.user.interview.websocket.WebSocketMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class InterviewCallbackServiceImpl implements InterviewCallbackService {
 
     private final InterviewSessionRepository sessionRepository;
     private final AIInterviewFeedbackRepository feedbackRepository;
     private final CareerHistoryRepository careerHistoryRepository;
-    private final InterviewWebSocketHandler webSocketHandler;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    @Override
-    public void processReportCallback(UUID sessionId, InterviewDTO.RequestReportCallback dto) {
-        // 멱등성 체크 — 이미 저장된 피드백이 있으면 REPORT_READY만 재전송
-        if (feedbackRepository.existsBySessionId(sessionId)) {
-            log.info("Report callback already processed (idempotent): sessionId={}", sessionId);
-            webSocketHandler.sendReportReady(sessionId.toString(), null);
-            return;
-        }
-
-        saveReportData(sessionId, dto);
-        webSocketHandler.sendReportReady(sessionId.toString(), null);
+    // SimpMessagingTemplate은 WebSocket 브로커 초기화 이후에만 사용 가능하므로 @Lazy 주입
+    @Autowired
+    public InterviewCallbackServiceImpl(
+            InterviewSessionRepository sessionRepository,
+            AIInterviewFeedbackRepository feedbackRepository,
+            CareerHistoryRepository careerHistoryRepository,
+            @Lazy SimpMessagingTemplate messagingTemplate
+    ) {
+        this.sessionRepository = sessionRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.careerHistoryRepository = careerHistoryRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
+    @Override
     @Transactional
-    protected void saveReportData(UUID sessionId, InterviewDTO.RequestReportCallback dto) {
+    public void processReportCallback(UUID sessionId, InterviewDTO.RequestReportCallback dto) {
+        String reportUrl = "/api/v1/user/interview/sessions/" + sessionId + "/report";
+
+        boolean alreadyProcessed = feedbackRepository.existsBySessionId(sessionId);
+
+        if (alreadyProcessed) {
+            log.info("Report callback already processed (idempotent): sessionId={}", sessionId);
+        } else {
+            saveReportData(sessionId, dto);
+        }
+
+        // 신규 처리일 때만 REPORT_READY 전송 — 멱등 경로 중복 전송 방지
+        if (!alreadyProcessed) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendReportReady(sessionId, reportUrl);
+                }
+            });
+        }
+    }
+
+    private void sendReportReady(UUID sessionId, String reportUrl) {
+        // /user/queue/interview/{sessionId} 구독자에게 전송
+        messagingTemplate.convertAndSend(
+                "/topic/interview/" + sessionId,
+                WebSocketMessage.reportReady(reportUrl)
+        );
+        log.info("REPORT_READY sent: sessionId={}", sessionId);
+    }
+
+    private void saveReportData(UUID sessionId, InterviewDTO.RequestReportCallback dto) {
         InterviewSession session = sessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_NOT_FOUND));
 

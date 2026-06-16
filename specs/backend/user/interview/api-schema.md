@@ -267,7 +267,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```
 
 > 세션 종료 즉시 서버에서 FastAPI 리포트 생성 작업을 **비동기로 트리거**한다.  
-> 리포트 완료 알림은 Spring WebSocket(`WS /ws/user/interview/{sessionId}/chat`)으로 클라이언트에 전달한다.
+> 리포트 완료 알림은 Spring STOMP(`/topic/interview/{sessionId}`)로 클라이언트에 전달한다.
 
 ### Error Cases
 
@@ -430,34 +430,50 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ---
 
-## 7. 실시간 채널 — Spring WebSocket
+## 7. 실시간 채널 — Spring WebSocket (STOMP)
 
-- **Endpoint**: `WS /ws/user/interview/{sessionId}/chat`
+- **Endpoint**: `WS /ws/user/interview`
+- **Protocol**: STOMP (resume 도메인과 동일한 브로커 통합)
 - **Description**: 면접 세션 생명주기 이벤트 및 AI 질문 전달 채널 (Spring 담당)
 
 ### 인증
 
 ```
-WS /ws/user/interview/{sessionId}/chat?token={accessToken}
+WS /ws/user/interview?token={accessToken}
 ```
 
-연결 시 토큰 검증 및 `sessionId` 소유권 검증을 수행한다.  
-검증 실패 시 Close 1008로 즉시 연결을 종료한다.
+핸드셰이크 시 `?token=` JWT 검증 → `memberId` 추출.  
+SUBSCRIBE 시 `sessionId` 소유권을 DB로 재검증 (IDOR 방지).  
+검증 실패 시 `MessageDeliveryException` 발생 → 연결 종료.
+
+### 구독 경로
+
+```
+SUBSCRIBE /topic/interview/{sessionId}
+```
+
+구독 직후 현재 상태 스냅샷 1회 전송 (`SessionSubscribeEvent` 기반):
+- 리포트 완료 → `REPORT_READY` 즉시 전송
+- 진행 중 → `SESSION_START` 전송
+
+> `/topic/` prefix 사용 이유: 서버(FastAPI 콜백)가 stompSessionId 없이도 브로드캐스트 가능. 소유권 검증은 SUBSCRIBE 인터셉터(`InterviewStompChannelInterceptor`)에서 수행.
 
 ### Connection Lifecycle
 
 ```
-클라이언트                               Spring 서버
-   │                                     │
-   │── WS 연결 요청 ─────────────────────▶│  토큰 + sessionId 소유권 검증
-   │                                     │
-   │◀─ {"type":"SYSTEM","subType":"SESSION_START",...} ──│  면접 시작 안내
-   │◀─ {"type":"QUESTION","questionOrder":1,...} ────────│  AI 첫 질문
-   │◀─ {"type":"QUESTION","questionOrder":2,...} ────────│  꼬리 질문
-   │                                     │
-   │◀─ {"type":"SYSTEM","subType":"REPORT_READY",...} ───│  리포트 생성 완료 알림
-   │                                     │
-   │  (클라이언트 연결 종료)              │
+클라이언트                                          Spring 서버
+   │                                                │
+   │── STOMP CONNECT (/ws/user/interview?token=...) ▶│  JWT 검증 → memberId 추출
+   │                                                │
+   │── SUBSCRIBE /topic/interview/{sessionId} ──────▶│  sessionId 소유권 검증
+   │◀─ {"type":"SYSTEM","subType":"SESSION_START",...} │  구독 직후 스냅샷 전송 (SessionSubscribeEvent)
+   │                                                │
+   │◀─ {"type":"QUESTION","questionOrder":1,...} ────│  AI 첫 질문 (FastAPI → Spring → WS)
+   │◀─ {"type":"QUESTION","questionOrder":2,...} ────│  꼬리 질문
+   │                                                │
+   │◀─ {"type":"SYSTEM","subType":"REPORT_READY",...} │  리포트 생성 완료 알림
+   │                                                │
+   │  (클라이언트 연결 종료)                        │
 ```
 
 ### Server → Client 메시지 형식
@@ -520,7 +536,7 @@ WS /ws/user/interview/{sessionId}/chat?token={accessToken}
 
 | 상황 | 동작 |
 |------|------|
-| 유효하지 않은 `sessionId` | 연결 즉시 종료 (Close 1008) |
-| 본인 소유가 아닌 `sessionId` | 연결 즉시 종료 (Close 1008) |
-| 토큰 없음 또는 만료 | 연결 즉시 종료 (Close 1008) |
+| 토큰 없음 또는 만료 | 핸드셰이크 거부 → 연결 불가 |
+| 유효하지 않은 `sessionId` | SUBSCRIBE 시 `MessageDeliveryException` → 연결 종료 |
+| 본인 소유가 아닌 `sessionId` | SUBSCRIBE 시 `MessageDeliveryException` → 연결 종료 |
 | 서버 처리 오류 | `ERROR` 메시지 전송 후 연결 유지 |

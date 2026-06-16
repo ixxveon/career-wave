@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +41,7 @@ public interface InterviewSessionControllerDocs {
     })
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<InterviewDTO.ResponseStartSession>> startSession(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody InterviewDTO.RequestStartSession dto
+            @RequestBody @Valid InterviewDTO.RequestStartSession dto
     );
 
     @Operation(summary = "텍스트 답변 제출",
@@ -59,7 +61,7 @@ public interface InterviewSessionControllerDocs {
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<InterviewDTO.ResponseSubmitTextAnswer>> submitTextAnswer(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
             @Parameter(description = "면접 세션 ID (UUID)") @PathVariable UUID sessionId,
-            @RequestBody InterviewDTO.RequestSubmitTextAnswer dto
+            @RequestBody @Valid InterviewDTO.RequestSubmitTextAnswer dto
     );
 
     @Operation(
@@ -76,8 +78,8 @@ public interface InterviewSessionControllerDocs {
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
             @Parameter(description = "면접 세션 ID (UUID)") @PathVariable UUID sessionId,
             @Parameter(description = "오디오 청크 파일") @RequestParam MultipartFile audioChunk,
-            @Parameter(description = "질문 순서 (1-based)") @RequestParam int questionOrder,
-            @Parameter(description = "청크 인덱스 (0-based)") @RequestParam int chunkIndex,
+            @Parameter(description = "질문 순서 (1-based)") @RequestParam @Min(1) int questionOrder,
+            @Parameter(description = "청크 인덱스 (0-based)") @RequestParam @Min(0) int chunkIndex,
             @Parameter(description = "마지막 청크 여부") @RequestParam boolean isFinal
     );
 

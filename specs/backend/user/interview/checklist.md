@@ -120,6 +120,7 @@ Phase 10 "먼저 작성할 3가지 ★"를 구현 코드보다 먼저 작성한�
 - [ ] `updated_at < NOW() - 5min` 유예 조건이 없으면 현재 답변 중인 세션이 강제 종료될 수 있다 — 반드시 포함.
 - [ ] 타임아웃 처리된 세션이 `FAILED`로 전이된다.
 - [ ] 처리 건수 및 세션 ID가 `log.info`로 기록된다.
+- [ ] 스케줄러 내 `ZonedDateTime.now()`가 `ZoneId.of("Asia/Seoul")`로 고정되어 있다 (JVM 기본 timezone 사용 금지).
 
 ## Phase 6-2 — FastAPI 콜백 수신
 
@@ -127,6 +128,10 @@ Phase 10 "먼저 작성할 3가지 ★"를 구현 코드보다 먼저 작성한�
 - [ ] `X-Internal-Secret` 헤더 검증이 구현되어 있으며, 시크릿 값이 환경 변수로 관리된다 (코드 하드코딩 금지).
 - [ ] `/internal/**` 경로가 Spring Security에서 외부 접근 차단된다.
 - [ ] `existsBySessionId` 멱등성 체크가 구현되어 있다 — 콜백 2회 수신 시 피드백 중복 저장이 발생하지 않는다.
+- [ ] `ai_interview_feedbacks`에 `(session_id, question_order)` 복합 유니크 제약이 있다 — DB 레벨 최종 방어선.
+- [ ] `career_histories`에 `session_id` 유니크 제약이 있다.
+- [ ] `processReportCallback`에 `@Transactional`이 적용되어 있고, self-invocation 없이 단일 트랜잭션 경계로 동작한다.
+- [ ] WebSocket `REPORT_READY` 전송이 `TransactionSynchronization.afterCommit()` 내부에서 실행된다 (트랜잭션 커밋 이후 보장).
 - [ ] 콜백 수신 후 `ai_interview_feedbacks` / `interview_sessions` / `career_histories` 세 곳이 모두 업데이트된다.
 - [ ] `REPORT_READY` WebSocket 메시지에 `data.reportUrl`이 포함된다.
 - [ ] 콜백 처리 실패 시 재시도 로직 및 `log.error` 기록이 동작한다.
