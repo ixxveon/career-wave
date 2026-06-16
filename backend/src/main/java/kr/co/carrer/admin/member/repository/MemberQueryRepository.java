@@ -26,8 +26,8 @@ public class MemberQueryRepository {
 
     private ZonedDateTime toZonedDateTime(Object value) {
         if (value == null) return null;
-        if (value instanceof java.sql.Timestamp ts) return ts.toInstant().atZone(java.time.ZoneId.systemDefault());
-        if (value instanceof java.time.Instant instant) return instant.atZone(java.time.ZoneId.systemDefault());
+        if (value instanceof java.sql.Timestamp ts) return ts.toInstant().atZone(java.time.ZoneId.of("Asia/Seoul"));
+        if (value instanceof java.time.Instant instant) return instant.atZone(java.time.ZoneId.of("Asia/Seoul"));
         if (value instanceof java.time.OffsetDateTime odt) return odt.toZonedDateTime();
         throw new IllegalArgumentException("Unsupported timestamp type: " + value.getClass());
     }
