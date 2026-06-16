@@ -5,13 +5,8 @@
 
 ## Phase 1 - Query
 
-<<<<<<< HEAD
-- [x] `AuditLog` 엔티티 필드가 `audit_logs` ERD 컬럼명과 null 허용 여부에 일치하는가
-- [x] `AuditLogType`, `AuditLogSeverity` enum 값이 ERD CHECK 제약조건(`ADMIN_ACTIVITY`, `ADMIN_MANAGEMENT`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` / `INFO`, `WARN`, `ERROR`, `SUCCESS`)과 일치하는가
-=======
 - [x] `AuditLog` 엔티티 필드가 `audit_logs` ERD 컬럼명과 null 허용 여부와 일치하는가
-- [x] `AuditLogType`, `AuditLogSeverity` enum 값이 ERD CHECK 제약조건(`ADMIN_ACTIVITY`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` / `INFO`, `WARN`, `ERROR`, `SUCCESS`)과 일치하는가
->>>>>>> origin/feature/backend-admin-audit-log-api
+- [x] `AuditLogType`, `AuditLogSeverity` enum 값이 ERD CHECK 제약조건(`ADMIN_ACTIVITY`, `ADMIN_MANAGEMENT`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` / `INFO`, `WARN`, `ERROR`, `SUCCESS`)과 일치하는가
 - [x] JPA enum 필드가 `EnumType.STRING`으로 매핑되어 있는가
 - [x] `AuditLogQueryRepository`에 요약 집계, 목록 조회, 상세 조회에 필요한 쿼리 메서드가 구현되어 있는가
 - [x] 목록 조회 쿼리가 `logType`, `severity`, `keyword`, `from`, `to`, `page`, `size` 조건을 반영하는가

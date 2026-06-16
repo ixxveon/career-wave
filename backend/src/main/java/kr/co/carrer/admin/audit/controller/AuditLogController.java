@@ -55,14 +55,17 @@ public class AuditLogController implements AuditLogDocs {
     public ResponseEntity<ApiResponse<AuditLogDTO.ResponseList>> getAuditLogs(
         @Valid @ModelAttribute AuditLogDTO.RequestList request
     ) {
+        int page = request.page() == null ? 1 : request.page();
+        int size = request.size() == null ? 20 : request.size();
+
         Page<AuditLog> auditLogs = auditLogService.getAuditLogs(
             request.logType(),
             request.severity(),
             request.keyword(),
             request.from(),
             request.to(),
-            request.page() == null ? 1 : request.page(),
-            request.size() == null ? 20 : request.size()
+            page,
+            size
         );
 
         List<AuditLogDTO.ResponseItem> content = auditLogs.getContent().stream()
@@ -71,8 +74,8 @@ public class AuditLogController implements AuditLogDocs {
 
         AuditLogDTO.ResponseList response = new AuditLogDTO.ResponseList(
             content,
-            request.page() == null ? 1 : request.page(),
-            request.size() == null ? 20 : request.size(),
+            page,
+            size,
             auditLogs.getTotalElements(),
             auditLogs.getTotalPages()
         );

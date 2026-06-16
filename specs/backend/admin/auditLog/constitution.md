@@ -22,15 +22,9 @@
 
 ## 3. 불변 규칙
 
-<<<<<<< HEAD
-- 감사 로그 API는 항상 읽기 전용이어야 하며 생성, 수정, 삭제 유스케이스를 추가할 수 없다.
-- 감사 로그 조회 권한은 항상 `MASTER` 또는 `BACKEND`로 제한되어야 한다.
-- `audit_logs.log_type` 값은 항상 `ADMIN_ACTIVITY`, `ADMIN_MANAGEMENT`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` 중 하나여야 한다.
-=======
 - 감사 로그 API는 항상 조회 전용이어야 하며 생성, 수정, 삭제 유스케이스를 추가하지 않는다.
 - 감사 로그 조회 권한은 항상 관리자 인증(`ROLE_ADMIN`) + 세부 역할 `MASTER` 또는 `BACKEND` 조건으로 제한되어야 한다.
-- `audit_logs.log_type` 값은 항상 `ADMIN_ACTIVITY`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` 중 하나여야 한다.
->>>>>>> origin/feature/backend-admin-audit-log-api
+- `audit_logs.log_type` 값은 항상 `ADMIN_ACTIVITY`, `ADMIN_MANAGEMENT`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` 중 하나여야 한다.
 - `audit_logs.severity` 값은 항상 `INFO`, `WARN`, `ERROR`, `SUCCESS` 중 하나여야 한다.
 - 감사 로그 목록 응답은 항상 `ApiResponse<T>`와 1-based 페이지네이션 구조를 유지해야 한다.
 - 감사 로그 상세 조회에서 대상 로그가 존재하지 않으면 반드시 `AUDIT_LOG_NOT_FOUND`를 반환해야 한다.

@@ -22,10 +22,10 @@ public class AuditLogDTO {
 
     @Schema(description = "감사 로그 목록 조회 요청")
     public record RequestList(
-        @Schema(description = "로그 유형", allowableValues = {"ADMIN_ACTIVITY", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"})
+        @Schema(description = "로그 유형", allowableValues = {"ADMIN_ACTIVITY", "ADMIN_MANAGEMENT", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"})
         String logType,
 
-        @Schema(description = "심각도", allowableValues = {"INFO", "WARN", "ERROR"})
+        @Schema(description = "심각도", allowableValues = {"INFO", "WARN", "ERROR", "SUCCESS"})
         String severity,
 
         @Size(max = 100)
@@ -82,7 +82,7 @@ public class AuditLogDTO {
         @Schema(description = "작업 관리자 ID")
         Long adminId,
 
-        @Schema(description = "로그 유형", allowableValues = {"ADMIN_ACTIVITY", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"})
+        @Schema(description = "로그 유형", allowableValues = {"ADMIN_ACTIVITY", "ADMIN_MANAGEMENT", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"})
         AuditLogType logType,
 
         @Schema(description = "작업 액션")
@@ -115,7 +115,7 @@ public class AuditLogDTO {
         @Schema(description = "작업 관리자 ID")
         Long adminId,
 
-        @Schema(description = "로그 유형", allowableValues = {"ADMIN_ACTIVITY", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"})
+        @Schema(description = "로그 유형", allowableValues = {"ADMIN_ACTIVITY", "ADMIN_MANAGEMENT", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"})
         AuditLogType logType,
 
         @Schema(description = "작업 액션")
