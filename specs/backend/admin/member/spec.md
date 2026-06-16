@@ -197,6 +197,16 @@ public class HrManagerDTO {
         String rejectReason;    // REMOVED 시 저장, 나머지 null
     }
 
+    // 기업 회원 목록 페이지 응답 (pendingCount 포함)
+    public static class ResponsePage {
+        List<ResponseList> items;
+        int page;
+        int size;
+        long totalItems;
+        int totalPages;
+        long pendingCount;  // 승인 대기 수
+    }
+
     // 기업 회원 반려 요청
     public static class RequestReject {
         String rejectReason;    // 최소 10자, 최대 500자
@@ -327,7 +337,7 @@ public class HrManagerDTO {
 | `page` | int | N | 페이지 번호 (default: 1) |
 | `size` | int | N | 페이지당 건수 (default: 20, 최대 100) |
 
-**Response**: `ApiResponse<Page<HrManagerDTO.ResponseList>>` + `pendingCount`
+**Response**: `ApiResponse<HrManagerDTO.ResponsePage>`
 
 ```json
 {
