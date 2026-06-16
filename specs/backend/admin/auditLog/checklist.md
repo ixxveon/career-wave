@@ -28,7 +28,7 @@
 ## Phase 3 - API
 
 - [ ] `from`, `to`, `page`, `size`가 유효하지 않은 요청을 공통 요청 검증 실패 `400`으로 처리하는가
-- [ ] `keyword` 100자 초과 요청을 공통 요청 검증 실패 `400`으로 처리하는가
+- [ ] `keyword` 100자 초과 요청은 `KEYWORD_TOO_LONG` 요청 검증 실패 `400`으로 처리되는가
 - [ ] `GET /api/v1/admin/audit-logs/summary`가 구현되어 있고 `MASTER`, `BACKEND` 권한으로만 접근 가능한가
 - [ ] `GET /api/v1/admin/audit-logs`가 구현되어 있고 감사 로그 목록을 페이지네이션으로 반환하는가
 - [ ] `GET /api/v1/admin/audit-logs/{logId}`가 구현되어 있고 `MASTER`, `BACKEND` 권한으로만 접근 가능한가

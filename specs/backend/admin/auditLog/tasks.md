@@ -36,7 +36,7 @@
 
 - [ ] `AuditLogDTO.java`를 작성한다.
 - [ ] 목록 조회 Request DTO에 `page >= 1`, `size >= 1` Bean Validation을 적용한다.
-- [ ] 목록 조회 Request DTO에 `keyword` 최대 100자 Bean Validation을 적용한다.
+- [ ] 목록 조회 Request DTO에 `keyword` 최대 100자 Bean Validation과 `KEYWORD_TOO_LONG` 매핑을 적용한다.
 - [ ] `from > to` 교차 필드 검증을 Service 계층에서 처리하고 DTO 단순 필드 검증과 분리한다.
 - [ ] `GET /api/v1/admin/audit-logs/summary` Controller endpoint를 작성한다.
 - [ ] `GET /api/v1/admin/audit-logs` Controller endpoint를 작성한다.
