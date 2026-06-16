@@ -4,5 +4,7 @@ import kr.co.carrer.admin.audit.entity.AuditLog;
 import org.springframework.data.repository.Repository;
 
 public interface AuditLogRepository extends Repository<AuditLog, Long> {
+    AuditLog save(AuditLog auditLog);
+
     java.util.Optional<AuditLog> findById(Long auditLogId);
 }

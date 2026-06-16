@@ -2,7 +2,7 @@ package kr.co.carrer.admin.admin.service.impl;
 
 import kr.co.carrer.admin.admin.repository.AdminQueryRepository;
 import kr.co.carrer.admin.admin.repository.AdminRepository;
-import kr.co.carrer.admin.admin.repository.AuditLogRepository;
+import kr.co.carrer.admin.audit.repository.AuditLogRepository;
 import kr.co.carrer.admin.admin.repository.IpAclQueryRepository;
 import kr.co.carrer.admin.admin.repository.IpAclRepository;
 import kr.co.carrer.admin.admin.entity.Admin;
@@ -249,8 +249,8 @@ class AdminManagementServiceImplTest {
             var result = adminManagementService.createAdmin(command, 1L, "10.0.0.2");
 
             ArgumentCaptor<Admin> adminCaptor = ArgumentCaptor.forClass(Admin.class);
-            ArgumentCaptor<kr.co.carrer.admin.admin.entity.AuditLog> auditLogCaptor =
-                ArgumentCaptor.forClass(kr.co.carrer.admin.admin.entity.AuditLog.class);
+            ArgumentCaptor<kr.co.carrer.admin.audit.entity.AuditLog> auditLogCaptor =
+                ArgumentCaptor.forClass(kr.co.carrer.admin.audit.entity.AuditLog.class);
 
             verify(passwordEncoder).encode("temporary-password");
             verify(adminRepository).saveAndFlush(adminCaptor.capture());
@@ -265,12 +265,12 @@ class AdminManagementServiceImplTest {
 
             var auditLog = auditLogCaptor.getValue();
             assertThat(auditLog.getAdminId()).isEqualTo(1L);
-            assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
+            assertThat(auditLog.getLogType()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogType.ADMIN_MANAGEMENT);
             assertThat(auditLog.getAction()).isEqualTo("CREATE_ADMIN");
             assertThat(auditLog.getTargetType()).isEqualTo("ADMIN");
             assertThat(auditLog.getTargetId()).isEqualTo("10");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.2");
-            assertThat(auditLog.getSeverity()).isEqualTo("INFO");
+            assertThat(auditLog.getSeverity()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogSeverity.INFO);
 
             assertThat(result.adminId()).isEqualTo(10L);
             assertThat(result.email()).isEqualTo("backend@career-wave.com");
@@ -326,8 +326,8 @@ class AdminManagementServiceImplTest {
 
             var result = adminManagementService.updateAdminRole(20L, command, 1L, "10.0.0.3");
 
-            ArgumentCaptor<kr.co.carrer.admin.admin.entity.AuditLog> auditLogCaptor =
-                ArgumentCaptor.forClass(kr.co.carrer.admin.admin.entity.AuditLog.class);
+            ArgumentCaptor<kr.co.carrer.admin.audit.entity.AuditLog> auditLogCaptor =
+                ArgumentCaptor.forClass(kr.co.carrer.admin.audit.entity.AuditLog.class);
 
             verify(adminRepository).findById(20L);
             verify(auditLogRepository).save(auditLogCaptor.capture());
@@ -339,12 +339,12 @@ class AdminManagementServiceImplTest {
 
             var auditLog = auditLogCaptor.getValue();
             assertThat(auditLog.getAdminId()).isEqualTo(1L);
-            assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
+            assertThat(auditLog.getLogType()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogType.ADMIN_MANAGEMENT);
             assertThat(auditLog.getAction()).isEqualTo("UPDATE_ADMIN_ROLE");
             assertThat(auditLog.getTargetType()).isEqualTo("ADMIN");
             assertThat(auditLog.getTargetId()).isEqualTo("20");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.3");
-            assertThat(auditLog.getSeverity()).isEqualTo("INFO");
+            assertThat(auditLog.getSeverity()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogSeverity.INFO);
         }
 
         @Test
@@ -400,8 +400,8 @@ class AdminManagementServiceImplTest {
 
             var result = adminManagementService.updateAdminStatus(30L, command, 1L, "10.0.0.4");
 
-            ArgumentCaptor<kr.co.carrer.admin.admin.entity.AuditLog> auditLogCaptor =
-                ArgumentCaptor.forClass(kr.co.carrer.admin.admin.entity.AuditLog.class);
+            ArgumentCaptor<kr.co.carrer.admin.audit.entity.AuditLog> auditLogCaptor =
+                ArgumentCaptor.forClass(kr.co.carrer.admin.audit.entity.AuditLog.class);
 
             verify(adminRepository).findById(30L);
             verify(auditLogRepository).save(auditLogCaptor.capture());
@@ -413,12 +413,12 @@ class AdminManagementServiceImplTest {
 
             var auditLog = auditLogCaptor.getValue();
             assertThat(auditLog.getAdminId()).isEqualTo(1L);
-            assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
+            assertThat(auditLog.getLogType()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogType.ADMIN_MANAGEMENT);
             assertThat(auditLog.getAction()).isEqualTo("UPDATE_ADMIN_STATUS");
             assertThat(auditLog.getTargetType()).isEqualTo("ADMIN");
             assertThat(auditLog.getTargetId()).isEqualTo("30");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.4");
-            assertThat(auditLog.getSeverity()).isEqualTo("INFO");
+            assertThat(auditLog.getSeverity()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogSeverity.INFO);
         }
     }
 
@@ -445,8 +445,8 @@ class AdminManagementServiceImplTest {
 
             adminManagementService.deleteAdmin(40L, 1L, "10.0.0.5");
 
-            ArgumentCaptor<kr.co.carrer.admin.admin.entity.AuditLog> auditLogCaptor =
-                ArgumentCaptor.forClass(kr.co.carrer.admin.admin.entity.AuditLog.class);
+            ArgumentCaptor<kr.co.carrer.admin.audit.entity.AuditLog> auditLogCaptor =
+                ArgumentCaptor.forClass(kr.co.carrer.admin.audit.entity.AuditLog.class);
 
             verify(adminRepository).findById(40L);
             verify(adminRepository).delete(admin);
@@ -454,12 +454,12 @@ class AdminManagementServiceImplTest {
 
             var auditLog = auditLogCaptor.getValue();
             assertThat(auditLog.getAdminId()).isEqualTo(1L);
-            assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
+            assertThat(auditLog.getLogType()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogType.ADMIN_MANAGEMENT);
             assertThat(auditLog.getAction()).isEqualTo("DELETE_ADMIN");
             assertThat(auditLog.getTargetType()).isEqualTo("ADMIN");
             assertThat(auditLog.getTargetId()).isEqualTo("40");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.5");
-            assertThat(auditLog.getSeverity()).isEqualTo("INFO");
+            assertThat(auditLog.getSeverity()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogSeverity.INFO);
         }
 
         @Test
@@ -544,8 +544,8 @@ class AdminManagementServiceImplTest {
             var result = adminManagementService.createIpAcl(command, 1L, "10.0.0.6");
 
             ArgumentCaptor<IpAcl> ipAclCaptor = ArgumentCaptor.forClass(IpAcl.class);
-            ArgumentCaptor<kr.co.carrer.admin.admin.entity.AuditLog> auditLogCaptor =
-                ArgumentCaptor.forClass(kr.co.carrer.admin.admin.entity.AuditLog.class);
+            ArgumentCaptor<kr.co.carrer.admin.audit.entity.AuditLog> auditLogCaptor =
+                ArgumentCaptor.forClass(kr.co.carrer.admin.audit.entity.AuditLog.class);
 
             verify(ipAclRepository).saveAndFlush(ipAclCaptor.capture());
             verify(auditLogRepository).save(auditLogCaptor.capture());
@@ -558,12 +558,12 @@ class AdminManagementServiceImplTest {
 
             var auditLog = auditLogCaptor.getValue();
             assertThat(auditLog.getAdminId()).isEqualTo(1L);
-            assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
+            assertThat(auditLog.getLogType()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogType.ADMIN_MANAGEMENT);
             assertThat(auditLog.getAction()).isEqualTo("CREATE_IP_ACL");
             assertThat(auditLog.getTargetType()).isEqualTo("IP_ACL");
             assertThat(auditLog.getTargetId()).isEqualTo("200");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.6");
-            assertThat(auditLog.getSeverity()).isEqualTo("INFO");
+            assertThat(auditLog.getSeverity()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogSeverity.INFO);
 
             assertThat(result.ipAclId()).isEqualTo(200L);
             assertThat(result.label()).isEqualTo("사내망");
@@ -616,8 +616,8 @@ class AdminManagementServiceImplTest {
 
             var result = adminManagementService.updateIpAclEnabled(300L, command, 1L, "10.0.0.7");
 
-            ArgumentCaptor<kr.co.carrer.admin.admin.entity.AuditLog> auditLogCaptor =
-                ArgumentCaptor.forClass(kr.co.carrer.admin.admin.entity.AuditLog.class);
+            ArgumentCaptor<kr.co.carrer.admin.audit.entity.AuditLog> auditLogCaptor =
+                ArgumentCaptor.forClass(kr.co.carrer.admin.audit.entity.AuditLog.class);
 
             verify(ipAclRepository).findById(300L);
             verify(auditLogRepository).save(auditLogCaptor.capture());
@@ -629,12 +629,12 @@ class AdminManagementServiceImplTest {
 
             var auditLog = auditLogCaptor.getValue();
             assertThat(auditLog.getAdminId()).isEqualTo(1L);
-            assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
+            assertThat(auditLog.getLogType()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogType.ADMIN_MANAGEMENT);
             assertThat(auditLog.getAction()).isEqualTo("UPDATE_IP_ACL_ENABLED");
             assertThat(auditLog.getTargetType()).isEqualTo("IP_ACL");
             assertThat(auditLog.getTargetId()).isEqualTo("300");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.7");
-            assertThat(auditLog.getSeverity()).isEqualTo("INFO");
+            assertThat(auditLog.getSeverity()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogSeverity.INFO);
         }
     }
 
@@ -684,8 +684,8 @@ class AdminManagementServiceImplTest {
 
             adminManagementService.deleteIpAcl(400L, 1L, "10.0.0.8");
 
-            ArgumentCaptor<kr.co.carrer.admin.admin.entity.AuditLog> auditLogCaptor =
-                ArgumentCaptor.forClass(kr.co.carrer.admin.admin.entity.AuditLog.class);
+            ArgumentCaptor<kr.co.carrer.admin.audit.entity.AuditLog> auditLogCaptor =
+                ArgumentCaptor.forClass(kr.co.carrer.admin.audit.entity.AuditLog.class);
 
             verify(ipAclRepository).findById(400L);
             verify(ipAclRepository).delete(ipAcl);
@@ -693,12 +693,12 @@ class AdminManagementServiceImplTest {
 
             var auditLog = auditLogCaptor.getValue();
             assertThat(auditLog.getAdminId()).isEqualTo(1L);
-            assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
+            assertThat(auditLog.getLogType()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogType.ADMIN_MANAGEMENT);
             assertThat(auditLog.getAction()).isEqualTo("DELETE_IP_ACL");
             assertThat(auditLog.getTargetType()).isEqualTo("IP_ACL");
             assertThat(auditLog.getTargetId()).isEqualTo("400");
             assertThat(auditLog.getIpAddress()).isEqualTo("10.0.0.8");
-            assertThat(auditLog.getSeverity()).isEqualTo("INFO");
+            assertThat(auditLog.getSeverity()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogSeverity.INFO);
         }
     }
 
@@ -913,19 +913,19 @@ class AdminManagementServiceImplTest {
 
             adminManagementService.createAdmin(command, 77L, "192.168.0.10");
 
-            ArgumentCaptor<kr.co.carrer.admin.admin.entity.AuditLog> auditLogCaptor =
-                ArgumentCaptor.forClass(kr.co.carrer.admin.admin.entity.AuditLog.class);
+            ArgumentCaptor<kr.co.carrer.admin.audit.entity.AuditLog> auditLogCaptor =
+                ArgumentCaptor.forClass(kr.co.carrer.admin.audit.entity.AuditLog.class);
 
             verify(auditLogRepository).save(auditLogCaptor.capture());
 
             var auditLog = auditLogCaptor.getValue();
             assertThat(auditLog.getAdminId()).isEqualTo(77L);
-            assertThat(auditLog.getLogType()).isEqualTo("ADMIN_MANAGEMENT");
+            assertThat(auditLog.getLogType()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogType.ADMIN_MANAGEMENT);
             assertThat(auditLog.getAction()).isEqualTo("CREATE_ADMIN");
             assertThat(auditLog.getTargetType()).isEqualTo("ADMIN");
             assertThat(auditLog.getTargetId()).isEqualTo("700");
             assertThat(auditLog.getIpAddress()).isEqualTo("192.168.0.10");
-            assertThat(auditLog.getSeverity()).isEqualTo("INFO");
+            assertThat(auditLog.getSeverity()).isEqualTo(kr.co.carrer.admin.audit.type.AuditLogSeverity.INFO);
             assertThat(auditLog.getDetail()).isNull();
         }
     }

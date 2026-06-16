@@ -132,9 +132,6 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
     @Override
     @Transactional
     public JobNoticeDTO.ResponseBookmark deleteBookmark(Long jobNoticeId, UUID memberId) {
-        jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(jobNoticeId, JobNoticeStatus.ACTIVE)
-                .orElseThrow(() -> new CustomException(JobNoticeErrorCode.JOB_NOTICE_NOT_FOUND));
-
         Bookmark bookmark = bookmarkRepository.findByMemberIdAndJobNoticeId(memberId, jobNoticeId)
                 .orElseThrow(() -> new CustomException(JobNoticeErrorCode.BOOKMARK_NOT_FOUND));
 
