@@ -37,7 +37,7 @@ payment_status  VARCHAR(20)     NOT NULL DEFAULT 'READY'
 failure_reason  VARCHAR(30)     NULL
                 CHECK IN ('USER_CANCELED', 'CARD_DECLINED', 'TIMEOUT', 'DUPLICATE_ORDER', 'CONFIRM_FAILED', 'FORBIDDEN', 'UNKNOWN')
 payment_method  VARCHAR(30)     NULL
-approved_at     TIMESTAMPTZ     NULL
+approved_at     TIMESTAMPTZ     NULL    -- PAID 상태일 때 반드시 값 존재, 그 외(READY/CONFIRMING/FAILED/CANCELED/REFUNDED)는 NULL
 created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 ```
 
