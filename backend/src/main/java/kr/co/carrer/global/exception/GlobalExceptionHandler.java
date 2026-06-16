@@ -37,11 +37,10 @@ public class GlobalExceptionHandler {
             log.warn("[비즈니스 제재/검증 실패] 에러코드: {} | 사유: {}", codeName, e.getMessage());
         }
 
-        // additionalData가 있으면 data 필드에 포함 (도메인별 특수 응답 포맷), 없으면 프론트엔드 판별용 code 포함
         if (e.getAdditionalData() != null) {
             return ResponseEntity
                     .status(errorCode.getStatus())
-                    .body(ApiResponse.fail(errorCode.getStatus().value(), e.getMessage(), e.getAdditionalData()));
+                    .body(ApiResponse.fail(errorCode.getStatus().value(), e.getMessage(), codeName, e.getAdditionalData()));
         }
         return ResponseEntity
                 .status(errorCode.getStatus())
