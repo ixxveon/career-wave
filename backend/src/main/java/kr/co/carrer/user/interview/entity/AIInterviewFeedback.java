@@ -11,7 +11,13 @@ import java.util.UUID;
 
 @Getter
 @Entity
-@Table(name = "ai_interview_feedbacks")
+@Table(
+        name = "ai_interview_feedbacks",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_ai_interview_feedbacks_session_question",
+                columnNames = {"session_id", "question_order"}
+        )
+)
 @org.hibernate.annotations.Check(constraints =
         "(relevance_score IS NULL OR (relevance_score >= 0 AND relevance_score <= 100)) AND " +
         "(depth_score IS NULL OR (depth_score >= 0 AND depth_score <= 100)) AND " +
