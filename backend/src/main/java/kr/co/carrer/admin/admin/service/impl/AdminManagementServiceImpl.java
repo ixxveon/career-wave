@@ -153,6 +153,10 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public void deleteAdmin(Long adminId, Long actorAdminId, String ipAddress) {
+        if (adminId.equals(actorAdminId)) {
+            throw new CustomException(AdminManagementErrorCode.CANNOT_DELETE_SELF);
+        }
+
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new CustomException(AdminManagementErrorCode.ADMIN_NOT_FOUND));
 

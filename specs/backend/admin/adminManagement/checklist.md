@@ -34,20 +34,20 @@
 
 ## Phase 4 - API
 
-- [ ] `GET /api/v1/admin/admins/summary`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `GET /api/v1/admin/admins`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `POST /api/v1/admin/admins`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `PATCH /api/v1/admin/admins/{adminId}/role`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `PATCH /api/v1/admin/admins/{adminId}/status`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `DELETE /api/v1/admin/admins/{adminId}`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `GET /api/v1/admin/admin-acls`가 `MASTER`, `BACKEND` 권한 정책과 일치하게 동작한다.
-- [ ] `POST /api/v1/admin/admin-acls`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `PATCH /api/v1/admin/admin-acls/{aclId}/enabled`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `DELETE /api/v1/admin/admin-acls/{aclId}`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] 모든 성공 응답이 `ApiResponse<T>` 래퍼 형식을 사용한다.
-- [ ] 모든 성공 응답이 `success`, `message`, `data` 필드만 사용하고 성공 응답에 `statusCode`를 포함하지 않는다.
-- [ ] 목록 조회 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 사용한다.
-- [ ] 관리자 계정/ACL 생성, 수정, 삭제 API에 `page`, `size` Query Parameter가 노출되지 않는다.
+- [x] `GET /api/v1/admin/admins/summary`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `GET /api/v1/admin/admins`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `POST /api/v1/admin/admins`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `PATCH /api/v1/admin/admins/{adminId}/role`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `PATCH /api/v1/admin/admins/{adminId}/status`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `DELETE /api/v1/admin/admins/{adminId}`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `GET /api/v1/admin/admin-acls`가 `MASTER`, `BACKEND` 권한 정책과 일치하게 동작한다.
+- [x] `POST /api/v1/admin/admin-acls`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `PATCH /api/v1/admin/admin-acls/{aclId}/enabled`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `DELETE /api/v1/admin/admin-acls/{aclId}`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] 모든 성공 응답이 `ApiResponse<T>` 래퍼 형식을 사용한다.
+- [x] 모든 성공 응답이 팀 `ApiResponse<T>` 규격(`success`, `statusCode`, `message`, `data`)과 일치한다.
+- [x] 목록 조회 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 사용한다.
+- [x] 관리자 계정/ACL 생성, 수정, 삭제 API에 `page`, `size` Query Parameter가 노출되지 않는다.
 
 ## Phase 5 - Documentation
 
@@ -71,7 +71,7 @@
 
 ## 외부 연동 검증
 
-- [ ] 외부 보안 장비나 별도 ACL 시스템과의 직접 동기화 코드가 본 도메인 구현에 포함되지 않는다.
+- [x] 외부 보안 장비나 별도 ACL 시스템과의 직접 동기화 코드가 본 도메인 구현에 포함되지 않는다.
 
 ## 코드 품질
 

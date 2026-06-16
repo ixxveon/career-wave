@@ -16,6 +16,7 @@ public enum AdminManagementErrorCode implements BaseErrorCode {
     INVALID_ADMIN_STATUS(HttpStatus.BAD_REQUEST, "유효하지 않은 관리자 상태입니다."),
     ADMIN_ALREADY_LOCKED(HttpStatus.CONFLICT, "이미 잠금 상태인 관리자 계정입니다."),
     ADMIN_ALREADY_ACTIVE(HttpStatus.CONFLICT, "이미 활성 상태인 관리자 계정입니다."),
+    CANNOT_DELETE_SELF(HttpStatus.BAD_REQUEST, "본인 관리자 계정은 삭제할 수 없습니다."),
     IP_ACL_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 IP ACL 정보입니다."),
     IP_ACL_DUPLICATED_RANGE(HttpStatus.CONFLICT, "이미 등록된 IP 범위입니다."),
     IP_ACL_ALREADY_ENABLED(HttpStatus.CONFLICT, "이미 활성 상태인 IP ACL입니다."),
