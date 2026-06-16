@@ -46,6 +46,14 @@ backend/src/main/java/kr/co/carrer/admin/payment/
 
 ---
 
+
+## 구현 진행 체크리스트
+
+- [ ] Phase 1: 엔티티 및 Enum
+- [ ] Phase 2: 레포지토리
+- [ ] Phase 3: 서비스 레이어
+- [ ] Phase 4: 컨트롤러
+- [ ] Phase 5: 에러코드 등록 및 검증
 ## Phase 1 — 엔티티 및 Enum
 
 ### 작업 목록
