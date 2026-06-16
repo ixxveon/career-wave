@@ -88,7 +88,7 @@ async def analyze_resume(
     request: AnalyzeDocumentRequest,
     background_tasks: BackgroundTasks,
 ) -> TriggerAcceptedResponse:
-    document_id = request.document_id
+    document_id = str(request.document_id)
 
     if document_id in _processing:
         raise HTTPException(
@@ -110,7 +110,7 @@ async def analyze_resume(
 
 async def _run_analysis(request: AnalyzeDocumentRequest) -> None:
     # Phase 4에서 resume_service.analyze_document(request)로 교체
-    document_id = request.document_id
+    document_id = str(request.document_id)
     try:
         await send_webhook(document_id, {"status": "PENDING", "progress": 0})
         await send_webhook(document_id, {"status": "ANALYZING", "progress": 50})

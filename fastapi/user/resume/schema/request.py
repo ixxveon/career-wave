@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -16,7 +17,7 @@ class CoverLetterContentItem(BaseModel):
 
 
 class AnalyzeDocumentRequest(BaseModel):
-    document_id: str = Field(..., alias="documentId")
+    document_id: UUID = Field(..., alias="documentId")
     file_type: Literal["RESUME", "COVER_LETTER"] = Field(..., alias="fileType")
 
     # RESUME 전용
