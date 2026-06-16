@@ -312,7 +312,7 @@ curl -X POST http://localhost:8080/internal/api/v1/interview/callback/{sessionId
   -H "X-Internal-Secret: local-secret-test" \
   -H "Content-Type: application/json" \
   -d '{
-    "sessionId": null,
+    "sessionId": "{sessionId}",
     "totalScore": 80,
     "feedbacks": [
       {

@@ -327,7 +327,7 @@ WS /ws/user/interview?token={accessToken}
 
 ### 구독 경로
 ```
-SUBSCRIBE /user/queue/interview/{sessionId}
+SUBSCRIBE /topic/interview/{sessionId}
 ```
 - SUBSCRIBE 시 `sessionId` 소유권 검증 (IDOR 방지)
 - 소유권 불일치 시 `MessageDeliveryException` 발생 → 연결 종료
