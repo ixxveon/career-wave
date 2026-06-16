@@ -28,12 +28,12 @@
 
 **Scenario 1**: 정상 조회
 - Given 신고 데이터가 존재할 때
-- When GET /api/admin/reports/summary 요청 시
+- When GET /api/v1/admin/reports/summary 요청 시
 - Then 전체, 대기, 블라인드, 기각 건수를 반환한다
 
 **Scenario 2**: 데이터 없음
 - Given 신고 데이터가 하나도 없을 때
-- When GET /api/admin/reports/summary 요청 시
+- When GET /api/v1/admin/reports/summary 요청 시
 - Then 모든 카운트를 0으로 반환한다
 
 ---
@@ -46,17 +46,17 @@
 
 **Scenario 1**: 정상 조회 (필터 없음)
 - Given 신고 데이터가 존재할 때
-- When GET /api/admin/reports 요청 시
+- When GET /api/v1/admin/reports 요청 시
 - Then 전체 신고 목록을 created_at DESC 순으로 반환한다
 
 **Scenario 2**: 상태 필터 적용
 - Given status=PENDING으로 요청 시
-- When GET /api/admin/reports?status=PENDING 요청 시
+- When GET /api/v1/admin/reports?status=PENDING 요청 시
 - Then PENDING 상태 신고만 반환한다
 
 **Scenario 3**: 잘못된 필터 값
 - Given status=INVALID로 요청 시
-- When GET /api/admin/reports?status=INVALID 요청 시
+- When GET /api/v1/admin/reports?status=INVALID 요청 시
 - Then 400 INVALID_REPORT_FILTER를 반환한다
 
 ---
@@ -69,17 +69,17 @@
 
 **Scenario 1**: 정상 조회
 - Given 유효한 reportId로 요청 시
-- When GET /api/admin/reports/{reportId} 요청 시
+- When GET /api/v1/admin/reports/{reportId} 요청 시
 - Then 신고 상세 정보와 대상 콘텐츠 내용을 반환한다
 
 **Scenario 2**: 대상 콘텐츠 삭제됨
 - Given 신고 대상 게시글이 이미 삭제된 경우
-- When GET /api/admin/reports/{reportId} 요청 시
+- When GET /api/v1/admin/reports/{reportId} 요청 시
 - Then contentTitle, contentBody를 null로 반환한다
 
 **Scenario 3**: 신고 없음
 - Given 존재하지 않는 reportId로 요청 시
-- When GET /api/admin/reports/{reportId} 요청 시
+- When GET /api/v1/admin/reports/{reportId} 요청 시
 - Then 404 REPORT_NOT_FOUND를 반환한다
 
 ---
@@ -92,22 +92,22 @@
 
 **Scenario 1**: BOARD 블라인드 처리
 - Given target_type = BOARD인 PENDING 신고에 대해
-- When PATCH /api/admin/reports/{reportId}/blind 요청 시
+- When PATCH /api/v1/admin/reports/{reportId}/blind 요청 시
 - Then report_status = BLINDED, boards.is_blind = TRUE가 동일 트랜잭션에서 변경되고 처리 결과를 반환한다
 
 **Scenario 2**: COMMENT 블라인드 처리
 - Given target_type = COMMENT인 PENDING 신고에 대해
-- When PATCH /api/admin/reports/{reportId}/blind 요청 시
+- When PATCH /api/v1/admin/reports/{reportId}/blind 요청 시
 - Then report_status = BLINDED, comments.is_blind = TRUE가 동일 트랜잭션에서 변경된다
 
 **Scenario 3**: MEMBER 블라인드 처리
 - Given target_type = MEMBER인 PENDING 신고에 대해
-- When PATCH /api/admin/reports/{reportId}/blind 요청 시
+- When PATCH /api/v1/admin/reports/{reportId}/blind 요청 시
 - Then report_status = BLINDED만 변경되며 members 테이블은 수정되지 않는다
 
 **Scenario 4**: 이미 처리된 신고
 - Given BLINDED 또는 DISMISSED 상태인 신고에 대해
-- When PATCH /api/admin/reports/{reportId}/blind 요청 시
+- When PATCH /api/v1/admin/reports/{reportId}/blind 요청 시
 - Then 409 ALREADY_PROCESSED를 반환한다
 
 ---
@@ -120,12 +120,12 @@
 
 **Scenario 1**: 정상 기각 처리
 - Given PENDING 상태인 신고에 대해
-- When PATCH /api/admin/reports/{reportId}/dismiss 요청 시
+- When PATCH /api/v1/admin/reports/{reportId}/dismiss 요청 시
 - Then report_status = DISMISSED로 변경되고 처리 결과를 반환한다
 
 **Scenario 2**: 이미 처리된 신고
 - Given BLINDED 또는 DISMISSED 상태인 신고에 대해
-- When PATCH /api/admin/reports/{reportId}/dismiss 요청 시
+- When PATCH /api/v1/admin/reports/{reportId}/dismiss 요청 시
 - Then 409 ALREADY_PROCESSED를 반환한다
 
 ---
