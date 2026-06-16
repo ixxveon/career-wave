@@ -295,3 +295,152 @@ POST /api/v1/user/inquiries
 - 문의 목록·접수는 JWT 인증 + USER 권한 필수
 - 문의 답변 알림(이메일/푸시)은 v1 범위 외
 - `view_count` 중복 증가 방지(동일 세션/IP)는 v2 고려
+
+---
+
+## User Stories
+
+### Story 1 — 공지사항 목록 조회 (P1)
+
+**As** 사용자
+**I want** 공지사항 목록을 카테고리·키워드로 검색하고 싶다
+**So that** 필요한 공지를 빠르게 찾을 수 있다
+
+**Scenario 1**: 필터 없이 전체 조회 (비로그인)
+- Given is_visible=true 공지사항이 존재할 때
+- When GET /api/v1/user/notices 요청 시
+- Then is_pinned=true 건 상단 정렬 후 created_at DESC 순으로 반환된다
+
+**Scenario 2**: 카테고리 필터
+- Given category=NOTICE로 요청 시
+- When GET /api/v1/user/notices?category=NOTICE 요청 시
+- Then NOTICE 카테고리 공지만 반환된다
+
+**Scenario 3**: is_visible=false 공지 비노출
+- Given is_visible=false 공지가 존재할 때
+- When GET /api/v1/user/notices 요청 시
+- Then 해당 공지는 반환되지 않는다
+
+---
+
+### Story 2 — 공지사항 상세 조회 (P1)
+
+**As** 사용자
+**I want** 공지사항 상세 내용과 이전·다음 공지를 확인하고 싶다
+**So that** 공지를 순서대로 탐색할 수 있다
+
+**Scenario 1**: 정상 조회
+- Given 유효한 noticeId로 요청 시
+- When GET /api/v1/user/notices/{noticeId} 요청 시
+- Then 공지 상세 내용과 이전·다음 공지 링크, 업데이트된 view_count를 반환한다
+
+**Scenario 2**: is_visible=false 공지 조회
+- Given is_visible=false인 noticeId로 요청 시
+- When GET /api/v1/user/notices/{noticeId} 요청 시
+- Then 404 NOTICE_NOT_FOUND를 반환한다
+
+---
+
+### Story 3 — FAQ 조회 (P2)
+
+**As** 사용자
+**I want** 자주 묻는 질문을 카테고리·키워드로 검색하고 싶다
+**So that** 문의 접수 전에 답변을 스스로 찾을 수 있다
+
+**Scenario 1**: 전체 FAQ 조회
+- Given FAQ 데이터가 존재할 때
+- When GET /api/v1/user/faqs 요청 시
+- Then 전체 FAQ 목록을 created_at ASC 순으로 반환한다
+
+**Scenario 2**: 키워드 검색
+- Given keyword=비밀번호로 요청 시
+- When GET /api/v1/user/faqs?keyword=비밀번호 요청 시
+- Then question 또는 answer에 "비밀번호"가 포함된 FAQ만 반환한다
+
+---
+
+### Story 4 — 1:1 문의 목록 조회 (P1)
+
+**As** 로그인 사용자
+**I want** 내가 접수한 1:1 문의 목록을 확인하고 싶다
+**So that** 처리 현황을 모니터링할 수 있다
+
+**Scenario 1**: 정상 조회
+- Given 로그인된 회원이 접수한 문의가 존재할 때
+- When GET /api/v1/user/inquiries 요청 시
+- Then 본인 문의만 created_at DESC 순으로 반환된다
+
+**Scenario 2**: 미인증 요청
+- Given JWT 토큰 없이 요청 시
+- When GET /api/v1/user/inquiries 요청 시
+- Then 401 UNAUTHORIZED를 반환한다
+
+---
+
+### Story 5 — 1:1 문의 접수 (P1)
+
+**As** 로그인 사용자
+**I want** 1:1 문의를 접수하고 싶다
+**So that** 문제 해결 지원을 요청할 수 있다
+
+**Scenario 1**: 정상 접수
+- Given 로그인된 회원이 category, title, content를 포함하여 요청 시
+- When POST /api/v1/user/inquiries 요청 시
+- Then 201 응답과 함께 inquiry_status = PENDING으로 생성된 inquiryId를 반환한다
+
+**Scenario 2**: 내용 10자 미만
+- Given content가 10자 미만인 경우
+- When POST /api/v1/user/inquiries 요청 시
+- Then 400 INVALID_INQUIRY_CONTENT를 반환한다
+
+**Scenario 3**: 미인증 요청
+- Given JWT 토큰 없이 요청 시
+- When POST /api/v1/user/inquiries 요청 시
+- Then 401 UNAUTHORIZED를 반환한다
+
+---
+
+## Functional Requirements
+
+- FR-001: 공지사항 목록은 is_visible=true 건만 반환해야 한다
+- FR-002: 공지사항 목록 정렬은 is_pinned=true 우선, 이후 created_at DESC이어야 한다
+- FR-003: 공지사항 목록은 category, keyword(title·content ILIKE) 필터를 지원해야 한다
+- FR-004: page < 1 또는 size < 1 요청 시 400을 반환해야 한다
+- FR-005: size > 100 요청 시 100으로 clamp해야 한다
+- FR-006: 공지사항 상세 조회 시 view_count를 +1 해야 한다 (@Transactional)
+- FR-007: 공지사항 상세에 이전·다음 공지(is_visible=true 조건)를 포함해야 한다
+- FR-008: is_visible=false 공지 상세 조회 시 404 NOTICE_NOT_FOUND를 반환해야 한다
+- FR-009: FAQ 목록은 페이지네이션 없이 전체를 반환해야 한다
+- FR-010: FAQ keyword 검색은 question OR answer ILIKE로 처리해야 한다
+- FR-011: FAQ 기본 정렬은 created_at ASC이어야 한다
+- FR-012: 문의 목록은 로그인 회원 본인(member_id) 문의만 반환해야 한다
+- FR-013: 문의 접수 시 inquiry_status = PENDING, member_id = 로그인 회원 ID로 저장해야 한다
+- FR-014: 문의 content가 10자 미만이면 400 INVALID_INQUIRY_CONTENT를 반환해야 한다
+- FR-015: 문의 목록·접수 API는 JWT 인증 + USER 권한이 필수이어야 한다
+
+---
+
+## Edge Cases
+
+- EC-001: is_visible=false 공지 상세 조회 → 404 NOTICE_NOT_FOUND
+- EC-002: 존재하지 않는 noticeId 조회 → 404 NOTICE_NOT_FOUND
+- EC-003: page < 1 → 400 BAD_REQUEST
+- EC-004: size > 100 → 100으로 clamp (오류 아님)
+- EC-005: FAQ keyword 검색 결과 없음 → 빈 리스트 반환 (404 아님)
+- EC-006: 문의 목록 조회 시 타인 member_id 접근 → 본인 데이터만 반환 (Security Context 기준)
+- EC-007: 문의 content 10자 미만 → 400 INVALID_INQUIRY_CONTENT
+- EC-008: 문의 목록·접수 미인증 → 401 UNAUTHORIZED
+- EC-009: 이전·다음 공지가 없는 경우 → prevNotice, nextNotice를 null로 반환
+
+---
+
+## Success Criteria
+
+- SC-001: is_visible=false 공지가 목록·상세에서 노출되지 않는다
+- SC-002: 공지 목록에서 is_pinned=true 건이 상단 정렬된다
+- SC-003: 공지 상세 조회 시 view_count가 정확히 +1된다
+- SC-004: 이전·다음 공지가 없는 경우 null로 반환된다
+- SC-005: 문의 목록이 본인 문의만 반환된다
+- SC-006: 문의 접수 후 inquiry_status = PENDING으로 생성된다
+- SC-007: 미인증 문의 목록·접수 요청 시 401이 반환된다
+- SC-008: 모든 응답이 ApiResponse<T> 래퍼로 감싸진다
