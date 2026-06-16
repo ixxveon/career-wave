@@ -37,9 +37,10 @@ public class UserNoticeServiceImpl implements UserNoticeService {
     @Override
     @Transactional
     public SupportDTO.NoticeDetail getNoticeDetail(Long noticeId) {
-        noticeRepository.incrementViewCountById(noticeId);
-
-        return noticeQueryRepository.findDetail(noticeId)
+        SupportDTO.NoticeDetail detail = noticeQueryRepository.findDetail(noticeId)
             .orElseThrow(() -> new CustomException(UserSupportErrorCode.NOTICE_NOT_FOUND));
+
+        noticeRepository.incrementViewCountById(noticeId);
+        return detail;
     }
 }

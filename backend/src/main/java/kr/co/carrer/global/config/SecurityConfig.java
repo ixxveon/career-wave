@@ -101,6 +101,8 @@ public class SecurityConfig {
                 // FastAPI 내부 콜백 — X-Internal-Secret 헤더로 보안 검증 (컨트롤러 레이어)
                 .requestMatchers(HttpMethod.POST, "/api/v1/user/resume/webhook").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/user/job-notices", "/api/v1/user/job-notices/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/user/notices", "/api/v1/user/notices/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/user/faqs", "/api/v1/user/faqs/*").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
                 .requestMatchers(
