@@ -145,10 +145,10 @@
 ### InterviewReportService
 
 - [x] `getReport(UUID memberId, UUID sessionId)`
-  - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
+  - [x] `findBySessionIdAndMemberId`로 세션 조회 — 존재하지 않거나 소유권 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)` (IDOR 방어: 타인 세션 존재 여부 미노출)
   - [x] 피드백 미존재 시 `INTERVIEW_REPORT_NOT_READY(409)` — additionalData: `ResponseReportNotReady("ANALYZING", 15)`
   - [x] `ai_interview_feedbacks` 조회 (`question_order ASC`)
-  - [x] `voiceQualityRatio`가 null이거나 50.00 미만인 피드백 → `deliveryScore` / `fluencyScore` null 처리
+  - [x] `voiceQualityRatio`가 `null`이거나 `50.00 미만`인 피드백 → `deliveryScore` / `fluencyScore` null 처리 (`50.00` 이상이면 정상 반환)
   - [x] 반환: `ResponseReport`
 
 ### InterviewHistoryService
