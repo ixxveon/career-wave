@@ -1,13 +1,14 @@
 package kr.co.carrer.admin.admin.service.impl;
 
 import kr.co.carrer.admin.admin.entity.Admin;
+import kr.co.carrer.admin.admin.entity.AuditLog;
 import kr.co.carrer.admin.admin.entity.IpAcl;
 import kr.co.carrer.admin.admin.exception.AdminManagementErrorCode;
 import kr.co.carrer.admin.admin.repository.AdminQueryRepository;
 import kr.co.carrer.admin.admin.repository.AdminRepository;
+import kr.co.carrer.admin.admin.repository.AuditLogRepository;
 import kr.co.carrer.admin.admin.repository.IpAclRepository;
 import kr.co.carrer.admin.admin.repository.IpAclQueryRepository;
-import kr.co.carrer.admin.admin.service.AdminAuditActionExecutor;
 import kr.co.carrer.admin.admin.service.AdminManagementService;
 import kr.co.carrer.admin.admin.type.AdminRole;
 import kr.co.carrer.admin.admin.type.AdminStatus;
@@ -31,13 +32,15 @@ public class AdminManagementServiceImpl implements AdminManagementService {
 
     private final AdminRepository adminRepository;
     private final AdminQueryRepository adminQueryRepository;
+    private final AuditLogRepository auditLogRepository;
     private final IpAclRepository ipAclRepository;
     private final IpAclQueryRepository ipAclQueryRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AdminAuditActionExecutor adminAuditActionExecutor;
 
+    private static final String LOG_TYPE_ADMIN_MANAGEMENT = "ADMIN_MANAGEMENT";
     private static final String TARGET_TYPE_ADMIN = "ADMIN";
     private static final String TARGET_TYPE_IP_ACL = "IP_ACL";
+    private static final String SEVERITY_INFO = "INFO";
 
     @Override
     @Transactional(readOnly = true)
@@ -78,87 +81,83 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public AdminDetailResult createAdmin(CreateAdminCommand command, Long actorAdminId, String ipAddress) {
-        return adminAuditActionExecutor.execute(actorAdminId, "CREATE_ADMIN", TARGET_TYPE_ADMIN, ipAddress, 0L, () -> {
-            if (command.adminRole() == null) {
-                throw new CustomException(AdminManagementErrorCode.INVALID_ADMIN_ROLE);
-            }
+        if (command.adminRole() == null) {
+            throw new CustomException(AdminManagementErrorCode.INVALID_ADMIN_ROLE);
+        }
 
-            if (adminRepository.existsByEmail(command.email())) {
+        if (adminRepository.existsByEmail(command.email())) {
+            throw new CustomException(AdminManagementErrorCode.ADMIN_EMAIL_ALREADY_EXISTS);
+        }
+
+        Admin admin = Admin.create(
+                command.email(),
+                passwordEncoder.encode(command.password()),
+                command.name(),
+                command.adminRole()
+        );
+
+        Admin savedAdmin;
+        try {
+            savedAdmin = adminRepository.saveAndFlush(admin);
+        } catch (DataIntegrityViolationException exception) {
+            if (isUniqueConstraintViolation(exception, "admins_email_key")) {
                 throw new CustomException(AdminManagementErrorCode.ADMIN_EMAIL_ALREADY_EXISTS);
             }
-
-            Admin admin = Admin.create(
-                    command.email(),
-                    passwordEncoder.encode(command.password()),
-                    command.name(),
-                    command.adminRole()
-            );
-
-            Admin savedAdmin;
-            try {
-                savedAdmin = adminRepository.saveAndFlush(admin);
-            } catch (DataIntegrityViolationException exception) {
-                if (isUniqueConstraintViolation(exception, "admins_email_key")) {
-                    throw new CustomException(AdminManagementErrorCode.ADMIN_EMAIL_ALREADY_EXISTS);
-                }
-                throw exception;
-            }
-            return toAdminDetailResult(savedAdmin);
-        }, AdminDetailResult::adminId);
+            throw exception;
+        }
+        saveAuditLog(actorAdminId, "CREATE_ADMIN", TARGET_TYPE_ADMIN, savedAdmin.getAdminId(), ipAddress, SEVERITY_INFO);
+        return toAdminDetailResult(savedAdmin);
     }
 
     @Override
     @Transactional
     public AdminDetailResult updateAdminRole(Long adminId, UpdateAdminRoleCommand command, Long actorAdminId, String ipAddress) {
-        return adminAuditActionExecutor.execute(actorAdminId, "UPDATE_ADMIN_ROLE", TARGET_TYPE_ADMIN, adminId, ipAddress, () -> {
-            if (command.adminRole() == null) {
-                throw new CustomException(AdminManagementErrorCode.INVALID_ADMIN_ROLE);
-            }
+        if (command.adminRole() == null) {
+            throw new CustomException(AdminManagementErrorCode.INVALID_ADMIN_ROLE);
+        }
 
-            Admin admin = adminRepository.findById(adminId)
-                    .orElseThrow(() -> new CustomException(AdminManagementErrorCode.ADMIN_NOT_FOUND));
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new CustomException(AdminManagementErrorCode.ADMIN_NOT_FOUND));
 
-            admin.updateRole(command.adminRole());
-            return toAdminDetailResult(admin);
-        });
+        admin.updateRole(command.adminRole());
+        saveAuditLog(actorAdminId, "UPDATE_ADMIN_ROLE", TARGET_TYPE_ADMIN, admin.getAdminId(), ipAddress, SEVERITY_INFO);
+        return toAdminDetailResult(admin);
     }
 
     @Override
     @Transactional
     public AdminDetailResult updateAdminStatus(Long adminId, UpdateAdminStatusCommand command, Long actorAdminId, String ipAddress) {
-        return adminAuditActionExecutor.execute(actorAdminId, "UPDATE_ADMIN_STATUS", TARGET_TYPE_ADMIN, adminId, ipAddress, () -> {
-            if (command.status() == null) {
-                throw new CustomException(AdminManagementErrorCode.INVALID_ADMIN_STATUS);
+        if (command.status() == null) {
+            throw new CustomException(AdminManagementErrorCode.INVALID_ADMIN_STATUS);
+        }
+
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new CustomException(AdminManagementErrorCode.ADMIN_NOT_FOUND));
+
+        if (admin.getStatus() == command.status()) {
+            if (command.status() == AdminStatus.LOCKED) {
+                throw new CustomException(AdminManagementErrorCode.ADMIN_ALREADY_LOCKED);
             }
+            throw new CustomException(AdminManagementErrorCode.ADMIN_ALREADY_ACTIVE);
+        }
 
-            Admin admin = adminRepository.findById(adminId)
-                    .orElseThrow(() -> new CustomException(AdminManagementErrorCode.ADMIN_NOT_FOUND));
-
-            if (admin.getStatus() == command.status()) {
-                if (command.status() == AdminStatus.LOCKED) {
-                    throw new CustomException(AdminManagementErrorCode.ADMIN_ALREADY_LOCKED);
-                }
-                throw new CustomException(AdminManagementErrorCode.ADMIN_ALREADY_ACTIVE);
-            }
-
-            admin.updateStatus(command.status());
-            return toAdminDetailResult(admin);
-        });
+        admin.updateStatus(command.status());
+        saveAuditLog(actorAdminId, "UPDATE_ADMIN_STATUS", TARGET_TYPE_ADMIN, admin.getAdminId(), ipAddress, SEVERITY_INFO);
+        return toAdminDetailResult(admin);
     }
 
     @Override
     @Transactional
     public void deleteAdmin(Long adminId, Long actorAdminId, String ipAddress) {
-        adminAuditActionExecutor.execute(actorAdminId, "DELETE_ADMIN", TARGET_TYPE_ADMIN, adminId, ipAddress, () -> {
-            if (adminId.equals(actorAdminId)) {
-                throw new CustomException(AdminManagementErrorCode.CANNOT_DELETE_SELF);
-            }
+        if (adminId.equals(actorAdminId)) {
+            throw new CustomException(AdminManagementErrorCode.CANNOT_DELETE_SELF);
+        }
 
-            Admin admin = adminRepository.findById(adminId)
-                    .orElseThrow(() -> new CustomException(AdminManagementErrorCode.ADMIN_NOT_FOUND));
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new CustomException(AdminManagementErrorCode.ADMIN_NOT_FOUND));
 
-            adminRepository.delete(admin);
-        });
+        adminRepository.delete(admin);
+        saveAuditLog(actorAdminId, "DELETE_ADMIN", TARGET_TYPE_ADMIN, adminId, ipAddress, SEVERITY_INFO);
     }
 
     @Override
@@ -178,62 +177,77 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public IpAclDetailResult createIpAcl(CreateIpAclCommand command, Long actorAdminId, String ipAddress) {
-        return adminAuditActionExecutor.execute(actorAdminId, "CREATE_IP_ACL", TARGET_TYPE_IP_ACL, ipAddress, 0L, () -> {
-            if (ipAclRepository.existsByIpRange(command.ipRange())) {
+        if (ipAclRepository.existsByIpRange(command.ipRange())) {
+            throw new CustomException(AdminManagementErrorCode.IP_ACL_DUPLICATED_RANGE);
+        }
+
+        IpAcl ipAcl = IpAcl.create(
+                command.label(),
+                command.ipRange(),
+                command.description()
+        );
+
+        IpAcl savedIpAcl;
+        try {
+            savedIpAcl = ipAclRepository.saveAndFlush(ipAcl);
+        } catch (DataIntegrityViolationException exception) {
+            if (isUniqueConstraintViolation(exception, "ip_acl_ip_range_key")) {
                 throw new CustomException(AdminManagementErrorCode.IP_ACL_DUPLICATED_RANGE);
             }
-
-            IpAcl ipAcl = IpAcl.create(
-                    command.label(),
-                    command.ipRange(),
-                    command.description()
-            );
-
-            IpAcl savedIpAcl;
-            try {
-                savedIpAcl = ipAclRepository.saveAndFlush(ipAcl);
-            } catch (DataIntegrityViolationException exception) {
-                if (isUniqueConstraintViolation(exception, "ip_acl_ip_range_key")) {
-                    throw new CustomException(AdminManagementErrorCode.IP_ACL_DUPLICATED_RANGE);
-                }
-                throw exception;
-            }
-            return toIpAclDetailResult(savedIpAcl);
-        }, IpAclDetailResult::ipAclId);
+            throw exception;
+        }
+        saveAuditLog(actorAdminId, "CREATE_IP_ACL", TARGET_TYPE_IP_ACL, savedIpAcl.getIpAclId(), ipAddress, SEVERITY_INFO);
+        return toIpAclDetailResult(savedIpAcl);
     }
 
     @Override
     @Transactional
     public IpAclDetailResult updateIpAclEnabled(Long aclId, UpdateIpAclEnabledCommand command, Long actorAdminId, String ipAddress) {
-        return adminAuditActionExecutor.execute(actorAdminId, "UPDATE_IP_ACL_ENABLED", TARGET_TYPE_IP_ACL, aclId, ipAddress, () -> {
-            if (command.isEnabled() == null) {
-                throw new CustomException(ErrorCode.BAD_REQUEST);
+        if (command.isEnabled() == null) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        IpAcl ipAcl = ipAclRepository.findById(aclId)
+                .orElseThrow(() -> new CustomException(AdminManagementErrorCode.IP_ACL_NOT_FOUND));
+
+        if (ipAcl.getIsEnabled().equals(command.isEnabled())) {
+            if (Boolean.TRUE.equals(command.isEnabled())) {
+                throw new CustomException(AdminManagementErrorCode.IP_ACL_ALREADY_ENABLED);
             }
+            throw new CustomException(AdminManagementErrorCode.IP_ACL_ALREADY_DISABLED);
+        }
 
-            IpAcl ipAcl = ipAclRepository.findById(aclId)
-                    .orElseThrow(() -> new CustomException(AdminManagementErrorCode.IP_ACL_NOT_FOUND));
-
-            if (ipAcl.getIsEnabled().equals(command.isEnabled())) {
-                if (Boolean.TRUE.equals(command.isEnabled())) {
-                    throw new CustomException(AdminManagementErrorCode.IP_ACL_ALREADY_ENABLED);
-                }
-                throw new CustomException(AdminManagementErrorCode.IP_ACL_ALREADY_DISABLED);
-            }
-
-            ipAcl.updateEnabled(command.isEnabled());
-            return toIpAclDetailResult(ipAcl);
-        });
+        ipAcl.updateEnabled(command.isEnabled());
+        saveAuditLog(actorAdminId, "UPDATE_IP_ACL_ENABLED", TARGET_TYPE_IP_ACL, ipAcl.getIpAclId(), ipAddress, SEVERITY_INFO);
+        return toIpAclDetailResult(ipAcl);
     }
 
     @Override
     @Transactional
     public void deleteIpAcl(Long aclId, Long actorAdminId, String ipAddress) {
-        adminAuditActionExecutor.execute(actorAdminId, "DELETE_IP_ACL", TARGET_TYPE_IP_ACL, aclId, ipAddress, () -> {
-            IpAcl ipAcl = ipAclRepository.findById(aclId)
-                    .orElseThrow(() -> new CustomException(AdminManagementErrorCode.IP_ACL_NOT_FOUND));
+        IpAcl ipAcl = ipAclRepository.findById(aclId)
+                .orElseThrow(() -> new CustomException(AdminManagementErrorCode.IP_ACL_NOT_FOUND));
 
-            ipAclRepository.delete(ipAcl);
-        });
+        ipAclRepository.delete(ipAcl);
+        saveAuditLog(actorAdminId, "DELETE_IP_ACL", TARGET_TYPE_IP_ACL, aclId, ipAddress, SEVERITY_INFO);
+    }
+
+    private void saveAuditLog(Long actorAdminId, String action, String targetType, Long targetId, String ipAddress, String severity) {
+        if (actorAdminId == null) {
+            return;
+        }
+
+        AuditLog auditLog = AuditLog.create(
+                actorAdminId,
+                LOG_TYPE_ADMIN_MANAGEMENT,
+                action,
+                targetType,
+                targetId,
+                ipAddress,
+                severity,
+                null
+        );
+        auditLogRepository.save(auditLog);
     }
 
     private boolean isUniqueConstraintViolation(Throwable throwable, String constraintName) {
