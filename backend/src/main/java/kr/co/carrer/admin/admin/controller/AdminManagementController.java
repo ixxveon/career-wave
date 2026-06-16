@@ -2,7 +2,7 @@ package kr.co.carrer.admin.admin.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import kr.co.carrer.admin.admin.docs.AdminManagementControllerDocs;
+import kr.co.carrer.admin.admin.docs.AdminManagementDocs;
 import kr.co.carrer.admin.admin.dto.AdminAclDTO;
 import kr.co.carrer.admin.admin.dto.AdminManagementDTO;
 import kr.co.carrer.admin.admin.service.AdminManagementService;
@@ -32,7 +32,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-public class AdminManagementController implements AdminManagementControllerDocs {
+public class AdminManagementController implements AdminManagementDocs {
 
     private final AdminManagementService adminManagementService;
 

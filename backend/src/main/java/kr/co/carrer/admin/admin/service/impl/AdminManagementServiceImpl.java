@@ -181,13 +181,15 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public IpAclDetailResult createIpAcl(CreateIpAclCommand command, Long actorAdminId, String ipAddress) {
-        if (ipAclRepository.existsByIpRange(command.ipRange())) {
+        String normalizedIpRange = command.ipRange().trim();
+
+        if (ipAclRepository.existsByIpRange(normalizedIpRange)) {
             throw new CustomException(AdminManagementErrorCode.IP_ACL_DUPLICATED_RANGE);
         }
 
         IpAcl ipAcl = IpAcl.create(
                 command.label(),
-                command.ipRange(),
+                normalizedIpRange,
                 command.description()
         );
 
@@ -238,7 +240,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
 
     private void saveAuditLog(Long actorAdminId, String action, String targetType, Long targetId, String ipAddress, String severity) {
         if (actorAdminId == null) {
-            return;
+            throw new IllegalArgumentException("actorAdminId must not be null");
         }
 
         AuditLog auditLog = AuditLog.create(

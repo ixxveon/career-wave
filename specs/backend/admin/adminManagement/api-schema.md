@@ -18,7 +18,8 @@
 ### 권한 표기
 
 - 문서상 권한 표기는 `MASTER`, `BACKEND`, `CS`를 사용한다.
-- Spring Security에서는 `MASTER -> ROLE_MASTER`, `BACKEND -> ROLE_BACKEND`, `CS -> ROLE_CS`로 매핑한다.
+- Spring Security 1차 진입 권한은 `ROLE_ADMIN`을 사용한다.
+- 세부 역할 정책은 JWT `principal.adminRole` 값(`MASTER`, `BACKEND`, `CS`)과 `@PreAuthorize` 조건으로 구분한다.
 
 ### Pagination 규칙
 
@@ -31,6 +32,7 @@
 ```json
 {
   "success": true,
+  "statusCode": 200,
   "message": "요청이 성공했습니다.",
   "data": {}
 }
@@ -41,6 +43,7 @@
 ```json
 {
   "success": true,
+  "statusCode": 200,
   "message": "요청이 성공했습니다.",
   "data": {
     "content": [],
@@ -57,8 +60,9 @@
 ```json
 {
   "success": false,
-  "status": 404,
+  "statusCode": 404,
   "message": "관리자 계정을 찾을 수 없습니다.",
+  "code": "ADMIN_NOT_FOUND",
   "data": null
 }
 ```

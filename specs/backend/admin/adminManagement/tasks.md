@@ -58,12 +58,12 @@
 
 ## Phase 5 - Documentation
 
-- [ ] `AdminManagementDocs.java` Swagger 인터페이스를 작성한다.
-- [ ] 관리자 계정 API의 요청/응답 문서를 정리한다.
-- [ ] IP ACL API의 요청/응답 문서를 정리한다.
-- [ ] 관리자 계정/ACL Error Response 문서를 정리한다.
-- [ ] `api-schema.md`와 구현 대상 API 계약의 정합성을 점검한다.
-- [ ] `spec.md`, `constitution.md`, `plan.md`와 구현 범위 정합성을 점검한다.
+- [x] `AdminManagementDocs.java` Swagger 인터페이스를 작성한다.
+- [x] 관리자 계정 API의 요청/응답 문서를 정리한다.
+- [x] IP ACL API의 요청/응답 문서를 정리한다.
+- [x] 관리자 계정/ACL Error Response 문서를 정리한다.
+- [x] `api-schema.md`와 구현 대상 API 계약의 정합성을 점검한다.
+- [x] `spec.md`, `constitution.md`, `plan.md`와 구현 범위 정합성을 점검한다.
 
 ## Phase 6 - Test
 
