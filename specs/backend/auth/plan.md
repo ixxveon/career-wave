@@ -7,7 +7,7 @@ global/auth/
 ├── jwt/         JwtTokenProvider, JwtProperties
 ├── filter/      JwtAuthenticationFilter, AccountStatusAuthorizationFilter
 ├── principal/   AuthPrincipal (CustomUserDetails 대체)
-├── config/      SecurityConfig (단일 FilterChain, Role 기반), SwaggerConfig
+├── config/      SecurityConfig (adminChain @Order(1) + userChain @Order(2)), SwaggerConfig
 ├── exception/   AuthErrorCode, AuthExceptionHandler, EntryPoint, AccessDeniedHandler
 └── store/       RefreshTokenStore(Redis), TokenBlacklistStore(Redis), LoginAttemptStore(Redis)
 
@@ -44,9 +44,10 @@ admin/auth/      AdminLoginService, AdminAuthController
 - 공통 인증 주체 표현. 필드: id(String — UUID or BIGINT 문자열), accountType, roleType, authorities, adminRole(관리자만, 그 외 null).
 - Controller에서는 `@AuthenticationPrincipal AuthPrincipal`로만 주체 조회(토큰 직접 파싱 금지).
 
-### SecurityConfig — 단일 FilterChain (Role 기반)
-- **단일 `SecurityFilterChain` 빈**으로 user/admin 요청을 함께 처리한다. `@Order`나 `securityMatcher`로 체인을 분리하지 않는다.
-- 기존 user 쪽 JWT 코드(`JwtTokenProvider`, `JwtAuthenticationFilter`)를 admin에서도 그대로 재사용하고, `roleType`(USER/COMPANY/ADMIN)으로 접근을 구분한다.
+### SecurityConfig — 두 개 FilterChain 분리 (constitution.md 기준)
+- **`adminSecurityFilterChain @Order(1)`**: `securityMatcher("/api/v1/admin/**")`로 admin 경로 전담.
+- **`userSecurityFilterChain @Order(2)`**: 나머지 경로 전담.
+- 기존 user 쪽 JWT 코드(`JwtTokenProvider`, `JwtAuthenticationFilter`)를 admin에서도 그대로 재사용하고, `roleType`(USER/COMPANY/ADMIN)으로 접근을 구분한다. ← 단일 FilterChain 설계는 constitution.md 기준으로 Phase 5에서 분리됨.
 - CSRF disable, 세션 STATELESS, CORS 설정(아래 CORS 항목), EntryPoint/AccessDeniedHandler 등록.
 - **[SS-1] JwtAuthenticationFilter 등록**: `http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)`로 단일 등록. (폼 로그인 필터보다 먼저 JWT 인증 처리)
 - 권한:

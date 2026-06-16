@@ -644,6 +644,7 @@ COMMENT ON COLUMN payments.created_at      IS '결제 요청 생성 일시';
 CREATE TABLE admins (
     admin_id      BIGSERIAL    NOT NULL,
     login_id      VARCHAR(100) NOT NULL,
+    email         VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     name          VARCHAR(50)  NOT NULL,
     admin_role    VARCHAR(20)  NOT NULL,
@@ -655,6 +656,7 @@ CREATE TABLE admins (
 
     CONSTRAINT pk_admins         PRIMARY KEY (admin_id),
     CONSTRAINT uq_admins_login_id UNIQUE (login_id),
+    CONSTRAINT uq_admins_email    UNIQUE (email),
     CONSTRAINT chk_admin_role    CHECK (admin_role IN ('MASTER', 'CS', 'BACKEND')),
     CONSTRAINT chk_admin_status  CHECK (status     IN ('ACTIVE', 'LOCKED'))
 );
@@ -1181,4 +1183,3 @@ COMMENT ON COLUMN scraping_logs.scraping_status IS '수행 결과 (SUCCESS / FAI
 COMMENT ON COLUMN scraping_logs.total_count     IS '수집된 공고 수';
 COMMENT ON COLUMN scraping_logs.error_message   IS '실패 시 오류 메시지';
 COMMENT ON COLUMN scraping_logs.executed_at     IS '스크래핑 실행 일시';
-

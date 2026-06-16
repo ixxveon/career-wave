@@ -33,6 +33,7 @@ type UsePaymentHistoryStatusReturn = {
   periodFilter: PaymentHistoryPeriod;
   page: number;
   cancelTarget: PaymentHistorySubscriptionCardItem | null;
+  cancelSuccess: boolean;
   successMessage: string;
   activeSubscriptions: PaymentHistorySubscriptionCardItem[];
   recommendationItems: UsageItem[];
@@ -49,6 +50,7 @@ type UsePaymentHistoryStatusReturn = {
   setPage: (page: number | ((prev: number) => number)) => void;
   setCancelTarget: (target: PaymentHistorySubscriptionCardItem | null) => void;
   handleCancelConfirm: () => Promise<void>;
+  handleCancelClose: () => void;
 };
 
 export function usePaymentHistoryStatus(
@@ -57,6 +59,7 @@ export function usePaymentHistoryStatus(
   const [periodFilter, setPeriodFilter] = useState<PaymentHistoryPeriod>(initialPeriod);
   const [page, setPage] = useState(1);
   const [cancelTarget, setCancelTarget] = useState<PaymentHistorySubscriptionCardItem | null>(null);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
   const {
@@ -120,6 +123,11 @@ export function usePaymentHistoryStatus(
     return () => window.clearTimeout(timer);
   }, [successMessage]);
 
+  function handleCancelClose() {
+    setCancelTarget(null);
+    setCancelSuccess(false);
+  }
+
   async function handleCancelConfirm() {
     if (!cancelTarget || cancelSubscription.isPending) return;
     try {
@@ -127,8 +135,7 @@ export function usePaymentHistoryStatus(
         subscriptionId: cancelTarget.subscriptionId,
         payload: { reason: CANCEL_REASON.NO_LONGER_NEEDED },
       });
-      setSuccessMessage('구독 해지 신청이 완료되었습니다.');
-      setCancelTarget(null);
+      setCancelSuccess(true);
     } catch {
       setSuccessMessage('');
     }
@@ -138,6 +145,7 @@ export function usePaymentHistoryStatus(
     periodFilter,
     page,
     cancelTarget,
+    cancelSuccess,
     successMessage,
     activeSubscriptions,
     recommendationItems,
@@ -154,5 +162,6 @@ export function usePaymentHistoryStatus(
     setPage,
     setCancelTarget,
     handleCancelConfirm,
+    handleCancelClose,
   };
 }

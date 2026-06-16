@@ -2,7 +2,7 @@ import { AlertCircle, CalendarDays, Star } from 'lucide-react';
 import { SUBSCRIPTION_STATUS, type UsageItem } from '../../../types/user/subscription';
 import { formatBillingDate, formatUsageUnit } from '../../../utils/user/subscription/subscriptionView';
 
-const MAX_USAGE_BOXES = 20;
+const MAX_USAGE_BOXES = 30;
 
 export function UsageStatusCard({ item }: { item: UsageItem }) {
   const limit = item.usage?.limit ?? 0;

@@ -72,8 +72,11 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 |-----------|------|
 | `INTERVIEW_AI_PIPELINE_ERROR` | FastAPI AI 파이프라인 처리 오류 |
 | `INTERVIEW_STT_FAILED` | 음성 인식(STT) 실패 |
+| `INTERVIEW_TTS_FAILED` | TTS 변환 실패 (FastAPI WebSocket 전용) |
+| `INTERVIEW_LLM_FAILED` | LLM 질문 생성 실패 (FastAPI WebSocket 전용) |
 | `INTERVIEW_SESSION_EXPIRED` | 세션 타임아웃으로 강제 종료 |
 | `INTERVIEW_CALLBACK_FAILED` | FastAPI 콜백 처리 최종 실패 |
+| `INTERVIEW_DUPLICATED_CONNECTION` | 동일 세션 중복 WebSocket 연결 시도 (FastAPI WebSocket 전용) |
 
 > 새로운 errorCode 추가 시 이 테이블에 먼저 등록하고, 백엔드·프론트엔드 동시 반영한다.
 

@@ -16,13 +16,16 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-@Entity
+@Entity(name = "AdminManagement")
 @Table(name = "admins")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Admin {
+
+    private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,10 +35,13 @@ public class Admin {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
+    @Column(name = "login_id", nullable = false, unique = true, length = 255)
+    private String loginId;
+
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 50)
     private String name;
 
     @Enumerated(EnumType.STRING)
@@ -61,6 +67,7 @@ public class Admin {
     public static Admin create(String email, String passwordHash, String name, AdminRole adminRole) {
         Admin admin = new Admin();
         admin.email = email;
+        admin.loginId = email;
         admin.passwordHash = passwordHash;
         admin.name = name;
         admin.adminRole = adminRole;
@@ -70,7 +77,7 @@ public class Admin {
 
     @PrePersist
     protected void onCreate() {
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
         this.createdAt = now;
         this.updatedAt = now;
         if (this.status == null) {
@@ -80,7 +87,7 @@ public class Admin {
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = ZonedDateTime.now();
+        this.updatedAt = ZonedDateTime.now(SERVICE_ZONE_ID);
     }
 
     public void updateRole(AdminRole adminRole) {

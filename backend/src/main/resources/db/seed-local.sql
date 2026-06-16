@@ -41,9 +41,9 @@ VALUES
 -- ────────────────────────────────────────────
 -- 관리자 (loginId=admin / 비밀번호: 1234)
 -- ────────────────────────────────────────────
-INSERT INTO admins (login_id, password_hash, name, admin_role, status, created_at, updated_at)
+INSERT INTO admins (login_id, email, password_hash, name, admin_role, status, created_at, updated_at)
 VALUES
-  ('admin',
+  ('admin', 'admin@career-wave.local',
    '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
    '슈퍼관리자', 'MASTER', 'ACTIVE', NOW(), NOW());
 

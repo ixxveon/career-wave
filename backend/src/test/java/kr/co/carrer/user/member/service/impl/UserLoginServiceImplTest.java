@@ -1,6 +1,5 @@
 package kr.co.carrer.user.member.service.impl;
 
-import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
@@ -30,9 +29,11 @@ import java.lang.reflect.Field;
 import java.util.Optional;
 import java.util.UUID;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,8 +43,8 @@ class UserLoginServiceImplTest {
     @Mock HttpServletResponse httpResponse;
     @Mock RefreshTokenStore refreshTokenStore;
     @Mock TokenBlacklistStore tokenBlacklistStore;
-    @Mock EntityManager entityManager;
-    @Mock jakarta.persistence.Query nativeQuery;
+    @Mock kr.co.carrer.auth.store.LoginAttemptStore loginAttemptStore;
+    @Mock kr.co.carrer.user.member.repository.UserMemberStatusQueryRepository statusQueryRepository;
 
     private UserLoginService service;
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -58,7 +59,10 @@ class UserLoginServiceImplTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, entityManager);
+        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore, statusQueryRepository);
+        // loginAttemptStore 기본 stub — 실패 카운트 테스트가 아닌 경우 5회 미만으로 설정
+        lenient().when(loginAttemptStore.increment(any(), anyString())).thenReturn(1L);
+        lenient().when(loginAttemptStore.getMaxAttempts()).thenReturn(5);
     }
 
     private Member createMember(RoleType roleType, MemberStatus status) throws Exception {
@@ -154,5 +158,23 @@ class UserLoginServiceImplTest {
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
+    }
+
+    @Test
+    void USER_5세션_상한_초과_시_오래된_세션_퇴출() throws Exception {
+        Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
+        when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
+
+        String oldSessionKey = "refresh:USER:" + member.getMemberId() + ":old-session-id";
+        when(refreshTokenStore.enforceSessionLimit(eq(AccountType.USER), anyString()))
+                .thenReturn(List.of(oldSessionKey));
+        when(refreshTokenStore.getAndDeleteAccessJti(eq(AccountType.USER), anyString(), eq("old-session-id")))
+                .thenReturn("old-jti");
+
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
+        service.login(req, httpResponse);
+
+        verify(tokenBlacklistStore).add(eq("old-jti"), any());
+        verify(refreshTokenStore).delete(eq(AccountType.USER), anyString(), eq("old-session-id"));
     }
 }

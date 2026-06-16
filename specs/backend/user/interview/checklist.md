@@ -22,18 +22,20 @@ Phase 10 "먼저 작성할 3가지 ★"를 구현 코드보다 먼저 작성한�
 
 ## Phase 1 — Entity & Type 설계
 
-- [ ] `SessionType` / `SessionStatus` / `InterviewType` / `MessageSender` / `MessageType` Enum이 `type/` 패키지에 선언되어 있다.
-- [ ] 모든 Enum 필드에 `@Enumerated(EnumType.STRING)`이 적용되어 있다.
-- [ ] `InterviewSession` Entity에 `@NoArgsConstructor(access = AccessLevel.PROTECTED)`가 있다.
-- [ ] `InterviewSession.session_id`가 UUID 타입으로 선언되어 있고, DB DEFAULT `gen_random_uuid()`를 사용한다.
-- [ ] `InterviewSession.member_id`가 nullable로 선언되어 있다 (비회원 세션 허용).
-- [ ] `InterviewSession.updated_at` 필드가 선언되어 있다.
-- [ ] `InterviewSession`의 상태 변경이 `complete()` 등 의미 있는 메서드로만 수행된다.
-- [ ] `InterviewMessage.message_type`이 `QUESTION` / `ANSWER` / `SYSTEM` 3종으로 선언되어 있다 (`ANSWER_TEXT`·`ANSWER_VOICE` 없음).
-- [ ] `AIInterviewFeedback` Entity의 PK 필드명이 `interviewFeedbackId` (컬럼명 `interview_feedback_id`)이다.
-- [ ] `AIInterviewFeedback.ai_feedback`이 nullable이다.
-- [ ] `CareerHistory` Entity가 `career_histories` 테이블과 매핑되어 있다.
-- [ ] Entity 필드에 public setter가 없다.
+- [x] `SessionType` / `SessionStatus` / `InterviewType` / `MessageSender` / `MessageType` Enum이 `type/` 패키지에 선언되어 있다.
+- [x] 모든 Enum 필드에 `@Enumerated(EnumType.STRING)`이 적용되어 있다.
+- [x] `InterviewSession` Entity에 `@NoArgsConstructor(access = AccessLevel.PROTECTED)`가 있다.
+- [x] `InterviewSession.session_id`가 UUID 타입으로 선언되어 있고, DB DEFAULT `gen_random_uuid()`를 사용한다.
+- [x] `InterviewSession.member_id`가 nullable로 선언되어 있다 (비회원 세션 허용).
+- [x] `InterviewSession.updated_at` 필드가 선언되어 있다.
+- [x] `InterviewSession`의 상태 변경이 `complete(ZonedDateTime)` / `fail(ZonedDateTime)` 의미 있는 메서드로만 수행된다.
+- [x] `InterviewSession.fail(ZonedDateTime endedAt)` — FAILED 전이 시 `endedAt`도 함께 기록된다.
+- [x] `InterviewMessage.message_type`이 `QUESTION` / `ANSWER` / `SYSTEM` 3종으로 선언되어 있다 (`ANSWER_TEXT`·`ANSWER_VOICE` 없음).
+- [x] `AIInterviewFeedback` Entity의 PK 필드명이 `interviewFeedbackId` (컬럼명 `interview_feedback_id`)이다.
+- [x] `AIInterviewFeedback` 점수 필드에 DB CHECK 제약이 적용되어 있다 — 점수(0~100), voiceQualityRatio(0.00~100.00).
+- [x] `AIInterviewFeedback.ai_feedback`이 nullable이다.
+- [x] `CareerHistory` Entity가 `career_histories` 테이블과 매핑되어 있다.
+- [x] Entity 필드에 public setter가 없다.
 
 ---
 
