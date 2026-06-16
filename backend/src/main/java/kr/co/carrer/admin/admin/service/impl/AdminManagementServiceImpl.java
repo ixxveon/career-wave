@@ -242,7 +242,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
                 LOG_TYPE_ADMIN_MANAGEMENT,
                 action,
                 targetType,
-                targetId,
+                targetId == null ? null : targetId.toString(),
                 ipAddress,
                 severity,
                 null
