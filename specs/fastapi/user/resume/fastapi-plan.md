@@ -80,7 +80,7 @@ OpenAI 분석을 수행한 뒤 단계별 Webhook 콜백으로 Spring Boot에 결
 
 ### Phase 3: 파일 파싱 서비스
 
-- [ ] `fastapi/user/resume/service/file_parser.py` — S3 다운로드 + 텍스트 추출 서비스
+- [x] `fastapi/user/resume/service/file_parser.py` — S3 다운로드 + 텍스트 추출 서비스
   - `boto3`로 S3에서 파일 스트림 다운로드
   - PDF 파싱 (`pdfplumber` 사용)
   - DOCX 파싱 (`python-docx` 사용)

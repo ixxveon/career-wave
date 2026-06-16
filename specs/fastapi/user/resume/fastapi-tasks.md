@@ -39,7 +39,7 @@
 
 ## Phase 3: 파일 파싱 서비스
 
-- [ ] `fastapi/user/resume/service/file_parser.py` 작성
+- [x] `fastapi/user/resume/service/file_parser.py` 작성
   - `boto3.client('s3')`로 S3 파일 스트림 다운로드
   - PDF 텍스트 추출 (`pdfplumber` 사용)
   - DOCX 텍스트 추출 (`python-docx` 사용)
