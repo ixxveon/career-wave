@@ -21,7 +21,7 @@ public interface InterviewReportControllerDocs {
                     "`voiceQualityRatio < 50.00`인 항목의 `deliveryScore` / `fluencyScore`는 null로 반환됩니다.\n\n" +
                     "**Error cases**\n" +
                     "- 401: 인증 토큰 없음 또는 만료\n" +
-                    "- 403: 본인 소유가 아닌 세션 (INTERVIEW_SESSION_FORBIDDEN)\n" +
+                    "- 403: 존재하지 않는 sessionId 또는 본인 소유가 아닌 세션 (INTERVIEW_SESSION_FORBIDDEN) — IDOR 방어\n" +
                     "- 409: 리포트 생성 중 (INTERVIEW_REPORT_NOT_READY)"
     )
     ResponseEntity<ApiResponse<InterviewDTO.ResponseReport>> getReport(
