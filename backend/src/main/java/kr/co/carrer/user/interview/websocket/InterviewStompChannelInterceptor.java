@@ -103,13 +103,17 @@ public class InterviewStompChannelInterceptor implements ChannelInterceptor {
         UUID sessionId = extractSessionId(destination);
         if (sessionId == null) return;
 
+        String stompSessionId = accessor.getSessionId();
+        if (stompSessionId == null) return;
+
         String reportUrl = "/api/v1/user/interview/sessions/" + sessionId + "/report";
         WebSocketMessage snapshot = feedbackRepository.existsBySessionId(sessionId)
                 ? WebSocketMessage.reportReady(reportUrl)
                 : WebSocketMessage.sessionStart();
 
-        messagingTemplate.convertAndSend(TOPIC_PREFIX + sessionId, snapshot);
-        log.debug("[Interview Snapshot 전송] sessionId={}", sessionId);
+        // 재연결 경쟁 조건에서 동일 토픽 구독자 전체에 브로드캐스트되지 않도록 유니캐스트 전송
+        messagingTemplate.convertAndSendToUser(stompSessionId, "/queue/interview-snapshot", snapshot);
+        log.debug("[Interview Snapshot 전송] sessionId={}, stompSessionId={}", sessionId, stompSessionId);
     }
 
     private UUID extractMemberId(StompHeaderAccessor accessor) {

@@ -10,7 +10,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.UUID;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -28,7 +31,9 @@ public class InterviewCallbackController {
             @PathVariable UUID sessionId,
             @RequestBody InterviewDTO.RequestReportCallback dto
     ) {
-        if (!internalSecret.equals(secret)) {
+        if (!MessageDigest.isEqual(
+                internalSecret.getBytes(StandardCharsets.UTF_8),
+                secret.getBytes(StandardCharsets.UTF_8))) {
             throw new CustomException(InterviewErrorCode.INTERVIEW_CALLBACK_UNAUTHORIZED);
         }
 

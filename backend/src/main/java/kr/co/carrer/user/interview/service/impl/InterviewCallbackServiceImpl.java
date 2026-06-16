@@ -51,19 +51,23 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
     public void processReportCallback(UUID sessionId, InterviewDTO.RequestReportCallback dto) {
         String reportUrl = "/api/v1/user/interview/sessions/" + sessionId + "/report";
 
-        if (feedbackRepository.existsBySessionId(sessionId)) {
+        boolean alreadyProcessed = feedbackRepository.existsBySessionId(sessionId);
+
+        if (alreadyProcessed) {
             log.info("Report callback already processed (idempotent): sessionId={}", sessionId);
         } else {
             saveReportData(sessionId, dto);
         }
 
-        // WebSocket 전송은 DB 커밋 이후에 실행 (외부 I/O를 트랜잭션 밖으로)
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                sendReportReady(sessionId, reportUrl);
-            }
-        });
+        // 신규 처리일 때만 REPORT_READY 전송 — 멱등 경로 중복 전송 방지
+        if (!alreadyProcessed) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendReportReady(sessionId, reportUrl);
+                }
+            });
+        }
     }
 
     private void sendReportReady(UUID sessionId, String reportUrl) {
