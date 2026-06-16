@@ -117,7 +117,7 @@ class UserInquiryServiceImplTest {
 
             assertThatThrownBy(() -> userInquiryService.createInquiry(memberId, dto))
                 .isInstanceOf(CustomException.class)
-                .extracting(e -> ((CustomException) e).getErrorCode())
+                .extracting("errorCode")
                 .isEqualTo(UserSupportErrorCode.INVALID_INQUIRY_CONTENT);
         }
     }
