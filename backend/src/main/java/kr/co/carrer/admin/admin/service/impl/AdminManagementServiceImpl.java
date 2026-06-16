@@ -1,17 +1,19 @@
 package kr.co.carrer.admin.admin.service.impl;
 
 import kr.co.carrer.admin.admin.entity.Admin;
-import kr.co.carrer.admin.admin.entity.AuditLog;
 import kr.co.carrer.admin.admin.entity.IpAcl;
 import kr.co.carrer.admin.admin.exception.AdminManagementErrorCode;
 import kr.co.carrer.admin.admin.repository.AdminQueryRepository;
 import kr.co.carrer.admin.admin.repository.AdminRepository;
-import kr.co.carrer.admin.admin.repository.AuditLogRepository;
 import kr.co.carrer.admin.admin.repository.IpAclRepository;
 import kr.co.carrer.admin.admin.repository.IpAclQueryRepository;
 import kr.co.carrer.admin.admin.service.AdminManagementService;
 import kr.co.carrer.admin.admin.type.AdminRole;
 import kr.co.carrer.admin.admin.type.AdminStatus;
+import kr.co.carrer.admin.audit.entity.AuditLog;
+import kr.co.carrer.admin.audit.repository.AuditLogRepository;
+import kr.co.carrer.admin.audit.type.AuditLogSeverity;
+import kr.co.carrer.admin.audit.type.AuditLogType;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
@@ -37,10 +39,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     private final IpAclQueryRepository ipAclQueryRepository;
     private final PasswordEncoder passwordEncoder;
 
-    private static final String LOG_TYPE_ADMIN_MANAGEMENT = "ADMIN_MANAGEMENT";
     private static final String TARGET_TYPE_ADMIN = "ADMIN";
     private static final String TARGET_TYPE_IP_ACL = "IP_ACL";
-    private static final String SEVERITY_INFO = "INFO";
 
     @Override
     @Transactional(readOnly = true)
@@ -105,7 +105,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             }
             throw exception;
         }
-        saveAuditLog(actorAdminId, "CREATE_ADMIN", TARGET_TYPE_ADMIN, savedAdmin.getAdminId(), ipAddress, SEVERITY_INFO);
+        saveAuditLog(actorAdminId, "CREATE_ADMIN", TARGET_TYPE_ADMIN, savedAdmin.getAdminId(), ipAddress);
         return toAdminDetailResult(savedAdmin);
     }
 
@@ -124,7 +124,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         }
 
         admin.updateRole(command.adminRole());
-        saveAuditLog(actorAdminId, "UPDATE_ADMIN_ROLE", TARGET_TYPE_ADMIN, admin.getAdminId(), ipAddress, SEVERITY_INFO);
+        saveAuditLog(actorAdminId, "UPDATE_ADMIN_ROLE", TARGET_TYPE_ADMIN, admin.getAdminId(), ipAddress);
         return toAdminDetailResult(admin);
     }
 
@@ -146,7 +146,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         }
 
         admin.updateStatus(command.status());
-        saveAuditLog(actorAdminId, "UPDATE_ADMIN_STATUS", TARGET_TYPE_ADMIN, admin.getAdminId(), ipAddress, SEVERITY_INFO);
+        saveAuditLog(actorAdminId, "UPDATE_ADMIN_STATUS", TARGET_TYPE_ADMIN, admin.getAdminId(), ipAddress);
         return toAdminDetailResult(admin);
     }
 
@@ -161,7 +161,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
                 .orElseThrow(() -> new CustomException(AdminManagementErrorCode.ADMIN_NOT_FOUND));
 
         adminRepository.delete(admin);
-        saveAuditLog(actorAdminId, "DELETE_ADMIN", TARGET_TYPE_ADMIN, adminId, ipAddress, SEVERITY_INFO);
+        saveAuditLog(actorAdminId, "DELETE_ADMIN", TARGET_TYPE_ADMIN, adminId, ipAddress);
     }
 
     @Override
@@ -202,7 +202,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             }
             throw exception;
         }
-        saveAuditLog(actorAdminId, "CREATE_IP_ACL", TARGET_TYPE_IP_ACL, savedIpAcl.getIpAclId(), ipAddress, SEVERITY_INFO);
+        saveAuditLog(actorAdminId, "CREATE_IP_ACL", TARGET_TYPE_IP_ACL, savedIpAcl.getIpAclId(), ipAddress);
         return toIpAclDetailResult(savedIpAcl);
     }
 
@@ -224,7 +224,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         }
 
         ipAcl.updateEnabled(command.isEnabled());
-        saveAuditLog(actorAdminId, "UPDATE_IP_ACL_ENABLED", TARGET_TYPE_IP_ACL, ipAcl.getIpAclId(), ipAddress, SEVERITY_INFO);
+        saveAuditLog(actorAdminId, "UPDATE_IP_ACL_ENABLED", TARGET_TYPE_IP_ACL, ipAcl.getIpAclId(), ipAddress);
         return toIpAclDetailResult(ipAcl);
     }
 
@@ -235,22 +235,22 @@ public class AdminManagementServiceImpl implements AdminManagementService {
                 .orElseThrow(() -> new CustomException(AdminManagementErrorCode.IP_ACL_NOT_FOUND));
 
         ipAclRepository.delete(ipAcl);
-        saveAuditLog(actorAdminId, "DELETE_IP_ACL", TARGET_TYPE_IP_ACL, aclId, ipAddress, SEVERITY_INFO);
+        saveAuditLog(actorAdminId, "DELETE_IP_ACL", TARGET_TYPE_IP_ACL, aclId, ipAddress);
     }
 
-    private void saveAuditLog(Long actorAdminId, String action, String targetType, Long targetId, String ipAddress, String severity) {
+    private void saveAuditLog(Long actorAdminId, String action, String targetType, Long targetId, String ipAddress) {
         if (actorAdminId == null) {
             throw new IllegalArgumentException("actorAdminId must not be null");
         }
 
         AuditLog auditLog = AuditLog.create(
                 actorAdminId,
-                LOG_TYPE_ADMIN_MANAGEMENT,
+                AuditLogType.ADMIN_MANAGEMENT,
                 action,
                 targetType,
                 targetId == null ? null : targetId.toString(),
                 ipAddress,
-                severity,
+                AuditLogSeverity.INFO,
                 null
         );
         auditLogRepository.save(auditLog);
