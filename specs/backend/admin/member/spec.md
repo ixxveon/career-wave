@@ -228,11 +228,11 @@ public class HrManagerDTO {
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/admin/members` | 개인 회원 목록 조회 |
-| GET | `/api/admin/members/{memberId}` | 개인 회원 상세 조회 |
-| POST | `/api/admin/members/{memberId}/sanctions` | 회원 제재 처리 |
+| GET | `/api/v1/admin/members` | 개인 회원 목록 조회 |
+| GET | `/api/v1/admin/members/{memberId}` | 개인 회원 상세 조회 |
+| POST | `/api/v1/admin/members/{memberId}/sanctions` | 회원 제재 처리 |
 
-#### GET /api/admin/members
+#### GET /api/v1/admin/members
 
 **Query Parameters**:
 
@@ -273,7 +273,7 @@ public class HrManagerDTO {
 
 ---
 
-#### GET /api/admin/members/{memberId}
+#### GET /api/v1/admin/members/{memberId}
 
 **Path Parameters**: `memberId` (UUID)
 
@@ -287,7 +287,7 @@ public class HrManagerDTO {
 
 ---
 
-#### POST /api/admin/members/{memberId}/sanctions
+#### POST /api/v1/admin/members/{memberId}/sanctions
 
 **Request Body**: `MemberDTO.RequestSanction`
 
@@ -309,12 +309,12 @@ public class HrManagerDTO {
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/admin/hr-managers` | 기업 회원 목록 조회 |
-| GET | `/api/admin/hr-managers/{memberId}` | 기업 회원 상세 조회 |
-| PATCH | `/api/admin/hr-managers/{memberId}/approve` | 기업 회원 승인 |
-| PATCH | `/api/admin/hr-managers/{memberId}/reject` | 기업 회원 반려 |
+| GET | `/api/v1/admin/hr-managers` | 기업 회원 목록 조회 |
+| GET | `/api/v1/admin/hr-managers/{memberId}` | 기업 회원 상세 조회 |
+| PATCH | `/api/v1/admin/hr-managers/{memberId}/approve` | 기업 회원 승인 |
+| PATCH | `/api/v1/admin/hr-managers/{memberId}/reject` | 기업 회원 반려 |
 
-#### GET /api/admin/hr-managers
+#### GET /api/v1/admin/hr-managers
 
 **Query Parameters**:
 
@@ -353,7 +353,7 @@ public class HrManagerDTO {
 
 ---
 
-#### GET /api/admin/hr-managers/{memberId}
+#### GET /api/v1/admin/hr-managers/{memberId}
 
 **Response**: `ApiResponse<HrManagerDTO.ResponseDetail>`
 
@@ -365,7 +365,7 @@ public class HrManagerDTO {
 
 ---
 
-#### PATCH /api/admin/hr-managers/{memberId}/approve
+#### PATCH /api/v1/admin/hr-managers/{memberId}/approve
 
 **Response**: `ApiResponse<HrManagerDTO.ResponseApprove>`
 
@@ -378,7 +378,7 @@ public class HrManagerDTO {
 
 ---
 
-#### PATCH /api/admin/hr-managers/{memberId}/reject
+#### PATCH /api/v1/admin/hr-managers/{memberId}/reject
 
 **Request Body**: `HrManagerDTO.RequestReject`
 
@@ -490,17 +490,17 @@ rejectHrManager(memberId, RequestReject dto)
 
 **Scenario 1**: 필터 없이 전체 조회
 - Given 회원 데이터가 존재할 때
-- When GET /api/admin/members 요청 시
+- When GET /api/v1/admin/members 요청 시
 - Then 전체 회원 목록을 반환한다
 
 **Scenario 2**: 상태 필터 적용
 - Given status=SUSPENDED로 요청 시
-- When GET /api/admin/members?status=SUSPENDED 요청 시
+- When GET /api/v1/admin/members?status=SUSPENDED 요청 시
 - Then member_status = SUSPENDED 회원만 반환한다
 
 **Scenario 3**: 잘못된 필터 값
 - Given role=INVALID로 요청 시
-- When GET /api/admin/members?role=INVALID 요청 시
+- When GET /api/v1/admin/members?role=INVALID 요청 시
 - Then 400 INVALID_MEMBER_FILTER를 반환한다
 
 ---
@@ -513,12 +513,12 @@ rejectHrManager(memberId, RequestReject dto)
 
 **Scenario 1**: 정상 조회
 - Given 유효한 memberId로 요청 시
-- When GET /api/admin/members/{memberId} 요청 시
+- When GET /api/v1/admin/members/{memberId} 요청 시
 - Then 회원 상세 정보와 reportCount를 반환한다
 
 **Scenario 2**: 회원 없음
 - Given 존재하지 않는 memberId로 요청 시
-- When GET /api/admin/members/{memberId} 요청 시
+- When GET /api/v1/admin/members/{memberId} 요청 시
 - Then 404 MEMBER_NOT_FOUND를 반환한다
 
 ---
@@ -531,27 +531,27 @@ rejectHrManager(memberId, RequestReject dto)
 
 **Scenario 1**: 경고 처리
 - Given ACTIVE 상태 회원에 WARNING 제재 요청 시
-- When POST /api/admin/members/{memberId}/sanctions 요청 시
+- When POST /api/v1/admin/members/{memberId}/sanctions 요청 시
 - Then warning_count가 1 증가하고 SuspendHistory가 저장된다
 
 **Scenario 2**: 일시 정지 처리
 - Given ACTIVE 상태 회원에 SUSPEND + SEVEN_DAYS 제재 요청 시
-- When POST /api/admin/members/{memberId}/sanctions 요청 시
+- When POST /api/v1/admin/members/{memberId}/sanctions 요청 시
 - Then member_status = SUSPENDED, suspend_end_date = now+7일, SuspendHistory 저장된다
 
 **Scenario 3**: 영구 제재(블랙리스트)
 - Given ACTIVE 상태 회원에 BLACKLIST 제재 요청 시
-- When POST /api/admin/members/{memberId}/sanctions 요청 시
+- When POST /api/v1/admin/members/{memberId}/sanctions 요청 시
 - Then member_status = BANNED, suspend_end_date = null, SuspendHistory 저장된다
 
 **Scenario 4**: 이미 영구 제재된 회원 재제재 시도
 - Given BANNED 상태 회원에 대해
-- When POST /api/admin/members/{memberId}/sanctions 요청 시
+- When POST /api/v1/admin/members/{memberId}/sanctions 요청 시
 - Then 409 ALREADY_BANNED를 반환한다
 
 **Scenario 5**: SUSPEND에 PERMANENT duration 지정
 - Given SUSPEND + PERMANENT로 요청 시
-- When POST /api/admin/members/{memberId}/sanctions 요청 시
+- When POST /api/v1/admin/members/{memberId}/sanctions 요청 시
 - Then 400 INVALID_SANCTION_DURATION을 반환한다
 
 ---
@@ -564,12 +564,12 @@ rejectHrManager(memberId, RequestReject dto)
 
 **Scenario 1**: 전체 조회
 - Given 기업 회원 데이터가 존재할 때
-- When GET /api/admin/hr-managers 요청 시
+- When GET /api/v1/admin/hr-managers 요청 시
 - Then 목록과 함께 pendingCount를 반환한다
 
 **Scenario 2**: PENDING 필터
 - Given hrStatus=PENDING으로 요청 시
-- When GET /api/admin/hr-managers?hrStatus=PENDING 요청 시
+- When GET /api/v1/admin/hr-managers?hrStatus=PENDING 요청 시
 - Then PENDING 상태 기업 회원만 반환한다
 
 ---
@@ -582,22 +582,22 @@ rejectHrManager(memberId, RequestReject dto)
 
 **Scenario 1**: 승인 처리
 - Given PENDING 상태 hr_manager에 대해
-- When PATCH /api/admin/hr-managers/{memberId}/approve 요청 시
+- When PATCH /api/v1/admin/hr-managers/{memberId}/approve 요청 시
 - Then hr_status = ACTIVE, approved_at 설정 후 결과를 반환한다
 
 **Scenario 2**: 반려 처리
 - Given PENDING 상태 hr_manager에 대해 rejectReason 포함하여 요청 시
-- When PATCH /api/admin/hr-managers/{memberId}/reject 요청 시
+- When PATCH /api/v1/admin/hr-managers/{memberId}/reject 요청 시
 - Then hr_status = REMOVED, reject_reason 저장 후 결과를 반환한다
 
 **Scenario 3**: 이미 처리된 신청 재처리
 - Given ACTIVE 또는 REMOVED 상태 hr_manager에 대해
-- When PATCH /api/admin/hr-managers/{memberId}/approve 요청 시
+- When PATCH /api/v1/admin/hr-managers/{memberId}/approve 요청 시
 - Then 409 ALREADY_PROCESSED를 반환한다
 
 **Scenario 4**: 반려 사유 미입력
 - Given rejectReason이 blank인 경우
-- When PATCH /api/admin/hr-managers/{memberId}/reject 요청 시
+- When PATCH /api/v1/admin/hr-managers/{memberId}/reject 요청 시
 - Then 400 REASON_REQUIRED를 반환한다
 
 ---
