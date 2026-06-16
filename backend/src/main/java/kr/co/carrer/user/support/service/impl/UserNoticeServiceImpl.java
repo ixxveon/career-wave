@@ -41,6 +41,17 @@ public class UserNoticeServiceImpl implements UserNoticeService {
             .orElseThrow(() -> new CustomException(UserSupportErrorCode.NOTICE_NOT_FOUND));
 
         noticeRepository.incrementViewCountById(noticeId);
-        return detail;
+        return new SupportDTO.NoticeDetail(
+            detail.noticeId(),
+            detail.category(),
+            detail.title(),
+            detail.content(),
+            detail.isPinned(),
+            detail.viewCount() + 1,
+            detail.createdAt(),
+            detail.updatedAt(),
+            detail.prevNotice(),
+            detail.nextNotice()
+        );
     }
 }
