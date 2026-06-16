@@ -155,10 +155,11 @@ export interface AnalysisResultResponse {
 export interface ResumeHistoryItem {
   documentId: string;
   fileType: FileType;
+  status: BackendDocumentStatus;
   originalName: string | null;
   company: string | null;
   job: string | null;
-  totalScore: number | null;
+  scoreTotal: number | null;
   createdAt: string;
 }
 
@@ -180,9 +181,10 @@ export interface ResumeHistoryResponse {
 
 // ── 5. WebSocket 메시지 ───────────────────────────────────────
 
-/** WS /ws/user/resume/{documentId}/status — Server → Client 메시지 */
+/** WS STOMP /ws/user/resume → /topic/resume/{documentId}/status — Server → Client 메시지 */
 export interface WsStatusMessage {
   status: WsAnalysisStatus;
   message: string;
   progress: number;
+  errorMessage?: string | null;
 }

@@ -266,19 +266,21 @@ Authorization: Bearer {accessToken}
       {
         "documentId": "uuid-v4",
         "fileType": "RESUME",
+        "status": "COMPLETED",
         "originalName": "이력서_홍길동.pdf",
         "company": null,
         "job": null,
-        "totalScore": 74,
+        "scoreTotal": 74,
         "createdAt": "2026-05-29T14:53:44Z"
       },
       {
         "documentId": "uuid-v4-2",
         "fileType": "COVER_LETTER",
+        "status": "COMPLETED",
         "originalName": null,
         "company": "카카오",
         "job": "백엔드 개발자",
-        "totalScore": 76,
+        "scoreTotal": 76,
         "createdAt": "2026-05-28T10:20:00Z"
       }
     ],
@@ -293,10 +295,11 @@ Authorization: Bearer {accessToken}
 | Field | Type | 설명 |
 |-------|------|------|
 | `data.content[].fileType` | `string` | `RESUME` \| `COVER_LETTER` |
+| `data.content[].status` | `string` | `UPLOADED` \| `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
 | `data.content[].originalName` | `string` \| `null` | 이력서: 파일명, 자기소개서: `null` |
 | `data.content[].company` | `string` \| `null` | 자기소개서: 지원 회사명, 이력서: `null` |
 | `data.content[].job` | `string` \| `null` | 자기소개서: 지원 직무명, 이력서: `null` |
-| `data.content[].totalScore` | `number` \| `null` | 종합 점수, 분석 미완료 시 `null` |
+| `data.content[].scoreTotal` | `number` \| `null` | 종합 점수, 분석 미완료 시 `null` |
 
 ### Error Cases
 
@@ -358,7 +361,8 @@ client.activate()
 {
   "status": "ANALYZING",
   "message": "키워드를 추출하고 있어요",
-  "progress": 40
+  "progress": 40,
+  "errorMessage": null
 }
 ```
 
@@ -367,6 +371,7 @@ client.activate()
 | `status` | `string` | `ANALYZING` \| `COMPLETED` \| `FAILED` |
 | `message` | `string` | 현재 단계 안내 문구 (UI 표시용) |
 | `progress` | `number` | 진행률 0~100 |
+| `errorMessage` | `string` \| `null` | `FAILED` 시 서버 제공 오류 메시지, `null`이면 기본 문구 표시 |
 
 #### 단계별 `message` 예시
 
