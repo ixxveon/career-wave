@@ -43,8 +43,9 @@ export function useAnalysisWebSocket({
   onFailed,
   onNetworkError,
 }: UseAnalysisWebSocketOptions): UseAnalysisWebSocketReturn {
-  const clientRef   = useRef<Client | null>(null);
-  const timeoutRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clientRef     = useRef<Client | null>(null);
+  const timeoutRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const errorFiredRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
 
   const clearAnalysisTimeout = useCallback(() => {
@@ -66,6 +67,7 @@ export function useAnalysisWebSocket({
   const connect = useCallback(
     (documentId: string) => {
       disconnect();
+      errorFiredRef.current = false;
 
       const token = authSession.getAccessToken();
       if (!token) {
@@ -124,12 +126,18 @@ export function useAnalysisWebSocket({
           }, ANALYSIS_TIMEOUT_MS);
         },
         onStompError: (frame) => {
+          if (errorFiredRef.current) return;
+          errorFiredRef.current = true;
           clearAnalysisTimeout();
+          clientRef.current = null;
           setIsConnected(false);
           onFailed(frame.headers['message'] ?? '서버 오류가 발생했습니다.');
         },
         onWebSocketError: () => {
+          if (errorFiredRef.current) return;
+          errorFiredRef.current = true;
           clearAnalysisTimeout();
+          clientRef.current = null;
           setIsConnected(false);
           onNetworkError();
           onFailed('네트워크 연결이 끊겼습니다. 연결 상태를 확인 후 다시 시도해주세요.');
@@ -137,8 +145,11 @@ export function useAnalysisWebSocket({
         onWebSocketClose: (event) => {
           clearAnalysisTimeout();
           setIsConnected(false);
+          if (errorFiredRef.current) return;
           // Close 1008: policy violation — 인증 실패 또는 IDOR
           if ((event as CloseEvent).code === 1008) {
+            errorFiredRef.current = true;
+            clientRef.current = null;
             onFailed('접근 권한이 없거나 유효하지 않은 문서입니다.');
           }
         },
