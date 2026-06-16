@@ -7,8 +7,10 @@ import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.RoleType;
 import kr.co.carrer.user.member.type.SubscriptionStatus;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+
 
 public class DashboardDTO {
 
@@ -52,5 +54,19 @@ public class DashboardDTO {
                         @Schema(description = "GitHub URL", example = "https://github.com/octocat") @Size(max = 300) @Pattern(regexp = "^https://(www\\.)?github\\.com/[A-Za-z0-9-]+/?$", message = "GitHub URL 형식이 올바르지 않습니다.") String githubUrl
 
         ) {
+        }
+
+        @Schema(description = "대시보드 스크랩 공고 응답")
+        public record BookmarkResponse(
+                        @Schema(description = "북마크 ID") Long bookmarkId,
+                        @Schema(description = "채용공고 ID") Long jobNoticeId,
+                        @Schema(description = "기업명") String companyName,
+                        @Schema(description = "공고 제목") String title,
+                        @Schema(description = "근무 지역") String location,
+                        @Schema(description = "경력 수준") String careerLevel,
+                        @Schema(description = "공고 상태") String noticeStatus,
+                        @Schema(description = "공고 출처") String source,
+                        @Schema(description = "마감일") LocalDate deadline,
+                        @Schema(description = "스크랩한 일시") ZonedDateTime bookmarkedAt) {
         }
 }
