@@ -7,20 +7,20 @@ import kr.co.carrer.admin.report.type.ReportReason;
 import kr.co.carrer.admin.report.type.ReportStatus;
 import kr.co.carrer.admin.report.type.TargetType;
 import kr.co.carrer.admin.report.exception.AdminReportErrorCode;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-// TODO: JWT 필터 구현 후 이슈 #310에서 활성화 예정
-// @PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('CS'))")
 public class AdminReportController implements AdminReportControllerDocs {
 
     private final AdminReportService adminReportService;
@@ -58,18 +58,18 @@ public class AdminReportController implements AdminReportControllerDocs {
     @PatchMapping("/reports/{reportId}/blind")
     public ResponseEntity<ApiResponse<ReportDetailDTO.ResponseProcess>> blindReport(
         @PathVariable Long reportId,
-        @AuthenticationPrincipal Long adminId
+        @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        if (adminId == null) throw new CustomException(ErrorCode.UNAUTHORIZED);
+        Long adminId = Long.parseLong(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(adminReportService.blindReport(reportId, adminId)));
     }
 
     @PatchMapping("/reports/{reportId}/dismiss")
     public ResponseEntity<ApiResponse<ReportDetailDTO.ResponseProcess>> dismissReport(
         @PathVariable Long reportId,
-        @AuthenticationPrincipal Long adminId
+        @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        if (adminId == null) throw new CustomException(ErrorCode.UNAUTHORIZED);
+        Long adminId = Long.parseLong(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(adminReportService.dismissReport(reportId, adminId)));
     }
 

@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AdminMemberController.class)
 @Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
-@WithMockUser(roles = "ADMIN")
+@WithMockUser(roles = {"ADMIN", "MASTER"})
 class AdminMemberControllerPaginationTest {
 
     @Autowired

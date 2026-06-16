@@ -119,6 +119,10 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new CustomException(AdminManagementErrorCode.ADMIN_NOT_FOUND));
 
+        if (admin.getAdminRole() == command.adminRole()) {
+            throw new CustomException(AdminManagementErrorCode.ADMIN_ROLE_ALREADY_ASSIGNED);
+        }
+
         admin.updateRole(command.adminRole());
         saveAuditLog(actorAdminId, "UPDATE_ADMIN_ROLE", TARGET_TYPE_ADMIN, admin.getAdminId(), ipAddress, SEVERITY_INFO);
         return toAdminDetailResult(admin);
@@ -149,6 +153,10 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public void deleteAdmin(Long adminId, Long actorAdminId, String ipAddress) {
+        if (adminId.equals(actorAdminId)) {
+            throw new CustomException(AdminManagementErrorCode.CANNOT_DELETE_SELF);
+        }
+
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new CustomException(AdminManagementErrorCode.ADMIN_NOT_FOUND));
 
@@ -240,7 +248,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
                 LOG_TYPE_ADMIN_MANAGEMENT,
                 action,
                 targetType,
-                targetId,
+                targetId == null ? null : targetId.toString(),
                 ipAddress,
                 severity,
                 null

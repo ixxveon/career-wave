@@ -48,4 +48,14 @@ public class PersonalProfile {
     protected void onUpdate() {
         this.updatedAt = ZonedDateTime.now();
     }
+
+    public static PersonalProfile create(UUID memberId) {
+        PersonalProfile personalProfile = new PersonalProfile();
+        personalProfile.memberId = memberId;
+        return personalProfile;
+    }
+
+    public void updateGithubUrl(String githubUrl) {
+        this.githubUrl = githubUrl;
+    }
 }

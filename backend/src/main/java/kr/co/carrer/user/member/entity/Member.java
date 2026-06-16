@@ -89,4 +89,14 @@ public class Member {
         this.memberStatus = MemberStatus.ACTIVE;
         this.lockedUntil = null;
     }
+
+    // 로그인 실패 5회 도달 시 잠금 처리 — dirty checking으로 DB 저장
+    public void lockAccount(Instant lockedUntil) {
+        this.memberStatus = MemberStatus.LOCKED;
+        this.lockedUntil = lockedUntil;
+    }
+    public void updateProfile(String name, String phone) {
+    this.name = name;
+    this.phone = phone;
+    }
 }

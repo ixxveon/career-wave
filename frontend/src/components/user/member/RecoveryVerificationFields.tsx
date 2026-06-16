@@ -2,6 +2,7 @@ import type { InputHTMLAttributes, ReactNode } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import type { VerificationState } from '../../../utils/user/member/recoveryView';
 import { formatRemaining } from '../../../utils/user/member/recoveryView';
+import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
 
 interface RecoveryContactFieldProps {
   label: string;
@@ -62,7 +63,8 @@ export function RecoveryContactField({
             inputMode={inputMode}
             placeholder={placeholder}
             value={value}
-            onChange={(event) => onChange(event.target.value)}
+            onChange={(event) => { onChange(event.target.value); applyInputFill(event.target); }}
+            onBlur={(event) => clearInputFill(event.target)}
           />
         </span>
         <button
@@ -111,7 +113,8 @@ export function RecoveryCodeField({
             type="text"
             placeholder="인증번호 6자리 입력"
             value={code}
-            onChange={(event) => onCodeChange(event.target.value)}
+            onChange={(event) => { onCodeChange(event.target.value); applyInputFill(event.target); }}
+            onBlur={(event) => clearInputFill(event.target)}
           />
         </span>
         <button

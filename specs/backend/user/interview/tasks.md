@@ -6,99 +6,101 @@
 
 ## Phase 1 — Entity & Type 정의
 
-- [ ] `SessionType.java` Enum
-  - [ ] `TEXT` / `VOICE` / `VIDEO`
-  - [ ] `@Enumerated(EnumType.STRING)` 적용 확인
+- [x] `SessionType.java` Enum
+  - [x] `TEXT` / `VOICE` / `VIDEO`
+  - [x] `@Enumerated(EnumType.STRING)` 적용 확인
 
-- [ ] `SessionStatus.java` Enum
-  - [ ] `IN_PROGRESS` / `COMPLETED` / `FAILED`
+- [x] `SessionStatus.java` Enum
+  - [x] `IN_PROGRESS` / `COMPLETED` / `FAILED`
 
-- [ ] `InterviewType.java` Enum
-  - [ ] `TECHNICAL` / `PERSONALITY` / `PROJECT`
+- [x] `InterviewType.java` Enum
+  - [x] `TECHNICAL` / `PERSONALITY` / `PROJECT`
 
-- [ ] `MessageSender.java` Enum
-  - [ ] `AI` / `USER`
+- [x] `MessageSender.java` Enum
+  - [x] `AI` / `USER`
 
-- [ ] `MessageType.java` Enum
-  - [ ] `QUESTION` / `ANSWER` / `SYSTEM`
+- [x] `MessageType.java` Enum
+  - [x] `QUESTION` / `ANSWER` / `SYSTEM`
 
-- [ ] `InterviewSession.java` Entity
-  - [ ] `session_id` UUID PK (DB DEFAULT gen_random_uuid())
-  - [ ] `member_id` UUID nullable — 비회원 세션 허용
-  - [ ] `document_id` UUID nullable
-  - [ ] `session_type` SessionType Enum (`@Enumerated(EnumType.STRING)`)
-  - [ ] `session_status` SessionStatus Enum (`@Enumerated(EnumType.STRING)`)
-  - [ ] `interview_type` InterviewType Enum nullable
-  - [ ] `target_company` VARCHAR(100) nullable
-  - [ ] `total_score` INTEGER nullable
-  - [ ] `started_at` / `ended_at` / `created_at` / `updated_at` ZonedDateTime
-  - [ ] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
-  - [ ] `complete(ZonedDateTime endedAt)` 상태 전이 메서드
+- [x] `InterviewSession.java` Entity
+  - [x] `session_id` UUID PK (DB DEFAULT gen_random_uuid())
+  - [x] `member_id` UUID nullable — 비회원 세션 허용
+  - [x] `document_id` UUID nullable
+  - [x] `session_type` SessionType Enum (`@Enumerated(EnumType.STRING)`)
+  - [x] `session_status` SessionStatus Enum (`@Enumerated(EnumType.STRING)`)
+  - [x] `interview_type` InterviewType Enum nullable
+  - [x] `target_company` VARCHAR(100) nullable
+  - [x] `total_score` INTEGER nullable
+  - [x] `started_at` / `ended_at` / `created_at` / `updated_at` ZonedDateTime
+  - [x] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
+  - [x] `complete(ZonedDateTime endedAt)` 상태 전이 메서드 — COMPLETED + endedAt 기록
+  - [x] `fail(ZonedDateTime endedAt)` 상태 전이 메서드 — FAILED + endedAt 기록
 
-- [ ] `InterviewMessage.java` Entity
-  - [ ] `message_id` BIGSERIAL PK
-  - [ ] `session_id` UUID NOT NULL FK
-  - [ ] `sender` MessageSender Enum NOT NULL
-  - [ ] `message_type` MessageType Enum NOT NULL (`QUESTION` / `ANSWER` / `SYSTEM`)
-  - [ ] `message_content` TEXT NOT NULL
-  - [ ] `created_at` ZonedDateTime NOT NULL
-  - [ ] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
+- [x] `InterviewMessage.java` Entity
+  - [x] `message_id` BIGSERIAL PK
+  - [x] `session_id` UUID NOT NULL FK
+  - [x] `sender` MessageSender Enum NOT NULL
+  - [x] `message_type` MessageType Enum NOT NULL (`QUESTION` / `ANSWER` / `SYSTEM`)
+  - [x] `message_content` TEXT NOT NULL
+  - [x] `created_at` ZonedDateTime NOT NULL
+  - [x] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
 
-- [ ] `AIInterviewFeedback.java` Entity
-  - [ ] `interviewFeedbackId` BIGSERIAL PK (컬럼명 `interview_feedback_id`)
-  - [ ] `session_id` UUID NOT NULL FK
-  - [ ] `question_order` INTEGER NOT NULL
-  - [ ] `question_text` / `answer_text` TEXT NOT NULL
-  - [ ] `relevance_score` / `depth_score` / `delivery_score` / `fluency_score` INTEGER nullable, CHECK (0~100)
-  - [ ] `voice_quality_ratio` DECIMAL(5,2) nullable, CHECK (0.00~100.00)
-  - [ ] `ai_feedback` TEXT nullable
-  - [ ] `created_at` ZonedDateTime NOT NULL
-  - [ ] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
+- [x] `AIInterviewFeedback.java` Entity
+  - [x] `interviewFeedbackId` BIGSERIAL PK (컬럼명 `interview_feedback_id`)
+  - [x] `session_id` UUID NOT NULL FK
+  - [x] `question_order` INTEGER NOT NULL
+  - [x] `question_text` / `answer_text` TEXT NOT NULL
+  - [x] `relevance_score` / `depth_score` / `delivery_score` / `fluency_score` INTEGER nullable, CHECK (0~100)
+  - [x] `voice_quality_ratio` DECIMAL(5,2) nullable, CHECK (0.00~100.00)
+  - [x] `@org.hibernate.annotations.Check` — 5개 점수 필드 범위 DB CHECK 제약 적용
+  - [x] `ai_feedback` TEXT nullable
+  - [x] `created_at` ZonedDateTime NOT NULL
+  - [x] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
 
-- [ ] `CareerHistory.java` Entity
-  - [ ] `career_history_id` BIGSERIAL PK
-  - [ ] `member_id` UUID NOT NULL FK
-  - [ ] `session_id` UUID NOT NULL FK
-  - [ ] `document_id` UUID nullable FK
-  - [ ] `total_score` INTEGER nullable
-  - [ ] `feedback` TEXT nullable
-  - [ ] `pdf_url` VARCHAR(500) nullable
-  - [ ] `created_at` ZonedDateTime NOT NULL
-  - [ ] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
+- [x] `CareerHistory.java` Entity
+  - [x] `career_history_id` BIGSERIAL PK
+  - [x] `member_id` UUID NOT NULL FK
+  - [x] `session_id` UUID NOT NULL FK
+  - [x] `document_id` UUID nullable FK
+  - [x] `total_score` INTEGER nullable
+  - [x] `feedback` TEXT nullable
+  - [x] `pdf_url` VARCHAR(500) nullable
+  - [x] `created_at` ZonedDateTime NOT NULL
+  - [x] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
 
 ---
 
 ## Phase 2 — DTO 정의
 
-- [ ] `InterviewDTO.java`
-  - [ ] `RequestStartSession` — documentId(nullable) / sessionType(@NotBlank) / interviewType(nullable) / targetCompany(@Size(max=100), nullable)
-  - [ ] `ResponseStartSession` — sessionId / sessionStatus / sessionType / documentId / createdAt
-  - [ ] `RequestSubmitTextAnswer` — questionOrder(@NotNull @Min(1)) / messageContent(@NotBlank)
-  - [ ] `ResponseSubmitTextAnswer` — messageId / createdAt
-  - [ ] `ResponseSubmitVoiceChunk` — chunkIndex / received
-  - [ ] `ResponseEndSession` — sessionId / sessionStatus / endedAt
-  - [ ] `FeedbackItem` — questionOrder / questionText / answerText / relevanceScore / depthScore / deliveryScore(nullable) / fluencyScore(nullable) / voiceQualityRatio(nullable) / aiFeedback / createdAt
-  - [ ] `ResponseReport` — sessionId / sessionStatus / sessionType / totalScore(nullable) / feedbacks / createdAt
-  - [ ] `HistoryItem` — careerHistoryId / sessionId / sessionType / interviewType(nullable) / targetCompany(nullable) / sessionStatus / totalScore(nullable) / pdfUrl(nullable) / createdAt
+- [x] `InterviewDTO.java`
+  - [x] `RequestStartSession` — documentId(nullable) / sessionType(@NotBlank) / interviewType(nullable) / targetCompany(@Size(max=100), nullable)
+  - [x] `ResponseStartSession` — sessionId / sessionStatus / sessionType / documentId / createdAt
+  - [x] `RequestSubmitTextAnswer` — questionOrder(@NotNull @Min(1)) / messageContent(@NotBlank)
+  - [x] `ResponseSubmitTextAnswer` — messageId / createdAt
+  - [x] `ResponseSubmitVoiceChunk` — chunkIndex / received
+  - [x] `ResponseEndSession` — sessionId / sessionStatus / endedAt
+  - [x] `FeedbackItem` — questionOrder / questionText / answerText / relevanceScore / depthScore / deliveryScore(nullable) / fluencyScore(nullable) / voiceQualityRatio(nullable) / aiFeedback / createdAt
+  - [x] `ResponseReport` — sessionId / sessionStatus / sessionType / totalScore(nullable) / feedbacks / createdAt
+  - [x] `HistoryItem` — careerHistoryId / sessionId / sessionType / interviewType(nullable) / targetCompany(nullable) / sessionStatus / totalScore(nullable) / pdfUrl(nullable) / createdAt
 
 ---
 
 ## Phase 3 — Repository 구현
 
-- [ ] `InterviewSessionRepository.java`
-  - [ ] `findBySessionId(UUID sessionId)` — 단순 조회
-  - [ ] `findBySessionIdAndMemberId(UUID sessionId, UUID memberId)` — 소유권 검증용
-  - [ ] `findInProgressByMemberId(UUID memberId)` — `@Lock(PESSIMISTIC_WRITE)` 적용, 중복 세션 체크용
+- [x] `InterviewSessionRepository.java`
+  - [x] `findBySessionId(UUID sessionId)` — 단순 조회
+  - [x] `findBySessionIdAndMemberId(UUID sessionId, UUID memberId)` — 소유권 검증용
+  - [x] `findInProgressByMemberId(UUID memberId)` — `@Lock(PESSIMISTIC_WRITE)` 적용, 중복 세션 체크용
 
-- [ ] `InterviewMessageRepository.java`
-  - [ ] `findBySessionIdOrderByCreatedAtAsc(UUID sessionId)` — 세션 메시지 전체 조회
+- [x] `InterviewMessageRepository.java`
+  - [x] `findBySessionIdOrderByCreatedAtAsc(UUID sessionId)` — 세션 메시지 전체 조회
 
-- [ ] `AIInterviewFeedbackRepository.java`
-  - [ ] `findBySessionIdOrderByQuestionOrderAsc(UUID sessionId)` — 리포트 피드백 조회
+- [x] `AIInterviewFeedbackRepository.java`
+  - [x] `findBySessionIdOrderByQuestionOrderAsc(UUID sessionId)` — 리포트 피드백 조회
 
-- [ ] `CareerHistoryRepository.java`
-  - [ ] `findByMemberIdOrderByCreatedAtDesc(UUID memberId, Pageable pageable)` — 이력 페이징
-  - [ ] `findByMemberIdAndSessionId(UUID memberId, UUID sessionId)` — 단건 조회
+- [x] `CareerHistoryRepository.java`
+  - [x] `findByMemberIdOrderByCreatedAtDesc(UUID memberId, Pageable pageable)` — 이력 페이징
+  - [x] `findByMemberIdAndSessionId(UUID memberId, UUID sessionId)` — 단건 조회
 
 ---
 
@@ -110,36 +112,35 @@
 
 ### InterviewSessionService
 
-- [ ] `startSession(UUID memberId, RequestStartSession dto)`
-  - [ ] `SessionType` 유효성 검증 — 유효하지 않으면 `INTERVIEW_INVALID_SESSION_TYPE(400)`
-  - [ ] `documentId` 존재 시 유효성 검증 — 없으면 `INTERVIEW_DOCUMENT_NOT_FOUND(404)`
-  - [ ] `InterviewSession` 저장 (`session_status = IN_PROGRESS`, `started_at = 현재 시각`)
-  - [ ] FastAPI RAG 컨텍스트 비동기 등록 (documentId 있는 경우)
-  - [ ] `@Transactional` 적용
-  - [ ] 반환: `ResponseStartSession`
+- [x] `startSession(UUID memberId, RequestStartSession dto)`
+  - [x] `SessionType` 유효성 검증 — 유효하지 않으면 `INTERVIEW_INVALID_SESSION_TYPE(400)`
+  - [x] `documentId` 존재 시 유효성 검증 — 없으면 `INTERVIEW_DOCUMENT_NOT_FOUND(404)`
+  - [x] `InterviewSession` 저장 (`session_status = IN_PROGRESS`, `started_at = 현재 시각`)
+  - [x] FastAPI RAG 컨텍스트 비동기 등록 (documentId 있는 경우, 트랜잭션 외부)
+  - [x] DB 저장은 `@Transactional` 내부 메서드로 분리, FastAPI 호출은 트랜잭션 외부
+  - [x] 반환: `ResponseStartSession`
 
-- [ ] `submitTextAnswer(UUID memberId, String sessionId, RequestSubmitTextAnswer dto)`
-  - [ ] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-  - [ ] 존재하지 않으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
-  - [ ] `InterviewMessage` 저장 (`sender = USER`, `message_type = ANSWER`)
-  - [ ] FastAPI LLM 파이프라인 비동기 트리거
-  - [ ] `@Transactional` 적용
-  - [ ] 반환: `ResponseSubmitTextAnswer`
+- [x] `submitTextAnswer(UUID memberId, UUID sessionId, RequestSubmitTextAnswer dto)`
+  - [x] `session_id` 존재 여부 검증 — 없으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
+  - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
+  - [x] `InterviewMessage` 저장 (`sender = USER`, `message_type = ANSWER`)
+  - [x] FastAPI LLM 파이프라인 비동기 트리거 (트랜잭션 외부)
+  - [x] 반환: `ResponseSubmitTextAnswer`
 
-- [ ] `submitVoiceChunk(UUID memberId, String sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal)`
-  - [ ] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-  - [ ] FastAPI STT 파이프라인으로 오디오 청크 비동기 전달 (트랜잭션 외부)
-  - [ ] `isFinal = true`이면 해당 질문 답변 완료 처리
-  - [ ] 반환: `ResponseSubmitVoiceChunk`
+- [x] `submitVoiceChunk(UUID memberId, UUID sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal)`
+  - [x] Content-Type 검증 — audio/webm, audio/mp4, audio/ogg만 허용 (`INTERVIEW_INVALID_AUDIO_FORMAT(400)`)
+  - [x] `session_id` 존재 여부 검증 — 없으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
+  - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
+  - [x] FastAPI STT 파이프라인으로 오디오 청크 비동기 전달 (트랜잭션 외부)
+  - [x] 반환: `ResponseSubmitVoiceChunk`
 
-- [ ] `endSession(UUID memberId, String sessionId)`
-  - [ ] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-  - [ ] 존재하지 않으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
-  - [ ] `COMPLETED` / `FAILED` 세션 재종료 시 `INTERVIEW_SESSION_ALREADY_ENDED(400)` — 멱등성 체크: FastAPI 리포트 트리거가 2회 이상 발생하지 않도록 반드시 상태 확인 후 얼리 리턴
-  - [ ] `complete(endedAt)` 메서드로 상태 변경 (`COMPLETED`, `ended_at = 현재 시각`)
-  - [ ] FastAPI 리포트 생성 비동기 트리거
-  - [ ] `@Transactional` 적용
-  - [ ] 반환: `ResponseEndSession`
+- [x] `endSession(UUID memberId, UUID sessionId)`
+  - [x] `session_id` 존재 여부 검증 — 없으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
+  - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
+  - [x] `COMPLETED` / `FAILED` 세션 재종료 시 `INTERVIEW_SESSION_ALREADY_ENDED(400)` — 멱등성 체크
+  - [x] `complete(endedAt)` 메서드로 상태 변경 (`COMPLETED`, `ended_at = 현재 시각`)
+  - [x] FastAPI 리포트 생성 비동기 트리거 (트랜잭션 외부)
+  - [x] 반환: `ResponseEndSession`
 
 ### InterviewReportService
 
@@ -162,13 +163,13 @@
 
 ## Phase 5 — Controller & Swagger Docs
 
-- [ ] `InterviewSessionController.java`
-  - [ ] `POST /api/v1/user/interview/sessions` — `@RequestBody @Valid RequestStartSession`
-  - [ ] `POST /api/v1/user/interview/sessions/{sessionId}/answer/text` — `@RequestBody @Valid RequestSubmitTextAnswer`
-  - [ ] `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice` — `@RequestParam MultipartFile audioChunk` + 파라미터
-  - [ ] `POST /api/v1/user/interview/sessions/{sessionId}/end`
-  - [ ] 모든 메서드에 `@AuthenticationPrincipal UserPrincipal` 적용
-  - [ ] Controller에서 `try-catch` 사용 금지
+- [x] `InterviewSessionController.java`
+  - [x] `POST /api/v1/user/interview/sessions` — `@RequestBody @Valid RequestStartSession`
+  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/text` — `@PathVariable UUID`, `@RequestBody @Valid RequestSubmitTextAnswer`
+  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice` — `@PathVariable UUID`, `@RequestParam MultipartFile audioChunk` + 파라미터, `consumes = MULTIPART_FORM_DATA`, `questionOrder @Min(1)` / `chunkIndex @Min(0)` 하한값 검증 (`@Validated` 적용)
+  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/end` — `@PathVariable UUID`
+  - [x] 모든 메서드에 `@AuthenticationPrincipal AuthPrincipal` 적용
+  - [x] Controller에서 `try-catch` 사용 금지
 
 - [ ] `InterviewReportController.java`
   - [ ] `GET /api/v1/user/interview/sessions/{sessionId}/report`
@@ -176,8 +177,8 @@
 - [ ] `InterviewHistoryController.java`
   - [ ] `GET /api/v1/user/interview/history` — `@RequestParam(defaultValue="0") int page`, `@RequestParam(defaultValue="10") int size`
 
-- [ ] Swagger Docs 인터페이스 분리
-  - [ ] `InterviewSessionControllerDocs.java`
+- [x] Swagger Docs 인터페이스 분리
+  - [x] `InterviewSessionControllerDocs.java`
   - [ ] `InterviewReportControllerDocs.java`
   - [ ] `InterviewHistoryControllerDocs.java`
 

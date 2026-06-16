@@ -1,4 +1,5 @@
 import { Building2, UserRound } from 'lucide-react';
+import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
 
 interface RecoveryCompanyIdentityFieldsProps {
   loginId?: string;
@@ -35,7 +36,8 @@ function RecoveryCompanyIdentityFields({
               type="text"
               placeholder="아이디를 입력하세요"
               value={loginId ?? ''}
-              onChange={(event) => onLoginIdChange(event.target.value)}
+              onChange={(event) => { onLoginIdChange(event.target.value); applyInputFill(event.target); }}
+              onBlur={(event) => clearInputFill(event.target)}
             />
           </span>
           {loginIdError && <p className="cw-register-error">{loginIdError}</p>}
@@ -50,7 +52,8 @@ function RecoveryCompanyIdentityFields({
             type="text"
             placeholder="담당자명(실명)"
             value={managerName}
-            onChange={(event) => onManagerNameChange(event.target.value)}
+            onChange={(event) => { onManagerNameChange(event.target.value); applyInputFill(event.target); }}
+            onBlur={(event) => clearInputFill(event.target)}
           />
         </span>
         {managerNameError && <p className="cw-register-error">{managerNameError}</p>}
@@ -65,7 +68,8 @@ function RecoveryCompanyIdentityFields({
             type="text"
             placeholder="사업자등록번호('-' 없이 숫자만 입력)"
             value={businessNumber}
-            onChange={(event) => onBusinessNumberChange(event.target.value)}
+            onChange={(event) => { onBusinessNumberChange(event.target.value); applyInputFill(event.target); }}
+            onBlur={(event) => clearInputFill(event.target)}
           />
         </span>
         {businessNumberError && <p className="cw-register-error">{businessNumberError}</p>}

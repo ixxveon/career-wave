@@ -9,4 +9,9 @@ public interface DashboardService {
     DashboardDTO.ProfileResponse getProfile(UUID memberId);
 
     DashboardDTO.GithubResponse getGithubProfile(UUID memberId);
+
+    DashboardDTO.ProfileResponse updateProfile(
+        UUID memberId,
+        DashboardDTO.ProfileUpdateRequest request
+);
 }
