@@ -34,16 +34,16 @@
 
 ## Phase 3 - API
 
-- [ ] `AuditLogDTO.java`를 작성한다.
-- [ ] 목록 조회 Request DTO에 `page >= 1`, `size >= 1` Bean Validation을 적용한다.
-- [ ] 목록 조회 Request DTO에 `keyword` 최대 100자 Bean Validation과 `KEYWORD_TOO_LONG` 매핑을 적용한다.
-- [ ] `from > to` 교차 필드 검증을 Service 계층에서 처리하고 DTO 단순 필드 검증과 분리한다.
-- [ ] `GET /api/v1/admin/audit-logs/summary` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/audit-logs` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/audit-logs/{logId}` Controller endpoint를 작성한다.
-- [ ] `AuditLogController.java`의 응답을 `ApiResponse<T>` 기준으로 정리한다.
-- [ ] `AuditLogDocs.java` Swagger 인터페이스를 작성한다.
-- [ ] JWT 인증과 `MASTER`, `BACKEND` 역할 접근 제어를 API 계층에 반영한다.
+- [x] `AuditLogDTO.java`를 작성한다.
+- [x] 목록 조회 Request DTO에 `page >= 1`, `size >= 1` Bean Validation을 적용한다.
+- [x] 목록 조회 Request DTO에 `keyword` 최대 100자 Bean Validation을 적용한다.
+- [x] `from > to` 교차 필드 검증은 Service 계층에서 처리하고 DTO 단순 필드 검증과 분리한다.
+- [x] `GET /api/v1/admin/audit-logs/summary` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/audit-logs` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/audit-logs/{logId}` Controller endpoint를 작성한다.
+- [x] `AuditLogController.java`의 응답을 `ApiResponse<T>` 기준으로 정리한다.
+- [x] `AuditLogDocs.java` Swagger 인터페이스를 작성한다.
+- [x] JWT 인증과 관리자 인증(`ROLE_ADMIN`) + `MASTER`, `BACKEND` 세부 역할 접근 제어를 API 계층에 반영한다.
 
 ## Phase 4 - Documentation
 
@@ -69,6 +69,6 @@
 - [ ] `AUDIT_LOG_NOT_FOUND` 예외 테스트를 작성한다.
 - [ ] `INVALID_AUDIT_LOG_TYPE` 예외 테스트를 작성한다.
 - [ ] `INVALID_AUDIT_LOG_SEVERITY` 예외 테스트를 작성한다.
-- [ ] `MASTER`, `BACKEND` 권한 허용 테스트를 작성한다.
+- [ ] 관리자 인증(`ROLE_ADMIN`) + `MASTER`, `BACKEND` 세부 역할 허용 테스트를 작성한다.
 - [ ] 그 외 권한 차단 테스트를 작성한다.
 - [ ] `ApiResponse<T>` 응답 구조 테스트를 작성한다.
