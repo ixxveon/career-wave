@@ -218,6 +218,7 @@ GET /api/admin/statistics/subscribers/recent
 
 #### getRevenueBreakdown()
 - 당월 구독 유형별 집계 + 전월 대비 증감률
+- REFUND_DEDUCTION은 환불 금액을 음수(× -1)로 변환하여 반환
 - 반환: `List<StatisticsDTO.RevenueBreakdownItem>` (PREMIUM→NEW_CONVERSION→RENEWAL→REFUND_DEDUCTION 순)
 
 #### getMonthlySubscribers()
