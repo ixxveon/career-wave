@@ -6,137 +6,79 @@
 
 ---
 
-## 프로젝트 구조
+## Summary
+
+커뮤니티 게시글·댓글·회원 신고 내역 조회 및 블라인드·기각 처리 어드민 REST API.
+블라인드 처리 시 boards/comments 테이블을 동일 트랜잭션에서 업데이트한다.
+
+---
+
+## Technical Context
+
+- Spring Boot + JPA 기반 어드민 백엔드
+- 패키지: `admin/report/`
+- Native Query 패턴 (EntityManager 직접 사용)
+- 연관 테이블: `reports`, `boards`, `comments`
+
+---
+
+## Project Structure
 
 ```text
-backend/src/main/java/kr/co/carrer/admin/report/
+admin/report/
 ├── entity/
-│   └── Report.java                    # reports 테이블 엔티티
+│   └── Report.java
 ├── repository/
-│   ├── ReportRepository.java          # JpaRepository<Report, Long>
-│   ├── ReportQueryRepository.java     # Native Query 목록/요약 조회
-│   ├── ReportBoardRepository.java     # boards is_blind 업데이트
-│   └── ReportCommentRepository.java   # comments is_blind 업데이트
+│   ├── ReportRepository.java
+│   ├── ReportQueryRepository.java
+│   ├── ReportBoardRepository.java
+│   └── ReportCommentRepository.java
 ├── type/
-│   ├── ReportStatus.java              # PENDING, BLINDED, DISMISSED
-│   ├── TargetType.java                # BOARD, COMMENT, MEMBER
-│   └── ReportReason.java             # SPAM, ABUSE, AD, INAPPROPRIATE, OTHER
+│   ├── ReportStatus.java              -- PENDING / BLINDED / DISMISSED
+│   ├── TargetType.java                -- BOARD / COMMENT / MEMBER
+│   └── ReportReason.java             -- SPAM / ABUSE / AD / INAPPROPRIATE / OTHER
 ├── service/
-│   ├── AdminReportService.java        # 인터페이스
+│   ├── AdminReportService.java
 │   └── impl/
 │       └── AdminReportServiceImpl.java
 ├── controller/
 │   └── AdminReportController.java
 ├── dto/
-│   └── ReportDetailDTO.java           # 상세 조회 DTO
+│   └── ReportDetailDTO.java
 ├── exception/
-│   └── AdminReportErrorCode.java      # REPORT_NOT_FOUND, ALREADY_PROCESSED, INVALID_REPORT_FILTER
+│   └── AdminReportErrorCode.java
 └── docs/
-    └── AdminReportControllerDocs.java # Swagger 인터페이스
+    └── AdminReportControllerDocs.java
 ```
 
 ---
 
-
-## 구현 진행 체크리스트
+## Phases
 
 - [ ] Phase 1: 엔티티 및 레포지토리
+  - `Report.java` 엔티티 — `@Enumerated(EnumType.STRING)` targetType, reason, reportStatus
+  - `ReportStatus`, `TargetType`, `ReportReason` Enum 작성
+  - `ReportRepository.java` — `JpaRepository<Report, Long>`
+  - `ReportQueryRepository.java` — Native Query 목록/요약 조회, `:param` 네임드 파라미터
+  - `ReportBoardRepository.java` — `@Modifying` boards.is_blind 업데이트
+  - `ReportCommentRepository.java` — `@Modifying` comments.is_blind 업데이트
+
 - [ ] Phase 2: 서비스 레이어
+  - `AdminReportService.java` 인터페이스 — getSummary / getReportList / getReportDetail / blindReport / dismissReport
+  - `getSummary()` — `@Transactional(readOnly = true)`
+  - `getReportList()` — `@Transactional(readOnly = true)`, page 1-based → 0-based 변환
+  - `getReportDetail()` — `@Transactional(readOnly = true)`, REPORT_NOT_FOUND(404)
+  - `blindReport()` — `@Transactional`, PENDING 검증 → ALREADY_PROCESSED(409), targetType별 분기 처리
+  - `dismissReport()` — `@Transactional`, PENDING 검증 → ALREADY_PROCESSED(409)
+  - `AdminReportErrorCode.java` — REPORT_NOT_FOUND(404), ALREADY_PROCESSED(409), INVALID_REPORT_FILTER(400)
+
 - [ ] Phase 3: 컨트롤러
+  - `AdminReportController.java` — 5개 엔드포인트 (`/api/v1/admin/reports/...`)
+  - `AdminReportControllerDocs.java` — Swagger `@Operation`, `@ApiResponse` 분리
+
 - [ ] Phase 4: 검증
-## Phase 1 — 엔티티 및 레포지토리
-
-### 작업 목록
-
-1. `Report.java` 엔티티 작성
-   - `@Entity @Table(name = "reports")`
-   - 필드: reportId, memberId, reporterId, targetType, targetId, reason, reportStatus, aiSuggestion, processedBy, processedAt, createdAt
-   - `@Enumerated(EnumType.STRING)` → targetType, reason, reportStatus
-
-2. Enum 타입 작성
-   - `ReportStatus`: PENDING, BLINDED, DISMISSED
-   - `TargetType`: BOARD, COMMENT, MEMBER
-   - `ReportReason`: SPAM, ABUSE, AD, INAPPROPRIATE, OTHER
-
-3. `ReportRepository.java` 작성
-   - `JpaRepository<Report, Long>` 상속
-
-4. `ReportQueryRepository.java` 작성 (Native Query 패턴)
-   - `EntityManager` 주입
-   - `getReportSummary()` → PENDING/BLINDED/DISMISSED 카운트 집계
-   - `getReportList(status, targetType, reason, keyword, page, size)` → 필터 조회
-   - `countReports(status, targetType, reason, keyword)` → 페이징 total 계산
-   - `:param` 네임드 파라미터 사용, 동적 조건 StringBuilder로 조립
-
-5. `ReportBoardRepository.java` 작성
-   - `@Modifying @Query("UPDATE boards SET is_blind = TRUE WHERE board_id = :boardId")`
-
-6. `ReportCommentRepository.java` 작성
-   - `@Modifying @Query("UPDATE comments SET is_blind = TRUE WHERE comment_id = :commentId")`
-
----
-
-## Phase 2 — 서비스 레이어
-
-### 작업 목록
-
-1. `AdminReportService.java` 인터페이스 작성
-   - `ReportSummaryResponse getSummary()`
-   - `PageResponse<ReportListItemResponse> getReportList(...)`
-   - `ReportDetailResponse getReportDetail(Long reportId)`
-   - `ReportActionResponse blindReport(Long reportId)`
-   - `ReportActionResponse dismissReport(Long reportId)`
-
-2. `AdminReportServiceImpl.java` 구현
-   - `getSummary()`: `@Transactional(readOnly = true)` — queryRepository 집계 호출
-   - `getReportList()`: `@Transactional(readOnly = true)` — page 1-based → 0-based 변환
-   - `getReportDetail()`: `@Transactional(readOnly = true)` — targetType에 따라 boards/comments 조인
-   - `blindReport()`:
-     - `@Transactional`
-     - PENDING 아니면 409 ALREADY_PROCESSED throw
-     - targetType == BOARD → reportBoardRepository.blindBoard(targetId)
-     - targetType == COMMENT → reportCommentRepository.blindComment(targetId)
-     - targetType == MEMBER → boards/comments 수정 없음
-     - report.reportStatus = BLINDED, processedAt = now()
-   - `dismissReport()`:
-     - `@Transactional`
-     - PENDING 아니면 409 ALREADY_PROCESSED throw
-     - report.reportStatus = DISMISSED, processedAt = now()
-
-3. `AdminReportErrorCode.java` 작성
-   - REPORT_NOT_FOUND (404)
-   - ALREADY_PROCESSED (409)
-   - INVALID_REPORT_FILTER (400)
-
----
-
-## Phase 3 — 컨트롤러
-
-### 작업 목록
-
-1. `AdminReportController.java` 작성
-   - `GET  /api/admin/reports/summary` → `getSummary()`
-   - `GET  /api/admin/reports` → `getReportList(status, targetType, reason, keyword, page, size)`
-   - `GET  /api/admin/reports/{reportId}` → `getReportDetail(reportId)`
-   - `PATCH /api/admin/reports/{reportId}/blind` → `blindReport(reportId)`
-   - `PATCH /api/admin/reports/{reportId}/dismiss` → `dismissReport(reportId)`
-
-2. `AdminReportControllerDocs.java` 인터페이스 작성
-   - Swagger @Operation, @ApiResponse 정의
-   - @SecurityRequirement(name = "bearerAuth")
-
----
-
-## Phase 4 — 검증
-
-### 체크리스트
-
-- [ ] PENDING이 아닌 신고에 blind/dismiss 요청 시 409 반환
-- [ ] BOARD 블라인드 처리 시 boards.is_blind = TRUE 변경 확인
-- [ ] COMMENT 블라인드 처리 시 comments.is_blind = TRUE 변경 확인
-- [ ] MEMBER 블라인드 처리 시 members 테이블 미변경 확인
-- [ ] 삭제된 콘텐츠 신고 상세 조회 시 contentTitle, contentBody null 반환
-- [ ] 잘못된 필터 Enum 값 입력 시 400 반환
-- [ ] 목록 기본 정렬 created_at DESC 확인
-- [ ] 처리 응답에 reportStatus, processedAt 포함 확인
-- [ ] 모든 응답 ApiResponse<T> 래퍼 확인
+  - PENDING 아닌 신고 처리 시 409 반환 확인
+  - BOARD 블라인드 처리 시 boards.is_blind 동일 트랜잭션 변경 확인
+  - MEMBER 블라인드 처리 시 members 테이블 미변경 확인
+  - 삭제된 콘텐츠 신고 상세 조회 시 null 반환 확인
+  - 모든 응답 ApiResponse<T> 래퍼 확인
