@@ -25,17 +25,17 @@ CareerWave 서비스의 매출 현황과 가입자 증가 추이를 집계하여
 
 **Scenario 1**: 정상 조회
 - Given 당월과 전월에 DONE 결제 건이 존재할 때
-- When GET /api/admin/statistics/summary 요청 시
+- When GET /api/v1/admin/statistics/summary 요청 시
 - Then 당월 매출, 전월 대비 증감률, 누적 매출, 총 가입자 수, 당월 신규 가입, 신규 가입 증감률을 반환한다
 
 **Scenario 2**: 전월 데이터 없음
 - Given 전월 매출이 0일 때
-- When GET /api/admin/statistics/summary 요청 시
+- When GET /api/v1/admin/statistics/summary 요청 시
 - Then 증감률은 0.0으로 반환한다 (0 나누기 방지)
 
 **Scenario 3**: 인증 실패
 - Given 유효하지 않은 토큰으로 요청 시
-- When GET /api/admin/statistics/summary 요청 시
+- When GET /api/v1/admin/statistics/summary 요청 시
 - Then 401 UNAUTHORIZED를 반환한다
 
 ---
@@ -48,12 +48,12 @@ CareerWave 서비스의 매출 현황과 가입자 증가 추이를 집계하여
 
 **Scenario 1**: 정상 조회
 - Given 최근 6개월 중 일부 월에만 결제 데이터가 존재할 때
-- When GET /api/admin/statistics/revenue/monthly 요청 시
+- When GET /api/v1/admin/statistics/revenue/monthly 요청 시
 - Then 데이터 없는 월은 total: 0으로 채워 6개월 전체를 오래된 순으로 반환한다
 
 **Scenario 2**: 전체 데이터 없음
 - Given 최근 6개월간 DONE 결제 건이 하나도 없을 때
-- When GET /api/admin/statistics/revenue/monthly 요청 시
+- When GET /api/v1/admin/statistics/revenue/monthly 요청 시
 - Then 6개월 전체를 total: 0으로 채워 반환한다
 
 ---
@@ -66,12 +66,12 @@ CareerWave 서비스의 매출 현황과 가입자 증가 추이를 집계하여
 
 **Scenario 1**: 정상 조회
 - Given 당월 MANUAL, AUTO_RENEWAL, 환불 데이터가 존재할 때
-- When GET /api/admin/statistics/revenue/breakdown 요청 시
+- When GET /api/v1/admin/statistics/revenue/breakdown 요청 시
 - Then PREMIUM, NEW_CONVERSION, RENEWAL, REFUND_DEDUCTION 순서로 반환하며 환불은 음수로 반환한다
 
 **Scenario 2**: 환불 데이터 없음
 - Given 당월 COMPLETED 환불 건이 없을 때
-- When GET /api/admin/statistics/revenue/breakdown 요청 시
+- When GET /api/v1/admin/statistics/revenue/breakdown 요청 시
 - Then REFUND_DEDUCTION amount는 0으로 반환한다
 
 ---
@@ -84,7 +84,7 @@ CareerWave 서비스의 매출 현황과 가입자 증가 추이를 집계하여
 
 **Scenario 1**: 정상 조회
 - Given 최근 6개월 구독 데이터가 존재할 때
-- When GET /api/admin/statistics/subscribers/monthly 요청 시
+- When GET /api/v1/admin/statistics/subscribers/monthly 요청 시
 - Then 월별 신규, 탈퇴 수를 오래된 순으로 반환하며 누락 월은 0으로 채운다
 
 ---
@@ -97,12 +97,12 @@ CareerWave 서비스의 매출 현황과 가입자 증가 추이를 집계하여
 
 **Scenario 1**: 정상 조회
 - Given 구독 데이터가 5건 이상 존재할 때
-- When GET /api/admin/statistics/subscribers/recent 요청 시
+- When GET /api/v1/admin/statistics/subscribers/recent 요청 시
 - Then 최신 순 상위 5건을 timeAgo 포맷과 함께 반환한다
 
 **Scenario 2**: 데이터 5건 미만
 - Given 구독 데이터가 3건만 존재할 때
-- When GET /api/admin/statistics/subscribers/recent 요청 시
+- When GET /api/v1/admin/statistics/subscribers/recent 요청 시
 - Then 존재하는 3건만 반환한다
 
 ---
