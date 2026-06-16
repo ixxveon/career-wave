@@ -475,7 +475,7 @@ rejectHrManager(memberId, RequestReject dto)
 - `company_profiles` 테이블은 `user` 도메인에서 관리하며, 이 도메인에서는 JOIN 조회만 수행한다. (`admin`↔`user` 직접 참조 금지 — Repository 레벨에서 Native Query 또는 별도 인터페이스로 처리)
 - `admins` 테이블의 PK는 BIGINT. `suspend_histories.admin_id`는 로그인한 관리자 ID를 사용한다.
 - `reportCount`는 별도 `reports` 테이블의 집계값이다. 상세 조회 시 subquery 또는 JOIN으로 제공한다.
-- 동적 필터링 쿼리는 QueryDSL 또는 JPA Specification으로 구현한다.
+- 동적 필터링 쿼리는 Native Query(EntityManager 직접 사용)로 구현한다.
 - 기업 회원 재직증명서 파일 정보(`certFileUrl`, `certFileName`)는 `documents` 테이블 연동 예정이며, v1에서는 저장된 URL 조회만 처리한다.
 
 ---
