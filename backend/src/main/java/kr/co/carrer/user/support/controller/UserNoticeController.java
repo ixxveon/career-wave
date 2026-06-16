@@ -1,5 +1,7 @@
 package kr.co.carrer.user.support.controller;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
@@ -10,8 +12,10 @@ import kr.co.carrer.user.support.service.UserNoticeService;
 import kr.co.carrer.user.support.type.NoticeCategory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Validated
 @RestController
 @RequestMapping("/api/v1/user/notices")
 @RequiredArgsConstructor
@@ -23,8 +27,8 @@ public class UserNoticeController implements UserNoticeControllerDocs {
     public ResponseEntity<ApiResponse<PaginationResponse<SupportDTO.NoticeList>>> getNotices(
         @RequestParam(required = false) String category,
         @RequestParam(required = false) String keyword,
-        @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "20") int size
+        @RequestParam(defaultValue = "1") @Min(1) int page,
+        @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         NoticeCategory cat = parseEnum(NoticeCategory.class, category);
         return ResponseEntity.ok(ApiResponse.ok(

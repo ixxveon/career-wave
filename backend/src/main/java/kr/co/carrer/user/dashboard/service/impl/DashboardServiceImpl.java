@@ -2,14 +2,21 @@ package kr.co.carrer.user.dashboard.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.dashboard.dto.DashboardDTO;
 import kr.co.carrer.user.dashboard.entity.PersonalProfile;
+import kr.co.carrer.user.dashboard.repository.DashboardBookmarkQueryRepository;
 import kr.co.carrer.user.dashboard.repository.PersonalProfileRepository;
 import kr.co.carrer.user.dashboard.service.DashboardService;
+import kr.co.carrer.user.jobnotice.entity.Bookmark;
+import kr.co.carrer.user.jobnotice.exception.JobNoticeErrorCode;
+import kr.co.carrer.user.jobnotice.repository.BookmarkRepository;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.ZoneId;
@@ -23,22 +30,15 @@ public class DashboardServiceImpl implements DashboardService {
 
     private final UserMemberRepository memberRepository;
     private final PersonalProfileRepository personalProfileRepository;
+    private final BookmarkRepository bookmarkRepository;
+    private final DashboardBookmarkQueryRepository dashboardBookmarkQueryRepository;
 
     @Override
     public DashboardDTO.ProfileResponse getProfile(UUID memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        return new DashboardDTO.ProfileResponse(
-                member.getMemberId(),
-                member.getLoginId(),
-                member.getEmail(),
-                member.getName(),
-                member.getPhone(),
-                member.getRoleType(),
-                member.getMemberStatus(),
-                member.getSubscriptionStatus(),
-                member.getCreatedAt().atZone(SERVICE_ZONE_ID));
+        return toProfileResponse(member);
     }
 
     @Override
@@ -70,6 +70,43 @@ public class DashboardServiceImpl implements DashboardService {
             personalProfile.updateGithubUrl(request.githubUrl());
             personalProfileRepository.save(personalProfile);
         }
+
+        return toProfileResponse(member);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginationResponse<DashboardDTO.BookmarkResponse> getBookmarks(
+            UUID memberId,
+            String keyword,
+            int page,
+            int size) {
+
+        int safePage = Math.max(page, 1);
+
+        Page<DashboardDTO.BookmarkResponse> result = dashboardBookmarkQueryRepository.findBookmarks(
+                memberId,
+                keyword,
+                safePage,
+                size);
+
+        return PaginationResponse.of(
+                result.getContent(),
+                safePage,
+                size,
+                result.getTotalElements());
+    }
+
+    @Override
+    @Transactional
+    public void deleteBookmark(UUID memberId, Long bookmarkId) {
+        Bookmark bookmark = bookmarkRepository.findByBookmarkIdAndMemberId(bookmarkId, memberId)
+                .orElseThrow(() -> new CustomException(JobNoticeErrorCode.BOOKMARK_NOT_FOUND));
+
+        bookmarkRepository.delete(bookmark);
+    }
+
+    private DashboardDTO.ProfileResponse toProfileResponse(Member member) {
         return new DashboardDTO.ProfileResponse(
                 member.getMemberId(),
                 member.getLoginId(),
