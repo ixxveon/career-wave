@@ -37,6 +37,13 @@ backend/src/main/java/kr/co/carrer/admin/report/
 
 ---
 
+
+## 구현 진행 체크리스트
+
+- [ ] Phase 1: 엔티티 및 레포지토리
+- [ ] Phase 2: 서비스 레이어
+- [ ] Phase 3: 컨트롤러
+- [ ] Phase 4: 검증
 ## Phase 1 — 엔티티 및 레포지토리
 
 ### 작업 목록
