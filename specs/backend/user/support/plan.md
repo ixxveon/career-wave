@@ -149,6 +149,14 @@ user/support에서 직접 참조할 수 없으므로 Native Query Repository 방
 
 ---
 
+
+## 구현 진행 체크리스트
+
+- [ ] Phase 1: DTO 정의 — `SupportDTO.java` inner class 6종
+- [ ] Phase 2: Service 구현 — UserNoticeService / UserFaqService / UserInquiryService
+- [ ] Phase 3: Controller & Swagger Docs
+- [ ] Phase 4: Security 설정 — 공지·FAQ `permitAll()`, 문의 `hasRole('USER')`
+- [ ] Phase 5: ErrorCode 등록 & 검증
 ## Phase 5 — 에러코드 등록 및 검증
 
 ### ErrorCode 목록
