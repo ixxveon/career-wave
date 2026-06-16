@@ -158,7 +158,7 @@
 - EC-004: target_type = MEMBER 블라인드 처리 시 members.member_status 변경 금지
 - EC-005: 잘못된 Enum 필터 값(status, targetType, reason) 입력 시 → 400 반환
 - EC-006: 존재하지 않는 reportId 조회 시 → 404 REPORT_NOT_FOUND
-- EC-007: 블라인드 처리 중 boards/comments 업데이트 실패 시 → 전체 트랜잭션 롤백
+- EC-007: 블라인드 처리 중 boards/comments 업데이트 실패 시 → 전체 트랜잭션 롤백 후 500 BLIND_PROCESSING_FAILED 반환
 
 ---
 
@@ -246,4 +246,5 @@ admin/report/
 | REPORT_NOT_FOUND | 404 | 신고 조회 실패 |
 | ALREADY_PROCESSED | 409 | PENDING 아닌 신고 처리 시도 |
 | INVALID_REPORT_FILTER | 400 | 잘못된 필터 Enum 값 |
+| BLIND_PROCESSING_FAILED | 500 | 블라인드 처리 중 boards/comments 업데이트 실패 |
 | UNAUTHORIZED | 401 | 인증 실패 |
