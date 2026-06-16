@@ -16,6 +16,7 @@ import kr.co.carrer.user.member.repository.UserMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.ZoneId;
@@ -74,13 +75,14 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PaginationResponse<DashboardDTO.BookmarkResponse> getBookmarks(
             UUID memberId,
             String keyword,
             int page,
             int size) {
-        Page<DashboardDTO.BookmarkResponse> result =
-                dashboardBookmarkQueryRepository.findBookmarks(memberId, keyword, page, size);
+        Page<DashboardDTO.BookmarkResponse> result = dashboardBookmarkQueryRepository.findBookmarks(memberId, keyword,
+                page, size);
 
         return PaginationResponse.of(
                 result.getContent(),
@@ -90,6 +92,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
+    @Transactional
     public void deleteBookmark(UUID memberId, Long bookmarkId) {
         Bookmark bookmark = bookmarkRepository.findByBookmarkIdAndMemberId(bookmarkId, memberId)
                 .orElseThrow(() -> new CustomException(JobNoticeErrorCode.BOOKMARK_NOT_FOUND));

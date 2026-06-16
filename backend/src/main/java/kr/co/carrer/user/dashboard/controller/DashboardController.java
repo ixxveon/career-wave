@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import java.util.UUID;
 
 @RestController
@@ -89,7 +88,7 @@ public class DashboardController implements DashboardControllerDocs {
                 dashboardService.deleteBookmark(memberId, bookmarkId);
 
                 return ResponseEntity.ok(
-                                ApiResponse.ok("스크랩 공고가 삭제되었습니다."));
+                                ApiResponse.ok(null));
         }
 
         private UUID getMemberId(AuthPrincipal principal) {
