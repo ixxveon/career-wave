@@ -23,14 +23,14 @@ public class InterviewCallbackController {
     @PostMapping("/{sessionId}/report")
     public ResponseEntity<ApiResponse<Void>> receiveReportCallback(
             @RequestHeader("X-Internal-Secret") String secret,
-            @PathVariable String sessionId,
+            @PathVariable UUID sessionId,
             @RequestBody InterviewDTO.RequestReportCallback dto
     ) {
         if (!internalSecret.equals(secret)) {
             return ResponseEntity.status(401).build();
         }
 
-        interviewCallbackService.processReportCallback(UUID.fromString(sessionId), dto);
+        interviewCallbackService.processReportCallback(sessionId, dto);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }
