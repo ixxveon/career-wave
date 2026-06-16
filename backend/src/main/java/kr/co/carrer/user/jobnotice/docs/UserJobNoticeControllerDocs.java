@@ -120,7 +120,7 @@ public interface UserJobNoticeControllerDocs {
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "JOB_NOTICE_NOT_FOUND or BOOKMARK_NOT_FOUND"
+                    description = "BOOKMARK_NOT_FOUND"
             )
     })
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<JobNoticeDTO.ResponseBookmark>> deleteBookmark(

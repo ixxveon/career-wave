@@ -417,8 +417,6 @@ class UserJobNoticeServiceImplTest {
             );
             Bookmark bookmark = Bookmark.of(memberId, 101L);
 
-            given(jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(101L, JobNoticeStatus.ACTIVE))
-                    .willReturn(Optional.of(jobNotice));
             given(bookmarkRepository.findByMemberIdAndJobNoticeId(memberId, 101L))
                     .willReturn(Optional.of(bookmark));
 
@@ -450,8 +448,6 @@ class UserJobNoticeServiceImplTest {
                     ZonedDateTime.of(2026, 6, 1, 0, 0, 0, 0, SERVICE_ZONE_ID)
             );
 
-            given(jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(101L, JobNoticeStatus.ACTIVE))
-                    .willReturn(Optional.of(jobNotice));
             given(bookmarkRepository.findByMemberIdAndJobNoticeId(memberId, 101L))
                     .willReturn(Optional.empty());
 
@@ -462,17 +458,17 @@ class UserJobNoticeServiceImplTest {
         }
 
         @Test
-        @DisplayName("비공개 또는 존재하지 않는 공고 북마크 해제 시 JOB_NOTICE_NOT_FOUND 예외")
-        void deleteBookmark_jobNoticeNotFoundThrows() {
+        @DisplayName("존재하지 않는 공고 ID로 북마크 해제 시 BOOKMARK_NOT_FOUND 예외")
+        void deleteBookmark_missingJobNoticeIdThrowsBookmarkNotFound() {
             UUID memberId = UUID.randomUUID();
 
-            given(jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(999L, JobNoticeStatus.ACTIVE))
+            given(bookmarkRepository.findByMemberIdAndJobNoticeId(memberId, 999L))
                     .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> userJobNoticeService.deleteBookmark(999L, memberId))
                     .isInstanceOf(CustomException.class)
                     .extracting(exception -> ((CustomException) exception).getErrorCode())
-                    .isEqualTo(JobNoticeErrorCode.JOB_NOTICE_NOT_FOUND);
+                    .isEqualTo(JobNoticeErrorCode.BOOKMARK_NOT_FOUND);
         }
     }
 
