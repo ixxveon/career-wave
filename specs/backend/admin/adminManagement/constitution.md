@@ -52,7 +52,7 @@ LOCKED
 - **Spring ↔ FastAPI**: 본 도메인은 FastAPI 비연동 도메인이다. Spring Boot가 FastAPI를 호출하지 않으며 FastAPI도 `adminManagement` 기능을 위해 Spring Boot를 호출하지 않는다.
 - **Spring ↔ DB**: Spring Boot만 `admins`, `ip_acl`, `audit_logs` 테이블에 대한 조회 및 변경 책임을 가진다. DB는 PK, UNIQUE, FK, CHECK 제약으로 최종 정합성을 보장한다.
 - **Spring ↔ 외부 시스템**: 관리자 프론트엔드는 Spring Boot가 제공하는 계약을 호출하는 외부 소비자다. 별도 보안 장비, 외부 ACL 시스템, FastAPI와의 직접 동기화는 본 도메인 범위에 포함하지 않는다.
-- **Spring ↔ Security**: 문서상 권한 `MASTER`, `BACKEND`, `CS`는 Spring Security에서 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`로 매핑되며, 인증은 JWT 기반으로 처리한다.
+- **Spring ↔ Security**: 관리자 API의 1차 접근 권한은 Spring Security `ROLE_ADMIN`으로 제한한다. 문서상 권한 `MASTER`, `BACKEND`, `CS`는 JWT `principal.adminRole` 값과 `@PreAuthorize` 조건으로 세분화하며, 인증은 JWT 기반으로 처리한다.
 
 ## 6. 금지 패턴
 
