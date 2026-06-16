@@ -60,14 +60,14 @@
 
 ## Phase 6 - Test
 
-- [ ] 관리자 KPI 요약, 관리자 목록, 관리자 생성, 권한 변경, 상태 변경, 삭제 테스트가 존재한다.
-- [ ] IP ACL 목록, 등록, 활성/비활성 변경, 삭제 테스트가 존재한다.
-- [ ] 관리자 목록 `keyword`, `role`, `status` 필터 테스트가 존재한다.
-- [ ] 관리자 이메일 중복, IP ACL 범위 중복, 미존재 `adminId`/`aclId` 예외 테스트가 존재한다.
-- [ ] 관리자 상태 중복 변경과 IP ACL 중복 상태 변경 예외 테스트가 존재한다.
-- [ ] 역할별 접근 제어 테스트가 존재한다.
-- [ ] `ApiResponse<T>`와 1-based 페이지네이션 응답 형식 테스트가 존재한다.
-- [ ] Audit Log 기록 검증 테스트가 존재한다.
+- [x] 관리자 KPI 요약, 관리자 목록, 관리자 생성, 권한 변경, 상태 변경, 삭제 테스트가 존재한다.
+- [x] IP ACL 목록, 등록, 활성/비활성 변경, 삭제 테스트가 존재한다.
+- [x] 관리자 목록 `keyword`, `role`, `status` 필터 테스트가 존재한다.
+- [x] 관리자 이메일 중복, IP ACL 범위 중복, 미존재 `adminId`/`aclId` 예외 테스트가 존재한다.
+- [x] 관리자 상태 중복 변경과 IP ACL 중복 상태 변경 예외 테스트가 존재한다.
+- [x] 역할별 접근 제어 테스트가 존재한다.
+- [x] `ApiResponse<T>`와 1-based 페이지네이션 응답 형식 테스트가 존재한다.
+- [x] Audit Log 기록 검증 테스트가 존재한다.
 
 ## 외부 연동 검증
 
@@ -81,7 +81,7 @@
 
 ## 머지 전 최종 확인
 
-- [ ] `spec.md`, `constitution.md`, `plan.md`, `tasks.md`의 요구사항과 실제 구현 범위가 충돌하지 않는다.
-- [ ] `constitution.md`의 불변 규칙(`email` 유일성, `ipRange` 유일성, Enum 범위, 중복 상태 변경 차단)이 구현과 테스트에 반영되어 있다.
-- [ ] Query Parameter와 ERD 컬럼 매핑, Enum 값, Role 정책, ErrorCode 정책이 문서와 구현 모두에서 일치한다.
-- [ ] `tasks.md`의 모든 작업 항목이 완료되었거나 미완료 사유가 PR에 정리되어 있다.
+- [x] `spec.md`, `constitution.md`, `plan.md`, `tasks.md`의 요구사항과 실제 구현 범위가 충돌하지 않는다.
+- [x] `constitution.md`의 불변 규칙(`email` 유일성, `ipRange` 유일성, Enum 범위, 중복 상태 변경 차단)이 구현과 테스트에 반영되어 있다.
+- [x] Query Parameter와 ERD 컬럼 매핑, Enum 값, Role 정책, ErrorCode 정책이 문서와 구현 모두에서 일치한다.
+- [x] `tasks.md`의 모든 작업 항목이 완료되었거나 미완료 사유가 PR에 정리되어 있다.
