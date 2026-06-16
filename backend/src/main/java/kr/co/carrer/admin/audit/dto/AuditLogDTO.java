@@ -2,7 +2,6 @@ package kr.co.carrer.admin.audit.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Size;
 import kr.co.carrer.admin.audit.type.AuditLogSeverity;
 import kr.co.carrer.admin.audit.type.AuditLogType;
 
@@ -28,7 +27,6 @@ public class AuditLogDTO {
         @Schema(description = "심각도", allowableValues = {"INFO", "WARN", "ERROR", "SUCCESS"})
         String severity,
 
-        @Size(max = 100)
         @Schema(description = "검색어", example = "UPDATE_ADMIN_ROLE")
         String keyword,
 
