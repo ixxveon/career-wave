@@ -249,3 +249,92 @@ gradlew.bat test
 2. 로그인 API 호출 → 응답의 `accessToken` 복사
 3. 우측 상단 **Authorize** 버튼 → `Bearer {accessToken}` 입력
 4. 인증 필요 API 테스트 가능
+
+---
+
+## Step 9. 면접 WebSocket (STOMP) 테스트
+
+> Phase 4 기능 검증용. Node.js 설치 필요.
+
+### 9-1. 환경변수 추가
+
+`backend/.env`에 아래 항목 추가:
+
+```env
+INTERVIEW_INTERNAL_SECRET=local-secret-test
+```
+
+> FastAPI 팀과 연동 시 동일한 값으로 맞춰야 함
+
+### 9-2. 서버 실행 (Windows)
+
+```powershell
+# backend/ 디렉토리에서
+Get-Content .env | ForEach-Object { if ($_ -match '^(.+?)=(.+)$') { [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2]) } }; ./gradlew bootRun --args='--spring.profiles.active=local --spring.jpa.hibernate.ddl-auto=none'
+```
+
+### 9-3. 로그인 및 세션 생성
+
+```bash
+# 1. 로그인 → accessToken 복사
+curl -X POST http://localhost:8080/api/v1/user/members/login \
+  -H "Content-Type: application/json" \
+  -d '{"loginId":"testuser01","password":"Test1234!","roleType":"USER"}'
+
+# 2. 면접 세션 생성 → sessionId 복사
+curl -X POST http://localhost:8080/api/v1/user/interview/sessions \
+  -H "Authorization: Bearer {accessToken}" \
+  -H "Content-Type: application/json" \
+  -d '{"documentId":"{본인 documentId}","sessionType":"TEXT","interviewType":"TECHNICAL"}'
+```
+
+> `documentId`는 DB `documents` 테이블에서 본인 memberId 기준으로 조회
+
+### 9-4. STOMP 연결 테스트 (터미널 1)
+
+프로젝트 루트에서:
+
+```bash
+node interview-stomp-test.js "{accessToken}" "{sessionId}"
+```
+
+**기대 결과:**
+```json
+{"type":"SYSTEM","content":"면접 세션이 시작되었습니다.","subType":"SESSION_START"}
+```
+
+### 9-5. FastAPI 콜백 테스트 (터미널 2)
+
+터미널 1을 켜둔 채로 새 터미널에서:
+
+```bash
+curl -X POST http://localhost:8080/internal/api/v1/interview/callback/{sessionId}/report \
+  -H "X-Internal-Secret: local-secret-test" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sessionId": null,
+    "totalScore": 80,
+    "feedbacks": [
+      {
+        "questionOrder": 1,
+        "questionText": "test question",
+        "answerText": "test answer",
+        "relevanceScore": 80,
+        "depthScore": 75,
+        "deliveryScore": null,
+        "fluencyScore": null,
+        "voiceQualityRatio": null,
+        "aiFeedback": "good"
+      }
+    ]
+  }'
+```
+
+**기대 결과:** 콜백 200 OK + 터미널 1에 아래 메시지 수신
+```json
+{"type":"SYSTEM","content":"리포트 생성이 완료되었습니다.","subType":"REPORT_READY","data":{"reportUrl":"..."}}
+```
+
+### 9-6. 멱등성 테스트
+
+9-5 curl 동일하게 한 번 더 실행 → 200 OK + `REPORT_READY` 재수신 확인
