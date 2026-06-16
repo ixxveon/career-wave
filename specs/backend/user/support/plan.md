@@ -81,7 +81,7 @@ user/support/
   - `UserInquiryRepository.java` — member_id 기준 본인 조회
 
 - [ ] Phase 3: 서비스 레이어
-  - `getNotices()` — `@Transactional(readOnly = true)`, page < 1 → BAD_REQUEST(400), size > 100 → clamp
+  - `getNotices()` — `@Transactional(readOnly = true)`, page < 1 → BAD_REQUEST(400), size > 100 → BAD_REQUEST(400)
   - `getNoticeDetail()` — `@Transactional`, is_visible=false → NOTICE_NOT_FOUND(404), view_count +1, prevNotice/nextNotice 조회
   - `getFaqs()` — `@Transactional(readOnly = true)`
   - `getMyInquiries()` — `@Transactional(readOnly = true)`, contentPreview 100자 truncate
