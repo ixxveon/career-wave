@@ -132,20 +132,23 @@ async def _run_analysis(request: AnalyzeDocumentRequest) -> None:
         logger.info(f"[{document_id}] Stub analysis completed — mock COMPLETED webhook sent")
     except Exception:
         logger.error(f"[{document_id}] Stub webhook delivery failed", exc_info=True)
-        await send_webhook(
-            document_id,
-            {
-                "status": "FAILED",
-                "progress": 0,
-                "scoreJobFitness": None,
-                "scoreTechStack": None,
-                "scoreQuantified": None,
-                "scoreLogical": None,
-                "scoreTotal": None,
-                "overallReview": None,
-                "feedbackText": None,
-                "errorMessage": "분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
-            },
-        )
+        try:
+            await send_webhook(
+                document_id,
+                {
+                    "status": "FAILED",
+                    "progress": 0,
+                    "scoreJobFitness": None,
+                    "scoreTechStack": None,
+                    "scoreQuantified": None,
+                    "scoreLogical": None,
+                    "scoreTotal": None,
+                    "overallReview": None,
+                    "feedbackText": None,
+                    "errorMessage": "분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+                },
+            )
+        except Exception:
+            logger.error(f"[{document_id}] FAILED webhook also failed — Spring Watchdog will handle", exc_info=True)
     finally:
         _processing.discard(document_id)
