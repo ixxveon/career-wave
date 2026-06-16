@@ -22,16 +22,16 @@
 
 ## Phase 2: 분석 트리거 라우터
 
-- [ ] `fastapi/user/resume/api/resume_router.py` — Pydantic 요청 모델 정의
+- [x] `fastapi/user/resume/api/resume_router.py` — Pydantic 요청 모델 정의
   - `AnalyzeResumeRequest` (RESUME용: `documentId`, `fileType`, `fileUrl`, `originalName`)
   - `AnalyzeCoverLetterRequest` (COVER_LETTER용: `documentId`, `fileType`, `company`, `job`, `content[]`)
   - 또는 Union 타입 단일 모델 + `fileType` discriminator
-- [ ] `POST /internal/user/resume/analyze` 엔드포인트 구현
+- [x] `POST /internal/user/resume/analyze` 엔드포인트 구현
   - `X-Internal-Secret` 검증 의존성 주입
   - `BackgroundTasks.add_task()`로 분석 서비스 비동기 실행
   - `202 Accepted` 즉시 반환
   - 동일 `documentId` 중복 요청 처리 (처리 중 판단 로직)
-- [ ] `fastapi/main.py`에 라우터 등록
+- [x] `fastapi/main.py`에 라우터 등록
   - `app.include_router(resume_router.router, prefix="/internal/user")`
   - 기존 주석 처리된 라우터 등록 패턴 참고
 
