@@ -49,7 +49,7 @@ def _resolve_extension(file_url: str, original_name: str | None) -> str:
 def _parse_s3_url(file_url: str) -> tuple[str, str]:
     """S3 URL에서 bucket과 key를 추출한다."""
     settings = get_settings()
-    bucket = settings.aws_s3_bucket_name
+    bucket = settings.aws_s3_bucket
     # presigned URL: https://{bucket}.s3.{region}.amazonaws.com/{key}?...
     # 또는 path-style:  https://s3.{region}.amazonaws.com/{bucket}/{key}?...
     url_without_qs = file_url.split("?")[0]
