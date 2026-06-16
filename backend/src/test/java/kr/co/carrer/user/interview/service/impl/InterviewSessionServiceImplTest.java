@@ -9,6 +9,7 @@ import kr.co.carrer.user.interview.exception.InterviewErrorCode;
 import kr.co.carrer.user.interview.repository.InterviewMessageRepository;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import kr.co.carrer.user.interview.type.InterviewType;
+import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -52,7 +53,7 @@ class InterviewSessionServiceImplTest {
             );
             InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, InterviewType.TECHNICAL, "카카오");
 
-            given(sessionRepository.findInProgressByMemberId(memberId)).willReturn(Optional.empty());
+            given(sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)).willReturn(Optional.empty());
             given(sessionRepository.save(any())).willReturn(session);
 
             InterviewDTO.ResponseStartSession result = interviewSessionService.startSession(memberId, dto);
@@ -71,7 +72,7 @@ class InterviewSessionServiceImplTest {
             );
             InterviewSession existing = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
 
-            given(sessionRepository.findInProgressByMemberId(memberId)).willReturn(Optional.of(existing));
+            given(sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)).willReturn(Optional.of(existing));
 
             assertThatThrownBy(() -> interviewSessionService.startSession(memberId, dto))
                     .isInstanceOf(CustomException.class)
