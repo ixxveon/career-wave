@@ -1,7 +1,9 @@
 package kr.co.carrer.user.interview.controller;
 
+import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
+import kr.co.carrer.user.interview.exception.InterviewErrorCode;
 import kr.co.carrer.user.interview.service.InterviewCallbackService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +29,7 @@ public class InterviewCallbackController {
             @RequestBody InterviewDTO.RequestReportCallback dto
     ) {
         if (!internalSecret.equals(secret)) {
-            return ResponseEntity.status(401).build();
+            throw new CustomException(InterviewErrorCode.INTERVIEW_CALLBACK_UNAUTHORIZED);
         }
 
         interviewCallbackService.processReportCallback(sessionId, dto);
