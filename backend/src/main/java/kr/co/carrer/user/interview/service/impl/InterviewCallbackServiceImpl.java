@@ -17,6 +17,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.UUID;
@@ -45,18 +47,23 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
     }
 
     @Override
+    @Transactional
     public void processReportCallback(UUID sessionId, InterviewDTO.RequestReportCallback dto) {
         String reportUrl = "/api/v1/user/interview/sessions/" + sessionId + "/report";
 
-        // 멱등성 체크 — 이미 저장된 피드백이 있으면 REPORT_READY만 재전송
         if (feedbackRepository.existsBySessionId(sessionId)) {
             log.info("Report callback already processed (idempotent): sessionId={}", sessionId);
-            sendReportReady(sessionId, reportUrl);
-            return;
+        } else {
+            saveReportData(sessionId, dto);
         }
 
-        saveReportData(sessionId, dto);
-        sendReportReady(sessionId, reportUrl);
+        // WebSocket 전송은 DB 커밋 이후에 실행 (외부 I/O를 트랜잭션 밖으로)
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                sendReportReady(sessionId, reportUrl);
+            }
+        });
     }
 
     private void sendReportReady(UUID sessionId, String reportUrl) {
@@ -68,8 +75,7 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
         log.info("REPORT_READY sent: sessionId={}", sessionId);
     }
 
-    @Transactional
-    protected void saveReportData(UUID sessionId, InterviewDTO.RequestReportCallback dto) {
+    private void saveReportData(UUID sessionId, InterviewDTO.RequestReportCallback dto) {
         InterviewSession session = sessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_NOT_FOUND));
 
