@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -22,11 +23,13 @@ public class InterviewSessionScheduler {
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void failTimedOutSessions() {
-        ZonedDateTime cutoff = ZonedDateTime.now().minusHours(24);
-        ZonedDateTime recentCutoff = ZonedDateTime.now().minusMinutes(5);
+        ZoneId kst = ZoneId.of("Asia/Seoul");
+        ZonedDateTime now = ZonedDateTime.now(kst);
+        ZonedDateTime cutoff = now.minusHours(24);
+        ZonedDateTime recentCutoff = now.minusMinutes(5);
 
         List<InterviewSession> timedOut = sessionRepository.findTimedOutSessions(cutoff, recentCutoff);
-        timedOut.forEach(InterviewSession::fail);
+        timedOut.forEach(session -> session.fail(now));
 
         if (!timedOut.isEmpty()) {
             log.info("Timed out sessions marked as FAILED: count={}", timedOut.size());
