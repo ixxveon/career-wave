@@ -18,8 +18,8 @@
 ### 권한 표기
 
 - 문서상 권한 표기는 `MASTER`, `BACKEND`, `CS`를 사용한다.
-- Spring Security에서는 `MASTER -> ROLE_MASTER`, `BACKEND -> ROLE_BACKEND`, `CS -> ROLE_CS`로 매핑한다.
-- 감사 로그 조회 API의 실제 접근 권한은 `MASTER`, `BACKEND`다.
+- Spring Security에서는 세부 역할 `MASTER`, `BACKEND`, `CS`를 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`로 매핑한다.
+- 감사 로그 조회 API의 실제 접근 조건은 관리자 인증(`ROLE_ADMIN`) + 세부 역할 `MASTER` 또는 `BACKEND`다.
 
 ### Pagination 규칙
 
@@ -104,7 +104,7 @@
 
 - **Method**: `GET`
 - **Path**: `/api/v1/admin/audit-logs/summary`
-- **Auth**: `MASTER`, `BACKEND`
+- **Auth**: `ROLE_ADMIN` + (`MASTER` or `BACKEND`)
 
 #### Query Parameter
 
@@ -152,7 +152,7 @@
 
 - **Method**: `GET`
 - **Path**: `/api/v1/admin/audit-logs`
-- **Auth**: `MASTER`, `BACKEND`
+- **Auth**: `ROLE_ADMIN` + (`MASTER` or `BACKEND`)
 
 #### Query Parameter
 
@@ -217,7 +217,7 @@
 
 - **Method**: `GET`
 - **Path**: `/api/v1/admin/audit-logs/{logId}`
-- **Auth**: `MASTER`, `BACKEND`
+- **Auth**: `ROLE_ADMIN` + (`MASTER` or `BACKEND`)
 
 #### Query Parameter
 
