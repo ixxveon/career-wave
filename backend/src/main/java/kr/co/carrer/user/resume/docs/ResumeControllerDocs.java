@@ -1,5 +1,6 @@
 package kr.co.carrer.user.resume.docs;
 
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
+
 
 @Tag(name = "Resume", description = "서류 분석 API")
 public interface ResumeControllerDocs {
@@ -105,6 +107,7 @@ public interface ResumeControllerDocs {
             )
     })
     ResponseEntity<ApiResponse<ResumeDTO.ResponseUpload>> uploadResume(
+            @Parameter(hidden = true) AuthPrincipal principal,
             @Parameter(hidden = true) MultipartFile file
     );
 
@@ -189,6 +192,7 @@ public interface ResumeControllerDocs {
             )
     })
     ResponseEntity<ApiResponse<ResumeDTO.ResponseCoverLetter>> submitCoverLetter(
+            @Parameter(hidden = true) AuthPrincipal principal,
             @Parameter(description = "자기소개서 제출 요청 body", required = true)
             @Valid ResumeDTO.RequestCoverLetter request
     );
@@ -208,6 +212,7 @@ public interface ResumeControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     ResponseEntity<ApiResponse<ResumeDTO.ResponseFeedback>> getFeedback(
+            @Parameter(hidden = true) AuthPrincipal principal,
             @Parameter(description = "문서 고유 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
             UUID documentId
     );
@@ -224,7 +229,24 @@ public interface ResumeControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistory(
+            @Parameter(hidden = true) AuthPrincipal principal,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @Min(0) int page,
             @Parameter(description = "페이지 크기 (최대 50)", example = "10") @Min(1) @Max(50) int size
+    );
+
+    @Operation(
+            summary = "분석 결과 Webhook 수신 (FastAPI 전용)",
+            description = "FastAPI에서 분석 완료 후 호출하는 내부 API입니다. X-Internal-Secret 헤더로 인증합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "처리 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Webhook 시크릿 불일치"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 documentId")
+    })
+    ResponseEntity<ApiResponse<Void>> receiveWebhook(
+            @Parameter(description = "내부 인증 시크릿 (환경 변수 WEBHOOK_SECRET)", required = true)
+            String webhookSecret,
+            @Parameter(description = "분석 결과 body", required = true)
+            ResumeDTO.RequestWebhook request
     );
 }

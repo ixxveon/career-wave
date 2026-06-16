@@ -24,7 +24,7 @@ Authorization: Bearer {accessToken}
 
 모든 API는 JWT 인증 + `ROLE_USER` 권한 필수. `memberId`는 `@AuthenticationPrincipal`로 추출.
 
-> **예외 — Webhook** (`POST /api/v1/user/resume/{documentId}/webhook`):  
+> **예외 — Webhook** (`POST /api/v1/user/resume/webhook`):  
 > FastAPI 내부 호출 전용으로, JWT/ROLE_USER 인증 대상에서 제외한다.  
 > 대신 `X-Internal-Secret` 헤더로 내부 보안을 검증한다.  
 > `SecurityConfig`에서 해당 경로를 `permitAll()` + IP 제한(또는 Secret 검증 필터)로 별도 처리한다.
@@ -102,13 +102,13 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 |-------|------|------|------|
 | `file` | `MultipartFile` | ✅ | PDF·DOC·DOCX, 최대 10MB |
 
-### Response `200 OK`
+### Response `201 Created`
 
 ```json
 {
   "success": true,
-  "statusCode": 200,
-  "message": "요청이 성공적으로 처리되었습니다.",
+  "statusCode": 201,
+  "message": "이력서가 업로드되었습니다.",
   "data": {
     "documentId": "550e8400-e29b-41d4-a716-446655440000",
     "status": "UPLOADED",
@@ -129,6 +129,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 |-----------|------|------|
 | `INVALID_FILE_SIZE` | 400 | 파일 크기 10MB 초과 |
 | `INVALID_FILE_TYPE` | 400 | PDF·DOC·DOCX 외 확장자 |
+| `S3_UPLOAD_FAILED` | 500 | S3 업로드 실패 (권한·네트워크·버킷 오류 등) |
 | `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
 
 ---
@@ -169,13 +170,13 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 > - `content[]` 배열 → `cover_letter_contents` 테이블 배열 길이만큼 행 삽입 (`saveAll()`)  
 > - `cover_letter_contents.order_num`은 동일 `document_id` 내 UNIQUE 제약 (`uq_clc_document_order`) — 프론트에서 중복 order 전송 시 DB 레벨에서 에러 발생
 
-### Response `200 OK`
+### Response `201 Created`
 
 ```json
 {
   "success": true,
-  "statusCode": 200,
-  "message": "요청이 성공적으로 처리되었습니다.",
+  "statusCode": 201,
+  "message": "자기소개서가 제출되었습니다.",
   "data": {
     "documentId": "550e8400-e29b-41d4-a716-446655440000",
     "status": "UPLOADED",
@@ -191,6 +192,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 |-----------|------|------|
 | `INVALID_CONTENT_COUNT` | 400 | 문항 수 범위(1~5) 위반 |
 | `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 |
+| `DUPLICATE_CONTENT_ORDER` | 400 | 동일 문서 내 문항 순서 중복 |
 | `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
 
 ---
@@ -304,6 +306,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
       {
         "documentId": "550e8400-e29b-41d4-a716-446655440000",
         "fileType": "RESUME",
+        "status": "COMPLETED",
         "originalName": "이력서_홍길동.pdf",
         "company": null,
         "job": null,
@@ -313,10 +316,11 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
       {
         "documentId": "660f9511-f30c-52e5-b827-557766551111",
         "fileType": "COVER_LETTER",
+        "status": "ANALYZING",
         "originalName": null,
         "company": "카카오",
         "job": "백엔드 개발자",
-        "totalScore": 76,
+        "totalScore": null,
         "createdAt": "2026-05-28T10:20:00Z"
       }
     ],
@@ -333,6 +337,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 | Field | Type | 설명 |
 |-------|------|------|
 | `content[].fileType` | `string` | `RESUME` \| `COVER_LETTER` |
+| `content[].status` | `string` | `UPLOADED` \| `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
 | `content[].originalName` | `string` \| `null` | 이력서: 파일명, 자기소개서: `null` |
 | `content[].company` | `string` \| `null` | 자기소개서: 지원 회사명, 이력서: `null` |
 | `content[].job` | `string` \| `null` | 자기소개서: 지원 직무명, 이력서: `null` |
@@ -348,7 +353,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 
 ## 5. 분석 완료 콜백 수신 (Webhook — FastAPI → Spring 내부 전용)
 
-- **Endpoint**: `POST /api/v1/user/resume/{documentId}/webhook`
+- **Endpoint**: `POST /api/v1/user/resume/webhook`
 - **호출 주체**: FastAPI (외부 클라이언트 호출 차단 — IP 제한 또는 내부 Secret 헤더 검증)
 - **Content-Type**: `application/json`
 
@@ -359,6 +364,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 
 ```json
 {
+  "documentId": "550e8400-e29b-41d4-a716-446655440000",
   "status": "COMPLETED",
   "scoreJobFitness": 78,
   "scoreTechStack": 85,
@@ -373,6 +379,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 
 | Field | Type | 설명 |
 |-------|------|------|
+| `documentId` | `string (UUID)` | 분석 완료된 문서 ID |
 | `status` | `string` | `COMPLETED` \| `FAILED` |
 | `scoreJobFitness` | `number` \| `null` | 직무 적합도 (0~100), `FAILED` 시 `null` |
 | `scoreTechStack` | `number` \| `null` | 기술 스택 (0~100), `FAILED` 시 `null` |
@@ -469,9 +476,13 @@ X-Internal-Secret: {WEBHOOK_SECRET 환경 변수 값}
 
 ```
 STOMP 핸드셰이크 엔드포인트 : /ws/user/resume
-구독 토픽                  : /topic/resume/{documentId}/status
-서버 → 클라이언트          : SimpMessagingTemplate.convertAndSend(...)
+구독 토픽 ①               : /topic/resume/{documentId}/status       ← 브로드캐스트 (진행 상태, 완료/실패)
+구독 토픽 ②               : /user/queue/resume/{documentId}/status  ← 개인 Snapshot (SUBSCRIBE 직후 1회)
 ```
+
+> 클라이언트는 **두 토픽을 모두 구독**해야 합니다.  
+> - ① `topic`은 Webhook 수신 시 서버가 브로드캐스트하는 ANALYZING/COMPLETED/FAILED 메시지를 수신합니다.  
+> - ② `user/queue`는 SUBSCRIBE 직후 서버가 해당 세션에만 1회 전송하는 현재 상태 Snapshot을 수신합니다. 재연결 시 UI 즉시 복원에 활용합니다.
 
 ### 인증
 
@@ -486,20 +497,22 @@ WS /ws/user/resume?token={accessToken}
 ### Connection Lifecycle
 
 ```
-클라이언트                               서버
-   │                                     │
-   │── STOMP CONNECT ────────────────────▶│  HandshakeInterceptor: ?token 검증 + memberId 세션 저장
-   │                                     │  ChannelInterceptor: CONNECT 프레임 재검증
-   │── STOMP SUBSCRIBE ──────────────────▶│  documentId 소유권 DB 재조회 (IDOR 방지)
-   │◀─ {"status":"ANALYZING", ...} ──────│  ← SUBSCRIBE 직후 현재 상태 Snapshot 1회 발행
-   │                                     │    (재연결 시 UI 즉시 복원)
-   │◀─ {"status":"ANALYZING", ...} ──────│  분석 진행 중 (Webhook 수신마다 발행)
-   │                                     │
-   │◀─ {"status":"COMPLETED", ...} ──────│  완료 메시지 전송
-   │   (또는 "FAILED")                   │  ↓ Grace Period 시작 (30초, TaskScheduler)
-   │                                     │
-   │── (클라이언트 정상 종료) ────────────▶│  클라이언트가 먼저 끊으면 즉시 세션 해제, 타이머 취소
-   │   또는 Grace Period 만료            │  30초 경과 시 서버에서 Close 1000으로 세션 정리
+클라이언트                                          서버
+   │                                                │
+   │── STOMP CONNECT ─────────────────────────────▶│  HandshakeInterceptor: ?token 검증 + memberId 세션 저장
+   │                                                │  ChannelInterceptor: CONNECT 프레임 재검증
+   │── STOMP SUBSCRIBE /topic/resume/{id}/status ──▶│  documentId 소유권 DB 재조회 (IDOR 방지)
+   │── STOMP SUBSCRIBE /user/queue/resume/{id}/status ▶│
+   │                                                │
+   │◀─ [user/queue] {"status":"ANALYZING"} ─────────│  ← SUBSCRIBE 직후 현재 상태 Snapshot 1회 (세션 전용)
+   │                                                │    (재연결 시 UI 즉시 복원)
+   │◀─ [topic] {"status":"ANALYZING"} ──────────────│  분석 진행 중 (Webhook 수신마다 브로드캐스트)
+   │                                                │
+   │◀─ [topic] {"status":"COMPLETED"} ──────────────│  완료 메시지 브로드캐스트
+   │   (또는 "FAILED")                              │  ↓ Grace Period 시작 (30초, TaskScheduler)
+   │                                                │
+   │── (클라이언트 정상 종료) ───────────────────────▶│  즉시 세션 해제, 타이머 취소
+   │   또는 Grace Period 만료                       │  30초 경과 시 서버에서 Close 1000으로 세션 정리
 ```
 
 **Grace Period 정책 (30초)**
@@ -570,12 +583,16 @@ WS /ws/user/resume?token={accessToken}
 |-----------|------|-----------|---------|
 | `INVALID_FILE_SIZE` | 400 | 파일 크기 10MB 초과 | § 1 업로드 |
 | `INVALID_FILE_TYPE` | 400 | PDF·DOC·DOCX 외 확장자 | § 1 업로드 |
+| `S3_UPLOAD_FAILED` | 500 | S3 업로드 실패 (권한·네트워크·버킷 오류) | § 1 업로드 |
 | `INVALID_CONTENT_COUNT` | 400 | 문항 수 범위(1~5) 위반 | § 2 자기소개서 |
 | `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 | § 2 자기소개서 |
-| `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId | § 3 피드백 조회 |
+| `DUPLICATE_CONTENT_ORDER` | 400 | 동일 문서 내 문항 순서 중복 | § 2 자기소개서 |
+| `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId | § 3 피드백 조회, § 5 Webhook |
 | `DOCUMENT_ACCESS_DENIED` | 403 | 본인 소유가 아닌 문서 접근 (IDOR) | § 3 피드백 조회, § 6 WebSocket |
 | `FEEDBACK_PARSE_ERROR` | 500 | feedback_text JSON 역직렬화 실패 | § 3 피드백 조회 |
-| `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 | 전체 API |
+| `WEBHOOK_SECRET_INVALID` | 403 | X-Internal-Secret 헤더 불일치 또는 누락 | § 5 Webhook |
+| `WEBHOOK_INVALID_STATUS` | 400 | COMPLETED·FAILED 외 알 수 없는 status 값 | § 5 Webhook |
+| `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 | 전체 API (§ 5 제외) |
 
 ---
 

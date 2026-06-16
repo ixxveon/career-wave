@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import type { LoginRequest } from '../../types/user/member';
 
+
 // ── 개발용 테스트 계정 ────────────────────────────────────────────
 // 개인 (구독 없음) : testuser01   / Test1234!
 // 개인 (면접만)    : testuser02   / Test1234!
@@ -87,20 +88,58 @@ export const memberHandlers = [
       );
     }
 
+    const sessionValue = `mock-refresh-token-${account.memberId}`;
+    return HttpResponse.json(
+      {
+        success: true,
+        statusCode: 200,
+        message: '로그인되었습니다.',
+        data: {
+          accessToken: `mock-access-token-${account.memberId}`,
+          member: {
+            ...account,
+            memberStatus: 'ACTIVE',
+            lastLoginAt: new Date().toISOString(),
+          },
+        },
+      },
+      {
+        headers: {
+          'Set-Cookie': `mock-session=${sessionValue}; Path=/; SameSite=Lax`,
+        },
+      },
+    );
+  }),
+
+  // 토큰 갱신 - 쿠키에 세션이 있을 때만 성공 (F5 새로고침 후에도 유지됨)
+  http.post('/api/v1/user/members/token/refresh', ({ cookies }) => {
+    const session = cookies['mock-session'];
+    const prefix = 'mock-refresh-token-';
+    if (!session || !session.startsWith(prefix)) {
+      return HttpResponse.json(
+        { success: false, statusCode: 401, message: '세션이 만료되었습니다.' },
+        { status: 401 },
+      );
+    }
+    const accessToken = `mock-access-token-${session.slice(prefix.length)}`;
     return HttpResponse.json({
       success: true,
       statusCode: 200,
-      message: '로그인되었습니다.',
-      data: {
-        accessToken: `mock-access-token-${account.memberId}`,
-        refreshToken: `mock-refresh-token-${account.memberId}`,
-        member: {
-          ...account,
-          memberStatus: 'ACTIVE',
-          lastLoginAt: new Date().toISOString(),
+      message: 'ok',
+      data: { accessToken, refreshToken: session },
+    });
+  }),
+
+  // 로그아웃 - 쿠키 삭제
+  http.post('/api/v1/user/members/logout', () => {
+    return HttpResponse.json(
+      { success: true, statusCode: 200, message: '로그아웃되었습니다.' },
+      {
+        headers: {
+          'Set-Cookie': 'mock-session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT',
         },
       },
-    });
+    );
   }),
 
   // 내 회원 상태 조회

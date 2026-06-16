@@ -12,6 +12,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -19,6 +20,8 @@ import java.time.ZonedDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class IpAcl {
+
+    private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,7 +37,7 @@ public class IpAcl {
     @Column(name = "is_enabled", nullable = false)
     private Boolean isEnabled;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", length = 200)
     private String description;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -54,7 +57,7 @@ public class IpAcl {
 
     @PrePersist
     protected void onCreate() {
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
         this.createdAt = now;
         this.updatedAt = now;
         if (this.isEnabled == null) {
@@ -64,7 +67,7 @@ public class IpAcl {
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = ZonedDateTime.now();
+        this.updatedAt = ZonedDateTime.now(SERVICE_ZONE_ID);
     }
 
     public void updateEnabled(boolean isEnabled) {
