@@ -14,13 +14,13 @@
 
 ## Phase 2 - Repository
 
-- [ ] `AiModelRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] 활성 운영 모델 조회 메서드를 추가한다.
-- [ ] `AiOpsSettingRepository.java` singleton 운영 설정 조회 인터페이스를 작성한다.
-- [ ] `RagDocumentRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] RAG 문서 목록 페이지네이션 조회 조건을 정리한다.
-- [ ] RAG 문서 상태별 조회 메서드를 추가한다.
-- [ ] Audit Log 기록 연동에 필요한 저장 인터페이스를 정리한다.
+- [x] `AiModelRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] 활성 운영 모델 조회 메서드를 추가한다.
+- [x] `AiOpsSettingRepository.java` singleton 운영 설정 조회 인터페이스를 작성한다.
+- [x] `RagDocumentRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] RAG 문서 목록 페이지네이션 조회 조건을 정리한다.
+- [x] RAG 문서 상태별 조회 메서드를 추가한다.
+- [x] Audit Log 기록 연동에 필요한 저장 인터페이스를 정리한다.
 
 ## Phase 3 - Service
 
