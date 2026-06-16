@@ -28,6 +28,14 @@ export const COMPANY_APPROVAL_STATUS = {
 
 export type CompanyApprovalStatus = (typeof COMPANY_APPROVAL_STATUS)[keyof typeof COMPANY_APPROVAL_STATUS];
 
+export const MEMBER_SUBSCRIPTION_STATUS = {
+  FREE: 'FREE',
+  PREMIUM: 'PREMIUM',
+} as const;
+
+export type MemberSubscriptionStatus =
+  (typeof MEMBER_SUBSCRIPTION_STATUS)[keyof typeof MEMBER_SUBSCRIPTION_STATUS];
+
 export const VERIFICATION_CHANNEL = {
   EMAIL: 'EMAIL',
   PHONE: 'PHONE',
@@ -83,6 +91,7 @@ export interface MemberSummary {
   name: string;
   roleType: MemberType;
   memberStatus: MemberStatus;
+  subscriptionStatus: MemberSubscriptionStatus;
   companyApprovalStatus: CompanyApprovalStatus;
   lastLoginAt: string | null;
 }
@@ -147,7 +156,7 @@ export interface UserRegisterResponse {
   memberStatus: MemberStatus;
 }
 
-export type SocialProviderId = 'kakao' | 'naver' | 'google' | 'apple';
+export type SocialProviderId = 'kakao' | 'naver' | 'google';
 
 export interface SocialRegisterTerms extends TermsAgreement {}
 

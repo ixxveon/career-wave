@@ -95,7 +95,9 @@ GET  /me/status
 - `company_profiles`에는 승인 상태 컬럼을 두지 않는다.
 - `companyApprovalStatus=NONE`은 DB 저장값이 아니라 API 응답 전용 가상값이다.
 - `roleType=USER`인 회원은 `hr_managers` row가 없으므로 `companyApprovalStatus=NONE`을 반환한다.
-- `roleType=COMPANY`인 회원은 `hr_managers.hr_status`를 `companyApprovalStatus`로 반환한다.
+- `roleType=COMPANY`인 회원은 기본적으로 `hr_managers.hr_status`를 `companyApprovalStatus`로 반환한다.
+- 단, `hr_managers.hr_status=REMOVED`는 승인 이후 HR 연결 제거를 의미하는 내부 상태값이므로 현재 public/user API 응답에서는 `companyApprovalStatus=NONE`으로 변환한다.
+- `REMOVED` 상태의 기업회원은 로그인 시 403으로 차단하며 access token/refresh token을 발급하지 않는다.
 - 개인회원 가입 성공 시 `personal_profiles` 빈 row를 생성한다.
 
 #### `social_accounts` Table
@@ -573,6 +575,7 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 - admin이 반려하면 `hr_managers.hr_status=REJECTED`로 변경하고 `reject_reason`을 저장한다.
 - admin이 보완 요청하면 `hr_managers.hr_status=NEEDS_REVISION`으로 변경하고 보완 사유를 저장한다.
 - 승인 이후 HR 담당자 연결이 제거되면 `hr_managers.hr_status=REMOVED`로 변경한다.
+- `REMOVED`는 내부 상태로 유지하되, 현재 user API 응답의 `companyApprovalStatus`에는 직접 노출하지 않고 `NONE`으로 변환한다.
 - 승인/반려 결과 이메일 발송은 admin 승인/반려 service의 책임이다.
 - `APPROVED`가 아닌 기업회원 로그인 요청은 403으로 실패하며 token을 발급하지 않는다.
 

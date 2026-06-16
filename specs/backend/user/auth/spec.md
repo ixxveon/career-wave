@@ -245,9 +245,11 @@ JWT 발급/재발급/로그아웃의 핵심 흐름은 기존 `specs/backend/auth
 > `company_profiles`에는 승인 상태 컬럼을 추가하지 않는다.
 > `companyApprovalStatus=NONE`은 DB에 저장하지 않는 API 응답 전용 가상값이다.
 > 개인회원(`roleType=USER`)은 `hr_managers` row가 없으므로 API 응답에서 항상 `companyApprovalStatus=NONE`을 반환한다.
-> 기업회원(`roleType=COMPANY`)은 `hr_managers.hr_status`를 `companyApprovalStatus`로 반환한다.
+> 기업회원(`roleType=COMPANY`)은 기본적으로 `hr_managers.hr_status`를 `companyApprovalStatus`로 반환한다.
 > 로그인은 `hrStatus=APPROVED`인 기업회원만 성공한다.
 > `REMOVED`는 승인 이후 HR 담당자 연결이 제거된 상태이며, 가입 신청 반려는 `REJECTED`로 저장한다.
+> `REMOVED`는 로그인 권한 판정에서는 차단 상태로 처리하며 access token / refresh token을 발급하지 않는다.
+> 현재 user API의 `companyApprovalStatus` enum에는 `REMOVED`를 노출하지 않으므로, 응답 변환 시 `REMOVED`는 `NONE`으로 매핑한다.
 
 ### MemberVerification
 

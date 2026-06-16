@@ -134,7 +134,7 @@ public class UserLoginServiceImpl implements UserLoginService {
     private CompanyApprovalStatus validateAccountStatus(Member member) {
         switch (member.getMemberStatus()) {
             case SUSPENDED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED);
-            case BANNED    -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
+            case BANNED, BLACKLISTED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
             case WITHDRAWN -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
             case LOCKED -> {
                 if (member.getLockedUntil() != null && Instant.now().isBefore(member.getLockedUntil())) {
@@ -150,7 +150,11 @@ public class UserLoginServiceImpl implements UserLoginService {
             default -> {}
         }
         if (member.getRoleType() == RoleType.COMPANY) {
-            CompanyApprovalStatus status = resolveCompanyApprovalStatus(member);
+            String rawHrStatus = statusQueryRepository.findCompanyHrStatus(member.getMemberId());
+            CompanyApprovalStatus status = mapCompanyApprovalStatus(rawHrStatus);
+            if ("REMOVED".equals(rawHrStatus)) {
+                throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_REJECTED);
+            }
             switch (status) {
                 case PENDING_REVIEW -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_PENDING_REVIEW);
                 case REJECTED       -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_REJECTED);
@@ -166,7 +170,21 @@ public class UserLoginServiceImpl implements UserLoginService {
         if (member.getRoleType() != RoleType.COMPANY) {
             return CompanyApprovalStatus.NONE;
         }
-        return statusQueryRepository.findCompanyApprovalStatus(member.getMemberId());
+        return mapCompanyApprovalStatus(statusQueryRepository.findCompanyHrStatus(member.getMemberId()));
+    }
+
+    private CompanyApprovalStatus mapCompanyApprovalStatus(String hrStatus) {
+        if (hrStatus == null) {
+            return CompanyApprovalStatus.NONE;
+        }
+        return switch (hrStatus) {
+            case "PENDING_REVIEW" -> CompanyApprovalStatus.PENDING_REVIEW;
+            case "APPROVED" -> CompanyApprovalStatus.APPROVED;
+            case "REJECTED" -> CompanyApprovalStatus.REJECTED;
+            case "NEEDS_REVISION" -> CompanyApprovalStatus.NEEDS_REVISION;
+            case "REMOVED" -> CompanyApprovalStatus.NONE;
+            default -> CompanyApprovalStatus.NONE;
+        };
     }
 
     @Transactional

@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { getLoginRouteDecision } from './useLogin';
-import { MEMBER_TYPE, MEMBER_STATUS, COMPANY_APPROVAL_STATUS, type LoginResponse } from '../../../types/user/member';
+import {
+  MEMBER_TYPE,
+  MEMBER_STATUS,
+  COMPANY_APPROVAL_STATUS,
+  MEMBER_SUBSCRIPTION_STATUS,
+  type LoginResponse,
+} from '../../../types/user/member';
 
 function makeResponse(overrides: Partial<LoginResponse['member']>): LoginResponse {
   return {
@@ -11,6 +17,7 @@ function makeResponse(overrides: Partial<LoginResponse['member']>): LoginRespons
       name: '홍길동',
       roleType: MEMBER_TYPE.USER,
       memberStatus: MEMBER_STATUS.ACTIVE,
+      subscriptionStatus: MEMBER_SUBSCRIPTION_STATUS.FREE,
       companyApprovalStatus: COMPANY_APPROVAL_STATUS.NONE,
       lastLoginAt: null,
       ...overrides,

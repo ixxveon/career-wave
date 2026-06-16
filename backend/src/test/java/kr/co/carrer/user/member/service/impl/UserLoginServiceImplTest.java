@@ -14,6 +14,7 @@ import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.MemberType;
 import kr.co.carrer.user.member.type.RoleType;
+import kr.co.carrer.user.member.type.CompanyApprovalStatus;
 import kr.co.carrer.user.member.type.SubscriptionStatus;
 import kr.co.carrer.user.member.dto.UserLoginDto;
 import kr.co.carrer.user.member.service.UserLoginService;
@@ -150,6 +151,17 @@ class UserLoginServiceImplTest {
     }
 
     @Test
+    void BLACKLISTED_계정_AUTH_ACCOUNT_BANNED() throws Exception {
+        Member member = createMember(RoleType.USER, MemberStatus.BLACKLISTED);
+        when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
+
+        assertThatThrownBy(() -> service.login(req, httpResponse))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
+    }
+
+    @Test
     void WITHDRAWN_계정_AUTH_ACCOUNT_WITHDRAWN() throws Exception {
         Member member = createMember(RoleType.USER, MemberStatus.WITHDRAWN);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
@@ -158,6 +170,38 @@ class UserLoginServiceImplTest {
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
+    }
+
+    @Test
+    void APPROVED_기업회원_로그인_성공() throws Exception {
+        Member member = createMember(RoleType.COMPANY, MemberStatus.ACTIVE);
+        when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
+        when(statusQueryRepository.findCompanyApprovalStatus(member.getMemberId()))
+                .thenReturn(CompanyApprovalStatus.APPROVED);
+        when(statusQueryRepository.findCompanyHrStatus(member.getMemberId()))
+                .thenReturn("APPROVED");
+
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.COMPANY);
+        UserLoginDto.Response result = service.login(req, httpResponse);
+
+        assertThat(result.getAccessToken()).isNotBlank();
+        assertThat(result.getMember().getCompanyApprovalStatus()).isEqualTo("APPROVED");
+    }
+
+    @Test
+    void PENDING_REVIEW_기업회원_AUTH_COMPANY_PENDING_REVIEW() throws Exception {
+        Member member = createMember(RoleType.COMPANY, MemberStatus.ACTIVE);
+        when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
+        when(statusQueryRepository.findCompanyApprovalStatus(member.getMemberId()))
+                .thenReturn(CompanyApprovalStatus.PENDING_REVIEW);
+        when(statusQueryRepository.findCompanyHrStatus(member.getMemberId()))
+                .thenReturn("PENDING_REVIEW");
+
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.COMPANY);
+
+        assertThatThrownBy(() -> service.login(req, httpResponse))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_COMPANY_PENDING_REVIEW);
     }
 
     @Test
