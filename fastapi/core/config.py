@@ -10,10 +10,23 @@ class Settings(BaseSettings):
     spring_base_url: str = "http://localhost:8080"
     webhook_secret: str = ""
 
-    # OpenAI
+    # JWT (Spring 공유 시크릿 — FastAPI WebSocket 토큰 검증용)
+    jwt_secret: str = ""
+
+    # OpenAI — 공용
     openai_api_key: str = ""
     openai_model_light: str = "gpt-4o-mini"
     openai_model_deep: str = "gpt-4o"
+
+    # OpenAI — 면접 전용
+    openai_model_interview: str = "gpt-4o"
+    openai_model_stt: str = "whisper-1"
+    openai_model_tts: str = "tts-1"
+    openai_tts_voice: str = "alloy"
+    openai_llm_timeout_seconds: int = 10
+
+    # 면접 파이프라인 임계값
+    voice_quality_threshold: float = 50.0
 
     # AWS S3
     aws_access_key_id: str = ""
