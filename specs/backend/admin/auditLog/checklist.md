@@ -14,21 +14,21 @@
 
 ## Phase 2 - Service
 
-- [ ] 감사 로그 요약 조회 서비스가 구현되어 있고 기간 조건을 올바르게 해석하는가
-- [ ] 감사 로그 목록 조회 서비스가 구현되어 있고 필터 조건을 올바르게 해석하는가
-- [ ] 감사 로그 상세 조회 서비스가 구현되어 있는가
-- [ ] `from`, `to`, `page`, `size`가 유효하지 않은 요청을 공통 요청 검증 실패 `400`으로 처리하는가
-- [ ] `from > to` 요청을 공통 요청 검증 실패 `400`으로 처리하는가
-- [ ] `keyword` 공백-only 입력을 필터 미적용으로 처리하는가
-- [ ] `keyword` 100자 초과 요청을 공통 요청 검증 실패 `400`으로 처리하는가
-- [ ] 유효하지 않은 `logType` 요청을 `INVALID_AUDIT_LOG_TYPE`으로 처리하는가
-- [ ] 유효하지 않은 `severity` 요청을 `INVALID_AUDIT_LOG_SEVERITY`로 처리하는가
-- [ ] 존재하지 않는 `logId` 요청을 `AUDIT_LOG_NOT_FOUND`로 처리하는가
-- [ ] 공통 `ErrorCode`와 도메인 `AuditLogErrorCode`가 분리되어 사용되는가
-- [ ] 조회 조건 검증, 페이지 번호 변환, 권한 분기가 Controller나 Repository가 아닌 Service 계층에 위치하는가
+- [x] 감사 로그 요약 조회 서비스가 구현되어 있고 기간 조건을 올바르게 해석하는가
+- [x] 감사 로그 목록 조회 서비스가 구현되어 있고 필터 조건을 올바르게 해석하는가
+- [x] 감사 로그 상세 조회 서비스가 구현되어 있는가
+- [x] `from > to` 요청을 공통 요청 검증 실패 `400`으로 처리하는가
+- [x] `keyword` 공백-only 입력을 필터 미적용으로 처리하는가
+- [x] 유효하지 않은 `logType` 요청을 `INVALID_AUDIT_LOG_TYPE`으로 처리하는가
+- [x] 유효하지 않은 `severity` 요청을 `INVALID_AUDIT_LOG_SEVERITY`로 처리하는가
+- [x] 존재하지 않는 `logId` 요청을 `AUDIT_LOG_NOT_FOUND`로 처리하는가    
+- [x] 공통 `ErrorCode`와 도메인 `AuditLogErrorCode`가 분리되어 사용되는가
+- [x] 조회 조건 검증, 페이지 번호 변환, 권한 분기가 Controller나 Repository가 아닌 Service 계층에 위치하는가
 
 ## Phase 3 - API
 
+- [ ] `from`, `to`, `page`, `size`가 유효하지 않은 요청을 공통 요청 검증 실패 `400`으로 처리하는가
+- [ ] `keyword` 100자 초과 요청은 `KEYWORD_TOO_LONG` 요청 검증 실패 `400`으로 처리되는가
 - [ ] `GET /api/v1/admin/audit-logs/summary`가 구현되어 있고 `MASTER`, `BACKEND` 권한으로만 접근 가능한가
 - [ ] `GET /api/v1/admin/audit-logs`가 구현되어 있고 감사 로그 목록을 페이지네이션으로 반환하는가
 - [ ] `GET /api/v1/admin/audit-logs/{logId}`가 구현되어 있고 `MASTER`, `BACKEND` 권한으로만 접근 가능한가
@@ -60,9 +60,9 @@
 ## 코드 일관성
 
 - [ ] `ApiResponse<T>` 래퍼를 사용하지 않는 감사 로그 endpoint가 없는가
-- [ ] `CustomException` + `ErrorCode` 패턴을 사용하고 `RuntimeException`을 직접 던지지 않는가
-- [ ] 비즈니스 로직은 Service Layer에만 존재하고 Controller는 요청 바인딩과 응답 반환만 담당하는가
-- [ ] Repository가 권한 정책, 응답 조립, ErrorCode 매핑 책임까지 가지지 않는가
+- [x] `CustomException` + `ErrorCode` 패턴을 사용하고 `RuntimeException`을 직접 던지지 않는가
+- [x] 비즈니스 로직은 Service Layer에만 존재하고 Controller는 요청 바인딩과 응답 반환만 담당하는가
+- [x] Repository가 권한 정책, 응답 조립, ErrorCode 매핑 책임까지 가지지 않는가
 - [ ] Entity를 API 응답으로 직접 노출하지 않는가
 
 ## 머지 전 최종 확인
