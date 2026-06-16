@@ -26,6 +26,9 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
 
+interview:
+  internal-secret: ${INTERVIEW_INTERNAL_SECRET}
+
 jwt:
   user:
     secret: ${JWT_USER_SECRET}

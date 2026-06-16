@@ -87,12 +87,16 @@
 user/interview/
 ├── controller/
 │   ├── InterviewSessionController.java
+│   ├── InterviewCallbackController.java
 │   ├── InterviewReportController.java
 │   └── InterviewHistoryController.java
 ├── service/
 │   ├── InterviewSessionService.java
+│   ├── InterviewCallbackService.java
 │   ├── InterviewReportService.java
 │   └── InterviewHistoryService.java
+├── scheduler/
+│   └── InterviewSessionScheduler.java       ← 24시간 타임아웃 배치
 ├── repository/
 │   ├── InterviewSessionRepository.java
 │   ├── InterviewMessageRepository.java
@@ -111,11 +115,17 @@ user/interview/
 │   └── MessageType.java
 ├── dto/
 │   └── InterviewDTO.java
+├── websocket/
+│   ├── InterviewHandshakeInterceptor.java   ← JWT 핸드셰이크 검증
+│   ├── InterviewStompChannelInterceptor.java ← SUBSCRIBE 소유권 검증 + 스냅샷 전송
+│   └── WebSocketMessage.java                ← STOMP 메시지 구조체
 └── docs/
     ├── InterviewSessionControllerDocs.java
     ├── InterviewReportControllerDocs.java
     └── InterviewHistoryControllerDocs.java
 ```
+
+> **WebSocket 설정**: `global/config/WebSocketConfig.java`에 resume STOMP 설정과 함께 통합. 별도 `InterviewWebSocketConfig`는 없다.
 
 ---
 
@@ -304,22 +314,33 @@ GET /api/v1/user/interview/history?page=0&size=10
 
 ---
 
-## WebSocket 채널 (Spring 담당)
+## WebSocket 채널 (Spring 담당, STOMP)
 
-### 연결
+> resume 도메인과 동일하게 STOMP 프로토콜을 사용한다. `WebSocketConfig`의 단일 STOMP 브로커에 통합되어 있다.
+
+### 연결 엔드포인트
 ```
-WS /ws/user/interview/{sessionId}/chat?token={accessToken}
+WS /ws/user/interview?token={accessToken}
 ```
-- 연결 시 `sessionId` 소유권 + 토큰 검증
-- 검증 실패 시 Close 1008
+- 핸드셰이크 시 `?token=` 쿼리 파라미터로 JWT 검증 → `memberId`를 세션 attributes에 저장
+- 검증 실패 시 연결 거부
+
+### 구독 경로
+```
+SUBSCRIBE /topic/interview/{sessionId}
+```
+- SUBSCRIBE 시 `sessionId` 소유권 검증 (IDOR 방지)
+- 소유권 불일치 시 `MessageDeliveryException` 발생 → 연결 종료
+- 구독 직후 현재 상태 스냅샷 1회 전송
+  - 리포트 완성 여부에 따라 `REPORT_READY` 또는 `SESSION_START` 메시지 전송
 
 ### Server → Client 메시지
 
 ```json
-{ "type": "SYSTEM",   "content": "면접이 시작되었습니다.",           "questionOrder": null, "subType": "SESSION_START",  "data": null,                                                               "errorCode": null }
-{ "type": "QUESTION", "content": "지원 동기를 말씀해 주세요.",       "questionOrder": 1,    "subType": null,             "data": null,                                                               "errorCode": null }
-{ "type": "SYSTEM",   "content": "리포트 생성이 완료되었습니다.",     "questionOrder": null, "subType": "REPORT_READY",   "data": { "reportUrl": "/api/v1/user/interview/sessions/{sessionId}/report" }, "errorCode": null }
-{ "type": "ERROR",    "content": "세션 처리 중 오류가 발생했습니다.", "questionOrder": null, "subType": null,             "data": null,                                                               "errorCode": "INTERVIEW_AI_PIPELINE_ERROR" }
+{ "type": "SYSTEM",   "content": "면접 세션이 시작되었습니다.",       "questionOrder": null, "subType": "SESSION_START",  "data": null,                                                               "errorCode": null }
+{ "type": "QUESTION", "content": "지원 동기를 말씀해 주세요.",         "questionOrder": 1,    "subType": null,             "data": null,                                                               "errorCode": null }
+{ "type": "SYSTEM",   "content": "리포트 생성이 완료되었습니다.",       "questionOrder": null, "subType": "REPORT_READY",   "data": { "reportUrl": "/api/v1/user/interview/sessions/{sessionId}/report" }, "errorCode": null }
+{ "type": "ERROR",    "content": "세션 처리 중 오류가 발생했습니다.",   "questionOrder": null, "subType": null,             "data": null,                                                               "errorCode": "INTERVIEW_AI_PIPELINE_ERROR" }
 ```
 
 ---
@@ -343,6 +364,7 @@ WS /ws/user/interview/{sessionId}/chat?token={accessToken}
 
 - 세션 생성 후 **24시간** 동안 `endSession` 요청이 없으면 서버 스케줄러가 해당 세션을 강제로 `FAILED` 처리한다.
 - 배치 주기: 1시간 단위 (`@Scheduled` cron)
+- 시간 기준: 모든 `ZonedDateTime.now()` 호출은 **KST (`Asia/Seoul`)** 기준으로 고정한다. JVM 기본 timezone 사용 금지.
 - 쿼리 조건: `started_at < NOW() - INTERVAL '24 hours'` **AND** `session_status = 'IN_PROGRESS'` **AND** `updated_at < NOW() - INTERVAL '5 minutes'`
   - `updated_at` 조건은 방금 답변을 제출한 세션이 배치 실행 타이밍과 겹쳐 의도치 않게 `FAILED` 처리되는 상황을 방지하는 유예 조건이다.
 - `FAILED` 전이 후 FastAPI 파이프라인 세션 별도 정리 요청은 하지 않는다. FastAPI가 자체 TTL로 만료 처리하며, Spring은 FAILED 마킹 + 처리 건수 `log.info` 기록만 담당한다.
@@ -395,14 +417,22 @@ POST /internal/api/v1/interview/callback/{sessionId}/report
 ### Spring 처리 순서 (멱등성 보장)
 
 1. `AIInterviewFeedbackRepository.existsBySessionId(sessionId)` 확인
-   - **이미 존재하면**: 중복 콜백으로 판단하고 `200 OK`를 반환한 뒤 이하 로직을 건너뛴다
-   - **존재하지 않으면**: 아래 순서 진행
+   - **이미 존재하면**: 중복 콜백으로 판단하고 `200 OK`를 반환한 뒤 이하 DB 로직을 건너뛴다
+   - **존재하지 않으면**: 아래 순서 진행 (단일 `@Transactional` 경계 안에서 원자적으로 처리)
 2. `ai_interview_feedbacks` 저장
 3. `interview_sessions.total_score` 업데이트
 4. `career_histories` INSERT
-5. WebSocket `REPORT_READY` 메시지 전송
+5. **DB 커밋 완료 후** WebSocket `REPORT_READY` 메시지 전송 (`TransactionSynchronization.afterCommit()` 활용)
+   - WebSocket 전송(외부 I/O)은 트랜잭션 범위 밖에서 수행한다
 
-> FastAPI가 네트워크 오류로 콜백을 2회 이상 호출할 수 있다. 멱등성 체크 없이 구현하면 피드백 데이터 중복 및 리포트 오염이 발생한다.
+> FastAPI가 네트워크 오류로 콜백을 2회 이상 호출할 수 있다. 멱등성 체크 외에도 `(session_id, question_order)` DB 유니크 제약이 최종 중복 방어선 역할을 한다.
+
+### DB 유니크 제약
+
+| 테이블 | 제약 |
+|--------|------|
+| `ai_interview_feedbacks` | `(session_id, question_order)` 복합 유니크 |
+| `career_histories` | `session_id` 유니크 |
 
 ---
 

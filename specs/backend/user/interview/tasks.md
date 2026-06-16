@@ -184,44 +184,44 @@
 
 ---
 
-## Phase 6 — WebSocket 구현
+## Phase 6 — WebSocket 구현 (STOMP)
 
-> **REPORT_READY 유실 방지**: 클라이언트 재연결 시 해당 세션의 `career_histories` 레코드 존재 여부를 DB에서 확인하여
-> 이미 완료 상태라면 `REPORT_READY` 메시지를 즉시 재전송한다.
+> resume 도메인과 동일하게 STOMP 프로토콜 사용. `global/config/WebSocketConfig.java`에 통합.
+> **REPORT_READY 유실 방지**: 구독(`SUBSCRIBE`) 시점에 피드백 존재 여부를 DB로 확인하여
+> 이미 완료 상태라면 `REPORT_READY`, 진행 중이면 `SESSION_START`를 스냅샷으로 즉시 전송한다.
 
-- [ ] Spring WebSocket 핸들러 구현
-  - [ ] 엔드포인트: `WS /ws/user/interview/{sessionId}/chat?token={accessToken}`
-  - [ ] 연결 시 토큰 검증 — 실패 시 Close 1008
-  - [ ] 연결 시 `sessionId` 소유권 검증 — 실패 시 Close 1008
-- [ ] 메시지 전송 구현
-  - [ ] `SYSTEM(SESSION_START)` — 세션 시작 안내
-  - [ ] `QUESTION` — AI 질문 전달 (FastAPI 콜백 수신 후 릴레이)
-  - [ ] `SYSTEM(REPORT_READY)` — 리포트 생성 완료 알림
-  - [ ] `ERROR` — 처리 오류 발생 시 클라이언트에 전송
-- [ ] FastAPI 콜백 처리 실패 시 재시도 로직
-  - [ ] `career_histories` INSERT 실패 시 최소 1회 재시도 + 실패 로그 기록
-  - [ ] `REPORT_READY` WebSocket 전송 실패 시 최소 1회 재시도 + 실패 로그 기록
+- [x] STOMP 엔드포인트 등록 — `WebSocketConfig`에 `/ws/user/interview` 추가
+- [x] `InterviewHandshakeInterceptor` — `?token=` JWT 검증 → `memberId`를 세션 attributes에 저장
+- [x] `InterviewStompChannelInterceptor` — STOMP 프레임 인터셉터
+  - [x] `CONNECT`: `memberId` 존재 여부 재검증
+  - [x] `SUBSCRIBE /topic/interview/{sessionId}`: sessionId 소유권 검증 (IDOR 방지)
+  - [x] 구독 완료 후 스냅샷 전송 (`SessionSubscribeEvent` 기반) — `REPORT_READY` 또는 `SESSION_START`
+- [x] 메시지 전송 (`SimpMessagingTemplate`)
+  - [x] `SESSION_START` — 세션 시작 안내
+  - [x] `REPORT_READY` — 리포트 생성 완료 알림 (`data.reportUrl` 포함)
+  - [x] `ERROR` — 처리 오류 발생 시 클라이언트에 전송
 
 ---
 
 ## Phase 6-1 — 세션 타임아웃 스케줄러
 
-- [ ] `InterviewSessionScheduler.java` 구현
-  - [ ] `@Scheduled(cron = "0 0 * * * *")` — 1시간 주기 실행
-  - [ ] 조회 조건: `started_at < NOW() - 24h` AND `session_status = 'IN_PROGRESS'` AND `updated_at < NOW() - 5min`
-  - [ ] 해당 세션 일괄 `FAILED` 전이
-  - [ ] 처리 건수 `log.info` 기록
+- [x] `InterviewSessionScheduler.java` 구현
+  - [x] `@Scheduled(cron = "0 0 * * * *")` — 1시간 주기 실행
+  - [x] 조회 조건: `started_at < NOW() - 24h` AND `session_status = 'IN_PROGRESS'` AND `updated_at < NOW() - 5min`
+  - [x] 해당 세션 일괄 `FAILED` 전이
+  - [x] 처리 건수 `log.info` 기록
+  - [x] `ZonedDateTime.now(ZoneId.of("Asia/Seoul"))` — KST 고정 (JVM 기본 timezone 사용 금지)
 
 ## Phase 6-2 — FastAPI 콜백 수신 Controller
 
-- [ ] `InterviewCallbackController.java` — `POST /internal/api/v1/interview/callback/{sessionId}/report`
-  - [ ] `X-Internal-Secret` 헤더 검증 — 불일치 시 401 반환 (값은 환경 변수로 관리)
-  - [ ] `AIInterviewFeedbackRepository.existsBySessionId(sessionId)` 멱등성 체크 — 이미 존재하면 200 즉시 반환
-  - [ ] `ai_interview_feedbacks` 저장
-  - [ ] `interview_sessions.total_score` 업데이트
-  - [ ] `career_histories` INSERT
-  - [ ] WebSocket `REPORT_READY` 전송 (`data.reportUrl` 포함)
-  - [ ] 실패 시 최소 1회 재시도 + `log.error` 기록
+- [x] `InterviewCallbackController.java` — `POST /internal/api/v1/interview/callback/{sessionId}/report`
+  - [x] `X-Internal-Secret` 헤더 검증 — 불일치 시 401 반환 (값은 `${INTERVIEW_INTERNAL_SECRET}` 환경변수)
+  - [x] `AIInterviewFeedbackRepository.existsBySessionId(sessionId)` 멱등성 체크 — 이미 존재하면 REPORT_READY 재전송 후 200 반환
+  - [x] `processReportCallback`에 `@Transactional` 적용 — DB 저장 전체를 단일 트랜잭션으로 보장 (self-invocation 방지)
+  - [x] `ai_interview_feedbacks` 저장 + `(session_id, question_order)` 복합 유니크 제약
+  - [x] `interview_sessions.total_score` 업데이트
+  - [x] `career_histories` INSERT + `session_id` 유니크 제약
+  - [x] WebSocket `REPORT_READY` 전송 — `TransactionSynchronization.afterCommit()` 사용, 트랜잭션 외부 I/O 원칙 준수
 
 ---
 

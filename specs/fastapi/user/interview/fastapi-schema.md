@@ -267,7 +267,7 @@ POST /internal/api/v1/interview/callback/{sessionId}/report
 #### 인증 헤더
 
 ```
-X-Internal-Secret: {WEBHOOK_SECRET 환경 변수 값}
+X-Internal-Secret: {INTERVIEW_INTERNAL_SECRET 환경 변수 값}
 ```
 
 #### Request Body
@@ -494,7 +494,7 @@ v1은 서버 메모리에 세션별 미전달 메시지 목록을 보관한다 (
 ```env
 # Spring 연동
 SPRING_BASE_URL=http://localhost:8080
-WEBHOOK_SECRET=                        # X-Internal-Secret 헤더 값 (필수)
+INTERVIEW_INTERNAL_SECRET=             # X-Internal-Secret 헤더 값 (필수, Spring과 동일한 값으로 맞춰야 함)
 
 # OpenAI
 OPENAI_API_KEY=
