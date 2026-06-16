@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { UserRound } from 'lucide-react';
+import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
 
 interface RecoveryLoginIdFieldProps {
   value: string;
@@ -21,7 +22,8 @@ function RecoveryLoginIdField({ value, error, onChange }: RecoveryLoginIdFieldPr
           type="text"
           placeholder="아이디를 입력하세요"
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => { onChange(event.target.value); applyInputFill(event.target); }}
+          onBlur={(event) => clearInputFill(event.target)}
         />
       </span>
       {error && (

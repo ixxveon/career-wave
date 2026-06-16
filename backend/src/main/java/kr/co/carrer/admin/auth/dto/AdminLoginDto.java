@@ -28,6 +28,8 @@ public class AdminLoginDto {
         }
     }
 
+    public record TokenRefreshResponse(String accessToken) {}
+
     @Getter
     public static class AdminInfo {
         private final Long id;

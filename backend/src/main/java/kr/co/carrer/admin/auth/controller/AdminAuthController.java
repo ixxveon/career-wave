@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/admin/auth")
@@ -27,29 +26,47 @@ public class AdminAuthController implements AdminAuthControllerDocs {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AdminLoginDto.Response>> login(
             @Valid @RequestBody AdminLoginDto.Request request,
+            HttpServletRequest httpRequest,
             HttpServletResponse response) {
-        return ResponseEntity.ok(ApiResponse.ok("로그인되었습니다.", adminLoginService.login(request, response)));
+        String clientIp = extractClientIp(httpRequest);
+        return ResponseEntity.ok(ApiResponse.ok("로그인되었습니다.", adminLoginService.login(request, response, clientIp)));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<Map<String, String>>> refresh(
+    public ResponseEntity<ApiResponse<AdminLoginDto.TokenRefreshResponse>> refresh(
             HttpServletRequest request,
             HttpServletResponse response) {
         String refreshToken = extractRefreshTokenCookie(request);
         if (refreshToken == null) throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         String newAccessToken = adminLoginService.refresh(refreshToken, response);
-        return ResponseEntity.ok(ApiResponse.ok("토큰이 갱신되었습니다.", Map.of("accessToken", newAccessToken)));
+        return ResponseEntity.ok(ApiResponse.ok("토큰이 갱신되었습니다.", new AdminLoginDto.TokenRefreshResponse(newAccessToken)));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request,
+                                                     HttpServletResponse response) {
         String refreshToken = extractRefreshTokenCookie(request);
         String accessToken = extractBearerToken(request);
         adminLoginService.logout(
                 refreshToken != null ? refreshToken : "",
                 accessToken  != null ? accessToken  : ""
         );
+        clearRefreshTokenCookie(response);
         return ResponseEntity.ok(ApiResponse.ok("로그아웃 되었습니다."));
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            String ip = forwarded.split(",")[0].trim();
+            if (!ip.isBlank()) return ip;
+        }
+        return request.getRemoteAddr();
+    }
+
+    private void clearRefreshTokenCookie(HttpServletResponse response) {
+        response.addHeader("Set-Cookie",
+                "refreshToken=; Path=/api/v1/admin/auth; Max-Age=0; HttpOnly; Secure; SameSite=Strict");
     }
 
     private String extractRefreshTokenCookie(HttpServletRequest request) {

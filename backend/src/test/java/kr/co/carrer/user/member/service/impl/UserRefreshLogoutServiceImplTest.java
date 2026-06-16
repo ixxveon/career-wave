@@ -1,6 +1,6 @@
 package kr.co.carrer.user.member.service.impl;
 
-import jakarta.persistence.EntityManager;
+import kr.co.carrer.user.member.repository.UserMemberStatusQueryRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.jwt.AccountType;
@@ -39,7 +39,7 @@ class UserRefreshLogoutServiceImplTest {
     @Mock HttpServletResponse httpResponse;
     @Mock RefreshTokenStore refreshTokenStore;
     @Mock TokenBlacklistStore tokenBlacklistStore;
-    @Mock EntityManager entityManager;
+    @Mock UserMemberStatusQueryRepository statusQueryRepository;
 
     private UserLoginService service;
     private JwtTokenProvider provider;
@@ -57,7 +57,8 @@ class UserRefreshLogoutServiceImplTest {
         props.getAdmin().setRefreshExpiration(86400000L);
         provider = new JwtTokenProvider(props);
         service = new UserLoginServiceImpl(memberRepository, encoder, provider, props,
-                refreshTokenStore, tokenBlacklistStore, entityManager);
+                refreshTokenStore, tokenBlacklistStore,
+                mock(kr.co.carrer.auth.store.LoginAttemptStore.class), statusQueryRepository);
     }
 
     private Member createActiveMember() throws Exception {

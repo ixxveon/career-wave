@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import kr.co.carrer.user.resume.type.DocumentStatus;
+import kr.co.carrer.user.resume.type.FileType;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -150,6 +152,31 @@ public class ResumeDTO {
         }
     }
 
+    // Webhook 수신 요청 (FastAPI → Spring)
+    @Schema(description = "FastAPI 분석 완료 웹훅 요청")
+    public record RequestWebhook(
+            @Schema(description = "문서 고유 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+            @NotNull UUID documentId,
+            @Schema(description = "분석 결과 상태 (COMPLETED 또는 FAILED)", example = "COMPLETED")
+            @NotBlank String status,
+            @Schema(description = "직무 적합도 점수 (FAILED 시 null)", example = "85")
+            Integer scoreJobFitness,
+            @Schema(description = "기술 스택 점수 (FAILED 시 null)", example = "90")
+            Integer scoreTechStack,
+            @Schema(description = "경험 수치화 점수 (FAILED 시 null)", example = "75")
+            Integer scoreQuantified,
+            @Schema(description = "논리력 점수 (FAILED 시 null)", example = "80")
+            Integer scoreLogical,
+            @Schema(description = "종합 점수 (FAILED 시 null)", example = "82")
+            Integer scoreTotal,
+            @Schema(description = "AI 종합 총평 (FAILED 시 null)", example = "전반적으로 역량이 우수합니다.")
+            String overallReview,
+            @Schema(description = "항목별 첨삭 JSON 문자열 (FAILED 시 null)")
+            String feedbackText,
+            @Schema(description = "분석 실패 메시지 (COMPLETED 시 null)", example = "AI 분석 중 오류 발생")
+            String errorMessage
+    ) {}
+
     // 이력 목록 조회 응답 (단건)
     @Schema(description = "이력 목록 단건")
     public record HistoryItem(
@@ -169,5 +196,11 @@ public class ResumeDTO {
             Integer scoreTotal,
             @Schema(description = "생성 일시", example = "2026-06-10T12:00:00+09:00")
             ZonedDateTime createdAt
-    ) {}
+    ) {
+        // JPQL SELECT new 생성자용 — Enum → String 변환
+        public HistoryItem(UUID documentId, FileType fileType, DocumentStatus status, String originalName,
+                           String company, String job, Integer scoreTotal, ZonedDateTime createdAt) {
+            this(documentId, fileType.name(), status.name(), originalName, company, job, scoreTotal, createdAt);
+        }
+    }
 }

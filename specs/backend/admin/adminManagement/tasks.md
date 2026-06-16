@@ -5,56 +5,56 @@
 
 ## Phase 1 - Entity
 
-- [ ] `AdminRole.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `AdminStatus.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `Admin.java` 엔티티를 `admins` ERD 컬럼 기준으로 작성한다.
-- [ ] `IpAcl.java` 엔티티를 `ip_acl` ERD 컬럼 기준으로 작성한다.
-- [ ] `AuditLog.java` 엔티티를 `audit_logs` ERD 컬럼 기준으로 작성한다.
+- [x] `AdminRole.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `AdminStatus.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `Admin.java` 엔티티를 `admins` ERD 컬럼 기준으로 작성한다.
+- [x] `IpAcl.java` 엔티티를 `ip_acl` ERD 컬럼 기준으로 작성한다.
+- [x] `AuditLog.java` 엔티티를 `audit_logs` ERD 컬럼 기준으로 작성한다.
 
 ## Phase 2 - Repository
 
-- [ ] `AdminRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] 관리자 이메일 중복 확인 조회 메서드를 추가한다.
-- [ ] 관리자 목록 `keyword` 필터 조회 조건을 구현한다.
-- [ ] 관리자 목록 `role` 필터 조회 조건을 구현한다.
-- [ ] 관리자 목록 `status` 필터 조회 조건을 구현한다.
-- [ ] 관리자 목록 페이지네이션 조회 조건을 정리한다.
-- [ ] `IpAclRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] IP ACL 중복 범위 확인 조회 메서드를 추가한다.
-- [ ] IP ACL 목록 페이지네이션 조회 조건을 정리한다.
-- [ ] `AuditLogRepository.java` 감사 로그 저장 인터페이스를 작성한다.
+- [x] `AdminRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] 관리자 이메일 중복 확인 조회 메서드를 추가한다.
+- [x] 관리자 목록 `keyword` 필터 조회 조건을 구현한다.
+- [x] 관리자 목록 `role` 필터 조회 조건을 구현한다.
+- [x] 관리자 목록 `status` 필터 조회 조건을 구현한다.
+- [x] 관리자 목록 페이지네이션 조회 조건을 정리한다.
+- [x] `IpAclRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] IP ACL 중복 범위 확인 조회 메서드를 추가한다.
+- [x] IP ACL 목록 페이지네이션 조회 조건을 정리한다.
+- [x] `AuditLogRepository.java` 감사 로그 저장 인터페이스를 작성한다.
 
 ## Phase 3 - Service
 
-- [ ] `AdminManagementService.java` 인터페이스를 작성한다.
-- [ ] 관리자 KPI 요약 조회 서비스 로직을 구현한다.
-- [ ] 관리자 계정 목록 조회 서비스 로직을 구현한다.
-- [ ] 관리자 계정 생성 서비스 로직을 구현한다.
-- [ ] 관리자 권한 변경 서비스 로직을 구현한다.
-- [ ] 관리자 상태 변경 서비스 로직을 구현한다.
-- [ ] 관리자 계정 삭제 서비스 로직을 구현한다.
-- [ ] IP ACL 목록 조회 서비스 로직을 구현한다.
-- [ ] IP ACL 등록 서비스 로직을 구현한다.
-- [ ] IP ACL 활성/비활성 변경 서비스 로직을 구현한다.
-- [ ] IP ACL 삭제 서비스 로직을 구현한다.
-- [ ] 감사 추적용 AuditLog 기록 연계 로직을 구현한다.
-- [ ] `AdminManagementErrorCode.java` 도메인 오류 코드를 작성한다.
+- [x] `AdminManagementService.java` 인터페이스를 작성한다.
+- [x] 관리자 KPI 요약 조회 서비스 로직을 구현한다.
+- [x] 관리자 계정 목록 조회 서비스 로직을 구현한다.
+- [x] 관리자 계정 생성 서비스 로직을 구현한다.
+- [x] 관리자 권한 변경 서비스 로직을 구현한다.
+- [x] 관리자 상태 변경 서비스 로직을 구현한다.
+- [x] 관리자 계정 삭제 서비스 로직을 구현한다.
+- [x] IP ACL 목록 조회 서비스 로직을 구현한다.
+- [x] IP ACL 등록 서비스 로직을 구현한다.
+- [x] IP ACL 활성/비활성 변경 서비스 로직을 구현한다.
+- [x] IP ACL 삭제 서비스 로직을 구현한다.
+- [x] 감사 추적용 AuditLog 기록 연계 로직을 구현한다.
+- [x] `AdminManagementErrorCode.java` 도메인 오류 코드를 작성한다.
 
 ## Phase 4 - API
 
-- [ ] `AdminManagementDTO.java`를 작성한다.
-- [ ] `AdminAclDTO.java`를 작성한다.
-- [ ] `GET /api/v1/admin/admins/summary` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/admins` Controller endpoint를 작성한다.
-- [ ] `POST /api/v1/admin/admins` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/admins/{adminId}/role` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/admins/{adminId}/status` Controller endpoint를 작성한다.
-- [ ] `DELETE /api/v1/admin/admins/{adminId}` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
-- [ ] `POST /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/admin-acls/{aclId}/enabled` Controller endpoint를 작성한다.
-- [ ] `DELETE /api/v1/admin/admin-acls/{aclId}` Controller endpoint를 작성한다.
-- [ ] `MASTER`, `BACKEND` 역할 정책과 JWT 인증 진입 조건을 API 계층에 반영한다.
+- [x] `AdminManagementDTO.java`를 작성한다.
+- [x] `AdminAclDTO.java`를 작성한다.
+- [x] `GET /api/v1/admin/admins/summary` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/admins` Controller endpoint를 작성한다.
+- [x] `POST /api/v1/admin/admins` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/admins/{adminId}/role` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/admins/{adminId}/status` Controller endpoint를 작성한다.
+- [x] `DELETE /api/v1/admin/admins/{adminId}` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
+- [x] `POST /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/admin-acls/{aclId}/enabled` Controller endpoint를 작성한다.
+- [x] `DELETE /api/v1/admin/admin-acls/{aclId}` Controller endpoint를 작성한다.
+- [x] `MASTER`, `BACKEND` 역할 정책과 JWT 인증 진입 조건을 API 계층에 반영한다.
 
 ## Phase 5 - Documentation
 

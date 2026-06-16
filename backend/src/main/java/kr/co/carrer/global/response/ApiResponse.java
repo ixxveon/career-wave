@@ -7,7 +7,10 @@ import lombok.Getter;
 public class ApiResponse<T> {
 
     private final boolean success;
-    private final int statusCode;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private final Integer statusCode;
+
     private final String message;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -15,7 +18,7 @@ public class ApiResponse<T> {
 
     private final T data;
 
-    private ApiResponse(boolean success, int statusCode, String message, String code, T data) {
+    private ApiResponse(boolean success, Integer statusCode, String message, String code, T data) {
         this.success = success;
         this.statusCode = statusCode;
         this.message = message;
@@ -24,15 +27,15 @@ public class ApiResponse<T> {
     }
 
     public static <T> ApiResponse<T> ok(T data) {
-        return new ApiResponse<>(true, 200, "요청이 성공적으로 처리되었습니다.", null, data);
+        return new ApiResponse<>(true, null, "요청이 성공적으로 처리되었습니다.", null, data);
     }
 
     public static <T> ApiResponse<T> ok(String message, T data) {
-        return new ApiResponse<>(true, 200, message, null, data);
+        return new ApiResponse<>(true, null, message, null, data);
     }
 
     public static ApiResponse<Void> ok(String message) {
-        return new ApiResponse<>(true, 200, message, null, null);
+        return new ApiResponse<>(true, null, message, null, null);
     }
 
     public static ApiResponse<Object> fail(int statusCode, String message) {

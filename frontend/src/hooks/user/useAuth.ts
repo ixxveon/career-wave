@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { authSession, AUTH_CHANGE_EVENT } from '../../utils/user/member/authSession';
 import { probeAuth } from '../../api/user/member/memberApiClient';
+import { memberAuthApi } from '../../api/user/member/authApi';
 
 function getIsLoggedIn() {
   return authSession.getAccessToken() !== null;
@@ -35,7 +36,8 @@ export function useAuth() {
   }, [isChecking]);
 
   function logout() {
-    authSession.clear();
+    memberAuthApi.logout(); // 백엔드 logout API 호출 (refresh token 폐기) + authSession.clear()
+    authSession.clear();    // 즉시 UI 상태 업데이트
     setIsChecking(false);
   }
 

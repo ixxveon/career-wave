@@ -5,49 +5,49 @@
 
 ## Phase 1 - Entity
 
-- [ ] `Admin`, `IpAcl`, `AuditLog` 엔티티 필드가 ERD 컬럼명, null 허용 여부, PK/UNIQUE/FK/CHECK 제약과 일치한다.
-- [ ] `AdminRole`, `AdminStatus` Enum 값이 DB CHECK 제약조건(`MASTER`, `CS`, `BACKEND` / `ACTIVE`, `LOCKED`)과 일치한다.
-- [ ] JPA Enum 매핑이 `EnumType.STRING`으로 적용되어 있다.
+- [x] `Admin`, `IpAcl`, `AuditLog` 엔티티 필드가 ERD 컬럼명, null 허용 여부, PK/UNIQUE 제약과 일치한다.
+- [x] `AdminRole`, `AdminStatus` Enum 값이 DB CHECK 제약조건(`MASTER`, `CS`, `BACKEND` / `ACTIVE`, `LOCKED`)과 일치한다.
+- [x] JPA Enum 매핑이 `EnumType.STRING`으로 적용되어 있다.
 
 ## Phase 2 - Repository
 
-- [ ] `AdminRepository`가 관리자 이메일 중복 확인과 관리자 목록 조회에 필요한 메서드를 제공한다.
-- [ ] `IpAclRepository`가 IP ACL 범위 중복 확인과 ACL 목록 조회에 필요한 메서드를 제공한다.
-- [ ] `AuditLogRepository`가 감사 로그 기록 저장에 필요한 메서드를 제공한다.
-- [ ] `GET /api/v1/admin/admins` Query Parameter가 `admins.email`, `admins.name`, `admins.admin_role`, `admins.status` 매핑과 일치한다.
-- [ ] 관리자 목록 `keyword` 필터가 `admins.email`, `admins.name` 기준으로 동작한다.
-- [ ] 관리자 목록 `role` 필터가 `admins.admin_role` 기준으로 동작한다.
-- [ ] 관리자 목록 `status` 필터가 `admins.status` 기준으로 동작한다.
-- [ ] `GET /api/v1/admin/admin-acls`의 페이지네이션 조회가 `page`, `size` 1-based 외부 계약과 일치한다.
+- [x] `AdminRepository`가 관리자 이메일 중복 확인과 관리자 목록 조회에 필요한 메서드를 제공한다.
+- [x] `IpAclRepository`가 IP ACL 범위 중복 확인과 ACL 목록 조회에 필요한 메서드를 제공한다.
+- [x] `AuditLogRepository`가 감사 로그 기록 저장에 필요한 메서드를 제공한다.
+- [x] `GET /api/v1/admin/admins` Query Parameter가 `admins.email`, `admins.name`, `admins.admin_role`, `admins.status` 매핑과 일치한다.
+- [x] 관리자 목록 `keyword` 필터가 `admins.email`, `admins.name` 기준으로 동작한다.
+- [x] 관리자 목록 `role` 필터가 `admins.admin_role` 기준으로 동작한다.
+- [x] 관리자 목록 `status` 필터가 `admins.status` 기준으로 동작한다.
 
 ## Phase 3 - Service
 
-- [ ] 비즈니스 로직이 Controller나 Repository가 아니라 Service Layer에 위치한다.
-- [ ] Service가 인터페이스와 `impl` 구현체로 분리되어 있다.
-- [ ] 관리자 이메일 중복 검증이 Service Layer에서 수행된다.
-- [ ] IP ACL 범위 중복 검증이 Service Layer에서 수행된다.
-- [ ] 관리자 상태 중복 변경(`ACTIVE`, `LOCKED`)이 Service Layer에서 차단된다.
-- [ ] IP ACL 활성 상태 중복 변경(`isEnabled`)이 Service Layer에서 차단된다.
-- [ ] 관리자 계정과 IP ACL의 주요 변경 작업 시 Audit Log 기록 로직이 Service Layer에서 수행된다.
-- [ ] 비즈니스 예외가 `CustomException(ErrorCode)` 또는 도메인 ErrorCode 매핑 방식으로 처리된다.
-- [ ] `AdminManagementErrorCode`가 `global.exception.ErrorCode`와 분리되어 있다.
+- [x] 비즈니스 로직이 Controller나 Repository가 아니라 Service Layer에 위치한다.
+- [x] Service가 인터페이스와 `impl` 구현체로 분리되어 있다.
+- [x] 관리자 이메일 중복 검증이 Service Layer에서 수행된다.
+- [x] IP ACL 범위 중복 검증이 Service Layer에서 수행된다.
+- [x] 관리자 상태 중복 변경(`ACTIVE`, `LOCKED`)이 Service Layer에서 차단된다.
+- [x] IP ACL 활성 상태 중복 변경(`isEnabled`)이 Service Layer에서 차단된다.
+- [x] `GET /api/v1/admin/admin-acls`의 페이지네이션 조회가 `page`, `size` 1-based 외부 계약과 일치한다.
+- [x] 관리자 계정과 IP ACL의 주요 변경 작업 시 Audit Log 기록 로직이 Service Layer에서 수행된다.
+- [x] 비즈니스 예외가 `CustomException(ErrorCode)` 또는 도메인 ErrorCode 매핑 방식으로 처리된다.
+- [x] `AdminManagementErrorCode`가 `global.exception.ErrorCode`와 분리되어 있다.
 
 ## Phase 4 - API
 
-- [ ] `GET /api/v1/admin/admins/summary`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `GET /api/v1/admin/admins`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `POST /api/v1/admin/admins`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `PATCH /api/v1/admin/admins/{adminId}/role`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `PATCH /api/v1/admin/admins/{adminId}/status`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `DELETE /api/v1/admin/admins/{adminId}`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `GET /api/v1/admin/admin-acls`가 `MASTER`, `BACKEND` 권한 정책과 일치하게 동작한다.
-- [ ] `POST /api/v1/admin/admin-acls`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `PATCH /api/v1/admin/admin-acls/{aclId}/enabled`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] `DELETE /api/v1/admin/admin-acls/{aclId}`가 `MASTER` 권한 정책과 일치하게 동작한다.
-- [ ] 모든 성공 응답이 `ApiResponse<T>` 래퍼 형식을 사용한다.
-- [ ] 모든 성공 응답이 `success`, `message`, `data` 필드만 사용하고 성공 응답에 `statusCode`를 포함하지 않는다.
-- [ ] 목록 조회 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 사용한다.
-- [ ] 관리자 계정/ACL 생성, 수정, 삭제 API에 `page`, `size` Query Parameter가 노출되지 않는다.
+- [x] `GET /api/v1/admin/admins/summary`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `GET /api/v1/admin/admins`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `POST /api/v1/admin/admins`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `PATCH /api/v1/admin/admins/{adminId}/role`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `PATCH /api/v1/admin/admins/{adminId}/status`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `DELETE /api/v1/admin/admins/{adminId}`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `GET /api/v1/admin/admin-acls`가 `MASTER`, `BACKEND` 권한 정책과 일치하게 동작한다.
+- [x] `POST /api/v1/admin/admin-acls`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `PATCH /api/v1/admin/admin-acls/{aclId}/enabled`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] `DELETE /api/v1/admin/admin-acls/{aclId}`가 `MASTER` 권한 정책과 일치하게 동작한다.
+- [x] 모든 성공 응답이 `ApiResponse<T>` 래퍼 형식을 사용한다.
+- [x] 모든 성공 응답이 팀 `ApiResponse<T>` 규격(`success`, `statusCode`, `message`, `data`)과 일치한다.
+- [x] 목록 조회 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 사용한다.
+- [x] 관리자 계정/ACL 생성, 수정, 삭제 API에 `page`, `size` Query Parameter가 노출되지 않는다.
 
 ## Phase 5 - Documentation
 
@@ -69,17 +69,15 @@
 - [ ] `ApiResponse<T>`와 1-based 페이지네이션 응답 형식 테스트가 존재한다.
 - [ ] Audit Log 기록 검증 테스트가 존재한다.
 
-## FastAPI / 외부 연동 검증
+## 외부 연동 검증
 
-- [ ] `adminManagement` 구현에 Spring ↔ FastAPI 호출 코드가 없다.
-- [ ] FastAPI가 본 도메인 기능을 위해 DB에 직접 접근하지 않도록 설계되어 있다.
-- [ ] 외부 보안 장비나 별도 ACL 시스템과의 직접 동기화 코드가 본 도메인 구현에 포함되지 않는다.
+- [x] 외부 보안 장비나 별도 ACL 시스템과의 직접 동기화 코드가 본 도메인 구현에 포함되지 않는다.
 
 ## 코드 품질
 
-- [ ] Entity를 API 응답으로 직접 반환하지 않는다.
-- [ ] `new RuntimeException(...)` 직접 생성 없이 공통/도메인 ErrorCode 기반 예외 처리만 사용한다.
-- [ ] Repository에서 벌크 업데이트나 직접 상태 변경으로 `Admin.status`, `Admin.adminRole`, `IpAcl.isEnabled`를 우회 수정하지 않는다.
+- [x] Entity를 API 응답으로 직접 반환하지 않는다.
+- [x] `new RuntimeException(...)` 직접 생성 없이 공통/도메인 ErrorCode 기반 예외 처리만 사용한다.
+- [x] Repository에서 벌크 업데이트나 직접 상태 변경으로 `Admin.status`, `Admin.adminRole`, `IpAcl.isEnabled`를 우회 수정하지 않는다.
 
 ## 머지 전 최종 확인
 
