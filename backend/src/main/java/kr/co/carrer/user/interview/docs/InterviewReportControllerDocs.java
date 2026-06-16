@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.UUID;
+
 @Tag(name = "Interview Report", description = "AI 면접 리포트 API")
 public interface InterviewReportControllerDocs {
 
@@ -24,6 +26,6 @@ public interface InterviewReportControllerDocs {
     )
     ResponseEntity<ApiResponse<InterviewDTO.ResponseReport>> getReport(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
-            @Parameter(description = "면접 세션 ID (UUID)") @PathVariable String sessionId
+            @Parameter(description = "면접 세션 ID (UUID)") @PathVariable UUID sessionId
     );
 }

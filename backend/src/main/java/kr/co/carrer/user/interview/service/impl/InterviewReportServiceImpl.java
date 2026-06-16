@@ -32,7 +32,10 @@ public class InterviewReportServiceImpl implements InterviewReportService {
                 .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN));
 
         if (!feedbackRepository.existsBySessionId(sessionId)) {
-            throw new CustomException(InterviewErrorCode.INTERVIEW_REPORT_NOT_READY);
+            throw new CustomException(
+                    InterviewErrorCode.INTERVIEW_REPORT_NOT_READY,
+                    new InterviewDTO.ResponseReportNotReady("ANALYZING", 15)
+            );
         }
 
         List<AIInterviewFeedback> feedbacks = feedbackRepository.findBySessionIdOrderByQuestionOrderAsc(sessionId);

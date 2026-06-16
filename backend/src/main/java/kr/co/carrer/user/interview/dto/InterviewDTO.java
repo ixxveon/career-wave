@@ -182,6 +182,16 @@ public class InterviewDTO {
             ZonedDateTime createdAt
     ) {}
 
+    @Schema(description = "리포트 미완료 409 응답 데이터")
+    public record ResponseReportNotReady(
+
+            @Schema(description = "분석 상태", example = "ANALYZING")
+            String status,
+
+            @Schema(description = "예상 대기 시간 (초)", example = "15")
+            int estimatedWaitSeconds
+    ) {}
+
     @Schema(description = "FastAPI 리포트 콜백 요청")
     public record RequestReportCallback(
 

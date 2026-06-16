@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +23,8 @@ public interface InterviewSessionRepository extends JpaRepository<InterviewSessi
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM InterviewSession s WHERE s.memberId = :memberId AND s.sessionStatus = 'IN_PROGRESS'")
     Optional<InterviewSession> findInProgressByMemberId(@Param("memberId") UUID memberId);
+
+    List<InterviewSession> findAllBySessionIdIn(Collection<UUID> sessionIds);
 
     @Query("SELECT s FROM InterviewSession s WHERE s.sessionStatus = 'IN_PROGRESS' " +
            "AND s.startedAt < :cutoff AND s.updatedAt < :recentCutoff")
