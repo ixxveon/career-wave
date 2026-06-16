@@ -32,9 +32,10 @@ public class AdminQueryRepository {
 
         if (keyword != null && !keyword.isBlank()) {
             sql.append(" AND (a.email ILIKE ?").append(idx)
-               .append(" OR a.name ILIKE ?").append(idx).append(")");
+               .append(" OR a.name ILIKE ?").append(idx + 1).append(")");
             params.add("%" + keyword + "%");
-            idx++;
+            params.add("%" + keyword + "%");
+            idx += 2;
         }
         if (role != null) {
             sql.append(" AND a.admin_role = ?").append(idx);
@@ -74,9 +75,10 @@ public class AdminQueryRepository {
 
         if (keyword != null && !keyword.isBlank()) {
             sql.append(" AND (a.email ILIKE ?").append(idx)
-               .append(" OR a.name ILIKE ?").append(idx).append(")");
+               .append(" OR a.name ILIKE ?").append(idx + 1).append(")");
             params.add("%" + keyword + "%");
-            idx++;
+            params.add("%" + keyword + "%");
+            idx += 2;
         }
         if (role != null) {
             sql.append(" AND a.admin_role = ?").append(idx);
