@@ -476,7 +476,9 @@ EMPLOYMENT_FILE_UNSUPPORTED    415
 - [x] password reset token 저장소는 DB `password_reset_tokens`로 확정한다.
 - [x] refresh token 저장용 DB 테이블은 사용하지 않는다. 기존 정책상 Redis를 사용한다.
 - [x] 인증번호/verification 저장 위치는 DB `member_verifications`로 확정한다.
-- [x] Redis 사용 시 TTL, key prefix, 저장값 hash 여부를 명시한다.
+- [x] 이메일 인증 provider는 `AWS SES`, SMS 인증 provider는 `SOLAPI / CoolSMS`로 확정한다.
+- [x] 기업 검증은 국세청 사업자등록정보 `status` API를 `businessNumber`만으로 호출한다고 명시한다.
+- [x] `member_verifications` 기준 `expires_at`, `resend_available_at`, `remaining_attempts`, `verification_token` 사용 방식을 명시한다.
 - [x] `socialSignupToken` 저장소는 Redis로 확정하고 `user-auth:social-signup:{tokenHash}`, TTL 10분, 1회 사용 삭제 정책을 명시한다.
 - [x] `companyApprovalStatus=NONE`은 DB 저장값이 아니라 개인회원 응답 전용 가상값임을 명시한다.
 - [x] 개인회원 약관 저장 시 `company_verification_agreed`, `sms_agreed`는 `null`로 저장한다고 명시한다.

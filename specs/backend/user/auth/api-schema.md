@@ -79,7 +79,7 @@ GET  /me/status
 - `members`: 회원 마스터
 - `personal_profiles`: 개인회원 프로필, 개인회원 가입 시 빈 row 생성
 - `company_profiles`: 기업회원 프로필 및 재직증명서 최종 저장 컬럼
-- `member_verifications`: 이메일/휴대폰 인증번호 및 verificationToken
+- `member_verifications`: 이메일/휴대폰 인증번호 및 `verificationToken`
 - `password_reset_tokens`: 비밀번호 재설정 resetToken hash
 - `member_terms_agreements`: 회원가입 약관 동의
 - `hr_managers`: 기업회원 HR 승인 상태
@@ -354,6 +354,16 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 | 400 | `VERIFICATION_TARGET_INVALID` | 이메일/휴대폰 형식 오류 |
 | 429 | `VERIFICATION_RATE_LIMITED` | 재발송 또는 시도 제한 |
 
+#### Verification Storage Notes
+
+- 인증번호/인증 상태/`verificationToken`은 `member_verifications` 테이블에 저장한다.
+- `verificationId`는 `member_verifications.verification_id`를 사용한다.
+- 인증번호 TTL은 `member_verifications.expires_at` 기준 5분이다.
+- 인증번호 원문은 저장하지 않고 `member_verifications.code_hash`만 저장한다.
+- 인증 완료 후 발급한 `verificationToken`은 `member_verifications.verification_token`에 저장한다.
+- 이메일 발송 provider는 `AWS SES`, SMS 발송 provider는 `SOLAPI / CoolSMS`를 사용한다.
+- 외부 API Key/Secret은 환경변수 기반으로만 주입한다.
+
 ---
 
 ## 9. 인증번호 확인
@@ -389,6 +399,7 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 
 - `verificationToken`은 회원가입/아이디 찾기/비밀번호 재설정 요청 시 서버 검증용으로 사용한다.
 - 프론트의 인증 완료 boolean은 신뢰하지 않는다.
+- `verificationToken`은 `member_verifications.verification_token` 기준으로 검증한다.
 
 ---
 
@@ -511,9 +522,10 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 
 - `businessNumber`는 숫자 10자리로 정규화한다.
 - `companyName`, `ceoName`, `certificateNumber`는 공백 제거 후 필수 검증한다.
-- 사업자등록정보 진위확인은 외부 API adapter를 통해 처리한다.
-- 1차 후보는 공공데이터포털 `국세청_사업자등록정보 진위확인 및 상태조회 서비스`다.
-- 검증 요청에는 사업자등록번호, 대표자명, 개업일자 또는 발급번호 등 provider가 요구하는 값을 사용한다.
+- 사업자등록정보 검증은 외부 API adapter를 통해 처리한다.
+- 사용 API는 공공데이터포털 `국세청 사업자등록정보 상태조회(status)` API다.
+- 이번 단계에서는 `businessNumber`만으로 status API를 호출한다.
+- `start_dt`, `p_nm`, `ceoName`, `certificateNumber`를 status API 검증 파라미터로 사용하지 않는다.
 - 현재 프론트 화면은 `certificateNumber`를 입력받지만 `CompanyRegisterRequest` 타입과 payload mapping에는 누락되어 있으므로 프론트 연동 전 타입 업데이트가 필요하다.
 - 외부 API 검증 실패 시 `COMPANY_BUSINESS_VERIFICATION_FAILED`를 반환한다.
 - 외부 API 장애/타임아웃은 `COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE`을 반환하거나 admin 수동 검증 대상으로 접수하는 정책 중 하나로 확정한다.
@@ -569,7 +581,7 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 | HTTP | ErrorCode | 상황 |
 |---|---|---|
 | 400 | `COMPANY_TYPE_INVALID` | 기업 형태 오류 |
-| 400 | `COMPANY_BUSINESS_VERIFICATION_FAILED` | 사업자등록정보 진위확인 실패 |
+| 400 | `COMPANY_BUSINESS_VERIFICATION_FAILED` | 사업자등록정보 상태조회 실패 또는 유효하지 않은 사업자 |
 | 503 | `COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE` | 외부 사업자 검증 API 장애/타임아웃 |
 | 400 | `VERIFICATION_TOKEN_INVALID` | 담당자 인증 token 오류 |
 | 400 | `EMPLOYMENT_FILE_INVALID` | 재직증명서 fileId 오류 |
@@ -625,6 +637,7 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 - **Auth**: Public
 - **Path Variable**: `provider = kakao | naver | google`
 - **Description**: provider 인증 URL을 생성한다.
+- **Scope**: Apple 로그인은 지원하지 않는다.
 
 #### Response `200 OK`
 
@@ -701,6 +714,7 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 > 최초 소셜 가입용 `socialSignupToken`은 Redis `user-auth:social-signup:{tokenHash}`에 저장한다.
 > raw token은 저장하지 않고 hash만 key에 사용하며, TTL은 10분이다.
 > `/register/social/complete` 성공 시 Redis key를 삭제해 1회 사용을 보장한다.
+> 회원 식별 기준은 email이 아니라 `provider + providerUserId` 조합이며 `provider_email`은 nullable이다.
 
 ### POST `/api/v1/user/members/register/social/complete`
 

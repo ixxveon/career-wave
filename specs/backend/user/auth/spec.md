@@ -35,7 +35,6 @@ JWT 발급/재발급/로그아웃의 핵심 흐름은 기존 `specs/backend/auth
 
 ### 2.2 제외 범위
 
-- 이메일/SMS 외부 발송 벤더 최종 선정
 - 기업회원 승인/반려 처리 관리자 화면 및 승인 API
 - 구독/결제/자동 결제/Toss 결제 기능
 - 회원 탈퇴, 프로필 수정, 휴면 계정 정책
@@ -136,6 +135,9 @@ JWT 발급/재발급/로그아웃의 핵심 흐름은 기존 `specs/backend/auth
 - **FR-006**: 개인회원 가입은 loginId 중복 확인, 이메일 인증, 휴대폰 인증, 비밀번호 정책, 필수 약관 동의를 요구한다.
 - **FR-007**: 기업회원 가입은 담당자 휴대폰/이메일 인증, 사업자등록번호, 기업 정보, 재직증명서 업로드, 필수 약관 동의를 요구한다.
 - **FR-008**: 인증 완료 여부는 프론트 boolean이 아니라 서버 발급 `verificationToken`으로만 판단한다.
+- **FR-008A**: 이메일 인증번호 발송은 `AWS SES`를 사용하고, 개발 단계에서는 SES Sandbox 정책에 따라 검증된 이메일 대상으로 테스트한다.
+- **FR-008B**: 휴대폰 인증번호 발송은 `SOLAPI / CoolSMS`를 사용한다.
+- **FR-008C**: 이메일/SMS 인증번호와 `verificationToken`은 ERD의 `member_verifications` 테이블 기준으로 관리한다.
 - **FR-009**: 아이디 찾기 응답은 마스킹된 loginId만 반환한다.
 - **FR-010**: 비밀번호 재설정은 서버 발급 `resetToken`이 있을 때만 가능하다.
 - **FR-011**: 로그인/아이디 찾기/비밀번호 재설정 실패 메시지는 계정 존재 여부를 직접 노출하지 않는다.
@@ -150,6 +152,9 @@ JWT 발급/재발급/로그아웃의 핵심 흐름은 기존 `specs/backend/auth
 - **FR-020**: 기업회원 가입 신청 완료 응답은 "가입 완료"가 아니라 "가입 신청 접수" 의미로 작성한다.
 - **FR-021**: 기업회원 승인/반려 결과 메일 발송은 admin 승인/반려 기능의 책임이며, user auth는 신청 상태와 담당자 이메일을 저장한다.
 - **FR-022**: 소셜 로그인은 provider authorization, callback, provider token 검증, social account 연결, 최초 가입 추가정보 완료 흐름을 포함한다.
+- **FR-022A**: 소셜 로그인 provider는 `Kakao`, `Naver`, `Google`만 지원하며 `Apple` 로그인은 구현 범위에서 제외한다.
+- **FR-022B**: OAuth 회원 식별은 email이 아니라 반드시 `provider + providerUserId` 조합을 기준으로 처리한다.
+- **FR-022C**: `providerEmail`은 nullable이며, Kakao는 email 존재를 전제하지 않는다.
 - **FR-023**: 소셜 최초 가입 전에는 일반 access/refresh token을 발급하지 않고 짧은 TTL의 `socialSignupToken`만 사용한다.
 - **FR-024**: 개인회원 가입 성공 시 기본값이 비어 있는 `personal_profiles` row를 함께 생성한다.
 - **FR-025**: `members.role_type`은 DB/API/JWT에서 `USER`, `COMPANY`를 사용하고, Spring Security authority에서만 `ROLE_` prefix를 적용한다.
@@ -164,6 +169,7 @@ JWT 발급/재발급/로그아웃의 핵심 흐름은 기존 `specs/backend/auth
 - **NFR-004**: refresh token은 Redis에 hash로 저장하고 TTL을 만료 시간과 일치시킨다.
 - **NFR-005**: DB 상태와 Redis 상태가 충돌할 경우 계정 권위 상태는 DB를 기준으로 한다.
 - **NFR-006**: 프론트 validation은 UX 목적이며 백엔드 validation이 최종 권위다.
+- **NFR-007**: 외부 API Key, OAuth Client Secret, Service Key는 코드에 하드코딩하지 않고 환경변수로만 주입한다.
 
 ---
 
@@ -257,6 +263,8 @@ JWT 발급/재발급/로그아웃의 핵심 흐름은 기존 `specs/backend/auth
 
 > ERD 기준 테이블: `member_verifications`.
 > 가입 전 인증도 처리해야 하므로 회원 FK 없이 `target`과 `purpose` 기준으로 관리한다.
+> 인증번호 원문은 저장하지 않고 `code_hash`를 저장한다.
+> 인증 완료 후 발급하는 `verificationToken`은 `member_verifications.verification_token`에 저장한다.
 
 ### PasswordResetToken
 
@@ -325,7 +333,7 @@ CREATE INDEX idx_social_accounts_member_id ON social_accounts(member_id);
 - `email`: 이메일 형식
 - `phone`: `010`으로 시작하는 11자리 숫자
 - `businessNumber`: 숫자 10자리
-- `businessNumber`, `companyName`, `ceoName`, `certificateNumber`: 국세청 사업자등록정보 진위확인 API 또는 동등한 공공/인증 API로 검증한다.
+- `businessNumber`: 국세청 사업자등록정보 상태조회 API로 검증한다.
 - `verificationCode`: 6자리 숫자
 - `companyType`: 프론트 `CompanyType` enum 허용값만 사용
 - `address`: 도로명주소 API 검색 결과의 기본 주소를 사용한다.
@@ -346,9 +354,11 @@ CREATE INDEX idx_social_accounts_member_id ON social_accounts(member_id);
 ### 8.1 기업 정보 외부 검증
 
 - 기업회원 가입 신청 시 사업자등록번호 10자리 형식 검증만으로 승인하지 않는다.
-- 백엔드는 `businessNumber`, `companyName`, `ceoName`, `certificateNumber`를 기준으로 외부 API 검증을 수행한다.
-- 1차 후보 API는 공공데이터포털의 `국세청_사업자등록정보 진위확인 및 상태조회 서비스`다.
-- 외부 API 응답이 일치하면 기업 인증 검증 상태를 통과 처리하고 가입 신청을 생성한다.
+- 백엔드는 공공데이터포털 `국세청 사업자등록정보 상태조회(status)` API를 사용한다.
+- 이번 단계에서는 `businessNumber`만으로 status API를 호출한다.
+- `start_dt`, `p_nm`, `ceoName`, `certificateNumber`를 외부 API 검증 파라미터로 사용하지 않는다.
+- 외부 API 응답으로 사업자 존재 여부, 정상 사업자 여부, 휴업 여부, 폐업 여부를 확인한다.
+- status 조회 결과가 유효하면 기업 인증 검증 상태를 통과 처리하고 가입 신청을 생성한다.
 - 외부 API 장애, 타임아웃, 일시 제한 초과 시에는 가입 신청을 실패시키거나 `PENDING_REVIEW`로 접수 후 admin 수동 검증 대상으로 남기는 정책을 구현 전에 확정한다.
 - 프론트의 주소 검색 버튼은 이번 기업회원 가입 범위에서 활성화한다.
 - 주소 검색은 행정안전부 도로명주소 API 또는 동등한 한국 주소 API를 사용한다.
@@ -364,9 +374,12 @@ CREATE INDEX idx_social_accounts_member_id ON social_accounts(member_id);
 
 - 로그인 실패 시 계정 존재 여부가 노출되지 않는 공통 메시지를 사용한다.
 - 아이디 찾기와 비밀번호 재설정 권한 발급도 계정 존재 여부를 직접 노출하지 않는다.
-- `verificationToken`은 purpose, target, channel, expiresAt, used 여부를 검증한다.
+- `verificationToken`은 purpose, target, channel, expiresAt, verificationStatus를 검증한다.
 - `resetToken`은 짧은 TTL을 가지며 1회 사용 후 폐기한다.
 - `resetToken`과 인증번호는 원문 저장하지 않고 hash 저장을 우선한다.
+- 이메일 인증은 `EmailSenderPort` -> `AwsSesEmailSenderAdapter` 구조로 구현한다.
+- SMS 인증은 `SmsSenderPort` -> `SolapiSmsSenderAdapter` 구조로 구현한다.
+- 로컬/개발 설정에서도 외부 API 연동 정보는 `.env` 기반 환경변수로만 주입한다.
 - refresh token은 기존 auth constitution에 따라 Redis hash 저장, rotation, cookie-only 흐름을 따른다.
 - Access token blacklist는 로그아웃 시 현재 access token의 jti를 등록한다.
 - 비밀번호 재설정 성공 시 해당 member의 모든 refresh token을 폐기한다.
@@ -378,12 +391,14 @@ CREATE INDEX idx_social_accounts_member_id ON social_accounts(member_id);
 - Redis key는 `user-auth:social-signup:{tokenHash}` 형식을 사용하고, raw token은 저장하지 않는다.
 - Redis value에는 provider, providerUserId, providerEmail, state 검증 결과, issuedAt을 저장한다.
 - TTL은 10분으로 하며, `/register/social/complete` 성공 또는 검증 실패 후 재사용 방지를 위해 key를 삭제한다.
+- 인증번호는 6자리이며 `member_verifications.expires_at` 기준 5분 만료로 관리한다.
+- 인증번호 재전송은 60초 제한, 인증 실패는 최대 5회로 제한한다.
 
 ---
 
 ## 10. Rate Limit 정책
 
-- 인증번호 발송: `target + purpose` 기준 60초 재발송 제한, 1시간 5회 제한
+- 인증번호 발송: `target + purpose` 기준 60초 재발송 제한, `expires_at` 기준 5분 만료
 - 인증번호 확인: `verificationId` 기준 최대 5회 실패 허용, 초과 시 `RATE_LIMITED`
 - 로그인 실패: 기존 `LoginAttemptStore` 정책 유지, 5회 실패 시 15분 `LOCKED`
 - 비밀번호 reset token 발급: `loginId + IP` 기준 10분 5회 제한
@@ -438,6 +453,8 @@ CREATE INDEX idx_social_accounts_member_id ON social_accounts(member_id);
 - 회원가입/찾기/재설정 API의 base path는 `/api/v1/user/members`를 유지한다.
 - 실제 구현 패키지는 기존 사용자 인증 코드와의 일관성을 위해 `user/member`를 우선 사용한다.
 - spec 디렉토리는 기능 의미를 명확히 하기 위해 `specs/backend/user/auth`로 둔다.
-- 이메일/SMS 발송은 v1에서 추상화된 발송 port로 설계하고 실제 벤더는 팀 합의 후 결정한다.
+- 이메일 발송 provider는 `AWS SES`로 확정한다.
+- SMS 발송 provider는 `SOLAPI / CoolSMS`로 확정한다.
+- 외부 API Key, Client Secret, Service Key는 `.env` 기반 환경변수로만 주입하고 GitHub에 커밋하지 않는다.
 - `member_verifications`, `password_reset_tokens`, `company_profiles`, `personal_profiles`, `hr_managers`, `social_accounts`는 `db/init.sql`의 ERD를 기준으로 한다.
 - 기업회원 승인/반려 결과 메일은 admin 승인/반려 service에서 발송한다.

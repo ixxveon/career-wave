@@ -45,6 +45,8 @@
 - [ ] refresh token rotation 시 기존 token을 무효화한다.
 - [ ] logout 시 refresh key 삭제, access token jti blacklist, cookie 만료를 처리한다.
 - [ ] Controller에서 token을 직접 파싱하지 않고 SecurityContext 또는 `@AuthenticationPrincipal`을 사용한다.
+- [ ] 이메일 인증 provider는 `AWS SES`, SMS 인증 provider는 `SOLAPI / CoolSMS`로 명시되어 있다.
+- [ ] 외부 API Key/Secret은 환경변수로만 주입하고 코드 하드코딩이 없다.
 
 ---
 
@@ -77,6 +79,7 @@
 - [ ] companyName, ceoName, certificateNumber를 필수로 검증한다.
 - [ ] address/postalCode/roadAddress는 필수, addressDetail/jibunAddress는 선택 입력으로 검증한다.
 - [ ] verification code는 6자리 숫자인지 검증한다.
+- [ ] `VerificationPurpose`는 `REGISTER`, `FIND_ID`, `RESET_PASSWORD`를 사용한다.
 - [ ] `companyType`은 허용 enum 값만 받는다.
 - [ ] 재직증명서는 PDF, MIME type, 5MB 이하를 서버에서 검증한다.
 - [ ] 프론트 validation만 믿지 않고 서버에서 동일 검증을 수행한다.
@@ -106,7 +109,8 @@
 - [ ] 기업회원 승인/반려 결과 이메일 발송 책임이 admin 승인/반려 service에 있음을 문서화했다.
 - [ ] 재직증명서 `employmentCertificateFileId`가 실제 업로드된 파일인지 검증한다.
 - [ ] 파일 업로드 성공 후 가입 실패 시 orphan file 처리 정책이 있다.
-- [ ] 사업자등록번호/대표자명/기업명/인증 발급번호를 외부 API adapter로 검증한다.
+- [ ] 국세청 사업자등록정보 `status` API를 `businessNumber`만으로 호출한다.
+- [ ] `start_dt`, `p_nm` 기반 validate는 이번 범위에서 사용하지 않는다.
 - [ ] 외부 사업자 검증 실패/장애 ErrorCode가 정의되어 있다.
 - [ ] 주소 검색은 이번 범위에서 프론트 버튼 활성화와 한국 도로명주소 API 연동까지 포함한다.
 - [ ] 기업회원 가입 payload에 `certificateNumber`, `postalCode`, `roadAddress`, `jibunAddress`가 포함되어야 함을 문서화했다.
@@ -116,6 +120,7 @@
 ## 7. Social OAuth
 
 - [ ] Kakao/Naver/Google OAuth provider 범위가 명확하다.
+- [ ] Apple 로그인이 범위 제외로 명시되어 있다.
 - [ ] OAuth authorize API가 state를 생성/저장한다.
 - [ ] OAuth callback API가 state, provider token, provider userinfo를 검증한다.
 - [ ] 기존 소셜 계정이면 일반 로그인과 동일하게 access token + refresh cookie를 발급한다.
@@ -129,7 +134,9 @@
 ## 8. Verification / Recovery
 
 - [ ] 인증 완료 여부는 서버 발급 `verificationToken`으로만 판단한다.
-- [ ] `verificationToken`은 purpose, target, channel, expiresAt, used 여부를 검증한다.
+- [ ] `verificationToken`은 purpose, target, channel, expiresAt, verificationStatus를 검증한다.
+- [ ] 인증번호/verificationToken은 `member_verifications` 테이블을 사용한다.
+- [ ] 인증번호는 `expires_at` 5분, 재전송 제한은 60초, 실패 제한은 5회로 명시되어 있다.
 - [ ] 인증번호 발송/확인에 rate limit 또는 후속 작업 명시가 있다.
 - [ ] 아이디 찾기 결과는 마스킹된 loginId만 반환한다.
 - [ ] 아이디 찾기 실패 시 계정 존재 여부를 직접 노출하지 않는다.
