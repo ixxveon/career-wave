@@ -85,7 +85,7 @@ const stats = [
 ];
 
 function JobSeekerDashboardPage() {
-  const isLoggedIn = !!(authSession.getAccessToken() || authSession.getRefreshToken());
+  const isLoggedIn = !!authSession.getAccessToken();
 
   return (
     <div className="cw-page cw-home">
