@@ -181,7 +181,11 @@ export interface ResumeHistoryResponse {
 
 // ── 5. WebSocket 메시지 ───────────────────────────────────────
 
-/** WS STOMP /ws/user/resume → /topic/resume/{documentId}/status — Server → Client 메시지 */
+/**
+ * WS STOMP /ws/user/resume — Server → Client 메시지
+ * 구독 토픽 ①: /topic/resume/{documentId}/status         (Webhook 수신 후 브로드캐스트)
+ * 구독 토픽 ②: /user/queue/resume/{documentId}/status    (SUBSCRIBE 직후 1회 개인 Snapshot — 재연결 복원용)
+ */
 export interface WsStatusMessage {
   status: WsAnalysisStatus;
   message: string;
