@@ -364,6 +364,7 @@ SUBSCRIBE /topic/interview/{sessionId}
 
 - 세션 생성 후 **24시간** 동안 `endSession` 요청이 없으면 서버 스케줄러가 해당 세션을 강제로 `FAILED` 처리한다.
 - 배치 주기: 1시간 단위 (`@Scheduled` cron)
+- 시간 기준: 모든 `ZonedDateTime.now()` 호출은 **KST (`Asia/Seoul`)** 기준으로 고정한다. JVM 기본 timezone 사용 금지.
 - 쿼리 조건: `started_at < NOW() - INTERVAL '24 hours'` **AND** `session_status = 'IN_PROGRESS'` **AND** `updated_at < NOW() - INTERVAL '5 minutes'`
   - `updated_at` 조건은 방금 답변을 제출한 세션이 배치 실행 타이밍과 겹쳐 의도치 않게 `FAILED` 처리되는 상황을 방지하는 유예 조건이다.
 - `FAILED` 전이 후 FastAPI 파이프라인 세션 별도 정리 요청은 하지 않는다. FastAPI가 자체 TTL로 만료 처리하며, Spring은 FAILED 마킹 + 처리 건수 `log.info` 기록만 담당한다.
@@ -416,14 +417,22 @@ POST /internal/api/v1/interview/callback/{sessionId}/report
 ### Spring 처리 순서 (멱등성 보장)
 
 1. `AIInterviewFeedbackRepository.existsBySessionId(sessionId)` 확인
-   - **이미 존재하면**: 중복 콜백으로 판단하고 `200 OK`를 반환한 뒤 이하 로직을 건너뛴다
-   - **존재하지 않으면**: 아래 순서 진행
+   - **이미 존재하면**: 중복 콜백으로 판단하고 `200 OK`를 반환한 뒤 이하 DB 로직을 건너뛴다
+   - **존재하지 않으면**: 아래 순서 진행 (단일 `@Transactional` 경계 안에서 원자적으로 처리)
 2. `ai_interview_feedbacks` 저장
 3. `interview_sessions.total_score` 업데이트
 4. `career_histories` INSERT
-5. WebSocket `REPORT_READY` 메시지 전송
+5. **DB 커밋 완료 후** WebSocket `REPORT_READY` 메시지 전송 (`TransactionSynchronization.afterCommit()` 활용)
+   - WebSocket 전송(외부 I/O)은 트랜잭션 범위 밖에서 수행한다
 
-> FastAPI가 네트워크 오류로 콜백을 2회 이상 호출할 수 있다. 멱등성 체크 없이 구현하면 피드백 데이터 중복 및 리포트 오염이 발생한다.
+> FastAPI가 네트워크 오류로 콜백을 2회 이상 호출할 수 있다. 멱등성 체크 외에도 `(session_id, question_order)` DB 유니크 제약이 최종 중복 방어선 역할을 한다.
+
+### DB 유니크 제약
+
+| 테이블 | 제약 |
+|--------|------|
+| `ai_interview_feedbacks` | `(session_id, question_order)` 복합 유니크 |
+| `career_histories` | `session_id` 유니크 |
 
 ---
 

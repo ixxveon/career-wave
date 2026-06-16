@@ -210,16 +210,18 @@
   - [x] 조회 조건: `started_at < NOW() - 24h` AND `session_status = 'IN_PROGRESS'` AND `updated_at < NOW() - 5min`
   - [x] 해당 세션 일괄 `FAILED` 전이
   - [x] 처리 건수 `log.info` 기록
+  - [x] `ZonedDateTime.now(ZoneId.of("Asia/Seoul"))` — KST 고정 (JVM 기본 timezone 사용 금지)
 
 ## Phase 6-2 — FastAPI 콜백 수신 Controller
 
 - [x] `InterviewCallbackController.java` — `POST /internal/api/v1/interview/callback/{sessionId}/report`
   - [x] `X-Internal-Secret` 헤더 검증 — 불일치 시 401 반환 (값은 `${INTERVIEW_INTERNAL_SECRET}` 환경변수)
   - [x] `AIInterviewFeedbackRepository.existsBySessionId(sessionId)` 멱등성 체크 — 이미 존재하면 REPORT_READY 재전송 후 200 반환
-  - [x] `ai_interview_feedbacks` 저장
+  - [x] `processReportCallback`에 `@Transactional` 적용 — DB 저장 전체를 단일 트랜잭션으로 보장 (self-invocation 방지)
+  - [x] `ai_interview_feedbacks` 저장 + `(session_id, question_order)` 복합 유니크 제약
   - [x] `interview_sessions.total_score` 업데이트
-  - [x] `career_histories` INSERT
-  - [x] WebSocket `REPORT_READY` 전송
+  - [x] `career_histories` INSERT + `session_id` 유니크 제약
+  - [x] WebSocket `REPORT_READY` 전송 — `TransactionSynchronization.afterCommit()` 사용, 트랜잭션 외부 I/O 원칙 준수
 
 ---
 
