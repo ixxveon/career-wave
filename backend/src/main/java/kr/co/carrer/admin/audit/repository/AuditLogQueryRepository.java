@@ -26,6 +26,7 @@ public class AuditLogQueryRepository {
             SELECT
                 COUNT(*) AS total_count,
                 COUNT(*) FILTER (WHERE al.log_type = 'ADMIN_ACTIVITY') AS admin_activity_count,
+                COUNT(*) FILTER (WHERE al.log_type = 'ADMIN_MANAGEMENT') AS admin_management_count,
                 COUNT(*) FILTER (WHERE al.log_type = 'AI_METRICS_SYSTEM') AS ai_metrics_system_count,
                 COUNT(*) FILTER (WHERE al.log_type = 'SCRAPING_SYSTEM') AS scraping_system_count,
                 COUNT(*) FILTER (WHERE al.severity = 'INFO') AS info_count,
@@ -64,7 +65,8 @@ public class AuditLogQueryRepository {
             toLong(result[4]),
             toLong(result[5]),
             toLong(result[6]),
-            toLong(result[7])
+            toLong(result[7]),
+            toLong(result[8])
         );
     }
 
@@ -75,22 +77,19 @@ public class AuditLogQueryRepository {
             WHERE 1=1
             """);
 
-        int parameterIndex = 1;
         if (logType != null) {
-            sql.append(" AND al.log_type = ?").append(parameterIndex++);
+            sql.append(" AND al.log_type = :logType");
         }
 
-        sql.append(" ORDER BY al.created_at DESC LIMIT ?").append(parameterIndex)
-            .append(" OFFSET ?").append(parameterIndex + 1);
+        sql.append(" ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset");
 
         Query query = em.createNativeQuery(sql.toString(), AuditLog.class);
 
-        parameterIndex = 1;
         if (logType != null) {
-            query.setParameter(parameterIndex++, logType.name());
+            query.setParameter("logType", logType.name());
         }
-        query.setParameter(parameterIndex++, pageable.getPageSize());
-        query.setParameter(parameterIndex, pageable.getOffset());
+        query.setParameter("limit", pageable.getPageSize());
+        query.setParameter("offset", pageable.getOffset());
 
         @SuppressWarnings("unchecked")
         List<AuditLog> result = query.getResultList();
@@ -107,12 +106,12 @@ public class AuditLogQueryRepository {
             """);
 
         if (logType != null) {
-            sql.append(" AND al.log_type = ?1");
+            sql.append(" AND al.log_type = :logType");
         }
 
         Query query = em.createNativeQuery(sql.toString());
         if (logType != null) {
-            query.setParameter(1, logType.name());
+            query.setParameter("logType", logType.name());
         }
 
         return ((Number) query.getSingleResult()).longValue();
@@ -125,22 +124,19 @@ public class AuditLogQueryRepository {
             WHERE 1=1
             """);
 
-        int parameterIndex = 1;
         if (severity != null) {
-            sql.append(" AND al.severity = ?").append(parameterIndex++);
+            sql.append(" AND al.severity = :severity");
         }
 
-        sql.append(" ORDER BY al.created_at DESC LIMIT ?").append(parameterIndex)
-            .append(" OFFSET ?").append(parameterIndex + 1);
+        sql.append(" ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset");
 
         Query query = em.createNativeQuery(sql.toString(), AuditLog.class);
 
-        parameterIndex = 1;
         if (severity != null) {
-            query.setParameter(parameterIndex++, severity.name());
+            query.setParameter("severity", severity.name());
         }
-        query.setParameter(parameterIndex++, pageable.getPageSize());
-        query.setParameter(parameterIndex, pageable.getOffset());
+        query.setParameter("limit", pageable.getPageSize());
+        query.setParameter("offset", pageable.getOffset());
 
         @SuppressWarnings("unchecked")
         List<AuditLog> result = query.getResultList();
@@ -157,12 +153,12 @@ public class AuditLogQueryRepository {
             """);
 
         if (severity != null) {
-            sql.append(" AND al.severity = ?1");
+            sql.append(" AND al.severity = :severity");
         }
 
         Query query = em.createNativeQuery(sql.toString());
         if (severity != null) {
-            query.setParameter(1, severity.name());
+            query.setParameter("severity", severity.name());
         }
 
         return ((Number) query.getSingleResult()).longValue();
@@ -177,34 +173,31 @@ public class AuditLogQueryRepository {
             WHERE 1=1
             """);
 
-        int parameterIndex = 1;
         if (normalizedKeyword != null) {
             sql.append("""
                  AND (
-                    al.action ILIKE ?""").append(parameterIndex)
-                .append(" OR CAST(al.target_type AS TEXT) ILIKE ?").append(parameterIndex)
-                .append(" OR CAST(al.target_id AS TEXT) ILIKE ?").append(parameterIndex)
-                .append(" OR CAST(al.detail AS TEXT) ILIKE ?").append(parameterIndex)
-                .append(")");
-            parameterIndex++;
+                    al.action ILIKE :keyword
+                    OR CAST(al.target_type AS TEXT) ILIKE :keyword
+                    OR CAST(al.target_id AS TEXT) ILIKE :keyword
+                    OR CAST(al.detail AS TEXT) ILIKE :keyword
+                )
+                """);
         }
 
-        sql.append(" ORDER BY al.created_at DESC LIMIT ?").append(parameterIndex)
-            .append(" OFFSET ?").append(parameterIndex + 1);
+        sql.append(" ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset");
 
         Query query = em.createNativeQuery(sql.toString(), AuditLog.class);
 
-        parameterIndex = 1;
         if (normalizedKeyword != null) {
-            query.setParameter(parameterIndex++, "%" + normalizedKeyword + "%");
+            query.setParameter("keyword", "%" + normalizedKeyword + "%");
         }
-        query.setParameter(parameterIndex++, pageable.getPageSize());
-        query.setParameter(parameterIndex, pageable.getOffset());
+        query.setParameter("limit", pageable.getPageSize());
+        query.setParameter("offset", pageable.getOffset());
 
         @SuppressWarnings("unchecked")
         List<AuditLog> result = query.getResultList();
 
-        long total = countAuditLogsByKeyword(keyword);
+        long total = countAuditLogsByKeyword(normalizedKeyword);
         return new PageImpl<>(result, pageable, total);
     }
 
@@ -220,17 +213,17 @@ public class AuditLogQueryRepository {
         if (normalizedKeyword != null) {
             sql.append("""
                  AND (
-                    al.action ILIKE ?1
-                    OR CAST(al.target_type AS TEXT) ILIKE ?1
-                    OR CAST(al.target_id AS TEXT) ILIKE ?1
-                    OR CAST(al.detail AS TEXT) ILIKE ?1
+                    al.action ILIKE :keyword
+                    OR CAST(al.target_type AS TEXT) ILIKE :keyword
+                    OR CAST(al.target_id AS TEXT) ILIKE :keyword
+                    OR CAST(al.detail AS TEXT) ILIKE :keyword
                 )
                 """);
         }
 
         Query query = em.createNativeQuery(sql.toString());
         if (normalizedKeyword != null) {
-            query.setParameter(1, "%" + normalizedKeyword + "%");
+            query.setParameter("keyword", "%" + normalizedKeyword + "%");
         }
 
         return ((Number) query.getSingleResult()).longValue();
@@ -243,28 +236,25 @@ public class AuditLogQueryRepository {
             WHERE 1=1
             """);
 
-        int parameterIndex = 1;
         if (from != null) {
-            sql.append(" AND al.created_at >= ?").append(parameterIndex++);
+            sql.append(" AND al.created_at >= :from");
         }
         if (to != null) {
-            sql.append(" AND al.created_at <= ?").append(parameterIndex++);
+            sql.append(" AND al.created_at <= :to");
         }
 
-        sql.append(" ORDER BY al.created_at DESC LIMIT ?").append(parameterIndex)
-            .append(" OFFSET ?").append(parameterIndex + 1);
+        sql.append(" ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset");
 
         Query query = em.createNativeQuery(sql.toString(), AuditLog.class);
 
-        parameterIndex = 1;
         if (from != null) {
-            query.setParameter(parameterIndex++, from);
+            query.setParameter("from", from);
         }
         if (to != null) {
-            query.setParameter(parameterIndex++, to);
+            query.setParameter("to", to);
         }
-        query.setParameter(parameterIndex++, pageable.getPageSize());
-        query.setParameter(parameterIndex, pageable.getOffset());
+        query.setParameter("limit", pageable.getPageSize());
+        query.setParameter("offset", pageable.getOffset());
 
         @SuppressWarnings("unchecked")
         List<AuditLog> result = query.getResultList();
@@ -280,22 +270,20 @@ public class AuditLogQueryRepository {
             WHERE 1=1
             """);
 
-        int parameterIndex = 1;
         if (from != null) {
-            sql.append(" AND al.created_at >= ?").append(parameterIndex++);
+            sql.append(" AND al.created_at >= :from");
         }
         if (to != null) {
-            sql.append(" AND al.created_at <= ?").append(parameterIndex);
+            sql.append(" AND al.created_at <= :to");
         }
 
         Query query = em.createNativeQuery(sql.toString());
 
-        parameterIndex = 1;
         if (from != null) {
-            query.setParameter(parameterIndex++, from);
+            query.setParameter("from", from);
         }
         if (to != null) {
-            query.setParameter(parameterIndex, to);
+            query.setParameter("to", to);
         }
 
         return ((Number) query.getSingleResult()).longValue();
@@ -316,58 +304,55 @@ public class AuditLogQueryRepository {
             WHERE 1=1
             """);
 
-        int parameterIndex = 1;
         if (logType != null) {
-            sql.append(" AND al.log_type = ?").append(parameterIndex++);
+            sql.append(" AND al.log_type = :logType");
         }
         if (severity != null) {
-            sql.append(" AND al.severity = ?").append(parameterIndex++);
+            sql.append(" AND al.severity = :severity");
         }
         if (normalizedKeyword != null) {
             sql.append("""
                  AND (
-                    al.action ILIKE ?""").append(parameterIndex)
-                .append(" OR CAST(al.target_type AS TEXT) ILIKE ?").append(parameterIndex)
-                .append(" OR CAST(al.target_id AS TEXT) ILIKE ?").append(parameterIndex)
-                .append(" OR CAST(al.detail AS TEXT) ILIKE ?").append(parameterIndex)
-                .append(")");
-            parameterIndex++;
+                    al.action ILIKE :keyword
+                    OR CAST(al.target_type AS TEXT) ILIKE :keyword
+                    OR CAST(al.target_id AS TEXT) ILIKE :keyword
+                    OR CAST(al.detail AS TEXT) ILIKE :keyword
+                )
+                """);
         }
         if (from != null) {
-            sql.append(" AND al.created_at >= ?").append(parameterIndex++);
+            sql.append(" AND al.created_at >= :from");
         }
         if (to != null) {
-            sql.append(" AND al.created_at <= ?").append(parameterIndex++);
+            sql.append(" AND al.created_at <= :to");
         }
 
-        sql.append(" ORDER BY al.created_at DESC LIMIT ?").append(parameterIndex)
-            .append(" OFFSET ?").append(parameterIndex + 1);
+        sql.append(" ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset");
 
         Query query = em.createNativeQuery(sql.toString(), AuditLog.class);
 
-        parameterIndex = 1;
         if (logType != null) {
-            query.setParameter(parameterIndex++, logType.name());
+            query.setParameter("logType", logType.name());
         }
         if (severity != null) {
-            query.setParameter(parameterIndex++, severity.name());
+            query.setParameter("severity", severity.name());
         }
         if (normalizedKeyword != null) {
-            query.setParameter(parameterIndex++, "%" + normalizedKeyword + "%");
+            query.setParameter("keyword", "%" + normalizedKeyword + "%");
         }
         if (from != null) {
-            query.setParameter(parameterIndex++, from);
+            query.setParameter("from", from);
         }
         if (to != null) {
-            query.setParameter(parameterIndex++, to);
+            query.setParameter("to", to);
         }
-        query.setParameter(parameterIndex++, pageable.getPageSize());
-        query.setParameter(parameterIndex, pageable.getOffset());
+        query.setParameter("limit", pageable.getPageSize());
+        query.setParameter("offset", pageable.getOffset());
 
         @SuppressWarnings("unchecked")
         List<AuditLog> result = query.getResultList();
 
-        long total = countAuditLogs(logType, severity, keyword, from, to);
+        long total = countAuditLogs(logType, severity, normalizedKeyword, from, to);
         return new PageImpl<>(result, pageable, total);
     }
 
@@ -385,47 +370,45 @@ public class AuditLogQueryRepository {
             WHERE 1=1
             """);
 
-        int parameterIndex = 1;
         if (logType != null) {
-            sql.append(" AND al.log_type = ?").append(parameterIndex++);
+            sql.append(" AND al.log_type = :logType");
         }
         if (severity != null) {
-            sql.append(" AND al.severity = ?").append(parameterIndex++);
+            sql.append(" AND al.severity = :severity");
         }
         if (normalizedKeyword != null) {
             sql.append("""
                  AND (
-                    al.action ILIKE ?""").append(parameterIndex)
-                .append(" OR CAST(al.target_type AS TEXT) ILIKE ?").append(parameterIndex)
-                .append(" OR CAST(al.target_id AS TEXT) ILIKE ?").append(parameterIndex)
-                .append(" OR CAST(al.detail AS TEXT) ILIKE ?").append(parameterIndex)
-                .append(")");
-            parameterIndex++;
+                    al.action ILIKE :keyword
+                    OR CAST(al.target_type AS TEXT) ILIKE :keyword
+                    OR CAST(al.target_id AS TEXT) ILIKE :keyword
+                    OR CAST(al.detail AS TEXT) ILIKE :keyword
+                )
+                """);
         }
         if (from != null) {
-            sql.append(" AND al.created_at >= ?").append(parameterIndex++);
+            sql.append(" AND al.created_at >= :from");
         }
         if (to != null) {
-            sql.append(" AND al.created_at <= ?").append(parameterIndex);
+            sql.append(" AND al.created_at <= :to");
         }
 
         Query query = em.createNativeQuery(sql.toString());
 
-        parameterIndex = 1;
         if (logType != null) {
-            query.setParameter(parameterIndex++, logType.name());
+            query.setParameter("logType", logType.name());
         }
         if (severity != null) {
-            query.setParameter(parameterIndex++, severity.name());
+            query.setParameter("severity", severity.name());
         }
         if (normalizedKeyword != null) {
-            query.setParameter(parameterIndex++, "%" + normalizedKeyword + "%");
+            query.setParameter("keyword", "%" + normalizedKeyword + "%");
         }
         if (from != null) {
-            query.setParameter(parameterIndex++, from);
+            query.setParameter("from", from);
         }
         if (to != null) {
-            query.setParameter(parameterIndex, to);
+            query.setParameter("to", to);
         }
 
         return ((Number) query.getSingleResult()).longValue();
@@ -463,6 +446,7 @@ public class AuditLogQueryRepository {
     public record SummaryAggregate(
         long totalCount,
         long adminActivityCount,
+        long adminManagementCount,
         long aiMetricsSystemCount,
         long scrapingSystemCount,
         long infoCount,

@@ -808,18 +808,18 @@ CREATE TABLE audit_logs (
 
     CONSTRAINT pk_audit_logs  PRIMARY KEY (audit_log_id),
     CONSTRAINT fk_audit_admin FOREIGN KEY (admin_id) REFERENCES admins (admin_id),
-    CONSTRAINT chk_log_type   CHECK (log_type  IN ('ADMIN_ACTIVITY', 'AI_METRICS_SYSTEM', 'SCRAPING_SYSTEM')),
-    CONSTRAINT chk_severity   CHECK (severity  IN ('INFO', 'WARN', 'ERROR'))
+    CONSTRAINT chk_log_type   CHECK (log_type  IN ('ADMIN_ACTIVITY', 'ADMIN_MANAGEMENT', 'AI_METRICS_SYSTEM', 'SCRAPING_SYSTEM')),
+    CONSTRAINT chk_severity   CHECK (severity  IN ('INFO', 'WARN', 'ERROR', 'SUCCESS'))
 );
 COMMENT ON TABLE  audit_logs              IS '관리자 작업 감사 로그 테이블';
 COMMENT ON COLUMN audit_logs.audit_log_id IS '로그 고유 식별자';
 COMMENT ON COLUMN audit_logs.admin_id     IS '작업 관리자 FK';
-COMMENT ON COLUMN audit_logs.log_type     IS '로그 타입 (ADMIN_ACTIVITY / AI_METRICS_SYSTEM / SCRAPING_SYSTEM)';
+COMMENT ON COLUMN audit_logs.log_type     IS '로그 타입 (ADMIN_ACTIVITY / ADMIN_MANAGEMENT / AI_METRICS_SYSTEM / SCRAPING_SYSTEM)';
 COMMENT ON COLUMN audit_logs.action       IS '수행 액션 (SUSPEND / REFUND / BLIND 등)';
 COMMENT ON COLUMN audit_logs.target_type  IS '대상 유형 (MEMBER / BOARD / PAYMENT 등)';
 COMMENT ON COLUMN audit_logs.target_id    IS '대상 레코드 ID';
 COMMENT ON COLUMN audit_logs.ip_address   IS '요청 IP 주소';
-COMMENT ON COLUMN audit_logs.severity     IS '로그 등급 (INFO / WARN / ERROR)';
+COMMENT ON COLUMN audit_logs.severity     IS '로그 등급 (INFO / WARN / ERROR / SUCCESS)';
 COMMENT ON COLUMN audit_logs.detail       IS '변경 상세 내용 (변경 전후 값)';
 COMMENT ON COLUMN audit_logs.created_at   IS '로그 기록 일시';
 
