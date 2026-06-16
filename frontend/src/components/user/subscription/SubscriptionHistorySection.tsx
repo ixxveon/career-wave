@@ -27,9 +27,10 @@ export function SubscriptionHistorySection({
 }: SubscriptionHistorySectionProps) {
   return (
     <section className="cw-subscription-section cw-billing-section">
-      <div className="cw-subscription-section__head">
+      <div className="cw-account-header">
         <div>
-          <h3>내 구독 내역</h3>
+          <span className="cw-account-badge">BILLING HISTORY</span>
+          <h2>내 구독 내역</h2>
           <p>현재 이용중인 상품과 자동 결제 상태를 실무적으로 확인할 수 있도록 정리했어요.</p>
         </div>
       </div>

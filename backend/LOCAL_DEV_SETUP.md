@@ -1,7 +1,5 @@
 # Career Wave Backend — 로컬 실행 가이드
 
-> PR #323 기준 작성 (2026-06-11)
-
 ---
 
 ## Step 1. Java 21 설정 (⚠️ 필수 — Java 25 사용 시 Gradle 빌드 실패)
@@ -31,7 +29,16 @@ java -version
 
 ---
 
-## Step 2. 환경변수 설정 (.env)
+## Step 2. 환경변수 설정
+
+이 프로젝트는 로컬에서 `.env` 파일을 두 개 사용합니다.
+
+- 루트 `.env`: Docker Compose가 PostgreSQL / Redis 컨테이너를 띄울 때 사용
+- `backend/.env`: Spring Boot 백엔드가 DB / Redis / JWT 설정을 읽을 때 사용
+
+### 2-1. 루트 `.env` 생성 (Docker Compose용)
+
+프로젝트 루트에서 실행합니다.
 
 ### Mac
 ```bash
@@ -43,12 +50,42 @@ cp .env.example .env
 copy .env.example .env
 ```
 
-`.env` 파일을 열어 아래 항목을 채웁니다.
+루트 `.env` 파일을 열어 아래 항목을 채웁니다.
+
+```env
+DB_NAME=careerwave
+DB_USER=careerwave
+DB_PASSWORD=your_password
+DB_PORT=5432
+REDIS_PORT=6379
+```
+
+### 2-2. `backend/.env` 생성 (Spring Boot용)
+
+`backend` 디렉터리에서 실행합니다.
+
+### Mac
+```bash
+cd backend
+cp .env.example .env
+```
+
+### Windows
+```cmd
+cd backend
+copy .env.example .env
+```
+
+`backend/.env` 파일을 열어 아래 항목을 채웁니다.
 
 ```env
 DB_URL=jdbc:postgresql://localhost:5432/careerwave
 DB_USERNAME=careerwave
 DB_PASSWORD=your_password
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
 
 JWT_USER_SECRET=local-user-secret-32bytes-or-more!!
 JWT_ADMIN_SECRET=local-admin-secret-32bytes-or-more!
@@ -58,7 +95,65 @@ JWT_ADMIN_SECRET=local-admin-secret-32bytes-or-more!
 
 ---
 
-## Step 3. PostgreSQL DB 생성
+## Step 3. Docker Desktop으로 PostgreSQL + Redis 실행
+
+Docker Desktop을 켠 뒤 프로젝트 루트에서 아래 명령을 실행합니다.
+
+```bash
+docker compose up -d
+```
+
+실행 확인:
+
+```bash
+docker compose ps
+```
+
+정상이라면 아래 두 컨테이너가 `Up` 상태여야 합니다.
+
+```text
+careerwave-db
+careerwave-redis
+```
+
+Redis 연결 확인:
+
+```bash
+docker compose exec redis redis-cli ping
+# → PONG 이 나와야 정상
+```
+
+> Docker Compose 기본값은 PostgreSQL `localhost:5432`, Redis `localhost:6379`, Redis 비밀번호 없음입니다.
+
+### Docker를 사용하지 않는 경우 (Docker 사용 권장: Step 3. Redis 실행 내용 참고)
+
+### Mac — Homebrew
+```bash
+brew install redis
+brew services start redis
+
+# 실행 확인
+redis-cli ping
+# → PONG 이 나와야 정상
+```
+
+### Windows
+1. [Redis for Windows (MSI)](https://github.com/microsoftarchive/redis/releases) 설치
+2. 서비스 시작:
+   ```cmd
+   redis-server
+   ```
+3. 확인:
+   ```cmd
+   redis-cli ping
+   ```
+
+> `backend/.env` 파일의 `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`를 서버 설정에 맞게 채웁니다.  
+> 로컬 기본값은 `localhost:6379`, 비밀번호 없음입니다.
+
+---
+
+## Step 4. PostgreSQL DB 생성
 
 ### Mac — Homebrew
 ```bash
@@ -81,7 +176,7 @@ CREATE DATABASE careerwave OWNER careerwave;
 
 ---
 
-## Step 4. 테이블 생성 + 테스트 데이터 시드
+## Step 5. 테이블 생성 + 테스트 데이터 시드
 
 ### 테이블 생성 (최초 1회)
 
@@ -114,7 +209,7 @@ psql -U careerwave -d careerwave -f src\main\resources\db\seed-local.sql
 
 ---
 
-## Step 5. 백엔드 실행
+## Step 6. 백엔드 실행
 
 ### Mac
 ```bash
@@ -131,7 +226,7 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 
 ---
 
-## Step 6. 테스트 실행
+## Step 7. 테스트 실행
 
 ### Mac
 ```bash
@@ -148,7 +243,7 @@ gradlew.bat test
 
 ---
 
-## Step 7. Swagger로 API 확인
+## Step 8. Swagger로 API 확인
 
 1. `http://localhost:8080/swagger-ui.html` 접속
 2. 로그인 API 호출 → 응답의 `accessToken` 복사

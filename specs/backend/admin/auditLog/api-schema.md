@@ -70,7 +70,7 @@
 
 | Enum | Values | ERD CHECK 제약 |
 |---|---|---|
-| `AuditLogType` | `ADMIN_ACTIVITY`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` | `audit_logs.log_type` |
+| `AuditLogType` | `ADMIN_ACTIVITY`, `ADMIN_MANAGEMENT`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` | `audit_logs.log_type` |
 | `AuditLogSeverity` | `INFO`, `WARN`, `ERROR`, `SUCCESS` | `audit_logs.severity` |
 
 ---
@@ -88,7 +88,7 @@
 
 | Query Parameter | Type | ERD 컬럼 | Description |
 |---|---|---|---|
-| `logType` | `ADMIN_ACTIVITY \| AI_METRICS_SYSTEM \| SCRAPING_SYSTEM` | `audit_logs.log_type` | 로그 유형 필터 |
+| `logType` | `ADMIN_ACTIVITY \| ADMIN_MANAGEMENT \| AI_METRICS_SYSTEM \| SCRAPING_SYSTEM` | `audit_logs.log_type` | 로그 유형 필터 |
 | `severity` | `INFO \| WARN \| ERROR` | `audit_logs.severity` | 심각도 필터 |
 | `keyword` | `string` | `audit_logs.action`, `audit_logs.target_type`, `audit_logs.target_id`, `audit_logs.detail` | 감사 로그 검색어, `trim()` 기준 빈 문자열은 미적용, 최대 100자 |
 | `from` | `string` | `audit_logs.created_at` | 조회 시작 일시, ISO 8601 UTC |
@@ -128,6 +128,7 @@
   "data": {
     "totalCount": 1250,
     "adminActivityCount": 320,
+    "adminManagementCount": 12,
     "aiMetricsSystemCount": 610,
     "scrapingSystemCount": 320,
     "infoCount": 820,
@@ -157,7 +158,7 @@
 
 | Name | Type | Required | ERD 컬럼 | Description |
 |---|---|---|---|---|
-| `logType` | `ADMIN_ACTIVITY \| AI_METRICS_SYSTEM \| SCRAPING_SYSTEM` | N | `audit_logs.log_type` | 로그 유형 필터 |
+| `logType` | `ADMIN_ACTIVITY \| ADMIN_MANAGEMENT \| AI_METRICS_SYSTEM \| SCRAPING_SYSTEM` | N | `audit_logs.log_type` | 로그 유형 필터 |
 | `severity` | `INFO \| WARN \| ERROR` | N | `audit_logs.severity` | 심각도 필터 |
 | `keyword` | `string` | N | `audit_logs.action`, `audit_logs.target_type`, `audit_logs.target_id`, `audit_logs.detail` | 감사 로그 검색어, `trim()` 기준 빈 문자열은 미적용, 최대 100자 |
 | `from` | `string` | N | `audit_logs.created_at` | 조회 시작 일시, ISO 8601 UTC |
@@ -267,6 +268,7 @@
 |---|---|---|---|---|
 | `totalCount` | `number` | Y | 없음 | 전체 감사 로그 수 |
 | `adminActivityCount` | `number` | Y | 없음 | `logType = ADMIN_ACTIVITY` 집계 수 |
+| `adminManagementCount` | `number` | Y | 없음 | `logType = ADMIN_MANAGEMENT` 집계 수 |
 | `aiMetricsSystemCount` | `number` | Y | 없음 | `logType = AI_METRICS_SYSTEM` 집계 수 |
 | `scrapingSystemCount` | `number` | Y | 없음 | `logType = SCRAPING_SYSTEM` 집계 수 |
 | `infoCount` | `number` | Y | 없음 | `severity = INFO` 집계 수 |
@@ -280,7 +282,7 @@
 |---|---|---|---|---|
 | `auditLogId` | `number` | Y | `audit_logs.audit_log_id` | 감사 로그 ID |
 | `adminId` | `number \| null` | N | `audit_logs.admin_id` | 작업 관리자 ID |
-| `logType` | `ADMIN_ACTIVITY \| AI_METRICS_SYSTEM \| SCRAPING_SYSTEM` | Y | `audit_logs.log_type` | 로그 유형 |
+| `logType` | `ADMIN_ACTIVITY \| ADMIN_MANAGEMENT \| AI_METRICS_SYSTEM \| SCRAPING_SYSTEM` | Y | `audit_logs.log_type` | 로그 유형 |
 | `action` | `string` | Y | `audit_logs.action` | 작업 액션 |
 | `targetType` | `string \| null` | N | `audit_logs.target_type` | 대상 유형 |
 | `targetId` | `string \| null` | N | `audit_logs.target_id` | 대상 식별자 |
@@ -295,7 +297,7 @@
 |---|---|---|---|---|
 | `auditLogId` | `number` | Y | `audit_logs.audit_log_id` | 감사 로그 ID |
 | `adminId` | `number \| null` | N | `audit_logs.admin_id` | 작업 관리자 ID |
-| `logType` | `ADMIN_ACTIVITY \| AI_METRICS_SYSTEM \| SCRAPING_SYSTEM` | Y | `audit_logs.log_type` | 로그 유형 |
+| `logType` | `ADMIN_ACTIVITY \| ADMIN_MANAGEMENT \| AI_METRICS_SYSTEM \| SCRAPING_SYSTEM` | Y | `audit_logs.log_type` | 로그 유형 |
 | `action` | `string` | Y | `audit_logs.action` | 작업 액션 |
 | `targetType` | `string \| null` | N | `audit_logs.target_type` | 대상 유형 |
 | `targetId` | `string \| null` | N | `audit_logs.target_id` | 대상 식별자 |

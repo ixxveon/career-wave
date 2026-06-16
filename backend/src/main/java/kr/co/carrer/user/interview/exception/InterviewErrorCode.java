@@ -14,7 +14,8 @@ public enum InterviewErrorCode implements BaseErrorCode {
     INTERVIEW_DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 서류를 찾을 수 없습니다."),
     INTERVIEW_SESSION_DUPLICATE(HttpStatus.CONFLICT, "이미 진행 중인 면접 세션이 있습니다."),
     INTERVIEW_REPORT_NOT_READY(HttpStatus.CONFLICT, "면접 리포트가 아직 생성 중입니다."),
-    INTERVIEW_INVALID_AUDIO_FORMAT(HttpStatus.BAD_REQUEST, "지원하지 않는 오디오 포맷입니다. (audio/webm, audio/mp4, audio/ogg만 허용)");
+    INTERVIEW_INVALID_AUDIO_FORMAT(HttpStatus.BAD_REQUEST, "지원하지 않는 오디오 포맷이거나 빈 파일입니다. (audio/webm, audio/mp4, audio/ogg만 허용)"),
+    INTERVIEW_CALLBACK_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "내부 콜백 인증에 실패했습니다.");
 
     private final HttpStatus status;
     private final String message;

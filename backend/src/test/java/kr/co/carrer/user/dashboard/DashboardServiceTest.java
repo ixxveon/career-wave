@@ -28,6 +28,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,7 +58,7 @@ class DashboardServiceTest {
         assertThat(response.loginId()).isEqualTo("user01");
         assertThat(response.email()).isEqualTo("user01@test.com");
         assertThat(response.name()).isEqualTo("김지원");
-        assertThat(response.phone()).isNull();
+        assertThat(response.phone()).isEqualTo("010-1234-5678");
         assertThat(response.roleType()).isEqualTo(RoleType.USER);
         assertThat(response.memberStatus()).isEqualTo(MemberStatus.ACTIVE);
         assertThat(response.subscriptionStatus()).isEqualTo(SubscriptionStatus.FREE);
@@ -81,8 +83,7 @@ class DashboardServiceTest {
         Member member = createMember(memberId);
         PersonalProfile personalProfile = createPersonalProfile(
                 memberId,
-                "https://github.com/career-wave?tab=repositories"
-        );
+                "https://github.com/career-wave?tab=repositories");
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
         when(personalProfileRepository.findByMemberId(memberId)).thenReturn(Optional.of(personalProfile));
@@ -108,6 +109,74 @@ class DashboardServiceTest {
         assertThat(response.githubId()).isNull();
         assertThat(response.githubUrl()).isNull();
         assertThat(response.linked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("프로필 수정 - 기존 GitHub 프로필이 있는 경우 정상 수정")
+    void updateProfile_existingPersonalProfile_success() throws Exception {
+        UUID memberId = UUID.randomUUID();
+        Member member = createMember(memberId);
+        PersonalProfile personalProfile = createPersonalProfile(memberId, "https://github.com/old-user");
+
+        DashboardDTO.ProfileUpdateRequest request = new DashboardDTO.ProfileUpdateRequest(
+                "고유리",
+                "010-9999-8888",
+                "https://github.com/yul941117");
+
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+        when(personalProfileRepository.findByMemberId(memberId)).thenReturn(Optional.of(personalProfile));
+
+        DashboardDTO.ProfileResponse response = dashboardService.updateProfile(memberId, request);
+
+        assertThat(response.memberId()).isEqualTo(memberId);
+        assertThat(response.name()).isEqualTo("고유리");
+        assertThat(response.phone()).isEqualTo("010-9999-8888");
+
+        DashboardDTO.GithubResponse githubResponse = invokeToGithubResponse(personalProfile);
+        assertThat(githubResponse.githubId()).isEqualTo("yul941117");
+        assertThat(githubResponse.githubUrl()).isEqualTo("https://github.com/yul941117");
+        assertThat(githubResponse.linked()).isTrue();
+
+        verify(personalProfileRepository).save(personalProfile);
+    }
+
+    @Test
+    @DisplayName("프로필 수정 - 기존 GitHub 프로필이 없는 경우 생성 후 수정")
+    void updateProfile_withoutPersonalProfile_createNewProfile() throws Exception {
+        UUID memberId = UUID.randomUUID();
+        Member member = createMember(memberId);
+
+        DashboardDTO.ProfileUpdateRequest request = new DashboardDTO.ProfileUpdateRequest(
+                "고유리",
+                "010-9999-8888",
+                "https://github.com/yul941117");
+
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+        when(personalProfileRepository.findByMemberId(memberId)).thenReturn(Optional.empty());
+
+        DashboardDTO.ProfileResponse response = dashboardService.updateProfile(memberId, request);
+
+        assertThat(response.memberId()).isEqualTo(memberId);
+        assertThat(response.name()).isEqualTo("고유리");
+        assertThat(response.phone()).isEqualTo("010-9999-8888");
+
+        verify(personalProfileRepository).save(any(PersonalProfile.class));
+    }
+
+    @Test
+    @DisplayName("프로필 수정 - 회원 없음")
+    void updateProfile_memberNotFound() {
+        UUID memberId = UUID.randomUUID();
+
+        DashboardDTO.ProfileUpdateRequest request = new DashboardDTO.ProfileUpdateRequest(
+                "고유리",
+                "010-9999-8888",
+                "https://github.com/yul941117");
+
+        when(memberRepository.findById(memberId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> dashboardService.updateProfile(memberId, request))
+                .isInstanceOf(CustomException.class);
     }
 
     @ParameterizedTest
@@ -140,6 +209,12 @@ class DashboardServiceTest {
         return (String) method.invoke(dashboardService, githubUrl);
     }
 
+    private DashboardDTO.GithubResponse invokeToGithubResponse(PersonalProfile personalProfile) throws Exception {
+        Method method = DashboardServiceImpl.class.getDeclaredMethod("toGithubResponse", PersonalProfile.class);
+        method.setAccessible(true);
+        return (DashboardDTO.GithubResponse) method.invoke(dashboardService, personalProfile);
+    }
+
     private Member createMember(UUID memberId) throws Exception {
         var constructor = Member.class.getDeclaredConstructor();
         constructor.setAccessible(true);
@@ -149,6 +224,7 @@ class DashboardServiceTest {
         setField(member, "memberId", memberId);
         setField(member, "loginId", "user01");
         setField(member, "email", "user01@test.com");
+        setField(member, "phone", "010-1234-5678");
         setField(member, "password", "encoded-password");
         setField(member, "name", "김지원");
         setField(member, "roleType", RoleType.USER);

@@ -33,7 +33,8 @@
   - [x] `total_score` INTEGER nullable
   - [x] `started_at` / `ended_at` / `created_at` / `updated_at` ZonedDateTime
   - [x] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
-  - [x] `complete(ZonedDateTime endedAt)` 상태 전이 메서드
+  - [x] `complete(ZonedDateTime endedAt)` 상태 전이 메서드 — COMPLETED + endedAt 기록
+  - [x] `fail(ZonedDateTime endedAt)` 상태 전이 메서드 — FAILED + endedAt 기록
 
 - [x] `InterviewMessage.java` Entity
   - [x] `message_id` BIGSERIAL PK
@@ -51,6 +52,7 @@
   - [x] `question_text` / `answer_text` TEXT NOT NULL
   - [x] `relevance_score` / `depth_score` / `delivery_score` / `fluency_score` INTEGER nullable, CHECK (0~100)
   - [x] `voice_quality_ratio` DECIMAL(5,2) nullable, CHECK (0.00~100.00)
+  - [x] `@org.hibernate.annotations.Check` — 5개 점수 필드 범위 DB CHECK 제약 적용
   - [x] `ai_feedback` TEXT nullable
   - [x] `created_at` ZonedDateTime NOT NULL
   - [x] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
@@ -118,19 +120,22 @@
   - [x] DB 저장은 `@Transactional` 내부 메서드로 분리, FastAPI 호출은 트랜잭션 외부
   - [x] 반환: `ResponseStartSession`
 
-- [x] `submitTextAnswer(UUID memberId, String sessionId, RequestSubmitTextAnswer dto)`
+- [x] `submitTextAnswer(UUID memberId, UUID sessionId, RequestSubmitTextAnswer dto)`
+  - [x] `session_id` 존재 여부 검증 — 없으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
   - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
   - [x] `InterviewMessage` 저장 (`sender = USER`, `message_type = ANSWER`)
   - [x] FastAPI LLM 파이프라인 비동기 트리거 (트랜잭션 외부)
   - [x] 반환: `ResponseSubmitTextAnswer`
 
-- [x] `submitVoiceChunk(UUID memberId, String sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal)`
+- [x] `submitVoiceChunk(UUID memberId, UUID sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal)`
   - [x] Content-Type 검증 — audio/webm, audio/mp4, audio/ogg만 허용 (`INTERVIEW_INVALID_AUDIO_FORMAT(400)`)
+  - [x] `session_id` 존재 여부 검증 — 없으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
   - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
   - [x] FastAPI STT 파이프라인으로 오디오 청크 비동기 전달 (트랜잭션 외부)
   - [x] 반환: `ResponseSubmitVoiceChunk`
 
-- [x] `endSession(UUID memberId, String sessionId)`
+- [x] `endSession(UUID memberId, UUID sessionId)`
+  - [x] `session_id` 존재 여부 검증 — 없으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
   - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
   - [x] `COMPLETED` / `FAILED` 세션 재종료 시 `INTERVIEW_SESSION_ALREADY_ENDED(400)` — 멱등성 체크
   - [x] `complete(endedAt)` 메서드로 상태 변경 (`COMPLETED`, `ended_at = 현재 시각`)
@@ -139,20 +144,21 @@
 
 ### InterviewReportService
 
-- [x] `getReport(UUID memberId, String sessionId)`
+- [x] `getReport(UUID memberId, UUID sessionId)`
   - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-  - [x] 피드백 미존재 시 `INTERVIEW_REPORT_NOT_READY(409)`
+  - [x] 피드백 미존재 시 `INTERVIEW_REPORT_NOT_READY(409)` — additionalData: `ResponseReportNotReady("ANALYZING", 15)`
   - [x] `ai_interview_feedbacks` 조회 (`question_order ASC`)
   - [x] `voiceQualityRatio`가 null이거나 50.00 미만인 피드백 → `deliveryScore` / `fluencyScore` null 처리
   - [x] 반환: `ResponseReport`
 
 ### InterviewHistoryService
 
-- [ ] `getHistory(UUID memberId, int page, int size)`
-  - [ ] `career_histories` 기반 조회 — `member_id = memberId` 필터 필수 (타인 조회 차단)
-  - [ ] `interview_sessions` JOIN — `session_type` / `interview_type` / `target_company` / `session_status` 취득
-  - [ ] `career_histories.created_at DESC` 정렬, PageRequest 0-based
-  - [ ] 반환: `PaginationResponse<HistoryItem>`
+- [x] `getHistory(UUID memberId, int page, int size)`
+  - [x] `career_histories` 기반 조회 — `member_id = memberId` 필터 필수 (타인 조회 차단)
+  - [x] 2-query N+1 방지: CareerHistory 페이지 조회 → `findAllBySessionIdIn` 벌크 fetch → Map 조인
+  - [x] `career_histories.created_at DESC` 정렬, PageRequest 0-based
+  - [x] 세션 삭제된 이력은 sessionType/sessionStatus null 처리
+  - [x] 반환: `PaginationResponse<HistoryItem>`
 
 ---
 
@@ -160,22 +166,22 @@
 
 - [x] `InterviewSessionController.java`
   - [x] `POST /api/v1/user/interview/sessions` — `@RequestBody @Valid RequestStartSession`
-  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/text` — `@RequestBody @Valid RequestSubmitTextAnswer`
-  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice` — `@RequestParam MultipartFile audioChunk` + 파라미터
-  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/end`
+  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/text` — `@PathVariable UUID`, `@RequestBody @Valid RequestSubmitTextAnswer`
+  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice` — `@PathVariable UUID`, `@RequestParam MultipartFile audioChunk` + 파라미터, `consumes = MULTIPART_FORM_DATA`, `questionOrder @Min(1)` / `chunkIndex @Min(0)` 하한값 검증 (`@Validated` 적용)
+  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/end` — `@PathVariable UUID`
   - [x] 모든 메서드에 `@AuthenticationPrincipal AuthPrincipal` 적용
   - [x] Controller에서 `try-catch` 사용 금지
 
 - [x] `InterviewReportController.java`
-  - [x] `GET /api/v1/user/interview/sessions/{sessionId}/report`
+  - [x] `GET /api/v1/user/interview/sessions/{sessionId}/report` — `@PathVariable UUID sessionId`
 
-- [ ] `InterviewHistoryController.java`
-  - [ ] `GET /api/v1/user/interview/history` — `@RequestParam(defaultValue="0") int page`, `@RequestParam(defaultValue="10") int size`
+- [x] `InterviewHistoryController.java`
+  - [x] `GET /api/v1/user/interview/history` — `@RequestParam(defaultValue="0") int page`, `@RequestParam(defaultValue="10") int size`
 
 - [x] Swagger Docs 인터페이스 분리
   - [x] `InterviewSessionControllerDocs.java`
   - [x] `InterviewReportControllerDocs.java`
-  - [ ] `InterviewHistoryControllerDocs.java`
+  - [x] `InterviewHistoryControllerDocs.java`
 
 ---
 
@@ -184,36 +190,39 @@
 > **REPORT_READY 유실 방지**: 클라이언트 재연결 시 해당 세션의 `career_histories` 레코드 존재 여부를 DB에서 확인하여
 > 이미 완료 상태라면 `REPORT_READY` 메시지를 즉시 재전송한다.
 
-- [x] Spring WebSocket 핸들러 구현
-  - [x] 엔드포인트: `WS /ws/user/interview/{sessionId}/chat?token={accessToken}`
-  - [x] 연결 시 토큰 검증 — 실패 시 handshake 거절 (false 반환)
-  - [x] 연결 시 `sessionId` 소유권 검증 — 실패 시 handshake 거절
-  - [x] 재연결 시 피드백 존재 여부 확인 → `REPORT_READY` 즉시 재전송
-- [x] 메시지 전송 구현
-  - [x] `SESSION_START` — 세션 시작 안내
-  - [x] `REPORT_READY` — 리포트 생성 완료 알림
-  - [x] `ERROR` — 처리 오류 발생 시 클라이언트에 전송
-- [x] `InterviewWebSocketSessionRegistry` — ConcurrentHashMap 기반 세션 관리
+- [ ] Spring WebSocket 핸들러 구현
+  - [ ] 엔드포인트: `WS /ws/user/interview/{sessionId}/chat?token={accessToken}`
+  - [ ] 연결 시 토큰 검증 — 실패 시 Close 1008
+  - [ ] 연결 시 `sessionId` 소유권 검증 — 실패 시 Close 1008
+- [ ] 메시지 전송 구현
+  - [ ] `SYSTEM(SESSION_START)` — 세션 시작 안내
+  - [ ] `QUESTION` — AI 질문 전달 (FastAPI 콜백 수신 후 릴레이)
+  - [ ] `SYSTEM(REPORT_READY)` — 리포트 생성 완료 알림
+  - [ ] `ERROR` — 처리 오류 발생 시 클라이언트에 전송
+- [ ] FastAPI 콜백 처리 실패 시 재시도 로직
+  - [ ] `career_histories` INSERT 실패 시 최소 1회 재시도 + 실패 로그 기록
+  - [ ] `REPORT_READY` WebSocket 전송 실패 시 최소 1회 재시도 + 실패 로그 기록
 
 ---
 
 ## Phase 6-1 — 세션 타임아웃 스케줄러
 
-- [x] `InterviewSessionScheduler.java` 구현
-  - [x] `@Scheduled(cron = "0 0 * * * *")` — 1시간 주기 실행
-  - [x] 조회 조건: `started_at < NOW() - 24h` AND `session_status = 'IN_PROGRESS'` AND `updated_at < NOW() - 5min`
-  - [x] 해당 세션 일괄 `FAILED` 전이
-  - [x] 처리 건수 `log.info` 기록
+- [ ] `InterviewSessionScheduler.java` 구현
+  - [ ] `@Scheduled(cron = "0 0 * * * *")` — 1시간 주기 실행
+  - [ ] 조회 조건: `started_at < NOW() - 24h` AND `session_status = 'IN_PROGRESS'` AND `updated_at < NOW() - 5min`
+  - [ ] 해당 세션 일괄 `FAILED` 전이
+  - [ ] 처리 건수 `log.info` 기록
 
 ## Phase 6-2 — FastAPI 콜백 수신 Controller
 
-- [x] `InterviewCallbackController.java` — `POST /internal/api/v1/interview/callback/{sessionId}/report`
-  - [x] `X-Internal-Secret` 헤더 검증 — 불일치 시 401 반환 (값은 `${INTERVIEW_INTERNAL_SECRET}` 환경변수)
-  - [x] `AIInterviewFeedbackRepository.existsBySessionId(sessionId)` 멱등성 체크 — 이미 존재하면 REPORT_READY 재전송 후 200 반환
-  - [x] `ai_interview_feedbacks` 저장
-  - [x] `interview_sessions.total_score` 업데이트
-  - [x] `career_histories` INSERT
-  - [x] WebSocket `REPORT_READY` 전송
+- [ ] `InterviewCallbackController.java` — `POST /internal/api/v1/interview/callback/{sessionId}/report`
+  - [ ] `X-Internal-Secret` 헤더 검증 — 불일치 시 401 반환 (값은 환경 변수로 관리)
+  - [ ] `AIInterviewFeedbackRepository.existsBySessionId(sessionId)` 멱등성 체크 — 이미 존재하면 200 즉시 반환
+  - [ ] `ai_interview_feedbacks` 저장
+  - [ ] `interview_sessions.total_score` 업데이트
+  - [ ] `career_histories` INSERT
+  - [ ] WebSocket `REPORT_READY` 전송 (`data.reportUrl` 포함)
+  - [ ] 실패 시 최소 1회 재시도 + `log.error` 기록
 
 ---
 

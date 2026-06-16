@@ -3,11 +3,14 @@ package kr.co.carrer.admin.auth.entity;
 import jakarta.persistence.*;
 import kr.co.carrer.admin.auth.type.AdminRole;
 import kr.co.carrer.admin.auth.type.AdminStatus;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "admins")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Admin {
 
     @Id
@@ -34,6 +37,9 @@ public class Admin {
 
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
+
+    @Column(name = "last_login_ip", length = 45)
+    private String lastLoginIp;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -63,4 +69,10 @@ public class Admin {
     public Instant getLastLoginAt() { return lastLoginAt; }
 
     public void updateLastLoginAt(Instant time) { this.lastLoginAt = time; }
+
+    public void updateLastLoginIp(String ip) { this.lastLoginIp = ip; }
+
+    public void lockAccount() { this.status = AdminStatus.LOCKED; }
+
+    public void recoverFromLock() { this.status = AdminStatus.ACTIVE; }
 }

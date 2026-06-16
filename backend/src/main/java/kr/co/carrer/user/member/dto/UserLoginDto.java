@@ -38,6 +38,8 @@ public class UserLoginDto {
         }
     }
 
+    public record TokenRefreshResponse(String accessToken) {}
+
     @Getter
     public static class MemberInfo {
         private final UUID memberId;

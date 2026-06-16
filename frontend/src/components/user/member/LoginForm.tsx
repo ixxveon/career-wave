@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { AlertCircle, LockKeyhole, UserRound } from 'lucide-react';
+import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
 import type { FormEventHandler } from 'react';
 import type { LoginRouteDecision } from '../../../types/user/member';
 import type { LoginFormErrors } from '../../../utils/user/member/loginSchema';
@@ -51,7 +52,8 @@ export function LoginForm({
             type="text"
             placeholder="아이디를 입력하세요"
             value={credentials.loginId}
-            onChange={(event) => onCredentialChange('loginId', event.target.value)}
+            onChange={(event) => { onCredentialChange('loginId', event.target.value); applyInputFill(event.target); }}
+            onBlur={(event) => clearInputFill(event.target)}
           />
         </span>
         {fieldErrors.loginId && (
@@ -72,7 +74,8 @@ export function LoginForm({
             type="password"
             placeholder="비밀번호를 입력하세요"
             value={credentials.password}
-            onChange={(event) => onCredentialChange('password', event.target.value)}
+            onChange={(event) => { onCredentialChange('password', event.target.value); applyInputFill(event.target); }}
+            onBlur={(event) => clearInputFill(event.target)}
           />
         </span>
         {fieldErrors.password && (

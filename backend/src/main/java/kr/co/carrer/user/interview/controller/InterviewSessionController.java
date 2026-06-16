@@ -1,6 +1,7 @@
 package kr.co.carrer.user.interview.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.interview.docs.InterviewSessionControllerDocs;
@@ -8,12 +9,14 @@ import kr.co.carrer.user.interview.dto.InterviewDTO;
 import kr.co.carrer.user.interview.service.InterviewSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user/interview/sessions")
@@ -35,28 +38,28 @@ public class InterviewSessionController implements InterviewSessionControllerDoc
     @PostMapping("/{sessionId}/answer/text")
     public ResponseEntity<ApiResponse<InterviewDTO.ResponseSubmitTextAnswer>> submitTextAnswer(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable String sessionId,
+            @PathVariable UUID sessionId,
             @RequestBody @Valid InterviewDTO.RequestSubmitTextAnswer dto
     ) {
         UUID memberId = UUID.fromString(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(
-                interviewSessionService.submitTextAnswer(memberId, UUID.fromString(sessionId), dto)
+                interviewSessionService.submitTextAnswer(memberId, sessionId, dto)
         ));
     }
 
     @Override
-    @PostMapping("/{sessionId}/answer/voice")
+    @PostMapping(value = "/{sessionId}/answer/voice", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<InterviewDTO.ResponseSubmitVoiceChunk>> submitVoiceChunk(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable String sessionId,
+            @PathVariable UUID sessionId,
             @RequestParam MultipartFile audioChunk,
-            @RequestParam int questionOrder,
-            @RequestParam int chunkIndex,
+            @RequestParam @Min(1) int questionOrder,
+            @RequestParam @Min(0) int chunkIndex,
             @RequestParam boolean isFinal
     ) {
         UUID memberId = UUID.fromString(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(
-                interviewSessionService.submitVoiceChunk(memberId, UUID.fromString(sessionId), audioChunk, questionOrder, chunkIndex, isFinal)
+                interviewSessionService.submitVoiceChunk(memberId, sessionId, audioChunk, questionOrder, chunkIndex, isFinal)
         ));
     }
 
@@ -64,11 +67,11 @@ public class InterviewSessionController implements InterviewSessionControllerDoc
     @PostMapping("/{sessionId}/end")
     public ResponseEntity<ApiResponse<InterviewDTO.ResponseEndSession>> endSession(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable String sessionId
+            @PathVariable UUID sessionId
     ) {
         UUID memberId = UUID.fromString(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(
-                interviewSessionService.endSession(memberId, UUID.fromString(sessionId))
+                interviewSessionService.endSession(memberId, sessionId)
         ));
     }
 }

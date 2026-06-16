@@ -79,7 +79,7 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 | `question` | TEXT | NOT NULL | 문항 내용 |
 | `answer` | TEXT | NOT NULL | 답변 내용 (max 1000자) |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 생성 일시 |
-| UNIQUE | `(document_id, order_num)` | `CONSTRAINT uq_clc_document_order` | 동일 문서 내 순서 중복 방지 |
+| UNIQUE | `(document_id, order_num)` | | 동일 문서 내 순서 중복 방지 |
 
 ---
 
@@ -90,7 +90,11 @@ user/resume/
 ├── controller/
 │   └── ResumeController.java
 ├── service/
-│   └── ResumeService.java
+│   ├── ResumeService.java              ← 인터페이스
+│   ├── FileValidator.java              ← Tika MIME 검증 + 크기 검증
+│   ├── FastApiClient.java              ← FastAPI 분석 트리거 (WebClient)
+│   └── impl/
+│       └── ResumeServiceImpl.java      ← 구현체
 ├── dto/
 │   └── ResumeDTO.java
 ├── entity/
@@ -103,20 +107,37 @@ user/resume/
 │   ├── CoverLetterMetaRepository.java
 │   ├── CoverLetterContentRepository.java
 │   └── DocumentFeedbackRepository.java
+├── exception/
+│   └── ResumeErrorCode.java        ← resume 전용 에러코드 (BaseErrorCode 구현)
 ├── type/
 │   ├── FileType.java
 │   └── DocumentStatus.java
 └── docs/
     └── ResumeControllerDocs.java
 
-global/websocket/               ← resume + interview 공통 WebSocket 인프라
-├── WebSocketConfig.java        (STOMP 엔드포인트 /ws/user/resume 등록, 토픽 prefix /topic 설정)
-├── WebSocketHandshakeInterceptor.java (?token 쿼리 파라미터 JWT 검증, memberId 세션 주입)
-├── StompChannelInterceptor.java (CONNECT 프레임 수신 시 세션 memberId 재검증, SUBSCRIBE 시 소유권 검증)
-└── WebSocketEventListener.java  (연결·구독·해제 이벤트 처리, Grace Period TaskScheduler 관리)
+global/
+├── exception/
+│   └── BaseErrorCode.java          ← 도메인별 ErrorCode 공통 인터페이스
+├── s3/
+│   ├── S3Config.java               ← AWS S3Client 빈 등록
+│   └── S3Uploader.java             ← S3 업로드 (resumes/{날짜}/{UUID}.{확장자})
+└── config/
+    └── WebSocketConfig.java        ← STOMP 엔드포인트 등록, broker prefix 설정
+
+user/resume/websocket/              ← resume 전용 WebSocket 인프라
+├── ResumeHandshakeInterceptor.java  (?token 쿼리 파라미터 JWT 검증, memberId 세션 주입)
+├── ResumeStompChannelInterceptor.java (CONNECT 재검증, SUBSCRIBE IDOR 검증, Snapshot 전송, DisconnectEvent 처리)
+├── DocumentAnalysisEventListener.java (@TransactionalEventListener AFTER_COMMIT 브로드캐스트, Grace Period 타이머)
+├── WebSocketSessionRegistry.java   (sessionId↔WebSocketSession / documentId↔sessionId 양방향 매핑, session.close 호출)
+├── ResumeWebSocketHandlerDecoratorFactory.java (afterConnectionEstablished/Closed에서 Registry 등록/해제)
+└── WebSocketMessage.java           (payload DTO — documentId, status: ANALYZING|COMPLETED|FAILED)
 ```
 
-> WebSocket 설정·인터셉터는 `global/websocket/`에 위치 — interview 도메인(실시간 텍스트 면접)에서도 WebSocket을 사용하므로 공통 인프라로 분리 확정.
+**WebSocketConfig 주요 설정:**
+- STOMP 엔드포인트: `/ws/user/resume`
+- Simple Broker prefix: `/topic`, `/queue`
+- User Destination prefix: `/user`
+- `setAllowedOriginPatterns`: 환경 변수 `WEBSOCKET_ALLOWED_ORIGINS` 주입 (기본값 `*`)
 
 ---
 
@@ -237,10 +258,13 @@ GET  /api/v1/user/resume/history?page=0&size=10
       → ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>
       본인 문서 최신순 페이징 조회
 
-POST /api/v1/user/resume/{documentId}/webhook        [FastAPI → Spring 내부 전용]
+POST /api/v1/user/resume/webhook                      [FastAPI → Spring 내부 전용]
+      X-Internal-Secret: {WEBHOOK_SECRET}
       → 분석 완료 콜백 수신 → DB 상태 업데이트 → WebSocket으로 프론트 알림
 
-STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{documentId}/status
+STOMP /ws/user/resume?token={accessToken}
+      구독 ① /topic/resume/{documentId}/status       ← Webhook 수신 후 브로드캐스트
+      구독 ② /user/queue/resume/{documentId}/status  ← SUBSCRIBE 직후 1회 개인 Snapshot (재연결 대응)
       → 분석 상태 실시간 메시지 (ANALYZING / COMPLETED / FAILED)
 ```
 
@@ -256,7 +280,7 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 - 파일 크기 10MB 초과 → `INVALID_FILE_SIZE(400)`
 - 확장자 PDF·DOC·DOCX 외 → `INVALID_FILE_TYPE(400)`
   - **MIME type 기반 검증 필수** — 확장자 위조 파일 차단 목적
-  - `Apache Tika` (`org.apache.tika:tika-core`) 사용 확정 — `build.gradle` 의존성 추가 필요, 팀 공유 예정
+  - `Apache Tika` (`org.apache.tika:tika-core:3.2.2`) 사용 확정 — `build.gradle` 의존성 추가 완료
   - `Tika.detect(InputStream)` 으로 `application/pdf` 등 실제 MIME 확인
 - **검증 통과 후** UUID 기반 저장 파일명 생성 (`{UUID}.{확장자}`)
 - S3 저장 경로: `resumes/{yyyy-MM-dd}/{UUID}.{확장자}` — 날짜별 폴더로 파일 분산 관리
@@ -268,8 +292,8 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 - 반환: `ResumeDTO.ResponseUpload`
 
 #### submitCoverLetter(UUID memberId, ResumeDTO.RequestCoverLetter dto)
-- 문항 수 1~5개 외 → `INVALID_CONTENT_COUNT(400)`
-- 답변 1000자 초과 → `INVALID_CONTENT_LENGTH(400)`
+- 문항 수 1~5개 외 → Bean Validation `@Size(min=1, max=5)` 에서 400 반환 (메시지: "자기소개서 문항은 1개 이상 5개 이하로 입력해주세요.")
+- 답변 1000자 초과 → Bean Validation `@Size(max=1000)` 에서 400 반환 (메시지: "자기소개서 답변은 1000자를 초과할 수 없습니다.")
 - `Document` 저장 (`status = UPLOADED`, `file_url = null`)
 - `CoverLetterContent` 벌크 저장
 - FastAPI 분석 트리거 호출 → 202 Accepted 기대
@@ -299,12 +323,16 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 |-----------|------|-----------|
 | `INVALID_FILE_SIZE` | 400 | 파일 크기 10MB 초과 |
 | `INVALID_FILE_TYPE` | 400 | PDF·DOC·DOCX 외 확장자 |
-| `INVALID_CONTENT_COUNT` | 400 | 문항 수 범위(1~5) 위반 |
-| `INVALID_CONTENT_LENGTH` | 400 | 답변 1000자 초과 |
+| `DUPLICATE_CONTENT_ORDER` | 400 | 자기소개서 문항 순서(order) 중복 |
 | `DOCUMENT_NOT_FOUND` | 404 | 존재하지 않는 documentId |
 | `DOCUMENT_ACCESS_DENIED` | 403 | 본인 소유가 아닌 문서 접근 (IDOR) |
 | `FEEDBACK_PARSE_ERROR` | 500 | feedback_text JSON 역직렬화 실패 (FastAPI 응답 구조 변경 등) |
 | `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
+| `WEBHOOK_SECRET_INVALID` | 403 | 유효하지 않은 Webhook 인증 키 |
+| `S3_UPLOAD_FAILED` | 500 | S3 파일 업로드 실패 |
+
+> `MaxUploadSizeExceededException` (Tomcat 레벨 파일 크기 초과) 은 `GlobalExceptionHandler`에서 별도 처리하여 400 반환.  
+> 실제 업로드 상한은 `spring.servlet.multipart.max-file-size=10MB` / `max-request-size=11MB`(Spring)이 강제하며, `server.tomcat.max-swallow-size=11MB`는 초과 요청을 Tomcat이 배수(drain)하는 동작만 제어한다 — 미설정 시 Tomcat이 응답 전송 전에 커넥션을 끊어 클라이언트가 "Failed to fetch" 수신.
 
 ---
 
@@ -320,6 +348,28 @@ STOMP /ws/user/resume?token={accessToken}  → 구독 토픽 /topic/resume/{docu
 - members 테이블 PK는 UUID (`gen_random_uuid()`) — `document.member_id` FK 타입 동일하게 UUID 적용
 - `documents` 테이블에 `error_message TEXT NULL` 컬럼 추가 — 분석 `FAILED` 시 오류 메시지 저장, 정상 완료 시 `null`
 - `document_feedbacks` 테이블에 `overall_review TEXT NULL` 컬럼 추가 — FastAPI가 Webhook으로 전달하는 AI 종합 총평 저장
+
+---
+
+## 로컬 개발 환경 설정
+
+### S3 Mock 업로드
+
+AWS 자격증명 없이 로컬에서 Swagger 테스트 시 `.env`에 아래 값을 추가한다.
+
+```properties
+AWS_S3_MOCK_UPLOAD=true
+```
+
+`true`로 설정하면 실제 S3 업로드 없이 가짜 URL(`https://dummy-bucket.s3...`)을 반환한다.  
+기본값 `false` — 프로덕션 환경에서는 해당 환경변수를 설정하지 않으면 자동으로 실제 S3 업로드 동작.
+
+### JWT 인증
+
+`ResumeController`는 `@AuthenticationPrincipal AuthPrincipal principal`로 `memberId`를 추출한다.  
+Phase 8에서 `tempMemberId` 임시 코드는 완전히 제거되었으며, JWT 필터(`JwtAuthenticationFilter`)가 모든 `/api/v1/user/**` 요청에 적용된다.
+
+로컬 개발 시 Swagger에서 테스트하려면 `POST /api/v1/user/members/login` 로그인 후 발급된 Access Token을 Bearer 헤더에 설정한다.
 
 ---
 
@@ -352,5 +402,17 @@ documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
 ### 4. WebSocket 연결 안전성 (구독 시점 소유권 검증)
 
 JWT 인증 토큰이 유효하더라도 **아무 `documentId`나 구독할 수 있어서는 안 된다.**  
-`StompChannelInterceptor`의 SUBSCRIBE 프레임 처리 시 구독 토픽의 `documentId`와 인증 유저의 `memberId`를 `DocumentRepository`로 DB 재조회하여 소유권을 검증한다.  
+`ResumeStompChannelInterceptor`의 SUBSCRIBE 프레임 처리 시 구독 토픽의 `documentId`와 인증 유저의 `memberId`를 `DocumentRepository`로 DB 재조회하여 소유권을 검증한다.  
 불일치 시 Close 1008로 즉시 연결을 거부한다.
+
+### 5. Snapshot은 구독 세션에만 전송 (convertAndSendToUser)
+
+SUBSCRIBE 직후 전송하는 현재 상태 Snapshot은 **해당 세션에만** 전달해야 한다.  
+`SimpMessagingTemplate.convertAndSend()`는 토픽 구독자 전원에게 브로드캐스트하므로 사용 금지.  
+반드시 `convertAndSendToUser(sessionId, destination, payload, headers)` + `SESSION_ID_HEADER`를 활용한다.
+
+### 6. 세션 종료는 WebSocketSessionRegistry를 통해 수행
+
+Grace Period 만료 후 서버가 세션을 닫을 때 `SESSION_CLOSE` 메시지를 payload로 전송하지 않는다.  
+`WebSocketSessionRegistry.closeSession(documentId)` → `WebSocketSession.close(CloseStatus.NORMAL)` 으로 Close 1000을 전송한다.  
+`WebSocketSession`은 `ResumeWebSocketHandlerDecoratorFactory`의 `afterConnectionEstablished`에서 Registry에 등록된다.

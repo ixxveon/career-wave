@@ -15,6 +15,8 @@ import kr.co.carrer.user.resume.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.ZonedDateTime;
@@ -31,6 +33,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     private final InterviewFastApiClient fastApiClient;
 
     @Override
+    @Transactional
     public InterviewDTO.ResponseStartSession startSession(UUID memberId, InterviewDTO.RequestStartSession dto) {
         SessionType sessionType = parseSessionType(dto.sessionType());
         InterviewType interviewType = parseInterviewType(dto.interviewType());
@@ -39,7 +42,14 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         InterviewSession saved = saveNewSession(memberId, documentId, sessionType, interviewType, dto.targetCompany());
 
         if (documentId != null) {
-            fastApiClient.triggerRagContext(saved.getSessionId(), documentId);
+            UUID sessionId = saved.getSessionId();
+            UUID finalDocumentId = documentId;
+            if (TransactionSynchronizationManager.isSynchronizationActive()) TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    fastApiClient.triggerRagContext(sessionId, finalDocumentId);
+                }
+            });
         }
 
         return new InterviewDTO.ResponseStartSession(
@@ -66,16 +76,27 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     }
 
     @Override
+    @Transactional
     public InterviewDTO.ResponseSubmitTextAnswer submitTextAnswer(UUID memberId, UUID sessionId, InterviewDTO.RequestSubmitTextAnswer dto) {
         InterviewMessage saved = saveAnswerMessage(memberId, sessionId, dto);
-        fastApiClient.triggerLlmPipeline(sessionId, dto.questionOrder());
+        int questionOrder = dto.questionOrder();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                fastApiClient.triggerLlmPipeline(sessionId, questionOrder);
+            }
+        });
         return new InterviewDTO.ResponseSubmitTextAnswer(saved.getMessageId(), saved.getCreatedAt());
     }
 
     @Transactional
     protected InterviewMessage saveAnswerMessage(UUID memberId, UUID sessionId, InterviewDTO.RequestSubmitTextAnswer dto) {
-        InterviewSession session = sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)
-                .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN));
+        InterviewSession session = sessionRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_NOT_FOUND));
+
+        if (!session.getMemberId().equals(memberId)) {
+            throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN);
+        }
 
         if (!session.isInProgress()) {
             throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_ALREADY_ENDED);
@@ -97,14 +118,20 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
 
     @Transactional(readOnly = true)
     protected void validateSessionOwnership(UUID memberId, UUID sessionId) {
-        InterviewSession session = sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)
-                .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN));
+        InterviewSession session = sessionRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_NOT_FOUND));
+        if (!session.getMemberId().equals(memberId)) {
+            throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN);
+        }
         if (!session.isInProgress()) {
             throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_ALREADY_ENDED);
         }
     }
 
     private void validateAudioContentType(MultipartFile audioChunk) {
+        if (audioChunk.isEmpty()) {
+            throw new CustomException(InterviewErrorCode.INTERVIEW_INVALID_AUDIO_FORMAT);
+        }
         String contentType = audioChunk.getContentType();
         if (contentType == null || !ALLOWED_AUDIO_TYPES.contains(contentType)) {
             throw new CustomException(InterviewErrorCode.INTERVIEW_INVALID_AUDIO_FORMAT);
@@ -112,16 +139,26 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     }
 
     @Override
+    @Transactional
     public InterviewDTO.ResponseEndSession endSession(UUID memberId, UUID sessionId) {
         ZonedDateTime endedAt = completeSession(memberId, sessionId);
-        fastApiClient.triggerReportGeneration(sessionId);
+        if (TransactionSynchronizationManager.isSynchronizationActive()) TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                fastApiClient.triggerReportGeneration(sessionId);
+            }
+        });
         return new InterviewDTO.ResponseEndSession(sessionId.toString(), "COMPLETED", endedAt);
     }
 
     @Transactional
     protected ZonedDateTime completeSession(UUID memberId, UUID sessionId) {
-        InterviewSession session = sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)
-                .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN));
+        InterviewSession session = sessionRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_NOT_FOUND));
+
+        if (!session.getMemberId().equals(memberId)) {
+            throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN);
+        }
 
         if (session.isEnded()) {
             throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_ALREADY_ENDED);

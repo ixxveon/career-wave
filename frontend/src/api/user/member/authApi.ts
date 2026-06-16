@@ -10,7 +10,11 @@ export const memberAuthApi = {
     });
   },
 
-  logout() {
+  async logout() {
+    await memberApiClient('/api/v1/user/members/logout', {
+      method: 'POST',
+      auth: true,
+    }).catch(() => {});
     authSession.clear();
   },
 

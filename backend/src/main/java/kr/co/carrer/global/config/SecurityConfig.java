@@ -1,12 +1,17 @@
 package kr.co.carrer.global.config;
 
+import kr.co.carrer.auth.filter.AccountStatusAuthorizationFilter;
+import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,15 +21,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(proxyTargetClass = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenBlacklistStore tokenBlacklistStore;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
+    private final List<AccountStatusPort> accountStatusPorts;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -32,7 +41,40 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/v1/admin/**")
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/api/v1/admin/auth/login",
+                    "/api/v1/admin/auth/refresh"
+                ).permitAll()
+                .requestMatchers("/api/v1/admin/auth/logout").authenticated()
+                .anyRequest().hasRole("ADMIN")
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(authenticationEntryPoint)
+                .accessDeniedHandler(accessDeniedHandler)
+            )
+            .addFilterBefore(
+                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
+                UsernamePasswordAuthenticationFilter.class
+            )
+            .addFilterAfter(
+                new AccountStatusAuthorizationFilter(accountStatusPorts),
+                JwtAuthenticationFilter.class
+            );
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain userSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
@@ -42,10 +84,6 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
-                    // admin 인증 — permitAll
-                    "/api/v1/admin/auth/login",
-                    "/api/v1/admin/auth/refresh",
-                    // user 인증 — permitAll
                     "/api/v1/user/members/login",
                     "/api/v1/user/members/token/refresh",
                     "/api/v1/user/members/login-id/check",
@@ -59,7 +97,17 @@ public class SecurityConfig {
                     "/api/v1/user/members/recovery/password-token",
                     "/api/v1/user/members/recovery/reset-password"
                 ).permitAll()
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                .requestMatchers("/ws/**").permitAll()
+                // FastAPI 내부 콜백 — X-Internal-Secret 헤더로 보안 검증 (컨트롤러 레이어)
+                .requestMatchers(HttpMethod.POST, "/api/v1/user/resume/webhook").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/user/job-notices", "/api/v1/user/job-notices/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
+                .requestMatchers(
+                    "/api/v1/user/members/logout",
+                    "/api/v1/user/members/me/status"
+                ).authenticated()
+                .requestMatchers("/api/v1/user/**").hasAnyRole("USER", "COMPANY")
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
@@ -67,8 +115,12 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .addFilterBefore(
-                new JwtAuthenticationFilter(jwtTokenProvider),
+                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
                 UsernamePasswordAuthenticationFilter.class
+            )
+            .addFilterAfter(
+                new AccountStatusAuthorizationFilter(accountStatusPorts),
+                JwtAuthenticationFilter.class
             );
 
         return http.build();

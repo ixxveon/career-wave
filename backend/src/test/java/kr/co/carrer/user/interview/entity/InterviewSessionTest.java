@@ -86,15 +86,17 @@ class InterviewSessionTest {
     class Fail {
 
         @Test
-        @DisplayName("fail() 호출 시 세션 상태가 FAILED로 변경된다")
-        void fail_shouldSetFailedStatus() {
+        @DisplayName("fail() 호출 시 세션 상태가 FAILED로 변경되고 endedAt이 기록된다")
+        void fail_shouldSetFailedStatusAndEndedAt() {
             InterviewSession session = InterviewSession.create(
                     UUID.randomUUID(), null, SessionType.VOICE, null, null
             );
+            ZonedDateTime failedAt = ZonedDateTime.now();
 
-            session.fail();
+            session.fail(failedAt);
 
             assertThat(session.getSessionStatus()).isEqualTo(SessionStatus.FAILED);
+            assertThat(session.getEndedAt()).isEqualTo(failedAt);
             assertThat(session.isEnded()).isTrue();
             assertThat(session.isInProgress()).isFalse();
         }
@@ -148,7 +150,7 @@ class InterviewSessionTest {
             InterviewSession session = InterviewSession.create(
                     UUID.randomUUID(), null, SessionType.TEXT, null, null
             );
-            session.fail();
+            session.fail(ZonedDateTime.now());
 
             assertThat(session.isEnded()).isTrue();
         }

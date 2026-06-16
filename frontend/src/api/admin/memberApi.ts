@@ -2,7 +2,7 @@ import axiosInstance from '../../utils/axiosInstance';
 
 // ── 공통 타입 ──────────────────────────────────────────────────
 
-export const MEMBER_STATUS = { ACTIVE: 'ACTIVE', SUSPENDED: 'SUSPENDED', BANNED: 'BANNED' } as const;
+export const MEMBER_STATUS = { ACTIVE: 'ACTIVE', SUSPENDED: 'SUSPENDED', BANNED: 'BANNED', LOCKED: 'LOCKED', WITHDRAWN: 'WITHDRAWN' } as const;
 export const MEMBER_ROLE = { ROLE_USER: 'ROLE_USER', ROLE_COMPANY: 'ROLE_COMPANY' } as const;
 export const PLAN_TYPE = { FREE: 'FREE', PREMIUM: 'PREMIUM' } as const;
 export const SANCTION_TYPE = { WARNING: 'WARNING', SUSPEND: 'SUSPEND', BLACKLIST: 'BLACKLIST' } as const;

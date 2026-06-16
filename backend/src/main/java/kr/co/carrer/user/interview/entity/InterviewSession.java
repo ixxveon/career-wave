@@ -97,8 +97,9 @@ public class InterviewSession {
         this.endedAt = endedAt;
     }
 
-    public void fail() {
+    public void fail(ZonedDateTime endedAt) {
         this.sessionStatus = SessionStatus.FAILED;
+        this.endedAt = endedAt;
     }
 
     public void updateTotalScore(Integer totalScore) {

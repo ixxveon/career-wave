@@ -34,7 +34,6 @@ vi.mock('../../../utils/user/member/authSession', () => ({
     setTokens: mockSetTokens,
     setMember: mockSetMember,
     getAccessToken: vi.fn().mockReturnValue(null),
-    getRefreshToken: vi.fn().mockReturnValue(null),
   },
 }));
 
@@ -72,7 +71,7 @@ const COMPANY_MEMBER = {
   lastLoginAt: null,
 };
 
-const BASE_RESPONSE = { accessToken: 'mock-access', refreshToken: 'mock-refresh' };
+const BASE_RESPONSE = { accessToken: 'mock-access' };
 
 // ── 테스트 헬퍼 ───────────────────────────────────
 function setValidCredentials(result: ReturnType<typeof renderHook<ReturnType<typeof useLoginForm>, void>>['result']) {

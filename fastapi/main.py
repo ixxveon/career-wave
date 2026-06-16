@@ -37,6 +37,9 @@ async def health_check():
 # 사용자 AI 엔진 라우터
 # from user.api import interview_router
 # app.include_router(interview_router.router, prefix="/api/user")
+from user.resume.api import resume_router
+
+app.include_router(resume_router.router, prefix="/internal/user")
 
 # 어드민 스크래핑 라우터
 # from admin.api import scraper_router

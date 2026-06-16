@@ -12,6 +12,9 @@ import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
+import kr.co.carrer.auth.store.LoginAttemptStore;
+import kr.co.carrer.auth.store.RefreshTokenStore;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,11 +25,17 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,6 +43,9 @@ class AdminLoginServiceImplTest {
 
     @Mock AdminRepository adminRepository;
     @Mock HttpServletResponse httpResponse;
+    @Mock RefreshTokenStore refreshTokenStore;
+    @Mock TokenBlacklistStore tokenBlacklistStore;
+    @Mock LoginAttemptStore loginAttemptStore;
 
     private AdminLoginService service;
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -48,11 +60,14 @@ class AdminLoginServiceImplTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new AdminLoginServiceImpl(adminRepository, encoder, provider, props);
+        service = new AdminLoginServiceImpl(adminRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore);
+        // 잠금 카운트 테스트가 아닌 경우 MAX 미달로 설정
+        lenient().when(loginAttemptStore.increment(any(), anyString())).thenReturn(1L);
+        lenient().when(loginAttemptStore.getMaxAttempts()).thenReturn(5);
     }
 
     private Admin createAdmin(AdminStatus status) throws Exception {
-        Admin a = new Admin();
+        Admin a = createAdminInstance();
         setField(a, "adminId", 1L);
         setField(a, "loginId", "admin@test.com");
         setField(a, "passwordHash", encoder.encode("adminpw123"));
@@ -60,6 +75,12 @@ class AdminLoginServiceImplTest {
         setField(a, "adminRole", AdminRole.MASTER);
         setField(a, "status", status);
         return a;
+    }
+
+    private Admin createAdminInstance() throws Exception {
+        java.lang.reflect.Constructor<Admin> ctor = Admin.class.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        return ctor.newInstance();
     }
 
     private void setField(Object obj, String fieldName, Object value) throws Exception {
@@ -74,7 +95,7 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
-        AdminLoginDto.Response result = service.login(req, httpResponse);
+        AdminLoginDto.Response result = service.login(req, httpResponse, "127.0.0.1");
 
         assertThat(result.getAccessToken()).isNotBlank();
         assertThat(result.getAdminInfo().getRole()).isEqualTo("MASTER");
@@ -86,7 +107,7 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId(anyString())).thenReturn(Optional.empty());
         AdminLoginDto.Request req = new AdminLoginDto.Request("wrong@test.com", "pw");
 
-        assertThatThrownBy(() -> service.login(req, httpResponse))
+        assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
     }
@@ -97,7 +118,7 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
 
-        assertThatThrownBy(() -> service.login(req, httpResponse))
+        assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
     }
@@ -108,9 +129,68 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
 
-        assertThatThrownBy(() -> service.login(req, httpResponse))
+        assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_ACCOUNT_LOCKED);
+    }
+
+    @Test
+    void 비밀번호_5회_실패_시_LOCKED_처리() throws Exception {
+        Admin admin = createAdmin(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+        when(loginAttemptStore.increment(any(), anyString())).thenReturn(5L);
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
+        assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_ACCOUNT_LOCKED);
+
+        assertThat(admin.getStatus()).isEqualTo(AdminStatus.LOCKED);
+        verify(loginAttemptStore).clear(AccountType.ADMIN, "admin@test.com");
+    }
+
+    @Test
+    void 로그인_성공_시_실패_카운터_초기화() throws Exception {
+        Admin admin = createAdmin(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
+        service.login(req, httpResponse, "127.0.0.1");
+
+        verify(loginAttemptStore).clear(AccountType.ADMIN, "admin@test.com");
+    }
+
+    @Test
+    void ADMIN_단일세션_신규_로그인_시_기존_세션_jti_blacklist_등록() throws Exception {
+        Admin admin = createAdmin(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+
+        String existingSessionId = "existing-session";
+        String existingJti = "existing-jti";
+        when(refreshTokenStore.getAllSessionIds(AccountType.ADMIN, "1"))
+                .thenReturn(List.of(existingSessionId));
+        when(refreshTokenStore.getAndDeleteAccessJti(AccountType.ADMIN, "1", existingSessionId))
+                .thenReturn(existingJti);
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
+        service.login(req, httpResponse, "127.0.0.1");
+
+        verify(tokenBlacklistStore).add(eq(existingJti), any());
+        verify(refreshTokenStore).deleteAll(AccountType.ADMIN, "1");
+    }
+
+    @Test
+    void admin_logout_후_access_token_blacklist_등록() throws Exception {
+        Admin admin = createAdmin(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
+        AdminLoginDto.Response loginResult = service.login(req, httpResponse, "127.0.0.1");
+
+        String accessToken = loginResult.getAccessToken();
+        service.logout(null, accessToken);
+
+        verify(tokenBlacklistStore, atLeastOnce()).add(anyString(), any());
     }
 
     @Test
@@ -119,7 +199,7 @@ class AdminLoginServiceImplTest {
         when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
-        AdminLoginDto.Response result = service.login(req, httpResponse);
+        AdminLoginDto.Response result = service.login(req, httpResponse, "127.0.0.1");
 
         assertThat(result.getAdminInfo().getRole()).isEqualTo(AdminRole.MASTER.name());
 

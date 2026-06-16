@@ -8,7 +8,10 @@ import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.admin.auth.filter.AdminAccountStatusPort;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.user.member.filter.UserAccountStatusPort;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -17,7 +20,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -35,7 +40,16 @@ class SecurityExceptionHandlerTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @MockBean
+    private TokenBlacklistStore tokenBlacklistStore;
+
+    @MockBean
     private AdminMemberService adminMemberService;
+
+    @MockBean
+    private AdminAccountStatusPort adminAccountStatusPort;
+
+    @MockBean
+    private UserAccountStatusPort userAccountStatusPort;
 
     @Test
     void 토큰_없음_401_ApiResponse_반환() throws Exception {
@@ -83,10 +97,16 @@ class SecurityExceptionHandlerTest {
         when(claims.getSubject()).thenReturn("uuid-1234");
         when(claims.get("roleType", String.class)).thenReturn("USER");
         when(claims.get("adminRole", String.class)).thenReturn(null);
+        // jti가 없으면 fail-closed(401)로 빠지므로 유효한 jti를 설정한다.
+        when(claims.get("jti", String.class)).thenReturn("test-jti-user");
 
         when(jwtTokenProvider.extractAccountType(anyString())).thenReturn(AccountType.USER);
         when(jwtTokenProvider.validate(anyString(), any(AccountType.class))).thenReturn(true);
         when(jwtTokenProvider.parse(anyString(), any(AccountType.class))).thenReturn(claims);
+        when(tokenBlacklistStore.isBlacklisted(eq("test-jti-user"), anyBoolean())).thenReturn(false);
+        // orElseThrow 미발생을 위해 UserAccountStatusPort가 USER를 supports하도록 stub.
+        // validateActive()는 mock 기본값(no-op) → Spring Security hasRole("ADMIN")이 403 처리.
+        when(userAccountStatusPort.supports(AccountType.USER)).thenReturn(true);
 
         mockMvc.perform(get("/api/v1/admin/members")
                         .header("Authorization", "Bearer user.access.token"))

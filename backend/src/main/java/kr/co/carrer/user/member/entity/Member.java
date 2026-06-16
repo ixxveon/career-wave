@@ -22,6 +22,9 @@ public class Member {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    @Column(name = "phone", length = 20)
+    private String phone;
+
     @Column(nullable = false, length = 255)
     private String password;
 
@@ -69,6 +72,7 @@ public class Member {
     public UUID getMemberId() { return memberId; }
     public String getLoginId() { return loginId; }
     public String getEmail() { return email; }
+    public String getPhone() { return phone; }
     public String getPassword() { return password; }
     public String getName() { return name; }
     public RoleType getRoleType() { return roleType; }
@@ -78,6 +82,21 @@ public class Member {
     public Instant getLastLoginAt() { return lastLoginAt; }
     public Instant getCreatedAt() { return createdAt; }
 
-    // Setter (lastLoginAt 갱신용)
     public void updateLastLoginAt(Instant time) { this.lastLoginAt = time; }
+
+    // locked_until 경과 시 ACTIVE 자동 복구 — dirty checking으로 DB 저장
+    public void recoverFromLock() {
+        this.memberStatus = MemberStatus.ACTIVE;
+        this.lockedUntil = null;
+    }
+
+    // 로그인 실패 5회 도달 시 잠금 처리 — dirty checking으로 DB 저장
+    public void lockAccount(Instant lockedUntil) {
+        this.memberStatus = MemberStatus.LOCKED;
+        this.lockedUntil = lockedUntil;
+    }
+    public void updateProfile(String name, String phone) {
+    this.name = name;
+    this.phone = phone;
+    }
 }

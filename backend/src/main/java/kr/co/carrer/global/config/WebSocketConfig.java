@@ -1,25 +1,51 @@
 package kr.co.carrer.global.config;
 
-import kr.co.carrer.user.interview.websocket.InterviewWebSocketHandler;
-import kr.co.carrer.user.interview.websocket.InterviewWebSocketHandshakeInterceptor;
+import kr.co.carrer.user.resume.websocket.ResumeHandshakeInterceptor;
+import kr.co.carrer.user.resume.websocket.ResumeStompChannelInterceptor;
+import kr.co.carrer.user.resume.websocket.ResumeWebSocketHandlerDecoratorFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.socket.config.annotation.EnableWebSocket;
-import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.messaging.simp.config.ChannelRegistration;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 @Configuration
-@EnableWebSocket
+@EnableWebSocketMessageBroker
 @RequiredArgsConstructor
-public class WebSocketConfig implements WebSocketConfigurer {
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final InterviewWebSocketHandler interviewWebSocketHandler;
-    private final InterviewWebSocketHandshakeInterceptor handshakeInterceptor;
+    @Value("${websocket.allowed-origins}")
+    private String allowedOrigins;
+
+    private final ResumeHandshakeInterceptor resumeHandshakeInterceptor;
+    private final ResumeStompChannelInterceptor resumeStompChannelInterceptor;
+    private final ResumeWebSocketHandlerDecoratorFactory resumeWebSocketHandlerDecoratorFactory;
 
     @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(interviewWebSocketHandler, "/ws/user/interview/{sessionId}/chat")
-                .addInterceptors(handshakeInterceptor)
-                .setAllowedOriginPatterns("*");
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.enableSimpleBroker("/topic", "/queue");
+        registry.setApplicationDestinationPrefixes("/app");
+        registry.setUserDestinationPrefix("/user");
+    }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws/user/resume")
+                .addInterceptors(resumeHandshakeInterceptor)
+                .setAllowedOriginPatterns(allowedOrigins);
+    }
+
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration.addDecoratorFactory(resumeWebSocketHandlerDecoratorFactory);
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(resumeStompChannelInterceptor);
     }
 }
