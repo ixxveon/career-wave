@@ -6,13 +6,13 @@
 
 ## Phase 1: 기반 설정
 
-- [ ] `fastapi/core/config.py` — Settings 클래스 작성
+- [x] `fastapi/core/config.py` — Settings 클래스 작성
   - `SPRING_BASE_URL`, `WEBHOOK_SECRET`, `OPENAI_API_KEY`, `OPENAI_MODEL`, AWS S3 환경 변수 로딩
   - `pydantic-settings` 또는 `python-dotenv` 기반 (팀 의존성 확인 필요)
-- [ ] `X-Internal-Secret` 헤더 검증 FastAPI 의존성 함수 작성
+- [x] `X-Internal-Secret` 헤더 검증 FastAPI 의존성 함수 작성
   - 헤더 누락 또는 값 불일치 시 `403 Forbidden` 반환
   - `core/` 또는 공통 미들웨어 위치에 배치
-- [ ] `fastapi/user/service/webhook_client.py` 작성
+- [x] `fastapi/user/resume/service/webhook_client.py` 작성
   - `httpx.AsyncClient` 비동기 POST 구현
   - 재시도 3회 지수 백오프 구현 (1s → 2s → 4s)
   - `X-Internal-Secret` 헤더 자동 포함
@@ -22,16 +22,16 @@
 
 ## Phase 2: 분석 트리거 라우터
 
-- [ ] `fastapi/user/api/resume_router.py` — Pydantic 요청 모델 정의
+- [x] `fastapi/user/resume/api/resume_router.py` — Pydantic 요청 모델 정의
   - `AnalyzeResumeRequest` (RESUME용: `documentId`, `fileType`, `fileUrl`, `originalName`)
   - `AnalyzeCoverLetterRequest` (COVER_LETTER용: `documentId`, `fileType`, `company`, `job`, `content[]`)
   - 또는 Union 타입 단일 모델 + `fileType` discriminator
-- [ ] `POST /internal/user/resume/analyze` 엔드포인트 구현
+- [x] `POST /internal/user/resume/analyze` 엔드포인트 구현
   - `X-Internal-Secret` 검증 의존성 주입
   - `BackgroundTasks.add_task()`로 분석 서비스 비동기 실행
   - `202 Accepted` 즉시 반환
   - 동일 `documentId` 중복 요청 처리 (처리 중 판단 로직)
-- [ ] `fastapi/main.py`에 라우터 등록
+- [x] `fastapi/main.py`에 라우터 등록
   - `app.include_router(resume_router.router, prefix="/internal/user")`
   - 기존 주석 처리된 라우터 등록 패턴 참고
 
@@ -39,7 +39,7 @@
 
 ## Phase 3: 파일 파싱 서비스
 
-- [ ] `fastapi/user/service/file_parser.py` 작성
+- [x] `fastapi/user/resume/service/file_parser.py` 작성
   - `boto3.client('s3')`로 S3 파일 스트림 다운로드
   - PDF 텍스트 추출 (`pdfplumber` 사용)
   - DOCX 텍스트 추출 (`python-docx` 사용)
@@ -50,12 +50,12 @@
 
 ## Phase 4: 프롬프트 및 AI 분석 서비스
 
-- [ ] `fastapi/user/prompts/resume_prompts.py` — 프롬프트 템플릿 정의
+- [ ] `fastapi/user/resume/prompts/resume_prompts.py` — 프롬프트 템플릿 정의
   - 이력서 분석 시스템 프롬프트 (STAR 분석, 수치화 분석 포함)
   - 자기소개서 분석 시스템 프롬프트 (회사·직무 컨텍스트, STAR 분석 제외)
   - 점수 기준 설명 (0~100 각 항목별 평가 기준)
   - JSON 형식 응답 강제 (`response_format` 또는 프롬프트 내 JSON 스키마 명시)
-- [ ] `fastapi/user/service/resume_service.py` 작성
+- [ ] `fastapi/user/resume/service/resume_service.py` 작성
   - 분석 오케스트레이션 함수 (`analyze_document(request)`)
   - 분석 시작 시 `logger.info(f"Analysis started for {document_id}")` 로그 기록 — 컨테이너 재시작/OOM 발생 시 디버깅 기준점
   - PENDING 콜백 전송 (분석 시작 직후)

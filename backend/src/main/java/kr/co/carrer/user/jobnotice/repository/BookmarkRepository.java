@@ -14,4 +14,6 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     List<Bookmark> findByMemberIdAndJobNoticeIdIn(UUID memberId, List<Long> jobNoticeIds);
 
     Optional<Bookmark> findByMemberIdAndJobNoticeId(UUID memberId, Long jobNoticeId);
+
+    Optional<Bookmark> findByBookmarkIdAndMemberId(Long bookmarkId, UUID memberId);
 }

@@ -81,7 +81,7 @@
 - **FR-021**: 시스템은 ACL 변경 또는 삭제 대상이 존재하지 않으면 `IP_ACL_NOT_FOUND`를 반환해야 한다.
 - **FR-022**: 시스템은 목록 조회 응답을 `ApiResponse<T>` 래퍼와 `content`, `page`, `size`, `totalElements`, `totalPages` 페이지네이션 구조로 반환해야 한다.
 - **FR-023**: 시스템은 모든 관리자 관리 API에 JWT 기반 인증과 역할 기반 인가를 적용해야 한다.
-- **FR-024**: 시스템은 문서상 권한 표기 `MASTER`, `BACKEND`, `CS`를 Spring Security의 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`와 일치하도록 해석해야 한다.
+- **FR-024**: 시스템은 관리자 API 1차 진입 권한을 Spring Security의 `ROLE_ADMIN`으로 제한하고, 문서상 권한 표기 `MASTER`, `BACKEND`, `CS`는 JWT `principal.adminRole` 값과 `@PreAuthorize` 조건으로 세분화해 해석해야 한다.
 - **FR-025**: 시스템은 관리자 계정과 IP ACL의 주요 변경 작업을 감사 추적 가능한 변경 단위로 처리해야 한다.
 - **FR-026**: 시스템은 `adminManagement` 문서를 관리자 계정과 IP ACL 기능 범위로 한정해야 하며, 감사 로그 조회 전용 API를 포함하지 않아야 한다.
 

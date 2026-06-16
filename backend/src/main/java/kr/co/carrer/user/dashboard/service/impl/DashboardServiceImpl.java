@@ -2,48 +2,46 @@ package kr.co.carrer.user.dashboard.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.dashboard.dto.DashboardDTO;
 import kr.co.carrer.user.dashboard.entity.PersonalProfile;
+import kr.co.carrer.user.dashboard.repository.DashboardBookmarkQueryRepository;
 import kr.co.carrer.user.dashboard.repository.PersonalProfileRepository;
 import kr.co.carrer.user.dashboard.service.DashboardService;
+import kr.co.carrer.user.jobnotice.entity.Bookmark;
+import kr.co.carrer.user.jobnotice.exception.JobNoticeErrorCode;
+import kr.co.carrer.user.jobnotice.repository.BookmarkRepository;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-import java.time.ZoneId;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
+    private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
+
     private final UserMemberRepository memberRepository;
     private final PersonalProfileRepository personalProfileRepository;
+    private final BookmarkRepository bookmarkRepository;
+    private final DashboardBookmarkQueryRepository dashboardBookmarkQueryRepository;
 
     @Override
-    // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
     public DashboardDTO.ProfileResponse getProfile(UUID memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        return new DashboardDTO.ProfileResponse(
-                member.getMemberId(),
-                member.getLoginId(),
-                member.getEmail(),
-                member.getName(),
-                // TODO: user.member.Member에 phone 필드 또는 프로필 연락처 저장 위치 확정 후 매핑
-                null,
-                member.getRoleType(),
-                member.getMemberStatus(),
-                member.getSubscriptionStatus(),
-                member.getCreatedAt().atZone(ZoneId.systemDefault())
-        );
+        return toProfileResponse(member);
     }
 
     @Override
-    // TODO: JWT 인증 적용 후 memberId는 SecurityContext에서 조회하도록 변경
     public DashboardDTO.GithubResponse getGithubProfile(UUID memberId) {
         memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
@@ -53,6 +51,74 @@ public class DashboardServiceImpl implements DashboardService {
                 .orElseGet(() -> new DashboardDTO.GithubResponse(null, null, false));
     }
 
+    @Override
+    public DashboardDTO.ProfileResponse updateProfile(
+            UUID memberId,
+            DashboardDTO.ProfileUpdateRequest request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        String name = request.name() != null ? request.name() : member.getName();
+        String phone = request.phone() != null ? request.phone() : member.getPhone();
+
+        member.updateProfile(name, phone);
+
+        if (request.githubUrl() != null) {
+            PersonalProfile personalProfile = personalProfileRepository.findByMemberId(memberId)
+                    .orElseGet(() -> PersonalProfile.create(memberId));
+
+            personalProfile.updateGithubUrl(request.githubUrl());
+            personalProfileRepository.save(personalProfile);
+        }
+
+        return toProfileResponse(member);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginationResponse<DashboardDTO.BookmarkResponse> getBookmarks(
+            UUID memberId,
+            String keyword,
+            int page,
+            int size) {
+
+        int safePage = Math.max(page, 1);
+
+        Page<DashboardDTO.BookmarkResponse> result = dashboardBookmarkQueryRepository.findBookmarks(
+                memberId,
+                keyword,
+                safePage,
+                size);
+
+        return PaginationResponse.of(
+                result.getContent(),
+                safePage,
+                size,
+                result.getTotalElements());
+    }
+
+    @Override
+    @Transactional
+    public void deleteBookmark(UUID memberId, Long bookmarkId) {
+        Bookmark bookmark = bookmarkRepository.findByBookmarkIdAndMemberId(bookmarkId, memberId)
+                .orElseThrow(() -> new CustomException(JobNoticeErrorCode.BOOKMARK_NOT_FOUND));
+
+        bookmarkRepository.delete(bookmark);
+    }
+
+    private DashboardDTO.ProfileResponse toProfileResponse(Member member) {
+        return new DashboardDTO.ProfileResponse(
+                member.getMemberId(),
+                member.getLoginId(),
+                member.getEmail(),
+                member.getName(),
+                member.getPhone(),
+                member.getRoleType(),
+                member.getMemberStatus(),
+                member.getSubscriptionStatus(),
+                member.getCreatedAt().atZone(SERVICE_ZONE_ID));
+    }
+
     private DashboardDTO.GithubResponse toGithubResponse(PersonalProfile personalProfile) {
         String githubUrl = personalProfile.getGithubUrl();
         boolean linked = githubUrl != null && !githubUrl.isBlank();
@@ -60,8 +126,7 @@ public class DashboardServiceImpl implements DashboardService {
         return new DashboardDTO.GithubResponse(
                 extractGithubId(githubUrl),
                 githubUrl,
-                linked
-        );
+                linked);
     }
 
     private String extractGithubId(String githubUrl) {

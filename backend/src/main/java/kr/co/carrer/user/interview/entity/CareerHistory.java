@@ -10,7 +10,13 @@ import java.util.UUID;
 
 @Getter
 @Entity
-@Table(name = "career_histories")
+@Table(
+        name = "career_histories",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_career_histories_session_id",
+                columnNames = {"session_id"}
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CareerHistory {
 

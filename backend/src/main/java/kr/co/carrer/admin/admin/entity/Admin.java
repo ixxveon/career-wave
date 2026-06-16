@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-@Entity
+@Entity(name = "AdminManagement")
 @Table(name = "admins")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -35,10 +35,13 @@ public class Admin {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
+    @Column(name = "login_id", nullable = false, unique = true, length = 255)
+    private String loginId;
+
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 50)
     private String name;
 
     @Enumerated(EnumType.STRING)
@@ -64,6 +67,7 @@ public class Admin {
     public static Admin create(String email, String passwordHash, String name, AdminRole adminRole) {
         Admin admin = new Admin();
         admin.email = email;
+        admin.loginId = email;
         admin.passwordHash = passwordHash;
         admin.name = name;
         admin.adminRole = adminRole;

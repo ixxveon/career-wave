@@ -26,44 +26,44 @@
 
 ## Phase 3 - Service
 
-- [ ] `AdminManagementService.java` 인터페이스를 작성한다.
-- [ ] 관리자 KPI 요약 조회 서비스 로직을 구현한다.
-- [ ] 관리자 계정 목록 조회 서비스 로직을 구현한다.
-- [ ] 관리자 계정 생성 서비스 로직을 구현한다.
-- [ ] 관리자 권한 변경 서비스 로직을 구현한다.
-- [ ] 관리자 상태 변경 서비스 로직을 구현한다.
-- [ ] 관리자 계정 삭제 서비스 로직을 구현한다.
-- [ ] IP ACL 목록 조회 서비스 로직을 구현한다.
-- [ ] IP ACL 등록 서비스 로직을 구현한다.
-- [ ] IP ACL 활성/비활성 변경 서비스 로직을 구현한다.
-- [ ] IP ACL 삭제 서비스 로직을 구현한다.
-- [ ] 감사 추적용 AuditLog 기록 연계 로직을 구현한다.
-- [ ] `AdminManagementErrorCode.java` 도메인 오류 코드를 작성한다.
+- [x] `AdminManagementService.java` 인터페이스를 작성한다.
+- [x] 관리자 KPI 요약 조회 서비스 로직을 구현한다.
+- [x] 관리자 계정 목록 조회 서비스 로직을 구현한다.
+- [x] 관리자 계정 생성 서비스 로직을 구현한다.
+- [x] 관리자 권한 변경 서비스 로직을 구현한다.
+- [x] 관리자 상태 변경 서비스 로직을 구현한다.
+- [x] 관리자 계정 삭제 서비스 로직을 구현한다.
+- [x] IP ACL 목록 조회 서비스 로직을 구현한다.
+- [x] IP ACL 등록 서비스 로직을 구현한다.
+- [x] IP ACL 활성/비활성 변경 서비스 로직을 구현한다.
+- [x] IP ACL 삭제 서비스 로직을 구현한다.
+- [x] 감사 추적용 AuditLog 기록 연계 로직을 구현한다.
+- [x] `AdminManagementErrorCode.java` 도메인 오류 코드를 작성한다.
 
 ## Phase 4 - API
 
-- [ ] `AdminManagementDTO.java`를 작성한다.
-- [ ] `AdminAclDTO.java`를 작성한다.
-- [ ] `GET /api/v1/admin/admins/summary` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/admins` Controller endpoint를 작성한다.
-- [ ] `POST /api/v1/admin/admins` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/admins/{adminId}/role` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/admins/{adminId}/status` Controller endpoint를 작성한다.
-- [ ] `DELETE /api/v1/admin/admins/{adminId}` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
-- [ ] `POST /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/admin-acls/{aclId}/enabled` Controller endpoint를 작성한다.
-- [ ] `DELETE /api/v1/admin/admin-acls/{aclId}` Controller endpoint를 작성한다.
-- [ ] `MASTER`, `BACKEND` 역할 정책과 JWT 인증 진입 조건을 API 계층에 반영한다.
+- [x] `AdminManagementDTO.java`를 작성한다.
+- [x] `AdminAclDTO.java`를 작성한다.
+- [x] `GET /api/v1/admin/admins/summary` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/admins` Controller endpoint를 작성한다.
+- [x] `POST /api/v1/admin/admins` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/admins/{adminId}/role` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/admins/{adminId}/status` Controller endpoint를 작성한다.
+- [x] `DELETE /api/v1/admin/admins/{adminId}` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
+- [x] `POST /api/v1/admin/admin-acls` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/admin-acls/{aclId}/enabled` Controller endpoint를 작성한다.
+- [x] `DELETE /api/v1/admin/admin-acls/{aclId}` Controller endpoint를 작성한다.
+- [x] `MASTER`, `BACKEND` 역할 정책과 JWT 인증 진입 조건을 API 계층에 반영한다.
 
 ## Phase 5 - Documentation
 
-- [ ] `AdminManagementDocs.java` Swagger 인터페이스를 작성한다.
-- [ ] 관리자 계정 API의 요청/응답 문서를 정리한다.
-- [ ] IP ACL API의 요청/응답 문서를 정리한다.
-- [ ] 관리자 계정/ACL Error Response 문서를 정리한다.
-- [ ] `api-schema.md`와 구현 대상 API 계약의 정합성을 점검한다.
-- [ ] `spec.md`, `constitution.md`, `plan.md`와 구현 범위 정합성을 점검한다.
+- [x] `AdminManagementDocs.java` Swagger 인터페이스를 작성한다.
+- [x] 관리자 계정 API의 요청/응답 문서를 정리한다.
+- [x] IP ACL API의 요청/응답 문서를 정리한다.
+- [x] 관리자 계정/ACL Error Response 문서를 정리한다.
+- [x] `api-schema.md`와 구현 대상 API 계약의 정합성을 점검한다.
+- [x] `spec.md`, `constitution.md`, `plan.md`와 구현 범위 정합성을 점검한다.
 
 ## Phase 6 - Test
 
@@ -86,4 +86,4 @@
 - [ ] 관리자/ACL 중복 상태 변경 예외 테스트를 작성한다.
 - [ ] 역할별 접근 제어 테스트를 작성한다.
 - [ ] `ApiResponse<T>`와 1-based 페이지네이션 응답 형식 테스트를 작성한다.
-- [ ] 감사 추적 AuditLog 기록 테스트를 작성한다.
+- [ ] 감사 추적 AuditLog 기록 테스트를 작성한다.   

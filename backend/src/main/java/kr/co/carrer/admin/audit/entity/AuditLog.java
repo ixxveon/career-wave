@@ -1,12 +1,16 @@
-package kr.co.carrer.admin.admin.entity;
+package kr.co.carrer.admin.audit.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import kr.co.carrer.admin.audit.type.AuditLogSeverity;
+import kr.co.carrer.admin.audit.type.AuditLogType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,26 +31,28 @@ public class AuditLog {
     @Column(name = "audit_log_id")
     private Long auditLogId;
 
-    @Column(name = "admin_id", nullable = false)
+    @Column(name = "admin_id")
     private Long adminId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "log_type", nullable = false, length = 50)
-    private String logType;
+    private AuditLogType logType;
 
     @Column(name = "action", nullable = false, length = 100)
     private String action;
 
-    @Column(name = "target_type", nullable = false, length = 50)
+    @Column(name = "target_type", length = 50)
     private String targetType;
 
-    @Column(name = "target_id", nullable = false)
-    private Long targetId;
+    @Column(name = "target_id", length = 255)
+    private String targetId;
 
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "severity", nullable = false, length = 20)
-    private String severity;
+    private AuditLogSeverity severity;
 
     @Column(name = "detail", columnDefinition = "TEXT")
     private String detail;
@@ -56,12 +62,12 @@ public class AuditLog {
 
     public static AuditLog create(
             Long adminId,
-            String logType,
+            AuditLogType logType,
             String action,
             String targetType,
-            Long targetId,
+            String targetId,
             String ipAddress,
-            String severity,
+            AuditLogSeverity severity,
             String detail
     ) {
         AuditLog auditLog = new AuditLog();

@@ -2,6 +2,9 @@ package kr.co.carrer.user.resume.websocket;
 
 import kr.co.carrer.user.resume.dto.WebSocketMessage;
 import kr.co.carrer.user.resume.event.DocumentAnalysisCompletedEvent;
+import kr.co.carrer.user.resume.event.DocumentAnalysisTriggerEvent;
+import kr.co.carrer.user.resume.service.DocumentStatusService;
+import kr.co.carrer.user.resume.service.FastApiClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -33,20 +36,36 @@ public class DocumentAnalysisEventListener {
     private final SimpMessagingTemplate messagingTemplate;
     private final TaskScheduler taskScheduler;
     private final WebSocketSessionRegistry sessionRegistry;
+    private final FastApiClient fastApiClient;
+    private final DocumentStatusService documentStatusService;
 
     @Autowired
     public DocumentAnalysisEventListener(
             @Lazy SimpMessagingTemplate messagingTemplate,
             TaskScheduler taskScheduler,
-            WebSocketSessionRegistry sessionRegistry
+            WebSocketSessionRegistry sessionRegistry,
+            FastApiClient fastApiClient,
+            DocumentStatusService documentStatusService
     ) {
         this.messagingTemplate = messagingTemplate;
         this.taskScheduler = taskScheduler;
         this.sessionRegistry = sessionRegistry;
+        this.fastApiClient = fastApiClient;
+        this.documentStatusService = documentStatusService;
     }
 
     // Grace Period 타이머 관리: documentId → ScheduledFuture
     private final Map<UUID, ScheduledFuture<?>> gracePeriodTimers = new ConcurrentHashMap<>();
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onAnalysisTrigger(DocumentAnalysisTriggerEvent event) {
+        fastApiClient.triggerAnalysis(
+                event.documentId(),
+                event.fileType(),
+                () -> documentStatusService.markFailed(event.documentId(), "FastAPI 분석 트리거 실패")
+        );
+        log.info("[FastAPI 트리거] DB 커밋 후 호출 — documentId: {}, fileType: {}", event.documentId(), event.fileType());
+    }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onAnalysisCompleted(DocumentAnalysisCompletedEvent event) {
