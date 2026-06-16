@@ -21,15 +21,17 @@ public interface InterviewSessionRepository extends JpaRepository<InterviewSessi
     Optional<InterviewSession> findBySessionIdAndMemberId(UUID sessionId, UUID memberId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT s FROM InterviewSession s WHERE s.memberId = :memberId AND s.sessionStatus = 'IN_PROGRESS'")
-    Optional<InterviewSession> findInProgressByMemberId(@Param("memberId") UUID memberId);
+    @Query("SELECT s FROM InterviewSession s WHERE s.memberId = :memberId AND s.sessionStatus = :status")
+    Optional<InterviewSession> findInProgressByMemberId(@Param("memberId") UUID memberId,
+            @Param("status") SessionStatus status);
 
     List<InterviewSession> findAllBySessionIdIn(Collection<UUID> sessionIds);
 
-    @Query("SELECT s FROM InterviewSession s WHERE s.sessionStatus = 'IN_PROGRESS' " +
+    @Query("SELECT s FROM InterviewSession s WHERE s.sessionStatus = :status " +
            "AND s.startedAt < :cutoff AND s.updatedAt < :recentCutoff")
     List<InterviewSession> findTimedOutSessions(
             @Param("cutoff") ZonedDateTime cutoff,
-            @Param("recentCutoff") ZonedDateTime recentCutoff
+            @Param("recentCutoff") ZonedDateTime recentCutoff,
+            @Param("status") SessionStatus status
     );
 }

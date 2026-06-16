@@ -28,6 +28,7 @@ public class InterviewReportServiceImpl implements InterviewReportService {
     @Override
     @Transactional(readOnly = true)
     public InterviewDTO.ResponseReport getReport(UUID memberId, UUID sessionId) {
+        // 세션 미존재와 소유권 불일치를 동일 응답으로 처리 (IDOR 방어)
         InterviewSession session = sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)
                 .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN));
 
