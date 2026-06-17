@@ -2,6 +2,7 @@ package kr.co.carrer.admin.audit.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import kr.co.carrer.admin.audit.type.AuditLogSeverity;
 import kr.co.carrer.admin.audit.type.AuditLogType;
 
@@ -10,149 +11,171 @@ import java.util.List;
 
 public class AuditLogDTO {
 
-    @Schema(description = "감사 로그 요약 조회 요청")
+    @Schema(description = "Audit log summary request")
     public record RequestSummary(
-        @Schema(description = "조회 시작 일시", example = "2026-06-10T00:00:00Z")
+        @Schema(description = "Summary range start", example = "2026-06-10T00:00:00Z")
         ZonedDateTime from,
 
-        @Schema(description = "조회 종료 일시", example = "2026-06-16T23:59:59Z")
+        @Schema(description = "Summary range end", example = "2026-06-16T23:59:59Z")
         ZonedDateTime to
     ) {}
 
-    @Schema(description = "감사 로그 목록 조회 요청")
+    @Schema(description = "Audit log list request")
     public record RequestList(
-        @Schema(description = "로그 유형", allowableValues = {"ADMIN_ACTIVITY", "ADMIN_MANAGEMENT", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"})
+        @Schema(
+            description = "Audit log type",
+            allowableValues = {"ADMIN_ACTIVITY", "ADMIN_MANAGEMENT", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"}
+        )
         String logType,
 
-        @Schema(description = "심각도", allowableValues = {"INFO", "WARN", "ERROR", "SUCCESS"})
+        @Schema(
+            description = "Audit log severity",
+            allowableValues = {"INFO", "WARN", "ERROR", "SUCCESS"}
+        )
         String severity,
 
-        @Schema(description = "검색어", example = "UPDATE_ADMIN_ROLE")
+        @Size(max = 100)
+        @Schema(description = "Search keyword", example = "UPDATE_ADMIN_ROLE")
         String keyword,
 
-        @Schema(description = "조회 시작 일시", example = "2026-06-10T00:00:00Z")
+        @Schema(description = "List range start", example = "2026-06-10T00:00:00Z")
         ZonedDateTime from,
 
-        @Schema(description = "조회 종료 일시", example = "2026-06-16T23:59:59Z")
+        @Schema(description = "List range end", example = "2026-06-16T23:59:59Z")
         ZonedDateTime to,
 
         @Min(1)
-        @Schema(description = "페이지 번호(1-based)", example = "1")
+        @Schema(description = "Page number (1-based)", example = "1")
         Integer page,
 
         @Min(1)
-        @Schema(description = "페이지 크기", example = "20")
+        @Schema(description = "Page size", example = "20")
         Integer size
     ) {}
 
-    @Schema(description = "감사 로그 요약 응답")
+    @Schema(description = "Audit log summary response")
     public record ResponseSummary(
-        @Schema(description = "전체 감사 로그 수")
+        @Schema(description = "Total audit log count")
         long totalCount,
 
-        @Schema(description = "관리자 활동 로그 수")
+        @Schema(description = "ADMIN_ACTIVITY count")
         long adminActivityCount,
 
-        @Schema(description = "AI Metrics 시스템 로그 수")
+        @Schema(description = "ADMIN_MANAGEMENT count")
+        long adminManagementCount,
+
+        @Schema(description = "AI_METRICS_SYSTEM count")
         long aiMetricsSystemCount,
 
-        @Schema(description = "스크래핑 시스템 로그 수")
+        @Schema(description = "SCRAPING_SYSTEM count")
         long scrapingSystemCount,
 
-        @Schema(description = "INFO 로그 수")
+        @Schema(description = "INFO count")
         long infoCount,
 
-        @Schema(description = "WARN 로그 수")
+        @Schema(description = "WARN count")
         long warnCount,
 
-        @Schema(description = "ERROR 로그 수")
+        @Schema(description = "ERROR count")
         long errorCount,
 
-        @Schema(description = "SUCCESS 로그 수")
+        @Schema(description = "SUCCESS count")
         long successCount
     ) {}
 
-    @Schema(description = "감사 로그 목록 아이템")
+    @Schema(description = "Audit log list item")
     public record ResponseItem(
-        @Schema(description = "감사 로그 ID")
+        @Schema(description = "Audit log ID")
         Long auditLogId,
 
-        @Schema(description = "작업 관리자 ID")
+        @Schema(description = "Admin ID")
         Long adminId,
 
-        @Schema(description = "로그 유형", allowableValues = {"ADMIN_ACTIVITY", "ADMIN_MANAGEMENT", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"})
+        @Schema(
+            description = "Audit log type",
+            allowableValues = {"ADMIN_ACTIVITY", "ADMIN_MANAGEMENT", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"}
+        )
         AuditLogType logType,
 
-        @Schema(description = "작업 액션")
+        @Schema(description = "Action")
         String action,
 
-        @Schema(description = "대상 유형")
+        @Schema(description = "Target type")
         String targetType,
 
-        @Schema(description = "대상 식별자")
+        @Schema(description = "Target ID")
         String targetId,
 
-        @Schema(description = "요청 IP 주소")
+        @Schema(description = "Request IP address")
         String ipAddress,
 
-        @Schema(description = "심각도", allowableValues = {"INFO", "WARN", "ERROR", "SUCCESS"})
+        @Schema(
+            description = "Audit log severity",
+            allowableValues = {"INFO", "WARN", "ERROR", "SUCCESS"}
+        )
         AuditLogSeverity severity,
 
-        @Schema(description = "상세 내용")
+        @Schema(description = "Detail")
         String detail,
 
-        @Schema(description = "발생 시각")
+        @Schema(description = "Created at")
         ZonedDateTime createdAt
     ) {}
 
-    @Schema(description = "감사 로그 상세 응답")
+    @Schema(description = "Audit log detail response")
     public record ResponseDetail(
-        @Schema(description = "감사 로그 ID")
+        @Schema(description = "Audit log ID")
         Long auditLogId,
 
-        @Schema(description = "작업 관리자 ID")
+        @Schema(description = "Admin ID")
         Long adminId,
 
-        @Schema(description = "로그 유형", allowableValues = {"ADMIN_ACTIVITY", "ADMIN_MANAGEMENT", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"})
+        @Schema(
+            description = "Audit log type",
+            allowableValues = {"ADMIN_ACTIVITY", "ADMIN_MANAGEMENT", "AI_METRICS_SYSTEM", "SCRAPING_SYSTEM"}
+        )
         AuditLogType logType,
 
-        @Schema(description = "작업 액션")
+        @Schema(description = "Action")
         String action,
 
-        @Schema(description = "대상 유형")
+        @Schema(description = "Target type")
         String targetType,
 
-        @Schema(description = "대상 식별자")
+        @Schema(description = "Target ID")
         String targetId,
 
-        @Schema(description = "요청 IP 주소")
+        @Schema(description = "Request IP address")
         String ipAddress,
 
-        @Schema(description = "심각도", allowableValues = {"INFO", "WARN", "ERROR", "SUCCESS"})
+        @Schema(
+            description = "Audit log severity",
+            allowableValues = {"INFO", "WARN", "ERROR", "SUCCESS"}
+        )
         AuditLogSeverity severity,
 
-        @Schema(description = "상세 내용")
+        @Schema(description = "Detail")
         String detail,
 
-        @Schema(description = "발생 시각")
+        @Schema(description = "Created at")
         ZonedDateTime createdAt
     ) {}
 
-    @Schema(description = "감사 로그 목록 응답")
+    @Schema(description = "Audit log list response")
     public record ResponseList(
-        @Schema(description = "목록 데이터")
+        @Schema(description = "List content")
         List<ResponseItem> content,
 
-        @Schema(description = "현재 페이지(1-based)")
+        @Schema(description = "Current page (1-based)")
         int page,
 
-        @Schema(description = "페이지 크기")
+        @Schema(description = "Page size")
         int size,
 
-        @Schema(description = "전체 건수")
+        @Schema(description = "Total element count")
         long totalElements,
 
-        @Schema(description = "전체 페이지 수")
+        @Schema(description = "Total page count")
         int totalPages
     ) {}
 }
