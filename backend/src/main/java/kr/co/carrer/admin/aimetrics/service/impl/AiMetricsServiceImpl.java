@@ -12,6 +12,7 @@ import kr.co.carrer.admin.aimetrics.repository.AiOpsSettingRepository;
 import kr.co.carrer.admin.aimetrics.repository.RagDocumentRepository;
 import kr.co.carrer.admin.aimetrics.service.AiMetricsFastApiGateway;
 import kr.co.carrer.admin.aimetrics.service.AiMetricsService;
+import kr.co.carrer.admin.aimetrics.support.AiMetricsTimeZone;
 import kr.co.carrer.admin.aimetrics.type.AiFeatureType;
 import kr.co.carrer.admin.aimetrics.type.RagDocumentStatusType;
 import kr.co.carrer.global.exception.CustomException;
@@ -91,7 +92,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
         } catch (CustomException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new CustomException(AiMetricsErrorCode.AI_USAGE_LOG_CREATE_FAILED);
+            throw new CustomException(AiMetricsErrorCode.AI_USAGE_LOG_FETCH_FAILED);
         }
     }
 
@@ -139,7 +140,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     public ResponseRagDocumentList getRagDocuments(int page, int size) {
         validatePageRequest(page, size);
         return AiMetricsServiceMapper.toRagDocumentList(
-                ragDocumentRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page - 1, size)),
+                ragDocumentRepository.findAll(PageRequest.of(page - 1, size)),
                 page,
                 size
         );
@@ -161,6 +162,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
                     file.getContentType(),
                     file.getSize()
             );
+            // TODO: Persist uploaded RAG files through the Phase 4 storage/FastAPI integration flow.
 
             return AiMetricsServiceMapper.toRagDocumentDetail(ragDocumentRepository.save(document));
         } catch (CustomException e) {
@@ -270,16 +272,13 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     }
 
     private void validateNoIndexingDocument() {
-        if (ragDocumentRepository.findByStatusOrderByCreatedAtDesc(
-                RagDocumentStatusType.INDEXING,
-                PageRequest.of(0, 1)
-        ).hasContent()) {
+        if (ragDocumentRepository.existsByStatus(RagDocumentStatusType.INDEXING)) {
             throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_ALREADY_INDEXING);
         }
     }
 
     private String buildRagFilePath(UUID fileUuid, String originalFileName) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(AiMetricsTimeZone.SERVICE_ZONE_ID);
         return String.format(
                 "/rag/%d/%02d/%s-%s",
                 today.getYear(),
