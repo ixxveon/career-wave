@@ -6,6 +6,7 @@ import kr.co.carrer.admin.cs.dto.InquiryDTO;
 import kr.co.carrer.admin.cs.service.AdminInquiryService;
 import kr.co.carrer.admin.cs.type.InquiryCategory;
 import kr.co.carrer.admin.cs.type.InquiryStatus;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
@@ -47,9 +48,9 @@ public class AdminInquiryController implements AdminInquiryControllerDocs {
     public ResponseEntity<ApiResponse<InquiryDTO.ResponseReply>> saveReply(
         @PathVariable Long inquiryId,
         @RequestBody @Valid InquiryDTO.RequestReply dto,
-        @AuthenticationPrincipal Long adminId
+        @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        if (adminId == null) throw new CustomException(ErrorCode.UNAUTHORIZED);
+        Long adminId = parseAdminId(principal);
         return ResponseEntity.ok(ApiResponse.ok(
             adminInquiryService.saveReply(inquiryId, dto.reply(), adminId)
         ));
@@ -60,6 +61,15 @@ public class AdminInquiryController implements AdminInquiryControllerDocs {
         @PathVariable Long inquiryId
     ) {
         return ResponseEntity.ok(ApiResponse.ok(adminInquiryService.completeInquiry(inquiryId)));
+    }
+
+    private Long parseAdminId(AuthPrincipal principal) {
+        if (principal == null) throw new CustomException(ErrorCode.UNAUTHORIZED);
+        try {
+            return Long.parseLong(principal.getId());
+        } catch (NumberFormatException e) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {

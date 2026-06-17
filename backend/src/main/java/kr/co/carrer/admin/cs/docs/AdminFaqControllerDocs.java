@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.co.carrer.admin.cs.dto.FaqDTO;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public interface AdminFaqControllerDocs {
     @Operation(summary = "FAQ 등록")
     ResponseEntity<ApiResponse<FaqDTO.ResponseResult>> createFaq(
         @RequestBody @Valid FaqDTO.RequestCreate dto,
-        @Parameter(hidden = true) Long adminId
+        @Parameter(hidden = true) AuthPrincipal principal
     );
 
     @Operation(summary = "FAQ 수정")

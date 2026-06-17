@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.co.carrer.admin.cs.dto.InquiryDTO;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,7 @@ public interface AdminInquiryControllerDocs {
     ResponseEntity<ApiResponse<InquiryDTO.ResponseReply>> saveReply(
         @PathVariable Long inquiryId,
         @RequestBody @Valid InquiryDTO.RequestReply dto,
-        Long adminId
+        AuthPrincipal principal
     );
 
     @Operation(summary = "처리 완료")
