@@ -48,7 +48,7 @@
 - [x] `MemberVerificationRepository.findByVerificationId(...)` 구현 — 명시적 메서드 추가 (JpaRepository.findById와 동등, service 호출 일관성 목적)
 - [x] `MemberVerificationRepository.findByVerificationToken(...)` 구현
 - [x] `MemberVerificationRepository`에 재발송/rate limit 조회 메서드 구현 — `findTopByTargetAndPurposeOrderByCreatedAtDesc` 추가
-- [x] `HrManagerRepository`에서 member 기준 승인 상태 조회 메서드 구현 — `findByMemberId`, `findByMemberIdAndHrStatus`
+- [x] `UserHrManagerRepository`에서 member 기준 승인 상태 조회 메서드 구현 — `findByMemberId`, `findByMemberIdAndHrStatus` (bean 충돌로 HrManagerRepository → UserHrManagerRepository 리네임)
 - [x] `SocialAccountRepository.findByProviderAndProviderUserId(...)` 구현
 - [x] `SocialAccountRepository.existsByProviderAndProviderUserId(...)` 구현
 - [x] `SocialAccountRepository.existsByMemberIdAndProvider(...)` 구현

@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import kr.co.carrer.user.member.type.SocialProvider;
 import lombok.Getter;
 
 import java.util.UUID;
@@ -48,8 +47,12 @@ public class UserSocialAuthDto {
 
     @Getter
     public static class RequestSocialComplete {
-        @NotNull
-        private SocialProvider provider;
+        // String으로 수신 — Jackson 역직렬화 실패 방지
+        // 유효하지 않은 값은 service 레이어에서 SocialProvider.fromJsonValue() 변환 후
+        // CustomException(UserAuthErrorCode.OAUTH_PROVIDER_INVALID) throw (spec api-schema.md §13)
+        @NotBlank
+        @Pattern(regexp = "^(kakao|naver|google)$", message = "지원하지 않는 소셜 provider입니다.")
+        private String provider;
 
         // spec api-schema.md §13 계약 기준 — 프론트 타입에는 없으나 서버 검증 필요
         @NotBlank
