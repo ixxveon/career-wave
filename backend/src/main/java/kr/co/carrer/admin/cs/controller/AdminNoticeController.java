@@ -6,6 +6,7 @@ import kr.co.carrer.admin.cs.dto.NoticeDTO;
 import kr.co.carrer.admin.cs.exception.AdminCsErrorCode;
 import kr.co.carrer.admin.cs.service.AdminNoticeService;
 import kr.co.carrer.admin.cs.type.NoticeCategory;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
@@ -48,9 +49,9 @@ public class AdminNoticeController implements AdminNoticeControllerDocs {
     @PostMapping
     public ResponseEntity<ApiResponse<NoticeDTO.ResponseResult>> createNotice(
         @RequestBody @Valid NoticeDTO.RequestCreate dto,
-        @AuthenticationPrincipal Long adminId
+        @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        if (adminId == null) throw new CustomException(kr.co.carrer.global.exception.ErrorCode.UNAUTHORIZED);
+        Long adminId = parseAdminId(principal);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.ok(adminNoticeService.createNotice(dto, adminId)));
     }
@@ -67,6 +68,15 @@ public class AdminNoticeController implements AdminNoticeControllerDocs {
     public ResponseEntity<ApiResponse<Void>> deleteNotice(@PathVariable Long noticeId) {
         adminNoticeService.deleteNotice(noticeId);
         return ResponseEntity.ok(ApiResponse.ok("공지사항이 삭제되었습니다."));
+    }
+
+    private Long parseAdminId(AuthPrincipal principal) {
+        if (principal == null) throw new CustomException(kr.co.carrer.global.exception.ErrorCode.UNAUTHORIZED);
+        try {
+            return Long.parseLong(principal.getId());
+        } catch (NumberFormatException e) {
+            throw new CustomException(kr.co.carrer.global.exception.ErrorCode.UNAUTHORIZED);
+        }
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {
