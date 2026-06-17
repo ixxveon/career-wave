@@ -64,24 +64,24 @@
 
 ## Phase 5 - API
 
-- [ ] `AiMetricsDTO.java`를 작성한다.
-- [ ] `AiUsageLogDTO.java`를 작성한다.
-- [ ] `AiOpsSettingDTO.java`를 작성한다.
-- [ ] `RagDocumentDTO.java`를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/summary` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/domain-usage` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/token-trend` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/heavy-users` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/logs` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/budget` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/budget` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/alerts/discord` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/controls/rate-limit` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/rag-documents` Controller endpoint를 작성한다.
-- [ ] `POST /api/v1/admin/ai-metrics/rag-documents` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download` Controller endpoint를 작성한다.
-- [ ] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}` Controller endpoint를 작성한다.
-- [ ] `MASTER`, `BACKEND` 역할 정책과 JWT 인증 진입 조건을 API 계층에 반영한다.
+- [x] `AiMetricsDTO.java`를 작성한다.
+- [x] `AiUsageLogDTO.java`를 작성한다.
+- [x] `AiOpsSettingDTO.java`를 작성한다.
+- [x] `RagDocumentDTO.java`를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/summary` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/domain-usage` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/token-trend` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/heavy-users` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/logs` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/budget` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/budget` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/alerts/discord` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/controls/rate-limit` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/rag-documents` Controller endpoint를 작성한다.
+- [x] `POST /api/v1/admin/ai-metrics/rag-documents` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download` Controller endpoint를 작성한다.
+- [x] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}` Controller endpoint를 작성한다.
+- [x] `MASTER`, `BACKEND` 역할 정책과 JWT 인증 진입 조건을 API 계층에 반영한다.
 
 ## Phase 6 - Documentation
 
