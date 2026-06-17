@@ -135,7 +135,7 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
         jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(jobNoticeId, JobNoticeStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(JobNoticeErrorCode.JOB_NOTICE_NOT_FOUND));
 
-        Bookmark bookmark = bookmarkRepository.findByMemberIdAndJobNotice_JobNoticeId(memberId, jobNoticeId)
+        Bookmark bookmark = bookmarkRepository.findByMemberIdAndJobNoticeId(memberId, jobNoticeId)
                 .orElseThrow(() -> new CustomException(JobNoticeErrorCode.BOOKMARK_NOT_FOUND));
 
         bookmarkRepository.delete(bookmark);
@@ -172,7 +172,7 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 .map(JobNotice::getJobNoticeId)
                 .toList();
 
-        return bookmarkRepository.findByMemberIdAndJobNotice_JobNoticeIdIn(memberId, jobNoticeIds).stream()
+        return bookmarkRepository.findByMemberIdAndJobNoticeIdIn(memberId, jobNoticeIds).stream()
                 .map(Bookmark::getJobNoticeId)
                 .collect(HashSet::new, HashSet::add, HashSet::addAll);
     }
@@ -181,7 +181,7 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
         if (memberId == null) {
             return false;
         }
-        return bookmarkRepository.existsByMemberIdAndJobNotice_JobNoticeId(memberId, jobNoticeId);
+        return bookmarkRepository.existsByMemberIdAndJobNoticeId(memberId, jobNoticeId);
     }
 
     private boolean isBookmarkUniqueConstraintViolation(Throwable throwable) {

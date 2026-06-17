@@ -189,7 +189,7 @@ class UserJobNoticeServiceImplTest {
                     eq(null),
                     any(PageRequest.class)
             )).willReturn(pageResult);
-            given(bookmarkRepository.findByMemberIdAndJobNotice_JobNoticeIdIn(memberId, List.of(101L, 102L)))
+            given(bookmarkRepository.findByMemberIdAndJobNoticeIdIn(memberId, List.of(101L, 102L)))
                     .willReturn(List.of(Bookmark.of(memberId, secondJobNotice)));
 
             JobNoticeDTO.ResponseList response = userJobNoticeService.getJobNotices(
@@ -239,7 +239,7 @@ class UserJobNoticeServiceImplTest {
 
             given(jobNoticeQueryRepository.findActiveJobNoticeById(101L))
                     .willReturn(Optional.of(jobNotice));
-            given(bookmarkRepository.existsByMemberIdAndJobNotice_JobNoticeId(memberId, 101L))
+            given(bookmarkRepository.existsByMemberIdAndJobNoticeId(memberId, 101L))
                     .willReturn(true);
 
             JobNoticeDTO.ResponseDetail response = userJobNoticeService.getJobNoticeDetail(101L, memberId);
@@ -419,7 +419,7 @@ class UserJobNoticeServiceImplTest {
 
             given(jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(101L, JobNoticeStatus.ACTIVE))
                     .willReturn(Optional.of(jobNotice));
-            given(bookmarkRepository.findByMemberIdAndJobNotice_JobNoticeId(memberId, 101L))
+            given(bookmarkRepository.findByMemberIdAndJobNoticeId(memberId, 101L))
                     .willReturn(Optional.of(bookmark));
 
             JobNoticeDTO.ResponseBookmark response = userJobNoticeService.deleteBookmark(101L, memberId);
@@ -452,7 +452,7 @@ class UserJobNoticeServiceImplTest {
 
             given(jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(101L, JobNoticeStatus.ACTIVE))
                     .willReturn(Optional.of(jobNotice));
-            given(bookmarkRepository.findByMemberIdAndJobNotice_JobNoticeId(memberId, 101L))
+            given(bookmarkRepository.findByMemberIdAndJobNoticeId(memberId, 101L))
                     .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> userJobNoticeService.deleteBookmark(101L, memberId))

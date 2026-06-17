@@ -44,6 +44,9 @@ public class Bookmark {
     @Column(name = "member_id", nullable = false, columnDefinition = "UUID")
     private UUID memberId;
 
+    @Column(name = "job_notice_id", nullable = false, insertable = false, updatable = false)
+    private Long jobNoticeId;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "job_notice_id",
@@ -59,11 +62,12 @@ public class Bookmark {
         Bookmark bookmark = new Bookmark();
         bookmark.memberId = memberId;
         bookmark.jobNotice = jobNotice;
+        bookmark.jobNoticeId = jobNotice.getJobNoticeId();
         return bookmark;
     }
 
     public Long getJobNoticeId() {
-        return jobNotice.getJobNoticeId();
+        return jobNoticeId;
     }
 
     @PrePersist
