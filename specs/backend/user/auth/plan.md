@@ -130,9 +130,11 @@ backend/src/main/java/kr/co/carrer/user/member/
 | 엔티티 생성 패턴 | `@NoArgsConstructor(PROTECTED)` + 정적 팩토리 + `Objects.requireNonNull(memberId)` | setter 없이 필수 필드를 컴파일 타임에 강제, null은 DB flush 전에 즉시 실패 |
 | Swagger DTO 동기화 | enum 값 변경 시 DTO `@Schema(allowableValues)` 함께 갱신 | enum 변경 후 DTO allowableValues 누락 시 API 문서와 실제 동작이 불일치 |
 | `UserMemberQueryRepository` 분리 | 기업회원 아이디 찾기용 복합 조회를 별도 QueryRepository로 분리 (`JpaRepository` 미상속) | `members JOIN company_profiles JOIN hr_managers` 3-table 조인은 Spring Data JPA 메서드명으로 표현 불가 |
-| 기업회원 아이디 찾기 3중 검증 | `m.name = :managerName` + `cp.business_number = :businessNumber` + `m.email/phone` + `m.role_type = 'COMPANY'` | spec `FindIdRequest` 3요소를 DB 레벨에서 강제. `hr_managers` JOIN으로 유효 HR 담당자만 조회 |
+| 기업회원 아이디 찾기 3중 검증 | `m.name = :managerName` + `cp.business_number = :businessNumber` + `m.email/phone` + `m.role_type = 'COMPANY'` + `h.company_profile_id = cp.company_profile_id` | 3-table 관계를 완전히 고정해야 같은 회사의 HR 담당자임을 보장. company_profile_id 미고정 시 다른 회사의 hr_managers row가 매칭될 수 있음 |
 | 아이디 찾기 hr_status 필터 미적용 | `REMOVED` 포함 전 hr_status 조회 허용 | 아이디 찾기는 로그인 자격 검증이 아닌 신원 확인 단계. spec FR-011(계정 존재 노출 금지) 준수 |
-| `PasswordResetTokenRepository` | `findByTokenHash` + `existsByTokenHashAndUsedAtIsNull` | 1회 사용 보장을 Repository 레벨에서 `usedAt IS NULL` 조건으로 확인 |
+| `PasswordResetTokenRepository` 중복 발급 방지 | `existsByMemberIdAndUsedAtIsNullAndExpiresAtAfter(UUID memberId, Instant now)` | 중복 발급 방지는 tokenHash가 아닌 memberId 기준. 만료 토큰은 제외해야 정확한 활성 토큰 여부 확인 가능 |
+| `PasswordResetToken.isExpired()` 경계 | `!Instant.now().isBefore(expiresAt)` — now == expiresAt 포함 만료 | 재설정 권한 경계에서 토큰이 유효한 것처럼 처리되는 edge case 방지 |
+| `MemberVerification.verification_token` unique | `@Table(uniqueConstraints)` + `markVerified()` null/blank 즉시 실패 | token 기반 조회(`findByVerificationToken`)의 결과가 유일해야 하고, 빈 token으로 VERIFIED 상태가 되는 것을 방어 |
 | `MemberVerificationRepository.findByVerificationId` | `JpaRepository.findById(UUID)`와 동등하나 명시적 메서드 추가 | tasks.md 명시 메서드명과 일치시켜 service 레이어 호출 일관성 확보 |
 | 메일 발송 | AWS SES | 실제 이메일 인증/안내 메일 발송 provider 확정 |
 | SMS 발송 | SOLAPI / CoolSMS | 실제 휴대폰 인증번호 발송 provider 확정 |
@@ -207,7 +209,7 @@ backend/src/main/java/kr/co/carrer/user/member/
   - 메서드: `findLoginIdsByManagerNameAndBusinessNumberAndEmail`, `findLoginIdsByManagerNameAndBusinessNumberAndPhone`
 - `PasswordResetTokenRepository`
   - `findByTokenHash`
-  - `existsByTokenHashAndUsedAtIsNull`
+  - `existsByMemberIdAndUsedAtIsNullAndExpiresAtAfter(UUID memberId, Instant now)` — 중복 발급 방지 (memberId 기준, 만료 제외)
 - `HrManagerRepository`
   - `findByMemberId`
   - `findByMemberIdAndHrStatus`

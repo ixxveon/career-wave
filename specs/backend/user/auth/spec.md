@@ -262,23 +262,29 @@ JWT 발급/재발급/로그아웃의 핵심 흐름은 기존 `specs/backend/auth
 - `resendAvailableAt`
 - `remainingAttempts`
 - `status`
+- `verificationToken`: 인증 완료 후 발급되는 token — nullable, unique
 
 > ERD 기준 테이블: `member_verifications`.
 > 가입 전 인증도 처리해야 하므로 회원 FK 없이 `target`과 `purpose` 기준으로 관리한다.
 > 인증번호 원문은 저장하지 않고 `code_hash`를 저장한다.
 > 인증 완료 후 발급하는 `verificationToken`은 `member_verifications.verification_token`에 저장한다.
+> `verification_token`은 `uq_member_verification_token` unique constraint로 관리한다 — `findByVerificationToken` 조회 결과의 유일성 보장.
+> `markVerified(token)`는 null·빈 token을 즉시 실패 처리한다 — 빈 token으로 VERIFIED 상태가 되는 것을 방어.
 
 ### PasswordResetToken
 
 - `resetTokenId`
 - `memberId`
-- `tokenHash`
+- `tokenHash`: unique
 - `expiresAt`
 - `usedAt`
 - `createdAt`
 
 > ERD 기준 테이블: `password_reset_tokens`.
 > reset token 원문은 저장하지 않고 `token_hash`만 저장한다.
+> `token_hash`는 `uq_password_reset_token_hash` unique constraint로 관리한다.
+> 만료 판정은 `!Instant.now().isBefore(expiresAt)` — `now == expiresAt` 경계 포함 만료 처리.
+> 중복 발급 방지는 tokenHash가 아닌 `memberId` 기준으로 확인한다 — `existsByMemberIdAndUsedAtIsNullAndExpiresAtAfter(memberId, now)`.
 
 ### SocialAccount
 
