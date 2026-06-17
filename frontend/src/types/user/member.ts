@@ -1,3 +1,5 @@
+import type { SocialProviderId } from '../../utils/user/member/socialAuth';
+
 export const MEMBER_TYPE = {
   USER: 'USER',
   COMPANY: 'COMPANY',
@@ -156,7 +158,7 @@ export interface UserRegisterResponse {
   memberStatus: MemberStatus;
 }
 
-export type { SocialProviderId } from '../utils/user/member/socialAuth';
+export type { SocialProviderId };
 
 export interface SocialRegisterTerms extends TermsAgreement {}
 
