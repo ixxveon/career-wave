@@ -1,6 +1,7 @@
 package kr.co.carrer.admin.audit.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import kr.co.carrer.admin.audit.type.AuditLogSeverity;
@@ -49,6 +50,7 @@ public class AuditLogDTO {
         Integer page,
 
         @Min(1)
+        @Max(100)
         @Schema(description = "Page size", example = "20")
         Integer size
     ) {}
