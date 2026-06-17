@@ -39,6 +39,9 @@ public class AdminReportController implements AdminReportControllerDocs {
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
+        if (page < 1) throw new CustomException(kr.co.carrer.global.exception.ErrorCode.BAD_REQUEST);
+        if (size < 1 || size > 100) throw new CustomException(kr.co.carrer.global.exception.ErrorCode.BAD_REQUEST);
+
         ReportStatus reportStatus   = parseEnum(ReportStatus.class, status);
         TargetType   targetTypeEnum = parseEnum(TargetType.class, targetType);
         ReportReason reportReason   = parseEnum(ReportReason.class, reason);

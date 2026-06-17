@@ -657,7 +657,8 @@ CREATE TABLE payments (
     CONSTRAINT fk_payments_sub       FOREIGN KEY (subscription_id) REFERENCES subscriptions (subscription_id),
     CONSTRAINT fk_payments_plan      FOREIGN KEY (plan_id)         REFERENCES plans (plan_id),
     CONSTRAINT chk_payment_status    CHECK (payment_status IN ('READY', 'CONFIRMING', 'PAID', 'FAILED', 'CANCELED', 'REFUNDED')),
-    CONSTRAINT chk_failure_reason    CHECK (failure_reason IN ('USER_CANCELED', 'CARD_DECLINED', 'TIMEOUT', 'DUPLICATE_ORDER', 'CONFIRM_FAILED', 'FORBIDDEN', 'UNKNOWN'))
+    CONSTRAINT chk_failure_reason    CHECK (failure_reason IN ('USER_CANCELED', 'CARD_DECLINED', 'TIMEOUT', 'DUPLICATE_ORDER', 'CONFIRM_FAILED', 'FORBIDDEN', 'UNKNOWN')),
+    CONSTRAINT chk_paid_approved_at CHECK (payment_status != 'PAID' OR approved_at IS NOT NULL)
 );
 COMMENT ON TABLE  payments                 IS '결제 내역 테이블 (토스페이먼츠 연동)';
 COMMENT ON COLUMN payments.payment_id      IS '결제 고유 식별자';
