@@ -1,4 +1,4 @@
-package kr.co.carrer.admin.aiMetrics.entity;
+package kr.co.carrer.admin.aimetrics.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,13 +10,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import kr.co.carrer.admin.aiMetrics.type.AlertChannelType;
+import kr.co.carrer.admin.aimetrics.support.AiMetricsTimeZone;
+import kr.co.carrer.admin.aimetrics.type.AlertChannelType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -24,8 +24,6 @@ import java.time.ZonedDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AiOpsSetting {
-
-    private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,11 +54,11 @@ public class AiOpsSetting {
 
     @PrePersist
     protected void onCreate() {
-        this.updatedAt = ZonedDateTime.now(SERVICE_ZONE_ID);
+        this.updatedAt = ZonedDateTime.now(AiMetricsTimeZone.SERVICE_ZONE_ID);
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = ZonedDateTime.now(SERVICE_ZONE_ID);
+        this.updatedAt = ZonedDateTime.now(AiMetricsTimeZone.SERVICE_ZONE_ID);
     }
 }

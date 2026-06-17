@@ -1,7 +1,7 @@
-package kr.co.carrer.admin.aiMetrics.repository;
+package kr.co.carrer.admin.aimetrics.repository;
 
-import kr.co.carrer.admin.aiMetrics.entity.RagDocument;
-import kr.co.carrer.admin.aiMetrics.type.RagDocumentStatusType;
+import kr.co.carrer.admin.aimetrics.entity.RagDocument;
+import kr.co.carrer.admin.aimetrics.type.RagDocumentStatusType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,6 +1,6 @@
-package kr.co.carrer.admin.aiMetrics.repository;
+package kr.co.carrer.admin.aimetrics.repository;
 
-import kr.co.carrer.admin.aiMetrics.entity.AiOpsSetting;
+import kr.co.carrer.admin.aimetrics.entity.AiOpsSetting;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
