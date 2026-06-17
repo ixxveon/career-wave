@@ -99,29 +99,29 @@
 
 ## Phase 7 - Test
 
-- [ ] AI 사용량 요약 조회 테스트를 작성한다.
-- [ ] 도메인별 사용량 조회 테스트를 작성한다.
-- [ ] 토큰 추이 조회 테스트를 작성한다.
-- [ ] 고사용 사용자 조회 테스트를 작성한다.
-- [ ] AI 사용 로그 목록 조회 테스트를 작성한다.
-- [ ] AI 운영 설정 조회 테스트를 작성한다.
-- [ ] 예산 및 임계치 수정 테스트를 작성한다.
-- [ ] Discord 알림 설정 변경 테스트를 작성한다.
-- [ ] rate limit 설정 변경 테스트를 작성한다.
-- [ ] RAG 문서 목록 조회 테스트를 작성한다.
-- [ ] RAG 문서 업로드 테스트를 작성한다.
-- [ ] RAG 문서 다운로드 정보 조회 테스트를 작성한다.
-- [ ] RAG 문서 삭제 테스트를 작성한다.
-- [ ] `from`, `to`, `interval`, `limit`, `page`, `size` 검증 테스트를 작성한다.
-- [ ] `INVALID_MONTHLY_BUDGET`, `INVALID_ALERT_THRESHOLD` 예외 테스트를 작성한다.
-- [ ] `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `RAG_DOCUMENT_NOT_FOUND` 예외 테스트를 작성한다.
-- [ ] `RAG_DOCUMENT_ALREADY_INDEXING`, `RAG_DOCUMENT_INDEXING_FAILED`, `RAG_DOCUMENT_DELETE_FAILED`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 예외 테스트를 작성한다.
-- [ ] FastAPI 집계 연동 매핑 테스트를 작성한다.
-- [ ] Spring이 AI 사용량 집계를 직접 수행하지 않고 FastAPI 내부 집계 API를 호출하는지 검증하는 테스트를 작성한다.
-- [ ] 운영 정책 변경 후 FastAPI 설정 동기화 테스트를 작성한다.
-- [ ] RAG 업로드 후 비동기 인덱싱 시작 호출 테스트를 작성한다.
-- [ ] RAG 상태 전이(`UPLOADED -> INDEXING -> COMPLETED/FAILED`) 검증 테스트를 작성한다.
-- [ ] 운영 정책 변경 Audit Log 기록 테스트를 작성한다.
-- [ ] RAG 문서 삭제 Audit Log 기록 테스트를 작성한다.
-- [ ] 역할별 접근 제어 테스트를 작성한다.
-- [ ] `ApiResponse<T>`와 1-based 페이지네이션 응답 형식 테스트를 작성한다.
+- [x] AI 사용량 요약 조회 테스트를 작성한다.
+- [x] 도메인별 사용량 조회 테스트를 작성한다.
+- [x] 토큰 추이 조회 테스트를 작성한다.
+- [x] 고사용 사용자 조회 테스트를 작성한다.
+- [x] AI 사용 로그 목록 조회 테스트를 작성한다.
+- [x] AI 운영 설정 조회 테스트를 작성한다.
+- [x] 예산 및 임계치 수정 테스트를 작성한다.
+- [x] Discord 알림 설정 변경 테스트를 작성한다.
+- [x] rate limit 설정 변경 테스트를 작성한다.
+- [x] RAG 문서 목록 조회 테스트를 작성한다.
+- [x] RAG 문서 업로드 테스트를 작성한다.
+- [x] RAG 문서 다운로드 정보 조회 테스트를 작성한다.
+- [x] RAG 문서 삭제 테스트를 작성한다.
+- [x] `from`, `to`, `interval`, `limit`, `page`, `size` 검증 테스트를 작성한다.
+- [x] `INVALID_MONTHLY_BUDGET`, `INVALID_ALERT_THRESHOLD` 예외 테스트를 작성한다.
+- [x] `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `RAG_DOCUMENT_NOT_FOUND` 예외 테스트를 작성한다.
+- [x] `RAG_DOCUMENT_ALREADY_INDEXING`, `RAG_DOCUMENT_INDEXING_FAILED`, `RAG_DOCUMENT_DELETE_FAILED`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 예외 테스트를 작성한다.
+- [x] FastAPI 집계 연동 매핑 테스트를 작성한다.
+- [x] Spring이 AI 사용량 집계를 직접 수행하지 않고 FastAPI 내부 집계 API를 호출하는지 검증하는 테스트를 작성한다.
+- [x] 운영 정책 변경 후 FastAPI 설정 동기화 테스트를 작성한다.
+- [x] RAG 업로드 후 비동기 인덱싱 시작 호출 테스트를 작성한다.
+- [x] RAG 상태 전이(`UPLOADED -> INDEXING -> COMPLETED/FAILED`) 검증 테스트를 작성한다.
+- [x] 운영 정책 변경 Audit Log 기록 테스트를 작성한다.
+- [x] RAG 문서 삭제 Audit Log 기록 테스트를 작성한다.
+- [x] 역할별 접근 제어 테스트를 작성한다.
+- [x] `ApiResponse<T>`와 1-based 페이지네이션 응답 형식 테스트를 작성한다.
