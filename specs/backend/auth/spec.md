@@ -27,7 +27,7 @@
 - 인증 필요 API에서 memberId / adminId 조회 (SecurityContext 경유)
 - Refresh Token 재발급 (rotation 적용)
 - 로그아웃 시 Refresh Token 폐기 + 해당 Access Token 즉시 무효화(Blacklist)
-- 계정 상태(ACTIVE / SUSPENDED / BANNED / LOCKED / WITHDRAWN) 기반 로그인 차단
+- 계정 상태(ACTIVE / SUSPENDED / BANNED / LOCKED / WITHDRAWN / BLACKLISTED) 기반 로그인 차단
 - 인증 필요 API에서 계정 상태 검증(ACTIVE만 허용, `me/status` 예외)
 - 정지/차단 계정의 상태·제재 사유 조회 API (`GET /api/v1/user/members/me/status`)
 - 로그인 실패 횟수 누적 및 LOCKED 자동 처리
@@ -59,9 +59,10 @@
 
 ## 5. 계정 상태 정책
 
-- `members.member_status`: ACTIVE / SUSPENDED / BANNED / LOCKED / WITHDRAWN
+- `members.member_status`: ACTIVE / SUSPENDED / BANNED / LOCKED / WITHDRAWN / BLACKLISTED
 - `admins.status`: ACTIVE / LOCKED
 - ACTIVE만 로그인/토큰 재발급 허용, 그 외 전부 차단.
+- BANNED는 서비스 이용 정지 상태, BLACKLISTED는 재가입 또는 주요 서비스 접근 차단 대상 상태로 구분한다.
 - JWT 인증 필터는 토큰 진위/만료/blacklist만 검증하고 SecurityContext를 만든다. 계정 상태 검증은 별도 AccountStatus 검증 단계에서 수행한다. (SS-2 참고)
 - 인증 필요 API는 기본적으로 계정 상태가 ACTIVE인 주체만 접근 가능하다.
 - 예외: `GET /api/v1/user/members/me/status`는 SUSPENDED / BANNED / LOCKED / WITHDRAWN 회원도 유효한 access token이 있으면 접근 가능하다. (로그인 폼 → 고객센터 안내 → 상태 확인 흐름 보장)

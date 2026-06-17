@@ -6,6 +6,7 @@ import kr.co.carrer.user.member.type.RoleType;
 import kr.co.carrer.user.member.type.SubscriptionStatus;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity(name = "UserMember")
@@ -19,10 +20,10 @@ public class Member {
     @Column(name = "login_id", nullable = false, unique = true, length = 100)
     private String loginId;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(unique = true, length = 100)
     private String email;
 
-    @Column(name = "phone", length = 20)
+    @Column(name = "phone", unique = true, length = 20)
     private String phone;
 
     @Column(nullable = false, length = 255)
@@ -42,6 +43,12 @@ public class Member {
     @Enumerated(EnumType.STRING)
     @Column(name = "subscription_status", nullable = false, length = 20)
     private SubscriptionStatus subscriptionStatus;
+
+    @Column(name = "suspend_end_date")
+    private LocalDate suspendEndDate;
+
+    @Column(name = "warning_count", nullable = false)
+    private int warningCount;
 
     @Column(name = "locked_until")
     private Instant lockedUntil;
@@ -78,6 +85,8 @@ public class Member {
     public RoleType getRoleType() { return roleType; }
     public MemberStatus getMemberStatus() { return memberStatus; }
     public SubscriptionStatus getSubscriptionStatus() { return subscriptionStatus; }
+    public LocalDate getSuspendEndDate() { return suspendEndDate; }
+    public int getWarningCount() { return warningCount; }
     public Instant getLockedUntil() { return lockedUntil; }
     public Instant getLastLoginAt() { return lastLoginAt; }
     public Instant getCreatedAt() { return createdAt; }

@@ -5,6 +5,8 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import kr.co.carrer.admin.report.dto.ReportDetailDTO;
 import kr.co.carrer.admin.report.type.ReportReason;
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.admin.report.type.ReportStatus;
 import kr.co.carrer.admin.report.type.TargetType;
 import org.springframework.stereotype.Repository;
@@ -22,10 +24,10 @@ public class ReportQueryRepository {
 
     private ZonedDateTime toZonedDateTime(Object value) {
         if (value == null) return null;
-        if (value instanceof java.sql.Timestamp ts) return ts.toInstant().atZone(java.time.ZoneId.systemDefault());
-        if (value instanceof java.time.Instant instant) return instant.atZone(java.time.ZoneId.systemDefault());
-        if (value instanceof java.time.OffsetDateTime odt) return odt.toZonedDateTime();
-        throw new IllegalArgumentException("Unsupported timestamp type: " + value.getClass());
+        if (value instanceof java.sql.Timestamp ts) return ts.toInstant().atZone(java.time.ZoneId.of("Asia/Seoul"));
+        if (value instanceof java.time.Instant instant) return instant.atZone(java.time.ZoneId.of("Asia/Seoul"));
+        if (value instanceof java.time.OffsetDateTime odt) return odt.atZoneSameInstant(java.time.ZoneId.of("Asia/Seoul"));
+        throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     private void appendFilters(StringBuilder sql, List<Object> params,

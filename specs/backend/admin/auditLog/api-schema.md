@@ -1,7 +1,7 @@
 # API Schema: auditLog
 
-> 백엔드와 프론트엔드 간 `auditLog` 도메인 API 계약 문서.
-> 본 문서는 기능 설명 문서가 아니라 요청/응답 계약만 정의한다.
+> 백엔드와 프론트엔드 간 `auditLog` 도메인 API 계약 문서다.
+> 이 문서는 기능 설명이 아니라 요청/응답 계약만 정의한다.
 
 ---
 
@@ -9,8 +9,8 @@
 
 - 프로젝트 구조: Spring Boot + PostgreSQL + React
 - API 응답 규격: 모든 endpoint는 `ApiResponse<T>`를 사용한다.
-- 모든 page Query Parameter는 외부 API 기준 **1-based**다.
-- 백엔드 내부 Pageable 변환 시 `page - 1`을 적용한다.
+- 모든 `page` Query Parameter는 외부 API 기준 **1-based**다.
+- 백엔드 내부 Pageable 변환에서만 `page - 1`을 적용한다.
 - `from`, `to`는 ISO 8601 UTC 문자열을 사용한다.
 - Swagger 어노테이션은 Controller가 아니라 `docs` 인터페이스에 작성한다.
 - 본 문서의 ErrorCode 표에는 `auditLog` 도메인 코드만 작성한다.
@@ -89,12 +89,12 @@
 | Query Parameter | Type | ERD 컬럼 | Description |
 |---|---|---|---|
 | `logType` | `ADMIN_ACTIVITY \| ADMIN_MANAGEMENT \| AI_METRICS_SYSTEM \| SCRAPING_SYSTEM` | `audit_logs.log_type` | 로그 유형 필터 |
-| `severity` | `INFO \| WARN \| ERROR` | `audit_logs.severity` | 심각도 필터 |
-| `keyword` | `string` | `audit_logs.action`, `audit_logs.target_type`, `audit_logs.target_id`, `audit_logs.detail` | 감사 로그 검색어, `trim()` 기준 빈 문자열은 미적용, 최대 100자 |
+| `severity` | `INFO \| WARN \| ERROR \| SUCCESS` | `audit_logs.severity` | 심각도 필터 |
+| `keyword` | `string` | `audit_logs.action`, `audit_logs.target_type`, `audit_logs.target_id`, `audit_logs.detail` | 검색어, `trim()` 기준 빈 문자열은 미적용, 최대 100자 |
 | `from` | `string` | `audit_logs.created_at` | 조회 시작 일시, ISO 8601 UTC |
 | `to` | `string` | `audit_logs.created_at` | 조회 종료 일시, ISO 8601 UTC |
 | `page` | `number` | 없음 | 페이지 번호, 1-based |
-| `size` | `number` | 없음 | 페이지 크기 |
+| `size` | `number` | 없음 | 페이지 크기, 최소 1, 최대 100 |
 
 ---
 
@@ -128,8 +128,9 @@
   "data": {
     "totalCount": 1250,
     "adminActivityCount": 320,
+    "adminManagementCount": 12,
     "aiMetricsSystemCount": 610,
-    "scrapingSystemCount": 320,
+    "scrapingSystemCount": 308,
     "infoCount": 820,
     "warnCount": 210,
     "errorCount": 180,
@@ -142,8 +143,8 @@
 
 없음
 
-> 공통 보안 실패 응답: 인증이 없으면 `401`, 권한이 없으면 `403`이 반환된다.
-> 공통 요청 검증 실패: `from`, `to` 형식이 ISO 8601 UTC가 아니거나 `from > to`이면 공통 `400` 검증 오류가 반환된다. `from`, `to`는 각각 단독 전달이 가능하며 둘 다 없으면 기본 조회 범위 정책을 적용한다.
+> 공통 보안 실패 응답: 인증이 없으면 `401`, 권한이 없으면 `403`을 반환한다.  
+> 공통 요청 검증 실패: `from`, `to` 형식이 ISO 8601 UTC가 아니거나 `from > to`이면 `INVALID_DATE_RANGE`가 반환된다.
 
 ---
 
@@ -158,12 +159,12 @@
 | Name | Type | Required | ERD 컬럼 | Description |
 |---|---|---|---|---|
 | `logType` | `ADMIN_ACTIVITY \| ADMIN_MANAGEMENT \| AI_METRICS_SYSTEM \| SCRAPING_SYSTEM` | N | `audit_logs.log_type` | 로그 유형 필터 |
-| `severity` | `INFO \| WARN \| ERROR` | N | `audit_logs.severity` | 심각도 필터 |
-| `keyword` | `string` | N | `audit_logs.action`, `audit_logs.target_type`, `audit_logs.target_id`, `audit_logs.detail` | 감사 로그 검색어, `trim()` 기준 빈 문자열은 미적용, 최대 100자 |
+| `severity` | `INFO \| WARN \| ERROR \| SUCCESS` | N | `audit_logs.severity` | 심각도 필터 |
+| `keyword` | `string` | N | `audit_logs.action`, `audit_logs.target_type`, `audit_logs.target_id`, `audit_logs.detail` | 검색어, `trim()` 기준 빈 문자열은 미적용, 최대 100자 |
 | `from` | `string` | N | `audit_logs.created_at` | 조회 시작 일시, ISO 8601 UTC |
 | `to` | `string` | N | `audit_logs.created_at` | 조회 종료 일시, ISO 8601 UTC |
-| `page` | `number` | N | 없음 | 페이지 번호, 1-based |
-| `size` | `number` | N | 없음 | 페이지 크기 |
+| `page` | `number` | N | 없음 | 페이지 번호, 1-based, 기본값 1 |
+| `size` | `number` | N | 없음 | 페이지 크기, 기본값 20, 최소 1, 최대 100 |
 
 #### Request Body
 
@@ -206,10 +207,10 @@
 |---|---|---|
 | `INVALID_AUDIT_LOG_TYPE` | 400 | 유효하지 않은 감사 로그 유형입니다. |
 | `INVALID_AUDIT_LOG_SEVERITY` | 400 | 유효하지 않은 감사 로그 심각도입니다. |
-| `KEYWORD_TOO_LONG` | 400 | 검색어가 100자를 초과했습니다. |
 
-> 공통 보안 실패 응답: 인증이 없으면 `401`, 권한이 없으면 `403`이 반환된다.
-> 공통 요청 검증 실패: `from`, `to` 형식이 ISO 8601 UTC가 아니거나 `from > to`, `page < 1`, `size < 1`인 경우 공통 `400` 검증 오류가 반환된다. `keyword` 100자 초과인 경우 `KEYWORD_TOO_LONG`이 반환된다. `from`, `to`는 각각 단독 전달이 가능하며 둘 다 없으면 기간 필터를 적용하지 않는다.
+> 공통 보안 실패 응답: 인증이 없으면 `401`, 권한이 없으면 `403`을 반환한다.  
+> 공통 요청 검증 실패: `from`, `to` 형식 오류, `from > to`는 `INVALID_DATE_RANGE`를 반환하고, `page < 1`, `size < 1`, `size > 100`, `keyword` 100자 초과는 공통 `400` 검증 오류를 반환한다.
+
 ---
 
 ### 4.3 GET /api/v1/admin/audit-logs/{logId}
@@ -253,13 +254,14 @@
 
 | ErrorCode | HTTP | Message |
 |---|---|---|
+| `INVALID_DATE_RANGE` | 400 | `from`은 `to`보다 이후 시점일 수 없습니다. |
 | `AUDIT_LOG_NOT_FOUND` | 404 | 감사 로그를 찾을 수 없습니다. |
 
-> 공통 보안 실패 응답: 인증이 없으면 `401`, 권한이 없으면 `403`이 반환된다.
+> 공통 보안 실패 응답: 인증이 없으면 `401`, 권한이 없으면 `403`을 반환한다.
 
 ---
 
-## 5. DTO 계약 표
+## 5. DTO 계약
 
 ### 5.1 `AuditLogDTO.ResponseSummary`
 
@@ -267,6 +269,7 @@
 |---|---|---|---|---|
 | `totalCount` | `number` | Y | 없음 | 전체 감사 로그 수 |
 | `adminActivityCount` | `number` | Y | 없음 | `logType = ADMIN_ACTIVITY` 집계 수 |
+| `adminManagementCount` | `number` | Y | 없음 | `logType = ADMIN_MANAGEMENT` 집계 수 |
 | `aiMetricsSystemCount` | `number` | Y | 없음 | `logType = AI_METRICS_SYSTEM` 집계 수 |
 | `scrapingSystemCount` | `number` | Y | 없음 | `logType = SCRAPING_SYSTEM` 집계 수 |
 | `infoCount` | `number` | Y | 없음 | `severity = INFO` 집계 수 |
@@ -316,7 +319,7 @@
 
 ---
 
-## 6. ErrorCode 계약 표
+## 6. ErrorCode 계약
 
 ### 6.1 auditLog Domain ErrorCode
 
@@ -325,3 +328,16 @@
 | `AUDIT_LOG_NOT_FOUND` | 404 | 요청한 감사 로그가 존재하지 않는다. |
 | `INVALID_AUDIT_LOG_TYPE` | 400 | 허용되지 않은 감사 로그 유형 값이 입력되었다. |
 | `INVALID_AUDIT_LOG_SEVERITY` | 400 | 허용되지 않은 감사 로그 심각도 값이 입력되었다. |
+
+### 6.2 ErrorCode 사용 위치
+
+| ErrorCode | Used By | Trigger |
+|---|---|---|
+| `AUDIT_LOG_NOT_FOUND` | `GET /api/v1/admin/audit-logs/{logId}` | 요청한 `logId`에 해당하는 감사 로그가 존재하지 않을 때 |
+| `INVALID_AUDIT_LOG_TYPE` | `GET /api/v1/admin/audit-logs` | `logType`이 `ADMIN_ACTIVITY`, `ADMIN_MANAGEMENT`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` 범위를 벗어날 때 |
+| `INVALID_AUDIT_LOG_SEVERITY` | `GET /api/v1/admin/audit-logs` | `severity`가 `INFO`, `WARN`, `ERROR`, `SUCCESS` 범위를 벗어날 때 |
+
+### 6.3 Common Validation / Security Response
+
+- `from`, `to` 형식 오류, `page < 1`, `size < 1`, `size > 100`, `keyword` 100자 초과는 공통 `400` 검증 오류로 처리하고, `from > to`는 `INVALID_DATE_RANGE`로 처리한다.
+- 인증이 없으면 `401`, 권한이 없으면 `403`을 반환한다.

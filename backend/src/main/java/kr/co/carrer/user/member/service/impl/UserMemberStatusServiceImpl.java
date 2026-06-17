@@ -46,30 +46,51 @@ public class UserMemberStatusServiceImpl implements UserMemberStatusService {
         MemberStatus status = member.getMemberStatus();
         if (status == MemberStatus.ACTIVE) return null;
 
-        boolean recoverable = status == MemberStatus.SUSPENDED || status == MemberStatus.LOCKED;
+        boolean recoverable;
         Instant availableAt = null;
         String reason = null;
         Instant startedAt = null;
         String duration = null;
+        String messageCode;
 
-        if (status == MemberStatus.LOCKED) {
-            availableAt = member.getLockedUntil();
-        } else {
-            UserMemberStatusQueryRepository.SuspendHistoryRow row =
-                    statusQueryRepository.findLatestSuspendHistory(member.getMemberId());
-            if (row != null) {
-                reason = row.reason();
-                startedAt = row.startedAt();
-                availableAt = row.availableAt();
-                duration = row.duration();
+        switch (status) {
+            case LOCKED -> {
+                recoverable = true;
+                availableAt = member.getLockedUntil();
+                messageCode = MemberStatusDto.Restriction.MESSAGE_CODE_LOCKED;
             }
+            case SUSPENDED -> {
+                recoverable = true;
+                messageCode = MemberStatusDto.Restriction.MESSAGE_CODE_SUSPENDED;
+                UserMemberStatusQueryRepository.SuspendHistoryRow row =
+                        statusQueryRepository.findLatestSuspendHistory(member.getMemberId());
+                if (row != null) {
+                    reason = row.reason();
+                    startedAt = row.startedAt();
+                    availableAt = row.availableAt();
+                    duration = row.duration();
+                }
+            }
+            case BANNED -> {
+                recoverable = false;
+                messageCode = MemberStatusDto.Restriction.MESSAGE_CODE_BANNED;
+            }
+            case WITHDRAWN -> {
+                recoverable = false;
+                messageCode = MemberStatusDto.Restriction.MESSAGE_CODE_WITHDRAWN;
+            }
+            case BLACKLISTED -> {
+                recoverable = false;
+                messageCode = MemberStatusDto.Restriction.MESSAGE_CODE_BLACKLISTED;
+            }
+            default -> throw new IllegalStateException("Unhandled MemberStatus in restriction summary: " + status);
         }
 
         return new MemberStatusDto.Restriction(
                 status.name(),
                 recoverable,
                 availableAt,
-                MemberStatusDto.Restriction.MESSAGE_CODE,
+                messageCode,
                 reason,
                 startedAt,
                 duration
