@@ -175,6 +175,8 @@ ApiResponse.ok(message, data);
 ApiResponse.ok(message);
 ApiResponse.fail(statusCode, message);
 ApiResponse.fail(statusCode, message, data);
+ApiResponse.fail(statusCode, message, code);              // 에러 코드 식별자 포함 (code 필드)
+ApiResponse.fail(statusCode, message, code, data);        // 에러 코드 + 추가 데이터 포함 (GlobalExceptionHandler 내 additionalData 처리 시 사용)
 ```
 
 ### Rules

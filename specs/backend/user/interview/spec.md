@@ -363,8 +363,9 @@ SUBSCRIBE /topic/interview/{sessionId}
 ## 세션 타임아웃 정책
 
 - 세션 생성 후 **24시간** 동안 `endSession` 요청이 없으면 서버 스케줄러가 해당 세션을 강제로 `FAILED` 처리한다.
-- 배치 주기: 1시간 단위 (`@Scheduled` cron)
+- 배치 주기: 1시간 단위 (`@Scheduled(cron = "0 0 * * * *")`)
 - 시간 기준: 모든 `ZonedDateTime.now()` 호출은 **KST (`Asia/Seoul`)** 기준으로 고정한다. JVM 기본 timezone 사용 금지.
+- Repository: `findTimedOutSessions(ZonedDateTime cutoff, ZonedDateTime recentCutoff, SessionStatus status)` — `SessionStatus.IN_PROGRESS` 파라미터 명시 전달
 - 쿼리 조건: `started_at < NOW() - INTERVAL '24 hours'` **AND** `session_status = 'IN_PROGRESS'` **AND** `updated_at < NOW() - INTERVAL '5 minutes'`
   - `updated_at` 조건은 방금 답변을 제출한 세션이 배치 실행 타이밍과 겹쳐 의도치 않게 `FAILED` 처리되는 상황을 방지하는 유예 조건이다.
 - `FAILED` 전이 후 FastAPI 파이프라인 세션 별도 정리 요청은 하지 않는다. FastAPI가 자체 TTL로 만료 처리하며, Spring은 FAILED 마킹 + 처리 건수 `log.info` 기록만 담당한다.
