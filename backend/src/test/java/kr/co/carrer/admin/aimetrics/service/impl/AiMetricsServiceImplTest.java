@@ -749,7 +749,7 @@ class AiMetricsServiceImplTest {
             ReflectionTestUtils.setField(document, "ragDocumentId", 8L);
             given(ragDocumentRepository.findById(8L)).willReturn(Optional.of(document));
             given(aiMetricsFastApiGatewayProvider.getIfAvailable()).willReturn(aiMetricsFastApiGateway);
-            given(aiMetricsFastApiGateway.deleteRagIndex(new AiMetricsFastApiGateway.RagIndexDeleteRequest(8L)))
+            given(aiMetricsFastApiGateway.deleteRagIndex(new AiMetricsFastApiGateway.RagIndexDeleteRequest(8L, fileUuid, "/rag/2026/06/old-guide.pdf")))
                     .willReturn(new AiMetricsFastApiGateway.RagIndexDeleteResponse(true, 8L));
 
             AiMetricsService.ResponseRagDocumentDelete result = aiMetricsService.deleteRagDocument(
@@ -762,7 +762,7 @@ class AiMetricsServiceImplTest {
             assertThat(result.deleted()).isTrue();
             verify(ragDocumentRepository).findById(8L);
             verify(ragDocumentRepository).delete(document);
-            verify(aiMetricsFastApiGateway).deleteRagIndex(new AiMetricsFastApiGateway.RagIndexDeleteRequest(8L));
+            verify(aiMetricsFastApiGateway).deleteRagIndex(new AiMetricsFastApiGateway.RagIndexDeleteRequest(8L, fileUuid, "/rag/2026/06/old-guide.pdf"));
 
             ArgumentCaptor<AuditLog> auditLogCaptor = ArgumentCaptor.forClass(AuditLog.class);
             verify(auditLogRepository).save(auditLogCaptor.capture());
@@ -1159,7 +1159,11 @@ class AiMetricsServiceImplTest {
             ReflectionTestUtils.setField(document, "ragDocumentId", 15L);
             given(ragDocumentRepository.findById(15L)).willReturn(Optional.of(document));
             given(aiMetricsFastApiGatewayProvider.getIfAvailable()).willReturn(aiMetricsFastApiGateway);
-            given(aiMetricsFastApiGateway.deleteRagIndex(new AiMetricsFastApiGateway.RagIndexDeleteRequest(15L)))
+            given(aiMetricsFastApiGateway.deleteRagIndex(new AiMetricsFastApiGateway.RagIndexDeleteRequest(
+                    15L,
+                    UUID.fromString("99999999-9999-9999-9999-999999999999"),
+                    "/rag/2026/06/delete-target.pdf"
+            )))
                     .willReturn(new AiMetricsFastApiGateway.RagIndexDeleteResponse(true, 15L));
 
             aiMetricsService.deleteRagDocument(15L, 14L, "10.0.0.8");
