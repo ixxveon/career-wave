@@ -25,7 +25,7 @@ public class InquiryQueryRepository {
         if (value == null) return null;
         if (value instanceof java.sql.Timestamp ts) return ts.toInstant().atZone(java.time.ZoneId.of("Asia/Seoul"));
         if (value instanceof java.time.Instant i) return i.atZone(java.time.ZoneId.of("Asia/Seoul"));
-        if (value instanceof java.time.OffsetDateTime odt) return odt.toZonedDateTime();
+        if (value instanceof java.time.OffsetDateTime odt) return odt.atZoneSameInstant(java.time.ZoneId.of("Asia/Seoul"));
         throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
