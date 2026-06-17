@@ -61,4 +61,19 @@ public class AiOpsSetting {
     protected void onUpdate() {
         this.updatedAt = ZonedDateTime.now(AiMetricsTimeZone.SERVICE_ZONE_ID);
     }
+
+    public void updateBudget(Long selectedModelId, BigDecimal monthlyBudget, int alertThreshold) {
+        this.selectedModelId = selectedModelId;
+        this.monthlyBudget = monthlyBudget;
+        this.alertThreshold = alertThreshold;
+    }
+
+    public void updateDiscordAlert(boolean alertEnabled) {
+        this.alertEnabled = alertEnabled;
+        this.alertChannel = AlertChannelType.DISCORD;
+    }
+
+    public void updateRateLimit(boolean rateLimitEnabled) {
+        this.rateLimitEnabled = rateLimitEnabled;
+    }
 }

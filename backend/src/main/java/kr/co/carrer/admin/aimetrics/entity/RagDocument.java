@@ -64,6 +64,27 @@ public class RagDocument {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
+    public static RagDocument upload(
+            Long uploadedBy,
+            UUID fileUuid,
+            String originalFileName,
+            String filePath,
+            String mimeType,
+            Long fileSize
+    ) {
+        RagDocument ragDocument = new RagDocument();
+        ragDocument.uploadedBy = uploadedBy;
+        ragDocument.fileUuid = fileUuid;
+        ragDocument.originalFileName = originalFileName;
+        ragDocument.filePath = filePath;
+        ragDocument.mimeType = mimeType;
+        ragDocument.fileSize = fileSize;
+        ragDocument.chunkCount = 0;
+        ragDocument.indexingProgress = 0;
+        ragDocument.status = RagDocumentStatusType.UPLOADED;
+        return ragDocument;
+    }
+
     @PrePersist
     protected void onCreate() {
         ZonedDateTime now = ZonedDateTime.now(AiMetricsTimeZone.SERVICE_ZONE_ID);
