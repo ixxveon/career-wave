@@ -81,18 +81,7 @@ export function useSpringWebSocket({
         if (isManualCloseRef.current) return;
         onStatusChangeRef.current('ERROR');
       },
-      onWebSocketError: () => {
-        if (isManualCloseRef.current) return;
-        if (attemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
-          onStatusChangeRef.current('ERROR');
-          return;
-        }
-        attemptRef.current += 1;
-        onStatusChangeRef.current('RECONNECTING');
-        clientRef.current?.deactivate();
-        clientRef.current = null;
-        reconnectTimerRef.current = setTimeout(() => connect(sid), 2000);
-      },
+      onWebSocketError: () => { /* onWebSocketClose가 항상 뒤따르므로 재연결은 Close에서만 처리 */ },
       onWebSocketClose: () => {
         if (isManualCloseRef.current) return;
         if (attemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
@@ -101,6 +90,7 @@ export function useSpringWebSocket({
         }
         attemptRef.current += 1;
         onStatusChangeRef.current('RECONNECTING');
+        clientRef.current = null;
         reconnectTimerRef.current = setTimeout(() => connect(sid), 2000);
       },
     });
