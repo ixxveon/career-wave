@@ -1,6 +1,7 @@
 package kr.co.carrer.admin.cs.docs;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.co.carrer.admin.cs.dto.InquiryDTO;
@@ -30,7 +31,7 @@ public interface AdminInquiryControllerDocs {
     ResponseEntity<ApiResponse<InquiryDTO.ResponseReply>> saveReply(
         @PathVariable Long inquiryId,
         @RequestBody @Valid InquiryDTO.RequestReply dto,
-        AuthPrincipal principal
+        @Parameter(hidden = true) AuthPrincipal principal
     );
 
     @Operation(summary = "처리 완료")
