@@ -42,7 +42,9 @@ Authorization: Bearer {accessToken}
 {
   "success": false,
   "statusCode": 403,
-  "message": "해당 면접 세션에 접근할 권한이 없습니다."
+  "message": "해당 면접 세션에 접근할 권한이 없습니다.",
+  "code": "INTERVIEW_SESSION_FORBIDDEN",
+  "data": null
 }
 ```
 
@@ -351,6 +353,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
   "success": false,
   "statusCode": 409,
   "message": "리포트가 아직 생성 중입니다.",
+  "code": "INTERVIEW_REPORT_NOT_READY",
   "data": {
     "status": "ANALYZING",
     "estimatedWaitSeconds": 15
@@ -375,8 +378,8 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 | Parameter | Type | 필수 | 기본값 | 설명 |
 |-----------|------|------|--------|------|
-| `page` | `Integer` | ❌ | `0` | 페이지 번호 (0-based) |
-| `size` | `Integer` | ❌ | `10` | 페이지당 항목 수 |
+| `page` | `Integer` | ❌ | `0` | 페이지 번호 (0-based), `@Min(0)` |
+| `size` | `Integer` | ❌ | `10` | 페이지당 항목 수, `@Min(1) @Max(100)` |
 
 ### Response `200 OK`
 ```json
