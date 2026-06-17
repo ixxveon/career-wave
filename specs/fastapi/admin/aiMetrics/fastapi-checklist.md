@@ -19,6 +19,7 @@
 - [ ] `POST /internal/admin/ai-metrics/usage/heavy-users`가 요청 계약에 맞게 동작한다.
 - [ ] `POST /internal/admin/ai-metrics/usage/logs/search`가 요청 계약에 맞게 동작한다.
 - [ ] `POST /internal/admin/ai-metrics/ops/sync-settings`가 요청 계약에 맞게 동작한다.
+- [ ] 운영 정책 변경 후 FastAPI 설정 동기화 결과가 후속 조회에 반영된다.
 - [ ] `POST /internal/admin/ai-metrics/usage/log`가 요청 계약에 맞게 동작한다.
 - [ ] FastAPI ↔ Spring Boot 내부 API 계약 검증 테스트가 요청 필드, 응답 필드, 타입까지 확인한다.
 - [ ] 내부 ErrorCode가 Spring Boot에서 `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `INVALID_MONTHLY_BUDGET`, `INVALID_ALERT_THRESHOLD`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 등으로 변환 가능하게 반환된다.

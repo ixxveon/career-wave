@@ -48,19 +48,19 @@
 
 ## Phase 4 - FastAPI Integration
 
-- [ ] `AiMetricsFastApiClient.java` 내부 호출 클라이언트를 작성한다.
-- [ ] FastAPI summary 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI domain-usage 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI token-trend 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI heavy-users 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI usage-logs/search 요청/응답 매핑 DTO를 작성한다.
-- [ ] 운영 정책 동기화 FastAPI 요청/응답 매핑 DTO를 작성한다.
-- [ ] RAG 인덱싱 시작 FastAPI 요청/응답 매핑 DTO를 작성한다.
-- [ ] RAG 인덱스 삭제 FastAPI 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI 내부 오류를 Spring 도메인 ErrorCode로 변환하는 매퍼를 구현한다.
-- [ ] 운영 정책 변경 후 FastAPI 설정 동기화 호출을 연동한다.
-- [ ] RAG 문서 업로드 후 인덱싱 시작 호출을 연동한다.
-- [ ] RAG 문서 삭제 시 인덱스 제거 호출을 연동한다.
+- [x] `AiMetricsFastApiClient.java` 내부 호출 클라이언트를 작성한다.
+- [x] FastAPI summary 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI domain-usage 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI token-trend 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI heavy-users 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI usage-logs/search 요청/응답 매핑 DTO를 작성한다.
+- [x] 운영 정책 동기화 FastAPI 요청/응답 매핑 DTO를 작성한다.
+- [x] RAG 인덱싱 시작 FastAPI 요청/응답 매핑 DTO를 작성한다.
+- [x] RAG 인덱스 삭제 FastAPI 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI 내부 오류를 Spring 도메인 ErrorCode로 변환하는 매퍼를 구현한다.
+- [x] 운영 정책 변경 후 FastAPI 설정 동기화 호출을 연동한다.
+- [x] RAG 문서 업로드 후 인덱싱 시작 호출을 연동한다.
+- [x] RAG 문서 삭제 시 인덱스 제거 호출을 연동한다.
 
 ## Phase 5 - API
 
