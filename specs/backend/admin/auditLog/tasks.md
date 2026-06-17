@@ -25,7 +25,7 @@
 - [x] 감사 로그 목록 조회 서비스 로직을 구현한다.
 - [x] 감사 로그 상세 조회 서비스 로직을 구현한다.
 - [x] `from`, `to` 기간 조건 공통 검증 로직을 구현한다.
-- [x] `from > to` 요청을 공통 요청 검증 실패 `400`으로 처리하는 로직을 구현한다.
+- [x] `from > to` 요청을 `INVALID_DATE_RANGE`로 처리하는 로직을 구현한다.
 - [x] `logType` 값 검증과 `INVALID_AUDIT_LOG_TYPE` 매핑을 구현한다.
 - [x] `severity` 값 검증과 `INVALID_AUDIT_LOG_SEVERITY` 매핑을 구현한다.
 - [x] 1-based `page`를 내부 Pageable로 변환하는 로직을 구현한다.
@@ -55,20 +55,20 @@
 
 ## Phase 5 - Test
 
-- [ ] 감사 로그 요약 조회 테스트를 작성한다.
-- [ ] 감사 로그 목록 조회 테스트를 작성한다.
-- [ ] 감사 로그 상세 조회 테스트를 작성한다.
-- [ ] `logType` 필터 테스트를 작성한다.
-- [ ] `severity` 필터 테스트를 작성한다.
-- [ ] `keyword` 필터 테스트를 작성한다.
-- [ ] `keyword` 공백-only 입력 필터 미적용 테스트를 작성한다.
-- [ ] `keyword` 100자 초과 요청 공통 검증 실패 테스트를 작성한다.
-- [ ] `from`, `to` 기간 필터 테스트를 작성한다.
-- [ ] `from > to` 요청 공통 검증 실패 테스트를 작성한다.
-- [ ] 1-based 페이지네이션 변환 테스트를 작성한다.
-- [ ] `AUDIT_LOG_NOT_FOUND` 예외 테스트를 작성한다.
-- [ ] `INVALID_AUDIT_LOG_TYPE` 예외 테스트를 작성한다.
-- [ ] `INVALID_AUDIT_LOG_SEVERITY` 예외 테스트를 작성한다.
-- [ ] 관리자 인증(`ROLE_ADMIN`) + `MASTER`, `BACKEND` 세부 역할 허용 테스트를 작성한다.
-- [ ] 그 외 권한 차단 테스트를 작성한다.
-- [ ] `ApiResponse<T>` 응답 구조 테스트를 작성한다.
+- [x] 감사 로그 요약 조회 테스트를 작성한다.
+- [x] 감사 로그 목록 조회 테스트를 작성한다.
+- [x] 감사 로그 상세 조회 테스트를 작성한다.
+- [x] `logType` 필터 테스트를 작성한다.
+- [x] `severity` 필터 테스트를 작성한다.
+- [x] `keyword` 필터 테스트를 작성한다.
+- [x] `keyword` 공백-only 입력 필터 미적용 테스트를 작성한다.
+- [x] `keyword` 100자 초과 요청 공통 검증 실패 테스트를 작성한다.
+- [x] `from`, `to` 기간 필터 테스트를 작성한다.
+- [x] `from > to` 요청 `INVALID_DATE_RANGE` 테스트를 작성한다.
+- [x] 1-based 페이지네이션 변환 테스트를 작성한다.
+- [x] `AUDIT_LOG_NOT_FOUND` 예외 테스트를 작성한다.
+- [x] `INVALID_AUDIT_LOG_TYPE` 예외 테스트를 작성한다.
+- [x] `INVALID_AUDIT_LOG_SEVERITY` 예외 테스트를 작성한다.
+- [x] 관리자 인증(`ROLE_ADMIN`) + `MASTER`, `BACKEND` 세부 역할 허용 테스트를 작성한다.
+- [x] 그 외 권한 차단 테스트를 작성한다.
+- [x] `ApiResponse<T>` 응답 구조 테스트를 작성한다.

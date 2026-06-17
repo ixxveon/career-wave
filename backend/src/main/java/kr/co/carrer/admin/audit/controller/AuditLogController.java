@@ -26,6 +26,9 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('BACKEND'))")
 public class AuditLogController implements AuditLogDocs {
 
+    private static final int DEFAULT_PAGE = 1;
+    private static final int DEFAULT_SIZE = 20;
+
     private final AuditLogService auditLogService;
 
     @GetMapping("/summary")
@@ -56,8 +59,8 @@ public class AuditLogController implements AuditLogDocs {
     public ResponseEntity<ApiResponse<AuditLogDTO.ResponseList>> getAuditLogs(
         @Valid @ModelAttribute AuditLogDTO.RequestList request
     ) {
-        int page = request.page() == null ? 1 : request.page();
-        int size = request.size() == null ? 20 : request.size();
+        int effectivePage = getPageOrDefault(request.page());
+        int effectiveSize = getSizeOrDefault(request.size());
 
         Page<AuditLog> auditLogs = auditLogService.getAuditLogs(
             request.logType(),
@@ -65,8 +68,8 @@ public class AuditLogController implements AuditLogDocs {
             request.keyword(),
             request.from(),
             request.to(),
-            page,
-            size
+            effectivePage,
+            effectiveSize
         );
 
         List<AuditLogDTO.ResponseItem> content = auditLogs.getContent().stream()
@@ -75,8 +78,8 @@ public class AuditLogController implements AuditLogDocs {
 
         AuditLogDTO.ResponseList response = new AuditLogDTO.ResponseList(
             content,
-            page,
-            size,
+            effectivePage,
+            effectiveSize,
             auditLogs.getTotalElements(),
             auditLogs.getTotalPages()
         );
@@ -119,5 +122,13 @@ public class AuditLogController implements AuditLogDocs {
         );
 
         return ResponseEntity.ok(ApiResponse.ok("감사 로그 상세 조회에 성공했습니다.", response));
+    }
+
+    private int getPageOrDefault(Integer page) {
+        return page == null ? DEFAULT_PAGE : page;
+    }
+
+    private int getSizeOrDefault(Integer size) {
+        return size == null ? DEFAULT_SIZE : size;
     }
 }
