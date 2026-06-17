@@ -150,14 +150,14 @@ class UserLoginServiceImplTest {
     }
 
     @Test
-    void BLACKLISTED_계정_AUTH_ACCOUNT_BANNED() throws Exception {
+    void BLACKLISTED_계정_AUTH_ACCOUNT_BLACKLISTED() throws Exception {
         Member member = createMember(RoleType.USER, MemberStatus.BLACKLISTED);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
         UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
 
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
+                .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_ACCOUNT_BLACKLISTED);
     }
 
     @Test

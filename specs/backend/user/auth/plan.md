@@ -310,7 +310,7 @@ backend/src/main/java/kr/co/carrer/user/member/
   - refresh response body에 refresh token 포함 금지
   - 기업회원은 `hr_managers.hr_status=APPROVED`인 경우에만 token 발급
   - `PENDING_REVIEW`, `REJECTED`, `NEEDS_REVISION`, `REMOVED` 상태는 403으로 차단
-  - 비밀번호 재설정 성공 시 `RefreshTokenStore.deleteAll(AccountType.USER, memberId)`로 모든 refresh token 폐기
+  - 비밀번호 재설정 성공 시 `RefreshTokenStore.deleteAll(accountType, memberId)`로 모든 refresh token 폐기 (개인/기업회원 모두 처리)
 
 ### Rate Limit 정책
 

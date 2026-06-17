@@ -134,7 +134,8 @@ public class UserLoginServiceImpl implements UserLoginService {
     private CompanyApprovalStatus validateAccountStatus(Member member) {
         switch (member.getMemberStatus()) {
             case SUSPENDED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED);
-            case BANNED, BLACKLISTED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
+            case BANNED        -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
+            case BLACKLISTED   -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BLACKLISTED);
             case WITHDRAWN -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
             case LOCKED -> {
                 if (member.getLockedUntil() != null && Instant.now().isBefore(member.getLockedUntil())) {

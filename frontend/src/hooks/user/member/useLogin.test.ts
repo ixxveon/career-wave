@@ -67,6 +67,13 @@ describe('getLoginRouteDecision — 성공 응답 기반 blocked login', () => {
     });
   });
 
+  it('BLACKLISTED → BLOCK RESTRICTED', () => {
+    expect(getLoginRouteDecision(makeResponse({ memberStatus: MEMBER_STATUS.BLACKLISTED }))).toEqual({
+      type: 'BLOCK',
+      reason: 'RESTRICTED',
+    });
+  });
+
   it('ACTIVE COMPANY + PENDING_REVIEW → BLOCK COMPANY_PENDING', () => {
     expect(
       getLoginRouteDecision(makeResponse({ roleType: MEMBER_TYPE.COMPANY, companyApprovalStatus: COMPANY_APPROVAL_STATUS.PENDING_REVIEW })),

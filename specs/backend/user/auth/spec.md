@@ -361,7 +361,7 @@ CREATE INDEX idx_social_accounts_member_id ON social_accounts(member_id);
 - `start_dt`, `p_nm`, `ceoName`, `certificateNumber`를 외부 API 검증 파라미터로 사용하지 않는다.
 - 외부 API 응답으로 사업자 존재 여부, 정상 사업자 여부, 휴업 여부, 폐업 여부를 확인한다.
 - status 조회 결과가 유효하면 기업 인증 검증 상태를 통과 처리하고 가입 신청을 생성한다.
-- 외부 API 장애, 타임아웃, 일시 제한 초과 시에는 가입 신청을 실패시키거나 `PENDING_REVIEW`로 접수 후 admin 수동 검증 대상으로 남기는 정책을 구현 전에 확정한다.
+- 외부 API 장애, 타임아웃, 일시 제한 초과 시에는 가입 신청을 실패시킨다 (`COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE 503`). `PENDING_REVIEW` 자동 전환은 하지 않는다.
 - 프론트의 주소 검색 버튼은 이번 기업회원 가입 범위에서 활성화한다.
 - 주소 검색은 행정안전부 도로명주소 API 또는 동등한 한국 주소 API를 사용한다.
 - 프론트는 사용자가 선택한 주소 결과의 `postalCode`, `roadAddress`, 선택 가능한 `jibunAddress`를 가입 request에 포함한다.

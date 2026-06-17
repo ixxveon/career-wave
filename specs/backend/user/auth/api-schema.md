@@ -173,6 +173,7 @@ GET  /me/status
       "name": "홍길동",
       "roleType": "USER",
       "memberStatus": "ACTIVE",
+      "subscriptionStatus": "FREE",
       "companyApprovalStatus": "NONE",
       "lastLoginAt": "2026-05-31T12:30:00Z"
     }
@@ -680,6 +681,7 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
       "name": "홍길동",
       "roleType": "USER",
       "memberStatus": "ACTIVE",
+      "subscriptionStatus": "FREE",
       "companyApprovalStatus": "NONE",
       "lastLoginAt": "2026-06-15T10:00:00Z"
     },

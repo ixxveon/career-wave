@@ -156,7 +156,7 @@ export interface UserRegisterResponse {
   memberStatus: MemberStatus;
 }
 
-export type SocialProviderId = 'kakao' | 'naver' | 'google';
+export type { SocialProviderId } from '../utils/user/member/socialAuth';
 
 export interface SocialRegisterTerms extends TermsAgreement {}
 
