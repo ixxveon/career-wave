@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity(name = "UserHrManager")
@@ -54,8 +55,8 @@ public class HrManager {
 
     public static HrManager pendingFor(UUID memberId, UUID companyProfileId) {
         HrManager h = new HrManager();
-        h.memberId = memberId;
-        h.companyProfileId = companyProfileId;
+        h.memberId = Objects.requireNonNull(memberId, "memberId must not be null");
+        h.companyProfileId = Objects.requireNonNull(companyProfileId, "companyProfileId must not be null");
         return h;
     }
 }

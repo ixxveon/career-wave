@@ -5,12 +5,12 @@
 
 ## Phase 1 - Entity
 
-- [ ] `AiFeatureType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `AlertChannelType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `RagDocumentStatusType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `AiModel.java` 엔티티를 `ai_models` ERD 컬럼 기준으로 작성한다.
-- [ ] `AiOpsSetting.java` 엔티티를 `ai_ops_settings` ERD 컬럼 기준으로 작성한다.
-- [ ] `RagDocument.java` 엔티티를 `rag_documents` ERD 컬럼 기준으로 작성한다.
+- [x] `AiFeatureType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `AlertChannelType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `RagDocumentStatusType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `AiModel.java` 엔티티를 `ai_models` ERD 컬럼 기준으로 작성한다.
+- [x] `AiOpsSetting.java` 엔티티를 `ai_ops_settings` ERD 컬럼 기준으로 작성한다.
+- [x] `RagDocument.java` 엔티티를 `rag_documents` ERD 컬럼 기준으로 작성한다.
 
 ## Phase 2 - Repository
 

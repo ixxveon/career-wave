@@ -42,8 +42,8 @@
 - `from`이 `to`보다 이후 시점이면 공통 요청 검증 실패 `400`으로 처리한다.
 - 허용되지 않은 `logType` 값이 전달되면 `INVALID_AUDIT_LOG_TYPE`으로 처리한다.
 - 허용되지 않은 `severity` 값이 전달되면 `INVALID_AUDIT_LOG_SEVERITY`로 처리한다.
-- `page`는 1 이상, `size`는 1 이상이어야 하며 이를 만족하지 않으면 공통 요청 검증 실패 `400`으로 처리한다.
-- `keyword`가 `trim()` 기준 빈 문자열이면 필터를 적용하지 않고, 100자를 초과하면 `KEYWORD_TOO_LONG`으로 처리한다.
+- `page`는 1 이상, `size`는 1 이상 100 이하여야 하며 이를 만족하지 않으면 공통 요청 검증 실패 `400`으로 처리한다.
+- `keyword`가 `trim()` 기준 빈 문자열이면 필터를 적용하지 않고, 100자를 초과하면 공통 요청 검증 실패 `400`으로 처리한다.
 - `logId`에 해당하는 감사 로그가 존재하지 않으면 `AUDIT_LOG_NOT_FOUND`로 처리한다.
 
 ## Requirements
@@ -63,7 +63,7 @@
 - **FR-011**: 시스템은 존재하지 않는 감사 로그 상세 조회 요청에 대해 `AUDIT_LOG_NOT_FOUND`를 반환해야 한다.
 - **FR-012**: 시스템은 허용되지 않은 감사 로그 유형 값이 전달되면 `INVALID_AUDIT_LOG_TYPE`을 반환해야 한다.
 - **FR-013**: 시스템은 허용되지 않은 감사 로그 심각도 값이 전달되면 `INVALID_AUDIT_LOG_SEVERITY`를 반환해야 한다.
-- **FR-014**: 시스템은 `from`, `to`, `page`, `size`가 유효하지 않은 요청을 공통 요청 검증 실패 `400`으로 처리해야 하며, 잘못된 ISO 8601 UTC 형식, `from > to`, `page < 1`, `size < 1`을 포함해야 한다. `keyword` 100자 초과 요청은 `KEYWORD_TOO_LONG`으로 처리해야 한다.
+- **FR-014**: 시스템은 `from`, `to`, `page`, `size`, `keyword`가 유효하지 않은 요청 중 잘못된 ISO 8601 UTC 형식, `page < 1`, `size < 1`, `size > 100`, `keyword` 100자 초과는 공통 요청 검증 실패 `400`으로 처리해야 한다. `from > to` 요청은 `INVALID_DATE_RANGE`로 처리해야 한다.
 - **FR-015**: 시스템은 모든 감사 로그 API에 JWT 기반 인증과 역할 기반 인가를 적용해야 한다.
 - **FR-016**: 시스템은 문서상 권한 표기 `MASTER`, `BACKEND`, `CS`를 Spring Security의 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`와 일치하도록 해석하며, 관리자 도메인 API는 `ROLE_ADMIN` 인증과 조합해 적용해야 한다.
 - **FR-017**: 시스템은 `audit_logs.log_type` 값을 `ADMIN_ACTIVITY`, `ADMIN_MANAGEMENT`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` 범위로 해석해야 한다.
@@ -82,8 +82,8 @@
 - **SC-003**: 감사 로그 목록 응답은 100% `ApiResponse<T>`와 1-based `page` 기준 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 만족한다.
 - **SC-004**: 허용되지 않은 `logType`, `severity` 요청은 100% 각각 `INVALID_AUDIT_LOG_TYPE`, `INVALID_AUDIT_LOG_SEVERITY`로 처리된다.
 - **SC-005**: 존재하지 않는 `logId` 요청은 100% `AUDIT_LOG_NOT_FOUND`로 처리된다.
-- **SC-006**: 감사 로그 요약 응답은 전체 건수와 `logType`, `severity` 기준 집계 필드를 모두 포함한다.
-- **SC-007**: `keyword` 공백-only 요청은 100% 필터 미적용으로 처리되고, `keyword` 100자 초과 요청은 100% `KEYWORD_TOO_LONG`, `from > to` 요청은 100% 공통 요청 검증 실패 `400`으로 처리된다.
+- **SC-006**: 감사 로그 요약 응답은 전체 건수와 `ADMIN_ACTIVITY`, `ADMIN_MANAGEMENT`, `AI_METRICS_SYSTEM`, `SCRAPING_SYSTEM` 기준 집계 필드를 모두 포함한다.
+- **SC-007**: `keyword` 공백-only 요청은 100% 필터 미적용으로 처리되고, `keyword` 100자 초과 요청은 100% 공통 요청 검증 실패 `400`, `from > to` 요청은 100% `INVALID_DATE_RANGE`로 처리된다.
 
 ## Assumptions
 
