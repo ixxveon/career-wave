@@ -2,12 +2,14 @@ package kr.co.carrer.admin.aimetrics.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import kr.co.carrer.admin.aimetrics.docs.AiMetricsDocs;
 import kr.co.carrer.admin.aimetrics.dto.AiMetricsDTO;
 import kr.co.carrer.admin.aimetrics.dto.AiOpsSettingDTO;
 import kr.co.carrer.admin.aimetrics.dto.AiUsageLogDTO;
 import kr.co.carrer.admin.aimetrics.dto.RagDocumentDTO;
 import kr.co.carrer.admin.aimetrics.service.AiMetricsService;
 import kr.co.carrer.admin.aimetrics.type.AiFeatureType;
+import kr.co.carrer.admin.aimetrics.type.IntervalType;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
@@ -31,7 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/v1/admin/ai-metrics")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('BACKEND'))")
-public class AiMetricsController {
+public class AiMetricsController implements AiMetricsDocs {
 
     private final AiMetricsService aiMetricsService;
 
@@ -73,9 +75,9 @@ public class AiMetricsController {
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
             @RequestParam(required = false) AiFeatureType featureType,
-            @RequestParam String interval
+            @RequestParam IntervalType interval
     ) {
-        AiMetricsService.ResponseTokenTrend result = aiMetricsService.getTokenTrend(from, to, featureType, interval);
+        AiMetricsService.ResponseTokenTrend result = aiMetricsService.getTokenTrend(from, to, featureType, interval.name());
         AiMetricsDTO.ResponseTokenTrend response = new AiMetricsDTO.ResponseTokenTrend(
                 result.interval(),
                 result.points().stream()

@@ -85,17 +85,17 @@
 
 ## Phase 6 - Documentation
 
-- [ ] `AiMetricsDocs.java` Swagger 인터페이스를 작성한다.
-- [ ] AI 사용량 조회 API의 요청/응답 문서를 정리한다.
-- [ ] AI 운영 정책 API의 요청/응답 문서를 정리한다.
-- [ ] RAG 문서 운영 API의 요청/응답 문서를 정리한다.
-- [ ] MVP에서는 Discord 알림만 지원하고 `PATCH /alerts/discord`는 `alert_enabled`만 변경한다는 정책을 문서화한다.
-- [ ] FastAPI 내부 연동 계약과 backend API 계약의 대응 관계를 문서화한다.
-- [ ] RAG 문서 업로드의 `multipart/form-data` 계약과 내부 파일 전달 흐름을 문서화한다.
-- [ ] AI 사용량 집계는 FastAPI가 담당하고 Spring은 집계 결과를 DTO로 변환한다는 책임 분리를 문서화한다.
-- [ ] `api-schema.md`와 구현 대상 API 계약의 정합성을 점검한다.
-- [ ] `fastapi-schema.md`와 FastAPI 연동 범위 정합성을 점검한다.
-- [ ] `spec.md`, `constitution.md`, `plan.md`와 구현 범위 정합성을 점검한다.
+- [x] `AiMetricsDocs.java` Swagger 인터페이스를 작성한다.
+- [x] AI 사용량 조회 API의 요청/응답 문서를 정리한다.
+- [x] AI 운영 정책 API의 요청/응답 문서를 정리한다.
+- [x] RAG 문서 운영 API의 요청/응답 문서를 정리한다.
+- [x] MVP에서는 Discord 알림만 지원하고 `PATCH /alerts/discord`는 `alert_enabled`만 변경한다는 정책을 문서화한다.
+- [x] FastAPI 내부 연동 계약과 backend API 계약의 대응 관계를 문서화한다.
+- [x] RAG 문서 업로드의 `multipart/form-data` 계약과 내부 파일 전달 흐름을 문서화한다.
+- [x] AI 사용량 집계는 FastAPI가 담당하고 Spring은 집계 결과를 DTO로 변환한다는 책임 분리를 문서화한다.
+- [x] `api-schema.md`와 구현 대상 API 계약의 정합성을 점검한다.
+- [x] `fastapi-schema.md`와 FastAPI 연동 범위 정합성을 점검한다.
+- [x] `spec.md`, `constitution.md`, `plan.md`와 구현 범위 정합성을 점검한다.
 
 ## Phase 7 - Test
 

@@ -24,6 +24,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class DashboardServiceImpl implements DashboardService {
 
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
@@ -43,8 +44,9 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public DashboardDTO.GithubResponse getGithubProfile(UUID memberId) {
-        memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+        if (!memberRepository.existsById(memberId)) {
+            throw new CustomException(ErrorCode.NOT_FOUND);
+        }
 
         return personalProfileRepository.findByMemberId(memberId)
                 .map(this::toGithubResponse)
@@ -52,6 +54,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
+    @Transactional
     public DashboardDTO.ProfileResponse updateProfile(
             UUID memberId,
             DashboardDTO.ProfileUpdateRequest request) {
@@ -75,7 +78,6 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public PaginationResponse<DashboardDTO.BookmarkResponse> getBookmarks(
             UUID memberId,
             String keyword,
