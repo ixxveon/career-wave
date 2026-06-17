@@ -17,11 +17,11 @@
 
 ## Phase 3 — Service
 
-- [ ] Query Parameter와 ERD 컬럼 매핑이 구현과 일치한다.
-- [ ] `from`, `to`가 ISO 8601 UTC 문자열 기준으로 검증된다.
-- [ ] `page`, `size`가 목록 조회 API에만 적용되고 내부 Pageable 변환 시 `page - 1`이 적용된다.
-- [ ] 예외 응답이 `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `INVALID_ALERT_THRESHOLD`, `INVALID_MONTHLY_BUDGET`, `RAG_DOCUMENT_NOT_FOUND`, `RAG_DOCUMENT_ALREADY_INDEXING`, `RAG_DOCUMENT_INDEXING_FAILED`, `RAG_DOCUMENT_DELETE_FAILED`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 등 도메인 ErrorCode와 정확히 매핑된다.
-- [ ] 운영 정책 변경과 RAG 문서 삭제 같은 관리자 변경 행위가 Audit Log로 기록된다.
+- [x] Query Parameter와 ERD 컬럼 매핑이 구현과 일치한다.
+- [x] `from`, `to`가 ISO 8601 UTC 문자열 기준으로 검증된다.
+- [x] `page`, `size`가 목록 조회 API에만 적용되고 내부 Pageable 변환 시 `page - 1`이 적용된다.
+- [x] 예외 응답이 `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `INVALID_ALERT_THRESHOLD`, `INVALID_MONTHLY_BUDGET`, `RAG_DOCUMENT_NOT_FOUND`, `RAG_DOCUMENT_ALREADY_INDEXING`, `RAG_DOCUMENT_INDEXING_FAILED`, `RAG_DOCUMENT_DELETE_FAILED`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 등 도메인 ErrorCode와 정확히 매핑된다.
+- [x] 운영 정책 변경과 RAG 문서 삭제 같은 관리자 변경 행위가 Audit Log로 기록된다.
 
 ## Phase 4 — FastAPI Integration
 

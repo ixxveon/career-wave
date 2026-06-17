@@ -13,4 +13,6 @@ public interface RagDocumentRepository extends JpaRepository<RagDocument, Long> 
     Page<RagDocument> findAll(Pageable pageable);
 
     Page<RagDocument> findByStatus(RagDocumentStatusType status, Pageable pageable);
+
+    boolean existsByStatus(RagDocumentStatusType status);
 }
