@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect } from 'react';
+import { Client } from '@stomp/stompjs';
 import type { SpringWSMessage } from '../../../types/user/interview';
 import { MAX_RECONNECT_ATTEMPTS } from '../../../constants/user/interview';
 import { authSession } from '../../../utils/user/member/authSession';
@@ -11,17 +12,18 @@ export interface UseSpringWebSocketOptions {
   onStatusChange: (status: SpringWSStatus) => void;
 }
 
-const RECONNECT_DELAY_MS = 2000;
+const WS_BASE_URL =
+  import.meta.env.VITE_WS_BASE_URL ??
+  (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/^http/, 'ws');
 
 export function useSpringWebSocket({
   sessionId,
   onMessage,
   onStatusChange,
 }: UseSpringWebSocketOptions) {
-  const wsRef             = useRef<WebSocket | null>(null);
-  const attemptRef        = useRef(0);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isManualCloseRef  = useRef(false);
+  const clientRef      = useRef<Client | null>(null);
+  const attemptRef     = useRef(0);
+  const isManualCloseRef = useRef(false);
 
   /**
    * 콜백 ref 패턴 — connect()가 콜백을 deps로 갖지 않도록 ref 경유
@@ -33,76 +35,83 @@ export function useSpringWebSocket({
   useEffect(() => { onMessageRef.current = onMessage; }, [onMessage]);
   useEffect(() => { onStatusChangeRef.current = onStatusChange; }, [onStatusChange]);
 
-  const getWsUrl = (sid: string): string => {
-    const base =
-      import.meta.env.VITE_WS_BASE_URL ||
-      (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/^http/, 'ws');
-    const token = encodeURIComponent(authSession.getAccessToken() ?? '');
-    return `${base}/ws/interview/${sid}/chat?token=${token}`;
-  };
+  const disconnect = useCallback(() => {
+    isManualCloseRef.current = true;
+    if (clientRef.current) {
+      clientRef.current.deactivate();
+      clientRef.current = null;
+    }
+    attemptRef.current = 0;
+    onStatusChangeRef.current('DISCONNECTED');
+  }, []);
 
   const connect = useCallback((sid: string) => {
-    const state = wsRef.current?.readyState;
-    if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
+    if (clientRef.current?.active) return;
 
-    if (!authSession.getAccessToken()) {
+    const token = authSession.getAccessToken();
+    if (!token) {
       onStatusChangeRef.current('ERROR');
       return;
     }
 
+    isManualCloseRef.current = false;
     onStatusChangeRef.current(attemptRef.current === 0 ? 'CONNECTING' : 'RECONNECTING');
-    const ws = new WebSocket(getWsUrl(sid));
-    wsRef.current = ws;
 
-    ws.onopen = (): void => {
-      if (wsRef.current !== ws) return;
-      attemptRef.current = 0;
-      onStatusChangeRef.current('CONNECTED');
-    };
+    const client = new Client({
+      brokerURL: `${WS_BASE_URL}/ws/user/interview`,
+      connectHeaders: { Authorization: `Bearer ${token}` },
+      reconnectDelay: 0,
+      onConnect: () => {
+        attemptRef.current = 0;
+        onStatusChangeRef.current('CONNECTED');
 
-    ws.onmessage = (event: MessageEvent) => {
-      if (wsRef.current !== ws) return;
-      try {
-        const msg = JSON.parse(event.data as string) as SpringWSMessage;
-        onMessageRef.current(msg);
-      } catch { /* 파싱 실패 무시 */ }
-    };
-
-    ws.onclose = () => {
-      if (wsRef.current !== ws) return;
-      if (isManualCloseRef.current) {
-        onStatusChangeRef.current('DISCONNECTED');
-        return;
-      }
-      if (attemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
+        client.subscribe(`/user/queue/interview/${sid}`, (frame) => {
+          try {
+            const msg = JSON.parse(frame.body) as SpringWSMessage;
+            onMessageRef.current(msg);
+          } catch { /* 파싱 실패 무시 */ }
+        });
+      },
+      onStompError: () => {
+        if (isManualCloseRef.current) return;
         onStatusChangeRef.current('ERROR');
-        return;
-      }
-      attemptRef.current += 1;
-      onStatusChangeRef.current('RECONNECTING');
-      reconnectTimerRef.current = setTimeout(() => connect(sid), RECONNECT_DELAY_MS);
-    };
+      },
+      onWebSocketError: () => {
+        if (isManualCloseRef.current) return;
+        if (attemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
+          onStatusChangeRef.current('ERROR');
+          return;
+        }
+        attemptRef.current += 1;
+        onStatusChangeRef.current('RECONNECTING');
+        clientRef.current?.deactivate();
+        clientRef.current = null;
+        // 재연결은 useEffect에서 sessionId 변경으로 처리
+        setTimeout(() => connect(sid), 2000);
+      },
+      onWebSocketClose: () => {
+        if (isManualCloseRef.current) return;
+        if (attemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
+          onStatusChangeRef.current('ERROR');
+          return;
+        }
+        attemptRef.current += 1;
+        onStatusChangeRef.current('RECONNECTING');
+        setTimeout(() => connect(sid), 2000);
+      },
+    });
 
-    ws.onerror = () => { ws.close(); };
+    clientRef.current = client;
+    client.activate();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const disconnect = useCallback(() => {
-    isManualCloseRef.current = true;
-    if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-    wsRef.current?.close();
-    wsRef.current = null;
-    attemptRef.current = 0;
-  }, []);
 
   useEffect(() => {
     if (!sessionId) return;
-    isManualCloseRef.current = false;
     connect(sessionId);
     return () => {
       isManualCloseRef.current = true;
-      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-      wsRef.current?.close();
-      wsRef.current = null;
+      clientRef.current?.deactivate();
+      clientRef.current = null;
     };
   }, [sessionId, connect]);
 
