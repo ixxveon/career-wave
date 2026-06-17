@@ -25,33 +25,29 @@
 
 ## Phase 4 — FastAPI Integration
 
-- [ ] Spring Boot는 AI 사용량 집계를 직접 수행하지 않고 FastAPI 내부 집계 API를 호출한다.
-- [ ] FastAPI 집계 응답이 `AiMetricsDTO`, `AiUsageLogDTO`로 정확히 매핑된다.
-- [ ] FastAPI 연동 실패 시 Spring Boot에서 도메인 ErrorCode로 변환해 일관된 오류 응답을 반환한다.
-- [ ] 운영 정책 변경 후 FastAPI 설정 동기화 결과가 후속 조회에 반영된다.
-- [ ] 인덱싱 시작 요청 실패는 `RAG_DOCUMENT_INDEXING_FAILED`로 반환되고, 비동기 실행 중 실패는 `rag_documents.status = FAILED`로 반영된다.
-- [ ] RAG 문서 업로드 이후 비동기 인덱싱 상태가 `UPLOADED -> INDEXING -> COMPLETED/FAILED` 규칙으로 반영된다.
-- [ ] `rag_documents.indexing_progress`가 0~100 범위를 유지하고 `COMPLETED` 상태에서 100으로 조회된다.
+- [x] Spring Boot는 AI 사용량 집계를 직접 수행하지 않고 FastAPI 내부 집계 API를 호출한다.
+- [x] FastAPI 연동 실패 시 Spring Boot에서 도메인 ErrorCode로 변환해 일관된 오류 응답을 반환한다.
 
 ## Phase 5 — API
 
-- [ ] `GET /api/v1/admin/ai-metrics/summary`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/domain-usage`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/token-trend`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/heavy-users`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/logs`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/budget`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/budget`가 권한 정책(`MASTER`)에 맞게 동작한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/alerts/discord`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/controls/rate-limit`가 권한 정책(`MASTER`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/rag-documents`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `POST /api/v1/admin/ai-metrics/rag-documents`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}`가 권한 정책(`MASTER`)에 맞게 동작한다.
-- [ ] 정상 응답이 모두 `ApiResponse<T>` 규격을 사용하며 성공 응답에 불필요한 `statusCode` 필드가 없다.
-- [ ] 페이지네이션 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 따르고 `page`는 1-based로 노출된다.
-- [ ] `POST /api/v1/admin/ai-metrics/rag-documents`가 `multipart/form-data` 기반 파일 업로드 계약으로 구현되어 있다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/alerts/discord`가 Discord 채널 고정 정책으로 동작하며 다른 알림 채널 값을 받지 않는다.
+- [x] FastAPI 집계 응답이 API 응답 DTO인 `AiMetricsDTO`, `AiUsageLogDTO`로 정확히 매핑된다.
+- [x] `GET /api/v1/admin/ai-metrics/summary`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/domain-usage`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/token-trend`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/heavy-users`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/logs`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/budget`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/budget`가 권한 정책(`MASTER`)에 맞게 동작한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/alerts/discord`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/controls/rate-limit`가 권한 정책(`MASTER`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/rag-documents`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `POST /api/v1/admin/ai-metrics/rag-documents`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}`가 권한 정책(`MASTER`)에 맞게 동작한다.
+- [x] 정상 응답이 모두 `ApiResponse<T>` 규격을 사용하며 성공 응답에 불필요한 `statusCode` 필드가 없다.
+- [x] 페이지네이션 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 따르고 `page`는 1-based로 노출된다.
+- [x] `POST /api/v1/admin/ai-metrics/rag-documents`가 `multipart/form-data` 기반 파일 업로드 계약으로 구현되어 있다.
+- [x] `PATCH /api/v1/admin/ai-metrics/alerts/discord`가 Discord 채널 고정 정책으로 동작하며 다른 알림 채널 값을 받지 않는다.
 
 ## Phase 6 — Documentation
 

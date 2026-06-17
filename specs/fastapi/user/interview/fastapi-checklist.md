@@ -7,24 +7,24 @@
 
 ## Phase 1 — 설정 & 구조
 
-- [ ] `fastapi/core/config.py`에서 `pydantic-settings BaseSettings`로 환경 변수를 읽는다 (`os.environ.get()` 직접 호출 없음).
-- [ ] `logging.LoggerAdapter`를 사용한 세션별 로거가 구현되어 있으며, 모든 파이프라인 로그에 `[Session: {sessionId}]` 컨텍스트가 자동으로 포함된다 (로깅 코드마다 `sessionId`를 수동으로 전달하지 않음).
-- [ ] `WEBHOOK_SECRET`, `JWT_SECRET`, `OPENAI_API_KEY` 값이 소스 코드에 하드코딩되지 않았다.
-- [ ] `.env.example`에 면접 도메인 환경 변수 (`WEBHOOK_SECRET`, `JWT_SECRET`, `OPENAI_MODEL_INTERVIEW`, `OPENAI_MODEL_STT`, `OPENAI_MODEL_TTS`, `OPENAI_TTS_VOICE`, `OPENAI_LLM_TIMEOUT_SECONDS`)가 명시되어 있다.
-- [ ] `fastapi/user/api/interview_router.py`에 비즈니스 로직이 직접 작성되지 않고 `pipeline/` 계층을 호출한다.
-- [ ] `fastapi/main.py`에 면접 라우터가 등록되어 있다.
+- [x] `fastapi/core/config.py`에서 `pydantic-settings BaseSettings`로 환경 변수를 읽는다 (`os.environ.get()` 직접 호출 없음).
+- [x] `logging.LoggerAdapter`를 사용한 세션별 로거가 구현되어 있으며, 모든 파이프라인 로그에 `[Session: {sessionId}]` 컨텍스트가 자동으로 포함된다 (로깅 코드마다 `sessionId`를 수동으로 전달하지 않음).
+- [x] `WEBHOOK_SECRET`, `JWT_SECRET`, `OPENAI_API_KEY` 값이 소스 코드에 하드코딩되지 않았다.
+- [x] `.env.example`에 면접 도메인 환경 변수 (`WEBHOOK_SECRET`, `JWT_SECRET`, `OPENAI_MODEL_INTERVIEW`, `OPENAI_MODEL_STT`, `OPENAI_MODEL_TTS`, `OPENAI_TTS_VOICE`, `OPENAI_LLM_TIMEOUT_SECONDS`)가 명시되어 있다.
+- [x] `fastapi/user/api/interview_router.py`에 비즈니스 로직이 직접 작성되지 않고 `pipeline/` 계층을 호출한다.
+- [x] `fastapi/main.py`에 면접 라우터가 등록되어 있다.
 
 ---
 
 ## Phase 2 — WebSocket 핸들러
 
-- [ ] `WS /ws/user/interview/{sessionId}/ai` 엔드포인트가 구현되어 있다.
-- [ ] 연결 시 `?token=` JWT 검증이 수행되며, 실패 시 Close 1008로 연결이 종료된다.
-- [ ] `sessionId` 기반으로 세션별 WebSocket을 저장하고 중복 연결 시 이전 연결을 종료한다.
-- [ ] `send_stt_partial` / `send_stt_final` / `send_tts_audio` / `send_error` 헬퍼가 정의되어 있다.
-- [ ] 모든 WebSocket 메시지에 `type` / `errorCode` 필드가 포함된다 (없으면 `null`).
-- [ ] FastAPI WebSocket(`/ai`)은 Server → Client 단방향 Push 채널이다. 클라이언트는 연결만 수립하며 메시지를 업링크로 전송하지 않는다. `sequenceNumber`는 서버가 Push하는 메시지에만 포함된다.
-- [ ] 서버가 Push하는 메시지의 `sequenceNumber`가 세션 내 단조 증가하며, 재연결 시 `lastReceivedSequenceNumber` 이후 메시지를 순서대로 재전송한다.
+- [x] `WS /ws/user/interview/{sessionId}/ai` 엔드포인트가 구현되어 있다.
+- [x] 연결 시 `?token=` JWT 검증이 수행되며, 실패 시 Close 1008로 연결이 종료된다.
+- [x] `sessionId` 기반으로 세션별 WebSocket을 저장하고 중복 연결 시 이전 연결을 종료한다.
+- [x] `send_stt_partial` / `send_stt_final` / `send_tts_audio` / `send_error` 헬퍼가 정의되어 있다.
+- [x] 모든 WebSocket 메시지에 `type` / `errorCode` 필드가 포함된다 (없으면 `null`).
+- [x] FastAPI WebSocket(`/ai`)은 Server → Client 단방향 Push 채널이다. 클라이언트는 연결만 수립하며 메시지를 업링크로 전송하지 않는다. `sequenceNumber`는 서버가 Push하는 메시지에만 포함된다.
+- [x] 서버가 Push하는 메시지의 `sequenceNumber`가 세션 내 단조 증가하며, 재연결 시 `lastReceivedSequenceNumber` 이후 메시지를 순서대로 재전송한다.
 
 ---
 

@@ -7,36 +7,36 @@
 
 ## Phase 1 — 프로젝트 구조 & 설정
 
-- [ ] `fastapi/core/config.py` 생성
-  - [ ] `pydantic-settings BaseSettings` 기반 환경 변수 정의
-  - [ ] `SPRING_BASE_URL`, `WEBHOOK_SECRET`, `JWT_SECRET` 필드
-  - [ ] `OPENAI_API_KEY`, `OPENAI_MODEL_INTERVIEW`, `OPENAI_MODEL_STT`, `OPENAI_MODEL_TTS`, `OPENAI_TTS_VOICE` 필드
-  - [ ] `OPENAI_LLM_TIMEOUT_SECONDS: int = 10` 기본값 설정
-- [ ] `fastapi/core/spring_client.py` 생성
-  - [ ] `httpx.AsyncClient` 기반 Spring 내부 API 클라이언트
-  - [ ] `send_report_callback(session_id, payload)` — 지수 백오프 재시도 (최대 3회)
-  - [ ] 최종 실패 시 `log.error` 기록
-- [ ] `fastapi/.env.example` 업데이트 — 면접 관련 환경 변수 항목 추가
-- [ ] `fastapi/user/api/interview_router.py` 기본 파일 생성
-- [ ] `fastapi/user/pipeline/` 디렉터리 생성
-- [ ] `fastapi/main.py` — 면접 라우터 import 및 등록 주석 추가
+- [x] `fastapi/core/config.py` 생성
+  - [x] `pydantic-settings BaseSettings` 기반 환경 변수 정의
+  - [x] `SPRING_BASE_URL`, `WEBHOOK_SECRET`, `JWT_SECRET` 필드
+  - [x] `OPENAI_API_KEY`, `OPENAI_MODEL_INTERVIEW`, `OPENAI_MODEL_STT`, `OPENAI_MODEL_TTS`, `OPENAI_TTS_VOICE` 필드
+  - [x] `OPENAI_LLM_TIMEOUT_SECONDS: int = 10` 기본값 설정
+- [x] `fastapi/core/spring_client.py` 생성
+  - [x] `httpx.AsyncClient` 기반 Spring 내부 API 클라이언트
+  - [x] `send_report_callback(session_id, payload)` — 지수 백오프 재시도 (최대 3회)
+  - [x] 최종 실패 시 `log.error` 기록
+- [x] `fastapi/.env.example` 업데이트 — 면접 관련 환경 변수 항목 추가
+- [x] `fastapi/user/api/interview_router.py` 기본 파일 생성
+- [x] `fastapi/user/pipeline/` 디렉터리 생성
+- [x] `fastapi/main.py` — 면접 라우터 import 및 등록 (lifespan Graceful Shutdown으로 마이그레이션)
 
 ---
 
 ## Phase 2 — WebSocket 핸들러
 
-- [ ] `fastapi/user/websocket/interview_ws_handler.py` 생성
-  - [ ] `WS /ws/user/interview/{sessionId}/ai` 엔드포인트 정의
-  - [ ] JWT 토큰 검증 (`?token=`) — 실패 시 Close 1008
-  - [ ] `sessionId` 세션 저장 및 중복 연결 시 이전 연결 종료
-    - [ ] 교체 직전 기존 소켓에 `{"type": "ERROR", "errorCode": "INTERVIEW_DUPLICATED_CONNECTION"}` 전송 후 `close(code=1000)` 호출 — 클라이언트가 종료 이유를 수신할 수 있도록 보장
-  - [ ] 세션별 WebSocket 저장: `active_sessions: dict[str, WebSocket]`
-  - [ ] 메시지 전송 헬퍼 구현
-    - [ ] `send_stt_partial(session_id, content, question_order, chunk_index)`
-    - [ ] `send_stt_final(session_id, content, question_order, voice_quality_ratio)`
-    - [ ] `send_tts_audio(session_id, audio_data, question_order, chunk_index, is_final)`
-    - [ ] `send_error(session_id, content, error_code, question_order)`
-- [ ] `fastapi/main.py` — WebSocket 핸들러 라우터 등록
+- [x] `fastapi/user/websocket/interview_ws_handler.py` 생성
+  - [x] `WS /ws/user/interview/{sessionId}/ai` 엔드포인트 정의
+  - [x] JWT 토큰 검증 (`?token=`) — 실패 시 Close 1008
+  - [x] `sessionId` 세션 저장 및 중복 연결 시 이전 연결 종료
+    - [x] 교체 직전 기존 소켓에 `{"type": "ERROR", "errorCode": "INTERVIEW_DUPLICATED_CONNECTION"}` 전송 후 `close(code=1000)` 호출 — 클라이언트가 종료 이유를 수신할 수 있도록 보장
+  - [x] 세션별 WebSocket 저장: `active_sessions: dict[str, WebSocket]`
+  - [x] 메시지 전송 헬퍼 구현
+    - [x] `send_stt_partial(session_id, content, question_order, chunk_index)`
+    - [x] `send_stt_final(session_id, content, question_order, voice_quality_ratio)`
+    - [x] `send_tts_audio(session_id, audio_data, question_order, chunk_index, is_final)`
+    - [x] `send_error(session_id, content, error_code, question_order)`
+- [x] `fastapi/main.py` — WebSocket 핸들러 라우터 등록
 
 ---
 

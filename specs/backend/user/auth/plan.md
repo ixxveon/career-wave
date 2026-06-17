@@ -49,7 +49,7 @@ backend/src/main/java/kr/co/carrer/user/member/
 │   ├── Member.java
 │   ├── PersonalProfile.java
 │   ├── CompanyProfile.java
-│   ├── HrManager.java
+│   ├── UserHrManager.java
 │   ├── SocialAccount.java
 │   ├── MemberVerification.java
 │   └── PasswordResetToken.java
@@ -59,7 +59,7 @@ backend/src/main/java/kr/co/carrer/user/member/
 │   ├── UserMemberRepository.java
 │   ├── PersonalProfileRepository.java
 │   ├── CompanyProfileRepository.java
-│   ├── HrManagerRepository.java
+│   ├── UserHrManagerRepository.java
 │   ├── SocialAccountRepository.java
 │   ├── MemberVerificationRepository.java
 │   ├── PasswordResetTokenRepository.java
@@ -125,7 +125,7 @@ backend/src/main/java/kr/co/carrer/user/member/
 | 소셜 저장 구조 | `social_accounts` ERD 기준 | provider + providerUserId unique 연결 정보가 필요 |
 | 소셜 가입 token | Redis `user-auth:social-signup:{tokenHash}`, TTL 10분 | provider 인증 완료 후 추가정보 입력까지만 유효한 1회성 token |
 | 소셜 provider 범위 | Kakao / Naver / Google | Apple 로그인 제외 |
-| JPA Entity 이름 충돌 방지 | `PersonalProfile` → `@Entity(name = "UserPersonalProfile")`, `HrManager` → `@Entity(name = "UserHrManager")` | `user/dashboard/entity/PersonalProfile`, `admin/member/entity/HrManager`와 동일 클래스명으로 JPA 충돌 방지 |
+| JPA Entity 이름 충돌 방지 | `PersonalProfile` → `@Entity(name = "UserPersonalProfile")`, `HrManager` → `UserHrManager` (클래스명·파일명 변경) + `@Entity(name = "UserHrManager")` | `user/dashboard/entity/PersonalProfile`, `admin/member/entity/HrManager`와 동일 클래스명으로 JPA 충돌 및 import 혼동 방지 |
 | `company_profiles.address` 파생 | INSERT 시 `address = roadAddress` 값으로 채움 | DB NOT NULL 제약 충족, road_address와 의미가 같아 별도 입력 불필요 |
 | 엔티티 생성 패턴 | `@NoArgsConstructor(PROTECTED)` + 정적 팩토리 + `Objects.requireNonNull(memberId)` | setter 없이 필수 필드를 컴파일 타임에 강제, null은 DB flush 전에 즉시 실패 |
 | Swagger DTO 동기화 | enum 값 변경 시 DTO `@Schema(allowableValues)` 함께 갱신 | enum 변경 후 DTO allowableValues 누락 시 API 문서와 실제 동작이 불일치 |
@@ -210,7 +210,7 @@ backend/src/main/java/kr/co/carrer/user/member/
 - `PasswordResetTokenRepository`
   - `findByTokenHash`
   - `existsByMemberIdAndUsedAtIsNullAndExpiresAtAfter(UUID memberId, Instant now)` — 중복 발급 방지 (memberId 기준, 만료 제외)
-- `HrManagerRepository`
+- `UserHrManagerRepository`
   - `findByMemberId`
   - `findByMemberIdAndHrStatus`
 - `SocialAccountRepository`

@@ -48,40 +48,40 @@
 
 ## Phase 4 - FastAPI Integration
 
-- [ ] `AiMetricsFastApiClient.java` 내부 호출 클라이언트를 작성한다.
-- [ ] FastAPI summary 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI domain-usage 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI token-trend 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI heavy-users 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI usage-logs/search 요청/응답 매핑 DTO를 작성한다.
-- [ ] 운영 정책 동기화 FastAPI 요청/응답 매핑 DTO를 작성한다.
-- [ ] RAG 인덱싱 시작 FastAPI 요청/응답 매핑 DTO를 작성한다.
-- [ ] RAG 인덱스 삭제 FastAPI 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI 내부 오류를 Spring 도메인 ErrorCode로 변환하는 매퍼를 구현한다.
-- [ ] 운영 정책 변경 후 FastAPI 설정 동기화 호출을 연동한다.
-- [ ] RAG 문서 업로드 후 인덱싱 시작 호출을 연동한다.
-- [ ] RAG 문서 삭제 시 인덱스 제거 호출을 연동한다.
+- [x] `AiMetricsFastApiClient.java` 내부 호출 클라이언트를 작성한다.
+- [x] FastAPI summary 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI domain-usage 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI token-trend 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI heavy-users 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI usage-logs/search 요청/응답 매핑 DTO를 작성한다.
+- [x] 운영 정책 동기화 FastAPI 요청/응답 매핑 DTO를 작성한다.
+- [x] RAG 인덱싱 시작 FastAPI 요청/응답 매핑 DTO를 작성한다.
+- [x] RAG 인덱스 삭제 FastAPI 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI 내부 오류를 Spring 도메인 ErrorCode로 변환하는 매퍼를 구현한다.
+- [x] 운영 정책 변경 후 FastAPI 설정 동기화 호출을 연동한다.
+- [x] RAG 문서 업로드 후 인덱싱 시작 호출을 연동한다.
+- [x] RAG 문서 삭제 시 인덱스 제거 호출을 연동한다.
 
 ## Phase 5 - API
 
-- [ ] `AiMetricsDTO.java`를 작성한다.
-- [ ] `AiUsageLogDTO.java`를 작성한다.
-- [ ] `AiOpsSettingDTO.java`를 작성한다.
-- [ ] `RagDocumentDTO.java`를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/summary` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/domain-usage` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/token-trend` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/heavy-users` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/logs` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/budget` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/budget` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/alerts/discord` Controller endpoint를 작성한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/controls/rate-limit` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/rag-documents` Controller endpoint를 작성한다.
-- [ ] `POST /api/v1/admin/ai-metrics/rag-documents` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download` Controller endpoint를 작성한다.
-- [ ] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}` Controller endpoint를 작성한다.
-- [ ] `MASTER`, `BACKEND` 역할 정책과 JWT 인증 진입 조건을 API 계층에 반영한다.
+- [x] `AiMetricsDTO.java`를 작성한다.
+- [x] `AiUsageLogDTO.java`를 작성한다.
+- [x] `AiOpsSettingDTO.java`를 작성한다.
+- [x] `RagDocumentDTO.java`를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/summary` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/domain-usage` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/token-trend` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/heavy-users` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/logs` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/budget` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/budget` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/alerts/discord` Controller endpoint를 작성한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/controls/rate-limit` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/rag-documents` Controller endpoint를 작성한다.
+- [x] `POST /api/v1/admin/ai-metrics/rag-documents` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download` Controller endpoint를 작성한다.
+- [x] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}` Controller endpoint를 작성한다.
+- [x] `MASTER`, `BACKEND` 역할 정책과 JWT 인증 진입 조건을 API 계층에 반영한다.
 
 ## Phase 6 - Documentation
 
