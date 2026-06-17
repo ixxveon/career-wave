@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.RoleType;
 import kr.co.carrer.user.member.type.SubscriptionStatus;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -11,6 +14,8 @@ import java.util.UUID;
 
 @Entity(name = "UserMember")
 @Table(name = "members")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
 
     @Id
@@ -74,22 +79,6 @@ public class Member {
     protected void onUpdate() {
         updatedAt = Instant.now();
     }
-
-    // Getters
-    public UUID getMemberId() { return memberId; }
-    public String getLoginId() { return loginId; }
-    public String getEmail() { return email; }
-    public String getPhone() { return phone; }
-    public String getPassword() { return password; }
-    public String getName() { return name; }
-    public RoleType getRoleType() { return roleType; }
-    public MemberStatus getMemberStatus() { return memberStatus; }
-    public SubscriptionStatus getSubscriptionStatus() { return subscriptionStatus; }
-    public LocalDate getSuspendEndDate() { return suspendEndDate; }
-    public int getWarningCount() { return warningCount; }
-    public Instant getLockedUntil() { return lockedUntil; }
-    public Instant getLastLoginAt() { return lastLoginAt; }
-    public Instant getCreatedAt() { return createdAt; }
 
     public void updateLastLoginAt(Instant time) { this.lastLoginAt = time; }
 
