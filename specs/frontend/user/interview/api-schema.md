@@ -403,11 +403,11 @@ SUBSCRIBE /topic/interview/{sessionId}
 
 ### Connection Lifecycle
 
-```
+```text
 클라이언트                                            Spring 서버
    │                                                  │
    │── STOMP CONNECT (Authorization: Bearer token) ──▶│  JWT 검증
-   │── SUBSCRIBE /topic/interview/{sessionId} ───▶│  소유권 검증
+   │── SUBSCRIBE /topic/interview/{sessionId} ────────▶│  소유권 검증
    │◀─ {"type":"SYSTEM","subType":"SESSION_START"} ────│  구독 직후 스냅샷
    │                                                  │
    │◀─ {"type":"QUESTION", ...} ─────────────────────│  AI 첫 질문
