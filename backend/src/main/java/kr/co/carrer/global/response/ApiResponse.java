@@ -49,4 +49,8 @@ public class ApiResponse<T> {
     public static ApiResponse<Object> fail(int statusCode, String message, String code) {
         return new ApiResponse<>(false, statusCode, message, code, null);
     }
+
+    public static <T> ApiResponse<T> fail(int statusCode, String message, String code, T data) {
+        return new ApiResponse<>(false, statusCode, message, code, data);
+    }
 }

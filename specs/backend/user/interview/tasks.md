@@ -144,20 +144,21 @@
 
 ### InterviewReportService
 
-- [ ] `getReport(UUID memberId, String sessionId)`
-  - [ ] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-  - [ ] 존재하지 않으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
-  - [ ] `ai_interview_feedbacks` 조회 (`question_order ASC`)
-  - [ ] `voiceQualityRatio`가 null이거나 50.00 미만인 피드백 → `deliveryScore` / `fluencyScore` null 처리
-  - [ ] 반환: `ResponseReport`
+- [x] `getReport(UUID memberId, UUID sessionId)`
+  - [x] `findBySessionIdAndMemberId`로 세션 조회 — 존재하지 않거나 소유권 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)` (IDOR 방어: 타인 세션 존재 여부 미노출)
+  - [x] 피드백 미존재 시 `INTERVIEW_REPORT_NOT_READY(409)` — additionalData: `ResponseReportNotReady("ANALYZING", 15)`
+  - [x] `ai_interview_feedbacks` 조회 (`question_order ASC`)
+  - [x] `voiceQualityRatio`가 `null`이거나 `50.00 미만`인 피드백 → `deliveryScore` / `fluencyScore` null 처리 (`50.00` 이상이면 정상 반환)
+  - [x] 반환: `ResponseReport`
 
 ### InterviewHistoryService
 
-- [ ] `getHistory(UUID memberId, int page, int size)`
-  - [ ] `career_histories` 기반 조회 — `member_id = memberId` 필터 필수 (타인 조회 차단)
-  - [ ] `interview_sessions` JOIN — `session_type` / `interview_type` / `target_company` / `session_status` 취득
-  - [ ] `career_histories.created_at DESC` 정렬, PageRequest 0-based
-  - [ ] 반환: `PaginationResponse<HistoryItem>`
+- [x] `getHistory(UUID memberId, int page, int size)`
+  - [x] `career_histories` 기반 조회 — `member_id = memberId` 필터 필수 (타인 조회 차단)
+  - [x] 2-query N+1 방지: CareerHistory 페이지 조회 → `findAllBySessionIdIn` 벌크 fetch → Map 조인
+  - [x] `career_histories.created_at DESC` 정렬, PageRequest 0-based
+  - [x] 세션 삭제된 이력은 sessionType/sessionStatus null 처리
+  - [x] 반환: `PaginationResponse<HistoryItem>`
 
 ---
 
@@ -171,16 +172,16 @@
   - [x] 모든 메서드에 `@AuthenticationPrincipal AuthPrincipal` 적용
   - [x] Controller에서 `try-catch` 사용 금지
 
-- [ ] `InterviewReportController.java`
-  - [ ] `GET /api/v1/user/interview/sessions/{sessionId}/report`
+- [x] `InterviewReportController.java`
+  - [x] `GET /api/v1/user/interview/sessions/{sessionId}/report` — `@PathVariable UUID sessionId`
 
-- [ ] `InterviewHistoryController.java`
-  - [ ] `GET /api/v1/user/interview/history` — `@RequestParam(defaultValue="0") int page`, `@RequestParam(defaultValue="10") int size`
+- [x] `InterviewHistoryController.java`
+  - [x] `GET /api/v1/user/interview/history` — `@RequestParam(defaultValue="0") int page`, `@RequestParam(defaultValue="10") int size`
 
 - [x] Swagger Docs 인터페이스 분리
   - [x] `InterviewSessionControllerDocs.java`
-  - [ ] `InterviewReportControllerDocs.java`
-  - [ ] `InterviewHistoryControllerDocs.java`
+  - [x] `InterviewReportControllerDocs.java`
+  - [x] `InterviewHistoryControllerDocs.java`
 
 ---
 
