@@ -157,7 +157,7 @@ async def _call_openai(
 
 
 async def _send_completed(document_id: str, result: dict) -> None:
-    feedback_details = result.get("feedbackDetails", [])
+    feedback_details = result["feedbackDetails"]
     feedback_text = json.dumps(feedback_details, ensure_ascii=False)
 
     await _send_webhook_safe(
