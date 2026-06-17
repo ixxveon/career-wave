@@ -9,7 +9,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity(name = "UserPersonalProfile")
-@Table(name = "personal_profiles")
+@Table(name = "personal_profiles",
+        uniqueConstraints = @UniqueConstraint(name = "uq_personal_member_id", columnNames = "member_id"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PersonalProfile {

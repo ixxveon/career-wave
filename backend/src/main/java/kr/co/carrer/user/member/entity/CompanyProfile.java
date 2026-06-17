@@ -11,7 +11,11 @@ import java.util.UUID;
 
 // INSERT/UPDATE 책임: user 도메인 (admin 도메인의 CompanyProfile은 조회 전용)
 @Entity(name = "UserCompanyProfile")
-@Table(name = "company_profiles")
+@Table(name = "company_profiles",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uq_company_member_id",  columnNames = "member_id"),
+                @UniqueConstraint(name = "uq_business_number",    columnNames = "business_number")
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CompanyProfile {

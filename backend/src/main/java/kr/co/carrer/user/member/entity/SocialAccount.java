@@ -10,7 +10,12 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "social_accounts")
+@Table(name = "social_accounts",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uq_social_provider_user",   columnNames = {"provider", "provider_user_id"}),
+                @UniqueConstraint(name = "uq_social_member_provider", columnNames = {"member_id", "provider"})
+        },
+        indexes = @Index(name = "idx_social_accounts_member_id", columnList = "member_id"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SocialAccount {

@@ -10,7 +10,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity(name = "UserHrManager")
-@Table(name = "hr_managers")
+@Table(name = "hr_managers",
+        uniqueConstraints = @UniqueConstraint(name = "uq_hr_member_id", columnNames = "member_id"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HrManager {
