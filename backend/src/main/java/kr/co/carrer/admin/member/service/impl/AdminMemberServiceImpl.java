@@ -206,8 +206,8 @@ public class AdminMemberServiceImpl implements AdminMemberService {
     private record DateRange(ZonedDateTime from, ZonedDateTime to) {}
 
     private DateRange toDateRange(LocalDate startDate, LocalDate endDate) {
-        ZonedDateTime from = startDate != null ? startDate.atStartOfDay(ZoneId.systemDefault()) : null;
-        ZonedDateTime to   = endDate   != null ? endDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()) : null;
+        ZonedDateTime from = startDate != null ? startDate.atStartOfDay(ZoneId.of("Asia/Seoul")) : null;
+        ZonedDateTime to   = endDate   != null ? endDate.plusDays(1).atStartOfDay(ZoneId.of("Asia/Seoul")) : null;
         return new DateRange(from, to);
     }
 }
