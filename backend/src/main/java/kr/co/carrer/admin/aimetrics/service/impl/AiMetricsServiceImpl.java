@@ -18,12 +18,15 @@ import kr.co.carrer.admin.aimetrics.type.RagDocumentStatusType;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -31,6 +34,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AiMetricsServiceImpl implements AiMetricsService {
@@ -114,7 +118,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
 
         AiOpsSetting setting = getSingletonSetting();
         setting.updateBudget(command.selectedModelId(), command.monthlyBudget(), command.alertThreshold());
-        syncOpsSetting(setting);
+        runAfterCommit(() -> syncOpsSetting(setting));
         saveAuditLog(actorAdminId, "UPDATE_AI_BUDGET", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
         return AiMetricsServiceMapper.toBudget(setting);
     }
@@ -124,7 +128,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     public ResponseBudget updateDiscordAlert(RequestUpdateDiscordAlert command, Long actorAdminId, String ipAddress) {
         AiOpsSetting setting = getSingletonSetting();
         setting.updateDiscordAlert(command.alertEnabled());
-        syncOpsSetting(setting);
+        runAfterCommit(() -> syncOpsSetting(setting));
         saveAuditLog(actorAdminId, "UPDATE_DISCORD_ALERT", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
         return AiMetricsServiceMapper.toBudget(setting);
     }
@@ -134,7 +138,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     public ResponseBudget updateRateLimit(RequestUpdateRateLimit command, Long actorAdminId, String ipAddress) {
         AiOpsSetting setting = getSingletonSetting();
         setting.updateRateLimit(command.rateLimitEnabled());
-        syncOpsSetting(setting);
+        runAfterCommit(() -> syncOpsSetting(setting));
         saveAuditLog(actorAdminId, "UPDATE_RATE_LIMIT", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
         return AiMetricsServiceMapper.toBudget(setting);
     }
@@ -169,7 +173,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
             // TODO: Persist uploaded RAG files through the Phase 4 storage/FastAPI integration flow.
 
             RagDocument savedDocument = ragDocumentRepository.save(document);
-            startRagIndexing(savedDocument);
+            runAfterCommit(() -> startRagIndexing(savedDocument));
             return AiMetricsServiceMapper.toRagDocumentDetail(savedDocument);
         } catch (CustomException e) {
             throw e;
@@ -190,11 +194,11 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     public ResponseRagDocumentDelete deleteRagDocument(Long documentId, Long actorAdminId, String ipAddress) {
         RagDocument document = getRagDocument(documentId);
         try {
-            deleteRagIndex(document);
             ragDocumentRepository.delete(document);
         } catch (DataAccessException e) {
             throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_DELETE_FAILED);
         }
+        runAfterCommit(() -> deleteRagIndex(document));
         saveAuditLog(actorAdminId, "DELETE_RAG_DOCUMENT", TARGET_TYPE_RAG_DOCUMENT, documentId, ipAddress);
         return new ResponseRagDocumentDelete(documentId, true);
     }
@@ -242,6 +246,24 @@ public class AiMetricsServiceImpl implements AiMetricsService {
                 document.getFileUuid(),
                 document.getFilePath()
         ));
+    }
+
+    private void runAfterCommit(Runnable task) {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            task.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    task.run();
+                } catch (RuntimeException exception) {
+                    log.error("[AiMetricsServiceImpl] afterCommit task failed", exception);
+                }
+            }
+        });
     }
 
     private void validateAiModelExists(Long selectedModelId) {
