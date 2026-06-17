@@ -144,7 +144,7 @@
 없음
 
 > 공통 보안 실패 응답: 인증이 없으면 `401`, 권한이 없으면 `403`을 반환한다.  
-> 공통 요청 검증 실패: `from`, `to` 형식이 ISO 8601 UTC가 아니거나 `from > to`이면 공통 `400` 검증 오류가 반환된다.
+> 공통 요청 검증 실패: `from`, `to` 형식이 ISO 8601 UTC가 아니거나 `from > to`이면 `INVALID_DATE_RANGE`가 반환된다.
 
 ---
 
@@ -209,7 +209,7 @@
 | `INVALID_AUDIT_LOG_SEVERITY` | 400 | 유효하지 않은 감사 로그 심각도입니다. |
 
 > 공통 보안 실패 응답: 인증이 없으면 `401`, 권한이 없으면 `403`을 반환한다.  
-> 공통 요청 검증 실패: `from`, `to` 형식 오류, `from > to`, `page < 1`, `size < 1`, `size > 100`, `keyword` 100자 초과는 공통 `400` 검증 오류를 반환한다.
+> 공통 요청 검증 실패: `from`, `to` 형식 오류, `from > to`는 `INVALID_DATE_RANGE`를 반환하고, `page < 1`, `size < 1`, `size > 100`, `keyword` 100자 초과는 공통 `400` 검증 오류를 반환한다.
 
 ---
 
@@ -254,6 +254,7 @@
 
 | ErrorCode | HTTP | Message |
 |---|---|---|
+| `INVALID_DATE_RANGE` | 400 | `from`은 `to`보다 이후 시점일 수 없습니다. |
 | `AUDIT_LOG_NOT_FOUND` | 404 | 감사 로그를 찾을 수 없습니다. |
 
 > 공통 보안 실패 응답: 인증이 없으면 `401`, 권한이 없으면 `403`을 반환한다.
@@ -338,5 +339,5 @@
 
 ### 6.3 Common Validation / Security Response
 
-- `from`, `to` 형식 오류, `from > to`, `page < 1`, `size < 1`, `size > 100`, `keyword` 100자 초과는 도메인 ErrorCode가 아니라 공통 `400` 검증 오류로 처리한다.
+- `from`, `to` 형식 오류, `page < 1`, `size < 1`, `size > 100`, `keyword` 100자 초과는 공통 `400` 검증 오류로 처리하고, `from > to`는 `INVALID_DATE_RANGE`로 처리한다.
 - 인증이 없으면 `401`, 권한이 없으면 `403`을 반환한다.
