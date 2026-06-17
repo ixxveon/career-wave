@@ -21,7 +21,7 @@ public interface CareerHistoryRepository extends JpaRepository<CareerHistory, Lo
            "s.sessionType AS sessionType, s.interviewType AS interviewType, " +
            "s.targetCompany AS targetCompany, s.sessionStatus AS sessionStatus, " +
            "ch.totalScore AS totalScore, ch.pdfUrl AS pdfUrl, ch.createdAt AS createdAt " +
-           "FROM CareerHistory ch JOIN InterviewSession s ON ch.sessionId = s.sessionId " +
+           "FROM CareerHistory ch LEFT JOIN InterviewSession s ON ch.sessionId = s.sessionId " +
            "WHERE ch.memberId = :memberId ORDER BY ch.createdAt DESC")
     Page<CareerHistoryWithSession> findHistoryByMemberId(@Param("memberId") UUID memberId, Pageable pageable);
 }
