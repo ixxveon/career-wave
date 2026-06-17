@@ -1,6 +1,10 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="Career Wave AI & Scraping Engine",

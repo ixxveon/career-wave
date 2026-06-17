@@ -27,7 +27,7 @@ const HistoryItem = memo(function HistoryItem({ item }: HistoryItemProps) {
     ? (item.originalName ?? '이력서')
     : `${item.company ?? ''} · ${item.job ?? ''}`;
 
-  const score = item.totalScore;
+  const score = item.scoreTotal;
 
   return (
     <div className="hi">

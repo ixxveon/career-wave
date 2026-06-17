@@ -66,7 +66,9 @@ class UserLoginServiceImplTest {
     }
 
     private Member createMember(RoleType roleType, MemberStatus status) throws Exception {
-        Member m = new Member();
+        var ctor = Member.class.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        Member m = ctor.newInstance();
         setField(m, "memberId", UUID.randomUUID());
         setField(m, "loginId", "user01");
         setField(m, "password", encoder.encode("password123"));
@@ -150,6 +152,17 @@ class UserLoginServiceImplTest {
     }
 
     @Test
+    void BLACKLISTED_계정_AUTH_ACCOUNT_BLACKLISTED() throws Exception {
+        Member member = createMember(RoleType.USER, MemberStatus.BLACKLISTED);
+        when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
+
+        assertThatThrownBy(() -> service.login(req, httpResponse))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_ACCOUNT_BLACKLISTED);
+    }
+
+    @Test
     void WITHDRAWN_계정_AUTH_ACCOUNT_WITHDRAWN() throws Exception {
         Member member = createMember(RoleType.USER, MemberStatus.WITHDRAWN);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
@@ -158,6 +171,34 @@ class UserLoginServiceImplTest {
         assertThatThrownBy(() -> service.login(req, httpResponse))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
+    }
+
+    @Test
+    void APPROVED_기업회원_로그인_성공() throws Exception {
+        Member member = createMember(RoleType.COMPANY, MemberStatus.ACTIVE);
+        when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
+        when(statusQueryRepository.findCompanyHrStatus(member.getMemberId()))
+                .thenReturn("APPROVED");
+
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.COMPANY);
+        UserLoginDto.Response result = service.login(req, httpResponse);
+
+        assertThat(result.getAccessToken()).isNotBlank();
+        assertThat(result.getMember().getCompanyApprovalStatus()).isEqualTo("APPROVED");
+    }
+
+    @Test
+    void PENDING_REVIEW_기업회원_AUTH_COMPANY_PENDING_REVIEW() throws Exception {
+        Member member = createMember(RoleType.COMPANY, MemberStatus.ACTIVE);
+        when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
+        when(statusQueryRepository.findCompanyHrStatus(member.getMemberId()))
+                .thenReturn("PENDING_REVIEW");
+
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.COMPANY);
+
+        assertThatThrownBy(() -> service.login(req, httpResponse))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", UserAuthErrorCode.AUTH_COMPANY_PENDING_REVIEW);
     }
 
     @Test

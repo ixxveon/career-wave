@@ -29,8 +29,8 @@ final class AiMetricsFastApiErrorMapper {
         try {
             return objectMapper.readValue(body, AiMetricsFastApiResponse.Error.class);
         } catch (JsonProcessingException e) {
-            log.warn("[AiMetricsFastApiErrorMapper] FastAPI error body parsing failed: status={}, body={}",
-                    exception.getStatusCode(), body);
+            log.warn("[AiMetricsFastApiErrorMapper] FastAPI error body parsing failed: status={}, bodyLength={}",
+                    exception.getStatusCode(), body.length());
             return null;
         }
     }

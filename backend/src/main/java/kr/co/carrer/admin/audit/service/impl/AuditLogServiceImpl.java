@@ -32,6 +32,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         return new ResponseSummary(
             summary.totalCount(),
             summary.adminActivityCount(),
+            summary.adminManagementCount(),
             summary.aiMetricsSystemCount(),
             summary.scrapingSystemCount(),
             summary.infoCount(),
@@ -56,11 +57,12 @@ public class AuditLogServiceImpl implements AuditLogService {
         validatePageSize(page, size);
         AuditLogType auditLogType = parseLogType(logType);
         AuditLogSeverity auditLogSeverity = parseSeverity(severity);
+        String normalizedKeyword = normalizeKeyword(keyword);
 
         return auditLogQueryRepository.findAuditLogs(
             auditLogType,
             auditLogSeverity,
-            keyword,
+            normalizedKeyword,
             from,
             to,
             PageRequest.of(toInternalPage(page), size)
@@ -96,12 +98,19 @@ public class AuditLogServiceImpl implements AuditLogService {
         }
     }
 
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
+        return keyword.trim();
+    }
+
     private void validateDateRange(ZonedDateTime from, ZonedDateTime to) {
         if (from == null || to == null) {
             return;
         }
         if (from.isAfter(to)) {
-            throw new CustomException(ErrorCode.BAD_REQUEST);
+            throw new CustomException(AuditLogErrorCode.INVALID_DATE_RANGE);
         }
     }
 

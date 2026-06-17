@@ -62,7 +62,9 @@ class UserRefreshLogoutServiceImplTest {
     }
 
     private Member createActiveMember() throws Exception {
-        Member m = new Member();
+        var ctor = Member.class.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        Member m = ctor.newInstance();
         setField(m, "memberId", UUID.randomUUID());
         setField(m, "memberStatus", MemberStatus.ACTIVE);
         setField(m, "roleType", RoleType.USER);
