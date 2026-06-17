@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
-@Entity
+@Entity(name = "AuthAdmin")
 @Table(name = "admins")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Admin {
