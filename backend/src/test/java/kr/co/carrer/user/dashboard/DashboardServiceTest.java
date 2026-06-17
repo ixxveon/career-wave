@@ -80,12 +80,11 @@ class DashboardServiceTest {
     @DisplayName("GitHub 연동 정보 조회 - 정상")
     void getGithubProfile_success() throws Exception {
         UUID memberId = UUID.randomUUID();
-        Member member = createMember(memberId);
         PersonalProfile personalProfile = createPersonalProfile(
                 memberId,
                 "https://github.com/career-wave?tab=repositories");
 
-        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+        when(memberRepository.existsById(memberId)).thenReturn(true);
         when(personalProfileRepository.findByMemberId(memberId)).thenReturn(Optional.of(personalProfile));
 
         DashboardDTO.GithubResponse response = dashboardService.getGithubProfile(memberId);
@@ -101,7 +100,7 @@ class DashboardServiceTest {
         UUID memberId = UUID.randomUUID();
         Member member = createMember(memberId);
 
-        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+        when(memberRepository.existsById(memberId)).thenReturn(true);
         when(personalProfileRepository.findByMemberId(memberId)).thenReturn(Optional.empty());
 
         DashboardDTO.GithubResponse response = dashboardService.getGithubProfile(memberId);

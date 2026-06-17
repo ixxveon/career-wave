@@ -20,14 +20,14 @@ import java.time.Duration;
 public class AiMetricsFastApiClient implements AiMetricsFastApiGateway {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
-    private static final String SUMMARY_PATH = "/internal/admin/ai-metrics/summary";
-    private static final String DOMAIN_USAGE_PATH = "/internal/admin/ai-metrics/domain-usage";
-    private static final String TOKEN_TREND_PATH = "/internal/admin/ai-metrics/token-trend";
-    private static final String HEAVY_USERS_PATH = "/internal/admin/ai-metrics/heavy-users";
-    private static final String USAGE_LOGS_PATH = "/internal/admin/ai-metrics/usage-logs/search";
-    private static final String OPS_SETTING_SYNC_PATH = "/internal/admin/ai-metrics/ops-settings/sync";
-    private static final String RAG_INDEX_START_PATH = "/internal/admin/ai-metrics/rag-documents/indexing/start";
-    private static final String RAG_INDEX_DELETE_PATH = "/internal/admin/ai-metrics/rag-documents/indexing/delete";
+    private static final String SUMMARY_PATH = "/internal/admin/ai-metrics/usage/summary";
+    private static final String DOMAIN_USAGE_PATH = "/internal/admin/ai-metrics/usage/domain-usage";
+    private static final String TOKEN_TREND_PATH = "/internal/admin/ai-metrics/usage/token-trend";
+    private static final String HEAVY_USERS_PATH = "/internal/admin/ai-metrics/usage/heavy-users";
+    private static final String USAGE_LOGS_PATH = "/internal/admin/ai-metrics/usage/logs/search";
+    private static final String OPS_SETTING_SYNC_PATH = "/internal/admin/ai-metrics/ops/sync-settings";
+    private static final String RAG_INDEX_START_PATH = "/internal/admin/ai-metrics/rag-documents/index";
+    private static final String RAG_INDEX_DELETE_PATH = "/internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index";
 
     private final WebClient.Builder webClientBuilder;
     private final ObjectMapper objectMapper;
@@ -114,9 +114,9 @@ public class AiMetricsFastApiClient implements AiMetricsFastApiGateway {
 
     @Override
     public RagIndexDeleteResponse deleteRagIndex(RagIndexDeleteRequest request) {
-        AiMetricsFastApiResponse.RagIndexDelete response = post(
+        AiMetricsFastApiResponse.RagIndexDelete response = delete(
                 RAG_INDEX_DELETE_PATH,
-                AiMetricsFastApiMapper.toRagIndexDeleteRequest(request),
+                request.ragDocumentId(),
                 AiMetricsFastApiResponse.RagIndexDelete.class
         );
         return AiMetricsFastApiMapper.toRagIndexDeleteResponse(response);
@@ -143,6 +143,29 @@ public class AiMetricsFastApiClient implements AiMetricsFastApiGateway {
         } catch (RuntimeException e) {
             log.error("[AiMetricsFastApiClient] FastAPI call failed: path={}, reason={}", path, e.getMessage());
             throw new CustomException(AiMetricsErrorCode.AI_MODEL_EXECUTION_FAILED);
+        }
+    }
+
+    private <T> T delete(String path, Long ragDocumentId, Class<T> responseType) {
+        try {
+            T response = webClient.delete()
+                    .uri(path, ragDocumentId)
+                    .retrieve()
+                    .bodyToMono(responseType)
+                    .timeout(TIMEOUT)
+                    .block();
+
+            if (response == null) {
+                throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_DELETE_FAILED);
+            }
+            return response;
+        } catch (CustomException e) {
+            throw e;
+        } catch (WebClientResponseException e) {
+            throw AiMetricsFastApiErrorMapper.toCustomException(e, objectMapper);
+        } catch (RuntimeException e) {
+            log.error("[AiMetricsFastApiClient] FastAPI call failed: path={}, reason={}", path, e.getMessage());
+            throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_DELETE_FAILED);
         }
     }
 }

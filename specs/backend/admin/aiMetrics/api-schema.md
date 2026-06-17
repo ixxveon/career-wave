@@ -1,5 +1,32 @@
 # API Schema: aiMetrics
 
+## Spring Boot API -> FastAPI 내부 계약 대응 요약
+
+> 관리자 프론트엔드는 Spring Boot API만 호출한다. FastAPI endpoint는 Spring Boot 내부 연동 전용이며 외부 공개 API가 아니다.
+
+| Spring Boot 외부 API | FastAPI 내부 API | 연동 목적 | Spring Boot 책임 | FastAPI 책임 |
+|---|---|---|---|---|
+| `GET /api/v1/admin/ai-metrics/summary` | `POST /internal/admin/ai-metrics/usage/summary` | AI 사용량 요약 집계 조회 | JWT 인증/인가, query 검증, FastAPI 응답을 `AiMetricsDTO.ResponseSummary`로 변환 | `ai_usage_logs`, `ai_ops_settings`, `ai_models` 기준 집계 |
+| `GET /api/v1/admin/ai-metrics/domain-usage` | `POST /internal/admin/ai-metrics/usage/domain-usage` | 기능 도메인별 사용량 집계 조회 | JWT 인증/인가, query 검증, FastAPI 응답을 `AiMetricsDTO.ResponseDomainUsage`로 변환 | `feature_type`별 요청 수, 토큰, 비용 집계 |
+| `GET /api/v1/admin/ai-metrics/token-trend` | `POST /internal/admin/ai-metrics/usage/token-trend` | 시간 버킷별 토큰 추이 조회 | `from`, `to`, `featureType`, `interval` 검증 및 DTO 변환 | `HOURLY` 또는 `DAILY` 버킷 기준 토큰/비용 집계 |
+| `GET /api/v1/admin/ai-metrics/heavy-users` | `POST /internal/admin/ai-metrics/usage/heavy-users` | 고사용 사용자 집계 조회 | `limit` 검증 및 DTO 변환 | `member_id` 기준 상위 사용자 집계 |
+| `GET /api/v1/admin/ai-metrics/logs` | `POST /internal/admin/ai-metrics/usage/logs/search` | AI 사용 로그 페이지 조회 | 1-based page 계약 유지, FastAPI 응답을 `AiUsageLogDTO.ResponseList`로 변환 | `ai_usage_logs` 검색 및 페이지 결과 반환 |
+| `PATCH /api/v1/admin/ai-metrics/budget` | `POST /internal/admin/ai-metrics/ops/sync-settings` | 운영 모델/예산/임계치 변경 후 실행 설정 동기화 | `MASTER` 권한 검증, `ai_ops_settings` 저장, Audit Log 기록, FastAPI 동기화 호출 | 최신 운영 정책을 실행 계층에 반영 |
+| `PATCH /api/v1/admin/ai-metrics/alerts/discord` | `POST /internal/admin/ai-metrics/ops/sync-settings` | Discord 알림 활성 여부 변경 후 실행 설정 동기화 | `alert_enabled`만 변경하고 `alert_channel = DISCORD` 고정 | Discord 알림 판단/발송 기준 반영 |
+| `PATCH /api/v1/admin/ai-metrics/controls/rate-limit` | `POST /internal/admin/ai-metrics/ops/sync-settings` | rate limit 변경 후 실행 설정 동기화 | `MASTER` 권한 검증, `rate_limit_enabled` 저장, Audit Log 기록 | AI 실행 rate limit 기준 반영 |
+| `POST /api/v1/admin/ai-metrics/rag-documents` | `POST /internal/admin/ai-metrics/rag-documents/index` | RAG 문서 업로드 후 인덱싱 시작 | multipart 파일 수신, 파일 저장/메타데이터 생성, FastAPI 인덱싱 시작 호출 | 문서 파싱/청크/임베딩/벡터 인덱싱 비동기 작업 시작 |
+| `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}` | `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index` | RAG 문서 삭제 시 벡터 인덱스 제거 | `MASTER` 권한 검증, 삭제 대상 조회, FastAPI 인덱스 제거 호출, Audit Log 기록 | 벡터 인덱스와 내부 리소스 제거 |
+
+> `GET /api/v1/admin/ai-metrics/budget`, `GET /api/v1/admin/ai-metrics/rag-documents`, `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download`는 Spring Boot가 DB/파일 메타데이터를 기준으로 응답하며 FastAPI 내부 호출을 수행하지 않는다.
+> `POST /internal/admin/ai-metrics/rag-documents/index/worker`와 `POST /internal/admin/ai-metrics/usage/log`는 FastAPI 내부 워커/AI 실행 흐름에서 사용하는 계약이며 관리자 외부 API와 1:1로 직접 대응하지 않는다.
+
+### AI 사용량 집계 책임 분리
+
+- `summary`, `domain-usage`, `token-trend`, `heavy-users`, `logs` 조회의 집계 계산은 FastAPI가 담당한다.
+- Spring Boot는 `ai_usage_logs`를 직접 집계하지 않고 FastAPI 내부 집계 API를 호출한다.
+- Spring Boot는 FastAPI 응답을 `AiMetricsDTO`, `AiUsageLogDTO`와 외부 `ApiResponse<T>` 형식으로 변환한다.
+- 기간, 기능 유형, 집계 단위, 페이지 요청 검증과 관리자 권한 검증은 Spring Boot가 담당한다.
+
 > 백엔드와 프론트엔드 간 `aiMetrics` 도메인 API 계약 문서.
 > 본 문서는 기능 설명 문서가 아니라 요청/응답 계약만 정의한다.
 
@@ -672,6 +699,8 @@
 
 > 요청 Content-Type은 `multipart/form-data`다.
 > `originalFileName`, `mimeType`, `fileSize`는 업로드된 파일 파트에서 Spring Boot가 추출해 `rag_documents` 메타데이터로 저장한다.
+> Spring Boot는 원본 파일을 저장 가능한 경로에 보관한 뒤 `fileUuid`, `originalFileName`, `filePath`, `mimeType`, `fileSize`를 포함한 JSON 내부 계약으로 FastAPI의 `POST /internal/admin/ai-metrics/rag-documents/index`를 호출한다.
+> FastAPI는 원본 파일 multipart를 직접 수신하지 않으며, Spring Boot가 전달한 저장 경로와 메타데이터를 기준으로 비동기 인덱싱을 시작한다.
 
 #### Response Body
 
