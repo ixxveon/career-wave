@@ -16,7 +16,7 @@ import java.util.UUID;
         uniqueConstraints = @UniqueConstraint(name = "uq_hr_member_id", columnNames = "member_id"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class HrManager {
+public class UserHrManager {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,8 +53,8 @@ public class HrManager {
         createdAt = Instant.now();
     }
 
-    public static HrManager pendingFor(UUID memberId, UUID companyProfileId) {
-        HrManager h = new HrManager();
+    public static UserHrManager pendingFor(UUID memberId, UUID companyProfileId) {
+        UserHrManager h = new UserHrManager();
         h.memberId = Objects.requireNonNull(memberId, "memberId must not be null");
         h.companyProfileId = Objects.requireNonNull(companyProfileId, "companyProfileId must not be null");
         return h;
