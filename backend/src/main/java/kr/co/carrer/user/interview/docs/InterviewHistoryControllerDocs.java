@@ -7,6 +7,7 @@ import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,6 +27,6 @@ public interface InterviewHistoryControllerDocs {
     ResponseEntity<ApiResponse<PaginationResponse<InterviewDTO.HistoryItem>>> getHistory(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
             @Parameter(description = "페이지 번호 (0-based)", example = "0") @Min(0) @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기", example = "10") @Min(1) @RequestParam(defaultValue = "10") int size
+            @Parameter(description = "페이지 크기 (최대 100)", example = "10") @Min(1) @Max(100) @RequestParam(defaultValue = "10") int size
     );
 }
