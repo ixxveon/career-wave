@@ -113,7 +113,7 @@ export function validateCompanyRegisterForm(
   if (!/^\d{10}$/.test(form.businessNumber.trim())) errors.businessNumber = '사업자등록번호 10자리를 입력해주세요.';
   if (!form.companyName.trim()) errors.companyName = '회사명을 입력해주세요.';
   if (!form.ceoName.trim()) errors.ceoName = '대표자명을 입력해주세요.';
-  if (!form.address.trim()) errors.address = '회사주소를 입력해주세요.';
+  if (!form.postalCode.trim() || !form.roadAddress.trim()) errors.roadAddress = '주소 검색을 완료해주세요.';
   if (!form.certificateNumber.trim()) errors.certificateNumber = '기업인증을 완료해주세요.';
   if (!isValidLoginId(form.loginId)) {
     errors.loginId = '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.';
@@ -179,7 +179,10 @@ export function toCompanyRegisterRequest(form: CompanyRegisterFormSnapshot): Com
     companyName: form.companyName.trim(),
     businessNumber: form.businessNumber.trim(),
     ceoName: form.ceoName.trim(),
-    address: form.address.trim(),
+    certificateNumber: form.certificateNumber.trim(),
+    postalCode: form.postalCode.trim(),
+    roadAddress: form.roadAddress.trim(),
+    jibunAddress: form.jibunAddress?.trim() || undefined,
     addressDetail: form.addressDetail.trim(),
     companyType: COMPANY_TYPE_BY_LABEL[form.companyType],
     isAgency: form.isAgency,

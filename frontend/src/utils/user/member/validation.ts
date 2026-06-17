@@ -39,7 +39,9 @@ export interface CompanyRegisterDraft {
   companyName: string;
   businessNumber: string;
   ceoName: string;
-  address: string;
+  postalCode: string;
+  roadAddress: string;
+  jibunAddress: string;
   addressDetail: string;
   isAgency: boolean;
   managerPhoneVerificationToken?: string;
@@ -97,8 +99,8 @@ export function canSubmitCompanyRegister(form: CompanyRegisterDraft, loginIdStat
     form.companyName.trim().length > 0 &&
     form.businessNumber.trim().length > 0 &&
     form.ceoName.trim().length > 0 &&
-    form.address.trim().length > 0 &&
-    form.addressDetail.trim().length > 0 &&
+    form.postalCode.trim().length > 0 &&
+    form.roadAddress.trim().length > 0 &&
     hasValue(form.managerEmailVerificationToken) &&
     hasValue(form.managerPhoneVerificationToken) &&
     hasValue(form.employmentCertificateFileId) &&

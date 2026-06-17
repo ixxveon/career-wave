@@ -1,3 +1,5 @@
+import type { SocialProviderId } from '../../utils/user/member/socialAuth';
+
 export const MEMBER_TYPE = {
   USER: 'USER',
   COMPANY: 'COMPANY',
@@ -27,6 +29,14 @@ export const COMPANY_APPROVAL_STATUS = {
 } as const;
 
 export type CompanyApprovalStatus = (typeof COMPANY_APPROVAL_STATUS)[keyof typeof COMPANY_APPROVAL_STATUS];
+
+export const MEMBER_SUBSCRIPTION_STATUS = {
+  FREE: 'FREE',
+  PREMIUM: 'PREMIUM',
+} as const;
+
+export type MemberSubscriptionStatus =
+  (typeof MEMBER_SUBSCRIPTION_STATUS)[keyof typeof MEMBER_SUBSCRIPTION_STATUS];
 
 export const VERIFICATION_CHANNEL = {
   EMAIL: 'EMAIL',
@@ -83,6 +93,7 @@ export interface MemberSummary {
   name: string;
   roleType: MemberType;
   memberStatus: MemberStatus;
+  subscriptionStatus: MemberSubscriptionStatus;
   companyApprovalStatus: CompanyApprovalStatus;
   lastLoginAt: string | null;
 }
@@ -147,7 +158,7 @@ export interface UserRegisterResponse {
   memberStatus: MemberStatus;
 }
 
-export type SocialProviderId = 'kakao' | 'naver' | 'google' | 'apple';
+export type { SocialProviderId };
 
 export interface SocialRegisterTerms extends TermsAgreement {}
 
@@ -182,7 +193,10 @@ export interface CompanyRegisterRequest {
   companyName: string;
   businessNumber: string;
   ceoName: string;
-  address: string;
+  certificateNumber: string;
+  postalCode: string;
+  roadAddress: string;
+  jibunAddress?: string;
   addressDetail: string;
   companyType: CompanyType;
   isAgency: boolean;
