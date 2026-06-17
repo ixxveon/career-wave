@@ -122,12 +122,12 @@ public interface AiMetricsService {
     }
 
     record RequestUpdateDiscordAlert(
-            boolean alertEnabled
+            Boolean alertEnabled
     ) {
     }
 
     record RequestUpdateRateLimit(
-            boolean rateLimitEnabled
+            Boolean rateLimitEnabled
     ) {
     }
 
