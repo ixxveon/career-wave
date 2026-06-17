@@ -74,7 +74,6 @@ public interface AiMetricsFastApiGateway {
 
     record RagIndexStartRequest(
             Long ragDocumentId,
-            Long uploadedBy,
             UUID fileUuid,
             String originalFileName,
             String filePath,
@@ -84,9 +83,7 @@ public interface AiMetricsFastApiGateway {
     }
 
     record RagIndexDeleteRequest(
-            Long ragDocumentId,
-            UUID fileUuid,
-            String filePath
+            Long ragDocumentId
     ) {
     }
 

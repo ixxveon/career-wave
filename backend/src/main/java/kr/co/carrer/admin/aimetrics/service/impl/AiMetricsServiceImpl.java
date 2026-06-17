@@ -231,7 +231,6 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     private void startRagIndexing(RagDocument document) {
         getFastApiGateway().startRagIndexing(new AiMetricsFastApiGateway.RagIndexStartRequest(
                 document.getRagDocumentId(),
-                document.getUploadedBy(),
                 document.getFileUuid(),
                 document.getOriginalFileName(),
                 document.getFilePath(),
@@ -242,9 +241,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
 
     private void deleteRagIndex(RagDocument document) {
         getFastApiGateway().deleteRagIndex(new AiMetricsFastApiGateway.RagIndexDeleteRequest(
-                document.getRagDocumentId(),
-                document.getFileUuid(),
-                document.getFilePath()
+                document.getRagDocumentId()
         ));
     }
 

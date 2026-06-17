@@ -119,7 +119,6 @@ final class AiMetricsFastApiMapper {
     static AiMetricsFastApiRequest.RagIndexStart toRagIndexStartRequest(RagDocument document) {
         return new AiMetricsFastApiRequest.RagIndexStart(
                 document.getRagDocumentId(),
-                document.getUploadedBy(),
                 document.getFileUuid(),
                 document.getOriginalFileName(),
                 document.getFilePath(),
@@ -131,7 +130,6 @@ final class AiMetricsFastApiMapper {
     static AiMetricsFastApiRequest.RagIndexStart toRagIndexStartRequest(AiMetricsFastApiGateway.RagIndexStartRequest request) {
         return new AiMetricsFastApiRequest.RagIndexStart(
                 request.ragDocumentId(),
-                request.uploadedBy(),
                 request.fileUuid(),
                 request.originalFileName(),
                 request.filePath(),
@@ -144,22 +142,6 @@ final class AiMetricsFastApiMapper {
         return new AiMetricsFastApiGateway.RagIndexStartResponse(
                 response.accepted(),
                 response.ragDocumentId()
-        );
-    }
-
-    static AiMetricsFastApiRequest.RagIndexDelete toRagIndexDeleteRequest(RagDocument document) {
-        return new AiMetricsFastApiRequest.RagIndexDelete(
-                document.getRagDocumentId(),
-                document.getFileUuid(),
-                document.getFilePath()
-        );
-    }
-
-    static AiMetricsFastApiRequest.RagIndexDelete toRagIndexDeleteRequest(AiMetricsFastApiGateway.RagIndexDeleteRequest request) {
-        return new AiMetricsFastApiRequest.RagIndexDelete(
-                request.ragDocumentId(),
-                request.fileUuid(),
-                request.filePath()
         );
     }
 

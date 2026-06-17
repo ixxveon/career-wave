@@ -2,6 +2,7 @@ package kr.co.carrer.admin.aimetrics.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import kr.co.carrer.admin.aimetrics.docs.AiMetricsDocs;
 import kr.co.carrer.admin.aimetrics.dto.AiMetricsDTO;
 import kr.co.carrer.admin.aimetrics.dto.AiOpsSettingDTO;
 import kr.co.carrer.admin.aimetrics.dto.AiUsageLogDTO;
@@ -31,7 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/v1/admin/ai-metrics")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('BACKEND'))")
-public class AiMetricsController {
+public class AiMetricsController implements AiMetricsDocs {
 
     private final AiMetricsService aiMetricsService;
 

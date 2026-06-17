@@ -90,13 +90,15 @@ public class AiMetricsFastApiResponse {
     }
 
     public record OpsSettingSync(
-            boolean synced
+            boolean synced,
+            ZonedDateTime syncedAt
     ) {
     }
 
     public record RagIndexStart(
             boolean accepted,
-            Long ragDocumentId
+            Long ragDocumentId,
+            String status
     ) {
     }
 
