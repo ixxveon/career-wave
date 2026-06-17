@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from functools import lru_cache
 
 from openai import AsyncOpenAI, APIError, APITimeoutError
 
@@ -16,6 +17,12 @@ from user.resume.service.file_parser import FileParseError, parse_resume_file
 from user.resume.service.webhook_client import send_webhook
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache
+def _get_openai_client() -> AsyncOpenAI:
+    return AsyncOpenAI(api_key=get_settings().openai_api_key)
+
 
 _ERROR_MESSAGES = {
     "parse_failed": "파일을 읽을 수 없습니다. PDF 또는 DOCX 형식인지 확인해 주세요.",
@@ -133,7 +140,7 @@ async def _call_openai(
     model: str,
 ) -> dict:
     settings = get_settings()
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    client = _get_openai_client()
     model_id = settings.openai_model_deep if model == "deep" else settings.openai_model_light
 
     completion = await client.chat.completions.create(
