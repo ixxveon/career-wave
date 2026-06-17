@@ -20,6 +20,7 @@ import kr.co.carrer.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -140,7 +141,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     public ResponseRagDocumentList getRagDocuments(int page, int size) {
         validatePageRequest(page, size);
         return AiMetricsServiceMapper.toRagDocumentList(
-                ragDocumentRepository.findAll(PageRequest.of(page - 1, size)),
+                ragDocumentRepository.findAll(PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"))),
                 page,
                 size
         );
@@ -168,7 +169,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
         } catch (CustomException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_INDEXING_FAILED);
+            throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_UPLOAD_FAILED);
         }
     }
 
@@ -195,7 +196,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     private AiMetricsFastApiGateway getFastApiGateway() {
         AiMetricsFastApiGateway gateway = aiMetricsFastApiGatewayProvider.getIfAvailable();
         if (gateway == null) {
-            throw new CustomException(AiMetricsErrorCode.AI_MODEL_EXECUTION_FAILED);
+            throw new CustomException(AiMetricsErrorCode.FASTAPI_GATEWAY_UNAVAILABLE);
         }
         return gateway;
     }
