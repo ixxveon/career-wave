@@ -1,11 +1,12 @@
 package kr.co.carrer.admin.audit.repository;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import kr.co.carrer.admin.audit.entity.AuditLog;
+import kr.co.carrer.admin.audit.entity.QAuditLog;
 import kr.co.carrer.admin.audit.type.AuditLogSeverity;
 import kr.co.carrer.admin.audit.type.AuditLogType;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -16,419 +17,179 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
+@RequiredArgsConstructor
 public class AuditLogQueryRepository {
 
-    @PersistenceContext
-    private EntityManager em;
+    private static final QAuditLog auditLog = QAuditLog.auditLog;
+
+    private final JPAQueryFactory queryFactory;
 
     public SummaryAggregate getSummary(ZonedDateTime from, ZonedDateTime to) {
-        StringBuilder sql = new StringBuilder("""
-            SELECT
-                COUNT(*) AS total_count,
-                COUNT(*) FILTER (WHERE al.log_type = 'ADMIN_ACTIVITY') AS admin_activity_count,
-                COUNT(*) FILTER (WHERE al.log_type = 'ADMIN_MANAGEMENT') AS admin_management_count,
-                COUNT(*) FILTER (WHERE al.log_type = 'AI_METRICS_SYSTEM') AS ai_metrics_system_count,
-                COUNT(*) FILTER (WHERE al.log_type = 'SCRAPING_SYSTEM') AS scraping_system_count,
-                COUNT(*) FILTER (WHERE al.severity = 'INFO') AS info_count,
-                COUNT(*) FILTER (WHERE al.severity = 'WARN') AS warn_count,
-                COUNT(*) FILTER (WHERE al.severity = 'ERROR') AS error_count,
-                COUNT(*) FILTER (WHERE al.severity = 'SUCCESS') AS success_count
-            FROM audit_logs al
-            WHERE 1=1
-            """);
-
-        int parameterIndex = 1;
-        if (from != null) {
-            sql.append(" AND al.created_at >= ?").append(parameterIndex++);
-        }
-        if (to != null) {
-            sql.append(" AND al.created_at <= ?").append(parameterIndex);
-        }
-
-        Query query = em.createNativeQuery(sql.toString());
-
-        parameterIndex = 1;
-        if (from != null) {
-            query.setParameter(parameterIndex++, from);
-        }
-        if (to != null) {
-            query.setParameter(parameterIndex, to);
-        }
-
-        Object[] result = (Object[]) query.getSingleResult();
+        BooleanBuilder periodPredicate = periodPredicate(from, to);
 
         return new SummaryAggregate(
-            toLong(result[0]),
-            toLong(result[1]),
-            toLong(result[2]),
-            toLong(result[3]),
-            toLong(result[4]),
-            toLong(result[5]),
-            toLong(result[6]),
-            toLong(result[7]),
-            toLong(result[8])
+                count(periodPredicate),
+                count(new BooleanBuilder(periodPredicate).and(auditLog.logType.eq(AuditLogType.ADMIN_ACTIVITY))),
+                count(new BooleanBuilder(periodPredicate).and(auditLog.logType.eq(AuditLogType.ADMIN_MANAGEMENT))),
+                count(new BooleanBuilder(periodPredicate).and(auditLog.logType.eq(AuditLogType.AI_METRICS_SYSTEM))),
+                count(new BooleanBuilder(periodPredicate).and(auditLog.logType.eq(AuditLogType.SCRAPING_SYSTEM))),
+                count(new BooleanBuilder(periodPredicate).and(auditLog.severity.eq(AuditLogSeverity.INFO))),
+                count(new BooleanBuilder(periodPredicate).and(auditLog.severity.eq(AuditLogSeverity.WARN))),
+                count(new BooleanBuilder(periodPredicate).and(auditLog.severity.eq(AuditLogSeverity.ERROR))),
+                count(new BooleanBuilder(periodPredicate).and(auditLog.severity.eq(AuditLogSeverity.SUCCESS)))
         );
     }
 
     public Page<AuditLog> findAuditLogsByLogType(AuditLogType logType, Pageable pageable) {
-        StringBuilder sql = new StringBuilder("""
-            SELECT al.*
-            FROM audit_logs al
-            WHERE 1=1
-            """);
-
+        BooleanBuilder predicate = new BooleanBuilder();
         if (logType != null) {
-            sql.append(" AND al.log_type = :logType");
+            predicate.and(auditLog.logType.eq(logType));
         }
-
-        sql.append(" ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset");
-
-        Query query = em.createNativeQuery(sql.toString(), AuditLog.class);
-
-        if (logType != null) {
-            query.setParameter("logType", logType.name());
-        }
-        query.setParameter("limit", pageable.getPageSize());
-        query.setParameter("offset", pageable.getOffset());
-
-        @SuppressWarnings("unchecked")
-        List<AuditLog> result = query.getResultList();
-
-        long total = countAuditLogsByLogType(logType);
-        return new PageImpl<>(result, pageable, total);
+        return fetchPage(predicate, pageable);
     }
 
     public long countAuditLogsByLogType(AuditLogType logType) {
-        StringBuilder sql = new StringBuilder("""
-            SELECT COUNT(*)
-            FROM audit_logs al
-            WHERE 1=1
-            """);
-
+        BooleanBuilder predicate = new BooleanBuilder();
         if (logType != null) {
-            sql.append(" AND al.log_type = :logType");
+            predicate.and(auditLog.logType.eq(logType));
         }
-
-        Query query = em.createNativeQuery(sql.toString());
-        if (logType != null) {
-            query.setParameter("logType", logType.name());
-        }
-
-        return ((Number) query.getSingleResult()).longValue();
+        return count(predicate);
     }
 
     public Page<AuditLog> findAuditLogsBySeverity(AuditLogSeverity severity, Pageable pageable) {
-        StringBuilder sql = new StringBuilder("""
-            SELECT al.*
-            FROM audit_logs al
-            WHERE 1=1
-            """);
-
+        BooleanBuilder predicate = new BooleanBuilder();
         if (severity != null) {
-            sql.append(" AND al.severity = :severity");
+            predicate.and(auditLog.severity.eq(severity));
         }
-
-        sql.append(" ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset");
-
-        Query query = em.createNativeQuery(sql.toString(), AuditLog.class);
-
-        if (severity != null) {
-            query.setParameter("severity", severity.name());
-        }
-        query.setParameter("limit", pageable.getPageSize());
-        query.setParameter("offset", pageable.getOffset());
-
-        @SuppressWarnings("unchecked")
-        List<AuditLog> result = query.getResultList();
-
-        long total = countAuditLogsBySeverity(severity);
-        return new PageImpl<>(result, pageable, total);
+        return fetchPage(predicate, pageable);
     }
 
     public long countAuditLogsBySeverity(AuditLogSeverity severity) {
-        StringBuilder sql = new StringBuilder("""
-            SELECT COUNT(*)
-            FROM audit_logs al
-            WHERE 1=1
-            """);
-
+        BooleanBuilder predicate = new BooleanBuilder();
         if (severity != null) {
-            sql.append(" AND al.severity = :severity");
+            predicate.and(auditLog.severity.eq(severity));
         }
-
-        Query query = em.createNativeQuery(sql.toString());
-        if (severity != null) {
-            query.setParameter("severity", severity.name());
-        }
-
-        return ((Number) query.getSingleResult()).longValue();
+        return count(predicate);
     }
 
     public Page<AuditLog> findAuditLogsByKeyword(String keyword, Pageable pageable) {
-        String normalizedKeyword = normalizeKeyword(keyword);
-
-        StringBuilder sql = new StringBuilder("""
-            SELECT al.*
-            FROM audit_logs al
-            WHERE 1=1
-            """);
-
-        if (normalizedKeyword != null) {
-            sql.append("""
-                 AND (
-                    al.action ILIKE :keyword
-                    OR CAST(al.target_type AS TEXT) ILIKE :keyword
-                    OR CAST(al.target_id AS TEXT) ILIKE :keyword
-                    OR CAST(al.detail AS TEXT) ILIKE :keyword
-                )
-                """);
-        }
-
-        sql.append(" ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset");
-
-        Query query = em.createNativeQuery(sql.toString(), AuditLog.class);
-
-        if (normalizedKeyword != null) {
-            query.setParameter("keyword", "%" + normalizedKeyword + "%");
-        }
-        query.setParameter("limit", pageable.getPageSize());
-        query.setParameter("offset", pageable.getOffset());
-
-        @SuppressWarnings("unchecked")
-        List<AuditLog> result = query.getResultList();
-
-        long total = countAuditLogsByKeyword(normalizedKeyword);
-        return new PageImpl<>(result, pageable, total);
+        return fetchPage(keywordPredicate(keyword), pageable);
     }
 
     public long countAuditLogsByKeyword(String keyword) {
-        String normalizedKeyword = normalizeKeyword(keyword);
-
-        StringBuilder sql = new StringBuilder("""
-            SELECT COUNT(*)
-            FROM audit_logs al
-            WHERE 1=1
-            """);
-
-        if (normalizedKeyword != null) {
-            sql.append("""
-                 AND (
-                    al.action ILIKE :keyword
-                    OR CAST(al.target_type AS TEXT) ILIKE :keyword
-                    OR CAST(al.target_id AS TEXT) ILIKE :keyword
-                    OR CAST(al.detail AS TEXT) ILIKE :keyword
-                )
-                """);
-        }
-
-        Query query = em.createNativeQuery(sql.toString());
-        if (normalizedKeyword != null) {
-            query.setParameter("keyword", "%" + normalizedKeyword + "%");
-        }
-
-        return ((Number) query.getSingleResult()).longValue();
+        return count(keywordPredicate(keyword));
     }
 
     public Page<AuditLog> findAuditLogsByPeriod(ZonedDateTime from, ZonedDateTime to, Pageable pageable) {
-        StringBuilder sql = new StringBuilder("""
-            SELECT al.*
-            FROM audit_logs al
-            WHERE 1=1
-            """);
-
-        if (from != null) {
-            sql.append(" AND al.created_at >= :from");
-        }
-        if (to != null) {
-            sql.append(" AND al.created_at <= :to");
-        }
-
-        sql.append(" ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset");
-
-        Query query = em.createNativeQuery(sql.toString(), AuditLog.class);
-
-        if (from != null) {
-            query.setParameter("from", from);
-        }
-        if (to != null) {
-            query.setParameter("to", to);
-        }
-        query.setParameter("limit", pageable.getPageSize());
-        query.setParameter("offset", pageable.getOffset());
-
-        @SuppressWarnings("unchecked")
-        List<AuditLog> result = query.getResultList();
-
-        long total = countAuditLogsByPeriod(from, to);
-        return new PageImpl<>(result, pageable, total);
+        return fetchPage(periodPredicate(from, to), pageable);
     }
 
     public long countAuditLogsByPeriod(ZonedDateTime from, ZonedDateTime to) {
-        StringBuilder sql = new StringBuilder("""
-            SELECT COUNT(*)
-            FROM audit_logs al
-            WHERE 1=1
-            """);
-
-        if (from != null) {
-            sql.append(" AND al.created_at >= :from");
-        }
-        if (to != null) {
-            sql.append(" AND al.created_at <= :to");
-        }
-
-        Query query = em.createNativeQuery(sql.toString());
-
-        if (from != null) {
-            query.setParameter("from", from);
-        }
-        if (to != null) {
-            query.setParameter("to", to);
-        }
-
-        return ((Number) query.getSingleResult()).longValue();
+        return count(periodPredicate(from, to));
     }
 
     public Page<AuditLog> findAuditLogs(
-        AuditLogType logType,
-        AuditLogSeverity severity,
-        String keyword,
-        ZonedDateTime from,
-        ZonedDateTime to,
-        Pageable pageable
+            AuditLogType logType,
+            AuditLogSeverity severity,
+            String keyword,
+            ZonedDateTime from,
+            ZonedDateTime to,
+            Pageable pageable
     ) {
-        String normalizedKeyword = normalizeKeyword(keyword);
-        StringBuilder sql = new StringBuilder("""
-            SELECT al.*
-            FROM audit_logs al
-            WHERE 1=1
-            """);
-
-        if (logType != null) {
-            sql.append(" AND al.log_type = :logType");
-        }
-        if (severity != null) {
-            sql.append(" AND al.severity = :severity");
-        }
-        if (normalizedKeyword != null) {
-            sql.append("""
-                 AND (
-                    al.action ILIKE :keyword
-                    OR CAST(al.target_type AS TEXT) ILIKE :keyword
-                    OR CAST(al.target_id AS TEXT) ILIKE :keyword
-                    OR CAST(al.detail AS TEXT) ILIKE :keyword
-                )
-                """);
-        }
-        if (from != null) {
-            sql.append(" AND al.created_at >= :from");
-        }
-        if (to != null) {
-            sql.append(" AND al.created_at <= :to");
-        }
-
-        sql.append(" ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset");
-
-        Query query = em.createNativeQuery(sql.toString(), AuditLog.class);
-
-        if (logType != null) {
-            query.setParameter("logType", logType.name());
-        }
-        if (severity != null) {
-            query.setParameter("severity", severity.name());
-        }
-        if (normalizedKeyword != null) {
-            query.setParameter("keyword", "%" + normalizedKeyword + "%");
-        }
-        if (from != null) {
-            query.setParameter("from", from);
-        }
-        if (to != null) {
-            query.setParameter("to", to);
-        }
-        query.setParameter("limit", pageable.getPageSize());
-        query.setParameter("offset", pageable.getOffset());
-
-        @SuppressWarnings("unchecked")
-        List<AuditLog> result = query.getResultList();
-
-        long total = countAuditLogs(logType, severity, normalizedKeyword, from, to);
-        return new PageImpl<>(result, pageable, total);
+        BooleanBuilder predicate = buildPredicate(logType, severity, keyword, from, to);
+        return fetchPage(predicate, pageable);
     }
 
     public long countAuditLogs(
-        AuditLogType logType,
-        AuditLogSeverity severity,
-        String keyword,
-        ZonedDateTime from,
-        ZonedDateTime to
+            AuditLogType logType,
+            AuditLogSeverity severity,
+            String keyword,
+            ZonedDateTime from,
+            ZonedDateTime to
     ) {
-        String normalizedKeyword = normalizeKeyword(keyword);
-        StringBuilder sql = new StringBuilder("""
-            SELECT COUNT(*)
-            FROM audit_logs al
-            WHERE 1=1
-            """);
-
-        if (logType != null) {
-            sql.append(" AND al.log_type = :logType");
-        }
-        if (severity != null) {
-            sql.append(" AND al.severity = :severity");
-        }
-        if (normalizedKeyword != null) {
-            sql.append("""
-                 AND (
-                    al.action ILIKE :keyword
-                    OR CAST(al.target_type AS TEXT) ILIKE :keyword
-                    OR CAST(al.target_id AS TEXT) ILIKE :keyword
-                    OR CAST(al.detail AS TEXT) ILIKE :keyword
-                )
-                """);
-        }
-        if (from != null) {
-            sql.append(" AND al.created_at >= :from");
-        }
-        if (to != null) {
-            sql.append(" AND al.created_at <= :to");
-        }
-
-        Query query = em.createNativeQuery(sql.toString());
-
-        if (logType != null) {
-            query.setParameter("logType", logType.name());
-        }
-        if (severity != null) {
-            query.setParameter("severity", severity.name());
-        }
-        if (normalizedKeyword != null) {
-            query.setParameter("keyword", "%" + normalizedKeyword + "%");
-        }
-        if (from != null) {
-            query.setParameter("from", from);
-        }
-        if (to != null) {
-            query.setParameter("to", to);
-        }
-
-        return ((Number) query.getSingleResult()).longValue();
+        return count(buildPredicate(logType, severity, keyword, from, to));
     }
 
     public Optional<AuditLog> findAuditLogById(Long logId) {
-        Query query = em.createNativeQuery("""
-            SELECT al.*
-            FROM audit_logs al
-            WHERE al.audit_log_id = ?1
-            """, AuditLog.class);
-        query.setParameter(1, logId);
+        AuditLog result = queryFactory
+                .selectFrom(auditLog)
+                .where(auditLog.auditLogId.eq(logId))
+                .fetchOne();
 
-        @SuppressWarnings("unchecked")
-        List<AuditLog> result = query.getResultList();
+        return Optional.ofNullable(result);
+    }
 
-        if (result.isEmpty()) {
-            return Optional.empty();
+    private Page<AuditLog> fetchPage(BooleanBuilder predicate, Pageable pageable) {
+        List<AuditLog> result = queryFactory
+                .selectFrom(auditLog)
+                .where(predicate)
+                .orderBy(auditLog.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        long total = count(predicate);
+        return new PageImpl<>(result, pageable, total);
+    }
+
+    private long count(BooleanBuilder predicate) {
+        Long count = queryFactory
+                .select(auditLog.count())
+                .from(auditLog)
+                .where(predicate)
+                .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
+    private BooleanBuilder buildPredicate(
+            AuditLogType logType,
+            AuditLogSeverity severity,
+            String keyword,
+            ZonedDateTime from,
+            ZonedDateTime to
+    ) {
+        BooleanBuilder predicate = new BooleanBuilder();
+
+        if (logType != null) {
+            predicate.and(auditLog.logType.eq(logType));
         }
-        return Optional.of(result.getFirst());
+        if (severity != null) {
+            predicate.and(auditLog.severity.eq(severity));
+        }
+        predicate.and(keywordPredicate(keyword));
+        predicate.and(periodPredicate(from, to));
+
+        return predicate;
+    }
+
+    private BooleanBuilder keywordPredicate(String keyword) {
+        BooleanBuilder predicate = new BooleanBuilder();
+        String normalizedKeyword = normalizeKeyword(keyword);
+
+        if (normalizedKeyword != null) {
+            predicate.and(
+                    auditLog.action.containsIgnoreCase(normalizedKeyword)
+                            .or(auditLog.targetType.containsIgnoreCase(normalizedKeyword))
+                            .or(auditLog.targetId.containsIgnoreCase(normalizedKeyword))
+                            .or(auditLog.detail.containsIgnoreCase(normalizedKeyword))
+            );
+        }
+
+        return predicate;
+    }
+
+    private BooleanBuilder periodPredicate(ZonedDateTime from, ZonedDateTime to) {
+        BooleanBuilder predicate = new BooleanBuilder();
+
+        if (from != null) {
+            predicate.and(auditLog.createdAt.goe(from));
+        }
+        if (to != null) {
+            predicate.and(auditLog.createdAt.loe(to));
+        }
+
+        return predicate;
     }
 
     private String normalizeKeyword(String keyword) {
@@ -439,20 +200,16 @@ public class AuditLogQueryRepository {
         return trimmedKeyword.isEmpty() ? null : trimmedKeyword;
     }
 
-    private long toLong(Object value) {
-        return value == null ? 0L : ((Number) value).longValue();
-    }
-
     public record SummaryAggregate(
-        long totalCount,
-        long adminActivityCount,
-        long adminManagementCount,
-        long aiMetricsSystemCount,
-        long scrapingSystemCount,
-        long infoCount,
-        long warnCount,
-        long errorCount,
-        long successCount
+            long totalCount,
+            long adminActivityCount,
+            long adminManagementCount,
+            long aiMetricsSystemCount,
+            long scrapingSystemCount,
+            long infoCount,
+            long warnCount,
+            long errorCount,
+            long successCount
     ) {
     }
 }
