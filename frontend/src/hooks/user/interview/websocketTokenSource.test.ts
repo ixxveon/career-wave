@@ -9,6 +9,19 @@ vi.mock('../../../utils/user/member/authSession', () => ({
   authSession: { getAccessToken: vi.fn() },
 }));
 
+// useSpringWebSocket은 STOMP Client를 사용하므로 @stomp/stompjs를 모킹
+const mockActivate = vi.fn();
+const mockDeactivate = vi.fn();
+
+vi.mock('@stomp/stompjs', () => {
+  class MockClient {
+    active = false;
+    activate = mockActivate;
+    deactivate = mockDeactivate;
+  }
+  return { Client: MockClient };
+});
+
 import { authSession } from '../../../utils/user/member/authSession';
 
 class MockWebSocket {
@@ -36,10 +49,10 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); });
 
 // ─────────────────────────────────────────────
-// useSpringWebSocket — token source
+// useSpringWebSocket — token source (STOMP)
 // ─────────────────────────────────────────────
 describe('useSpringWebSocket — token source', () => {
-  it('token이 없으면 소켓 생성 없이 ERROR 상태가 된다', () => {
+  it('token이 없으면 STOMP Client를 생성하지 않고 ERROR 상태가 된다', () => {
     vi.mocked(authSession.getAccessToken).mockReturnValue(null);
     const onStatusChange = vi.fn();
 
@@ -48,11 +61,11 @@ describe('useSpringWebSocket — token source', () => {
     );
     act(() => result.current.connect('sid-1'));
 
-    expect(MockWebSocket.instances).toHaveLength(0);
+    expect(mockActivate).not.toHaveBeenCalled();
     expect(onStatusChange).toHaveBeenCalledWith('ERROR');
   });
 
-  it('token이 있으면 URL에 token이 포함된 소켓을 생성한다', () => {
+  it('token이 있으면 STOMP Client를 생성하고 activate를 호출한다', () => {
     vi.mocked(authSession.getAccessToken).mockReturnValue('my-token');
 
     const { result } = renderHook(() =>
@@ -60,8 +73,7 @@ describe('useSpringWebSocket — token source', () => {
     );
     act(() => result.current.connect('sid-1'));
 
-    expect(MockWebSocket.instances).toHaveLength(1);
-    expect(MockWebSocket.instances[0].url).toContain('token=my-token');
+    expect(mockActivate).toHaveBeenCalledTimes(1);
   });
 });
 
