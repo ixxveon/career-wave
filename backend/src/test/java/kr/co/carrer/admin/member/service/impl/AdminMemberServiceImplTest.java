@@ -250,7 +250,7 @@ class AdminMemberServiceImplTest {
 
             HrManagerDTO.ResponseApprove result = adminMemberService.approveHrManager(memberId);
 
-            assertThat(result.hrStatus()).isEqualTo(HrStatus.ACTIVE);
+            assertThat(result.hrStatus()).isEqualTo(HrStatus.APPROVED);
             assertThat(result.approvedAt()).isNotNull();
         }
 
@@ -295,7 +295,7 @@ class AdminMemberServiceImplTest {
 
             HrManagerDTO.ResponseReject result = adminMemberService.rejectHrManager(memberId, request);
 
-            assertThat(result.hrStatus()).isEqualTo(HrStatus.REMOVED);
+            assertThat(result.hrStatus()).isEqualTo(HrStatus.REJECTED);
             assertThat(result.rejectReason()).isEqualTo("사업자등록증 서류 미비로 반려 처리합니다.");
         }
 
@@ -414,7 +414,7 @@ class AdminMemberServiceImplTest {
             HrManager hrManager = constructor.newInstance();
 
             setField(hrManager, "memberId", memberId);
-            setField(hrManager, "hrStatus", HrStatus.PENDING);
+            setField(hrManager, "hrStatus", HrStatus.PENDING_REVIEW);
             return hrManager;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -428,7 +428,7 @@ class AdminMemberServiceImplTest {
             HrManager hrManager = constructor.newInstance();
 
             setField(hrManager, "memberId", memberId);
-            setField(hrManager, "hrStatus", HrStatus.ACTIVE);
+            setField(hrManager, "hrStatus", HrStatus.APPROVED);
             return hrManager;
         } catch (Exception e) {
             throw new RuntimeException(e);

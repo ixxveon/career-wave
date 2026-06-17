@@ -12,10 +12,10 @@
 - [ ] 기존 `specs/backend/auth/constitution.md`의 JWT 보안 원칙과 충돌하지 않는다.
 - [ ] `specs/frontend/user/member/api-schema.md` 및 `frontend/src/types/user/member.ts`와 필드명이 일치한다.
 - [ ] MSW mock을 최종 계약 원본으로 사용하지 않았다.
-- [ ] `members.role_type`은 `USER`, `COMPANY`로 통일하고 `ROLE_` prefix는 security authority에서만 사용한다.
-- [ ] `members.member_status`는 `BLACKLISTED`까지 포함한다.
-- [ ] `hr_managers.hr_status`는 `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `NEEDS_REVISION`, `REMOVED`로 통일한다.
-- [ ] 기존 Java enum과 QueryRepository mapping이 ERD enum 값과 일치한다.
+- [x] `members.role_type`은 `USER`, `COMPANY`로 통일하고 `ROLE_` prefix는 security authority에서만 사용한다.
+- [x] `members.member_status`는 `BLACKLISTED`까지 포함한다.
+- [x] `hr_managers.hr_status`는 `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `NEEDS_REVISION`, `REMOVED`로 통일한다. — user `HrStatus` enum 신규 정의, admin `HrStatus` enum도 ERD 기준으로 수정
+- [x] 기존 Java enum과 QueryRepository mapping이 ERD enum 값과 일치한다. — admin `HrStatus` · admin `AdminMemberServiceImpl` · 테스트 동기화 완료
 
 ---
 
