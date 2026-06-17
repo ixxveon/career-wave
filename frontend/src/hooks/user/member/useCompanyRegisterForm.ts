@@ -194,10 +194,16 @@ export function useCompanyRegisterForm() {
     }
   };
 
+  const DAUM_POSTCODE_SCRIPT_ID = 'daum-postcode-script';
+
   const handleAddressSearch = () => {
     const openPopup = () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      new window.daum!.Postcode({
+      const Postcode = window.daum?.Postcode;
+      if (!Postcode) {
+        setFormMessage('주소 검색 서비스를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+      new Postcode({
         oncomplete: (data) => {
           setForm((current) => ({
             ...current,
@@ -217,9 +223,23 @@ export function useCompanyRegisterForm() {
       return;
     }
 
+    const existing = document.getElementById(DAUM_POSTCODE_SCRIPT_ID) as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener('load', openPopup, { once: true });
+      existing.addEventListener('error', () => {
+        setFormMessage('주소 검색 스크립트를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      }, { once: true });
+      return;
+    }
+
     const script = document.createElement('script');
+    script.id = DAUM_POSTCODE_SCRIPT_ID;
+    script.async = true;
     script.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
     script.onload = openPopup;
+    script.onerror = () => {
+      setFormMessage('주소 검색 스크립트를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+    };
     document.head.appendChild(script);
   };
 
