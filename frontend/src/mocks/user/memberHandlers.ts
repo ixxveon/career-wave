@@ -99,6 +99,7 @@ export const memberHandlers = [
           member: {
             ...account,
             memberStatus: 'ACTIVE',
+            subscriptionStatus: 'FREE',
             lastLoginAt: new Date().toISOString(),
           },
         },

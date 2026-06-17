@@ -40,6 +40,7 @@ public class AuditLogController implements AuditLogDocs {
         AuditLogDTO.ResponseSummary response = new AuditLogDTO.ResponseSummary(
             summary.totalCount(),
             summary.adminActivityCount(),
+            summary.adminManagementCount(),
             summary.aiMetricsSystemCount(),
             summary.scrapingSystemCount(),
             summary.infoCount(),

@@ -47,11 +47,11 @@
 
 ## Phase 4 - Documentation
 
-- [ ] `api-schema.md`와 요청/응답 계약 필드 정합성을 맞춘다.
-- [ ] `spec.md`와 구현 범위 정합성을 맞춘다.
-- [ ] `constitution.md`와 권한/책임 경계 정합성을 맞춘다.
-- [ ] 감사 로그 API의 도메인 ErrorCode 문서를 정리한다.
-- [ ] Swagger 문서가 `docs` 인터페이스 기준으로 분리되어 노출되는지 맞춘다.
+- [x] `api-schema.md`와 요청/응답 계약 필드 정합성을 맞춘다.
+- [x] `spec.md`와 구현 범위 정합성을 맞춘다.
+- [x] `constitution.md`와 권한/책임 경계 정합성을 맞춘다.
+- [x] 감사 로그 API의 도메인 ErrorCode 문서를 정리한다.
+- [x] Swagger 문서가 `docs` 인터페이스 기준으로 분리되어 노출되는지 맞춘다.
 
 ## Phase 5 - Test
 
