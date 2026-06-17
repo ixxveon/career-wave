@@ -21,7 +21,7 @@ public class UserMemberQueryRepository {
         List<?> rows = entityManager.createNativeQuery(
                 "SELECT m.login_id FROM members m " +
                 "JOIN company_profiles cp ON cp.member_id = m.member_id " +
-                "JOIN hr_managers h ON h.member_id = m.member_id " +
+                "JOIN hr_managers h ON h.member_id = m.member_id AND h.company_profile_id = cp.company_profile_id " +
                 "WHERE m.name = :managerName " +
                 "AND cp.business_number = :businessNumber " +
                 "AND m.email = :email " +
@@ -41,7 +41,7 @@ public class UserMemberQueryRepository {
         List<?> rows = entityManager.createNativeQuery(
                 "SELECT m.login_id FROM members m " +
                 "JOIN company_profiles cp ON cp.member_id = m.member_id " +
-                "JOIN hr_managers h ON h.member_id = m.member_id " +
+                "JOIN hr_managers h ON h.member_id = m.member_id AND h.company_profile_id = cp.company_profile_id " +
                 "WHERE m.name = :managerName " +
                 "AND cp.business_number = :businessNumber " +
                 "AND m.phone = :phone " +
