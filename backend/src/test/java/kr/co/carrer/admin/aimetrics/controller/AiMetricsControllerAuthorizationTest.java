@@ -191,6 +191,13 @@ class AiMetricsControllerAuthorizationTest {
         )).isInstanceOf(AccessDeniedException.class);
     }
 
+    @Test
+    @DisplayName("미인증 요청은 AI 사용량 요약 조회에 접근할 수 없다")
+    void unauthenticatedCannotAccessSummary() {
+        assertThatThrownBy(() -> aiMetricsController.getSummary(null, null, null))
+                .isInstanceOf(org.springframework.security.core.AuthenticationException.class);
+    }
+
     private AiMetricsService.ResponseBudget responseBudget() {
         return new AiMetricsService.ResponseBudget(
                 1L,
