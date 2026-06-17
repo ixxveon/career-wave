@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 
@@ -80,7 +81,8 @@ async def analyze_document(request: AnalyzeDocumentRequest) -> None:
 
 
 async def _analyze_resume(document_id: str, request: AnalyzeDocumentRequest) -> None:
-    resume_text = parse_resume_file(
+    resume_text = await asyncio.to_thread(
+        parse_resume_file,
         document_id,
         str(request.file_url),
         request.original_name,
