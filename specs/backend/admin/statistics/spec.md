@@ -21,7 +21,7 @@ CareerWave 서비스의 매출 현황과 가입자 증가 추이를 집계하여
 
 | 컬럼 | 집계 활용 |
 |---|---|
-| `payment_status` | `DONE` 건만 매출 집계 대상 |
+| `payment_status` | `PAID` 건만 매출 집계 대상 |
 | `payment_type` | `MANUAL`(신규) / `AUTO_RENEWAL`(갱신) 분류 |
 | `amount` | 매출 금액 합산 |
 | `created_at` | 월별 집계 기준 |
@@ -30,9 +30,9 @@ CareerWave 서비스의 매출 현황과 가입자 증가 추이를 집계하여
 
 | 컬럼 | 집계 활용 |
 |---|---|
-| `sub_status` | 구독 상태 |
-| `start_date` | 신규 구독자 월별 집계 기준 |
-| `renew_date` | 탈퇴(만료) 집계 기준 |
+| `subscription_status` | 구독 상태 |
+| `started_at` | 신규 구독자 월별 집계 기준 |
+| `cancelled_at` / `current_period_end` | 탈퇴(만료) 집계 기준 |
 | `created_at` | 최근 가입 피드 정렬 기준 |
 
 ### members (집계 대상)
@@ -80,7 +80,7 @@ public class StatisticsDTO {
 
     // KPI 집계
     public record ResponseSummary(
-        long currentMonthRevenue,          // 이번 달 매출 (DONE 합산)
+        long currentMonthRevenue,          // 이번 달 매출 (PAID 합산)
         double currentMonthRevenueGrowth,  // 전월 대비 증감률 (%)
         long totalRevenue,                 // 누적 총 매출
         long totalMembers,                 // 총 가입자 수
@@ -91,7 +91,7 @@ public class StatisticsDTO {
     // 월별 매출 항목
     public record MonthlyRevenue(
         String month,   // "YYYY-MM" 형식
-        long total      // 해당 월 DONE 합산 금액
+        long total      // 해당 월 PAID 합산 금액
     ) {}
 
     // 구독 유형별 매출 항목
@@ -133,9 +133,9 @@ GET /api/admin/statistics/summary
 ```
 
 **집계 로직**:
-- `currentMonthRevenue`: 당월 `payment_status = DONE` AND `amount` SUM
+- `currentMonthRevenue`: 당월 `payment_status = PAID` AND `amount` SUM
 - `currentMonthRevenueGrowth`: (당월 매출 - 전월 매출) / 전월 매출 × 100. **전월 매출이 0이면 0.0 반환** (0 나누기 방지)
-- `totalRevenue`: 전체 `payment_status = DONE` AND `amount` SUM
+- `totalRevenue`: 전체 `payment_status = PAID` AND `amount` SUM
 - `totalMembers`: `members` 테이블 COUNT
 - `currentMonthNewMembers`: 당월 `members.created_at` COUNT
 - `currentMonthNewMembersGrowth`: (당월 신규 - 전월 신규) / 전월 신규 × 100. **전월 신규 가입이 0이면 0.0 반환** (0 나누기 방지)
@@ -151,7 +151,7 @@ GET /api/admin/statistics/revenue/monthly
 
 **집계 로직**:
 - 최근 6개월 (당월 포함), 오래된 순 정렬
-- 월별 `payment_status = DONE` `amount` SUM
+- 월별 `payment_status = PAID` `amount` SUM
 - 데이터 없는 월은 `total: 0` 반환
 
 ---
@@ -164,9 +164,9 @@ GET /api/admin/statistics/revenue/breakdown
 ```
 
 **집계 로직 (당월 기준)**:
-- `PREMIUM`: `payment_type = MANUAL` OR `AUTO_RENEWAL` 전체 DONE 합산
-- `NEW_CONVERSION`: `payment_type = MANUAL` DONE 합산 (신규 가입 전환)
-- `RENEWAL`: `payment_type = AUTO_RENEWAL` DONE 합산
+- `PREMIUM`: `payment_type = MANUAL` OR `AUTO_RENEWAL` 전체 PAID 합산
+- `NEW_CONVERSION`: `payment_type = MANUAL` PAID 합산 (신규 가입 전환)
+- `RENEWAL`: `payment_type = AUTO_RENEWAL` PAID 합산
 - `REFUND_DEDUCTION`: `refund_status = COMPLETED` `amount` SUM (음수 반환)
 - 각 유형별 전월 대비 증감률 포함
 
@@ -181,8 +181,8 @@ GET /api/admin/statistics/subscribers/monthly
 
 **집계 로직**:
 - 최근 6개월 (당월 포함), 오래된 순 정렬
-- `newSubs`: 월별 `subscriptions.start_date` 기준 신규 COUNT
-- `churned`: 월별 `subscriptions.renew_date` 만료 기준 탈퇴 COUNT
+- `newSubs`: 월별 `subscriptions.started_at` 기준 신규 COUNT
+- `churned`: 월별 `subscriptions.cancelled_at` 만료 기준 탈퇴 COUNT
 - 데이터 없는 월은 `newSubs: 0, churned: 0` 반환
 
 ---
@@ -218,6 +218,7 @@ GET /api/admin/statistics/subscribers/recent
 
 #### getRevenueBreakdown()
 - 당월 구독 유형별 집계 + 전월 대비 증감률
+- REFUND_DEDUCTION은 환불 금액을 음수(× -1)로 변환하여 반환
 - 반환: `List<StatisticsDTO.RevenueBreakdownItem>` (PREMIUM→NEW_CONVERSION→RENEWAL→REFUND_DEDUCTION 순)
 
 #### getMonthlySubscribers()

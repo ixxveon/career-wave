@@ -10,6 +10,7 @@ public enum UserAuthErrorCode implements BaseErrorCode {
     // 사용자 전용 계정 상태 에러
     AUTH_ACCOUNT_SUSPENDED(HttpStatus.FORBIDDEN, "계정이 일시 정지되었습니다."),
     AUTH_ACCOUNT_BANNED(HttpStatus.FORBIDDEN, "계정이 영구 정지되었습니다."),
+    AUTH_ACCOUNT_BLACKLISTED(HttpStatus.FORBIDDEN, "블랙리스트 계정입니다."),
     AUTH_ACCOUNT_WITHDRAWN(HttpStatus.FORBIDDEN, "탈퇴한 계정입니다."),
 
     // 기업 회원 전용 승인 상태 에러

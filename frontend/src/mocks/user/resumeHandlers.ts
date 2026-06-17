@@ -1,7 +1,6 @@
 import { http, HttpResponse, ws } from 'msw';
 import type { ApiResponse } from '../../types/user/resume';
 import {
-  MOCK_DOCUMENT_ID,
   MOCK_UPLOAD_RESPONSE,
   MOCK_COVER_LETTER_RESPONSE,
   MOCK_ANALYSIS_RESULT,
@@ -10,15 +9,82 @@ import {
 
 const BASE = '/api/v1/user/resume';
 
-// WebSocket 핸들러 — 분석 상태 단계별 메시지 시뮬레이션
-const wsAnalysis = ws.link(`*/ws/user/resume/${MOCK_DOCUMENT_ID}/status`);
+// ── STOMP 프레임 유틸 ─────────────────────────────────────────────
+function buildStompFrame(command: string, headers: Record<string, string>, body = ''): string {
+  const headerStr = Object.entries(headers).map(([k, v]) => `${k}:${v}`).join('\n');
+  return `${command}\n${headerStr}\n\n${body}\0`;
+}
+
+function parseStompCommand(raw: string): string {
+  return raw.split('\n')[0];
+}
+
+function parseStompHeader(raw: string, name: string): string | undefined {
+  const match = raw.match(new RegExp(`^${name}:(.+)$`, 'm'));
+  return match?.[1]?.trim();
+}
+
+// ── STOMP WebSocket 핸들러 (/ws/user/resume) ──────────────────────
+const wsAnalysis = ws.link('*/ws/user/resume');
 
 const wsHandler = wsAnalysis.addEventListener('connection', ({ client }) => {
+  let simulationTimer: ReturnType<typeof setInterval> | null = null;
+
+  client.addEventListener('message', (event) => {
+    const raw = typeof event.data === 'string' ? event.data : '';
+    const command = parseStompCommand(raw);
+
+    if (command === 'CONNECT') {
+      client.send(buildStompFrame('CONNECTED', {
+        'version': '1.2',
+        'heart-beat': '0,0',
+        'server': 'MSW-STOMP-Mock',
+      }));
+    }
+
+    if (command === 'SUBSCRIBE') {
+      const destination = parseStompHeader(raw, 'destination') ?? '';
+      const subscriptionId = parseStompHeader(raw, 'id') ?? 'sub-0';
+
+      // /topic/resume/{documentId}/status 구독 시 분석 시뮬레이션 시작
+      const topicMatch = destination.match(/^\/topic\/resume\/([^/]+)\/status$/);
+      if (topicMatch) {
+        simulationTimer = startAnalysisSimulation(client, destination, subscriptionId);
+      }
+
+      // /user/queue/resume/{documentId}/status 구독 시 현재 상태 Snapshot 1회 전송
+      const queueMatch = destination.match(/^\/user\/queue\/resume\/([^/]+)\/status$/);
+      if (queueMatch) {
+        const snap = { status: 'ANALYZING', message: '분석 진행 중', progress: 20, errorMessage: null };
+        client.send(buildStompFrame('MESSAGE', {
+          'subscription': subscriptionId,
+          'message-id': `snap-${Date.now()}`,
+          'destination': destination,
+          'content-type': 'application/json',
+        }, JSON.stringify(snap)));
+      }
+    }
+
+    if (command === 'DISCONNECT') {
+      if (simulationTimer) clearInterval(simulationTimer);
+    }
+  });
+
+  client.addEventListener('close', () => {
+    if (simulationTimer) clearInterval(simulationTimer);
+  });
+});
+
+function startAnalysisSimulation(
+  client: Parameters<Parameters<typeof wsAnalysis.addEventListener>[1]>[0]['client'],
+  destination: string,
+  subscriptionId: string,
+): ReturnType<typeof setInterval> {
   const steps = [
-    { status: 'ANALYZING', message: '파일을 읽고 있어요',     progress: 10 },
-    { status: 'ANALYZING', message: '키워드를 추출하고 있어요', progress: 40 },
-    { status: 'ANALYZING', message: '피드백을 생성하고 있어요', progress: 70 },
-    { status: 'COMPLETED', message: '분석이 완료되었어요',     progress: 100 },
+    { status: 'ANALYZING', message: '파일을 읽고 있어요',      progress: 10,  errorMessage: null },
+    { status: 'ANALYZING', message: '키워드를 추출하고 있어요',  progress: 40,  errorMessage: null },
+    { status: 'ANALYZING', message: '피드백을 생성하고 있어요',  progress: 70,  errorMessage: null },
+    { status: 'COMPLETED', message: '분석이 완료되었어요',       progress: 100, errorMessage: null },
   ];
 
   let i = 0;
@@ -27,15 +93,21 @@ const wsHandler = wsAnalysis.addEventListener('connection', ({ client }) => {
       clearInterval(timer);
       return;
     }
-    client.send(JSON.stringify(steps[i]));
+    client.send(buildStompFrame('MESSAGE', {
+      'subscription': subscriptionId,
+      'message-id': `msg-${Date.now()}`,
+      'destination': destination,
+      'content-type': 'application/json',
+    }, JSON.stringify(steps[i])));
+
     if (steps[i].status === 'COMPLETED') clearInterval(timer);
     i++;
   }, 1500);
 
-  client.addEventListener('close', () => clearInterval(timer));
-});
+  return timer;
+}
 
-// REST 핸들러
+// ── REST 핸들러 ───────────────────────────────────────────────────
 export const resumeHandlers = [
   wsHandler,
 
@@ -66,7 +138,7 @@ export const resumeHandlers = [
     await delay(400);
     const url      = new URL(request.url);
     const page     = Number(url.searchParams.get('page')     ?? 0);
-    const size     = Number(url.searchParams.get('size')     ?? 10);
+    const size     = Number(url.searchParams.get('size')     ?? 5);
     const fileType = url.searchParams.get('fileType') ?? null;
 
     const filtered = fileType

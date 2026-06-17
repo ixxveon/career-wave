@@ -1,5 +1,5 @@
 import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
-import { Apple, BadgeCheck, UserRound } from 'lucide-react';
+import { BadgeCheck, UserRound } from 'lucide-react';
 import { AuthButtonGroup, Field, StatusPill, TextInput } from './RegisterFormPrimitives';
 import { LOGIN_ID_CHECK_STATE } from '../../../utils/user/member/validation';
 import { usePersonalRegisterForm } from '../../../hooks/user/member/usePersonalRegisterForm';
@@ -72,7 +72,7 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
               href={`/auth/register/verify?provider=${provider.id}`}
               key={provider.id}
             >
-              {provider.id === 'apple' ? <Apple size={24} /> : provider.mark}
+              {provider.mark}
             </a>
           ))}
         </div>
