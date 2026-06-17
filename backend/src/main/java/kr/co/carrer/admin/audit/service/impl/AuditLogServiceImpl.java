@@ -21,6 +21,7 @@ import java.time.ZonedDateTime;
 public class AuditLogServiceImpl implements AuditLogService {
 
     private static final int MAX_PAGE_SIZE = 100;
+    private static final int MAX_KEYWORD_LENGTH = 100;
 
     private final AuditLogQueryRepository auditLogQueryRepository;
 
@@ -56,11 +57,12 @@ public class AuditLogServiceImpl implements AuditLogService {
         validatePageSize(page, size);
         AuditLogType auditLogType = parseLogType(logType);
         AuditLogSeverity auditLogSeverity = parseSeverity(severity);
+        String normalizedKeyword = normalizeKeyword(keyword);
 
         return auditLogQueryRepository.findAuditLogs(
             auditLogType,
             auditLogSeverity,
-            keyword,
+            normalizedKeyword,
             from,
             to,
             PageRequest.of(toInternalPage(page), size)
@@ -109,6 +111,22 @@ public class AuditLogServiceImpl implements AuditLogService {
         if (page < 1 || size < 1 || size > MAX_PAGE_SIZE) {
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+
+        String trimmedKeyword = keyword.trim();
+        if (trimmedKeyword.isEmpty()) {
+            return null;
+        }
+        if (trimmedKeyword.length() > MAX_KEYWORD_LENGTH) {
+            throw new CustomException(AuditLogErrorCode.KEYWORD_TOO_LONG);
+        }
+
+        return trimmedKeyword;
     }
 
     private int toInternalPage(int page) {

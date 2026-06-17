@@ -18,8 +18,8 @@
 ### 권한 표기
 
 - 문서상 권한 표기는 `MASTER`, `BACKEND`, `CS`를 사용한다.
-- Spring Security에서는 `MASTER -> ROLE_MASTER`, `BACKEND -> ROLE_BACKEND`, `CS -> ROLE_CS`로 매핑한다.
-- 감사 로그 조회 API의 실제 접근 권한은 `MASTER`, `BACKEND`다.
+- Spring Security에서는 세부 역할 `MASTER`, `BACKEND`, `CS`를 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`로 매핑한다.
+- 감사 로그 조회 API의 실제 접근 조건은 관리자 인증(`ROLE_ADMIN`) + 세부 역할 `MASTER` 또는 `BACKEND`다.
 
 ### Pagination 규칙
 
@@ -104,7 +104,7 @@
 
 - **Method**: `GET`
 - **Path**: `/api/v1/admin/audit-logs/summary`
-- **Auth**: `MASTER`, `BACKEND`
+- **Auth**: `ROLE_ADMIN` + (`MASTER` or `BACKEND`)
 
 #### Query Parameter
 
@@ -128,7 +128,6 @@
   "data": {
     "totalCount": 1250,
     "adminActivityCount": 320,
-    "adminManagementCount": 12,
     "aiMetricsSystemCount": 610,
     "scrapingSystemCount": 320,
     "infoCount": 820,
@@ -152,7 +151,7 @@
 
 - **Method**: `GET`
 - **Path**: `/api/v1/admin/audit-logs`
-- **Auth**: `MASTER`, `BACKEND`
+- **Auth**: `ROLE_ADMIN` + (`MASTER` or `BACKEND`)
 
 #### Query Parameter
 
@@ -207,17 +206,17 @@
 |---|---|---|
 | `INVALID_AUDIT_LOG_TYPE` | 400 | 유효하지 않은 감사 로그 유형입니다. |
 | `INVALID_AUDIT_LOG_SEVERITY` | 400 | 유효하지 않은 감사 로그 심각도입니다. |
+| `KEYWORD_TOO_LONG` | 400 | 검색어가 100자를 초과했습니다. |
 
 > 공통 보안 실패 응답: 인증이 없으면 `401`, 권한이 없으면 `403`이 반환된다.
-> 공통 요청 검증 실패: `from`, `to` 형식이 ISO 8601 UTC가 아니거나 `from > to`, `page < 1`, `size < 1`, `keyword` 100자 초과인 경우 공통 `400` 검증 오류가 반환된다. `from`, `to`는 각각 단독 전달이 가능하며 둘 다 없으면 기간 필터를 적용하지 않는다.
-
+> 공통 요청 검증 실패: `from`, `to` 형식이 ISO 8601 UTC가 아니거나 `from > to`, `page < 1`, `size < 1`인 경우 공통 `400` 검증 오류가 반환된다. `keyword` 100자 초과인 경우 `KEYWORD_TOO_LONG`이 반환된다. `from`, `to`는 각각 단독 전달이 가능하며 둘 다 없으면 기간 필터를 적용하지 않는다.
 ---
 
 ### 4.3 GET /api/v1/admin/audit-logs/{logId}
 
 - **Method**: `GET`
 - **Path**: `/api/v1/admin/audit-logs/{logId}`
-- **Auth**: `MASTER`, `BACKEND`
+- **Auth**: `ROLE_ADMIN` + (`MASTER` or `BACKEND`)
 
 #### Query Parameter
 
@@ -268,7 +267,6 @@
 |---|---|---|---|---|
 | `totalCount` | `number` | Y | 없음 | 전체 감사 로그 수 |
 | `adminActivityCount` | `number` | Y | 없음 | `logType = ADMIN_ACTIVITY` 집계 수 |
-| `adminManagementCount` | `number` | Y | 없음 | `logType = ADMIN_MANAGEMENT` 집계 수 |
 | `aiMetricsSystemCount` | `number` | Y | 없음 | `logType = AI_METRICS_SYSTEM` 집계 수 |
 | `scrapingSystemCount` | `number` | Y | 없음 | `logType = SCRAPING_SYSTEM` 집계 수 |
 | `infoCount` | `number` | Y | 없음 | `severity = INFO` 집계 수 |
