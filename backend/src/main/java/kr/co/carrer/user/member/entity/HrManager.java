@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 import java.util.UUID;
 
-@Entity
+@Entity(name = "UserHrManager")
 @Table(name = "hr_managers")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

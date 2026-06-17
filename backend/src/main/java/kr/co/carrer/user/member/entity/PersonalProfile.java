@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 import java.util.UUID;
 
-@Entity
+@Entity(name = "UserPersonalProfile")
 @Table(name = "personal_profiles")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
