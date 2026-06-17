@@ -51,9 +51,9 @@
 
 ## Phase 6 — Documentation
 
-- [ ] `AiMetricsDocs` 인터페이스가 작성되어 있고 Swagger 어노테이션이 Controller가 아니라 Docs 인터페이스에 분리되어 있다.
-- [ ] Controller에 Swagger 어노테이션이 직접 선언되어 있지 않다.
-- [ ] `api-schema.md`, `fastapi-schema.md`, `spec.md`, `constitution.md`, `plan.md`, `tasks.md`가 동일한 권한 정책, ErrorCode, 상태 규칙을 기준으로 정합성을 유지한다.
+- [x] `AiMetricsDocs` 인터페이스가 작성되어 있고 Swagger 어노테이션이 Controller가 아니라 Docs 인터페이스에 분리되어 있다.
+- [x] Controller에 Swagger 어노테이션이 직접 선언되어 있지 않다.
+- [x] `api-schema.md`, `fastapi-schema.md`, `spec.md`, `constitution.md`, `plan.md`, `tasks.md`가 동일한 권한 정책, ErrorCode, 상태 규칙을 기준으로 정합성을 유지한다.
 
 ## Phase 7 — Test
 

@@ -60,7 +60,6 @@ public class AiMetricsFastApiRequest {
 
     public record RagIndexStart(
             Long ragDocumentId,
-            Long uploadedBy,
             UUID fileUuid,
             String originalFileName,
             String filePath,
@@ -69,10 +68,4 @@ public class AiMetricsFastApiRequest {
     ) {
     }
 
-    public record RagIndexDelete(
-            Long ragDocumentId,
-            UUID fileUuid,
-            String filePath
-    ) {
-    }
 }

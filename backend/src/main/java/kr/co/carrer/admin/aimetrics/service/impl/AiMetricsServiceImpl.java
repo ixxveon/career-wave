@@ -235,7 +235,6 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     private void startRagIndexing(RagDocument document) {
         AiMetricsFastApiGateway.RagIndexStartResponse response = getFastApiGateway().startRagIndexing(new AiMetricsFastApiGateway.RagIndexStartRequest(
                 document.getRagDocumentId(),
-                document.getUploadedBy(),
                 document.getFileUuid(),
                 document.getOriginalFileName(),
                 document.getFilePath(),
