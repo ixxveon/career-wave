@@ -74,9 +74,9 @@ Phase 10 "먼저 작성할 3가지 ★"를 구현 코드보다 먼저 작성한�
 
 ### 리포트 생성
 - [ ] 리포트 생성이 완료될 때 `career_histories`에 레코드가 INSERT된다 (세션 종료 API 응답이 아닌 FastAPI 완료 콜백 시점).
-- [ ] `getReport` 호출 시 리포트가 아직 생성 중인 경우 `INTERVIEW_REPORT_NOT_READY`를 반환하며, HTTP 상태코드는 **409 Conflict**이다.
-- [ ] `voiceQualityRatio < 50.00`인 피드백 항목의 `deliveryScore` / `fluencyScore`가 `null`로 반환된다.
-- [ ] `voiceQualityRatio`가 `null`인 피드백 항목의 `deliveryScore` / `fluencyScore`가 `null`로 반환된다.
+- [ ] `getReport` 호출 시 리포트가 아직 생성 중인 경우 `INTERVIEW_REPORT_NOT_READY(409 Conflict)`를 반환하며, 응답 `data`에 `{ "status": "ANALYZING", "estimatedWaitSeconds": 15 }` 포함.
+- [ ] `voiceQualityRatio < 50.00`이거나 `null`인 피드백 항목의 `deliveryScore` / `fluencyScore`가 `null`로 반환된다 (`50.00` 이상이면 실제 값 반환).
+- [ ] `getReport`에서 세션이 존재하지 않거나 소유권 불일치 시 모두 `INTERVIEW_SESSION_FORBIDDEN(403)` 반환 (IDOR 방어).
 - [ ] 피드백이 `question_order ASC` 순으로 정렬되어 반환된다.
 
 ### 이력 조회

@@ -310,7 +310,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
         "originalName": "이력서_홍길동.pdf",
         "company": null,
         "job": null,
-        "totalScore": 74,
+        "scoreTotal": 74,
         "createdAt": "2026-05-29T14:53:44Z"
       },
       {
@@ -320,7 +320,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
         "originalName": null,
         "company": "카카오",
         "job": "백엔드 개발자",
-        "totalScore": null,
+        "scoreTotal": null,
         "createdAt": "2026-05-28T10:20:00Z"
       }
     ],
@@ -341,7 +341,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 | `content[].originalName` | `string` \| `null` | 이력서: 파일명, 자기소개서: `null` |
 | `content[].company` | `string` \| `null` | 자기소개서: 지원 회사명, 이력서: `null` |
 | `content[].job` | `string` \| `null` | 자기소개서: 지원 직무명, 이력서: `null` |
-| `content[].totalScore` | `number` \| `null` | 종합 점수, 분석 미완료 시 `null` |
+| `content[].scoreTotal` | `number` \| `null` | 종합 점수, 분석 미완료 시 `null` |
 
 ### Error Cases
 
