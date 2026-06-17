@@ -141,7 +141,7 @@ public class AdminMemberServiceImpl implements AdminMemberService {
 
         List<HrManagerDTO.ResponseList> items = memberQueryRepository.findHrManagers(hrStatus, keyword, range.from(), range.to(), offset, size);
         long total = memberQueryRepository.countHrManagers(hrStatus, keyword, range.from(), range.to());
-        long pendingCount = hrManagerRepository.countByHrStatus(HrStatus.PENDING);
+        long pendingCount = hrManagerRepository.countByHrStatus(HrStatus.PENDING_REVIEW);
 
         PaginationResponse<HrManagerDTO.ResponseList> pagination = PaginationResponse.of(items, page, size, total);
         return new HrManagerDTO.ResponsePage(
@@ -167,7 +167,7 @@ public class AdminMemberServiceImpl implements AdminMemberService {
         HrManager hrManager = hrManagerRepository.findByMemberId(memberId)
             .orElseThrow(() -> new CustomException(AdminMemberErrorCode.HR_MANAGER_NOT_FOUND));
 
-        if (hrManager.getHrStatus() != HrStatus.PENDING) {
+        if (hrManager.getHrStatus() != HrStatus.PENDING_REVIEW) {
             throw new CustomException(AdminMemberErrorCode.ALREADY_PROCESSED);
         }
 
@@ -182,7 +182,7 @@ public class AdminMemberServiceImpl implements AdminMemberService {
         HrManager hrManager = hrManagerRepository.findByMemberId(memberId)
             .orElseThrow(() -> new CustomException(AdminMemberErrorCode.HR_MANAGER_NOT_FOUND));
 
-        if (hrManager.getHrStatus() != HrStatus.PENDING) {
+        if (hrManager.getHrStatus() != HrStatus.PENDING_REVIEW) {
             throw new CustomException(AdminMemberErrorCode.ALREADY_PROCESSED);
         }
 
