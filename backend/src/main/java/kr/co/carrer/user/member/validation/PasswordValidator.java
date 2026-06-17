@@ -15,7 +15,8 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
 
         if (value.length() < MIN_LENGTH || value.length() > MAX_LENGTH) return false;
 
-        boolean hasLetter = value.chars().anyMatch(Character::isLetter);
+        // 영문(ASCII 알파벳)만 인정 — Character.isLetter()는 한글 등 유니코드 문자를 포함하므로 사용 금지
+        boolean hasLetter = value.chars().anyMatch(c -> (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
         boolean hasDigit = value.chars().anyMatch(Character::isDigit);
         // loginId 포함 금지는 DTO 레벨에서 loginId 접근 불가 — service 레이어에서 별도 검증
         boolean hasSpecial = value.chars().anyMatch(c ->

@@ -80,8 +80,8 @@
 - [x] loginId validation: 영문/숫자 6~20자 — `@Pattern(regexp = "^[A-Za-z0-9]{6,20}$")`
 - [x] password validation: 8~64자, 영문/숫자/특수문자, loginId 포함 금지 — `@ValidPassword` (loginId 포함 금지는 service 레이어)
 - [x] email validation 추가 — `@Email`
-- [x] phone normalization 및 `010` 시작 11자리 검증 추가 — `@Pattern(regexp = "^010[0-9]{8}$")`
-- [x] businessNumber normalization 및 10자리 검증 추가 — `@Pattern(regexp = "^[0-9]{10}$")`
+- [x] phone `010` 시작 11자리 순수 숫자 검증 추가 — `@Pattern(regexp = "^010[0-9]{8}$")` (프론트가 정규화된 값 전달 전제; 하이픈 포함 입력 normalize는 미구현 — service 레이어 필요 시 추가)
+- [x] businessNumber 10자리 순수 숫자 검증 추가 — `@Pattern(regexp = "^[0-9]{10}$")` (동일 전제)
 - [x] certificateNumber 필수 검증 추가 — `@NotBlank`
 - [x] companyName, ceoName 필수 검증 추가 — `@NotBlank`
 - [x] postalCode/roadAddress 필수, addressDetail/jibunAddress 선택 검증 추가 — `validateCompanyRegisterForm()` 반영 완료
