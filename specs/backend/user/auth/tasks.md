@@ -35,16 +35,16 @@
 
 ## Phase 2 - Repository 구현
 
-- [ ] `UserMemberRepository.existsByLoginId(String loginId)` 추가
-- [ ] `UserMemberRepository.existsByEmail(String email)` 추가
-- [ ] `UserMemberRepository.existsByPhone(String phone)` 추가
-- [ ] `UserMemberRepository.findByEmailAndRoleType(...)` 또는 동등 조회 추가
-- [ ] `UserMemberRepository.findByPhoneAndRoleType(...)` 또는 동등 조회 추가
-- [ ] `PersonalProfileRepository.save(...)` 또는 동등 저장 흐름 추가
-- [ ] `PersonalProfileRepository.findByMemberId(...)` 추가
-- [ ] 기업회원 담당자/사업자번호 기반 조회 repository method 추가
-- [ ] `CompanyProfileRepository.existsByBusinessNumber(String businessNumber)` 추가
-- [ ] `PasswordResetTokenRepository.findByTokenHash(...)` 구현
+- [x] `UserMemberRepository.existsByLoginId(String loginId)` 추가
+- [x] `UserMemberRepository.existsByEmail(String email)` 추가
+- [x] `UserMemberRepository.existsByPhone(String phone)` 추가
+- [x] `UserMemberRepository.findByEmailAndRoleType(...)` 또는 동등 조회 추가
+- [x] `UserMemberRepository.findByPhoneAndRoleType(...)` 또는 동등 조회 추가
+- [x] `PersonalProfileRepository.save(...)` 또는 동등 저장 흐름 추가 — `JpaRepository.save()` 기본 제공으로 충족
+- [x] `PersonalProfileRepository.findByMemberId(...)` 추가
+- [x] 기업회원 담당자/사업자번호 기반 조회 repository method 추가 — `UserMemberQueryRepository` 신규 추가, `members JOIN company_profiles JOIN hr_managers`, 조건: `managerName + businessNumber + email/phone + role_type = 'COMPANY'`
+- [x] `CompanyProfileRepository.existsByBusinessNumber(String businessNumber)` 추가
+- [x] `PasswordResetTokenRepository.findByTokenHash(...)` 구현 — `existsByTokenHashAndUsedAtIsNull` 함께 추가
 - [x] `MemberVerificationRepository.findByVerificationId(...)` 구현 — 명시적 메서드 추가 (JpaRepository.findById와 동등, service 호출 일관성 목적)
 - [x] `MemberVerificationRepository.findByVerificationToken(...)` 구현
 - [x] `MemberVerificationRepository`에 재발송/rate limit 조회 메서드 구현 — `findTopByTargetAndPurposeOrderByCreatedAtDesc` 추가
@@ -53,8 +53,8 @@
 - [x] `SocialAccountRepository.existsByProviderAndProviderUserId(...)` 구현
 - [x] `SocialAccountRepository.existsByMemberIdAndProvider(...)` 구현
 - [x] 기업회원 아이디 찾기용 `member + company_profile + hr_manager` 조회 query를 분리할지 확정한다. — `UserMemberQueryRepository`로 분리. `members JOIN company_profiles JOIN hr_managers`. 조건: `m.name(managerName)` + `cp.business_number` + `m.email 또는 m.phone` + `m.role_type = 'COMPANY'`. hr_status 필터 미적용 (아이디 찾기는 로그인 자격 검증 아님, spec FR-011).
-- [ ] employment certificate 임시 fileId 검증 port 또는 service 구현
-- [ ] 한 요청 안에서 중복 DB 조회가 발생하지 않도록 조회 흐름 점검
+- [ ] employment certificate 임시 fileId 검증 port 또는 service 구현 — Phase 4 Service 구현 시 처리
+- [ ] 한 요청 안에서 중복 DB 조회가 발생하지 않도록 조회 흐름 점검 — Phase 4 Service 구현 시 처리
 
 ---
 

@@ -62,7 +62,9 @@ backend/src/main/java/kr/co/carrer/user/member/
 │   ├── HrManagerRepository.java
 │   ├── SocialAccountRepository.java
 │   ├── MemberVerificationRepository.java
-│   └── PasswordResetTokenRepository.java
+│   ├── PasswordResetTokenRepository.java
+│   ├── UserMemberStatusQueryRepository.java
+│   └── UserMemberQueryRepository.java
 ├── service/
 │   ├── UserLoginService.java
 │   ├── UserRegisterService.java
@@ -127,6 +129,11 @@ backend/src/main/java/kr/co/carrer/user/member/
 | `company_profiles.address` 파생 | INSERT 시 `address = roadAddress` 값으로 채움 | DB NOT NULL 제약 충족, road_address와 의미가 같아 별도 입력 불필요 |
 | 엔티티 생성 패턴 | `@NoArgsConstructor(PROTECTED)` + 정적 팩토리 + `Objects.requireNonNull(memberId)` | setter 없이 필수 필드를 컴파일 타임에 강제, null은 DB flush 전에 즉시 실패 |
 | Swagger DTO 동기화 | enum 값 변경 시 DTO `@Schema(allowableValues)` 함께 갱신 | enum 변경 후 DTO allowableValues 누락 시 API 문서와 실제 동작이 불일치 |
+| `UserMemberQueryRepository` 분리 | 기업회원 아이디 찾기용 복합 조회를 별도 QueryRepository로 분리 (`JpaRepository` 미상속) | `members JOIN company_profiles JOIN hr_managers` 3-table 조인은 Spring Data JPA 메서드명으로 표현 불가 |
+| 기업회원 아이디 찾기 3중 검증 | `m.name = :managerName` + `cp.business_number = :businessNumber` + `m.email/phone` + `m.role_type = 'COMPANY'` | spec `FindIdRequest` 3요소를 DB 레벨에서 강제. `hr_managers` JOIN으로 유효 HR 담당자만 조회 |
+| 아이디 찾기 hr_status 필터 미적용 | `REMOVED` 포함 전 hr_status 조회 허용 | 아이디 찾기는 로그인 자격 검증이 아닌 신원 확인 단계. spec FR-011(계정 존재 노출 금지) 준수 |
+| `PasswordResetTokenRepository` | `findByTokenHash` + `existsByTokenHashAndUsedAtIsNull` | 1회 사용 보장을 Repository 레벨에서 `usedAt IS NULL` 조건으로 확인 |
+| `MemberVerificationRepository.findByVerificationId` | `JpaRepository.findById(UUID)`와 동등하나 명시적 메서드 추가 | tasks.md 명시 메서드명과 일치시켜 service 레이어 호출 일관성 확보 |
 | 메일 발송 | AWS SES | 실제 이메일 인증/안내 메일 발송 provider 확정 |
 | SMS 발송 | SOLAPI / CoolSMS | 실제 휴대폰 인증번호 발송 provider 확정 |
 | 시크릿 주입 | `.env` 환경변수만 사용 | 코드 하드코딩 및 GitHub 커밋 금지 |
@@ -138,7 +145,7 @@ backend/src/main/java/kr/co/carrer/user/member/
 ## Phases
 
 - [x] Phase 1: Entity / Enum / DB 구조 정리 — PR #520
-- [ ] Phase 2: Repository 구현
+- [x] Phase 2: Repository 구현 — PR #522
 - [ ] Phase 3: DTO / Validation 구현
 - [ ] Phase 4: Service 구현
 - [ ] Phase 5: Controller / API 구현
@@ -194,8 +201,10 @@ backend/src/main/java/kr/co/carrer/user/member/
 - `PersonalProfileRepository`
   - `save`
   - `findByMemberId`
-- 기업 담당자 + 사업자번호 조회
-  - `members.email` 또는 `members.phone`과 `company_profiles.business_number`를 조인하는 QueryRepository 또는 service 조회로 처리한다.
+- 기업 담당자 + 사업자번호 조회 → `UserMemberQueryRepository` (Native Query)
+  - `members JOIN company_profiles JOIN hr_managers` 3-table 조인
+  - 조건: `m.name(managerName)` + `cp.business_number` + `m.email 또는 m.phone` + `m.role_type = 'COMPANY'`
+  - 메서드: `findLoginIdsByManagerNameAndBusinessNumberAndEmail`, `findLoginIdsByManagerNameAndBusinessNumberAndPhone`
 - `PasswordResetTokenRepository`
   - `findByTokenHash`
   - `existsByTokenHashAndUsedAtIsNull`
