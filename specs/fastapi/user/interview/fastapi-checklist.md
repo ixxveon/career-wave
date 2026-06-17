@@ -30,12 +30,12 @@
 
 ## Phase 3 — STT 파이프라인
 
-- [ ] `POST /internal/user/interview/sessions/{sessionId}/trigger/voice-chunk` 라우터에 `X-Internal-Secret` 헤더 검증이 구현되어 있다.
-- [ ] STT 파이프라인이 `asyncio.create_task`로 비동기 실행된다 (라우터가 즉시 200 응답 반환).
-- [ ] `voiceQualityRatio` 산정 로직이 구현되어 있다 (Whisper `no_speech_prob` 기반).
+- [x] `POST /internal/user/interview/sessions/{sessionId}/trigger/voice-chunk` 라우터에 `X-Internal-Secret` 헤더 검증이 구현되어 있다.
+- [x] STT 파이프라인이 `asyncio.create_task`로 비동기 실행된다 (라우터가 즉시 200 응답 반환).
+- [x] `voiceQualityRatio` 산정 로직이 구현되어 있다 (Whisper `no_speech_prob` 기반).
 - [ ] `voiceQualityRatio < 50.00`인 답변의 `deliveryScore` / `fluencyScore`가 Spring 콜백 페이로드에서 `null`로 포함된다.
 - [ ] `voiceQualityRatio`가 `null`인 답변(텍스트 면접)의 `deliveryScore` / `fluencyScore`가 `null`로 포함된다.
-- [ ] STT 변환 실패 시 `INTERVIEW_STT_FAILED` errorCode WebSocket 메시지가 클라이언트에 전송된다.
+- [x] STT 변환 실패 시 `INTERVIEW_STT_FAILED` errorCode WebSocket 메시지가 클라이언트에 전송된다.
 
 ---
 
