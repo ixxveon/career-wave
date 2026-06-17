@@ -152,7 +152,7 @@ public class UserLoginServiceImpl implements UserLoginService {
         }
         if (member.getRoleType() == RoleType.COMPANY) {
             String rawHrStatus = statusQueryRepository.findCompanyHrStatus(member.getMemberId());
-            CompanyApprovalStatus status = statusQueryRepository.mapCompanyApprovalStatus(rawHrStatus);
+            CompanyApprovalStatus status = UserMemberStatusQueryRepository.mapCompanyApprovalStatus(rawHrStatus);
             if ("REMOVED".equals(rawHrStatus)) {
                 throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_REJECTED);
             }
@@ -171,7 +171,7 @@ public class UserLoginServiceImpl implements UserLoginService {
         if (member.getRoleType() != RoleType.COMPANY) {
             return CompanyApprovalStatus.NONE;
         }
-        return statusQueryRepository.mapCompanyApprovalStatus(statusQueryRepository.findCompanyHrStatus(member.getMemberId()));
+        return UserMemberStatusQueryRepository.mapCompanyApprovalStatus(statusQueryRepository.findCompanyHrStatus(member.getMemberId()));
     }
 
     @Transactional

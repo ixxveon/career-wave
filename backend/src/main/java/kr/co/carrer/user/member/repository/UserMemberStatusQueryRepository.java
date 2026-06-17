@@ -41,7 +41,7 @@ public class UserMemberStatusQueryRepository {
         return mapCompanyApprovalStatus(findCompanyHrStatus(memberId));
     }
 
-    public CompanyApprovalStatus mapCompanyApprovalStatus(String hrStatus) {
+    public static CompanyApprovalStatus mapCompanyApprovalStatus(String hrStatus) {
         if (hrStatus == null) return CompanyApprovalStatus.NONE;
         return switch (hrStatus) {
             case "PENDING_REVIEW" -> CompanyApprovalStatus.PENDING_REVIEW;
