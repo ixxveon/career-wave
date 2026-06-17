@@ -13,7 +13,7 @@
 > tasks.md의 Phase에 맞춰 항목을 채운다.
 
 - [x] `ai_ops_settings` singleton 구조(`ai_ops_setting_id = 1`)를 전제로 한 조회 방식이 반영되어 있다.
-- [x] `ai_models` 조회, `ai_ops_settings` 조회/수정, `rag_documents` 메타데이터 조회/생성/삭제, Audit Log 기록 연동에 필요한 Repository가 구현되어 있다.
+- [x] `ai_models` 조회, `ai_ops_settings` 조회/수정, `rag_documents` 메타데이터 조회/생성/삭제에 필요한 Repository가 구현되어 있다.
 
 ## Phase 3 — Service
 

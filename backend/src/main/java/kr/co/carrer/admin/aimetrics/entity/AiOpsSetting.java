@@ -4,8 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -25,8 +23,9 @@ import java.time.ZonedDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AiOpsSetting {
 
+    private static final Long SINGLETON_ID = 1L;
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ai_ops_setting_id")
     private Long aiOpsSettingId;
 
@@ -54,11 +53,13 @@ public class AiOpsSetting {
 
     @PrePersist
     protected void onCreate() {
+        enforceSingletonId();
         this.updatedAt = ZonedDateTime.now(AiMetricsTimeZone.SERVICE_ZONE_ID);
     }
 
     @PreUpdate
     protected void onUpdate() {
+        enforceSingletonId();
         this.updatedAt = ZonedDateTime.now(AiMetricsTimeZone.SERVICE_ZONE_ID);
     }
 
@@ -75,5 +76,16 @@ public class AiOpsSetting {
 
     public void updateRateLimit(boolean rateLimitEnabled) {
         this.rateLimitEnabled = rateLimitEnabled;
+    }
+
+    private void enforceSingletonId() {
+        if (aiOpsSettingId == null) {
+            aiOpsSettingId = SINGLETON_ID;
+            return;
+        }
+
+        if (!SINGLETON_ID.equals(aiOpsSettingId)) {
+            throw new IllegalStateException("AiOpsSetting ID must always be 1.");
+        }
     }
 }
