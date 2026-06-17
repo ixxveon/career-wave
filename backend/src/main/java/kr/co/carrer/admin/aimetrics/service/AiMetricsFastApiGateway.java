@@ -83,7 +83,9 @@ public interface AiMetricsFastApiGateway {
     }
 
     record RagIndexDeleteRequest(
-            Long ragDocumentId
+            Long ragDocumentId,
+            UUID fileUuid,
+            String filePath
     ) {
     }
 

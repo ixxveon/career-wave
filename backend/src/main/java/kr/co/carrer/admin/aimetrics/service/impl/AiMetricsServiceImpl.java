@@ -240,9 +240,14 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     }
 
     private void deleteRagIndex(RagDocument document) {
-        getFastApiGateway().deleteRagIndex(new AiMetricsFastApiGateway.RagIndexDeleteRequest(
-                document.getRagDocumentId()
+        AiMetricsFastApiGateway.RagIndexDeleteResponse response = getFastApiGateway().deleteRagIndex(new AiMetricsFastApiGateway.RagIndexDeleteRequest(
+                document.getRagDocumentId(),
+                document.getFileUuid(),
+                document.getFilePath()
         ));
+        if (!response.deleted()) {
+            throw new CustomException(AiMetricsErrorCode.AI_MODEL_EXECUTION_FAILED);
+        }
     }
 
     private void runAfterCommit(Runnable task) {
