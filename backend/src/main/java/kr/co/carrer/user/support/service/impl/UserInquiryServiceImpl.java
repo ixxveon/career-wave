@@ -44,8 +44,8 @@ public class UserInquiryServiceImpl implements UserInquiryService {
             throw new CustomException(UserSupportErrorCode.INVALID_INQUIRY_CONTENT);
         }
         SupportInquiry inquiry = SupportInquiry.create(memberId, dto.category(), dto.title(), dto.content());
-        inquiryRepository.save(inquiry);
-        return new SupportDTO.ResponseCreateInquiry(inquiry.getInquiryId(), inquiry.getInquiryStatus());
+        SupportInquiry saved = inquiryRepository.save(inquiry);
+        return new SupportDTO.ResponseCreateInquiry(saved.getInquiryId(), saved.getInquiryStatus());
     }
 
     private String truncate(String content, int maxLength) {

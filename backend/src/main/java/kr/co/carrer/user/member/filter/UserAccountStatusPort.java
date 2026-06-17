@@ -41,6 +41,7 @@ public class UserAccountStatusPort implements AccountStatusPort {
         switch (member.getMemberStatus()) {
             case SUSPENDED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED);
             case BANNED    -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
+            case BLACKLISTED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BLACKLISTED);
             case WITHDRAWN -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
             case LOCKED -> {
                 if (member.getLockedUntil() != null && Instant.now().isBefore(member.getLockedUntil())) {

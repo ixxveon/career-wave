@@ -24,6 +24,7 @@ public interface AuditLogService {
     record ResponseSummary(
         long totalCount,
         long adminActivityCount,
+        long adminManagementCount,
         long aiMetricsSystemCount,
         long scrapingSystemCount,
         long infoCount,
