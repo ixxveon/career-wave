@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -48,6 +49,7 @@ public class MemberTermsAgreement {
     }
 
     public static MemberTermsAgreement forUser(UUID memberId, boolean service, boolean privacy, boolean marketing) {
+        Objects.requireNonNull(memberId, "memberId must not be null");
         MemberTermsAgreement a = new MemberTermsAgreement();
         a.memberId = memberId;
         a.serviceAgreed = service;
@@ -60,6 +62,7 @@ public class MemberTermsAgreement {
 
     public static MemberTermsAgreement forCompany(UUID memberId, boolean service, boolean privacy,
                                                    boolean marketing, boolean companyVerification, boolean sms) {
+        Objects.requireNonNull(memberId, "memberId must not be null");
         MemberTermsAgreement a = new MemberTermsAgreement();
         a.memberId = memberId;
         a.serviceAgreed = service;

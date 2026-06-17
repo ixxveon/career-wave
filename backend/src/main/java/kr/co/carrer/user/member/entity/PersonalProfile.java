@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity(name = "UserPersonalProfile")
@@ -51,6 +52,7 @@ public class PersonalProfile {
     }
 
     public static PersonalProfile emptyFor(UUID memberId) {
+        Objects.requireNonNull(memberId, "memberId must not be null");
         PersonalProfile profile = new PersonalProfile();
         profile.memberId = memberId;
         return profile;
