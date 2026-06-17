@@ -26,7 +26,6 @@ _ERROR_MESSAGES = {
 
 _FAILED_PAYLOAD = {
     "status": "FAILED",
-    "progress": 0,
     "scoreJobFitness": None,
     "scoreTechStack": None,
     "scoreQuantified": None,
@@ -41,7 +40,7 @@ async def analyze_document(request: AnalyzeDocumentRequest) -> None:
     document_id = str(request.document_id)
     logger.info(f"[{document_id}] Analysis started — fileType={request.file_type}")
 
-    await _send_webhook_safe(document_id, {"status": "PENDING", "progress": 0})
+    await _send_webhook_safe(document_id, {"status": "PENDING"})
 
     try:
         if request.file_type == "RESUME":
@@ -87,7 +86,7 @@ async def _analyze_resume(document_id: str, request: AnalyzeDocumentRequest) -> 
         request.original_name,
     )
 
-    await _send_webhook_safe(document_id, {"status": "ANALYZING", "progress": 30})
+    await _send_webhook_safe(document_id, {"status": "ANALYZING"})
 
     result = await _call_openai(
         document_id=document_id,
@@ -96,13 +95,13 @@ async def _analyze_resume(document_id: str, request: AnalyzeDocumentRequest) -> 
         model="deep",
     )
 
-    await _send_webhook_safe(document_id, {"status": "ANALYZING", "progress": 80})
+    await _send_webhook_safe(document_id, {"status": "ANALYZING"})
 
     await _send_completed(document_id, result)
 
 
 async def _analyze_cover_letter(document_id: str, request: AnalyzeDocumentRequest) -> None:
-    await _send_webhook_safe(document_id, {"status": "ANALYZING", "progress": 30})
+    await _send_webhook_safe(document_id, {"status": "ANALYZING"})
 
     content_dicts = [
         {"order": item.order, "question": item.question, "answer": item.answer}
@@ -120,7 +119,7 @@ async def _analyze_cover_letter(document_id: str, request: AnalyzeDocumentReques
         model="deep",
     )
 
-    await _send_webhook_safe(document_id, {"status": "ANALYZING", "progress": 80})
+    await _send_webhook_safe(document_id, {"status": "ANALYZING"})
 
     await _send_completed(document_id, result)
 
@@ -163,7 +162,6 @@ async def _send_completed(document_id: str, result: dict) -> None:
         document_id,
         {
             "status": "COMPLETED",
-            "progress": 100,
             "scoreJobFitness": result["scoreJobFitness"],
             "scoreTechStack": result["scoreTechStack"],
             "scoreQuantified": result["scoreQuantified"],
