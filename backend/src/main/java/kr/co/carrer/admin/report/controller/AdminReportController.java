@@ -15,11 +15,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
+@Validated
 @PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('CS'))")
 public class AdminReportController implements AdminReportControllerDocs {
 
@@ -39,8 +41,6 @@ public class AdminReportController implements AdminReportControllerDocs {
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
-        if (page < 1) throw new CustomException(kr.co.carrer.global.exception.ErrorCode.BAD_REQUEST);
-        if (size < 1 || size > 100) throw new CustomException(kr.co.carrer.global.exception.ErrorCode.BAD_REQUEST);
 
         ReportStatus reportStatus   = parseEnum(ReportStatus.class, status);
         TargetType   targetTypeEnum = parseEnum(TargetType.class, targetType);

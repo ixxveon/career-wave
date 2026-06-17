@@ -3,6 +3,8 @@ package kr.co.carrer.admin.report.docs;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import kr.co.carrer.admin.report.dto.ReportDetailDTO;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.response.ApiResponse;
@@ -24,8 +26,8 @@ public interface AdminReportControllerDocs {
         @Parameter(description = "신고 대상 유형 (BOARD / COMMENT / MEMBER)") @RequestParam(required = false) String targetType,
         @Parameter(description = "신고 사유 (SPAM / ABUSE / AD / INAPPROPRIATE / OTHER)") @RequestParam(required = false) String reason,
         @Parameter(description = "신고ID·신고자명·피신고자명 통합 검색") @RequestParam(required = false) String keyword,
-        @Parameter(description = "페이지 번호 (1-based)") @RequestParam(defaultValue = "1") int page,
-        @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size
+        @Parameter(description = "페이지 번호 (1-based)") @RequestParam(defaultValue = "1") @Min(1) int page,
+        @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     );
 
     @Operation(summary = "신고 상세 조회")
