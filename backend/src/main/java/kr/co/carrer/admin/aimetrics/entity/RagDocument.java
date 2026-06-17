@@ -1,4 +1,4 @@
-package kr.co.carrer.admin.aiMetrics.entity;
+package kr.co.carrer.admin.aimetrics.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,12 +10,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import kr.co.carrer.admin.aiMetrics.type.RagDocumentStatusType;
+import kr.co.carrer.admin.aimetrics.support.AiMetricsTimeZone;
+import kr.co.carrer.admin.aimetrics.type.RagDocumentStatusType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -24,8 +24,6 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RagDocument {
-
-    private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,13 +66,13 @@ public class RagDocument {
 
     @PrePersist
     protected void onCreate() {
-        ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
+        ZonedDateTime now = ZonedDateTime.now(AiMetricsTimeZone.SERVICE_ZONE_ID);
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = ZonedDateTime.now(SERVICE_ZONE_ID);
+        this.updatedAt = ZonedDateTime.now(AiMetricsTimeZone.SERVICE_ZONE_ID);
     }
 }

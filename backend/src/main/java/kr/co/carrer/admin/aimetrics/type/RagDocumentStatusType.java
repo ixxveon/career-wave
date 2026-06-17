@@ -1,4 +1,4 @@
-package kr.co.carrer.admin.aiMetrics.type;
+package kr.co.carrer.admin.aimetrics.type;
 
 public enum RagDocumentStatusType {
     UPLOADED,
