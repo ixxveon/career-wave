@@ -10,7 +10,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface RagDocumentRepository extends JpaRepository<RagDocument, Long> {
 
-    Page<RagDocument> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    Page<RagDocument> findAll(Pageable pageable);
 
-    Page<RagDocument> findByStatusOrderByCreatedAtDesc(RagDocumentStatusType status, Pageable pageable);
+    Page<RagDocument> findByStatus(RagDocumentStatusType status, Pageable pageable);
+
+    boolean existsByStatus(RagDocumentStatusType status);
 }
