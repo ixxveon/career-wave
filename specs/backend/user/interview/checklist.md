@@ -115,12 +115,13 @@ Phase 10 "먼저 작성할 3가지 ★"를 구현 코드보다 먼저 작성한�
 
 ## Phase 6-1 — 세션 타임아웃 스케줄러
 
-- [ ] `InterviewSessionScheduler`가 1시간 주기로 실행된다.
-- [ ] 쿼리 조건에 `started_at < NOW() - 24h` AND `IN_PROGRESS` AND `updated_at < NOW() - 5min` 세 조건이 모두 포함된다.
-- [ ] `updated_at < NOW() - 5min` 유예 조건이 없으면 현재 답변 중인 세션이 강제 종료될 수 있다 — 반드시 포함.
-- [ ] 타임아웃 처리된 세션이 `FAILED`로 전이된다.
-- [ ] 처리 건수 및 세션 ID가 `log.info`로 기록된다.
-- [ ] 스케줄러 내 `ZonedDateTime.now()`가 `ZoneId.of("Asia/Seoul")`로 고정되어 있다 (JVM 기본 timezone 사용 금지).
+- [x] `InterviewSessionScheduler`가 1시간 주기로 실행된다.
+- [x] 쿼리 조건에 `started_at < NOW() - 24h` AND `IN_PROGRESS` AND `updated_at < NOW() - 5min` 세 조건이 모두 포함된다.
+- [x] `updated_at < NOW() - 5min` 유예 조건이 없으면 현재 답변 중인 세션이 강제 종료될 수 있다 — 반드시 포함.
+- [x] 타임아웃 처리된 세션이 `FAILED`로 전이된다.
+- [x] 처리 건수가 `log.info`로 기록된다 (0건인 경우 로그 생략, 1건 이상인 경우에만 기록).
+- [x] 스케줄러 내 `ZonedDateTime.now()`가 `ZoneId.of("Asia/Seoul")`로 고정되어 있다 (JVM 기본 timezone 사용 금지).
+- [x] `findTimedOutSessions` 호출 시 `SessionStatus.IN_PROGRESS`를 파라미터로 명시 전달한다.
 
 ## Phase 6-2 — FastAPI 콜백 수신
 
@@ -140,7 +141,9 @@ Phase 10 "먼저 작성할 3가지 ★"를 구현 코드보다 먼저 작성한�
 
 ## Phase 7-1 — 응답 포맷 최종 점검
 
-- [ ] `getReport` 409 응답에 `data.status = "ANALYZING"`, `data.estimatedWaitSeconds` 필드가 포함되어 있다.
+> ⚠️ **미구현**: `getReport` 409 응답 및 WebSocket 메시지 스펙은 FE 연동 전 구현 예정 (Phase 7-1).
+
+- [ ] `getReport` 409 응답에 `data.status = "ANALYZING"`, `data.estimatedWaitSeconds` 필드가 포함되어 있다. (`code: "INTERVIEW_REPORT_NOT_READY"`, `data: { status: "ANALYZING", estimatedWaitSeconds: 15 }` 포함, `ApiResponse.fail(statusCode, message, code, data)` 오버로드 사용)
 - [ ] WebSocket `REPORT_READY` 메시지에 `data.reportUrl` 필드가 포함되어 있다.
 - [ ] WebSocket `ERROR` 메시지에 `errorCode` 필드가 포함되어 있다 (예: `INTERVIEW_AI_PIPELINE_ERROR`).
 - [ ] 모든 WebSocket 메시지에 `data` / `errorCode` 필드가 일관되게 포함되어 있다 (없으면 `null`).
@@ -150,10 +153,11 @@ Phase 10 "먼저 작성할 3가지 ★"를 구현 코드보다 먼저 작성한�
 
 ## Phase 8 — Swagger & 계약 일치
 
-- [ ] Swagger Annotation이 Controller가 아닌 `docs/` 패키지 인터페이스로 분리되어 있다.
+- [x] Swagger Annotation이 Controller가 아닌 `docs/` 패키지 인터페이스로 분리되어 있다.
+- [x] Swagger 태그명이 `"User Interview Session"` / `"User Interview Report"` / `"User Interview History"` 형식으로 선언되어 있다 (`"Interview Session"` 등 구버전 태그명 사용 금지).
 - [ ] 응답 필드명이 FE `api-schema.md` 계약과 일치한다 (`sessionId`, `sessionStatus`, `sessionType` 등 camelCase).
 - [ ] 날짜 포맷이 ISO 8601 형식으로 반환된다 (`ZonedDateTime` → JSON 직렬화 확인).
-- [ ] 이력 목록의 `page` / `size` / `totalElements` / `totalPages` 필드가 응답에 포함된다.
+- [ ] 이력 목록의 `page` / `size` / `totalItems` / `totalPages` 필드가 응답에 포함된다 (`totalElements` 아닌 `totalItems` 사용).
 - [ ] `POST /end` API의 멱등성 검증 — 동일 `sessionId`로 2회 이상 호출해도 리포트 생성 트리거가 1회만 동작하는지 확인.
 - [ ] `IN_PROGRESS` 세션 중복 방지 — 동일 회원이 `startSession`을 2번 호출했을 때 `409 INTERVIEW_SESSION_DUPLICATE`가 반환되는지 확인.
 

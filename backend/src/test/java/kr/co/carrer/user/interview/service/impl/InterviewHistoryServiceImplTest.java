@@ -2,10 +2,8 @@ package kr.co.carrer.user.interview.service.impl;
 
 import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
-import kr.co.carrer.user.interview.entity.CareerHistory;
-import kr.co.carrer.user.interview.entity.InterviewSession;
 import kr.co.carrer.user.interview.repository.CareerHistoryRepository;
-import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
+import kr.co.carrer.user.interview.repository.projection.CareerHistoryWithSession;
 import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
 import org.junit.jupiter.api.DisplayName;
@@ -18,12 +16,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -34,7 +32,6 @@ class InterviewHistoryServiceImplTest {
     private InterviewHistoryServiceImpl interviewHistoryService;
 
     @Mock private CareerHistoryRepository careerHistoryRepository;
-    @Mock private InterviewSessionRepository sessionRepository;
 
     @Nested
     @DisplayName("면접 이력 조회 - getHistory()")
@@ -46,18 +43,19 @@ class InterviewHistoryServiceImplTest {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
 
-            CareerHistory history = CareerHistory.create(memberId, sessionId, null, 85, null);
-            InterviewSession session = mock(InterviewSession.class);
-            given(session.getSessionId()).willReturn(sessionId);
-            given(session.getSessionType()).willReturn(SessionType.TEXT);
-            given(session.getInterviewType()).willReturn(null);
-            given(session.getTargetCompany()).willReturn(null);
-            given(session.getSessionStatus()).willReturn(SessionStatus.COMPLETED);
+            CareerHistoryWithSession row = mock(CareerHistoryWithSession.class);
+            given(row.getCareerHistoryId()).willReturn(1L);
+            given(row.getSessionId()).willReturn(sessionId);
+            given(row.getSessionType()).willReturn(SessionType.TEXT);
+            given(row.getInterviewType()).willReturn(null);
+            given(row.getTargetCompany()).willReturn(null);
+            given(row.getSessionStatus()).willReturn(SessionStatus.COMPLETED);
+            given(row.getTotalScore()).willReturn(85);
+            given(row.getPdfUrl()).willReturn(null);
+            given(row.getCreatedAt()).willReturn(ZonedDateTime.now());
 
-            given(careerHistoryRepository.findByMemberIdOrderByCreatedAtDesc(any(), any()))
-                    .willReturn(new PageImpl<>(List.of(history), PageRequest.of(0, 10), 1));
-            given(sessionRepository.findAllBySessionIdIn(anyList()))
-                    .willReturn(List.of(session));
+            given(careerHistoryRepository.findHistoryByMemberId(any(), any()))
+                    .willReturn(new PageImpl<>(List.of(row), PageRequest.of(0, 10), 1));
 
             PaginationResponse<InterviewDTO.HistoryItem> result =
                     interviewHistoryService.getHistory(memberId, 0, 10);
@@ -73,10 +71,8 @@ class InterviewHistoryServiceImplTest {
         void getHistory_noHistory_returnsEmpty() {
             UUID memberId = UUID.randomUUID();
 
-            given(careerHistoryRepository.findByMemberIdOrderByCreatedAtDesc(any(), any()))
+            given(careerHistoryRepository.findHistoryByMemberId(any(), any()))
                     .willReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
-            given(sessionRepository.findAllBySessionIdIn(List.of()))
-                    .willReturn(List.of());
 
             PaginationResponse<InterviewDTO.HistoryItem> result =
                     interviewHistoryService.getHistory(memberId, 0, 10);
@@ -91,12 +87,17 @@ class InterviewHistoryServiceImplTest {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
 
-            CareerHistory history = CareerHistory.create(memberId, sessionId, null, null, null);
+            CareerHistoryWithSession row = mock(CareerHistoryWithSession.class);
+            given(row.getCareerHistoryId()).willReturn(1L);
+            given(row.getSessionId()).willReturn(sessionId);
+            given(row.getSessionType()).willReturn(null);
+            given(row.getSessionStatus()).willReturn(null);
+            given(row.getTotalScore()).willReturn(null);
+            given(row.getPdfUrl()).willReturn(null);
+            given(row.getCreatedAt()).willReturn(ZonedDateTime.now());
 
-            given(careerHistoryRepository.findByMemberIdOrderByCreatedAtDesc(any(), any()))
-                    .willReturn(new PageImpl<>(List.of(history), PageRequest.of(0, 10), 1));
-            given(sessionRepository.findAllBySessionIdIn(List.of(sessionId)))
-                    .willReturn(List.of());
+            given(careerHistoryRepository.findHistoryByMemberId(any(), any()))
+                    .willReturn(new PageImpl<>(List.of(row), PageRequest.of(0, 10), 1));
 
             PaginationResponse<InterviewDTO.HistoryItem> result =
                     interviewHistoryService.getHistory(memberId, 0, 10);

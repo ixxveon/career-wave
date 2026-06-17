@@ -90,7 +90,7 @@
 - [x] `InterviewSessionRepository.java`
   - [x] `findBySessionId(UUID sessionId)` — 단순 조회
   - [x] `findBySessionIdAndMemberId(UUID sessionId, UUID memberId)` — 소유권 검증용
-  - [x] `findInProgressByMemberId(UUID memberId)` — `@Lock(PESSIMISTIC_WRITE)` 적용, 중복 세션 체크용
+  - [x] `findInProgressByMemberId(UUID memberId, SessionStatus status)` — `@Lock(PESSIMISTIC_WRITE)` 적용, 중복 세션 체크용 (SessionStatus 파라미터로 IN_PROGRESS 전달)
 
 - [x] `InterviewMessageRepository.java`
   - [x] `findBySessionIdOrderByCreatedAtAsc(UUID sessionId)` — 세션 메시지 전체 조회
@@ -167,7 +167,7 @@
 - [x] `InterviewSessionController.java`
   - [x] `POST /api/v1/user/interview/sessions` — `@RequestBody @Valid RequestStartSession`
   - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/text` — `@PathVariable UUID`, `@RequestBody @Valid RequestSubmitTextAnswer`
-  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice` — `@PathVariable UUID`, `@RequestParam MultipartFile audioChunk` + 파라미터, `consumes = MULTIPART_FORM_DATA`, `questionOrder @Min(1)` / `chunkIndex @Min(0)` 하한값 검증 (`@Validated` 적용)
+  - [x] `POST /api/v1/user/interview/sessions/{sessionId}/answer/voice` — `@PathVariable UUID`, `@RequestParam MultipartFile audioChunk` + 파라미터, `consumes = MULTIPART_FORM_DATA`, `questionOrder @Min(1)` / `chunkIndex @Min(0)` 하한값 검증 (`@Min` 어노테이션은 `InterviewSessionControllerDocs` 인터페이스로 이동, Controller에서 `@Validated` 제거됨)
   - [x] `POST /api/v1/user/interview/sessions/{sessionId}/end` — `@PathVariable UUID`
   - [x] 모든 메서드에 `@AuthenticationPrincipal AuthPrincipal` 적용
   - [x] Controller에서 `try-catch` 사용 금지
@@ -177,11 +177,12 @@
 
 - [x] `InterviewHistoryController.java`
   - [x] `GET /api/v1/user/interview/history` — `@RequestParam(defaultValue="0") int page`, `@RequestParam(defaultValue="10") int size`
+  - [x] `@Validated` 적용 — Docs 인터페이스 `@Min(0)` / `@Min(1)` 제약 검증 활성화
 
 - [x] Swagger Docs 인터페이스 분리
-  - [x] `InterviewSessionControllerDocs.java`
-  - [x] `InterviewReportControllerDocs.java`
-  - [x] `InterviewHistoryControllerDocs.java`
+  - [x] `InterviewSessionControllerDocs.java` — `@Tag(name = "User Interview Session")`
+  - [x] `InterviewReportControllerDocs.java` — `@Tag(name = "User Interview Report")`
+  - [x] `InterviewHistoryControllerDocs.java` — `@Tag(name = "User Interview History")`, `@Min(0) page` / `@Min(1) size` 검증 추가
 
 ---
 
@@ -209,8 +210,9 @@
 - [x] `InterviewSessionScheduler.java` 구현
   - [x] `@Scheduled(cron = "0 0 * * * *")` — 1시간 주기 실행
   - [x] 조회 조건: `started_at < NOW() - 24h` AND `session_status = 'IN_PROGRESS'` AND `updated_at < NOW() - 5min`
+  - [x] `findTimedOutSessions(cutoff, recentCutoff, SessionStatus.IN_PROGRESS)` — `SessionStatus` 파라미터 명시 전달
   - [x] 해당 세션 일괄 `FAILED` 전이
-  - [x] 처리 건수 `log.info` 기록
+  - [x] 처리 건수 `log.info` 기록 (timedOut 비어 있으면 로그 생략)
   - [x] `ZonedDateTime.now(ZoneId.of("Asia/Seoul"))` — KST 고정 (JVM 기본 timezone 사용 금지)
 
 ## Phase 6-2 — FastAPI 콜백 수신 Controller

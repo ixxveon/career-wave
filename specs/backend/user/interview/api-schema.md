@@ -42,7 +42,9 @@ Authorization: Bearer {accessToken}
 {
   "success": false,
   "statusCode": 403,
-  "message": "해당 면접 세션에 접근할 권한이 없습니다."
+  "message": "해당 면접 세션에 접근할 권한이 없습니다.",
+  "code": "INTERVIEW_SESSION_FORBIDDEN",
+  "data": null
 }
 ```
 
@@ -351,6 +353,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
   "success": false,
   "statusCode": 409,
   "message": "리포트가 아직 생성 중입니다.",
+  "code": "INTERVIEW_REPORT_NOT_READY",
   "data": {
     "status": "ANALYZING",
     "estimatedWaitSeconds": 15
@@ -360,6 +363,8 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 > `data.estimatedWaitSeconds`는 고정값(예: 15)으로 내려보내도 무방하다. FE는 이 값을 폴링 간격 힌트로 사용할 수 있다.  
 > 응답 헤더에 `Retry-After: 15`를 함께 포함하여 HTTP 표준 방식으로도 대기 시간을 전달한다.
+
+> ⚠️ **미구현 (Phase 7-1)**: 현재 구현은 `data.status` / `data.estimatedWaitSeconds` 없이 `CustomException` 기본 포맷만 반환한다. FE 연동 전 구현 필요.
 
 ---
 
@@ -373,8 +378,8 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 | Parameter | Type | 필수 | 기본값 | 설명 |
 |-----------|------|------|--------|------|
-| `page` | `Integer` | ❌ | `0` | 페이지 번호 (0-based) |
-| `size` | `Integer` | ❌ | `10` | 페이지당 항목 수 |
+| `page` | `Integer` | ❌ | `0` | 페이지 번호 (0-based), `@Min(0)` |
+| `size` | `Integer` | ❌ | `10` | 페이지당 항목 수, `@Min(1) @Max(100)` |
 
 ### Response `200 OK`
 ```json
@@ -383,7 +388,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
   "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
-    "content": [
+    "items": [
       {
         "careerHistoryId": 1,
         "sessionId": "uuid-v4",
@@ -409,7 +414,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
     ],
     "page": 0,
     "size": 10,
-    "totalElements": 15,
+    "totalItems": 15,
     "totalPages": 2
   }
 }
@@ -417,10 +422,10 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 | Field | Type | 설명 |
 |-------|------|------|
-| `data.content[].interviewType` | `String` \| `null` | 미입력 시 `null` |
-| `data.content[].targetCompany` | `String` \| `null` | 미입력 시 `null` |
-| `data.content[].totalScore` | `Integer` \| `null` | 리포트 미완료 또는 `FAILED` 시 `null` |
-| `data.content[].pdfUrl` | `String` \| `null` | 종합 진단 PDF URL (S3), 미생성 시 `null` |
+| `data.items[].interviewType` | `String` \| `null` | 미입력 시 `null` |
+| `data.items[].targetCompany` | `String` \| `null` | 미입력 시 `null` |
+| `data.items[].totalScore` | `Integer` \| `null` | 리포트 미완료 또는 `FAILED` 시 `null` |
+| `data.items[].pdfUrl` | `String` \| `null` | 종합 진단 PDF URL (S3), 미생성 시 `null` |
 
 ### Error Cases
 
@@ -477,6 +482,9 @@ SUBSCRIBE /topic/interview/{sessionId}
 ```
 
 ### Server → Client 메시지 형식
+
+> ⚠️ **미구현 (Phase 7-1)**: 현재 WebSocket 메시지는 `{"type": "...", "data": "..."}` 단순 구조로 전송된다.  
+> 아래 스펙(`content` / `questionOrder` / `subType` / `errorCode` 필드)은 FE 연동 전 구현 필요.
 
 ```json
 {
