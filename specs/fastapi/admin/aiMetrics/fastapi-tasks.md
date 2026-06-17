@@ -16,16 +16,16 @@
 
 ## Phase 2 - DB Repository
 
-- [ ] `ai_model_repository.py` 조회 Repository를 작성한다.
-- [ ] `ai_ops_setting_repository.py` 조회 Repository를 작성한다.
-- [ ] `ai_usage_log_repository.py` 로그 적재 Repository를 작성한다.
-- [ ] `ai_usage_log_repository.py` 사용량 요약 집계 쿼리를 작성한다.
-- [ ] `ai_usage_log_repository.py` 도메인별 사용량 집계 쿼리를 작성한다.
-- [ ] `ai_usage_log_repository.py` 토큰 추이 집계 쿼리를 작성한다.
-- [ ] `ai_usage_log_repository.py` 고사용 사용자 집계 쿼리를 작성한다.
-- [ ] `ai_usage_log_repository.py` AI 사용 로그 목록 조회 쿼리를 작성한다.
-- [ ] `rag_document_repository.py` RAG 문서 상태 조회 Repository를 작성한다.
-- [ ] `rag_document_repository.py` `status`, `indexing_progress`, `chunk_count`, `updated_at` 갱신 메서드를 작성한다.
+- [x] `ai_model_repository.py` 조회 Repository를 작성한다.
+- [x] `ai_ops_setting_repository.py` 조회 Repository를 작성한다.
+- [x] `ai_usage_log_repository.py` 로그 적재 Repository를 작성한다.
+- [x] `ai_usage_log_repository.py` 사용량 요약 집계 쿼리를 작성한다.
+- [x] `ai_usage_log_repository.py` 도메인별 사용량 집계 쿼리를 작성한다.
+- [x] `ai_usage_log_repository.py` 토큰 추이 집계 쿼리를 작성한다.
+- [x] `ai_usage_log_repository.py` 고사용 사용자 집계 쿼리를 작성한다.
+- [x] `ai_usage_log_repository.py` AI 사용 로그 목록 조회 쿼리를 작성한다.
+- [x] `rag_document_repository.py` RAG 문서 상태 조회 Repository를 작성한다.
+- [x] `rag_document_repository.py` `status`, `indexing_progress`, `chunk_count`, `updated_at` 갱신 메서드를 작성한다.
 
 ## Phase 3 - OpenAI Client
 
