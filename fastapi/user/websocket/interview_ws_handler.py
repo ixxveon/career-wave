@@ -40,6 +40,7 @@ def _make_log(session_id: str) -> _SessionAdapter:
 @dataclass
 class _SessionContext:
     ws: WebSocket
+    member_id: str = ""
     seq: int = 0
     # 재연결 시 미전달 메시지 재전송용 버퍼 (Scale-out 시 Redis 전환 예정)
     msg_buffer: list[dict[str, Any]] = field(default_factory=list)
@@ -105,8 +106,10 @@ async def interview_ws(
     try:
         if not token:
             raise JWTError("token missing")
-        _verify_jwt(token)
+        claims = _verify_jwt(token)
+        member_id: str = claims.get("sub", "")
     except JWTError:
+        await websocket.accept()
         await websocket.close(code=1008)
         slog.warning("WS connection rejected: invalid or missing JWT")
         return
@@ -120,6 +123,7 @@ async def interview_ws(
     prev = _sessions.get(session_id)
     ctx = _SessionContext(
         ws=websocket,
+        member_id=member_id,
         seq=prev.seq if prev else 0,
         msg_buffer=prev.msg_buffer if prev else [],
     )
