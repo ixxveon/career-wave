@@ -185,6 +185,7 @@ ApiResponse.fail(statusCode, message, code, data);        // 에러 코드 + 추
 - 성공/실패 응답 형식을 통일한다.
 - 실패 응답의 `data`는 기본적으로 `null`이며, 검증 오류처럼 상세 정보가 필요한 경우에만 포함한다.
 - 현재 응답 필드는 `success`, `statusCode`, `message`, `data`를 기준으로 한다.
+- 실패 응답에 `code` 필드가 포함된 경우 에러 코드 식별자(`ErrorCode` enum 이름)를 담으며, 클라이언트 분기 처리에 활용한다.
 
 ---
 
