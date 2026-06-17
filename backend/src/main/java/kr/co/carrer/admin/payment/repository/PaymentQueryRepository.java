@@ -154,16 +154,17 @@ public class PaymentQueryRepository {
         ));
     }
 
-    public PaymentDTO.ResponseDetail.AiUsage findAiUsage(UUID memberId) {
+    public PaymentDTO.ResponseDetail.AiUsage findAiUsage(UUID paymentId) {
         String sql = """
-            SELECT feature_type, COUNT(*) AS cnt
-            FROM ai_usage_logs
-            WHERE member_id = ?1
-            GROUP BY feature_type
+            SELECT a.feature_type, COUNT(*) AS cnt
+            FROM ai_usage_logs a
+            JOIN payments p ON p.member_id = a.member_id
+            WHERE p.payment_id = ?1
+            GROUP BY a.feature_type
             """;
 
         Query query = em.createNativeQuery(sql);
-        query.setParameter(1, memberId);
+        query.setParameter(1, paymentId);
 
         @SuppressWarnings("unchecked")
         List<Object[]> rows = query.getResultList();

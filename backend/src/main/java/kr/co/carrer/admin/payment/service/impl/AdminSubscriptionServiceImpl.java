@@ -22,7 +22,7 @@ public class AdminSubscriptionServiceImpl implements AdminSubscriptionService {
     public PaginationResponse<SubscriptionDTO.ResponseList> getSubscriptions(SubscriptionStatus status, int page, int size) {
         int safePage = Math.max(page, 1);
         int safeSize = Math.min(Math.max(size, 1), 100);
-        int offset = (safePage - 1) * safeSize;
+        int offset = (int) Math.min((long) (safePage - 1) * safeSize, Integer.MAX_VALUE);
 
         List<SubscriptionDTO.ResponseList> items = subscriptionQueryRepository.findSubscriptions(status, offset, safeSize);
         long total = subscriptionQueryRepository.countSubscriptions(status);

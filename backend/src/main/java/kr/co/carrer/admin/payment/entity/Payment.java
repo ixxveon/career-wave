@@ -64,4 +64,8 @@ public class Payment {
     public void cancel() {
         this.paymentStatus = PaymentStatus.CANCELED;
     }
+
+    public void refund() {
+        this.paymentStatus = PaymentStatus.REFUNDED;
+    }
 }

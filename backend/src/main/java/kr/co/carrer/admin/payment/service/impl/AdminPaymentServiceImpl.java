@@ -15,7 +15,6 @@ import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -28,6 +27,7 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentQueryRepository paymentQueryRepository;
     private final RefundRepository refundRepository;
+    private final RefundFailureTxService refundFailureTxService;
 
     @Override
     @Transactional(readOnly = true)
@@ -44,7 +44,7 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     public PaginationResponse<PaymentDTO.ResponseList> getPayments(String keyword, PaymentStatus status, int page, int size) {
         int safePage = Math.max(page, 1);
         int safeSize = Math.min(Math.max(size, 1), 100);
-        int offset = (safePage - 1) * safeSize;
+        int offset = (int) Math.min((long) (safePage - 1) * safeSize, Integer.MAX_VALUE);
 
         List<PaymentDTO.ResponseList> items = paymentQueryRepository.findPayments(keyword, status, offset, safeSize);
         long total = paymentQueryRepository.countPayments(keyword, status);
@@ -57,9 +57,7 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
         PaymentDTO.ResponseDetail base = paymentQueryRepository.findPaymentDetail(paymentId)
             .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_FOUND));
 
-        PaymentDTO.ResponseDetail.AiUsage aiUsage = paymentQueryRepository.findAiUsage(
-            UUID.fromString(base.paymentId())
-        );
+        PaymentDTO.ResponseDetail.AiUsage aiUsage = paymentQueryRepository.findAiUsage(paymentId);
 
         return new PaymentDTO.ResponseDetail(
             base.paymentId(), base.orderId(), base.memberName(), base.memberEmail(),
@@ -81,28 +79,17 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
         Refund refund = refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING)
             .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.REFUND_NOT_PENDING));
 
-        try {
-            // Toss 환불 API — v1 stub 처리
-            refund.approve(adminId);
-            payment.cancel();
-            refundRepository.save(refund);
-            paymentRepository.save(payment);
-        } catch (Exception e) {
-            saveRefundFailed(refund, adminId);
-            throw new CustomException(AdminPaymentErrorCode.TOSS_REFUND_FAILED);
-        }
+        // Toss 환불 API — v1 stub 처리 (실제 연동 시 외부 호출 후 TossApiException catch 추가)
+        refund.approve(adminId);
+        payment.refund();
+        refundRepository.save(refund);
+        paymentRepository.save(payment);
 
         return new RefundDTO.ResponseApprove(
             paymentId.toString(),
             payment.getPaymentStatus(),
             refund.getRefundStatus()
         );
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void saveRefundFailed(Refund refund, Long adminId) {
-        refund.fail(adminId);
-        refundRepository.save(refund);
     }
 
     @Override

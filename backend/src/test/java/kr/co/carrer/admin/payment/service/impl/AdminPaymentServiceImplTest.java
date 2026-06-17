@@ -79,7 +79,7 @@ class AdminPaymentServiceImplTest {
 
             RefundDTO.ResponseApprove result = adminPaymentService.approveRefund(paymentId, 1L);
 
-            assertThat(result.paymentStatus()).isEqualTo(PaymentStatus.CANCELED);
+            assertThat(result.paymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
             assertThat(result.refundStatus()).isEqualTo(RefundStatus.COMPLETED);
             verify(refundRepository).save(refund);
             verify(paymentRepository).save(payment);
