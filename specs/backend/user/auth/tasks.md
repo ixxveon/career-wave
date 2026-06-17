@@ -7,29 +7,29 @@
 
 ## Phase 1 - Entity / Enum / DB 구조 정리
 
-- [ ] 기존 `Member` 엔티티의 필드, 제약조건, UUID PK 정책을 확인한다.
-- [ ] `members.role_type`은 `USER`, `COMPANY`로 저장하고 security authority에서만 `ROLE_` prefix를 붙이도록 정리한다.
-- [ ] `members.member_status`에 `BLACKLISTED`를 포함한다.
-- [ ] 기존 `RoleType`, `MemberStatus`, `HrStatus` enum과 QueryRepository mapping을 ERD enum 값에 맞게 갱신한다.
-- [ ] 개인회원 가입 시 빈 `personal_profiles` row를 생성하도록 구조를 정리한다.
-- [ ] 개인회원 가입에 필요한 `members` 필드와 unique 제약을 정리한다.
-- [ ] `members.phone` unique 제약을 적용하되 null 허용 정책을 문서와 엔티티에 반영한다.
-- [ ] 기업회원 가입에 필요한 `CompanyProfile` 구조를 확정한다.
-- [ ] 기업회원 승인 상태는 `hr_managers.hr_status` 기준으로 관리하고 `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `NEEDS_REVISION`, `REMOVED` 값을 사용한다.
-- [ ] `business_number` unique 제약 필요 여부를 확정한다.
-- [ ] `CompanyType` enum을 프론트 `CompanyType` 값과 동일하게 정의한다.
-- [ ] `VerificationChannel`, `VerificationPurpose`, `VerificationStatus` enum을 정의한다.
-- [ ] `VerificationPurpose`는 `REGISTER`, `FIND_ID`, `RESET_PASSWORD`를 사용한다.
-- [ ] `password_reset_tokens` 테이블 기준으로 `PasswordResetToken` 엔티티를 정의한다.
-- [ ] `member_verifications` 테이블 기준으로 `MemberVerification` 엔티티를 정의한다.
-- [ ] `member_verifications.verification_token` 컬럼까지 포함한 매핑을 정리한다.
-- [ ] 재직증명서는 최종적으로 `company_profiles.cert_file_url`, `cert_file_name`, `certificate_number`에 저장하도록 구조를 정리한다.
-- [ ] 소셜 로그인을 위한 `social_accounts` 테이블/엔티티를 ERD 기준으로 정의한다.
-- [ ] `social_accounts`는 `provider + provider_user_id` unique, `member_id + provider` unique 제약을 둔다.
-- [ ] `social_accounts.provider_email`은 provider 정책상 없을 수 있으므로 nullable로 둔다.
-- [ ] `SocialProvider` enum 또는 provider 허용값을 `kakao`, `naver`, `google` 기준으로 정의한다.
-- [ ] `Apple` provider는 enum/허용값/문서 어디에도 포함하지 않도록 정리한다.
-- [ ] 모든 JPA enum 필드에 `EnumType.STRING` 사용을 명시한다.
+- [x] 기존 `Member` 엔티티의 필드, 제약조건, UUID PK 정책을 확인한다. — `@Getter` · `@NoArgsConstructor(PROTECTED)` Lombok 적용, `@PrePersist` UUID 자동 생성 확인
+- [x] `members.role_type`은 `USER`, `COMPANY`로 저장하고 security authority에서만 `ROLE_` prefix를 붙이도록 정리한다.
+- [x] `members.member_status`에 `BLACKLISTED`를 포함한다. — `MemberStatus` enum에 반영 완료 (docs PR #488)
+- [x] 기존 `RoleType`, `MemberStatus`, `HrStatus` enum과 QueryRepository mapping을 ERD enum 값에 맞게 갱신한다. — admin `HrStatus` `PENDING→PENDING_REVIEW`, `ACTIVE→APPROVED`, `reject()→REJECTED` 수정
+- [x] 개인회원 가입 시 빈 `personal_profiles` row를 생성하도록 구조를 정리한다. — `PersonalProfile.emptyFor(UUID)` 정적 팩토리 추가
+- [x] 개인회원 가입에 필요한 `members` 필드와 unique 제약을 정리한다.
+- [x] `members.phone` unique 제약을 적용하되 null 허용 정책을 문서와 엔티티에 반영한다. — `@Column(unique = true)`, nullable 유지 (docs PR #488)
+- [x] 기업회원 가입에 필요한 `CompanyProfile` 구조를 확정한다. — user 도메인 `CompanyProfile` 엔티티 추가, `@Entity(name = "UserCompanyProfile")`로 admin 엔티티와 분리
+- [x] 기업회원 승인 상태는 `hr_managers.hr_status` 기준으로 관리하고 `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `NEEDS_REVISION`, `REMOVED` 값을 사용한다. — `HrStatus` enum 정의, admin enum도 동기화
+- [x] `business_number` unique 제약 필요 여부를 확정한다. — ERD `uq_business_number` 기준 필요, `@Table(uniqueConstraints)` 반영
+- [x] `CompanyType` enum을 프론트 `CompanyType` 값과 동일하게 정의한다. — 10개 값 일치 확인
+- [x] `VerificationChannel`, `VerificationPurpose`, `VerificationStatus` enum을 정의한다.
+- [x] `VerificationPurpose`는 `REGISTER`, `FIND_ID`, `RESET_PASSWORD`를 사용한다.
+- [x] `password_reset_tokens` 테이블 기준으로 `PasswordResetToken` 엔티티를 정의한다. — `create()` 팩토리, `markUsed()` 상태 메서드
+- [x] `member_verifications` 테이블 기준으로 `MemberVerification` 엔티티를 정의한다. — `issue()` 팩토리, `markVerified()` · `decrementAttempts()` · `expire()` 상태 메서드
+- [x] `member_verifications.verification_token` 컬럼까지 포함한 매핑을 정리한다.
+- [x] 재직증명서는 최종적으로 `company_profiles.cert_file_url`, `cert_file_name`, `certificate_number`에 저장하도록 구조를 정리한다. — `CompanyProfile` 엔티티에 모두 `NOT NULL` 반영
+- [x] 소셜 로그인을 위한 `social_accounts` 테이블/엔티티를 ERD 기준으로 정의한다. — `link()` 팩토리
+- [x] `social_accounts`는 `provider + provider_user_id` unique, `member_id + provider` unique 제약을 둔다. — `@Table(uniqueConstraints)` 반영
+- [x] `social_accounts.provider_email`은 provider 정책상 없을 수 있으므로 nullable로 둔다.
+- [x] `SocialProvider` enum 또는 provider 허용값을 `kakao`, `naver`, `google` 기준으로 정의한다. — `SocialProvider` enum: KAKAO · NAVER · GOOGLE
+- [x] `Apple` provider는 enum/허용값/문서 어디에도 포함하지 않도록 정리한다.
+- [x] 모든 JPA enum 필드에 `EnumType.STRING` 사용을 명시한다.
 
 ---
 

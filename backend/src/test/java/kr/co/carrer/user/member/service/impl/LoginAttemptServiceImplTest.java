@@ -155,7 +155,9 @@ class LoginAttemptServiceImplTest {
     }
 
     private Member createMember(MemberStatus status, Instant lockedUntil) throws Exception {
-        Member m = new Member();
+        var ctor = Member.class.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        Member m = ctor.newInstance();
         setField(m, "memberId", UUID.randomUUID());
         setField(m, "loginId", "user01");
         setField(m, "password", encoder.encode(RAW_PASSWORD));

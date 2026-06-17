@@ -66,7 +66,9 @@ class UserLoginServiceImplTest {
     }
 
     private Member createMember(RoleType roleType, MemberStatus status) throws Exception {
-        Member m = new Member();
+        var ctor = Member.class.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        Member m = ctor.newInstance();
         setField(m, "memberId", UUID.randomUUID());
         setField(m, "loginId", "user01");
         setField(m, "password", encoder.encode("password123"));
