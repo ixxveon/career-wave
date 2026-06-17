@@ -22,7 +22,7 @@
 |------|------|------|
 | 서버 상태 | `TanStack Query` | 면접 리포트·이력 캐싱 및 로딩/에러/재시도 관리 |
 | 세션·실시간 UI 상태 | React `useReducer` | 복잡한 면접 세션 상태(소켓 연결·녹음·타이머) 단일 리듀서로 집중 관리 |
-| Spring WebSocket | native WebSocket | 세션 생명주기 및 채팅 메시지 송수신 |
+| Spring WebSocket | `@stomp/stompjs` Client | 세션 생명주기 및 채팅 메시지 송수신 |
 | FastAPI WebSocket | native WebSocket | LLM 스트리밍 응답, STT 결과 수신, TTS 오디오 스트리밍 |
 | 오디오 캡처 | `MediaRecorder API` | 음성 녹음 및 Blob 전송 (Safari WebM 미지원 대비 MIME 타입 분기 처리) |
 | 시각화 | `Recharts ^3.8.1` | 역량 지표 레이더 차트 기본 지원 |
