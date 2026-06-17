@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
-@Tag(name = "Interview Report", description = "AI 면접 리포트 API")
+@Tag(name = "User Interview Report", description = "AI 면접 리포트 API")
 public interface InterviewReportControllerDocs {
 
     @Operation(
