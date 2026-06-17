@@ -9,10 +9,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "member_verifications")
+@Table(name = "member_verifications",
+        uniqueConstraints = @UniqueConstraint(name = "uq_member_verification_token", columnNames = "verification_token"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberVerification {
@@ -70,6 +72,8 @@ public class MemberVerification {
     }
 
     public void markVerified(String token) {
+        Objects.requireNonNull(token, "verificationToken must not be null");
+        if (token.isBlank()) throw new IllegalArgumentException("verificationToken must not be blank");
         this.verificationToken = token;
         this.verificationStatus = VerificationStatus.VERIFIED;
         this.verifiedAt = Instant.now();

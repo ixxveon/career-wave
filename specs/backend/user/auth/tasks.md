@@ -20,8 +20,8 @@
 - [x] `CompanyType` enum을 프론트 `CompanyType` 값과 동일하게 정의한다. — 10개 값 일치 확인
 - [x] `VerificationChannel`, `VerificationPurpose`, `VerificationStatus` enum을 정의한다.
 - [x] `VerificationPurpose`는 `REGISTER`, `FIND_ID`, `RESET_PASSWORD`를 사용한다.
-- [x] `password_reset_tokens` 테이블 기준으로 `PasswordResetToken` 엔티티를 정의한다. — `create()` 팩토리, `markUsed()` 상태 메서드
-- [x] `member_verifications` 테이블 기준으로 `MemberVerification` 엔티티를 정의한다. — `issue()` 팩토리, `markVerified()` · `decrementAttempts()` · `expire()` 상태 메서드
+- [x] `password_reset_tokens` 테이블 기준으로 `PasswordResetToken` 엔티티를 정의한다. — `create()` 팩토리, `markUsed()` 상태 메서드, `token_hash` unique constraint, `isExpired()` 경계 포함(`!isBefore`)
+- [x] `member_verifications` 테이블 기준으로 `MemberVerification` 엔티티를 정의한다. — `issue()` 팩토리, `markVerified()` null/blank 즉시 실패, `verification_token` unique constraint, `decrementAttempts()` · `expire()`
 - [x] `member_verifications.verification_token` 컬럼까지 포함한 매핑을 정리한다.
 - [x] 재직증명서는 최종적으로 `company_profiles.cert_file_url`, `cert_file_name`, `certificate_number`에 저장하도록 구조를 정리한다. — `CompanyProfile` 엔티티에 모두 `NOT NULL` 반영
 - [x] 소셜 로그인을 위한 `social_accounts` 테이블/엔티티를 ERD 기준으로 정의한다. — `link()` 팩토리
@@ -35,26 +35,26 @@
 
 ## Phase 2 - Repository 구현
 
-- [ ] `UserMemberRepository.existsByLoginId(String loginId)` 추가
-- [ ] `UserMemberRepository.existsByEmail(String email)` 추가
-- [ ] `UserMemberRepository.existsByPhone(String phone)` 추가
-- [ ] `UserMemberRepository.findByEmailAndRoleType(...)` 또는 동등 조회 추가
-- [ ] `UserMemberRepository.findByPhoneAndRoleType(...)` 또는 동등 조회 추가
-- [ ] `PersonalProfileRepository.save(...)` 또는 동등 저장 흐름 추가
-- [ ] `PersonalProfileRepository.findByMemberId(...)` 추가
-- [ ] 기업회원 담당자/사업자번호 기반 조회 repository method 추가
-- [ ] `CompanyProfileRepository.existsByBusinessNumber(String businessNumber)` 추가
-- [ ] `PasswordResetTokenRepository.findByTokenHash(...)` 구현
-- [ ] `MemberVerificationRepository.findByVerificationId(...)` 구현
-- [ ] `MemberVerificationRepository.findByVerificationToken(...)` 구현
-- [ ] `MemberVerificationRepository`에 재발송/rate limit 조회 메서드 구현
-- [ ] `HrManagerRepository`에서 member 기준 승인 상태 조회 메서드 구현
-- [ ] `SocialAccountRepository.findByProviderAndProviderUserId(...)` 구현
-- [ ] `SocialAccountRepository.existsByProviderAndProviderUserId(...)` 구현
-- [ ] `SocialAccountRepository.existsByMemberIdAndProvider(...)` 구현
-- [ ] 기업회원 아이디 찾기용 `member + company_profile + hr_manager` 조회 query를 분리할지 확정한다.
-- [ ] employment certificate 임시 fileId 검증 port 또는 service 구현
-- [ ] 한 요청 안에서 중복 DB 조회가 발생하지 않도록 조회 흐름 점검
+- [x] `UserMemberRepository.existsByLoginId(String loginId)` 추가
+- [x] `UserMemberRepository.existsByEmail(String email)` 추가
+- [x] `UserMemberRepository.existsByPhone(String phone)` 추가
+- [x] `UserMemberRepository.findByEmailAndRoleType(...)` 또는 동등 조회 추가
+- [x] `UserMemberRepository.findByPhoneAndRoleType(...)` 또는 동등 조회 추가
+- [x] `PersonalProfileRepository.save(...)` 또는 동등 저장 흐름 추가 — `JpaRepository.save()` 기본 제공으로 충족
+- [x] `PersonalProfileRepository.findByMemberId(...)` 추가
+- [x] 기업회원 담당자/사업자번호 기반 조회 repository method 추가 — `UserMemberQueryRepository` 신규 추가. JOIN: `members JOIN company_profiles JOIN hr_managers ON h.company_profile_id = cp.company_profile_id`. 조건: `managerName + businessNumber + email/phone + role_type = 'COMPANY'`
+- [x] `CompanyProfileRepository.existsByBusinessNumber(String businessNumber)` 추가
+- [x] `PasswordResetTokenRepository.findByTokenHash(...)` 구현 — `existsByMemberIdAndUsedAtIsNullAndExpiresAtAfter(UUID memberId, Instant now)` 추가 (중복 발급 방지)
+- [x] `MemberVerificationRepository.findByVerificationId(...)` 구현 — 명시적 메서드 추가 (JpaRepository.findById와 동등, service 호출 일관성 목적)
+- [x] `MemberVerificationRepository.findByVerificationToken(...)` 구현
+- [x] `MemberVerificationRepository`에 재발송/rate limit 조회 메서드 구현 — `findTopByTargetAndPurposeOrderByCreatedAtDesc` 추가
+- [x] `HrManagerRepository`에서 member 기준 승인 상태 조회 메서드 구현 — `findByMemberId`, `findByMemberIdAndHrStatus`
+- [x] `SocialAccountRepository.findByProviderAndProviderUserId(...)` 구현
+- [x] `SocialAccountRepository.existsByProviderAndProviderUserId(...)` 구현
+- [x] `SocialAccountRepository.existsByMemberIdAndProvider(...)` 구현
+- [x] 기업회원 아이디 찾기용 `member + company_profile + hr_manager` 조회 query를 분리할지 확정한다. — `UserMemberQueryRepository`로 분리. `members JOIN company_profiles JOIN hr_managers`. 조건: `m.name(managerName)` + `cp.business_number` + `m.email 또는 m.phone` + `m.role_type = 'COMPANY'`. hr_status 필터 미적용 (아이디 찾기는 로그인 자격 검증 아님, spec FR-011).
+- [ ] employment certificate 임시 fileId 검증 port 또는 service 구현 — Phase 4 Service 구현 시 처리
+- [ ] 한 요청 안에서 중복 DB 조회가 발생하지 않도록 조회 흐름 점검 — Phase 4 Service 구현 시 처리
 
 ---
 

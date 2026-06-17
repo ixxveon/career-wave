@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -46,7 +47,7 @@ public class HrManager {
 
     public void approve() {
         this.hrStatus = HrStatus.APPROVED;
-        this.approvedAt = ZonedDateTime.now();
+        this.approvedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 
     public void reject(String rejectReason) {

@@ -9,7 +9,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "password_reset_tokens")
+@Table(name = "password_reset_tokens",
+        uniqueConstraints = @UniqueConstraint(name = "uq_password_reset_token_hash", columnNames = "token_hash"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PasswordResetToken {
@@ -41,7 +42,7 @@ public class PasswordResetToken {
     }
 
     public boolean isExpired() {
-        return Instant.now().isAfter(expiresAt);
+        return !Instant.now().isBefore(expiresAt);
     }
 
     public boolean isUsed() {
