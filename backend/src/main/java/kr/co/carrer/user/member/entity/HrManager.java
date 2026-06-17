@@ -2,6 +2,7 @@ package kr.co.carrer.user.member.entity;
 
 import jakarta.persistence.*;
 import kr.co.carrer.user.member.type.HrStatus;
+import kr.co.carrer.user.member.type.PermissionLevel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,9 +28,9 @@ public class HrManager {
     @Column(name = "company_profile_id", nullable = false, columnDefinition = "uuid")
     private UUID companyProfileId;
 
-    // FULL / NOTICE / VIEWER — 상태 변경은 admin 도메인 책임
+    @Enumerated(EnumType.STRING)
     @Column(name = "permission_level", nullable = false, length = 10)
-    private String permissionLevel;
+    private PermissionLevel permissionLevel;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "hr_status", nullable = false, length = 20)
@@ -47,7 +48,7 @@ public class HrManager {
     @PrePersist
     protected void onCreate() {
         if (hrStatus == null) hrStatus = HrStatus.PENDING_REVIEW;
-        if (permissionLevel == null) permissionLevel = "FULL";
+        if (permissionLevel == null) permissionLevel = PermissionLevel.FULL;
         createdAt = Instant.now();
     }
 
