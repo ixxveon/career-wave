@@ -60,49 +60,49 @@
 
 ## Phase 3 - DTO / Validation 구현
 
-- [ ] 로그인 DTO가 프론트 `LoginRequest`, `LoginResponse`와 일치하는지 점검
-- [ ] token refresh response가 `accessToken`만 반환하도록 DTO 확인
-- [ ] `CheckLoginIdResponse` DTO 작성
-- [ ] 개인회원 가입 request/response DTO 작성
-- [ ] 기업회원 가입 request/response DTO 작성
-- [ ] 재직증명서 업로드 response DTO 작성
-- [ ] 인증번호 발송 request/response DTO 작성
-- [ ] 인증번호 확인 request/response DTO 작성
-- [ ] 아이디 찾기 request/response DTO 작성
-- [ ] 비밀번호 resetToken 발급 request/response DTO 작성
-- [ ] 비밀번호 재설정 request/response DTO 작성
-- [ ] 소셜 회원가입 추가정보 완료 request/response DTO 작성
-- [ ] 소셜 OAuth authorize response DTO 작성
-- [ ] 소셜 OAuth callback response DTO 작성
-- [ ] OAuth provider별 callback 응답 분기 DTO를 명확히 한다: 기존 계정 로그인 / 추가정보 입력 필요
-- [ ] `socialSignupToken` 필드가 프론트 타입에 추가되어야 함을 API 계약에 반영
-- [ ] `companyApprovalStatus=NONE`은 개인회원 응답 전용 가상값이며 DB에 저장하지 않는다는 API 계약을 반영
-- [ ] loginId validation: 영문/숫자 6~20자
-- [ ] password validation: 8~64자, 영문/숫자/특수문자, loginId 포함 금지
-- [ ] email validation 추가
-- [ ] phone normalization 및 `010` 시작 11자리 검증 추가
-- [ ] businessNumber normalization 및 10자리 검증 추가
-- [ ] certificateNumber 필수 검증 추가
-- [ ] companyName, ceoName 필수 검증 추가
+- [x] 로그인 DTO가 프론트 `LoginRequest`, `LoginResponse`와 일치하는지 점검 — 기존 `UserLoginDto` 일치 확인
+- [x] token refresh response가 `accessToken`만 반환하도록 DTO 확인 — `TokenRefreshResponse(accessToken)` 확인
+- [x] `CheckLoginIdResponse` DTO 작성 — `UserRegisterDto.ResponseCheckLoginId`
+- [x] 개인회원 가입 request/response DTO 작성 — `RequestPersonalRegister` / `ResponsePersonalRegister`
+- [x] 기업회원 가입 request/response DTO 작성 — `RequestCompanyRegister` / `ResponseCompanyRegister`
+- [x] 재직증명서 업로드 response DTO 작성 — `ResponseEmploymentCertificateUpload`
+- [x] 인증번호 발송 request/response DTO 작성 — `UserVerificationDto.RequestSendVerification` / `ResponseSendVerification`
+- [x] 인증번호 확인 request/response DTO 작성 — `RequestConfirmVerification` / `ResponseConfirmVerification`
+- [x] 아이디 찾기 request/response DTO 작성 — `UserRecoveryDto.RequestFindId` / `ResponseFindId`
+- [x] 비밀번호 resetToken 발급 request/response DTO 작성 — `RequestPasswordToken` / `ResponsePasswordToken`
+- [x] 비밀번호 재설정 request/response DTO 작성 — `RequestResetPassword` / `ResponseResetPassword`
+- [x] 소셜 회원가입 추가정보 완료 request/response DTO 작성 — `UserSocialAuthDto.RequestSocialComplete` / `ResponseSocialComplete`
+- [x] 소셜 OAuth authorize response DTO 작성 — `ResponseOAuthAuthorize`
+- [x] 소셜 OAuth callback response DTO 작성 — `ResponseOAuthCallbackLogin` / `ResponseOAuthCallbackSignupRequired`
+- [x] OAuth provider별 callback 응답 분기 DTO를 명확히 한다: 기존 계정 로그인 / 추가정보 입력 필요 — 두 record로 분리
+- [x] `socialSignupToken` 필드가 프론트 타입에 추가되어야 함을 API 계약에 반영 — `RequestSocialComplete`에 포함, 프론트 타입 추후 동기화
+- [x] `companyApprovalStatus=NONE`은 개인회원 응답 전용 가상값이며 DB에 저장하지 않는다는 API 계약을 반영 — DTO 주석 명시
+- [x] loginId validation: 영문/숫자 6~20자 — `@Pattern(regexp = "^[A-Za-z0-9]{6,20}$")`
+- [x] password validation: 8~64자, 영문/숫자/특수문자, loginId 포함 금지 — `@ValidPassword` (loginId 포함 금지는 service 레이어)
+- [x] email validation 추가 — `@Email`
+- [x] phone normalization 및 `010` 시작 11자리 검증 추가 — `@Pattern(regexp = "^010[0-9]{8}$")`
+- [x] businessNumber normalization 및 10자리 검증 추가 — `@Pattern(regexp = "^[0-9]{10}$")`
+- [x] certificateNumber 필수 검증 추가 — `@NotBlank`
+- [x] companyName, ceoName 필수 검증 추가 — `@NotBlank`
 - [x] postalCode/roadAddress 필수, addressDetail/jibunAddress 선택 검증 추가 — `validateCompanyRegisterForm()` 반영 완료
 - [x] `CompanyRegisterRequest`에 `certificateNumber`, `postalCode`, `roadAddress`, `jibunAddress` 필드 추가 — 프론트 타입 및 payload mapping 완료
-- [ ] verification code 6자리 숫자 검증 추가
-- [ ] verification target이 EMAIL일 때 이메일 형식 검증 추가
-- [ ] verification target이 PHONE일 때 한국 휴대폰 번호 형식 검증 추가
-- [ ] verification purpose별 허용 target 조합을 문서화한다.
-- [ ] 개인회원 회원가입 이메일 인증 purpose를 `REGISTER`로 고정한다.
-- [ ] 개인회원 회원가입 휴대폰 인증 purpose를 `REGISTER`로 고정한다.
-- [ ] 기업회원 담당자 이메일/휴대폰 인증 purpose를 `REGISTER`로 고정한다.
-- [ ] 소셜 추가정보 완료의 휴대폰 인증 purpose를 `REGISTER`로 고정한다.
-- [ ] 이번 범위에서는 `PHONE_VERIFY` purpose를 사용하지 않음을 문서와 구현에 동일 적용한다.
-- [ ] PDF MIME type, 확장자, 5MB 이하 검증 추가
-- [ ] 외부 API/provider 설정은 환경변수 참조 방식으로만 사용한다고 DTO/API 계약에 반영
-- [ ] AWS SES 관련 환경변수 목록을 문서화한다.
-- [ ] SOLAPI / CoolSMS 관련 환경변수 목록을 문서화한다.
-- [ ] Kakao/Naver/Google OAuth 환경변수 목록을 문서화한다.
-- [ ] 국세청 사업자 상태조회 API 환경변수 목록을 문서화한다.
-- [ ] DTO 필드에 Swagger `@Schema` 설명 추가
-- [ ] Enum field의 Swagger allowable values 정리
+- [x] verification code 6자리 숫자 검증 추가 — `@Pattern(regexp = "^[0-9]{6}$")`
+- [ ] verification target이 EMAIL일 때 이메일 형식 검증 추가 — service 레이어 검증 (Phase 4)
+- [ ] verification target이 PHONE일 때 한국 휴대폰 번호 형식 검증 추가 — service 레이어 검증 (Phase 4)
+- [ ] verification purpose별 허용 target 조합을 문서화한다. — Phase 4
+- [ ] 개인회원 회원가입 이메일 인증 purpose를 `REGISTER`로 고정한다. — Phase 4
+- [ ] 개인회원 회원가입 휴대폰 인증 purpose를 `REGISTER`로 고정한다. — Phase 4
+- [ ] 기업회원 담당자 이메일/휴대폰 인증 purpose를 `REGISTER`로 고정한다. — Phase 4
+- [ ] 소셜 추가정보 완료의 휴대폰 인증 purpose를 `REGISTER`로 고정한다. — Phase 4
+- [ ] 이번 범위에서는 `PHONE_VERIFY` purpose를 사용하지 않음을 문서와 구현에 동일 적용한다. — Phase 4
+- [ ] PDF MIME type, 확장자, 5MB 이하 검증 추가 — Controller multipart 처리 시 (Phase 5)
+- [ ] 외부 API/provider 설정은 환경변수 참조 방식으로만 사용한다고 DTO/API 계약에 반영 — Phase 4
+- [ ] AWS SES 관련 환경변수 목록을 문서화한다. — Phase 4
+- [ ] SOLAPI / CoolSMS 관련 환경변수 목록을 문서화한다. — Phase 4
+- [ ] Kakao/Naver/Google OAuth 환경변수 목록을 문서화한다. — Phase 4
+- [ ] 국세청 사업자 상태조회 API 환경변수 목록을 문서화한다. — Phase 4
+- [ ] DTO 필드에 Swagger `@Schema` 설명 추가 — Phase 6
+- [ ] Enum field의 Swagger allowable values 정리 — Phase 6
 
 ---
 
