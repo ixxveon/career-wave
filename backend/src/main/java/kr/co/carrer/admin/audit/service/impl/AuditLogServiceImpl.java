@@ -33,6 +33,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         return new ResponseSummary(
             summary.totalCount(),
             summary.adminActivityCount(),
+            summary.adminManagementCount(),
             summary.aiMetricsSystemCount(),
             summary.scrapingSystemCount(),
             summary.infoCount(),
