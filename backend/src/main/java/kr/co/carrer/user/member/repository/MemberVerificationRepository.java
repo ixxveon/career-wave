@@ -9,6 +9,9 @@ import java.util.UUID;
 
 public interface MemberVerificationRepository extends JpaRepository<MemberVerification, UUID> {
 
+    // tasks.md 명시 메서드 — JpaRepository.findById()와 동등하나 service에서 일관된 명칭으로 호출
+    Optional<MemberVerification> findByVerificationId(UUID verificationId);
+
     // 인증 완료 토큰으로 조회 — verificationToken 유효성 검증 시 사용
     Optional<MemberVerification> findByVerificationToken(String verificationToken);
 

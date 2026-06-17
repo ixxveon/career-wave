@@ -45,14 +45,14 @@
 - [ ] 기업회원 담당자/사업자번호 기반 조회 repository method 추가
 - [ ] `CompanyProfileRepository.existsByBusinessNumber(String businessNumber)` 추가
 - [ ] `PasswordResetTokenRepository.findByTokenHash(...)` 구현
-- [ ] `MemberVerificationRepository.findByVerificationId(...)` 구현
-- [ ] `MemberVerificationRepository.findByVerificationToken(...)` 구현
-- [ ] `MemberVerificationRepository`에 재발송/rate limit 조회 메서드 구현
-- [ ] `HrManagerRepository`에서 member 기준 승인 상태 조회 메서드 구현
-- [ ] `SocialAccountRepository.findByProviderAndProviderUserId(...)` 구현
-- [ ] `SocialAccountRepository.existsByProviderAndProviderUserId(...)` 구현
-- [ ] `SocialAccountRepository.existsByMemberIdAndProvider(...)` 구현
-- [ ] 기업회원 아이디 찾기용 `member + company_profile + hr_manager` 조회 query를 분리할지 확정한다.
+- [x] `MemberVerificationRepository.findByVerificationId(...)` 구현 — 명시적 메서드 추가 (JpaRepository.findById와 동등, service 호출 일관성 목적)
+- [x] `MemberVerificationRepository.findByVerificationToken(...)` 구현
+- [x] `MemberVerificationRepository`에 재발송/rate limit 조회 메서드 구현 — `findTopByTargetAndPurposeOrderByCreatedAtDesc` 추가
+- [x] `HrManagerRepository`에서 member 기준 승인 상태 조회 메서드 구현 — `findByMemberId`, `findByMemberIdAndHrStatus`
+- [x] `SocialAccountRepository.findByProviderAndProviderUserId(...)` 구현
+- [x] `SocialAccountRepository.existsByProviderAndProviderUserId(...)` 구현
+- [x] `SocialAccountRepository.existsByMemberIdAndProvider(...)` 구현
+- [x] 기업회원 아이디 찾기용 `member + company_profile + hr_manager` 조회 query를 분리할지 확정한다. — `UserMemberQueryRepository`로 분리. `members JOIN company_profiles JOIN hr_managers`. 조건: `m.name(managerName)` + `cp.business_number` + `m.email 또는 m.phone` + `m.role_type = 'COMPANY'`. hr_status 필터 미적용 (아이디 찾기는 로그인 자격 검증 아님, spec FR-011).
 - [ ] employment certificate 임시 fileId 검증 port 또는 service 구현
 - [ ] 한 요청 안에서 중복 DB 조회가 발생하지 않도록 조회 흐름 점검
 
