@@ -38,16 +38,18 @@ public class UserMemberStatusQueryRepository {
     }
 
     public CompanyApprovalStatus findCompanyApprovalStatus(UUID memberId) {
-        String hrStatus = findCompanyHrStatus(memberId);
-        if (hrStatus == null) return CompanyApprovalStatus.NONE;
+        return mapCompanyApprovalStatus(findCompanyHrStatus(memberId));
+    }
 
+    public CompanyApprovalStatus mapCompanyApprovalStatus(String hrStatus) {
+        if (hrStatus == null) return CompanyApprovalStatus.NONE;
         return switch (hrStatus) {
             case "PENDING_REVIEW" -> CompanyApprovalStatus.PENDING_REVIEW;
             case "APPROVED"       -> CompanyApprovalStatus.APPROVED;
             case "REJECTED"       -> CompanyApprovalStatus.REJECTED;
             case "NEEDS_REVISION" -> CompanyApprovalStatus.NEEDS_REVISION;
             case "REMOVED"        -> CompanyApprovalStatus.NONE;
-            default        -> CompanyApprovalStatus.NONE;
+            default               -> CompanyApprovalStatus.NONE;
         };
     }
 

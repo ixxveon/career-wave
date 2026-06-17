@@ -83,10 +83,7 @@ public class UserMemberStatusServiceImpl implements UserMemberStatusService {
                 recoverable = false;
                 messageCode = MemberStatusDto.Restriction.MESSAGE_CODE_BLACKLISTED;
             }
-            default -> {
-                recoverable = false;
-                messageCode = MemberStatusDto.Restriction.MESSAGE_CODE_BANNED;
-            }
+            default -> throw new IllegalStateException("Unhandled MemberStatus in restriction summary: " + status);
         }
 
         return new MemberStatusDto.Restriction(

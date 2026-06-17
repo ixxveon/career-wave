@@ -115,7 +115,6 @@ export function CompanyRegisterForm({
                 value={form.addressDetail}
                 onChange={(value) => update('addressDetail', value)}
                 placeholder="상세주소 입력"
-                disabled={!form.roadAddress}
               />
             </Field>
             <label className="cw-register-check cw-register-field--wide">
