@@ -21,9 +21,10 @@ export function useSpringWebSocket({
   onMessage,
   onStatusChange,
 }: UseSpringWebSocketOptions) {
-  const clientRef      = useRef<Client | null>(null);
-  const attemptRef     = useRef(0);
-  const isManualCloseRef = useRef(false);
+  const clientRef         = useRef<Client | null>(null);
+  const attemptRef        = useRef(0);
+  const isManualCloseRef  = useRef(false);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * 콜백 ref 패턴 — connect()가 콜백을 deps로 갖지 않도록 ref 경유
@@ -37,6 +38,10 @@ export function useSpringWebSocket({
 
   const disconnect = useCallback(() => {
     isManualCloseRef.current = true;
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
     if (clientRef.current) {
       clientRef.current.deactivate();
       clientRef.current = null;
@@ -86,8 +91,7 @@ export function useSpringWebSocket({
         onStatusChangeRef.current('RECONNECTING');
         clientRef.current?.deactivate();
         clientRef.current = null;
-        // 재연결은 useEffect에서 sessionId 변경으로 처리
-        setTimeout(() => connect(sid), 2000);
+        reconnectTimerRef.current = setTimeout(() => connect(sid), 2000);
       },
       onWebSocketClose: () => {
         if (isManualCloseRef.current) return;
@@ -97,7 +101,7 @@ export function useSpringWebSocket({
         }
         attemptRef.current += 1;
         onStatusChangeRef.current('RECONNECTING');
-        setTimeout(() => connect(sid), 2000);
+        reconnectTimerRef.current = setTimeout(() => connect(sid), 2000);
       },
     });
 
@@ -110,6 +114,10 @@ export function useSpringWebSocket({
     connect(sessionId);
     return () => {
       isManualCloseRef.current = true;
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       clientRef.current?.deactivate();
       clientRef.current = null;
     };
