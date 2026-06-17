@@ -4,7 +4,11 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -40,17 +44,26 @@ public class Bookmark {
     @Column(name = "member_id", nullable = false, columnDefinition = "UUID")
     private UUID memberId;
 
-    @Column(name = "job_notice_id", nullable = false)
-    private Long jobNoticeId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "job_notice_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_bookmark_job")
+    )
+    private JobNotice jobNotice;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;
 
-    public static Bookmark of(UUID memberId, Long jobNoticeId) {
+    public static Bookmark of(UUID memberId, JobNotice jobNotice) {
         Bookmark bookmark = new Bookmark();
         bookmark.memberId = memberId;
-        bookmark.jobNoticeId = jobNoticeId;
+        bookmark.jobNotice = jobNotice;
         return bookmark;
+    }
+
+    public Long getJobNoticeId() {
+        return jobNotice.getJobNoticeId();
     }
 
     @PrePersist

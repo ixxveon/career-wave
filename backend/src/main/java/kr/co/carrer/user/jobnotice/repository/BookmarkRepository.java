@@ -9,11 +9,11 @@ import java.util.UUID;
 
 public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
 
-    boolean existsByMemberIdAndJobNoticeId(UUID memberId, Long jobNoticeId);
+    boolean existsByMemberIdAndJobNotice_JobNoticeId(UUID memberId, Long jobNoticeId);
 
-    List<Bookmark> findByMemberIdAndJobNoticeIdIn(UUID memberId, List<Long> jobNoticeIds);
+    List<Bookmark> findByMemberIdAndJobNotice_JobNoticeIdIn(UUID memberId, List<Long> jobNoticeIds);
 
-    Optional<Bookmark> findByMemberIdAndJobNoticeId(UUID memberId, Long jobNoticeId);
+    Optional<Bookmark> findByMemberIdAndJobNotice_JobNoticeId(UUID memberId, Long jobNoticeId);
 
     Optional<Bookmark> findByBookmarkIdAndMemberId(Long bookmarkId, UUID memberId);
 }
