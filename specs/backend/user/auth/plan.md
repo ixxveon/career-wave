@@ -125,7 +125,8 @@ backend/src/main/java/kr/co/carrer/user/member/
 | 소셜 provider 범위 | Kakao / Naver / Google | Apple 로그인 제외 |
 | JPA Entity 이름 충돌 방지 | `PersonalProfile` → `@Entity(name = "UserPersonalProfile")`, `HrManager` → `@Entity(name = "UserHrManager")` | `user/dashboard/entity/PersonalProfile`, `admin/member/entity/HrManager`와 동일 클래스명으로 JPA 충돌 방지 |
 | `company_profiles.address` 파생 | INSERT 시 `address = roadAddress` 값으로 채움 | DB NOT NULL 제약 충족, road_address와 의미가 같아 별도 입력 불필요 |
-| 엔티티 생성 패턴 | `@NoArgsConstructor(PROTECTED)` + 정적 팩토리 | setter 없이 필수 필드를 컴파일 타임에 강제, JPA 프록시 호환 |
+| 엔티티 생성 패턴 | `@NoArgsConstructor(PROTECTED)` + 정적 팩토리 + `Objects.requireNonNull(memberId)` | setter 없이 필수 필드를 컴파일 타임에 강제, null은 DB flush 전에 즉시 실패 |
+| Swagger DTO 동기화 | enum 값 변경 시 DTO `@Schema(allowableValues)` 함께 갱신 | enum 변경 후 DTO allowableValues 누락 시 API 문서와 실제 동작이 불일치 |
 | 메일 발송 | AWS SES | 실제 이메일 인증/안내 메일 발송 provider 확정 |
 | SMS 발송 | SOLAPI / CoolSMS | 실제 휴대폰 인증번호 발송 provider 확정 |
 | 시크릿 주입 | `.env` 환경변수만 사용 | 코드 하드코딩 및 GitHub 커밋 금지 |
