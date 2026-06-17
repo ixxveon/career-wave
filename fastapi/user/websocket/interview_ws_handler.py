@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from dataclasses import dataclass, field
@@ -39,13 +40,23 @@ def _make_log(session_id: str) -> _SessionAdapter:
 @dataclass
 class _SessionContext:
     ws: WebSocket
+    member_id: str = ""
     seq: int = 0
-    # 재연결 시 미전달 메시지 재전송용 버퍼 (Phase 6에서 Redis 전환 예정)
+    # 재연결 시 미전달 메시지 재전송용 버퍼 (Scale-out 시 Redis 전환 예정)
     msg_buffer: list[dict[str, Any]] = field(default_factory=list)
 
 
 _sessions: dict[str, _SessionContext] = {}
 _MSG_BUFFER_MAX = 50
+_RECONNECT_WINDOW_SECONDS = 300  # 재연결 대기 윈도우 (5분)
+
+
+async def _expire_session(session_id: str, ctx: _SessionContext) -> None:
+    """재연결 윈도우 경과 후 세션 컨텍스트를 해제한다."""
+    await asyncio.sleep(_RECONNECT_WINDOW_SECONDS)
+    if _sessions.get(session_id) is ctx:
+        _sessions.pop(session_id, None)
+        _base_log.info("[Session: %s] session expired after reconnect window", session_id)
 
 
 def _verify_jwt(token: str) -> dict[str, Any]:
@@ -95,8 +106,10 @@ async def interview_ws(
     try:
         if not token:
             raise JWTError("token missing")
-        _verify_jwt(token)
+        claims = _verify_jwt(token)
+        member_id: str = claims.get("sub", "")
     except JWTError:
+        await websocket.accept()
         await websocket.close(code=1008)
         slog.warning("WS connection rejected: invalid or missing JWT")
         return
@@ -110,6 +123,7 @@ async def interview_ws(
     prev = _sessions.get(session_id)
     ctx = _SessionContext(
         ws=websocket,
+        member_id=member_id,
         seq=prev.seq if prev else 0,
         msg_buffer=prev.msg_buffer if prev else [],
     )
@@ -135,10 +149,11 @@ async def interview_ws(
     except WebSocketDisconnect:
         slog.info("WS disconnected")
     finally:
-        # 새 연결로 교체된 경우엔 제거하지 않음
-        # Phase 6: 5분 좀비 세션 타이머로 교체 예정
+        # 새 연결로 교체된 경우엔 타이머를 걸지 않음
         if _sessions.get(session_id) is ctx:
-            _sessions.pop(session_id, None)
+            # 소켓은 끊겼지만 seq·buffer는 재연결 윈도우 동안 보존
+            asyncio.create_task(_expire_session(session_id, ctx))
+            slog.info("holding buffer for %ds reconnect window", _RECONNECT_WINDOW_SECONDS)
 
 
 # ── 내부 Push 헬퍼 ──────────────────────────────────────────────────────────

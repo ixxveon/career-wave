@@ -1,6 +1,7 @@
 package kr.co.carrer.admin.aimetrics.service;
 
 import kr.co.carrer.admin.aimetrics.type.AiFeatureType;
+import kr.co.carrer.admin.aimetrics.type.AlertChannelType;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
@@ -17,6 +18,12 @@ public interface AiMetricsFastApiGateway {
     HeavyUsersResponse getHeavyUsers(HeavyUsersRequest request);
 
     UsageLogListResponse getUsageLogs(UsageLogSearchRequest request);
+
+    OpsSettingSyncResponse syncOpsSetting(OpsSettingSyncRequest request);
+
+    RagIndexStartResponse startRagIndexing(RagIndexStartRequest request);
+
+    RagIndexDeleteResponse deleteRagIndex(RagIndexDeleteRequest request);
 
     record PeriodRequest(
             String from,
@@ -51,6 +58,35 @@ public interface AiMetricsFastApiGateway {
             AiFeatureType featureType,
             int page,
             int size
+    ) {
+    }
+
+    record OpsSettingSyncRequest(
+            Long aiOpsSettingId,
+            Long selectedModelId,
+            BigDecimal monthlyBudget,
+            boolean alertEnabled,
+            AlertChannelType alertChannel,
+            int alertThreshold,
+            boolean rateLimitEnabled
+    ) {
+    }
+
+    record RagIndexStartRequest(
+            Long ragDocumentId,
+            Long uploadedBy,
+            UUID fileUuid,
+            String originalFileName,
+            String filePath,
+            String mimeType,
+            Long fileSize
+    ) {
+    }
+
+    record RagIndexDeleteRequest(
+            Long ragDocumentId,
+            UUID fileUuid,
+            String filePath
     ) {
     }
 
@@ -127,6 +163,23 @@ public interface AiMetricsFastApiGateway {
             int size,
             long totalElements,
             int totalPages
+    ) {
+    }
+
+    record OpsSettingSyncResponse(
+            boolean synced
+    ) {
+    }
+
+    record RagIndexStartResponse(
+            boolean accepted,
+            Long ragDocumentId
+    ) {
+    }
+
+    record RagIndexDeleteResponse(
+            boolean deleted,
+            Long ragDocumentId
     ) {
     }
 }

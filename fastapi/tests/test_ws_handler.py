@@ -36,30 +36,30 @@ WS_PATH = f"/ws/user/interview/{TEST_SESSION_ID}/ai"
 
 def test_connect_without_token_closes_1008(client: TestClient):
     with pytest.raises(WebSocketDisconnect) as exc:
-        with client.websocket_connect(WS_PATH):
-            pass
+        with client.websocket_connect(WS_PATH) as ws:
+            ws.receive_text()
     assert exc.value.code == 1008
 
 
 def test_connect_with_invalid_token_closes_1008(client: TestClient):
     with pytest.raises(WebSocketDisconnect) as exc:
-        with client.websocket_connect(f"{WS_PATH}?token=totally.invalid.token"):
-            pass
+        with client.websocket_connect(f"{WS_PATH}?token=totally.invalid.token") as ws:
+            ws.receive_text()
     assert exc.value.code == 1008
 
 
 def test_connect_with_expired_token_closes_1008(client: TestClient, expired_token: str):
     with pytest.raises(WebSocketDisconnect) as exc:
-        with client.websocket_connect(f"{WS_PATH}?token={expired_token}"):
-            pass
+        with client.websocket_connect(f"{WS_PATH}?token={expired_token}") as ws:
+            ws.receive_text()
     assert exc.value.code == 1008
 
 
 def test_connect_with_wrong_secret_closes_1008(client: TestClient):
     token = make_token(secret="wrong-secret")
     with pytest.raises(WebSocketDisconnect) as exc:
-        with client.websocket_connect(f"{WS_PATH}?token={token}"):
-            pass
+        with client.websocket_connect(f"{WS_PATH}?token={token}") as ws:
+            ws.receive_text()
     assert exc.value.code == 1008
 
 

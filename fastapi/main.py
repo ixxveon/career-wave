@@ -18,7 +18,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
     scheduler.shutdown()
     # Graceful shutdown: 진행 중인 AI 파이프라인 태스크 최대 15초 대기
-    pending = [t for t in asyncio.all_tasks() if not t.done()]
+    current = asyncio.current_task()
+    pending = [t for t in asyncio.all_tasks() if not t.done() and t is not current]
     if pending:
         log.info("graceful shutdown: waiting for %d pending tasks (timeout=15s)", len(pending))
         await asyncio.wait(pending, timeout=15)

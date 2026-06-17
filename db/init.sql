@@ -167,6 +167,7 @@ CREATE TABLE member_verifications (
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_member_verifications         PRIMARY KEY (verification_id),
+    CONSTRAINT uq_member_verification_token    UNIQUE      (verification_token),
     CONSTRAINT chk_verification_channel        CHECK (channel             IN ('EMAIL', 'PHONE')),
     CONSTRAINT chk_verification_purpose        CHECK (purpose             IN ('REGISTER', 'FIND_ID', 'RESET_PASSWORD')),
     CONSTRAINT chk_verification_status         CHECK (verification_status IN ('SENT', 'VERIFIED', 'EXPIRED', 'FAILED', 'RATE_LIMITED'))
@@ -196,8 +197,9 @@ CREATE TABLE password_reset_tokens (
     used_at        TIMESTAMPTZ NULL,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_password_reset_tokens PRIMARY KEY (reset_token_id),
-    CONSTRAINT fk_reset_token_member    FOREIGN KEY (member_id) REFERENCES members (member_id)
+    CONSTRAINT pk_password_reset_tokens        PRIMARY KEY (reset_token_id),
+    CONSTRAINT uq_password_reset_token_hash    UNIQUE      (token_hash),
+    CONSTRAINT fk_reset_token_member           FOREIGN KEY (member_id) REFERENCES members (member_id)
 );
 COMMENT ON TABLE  password_reset_tokens                IS '비밀번호 재설정 토큰 테이블';
 COMMENT ON COLUMN password_reset_tokens.reset_token_id IS '비밀번호 재설정 토큰 고유 식별자';
@@ -657,7 +659,8 @@ CREATE TABLE payments (
     CONSTRAINT fk_payments_sub       FOREIGN KEY (subscription_id) REFERENCES subscriptions (subscription_id),
     CONSTRAINT fk_payments_plan      FOREIGN KEY (plan_id)         REFERENCES plans (plan_id),
     CONSTRAINT chk_payment_status    CHECK (payment_status IN ('READY', 'CONFIRMING', 'PAID', 'FAILED', 'CANCELED', 'REFUNDED')),
-    CONSTRAINT chk_failure_reason    CHECK (failure_reason IN ('USER_CANCELED', 'CARD_DECLINED', 'TIMEOUT', 'DUPLICATE_ORDER', 'CONFIRM_FAILED', 'FORBIDDEN', 'UNKNOWN'))
+    CONSTRAINT chk_failure_reason    CHECK (failure_reason IN ('USER_CANCELED', 'CARD_DECLINED', 'TIMEOUT', 'DUPLICATE_ORDER', 'CONFIRM_FAILED', 'FORBIDDEN', 'UNKNOWN')),
+    CONSTRAINT chk_paid_approved_at CHECK (payment_status != 'PAID' OR approved_at IS NOT NULL)
 );
 COMMENT ON TABLE  payments                 IS '결제 내역 테이블 (토스페이먼츠 연동)';
 COMMENT ON COLUMN payments.payment_id      IS '결제 고유 식별자';

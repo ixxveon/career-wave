@@ -56,6 +56,7 @@ public class AdminInquiryServiceImpl implements AdminInquiryService {
 
         try {
             inquiry.saveReply(reply, adminId);
+            inquiryRepository.saveAndFlush(inquiry);
         } catch (OptimisticLockingFailureException e) {
             throw new CustomException(AdminCsErrorCode.INQUIRY_CONFLICT);
         }

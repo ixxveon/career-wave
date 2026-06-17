@@ -389,32 +389,33 @@ Authorization: Bearer {accessToken}
 ### 인증 및 구독
 
 ```
-// 1. STOMP 연결
-WS /ws/user/interview?token={accessToken}
+// 1. STOMP 연결 — CONNECT 헤더에 JWT 전달
+WS /ws/user/interview
+CONNECT Headers: { Authorization: "Bearer {accessToken}" }
 
-// 2. 세션 구독
+// 2. 세션 구독 (개인 큐)
 SUBSCRIBE /topic/interview/{sessionId}
 ```
 
-- 핸드셰이크 시 JWT 검증 → 실패 시 연결 거부
+- STOMP CONNECT 헤더로 JWT 검증 → 실패 시 연결 거부
 - SUBSCRIBE 시 `sessionId` 소유권 검증 → 실패 시 연결 종료
 - 구독 직후 현재 상태 스냅샷 수신 (`SESSION_START` 또는 `REPORT_READY`)
 
 ### Connection Lifecycle
 
-```
-클라이언트                                       Spring 서버
-   │                                             │
-   │── STOMP CONNECT (/ws/user/interview?token=) ▶│  JWT 검증
-   │── SUBSCRIBE /topic/interview/{sessionId} ───▶│  소유권 검증
-   │◀─ {"type":"SYSTEM","subType":"SESSION_START"} │  구독 직후 스냅샷
-   │                                             │
-   │◀─ {"type":"QUESTION", ...} ─────────────────│  AI 첫 질문
-   │◀─ {"type":"QUESTION", ...} ─────────────────│  꼬리 질문
-   │                                             │
-   │◀─ {"type":"SYSTEM","subType":"REPORT_READY"} │  리포트 생성 완료 알림
-   │                                             │
-   │  (클라이언트 연결 종료)                     │
+```text
+클라이언트                                            Spring 서버
+   │                                                  │
+   │── STOMP CONNECT (Authorization: Bearer token) ──▶│  JWT 검증
+   │── SUBSCRIBE /topic/interview/{sessionId} ────────▶│  소유권 검증
+   │◀─ {"type":"SYSTEM","subType":"SESSION_START"} ────│  구독 직후 스냅샷
+   │                                                  │
+   │◀─ {"type":"QUESTION", ...} ─────────────────────│  AI 첫 질문
+   │◀─ {"type":"QUESTION", ...} ─────────────────────│  꼬리 질문
+   │                                                  │
+   │◀─ {"type":"SYSTEM","subType":"REPORT_READY"} ────│  리포트 생성 완료 알림
+   │                                                  │
+   │  (클라이언트 연결 종료)                          │
 ```
 
 ### Server → Client 메시지 형식
