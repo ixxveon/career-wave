@@ -6,4 +6,6 @@ export const resumeQueryKeys = {
     ['resume', 'feedback', documentId] as const,
   history: (page: number, size: number, fileType?: FileType) =>
     ['resume', 'history', page, size, fileType] as const,
+  historyInfinite: (fileType?: FileType) =>
+    ['resume', 'history', 'infinite', fileType] as const,
 };

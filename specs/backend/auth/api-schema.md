@@ -43,7 +43,7 @@
 > `refreshToken`은 응답 body가 아닌 **Set-Cookie 헤더**로 전달한다.
 > `Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/user/members`
 >
-> `companyApprovalStatus` 변환 규칙: roleType이 `USER`이면 항상 `NONE`. roleType이 `COMPANY`이면 `hr_managers.hr_status` 기준 — `PENDING`→`PENDING_REVIEW`, `ACTIVE`→`APPROVED`, `REMOVED`→`REJECTED`.
+> `companyApprovalStatus` 변환 규칙: roleType이 `USER`이면 항상 `NONE`. roleType이 `COMPANY`이면 `hr_managers.hr_status` 기준 — `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `NEEDS_REVISION`을 반환한다. `REMOVED`는 HR 연결 제거 상태이며 로그인 허용 상태가 아니다.
 
 **Error**
 - 401 `AUTH_INVALID_CREDENTIALS` — 아이디/비밀번호 불일치 (계정 존재 여부 비노출, 공통 메시지)
@@ -121,9 +121,9 @@
 | memberId | members.member_id |
 | roleType | members.role_type → `USER`, `COMPANY` |
 | memberStatus | members.member_status |
-| companyApprovalStatus | hr_managers.hr_status → `PENDING_REVIEW` / `APPROVED` / `REJECTED`. roleType=USER 또는 hr_managers 행 미존재·hr_status 미매핑 시 `NONE` |
+| companyApprovalStatus | hr_managers.hr_status → `PENDING_REVIEW` / `APPROVED` / `REJECTED` / `NEEDS_REVISION`. roleType=USER 또는 hr_managers 행 미존재·hr_status 미매핑 시 `NONE` |
 | restriction.restrictionType | members.member_status |
-| restriction.recoverable | SUSPENDED / LOCKED → `true`, BANNED / WITHDRAWN → `false` |
+| restriction.recoverable | SUSPENDED / LOCKED → `true`, BANNED / WITHDRAWN / BLACKLISTED → `false` |
 | restriction.availableAt | LOCKED: members.locked_until, SUSPENDED: suspend_histories.end_date (NULL = 영구정지) |
 | restriction.messageCode | 고정값 `"ACCOUNT_RESTRICTED"` |
 | restriction.reason | suspend_histories.reason (최근 이력 1건, BANNED/WITHDRAWN도 포함) |

@@ -197,6 +197,16 @@ public class HrManagerDTO {
         String rejectReason;    // REMOVED 시 저장, 나머지 null
     }
 
+    // 기업 회원 목록 페이지 응답 (pendingCount 포함)
+    public static class ResponsePage {
+        List<ResponseList> items;
+        int page;
+        int size;
+        long totalItems;
+        int totalPages;
+        long pendingCount;  // 승인 대기 수
+    }
+
     // 기업 회원 반려 요청
     public static class RequestReject {
         String rejectReason;    // 최소 10자, 최대 500자
@@ -228,11 +238,11 @@ public class HrManagerDTO {
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/admin/members` | 개인 회원 목록 조회 |
-| GET | `/api/admin/members/{memberId}` | 개인 회원 상세 조회 |
-| POST | `/api/admin/members/{memberId}/sanctions` | 회원 제재 처리 |
+| GET | `/api/v1/admin/members` | 개인 회원 목록 조회 |
+| GET | `/api/v1/admin/members/{memberId}` | 개인 회원 상세 조회 |
+| POST | `/api/v1/admin/members/{memberId}/sanctions` | 회원 제재 처리 |
 
-#### GET /api/admin/members
+#### GET /api/v1/admin/members
 
 **Query Parameters**:
 
@@ -273,7 +283,7 @@ public class HrManagerDTO {
 
 ---
 
-#### GET /api/admin/members/{memberId}
+#### GET /api/v1/admin/members/{memberId}
 
 **Path Parameters**: `memberId` (UUID)
 
@@ -287,7 +297,7 @@ public class HrManagerDTO {
 
 ---
 
-#### POST /api/admin/members/{memberId}/sanctions
+#### POST /api/v1/admin/members/{memberId}/sanctions
 
 **Request Body**: `MemberDTO.RequestSanction`
 
@@ -309,12 +319,12 @@ public class HrManagerDTO {
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/admin/hr-managers` | 기업 회원 목록 조회 |
-| GET | `/api/admin/hr-managers/{memberId}` | 기업 회원 상세 조회 |
-| PATCH | `/api/admin/hr-managers/{memberId}/approve` | 기업 회원 승인 |
-| PATCH | `/api/admin/hr-managers/{memberId}/reject` | 기업 회원 반려 |
+| GET | `/api/v1/admin/hr-managers` | 기업 회원 목록 조회 |
+| GET | `/api/v1/admin/hr-managers/{memberId}` | 기업 회원 상세 조회 |
+| PATCH | `/api/v1/admin/hr-managers/{memberId}/approve` | 기업 회원 승인 |
+| PATCH | `/api/v1/admin/hr-managers/{memberId}/reject` | 기업 회원 반려 |
 
-#### GET /api/admin/hr-managers
+#### GET /api/v1/admin/hr-managers
 
 **Query Parameters**:
 
@@ -327,7 +337,7 @@ public class HrManagerDTO {
 | `page` | int | N | 페이지 번호 (default: 1) |
 | `size` | int | N | 페이지당 건수 (default: 20, 최대 100) |
 
-**Response**: `ApiResponse<Page<HrManagerDTO.ResponseList>>` + `pendingCount`
+**Response**: `ApiResponse<HrManagerDTO.ResponsePage>`
 
 ```json
 {
@@ -353,7 +363,7 @@ public class HrManagerDTO {
 
 ---
 
-#### GET /api/admin/hr-managers/{memberId}
+#### GET /api/v1/admin/hr-managers/{memberId}
 
 **Response**: `ApiResponse<HrManagerDTO.ResponseDetail>`
 
@@ -365,7 +375,7 @@ public class HrManagerDTO {
 
 ---
 
-#### PATCH /api/admin/hr-managers/{memberId}/approve
+#### PATCH /api/v1/admin/hr-managers/{memberId}/approve
 
 **Response**: `ApiResponse<HrManagerDTO.ResponseApprove>`
 
@@ -378,7 +388,7 @@ public class HrManagerDTO {
 
 ---
 
-#### PATCH /api/admin/hr-managers/{memberId}/reject
+#### PATCH /api/v1/admin/hr-managers/{memberId}/reject
 
 **Request Body**: `HrManagerDTO.RequestReject`
 
@@ -475,5 +485,155 @@ rejectHrManager(memberId, RequestReject dto)
 - `company_profiles` 테이블은 `user` 도메인에서 관리하며, 이 도메인에서는 JOIN 조회만 수행한다. (`admin`↔`user` 직접 참조 금지 — Repository 레벨에서 Native Query 또는 별도 인터페이스로 처리)
 - `admins` 테이블의 PK는 BIGINT. `suspend_histories.admin_id`는 로그인한 관리자 ID를 사용한다.
 - `reportCount`는 별도 `reports` 테이블의 집계값이다. 상세 조회 시 subquery 또는 JOIN으로 제공한다.
-- 동적 필터링 쿼리는 QueryDSL 또는 JPA Specification으로 구현한다.
+- 동적 필터링 쿼리는 Native Query(EntityManager 직접 사용)로 구현한다.
 - 기업 회원 재직증명서 파일 정보(`certFileUrl`, `certFileName`)는 `documents` 테이블 연동 예정이며, v1에서는 저장된 URL 조회만 처리한다.
+
+---
+
+## User Stories
+
+### Story 1 — 개인 회원 목록 조회 (P1)
+
+**As** 관리자
+**I want** 개인 회원을 상태·플랜·키워드로 필터링하여 조회하고 싶다
+**So that** 제재 또는 관리가 필요한 회원을 빠르게 찾을 수 있다
+
+**Scenario 1**: 필터 없이 전체 조회
+- Given 회원 데이터가 존재할 때
+- When GET /api/v1/admin/members 요청 시
+- Then 전체 회원 목록을 반환한다
+
+**Scenario 2**: 상태 필터 적용
+- Given status=SUSPENDED로 요청 시
+- When GET /api/v1/admin/members?status=SUSPENDED 요청 시
+- Then member_status = SUSPENDED 회원만 반환한다
+
+**Scenario 3**: 잘못된 필터 값
+- Given role=INVALID로 요청 시
+- When GET /api/v1/admin/members?role=INVALID 요청 시
+- Then 400 INVALID_MEMBER_FILTER를 반환한다
+
+---
+
+### Story 2 — 개인 회원 상세 조회 (P1)
+
+**As** 관리자
+**I want** 회원의 상세 정보와 신고 횟수를 확인하고 싶다
+**So that** 제재 처리 여부를 판단할 수 있다
+
+**Scenario 1**: 정상 조회
+- Given 유효한 memberId로 요청 시
+- When GET /api/v1/admin/members/{memberId} 요청 시
+- Then 회원 상세 정보와 reportCount를 반환한다
+
+**Scenario 2**: 회원 없음
+- Given 존재하지 않는 memberId로 요청 시
+- When GET /api/v1/admin/members/{memberId} 요청 시
+- Then 404 MEMBER_NOT_FOUND를 반환한다
+
+---
+
+### Story 3 — 회원 제재 처리 (P1)
+
+**As** 관리자
+**I want** 규정 위반 회원에게 경고·정지·영구 제재를 부여하고 싶다
+**So that** 플랫폼 규정을 위반한 회원을 제재할 수 있다
+
+**Scenario 1**: 경고 처리
+- Given ACTIVE 상태 회원에 WARNING 제재 요청 시
+- When POST /api/v1/admin/members/{memberId}/sanctions 요청 시
+- Then warning_count가 1 증가하고 SuspendHistory가 저장된다
+
+**Scenario 2**: 일시 정지 처리
+- Given ACTIVE 상태 회원에 SUSPEND + SEVEN_DAYS 제재 요청 시
+- When POST /api/v1/admin/members/{memberId}/sanctions 요청 시
+- Then member_status = SUSPENDED, suspend_end_date = now+7일, SuspendHistory 저장된다
+
+**Scenario 3**: 영구 제재(블랙리스트)
+- Given ACTIVE 상태 회원에 BLACKLIST 제재 요청 시
+- When POST /api/v1/admin/members/{memberId}/sanctions 요청 시
+- Then member_status = BANNED, suspend_end_date = null, SuspendHistory 저장된다
+
+**Scenario 4**: 이미 영구 제재된 회원 재제재 시도
+- Given BANNED 상태 회원에 대해
+- When POST /api/v1/admin/members/{memberId}/sanctions 요청 시
+- Then 409 ALREADY_BANNED를 반환한다
+
+**Scenario 5**: SUSPEND에 PERMANENT duration 지정
+- Given SUSPEND + PERMANENT로 요청 시
+- When POST /api/v1/admin/members/{memberId}/sanctions 요청 시
+- Then 400 INVALID_SANCTION_DURATION을 반환한다
+
+---
+
+### Story 4 — 기업 회원 목록 조회 (P1)
+
+**As** 관리자
+**I want** 기업 회원 가입 신청 현황을 조회하고 싶다
+**So that** PENDING 상태 신청을 빠르게 파악하고 처리할 수 있다
+
+**Scenario 1**: 전체 조회
+- Given 기업 회원 데이터가 존재할 때
+- When GET /api/v1/admin/hr-managers 요청 시
+- Then 목록과 함께 pendingCount를 반환한다
+
+**Scenario 2**: PENDING 필터
+- Given hrStatus=PENDING으로 요청 시
+- When GET /api/v1/admin/hr-managers?hrStatus=PENDING 요청 시
+- Then PENDING 상태 기업 회원만 반환한다
+
+---
+
+### Story 5 — 기업 회원 승인·반려 (P1)
+
+**As** 관리자
+**I want** 기업 회원 가입 신청을 승인 또는 반려하고 싶다
+**So that** 플랫폼 이용 자격을 심사할 수 있다
+
+**Scenario 1**: 승인 처리
+- Given PENDING 상태 hr_manager에 대해
+- When PATCH /api/v1/admin/hr-managers/{memberId}/approve 요청 시
+- Then hr_status = ACTIVE, approved_at 설정 후 결과를 반환한다
+
+**Scenario 2**: 반려 처리
+- Given PENDING 상태 hr_manager에 대해 rejectReason 포함하여 요청 시
+- When PATCH /api/v1/admin/hr-managers/{memberId}/reject 요청 시
+- Then hr_status = REMOVED, reject_reason 저장 후 결과를 반환한다
+
+**Scenario 3**: 이미 처리된 신청 재처리
+- Given ACTIVE 또는 REMOVED 상태 hr_manager에 대해
+- When PATCH /api/v1/admin/hr-managers/{memberId}/approve 요청 시
+- Then 409 ALREADY_PROCESSED를 반환한다
+
+**Scenario 4**: 반려 사유 미입력
+- Given rejectReason이 blank인 경우
+- When PATCH /api/v1/admin/hr-managers/{memberId}/reject 요청 시
+- Then 400 REASON_REQUIRED를 반환한다
+
+---
+
+## Edge Cases
+
+- EC-001: BANNED 상태 회원에 제재 재시도 → 409 ALREADY_BANNED
+- EC-002: SUSPEND 제재에 duration = null → 400 INVALID_SANCTION_DURATION
+- EC-003: SUSPEND 제재에 duration = PERMANENT → 400 INVALID_SANCTION_DURATION (BLACKLIST 전용)
+- EC-004: 제재 reason이 blank → 400 REASON_REQUIRED
+- EC-005: 제재 reason이 10자 미만 → 400 REASON_TOO_SHORT
+- EC-006: PENDING 아닌 hr_manager 승인/반려 시도 → 409 ALREADY_PROCESSED
+- EC-007: 반려 rejectReason이 blank → 400 REASON_REQUIRED
+- EC-008: 반려 rejectReason이 10자 미만 → 400 REASON_TOO_SHORT
+- EC-009: 존재하지 않는 memberId 조회 → 404 MEMBER_NOT_FOUND
+- EC-010: 잘못된 Enum 필터(role, status, plan) → 400 INVALID_MEMBER_FILTER
+
+---
+
+## Success Criteria
+
+- SC-001: BANNED 회원 재제재 시도 시 409가 반환된다
+- SC-002: SUSPEND + PERMANENT 지정 시 400이 반환된다
+- SC-003: SUSPEND 제재 시 member_status = SUSPENDED, suspend_end_date가 정확히 설정된다
+- SC-004: 제재 처리 시 members 업데이트와 SuspendHistory INSERT가 동일 트랜잭션에서 실행된다
+- SC-005: PENDING 아닌 hr_manager 재처리 시도 시 409가 반환된다
+- SC-006: 반려 rejectReason blank 시 400이 반환된다
+- SC-007: 기업 회원 목록 응답에 pendingCount가 포함된다
+- SC-008: 모든 응답이 ApiResponse<T> 래퍼로 감싸진다

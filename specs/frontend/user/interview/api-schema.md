@@ -288,10 +288,26 @@ Authorization: Bearer {accessToken}
 
 | statusCode | 상황 |
 |-----------|------|
-| `403` | 본인 소유가 아닌 세션 |
-| `404` | 존재하지 않는 `sessionId` |
-| `409` | 리포트 아직 생성 중 (`INTERVIEW_REPORT_NOT_READY`) — `data.estimatedWaitSeconds` 참고 |
+| `403` | 존재하지 않는 `sessionId` 또는 본인 소유가 아닌 세션 (IDOR 방어: 두 경우 모두 동일 응답) |
+| `409` | 리포트 아직 생성 중 (`INTERVIEW_REPORT_NOT_READY`) — 응답 `code: "INTERVIEW_REPORT_NOT_READY"`, `data.estimatedWaitSeconds` 참고 |
 | `401` | 토큰 없음 또는 만료 |
+
+#### 409 응답 예시
+
+```json
+{
+  "success": false,
+  "statusCode": 409,
+  "message": "리포트가 아직 생성 중입니다.",
+  "code": "INTERVIEW_REPORT_NOT_READY",
+  "data": {
+    "status": "ANALYZING",
+    "estimatedWaitSeconds": 15
+  }
+}
+```
+
+> ⚠️ **미구현 (Phase 7-1)**: 현재 구현은 `data` / `code` 없이 기본 에러 포맷만 반환한다. FE 연동 전 구현 필요.
 
 ---
 
@@ -315,7 +331,7 @@ Authorization: Bearer {accessToken}
   "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
-    "content": [
+    "items": [
       {
         "careerHistoryId": 1,
         "sessionId": "uuid-v4",
@@ -341,7 +357,7 @@ Authorization: Bearer {accessToken}
     ],
     "page": 0,
     "size": 10,
-    "totalElements": 15,
+    "totalItems": 15,
     "totalPages": 2
   }
 }
@@ -349,12 +365,12 @@ Authorization: Bearer {accessToken}
 
 | Field | Type | 설명 |
 |-------|------|------|
-| `data.content[].careerHistoryId` | `number` | 이력 고유 식별자 |
-| `data.content[].sessionType` | `string` | `TEXT` \| `VOICE` \| `VIDEO` |
-| `data.content[].interviewType` | `string` \| `null` | `TECHNICAL` \| `PERSONALITY` \| `PROJECT`, 미입력 시 `null` |
-| `data.content[].targetCompany` | `string` \| `null` | 미입력 시 `null` |
-| `data.content[].totalScore` | `number` \| `null` | 리포트 미완료 또는 `FAILED` 시 `null` |
-| `data.content[].pdfUrl` | `string` \| `null` | 종합 진단 PDF URL (S3), 미생성 시 `null` |
+| `data.items[].careerHistoryId` | `number` | 이력 고유 식별자 |
+| `data.items[].sessionType` | `string` | `TEXT` \| `VOICE` \| `VIDEO` |
+| `data.items[].interviewType` | `string` \| `null` | `TECHNICAL` \| `PERSONALITY` \| `PROJECT`, 미입력 시 `null` |
+| `data.items[].targetCompany` | `string` \| `null` | 미입력 시 `null` |
+| `data.items[].totalScore` | `number` \| `null` | 리포트 미완료 또는 `FAILED` 시 `null` |
+| `data.items[].pdfUrl` | `string` \| `null` | 종합 진단 PDF URL (S3), 미생성 시 `null` |
 
 ### Error Cases
 

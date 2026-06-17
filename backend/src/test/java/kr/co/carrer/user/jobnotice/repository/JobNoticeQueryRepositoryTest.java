@@ -296,6 +296,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
     @DisplayName("filters period by today, 7d, and 30d contracts")
     void findActiveJobNotices_filtersByPeriodContract() {
         ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
+        ZonedDateTime today = now.toLocalDate().atStartOfDay(SERVICE_ZONE_ID).plusMinutes(1);
 
         persistJobNotice(
                 "Period Co",
@@ -307,7 +308,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 JobNoticeStatus.ACTIVE,
                 10,
                 now.toLocalDate().plusDays(10),
-                now.minusHours(1)
+                today
         );
         persistJobNotice(
                 "Period Co",

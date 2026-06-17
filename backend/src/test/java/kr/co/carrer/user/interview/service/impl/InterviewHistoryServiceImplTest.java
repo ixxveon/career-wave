@@ -1,0 +1,109 @@
+package kr.co.carrer.user.interview.service.impl;
+
+import kr.co.carrer.global.response.PaginationResponse;
+import kr.co.carrer.user.interview.dto.InterviewDTO;
+import kr.co.carrer.user.interview.repository.CareerHistoryRepository;
+import kr.co.carrer.user.interview.repository.projection.CareerHistoryWithSession;
+import kr.co.carrer.user.interview.type.SessionStatus;
+import kr.co.carrer.user.interview.type.SessionType;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+
+@ExtendWith(MockitoExtension.class)
+class InterviewHistoryServiceImplTest {
+
+    @InjectMocks
+    private InterviewHistoryServiceImpl interviewHistoryService;
+
+    @Mock private CareerHistoryRepository careerHistoryRepository;
+
+    @Nested
+    @DisplayName("면접 이력 조회 - getHistory()")
+    class GetHistory {
+
+        @Test
+        @DisplayName("본인 이력만 반환되며 PaginationResponse 형식이다")
+        void getHistory_returnsPaginatedItems() {
+            UUID memberId = UUID.randomUUID();
+            UUID sessionId = UUID.randomUUID();
+
+            CareerHistoryWithSession row = mock(CareerHistoryWithSession.class);
+            given(row.getCareerHistoryId()).willReturn(1L);
+            given(row.getSessionId()).willReturn(sessionId);
+            given(row.getSessionType()).willReturn(SessionType.TEXT);
+            given(row.getInterviewType()).willReturn(null);
+            given(row.getTargetCompany()).willReturn(null);
+            given(row.getSessionStatus()).willReturn(SessionStatus.COMPLETED);
+            given(row.getTotalScore()).willReturn(85);
+            given(row.getPdfUrl()).willReturn(null);
+            given(row.getCreatedAt()).willReturn(ZonedDateTime.now());
+
+            given(careerHistoryRepository.findHistoryByMemberId(any(), any()))
+                    .willReturn(new PageImpl<>(List.of(row), PageRequest.of(0, 10), 1));
+
+            PaginationResponse<InterviewDTO.HistoryItem> result =
+                    interviewHistoryService.getHistory(memberId, 0, 10);
+
+            assertThat(result.items()).hasSize(1);
+            assertThat(result.totalItems()).isEqualTo(1);
+            assertThat(result.items().get(0).sessionType()).isEqualTo(SessionType.TEXT.name());
+            assertThat(result.items().get(0).totalScore()).isEqualTo(85);
+        }
+
+        @Test
+        @DisplayName("이력이 없으면 빈 목록을 반환한다")
+        void getHistory_noHistory_returnsEmpty() {
+            UUID memberId = UUID.randomUUID();
+
+            given(careerHistoryRepository.findHistoryByMemberId(any(), any()))
+                    .willReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+            PaginationResponse<InterviewDTO.HistoryItem> result =
+                    interviewHistoryService.getHistory(memberId, 0, 10);
+
+            assertThat(result.items()).isEmpty();
+            assertThat(result.totalItems()).isZero();
+        }
+
+        @Test
+        @DisplayName("세션이 삭제된 이력은 sessionType이 null로 반환된다")
+        void getHistory_orphanedHistory_returnsNullSessionFields() {
+            UUID memberId = UUID.randomUUID();
+            UUID sessionId = UUID.randomUUID();
+
+            CareerHistoryWithSession row = mock(CareerHistoryWithSession.class);
+            given(row.getCareerHistoryId()).willReturn(1L);
+            given(row.getSessionId()).willReturn(sessionId);
+            given(row.getSessionType()).willReturn(null);
+            given(row.getSessionStatus()).willReturn(null);
+            given(row.getTotalScore()).willReturn(null);
+            given(row.getPdfUrl()).willReturn(null);
+            given(row.getCreatedAt()).willReturn(ZonedDateTime.now());
+
+            given(careerHistoryRepository.findHistoryByMemberId(any(), any()))
+                    .willReturn(new PageImpl<>(List.of(row), PageRequest.of(0, 10), 1));
+
+            PaginationResponse<InterviewDTO.HistoryItem> result =
+                    interviewHistoryService.getHistory(memberId, 0, 10);
+
+            assertThat(result.items().get(0).sessionType()).isNull();
+            assertThat(result.items().get(0).sessionStatus()).isNull();
+        }
+    }
+}
