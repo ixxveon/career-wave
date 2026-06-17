@@ -65,7 +65,7 @@ export function useSpringWebSocket({
         attemptRef.current = 0;
         onStatusChangeRef.current('CONNECTED');
 
-        client.subscribe(`/user/queue/interview/${sid}`, (frame) => {
+        client.subscribe(`/topic/interview/${sid}`, (frame) => {
           try {
             const msg = JSON.parse(frame.body) as SpringWSMessage;
             onMessageRef.current(msg);
