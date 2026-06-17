@@ -51,4 +51,12 @@ public class PasswordResetToken {
     public void markUsed() {
         this.usedAt = Instant.now();
     }
+
+    public static PasswordResetToken create(UUID memberId, String tokenHash, Instant expiresAt) {
+        PasswordResetToken t = new PasswordResetToken();
+        t.memberId = memberId;
+        t.tokenHash = tokenHash;
+        t.expiresAt = expiresAt;
+        return t;
+    }
 }

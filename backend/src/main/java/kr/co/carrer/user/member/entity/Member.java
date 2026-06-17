@@ -94,7 +94,7 @@ public class Member {
         this.lockedUntil = lockedUntil;
     }
     public void updateProfile(String name, String phone) {
-    this.name = name;
-    this.phone = phone;
+        this.name = name;
+        this.phone = phone;
     }
 }

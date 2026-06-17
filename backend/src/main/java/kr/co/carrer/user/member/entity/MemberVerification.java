@@ -85,4 +85,17 @@ public class MemberVerification {
     public void expire() {
         this.verificationStatus = VerificationStatus.EXPIRED;
     }
+
+    public static MemberVerification issue(VerificationChannel channel, String target,
+                                           VerificationPurpose purpose, String codeHash,
+                                           Instant expiresAt, Instant resendAvailableAt) {
+        MemberVerification v = new MemberVerification();
+        v.channel = channel;
+        v.target = target;
+        v.purpose = purpose;
+        v.codeHash = codeHash;
+        v.expiresAt = expiresAt;
+        v.resendAvailableAt = resendAvailableAt;
+        return v;
+    }
 }

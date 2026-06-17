@@ -62,4 +62,14 @@ public class SocialAccount {
     protected void onUpdate() {
         updatedAt = Instant.now();
     }
+
+    public static SocialAccount link(UUID memberId, SocialProvider provider,
+                                     String providerUserId, String providerEmail) {
+        SocialAccount a = new SocialAccount();
+        a.memberId = memberId;
+        a.provider = provider;
+        a.providerUserId = providerUserId;
+        a.providerEmail = providerEmail;
+        return a;
+    }
 }

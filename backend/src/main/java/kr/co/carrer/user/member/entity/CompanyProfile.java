@@ -86,4 +86,27 @@ public class CompanyProfile {
     protected void onUpdate() {
         updatedAt = Instant.now();
     }
+
+    public static CompanyProfile create(UUID memberId, CompanyType companyType, String companyName,
+                                        String businessNumber, String ceoName,
+                                        String postalCode, String roadAddress, String jibunAddress, String addressDetail,
+                                        boolean isAgency, String certificateNumber,
+                                        String certFileUrl, String certFileName) {
+        CompanyProfile p = new CompanyProfile();
+        p.memberId = memberId;
+        p.companyType = companyType;
+        p.companyName = companyName;
+        p.businessNumber = businessNumber;
+        p.ceoName = ceoName;
+        p.address = roadAddress;
+        p.postalCode = postalCode;
+        p.roadAddress = roadAddress;
+        p.jibunAddress = jibunAddress;
+        p.addressDetail = addressDetail;
+        p.isAgency = isAgency;
+        p.certificateNumber = certificateNumber;
+        p.certFileUrl = certFileUrl;
+        p.certFileName = certFileName;
+        return p;
+    }
 }
