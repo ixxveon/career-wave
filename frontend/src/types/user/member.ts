@@ -193,7 +193,10 @@ export interface CompanyRegisterRequest {
   companyName: string;
   businessNumber: string;
   ceoName: string;
-  address: string;
+  certificateNumber: string;
+  postalCode: string;
+  roadAddress: string;
+  jibunAddress?: string;
   addressDetail: string;
   companyType: CompanyType;
   isAgency: boolean;

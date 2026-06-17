@@ -338,11 +338,11 @@ CREATE INDEX idx_social_accounts_member_id ON social_accounts(member_id);
 - `businessNumber`: 국세청 사업자등록정보 상태조회 API로 검증한다.
 - `verificationCode`: 6자리 숫자
 - `companyType`: 프론트 `CompanyType` enum 허용값만 사용
-- `address`: 도로명주소 API 검색 결과의 기본 주소를 사용한다.
-- `postalCode`: 도로명주소 API 검색 결과의 우편번호를 사용한다.
-- `roadAddress`: 도로명주소 API 검색 결과의 도로명주소를 사용한다.
-- `jibunAddress`: 도로명주소 API 검색 결과의 지번주소가 있을 경우 저장한다.
-- `addressDetail`: 선택 입력이며 길이 제한과 금지 문자 검증을 적용한다.
+- `postalCode`: Kakao(Daum) 우편번호 서비스 검색 결과의 우편번호(`zonecode`)를 사용한다. 필수값.
+- `roadAddress`: Kakao(Daum) 우편번호 서비스 검색 결과의 도로명주소를 사용한다. 필수값.
+- `jibunAddress`: Kakao(Daum) 우편번호 서비스 검색 결과의 지번주소가 있을 경우 저장한다. 선택값.
+- `addressDetail`: 사용자가 직접 입력하는 상세주소이며 선택값이다.
+- 백엔드 INSERT 시 `company_profiles.address`(DB NOT NULL) 컬럼은 `roadAddress` 값으로 채운다.
 - `employmentCertificate`: PDF, MIME type `application/pdf`, 최대 5MB
 - 개인회원 필수 약관: `terms.service=true`, `terms.privacy=true`
 - 개인회원 선택 약관: `terms.marketing=false` 기본값, 제출값을 `member_terms_agreements.marketing_agreed`에 저장한다.
@@ -362,13 +362,10 @@ CREATE INDEX idx_social_accounts_member_id ON social_accounts(member_id);
 - 외부 API 응답으로 사업자 존재 여부, 정상 사업자 여부, 휴업 여부, 폐업 여부를 확인한다.
 - status 조회 결과가 유효하면 기업 인증 검증 상태를 통과 처리하고 가입 신청을 생성한다.
 - 외부 API 장애, 타임아웃, 일시 제한 초과 시에는 가입 신청을 실패시킨다 (`COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE 503`). `PENDING_REVIEW` 자동 전환은 하지 않는다.
-- 프론트의 주소 검색 버튼은 이번 기업회원 가입 범위에서 활성화한다.
-- 주소 검색은 행정안전부 도로명주소 API 또는 동등한 한국 주소 API를 사용한다.
-- 프론트는 사용자가 선택한 주소 결과의 `postalCode`, `roadAddress`, 선택 가능한 `jibunAddress`를 가입 request에 포함한다.
-- 백엔드는 `address`, `postalCode`, `roadAddress`를 필수 검증하고 `addressDetail`, `jibunAddress`는 선택값으로 저장한다.
-
-> 현재 프론트 `CompanyRegisterForm`에는 `certificateNumber` 입력이 있으나 `CompanyRegisterRequest` 타입과 `toCompanyRegisterRequest()`에는 포함되어 있지 않다. 백엔드 구현 전 프론트 타입과 payload mapping을 동기화해야 한다.
-> 현재 프론트 주소 검색 버튼은 disabled 상태이므로, 이번 범위에서 버튼 활성화와 도로명주소 API 연동 작업이 필요하다.
+- 프론트 주소 검색은 Kakao(Daum) 우편번호 서비스를 사용한다. 별도 API Key 불필요.
+- 프론트는 `CompanyRegisterForm`의 "주소 검색" 버튼 클릭 시 Daum Postcode 팝업을 열고, 선택 결과를 `postalCode`, `roadAddress`, `jibunAddress`에 자동 입력한다.
+- 프론트는 `postalCode`, `roadAddress`, `jibunAddress`, `addressDetail`, `certificateNumber`를 가입 request에 포함한다.
+- 백엔드는 `postalCode`, `roadAddress`를 필수 검증하고 `addressDetail`, `jibunAddress`는 선택값으로 저장한다.
 
 ---
 

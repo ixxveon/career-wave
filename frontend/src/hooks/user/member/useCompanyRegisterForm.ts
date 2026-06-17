@@ -1,4 +1,14 @@
 import { useRef, useState, type ChangeEvent } from 'react';
+
+declare global {
+  interface Window {
+    daum?: {
+      Postcode: new (options: {
+        oncomplete: (data: { zonecode: string; roadAddress: string; jibunAddress: string }) => void;
+      }) => { open: () => void };
+    };
+  }
+}
 import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../../types/user/member';
 import { validateEmploymentCertificateFile } from '../../../utils/user/member/fileValidation';
 import {
@@ -26,7 +36,9 @@ const initialCompanyForm = {
   businessNumber: '',
   companyName: '',
   ceoName: '',
-  address: '',
+  postalCode: '',
+  roadAddress: '',
+  jibunAddress: '',
   addressDetail: '',
   isAgency: false,
   certificateNumber: '',
@@ -115,7 +127,9 @@ export function useCompanyRegisterForm() {
     companyName: form.companyName,
     businessNumber: form.businessNumber,
     ceoName: form.ceoName,
-    address: form.address,
+    postalCode: form.postalCode,
+    roadAddress: form.roadAddress,
+    jibunAddress: form.jibunAddress,
     addressDetail: form.addressDetail,
     isAgency: form.isAgency,
     companyType: form.companyType,
@@ -178,6 +192,35 @@ export function useCompanyRegisterForm() {
         emailRemainingAttempts: 0,
       }));
     }
+  };
+
+  const handleAddressSearch = () => {
+    const openPopup = () => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      new window.daum!.Postcode({
+        oncomplete: (data) => {
+          setForm((current) => ({
+            ...current,
+            postalCode: data.zonecode,
+            roadAddress: data.roadAddress,
+            jibunAddress: data.jibunAddress ?? '',
+          }));
+          setFieldErrors((current) => ({ ...current, roadAddress: '' }));
+          setFormMessage('');
+          setSuccessMessage('');
+        },
+      }).open();
+    };
+
+    if (window.daum?.Postcode) {
+      openPopup();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+    script.onload = openPopup;
+    document.head.appendChild(script);
   };
 
   const handleCertificateChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -413,6 +456,7 @@ export function useCompanyRegisterForm() {
     fieldErrors,
     form,
     formMessage,
+    handleAddressSearch,
     handleCertificateChange,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,

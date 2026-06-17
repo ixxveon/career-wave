@@ -84,8 +84,8 @@
 - [ ] businessNumber normalization 및 10자리 검증 추가
 - [ ] certificateNumber 필수 검증 추가
 - [ ] companyName, ceoName 필수 검증 추가
-- [ ] address/postalCode/roadAddress 필수, addressDetail/jibunAddress 선택 검증 추가
-- [ ] `CompanyRegisterRequest`에 `certificateNumber`, `postalCode`, `roadAddress`, `jibunAddress` 필드 추가 필요 명시
+- [x] postalCode/roadAddress 필수, addressDetail/jibunAddress 선택 검증 추가 — `validateCompanyRegisterForm()` 반영 완료
+- [x] `CompanyRegisterRequest`에 `certificateNumber`, `postalCode`, `roadAddress`, `jibunAddress` 필드 추가 — 프론트 타입 및 payload mapping 완료
 - [ ] verification code 6자리 숫자 검증 추가
 - [ ] verification target이 EMAIL일 때 이메일 형식 검증 추가
 - [ ] verification target이 PHONE일 때 한국 휴대폰 번호 형식 검증 추가
@@ -135,9 +135,10 @@
 - [ ] status API timeout / 4xx / 5xx / 빈 응답을 `UserAuthErrorCode`로 매핑한다.
 - [ ] businessNumber normalize 후 외부 API를 호출하도록 구현한다.
 - [ ] 외부 사업자 검증 실패/장애 ErrorCode 구현
-- [ ] 프론트 기업회원 가입 주소 검색 버튼 활성화
-- [ ] 행정안전부 도로명주소 API 또는 동등한 한국 주소 API 연동
-- [ ] 주소 검색 결과를 `address`, `postalCode`, `roadAddress`, `jibunAddress`로 가입 payload에 매핑
+- [x] 프론트 기업회원 가입 주소 검색 버튼 활성화 — `CompanyRegisterForm.tsx` "주소 검색" 버튼 활성화 완료
+- [x] Kakao(Daum) 우편번호 서비스 연동 — `handleAddressSearch()` 구현, 별도 API Key 불필요
+- [x] 주소 검색 결과를 `postalCode`, `roadAddress`, `jibunAddress`로 가입 payload에 매핑 — `CompanyRegisterRequest` 타입 및 `toCompanyRegisterRequest()` 완료
+- [ ] 백엔드 기업회원 가입 service에서 `company_profiles.address` 컬럼을 `roadAddress` 값으로 채워 INSERT
 - [ ] `UserSocialAuthService` 인터페이스 작성
 - [ ] OAuth authorize URL 생성 및 state 저장 구현
 - [ ] OAuth state를 Redis에 저장하는 구조(key, value, TTL)를 확정하고 구현한다.

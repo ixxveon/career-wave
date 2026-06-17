@@ -492,7 +492,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
   "businessNumber": "1234567890",
   "ceoName": "대표자",
   "certificateNumber": "202606150001",
-  "address": "서울특별시 강남구 테헤란로 123",
   "postalCode": "06134",
   "roadAddress": "서울특별시 강남구 테헤란로 123",
   "jibunAddress": "서울특별시 강남구 역삼동 123-45",
@@ -529,7 +528,7 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 - 사용 API는 공공데이터포털 `국세청 사업자등록정보 상태조회(status)` API다.
 - 이번 단계에서는 `businessNumber`만으로 status API를 호출한다.
 - `start_dt`, `p_nm`, `ceoName`, `certificateNumber`를 status API 검증 파라미터로 사용하지 않는다.
-- 현재 프론트 화면은 `certificateNumber`를 입력받지만 `CompanyRegisterRequest` 타입과 payload mapping에는 누락되어 있으므로 프론트 연동 전 타입 업데이트가 필요하다.
+- `certificateNumber`는 프론트 `CompanyRegisterRequest` 타입과 payload mapping에 포함되어 있다.
 - 외부 API 검증 실패 시 `COMPANY_BUSINESS_VERIFICATION_FAILED`를 반환한다.
 - 외부 API 장애/타임아웃은 `COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE`을 반환하거나 admin 수동 검증 대상으로 접수하는 정책 중 하나로 확정한다.
 
@@ -537,10 +536,11 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 
 - 주소 검색은 이번 기업회원 가입 범위에 포함한다.
 - 프론트는 주소 검색 버튼을 활성화하고 행정안전부 도로명주소 API 또는 동등한 한국 주소 API를 호출한다.
-- 백엔드는 `address`, `postalCode`, `roadAddress`를 필수 문자열로 검증한다.
-- `addressDetail`, `jibunAddress`는 선택 문자열로 저장한다.
-- 직접 입력만으로 생성된 주소는 허용하지 않고, 주소 검색 결과에서 선택된 주소를 request로 제출한다.
-- 현재 프론트 `CompanyRegisterRequest` 타입에는 `postalCode`, `roadAddress`, `jibunAddress`, `certificateNumber`가 없으므로 프론트 타입과 payload mapping 업데이트가 필요하다.
+- 프론트는 Kakao(Daum) 우편번호 서비스로 주소를 검색하며, 선택 결과에서 `postalCode`, `roadAddress`, `jibunAddress`를 자동 입력한다.
+- `addressDetail`은 사용자가 직접 입력한다.
+- 백엔드는 `postalCode`, `roadAddress`를 필수 문자열로 검증한다. `addressDetail`, `jibunAddress`는 선택값이다.
+- 직접 입력만으로 생성된 주소는 허용하지 않는다.
+- 백엔드 INSERT 시 `address` 컬럼(DB NOT NULL)은 `roadAddress` 값으로 채운다.
 
 #### Response `201 Created`
 

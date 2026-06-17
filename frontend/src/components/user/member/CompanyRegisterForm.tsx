@@ -41,6 +41,7 @@ export function CompanyRegisterForm({
     fieldErrors,
     form,
     formMessage,
+    handleAddressSearch,
     handleCertificateChange,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,
@@ -96,14 +97,26 @@ export function CompanyRegisterForm({
             </Field>
             <Field label="회사주소" required wide>
               <AuthButtonGroup
-                input={<TextInput value={form.address} onChange={(value) => update('address', value)} placeholder="주소를 직접 입력해주세요 (주소 검색 준비 중)" />}
+                input={
+                  <TextInput
+                    value={form.postalCode ? `[${form.postalCode}] ${form.roadAddress}` : ''}
+                    onChange={() => {}}
+                    placeholder="주소 검색 버튼을 눌러 주소를 검색해주세요."
+                  />
+                }
                 buttonLabel="주소 검색"
-                disabled
-                onClick={() => {}}
+                onClick={handleAddressSearch}
               />
+              {form.jibunAddress && <p className="cw-register-address-jibun">{form.jibunAddress}</p>}
+              {fieldErrors.roadAddress && <p className="cw-register-error">{fieldErrors.roadAddress}</p>}
             </Field>
             <Field label="상세주소" wide>
-              <TextInput value={form.addressDetail} onChange={(value) => update('addressDetail', value)} placeholder="상세주소 입력" />
+              <TextInput
+                value={form.addressDetail}
+                onChange={(value) => update('addressDetail', value)}
+                placeholder="상세주소 입력"
+                disabled={!form.roadAddress}
+              />
             </Field>
             <label className="cw-register-check cw-register-field--wide">
               <input type="checkbox" checked={form.isAgency} onChange={() => update('isAgency', !form.isAgency)} />
