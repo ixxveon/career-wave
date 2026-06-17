@@ -14,7 +14,6 @@ import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.MemberType;
 import kr.co.carrer.user.member.type.RoleType;
-import kr.co.carrer.user.member.type.CompanyApprovalStatus;
 import kr.co.carrer.user.member.type.SubscriptionStatus;
 import kr.co.carrer.user.member.dto.UserLoginDto;
 import kr.co.carrer.user.member.service.UserLoginService;
@@ -176,8 +175,6 @@ class UserLoginServiceImplTest {
     void APPROVED_기업회원_로그인_성공() throws Exception {
         Member member = createMember(RoleType.COMPANY, MemberStatus.ACTIVE);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
-        when(statusQueryRepository.findCompanyApprovalStatus(member.getMemberId()))
-                .thenReturn(CompanyApprovalStatus.APPROVED);
         when(statusQueryRepository.findCompanyHrStatus(member.getMemberId()))
                 .thenReturn("APPROVED");
 
@@ -192,8 +189,6 @@ class UserLoginServiceImplTest {
     void PENDING_REVIEW_기업회원_AUTH_COMPANY_PENDING_REVIEW() throws Exception {
         Member member = createMember(RoleType.COMPANY, MemberStatus.ACTIVE);
         when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
-        when(statusQueryRepository.findCompanyApprovalStatus(member.getMemberId()))
-                .thenReturn(CompanyApprovalStatus.PENDING_REVIEW);
         when(statusQueryRepository.findCompanyHrStatus(member.getMemberId()))
                 .thenReturn("PENDING_REVIEW");
 
