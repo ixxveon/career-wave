@@ -17,7 +17,7 @@ public interface CareerHistoryRepository extends JpaRepository<CareerHistory, Lo
 
     Optional<CareerHistory> findByMemberIdAndSessionId(UUID memberId, UUID sessionId);
 
-    @Query("SELECT ch.careerHistoryId AS careerHistoryId, s.sessionId AS sessionId, " +
+    @Query("SELECT ch.careerHistoryId AS careerHistoryId, ch.sessionId AS sessionId, " +
            "s.sessionType AS sessionType, s.interviewType AS interviewType, " +
            "s.targetCompany AS targetCompany, s.sessionStatus AS sessionStatus, " +
            "ch.totalScore AS totalScore, ch.pdfUrl AS pdfUrl, ch.createdAt AS createdAt " +

@@ -312,7 +312,8 @@ GET /api/v1/user/interview/history?page=0&size=10
 - `career_histories` 기반 조회 — `member_id = memberId` 필터 필수 (타인 조회 차단)
 - `interview_sessions` **LEFT JOIN** — 세션이 삭제된 이력도 누락 없이 반환하기 위해 LEFT JOIN 사용
 - JPQL Projection(`CareerHistoryWithSession`)으로 단일 쿼리에서 `session_type` / `interview_type` / `target_company` / `session_status` 취득
-- 세션 미존재 시 관련 필드(`sessionType`, `sessionStatus` 등) `null` 반환
+- `sessionId`는 `ch.sessionId`(CareerHistory FK)를 사용 — LEFT JOIN 미매칭 시에도 세션 식별자가 유지됨
+- 세션 미존재 시 세션 정보 필드(`sessionType`, `sessionStatus` 등)만 `null` 반환, `sessionId`는 보존
 - `career_histories.created_at DESC`, 페이징 처리
 - 반환: `PaginationResponse<HistoryItem>`
 
