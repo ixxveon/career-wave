@@ -25,16 +25,12 @@
 
 ## Phase 4 — FastAPI Integration
 
-- [ ] Spring Boot는 AI 사용량 집계를 직접 수행하지 않고 FastAPI 내부 집계 API를 호출한다.
-- [ ] FastAPI 집계 응답이 `AiMetricsDTO`, `AiUsageLogDTO`로 정확히 매핑된다.
-- [ ] FastAPI 연동 실패 시 Spring Boot에서 도메인 ErrorCode로 변환해 일관된 오류 응답을 반환한다.
-- [ ] 운영 정책 변경 후 FastAPI 설정 동기화 결과가 후속 조회에 반영된다.
-- [ ] 인덱싱 시작 요청 실패는 `RAG_DOCUMENT_INDEXING_FAILED`로 반환되고, 비동기 실행 중 실패는 `rag_documents.status = FAILED`로 반영된다.
-- [ ] RAG 문서 업로드 이후 비동기 인덱싱 상태가 `UPLOADED -> INDEXING -> COMPLETED/FAILED` 규칙으로 반영된다.
-- [ ] `rag_documents.indexing_progress`가 0~100 범위를 유지하고 `COMPLETED` 상태에서 100으로 조회된다.
+- [x] Spring Boot는 AI 사용량 집계를 직접 수행하지 않고 FastAPI 내부 집계 API를 호출한다.
+- [x] FastAPI 연동 실패 시 Spring Boot에서 도메인 ErrorCode로 변환해 일관된 오류 응답을 반환한다.
 
 ## Phase 5 — API
 
+- [ ] FastAPI 집계 응답이 API 응답 DTO인 `AiMetricsDTO`, `AiUsageLogDTO`로 정확히 매핑된다.
 - [ ] `GET /api/v1/admin/ai-metrics/summary`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
 - [ ] `GET /api/v1/admin/ai-metrics/domain-usage`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
 - [ ] `GET /api/v1/admin/ai-metrics/token-trend`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
