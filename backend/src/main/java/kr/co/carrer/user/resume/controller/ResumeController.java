@@ -75,10 +75,11 @@ public class ResumeController implements ResumeControllerDocs {
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
-    @PostMapping("/webhook")
+    @PostMapping("/{documentId}/webhook")
     public ResponseEntity<ApiResponse<Void>> receiveWebhook(
+            @PathVariable UUID documentId,
             @RequestHeader("X-Internal-Secret") String webhookSecret,
-            @Valid @RequestBody ResumeDTO.RequestWebhook request
+            @RequestBody ResumeDTO.RequestWebhook request
     ) {
         resumeService.receiveWebhook(webhookSecret, request);
         return ResponseEntity.ok(ApiResponse.ok("분석 결과가 처리되었습니다.", null));

@@ -244,6 +244,8 @@ public interface ResumeControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 documentId")
     })
     ResponseEntity<ApiResponse<Void>> receiveWebhook(
+            @Parameter(description = "문서 ID", required = true)
+            UUID documentId,
             @Parameter(description = "내부 인증 시크릿 (환경 변수 WEBHOOK_SECRET)", required = true)
             String webhookSecret,
             @Parameter(description = "분석 결과 body", required = true)

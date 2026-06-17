@@ -68,7 +68,7 @@ public class ResumeServiceImpl implements ResumeService {
         Document document = Document.ofResume(memberId, fileUrl, originalName);
         documentRepository.save(document);
 
-        eventPublisher.publishEvent(new DocumentAnalysisTriggerEvent(document.getDocumentId(), FileType.RESUME.name()));
+        eventPublisher.publishEvent(DocumentAnalysisTriggerEvent.ofResume(document.getDocumentId(), fileUrl, originalName));
 
         return new ResumeDTO.ResponseUpload(
                 document.getDocumentId(),
@@ -106,7 +106,9 @@ public class ResumeServiceImpl implements ResumeService {
                 .toList();
         coverLetterContentRepository.saveAll(contents);
 
-        eventPublisher.publishEvent(new DocumentAnalysisTriggerEvent(document.getDocumentId(), FileType.COVER_LETTER.name()));
+        eventPublisher.publishEvent(DocumentAnalysisTriggerEvent.ofCoverLetter(
+                document.getDocumentId(), dto.company(), dto.job(), dto.content()
+        ));
 
         return new ResumeDTO.ResponseCoverLetter(
                 document.getDocumentId(),

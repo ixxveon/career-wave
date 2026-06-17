@@ -48,7 +48,7 @@
 ## feedbackText 직렬화 계약
 
 - [x] `feedbackText`가 `FeedbackDetail[]` JSON 직렬화 문자열인가?
-- [ ] Spring Boot `ObjectMapper.readValue(feedbackText, FeedbackDetail[].class)` 역직렬화 가능한가? (Spring Boot #527 #528 해결 후 확인)
+- [x] Spring Boot `ObjectMapper.readValue(feedbackText, FeedbackDetail[].class)` 역직렬화 가능한가? (Spring Boot #527 #528 #541 해결 후 통합 테스트에서 확인 완료)
 - [x] 이력서 `feedbackDetails` 각 항목에 `starAnalysis` (S·T·A·R 4개 항목)가 포함되는가?
 - [x] 자기소개서 `feedbackDetails` 각 항목의 `starAnalysis`가 `null`인가?
 - [x] `sectionNumber`가 1부터 시작하는 연속 정수인가?
@@ -74,18 +74,18 @@
 
 ## Spring Boot 연동
 
-- [ ] Spring Boot `POST /api/v1/user/resume/{documentId}/webhook` 수신 후 DB 상태가 업데이트되는가?
-- [ ] WebSocket `/topic/resume/{documentId}/status`로 메시지가 브로드캐스트되는가?
-- [ ] ANALYZING 중간 콜백 수신 시 WebSocket 메시지가 전송되는가?
-- [ ] WebSocket 브로드캐스트가 트랜잭션 커밋 이후(`@TransactionalEventListener` 등)에 호출되는가? (DB 반영 전 프론트 수신 방지)
-- [ ] WebSocket으로 전송되는 메시지 구조가 `status`, `progress`, `result`(또는 null)를 포함한 통합 스키마를 사용하는가?
+- [x] Spring Boot `POST /api/v1/user/resume/{documentId}/webhook` 수신 후 DB 상태가 업데이트되는가?
+- [x] WebSocket `/topic/resume/{documentId}/status`로 메시지가 브로드캐스트되는가?
+- [x] ANALYZING 중간 콜백 수신 시 WebSocket 메시지가 전송되는가?
+- [x] WebSocket 브로드캐스트가 트랜잭션 커밋 이후(`@TransactionalEventListener` 등)에 호출되는가? (DB 반영 전 프론트 수신 방지)
+- [x] WebSocket으로 전송되는 메시지 구조가 `status`, `progress`, `result`(또는 null)를 포함한 통합 스키마를 사용하는가?
 - [ ] WebSocket 페이로드 필드명이 프론트엔드 상태 관리(Zustand 등)의 상태값과 1:1 매핑되는지 프론트엔드 담당자와 사전 합의되었는가?
 
 ## 데이터 정합성
 
-- [ ] Spring Boot Webhook 수신 시, 현재 DB 상태보다 이전 상태(예: COMPLETED 이후 도착한 ANALYZING)는 무시하는 로직이 있는가? (Out-of-order Webhook 방지)
-- [ ] Webhook 멱등성: 동일한 `documentId` + `status` 조합이 중복 수신될 경우, 재처리 없이 `200 OK`를 즉시 반환하는가? (네트워크 재시도로 인한 중복 처리 방지)
-- [ ] Spring Boot에서 분석 요청 후 일정 시간(예: 30분) 이내에 COMPLETED 또는 FAILED 콜백이 오지 않으면 FAILED 처리하는 감시 배치(Watchdog)가 있는가? (Zombie Task 방지)
+- [x] Spring Boot Webhook 수신 시, 현재 DB 상태보다 이전 상태(예: COMPLETED 이후 도착한 ANALYZING)는 무시하는 로직이 있는가? (Out-of-order Webhook 방지)
+- [x] Webhook 멱등성: 동일한 `documentId` + `status` 조합이 중복 수신될 경우, 재처리 없이 `200 OK`를 즉시 반환하는가? (네트워크 재시도로 인한 중복 처리 방지)
+- [ ] Spring Boot에서 분석 요청 후 일정 시간(예: 30분) 이내에 COMPLETED 또는 FAILED 콜백이 오지 않으면 FAILED 처리하는 감시 배치(Watchdog)가 있는가? (Zombie Task 방지 — Phase 6 이후 별도 구현 예정)
 
 ## 사용자 경험
 
