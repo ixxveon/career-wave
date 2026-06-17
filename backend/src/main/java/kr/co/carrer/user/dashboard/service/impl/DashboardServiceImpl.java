@@ -34,6 +34,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final DashboardBookmarkQueryRepository dashboardBookmarkQueryRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public DashboardDTO.ProfileResponse getProfile(UUID memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
@@ -42,6 +43,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DashboardDTO.GithubResponse getGithubProfile(UUID memberId) {
         memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
@@ -52,6 +54,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
+    @Transactional
     public DashboardDTO.ProfileResponse updateProfile(
             UUID memberId,
             DashboardDTO.ProfileUpdateRequest request) {
