@@ -340,8 +340,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 | statusCode | ErrorCode | 상황 |
 |-----------|-----------|------|
-| `403` | `INTERVIEW_SESSION_FORBIDDEN` | 본인 소유가 아닌 세션 |
-| `404` | `INTERVIEW_SESSION_NOT_FOUND` | 존재하지 않는 `sessionId` |
+| `403` | `INTERVIEW_SESSION_FORBIDDEN` | 존재하지 않는 `sessionId` 또는 본인 소유가 아닌 세션 (IDOR 방어: 두 경우 모두 동일 응답) |
 | `409` | `INTERVIEW_REPORT_NOT_READY` | 리포트 아직 생성 중 |
 | `401` | `UNAUTHORIZED` | 토큰 없음 또는 만료 |
 

@@ -1,5 +1,5 @@
 package kr.co.carrer.admin.member.type;
 
 public enum HrStatus {
-    PENDING, ACTIVE, REMOVED
+    PENDING_REVIEW, APPROVED, REJECTED, NEEDS_REVISION, REMOVED
 }

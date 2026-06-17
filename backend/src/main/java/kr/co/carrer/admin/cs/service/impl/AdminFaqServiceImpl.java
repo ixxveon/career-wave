@@ -32,9 +32,9 @@ public class AdminFaqServiceImpl implements AdminFaqService {
 
     private ZonedDateTime toZdt(Object value) {
         if (value == null) return null;
-        if (value instanceof java.sql.Timestamp ts) return ts.toInstant().atZone(ZoneId.systemDefault());
-        if (value instanceof java.time.Instant i) return i.atZone(ZoneId.systemDefault());
-        if (value instanceof java.time.OffsetDateTime odt) return odt.toZonedDateTime();
+        if (value instanceof java.sql.Timestamp ts) return ts.toInstant().atZone(ZoneId.of("Asia/Seoul"));
+        if (value instanceof java.time.Instant i) return i.atZone(ZoneId.of("Asia/Seoul"));
+        if (value instanceof java.time.OffsetDateTime odt) return odt.atZoneSameInstant(ZoneId.of("Asia/Seoul"));
         throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 

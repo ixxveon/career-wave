@@ -297,11 +297,11 @@ GET /api/v1/user/interview/history?page=0&size=10
 
 ### InterviewReportService
 
-#### getReport(UUID memberId, String sessionId)
-- `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-- 존재하지 않는 `session_id` → `INTERVIEW_SESSION_NOT_FOUND(404)`
+#### getReport(UUID memberId, UUID sessionId)
+- `findBySessionIdAndMemberId`로 세션 조회 — 존재하지 않거나 소유권 불일치 시 둘 다 `INTERVIEW_SESSION_FORBIDDEN(403)` 반환 (IDOR 방어: 타인 세션 존재 여부를 노출하지 않음)
+- `ai_interview_feedbacks` 미존재 시 `INTERVIEW_REPORT_NOT_READY(409)` — additionalData: `ResponseReportNotReady("ANALYZING", 15)`
 - `ai_interview_feedbacks` 조회 후 `question_order ASC` 정렬
-- `voiceQualityRatio < 50.00`인 항목의 `deliveryScore` / `fluencyScore`는 `null` 반환
+- `voiceQualityRatio`가 `null`이거나 `50.00 미만`인 항목의 `deliveryScore` / `fluencyScore`는 `null` 반환
 - 반환: `ResponseReport`
 
 ### InterviewHistoryService

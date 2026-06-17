@@ -24,7 +24,6 @@ import java.time.ZonedDateTime;
 public class AiOpsSetting {
 
     private static final Long SINGLETON_ID = 1L;
-
     @Id
     @Column(name = "ai_ops_setting_id")
     private Long aiOpsSettingId;
