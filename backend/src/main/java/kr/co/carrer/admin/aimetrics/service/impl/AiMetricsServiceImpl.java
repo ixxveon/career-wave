@@ -112,6 +112,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
 
         AiOpsSetting setting = getSingletonSetting();
         setting.updateBudget(command.selectedModelId(), command.monthlyBudget(), command.alertThreshold());
+        syncOpsSetting(setting);
         saveAuditLog(actorAdminId, "UPDATE_AI_BUDGET", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
         return AiMetricsServiceMapper.toBudget(setting);
     }
@@ -121,6 +122,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     public ResponseBudget updateDiscordAlert(RequestUpdateDiscordAlert command, Long actorAdminId, String ipAddress) {
         AiOpsSetting setting = getSingletonSetting();
         setting.updateDiscordAlert(command.alertEnabled());
+        syncOpsSetting(setting);
         saveAuditLog(actorAdminId, "UPDATE_DISCORD_ALERT", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
         return AiMetricsServiceMapper.toBudget(setting);
     }
@@ -130,6 +132,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     public ResponseBudget updateRateLimit(RequestUpdateRateLimit command, Long actorAdminId, String ipAddress) {
         AiOpsSetting setting = getSingletonSetting();
         setting.updateRateLimit(command.rateLimitEnabled());
+        syncOpsSetting(setting);
         saveAuditLog(actorAdminId, "UPDATE_RATE_LIMIT", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
         return AiMetricsServiceMapper.toBudget(setting);
     }
@@ -162,7 +165,9 @@ public class AiMetricsServiceImpl implements AiMetricsService {
                     file.getSize()
             );
 
-            return AiMetricsServiceMapper.toRagDocumentDetail(ragDocumentRepository.save(document));
+            RagDocument savedDocument = ragDocumentRepository.save(document);
+            startRagIndexing(savedDocument);
+            return AiMetricsServiceMapper.toRagDocumentDetail(savedDocument);
         } catch (CustomException e) {
             throw e;
         } catch (RuntimeException e) {
@@ -182,6 +187,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     public ResponseRagDocumentDelete deleteRagDocument(Long documentId, Long actorAdminId, String ipAddress) {
         RagDocument document = getRagDocument(documentId);
         try {
+            deleteRagIndex(document);
             ragDocumentRepository.delete(document);
         } catch (DataAccessException e) {
             throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_DELETE_FAILED);
@@ -201,6 +207,38 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     private AiOpsSetting getSingletonSetting() {
         return aiOpsSettingRepository.findSingleton()
                 .orElseThrow(() -> new CustomException(AiMetricsErrorCode.AI_OPS_SETTING_NOT_FOUND));
+    }
+
+    private void syncOpsSetting(AiOpsSetting setting) {
+        getFastApiGateway().syncOpsSetting(new AiMetricsFastApiGateway.OpsSettingSyncRequest(
+                setting.getAiOpsSettingId(),
+                setting.getSelectedModelId(),
+                setting.getMonthlyBudget(),
+                setting.isAlertEnabled(),
+                setting.getAlertChannel(),
+                setting.getAlertThreshold(),
+                setting.isRateLimitEnabled()
+        ));
+    }
+
+    private void startRagIndexing(RagDocument document) {
+        getFastApiGateway().startRagIndexing(new AiMetricsFastApiGateway.RagIndexStartRequest(
+                document.getRagDocumentId(),
+                document.getUploadedBy(),
+                document.getFileUuid(),
+                document.getOriginalFileName(),
+                document.getFilePath(),
+                document.getMimeType(),
+                document.getFileSize()
+        ));
+    }
+
+    private void deleteRagIndex(RagDocument document) {
+        getFastApiGateway().deleteRagIndex(new AiMetricsFastApiGateway.RagIndexDeleteRequest(
+                document.getRagDocumentId(),
+                document.getFileUuid(),
+                document.getFilePath()
+        ));
     }
 
     private void validateAiModelExists(Long selectedModelId) {
