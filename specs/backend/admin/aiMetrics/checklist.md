@@ -3,18 +3,18 @@
 > tasks.md가 "무엇을 만들지"라면, 이 파일은 "제대로 만들었는지" 검증한다.
 > 구현 완료 후 PR 올리기 전에 작성자 본인이 체크한다.
 
-## Phase 1 — 엔티티 & 레포지토리
+## Phase 1 — 엔티티 & Enum
 
-- [ ] `ai_models`, `ai_ops_settings`, `rag_documents` 엔티티 필드와 제약조건이 ERD와 일치하고, `ai_usage_logs`는 FastAPI 응답 DTO 계약과 일치한다.
-- [ ] `AiFeatureType`, `AlertChannelType`, `RagDocumentStatusType` enum 값이 DB CHECK 제약조건과 일치한다.
-- [ ] `ai_ops_settings` singleton 구조(`ai_ops_setting_id = 1`)를 전제로 한 조회 방식이 반영되어 있다.
-- [ ] `ai_models` 조회, `ai_ops_settings` 조회/수정, `rag_documents` 메타데이터 조회/생성/삭제, Audit Log 기록 연동에 필요한 Repository가 구현되어 있다.
-- [ ] Query Parameter와 ERD 컬럼 매핑이 구현과 일치한다.
+- [x] `ai_models`, `ai_ops_settings`, `rag_documents` 엔티티 필드와 제약조건이 ERD와 일치하고, `ai_usage_logs`는 FastAPI 응답 DTO 계약과 일치한다.
+- [x] `AiFeatureType`, `AlertChannelType`, `RagDocumentStatusType` enum 값이 DB CHECK 제약조건과 일치한다.
 
 ## Phase 2 — 핵심 API (P1)
 
 > tasks.md의 Phase에 맞춰 항목을 채운다.
 
+- [ ] `ai_ops_settings` singleton 구조(`ai_ops_setting_id = 1`)를 전제로 한 조회 방식이 반영되어 있다.
+- [ ] `ai_models` 조회, `ai_ops_settings` 조회/수정, `rag_documents` 메타데이터 조회/생성/삭제, Audit Log 기록 연동에 필요한 Repository가 구현되어 있다.
+- [ ] Query Parameter와 ERD 컬럼 매핑이 구현과 일치한다.
 - [ ] `GET /api/v1/admin/ai-metrics/summary`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
 - [ ] `GET /api/v1/admin/ai-metrics/domain-usage`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
 - [ ] `GET /api/v1/admin/ai-metrics/token-trend`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
