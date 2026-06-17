@@ -101,7 +101,9 @@ user/interview/
 │   ├── InterviewSessionRepository.java
 │   ├── InterviewMessageRepository.java
 │   ├── AIInterviewFeedbackRepository.java
-│   └── CareerHistoryRepository.java
+│   ├── CareerHistoryRepository.java
+│   └── projection/
+│       └── CareerHistoryWithSession.java     ← 이력 목록 조회용 JPQL Projection 인터페이스
 ├── entity/
 │   ├── InterviewSession.java
 │   ├── InterviewMessage.java
@@ -297,18 +299,21 @@ GET /api/v1/user/interview/history?page=0&size=10
 
 ### InterviewReportService
 
-#### getReport(UUID memberId, String sessionId)
-- `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
-- 존재하지 않는 `session_id` → `INTERVIEW_SESSION_NOT_FOUND(404)`
+#### getReport(UUID memberId, UUID sessionId)
+- `findBySessionIdAndMemberId`로 세션 조회 — 존재하지 않거나 소유권 불일치 시 둘 다 `INTERVIEW_SESSION_FORBIDDEN(403)` 반환 (IDOR 방어: 타인 세션 존재 여부를 노출하지 않음)
+- `ai_interview_feedbacks` 미존재 시 `INTERVIEW_REPORT_NOT_READY(409)` — additionalData: `ResponseReportNotReady("ANALYZING", 15)`
 - `ai_interview_feedbacks` 조회 후 `question_order ASC` 정렬
-- `voiceQualityRatio < 50.00`인 항목의 `deliveryScore` / `fluencyScore`는 `null` 반환
+- `voiceQualityRatio`가 `null`이거나 `50.00 미만`인 항목의 `deliveryScore` / `fluencyScore`는 `null` 반환
 - 반환: `ResponseReport`
 
 ### InterviewHistoryService
 
 #### getHistory(UUID memberId, int page, int size)
 - `career_histories` 기반 조회 — `member_id = memberId` 필터 필수 (타인 조회 차단)
-- `interview_sessions` JOIN — `session_type` / `interview_type` / `target_company` / `session_status` 취득
+- `interview_sessions` **LEFT JOIN** — 세션이 삭제된 이력도 누락 없이 반환하기 위해 LEFT JOIN 사용
+- JPQL Projection(`CareerHistoryWithSession`)으로 단일 쿼리에서 `session_type` / `interview_type` / `target_company` / `session_status` 취득
+- `sessionId`는 `ch.sessionId`(CareerHistory FK)를 사용 — LEFT JOIN 미매칭 시에도 세션 식별자가 유지됨
+- 세션 미존재 시 세션 정보 필드(`sessionType`, `sessionStatus` 등)만 `null` 반환, `sessionId`는 보존
 - `career_histories.created_at DESC`, 페이징 처리
 - 반환: `PaginationResponse<HistoryItem>`
 
@@ -363,8 +368,9 @@ SUBSCRIBE /topic/interview/{sessionId}
 ## 세션 타임아웃 정책
 
 - 세션 생성 후 **24시간** 동안 `endSession` 요청이 없으면 서버 스케줄러가 해당 세션을 강제로 `FAILED` 처리한다.
-- 배치 주기: 1시간 단위 (`@Scheduled` cron)
+- 배치 주기: 1시간 단위 (`@Scheduled(cron = "0 0 * * * *")`)
 - 시간 기준: 모든 `ZonedDateTime.now()` 호출은 **KST (`Asia/Seoul`)** 기준으로 고정한다. JVM 기본 timezone 사용 금지.
+- Repository: `findTimedOutSessions(ZonedDateTime cutoff, ZonedDateTime recentCutoff, SessionStatus status)` — `SessionStatus.IN_PROGRESS` 파라미터 명시 전달
 - 쿼리 조건: `started_at < NOW() - INTERVAL '24 hours'` **AND** `session_status = 'IN_PROGRESS'` **AND** `updated_at < NOW() - INTERVAL '5 minutes'`
   - `updated_at` 조건은 방금 답변을 제출한 세션이 배치 실행 타이밍과 겹쳐 의도치 않게 `FAILED` 처리되는 상황을 방지하는 유예 조건이다.
 - `FAILED` 전이 후 FastAPI 파이프라인 세션 별도 정리 요청은 하지 않는다. FastAPI가 자체 TTL로 만료 처리하며, Spring은 FAILED 마킹 + 처리 건수 `log.info` 기록만 담당한다.

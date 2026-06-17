@@ -5,46 +5,46 @@
 
 ## Phase 1 - Entity
 
-- [ ] `AiFeatureType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `AlertChannelType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `RagDocumentStatusType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
-- [ ] `AiModel.java` 엔티티를 `ai_models` ERD 컬럼 기준으로 작성한다.
-- [ ] `AiOpsSetting.java` 엔티티를 `ai_ops_settings` ERD 컬럼 기준으로 작성한다.
-- [ ] `RagDocument.java` 엔티티를 `rag_documents` ERD 컬럼 기준으로 작성한다.
+- [x] `AiFeatureType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `AlertChannelType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `RagDocumentStatusType.java` Enum을 ERD CHECK 제약조건 기준으로 작성한다.
+- [x] `AiModel.java` 엔티티를 `ai_models` ERD 컬럼 기준으로 작성한다.
+- [x] `AiOpsSetting.java` 엔티티를 `ai_ops_settings` ERD 컬럼 기준으로 작성한다.
+- [x] `RagDocument.java` 엔티티를 `rag_documents` ERD 컬럼 기준으로 작성한다.
 
 ## Phase 2 - Repository
 
-- [ ] `AiModelRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] 활성 운영 모델 조회 메서드를 추가한다.
-- [ ] `AiOpsSettingRepository.java` singleton 운영 설정 조회 인터페이스를 작성한다.
-- [ ] `RagDocumentRepository.java` 기본 조회 인터페이스를 작성한다.
-- [ ] RAG 문서 목록 페이지네이션 조회 조건을 정리한다.
-- [ ] RAG 문서 상태별 조회 메서드를 추가한다.
-- [ ] Audit Log 기록 연동에 필요한 저장 인터페이스를 정리한다.
+- [x] `AiModelRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] 활성 운영 모델 조회 메서드를 추가한다.
+- [x] `AiOpsSettingRepository.java` singleton 운영 설정 조회 인터페이스를 작성한다.
+- [x] `RagDocumentRepository.java` 기본 조회 인터페이스를 작성한다.
+- [x] RAG 문서 목록 페이지네이션 조회 조건을 정리한다.
+- [x] RAG 문서 상태별 조회 메서드를 추가한다.
+- [x] Audit Log 기록 연동에 필요한 저장 인터페이스를 정리한다.
 
 ## Phase 3 - Service
 
-- [ ] `AiMetricsService.java` 인터페이스를 작성한다.
-- [ ] AI 사용량 요약 조회 서비스에서 FastAPI 응답을 Spring DTO로 변환하는 로직을 구현한다.
-- [ ] 도메인별 사용량 조회 서비스에서 FastAPI 응답을 Spring DTO로 변환하는 로직을 구현한다.
-- [ ] 토큰 추이 조회 서비스에서 FastAPI 응답을 Spring DTO로 변환하는 로직을 구현한다.
-- [ ] 고사용 사용자 조회 서비스에서 FastAPI 응답을 Spring DTO로 변환하는 로직을 구현한다.
-- [ ] AI 사용 로그 목록 조회 서비스에서 FastAPI 응답을 Spring DTO로 변환하는 로직을 구현한다.
-- [ ] AI 운영 설정 조회 서비스 로직을 구현한다.
-- [ ] 예산 및 임계치 수정 서비스 로직을 구현한다.
-- [ ] Discord 알림 설정 변경 서비스 로직을 구현한다.
-- [ ] rate limit 설정 변경 서비스 로직을 구현한다.
-- [ ] RAG 문서 목록 조회 서비스 로직을 구현한다.
-- [ ] RAG 문서 업로드 서비스 로직을 구현한다.
-- [ ] RAG 문서 다운로드 정보 조회 서비스 로직을 구현한다.
-- [ ] RAG 문서 삭제 서비스 로직을 구현한다.
-- [ ] 운영 정책 변경 시 Audit Log 기록 서비스 로직을 구현한다.
-- [ ] RAG 문서 삭제 시 Audit Log 기록 서비스 로직을 구현한다.
-- [ ] `from`, `to`, `interval`, `limit`, `page`, `size` 공통 요청 검증 로직을 구현한다.
-- [ ] `monthlyBudget`, `alertThreshold` 값 검증과 ErrorCode 매핑을 구현한다.
-- [ ] `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `RAG_DOCUMENT_NOT_FOUND` 예외 처리를 구현한다.
-- [ ] `RAG_DOCUMENT_ALREADY_INDEXING`, `RAG_DOCUMENT_INDEXING_FAILED`, `RAG_DOCUMENT_DELETE_FAILED`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 예외 처리를 구현한다.
-- [ ] `AiMetricsErrorCode.java` 도메인 오류 코드를 작성한다.
+- [x] `AiMetricsService.java` 인터페이스를 작성한다.
+- [x] AI 사용량 요약 조회 서비스에서 FastAPI 응답을 Spring DTO로 변환하는 로직을 구현한다.
+- [x] 도메인별 사용량 조회 서비스에서 FastAPI 응답을 Spring DTO로 변환하는 로직을 구현한다.
+- [x] 토큰 추이 조회 서비스에서 FastAPI 응답을 Spring DTO로 변환하는 로직을 구현한다.
+- [x] 고사용 사용자 조회 서비스에서 FastAPI 응답을 Spring DTO로 변환하는 로직을 구현한다.
+- [x] AI 사용 로그 목록 조회 서비스에서 FastAPI 응답을 Spring DTO로 변환하는 로직을 구현한다.
+- [x] AI 운영 설정 조회 서비스 로직을 구현한다.
+- [x] 예산 및 임계치 수정 서비스 로직을 구현한다.
+- [x] Discord 알림 설정 변경 서비스 로직을 구현한다.
+- [x] rate limit 설정 변경 서비스 로직을 구현한다.
+- [x] RAG 문서 목록 조회 서비스 로직을 구현한다.
+- [x] RAG 문서 업로드 서비스 로직을 구현한다.
+- [x] RAG 문서 다운로드 정보 조회 서비스 로직을 구현한다.
+- [x] RAG 문서 삭제 서비스 로직을 구현한다.
+- [x] 운영 정책 변경 시 Audit Log 기록 서비스 로직을 구현한다.
+- [x] RAG 문서 삭제 시 Audit Log 기록 서비스 로직을 구현한다.
+- [x] `from`, `to`, `interval`, `limit`, `page`, `size` 공통 요청 검증 로직을 구현한다.
+- [x] `monthlyBudget`, `alertThreshold` 값 검증과 ErrorCode 매핑을 구현한다.
+- [x] `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `RAG_DOCUMENT_NOT_FOUND` 예외 처리를 구현한다.
+- [x] `RAG_DOCUMENT_ALREADY_INDEXING`, `RAG_DOCUMENT_INDEXING_FAILED`, `RAG_DOCUMENT_DELETE_FAILED`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 예외 처리를 구현한다.
+- [x] `AiMetricsErrorCode.java` 도메인 오류 코드를 작성한다.
 
 ## Phase 4 - FastAPI Integration
 

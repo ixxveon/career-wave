@@ -56,7 +56,7 @@ public class DashboardBookmarkQueryRepository {
                                                 jobNotice.deadline,
                                                 bookmark.createdAt))
                                 .from(bookmark)
-                                .leftJoin(jobNotice).on(bookmark.jobNoticeId.eq(jobNotice.jobNoticeId))
+                                .leftJoin(bookmark.jobNotice, jobNotice)
                                 .where(predicate)
                                 .orderBy(bookmark.createdAt.desc())
                                 .offset((long) normalizedPage * normalizedSize)
@@ -66,7 +66,7 @@ public class DashboardBookmarkQueryRepository {
                 Long total = queryFactory
                                 .select(bookmark.count())
                                 .from(bookmark)
-                                .leftJoin(jobNotice).on(bookmark.jobNoticeId.eq(jobNotice.jobNoticeId))
+                                .leftJoin(bookmark.jobNotice, jobNotice)
                                 .where(predicate)
                                 .fetchOne();
 

@@ -24,6 +24,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await asyncio.wait(pending, timeout=15)
 
 
+logging.basicConfig(level=logging.INFO)
+
 app = FastAPI(
     title="Career Wave AI & Scraping Engine",
     description="실시간 면접 분석 AI 엔진 및 외부 채용 공고 수집 파이프라인 통합 API",

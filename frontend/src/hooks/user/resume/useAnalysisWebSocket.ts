@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
+import { Client } from '@stomp/stompjs';
 import type { WsStatusMessage } from '../../../types/user/resume';
 import { authSession } from '../../../utils/user/member/authSession';
 
@@ -26,12 +27,14 @@ export interface UseAnalysisWebSocketReturn {
 }
 
 /**
- * 분석 상태 실시간 구독 WebSocket 훅
+ * 분석 상태 실시간 구독 STOMP WebSocket 훅
  *
  * api-schema.md §5 기준:
+ * - STOMP 엔드포인트: /ws/user/resume?token={accessToken}
+ * - 브로드캐스트 구독: /topic/resume/{documentId}/status
+ * - 개인 Snapshot 구독: /user/queue/resume/{documentId}/status
  * - COMPLETED 수신 시 onCompleted 콜백 호출 후 연결 종료
- * - FAILED 수신 시 onFailed 콜백 호출 후 연결 종료
- * - Close 1008 (auth/IDOR 에러) 시 onFailed 호출
+ * - FAILED 수신 시 errorMessage 우선, null이면 message로 폴백
  * - 30초 타임아웃 초과 시 onFailed 호출 (NFR-001)
  */
 export function useAnalysisWebSocket({
@@ -40,8 +43,8 @@ export function useAnalysisWebSocket({
   onFailed,
   onNetworkError,
 }: UseAnalysisWebSocketOptions): UseAnalysisWebSocketReturn {
-  const wsRef        = useRef<WebSocket | null>(null);
-  const timeoutRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clientRef     = useRef<Client | null>(null);
+  const timeoutRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errorFiredRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -52,107 +55,110 @@ export function useAnalysisWebSocket({
     }
   }, []);
 
-  const cleanupWebSocket = useCallback((ws: WebSocket) => {
-    ws.onopen    = null;
-    ws.onmessage = null;
-    ws.onerror   = null;
-    ws.onclose   = null;
-  }, []);
-
   const disconnect = useCallback(() => {
     clearAnalysisTimeout();
-    if (wsRef.current) {
-      cleanupWebSocket(wsRef.current);
-      wsRef.current.close();
-      wsRef.current = null;
+    if (clientRef.current) {
+      clientRef.current.deactivate();
+      clientRef.current = null;
     }
     setIsConnected(false);
-  }, [clearAnalysisTimeout, cleanupWebSocket]);
+  }, [clearAnalysisTimeout]);
 
   const connect = useCallback(
     (documentId: string) => {
-      // 기존 연결 정리
-      clearAnalysisTimeout();
-      if (wsRef.current) {
-        cleanupWebSocket(wsRef.current);
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-      setIsConnected(false);
+      disconnect();
       errorFiredRef.current = false;
 
-      // api-schema.md §5: JWT를 쿼리 파라미터로 전달 (?token={accessToken})
       const token = authSession.getAccessToken();
       if (!token) {
-        setIsConnected(false);
         onFailed('인증 토큰이 없습니다. 로그인 후 다시 시도해주세요.');
         return;
       }
-      const url = `${WS_BASE_URL}/ws/user/resume/${documentId}/status?token=${encodeURIComponent(token)}`;
-      const ws = new WebSocket(url);
-      wsRef.current = ws;
 
-      // 30초 타임아웃 — 서버 무응답 시 에러 처리 (NFR-001)
-      timeoutRef.current = setTimeout(() => {
-        if (wsRef.current === ws) {
-          cleanupWebSocket(ws);
-          ws.close();
-          wsRef.current = null;
-          setIsConnected(false);
-          onFailed('분석 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.');
-        }
-      }, ANALYSIS_TIMEOUT_MS);
+      const brokerURL = `${WS_BASE_URL}/ws/user/resume?token=${encodeURIComponent(token)}`;
 
-      ws.onopen = () => {
-        setIsConnected(true);
-      };
-
-      ws.onmessage = (event: MessageEvent) => {
+      function handleMessage(body: string) {
         try {
-          const msg: WsStatusMessage = JSON.parse(event.data as string);
+          const msg: WsStatusMessage = JSON.parse(body);
           onMessage(msg);
 
           if (msg.status === 'COMPLETED') {
             clearAnalysisTimeout();
-            cleanupWebSocket(ws);
-            ws.close();
-            wsRef.current = null;
+            clientRef.current?.deactivate();
+            clientRef.current = null;
             setIsConnected(false);
             onCompleted();
           } else if (msg.status === 'FAILED') {
             clearAnalysisTimeout();
-            cleanupWebSocket(ws);
-            ws.close();
-            wsRef.current = null;
+            clientRef.current?.deactivate();
+            clientRef.current = null;
             setIsConnected(false);
-            onFailed(msg.message);
+            onFailed(msg.errorMessage ?? msg.message ?? '분석 중 오류가 발생했습니다.');
           }
         } catch {
           // JSON 파싱 실패 무시
         }
-      };
+      }
 
-      // onerror: 네트워크 단절 토스트 + ERROR 상태 전이
-      // onerror 이후 onclose가 항상 발화하므로 errorFiredRef로 중복 방지
-      ws.onerror = () => {
-        clearAnalysisTimeout();
-        errorFiredRef.current = true;
-        setIsConnected(false);
-        onNetworkError();
-        onFailed('네트워크 연결이 끊겼습니다. 연결 상태를 확인 후 다시 시도해주세요.');
-      };
+      const client = new Client({
+        brokerURL,
+        reconnectDelay: 0,
+        onConnect: () => {
+          setIsConnected(true);
 
-      ws.onclose = (event: CloseEvent) => {
-        clearAnalysisTimeout();
-        setIsConnected(false);
-        if (errorFiredRef.current) return;
-        // Close 1008: policy violation — 인증 실패 또는 IDOR
-        if (event.code === 1008) {
-          onFailed('접근 권한이 없거나 유효하지 않은 문서입니다.');
-        }
-      };
+          // 브로드캐스트 구독
+          client.subscribe(
+            `/topic/resume/${documentId}/status`,
+            (frame) => handleMessage(frame.body),
+          );
+          // 개인 Snapshot 구독 (재연결 시 현재 상태 즉시 수신)
+          client.subscribe(
+            `/user/queue/resume/${documentId}/status`,
+            (frame) => handleMessage(frame.body),
+          );
+
+          // 30초 타임아웃 (NFR-001)
+          timeoutRef.current = setTimeout(() => {
+            clientRef.current?.deactivate();
+            clientRef.current = null;
+            setIsConnected(false);
+            onFailed('분석 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.');
+          }, ANALYSIS_TIMEOUT_MS);
+        },
+        onStompError: (frame) => {
+          if (errorFiredRef.current) return;
+          errorFiredRef.current = true;
+          clearAnalysisTimeout();
+          clientRef.current = null;
+          setIsConnected(false);
+          onFailed(frame.headers['message'] ?? '서버 오류가 발생했습니다.');
+        },
+        onWebSocketError: () => {
+          if (errorFiredRef.current) return;
+          errorFiredRef.current = true;
+          clearAnalysisTimeout();
+          clientRef.current = null;
+          setIsConnected(false);
+          onNetworkError();
+          onFailed('네트워크 연결이 끊겼습니다. 연결 상태를 확인 후 다시 시도해주세요.');
+        },
+        onWebSocketClose: (event) => {
+          clearAnalysisTimeout();
+          setIsConnected(false);
+          if (errorFiredRef.current) return;
+          // Close 1008: policy violation — 인증 실패 또는 IDOR
+          if ((event as CloseEvent).code === 1008) {
+            errorFiredRef.current = true;
+            clientRef.current = null;
+            onFailed('접근 권한이 없거나 유효하지 않은 문서입니다.');
+          }
+        },
+      });
+
+      clientRef.current = client;
+      client.activate();
     },
-    [clearAnalysisTimeout, cleanupWebSocket, onMessage, onCompleted, onFailed, onNetworkError],
+    [disconnect, clearAnalysisTimeout, onMessage, onCompleted, onFailed, onNetworkError],
   );
 
   return { connect, disconnect, isConnected };
