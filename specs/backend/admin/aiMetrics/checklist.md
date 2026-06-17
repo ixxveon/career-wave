@@ -30,24 +30,24 @@
 
 ## Phase 5 — API
 
-- [ ] FastAPI 집계 응답이 API 응답 DTO인 `AiMetricsDTO`, `AiUsageLogDTO`로 정확히 매핑된다.
-- [ ] `GET /api/v1/admin/ai-metrics/summary`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/domain-usage`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/token-trend`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/heavy-users`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/logs`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/budget`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/budget`가 권한 정책(`MASTER`)에 맞게 동작한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/alerts/discord`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/controls/rate-limit`가 권한 정책(`MASTER`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/rag-documents`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `POST /api/v1/admin/ai-metrics/rag-documents`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
-- [ ] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}`가 권한 정책(`MASTER`)에 맞게 동작한다.
-- [ ] 정상 응답이 모두 `ApiResponse<T>` 규격을 사용하며 성공 응답에 불필요한 `statusCode` 필드가 없다.
-- [ ] 페이지네이션 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 따르고 `page`는 1-based로 노출된다.
-- [ ] `POST /api/v1/admin/ai-metrics/rag-documents`가 `multipart/form-data` 기반 파일 업로드 계약으로 구현되어 있다.
-- [ ] `PATCH /api/v1/admin/ai-metrics/alerts/discord`가 Discord 채널 고정 정책으로 동작하며 다른 알림 채널 값을 받지 않는다.
+- [x] FastAPI 집계 응답이 API 응답 DTO인 `AiMetricsDTO`, `AiUsageLogDTO`로 정확히 매핑된다.
+- [x] `GET /api/v1/admin/ai-metrics/summary`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/domain-usage`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/token-trend`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/heavy-users`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/logs`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/budget`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/budget`가 권한 정책(`MASTER`)에 맞게 동작한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/alerts/discord`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `PATCH /api/v1/admin/ai-metrics/controls/rate-limit`가 권한 정책(`MASTER`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/rag-documents`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `POST /api/v1/admin/ai-metrics/rag-documents`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `GET /api/v1/admin/ai-metrics/rag-documents/{documentId}/download`가 권한 정책(`MASTER`, `BACKEND`)에 맞게 동작한다.
+- [x] `DELETE /api/v1/admin/ai-metrics/rag-documents/{documentId}`가 권한 정책(`MASTER`)에 맞게 동작한다.
+- [x] 정상 응답이 모두 `ApiResponse<T>` 규격을 사용하며 성공 응답에 불필요한 `statusCode` 필드가 없다.
+- [x] 페이지네이션 응답이 `content`, `page`, `size`, `totalElements`, `totalPages` 구조를 따르고 `page`는 1-based로 노출된다.
+- [x] `POST /api/v1/admin/ai-metrics/rag-documents`가 `multipart/form-data` 기반 파일 업로드 계약으로 구현되어 있다.
+- [x] `PATCH /api/v1/admin/ai-metrics/alerts/discord`가 Discord 채널 고정 정책으로 동작하며 다른 알림 채널 값을 받지 않는다.
 
 ## Phase 6 — Documentation
 
