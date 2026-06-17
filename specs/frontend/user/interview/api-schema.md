@@ -100,7 +100,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 세션 생성 직후 클라이언트는 `data.sessionId` 수신 후 즉시  
-> Spring STOMP(`WS /ws/user/interview`, 구독: `/topic/interview/{sessionId}`) 및  
+> Spring STOMP(`WS /ws/user/interview`, 구독: `/user/queue/interview/{sessionId}`) 및  
 > FastAPI WebSocket(`WS /ws/user/interview/{sessionId}/ai`) 연결을 시작합니다.
 
 ### Error Cases
@@ -222,7 +222,7 @@ Authorization: Bearer {accessToken}
 ```
 
 > ℹ️ 세션 종료 즉시 서버에서 AI 리포트 생성 작업을 **자동 트리거**합니다.  
-> 리포트 완료 알림은 Spring STOMP(`/topic/interview/{sessionId}`)로 수신합니다.
+> 리포트 완료 알림은 Spring STOMP(`/user/queue/interview/{sessionId}`)로 수신합니다.
 
 ### Error Cases
 
@@ -389,32 +389,33 @@ Authorization: Bearer {accessToken}
 ### 인증 및 구독
 
 ```
-// 1. STOMP 연결
-WS /ws/user/interview?token={accessToken}
+// 1. STOMP 연결 — CONNECT 헤더에 JWT 전달
+WS /ws/user/interview
+CONNECT Headers: { Authorization: "Bearer {accessToken}" }
 
-// 2. 세션 구독
-SUBSCRIBE /topic/interview/{sessionId}
+// 2. 세션 구독 (개인 큐)
+SUBSCRIBE /user/queue/interview/{sessionId}
 ```
 
-- 핸드셰이크 시 JWT 검증 → 실패 시 연결 거부
+- STOMP CONNECT 헤더로 JWT 검증 → 실패 시 연결 거부
 - SUBSCRIBE 시 `sessionId` 소유권 검증 → 실패 시 연결 종료
 - 구독 직후 현재 상태 스냅샷 수신 (`SESSION_START` 또는 `REPORT_READY`)
 
 ### Connection Lifecycle
 
 ```
-클라이언트                                       Spring 서버
-   │                                             │
-   │── STOMP CONNECT (/ws/user/interview?token=) ▶│  JWT 검증
-   │── SUBSCRIBE /topic/interview/{sessionId} ───▶│  소유권 검증
-   │◀─ {"type":"SYSTEM","subType":"SESSION_START"} │  구독 직후 스냅샷
-   │                                             │
-   │◀─ {"type":"QUESTION", ...} ─────────────────│  AI 첫 질문
-   │◀─ {"type":"QUESTION", ...} ─────────────────│  꼬리 질문
-   │                                             │
-   │◀─ {"type":"SYSTEM","subType":"REPORT_READY"} │  리포트 생성 완료 알림
-   │                                             │
-   │  (클라이언트 연결 종료)                     │
+클라이언트                                            Spring 서버
+   │                                                  │
+   │── STOMP CONNECT (Authorization: Bearer token) ──▶│  JWT 검증
+   │── SUBSCRIBE /user/queue/interview/{sessionId} ───▶│  소유권 검증
+   │◀─ {"type":"SYSTEM","subType":"SESSION_START"} ────│  구독 직후 스냅샷
+   │                                                  │
+   │◀─ {"type":"QUESTION", ...} ─────────────────────│  AI 첫 질문
+   │◀─ {"type":"QUESTION", ...} ─────────────────────│  꼬리 질문
+   │                                                  │
+   │◀─ {"type":"SYSTEM","subType":"REPORT_READY"} ────│  리포트 생성 완료 알림
+   │                                                  │
+   │  (클라이언트 연결 종료)                          │
 ```
 
 ### Server → Client 메시지 형식
