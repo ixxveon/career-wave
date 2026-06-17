@@ -93,6 +93,10 @@ public class Member {
         this.memberStatus = MemberStatus.LOCKED;
         this.lockedUntil = lockedUntil;
     }
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
     public void updateProfile(String name, String phone) {
         this.name = name;
         this.phone = phone;
