@@ -5,9 +5,9 @@
 
 ## Phase 1 — Config / Schema
 
-- [ ] OpenAI, PostgreSQL, 파일 스토리지, vector store 설정 로더가 환경별로 정상 주입된다.
-- [ ] Pydantic Request / Response Schema가 Spring Boot 내부 요청/응답 계약과 일치한다.
-- [ ] FastAPI 내부 ErrorCode 식별자가 정의되어 있고 Spring Boot 변환 대상과 일치한다.
+- [x] OpenAI, PostgreSQL, 파일 스토리지, vector store 설정 로더가 환경별로 정상 주입된다.
+- [x] Pydantic Request / Response Schema가 Spring Boot 내부 요청/응답 계약과 일치한다.
+- [x] FastAPI 내부 ErrorCode 식별자가 정의되어 있고 Spring Boot 변환 대상과 일치한다.
 
 ## Phase 2 — 핵심 내부 API (P1)
 
