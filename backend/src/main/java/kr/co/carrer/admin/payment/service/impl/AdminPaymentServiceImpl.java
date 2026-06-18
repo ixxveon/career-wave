@@ -27,6 +27,7 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentQueryRepository paymentQueryRepository;
     private final RefundRepository refundRepository;
+    // v1 stub: Toss 실제 연동 시 try-catch 추가 후 실패 경로에서 호출 (REQUIRES_NEW로 실패 이력 별도 커밋)
     private final RefundFailureTxService refundFailureTxService;
 
     @Override
