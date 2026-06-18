@@ -54,17 +54,24 @@ public class SolapiSmsSenderAdapter implements SmsSenderPort {
                 ))
         );
 
-        webClient.post()
-                .uri("/messages/v4/send-many")
-                .header("Authorization", "HMAC-SHA256 apiKey=" + apiKey
-                        + ", date=" + date + ", salt=" + salt + ", signature=" + signature)
-                .header("Content-Type", "application/json")
-                .bodyValue(body)
-                .retrieve()
-                .toBodilessEntity()
-                .doOnSuccess(r -> log.info("SOLAPI SMS 발송 완료: {}", toPhone))
-                .doOnError(e -> log.error("SOLAPI SMS 발송 실패: {}", e.getMessage()))
-                .block();
+        try {
+            webClient.post()
+                    .uri("/messages/v4/send-many")
+                    .header("Authorization", "HMAC-SHA256 apiKey=" + apiKey
+                            + ", date=" + date + ", salt=" + salt + ", signature=" + signature)
+                    .header("Content-Type", "application/json")
+                    .bodyValue(body)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .doOnSuccess(r -> log.info("SOLAPI SMS 발송 완료: {}", toPhone))
+                    .block();
+        } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
+            log.error("SOLAPI SMS 발송 실패: {} — HTTP {}", toPhone, e.getStatusCode());
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
+        } catch (Exception e) {
+            log.error("SOLAPI SMS 발송 실패: {} — {}", toPhone, e.getMessage());
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
+        }
     }
 
     private String buildSignature(String date, String salt) {

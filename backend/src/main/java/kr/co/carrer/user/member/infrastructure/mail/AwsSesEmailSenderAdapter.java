@@ -1,5 +1,7 @@
 package kr.co.carrer.user.member.infrastructure.mail;
 
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.service.EmailSenderPort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,7 +53,12 @@ public class AwsSesEmailSenderAdapter implements EmailSenderPort {
                         .build())
                 .build();
 
-        sesClient.sendEmail(request);
-        log.info("SES 이메일 발송 완료: {}", toEmail);
+        try {
+            sesClient.sendEmail(request);
+            log.info("SES 이메일 발송 완료: {}", toEmail);
+        } catch (SesV2Exception e) {
+            log.error("SES 이메일 발송 실패: {} — {}", toEmail, e.getMessage());
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
+        }
     }
 }

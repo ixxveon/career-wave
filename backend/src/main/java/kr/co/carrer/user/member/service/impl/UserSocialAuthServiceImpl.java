@@ -221,26 +221,38 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
 
     private OAuthUserInfo fetchKakaoUserInfo(String code) {
         WebClient client = webClientBuilder.build();
-        Map<?, ?> tokenResponse = client.post()
-                .uri("https://kauth.kakao.com/oauth/token")
-                .bodyValue("grant_type=authorization_code&client_id=" + kakaoClientId
-                        + "&client_secret=" + kakaoClientSecret
-                        + "&redirect_uri=" + kakaoRedirectUri
-                        + "&code=" + code)
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+        Map<?, ?> tokenResponse;
+        Map<?, ?> userResponse;
+        try {
+            tokenResponse = client.post()
+                    .uri("https://kauth.kakao.com/oauth/token")
+                    .bodyValue("grant_type=authorization_code&client_id=" + kakaoClientId
+                            + "&client_secret=" + kakaoClientSecret
+                            + "&redirect_uri=" + kakaoRedirectUri
+                            + "&code=" + code)
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
 
-        if (tokenResponse == null || !tokenResponse.containsKey("access_token"))
+            if (tokenResponse == null || !tokenResponse.containsKey("access_token"))
+                throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+
+            userResponse = client.get()
+                    .uri("https://kapi.kakao.com/v2/user/me")
+                    .header("Authorization", "Bearer " + tokenResponse.get("access_token"))
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+        } catch (CustomException e) {
+            throw e;
+        } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
+            log.error("Kakao API 호출 실패: HTTP {}", e.getStatusCode());
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
-
-        Map<?, ?> userResponse = client.get()
-                .uri("https://kapi.kakao.com/v2/user/me")
-                .header("Authorization", "Bearer " + tokenResponse.get("access_token"))
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+        } catch (Exception e) {
+            log.error("Kakao API 호출 실패: {}", e.getMessage());
+            throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+        }
 
         if (userResponse == null) throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
 
@@ -257,26 +269,38 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
 
     private OAuthUserInfo fetchNaverUserInfo(String code) {
         WebClient client = webClientBuilder.build();
-        Map<?, ?> tokenResponse = client.post()
-                .uri("https://nid.naver.com/oauth2.0/token")
-                .bodyValue("grant_type=authorization_code&client_id=" + naverClientId
-                        + "&client_secret=" + naverClientSecret
-                        + "&redirect_uri=" + naverRedirectUri
-                        + "&code=" + code)
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+        Map<?, ?> tokenResponse;
+        Map<?, ?> userResponse;
+        try {
+            tokenResponse = client.post()
+                    .uri("https://nid.naver.com/oauth2.0/token")
+                    .bodyValue("grant_type=authorization_code&client_id=" + naverClientId
+                            + "&client_secret=" + naverClientSecret
+                            + "&redirect_uri=" + naverRedirectUri
+                            + "&code=" + code)
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
 
-        if (tokenResponse == null || !tokenResponse.containsKey("access_token"))
+            if (tokenResponse == null || !tokenResponse.containsKey("access_token"))
+                throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+
+            userResponse = client.get()
+                    .uri("https://openapi.naver.com/v1/nid/me")
+                    .header("Authorization", "Bearer " + tokenResponse.get("access_token"))
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+        } catch (CustomException e) {
+            throw e;
+        } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
+            log.error("Naver API 호출 실패: HTTP {}", e.getStatusCode());
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
-
-        Map<?, ?> userResponse = client.get()
-                .uri("https://openapi.naver.com/v1/nid/me")
-                .header("Authorization", "Bearer " + tokenResponse.get("access_token"))
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+        } catch (Exception e) {
+            log.error("Naver API 호출 실패: {}", e.getMessage());
+            throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+        }
 
         if (userResponse == null) throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
 
@@ -292,26 +316,38 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
 
     private OAuthUserInfo fetchGoogleUserInfo(String code) {
         WebClient client = webClientBuilder.build();
-        Map<?, ?> tokenResponse = client.post()
-                .uri("https://oauth2.googleapis.com/token")
-                .bodyValue("grant_type=authorization_code&client_id=" + googleClientId
-                        + "&client_secret=" + googleClientSecret
-                        + "&redirect_uri=" + googleRedirectUri
-                        + "&code=" + code)
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+        Map<?, ?> tokenResponse;
+        Map<?, ?> userResponse;
+        try {
+            tokenResponse = client.post()
+                    .uri("https://oauth2.googleapis.com/token")
+                    .bodyValue("grant_type=authorization_code&client_id=" + googleClientId
+                            + "&client_secret=" + googleClientSecret
+                            + "&redirect_uri=" + googleRedirectUri
+                            + "&code=" + code)
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
 
-        if (tokenResponse == null || !tokenResponse.containsKey("access_token"))
+            if (tokenResponse == null || !tokenResponse.containsKey("access_token"))
+                throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+
+            userResponse = client.get()
+                    .uri("https://www.googleapis.com/oauth2/v3/userinfo")
+                    .header("Authorization", "Bearer " + tokenResponse.get("access_token"))
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+        } catch (CustomException e) {
+            throw e;
+        } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
+            log.error("Google API 호출 실패: HTTP {}", e.getStatusCode());
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
-
-        Map<?, ?> userResponse = client.get()
-                .uri("https://www.googleapis.com/oauth2/v3/userinfo")
-                .header("Authorization", "Bearer " + tokenResponse.get("access_token"))
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+        } catch (Exception e) {
+            log.error("Google API 호출 실패: {}", e.getMessage());
+            throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+        }
 
         if (userResponse == null) throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
 
