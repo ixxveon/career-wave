@@ -44,21 +44,21 @@
 
 ## Phase 5 - AI Usage Log Persistence
 
-- [ ] `usage_log_service.py`를 작성한다.
-- [ ] AI Usage Log 적재 서비스 로직을 작성한다.
-- [ ] `member_id`, `session_id`, `ai_model_id`, `feature_type` 검증 로직을 작성한다.
-- [ ] 토큰/비용 계산 결과를 로그 저장 데이터로 매핑하는 로직을 작성한다.
-- [ ] 로그 적재 후 후속 운영 판단용 메타 처리 포인트를 정리한다.
+- [x] `usage_log_service.py`를 작성한다.
+- [x] AI Usage Log 적재 서비스 로직을 작성한다.
+- [x] `member_id`, `session_id`, `ai_model_id`, `feature_type` 검증 로직을 작성한다.
+- [x] 토큰/비용 계산 결과를 로그 저장 데이터로 매핑하는 로직을 작성한다.
+- [x] 로그 적재 후 후속 운영 판단용 메타 처리 포인트를 정리한다.
 
 ## Phase 6 - Usage Metrics Domain Service
 
-- [ ] `usage_metrics_service.py`를 작성한다.
-- [ ] AI 사용량 요약 집계 서비스 로직을 작성한다.
-- [ ] 도메인별 사용량 집계 서비스 로직을 작성한다.
-- [ ] 토큰 추이 집계 서비스 로직을 작성한다.
-- [ ] 고사용 사용자 집계 서비스 로직을 작성한다.
-- [ ] AI 사용 로그 목록 조회 서비스 로직을 작성한다.
-- [ ] `from`, `to`, `featureType`, `interval`, `limit`, `page`, `size` 검증 로직을 작성한다.
+- [x] `usage_metrics_service.py`를 작성한다.
+- [x] AI 사용량 요약 집계 서비스 로직을 작성한다.
+- [x] 도메인별 사용량 집계 서비스 로직을 작성한다.
+- [x] 토큰 추이 집계 서비스 로직을 작성한다.
+- [x] 고사용 사용자 집계 서비스 로직을 작성한다.
+- [x] AI 사용 로그 목록 조회 서비스 로직을 작성한다.
+- [x] `from`, `to`, `featureType`, `interval`, `limit`, `page`, `size` 검증 로직을 작성한다.
 
 ## Phase 7 - Ops Settings Sync Service
 
