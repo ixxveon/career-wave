@@ -44,6 +44,8 @@ class UserAuthControllerTest {
         mockMvc.perform(post("/api/v1/user/members/token/refresh"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.code").value("AUTH_REFRESH_INVALID"));
     }
 
@@ -58,6 +60,9 @@ class UserAuthControllerTest {
         mockMvc.perform(post("/api/v1/user/members/token/refresh")
                         .cookie(new jakarta.servlet.http.Cookie("refreshToken", "valid-refresh-token")))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.accessToken").value("new-access-token"))
                 .andExpect(jsonPath("$.data.refreshToken").doesNotExist());
     }
@@ -85,6 +90,8 @@ class UserAuthControllerTest {
                         .cookie(new jakarta.servlet.http.Cookie("refreshToken", "valid-refresh-token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(header().string("Set-Cookie", containsString("refreshToken=")))
                 .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")));
     }
