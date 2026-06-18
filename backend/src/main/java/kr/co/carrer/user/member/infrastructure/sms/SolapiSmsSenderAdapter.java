@@ -3,6 +3,7 @@ package kr.co.carrer.user.member.infrastructure.sms;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.service.SmsSenderPort;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -21,27 +22,19 @@ import java.util.UUID;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class SolapiSmsSenderAdapter implements SmsSenderPort {
 
-    private final WebClient webClient;
-    private final String apiKey;
-    private final String apiSecret;
-    private final String senderPhone;
+    private final WebClient.Builder webClientBuilder;
 
-    public SolapiSmsSenderAdapter(
-            @Value("${solapi.base-url}") String baseUrl,
-            @Value("${solapi.api-key}") String apiKey,
-            @Value("${solapi.api-secret}") String apiSecret,
-            @Value("${solapi.sender-phone}") String senderPhone,
-            WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
-        this.apiKey = apiKey;
-        this.apiSecret = apiSecret;
-        this.senderPhone = senderPhone;
-    }
+    @Value("${solapi.base-url}") private String baseUrl;
+    @Value("${solapi.api-key}") private String apiKey;
+    @Value("${solapi.api-secret}") private String apiSecret;
+    @Value("${solapi.sender-phone}") private String senderPhone;
 
     @Override
     public void sendVerificationCode(String toPhone, String code) {
+        WebClient webClient = webClientBuilder.baseUrl(baseUrl).build();
         String date = Instant.now().toString();
         String salt = UUID.randomUUID().toString().replace("-", "");
         String signature = buildSignature(date, salt);

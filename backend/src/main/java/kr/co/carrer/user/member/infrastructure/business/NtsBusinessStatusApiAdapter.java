@@ -3,6 +3,7 @@ package kr.co.carrer.user.member.infrastructure.business;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.service.BusinessRegistrationVerificationPort;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
@@ -21,24 +22,20 @@ import java.util.Map;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class NtsBusinessStatusApiAdapter implements BusinessRegistrationVerificationPort {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     private static final String VALID_STATUS_CODE = "01";
 
-    private final WebClient webClient;
-    private final String serviceKey;
+    private final WebClient.Builder webClientBuilder;
 
-    public NtsBusinessStatusApiAdapter(
-            @Value("${nts.api.base-url}") String baseUrl,
-            @Value("${nts.api.key}") String serviceKey,
-            WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
-        this.serviceKey = serviceKey;
-    }
+    @Value("${nts.api.base-url}") private String baseUrl;
+    @Value("${nts.api.key}") private String serviceKey;
 
     @Override
     public boolean verify(String businessNumber) {
+        WebClient webClient = webClientBuilder.baseUrl(baseUrl).build();
         Map<String, Object> requestBody = Map.of(
                 "b_no", List.of(businessNumber)
         );
@@ -59,9 +56,12 @@ public class NtsBusinessStatusApiAdapter implements BusinessRegistrationVerifica
                     .bodyToMono(NtsStatusResponse.class)
                     .timeout(TIMEOUT)
                     .block();
-        } catch (WebClientResponseException | CustomException e) {
+        } catch (CustomException e) {
+            throw e;
+        } catch (WebClientResponseException e) {
+            log.error("NTS API 호출 실패: HTTP {}", e.getStatusCode());
             throw new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("NTS API 호출 실패: {}", e.getMessage());
             throw new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE);
         }
