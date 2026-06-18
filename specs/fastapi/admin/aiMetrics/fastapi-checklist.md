@@ -5,9 +5,9 @@
 
 ## Phase 1 — Config / Schema
 
-- [ ] OpenAI, PostgreSQL, 파일 스토리지, vector store 설정 로더가 환경별로 정상 주입된다.
-- [ ] Pydantic Request / Response Schema가 Spring Boot 내부 요청/응답 계약과 일치한다.
-- [ ] FastAPI 내부 ErrorCode 식별자가 정의되어 있고 Spring Boot 변환 대상과 일치한다.
+- [x] OpenAI, PostgreSQL, 파일 스토리지, vector store 설정 로더가 환경별로 정상 주입된다.
+- [x] Pydantic Request / Response Schema가 Spring Boot 내부 요청/응답 계약과 일치한다.
+- [x] FastAPI 내부 ErrorCode 식별자가 정의되어 있고 Spring Boot 변환 대상과 일치한다.
 
 ## Phase 2 — 핵심 내부 API (P1)
 
@@ -22,7 +22,7 @@
 - [ ] 운영 정책 변경 후 FastAPI 설정 동기화 결과가 후속 조회에 반영된다.
 - [ ] `POST /internal/admin/ai-metrics/usage/log`가 요청 계약에 맞게 동작한다.
 - [ ] FastAPI ↔ Spring Boot 내부 API 계약 검증 테스트가 요청 필드, 응답 필드, 타입까지 확인한다.
-- [ ] 내부 ErrorCode가 Spring Boot에서 `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `INVALID_MONTHLY_BUDGET`, `INVALID_ALERT_THRESHOLD`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 등으로 변환 가능하게 반환된다.
+- [ ] 내부 ErrorCode가 Spring Boot에서 `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `INVALID_MONTHLY_BUDGET`, `INVALID_ALERT_THRESHOLD`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 등으로 변환 가능하게 반환된다.  
 - [ ] FastAPI 내부 오류 응답이 `success`, `errorCode`, `message`, `detail` 스키마를 만족한다.
 
 ## Phase 3 — 비동기 / 파이프라인 (P2)
