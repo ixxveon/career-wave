@@ -98,10 +98,6 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_FOUND));
 
-        if (rejectReason == null || rejectReason.isBlank()) {
-            throw new CustomException(AdminPaymentErrorCode.REJECT_REASON_REQUIRED);
-        }
-
         Refund refund = refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING)
             .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.REFUND_NOT_PENDING));
 
