@@ -77,7 +77,7 @@ public interface UserRegisterControllerDocs {
             description = "기업회원 가입 전 재직증명서 PDF를 S3에 업로드하고 임시 fileId를 반환한다. " +
                     "파일 형식은 PDF만 허용하며 최대 5MB까지 업로드할 수 있다. " +
                     "반환된 fileId는 기업회원 가입 API의 employmentCertificateFileId 필드에 사용한다. " +
-                    "사용되지 않은 fileId는 24시간 후 정리 대상이다.")
+                    "사용되지 않은 fileId 정리는 별도 배치 작업으로 처리 예정입니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "업로드 성공",
                     content = @Content(

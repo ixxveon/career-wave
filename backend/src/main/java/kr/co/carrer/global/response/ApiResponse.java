@@ -27,15 +27,15 @@ public class ApiResponse<T> {
     }
 
     public static <T> ApiResponse<T> ok(T data) {
-        return new ApiResponse<>(true, null, "요청이 성공적으로 처리되었습니다.", null, data);
+        return new ApiResponse<>(true, 200, "요청이 성공적으로 처리되었습니다.", null, data);
     }
 
     public static <T> ApiResponse<T> ok(String message, T data) {
-        return new ApiResponse<>(true, null, message, null, data);
+        return new ApiResponse<>(true, 200, message, null, data);
     }
 
     public static ApiResponse<Void> ok(String message) {
-        return new ApiResponse<>(true, null, message, null, null);
+        return new ApiResponse<>(true, 200, message, null, null);
     }
 
     public static ApiResponse<Object> fail(int statusCode, String message) {

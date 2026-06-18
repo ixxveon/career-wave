@@ -1,5 +1,6 @@
 package kr.co.carrer.user.member.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.member.docs.UserRegisterControllerDocs;
@@ -13,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Tag(name = "User Register", description = "사용자 회원가입 / 아이디 중복 확인 / 재직증명서 업로드 API")
 @RestController
 @RequestMapping("/api/v1/user/members")
 @RequiredArgsConstructor

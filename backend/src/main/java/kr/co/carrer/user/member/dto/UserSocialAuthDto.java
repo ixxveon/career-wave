@@ -1,5 +1,6 @@
 package kr.co.carrer.user.member.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,9 +14,9 @@ public class UserSocialAuthDto {
     // ───────────────────────────── OAuth authorize ─────────────────────────────
 
     public record ResponseOAuthAuthorize(
-            String provider,
-            String authorizationUrl,
-            String state
+            @Schema(description = "소셜 provider", allowableValues = {"kakao", "naver", "google"}) String provider,
+            @Schema(description = "프론트가 이동해야 할 OAuth 인증 URL") String authorizationUrl,
+            @Schema(description = "CSRF 방지용 state (callback 검증에 사용)") String state
     ) {}
 
     // ───────────────────────────── OAuth callback — 기존 소셜 계정 로그인 ─────────────────────────────
@@ -50,28 +51,33 @@ public class UserSocialAuthDto {
         // String으로 수신 — Jackson 역직렬화 실패 방지
         // 유효하지 않은 값은 service 레이어에서 SocialProvider.fromJsonValue() 변환 후
         // CustomException(UserAuthErrorCode.OAUTH_PROVIDER_INVALID) throw (spec api-schema.md §13)
+        @Schema(description = "소셜 provider", allowableValues = {"kakao", "naver", "google"}, example = "kakao")
         @NotBlank
         @Pattern(regexp = "^(kakao|naver|google)$", message = "지원하지 않는 소셜 provider입니다.")
         private String provider;
 
-        // spec api-schema.md §13 계약 기준 — 프론트 타입에는 없으나 서버 검증 필요
+        @Schema(description = "OAuth callback 응답에서 받은 1회용 socialSignupToken")
         @NotBlank
         private String socialSignupToken;
 
-        // nullable — provider에서 email을 제공하지 않을 수 있음
+        @Schema(description = "provider에서 받은 이메일 (nullable — Kakao는 없을 수 있음)", example = "social@example.com")
         private String socialEmail;
 
+        @Schema(description = "이름", example = "홍길동")
         @NotBlank
         private String name;
 
+        @Schema(description = "통신사", example = "SKT")
         @NotBlank
         private String carrier;
 
+        @Schema(description = "휴대폰 번호 (010 시작 11자리)", example = "01012345678")
         @NotBlank
         @Pattern(regexp = "^010[0-9]{8}$",
                 message = "휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해 주세요.")
         private String phone;
 
+        @Schema(description = "휴대폰 인증 token (purpose=REGISTER)")
         @NotBlank
         private String phoneVerificationToken;
 

@@ -1,5 +1,6 @@
 package kr.co.carrer.user.member.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import kr.co.carrer.global.response.ApiResponse;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "User Recovery", description = "아이디 찾기 / 비밀번호 재설정 API")
 @RestController
 @RequestMapping("/api/v1/user/members/recovery")
 @RequiredArgsConstructor
