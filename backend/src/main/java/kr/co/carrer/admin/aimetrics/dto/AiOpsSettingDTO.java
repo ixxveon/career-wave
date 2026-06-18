@@ -29,14 +29,14 @@ public class AiOpsSettingDTO {
     @Schema(description = "Discord 알림 설정 변경 요청")
     public record RequestUpdateDiscordAlert(
             @Schema(description = "Discord 알림 활성 여부", requiredMode = Schema.RequiredMode.REQUIRED)
-            boolean alertEnabled
+            @NotNull Boolean alertEnabled
     ) {
     }
 
     @Schema(description = "AI rate limit 설정 변경 요청")
     public record RequestUpdateRateLimit(
             @Schema(description = "rate limit 활성 여부", requiredMode = Schema.RequiredMode.REQUIRED)
-            boolean rateLimitEnabled
+            @NotNull Boolean rateLimitEnabled
     ) {
     }
 

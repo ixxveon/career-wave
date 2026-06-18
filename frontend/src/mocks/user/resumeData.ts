@@ -87,20 +87,20 @@ export const MOCK_ANALYSIS_RESULT: AnalysisResultResponse = {
   createdAt: new Date().toISOString(),
 };
 
-// 페이지네이션 테스트용 전체 목록 (12건 — 10건 페이지 기준 2페이지 생성)
+// 무한스크롤 테스트용 전체 목록 (12건)
 export const MOCK_HISTORY_ALL = [
-  { documentId: MOCK_DOCUMENT_ID,          fileType: 'RESUME'       as const, originalName: '이력서_홍길동.pdf',   company: null,      job: null,            totalScore: 76, createdAt: new Date(Date.now() - 0          ).toISOString() },
-  { documentId: 'mock-uuid-2',             fileType: 'COVER_LETTER' as const, originalName: null,                 company: '카카오',   job: '백엔드 개발자',  totalScore: 81, createdAt: new Date(Date.now() - 86400000   ).toISOString() },
-  { documentId: 'mock-uuid-3',             fileType: 'RESUME'       as const, originalName: '이력서_v2.pdf',      company: null,      job: null,            totalScore: 68, createdAt: new Date(Date.now() - 172800000  ).toISOString() },
-  { documentId: 'mock-uuid-4',             fileType: 'COVER_LETTER' as const, originalName: null,                 company: '네이버',   job: '프론트엔드 개발자', totalScore: 74, createdAt: new Date(Date.now() - 259200000).toISOString() },
-  { documentId: 'mock-uuid-5',             fileType: 'RESUME'       as const, originalName: '이력서_최종.docx',   company: null,      job: null,            totalScore: 88, createdAt: new Date(Date.now() - 345600000  ).toISOString() },
-  { documentId: 'mock-uuid-6',             fileType: 'COVER_LETTER' as const, originalName: null,                 company: '라인',     job: '풀스택 개발자',  totalScore: 72, createdAt: new Date(Date.now() - 432000000  ).toISOString() },
-  { documentId: 'mock-uuid-7',             fileType: 'RESUME'       as const, originalName: '이력서_수정본.pdf',  company: null,      job: null,            totalScore: 65, createdAt: new Date(Date.now() - 518400000  ).toISOString() },
-  { documentId: 'mock-uuid-8',             fileType: 'COVER_LETTER' as const, originalName: null,                 company: '토스',     job: '백엔드 개발자',  totalScore: 91, createdAt: new Date(Date.now() - 604800000  ).toISOString() },
-  { documentId: 'mock-uuid-9',             fileType: 'RESUME'       as const, originalName: '이력서_230501.pdf',  company: null,      job: null,            totalScore: 79, createdAt: new Date(Date.now() - 691200000  ).toISOString() },
-  { documentId: 'mock-uuid-10',            fileType: 'COVER_LETTER' as const, originalName: null,                 company: '쿠팡',     job: '서버 개발자',   totalScore: 83, createdAt: new Date(Date.now() - 777600000  ).toISOString() },
-  { documentId: 'mock-uuid-11',            fileType: 'RESUME'       as const, originalName: '이력서_구버전.pdf',  company: null,      job: null,            totalScore: 61, createdAt: new Date(Date.now() - 864000000  ).toISOString() },
-  { documentId: 'mock-uuid-12',            fileType: 'COVER_LETTER' as const, originalName: null,                 company: '배달의민족', job: 'iOS 개발자',   totalScore: 77, createdAt: new Date(Date.now() - 950400000  ).toISOString() },
+  { documentId: MOCK_DOCUMENT_ID,          fileType: 'RESUME'       as const, status: 'COMPLETED' as const, originalName: '이력서_홍길동.pdf',   company: null,       job: null,               scoreTotal: 76, createdAt: new Date(Date.now() - 0          ).toISOString() },
+  { documentId: 'mock-uuid-2',             fileType: 'COVER_LETTER' as const, status: 'COMPLETED' as const, originalName: null,                  company: '카카오',    job: '백엔드 개발자',     scoreTotal: 81, createdAt: new Date(Date.now() - 86400000   ).toISOString() },
+  { documentId: 'mock-uuid-3',             fileType: 'RESUME'       as const, status: 'COMPLETED' as const, originalName: '이력서_v2.pdf',        company: null,       job: null,               scoreTotal: 68, createdAt: new Date(Date.now() - 172800000  ).toISOString() },
+  { documentId: 'mock-uuid-4',             fileType: 'COVER_LETTER' as const, status: 'COMPLETED' as const, originalName: null,                  company: '네이버',    job: '프론트엔드 개발자',  scoreTotal: 74, createdAt: new Date(Date.now() - 259200000  ).toISOString() },
+  { documentId: 'mock-uuid-5',             fileType: 'RESUME'       as const, status: 'COMPLETED' as const, originalName: '이력서_최종.docx',     company: null,       job: null,               scoreTotal: 88, createdAt: new Date(Date.now() - 345600000  ).toISOString() },
+  { documentId: 'mock-uuid-6',             fileType: 'COVER_LETTER' as const, status: 'COMPLETED' as const, originalName: null,                  company: '라인',      job: '풀스택 개발자',     scoreTotal: 72, createdAt: new Date(Date.now() - 432000000  ).toISOString() },
+  { documentId: 'mock-uuid-7',             fileType: 'RESUME'       as const, status: 'COMPLETED' as const, originalName: '이력서_수정본.pdf',    company: null,       job: null,               scoreTotal: 65, createdAt: new Date(Date.now() - 518400000  ).toISOString() },
+  { documentId: 'mock-uuid-8',             fileType: 'COVER_LETTER' as const, status: 'ANALYZING' as const, originalName: null,                  company: '토스',      job: '백엔드 개발자',     scoreTotal: null, createdAt: new Date(Date.now() - 604800000 ).toISOString() },
+  { documentId: 'mock-uuid-9',             fileType: 'RESUME'       as const, status: 'COMPLETED' as const, originalName: '이력서_230501.pdf',    company: null,       job: null,               scoreTotal: 79, createdAt: new Date(Date.now() - 691200000  ).toISOString() },
+  { documentId: 'mock-uuid-10',            fileType: 'COVER_LETTER' as const, status: 'COMPLETED' as const, originalName: null,                  company: '쿠팡',      job: '서버 개발자',       scoreTotal: 83, createdAt: new Date(Date.now() - 777600000  ).toISOString() },
+  { documentId: 'mock-uuid-11',            fileType: 'RESUME'       as const, status: 'COMPLETED' as const, originalName: '이력서_구버전.pdf',    company: null,       job: null,               scoreTotal: 61, createdAt: new Date(Date.now() - 864000000  ).toISOString() },
+  { documentId: 'mock-uuid-12',            fileType: 'COVER_LETTER' as const, status: 'COMPLETED' as const, originalName: null,                  company: '배달의민족', job: 'iOS 개발자',       scoreTotal: 77, createdAt: new Date(Date.now() - 950400000  ).toISOString() },
 ];
 
 // handlers.ts에서 page/size를 적용해 슬라이싱하여 사용

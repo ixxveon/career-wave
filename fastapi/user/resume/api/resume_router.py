@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from core.security import verify_internal_secret
 from user.resume.schema.request import AnalyzeDocumentRequest
 from user.resume.schema.response import TriggerAcceptedResponse
-from user.resume.service.webhook_client import send_webhook
+from user.resume.service import resume_service
 
 logger = logging.getLogger(__name__)
 
@@ -109,46 +109,8 @@ async def analyze_resume(
 
 
 async def _run_analysis(request: AnalyzeDocumentRequest) -> None:
-    # Phase 4에서 resume_service.analyze_document(request)로 교체
     document_id = str(request.document_id)
     try:
-        await send_webhook(document_id, {"status": "PENDING", "progress": 0})
-        await send_webhook(document_id, {"status": "ANALYZING", "progress": 50})
-        await send_webhook(
-            document_id,
-            {
-                "status": "COMPLETED",
-                "progress": 100,
-                "scoreJobFitness": 80,
-                "scoreTechStack": 75,
-                "scoreQuantified": 70,
-                "scoreLogical": 85,
-                "scoreTotal": 78,
-                "overallReview": "[stub] Phase 4 구현 전 mock 응답입니다.",
-                "feedbackText": "[]",
-                "errorMessage": None,
-            },
-        )
-        logger.info(f"[{document_id}] Stub analysis completed — mock COMPLETED webhook sent")
-    except Exception:
-        logger.error(f"[{document_id}] Stub webhook delivery failed", exc_info=True)
-        try:
-            await send_webhook(
-                document_id,
-                {
-                    "status": "FAILED",
-                    "progress": 0,
-                    "scoreJobFitness": None,
-                    "scoreTechStack": None,
-                    "scoreQuantified": None,
-                    "scoreLogical": None,
-                    "scoreTotal": None,
-                    "overallReview": None,
-                    "feedbackText": None,
-                    "errorMessage": "분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
-                },
-            )
-        except Exception:
-            logger.error(f"[{document_id}] FAILED webhook also failed — Spring Watchdog will handle", exc_info=True)
+        await resume_service.analyze_document(request)
     finally:
         _processing.discard(document_id)

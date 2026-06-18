@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-@Tag(name = "Interview Session", description = "AI 면접 세션 API")
+@Tag(name = "User Interview Session", description = "AI 면접 세션 API")
 public interface InterviewSessionControllerDocs {
 
     @Operation(summary = "면접 세션 시작",

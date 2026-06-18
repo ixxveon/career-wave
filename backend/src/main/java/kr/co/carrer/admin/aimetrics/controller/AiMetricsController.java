@@ -9,6 +9,7 @@ import kr.co.carrer.admin.aimetrics.dto.AiUsageLogDTO;
 import kr.co.carrer.admin.aimetrics.dto.RagDocumentDTO;
 import kr.co.carrer.admin.aimetrics.service.AiMetricsService;
 import kr.co.carrer.admin.aimetrics.type.AiFeatureType;
+import kr.co.carrer.admin.aimetrics.type.IntervalType;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
@@ -74,9 +75,9 @@ public class AiMetricsController implements AiMetricsDocs {
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
             @RequestParam(required = false) AiFeatureType featureType,
-            @RequestParam String interval
+            @RequestParam IntervalType interval
     ) {
-        AiMetricsService.ResponseTokenTrend result = aiMetricsService.getTokenTrend(from, to, featureType, interval);
+        AiMetricsService.ResponseTokenTrend result = aiMetricsService.getTokenTrend(from, to, featureType, interval.name());
         AiMetricsDTO.ResponseTokenTrend response = new AiMetricsDTO.ResponseTokenTrend(
                 result.interval(),
                 result.points().stream()
@@ -330,6 +331,16 @@ public class AiMetricsController implements AiMetricsDocs {
     }
 
     private String extractClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isBlank()) {
+            return xRealIp.trim();
+        }
+
         return request.getRemoteAddr();
     }
 }

@@ -8,7 +8,7 @@
 
 ## Phase 1 — 인프라 세팅 & 타입 정의 `feat(feature/user-resume-upload)`
 
-- [x] `types/resume.d.ts` 정의 (Request/Response DTO, AnalysisResult, 상태 머신 타입)
+- [x] `types/user/resume.ts` 정의 (Request/Response DTO, AnalysisResult, 상태 머신 타입, const enum 패턴)
 - [x] `api/resume/` API 호출 함수 인터페이스 작성 (AbortController 지원) 및 공통 에러 핸들링 구조 세팅
 - [x] TanStack Query 커스텀 훅 세팅 (queryKey 컨벤션, `retry` 정책 포함)
 - [x] sessionStorage 헬퍼 유틸리티 구현 (`try-catch` 통한 직렬화/역직렬화 예외 처리 포함)
@@ -36,7 +36,7 @@
 
 ## Phase 3 — AI 분석 로딩 흐름 `feat(feature/user-resume-analysis)`
 
-- [x] `hooks/resume/useAnalysisResult.ts` — WebSocket 기반 상태 구독 구현 (`useAnalysisWebSocket.ts`로 구현)
+- [x] `hooks/resume/useAnalysisWebSocket.ts` — STOMP (`@stomp/stompjs`) 기반 상태 구독 구현 (브로드캐스트 + 개인 Snapshot 이중 구독, FAILED `errorMessage` 우선 노출)
 - [x] `components/resume/LoadingModal.tsx` — 상태 머신(`IDLE → SUBMITTING → ANALYZING → SUCCESS/ERROR`)에 따른 단계별 메시지 전환
 - [x] 비정상 종료 처리 — 타임아웃/API 에러 시 Modal 닫힘 + 에러 상태 전이 + 에러 메시지 노출
 - [x] 네트워크 단절 시 토스트 메시지 알림 처리
@@ -55,7 +55,7 @@
 
 ## Phase 5 — 리스트 페이징 & 도메인 통합 `feat(feature/user-resume-history)`
 
-- [x] `hooks/resume/useResumeHistory.ts` — 최신순 페이징 + fileType 서버사이드 필터링 구현
+- [x] `hooks/resume/useResumeHistory.ts` — 최신순 무한스크롤 (`useInfiniteQuery`, PAGE_SIZE 5) + fileType 서버사이드 필터링 구현
 - [x] `components/resume/HistoryItem.tsx` — 이력 목록 아이템 렌더링 및 Empty State 대응
 - [x] 면접 도메인 연동 — `documentId`를 쿼리 파라미터로 전달 (`?documentId=xxx`)
 - [ ] 면접 도메인 연동 시 404/403 에러 처리 및 담당자 연동 테스트 (백엔드 구현 후 진행 예정)
@@ -69,3 +69,17 @@
 - [x] 최종 클린업 — ESLint `no-console` 검사 완료 (목업 데이터는 백엔드 연동 후 제거 예정)
 - [ ] 성능 측정 — Lighthouse 성능 90점 / 접근성 95점 이상 달성 (백엔드 연동 후 진행 예정)
 - [x] `checklist.md` 기반 최종 점검 및 PR 생성 (`.github/pull_request_template.md` 형식 준수)
+
+---
+
+## Phase 7 — 버그 수정 & 백엔드 연동 준비 `fix/user-resume-frontend`
+
+- [x] **#392** `ResumeHistoryItem.totalScore` → `scoreTotal` 필드명 통일 (백엔드 `ResumeDTO.HistoryItem` 기준), `status: BackendDocumentStatus` 필드 추가
+- [x] **#303** 이력 목록 무한스크롤 전환 — `useInfiniteQuery` (PAGE_SIZE 5) + IntersectionObserver 센티넬 패턴
+- [x] **#269** `useAnalysisWebSocket.ts` raw WebSocket → STOMP `@stomp/stompjs` Client 마이그레이션
+  - 브로드캐스트 구독: `/topic/resume/{documentId}/status`
+  - 개인 Snapshot 구독: `/user/queue/resume/{documentId}/status`
+  - FAILED 수신 시 `errorMessage` 필드 우선 노출, null이면 `message` 폴백
+- [x] MSW WS 핸들러 STOMP 프레임 대응 (`CONNECT→CONNECTED`, `SUBSCRIBE→MESSAGE` 시뮬레이션)
+- [x] `WsStatusMessage` 타입에 `errorMessage?: string | null` 필드 추가
+- [x] `specs/frontend/user/resume/`, `specs/backend/user/resume/` 스펙 최신화
