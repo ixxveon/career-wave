@@ -5,14 +5,14 @@
 
 ## Phase 1 - Config / Schema
 
-- [ ] `settings.py`에 OpenAI, PostgreSQL, 파일 스토리지, vector store 연동 설정 로더를 정의한다.
-- [ ] FastAPI 내부 ErrorCode와 예외 식별자 규칙을 정의한다.
-- [ ] 집계 조회용 Pydantic Request Schema를 작성한다.
-- [ ] 집계 조회용 Pydantic Response Schema를 작성한다.
-- [ ] 운영 정책 동기화용 Pydantic Request / Response Schema를 작성한다.
-- [ ] RAG 인덱싱 시작용 Pydantic Request / Response Schema를 작성한다.
-- [ ] RAG 인덱스 삭제용 Pydantic Response Schema를 작성한다.
-- [ ] AI Usage Log 적재용 Pydantic Request / Response Schema를 작성한다.
+- [x] `settings.py`에 OpenAI, PostgreSQL, 파일 스토리지, vector store 연동 설정 로더를 정의한다.
+- [x] FastAPI 내부 ErrorCode와 예외 식별자 규칙을 정의한다.
+- [x] 집계 조회용 Pydantic Request Schema를 작성한다.
+- [x] 집계 조회용 Pydantic Response Schema를 작성한다.
+- [x] 운영 정책 동기화용 Pydantic Request / Response Schema를 작성한다.
+- [x] RAG 인덱싱 시작용 Pydantic Request / Response Schema를 작성한다.
+- [x] RAG 인덱스 삭제용 Pydantic Response Schema를 작성한다.
+- [x] AI Usage Log 적재용 Pydantic Request / Response Schema를 작성한다.
 
 ## Phase 2 - DB Repository
 

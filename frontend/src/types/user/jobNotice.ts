@@ -6,6 +6,43 @@ export interface ApiResponse<T> {
 }
 
 export interface JobNoticeSummary {
+  jobNoticeId: number;
+  companyName: string;
+  title: string;
+  skillTags: string[] | null;
+  viewCount: number;
+  createdAt: string;
+  noticeStatus?: string;
+  jobCategory: string | string[];
+  jobType: string;
+  careerLevel: string;
+  location: string;
+  companySize: string;
+  salary?: string | null;
+  deadline?: string | null;
+  source: string;
+  bookmarked: boolean;
+}
+
+export interface JobNoticeDetail extends JobNoticeSummary {
+  originalUrl?: string | null;
+  industry?: string;
+  responsibilities?: string[];
+  requirements?: string[];
+  preferredQualifications?: string[];
+  process?: string[];
+  workConditions?: string[];
+  companyDescription?: string;
+  description?: string | null;
+  updatedAt?: string;
+}
+
+export interface JobNoticeBookmarkResponse {
+  jobNoticeId: number;
+  bookmarked: boolean;
+}
+
+export interface JobNotice {
   id: number;
   company: string;
   title: string;
@@ -25,9 +62,8 @@ export interface JobNoticeSummary {
   bookmarked: boolean;
   originalUrl?: string;
   stacks?: string[];
-}
-
-export interface JobNoticeDetail extends JobNoticeSummary {
+  exp: string;
+  employment: string;
   industry?: string;
   responsibilities?: string[];
   requirements?: string[];
@@ -35,15 +71,10 @@ export interface JobNoticeDetail extends JobNoticeSummary {
   process?: string[];
   workConditions?: string[];
   companyDescription?: string;
+  description?: string | null;
 }
 
-export interface JobNoticeBookmarkResponse {
-  id: number;
-  bookmarked: boolean;
-  scrapCount: number;
-}
-
-export type JobNoticeBookmarkMap = Record<JobNoticeSummary['id'], JobNoticeSummary['bookmarked']>;
+export type JobNoticeBookmarkMap = Record<JobNotice['id'], JobNotice['bookmarked']>;
 
 export interface JobNoticeListStats {
   totalOpenCount: number;
@@ -61,13 +92,13 @@ export interface JobNoticeFilterOptions {
 }
 
 export interface JobNoticeListResponse {
-  items: JobNoticeSummary[];
+  content: JobNoticeSummary[];
   page: number;
   size: number;
-  totalItems: number;
+  totalElements: number;
   totalPages: number;
-  stats: JobNoticeListStats;
-  filterOptions: JobNoticeFilterOptions;
+  stats?: JobNoticeListStats;
+  filterOptions?: JobNoticeFilterOptions;
 }
 
 export const JOB_NOTICE_ALL_FILTER_VALUE = '전체';
@@ -135,27 +166,72 @@ export const JOB_NOTICE_VIEW_FIELD_MAP = {
   jobType: 'employment',
 } as const;
 
-export type JobNotice = Omit<JobNoticeDetail, 'careerLevel' | 'jobType'> & {
-  exp: string;
-  employment: string;
-};
+function getPrimaryJobCategory(jobCategory: JobNoticeSummary['jobCategory']) {
+  return Array.isArray(jobCategory) ? (jobCategory[0] ?? '') : jobCategory;
+}
 
-export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeDetail): JobNotice {
-  const { careerLevel, jobType, ...viewJobNotice } = jobNotice;
+export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoticeDetail): JobNotice {
+  const jobCategory = getPrimaryJobCategory(jobNotice.jobCategory);
+  const tags = jobNotice.skillTags ?? [];
 
   return {
-    ...viewJobNotice,
-    exp: careerLevel,
-    employment: jobType,
+    id: jobNotice.jobNoticeId,
+    company: jobNotice.companyName,
+    title: jobNotice.title,
+    jobType: jobNotice.jobType,
+    jobCategory,
+    careerLevel: jobNotice.careerLevel,
+    location: jobNotice.location,
+    companySize: jobNotice.companySize,
+    salary: jobNotice.salary ?? undefined,
+    deadline: jobNotice.deadline ?? '',
+    postedAt: jobNotice.createdAt,
+    tags,
+    source: jobNotice.source,
+    recommended: false,
+    recommendScore: 0,
+    views: jobNotice.viewCount,
+    bookmarked: jobNotice.bookmarked,
+    originalUrl: 'originalUrl' in jobNotice ? jobNotice.originalUrl ?? undefined : undefined,
+    stacks: tags,
+    exp: jobNotice.careerLevel,
+    employment: jobNotice.jobType,
+    industry: 'industry' in jobNotice ? jobNotice.industry : undefined,
+    responsibilities: 'responsibilities' in jobNotice ? jobNotice.responsibilities : undefined,
+    requirements: 'requirements' in jobNotice ? jobNotice.requirements : undefined,
+    preferredQualifications: 'preferredQualifications' in jobNotice ? jobNotice.preferredQualifications : undefined,
+    process: 'process' in jobNotice ? jobNotice.process : undefined,
+    workConditions: 'workConditions' in jobNotice ? jobNotice.workConditions : undefined,
+    companyDescription: 'companyDescription' in jobNotice ? jobNotice.companyDescription : undefined,
+    description: 'description' in jobNotice ? jobNotice.description : undefined,
   };
 }
 
 export function mapJobNoticeViewToApiModel(jobNotice: JobNotice): JobNoticeDetail {
-  const { exp, employment, ...viewJobNotice } = jobNotice;
-
   return {
-    ...viewJobNotice,
-    careerLevel: exp,
-    jobType: employment,
+    jobNoticeId: jobNotice.id,
+    companyName: jobNotice.company,
+    title: jobNotice.title,
+    skillTags: jobNotice.tags,
+    jobType: jobNotice.employment,
+    companySize: jobNotice.companySize,
+    jobCategory: jobNotice.jobCategory,
+    careerLevel: jobNotice.exp,
+    location: jobNotice.location,
+    salary: jobNotice.salary,
+    source: jobNotice.source,
+    viewCount: jobNotice.views,
+    deadline: jobNotice.deadline,
+    createdAt: jobNotice.postedAt,
+    bookmarked: jobNotice.bookmarked,
+    originalUrl: jobNotice.originalUrl,
+    industry: jobNotice.industry,
+    responsibilities: jobNotice.responsibilities,
+    requirements: jobNotice.requirements,
+    preferredQualifications: jobNotice.preferredQualifications,
+    process: jobNotice.process,
+    workConditions: jobNotice.workConditions,
+    companyDescription: jobNotice.companyDescription,
+    description: jobNotice.description,
   };
 }
