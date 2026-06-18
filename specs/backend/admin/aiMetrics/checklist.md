@@ -57,25 +57,25 @@
 
 ## Phase 7 — Test
 
-- [ ] 정상 케이스 통합 테스트가 AI 사용량 조회, AI 사용 로그 조회, 운영 정책 조회/수정, RAG 문서 조회/업로드/다운로드/삭제를 검증한다.
-- [ ] 예외/경계 케이스 단위 테스트가 잘못된 기간, 잘못된 enum, 예산/임계치 검증, 미존재 리소스, 중복 인덱싱 요청을 검증한다.
-- [ ] FastAPI 연동 테스트가 집계 조회 매핑, 설정 동기화, RAG 인덱싱 시작/삭제 호출을 검증한다.
-- [ ] Audit Log 기록 테스트가 운영 정책 변경과 RAG 문서 삭제 같은 관리자 변경 행위에 대해 남는지 검증한다.
+- [x] 정상 케이스 계층 테스트가 AI 사용량 조회, AI 사용 로그 조회, 운영 정책 조회/수정, RAG 문서 조회/업로드/다운로드/삭제를 검증한다.
+- [x] 예외/경계 케이스 단위 테스트가 잘못된 기간, 잘못된 enum, 예산/임계치 검증, 미존재 리소스, 중복 인덱싱 요청을 검증한다.
+- [x] FastAPI 연동 테스트가 집계 조회 매핑, 설정 동기화, RAG 인덱싱 시작/삭제 호출을 검증한다.
+- [x] Audit Log 기록 테스트가 운영 정책 변경과 RAG 문서 삭제 같은 관리자 변경 행위에 대해 남는지 검증한다.
 
 ## 코드 품질
 
-- [ ] `ApiResponse<T>` 래퍼 누락 엔드포인트가 없다.
-- [ ] 예외 처리가 `BusinessException(ErrorCode.XXX)` 패턴을 따르며 컨트롤러에서 직접 예외 응답을 조립하지 않는다.
-- [ ] 비즈니스 로직과 권한 분기, 검증 로직이 서비스 레이어에만 존재한다.
-- [ ] Service 인터페이스와 `impl` 구현체가 분리되어 있다.
-- [ ] Spring Boot가 OpenAI 호출, 토큰 계산, RAG 인덱싱 로직을 직접 수행하지 않고 FastAPI 연동 책임만 가진다.
-- [ ] `global/`이 도메인 구현 세부사항에 역참조되지 않는다.
+- [x] `ApiResponse<T>` 래퍼 누락 엔드포인트가 없다.
+- [x] 예외 처리가 `CustomException(ErrorCode.XXX)` 패턴을 따르며 컨트롤러에서 직접 예외 응답을 조립하지 않는다.
+- [x] 비즈니스 로직과 검증 로직이 서비스 레이어에만 존재하며, API 접근 권한은 Controller의 `@PreAuthorize` 정책으로 분리되어 있다.
+- [x] Service 인터페이스와 `impl` 구현체가 분리되어 있다.
+- [x] Spring Boot가 OpenAI 호출, 토큰 계산, RAG 인덱싱 로직을 직접 수행하지 않고 FastAPI 연동 책임만 가진다.
+- [x] `global/`이 도메인 구현 세부사항에 역참조되지 않는다.
 
 ## 머지 전 최종 확인
 
-- [ ] 구현 결과가 `constitution.md`의 불변 규칙과 상태 전이 규칙을 위반하지 않는다.
-- [ ] Query Parameter와 ERD 컬럼 매핑이 실제 쿼리 구현과 일치한다.
-- [ ] Enum 값과 DB CHECK 제약조건이 실제 코드와 문서 모두에서 일치한다.
-- [ ] 권한(Role) 정책이 문서 명칭(`MASTER`, `BACKEND`)과 Spring Security 매핑(`ROLE_MASTER`, `ROLE_BACKEND`) 모두에서 일치한다.
-- [ ] Audit Log 대상 변경 작업이 누락 없이 기록된다.
-- [ ] tasks.md의 모든 항목이 완료 상태로 점검되었다.
+- [x] 구현 결과가 `constitution.md`의 불변 규칙과 상태 전이 규칙을 위반하지 않는다.
+- [x] Query Parameter와 ERD 컬럼 매핑이 Spring 요청 검증 및 FastAPI 내부 계약 매핑과 일치한다.
+- [x] Enum 값과 DB CHECK 제약조건이 실제 코드와 문서 모두에서 일치한다.
+- [x] 권한(Role) 정책이 문서 명칭(`MASTER`, `BACKEND`)과 Spring Security 매핑(`ROLE_MASTER`, `ROLE_BACKEND`) 모두에서 일치한다.
+- [x] Audit Log 대상 변경 작업이 누락 없이 기록된다.
+- [x] tasks.md의 모든 항목이 완료 상태로 점검되었다.
