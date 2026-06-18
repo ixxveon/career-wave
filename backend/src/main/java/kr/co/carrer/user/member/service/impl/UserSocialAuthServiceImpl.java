@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.dto.UserLoginDto;
@@ -126,6 +127,10 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
             // 기존 계정 로그인
             Member member = memberRepository.findById(existing.get().getMemberId())
                     .orElseThrow(() -> new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED));
+
+            // 계정 상태 검증 — 일반 로그인과 동일한 정책 적용
+            validateAccountStatus(member);
+
             member.updateLastLoginAt(Instant.now());
             String accessToken = issueTokens(member, response);
 
@@ -325,6 +330,23 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         }
     }
 
+    // 계정 상태 검증 — 일반 로그인(UserLoginServiceImpl)과 동일한 정책
+    private void validateAccountStatus(Member member) {
+        switch (member.getMemberStatus()) {
+            case SUSPENDED    -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED);
+            case BANNED       -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
+            case BLACKLISTED  -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BLACKLISTED);
+            case WITHDRAWN    -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
+            case LOCKED -> {
+                if (member.getLockedUntil() != null && Instant.now().isBefore(member.getLockedUntil())) {
+                    throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
+                }
+                member.recoverFromLock();
+            }
+            default -> {}
+        }
+    }
+
     private String issueTokens(Member member, HttpServletResponse response) {
         AccountType accountType = AccountType.USER;
         String subject = member.getMemberId().toString();
@@ -335,13 +357,30 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         String refreshToken = jwtTokenProvider.createRefreshToken(
                 subject, accountType, null, sessionId);
 
-        refreshTokenStore.save(accountType, subject, sessionId,
-                refreshToken, Duration.ofMillis(jwtProperties.getUser().getRefreshExpiration()));
+        Duration accessTtl = Duration.ofMillis(jwtProperties.getUser().getAccessExpiration());
+        Duration refreshTtl = Duration.ofMillis(jwtProperties.getUser().getRefreshExpiration());
+
+        // session limit — 일반 로그인과 동일하게 5세션 상한 적용
+        refreshTokenStore.enforceSessionLimit(accountType, subject).forEach(expiredKey -> {
+            String expiredSessionId = expiredKey.substring(expiredKey.lastIndexOf(':') + 1);
+            String expiredJti = refreshTokenStore.getAndDeleteAccessJti(accountType, subject, expiredSessionId);
+            if (expiredJti != null) {
+                try { refreshTokenStore.delete(accountType, subject, expiredSessionId); }
+                catch (Exception ignored) {}
+            }
+            refreshTokenStore.delete(accountType, subject, expiredSessionId);
+        });
+
+        refreshTokenStore.save(accountType, subject, sessionId, refreshToken, refreshTtl);
+
+        // access JTI 저장 — 세션 퇴출 시 blacklist 등록에 사용
+        String jti = jwtTokenProvider.extractJti(accessToken, accountType);
+        refreshTokenStore.saveAccessJti(accountType, subject, sessionId, jti, accessTtl);
 
         ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, refreshToken)
                 .httpOnly(true).secure(true).sameSite("Strict")
                 .path("/api/v1/user/members")
-                .maxAge(jwtProperties.getUser().getRefreshExpiration() / 1000)
+                .maxAge(refreshTtl.toSeconds())
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
         return accessToken;
