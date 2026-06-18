@@ -5,27 +5,27 @@
 
 ## Phase 1 - Config / Schema
 
-- [ ] `settings.py`에 OpenAI, PostgreSQL, 파일 스토리지, vector store 연동 설정 로더를 정의한다.
-- [ ] FastAPI 내부 ErrorCode와 예외 식별자 규칙을 정의한다.
-- [ ] 집계 조회용 Pydantic Request Schema를 작성한다.
-- [ ] 집계 조회용 Pydantic Response Schema를 작성한다.
-- [ ] 운영 정책 동기화용 Pydantic Request / Response Schema를 작성한다.
-- [ ] RAG 인덱싱 시작용 Pydantic Request / Response Schema를 작성한다.
-- [ ] RAG 인덱스 삭제용 Pydantic Response Schema를 작성한다.
-- [ ] AI Usage Log 적재용 Pydantic Request / Response Schema를 작성한다.
+- [x] `settings.py`에 OpenAI, PostgreSQL, 파일 스토리지, vector store 연동 설정 로더를 정의한다.
+- [x] FastAPI 내부 ErrorCode와 예외 식별자 규칙을 정의한다.
+- [x] 집계 조회용 Pydantic Request Schema를 작성한다.
+- [x] 집계 조회용 Pydantic Response Schema를 작성한다.
+- [x] 운영 정책 동기화용 Pydantic Request / Response Schema를 작성한다.
+- [x] RAG 인덱싱 시작용 Pydantic Request / Response Schema를 작성한다.
+- [x] RAG 인덱스 삭제용 Pydantic Response Schema를 작성한다.
+- [x] AI Usage Log 적재용 Pydantic Request / Response Schema를 작성한다.
 
 ## Phase 2 - DB Repository
 
-- [ ] `ai_model_repository.py` 조회 Repository를 작성한다.
-- [ ] `ai_ops_setting_repository.py` 조회 Repository를 작성한다.
-- [ ] `ai_usage_log_repository.py` 로그 적재 Repository를 작성한다.
-- [ ] `ai_usage_log_repository.py` 사용량 요약 집계 쿼리를 작성한다.
-- [ ] `ai_usage_log_repository.py` 도메인별 사용량 집계 쿼리를 작성한다.
-- [ ] `ai_usage_log_repository.py` 토큰 추이 집계 쿼리를 작성한다.
-- [ ] `ai_usage_log_repository.py` 고사용 사용자 집계 쿼리를 작성한다.
-- [ ] `ai_usage_log_repository.py` AI 사용 로그 목록 조회 쿼리를 작성한다.
-- [ ] `rag_document_repository.py` RAG 문서 상태 조회 Repository를 작성한다.
-- [ ] `rag_document_repository.py` `status`, `indexing_progress`, `chunk_count`, `updated_at` 갱신 메서드를 작성한다.
+- [x] `ai_model_repository.py` 조회 Repository를 작성한다.
+- [x] `ai_ops_setting_repository.py` 조회 Repository를 작성한다.
+- [x] `ai_usage_log_repository.py` 로그 적재 Repository를 작성한다.
+- [x] `ai_usage_log_repository.py` 사용량 요약 집계 쿼리를 작성한다.
+- [x] `ai_usage_log_repository.py` 도메인별 사용량 집계 쿼리를 작성한다.
+- [x] `ai_usage_log_repository.py` 토큰 추이 집계 쿼리를 작성한다.
+- [x] `ai_usage_log_repository.py` 고사용 사용자 집계 쿼리를 작성한다.
+- [x] `ai_usage_log_repository.py` AI 사용 로그 목록 조회 쿼리를 작성한다.
+- [x] `rag_document_repository.py` RAG 문서 상태 조회 Repository를 작성한다.
+- [x] `rag_document_repository.py` `status`, `indexing_progress`, `chunk_count`, `updated_at` 갱신 메서드를 작성한다.
 
 ## Phase 3 - OpenAI Client
 
