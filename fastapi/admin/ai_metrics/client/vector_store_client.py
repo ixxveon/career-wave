@@ -1,3 +1,4 @@
+import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import json
@@ -57,7 +58,11 @@ class MockVectorStoreClient(VectorStoreClient):
     ) -> VectorStoreUpsertResult:
         try:
             collection_path = self._base_path / self._collection
-            collection_path.mkdir(parents=True, exist_ok=True)
+            await asyncio.to_thread(
+                collection_path.mkdir,
+                parents=True,
+                exist_ok=True,
+            )
 
             payload = {
                 "ragDocumentId": document.rag_document_id,
@@ -73,8 +78,10 @@ class MockVectorStoreClient(VectorStoreClient):
             }
 
             target_path = collection_path / f"{document.rag_document_id}.json"
-            target_path.write_text(
-                json.dumps(payload, ensure_ascii=False, indent=2),
+            serialized_payload = json.dumps(payload, ensure_ascii=False, indent=2)
+            await asyncio.to_thread(
+                target_path.write_text,
+                serialized_payload,
                 encoding="utf-8",
             )
 
@@ -102,8 +109,8 @@ class MockVectorStoreClient(VectorStoreClient):
             target_path = collection_path / f"{rag_document_id}.json"
 
             deleted = False
-            if target_path.exists():
-                target_path.unlink()
+            if await asyncio.to_thread(target_path.exists):
+                await asyncio.to_thread(target_path.unlink)
                 deleted = True
 
             return VectorStoreDeleteResult(
