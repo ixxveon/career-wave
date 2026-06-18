@@ -2,6 +2,7 @@ package kr.co.carrer.user.member.service.impl;
 
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.store.RefreshTokenStore;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.dto.UserRecoveryDto;
 import kr.co.carrer.user.member.entity.Member;
@@ -37,6 +38,8 @@ import java.util.List;
 public class UserRecoveryServiceImpl implements UserRecoveryService {
 
     private static final long RESET_TOKEN_EXPIRES_SECONDS = 600L; // 10분
+    private static final int RESET_MAX_FAIL = 5;
+    private static final String RESET_FAIL_PREFIX = "password-reset:fail:";
 
     private final UserMemberRepository memberRepository;
     private final UserMemberQueryRepository memberQueryRepository;
@@ -45,6 +48,7 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
     private final PasswordResetTokenRepository resetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenStore refreshTokenStore;
+    private final StringRedisTemplate redisTemplate;
 
     // ── 아이디 찾기 ────────────────────────────────────────────────────────────
 
@@ -171,11 +175,22 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
     // ── 비밀번호 재설정 ─────────────────────────────────────────────────────────
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = {CustomException.class})
     public UserRecoveryDto.ResponseResetPassword resetPassword(UserRecoveryDto.RequestResetPassword request) {
         String tokenHash = hash(request.getResetToken());
+        String failKey = RESET_FAIL_PREFIX + tokenHash;
+
+        // 실패 횟수 체크 — 5회 초과 시 차단 (spec §10)
+        String failCountStr = redisTemplate.opsForValue().get(failKey);
+        if (failCountStr != null && Long.parseLong(failCountStr) >= RESET_MAX_FAIL) {
+            throw new CustomException(UserAuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
+        }
+
         PasswordResetToken resetToken = resetTokenRepository.findByTokenHash(tokenHash)
-                .orElseThrow(() -> new CustomException(UserAuthErrorCode.PASSWORD_RESET_TOKEN_INVALID));
+                .orElseThrow(() -> {
+                    incrementResetFailCount(failKey, 60L); // 존재하지 않는 token: 짧은 TTL
+                    return new CustomException(UserAuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
+                });
 
         if (resetToken.isUsed()) {
             throw new CustomException(UserAuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
@@ -189,6 +204,7 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
 
         // loginId 포함 금지 검증 (spec §8)
         if (request.getNewPassword().contains(member.getLoginId())) {
+            incrementResetFailCount(failKey, resetToken.getExpiresAt().getEpochSecond() - Instant.now().getEpochSecond());
             throw new CustomException(UserAuthErrorCode.PASSWORD_POLICY_VIOLATION);
         }
 
@@ -201,6 +217,14 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
         refreshTokenStore.deleteAll(accountType, member.getMemberId().toString());
 
         return new UserRecoveryDto.ResponseResetPassword(Instant.now());
+    }
+
+    private void incrementResetFailCount(String key, long ttlSeconds) {
+        if (ttlSeconds <= 0) ttlSeconds = 60L;
+        Long count = redisTemplate.opsForValue().increment(key);
+        if (count != null && count == 1L) {
+            redisTemplate.expire(key, java.time.Duration.ofSeconds(ttlSeconds));
+        }
     }
 
     // ── 내부 유틸 ─────────────────────────────────────────────────────────────
