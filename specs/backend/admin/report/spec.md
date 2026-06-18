@@ -183,7 +183,7 @@
 | target_id | BIGINT | NOT NULL | 신고 대상 레코드 ID |
 | reason | VARCHAR(30) | NOT NULL | SPAM / ABUSE / AD / INAPPROPRIATE / OTHER |
 | report_status | VARCHAR(20) | NOT NULL, DEFAULT PENDING | PENDING / BLINDED / DISMISSED |
-| ai_suggestion | JSONB | NULL | AI 검토 의견 JSON — `{"severity":"높음|중간|낮음","category":"SPAM|ABUSE|AD|INAPPROPRIATE|OTHER","suggestion":"..."}` |
+| ai_suggestion | JSONB | NULL | AI 검토 의견 JSON — `{"severity":"높음\|중간\|낮음","category":"SPAM\|ABUSE\|AD\|INAPPROPRIATE\|OTHER","suggestion":"..."}` |
 | processed_by | BIGINT | FK → admins, NULL | 처리 관리자 |
 | processed_at | TIMESTAMPTZ | NULL | 처리 완료 일시 |
 | created_at | TIMESTAMPTZ | NOT NULL | 신고 접수 일시 |
