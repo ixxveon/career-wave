@@ -466,7 +466,7 @@ export default function JobNoticeListPage() {
 
       setBookmarks((current) => ({
         ...current,
-        [bookmarkResult?.id ?? id]: bookmarkResult?.bookmarked ?? nextBookmarked,
+        [bookmarkResult?.jobNoticeId ?? id]: bookmarkResult?.bookmarked ?? nextBookmarked,
       }));
     } catch {
       setBookmarks((current) => ({
@@ -498,8 +498,8 @@ export default function JobNoticeListPage() {
     refetch: refetchJobNoticeList,
   } = useJobNoticeList(jobNoticeQueryParams);
   const jobNoticeListResponse = jobNoticeListApiResponse?.data;
-  const filteredJobs = jobNoticeListResponse?.items.map(mapJobNoticeApiToViewModel) ?? [];
-  const resultTotalItems = jobNoticeListResponse?.totalItems ?? 0;
+  const filteredJobs = jobNoticeListResponse?.content.map(mapJobNoticeApiToViewModel) ?? [];
+  const resultTotalItems = jobNoticeListResponse?.totalElements ?? 0;
   const listStats = jobNoticeListResponse?.stats ?? EMPTY_LIST_STATS;
   const listStatus: JobNoticeListStatus = isJobNoticeListLoading
     ? 'loading'
@@ -510,16 +510,16 @@ export default function JobNoticeListPage() {
         : 'empty';
 
   useEffect(() => {
-    if (!jobNoticeListResponse?.items.length) return;
+    if (!jobNoticeListResponse?.content.length) return;
 
     setBookmarks((current) => {
       const next = { ...current };
-      jobNoticeListResponse.items.forEach((job) => {
-        next[job.id] = current[job.id] ?? job.bookmarked;
+      jobNoticeListResponse.content.forEach((job) => {
+        next[job.jobNoticeId] = current[job.jobNoticeId] ?? job.bookmarked;
       });
       return next;
     });
-  }, [jobNoticeListResponse?.items]);
+  }, [jobNoticeListResponse?.content]);
 
   function retryJobNoticeList() {
     void refetchJobNoticeList();
