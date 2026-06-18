@@ -128,7 +128,7 @@ GET  /me/status
 | `CompanyApprovalStatus` | `NONE`, `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `NEEDS_REVISION` |
 | `VerificationChannel` | `EMAIL`, `PHONE` |
 | `VerificationPurpose` | `REGISTER`, `FIND_ID`, `RESET_PASSWORD` |
-| `VerificationStatus` | `SENT`, `VERIFIED`, `EXPIRED`, `FAILED`, `RATE_LIMITED` |
+| `VerificationStatus` | `SENT`, `VERIFIED`, `CONSUMED`, `EXPIRED`, `FAILED`, `RATE_LIMITED` |
 | `CompanyType` | `ENTERPRISE`, `SUBSIDIARY`, `SME`, `MID_MARKET`, `VENTURE`, `FOREIGN_INVESTED`, `FOREIGN_CORPORATION`, `PUBLIC`, `NON_PROFIT`, `FOREIGN_NON_PROFIT` |
 
 > `BANNED`는 서비스 이용 정지 상태, `BLACKLISTED`는 재가입 또는 주요 서비스 접근 차단 대상 상태로 구분한다.

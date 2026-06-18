@@ -22,7 +22,7 @@ public class UserSocialAuthDto {
 
     // member 필드는 UserLoginDto.MemberInfo 재사용
     @Getter
-    public static class ResponseOAuthCallbackLogin {
+    public static final class ResponseOAuthCallbackLogin implements OAuthCallbackResponse {
         private final String accessToken;
         private final UserLoginDto.MemberInfo member;
         private final String nextPath;
@@ -41,7 +41,7 @@ public class UserSocialAuthDto {
             String socialEmail,   // nullable — Kakao는 email 없을 수 있음 (spec FR-022C)
             String socialSignupToken,
             String nextPath
-    ) {}
+    ) implements OAuthCallbackResponse {}
 
     // ───────────────────────────── 소셜 회원가입 추가정보 완료 ─────────────────────────────
 

@@ -267,7 +267,7 @@ export default function JobNoticeDetail({
   const [activeTab, setActiveTab] = useState<DetailTab>(TABS[0]);
   const detailQuery = useJobNoticeDetail(isOpen ? job?.id : null);
   const detailJob =
-    detailQuery.data?.data && job && detailQuery.data.data.id === job.id
+    detailQuery.data?.data && job && detailQuery.data.data.jobNoticeId === job.id
       ? mapJobNoticeApiToViewModel(detailQuery.data.data)
       : null;
   const displayJob = detailJob ? { ...job, ...detailJob } : job;
