@@ -82,22 +82,19 @@
 
 ## Phase 5 — 리포트 생성 파이프라인
 
-- [ ] `fastapi/user/prompts/report_prompts.py` 생성
-  - [ ] 리포트 분석 시스템 프롬프트 (4개 역량 지표: Relevance·Depth·Delivery·Fluency)
-  - [ ] `totalScore` 산출 기준 및 가중치 프롬프트
-  - [ ] 질문별 `aiFeedback` 생성 프롬프트
-- [ ] `fastapi/user/pipeline/report_pipeline.py` 생성
-  - [ ] `generate_report(session_id, session_type, answer_records)` — GPT-4o 리포트 분석
-  - [ ] `voiceQualityRatio < 50.00` 항목의 `deliveryScore` / `fluencyScore` null 처리
-  - [ ] `voiceQualityRatio is None` 항목의 `deliveryScore` / `fluencyScore` null 처리 (텍스트 면접)
-  - [ ] `totalScore` 계산 및 피드백 직렬화
-  - [ ] 리포트 생성 실패 시 빈 feedbacks + `totalScore: null` 부분 콜백 전송
-- [ ] `fastapi/core/spring_client.py` 업데이트
-  - [ ] `send_report_callback` 지수 백오프 구현 (1초, 3초 대기)
-  - [ ] 콜백 전송 직전 Pydantic 모델(`ReportCallbackPayload`)로 페이로드 유효성 검증 — 필수 필드 누락 시 Spring 전송 차단 및 `log.error` 기록
-  - [ ] `duplicated: true` 응답 시 정상 처리 (중복 콜백 허용)
-- [ ] `fastapi/user/api/interview_router.py` 업데이트
-  - [ ] `POST /internal/user/interview/sessions/{sessionId}/trigger/report` 라우터
+- [x] `fastapi/user/interview/prompts/report_prompts.py` 생성
+  - [x] 리포트 분석 시스템 프롬프트 (4개 역량 지표: Relevance·Depth·Delivery·Fluency)
+  - [x] `totalScore` 산출 기준 및 가중치 프롬프트
+  - [x] 질문별 `aiFeedback` 생성 프롬프트
+- [x] `fastapi/user/interview/pipeline/report_pipeline.py` 생성
+  - [x] `generate_and_send_report(session_id, session_type)` — GPT-4o 리포트 분석 후 Spring 콜백
+  - [x] `voiceQualityRatio < 50.00` 항목의 `deliveryScore` / `fluencyScore` null 처리
+  - [x] `voiceQualityRatio is None` 항목의 `deliveryScore` / `fluencyScore` null 처리 (텍스트 면접)
+  - [x] `totalScore` 계산 및 피드백 직렬화
+  - [x] 리포트 생성 실패 시 빈 feedbacks + `totalScore: null` 부분 콜백 전송
+- [x] `fastapi/core/spring_client.py` — Phase 1에서 이미 완성 (지수 백오프, duplicated 처리)
+- [x] `fastapi/user/interview/api/interview_router.py` 업데이트
+  - [x] `POST /internal/user/interview/sessions/{sessionId}/trigger/report` 라우터
 
 ---
 

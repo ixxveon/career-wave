@@ -57,13 +57,13 @@
 
 ## Phase 5 — 리포트 생성 & Spring 콜백
 
-- [ ] `POST /internal/user/interview/sessions/{sessionId}/trigger/report` 라우터에 `X-Internal-Secret` 헤더 검증이 구현되어 있다.
-- [ ] 리포트 파이프라인이 `asyncio.create_task`로 비동기 실행된다.
-- [ ] Spring 콜백 요청에 `X-Internal-Secret` 헤더가 포함된다.
-- [ ] Spring 콜백 재시도 횟수가 최대 3회를 초과하지 않는다 (지수 백오프 1초, 3초 대기).
-- [ ] 최종 콜백 실패 시 `log.error`가 기록된다.
-- [ ] 콜백 응답 `duplicated: true` 시 정상 처리로 간주하고 오류를 발생시키지 않는다.
-- [ ] FastAPI 코드에 DB 직접 접근 (`import sqlalchemy`, `import pymysql` 등) 코드가 없다.
+- [x] `POST /internal/user/interview/sessions/{sessionId}/trigger/report` 라우터에 `X-Internal-Secret` 헤더 검증이 구현되어 있다.
+- [x] 리포트 파이프라인이 `asyncio.create_task`로 비동기 실행된다.
+- [x] Spring 콜백 요청에 `X-Internal-Secret` 헤더가 포함된다.
+- [x] Spring 콜백 재시도 횟수가 최대 3회를 초과하지 않는다 (지수 백오프 1초, 3초 대기).
+- [x] 최종 콜백 실패 시 `log.error`가 기록된다.
+- [x] 콜백 응답 `duplicated: true` 시 정상 처리로 간주하고 오류를 발생시키지 않는다.
+- [x] FastAPI 코드에 DB 직접 접근 (`import sqlalchemy`, `import pymysql` 등) 코드가 없다.
 
 ---
 
