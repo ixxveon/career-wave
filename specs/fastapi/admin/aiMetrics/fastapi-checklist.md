@@ -20,16 +20,16 @@
 
 ## Phase 3 — OpenAI Client
 
-- [ ] OpenAI 호출이 FastAPI 내부 클라이언트를 통해 수행된다.
-- [ ] 모델명과 provider 기준 실행 컨텍스트가 구성된다.
-- [ ] chat/completion 계열 호출과 embedding 호출이 클라이언트 래퍼로 분리된다.
-- [ ] OpenAI 오류가 내부 ErrorCode로 변환된다.
+- [x] OpenAI 호출이 FastAPI 내부 클라이언트를 통해 수행된다.
+- [x] 모델명과 provider 기준 실행 컨텍스트가 구성된다.
+- [x] chat/completion 계열 호출과 embedding 호출이 클라이언트 래퍼로 분리된다.
+- [x] OpenAI 오류가 내부 ErrorCode로 변환된다.
 
 ## Phase 4 — Token / Cost Calculation
 
-- [ ] 입력/출력 토큰 계산 로직이 OpenAI 응답 또는 동등한 실행 결과 기준으로 동작한다.
-- [ ] Cost 계산 로직이 `ai_models.input_token_price`, `ai_models.output_token_price` 기준으로 동작한다.
-- [ ] 토큰/비용 계산 결과가 음수 또는 누락 값으로 저장되지 않도록 검증된다.
+- [x] 입력/출력 토큰 계산 로직이 OpenAI 응답 또는 동등한 실행 결과 기준으로 동작한다.
+- [x] Cost 계산 로직이 `ai_models.input_token_price`, `ai_models.output_token_price` 기준으로 동작한다.
+- [x] 토큰/비용 계산 결과가 음수 또는 누락 값으로 저장되지 않도록 검증된다.
 
 ## Phase 5 — AI Usage Log Persistence
 

@@ -52,7 +52,7 @@ class TokenTrendRequest(PeriodRequest):
 
 class HeavyUsersRequest(PeriodRequest):
     feature_type: AiFeatureType | None = Field(default=None, alias="featureType")
-    limit: int | None = None
+    limit: int | None = Field(default=None, ge=1)
 
 
 class UsageLogSearchRequest(AiMetricsRequestBase):
@@ -85,6 +85,6 @@ class UsageLogCreateRequest(AiMetricsRequestBase):
     session_id: UUID | None = Field(default=None, alias="sessionId")
     ai_model_id: int = Field(alias="aiModelId")
     feature_type: AiFeatureType = Field(alias="featureType")
-    input_tokens: int = Field(alias="inputTokens")
-    output_tokens: int = Field(alias="outputTokens")
-    cost: Decimal
+    input_tokens: int = Field(alias="inputTokens", ge=0)
+    output_tokens: int = Field(alias="outputTokens", ge=0)
+    cost: Decimal = Field(ge=0)
