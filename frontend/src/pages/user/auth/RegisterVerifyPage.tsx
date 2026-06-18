@@ -8,6 +8,9 @@ import { formatRemaining, getRecoveryErrorMessage, getRemainingSeconds } from '.
 import { isValidPhone, isValidVerificationCode, normalizePhone } from '../../../utils/user/member/registerSchema';
 import '@/styles/user/auth/AuthPage.css';
 
+// Phase 5 OAuth callback 페이지에서 이 키로 저장: sessionStorage.setItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY, token)
+export const SOCIAL_SIGNUP_TOKEN_SESSION_KEY = 'cw:oauth:social-signup-token';
+
 const carriers = ['SKT', 'KT', 'LG U+', '알뜰폰'];
 
 const initialForm = {
@@ -34,7 +37,13 @@ function RegisterVerifyPage() {
   const providerId = searchParams.get('provider') as SocialProviderId | null;
   const provider = getSocialProviderLabel(providerId);
   const socialEmail = searchParams.get('email')?.trim() || '';
-  const socialSignupToken = searchParams.get('socialSignupToken') ?? '';
+  // socialSignupToken은 URL query에 두지 않고 sessionStorage에서 읽은 뒤 즉시 제거
+  // Phase 5 OAuth callback 페이지에서 sessionStorage.setItem(SESSION_KEY, token) 후 여기로 redirect
+  const [socialSignupToken] = useState<string>(() => {
+    const token = sessionStorage.getItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY) ?? '';
+    sessionStorage.removeItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY);
+    return token;
+  });
   const [form, setForm] = useState(initialForm);
   const [terms, setTerms] = useState(initialTerms);
   const [verification, setVerification] = useState({

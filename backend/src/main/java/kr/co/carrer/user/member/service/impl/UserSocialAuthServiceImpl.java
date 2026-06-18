@@ -118,12 +118,11 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
     @Override
     @Transactional
     public OAuthCallbackResponse callback(String provider, String code, String state, HttpServletResponse response) {
-        // state 검증
-        String storedProvider = redisTemplate.opsForValue().get(STATE_PREFIX + state);
+        // state 검증 — getAndDelete: 조회+삭제 원자 실행으로 동시 callback 중복 소비 방지
+        String storedProvider = redisTemplate.opsForValue().getAndDelete(STATE_PREFIX + state);
         if (storedProvider == null || !storedProvider.equals(provider)) {
             throw new CustomException(UserAuthErrorCode.OAUTH_STATE_INVALID);
         }
-        redisTemplate.delete(STATE_PREFIX + state);
 
         SocialProvider socialProvider = resolveSocialProvider(provider);
 

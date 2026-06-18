@@ -45,10 +45,9 @@ public class RedisSocialSignupTokenStore implements SocialSignupTokenStore {
     public Optional<SocialSignupPayload> consume(String rawToken) {
         String tokenHash = hash(rawToken);
         String key = KEY_PREFIX + tokenHash;
-        String value = redisTemplate.opsForValue().get(key);
+        // getAndDelete: 조회+삭제 원자 실행 — 동시 요청 시 두 번째 호출은 null 반환 (1회 소비 보장)
+        String value = redisTemplate.opsForValue().getAndDelete(key);
         if (value == null) return Optional.empty();
-
-        redisTemplate.delete(key);
 
         String[] parts = value.split("\\|", -1);
         if (parts.length < 2) return Optional.empty();

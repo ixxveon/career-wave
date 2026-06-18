@@ -168,7 +168,7 @@ class UserSocialAuthServiceImplTest {
     @Test
     void callback_providerUserId_null_OAUTH_PROVIDER_AUTH_FAILED() throws Exception {
         when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.get(anyString())).thenReturn("kakao");
+        when(valueOps.getAndDelete(anyString())).thenReturn("kakao");
 
         WebClient mockWebClient = mock(WebClient.class);
         when(webClientBuilder.build()).thenReturn(mockWebClient);
@@ -204,7 +204,7 @@ class UserSocialAuthServiceImplTest {
     @Test
     void callback_세션퇴출_기존_accessToken_blacklist_등록() throws Exception {
         when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.get(anyString())).thenReturn("kakao");
+        when(valueOps.getAndDelete(anyString())).thenReturn("kakao");
 
         WebClient mockWebClient = mock(WebClient.class);
         when(webClientBuilder.build()).thenReturn(mockWebClient);

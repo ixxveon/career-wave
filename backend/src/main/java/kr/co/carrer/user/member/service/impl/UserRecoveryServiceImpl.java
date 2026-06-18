@@ -118,14 +118,14 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
     public UserRecoveryDto.ResponsePasswordToken issuePasswordToken(
             UserRecoveryDto.RequestPasswordToken request, String clientIp) {
         // loginId + IP 기준 10분 5회 rate limit (spec §10)
+        // increment 후 결과 비교: get→check→increment 패턴 대비 동시 요청 경쟁 조건 제거
         String rateKey = ISSUE_RATE_PREFIX + request.getLoginId() + ":" + clientIp;
-        String rateCountStr = redisTemplate.opsForValue().get(rateKey);
-        if (rateCountStr != null && Long.parseLong(rateCountStr) >= ISSUE_RATE_LIMIT) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_RATE_LIMITED);
-        }
         Long rateCount = redisTemplate.opsForValue().increment(rateKey);
         if (rateCount != null && rateCount == 1L) {
             redisTemplate.expire(rateKey, java.time.Duration.ofSeconds(ISSUE_RATE_TTL_SECONDS));
+        }
+        if (rateCount != null && rateCount > ISSUE_RATE_LIMIT) {
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_RATE_LIMITED);
         }
         // verificationToken 검증
         MemberVerification verification = verificationRepository

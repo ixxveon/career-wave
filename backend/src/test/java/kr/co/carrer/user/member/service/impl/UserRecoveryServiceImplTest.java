@@ -69,7 +69,6 @@ class UserRecoveryServiceImplTest {
         CompanyProfile cp = mock(CompanyProfile.class);
         when(cp.getBusinessNumber()).thenReturn("1234567890");
         when(companyProfileRepository.findByMemberId(member.getMemberId())).thenReturn(Optional.of(cp));
-        when(valueOps.get(anyString())).thenReturn(null);
         when(valueOps.increment(anyString())).thenReturn(1L);
         when(redisTemplate.expire(anyString(), any())).thenReturn(true);
 
@@ -108,7 +107,8 @@ class UserRecoveryServiceImplTest {
 
     @Test
     void issuePasswordToken_rate_limit_초과_VERIFICATION_RATE_LIMITED() throws Exception {
-        when(valueOps.get(startsWith("password-token:rate:"))).thenReturn("5");
+        // increment 결과가 6 (> 5 limit) → 차단 (atomic increment 방식)
+        when(valueOps.increment(startsWith("password-token:rate:"))).thenReturn(6L);
 
         UserRecoveryDto.RequestPasswordToken req = new UserRecoveryDto.RequestPasswordToken();
         setField(req, "roleType", MemberType.USER);
