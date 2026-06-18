@@ -1,130 +1,132 @@
 # FastAPI Checklist: aiMetrics
 
-> tasks.md가 "무엇??만들지"?�면, ???�일?� "?��?�?만들?�는지" 검증한??
-> 구현 ?�료 ??PR ?�리�??�에 ?�성??본인??체크?�다.
+> tasks.md가 "무엇을 만들지"라면, 이 파일은 "제대로 만들었는지" 검증한다.
+> 구현 완료 후 PR 올리기 전에 작성자 본인이 체크한다.
 
-## Phase 1 ??Config / Schema
+## Phase 1 — Config / Schema
 
-- [x] OpenAI, PostgreSQL, ?�일 ?�토리�?, vector store ?�정 로더가 ?�경별로 ?�상 주입?�다.
-- [x] Pydantic Request / Response Schema가 Spring Boot ?��? ?�청/?�답 계약�??�치?�다.
-- [x] FastAPI ?��? ErrorCode ?�별?��? ?�의?�어 ?�고 Spring Boot 변???�?�과 ?�치?�다.
+- [x] OpenAI, PostgreSQL, 파일 스토리지, vector store 설정 로더가 환경별로 정상 주입된다.
+- [x] Pydantic Request / Response Schema가 Spring Boot 내부 요청/응답 계약과 일치한다.
+- [x] FastAPI 내부 ErrorCode 식별자가 정의되어 있고 Spring Boot 변환 대상과 일치한다.
 
-## Phase 2 ??DB Repository
+## Phase 2 — DB Repository
 
-- [x] `ai_models` 조회 Repository가 모델 ?�행 컨텍?�트?� 비용 계산???�요??컬럼???�공?�다.
-- [x] `ai_ops_settings` Repository가 ?�영 ?�정???�기 ?�용?�로 조회?�다.
-- [x] `ai_usage_logs` Repository가 로그 ?�재?� ?�약/?�메?�별/?�큰 추이/고사???�용??목록 조회 쿼리�??�공?�다.
-- [x] `ai_usage_logs` 목록 조회가 1-based page�??��? offset?�로 변?�한??
-- [x] `rag_documents` Repository가 문서 ?�태 조회?� `status`, `indexing_progress`, `chunk_count`, `updated_at` 갱신 메서?��? ?�공?�다.
-- [x] `rag_documents` Repository가 Spring Boot ?�유 컬럼??`file_path`, `original_file_name`, `uploaded_by` ?�을 갱신?��? ?�는??
+- [x] `ai_models` 조회 Repository가 모델 실행 컨텍스트와 비용 계산에 필요한 컬럼을 제공한다.
+- [x] `ai_ops_settings` Repository가 운영 설정을 읽기 전용으로 조회한다.
+- [x] `ai_usage_logs` Repository가 로그 적재와 요약/도메인별/토큰 추이/고사용 사용자/목록 조회 쿼리를 제공한다.
+- [x] `ai_usage_logs` 목록 조회가 1-based page를 내부 offset으로 변환한다.
+- [x] `rag_documents` Repository가 문서 상태 조회와 `status`, `indexing_progress`, `chunk_count`, `updated_at` 갱신 메서드를 제공한다.
+- [x] `rag_documents` Repository가 Spring Boot 소유 컬럼인 `file_path`, `original_file_name`, `uploaded_by` 등을 갱신하지 않는다.
 
-## Phase 3 ??OpenAI Client
+## Phase 3 — OpenAI Client
 
-- [x] OpenAI ?�출??FastAPI ?��? ?�라?�언?��? ?�해 ?�행?�다.
-- [x] 모델명과 provider 기�? ?�행 컨텍?�트가 구성?�다.
-- [x] chat/completion 계열 ?�출�?embedding ?�출???�라?�언???�퍼�?분리?�다.
-- [x] OpenAI ?�류가 ?��? ErrorCode�?변?�된??
+- [x] OpenAI 호출이 FastAPI 내부 클라이언트를 통해 수행된다.
+- [x] 모델명과 provider 기준 실행 컨텍스트가 구성된다.
+- [x] chat/completion 계열 호출과 embedding 호출이 클라이언트 래퍼로 분리된다.
+- [x] OpenAI 오류가 내부 ErrorCode로 변환된다.
 
-## Phase 4 ??Token / Cost Calculation
+## Phase 4 — Token / Cost Calculation
 
-- [x] ?�력/출력 ?�큰 계산 로직??OpenAI ?�답 ?�는 ?�등???�행 결과 기�??�로 ?�작?�다.
-- [x] Cost 계산 로직??`ai_models.input_token_price`, `ai_models.output_token_price` 기�??�로 ?�작?�다.
-- [x] ?�큰/비용 계산 결과가 ?�수 ?�는 ?�락 값으�??�?�되지 ?�도�?검증된??
+- [x] 입력/출력 토큰 계산 로직이 OpenAI 응답 또는 동등한 실행 결과 기준으로 동작한다.
+- [x] Cost 계산 로직이 `ai_models.input_token_price`, `ai_models.output_token_price` 기준으로 동작한다.
+- [x] 토큰/비용 계산 결과가 음수 또는 누락 값으로 저장되지 않도록 검증된다.
 
-## Phase 5 ??AI Usage Log Persistence
+## Phase 5 — AI Usage Log Persistence
 
-- [x] AI Usage Log ?�재 ?�비?��? Repository ?�??로직???�출?�다.
-- [x] AI Usage Log ?�재 로직??`member_id`, `session_id`, `ai_model_id`, `feature_type`, `input_tokens`, `output_tokens`, `cost`�??�락 ?�이 기록?�다.
-- [x] `member_id`, `session_id`, `ai_model_id`, `feature_type` 검�??�패가 ?��? ErrorCode�?변?�된??
+- [x] AI Usage Log 적재 서비스가 Repository 저장 로직을 호출한다.
+- [x] AI Usage Log 적재 로직이 `member_id`, `session_id`, `ai_model_id`, `feature_type`, `input_tokens`, `output_tokens`, `cost`를 누락 없이 기록한다.
+- [x] `member_id`, `session_id`, `ai_model_id`, `feature_type` 검증 실패가 내부 ErrorCode로 변환된다.
 
-## Phase 6 ??Usage Metrics Domain Service
+## Phase 6 — Usage Metrics Domain Service
 
-- [x] ?�약/?�메?�별/?�큰 추이/고사???�용??로그 목록 조회 ?�비?��? Repository 집계�??�답 schema�?매핑?�다.
-- [x] `from`, `to`, `featureType`, `interval`, `limit`, `page`, `size` 검증이 ?�행?�다.
+- [x] 요약/도메인별/토큰 추이/고사용 사용자/로그 목록 조회 서비스가 Repository 집계를 응답 schema로 매핑한다.
+- [x] `from`, `to`, `featureType`, `interval`, `limit`, `page`, `size` 검증이 수행된다.
 
-## Phase 7 ??Ops Settings Sync Service
+## Phase 7 — Ops Settings Sync Service
 
-- [x] ?�영 ?�책 변�???FastAPI ?�정 ?�기??결과가 ?�속 조회??반영?�다.
-- [x] `selectedModelId` 존재 ?��?가 검증된??
-- [x] `monthlyBudget`, `alertThreshold` 범위 검�??�패가 ?��? ErrorCode�?변?�된??
+- [x] 운영 정책 변경 후 FastAPI 설정 동기화 결과가 후속 조회에 반영된다.
+- [x] `selectedModelId` 존재 여부가 검증된다.
+- [x] `monthlyBudget`, `alertThreshold` 범위 검증 실패가 내부 ErrorCode로 변환된다.
 
-## Phase 8 ??RAG Document Parser
+## Phase 8 — RAG Document Parser
 
-- [x] RAG 문서 ?�서가 ?�본 문서�??�스?�로 변?�할 ???�으�??�패 ???��? ?�류�?반환?�다.
-- [x] ?�일 ?�토리�??�서 ?�본 문서�??�는 로더가 분리?�어 ?�다.
-- [x] PDF/문서 ?�스??추출 ?�패가 ?��? ErrorCode�?변?�된??
+- [x] RAG 문서 파서가 원본 문서를 텍스트로 변환할 수 있으며 실패 시 내부 오류를 반환한다.
+- [x] 파일 스토리지에서 원본 문서를 읽는 로더가 분리되어 있다.
+- [x] PDF/문서 텍스트 추출 실패가 내부 ErrorCode로 변환된다.
 
-## Phase 9 ??Chunking
+## Phase 9 — Chunking
 
-- [ ] Chunking 로직??�?�� 분할 기�?�?`chunk_count` 계산???��??�게 ?�용?�다.
-- [ ] �?�� ?�기?� 분할 기�? ?�정???�락?�거???�못??경우 ?��? ?�류�?반환?�다.
+- [ ] Chunking 로직이 청크 분할 기준과 `chunk_count` 계산을 일관되게 적용한다.
+- [ ] 청크 크기와 분할 기준 설정이 누락되거나 잘못된 경우 내부 오류를 반환한다.
 
-## Phase 10 ??Embedding
+## Phase 10 — Embedding
 
-- [ ] Embedding ?�성 로직??�?���?결과�??��? 벡터 ?�맷?�로 변?�한??
-- [ ] Embedding ?�성 ?�패가 ?��? ErrorCode�?변?�된??
+- [ ] Embedding 생성 로직이 청크별 결과를 내부 벡터 포맷으로 변환한다.
+- [ ] Embedding 생성 실패가 내부 ErrorCode로 변환된다.
 
-## Phase 11 ??Vector Store Integration
+## Phase 11 — Vector Store Integration
 
-- [ ] Vector Store ?�라?�언?��? 추상 adapter 구조�?분리?�어 구현�?교체가 가?�하??
-- [ ] Vector Index ?�성 로직???�공 ???�속 ?�태 갱신�??�결?�다.
-- [ ] Vector Index ??�� 로직???�패 ???�공 ?�답?�로 ?�기지 ?�는??
-- [ ] Vector Store ?�동 ?�패가 ?��? ErrorCode�?변?�된??
+- [ ] Vector Store 클라이언트가 추상 adapter 구조로 분리되어 구현체 교체가 가능하다.
+- [ ] Vector Index 생성 로직이 성공 시 후속 상태 갱신과 연결된다.
+- [ ] Vector Index 삭제 로직이 실패 시 성공 응답으로 숨기지 않는다.
+- [ ] Vector Store 연동 실패가 내부 ErrorCode로 변환된다.
 
-## Phase 12 ??Domain Router
+## Phase 12 — Domain Router
 
-- [ ] Router, Schema, Repository, Service, External Client, Background Task 책임??계층별로 분리?�어 ?�다.
-- [ ] `POST /internal/admin/ai-metrics/usage/summary`가 ?�청 계약??맞게 ?�작?�다.
-- [ ] `POST /internal/admin/ai-metrics/usage/domain-usage`가 ?�청 계약??맞게 ?�작?�다.
-- [ ] `POST /internal/admin/ai-metrics/usage/token-trend`가 ?�청 계약??맞게 ?�작?�다.
-- [ ] `POST /internal/admin/ai-metrics/usage/heavy-users`가 ?�청 계약??맞게 ?�작?�다.
-- [ ] `POST /internal/admin/ai-metrics/usage/logs/search`가 ?�청 계약??맞게 ?�작?�다.
-- [ ] `POST /internal/admin/ai-metrics/ops/sync-settings`가 ?�청 계약??맞게 ?�작?�다.
-- [ ] `POST /internal/admin/ai-metrics/rag-documents/index`가 ?�청 계약??맞게 ?�작?�다.
-- [ ] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 ?�청 계약??맞게 ?�작?�다.
-- [ ] `POST /internal/admin/ai-metrics/usage/log`가 ?�청 계약??맞게 ?�작?�다.
+- [ ] Router, Schema, Repository, Service, External Client, Background Task 책임이 계층별로 분리되어 있다.
+- [ ] `POST /internal/admin/ai-metrics/usage/summary`가 요청 계약에 맞게 동작한다.
+- [ ] `POST /internal/admin/ai-metrics/usage/domain-usage`가 요청 계약에 맞게 동작한다.
+- [ ] `POST /internal/admin/ai-metrics/usage/token-trend`가 요청 계약에 맞게 동작한다.
+- [ ] `POST /internal/admin/ai-metrics/usage/heavy-users`가 요청 계약에 맞게 동작한다.
+- [ ] `POST /internal/admin/ai-metrics/usage/logs/search`가 요청 계약에 맞게 동작한다.
+- [ ] `POST /internal/admin/ai-metrics/ops/sync-settings`가 요청 계약에 맞게 동작한다.
+- [ ] `POST /internal/admin/ai-metrics/rag-documents/index`가 요청 계약에 맞게 동작한다.
+- [ ] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 요청 계약에 맞게 동작한다.
+- [ ] `POST /internal/admin/ai-metrics/usage/log`가 요청 계약에 맞게 동작한다.
 
-## Phase 13 ??RAG Indexing Background Task
+## Phase 13 — RAG Indexing Background Task
 
-- [ ] `POST /internal/admin/ai-metrics/rag-documents/index`가 ?�덱???�락 ??`rag_documents.status = INDEXING`?�로 갱신?�다.
-- [ ] 비동�??�덱???�커가 `UPLOADED -> INDEXING -> COMPLETED` ?�공 ?�태 ?�이�?반영?�다.
-- [ ] 비동�??�덱???�커가 `INDEXING -> FAILED` ?�패 ?�태 ?�이�?반영?�다.
-- [ ] `INDEXING` ?�태 문서???�??중복 ?�덱???�행??차단?�다.
-- [ ] `indexing_progress`가 0~100 범위�?벗어?��? ?�는??
-- [ ] `COMPLETED` ?�태 문서가 ??�� `indexing_progress = 100`?�로 ?�?�된??
-- [ ] `POST /internal/admin/ai-metrics/rag-documents/index` ?�패 ??Spring Boot가 `RAG_DOCUMENT_INDEXING_FAILED`�?변??가?�한 ?��? ?�류�?반환?�다.
+- [ ] `POST /internal/admin/ai-metrics/rag-documents/index`가 인덱싱 수락 시 `rag_documents.status = INDEXING`으로 갱신한다.
+- [ ] 비동기 인덱싱 워커가 `UPLOADED -> INDEXING -> COMPLETED` 성공 상태 전이를 반영한다.
+- [ ] 비동기 인덱싱 워커가 `INDEXING -> FAILED` 실패 상태 전이를 반영한다.
+- [ ] `INDEXING` 상태 문서에 대한 중복 인덱싱 실행이 차단된다.
+- [ ] `indexing_progress`가 0~100 범위를 벗어나지 않는다.
+- [ ] `COMPLETED` 상태 문서가 항상 `indexing_progress = 100`으로 저장된다.
+- [ ] `POST /internal/admin/ai-metrics/rag-documents/index` 실패 시 Spring Boot가 `RAG_DOCUMENT_INDEXING_FAILED`로 변환 가능한 내부 오류를 반환한다.
 
-## Phase 14 ??RAG Index Delete Phase
+## Phase 14 — RAG Index Delete Phase
 
-- [ ] RAG 문서 기�? vector index 조회?� ??�� ?�름??분리?�어 ?�다.
-- [ ] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 ??�� ?�공/?�패 계약??맞게 ?�작?�다.
-- [ ] ??�� ?�패 ??`RAG_DOCUMENT_DELETE_FAILED` ?��? ?�류�?반환?�다.
-- [ ] ?�속 리소???�리 ?�이 ??�� ?�름�??�결?�어 ?�다.
+- [ ] RAG 문서 기준 vector index 조회와 삭제 흐름이 분리되어 있다.
+- [ ] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 삭제 성공/실패 계약에 맞게 동작한다.
+- [ ] 삭제 실패 시 `RAG_DOCUMENT_DELETE_FAILED` 내부 오류를 반환한다.
+- [ ] 후속 리소스 정리 훅이 삭제 흐름과 연결되어 있다.
 
-## Phase 15 ??Spring ??FastAPI 계약 검�?
-- [ ] FastAPI ??Spring Boot ?��? API 계약 검�??�스?��? ?�청 ?�드, ?�답 ?�드, ?�?�까지 ?�인?�다.
-- [ ] ?��? ErrorCode가 Spring Boot?�서 `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `INVALID_MONTHLY_BUDGET`, `INVALID_ALERT_THRESHOLD`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` ?�으�?변??가?�하�?반환?�다.
-- [ ] FastAPI ?��? ?�류 ?�답??`success`, `errorCode`, `message`, `detail` ?�키마�? 만족?�다.
+## Phase 15 — Spring ↔ FastAPI 계약 검증
 
-## Phase 16 ??Test
+- [ ] FastAPI ↔ Spring Boot 내부 API 계약 검증 테스트가 요청 필드, 응답 필드, 타입까지 확인한다.
+- [ ] 내부 ErrorCode가 Spring Boot에서 `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `INVALID_MONTHLY_BUDGET`, `INVALID_ALERT_THRESHOLD`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 등으로 변환 가능하게 반환된다.
+- [ ] FastAPI 내부 오류 응답이 `success`, `errorCode`, `message`, `detail` 스키마를 만족한다.
 
-- [ ] ?�상 케?�스 ?�스?��? 집계, ?�정 ?�기?? AI Usage Log ?�재, RAG ?�덱?? ?�덱????�� ?�름??검증한??
-- [ ] ?�외/경계 케?�스 ?�스?��? ?�못??기간, ?�못??enum, ?�못???�산/?�계�? 존재?��? ?�는 모델/문서, 중복 ?�덱???�청??검증한??
-- [ ] ?��? ?�스???�동 ?�패 ?�스?��? OpenAI, ?�일 ?�토리�?, vector store ?�패 처리 로직??검증한??
-- [ ] FastAPI ??Spring 계약 검�??�스?��? 모두 ?�과?�다.
-- [ ] ?��? ErrorCode 매핑 검증이 모두 ?�과?�다.
-- [ ] ?�용??집계 결과가 `ai_usage_logs` ?�???�이?��? ?��??�는지 ?�스?�로 검증한??
+## Phase 16 — Test
 
-## DB 매핑 검�?
-- [x] FastAPI ??DB 매핑??`ai_models`, `ai_usage_logs`, `ai_ops_settings`, `rag_documents` 컬럼 ?�의?� ?�치?�다.
-- [x] FastAPI??`rag_documents.status`, `rag_documents.indexing_progress`, `rag_documents.chunk_count`, `rag_documents.updated_at`�??�태 갱신 ?�도�??�정?�다.
-- [x] FastAPI??Spring Boot ?�유 컬럼??`rag_documents.file_path`, `original_file_name`, `uploaded_by` ?�을 ?�의 ?�정?��? ?�는??
-- [x] FastAPI??`ai_ops_settings`�??�기 ?�용?�로 ?�용?�고, Spring Boot가 ?�정?�는 ?�정 컬럼??직접 갱신?��? ?�는??
-- [ ] `ai_usage_logs` ?�???�이?��? ?�제 집계 조회 결과?� ?��??�다.
+- [ ] 정상 케이스 테스트가 집계, 설정 동기화, AI Usage Log 적재, RAG 인덱싱, 인덱스 삭제 흐름을 검증한다.
+- [ ] 예외/경계 케이스 테스트가 잘못된 기간, 잘못된 enum, 잘못된 예산/임계치, 존재하지 않는 모델/문서, 중복 인덱싱 요청을 검증한다.
+- [ ] 외부 시스템 연동 실패 테스트가 OpenAI, 파일 스토리지, vector store 실패 처리 로직을 검증한다.
+- [ ] FastAPI ↔ Spring 계약 검증 테스트가 모두 통과한다.
+- [ ] 내부 ErrorCode 매핑 검증이 모두 통과한다.
+- [ ] 사용량 집계 결과가 `ai_usage_logs` 저장 데이터와 일관되는지 테스트로 검증한다.
 
-## 머�? ??최종 ?�인
+## DB 매핑 검증
 
-- [ ] 구현 결과가 `fastapi-constitution.md`??불�? 규칙�??�태 ?�이 규칙???�반?��? ?�는??
-- [ ] FastAPI ??DB 매핑 검�???��??모두 충족?�다.
-- [ ] 비동�??�업 검�? 중복 ?�행 방�? 검�? ?��? ?�스???�패 처리 검증이 모두 ?�과?�다.
-- [ ] fastapi-tasks.md??모든 ??��???�료 ?�태�??��??�었??
+- [x] FastAPI ↔ DB 매핑이 `ai_models`, `ai_usage_logs`, `ai_ops_settings`, `rag_documents` 컬럼 정의와 일치한다.
+- [x] FastAPI는 `rag_documents.status`, `rag_documents.indexing_progress`, `rag_documents.chunk_count`, `rag_documents.updated_at`만 상태 갱신 용도로 수정한다.
+- [x] FastAPI는 Spring Boot 소유 컬럼인 `rag_documents.file_path`, `original_file_name`, `uploaded_by` 등을 임의 수정하지 않는다.
+- [x] FastAPI는 `ai_ops_settings`를 읽기 전용으로 사용하고, Spring Boot가 수정하는 설정 컬럼을 직접 갱신하지 않는다.
+- [ ] `ai_usage_logs` 저장 데이터가 실제 집계 조회 결과와 일관된다.
+
+## 머지 전 최종 확인
+
+- [ ] 구현 결과가 `fastapi-constitution.md`의 불변 규칙과 상태 전이 규칙을 위반하지 않는다.
+- [ ] FastAPI ↔ DB 매핑 검증 항목이 모두 충족된다.
+- [ ] 비동기 작업 검증, 중복 실행 방지 검증, 외부 시스템 실패 처리 검증이 모두 통과한다.
+- [ ] fastapi-tasks.md의 모든 항목이 완료 상태로 점검되었다.
