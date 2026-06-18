@@ -38,6 +38,10 @@ public class ApiResponse<T> {
         return new ApiResponse<>(true, 200, message, null, null);
     }
 
+    public static <T> ApiResponse<T> created(String message, T data) {
+        return new ApiResponse<>(true, 201, message, null, data);
+    }
+
     public static ApiResponse<Object> fail(int statusCode, String message) {
         return new ApiResponse<>(false, statusCode, message, null, null);
     }

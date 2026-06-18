@@ -36,7 +36,7 @@ public class UserRegisterController implements UserRegisterControllerDocs {
             @Valid @RequestBody UserRegisterDto.RequestPersonalRegister request) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("회원가입이 완료되었습니다.", userRegisterService.registerUser(request)));
+                .body(ApiResponse.created("회원가입이 완료되었습니다.", userRegisterService.registerUser(request)));
     }
 
     @PostMapping("/register/company")
@@ -44,7 +44,7 @@ public class UserRegisterController implements UserRegisterControllerDocs {
             @Valid @RequestBody UserRegisterDto.RequestCompanyRegister request) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(
+                .body(ApiResponse.created(
                         "기업회원 가입 신청이 접수되었습니다. 관리자 승인 후 이메일로 안내드립니다.",
                         userRegisterService.registerCompany(request)));
     }
