@@ -200,7 +200,14 @@ export const jobNoticeHandlers = [
     const jobNoticeId = Number(params.jobNoticeId);
     const jobNotice = jobNotices.find((item) => item.jobNoticeId === jobNoticeId);
 
-    if (jobNotice) jobNotice.bookmarked = true;
+    if (!jobNotice) {
+      return HttpResponse.json(
+        { success: false, statusCode: 404, message: '채용공고를 찾을 수 없습니다.', data: null },
+        { status: 404 },
+      );
+    }
+
+    jobNotice.bookmarked = true;
 
     const data: JobNoticeBookmarkResponse = {
       jobNoticeId,
@@ -214,7 +221,14 @@ export const jobNoticeHandlers = [
     const jobNoticeId = Number(params.jobNoticeId);
     const jobNotice = jobNotices.find((item) => item.jobNoticeId === jobNoticeId);
 
-    if (jobNotice) jobNotice.bookmarked = false;
+    if (!jobNotice) {
+      return HttpResponse.json(
+        { success: false, statusCode: 404, message: '채용공고를 찾을 수 없습니다.', data: null },
+        { status: 404 },
+      );
+    }
+
+    jobNotice.bookmarked = false;
 
     const data: JobNoticeBookmarkResponse = {
       jobNoticeId,
