@@ -20,16 +20,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Mono;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class AdminReportServiceImplTest {
@@ -43,11 +48,27 @@ class AdminReportServiceImplTest {
     @Mock private ReportCommentRepository reportCommentRepository;
     @Mock private WebClient.Builder webClientBuilder;
     @Mock private ObjectMapper objectMapper;
+    @Mock private WebClient webClient;
+    @Mock private WebClient.RequestBodyUriSpec postSpec;
+    @Mock private WebClient.RequestBodySpec bodySpec;
+    @Mock private WebClient.ResponseSpec responseSpec;
+    @SuppressWarnings("rawtypes") @Mock private Mono monoMock;
 
     @BeforeEach
     void setUp() {
         // self-injection: @Lazy @Autowired는 @InjectMocks로 주입되지 않으므로 직접 설정
         ReflectionTestUtils.setField(adminReportService, "self", adminReportService);
+        // @PostConstruct init()은 테스트 환경에서 실행되지 않으므로 webClient와 webhookSecret을 직접 주입
+        ReflectionTestUtils.setField(adminReportService, "webClient", webClient);
+        ReflectionTestUtils.setField(adminReportService, "webhookSecret", "test-secret");
+        // WebClient 체인 기본 스텁 (FastAPI를 호출하지 않는 테스트에서 불필요한 스텁 경고 방지)
+        lenient().when(webClient.post()).thenReturn(postSpec);
+        lenient().when(postSpec.uri(anyString())).thenReturn(bodySpec);
+        lenient().when(bodySpec.header(anyString(), (String[]) any())).thenReturn(bodySpec);
+        lenient().when(bodySpec.bodyValue(any())).thenAnswer(inv -> bodySpec);
+        lenient().when(bodySpec.retrieve()).thenReturn(responseSpec);
+        lenient().when(responseSpec.bodyToMono(Map.class)).thenReturn(monoMock);
+        lenient().when(monoMock.timeout(any(java.time.Duration.class))).thenReturn(monoMock);
     }
 
     // ── getSummary ────────────────────────────────────────────────────────────
@@ -145,6 +166,43 @@ class AdminReportServiceImplTest {
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminReportErrorCode.REPORT_NOT_FOUND);
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
+        @DisplayName("aiSuggestion null → FastAPI 호출 성공 → persistAiSuggestion 호출 및 결과 반환")
+        void aiSuggestion_null_fastapi_success() throws Exception {
+            ReportDetailDTO.ResponseDetail base = createBaseDetailWithNullAiSuggestion(5L, TargetType.BOARD, 50L);
+            given(reportQueryRepository.findReportDetail(5L)).willReturn(Optional.of(base));
+            given(reportBoardRepository.findTitleById(50L)).willReturn("게시글 제목");
+            given(reportBoardRepository.findContentById(50L)).willReturn("게시글 본문");
+
+            Map<String, Object> fakeResponse = Map.of("severity", "HIGH", "category", "SPAM", "suggestion", "조치 필요");
+            given(monoMock.block()).willReturn(fakeResponse);
+            given(objectMapper.writeValueAsString(any()))
+                .willReturn("{\"severity\":\"HIGH\",\"category\":\"SPAM\",\"suggestion\":\"조치 필요\"}");
+
+            Report report = createPendingReport(5L, TargetType.BOARD, 50L);
+            given(reportRepository.findById(5L)).willReturn(Optional.of(report));
+
+            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(5L);
+
+            assertThat(result.aiSuggestion()).isEqualTo("{\"severity\":\"HIGH\",\"category\":\"SPAM\",\"suggestion\":\"조치 필요\"}");
+            verify(reportRepository).findById(5L);
+        }
+
+        @Test
+        @DisplayName("aiSuggestion null → FastAPI 호출 실패 → aiSuggestion null로 나머지 상세 정상 반환")
+        void aiSuggestion_null_fastapi_failure() {
+            ReportDetailDTO.ResponseDetail base = createBaseDetailWithNullAiSuggestion(6L, TargetType.MEMBER, 60L);
+            given(reportQueryRepository.findReportDetail(6L)).willReturn(Optional.of(base));
+            given(monoMock.block()).willThrow(new RuntimeException("Connection refused"));
+
+            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(6L);
+
+            assertThat(result.aiSuggestion()).isNull();
+            assertThat(result.reportId()).isEqualTo(6L);
+            verify(reportRepository, never()).findById(any());
         }
     }
 
@@ -310,6 +368,16 @@ class AdminReportServiceImplTest {
             ReportReason.SPAM, ReportStatus.PENDING,
             "신고자", "피신고자",
             null, null, "{\"severity\":\"HIGH\",\"category\":\"SPAM\",\"suggestion\":\"테스트\"}",
+            ZonedDateTime.now(), null, null
+        );
+    }
+
+    private ReportDetailDTO.ResponseDetail createBaseDetailWithNullAiSuggestion(Long reportId, TargetType targetType, Long targetId) {
+        return new ReportDetailDTO.ResponseDetail(
+            reportId, targetType, targetId,
+            ReportReason.SPAM, ReportStatus.PENDING,
+            "신고자", "피신고자",
+            null, null, null,
             ZonedDateTime.now(), null, null
         );
     }
