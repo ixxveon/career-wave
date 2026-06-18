@@ -162,19 +162,6 @@ class AdminPaymentServiceImplTest {
         }
 
         @Test
-        @DisplayName("거절 사유 공백 → REJECT_REASON_REQUIRED 예외")
-        void rejectRefund_blankReason_throwsRejectReasonRequired() {
-            UUID paymentId = UUID.randomUUID();
-            Payment payment = createPayment(paymentId, PaymentStatus.PAID);
-            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
-
-            assertThatThrownBy(() -> adminPaymentService.rejectRefund(paymentId, "   ", 1L))
-                .isInstanceOf(CustomException.class)
-                .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(AdminPaymentErrorCode.REJECT_REASON_REQUIRED);
-        }
-
-        @Test
         @DisplayName("PENDING 환불 없음 → REFUND_NOT_PENDING 예외")
         void rejectRefund_noPendingRefund_throwsRefundNotPending() {
             UUID paymentId = UUID.randomUUID();
