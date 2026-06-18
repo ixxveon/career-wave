@@ -1,11 +1,13 @@
 package kr.co.carrer.admin.auth.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import kr.co.carrer.admin.auth.type.AdminRole;
 import lombok.Getter;
 
 public class AdminLoginDto {
 
+    @Schema(name = "AdminLoginRequest")
     @Getter
     public static class Request {
         @NotBlank private final String loginId;
