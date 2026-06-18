@@ -1,0 +1,11 @@
+{
+  "status": "FAILED",
+  "scoreJobFitness": null,
+  "scoreTechStack": null,
+  "scoreQuantified": null,
+  "scoreLogical": null,
+  "scoreTotal": null,
+  "overallReview": null,
+  "feedbackText": null,
+  "errorMessage": "파일을 읽을 수 없습니다. PDF 또는 DOCX 형식인지 확인해 주세요."
+}
