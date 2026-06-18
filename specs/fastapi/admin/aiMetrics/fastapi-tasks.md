@@ -1,4 +1,4 @@
-# FastAPI Tasks: aiMetrics
+﻿# FastAPI Tasks: aiMetrics
 
 > plan.md의 Phase와 1:1 대응한다.
 > 각 항목은 하나의 커밋 또는 PR 리뷰 단위로 쪼갤 수 있어야 한다.
@@ -77,17 +77,17 @@
 
 ## Phase 9 - Chunking
 
-- [ ] `chunking_service.py`를 작성한다.
-- [ ] 파싱된 텍스트를 청크 단위로 분할하는 로직을 작성한다.
-- [ ] 청크 크기와 분할 기준 설정 로직을 작성한다.
-- [ ] `chunk_count` 계산 및 검증 로직을 작성한다.
+- [x] `chunking_service.py`를 작성한다.
+- [x] 파싱된 텍스트를 청크 단위로 분할하는 로직을 작성한다.
+- [x] 청크 크기와 분할 기준 설정 로직을 작성한다.
+- [x] `chunk_count` 계산 및 검증 로직을 작성한다.
 
 ## Phase 10 - Embedding
 
-- [ ] `embedding_service.py`를 작성한다.
-- [ ] 청크별 embedding 생성 로직을 작성한다.
-- [ ] OpenAI embedding 호출 결과를 내부 벡터 포맷으로 매핑하는 로직을 작성한다.
-- [ ] embedding 생성 실패를 내부 오류로 변환하는 처리 로직을 작성한다.
+- [x] `embedding_service.py`를 작성한다.
+- [x] 청크별 embedding 생성 로직을 작성한다.
+- [x] OpenAI embedding 호출 결과를 내부 벡터 포맷으로 매핑하는 로직을 작성한다.
+- [x] embedding 생성 실패를 내부 오류로 변환하는 처리 로직을 작성한다.
 
 ## Phase 11 - Vector Store Integration
 
@@ -99,7 +99,7 @@
 
 ## Phase 12 - Domain Router
 
-- [ ] `ai_metrics_router.py`를 작성한다.
+- [ ] `ai_metrics_router.py`를 작성한다.   
 - [ ] `POST /internal/admin/ai-metrics/usage/summary` Router를 작성한다.
 - [ ] `POST /internal/admin/ai-metrics/usage/domain-usage` Router를 작성한다.
 - [ ] `POST /internal/admin/ai-metrics/usage/token-trend` Router를 작성한다.

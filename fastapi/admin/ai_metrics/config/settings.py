@@ -24,6 +24,14 @@ class AiMetricsSettings(BaseSettings):
         default="text-embedding-3-small",
         alias="OPENAI_EMBEDDING_MODEL",
     )
+    rag_chunk_target_chars: int = Field(
+        default=1200,
+        alias="RAG_CHUNK_TARGET_CHARS",
+    )
+    rag_chunk_max_chars: int = Field(
+        default=1500,
+        alias="RAG_CHUNK_MAX_CHARS",
+    )
 
     file_storage_provider: str = Field(default="local", alias="FILE_STORAGE_PROVIDER")
     file_storage_base_path: str = Field(
