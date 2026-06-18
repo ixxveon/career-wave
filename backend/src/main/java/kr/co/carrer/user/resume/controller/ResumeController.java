@@ -81,7 +81,7 @@ public class ResumeController implements ResumeControllerDocs {
             @RequestHeader("X-Internal-Secret") String webhookSecret,
             @RequestBody ResumeDTO.RequestWebhook request
     ) {
-        resumeService.receiveWebhook(webhookSecret, request);
+        resumeService.receiveWebhook(documentId, webhookSecret, request);
         return ResponseEntity.ok(ApiResponse.ok("분석 결과가 처리되었습니다.", null));
     }
 }

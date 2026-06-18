@@ -176,23 +176,23 @@ public class ResumeServiceImpl implements ResumeService {
 
     @Transactional
     @Override
-    public void receiveWebhook(String webhookSecret, ResumeDTO.RequestWebhook dto) {
+    public void receiveWebhook(UUID documentId, String webhookSecret, ResumeDTO.RequestWebhook dto) {
         if (!configuredWebhookSecret.equals(webhookSecret)) {
             throw new CustomException(ResumeErrorCode.WEBHOOK_SECRET_INVALID);
         }
 
-        Document document = documentRepository.findById(dto.documentId())
+        Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new CustomException(ResumeErrorCode.DOCUMENT_NOT_FOUND));
 
         // 멱등성 처리 — 이미 최종 상태면 DB 갱신 없이 반환
         if (document.getStatus() == DocumentStatus.COMPLETED || document.getStatus() == DocumentStatus.FAILED) {
-            log.info("[Webhook 멱등성] 이미 처리된 documentId: {}, 현재 상태: {}", dto.documentId(), document.getStatus());
+            log.info("[Webhook 멱등성] 이미 처리된 documentId: {}, 현재 상태: {}", documentId, document.getStatus());
             return;
         }
 
         if ("COMPLETED".equals(dto.status())) {
             DocumentFeedback feedback = DocumentFeedback.of(
-                    dto.documentId(),
+                    documentId,
                     dto.scoreJobFitness(),
                     dto.scoreTechStack(),
                     dto.scoreQuantified(),
@@ -210,7 +210,7 @@ public class ResumeServiceImpl implements ResumeService {
         }
 
         // DB 커밋 후 WebSocket 브로드캐스트 (Phase 7에서 리스너 구현)
-        eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(dto.documentId(), dto.status()));
+        eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(documentId, dto.status()));
     }
 
     private List<ResumeDTO.ResponseFeedback.FeedbackDetail> parseFeedbackDetails(String feedbackText, UUID documentId) {
