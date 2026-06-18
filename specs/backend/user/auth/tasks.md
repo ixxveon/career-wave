@@ -236,17 +236,18 @@
 ---
 
 ## Phase 7 - Test / 예외 케이스 검증
+> Phase 4에서 Service 단위 테스트 완료 항목은 [x] 표시. Phase 7은 Controller·통합·E2E 테스트 전담.
 
-- [ ] login 성공 테스트
-- [ ] login roleType 불일치 테스트
-- [ ] login 비밀번호 불일치 테스트
-- [ ] login 잠금/정지/탈퇴 계정 테스트
+- [x] login 성공 테스트 — `UserLoginServiceImplTest.정상_로그인_USER_accessToken_반환`
+- [x] login roleType 불일치 테스트 — `UserLoginServiceImplTest.roleType_불일치_AUTH_INVALID_CREDENTIALS`
+- [x] login 비밀번호 불일치 테스트 — `UserLoginServiceImplTest.비밀번호_불일치_AUTH_INVALID_CREDENTIALS`
+- [x] login 잠금/정지/탈퇴 계정 테스트 — `UserLoginServiceImplTest.SUSPENDED_/BANNED_/WITHDRAWN_계정_*`
 - [ ] refresh cookie 없음 테스트
 - [ ] refresh response에 refreshToken이 없는지 테스트
-- [ ] logout cookie 삭제 및 blacklist 등록 테스트
+- [x] logout cookie 삭제 및 blacklist 등록 테스트 — `UserRefreshLogoutServiceImplTest.logout_refresh_Redis_key_삭제_및_access_blacklist_등록`
 - [ ] loginId 중복 확인 성공/실패 테스트
-- [ ] 개인회원 가입 성공 테스트
-- [ ] 개인회원 가입 성공 시 `personal_profiles` 빈 row 생성 테스트
+- [x] 개인회원 가입 성공 테스트 — `UserRegisterServiceImplTest.registerUser_성공_시_personalProfile_저장`
+- [x] 개인회원 가입 성공 시 `personal_profiles` 빈 row 생성 테스트 — 동일 테스트
 - [ ] 개인회원 가입 시 `company_verification_agreed`, `sms_agreed`가 `null`로 저장되는지 테스트
 - [ ] 개인회원 login/me/status 응답에서 `companyApprovalStatus=NONE`이 반환되고 DB에 저장되지 않는지 테스트
 - [ ] 기업회원 가입 성공 테스트
@@ -254,15 +255,15 @@
 - [ ] 기업회원 사업자등록정보 외부 검증 성공/실패 테스트
 - [ ] 기업회원 외부 검증 API 장애 테스트
 - [ ] 기업회원 약관 동의 저장 테스트
-- [ ] 승인 대기 기업회원 로그인 403 및 token 미발급 테스트
-- [ ] 승인 완료 기업회원 로그인 성공 테스트
+- [x] 승인 대기 기업회원 로그인 403 및 token 미발급 테스트 — `UserLoginServiceImplTest.PENDING_REVIEW_기업회원_AUTH_COMPANY_PENDING_REVIEW`
+- [x] 승인 완료 기업회원 로그인 성공 테스트 — `UserLoginServiceImplTest.APPROVED_기업회원_로그인_성공`
 - [ ] loginId/email/phone/businessNumber 중복 테스트
 - [ ] 필수 약관 미동의 테스트
-- [ ] 비밀번호 정책 위반 테스트
+- [x] 비밀번호 정책 위반 테스트 — `UserRegisterServiceImplTest.registerUser_loginId_포함_비밀번호_정책위반`
 - [ ] verificationToken 없음/만료/purpose 불일치 테스트
 - [ ] 인증번호 발송 성공 테스트
 - [ ] 인증번호 확인 성공 테스트
-- [ ] 인증번호 오입력/만료/시도 횟수 초과 테스트
+- [x] 인증번호 오입력/만료/시도 횟수 초과 테스트 — `UserVerificationServiceImplTest.confirm_코드불일치_*` / `confirm_만료된_인증번호_*`
 - [ ] `member_verifications.expires_at` 5분 만료 테스트
 - [ ] 인증번호 재전송 60초 제한 테스트
 - [ ] 인증번호 5회 실패 후 차단 테스트
@@ -273,9 +274,10 @@
 - [ ] 아이디 찾기 결과 없음 `found=false` 테스트
 - [ ] loginId masking 테스트
 - [ ] password resetToken 발급 테스트
-- [ ] resetToken 만료/재사용 차단 테스트
-- [ ] 비밀번호 재설정 성공 테스트
-- [ ] 비밀번호 재설정 후 refresh token 전체 폐기 테스트
+- [x] resetToken 실패 5회 차단 테스트 — `UserRecoveryServiceImplTest.resetPassword_실패_5회_초과_차단`
+- [ ] resetToken 만료·이미 사용된 token 차단 테스트
+- [x] 비밀번호 재설정 성공 테스트 — `UserRecoveryServiceImplTest.resetPassword_성공_refreshTokenStore_deleteAll_호출`
+- [x] 비밀번호 재설정 후 refresh token 전체 폐기 테스트 — 동일 테스트
 - [ ] OAuth state 불일치 실패 테스트
 - [ ] OAuth state TTL 만료 테스트
 - [ ] 기존 소셜 계정 로그인 성공 테스트
@@ -285,10 +287,10 @@
 - [ ] Google email 없음/있음 테스트
 - [ ] 최초 소셜 계정 callback 시 `socialSignupToken` 발급 테스트
 - [ ] `socialSignupToken` Redis TTL 10분 및 raw token 미저장 테스트
-- [ ] `socialSignupToken` 만료/재사용 차단 테스트
-- [ ] `socialSignupToken`과 provider 불일치 시 `SOCIAL_SIGNUP_TOKEN_INVALID` 테스트
-- [ ] 소셜 회원가입 추가정보 완료 성공/실패 테스트
-- [ ] 재직증명서 PDF 업로드 성공 테스트
-- [ ] PDF 아님/MIME 불일치/5MB 초과 테스트
+- [x] `socialSignupToken` 중복 소비 차단 테스트 — `RedisSocialSignupTokenStoreTest.consume_중복_소비_두_번째_호출_empty`
+- [x] `socialSignupToken`과 provider 불일치 시 `SOCIAL_SIGNUP_TOKEN_INVALID` 테스트 — `UserSocialAuthServiceImplTest.complete_socialSignupToken_소비_실패_SOCIAL_SIGNUP_TOKEN_INVALID`
+- [ ] 소셜 회원가입 추가정보 완료 성공 테스트
+- [ ] 재직증명서 PDF 업로드 성공 테스트 — Phase 5
+- [ ] PDF 아님/MIME 불일치/5MB 초과 테스트 — Phase 5
 - [ ] 프론트 `types/user/member.ts`와 response field 수동 대조
 - [ ] MSW mock 갱신 필요 항목 정리

@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class UserRecoveryServiceImplTest {
@@ -47,7 +48,8 @@ class UserRecoveryServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        // opsForValue는 resetPassword 경로에서만 사용 — rate limit 경로(Lua script)에서는 불필요하므로 lenient 처리
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOps);
         service = new UserRecoveryServiceImpl(
                 memberRepository, memberQueryRepository, companyProfileRepository,
                 verificationRepository, resetTokenRepository, encoder,
@@ -69,8 +71,7 @@ class UserRecoveryServiceImplTest {
         CompanyProfile cp = mock(CompanyProfile.class);
         when(cp.getBusinessNumber()).thenReturn("1234567890");
         when(companyProfileRepository.findByMemberId(member.getMemberId())).thenReturn(Optional.of(cp));
-        when(valueOps.increment(anyString())).thenReturn(1L);
-        when(redisTemplate.expire(anyString(), any())).thenReturn(true);
+        when(redisTemplate.execute(any(), anyList(), any(Object[].class))).thenReturn(1L);
 
         UserRecoveryDto.RequestPasswordToken request = createCompanyPasswordTokenRequest(
                 member.getLoginId(), "vtoken", "홍담당", "9999999999"); // 다른 사업자번호
@@ -107,8 +108,8 @@ class UserRecoveryServiceImplTest {
 
     @Test
     void issuePasswordToken_rate_limit_초과_VERIFICATION_RATE_LIMITED() throws Exception {
-        // increment 결과가 6 (> 5 limit) → 차단 (atomic increment 방식)
-        when(valueOps.increment(startsWith("password-token:rate:"))).thenReturn(6L);
+        // Lua 스크립트 execute 결과가 6 (> 5 limit) → 차단
+        when(redisTemplate.execute(any(), anyList(), any(Object[].class))).thenReturn(6L);
 
         UserRecoveryDto.RequestPasswordToken req = new UserRecoveryDto.RequestPasswordToken();
         setField(req, "roleType", MemberType.USER);

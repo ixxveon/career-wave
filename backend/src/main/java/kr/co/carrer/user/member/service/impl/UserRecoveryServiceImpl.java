@@ -20,6 +20,7 @@ import kr.co.carrer.user.member.type.RoleType;
 import kr.co.carrer.user.member.type.VerificationChannel;
 import kr.co.carrer.user.member.type.VerificationPurpose;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,16 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
     private static final int ISSUE_RATE_LIMIT = 5;
     private static final long ISSUE_RATE_TTL_SECONDS = 600L; // 10분
     private static final String ISSUE_RATE_PREFIX = "password-token:rate:";
+
+    // INCR + 최초 TTL 설정 원자 Lua 스크립트 — INCR/EXPIRE 사이 프로세스 종료 시 TTL 미설정 방지
+    private static final DefaultRedisScript<Long> INCR_WITH_TTL_SCRIPT = new DefaultRedisScript<>(
+            "local count = redis.call('INCR', KEYS[1])\n" +
+            "if count == 1 then\n" +
+            "  redis.call('EXPIRE', KEYS[1], ARGV[1])\n" +
+            "end\n" +
+            "return count",
+            Long.class
+    );
 
     private final UserMemberRepository memberRepository;
     private final UserMemberQueryRepository memberQueryRepository;
@@ -118,12 +129,10 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
     public UserRecoveryDto.ResponsePasswordToken issuePasswordToken(
             UserRecoveryDto.RequestPasswordToken request, String clientIp) {
         // loginId + IP 기준 10분 5회 rate limit (spec §10)
-        // increment 후 결과 비교: get→check→increment 패턴 대비 동시 요청 경쟁 조건 제거
+        // Lua 스크립트로 INCR + 최초 EXPIRE를 원자 실행 — 프로세스 장애 시 TTL 미설정 방지
         String rateKey = ISSUE_RATE_PREFIX + request.getLoginId() + ":" + clientIp;
-        Long rateCount = redisTemplate.opsForValue().increment(rateKey);
-        if (rateCount != null && rateCount == 1L) {
-            redisTemplate.expire(rateKey, java.time.Duration.ofSeconds(ISSUE_RATE_TTL_SECONDS));
-        }
+        Long rateCount = redisTemplate.execute(INCR_WITH_TTL_SCRIPT,
+                List.of(rateKey), String.valueOf(ISSUE_RATE_TTL_SECONDS));
         if (rateCount != null && rateCount > ISSUE_RATE_LIMIT) {
             throw new CustomException(UserAuthErrorCode.VERIFICATION_RATE_LIMITED);
         }

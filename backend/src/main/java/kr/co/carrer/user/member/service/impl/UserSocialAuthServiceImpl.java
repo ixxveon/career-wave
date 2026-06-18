@@ -153,13 +153,14 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
 
 
             return new UserSocialAuthDto.ResponseOAuthCallbackLogin(
-                    accessToken, memberInfo, "/user/dashboard");
+                    accessToken, memberInfo, "/");
         } else {
             // 최초 소셜 가입 — socialSignupToken 발급
+            // Phase 5 callback 페이지에서 socialSignupToken을 sessionStorage에 저장 후 nextPath로 redirect
             String socialSignupToken = socialSignupTokenStore.issue(
                     socialProvider, userInfo.providerUserId(), userInfo.providerEmail());
             return new UserSocialAuthDto.ResponseOAuthCallbackSignupRequired(
-                    provider, userInfo.providerEmail(), socialSignupToken, "/register/social/complete");
+                    provider, userInfo.providerEmail(), socialSignupToken, "/auth/register/verify");
         }
     }
 

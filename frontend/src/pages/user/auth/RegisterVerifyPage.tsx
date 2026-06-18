@@ -37,13 +37,12 @@ function RegisterVerifyPage() {
   const providerId = searchParams.get('provider') as SocialProviderId | null;
   const provider = getSocialProviderLabel(providerId);
   const socialEmail = searchParams.get('email')?.trim() || '';
-  // socialSignupToken은 URL query에 두지 않고 sessionStorage에서 읽은 뒤 즉시 제거
-  // Phase 5 OAuth callback 페이지에서 sessionStorage.setItem(SESSION_KEY, token) 후 여기로 redirect
-  const [socialSignupToken] = useState<string>(() => {
-    const token = sessionStorage.getItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY) ?? '';
-    sessionStorage.removeItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY);
-    return token;
-  });
+  // socialSignupToken: URL query 대신 sessionStorage에서 읽음 (브라우저 히스토리/로그 노출 방지)
+  // Phase 5 OAuth callback 페이지에서 sessionStorage.setItem(SESSION_KEY, token) 후 이 페이지로 redirect
+  // removeItem은 렌더링 중 호출하지 않고 등록 성공 후 호출 — StrictMode/병렬 렌더 대응 및 실패 시 재시도 허용
+  const [socialSignupToken] = useState<string>(
+    () => sessionStorage.getItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY) ?? ''
+  );
   const [form, setForm] = useState(initialForm);
   const [terms, setTerms] = useState(initialTerms);
   const [verification, setVerification] = useState({
@@ -245,6 +244,7 @@ function RegisterVerifyPage() {
           marketing: terms.marketing,
         },
       });
+      sessionStorage.removeItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY);
       setSuccessMessage('소셜 가입 추가 정보 입력이 완료되었습니다. 로그인 페이지로 이동합니다.');
       navigate(result.nextPath, {
         replace: true,
