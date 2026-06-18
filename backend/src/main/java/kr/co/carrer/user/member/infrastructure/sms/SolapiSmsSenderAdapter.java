@@ -61,7 +61,7 @@ public class SolapiSmsSenderAdapter implements SmsSenderPort {
         } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
             log.error("SOLAPI SMS 발송 실패: {} — HTTP {}", toPhone, e.getStatusCode());
             throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("SOLAPI SMS 발송 실패: {} — {}", toPhone, e.getMessage());
             throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
         }

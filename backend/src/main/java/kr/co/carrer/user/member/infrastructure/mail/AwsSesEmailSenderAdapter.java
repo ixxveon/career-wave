@@ -1,5 +1,6 @@
 package kr.co.carrer.user.member.infrastructure.mail;
 
+import jakarta.annotation.PostConstruct;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.service.EmailSenderPort;
@@ -16,15 +17,15 @@ import software.amazon.awssdk.services.sesv2.model.*;
 @Component
 public class AwsSesEmailSenderAdapter implements EmailSenderPort {
 
-    private final SesV2Client sesClient;
-    private final String fromEmail;
+    @Value("${aws.ses.access-key}") private String accessKey;
+    @Value("${aws.ses.secret-key}") private String secretKey;
+    @Value("${aws.ses.region}") private String region;
+    @Value("${aws.ses.from-email}") private String fromEmail;
 
-    public AwsSesEmailSenderAdapter(
-            @Value("${aws.ses.access-key}") String accessKey,
-            @Value("${aws.ses.secret-key}") String secretKey,
-            @Value("${aws.ses.region}") String region,
-            @Value("${aws.ses.from-email}") String fromEmail) {
-        this.fromEmail = fromEmail;
+    private SesV2Client sesClient;
+
+    @PostConstruct
+    void init() {
         this.sesClient = SesV2Client.builder()
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(

@@ -8,6 +8,7 @@ import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.member.dto.OAuthCallbackResponse;
 import kr.co.carrer.user.member.dto.UserLoginDto;
 import kr.co.carrer.user.member.dto.UserSocialAuthDto;
 import kr.co.carrer.user.member.entity.Member;
@@ -115,7 +116,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
 
     @Override
     @Transactional
-    public Object callback(String provider, String code, String state, HttpServletResponse response) {
+    public OAuthCallbackResponse callback(String provider, String code, String state, HttpServletResponse response) {
         // state 검증
         String storedProvider = redisTemplate.opsForValue().get(STATE_PREFIX + state);
         if (storedProvider == null || !storedProvider.equals(provider)) {
