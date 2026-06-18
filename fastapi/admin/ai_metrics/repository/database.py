@@ -31,6 +31,8 @@ def get_session() -> Generator[Session, None, None]:
     session = get_session_factory()()
     try:
         yield session
+    except Exception:
+        session.rollback()
+        raise
     finally:
         session.close()
-
