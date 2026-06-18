@@ -148,11 +148,11 @@ backend/src/main/java/kr/co/carrer/user/member/
 
 - [x] Phase 1: Entity / Enum / DB 구조 정리 — PR #520
 - [x] Phase 2: Repository 구현 — PR #522
-- [ ] Phase 3: DTO / Validation 구현
-- [ ] Phase 4: Service 구현
-- [ ] Phase 5: Controller / API 구현
-- [ ] Phase 6: Swagger 문서화
-- [ ] Phase 7: Test / 예외 케이스 검증
+- [x] Phase 3: DTO / Validation 구현
+- [x] Phase 4: Service 구현 (Service 단위 테스트 포함)
+- [x] Phase 5: Controller / API 구현 — feature/user-auth-api-docs-integration
+- [x] Phase 6: Swagger 문서화 — 동일 브랜치
+- [x] Phase 7: Controller·Service 단위 테스트 완료 (통합/E2E 테스트 별도 PR)
 
 ---
 
