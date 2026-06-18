@@ -5,7 +5,7 @@ from uuid import UUID
 from admin.ai_metrics.client import AiMetricsModelExecutionContext
 from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException
 from admin.ai_metrics.repository import AiUsageLogRecord
-from admin.ai_metrics.repository.ai_model_repository import AiModelRepository
+from admin.ai_metrics.repository.ai_model_repository import AiModelRecord, AiModelRepository
 from admin.ai_metrics.repository.ai_usage_log_repository import AiUsageLogRepository
 from admin.ai_metrics.schema import AiFeatureType, UsageLogCreateRequest
 from admin.ai_metrics.service.token_cost_calculator import TokenCostCalculator
@@ -37,8 +37,8 @@ class UsageLogService:
         self,
         request: UsageLogCreateRequest,
     ) -> AiUsageLogRecord:
-        self._validate_request(request)
-        persist_request = self._build_persist_request(request)
+        ai_model = self._validate_request(request)
+        persist_request = self._build_persist_request(request, ai_model)
         saved_record = self._usage_log_repository.save(persist_request)
         self._build_operational_meta(saved_record)
         return saved_record
@@ -46,7 +46,7 @@ class UsageLogService:
     def _validate_request(
         self,
         request: UsageLogCreateRequest,
-    ) -> None:
+    ) -> AiModelRecord:
         if not isinstance(request.member_id, UUID):
             raise AiMetricsException(
                 error_code=AiMetricsErrorCode.TOKEN_CALCULATION_FAILED,
@@ -74,18 +74,13 @@ class UsageLogService:
                 error_code=AiMetricsErrorCode.AI_MODEL_NOT_FOUND,
                 detail={"aiModelId": request.ai_model_id},
             )
+        return ai_model
 
     def _build_persist_request(
         self,
         request: UsageLogCreateRequest,
+        ai_model: AiModelRecord,
     ) -> UsageLogCreateRequest:
-        ai_model = self._ai_model_repository.find_by_id(request.ai_model_id)
-        if ai_model is None:
-            raise AiMetricsException(
-                error_code=AiMetricsErrorCode.AI_MODEL_NOT_FOUND,
-                detail={"aiModelId": request.ai_model_id},
-            )
-
         context = AiMetricsModelExecutionContext(
             ai_model_id=ai_model.ai_model_id,
             provider=ai_model.provider,
