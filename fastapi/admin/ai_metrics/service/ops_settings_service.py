@@ -44,7 +44,6 @@ class OpsSettingsService:
                 detail={"aiOpsSettingId": request.ai_ops_setting_id},
             )
 
-        self._validate_selected_model_id(request.selected_model_id)
         self._validate_budget_threshold(
             monthly_budget=request.monthly_budget,
             alert_threshold=request.alert_threshold,
@@ -77,21 +76,13 @@ class OpsSettingsService:
     def get_runtime_context(self) -> AiOpsRuntimeContext | None:
         return self._runtime_context
 
-    def _validate_selected_model_id(self, selected_model_id: int) -> None:
-        active_model = self._ai_model_repository.find_by_id(selected_model_id)
-        if active_model is None:
-            raise AiMetricsException(
-                error_code=AiMetricsErrorCode.AI_MODEL_NOT_FOUND,
-                detail={"selectedModelId": selected_model_id},
-            )
-
     def _validate_budget_threshold(
         self,
         *,
         monthly_budget,
         alert_threshold: int,
     ) -> None:
-        if monthly_budget < 0:
+        if monthly_budget <= 0:
             raise AiMetricsException(
                 error_code=AiMetricsErrorCode.INVALID_MONTHLY_BUDGET,
                 detail={"monthlyBudget": str(monthly_budget)},
