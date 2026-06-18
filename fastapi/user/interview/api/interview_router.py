@@ -8,6 +8,8 @@ from user.interview.pipeline import stt_pipeline
 
 log = logging.getLogger(__name__)
 
+_bg_tasks: set[asyncio.Task] = set()
+
 router = APIRouter(
     prefix="/interview",
     tags=["interview-internal"],
@@ -29,7 +31,7 @@ async def trigger_voice_chunk(
     """
     audio_bytes = await audio_chunk.read()
 
-    asyncio.create_task(
+    task = asyncio.create_task(
         stt_pipeline.transcribe_chunk(
             audio_bytes=audio_bytes,
             session_id=session_id,
@@ -38,6 +40,8 @@ async def trigger_voice_chunk(
             is_final=is_final,
         )
     )
+    _bg_tasks.add(task)
+    task.add_done_callback(_bg_tasks.discard)
 
     log.info(
         "STT pipeline triggered: sessionId=%s, chunkIndex=%d, isFinal=%s",
