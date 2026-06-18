@@ -77,6 +77,7 @@ public class FastApiClient {
     }
 
     private List<Map<String, Object>> buildContentList(List<ResumeDTO.RequestCoverLetter.ContentItem> content) {
+        if (content == null) return List.of();
         return content.stream()
                 .map(item -> Map.<String, Object>of(
                         "order", item.order(),
