@@ -91,11 +91,11 @@
 
 ## Phase 11 - Vector Store Integration
 
-- [ ] `vector_store_client.py` 생성/저장 클라이언트를 작성한다.
-- [ ] `vector_store_client.py`를 추상 adapter 구조로 작성한다.
-- [ ] vector index 저장 로직을 작성한다.
-- [ ] vector index 삭제 로직을 작성한다.
-- [ ] vector store 연동 실패를 내부 오류로 변환하는 처리 로직을 작성한다.
+- [x] `vector_store_client.py` 생성/저장 클라이언트를 작성한다.
+- [x] `vector_store_client.py`를 추상 adapter 구조로 작성한다.
+- [x] vector index 저장 로직을 작성한다.
+- [x] vector index 삭제 로직을 작성한다.
+- [x] vector store 연동 실패를 내부 오류로 변환하는 처리 로직을 작성한다.
 
 ## Phase 12 - Domain Router
 
