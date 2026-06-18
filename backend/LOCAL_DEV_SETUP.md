@@ -224,6 +224,13 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 
 서버 기동 확인: `http://localhost:8080/swagger-ui.html`
 
+> **[배포 경계 주의] Phase 5 완료 전 non-local 환경 배포 불가**
+>
+> `StubEmploymentCertificateFileAdapter`는 `@Profile({"local","test"})`로만 활성화됩니다.
+> Phase 5에서 실제 S3 구현체(`S3EmploymentCertificateFileAdapter`)가 완성되기 전까지
+> staging / prod 환경에는 `EmploymentCertificateFilePort` Bean이 없어 **애플리케이션이 기동 실패**합니다.
+> `develop` 브랜치를 non-local 환경에 배포하려면 반드시 Phase 5 S3 구현 완료 후 진행하세요.
+
 ---
 
 ## Step 7. 테스트 실행

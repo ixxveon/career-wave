@@ -164,6 +164,7 @@ export interface SocialRegisterTerms extends TermsAgreement {}
 
 export interface SocialRegisterCompletionRequest {
   provider: SocialProviderId;
+  socialSignupToken: string;
   socialEmail?: string;
   name: string;
   carrier: string;

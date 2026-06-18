@@ -34,6 +34,7 @@ function RegisterVerifyPage() {
   const providerId = searchParams.get('provider') as SocialProviderId | null;
   const provider = getSocialProviderLabel(providerId);
   const socialEmail = searchParams.get('email')?.trim() || '';
+  const socialSignupToken = searchParams.get('socialSignupToken') ?? '';
   const [form, setForm] = useState(initialForm);
   const [terms, setTerms] = useState(initialTerms);
   const [verification, setVerification] = useState({
@@ -223,6 +224,7 @@ function RegisterVerifyPage() {
     try {
       const result = await completeSocialRegister.mutateAsync({
         provider: providerId as SocialProviderId,
+        socialSignupToken,
         socialEmail: socialEmail || undefined,
         name: form.name.trim(),
         carrier: form.carrier.trim(),

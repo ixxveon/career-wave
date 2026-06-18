@@ -255,15 +255,22 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
                     .header("Authorization", "Bearer " + tokenResponse.get("access_token"))
                     .retrieve()
                     .bodyToMono(Map.class)
+                    .timeout(Duration.ofSeconds(10))
                     .block();
         } catch (CustomException e) {
             throw e;
         } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
             log.error("Kakao API 호출 실패: HTTP {}", e.getStatusCode());
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
-        } catch (Exception e) {
+        } catch (org.springframework.web.reactive.function.client.WebClientRequestException e) {
             log.error("Kakao API 호출 실패: {}", e.getMessage());
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof java.util.concurrent.TimeoutException) {
+                log.error("Kakao API timeout");
+                throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+            }
+            throw e;
         }
 
         if (userResponse == null) throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
@@ -309,15 +316,22 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
                     .header("Authorization", "Bearer " + tokenResponse.get("access_token"))
                     .retrieve()
                     .bodyToMono(Map.class)
+                    .timeout(Duration.ofSeconds(10))
                     .block();
         } catch (CustomException e) {
             throw e;
         } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
             log.error("Naver API 호출 실패: HTTP {}", e.getStatusCode());
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
-        } catch (Exception e) {
+        } catch (org.springframework.web.reactive.function.client.WebClientRequestException e) {
             log.error("Naver API 호출 실패: {}", e.getMessage());
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof java.util.concurrent.TimeoutException) {
+                log.error("Naver API timeout");
+                throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+            }
+            throw e;
         }
 
         if (userResponse == null) throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
@@ -361,15 +375,22 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
                     .header("Authorization", "Bearer " + tokenResponse.get("access_token"))
                     .retrieve()
                     .bodyToMono(Map.class)
+                    .timeout(Duration.ofSeconds(10))
                     .block();
         } catch (CustomException e) {
             throw e;
         } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
             log.error("Google API 호출 실패: HTTP {}", e.getStatusCode());
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
-        } catch (Exception e) {
+        } catch (org.springframework.web.reactive.function.client.WebClientRequestException e) {
             log.error("Google API 호출 실패: {}", e.getMessage());
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof java.util.concurrent.TimeoutException) {
+                log.error("Google API timeout");
+                throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+            }
+            throw e;
         }
 
         if (userResponse == null) throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);

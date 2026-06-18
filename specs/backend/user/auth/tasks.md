@@ -93,7 +93,9 @@
 ## Phase 4 - Service 구현
 > **완료 기준**: Service 로직 + Service 단위 테스트 동시 완성. (Phase 7의 Service 단위 테스트 항목은 Phase 4로 귀속. Phase 7은 통합/E2E 테스트 전담)
 
-- [ ] PDF MIME type, 확장자, 5MB 이하 검증 추가 — Controller multipart 처리 시 (Phase 5)
+- [x] `EmploymentCertificateFilePort` 인터페이스 정의 + `StubEmploymentCertificateFileAdapter` 구현 — Phase 4 완료 (Phase 5에서 S3 실제 구현체로 교체)
+- [x] 기업회원 가입 Service에서 fileId 검증 Port 호출 구조 구현 — validate() → memberRepository.save() 순서 보장
+- [x] fileId port 실패 시 회원/기업 정보 미저장 단위 테스트 추가
 - [x] 외부 API/provider 설정은 환경변수 참조 방식으로만 사용 — application.properties + .env.example 갱신
 - [x] AWS SES 관련 환경변수 목록을 문서화한다. — AWS_ACCESS_KEY_ID·SECRET·REGION·SES_FROM_EMAIL
 - [x] SOLAPI / CoolSMS 관련 환경변수 목록을 문서화한다. — SOLAPI_API_KEY·API_SECRET·SENDER_PHONE
@@ -125,7 +127,7 @@
 - [x] 개인회원 가입 시 company_verification_agreed, sms_agreed는 null로 저장
 - [x] 기업회원 가입 시 company_verification_agreed=true, sms_agreed=true를 필수 검증
 - [x] 프론트 age 동의는 API request에 포함하지 않고 백엔드는 service/privacy 필수 약관만 검증
-- [ ] 재직증명서 fileId 유효성 검증 — S3 연동 Phase 5에서 처리
+- [x] 재직증명서 fileId 검증 Port·Service 호출 구조 구현 완료 — 실제 S3 객체 존재·MIME·크기 검증은 Phase 5에서 처리
 - [x] BusinessRegistrationVerificationPort 작성 — NtsBusinessStatusApiAdapter
 - [x] 국세청 status API request/response DTO 작성 — NtsBusinessStatusApiAdapter 내부 record
 - [x] 국세청 사업자등록정보 status API를 businessNumber만으로 호출하는 service 구현
@@ -189,6 +191,9 @@
 - [ ] `POST /api/v1/user/members/register/user` 구현
 - [ ] `POST /api/v1/user/members/register/company` 구현
 - [ ] `POST /api/v1/user/members/company/employment-certificate` 구현
+- [ ] 재직증명서 Multipart 업로드 Service 구현 — PDF 확장자·Tika MIME type·5MB 이하 검증 후 S3 업로드 및 fileId 발급
+- [ ] S3 기반 `EmploymentCertificateFilePort` 실제 구현 — S3 객체 존재 여부·MIME type·크기·임시 파일 상태 검증
+- [ ] `StubEmploymentCertificateFileAdapter` → `S3EmploymentCertificateFileAdapter` 교체 및 `@Profile` annotation 제거
 - [ ] `GET /api/v1/user/members/oauth/{provider}/authorize` 구현
 - [ ] `GET /api/v1/user/members/oauth/{provider}/callback` 구현
 - [ ] `POST /api/v1/user/members/register/social/complete` 구현
