@@ -177,6 +177,33 @@ class UserVerificationServiceImplTest {
         verify(emailSenderPort, never()).sendVerificationCode(any(), any());
     }
 
+    // ─── 인증번호 만료 5분 / 재발송 60초 TTL 경계 검증 ──────────────────────────────────
+
+    @Test
+    void send_EMAIL_expiresAt_5분_후_resendAvailableAt_60초_후() throws Exception {
+        when(verificationRepository.findTopByTargetAndPurposeOrderByCreatedAtDesc(anyString(), any()))
+                .thenReturn(java.util.Optional.empty());
+
+        MemberVerification saved = createVerification(5, VerificationStatus.SENT, "anyhash");
+        when(verificationRepository.save(any())).thenReturn(saved);
+
+        UserVerificationDto.RequestSendVerification req = new UserVerificationDto.RequestSendVerification();
+        setField(req, "channel", VerificationChannel.EMAIL);
+        setField(req, "target", "user@example.com");
+        setField(req, "purpose", VerificationPurpose.REGISTER);
+
+        Instant before = Instant.now();
+        UserVerificationDto.ResponseSendVerification resp = service.send(req);
+
+        // expiresAt ≈ now + 300초 (5분), 허용 오차 ±5초
+        assertThat(resp.expiresAt()).isAfter(before.plusSeconds(295));
+        assertThat(resp.expiresAt()).isBefore(before.plusSeconds(305));
+
+        // resendAvailableAt ≈ now + 60초, 허용 오차 ±5초
+        assertThat(resp.resendAvailableAt()).isAfter(before.plusSeconds(55));
+        assertThat(resp.resendAvailableAt()).isBefore(before.plusSeconds(65));
+    }
+
     // ─── 인증번호 재발송 60초 제한 ─────────────────────────────────────────────────
 
     @Test
