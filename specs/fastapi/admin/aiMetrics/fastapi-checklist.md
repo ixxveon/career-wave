@@ -1,4 +1,4 @@
-# FastAPI Checklist: aiMetrics
+﻿# FastAPI Checklist: aiMetrics
 
 > tasks.md가 "무엇을 만들지"라면, 이 파일은 "제대로 만들었는지" 검증한다.
 > 구현 완료 후 PR 올리기 전에 작성자 본인이 체크한다.
@@ -56,13 +56,13 @@
 
 ## Phase 9 — Chunking
 
-- [ ] Chunking 로직이 청크 분할 기준과 `chunk_count` 계산을 일관되게 적용한다.
-- [ ] 청크 크기와 분할 기준 설정이 누락되거나 잘못된 경우 내부 오류를 반환한다.
+- [x] Chunking 로직이 청크 분할 기준과 `chunk_count` 계산을 일관되게 적용한다.
+- [x] 청크 크기와 분할 기준 설정이 누락되거나 잘못된 경우 내부 오류를 반환한다.
 
 ## Phase 10 — Embedding
 
-- [ ] Embedding 생성 로직이 청크별 결과를 내부 벡터 포맷으로 변환한다.
-- [ ] Embedding 생성 실패가 내부 ErrorCode로 변환된다.
+- [x] Embedding 생성 로직이 청크별 결과를 내부 벡터 포맷으로 변환한다.
+- [x] Embedding 생성 실패가 내부 ErrorCode로 변환된다.
 
 ## Phase 11 — Vector Store Integration
 
