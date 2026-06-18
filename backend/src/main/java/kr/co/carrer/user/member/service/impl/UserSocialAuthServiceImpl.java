@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseCookie;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,22 +84,28 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
 
     private String buildAuthorizationUrl(SocialProvider provider, String state) {
         return switch (provider) {
-            case KAKAO -> "https://kauth.kakao.com/oauth/authorize"
-                    + "?client_id=" + kakaoClientId
-                    + "&redirect_uri=" + kakaoRedirectUri
-                    + "&response_type=code"
-                    + "&state=" + state;
-            case NAVER -> "https://nid.naver.com/oauth2.0/authorize"
-                    + "?client_id=" + naverClientId
-                    + "&redirect_uri=" + naverRedirectUri
-                    + "&response_type=code"
-                    + "&state=" + state;
-            case GOOGLE -> "https://accounts.google.com/o/oauth2/v2/auth"
-                    + "?client_id=" + googleClientId
-                    + "&redirect_uri=" + googleRedirectUri
-                    + "&response_type=code"
-                    + "&scope=openid email profile"
-                    + "&state=" + state;
+            case KAKAO -> UriComponentsBuilder
+                    .fromHttpUrl("https://kauth.kakao.com/oauth/authorize")
+                    .queryParam("client_id", kakaoClientId)
+                    .queryParam("redirect_uri", kakaoRedirectUri)
+                    .queryParam("response_type", "code")
+                    .queryParam("state", state)
+                    .build().toUriString();
+            case NAVER -> UriComponentsBuilder
+                    .fromHttpUrl("https://nid.naver.com/oauth2.0/authorize")
+                    .queryParam("client_id", naverClientId)
+                    .queryParam("redirect_uri", naverRedirectUri)
+                    .queryParam("response_type", "code")
+                    .queryParam("state", state)
+                    .build().toUriString();
+            case GOOGLE -> UriComponentsBuilder
+                    .fromHttpUrl("https://accounts.google.com/o/oauth2/v2/auth")
+                    .queryParam("client_id", googleClientId)
+                    .queryParam("redirect_uri", googleRedirectUri)
+                    .queryParam("response_type", "code")
+                    .queryParam("scope", "openid email profile")
+                    .queryParam("state", state)
+                    .build().toUriString();
         };
     }
 
