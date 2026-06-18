@@ -29,6 +29,12 @@ class RagIndexService:
     def _accept_indexing(self, rag_document_id: int):
         updated_document = self._rag_document_repository.mark_indexing(rag_document_id)
         if updated_document is None:
+            rag_document = self._rag_document_repository.find_by_id(rag_document_id)
+            if rag_document is None:
+                raise AiMetricsException(
+                    error_code=AiMetricsErrorCode.RAG_DOCUMENT_NOT_FOUND,
+                    detail={"ragDocumentId": rag_document_id},
+                )
             raise AiMetricsException(
                 error_code=AiMetricsErrorCode.RAG_DOCUMENT_ALREADY_INDEXING,
                 detail={"ragDocumentId": rag_document_id},
