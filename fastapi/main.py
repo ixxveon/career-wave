@@ -62,6 +62,11 @@ from user.interview.websocket import interview_ws_handler  # noqa: E402
 
 app.include_router(interview_ws_handler.router)
 
-# ── 어드민 도메인 라우터 (예정) ─────────────────────────────────────────────
+# ── 어드민 도메인 라우터 ─────────────────────────────────────────────────────
+
+from admin.api import cs_ai_router  # noqa: E402
+
+app.include_router(cs_ai_router.router, prefix="/api/v1/ai")
+
 # from admin.api import scraper_router
 # app.include_router(scraper_router.router, prefix="/internal/admin")
