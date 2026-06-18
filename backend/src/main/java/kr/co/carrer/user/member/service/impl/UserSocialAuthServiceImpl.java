@@ -265,7 +265,12 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
 
         if (userResponse == null) throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
 
-        String providerUserId = String.valueOf(userResponse.get("id"));
+        // String.valueOf(null) = "null" 문자열 — null/blank/"null" 모두 fail-close
+        Object idObj = userResponse.get("id");
+        String providerUserId = idObj != null ? idObj.toString() : null;
+        if (providerUserId == null || providerUserId.isBlank() || "null".equals(providerUserId))
+            throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+
         // Kakao email nullable (spec FR-022C)
         String email = null;
         Object kakaoAccount = userResponse.get("kakao_account");
@@ -317,7 +322,11 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         if (!(responseObj instanceof Map<?, ?> profile))
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
 
-        String providerUserId = String.valueOf(profile.get("id"));
+        Object idObj = profile.get("id");
+        String providerUserId = idObj != null ? idObj.toString() : null;
+        if (providerUserId == null || providerUserId.isBlank() || "null".equals(providerUserId))
+            throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+
         Object emailObj = profile.get("email");
         String email = emailObj != null ? String.valueOf(emailObj) : null;
         return new OAuthUserInfo(providerUserId, email);
@@ -360,7 +369,11 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
 
         if (userResponse == null) throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
 
-        String providerUserId = String.valueOf(userResponse.get("sub"));
+        Object subObj = userResponse.get("sub");
+        String providerUserId = subObj != null ? subObj.toString() : null;
+        if (providerUserId == null || providerUserId.isBlank() || "null".equals(providerUserId))
+            throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
+
         Object emailObj = userResponse.get("email");
         String email = emailObj != null ? String.valueOf(emailObj) : null;
         return new OAuthUserInfo(providerUserId, email);
