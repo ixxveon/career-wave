@@ -8,6 +8,7 @@ import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.entity.MemberVerification;
 import kr.co.carrer.user.member.entity.PasswordResetToken;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
+import kr.co.carrer.user.member.repository.CompanyProfileRepository;
 import kr.co.carrer.user.member.repository.MemberVerificationRepository;
 import kr.co.carrer.user.member.repository.PasswordResetTokenRepository;
 import kr.co.carrer.user.member.repository.UserMemberQueryRepository;
@@ -39,6 +40,7 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
 
     private final UserMemberRepository memberRepository;
     private final UserMemberQueryRepository memberQueryRepository;
+    private final CompanyProfileRepository companyProfileRepository;
     private final MemberVerificationRepository verificationRepository;
     private final PasswordResetTokenRepository resetTokenRepository;
     private final PasswordEncoder passwordEncoder;
@@ -121,9 +123,15 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
         // 회원 조회 (계정 존재 여부 노출 금지 — 공통 메시지)
         Member member = findMemberForReset(request, verification);
 
-        // 기업회원 추가 검증
+        // 기업회원 추가 검증 — managerName·businessNumber를 DB 값과 대조 (단순 비어있음 체크 아님)
         if (request.getRoleType() == MemberType.COMPANY) {
             if (isBlank(request.getManagerName()) || isBlank(request.getBusinessNumber())) {
+                throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
+            }
+            companyProfileRepository.findByMemberId(member.getMemberId())
+                    .filter(cp -> cp.getBusinessNumber().equals(request.getBusinessNumber()))
+                    .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
+            if (!member.getName().equals(request.getManagerName())) {
                 throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
             }
         }
