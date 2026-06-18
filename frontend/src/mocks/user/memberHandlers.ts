@@ -201,7 +201,13 @@ export const memberHandlers = [
   // ── 개인회원 가입 ──────────────────────────────────────────────────────────────
   http.post('/api/v1/user/members/register/user', async ({ request }) => {
     const body = await request.json() as Record<string, unknown>;
-    const loginId = body?.loginId as string;
+    const loginId = body?.loginId;
+    if (typeof loginId !== 'string' || !/^[A-Za-z0-9]{6,20}$/.test(loginId)) {
+      return HttpResponse.json(
+        { success: false, statusCode: 400, message: '아이디 형식이 올바르지 않습니다.', code: 'LOGIN_ID_INVALID' },
+        { status: 400 },
+      );
+    }
 
     if (TAKEN_LOGIN_IDS.has(loginId)) {
       return HttpResponse.json(
@@ -226,7 +232,13 @@ export const memberHandlers = [
   // ── 기업회원 가입 ──────────────────────────────────────────────────────────────
   http.post('/api/v1/user/members/register/company', async ({ request }) => {
     const body = await request.json() as Record<string, unknown>;
-    const loginId = body?.loginId as string;
+    const loginId = body?.loginId;
+    if (typeof loginId !== 'string' || !/^[A-Za-z0-9]{6,20}$/.test(loginId)) {
+      return HttpResponse.json(
+        { success: false, statusCode: 400, message: '아이디 형식이 올바르지 않습니다.', code: 'LOGIN_ID_INVALID' },
+        { status: 400 },
+      );
+    }
 
     if (TAKEN_LOGIN_IDS.has(loginId)) {
       return HttpResponse.json(
@@ -362,10 +374,14 @@ export const memberHandlers = [
     }
 
     const session = MOCK_VERIFICATION_SESSIONS.get(verificationId);
-    const verificationToken = session?.token ?? `mock-verified-token-${Date.now()}`;
-    if (session) {
-      session.verified = true;
+    if (!session) {
+      return HttpResponse.json(
+        { success: false, statusCode: 400, message: '유효하지 않은 인증 세션입니다.', code: 'VERIFICATION_SESSION_INVALID' },
+        { status: 400 },
+      );
     }
+    session.verified = true;
+    const verificationToken = session.token;
 
     return HttpResponse.json({
       success: true,

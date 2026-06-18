@@ -3,6 +3,7 @@ import type {
   OAuthCallbackLoginResponse,
   OAuthCallbackSignupRequiredResponse,
 } from '../../../types/user/member';
+import type { SocialProviderId } from '../../../utils/user/member/socialAuth';
 import { memberApiClient } from './memberApiClient';
 
 export const memberSocialAuthApi = {
@@ -11,9 +12,9 @@ export const memberSocialAuthApi = {
    * provider OAuth 인증 URL과 state를 반환한다.
    * 반환된 authorizationUrl로 브라우저를 리다이렉트해 OAuth 인증을 시작한다.
    */
-  authorize(provider: string): Promise<OAuthAuthorizeResponse> {
+  authorize(provider: SocialProviderId): Promise<OAuthAuthorizeResponse> {
     return memberApiClient<OAuthAuthorizeResponse>(
-      `/api/v1/user/members/oauth/${provider}/authorize`,
+      `/api/v1/user/members/oauth/${encodeURIComponent(provider)}/authorize`,
     );
   },
 
@@ -24,13 +25,13 @@ export const memberSocialAuthApi = {
    * - 최초 소셜 사용자: OAuthCallbackSignupRequiredResponse (socialSignupToken 포함)
    */
   callback(
-    provider: string,
+    provider: SocialProviderId,
     code: string,
     state: string,
   ): Promise<OAuthCallbackLoginResponse | OAuthCallbackSignupRequiredResponse> {
     const params = new URLSearchParams({ code, state });
     return memberApiClient<OAuthCallbackLoginResponse | OAuthCallbackSignupRequiredResponse>(
-      `/api/v1/user/members/oauth/${provider}/callback?${params.toString()}`,
+      `/api/v1/user/members/oauth/${encodeURIComponent(provider)}/callback?${params.toString()}`,
     );
   },
 };

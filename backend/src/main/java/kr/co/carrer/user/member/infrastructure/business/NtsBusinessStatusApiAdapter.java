@@ -49,15 +49,12 @@ public class NtsBusinessStatusApiAdapter implements BusinessRegistrationVerifica
         NtsStatusResponse response = callApi(businessNumber);
 
         if (response == null || response.data() == null || response.data().isEmpty()) {
-            throw new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE);
+            return false;
         }
 
-        String statusCode = response.data().get(0).b_stt_cd();
-        if (statusCode == null) {
-            throw new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE);
-        }
-
-        // 01=계속사업자(정상), 02=휴업자, 03=폐업자
+        NtsBizData first = response.data().get(0);
+        String statusCode = first == null ? null : first.b_stt_cd();
+        // 01=계속사업자(정상), 02=휴업자, 03=폐업자, null=미등록
         return VALID_STATUS_CODE.equals(statusCode);
     }
 

@@ -94,7 +94,7 @@ class UserSocialAuthControllerTest {
     void callback_최초가입_200() throws Exception {
         UserSocialAuthDto.ResponseOAuthCallbackSignupRequired signupResponse =
                 new UserSocialAuthDto.ResponseOAuthCallbackSignupRequired(
-                        "kakao", "social@example.com", "signup-token", "/register/social/complete");
+                        "kakao", "social@example.com", "signup-token", "/auth/register/verify");
 
         when(userSocialAuthService.callback(eq("kakao"), anyString(), anyString(), any()))
                 .thenReturn(signupResponse);
@@ -106,7 +106,10 @@ class UserSocialAuthControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.message").isNotEmpty())
-                .andExpect(jsonPath("$.data.socialSignupToken").value("signup-token"));
+                .andExpect(jsonPath("$.data.provider").value("kakao"))
+                .andExpect(jsonPath("$.data.socialEmail").value("social@example.com"))
+                .andExpect(jsonPath("$.data.socialSignupToken").value("signup-token"))
+                .andExpect(jsonPath("$.data.nextPath").value("/auth/register/verify"));
     }
 
     // ─── 소셜 회원가입 추가정보 완료 ────────────────────────────────────────────────────

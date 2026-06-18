@@ -27,6 +27,10 @@ public class AwsSesEmailSenderAdapter implements EmailSenderPort {
 
     @PostConstruct
     void init() {
+        if (accessKey == null || accessKey.isBlank() || secretKey == null || secretKey.isBlank()) {
+            log.warn("[SES] AWS 자격증명 미설정 — 이메일 발송 비활성화 (로컬 기동은 정상)");
+            return;
+        }
         this.sesClient = SesV2Client.builder()
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(
@@ -36,6 +40,11 @@ public class AwsSesEmailSenderAdapter implements EmailSenderPort {
 
     @Override
     public void sendVerificationCode(String toEmail, String code) {
+        if (sesClient == null) {
+            log.warn("[SES] 이메일 발송 스킵 — AWS 자격증명 미설정 (to: {})", toEmail);
+            return;
+        }
+
         SendEmailRequest request = SendEmailRequest.builder()
                 .fromEmailAddress(fromEmail)
                 .destination(Destination.builder().toAddresses(toEmail).build())

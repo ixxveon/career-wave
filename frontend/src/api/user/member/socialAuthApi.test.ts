@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { memberSocialAuthApi } from './socialAuthApi';
 import type {
   OAuthAuthorizeResponse,
@@ -38,6 +38,10 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 // ─── authorize ───────────────────────────────────────────────────────────────
 
 describe('memberSocialAuthApi.authorize', () => {
@@ -58,18 +62,18 @@ describe('memberSocialAuthApi.authorize', () => {
     expect(result.provider).toBe('kakao');
   });
 
-  it('지원하지 않는 provider도 URL 경로에 포함된다', async () => {
+  it('naver provider로 authorize 호출 시 URL에 naver가 포함된다', async () => {
     const body: OAuthAuthorizeResponse = {
-      provider: 'kakao',
-      authorizationUrl: 'https://example.com',
+      provider: 'naver',
+      authorizationUrl: 'https://nid.naver.com/oauth2.0/authorize?...',
       state: 'xyz',
     };
     vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ data: body }));
 
-    await memberSocialAuthApi.authorize('apple');
+    await memberSocialAuthApi.authorize('naver');
 
     const [url] = vi.mocked(fetch).mock.calls[0];
-    expect(String(url)).toContain('/oauth/apple/authorize');
+    expect(String(url)).toContain('/oauth/naver/authorize');
   });
 });
 

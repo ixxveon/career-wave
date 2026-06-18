@@ -105,16 +105,13 @@ class NtsBusinessStatusApiAdapterTest {
     }
 
     @Test
-    @DisplayName("data가 빈 배열이면 미등록 사업자 — verify()는 COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE을 throw한다")
-    void verify_미등록_data_빈배열_예외() {
+    @DisplayName("data가 빈 배열이면 미등록 사업자 — verify()는 false를 반환한다 (503 아님)")
+    void verify_미등록_data_빈배열_false() {
         server.enqueue(new MockResponse()
                 .setBody("{\"status_code\":\"OK\",\"data\":[]}")
                 .addHeader("Content-Type", "application/json"));
 
-        assertThatThrownBy(() -> adapter.verify("0000000000"))
-                .isInstanceOf(CustomException.class)
-                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
-                        .isEqualTo(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE));
+        assertThat(adapter.verify("0000000000")).isFalse();
     }
 
     // ─── 상태 코드 매핑 — check() ────────────────────────────────────────────────

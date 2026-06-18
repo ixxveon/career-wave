@@ -221,12 +221,25 @@ export interface CheckBusinessNumberRequest {
   businessNumber: string;
 }
 
-/**
- * businessStatus: CONTINUING(정상) | SUSPENDED(휴업) | CLOSED(폐업) | NOT_REGISTERED(미등록)
- */
+export const BUSINESS_STATUS = {
+  CONTINUING:     'CONTINUING',
+  SUSPENDED:      'SUSPENDED',
+  CLOSED:         'CLOSED',
+  NOT_REGISTERED: 'NOT_REGISTERED',
+} as const;
+
+export type BusinessStatus = (typeof BUSINESS_STATUS)[keyof typeof BUSINESS_STATUS];
+
+export const BUSINESS_STATUS_LABELS: Record<BusinessStatus, string> = {
+  [BUSINESS_STATUS.CONTINUING]:     '정상 영업 중인 사업자입니다.',
+  [BUSINESS_STATUS.SUSPENDED]:      '휴업 중인 사업자입니다.',
+  [BUSINESS_STATUS.CLOSED]:         '폐업한 사업자입니다.',
+  [BUSINESS_STATUS.NOT_REGISTERED]: '등록되지 않은 사업자번호입니다.',
+} as const;
+
 export interface CheckBusinessNumberResponse {
   valid: boolean;
-  businessStatus: 'CONTINUING' | 'SUSPENDED' | 'CLOSED' | 'NOT_REGISTERED';
+  businessStatus: BusinessStatus;
 }
 
 export interface EmploymentCertificateUploadResponse {

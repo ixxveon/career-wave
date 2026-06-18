@@ -138,7 +138,10 @@ public class S3EmploymentCertificateFileAdapter implements EmploymentCertificate
             var response = s3Client.headObject(HeadObjectRequest.builder()
                     .bucket(bucketName).key(fileId).build());
             String originalName = response.metadata().get(META_ORIGINAL_NAME);
-            return originalName != null ? originalName : fileId;
+            if (originalName == null || originalName.isBlank()) {
+                throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
+            }
+            return originalName;
         } catch (SdkException e) {
             log.error("[재직증명서 파일명 조회] S3 headObject 실패 — key: {}, error: {}", fileId, e.getMessage());
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);

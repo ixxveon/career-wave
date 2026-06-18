@@ -9,7 +9,7 @@ declare global {
     };
   }
 }
-import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../../types/user/member';
+import { BUSINESS_STATUS_LABELS, VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../../types/user/member';
 import { BUSINESS_NUMBER_CHECK_STATE, type BusinessNumberCheckState } from '../../../utils/user/member/validation';
 import { validateEmploymentCertificateFile } from '../../../utils/user/member/fileValidation';
 import {
@@ -283,13 +283,6 @@ export function useCompanyRegisterForm() {
     setFieldErrors((current) => ({ ...current, employmentCertificate: '', employmentCertificateFileId: '' }));
   };
 
-  const BUSINESS_STATUS_MESSAGES: Record<string, string> = {
-    CONTINUING: '정상 영업 중인 사업자입니다.',
-    SUSPENDED: '휴업 중인 사업자입니다.',
-    CLOSED: '폐업한 사업자입니다.',
-    NOT_REGISTERED: '등록되지 않은 사업자번호입니다.',
-  };
-
   const handleBusinessNumberCheck = async () => {
     const bn = form.businessNumber.trim();
     if (!/^\d{10}$/.test(bn)) {
@@ -302,11 +295,12 @@ export function useCompanyRegisterForm() {
       const result = await checkBusinessNumber.mutateAsync({ businessNumber: bn });
       // stale guard — 조회 중 번호가 변경되면 구 결과 무시
       if (bn !== currentBusinessNumberRef.current.trim()) return;
+      const label = BUSINESS_STATUS_LABELS[result.businessStatus] ?? result.businessStatus;
       setBusinessNumberCheckState(result.valid ? BUSINESS_NUMBER_CHECK_STATE.CONFIRMED : BUSINESS_NUMBER_CHECK_STATE.REJECTED);
-      setBusinessNumberCheckMessage(BUSINESS_STATUS_MESSAGES[result.businessStatus] ?? result.businessStatus);
+      setBusinessNumberCheckMessage(label);
       setFieldErrors((current) => ({
         ...current,
-        businessNumber: result.valid ? '' : (BUSINESS_STATUS_MESSAGES[result.businessStatus] ?? '사업자 확인에 실패했습니다.'),
+        businessNumber: result.valid ? '' : label,
       }));
     } catch (error) {
       if (bn !== currentBusinessNumberRef.current.trim()) return;

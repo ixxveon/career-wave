@@ -37,7 +37,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     @Override
     @Transactional(readOnly = true)
     public UserRegisterDto.ResponseCheckLoginId checkLoginId(String loginId) {
-        if (!loginId.matches("^[A-Za-z0-9]{6,20}$")) {
+        if (loginId == null || loginId.isBlank() || !loginId.matches("^[A-Za-z0-9]{6,20}$")) {
             throw new CustomException(UserAuthErrorCode.LOGIN_ID_INVALID);
         }
         boolean available = !memberRepository.existsByLoginId(loginId);
