@@ -270,9 +270,9 @@
 - [x] 인증번호 확인 성공 테스트 — `UserVerificationServiceImplTest.confirm_성공_verificationToken_반환` / `UserVerificationControllerTest.confirm_성공_200`
 - [x] 인증번호 오입력/만료/시도 횟수 초과 테스트 — `UserVerificationServiceImplTest.confirm_코드불일치_*` / `confirm_만료된_인증번호_*` / `confirm_마지막_실패_remainingAttempts_0_VERIFICATION_RATE_LIMITED`
 - [x] 인증번호 재전송 60초 제한 테스트 — `UserVerificationServiceImplTest.send_재발송_60초_제한_VERIFICATION_RATE_LIMITED`
-- [ ] `member_verifications.expires_at` 5분 만료 통합 테스트 (Integration 테스트 전담)
-- [ ] AWS SES sandbox 또는 mock 기반 이메일 발송 통합 테스트 (Integration 테스트 전담)
-- [ ] SOLAPI / CoolSMS mock 기반 SMS 발송 통합 테스트 (Integration 테스트 전담)
+- [x] `member_verifications.expires_at` 5분 만료 테스트 — `UserVerificationServiceImplTest.send_EMAIL_expiresAt_5분_후_resendAvailableAt_60초_후` (expiresAt≈now+300s, resendAvailableAt≈now+60s 경계 검증)
+- [x] AWS SES mock 기반 이메일 발송 테스트 — `AwsSesEmailSenderAdapterTest` (sendEmail 호출, 발신자/수신자/코드 포함, SdkException→VERIFICATION_EMAIL_UNAVAILABLE)
+- [x] SOLAPI mock 기반 SMS 발송 테스트 — `SolapiSmsSenderAdapterTest` (endpoint, Authorization 헤더, HTTP오류/연결장애→VERIFICATION_SMS_UNAVAILABLE)
 - [x] 개인회원 아이디 찾기 성공 테스트 — `UserRecoveryServiceImplTest.findId_개인회원_EMAIL_성공_maskedLoginId` / `UserRecoveryControllerTest.findId_성공_200`
 - [x] 기업회원 아이디 찾기 성공 테스트 — `UserRecoveryServiceImplTest.findId_기업회원_성공_maskedLoginId`
 - [x] 아이디 찾기 결과 없음 `found=false` 테스트 — `UserRecoveryServiceImplTest.findId_결과_없음_found_false` / `UserRecoveryControllerTest.findId_결과없음_200`
@@ -290,5 +290,5 @@
 - [x] 소셜 회원가입 추가정보 완료 성공 테스트 — `UserSocialAuthControllerTest.complete_성공_200`
 - [x] 재직증명서 PDF 업로드 성공 테스트 — `S3EmploymentCertificateFileAdapterTest.upload_성공_fileId_반환` / `UserRegisterControllerTest.uploadCertificate_성공_200`
 - [x] PDF 아님/MIME 불일치/5MB 초과 테스트 — `S3EmploymentCertificateFileAdapterTest.upload_비PDF_확장자_*` / `upload_비PDF_내용_*` / `upload_5MB초과_*` / `validate_*`
-- [ ] 프론트 `types/user/member.ts`와 response field 수동 대조 (수동 검증 — 별도 PR)
-- [ ] MSW mock 갱신 필요 항목 정리 (수동 작업 — 별도 PR)
+- [x] 프론트 `types/user/member.ts`와 response field 대조 완료 — addressDetail 선택 수정, OAuthAuthorizeResponse/OAuthCallbackLoginResponse/OAuthCallbackSignupRequiredResponse 타입 추가, isOAuthCallbackLoginResponse 타입가드 추가
+- [x] MSW mock 갱신 완료 — memberHandlers에 신규 API 핸들러 12개 추가, token refresh body에서 refreshToken 제거, socialRegisterApi mock 플래그 제거 및 실제 endpoint 전환, socialAuthApi 신규 추가
