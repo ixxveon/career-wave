@@ -6,6 +6,7 @@ import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.store.RefreshTokenStore;
+import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.dto.UserLoginDto;
 import kr.co.carrer.user.member.dto.UserSocialAuthDto;
@@ -56,6 +57,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
     private final RefreshTokenStore refreshTokenStore;
+    private final TokenBlacklistStore tokenBlacklistStore;
     private final SocialSignupTokenStore socialSignupTokenStore;
     private final StringRedisTemplate redisTemplate;
     private final WebClient.Builder webClientBuilder;
@@ -410,10 +412,8 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         refreshTokenStore.enforceSessionLimit(accountType, subject).forEach(expiredKey -> {
             String expiredSessionId = expiredKey.substring(expiredKey.lastIndexOf(':') + 1);
             String expiredJti = refreshTokenStore.getAndDeleteAccessJti(accountType, subject, expiredSessionId);
-            if (expiredJti != null) {
-                try { refreshTokenStore.delete(accountType, subject, expiredSessionId); }
-                catch (Exception ignored) {}
-            }
+            // 퇴출된 세션의 access token blacklist 등록 — 일반 로그인과 동일한 보안 정책
+            if (expiredJti != null) tokenBlacklistStore.add(expiredJti, accessTtl);
             refreshTokenStore.delete(accountType, subject, expiredSessionId);
         });
 
