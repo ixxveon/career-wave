@@ -21,12 +21,21 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import kr.co.carrer.auth.jwt.AccountType;
+import kr.co.carrer.user.member.entity.SocialAccount;
+import reactor.core.publisher.Mono;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -84,7 +93,7 @@ class UserSocialAuthServiceImplTest {
             catch (java.lang.reflect.InvocationTargetException e) { throw e.getCause(); }
         }).isInstanceOf(CustomException.class)
           .satisfies(e -> {
-              assert ((CustomException) e).getErrorCode() == UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED;
+              assertThat(((CustomException) e).getErrorCode()).isEqualTo(UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED);
           });
     }
 
@@ -100,7 +109,7 @@ class UserSocialAuthServiceImplTest {
             catch (java.lang.reflect.InvocationTargetException e) { throw e.getCause(); }
         }).isInstanceOf(CustomException.class)
           .satisfies(e -> {
-              assert ((CustomException) e).getErrorCode() == UserAuthErrorCode.AUTH_ACCOUNT_BANNED;
+              assertThat(((CustomException) e).getErrorCode()).isEqualTo(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
           });
     }
 
@@ -134,8 +143,121 @@ class UserSocialAuthServiceImplTest {
         assertThatThrownBy(() -> service.complete(request, httpResponse))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> {
-                    assert ((CustomException) e).getErrorCode() == UserAuthErrorCode.SOCIAL_EMAIL_ALREADY_EXISTS;
+                    assertThat(((CustomException) e).getErrorCode()).isEqualTo(UserAuthErrorCode.SOCIAL_EMAIL_ALREADY_EXISTS);
                 });
+    }
+
+    // ─── socialSignupToken 소비 실패 — SOCIAL_SIGNUP_TOKEN_INVALID ───────────────────
+
+    @Test
+    void complete_socialSignupToken_소비_실패_SOCIAL_SIGNUP_TOKEN_INVALID() throws Exception {
+        when(socialSignupTokenStore.consume(anyString())).thenReturn(Optional.empty());
+
+        var request = buildRequestSocialComplete("kakao", "01012345678", "ptoken");
+
+        assertThatThrownBy(() -> service.complete(request, httpResponse))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.SOCIAL_SIGNUP_TOKEN_INVALID));
+    }
+
+    // ─── providerUserId null — fail-close ─────────────────────────────────────────
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void callback_providerUserId_null_OAUTH_PROVIDER_AUTH_FAILED() throws Exception {
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get(anyString())).thenReturn("kakao");
+
+        WebClient mockWebClient = mock(WebClient.class);
+        when(webClientBuilder.build()).thenReturn(mockWebClient);
+
+        WebClient.RequestBodyUriSpec postSpec = mock(WebClient.RequestBodyUriSpec.class);
+        WebClient.RequestHeadersSpec headersSpec = mock(WebClient.RequestHeadersSpec.class);
+        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
+        WebClient.RequestHeadersUriSpec getSpec = mock(WebClient.RequestHeadersUriSpec.class);
+
+        when(mockWebClient.post()).thenReturn(postSpec);
+        when(postSpec.uri(anyString())).thenReturn(postSpec);
+        doReturn(headersSpec).when(postSpec).body(any());
+        when(headersSpec.retrieve()).thenReturn(responseSpec);
+        when(mockWebClient.get()).thenReturn(getSpec);
+        when(getSpec.uri(anyString())).thenReturn(headersSpec);
+        when(headersSpec.header(anyString(), anyString())).thenReturn(headersSpec);
+
+        // token 응답 → access_token 있음, user info 응답 → id 없음 (null providerUserId)
+        when(responseSpec.bodyToMono(Map.class))
+                .thenReturn(Mono.just(Map.of("access_token", "t")))
+                .thenReturn(Mono.just(new HashMap<>()));
+
+        assertThatThrownBy(() -> service.callback("kakao", "code-123", "state-abc", httpResponse))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED));
+    }
+
+    // ─── OAuth 로그인 — 세션 퇴출 시 기존 access token blacklist 등록 ────────────────
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void callback_세션퇴출_기존_accessToken_blacklist_등록() throws Exception {
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get(anyString())).thenReturn("kakao");
+
+        WebClient mockWebClient = mock(WebClient.class);
+        when(webClientBuilder.build()).thenReturn(mockWebClient);
+
+        WebClient.RequestBodyUriSpec postSpec = mock(WebClient.RequestBodyUriSpec.class);
+        WebClient.RequestHeadersSpec headersSpec = mock(WebClient.RequestHeadersSpec.class);
+        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
+        WebClient.RequestHeadersUriSpec getSpec = mock(WebClient.RequestHeadersUriSpec.class);
+
+        when(mockWebClient.post()).thenReturn(postSpec);
+        when(postSpec.uri(anyString())).thenReturn(postSpec);
+        doReturn(headersSpec).when(postSpec).body(any());
+        when(headersSpec.retrieve()).thenReturn(responseSpec);
+        when(mockWebClient.get()).thenReturn(getSpec);
+        when(getSpec.uri(anyString())).thenReturn(headersSpec);
+        when(headersSpec.header(anyString(), anyString())).thenReturn(headersSpec);
+        when(responseSpec.bodyToMono(Map.class))
+                .thenReturn(Mono.just(Map.of("access_token", "t")))
+                .thenReturn(Mono.just(Map.of("id", "provider-uid-123")));
+
+        // 기존 소셜 계정 존재 → 로그인 경로
+        UUID memberId = UUID.randomUUID();
+        SocialAccount mockAccount = mock(SocialAccount.class);
+        when(mockAccount.getMemberId()).thenReturn(memberId);
+        when(socialAccountRepository.findByProviderAndProviderUserId(any(), anyString()))
+                .thenReturn(Optional.of(mockAccount));
+
+        Member member = createMember(MemberStatus.ACTIVE);
+        setField(member, "memberId", memberId);
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+
+        // JWT 설정
+        JwtProperties.TokenConfig tokenConfig = mock(JwtProperties.TokenConfig.class);
+        when(tokenConfig.getAccessExpiration()).thenReturn(1800000L);
+        when(tokenConfig.getRefreshExpiration()).thenReturn(604800000L);
+        when(jwtProperties.getUser()).thenReturn(tokenConfig);
+        when(jwtTokenProvider.createAccessToken(anyString(), any(), anyString(), any()))
+                .thenReturn("new-access-token");
+        when(jwtTokenProvider.createRefreshToken(anyString(), any(), any(), anyString()))
+                .thenReturn("new-refresh-token");
+        when(jwtTokenProvider.extractJti(anyString(), any())).thenReturn("new-jti");
+
+        // 세션 퇴출 — 만료된 세션 1개 반환
+        String expiredKey = "refresh:USER:" + memberId + ":old-session-id";
+        when(refreshTokenStore.enforceSessionLimit(any(), anyString()))
+                .thenReturn(List.of(expiredKey));
+        when(refreshTokenStore.getAndDeleteAccessJti(any(), anyString(), eq("old-session-id")))
+                .thenReturn("expired-jti");
+
+        service.callback("kakao", "auth-code", "state-xyz", httpResponse);
+
+        // 퇴출된 세션의 JTI가 blacklist에 등록되어야 함
+        verify(tokenBlacklistStore).add(eq("expired-jti"), any(Duration.class));
     }
 
     // ─── 내부 유틸 ───────────────────────────────────────────────────────────────

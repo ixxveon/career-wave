@@ -100,8 +100,38 @@ class UserRegisterServiceImplTest {
         assertThatThrownBy(() -> service.registerUser(req))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> {
-                    assert ((CustomException) e).getErrorCode() == UserAuthErrorCode.PASSWORD_POLICY_VIOLATION;
+                    assertThat(((CustomException) e).getErrorCode()).isEqualTo(UserAuthErrorCode.PASSWORD_POLICY_VIOLATION);
                 });
+    }
+
+    // ─── fileId port 실패 시 회원 미저장 ─────────────────────────────────────────────
+
+    @Test
+    void registerCompany_fileId_port_실패_회원_미저장() throws Exception {
+        MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "hr@company.com");
+        MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01099998888");
+        setField(phoneVerif, "verificationToken", "ptoken");
+        when(verificationRepository.findByVerificationToken("etoken")).thenReturn(Optional.of(emailVerif));
+        when(verificationRepository.findByVerificationToken("ptoken")).thenReturn(Optional.of(phoneVerif));
+
+        when(memberRepository.existsByLoginId(anyString())).thenReturn(false);
+        when(memberRepository.existsByEmail(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(companyProfileRepository.existsByBusinessNumber(anyString())).thenReturn(false);
+        when(businessVerificationPort.verify(anyString())).thenReturn(true);
+
+        doThrow(new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID))
+                .when(employmentCertificateFilePort).validate(anyString());
+
+        UserRegisterDto.RequestCompanyRegister req = buildCompanyRequest();
+
+        assertThatThrownBy(() -> service.registerCompany(req))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID));
+
+        verify(memberRepository, never()).save(any());
     }
 
     // ─── 내부 유틸 ───────────────────────────────────────────────────────────────
@@ -134,6 +164,36 @@ class UserRegisterServiceImplTest {
         setField(terms, "service", true);
         setField(terms, "privacy", true);
         setField(terms, "marketing", false);
+        setField(req, "terms", terms);
+        return req;
+    }
+
+    private UserRegisterDto.RequestCompanyRegister buildCompanyRequest() throws Exception {
+        UserRegisterDto.RequestCompanyRegister req = new UserRegisterDto.RequestCompanyRegister();
+        setField(req, "loginId", "companyuser01");
+        setField(req, "password", "CompanyPass1!");
+        setField(req, "managerName", "홍담당");
+        setField(req, "managerEmail", "hr@company.com");
+        setField(req, "managerPhone", "01099998888");
+        setField(req, "managerEmailVerificationToken", "etoken");
+        setField(req, "managerPhoneVerificationToken", "ptoken");
+        setField(req, "companyName", "테스트회사");
+        setField(req, "businessNumber", "1234567890");
+        setField(req, "ceoName", "김대표");
+        setField(req, "companyType", CompanyType.SME);
+        setField(req, "postalCode", "12345");
+        setField(req, "roadAddress", "서울시 강남구 테헤란로 1");
+        setField(req, "jibunAddress", "서울시 강남구 역삼동 1");
+        setField(req, "addressDetail", "101호");
+        setField(req, "isAgency", false);
+        setField(req, "certificateNumber", "CERT-001");
+        setField(req, "employmentCertificateFileId", "fileid-001");
+        UserRegisterDto.CompanyTerms terms = new UserRegisterDto.CompanyTerms();
+        setField(terms, "service", true);
+        setField(terms, "privacy", true);
+        setField(terms, "marketing", false);
+        setField(terms, "companyVerification", true);
+        setField(terms, "sms", false);
         setField(req, "terms", terms);
         return req;
     }

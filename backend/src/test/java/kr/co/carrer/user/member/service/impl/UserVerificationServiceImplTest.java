@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -55,12 +56,12 @@ class UserVerificationServiceImplTest {
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> {
                     UserAuthErrorCode code = ((CustomException) e).getErrorCode() instanceof UserAuthErrorCode ec ? ec : null;
-                    assert code == UserAuthErrorCode.INVALID_VERIFICATION_CODE
-                            || code == UserAuthErrorCode.VERIFICATION_RATE_LIMITED;
+                    assertThat(code).isIn(UserAuthErrorCode.INVALID_VERIFICATION_CODE,
+                            UserAuthErrorCode.VERIFICATION_RATE_LIMITED);
                 });
 
         // decrementAttempts()가 호출됐는지 간접 확인 — remainingAttempts 감소
-        assert verification.getRemainingAttempts() < 3;
+        assertThat(verification.getRemainingAttempts()).isLessThan(3);
     }
 
     @Test
@@ -79,7 +80,7 @@ class UserVerificationServiceImplTest {
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> {
                     CustomException ce = (CustomException) e;
-                    assert ce.getErrorCode() == UserAuthErrorCode.VERIFICATION_EXPIRED;
+                    assertThat(ce.getErrorCode()).isEqualTo(UserAuthErrorCode.VERIFICATION_EXPIRED);
                 });
     }
 

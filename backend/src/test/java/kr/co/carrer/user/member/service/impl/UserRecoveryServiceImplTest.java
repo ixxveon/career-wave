@@ -1,5 +1,6 @@
 package kr.co.carrer.user.member.service.impl;
 
+import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.dto.UserRecoveryDto;
@@ -24,6 +25,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -78,7 +80,7 @@ class UserRecoveryServiceImplTest {
         assertThatThrownBy(() -> service.issuePasswordToken(request, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> {
-                    assert ((CustomException) e).getErrorCode() == UserAuthErrorCode.VERIFICATION_TOKEN_INVALID;
+                    assertThat(((CustomException) e).getErrorCode()).isEqualTo(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
                 });
     }
 
@@ -96,10 +98,56 @@ class UserRecoveryServiceImplTest {
         assertThatThrownBy(() -> service.resetPassword(request))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> {
-                    assert ((CustomException) e).getErrorCode() == UserAuthErrorCode.PASSWORD_RESET_TOKEN_INVALID;
+                    assertThat(((CustomException) e).getErrorCode()).isEqualTo(UserAuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
                 });
 
         verify(resetTokenRepository, never()).findByTokenHash(any());
+    }
+
+    // ─── resetToken 발급 rate limit 초과 — loginId+IP 10분 5회 ──────────────────────
+
+    @Test
+    void issuePasswordToken_rate_limit_초과_VERIFICATION_RATE_LIMITED() throws Exception {
+        when(valueOps.get(startsWith("password-token:rate:"))).thenReturn("5");
+
+        UserRecoveryDto.RequestPasswordToken req = new UserRecoveryDto.RequestPasswordToken();
+        setField(req, "roleType", MemberType.USER);
+        setField(req, "loginId", "testlogin");
+        setField(req, "verificationToken", "vtoken");
+
+        assertThatThrownBy(() -> service.issuePasswordToken(req, "1.2.3.4"))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.VERIFICATION_RATE_LIMITED));
+
+        verify(verificationRepository, never()).findByVerificationToken(any());
+    }
+
+    // ─── 비밀번호 재설정 성공 — 전체 refresh token 삭제 ─────────────────────────────
+
+    @Test
+    void resetPassword_성공_refreshTokenStore_deleteAll_호출() throws Exception {
+        when(valueOps.get(startsWith("password-reset:fail:"))).thenReturn(null);
+
+        UUID memberId = UUID.randomUUID();
+        PasswordResetToken resetToken = mock(PasswordResetToken.class);
+        when(resetToken.isUsed()).thenReturn(false);
+        when(resetToken.isExpired()).thenReturn(false);
+        when(resetToken.getMemberId()).thenReturn(memberId);
+        when(resetTokenRepository.findByTokenHash(anyString())).thenReturn(Optional.of(resetToken));
+
+        Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
+        setField(member, "memberId", memberId);
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+
+        UserRecoveryDto.RequestResetPassword req = new UserRecoveryDto.RequestResetPassword();
+        setField(req, "resetToken", "rawtoken-abcdefghijklmno");
+        setField(req, "newPassword", "NewPass1!");
+
+        service.resetPassword(req);
+
+        verify(refreshTokenStore).deleteAll(eq(AccountType.USER), anyString());
     }
 
     // ─── 내부 유틸 ───────────────────────────────────────────────────────────────

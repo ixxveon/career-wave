@@ -53,7 +53,7 @@
 - [x] `SocialAccountRepository.existsByProviderAndProviderUserId(...)` 구현
 - [x] `SocialAccountRepository.existsByMemberIdAndProvider(...)` 구현
 - [x] 기업회원 아이디 찾기용 `member + company_profile + hr_manager` 조회 query를 분리할지 확정한다. — `UserMemberQueryRepository`로 분리. `members JOIN company_profiles JOIN hr_managers`. 조건: `m.name(managerName)` + `cp.business_number` + `m.email 또는 m.phone` + `m.role_type = 'COMPANY'`. hr_status 필터 미적용 (아이디 찾기는 로그인 자격 검증 아님, spec FR-011).
-- [ ] employment certificate 임시 fileId 검증 port 또는 service 구현 — Phase 4 Service 구현 시 처리
+- [x] employment certificate 임시 fileId 검증 port 또는 service 구현 — `EmploymentCertificateFilePort` + `StubEmploymentCertificateFileAdapter`(@Profile({"local","test"})) 구현 완료, Phase 5에서 S3 실제 검증으로 교체 예정
 - [ ] 한 요청 안에서 중복 DB 조회가 발생하지 않도록 조회 흐름 점검 — Phase 4 Service 구현 시 처리
 
 ---
@@ -91,6 +91,7 @@
 ---
 
 ## Phase 4 - Service 구현
+> **완료 기준**: Service 로직 + Service 단위 테스트 동시 완성. (Phase 7의 Service 단위 테스트 항목은 Phase 4로 귀속. Phase 7은 통합/E2E 테스트 전담)
 
 - [ ] PDF MIME type, 확장자, 5MB 이하 검증 추가 — Controller multipart 처리 시 (Phase 5)
 - [x] 외부 API/provider 설정은 환경변수 참조 방식으로만 사용 — application.properties + .env.example 갱신
@@ -224,8 +225,8 @@
 - [ ] Swagger enum allowable values 작성
 - [ ] Controller에 Swagger annotation이 직접 과도하게 작성되지 않았는지 확인
 - [ ] `api-schema.md`와 Swagger 예시가 일치하는지 확인
-- [ ] DTO 필드에 Swagger `@Schema` 설명 추가 
-- [ ] Enum field의 Swagger allowable values 정리 
+- [ ] DTO 필드에 Swagger `@Schema` 설명 추가
+- [ ] Enum field의 Swagger allowable values 정리
 
 ---
 

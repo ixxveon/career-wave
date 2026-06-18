@@ -128,6 +128,10 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         boolean valid = businessVerificationPort.verify(request.getBusinessNumber());
         if (!valid) throw new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_FAILED);
 
+        // 재직증명서 fileId 검증 — 엔티티 생성 전 검증 (실패 시 memberRepository.save() 미호출 보장)
+        String fileId = request.getEmploymentCertificateFileId();
+        employmentCertificateFilePort.validate(fileId);
+
         // Member 생성 (담당자명=name, 담당자 이메일=email, 담당자 휴대폰=phone)
         Member member = Member.createCompany(
                 request.getLoginId(),
@@ -136,10 +140,6 @@ public class UserRegisterServiceImpl implements UserRegisterService {
                 request.getManagerEmail(),
                 request.getManagerPhone());
         memberRepository.save(member);
-
-        // 재직증명서 fileId 검증 — Port를 통해 형식 검증 (Phase 5에서 S3 실제 검증으로 교체)
-        String fileId = request.getEmploymentCertificateFileId();
-        employmentCertificateFilePort.validate(fileId);
 
         // CompanyProfile 생성 — address = roadAddress (spec §8)
         CompanyProfile companyProfile = CompanyProfile.create(
