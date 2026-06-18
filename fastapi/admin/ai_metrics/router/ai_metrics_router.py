@@ -74,7 +74,6 @@ async def domain_usage(request: DomainUsageRequest):
             return service.get_domain_usage(
                 created_from=_parse_iso_datetime(request.from_),
                 created_to=_parse_iso_datetime(request.to),
-                feature_type=request.feature_type.value if request.feature_type else None,
             )
     except AiMetricsException as error:
         return JSONResponse(
