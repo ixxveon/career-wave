@@ -80,6 +80,36 @@ public class Member {
         updatedAt = Instant.now();
     }
 
+    public static Member createUser(String loginId, String encodedPassword,
+                                    String name, String email, String phone) {
+        Member m = new Member();
+        m.loginId = loginId;
+        m.password = encodedPassword;
+        m.name = name;
+        m.email = email;
+        m.phone = phone;
+        m.roleType = RoleType.USER;
+        m.memberStatus = MemberStatus.ACTIVE;
+        m.subscriptionStatus = SubscriptionStatus.FREE;
+        m.warningCount = 0;
+        return m;
+    }
+
+    public static Member createCompany(String loginId, String encodedPassword,
+                                       String managerName, String managerEmail, String managerPhone) {
+        Member m = new Member();
+        m.loginId = loginId;
+        m.password = encodedPassword;
+        m.name = managerName;
+        m.email = managerEmail;
+        m.phone = managerPhone;
+        m.roleType = RoleType.COMPANY;
+        m.memberStatus = MemberStatus.ACTIVE;
+        m.subscriptionStatus = SubscriptionStatus.FREE;
+        m.warningCount = 0;
+        return m;
+    }
+
     public void updateLastLoginAt(Instant time) { this.lastLoginAt = time; }
 
     // locked_until 경과 시 ACTIVE 자동 복구 — dirty checking으로 DB 저장
@@ -93,6 +123,10 @@ public class Member {
         this.memberStatus = MemberStatus.LOCKED;
         this.lockedUntil = lockedUntil;
     }
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
     public void updateProfile(String name, String phone) {
         this.name = name;
         this.phone = phone;

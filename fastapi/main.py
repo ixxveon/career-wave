@@ -59,11 +59,11 @@ from user.resume.api import resume_router  # noqa: E402
 
 app.include_router(resume_router.router, prefix="/internal/user")
 
-from user.api import interview_router  # noqa: E402
+from user.interview.api import interview_router  # noqa: E402
 
 app.include_router(interview_router.router, prefix="/internal/user")
 
-from user.websocket import interview_ws_handler  # noqa: E402
+from user.interview.websocket import interview_ws_handler  # noqa: E402
 
 app.include_router(interview_ws_handler.router)
 

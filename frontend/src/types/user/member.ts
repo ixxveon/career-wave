@@ -56,6 +56,7 @@ export type VerificationPurpose = (typeof VERIFICATION_PURPOSE)[keyof typeof VER
 export type VerificationStatus =
   | 'SENT'
   | 'VERIFIED'
+  | 'CONSUMED'
   | 'EXPIRED'
   | 'FAILED'
   | 'RATE_LIMITED';
@@ -164,6 +165,7 @@ export interface SocialRegisterTerms extends TermsAgreement {}
 
 export interface SocialRegisterCompletionRequest {
   provider: SocialProviderId;
+  socialSignupToken: string;
   socialEmail?: string;
   name: string;
   carrier: string;
