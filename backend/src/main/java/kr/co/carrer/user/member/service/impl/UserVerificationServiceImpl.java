@@ -124,6 +124,12 @@ public class UserVerificationServiceImpl implements UserVerificationService {
     // ── 내부 유틸 ─────────────────────────────────────────────────────────────
 
     private void validateTarget(VerificationChannel channel, String target) {
+        if (channel == null || target == null || target.isBlank()) {
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
+        }
+        if (channel != VerificationChannel.EMAIL && channel != VerificationChannel.PHONE) {
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
+        }
         if (channel == VerificationChannel.EMAIL && !EMAIL_PATTERN.matcher(target).matches()) {
             throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
         }

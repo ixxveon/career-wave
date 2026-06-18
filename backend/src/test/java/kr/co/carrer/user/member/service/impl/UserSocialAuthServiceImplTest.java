@@ -181,6 +181,20 @@ class UserSocialAuthServiceImplTest {
                                 .isEqualTo(UserAuthErrorCode.SOCIAL_SIGNUP_TOKEN_INVALID));
     }
 
+    @Test
+    void complete_필수약관_null_REGISTER_TERMS_REQUIRED() throws Exception {
+        var request = buildRequestSocialComplete("kakao", "01012345678", "ptoken");
+        setField(request, "terms", null);
+
+        assertThatThrownBy(() -> service.complete(request, httpResponse))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.REGISTER_TERMS_REQUIRED));
+
+        verifyNoInteractions(socialSignupTokenStore);
+    }
+
     // ─── providerUserId null — fail-close ─────────────────────────────────────────
 
     @SuppressWarnings({"unchecked", "rawtypes"})

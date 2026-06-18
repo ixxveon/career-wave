@@ -1,5 +1,6 @@
 package kr.co.carrer.user.member.infrastructure.business;
 
+import jakarta.annotation.PostConstruct;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.service.BusinessRegistrationVerificationPort;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.List;
@@ -33,9 +35,15 @@ public class NtsBusinessStatusApiAdapter implements BusinessRegistrationVerifica
     @Value("${nts.api.base-url}") private String baseUrl;
     @Value("${nts.api.key}") private String serviceKey;
 
+    private WebClient webClient;
+
+    @PostConstruct
+    void init() {
+        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
+    }
+
     @Override
     public boolean verify(String businessNumber) {
-        WebClient webClient = webClientBuilder.baseUrl(baseUrl).build();
         Map<String, Object> requestBody = Map.of(
                 "b_no", List.of(businessNumber)
         );
@@ -51,8 +59,8 @@ public class NtsBusinessStatusApiAdapter implements BusinessRegistrationVerifica
                     .bodyValue(requestBody)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, r ->
-                            r.bodyToMono(String.class).map(body ->
-                                    new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE)))
+                            r.releaseBody().then(Mono.just(
+                                    new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE))))
                     .bodyToMono(NtsStatusResponse.class)
                     .timeout(TIMEOUT)
                     .block();

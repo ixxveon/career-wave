@@ -56,8 +56,7 @@ class UserVerificationServiceImplTest {
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> {
                     UserAuthErrorCode code = ((CustomException) e).getErrorCode() instanceof UserAuthErrorCode ec ? ec : null;
-                    assertThat(code).isIn(UserAuthErrorCode.INVALID_VERIFICATION_CODE,
-                            UserAuthErrorCode.VERIFICATION_RATE_LIMITED);
+                    assertThat(code).isEqualTo(UserAuthErrorCode.INVALID_VERIFICATION_CODE);
                 });
 
         // decrementAttempts()가 호출됐는지 간접 확인 — remainingAttempts 감소
@@ -103,6 +102,36 @@ class UserVerificationServiceImplTest {
                     CustomException ce = (CustomException) e;
                     assertThat(ce.getErrorCode()).isEqualTo(UserAuthErrorCode.VERIFICATION_EXPIRED);
                 });
+    }
+
+    @Test
+    void send_channel_null_VERIFICATION_TARGET_INVALID() throws Exception {
+        UserVerificationDto.RequestSendVerification request =
+                new UserVerificationDto.RequestSendVerification();
+        setField(request, "channel", null);
+        setField(request, "target", "test@example.com");
+        setField(request, "purpose", VerificationPurpose.REGISTER);
+
+        assertThatThrownBy(() -> service.send(request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.VERIFICATION_TARGET_INVALID));
+    }
+
+    @Test
+    void send_target_null_VERIFICATION_TARGET_INVALID() throws Exception {
+        UserVerificationDto.RequestSendVerification request =
+                new UserVerificationDto.RequestSendVerification();
+        setField(request, "channel", VerificationChannel.EMAIL);
+        setField(request, "target", null);
+        setField(request, "purpose", VerificationPurpose.REGISTER);
+
+        assertThatThrownBy(() -> service.send(request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.VERIFICATION_TARGET_INVALID));
     }
 
     // ─── 내부 유틸 ───────────────────────────────────────────────────────────────

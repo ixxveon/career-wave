@@ -129,6 +129,9 @@ function RegisterVerifyPage() {
     if (!providerId || !provider) {
       nextErrors.provider = '유효한 소셜 가입 경로가 아닙니다. 다시 시도해주세요.';
     }
+    if (!socialSignupToken.trim()) {
+      nextErrors.provider = '소셜 가입 세션이 만료되었습니다. 소셜 로그인을 다시 진행해주세요.';
+    }
     if (!form.name.trim()) nextErrors.name = '이름을 입력해주세요.';
     if (!form.carrier.trim()) nextErrors.carrier = '통신사를 선택해주세요.';
     if (!isValidPhone(form.phone)) nextErrors.phone = '휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해주세요.';

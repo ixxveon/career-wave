@@ -85,6 +85,8 @@ class UserRegisterServiceImplTest {
         verify(personalProfileRepository, times(1)).save(any());
         // 약관 저장 확인
         verify(termsRepository, times(1)).save(any());
+        assertThat(emailVerif.getVerificationStatus()).isEqualTo(VerificationStatus.CONSUMED);
+        assertThat(phoneVerif.getVerificationStatus()).isEqualTo(VerificationStatus.CONSUMED);
     }
 
     // ─── 로그인 아이디 포함 비밀번호 — PASSWORD_POLICY_VIOLATION ──────────────────
@@ -171,6 +173,18 @@ class UserRegisterServiceImplTest {
     void registerUser_privacy_약관_미동의_REGISTER_TERMS_REQUIRED() throws Exception {
         UserRegisterDto.RequestPersonalRegister req = buildPersonalRequest();
         setField(req.getTerms(), "privacy", false);
+
+        assertThatThrownBy(() -> service.registerUser(req))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.REGISTER_TERMS_REQUIRED));
+    }
+
+    @Test
+    void registerUser_약관_null_REGISTER_TERMS_REQUIRED() throws Exception {
+        UserRegisterDto.RequestPersonalRegister req = buildPersonalRequest();
+        setField(req, "terms", null);
 
         assertThatThrownBy(() -> service.registerUser(req))
                 .isInstanceOf(CustomException.class)

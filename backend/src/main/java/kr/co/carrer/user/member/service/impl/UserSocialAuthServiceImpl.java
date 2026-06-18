@@ -172,6 +172,11 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
             UserSocialAuthDto.RequestSocialComplete request, HttpServletResponse response) {
 
         SocialProvider provider = resolveSocialProvider(request.getProvider());
+        if (request.getTerms() == null
+                || !request.getTerms().isService()
+                || !request.getTerms().isPrivacy()) {
+            throw new CustomException(UserAuthErrorCode.REGISTER_TERMS_REQUIRED);
+        }
 
         // socialSignupToken 소비
         SocialSignupTokenStore.SocialSignupPayload payload = socialSignupTokenStore
@@ -193,6 +198,8 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         // 소셜 이메일 충돌 — members.email unique 제약 위반 전에 명시적 체크 (spec SOCIAL_EMAIL_ALREADY_EXISTS 409)
         if (payload.providerEmail() != null && memberRepository.existsByEmail(payload.providerEmail()))
             throw new CustomException(UserAuthErrorCode.SOCIAL_EMAIL_ALREADY_EXISTS);
+
+        phoneVerification.markConsumed();
 
         // Member 생성 (소셜 회원은 loginId = UUID prefix, password = random)
         String loginId = "social_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);

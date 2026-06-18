@@ -14,6 +14,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
@@ -24,6 +25,8 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class SolapiSmsSenderAdapter implements SmsSenderPort {
+
+    private static final Duration TIMEOUT = Duration.ofSeconds(5);
 
     private final WebClient.Builder webClientBuilder;
 
@@ -56,14 +59,15 @@ public class SolapiSmsSenderAdapter implements SmsSenderPort {
                     .bodyValue(body)
                     .retrieve()
                     .toBodilessEntity()
-                    .doOnSuccess(r -> log.info("SOLAPI SMS 발송 완료: {}", toPhone))
+                    .doOnSuccess(r -> log.info("SOLAPI SMS 발송 완료"))
+                    .timeout(TIMEOUT)
                     .block();
         } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
-            log.error("SOLAPI SMS 발송 실패: {} — HTTP {}", toPhone, e.getStatusCode());
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
+            log.error("SOLAPI SMS 발송 실패 — HTTP {}", e.getStatusCode());
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_SMS_UNAVAILABLE);
         } catch (RuntimeException e) {
-            log.error("SOLAPI SMS 발송 실패: {} — {}", toPhone, e.getMessage());
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
+            log.error("SOLAPI SMS 발송 실패 — {}", e.getMessage());
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_SMS_UNAVAILABLE);
         }
     }
 
@@ -74,7 +78,7 @@ public class SolapiSmsSenderAdapter implements SmsSenderPort {
             mac.init(new SecretKeySpec(apiSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             return HexFormat.of().formatHex(mac.doFinal(message.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID, "SMS 서명 생성 실패");
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_SMS_UNAVAILABLE, "SMS 서명 생성 실패");
         }
     }
 }

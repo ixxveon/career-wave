@@ -46,7 +46,9 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     @Transactional
     public UserRegisterDto.ResponsePersonalRegister registerUser(UserRegisterDto.RequestPersonalRegister request) {
         // 필수 약관 검증 — DTO @AssertTrue는 Controller Bean Validation 의존; Service 직접 호출 시 재검증
-        if (!request.getTerms().isService() || !request.getTerms().isPrivacy()) {
+        if (request.getTerms() == null
+                || !request.getTerms().isService()
+                || !request.getTerms().isPrivacy()) {
             throw new CustomException(UserAuthErrorCode.REGISTER_TERMS_REQUIRED);
         }
 
@@ -74,6 +76,9 @@ public class UserRegisterServiceImpl implements UserRegisterService {
             throw new CustomException(UserAuthErrorCode.EMAIL_ALREADY_EXISTS);
         if (memberRepository.existsByPhone(request.getPhone()))
             throw new CustomException(UserAuthErrorCode.PHONE_ALREADY_EXISTS);
+
+        emailVerification.markConsumed();
+        phoneVerification.markConsumed();
 
         // Member 생성
         Member member = Member.createUser(
@@ -103,7 +108,8 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     @Transactional
     public UserRegisterDto.ResponseCompanyRegister registerCompany(UserRegisterDto.RequestCompanyRegister request) {
         // 필수 약관 검증 — 기업회원은 service/privacy/companyVerification/sms 모두 필수
-        if (!request.getTerms().isService() || !request.getTerms().isPrivacy()
+        if (request.getTerms() == null
+                || !request.getTerms().isService() || !request.getTerms().isPrivacy()
                 || !request.getTerms().isCompanyVerification() || !request.getTerms().isSms()) {
             throw new CustomException(UserAuthErrorCode.REGISTER_TERMS_REQUIRED);
         }
@@ -142,6 +148,9 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         // 재직증명서 fileId 검증 — 엔티티 생성 전 검증 (실패 시 memberRepository.save() 미호출 보장)
         String fileId = request.getEmploymentCertificateFileId();
         employmentCertificateFilePort.validate(fileId);
+
+        emailVerification.markConsumed();
+        phoneVerification.markConsumed();
 
         // Member 생성 (담당자명=name, 담당자 이메일=email, 담당자 휴대폰=phone)
         Member member = Member.createCompany(

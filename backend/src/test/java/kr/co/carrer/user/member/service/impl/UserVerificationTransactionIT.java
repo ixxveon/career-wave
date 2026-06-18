@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * @Transactional(noRollbackFor = CustomException.class) 적용 후
@@ -71,9 +72,8 @@ class UserVerificationTransactionIT {
         setField(request, "verificationId", id);
         setField(request, "code", "000000");  // SHA-256("000000") != "fixedhash-..."
 
-        try {
-            service.confirm(request);
-        } catch (CustomException ignored) {}
+        assertThatThrownBy(() -> service.confirm(request))
+                .isInstanceOf(CustomException.class);
 
         // 3. 1차 캐시 제거 → DB 직접 조회
         entityManager.clear();

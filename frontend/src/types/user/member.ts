@@ -56,6 +56,7 @@ export type VerificationPurpose = (typeof VERIFICATION_PURPOSE)[keyof typeof VER
 export type VerificationStatus =
   | 'SENT'
   | 'VERIFIED'
+  | 'CONSUMED'
   | 'EXPIRED'
   | 'FAILED'
   | 'RATE_LIMITED';

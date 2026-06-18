@@ -67,7 +67,7 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
     // ── 아이디 찾기 ────────────────────────────────────────────────────────────
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public UserRecoveryDto.ResponseFindId findId(UserRecoveryDto.RequestFindId request) {
         MemberVerification verification = verificationRepository
                 .findByVerificationToken(request.getVerificationToken())
@@ -78,6 +78,7 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
                 verification.getChannel(),
                 verification.getTarget(),
                 VerificationPurpose.FIND_ID);
+        verification.markConsumed();
 
         List<String> rawIds;
         if (request.getRoleType() == MemberType.USER) {
@@ -169,6 +170,8 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
             throw new CustomException(UserAuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
         }
 
+        verification.markConsumed();
+
         String rawToken = generateRawToken();
         String tokenHash = hash(rawToken);
         Instant expiresAt = now.plusSeconds(RESET_TOKEN_EXPIRES_SECONDS);
@@ -244,10 +247,7 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
 
     private void incrementResetFailCount(String key, long ttlSeconds) {
         if (ttlSeconds <= 0) ttlSeconds = 60L;
-        Long count = redisTemplate.opsForValue().increment(key);
-        if (count != null && count == 1L) {
-            redisTemplate.expire(key, java.time.Duration.ofSeconds(ttlSeconds));
-        }
+        redisTemplate.execute(INCR_WITH_TTL_SCRIPT, List.of(key), String.valueOf(ttlSeconds));
     }
 
     // ── 내부 유틸 ─────────────────────────────────────────────────────────────

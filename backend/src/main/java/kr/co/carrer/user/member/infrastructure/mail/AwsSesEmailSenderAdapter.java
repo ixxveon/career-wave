@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sesv2.SesV2Client;
 import software.amazon.awssdk.services.sesv2.model.*;
@@ -56,10 +57,10 @@ public class AwsSesEmailSenderAdapter implements EmailSenderPort {
 
         try {
             sesClient.sendEmail(request);
-            log.info("SES 이메일 발송 완료: {}", toEmail);
-        } catch (SesV2Exception e) {
-            log.error("SES 이메일 발송 실패: {} — {}", toEmail, e.getMessage());
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
+            log.info("SES 이메일 발송 완료");
+        } catch (SdkException e) {
+            log.error("SES 이메일 발송 실패 — {}", e.getMessage());
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_EMAIL_UNAVAILABLE);
         }
     }
 }
