@@ -7,6 +7,10 @@ from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException
 
 
 class TokenCostCalculator:
+    @staticmethod
+    def _is_non_negative_int(value: Any) -> bool:
+        return type(value) is int and value >= 0
+
     def calculate_input_tokens(
         self,
         usage_source: Any | None = None,
@@ -16,10 +20,10 @@ class TokenCostCalculator:
         usage = getattr(usage_source, "usage", usage_source)
         prompt_tokens = getattr(usage, "prompt_tokens", None)
 
-        if isinstance(prompt_tokens, int) and prompt_tokens >= 0:
+        if self._is_non_negative_int(prompt_tokens):
             return prompt_tokens
 
-        if isinstance(fallback_input_tokens, int) and fallback_input_tokens >= 0:
+        if self._is_non_negative_int(fallback_input_tokens):
             return fallback_input_tokens
 
         raise AiMetricsException(
@@ -37,10 +41,10 @@ class TokenCostCalculator:
         usage = getattr(usage_source, "usage", usage_source)
         completion_tokens = getattr(usage, "completion_tokens", None)
 
-        if isinstance(completion_tokens, int) and completion_tokens >= 0:
+        if self._is_non_negative_int(completion_tokens):
             return completion_tokens
 
-        if isinstance(fallback_output_tokens, int) and fallback_output_tokens >= 0:
+        if self._is_non_negative_int(fallback_output_tokens):
             return fallback_output_tokens
 
         raise AiMetricsException(
@@ -56,7 +60,7 @@ class TokenCostCalculator:
         input_tokens: int,
         output_tokens: int,
     ) -> Decimal:
-        if input_tokens < 0 or output_tokens < 0:
+        if not self._is_non_negative_int(input_tokens) or not self._is_non_negative_int(output_tokens):
             raise AiMetricsException(
                 error_code=AiMetricsErrorCode.TOKEN_CALCULATION_FAILED,
                 message="Cost calculation failed.",
@@ -77,14 +81,14 @@ class TokenCostCalculator:
         output_tokens: int,
         cost: Decimal,
     ) -> None:
-        if not isinstance(input_tokens, int) or input_tokens < 0:
+        if not self._is_non_negative_int(input_tokens):
             raise AiMetricsException(
                 error_code=AiMetricsErrorCode.TOKEN_CALCULATION_FAILED,
                 message="Input token validation failed.",
                 detail={"field": "inputTokens", "value": input_tokens},
             )
 
-        if not isinstance(output_tokens, int) or output_tokens < 0:
+        if not self._is_non_negative_int(output_tokens):
             raise AiMetricsException(
                 error_code=AiMetricsErrorCode.TOKEN_CALCULATION_FAILED,
                 message="Output token validation failed.",
