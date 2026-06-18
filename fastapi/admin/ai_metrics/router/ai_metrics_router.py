@@ -1,11 +1,13 @@
+import asyncio
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from fastapi import Path as FastApiPath
 from fastapi.responses import JSONResponse
 
-from admin.ai_metrics.client import MockVectorStoreClient
+from admin.ai_metrics.client import MockVectorStoreClient, get_ai_metrics_openai_client
 from admin.ai_metrics.exception import AiMetricsException, build_error_response
+from admin.ai_metrics.parser import RagDocumentParser
 from admin.ai_metrics.repository import (
     AiModelRepository,
     AiOpsSettingRepository,
@@ -25,12 +27,15 @@ from admin.ai_metrics.schema import (
     UsageLogSearchRequest,
 )
 from admin.ai_metrics.service import (
+    ChunkingService,
+    EmbeddingService,
     OpsSettingsService,
     RagIndexDeleteService,
     RagIndexService,
     UsageLogService,
     UsageMetricsService,
 )
+from admin.ai_metrics.task import RagIndexingTask
 from core.security import verify_internal_secret
 
 
@@ -39,6 +44,8 @@ router = APIRouter(
     tags=["admin-ai-metrics-internal"],
     dependencies=[Depends(verify_internal_secret)],
 )
+
+_bg_tasks: set[asyncio.Task[None]] = set()
 
 
 @router.post("/usage/summary")
@@ -172,7 +179,10 @@ async def start_rag_document_index(request: RagIndexStartRequest):
             )
             response = service.start_indexing(request)
             session.commit()
-            return response
+        task = asyncio.create_task(_run_rag_indexing(request.rag_document_id))
+        _bg_tasks.add(task)
+        task.add_done_callback(_bg_tasks.discard)
+        return response
     except AiMetricsException as error:
         return JSONResponse(
             status_code=error.status_code,
@@ -223,3 +233,18 @@ async def create_usage_log(request: UsageLogCreateRequest):
 def _parse_iso_datetime(value: str) -> datetime:
     normalized = value.replace("Z", "+00:00")
     return datetime.fromisoformat(normalized)
+
+
+async def _run_rag_indexing(rag_document_id: int) -> None:
+    with get_session() as session:
+        task = RagIndexingTask(
+            rag_document_repository=RagDocumentRepository(session),
+            rag_document_parser=RagDocumentParser(),
+            chunking_service=ChunkingService(),
+            embedding_service=EmbeddingService(
+                openai_client=get_ai_metrics_openai_client(),
+            ),
+            vector_store_client=MockVectorStoreClient(),
+        )
+        await task.run(rag_document_id)
+        session.commit()
