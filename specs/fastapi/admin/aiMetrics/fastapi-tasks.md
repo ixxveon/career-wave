@@ -131,14 +131,14 @@
 
 ## Phase 15 - Spring ↔ FastAPI 계약 검증
 
-- [ ] Spring Boot가 기대하는 집계 요청 JSON 필드 계약 검증 테스트를 작성한다.
-- [ ] Spring Boot가 기대하는 집계 응답 JSON 필드 계약 검증 테스트를 작성한다.
-- [ ] 운영 정책 동기화 Request / Response 계약 검증 테스트를 작성한다.
-- [ ] RAG 인덱싱 시작 Request / Response 계약 검증 테스트를 작성한다.
-- [ ] RAG 인덱스 삭제 Response 계약 검증 테스트를 작성한다.
-- [ ] AI Usage Log 적재 Request / Response 계약 검증 테스트를 작성한다.
-- [ ] 내부 ErrorCode가 Spring Boot 도메인 ErrorCode로 변환 가능한지 검증하는 테스트를 작성한다.
-- [ ] 내부 오류 응답 스키마가 `success`, `errorCode`, `message`, `detail` 구조를 만족하는지 검증하는 테스트를 작성한다.
+- [x] Spring Boot가 기대하는 집계 요청 JSON 필드 계약 검증 테스트를 작성한다.
+- [x] Spring Boot가 기대하는 집계 응답 JSON 필드 계약 검증 테스트를 작성한다.
+- [x] 운영 정책 동기화 Request / Response 계약 검증 테스트를 작성한다.
+- [x] RAG 인덱싱 시작 Request / Response 계약 검증 테스트를 작성한다.
+- [x] RAG 인덱스 삭제 Response 계약 검증 테스트를 작성한다.
+- [x] AI Usage Log 적재 Request / Response 계약 검증 테스트를 작성한다.
+- [x] 내부 ErrorCode가 Spring Boot 도메인 ErrorCode로 변환 가능한지 검증하는 테스트를 작성한다.
+- [x] 내부 오류 응답 스키마가 `success`, `errorCode`, `message`, `detail` 구조를 만족하는지 검증하는 테스트를 작성한다.
 
 ## Phase 16 - Test
 
