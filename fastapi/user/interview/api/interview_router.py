@@ -27,7 +27,7 @@ async def trigger_voice_chunk(
 ) -> dict[str, object]:
     """
     Spring → FastAPI 음성 청크 전달 트리거.
-    STT 파이프라인을 백그라운드로 실행하고 200 응답을 즉시 반환한다.
+    STT 파이프라인을 백그라운드로 실행하고 202 응답을 즉시 반환한다.
     """
     audio_bytes = await audio_chunk.read()
 
