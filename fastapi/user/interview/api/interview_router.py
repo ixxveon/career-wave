@@ -1,10 +1,10 @@
 import asyncio
 import logging
 
-from fastapi import APIRouter, Depends, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from core.security import verify_internal_secret
-from user.pipeline import stt_pipeline
+from user.interview.pipeline import stt_pipeline
 
 log = logging.getLogger(__name__)
 
@@ -21,11 +21,11 @@ async def trigger_voice_chunk(
     question_order: int = Form(...),
     chunk_index: int = Form(...),
     is_final: bool = Form(...),
-    audio_chunk: UploadFile = Form(...),
+    audio_chunk: UploadFile = File(...),
 ) -> dict[str, object]:
     """
     Spring → FastAPI 음성 청크 전달 트리거.
-    STT 파이프라인을 백그라운드로 실행하고 202 응답을 즉시 반환한다.
+    STT 파이프라인을 백그라운드로 실행하고 200 응답을 즉시 반환한다.
     """
     audio_bytes = await audio_chunk.read()
 

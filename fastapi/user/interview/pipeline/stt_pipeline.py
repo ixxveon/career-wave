@@ -4,7 +4,7 @@ import logging
 from openai import AsyncOpenAI, OpenAIError
 
 from core.config import get_settings
-from user.websocket.interview_ws_handler import InterviewErrorCode, send_error, send_stt_final, send_stt_partial
+from user.interview.websocket.interview_ws_handler import InterviewErrorCode, send_error, send_stt_final, send_stt_partial
 
 log = logging.getLogger(__name__)
 
