@@ -253,7 +253,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
                 document.getFilePath()
         ));
         if (!response.deleted()) {
-            throw new CustomException(AiMetricsErrorCode.AI_MODEL_EXECUTION_FAILED);
+            throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_DELETE_FAILED);
         }
     }
 
