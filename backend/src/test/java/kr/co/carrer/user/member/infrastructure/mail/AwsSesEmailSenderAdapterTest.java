@@ -10,6 +10,8 @@ import software.amazon.awssdk.services.sesv2.SesV2Client;
 import software.amazon.awssdk.services.sesv2.model.SendEmailRequest;
 import software.amazon.awssdk.services.sesv2.model.SendEmailResponse;
 
+import org.springframework.core.env.Environment;
+
 import java.lang.reflect.Field;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +27,9 @@ class AwsSesEmailSenderAdapterTest {
     @BeforeEach
     void setUp() throws Exception {
         sesClient = mock(SesV2Client.class);
-        adapter = new AwsSesEmailSenderAdapter();
+        Environment env = mock(Environment.class);
+        when(env.getActiveProfiles()).thenReturn(new String[]{"test"});
+        adapter = new AwsSesEmailSenderAdapter(env);
         setField(adapter, "fromEmail", "noreply@careerwave.co.kr");
         setField(adapter, "sesClient", sesClient);
     }

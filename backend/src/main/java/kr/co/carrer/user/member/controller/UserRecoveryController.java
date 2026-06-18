@@ -46,7 +46,9 @@ public class UserRecoveryController implements UserRecoveryControllerDocs {
     private String extractClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
-            String ip = forwarded.split(",")[0].trim();
+            // 첫 번째 값은 클라이언트가 임의 주입 가능 — 프록시/LB가 신뢰할 수 있게 append한 마지막 값 사용
+            String[] parts = forwarded.split(",");
+            String ip = parts[parts.length - 1].trim();
             if (!ip.isBlank()) return ip;
         }
         return request.getRemoteAddr();
