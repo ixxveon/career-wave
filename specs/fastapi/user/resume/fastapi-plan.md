@@ -80,7 +80,7 @@ OpenAI 분석을 수행한 뒤 단계별 Webhook 콜백으로 Spring Boot에 결
 
 ### Phase 3: 파일 파싱 서비스
 
-- [ ] `fastapi/user/resume/service/file_parser.py` — S3 다운로드 + 텍스트 추출 서비스
+- [x] `fastapi/user/resume/service/file_parser.py` — S3 다운로드 + 텍스트 추출 서비스
   - `boto3`로 S3에서 파일 스트림 다운로드
   - PDF 파싱 (`pdfplumber` 사용)
   - DOCX 파싱 (`python-docx` 사용)
@@ -89,11 +89,11 @@ OpenAI 분석을 수행한 뒤 단계별 Webhook 콜백으로 Spring Boot에 결
 
 ### Phase 4: 프롬프트 및 AI 분석 서비스
 
-- [ ] `fastapi/user/resume/prompts/resume_prompts.py` — 분석 프롬프트 템플릿 정의
+- [x] `fastapi/user/resume/prompts/resume_prompts.py` — 분석 프롬프트 템플릿 정의
   - 이력서 분석 프롬프트 (STAR 분석 포함)
   - 자기소개서 분석 프롬프트 (회사·직무 컨텍스트 포함)
   - 점수 산출 기준 정의
-- [ ] `fastapi/user/resume/service/resume_service.py` — 분석 오케스트레이션
+- [x] `fastapi/user/resume/service/resume_service.py` — 분석 오케스트레이션
   - PENDING 콜백 전송
   - RESUME: 파일 파싱 → ANALYZING 콜백 → AI 분석 → COMPLETED/FAILED 콜백
   - COVER_LETTER: ANALYZING 콜백 → AI 분석 → COMPLETED/FAILED 콜백

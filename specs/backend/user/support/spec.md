@@ -195,7 +195,7 @@ GET /api/v1/user/notices?category=&keyword=&page=1&size=20
       → ApiResponse<PaginationResponse<SupportDTO.NoticeList>>
       is_visible=true 건만 반환, is_pinned=true 건 상단 정렬 후 created_at DESC
       page < 1 → BAD_REQUEST(400)
-      size > 100 → 100으로 clamp
+      size > 100 → 400 반환
 
 GET /api/v1/user/notices/{noticeId}
       → ApiResponse<SupportDTO.NoticeDetail>
@@ -237,7 +237,7 @@ POST /api/v1/user/inquiries
 - `is_pinned = true` 건 우선 정렬 후 `created_at DESC`
 - `keyword` → `title ILIKE %keyword%` OR `content ILIKE %keyword%`
 - `page < 1` 또는 `size < 1` → `BAD_REQUEST(400)` 예외
-- `size > 100` → 100으로 clamp
+- `size > 100` → `BAD_REQUEST(400)` 예외
 - page 1-based → 0-based 변환
 - 반환: `PaginationResponse<SupportDTO.NoticeList>`
 

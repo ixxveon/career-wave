@@ -39,7 +39,7 @@ export function useFastApiWebSocket({
       import.meta.env.VITE_FASTAPI_BASE_URL?.replace(/^http/, 'ws') ||
       'ws://localhost:8000';
     const token = encodeURIComponent(authSession.getAccessToken() ?? '');
-    return `${base}/ws/interview/${sid}/ai?token=${token}`;
+    return `${base}/ws/user/interview/${sid}/ai?token=${token}`;
   };
 
   const connect = useCallback((sid: string) => {

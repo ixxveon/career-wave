@@ -134,7 +134,8 @@ public class UserLoginServiceImpl implements UserLoginService {
     private CompanyApprovalStatus validateAccountStatus(Member member) {
         switch (member.getMemberStatus()) {
             case SUSPENDED -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_SUSPENDED);
-            case BANNED    -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
+            case BANNED        -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BANNED);
+            case BLACKLISTED   -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_BLACKLISTED);
             case WITHDRAWN -> throw new CustomException(UserAuthErrorCode.AUTH_ACCOUNT_WITHDRAWN);
             case LOCKED -> {
                 if (member.getLockedUntil() != null && Instant.now().isBefore(member.getLockedUntil())) {
@@ -150,12 +151,18 @@ public class UserLoginServiceImpl implements UserLoginService {
             default -> {}
         }
         if (member.getRoleType() == RoleType.COMPANY) {
-            CompanyApprovalStatus status = resolveCompanyApprovalStatus(member);
+            String rawHrStatus = statusQueryRepository.findCompanyHrStatus(member.getMemberId());
+            CompanyApprovalStatus status = UserMemberStatusQueryRepository.mapCompanyApprovalStatus(rawHrStatus);
+            if ("REMOVED".equals(rawHrStatus)) {
+                throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_REJECTED);
+            }
             switch (status) {
                 case PENDING_REVIEW -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_PENDING_REVIEW);
                 case REJECTED       -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_REJECTED);
                 case NEEDS_REVISION -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_NEEDS_REVISION);
-                default -> {}
+                case APPROVED       -> { /* 로그인 허용 */ }
+                // NONE(hr_managers row 없음) 포함 나머지 — fail-close: spec "APPROVED만 로그인 가능"
+                default             -> throw new CustomException(UserAuthErrorCode.AUTH_COMPANY_PENDING_REVIEW);
             }
             return status;
         }
@@ -166,7 +173,7 @@ public class UserLoginServiceImpl implements UserLoginService {
         if (member.getRoleType() != RoleType.COMPANY) {
             return CompanyApprovalStatus.NONE;
         }
-        return statusQueryRepository.findCompanyApprovalStatus(member.getMemberId());
+        return UserMemberStatusQueryRepository.mapCompanyApprovalStatus(statusQueryRepository.findCompanyHrStatus(member.getMemberId()));
     }
 
     @Transactional

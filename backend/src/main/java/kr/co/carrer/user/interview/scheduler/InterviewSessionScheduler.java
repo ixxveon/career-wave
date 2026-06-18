@@ -2,6 +2,7 @@ package kr.co.carrer.user.interview.scheduler;
 
 import kr.co.carrer.user.interview.entity.InterviewSession;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
+import kr.co.carrer.user.interview.type.SessionStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,7 +29,7 @@ public class InterviewSessionScheduler {
         ZonedDateTime cutoff = now.minusHours(24);
         ZonedDateTime recentCutoff = now.minusMinutes(5);
 
-        List<InterviewSession> timedOut = sessionRepository.findTimedOutSessions(cutoff, recentCutoff);
+        List<InterviewSession> timedOut = sessionRepository.findTimedOutSessions(cutoff, recentCutoff, SessionStatus.IN_PROGRESS);
         timedOut.forEach(session -> session.fail(now));
 
         if (!timedOut.isEmpty()) {

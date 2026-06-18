@@ -16,6 +16,7 @@ import kr.co.carrer.admin.aimetrics.dto.AiOpsSettingDTO;
 import kr.co.carrer.admin.aimetrics.dto.AiUsageLogDTO;
 import kr.co.carrer.admin.aimetrics.dto.RagDocumentDTO;
 import kr.co.carrer.admin.aimetrics.type.AiFeatureType;
+import kr.co.carrer.admin.aimetrics.type.IntervalType;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -70,7 +71,7 @@ public interface AiMetricsDocs {
             @Parameter(description = "조회 시작 일시, ISO 8601 UTC, ai_usage_logs.created_at 기준") @RequestParam(required = false) String from,
             @Parameter(description = "조회 종료 일시, ISO 8601 UTC, ai_usage_logs.created_at 기준") @RequestParam(required = false) String to,
             @Parameter(description = "AI 기능 유형 필터, ai_usage_logs.feature_type 기준", schema = @Schema(allowableValues = {"DOCUMENT", "INTERVIEW"})) @RequestParam(required = false) AiFeatureType featureType,
-            @Parameter(description = "집계 단위", required = true, schema = @Schema(allowableValues = {"HOURLY", "DAILY"})) @RequestParam String interval
+            @Parameter(description = "집계 단위", required = true, schema = @Schema(allowableValues = {"HOURLY", "DAILY"})) @RequestParam IntervalType interval
     );
 
     @Operation(summary = "고사용 사용자 조회", description = "ai_usage_logs.created_at 기간 조건과 featureType 필터 기준으로 AI 사용량이 높은 사용자를 요청 수, 토큰 수, 비용 기준으로 조회합니다. from/to는 ISO 8601 UTC 문자열을 사용합니다.")

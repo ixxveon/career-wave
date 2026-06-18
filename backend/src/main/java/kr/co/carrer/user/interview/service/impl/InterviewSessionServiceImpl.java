@@ -10,6 +10,7 @@ import kr.co.carrer.user.interview.repository.InterviewMessageRepository;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import kr.co.carrer.user.interview.service.InterviewSessionService;
 import kr.co.carrer.user.interview.type.InterviewType;
+import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
@@ -68,7 +69,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
                     .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_DOCUMENT_NOT_FOUND));
         }
 
-        sessionRepository.findInProgressByMemberId(memberId)
+        sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)
                 .ifPresent(s -> { throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_DUPLICATE); });
 
         InterviewSession session = InterviewSession.create(memberId, documentId, sessionType, interviewType, targetCompany);

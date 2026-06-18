@@ -80,7 +80,7 @@ AI 파이프라인(STT·LLM·TTS)은 FastAPI 서버가 전담한다.
 
 ```java
 @Lock(LockModeType.PESSIMISTIC_WRITE)
-Optional<InterviewSession> findInProgressByMemberId(UUID memberId);
+Optional<InterviewSession> findInProgressByMemberId(UUID memberId, SessionStatus status);
 ```
 
 - v1 단일 서버 환경에서는 이것으로 충분하다.
