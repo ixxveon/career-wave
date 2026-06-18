@@ -819,7 +819,7 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
   "statusCode": 200,
   "message": "요청이 처리되었습니다.",
   "data": {
-    "maskedLoginIds": ["caree***01"],
+    "maskedLoginIds": ["car***01"],
     "found": true
   }
 }

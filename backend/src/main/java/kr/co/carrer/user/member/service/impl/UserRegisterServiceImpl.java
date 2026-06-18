@@ -195,6 +195,9 @@ public class UserRegisterServiceImpl implements UserRegisterService {
                 request.getTerms().isCompanyVerification(),
                 request.getTerms().isSms()));
 
+        // fileId 일회성 소비 처리 — 동일 fileId로 중복 가입 신청 차단 (spec §11 File Lifecycle)
+        employmentCertificateFilePort.consume(fileId);
+
         // 기업회원 가입 응답 — access/refresh token 미발급 (spec FR-019, FR-020)
         return new UserRegisterDto.ResponseCompanyRegister(
                 member.getMemberId(),

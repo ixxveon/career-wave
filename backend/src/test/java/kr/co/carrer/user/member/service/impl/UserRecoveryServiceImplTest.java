@@ -172,9 +172,8 @@ class UserRecoveryServiceImplTest {
 
         assertThat(resp.found()).isTrue();
         assertThat(resp.maskedLoginIds()).hasSize(1);
-        // 앞 3자 유지 + 나머지 * (career01 → car*****)
-        assertThat(resp.maskedLoginIds().get(0)).startsWith("car");
-        assertThat(resp.maskedLoginIds().get(0)).doesNotContain("eer01");
+        // 앞 3자 + *** + 뒤 2자 (career01 → car***01)
+        assertThat(resp.maskedLoginIds().get(0)).isEqualTo("car***01");
     }
 
     // ─── 기업회원 아이디 찾기 성공 ───────────────────────────────────────────────────
@@ -196,7 +195,8 @@ class UserRecoveryServiceImplTest {
         UserRecoveryDto.ResponseFindId resp = service.findId(req);
 
         assertThat(resp.found()).isTrue();
-        assertThat(resp.maskedLoginIds().get(0)).startsWith("com");
+        // 앞 3자 + *** + 뒤 2자 (company01 → com***01)
+        assertThat(resp.maskedLoginIds().get(0)).isEqualTo("com***01");
     }
 
     // ─── 아이디 찾기 — 결과 없음 found=false ─────────────────────────────────────────
@@ -218,15 +218,15 @@ class UserRecoveryServiceImplTest {
         assertThat(resp.maskedLoginIds()).isEmpty();
     }
 
-    // ─── loginId 마스킹 — 앞 3자 + * ───────────────────────────────────────────────
+    // ─── loginId 마스킹 — 앞 3자 + *** + 뒤 2자 ─────────────────────────────────────
 
     @Test
-    void findId_loginId_마스킹_앞3자_유지() throws Exception {
+    void findId_loginId_마스킹_앞3자_별표_뒤2자() throws Exception {
         MemberVerification verification = createEmailVerification("user@example.com", VerificationPurpose.FIND_ID);
         when(verificationRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(verification));
 
         Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
-        setField(member, "loginId", "abcdef"); // 6자
+        setField(member, "loginId", "abcdef"); // 6자 — 앞 3자(abc) + *** + 뒤 2자(ef) = abc***ef
         when(memberRepository.findByEmailAndRoleType(anyString(), any())).thenReturn(Optional.of(member));
 
         UserRecoveryDto.RequestFindId req = new UserRecoveryDto.RequestFindId();
@@ -235,7 +235,7 @@ class UserRecoveryServiceImplTest {
 
         UserRecoveryDto.ResponseFindId resp = service.findId(req);
 
-        assertThat(resp.maskedLoginIds().get(0)).isEqualTo("abc***"); // 앞 3자 + *** (3자 마스킹)
+        assertThat(resp.maskedLoginIds().get(0)).isEqualTo("abc***ef"); // 앞 3자 + *** + 뒤 2자 (spec §14)
     }
 
     // ─── 비밀번호 resetToken 발급 성공 — 개인회원 ───────────────────────────────────────

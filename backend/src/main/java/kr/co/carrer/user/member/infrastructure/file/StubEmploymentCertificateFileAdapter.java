@@ -4,24 +4,36 @@ import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.member.dto.UserRegisterDto;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.service.EmploymentCertificateFilePort;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 재직증명서 fileId 검증 stub — local/test 전용.
  * 실 환경에서는 S3EmploymentCertificateFileAdapter 사용.
+ * S3 adapter와 동일한 검증 로직(확장자 + Tika MIME + 소비 상태)을 적용해
+ * local/test와 생산 환경의 동작 일관성을 보장한다.
  */
+@Slf4j
 @Profile({"local", "test"})
 @Component
 public class StubEmploymentCertificateFileAdapter implements EmploymentCertificateFilePort {
 
     private static final int MIN_FILE_ID_LENGTH = 8;
     private static final long MAX_FILE_SIZE = 5L * 1024 * 1024;
+    private static final String ALLOWED_MIME = "application/pdf";
+
+    private final Tika tika = new Tika();
+    private final Set<String> consumedFileIds = ConcurrentHashMap.newKeySet();
 
     @Value("${aws.s3.bucket-name:careerwave-local}")
     private String bucketName;
@@ -31,6 +43,16 @@ public class StubEmploymentCertificateFileAdapter implements EmploymentCertifica
         if (fileId == null || fileId.isBlank() || fileId.length() < MIN_FILE_ID_LENGTH) {
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
         }
+        if (consumedFileIds.contains(fileId)) {
+            log.warn("[Stub 재직증명서] 이미 소비된 fileId — {}", fileId);
+            throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
+        }
+    }
+
+    @Override
+    public void consume(String fileId) {
+        consumedFileIds.add(fileId);
+        log.info("[Stub 재직증명서] 소비 처리 — {}", fileId);
     }
 
     @Override
@@ -51,18 +73,27 @@ public class StubEmploymentCertificateFileAdapter implements EmploymentCertifica
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_TOO_LARGE);
         }
-        // 확장자 최소 검증 — local/test에서도 비PDF 파일명 거부
+
+        // 확장자 검증 (S3 adapter와 동일)
         String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "";
         if (!originalName.toLowerCase().endsWith(".pdf")) {
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_UNSUPPORTED);
         }
+
+        // Tika MIME 검증 (S3 adapter와 동일 — 확장자 위조 방어)
+        try {
+            String detectedMime = tika.detect(file.getBytes());
+            if (!ALLOWED_MIME.equals(detectedMime)) {
+                throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_UNSUPPORTED);
+            }
+        } catch (CustomException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
+        }
+
         String fakeFileId = "stub-" + UUID.randomUUID();
         return new UserRegisterDto.ResponseEmploymentCertificateUpload(
-                fakeFileId,
-                originalName,
-                "application/pdf",
-                file.getSize(),
-                Instant.now()
-        );
+                fakeFileId, originalName, ALLOWED_MIME, file.getSize(), Instant.now());
     }
 }

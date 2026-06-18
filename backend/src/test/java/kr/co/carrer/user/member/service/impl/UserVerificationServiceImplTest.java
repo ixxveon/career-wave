@@ -254,6 +254,48 @@ class UserVerificationServiceImplTest {
         assertThat(verification.getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
     }
 
+    // ─── validateVerificationToken — status 미인증 ──────────────────────────────
+
+    @Test
+    void validateVerificationToken_status_SENT_VERIFICATION_TOKEN_INVALID() throws Exception {
+        MemberVerification v = createVerification(5, VerificationStatus.SENT, "h");
+        assertThatThrownBy(() ->
+                UserVerificationServiceImpl.validateVerificationToken(
+                        v, VerificationChannel.EMAIL, "test@example.com", VerificationPurpose.REGISTER))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
+    }
+
+    // ─── validateVerificationToken — 만료 ───────────────────────────────────────
+
+    @Test
+    void validateVerificationToken_만료_VERIFICATION_TOKEN_INVALID() throws Exception {
+        MemberVerification v = createVerification(5, VerificationStatus.VERIFIED, "h");
+        setField(v, "expiresAt", Instant.now().minusSeconds(60));
+        assertThatThrownBy(() ->
+                UserVerificationServiceImpl.validateVerificationToken(
+                        v, VerificationChannel.EMAIL, "test@example.com", VerificationPurpose.REGISTER))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
+    }
+
+    // ─── validateVerificationToken — purpose 불일치 ──────────────────────────────
+
+    @Test
+    void validateVerificationToken_purpose_불일치_VERIFICATION_TOKEN_INVALID() throws Exception {
+        MemberVerification v = createVerification(5, VerificationStatus.VERIFIED, "h");
+        // purpose는 FIND_ID지만 REGISTER를 기대 → 불일치
+        setField(v, "purpose", VerificationPurpose.FIND_ID);
+        assertThatThrownBy(() ->
+                UserVerificationServiceImpl.validateVerificationToken(
+                        v, VerificationChannel.EMAIL, "test@example.com", VerificationPurpose.REGISTER))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
+    }
+
     // ─── 내부 유틸 ───────────────────────────────────────────────────────────────
 
     private MemberVerification createVerification(int attempts, VerificationStatus status,

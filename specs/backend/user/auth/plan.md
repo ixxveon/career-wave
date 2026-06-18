@@ -152,7 +152,7 @@ backend/src/main/java/kr/co/carrer/user/member/
 - [x] Phase 4: Service 구현 (Service 단위 테스트 포함)
 - [x] Phase 5: Controller / API 구현 — feature/user-auth-api-docs-integration
 - [x] Phase 6: Swagger 문서화 — 동일 브랜치
-- [x] Phase 7: Controller·Service 단위 테스트 완료 (통합/E2E 테스트 별도 PR)
+- [x] Phase 7: Controller·Service 단위 테스트 완료 — 통합 테스트(SES/SOLAPI sandbox, JWT refresh 흐름) 및 E2E 테스트는 별도 PR에서 진행
 
 ---
 

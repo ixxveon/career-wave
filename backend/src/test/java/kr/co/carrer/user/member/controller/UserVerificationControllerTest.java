@@ -69,7 +69,9 @@ class UserVerificationControllerTest {
                         .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400));
+                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."))
+                .andExpect(jsonPath("$.code").doesNotExist());
     }
 
     // ─── 인증번호 확인 ─────────────────────────────────────────────────────────────
@@ -107,6 +109,8 @@ class UserVerificationControllerTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400));
+                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."))
+                .andExpect(jsonPath("$.code").doesNotExist());
     }
 }

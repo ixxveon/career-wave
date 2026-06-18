@@ -357,7 +357,7 @@ export const memberHandlers = [
       statusCode: 200,
       message: '요청이 처리되었습니다.',
       data: {
-        maskedLoginIds: ['tes***user01'],
+        maskedLoginIds: ['tes***01'],
         found: true,
       },
     });

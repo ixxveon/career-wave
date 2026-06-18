@@ -269,6 +269,7 @@
 - [x] 인증번호 발송 성공 테스트 — `UserVerificationServiceImplTest.send_EMAIL_성공_emailSenderPort_호출` / `send_PHONE_성공_smsSenderPort_호출` / `UserVerificationControllerTest.send_성공_200`
 - [x] 인증번호 확인 성공 테스트 — `UserVerificationServiceImplTest.confirm_성공_verificationToken_반환` / `UserVerificationControllerTest.confirm_성공_200`
 - [x] 인증번호 오입력/만료/시도 횟수 초과 테스트 — `UserVerificationServiceImplTest.confirm_코드불일치_*` / `confirm_만료된_인증번호_*` / `confirm_마지막_실패_remainingAttempts_0_VERIFICATION_RATE_LIMITED`
+- [x] verificationToken status 미인증/만료/purpose 불일치 테스트 — `UserVerificationServiceImplTest.validateVerificationToken_status_SENT_*` / `validateVerificationToken_만료_*` / `validateVerificationToken_purpose_불일치_*`
 - [x] 인증번호 재전송 60초 제한 테스트 — `UserVerificationServiceImplTest.send_재발송_60초_제한_VERIFICATION_RATE_LIMITED`
 - [x] `member_verifications.expires_at` 5분 만료 테스트 — `UserVerificationServiceImplTest.send_EMAIL_expiresAt_5분_후_resendAvailableAt_60초_후` (expiresAt≈now+300s, resendAvailableAt≈now+60s 경계 검증)
 - [x] AWS SES mock 기반 이메일 발송 테스트 — `AwsSesEmailSenderAdapterTest` (sendEmail 호출, 발신자/수신자/코드 포함, SdkException→VERIFICATION_EMAIL_UNAVAILABLE)
@@ -276,7 +277,7 @@
 - [x] 개인회원 아이디 찾기 성공 테스트 — `UserRecoveryServiceImplTest.findId_개인회원_EMAIL_성공_maskedLoginId` / `UserRecoveryControllerTest.findId_성공_200`
 - [x] 기업회원 아이디 찾기 성공 테스트 — `UserRecoveryServiceImplTest.findId_기업회원_성공_maskedLoginId`
 - [x] 아이디 찾기 결과 없음 `found=false` 테스트 — `UserRecoveryServiceImplTest.findId_결과_없음_found_false` / `UserRecoveryControllerTest.findId_결과없음_200`
-- [x] loginId masking 테스트 — `UserRecoveryServiceImplTest.findId_loginId_마스킹_앞3자_유지`
+- [x] loginId masking 테스트 (앞 3자+***+뒤 2자 고정 포맷) — `UserRecoveryServiceImplTest.findId_loginId_마스킹_앞3자_별표_뒤2자`
 - [x] password resetToken 발급 테스트 — `UserRecoveryServiceImplTest.issuePasswordToken_개인회원_성공` / `UserRecoveryControllerTest.issuePasswordToken_성공_200`
 - [x] resetToken 실패 5회 차단 테스트 — `UserRecoveryServiceImplTest.resetPassword_실패_5회_초과_차단`
 - [x] resetToken 만료·이미 사용된 token 차단 테스트 — `UserRecoveryServiceImplTest.resetPassword_토큰_만료_*` / `resetPassword_토큰_이미_사용됨_*`
@@ -286,6 +287,8 @@
 - [x] 기존 소셜 계정 로그인 성공 테스트 — `UserSocialAuthServiceImplTest.callback_세션퇴출_기존_accessToken_blacklist_등록` / `UserSocialAuthControllerTest.callback_기존계정_로그인_200`
 - [x] 최초 소셜 계정 callback 시 `socialSignupToken` 발급 테스트 — `UserSocialAuthControllerTest.callback_최초가입_200`
 - [x] `socialSignupToken` 중복 소비 차단 테스트 — `RedisSocialSignupTokenStoreTest.consume_중복_소비_두_번째_호출_empty`
+- [x] `socialSignupToken` TTL 10분 + raw token 저장값 미포함 테스트 — `RedisSocialSignupTokenStoreTest.issue_TTL_10분_설정` / `issue_rawToken_저장값에_미포함`
+- [x] Kakao/Naver/Google email nullable(빈 문자열) 처리 테스트 — `RedisSocialSignupTokenStoreTest.consume_providerEmail_없음_null_반환`
 - [x] `socialSignupToken` provider 불일치 시 `SOCIAL_SIGNUP_TOKEN_INVALID` 테스트 — `UserSocialAuthServiceImplTest.complete_provider_불일치_SOCIAL_SIGNUP_TOKEN_INVALID`
 - [x] 소셜 회원가입 추가정보 완료 성공 테스트 — `UserSocialAuthControllerTest.complete_성공_200`
 - [x] 재직증명서 PDF 업로드 성공 테스트 — `S3EmploymentCertificateFileAdapterTest.upload_성공_fileId_반환` / `UserRegisterControllerTest.uploadCertificate_성공_200`

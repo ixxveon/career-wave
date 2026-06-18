@@ -19,4 +19,10 @@ public interface EmploymentCertificateFilePort {
 
     /** PDF 파일 업로드 후 fileId 및 메타데이터 반환 */
     UserRegisterDto.ResponseEmploymentCertificateUpload upload(MultipartFile file);
+
+    /**
+     * 기업 가입 완료 후 fileId를 소비 처리한다.
+     * 소비된 fileId는 validate()에서 거부되어 재사용을 방지한다.
+     */
+    void consume(String fileId);
 }
