@@ -1,5 +1,6 @@
 package kr.co.carrer.admin.report.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.co.carrer.admin.report.dto.ReportDetailDTO;
 import kr.co.carrer.admin.report.entity.Report;
 import kr.co.carrer.admin.report.repository.ReportBoardRepository;
@@ -11,6 +12,7 @@ import kr.co.carrer.admin.report.type.ReportStatus;
 import kr.co.carrer.admin.report.type.TargetType;
 import kr.co.carrer.admin.report.exception.AdminReportErrorCode;
 import kr.co.carrer.global.exception.CustomException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -37,6 +41,14 @@ class AdminReportServiceImplTest {
     @Mock private ReportQueryRepository reportQueryRepository;
     @Mock private ReportBoardRepository reportBoardRepository;
     @Mock private ReportCommentRepository reportCommentRepository;
+    @Mock private WebClient.Builder webClientBuilder;
+    @Mock private ObjectMapper objectMapper;
+
+    @BeforeEach
+    void setUp() {
+        // self-injection: @Lazy @Autowired는 @InjectMocks로 주입되지 않으므로 직접 설정
+        ReflectionTestUtils.setField(adminReportService, "self", adminReportService);
+    }
 
     // ── getSummary ────────────────────────────────────────────────────────────
 
@@ -292,11 +304,12 @@ class AdminReportServiceImplTest {
     }
 
     private ReportDetailDTO.ResponseDetail createBaseDetail(Long reportId, TargetType targetType, Long targetId) {
+        // aiSuggestion을 non-null로 설정하여 테스트 내 FastAPI 호출 우회
         return new ReportDetailDTO.ResponseDetail(
             reportId, targetType, targetId,
             ReportReason.SPAM, ReportStatus.PENDING,
             "신고자", "피신고자",
-            null, null, null,
+            null, null, "{\"severity\":\"HIGH\",\"category\":\"SPAM\",\"suggestion\":\"테스트\"}",
             ZonedDateTime.now(), null, null
         );
     }
