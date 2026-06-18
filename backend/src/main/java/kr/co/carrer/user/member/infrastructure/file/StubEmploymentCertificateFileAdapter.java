@@ -51,10 +51,15 @@ public class StubEmploymentCertificateFileAdapter implements EmploymentCertifica
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_TOO_LARGE);
         }
+        // 확장자 최소 검증 — local/test에서도 비PDF 파일명 거부
+        String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "";
+        if (!originalName.toLowerCase().endsWith(".pdf")) {
+            throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_UNSUPPORTED);
+        }
         String fakeFileId = "stub-" + UUID.randomUUID();
         return new UserRegisterDto.ResponseEmploymentCertificateUpload(
                 fakeFileId,
-                file.getOriginalFilename(),
+                originalName,
                 "application/pdf",
                 file.getSize(),
                 Instant.now()
