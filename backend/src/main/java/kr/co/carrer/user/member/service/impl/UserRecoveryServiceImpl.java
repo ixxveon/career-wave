@@ -40,6 +40,9 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
     private static final long RESET_TOKEN_EXPIRES_SECONDS = 600L; // 10분
     private static final int RESET_MAX_FAIL = 5;
     private static final String RESET_FAIL_PREFIX = "password-reset:fail:";
+    private static final int ISSUE_RATE_LIMIT = 5;
+    private static final long ISSUE_RATE_TTL_SECONDS = 600L; // 10분
+    private static final String ISSUE_RATE_PREFIX = "password-token:rate:";
 
     private final UserMemberRepository memberRepository;
     private final UserMemberQueryRepository memberQueryRepository;
@@ -112,7 +115,18 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
 
     @Override
     @Transactional
-    public UserRecoveryDto.ResponsePasswordToken issuePasswordToken(UserRecoveryDto.RequestPasswordToken request) {
+    public UserRecoveryDto.ResponsePasswordToken issuePasswordToken(
+            UserRecoveryDto.RequestPasswordToken request, String clientIp) {
+        // loginId + IP 기준 10분 5회 rate limit (spec §10)
+        String rateKey = ISSUE_RATE_PREFIX + request.getLoginId() + ":" + clientIp;
+        String rateCountStr = redisTemplate.opsForValue().get(rateKey);
+        if (rateCountStr != null && Long.parseLong(rateCountStr) >= ISSUE_RATE_LIMIT) {
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_RATE_LIMITED);
+        }
+        Long rateCount = redisTemplate.opsForValue().increment(rateKey);
+        if (rateCount != null && rateCount == 1L) {
+            redisTemplate.expire(rateKey, java.time.Duration.ofSeconds(ISSUE_RATE_TTL_SECONDS));
+        }
         // verificationToken 검증
         MemberVerification verification = verificationRepository
                 .findByVerificationToken(request.getVerificationToken())
