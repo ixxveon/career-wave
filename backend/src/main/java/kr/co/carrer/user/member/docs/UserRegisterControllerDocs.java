@@ -25,7 +25,7 @@ public interface UserRegisterControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공 (available=true: 사용 가능, available=false: 중복)",
                     content = @Content(examples = @ExampleObject(
-                            value = "{\"success\":true,\"message\":\"사용 가능한 아이디입니다.\",\"data\":{\"available\":true}}"))),
+                            value = "{\"success\":true,\"statusCode\":200,\"message\":\"사용 가능한 아이디입니다.\",\"data\":{\"available\":true}}"))),
             @ApiResponse(responseCode = "400", description = "아이디 형식 오류",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"아이디 형식이 올바르지 않습니다. 영문/숫자 6~20자로 입력해 주세요.\",\"code\":\"LOGIN_ID_INVALID\"}")))
@@ -42,7 +42,7 @@ public interface UserRegisterControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "가입 성공",
                     content = @Content(examples = @ExampleObject(
-                            value = "{\"success\":true,\"message\":\"회원가입이 완료되었습니다.\",\"data\":{\"memberId\":\"uuid-v4\",\"roleType\":\"USER\",\"memberStatus\":\"ACTIVE\"}}"))),
+                            value = "{\"success\":true,\"statusCode\":201,\"message\":\"회원가입이 완료되었습니다.\",\"data\":{\"memberId\":\"uuid-v4\",\"roleType\":\"USER\",\"memberStatus\":\"ACTIVE\"}}"))),
             @ApiResponse(responseCode = "400", description = "인증 token 오류 / 비밀번호 정책 위반 / 필수 약관 미동의",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"인증 토큰이 유효하지 않습니다. 인증을 다시 진행해 주세요.\",\"code\":\"VERIFICATION_TOKEN_INVALID\"}"))),
@@ -60,7 +60,7 @@ public interface UserRegisterControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "가입 신청 접수 성공",
                     content = @Content(examples = @ExampleObject(
-                            value = "{\"success\":true,\"message\":\"기업회원 가입 신청이 접수되었습니다. 관리자 승인 후 이메일로 안내드립니다.\",\"data\":{\"memberId\":\"uuid-v4\",\"companyProfileId\":\"uuid-v4\",\"roleType\":\"COMPANY\",\"memberStatus\":\"ACTIVE\",\"companyApprovalStatus\":\"PENDING_REVIEW\"}}"))),
+                            value = "{\"success\":true,\"statusCode\":201,\"message\":\"기업회원 가입 신청이 접수되었습니다. 관리자 승인 후 이메일로 안내드립니다.\",\"data\":{\"memberId\":\"uuid-v4\",\"companyProfileId\":\"uuid-v4\",\"roleType\":\"COMPANY\",\"memberStatus\":\"ACTIVE\",\"companyApprovalStatus\":\"PENDING_REVIEW\"}}"))),
             @ApiResponse(responseCode = "400", description = "인증 token 오류 / 사업자 검증 실패 / 재직증명서 fileId 오류",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"사업자등록정보 확인에 실패했습니다. 사업자등록번호를 다시 확인해 주세요.\",\"code\":\"COMPANY_BUSINESS_VERIFICATION_FAILED\"}"))),
@@ -84,7 +84,7 @@ public interface UserRegisterControllerDocs {
                             mediaType = "application/json",
                             schema = @Schema(implementation = UserRegisterDto.ResponseEmploymentCertificateUpload.class),
                             examples = @ExampleObject(
-                                    value = "{\"success\":true,\"message\":\"파일이 업로드되었습니다.\",\"data\":{\"fileId\":\"employment-certificates/2026-06-18/uuid.pdf\",\"originalName\":\"certificate.pdf\",\"mimeType\":\"application/pdf\",\"size\":1200000,\"uploadedAt\":\"2026-06-18T12:30:00Z\"}}"))),
+                                    value = "{\"success\":true,\"statusCode\":200,\"message\":\"파일이 업로드되었습니다.\",\"data\":{\"fileId\":\"employment-certificates/2026-06-18/uuid.pdf\",\"originalName\":\"certificate.pdf\",\"mimeType\":\"application/pdf\",\"size\":1200000,\"uploadedAt\":\"2026-06-18T12:30:00Z\"}}"))),
             @ApiResponse(responseCode = "400", description = "PDF 형식 아님 또는 MIME 불일치",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"재직증명서는 PDF 파일만 업로드할 수 있습니다.\",\"code\":\"EMPLOYMENT_FILE_INVALID\"}"))),

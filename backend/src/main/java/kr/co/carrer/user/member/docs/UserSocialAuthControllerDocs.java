@@ -25,7 +25,7 @@ public interface UserSocialAuthControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "인증 URL 생성 성공",
                     content = @Content(examples = @ExampleObject(
-                            value = "{\"success\":true,\"message\":\"소셜 인증 URL이 생성되었습니다.\",\"data\":{\"provider\":\"kakao\",\"authorizationUrl\":\"https://kauth.kakao.com/oauth/authorize?...\",\"state\":\"opaque-state\"}}"))),
+                            value = "{\"success\":true,\"statusCode\":200,\"message\":\"소셜 인증 URL이 생성되었습니다.\",\"data\":{\"provider\":\"kakao\",\"authorizationUrl\":\"https://kauth.kakao.com/oauth/authorize?...\",\"state\":\"opaque-state\"}}"))),
             @ApiResponse(responseCode = "400", description = "지원하지 않는 provider",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"지원하지 않는 소셜 로그인 provider입니다.\",\"code\":\"OAUTH_PROVIDER_INVALID\"}")))
@@ -43,7 +43,7 @@ public interface UserSocialAuthControllerDocs {
             @ApiResponse(responseCode = "200", description = "기존 소셜 계정 로그인 성공 또는 추가정보 입력 필요",
                     content = @Content(examples = @ExampleObject(
                             name = "기존 계정 로그인",
-                            value = "{\"success\":true,\"message\":\"로그인되었습니다.\",\"data\":{\"accessToken\":\"jwt-access-token\",\"member\":{\"memberId\":\"uuid-v4\",\"loginId\":\"social_user01\",\"name\":\"홍길동\",\"roleType\":\"USER\",\"memberStatus\":\"ACTIVE\",\"subscriptionStatus\":\"FREE\",\"companyApprovalStatus\":\"NONE\",\"lastLoginAt\":\"2026-06-18T10:00:00Z\"},\"nextPath\":\"/user/dashboard\"}}"))),
+                            value = "{\"success\":true,\"statusCode\":200,\"message\":\"로그인되었습니다.\",\"data\":{\"accessToken\":\"jwt-access-token\",\"member\":{\"memberId\":\"uuid-v4\",\"loginId\":\"social_user01\",\"name\":\"홍길동\",\"roleType\":\"USER\",\"memberStatus\":\"ACTIVE\",\"subscriptionStatus\":\"FREE\",\"companyApprovalStatus\":\"NONE\",\"lastLoginAt\":\"2026-06-18T10:00:00Z\"},\"nextPath\":\"/user/dashboard\"}}"))),
             @ApiResponse(responseCode = "400", description = "지원하지 않는 provider / state 불일치 또는 만료",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"소셜 인증 요청이 유효하지 않습니다. 다시 시도해 주세요.\",\"code\":\"OAUTH_STATE_INVALID\"}"))),
@@ -65,7 +65,7 @@ public interface UserSocialAuthControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "소셜 회원가입 완료",
                     content = @Content(examples = @ExampleObject(
-                            value = "{\"success\":true,\"message\":\"소셜 회원가입이 완료되었습니다.\",\"data\":{\"memberId\":\"uuid-v4\",\"roleType\":\"USER\",\"memberStatus\":\"ACTIVE\",\"nextPath\":\"/auth/login?registered=social\"}}"))),
+                            value = "{\"success\":true,\"statusCode\":200,\"message\":\"소셜 회원가입이 완료되었습니다.\",\"data\":{\"memberId\":\"uuid-v4\",\"roleType\":\"USER\",\"memberStatus\":\"ACTIVE\",\"nextPath\":\"/auth/login?registered=social\"}}"))),
             @ApiResponse(responseCode = "400", description = "socialSignupToken 만료/오류 또는 휴대폰 인증 token 오류",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"소셜 가입 토큰이 유효하지 않습니다. 소셜 로그인을 다시 시도해 주세요.\",\"code\":\"SOCIAL_SIGNUP_TOKEN_INVALID\"}"))),

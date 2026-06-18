@@ -22,7 +22,7 @@ public interface UserVerificationControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "발송 성공",
                     content = @Content(examples = @ExampleObject(
-                            value = "{\"success\":true,\"message\":\"인증번호가 발송되었습니다.\",\"data\":{\"verificationId\":\"uuid-v4\",\"expiresAt\":\"2026-06-18T12:35:00Z\",\"resendAvailableAt\":\"2026-06-18T12:31:00Z\",\"remainingAttempts\":5}}"))),
+                            value = "{\"success\":true,\"statusCode\":200,\"message\":\"인증번호가 발송되었습니다.\",\"data\":{\"verificationId\":\"uuid-v4\",\"expiresAt\":\"2026-06-18T12:35:00Z\",\"resendAvailableAt\":\"2026-06-18T12:31:00Z\",\"remainingAttempts\":5}}"))),
             @ApiResponse(responseCode = "400", description = "이메일/휴대폰 형식 오류",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"인증 대상 형식이 올바르지 않습니다.\",\"code\":\"VERIFICATION_TARGET_INVALID\"}"))),
@@ -40,7 +40,7 @@ public interface UserVerificationControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "인증 성공",
                     content = @Content(examples = @ExampleObject(
-                            value = "{\"success\":true,\"message\":\"인증이 완료되었습니다.\",\"data\":{\"verificationToken\":\"short-lived-token\",\"verifiedAt\":\"2026-06-18T12:32:00Z\"}}"))),
+                            value = "{\"success\":true,\"statusCode\":200,\"message\":\"인증이 완료되었습니다.\",\"data\":{\"verificationToken\":\"short-lived-token\",\"verifiedAt\":\"2026-06-18T12:32:00Z\"}}"))),
             @ApiResponse(responseCode = "400", description = "인증번호 불일치 / 만료 / 인증 token 오류",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"인증번호가 일치하지 않습니다.\",\"code\":\"INVALID_VERIFICATION_CODE\"}"))),

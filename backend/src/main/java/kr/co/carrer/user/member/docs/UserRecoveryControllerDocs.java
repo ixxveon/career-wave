@@ -19,11 +19,11 @@ public interface UserRecoveryControllerDocs {
                     "개인회원(roleType=USER)은 verificationToken만 필요하고, " +
                     "기업회원(roleType=COMPANY)은 managerName과 businessNumber를 추가로 검증한다. " +
                     "결과가 없어도 동일한 일반 메시지를 반환한다(계정 존재 여부 노출 금지). " +
-                    "loginId는 앞 3자 + * 마스킹하여 반환한다.")
+                    "loginId는 앞 3자 + *** + 뒤 2자 형식으로 마스킹하여 반환한다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공 (found=false이면 계정 없음)",
                     content = @Content(examples = @ExampleObject(
-                            value = "{\"success\":true,\"message\":\"요청이 처리되었습니다.\",\"data\":{\"maskedLoginIds\":[\"caree***01\"],\"found\":true}}"))),
+                            value = "{\"success\":true,\"statusCode\":200,\"message\":\"요청이 처리되었습니다.\",\"data\":{\"maskedLoginIds\":[\"car***01\"],\"found\":true}}"))),
             @ApiResponse(responseCode = "400", description = "verificationToken 오류",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"인증 토큰이 유효하지 않습니다. 인증을 다시 진행해 주세요.\",\"code\":\"VERIFICATION_TOKEN_INVALID\"}")))
@@ -39,7 +39,7 @@ public interface UserRecoveryControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "resetToken 발급 성공",
                     content = @Content(examples = @ExampleObject(
-                            value = "{\"success\":true,\"message\":\"비밀번호를 재설정할 수 있습니다.\",\"data\":{\"resetToken\":\"reset-token\",\"expiresAt\":\"2026-06-18T12:40:00Z\"}}"))),
+                            value = "{\"success\":true,\"statusCode\":200,\"message\":\"비밀번호를 재설정할 수 있습니다.\",\"data\":{\"resetToken\":\"reset-token\",\"expiresAt\":\"2026-06-18T12:40:00Z\"}}"))),
             @ApiResponse(responseCode = "400", description = "verificationToken 오류 또는 계정 조회 실패",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"인증 토큰이 유효하지 않습니다. 인증을 다시 진행해 주세요.\",\"code\":\"VERIFICATION_TOKEN_INVALID\"}")))
@@ -55,7 +55,7 @@ public interface UserRecoveryControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공",
                     content = @Content(examples = @ExampleObject(
-                            value = "{\"success\":true,\"message\":\"비밀번호가 변경되었습니다.\",\"data\":{\"changedAt\":\"2026-06-18T12:39:00Z\"}}"))),
+                            value = "{\"success\":true,\"statusCode\":200,\"message\":\"비밀번호가 변경되었습니다.\",\"data\":{\"changedAt\":\"2026-06-18T12:39:00Z\"}}"))),
             @ApiResponse(responseCode = "400", description = "resetToken 없음/위조/재사용 또는 만료 또는 비밀번호 정책 위반",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"비밀번호 재설정 권한이 유효하지 않습니다.\",\"code\":\"PASSWORD_RESET_TOKEN_INVALID\"}")))
