@@ -7,6 +7,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from admin.ai_metrics.client.openai_client import get_ai_metrics_openai_client
+
 log = logging.getLogger(__name__)
 
 scheduler = AsyncIOScheduler()
@@ -16,6 +18,9 @@ scheduler = AsyncIOScheduler()
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     scheduler.start()
     yield
+    if get_ai_metrics_openai_client.cache_info().currsize > 0:
+        await get_ai_metrics_openai_client().close()
+        get_ai_metrics_openai_client.cache_clear()
     scheduler.shutdown()
     # Graceful shutdown: 진행 중인 AI 파이프라인 태스크 최대 15초 대기
     current = asyncio.current_task()

@@ -6,6 +6,8 @@ from sqlalchemy import BigInteger, Column, DateTime, Integer, MetaData, String, 
 from sqlalchemy.dialects.postgresql import UUID as PostgreSqlUUID
 from sqlalchemy.orm import Session
 
+from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException
+
 
 metadata = MetaData()
 
@@ -126,13 +128,19 @@ class RagDocumentRepository:
     @staticmethod
     def _validate_indexing_progress(indexing_progress: int) -> int:
         if indexing_progress < 0 or indexing_progress > 100:
-            raise ValueError("indexing_progress must be between 0 and 100.")
+            raise AiMetricsException(
+                error_code=AiMetricsErrorCode.RAG_DOCUMENT_INDEXING_FAILED,
+                detail={"field": "indexingProgress", "reason": "must be between 0 and 100"},
+            )
         return indexing_progress
 
     @staticmethod
     def _validate_chunk_count(chunk_count: int) -> int:
         if chunk_count < 0:
-            raise ValueError("chunk_count must be greater than or equal to 0.")
+            raise AiMetricsException(
+                error_code=AiMetricsErrorCode.RAG_DOCUMENT_INDEXING_FAILED,
+                detail={"field": "chunkCount", "reason": "must be greater than or equal to 0"},
+            )
         return chunk_count
 
     @staticmethod
