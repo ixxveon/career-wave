@@ -1,5 +1,7 @@
 package kr.co.carrer.admin.report.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import kr.co.carrer.admin.report.dto.ReportDetailDTO;
 import kr.co.carrer.admin.report.entity.Report;
 import kr.co.carrer.admin.report.repository.ReportBoardRepository;
@@ -14,11 +16,18 @@ import kr.co.carrer.admin.report.service.AdminReportService;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminReportServiceImpl implements AdminReportService {
@@ -27,6 +36,24 @@ public class AdminReportServiceImpl implements AdminReportService {
     private final ReportQueryRepository reportQueryRepository;
     private final ReportBoardRepository reportBoardRepository;
     private final ReportCommentRepository reportCommentRepository;
+    private final WebClient.Builder webClientBuilder;
+    private final ObjectMapper objectMapper;
+
+    @Value("${fastapi.base-url}")
+    private String fastApiBaseUrl;
+
+    @Value("${webhook.secret}")
+    private String webhookSecret;
+
+    private static final Duration AI_TIMEOUT = Duration.ofSeconds(10);
+    private static final String REPORT_ANALYSIS_PATH = "/internal/admin/ai/report-analysis";
+
+    private WebClient webClient;
+
+    @PostConstruct
+    void init() {
+        this.webClient = webClientBuilder.baseUrl(fastApiBaseUrl).build();
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -55,7 +82,7 @@ public class AdminReportServiceImpl implements AdminReportService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public ReportDetailDTO.ResponseDetail getReportDetail(Long reportId) {
         ReportDetailDTO.ResponseDetail base = reportQueryRepository.findReportDetail(reportId)
             .orElseThrow(() -> new CustomException(AdminReportErrorCode.REPORT_NOT_FOUND));
@@ -70,13 +97,48 @@ public class AdminReportServiceImpl implements AdminReportService {
             contentBody = reportCommentRepository.findContentById(base.targetId());
         }
 
+        String aiSuggestion = base.aiSuggestion();
+        if (aiSuggestion == null) {
+            aiSuggestion = fetchAiSuggestion(reportId, base.targetType(), base.reason(), contentTitle, contentBody);
+        }
+
         return new ReportDetailDTO.ResponseDetail(
             base.reportId(), base.targetType(), base.targetId(),
             base.reason(), base.reportStatus(),
             base.reporterName(), base.reportedName(),
-            contentTitle, contentBody,
+            contentTitle, contentBody, aiSuggestion,
             base.createdAt(), base.processedAt(), base.processedBy()
         );
+    }
+
+    private String fetchAiSuggestion(Long reportId, TargetType targetType, ReportReason reason,
+                                     String contentTitle, String contentBody) {
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("targetType", targetType.name());
+            body.put("reason", reason.name());
+            body.put("contentTitle", contentTitle);
+            body.put("contentBody", contentBody);
+
+            Map<?, ?> response = webClient.post()
+                .uri(REPORT_ANALYSIS_PATH)
+                .header("X-Internal-Secret", webhookSecret)
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .timeout(AI_TIMEOUT)
+                .block();
+
+            if (response == null) return null;
+
+            String aiSuggestion = objectMapper.writeValueAsString(response);
+            reportRepository.findById(reportId)
+                .ifPresent(report -> report.updateAiSuggestion(aiSuggestion));
+            return aiSuggestion;
+        } catch (Exception e) {
+            log.warn("[ReportAI] FastAPI 호출 실패 — reportId={}, 원인={}", reportId, e.getMessage());
+            return null;
+        }
     }
 
     @Override
