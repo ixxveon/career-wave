@@ -1,6 +1,9 @@
 package kr.co.carrer.admin.audit.repository;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import kr.co.carrer.admin.audit.entity.AuditLog;
 import kr.co.carrer.admin.audit.entity.QAuditLog;
@@ -26,17 +29,77 @@ public class AuditLogQueryRepository {
 
     public SummaryAggregate getSummary(ZonedDateTime from, ZonedDateTime to) {
         BooleanBuilder periodPredicate = periodPredicate(from, to);
+        NumberExpression<Long> adminActivityCount = new CaseBuilder()
+                .when(auditLog.logType.eq(AuditLogType.ADMIN_ACTIVITY))
+                .then(1L)
+                .otherwise(0L)
+                .sum();
+        NumberExpression<Long> adminManagementCount = new CaseBuilder()
+                .when(auditLog.logType.eq(AuditLogType.ADMIN_MANAGEMENT))
+                .then(1L)
+                .otherwise(0L)
+                .sum();
+        NumberExpression<Long> aiMetricsSystemCount = new CaseBuilder()
+                .when(auditLog.logType.eq(AuditLogType.AI_METRICS_SYSTEM))
+                .then(1L)
+                .otherwise(0L)
+                .sum();
+        NumberExpression<Long> scrapingSystemCount = new CaseBuilder()
+                .when(auditLog.logType.eq(AuditLogType.SCRAPING_SYSTEM))
+                .then(1L)
+                .otherwise(0L)
+                .sum();
+        NumberExpression<Long> infoCount = new CaseBuilder()
+                .when(auditLog.severity.eq(AuditLogSeverity.INFO))
+                .then(1L)
+                .otherwise(0L)
+                .sum();
+        NumberExpression<Long> warnCount = new CaseBuilder()
+                .when(auditLog.severity.eq(AuditLogSeverity.WARN))
+                .then(1L)
+                .otherwise(0L)
+                .sum();
+        NumberExpression<Long> errorCount = new CaseBuilder()
+                .when(auditLog.severity.eq(AuditLogSeverity.ERROR))
+                .then(1L)
+                .otherwise(0L)
+                .sum();
+        NumberExpression<Long> successCount = new CaseBuilder()
+                .when(auditLog.severity.eq(AuditLogSeverity.SUCCESS))
+                .then(1L)
+                .otherwise(0L)
+                .sum();
+
+        Tuple row = queryFactory
+                .select(
+                        auditLog.count(),
+                        adminActivityCount,
+                        adminManagementCount,
+                        aiMetricsSystemCount,
+                        scrapingSystemCount,
+                        infoCount,
+                        warnCount,
+                        errorCount,
+                        successCount
+                )
+                .from(auditLog)
+                .where(periodPredicate)
+                .fetchOne();
+
+        if (row == null) {
+            return new SummaryAggregate(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
+        }
 
         return new SummaryAggregate(
-                count(periodPredicate),
-                count(new BooleanBuilder(periodPredicate).and(auditLog.logType.eq(AuditLogType.ADMIN_ACTIVITY))),
-                count(new BooleanBuilder(periodPredicate).and(auditLog.logType.eq(AuditLogType.ADMIN_MANAGEMENT))),
-                count(new BooleanBuilder(periodPredicate).and(auditLog.logType.eq(AuditLogType.AI_METRICS_SYSTEM))),
-                count(new BooleanBuilder(periodPredicate).and(auditLog.logType.eq(AuditLogType.SCRAPING_SYSTEM))),
-                count(new BooleanBuilder(periodPredicate).and(auditLog.severity.eq(AuditLogSeverity.INFO))),
-                count(new BooleanBuilder(periodPredicate).and(auditLog.severity.eq(AuditLogSeverity.WARN))),
-                count(new BooleanBuilder(periodPredicate).and(auditLog.severity.eq(AuditLogSeverity.ERROR))),
-                count(new BooleanBuilder(periodPredicate).and(auditLog.severity.eq(AuditLogSeverity.SUCCESS)))
+                valueOrZero(row.get(auditLog.count())),
+                valueOrZero(row.get(adminActivityCount)),
+                valueOrZero(row.get(adminManagementCount)),
+                valueOrZero(row.get(aiMetricsSystemCount)),
+                valueOrZero(row.get(scrapingSystemCount)),
+                valueOrZero(row.get(infoCount)),
+                valueOrZero(row.get(warnCount)),
+                valueOrZero(row.get(errorCount)),
+                valueOrZero(row.get(successCount))
         );
     }
 
@@ -198,6 +261,10 @@ public class AuditLogQueryRepository {
         }
         String trimmedKeyword = keyword.trim();
         return trimmedKeyword.isEmpty() ? null : trimmedKeyword;
+    }
+
+    private long valueOrZero(Long value) {
+        return value != null ? value : 0L;
     }
 
     public record SummaryAggregate(
