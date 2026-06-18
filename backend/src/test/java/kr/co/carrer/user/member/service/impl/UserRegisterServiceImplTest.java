@@ -1,7 +1,9 @@
 package kr.co.carrer.user.member.service.impl;
 
 import kr.co.carrer.user.member.dto.UserRegisterDto;
+import kr.co.carrer.user.member.entity.CompanyProfile;
 import kr.co.carrer.user.member.entity.Member;
+import kr.co.carrer.user.member.entity.MemberTermsAgreement;
 import kr.co.carrer.user.member.entity.MemberVerification;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.*;
@@ -25,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
 
 @ExtendWith(MockitoExtension.class)
 class UserRegisterServiceImplTest {
@@ -134,6 +137,177 @@ class UserRegisterServiceImplTest {
         verify(memberRepository, never()).save(any());
     }
 
+    // ─── loginId 중복 확인 ────────────────────────────────────────────────────────
+
+    @Test
+    void checkLoginId_사용가능한_아이디_available_true() {
+        when(memberRepository.existsByLoginId("newuser01")).thenReturn(false);
+        assertThat(service.checkLoginId("newuser01").available()).isTrue();
+    }
+
+    @Test
+    void checkLoginId_중복된_아이디_available_false() {
+        when(memberRepository.existsByLoginId("taken")).thenReturn(true);
+        assertThat(service.checkLoginId("taken").available()).isFalse();
+    }
+
+    // ─── 개인회원 필수 약관 미동의 ───────────────────────────────────────────────────
+
+    @Test
+    void registerUser_service_약관_미동의_REGISTER_TERMS_REQUIRED() throws Exception {
+        UserRegisterDto.RequestPersonalRegister req = buildPersonalRequest();
+        setField(req.getTerms(), "service", false);
+
+        assertThatThrownBy(() -> service.registerUser(req))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.REGISTER_TERMS_REQUIRED));
+
+        verifyNoInteractions(verificationRepository);
+    }
+
+    @Test
+    void registerUser_privacy_약관_미동의_REGISTER_TERMS_REQUIRED() throws Exception {
+        UserRegisterDto.RequestPersonalRegister req = buildPersonalRequest();
+        setField(req.getTerms(), "privacy", false);
+
+        assertThatThrownBy(() -> service.registerUser(req))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.REGISTER_TERMS_REQUIRED));
+    }
+
+    // ─── 개인회원 가입 시 companyVerification/sms null 저장 ───────────────────────────
+
+    @Test
+    void registerUser_companyVerification_sms_null_저장() throws Exception {
+        MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "test@example.com");
+        MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01012345678");
+        when(verificationRepository.findByVerificationToken("etoken")).thenReturn(Optional.of(emailVerif));
+        when(verificationRepository.findByVerificationToken("ptoken")).thenReturn(Optional.of(phoneVerif));
+        when(memberRepository.existsByLoginId(anyString())).thenReturn(false);
+        when(memberRepository.existsByEmail(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(memberRepository.save(any())).thenAnswer(inv -> {
+            Member m = inv.getArgument(0);
+            setField(m, "memberId", UUID.randomUUID());
+            return m;
+        });
+
+        service.registerUser(buildPersonalRequest());
+
+        ArgumentCaptor<MemberTermsAgreement> captor = ArgumentCaptor.forClass(MemberTermsAgreement.class);
+        verify(termsRepository).save(captor.capture());
+        assertThat(captor.getValue().getCompanyVerificationAgreed()).isNull();
+        assertThat(captor.getValue().getSmsAgreed()).isNull();
+    }
+
+    // ─── 기업회원 가입 성공 — token 미발급 ───────────────────────────────────────────
+
+    @Test
+    void registerCompany_성공_token_미발급() throws Exception {
+        MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "hr@company.com");
+        MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01099998888");
+        setField(phoneVerif, "verificationToken", "ptoken");
+        when(verificationRepository.findByVerificationToken("etoken")).thenReturn(Optional.of(emailVerif));
+        when(verificationRepository.findByVerificationToken("ptoken")).thenReturn(Optional.of(phoneVerif));
+        when(memberRepository.existsByLoginId(anyString())).thenReturn(false);
+        when(memberRepository.existsByEmail(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(companyProfileRepository.existsByBusinessNumber(anyString())).thenReturn(false);
+        when(businessVerificationPort.verify(anyString())).thenReturn(true);
+        when(employmentCertificateFilePort.resolveUrl(anyString())).thenReturn("http://s3/cert.pdf");
+        when(employmentCertificateFilePort.resolveFileName(anyString())).thenReturn("cert.pdf");
+        when(memberRepository.save(any())).thenAnswer(inv -> {
+            Member m = inv.getArgument(0);
+            setField(m, "memberId", UUID.randomUUID());
+            return m;
+        });
+        when(companyProfileRepository.save(any())).thenAnswer(inv -> {
+            CompanyProfile cp = inv.getArgument(0);
+            setField(cp, "companyProfileId", UUID.randomUUID());
+            return cp;
+        });
+
+        UserRegisterDto.ResponseCompanyRegister resp = service.registerCompany(buildCompanyRequest());
+
+        assertThat(resp).isNotNull();
+        assertThat(resp.getRoleType()).isEqualTo("COMPANY");
+        assertThat(resp.getMemberId()).isNotNull();
+        assertThat(resp.getCompanyApprovalStatus()).isEqualTo("PENDING_REVIEW");
+        verify(hrManagerRepository, times(1)).save(any());
+        verify(termsRepository, times(1)).save(any());
+    }
+
+    // ─── 기업회원 필수 약관 미동의 ───────────────────────────────────────────────────
+
+    @Test
+    void registerCompany_companyVerification_미동의_REGISTER_TERMS_REQUIRED() throws Exception {
+        UserRegisterDto.RequestCompanyRegister req = buildCompanyRequest();
+        setField(req.getTerms(), "companyVerification", false);
+
+        assertThatThrownBy(() -> service.registerCompany(req))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.REGISTER_TERMS_REQUIRED));
+
+        verifyNoInteractions(verificationRepository);
+    }
+
+    @Test
+    void registerCompany_sms_미동의_REGISTER_TERMS_REQUIRED() throws Exception {
+        UserRegisterDto.RequestCompanyRegister req = buildCompanyRequest();
+        setField(req.getTerms(), "sms", false);
+
+        assertThatThrownBy(() -> service.registerCompany(req))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.REGISTER_TERMS_REQUIRED));
+    }
+
+    // ─── 기업회원 약관 저장값 검증 ───────────────────────────────────────────────────
+
+    @Test
+    void registerCompany_약관_저장_검증() throws Exception {
+        MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "hr@company.com");
+        MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01099998888");
+        setField(phoneVerif, "verificationToken", "ptoken");
+        when(verificationRepository.findByVerificationToken("etoken")).thenReturn(Optional.of(emailVerif));
+        when(verificationRepository.findByVerificationToken("ptoken")).thenReturn(Optional.of(phoneVerif));
+        when(memberRepository.existsByLoginId(anyString())).thenReturn(false);
+        when(memberRepository.existsByEmail(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(companyProfileRepository.existsByBusinessNumber(anyString())).thenReturn(false);
+        when(businessVerificationPort.verify(anyString())).thenReturn(true);
+        when(employmentCertificateFilePort.resolveUrl(anyString())).thenReturn("http://s3/cert.pdf");
+        when(employmentCertificateFilePort.resolveFileName(anyString())).thenReturn("cert.pdf");
+        when(memberRepository.save(any())).thenAnswer(inv -> {
+            Member m = inv.getArgument(0);
+            setField(m, "memberId", UUID.randomUUID());
+            return m;
+        });
+        when(companyProfileRepository.save(any())).thenAnswer(inv -> {
+            CompanyProfile cp = inv.getArgument(0);
+            setField(cp, "companyProfileId", UUID.randomUUID());
+            return cp;
+        });
+
+        service.registerCompany(buildCompanyRequest());
+
+        ArgumentCaptor<MemberTermsAgreement> captor = ArgumentCaptor.forClass(MemberTermsAgreement.class);
+        verify(termsRepository).save(captor.capture());
+        MemberTermsAgreement saved = captor.getValue();
+        assertThat(saved.isServiceAgreed()).isTrue();
+        assertThat(saved.isPrivacyAgreed()).isTrue();
+        assertThat(saved.getCompanyVerificationAgreed()).isTrue();
+        assertThat(saved.getSmsAgreed()).isTrue();
+        assertThat(saved.isMarketingAgreed()).isFalse();
+    }
+
     // ─── 내부 유틸 ───────────────────────────────────────────────────────────────
 
     private MemberVerification createVerification(VerificationChannel channel, String target) throws Exception {
@@ -193,7 +367,7 @@ class UserRegisterServiceImplTest {
         setField(terms, "privacy", true);
         setField(terms, "marketing", false);
         setField(terms, "companyVerification", true);
-        setField(terms, "sms", false);
+        setField(terms, "sms", true);
         setField(req, "terms", terms);
         return req;
     }

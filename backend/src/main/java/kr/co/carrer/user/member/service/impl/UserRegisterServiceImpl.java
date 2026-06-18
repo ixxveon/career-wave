@@ -45,6 +45,11 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     @Override
     @Transactional
     public UserRegisterDto.ResponsePersonalRegister registerUser(UserRegisterDto.RequestPersonalRegister request) {
+        // 필수 약관 검증 — DTO @AssertTrue는 Controller Bean Validation 의존; Service 직접 호출 시 재검증
+        if (!request.getTerms().isService() || !request.getTerms().isPrivacy()) {
+            throw new CustomException(UserAuthErrorCode.REGISTER_TERMS_REQUIRED);
+        }
+
         // 이메일 인증 검증 — purpose=REGISTER
         var emailVerification = verificationRepository.findByVerificationToken(request.getEmailVerificationToken())
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
@@ -97,6 +102,12 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     @Override
     @Transactional
     public UserRegisterDto.ResponseCompanyRegister registerCompany(UserRegisterDto.RequestCompanyRegister request) {
+        // 필수 약관 검증 — 기업회원은 service/privacy/companyVerification/sms 모두 필수
+        if (!request.getTerms().isService() || !request.getTerms().isPrivacy()
+                || !request.getTerms().isCompanyVerification() || !request.getTerms().isSms()) {
+            throw new CustomException(UserAuthErrorCode.REGISTER_TERMS_REQUIRED);
+        }
+
         // 담당자 이메일 인증 검증
         var emailVerification = verificationRepository.findByVerificationToken(request.getManagerEmailVerificationToken())
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));

@@ -162,6 +162,25 @@ class UserSocialAuthServiceImplTest {
                                 .isEqualTo(UserAuthErrorCode.SOCIAL_SIGNUP_TOKEN_INVALID));
     }
 
+    // ─── provider 불일치 — SOCIAL_SIGNUP_TOKEN_INVALID ───────────────────────────
+
+    @Test
+    void complete_provider_불일치_SOCIAL_SIGNUP_TOKEN_INVALID() throws Exception {
+        // consume()은 GOOGLE payload를 반환하지만 request provider는 kakao
+        SocialSignupTokenStore.SocialSignupPayload googlePayload =
+                new SocialSignupTokenStore.SocialSignupPayload(
+                        SocialProvider.GOOGLE, "google-uid-123", "test@gmail.com");
+        when(socialSignupTokenStore.consume(anyString())).thenReturn(Optional.of(googlePayload));
+
+        var request = buildRequestSocialComplete("kakao", "01012345678", "ptoken");
+
+        assertThatThrownBy(() -> service.complete(request, httpResponse))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.SOCIAL_SIGNUP_TOKEN_INVALID));
+    }
+
     // ─── providerUserId null — fail-close ─────────────────────────────────────────
 
     @SuppressWarnings({"unchecked", "rawtypes"})

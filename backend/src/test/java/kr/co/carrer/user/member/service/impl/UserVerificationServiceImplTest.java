@@ -65,6 +65,27 @@ class UserVerificationServiceImplTest {
     }
 
     @Test
+    void confirm_마지막_실패_remainingAttempts_0_VERIFICATION_RATE_LIMITED() throws Exception {
+        // remainingAttempts=1 → 오입력 1회 → 0이 되면 VERIFICATION_RATE_LIMITED
+        MemberVerification verification = createVerification(1, VerificationStatus.SENT, "correcthash");
+        when(verificationRepository.findByVerificationId(any(UUID.class)))
+                .thenReturn(Optional.of(verification));
+
+        UserVerificationDto.RequestConfirmVerification request = new UserVerificationDto.RequestConfirmVerification();
+        setField(request, "verificationId", UUID.randomUUID());
+        setField(request, "code", "000000"); // 틀린 코드
+
+        assertThatThrownBy(() -> service.confirm(request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> {
+                    assertThat(((CustomException) e).getErrorCode())
+                            .isEqualTo(UserAuthErrorCode.VERIFICATION_RATE_LIMITED);
+                });
+
+        assertThat(verification.getRemainingAttempts()).isEqualTo(0);
+    }
+
+    @Test
     void confirm_만료된_인증번호_VERIFICATION_EXPIRED() throws Exception {
         MemberVerification verification = createVerification(5, VerificationStatus.SENT, "hash");
         setField(verification, "expiresAt", Instant.now().minusSeconds(60)); // 만료

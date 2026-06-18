@@ -133,7 +133,7 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
         String rateKey = ISSUE_RATE_PREFIX + request.getLoginId() + ":" + clientIp;
         Long rateCount = redisTemplate.execute(INCR_WITH_TTL_SCRIPT,
                 List.of(rateKey), String.valueOf(ISSUE_RATE_TTL_SECONDS));
-        if (rateCount != null && rateCount > ISSUE_RATE_LIMIT) {
+        if (rateCount == null || rateCount > ISSUE_RATE_LIMIT) {
             throw new CustomException(UserAuthErrorCode.VERIFICATION_RATE_LIMITED);
         }
         // verificationToken 검증
