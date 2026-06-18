@@ -96,7 +96,7 @@
 - [x] vector index 저장 로직을 작성한다.
 - [x] vector index 삭제 로직을 작성한다.
 - [x] vector store 연동 실패를 내부 오류로 변환하는 처리 로직을 작성한다.
-
+  
 ## Phase 12 - Domain Router
 
 - [ ] `ai_metrics_router.py`를 작성한다.   
