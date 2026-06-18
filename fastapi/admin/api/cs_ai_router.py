@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -52,7 +52,7 @@ _responses = {
     description="카테고리와 제목을 기반으로 공지사항 본문 초안을 생성합니다.",
     dependencies=[Depends(verify_internal_secret)],
 )
-async def generate_notice_draft(request: NoticeDraftRequest) -> CsAiDraftResponse:
+async def notice_draft_handler(request: NoticeDraftRequest) -> CsAiDraftResponse:
     try:
         draft = await generate_notice_draft(request)
         return CsAiDraftResponse(draft=draft)
@@ -77,7 +77,7 @@ async def generate_notice_draft(request: NoticeDraftRequest) -> CsAiDraftRespons
     description="질문을 기반으로 FAQ 답변 초안을 생성합니다.",
     dependencies=[Depends(verify_internal_secret)],
 )
-async def generate_faq_draft(request: FaqDraftRequest) -> CsAiDraftResponse:
+async def faq_draft_handler(request: FaqDraftRequest) -> CsAiDraftResponse:
     try:
         draft = await generate_faq_draft(request)
         return CsAiDraftResponse(draft=draft)
@@ -102,7 +102,7 @@ async def generate_faq_draft(request: FaqDraftRequest) -> CsAiDraftResponse:
     description="문의 카테고리, 제목, 내용을 기반으로 답변 초안을 생성합니다.",
     dependencies=[Depends(verify_internal_secret)],
 )
-async def generate_inquiry_draft(request: InquiryDraftRequest) -> CsAiDraftResponse:
+async def inquiry_draft_handler(request: InquiryDraftRequest) -> CsAiDraftResponse:
     try:
         draft = await generate_inquiry_draft(request)
         return CsAiDraftResponse(draft=draft)
