@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -36,6 +37,9 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     @Override
     @Transactional(readOnly = true)
     public UserRegisterDto.ResponseCheckLoginId checkLoginId(String loginId) {
+        if (!loginId.matches("^[A-Za-z0-9]{6,20}$")) {
+            throw new CustomException(UserAuthErrorCode.LOGIN_ID_INVALID);
+        }
         boolean available = !memberRepository.existsByLoginId(loginId);
         return new UserRegisterDto.ResponseCheckLoginId(available);
     }
@@ -197,6 +201,13 @@ public class UserRegisterServiceImpl implements UserRegisterService {
                 companyProfile.getCompanyProfileId(),
                 MemberStatus.ACTIVE,
                 "PENDING_REVIEW");
+    }
+
+    // ── 재직증명서 업로드 ──────────────────────────────────────────────────────
+
+    @Override
+    public UserRegisterDto.ResponseEmploymentCertificateUpload uploadEmploymentCertificate(MultipartFile file) {
+        return employmentCertificateFilePort.upload(file);
     }
 
 }

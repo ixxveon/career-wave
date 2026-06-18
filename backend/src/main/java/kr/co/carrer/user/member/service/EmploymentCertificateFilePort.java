@@ -1,10 +1,13 @@
 package kr.co.carrer.user.member.service;
 
+import kr.co.carrer.user.member.dto.UserRegisterDto;
+import org.springframework.web.multipart.MultipartFile;
+
 public interface EmploymentCertificateFilePort {
 
     /**
      * fileId 유효성 검증 — 유효하지 않으면 CustomException(EMPLOYMENT_FILE_INVALID) throw.
-     * Phase 5에서 실제 S3 존재 여부·MIME·크기 검증으로 교체.
+     * S3 구현체에서 객체 존재 여부·MIME·크기 검증.
      */
     void validate(String fileId);
 
@@ -13,4 +16,7 @@ public interface EmploymentCertificateFilePort {
 
     /** fileId → 원본 파일명 변환 */
     String resolveFileName(String fileId);
+
+    /** PDF 파일 업로드 후 fileId 및 메타데이터 반환 */
+    UserRegisterDto.ResponseEmploymentCertificateUpload upload(MultipartFile file);
 }
