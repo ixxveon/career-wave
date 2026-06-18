@@ -99,7 +99,7 @@
 
 ## Phase 12 - Domain Router
 
-- [ ] `ai_metrics_router.py`를 작성한다.
+- [ ] `ai_metrics_router.py`를 작성한다.   
 - [ ] `POST /internal/admin/ai-metrics/usage/summary` Router를 작성한다.
 - [ ] `POST /internal/admin/ai-metrics/usage/domain-usage` Router를 작성한다.
 - [ ] `POST /internal/admin/ai-metrics/usage/token-trend` Router를 작성한다.
