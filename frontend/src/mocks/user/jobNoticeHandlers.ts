@@ -156,7 +156,8 @@ export const jobNoticeHandlers = [
     const start = (page - 1) * size;
     const content = filtered.slice(start, start + size).map(toListItem);
     const totalElements = filtered.length;
-    const todayNewCount = filtered.filter((jobNotice) => jobNotice.createdAt.startsWith('2026-06-13')).length;
+    const today = new Date().toISOString().slice(0, 10);
+    const todayNewCount = filtered.filter((jobNotice) => jobNotice.createdAt.startsWith(today)).length;
 
     const data: JobNoticeListResponse = {
       content,
