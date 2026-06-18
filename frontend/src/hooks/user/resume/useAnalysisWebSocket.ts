@@ -93,7 +93,7 @@ export function useAnalysisWebSocket({
             clientRef.current?.deactivate();
             clientRef.current = null;
             setIsConnected(false);
-            onFailed(msg.errorMessage ?? msg.message ?? '분석 중 오류가 발생했습니다.');
+            onFailed(msg.errorMessage ?? '분석 중 오류가 발생했습니다.');
           }
         } catch {
           // JSON 파싱 실패 무시

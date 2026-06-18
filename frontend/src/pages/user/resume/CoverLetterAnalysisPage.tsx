@@ -9,7 +9,7 @@ import '@/styles/user/resume/CoverLetterAnalysisPage.css';
 
 export default function CoverLetterAnalysisPage() {
   const {
-    company, job, items, uiState, apiError, networkError, wsMessage, canSubmit,
+    company, job, items, uiState, apiError, networkError, canSubmit,
     analysisResult,
     setCompany, setJob, addItem, removeItem, updateItem,
     handleSubmit, reset, dismissNetworkError,
@@ -49,7 +49,7 @@ export default function CoverLetterAnalysisPage() {
 
   return (
     <div className="cl">
-      {isAnalyzing && <LoadingModal wsMessage={wsMessage} onCancel={reset} />}
+      {isAnalyzing && <LoadingModal onCancel={reset} />}
 
       {networkError && (
         <div className="ra-toast" role="alert" aria-live="assertive">

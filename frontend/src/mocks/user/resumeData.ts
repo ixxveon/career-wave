@@ -105,9 +105,9 @@ export const MOCK_HISTORY_ALL = [
 
 // handlers.ts에서 page/size를 적용해 슬라이싱하여 사용
 export const MOCK_HISTORY_RESPONSE: ResumeHistoryResponse = {
-  content: MOCK_HISTORY_ALL.slice(0, 10),
+  items: MOCK_HISTORY_ALL.slice(0, 10),
   page: 0,
   size: 10,
-  totalElements: MOCK_HISTORY_ALL.length,
+  totalItems: MOCK_HISTORY_ALL.length,
   totalPages: Math.ceil(MOCK_HISTORY_ALL.length / 10),
 };

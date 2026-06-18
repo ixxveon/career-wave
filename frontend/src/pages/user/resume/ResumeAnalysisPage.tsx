@@ -9,7 +9,7 @@ import '@/styles/user/resume/ResumeAnalysisPage.css';
 
 export default function ResumeAnalysisPage() {
   const {
-    file, uiState, fileError, apiError, networkError, wsMessage,
+    file, uiState, fileError, apiError, networkError,
     analysisResult,
     handleFileSelect, handleFileRemove, handleUpload, reset, dismissNetworkError,
   } = useResumeUpload();
@@ -46,7 +46,7 @@ export default function ResumeAnalysisPage() {
 
   return (
     <div className="ra">
-      {isAnalyzing && <LoadingModal wsMessage={wsMessage} onCancel={reset} />}
+      {isAnalyzing && <LoadingModal onCancel={reset} />}
 
       {networkError && (
         <div className="ra-toast" role="alert" aria-live="assertive">

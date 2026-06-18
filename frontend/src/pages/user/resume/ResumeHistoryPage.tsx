@@ -1,10 +1,9 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FileSearch, FileText, ScrollText } from 'lucide-react';
 import HistoryItem from '../../../components/user/resume/HistoryItem';
 import { useResumeHistory } from '../../../hooks/user/resume/useResumeHistory';
-import type { FileType } from '../../../types/user/resume';
-import { useState } from 'react';
+import type { FileType, ResumeHistoryItem } from '../../../types/user/resume';
 import '@/styles/user/resume/ResumeHistoryPage.css';
 
 const TYPE_TABS: { label: string; value: FileType | 'ALL'; Icon: typeof FileText }[] = [
@@ -15,7 +14,6 @@ const TYPE_TABS: { label: string; value: FileType | 'ALL'; Icon: typeof FileText
 
 export default function ResumeHistoryPage() {
   const [activeType, setActiveType] = useState<FileType | 'ALL'>('ALL');
-  const fileTypeParam = activeType === 'ALL' ? undefined : activeType;
 
   const {
     data,
@@ -25,7 +23,7 @@ export default function ResumeHistoryPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useResumeHistory(fileTypeParam);
+  } = useResumeHistory();
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -46,12 +44,16 @@ export default function ResumeHistoryPage() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  function handleTabChange(type: FileType | 'ALL') {
+  function handleTabChange(type: FileType | 'ALL'): void {
     setActiveType(type);
   }
 
-  const allItems = data?.pages.flatMap((page) => page.content) ?? [];
-  const totalElements = data?.pages[0]?.totalElements ?? 0;
+  const allItems: ResumeHistoryItem[] = data?.pages.flatMap((page) => page.items) ?? [];
+  // 탭 필터는 클라이언트 사이드 적용 (백엔드 미지원)
+  const filteredItems = activeType === 'ALL'
+    ? allItems
+    : allItems.filter(item => item.fileType === activeType);
+  const totalItems = data?.pages[0]?.totalItems ?? 0;
 
   return (
     <div className="rh">
@@ -118,9 +120,9 @@ export default function ResumeHistoryPage() {
               </div>
             ) : (
               <>
-                <p className="rh-count">총 {totalElements}건</p>
+                <p className="rh-count">총 {totalItems}건</p>
                 <ul className="rh-list" aria-label="분석 이력 목록">
-                  {allItems.map(item => (
+                  {filteredItems.map((item) => (
                     <li key={item.documentId}>
                       <HistoryItem item={item} />
                     </li>

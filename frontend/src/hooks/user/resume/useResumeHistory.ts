@@ -5,11 +5,11 @@ import type { FileType } from '../../../types/user/resume';
 
 const PAGE_SIZE = 5;
 
-export function useResumeHistory(fileType?: FileType) {
+export function useResumeHistory() {
   return useInfiniteQuery({
-    queryKey: resumeQueryKeys.historyInfinite(fileType),
+    queryKey: resumeQueryKeys.historyInfinite(),
     queryFn: ({ pageParam, signal }) =>
-      resumeHistoryApi.getHistory({ page: pageParam, size: PAGE_SIZE, fileType }, signal),
+      resumeHistoryApi.getHistory({ page: pageParam, size: PAGE_SIZE }, signal),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       const next = lastPage.page + 1;
