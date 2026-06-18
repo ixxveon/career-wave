@@ -1,0 +1,11 @@
+{
+  "status": "COMPLETED",
+  "scoreJobFitness": 82,
+  "scoreTechStack": 78,
+  "scoreQuantified": 70,
+  "scoreLogical": 85,
+  "scoreTotal": 79,
+  "overallReview": "전반적으로 기술 역량이 우수하며 문제 해결 경험이 잘 드러납니다. 수치화된 성과를 더 구체적으로 작성하면 경쟁력이 높아질 것입니다.",
+  "feedbackText": "[{\"sectionNumber\":1,\"question\":\"지원 동기를 작성하세요.\",\"originalText\":\"저는 카카오의 기술력과...\",\"goodPoint\":\"지원 동기가 명확하게 드러납니다.\",\"badPoint\":\"구체적인 기술 경험 연결이 부족합니다.\",\"improvedText\":\"저는 카카오의 대규모 트래픽 처리 기술에 관심을 갖고...\",\"starAnalysis\":null}]",
+  "errorMessage": null
+}

@@ -68,7 +68,7 @@ class ResumeServiceWebhookTest {
                 "전반적으로 우수합니다.", "[{\"sectionNumber\":1}]", null
         );
 
-        resumeService.receiveWebhook(VALID_SECRET, request);
+        resumeService.receiveWebhook(documentId, VALID_SECRET, request);
 
         verify(documentFeedbackRepository).save(any(DocumentFeedback.class));
         assertThat(document.getStatus()).isEqualTo(DocumentStatus.COMPLETED);
@@ -92,7 +92,7 @@ class ResumeServiceWebhookTest {
                 null, null, "AI 분석 오류 발생"
         );
 
-        resumeService.receiveWebhook(VALID_SECRET, request);
+        resumeService.receiveWebhook(documentId, VALID_SECRET, request);
 
         verify(documentFeedbackRepository, never()).save(any());
         assertThat(document.getStatus()).isEqualTo(DocumentStatus.FAILED);
@@ -109,7 +109,7 @@ class ResumeServiceWebhookTest {
                 85, 90, 75, 80, 82, "총평", "[]", null
         );
 
-        assertThatThrownBy(() -> resumeService.receiveWebhook("wrong-secret", request))
+        assertThatThrownBy(() -> resumeService.receiveWebhook(request.documentId(), "wrong-secret", request))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(ResumeErrorCode.WEBHOOK_SECRET_INVALID);
@@ -127,7 +127,7 @@ class ResumeServiceWebhookTest {
                 null, null, null
         );
 
-        assertThatThrownBy(() -> resumeService.receiveWebhook(VALID_SECRET, request))
+        assertThatThrownBy(() -> resumeService.receiveWebhook(documentId, VALID_SECRET, request))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(ResumeErrorCode.WEBHOOK_INVALID_STATUS);
@@ -147,7 +147,7 @@ class ResumeServiceWebhookTest {
                 85, 90, 75, 80, 82, "총평", "[]", null
         );
 
-        resumeService.receiveWebhook(VALID_SECRET, request);
+        resumeService.receiveWebhook(documentId, VALID_SECRET, request);
 
         verify(documentFeedbackRepository, never()).save(any());
         verify(eventPublisher, never()).publishEvent(any());
