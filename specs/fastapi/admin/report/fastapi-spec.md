@@ -53,10 +53,10 @@ FastAPI는 분석 결과만 반환하며 DB를 직접 읽거나 쓰지 않는다
 
 ### Edge Cases
 
-- `contentBody`가 null인 MEMBER 타입 신고를 분석할 때 LLM 프롬프트를 어떻게 구성하는가?
-- LLM 응답이 JSON 형식이지만 `severity` 필드가 허용 범위(높음|중간|낮음) 밖의 값을 반환하면 어떻게 처리하는가?
-- `contentBody`가 매우 긴 경우(토큰 초과) LLM 호출이 실패할 수 있는데 어떻게 처리하는가?
-- 동일 신고에 대해 Spring Boot가 동시에 두 번 요청하면 FastAPI는 중복 분석을 수행하는가?
+- **EC-001**: `contentBody`가 null인 MEMBER 타입 신고 분석 시 → FR-005에 따라 `reason`만으로 LLM 프롬프트를 구성한다.
+- **EC-002**: LLM 응답의 `severity` 또는 `category`가 허용 범위 밖의 값이면 → FR-007에 따라 `REPORT_AI_ANALYSIS_FAILED`에 대응 가능한 내부 오류를 반환한다.
+- **EC-003**: `contentBody`가 매우 긴 경우(토큰 초과) → LLM 호출 실패로 간주하고 FR-008에 따라 `REPORT_AI_ANALYSIS_FAILED`를 반환한다. Spring Boot는 비크리티컬로 처리하여 `ai_suggestion` null 유지 후 상세 데이터를 정상 반환한다.
+- **EC-004**: 동일 신고에 대해 Spring Boot가 동시에 두 번 요청하는 경우 → FastAPI는 stateless하므로 두 번 모두 분석을 수행한다. Spring Boot 레벨에서 `ai_suggestion`이 이미 저장된 경우 재호출하지 않는 null-check(FR-017) 로직으로 중복 분석을 방지하며, 극히 드문 동시 요청 경합은 허용 가능한 수준으로 허용한다.
 
 ---
 
@@ -70,7 +70,7 @@ FastAPI는 분석 결과만 반환하며 DB를 직접 읽거나 쓰지 않는다
 - **FR-004**: FastAPI는 `targetType`, `reason`을 필수 입력으로 받아야 하며, `contentTitle`, `contentBody`는 null 허용이어야 한다.
 - **FR-005**: FastAPI는 `targetType`이 MEMBER인 경우 `contentBody` 없이 `reason`만으로 LLM 프롬프트를 구성해야 한다.
 - **FR-006**: FastAPI는 `targetType`이 BOARD 또는 COMMENT인 경우 `reason`과 `contentBody`를 함께 LLM 프롬프트에 포함해야 한다.
-- **FR-007**: FastAPI는 LLM 응답의 `severity` 값이 허용 범위(높음|중간|낮음) 밖이면 `REPORT_AI_ANALYSIS_FAILED`에 대응 가능한 내부 오류를 반환해야 한다.
+- **FR-007**: FastAPI는 LLM 응답의 `severity` 또는 `category` 값이 허용 범위(높음|중간|낮음 / SPAM|ABUSE|AD|INAPPROPRIATE|OTHER) 밖이면 `REPORT_AI_ANALYSIS_FAILED`에 대응 가능한 내부 오류를 반환해야 한다.
 - **FR-008**: FastAPI는 LLM 응답 파싱 실패 시 `REPORT_AI_ANALYSIS_FAILED`에 대응 가능한 내부 오류를 반환해야 한다.
 - **FR-009**: FastAPI는 DB를 직접 읽거나 쓰지 않아야 한다. DB 저장 책임은 Spring Boot가 가진다.
 - **FR-010**: FastAPI는 OpenAI 호출 책임을 가져야 하며, Spring Boot가 OpenAI를 직접 호출하지 않아야 한다.

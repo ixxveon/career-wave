@@ -51,9 +51,9 @@ Spring Boot가 관리자 요청을 수신한 뒤 FastAPI를 내부 호출하며,
 
 ### Edge Cases
 
-- `title`은 있지만 `category`가 허용 범위 밖의 값이면 어떤 내부 오류를 반환하는가?
-- LLM이 `draft` 필드를 반환했지만 값이 빈 문자열이면 성공으로 처리하는가, 실패로 처리하는가?
-- Spring Boot 타임아웃(10초)과 FastAPI 내부 LLM 타임아웃 설정이 다를 경우 어느 쪽이 먼저 끊기는가?
+- **EC-001**: `category`가 허용 범위 밖의 값이면 → FastAPI는 `CS_DRAFT_INVALID_INPUT`에 대응 가능한 내부 오류(HTTP 422)를 반환해야 한다. Spring Boot는 이를 503 `AI_SERVER_UNAVAILABLE`로 매핑한다.
+- **EC-002**: LLM이 `draft` 필드를 반환했지만 값이 빈 문자열이면 → FR-007에 따라 `CS_AI_GENERATION_FAILED`에 대응 가능한 내부 오류를 반환하고 실패로 처리한다.
+- **EC-003**: Spring Boot 타임아웃(10초)과 FastAPI 내부 LLM 타임아웃이 다를 경우 → FastAPI의 자체 타임아웃을 Spring Boot보다 짧게(8초) 설정하여 FastAPI가 먼저 503을 반환하도록 한다. Spring Boot 측은 WebClient 타임아웃 초과 시 `AI_SERVER_UNAVAILABLE`을 반환한다.
 
 ---
 

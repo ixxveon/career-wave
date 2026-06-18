@@ -183,7 +183,7 @@
 | target_id | BIGINT | NOT NULL | 신고 대상 레코드 ID |
 | reason | VARCHAR(30) | NOT NULL | SPAM / ABUSE / AD / INAPPROPRIATE / OTHER |
 | report_status | VARCHAR(20) | NOT NULL, DEFAULT PENDING | PENDING / BLINDED / DISMISSED |
-| ai_suggestion | TEXT | NULL | AI 검토 의견 JSON — `{"severity":"높음\|중간\|낮음","category":"SPAM\|ABUSE\|AD\|INAPPROPRIATE\|OTHER","suggestion":"..."}` |
+| ai_suggestion | JSONB | NULL | AI 검토 의견 JSON — `{"severity":"높음|중간|낮음","category":"SPAM|ABUSE|AD|INAPPROPRIATE|OTHER","suggestion":"..."}` |
 | processed_by | BIGINT | FK → admins, NULL | 처리 관리자 |
 | processed_at | TIMESTAMPTZ | NULL | 처리 완료 일시 |
 | created_at | TIMESTAMPTZ | NOT NULL | 신고 접수 일시 |
@@ -256,7 +256,7 @@ admin/report/
 
 기존 상세 조회 로직 이후 AI 분석 처리를 추가한다.
 
-```
+```text
 1. ai_suggestion이 null인 경우에만 FastAPI 호출
 2. FastAPI POST /internal/admin/ai/report-analysis 호출
    - body: { targetType, reason, contentTitle, contentBody }
