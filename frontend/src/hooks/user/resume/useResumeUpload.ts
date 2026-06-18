@@ -1,9 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { resumeUploadApi } from '../../../api/user/resume/resumeUploadApi';
 import { analysisResultApi } from '../../../api/user/resume/analysisResultApi';
 import { validateResumeFile } from '../../../utils/user/resume/validation';
 import { resumeStorage } from '../../../utils/user/resume/resumeStorage';
 import { useAnalysisWebSocket } from './useAnalysisWebSocket';
+import { QUOTA_QUERY_KEY } from './useResumeQuota';
 import type {
   ResumeUIState,
   UploadResumeResponse,
@@ -41,6 +43,7 @@ export interface UseResumeUploadReturn {
  * - 마운트 시 저장된 documentId + UIState === 'ANALYZING' 이면 WebSocket 재연결
  */
 export function useResumeUpload(): UseResumeUploadReturn {
+  const queryClient = useQueryClient();
   const [file, setFile]                       = useState<File | null>(null);
   const [uiState, setUiState]                 = useState<ResumeUIState>('IDLE');
   const [fileError, setFileError]             = useState<string | null>(null);
@@ -54,6 +57,7 @@ export function useResumeUpload(): UseResumeUploadReturn {
 
   const handleCompleted = useCallback(async () => {
     resumeStorage.removeUIState('RESUME');
+    queryClient.invalidateQueries({ queryKey: QUOTA_QUERY_KEY });
     if (documentIdRef.current) {
       try {
         const result = await analysisResultApi.getFeedback(documentIdRef.current);
@@ -63,7 +67,7 @@ export function useResumeUpload(): UseResumeUploadReturn {
       }
     }
     setUiState('SUCCESS');
-  }, []);
+  }, [queryClient]);
 
   const handleFailed = useCallback((message: string) => {
     resumeStorage.removeUIState('RESUME');

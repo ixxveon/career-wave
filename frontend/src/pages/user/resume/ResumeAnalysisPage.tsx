@@ -4,7 +4,7 @@ import LoadingModal from '../../../components/user/resume/LoadingModal';
 import QuotaBar from '../../../components/user/resume/QuotaBar';
 import DocumentResultView from './DocumentResultView';
 import { useResumeUpload } from '../../../hooks/user/resume/useResumeUpload';
-import { PLAN_LIMITS, MOCK_QUOTA } from '../../../utils/user/resume/quota';
+import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
 import '@/styles/user/resume/ResumeAnalysisPage.css';
 
 export default function ResumeAnalysisPage() {
@@ -17,9 +17,8 @@ export default function ResumeAnalysisPage() {
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  const { membership, documentUsed } = MOCK_QUOTA;
-  const docLimit    = PLAN_LIMITS[membership].document;
-  const isExhausted = documentUsed >= docLimit;
+  const { data: quota } = useResumeQuota();
+  const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (

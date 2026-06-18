@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,4 +36,14 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
             ORDER BY d.createdAt DESC, d.documentId DESC
             """)
     Page<ResumeDTO.HistoryItem> findHistoryByMemberId(@Param("memberId") UUID memberId, Pageable pageable);
+
+    // 이번 달 분석 사용 횟수 (FAILED 제외)
+    @Query("""
+            SELECT COUNT(d)
+            FROM Document d
+            WHERE d.memberId = :memberId
+              AND d.status <> kr.co.carrer.user.resume.type.DocumentStatus.FAILED
+              AND d.createdAt >= :from
+            """)
+    int countUsedThisMonth(@Param("memberId") UUID memberId, @Param("from") ZonedDateTime from);
 }

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { coverLetterApi } from '../../../api/user/resume/coverLetterApi';
 import { analysisResultApi } from '../../../api/user/resume/analysisResultApi';
 import {
@@ -8,6 +9,7 @@ import {
 } from '../../../utils/user/resume/validation';
 import { resumeStorage } from '../../../utils/user/resume/resumeStorage';
 import { useAnalysisWebSocket } from './useAnalysisWebSocket';
+import { QUOTA_QUERY_KEY } from './useResumeQuota';
 import type {
   ResumeUIState,
   SubmitCoverLetterResponse,
@@ -55,6 +57,7 @@ const INITIAL_ITEM: CoverLetterFormItem = { question: '', answer: '' };
  * - 마운트 시 저장된 documentId + UIState === 'ANALYZING' 이면 WebSocket 재연결
  */
 export function useCoverLetterForm(): UseCoverLetterFormReturn {
+  const queryClient = useQueryClient();
   const [company, setCompany]             = useState('');
   const [job, setJob]                     = useState('');
   const [items, setItems]                 = useState<CoverLetterFormItem[]>([{ ...INITIAL_ITEM }]);
@@ -79,6 +82,7 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
 
   const handleCompleted = useCallback(async () => {
     resumeStorage.removeUIState('COVER_LETTER');
+    queryClient.invalidateQueries({ queryKey: QUOTA_QUERY_KEY });
     if (documentIdRef.current) {
       try {
         const result = await analysisResultApi.getFeedback(documentIdRef.current);
@@ -88,7 +92,7 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
       }
     }
     setUiState('SUCCESS');
-  }, []);
+  }, [queryClient]);
 
   const handleFailed = useCallback((message: string) => {
     resumeStorage.removeUIState('COVER_LETTER');

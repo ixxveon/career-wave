@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -211,6 +212,14 @@ public class ResumeServiceImpl implements ResumeService {
 
         // DB 커밋 후 WebSocket 브로드캐스트 (Phase 7에서 리스너 구현)
         eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(documentId, dto.status()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResumeDTO.ResponseQuota getQuota(UUID memberId) {
+        ZonedDateTime firstDayOfMonth = ZonedDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        int usedCount = documentRepository.countUsedThisMonth(memberId, firstDayOfMonth);
+        return new ResumeDTO.ResponseQuota(usedCount, 30);
     }
 
     private List<ResumeDTO.ResponseFeedback.FeedbackDetail> parseFeedbackDetails(String feedbackText, UUID documentId) {

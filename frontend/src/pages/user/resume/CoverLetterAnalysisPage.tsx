@@ -4,7 +4,7 @@ import LoadingModal from '../../../components/user/resume/LoadingModal';
 import QuotaBar from '../../../components/user/resume/QuotaBar';
 import DocumentResultView from './DocumentResultView';
 import { useCoverLetterForm } from '../../../hooks/user/resume/useCoverLetterForm';
-import { PLAN_LIMITS, MOCK_QUOTA } from '../../../utils/user/resume/quota';
+import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
 import '@/styles/user/resume/CoverLetterAnalysisPage.css';
 
 export default function CoverLetterAnalysisPage() {
@@ -18,9 +18,8 @@ export default function CoverLetterAnalysisPage() {
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  const { membership, documentUsed } = MOCK_QUOTA;
-  const docLimit    = PLAN_LIMITS[membership].document;
-  const isExhausted = documentUsed >= docLimit;
+  const { data: quota } = useResumeQuota();
+  const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (

@@ -189,3 +189,8 @@ export interface WsStatusMessage {
   status: WsAnalysisStatus;
   errorMessage?: string | null;
 }
+
+export interface ResumeQuotaResponse {
+  usedCount: number;
+  limitCount: number;
+}
