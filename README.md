@@ -158,6 +158,7 @@ copy backend/.env.example backend/.env
 | `AWS_SECRET_ACCESS_KEY` | AWS Secret Key | `(인프라 팀 요청)` |
 | `AWS_S3_REGION` | S3 버킷 리전 | `ap-northeast-2` |
 | `AWS_SES_REGION` | SES 이메일 발송 리전 | `ap-southeast-2` |
+| `AWS_SES_FROM_EMAIL` | SES 발신 이메일 주소 | `no-reply@careerwave.kr` |
 | `FASTAPI_BASE_URL` | FastAPI 내부 통신 URL | `http://localhost:8000` |
 | `WEBHOOK_SECRET` | FastAPI → Spring Webhook 인증키 | `(임의 생성, FastAPI와 공유)` |
 

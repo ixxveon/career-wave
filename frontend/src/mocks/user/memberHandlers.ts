@@ -73,6 +73,11 @@ const TAKEN_LOGIN_IDS = new Set(['testuser01', 'testuser02', 'testuser03', 'test
 // 인증 세션 mock 저장소 (verificationId → verificationToken)
 const MOCK_VERIFICATION_SESSIONS: Map<string, { token: string; verified: boolean }> = new Map();
 
+const OAUTH_PROVIDERS = ['kakao', 'naver', 'google'] as const;
+type OAuthProvider = (typeof OAUTH_PROVIDERS)[number];
+const isOAuthProvider = (p: string): p is OAuthProvider =>
+  (OAUTH_PROVIDERS as readonly string[]).includes(p);
+
 export const memberHandlers = [
   // ── 로그인 ───────────────────────────────────────────────────────────────────
   http.post('/api/v1/user/members/login', async ({ request }) => {
@@ -435,9 +440,8 @@ export const memberHandlers = [
   // ── OAuth authorize URL 생성 ─────────────────────────────────────────────────
   http.get('/api/v1/user/members/oauth/:provider/authorize', ({ params }) => {
     const provider = params.provider as string;
-    const validProviders = ['kakao', 'naver', 'google'];
 
-    if (!validProviders.includes(provider)) {
+    if (!isOAuthProvider(provider)) {
       return HttpResponse.json(
         { success: false, statusCode: 400, message: '지원하지 않는 소셜 로그인 provider입니다.', code: 'OAUTH_PROVIDER_INVALID' },
         { status: 400 },
@@ -460,6 +464,14 @@ export const memberHandlers = [
   // ── OAuth callback (mock: 항상 신규 가입 필요 응답) ────────────────────────────
   http.get('/api/v1/user/members/oauth/:provider/callback', ({ params, request }) => {
     const provider = params.provider as string;
+
+    if (!isOAuthProvider(provider)) {
+      return HttpResponse.json(
+        { success: false, statusCode: 400, message: '지원하지 않는 소셜 로그인 provider입니다.', code: 'OAUTH_PROVIDER_INVALID' },
+        { status: 400 },
+      );
+    }
+
     const url = new URL(request.url);
     const state = url.searchParams.get('state');
 
