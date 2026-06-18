@@ -82,7 +82,7 @@ public class UserVerificationServiceImpl implements UserVerificationService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = {CustomException.class})
     public UserVerificationDto.ResponseConfirmVerification confirm(UserVerificationDto.RequestConfirmVerification request) {
         MemberVerification verification = verificationRepository
                 .findByVerificationId(request.getVerificationId())
