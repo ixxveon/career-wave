@@ -296,7 +296,7 @@ class AdminReportServiceImplTest {
             reportId, targetType, targetId,
             ReportReason.SPAM, ReportStatus.PENDING,
             "신고자", "피신고자",
-            null, null,
+            null, null, null,
             ZonedDateTime.now(), null, null
         );
     }
