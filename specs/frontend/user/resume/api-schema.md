@@ -245,7 +245,7 @@ Authorization: Bearer {accessToken}
 ## 4. 분석 이력 목록 조회
 
 - **Endpoint**: `GET /api/v1/user/resume/history`
-- **Description**: 본인의 서류 분석 이력을 최신순으로 페이징 조회
+- **Description**: 본인의 서류 분석 이력을 최신순으로 조회 (클라이언트 `useInfiniteQuery` 기반 무한스크롤)
 - **Content-Type**: `application/json`
 
 ### Query Parameters
@@ -253,7 +253,7 @@ Authorization: Bearer {accessToken}
 | Parameter | Type | 필수 | 기본값 | 설명 |
 |-----------|------|------|--------|------|
 | `page` | `number` | ❌ | `0` | 페이지 번호 (0-based) |
-| `size` | `number` | ❌ | `10` | 페이지당 항목 수 |
+| `size` | `number` | ❌ | `5` | 페이지당 항목 수 (클라이언트 기본값) |
 
 ### Response `200 OK`
 ```json
@@ -266,19 +266,21 @@ Authorization: Bearer {accessToken}
       {
         "documentId": "uuid-v4",
         "fileType": "RESUME",
+        "status": "COMPLETED",
         "originalName": "이력서_홍길동.pdf",
         "company": null,
         "job": null,
-        "totalScore": 74,
+        "scoreTotal": 74,
         "createdAt": "2026-05-29T14:53:44Z"
       },
       {
         "documentId": "uuid-v4-2",
         "fileType": "COVER_LETTER",
+        "status": "COMPLETED",
         "originalName": null,
         "company": "카카오",
         "job": "백엔드 개발자",
-        "totalScore": 76,
+        "scoreTotal": 76,
         "createdAt": "2026-05-28T10:20:00Z"
       }
     ],
@@ -293,10 +295,11 @@ Authorization: Bearer {accessToken}
 | Field | Type | 설명 |
 |-------|------|------|
 | `data.content[].fileType` | `string` | `RESUME` \| `COVER_LETTER` |
+| `data.content[].status` | `string` | `UPLOADED` \| `PENDING` \| `ANALYZING` \| `COMPLETED` \| `FAILED` |
 | `data.content[].originalName` | `string` \| `null` | 이력서: 파일명, 자기소개서: `null` |
 | `data.content[].company` | `string` \| `null` | 자기소개서: 지원 회사명, 이력서: `null` |
 | `data.content[].job` | `string` \| `null` | 자기소개서: 지원 직무명, 이력서: `null` |
-| `data.content[].totalScore` | `number` \| `null` | 종합 점수, 분석 미완료 시 `null` |
+| `data.content[].scoreTotal` | `number` \| `null` | 종합 점수, 분석 미완료 시 `null` |
 
 ### Error Cases
 
@@ -313,8 +316,11 @@ Authorization: Bearer {accessToken}
 
 ```
 STOMP 핸드셰이크 : WS /ws/user/resume?token={accessToken}
-구독 토픽        : /topic/resume/{documentId}/status
+브로드캐스트 구독 : /topic/resume/{documentId}/status         ← Webhook 수신 후 상태 메시지
+개인 Snapshot 구독: /user/queue/resume/{documentId}/status    ← SUBSCRIBE 직후 1회 현재 상태 수신 (재연결 복원)
 ```
+
+> 클라이언트는 두 토픽을 **모두 구독**해야 한다. 브로드캐스트 구독만으로는 재연결 시 현재 분석 상태를 놓칠 수 있다.
 
 ### 인증
 
@@ -324,9 +330,14 @@ JWT를 STOMP 핸드셰이크 쿼리 파라미터로 전달한다.
 const client = new Client({
   brokerURL: `wss://{host}/ws/user/resume?token=${accessToken}`,
   onConnect: () => {
+    // 브로드캐스트 구독 — Webhook 수신 후 서버가 전파하는 메시지
     client.subscribe(`/topic/resume/${documentId}/status`, (message) => {
       const payload = JSON.parse(message.body)
-      // payload: { status, message, progress }
+      // payload: { status, message, progress, errorMessage }
+    })
+    // 개인 Snapshot 구독 — SUBSCRIBE 직후 서버가 1회 현재 상태를 개인 채널로 전송 (재연결 복원)
+    client.subscribe(`/user/queue/resume/${documentId}/status`, (message) => {
+      const payload = JSON.parse(message.body)
     })
   }
 })
@@ -358,7 +369,8 @@ client.activate()
 {
   "status": "ANALYZING",
   "message": "키워드를 추출하고 있어요",
-  "progress": 40
+  "progress": 40,
+  "errorMessage": null
 }
 ```
 
@@ -367,6 +379,7 @@ client.activate()
 | `status` | `string` | `ANALYZING` \| `COMPLETED` \| `FAILED` |
 | `message` | `string` | 현재 단계 안내 문구 (UI 표시용) |
 | `progress` | `number` | 진행률 0~100 |
+| `errorMessage` | `string` \| `null` | `FAILED` 시 서버 제공 오류 메시지, `null`이면 기본 문구 표시 |
 
 #### 단계별 `message` 예시
 

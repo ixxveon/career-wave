@@ -5,6 +5,7 @@ import kr.co.carrer.admin.cs.docs.AdminFaqControllerDocs;
 import kr.co.carrer.admin.cs.dto.FaqDTO;
 import kr.co.carrer.admin.cs.service.AdminFaqService;
 import kr.co.carrer.admin.cs.type.FaqCategory;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
@@ -39,9 +40,9 @@ public class AdminFaqController implements AdminFaqControllerDocs {
     @PostMapping
     public ResponseEntity<ApiResponse<FaqDTO.ResponseResult>> createFaq(
         @RequestBody @Valid FaqDTO.RequestCreate dto,
-        @AuthenticationPrincipal Long adminId
+        @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        if (adminId == null) throw new CustomException(ErrorCode.UNAUTHORIZED);
+        Long adminId = parseAdminId(principal);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.ok(adminFaqService.createFaq(dto, adminId)));
     }
@@ -58,6 +59,15 @@ public class AdminFaqController implements AdminFaqControllerDocs {
     public ResponseEntity<ApiResponse<Void>> deleteFaq(@PathVariable Long faqId) {
         adminFaqService.deleteFaq(faqId);
         return ResponseEntity.ok(ApiResponse.ok("FAQ가 삭제되었습니다."));
+    }
+
+    private Long parseAdminId(AuthPrincipal principal) {
+        if (principal == null) throw new CustomException(ErrorCode.UNAUTHORIZED);
+        try {
+            return Long.parseLong(principal.getId());
+        } catch (NumberFormatException e) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {

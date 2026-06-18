@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ApiResponse<Object>> handleCustomException(CustomException e) {
+    public ResponseEntity<ApiResponse<?>> handleCustomException(CustomException e) {
         BaseErrorCode errorCode = e.getErrorCode();
         String codeName = errorCode.name();
 
@@ -37,7 +37,11 @@ public class GlobalExceptionHandler {
             log.warn("[비즈니스 제재/검증 실패] 에러코드: {} | 사유: {}", codeName, e.getMessage());
         }
 
-        // 프론트엔드가 body.code 필드로 에러 종류를 판별하므로 enum name 포함
+        if (e.getAdditionalData() != null) {
+            return ResponseEntity
+                    .status(errorCode.getStatus())
+                    .body(ApiResponse.fail(errorCode.getStatus().value(), e.getMessage(), codeName, e.getAdditionalData()));
+        }
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .body(ApiResponse.fail(errorCode.getStatus().value(), e.getMessage(), codeName));

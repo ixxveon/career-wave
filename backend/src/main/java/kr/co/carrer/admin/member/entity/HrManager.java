@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -32,7 +33,7 @@ public class HrManager {
     private PermissionLevel permissionLevel;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "hr_status", nullable = false, length = 10)
+    @Column(name = "hr_status", nullable = false, length = 20)
     private HrStatus hrStatus;
 
     @Column(name = "reject_reason", columnDefinition = "TEXT")
@@ -45,12 +46,12 @@ public class HrManager {
     private ZonedDateTime approvedAt;
 
     public void approve() {
-        this.hrStatus = HrStatus.ACTIVE;
-        this.approvedAt = ZonedDateTime.now();
+        this.hrStatus = HrStatus.APPROVED;
+        this.approvedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 
     public void reject(String rejectReason) {
-        this.hrStatus = HrStatus.REMOVED;
+        this.hrStatus = HrStatus.REJECTED;
         this.rejectReason = rejectReason;
     }
 }

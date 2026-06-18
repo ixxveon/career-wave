@@ -1,9 +1,11 @@
 package kr.co.carrer.admin.cs.docs;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.co.carrer.admin.cs.dto.NoticeDTO;
+import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +31,7 @@ public interface AdminNoticeControllerDocs {
     @Operation(summary = "공지사항 등록")
     ResponseEntity<ApiResponse<NoticeDTO.ResponseResult>> createNotice(
         @RequestBody @Valid NoticeDTO.RequestCreate dto,
-        Long adminId
+        @Parameter(hidden = true) AuthPrincipal principal
     );
 
     @Operation(summary = "공지사항 수정")

@@ -22,7 +22,7 @@ public class HrManagerDTO {
         @Schema(description = "재직증명서 파일명") String certFileName,
         @Schema(description = "가입 신청 일시") ZonedDateTime joinedAt,
         @Schema(description = "승인 일시") ZonedDateTime approvedAt,
-        @Schema(description = "상태", allowableValues = {"PENDING", "ACTIVE", "REMOVED"}) HrStatus hrStatus
+        @Schema(description = "상태", allowableValues = {"PENDING_REVIEW", "APPROVED", "REJECTED", "NEEDS_REVISION", "REMOVED"}) HrStatus hrStatus
     ) {}
 
     @Schema(description = "기업 회원 상세 응답")
@@ -37,7 +37,7 @@ public class HrManagerDTO {
         @Schema(description = "재직증명서 파일명") String certFileName,
         @Schema(description = "가입 신청 일시") ZonedDateTime joinedAt,
         @Schema(description = "승인 일시") ZonedDateTime approvedAt,
-        @Schema(description = "상태", allowableValues = {"PENDING", "ACTIVE", "REMOVED"}) HrStatus hrStatus,
+        @Schema(description = "상태", allowableValues = {"PENDING_REVIEW", "APPROVED", "REJECTED", "NEEDS_REVISION", "REMOVED"}) HrStatus hrStatus,
         @Schema(description = "반려 사유") String rejectReason
     ) {}
 
