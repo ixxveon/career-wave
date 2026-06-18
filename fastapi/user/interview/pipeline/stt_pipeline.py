@@ -64,9 +64,14 @@ async def transcribe_chunk(
     transcript: str = response.text or ""
 
     # no_speech_prob은 verbose_json에서만 제공된다.
+    # segments 원소는 SDK 버전에 따라 dict 또는 객체로 올 수 있어 양쪽 모두 처리한다.
     no_speech_prob: float = getattr(response, "no_speech_prob", 0.0)
     if not no_speech_prob and hasattr(response, "segments") and response.segments:
-        probs = [seg.get("no_speech_prob", 0.0) for seg in response.segments]
+        probs = [
+            seg.get("no_speech_prob", 0.0) if isinstance(seg, dict)
+            else getattr(seg, "no_speech_prob", 0.0)
+            for seg in response.segments
+        ]
         no_speech_prob = sum(probs) / len(probs) if probs else 0.0
 
     voice_quality_ratio = calculate_voice_quality_ratio(no_speech_prob)
