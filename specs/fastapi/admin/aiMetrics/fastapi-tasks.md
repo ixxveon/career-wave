@@ -123,11 +123,11 @@
 
 ## Phase 14 - RAG Index Delete Phase
 
-- [ ] `rag_index_delete_task.py` 삭제 처리 흐름을 작성한다.
-- [ ] RAG 문서 기준 vector index 조회 로직을 작성한다.
-- [ ] vector index 삭제 후 결과 반환 로직을 작성한다.
-- [ ] 삭제 실패 시 `RAG_DOCUMENT_DELETE_FAILED` 내부 오류 처리 로직을 작성한다.
-- [ ] 후속 리소스 정리 훅을 작성한다.
+- [x] `rag_index_delete_task.py` 삭제 처리 흐름을 작성한다.
+- [x] RAG 문서 기준 vector index 조회 로직을 작성한다.
+- [x] vector index 삭제 후 결과 반환 로직을 작성한다.
+- [x] 삭제 실패 시 `RAG_DOCUMENT_DELETE_FAILED` 내부 오류 처리 로직을 작성한다.
+- [x] 후속 리소스 정리 훅을 작성한다.
 
 ## Phase 15 - Spring ↔ FastAPI 계약 검증
 
