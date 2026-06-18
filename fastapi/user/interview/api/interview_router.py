@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from core.security import verify_internal_secret
 from user.interview.pipeline import stt_pipeline
 from user.interview.pipeline import llm_pipeline
+from user.interview.pipeline import report_pipeline
 from user.interview.websocket.interview_ws_handler import _sessions
 
 log = logging.getLogger(__name__)
@@ -37,6 +38,12 @@ class RagContextRequest(BaseModel):
     memberId: str
     documentId: str
     documentFilePath: str
+
+
+class ReportTriggerRequest(BaseModel):
+    sessionId: str
+    memberId: str
+    sessionType: str = "TEXT"  # TEXT | VOICE | VIDEO
 
 
 # ── 라우터 ──────────────────────────────────────────────────────────────────
@@ -179,4 +186,28 @@ def _extract_sync(file_path: str) -> str:
             return f.read()
 
 
-# Phase 5: POST /sessions/{session_id}/trigger/report  (리포트 생성 트리거)
+@router.post("/sessions/{session_id}/trigger/report", status_code=202)
+async def trigger_report(
+    session_id: str,
+    body: ReportTriggerRequest,
+) -> dict[str, object]:
+    """
+    Spring → FastAPI 리포트 생성 트리거.
+    리포트 파이프라인을 백그라운드로 실행하고 202 응답을 즉시 반환한다.
+    """
+    task = asyncio.create_task(
+        report_pipeline.generate_and_send_report(
+            session_id=session_id,
+            session_type=body.sessionType,
+        )
+    )
+    _bg_tasks.add(task)
+    task.add_done_callback(_bg_tasks.discard)
+
+    log.info(
+        "report pipeline triggered: sessionId=%s, sessionType=%s",
+        session_id,
+        body.sessionType,
+    )
+
+    return {"accepted": True, "sessionId": session_id}
