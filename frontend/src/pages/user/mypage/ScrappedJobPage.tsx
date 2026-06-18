@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Search, Bookmark } from "lucide-react";
 import JobNoticeDetail from "@/pages/user/jobNotice/JobNoticeDetail";
-import { mockScrapJobs } from "@/mocks/user/dashboardMock";
+import { deleteDashboardBookmark } from "@/api/user/dashboard";
+import { useDashboardBookmarks } from "@/hooks/user/dashboard";
 import type { ScrapJob } from "@/types/user/dashboard";
 import "@/styles/user/mypage/MyPage.css";
 
@@ -71,7 +72,20 @@ function ScrappedJobPage() {
   );
   const [searchKeyword, setSearchKeyword] = useState("");
 
-  const [scrappedJobs, setScrappedJobs] = useState<ScrapJob[]>(mockScrapJobs);
+  const keyword = searchKeyword.trim();
+
+  const {
+    data: scrapJobPage,
+    isLoading,
+    isError,
+    refetch,
+  } = useDashboardBookmarks({
+    keyword,
+    page: 0,
+    size: 10,
+  });
+
+  const scrappedJobs = scrapJobPage?.items ?? [];
 
   const filteredScrapJobs = useMemo(() => {
     const keyword = searchKeyword.trim().toLowerCase();
@@ -98,20 +112,14 @@ function ScrappedJobPage() {
     setSelectedJob(null);
   }
 
-  function handleUnscrap(bookmarkId: number) {
+  async function handleUnscrap(bookmarkId: number) {
     const confirmed = window.confirm("스크랩을 해제하시겠습니까?");
-
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     try {
-      setScrappedJobs((prev) =>
-        prev.filter((job) => job.bookmarkId !== bookmarkId),
-      );
-      if (selectedJob?.bookmarkId === bookmarkId) {
-        setSelectedJob(null);
-      }
+      await deleteDashboardBookmark(bookmarkId);
+      await refetch();
+      alert("스크랩이 해제되었습니다.");
     } catch {
       alert("스크랩 해제에 실패했습니다.");
     }
