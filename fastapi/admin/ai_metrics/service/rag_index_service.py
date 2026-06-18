@@ -19,12 +19,6 @@ class RagIndexService:
                 detail={"ragDocumentId": request.rag_document_id},
             )
 
-        if rag_document.status == RagDocumentStatusType.INDEXING.value:
-            raise AiMetricsException(
-                error_code=AiMetricsErrorCode.RAG_DOCUMENT_ALREADY_INDEXING,
-                detail={"ragDocumentId": request.rag_document_id},
-            )
-
         updated_document = self._accept_indexing(request.rag_document_id)
         return RagIndexStartResponse(
             accepted=True,
@@ -36,7 +30,7 @@ class RagIndexService:
         updated_document = self._rag_document_repository.mark_indexing(rag_document_id)
         if updated_document is None:
             raise AiMetricsException(
-                error_code=AiMetricsErrorCode.RAG_DOCUMENT_INDEXING_FAILED,
+                error_code=AiMetricsErrorCode.RAG_DOCUMENT_ALREADY_INDEXING,
                 detail={"ragDocumentId": rag_document_id},
             )
         if updated_document.indexing_progress != 0:

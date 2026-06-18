@@ -62,9 +62,15 @@ class RagIndexingTask:
                 stored=upsert_result.stored,
             )
         except AiMetricsException as error:
-            if error.error_code == AiMetricsErrorCode.RAG_DOCUMENT_ALREADY_INDEXING:
+            if error.error_code in {
+                AiMetricsErrorCode.RAG_DOCUMENT_ALREADY_INDEXING,
+                AiMetricsErrorCode.RAG_DOCUMENT_NOT_FOUND,
+            }:
                 raise
-            self._mark_failed(rag_document_id)
+            try:
+                self._mark_failed(rag_document_id)
+            except AiMetricsException:
+                raise error
             raise
         except Exception:
             self._mark_failed(rag_document_id)

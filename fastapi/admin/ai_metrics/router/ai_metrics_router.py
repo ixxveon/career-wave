@@ -5,7 +5,7 @@ from fastapi import Path as FastApiPath
 from fastapi.responses import JSONResponse
 
 from admin.ai_metrics.client import MockVectorStoreClient
-from admin.ai_metrics.exception import AiMetricsException, build_error_response
+from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException, build_error_response
 from admin.ai_metrics.repository import (
     AiModelRepository,
     AiOpsSettingRepository,
@@ -223,4 +223,10 @@ async def create_usage_log(request: UsageLogCreateRequest):
 
 def _parse_iso_datetime(value: str) -> datetime:
     normalized = value.replace("Z", "+00:00")
-    return datetime.fromisoformat(normalized)
+    try:
+        return datetime.fromisoformat(normalized)
+    except ValueError as error:
+        raise AiMetricsException(
+            error_code=AiMetricsErrorCode.INVALID_DATETIME_FORMAT,
+            detail={"value": value},
+        ) from error
