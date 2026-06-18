@@ -6,6 +6,7 @@ import kr.co.carrer.user.member.entity.*;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.*;
 import kr.co.carrer.user.member.service.BusinessRegistrationVerificationPort;
+import kr.co.carrer.user.member.service.EmploymentCertificateFilePort;
 import kr.co.carrer.user.member.service.UserRegisterService;
 import kr.co.carrer.user.member.type.*;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     private final MemberVerificationRepository verificationRepository;
     private final PasswordEncoder passwordEncoder;
     private final BusinessRegistrationVerificationPort businessVerificationPort;
+    private final EmploymentCertificateFilePort employmentCertificateFilePort;
 
     // ── loginId 중복 확인 ──────────────────────────────────────────────────────
 
@@ -135,6 +137,10 @@ public class UserRegisterServiceImpl implements UserRegisterService {
                 request.getManagerPhone());
         memberRepository.save(member);
 
+        // 재직증명서 fileId 검증 — Port를 통해 형식 검증 (Phase 5에서 S3 실제 검증으로 교체)
+        String fileId = request.getEmploymentCertificateFileId();
+        employmentCertificateFilePort.validate(fileId);
+
         // CompanyProfile 생성 — address = roadAddress (spec §8)
         CompanyProfile companyProfile = CompanyProfile.create(
                 member.getMemberId(),
@@ -148,8 +154,8 @@ public class UserRegisterServiceImpl implements UserRegisterService {
                 request.getAddressDetail(),
                 request.isAgency(),
                 request.getCertificateNumber(),
-                resolveFileUrl(request.getEmploymentCertificateFileId()),
-                resolveFileName(request.getEmploymentCertificateFileId()));
+                employmentCertificateFilePort.resolveUrl(fileId),
+                employmentCertificateFilePort.resolveFileName(fileId));
         companyProfileRepository.save(companyProfile);
 
         // hr_managers 신청 레코드 생성 — PENDING_REVIEW (spec §11)
@@ -173,14 +179,4 @@ public class UserRegisterServiceImpl implements UserRegisterService {
                 "PENDING_REVIEW");
     }
 
-    // ── 내부 유틸 ─────────────────────────────────────────────────────────────
-
-    // 재직증명서 fileId → cert_file_url 변환 (S3 연동 후 실제 URL로 교체)
-    private String resolveFileUrl(String fileId) {
-        return "https://s3.ap-northeast-2.amazonaws.com/careerwave/" + fileId;
-    }
-
-    private String resolveFileName(String fileId) {
-        return fileId;
-    }
 }
