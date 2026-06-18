@@ -29,18 +29,18 @@
 
 ## Phase 3 - OpenAI Client
 
-- [ ] `openai_client.py` 기본 클라이언트 래퍼를 작성한다.
-- [ ] 모델명과 provider 기준 실행 컨텍스트 구성 로직을 작성한다.
-- [ ] chat/completion 계열 호출 메서드를 작성한다.
-- [ ] embedding 생성 호출 메서드를 작성한다.
-- [ ] OpenAI 오류를 내부 ErrorCode로 변환하는 처리 로직을 작성한다.
+- [x] `openai_client.py` 기본 클라이언트 래퍼를 작성한다.
+- [x] 모델명과 provider 기준 실행 컨텍스트 구성 로직을 작성한다.
+- [x] chat/completion 계열 호출 메서드를 작성한다.
+- [x] embedding 생성 호출 메서드를 작성한다.
+- [x] OpenAI 오류를 내부 ErrorCode로 변환하는 처리 로직을 작성한다.
 
 ## Phase 4 - Token / Cost Calculation
 
-- [ ] 입력 토큰 계산 로직을 작성한다.
-- [ ] 출력 토큰 계산 로직을 작성한다.
-- [ ] `ai_models.input_token_price`, `output_token_price` 기준 비용 계산 로직을 작성한다.
-- [ ] 토큰/비용 계산 결과 검증 유틸을 작성한다.
+- [x] 입력 토큰 계산 로직을 작성한다.
+- [x] 출력 토큰 계산 로직을 작성한다.
+- [x] `ai_models.input_token_price`, `output_token_price` 기준 비용 계산 로직을 작성한다.
+- [x] 토큰/비용 계산 결과 검증 유틸을 작성한다.
 
 ## Phase 5 - AI Usage Log Persistence
 
