@@ -149,6 +149,18 @@ class AiMetricsControllerAuthorizationTest {
     }
 
     @Test
+    @DisplayName("CS는 예산 및 임계치 수정에 접근할 수 없다")
+    void csCannotUpdateBudget() {
+        authenticateAs("CS");
+
+        assertThatThrownBy(() -> aiMetricsController.updateBudget(
+                new AiOpsSettingDTO.RequestUpdateBudget(3L, new BigDecimal("1000000.00"), 80),
+                adminPrincipal("CS"),
+                requestWithRemoteAddr("203.0.113.14")
+        )).isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
     @DisplayName("BACKEND는 Discord 알림 설정 변경에 접근할 수 있다")
     void backendCanUpdateDiscordAlert() {
         given(aiMetricsService.updateDiscordAlert(
@@ -180,6 +192,18 @@ class AiMetricsControllerAuthorizationTest {
     }
 
     @Test
+    @DisplayName("CS는 rate limit 설정 변경에 접근할 수 없다")
+    void csCannotUpdateRateLimit() {
+        authenticateAs("CS");
+
+        assertThatThrownBy(() -> aiMetricsController.updateRateLimit(
+                new AiOpsSettingDTO.RequestUpdateRateLimit(true),
+                adminPrincipal("CS"),
+                requestWithRemoteAddr("203.0.113.15")
+        )).isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
     @DisplayName("BACKEND는 RAG 문서 삭제에 접근할 수 없다")
     void backendCannotDeleteRagDocument() {
         authenticateAs("BACKEND");
@@ -188,6 +212,18 @@ class AiMetricsControllerAuthorizationTest {
                 1L,
                 adminPrincipal("BACKEND"),
                 requestWithRemoteAddr("203.0.113.13")
+        )).isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    @DisplayName("CS는 RAG 문서 삭제에 접근할 수 없다")
+    void csCannotDeleteRagDocument() {
+        authenticateAs("CS");
+
+        assertThatThrownBy(() -> aiMetricsController.deleteRagDocument(
+                1L,
+                adminPrincipal("CS"),
+                requestWithRemoteAddr("203.0.113.16")
         )).isInstanceOf(AccessDeniedException.class);
     }
 
