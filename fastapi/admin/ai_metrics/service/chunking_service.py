@@ -38,13 +38,7 @@ class ChunkingResult:
 
     @property
     def chunk_count(self) -> int:
-        count = len(self.chunks)
-        if count < 0:
-            raise AiMetricsException(
-                error_code=AiMetricsErrorCode.RAG_DOCUMENT_INDEXING_FAILED,
-                detail={"reason": "invalid_chunk_count"},
-            )
-        return count
+        return len(self.chunks)
 
 
 class ChunkingService:
