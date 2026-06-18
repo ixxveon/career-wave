@@ -261,7 +261,7 @@ gradlew.bat test
 `backend/.env`에 아래 항목 추가:
 
 ```env
-INTERVIEW_INTERNAL_SECRET=local-secret-test
+WEBHOOK_SECRET=careerwave-internal-secret-2026
 ```
 
 > FastAPI 팀과 연동 시 동일한 값으로 맞춰야 함

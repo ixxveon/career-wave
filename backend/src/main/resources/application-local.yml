@@ -27,7 +27,7 @@ spring:
       password: ${REDIS_PASSWORD:}
 
 interview:
-  internal-secret: ${INTERVIEW_INTERNAL_SECRET}
+  internal-secret: ${WEBHOOK_SECRET}
 
 jwt:
   user:
