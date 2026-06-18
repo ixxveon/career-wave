@@ -63,7 +63,7 @@ Authorization: Bearer {accessToken}
 | `MemberStatus` | `ACTIVE`, `SUSPENDED`, `BANNED`, `LOCKED`, `WITHDRAWN`, `BLACKLISTED` |
 | `CompanyApprovalStatus` | `NONE`, `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `NEEDS_REVISION` |
 | `VerificationChannel` | `EMAIL`, `PHONE` |
-| `VerificationStatus` | `SENT`, `VERIFIED`, `EXPIRED`, `FAILED`, `RATE_LIMITED` |
+| `VerificationStatus` | `SENT`, `VERIFIED`, `CONSUMED`, `EXPIRED`, `FAILED`, `RATE_LIMITED` |
 
 ### 공통 Error Cases
 
