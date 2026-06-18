@@ -6,6 +6,7 @@ from fastapi import status
 
 class AiMetricsErrorCode(str, Enum):
     AI_MODEL_NOT_FOUND = "AI_MODEL_NOT_FOUND"
+    AI_MODEL_PROVIDER_NOT_SUPPORTED = "AI_MODEL_PROVIDER_NOT_SUPPORTED"
     AI_OPS_SETTING_NOT_FOUND = "AI_OPS_SETTING_NOT_FOUND"
     INVALID_MONTHLY_BUDGET = "INVALID_MONTHLY_BUDGET"
     INVALID_ALERT_THRESHOLD = "INVALID_ALERT_THRESHOLD"
@@ -21,6 +22,7 @@ class AiMetricsErrorCode(str, Enum):
 
 ERROR_STATUS_BY_CODE: dict[AiMetricsErrorCode, int] = {
     AiMetricsErrorCode.AI_MODEL_NOT_FOUND: status.HTTP_404_NOT_FOUND,
+    AiMetricsErrorCode.AI_MODEL_PROVIDER_NOT_SUPPORTED: status.HTTP_400_BAD_REQUEST,
     AiMetricsErrorCode.AI_OPS_SETTING_NOT_FOUND: status.HTTP_404_NOT_FOUND,
     AiMetricsErrorCode.INVALID_MONTHLY_BUDGET: status.HTTP_400_BAD_REQUEST,
     AiMetricsErrorCode.INVALID_ALERT_THRESHOLD: status.HTTP_400_BAD_REQUEST,
@@ -37,6 +39,7 @@ ERROR_STATUS_BY_CODE: dict[AiMetricsErrorCode, int] = {
 
 DEFAULT_MESSAGE_BY_CODE: dict[AiMetricsErrorCode, str] = {
     AiMetricsErrorCode.AI_MODEL_NOT_FOUND: "AI model was not found.",
+    AiMetricsErrorCode.AI_MODEL_PROVIDER_NOT_SUPPORTED: "AI model provider is not supported.",
     AiMetricsErrorCode.AI_OPS_SETTING_NOT_FOUND: "AI ops setting was not found.",
     AiMetricsErrorCode.INVALID_MONTHLY_BUDGET: "Monthly budget is invalid.",
     AiMetricsErrorCode.INVALID_ALERT_THRESHOLD: "Alert threshold is invalid.",

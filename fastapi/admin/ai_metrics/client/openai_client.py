@@ -42,7 +42,7 @@ class AiMetricsOpenAIClient:
         provider = ai_model.provider.strip().lower()
         if provider != "openai":
             raise AiMetricsException(
-                error_code=AiMetricsErrorCode.OPENAI_API_ERROR,
+                error_code=AiMetricsErrorCode.AI_MODEL_PROVIDER_NOT_SUPPORTED,
                 message="Unsupported AI provider for aiMetrics.",
                 detail={"provider": ai_model.provider},
             )
