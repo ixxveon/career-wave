@@ -1,0 +1,117 @@
+package kr.co.carrer.user.member.service.impl;
+
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.member.dto.UserVerificationDto;
+import kr.co.carrer.user.member.entity.MemberVerification;
+import kr.co.carrer.user.member.exception.UserAuthErrorCode;
+import kr.co.carrer.user.member.repository.MemberVerificationRepository;
+import kr.co.carrer.user.member.service.EmailSenderPort;
+import kr.co.carrer.user.member.service.SmsSenderPort;
+import kr.co.carrer.user.member.type.VerificationChannel;
+import kr.co.carrer.user.member.type.VerificationPurpose;
+import kr.co.carrer.user.member.type.VerificationStatus;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.lang.reflect.Field;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class UserVerificationServiceImplTest {
+
+    @Mock MemberVerificationRepository verificationRepository;
+    @Mock EmailSenderPort emailSenderPort;
+    @Mock SmsSenderPort smsSenderPort;
+
+    private UserVerificationServiceImpl service;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        service = new UserVerificationServiceImpl(verificationRepository, emailSenderPort, smsSenderPort);
+    }
+
+    // ─── 인증번호 확인 실패 시 decrementAttempts() 호출 검증 ───────────────────────
+
+    @Test
+    void confirm_코드불일치_시_decrementAttempts_호출() throws Exception {
+        MemberVerification verification = createVerification(3, VerificationStatus.SENT, "correcthash");
+        when(verificationRepository.findByVerificationId(any(UUID.class)))
+                .thenReturn(Optional.of(verification));
+
+        UserVerificationDto.RequestConfirmVerification request = new UserVerificationDto.RequestConfirmVerification();
+        setField(request, "verificationId", UUID.randomUUID());
+        setField(request, "code", "000000"); // 틀린 코드 — hash 불일치
+
+        assertThatThrownBy(() -> service.confirm(request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> {
+                    UserAuthErrorCode code = ((CustomException) e).getErrorCode() instanceof UserAuthErrorCode ec ? ec : null;
+                    assert code == UserAuthErrorCode.INVALID_VERIFICATION_CODE
+                            || code == UserAuthErrorCode.VERIFICATION_RATE_LIMITED;
+                });
+
+        // decrementAttempts()가 호출됐는지 간접 확인 — remainingAttempts 감소
+        assert verification.getRemainingAttempts() < 3;
+    }
+
+    @Test
+    void confirm_만료된_인증번호_VERIFICATION_EXPIRED() throws Exception {
+        MemberVerification verification = createVerification(5, VerificationStatus.SENT, "hash");
+        setField(verification, "expiresAt", Instant.now().minusSeconds(60)); // 만료
+
+        when(verificationRepository.findByVerificationId(any(UUID.class)))
+                .thenReturn(Optional.of(verification));
+
+        UserVerificationDto.RequestConfirmVerification request = new UserVerificationDto.RequestConfirmVerification();
+        setField(request, "verificationId", UUID.randomUUID());
+        setField(request, "code", "123456");
+
+        assertThatThrownBy(() -> service.confirm(request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> {
+                    CustomException ce = (CustomException) e;
+                    assert ce.getErrorCode() == UserAuthErrorCode.VERIFICATION_EXPIRED;
+                });
+    }
+
+    // ─── 내부 유틸 ───────────────────────────────────────────────────────────────
+
+    private MemberVerification createVerification(int attempts, VerificationStatus status,
+                                                   String codeHash) throws Exception {
+        MemberVerification v = new MemberVerification() {};
+        setField(v, "verificationId", UUID.randomUUID());
+        setField(v, "channel", VerificationChannel.EMAIL);
+        setField(v, "target", "test@example.com");
+        setField(v, "purpose", VerificationPurpose.REGISTER);
+        setField(v, "codeHash", codeHash);
+        setField(v, "verificationStatus", status);
+        setField(v, "remainingAttempts", attempts);
+        setField(v, "expiresAt", Instant.now().plusSeconds(300));
+        setField(v, "resendAvailableAt", Instant.now().plusSeconds(60));
+        return v;
+    }
+
+    private void setField(Object target, String name, Object value) throws Exception {
+        Class<?> clazz = target.getClass();
+        while (clazz != null) {
+            try {
+                Field field = clazz.getDeclaredField(name);
+                field.setAccessible(true);
+                field.set(target, value);
+                return;
+            } catch (NoSuchFieldException e) {
+                clazz = clazz.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(name);
+    }
+}
