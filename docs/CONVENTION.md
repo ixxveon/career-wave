@@ -175,6 +175,8 @@ ApiResponse.ok(message, data);
 ApiResponse.ok(message);
 ApiResponse.fail(statusCode, message);
 ApiResponse.fail(statusCode, message, data);
+ApiResponse.fail(statusCode, message, code);              // 에러 코드 식별자 포함 (code 필드)
+ApiResponse.fail(statusCode, message, code, data);        // 에러 코드 + 추가 데이터 포함 (GlobalExceptionHandler 내 additionalData 처리 시 사용)
 ```
 
 ### Rules
@@ -183,6 +185,7 @@ ApiResponse.fail(statusCode, message, data);
 - 성공/실패 응답 형식을 통일한다.
 - 실패 응답의 `data`는 기본적으로 `null`이며, 검증 오류처럼 상세 정보가 필요한 경우에만 포함한다.
 - 현재 응답 필드는 `success`, `statusCode`, `message`, `data`를 기준으로 한다.
+- 실패 응답에 `code` 필드가 포함된 경우 에러 코드 식별자(`ErrorCode` enum 이름)를 담으며, 클라이언트 분기 처리에 활용한다.
 
 ---
 
@@ -414,3 +417,66 @@ fastapi/
 - 의미 없는 TODO 코드를 남기지 않는다.
 - `admin`과 `user` 도메인 간 직접 참조를 만들지 않는다.
 - Spec과 다른 동작을 조용히 구현하지 않는다.
+
+
+---
+
+## 14. QueryRepository Pattern
+
+복잡한 조회 쿼리는 Native Query(EntityManager) 또는 QueryDSL 중 하나를 사용한다.
+어떤 방식을 선택할지는 도메인 담당자가 결정한다.
+
+### Native Query (EntityManager)
+
+```java
+@Repository
+@RequiredArgsConstructor
+public class MemberQueryRepository {
+
+    private final EntityManager em;
+
+    public List<Member> findByCondition(...) {
+        return em.createQuery("...", Member.class)
+                 .getResultList();
+    }
+}
+```
+
+### QueryDSL
+
+QueryDSL 사용 시 `JPAQueryFactory` Bean을 등록하고 주입받는 방식을 우선 사용한다.
+
+```java
+// global/config/QueryDslConfig.java
+@Configuration
+public class QueryDslConfig {
+
+    @Bean
+    public JPAQueryFactory jpaQueryFactory(EntityManager em) {
+        return new JPAQueryFactory(em);
+    }
+}
+```
+
+```java
+@Repository
+@RequiredArgsConstructor
+public class MemberQueryRepository {
+
+    private final JPAQueryFactory queryFactory;
+
+    public List<Member> findByCondition(...) {
+        return queryFactory
+                .selectFrom(member)
+                .where(...)
+                .fetch();
+    }
+}
+```
+
+### Rules
+
+- Native Query와 QueryDSL은 모두 허용된다. 도메인 담당자가 선택한다.
+- QueryRepository는 `JpaRepository`를 상속하지 않는 별도 클래스로 분리한다.
+- QueryDSL 사용 시 생성자에서 `JPAQueryFactory`를 직접 생성하지 않고, Bean으로 등록된 것을 주입받는다.
+- 네이밍은 `{Domain}QueryRepository`를 기본으로 한다.

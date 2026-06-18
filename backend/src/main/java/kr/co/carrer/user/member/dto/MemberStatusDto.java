@@ -31,6 +31,10 @@ public class MemberStatusDto {
             Instant startedAt,
             String duration
     ) {
-        public static final String MESSAGE_CODE = "ACCOUNT_RESTRICTED";
+        public static final String MESSAGE_CODE_SUSPENDED = "AUTH_ACCOUNT_SUSPENDED";
+        public static final String MESSAGE_CODE_LOCKED = "AUTH_ACCOUNT_LOCKED";
+        public static final String MESSAGE_CODE_BANNED = "AUTH_ACCOUNT_BANNED";
+        public static final String MESSAGE_CODE_WITHDRAWN = "AUTH_ACCOUNT_WITHDRAWN";
+        public static final String MESSAGE_CODE_BLACKLISTED = "AUTH_ACCOUNT_BLACKLISTED";
     }
 }

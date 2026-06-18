@@ -43,6 +43,7 @@ public class AdminReportServiceImpl implements AdminReportService {
     public PaginationResponse<ReportDetailDTO.ResponseList> getReports(ReportStatus status, TargetType targetType,
                                                                         ReportReason reason, String keyword,
                                                                         int page, int size) {
+        if (page < 1 || size < 1) throw new CustomException(kr.co.carrer.global.exception.ErrorCode.BAD_REQUEST);
         size = Math.min(size, 100);
         int offset = (page - 1) * size;
 

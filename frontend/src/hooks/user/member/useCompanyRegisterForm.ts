@@ -1,4 +1,14 @@
 import { useRef, useState, type ChangeEvent } from 'react';
+
+declare global {
+  interface Window {
+    daum?: {
+      Postcode: new (options: {
+        oncomplete: (data: { zonecode: string; roadAddress: string; jibunAddress: string }) => void;
+      }) => { open: () => void };
+    };
+  }
+}
 import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../../types/user/member';
 import { validateEmploymentCertificateFile } from '../../../utils/user/member/fileValidation';
 import {
@@ -26,7 +36,9 @@ const initialCompanyForm = {
   businessNumber: '',
   companyName: '',
   ceoName: '',
-  address: '',
+  postalCode: '',
+  roadAddress: '',
+  jibunAddress: '',
   addressDetail: '',
   isAgency: false,
   certificateNumber: '',
@@ -115,7 +127,9 @@ export function useCompanyRegisterForm() {
     companyName: form.companyName,
     businessNumber: form.businessNumber,
     ceoName: form.ceoName,
-    address: form.address,
+    postalCode: form.postalCode,
+    roadAddress: form.roadAddress,
+    jibunAddress: form.jibunAddress,
     addressDetail: form.addressDetail,
     isAgency: form.isAgency,
     companyType: form.companyType,
@@ -178,6 +192,55 @@ export function useCompanyRegisterForm() {
         emailRemainingAttempts: 0,
       }));
     }
+  };
+
+  const DAUM_POSTCODE_SCRIPT_ID = 'daum-postcode-script';
+
+  const handleAddressSearch = () => {
+    const openPopup = () => {
+      const Postcode = window.daum?.Postcode;
+      if (!Postcode) {
+        setFormMessage('주소 검색 서비스를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+      new Postcode({
+        oncomplete: (data) => {
+          setForm((current) => ({
+            ...current,
+            postalCode: data.zonecode,
+            roadAddress: data.roadAddress,
+            jibunAddress: data.jibunAddress ?? '',
+          }));
+          setFieldErrors((current) => ({ ...current, roadAddress: '' }));
+          setFormMessage('');
+          setSuccessMessage('');
+        },
+      }).open();
+    };
+
+    if (window.daum?.Postcode) {
+      openPopup();
+      return;
+    }
+
+    const existing = document.getElementById(DAUM_POSTCODE_SCRIPT_ID) as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener('load', openPopup, { once: true });
+      existing.addEventListener('error', () => {
+        setFormMessage('주소 검색 스크립트를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      }, { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = DAUM_POSTCODE_SCRIPT_ID;
+    script.async = true;
+    script.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+    script.onload = openPopup;
+    script.onerror = () => {
+      setFormMessage('주소 검색 스크립트를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+    };
+    document.head.appendChild(script);
   };
 
   const handleCertificateChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -413,6 +476,7 @@ export function useCompanyRegisterForm() {
     fieldErrors,
     form,
     formMessage,
+    handleAddressSearch,
     handleCertificateChange,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,

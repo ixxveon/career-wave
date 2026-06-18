@@ -174,6 +174,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
 
             RagDocument savedDocument = ragDocumentRepository.save(document);
             runAfterCommit(() -> startRagIndexing(savedDocument));
+            saveAuditLog(actorAdminId, "UPLOAD_RAG_DOCUMENT", TARGET_TYPE_RAG_DOCUMENT, savedDocument.getRagDocumentId(), ipAddress);
             return AiMetricsServiceMapper.toRagDocumentDetail(savedDocument);
         } catch (CustomException e) {
             throw e;
@@ -217,7 +218,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     }
 
     private void syncOpsSetting(AiOpsSetting setting) {
-        getFastApiGateway().syncOpsSetting(new AiMetricsFastApiGateway.OpsSettingSyncRequest(
+        AiMetricsFastApiGateway.OpsSettingSyncResponse response = getFastApiGateway().syncOpsSetting(new AiMetricsFastApiGateway.OpsSettingSyncRequest(
                 setting.getAiOpsSettingId(),
                 setting.getSelectedModelId(),
                 setting.getMonthlyBudget(),
@@ -226,10 +227,13 @@ public class AiMetricsServiceImpl implements AiMetricsService {
                 setting.getAlertThreshold(),
                 setting.isRateLimitEnabled()
         ));
+        if (!response.synced()) {
+            throw new CustomException(AiMetricsErrorCode.AI_MODEL_EXECUTION_FAILED);
+        }
     }
 
     private void startRagIndexing(RagDocument document) {
-        getFastApiGateway().startRagIndexing(new AiMetricsFastApiGateway.RagIndexStartRequest(
+        AiMetricsFastApiGateway.RagIndexStartResponse response = getFastApiGateway().startRagIndexing(new AiMetricsFastApiGateway.RagIndexStartRequest(
                 document.getRagDocumentId(),
                 document.getFileUuid(),
                 document.getOriginalFileName(),
@@ -237,6 +241,9 @@ public class AiMetricsServiceImpl implements AiMetricsService {
                 document.getMimeType(),
                 document.getFileSize()
         ));
+        if (!response.accepted()) {
+            throw new CustomException(AiMetricsErrorCode.AI_MODEL_EXECUTION_FAILED);
+        }
     }
 
     private void deleteRagIndex(RagDocument document) {
@@ -246,7 +253,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
                 document.getFilePath()
         ));
         if (!response.deleted()) {
-            throw new CustomException(AiMetricsErrorCode.AI_MODEL_EXECUTION_FAILED);
+            throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_DELETE_FAILED);
         }
     }
 

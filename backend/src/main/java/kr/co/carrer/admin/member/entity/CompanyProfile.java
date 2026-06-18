@@ -41,19 +41,28 @@ public class CompanyProfile {
     @Column(name = "address", nullable = false, length = 200)
     private String address;
 
+    @Column(name = "postal_code", nullable = false, length = 10)
+    private String postalCode;
+
+    @Column(name = "road_address", nullable = false, length = 200)
+    private String roadAddress;
+
+    @Column(name = "jibun_address", length = 200)
+    private String jibunAddress;
+
     @Column(name = "address_detail", length = 200)
     private String addressDetail;
 
     @Column(name = "is_agency", nullable = false)
     private boolean isAgency;
 
-    @Column(name = "certificate_number", length = 50)
+    @Column(name = "certificate_number", nullable = false, length = 50)
     private String certificateNumber;
 
-    @Column(name = "cert_file_url", length = 500)
+    @Column(name = "cert_file_url", nullable = false, length = 500)
     private String certFileUrl;
 
-    @Column(name = "cert_file_name", length = 200)
+    @Column(name = "cert_file_name", nullable = false, length = 200)
     private String certFileName;
 
     @Column(name = "created_at", nullable = false, updatable = false)

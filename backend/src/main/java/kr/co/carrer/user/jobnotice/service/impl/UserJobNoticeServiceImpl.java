@@ -115,11 +115,11 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
     @Override
     @Transactional
     public JobNoticeDTO.ResponseBookmark createBookmark(Long jobNoticeId, UUID memberId) {
-        jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(jobNoticeId, JobNoticeStatus.ACTIVE)
+        JobNotice jobNotice = jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(jobNoticeId, JobNoticeStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(JobNoticeErrorCode.JOB_NOTICE_NOT_FOUND));
 
         try {
-            Bookmark bookmark = bookmarkRepository.save(Bookmark.of(memberId, jobNoticeId));
+            Bookmark bookmark = bookmarkRepository.save(Bookmark.of(memberId, jobNotice));
             return new JobNoticeDTO.ResponseBookmark(bookmark.getJobNoticeId(), true);
         } catch (DataIntegrityViolationException exception) {
             if (isBookmarkUniqueConstraintViolation(exception)) {
@@ -132,6 +132,9 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
     @Override
     @Transactional
     public JobNoticeDTO.ResponseBookmark deleteBookmark(Long jobNoticeId, UUID memberId) {
+        jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(jobNoticeId, JobNoticeStatus.ACTIVE)
+                .orElseThrow(() -> new CustomException(JobNoticeErrorCode.JOB_NOTICE_NOT_FOUND));
+
         Bookmark bookmark = bookmarkRepository.findByMemberIdAndJobNoticeId(memberId, jobNoticeId)
                 .orElseThrow(() -> new CustomException(JobNoticeErrorCode.BOOKMARK_NOT_FOUND));
 

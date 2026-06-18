@@ -190,7 +190,7 @@ class UserJobNoticeServiceImplTest {
                     any(PageRequest.class)
             )).willReturn(pageResult);
             given(bookmarkRepository.findByMemberIdAndJobNoticeIdIn(memberId, List.of(101L, 102L)))
-                    .willReturn(List.of(Bookmark.of(memberId, 102L)));
+                    .willReturn(List.of(Bookmark.of(memberId, secondJobNotice)));
 
             JobNoticeDTO.ResponseList response = userJobNoticeService.getJobNotices(
                     null,
@@ -415,8 +415,10 @@ class UserJobNoticeServiceImplTest {
                     LocalDate.of(2026, 6, 30),
                     ZonedDateTime.of(2026, 6, 1, 0, 0, 0, 0, SERVICE_ZONE_ID)
             );
-            Bookmark bookmark = Bookmark.of(memberId, 101L);
+            Bookmark bookmark = Bookmark.of(memberId, jobNotice);
 
+            given(jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(101L, JobNoticeStatus.ACTIVE))
+                    .willReturn(Optional.of(jobNotice));
             given(bookmarkRepository.findByMemberIdAndJobNoticeId(memberId, 101L))
                     .willReturn(Optional.of(bookmark));
 
@@ -448,6 +450,8 @@ class UserJobNoticeServiceImplTest {
                     ZonedDateTime.of(2026, 6, 1, 0, 0, 0, 0, SERVICE_ZONE_ID)
             );
 
+            given(jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(101L, JobNoticeStatus.ACTIVE))
+                    .willReturn(Optional.of(jobNotice));
             given(bookmarkRepository.findByMemberIdAndJobNoticeId(memberId, 101L))
                     .willReturn(Optional.empty());
 
@@ -458,17 +462,17 @@ class UserJobNoticeServiceImplTest {
         }
 
         @Test
-        @DisplayName("존재하지 않는 공고 ID로 북마크 해제 시 BOOKMARK_NOT_FOUND 예외")
-        void deleteBookmark_missingJobNoticeIdThrowsBookmarkNotFound() {
+        @DisplayName("비공개 또는 존재하지 않는 공고 북마크 해제 시 JOB_NOTICE_NOT_FOUND 예외")
+        void deleteBookmark_jobNoticeNotFoundThrows() {
             UUID memberId = UUID.randomUUID();
 
-            given(bookmarkRepository.findByMemberIdAndJobNoticeId(memberId, 999L))
+            given(jobNoticeRepository.findByJobNoticeIdAndNoticeStatus(999L, JobNoticeStatus.ACTIVE))
                     .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> userJobNoticeService.deleteBookmark(999L, memberId))
                     .isInstanceOf(CustomException.class)
                     .extracting(exception -> ((CustomException) exception).getErrorCode())
-                    .isEqualTo(JobNoticeErrorCode.BOOKMARK_NOT_FOUND);
+                    .isEqualTo(JobNoticeErrorCode.JOB_NOTICE_NOT_FOUND);
         }
     }
 

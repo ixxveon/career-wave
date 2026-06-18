@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, MetaData, String, Table, select
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, MetaData, Numeric, String, Table, select
 from sqlalchemy.engine import RowMapping
 from sqlalchemy.orm import Session
 
@@ -16,8 +16,8 @@ ai_models_table = Table(
     Column("model_name", String(100), nullable=False),
     Column("display_type", String(100), nullable=False),
     Column("provider", String(50), nullable=False),
-    Column("input_token_price", Integer, nullable=False),
-    Column("output_token_price", Integer, nullable=False),
+    Column("input_token_price", Numeric(12, 6), nullable=False),
+    Column("output_token_price", Numeric(12, 6), nullable=False),
     Column("is_enabled", Boolean, nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),

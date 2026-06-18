@@ -74,7 +74,7 @@
 
 - [ ] 본인 문서만 반환된다 (`member_id` 필터 필수)
 - [ ] 최신순(`created_at DESC`) 정렬이 적용된다
-- [ ] 분석 미완료 항목의 `totalScore`가 `null`로 반환된다
+- [ ] 분석 미완료 항목의 `scoreTotal`가 `null`로 반환된다
 - [ ] `RESUME` 타입의 `company`, `job` 필드가 `null`로 반환된다
 - [ ] `COVER_LETTER` 타입의 `originalName` 필드가 `null`로 반환된다
 - [ ] 0-based 페이징이 정상 동작한다
