@@ -1,0 +1,156 @@
+"""
+LLM 기반 면접 질문 생성 파이프라인.
+
+- GPT-4o로 다음 질문 생성 (이전 답변 이력 + RAG 컨텍스트 반영)
+- asyncio.wait_for로 타임아웃 처리 → 폴백 질문 반환
+- JSONDecodeError 시 1회 재시도 → 실패 시 폴백
+- 세션별 used_fallback_questions로 중복 폴백 방지
+"""
+import asyncio
+import json
+import logging
+import random
+
+from openai import AsyncOpenAI, OpenAIError
+
+from core.config import get_settings
+from core.spring_client import QuestionPayload, send_question_to_spring
+from user.interview.prompts.interview_prompts import (
+    MAX_ANSWER_HISTORY,
+    TEMPERATURE,
+    build_rag_injection,
+    get_fallback_questions,
+    get_system_prompt,
+)
+from user.interview.websocket.interview_ws_handler import (
+    InterviewErrorCode,
+    _SessionContext,
+    _sessions,
+    send_error,
+)
+
+log = logging.getLogger(__name__)
+
+
+async def generate_and_deliver_question(
+    session_id: str,
+    question_order: int,
+    answer_text: str,
+    question_text: str,
+) -> None:
+    """
+    텍스트 답변 수신 후 LLM으로 다음 질문을 생성하고 Spring에 전달한다.
+    실패 시 폴백 질문으로 대체하며 세션을 중단하지 않는다.
+    """
+    ctx = _sessions.get(session_id)
+    if ctx is None:
+        log.warning("[Session: %s] LLM skipped: no active session context", session_id)
+        return
+
+    _record_answer(ctx, question_text, answer_text)
+
+    settings = get_settings()
+    next_question_order = question_order + 1
+
+    try:
+        result = await asyncio.wait_for(
+            _call_llm(session_id, ctx, settings),
+            timeout=settings.openai_llm_timeout_seconds,
+        )
+        question_text_generated = result["question"]
+        question_type = result["questionType"]
+        log.info(
+            "[Session: %s] LLM question generated: order=%d, type=%s",
+            session_id, next_question_order, question_type,
+        )
+    except (asyncio.TimeoutError, OpenAIError, Exception) as e:
+        log.warning("[Session: %s] LLM failed (%s), using fallback", session_id, e)
+        await send_error(
+            session_id,
+            "LLM 질문 생성에 실패하여 폴백 질문으로 대체합니다.",
+            InterviewErrorCode.LLM_FAILED,
+            question_order=next_question_order,
+        )
+        question_text_generated = _pick_fallback(ctx)
+        question_type = "NEXT"
+
+    payload = QuestionPayload(
+        sessionId=session_id,
+        questionOrder=next_question_order,
+        questionText=question_text_generated,
+        questionType=question_type,
+    )
+    await send_question_to_spring(session_id, payload)
+
+    if ctx.session_type == "VOICE":
+        from user.interview.pipeline import tts_pipeline
+        await tts_pipeline.synthesize_and_stream(question_text_generated, session_id, next_question_order)
+
+
+async def _call_llm(session_id: str, ctx: _SessionContext, settings) -> dict[str, str]:
+    """GPT-4o 호출 후 JSON 파싱. 실패 시 1회 재시도."""
+    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    messages = _build_messages(ctx)
+
+    raw = await _chat(client, settings.openai_model_interview, messages)
+    try:
+        return _parse_llm_json(raw)
+    except (json.JSONDecodeError, KeyError, ValueError):
+        log.warning("[Session: %s] LLM JSON parse failed, retrying with format hint", session_id)
+        messages.append({"role": "assistant", "content": raw})
+        messages.append({"role": "user", "content": "JSON 형식으로만 답해줘."})
+        raw2 = await _chat(client, settings.openai_model_interview, messages)
+        return _parse_llm_json(raw2)
+
+
+async def _chat(client: AsyncOpenAI, model: str, messages: list[dict]) -> str:
+    response = await client.chat.completions.create(
+        model=model,
+        messages=messages,  # type: ignore[arg-type]
+        temperature=TEMPERATURE,
+        response_format={"type": "json_object"},
+    )
+    content = response.choices[0].message.content or ""
+    log.debug("LLM usage: tokens=%s", response.usage)
+    return content
+
+
+def _parse_llm_json(raw: str) -> dict[str, str]:
+    data = json.loads(raw)
+    if "question" not in data or "questionType" not in data:
+        raise ValueError("missing required fields in LLM response")
+    if data["questionType"] not in ("FOLLOW_UP", "PRESSURE", "NEXT"):
+        data["questionType"] = "NEXT"
+    return {"question": str(data["question"]), "questionType": str(data["questionType"])}
+
+
+def _build_messages(ctx: _SessionContext) -> list[dict[str, str]]:
+    system_prompt = get_system_prompt(ctx.interview_type)
+    if ctx.rag_context:
+        system_prompt = system_prompt + "\n\n" + build_rag_injection(ctx.rag_context)
+
+    messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
+
+    # LLM 컨텍스트 초과 방지: 최근 N개만 포함
+    history = ctx.answer_history[-MAX_ANSWER_HISTORY:]
+    for record in history:
+        messages.append({"role": "assistant", "content": record["question"]})
+        messages.append({"role": "user", "content": record["answer"]})
+
+    messages.append({"role": "user", "content": "다음 면접 질문을 JSON 형식으로 생성해 주세요."})
+    return messages
+
+
+def _record_answer(ctx: _SessionContext, question: str, answer: str) -> None:
+    ctx.answer_history.append({"question": question, "answer": answer})
+
+
+def _pick_fallback(ctx: _SessionContext) -> str:
+    candidates = get_fallback_questions(ctx.interview_type)
+    unused = [q for q in candidates if q not in ctx.used_fallback_questions]
+    if not unused:
+        ctx.used_fallback_questions.clear()
+        unused = candidates
+    chosen = random.choice(unused)
+    ctx.used_fallback_questions.add(chosen)
+    return chosen
