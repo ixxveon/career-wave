@@ -33,16 +33,14 @@
 
 ## Phase 5 — AI Usage Log Persistence
 
-- [ ] AI Usage Log 적재 서비스가 Repository 저장 로직을 호출한다.
-- [ ] AI Usage Log 적재 로직이 `member_id`, `session_id`, `ai_model_id`, `feature_type`, `input_tokens`, `output_tokens`, `cost`를 누락 없이 기록한다.
-- [ ] `member_id`, `session_id`, `ai_model_id`, `feature_type` 검증 실패가 내부 ErrorCode로 변환된다.
-- [ ] `POST /internal/admin/ai-metrics/usage/log`가 요청 계약에 맞게 동작한다.
+- [x] AI Usage Log 적재 서비스가 Repository 저장 로직을 호출한다.
+- [x] AI Usage Log 적재 로직이 `member_id`, `session_id`, `ai_model_id`, `feature_type`, `input_tokens`, `output_tokens`, `cost`를 누락 없이 기록한다.
+- [x] `member_id`, `session_id`, `ai_model_id`, `feature_type` 검증 실패가 내부 ErrorCode로 변환된다.
 
 ## Phase 6 — Usage Metrics Domain Service
 
-- [ ] 요약/도메인별/토큰 추이/고사용 사용자/로그 목록 조회 서비스가 Repository 집계를 응답 schema로 매핑한다.
-- [ ] `from`, `to`, `featureType`, `interval`, `limit`, `page`, `size` 검증이 수행된다.
-- [ ] 사용량 집계 결과가 `ai_usage_logs` 저장 데이터와 일관된다.
+- [x] 요약/도메인별/토큰 추이/고사용 사용자/로그 목록 조회 서비스가 Repository 집계를 응답 schema로 매핑한다.
+- [x] `from`, `to`, `featureType`, `interval`, `limit`, `page`, `size` 검증이 수행된다.
 
 ## Phase 7 — Ops Settings Sync Service
 
@@ -116,6 +114,7 @@
 - [ ] 외부 시스템 연동 실패 테스트가 OpenAI, 파일 스토리지, vector store 실패 처리 로직을 검증한다.
 - [ ] FastAPI ↔ Spring 계약 검증 테스트가 모두 통과한다.
 - [ ] 내부 ErrorCode 매핑 검증이 모두 통과한다.
+- [ ] 사용량 집계 결과가 `ai_usage_logs` 저장 데이터와 일관되는지 테스트로 검증한다.
 
 ## DB 매핑 검증
 
