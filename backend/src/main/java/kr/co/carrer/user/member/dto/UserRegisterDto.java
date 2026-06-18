@@ -17,6 +17,25 @@ public class UserRegisterDto {
 
     public record ResponseCheckLoginId(boolean available) {}
 
+    // ───────────────────────────── 사업자 번호 사전 확인 ────────────────────────────
+
+    @Getter
+    public static class RequestCheckBusinessNumber {
+        @NotBlank(message = "사업자등록번호를 입력해 주세요.")
+        @Pattern(regexp = "^\\d{10}$", message = "사업자등록번호는 10자리 숫자입니다.")
+        @Schema(description = "사업자등록번호 (10자리 숫자)", example = "1234567890")
+        private String businessNumber;
+    }
+
+    /**
+     * businessStatus:
+     * CONTINUING  — 계속사업자 (정상)
+     * SUSPENDED   — 휴업자
+     * CLOSED      — 폐업자
+     * NOT_REGISTERED — 미등록 또는 조회 불가
+     */
+    public record ResponseCheckBusinessNumber(boolean valid, String businessStatus) {}
+
     // ───────────────────────────── 약관 Inner Class ─────────────────────────────
 
     @Getter

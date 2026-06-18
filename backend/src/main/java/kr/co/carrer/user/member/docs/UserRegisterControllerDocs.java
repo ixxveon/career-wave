@@ -98,4 +98,21 @@ public interface UserRegisterControllerDocs {
     ResponseEntity<?> uploadEmploymentCertificate(
             @Parameter(description = "업로드할 재직증명서 PDF 파일 (최대 5MB)")
             @RequestParam("file") MultipartFile file);
+
+    @Operation(summary = "사업자 번호 사전 확인",
+            description = "기업 등록 전 사업자등록번호의 국세청 등록 상태를 빠르게 확인한다. " +
+                    "정상(CONTINUING) 여부를 반환하며, 최종 기업 등록 시에는 서버에서 재검증된다. " +
+                    "businessStatus: CONTINUING(정상), SUSPENDED(휴업), CLOSED(폐업), NOT_REGISTERED(미등록/조회불가)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공 (valid=true: 정상 사업자, valid=false: 휴업/폐업/미등록)",
+                    content = @Content(examples = @ExampleObject(
+                            value = "{\"success\":true,\"statusCode\":200,\"message\":\"정상 영업 중인 사업자입니다.\",\"data\":{\"valid\":true,\"businessStatus\":\"CONTINUING\"}}"))),
+            @ApiResponse(responseCode = "400", description = "사업자번호 형식 오류 (10자리 숫자 아님)",
+                    content = @Content(examples = @ExampleObject(
+                            value = "{\"success\":false,\"statusCode\":400,\"message\":\"입력값 검증에 실패했습니다.\",\"code\":null}"))),
+            @ApiResponse(responseCode = "503", description = "국세청 API 장애/타임아웃",
+                    content = @Content(examples = @ExampleObject(
+                            value = "{\"success\":false,\"statusCode\":503,\"message\":\"사업자 검증 서비스를 일시적으로 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.\",\"code\":\"COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE\"}")))
+    })
+    ResponseEntity<?> checkBusinessNumber(@Valid @RequestBody UserRegisterDto.RequestCheckBusinessNumber request);
 }

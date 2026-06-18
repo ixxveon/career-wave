@@ -211,4 +211,12 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         return employmentCertificateFilePort.upload(file);
     }
 
+    // ── 사업자 번호 사전 확인 ──────────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserRegisterDto.ResponseCheckBusinessNumber checkBusinessNumber(String businessNumber) {
+        return businessVerificationPort.check(businessNumber);
+    }
+
 }

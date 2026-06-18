@@ -55,4 +55,15 @@ public class UserRegisterController implements UserRegisterControllerDocs {
         return ResponseEntity.ok(
                 ApiResponse.ok("파일이 업로드되었습니다.", userRegisterService.uploadEmploymentCertificate(file)));
     }
+
+    @PostMapping("/company/business-number/check")
+    public ResponseEntity<ApiResponse<UserRegisterDto.ResponseCheckBusinessNumber>> checkBusinessNumber(
+            @Valid @RequestBody UserRegisterDto.RequestCheckBusinessNumber request) {
+        UserRegisterDto.ResponseCheckBusinessNumber result =
+                userRegisterService.checkBusinessNumber(request.getBusinessNumber());
+        String message = result.valid()
+                ? "정상 영업 중인 사업자입니다."
+                : "정상 영업 중이 아닌 사업자입니다.";
+        return ResponseEntity.ok(ApiResponse.ok(message, result));
+    }
 }

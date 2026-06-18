@@ -13,6 +13,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import kr.co.carrer.user.member.dto.UserRegisterDto;
+
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -44,13 +46,42 @@ public class NtsBusinessStatusApiAdapter implements BusinessRegistrationVerifica
 
     @Override
     public boolean verify(String businessNumber) {
-        Map<String, Object> requestBody = Map.of(
-                "b_no", List.of(businessNumber)
-        );
+        NtsStatusResponse response = callApi(businessNumber);
 
-        NtsStatusResponse response;
+        if (response == null || response.data() == null || response.data().isEmpty()) {
+            throw new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE);
+        }
+
+        String statusCode = response.data().get(0).b_stt_cd();
+        if (statusCode == null) {
+            throw new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE);
+        }
+
+        // 01=계속사업자(정상), 02=휴업자, 03=폐업자
+        return VALID_STATUS_CODE.equals(statusCode);
+    }
+
+    @Override
+    public UserRegisterDto.ResponseCheckBusinessNumber check(String businessNumber) {
+        NtsStatusResponse response = callApi(businessNumber);
+
+        if (response == null || response.data() == null || response.data().isEmpty()) {
+            return new UserRegisterDto.ResponseCheckBusinessNumber(false, "NOT_REGISTERED");
+        }
+
+        String statusCode = response.data().get(0).b_stt_cd();
+        return switch (statusCode == null ? "" : statusCode) {
+            case "01" -> new UserRegisterDto.ResponseCheckBusinessNumber(true,  "CONTINUING");
+            case "02" -> new UserRegisterDto.ResponseCheckBusinessNumber(false, "SUSPENDED");
+            case "03" -> new UserRegisterDto.ResponseCheckBusinessNumber(false, "CLOSED");
+            default   -> new UserRegisterDto.ResponseCheckBusinessNumber(false, "NOT_REGISTERED");
+        };
+    }
+
+    private NtsStatusResponse callApi(String businessNumber) {
+        Map<String, Object> requestBody = Map.of("b_no", List.of(businessNumber));
         try {
-            response = webClient.post()
+            return webClient.post()
                     .uri(uriBuilder -> uriBuilder
                             .path("/status")
                             .queryParam("serviceKey", serviceKey)
@@ -73,18 +104,6 @@ public class NtsBusinessStatusApiAdapter implements BusinessRegistrationVerifica
             log.error("NTS API 호출 실패: {}", e.getMessage());
             throw new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE);
         }
-
-        if (response == null || response.data() == null || response.data().isEmpty()) {
-            throw new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE);
-        }
-
-        String statusCode = response.data().get(0).b_stt_cd();
-        if (statusCode == null) {
-            throw new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE);
-        }
-
-        // 01=계속사업자(정상), 02=휴업자, 03=폐업자
-        return VALID_STATUS_CODE.equals(statusCode);
     }
 
     record NtsStatusResponse(String status_code, List<NtsBizData> data) {}

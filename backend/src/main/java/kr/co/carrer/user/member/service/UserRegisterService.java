@@ -12,4 +12,7 @@ public interface UserRegisterService {
     UserRegisterDto.ResponseCompanyRegister registerCompany(UserRegisterDto.RequestCompanyRegister request);
 
     UserRegisterDto.ResponseEmploymentCertificateUpload uploadEmploymentCertificate(MultipartFile file);
+
+    /** 기업 등록 전 사업자번호 사전 확인 — 프론트 빠른 피드백용 (최종 등록 시 재검증됨) */
+    UserRegisterDto.ResponseCheckBusinessNumber checkBusinessNumber(String businessNumber);
 }

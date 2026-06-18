@@ -130,6 +130,53 @@ class UserRegisterControllerTest {
                 .andExpect(jsonPath("$.data.companyApprovalStatus").value("PENDING_REVIEW"));
     }
 
+    // ─── 사업자 번호 사전 확인 ──────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("정상 사업자 확인 시 200 + valid=true + CONTINUING을 반환한다")
+    void checkBusinessNumber_정상사업자_200() throws Exception {
+        when(userRegisterService.checkBusinessNumber("1234567890"))
+                .thenReturn(new UserRegisterDto.ResponseCheckBusinessNumber(true, "CONTINUING"));
+
+        mockMvc.perform(post("/api/v1/user/members/company/business-number/check")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"businessNumber\":\"1234567890\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.message").value("정상 영업 중인 사업자입니다."))
+                .andExpect(jsonPath("$.code").doesNotExist())
+                .andExpect(jsonPath("$.data.valid").value(true))
+                .andExpect(jsonPath("$.data.businessStatus").value("CONTINUING"));
+    }
+
+    @Test
+    @DisplayName("휴업 사업자 확인 시 200 + valid=false + SUSPENDED를 반환한다")
+    void checkBusinessNumber_휴업사업자_200() throws Exception {
+        when(userRegisterService.checkBusinessNumber("9876543210"))
+                .thenReturn(new UserRegisterDto.ResponseCheckBusinessNumber(false, "SUSPENDED"));
+
+        mockMvc.perform(post("/api/v1/user/members/company/business-number/check")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"businessNumber\":\"9876543210\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.valid").value(false))
+                .andExpect(jsonPath("$.data.businessStatus").value("SUSPENDED"));
+    }
+
+    @Test
+    @DisplayName("10자리 미만 사업자번호는 400을 반환한다")
+    void checkBusinessNumber_형식오류_400() throws Exception {
+        mockMvc.perform(post("/api/v1/user/members/company/business-number/check")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"businessNumber\":\"12345\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."))
+                .andExpect(jsonPath("$.code").doesNotExist());
+    }
+
     // ─── 재직증명서 업로드 ────────────────────────────────────────────────────────
 
     @Test
