@@ -179,6 +179,9 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
             throw new CustomException(UserAuthErrorCode.PHONE_ALREADY_EXISTS);
         if (socialAccountRepository.existsByProviderAndProviderUserId(provider, payload.providerUserId()))
             throw new CustomException(UserAuthErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
+        // 소셜 이메일 충돌 — members.email unique 제약 위반 전에 명시적 체크 (spec SOCIAL_EMAIL_ALREADY_EXISTS 409)
+        if (payload.providerEmail() != null && memberRepository.existsByEmail(payload.providerEmail()))
+            throw new CustomException(UserAuthErrorCode.SOCIAL_EMAIL_ALREADY_EXISTS);
 
         // Member 생성 (소셜 회원은 loginId = UUID prefix, password = random)
         String loginId = "social_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
