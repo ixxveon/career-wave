@@ -60,8 +60,7 @@ public class DocumentAnalysisEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onAnalysisTrigger(DocumentAnalysisTriggerEvent event) {
         fastApiClient.triggerAnalysis(
-                event.documentId(),
-                event.fileType(),
+                event,
                 () -> documentStatusService.markFailed(event.documentId(), "FastAPI 분석 트리거 실패")
         );
         log.info("[FastAPI 트리거] DB 커밋 후 호출 — documentId: {}, fileType: {}", event.documentId(), event.fileType());
