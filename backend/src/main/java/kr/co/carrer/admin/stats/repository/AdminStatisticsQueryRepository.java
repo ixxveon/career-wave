@@ -26,10 +26,12 @@ public class AdminStatisticsQueryRepository {
             WHERE payment_status = 'PAID'
               AND DATE_TRUNC('month', approved_at AT TIME ZONE 'Asia/Seoul')
                 = DATE_TRUNC('month', (NOW() AT TIME ZONE 'Asia/Seoul')
+                    + CAST(? || ' years' AS INTERVAL)
                     + CAST(? || ' months' AS INTERVAL))
             """;
         Query query = em.createNativeQuery(sql);
-        query.setParameter(1, monthOffset);
+        query.setParameter(1, yearOffset);
+        query.setParameter(2, monthOffset);
         return ((Number) query.getSingleResult()).longValue();
     }
 
@@ -120,6 +122,7 @@ public class AdminStatisticsQueryRepository {
             FROM subscriptions s
             JOIN members m  ON m.member_id  = s.member_id
             JOIN plans pl   ON pl.plan_id   = s.plan_id
+            WHERE s.subscription_status = 'ACTIVE'
             ORDER BY s.created_at DESC
             LIMIT 5
             """;

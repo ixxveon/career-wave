@@ -81,11 +81,11 @@ public class AdminStatisticsServiceImpl implements AdminStatisticsService {
 
     private String formatTimeAgo(ZonedDateTime now, ZonedDateTime target) {
         if (target == null) return "-";
-        long minutes = ChronoUnit.MINUTES.between(target, now);
+        long minutes = Math.max(0, ChronoUnit.MINUTES.between(target, now));
         if (minutes < 60) return minutes + "분 전";
-        long hours = ChronoUnit.HOURS.between(target, now);
+        long hours = Math.max(0, ChronoUnit.HOURS.between(target, now));
         if (hours < 24) return hours + "시간 전";
-        long days = ChronoUnit.DAYS.between(target, now);
+        long days = Math.max(0, ChronoUnit.DAYS.between(target, now));
         return days + "일 전";
     }
 }
