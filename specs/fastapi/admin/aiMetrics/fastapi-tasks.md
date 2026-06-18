@@ -62,18 +62,18 @@
 
 ## Phase 7 - Ops Settings Sync Service
 
-- [ ] `ops_settings_service.py`를 작성한다.
-- [ ] 운영 정책 동기화 서비스 로직을 작성한다.
-- [ ] `selectedModelId` 존재 여부 검증 로직을 작성한다.
-- [ ] `monthlyBudget`, `alertThreshold` 범위 검증 로직을 작성한다.
-- [ ] 동기화된 설정을 내부 런타임 캐시 또는 실행 컨텍스트에 반영하는 로직을 작성한다.
+- [x] `ops_settings_service.py`를 작성한다.
+- [x] 운영 정책 동기화 서비스 로직을 작성한다.
+- [x] `selectedModelId` 존재 여부 검증 로직을 작성한다.
+- [x] `monthlyBudget`, `alertThreshold` 범위 검증 로직을 작성한다.
+- [x] 동기화된 설정을 내부 런타임 캐시 또는 실행 컨텍스트에 반영하는 로직을 작성한다.
 
 ## Phase 8 - RAG Document Parser
 
-- [ ] `rag_document_parser.py`를 작성한다.
-- [ ] 파일 스토리지에서 원본 문서를 읽는 로더를 작성한다.
-- [ ] PDF/문서 텍스트 추출 파싱 로직을 작성한다.
-- [ ] 파싱 실패를 내부 오류로 변환하는 처리 로직을 작성한다.
+- [x] `rag_document_parser.py`를 작성한다.
+- [x] 파일 스토리지에서 원본 문서를 읽는 로더를 작성한다.
+- [x] PDF/문서 텍스트 추출 파싱 로직을 작성한다.
+- [x] 파싱 실패를 내부 오류로 변환하는 처리 로직을 작성한다.
 
 ## Phase 9 - Chunking
 

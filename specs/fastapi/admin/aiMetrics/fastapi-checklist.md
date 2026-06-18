@@ -44,15 +44,15 @@
 
 ## Phase 7 — Ops Settings Sync Service
 
-- [ ] 운영 정책 변경 후 FastAPI 설정 동기화 결과가 후속 조회에 반영된다.
-- [ ] `selectedModelId` 존재 여부가 검증된다.
-- [ ] `monthlyBudget`, `alertThreshold` 범위 검증 실패가 내부 ErrorCode로 변환된다.
+- [x] 운영 정책 변경 후 FastAPI 설정 동기화 결과가 후속 조회에 반영된다.
+- [x] `selectedModelId` 존재 여부가 검증된다.
+- [x] `monthlyBudget`, `alertThreshold` 범위 검증 실패가 내부 ErrorCode로 변환된다.
 
 ## Phase 8 — RAG Document Parser
 
-- [ ] RAG 문서 파서가 원본 문서를 텍스트로 변환할 수 있으며 실패 시 내부 오류를 반환한다.
-- [ ] 파일 스토리지에서 원본 문서를 읽는 로더가 분리되어 있다.
-- [ ] PDF/문서 텍스트 추출 실패가 내부 ErrorCode로 변환된다.
+- [x] RAG 문서 파서가 원본 문서를 텍스트로 변환할 수 있으며 실패 시 내부 오류를 반환한다.
+- [x] 파일 스토리지에서 원본 문서를 읽는 로더가 분리되어 있다.
+- [x] PDF/문서 텍스트 추출 실패가 내부 ErrorCode로 변환된다.
 
 ## Phase 9 — Chunking
 
