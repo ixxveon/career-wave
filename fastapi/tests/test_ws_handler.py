@@ -19,7 +19,7 @@ from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 from tests.conftest import TEST_SESSION_ID, make_token
-from user.websocket.interview_ws_handler import (
+from user.interview.websocket.interview_ws_handler import (
     InterviewErrorCode,
     _SessionContext,
     _sessions,

@@ -190,6 +190,11 @@ public class PaymentDTO {
 ```java
 public class RefundDTO {
 
+    // 환불 불가 처리 요청
+    public record RequestReject(
+        @NotBlank String rejectReason
+    ) {}
+
     public record ResponseApprove(
         String paymentId,
         PaymentStatus paymentStatus,
@@ -219,12 +224,8 @@ public class SubscriptionDTO {
         boolean autoRenew
     ) {}
 
-    public record ResponseSummary(
-        long activeCount,
-        long cancelScheduledCount,
-        long paymentFailedCount,
-        long expiredCount
-    ) {}
+    // v1 미구현 — API 엔드포인트 없음, 추후 추가 예정
+    // public record ResponseSummary(...) {}
 }
 ```
 
@@ -292,16 +293,16 @@ GET /api/v1/admin/subscriptions?status=&page=1&size=20
 - `PAYMENT_NOT_FOUND(404)` 예외 처리
 - `refund_status != PENDING` → `REFUND_NOT_PENDING(409)` 예외
 - `payment_status != PAID` → `PAYMENT_NOT_REFUNDABLE(409)` 예외
-- Toss 환불 API 호출 (`POST /v1/payments/{paymentKey}/cancel`)
-  - 성공: `refund_status = COMPLETED`, `payment_status = CANCELED` — 동일 트랜잭션
-  - 실패: `refund_status = FAILED` — 별도 트랜잭션(`REQUIRES_NEW`) 후 `TOSS_REFUND_FAILED(502)` throw
+- Toss 환불 API 호출 — v1은 stub 처리 (실제 연동 미정)
+  - 성공(stub): `refund_status = COMPLETED`, `refunded_at = now()`, `admin_id = adminId`, `payment_status = CANCELED` — 동일 트랜잭션
+  - 실패(stub): `refund_status = FAILED`, `admin_id = adminId` — 별도 트랜잭션(`REQUIRES_NEW`) 후 `TOSS_REFUND_FAILED(502)` throw
 - `@Transactional`
 
 #### rejectRefund(UUID paymentId, String rejectReason, Long adminId)
 - `PAYMENT_NOT_FOUND(404)` 예외 처리
 - `refund_status != PENDING` → `REFUND_NOT_PENDING(409)` 예외
 - `rejectReason` blank → `REJECT_REASON_REQUIRED(400)` 예외
-- `refund_status = REJECTED`, `reject_reason` 저장
+- `refund_status = REJECTED`, `reject_reason` 저장, `admin_id = adminId` 저장
 - `@Transactional`
 
 ### AdminSubscriptionService

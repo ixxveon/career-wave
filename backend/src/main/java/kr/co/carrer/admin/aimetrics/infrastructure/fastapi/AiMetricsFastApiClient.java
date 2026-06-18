@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Component
@@ -164,8 +165,23 @@ public class AiMetricsFastApiClient implements AiMetricsFastApiGateway {
         } catch (WebClientResponseException e) {
             throw AiMetricsFastApiErrorMapper.toCustomException(e, objectMapper);
         } catch (RuntimeException e) {
+            if (hasTimeoutCause(e)) {
+                log.error("[AiMetricsFastApiClient] FastAPI delete timed out: path={}, ragDocumentId={}", path, ragDocumentId, e);
+                throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_DELETE_FAILED);
+            }
             log.error("[AiMetricsFastApiClient] FastAPI call failed: path={}, reason={}", path, e.getMessage());
             throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_DELETE_FAILED);
         }
+    }
+
+    private boolean hasTimeoutCause(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof TimeoutException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }
