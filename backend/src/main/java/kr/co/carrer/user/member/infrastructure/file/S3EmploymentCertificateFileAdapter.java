@@ -19,7 +19,6 @@ import software.amazon.awssdk.services.s3.model.*;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -34,8 +33,6 @@ public class S3EmploymentCertificateFileAdapter implements EmploymentCertificate
     private static final String ALLOWED_EXTENSION = ".pdf";
     private static final long MAX_FILE_SIZE = 5L * 1024 * 1024;
     private static final String META_ORIGINAL_NAME = "original-name";
-    private static final String TAG_CONSUMED = "consumed";
-    private static final String TAG_CONSUMED_VALUE = "true";
 
     private final S3Client s3Client;
     private final Tika tika = new Tika();
@@ -116,52 +113,16 @@ public class S3EmploymentCertificateFileAdapter implements EmploymentCertificate
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
         }
 
-        // contentType 검증
         if (!ALLOWED_MIME.equals(headResponse.contentType())) {
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_UNSUPPORTED);
         }
 
-        // contentLength — null 포함 fail-close
         Long contentLength = headResponse.contentLength();
         if (contentLength == null) {
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
         }
         if (contentLength > MAX_FILE_SIZE) {
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_TOO_LARGE);
-        }
-
-        // 소비 여부 확인 — 이미 사용된 fileId 재사용 차단
-        try {
-            GetObjectTaggingResponse tagging = s3Client.getObjectTagging(
-                    GetObjectTaggingRequest.builder().bucket(bucketName).key(fileId).build());
-            boolean consumed = tagging.tagSet().stream()
-                    .anyMatch(t -> TAG_CONSUMED.equals(t.key()) && TAG_CONSUMED_VALUE.equals(t.value()));
-            if (consumed) {
-                log.warn("[재직증명서 검증] 이미 소비된 fileId — key: {}", fileId);
-                throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
-            }
-        } catch (CustomException e) {
-            throw e;
-        } catch (SdkException e) {
-            log.error("[재직증명서 검증] S3 태그 조회 실패 — key: {}, error: {}", fileId, e.getMessage());
-            throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
-        }
-    }
-
-    @Override
-    public void consume(String fileId) {
-        try {
-            s3Client.putObjectTagging(PutObjectTaggingRequest.builder()
-                    .bucket(bucketName)
-                    .key(fileId)
-                    .tagging(Tagging.builder()
-                            .tagSet(Tag.builder().key(TAG_CONSUMED).value(TAG_CONSUMED_VALUE).build())
-                            .build())
-                    .build());
-            log.info("[재직증명서] 소비 처리 완료 — key: {}", fileId);
-        } catch (SdkException e) {
-            log.error("[재직증명서] 소비 처리 실패 — key: {}, error: {}", fileId, e.getMessage());
-            throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
         }
     }
 
@@ -172,7 +133,7 @@ public class S3EmploymentCertificateFileAdapter implements EmploymentCertificate
 
     @Override
     public String resolveFileName(String fileId) {
-        // fail-close: headObject 실패 시 등록 중단 (cert_file_name에 S3 key가 저장되는 것 방지)
+        // fail-close: headObject 실패 시 예외 throw (cert_file_name에 S3 key 저장 방지)
         try {
             var response = s3Client.headObject(HeadObjectRequest.builder()
                     .bucket(bucketName).key(fileId).build());

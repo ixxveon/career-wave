@@ -13,7 +13,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StubEmploymentCertificateFileAdapterTest {
 
-    // Tika가 application/pdf로 감지하는 최소 유효 PDF 바이트
     private static final byte[] MINIMAL_PDF =
             "%PDF-1.0\n1 0 obj<</Type/Catalog>>endobj\n%%EOF".getBytes();
 
@@ -43,8 +42,6 @@ class StubEmploymentCertificateFileAdapterTest {
         assertThat(result.uploadedAt()).isNotNull();
     }
 
-    // ─── 5MB 초과 ─────────────────────────────────────────────────────────────────
-
     @Test
     @DisplayName("5MB를 초과하는 파일 업로드 시 EMPLOYMENT_FILE_TOO_LARGE를 반환한다")
     void upload_5MB_초과_EMPLOYMENT_FILE_TOO_LARGE() {
@@ -59,8 +56,6 @@ class StubEmploymentCertificateFileAdapterTest {
                                 .isEqualTo(UserAuthErrorCode.EMPLOYMENT_FILE_TOO_LARGE));
     }
 
-    // ─── 빈 파일 ──────────────────────────────────────────────────────────────────
-
     @Test
     @DisplayName("빈 파일 업로드 시 EMPLOYMENT_FILE_INVALID를 반환한다")
     void upload_빈_파일_EMPLOYMENT_FILE_INVALID() {
@@ -73,8 +68,6 @@ class StubEmploymentCertificateFileAdapterTest {
                         assertThat(((CustomException) e).getErrorCode())
                                 .isEqualTo(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID));
     }
-
-    // ─── 비PDF 확장자 ─────────────────────────────────────────────────────────────
 
     @Test
     @DisplayName("비PDF 확장자 파일 업로드 시 EMPLOYMENT_FILE_UNSUPPORTED를 반환한다")
@@ -89,7 +82,7 @@ class StubEmploymentCertificateFileAdapterTest {
                                 .isEqualTo(UserAuthErrorCode.EMPLOYMENT_FILE_UNSUPPORTED));
     }
 
-    // ─── Tika MIME 검증 — PDF 확장자지만 실제 내용이 PDF 아님 ────────────────────────
+    // ─── Tika MIME 검증 ───────────────────────────────────────────────────────────
 
     @Test
     @DisplayName("PDF 확장자지만 실제 내용이 PDF가 아닌 경우 EMPLOYMENT_FILE_UNSUPPORTED를 반환한다")
@@ -105,7 +98,7 @@ class StubEmploymentCertificateFileAdapterTest {
                                 .isEqualTo(UserAuthErrorCode.EMPLOYMENT_FILE_UNSUPPORTED));
     }
 
-    // ─── validate — 최소 길이 미만 fileId 거부 ────────────────────────────────────────
+    // ─── validate ────────────────────────────────────────────────────────────────
 
     @Test
     @DisplayName("8자 미만 fileId는 validate에서 EMPLOYMENT_FILE_INVALID를 반환한다")
@@ -117,25 +110,9 @@ class StubEmploymentCertificateFileAdapterTest {
                                 .isEqualTo(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID));
     }
 
-    // ─── consume() — 소비 후 재사용 차단 ─────────────────────────────────────────────
-
     @Test
-    @DisplayName("consume() 후 동일 fileId로 validate() 호출 시 EMPLOYMENT_FILE_INVALID를 반환한다")
-    void validate_소비된_fileId_EMPLOYMENT_FILE_INVALID() {
-        String fileId = "stub-already-used-file-id";
-        adapter.consume(fileId);
-
-        assertThatThrownBy(() -> adapter.validate(fileId))
-                .isInstanceOf(CustomException.class)
-                .satisfies(e ->
-                        assertThat(((CustomException) e).getErrorCode())
-                                .isEqualTo(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID));
-    }
-
-    @Test
-    @DisplayName("consume()되지 않은 유효한 fileId는 validate()를 통과한다")
-    void validate_미소비_fileId_통과() {
-        String fileId = "stub-valid-file-id-not-consumed";
-        adapter.validate(fileId); // 예외 없이 통과
+    @DisplayName("유효한 fileId는 validate()를 통과한다 — 중복 방지는 DB UNIQUE 제약이 보장")
+    void validate_유효한_fileId_통과() {
+        adapter.validate("stub-valid-file-id-long-enough"); // 예외 없이 통과
     }
 }

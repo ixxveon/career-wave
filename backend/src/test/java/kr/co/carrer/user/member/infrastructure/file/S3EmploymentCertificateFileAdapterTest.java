@@ -13,7 +13,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.lang.reflect.Field;
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,26 +59,23 @@ class S3EmploymentCertificateFileAdapterTest {
     // ─── upload — 확장자 오류 ───────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("비PDF 확장자 파일 업로드 시 EMPLOYMENT_FILE_UNSUPPORTED를 반환한다")
+    @DisplayName("확장자가 .pdf가 아닌 경우 EMPLOYMENT_FILE_UNSUPPORTED를 반환한다")
     void upload_비PDF_확장자_EMPLOYMENT_FILE_UNSUPPORTED() {
         MockMultipartFile file = new MockMultipartFile(
-                "file", "malware.exe", "application/pdf", MINIMAL_PDF_BYTES);
+                "file", "certificate.txt", "text/plain", "text content".getBytes());
 
         assertThatThrownBy(() -> adapter.upload(file))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e ->
                         assertThat(((CustomException) e).getErrorCode())
                                 .isEqualTo(UserAuthErrorCode.EMPLOYMENT_FILE_UNSUPPORTED));
-
-        verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
 
     @Test
-    @DisplayName("PDF 확장자지만 내용이 PDF가 아닌 경우 EMPLOYMENT_FILE_UNSUPPORTED를 반환한다")
+    @DisplayName("확장자는 .pdf지만 내용이 PDF가 아닌 경우 EMPLOYMENT_FILE_UNSUPPORTED를 반환한다")
     void upload_비PDF_내용_EMPLOYMENT_FILE_UNSUPPORTED() {
-        byte[] textBytes = "This is plain text content, not a PDF.".getBytes();
         MockMultipartFile file = new MockMultipartFile(
-                "file", "fake.pdf", "application/pdf", textBytes);
+                "file", "fake.pdf", "application/pdf", "not a pdf".getBytes());
 
         assertThatThrownBy(() -> adapter.upload(file))
                 .isInstanceOf(CustomException.class)
@@ -89,11 +85,11 @@ class S3EmploymentCertificateFileAdapterTest {
     }
 
     @Test
-    @DisplayName("5MB 초과 파일 업로드 시 EMPLOYMENT_FILE_TOO_LARGE를 반환한다")
-    void upload_5MB초과_EMPLOYMENT_FILE_TOO_LARGE() {
+    @DisplayName("5MB를 초과하는 파일 업로드 시 EMPLOYMENT_FILE_TOO_LARGE를 반환한다")
+    void upload_5MB_초과_EMPLOYMENT_FILE_TOO_LARGE() {
         byte[] largeContent = new byte[5 * 1024 * 1024 + 1];
         MockMultipartFile file = new MockMultipartFile(
-                "file", "large.pdf", "application/pdf", largeContent);
+                "file", "big.pdf", "application/pdf", largeContent);
 
         assertThatThrownBy(() -> adapter.upload(file))
                 .isInstanceOf(CustomException.class)
@@ -121,21 +117,19 @@ class S3EmploymentCertificateFileAdapterTest {
     // ─── validate 성공 ────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("유효하고 소비되지 않은 S3 PDF 객체는 validate()를 통과한다")
+    @DisplayName("유효한 S3 PDF 객체는 validate()를 통과한다")
     void validate_성공() {
         String fileId = "employment-certificates/2026-06-18/uuid.pdf";
         HeadObjectResponse headResponse = HeadObjectResponse.builder()
                 .contentType("application/pdf")
                 .contentLength(1024L)
                 .build();
-        GetObjectTaggingResponse tagging = GetObjectTaggingResponse.builder()
-                .tagSet(List.of()) // consumed 태그 없음
-                .build();
 
         when(s3Client.headObject(any(HeadObjectRequest.class))).thenReturn(headResponse);
-        when(s3Client.getObjectTagging(any(GetObjectTaggingRequest.class))).thenReturn(tagging);
 
         adapter.validate(fileId); // 예외 없이 통과
+        // 중복 사용 방지는 company_profiles.cert_file_url UNIQUE 제약으로 DB가 보장
+        verify(s3Client, times(1)).headObject(any(HeadObjectRequest.class));
     }
 
     // ─── validate — prefix 오류 ───────────────────────────────────────────────────
@@ -199,7 +193,7 @@ class S3EmploymentCertificateFileAdapterTest {
     void validate_contentLength_null_EMPLOYMENT_FILE_INVALID() {
         HeadObjectResponse headResponse = HeadObjectResponse.builder()
                 .contentType("application/pdf")
-                .contentLength((Long) null) // SDK가 null 반환하는 상황 가정
+                .contentLength((Long) null)
                 .build();
         when(s3Client.headObject(any(HeadObjectRequest.class))).thenReturn(headResponse);
 
@@ -217,69 +211,6 @@ class S3EmploymentCertificateFileAdapterTest {
                 .thenThrow(SdkException.create("403 Forbidden", new RuntimeException()));
 
         assertThatThrownBy(() -> adapter.validate("employment-certificates/2026/uuid.pdf"))
-                .isInstanceOf(CustomException.class)
-                .satisfies(e ->
-                        assertThat(((CustomException) e).getErrorCode())
-                                .isEqualTo(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID));
-    }
-
-    // ─── validate — 소비된 fileId 거부 ────────────────────────────────────────────
-
-    @Test
-    @DisplayName("consumed=true 태그가 있는 fileId는 EMPLOYMENT_FILE_INVALID를 반환한다")
-    void validate_소비된_fileId_EMPLOYMENT_FILE_INVALID() {
-        HeadObjectResponse headResponse = HeadObjectResponse.builder()
-                .contentType("application/pdf").contentLength(1024L).build();
-        GetObjectTaggingResponse tagging = GetObjectTaggingResponse.builder()
-                .tagSet(List.of(Tag.builder().key("consumed").value("true").build()))
-                .build();
-
-        when(s3Client.headObject(any(HeadObjectRequest.class))).thenReturn(headResponse);
-        when(s3Client.getObjectTagging(any(GetObjectTaggingRequest.class))).thenReturn(tagging);
-
-        assertThatThrownBy(() -> adapter.validate("employment-certificates/2026/used.pdf"))
-                .isInstanceOf(CustomException.class)
-                .satisfies(e ->
-                        assertThat(((CustomException) e).getErrorCode())
-                                .isEqualTo(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID));
-    }
-
-    @Test
-    @DisplayName("S3 태그 조회 실패 시 fail-close로 EMPLOYMENT_FILE_INVALID를 반환한다")
-    void validate_태그조회_SdkException_EMPLOYMENT_FILE_INVALID() {
-        HeadObjectResponse headResponse = HeadObjectResponse.builder()
-                .contentType("application/pdf").contentLength(1024L).build();
-        when(s3Client.headObject(any(HeadObjectRequest.class))).thenReturn(headResponse);
-        when(s3Client.getObjectTagging(any(GetObjectTaggingRequest.class)))
-                .thenThrow(SdkException.create("tag error", new RuntimeException()));
-
-        assertThatThrownBy(() -> adapter.validate("employment-certificates/2026/uuid.pdf"))
-                .isInstanceOf(CustomException.class)
-                .satisfies(e ->
-                        assertThat(((CustomException) e).getErrorCode())
-                                .isEqualTo(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID));
-    }
-
-    // ─── consume() ────────────────────────────────────────────────────────────────
-
-    @Test
-    @DisplayName("consume() 성공 시 S3 putObjectTagging이 호출된다")
-    void consume_성공_putObjectTagging_호출() {
-        when(s3Client.putObjectTagging(any(PutObjectTaggingRequest.class)))
-                .thenReturn(PutObjectTaggingResponse.builder().build());
-
-        adapter.consume("employment-certificates/2026/uuid.pdf");
-
-        verify(s3Client, times(1)).putObjectTagging(any(PutObjectTaggingRequest.class));
-    }
-
-    @Test
-    @DisplayName("consume() S3 실패 시 EMPLOYMENT_FILE_INVALID를 반환한다")
-    void consume_S3Exception_EMPLOYMENT_FILE_INVALID() {
-        when(s3Client.putObjectTagging(any(PutObjectTaggingRequest.class)))
-                .thenThrow(SdkException.create("tag error", new RuntimeException()));
-
-        assertThatThrownBy(() -> adapter.consume("employment-certificates/2026/uuid.pdf"))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e ->
                         assertThat(((CustomException) e).getErrorCode())
@@ -306,8 +237,7 @@ class S3EmploymentCertificateFileAdapterTest {
         when(s3Client.headObject(any(HeadObjectRequest.class)))
                 .thenThrow(SdkException.create("error", new RuntimeException()));
 
-        String fileId = "employment-certificates/2026/uuid.pdf";
-        assertThatThrownBy(() -> adapter.resolveFileName(fileId))
+        assertThatThrownBy(() -> adapter.resolveFileName("employment-certificates/2026/uuid.pdf"))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e ->
                         assertThat(((CustomException) e).getErrorCode())

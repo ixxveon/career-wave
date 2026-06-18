@@ -8,6 +8,7 @@ public interface EmploymentCertificateFilePort {
     /**
      * fileId 유효성 검증 — 유효하지 않으면 CustomException(EMPLOYMENT_FILE_INVALID) throw.
      * S3 구현체에서 객체 존재 여부·MIME·크기 검증.
+     * 중복 사용 방지는 company_profiles.cert_file_url UNIQUE 제약으로 DB 레벨에서 보장한다.
      */
     void validate(String fileId);
 
@@ -19,10 +20,4 @@ public interface EmploymentCertificateFilePort {
 
     /** PDF 파일 업로드 후 fileId 및 메타데이터 반환 */
     UserRegisterDto.ResponseEmploymentCertificateUpload upload(MultipartFile file);
-
-    /**
-     * 기업 가입 완료 후 fileId를 소비 처리한다.
-     * 소비된 fileId는 validate()에서 거부되어 재사용을 방지한다.
-     */
-    void consume(String fileId);
 }

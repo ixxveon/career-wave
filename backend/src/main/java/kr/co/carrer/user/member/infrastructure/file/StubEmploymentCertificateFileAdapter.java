@@ -13,15 +13,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 재직증명서 fileId 검증 stub — local/test 전용.
  * 실 환경에서는 S3EmploymentCertificateFileAdapter 사용.
- * S3 adapter와 동일한 검증 로직(확장자 + Tika MIME + 소비 상태)을 적용해
+ * S3 adapter와 동일한 검증 로직(확장자 + Tika MIME)을 적용해
  * local/test와 생산 환경의 동작 일관성을 보장한다.
+ * 중복 사용 방지는 company_profiles.cert_file_url UNIQUE 제약으로 DB 레벨에서 보장한다.
  */
 @Slf4j
 @Profile({"local", "test"})
@@ -33,7 +32,6 @@ public class StubEmploymentCertificateFileAdapter implements EmploymentCertifica
     private static final String ALLOWED_MIME = "application/pdf";
 
     private final Tika tika = new Tika();
-    private final Set<String> consumedFileIds = ConcurrentHashMap.newKeySet();
 
     @Value("${aws.s3.bucket-name:careerwave-local}")
     private String bucketName;
@@ -43,16 +41,6 @@ public class StubEmploymentCertificateFileAdapter implements EmploymentCertifica
         if (fileId == null || fileId.isBlank() || fileId.length() < MIN_FILE_ID_LENGTH) {
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
         }
-        if (consumedFileIds.contains(fileId)) {
-            log.warn("[Stub 재직증명서] 이미 소비된 fileId — {}", fileId);
-            throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
-        }
-    }
-
-    @Override
-    public void consume(String fileId) {
-        consumedFileIds.add(fileId);
-        log.info("[Stub 재직증명서] 소비 처리 — {}", fileId);
     }
 
     @Override
@@ -74,7 +62,6 @@ public class StubEmploymentCertificateFileAdapter implements EmploymentCertifica
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_TOO_LARGE);
         }
 
-        // 확장자 검증 (S3 adapter와 동일)
         String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "";
         if (!originalName.toLowerCase().endsWith(".pdf")) {
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_UNSUPPORTED);
