@@ -17,7 +17,7 @@ router = APIRouter(
 )
 
 
-@router.post("/sessions/{session_id}/trigger/voice-chunk")
+@router.post("/sessions/{session_id}/trigger/voice-chunk", status_code=202)
 async def trigger_voice_chunk(
     session_id: str,
     question_order: int = Form(...),
