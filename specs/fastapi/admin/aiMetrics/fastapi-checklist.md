@@ -73,19 +73,19 @@
 
 ## Phase 12 — Domain Router
 
-- [ ] Router, Schema, Repository, Service, External Client, Background Task 책임이 계층별로 분리되어 있다.
-- [ ] `POST /internal/admin/ai-metrics/usage/summary`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/domain-usage`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/token-trend`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/heavy-users`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/logs/search`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/ops/sync-settings`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/rag-documents/index`가 요청 계약에 맞게 동작한다.
-- [ ] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/log`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/summary`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/domain-usage`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/token-trend`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/heavy-users`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/logs/search`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/ops/sync-settings`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/rag-documents/index`가 요청 계약에 맞게 동작한다.
+- [x] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/log`가 요청 계약에 맞게 동작한다.
 
 ## Phase 13 — RAG Indexing Background Task
 
+- [ ] Router, Schema, Repository, Service, External Client, Background Task 책임이 계층별로 분리되어 있다.
 - [ ] `POST /internal/admin/ai-metrics/rag-documents/index`가 인덱싱 수락 시 `rag_documents.status = INDEXING`으로 갱신한다.
 - [ ] 비동기 인덱싱 워커가 `UPLOADED -> INDEXING -> COMPLETED` 성공 상태 전이를 반영한다.
 - [ ] 비동기 인덱싱 워커가 `INDEXING -> FAILED` 실패 상태 전이를 반영한다.

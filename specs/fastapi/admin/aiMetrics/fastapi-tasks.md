@@ -99,16 +99,16 @@
   
 ## Phase 12 - Domain Router
 
-- [ ] `ai_metrics_router.py`를 작성한다.   
-- [ ] `POST /internal/admin/ai-metrics/usage/summary` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/domain-usage` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/token-trend` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/heavy-users` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/logs/search` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/ops/sync-settings` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/rag-documents/index` Router를 작성한다.
-- [ ] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/log` Router를 작성한다.
+- [x] `ai_metrics_router.py`를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/usage/summary` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/usage/domain-usage` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/usage/token-trend` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/usage/heavy-users` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/usage/logs/search` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/ops/sync-settings` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/rag-documents/index` Router를 작성한다.
+- [x] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/usage/log` Router를 작성한다.
 
 ## Phase 13 - RAG Indexing Background Task
 
