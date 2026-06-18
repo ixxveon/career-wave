@@ -22,6 +22,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import kr.co.carrer.auth.jwt.AccountType;
+import kr.co.carrer.user.member.dto.UserSocialAuthDto;
 import kr.co.carrer.user.member.entity.SocialAccount;
 import reactor.core.publisher.Mono;
 
@@ -77,6 +78,45 @@ class UserSocialAuthServiceImplTest {
         injectValue(service, "googleClientId", "google-id");
         injectValue(service, "googleClientSecret", "google-secret");
         injectValue(service, "googleRedirectUri", "http://localhost/google");
+    }
+
+    // ─── OAuth state 불일치 — OAUTH_STATE_INVALID ────────────────────────────────
+
+    @Test
+    void callback_state_불일치_OAUTH_STATE_INVALID() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        // Redis에 state가 없음 (만료 또는 위조)
+        when(valueOps.getAndDelete(anyString())).thenReturn(null);
+
+        assertThatThrownBy(() -> service.callback("kakao", "code-123", "invalid-state", httpResponse))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.OAUTH_STATE_INVALID));
+    }
+
+    // ─── authorize 성공 — authorizationUrl 반환 ────────────────────────────────────
+
+    @Test
+    void authorize_kakao_성공_authorizationUrl_포함() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+
+        UserSocialAuthDto.ResponseOAuthAuthorize resp = service.authorize("kakao");
+
+        assertThat(resp).isNotNull();
+        assertThat(resp.provider()).isEqualTo("kakao");
+        assertThat(resp.authorizationUrl()).contains("kauth.kakao.com");
+        assertThat(resp.state()).isNotBlank();
+        verify(valueOps, times(1)).set(anyString(), anyString(), any(java.time.Duration.class));
+    }
+
+    @Test
+    void authorize_지원하지_않는_provider_OAUTH_PROVIDER_INVALID() {
+        assertThatThrownBy(() -> service.authorize("apple"))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.OAUTH_PROVIDER_INVALID));
     }
 
     // ─── SUSPENDED 계정 — validateAccountStatus() 동작 확인 ──────────────────────

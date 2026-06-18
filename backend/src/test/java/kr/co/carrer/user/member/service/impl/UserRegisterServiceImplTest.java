@@ -149,8 +149,144 @@ class UserRegisterServiceImplTest {
 
     @Test
     void checkLoginId_중복된_아이디_available_false() {
-        when(memberRepository.existsByLoginId("taken")).thenReturn(true);
-        assertThat(service.checkLoginId("taken").available()).isFalse();
+        when(memberRepository.existsByLoginId("taken01")).thenReturn(true);
+        assertThat(service.checkLoginId("taken01").available()).isFalse();
+    }
+
+    @Test
+    void checkLoginId_형식_오류_5자_LOGIN_ID_INVALID() {
+        assertThatThrownBy(() -> service.checkLoginId("abc12")) // 5자 — 6자 미만
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.LOGIN_ID_INVALID));
+
+        verifyNoInteractions(memberRepository);
+    }
+
+    @Test
+    void checkLoginId_특수문자_포함_LOGIN_ID_INVALID() {
+        assertThatThrownBy(() -> service.checkLoginId("user_01!")) // 특수문자 포함
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.LOGIN_ID_INVALID));
+    }
+
+    // ─── 개인회원 가입 중복 검증 ────────────────────────────────────────────────────
+
+    @Test
+    void registerUser_loginId_중복_LOGIN_ID_ALREADY_EXISTS() throws Exception {
+        MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "test@example.com");
+        MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01012345678");
+        when(verificationRepository.findByVerificationToken("etoken")).thenReturn(Optional.of(emailVerif));
+        when(verificationRepository.findByVerificationToken("ptoken")).thenReturn(Optional.of(phoneVerif));
+        when(memberRepository.existsByLoginId(anyString())).thenReturn(true); // 중복
+
+        assertThatThrownBy(() -> service.registerUser(buildPersonalRequest()))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.LOGIN_ID_ALREADY_EXISTS));
+
+        verify(memberRepository, never()).save(any());
+    }
+
+    @Test
+    void registerUser_email_중복_EMAIL_ALREADY_EXISTS() throws Exception {
+        MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "test@example.com");
+        MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01012345678");
+        when(verificationRepository.findByVerificationToken("etoken")).thenReturn(Optional.of(emailVerif));
+        when(verificationRepository.findByVerificationToken("ptoken")).thenReturn(Optional.of(phoneVerif));
+        when(memberRepository.existsByLoginId(anyString())).thenReturn(false);
+        when(memberRepository.existsByEmail(anyString())).thenReturn(true); // 중복
+
+        assertThatThrownBy(() -> service.registerUser(buildPersonalRequest()))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.EMAIL_ALREADY_EXISTS));
+    }
+
+    @Test
+    void registerUser_phone_중복_PHONE_ALREADY_EXISTS() throws Exception {
+        MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "test@example.com");
+        MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01012345678");
+        when(verificationRepository.findByVerificationToken("etoken")).thenReturn(Optional.of(emailVerif));
+        when(verificationRepository.findByVerificationToken("ptoken")).thenReturn(Optional.of(phoneVerif));
+        when(memberRepository.existsByLoginId(anyString())).thenReturn(false);
+        when(memberRepository.existsByEmail(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhone(anyString())).thenReturn(true); // 중복
+
+        assertThatThrownBy(() -> service.registerUser(buildPersonalRequest()))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.PHONE_ALREADY_EXISTS));
+    }
+
+    // ─── 기업회원 가입 중복 / 외부 검증 ─────────────────────────────────────────────
+
+    @Test
+    void registerCompany_businessNumber_중복_BUSINESS_NUMBER_ALREADY_EXISTS() throws Exception {
+        MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "hr@company.com");
+        MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01099998888");
+        setField(phoneVerif, "verificationToken", "ptoken");
+        when(verificationRepository.findByVerificationToken("etoken")).thenReturn(Optional.of(emailVerif));
+        when(verificationRepository.findByVerificationToken("ptoken")).thenReturn(Optional.of(phoneVerif));
+        when(memberRepository.existsByLoginId(anyString())).thenReturn(false);
+        when(memberRepository.existsByEmail(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(companyProfileRepository.existsByBusinessNumber(anyString())).thenReturn(true); // 중복
+
+        assertThatThrownBy(() -> service.registerCompany(buildCompanyRequest()))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.BUSINESS_NUMBER_ALREADY_EXISTS));
+
+        verify(memberRepository, never()).save(any());
+    }
+
+    @Test
+    void registerCompany_사업자등록_검증_실패_COMPANY_BUSINESS_VERIFICATION_FAILED() throws Exception {
+        MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "hr@company.com");
+        MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01099998888");
+        setField(phoneVerif, "verificationToken", "ptoken");
+        when(verificationRepository.findByVerificationToken("etoken")).thenReturn(Optional.of(emailVerif));
+        when(verificationRepository.findByVerificationToken("ptoken")).thenReturn(Optional.of(phoneVerif));
+        when(memberRepository.existsByLoginId(anyString())).thenReturn(false);
+        when(memberRepository.existsByEmail(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(companyProfileRepository.existsByBusinessNumber(anyString())).thenReturn(false);
+        when(businessVerificationPort.verify(anyString())).thenReturn(false); // 검증 실패
+
+        assertThatThrownBy(() -> service.registerCompany(buildCompanyRequest()))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_FAILED));
+    }
+
+    @Test
+    void registerCompany_사업자등록_API_장애_COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE() throws Exception {
+        MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "hr@company.com");
+        MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01099998888");
+        setField(phoneVerif, "verificationToken", "ptoken");
+        when(verificationRepository.findByVerificationToken("etoken")).thenReturn(Optional.of(emailVerif));
+        when(verificationRepository.findByVerificationToken("ptoken")).thenReturn(Optional.of(phoneVerif));
+        when(memberRepository.existsByLoginId(anyString())).thenReturn(false);
+        when(memberRepository.existsByEmail(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(companyProfileRepository.existsByBusinessNumber(anyString())).thenReturn(false);
+        when(businessVerificationPort.verify(anyString()))
+                .thenThrow(new CustomException(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE));
+
+        assertThatThrownBy(() -> service.registerCompany(buildCompanyRequest()))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE));
     }
 
     // ─── 개인회원 필수 약관 미동의 ───────────────────────────────────────────────────
