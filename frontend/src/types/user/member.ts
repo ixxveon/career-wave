@@ -216,6 +216,19 @@ export interface CompanyRegisterResponse {
   companyApprovalStatus: CompanyApprovalStatus;
 }
 
+/** 사업자번호 사전 확인 — POST /company/business-number/check */
+export interface CheckBusinessNumberRequest {
+  businessNumber: string;
+}
+
+/**
+ * businessStatus: CONTINUING(정상) | SUSPENDED(휴업) | CLOSED(폐업) | NOT_REGISTERED(미등록)
+ */
+export interface CheckBusinessNumberResponse {
+  valid: boolean;
+  businessStatus: 'CONTINUING' | 'SUSPENDED' | 'CLOSED' | 'NOT_REGISTERED';
+}
+
 export interface EmploymentCertificateUploadResponse {
   fileId: string;
   originalName: string;

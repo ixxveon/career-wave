@@ -109,7 +109,7 @@ public interface UserRegisterControllerDocs {
                             value = "{\"success\":true,\"statusCode\":200,\"message\":\"정상 영업 중인 사업자입니다.\",\"data\":{\"valid\":true,\"businessStatus\":\"CONTINUING\"}}"))),
             @ApiResponse(responseCode = "400", description = "사업자번호 형식 오류 (10자리 숫자 아님)",
                     content = @Content(examples = @ExampleObject(
-                            value = "{\"success\":false,\"statusCode\":400,\"message\":\"입력값 검증에 실패했습니다.\",\"code\":null}"))),
+                            value = "{\"success\":false,\"statusCode\":400,\"message\":\"입력값 검증에 실패했습니다.\",\"data\":{\"businessNumber\":\"사업자등록번호는 10자리 숫자입니다.\"}}"))),
             @ApiResponse(responseCode = "503", description = "국세청 API 장애/타임아웃",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":503,\"message\":\"사업자 검증 서비스를 일시적으로 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.\",\"code\":\"COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE\"}")))

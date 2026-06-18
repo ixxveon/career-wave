@@ -288,6 +288,35 @@ export const memberHandlers = [
     });
   }),
 
+  // ── 사업자번호 사전 확인 ──────────────────────────────────────────────────────
+  http.post('/api/v1/user/members/company/business-number/check', async ({ request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    const businessNumber = body?.businessNumber as string;
+
+    if (!businessNumber || !/^\d{10}$/.test(businessNumber)) {
+      return HttpResponse.json(
+        {
+          success: false,
+          statusCode: 400,
+          message: '입력값 검증에 실패했습니다.',
+          data: { businessNumber: '사업자등록번호는 10자리 숫자입니다.' },
+        },
+        { status: 400 },
+      );
+    }
+    // 로컬 개발용 — 1234567890은 정상, 나머지는 휴업으로 반환
+    const isValid = businessNumber === '1234567890';
+    return HttpResponse.json({
+      success: true,
+      statusCode: 200,
+      message: isValid ? '정상 영업 중인 사업자입니다.' : '정상 영업 중이 아닌 사업자입니다.',
+      data: {
+        valid: isValid,
+        businessStatus: isValid ? 'CONTINUING' : 'SUSPENDED',
+      },
+    });
+  }),
+
   // ── 인증번호 발송 ──────────────────────────────────────────────────────────────
   http.post('/api/v1/user/members/verifications/send', async ({ request }) => {
     const body = await request.json() as Record<string, unknown>;

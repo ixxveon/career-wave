@@ -1,4 +1,6 @@
 import type {
+  CheckBusinessNumberRequest,
+  CheckBusinessNumberResponse,
   CheckLoginIdResponse,
   CompanyRegisterRequest,
   CompanyRegisterResponse,
@@ -23,6 +25,13 @@ export const memberRegisterApi = {
 
   registerCompany(payload: CompanyRegisterRequest): Promise<CompanyRegisterResponse> {
     return memberApiClient<CompanyRegisterResponse>('/api/v1/user/members/register/company', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  checkBusinessNumber(payload: CheckBusinessNumberRequest): Promise<CheckBusinessNumberResponse> {
+    return memberApiClient<CheckBusinessNumberResponse>('/api/v1/user/members/company/business-number/check', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
