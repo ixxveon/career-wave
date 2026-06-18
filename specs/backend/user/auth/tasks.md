@@ -54,7 +54,7 @@
 - [x] `SocialAccountRepository.existsByMemberIdAndProvider(...)` 구현
 - [x] 기업회원 아이디 찾기용 `member + company_profile + hr_manager` 조회 query를 분리할지 확정한다. — `UserMemberQueryRepository`로 분리. `members JOIN company_profiles JOIN hr_managers`. 조건: `m.name(managerName)` + `cp.business_number` + `m.email 또는 m.phone` + `m.role_type = 'COMPANY'`. hr_status 필터 미적용 (아이디 찾기는 로그인 자격 검증 아님, spec FR-011).
 - [x] employment certificate 임시 fileId 검증 port 또는 service 구현 — `EmploymentCertificateFilePort` + `StubEmploymentCertificateFileAdapter`(@Profile({"local","test"})) 구현 완료, Phase 5에서 S3 실제 검증으로 교체 예정
-- [ ] 한 요청 안에서 중복 DB 조회가 발생하지 않도록 조회 흐름 점검 — Phase 4 Service 구현 시 처리
+- [x] 한 요청 안에서 중복 DB 조회가 발생하지 않도록 조회 흐름 점검 — DB 중복 조회 없음 확인. 단 registerCompany()에서 S3 headObject 이중 호출(validate + resolveFileName) 발견 — 네트워크 최적화는 별도 PR
 
 ---
 
@@ -255,7 +255,7 @@
 - [x] 개인회원 가입 성공 테스트 — `UserRegisterServiceImplTest.registerUser_성공_시_personalProfile_저장` / `UserRegisterControllerTest.registerUser_성공_201`
 - [x] 개인회원 가입 성공 시 `personal_profiles` 빈 row 생성 테스트 — 동일 테스트
 - [x] 개인회원 가입 시 `company_verification_agreed`, `sms_agreed`가 `null`로 저장되는지 테스트 — `UserRegisterServiceImplTest.registerUser_companyVerification_sms_null_저장`
-- [ ] 개인회원 login/me/status 응답에서 `companyApprovalStatus=NONE`이 반환되고 DB에 저장되지 않는지 테스트
+- [x] 개인회원 login/me/status 응답에서 `companyApprovalStatus=NONE`이 반환되고 DB에 저장되지 않는지 테스트 — `UserLoginServiceImplTest.개인회원_로그인_companyApprovalStatus_NONE_반환_및_DB_미조회`
 - [x] 기업회원 가입 성공 테스트 — `UserRegisterServiceImplTest.registerCompany_성공_token_미발급` / `UserRegisterControllerTest.registerCompany_성공_201`
 - [x] 기업회원 가입 성공 후 token이 발급되지 않는지 테스트 — 동일 테스트 (응답 roleType=COMPANY, companyApprovalStatus=PENDING_REVIEW만 반환)
 - [x] 기업회원 사업자등록정보 외부 검증 성공/실패 테스트 — `UserRegisterServiceImplTest.registerCompany_사업자등록_검증_실패_COMPANY_BUSINESS_VERIFICATION_FAILED`
