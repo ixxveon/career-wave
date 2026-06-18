@@ -76,6 +76,7 @@ export function useCompanyRegisterForm() {
   const [form, setForm] = useState<CompanyForm>(initialCompanyForm);
   const [terms, setTerms] = useState(initialCompanyTerms);
   const currentLoginIdRef = useRef(form.managerId);
+  const currentBusinessNumberRef = useRef(form.businessNumber);
   const currentManagerPhoneRef = useRef(form.managerPhone);
   const currentManagerEmailRef = useRef(form.managerEmail);
   const managerPhoneVerificationIdRef = useRef('');
@@ -174,6 +175,7 @@ export function useCompanyRegisterForm() {
 
     if (key === 'managerId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
     if (key === 'businessNumber') {
+      currentBusinessNumberRef.current = typeof value === 'string' ? value : currentBusinessNumberRef.current;
       setBusinessNumberCheckState(BUSINESS_NUMBER_CHECK_STATE.UNCHECKED);
       setBusinessNumberCheckMessage('');
     }
@@ -298,6 +300,8 @@ export function useCompanyRegisterForm() {
     setBusinessNumberCheckMessage('');
     try {
       const result = await checkBusinessNumber.mutateAsync({ businessNumber: bn });
+      // stale guard — 조회 중 번호가 변경되면 구 결과 무시
+      if (bn !== currentBusinessNumberRef.current.trim()) return;
       setBusinessNumberCheckState(result.valid ? BUSINESS_NUMBER_CHECK_STATE.CONFIRMED : BUSINESS_NUMBER_CHECK_STATE.REJECTED);
       setBusinessNumberCheckMessage(BUSINESS_STATUS_MESSAGES[result.businessStatus] ?? result.businessStatus);
       setFieldErrors((current) => ({
@@ -305,6 +309,7 @@ export function useCompanyRegisterForm() {
         businessNumber: result.valid ? '' : (BUSINESS_STATUS_MESSAGES[result.businessStatus] ?? '사업자 확인에 실패했습니다.'),
       }));
     } catch (error) {
+      if (bn !== currentBusinessNumberRef.current.trim()) return;
       setBusinessNumberCheckState(BUSINESS_NUMBER_CHECK_STATE.ERROR);
       setBusinessNumberCheckMessage('사업자 확인 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해주세요.');
       setFieldErrors((current) => ({ ...current, businessNumber: getRecoveryErrorMessage(error, '사업자 확인에 실패했습니다.') }));

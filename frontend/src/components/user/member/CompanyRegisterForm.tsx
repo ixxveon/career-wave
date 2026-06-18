@@ -104,9 +104,11 @@ export function CompanyRegisterForm({
                 onClick={() => void handleBusinessNumberCheck()}
                 disabled={checkBusinessNumber.isPending}
               />
-              <StatusPill active={businessNumberCheckState === BUSINESS_NUMBER_CHECK_STATE.CONFIRMED}>
-                {businessNumberCheckMessage || '정상 영업 중인 사업자입니다.'}
-              </StatusPill>
+              {businessNumberCheckMessage && (
+                <StatusPill active={businessNumberCheckState === BUSINESS_NUMBER_CHECK_STATE.CONFIRMED}>
+                  {businessNumberCheckMessage}
+                </StatusPill>
+              )}
               {fieldErrors.businessNumber && <p className="cw-register-error">{fieldErrors.businessNumber}</p>}
             </Field>
             <Field label="회사명" required>
