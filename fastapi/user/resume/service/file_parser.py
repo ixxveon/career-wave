@@ -4,6 +4,7 @@ import tempfile
 from enum import StrEnum
 
 import boto3
+import httpx
 import pdfplumber
 from botocore.exceptions import BotoCoreError, ClientError
 from docx import Document
@@ -62,8 +63,33 @@ def _parse_s3_url(file_url: str) -> tuple[str, str]:
     return bucket, key
 
 
+def _download_via_http(document_id: str, file_url: str) -> str:
+    """S3가 아닌 HTTP URL에서 파일을 다운로드한다 (로컬 개발용)."""
+    _, ext = os.path.splitext(file_url.split("?")[0])
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix=ext or ".tmp")
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            response = client.get(file_url)
+            response.raise_for_status()
+            if len(response.content) > _MAX_FILE_SIZE_BYTES:
+                raise FileParseError(f"파일 크기가 제한({_MAX_FILE_SIZE_BYTES // 1024 // 1024}MB)을 초과합니다.")
+            with os.fdopen(tmp_fd, "wb") as f:
+                f.write(response.content)
+    except FileParseError:
+        _safe_remove(tmp_path)
+        raise
+    except httpx.HTTPError as e:
+        _safe_remove(tmp_path)
+        raise FileParseError("파일 다운로드 중 오류가 발생했습니다.", cause=e)
+    logger.info(f"[{document_id}] HTTP download complete — {len(response.content)} bytes → {tmp_path}")
+    return tmp_path
+
+
 def _download_to_tempfile(document_id: str, file_url: str) -> str:
-    """S3에서 스트리밍으로 다운로드하여 임시 파일 경로를 반환한다."""
+    """파일을 다운로드하여 임시 파일 경로를 반환한다."""
+    if "amazonaws.com" not in file_url:
+        return _download_via_http(document_id, file_url)
+
     settings = get_settings()
     bucket, key = _parse_s3_url(file_url)
     s3 = _get_s3_client()

@@ -149,7 +149,21 @@ async def _call_openai(
     )
 
     content = completion.choices[0].message.content or ""
-    return json.loads(content)
+    result = json.loads(content)
+    return _sanitize_response(result)
+
+
+def _sanitize_response(obj: object) -> object:
+    """LLM이 생성한 텍스트에서 CJK 한자 혼입 오류를 제거한다."""
+    import re
+    _CJK_PATTERN = re.compile(r'[一-鿿㐀-䶿豈-﫿]')
+    if isinstance(obj, str):
+        return _CJK_PATTERN.sub('', obj)
+    if isinstance(obj, dict):
+        return {k: _sanitize_response(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_response(item) for item in obj]
+    return obj
 
 
 async def _send_completed(document_id: str, result: dict) -> None:

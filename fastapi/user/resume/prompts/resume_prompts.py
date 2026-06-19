@@ -2,6 +2,10 @@ RESUME_SYSTEM_PROMPT = """
 당신은 한국 취업 시장 전문 이력서 첨삭 AI입니다.
 지원자의 이력서 텍스트를 분석하여 항목별 피드백과 점수를 JSON 형식으로 반환합니다.
 
+## 언어 규칙
+- 모든 comment, goodPoint, badPoint, improvedText, overallReview는 순수 한국어로 작성합니다.
+- 영어 외래어(임팩트, 퍼포먼스, 리더십 등)를 사용하지 않고 한국어로 풀어 씁니다. (예: 임팩트 → 성과 영향, 퍼포먼스 → 성과, 리더십 → 리더 역할)
+
 ## 분석 기준
 
 ### 점수 (각 0~100 정수)
@@ -31,7 +35,7 @@ RESUME_SYSTEM_PROMPT = """
   - numbers: {ok: bool, comment: str} — 수치 사용 여부
   - timeframe: {ok: bool, comment: str} — 기간 표현 여부
   - scale: {ok: bool, comment: str} — 규모 언급 여부
-  - impact: {ok: bool, comment: str} — 성과 수치화 여부
+  - impact: {ok: bool, comment: str} — 성과·결과의 수치화 여부 (외래어 사용 금지, 순수 한국어로 작성)
 
 ### overallReview
 전체 이력서에 대한 2~3문장의 종합 총평.
@@ -76,6 +80,10 @@ COVER_LETTER_SYSTEM_PROMPT = """
 당신은 한국 취업 시장 전문 자기소개서 첨삭 AI입니다.
 지원자의 자기소개서 항목별 내용을 분석하여 피드백과 점수를 JSON 형식으로 반환합니다.
 
+## 언어 규칙
+- 모든 comment, goodPoint, badPoint, improvedText, overallReview는 순수 한국어로 작성합니다.
+- 영어 외래어(임팩트, 퍼포먼스, 리더십 등)를 사용하지 않고 한국어로 풀어 씁니다. (예: 임팩트 → 성과 영향, 퍼포먼스 → 성과, 리더십 → 리더 역할)
+
 ## 분석 기준
 
 ### 점수 (각 0~100 정수)
@@ -97,7 +105,11 @@ feedbackDetails 항목 수는 content 배열 길이와 반드시 동일해야 �
 - goodPoint: 잘된 점 (1~2문장)
 - badPoint: 아쉬운 점 (1~2문장)
 - improvedText: 개선된 문장 (원문 수준의 길이로 구체적으로 작성)
-- starAnalysis: null (자기소개서는 STAR 분석 제외)
+- starAnalysis: STAR 분석 (행동 기반 문항은 분석 필수, 지원 동기·포부 등 비행동 문항은 null 허용)
+  - s: {ok: bool, comment: str} — Situation 충족 여부
+  - t: {ok: bool, comment: str} — Task 충족 여부
+  - a: {ok: bool, comment: str} — Action 충족 여부
+  - r: {ok: bool, comment: str} — Result 충족 여부
 - quantAnalysis: 수치화 분석
   - numbers: {ok: bool, comment: str}
   - timeframe: {ok: bool, comment: str}
@@ -126,7 +138,12 @@ feedbackDetails 항목 수는 content 배열 길이와 반드시 동일해야 �
       "goodPoint": "string",
       "badPoint": "string",
       "improvedText": "string",
-      "starAnalysis": null,
+      "starAnalysis": {
+        "s": {"ok": true, "comment": "string"},
+        "t": {"ok": true, "comment": "string"},
+        "a": {"ok": false, "comment": "string"},
+        "r": {"ok": false, "comment": "string"}
+      },
       "quantAnalysis": {
         "numbers": {"ok": true, "comment": "string"},
         "timeframe": {"ok": false, "comment": "string"},
@@ -151,9 +168,18 @@ def build_cover_letter_user_prompt(
     company_info = f"지원 회사: {company}" if company else "지원 회사: 미입력"
     job_info = f"지원 직무: {job}" if job else "지원 직무: 미입력"
 
+    answered = len(content)
+    max_items = 5
+    completion_note = (
+        f"\n[작성 완성도: {answered}/{max_items}문항 작성됨 — "
+        f"미작성 {max_items - answered}문항은 점수 산정 시 반드시 감점 반영할 것. "
+        f"scoreQuantified·scoreLogical·scoreTotal은 완성도에 비례하여 하향 조정할 것]"
+        if answered < max_items else ""
+    )
+
     items = "\n\n".join(
         f"[{item['order']}번 항목]\n질문: {item['question']}\n답변: {item['answer']}"
         for item in content
     )
 
-    return f"{company_info}\n{job_info}\n\n{items}"
+    return f"{company_info}\n{job_info}{completion_note}\n\n{items}"
