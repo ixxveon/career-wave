@@ -198,6 +198,8 @@ export default function CommunityPage() {
   const [category, setCategory] = useState('전체');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  const isLoggedIn = Boolean(localStorage.getItem('accessToken'));
+
   const filtered = useMemo(() => {
     return MOCK_POSTS.filter((post) => {
       if (category !== '전체' && post.category !== category) return false;
@@ -242,9 +244,11 @@ export default function CommunityPage() {
             />
           </div>
 
-          <button className="cm-write" type="button" onClick={() => navigate('/community/posts/create')}>
-            글쓰기
-          </button>
+          {isLoggedIn && (
+              <button className="cm-write" type="button" onClick={() => navigate('/community/posts/create')}>
+                글쓰기
+              </button>
+          )}
         </div>
 
         <div className="cm-categories">
