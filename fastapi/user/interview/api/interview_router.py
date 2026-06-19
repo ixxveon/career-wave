@@ -1,9 +1,11 @@
 import asyncio
 import logging
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from pydantic import BaseModel
 
+from core.config import get_settings
 from core.security import verify_internal_secret
 from user.interview.pipeline import stt_pipeline
 from user.interview.pipeline import llm_pipeline
@@ -140,10 +142,23 @@ async def register_rag_context(
     return {"accepted": True, "sessionId": session_id}
 
 
+def _resolve_safe_path(file_path: str) -> Path:
+    """
+    요청으로 전달된 파일 경로가 허용 디렉터리 안에 있는지 검증한다.
+    Path Traversal 공격 방지용.
+    """
+    base = Path(get_settings().document_base_dir).resolve()
+    resolved = (base / Path(file_path).name).resolve()
+    if not str(resolved).startswith(str(base)):
+        raise ValueError(f"허용되지 않는 파일 경로: {file_path}")
+    return resolved
+
+
 async def _index_rag_context(session_id: str, document_file_path: str) -> None:
     """서류 파일에서 텍스트를 추출해 세션 컨텍스트에 저장한다. 실패 시 일반 모드로 폴백."""
     try:
-        text = await _extract_document_text(document_file_path)
+        safe_path = _resolve_safe_path(document_file_path)
+        text = await _extract_document_text(str(safe_path))
         truncated = text[:MAX_RAG_CONTEXT_CHARS]
         ctx = _sessions.get(session_id)
         if ctx is not None:
