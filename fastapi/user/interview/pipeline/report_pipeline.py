@@ -44,9 +44,13 @@ async def generate_and_send_report(session_id: str, session_type: str) -> None:
     try:
         result = await _call_llm_report(session_id, answers)
         feedbacks = _build_feedbacks(answers, result)
-        total_score = result.get("totalScore")
-        if isinstance(total_score, float):
-            total_score = int(total_score)
+        total_score: int | None
+        try:
+            raw_score = result.get("totalScore")
+            total_score = int(raw_score) if raw_score is not None else None
+        except (TypeError, ValueError):
+            log.warning("[Session: %s] totalScore 변환 실패 — null 처리: value=%s", session_id, result.get("totalScore"))
+            total_score = None
         log.info(
             "[Session: %s] report generated: totalScore=%s, feedbacks=%d",
             session_id, total_score, len(feedbacks),
