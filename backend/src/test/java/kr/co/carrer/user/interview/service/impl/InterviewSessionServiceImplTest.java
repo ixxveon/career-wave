@@ -215,7 +215,7 @@ class InterviewSessionServiceImplTest {
                     .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                             .isEqualTo(InterviewErrorCode.INTERVIEW_SESSION_ALREADY_ENDED));
 
-            verify(fastApiClient, never()).triggerReportGeneration(any());
+            verify(fastApiClient, never()).triggerReportGeneration(any(), any(), any());
         }
 
         @Test
