@@ -71,7 +71,8 @@ class RagDocumentParser:
         settings = get_ai_metrics_settings()
         base_path = Path(settings.file_storage_base_path).resolve()
         candidate = Path(file_path)
-        resolved_path = candidate if candidate.is_absolute() else (base_path / candidate).resolve()
+        raw_path = candidate if candidate.is_absolute() else (base_path / candidate)
+        resolved_path = raw_path.resolve()
 
         try:
             resolved_path.relative_to(base_path)

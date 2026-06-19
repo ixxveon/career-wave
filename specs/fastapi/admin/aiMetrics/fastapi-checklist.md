@@ -85,21 +85,21 @@
 
 ## Phase 13 — RAG Indexing Background Task
 
-- [ ] Router, Schema, Repository, Service, External Client, Background Task 책임이 계층별로 분리되어 있다.
-- [ ] `POST /internal/admin/ai-metrics/rag-documents/index`가 인덱싱 수락 시 `rag_documents.status = INDEXING`으로 갱신한다.
-- [ ] 비동기 인덱싱 워커가 `UPLOADED -> INDEXING -> COMPLETED` 성공 상태 전이를 반영한다.
-- [ ] 비동기 인덱싱 워커가 `INDEXING -> FAILED` 실패 상태 전이를 반영한다.
-- [ ] `INDEXING` 상태 문서에 대한 중복 인덱싱 실행이 차단된다.
-- [ ] `indexing_progress`가 0~100 범위를 벗어나지 않는다.
-- [ ] `COMPLETED` 상태 문서가 항상 `indexing_progress = 100`으로 저장된다.
-- [ ] `POST /internal/admin/ai-metrics/rag-documents/index` 실패 시 Spring Boot가 `RAG_DOCUMENT_INDEXING_FAILED`로 변환 가능한 내부 오류를 반환한다.
+- [x] Router, Schema, Repository, Service, External Client, Background Task 책임이 계층별로 분리되어 있다.
+- [x] `POST /internal/admin/ai-metrics/rag-documents/index`가 인덱싱 수락 시 `rag_documents.status = INDEXING`으로 갱신한다.
+- [x] 비동기 인덱싱 워커가 `UPLOADED -> INDEXING -> COMPLETED` 성공 상태 전이를 반영한다.
+- [x] 비동기 인덱싱 워커가 `INDEXING -> FAILED` 실패 상태 전이를 반영한다.
+- [x] `INDEXING` 상태 문서에 대한 중복 인덱싱 실행이 차단된다.
+- [x] `indexing_progress`가 0~100 범위를 벗어나지 않는다.
+- [x] `COMPLETED` 상태 문서가 항상 `indexing_progress = 100`으로 저장된다.
+- [x] `POST /internal/admin/ai-metrics/rag-documents/index` 실패 시 Spring Boot가 `RAG_DOCUMENT_INDEXING_FAILED`로 변환 가능한 내부 오류를 반환한다.
 
 ## Phase 14 — RAG Index Delete Phase
 
-- [ ] RAG 문서 기준 vector index 조회와 삭제 흐름이 분리되어 있다.
-- [ ] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 삭제 성공/실패 계약에 맞게 동작한다.
-- [ ] 삭제 실패 시 `RAG_DOCUMENT_DELETE_FAILED` 내부 오류를 반환한다.
-- [ ] 후속 리소스 정리 훅이 삭제 흐름과 연결되어 있다.
+- [x] RAG 문서 기준 vector index 조회와 삭제 흐름이 분리되어 있다.
+- [x] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 삭제 성공/실패 계약에 맞게 동작한다.
+- [x] 삭제 실패 시 `RAG_DOCUMENT_DELETE_FAILED` 내부 오류를 반환한다.
+- [x] 후속 리소스 정리 훅이 삭제 흐름과 연결되어 있다.
 
 ## Phase 15 — Spring ↔ FastAPI 계약 검증
 

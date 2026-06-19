@@ -113,22 +113,22 @@
 
 ## Phase 13 - RAG Indexing Background Task
 
-- [ ] `rag_indexing_task.py` background task 또는 워커 엔트리포인트를 작성한다.
-- [ ] 인덱싱 수락 시 `rag_documents.status = INDEXING` 갱신 로직을 작성한다.
-- [ ] 인덱싱 시작 시 `indexing_progress = 0` 초기화 로직을 작성한다.
-- [ ] 문서 파싱 -> chunking -> embedding -> vector index 생성 파이프라인을 연결한다.
-- [ ] 진행 단계별 `indexing_progress` 갱신 로직을 작성한다.
-- [ ] 인덱싱 완료 시 `status = COMPLETED`, `indexing_progress = 100`, `chunk_count` 반영 로직을 작성한다.
-- [ ] 인덱싱 실패 시 `status = FAILED` 반영 로직을 작성한다.
-- [ ] `INDEXING` 상태 문서 중복 실행 방지 로직을 작성한다.
+- [x] `rag_indexing_task.py` background task 또는 워커 엔트리포인트를 작성한다.
+- [x] 인덱싱 수락 시 `rag_documents.status = INDEXING` 갱신 로직을 작성한다.
+- [x] 인덱싱 시작 시 `indexing_progress = 0` 초기화 로직을 작성한다.
+- [x] 문서 파싱 -> chunking -> embedding -> vector index 생성 파이프라인을 연결한다.
+- [x] 진행 단계별 `indexing_progress` 갱신 로직을 작성한다.
+- [x] 인덱싱 완료 시 `status = COMPLETED`, `indexing_progress = 100`, `chunk_count` 반영 로직을 작성한다.
+- [x] 인덱싱 실패 시 `status = FAILED` 반영 로직을 작성한다.
+- [x] `INDEXING` 상태 문서 중복 실행 방지 로직을 작성한다.
 
 ## Phase 14 - RAG Index Delete Phase
 
-- [ ] `rag_index_delete_task.py` 삭제 처리 흐름을 작성한다.
-- [ ] RAG 문서 기준 vector index 조회 로직을 작성한다.
-- [ ] vector index 삭제 후 결과 반환 로직을 작성한다.
-- [ ] 삭제 실패 시 `RAG_DOCUMENT_DELETE_FAILED` 내부 오류 처리 로직을 작성한다.
-- [ ] 후속 리소스 정리 훅을 작성한다.
+- [x] `rag_index_delete_task.py` 삭제 처리 흐름을 작성한다.
+- [x] RAG 문서 기준 vector index 조회 로직을 작성한다.
+- [x] vector index 삭제 후 결과 반환 로직을 작성한다.
+- [x] 삭제 실패 시 `RAG_DOCUMENT_DELETE_FAILED` 내부 오류 처리 로직을 작성한다.
+- [x] 후속 리소스 정리 훅을 작성한다.
 
 ## Phase 15 - Spring ↔ FastAPI 계약 검증
 
