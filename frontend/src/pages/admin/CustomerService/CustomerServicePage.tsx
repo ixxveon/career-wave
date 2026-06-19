@@ -335,8 +335,9 @@ export default function CustomerServicePage() {
     try {
       const res = await csApi.generateNoticeDraft({ category: noticeForm.category, title: noticeForm.title });
       if (reqId !== aiNoticeReqId.current) return;
-      if (res.data.success) {
-        setNoticeForm((p) => ({ ...p, content: res.data.data.draft }));
+      const noticeDraft = res.data.data?.draft;
+      if (noticeDraft) {
+        setNoticeForm((p) => ({ ...p, content: noticeDraft }));
       }
     } catch {
       // AI 실패 시 조용히 무시 (비크리티컬)
@@ -401,8 +402,9 @@ export default function CustomerServicePage() {
     try {
       const res = await csApi.generateFaqDraft({ question: faqForm.question });
       if (reqId !== aiFaqReqId.current) return;
-      if (res.data.success) {
-        setFaqForm((p) => ({ ...p, answer: res.data.data.draft }));
+      const faqDraft = res.data.data?.draft;
+      if (faqDraft) {
+        setFaqForm((p) => ({ ...p, answer: faqDraft }));
       }
     } catch {
       // AI 실패 시 조용히 무시 (비크리티컬)
@@ -476,8 +478,9 @@ export default function CustomerServicePage() {
         content: selectedInquiry.content,
       });
       if (reqId !== aiInqReqId.current) return;
-      if (res.data.success) {
-        setInquiryReply(res.data.data.draft);
+      const inqDraft = res.data.data?.draft;
+      if (inqDraft) {
+        setInquiryReply(inqDraft);
       }
     } catch {
       // AI 실패 시 조용히 무시 (비크리티컬)
