@@ -23,6 +23,15 @@ from user.interview.websocket.interview_ws_handler import _sessions
 
 log = logging.getLogger(__name__)
 
+_openai_client: AsyncOpenAI | None = None
+
+
+def _get_openai_client() -> AsyncOpenAI:
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = AsyncOpenAI(api_key=get_settings().openai_api_key)
+    return _openai_client
+
 
 async def generate_and_send_report(session_id: str, session_type: str) -> None:
     """
@@ -70,7 +79,7 @@ async def generate_and_send_report(session_id: str, session_type: str) -> None:
 
 async def _call_llm_report(session_id: str, answers: list[dict]) -> dict:
     settings = get_settings()
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    client = _get_openai_client()
 
     user_prompt = build_report_user_prompt(answers)
     response = await client.chat.completions.create(
