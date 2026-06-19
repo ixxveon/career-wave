@@ -2,19 +2,8 @@ from dataclasses import dataclass
 
 from admin.ai_metrics.client import AiMetricsOpenAIClient, get_ai_metrics_openai_client
 from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException
+from admin.ai_metrics.schema import RagChunkEmbedding, RagEmbeddingVector
 from admin.ai_metrics.service.chunking_service import RagTextChunk
-
-
-@dataclass(frozen=True)
-class RagEmbeddingVector:
-    values: list[float]
-
-
-@dataclass(frozen=True)
-class RagChunkEmbedding:
-    chunk_index: int
-    content: str
-    vector: RagEmbeddingVector
 
 
 @dataclass(frozen=True)

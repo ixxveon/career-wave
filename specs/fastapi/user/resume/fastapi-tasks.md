@@ -72,17 +72,17 @@
 
 ## Phase 5: 검증 및 문서화
 
-- [ ] `checklist.md` 전 항목 셀프 체크
-- [ ] `fastapi/tests/fixtures/` 디렉토리 생성 및 테스트 픽스처 작성
-  - `mock_resume_request.json` — RESUME 타입 분석 트리거 요청 샘플
-  - `mock_cover_letter_request.json` — COVER_LETTER 타입 분석 트리거 요청 샘플
-  - `mock_completed_webhook.json` — COMPLETED 콜백 페이로드 샘플
-  - `mock_failed_webhook.json` — FAILED 콜백 페이로드 샘플
-- [ ] 로컬 통합 테스트 (위 픽스처 활용)
-  - `POST /internal/user/resume/analyze` (RESUME 타입) — Webhook 콜백 수신 확인
-  - `POST /internal/user/resume/analyze` (COVER_LETTER 타입) — Webhook 콜백 수신 확인
-  - `X-Internal-Secret` 누락 시 `403` 응답 확인
-  - FAILED 케이스 시뮬레이션 (잘못된 fileUrl 전달)
-- [ ] Spring Boot 연동 테스트
-  - `feedbackText` JSON이 Spring `ObjectMapper.readValue(feedbackText, FeedbackDetail[].class)` 역직렬화 가능한지 확인
-  - WebSocket 브로드캐스트 정상 수신 확인 (분석 진행 → 완료)
+- [x] `checklist.md` 전 항목 셀프 체크
+- [x] `fastapi/tests/fixtures/` 디렉토리 생성 및 테스트 픽스처 작성
+  - [x] `mock_resume_request.json` — RESUME 타입 분석 트리거 요청 샘플
+  - [x] `mock_cover_letter_request.json` — COVER_LETTER 타입 분석 트리거 요청 샘플
+  - [x] `mock_completed_webhook.json` — COMPLETED 콜백 페이로드 샘플
+  - [x] `mock_failed_webhook.json` — FAILED 콜백 페이로드 샘플
+- [x] 로컬 통합 테스트 (위 픽스처 활용) — Spring Boot #527 #528 #541 해결 후 완료
+  - [x] `POST /internal/user/resume/analyze` (RESUME 타입) — Webhook 콜백 수신 확인
+  - [x] `POST /internal/user/resume/analyze` (COVER_LETTER 타입) — Webhook 콜백 수신 확인
+  - [x] `X-Internal-Secret` 누락 시 `403` 응답 확인
+  - [x] FAILED 케이스 시뮬레이션 (잘못된 fileUrl 전달)
+- [x] Spring Boot 연동 테스트 — Spring Boot #527 #528 #541 해결 후 완료
+  - [x] `feedbackText` JSON이 Spring `ObjectMapper.readValue(feedbackText, FeedbackDetail[].class)` 역직렬화 가능한지 확인
+  - [x] WebSocket 브로드캐스트 정상 수신 확인 (분석 진행 → 완료)
