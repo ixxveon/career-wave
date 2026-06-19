@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, MetaData, String, Table, select
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, MetaData, Numeric, String, Table, select
 from sqlalchemy.engine import RowMapping
 from sqlalchemy.orm import Session
 
@@ -14,7 +14,7 @@ ai_ops_settings_table = Table(
     metadata,
     Column("ai_ops_setting_id", BigInteger, primary_key=True),
     Column("selected_model_id", BigInteger, nullable=False),
-    Column("monthly_budget", Integer, nullable=False),
+    Column("monthly_budget", Numeric(15, 2), nullable=False),
     Column("alert_enabled", Boolean, nullable=False),
     Column("alert_channel", String(20), nullable=False),
     Column("alert_threshold", Integer, nullable=False),
