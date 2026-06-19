@@ -63,7 +63,7 @@ async def generate_and_deliver_question(
             "[Session: %s] LLM question generated: order=%d, type=%s",
             session_id, next_question_order, question_type,
         )
-    except (asyncio.TimeoutError, OpenAIError, Exception) as e:
+    except Exception as e:  # asyncio.TimeoutError, OpenAIError 포함
         log.warning("[Session: %s] LLM failed (%s), using fallback", session_id, e)
         await send_error(
             session_id,
