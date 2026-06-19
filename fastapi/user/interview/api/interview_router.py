@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from core.security import verify_internal_secret
 from user.interview.pipeline import stt_pipeline
 from user.interview.pipeline import llm_pipeline
+from user.interview.prompts.interview_prompts import MAX_RAG_CONTEXT_CHARS
 from user.interview.websocket.interview_ws_handler import _sessions
 
 log = logging.getLogger(__name__)
@@ -143,10 +144,11 @@ async def _index_rag_context(session_id: str, document_file_path: str) -> None:
     """서류 파일에서 텍스트를 추출해 세션 컨텍스트에 저장한다. 실패 시 일반 모드로 폴백."""
     try:
         text = await _extract_document_text(document_file_path)
+        truncated = text[:MAX_RAG_CONTEXT_CHARS]
         ctx = _sessions.get(session_id)
         if ctx is not None:
-            ctx.rag_context = text
-            log.info("[Session: %s] RAG context indexed: charLen=%d", session_id, len(text))
+            ctx.rag_context = truncated
+            log.info("[Session: %s] RAG context indexed: charLen=%d", session_id, len(truncated))
         else:
             log.warning("[Session: %s] RAG index skipped: no active session", session_id)
     except Exception as e:
