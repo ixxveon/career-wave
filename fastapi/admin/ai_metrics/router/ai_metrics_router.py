@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
@@ -46,6 +47,7 @@ router = APIRouter(
 )
 
 _bg_tasks: set[asyncio.Task[None]] = set()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/usage/summary")
@@ -179,9 +181,9 @@ async def start_rag_document_index(request: RagIndexStartRequest):
             )
             response = service.start_indexing(request)
             session.commit()
-        task = asyncio.create_task(_run_rag_indexing(request.rag_document_id))
-        _bg_tasks.add(task)
-        task.add_done_callback(_bg_tasks.discard)
+            task = asyncio.create_task(_run_rag_indexing(request.rag_document_id))
+            _bg_tasks.add(task)
+            task.add_done_callback(_on_background_task_done)
         return response
     except AiMetricsException as error:
         return JSONResponse(
@@ -239,6 +241,17 @@ def _parse_iso_datetime(value: str) -> datetime:
             error_code=AiMetricsErrorCode.INVALID_DATETIME_FORMAT,
             detail={"value": value},
         ) from error
+
+
+def _on_background_task_done(task: asyncio.Task[None]) -> None:
+    _bg_tasks.discard(task)
+
+    if task.cancelled():
+        return
+
+    exception = task.exception()
+    if exception is not None:
+        logger.error("RAG indexing background task failed", exc_info=exception)
 
 
 async def _run_rag_indexing(rag_document_id: int) -> None:

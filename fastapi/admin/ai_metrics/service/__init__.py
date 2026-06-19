@@ -1,3 +1,4 @@
+from admin.ai_metrics.schema import RagChunkEmbedding, RagEmbeddingVector
 from admin.ai_metrics.service.chunking_service import (
     ChunkingResult,
     ChunkingService,
@@ -6,8 +7,6 @@ from admin.ai_metrics.service.chunking_service import (
 from admin.ai_metrics.service.embedding_service import (
     EmbeddingResult,
     EmbeddingService,
-    RagChunkEmbedding,
-    RagEmbeddingVector,
 )
 from admin.ai_metrics.service.ops_settings_service import (
     AiOpsRuntimeContext,

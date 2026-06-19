@@ -27,6 +27,7 @@ from admin.ai_metrics.schema.response import (
     UsageLogItemResponse,
     UsageLogListResponse,
 )
+from admin.ai_metrics.schema.rag_types import RagChunkEmbedding, RagEmbeddingVector
 
 __all__ = [
     "AiFeatureType",
@@ -40,6 +41,8 @@ __all__ = [
     "OpsSettingSyncRequest",
     "OpsSettingSyncResponse",
     "RagDocumentStatusType",
+    "RagChunkEmbedding",
+    "RagEmbeddingVector",
     "RagIndexDeleteResponse",
     "RagIndexStartRequest",
     "RagIndexStartResponse",
