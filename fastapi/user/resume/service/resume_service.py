@@ -19,12 +19,14 @@ from user.resume.service.webhook_client import send_webhook
 
 logger = logging.getLogger(__name__)
 
-_CJK_PATTERN = re.compile(r'[一-鿿㐀-䶿豈-﫿]')
-# 정상 외래어(임팩트, 퍼센트)는 lookahead로 제외하고 오염된 음절 조합만 치환
+_CJK_PATTERN = re.compile(r'[㐀-䶿一-鿿豈-﫿]')
+# 임팩트/퍼센트 오염 패턴 교정 (LLM이 생성하는 깨진 음절 치환)
+# 임팩 = 임팩, 입팩 = 입팩, 트 = 트, 퍼 = 퍼, 비 = 비, 센 = 센
 _LOANWORD_FIXES: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r'[임입][팩팬](?!트)\S*'), '성과 영향'),
-    (re.compile(r'[퍼비][센](?!트)\S*'), '비율'),
+    (re.compile(r'[임입]팩(?!트)\S*'), '성과 영향'),
+    (re.compile(r'[퍼비]센(?!트)\S*'), '비율'),
 ]
+
 
 
 @lru_cache
