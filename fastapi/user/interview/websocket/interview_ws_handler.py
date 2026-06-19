@@ -44,6 +44,12 @@ class _SessionContext:
     seq: int = 0
     # 재연결 시 미전달 메시지 재전송용 버퍼 (Scale-out 시 Redis 전환 예정)
     msg_buffer: list[dict[str, Any]] = field(default_factory=list)
+    # Phase 4 — LLM 파이프라인 컨텍스트
+    interview_type: str | None = None       # TECHNICAL | PERSONALITY | PROJECT
+    session_type: str | None = None         # TEXT | VOICE
+    answer_history: list[dict[str, str]] = field(default_factory=list)  # [{question, answer}, ...]
+    rag_context: str | None = None          # RAG 인덱싱된 문서 텍스트
+    used_fallback_questions: set[str] = field(default_factory=set)  # 중복 폴백 방지
 
 
 _sessions: dict[str, _SessionContext] = {}

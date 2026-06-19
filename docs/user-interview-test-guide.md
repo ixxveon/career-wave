@@ -211,7 +211,7 @@ LLM이 다음 질문을 생성하면 TTS 오디오가 순차 전송됩니다.
 
 ## FastAPI 내부 API 직접 테스트 (Spring Boot 없이)
 
-### voice-chunk 트리거
+### voice-chunk 트리거 (Phase 3)
 
 ```bash
 # 정상 요청 → 202
@@ -238,6 +238,55 @@ print('Response:', resp.text)
 "
 ```
 
+### text-answer 트리거 (Phase 4)
+
+```bash
+# WebSocket 먼저 연결한 후 아래 요청 전송
+# FastAPI가 LLM 질문을 생성해 Spring에 전달하고, 음성 모드면 TTS 오디오도 WebSocket으로 수신됨
+
+python -c "
+import requests, json
+url = 'http://localhost:8000/internal/user/interview/sessions/test-session-001/trigger/text-answer'
+headers = {'X-Internal-Secret': 'WEBHOOK_SECRET에_입력한_값', 'Content-Type': 'application/json'}
+body = {
+    'sessionId': 'test-session-001',
+    'memberId': 'test-member-001',
+    'questionOrder': 1,
+    'answerText': '저는 Java와 Spring Boot를 주로 사용합니다.',
+    'questionText': '본인의 기술 스택을 소개해 주세요.',
+    'sessionType': 'TEXT',
+    'interviewType': 'TECHNICAL'
+}
+resp = requests.post(url, headers=headers, data=json.dumps(body))
+print('HTTP Status:', resp.status_code)  # 202 기대
+print('Response:', resp.text)
+"
+```
+
+### rag-context 등록 (Phase 4)
+
+```bash
+# 로컬 PDF 서류 경로로 테스트 (FastAPI 서버가 읽을 수 있는 경로 필요)
+
+python -c "
+import requests, json
+url = 'http://localhost:8000/internal/user/interview/sessions/test-session-001/rag-context'
+headers = {'X-Internal-Secret': 'WEBHOOK_SECRET에_입력한_값', 'Content-Type': 'application/json'}
+body = {
+    'sessionId': 'test-session-001',
+    'memberId': 'test-member-001',
+    'documentId': 'test-doc-001',
+    'documentFilePath': '/path/to/resume.pdf'
+}
+resp = requests.post(url, headers=headers, data=json.dumps(body))
+print('HTTP Status:', resp.status_code)  # 200 기대
+print('Response:', resp.text)
+"
+```
+
+> 파일 경로를 찾을 수 없으면 FastAPI 로그에 `RAG indexing failed (fallback to general mode)` 경고가 출력됩니다.  
+> 이 경우 세션은 중단되지 않고 RAG 없이 일반 면접 모드로 계속 진행됩니다.
+
 ---
 
 ## 단위 테스트 실행
@@ -251,6 +300,7 @@ python -m pytest tests/ -v
 |------|-------------|
 | `test_spring_client.py` | 콜백 성공·재시도·최종 실패·duplicated 멱등 처리·voiceQualityRatio null 처리 |
 | `test_ws_handler.py` | JWT 검증·중복 연결·sequenceNumber·재연결 재전송·send_* 메시지 구조 |
+| `test_llm_pipeline.py` | LLM 타임아웃 폴백·폴백 중복 방지·RAG 컨텍스트 주입·JSON 파싱 |
 
 ---
 

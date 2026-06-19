@@ -57,26 +57,26 @@
 
 ## Phase 4 — LLM 질문 생성 & TTS
 
-- [ ] `fastapi/user/prompts/interview_prompts.py` 생성
-  - [ ] 시스템 프롬프트 (면접 유형별: `TECHNICAL` / `PERSONALITY` / `PROJECT` / 기본)
-  - [ ] 폴백 질문 목록 (각 유형 최소 5개)
-  - [ ] RAG 컨텍스트 주입 프롬프트 템플릿
-  - [ ] 꼬리 질문·압박 질문 생성 가이드라인 프롬프트
-- [ ] `fastapi/user/pipeline/llm_pipeline.py` 생성
-  - [ ] `generate_next_question(session_id, question_order, answer_text, rag_context, interview_type)` — GPT-4o 호출
-  - [ ] 이전 답변 이력 컨텍스트 조합 로직
-  - [ ] `asyncio.wait_for`로 LLM 타임아웃 처리 (`OPENAI_LLM_TIMEOUT_SECONDS`)
-  - [ ] 타임아웃 시 폴백 질문 반환
-  - [ ] 세션별 `used_fallback_questions: set[str]` 메모리로 이미 사용한 폴백 질문 추적 — 중복 폴백 질문 재출제 방지
-  - [ ] LLM 실패 시 `INTERVIEW_LLM_FAILED` WebSocket 메시지 전송
-- [ ] `fastapi/user/pipeline/tts_pipeline.py` 생성
-  - [ ] `synthesize_and_stream(text, session_id, question_order)` — OpenAI TTS 호출 + WebSocket 스트리밍
-  - [ ] 문장 단위 청크 분할 후 `TTS_AUDIO` 순차 전송
-  - [ ] 전송 완료 시 `TTS_AUDIO_END` 전송
-  - [ ] TTS 실패 시 텍스트 질문만 전달 + `INTERVIEW_TTS_FAILED` 전송
-- [ ] `fastapi/user/api/interview_router.py` 업데이트
-  - [ ] `POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer` 라우터
-  - [ ] `POST /internal/user/interview/sessions/{sessionId}/rag-context` 라우터
+- [x] `fastapi/user/interview/prompts/interview_prompts.py` 생성
+  - [x] 시스템 프롬프트 (면접 유형별: `TECHNICAL` / `PERSONALITY` / `PROJECT` / 기본)
+  - [x] 폴백 질문 목록 (각 유형 최소 5개)
+  - [x] RAG 컨텍스트 주입 프롬프트 템플릿
+  - [x] 꼬리 질문·압박 질문 생성 가이드라인 프롬프트
+- [x] `fastapi/user/interview/pipeline/llm_pipeline.py` 생성
+  - [x] `generate_and_deliver_question(session_id, question_order, answer_text, question_text)` — GPT-4o 호출 후 Spring 전달
+  - [x] 이전 답변 이력 컨텍스트 조합 로직 (최근 10개)
+  - [x] `asyncio.wait_for`로 LLM 타임아웃 처리 (`OPENAI_LLM_TIMEOUT_SECONDS`)
+  - [x] 타임아웃 시 폴백 질문 반환
+  - [x] 세션별 `used_fallback_questions: set[str]` 메모리로 이미 사용한 폴백 질문 추적 — 중복 폴백 질문 재출제 방지
+  - [x] LLM 실패 시 `INTERVIEW_LLM_FAILED` WebSocket 메시지 전송
+- [x] `fastapi/user/interview/pipeline/tts_pipeline.py` 생성
+  - [x] `synthesize_and_stream(text, session_id, question_order)` — OpenAI TTS 스트리밍 + WebSocket 전송
+  - [x] `TTS_AUDIO` 청크 순차 전송
+  - [x] 전송 완료 시 `TTS_AUDIO_END` 전송
+  - [x] TTS 실패 시 텍스트 질문만 전달 + `INTERVIEW_TTS_FAILED` 전송
+- [x] `fastapi/user/interview/api/interview_router.py` 업데이트
+  - [x] `POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer` 라우터
+  - [x] `POST /internal/user/interview/sessions/{sessionId}/rag-context` 라우터
 
 ---
 
