@@ -6,12 +6,14 @@ from admin.ai_metrics.service.chunking_service import (
 from admin.ai_metrics.service.embedding_service import (
     EmbeddingResult,
     EmbeddingService,
-    RagChunkEmbedding,
-    RagEmbeddingVector,
 )
 from admin.ai_metrics.service.ops_settings_service import (
     AiOpsRuntimeContext,
     OpsSettingsService,
+)
+from admin.ai_metrics.schema import (
+    RagChunkEmbedding,
+    RagEmbeddingVector,
 )
 from admin.ai_metrics.service.token_cost_calculator import TokenCostCalculator
 from admin.ai_metrics.service.usage_metrics_service import UsageMetricsService
