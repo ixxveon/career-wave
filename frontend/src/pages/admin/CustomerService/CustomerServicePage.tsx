@@ -93,6 +93,7 @@ export default function CustomerServicePage() {
   const [noticeDetailLoading, setNoticeDetailLoading] = useState(false);
   const [noticeFormError, setNoticeFormError]         = useState('');
   const [aiNoticeLoading, setAiNoticeLoading]         = useState(false);
+  const aiNoticeReqId = useRef(0);
   const [deleteConfirmId, setDeleteConfirmId]         = useState<number | null>(null);
 
   // ── FAQ API 상태 ──────────────────────────────────────────
@@ -113,6 +114,7 @@ export default function CustomerServicePage() {
   const [faqFormError, setFaqFormError]     = useState('');
   const [faqDeleteId, setFaqDeleteId]       = useState<number | null>(null);
   const [aiFaqLoading, setAiFaqLoading]     = useState(false);
+  const aiFaqReqId = useRef(0);
 
   // ── 문의 API 상태 ─────────────────────────────────────────
   const [inquiries, setInquiries]         = useState<InquiryItem[]>([]);
@@ -132,6 +134,7 @@ export default function CustomerServicePage() {
   const [inqActionLoading, setInqActionLoading] = useState(false);
   const [inqActionError, setInqActionError]     = useState('');
   const [aiInqLoading, setAiInqLoading]         = useState(false);
+  const aiInqReqId = useRef(0);
 
   // ── KPI 조회 ──────────────────────────────────────────────
   const fetchSummary = useCallback(async () => {
@@ -327,16 +330,18 @@ export default function CustomerServicePage() {
 
   const handleAiNoticeDraft = async () => {
     if (!noticeForm.title.trim()) return;
+    const reqId = ++aiNoticeReqId.current;
     setAiNoticeLoading(true);
     try {
       const res = await csApi.generateNoticeDraft({ category: noticeForm.category, title: noticeForm.title });
+      if (reqId !== aiNoticeReqId.current) return;
       if (res.data.success) {
         setNoticeForm((p) => ({ ...p, content: res.data.data.draft }));
       }
     } catch {
       // AI 실패 시 조용히 무시 (비크리티컬)
     } finally {
-      setAiNoticeLoading(false);
+      if (reqId === aiNoticeReqId.current) setAiNoticeLoading(false);
     }
   };
 
@@ -391,16 +396,18 @@ export default function CustomerServicePage() {
   };
   const handleAiFaqDraft = async () => {
     if (!faqForm.question.trim()) return;
+    const reqId = ++aiFaqReqId.current;
     setAiFaqLoading(true);
     try {
       const res = await csApi.generateFaqDraft({ question: faqForm.question });
+      if (reqId !== aiFaqReqId.current) return;
       if (res.data.success) {
         setFaqForm((p) => ({ ...p, answer: res.data.data.draft }));
       }
     } catch {
       // AI 실패 시 조용히 무시 (비크리티컬)
     } finally {
-      setAiFaqLoading(false);
+      if (reqId === aiFaqReqId.current) setAiFaqLoading(false);
     }
   };
 
@@ -459,7 +466,8 @@ export default function CustomerServicePage() {
   };
 
   const handleAiInquiryDraft = async () => {
-    if (!selectedInquiry) return;
+    if (!selectedInquiry || selectedInquiry.inquiryStatus === INQUIRY_STATUS.COMPLETED) return;
+    const reqId = ++aiInqReqId.current;
     setAiInqLoading(true);
     try {
       const res = await csApi.generateInquiryDraft({
@@ -467,13 +475,14 @@ export default function CustomerServicePage() {
         title: selectedInquiry.title,
         content: selectedInquiry.content,
       });
+      if (reqId !== aiInqReqId.current) return;
       if (res.data.success) {
         setInquiryReply(res.data.data.draft);
       }
     } catch {
       // AI 실패 시 조용히 무시 (비크리티컬)
     } finally {
-      setAiInqLoading(false);
+      if (reqId === aiInqReqId.current) setAiInqLoading(false);
     }
   };
 
