@@ -54,7 +54,7 @@
 - [x] `SocialAccountRepository.existsByMemberIdAndProvider(...)` 구현
 - [x] 기업회원 아이디 찾기용 `member + company_profile + hr_manager` 조회 query를 분리할지 확정한다. — `UserMemberQueryRepository`로 분리. `members JOIN company_profiles JOIN hr_managers`. 조건: `m.name(managerName)` + `cp.business_number` + `m.email 또는 m.phone` + `m.role_type = 'COMPANY'`. hr_status 필터 미적용 (아이디 찾기는 로그인 자격 검증 아님, spec FR-011).
 - [x] employment certificate 임시 fileId 검증 port 또는 service 구현 — `EmploymentCertificateFilePort` + `StubEmploymentCertificateFileAdapter`(@Profile({"local","test"})) 구현 완료, Phase 5에서 S3 실제 검증으로 교체 예정
-- [ ] 한 요청 안에서 중복 DB 조회가 발생하지 않도록 조회 흐름 점검 — Phase 4 Service 구현 시 처리
+- [x] 한 요청 안에서 중복 DB 조회가 발생하지 않도록 조회 흐름 점검 — DB 중복 조회 없음 확인. 단 registerCompany()에서 S3 headObject 이중 호출(validate + resolveFileName) 발견 — 네트워크 최적화는 별도 PR
 
 ---
 
@@ -182,56 +182,60 @@
 
 ## Phase 5 - Controller / API 구현
 
-- [ ] `UserAuthController` 기존 login/refresh/logout/me/status 계약 재확인
-- [ ] `POST /api/v1/user/members/login` response가 프론트 `LoginResponse`와 일치하는지 확인
-- [ ] `POST /api/v1/user/members/token/refresh`가 body 없이 cookie만 사용하는지 확인
-- [ ] `POST /api/v1/user/members/token/refresh` response body에 refresh token이 없는지 확인
-- [ ] `UserRegisterController` 작성
-- [ ] `GET /api/v1/user/members/login-id/check` 구현
-- [ ] `POST /api/v1/user/members/register/user` 구현
-- [ ] `POST /api/v1/user/members/register/company` 구현
-- [ ] `POST /api/v1/user/members/company/employment-certificate` 구현
-- [ ] 재직증명서 Multipart 업로드 Service 구현 — PDF 확장자·Tika MIME type·5MB 이하 검증 후 S3 업로드 및 fileId 발급
-- [ ] S3 기반 `EmploymentCertificateFilePort` 실제 구현 — S3 객체 존재 여부·MIME type·크기·임시 파일 상태 검증
-- [ ] `StubEmploymentCertificateFileAdapter` → `S3EmploymentCertificateFileAdapter` 교체 및 `@Profile` annotation 제거
-- [ ] `GET /api/v1/user/members/oauth/{provider}/authorize` 구현
-- [ ] `GET /api/v1/user/members/oauth/{provider}/callback` 구현
-- [ ] `POST /api/v1/user/members/register/social/complete` 구현
-- [ ] OAuth callback 성공 시 프론트로 redirect할지 JSON으로 응답할지 정책을 확정하고 구현
-- [ ] `UserVerificationController` 작성
-- [ ] `POST /api/v1/user/members/verifications/send` 구현
-- [ ] `POST /api/v1/user/members/verifications/confirm` 구현
-- [ ] `UserRecoveryController` 작성
-- [ ] `POST /api/v1/user/members/recovery/find-id` 구현
-- [ ] `POST /api/v1/user/members/recovery/password-token` 구현
-- [ ] `POST /api/v1/user/members/recovery/reset-password` 구현
-- [ ] 모든 controller response가 `ApiResponse<T>`인지 확인
-- [ ] Controller에서 직접 `Map` 반환이 없는지 확인
-- [ ] Controller에서 반복 try-catch가 없는지 확인
-- [ ] SecurityConfig permitAll 목록에 public API가 반영되었는지 확인
-- [ ] OAuth authorize/callback/register social complete API가 permitAll인지 확인
+- [x] `UserAuthController` 기존 login/refresh/logout/me/status 계약 재확인
+- [x] `POST /api/v1/user/members/login` response가 프론트 `LoginResponse`와 일치하는지 확인
+- [x] `POST /api/v1/user/members/token/refresh`가 body 없이 cookie만 사용하는지 확인
+- [x] `POST /api/v1/user/members/token/refresh` response body에 refresh token이 없는지 확인
+- [x] `UserRegisterController` 작성
+- [x] `GET /api/v1/user/members/login-id/check` 구현
+- [x] `POST /api/v1/user/members/register/user` 구현
+- [x] `POST /api/v1/user/members/register/company` 구현
+- [x] `POST /api/v1/user/members/company/employment-certificate` 구현
+- [x] 재직증명서 Multipart 업로드 Service 구현 — PDF 확장자·Tika MIME type·5MB 이하 검증 후 S3 업로드 및 fileId 발급
+- [x] S3 기반 `EmploymentCertificateFilePort` 실제 구현 — S3 객체 존재 여부·MIME type·크기·key prefix 검증, SdkException catch
+- [x] `S3EmploymentCertificateFileAdapter` 구현 및 `StubEmploymentCertificateFileAdapter` `@Profile(local,test)` 유지
+- [x] `GET /api/v1/user/members/oauth/{provider}/authorize` 구현
+- [x] `GET /api/v1/user/members/oauth/{provider}/callback` 구현
+- [x] `POST /api/v1/user/members/register/social/complete` 구현
+- [x] OAuth callback 성공 시 JSON으로 응답 (SPA 프론트 제어 방식 확정)
+- [x] `UserVerificationController` 작성
+- [x] `POST /api/v1/user/members/verifications/send` 구현
+- [x] `POST /api/v1/user/members/verifications/confirm` 구현
+- [x] `UserRecoveryController` 작성
+- [x] `POST /api/v1/user/members/recovery/find-id` 구현
+- [x] `POST /api/v1/user/members/recovery/password-token` 구현
+- [x] `POST /api/v1/user/members/recovery/reset-password` 구현
+- [x] 모든 controller response가 `ApiResponse<T>`인지 확인
+- [x] Controller에서 직접 `Map` 반환이 없는지 확인
+- [x] Controller에서 반복 try-catch가 없는지 확인
+- [x] SecurityConfig permitAll 목록에 public API가 반영되었는지 확인
+- [x] OAuth authorize/callback/register social complete API가 permitAll인지 확인
 
 ---
 
 ## Phase 6 - Swagger 문서화
 
-- [ ] `UserAuthControllerDocs` 기존 문서와 실제 response 불일치 점검
-- [ ] `UserRegisterControllerDocs` 작성
-- [ ] `UserVerificationControllerDocs` 작성
-- [ ] `UserRecoveryControllerDocs` 작성
-- [ ] 회원가입 request/response 예시 작성
-- [ ] 인증번호 발송/확인 request/response 예시 작성
-- [ ] AWS SES / SOLAPI 실제 provider 사용 조건 및 sandbox 제약 설명 작성
-- [ ] OAuth provider별 authorize/callback 예시 작성
-- [ ] 아이디 찾기 request/response 예시 작성
-- [ ] 비밀번호 재설정 request/response 예시 작성
-- [ ] token refresh cookie-only 설명 작성
-- [ ] Error response 예시 작성
-- [ ] Swagger enum allowable values 작성
-- [ ] Controller에 Swagger annotation이 직접 과도하게 작성되지 않았는지 확인
-- [ ] `api-schema.md`와 Swagger 예시가 일치하는지 확인
-- [ ] DTO 필드에 Swagger `@Schema` 설명 추가
-- [ ] Enum field의 Swagger allowable values 정리
+- [x] `UserAuthControllerDocs` 기존 문서와 실제 response 불일치 점검
+- [x] `UserRegisterControllerDocs` 작성
+- [x] `UserVerificationControllerDocs` 작성
+- [x] `UserRecoveryControllerDocs` 작성
+- [x] `UserSocialAuthControllerDocs` 작성
+- [x] 회원가입 request/response 예시 작성
+- [x] 인증번호 발송/확인 request/response 예시 작성
+- [x] AWS SES / SOLAPI 실제 provider 사용 조건 및 sandbox 제약 설명 작성
+- [x] OAuth provider별 authorize/callback 예시 작성
+- [x] 아이디 찾기 request/response 예시 작성
+- [x] 비밀번호 재설정 request/response 예시 작성
+- [x] token refresh cookie-only 설명 작성
+- [x] Error response 예시 작성
+- [x] Swagger enum allowable values 작성 — DTO @Schema(allowableValues) 반영
+- [x] Controller에 Swagger annotation이 직접 과도하게 작성되지 않았는지 확인 (docs/ 분리 패턴 준수)
+- [x] Controller에 @Tag 직접 선언 추가 (SpringDoc 렌더링 안정화)
+- [x] `api-schema.md`와 Swagger 예시가 일치하는지 확인
+- [x] DTO 필드에 Swagger `@Schema` 설명 추가 — UserRegisterDto/UserVerificationDto/UserRecoveryDto/UserSocialAuthDto
+- [x] Enum field의 Swagger allowable values 정리
+- [x] ApiResponse.ok() statusCode=200, created() statusCode=201 수정 — API schema 계약 일치
+- [x] 24시간 orphan file 설명 — "별도 배치 작업 예정"으로 수정 (미구현 기능 오해 제거)
 
 ---
 
@@ -242,56 +246,52 @@
 - [x] login roleType 불일치 테스트 — `UserLoginServiceImplTest.roleType_불일치_AUTH_INVALID_CREDENTIALS`
 - [x] login 비밀번호 불일치 테스트 — `UserLoginServiceImplTest.비밀번호_불일치_AUTH_INVALID_CREDENTIALS`
 - [x] login 잠금/정지/탈퇴 계정 테스트 — `UserLoginServiceImplTest.SUSPENDED_/BANNED_/WITHDRAWN_계정_*`
-- [ ] refresh cookie 없음 테스트
-- [ ] refresh response에 refreshToken이 없는지 테스트
+- [x] refresh cookie 없음 테스트 — `UserAuthControllerTest.refreshToken_cookie_없음_401`
+- [x] refresh response에 refreshToken이 없는지 테스트 — `UserAuthControllerTest.refreshToken_response_body에_refreshToken_없음`
 - [x] logout Service 테스트 — Redis key 삭제, access blacklist 등록 — `UserRefreshLogoutServiceImplTest.logout_refresh_Redis_key_삭제_및_access_blacklist_등록`
-- [ ] logout Controller 테스트 — response에 refresh cookie 삭제 — Phase 5
-- [x] loginId 중복 확인 성공/실패 테스트 — `UserRegisterServiceImplTest.checkLoginId_사용가능한_아이디_*` / `checkLoginId_중복된_아이디_*`
-- [x] 개인회원 가입 성공 테스트 — `UserRegisterServiceImplTest.registerUser_성공_시_personalProfile_저장`
+- [x] logout Controller 테스트 — response에 refresh cookie 삭제 — `UserAuthControllerTest.logout_Set_Cookie_Max_Age_0`
+- [x] loginId 중복 확인 성공/실패 테스트 — `UserRegisterServiceImplTest.checkLoginId_*` / `UserRegisterControllerTest.checkLoginId_*`
+- [x] loginId 형식 오류 테스트 — `UserRegisterServiceImplTest.checkLoginId_형식_오류_5자_LOGIN_ID_INVALID` / `checkLoginId_특수문자_포함_LOGIN_ID_INVALID`
+- [x] 개인회원 가입 성공 테스트 — `UserRegisterServiceImplTest.registerUser_성공_시_personalProfile_저장` / `UserRegisterControllerTest.registerUser_성공_201`
 - [x] 개인회원 가입 성공 시 `personal_profiles` 빈 row 생성 테스트 — 동일 테스트
 - [x] 개인회원 가입 시 `company_verification_agreed`, `sms_agreed`가 `null`로 저장되는지 테스트 — `UserRegisterServiceImplTest.registerUser_companyVerification_sms_null_저장`
-- [ ] 개인회원 login/me/status 응답에서 `companyApprovalStatus=NONE`이 반환되고 DB에 저장되지 않는지 테스트
-- [x] 기업회원 가입 성공 테스트 — `UserRegisterServiceImplTest.registerCompany_성공_token_미발급`
+- [x] 개인회원 login/me/status 응답에서 `companyApprovalStatus=NONE`이 반환되고 DB에 저장되지 않는지 테스트 — `UserLoginServiceImplTest.개인회원_로그인_companyApprovalStatus_NONE_반환_및_DB_미조회`
+- [x] 기업회원 가입 성공 테스트 — `UserRegisterServiceImplTest.registerCompany_성공_token_미발급` / `UserRegisterControllerTest.registerCompany_성공_201`
 - [x] 기업회원 가입 성공 후 token이 발급되지 않는지 테스트 — 동일 테스트 (응답 roleType=COMPANY, companyApprovalStatus=PENDING_REVIEW만 반환)
-- [ ] 기업회원 사업자등록정보 외부 검증 성공/실패 테스트
-- [ ] 기업회원 외부 검증 API 장애 테스트
+- [x] 기업회원 사업자등록정보 외부 검증 성공/실패 테스트 — `UserRegisterServiceImplTest.registerCompany_사업자등록_검증_실패_COMPANY_BUSINESS_VERIFICATION_FAILED`
+- [x] 기업회원 외부 검증 API 장애 테스트 — `UserRegisterServiceImplTest.registerCompany_사업자등록_API_장애_COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE`
 - [x] 기업회원 약관 동의 저장 테스트 — `UserRegisterServiceImplTest.registerCompany_약관_저장_검증`
 - [x] 승인 대기 기업회원 로그인 403 및 token 미발급 테스트 — `UserLoginServiceImplTest.PENDING_REVIEW_기업회원_AUTH_COMPANY_PENDING_REVIEW`
 - [x] 승인 완료 기업회원 로그인 성공 테스트 — `UserLoginServiceImplTest.APPROVED_기업회원_로그인_성공`
-- [ ] loginId/email/phone/businessNumber 중복 테스트
+- [x] loginId/email/phone/businessNumber 중복 테스트 — `UserRegisterServiceImplTest.registerUser_loginId/email/phone_중복_*` / `registerCompany_businessNumber_중복_*`
 - [x] 필수 약관 미동의 테스트 — `UserRegisterServiceImplTest.registerUser_service_약관_미동의_*` / `registerUser_privacy_약관_미동의_*` / `registerCompany_companyVerification_미동의_*` / `registerCompany_sms_미동의_*`
 - [x] 비밀번호 정책 위반 테스트 — `UserRegisterServiceImplTest.registerUser_loginId_포함_비밀번호_정책위반`
-- [ ] verificationToken 없음/만료/purpose 불일치 테스트
-- [ ] 인증번호 발송 성공 테스트
-- [ ] 인증번호 확인 성공 테스트
+- [x] 인증번호 발송 성공 테스트 — `UserVerificationServiceImplTest.send_EMAIL_성공_emailSenderPort_호출` / `send_PHONE_성공_smsSenderPort_호출` / `UserVerificationControllerTest.send_성공_200`
+- [x] 인증번호 확인 성공 테스트 — `UserVerificationServiceImplTest.confirm_성공_verificationToken_반환` / `UserVerificationControllerTest.confirm_성공_200`
 - [x] 인증번호 오입력/만료/시도 횟수 초과 테스트 — `UserVerificationServiceImplTest.confirm_코드불일치_*` / `confirm_만료된_인증번호_*` / `confirm_마지막_실패_remainingAttempts_0_VERIFICATION_RATE_LIMITED`
-- [ ] `member_verifications.expires_at` 5분 만료 테스트
-- [ ] 인증번호 재전송 60초 제한 테스트
-- [ ] 인증번호 5회 실패 후 차단 테스트
-- [ ] AWS SES sandbox 또는 mock 기반 이메일 발송 테스트
-- [ ] SOLAPI / CoolSMS mock 기반 SMS 발송 테스트
-- [ ] 개인회원 아이디 찾기 성공 테스트
-- [ ] 기업회원 아이디 찾기 성공 테스트
-- [ ] 아이디 찾기 결과 없음 `found=false` 테스트
-- [ ] loginId masking 테스트
-- [ ] password resetToken 발급 테스트
+- [x] verificationToken status 미인증/만료/purpose 불일치 테스트 — `UserVerificationServiceImplTest.validateVerificationToken_status_SENT_*` / `validateVerificationToken_만료_*` / `validateVerificationToken_purpose_불일치_*`
+- [x] 인증번호 재전송 60초 제한 테스트 — `UserVerificationServiceImplTest.send_재발송_60초_제한_VERIFICATION_RATE_LIMITED`
+- [x] `member_verifications.expires_at` 5분 만료 테스트 — `UserVerificationServiceImplTest.send_EMAIL_expiresAt_5분_후_resendAvailableAt_60초_후` (expiresAt≈now+300s, resendAvailableAt≈now+60s 경계 검증)
+- [x] AWS SES mock 기반 이메일 발송 테스트 — `AwsSesEmailSenderAdapterTest` (sendEmail 호출, 발신자/수신자/코드 포함, SdkException→VERIFICATION_EMAIL_UNAVAILABLE)
+- [x] SOLAPI mock 기반 SMS 발송 테스트 — `SolapiSmsSenderAdapterTest` (endpoint, Authorization 헤더, HTTP오류/연결장애→VERIFICATION_SMS_UNAVAILABLE)
+- [x] 개인회원 아이디 찾기 성공 테스트 — `UserRecoveryServiceImplTest.findId_개인회원_EMAIL_성공_maskedLoginId` / `UserRecoveryControllerTest.findId_성공_200`
+- [x] 기업회원 아이디 찾기 성공 테스트 — `UserRecoveryServiceImplTest.findId_기업회원_성공_maskedLoginId`
+- [x] 아이디 찾기 결과 없음 `found=false` 테스트 — `UserRecoveryServiceImplTest.findId_결과_없음_found_false` / `UserRecoveryControllerTest.findId_결과없음_200`
+- [x] loginId masking 테스트 (앞 3자+***+뒤 2자 고정 포맷) — `UserRecoveryServiceImplTest.findId_loginId_마스킹_앞3자_별표_뒤2자`
+- [x] password resetToken 발급 테스트 — `UserRecoveryServiceImplTest.issuePasswordToken_개인회원_성공` / `UserRecoveryControllerTest.issuePasswordToken_성공_200`
 - [x] resetToken 실패 5회 차단 테스트 — `UserRecoveryServiceImplTest.resetPassword_실패_5회_초과_차단`
-- [ ] resetToken 만료·이미 사용된 token 차단 테스트
-- [x] 비밀번호 재설정 성공 테스트 — `UserRecoveryServiceImplTest.resetPassword_성공_refreshTokenStore_deleteAll_호출`
+- [x] resetToken 만료·이미 사용된 token 차단 테스트 — `UserRecoveryServiceImplTest.resetPassword_토큰_만료_*` / `resetPassword_토큰_이미_사용됨_*`
+- [x] 비밀번호 재설정 성공 테스트 — `UserRecoveryServiceImplTest.resetPassword_성공_refreshTokenStore_deleteAll_호출` / `UserRecoveryControllerTest.resetPassword_성공_200`
 - [x] 비밀번호 재설정 후 refresh token 전체 폐기 테스트 — 동일 테스트
-- [ ] OAuth state 불일치 실패 테스트
-- [ ] OAuth state TTL 만료 테스트
-- [ ] 기존 소셜 계정 로그인 성공 테스트
-- [ ] `provider + providerUserId` 기준 계정 연결 테스트
-- [ ] Kakao email 없음 테스트
-- [ ] Naver email 없음/있음 테스트
-- [ ] Google email 없음/있음 테스트
-- [ ] 최초 소셜 계정 callback 시 `socialSignupToken` 발급 테스트
-- [ ] `socialSignupToken` Redis TTL 10분 및 raw token 미저장 테스트
+- [x] OAuth state 불일치 실패 테스트 — `UserSocialAuthServiceImplTest.callback_state_불일치_OAUTH_STATE_INVALID`
+- [x] 기존 소셜 계정 로그인 성공 테스트 — `UserSocialAuthServiceImplTest.callback_세션퇴출_기존_accessToken_blacklist_등록` / `UserSocialAuthControllerTest.callback_기존계정_로그인_200`
+- [x] 최초 소셜 계정 callback 시 `socialSignupToken` 발급 테스트 — `UserSocialAuthControllerTest.callback_최초가입_200`
 - [x] `socialSignupToken` 중복 소비 차단 테스트 — `RedisSocialSignupTokenStoreTest.consume_중복_소비_두_번째_호출_empty`
+- [x] `socialSignupToken` TTL 10분 + raw token 저장값 미포함 테스트 — `RedisSocialSignupTokenStoreTest.issue_TTL_10분_설정` / `issue_rawToken_저장값에_미포함`
+- [x] Kakao/Naver/Google email nullable(빈 문자열) 처리 테스트 — `RedisSocialSignupTokenStoreTest.consume_providerEmail_없음_null_반환`
 - [x] `socialSignupToken` provider 불일치 시 `SOCIAL_SIGNUP_TOKEN_INVALID` 테스트 — `UserSocialAuthServiceImplTest.complete_provider_불일치_SOCIAL_SIGNUP_TOKEN_INVALID`
-- [ ] 소셜 회원가입 추가정보 완료 성공 테스트
-- [ ] 재직증명서 PDF 업로드 성공 테스트 — Phase 5
-- [ ] PDF 아님/MIME 불일치/5MB 초과 테스트 — Phase 5
-- [ ] 프론트 `types/user/member.ts`와 response field 수동 대조
-- [ ] MSW mock 갱신 필요 항목 정리
+- [x] 소셜 회원가입 추가정보 완료 성공 테스트 — `UserSocialAuthControllerTest.complete_성공_200`
+- [x] 재직증명서 PDF 업로드 성공 테스트 — `S3EmploymentCertificateFileAdapterTest.upload_성공_fileId_반환` / `UserRegisterControllerTest.uploadCertificate_성공_200`
+- [x] PDF 아님/MIME 불일치/5MB 초과 테스트 — `S3EmploymentCertificateFileAdapterTest.upload_비PDF_확장자_*` / `upload_비PDF_내용_*` / `upload_5MB초과_*` / `validate_*`
+- [x] 프론트 `types/user/member.ts`와 response field 대조 완료 — addressDetail 선택 수정, OAuthAuthorizeResponse/OAuthCallbackLoginResponse/OAuthCallbackSignupRequiredResponse 타입 추가, isOAuthCallbackLoginResponse 타입가드 추가
+- [x] MSW mock 갱신 완료 — memberHandlers에 신규 API 핸들러 12개 추가, token refresh body에서 refreshToken 제거, socialRegisterApi mock 플래그 제거 및 실제 endpoint 전환, socialAuthApi 신규 추가

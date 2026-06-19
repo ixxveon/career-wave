@@ -64,6 +64,7 @@ class UsageLogSearchRequest(AiMetricsRequestBase):
 class OpsSettingSyncRequest(AiMetricsRequestBase):
     ai_ops_setting_id: int = Field(alias="aiOpsSettingId")
     selected_model_id: int = Field(alias="selectedModelId")
+    model_name: str | None = Field(default=None, alias="modelName")
     monthly_budget: Decimal = Field(alias="monthlyBudget")
     alert_enabled: bool = Field(alias="alertEnabled")
     alert_channel: AlertChannelType = Field(alias="alertChannel")

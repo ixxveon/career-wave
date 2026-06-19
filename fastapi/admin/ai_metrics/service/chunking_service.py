@@ -147,9 +147,23 @@ class ChunkingService:
             return []
 
         segments: list[str] = []
-        current = words[0]
+        current = ""
 
-        for word in words[1:]:
+        for word in words:
+            if len(word) > self._max_chars:
+                if current:
+                    segments.append(current)
+                    current = ""
+                segments.extend(
+                    word[index : index + self._max_chars]
+                    for index in range(0, len(word), self._max_chars)
+                )
+                continue
+
+            if not current:
+                current = word
+                continue
+
             candidate = f"{current} {word}"
             if len(candidate) <= self._max_chars:
                 current = candidate

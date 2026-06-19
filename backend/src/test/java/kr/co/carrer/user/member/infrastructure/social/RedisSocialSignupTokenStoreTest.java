@@ -12,6 +12,8 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.Optional;
 
+import java.time.Duration;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -28,6 +30,30 @@ class RedisSocialSignupTokenStoreTest {
     void setUp() {
         when(redisTemplate.opsForValue()).thenReturn(valueOps);
         store = new RedisSocialSignupTokenStore(redisTemplate);
+    }
+
+    // ─── issue — TTL 10분 + raw token 값에 미포함 ──────────────────────────────────
+
+    @Test
+    void issue_TTL_10분_설정() {
+        String rawToken = store.issue(SocialProvider.KAKAO, "uid-123", "user@kakao.com");
+
+        assertThat(rawToken).isNotBlank();
+        // set(key, value, TTL=10분) 호출 검증
+        verify(valueOps).set(anyString(), anyString(), eq(Duration.ofMinutes(10)));
+    }
+
+    @Test
+    void issue_rawToken_저장값에_미포함() {
+        org.mockito.ArgumentCaptor<String> valueCaptor =
+                org.mockito.ArgumentCaptor.forClass(String.class);
+
+        String rawToken = store.issue(SocialProvider.KAKAO, "uid-456", "user@kakao.com");
+
+        verify(valueOps).set(anyString(), valueCaptor.capture(), any(Duration.class));
+        // Redis에 저장된 value는 "{provider}|{uid}|{email}" 형식 — raw token 미포함
+        assertThat(valueCaptor.getValue()).doesNotContain(rawToken);
+        assertThat(valueCaptor.getValue()).startsWith("KAKAO|uid-456|");
     }
 
     // ─── consume 정상 — payload 파싱 ───────────────────────────────────────────

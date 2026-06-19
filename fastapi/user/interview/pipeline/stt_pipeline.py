@@ -83,6 +83,12 @@ async def transcribe_chunk(
             question_order,
             voice_quality_ratio,
         )
+        # 리포트 파이프라인에서 활용하기 위해 세션 컨텍스트에 저장
+        from user.interview.websocket.interview_ws_handler import _sessions
+        ctx = _sessions.get(session_id)
+        if ctx is not None:
+            ctx.voice_quality_by_order[question_order] = voice_quality_ratio
+
         await send_stt_final(session_id, transcript, question_order, voice_quality_ratio)
     else:
         await send_stt_partial(session_id, transcript, question_order, chunk_index)

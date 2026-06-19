@@ -542,6 +542,17 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 - 직접 입력만으로 생성된 주소는 허용하지 않는다.
 - 백엔드 INSERT 시 `address` 컬럼(DB NOT NULL)은 `roadAddress` 값으로 채운다.
 
+| Field | Required | Description |
+|---|---|---|
+| `postalCode` | **필수** | 우편번호 (주소 검색 결과) |
+| `roadAddress` | **필수** | 도로명주소 (주소 검색 결과) |
+| `jibunAddress` | 선택 | 지번주소 (주소 검색 결과, nullable) |
+| `addressDetail` | 선택 | 상세주소 (사용자 직접 입력, nullable) |
+
+> **프론트엔드 계약 불일치 주의**: 현재 프론트 `CompanyRegisterRequest` 타입에서 `addressDetail`이 필수로 정의되어 있을 수 있다.
+> 백엔드 기준은 **선택(optional)** 이며, 이 계약이 우선한다.
+> 프론트 타입을 `addressDetail?: string`으로 수정하는 별도 PR이 필요하다.
+
 #### Response `201 Created`
 
 ```json
@@ -808,7 +819,7 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
   "statusCode": 200,
   "message": "요청이 처리되었습니다.",
   "data": {
-    "maskedLoginIds": ["caree***01"],
+    "maskedLoginIds": ["car***01"],
     "found": true
   }
 }

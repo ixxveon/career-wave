@@ -213,4 +213,14 @@ export const csApi = {
     axiosInstance.put<ApiResponse<{ inquiryId: number; inquiryStatus: InquiryStatus; completedAt: string }>>(
       `/api/v1/admin/inquiries/${inquiryId}/complete`
     ),
+
+  // AI 초안 생성
+  generateNoticeDraft: (body: { category: NoticeCategory; title: string }) =>
+    axiosInstance.post<ApiResponse<{ draft: string }>>('/api/v1/admin/ai/notice-draft', body),
+
+  generateFaqDraft: (body: { question: string }) =>
+    axiosInstance.post<ApiResponse<{ draft: string }>>('/api/v1/admin/ai/faq-draft', body),
+
+  generateInquiryDraft: (body: { category: InquiryCategory; title: string; content: string }) =>
+    axiosInstance.post<ApiResponse<{ draft: string }>>('/api/v1/admin/ai/inquiry-draft', body),
 };

@@ -151,6 +151,166 @@ class UserRecoveryServiceImplTest {
         verify(refreshTokenStore).deleteAll(eq(AccountType.USER), anyString());
     }
 
+    // ─── 개인회원 아이디 찾기 성공 — EMAIL 채널 ────────────────────────────────────────
+
+    @Test
+    void findId_개인회원_EMAIL_성공_maskedLoginId() throws Exception {
+        MemberVerification verification = createEmailVerification("user@example.com", VerificationPurpose.FIND_ID);
+        when(verificationRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(verification));
+
+        Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
+        setField(member, "loginId", "career01");
+        // findByEmailAndRoleType returns Optional<Member>
+        when(memberRepository.findByEmailAndRoleType("user@example.com", RoleType.USER))
+                .thenReturn(Optional.of(member));
+
+        UserRecoveryDto.RequestFindId req = new UserRecoveryDto.RequestFindId();
+        setField(req, "roleType", MemberType.USER);
+        setField(req, "verificationToken", "vtoken");
+
+        UserRecoveryDto.ResponseFindId resp = service.findId(req);
+
+        assertThat(resp.found()).isTrue();
+        assertThat(resp.maskedLoginIds()).hasSize(1);
+        // 앞 3자 + *** + 뒤 2자 (career01 → car***01)
+        assertThat(resp.maskedLoginIds().get(0)).isEqualTo("car***01");
+    }
+
+    // ─── 기업회원 아이디 찾기 성공 ───────────────────────────────────────────────────
+
+    @Test
+    void findId_기업회원_성공_maskedLoginId() throws Exception {
+        MemberVerification verification = createEmailVerification("hr@company.com", VerificationPurpose.FIND_ID);
+        when(verificationRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(verification));
+        when(memberQueryRepository.findLoginIdsByManagerNameAndBusinessNumberAndEmail(
+                "홍담당", "1234567890", "hr@company.com"))
+                .thenReturn(java.util.List.of("company01"));
+
+        UserRecoveryDto.RequestFindId req = new UserRecoveryDto.RequestFindId();
+        setField(req, "roleType", MemberType.COMPANY);
+        setField(req, "verificationToken", "vtoken");
+        setField(req, "managerName", "홍담당");
+        setField(req, "businessNumber", "1234567890");
+
+        UserRecoveryDto.ResponseFindId resp = service.findId(req);
+
+        assertThat(resp.found()).isTrue();
+        // 앞 3자 + *** + 뒤 2자 (company01 → com***01)
+        assertThat(resp.maskedLoginIds().get(0)).isEqualTo("com***01");
+    }
+
+    // ─── 아이디 찾기 — 결과 없음 found=false ─────────────────────────────────────────
+
+    @Test
+    void findId_결과_없음_found_false() throws Exception {
+        MemberVerification verification = createEmailVerification("nobody@example.com", VerificationPurpose.FIND_ID);
+        when(verificationRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(verification));
+        when(memberRepository.findByEmailAndRoleType("nobody@example.com", RoleType.USER))
+                .thenReturn(Optional.empty());
+
+        UserRecoveryDto.RequestFindId req = new UserRecoveryDto.RequestFindId();
+        setField(req, "roleType", MemberType.USER);
+        setField(req, "verificationToken", "vtoken");
+
+        UserRecoveryDto.ResponseFindId resp = service.findId(req);
+
+        assertThat(resp.found()).isFalse();
+        assertThat(resp.maskedLoginIds()).isEmpty();
+    }
+
+    // ─── loginId 마스킹 — 앞 3자 + *** + 뒤 2자 ─────────────────────────────────────
+
+    @Test
+    void findId_loginId_마스킹_앞3자_별표_뒤2자() throws Exception {
+        MemberVerification verification = createEmailVerification("user@example.com", VerificationPurpose.FIND_ID);
+        when(verificationRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(verification));
+
+        Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
+        setField(member, "loginId", "abcdef"); // 6자 — 앞 3자(abc) + *** + 뒤 2자(ef) = abc***ef
+        when(memberRepository.findByEmailAndRoleType(anyString(), any())).thenReturn(Optional.of(member));
+
+        UserRecoveryDto.RequestFindId req = new UserRecoveryDto.RequestFindId();
+        setField(req, "roleType", MemberType.USER);
+        setField(req, "verificationToken", "vtoken");
+
+        UserRecoveryDto.ResponseFindId resp = service.findId(req);
+
+        assertThat(resp.maskedLoginIds().get(0)).isEqualTo("abc***ef"); // 앞 3자 + *** + 뒤 2자 (spec §14)
+    }
+
+    // ─── 비밀번호 resetToken 발급 성공 — 개인회원 ───────────────────────────────────────
+
+    @Test
+    void issuePasswordToken_개인회원_성공() throws Exception {
+        when(redisTemplate.execute(any(), anyList(), any(Object[].class))).thenReturn(1L); // rate limit 미초과
+
+        MemberVerification verification = createEmailVerification("user@example.com", VerificationPurpose.RESET_PASSWORD);
+        when(verificationRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(verification));
+
+        Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
+        when(memberRepository.findByEmailAndRoleType("user@example.com", RoleType.USER))
+                .thenReturn(Optional.of(member)); // Optional<Member>
+        when(resetTokenRepository.existsByMemberIdAndUsedAtIsNullAndExpiresAtAfter(any(), any()))
+                .thenReturn(false);
+
+        UserRecoveryDto.RequestPasswordToken req = new UserRecoveryDto.RequestPasswordToken();
+        setField(req, "roleType", MemberType.USER);
+        setField(req, "loginId", "testlogin");
+        setField(req, "verificationToken", "vtoken");
+
+        UserRecoveryDto.ResponsePasswordToken resp = service.issuePasswordToken(req, "127.0.0.1");
+
+        assertThat(resp).isNotNull();
+        assertThat(resp.resetToken()).isNotBlank();
+        assertThat(resp.expiresAt()).isAfter(Instant.now());
+        verify(resetTokenRepository, times(1)).save(any());
+    }
+
+    // ─── resetToken 이미 사용됨 — PASSWORD_RESET_TOKEN_INVALID ───────────────────────
+
+    @Test
+    void resetPassword_토큰_이미_사용됨_PASSWORD_RESET_TOKEN_INVALID() throws Exception {
+        when(valueOps.get(startsWith("password-reset:fail:"))).thenReturn(null);
+
+        PasswordResetToken resetToken = mock(PasswordResetToken.class);
+        when(resetToken.isUsed()).thenReturn(true);
+        when(resetTokenRepository.findByTokenHash(anyString())).thenReturn(Optional.of(resetToken));
+
+        UserRecoveryDto.RequestResetPassword req = new UserRecoveryDto.RequestResetPassword();
+        setField(req, "resetToken", "already-used-token-xyz");
+        setField(req, "newPassword", "NewPass1!");
+
+        assertThatThrownBy(() -> service.resetPassword(req))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.PASSWORD_RESET_TOKEN_INVALID));
+
+        verify(memberRepository, never()).findById(any());
+    }
+
+    // ─── resetToken 만료 — PASSWORD_RESET_TOKEN_EXPIRED ──────────────────────────────
+
+    @Test
+    void resetPassword_토큰_만료_PASSWORD_RESET_TOKEN_EXPIRED() throws Exception {
+        when(valueOps.get(startsWith("password-reset:fail:"))).thenReturn(null);
+
+        PasswordResetToken resetToken = mock(PasswordResetToken.class);
+        when(resetToken.isUsed()).thenReturn(false);
+        when(resetToken.isExpired()).thenReturn(true);
+        when(resetTokenRepository.findByTokenHash(anyString())).thenReturn(Optional.of(resetToken));
+
+        UserRecoveryDto.RequestResetPassword req = new UserRecoveryDto.RequestResetPassword();
+        setField(req, "resetToken", "expired-token-xyz-12345678");
+        setField(req, "newPassword", "NewPass1!");
+
+        assertThatThrownBy(() -> service.resetPassword(req))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.PASSWORD_RESET_TOKEN_EXPIRED));
+    }
+
     // ─── 내부 유틸 ───────────────────────────────────────────────────────────────
 
     private MemberVerification createEmailVerification(String target, VerificationPurpose purpose) throws Exception {

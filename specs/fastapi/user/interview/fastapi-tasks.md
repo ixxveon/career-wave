@@ -57,70 +57,67 @@
 
 ## Phase 4 — LLM 질문 생성 & TTS
 
-- [ ] `fastapi/user/prompts/interview_prompts.py` 생성
-  - [ ] 시스템 프롬프트 (면접 유형별: `TECHNICAL` / `PERSONALITY` / `PROJECT` / 기본)
-  - [ ] 폴백 질문 목록 (각 유형 최소 5개)
-  - [ ] RAG 컨텍스트 주입 프롬프트 템플릿
-  - [ ] 꼬리 질문·압박 질문 생성 가이드라인 프롬프트
-- [ ] `fastapi/user/pipeline/llm_pipeline.py` 생성
-  - [ ] `generate_next_question(session_id, question_order, answer_text, rag_context, interview_type)` — GPT-4o 호출
-  - [ ] 이전 답변 이력 컨텍스트 조합 로직
-  - [ ] `asyncio.wait_for`로 LLM 타임아웃 처리 (`OPENAI_LLM_TIMEOUT_SECONDS`)
-  - [ ] 타임아웃 시 폴백 질문 반환
-  - [ ] 세션별 `used_fallback_questions: set[str]` 메모리로 이미 사용한 폴백 질문 추적 — 중복 폴백 질문 재출제 방지
-  - [ ] LLM 실패 시 `INTERVIEW_LLM_FAILED` WebSocket 메시지 전송
-- [ ] `fastapi/user/pipeline/tts_pipeline.py` 생성
-  - [ ] `synthesize_and_stream(text, session_id, question_order)` — OpenAI TTS 호출 + WebSocket 스트리밍
-  - [ ] 문장 단위 청크 분할 후 `TTS_AUDIO` 순차 전송
-  - [ ] 전송 완료 시 `TTS_AUDIO_END` 전송
-  - [ ] TTS 실패 시 텍스트 질문만 전달 + `INTERVIEW_TTS_FAILED` 전송
-- [ ] `fastapi/user/api/interview_router.py` 업데이트
-  - [ ] `POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer` 라우터
-  - [ ] `POST /internal/user/interview/sessions/{sessionId}/rag-context` 라우터
+- [x] `fastapi/user/interview/prompts/interview_prompts.py` 생성
+  - [x] 시스템 프롬프트 (면접 유형별: `TECHNICAL` / `PERSONALITY` / `PROJECT` / 기본)
+  - [x] 폴백 질문 목록 (각 유형 최소 5개)
+  - [x] RAG 컨텍스트 주입 프롬프트 템플릿
+  - [x] 꼬리 질문·압박 질문 생성 가이드라인 프롬프트
+- [x] `fastapi/user/interview/pipeline/llm_pipeline.py` 생성
+  - [x] `generate_and_deliver_question(session_id, question_order, answer_text, question_text)` — GPT-4o 호출 후 Spring 전달
+  - [x] 이전 답변 이력 컨텍스트 조합 로직 (최근 10개)
+  - [x] `asyncio.wait_for`로 LLM 타임아웃 처리 (`OPENAI_LLM_TIMEOUT_SECONDS`)
+  - [x] 타임아웃 시 폴백 질문 반환
+  - [x] 세션별 `used_fallback_questions: set[str]` 메모리로 이미 사용한 폴백 질문 추적 — 중복 폴백 질문 재출제 방지
+  - [x] LLM 실패 시 `INTERVIEW_LLM_FAILED` WebSocket 메시지 전송
+- [x] `fastapi/user/interview/pipeline/tts_pipeline.py` 생성
+  - [x] `synthesize_and_stream(text, session_id, question_order)` — OpenAI TTS 스트리밍 + WebSocket 전송
+  - [x] `TTS_AUDIO` 청크 순차 전송
+  - [x] 전송 완료 시 `TTS_AUDIO_END` 전송
+  - [x] TTS 실패 시 텍스트 질문만 전달 + `INTERVIEW_TTS_FAILED` 전송
+- [x] `fastapi/user/interview/api/interview_router.py` 업데이트
+  - [x] `POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer` 라우터
+  - [x] `POST /internal/user/interview/sessions/{sessionId}/rag-context` 라우터
 
 ---
 
 ## Phase 5 — 리포트 생성 파이프라인
 
-- [ ] `fastapi/user/prompts/report_prompts.py` 생성
-  - [ ] 리포트 분석 시스템 프롬프트 (4개 역량 지표: Relevance·Depth·Delivery·Fluency)
-  - [ ] `totalScore` 산출 기준 및 가중치 프롬프트
-  - [ ] 질문별 `aiFeedback` 생성 프롬프트
-- [ ] `fastapi/user/pipeline/report_pipeline.py` 생성
-  - [ ] `generate_report(session_id, session_type, answer_records)` — GPT-4o 리포트 분석
-  - [ ] `voiceQualityRatio < 50.00` 항목의 `deliveryScore` / `fluencyScore` null 처리
-  - [ ] `voiceQualityRatio is None` 항목의 `deliveryScore` / `fluencyScore` null 처리 (텍스트 면접)
-  - [ ] `totalScore` 계산 및 피드백 직렬화
-  - [ ] 리포트 생성 실패 시 빈 feedbacks + `totalScore: null` 부분 콜백 전송
-- [ ] `fastapi/core/spring_client.py` 업데이트
-  - [ ] `send_report_callback` 지수 백오프 구현 (1초, 3초 대기)
-  - [ ] 콜백 전송 직전 Pydantic 모델(`ReportCallbackPayload`)로 페이로드 유효성 검증 — 필수 필드 누락 시 Spring 전송 차단 및 `log.error` 기록
-  - [ ] `duplicated: true` 응답 시 정상 처리 (중복 콜백 허용)
-- [ ] `fastapi/user/api/interview_router.py` 업데이트
-  - [ ] `POST /internal/user/interview/sessions/{sessionId}/trigger/report` 라우터
+- [x] `fastapi/user/interview/prompts/report_prompts.py` 생성
+  - [x] 리포트 분석 시스템 프롬프트 (4개 역량 지표: Relevance·Depth·Delivery·Fluency)
+  - [x] `totalScore` 산출 기준 및 가중치 프롬프트
+  - [x] 질문별 `aiFeedback` 생성 프롬프트
+- [x] `fastapi/user/interview/pipeline/report_pipeline.py` 생성
+  - [x] `generate_and_send_report(session_id, session_type)` — GPT-4o 리포트 분석 후 Spring 콜백
+  - [x] `voiceQualityRatio < 50.00` 항목의 `deliveryScore` / `fluencyScore` null 처리
+  - [x] `voiceQualityRatio is None` 항목의 `deliveryScore` / `fluencyScore` null 처리 (텍스트 면접)
+  - [x] `totalScore` 계산 및 피드백 직렬화
+  - [x] 리포트 생성 실패 시 빈 feedbacks + `totalScore: null` 부분 콜백 전송
+- [x] `fastapi/core/spring_client.py` — Phase 1에서 이미 완성 (지수 백오프, duplicated 처리)
+- [x] `fastapi/user/interview/api/interview_router.py` 업데이트
+  - [x] `POST /internal/user/interview/sessions/{sessionId}/trigger/report` 라우터
 
 ---
 
 ## Phase 6 — 테스트 & 통합 검증
 
-- [ ] `fastapi/` pytest 테스트 파일 작성
-  - [ ] `test_stt_pipeline.py`
+- [x] `fastapi/` pytest 테스트 파일 작성
+  - [ ] `test_stt_pipeline.py` — 미작성
     - [ ] `voiceQualityRatio = 49.99` → `deliveryScore` / `fluencyScore` null 처리 확인
     - [ ] `voiceQualityRatio = 50.00` → 점수 정상값 유지 확인
     - [ ] STT 실패 시 `INTERVIEW_STT_FAILED` WebSocket 메시지 전송 확인
-  - [ ] `test_llm_pipeline.py`
-    - [ ] LLM 타임아웃 → 폴백 질문 반환 확인
-    - [ ] RAG 컨텍스트 포함 시 프롬프트 조합 확인
-  - [ ] `test_report_pipeline.py`
-    - [ ] 리포트 생성 후 콜백 페이로드 구조 검증
-    - [ ] 텍스트 면접 시 `voiceQualityRatio: null`, `deliveryScore: null` 확인
-  - [ ] `test_spring_client.py`
-    - [ ] 콜백 성공 1회 테스트
-    - [ ] 콜백 2회 실패 → 3차 시도 성공 테스트 (httpx mock)
-    - [ ] 최종 실패 시 `log.error` 호출 확인
-  - [ ] `test_ws_handler.py`
-    - [ ] JWT 검증 실패 → Close 1008 확인
-    - [ ] 중복 연결 시 이전 연결 종료 확인
-- [ ] `python -m pytest fastapi/` 전체 통과 확인
+  - [x] `test_llm_pipeline.py`
+    - [x] LLM 타임아웃 → 폴백 질문 반환 확인
+    - [x] RAG 컨텍스트 포함 시 프롬프트 조합 확인
+  - [x] `test_report_pipeline.py`
+    - [x] 리포트 생성 후 콜백 페이로드 구조 검증
+    - [x] 텍스트 면접 시 `voiceQualityRatio: null`, `deliveryScore: null` 확인
+  - [x] `test_spring_client.py`
+    - [x] 콜백 성공 1회 테스트
+    - [x] 콜백 2회 실패 → 3차 시도 성공 테스트 (httpx mock)
+    - [x] 최종 실패 시 `log.error` 호출 확인
+  - [x] `test_ws_handler.py`
+    - [x] JWT 검증 실패 → Close 1008 확인
+    - [x] 중복 연결 시 이전 연결 종료 확인
+- [x] `python -m pytest fastapi/` 전체 통과 확인
 - [ ] Spring BE 연동 E2E: 텍스트 면접 전체 플로우 확인
 - [ ] Spring BE 연동 E2E: 음성 면접 전체 플로우 확인

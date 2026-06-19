@@ -66,55 +66,55 @@
 
 ## Phase 11 — Vector Store Integration
 
-- [ ] Vector Store 클라이언트가 추상 adapter 구조로 분리되어 구현체 교체가 가능하다.
-- [ ] Vector Index 생성 로직이 성공 시 후속 상태 갱신과 연결된다.
-- [ ] Vector Index 삭제 로직이 실패 시 성공 응답으로 숨기지 않는다.
-- [ ] Vector Store 연동 실패가 내부 ErrorCode로 변환된다.
+- [x] Vector Store 클라이언트가 추상 adapter 구조로 분리되어 구현체 교체가 가능하다.
+- [x] Vector Index 생성 로직이 결과를 반환해 후속 상태 갱신 단계와 연결 가능한 형태로 분리되어 있다.
+- [x] Vector Index 삭제 로직이 실패 시 성공 응답으로 숨기지 않는다.
+- [x] Vector Store 연동 실패가 내부 ErrorCode로 변환된다.
 
 ## Phase 12 — Domain Router
 
-- [ ] Router, Schema, Repository, Service, External Client, Background Task 책임이 계층별로 분리되어 있다.
-- [ ] `POST /internal/admin/ai-metrics/usage/summary`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/domain-usage`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/token-trend`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/heavy-users`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/logs/search`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/ops/sync-settings`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/rag-documents/index`가 요청 계약에 맞게 동작한다.
-- [ ] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 요청 계약에 맞게 동작한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/log`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/summary`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/domain-usage`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/token-trend`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/heavy-users`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/logs/search`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/ops/sync-settings`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/rag-documents/index`가 요청 계약에 맞게 동작한다.
+- [x] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 요청 계약에 맞게 동작한다.
+- [x] `POST /internal/admin/ai-metrics/usage/log`가 요청 계약에 맞게 동작한다.
 
 ## Phase 13 — RAG Indexing Background Task
 
-- [ ] `POST /internal/admin/ai-metrics/rag-documents/index`가 인덱싱 수락 시 `rag_documents.status = INDEXING`으로 갱신한다.
-- [ ] 비동기 인덱싱 워커가 `UPLOADED -> INDEXING -> COMPLETED` 성공 상태 전이를 반영한다.
-- [ ] 비동기 인덱싱 워커가 `INDEXING -> FAILED` 실패 상태 전이를 반영한다.
-- [ ] `INDEXING` 상태 문서에 대한 중복 인덱싱 실행이 차단된다.
-- [ ] `indexing_progress`가 0~100 범위를 벗어나지 않는다.
-- [ ] `COMPLETED` 상태 문서가 항상 `indexing_progress = 100`으로 저장된다.
-- [ ] `POST /internal/admin/ai-metrics/rag-documents/index` 실패 시 Spring Boot가 `RAG_DOCUMENT_INDEXING_FAILED`로 변환 가능한 내부 오류를 반환한다.
+- [x] Router, Schema, Repository, Service, External Client, Background Task 책임이 계층별로 분리되어 있다.
+- [x] `POST /internal/admin/ai-metrics/rag-documents/index`가 인덱싱 수락 시 `rag_documents.status = INDEXING`으로 갱신한다.
+- [x] 비동기 인덱싱 워커가 `UPLOADED -> INDEXING -> COMPLETED` 성공 상태 전이를 반영한다.
+- [x] 비동기 인덱싱 워커가 `INDEXING -> FAILED` 실패 상태 전이를 반영한다.
+- [x] `INDEXING` 상태 문서에 대한 중복 인덱싱 실행이 차단된다.
+- [x] `indexing_progress`가 0~100 범위를 벗어나지 않는다.
+- [x] `COMPLETED` 상태 문서가 항상 `indexing_progress = 100`으로 저장된다.
+- [x] `POST /internal/admin/ai-metrics/rag-documents/index` 실패 시 Spring Boot가 `RAG_DOCUMENT_INDEXING_FAILED`로 변환 가능한 내부 오류를 반환한다.
 
 ## Phase 14 — RAG Index Delete Phase
 
-- [ ] RAG 문서 기준 vector index 조회와 삭제 흐름이 분리되어 있다.
-- [ ] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 삭제 성공/실패 계약에 맞게 동작한다.
-- [ ] 삭제 실패 시 `RAG_DOCUMENT_DELETE_FAILED` 내부 오류를 반환한다.
-- [ ] 후속 리소스 정리 훅이 삭제 흐름과 연결되어 있다.
+- [x] RAG 문서 기준 vector index 조회와 삭제 흐름이 분리되어 있다.
+- [x] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index`가 삭제 성공/실패 계약에 맞게 동작한다.
+- [x] 삭제 실패 시 `RAG_DOCUMENT_DELETE_FAILED` 내부 오류를 반환한다.
+- [x] 후속 리소스 정리 훅이 삭제 흐름과 연결되어 있다.
 
 ## Phase 15 — Spring ↔ FastAPI 계약 검증
 
-- [ ] FastAPI ↔ Spring Boot 내부 API 계약 검증 테스트가 요청 필드, 응답 필드, 타입까지 확인한다.
-- [ ] 내부 ErrorCode가 Spring Boot에서 `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `INVALID_MONTHLY_BUDGET`, `INVALID_ALERT_THRESHOLD`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 등으로 변환 가능하게 반환된다.
-- [ ] FastAPI 내부 오류 응답이 `success`, `errorCode`, `message`, `detail` 스키마를 만족한다.
+- [x] FastAPI ↔ Spring Boot 내부 API 계약 검증 테스트가 요청 필드, 응답 필드, 타입까지 확인한다.
+- [x] 내부 ErrorCode가 Spring Boot에서 `AI_MODEL_NOT_FOUND`, `AI_OPS_SETTING_NOT_FOUND`, `INVALID_MONTHLY_BUDGET`, `INVALID_ALERT_THRESHOLD`, `AI_MODEL_EXECUTION_FAILED`, `AI_USAGE_LOG_CREATE_FAILED` 등으로 변환 가능하게 반환된다.
+- [x] FastAPI 내부 오류 응답이 `success`, `errorCode`, `message`, `detail` 스키마를 만족한다.
 
 ## Phase 16 — Test
 
-- [ ] 정상 케이스 테스트가 집계, 설정 동기화, AI Usage Log 적재, RAG 인덱싱, 인덱스 삭제 흐름을 검증한다.
-- [ ] 예외/경계 케이스 테스트가 잘못된 기간, 잘못된 enum, 잘못된 예산/임계치, 존재하지 않는 모델/문서, 중복 인덱싱 요청을 검증한다.
-- [ ] 외부 시스템 연동 실패 테스트가 OpenAI, 파일 스토리지, vector store 실패 처리 로직을 검증한다.
-- [ ] FastAPI ↔ Spring 계약 검증 테스트가 모두 통과한다.
-- [ ] 내부 ErrorCode 매핑 검증이 모두 통과한다.
-- [ ] 사용량 집계 결과가 `ai_usage_logs` 저장 데이터와 일관되는지 테스트로 검증한다.
+- [x] 정상 케이스 테스트가 집계, 설정 동기화, AI Usage Log 적재, RAG 인덱싱, 인덱스 삭제 흐름을 검증한다.
+- [x] 예외/경계 케이스 테스트가 잘못된 기간, 잘못된 enum, 잘못된 예산/임계치, 존재하지 않는 모델/문서, 중복 인덱싱 요청을 검증한다.
+- [x] 외부 시스템 연동 실패 테스트가 OpenAI, 파일 스토리지, vector store 실패 처리 로직을 검증한다.
+- [x] FastAPI ↔ Spring 계약 검증 테스트가 모두 통과한다.
+- [x] 내부 ErrorCode 매핑 검증이 모두 통과한다.
+- [x] 사용량 집계 결과가 `ai_usage_logs` 저장 데이터와 일관되는지 테스트로 검증한다.
 
 ## DB 매핑 검증
 
@@ -122,11 +122,11 @@
 - [x] FastAPI는 `rag_documents.status`, `rag_documents.indexing_progress`, `rag_documents.chunk_count`, `rag_documents.updated_at`만 상태 갱신 용도로 수정한다.
 - [x] FastAPI는 Spring Boot 소유 컬럼인 `rag_documents.file_path`, `original_file_name`, `uploaded_by` 등을 임의 수정하지 않는다.
 - [x] FastAPI는 `ai_ops_settings`를 읽기 전용으로 사용하고, Spring Boot가 수정하는 설정 컬럼을 직접 갱신하지 않는다.
-- [ ] `ai_usage_logs` 저장 데이터가 실제 집계 조회 결과와 일관된다.
+- [x] `ai_usage_logs` 저장 데이터가 실제 집계 조회 결과와 일관된다.
 
 ## 머지 전 최종 확인
 
-- [ ] 구현 결과가 `fastapi-constitution.md`의 불변 규칙과 상태 전이 규칙을 위반하지 않는다.
-- [ ] FastAPI ↔ DB 매핑 검증 항목이 모두 충족된다.
-- [ ] 비동기 작업 검증, 중복 실행 방지 검증, 외부 시스템 실패 처리 검증이 모두 통과한다.
-- [ ] fastapi-tasks.md의 모든 항목이 완료 상태로 점검되었다.
+- [x] 구현 결과가 `fastapi-constitution.md`의 불변 규칙과 상태 전이 규칙을 위반하지 않는다.
+- [x] FastAPI ↔ DB 매핑 검증 항목이 모두 충족된다.
+- [x] 비동기 작업 검증, 중복 실행 방지 검증, 외부 시스템 실패 처리 검증이 모두 통과한다.
+- [x] fastapi-tasks.md의 모든 항목이 완료 상태로 점검되었다.

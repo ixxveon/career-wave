@@ -38,6 +38,14 @@ websocket:
 interview:
   internal-secret: ${WEBHOOK_SECRET}
 
+# 로컬 로그 설정 — reactor.netty/io.netty DEBUG는 URI(serviceKey), request body(인증번호, 전화번호) 전문 출력
+# NFR-002 위반 방지를 위해 WARN 으로 제한
+logging:
+  level:
+    reactor.netty: WARN
+    io.netty: WARN
+    org.springframework.web.reactive: WARN
+
 jwt:
   user:
     secret: ${JWT_USER_SECRET}

@@ -31,26 +31,55 @@ export interface CareerHistory {
   weakness?: string;
 }
 
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+const USE_MOCK_DATA =
+    import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
 function mockResponse<T>(data: T): Promise<T> {
   return Promise.resolve(structuredClone(data));
 }
 
+function createCareerHistoryQueryString(params: CareerHistoryQuery): string {
+  const queryParams = new URLSearchParams();
+
+  if (params.activityType && params.activityType !== '전체') {
+    queryParams.set('activityType', params.activityType);
+  }
+
+  if (params.companyName?.trim()) {
+    queryParams.set('companyName', params.companyName.trim());
+  }
+
+  if (params.practiceDate) {
+    queryParams.set('practiceDate', params.practiceDate);
+  }
+
+  if (params.jobTitle && params.jobTitle !== '전체 직무') {
+    queryParams.set('jobTitle', params.jobTitle);
+  }
+
+  return queryParams.toString();
+}
+
 export const careerHistoryApi = {
-  getHistories: (params: CareerHistoryQuery = {}): Promise<CareerHistory[]> => {
-    if (!useMockData) {
-      const query = new URLSearchParams(params as Record<string, string>).toString();
-      return apiClient<CareerHistory[]>(`/career-histories${query ? `?${query}` : ''}`) as Promise<CareerHistory[]>;
+  getHistories: async (params: CareerHistoryQuery = {}): Promise<CareerHistory[]> => {
+    if (!USE_MOCK_DATA) {
+      const query = createCareerHistoryQueryString(params);
+      const response = await apiClient<CareerHistory[] | null>(
+          `/career-histories${query ? `?${query}` : ''}`,
+      );
+
+      return response ?? [];
     }
 
     const { activityType = '전체', companyName = '', practiceDate = '', jobTitle = '전체 직무' } = params;
     const companyQuery = companyName.trim().toLowerCase();
+
     const filtered = (mockCareerHistories as CareerHistory[]).filter((record) => {
       const matchesType = activityType === '전체' || record.activityType === activityType;
       const matchesCompany = !companyQuery || record.companyName.toLowerCase().includes(companyQuery);
       const matchesDate = !practiceDate || record.practiceDate === practiceDate;
       const matchesJob = jobTitle === '전체 직무' || record.jobTitle === jobTitle;
+
       return matchesType && matchesCompany && matchesDate && matchesJob;
     });
 
@@ -58,20 +87,20 @@ export const careerHistoryApi = {
   },
 
   getHistoryDetail: (historyId: string) => (
-    useMockData
-      ? mockResponse((mockCareerDetails as Record<string, unknown>)[historyId] || null)
-      : apiClient(`/career-histories/${historyId}`)
+      USE_MOCK_DATA
+          ? mockResponse((mockCareerDetails as Record<string, unknown>)[historyId] || null)
+          : apiClient(`/career-histories/${historyId}`)
   ),
 
   getCompetencyReport: () => (
-    useMockData
-      ? mockResponse(mockCompetencyReport)
-      : apiClient('/career-histories/competency-report')
+      USE_MOCK_DATA
+          ? mockResponse(mockCompetencyReport)
+          : apiClient('/career-histories/competency-report')
   ),
 
   getRoadmap: () => (
-    useMockData
-      ? mockResponse(mockRoadmap)
-      : apiClient('/career-histories/roadmap')
+      USE_MOCK_DATA
+          ? mockResponse(mockRoadmap)
+          : apiClient('/career-histories/roadmap')
   ),
 };
