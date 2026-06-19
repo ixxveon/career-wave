@@ -17,6 +17,7 @@ function createMockAdminAccessToken() {
   const header = { alg: 'HS256', typ: 'JWT' };
   const payload = {
     sub: 'career-wave-admin',
+    accountType: 'ADMIN',
     role: ADMIN_ROLE,
     roles: [ADMIN_ROLE],
     exp: Math.floor(Date.now() / 1000) + 60 * 60,
