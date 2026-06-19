@@ -6,7 +6,7 @@ from fastapi import Path as FastApiPath
 from fastapi.responses import JSONResponse
 
 from admin.ai_metrics.client import MockVectorStoreClient, get_ai_metrics_openai_client
-from admin.ai_metrics.exception import AiMetricsException, build_error_response
+from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException, build_error_response
 from admin.ai_metrics.parser import RagDocumentParser
 from admin.ai_metrics.repository import (
     AiModelRepository,
@@ -232,7 +232,18 @@ async def create_usage_log(request: UsageLogCreateRequest):
 
 def _parse_iso_datetime(value: str) -> datetime:
     normalized = value.replace("Z", "+00:00")
-    return datetime.fromisoformat(normalized)
+    try:
+        return datetime.fromisoformat(normalized)
+    except ValueError as error:
+        raise AiMetricsException(
+            error_code=AiMetricsErrorCode.TOKEN_CALCULATION_FAILED,
+            message="Usage metrics request validation failed.",
+            detail={
+                "field": "from/to",
+                "value": value,
+                "reason": "invalid_iso_datetime_format",
+            },
+        ) from error
 
 
 async def _run_rag_indexing(rag_document_id: int) -> None:
