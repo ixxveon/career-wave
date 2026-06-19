@@ -103,6 +103,9 @@ function ScrappedJobPage() {
     try {
       await deleteDashboardBookmark(bookmarkId);
       await refetch();
+      if (selectedJob?.bookmarkId === bookmarkId) {
+        setSelectedJob(null);
+      }
       alert("스크랩이 해제되었습니다.");
     } catch {
       alert("스크랩 해제에 실패했습니다.");
