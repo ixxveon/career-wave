@@ -32,23 +32,26 @@ _ERROR_MESSAGES = {
     "unknown": "분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
 }
 
-_FAILED_PAYLOAD = {
-    "status": "FAILED",
-    "scoreJobFitness": None,
-    "scoreTechStack": None,
-    "scoreQuantified": None,
-    "scoreLogical": None,
-    "scoreTotal": None,
-    "overallReview": None,
-    "feedbackText": None,
-}
+def _failed_payload(document_id: str, error_message: str) -> dict:
+    return {
+        "documentId": document_id,
+        "status": "FAILED",
+        "scoreJobFitness": None,
+        "scoreTechStack": None,
+        "scoreQuantified": None,
+        "scoreLogical": None,
+        "scoreTotal": None,
+        "overallReview": None,
+        "feedbackText": None,
+        "errorMessage": error_message,
+    }
 
 
 async def analyze_document(request: AnalyzeDocumentRequest) -> None:
     document_id = str(request.document_id)
     logger.info(f"[{document_id}] Analysis started — fileType={request.file_type}")
 
-    await _send_webhook_safe(document_id, {"status": "PENDING"})
+    await _send_webhook_safe(document_id, {"documentId": document_id, "status": "PENDING"})
 
     try:
         if request.file_type == "RESUME":
@@ -57,33 +60,19 @@ async def analyze_document(request: AnalyzeDocumentRequest) -> None:
             await _analyze_cover_letter(document_id, request)
     except FileParseError as e:
         logger.error(f"[{document_id}] File parse failed: {e.user_message}", exc_info=True)
-        await _send_webhook_safe(
-            document_id,
-            {**_FAILED_PAYLOAD, "errorMessage": e.user_message},
-        )
+        await _send_webhook_safe(document_id, _failed_payload(document_id, e.user_message))
     except APITimeoutError:
         logger.error(f"[{document_id}] OpenAI timeout", exc_info=True)
-        await _send_webhook_safe(
-            document_id,
-            {**_FAILED_PAYLOAD, "errorMessage": _ERROR_MESSAGES["ai_timeout"]},
-        )
+        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["ai_timeout"]))
     except APIError as e:
         logger.error(f"[{document_id}] OpenAI API error: {e}", exc_info=True)
-        await _send_webhook_safe(
-            document_id,
-            {**_FAILED_PAYLOAD, "errorMessage": _ERROR_MESSAGES["ai_error"]},
-        )
+        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["ai_error"]))
     except (json.JSONDecodeError, KeyError, ValueError) as e:
         logger.error(f"[{document_id}] AI response parse failed: {e}", exc_info=True)
-        await _send_webhook_safe(
-            document_id,
-            {**_FAILED_PAYLOAD, "errorMessage": _ERROR_MESSAGES["parse_response"]},
-        )
+        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["parse_response"]))
     except Exception:
         logger.error(f"[{document_id}] Unexpected error", exc_info=True)
-        await _send_webhook_safe(
-            document_id,
-            {**_FAILED_PAYLOAD, "errorMessage": _ERROR_MESSAGES["unknown"]},
+        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["unknown"]),
         )
 
 
@@ -95,7 +84,7 @@ async def _analyze_resume(document_id: str, request: AnalyzeDocumentRequest) -> 
         request.original_name,
     )
 
-    await _send_webhook_safe(document_id, {"status": "ANALYZING"})
+    await _send_webhook_safe(document_id, {"documentId": document_id, "status": "ANALYZING"})
 
     result = await _call_openai(
         document_id=document_id,
@@ -104,13 +93,13 @@ async def _analyze_resume(document_id: str, request: AnalyzeDocumentRequest) -> 
         model="deep",
     )
 
-    await _send_webhook_safe(document_id, {"status": "ANALYZING"})
+    await _send_webhook_safe(document_id, {"documentId": document_id, "status": "ANALYZING"})
 
     await _send_completed(document_id, result)
 
 
 async def _analyze_cover_letter(document_id: str, request: AnalyzeDocumentRequest) -> None:
-    await _send_webhook_safe(document_id, {"status": "ANALYZING"})
+    await _send_webhook_safe(document_id, {"documentId": document_id, "status": "ANALYZING"})
 
     content_dicts = [
         {"order": item.order, "question": item.question, "answer": item.answer}
@@ -128,7 +117,7 @@ async def _analyze_cover_letter(document_id: str, request: AnalyzeDocumentReques
         model="deep",
     )
 
-    await _send_webhook_safe(document_id, {"status": "ANALYZING"})
+    await _send_webhook_safe(document_id, {"documentId": document_id, "status": "ANALYZING"})
 
     await _send_completed(document_id, result)
 
@@ -170,6 +159,7 @@ async def _send_completed(document_id: str, result: dict) -> None:
     await _send_webhook_safe(
         document_id,
         {
+            "documentId": document_id,
             "status": "COMPLETED",
             "scoreJobFitness": result["scoreJobFitness"],
             "scoreTechStack": result["scoreTechStack"],

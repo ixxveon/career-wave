@@ -90,6 +90,13 @@ public class MemberVerification {
         this.verificationStatus = VerificationStatus.EXPIRED;
     }
 
+    public void markConsumed() {
+        if (this.verificationStatus != VerificationStatus.VERIFIED) {
+            throw new IllegalStateException("Only verified tokens can be consumed");
+        }
+        this.verificationStatus = VerificationStatus.CONSUMED;
+    }
+
     public static MemberVerification issue(VerificationChannel channel, String target,
                                            VerificationPurpose purpose, String codeHash,
                                            Instant expiresAt, Instant resendAvailableAt) {

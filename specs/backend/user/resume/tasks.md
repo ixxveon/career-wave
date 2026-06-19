@@ -109,7 +109,7 @@
   - 서비스 내부에서 `ApplicationEventPublisher.publishEvent()`로 이벤트 발행
   - 이벤트 리스너에서 `SimpMessagingTemplate.convertAndSend()` 호출 (Phase 7에서 리스너 구현)
   - ⚠️ `SimpMessagingTemplate`을 `@Transactional` 메서드 안에서 직접 호출 금지
-- [x] `ResumeController.receiveWebhook()` 구현 (`POST /api/v1/user/resume/webhook`)
+- [x] `ResumeController.receiveWebhook()` 구현 (`POST /api/v1/user/resume/{documentId}/webhook`)
 - [x] `COMPLETED`·`FAILED` 외 알 수 없는 status 값은 `WEBHOOK_INVALID_STATUS(400)` 예외 처리
 
 ---

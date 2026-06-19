@@ -21,6 +21,9 @@ public class Admin {
     @Column(name = "login_id", nullable = false, unique = true, length = 100)
     private String loginId;
 
+    @Column(name = "email", nullable = false, unique = true, length = 255)
+    private String email;
+
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -62,6 +65,7 @@ public class Admin {
 
     public Long getAdminId() { return adminId; }
     public String getLoginId() { return loginId; }
+    public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }
     public String getName() { return name; }
     public AdminRole getAdminRole() { return adminRole; }
