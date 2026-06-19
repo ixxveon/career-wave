@@ -67,7 +67,10 @@ class RagIndexingTask:
                 AiMetricsErrorCode.RAG_DOCUMENT_NOT_FOUND,
             }:
                 raise
-            self._mark_failed(rag_document_id)
+            try:
+                self._mark_failed(rag_document_id)
+            except AiMetricsException as mark_failed_error:
+                raise error from mark_failed_error
             raise
         except Exception:
             self._mark_failed(rag_document_id)

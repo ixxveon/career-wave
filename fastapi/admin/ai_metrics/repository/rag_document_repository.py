@@ -69,12 +69,20 @@ class RagDocumentRepository:
         return self._session.execute(statement).first() is not None
 
     def mark_indexing(self, rag_document_id: int) -> RagDocumentRecord | None:
-        return self.update_indexing_state(
-            rag_document_id=rag_document_id,
-            status="INDEXING",
-            indexing_progress=0,
-            chunk_count=None,
+        statement = (
+            update(rag_documents_table)
+            .where(rag_documents_table.c.rag_document_id == rag_document_id)
+            .where(rag_documents_table.c.status != "INDEXING")
+            .values(
+                status="INDEXING",
+                indexing_progress=self._validate_indexing_progress(0),
+                updated_at=datetime.now(UTC),
+            )
+            .returning(rag_documents_table)
         )
+        row = self._session.execute(statement).mappings().first()
+        self._session.flush()
+        return self._to_record(row) if row else None
 
     def mark_completed(self, rag_document_id: int, chunk_count: int) -> RagDocumentRecord | None:
         return self.update_indexing_state(
