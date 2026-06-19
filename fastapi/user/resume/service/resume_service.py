@@ -146,6 +146,7 @@ async def _call_openai(
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
+        temperature=0,
         timeout=120,
     )
 
