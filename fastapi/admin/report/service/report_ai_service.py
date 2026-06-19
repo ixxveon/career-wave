@@ -46,16 +46,16 @@ async def analyze_report(request: ReportAnalysisRequest) -> ReportAnalysisRespon
     )
 
     usage = completion.usage
-    logger.info(
-        f"[Report AI] Token usage — "
-        f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
-    )
+    if usage:
+        logger.info(
+            f"[Report AI] Token usage — "
+            f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
+        )
 
     raw = completion.choices[0].message.content or "{}"
-    result = json.loads(raw)
-
-    return ReportAnalysisResponse(
-        severity=result["severity"],
-        category=result["category"],
-        suggestion=result["suggestion"],
-    )
+    try:
+        result = json.loads(raw)
+        return ReportAnalysisResponse(**result)
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.error(f"[Report AI] LLM 응답 파싱 실패: {e}")
+        raise
