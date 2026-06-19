@@ -26,7 +26,7 @@ def make_token(secret: str = TEST_JWT_SECRET, expired: bool = False) -> str:
 
     exp = int(time.time()) + (-60 if expired else 3600)
     return jwt.encode(
-        {"sub": TEST_MEMBER_ID, "exp": exp},
+        {"sub": TEST_MEMBER_ID, "exp": exp, "aud": "user"},
         secret,
         algorithm="HS256",
     )
