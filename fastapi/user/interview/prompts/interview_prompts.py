@@ -7,6 +7,7 @@ from typing import Final
 
 TEMPERATURE: Final[float] = 0.7
 MAX_ANSWER_HISTORY: Final[int] = 10  # LLM 컨텍스트 초과 방지
+MAX_RAG_CONTEXT_CHARS: Final[int] = 3000  # 토큰 블로트 방지
 
 
 # ── 시스템 프롬프트 ─────────────────────────────────────────────────────────
