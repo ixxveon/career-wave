@@ -22,6 +22,14 @@ from user.interview.websocket.interview_ws_handler import (
 log = logging.getLogger(__name__)
 
 _TTS_CHUNK_SIZE = 4096  # bytes per chunk
+_openai_client: AsyncOpenAI | None = None
+
+
+def _get_openai_client() -> AsyncOpenAI:
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = AsyncOpenAI(api_key=get_settings().openai_api_key)
+    return _openai_client
 
 
 async def synthesize_and_stream(
@@ -35,7 +43,7 @@ async def synthesize_and_stream(
     연결이 끊어지면 즉시 중단하여 오디오 버퍼가 메모리에 잔류하지 않도록 한다.
     """
     settings = get_settings()
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    client = _get_openai_client()
 
     log.info(
         "[Session: %s] TTS start: questionOrder=%d, textLen=%d",
