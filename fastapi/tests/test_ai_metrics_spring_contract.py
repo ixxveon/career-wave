@@ -395,10 +395,12 @@ def test_usage_log_create_contract_matches_spring_boot_fields():
 
 def test_error_codes_are_returned_in_spring_boot_mappable_identifiers():
     expected_codes = {
+        "AI_MODEL_PROVIDER_NOT_SUPPORTED",
         "AI_MODEL_NOT_FOUND",
         "AI_OPS_SETTING_NOT_FOUND",
         "INVALID_MONTHLY_BUDGET",
         "INVALID_ALERT_THRESHOLD",
+        "INVALID_DATETIME_FORMAT",
         "RAG_DOCUMENT_NOT_FOUND",
         "RAG_DOCUMENT_ALREADY_INDEXING",
         "RAG_DOCUMENT_INDEXING_FAILED",
@@ -410,7 +412,7 @@ def test_error_codes_are_returned_in_spring_boot_mappable_identifiers():
 
     actual_codes = {error_code.value for error_code in AiMetricsErrorCode}
 
-    assert expected_codes.issubset(actual_codes)
+    assert actual_codes == expected_codes
 
 
 def test_error_response_schema_matches_fastapi_contract():

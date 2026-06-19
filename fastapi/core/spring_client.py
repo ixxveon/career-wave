@@ -14,6 +14,13 @@ _CALLBACK_TIMEOUT = 10.0
 _BACKOFF_DELAYS = (0, 1, 3)
 
 
+class QuestionPayload(BaseModel):
+    sessionId: str
+    questionOrder: int
+    questionText: str
+    questionType: str  # FOLLOW_UP | PRESSURE | NEXT
+
+
 class FeedbackPayload(BaseModel):
     questionOrder: int
     questionText: str
@@ -30,6 +37,44 @@ class ReportCallbackPayload(BaseModel):
     sessionId: str
     totalScore: int | None = None
     feedbacks: list[FeedbackPayload]
+
+
+async def send_question_to_spring(session_id: str, payload: QuestionPayload) -> bool:
+    """
+    LLM이 생성한 질문을 Spring에 전달한다. Spring이 STOMP로 클라이언트에 릴레이한다.
+    전달 성공 시 True, 최종 실패 시 False 반환.
+    """
+    settings = get_settings()
+    url = f"{settings.spring_base_url}/internal/api/v1/interview/callback/{session_id}/question"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Internal-Secret": settings.webhook_secret,
+    }
+    body = payload.model_dump_json()
+
+    for attempt, delay in enumerate(_BACKOFF_DELAYS):
+        if delay:
+            await asyncio.sleep(delay)
+        try:
+            async with httpx.AsyncClient(timeout=_CALLBACK_TIMEOUT) as client:
+                resp = await client.post(url, content=body, headers=headers)
+                resp.raise_for_status()
+                log.info("question sent to spring: sessionId=%s, order=%d, attempt=%d",
+                         session_id, payload.questionOrder, attempt + 1)
+                return True
+        except httpx.HTTPStatusError as e:
+            log.warning(
+                "question callback HTTP error: sessionId=%s, attempt=%d, status=%d",
+                session_id, attempt + 1, e.response.status_code,
+            )
+        except httpx.RequestError as e:
+            log.warning(
+                "question callback request error: sessionId=%s, attempt=%d, error=%s",
+                session_id, attempt + 1, e,
+            )
+
+    log.error("question callback failed after all retries: sessionId=%s", session_id)
+    return False
 
 
 async def send_report_callback(session_id: str, payload: ReportCallbackPayload) -> None:

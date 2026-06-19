@@ -52,8 +52,10 @@ dependencies {
     // Thymeleaf (이메일 템플릿)
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
-    // AWS S3
+    // AWS S3 + SES
     implementation 'software.amazon.awssdk:s3:2.25.60'
+    implementation 'software.amazon.awssdk:ses:2.25.60'
+    implementation 'software.amazon.awssdk:sesv2:2.25.60'
 
     // Apache Tika (MIME type 기반 파일 검증)
     implementation 'org.apache.tika:tika-core:3.2.2'
@@ -77,6 +79,7 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
 }
 
 tasks.named('test') {

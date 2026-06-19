@@ -30,28 +30,28 @@
 
 ## Phase 3 — STT 파이프라인
 
-- [ ] `POST /internal/user/interview/sessions/{sessionId}/trigger/voice-chunk` 라우터에 `X-Internal-Secret` 헤더 검증이 구현되어 있다.
-- [ ] STT 파이프라인이 `asyncio.create_task`로 비동기 실행된다 (라우터가 즉시 200 응답 반환).
-- [ ] `voiceQualityRatio` 산정 로직이 구현되어 있다 (Whisper `no_speech_prob` 기반).
+- [x] `POST /internal/user/interview/sessions/{sessionId}/trigger/voice-chunk` 라우터에 `X-Internal-Secret` 헤더 검증이 구현되어 있다.
+- [x] STT 파이프라인이 `asyncio.create_task`로 비동기 실행된다 (라우터가 즉시 202 응답 반환).
+- [x] `voiceQualityRatio` 산정 로직이 구현되어 있다 (Whisper `no_speech_prob` 기반).
 - [ ] `voiceQualityRatio < 50.00`인 답변의 `deliveryScore` / `fluencyScore`가 Spring 콜백 페이로드에서 `null`로 포함된다.
 - [ ] `voiceQualityRatio`가 `null`인 답변(텍스트 면접)의 `deliveryScore` / `fluencyScore`가 `null`로 포함된다.
-- [ ] STT 변환 실패 시 `INTERVIEW_STT_FAILED` errorCode WebSocket 메시지가 클라이언트에 전송된다.
+- [x] STT 변환 실패 시 `INTERVIEW_STT_FAILED` errorCode WebSocket 메시지가 클라이언트에 전송된다.
 
 ---
 
 ## Phase 4 — LLM 질문 생성 & TTS
 
-- [ ] `POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer` 라우터에 `X-Internal-Secret` 헤더 검증이 구현되어 있다.
-- [ ] LLM 파이프라인이 `asyncio.create_task`로 비동기 실행된다.
-- [ ] LLM 호출 시 `OPENAI_LLM_TIMEOUT_SECONDS` 타임아웃이 적용된다.
-- [ ] LLM 타임아웃 또는 실패 시 폴백 질문 목록에서 대체 질문이 반환된다.
-- [ ] RAG 컨텍스트가 있는 세션의 경우 LLM 프롬프트에 컨텍스트가 주입된다.
-- [ ] `POST /internal/user/interview/sessions/{sessionId}/rag-context` 라우터에 `X-Internal-Secret` 헤더 검증이 구현되어 있다.
-- [ ] RAG 인덱싱이 비동기로 처리되며, 실패 시 세션을 중단하지 않고 일반 면접 모드로 폴백한다.
-- [ ] TTS 오디오가 `TTS_AUDIO` → `TTS_AUDIO_END` 순으로 순차 전송된다.
-- [ ] TTS 실패 시 텍스트 질문만 전달하고 `INTERVIEW_TTS_FAILED` 메시지를 전송한다.
-- [ ] TTS 생성 모듈이 Generator 기반 스트리밍 방식으로 구현되어 있으며, 세션 WebSocket 연결이 끊기면 진행 중인 TTS `asyncio.Task`가 즉시 취소(`task.cancel()`)되어 오디오 버퍼가 메모리에 잔류하지 않는다.
-- [ ] 폴백 질문 목록이 `fastapi/user/prompts/interview_prompts.py`에 정의되어 있다 (각 유형 최소 5개).
+- [x] `POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer` 라우터에 `X-Internal-Secret` 헤더 검증이 구현되어 있다.
+- [x] LLM 파이프라인이 `asyncio.create_task`로 비동기 실행된다.
+- [x] LLM 호출 시 `OPENAI_LLM_TIMEOUT_SECONDS` 타임아웃이 적용된다.
+- [x] LLM 타임아웃 또는 실패 시 폴백 질문 목록에서 대체 질문이 반환된다.
+- [x] RAG 컨텍스트가 있는 세션의 경우 LLM 프롬프트에 컨텍스트가 주입된다.
+- [x] `POST /internal/user/interview/sessions/{sessionId}/rag-context` 라우터에 `X-Internal-Secret` 헤더 검증이 구현되어 있다.
+- [x] RAG 인덱싱이 비동기로 처리되며, 실패 시 세션을 중단하지 않고 일반 면접 모드로 폴백한다.
+- [x] TTS 오디오가 `TTS_AUDIO` → `TTS_AUDIO_END` 순으로 순차 전송된다.
+- [x] TTS 실패 시 텍스트 질문만 전달하고 `INTERVIEW_TTS_FAILED` 메시지를 전송한다.
+- [x] TTS 생성 모듈이 Generator 기반 스트리밍 방식으로 구현되어 있으며, 세션 WebSocket 연결이 끊기면 진행 중인 TTS 스트리밍이 즉시 중단되어 오디오 버퍼가 메모리에 잔류하지 않는다.
+- [x] 폴백 질문 목록이 `fastapi/user/interview/prompts/interview_prompts.py`에 정의되어 있다 (각 유형 최소 5개).
 
 ---
 

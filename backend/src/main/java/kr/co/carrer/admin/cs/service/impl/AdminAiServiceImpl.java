@@ -24,6 +24,9 @@ public class AdminAiServiceImpl implements AdminAiService {
     @Value("${fastapi.base-url}")
     private String fastApiBaseUrl;
 
+    @Value("${webhook.secret}")
+    private String webhookSecret;
+
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
 
     private WebClient webClient;
@@ -61,6 +64,7 @@ public class AdminAiServiceImpl implements AdminAiService {
         try {
             Map<?, ?> response = webClient.post()
                 .uri(path)
+                .header("X-Internal-Secret", webhookSecret)
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(Map.class)
