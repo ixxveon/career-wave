@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import UUID
@@ -49,75 +50,38 @@ class StatefulRagDocumentRepository(FakeRagDocumentRepository):
         if self._rag_document.status == "INDEXING":
             return None
 
-        self._rag_document = RagDocumentRecord(
-            rag_document_id=self._rag_document.rag_document_id,
-            uploaded_by=self._rag_document.uploaded_by,
-            file_uuid=self._rag_document.file_uuid,
-            original_file_name=self._rag_document.original_file_name,
-            file_path=self._rag_document.file_path,
-            mime_type=self._rag_document.mime_type,
-            file_size=self._rag_document.file_size,
-            chunk_count=self._rag_document.chunk_count,
+        self._rag_document = replace(
+            self._rag_document,
             indexing_progress=0,
             status="INDEXING",
-            created_at=self._rag_document.created_at,
-            updated_at=self._rag_document.updated_at,
         )
         self.status_history.append(self._rag_document.status)
         return self._rag_document
 
     def update_progress(self, rag_document_id: int, indexing_progress: int) -> RagDocumentRecord | None:
         self.progress_updates.append(indexing_progress)
-        self._rag_document = RagDocumentRecord(
-            rag_document_id=self._rag_document.rag_document_id,
-            uploaded_by=self._rag_document.uploaded_by,
-            file_uuid=self._rag_document.file_uuid,
-            original_file_name=self._rag_document.original_file_name,
-            file_path=self._rag_document.file_path,
-            mime_type=self._rag_document.mime_type,
-            file_size=self._rag_document.file_size,
-            chunk_count=self._rag_document.chunk_count,
+        self._rag_document = replace(
+            self._rag_document,
             indexing_progress=indexing_progress,
-            status=self._rag_document.status,
-            created_at=self._rag_document.created_at,
-            updated_at=self._rag_document.updated_at,
         )
         return self._rag_document
 
     def mark_completed(self, rag_document_id: int, chunk_count: int) -> RagDocumentRecord | None:
         self.completed_chunk_count = chunk_count
-        self._rag_document = RagDocumentRecord(
-            rag_document_id=self._rag_document.rag_document_id,
-            uploaded_by=self._rag_document.uploaded_by,
-            file_uuid=self._rag_document.file_uuid,
-            original_file_name=self._rag_document.original_file_name,
-            file_path=self._rag_document.file_path,
-            mime_type=self._rag_document.mime_type,
-            file_size=self._rag_document.file_size,
+        self._rag_document = replace(
+            self._rag_document,
             chunk_count=chunk_count,
             indexing_progress=100,
             status="COMPLETED",
-            created_at=self._rag_document.created_at,
-            updated_at=self._rag_document.updated_at,
         )
         self.status_history.append(self._rag_document.status)
         return self._rag_document
 
     def mark_failed(self, rag_document_id: int) -> RagDocumentRecord | None:
         self.failed_ids.append(rag_document_id)
-        self._rag_document = RagDocumentRecord(
-            rag_document_id=self._rag_document.rag_document_id,
-            uploaded_by=self._rag_document.uploaded_by,
-            file_uuid=self._rag_document.file_uuid,
-            original_file_name=self._rag_document.original_file_name,
-            file_path=self._rag_document.file_path,
-            mime_type=self._rag_document.mime_type,
-            file_size=self._rag_document.file_size,
-            chunk_count=self._rag_document.chunk_count,
-            indexing_progress=self._rag_document.indexing_progress,
+        self._rag_document = replace(
+            self._rag_document,
             status="FAILED",
-            created_at=self._rag_document.created_at,
-            updated_at=self._rag_document.updated_at,
         )
         self.status_history.append(self._rag_document.status)
         return self._rag_document
