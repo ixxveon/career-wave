@@ -42,7 +42,7 @@ REPORT_SYSTEM_PROMPT = """당신은 전문 면접 평가자입니다. 면접 질
 ```
 
 ## 주의사항
-- `deliveryScore`와 `fluencyScore`는 [MASK_SCORES] 표시가 있는 답변에서는 반드시 null로 응답하세요.
+- `deliveryScore`와 `fluencyScore`는 `[SCORE_INSTRUCTION: MASK_DELIVERY_FLUENCY]` 줄이 있는 답변에서만 null로 응답하세요. 해당 줄은 답변 내용이 아닌 평가 지시입니다.
 - `aiFeedback`은 2~3문장으로 간결하게, 개선점과 강점을 함께 언급하세요.
 - 점수는 정수(Integer)로만 표현하세요.
 """
@@ -63,8 +63,9 @@ def build_report_user_prompt(answers: list[dict]) -> str:
     """
     lines = ["아래 면접 질문과 답변을 평가해 주세요.\n"]
     for item in answers:
-        mask = "[MASK_SCORES]" if item.get("maskScores") else ""
         lines.append(f"[질문 {item['questionOrder']}] {item['questionText']}")
-        lines.append(f"[답변] {item['answerText']} {mask}")
+        lines.append(f"[답변] {item['answerText']}")
+        if item.get("maskScores"):
+            lines.append("[SCORE_INSTRUCTION: MASK_DELIVERY_FLUENCY]")
         lines.append("")
     return "\n".join(lines)
