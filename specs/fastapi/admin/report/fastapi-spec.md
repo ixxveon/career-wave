@@ -120,4 +120,4 @@ FastAPI는 DB를 읽거나 쓰지 않는다. 아래는 Spring Boot와의 내부 
 - DB 저장(`reports.ai_suggestion` 업데이트)은 Spring Boot 책임이며 FastAPI는 결과만 반환한다.
 - FastAPI 호출 실패는 비크리티컬로 처리되어 신고 상세 조회 자체는 항상 성공으로 처리된다.
 - MVP에서 사용하는 LLM 모델은 OpenAI GPT 계열이며 모델명은 환경변수로 관리한다.
-- `contentBody`가 토큰 한도를 초과하는 경우 FastAPI가 앞부분만 잘라서 사용한다(truncation).
+- `contentBody`가 토큰 한도를 초과하는 경우 LLM 호출 실패로 간주하고 EC-003에 따라 `REPORT_AI_ANALYSIS_FAILED`를 반환한다.

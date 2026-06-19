@@ -257,10 +257,10 @@ admin/report/
 기존 상세 조회 로직 이후 AI 분석 처리를 추가한다.
 
 ```text
-1. ai_suggestion이 null인 경우에만 FastAPI 호출
-2. FastAPI POST /internal/admin/ai/report-analysis 호출
+1. ai_suggestion이 null인 경우에만 FastAPI 호출 (트랜잭션 외부)
+2. FastAPI POST /api/v1/ai/report-analysis 호출
    - body: { targetType, reason, contentTitle, contentBody }
-3. 응답 JSON을 reports.ai_suggestion에 저장 (@Transactional)
+3. 응답 JSON을 reports.ai_suggestion에 저장 (별도 @Transactional)
 4. FastAPI 타임아웃 / 실패 시 → ai_suggestion null 유지, 예외 삼키고 정상 응답
 ```
 
