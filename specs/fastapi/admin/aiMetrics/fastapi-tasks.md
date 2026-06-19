@@ -113,14 +113,14 @@
 
 ## Phase 13 - RAG Indexing Background Task
 
-- [ ] `rag_indexing_task.py` background task 또는 워커 엔트리포인트를 작성한다.
-- [ ] 인덱싱 수락 시 `rag_documents.status = INDEXING` 갱신 로직을 작성한다.
-- [ ] 인덱싱 시작 시 `indexing_progress = 0` 초기화 로직을 작성한다.
-- [ ] 문서 파싱 -> chunking -> embedding -> vector index 생성 파이프라인을 연결한다.
-- [ ] 진행 단계별 `indexing_progress` 갱신 로직을 작성한다.
-- [ ] 인덱싱 완료 시 `status = COMPLETED`, `indexing_progress = 100`, `chunk_count` 반영 로직을 작성한다.
-- [ ] 인덱싱 실패 시 `status = FAILED` 반영 로직을 작성한다.
-- [ ] `INDEXING` 상태 문서 중복 실행 방지 로직을 작성한다.
+- [x] `rag_indexing_task.py` background task 또는 워커 엔트리포인트를 작성한다.
+- [x] 인덱싱 수락 시 `rag_documents.status = INDEXING` 갱신 로직을 작성한다.
+- [x] 인덱싱 시작 시 `indexing_progress = 0` 초기화 로직을 작성한다.
+- [x] 문서 파싱 -> chunking -> embedding -> vector index 생성 파이프라인을 연결한다.
+- [x] 진행 단계별 `indexing_progress` 갱신 로직을 작성한다.
+- [x] 인덱싱 완료 시 `status = COMPLETED`, `indexing_progress = 100`, `chunk_count` 반영 로직을 작성한다.
+- [x] 인덱싱 실패 시 `status = FAILED` 반영 로직을 작성한다.
+- [x] `INDEXING` 상태 문서 중복 실행 방지 로직을 작성한다.
 
 ## Phase 14 - RAG Index Delete Phase
 
