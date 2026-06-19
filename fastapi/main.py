@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from admin.ai_metrics.client.openai_client import get_ai_metrics_openai_client
+from admin.ai_metrics.router import router as ai_metrics_router
 
 log = logging.getLogger(__name__)
 
@@ -77,3 +78,4 @@ app.include_router(report_ai_router.router, prefix="/api/v1/ai")
 
 # from admin.api import scraper_router
 # app.include_router(scraper_router.router, prefix="/internal/admin")
+app.include_router(ai_metrics_router, prefix="/internal/admin")

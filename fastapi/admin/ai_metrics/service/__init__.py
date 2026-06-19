@@ -11,6 +11,8 @@ from admin.ai_metrics.service.ops_settings_service import (
     AiOpsRuntimeContext,
     OpsSettingsService,
 )
+from admin.ai_metrics.service.rag_index_delete_service import RagIndexDeleteService
+from admin.ai_metrics.service.rag_index_service import RagIndexService
 from admin.ai_metrics.schema import (
     RagChunkEmbedding,
     RagEmbeddingVector,
@@ -31,6 +33,8 @@ __all__ = [
     "RagEmbeddingVector",
     "OpsSettingsService",
     "AiOpsRuntimeContext",
+    "RagIndexDeleteService",
+    "RagIndexService",
     "TokenCostCalculator",
     "UsageLogService",
     "UsageMetricsService",
