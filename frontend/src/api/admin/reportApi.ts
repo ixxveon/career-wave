@@ -48,9 +48,17 @@ export interface ReportListData extends PageMeta {
   items: ReportItem[];
 }
 
+export interface AiSuggestion {
+  severity: '높음' | '중간' | '낮음';
+  category: 'SPAM' | 'ABUSE' | 'AD' | 'INAPPROPRIATE' | 'OTHER';
+  suggestion: string;
+}
+
 export interface ReportDetail extends ReportItem {
   targetId: number;
+  contentTitle: string | null;
   contentBody: string | null;
+  aiSuggestion: AiSuggestion | null;
   processedAt: string | null;
   processedBy: number | null;
 }
