@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -36,6 +37,9 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     @Override
     @Transactional(readOnly = true)
     public UserRegisterDto.ResponseCheckLoginId checkLoginId(String loginId) {
+        if (loginId == null || loginId.isBlank() || !loginId.matches("^[A-Za-z0-9]{6,20}$")) {
+            throw new CustomException(UserAuthErrorCode.LOGIN_ID_INVALID);
+        }
         boolean available = !memberRepository.existsByLoginId(loginId);
         return new UserRegisterDto.ResponseCheckLoginId(available);
     }
@@ -192,11 +196,27 @@ public class UserRegisterServiceImpl implements UserRegisterService {
                 request.getTerms().isSms()));
 
         // 기업회원 가입 응답 — access/refresh token 미발급 (spec FR-019, FR-020)
+        // 재직증명서 재사용 방지: company_profiles.cert_file_url UNIQUE 제약으로 DB 레벨에서 보장
         return new UserRegisterDto.ResponseCompanyRegister(
                 member.getMemberId(),
                 companyProfile.getCompanyProfileId(),
                 MemberStatus.ACTIVE,
                 "PENDING_REVIEW");
+    }
+
+    // ── 재직증명서 업로드 ──────────────────────────────────────────────────────
+
+    @Override
+    public UserRegisterDto.ResponseEmploymentCertificateUpload uploadEmploymentCertificate(MultipartFile file) {
+        return employmentCertificateFilePort.upload(file);
+    }
+
+    // ── 사업자 번호 사전 확인 ──────────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserRegisterDto.ResponseCheckBusinessNumber checkBusinessNumber(String businessNumber) {
+        return businessVerificationPort.check(businessNumber);
     }
 
 }

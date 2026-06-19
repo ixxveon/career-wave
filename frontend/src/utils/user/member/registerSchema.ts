@@ -7,7 +7,7 @@ import type {
 } from '../../../types/user/member';
 import { validateEmploymentCertificateFile } from './fileValidation';
 import { validatePasswordPolicy } from './passwordPolicy';
-import { LOGIN_ID_CHECK_STATE, type CompanyRegisterDraft, type LoginIdCheckState, type PersonalRegisterDraft } from './validation';
+import { BUSINESS_NUMBER_CHECK_STATE, LOGIN_ID_CHECK_STATE, type BusinessNumberCheckState, type CompanyRegisterDraft, type LoginIdCheckState, type PersonalRegisterDraft } from './validation';
 
 export const LOGIN_ID_PATTERN = /^[A-Za-z0-9]{6,20}$/;
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -56,6 +56,7 @@ export interface CompanyRegisterFormSnapshot extends CompanyRegisterDraft {
   managerPhoneCode: string;
   managerEmailCode: string;
   employmentCertificate: File | null;
+  businessNumberCheckState: BusinessNumberCheckState;
 }
 
 export function normalizePhone(value: string): string {
@@ -110,7 +111,11 @@ export function validateCompanyRegisterForm(
   const password = validatePasswordPolicy(form.password, form.loginId);
 
   if (!COMPANY_TYPE_BY_LABEL[form.companyType]) errors.companyType = '기업형태를 선택해주세요.';
-  if (!/^\d{10}$/.test(form.businessNumber.trim())) errors.businessNumber = '사업자등록번호 10자리를 입력해주세요.';
+  if (!/^\d{10}$/.test(form.businessNumber.trim())) {
+    errors.businessNumber = '사업자등록번호 10자리를 입력해주세요.';
+  } else if (form.businessNumberCheckState !== BUSINESS_NUMBER_CHECK_STATE.CONFIRMED) {
+    errors.businessNumber = '사업자등록번호 확인을 완료해주세요.';
+  }
   if (!form.companyName.trim()) errors.companyName = '회사명을 입력해주세요.';
   if (!form.ceoName.trim()) errors.ceoName = '대표자명을 입력해주세요.';
   if (!form.postalCode.trim() || !form.roadAddress.trim()) errors.roadAddress = '주소 검색을 완료해주세요.';

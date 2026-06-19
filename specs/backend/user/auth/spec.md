@@ -1,7 +1,7 @@
 # Feature Specification: 사용자 인증 기능 (Backend)
 
-**Feature Branch**: `docs/frontend-user-auth-spec`
-**Status**: Draft
+**Feature Branch**: `feature/user-auth-api-docs-integration`
+**Status**: Active
 **Layer**: Backend (Spring Boot)
 
 ---
