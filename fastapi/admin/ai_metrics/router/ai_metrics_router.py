@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+import logging
 
 from fastapi import APIRouter, Depends
 from fastapi import Path as FastApiPath
@@ -38,6 +39,7 @@ from admin.ai_metrics.service import (
 from admin.ai_metrics.task import RagIndexingTask
 from core.security import verify_internal_secret
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/ai-metrics",
@@ -181,7 +183,7 @@ async def start_rag_document_index(request: RagIndexStartRequest):
             session.commit()
         task = asyncio.create_task(_run_rag_indexing(request.rag_document_id))
         _bg_tasks.add(task)
-        task.add_done_callback(_bg_tasks.discard)
+        task.add_done_callback(_on_bg_task_done)
         return response
     except AiMetricsException as error:
         return JSONResponse(
@@ -254,3 +256,12 @@ async def _run_rag_indexing(rag_document_id: int) -> None:
         )
         await task.run(rag_document_id)
         session.commit()
+
+
+def _on_bg_task_done(task: asyncio.Task[None]) -> None:
+    _bg_tasks.discard(task)
+    if task.cancelled():
+        return
+    exception = task.exception()
+    if exception is not None:
+        logger.error("RAG indexing background task failed", exc_info=exception)
