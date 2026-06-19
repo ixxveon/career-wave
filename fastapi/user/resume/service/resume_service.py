@@ -19,10 +19,11 @@ from user.resume.service.webhook_client import send_webhook
 
 logger = logging.getLogger(__name__)
 
-_CJK_PATTERN = re.compile(r'[一-鿿㐀-䶿豈-﫿]')
+_CJK_PATTERN = re.compile(r'[一-鿿㐀-䶿豈-﫿]')
+# 정상 외래어(임팩트, 퍼센트)는 lookahead로 제외하고 오염된 음절 조합만 치환
 _LOANWORD_FIXES: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r'[임입][팩팬][^\s트]*'), '성과 영향'),
-    (re.compile(r'[퍼비][센][^\s트]*'), '비율'),
+    (re.compile(r'[임입][팩팬](?!트)\S*'), '성과 영향'),
+    (re.compile(r'[퍼비][센](?!트)\S*'), '비율'),
 ]
 
 
@@ -38,6 +39,7 @@ _ERROR_MESSAGES = {
     "parse_response": "AI 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
     "unknown": "분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
 }
+
 
 def _failed_payload(document_id: str, error_message: str) -> dict:
     return {
@@ -79,8 +81,7 @@ async def analyze_document(request: AnalyzeDocumentRequest) -> None:
         await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["parse_response"]))
     except Exception:
         logger.error(f"[{document_id}] Unexpected error", exc_info=True)
-        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["unknown"]),
-        )
+        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["unknown"]))
 
 
 async def _analyze_resume(document_id: str, request: AnalyzeDocumentRequest) -> None:
