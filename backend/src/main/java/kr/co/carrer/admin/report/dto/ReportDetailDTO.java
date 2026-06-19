@@ -40,6 +40,7 @@ public class ReportDetailDTO {
         @Schema(description = "피신고자 이름") String reportedName,
         @Schema(description = "신고 대상 콘텐츠 제목 (게시글인 경우, 삭제 시 null)") String contentTitle,
         @Schema(description = "신고 대상 콘텐츠 본문 (게시글·댓글인 경우, 삭제 시 null)") String contentBody,
+        @Schema(description = "AI 검토 의견 JSON (severity/category/suggestion, AI 미호출 시 null)") String aiSuggestion,
         @Schema(description = "신고 접수 일시") ZonedDateTime createdAt,
         @Schema(description = "처리 일시 (미처리 시 null)") ZonedDateTime processedAt,
         @Schema(description = "처리한 관리자 ID (미처리 시 null)") Long processedBy

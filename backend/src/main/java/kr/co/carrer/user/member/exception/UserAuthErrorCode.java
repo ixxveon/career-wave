@@ -49,6 +49,8 @@ public enum UserAuthErrorCode implements BaseErrorCode {
     VERIFICATION_EXPIRED(HttpStatus.BAD_REQUEST, "인증번호가 만료되었습니다. 다시 발송해 주세요."),
     VERIFICATION_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "인증 요청 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요."),
     VERIFICATION_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "인증 토큰이 유효하지 않습니다. 인증을 다시 진행해 주세요."),
+    VERIFICATION_EMAIL_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "이메일 인증 서비스를 일시적으로 이용할 수 없습니다. 잠시 후 다시 시도해 주세요."),
+    VERIFICATION_SMS_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "SMS 인증 서비스를 일시적으로 이용할 수 없습니다. 잠시 후 다시 시도해 주세요."),
 
     // 비밀번호 재설정
     PASSWORD_RESET_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "비밀번호 재설정 권한이 유효하지 않습니다."),

@@ -147,6 +147,12 @@
 - FR-013: 처리 응답에는 변경된 reportStatus와 processedAt이 포함되어야 한다
 - FR-014: processedBy는 Security Context에서 추출한 관리자 ID를 사용해야 한다
 - FR-015: 모든 응답은 ApiResponse<T> 래퍼를 사용해야 한다
+- FR-016: 신고 상세 조회 시 ai_suggestion이 null이면 FastAPI `POST /internal/admin/ai/report-analysis`를 호출하여 결과를 reports.ai_suggestion에 저장해야 한다
+- FR-017: ai_suggestion이 이미 존재하면 FastAPI를 재호출하지 않고 저장된 값을 반환해야 한다
+- FR-018: FastAPI 호출은 타임아웃 10초를 적용해야 한다
+- FR-019: FastAPI 타임아웃 또는 연결 실패 시 ai_suggestion을 null로 유지하고 나머지 상세 데이터는 정상 반환해야 한다 (비크리티컬 처리)
+- FR-020: FastAPI 응답 ai_suggestion JSON은 severity, category, suggestion 필드를 포함해야 한다
+- FR-021: KPI getSummary의 highRiskCount는 ai_suggestion::jsonb ->> 'severity' = '높음' 인 건수를 반환해야 한다
 
 ---
 
@@ -159,6 +165,8 @@
 - EC-005: 잘못된 Enum 필터 값(status, targetType, reason) 입력 시 → 400 반환
 - EC-006: 존재하지 않는 reportId 조회 시 → 404 REPORT_NOT_FOUND
 - EC-007: 블라인드 처리 중 boards/comments 업데이트 실패 시 → 전체 트랜잭션 롤백 후 500 BLIND_PROCESSING_FAILED 반환
+- EC-008: FastAPI AI 분석 타임아웃(10초) 또는 연결 실패 시 → ai_suggestion null 유지, 503 반환 없이 나머지 상세 데이터는 정상 반환
+- EC-009: ai_suggestion이 이미 존재하는 신고 상세 조회 시 → FastAPI 재호출 없이 저장된 값 반환
 
 ---
 
@@ -175,7 +183,7 @@
 | target_id | BIGINT | NOT NULL | 신고 대상 레코드 ID |
 | reason | VARCHAR(30) | NOT NULL | SPAM / ABUSE / AD / INAPPROPRIATE / OTHER |
 | report_status | VARCHAR(20) | NOT NULL, DEFAULT PENDING | PENDING / BLINDED / DISMISSED |
-| ai_suggestion | TEXT | NULL | AI 검토 의견 (v2 UI 표시 예정) |
+| ai_suggestion | JSONB | NULL | AI 검토 의견 JSON — `{"severity":"높음\|중간\|낮음","category":"SPAM\|ABUSE\|AD\|INAPPROPRIATE\|OTHER","suggestion":"..."}` |
 | processed_by | BIGINT | FK → admins, NULL | 처리 관리자 |
 | processed_at | TIMESTAMPTZ | NULL | 처리 완료 일시 |
 | created_at | TIMESTAMPTZ | NOT NULL | 신고 접수 일시 |
@@ -236,6 +244,27 @@ admin/report/
 - SC-005: 잘못된 필터 값 입력 시 400이 반환된다
 - SC-006: 처리 응답에 reportStatus와 processedAt이 포함된다
 - SC-007: 모든 응답이 ApiResponse<T> 래퍼로 감싸진다
+- SC-008: ai_suggestion null인 신고 상세 조회 시 FastAPI 호출 후 reports.ai_suggestion에 JSON이 저장된다
+- SC-009: ai_suggestion이 이미 존재하는 신고 상세 재조회 시 FastAPI가 재호출되지 않는다
+- SC-010: FastAPI 타임아웃 발생 시 ai_suggestion이 null인 채로 나머지 상세 데이터가 정상 반환된다
+
+---
+
+## 서비스 로직 추가
+
+### getReportDetail(Long reportId) — AI 연동
+
+기존 상세 조회 로직 이후 AI 분석 처리를 추가한다.
+
+```text
+1. ai_suggestion이 null인 경우에만 FastAPI 호출 (트랜잭션 외부)
+2. FastAPI POST /api/v1/ai/report-analysis 호출
+   - body: { targetType, reason, contentTitle, contentBody }
+3. 응답 JSON을 reports.ai_suggestion에 저장 (별도 @Transactional)
+4. FastAPI 타임아웃 / 실패 시 → ai_suggestion null 유지, 예외 삼키고 정상 응답
+```
+
+> FastAPI 호출은 비크리티컬 — 실패해도 상세 조회 자체는 성공으로 처리한다.
 
 ---
 
@@ -248,3 +277,5 @@ admin/report/
 | INVALID_REPORT_FILTER | 400 | 잘못된 필터 Enum 값 |
 | BLIND_PROCESSING_FAILED | 500 | 블라인드 처리 중 boards/comments 업데이트 실패 |
 | UNAUTHORIZED | 401 | 인증 실패 |
+
+> AI_SERVER_UNAVAILABLE은 신고 도메인에서 발생하지 않는다. FastAPI 실패는 비크리티컬로 처리하여 예외를 외부로 전파하지 않는다.

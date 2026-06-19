@@ -6,7 +6,7 @@ from pathlib import Path
 
 from admin.ai_metrics.config.settings import AiMetricsSettings, get_ai_metrics_settings
 from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException
-from admin.ai_metrics.service.embedding_service import RagChunkEmbedding
+from admin.ai_metrics.schema import RagChunkEmbedding
 
 
 @dataclass(frozen=True)

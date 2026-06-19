@@ -98,6 +98,23 @@ class UserLoginServiceImplTest {
     }
 
     @Test
+    void 개인회원_로그인_companyApprovalStatus_NONE_반환_및_DB_미조회() throws Exception {
+        // given — USER 회원: hr_managers row 없음 → NONE은 DB 저장값이 아닌 API 응답 전용 가상값 (spec §1.4)
+        Member member = createMember(RoleType.USER, MemberStatus.ACTIVE);
+        when(memberRepository.findByLoginId("user01")).thenReturn(Optional.of(member));
+
+        UserLoginDto.Request req = new UserLoginDto.Request("user01", "password123", MemberType.USER);
+        UserLoginDto.Response result = service.login(req, httpResponse);
+
+        // companyApprovalStatus=NONE 반환 확인
+        assertThat(result.getMember().getCompanyApprovalStatus()).isEqualTo("NONE");
+
+        // statusQueryRepository(hr_managers 조회)가 호출되지 않았는지 확인 — NONE은 DB에 저장되지 않는 가상값
+        verify(statusQueryRepository, never()).findCompanyHrStatus(any());
+        verify(statusQueryRepository, never()).findCompanyApprovalStatus(any());
+    }
+
+    @Test
     void 존재하지_않는_아이디_AUTH_INVALID_CREDENTIALS() {
         when(memberRepository.findByLoginId(anyString())).thenReturn(Optional.empty());
         UserLoginDto.Request req = new UserLoginDto.Request("wrong", "pw", MemberType.USER);

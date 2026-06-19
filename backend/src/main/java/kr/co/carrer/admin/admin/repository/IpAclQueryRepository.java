@@ -1,9 +1,9 @@
 package kr.co.carrer.admin.admin.repository;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import kr.co.carrer.admin.admin.entity.IpAcl;
+import kr.co.carrer.admin.admin.entity.QIpAcl;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -12,32 +12,31 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
+@RequiredArgsConstructor
 public class IpAclQueryRepository {
 
-    @PersistenceContext
-    private EntityManager em;
+    private static final QIpAcl ipAcl = QIpAcl.ipAcl;
+
+    private final JPAQueryFactory queryFactory;
 
     public Page<IpAcl> findIpAcls(Pageable pageable) {
-        String sql = """
-            SELECT ia.*
-            FROM ip_acl ia
-            ORDER BY ia.created_at DESC
-            LIMIT ?1 OFFSET ?2
-            """;
-
-        Query query = em.createNativeQuery(sql, IpAcl.class);
-        query.setParameter(1, pageable.getPageSize());
-        query.setParameter(2, pageable.getOffset());
-
-        @SuppressWarnings("unchecked")
-        List<IpAcl> result = query.getResultList();
+        List<IpAcl> result = queryFactory
+                .selectFrom(ipAcl)
+                .orderBy(ipAcl.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
 
         long total = countIpAcls();
         return new PageImpl<>(result, pageable, total);
     }
 
     public long countIpAcls() {
-        Query query = em.createNativeQuery("SELECT COUNT(*) FROM ip_acl");
-        return ((Number) query.getSingleResult()).longValue();
+        Long count = queryFactory
+                .select(ipAcl.count())
+                .from(ipAcl)
+                .fetchOne();
+
+        return count != null ? count : 0L;
     }
 }

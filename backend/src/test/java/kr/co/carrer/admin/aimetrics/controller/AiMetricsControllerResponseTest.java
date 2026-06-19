@@ -53,7 +53,7 @@ class AiMetricsControllerResponseTest {
         ApiResponse<?> body = response.getBody();
         assertThat(body).isNotNull();
         assertThat(body.isSuccess()).isTrue();
-        assertThat(body.getStatusCode()).isNull();
+        assertThat(body.getStatusCode()).isEqualTo(200);
         assertThat(body.getData()).isNotNull();
         var data = response.getBody().getData();
         assertThat(data.page()).isEqualTo(2);
@@ -98,7 +98,7 @@ class AiMetricsControllerResponseTest {
         ApiResponse<?> body = response.getBody();
         assertThat(body).isNotNull();
         assertThat(body.isSuccess()).isTrue();
-        assertThat(body.getStatusCode()).isNull();
+        assertThat(body.getStatusCode()).isEqualTo(200);
         assertThat(body.getData()).isNotNull();
         var data = response.getBody().getData();
         assertThat(data.page()).isEqualTo(3);
