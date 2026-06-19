@@ -1,7 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { resumeHistoryApi } from '../../../api/user/resume/resumeHistoryApi';
 import { resumeQueryKeys } from './queryKeys';
-import type { FileType } from '../../../types/user/resume';
 
 const PAGE_SIZE = 5;
 

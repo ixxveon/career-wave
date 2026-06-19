@@ -32,7 +32,7 @@ export default function CoverLetterAnalysisPage() {
             techStackScore:    analysisResult.scores?.techStack              ?? 0,
             quantifiedScore:   analysisResult.scores?.quantifiedAchievement ?? 0,
             logicalScore:      analysisResult.scores?.logicalStructure       ?? 0,
-            overallReview:     analysisResult.overallReview,
+            overallReview:     analysisResult.overallReview ?? '',
           },
           feedbackDetails: analysisResult.feedbackDetails,
         }}

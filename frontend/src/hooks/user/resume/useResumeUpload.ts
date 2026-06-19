@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { resumeUploadApi } from '../../../api/user/resume/resumeUploadApi';
-import { analysisResultApi } from '../../../api/user/resume/analysisResultApi';
 import { validateResumeFile } from '../../../utils/user/resume/validation';
 import { resumeStorage } from '../../../utils/user/resume/resumeStorage';
 import { useAnalysisWebSocket } from './useAnalysisWebSocket';

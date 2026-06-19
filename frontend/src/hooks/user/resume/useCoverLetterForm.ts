@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { coverLetterApi } from '../../../api/user/resume/coverLetterApi';
-import { analysisResultApi } from '../../../api/user/resume/analysisResultApi';
 import {
   validateCoverLetterForm,
   MAX_COVER_LETTER_ITEMS,
