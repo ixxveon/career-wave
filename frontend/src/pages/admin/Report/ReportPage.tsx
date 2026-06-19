@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Bot, Clock, EyeOff, Flag, UserX } from 'lucide-react';
-import { reportApi, REPORT_STATUS, type ReportItem, type ReportSummary, type ReportStatus, type TargetType, type ReportReason, type ReportDetail } from '../../../api/admin/reportApi';
+import { reportApi, REPORT_STATUS, type ReportItem, type ReportSummary, type ReportStatus, type TargetType, type ReportReason, type ReportDetail, type AiSuggestion } from '../../../api/admin/reportApi';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Report.css';
 
@@ -52,12 +52,6 @@ const sanctionActiveCls: Record<SuspendType, string> = {
 };
 
 // ── 인터페이스 ───────────────────────────────────────────────
-interface AiReview {
-  severity: Severity;
-  recommendation: 'BLINDED' | 'DISMISSED';
-  summary: string;
-}
-
 interface UserAiReview {
   reportCount: number;
   warningCount: number;
@@ -67,7 +61,7 @@ interface UserAiReview {
 }
 
 interface ReportWithAi extends ReportItem {
-  aiReview?: AiReview;
+  aiSuggestion?: AiSuggestion | null;
   userAiReview?: UserAiReview;
   contentBody?: ReportDetail['contentBody'];
   targetId?: ReportDetail['targetId'];
@@ -91,7 +85,6 @@ export default function ReportPage() {
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  const [aiLoading, setAiLoading]         = useState<number | null>(null);
   const [userAiLoading, setUserAiLoading] = useState<number | null>(null);
   const [suspendTarget, setSuspendTarget] = useState<ReportWithAi | null>(null);
   const [suspendType, setSuspendType]     = useState<SuspendType>('WARNING');
@@ -157,19 +150,6 @@ export default function ReportPage() {
   const toggleOne = (id: number, checked: boolean) =>
     setCheckedIds((prev) => (checked ? [...prev, id] : prev.filter((v) => v !== id)));
 
-  // ── AI 검토 (mock — v2에서 실제 API 전환) ─────────────────
-  const requestAiReview = (reportId: number) => {
-    setAiLoading(reportId);
-    setTimeout(() => {
-      const mockReview: AiReview = {
-        severity: '중간', recommendation: 'BLINDED',
-        summary: 'AI 검토 결과, 해당 콘텐츠에 커뮤니티 가이드라인 위반 요소가 감지되었습니다. 블라인드 처리를 권고합니다.',
-      };
-      setReports((prev) => prev.map((r) => (r.reportId === reportId ? { ...r, aiReview: mockReview } : r)));
-      setSelected((prev) => (prev && prev.reportId === reportId ? { ...prev, aiReview: mockReview } : prev));
-      setAiLoading(null);
-    }, 1500);
-  };
 
   const requestUserAiReview = (reportId: number) => {
     setUserAiLoading(reportId);
@@ -438,33 +418,24 @@ export default function ReportPage() {
               {/* 콘텐츠 AI 검토 */}
               <div className="reportAiSection">
                 <h4><Bot size={14} /> 콘텐츠 AI 검토</h4>
-                {selected.aiReview ? (
+                {selected.aiSuggestion ? (
                   <>
                     <div className="reportAiGrid">
                       <div>
                         <span>심각도</span>
-                        <span className={`severityBadge ${severityCls[selected.aiReview.severity]}`}>
-                          <AlertTriangle size={11} />{selected.aiReview.severity}
+                        <span className={`severityBadge ${severityCls[selected.aiSuggestion.severity]}`}>
+                          <AlertTriangle size={11} />{selected.aiSuggestion.severity}
                         </span>
                       </div>
                       <div>
-                        <span>처리 권고</span>
-                        <span className={`statusBadge ${statusCls[selected.aiReview.recommendation]}`}>
-                          {statusLabel[selected.aiReview.recommendation]}
-                        </span>
+                        <span>분류</span>
+                        <span>{reasonLabel[selected.aiSuggestion.category]}</span>
                       </div>
                     </div>
-                    <p className="reportAiSummary">{selected.aiReview.summary}</p>
+                    <p className="reportAiSummary">{selected.aiSuggestion.suggestion}</p>
                   </>
                 ) : (
-                  <button
-                    className="aiReviewBtn"
-                    disabled={aiLoading === selected.reportId}
-                    onClick={() => requestAiReview(selected.reportId)}
-                  >
-                    <Bot size={14} />
-                    {aiLoading === selected.reportId ? 'AI 검토 중...' : 'AI 검토 요청'}
-                  </button>
+                  <p className="reportAiPending">상세 조회 시 AI 분석이 자동 실행됩니다.</p>
                 )}
               </div>
 
