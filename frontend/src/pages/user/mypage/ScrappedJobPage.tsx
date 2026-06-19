@@ -82,26 +82,15 @@ function ScrappedJobPage() {
 
   const scrappedJobs = scrapJobPage?.items ?? [];
 
-  const filteredScrapJobs = useMemo(() => {
-    const keyword = searchKeyword.trim().toLowerCase();
-
-    const sortedJobs = [...scrappedJobs].sort(
+  const sortedScrapJobs = useMemo(() => {
+    return [...scrappedJobs].sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
-
-    if (!keyword) return sortedJobs;
-
-    return sortedJobs.filter((job) => {
-      const title = job.title.toLowerCase();
-      const companyName = job.companyName.toLowerCase();
-
-      return title.includes(keyword) || companyName.includes(keyword);
-    });
-  }, [scrappedJobs, searchKeyword]);
+  }, [scrappedJobs]);
 
   const hasScrapJobs = scrappedJobs.length > 0;
-  const hasSearchResult = filteredScrapJobs.length > 0;
+  const hasSearchResult = sortedScrapJobs.length > 0;
 
   function closeDetail() {
     setSelectedJob(null);
@@ -163,7 +152,7 @@ function ScrappedJobPage() {
           <span>
             스크랩한 공고 {scrappedJobs.length}개
             {searchKeyword.trim() &&
-              ` · 검색 결과 ${filteredScrapJobs.length}개`}
+              ` · 검색 결과 ${sortedScrapJobs.length}개`}
           </span>
 
           <button type="button" disabled aria-disabled="true">
@@ -179,7 +168,7 @@ function ScrappedJobPage() {
           </div>
         ) : (
           <div className="cw-scrap-grid">
-            {filteredScrapJobs.map((job) => {
+            {sortedScrapJobs.map((job) => {
               const isDeleted = job.deleted;
               const isClosed = job.noticeStatus === "CLOSED";
 

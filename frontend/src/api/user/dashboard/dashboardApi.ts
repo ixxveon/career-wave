@@ -48,7 +48,7 @@ export async function getDashboardBookmarks(params?: {
     searchParams.set("keyword", params.keyword);
   }
 
-  searchParams.set("page", String(params?.page ?? 1));
+  searchParams.set("page", String(params?.page ?? 0));
   searchParams.set("size", String(params?.size ?? 20));
 
   return memberApiClient<ScrapJobPageResponse>(
