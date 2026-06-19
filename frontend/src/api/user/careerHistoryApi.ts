@@ -38,10 +38,32 @@ function mockResponse<T>(data: T): Promise<T> {
   return Promise.resolve(structuredClone(data));
 }
 
+function createCareerHistoryQueryString(params: CareerHistoryQuery): string {
+  const queryParams = new URLSearchParams();
+
+  if (params.activityType && params.activityType !== '전체') {
+    queryParams.set('activityType', params.activityType);
+  }
+
+  if (params.companyName?.trim()) {
+    queryParams.set('companyName', params.companyName.trim());
+  }
+
+  if (params.practiceDate) {
+    queryParams.set('practiceDate', params.practiceDate);
+  }
+
+  if (params.jobTitle && params.jobTitle !== '전체 직무') {
+    queryParams.set('jobTitle', params.jobTitle);
+  }
+
+  return queryParams.toString();
+}
+
 export const careerHistoryApi = {
   getHistories: async (params: CareerHistoryQuery = {}): Promise<CareerHistory[]> => {
     if (!USE_MOCK_DATA) {
-      const query = new URLSearchParams(params as Record<string, string>).toString();
+      const query = createCareerHistoryQueryString(params);
       const response = await apiClient<CareerHistory[] | null>(
           `/career-histories${query ? `?${query}` : ''}`,
       );
