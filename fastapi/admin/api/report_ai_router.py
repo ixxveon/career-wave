@@ -64,7 +64,7 @@ _responses = {
 async def report_analysis(request: ReportAnalysisRequest) -> ReportAnalysisResponse:
     try:
         return await analyze_report(request)
-    except Exception:
+    except Exception as exc:
         logger.error("[Report AI] report-analysis 실패", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -74,4 +74,4 @@ async def report_analysis(request: ReportAnalysisRequest) -> ReportAnalysisRespo
                 "message": "AI 서버와 통신 중 오류가 발생했습니다.",
                 "detail": {},
             },
-        )
+        ) from exc
