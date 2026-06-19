@@ -264,8 +264,19 @@
   align-items: start;
 }
 
-/* 원문 패널 */
-.dr-split__original { position: sticky; top: 20px; }
+/* 왼쪽 컬럼 (원문 + 잘한점 + 아쉬운점) */
+.dr-split__left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 오른쪽 컬럼 (STAR + 수치화) */
+.dr-split__right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
 .dr-split__question {
   margin: 0 0 14px;
@@ -287,12 +298,6 @@
   white-space: pre-wrap;
 }
 
-/* 첨삭 카드 묶음 */
-.dr-split__feedback {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
 
 /* 잘한 점 */
 .dr-good-card { border-left: 4px solid #16a34a; }
@@ -572,7 +577,6 @@
   .dr-summary__ring-wrap { grid-column: auto; flex-direction: column; text-align: center; }
   .dr-summary__review { grid-column: auto; }
   .dr-split { grid-template-columns: 1fr; }
-  .dr-split__original { position: static; }
   .dr-improved__panels { grid-template-columns: 1fr; }
   .dr-cta { font-size: 14px; padding: 16px 20px; }
 }

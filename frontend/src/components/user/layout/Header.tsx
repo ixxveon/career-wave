@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
@@ -46,7 +46,18 @@ function Header() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isLoggedIn, isChecking, logout } = useAuth();
+
+  const handleMenuEnter = useCallback((label: string) => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    setOpenMenu(label);
+  }, []);
+
+  const handleMenuLeave = useCallback(() => {
+    closeTimerRef.current = setTimeout(() => setOpenMenu(null), 150);
+  }, []);
 
   function handleLogout() {
     logout();
@@ -80,12 +91,17 @@ function Header() {
 
           <nav className="cw-header__nav" aria-label="주요 메뉴">
             {serviceMenus.map((item) => (
-              <div className={`cw-header__nav-item ${activeMenuLabel === item.label ? 'is-active' : ''}`} key={item.label}>
+              <div
+                className={`cw-header__nav-item ${activeMenuLabel === item.label ? 'is-active' : ''}`}
+                key={item.label}
+                onMouseEnter={() => item.children && handleMenuEnter(item.label)}
+                onMouseLeave={handleMenuLeave}
+              >
                 <NavLink className="cw-header__nav-link" to={item.href}>
                   {item.label}
                 </NavLink>
                 {item.children && (
-                  <div className="cw-header__submenu" role="menu">
+                  <div className={`cw-header__submenu${openMenu === item.label ? ' cw-header__submenu--open' : ''}`} role="menu">
                     {item.children.map((child) =>
                       child.comingSoon ? (
                         <button

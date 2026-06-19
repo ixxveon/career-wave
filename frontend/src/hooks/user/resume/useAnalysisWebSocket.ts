@@ -2,6 +2,7 @@ import { useRef, useState, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import type { WsStatusMessage } from '../../../types/user/resume';
 import { authSession } from '../../../utils/user/member/authSession';
+import { analysisResultApi } from '../../../api/user/resume/analysisResultApi';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL
   ?? window.location.origin.replace(/^https/, 'wss').replace(/^http/, 'ws');
@@ -48,6 +49,15 @@ export function useAnalysisWebSocket({
   const errorFiredRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
 
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current !== null) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  }, []);
+
   const clearAnalysisTimeout = useCallback(() => {
     if (timeoutRef.current !== null) {
       clearTimeout(timeoutRef.current);
@@ -57,12 +67,42 @@ export function useAnalysisWebSocket({
 
   const disconnect = useCallback(() => {
     clearAnalysisTimeout();
+    stopPolling();
     if (clientRef.current) {
       clientRef.current.deactivate();
       clientRef.current = null;
     }
     setIsConnected(false);
-  }, [clearAnalysisTimeout]);
+  }, [clearAnalysisTimeout, stopPolling]);
+
+  const startPolling = useCallback((documentId: string) => {
+    stopPolling();
+    const POLL_INTERVAL_MS = 3000;
+    const POLL_MAX_MS = 120_000;
+    const startedAt = Date.now();
+
+    pollingRef.current = setInterval(async () => {
+      if (Date.now() - startedAt > POLL_MAX_MS) {
+        stopPolling();
+        errorFiredRef.current = true;
+        onFailed('분석 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+      try {
+        const result = await analysisResultApi.getFeedback(documentId);
+        if (result.status === 'COMPLETED') {
+          stopPolling();
+          onCompleted();
+        } else if (result.status === 'FAILED') {
+          stopPolling();
+          errorFiredRef.current = true;
+          onFailed(result.errorMessage ?? '분석 중 오류가 발생했습니다.');
+        }
+      } catch {
+        // 조회 실패 시 재시도
+      }
+    }, POLL_INTERVAL_MS);
+  }, [stopPolling, onCompleted, onFailed]);
 
   const connect = useCallback(
     (documentId: string) => {
@@ -135,12 +175,11 @@ export function useAnalysisWebSocket({
         },
         onWebSocketError: () => {
           if (errorFiredRef.current) return;
-          errorFiredRef.current = true;
           clearAnalysisTimeout();
           clientRef.current = null;
           setIsConnected(false);
-          onNetworkError();
-          onFailed('네트워크 연결이 끊겼습니다. 연결 상태를 확인 후 다시 시도해주세요.');
+          // WebSocket 연결 실패 시 polling fallback
+          startPolling(documentId);
         },
         onWebSocketClose: (event) => {
           clearAnalysisTimeout();

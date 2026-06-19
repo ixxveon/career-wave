@@ -3,7 +3,7 @@ import App from './App';
 import './styles/global.css';
 
 async function prepare() {
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_MSW !== 'false') {
     const { worker } = await import('./mocks/browser');
     await worker.start({
       onUnhandledRequest: 'bypass', // MSW 핸들러 없는 요청은 그대로 통과
