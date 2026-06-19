@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import BigInteger, Column, DateTime, Integer, MetaData, String, Table, case, func, insert, select
+from sqlalchemy import BigInteger, Column, DateTime, Integer, MetaData, Numeric, String, Table, case, func, insert, select
 from sqlalchemy.dialects.postgresql import UUID as PostgreSqlUUID
 from sqlalchemy.orm import Session
 
@@ -22,7 +22,7 @@ ai_usage_logs_table = Table(
     Column("feature_type", String(20), nullable=False),
     Column("input_tokens", Integer, nullable=False),
     Column("output_tokens", Integer, nullable=False),
-    Column("cost", Integer, nullable=False),
+    Column("cost", Numeric(15, 2), nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
 )
 
