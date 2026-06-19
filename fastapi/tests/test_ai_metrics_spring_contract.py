@@ -133,14 +133,14 @@ def test_non_usage_request_contracts_match_spring_boot_fields():
         "alertThreshold": 90,
         "rateLimitEnabled": True,
     }
-    assert usage_log_create_request.model_dump(by_alias=True) == {
+    assert usage_log_create_request.model_dump(mode="json", by_alias=True) == {
         "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
         "sessionId": None,
         "aiModelId": 1,
         "featureType": "DOCUMENT",
         "inputTokens": 1200,
         "outputTokens": 450,
-        "cost": usage_log_create_request.cost,
+        "cost": "2800",
     }
 
     assert ops_settings_request.alert_channel == AlertChannelType.DISCORD
@@ -249,18 +249,18 @@ def test_usage_response_contracts_match_spring_boot_fields():
             }
         ],
     }
-    assert heavy_users_response.model_dump(by_alias=True) == {
+    assert heavy_users_response.model_dump(mode="json", by_alias=True) == {
         "users": [
             {
                 "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
                 "requestCount": 95,
                 "inputTokens": 52000,
                 "outputTokens": 21000,
-                "cost": heavy_users_response.users[0].cost,
+                "cost": "118000",
             }
         ]
     }
-    assert usage_log_list_response.model_dump(by_alias=True) == {
+    assert usage_log_list_response.model_dump(mode="json", by_alias=True) == {
         "content": [
             {
                 "aiUsageLogId": 101,
@@ -270,8 +270,8 @@ def test_usage_response_contracts_match_spring_boot_fields():
                 "featureType": "DOCUMENT",
                 "inputTokens": 1200,
                 "outputTokens": 450,
-                "cost": usage_log_list_response.content[0].cost,
-                "createdAt": usage_log_list_response.content[0].created_at,
+                "cost": "2800",
+                "createdAt": "2026-06-10T02:00:00Z",
             }
         ],
         "page": 1,
@@ -377,14 +377,14 @@ def test_usage_log_create_contract_matches_spring_boot_fields():
         createdAt="2026-06-10T02:00:00Z",
     )
 
-    assert usage_log_create_request.model_dump(by_alias=True) == {
+    assert usage_log_create_request.model_dump(mode="json", by_alias=True) == {
         "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
         "sessionId": None,
         "aiModelId": 1,
         "featureType": "DOCUMENT",
         "inputTokens": 1200,
         "outputTokens": 450,
-        "cost": usage_log_create_request.cost,
+        "cost": "2800",
     }
     assert usage_log_create_response.model_dump(by_alias=True) == {
         "aiUsageLogId": 101,

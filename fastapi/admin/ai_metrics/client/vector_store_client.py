@@ -3,16 +3,19 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from admin.ai_metrics.config.settings import AiMetricsSettings, get_ai_metrics_settings
 from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException
-from admin.ai_metrics.service.embedding_service import RagChunkEmbedding
+
+if TYPE_CHECKING:
+    from admin.ai_metrics.service.embedding_service import RagChunkEmbedding
 
 
 @dataclass(frozen=True)
 class VectorStoreDocument:
     rag_document_id: int
-    chunk_embeddings: list[RagChunkEmbedding]
+    chunk_embeddings: list["RagChunkEmbedding"]
 
 
 @dataclass(frozen=True)

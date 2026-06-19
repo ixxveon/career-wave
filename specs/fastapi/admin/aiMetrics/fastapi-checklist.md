@@ -109,12 +109,12 @@
 
 ## Phase 16 — Test
 
-- [ ] 정상 케이스 테스트가 집계, 설정 동기화, AI Usage Log 적재, RAG 인덱싱, 인덱스 삭제 흐름을 검증한다.
-- [ ] 예외/경계 케이스 테스트가 잘못된 기간, 잘못된 enum, 잘못된 예산/임계치, 존재하지 않는 모델/문서, 중복 인덱싱 요청을 검증한다.
-- [ ] 외부 시스템 연동 실패 테스트가 OpenAI, 파일 스토리지, vector store 실패 처리 로직을 검증한다.
-- [ ] FastAPI ↔ Spring 계약 검증 테스트가 모두 통과한다.
-- [ ] 내부 ErrorCode 매핑 검증이 모두 통과한다.
-- [ ] 사용량 집계 결과가 `ai_usage_logs` 저장 데이터와 일관되는지 테스트로 검증한다.
+- [x] 정상 케이스 테스트가 집계, 설정 동기화, AI Usage Log 적재, RAG 인덱싱, 인덱스 삭제 흐름을 검증한다.
+- [x] 예외/경계 케이스 테스트가 잘못된 기간, 잘못된 enum, 잘못된 예산/임계치, 존재하지 않는 모델/문서, 중복 인덱싱 요청을 검증한다.
+- [x] 외부 시스템 연동 실패 테스트가 OpenAI, 파일 스토리지, vector store 실패 처리 로직을 검증한다.
+- [x] FastAPI ↔ Spring 계약 검증 테스트가 모두 통과한다.
+- [x] 내부 ErrorCode 매핑 검증이 모두 통과한다.
+- [x] 사용량 집계 결과가 `ai_usage_logs` 저장 데이터와 일관되는지 테스트로 검증한다.
 
 ## DB 매핑 검증
 
@@ -122,11 +122,11 @@
 - [x] FastAPI는 `rag_documents.status`, `rag_documents.indexing_progress`, `rag_documents.chunk_count`, `rag_documents.updated_at`만 상태 갱신 용도로 수정한다.
 - [x] FastAPI는 Spring Boot 소유 컬럼인 `rag_documents.file_path`, `original_file_name`, `uploaded_by` 등을 임의 수정하지 않는다.
 - [x] FastAPI는 `ai_ops_settings`를 읽기 전용으로 사용하고, Spring Boot가 수정하는 설정 컬럼을 직접 갱신하지 않는다.
-- [ ] `ai_usage_logs` 저장 데이터가 실제 집계 조회 결과와 일관된다.
+- [x] `ai_usage_logs` 저장 데이터가 실제 집계 조회 결과와 일관된다.
 
 ## 머지 전 최종 확인
 
-- [ ] 구현 결과가 `fastapi-constitution.md`의 불변 규칙과 상태 전이 규칙을 위반하지 않는다.
-- [ ] FastAPI ↔ DB 매핑 검증 항목이 모두 충족된다.
-- [ ] 비동기 작업 검증, 중복 실행 방지 검증, 외부 시스템 실패 처리 검증이 모두 통과한다.
-- [ ] fastapi-tasks.md의 모든 항목이 완료 상태로 점검되었다.
+- [x] 구현 결과가 `fastapi-constitution.md`의 불변 규칙과 상태 전이 규칙을 위반하지 않는다.
+- [x] FastAPI ↔ DB 매핑 검증 항목이 모두 충족된다.
+- [x] 비동기 작업 검증, 중복 실행 방지 검증, 외부 시스템 실패 처리 검증이 모두 통과한다.
+- [x] fastapi-tasks.md의 모든 항목이 완료 상태로 점검되었다.
