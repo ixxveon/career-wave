@@ -53,7 +53,7 @@ public class AdminReportServiceImpl implements AdminReportService {
     private String webhookSecret;
 
     private static final Duration AI_TIMEOUT = Duration.ofSeconds(10);
-    private static final String REPORT_ANALYSIS_PATH = "/internal/admin/ai/report-analysis";
+    private static final String REPORT_ANALYSIS_PATH = "/api/v1/ai/report-analysis";
 
     private WebClient webClient;
 
