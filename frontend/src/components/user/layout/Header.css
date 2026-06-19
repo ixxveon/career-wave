@@ -176,7 +176,7 @@
   justify-content: center;
   background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(2px);
-  animation: fadeIn 0.15s ease;
+  animation: fade-In 0.15s ease;
 }
 
 .cw-modal {
@@ -188,7 +188,7 @@
   background: #ffffff;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
   text-align: center;
-  animation: slideUp 0.18s ease;
+  animation: slide-Up 0.18s ease;
 }
 
 .cw-modal__close {
@@ -253,7 +253,7 @@
   opacity: 0.88;
 }
 
-@keyframes fadeIn {
+@keyframes fade-in {
   from {
     opacity: 0;
   }
@@ -263,7 +263,7 @@
   }
 }
 
-@keyframes slideUp {
+@keyframes slide-Up {
   from {
     opacity: 0;
     transform: translateY(12px);
