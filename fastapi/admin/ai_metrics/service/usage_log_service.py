@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
 
@@ -9,17 +8,6 @@ from admin.ai_metrics.repository.ai_model_repository import AiModelRecord, AiMod
 from admin.ai_metrics.repository.ai_usage_log_repository import AiUsageLogRepository
 from admin.ai_metrics.schema import AiFeatureType, UsageLogCreateRequest
 from admin.ai_metrics.service.token_cost_calculator import TokenCostCalculator
-
-
-@dataclass(frozen=True)
-class UsageLogOperationalMeta:
-    ai_usage_log_id: int
-    ai_model_id: int
-    feature_type: str
-    cost: Decimal
-    budget_tracking_needed: bool
-    alert_evaluation_needed: bool
-    rate_limit_evaluation_needed: bool
 
 
 class UsageLogService:
@@ -40,7 +28,6 @@ class UsageLogService:
         ai_model = self._validate_request(request)
         persist_request = self._build_persist_request(request, ai_model)
         saved_record = self._usage_log_repository.save(persist_request)
-        self._build_operational_meta(saved_record)
         return saved_record
 
     def _validate_request(
@@ -111,18 +98,4 @@ class UsageLogService:
                 "output_tokens": output_tokens,
                 "cost": Decimal(cost),
             }
-        )
-
-    def _build_operational_meta(
-        self,
-        saved_record: AiUsageLogRecord,
-    ) -> UsageLogOperationalMeta:
-        return UsageLogOperationalMeta(
-            ai_usage_log_id=saved_record.ai_usage_log_id,
-            ai_model_id=saved_record.ai_model_id,
-            feature_type=saved_record.feature_type,
-            cost=saved_record.cost,
-            budget_tracking_needed=True,
-            alert_evaluation_needed=True,
-            rate_limit_evaluation_needed=True,
         )
