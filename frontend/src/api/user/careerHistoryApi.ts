@@ -39,10 +39,14 @@ function mockResponse<T>(data: T): Promise<T> {
 }
 
 export const careerHistoryApi = {
-  getHistories: (params: CareerHistoryQuery = {}): Promise<CareerHistory[]> => {
+  getHistories: async (params: CareerHistoryQuery = {}): Promise<CareerHistory[]> => {
     if (!USE_MOCK_DATA) {
       const query = new URLSearchParams(params as Record<string, string>).toString();
-      return apiClient<CareerHistory[]>(`/career-histories${query ? `?${query}` : ''}`) as Promise<CareerHistory[]>;
+      const response = await apiClient<CareerHistory[] | null>(
+          `/career-histories${query ? `?${query}` : ''}`,
+      );
+
+      return response ?? [];
     }
 
     const { activityType = '전체', companyName = '', practiceDate = '', jobTitle = '전체 직무' } = params;
