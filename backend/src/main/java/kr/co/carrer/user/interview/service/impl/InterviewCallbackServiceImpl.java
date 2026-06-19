@@ -47,6 +47,15 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
     }
 
     @Override
+    public void processQuestionCallback(UUID sessionId, InterviewDTO.RequestQuestionCallback dto) {
+        messagingTemplate.convertAndSend(
+                "/topic/interview/" + sessionId,
+                WebSocketMessage.question(dto.questionOrder(), dto.questionText(), dto.questionType())
+        );
+        log.info("QUESTION sent via STOMP: sessionId={}, order={}, type={}", sessionId, dto.questionOrder(), dto.questionType());
+    }
+
+    @Override
     @Transactional
     public void processReportCallback(UUID sessionId, InterviewDTO.RequestReportCallback dto) {
         String reportUrl = "/api/v1/user/interview/sessions/" + sessionId + "/report";
