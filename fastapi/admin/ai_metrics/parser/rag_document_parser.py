@@ -201,7 +201,8 @@ class RagDocumentParser:
 
         return text
 
-    def _normalize_text(self, text: str) -> str:
+    @staticmethod
+    def _normalize_text(text: str) -> str:
         return text.replace("\r\n", "\n").replace("\r", "\n").strip()
 
     def _build_indexing_failed_exception(
