@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import re
 from functools import lru_cache
 
 from openai import AsyncOpenAI, APIError, APITimeoutError
@@ -17,6 +18,12 @@ from user.resume.service.file_parser import FileParseError, parse_resume_file
 from user.resume.service.webhook_client import send_webhook
 
 logger = logging.getLogger(__name__)
+
+_CJK_PATTERN = re.compile(r'[一-鿿㐀-䶿豈-﫿]')
+_LOANWORD_FIXES: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r'[임입][팩팬][^\s트]*'), '성과 영향'),
+    (re.compile(r'[퍼비][센][^\s트]*'), '비율'),
+]
 
 
 @lru_cache
@@ -154,11 +161,11 @@ async def _call_openai(
 
 
 def _sanitize_response(obj: object) -> object:
-    """LLM이 생성한 텍스트에서 CJK 한자 혼입 오류를 제거한다."""
-    import re
-    _CJK_PATTERN = re.compile(r'[一-鿿㐀-䶿豈-﫿]')
     if isinstance(obj, str):
-        return _CJK_PATTERN.sub('', obj)
+        text = _CJK_PATTERN.sub('', obj)
+        for pattern, replacement in _LOANWORD_FIXES:
+            text = pattern.sub(replacement, text)
+        return text
     if isinstance(obj, dict):
         return {k: _sanitize_response(v) for k, v in obj.items()}
     if isinstance(obj, list):
