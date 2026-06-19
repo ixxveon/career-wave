@@ -5,26 +5,13 @@ import {
   MessageSquare, Video, ChevronRight, Lightbulb,
   FileText, User, Zap, ClipboardList, X, Loader2,
 } from 'lucide-react';
-import type { PlanLimits, MockUser } from '../../../types/user/interview';
 import { SESSION_TYPE } from '../../../types/user/interview';
 import { useInterviewHistory } from '../../../hooks/user/interview/useInterviewReport';
+import { useSubscriptionStatus } from '../../../hooks/user/subscription';
 
-/* ── 멤버십별 월 이용 한도 ─────────────────────────
-   FREE    : 서류 분석  1회 / 면접 1회
-   PREMIUM : 서류 분석 20회 / 면접 10회
-──────────────────────────────────────────────── */
-const PLAN_LIMITS: PlanLimits = {
-  FREE:    { document: 1,  interview: 1  },
-  PREMIUM: { document: 20, interview: 10 },
-};
-
-/* ── Mock 유저 (백엔드 연동 전 임시 데이터) ──────── */
-const MOCK_USER: MockUser = {
-  name:          '김지원',
-  membership:    'PREMIUM',
-  documentUsed:  7,
-  interviewUsed: 3,
-};
+/* ── 상품별 월 이용 한도 기본값 (API 미구독 시 fallback) */
+const DEFAULT_DOC_LIMIT = 30;
+const DEFAULT_IV_LIMIT  = 20;
 
 function scoreClass(s: number): string {
   return s >= 80 ? 'iv-score--high' : s >= 65 ? 'iv-score--mid' : 'iv-score--low';
@@ -66,14 +53,23 @@ function InterviewHomePage() {
   const [showComingSoon, setShowComingSoon] = useState(false);
 
   const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
+  const { subscribedItems, unsubscribedItems } = useSubscriptionStatus();
 
-  const { membership, documentUsed, interviewUsed } = MOCK_USER;
-  const limits      = PLAN_LIMITS[membership];
-  const isPremium   = membership === 'PREMIUM';
+  /* 서류 AI 코칭 / AI 모의면접 usage 항목 (구독 여부 무관) */
+  const allSubItems = [...subscribedItems, ...unsubscribedItems];
+  const docItem = allSubItems.find(i => i.key === 'document');
+  const ivItem  = allSubItems.find(i => i.key === 'interview');
 
-  /* 사용량 퍼센트 (최대 100%) */
-  const docPct  = Math.min((documentUsed  / limits.document)  * 100, 100);
-  const ivPct   = Math.min((interviewUsed / limits.interview) * 100, 100);
+  const docUsed  = docItem?.usage?.used  ?? 0;
+  const docLimit = docItem?.usage?.limit ?? DEFAULT_DOC_LIMIT;
+  const ivUsed   = ivItem?.usage?.used   ?? 0;
+  const ivLimit  = ivItem?.usage?.limit  ?? DEFAULT_IV_LIMIT;
+
+  const docPct = Math.min((docUsed / docLimit) * 100, 100);
+  const ivPct  = Math.min((ivUsed  / ivLimit)  * 100, 100);
+
+  const docSubscribed = docItem?.isSubscribed ?? false;
+  const ivSubscribed  = ivItem?.isSubscribed  ?? false;
 
   return (
     <div className="iv-home">
@@ -92,7 +88,7 @@ function InterviewHomePage() {
         <div className="iv-hero__left">
           <span className="iv-hero__eyebrow">AI INTERVIEW</span>
           <h1 className="iv-hero__title">
-            안녕하세요, {MOCK_USER.name}님!<br />
+            안녕하세요!<br />
             오늘 어떤 면접을 연습할까요?
           </h1>
           <p className="iv-hero__sub">
@@ -106,12 +102,12 @@ function InterviewHomePage() {
             <span className="iv-stat__label">최고 점수</span>
           </div>
           <div className="iv-stat">
-            <span className="iv-stat__value">3회</span>
+            <span className="iv-stat__value">{historyData ? historyData.totalItems : '—'}회</span>
             <span className="iv-stat__label">총 연습</span>
           </div>
-          <div className={`iv-stat${isPremium ? ' iv-stat--premium' : ''}`}>
-            <span className="iv-stat__value">{membership}</span>
-            <span className="iv-stat__label">멤버십</span>
+          <div className={`iv-stat${(docSubscribed || ivSubscribed) ? ' iv-stat--premium' : ''}`}>
+            <span className="iv-stat__value">{subscribedItems.length > 0 ? `${subscribedItems.length}개` : '미구독'}</span>
+            <span className="iv-stat__label">구독 중</span>
           </div>
         </div>
       </section>
@@ -147,9 +143,15 @@ function InterviewHomePage() {
               <span className="iv-status-item__value">백엔드 개발자</span>
             </li>
             <li className="iv-status-item">
-              <span className="iv-status-item__label">멤버십</span>
-              <span className={`iv-status-item__value iv-status-item__value--${isPremium ? 'premium' : 'free'}`}>
-                {membership}
+              <span className="iv-status-item__label">서류 AI 코칭</span>
+              <span className={`iv-status-item__value iv-status-item__value--${docSubscribed ? 'premium' : 'free'}`}>
+                {docSubscribed ? '구독 중' : '미구독'}
+              </span>
+            </li>
+            <li className="iv-status-item">
+              <span className="iv-status-item__label">AI 모의면접</span>
+              <span className={`iv-status-item__value iv-status-item__value--${ivSubscribed ? 'premium' : 'free'}`}>
+                {ivSubscribed ? '구독 중' : '미구독'}
               </span>
             </li>
 
@@ -164,7 +166,7 @@ function InterviewHomePage() {
                   />
                 </div>
                 <span className={`iv-quota-count${docPct >= 90 ? ' iv-quota-count--warn' : ''}`}>
-                  {documentUsed} / {limits.document}회
+                  {docUsed} / {docLimit}회
                 </span>
               </div>
             </li>
@@ -180,7 +182,7 @@ function InterviewHomePage() {
                   />
                 </div>
                 <span className={`iv-quota-count${ivPct >= 90 ? ' iv-quota-count--warn' : ''}`}>
-                  {interviewUsed} / {limits.interview}회
+                  {ivUsed} / {ivLimit}회
                 </span>
               </div>
             </li>
