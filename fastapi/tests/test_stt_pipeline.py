@@ -56,9 +56,6 @@ async def test_stt_failure_sends_error_message():
     ctx = _SessionContext(ws=mock_ws)
     _sessions[TEST_SESSION_ID] = ctx
 
-    with patch.object(stt_pipeline, "_get_openai_client" if hasattr(stt_pipeline, "_get_openai_client") else "__name__"):
-        pass
-
     with patch("user.interview.pipeline.stt_pipeline.AsyncOpenAI") as mock_openai_cls:
         mock_client = AsyncMock()
         mock_openai_cls.return_value = mock_client
