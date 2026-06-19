@@ -345,7 +345,7 @@ function UserMyPage() {
                 이름
                 <input
                   type="text"
-                  value={editForm.name}
+                  value={editForm.name ?? ""}
                   onChange={(event) =>
                     handleEditFormChange("name", event.target.value)
                   }
@@ -356,7 +356,7 @@ function UserMyPage() {
                 휴대폰 번호
                 <input
                   type="text"
-                  value={editForm.phone}
+                  value={editForm.phone ?? ""}
                   onChange={(event) =>
                     handleEditFormChange("phone", event.target.value)
                   }
@@ -367,7 +367,7 @@ function UserMyPage() {
                 GitHub URL
                 <input
                   type="text"
-                  value={editForm.githubUrl}
+                  value={editForm.githubUrl ?? ""}
                   placeholder="https://github.com/username"
                   onChange={(event) =>
                     handleEditFormChange("githubUrl", event.target.value)
