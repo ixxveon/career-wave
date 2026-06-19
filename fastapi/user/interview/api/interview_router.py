@@ -2,7 +2,7 @@ import asyncio
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from core.config import get_settings
@@ -96,6 +96,9 @@ async def trigger_text_answer(
     Spring → FastAPI 텍스트 답변 저장 완료 트리거.
     LLM 파이프라인을 백그라운드로 실행하고 202 응답을 즉시 반환한다.
     """
+    if body.sessionId != session_id:
+        raise HTTPException(status_code=400, detail="path sessionId와 body sessionId가 일치하지 않습니다.")
+
     ctx = _sessions.get(session_id)
     if ctx is not None:
         if ctx.session_type is None:
@@ -134,6 +137,9 @@ async def register_rag_context(
     서류 텍스트를 세션 컨텍스트에 저장하고 즉시 200 응답을 반환한다.
     실패해도 세션을 중단하지 않고 일반 면접 모드로 진행한다.
     """
+    if body.sessionId != session_id:
+        raise HTTPException(status_code=400, detail="path sessionId와 body sessionId가 일치하지 않습니다.")
+
     task = asyncio.create_task(
         _index_rag_context(session_id, body.documentFilePath)
     )
@@ -212,6 +218,9 @@ async def trigger_report(
     Spring → FastAPI 리포트 생성 트리거.
     리포트 파이프라인을 백그라운드로 실행하고 202 응답을 즉시 반환한다.
     """
+    if body.sessionId != session_id:
+        raise HTTPException(status_code=400, detail="path sessionId와 body sessionId가 일치하지 않습니다.")
+
     task = asyncio.create_task(
         report_pipeline.generate_and_send_report(
             session_id=session_id,
