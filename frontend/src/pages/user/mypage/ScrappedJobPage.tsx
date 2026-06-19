@@ -74,12 +74,7 @@ function ScrappedJobPage() {
 
   const keyword = searchKeyword.trim();
 
-  const {
-    data: scrapJobPage,
-    isLoading,
-    isError,
-    refetch,
-  } = useDashboardBookmarks({
+  const { data: scrapJobPage, refetch } = useDashboardBookmarks({
     keyword,
     page: 0,
     size: 10,
