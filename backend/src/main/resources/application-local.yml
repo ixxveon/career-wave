@@ -7,6 +7,12 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
+aws:
+  s3:
+    mock-upload: true
+    bucket-name: mock-bucket
+    region: ap-northeast-2
+
   servlet:
     multipart:
       max-file-size: 5MB
@@ -25,6 +31,9 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+
+websocket:
+  allowed-origins: "*"
 
 interview:
   internal-secret: ${WEBHOOK_SECRET}

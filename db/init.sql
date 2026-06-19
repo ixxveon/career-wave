@@ -1096,7 +1096,7 @@ COMMENT ON COLUMN ai_usage_logs.created_at      IS '사용 기록 일시';
 CREATE TABLE ai_ops_settings (
     ai_ops_setting_id  BIGINT      NOT NULL DEFAULT 1,
     selected_model_id  BIGINT      NOT NULL,
-    monthly_budget     INTEGER     NOT NULL,
+    monthly_budget     NUMERIC(15,2) NOT NULL,
     alert_enabled      BOOLEAN     NOT NULL DEFAULT TRUE,
     alert_channel      VARCHAR(20) NOT NULL DEFAULT 'DISCORD',
     alert_threshold    INTEGER     NOT NULL DEFAULT 85,

@@ -191,6 +191,13 @@ public class ResumeServiceImpl implements ResumeService {
             return;
         }
 
+        if ("PENDING".equals(dto.status()) || "ANALYZING".equals(dto.status())) {
+            // 중간 상태 — DB 갱신 없이 WebSocket 브로드캐스트만
+            log.info("[Webhook] 중간 상태 수신 — documentId: {}, status: {}", documentId, dto.status());
+            eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(documentId, dto.status()));
+            return;
+        }
+
         if ("COMPLETED".equals(dto.status())) {
             DocumentFeedback feedback = DocumentFeedback.of(
                     documentId,
@@ -210,7 +217,7 @@ public class ResumeServiceImpl implements ResumeService {
             throw new CustomException(ResumeErrorCode.WEBHOOK_INVALID_STATUS);
         }
 
-        // DB 커밋 후 WebSocket 브로드캐스트 (Phase 7에서 리스너 구현)
+        // DB 커밋 후 WebSocket 브로드캐스트
         eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(documentId, dto.status()));
     }
 
@@ -218,7 +225,7 @@ public class ResumeServiceImpl implements ResumeService {
     @Transactional(readOnly = true)
     public ResumeDTO.ResponseQuota getQuota(UUID memberId) {
         ZonedDateTime firstDayOfMonth = ZonedDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        int usedCount = documentRepository.countUsedThisMonth(memberId, firstDayOfMonth);
+        int usedCount = documentRepository.countUsedThisMonth(memberId, firstDayOfMonth, DocumentStatus.FAILED);
         return new ResumeDTO.ResponseQuota(usedCount, 30);
     }
 

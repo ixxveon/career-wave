@@ -2,6 +2,7 @@ package kr.co.carrer.user.resume.repository;
 
 import kr.co.carrer.user.resume.dto.ResumeDTO;
 import kr.co.carrer.user.resume.entity.Document;
+import kr.co.carrer.user.resume.type.DocumentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -42,8 +43,10 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
             SELECT COUNT(d)
             FROM Document d
             WHERE d.memberId = :memberId
-              AND d.status <> kr.co.carrer.user.resume.type.DocumentStatus.FAILED
+              AND d.status <> :excludedStatus
               AND d.createdAt >= :from
             """)
-    int countUsedThisMonth(@Param("memberId") UUID memberId, @Param("from") ZonedDateTime from);
+    int countUsedThisMonth(@Param("memberId") UUID memberId,
+                           @Param("from") ZonedDateTime from,
+                           @Param("excludedStatus") DocumentStatus excludedStatus);
 }

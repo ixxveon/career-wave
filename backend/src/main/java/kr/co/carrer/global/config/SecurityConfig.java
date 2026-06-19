@@ -98,6 +98,7 @@ public class SecurityConfig {
                     "/api/v1/user/members/recovery/reset-password"
                 ).permitAll()
                 .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/mock-files/**").permitAll()
                 // FastAPI 내부 콜백 — X-Internal-Secret 헤더로 보안 검증 (컨트롤러 레이어)
                 .requestMatchers(HttpMethod.POST, "/api/v1/user/resume/*/webhook").permitAll()
                 .requestMatchers(HttpMethod.POST, "/internal/api/v1/interview/callback/*/report").permitAll()
