@@ -1,5 +1,6 @@
 package kr.co.carrer.user.interview.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
@@ -15,6 +16,7 @@ import java.security.MessageDigest;
 import java.util.UUID;
 
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/internal/api/v1/interview/callback")

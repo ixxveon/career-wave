@@ -68,7 +68,7 @@ async def _expire_session(session_id: str, ctx: _SessionContext) -> None:
 
 def _verify_jwt(token: str) -> dict[str, Any]:
     settings = get_settings()
-    return jwt.decode(token, settings.jwt_secret, algorithms=["HS256", "HS384"])
+    return jwt.decode(token, settings.jwt_secret, algorithms=["HS256", "HS384"], audience="user")
 
 
 async def _close_existing(session_id: str, slog: _SessionAdapter) -> None:
