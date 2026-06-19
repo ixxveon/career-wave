@@ -164,7 +164,7 @@ class RagDocumentParser:
         with pdfplumber.open(BytesIO(document_bytes)) as pdf:
             pages_text = [page.extract_text() or "" for page in pdf.pages]
 
-        text = "\n".join(pages_text).strip()
+        text = self._normalize_text("\n".join(pages_text))
         if not text:
             raise AiMetricsException(
                 error_code=AiMetricsErrorCode.RAG_DOCUMENT_INDEXING_FAILED,
@@ -174,7 +174,9 @@ class RagDocumentParser:
 
     def _extract_docx_text(self, document_bytes: bytes) -> str:
         document = Document(BytesIO(document_bytes))
-        text = "\n".join(paragraph.text for paragraph in document.paragraphs).strip()
+        text = self._normalize_text(
+            "\n".join(paragraph.text for paragraph in document.paragraphs),
+        )
         if not text:
             raise AiMetricsException(
                 error_code=AiMetricsErrorCode.RAG_DOCUMENT_INDEXING_FAILED,
@@ -184,7 +186,7 @@ class RagDocumentParser:
 
     def _extract_plain_text(self, document_bytes: bytes) -> str:
         try:
-            text = document_bytes.decode("utf-8").strip()
+            text = self._normalize_text(document_bytes.decode("utf-8"))
         except UnicodeDecodeError as error:
             raise AiMetricsException(
                 error_code=AiMetricsErrorCode.RAG_DOCUMENT_INDEXING_FAILED,
@@ -198,6 +200,9 @@ class RagDocumentParser:
             )
 
         return text
+
+    def _normalize_text(self, text: str) -> str:
+        return text.replace("\r\n", "\n").replace("\r", "\n").strip()
 
     def _build_indexing_failed_exception(
         self,
