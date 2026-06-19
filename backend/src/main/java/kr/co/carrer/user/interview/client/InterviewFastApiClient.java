@@ -70,7 +70,7 @@ public class InterviewFastApiClient {
                 "memberId", memberId.toString(),
                 "questionOrder", questionOrder,
                 "answerText", answerText != null ? answerText : "",
-                "sessionType", sessionType,
+                "sessionType", sessionType != null ? sessionType : "",
                 "interviewType", interviewType != null ? interviewType : ""
         );
 
@@ -92,7 +92,7 @@ public class InterviewFastApiClient {
         Map<String, Object> body = Map.of(
                 "sessionId", sessionId.toString(),
                 "memberId", memberId.toString(),
-                "sessionType", sessionType
+                "sessionType", sessionType != null ? sessionType : ""
         );
 
         webClient.post()

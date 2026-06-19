@@ -22,6 +22,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -159,7 +160,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
             throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_ALREADY_ENDED);
         }
 
-        ZonedDateTime endedAt = ZonedDateTime.now();
+        ZonedDateTime endedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
         session.complete(endedAt);
 
         String sessionType = session.getSessionType().name();
@@ -173,7 +174,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
             });
         }
 
-        return new InterviewDTO.ResponseEndSession(sessionId.toString(), "COMPLETED", endedAt);
+        return new InterviewDTO.ResponseEndSession(sessionId.toString(), SessionStatus.COMPLETED.name(), endedAt);
     }
 
     private SessionType parseSessionType(String sessionType) {
