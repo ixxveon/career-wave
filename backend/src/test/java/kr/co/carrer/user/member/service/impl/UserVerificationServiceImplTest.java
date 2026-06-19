@@ -134,6 +134,168 @@ class UserVerificationServiceImplTest {
                                 .isEqualTo(UserAuthErrorCode.VERIFICATION_TARGET_INVALID));
     }
 
+    // ─── 인증번호 발송 성공 ────────────────────────────────────────────────────────
+
+    @Test
+    void send_EMAIL_성공_emailSenderPort_호출() throws Exception {
+        when(verificationRepository.findTopByTargetAndPurposeOrderByCreatedAtDesc(anyString(), any()))
+                .thenReturn(java.util.Optional.empty());
+
+        MemberVerification saved = createVerification(5, VerificationStatus.SENT, "anyhash");
+        when(verificationRepository.save(any())).thenReturn(saved);
+
+        UserVerificationDto.RequestSendVerification req = new UserVerificationDto.RequestSendVerification();
+        setField(req, "channel", VerificationChannel.EMAIL);
+        setField(req, "target", "user@example.com");
+        setField(req, "purpose", VerificationPurpose.REGISTER);
+
+        UserVerificationDto.ResponseSendVerification resp = service.send(req);
+
+        assertThat(resp).isNotNull();
+        assertThat(resp.expiresAt()).isAfter(Instant.now());
+        assertThat(resp.resendAvailableAt()).isAfter(Instant.now());
+        verify(emailSenderPort, times(1)).sendVerificationCode(eq("user@example.com"), anyString());
+        verify(smsSenderPort, never()).sendVerificationCode(any(), any());
+    }
+
+    @Test
+    void send_PHONE_성공_smsSenderPort_호출() throws Exception {
+        when(verificationRepository.findTopByTargetAndPurposeOrderByCreatedAtDesc(anyString(), any()))
+                .thenReturn(java.util.Optional.empty());
+
+        MemberVerification saved = createVerification(5, VerificationStatus.SENT, "anyhash");
+        when(verificationRepository.save(any())).thenReturn(saved);
+
+        UserVerificationDto.RequestSendVerification req = new UserVerificationDto.RequestSendVerification();
+        setField(req, "channel", VerificationChannel.PHONE);
+        setField(req, "target", "01012345678");
+        setField(req, "purpose", VerificationPurpose.REGISTER);
+
+        service.send(req);
+
+        verify(smsSenderPort, times(1)).sendVerificationCode(eq("01012345678"), anyString());
+        verify(emailSenderPort, never()).sendVerificationCode(any(), any());
+    }
+
+    // ─── 인증번호 만료 5분 / 재발송 60초 TTL 경계 검증 ──────────────────────────────────
+
+    @Test
+    void send_EMAIL_expiresAt_5분_후_resendAvailableAt_60초_후() throws Exception {
+        when(verificationRepository.findTopByTargetAndPurposeOrderByCreatedAtDesc(anyString(), any()))
+                .thenReturn(java.util.Optional.empty());
+
+        MemberVerification saved = createVerification(5, VerificationStatus.SENT, "anyhash");
+        when(verificationRepository.save(any())).thenReturn(saved);
+
+        UserVerificationDto.RequestSendVerification req = new UserVerificationDto.RequestSendVerification();
+        setField(req, "channel", VerificationChannel.EMAIL);
+        setField(req, "target", "user@example.com");
+        setField(req, "purpose", VerificationPurpose.REGISTER);
+
+        Instant before = Instant.now();
+        UserVerificationDto.ResponseSendVerification resp = service.send(req);
+
+        // expiresAt ≈ now + 300초 (5분), 허용 오차 ±5초
+        assertThat(resp.expiresAt()).isAfter(before.plusSeconds(295));
+        assertThat(resp.expiresAt()).isBefore(before.plusSeconds(305));
+
+        // resendAvailableAt ≈ now + 60초, 허용 오차 ±5초
+        assertThat(resp.resendAvailableAt()).isAfter(before.plusSeconds(55));
+        assertThat(resp.resendAvailableAt()).isBefore(before.plusSeconds(65));
+    }
+
+    // ─── 인증번호 재발송 60초 제한 ─────────────────────────────────────────────────
+
+    @Test
+    void send_재발송_60초_제한_VERIFICATION_RATE_LIMITED() throws Exception {
+        MemberVerification prev = createVerification(5, VerificationStatus.SENT, "hash");
+        // resendAvailableAt을 60초 후로 설정 → 아직 재발송 불가
+        setField(prev, "resendAvailableAt", Instant.now().plusSeconds(60));
+
+        when(verificationRepository.findTopByTargetAndPurposeOrderByCreatedAtDesc(anyString(), any()))
+                .thenReturn(java.util.Optional.of(prev));
+
+        UserVerificationDto.RequestSendVerification req = new UserVerificationDto.RequestSendVerification();
+        setField(req, "channel", VerificationChannel.EMAIL);
+        setField(req, "target", "user@example.com");
+        setField(req, "purpose", VerificationPurpose.REGISTER);
+
+        assertThatThrownBy(() -> service.send(req))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.VERIFICATION_RATE_LIMITED));
+
+        verify(emailSenderPort, never()).sendVerificationCode(any(), any());
+    }
+
+    // ─── 인증번호 확인 성공 — verificationToken 반환 ─────────────────────────────────
+
+    @Test
+    void confirm_성공_verificationToken_반환() throws Exception {
+        // SHA-256("123456") 계산
+        java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+        String codeHash = java.util.HexFormat.of().formatHex(
+                md.digest("123456".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+
+        MemberVerification verification = createVerification(5, VerificationStatus.SENT, codeHash);
+        when(verificationRepository.findByVerificationId(any(UUID.class)))
+                .thenReturn(java.util.Optional.of(verification));
+
+        UserVerificationDto.RequestConfirmVerification req = new UserVerificationDto.RequestConfirmVerification();
+        setField(req, "verificationId", UUID.randomUUID());
+        setField(req, "code", "123456");
+
+        UserVerificationDto.ResponseConfirmVerification resp = service.confirm(req);
+
+        assertThat(resp).isNotNull();
+        assertThat(resp.verificationToken()).isNotBlank();
+        assertThat(resp.verifiedAt()).isNotNull();
+        assertThat(verification.getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+    }
+
+    // ─── validateVerificationToken — status 미인증 ──────────────────────────────
+
+    @Test
+    void validateVerificationToken_status_SENT_VERIFICATION_TOKEN_INVALID() throws Exception {
+        MemberVerification v = createVerification(5, VerificationStatus.SENT, "h");
+        assertThatThrownBy(() ->
+                UserVerificationServiceImpl.validateVerificationToken(
+                        v, VerificationChannel.EMAIL, "test@example.com", VerificationPurpose.REGISTER))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
+    }
+
+    // ─── validateVerificationToken — 만료 ───────────────────────────────────────
+
+    @Test
+    void validateVerificationToken_만료_VERIFICATION_TOKEN_INVALID() throws Exception {
+        MemberVerification v = createVerification(5, VerificationStatus.VERIFIED, "h");
+        setField(v, "expiresAt", Instant.now().minusSeconds(60));
+        assertThatThrownBy(() ->
+                UserVerificationServiceImpl.validateVerificationToken(
+                        v, VerificationChannel.EMAIL, "test@example.com", VerificationPurpose.REGISTER))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
+    }
+
+    // ─── validateVerificationToken — purpose 불일치 ──────────────────────────────
+
+    @Test
+    void validateVerificationToken_purpose_불일치_VERIFICATION_TOKEN_INVALID() throws Exception {
+        MemberVerification v = createVerification(5, VerificationStatus.VERIFIED, "h");
+        // purpose는 FIND_ID지만 REGISTER를 기대 → 불일치
+        setField(v, "purpose", VerificationPurpose.FIND_ID);
+        assertThatThrownBy(() ->
+                UserVerificationServiceImpl.validateVerificationToken(
+                        v, VerificationChannel.EMAIL, "test@example.com", VerificationPurpose.REGISTER))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
+    }
+
     // ─── 내부 유틸 ───────────────────────────────────────────────────────────────
 
     private MemberVerification createVerification(int attempts, VerificationStatus status,

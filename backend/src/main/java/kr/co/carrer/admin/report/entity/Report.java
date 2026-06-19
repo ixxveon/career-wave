@@ -63,6 +63,10 @@ public class Report {
         this.updatedAt = ZonedDateTime.now();
     }
 
+    public void updateAiSuggestion(String aiSuggestion) {
+        this.aiSuggestion = aiSuggestion;
+    }
+
     public void blind(Long adminId) {
         this.reportStatus = ReportStatus.BLINDED;
         this.processedBy = adminId;

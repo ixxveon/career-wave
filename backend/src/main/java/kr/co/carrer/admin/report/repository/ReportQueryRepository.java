@@ -123,7 +123,7 @@ public class ReportQueryRepository {
         String sql = """
             SELECT r.report_id, r.target_type, r.target_id, r.reason, r.report_status,
                    reporter.name AS reporter_name, victim.name AS reported_name,
-                   r.created_at, r.processed_at, r.processed_by
+                   r.ai_suggestion, r.created_at, r.processed_at, r.processed_by
             FROM reports r
             JOIN members reporter ON reporter.member_id = r.reporter_id
             JOIN members victim   ON victim.member_id   = r.member_id
@@ -144,11 +144,12 @@ public class ReportQueryRepository {
             ReportStatus.valueOf((String) row[4]),
             (String) row[5],
             (String) row[6],
-            null,   // contentTitle — 서비스 레이어에서 채움
-            null,   // contentBody  — 서비스 레이어에서 채움
-            toZonedDateTime(row[7]),
+            null,           // contentTitle — 서비스 레이어에서 채움
+            null,           // contentBody  — 서비스 레이어에서 채움
+            (String) row[7], // aiSuggestion — 서비스 레이어에서 FastAPI 호출 후 갱신 가능
             toZonedDateTime(row[8]),
-            row[9] != null ? ((Number) row[9]).longValue() : null
+            toZonedDateTime(row[9]),
+            row[10] != null ? ((Number) row[10]).longValue() : null
         ));
     }
 }

@@ -91,11 +91,14 @@ public class SecurityConfig {
                     "/api/v1/user/members/register/company",
                     "/api/v1/user/members/register/social/complete",
                     "/api/v1/user/members/company/employment-certificate",
+                    "/api/v1/user/members/company/business-number/check",
                     "/api/v1/user/members/verifications/send",
                     "/api/v1/user/members/verifications/confirm",
                     "/api/v1/user/members/recovery/find-id",
                     "/api/v1/user/members/recovery/password-token",
-                    "/api/v1/user/members/recovery/reset-password"
+                    "/api/v1/user/members/recovery/reset-password",
+                    "/api/v1/user/members/oauth/*/authorize",
+                    "/api/v1/user/members/oauth/*/callback"
                 ).permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 // FastAPI 내부 콜백 — X-Internal-Secret 헤더로 보안 검증 (컨트롤러 레이어)

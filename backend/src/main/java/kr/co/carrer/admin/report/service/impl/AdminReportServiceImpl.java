@@ -1,5 +1,7 @@
 package kr.co.carrer.admin.report.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import kr.co.carrer.admin.report.dto.ReportDetailDTO;
 import kr.co.carrer.admin.report.entity.Report;
 import kr.co.carrer.admin.report.repository.ReportBoardRepository;
@@ -14,11 +16,20 @@ import kr.co.carrer.admin.report.service.AdminReportService;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminReportServiceImpl implements AdminReportService {
@@ -27,6 +38,29 @@ public class AdminReportServiceImpl implements AdminReportService {
     private final ReportQueryRepository reportQueryRepository;
     private final ReportBoardRepository reportBoardRepository;
     private final ReportCommentRepository reportCommentRepository;
+    private final WebClient.Builder webClientBuilder;
+    private final ObjectMapper objectMapper;
+
+    // 트랜잭션 분리를 위한 self-injection — readOnly 읽기 / 쓰기 트랜잭션을 각각 프록시로 실행
+    @Lazy
+    @Autowired
+    private AdminReportServiceImpl self;
+
+    @Value("${fastapi.base-url}")
+    private String fastApiBaseUrl;
+
+    @Value("${webhook.secret}")
+    private String webhookSecret;
+
+    private static final Duration AI_TIMEOUT = Duration.ofSeconds(10);
+    private static final String REPORT_ANALYSIS_PATH = "/api/v1/ai/report-analysis";
+
+    private WebClient webClient;
+
+    @PostConstruct
+    void init() {
+        this.webClient = webClientBuilder.baseUrl(fastApiBaseUrl).build();
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -54,9 +88,38 @@ public class AdminReportServiceImpl implements AdminReportService {
         return PaginationResponse.of(items, page, size, total);
     }
 
+    /**
+     * 논트랜잭션 오케스트레이터:
+     * 1) readOnly 트랜잭션으로 데이터 조회 (self.readReportDetail)
+     * 2) 트랜잭션 종료 후 FastAPI HTTP 호출 — DB 커넥션 미점유
+     * 3) 결과를 독립된 쓰기 트랜잭션으로 저장 (self.persistAiSuggestion)
+     */
     @Override
-    @Transactional(readOnly = true)
     public ReportDetailDTO.ResponseDetail getReportDetail(Long reportId) {
+        ReportDetailDTO.ResponseDetail detail = self.readReportDetail(reportId);
+
+        String aiSuggestion = detail.aiSuggestion();
+        if (aiSuggestion == null) {
+            aiSuggestion = callFastApiForAiSuggestion(
+                reportId, detail.targetType(), detail.reason(),
+                detail.contentTitle(), detail.contentBody()
+            );
+            if (aiSuggestion != null) {
+                self.persistAiSuggestion(reportId, aiSuggestion);
+            }
+        }
+
+        return new ReportDetailDTO.ResponseDetail(
+            detail.reportId(), detail.targetType(), detail.targetId(),
+            detail.reason(), detail.reportStatus(),
+            detail.reporterName(), detail.reportedName(),
+            detail.contentTitle(), detail.contentBody(), aiSuggestion,
+            detail.createdAt(), detail.processedAt(), detail.processedBy()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public ReportDetailDTO.ResponseDetail readReportDetail(Long reportId) {
         ReportDetailDTO.ResponseDetail base = reportQueryRepository.findReportDetail(reportId)
             .orElseThrow(() -> new CustomException(AdminReportErrorCode.REPORT_NOT_FOUND));
 
@@ -74,9 +137,41 @@ public class AdminReportServiceImpl implements AdminReportService {
             base.reportId(), base.targetType(), base.targetId(),
             base.reason(), base.reportStatus(),
             base.reporterName(), base.reportedName(),
-            contentTitle, contentBody,
+            contentTitle, contentBody, base.aiSuggestion(),
             base.createdAt(), base.processedAt(), base.processedBy()
         );
+    }
+
+    @Transactional
+    public void persistAiSuggestion(Long reportId, String aiSuggestion) {
+        reportRepository.findById(reportId)
+            .ifPresent(report -> report.updateAiSuggestion(aiSuggestion));
+    }
+
+    private String callFastApiForAiSuggestion(Long reportId, TargetType targetType, ReportReason reason,
+                                               String contentTitle, String contentBody) {
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("targetType", targetType.name());
+            body.put("reason", reason.name());
+            body.put("contentTitle", contentTitle);
+            body.put("contentBody", contentBody);
+
+            Map<?, ?> response = webClient.post()
+                .uri(REPORT_ANALYSIS_PATH)
+                .header("X-Internal-Secret", webhookSecret)
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .timeout(AI_TIMEOUT)
+                .block();
+
+            if (response == null) return null;
+            return objectMapper.writeValueAsString(response);
+        } catch (Exception e) {
+            log.warn("[ReportAI] FastAPI 호출 실패 — reportId={}, 원인={}", reportId, e.getMessage());
+            return null;
+        }
     }
 
     @Override

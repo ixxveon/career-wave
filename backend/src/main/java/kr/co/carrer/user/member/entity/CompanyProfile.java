@@ -14,7 +14,8 @@ import java.util.UUID;
 @Table(name = "company_profiles",
         uniqueConstraints = {
                 @UniqueConstraint(name = "uq_company_member_id",  columnNames = "member_id"),
-                @UniqueConstraint(name = "uq_business_number",    columnNames = "business_number")
+                @UniqueConstraint(name = "uq_business_number",    columnNames = "business_number"),
+                @UniqueConstraint(name = "uq_cert_file_url",      columnNames = "cert_file_url")
         })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

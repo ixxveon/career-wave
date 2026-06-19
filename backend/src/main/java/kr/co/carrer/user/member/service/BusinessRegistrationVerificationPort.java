@@ -1,5 +1,7 @@
 package kr.co.carrer.user.member.service;
 
+import kr.co.carrer.user.member.dto.UserRegisterDto;
+
 public interface BusinessRegistrationVerificationPort {
 
     /**
@@ -8,4 +10,10 @@ public interface BusinessRegistrationVerificationPort {
      * 외부 API 장애·타임아웃 시 CustomException(COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE) throw.
      */
     boolean verify(String businessNumber);
+
+    /**
+     * 사업자등록번호 상태를 상세 조회한다 — 사전 확인 전용 (기업 등록 전 빠른 피드백).
+     * 최종 등록 시에는 verify()를 별도로 재검증한다.
+     */
+    UserRegisterDto.ResponseCheckBusinessNumber check(String businessNumber);
 }

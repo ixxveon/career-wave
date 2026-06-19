@@ -91,24 +91,25 @@
 
 ## Phase 11 - Vector Store Integration
 
-- [ ] `vector_store_client.py` 생성/저장 클라이언트를 작성한다.
-- [ ] `vector_store_client.py`를 추상 adapter 구조로 작성한다.
-- [ ] vector index 저장 로직을 작성한다.
-- [ ] vector index 삭제 로직을 작성한다.
-- [ ] vector store 연동 실패를 내부 오류로 변환하는 처리 로직을 작성한다.
-
+- [x] `vector_store_client.py` 생성/저장 클라이언트를 작성한다.
+- [x] `vector_store_client.py`를 추상 adapter 구조로 작성한다.
+- [x] vector index 저장 로직을 작성한다.
+- [x] vector index 저장 결과를 후속 상태 갱신 단계에서 사용할 수 있는 반환값으로 분리한다.
+- [x] vector index 삭제 로직을 작성한다.
+- [x] vector store 연동 실패를 내부 오류로 변환하는 처리 로직을 작성한다.
+  
 ## Phase 12 - Domain Router
 
-- [ ] `ai_metrics_router.py`를 작성한다.   
-- [ ] `POST /internal/admin/ai-metrics/usage/summary` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/domain-usage` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/token-trend` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/heavy-users` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/logs/search` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/ops/sync-settings` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/rag-documents/index` Router를 작성한다.
-- [ ] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index` Router를 작성한다.
-- [ ] `POST /internal/admin/ai-metrics/usage/log` Router를 작성한다.
+- [x] `ai_metrics_router.py`를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/usage/summary` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/usage/domain-usage` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/usage/token-trend` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/usage/heavy-users` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/usage/logs/search` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/ops/sync-settings` Router를 작성한다.
+- [x] `POST /internal/admin/ai-metrics/rag-documents/index` Router를 작성한다.
+- [x] `DELETE /internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index` Router를 작성한다.  
+- [x] `POST /internal/admin/ai-metrics/usage/log` Router를 작성한다.
 
 ## Phase 13 - RAG Indexing Background Task
 

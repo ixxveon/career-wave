@@ -199,7 +199,7 @@ export interface CompanyRegisterRequest {
   postalCode: string;
   roadAddress: string;
   jibunAddress?: string;
-  addressDetail: string;
+  addressDetail?: string;
   companyType: CompanyType;
   isAgency: boolean;
   managerPhoneVerificationToken: string;
@@ -214,6 +214,32 @@ export interface CompanyRegisterResponse {
   roleType: 'COMPANY';
   memberStatus: MemberStatus;
   companyApprovalStatus: CompanyApprovalStatus;
+}
+
+/** 사업자번호 사전 확인 — POST /company/business-number/check */
+export interface CheckBusinessNumberRequest {
+  businessNumber: string;
+}
+
+export const BUSINESS_STATUS = {
+  CONTINUING:     'CONTINUING',
+  SUSPENDED:      'SUSPENDED',
+  CLOSED:         'CLOSED',
+  NOT_REGISTERED: 'NOT_REGISTERED',
+} as const;
+
+export type BusinessStatus = (typeof BUSINESS_STATUS)[keyof typeof BUSINESS_STATUS];
+
+export const BUSINESS_STATUS_LABELS: Record<BusinessStatus, string> = {
+  [BUSINESS_STATUS.CONTINUING]:     '정상 영업 중인 사업자입니다.',
+  [BUSINESS_STATUS.SUSPENDED]:      '휴업 중인 사업자입니다.',
+  [BUSINESS_STATUS.CLOSED]:         '폐업한 사업자입니다.',
+  [BUSINESS_STATUS.NOT_REGISTERED]: '등록되지 않은 사업자번호입니다.',
+} as const;
+
+export interface CheckBusinessNumberResponse {
+  valid: boolean;
+  businessStatus: BusinessStatus;
 }
 
 export interface EmploymentCertificateUploadResponse {
@@ -285,6 +311,36 @@ export interface ResetPasswordRequest {
 
 export interface ResetPasswordResponse {
   changedAt: string;
+}
+
+// ─── OAuth 소셜 로그인 ─────────────────────────────────────────────────────────
+
+export interface OAuthAuthorizeResponse {
+  provider: SocialProviderId;
+  authorizationUrl: string;
+  state: string;
+}
+
+/** OAuth callback — 기존 소셜 계정 로그인 성공 시 */
+export interface OAuthCallbackLoginResponse {
+  accessToken: string;
+  member: MemberSummary;
+  nextPath: string;
+}
+
+/** OAuth callback — 최초 소셜 사용자, 추가정보 입력 필요 시 */
+export interface OAuthCallbackSignupRequiredResponse {
+  provider: SocialProviderId;
+  socialEmail: string | null;
+  socialSignupToken: string;
+  nextPath: string;
+}
+
+/** OAuth callback 응답 판별 타입가드 */
+export function isOAuthCallbackLoginResponse(
+  res: OAuthCallbackLoginResponse | OAuthCallbackSignupRequiredResponse,
+): res is OAuthCallbackLoginResponse {
+  return 'accessToken' in res;
 }
 
 export type LoginUiState = 'IDLE' | 'SUBMITTING' | 'AUTHENTICATED' | 'BLOCKED' | 'ERROR';
