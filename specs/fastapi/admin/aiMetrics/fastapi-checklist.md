@@ -67,7 +67,7 @@
 ## Phase 11 — Vector Store Integration
 
 - [x] Vector Store 클라이언트가 추상 adapter 구조로 분리되어 구현체 교체가 가능하다.
-- [x] Vector Index 생성 로직이 성공 시 후속 상태 갱신과 연결된다.
+- [x] Vector Index 생성 로직이 결과를 반환해 후속 상태 갱신 단계와 연결 가능한 형태로 분리되어 있다.
 - [x] Vector Index 삭제 로직이 실패 시 성공 응답으로 숨기지 않는다.
 - [x] Vector Store 연동 실패가 내부 ErrorCode로 변환된다.
 

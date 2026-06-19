@@ -42,16 +42,16 @@
 
 ## Phase 3 — STT 파이프라인
 
-- [ ] `fastapi/user/pipeline/stt_pipeline.py` 생성
-  - [ ] `transcribe_chunk(audio_bytes, session_id, question_order, chunk_index)` — OpenAI Whisper 호출
-  - [ ] `calculate_voice_quality_ratio(whisper_response)` — `no_speech_prob` 기반 산정
-  - [ ] `should_mask_scores(voice_quality_ratio)` — `voiceQualityRatio < 50.00` 판단
-  - [ ] STT 실패 시 `INTERVIEW_STT_FAILED` WebSocket 메시지 전송
-- [ ] `fastapi/user/api/interview_router.py` 업데이트
-  - [ ] `POST /internal/user/interview/sessions/{sessionId}/trigger/voice-chunk` 라우터
-  - [ ] multipart 파일(`audioChunk`) + 파라미터(`questionOrder`, `chunkIndex`, `isFinal`) 바인딩
-  - [ ] `asyncio.create_task`로 STT 파이프라인 비동기 실행
-  - [ ] `X-Internal-Secret` 헤더 검증
+- [x] `fastapi/user/pipeline/stt_pipeline.py` 생성
+  - [x] `transcribe_chunk(audio_bytes, session_id, question_order, chunk_index)` — OpenAI Whisper 호출
+  - [x] `calculate_voice_quality_ratio(whisper_response)` — `no_speech_prob` 기반 산정
+  - [x] `should_mask_scores(voice_quality_ratio)` — `voiceQualityRatio < 50.00` 판단
+  - [x] STT 실패 시 `INTERVIEW_STT_FAILED` WebSocket 메시지 전송
+- [x] `fastapi/user/api/interview_router.py` 업데이트
+  - [x] `POST /internal/user/interview/sessions/{sessionId}/trigger/voice-chunk` 라우터
+  - [x] multipart 파일(`audioChunk`) + 파라미터(`questionOrder`, `chunkIndex`, `isFinal`) 바인딩
+  - [x] `asyncio.create_task`로 STT 파이프라인 비동기 실행
+  - [x] `X-Internal-Secret` 헤더 검증
 
 ---
 

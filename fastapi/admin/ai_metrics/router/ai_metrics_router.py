@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends
 from fastapi import Path as FastApiPath
 from fastapi.responses import JSONResponse
 
-from admin.ai_metrics.client import MockVectorStoreClient, get_ai_metrics_openai_client
+from admin.ai_metrics.client import MockVectorStoreClient
+from admin.ai_metrics.client import get_ai_metrics_openai_client
 from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException, build_error_response
 from admin.ai_metrics.parser import RagDocumentParser
 from admin.ai_metrics.repository import (
@@ -39,6 +40,7 @@ from admin.ai_metrics.service import (
 from admin.ai_metrics.task import RagIndexingTask
 from core.security import verify_internal_secret
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/ai-metrics",
@@ -47,7 +49,6 @@ router = APIRouter(
 )
 
 _bg_tasks: set[asyncio.Task[None]] = set()
-logger = logging.getLogger(__name__)
 
 
 @router.post("/usage/summary")
@@ -181,9 +182,9 @@ async def start_rag_document_index(request: RagIndexStartRequest):
             )
             response = service.start_indexing(request)
             session.commit()
-            task = asyncio.create_task(_run_rag_indexing(request.rag_document_id))
-            _bg_tasks.add(task)
-            task.add_done_callback(_on_background_task_done)
+        task = asyncio.create_task(_run_rag_indexing(request.rag_document_id))
+        _bg_tasks.add(task)
+        task.add_done_callback(_on_bg_task_done)
         return response
     except AiMetricsException as error:
         return JSONResponse(
@@ -243,17 +244,6 @@ def _parse_iso_datetime(value: str) -> datetime:
         ) from error
 
 
-def _on_background_task_done(task: asyncio.Task[None]) -> None:
-    _bg_tasks.discard(task)
-
-    if task.cancelled():
-        return
-
-    exception = task.exception()
-    if exception is not None:
-        logger.error("RAG indexing background task failed", exc_info=exception)
-
-
 async def _run_rag_indexing(rag_document_id: int) -> None:
     with get_session() as session:
         task = RagIndexingTask(
@@ -267,3 +257,12 @@ async def _run_rag_indexing(rag_document_id: int) -> None:
         )
         await task.run(rag_document_id)
         session.commit()
+
+
+def _on_bg_task_done(task: asyncio.Task[None]) -> None:
+    _bg_tasks.discard(task)
+    if task.cancelled():
+        return
+    exception = task.exception()
+    if exception is not None:
+        logger.error("RAG indexing background task failed", exc_info=exception)
