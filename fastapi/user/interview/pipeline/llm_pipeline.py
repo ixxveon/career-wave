@@ -31,6 +31,15 @@ from user.interview.websocket.interview_ws_handler import (
 
 log = logging.getLogger(__name__)
 
+_openai_client: AsyncOpenAI | None = None
+
+
+def _get_openai_client() -> AsyncOpenAI:
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = AsyncOpenAI(api_key=get_settings().openai_api_key)
+    return _openai_client
+
 
 async def generate_and_deliver_question(
     session_id: str,
@@ -98,7 +107,7 @@ async def generate_and_deliver_question(
 
 async def _call_llm(session_id: str, ctx: _SessionContext, settings) -> dict[str, str]:
     """GPT-4o 호출 후 JSON 파싱. 실패 시 1회 재시도."""
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    client = _get_openai_client()
     messages = _build_messages(ctx)
 
     raw = await _chat(client, settings.openai_model_interview, messages)
