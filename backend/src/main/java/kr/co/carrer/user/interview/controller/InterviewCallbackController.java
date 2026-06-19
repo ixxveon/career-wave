@@ -1,5 +1,6 @@
 package kr.co.carrer.user.interview.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
@@ -15,6 +16,7 @@ import java.security.MessageDigest;
 import java.util.UUID;
 
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/internal/api/v1/interview/callback")
@@ -24,6 +26,22 @@ public class InterviewCallbackController {
 
     @Value("${interview.internal-secret}")
     private String internalSecret;
+
+    @PostMapping("/{sessionId}/question")
+    public ResponseEntity<ApiResponse<Void>> receiveQuestionCallback(
+            @RequestHeader("X-Internal-Secret") String secret,
+            @PathVariable UUID sessionId,
+            @RequestBody InterviewDTO.RequestQuestionCallback dto
+    ) {
+        if (!MessageDigest.isEqual(
+                internalSecret.getBytes(StandardCharsets.UTF_8),
+                secret.getBytes(StandardCharsets.UTF_8))) {
+            throw new CustomException(InterviewErrorCode.INTERVIEW_CALLBACK_UNAUTHORIZED);
+        }
+
+        interviewCallbackService.processQuestionCallback(sessionId, dto);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
 
     @PostMapping("/{sessionId}/report")
     public ResponseEntity<ApiResponse<Void>> receiveReportCallback(

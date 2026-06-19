@@ -20,6 +20,10 @@ public record WebSocketMessage(
                 new ReportReadyData(reportUrl), null);
     }
 
+    public static WebSocketMessage question(int questionOrder, String questionText, String questionType) {
+        return new WebSocketMessage("QUESTION", questionText, questionOrder, questionType, null, null);
+    }
+
     public static WebSocketMessage error(String content, String errorCode) {
         return new WebSocketMessage("ERROR", content, null, null, null, errorCode);
     }
