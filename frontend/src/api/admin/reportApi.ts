@@ -62,6 +62,10 @@ export interface ReportDetail extends ReportItem {
   processedBy: number | null;
 }
 
+interface RawReportDetail extends Omit<ReportDetail, 'aiSuggestion'> {
+  aiSuggestion: string | null;
+}
+
 export interface ReportListParams {
   status?: ReportStatus;
   targetType?: TargetType;
@@ -88,8 +92,14 @@ export const reportApi = {
     axiosInstance.get<ApiResponse<ReportListData>>('/api/v1/admin/reports', { params }),
 
   // 신고 상세 조회
-  getReportDetail: (reportId: number) =>
-    axiosInstance.get<ApiResponse<ReportDetail>>(`/api/v1/admin/reports/${reportId}`),
+  getReportDetail: async (reportId: number): Promise<{ data: ApiResponse<ReportDetail> }> => {
+    const res = await axiosInstance.get<ApiResponse<RawReportDetail>>(`/api/v1/admin/reports/${reportId}`);
+    const raw = res.data.data;
+    const aiSuggestion: AiSuggestion | null = typeof raw.aiSuggestion === 'string'
+      ? (() => { try { return JSON.parse(raw.aiSuggestion as string); } catch { return null; } })()
+      : null;
+    return { data: { ...res.data, data: { ...raw, aiSuggestion } } };
+  },
 
   // 블라인드 처리
   blindReport: (reportId: number) =>
