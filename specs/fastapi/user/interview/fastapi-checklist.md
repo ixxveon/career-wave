@@ -33,8 +33,8 @@
 - [x] `POST /internal/user/interview/sessions/{sessionId}/trigger/voice-chunk` 라우터에 `X-Internal-Secret` 헤더 검증이 구현되어 있다.
 - [x] STT 파이프라인이 `asyncio.create_task`로 비동기 실행된다 (라우터가 즉시 202 응답 반환).
 - [x] `voiceQualityRatio` 산정 로직이 구현되어 있다 (Whisper `no_speech_prob` 기반).
-- [ ] `voiceQualityRatio < 50.00`인 답변의 `deliveryScore` / `fluencyScore`가 Spring 콜백 페이로드에서 `null`로 포함된다.
-- [ ] `voiceQualityRatio`가 `null`인 답변(텍스트 면접)의 `deliveryScore` / `fluencyScore`가 `null`로 포함된다.
+- [x] `voiceQualityRatio < 50.00`인 답변의 `deliveryScore` / `fluencyScore`가 Spring 콜백 페이로드에서 `null`로 포함된다.
+- [x] `voiceQualityRatio`가 `null`인 답변(텍스트 면접)의 `deliveryScore` / `fluencyScore`가 `null`로 포함된다.
 - [x] STT 변환 실패 시 `INTERVIEW_STT_FAILED` errorCode WebSocket 메시지가 클라이언트에 전송된다.
 
 ---
@@ -69,23 +69,23 @@
 
 ## Phase 6 — 보안 & 컨벤션
 
-- [ ] `POST /internal/user/interview/**` 경로의 모든 라우터에 `X-Internal-Secret` 헤더 검증이 적용된다.
-- [ ] `X-Internal-Secret` 시크릿 값이 환경 변수(`WEBHOOK_SECRET`)로만 관리된다.
-- [ ] FastAPI WebSocket 라우터 코드가 Spring WebSocket 채널(`/chat`)에 직접 메시지를 전송하지 않는다.
-- [ ] FastAPI 라우터에 복잡한 AI 파이프라인 로직이 직접 구현되지 않고 `pipeline/` 계층으로 분리된다.
-- [ ] 환경 변수 접근이 `core/config.py`의 `settings` 객체를 통해서만 이루어진다.
-- [ ] FastAPI 도메인(`user/interview`)이 `admin/` 도메인 코드를 직접 참조하지 않는다.
+- [x] `POST /internal/user/interview/**` 경로의 모든 라우터에 `X-Internal-Secret` 헤더 검증이 적용된다.
+- [x] `X-Internal-Secret` 시크릿 값이 환경 변수(`WEBHOOK_SECRET`)로만 관리된다.
+- [x] FastAPI WebSocket 라우터 코드가 Spring WebSocket 채널(`/chat`)에 직접 메시지를 전송하지 않는다.
+- [x] FastAPI 라우터에 복잡한 AI 파이프라인 로직이 직접 구현되지 않고 `pipeline/` 계층으로 분리된다.
+- [x] 환경 변수 접근이 `core/config.py`의 `settings` 객체를 통해서만 이루어진다.
+- [x] FastAPI 도메인(`user/interview`)이 `admin/` 도메인 코드를 직접 참조하지 않는다.
 
 ---
 
 ## Phase 7 — 테스트 & 검증
 
-- [ ] `voiceQualityRatio = 49.99` 경계값 테스트 — `deliveryScore` / `fluencyScore` `null` 반환 확인.
-- [ ] `voiceQualityRatio = 50.00` 경계값 테스트 — 점수 정상값 반환 확인.
-- [ ] LLM 타임아웃 → 폴백 질문 반환 단위 테스트 통과.
-- [ ] Spring 콜백 재시도 단위 테스트 — 2회 실패 후 3회 성공, 3회 모두 실패 후 `log.error` 기록.
-- [ ] WebSocket JWT 검증 실패 → Close 1008 테스트 통과.
-- [ ] `python -m pytest fastapi/` 전체 통과.
+- [x] `voiceQualityRatio = 49.99` 경계값 테스트 — `deliveryScore` / `fluencyScore` `null` 반환 확인.
+- [x] `voiceQualityRatio = 50.00` 경계값 테스트 — 점수 정상값 반환 확인.
+- [x] LLM 타임아웃 → 폴백 질문 반환 단위 테스트 통과.
+- [x] Spring 콜백 재시도 단위 테스트 — 2회 실패 후 3회 성공, 3회 모두 실패 후 `log.error` 기록.
+- [x] WebSocket JWT 검증 실패 → Close 1008 테스트 통과.
+- [x] `python -m pytest fastapi/` 전체 통과.
 - [ ] Spring BE 연동 텍스트 면접 E2E 플로우 수동 검증 완료.
 - [ ] Spring BE 연동 음성 면접 E2E 플로우 수동 검증 완료.
 

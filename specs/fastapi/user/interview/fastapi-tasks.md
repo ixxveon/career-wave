@@ -100,24 +100,24 @@
 
 ## Phase 6 — 테스트 & 통합 검증
 
-- [ ] `fastapi/` pytest 테스트 파일 작성
-  - [ ] `test_stt_pipeline.py`
+- [x] `fastapi/` pytest 테스트 파일 작성
+  - [ ] `test_stt_pipeline.py` — 미작성
     - [ ] `voiceQualityRatio = 49.99` → `deliveryScore` / `fluencyScore` null 처리 확인
     - [ ] `voiceQualityRatio = 50.00` → 점수 정상값 유지 확인
     - [ ] STT 실패 시 `INTERVIEW_STT_FAILED` WebSocket 메시지 전송 확인
-  - [ ] `test_llm_pipeline.py`
-    - [ ] LLM 타임아웃 → 폴백 질문 반환 확인
-    - [ ] RAG 컨텍스트 포함 시 프롬프트 조합 확인
-  - [ ] `test_report_pipeline.py`
-    - [ ] 리포트 생성 후 콜백 페이로드 구조 검증
-    - [ ] 텍스트 면접 시 `voiceQualityRatio: null`, `deliveryScore: null` 확인
-  - [ ] `test_spring_client.py`
-    - [ ] 콜백 성공 1회 테스트
-    - [ ] 콜백 2회 실패 → 3차 시도 성공 테스트 (httpx mock)
-    - [ ] 최종 실패 시 `log.error` 호출 확인
-  - [ ] `test_ws_handler.py`
-    - [ ] JWT 검증 실패 → Close 1008 확인
-    - [ ] 중복 연결 시 이전 연결 종료 확인
-- [ ] `python -m pytest fastapi/` 전체 통과 확인
+  - [x] `test_llm_pipeline.py`
+    - [x] LLM 타임아웃 → 폴백 질문 반환 확인
+    - [x] RAG 컨텍스트 포함 시 프롬프트 조합 확인
+  - [x] `test_report_pipeline.py`
+    - [x] 리포트 생성 후 콜백 페이로드 구조 검증
+    - [x] 텍스트 면접 시 `voiceQualityRatio: null`, `deliveryScore: null` 확인
+  - [x] `test_spring_client.py`
+    - [x] 콜백 성공 1회 테스트
+    - [x] 콜백 2회 실패 → 3차 시도 성공 테스트 (httpx mock)
+    - [x] 최종 실패 시 `log.error` 호출 확인
+  - [x] `test_ws_handler.py`
+    - [x] JWT 검증 실패 → Close 1008 확인
+    - [x] 중복 연결 시 이전 연결 종료 확인
+- [x] `python -m pytest fastapi/` 전체 통과 확인
 - [ ] Spring BE 연동 E2E: 텍스트 면접 전체 플로우 확인
 - [ ] Spring BE 연동 E2E: 음성 면접 전체 플로우 확인
