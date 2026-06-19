@@ -177,17 +177,17 @@ class AdminReportServiceImplTest {
             given(reportBoardRepository.findTitleById(50L)).willReturn("게시글 제목");
             given(reportBoardRepository.findContentById(50L)).willReturn("게시글 본문");
 
-            Map<String, Object> fakeResponse = Map.of("severity", "HIGH", "category", "SPAM", "suggestion", "조치 필요");
+            Map<String, Object> fakeResponse = Map.of("severity", "높음", "category", "SPAM", "suggestion", "조치 필요");
             given(monoMock.block()).willReturn(fakeResponse);
             given(objectMapper.writeValueAsString(any()))
-                .willReturn("{\"severity\":\"HIGH\",\"category\":\"SPAM\",\"suggestion\":\"조치 필요\"}");
+                .willReturn("{\"severity\":\"높음\",\"category\":\"SPAM\",\"suggestion\":\"조치 필요\"}");
 
             Report report = createPendingReport(5L, TargetType.BOARD, 50L);
             given(reportRepository.findById(5L)).willReturn(Optional.of(report));
 
             ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(5L);
 
-            assertThat(result.aiSuggestion()).isEqualTo("{\"severity\":\"HIGH\",\"category\":\"SPAM\",\"suggestion\":\"조치 필요\"}");
+            assertThat(result.aiSuggestion()).isEqualTo("{\"severity\":\"높음\",\"category\":\"SPAM\",\"suggestion\":\"조치 필요\"}");
             verify(reportRepository).findById(5L);
         }
 
@@ -367,7 +367,7 @@ class AdminReportServiceImplTest {
             reportId, targetType, targetId,
             ReportReason.SPAM, ReportStatus.PENDING,
             "신고자", "피신고자",
-            null, null, "{\"severity\":\"HIGH\",\"category\":\"SPAM\",\"suggestion\":\"테스트\"}",
+            null, null, "{\"severity\":\"높음\",\"category\":\"SPAM\",\"suggestion\":\"테스트\"}",
             ZonedDateTime.now(), null, null
         );
     }
