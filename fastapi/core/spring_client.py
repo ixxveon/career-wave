@@ -39,8 +39,11 @@ class ReportCallbackPayload(BaseModel):
     feedbacks: list[FeedbackPayload]
 
 
-async def send_question_to_spring(session_id: str, payload: QuestionPayload) -> None:
-    """LLM이 생성한 질문을 Spring에 전달한다. Spring이 STOMP로 클라이언트에 릴레이한다."""
+async def send_question_to_spring(session_id: str, payload: QuestionPayload) -> bool:
+    """
+    LLM이 생성한 질문을 Spring에 전달한다. Spring이 STOMP로 클라이언트에 릴레이한다.
+    전달 성공 시 True, 최종 실패 시 False 반환.
+    """
     settings = get_settings()
     url = f"{settings.spring_base_url}/internal/api/v1/interview/callback/{session_id}/question"
     headers = {
@@ -58,7 +61,7 @@ async def send_question_to_spring(session_id: str, payload: QuestionPayload) -> 
                 resp.raise_for_status()
                 log.info("question sent to spring: sessionId=%s, order=%d, attempt=%d",
                          session_id, payload.questionOrder, attempt + 1)
-                return
+                return True
         except httpx.HTTPStatusError as e:
             log.warning(
                 "question callback HTTP error: sessionId=%s, attempt=%d, status=%d",
@@ -71,6 +74,7 @@ async def send_question_to_spring(session_id: str, payload: QuestionPayload) -> 
             )
 
     log.error("question callback failed after all retries: sessionId=%s", session_id)
+    return False
 
 
 async def send_report_callback(session_id: str, payload: ReportCallbackPayload) -> None:

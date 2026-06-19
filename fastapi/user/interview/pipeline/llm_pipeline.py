@@ -80,7 +80,16 @@ async def generate_and_deliver_question(
         questionText=question_text_generated,
         questionType=question_type,
     )
-    await send_question_to_spring(session_id, payload)
+    delivered = await send_question_to_spring(session_id, payload)
+    if not delivered:
+        log.error("[Session: %s] question delivery failed: order=%d", session_id, next_question_order)
+        await send_error(
+            session_id,
+            "질문 전달에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+            InterviewErrorCode.LLM_FAILED,
+            question_order=next_question_order,
+        )
+        return
 
     if ctx.session_type == "VOICE":
         from user.interview.pipeline import tts_pipeline
