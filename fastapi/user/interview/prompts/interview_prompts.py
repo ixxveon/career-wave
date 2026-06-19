@@ -55,7 +55,7 @@ _SYSTEM_PROMPTS: dict[str, str] = {
 
 
 def get_system_prompt(interview_type: str | None) -> str:
-    return _SYSTEM_PROMPTS.get(interview_type or "", SYSTEM_PROMPT_DEFAULT)
+    return _SYSTEM_PROMPTS.get((interview_type or "").upper(), SYSTEM_PROMPT_DEFAULT)
 
 
 # ── RAG 컨텍스트 주입 템플릿 ─────────────────────────────────────────────────
@@ -126,4 +126,4 @@ _FALLBACK_MAP: dict[str, list[str]] = {
 
 
 def get_fallback_questions(interview_type: str | None) -> list[str]:
-    return _FALLBACK_MAP.get(interview_type or "", FALLBACK_QUESTIONS_DEFAULT)
+    return _FALLBACK_MAP.get((interview_type or "").upper(), FALLBACK_QUESTIONS_DEFAULT)
