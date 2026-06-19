@@ -7,15 +7,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import kr.co.carrer.admin.scraping.type.ScrapingPipelineStatusType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -23,8 +22,6 @@ import java.time.ZonedDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ScrapingPipeline {
-
-    private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,7 +39,7 @@ public class ScrapingPipeline {
     private ScrapingPipelineStatusType pipelineStatus;
 
     @Column(name = "is_enabled", nullable = false)
-    private Boolean isEnabled;
+    private Boolean isEnabled = true;
 
     @Column(name = "last_started_at")
     private ZonedDateTime lastStartedAt;
@@ -62,24 +59,11 @@ public class ScrapingPipeline {
     @Column(name = "last_error_message", columnDefinition = "TEXT")
     private String lastErrorMessage;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
-        this.createdAt = now;
-        this.updatedAt = now;
-        if (this.isEnabled == null) {
-            this.isEnabled = true;
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = ZonedDateTime.now(SERVICE_ZONE_ID);
-    }
 }
