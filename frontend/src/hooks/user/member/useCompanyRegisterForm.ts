@@ -9,7 +9,8 @@ declare global {
     };
   }
 }
-import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../../types/user/member';
+import { BUSINESS_STATUS_LABELS, VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../../types/user/member';
+import { BUSINESS_NUMBER_CHECK_STATE, type BusinessNumberCheckState } from '../../../utils/user/member/validation';
 import { validateEmploymentCertificateFile } from '../../../utils/user/member/fileValidation';
 import {
   isValidEmail,
@@ -23,6 +24,7 @@ import {
 import { getRecoveryErrorMessage, getRemainingSeconds } from '../../../utils/user/member/recoveryView';
 import { LOGIN_ID_CHECK_STATE, type LoginIdCheckState } from '../../../utils/user/member/validation';
 import {
+  useCheckBusinessNumber,
   useConfirmVerificationCode,
   useLoginIdCheck,
   useRegisterCompany,
@@ -74,6 +76,7 @@ export function useCompanyRegisterForm() {
   const [form, setForm] = useState<CompanyForm>(initialCompanyForm);
   const [terms, setTerms] = useState(initialCompanyTerms);
   const currentLoginIdRef = useRef(form.managerId);
+  const currentBusinessNumberRef = useRef(form.businessNumber);
   const currentManagerPhoneRef = useRef(form.managerPhone);
   const currentManagerEmailRef = useRef(form.managerEmail);
   const managerPhoneVerificationIdRef = useRef('');
@@ -84,6 +87,8 @@ export function useCompanyRegisterForm() {
   const currentEmploymentCertificateRef = useRef<File | null>(null);
   const [employmentCertificateError, setEmploymentCertificateError] = useState('');
   const [loginIdState, setLoginIdState] = useState<LoginIdCheckState>(LOGIN_ID_CHECK_STATE.UNCHECKED);
+  const [businessNumberCheckState, setBusinessNumberCheckState] = useState<BusinessNumberCheckState>(BUSINESS_NUMBER_CHECK_STATE.UNCHECKED);
+  const [businessNumberCheckMessage, setBusinessNumberCheckMessage] = useState('');
   const [verification, setVerification] = useState({
     phoneId: '',
     phoneToken: '',
@@ -102,6 +107,7 @@ export function useCompanyRegisterForm() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitGuideOpen, setIsSubmitGuideOpen] = useState(false);
   const employmentCertificateInputRef = useRef<HTMLInputElement | null>(null);
+  const checkBusinessNumber = useCheckBusinessNumber();
   const checkLoginId = useLoginIdCheck();
   const sendPhoneCode = useSendVerificationCode();
   const confirmPhoneCode = useConfirmVerificationCode();
@@ -138,6 +144,7 @@ export function useCompanyRegisterForm() {
     managerEmailCode: form.managerEmailCode,
     employmentCertificate,
     employmentCertificateFileId: verification.employmentCertificateFileId,
+    businessNumberCheckState,
     terms: {
       service: terms.service,
       privacy: terms.privacy,
@@ -167,6 +174,11 @@ export function useCompanyRegisterForm() {
     setSuccessMessage('');
 
     if (key === 'managerId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
+    if (key === 'businessNumber') {
+      currentBusinessNumberRef.current = typeof value === 'string' ? value : currentBusinessNumberRef.current;
+      setBusinessNumberCheckState(BUSINESS_NUMBER_CHECK_STATE.UNCHECKED);
+      setBusinessNumberCheckMessage('');
+    }
     if (key === 'managerId') currentLoginIdRef.current = typeof value === 'string' ? value : currentLoginIdRef.current;
     if (key === 'managerPhone') {
       currentManagerPhoneRef.current = typeof value === 'string' ? value : currentManagerPhoneRef.current;
@@ -269,6 +281,33 @@ export function useCompanyRegisterForm() {
     setVerification((current) => ({ ...current, employmentCertificateFileId: '' }));
     setEmploymentCertificateError('');
     setFieldErrors((current) => ({ ...current, employmentCertificate: '', employmentCertificateFileId: '' }));
+  };
+
+  const handleBusinessNumberCheck = async () => {
+    const bn = form.businessNumber.trim();
+    if (!/^\d{10}$/.test(bn)) {
+      setFieldErrors((current) => ({ ...current, businessNumber: '사업자등록번호 10자리를 입력해주세요.' }));
+      return;
+    }
+    setBusinessNumberCheckState(BUSINESS_NUMBER_CHECK_STATE.CHECKING);
+    setBusinessNumberCheckMessage('');
+    try {
+      const result = await checkBusinessNumber.mutateAsync({ businessNumber: bn });
+      // stale guard — 조회 중 번호가 변경되면 구 결과 무시
+      if (bn !== currentBusinessNumberRef.current.trim()) return;
+      const label = BUSINESS_STATUS_LABELS[result.businessStatus] ?? result.businessStatus;
+      setBusinessNumberCheckState(result.valid ? BUSINESS_NUMBER_CHECK_STATE.CONFIRMED : BUSINESS_NUMBER_CHECK_STATE.REJECTED);
+      setBusinessNumberCheckMessage(label);
+      setFieldErrors((current) => ({
+        ...current,
+        businessNumber: result.valid ? '' : label,
+      }));
+    } catch (error) {
+      if (bn !== currentBusinessNumberRef.current.trim()) return;
+      setBusinessNumberCheckState(BUSINESS_NUMBER_CHECK_STATE.ERROR);
+      setBusinessNumberCheckMessage('사업자 확인 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해주세요.');
+      setFieldErrors((current) => ({ ...current, businessNumber: getRecoveryErrorMessage(error, '사업자 확인에 실패했습니다.') }));
+    }
   };
 
   const handleLoginIdCheck = async () => {
@@ -463,7 +502,10 @@ export function useCompanyRegisterForm() {
   };
 
   return {
+    businessNumberCheckState,
+    businessNumberCheckMessage,
     canSubmit,
+    checkBusinessNumber,
     checkLoginId,
     companySnapshot,
     confirmEmailCode,
@@ -477,6 +519,7 @@ export function useCompanyRegisterForm() {
     form,
     formMessage,
     handleAddressSearch,
+    handleBusinessNumberCheck,
     handleCertificateChange,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,

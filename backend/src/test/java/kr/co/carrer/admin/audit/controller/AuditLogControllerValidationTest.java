@@ -184,7 +184,7 @@ class AuditLogControllerValidationTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").doesNotExist())
+                .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.code").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.content.length()").value(1))

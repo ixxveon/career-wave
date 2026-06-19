@@ -53,7 +53,7 @@ class AdminManagementControllerResponseTest {
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().isSuccess()).isTrue();
-        assertThat(response.getBody().getStatusCode()).isNull();
+        assertThat(response.getBody().getStatusCode()).isEqualTo(200);
         assertThat(response.getBody().getData().page()).isEqualTo(1);
         assertThat(response.getBody().getData().size()).isEqualTo(20);
         assertThat(response.getBody().getData().totalElements()).isEqualTo(1L);
@@ -85,7 +85,7 @@ class AdminManagementControllerResponseTest {
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().isSuccess()).isTrue();
-        assertThat(response.getBody().getStatusCode()).isNull();
+        assertThat(response.getBody().getStatusCode()).isEqualTo(200);
         assertThat(response.getBody().getData().page()).isEqualTo(1);
         assertThat(response.getBody().getData().size()).isEqualTo(20);
         assertThat(response.getBody().getData().totalElements()).isEqualTo(1L);

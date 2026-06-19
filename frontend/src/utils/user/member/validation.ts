@@ -1,6 +1,16 @@
 import { MEMBER_TYPE, type MemberType } from '../../../types/user/member';
 import { isPasswordConfirmed, validatePasswordPolicy } from './passwordPolicy';
 
+export const BUSINESS_NUMBER_CHECK_STATE = {
+  UNCHECKED: 'unchecked',
+  CHECKING: 'checking',
+  CONFIRMED: 'confirmed',  // valid=true (CONTINUING)
+  REJECTED: 'rejected',    // valid=false (SUSPENDED/CLOSED/NOT_REGISTERED)
+  ERROR: 'error',
+} as const;
+
+export type BusinessNumberCheckState = (typeof BUSINESS_NUMBER_CHECK_STATE)[keyof typeof BUSINESS_NUMBER_CHECK_STATE];
+
 export const LOGIN_ID_CHECK_STATE = {
   UNCHECKED: 'unchecked',
   CHECKING: 'checking',
