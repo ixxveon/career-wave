@@ -6,8 +6,9 @@ from fastapi import APIRouter, Depends
 from fastapi import Path as FastApiPath
 from fastapi.responses import JSONResponse
 
-from admin.ai_metrics.client import MockVectorStoreClient, get_ai_metrics_openai_client
+from admin.ai_metrics.client import MockVectorStoreClient
 from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException, build_error_response
+from admin.ai_metrics.client import get_ai_metrics_openai_client
 from admin.ai_metrics.parser import RagDocumentParser
 from admin.ai_metrics.repository import (
     AiModelRepository,

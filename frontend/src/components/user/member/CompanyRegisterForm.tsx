@@ -4,6 +4,7 @@ import { useCompanyRegisterForm } from '../../../hooks/user/member/useCompanyReg
 import { formatRemaining } from '../../../utils/user/member/recoveryView';
 import type { CompanyTermDetails } from '../../../utils/user/member/registerTerms';
 import { LOGIN_ID_CHECK_STATE } from '../../../utils/user/member/validation';
+import { BUSINESS_NUMBER_CHECK_STATE } from '../../../utils/user/member/validation';
 import { AuthButtonGroup, Field, SelectInput, StatusPill, TextInput } from './RegisterFormPrimitives';
 
 type CompanyTermsValues = {
@@ -30,6 +31,9 @@ export function CompanyRegisterForm({
   termDetails: CompanyTermDetails;
 }) {
   const {
+    businessNumberCheckState,
+    businessNumberCheckMessage,
+    checkBusinessNumber,
     checkLoginId,
     confirmEmailCode,
     confirmPhoneCode,
@@ -42,6 +46,7 @@ export function CompanyRegisterForm({
     form,
     formMessage,
     handleAddressSearch,
+    handleBusinessNumberCheck,
     handleCertificateChange,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,
@@ -87,7 +92,24 @@ export function CompanyRegisterForm({
               <SelectInput value={form.companyType} onChange={(value) => update('companyType', value)} placeholder="기업형태 선택" options={companyTypes} />
             </Field>
             <Field label="사업자등록번호" required>
-              <TextInput value={form.businessNumber} onChange={(value) => update('businessNumber', value)} placeholder="사업자등록번호('-' 없이 숫자만 입력)" />
+              <AuthButtonGroup
+                input={
+                  <TextInput
+                    value={form.businessNumber}
+                    onChange={(value) => update('businessNumber', value)}
+                    placeholder="사업자등록번호('-' 없이 숫자만 입력)"
+                  />
+                }
+                buttonLabel={checkBusinessNumber.isPending ? '확인 중...' : '확인'}
+                onClick={() => void handleBusinessNumberCheck()}
+                disabled={checkBusinessNumber.isPending}
+              />
+              {businessNumberCheckMessage && (
+                <StatusPill active={businessNumberCheckState === BUSINESS_NUMBER_CHECK_STATE.CONFIRMED}>
+                  {businessNumberCheckMessage}
+                </StatusPill>
+              )}
+              {fieldErrors.businessNumber && <p className="cw-register-error">{fieldErrors.businessNumber}</p>}
             </Field>
             <Field label="회사명" required>
               <TextInput value={form.companyName} onChange={(value) => update('companyName', value)} placeholder="회사명 입력" />
