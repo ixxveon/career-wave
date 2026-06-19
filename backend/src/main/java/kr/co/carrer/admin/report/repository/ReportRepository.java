@@ -9,6 +9,6 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 
     long countByReportStatus(ReportStatus reportStatus);
 
-    @Query(value = "SELECT COUNT(*) FROM reports WHERE ai_suggestion IS NOT NULL AND ai_suggestion::jsonb ->> 'severity' = 'HIGH'", nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) FROM reports WHERE ai_suggestion IS NOT NULL AND ai_suggestion::jsonb ->> 'severity' = '높음'", nativeQuery = true)
     long countHighRisk();
 }
