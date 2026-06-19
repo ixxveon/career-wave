@@ -85,6 +85,7 @@ public class ScrapingServiceImpl implements ScrapingService {
 
     @Override
     public ResponseAction requestAction(String sourceName, RequestAction command, Long actorAdminId, String ipAddress) {
+        validateActionCommand(command);
         try {
             ScrapingFastApiGateway.ActionRequest request = new ScrapingFastApiGateway.ActionRequest(
                     sourceName,
@@ -107,6 +108,7 @@ public class ScrapingServiceImpl implements ScrapingService {
 
     @Override
     public ResponseBatchAction requestBatchAction(RequestBatchAction command, Long actorAdminId, String ipAddress) {
+        validateBatchActionCommand(command);
         try {
             ScrapingFastApiGateway.BatchActionRequest request = new ScrapingFastApiGateway.BatchActionRequest(
                     command.actionType().name(),
@@ -181,7 +183,19 @@ public class ScrapingServiceImpl implements ScrapingService {
 
     private void validateActorAdminId(Long actorAdminId) {
         if (actorAdminId == null) {
-            throw new IllegalArgumentException("actorAdminId must not be null");
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+    }
+
+    private void validateActionCommand(RequestAction command) {
+        if (command == null || command.actionType() == null) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+    }
+
+    private void validateBatchActionCommand(RequestBatchAction command) {
+        if (command == null || command.actionType() == null || command.sourceNames() == null) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
         }
     }
 }
