@@ -3,15 +3,6 @@
    ═══════════════════════════════════════════════ */
 .sp-page { display: flex; flex-direction: column; gap: 0; padding: 36px 0 0; }
 
-.sp-eyebrow {
-  display: inline-block; margin-bottom: 12px;
-  padding: 4px 12px; border-radius: 100px;
-  background: #dbeafe; color: var(--color-primary-dark);
-  font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
-}
-.sp-header__title { margin: 0 0 8px; font-size: 26px; font-weight: 700; color: var(--color-text-primary); }
-.sp-header__desc  { margin: 0; font-size: 14px; color: var(--color-text-secondary); }
-
 .sp-tabs {
   display: flex; gap: 0; margin-top: 28px;
   border-bottom: 2px solid var(--color-border);
