@@ -125,6 +125,8 @@ Phase 10 "먼저 작성할 3가지 ★"를 구현 코드보다 먼저 작성한�
 
 ## Phase 6-2 — FastAPI 콜백 수신
 
+- [x] `POST /internal/api/v1/interview/callback/{sessionId}/question` 엔드포인트가 구현되어 있다.
+  - [x] `X-Internal-Secret` 헤더 검증 및 `/topic/interview/{sessionId}` STOMP 릴레이 동작 확인.
 - [ ] `POST /internal/api/v1/interview/callback/{sessionId}/report` 엔드포인트가 구현되어 있다.
 - [ ] `X-Internal-Secret` 헤더 검증이 구현되어 있으며, 시크릿 값이 환경 변수로 관리된다 (코드 하드코딩 금지).
 - [ ] `/internal/**` 경로가 Spring Security에서 외부 접근 차단된다.

@@ -86,7 +86,7 @@
 - [x] Spring 콜백 재시도 단위 테스트 — 2회 실패 후 3회 성공, 3회 모두 실패 후 `log.error` 기록.
 - [x] WebSocket JWT 검증 실패 → Close 1008 테스트 통과.
 - [x] `python -m pytest fastapi/` 전체 통과.
-- [ ] Spring BE 연동 텍스트 면접 E2E 플로우 수동 검증 완료.
+- [x] Spring BE 연동 텍스트 면접 E2E 플로우 수동 검증 완료.
 - [ ] Spring BE 연동 음성 면접 E2E 플로우 수동 검증 완료.
 
 ---

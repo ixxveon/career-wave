@@ -15,7 +15,6 @@ _BACKOFF_DELAYS = (0, 1, 3)
 
 
 class QuestionPayload(BaseModel):
-    sessionId: str
     questionOrder: int
     questionText: str
     questionType: str  # FOLLOW_UP | PRESSURE | NEXT

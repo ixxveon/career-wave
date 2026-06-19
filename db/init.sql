@@ -1070,7 +1070,7 @@ CREATE TABLE ai_usage_logs (
     feature_type    VARCHAR(20) NOT NULL,
     input_tokens    INTEGER     NOT NULL,
     output_tokens   INTEGER     NOT NULL,
-    cost            INTEGER     NOT NULL,
+    cost            NUMERIC(15,2) NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_ai_usage_logs     PRIMARY KEY (ai_usage_log_id),
