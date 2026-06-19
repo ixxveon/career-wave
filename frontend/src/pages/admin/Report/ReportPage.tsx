@@ -63,7 +63,6 @@ interface UserAiReview {
 interface ReportWithAi extends ReportItem {
   aiSuggestion?: AiSuggestion | null;
   userAiReview?: UserAiReview;
-  contentTitle?: ReportDetail['contentTitle'];
   contentBody?: ReportDetail['contentBody'];
   targetId?: ReportDetail['targetId'];
   processedAt?: ReportDetail['processedAt'];
