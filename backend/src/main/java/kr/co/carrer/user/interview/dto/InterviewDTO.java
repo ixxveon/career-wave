@@ -195,9 +195,6 @@ public class InterviewDTO {
     @Schema(description = "FastAPI 질문 콜백 요청")
     public record RequestQuestionCallback(
 
-            @Schema(description = "면접 세션 ID")
-            String sessionId,
-
             @Schema(description = "질문 순서 (1-based)")
             Integer questionOrder,
 
