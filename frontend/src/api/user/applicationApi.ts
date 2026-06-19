@@ -29,8 +29,7 @@ interface DiagnosisPdfPayload {
   pdfUrl?: string;
 }
 
-const USE_MOCK_DATA =
-    import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_DATA === 'true';
+const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
 const mockApplicants: Applicant[] = [
   {
@@ -85,27 +84,20 @@ function mockResponse<T>(data: T): Promise<T> {
 }
 
 export const applicationApi = {
-  getApplications: async (params: ApplicationQuery = {}): Promise<Applicant[]> => {
-    if (!USE_MOCK_DATA) {
+  getApplications: (params: ApplicationQuery = {}): Promise<Applicant[]> => {
+    if (!useMockData) {
       const query = new URLSearchParams(params as Record<string, string>).toString();
-      const response = await apiClient<Applicant[] | null>(
-          `/applications${query ? `?${query}` : ''}`,
-      );
-
-      return response ?? [];
+      return apiClient<Applicant[]>(`/applications${query ? `?${query}` : ''}`) as Promise<Applicant[]>;
     }
 
     const keyword = (params.keyword || '').trim().toLowerCase();
     const status = params.status || 'ALL';
-
     const filtered = mockApplicants.filter((applicant) => {
       const matchesKeyword =
-          !keyword ||
-          applicant.applicantName.toLowerCase().includes(keyword) ||
-          applicant.jobTitle.toLowerCase().includes(keyword);
-
+        !keyword ||
+        applicant.applicantName.toLowerCase().includes(keyword) ||
+        applicant.jobTitle.toLowerCase().includes(keyword);
       const matchesStatus = status === 'ALL' || applicant.status === status;
-
       return matchesKeyword && matchesStatus;
     });
 
@@ -113,28 +105,28 @@ export const applicationApi = {
   },
 
   getApplicationDetail: (applicationId: string): Promise<Applicant | null> => {
-    if (!USE_MOCK_DATA) {
-      return apiClient<Applicant | null>(`/applications/${applicationId}`);
+    if (!useMockData) {
+      return apiClient(`/applications/${applicationId}`);
     }
 
     return mockResponse(mockApplicants.find((applicant) => applicant.id === applicationId) || null);
   },
 
   updateApplicationStatus: (applicationId: string, status: ApplicationStatus) => (
-      USE_MOCK_DATA
-          ? mockResponse({ applicationId, status })
-          : apiClient(`/applications/${applicationId}/status`, {
-            method: 'PATCH',
-            body: JSON.stringify({ status }),
-          })
+    useMockData
+      ? mockResponse({ applicationId, status })
+      : apiClient(`/applications/${applicationId}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status }),
+        })
   ),
 
   saveDiagnosisPdf: (applicationId: string, payload: DiagnosisPdfPayload) => (
-      USE_MOCK_DATA
-          ? mockResponse({ applicationId, pdfUrl: payload.pdfUrl || 'mock://diagnosis-report.pdf' })
-          : apiClient(`/applications/${applicationId}/diagnosis-pdf`, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-          })
+    useMockData
+      ? mockResponse({ applicationId, pdfUrl: payload.pdfUrl || 'mock://diagnosis-report.pdf' })
+      : apiClient(`/applications/${applicationId}/diagnosis-pdf`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        })
   ),
 };
