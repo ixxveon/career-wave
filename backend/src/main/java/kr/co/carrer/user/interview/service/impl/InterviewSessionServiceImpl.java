@@ -12,8 +12,10 @@ import kr.co.carrer.user.interview.service.InterviewSessionService;
 import kr.co.carrer.user.interview.type.InterviewType;
 import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
+import kr.co.carrer.user.resume.entity.Document;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -24,6 +26,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InterviewSessionServiceImpl implements InterviewSessionService {
@@ -40,17 +43,27 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         InterviewType interviewType = parseInterviewType(dto.interviewType());
         UUID documentId = parseDocumentId(dto.documentId());
 
+        String fileUrl = null;
+        if (documentId != null) {
+            Document document = documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
+                    .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_DOCUMENT_NOT_FOUND));
+            fileUrl = document.getFileUrl();
+        }
+
         InterviewSession saved = saveNewSession(memberId, documentId, sessionType, interviewType, dto.targetCompany());
 
         if (documentId != null) {
             UUID sessionId = saved.getSessionId();
             UUID finalDocumentId = documentId;
-            if (TransactionSynchronizationManager.isSynchronizationActive()) TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    fastApiClient.triggerRagContext(sessionId, finalDocumentId);
-                }
-            });
+            String finalFileUrl = fileUrl;
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        fastApiClient.triggerRagContext(sessionId, memberId, finalDocumentId, finalFileUrl);
+                    }
+                });
+            }
         }
 
         return new InterviewDTO.ResponseStartSession(
@@ -64,11 +77,6 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
 
     @Transactional
     protected InterviewSession saveNewSession(UUID memberId, UUID documentId, SessionType sessionType, InterviewType interviewType, String targetCompany) {
-        if (documentId != null) {
-            documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
-                    .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_DOCUMENT_NOT_FOUND));
-        }
-
         sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)
                 .ifPresent(s -> { throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_DUPLICATE); });
 
@@ -79,32 +87,30 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     @Override
     @Transactional
     public InterviewDTO.ResponseSubmitTextAnswer submitTextAnswer(UUID memberId, UUID sessionId, InterviewDTO.RequestSubmitTextAnswer dto) {
-        InterviewMessage saved = saveAnswerMessage(memberId, sessionId, dto);
-        int questionOrder = dto.questionOrder();
-        if (TransactionSynchronizationManager.isSynchronizationActive()) TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                fastApiClient.triggerLlmPipeline(sessionId, questionOrder);
-            }
-        });
-        return new InterviewDTO.ResponseSubmitTextAnswer(saved.getMessageId(), saved.getCreatedAt());
-    }
-
-    @Transactional
-    protected InterviewMessage saveAnswerMessage(UUID memberId, UUID sessionId, InterviewDTO.RequestSubmitTextAnswer dto) {
-        InterviewSession session = sessionRepository.findBySessionId(sessionId)
-                .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_NOT_FOUND));
-
-        if (!session.getMemberId().equals(memberId)) {
-            throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN);
-        }
+        InterviewSession session = sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)
+                .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_FORBIDDEN));
 
         if (!session.isInProgress()) {
             throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_ALREADY_ENDED);
         }
 
-        InterviewMessage message = InterviewMessage.createAnswer(sessionId, dto.messageContent());
-        return messageRepository.save(message);
+        InterviewMessage saved = messageRepository.save(InterviewMessage.createAnswer(sessionId, dto.messageContent()));
+
+        int questionOrder = dto.questionOrder();
+        String answerText = dto.messageContent();
+        String sessionType = session.getSessionType().name();
+        String interviewType = session.getInterviewType() != null ? session.getInterviewType().name() : null;
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    fastApiClient.triggerLlmPipeline(sessionId, memberId, questionOrder, answerText, sessionType, interviewType);
+                }
+            });
+        }
+
+        return new InterviewDTO.ResponseSubmitTextAnswer(saved.getMessageId(), saved.getCreatedAt());
     }
 
     private static final List<String> ALLOWED_AUDIO_TYPES = List.of("audio/webm", "audio/mp4", "audio/ogg");
@@ -142,18 +148,6 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     @Override
     @Transactional
     public InterviewDTO.ResponseEndSession endSession(UUID memberId, UUID sessionId) {
-        ZonedDateTime endedAt = completeSession(memberId, sessionId);
-        if (TransactionSynchronizationManager.isSynchronizationActive()) TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                fastApiClient.triggerReportGeneration(sessionId);
-            }
-        });
-        return new InterviewDTO.ResponseEndSession(sessionId.toString(), "COMPLETED", endedAt);
-    }
-
-    @Transactional
-    protected ZonedDateTime completeSession(UUID memberId, UUID sessionId) {
         InterviewSession session = sessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_SESSION_NOT_FOUND));
 
@@ -167,7 +161,19 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
 
         ZonedDateTime endedAt = ZonedDateTime.now();
         session.complete(endedAt);
-        return endedAt;
+
+        String sessionType = session.getSessionType().name();
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    fastApiClient.triggerReportGeneration(sessionId, memberId, sessionType);
+                }
+            });
+        }
+
+        return new InterviewDTO.ResponseEndSession(sessionId.toString(), "COMPLETED", endedAt);
     }
 
     private SessionType parseSessionType(String sessionType) {
