@@ -382,7 +382,7 @@
 
 .dr-star-row {
   display: grid;
-  grid-template-columns: 28px 36px 1fr 18px;
+  grid-template-columns: 28px auto 1fr 18px;
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
