@@ -95,6 +95,9 @@ export const reportApi = {
   getReportDetail: async (reportId: number): Promise<{ data: ApiResponse<ReportDetail> }> => {
     const res = await axiosInstance.get<ApiResponse<RawReportDetail>>(`/api/v1/admin/reports/${reportId}`);
     const raw = res.data.data;
+    if (!raw) {
+      return { data: { ...res.data, data: null as unknown as ReportDetail } };
+    }
     const aiSuggestion: AiSuggestion | null = typeof raw.aiSuggestion === 'string'
       ? (() => { try { return JSON.parse(raw.aiSuggestion as string); } catch { return null; } })()
       : null;
