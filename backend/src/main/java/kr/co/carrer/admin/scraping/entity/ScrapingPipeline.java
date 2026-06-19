@@ -51,7 +51,7 @@ public class ScrapingPipeline {
     private ZonedDateTime lastFailedAt;
 
     @Column(name = "last_duration_ms")
-    private Long lastDurationMs;
+    private Integer lastDurationMs;
 
     @Column(name = "last_total_count")
     private Integer lastTotalCount;
