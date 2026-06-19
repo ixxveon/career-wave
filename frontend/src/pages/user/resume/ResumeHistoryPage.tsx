@@ -26,6 +26,7 @@ export default function ResumeHistoryPage() {
   } = useResumeHistory();
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const listWrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -37,7 +38,7 @@ export default function ResumeHistoryPage() {
           fetchNextPage();
         }
       },
-      { threshold: 0.1 },
+      { root: listWrapRef.current, threshold: 0.1 },
     );
 
     observer.observe(el);
@@ -121,16 +122,18 @@ export default function ResumeHistoryPage() {
             ) : (
               <>
                 <p className="rh-count">총 {totalItems}건</p>
-                <ul className="rh-list" aria-label="분석 이력 목록">
-                  {filteredItems.map((item) => (
-                    <li key={item.documentId}>
-                      <HistoryItem item={item} />
-                    </li>
-                  ))}
-                </ul>
+                <div className="rh-list-wrap" ref={listWrapRef}>
+                  <ul className="rh-list" aria-label="분석 이력 목록">
+                    {filteredItems.map((item) => (
+                      <li key={item.documentId}>
+                        <HistoryItem item={item} />
+                      </li>
+                    ))}
+                  </ul>
 
-                {/* 무한스크롤 센티넬 */}
-                <div ref={sentinelRef} aria-hidden="true" />
+                  {/* 무한스크롤 센티넬 */}
+                  <div ref={sentinelRef} aria-hidden="true" />
+                </div>
 
                 {isFetchingNextPage && (
                   <div role="status" aria-label="추가 항목 불러오는 중">
