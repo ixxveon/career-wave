@@ -17,6 +17,13 @@ log = logging.getLogger(__name__)
 
 _bg_tasks: set[asyncio.Task] = set()
 
+
+def _on_task_done(task: asyncio.Task) -> None:
+    _bg_tasks.discard(task)
+    if not task.cancelled() and (exc := task.exception()):
+        log.error("background task failed: %s", exc, exc_info=exc)
+
+
 router = APIRouter(
     prefix="/interview",
     tags=["interview-internal"],
@@ -75,7 +82,7 @@ async def trigger_voice_chunk(
         )
     )
     _bg_tasks.add(task)
-    task.add_done_callback(_bg_tasks.discard)
+    task.add_done_callback(_on_task_done)
 
     log.info(
         "STT pipeline triggered: sessionId=%s, chunkIndex=%d, isFinal=%s",
@@ -115,7 +122,7 @@ async def trigger_text_answer(
         )
     )
     _bg_tasks.add(task)
-    task.add_done_callback(_bg_tasks.discard)
+    task.add_done_callback(_on_task_done)
 
     log.info(
         "LLM pipeline triggered: sessionId=%s, questionOrder=%d, sessionType=%s",
@@ -144,7 +151,7 @@ async def register_rag_context(
         _index_rag_context(session_id, body.documentFilePath)
     )
     _bg_tasks.add(task)
-    task.add_done_callback(_bg_tasks.discard)
+    task.add_done_callback(_on_task_done)
 
     log.info(
         "RAG context registration triggered: sessionId=%s, documentId=%s",
@@ -228,7 +235,7 @@ async def trigger_report(
         )
     )
     _bg_tasks.add(task)
-    task.add_done_callback(_bg_tasks.discard)
+    task.add_done_callback(_on_task_done)
 
     log.info(
         "report pipeline triggered: sessionId=%s, sessionType=%s",
