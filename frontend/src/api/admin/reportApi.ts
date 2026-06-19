@@ -56,7 +56,6 @@ export interface AiSuggestion {
 
 export interface ReportDetail extends ReportItem {
   targetId: number;
-  contentTitle: string | null;
   contentBody: string | null;
   aiSuggestion: AiSuggestion | null;
   processedAt: string | null;
