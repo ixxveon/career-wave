@@ -137,12 +137,12 @@ export const supportApi = {
     const query = new URLSearchParams();
     if (params?.category) query.set('category', params.category);
     const qs = query.toString();
-    return memberApiClient<InquiryItem[]>(`/api/v1/inquiries${qs ? `?${qs}` : ''}`, { auth: true });
+    return memberApiClient<InquiryItem[]>(`/api/v1/user/inquiries${qs ? `?${qs}` : ''}`, { auth: true });
   },
 
   // 문의 접수 (로그인 필수)
   createInquiry: (body: CreateInquiryRequest) =>
-    memberApiClient<CreateInquiryResult>('/api/v1/inquiries', {
+    memberApiClient<CreateInquiryResult>('/api/v1/user/inquiries', {
       method: 'POST',
       body: JSON.stringify(body),
       auth: true,
