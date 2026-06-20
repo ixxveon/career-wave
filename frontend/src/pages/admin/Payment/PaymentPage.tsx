@@ -15,7 +15,6 @@ import {
   PAY_STATUS,
   PAY_STATUS_LABEL,
   REFUND_STATUS_LABEL,
-  PAYMENT_TYPE_LABEL,
   SUB_STATUS,
   SUB_STATUS_LABEL,
   type Payment,
@@ -49,10 +48,6 @@ const REFUND_STATUS_CLS: Record<string, string> = {
   REJECTED:  'blinded',
 };
 
-const PAYMENT_TYPE_CLS: Record<string, string> = {
-  MANUAL:       'payType--manual',
-  AUTO_RENEWAL: 'payType--renewal',
-};
 
 const SUB_STATUS_CLS: Record<string, string> = {
   ACTIVE:            'normal',
@@ -65,8 +60,8 @@ const TABS: PayTab[] = ['결제 내역', '구독 현황', '정산 리포트'];
 
 // ── 환불 가능 여부 판단 헬퍼 ──────────────────────────────────
 
-function daysSincePaid(paidAt: string): number {
-  const paid = new Date(paidAt);
+function daysSincePaid(approvedAt: string): number {
+  const paid = new Date(approvedAt);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   paid.setHours(0, 0, 0, 0);
@@ -74,11 +69,11 @@ function daysSincePaid(paidAt: string): number {
 }
 
 function checkRefundEligibility(p: Payment): { eligible: boolean; reason: string | null } {
-  const days = daysSincePaid(p.paidAt);
+  const days = daysSincePaid(p.approvedAt);
   if (days > 7) {
     return { eligible: false, reason: `결제일로부터 ${days}일 경과 — 환불 가능 기간(7일)을 초과하였습니다.` };
   }
-  if (p.aiUsage.resumePaidCount > 0 || p.aiUsage.interviewPaidCount > 0) {
+  if (p.aiUsage.documentCount > 0 || p.aiUsage.interviewCount > 0) {
     return { eligible: false, reason: '유료 AI 기능 이용 이력이 있어 환불이 불가합니다.' };
   }
   return { eligible: true, reason: null };
@@ -426,16 +421,14 @@ export default function PaymentPage() {
                     <tr><td colSpan={9} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
                   ) : payments.map((p) => (
                     <tr key={p.paymentId}>
-                      <td style={{ fontSize: 13, color: '#7a8da4' }}>{p.paymentId}</td>
+                      <td style={{ fontSize: 13, color: '#7a8da4', fontFamily: 'monospace' }} title={p.paymentId}>
+                        {p.paymentId.slice(0, 8)}…
+                      </td>
                       <td className="payOrderId">{p.orderId}</td>
                       <td>{p.memberName}</td>
-                      <td>{p.product}</td>
-                      <td>
-                        <span className={`payTypeBadge ${PAYMENT_TYPE_CLS[p.paymentType]}`}>
-                          {PAYMENT_TYPE_LABEL[p.paymentType]}
-                        </span>
-                      </td>
-                      <td>{new Date(p.paidAt).toLocaleDateString('ko-KR')}</td>
+                      <td>{p.planName}</td>
+                      <td>—</td>
+                      <td>{p.approvedAt ? new Date(p.approvedAt).toLocaleDateString('ko-KR') : '—'}</td>
                       <td>₩{p.amount.toLocaleString()}</td>
                       <td>
                         {p.refundStatus ? (
@@ -577,7 +570,7 @@ export default function PaymentPage() {
           <div className="memberModal modal--scrollable" style={{ width: 540 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0, padding: '20px 24px 16px' }}>
               <div>
-                <h3>{selected.memberName} · {selected.paymentId}</h3>
+                <h3>{selected.memberName} · <span title={selected.paymentId} style={{ fontFamily: 'monospace', fontSize: 14 }}>{selected.paymentId.slice(0, 8)}…</span></h3>
                 <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>
                   Toss 주문번호: {selected.orderId}
                 </p>
@@ -587,15 +580,10 @@ export default function PaymentPage() {
 
             <div className="modalBody">
               <div className="modalInfoGrid">
-                <div><span>상품명</span><strong>{selected.product}</strong></div>
-                <div><span>결제일</span><strong>{new Date(selected.paidAt).toLocaleDateString('ko-KR')}</strong></div>
+                <div><span>상품명</span><strong>{selected.planName}</strong></div>
+                <div><span>결제일</span><strong>{selected.approvedAt ? new Date(selected.approvedAt).toLocaleDateString('ko-KR') : '—'}</strong></div>
                 <div><span>결제 금액</span><strong>₩{selected.amount.toLocaleString()}</strong></div>
-                <div>
-                  <span>결제 유형</span>
-                  <span className={`payTypeBadge ${PAYMENT_TYPE_CLS[selected.paymentType]}`}>
-                    {PAYMENT_TYPE_LABEL[selected.paymentType]}
-                  </span>
-                </div>
+                <div><span>결제 수단</span><strong>{selected.paymentMethod ?? '—'}</strong></div>
                 <div>
                   <span>현재 상태</span>
                   <span className={`statusBadge ${PAY_STATUS_CLS[selected.paymentStatus]}`}>
@@ -618,21 +606,21 @@ export default function PaymentPage() {
                   <p className="refundCheckTitle">환불 가능 여부 확인</p>
                   <div className="refundCheckRow">
                     <span>결제일로부터 경과</span>
-                    <strong className={daysSincePaid(selected.paidAt) <= 7 ? 'refundOk' : 'refundFail'}>
-                      {daysSincePaid(selected.paidAt)}일 경과
-                      {daysSincePaid(selected.paidAt) <= 7 ? ' (7일 이내)' : ' (7일 초과)'}
+                    <strong className={daysSincePaid(selected.approvedAt) <= 7 ? 'refundOk' : 'refundFail'}>
+                      {daysSincePaid(selected.approvedAt)}일 경과
+                      {daysSincePaid(selected.approvedAt) <= 7 ? ' (7일 이내)' : ' (7일 초과)'}
                     </strong>
                   </div>
                   <div className="refundCheckRow">
                     <span>이력서 분석 유료 이용</span>
-                    <strong className={selected.aiUsage.resumePaidCount === 0 ? 'refundOk' : 'refundFail'}>
-                      {selected.aiUsage.resumePaidCount === 0 ? '없음' : `${selected.aiUsage.resumePaidCount}회`}
+                    <strong className={selected.aiUsage.documentCount === 0 ? 'refundOk' : 'refundFail'}>
+                      {selected.aiUsage.documentCount === 0 ? '없음' : `${selected.aiUsage.documentCount}회`}
                     </strong>
                   </div>
                   <div className="refundCheckRow">
                     <span>AI 면접 유료 이용</span>
-                    <strong className={selected.aiUsage.interviewPaidCount === 0 ? 'refundOk' : 'refundFail'}>
-                      {selected.aiUsage.interviewPaidCount === 0 ? '없음' : `${selected.aiUsage.interviewPaidCount}회`}
+                    <strong className={selected.aiUsage.interviewCount === 0 ? 'refundOk' : 'refundFail'}>
+                      {selected.aiUsage.interviewCount === 0 ? '없음' : `${selected.aiUsage.interviewCount}회`}
                     </strong>
                   </div>
                   <div className="refundEligibleRow">
