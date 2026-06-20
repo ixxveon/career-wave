@@ -116,12 +116,12 @@ export const supportApi = {
     if (params.keyword)  query.set('keyword', params.keyword);
     query.set('page', String(params.page));
     query.set('size', String(params.size));
-    return memberApiClient<NoticeListResult>(`/api/v1/notices?${query}`);
+    return memberApiClient<NoticeListResult>(`/api/v1/user/notices?${query}`);
   },
 
   // 공지사항 상세
   getNoticeDetail: (noticeId: number) =>
-    memberApiClient<NoticeDetail>(`/api/v1/notices/${noticeId}`),
+    memberApiClient<NoticeDetail>(`/api/v1/user/notices/${noticeId}`),
 
   // FAQ 목록
   getFaqs: (params?: { category?: FaqCategory; keyword?: string }) => {
@@ -129,7 +129,7 @@ export const supportApi = {
     if (params?.category) query.set('category', params.category);
     if (params?.keyword)  query.set('keyword', params.keyword);
     const qs = query.toString();
-    return memberApiClient<FaqItem[]>(`/api/v1/faqs${qs ? `?${qs}` : ''}`);
+    return memberApiClient<FaqItem[]>(`/api/v1/user/faqs${qs ? `?${qs}` : ''}`);
   },
 
   // 나의 문의 목록 (로그인 필수)
