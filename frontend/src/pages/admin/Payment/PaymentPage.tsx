@@ -421,7 +421,13 @@ export default function PaymentPage() {
                     <tr><td colSpan={9} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
                   ) : payments.map((p) => (
                     <tr key={p.paymentId}>
-                      <td style={{ fontSize: 12, color: '#7a8da4', fontFamily: 'monospace' }}>{p.paymentId}</td>
+                      <td
+                        style={{ fontSize: 13, color: '#7a8da4', fontFamily: 'monospace', cursor: 'pointer', userSelect: 'none' }}
+                        title={`클릭하여 복사: ${p.paymentId}`}
+                        onClick={() => { navigator.clipboard.writeText(p.paymentId); showToast('결제 ID가 복사되었습니다.'); }}
+                      >
+                        {p.paymentId.slice(0, 8)}…
+                      </td>
                       <td className="payOrderId">{p.orderId}</td>
                       <td>{p.memberName}</td>
                       <td>{p.planName}</td>
@@ -568,7 +574,11 @@ export default function PaymentPage() {
           <div className="memberModal modal--scrollable" style={{ width: 540 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0, padding: '20px 24px 16px' }}>
               <div>
-                <h3>{selected.memberName} · <span style={{ fontFamily: 'monospace', fontSize: 14 }}>{selected.paymentId}</span></h3>
+                <h3>{selected.memberName} · <span
+                  style={{ fontFamily: 'monospace', fontSize: 14, cursor: 'pointer', userSelect: 'none' }}
+                  title={`클릭하여 복사: ${selected.paymentId}`}
+                  onClick={() => { navigator.clipboard.writeText(selected.paymentId); showToast('결제 ID가 복사되었습니다.'); }}
+                >{selected.paymentId.slice(0, 8)}…</span></h3>
                 <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>
                   Toss 주문번호: {selected.orderId}
                 </p>
