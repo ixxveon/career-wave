@@ -89,9 +89,9 @@ export interface InquiryItem {
   inquiryId: number;
   category: InquiryCategory;
   title: string;
-  content: string;
+  contentPreview: string;
+  reply: string | null;
   inquiryStatus: InquiryStatus;
-  answer: string | null;
   createdAt: string;
 }
 
