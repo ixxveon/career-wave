@@ -5,6 +5,7 @@ import {
   MEMBER_STATUS,
   type MemberItem,
   type MemberStatus,
+  type MemberCounts,
   type SuspendDuration,
   type HrManagerItem,
   type HrManagerDetail,
@@ -60,6 +61,9 @@ export default function UserManagementPage() {
   const [suspendLoading, setSuspendLoading] = useState(false);
   const [suspendError, setSuspendError] = useState('');
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
+
+  // ── KPI 집계 상태 ─────────────────────────────────────────
+  const [memberCounts, setMemberCounts] = useState<MemberCounts | null>(null);
 
   // ── 기업 회원 상태 ─────────────────────────────────────────
   const [hrManagers, setHrManagers] = useState<HrManagerItem[]>([]);
@@ -161,8 +165,16 @@ export default function UserManagementPage() {
     fetchHrManagers(1);
   };
 
+  const fetchMemberCounts = useCallback(async () => {
+    try {
+      const res = await memberApi.getMemberCounts();
+      if (res.data.success) setMemberCounts(res.data.data);
+    } catch {}
+  }, []);
+
   useEffect(() => { fetchMembers(1); }, [fetchMembers]);
   useEffect(() => { fetchHrManagers(1); }, [fetchHrManagers]);
+  useEffect(() => { fetchMemberCounts(); }, [fetchMemberCounts]);
 
   // ── 제재 처리 ──────────────────────────────────────────────
   const openSuspend = (member: MemberItem) => {
@@ -186,6 +198,7 @@ export default function UserManagementPage() {
       if (!res.data.success) throw new Error(res.data.message);
       setSuspendTarget(null);
       fetchMembers(memberPage);
+      fetchMemberCounts();
     } catch (err: any) {
       const msg = err.response?.data?.message || (err instanceof Error ? err.message : '');
       setSuspendError(msg || '제재 처리에 실패했습니다.');
@@ -306,16 +319,16 @@ export default function UserManagementPage() {
             <article className="memberSummaryCard kpi-green">
               <div className="memberKpiContent">
                 <p>오늘 신규 가입</p>
-                <h3>—</h3>
-                <span>준비 중</span>
+                <h3>{memberCounts != null ? memberCounts.todayJoinCount.toLocaleString() : '—'}</h3>
+                <span>오늘 가입 회원</span>
               </div>
               <div className="memberKpiIcon kpi-green"><UserPlus size={26} /></div>
             </article>
             <article className="memberSummaryCard kpi-purple">
               <div className="memberKpiContent">
                 <p>프리미엄 구독</p>
-                <h3>—</h3>
-                <span>준비 중</span>
+                <h3>{memberCounts != null ? memberCounts.premiumCount.toLocaleString() : '—'}</h3>
+                <span>유료 구독 회원</span>
               </div>
               <div className="memberKpiIcon kpi-purple">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -326,8 +339,8 @@ export default function UserManagementPage() {
             <article className="memberSummaryCard kpi-yellow">
               <div className="memberKpiContent">
                 <p>정지 회원 수</p>
-                <h3>—</h3>
-                <span>준비 중</span>
+                <h3>{memberCounts != null ? memberCounts.suspendedCount.toLocaleString() : '—'}</h3>
+                <span>현재 정지 중</span>
               </div>
               <div className="memberKpiIcon kpi-yellow"><UserX size={26} /></div>
             </article>
@@ -624,16 +637,16 @@ export default function UserManagementPage() {
               </div>
               <button onClick={() => setSuspendTarget(null)}>닫기</button>
             </div>
-            <div className="csFormRows">
-              <div className="csFormRow">
-                <label>정지 기간</label>
-                <div style={{ display: 'flex', gap: 8 }}>
+            <div className="modalInfoGrid">
+              <div style={{ gridColumn: '1 / -1' }}>
+                <span>정지 기간</span>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                   {SUSPEND_PERIODS.map((p) => (
                     <button
                       key={p}
                       onClick={() => setSuspendPeriod(p)}
                       style={{
-                        height: 38, padding: '0 16px', borderRadius: 8, fontFamily: 'inherit',
+                        height: 36, padding: '0 16px', borderRadius: 8, fontFamily: 'inherit',
                         border: `1px solid ${suspendPeriod === p ? '#24496f' : '#d7e4f2'}`,
                         background: suspendPeriod === p ? '#24496f' : 'white',
                         color: suspendPeriod === p ? 'white' : '#24496f',
@@ -645,18 +658,22 @@ export default function UserManagementPage() {
                   ))}
                 </div>
               </div>
-              <div className="csFormRow">
-                <label>정지 사유</label>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <span>정지 사유</span>
                 <textarea
-                  className="csFormTextarea"
                   placeholder="이용 약관 위반 내용을 입력하세요 (최소 10자)"
                   value={suspendReason}
                   onChange={(e) => setSuspendReason(e.target.value)}
-                  style={{ minHeight: 80 }}
+                  style={{
+                    marginTop: 8, width: '100%', minHeight: 90, boxSizing: 'border-box',
+                    border: '1px solid #d8e3ed', borderRadius: 10, padding: '10px 12px',
+                    outline: 'none', resize: 'vertical', background: 'white',
+                    fontSize: 14, fontFamily: 'inherit', color: '#10243f', lineHeight: 1.7,
+                  }}
                 />
               </div>
               {suspendError && (
-                <p style={{ fontSize: 13, color: '#9a4444', margin: '0 0 4px' }}>{suspendError}</p>
+                <p style={{ gridColumn: '1 / -1', fontSize: 13, color: '#9a4444', margin: 0 }}>{suspendError}</p>
               )}
             </div>
             <div className="modalAction">

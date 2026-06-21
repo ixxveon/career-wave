@@ -34,6 +34,11 @@ public class AdminMemberController implements AdminMemberControllerDocs {
 
     private final AdminMemberService adminMemberService;
 
+    @GetMapping("/members/counts")
+    public ResponseEntity<ApiResponse<MemberDTO.ResponseCounts>> getMemberCounts() {
+        return ResponseEntity.ok(ApiResponse.ok(adminMemberService.getMemberCounts()));
+    }
+
     @GetMapping("/members")
     public ResponseEntity<ApiResponse<PaginationResponse<MemberDTO.ResponseList>>> getMembers(
         @RequestParam(required = false) String role,
