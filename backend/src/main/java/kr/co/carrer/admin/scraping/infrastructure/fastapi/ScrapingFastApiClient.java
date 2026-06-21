@@ -17,7 +17,9 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.util.UriBuilder;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.function.Function;
 
 @Slf4j
@@ -74,7 +76,7 @@ public class ScrapingFastApiClient implements ScrapingFastApiGateway {
         );
 
         return new PipelinePageResponse(
-                response.content().stream()
+                Objects.requireNonNullElse(response.content(), List.<ScrapingFastApiResponse.PipelineItem>of()).stream()
                         .map(item -> new PipelineItemResponse(
                                 item.scrapingPipelineId(),
                                 item.sourceName(),
@@ -163,7 +165,7 @@ public class ScrapingFastApiClient implements ScrapingFastApiGateway {
                 ScrapingFastApiResponse.LogPage.class
         );
         return new LogPageResponse(
-                response.content().stream()
+                Objects.requireNonNullElse(response.content(), List.<ScrapingFastApiResponse.LogItem>of()).stream()
                         .map(item -> new LogItemResponse(
                                 item.logId(),
                                 item.occurredAt(),
@@ -249,7 +251,7 @@ public class ScrapingFastApiClient implements ScrapingFastApiGateway {
                 response.requestedCount(),
                 response.acceptedCount(),
                 response.requestedAt(),
-                response.results().stream()
+                Objects.requireNonNullElse(response.results(), List.<ScrapingFastApiResponse.BatchActionItem>of()).stream()
                         .map(item -> new BatchActionItemResponse(
                                 item.sourceName(),
                                 item.accepted(),
@@ -275,8 +277,9 @@ public class ScrapingFastApiClient implements ScrapingFastApiGateway {
         } catch (CustomException exception) {
             throw exception;
         } catch (WebClientResponseException exception) {
-            log.error("[ScrapingFastApiClient] FastAPI GET failed: status={}, body={}",
-                    exception.getStatusCode(), exception.getResponseBodyAsString());
+            String body = exception.getResponseBodyAsString();
+            log.error("[ScrapingFastApiClient] FastAPI GET failed: status={}, bodyLength={}",
+                    exception.getStatusCode(), body == null ? 0 : body.length());
             throw ScrapingFastApiErrorMapper.toCustomException(exception, objectMapper);
         } catch (RuntimeException exception) {
             log.error("[ScrapingFastApiClient] FastAPI GET failed: reason={}", exception.getMessage());
@@ -301,8 +304,9 @@ public class ScrapingFastApiClient implements ScrapingFastApiGateway {
         } catch (CustomException exception) {
             throw exception;
         } catch (WebClientResponseException exception) {
-            log.error("[ScrapingFastApiClient] FastAPI POST failed: path={}, status={}, body={}",
-                    path, exception.getStatusCode(), exception.getResponseBodyAsString());
+            String body = exception.getResponseBodyAsString();
+            log.error("[ScrapingFastApiClient] FastAPI POST failed: path={}, status={}, bodyLength={}",
+                    path, exception.getStatusCode(), body == null ? 0 : body.length());
             throw ScrapingFastApiErrorMapper.toCustomException(exception, objectMapper);
         } catch (RuntimeException exception) {
             log.error("[ScrapingFastApiClient] FastAPI POST failed: path={}, reason={}", path, exception.getMessage());
