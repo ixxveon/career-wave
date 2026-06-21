@@ -1,6 +1,8 @@
 from admin.scraping.repository.scraping_pipeline_repository import (
+    ScrapingPipelinePageRecord,
     ScrapingPipelineRecord,
     ScrapingPipelineRepository,
+    ScrapingPipelineSummaryRecord,
     scraping_pipelines_table,
 )
 from admin.scraping.repository.job_notice_repository import (
@@ -21,8 +23,10 @@ __all__ = [
     "ScrapingLogPageRecord",
     "ScrapingLogRecord",
     "ScrapingLogRepository",
+    "ScrapingPipelinePageRecord",
     "ScrapingPipelineRecord",
     "ScrapingPipelineRepository",
+    "ScrapingPipelineSummaryRecord",
     "job_notices_table",
     "scraping_logs_table",
     "scraping_pipelines_table",

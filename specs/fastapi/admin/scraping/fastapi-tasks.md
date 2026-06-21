@@ -19,19 +19,19 @@
 
 ## Phase 3 - Source Registry / Scraper Adapter
 
-- [ ] Source Registry를 `wanted`, `saramin` 기준으로 구현한다.
-- [ ] `scraper_adapter.py` 인터페이스를 작성한다.
-- [ ] `wanted_scraper.py` 구현체를 작성한다.    
-- [ ] `saramin_scraper.py` 구현체를 작성한다.
-- [ ] 미지원 `sourceName`을 `SCRAPING_SOURCE_NOT_FOUND`로 처리하는 로직을 작성한다.
+- [x] Source Registry를 `wanted`, `saramin` 기준으로 구현한다.
+- [x] `scraper_adapter.py` 인터페이스를 작성한다.
+- [x] `wanted_scraper.py` 구현체를 작성한다.    
+- [x] `saramin_scraper.py` 구현체를 작성한다.
+- [x] 미지원 `sourceName`을 `SCRAPING_SOURCE_NOT_FOUND`로 처리하는 로직을 작성한다.
 
 ## Phase 4 - Query Service
 
-- [ ] `pipeline_query_service.py`를 작성한다.
-- [ ] 목록 조회 Query Parameter 처리 로직을 작성한다.
-- [ ] 요약 조회 로직을 작성한다.
-- [ ] 상세 조회 로직을 작성한다.
-- [ ] 실행 로그 조회 로직을 작성한다.
+- [x] `pipeline_query_service.py`를 작성한다.
+- [x] 목록 조회 Query Parameter 처리 로직을 작성한다.
+- [x] 요약 조회 로직을 작성한다.
+- [x] 상세 조회 로직을 작성한다.
+- [x] 실행 로그 조회 로직을 작성한다.
 
 ## Phase 5 - 단일 액션 처리
 

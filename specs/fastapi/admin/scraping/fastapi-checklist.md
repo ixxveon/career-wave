@@ -20,18 +20,17 @@
 
 ## Phase 3 - Source Registry / Scraper Adapter
 
-- [ ] MVP Source Registry가 `wanted`, `saramin`만 지원한다.
-- [ ] 미지원 `sourceName`이 `SCRAPING_SOURCE_NOT_FOUND`로 처리된다.
-- [ ] Scraper adapter 인터페이스와 사이트별 구현체가 분리되어 있다.
+- [x] MVP Source Registry가 `wanted`, `saramin`만 지원한다.
+- [x] 미지원 `sourceName`이 `SCRAPING_SOURCE_NOT_FOUND`로 처리된다.
+- [x] Scraper adapter 인터페이스와 사이트별 구현체가 분리되어 있다.
 
 ## Phase 4 - Query Service
 
-- [ ] `GET /internal/scraping/pipelines` 계약에 맞는 목록 조회 로직이 존재한다.
-- [ ] `GET /internal/scraping/pipelines/summary` 계약에 맞는 요약 조회 로직이 존재한다.
-- [ ] `GET /internal/scraping/pipelines/{sourceName}` 계약에 맞는 상세 조회 로직이 존재한다.
-- [ ] `GET /internal/scraping/logs` 계약에 맞는 로그 조회 로직이 존재한다.
-- [ ] GET 내부 API는 Request Body 없이 Query Parameter만 사용한다.
-- [ ] 내부 조회 API의 page 계약이 1-based로 유지된다.
+- [x] `GET /internal/scraping/pipelines` 계약에 맞는 목록 조회 로직이 존재한다.
+- [x] `GET /internal/scraping/pipelines/summary` 계약에 맞는 요약 조회 로직이 존재한다.
+- [x] `GET /internal/scraping/pipelines/{sourceName}` 계약에 맞는 상세 조회 로직이 존재한다.
+- [x] `GET /internal/scraping/logs` 계약에 맞는 로그 조회 로직이 존재한다.
+- [x] 내부 조회 API의 page 계약이 1-based로 유지된다.
 
 ## Phase 5 - 단일 액션 처리
 
@@ -87,6 +86,7 @@
 - [ ] `GET /internal/scraping/logs`가 Query Parameter를 사용한다.
 - [ ] 실행/재시도/TEST/배치 액션 POST API만 Request Body를 사용한다.
 - [ ] Spring API ↔ FastAPI 내부 API 매핑이 문서와 구현에서 일치한다.
+- [ ] GET 내부 API는 Request Body 없이 Query Parameter만 사용한다.
 
 ## Phase 13 - Background Task / Pipeline
 
