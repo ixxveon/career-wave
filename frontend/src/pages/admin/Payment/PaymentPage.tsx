@@ -55,6 +55,10 @@ const SUB_STATUS_CLS: Record<string, string> = {
   RENEWAL_SCHEDULED: 'answering',
   CANCEL_SCHEDULED:  'pending',
   AT_RISK:           'blinded',
+  EXPIRED:           'dismissed',
+  PAYMENT_FAILED:    'blinded',
+  REFUND_PENDING:    'pending',
+  REFUNDED:          'dismissed',
 };
 
 const TABS: PayTab[] = ['결제 내역', '구독 현황', '정산 리포트'];

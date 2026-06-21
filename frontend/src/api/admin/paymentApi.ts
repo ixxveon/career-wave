@@ -40,9 +40,11 @@ export const PAYMENT_TYPE = {
 
 export const SUB_STATUS = {
   ACTIVE:            'ACTIVE',
-  RENEWAL_SCHEDULED: 'RENEWAL_SCHEDULED',
   CANCEL_SCHEDULED:  'CANCEL_SCHEDULED',
-  AT_RISK:           'AT_RISK',
+  EXPIRED:           'EXPIRED',
+  PAYMENT_FAILED:    'PAYMENT_FAILED',
+  REFUND_PENDING:    'REFUND_PENDING',
+  REFUNDED:          'REFUNDED',
 } as const;
 
 export type PayStatus    = typeof PAY_STATUS[keyof typeof PAY_STATUS];
@@ -73,9 +75,11 @@ export const PAYMENT_TYPE_LABEL: Record<PaymentType, string> = {
 
 export const SUB_STATUS_LABEL: Record<SubStatus, string> = {
   ACTIVE:            '활성',
-  RENEWAL_SCHEDULED: '갱신예정',
   CANCEL_SCHEDULED:  '취소예정',
-  AT_RISK:           '이탈위험',
+  EXPIRED:           '만료',
+  PAYMENT_FAILED:    '결제실패',
+  REFUND_PENDING:    '환불요청',
+  REFUNDED:          '환불완료',
 };
 
 // ── 도메인 인터페이스 ──────────────────────────────────────────
