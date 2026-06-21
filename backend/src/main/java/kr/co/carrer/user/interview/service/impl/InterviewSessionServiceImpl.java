@@ -44,6 +44,9 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         InterviewType interviewType = parseInterviewType(dto.interviewType());
         UUID documentId = parseDocumentId(dto.documentId());
 
+        sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)
+                .ifPresent(s -> { throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_DUPLICATE); });
+
         String fileUrl = null;
         if (documentId != null) {
             Document document = documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
@@ -78,9 +81,6 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
 
     @Transactional
     protected InterviewSession saveNewSession(UUID memberId, UUID documentId, SessionType sessionType, InterviewType interviewType, String targetCompany) {
-        sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)
-                .ifPresent(s -> { throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_DUPLICATE); });
-
         InterviewSession session = InterviewSession.create(memberId, documentId, sessionType, interviewType, targetCompany);
         return sessionRepository.save(session);
     }
