@@ -288,6 +288,23 @@ public class MemberQueryRepository {
         return ((Number) query.getSingleResult()).longValue();
     }
 
+    public MemberDTO.ResponseCounts countMemberKpi() {
+        String sql = """
+            SELECT
+              COUNT(*) FILTER (WHERE DATE(m.created_at AT TIME ZONE 'Asia/Seoul') = CURRENT_DATE AT TIME ZONE 'Asia/Seoul') AS today_join_count,
+              COUNT(*) FILTER (WHERE m.subscription_status = 'PREMIUM') AS premium_count,
+              COUNT(*) FILTER (WHERE m.member_status = 'SUSPENDED') AS suspended_count
+            FROM members m
+            WHERE m.role_type = 'USER'
+            """;
+        Object[] row = (Object[]) em.createNativeQuery(sql).getSingleResult();
+        return new MemberDTO.ResponseCounts(
+            ((Number) row[0]).longValue(),
+            ((Number) row[1]).longValue(),
+            ((Number) row[2]).longValue()
+        );
+    }
+
     public Optional<HrManagerDTO.ResponseDetail> findHrManagerDetail(UUID memberId) {
         String sql = """
             SELECT m.member_id, m.name, m.email,

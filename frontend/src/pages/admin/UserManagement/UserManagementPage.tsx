@@ -5,6 +5,7 @@ import {
   MEMBER_STATUS,
   type MemberItem,
   type MemberStatus,
+  type MemberCounts,
   type SuspendDuration,
   type HrManagerItem,
   type HrManagerDetail,
@@ -60,6 +61,9 @@ export default function UserManagementPage() {
   const [suspendLoading, setSuspendLoading] = useState(false);
   const [suspendError, setSuspendError] = useState('');
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
+
+  // ── KPI 집계 상태 ─────────────────────────────────────────
+  const [memberCounts, setMemberCounts] = useState<MemberCounts | null>(null);
 
   // ── 기업 회원 상태 ─────────────────────────────────────────
   const [hrManagers, setHrManagers] = useState<HrManagerItem[]>([]);
@@ -163,6 +167,11 @@ export default function UserManagementPage() {
 
   useEffect(() => { fetchMembers(1); }, [fetchMembers]);
   useEffect(() => { fetchHrManagers(1); }, [fetchHrManagers]);
+  useEffect(() => {
+    memberApi.getMemberCounts().then(res => {
+      if (res.data.success) setMemberCounts(res.data.data);
+    }).catch(() => {});
+  }, []);
 
   // ── 제재 처리 ──────────────────────────────────────────────
   const openSuspend = (member: MemberItem) => {
@@ -306,16 +315,16 @@ export default function UserManagementPage() {
             <article className="memberSummaryCard kpi-green">
               <div className="memberKpiContent">
                 <p>오늘 신규 가입</p>
-                <h3>—</h3>
-                <span>준비 중</span>
+                <h3>{memberCounts != null ? memberCounts.todayJoinCount.toLocaleString() : '—'}</h3>
+                <span>오늘 가입 회원</span>
               </div>
               <div className="memberKpiIcon kpi-green"><UserPlus size={26} /></div>
             </article>
             <article className="memberSummaryCard kpi-purple">
               <div className="memberKpiContent">
                 <p>프리미엄 구독</p>
-                <h3>—</h3>
-                <span>준비 중</span>
+                <h3>{memberCounts != null ? memberCounts.premiumCount.toLocaleString() : '—'}</h3>
+                <span>유료 구독 회원</span>
               </div>
               <div className="memberKpiIcon kpi-purple">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -326,8 +335,8 @@ export default function UserManagementPage() {
             <article className="memberSummaryCard kpi-yellow">
               <div className="memberKpiContent">
                 <p>정지 회원 수</p>
-                <h3>—</h3>
-                <span>준비 중</span>
+                <h3>{memberCounts != null ? memberCounts.suspendedCount.toLocaleString() : '—'}</h3>
+                <span>현재 정지 중</span>
               </div>
               <div className="memberKpiIcon kpi-yellow"><UserX size={26} /></div>
             </article>
