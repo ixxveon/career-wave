@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Admin Subscription", description = "관리자 구독 현황 API")
 public interface AdminSubscriptionControllerDocs {
 
+    @Operation(summary = "구독 KPI 집계 조회 (활성 / 갱신 예정 / 취소 예정 / 이탈 위험 건수)")
+    ResponseEntity<ApiResponse<SubscriptionDTO.ResponseCounts>> getSubscriptionCounts();
+
     @Operation(summary = "구독 현황 목록 조회")
     ResponseEntity<ApiResponse<PaginationResponse<SubscriptionDTO.ResponseList>>> getSubscriptions(
         @Parameter(description = "구독 상태 (ACTIVE / CANCEL_SCHEDULED / EXPIRED / PAYMENT_FAILED / REFUND_PENDING / REFUNDED)") @RequestParam(required = false) String status,

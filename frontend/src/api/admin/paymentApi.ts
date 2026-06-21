@@ -129,6 +129,13 @@ export interface SubscriptionListParams {
   size?: number;
 }
 
+export interface SubscriptionCounts {
+  active: number;
+  renewalScheduled: number;
+  cancelScheduled: number;
+  atRisk: number;
+}
+
 // ── 환불 응답 타입 ─────────────────────────────────────────────
 
 export interface RefundResult {
@@ -163,6 +170,10 @@ export const paymentApi = {
     axiosInstance.post<ApiResponse<RefundResult>>(
       `/api/v1/admin/payments/${paymentId}/refund-reject`
     ),
+
+  // 구독 KPI 집계
+  getSubscriptionCounts: () =>
+    axiosInstance.get<ApiResponse<SubscriptionCounts>>('/api/v1/admin/subscriptions/counts'),
 
   // 구독 현황 목록 조회
   getSubscriptions: (params?: SubscriptionListParams) =>
