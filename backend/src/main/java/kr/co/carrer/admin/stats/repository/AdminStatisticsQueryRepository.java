@@ -124,7 +124,7 @@ public class AdminStatisticsQueryRepository {
               COALESCE(SUM(p.amount) FILTER (WHERE DATE_TRUNC('month', p.approved_at AT TIME ZONE 'Asia/Seoul') = DATE_TRUNC('month', (NOW() AT TIME ZONE 'Asia/Seoul') - INTERVAL '1 month')), 0) AS prev_amount
             FROM payments p
             WHERE p.payment_status = 'PAID'
-              AND p.approved_at >= DATE_TRUNC('month', (NOW() AT TIME ZONE 'Asia/Seoul') - INTERVAL '1 month')
+              AND p.approved_at >= (DATE_TRUNC('month', (NOW() AT TIME ZONE 'Asia/Seoul') - INTERVAL '1 month')) AT TIME ZONE 'Asia/Seoul'
             GROUP BY p.payment_type
             ORDER BY p.payment_type
             """;
