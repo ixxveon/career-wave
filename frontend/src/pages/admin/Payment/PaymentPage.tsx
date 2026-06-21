@@ -424,7 +424,7 @@ export default function PaymentPage() {
                       <td
                         style={{ fontSize: 13, color: '#7a8da4', fontFamily: 'monospace', cursor: 'pointer', userSelect: 'none' }}
                         title={`클릭하여 복사: ${p.paymentId}`}
-                        onClick={() => { navigator.clipboard.writeText(p.paymentId); showToast('결제 ID가 복사되었습니다.'); }}
+                        onClick={() => { navigator.clipboard.writeText(p.paymentId).then(() => showToast('결제 ID가 복사되었습니다.')).catch(() => showToast('복사에 실패했습니다.', 'error')); }}
                       >
                         {p.paymentId.slice(0, 8)}…
                       </td>
@@ -577,7 +577,7 @@ export default function PaymentPage() {
                 <h3>{selected.memberName} · <span
                   style={{ fontFamily: 'monospace', fontSize: 14, cursor: 'pointer', userSelect: 'none' }}
                   title={`클릭하여 복사: ${selected.paymentId}`}
-                  onClick={() => { navigator.clipboard.writeText(selected.paymentId); showToast('결제 ID가 복사되었습니다.'); }}
+                  onClick={() => { navigator.clipboard.writeText(selected.paymentId).then(() => showToast('결제 ID가 복사되었습니다.')).catch(() => showToast('복사에 실패했습니다.', 'error')); }}
                 >{selected.paymentId.slice(0, 8)}…</span></h3>
                 <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>
                   Toss 주문번호: {selected.orderId}
@@ -609,14 +609,16 @@ export default function PaymentPage() {
               </div>
 
               {/* 환불 요청 건 — 환불 가능 여부 확인 섹션 */}
-              {selected.refundStatus === 'PENDING' && refundCheck && (
+              {selected.refundStatus === 'PENDING' && refundCheck && (() => {
+                const elapsedDays = daysSincePaid(selected.approvedAt);
+                return (
                 <div className="refundCheckSection">
                   <p className="refundCheckTitle">환불 가능 여부 확인</p>
                   <div className="refundCheckRow">
                     <span>결제일로부터 경과</span>
-                    <strong className={daysSincePaid(selected.approvedAt) <= 7 ? 'refundOk' : 'refundFail'}>
-                      {daysSincePaid(selected.approvedAt)}일 경과
-                      {daysSincePaid(selected.approvedAt) <= 7 ? ' (7일 이내)' : ' (7일 초과)'}
+                    <strong className={elapsedDays <= 7 ? 'refundOk' : 'refundFail'}>
+                      {elapsedDays}일 경과
+                      {elapsedDays <= 7 ? ' (7일 이내)' : ' (7일 초과)'}
                     </strong>
                   </div>
                   <div className="refundCheckRow">
@@ -641,7 +643,8 @@ export default function PaymentPage() {
                     <p className="refundIneligibleNote">{refundCheck.reason}</p>
                   )}
                 </div>
-              )}
+                );
+              })()}
 
               {refundError && <p style={{ fontSize: 13, color: '#9a4444', marginTop: 12 }}>{refundError}</p>}
             </div>
