@@ -64,7 +64,6 @@ const NoticeDetailPage = lazy(() => import('../pages/user/support/NoticeDetailPa
 const FaqPage = lazy(() => import('../pages/user/support/FaqPage'));
 const InquiryListPage = lazy(() => import('../pages/user/support/InquiryListPage'));
 const InquiryCreatePage = lazy(() => import('../pages/user/support/InquiryCreatePage'));
-const AccountStatusPage = lazy(() => import('../pages/user/support/AccountStatusPage'));
 
 const NotFoundPage = lazy(() => import('../pages/user/common/NotFoundPage'));
 
@@ -167,7 +166,6 @@ function AppRoutes() {
           <Route element={<ProtectedRoute />}>
             <Route path="inquiry" element={lazyRoute(<InquiryListPage />)} />
             <Route path="inquiry/create" element={lazyRoute(<InquiryCreatePage />)} />
-            <Route path="account-status" element={lazyRoute(<AccountStatusPage />)} />
           </Route>
         </Route>
 

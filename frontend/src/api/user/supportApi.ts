@@ -106,26 +106,6 @@ export interface CreateInquiryResult {
   inquiryStatus: 'PENDING';
 }
 
-// ── 계정 상태 타입 ─────────────────────────────────────────────
-
-export type MemberStatus = 'ACTIVE' | 'SUSPENDED' | 'BANNED' | 'LOCKED' | 'WITHDRAWN' | 'BLACKLISTED';
-export type RestrictionType = 'SUSPENDED' | 'BANNED' | 'LOCKED' | 'WITHDRAWN';
-export type SanctionDuration = 'THREE_DAYS' | 'SEVEN_DAYS' | 'FOURTEEN_DAYS' | 'THIRTY_DAYS' | 'PERMANENT';
-
-export interface AccountRestriction {
-  restrictionType: RestrictionType;
-  recoverable: boolean;
-  availableAt: string | null;
-  messageCode: string;
-  reason: string | null;
-  startedAt: string | null;
-  duration: SanctionDuration | null;
-}
-
-export interface AccountStatus {
-  memberStatus: MemberStatus;
-  restriction: AccountRestriction | null;
-}
 
 // ── API 함수 ───────────────────────────────────────────────────
 
@@ -169,7 +149,4 @@ export const supportApi = {
       auth: true,
     }),
 
-  // 계정 상태 조회 (로그인 필수)
-  getAccountStatus: () =>
-    memberApiClient<AccountStatus>('/api/v1/user/members/me/status', { auth: true }),
 };
