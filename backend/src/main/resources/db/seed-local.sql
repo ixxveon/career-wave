@@ -59,6 +59,36 @@ VALUES
   ('PREMIUM_ALL_MONTHLY',       '전체 프리미엄 월정액', 29900, 'KRW', 'MONTHLY', true, NOW());
 
 -- ────────────────────────────────────────────
+-- 데모용 구독 데이터 (testuser02 — 면접, testuser03 — 서류)
+-- ────────────────────────────────────────────
+DELETE FROM subscriptions WHERE member_id IN (
+  SELECT member_id FROM members WHERE login_id IN ('testuser02', 'testuser03')
+);
+
+DO $$
+DECLARE
+  v_member02 UUID;
+  v_member03 UUID;
+  v_plan_interview BIGINT;
+  v_plan_resume    BIGINT;
+BEGIN
+  SELECT member_id INTO v_member02 FROM members WHERE login_id = 'testuser02';
+  SELECT member_id INTO v_member03 FROM members WHERE login_id = 'testuser03';
+  SELECT plan_id INTO v_plan_interview FROM plans WHERE product_code = 'PREMIUM_INTERVIEW_MONTHLY';
+  SELECT plan_id INTO v_plan_resume    FROM plans WHERE product_code = 'PREMIUM_RESUME_MONTHLY';
+
+  INSERT INTO subscriptions (subscription_id, member_id, plan_id, subscription_status,
+    started_at, current_period_start, current_period_end, next_billing_at, auto_renew, created_at, updated_at)
+  VALUES
+    (gen_random_uuid(), v_member02, v_plan_interview, 'ACTIVE',
+     NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days',
+     NOW() + INTERVAL '15 days', true, NOW() - INTERVAL '15 days', NOW()),
+    (gen_random_uuid(), v_member03, v_plan_resume, 'ACTIVE',
+     NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days', NOW() + INTERVAL '25 days',
+     NOW() + INTERVAL '25 days', true, NOW() - INTERVAL '5 days', NOW());
+END $$;
+
+-- ────────────────────────────────────────────
 -- 데모용 결제·환불 데이터 (testuser04 — 전체구독)
 -- ────────────────────────────────────────────
 DELETE FROM refunds   WHERE payment_id IN (SELECT payment_id FROM payments WHERE order_id LIKE 'DEMO-%');
