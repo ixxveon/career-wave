@@ -82,7 +82,10 @@ public interface ScrapingDocs {
             @ApiResponse(responseCode = "403", description = "권한 없음",
                     content = @Content(examples = @ExampleObject(value = FORBIDDEN_EXAMPLE))),
             @ApiResponse(responseCode = "404", description = "파이프라인 없음",
-                    content = @Content(examples = @ExampleObject(value = PIPELINE_NOT_FOUND_EXAMPLE)))
+                    content = @Content(examples = {
+                            @ExampleObject(name = "pipelineNotFound", value = PIPELINE_NOT_FOUND_EXAMPLE),
+                            @ExampleObject(name = "sourceNotFound", value = SOURCE_NOT_FOUND_EXAMPLE)
+                    }))
     })
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<ScrapingPipelineDTO.ResponseDetail>> getPipelineDetail(
             @Parameter(description = "스크래핑 sourceName") @PathVariable String sourceName

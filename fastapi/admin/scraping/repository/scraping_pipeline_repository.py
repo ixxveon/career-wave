@@ -12,7 +12,7 @@ scraping_pipelines_table = Table(
     "scraping_pipelines",
     metadata,
     Column("scraping_pipeline_id", BigInteger, primary_key=True),
-    Column("source_name", String(50), nullable=False),
+    Column("source_name", String(50), nullable=False, unique=True),
     Column("display_name", String(100), nullable=False),
     Column("pipeline_status", String(20), nullable=False),
     Column("is_enabled", Boolean, nullable=False),
@@ -59,7 +59,7 @@ class ScrapingPipelineRepository:
         statement = select(scraping_pipelines_table).where(
             scraping_pipelines_table.c.source_name == source_name
         )
-        row = self._session.execute(statement).mappings().first()
+        row = self._session.execute(statement).mappings().one_or_none()
         return self._to_record(row) if row else None
 
     def find_status_by_source_name(self, source_name: str) -> str | None:
