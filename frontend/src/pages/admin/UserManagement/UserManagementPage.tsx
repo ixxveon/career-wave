@@ -633,16 +633,16 @@ export default function UserManagementPage() {
               </div>
               <button onClick={() => setSuspendTarget(null)}>닫기</button>
             </div>
-            <div className="csFormRows">
-              <div className="csFormRow">
-                <label>정지 기간</label>
-                <div style={{ display: 'flex', gap: 8 }}>
+            <div className="modalInfoGrid">
+              <div style={{ gridColumn: '1 / -1' }}>
+                <span>정지 기간</span>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                   {SUSPEND_PERIODS.map((p) => (
                     <button
                       key={p}
                       onClick={() => setSuspendPeriod(p)}
                       style={{
-                        height: 38, padding: '0 16px', borderRadius: 8, fontFamily: 'inherit',
+                        height: 36, padding: '0 16px', borderRadius: 8, fontFamily: 'inherit',
                         border: `1px solid ${suspendPeriod === p ? '#24496f' : '#d7e4f2'}`,
                         background: suspendPeriod === p ? '#24496f' : 'white',
                         color: suspendPeriod === p ? 'white' : '#24496f',
@@ -654,18 +654,22 @@ export default function UserManagementPage() {
                   ))}
                 </div>
               </div>
-              <div className="csFormRow">
-                <label>정지 사유</label>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <span>정지 사유</span>
                 <textarea
-                  className="csFormTextarea"
                   placeholder="이용 약관 위반 내용을 입력하세요 (최소 10자)"
                   value={suspendReason}
                   onChange={(e) => setSuspendReason(e.target.value)}
-                  style={{ minHeight: 80 }}
+                  style={{
+                    marginTop: 8, width: '100%', minHeight: 90, boxSizing: 'border-box',
+                    border: '1px solid #d8e3ed', borderRadius: 10, padding: '10px 12px',
+                    outline: 'none', resize: 'vertical', background: 'white',
+                    fontSize: 14, fontFamily: 'inherit', color: '#10243f', lineHeight: 1.7,
+                  }}
                 />
               </div>
               {suspendError && (
-                <p style={{ fontSize: 13, color: '#9a4444', margin: '0 0 4px' }}>{suspendError}</p>
+                <p style={{ gridColumn: '1 / -1', fontSize: 13, color: '#9a4444', margin: 0 }}>{suspendError}</p>
               )}
             </div>
             <div className="modalAction">
