@@ -102,6 +102,8 @@ function Header() {
                 key={item.label}
                 onMouseEnter={() => item.children && handleMenuEnter(item.label)}
                 onMouseLeave={handleMenuLeave}
+                onFocus={() => item.children && handleMenuEnter(item.label)}
+                onBlur={handleMenuLeave}
               >
                 <NavLink className="cw-header__nav-link" to={item.href}>
                   {item.label}
