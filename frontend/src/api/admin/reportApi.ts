@@ -48,11 +48,22 @@ export interface ReportListData extends PageMeta {
   items: ReportItem[];
 }
 
+export interface AiSuggestion {
+  severity: '높음' | '중간' | '낮음';
+  category: 'SPAM' | 'ABUSE' | 'AD' | 'INAPPROPRIATE' | 'OTHER';
+  suggestion: string;
+}
+
 export interface ReportDetail extends ReportItem {
   targetId: number;
   contentBody: string | null;
+  aiSuggestion: AiSuggestion | null;
   processedAt: string | null;
   processedBy: number | null;
+}
+
+interface RawReportDetail extends Omit<ReportDetail, 'aiSuggestion'> {
+  aiSuggestion: string | null;
 }
 
 export interface ReportListParams {
@@ -81,8 +92,17 @@ export const reportApi = {
     axiosInstance.get<ApiResponse<ReportListData>>('/api/v1/admin/reports', { params }),
 
   // 신고 상세 조회
-  getReportDetail: (reportId: number) =>
-    axiosInstance.get<ApiResponse<ReportDetail>>(`/api/v1/admin/reports/${reportId}`),
+  getReportDetail: async (reportId: number): Promise<{ data: ApiResponse<ReportDetail> }> => {
+    const res = await axiosInstance.get<ApiResponse<RawReportDetail>>(`/api/v1/admin/reports/${reportId}`);
+    const raw = res.data.data;
+    if (!raw) {
+      return { data: { ...res.data, data: null as unknown as ReportDetail } };
+    }
+    const aiSuggestion: AiSuggestion | null = typeof raw.aiSuggestion === 'string'
+      ? (() => { try { return JSON.parse(raw.aiSuggestion as string); } catch { return null; } })()
+      : null;
+    return { data: { ...res.data, data: { ...raw, aiSuggestion } } };
+  },
 
   // 블라인드 처리
   blindReport: (reportId: number) =>

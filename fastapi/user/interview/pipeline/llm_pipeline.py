@@ -84,7 +84,6 @@ async def generate_and_deliver_question(
         question_type = "NEXT"
 
     payload = QuestionPayload(
-        sessionId=session_id,
         questionOrder=next_question_order,
         questionText=question_text_generated,
         questionType=question_type,

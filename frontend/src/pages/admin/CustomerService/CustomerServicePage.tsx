@@ -41,23 +41,6 @@ const TAB_LABEL: Record<CsTab, string> = {
   inquiry: '1:1 문의',
 };
 
-// ── AI Mock 응답 생성 (v2에서 실제 API 전환 예정) ────────────
-
-function genNoticeDraft(category: NoticeCategory, title: string): string {
-  const base = title.trim() ? `"${title}" 관련 ` : '';
-  const templates: Record<NoticeCategory, string> = {
-    NOTICE:      `안녕하세요, Career Wave입니다.\n\n${base}공지사항을 안내드립니다.\n\n[본문 내용을 입력해 주세요]\n\n항상 더 나은 서비스를 제공하기 위해 노력하겠습니다.\n감사합니다.`,
-    MAINTENANCE: `안녕하세요, Career Wave입니다.\n\n안정적인 서비스 제공을 위해 시스템 점검을 진행합니다.\n\n■ 점검 일시: 0000.00.00 00:00 ~ 00:00\n■ 점검 내용: 서버 안정화 및 성능 개선\n\n이용에 불편을 드려 죄송합니다.`,
-    UPDATE:      `안녕하세요, Career Wave입니다.\n\n${base}업데이트 내용을 안내드립니다.\n\n■ 주요 변경 사항\n- [변경 내용 1]\n- [변경 내용 2]\n\n더 나은 서비스로 찾아뵙겠습니다. 감사합니다.`,
-    EVENT:       `안녕하세요, Career Wave입니다.\n\n특별 이벤트를 진행합니다!\n\n■ 이벤트 기간: 0000.00.00 ~ 0000.00.00\n■ 이벤트 내용: ${base}[내용을 입력해 주세요]\n\n많은 참여 부탁드립니다. 감사합니다.`,
-  };
-  return templates[category];
-}
-
-function genFaqDraft(question: string): string {
-  if (!question.trim()) return '';
-  return `안녕하세요, Career Wave 고객센터입니다.\n\n문의하신 "${question}"에 대한 답변입니다.\n\n[답변 내용을 입력해 주세요]\n\n추가 문의사항이 있으시면 언제든지 1:1 문의를 이용해 주세요.\n감사합니다.`;
-}
 
 // ── 폼 상태 타입 ──────────────────────────────────────────────
 
@@ -110,6 +93,7 @@ export default function CustomerServicePage() {
   const [noticeDetailLoading, setNoticeDetailLoading] = useState(false);
   const [noticeFormError, setNoticeFormError]         = useState('');
   const [aiNoticeLoading, setAiNoticeLoading]         = useState(false);
+  const aiNoticeReqId = useRef(0);
   const [deleteConfirmId, setDeleteConfirmId]         = useState<number | null>(null);
 
   // ── FAQ API 상태 ──────────────────────────────────────────
@@ -130,6 +114,7 @@ export default function CustomerServicePage() {
   const [faqFormError, setFaqFormError]     = useState('');
   const [faqDeleteId, setFaqDeleteId]       = useState<number | null>(null);
   const [aiFaqLoading, setAiFaqLoading]     = useState(false);
+  const aiFaqReqId = useRef(0);
 
   // ── 문의 API 상태 ─────────────────────────────────────────
   const [inquiries, setInquiries]         = useState<InquiryItem[]>([]);
@@ -149,6 +134,7 @@ export default function CustomerServicePage() {
   const [inqActionLoading, setInqActionLoading] = useState(false);
   const [inqActionError, setInqActionError]     = useState('');
   const [aiInqLoading, setAiInqLoading]         = useState(false);
+  const aiInqReqId = useRef(0);
 
   // ── KPI 조회 ──────────────────────────────────────────────
   const fetchSummary = useCallback(async () => {
@@ -342,12 +328,22 @@ export default function CustomerServicePage() {
     }
   };
 
-  const handleAiNoticeDraft = () => {
+  const handleAiNoticeDraft = async () => {
+    if (!noticeForm.title.trim()) return;
+    const reqId = ++aiNoticeReqId.current;
     setAiNoticeLoading(true);
-    setTimeout(() => {
-      setNoticeForm((p) => ({ ...p, content: genNoticeDraft(p.category, p.title) }));
-      setAiNoticeLoading(false);
-    }, 900);
+    try {
+      const res = await csApi.generateNoticeDraft({ category: noticeForm.category, title: noticeForm.title });
+      if (reqId !== aiNoticeReqId.current) return;
+      const noticeDraft = res.data.data?.draft;
+      if (noticeDraft) {
+        setNoticeForm((p) => ({ ...p, content: noticeDraft }));
+      }
+    } catch {
+      // AI 실패 시 조용히 무시 (비크리티컬)
+    } finally {
+      if (reqId === aiNoticeReqId.current) setAiNoticeLoading(false);
+    }
   };
 
   // ── FAQ handlers ──────────────────────────────────────────
@@ -399,9 +395,22 @@ export default function CustomerServicePage() {
       alert(status === 500 ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' : err.response?.data?.message || '삭제에 실패했습니다.');
     }
   };
-  const handleAiFaqDraft = () => {
+  const handleAiFaqDraft = async () => {
+    if (!faqForm.question.trim()) return;
+    const reqId = ++aiFaqReqId.current;
     setAiFaqLoading(true);
-    setTimeout(() => { setFaqForm((p) => ({ ...p, answer: genFaqDraft(p.question) })); setAiFaqLoading(false); }, 900);
+    try {
+      const res = await csApi.generateFaqDraft({ question: faqForm.question });
+      if (reqId !== aiFaqReqId.current) return;
+      const faqDraft = res.data.data?.draft;
+      if (faqDraft) {
+        setFaqForm((p) => ({ ...p, answer: faqDraft }));
+      }
+    } catch {
+      // AI 실패 시 조용히 무시 (비크리티컬)
+    } finally {
+      if (reqId === aiFaqReqId.current) setAiFaqLoading(false);
+    }
   };
 
   // ── 문의 핸들러 ───────────────────────────────────────────
@@ -458,20 +467,26 @@ export default function CustomerServicePage() {
     }
   };
 
-  const handleAiInquiryDraft = () => {
-    if (!selectedInquiry) return;
+  const handleAiInquiryDraft = async () => {
+    if (!selectedInquiry || selectedInquiry.inquiryStatus === INQUIRY_STATUS.COMPLETED) return;
+    const reqId = ++aiInqReqId.current;
     setAiInqLoading(true);
-    setTimeout(() => {
-      const draftBodies: Record<InquiryCategory, string> = {
-        REFUND:        '환불 요청 접수해 주셔서 감사합니다.\n\n이용 내역 확인 후 영업일 기준 3~5일 이내에 처리 결과를 안내해 드리겠습니다.',
-        PAYMENT_ERROR: '결제 오류로 불편을 드려 죄송합니다.\n\n카드 한도 및 유효기간을 확인해 주시고, 다른 브라우저에서도 시도해 주세요.',
-        SERVICE:       '문의하신 내용을 기술팀에서 검토 중이며, 빠른 시일 내에 해결하여 안내드리겠습니다.',
-        ACCOUNT:       '계정 관련 문의 감사합니다. 보안을 위해 본인 확인 절차가 필요할 수 있습니다.',
-        ETC:           '내용을 확인하였으며 빠른 시일 내에 답변 드리겠습니다.',
-      };
-      setInquiryReply(`안녕하세요, ${selectedInquiry.memberName} 님.\nCareer Wave 고객센터입니다.\n\n${draftBodies[selectedInquiry.category]}\n\n추가 문의사항이 있으시면 언제든지 연락 주세요.\n감사합니다.`);
-      setAiInqLoading(false);
-    }, 900);
+    try {
+      const res = await csApi.generateInquiryDraft({
+        category: selectedInquiry.category,
+        title: selectedInquiry.title,
+        content: selectedInquiry.content,
+      });
+      if (reqId !== aiInqReqId.current) return;
+      const inqDraft = res.data.data?.draft;
+      if (inqDraft) {
+        setInquiryReply(inqDraft);
+      }
+    } catch {
+      // AI 실패 시 조용히 무시 (비크리티컬)
+    } finally {
+      if (reqId === aiInqReqId.current) setAiInqLoading(false);
+    }
   };
 
   // ── 페이지네이션 ──────────────────────────────────────────

@@ -6,5 +6,7 @@ import java.util.UUID;
 
 public interface InterviewCallbackService {
 
+    void processQuestionCallback(UUID sessionId, InterviewDTO.RequestQuestionCallback dto);
+
     void processReportCallback(UUID sessionId, InterviewDTO.RequestReportCallback dto);
 }

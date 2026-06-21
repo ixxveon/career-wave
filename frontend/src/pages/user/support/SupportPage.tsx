@@ -19,12 +19,6 @@ export default function SupportPage() {
 
   return (
     <div className="sp-page">
-      <div className="sp-header">
-        <span className="sp-eyebrow">HELP CENTER</span>
-        <h1 className="sp-header__title">고객센터</h1>
-        <p className="sp-header__desc">공지사항, 자주 묻는 질문, 1:1 문의를 통해 도움을 받으세요.</p>
-      </div>
-
       {!isInquiryCreate && (
         <nav className="sp-tabs">
           {TABS.map(t => (
