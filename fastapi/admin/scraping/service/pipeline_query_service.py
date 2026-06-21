@@ -73,7 +73,7 @@ class PipelineQueryService:
 
     def _raise_validation_error(self, field: str) -> None:
         raise ScrapingException(
-            error_code=ScrapingErrorCode.FASTAPI_INTERNAL_ERROR,
+            error_code=ScrapingErrorCode.SCRAPING_INVALID_REQUEST,
             message="Pipeline list request validation failed.",
             detail={"field": field},
         )
