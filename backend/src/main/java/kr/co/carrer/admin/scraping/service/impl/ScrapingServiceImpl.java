@@ -11,11 +11,13 @@ import kr.co.carrer.admin.scraping.type.ScrapingStatusType;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ScrapingServiceImpl implements ScrapingService {
@@ -30,8 +32,8 @@ public class ScrapingServiceImpl implements ScrapingService {
     @Override
     @Transactional(readOnly = true)
     public ResponsePipelinePage getPipelines(String keyword, ScrapingPipelineStatusType status, int page, int size) {
+        validateExternalPageRequest(page, size);
         try {
-            validateExternalPageRequest(page, size);
             return ScrapingServiceMapper.toPipelinePage(
                     getFastApiGateway().getPipelines(new ScrapingFastApiGateway.PipelineSearchRequest(
                             keyword,
@@ -68,8 +70,8 @@ public class ScrapingServiceImpl implements ScrapingService {
     @Override
     @Transactional(readOnly = true)
     public ResponseLogPage getLogs(String sourceName, ScrapingStatusType status, int page, int size) {
+        validateExternalPageRequest(page, size);
         try {
-            validateExternalPageRequest(page, size);
             return ScrapingServiceMapper.toLogPage(
                     getFastApiGateway().getLogs(new ScrapingFastApiGateway.LogSearchRequest(
                             sourceName,
@@ -86,6 +88,7 @@ public class ScrapingServiceImpl implements ScrapingService {
     @Override
     public ResponseAction requestAction(String sourceName, RequestAction command, Long actorAdminId, String ipAddress) {
         validateActionCommand(command);
+        validateActorAdminId(actorAdminId);
         ScrapingFastApiGateway.ActionResponse response;
         try {
             ScrapingFastApiGateway.ActionRequest request = new ScrapingFastApiGateway.ActionRequest(
@@ -102,13 +105,14 @@ public class ScrapingServiceImpl implements ScrapingService {
             throw ScrapingServiceExceptionMapper.toActionException(command.actionType(), exception);
         }
         ResponseAction result = ScrapingServiceMapper.toAction(response, command);
-        saveActionAuditLog(actorAdminId, sourceName, command, ipAddress);
+        saveActionAuditLogSafely(actorAdminId, sourceName, command, ipAddress);
         return result;
     }
 
     @Override
     public ResponseBatchAction requestBatchAction(RequestBatchAction command, Long actorAdminId, String ipAddress) {
         validateBatchActionCommand(command);
+        validateActorAdminId(actorAdminId);
         ScrapingFastApiGateway.BatchActionRequest request = new ScrapingFastApiGateway.BatchActionRequest(
                 command.actionType(),
                 command.sourceNames(),
@@ -121,7 +125,7 @@ public class ScrapingServiceImpl implements ScrapingService {
             throw ScrapingServiceExceptionMapper.toActionException(command.actionType(), exception);
         }
         ResponseBatchAction result = ScrapingServiceMapper.toBatchAction(response);
-        saveBatchActionAuditLog(actorAdminId, command, ipAddress);
+        saveBatchActionAuditLogSafely(actorAdminId, command, ipAddress);
         return result;
     }
 
@@ -153,7 +157,6 @@ public class ScrapingServiceImpl implements ScrapingService {
     }
 
     private void saveActionAuditLog(Long actorAdminId, String sourceName, RequestAction command, String ipAddress) {
-        validateActorAdminId(actorAdminId);
         AuditLog auditLog = AuditLog.create(
                 actorAdminId,
                 AuditLogType.SCRAPING_SYSTEM,
@@ -168,7 +171,6 @@ public class ScrapingServiceImpl implements ScrapingService {
     }
 
     private void saveBatchActionAuditLog(Long actorAdminId, RequestBatchAction command, String ipAddress) {
-        validateActorAdminId(actorAdminId);
         AuditLog auditLog = AuditLog.create(
                 actorAdminId,
                 AuditLogType.SCRAPING_SYSTEM,
@@ -180,6 +182,24 @@ public class ScrapingServiceImpl implements ScrapingService {
                 "reason=" + command.reason()
         );
         auditLogRepository.save(auditLog);
+    }
+
+    private void saveActionAuditLogSafely(Long actorAdminId, String sourceName, RequestAction command, String ipAddress) {
+        try {
+            saveActionAuditLog(actorAdminId, sourceName, command, ipAddress);
+        } catch (RuntimeException exception) {
+            log.error("[ScrapingServiceImpl] Failed to save action audit log: sourceName={}, actionType={}",
+                    sourceName, command.actionType(), exception);
+        }
+    }
+
+    private void saveBatchActionAuditLogSafely(Long actorAdminId, RequestBatchAction command, String ipAddress) {
+        try {
+            saveBatchActionAuditLog(actorAdminId, command, ipAddress);
+        } catch (RuntimeException exception) {
+            log.error("[ScrapingServiceImpl] Failed to save batch action audit log: actionType={}, sourceCount={}",
+                    command.actionType(), command.sourceNames().size(), exception);
+        }
     }
 
     private void validateActorAdminId(Long actorAdminId) {
@@ -195,7 +215,11 @@ public class ScrapingServiceImpl implements ScrapingService {
     }
 
     private void validateBatchActionCommand(RequestBatchAction command) {
-        if (command == null || command.actionType() == null || command.sourceNames() == null) {
+        if (command == null
+                || command.actionType() == null
+                || command.sourceNames() == null
+                || command.sourceNames().isEmpty()
+                || command.sourceNames().stream().anyMatch(sourceName -> sourceName == null || sourceName.isBlank())) {
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
     }

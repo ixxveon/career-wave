@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.util.UriBuilder;
 
 import java.time.Duration;
+import java.util.Locale;
 import java.util.function.Function;
 
 @Slf4j
@@ -167,7 +168,7 @@ public class ScrapingFastApiClient implements ScrapingFastApiGateway {
                                 item.logId(),
                                 item.occurredAt(),
                                 item.sourceName(),
-                                item.status() == null ? null : ScrapingStatusType.valueOf(item.status()),
+                                toScrapingStatusType(item.status()),
                                 item.message(),
                                 item.detail(),
                                 item.runId()
@@ -319,6 +320,19 @@ public class ScrapingFastApiClient implements ScrapingFastApiGateway {
             case RETRY -> "RETRY";
             case TEST -> "TEST";
         };
+    }
+
+    private ScrapingStatusType toScrapingStatusType(String status) {
+        if (!StringUtils.hasText(status)) {
+            return null;
+        }
+
+        try {
+            return ScrapingStatusType.valueOf(status.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            log.error("[ScrapingFastApiClient] Unknown log status from FastAPI: {}", status, exception);
+            throw new CustomException(ScrapingErrorCode.SCRAPING_EXECUTION_FAILED);
+        }
     }
 
     private record SingleActionPayload(
