@@ -67,15 +67,4 @@ public class ScrapingPipeline {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
-        this.createdAt = now;
-        this.updatedAt = now;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = ZonedDateTime.now(SERVICE_ZONE_ID);
-    }
 }
