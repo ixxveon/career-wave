@@ -111,7 +111,7 @@ public class ScrapingServiceImpl implements ScrapingService {
         validateBatchActionCommand(command);
         try {
             ScrapingFastApiGateway.BatchActionRequest request = new ScrapingFastApiGateway.BatchActionRequest(
-                    command.actionType().name(),
+                    command.actionType(),
                     command.sourceNames(),
                     REQUESTED_BY_ADMIN_SERVICE
             );

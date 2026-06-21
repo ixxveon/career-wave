@@ -39,23 +39,22 @@
 
 ## Phase 4 - FastAPI Integration
 
-- [ ] Spring Boot가 FastAPI 내부 API를 실제로 호출하는 `ScrapingFastApiClient`를 사용한다.
-- [ ] FastAPI 목록 조회 요청/응답 매핑 DTO가 존재한다.
-- [ ] FastAPI 요약 조회 요청/응답 매핑 DTO가 존재한다.
-- [ ] FastAPI 상세 조회 요청/응답 매핑 DTO가 존재한다.
-- [ ] FastAPI 실행 로그 조회 요청/응답 매핑 DTO가 존재한다.
-- [ ] FastAPI 단일 실행 요청/응답 매핑 DTO가 존재한다.
-- [ ] FastAPI 재시도 요청/응답 매핑 DTO가 존재한다.
-- [ ] FastAPI 테스트 실행 요청/응답 매핑 DTO가 존재한다.
-- [ ] FastAPI 배치 액션 요청/응답 매핑 DTO가 존재한다.
-- [ ] `SCRAPING_PIPELINE_NOT_FOUND`, `SCRAPING_SOURCE_NOT_FOUND`, `SCRAPING_ALREADY_RUNNING`, `SCRAPING_EXECUTION_FAILED`, `SCRAPING_TEST_FAILED`가 올바르게 사용된다.
-- [ ] FastAPI ErrorCode와 Spring ErrorCode 매핑이 문서와 일치한다.
-- [ ] `FASTAPI_INTERNAL_ERROR`가 Spring에서 `SCRAPING_EXECUTION_FAILED`로 변환된다.
-- [ ] `DISCORD_ALERT_SEND_FAILED`가 선택 기능 정책에 맞게 조건부로만 사용된다.
-- [ ] Spring API와 FastAPI 내부 API 매핑이 문서와 구현에서 일치한다.
-- [ ] 단일 액션의 `actionType`이 `/run`, `/retry`, `/test` 호출로 올바르게 분기된다.
-- [ ] 배치 액션의 `actionType`이 `batch-run` 요청에 누락 없이 전달된다.
-- [ ] 미지원 `sourceName`이 `SCRAPING_SOURCE_NOT_FOUND`로 처리된다.
+- [x] Spring Boot가 FastAPI 내부 API를 실제로 호출하는 `ScrapingFastApiClient`를 사용한다.
+- [x] FastAPI 목록 조회 요청/응답 매핑 DTO가 존재한다.
+- [x] FastAPI 요약 조회 요청/응답 매핑 DTO가 존재한다.
+- [x] FastAPI 상세 조회 요청/응답 매핑 DTO가 존재한다.
+- [x] FastAPI 실행 로그 조회 요청/응답 매핑 DTO가 존재한다.
+- [x] FastAPI 단일 실행 요청/응답 매핑 DTO가 존재한다.
+- [x] FastAPI 재시도 요청/응답 매핑 DTO가 존재한다.
+- [x] FastAPI 테스트 실행 요청/응답 매핑 DTO가 존재한다.
+- [x] FastAPI 배치 액션 요청/응답 매핑 DTO가 존재한다.
+- [x] `SCRAPING_PIPELINE_NOT_FOUND`, `SCRAPING_SOURCE_NOT_FOUND`, `SCRAPING_ALREADY_RUNNING`, `SCRAPING_EXECUTION_FAILED`, `SCRAPING_TEST_FAILED`가 올바르게 사용된다.
+- [x] FastAPI ErrorCode와 Spring ErrorCode 매핑이 문서와 일치한다.
+- [x] `FASTAPI_INTERNAL_ERROR`가 Spring에서 `SCRAPING_EXECUTION_FAILED`로 변환된다.
+- [x] Spring API와 FastAPI 내부 API 매핑이 문서와 구현에서 일치한다.
+- [x] 단일 액션의 `actionType`이 `/run`, `/retry`, `/test` 호출로 올바르게 분기된다.
+- [x] 배치 액션의 `actionType`이 `batch-run` 요청에 누락 없이 전달된다.
+- [x] 미지원 `sourceName`이 `SCRAPING_SOURCE_NOT_FOUND`로 처리된다.
 
 ## Phase 5 - API
 
