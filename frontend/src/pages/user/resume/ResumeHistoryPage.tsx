@@ -121,7 +121,7 @@ export default function ResumeHistoryPage() {
               </div>
             ) : (
               <>
-                <p className="rh-count">총 {totalItems}건</p>
+                <p className="rh-count">총 {filteredItems.length}건</p>
                 <div className="rh-list-wrap" ref={listWrapRef}>
                   <ul className="rh-list" aria-label="분석 이력 목록">
                     {filteredItems.map((item) => (
