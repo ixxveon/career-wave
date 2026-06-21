@@ -91,7 +91,7 @@ BEGIN
     'DEMO-ORDER-001',
     'DEMO-TOSS-KEY-001',
     'DEMO-IDEM-001',
-    29900, 'KRW', 'PAID', '카드', NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days');
+    29900, 'KRW', 'PAID', 'CARD', NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days');
 
   INSERT INTO refunds (payment_id, amount, reason, refund_status, created_at)
   VALUES (v_pay_id, 29900, '서비스 불만족으로 인한 환불 요청', 'PENDING', NOW() - INTERVAL '1 day');
