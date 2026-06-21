@@ -116,6 +116,32 @@ public class AdminStatisticsQueryRepository {
         return result;
     }
 
+    public List<StatisticsDTO.RevenueBreakdownItem> findRevenueBreakdown() {
+        String sql = """
+            SELECT
+              p.payment_type,
+              COALESCE(SUM(p.amount) FILTER (WHERE DATE_TRUNC('month', p.approved_at AT TIME ZONE 'Asia/Seoul') = DATE_TRUNC('month', NOW() AT TIME ZONE 'Asia/Seoul')), 0) AS current_amount,
+              COALESCE(SUM(p.amount) FILTER (WHERE DATE_TRUNC('month', p.approved_at AT TIME ZONE 'Asia/Seoul') = DATE_TRUNC('month', (NOW() AT TIME ZONE 'Asia/Seoul') - INTERVAL '1 month')), 0) AS prev_amount
+            FROM payments p
+            WHERE p.payment_status = 'PAID'
+              AND p.approved_at >= DATE_TRUNC('month', (NOW() AT TIME ZONE 'Asia/Seoul') - INTERVAL '1 month')
+            GROUP BY p.payment_type
+            ORDER BY p.payment_type
+            """;
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = em.createNativeQuery(sql).getResultList();
+        return rows.stream().map(row -> {
+            String type        = (String) row[0];
+            long current       = ((Number) row[1]).longValue();
+            long prev          = ((Number) row[2]).longValue();
+            double growth      = prev == 0 ? 0.0
+                : Math.round((double)(current - prev) / prev * 10000.0) / 100.0;
+            String label       = "AUTO_RENEWAL".equals(type) ? "자동 갱신" : "직접 결제";
+            return new StatisticsDTO.RevenueBreakdownItem(type, label, current, growth);
+        }).toList();
+    }
+
     public List<Object[]> findRecentSubscribers() {
         String sql = """
             SELECT CAST(m.member_id AS TEXT), m.name, s.subscription_status, pl.plan_name, s.created_at
