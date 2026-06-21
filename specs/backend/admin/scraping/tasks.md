@@ -34,17 +34,17 @@
 
 ## Phase 4 - FastAPI Integration
 
-- [ ] `ScrapingFastApiClient.java`를 작성한다.
-- [ ] FastAPI 목록 조회 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI 요약 조회 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI 상세 조회 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI 단일 실행 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI 재시도 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI 테스트 실행 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI 배치 액션 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI 실행 로그 조회 요청/응답 매핑 DTO를 작성한다.
-- [ ] 배치 액션 `actionType`을 FastAPI 내부 계약으로 전달하는 매핑을 구현한다.
-- [ ] FastAPI 내부 ErrorCode를 Spring ErrorCode로 변환하는 매퍼를 구현한다.
+- [x] `ScrapingFastApiClient.java`를 작성한다.
+- [x] FastAPI 목록 조회 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI 요약 조회 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI 상세 조회 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI 단일 실행 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI 재시도 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI 테스트 실행 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI 배치 액션 요청/응답 매핑 DTO를 작성한다.
+- [x] FastAPI 실행 로그 조회 요청/응답 매핑 DTO를 작성한다.
+- [x] 배치 액션 `actionType`을 FastAPI 내부 계약으로 전달하는 매핑을 구현한다.
+- [x] FastAPI 내부 ErrorCode를 Spring ErrorCode로 변환하는 매퍼를 구현한다.
 
 ## Phase 5 - API
 
