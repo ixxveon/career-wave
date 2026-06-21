@@ -13,6 +13,9 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -43,8 +46,17 @@ public class S3Uploader {
         String s3Key = buildS3Key(extension);
 
         if (mockUpload) {
-            log.warn("[S3 Mock] 실제 업로드 건너뜀 — key: {}", s3Key);
-            return buildFileUrl(s3Key);
+            try {
+                String fileName = UUID.randomUUID() + "." + extension;
+                Path dir = Paths.get(System.getProperty("java.io.tmpdir"), "career-wave-mock-files");
+                Files.createDirectories(dir);
+                Files.write(dir.resolve(fileName), file.getBytes());
+                log.warn("[S3 Mock] 로컬 저장 — {}", dir.resolve(fileName));
+                return "http://localhost:8080/mock-files/" + fileName;
+            } catch (IOException e) {
+                log.error("[S3 Mock] 로컬 저장 실패", e);
+                throw new CustomException(ErrorCode.S3_UPLOAD_FAILED);
+            }
         }
 
         try {

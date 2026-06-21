@@ -26,6 +26,15 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
 
+aws:
+  s3:
+    mock-upload: true
+    bucket-name: mock-bucket
+    region: ap-northeast-2
+
+websocket:
+  allowed-origins: "*"
+
 interview:
   internal-secret: ${WEBHOOK_SECRET}
 
