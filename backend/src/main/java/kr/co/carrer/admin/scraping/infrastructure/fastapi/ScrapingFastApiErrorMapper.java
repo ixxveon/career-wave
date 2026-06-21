@@ -7,6 +7,8 @@ import kr.co.carrer.global.exception.CustomException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.util.Locale;
+
 @Slf4j
 final class ScrapingFastApiErrorMapper {
 
@@ -36,7 +38,8 @@ final class ScrapingFastApiErrorMapper {
     }
 
     private static ScrapingErrorCode toErrorCode(String errorCode) {
-        return switch (errorCode) {
+        String normalized = errorCode == null ? "" : errorCode.trim().toUpperCase(Locale.ROOT);
+        return switch (normalized) {
             case "SCRAPING_PIPELINE_NOT_FOUND" -> ScrapingErrorCode.SCRAPING_PIPELINE_NOT_FOUND;
             case "SCRAPING_SOURCE_NOT_FOUND" -> ScrapingErrorCode.SCRAPING_SOURCE_NOT_FOUND;
             case "SCRAPING_ALREADY_RUNNING" -> ScrapingErrorCode.SCRAPING_ALREADY_RUNNING;
