@@ -11,8 +11,8 @@ const QuotaBar = memo(function QuotaBar({ label = '이번 달 서류 분석' }: 
 
   const usedCount  = data?.usedCount  ?? 0;
   const limitCount = data?.limitCount ?? 30;
-  const docLeft    = limitCount - usedCount;
-  const pct        = Math.min((usedCount / limitCount) * 100, 100);
+  const docLeft    = Math.max(limitCount - usedCount, 0);
+  const pct        = limitCount > 0 ? Math.min((usedCount / limitCount) * 100, 100) : 100;
   const isExhausted = docLeft <= 0;
   const isWarning   = !isExhausted && docLeft <= 3;
 
