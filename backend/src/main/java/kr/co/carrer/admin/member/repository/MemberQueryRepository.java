@@ -291,7 +291,7 @@ public class MemberQueryRepository {
     public MemberDTO.ResponseCounts countMemberKpi() {
         String sql = """
             SELECT
-              COUNT(*) FILTER (WHERE DATE(m.created_at AT TIME ZONE 'Asia/Seoul') = CURRENT_DATE AT TIME ZONE 'Asia/Seoul') AS today_join_count,
+              COUNT(*) FILTER (WHERE (m.created_at AT TIME ZONE 'Asia/Seoul')::date = (NOW() AT TIME ZONE 'Asia/Seoul')::date) AS today_join_count,
               COUNT(*) FILTER (WHERE m.subscription_status = 'PREMIUM') AS premium_count,
               COUNT(*) FILTER (WHERE m.member_status = 'SUSPENDED') AS suspended_count
             FROM members m

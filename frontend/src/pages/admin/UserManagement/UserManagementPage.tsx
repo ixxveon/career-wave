@@ -165,13 +165,16 @@ export default function UserManagementPage() {
     fetchHrManagers(1);
   };
 
+  const fetchMemberCounts = useCallback(async () => {
+    try {
+      const res = await memberApi.getMemberCounts();
+      if (res.data.success) setMemberCounts(res.data.data);
+    } catch {}
+  }, []);
+
   useEffect(() => { fetchMembers(1); }, [fetchMembers]);
   useEffect(() => { fetchHrManagers(1); }, [fetchHrManagers]);
-  useEffect(() => {
-    memberApi.getMemberCounts().then(res => {
-      if (res.data.success) setMemberCounts(res.data.data);
-    }).catch(() => {});
-  }, []);
+  useEffect(() => { fetchMemberCounts(); }, [fetchMemberCounts]);
 
   // ── 제재 처리 ──────────────────────────────────────────────
   const openSuspend = (member: MemberItem) => {
@@ -195,6 +198,7 @@ export default function UserManagementPage() {
       if (!res.data.success) throw new Error(res.data.message);
       setSuspendTarget(null);
       fetchMembers(memberPage);
+      fetchMemberCounts();
     } catch (err: any) {
       const msg = err.response?.data?.message || (err instanceof Error ? err.message : '');
       setSuspendError(msg || '제재 처리에 실패했습니다.');
