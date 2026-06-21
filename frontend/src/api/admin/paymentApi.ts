@@ -108,10 +108,11 @@ export interface PaymentSummary {
 export interface Subscription {
   subscriptionId: string;
   memberName: string;
-  plan: string;
-  startDate: string;
-  renewDate: string;
-  subStatus: SubStatus;
+  planName: string;
+  startedAt: string;
+  currentPeriodEnd: string;
+  subscriptionStatus: SubStatus;
+  autoRenew: boolean;
 }
 
 // ── 쿼리 파라미터 타입 ─────────────────────────────────────────

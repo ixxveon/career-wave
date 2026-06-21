@@ -531,14 +531,20 @@ export default function PaymentPage() {
                     <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
                   ) : subscriptions.map((s) => (
                     <tr key={s.subscriptionId}>
-                      <td style={{ fontSize: 13, color: '#7a8da4' }}>{s.subscriptionId}</td>
+                      <td
+                        style={{ fontSize: 13, color: '#7a8da4', fontFamily: 'monospace', cursor: 'pointer', userSelect: 'none' }}
+                        title={`클릭하여 복사: ${s.subscriptionId}`}
+                        onClick={() => { navigator.clipboard.writeText(s.subscriptionId); showToast('구독 ID가 복사되었습니다.'); }}
+                      >
+                        {s.subscriptionId.slice(0, 8)}…
+                      </td>
                       <td>{s.memberName}</td>
-                      <td>{s.plan}</td>
-                      <td>{new Date(s.startDate).toLocaleDateString('ko-KR')}</td>
-                      <td>{new Date(s.renewDate).toLocaleDateString('ko-KR')}</td>
+                      <td>{s.planName}</td>
+                      <td>{new Date(s.startedAt).toLocaleDateString('ko-KR')}</td>
+                      <td>{new Date(s.currentPeriodEnd).toLocaleDateString('ko-KR')}</td>
                       <td>
-                        <span className={`statusBadge ${SUB_STATUS_CLS[s.subStatus]}`}>
-                          {SUB_STATUS_LABEL[s.subStatus]}
+                        <span className={`statusBadge ${SUB_STATUS_CLS[s.subscriptionStatus]}`}>
+                          {SUB_STATUS_LABEL[s.subscriptionStatus]}
                         </span>
                       </td>
                     </tr>
