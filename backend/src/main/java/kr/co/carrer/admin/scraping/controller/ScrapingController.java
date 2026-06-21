@@ -2,6 +2,7 @@ package kr.co.carrer.admin.scraping.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import kr.co.carrer.admin.scraping.docs.ScrapingDocs;
 import kr.co.carrer.admin.scraping.dto.ScrapingLogDTO;
 import kr.co.carrer.admin.scraping.dto.ScrapingPipelineDTO;
 import kr.co.carrer.admin.scraping.service.ScrapingService;
@@ -27,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Validated
 @PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('BACKEND'))")
-public class ScrapingController {
+public class ScrapingController implements ScrapingDocs {
 
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_SIZE = 20;
