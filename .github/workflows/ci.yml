@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   backend:
@@ -12,28 +12,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Java 21 설정
+      - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: "temurin"
+          cache: "gradle"
 
-      - name: gradlew 실행 권한 부여
+      - name: Grant gradlew execute permission
         run: chmod +x backend/gradlew
 
-      - name: 환경 확인
+      - name: Verify environment
         working-directory: backend
         run: |
           java -version
-          ./gradlew --version --no-daemon
+          for attempt in 1 2 3; do
+            ./gradlew --version --no-daemon && exit 0
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            echo "Gradle wrapper download failed. Retrying..."
+            sleep 5
+          done
 
-      - name: 테스트 실행
+      - name: Run tests
         working-directory: backend
         run: ./gradlew test --no-daemon --stacktrace --info
         env:
           SPRING_PROFILES_ACTIVE: test
 
-      - name: 패키징 검증
+      - name: Verify package
         working-directory: backend
         run: ./gradlew bootJar --no-daemon
         env:
@@ -46,26 +54,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Node.js 20 설정
+      - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
-      - name: 의존성 설치
+      - name: Install dependencies
         working-directory: frontend
         run: npm ci
 
-      - name: 타입 검사
+      - name: Run typecheck
         working-directory: frontend
         run: npm run typecheck
 
-      - name: 빌드
+      - name: Build
         working-directory: frontend
         run: npm run build
 
-      - name: 테스트
+      - name: Run tests
         working-directory: frontend
         run: npm test
 
@@ -76,17 +84,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Python 3.12 설정
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
           cache-dependency-path: fastapi/requirements.txt
 
-      - name: 의존성 설치
+      - name: Install dependencies
         working-directory: fastapi
         run: pip install -r requirements.txt
 
-      - name: 전체 모듈 문법 검사
+      - name: Check Python modules
         working-directory: fastapi
         run: python -m compileall .
