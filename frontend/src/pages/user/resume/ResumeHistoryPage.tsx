@@ -54,7 +54,7 @@ export default function ResumeHistoryPage() {
   const filteredItems = activeType === 'ALL'
     ? allItems
     : allItems.filter(item => item.fileType === activeType);
-  const totalItems = data?.pages[0]?.totalItems ?? 0;
+
 
   return (
     <div className="rh">
