@@ -116,9 +116,19 @@ export interface RejectRequest {
   rejectReason: string;
 }
 
+export interface MemberCounts {
+  todayJoinCount: number;
+  premiumCount: number;
+  suspendedCount: number;
+}
+
 // ── API 함수 ───────────────────────────────────────────────────
 
 export const memberApi = {
+  // 회원 KPI 집계 조회
+  getMemberCounts: () =>
+    axiosInstance.get<ApiResponse<MemberCounts>>('/api/v1/admin/members/counts'),
+
   // 개인 회원 목록 조회
   getMembers: (params?: MemberListParams) =>
     axiosInstance.get<ApiResponse<MemberListData>>('/api/v1/admin/members', { params }),

@@ -19,6 +19,12 @@ public class AdminSubscriptionServiceImpl implements AdminSubscriptionService {
 
     @Override
     @Transactional(readOnly = true)
+    public SubscriptionDTO.ResponseCounts getSubscriptionCounts() {
+        return subscriptionQueryRepository.countSubscriptionKpi();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PaginationResponse<SubscriptionDTO.ResponseList> getSubscriptions(SubscriptionStatus status, int page, int size) {
         int safePage = Math.max(page, 1);
         int safeSize = Math.min(Math.max(size, 1), 100);
