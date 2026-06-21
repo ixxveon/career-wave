@@ -6,8 +6,26 @@
 -- ============================================================
 
 -- 기존 테스트 데이터 초기화 (재실행 안전)
+-- suspend_histories 자식 행 먼저 삭제 (FK 제약 위반 방지)
+DELETE FROM suspend_histories
+WHERE member_id IN (
+  SELECT member_id FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01')
+);
 DELETE FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01');
 DELETE FROM admins  WHERE login_id IN ('admin', 'cs');
+
+-- ────────────────────────────────────────────
+-- 관리자 먼저 삽입 (suspend_histories admin_id FK 보장)
+-- loginId=admin / 비밀번호: 1234
+-- ────────────────────────────────────────────
+INSERT INTO admins (login_id, email, password_hash, name, admin_role, status, created_at, updated_at)
+VALUES
+  ('admin', 'admin@career-wave.local',
+   '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
+   '슈퍼관리자', 'MASTER', 'ACTIVE', NOW(), NOW()),
+  ('cs', 'cs@career-wave.com',
+   '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
+   'CS 담당자', 'CS', 'ACTIVE', NOW(), NOW());
 
 -- ────────────────────────────────────────────
 -- 일반 회원 (USER / 비밀번호: Test1234!)
@@ -45,8 +63,6 @@ BEGIN
   SELECT member_id INTO v_member_id FROM members WHERE login_id = 'testuser05';
   SELECT admin_id  INTO v_admin_id  FROM admins  WHERE login_id = 'admin';
 
-  DELETE FROM suspend_histories WHERE member_id = v_member_id;
-
   INSERT INTO suspend_histories (member_id, admin_id, sanction_type, reason, duration, start_date, end_date, created_at)
   VALUES (v_member_id, v_admin_id, 'SUSPEND', '커뮤니티 운영정책 위반', 'SEVEN_DAYS',
           CURRENT_DATE, CURRENT_DATE + INTERVAL '7 days', NOW());
@@ -61,17 +77,6 @@ VALUES
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
    '테스트기업담당자', 'COMPANY', 'ACTIVE', 'FREE', 0, NOW(), NOW());
 
--- ────────────────────────────────────────────
--- 관리자 (loginId=admin / 비밀번호: 1234)
--- ────────────────────────────────────────────
-INSERT INTO admins (login_id, email, password_hash, name, admin_role, status, created_at, updated_at)
-VALUES
-  ('admin', 'admin@career-wave.local',
-   '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
-   '슈퍼관리자', 'MASTER', 'ACTIVE', NOW(), NOW()),
-  ('cs', 'cs@career-wave.com',
-   '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
-   'CS 담당자', 'CS', 'ACTIVE', NOW(), NOW());
 
 -- ────────────────────────────────────────────
 -- 구독 플랜 (데모용)
