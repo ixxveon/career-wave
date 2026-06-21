@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
@@ -57,6 +57,12 @@ function Header() {
 
   const handleMenuLeave = useCallback(() => {
     closeTimerRef.current = setTimeout(() => setOpenMenu(null), 150);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
   }, []);
 
   function handleLogout() {
