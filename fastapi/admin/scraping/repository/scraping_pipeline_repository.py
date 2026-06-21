@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, MetaData, String, Table, Text, func, or_, select
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, MetaData, String, Table, Text, func, or_, select, update
 from sqlalchemy.engine import RowMapping
 from sqlalchemy.orm import Session
 
@@ -87,6 +87,68 @@ class ScrapingPipelineRepository:
             scraping_pipelines_table.c.source_name == source_name
         )
         return self._session.execute(statement).scalar_one_or_none()
+
+    def mark_running(self, source_name: str, started_at: datetime) -> ScrapingPipelineRecord | None:
+        statement = (
+            update(scraping_pipelines_table)
+            .where(scraping_pipelines_table.c.source_name == source_name)
+            .values(
+                pipeline_status="RUNNING",
+                last_started_at=started_at,
+                updated_at=started_at,
+            )
+            .returning(scraping_pipelines_table)
+        )
+        row = self._session.execute(statement).mappings().first()
+        self._session.flush()
+        return self._to_record(row) if row else None
+
+    def mark_success(
+        self,
+        source_name: str,
+        *,
+        succeeded_at: datetime,
+        total_count: int,
+        duration_ms: int,
+    ) -> ScrapingPipelineRecord | None:
+        statement = (
+            update(scraping_pipelines_table)
+            .where(scraping_pipelines_table.c.source_name == source_name)
+            .values(
+                pipeline_status="SUCCESS",
+                last_success_at=succeeded_at,
+                last_duration_ms=duration_ms,
+                last_total_count=total_count,
+                last_error_message=None,
+                updated_at=succeeded_at,
+            )
+            .returning(scraping_pipelines_table)
+        )
+        row = self._session.execute(statement).mappings().first()
+        self._session.flush()
+        return self._to_record(row) if row else None
+
+    def mark_failed(
+        self,
+        source_name: str,
+        *,
+        failed_at: datetime,
+        error_message: str | None,
+    ) -> ScrapingPipelineRecord | None:
+        statement = (
+            update(scraping_pipelines_table)
+            .where(scraping_pipelines_table.c.source_name == source_name)
+            .values(
+                pipeline_status="FAILED",
+                last_failed_at=failed_at,
+                last_error_message=error_message,
+                updated_at=failed_at,
+            )
+            .returning(scraping_pipelines_table)
+        )
+        row = self._session.execute(statement).mappings().first()
+        self._session.flush()
+        return self._to_record(row) if row else None
 
     def find_pipelines(
         self,
