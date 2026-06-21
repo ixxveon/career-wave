@@ -30,15 +30,6 @@ VALUES
 -- ────────────────────────────────────────────
 -- 관리자 먼저 삽입 (suspend_histories admin_id FK 보장)
 -- loginId=admin / 비밀번호: 1234
--- ────────────────────────────────────────────
-INSERT INTO admins (login_id, email, password_hash, name, admin_role, status, created_at, updated_at)
-VALUES
-  ('admin', 'admin@career-wave.local',
-   '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
-   '슈퍼관리자', 'MASTER', 'ACTIVE', NOW(), NOW()),
-  ('cs', 'cs@career-wave.com',
-   '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
-   'CS 담당자', 'CS', 'ACTIVE', NOW(), NOW());
 
 -- ────────────────────────────────────────────
 -- 일반 회원 (USER / 비밀번호: Test1234!)
