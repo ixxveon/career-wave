@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { interviewReportApi, interviewHistoryApi } from '../../../api/user/interview';
 import type { InterviewReportResponse, InterviewHistoryResponse } from '../../../types/user/interview';
+import type { MemberApiError } from '../../../utils/user/member/errorMapping';
 
 // ── QueryKey 팩토리 ────────────────────────────────────────────────
 export const interviewQueryKeys = {
@@ -11,14 +12,35 @@ export const interviewQueryKeys = {
 
 // ── useInterviewReport ─────────────────────────────────────────────
 // 리포트 조회 — sessionId null이면 비활성화
+// 409 INTERVIEW_REPORT_NOT_READY: estimatedWaitSeconds 기반 자동 폴링 (최대 8회)
 // 페이지 재진입·새로고침 시 TanStack Query가 자동 재조회 (constitution §상태 복원력)
 export function useInterviewReport(sessionId: string | null) {
-  return useQuery<InterviewReportResponse>({
+  const query = useQuery<InterviewReportResponse, MemberApiError>({
     queryKey: interviewQueryKeys.report(sessionId ?? ''),
     queryFn: ({ signal }) => interviewReportApi.get(sessionId!, signal),
     enabled: !!sessionId,
-    retry: 1,
+    retry: (failureCount, error) => {
+      if (error.statusCode === 409 && error.serverCode === 'INTERVIEW_REPORT_NOT_READY') {
+        return failureCount < 8;
+      }
+      return failureCount < 1;
+    },
+    retryDelay: (_failureCount, error) => {
+      if (error.statusCode === 409 && error.serverCode === 'INTERVIEW_REPORT_NOT_READY') {
+        const waitData = error.data as { estimatedWaitSeconds?: number } | undefined;
+        return (waitData?.estimatedWaitSeconds ?? 15) * 1000;
+      }
+      return 1000;
+    },
   });
+
+  // isAnalyzing: 모든 재시도 소진 후에도 리포트 미완성 상태
+  const isAnalyzing =
+    query.isError &&
+    query.error?.statusCode === 409 &&
+    query.error?.serverCode === 'INTERVIEW_REPORT_NOT_READY';
+
+  return { ...query, isAnalyzing };
 }
 
 // ── useInterviewHistory ────────────────────────────────────────────

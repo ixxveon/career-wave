@@ -137,10 +137,10 @@ export interface HistoryItem {
 }
 
 export interface InterviewHistoryResponse {
-  content: HistoryItem[];
+  items: HistoryItem[];
   page: number;
   size: number;
-  totalElements: number;
+  totalItems: number;
   totalPages: number;
 }
 
