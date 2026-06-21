@@ -20,17 +20,17 @@
 
 ## Phase 3 - Service
 
-- [ ] `ScrapingService.java` 인터페이스를 작성한다.
-- [ ] FastAPI 목록 응답을 Spring DTO로 변환하는 서비스 로직을 구현한다.
-- [ ] FastAPI 요약 응답을 Spring DTO로 변환하는 서비스 로직을 구현한다.
-- [ ] FastAPI 상세 응답을 Spring DTO로 변환하는 서비스 로직을 구현한다.
-- [ ] FastAPI 실행 로그 응답을 Spring DTO로 변환하는 서비스 로직을 구현한다.
-- [ ] 단일 액션 요청 서비스 로직을 구현한다.
-- [ ] 배치 액션 요청 서비스 로직을 구현한다.
-- [ ] `page - 1` Pageable 변환 로직을 구현한다.
-- [ ] `SCRAPING_PIPELINE_NOT_FOUND`, `SCRAPING_SOURCE_NOT_FOUND`, `SCRAPING_ALREADY_RUNNING`, `SCRAPING_EXECUTION_FAILED`, `SCRAPING_TEST_FAILED` 예외 변환 로직을 구현한다.
-- [ ] 관리자 실행 제어 요청에 대한 Audit Log 기록 연동 로직을 구현한다.
-- [ ] `ScrapingErrorCode.java` 도메인 에러 코드를 작성한다.
+- [x] `ScrapingService.java` 인터페이스를 작성한다.
+- [x] FastAPI 목록 응답을 Spring DTO로 변환하는 서비스 로직을 구현한다.
+- [x] FastAPI 요약 응답을 Spring DTO로 변환하는 서비스 로직을 구현한다.
+- [x] FastAPI 상세 응답을 Spring DTO로 변환하는 서비스 로직을 구현한다.
+- [x] FastAPI 실행 로그 응답을 Spring DTO로 변환하는 서비스 로직을 구현한다.
+- [x] 단일 액션 요청 서비스 로직을 구현한다.
+- [x] 배치 액션 요청 서비스 로직을 구현한다.
+- [x] 외부 1-based `page`를 검증하고 Spring 내부 Pageable 소비 지점용 `page - 1` 변환 로직을 구현한다.
+- [x] `SCRAPING_PIPELINE_NOT_FOUND`, `SCRAPING_SOURCE_NOT_FOUND`, `SCRAPING_ALREADY_RUNNING`, `SCRAPING_EXECUTION_FAILED`, `SCRAPING_TEST_FAILED` 예외 변환 로직을 구현한다.
+- [x] 관리자 실행 제어 요청에 대한 Audit Log 기록 연동 로직을 구현한다.
+- [x] `ScrapingErrorCode.java` 도메인 에러 코드를 작성한다.
 
 ## Phase 4 - FastAPI Integration
 
@@ -39,7 +39,7 @@
 - [ ] FastAPI 요약 조회 요청/응답 매핑 DTO를 작성한다.
 - [ ] FastAPI 상세 조회 요청/응답 매핑 DTO를 작성한다.
 - [ ] FastAPI 단일 실행 요청/응답 매핑 DTO를 작성한다.
-- [ ] FastAPI 재실행 요청/응답 매핑 DTO를 작성한다.
+- [ ] FastAPI 재시도 요청/응답 매핑 DTO를 작성한다.
 - [ ] FastAPI 테스트 실행 요청/응답 매핑 DTO를 작성한다.
 - [ ] FastAPI 배치 액션 요청/응답 매핑 DTO를 작성한다.
 - [ ] FastAPI 실행 로그 조회 요청/응답 매핑 DTO를 작성한다.
@@ -63,13 +63,13 @@
 - [ ] `ScrapingDocs.java` Swagger 인터페이스를 작성한다.
 - [ ] 관리자 목록/요약/상세/로그 조회 API 문서를 정리한다.
 - [ ] 단일 액션 및 배치 액션 API 문서를 정리한다.
-- [ ] FastAPI 내부 API 매핑과 ErrorCode 매핑을 백엔드 문서와 일치시킨다.
+- [ ] FastAPI 내부 API 매핑과 ErrorCode 매핑이 백엔드 문서와 일치하도록 정리한다.
 - [ ] Audit Log 기록 범위를 문서와 구현 계획에 맞춘다.
 
 ## Phase 7 - Test
 
 - [ ] FastAPI 목록/요약/상세/로그 응답 매핑 테스트를 작성한다.
-- [ ] 단일 실행/재실행/테스트 액션 요청 테스트를 작성한다.
+- [ ] 단일 실행/재시도/테스트 액션 요청 테스트를 작성한다.
 - [ ] 배치 액션 요청 테스트를 작성한다.
 - [ ] `page - 1` 변환 테스트를 작성한다.
 - [ ] ErrorCode 변환 테스트를 작성한다.
