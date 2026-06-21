@@ -190,7 +190,12 @@ export function useAnalysisWebSocket({
             errorFiredRef.current = true;
             clientRef.current = null;
             onFailed('접근 권한이 없거나 유효하지 않은 문서입니다.');
+            return;
           }
+          // 그 외 비정상 종료 — polling fallback으로 전환
+          clientRef.current = null;
+          onNetworkError();
+          startPolling(documentId);
         },
       });
 
