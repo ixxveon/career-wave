@@ -3,6 +3,7 @@ package kr.co.carrer.admin.stats.repository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import kr.co.carrer.admin.payment.type.PaymentType;
 import kr.co.carrer.admin.stats.dto.StatisticsDTO;
 import org.springframework.stereotype.Repository;
 
@@ -137,7 +138,7 @@ public class AdminStatisticsQueryRepository {
             long prev          = ((Number) row[2]).longValue();
             double growth      = prev == 0 ? 0.0
                 : Math.round((double)(current - prev) / prev * 10000.0) / 100.0;
-            String label       = "AUTO_RENEWAL".equals(type) ? "자동 갱신" : "직접 결제";
+            String label       = PaymentType.valueOf(type).label();
             return new StatisticsDTO.RevenueBreakdownItem(type, label, current, growth);
         }).toList();
     }
