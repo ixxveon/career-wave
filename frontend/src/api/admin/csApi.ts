@@ -62,8 +62,8 @@ export const NOTICE_CATEGORY_LABEL: Record<NoticeCategory, string> = {
 
 export const FAQ_CATEGORY_LABEL: Record<FaqCategory, string> = {
   ACCOUNT: '계정',
-  PAYMENT: '결제',
-  SERVICE: '서비스',
+  PAYMENT: '구독/결제',
+  SERVICE: 'AI 서비스',
   ETC:     '기타',
 };
 

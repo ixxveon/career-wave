@@ -18,6 +18,7 @@ export type MemberErrorCode = (typeof MEMBER_ERROR_CODE)[keyof typeof MEMBER_ERR
 export interface MemberApiError extends ApiError {
   code: MemberErrorCode;
   fieldErrors?: Record<string, string>;
+  data?: unknown;
 }
 
 export const LOGIN_BLOCK_SERVER_CODE = {
@@ -101,6 +102,7 @@ export function toMemberApiError(statusCode: number, body?: ApiErrorBody): Membe
     message: body?.message || fallbackMessages[code],
     serverCode: body?.code,
     fieldErrors,
+    data: body?.data,
   };
 }
 
