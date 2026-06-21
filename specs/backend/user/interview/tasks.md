@@ -218,6 +218,10 @@
 ## Phase 6-2 — FastAPI 콜백 수신 Controller
 
 - [x] `InterviewCallbackController.java` — `POST /internal/api/v1/interview/callback/{sessionId}/report`
+- [x] `InterviewCallbackController.java` — `POST /internal/api/v1/interview/callback/{sessionId}/question`
+  - [x] `X-Internal-Secret` 헤더 검증
+  - [x] `processQuestionCallback` — `SimpMessagingTemplate`으로 `/topic/interview/{sessionId}` STOMP 릴레이
+  - [x] Spring Security `permitAll` 등록 (`/internal/api/v1/interview/callback/*/question`)
   - [x] `X-Internal-Secret` 헤더 검증 — 불일치 시 401 반환 (값은 `${INTERVIEW_INTERNAL_SECRET}` 환경변수)
   - [x] `AIInterviewFeedbackRepository.existsBySessionId(sessionId)` 멱등성 체크 — 이미 존재하면 REPORT_READY 재전송 후 200 반환
   - [x] `processReportCallback`에 `@Transactional` 적용 — DB 저장 전체를 단일 트랜잭션으로 보장 (self-invocation 방지)

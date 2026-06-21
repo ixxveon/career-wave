@@ -84,10 +84,25 @@ function mockResponse<T>(data: T): Promise<T> {
   return Promise.resolve(structuredClone(data));
 }
 
+function createApplicationQueryString(params: ApplicationQuery): string {
+  const queryParams = new URLSearchParams();
+  const keyword = params.keyword?.trim();
+
+  if (keyword) {
+    queryParams.set('keyword', keyword);
+  }
+
+  if (params.status && params.status !== 'ALL') {
+    queryParams.set('status', params.status);
+  }
+
+  return queryParams.toString();
+}
+
 export const applicationApi = {
   getApplications: async (params: ApplicationQuery = {}): Promise<Applicant[]> => {
     if (!USE_MOCK_DATA) {
-      const query = new URLSearchParams(params as Record<string, string>).toString();
+      const query = createApplicationQueryString(params);
       const response = await apiClient<Applicant[] | null>(
           `/applications${query ? `?${query}` : ''}`,
       );

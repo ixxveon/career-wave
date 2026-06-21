@@ -192,6 +192,19 @@ public class InterviewDTO {
             int estimatedWaitSeconds
     ) {}
 
+    @Schema(description = "FastAPI 질문 콜백 요청")
+    public record RequestQuestionCallback(
+
+            @Schema(description = "질문 순서 (1-based)")
+            Integer questionOrder,
+
+            @Schema(description = "질문 본문")
+            String questionText,
+
+            @Schema(description = "질문 유형 (FOLLOW_UP | PRESSURE | NEXT)")
+            String questionType
+    ) {}
+
     @Schema(description = "FastAPI 리포트 콜백 요청")
     public record RequestReportCallback(
 

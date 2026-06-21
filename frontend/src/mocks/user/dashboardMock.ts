@@ -6,7 +6,7 @@ export const mockUserProfile: UserProfile = {
   email: "user@example.com",
   name: "홍길동",
   phone: "01012345678",
-  roleType: "ROLE_USER",
+  roleType: "USER",
   memberStatus: "ACTIVE",
   subscriptionStatus: "FREE",
   notificationEnabled: true,
