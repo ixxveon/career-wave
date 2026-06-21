@@ -44,9 +44,10 @@ export function useAnalysisWebSocket({
   onFailed,
   onNetworkError,
 }: UseAnalysisWebSocketOptions): UseAnalysisWebSocketReturn {
-  const clientRef     = useRef<Client | null>(null);
-  const timeoutRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const errorFiredRef = useRef(false);
+  const clientRef        = useRef<Client | null>(null);
+  const timeoutRef       = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const errorFiredRef    = useRef(false);
+  const normalClosedRef  = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -107,7 +108,8 @@ export function useAnalysisWebSocket({
   const connect = useCallback(
     (documentId: string) => {
       disconnect();
-      errorFiredRef.current = false;
+      errorFiredRef.current   = false;
+      normalClosedRef.current = false;
 
       const token = authSession.getAccessToken();
       if (!token) {
@@ -124,12 +126,14 @@ export function useAnalysisWebSocket({
 
           if (msg.status === 'COMPLETED') {
             clearAnalysisTimeout();
+            normalClosedRef.current = true;
             clientRef.current?.deactivate();
             clientRef.current = null;
             setIsConnected(false);
             onCompleted();
           } else if (msg.status === 'FAILED') {
             clearAnalysisTimeout();
+            normalClosedRef.current = true;
             clientRef.current?.deactivate();
             clientRef.current = null;
             setIsConnected(false);
@@ -184,7 +188,7 @@ export function useAnalysisWebSocket({
         onWebSocketClose: (event) => {
           clearAnalysisTimeout();
           setIsConnected(false);
-          if (errorFiredRef.current) return;
+          if (normalClosedRef.current || errorFiredRef.current) return;
           // Close 1008: policy violation — 인증 실패 또는 IDOR
           if ((event as CloseEvent).code === 1008) {
             errorFiredRef.current = true;
