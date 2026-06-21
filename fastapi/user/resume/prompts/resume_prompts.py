@@ -168,7 +168,7 @@ def build_cover_letter_user_prompt(
     company_info = f"지원 회사: {company}" if company else "지원 회사: 미입력"
     job_info = f"지원 직무: {job}" if job else "지원 직무: 미입력"
 
-    answered = len(content)
+    answered = sum(1 for item in content if item.get("answer", "").strip())
     max_items = 5
     completion_note = (
         f"\n[작성 완성도: {answered}/{max_items}문항 작성됨 — "
