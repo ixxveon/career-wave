@@ -51,7 +51,7 @@ export default function TextInterviewPage() {
 
   /* ── 대표 이력서 로드 (추후 documentApi 연동 예정) ── */
   useEffect(() => {
-    if (import.meta.env.DEV) {
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
       setResume({ fileName: MOCK_SETUP.resumeFileName, s3Url: MOCK_SETUP.resumeS3Url });
     }
     setResumeLoading(false);
@@ -105,7 +105,7 @@ export default function TextInterviewPage() {
       setSessionId(result.sessionId);
       setPhase('interview');
     } catch (err) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
         setSessionId(`dev-session-${Date.now()}`);
         setPhase('interview');
       } else {

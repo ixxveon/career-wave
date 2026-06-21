@@ -51,7 +51,7 @@ export default function InterviewRoom({
 
   /* ── DEV mock: 초기 AI 질문 + RUNNING 전환 ── */
   useEffect(() => {
-    if (!import.meta.env.DEV) return;
+    if (import.meta.env.VITE_USE_MOCK_DATA !== 'true') return;
     session.dispatch({ type: 'RUNNING' });
     session.dispatch({
       type:    'ADD_MESSAGE',
@@ -102,7 +102,7 @@ export default function InterviewRoom({
     sessionId,
     questionOrder: session.questionOrder,
     onStop: () => {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
         const pid = pendingVoiceIdRef.current;
         if (pid !== null) {
           session.dispatch({ type: 'UPDATE_MESSAGE', id: pid, updates: { isPending: false, text: '(음성 답변 전송됨)' } });

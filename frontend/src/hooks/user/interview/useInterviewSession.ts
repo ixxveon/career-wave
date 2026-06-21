@@ -280,7 +280,7 @@ export function useInterviewSession({
     if (status === 'RECONNECTING') dispatch({ type: 'RECONNECTING' });
     // DEV 모드: 백엔드 없을 때 WS ERROR를 무시하고 RUNNING으로 유지
     if (status === 'ERROR') {
-      if (import.meta.env.DEV) return;
+      if (import.meta.env.VITE_USE_MOCK_DATA === 'true') return;
       dispatch({ type: 'ERROR' });
     }
     if (
@@ -378,7 +378,7 @@ export function useInterviewSession({
       dispatch({ type: 'RUNNING' });
     }
     if (status === 'ERROR') {
-      if (import.meta.env.DEV) return;
+      if (import.meta.env.VITE_USE_MOCK_DATA === 'true') return;
       dispatch({ type: 'ERROR' });
     }
   }, []);
@@ -432,10 +432,10 @@ export function useInterviewSession({
     dispatch({ type: 'SET_TYPING', typing: true });
     tts.clear();
     llmFallbackFiredRef.current = null;
-    if (!import.meta.env.DEV) startLlmTimeout();
+    if (import.meta.env.VITE_USE_MOCK_DATA !== 'true') startLlmTimeout();
 
     // DEV mock: API 호출 없이 다음 질문 자동 생성
-    if (import.meta.env.DEV) {
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
       const currentQ = stateRef.current.questionOrder;
       setTimeout(() => {
         if (currentQ >= 5) {
