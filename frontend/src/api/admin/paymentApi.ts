@@ -81,19 +81,19 @@ export const SUB_STATUS_LABEL: Record<SubStatus, string> = {
 // ── 도메인 인터페이스 ──────────────────────────────────────────
 
 export interface AiUsage {
-  resumePaidCount: number;
-  interviewPaidCount: number;
+  documentCount: number;
+  interviewCount: number;
 }
 
 export interface Payment {
   paymentId: string;
   orderId: string;
   memberName: string;
-  product: string;
-  paidAt: string;          // ISO 8601
+  planName: string;
+  approvedAt: string;
   amount: number;
   paymentStatus: PayStatus;
-  paymentType: PaymentType;
+  paymentMethod?: string;
   aiUsage: AiUsage;
   refundStatus?: RefundStatus;
 }
