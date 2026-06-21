@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -224,7 +225,7 @@ public class ResumeServiceImpl implements ResumeService {
     @Override
     @Transactional(readOnly = true)
     public ResumeDTO.ResponseQuota getQuota(UUID memberId) {
-        ZonedDateTime firstDayOfMonth = ZonedDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime firstDayOfMonth = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
         int usedCount = documentRepository.countUsedThisMonth(memberId, firstDayOfMonth, DocumentStatus.FAILED);
         return new ResumeDTO.ResponseQuota(usedCount, 30);
     }
