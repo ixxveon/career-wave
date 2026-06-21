@@ -2,6 +2,8 @@ import { LoginForm } from '../../../components/user/member/LoginForm';
 import { LoginPageLinks } from '../../../components/user/member/LoginPageLinks';
 import { LoginTypeTabs } from '../../../components/user/member/LoginTypeTabs';
 import { useLoginForm } from '../../../hooks/user/member';
+import { SOCIAL_PROVIDERS } from '../../../utils/user/member/socialAuth';
+import { memberSocialAuthApi } from '../../../api/user/member/socialAuthApi';
 import '@/styles/user/auth/AuthPage.css';
 
 function LoginPage() {
@@ -34,6 +36,26 @@ function LoginPage() {
           onCredentialChange={updateCredential}
           onSubmit={handleSubmit}
         />
+        <div className="cw-auth-social">
+          <p className="cw-auth-social__label">소셜 계정으로 로그인</p>
+          <div className="cw-social-login" aria-label="소셜 로그인">
+            {SOCIAL_PROVIDERS.map((provider) => (
+              <button
+                key={provider.id}
+                aria-label={`${provider.label} 로그인`}
+                className={`cw-social-login__button cw-social-login__${provider.id}`}
+                type="button"
+                onClick={() => {
+                  void memberSocialAuthApi
+                    .authorize(provider.id)
+                    .then(({ authorizationUrl }) => { window.location.href = authorizationUrl; });
+                }}
+              >
+                {provider.mark}
+              </button>
+            ))}
+          </div>
+        </div>
         <LoginPageLinks />
       </div>
     </section>

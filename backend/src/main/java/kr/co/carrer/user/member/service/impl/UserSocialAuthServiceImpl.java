@@ -118,16 +118,17 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
     @Override
     @Transactional
     public OAuthCallbackResponse callback(String provider, String code, String state, HttpServletResponse response) {
-        // state 검증 — getAndDelete: 조회+삭제 원자 실행으로 동시 callback 중복 소비 방지
-        String storedProvider = redisTemplate.opsForValue().getAndDelete(STATE_PREFIX + state);
+        // state 검증 — get 후 토큰 교환 성공 시 삭제 (실패 시 재시도 허용)
+        String storedProvider = redisTemplate.opsForValue().get(STATE_PREFIX + state);
         if (storedProvider == null || !storedProvider.equals(provider)) {
             throw new CustomException(UserAuthErrorCode.OAUTH_STATE_INVALID);
         }
 
         SocialProvider socialProvider = resolveSocialProvider(provider);
 
-        // provider token 교환 + userinfo 조회
+        // provider token 교환 + userinfo 조회 (성공 시 state 삭제)
         OAuthUserInfo userInfo = fetchUserInfo(socialProvider, code);
+        redisTemplate.delete(STATE_PREFIX + state);
 
         // 기존 social account 조회
         Optional<SocialAccount> existing = socialAccountRepository
@@ -223,8 +224,9 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
                 request.getTerms().isPrivacy(),
                 request.getTerms().isMarketing()));
 
+        String accessToken = issueTokens(member, response);
         return UserSocialAuthDto.ResponseSocialComplete.of(
-                member.getMemberId(), member.getMemberStatus().name());
+                member.getMemberId(), member.getMemberStatus().name(), accessToken);
     }
 
     // ── OAuth 외부 API 호출 ────────────────────────────────────────────────────
@@ -242,13 +244,17 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         Map<?, ?> tokenResponse;
         Map<?, ?> userResponse;
         try {
+            BodyInserters.FormInserter<String> kakaoForm = BodyInserters
+                    .fromFormData("grant_type", "authorization_code")
+                    .with("client_id", kakaoClientId)
+                    .with("redirect_uri", kakaoRedirectUri)
+                    .with("code", code);
+            if (kakaoClientSecret != null && !kakaoClientSecret.isBlank() && !kakaoClientSecret.equals("없음")) {
+                kakaoForm = kakaoForm.with("client_secret", kakaoClientSecret);
+            }
             tokenResponse = client.post()
                     .uri("https://kauth.kakao.com/oauth/token")
-                    .body(BodyInserters.fromFormData("grant_type", "authorization_code")
-                            .with("client_id", kakaoClientId)
-                            .with("client_secret", kakaoClientSecret)
-                            .with("redirect_uri", kakaoRedirectUri)
-                            .with("code", code))
+                    .body(kakaoForm)
                     .retrieve()
                     .bodyToMono(Map.class)
                     .timeout(Duration.ofSeconds(10))
@@ -267,7 +273,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         } catch (CustomException e) {
             throw e;
         } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
-            log.error("Kakao API 호출 실패: HTTP {}", e.getStatusCode());
+            log.error("Kakao API 호출 실패: HTTP {} body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
         } catch (org.springframework.web.reactive.function.client.WebClientRequestException e) {
             log.error("Kakao API 호출 실패: {}", e.getMessage());

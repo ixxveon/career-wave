@@ -51,11 +51,11 @@ public interface UserSocialAuthControllerDocs {
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":401,\"message\":\"소셜 provider 인증에 실패했습니다.\",\"code\":\"OAUTH_PROVIDER_AUTH_FAILED\"}")))
     })
-    ResponseEntity<?> callback(
+    void callback(
             @Parameter(description = "소셜 provider", example = "kakao") @PathVariable String provider,
             @Parameter(description = "provider에서 반환한 인증 코드") @RequestParam String code,
             @Parameter(description = "CSRF 방지용 state") @RequestParam String state,
-            HttpServletResponse response);
+            HttpServletResponse response) throws java.io.IOException;
 
     @Operation(summary = "소셜 회원가입 추가정보 완료",
             description = "OAuth provider 인증은 완료되었지만 아직 회원이 아닌 사용자의 추가정보를 저장하고 소셜 계정을 연결한다. " +

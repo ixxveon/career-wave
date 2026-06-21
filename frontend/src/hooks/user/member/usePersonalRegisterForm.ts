@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../../types/user/member';
 import {
   isValidEmail,
@@ -41,6 +42,7 @@ type PersonalForm = typeof initialPersonalForm;
 type PersonalFormKey = keyof PersonalForm;
 
 export function usePersonalRegisterForm() {
+  const navigate = useNavigate();
   const [form, setForm] = useState(initialPersonalForm);
   const [terms, setTerms] = useState(initialPersonalTerms);
   const currentLoginIdRef = useRef(form.userId);
@@ -293,7 +295,8 @@ export function usePersonalRegisterForm() {
 
     try {
       await registerUser.mutateAsync(toUserRegisterRequest(personalSnapshot));
-      setSuccessMessage('회원가입이 완료되었습니다. 로그인 페이지에서 서비스를 시작해주세요.');
+      setSuccessMessage('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다...');
+      setTimeout(() => navigate('/auth/login?registered=true', { replace: true }), 2000);
     } catch (error) {
       setFormMessage(getRecoveryErrorMessage(error, '회원가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
     }

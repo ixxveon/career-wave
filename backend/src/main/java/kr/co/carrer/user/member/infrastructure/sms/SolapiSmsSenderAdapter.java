@@ -63,7 +63,7 @@ public class SolapiSmsSenderAdapter implements SmsSenderPort {
                     .timeout(TIMEOUT)
                     .block();
         } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
-            log.error("SOLAPI SMS 발송 실패 — HTTP {}", e.getStatusCode());
+            log.error("SOLAPI SMS 발송 실패 — HTTP {} body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new CustomException(UserAuthErrorCode.VERIFICATION_SMS_UNAVAILABLE);
         } catch (RuntimeException e) {
             log.error("SOLAPI SMS 발송 실패 — {}", e.getMessage());

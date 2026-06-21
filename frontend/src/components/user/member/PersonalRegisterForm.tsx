@@ -6,6 +6,7 @@ import { usePersonalRegisterForm } from '../../../hooks/user/member/usePersonalR
 import type { PersonalTermDetails, TermSection } from '../../../utils/user/member/registerTerms';
 import { SOCIAL_PROVIDERS } from '../../../utils/user/member/socialAuth';
 import { formatRemaining } from '../../../utils/user/member/recoveryView';
+import { memberSocialAuthApi } from '../../../api/user/member/socialAuthApi';
 
 type PersonalTermsValues = {
   age: boolean;
@@ -66,14 +67,19 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
         </div>
         <div className="cw-social-login" aria-label="소셜 회원가입">
           {SOCIAL_PROVIDERS.map((provider) => (
-            <a
+            <button
               aria-label={`${provider.label} 회원가입`}
               className={`cw-social-login__button cw-social-login__${provider.id}`}
-              href={`/auth/register/verify?provider=${provider.id}`}
               key={provider.id}
+              type="button"
+              onClick={() => {
+                void memberSocialAuthApi
+                  .authorize(provider.id)
+                  .then(({ authorizationUrl }) => { window.location.href = authorizationUrl; });
+              }}
             >
               {provider.mark}
-            </a>
+            </button>
           ))}
         </div>
       </section>

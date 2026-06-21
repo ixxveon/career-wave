@@ -178,6 +178,7 @@ export interface SocialRegisterCompletionResponse {
   memberId: string;
   roleType: 'USER';
   memberStatus: MemberStatus;
+  accessToken: string;
   nextPath: string;
 }
 

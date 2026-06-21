@@ -91,10 +91,11 @@ public class UserSocialAuthDto {
             UUID memberId,
             String roleType,
             String memberStatus,
+            String accessToken,
             String nextPath
     ) {
-        public static ResponseSocialComplete of(UUID memberId, String memberStatus) {
-            return new ResponseSocialComplete(memberId, "USER", memberStatus, "/auth/login?registered=social");
+        public static ResponseSocialComplete of(UUID memberId, String memberStatus, String accessToken) {
+            return new ResponseSocialComplete(memberId, "USER", memberStatus, accessToken, "/");
         }
     }
 }
