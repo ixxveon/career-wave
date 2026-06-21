@@ -86,42 +86,43 @@ public class ScrapingServiceImpl implements ScrapingService {
     @Override
     public ResponseAction requestAction(String sourceName, RequestAction command, Long actorAdminId, String ipAddress) {
         validateActionCommand(command);
+        ScrapingFastApiGateway.ActionResponse response;
         try {
             ScrapingFastApiGateway.ActionRequest request = new ScrapingFastApiGateway.ActionRequest(
                     sourceName,
                     REQUESTED_BY_ADMIN_SERVICE
             );
 
-            ScrapingFastApiGateway.ActionResponse response = switch (command.actionType()) {
+            response = switch (command.actionType()) {
                 case RUN -> getFastApiGateway().runPipeline(request);
                 case RETRY -> getFastApiGateway().retryPipeline(request);
                 case TEST -> getFastApiGateway().testPipeline(request);
             };
-
-            ResponseAction result = ScrapingServiceMapper.toAction(response, command);
-            saveActionAuditLog(actorAdminId, sourceName, command, ipAddress);
-            return result;
         } catch (RuntimeException exception) {
             throw ScrapingServiceExceptionMapper.toActionException(command.actionType(), exception);
         }
+        ResponseAction result = ScrapingServiceMapper.toAction(response, command);
+        saveActionAuditLog(actorAdminId, sourceName, command, ipAddress);
+        return result;
     }
 
     @Override
     public ResponseBatchAction requestBatchAction(RequestBatchAction command, Long actorAdminId, String ipAddress) {
         validateBatchActionCommand(command);
+        ScrapingFastApiGateway.BatchActionRequest request = new ScrapingFastApiGateway.BatchActionRequest(
+                command.actionType(),
+                command.sourceNames(),
+                REQUESTED_BY_ADMIN_SERVICE
+        );
+        ScrapingFastApiGateway.BatchActionResponse response;
         try {
-            ScrapingFastApiGateway.BatchActionRequest request = new ScrapingFastApiGateway.BatchActionRequest(
-                    command.actionType(),
-                    command.sourceNames(),
-                    REQUESTED_BY_ADMIN_SERVICE
-            );
-
-            ResponseBatchAction result = ScrapingServiceMapper.toBatchAction(getFastApiGateway().batchRunPipelines(request));
-            saveBatchActionAuditLog(actorAdminId, command, ipAddress);
-            return result;
+            response = getFastApiGateway().batchRunPipelines(request);
         } catch (RuntimeException exception) {
             throw ScrapingServiceExceptionMapper.toActionException(command.actionType(), exception);
         }
+        ResponseBatchAction result = ScrapingServiceMapper.toBatchAction(response);
+        saveBatchActionAuditLog(actorAdminId, command, ipAddress);
+        return result;
     }
 
     private ScrapingFastApiGateway getFastApiGateway() {
