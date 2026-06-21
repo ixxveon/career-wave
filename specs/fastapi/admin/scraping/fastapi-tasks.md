@@ -21,7 +21,7 @@
 
 - [ ] Source Registry를 `wanted`, `saramin` 기준으로 구현한다.
 - [ ] `scraper_adapter.py` 인터페이스를 작성한다.
-- [ ] `wanted_scraper.py` 구현체를 작성한다.
+- [ ] `wanted_scraper.py` 구현체를 작성한다.    
 - [ ] `saramin_scraper.py` 구현체를 작성한다.
 - [ ] 미지원 `sourceName`을 `SCRAPING_SOURCE_NOT_FOUND`로 처리하는 로직을 작성한다.
 
