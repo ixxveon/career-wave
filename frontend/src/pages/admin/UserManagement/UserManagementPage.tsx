@@ -356,8 +356,8 @@ export default function UserManagementPage() {
             />
             <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
               <option value="">권한 전체</option>
-              <option value="ROLE_USER">일반 회원</option>
-              <option value="ROLE_COMPANY">기업 회원</option>
+              <option value="USER">일반 회원</option>
+              <option value="COMPANY">기업 회원</option>
             </select>
             <select value={planFilter} onChange={(e) => setPlanFilter(e.target.value)}>
               <option value="">구독 전체</option>
@@ -429,7 +429,7 @@ export default function UserManagementPage() {
                       <td><strong style={{ color: '#1a2941' }}>{m.name}</strong></td>
                       <td>{m.email}</td>
                       <td style={{ color: '#7a8da4', fontSize: 13 }}>{m.loginId}</td>
-                      <td><span className="roleBadge">{m.role === 'ROLE_USER' ? '개인' : '기업'}</span></td>
+                      <td><span className={`roleBadge ${m.role === 'USER' ? 'roleBadge--user' : 'roleBadge--company'}`}>{m.role === 'USER' ? '개인' : '기업'}</span></td>
                       <td><span className={`planBadge ${m.plan.toLowerCase()}`}>{m.plan}</span></td>
                       <td>{new Date(m.joinedAt).toLocaleDateString('ko-KR')}</td>
                       <td><span className={`statusBadge ${memberStatusCls[m.memberStatus]}`}>{memberStatusLabel[m.memberStatus]}</span></td>
@@ -593,7 +593,7 @@ export default function UserManagementPage() {
               <button onClick={() => setSelectedMember(null)}>닫기</button>
             </div>
             <div className="modalInfoGrid">
-              <div><span>권한</span><strong>{selectedMember.role === 'ROLE_USER' ? '개인 회원' : '기업 회원'}</strong></div>
+              <div><span>권한</span><strong>{selectedMember.role === 'USER' ? '개인 회원' : '기업 회원'}</strong></div>
               <div><span>구독 플랜</span><strong>{selectedMember.plan}</strong></div>
               <div><span>가입일</span><strong>{new Date(selectedMember.joinedAt).toLocaleDateString('ko-KR')}</strong></div>
               <div><span>최근 접속</span><strong>{selectedMember.lastLoginAt ? new Date(selectedMember.lastLoginAt).toLocaleDateString('ko-KR') : '—'}</strong></div>
