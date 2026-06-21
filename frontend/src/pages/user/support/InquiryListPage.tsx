@@ -48,13 +48,13 @@ function InquiryDetailModal({ inquiry, onClose }: InquiryDetailModalProps) {
 
         <div className="iq-modal__section">
           <p className="iq-modal__section-label">문의 내용</p>
-          <p className="iq-modal__content">{inquiry.content}</p>
+          <p className="iq-modal__content">{inquiry.contentPreview}</p>
         </div>
 
-        {inquiry.answer ? (
+        {inquiry.reply ? (
           <div className="iq-modal__section iq-modal__section--answer">
             <p className="iq-modal__section-label">답변</p>
-            <p className="iq-modal__content">{inquiry.answer}</p>
+            <p className="iq-modal__content">{inquiry.reply}</p>
           </div>
         ) : (
           <div className="iq-modal__pending">
@@ -133,7 +133,7 @@ export default function InquiryListPage() {
                     <MessageSquare size={14} className="iq-item__icon" />
                     <div className="iq-item__info">
                       <span className="iq-item__title">{i.title}</span>
-                      <span className="iq-item__preview">{i.content}</span>
+                      <span className="iq-item__preview">{i.contentPreview}</span>
                     </div>
                   </div>
                   <div className="iq-item__right">

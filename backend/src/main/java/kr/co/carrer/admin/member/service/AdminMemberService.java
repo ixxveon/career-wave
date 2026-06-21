@@ -13,6 +13,8 @@ import java.util.UUID;
 
 public interface AdminMemberService {
 
+    MemberDTO.ResponseCounts getMemberCounts();
+
     PaginationResponse<MemberDTO.ResponseList> getMembers(RoleType role, MemberStatus status,
                                                           SubscriptionStatus plan, String keyword,
                                                           LocalDate startDate, LocalDate endDate,

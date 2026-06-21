@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { interviewSessionApi }              from '../../../api/user/interview';
 import { SESSION_TYPE }                     from '../../../types/user/interview';
 import type { SessionType, Resume, MicStatus } from '../../../types/user/interview';
+import type { MemberApiError }              from '../../../utils/user/member/errorMapping';
 
 import { usePreflightCheck } from '../../../hooks/user/interview/usePreflightCheck';
 
@@ -108,10 +109,12 @@ export default function TextInterviewPage() {
         setSessionId(`dev-session-${Date.now()}`);
         setPhase('interview');
       } else {
-        const status = (err as { status?: number }).status;
-        if (status === 403) {
+        const e = err as MemberApiError;
+        if (e.statusCode === 409 && e.serverCode === 'INTERVIEW_SESSION_DUPLICATE') {
+          setApiError('이미 진행 중인 면접이 있습니다. 잠시 후 다시 시도하거나 페이지를 새로고침해주세요.');
+        } else if (e.statusCode === 403) {
           setApiError('연결된 서류에 접근 권한이 없습니다. 본인 소유의 서류인지 확인해주세요.');
-        } else if (status === 404) {
+        } else if (e.statusCode === 404) {
           setApiError('연결된 서류를 찾을 수 없습니다. 서류 분석 페이지에서 다시 시도해주세요.');
         } else {
           setApiError('세션 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
