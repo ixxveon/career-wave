@@ -17,7 +17,11 @@ public class MockFileController {
 
     @GetMapping("/mock-files/{filename}")
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
-        Path path = Paths.get(System.getProperty("java.io.tmpdir"), "career-wave-mock-files", filename);
+        Path baseDir = Paths.get(System.getProperty("java.io.tmpdir"), "career-wave-mock-files");
+        Path path = baseDir.resolve(filename).normalize();
+        if (!path.startsWith(baseDir)) {
+            return ResponseEntity.badRequest().build();
+        }
         Resource resource = new FileSystemResource(path);
         if (!resource.exists()) {
             return ResponseEntity.notFound().build();
