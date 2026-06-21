@@ -48,15 +48,15 @@
 
 ## Phase 5 - API
 
-- [ ] `ScrapingPipelineDTO.java`를 작성한다.
-- [ ] `ScrapingLogDTO.java`를 작성한다.
-- [ ] `GET /api/v1/admin/scraping/pipelines` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/scraping/pipelines/summary` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/scraping/pipelines/{sourceName}` Controller endpoint를 작성한다.
-- [ ] `POST /api/v1/admin/scraping/pipelines/{sourceName}/actions` Controller endpoint를 작성한다.
-- [ ] `POST /api/v1/admin/scraping/pipelines/batch-actions` Controller endpoint를 작성한다.
-- [ ] `GET /api/v1/admin/scraping/logs` Controller endpoint를 작성한다.
-- [ ] `MASTER`, `BACKEND` 권한 정책과 JWT 인증 진입 조건을 반영한다.
+- [x] `ScrapingPipelineDTO.java`를 작성한다.
+- [x] `ScrapingLogDTO.java`를 작성한다.
+- [x] `GET /api/v1/admin/scraping/pipelines` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/scraping/pipelines/summary` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/scraping/pipelines/{sourceName}` Controller endpoint를 작성한다.
+- [x] `POST /api/v1/admin/scraping/pipelines/{sourceName}/actions` Controller endpoint를 작성한다.
+- [x] `POST /api/v1/admin/scraping/pipelines/batch-actions` Controller endpoint를 작성한다.
+- [x] `GET /api/v1/admin/scraping/logs` Controller endpoint를 작성한다.
+- [x] `MASTER`, `BACKEND` 권한 정책과 JWT 인증 진입 조건을 반영한다.
 
 ## Phase 6 - Documentation
 
