@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 
-from sqlalchemy import ARRAY, BigInteger, Column, Date, DateTime, Integer, MetaData, String, Table, Text, insert, select
+from sqlalchemy import ARRAY, BigInteger, Column, Date, DateTime, Integer, MetaData, String, Table, Text, UniqueConstraint, insert, select
 from sqlalchemy.orm import Session
 
 
@@ -28,6 +28,7 @@ job_notices_table = Table(
     Column("deadline", Date, nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("source", "original_url", name="uq_job_notices_source_original_url"),
 )
 
 

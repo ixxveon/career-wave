@@ -5,6 +5,7 @@ from fastapi import status
 
 
 class ScrapingErrorCode(str, Enum):
+    SCRAPING_INVALID_REQUEST = "SCRAPING_INVALID_REQUEST"
     SCRAPING_PIPELINE_NOT_FOUND = "SCRAPING_PIPELINE_NOT_FOUND"
     SCRAPING_SOURCE_NOT_FOUND = "SCRAPING_SOURCE_NOT_FOUND"
     SCRAPING_ALREADY_RUNNING = "SCRAPING_ALREADY_RUNNING"
@@ -15,6 +16,7 @@ class ScrapingErrorCode(str, Enum):
 
 
 ERROR_STATUS_BY_CODE: dict[ScrapingErrorCode, int] = {
+    ScrapingErrorCode.SCRAPING_INVALID_REQUEST: status.HTTP_400_BAD_REQUEST,
     ScrapingErrorCode.SCRAPING_PIPELINE_NOT_FOUND: status.HTTP_404_NOT_FOUND,
     ScrapingErrorCode.SCRAPING_SOURCE_NOT_FOUND: status.HTTP_404_NOT_FOUND,
     ScrapingErrorCode.SCRAPING_ALREADY_RUNNING: status.HTTP_409_CONFLICT,
@@ -26,6 +28,7 @@ ERROR_STATUS_BY_CODE: dict[ScrapingErrorCode, int] = {
 
 
 DEFAULT_MESSAGE_BY_CODE: dict[ScrapingErrorCode, str] = {
+    ScrapingErrorCode.SCRAPING_INVALID_REQUEST: "Scraping request is invalid.",
     ScrapingErrorCode.SCRAPING_PIPELINE_NOT_FOUND: "Scraping pipeline was not found.",
     ScrapingErrorCode.SCRAPING_SOURCE_NOT_FOUND: "Scraping source was not found.",
     ScrapingErrorCode.SCRAPING_ALREADY_RUNNING: "Scraping pipeline is already running.",

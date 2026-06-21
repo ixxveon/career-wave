@@ -40,7 +40,7 @@ class BatchActionService:
     def validate_action_type(self, request: PipelineBatchActionRequest) -> ScrapingActionType:
         if request.action_type not in self.SUPPORTED_BATCH_ACTION_TYPES:
             raise ScrapingException(
-                error_code=ScrapingErrorCode.FASTAPI_INTERNAL_ERROR,
+                error_code=ScrapingErrorCode.SCRAPING_INVALID_REQUEST,
                 message="Scraping batch action request validation failed.",
                 detail={
                     "field": "actionType",
@@ -51,11 +51,12 @@ class BatchActionService:
 
     def validate_source_names(self, request: PipelineBatchActionRequest) -> list[str]:
         normalized_source_names: list[str] = []
+        seen_source_names: set[str] = set()
         for index, source_name in enumerate(request.source_names):
             normalized_source_name = source_name.strip()
             if not normalized_source_name:
                 raise ScrapingException(
-                    error_code=ScrapingErrorCode.FASTAPI_INTERNAL_ERROR,
+                    error_code=ScrapingErrorCode.SCRAPING_INVALID_REQUEST,
                     message="Scraping batch action request validation failed.",
                     detail={
                         "field": "sourceNames",
@@ -63,7 +64,19 @@ class BatchActionService:
                     },
                 )
 
+            if normalized_source_name in seen_source_names:
+                raise ScrapingException(
+                    error_code=ScrapingErrorCode.SCRAPING_INVALID_REQUEST,
+                    message="Scraping batch action request validation failed.",
+                    detail={
+                        "field": "sourceNames",
+                        "index": index,
+                        "sourceName": normalized_source_name,
+                    },
+                )
+
             require_source_registry_entry(normalized_source_name)
+            seen_source_names.add(normalized_source_name)
             normalized_source_names.append(normalized_source_name)
 
         return normalized_source_names

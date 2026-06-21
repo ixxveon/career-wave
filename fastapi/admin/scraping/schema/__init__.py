@@ -24,8 +24,8 @@ __all__ = [
     "PipelineListQueryRequest",
     "PipelineLogQueryRequest",
     "PipelineSummaryQueryRequest",
-    "ScrapingErrorResponse",
     "ScrapingActionType",
+    "ScrapingErrorResponse",
     "ScrapingPipelineStatusType",
     "ScrapingStatusType",
 ]

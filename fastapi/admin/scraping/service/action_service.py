@@ -53,7 +53,7 @@ class ActionService:
         self._ensure_not_running(pipeline)
         if pipeline.pipeline_status not in {"SUCCESS", "FAILED"}:
             raise ScrapingException(
-                error_code=ScrapingErrorCode.FASTAPI_INTERNAL_ERROR,
+                error_code=ScrapingErrorCode.SCRAPING_INVALID_REQUEST,
                 message="Scraping retry request validation failed.",
                 detail={
                     "field": "pipelineStatus",
@@ -100,7 +100,7 @@ class ActionService:
 
     def _raise_validation_error(self, field: str) -> None:
         raise ScrapingException(
-            error_code=ScrapingErrorCode.FASTAPI_INTERNAL_ERROR,
+            error_code=ScrapingErrorCode.SCRAPING_INVALID_REQUEST,
             message="Scraping action request validation failed.",
             detail={"field": field},
         )
