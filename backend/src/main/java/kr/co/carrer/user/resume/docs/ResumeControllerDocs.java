@@ -235,6 +235,35 @@ public interface ResumeControllerDocs {
     );
 
     @Operation(
+            summary = "서류 분석 횟수 조회",
+            description = "이번 달 서류 분석 사용 횟수와 월 한도를 반환합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "statusCode": 200,
+                                      "message": "OK",
+                                      "data": {
+                                        "usedCount": 7,
+                                        "limitCount": 30
+                                      }
+                                    }
+                                    """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    ResponseEntity<ApiResponse<ResumeDTO.ResponseQuota>> getQuota(
+            @Parameter(hidden = true) AuthPrincipal principal
+    );
+
+    @Operation(
             summary = "분석 결과 Webhook 수신 (FastAPI 전용)",
             description = "FastAPI에서 분석 완료 후 호출하는 내부 API입니다. X-Internal-Secret 헤더로 인증합니다."
     )

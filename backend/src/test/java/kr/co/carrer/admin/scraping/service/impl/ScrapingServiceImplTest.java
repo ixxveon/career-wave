@@ -375,11 +375,27 @@ class ScrapingServiceImplTest {
 
         @Test
         @DisplayName("page가 1보다 작으면 BAD_REQUEST 예외가 발생한다")
-        void throwsBadRequestWhenPageIsLessThanOne() {
-            assertThatThrownBy(() -> scrapingService.getPipelines(null, null, 0, 20))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.BAD_REQUEST);
-        }
+    void throwsBadRequestWhenPageIsLessThanOne() {
+        assertThatThrownBy(() -> scrapingService.getPipelines(null, null, 0, 20))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.BAD_REQUEST);
+    }
+
+    @Test
+    void throwsBadRequestWhenPipelinePageSizeIsLessThanOne() {
+        assertThatThrownBy(() -> scrapingService.getPipelines(null, null, 1, 0))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.BAD_REQUEST);
+    }
+
+    @Test
+    void throwsBadRequestWhenLogPageSizeIsLessThanOne() {
+        assertThatThrownBy(() -> scrapingService.getLogs(null, null, 1, 0))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.BAD_REQUEST);
+    }
     }
 }

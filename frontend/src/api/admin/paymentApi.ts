@@ -40,9 +40,11 @@ export const PAYMENT_TYPE = {
 
 export const SUB_STATUS = {
   ACTIVE:            'ACTIVE',
-  RENEWAL_SCHEDULED: 'RENEWAL_SCHEDULED',
   CANCEL_SCHEDULED:  'CANCEL_SCHEDULED',
-  AT_RISK:           'AT_RISK',
+  EXPIRED:           'EXPIRED',
+  PAYMENT_FAILED:    'PAYMENT_FAILED',
+  REFUND_PENDING:    'REFUND_PENDING',
+  REFUNDED:          'REFUNDED',
 } as const;
 
 export type PayStatus    = typeof PAY_STATUS[keyof typeof PAY_STATUS];
@@ -73,27 +75,29 @@ export const PAYMENT_TYPE_LABEL: Record<PaymentType, string> = {
 
 export const SUB_STATUS_LABEL: Record<SubStatus, string> = {
   ACTIVE:            '활성',
-  RENEWAL_SCHEDULED: '갱신예정',
   CANCEL_SCHEDULED:  '취소예정',
-  AT_RISK:           '이탈위험',
+  EXPIRED:           '만료',
+  PAYMENT_FAILED:    '결제실패',
+  REFUND_PENDING:    '환불요청',
+  REFUNDED:          '환불완료',
 };
 
 // ── 도메인 인터페이스 ──────────────────────────────────────────
 
 export interface AiUsage {
-  resumePaidCount: number;
-  interviewPaidCount: number;
+  documentCount: number;
+  interviewCount: number;
 }
 
 export interface Payment {
   paymentId: string;
   orderId: string;
   memberName: string;
-  product: string;
-  paidAt: string;          // ISO 8601
+  planName: string;
+  approvedAt: string;
   amount: number;
   paymentStatus: PayStatus;
-  paymentType: PaymentType;
+  paymentMethod?: string;
   aiUsage: AiUsage;
   refundStatus?: RefundStatus;
 }
@@ -108,10 +112,11 @@ export interface PaymentSummary {
 export interface Subscription {
   subscriptionId: string;
   memberName: string;
-  plan: string;
-  startDate: string;
-  renewDate: string;
-  subStatus: SubStatus;
+  planName: string;
+  startedAt: string;
+  currentPeriodEnd: string;
+  subscriptionStatus: SubStatus;
+  autoRenew: boolean;
 }
 
 // ── 쿼리 파라미터 타입 ─────────────────────────────────────────
@@ -127,6 +132,13 @@ export interface SubscriptionListParams {
   status?: SubStatus;
   page?: number;
   size?: number;
+}
+
+export interface SubscriptionCounts {
+  active: number;
+  renewalScheduled: number;
+  cancelScheduled: number;
+  atRisk: number;
 }
 
 // ── 환불 응답 타입 ─────────────────────────────────────────────
@@ -163,6 +175,10 @@ export const paymentApi = {
     axiosInstance.post<ApiResponse<RefundResult>>(
       `/api/v1/admin/payments/${paymentId}/refund-reject`
     ),
+
+  // 구독 KPI 집계
+  getSubscriptionCounts: () =>
+    axiosInstance.get<ApiResponse<SubscriptionCounts>>('/api/v1/admin/subscriptions/counts'),
 
   // 구독 현황 목록 조회
   getSubscriptions: (params?: SubscriptionListParams) =>

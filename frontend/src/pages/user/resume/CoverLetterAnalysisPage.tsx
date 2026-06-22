@@ -4,12 +4,12 @@ import LoadingModal from '../../../components/user/resume/LoadingModal';
 import QuotaBar from '../../../components/user/resume/QuotaBar';
 import DocumentResultView from './DocumentResultView';
 import { useCoverLetterForm } from '../../../hooks/user/resume/useCoverLetterForm';
-import { PLAN_LIMITS, MOCK_QUOTA } from '../../../utils/user/resume/quota';
+import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
 import '@/styles/user/resume/CoverLetterAnalysisPage.css';
 
 export default function CoverLetterAnalysisPage() {
   const {
-    company, job, items, uiState, apiError, networkError, wsMessage, canSubmit,
+    company, job, items, uiState, apiError, networkError, canSubmit,
     analysisResult,
     setCompany, setJob, addItem, removeItem, updateItem,
     handleSubmit, reset, dismissNetworkError,
@@ -18,9 +18,8 @@ export default function CoverLetterAnalysisPage() {
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  const { membership, documentUsed } = MOCK_QUOTA;
-  const docLimit    = PLAN_LIMITS[membership].document;
-  const isExhausted = documentUsed >= docLimit;
+  const { data: quota } = useResumeQuota();
+  const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (
@@ -33,7 +32,7 @@ export default function CoverLetterAnalysisPage() {
             techStackScore:    analysisResult.scores?.techStack              ?? 0,
             quantifiedScore:   analysisResult.scores?.quantifiedAchievement ?? 0,
             logicalScore:      analysisResult.scores?.logicalStructure       ?? 0,
-            overallReview:     analysisResult.overallReview,
+            overallReview:     analysisResult.overallReview ?? '',
           },
           feedbackDetails: analysisResult.feedbackDetails,
         }}
@@ -49,7 +48,7 @@ export default function CoverLetterAnalysisPage() {
 
   return (
     <div className="cl">
-      {isAnalyzing && <LoadingModal wsMessage={wsMessage} onCancel={reset} />}
+      {isAnalyzing && <LoadingModal onCancel={reset} />}
 
       {networkError && (
         <div className="ra-toast" role="alert" aria-live="assertive">

@@ -121,6 +121,14 @@
 }
 
 /* ─── 목록 ────────────────────────────────────── */
+.rh-list-wrap {
+  max-height: 560px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
 .rh-list {
   list-style: none;
   margin: 0;

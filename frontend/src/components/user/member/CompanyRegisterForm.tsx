@@ -5,7 +5,7 @@ import { formatRemaining } from '../../../utils/user/member/recoveryView';
 import type { CompanyTermDetails } from '../../../utils/user/member/registerTerms';
 import { LOGIN_ID_CHECK_STATE } from '../../../utils/user/member/validation';
 import { BUSINESS_NUMBER_CHECK_STATE } from '../../../utils/user/member/validation';
-import { AuthButtonGroup, Field, SelectInput, StatusPill, TextInput } from './RegisterFormPrimitives';
+import { AuthButtonGroup, Field, PasswordInput, SelectInput, StatusPill, TextInput } from './RegisterFormPrimitives';
 
 type CompanyTermsValues = {
   service: boolean;
@@ -183,11 +183,11 @@ export function CompanyRegisterForm({
               <TextInput value={form.managerName} onChange={(value) => update('managerName', value)} placeholder="담당자명(실명)" />
             </Field>
             <Field label="비밀번호" required>
-              <TextInput type="password" value={form.managerPassword} onChange={(value) => update('managerPassword', value)} placeholder="비밀번호(8~16자의 영문, 숫자, 특수기호)" />
+              <PasswordInput value={form.managerPassword} onChange={(value) => update('managerPassword', value)} placeholder="비밀번호(8~16자의 영문, 숫자, 특수기호)" />
               {fieldErrors.password && <p className="cw-register-error">{fieldErrors.password}</p>}
             </Field>
             <Field label="비밀번호 확인" required>
-              <TextInput type="password" value={form.managerPasswordConfirm} onChange={(value) => update('managerPasswordConfirm', value)} placeholder="비밀번호 재입력" />
+              <PasswordInput value={form.managerPasswordConfirm} onChange={(value) => update('managerPasswordConfirm', value)} placeholder="비밀번호 재입력" />
               {passwordMismatch && <p className="cw-register-error">비밀번호가 일치하지 않습니다.</p>}
               {fieldErrors.passwordConfirm && <p className="cw-register-error">{fieldErrors.passwordConfirm}</p>}
             </Field>

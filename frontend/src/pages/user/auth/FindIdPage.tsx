@@ -169,7 +169,7 @@ function FindIdPage() {
           {result.submitted && (
             <RecoveryResultPanel
               found={result.found}
-              maskedLoginIds={result.maskedLoginIds}
+              loginIds={result.loginIds}
             />
           )}
 

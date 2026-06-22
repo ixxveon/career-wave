@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, MetaData, String, Table, Text, func, or_, select
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, MetaData, String, Table, Text, select
 from sqlalchemy.engine import RowMapping
 from sqlalchemy.orm import Session
 
@@ -12,7 +12,7 @@ scraping_pipelines_table = Table(
     "scraping_pipelines",
     metadata,
     Column("scraping_pipeline_id", BigInteger, primary_key=True),
-    Column("source_name", String(50), nullable=False),
+    Column("source_name", String(50), nullable=False, unique=True),
     Column("display_name", String(100), nullable=False),
     Column("pipeline_status", String(20), nullable=False),
     Column("is_enabled", Boolean, nullable=False),
@@ -44,26 +44,6 @@ class ScrapingPipelineRecord:
     updated_at: datetime
 
 
-@dataclass(frozen=True)
-class ScrapingPipelinePageRecord:
-    content: list[ScrapingPipelineRecord]
-    page: int
-    size: int
-    total_elements: int
-    total_pages: int
-
-
-@dataclass(frozen=True)
-class ScrapingPipelineSummaryRecord:
-    total_count: int
-    idle_count: int
-    running_count: int
-    success_count: int
-    failed_count: int
-    enabled_count: int
-    disabled_count: int
-
-
 class ScrapingPipelineRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -79,7 +59,7 @@ class ScrapingPipelineRepository:
         statement = select(scraping_pipelines_table).where(
             scraping_pipelines_table.c.source_name == source_name
         )
-        row = self._session.execute(statement).mappings().first()
+        row = self._session.execute(statement).mappings().one_or_none()
         return self._to_record(row) if row else None
 
     def find_status_by_source_name(self, source_name: str) -> str | None:
@@ -87,111 +67,6 @@ class ScrapingPipelineRepository:
             scraping_pipelines_table.c.source_name == source_name
         )
         return self._session.execute(statement).scalar_one_or_none()
-
-    def find_pipelines(
-        self,
-        keyword: str | None,
-        status: str | None,
-        page: int,
-        size: int,
-    ) -> ScrapingPipelinePageRecord:
-        total_statement = self._apply_filters(
-            select(func.count(scraping_pipelines_table.c.scraping_pipeline_id)),
-            keyword=keyword,
-            status=status,
-        )
-        total_elements = self._session.execute(total_statement).scalar_one()
-
-        offset = (page - 1) * size
-        content_statement = (
-            self._apply_filters(
-                select(scraping_pipelines_table),
-                keyword=keyword,
-                status=status,
-            )
-            .order_by(
-                scraping_pipelines_table.c.updated_at.desc(),
-                scraping_pipelines_table.c.scraping_pipeline_id.desc(),
-            )
-            .offset(offset)
-            .limit(size)
-        )
-        rows = self._session.execute(content_statement).mappings().all()
-        return ScrapingPipelinePageRecord(
-            content=[self._to_record(row) for row in rows],
-            page=page,
-            size=size,
-            total_elements=total_elements,
-            total_pages=self._calculate_total_pages(total_elements, size),
-        )
-
-    def aggregate_summary(self) -> ScrapingPipelineSummaryRecord:
-        statement = select(
-            func.count(scraping_pipelines_table.c.scraping_pipeline_id).label("total_count"),
-            func.coalesce(
-                func.sum(
-                    func.cast(scraping_pipelines_table.c.pipeline_status == "IDLE", Integer)
-                ),
-                0,
-            ).label("idle_count"),
-            func.coalesce(
-                func.sum(
-                    func.cast(scraping_pipelines_table.c.pipeline_status == "RUNNING", Integer)
-                ),
-                0,
-            ).label("running_count"),
-            func.coalesce(
-                func.sum(
-                    func.cast(scraping_pipelines_table.c.pipeline_status == "SUCCESS", Integer)
-                ),
-                0,
-            ).label("success_count"),
-            func.coalesce(
-                func.sum(
-                    func.cast(scraping_pipelines_table.c.pipeline_status == "FAILED", Integer)
-                ),
-                0,
-            ).label("failed_count"),
-            func.coalesce(
-                func.sum(func.cast(scraping_pipelines_table.c.is_enabled.is_(True), Integer)),
-                0,
-            ).label("enabled_count"),
-            func.coalesce(
-                func.sum(func.cast(scraping_pipelines_table.c.is_enabled.is_(False), Integer)),
-                0,
-            ).label("disabled_count"),
-        )
-        row = self._session.execute(statement).mappings().one()
-        return ScrapingPipelineSummaryRecord(
-            total_count=row["total_count"],
-            idle_count=row["idle_count"],
-            running_count=row["running_count"],
-            success_count=row["success_count"],
-            failed_count=row["failed_count"],
-            enabled_count=row["enabled_count"],
-            disabled_count=row["disabled_count"],
-        )
-
-    @staticmethod
-    def _apply_filters(statement, *, keyword: str | None, status: str | None):
-        if keyword:
-            normalized_keyword = f"%{keyword.strip()}%"
-            statement = statement.where(
-                or_(
-                    scraping_pipelines_table.c.source_name.ilike(normalized_keyword),
-                    scraping_pipelines_table.c.display_name.ilike(normalized_keyword),
-                    scraping_pipelines_table.c.last_error_message.ilike(normalized_keyword),
-                )
-            )
-        if status is not None:
-            statement = statement.where(scraping_pipelines_table.c.pipeline_status == status)
-        return statement
-
-    @staticmethod
-    def _calculate_total_pages(total_elements: int, size: int) -> int:
-        if total_elements == 0:
-            return 0
-        return (total_elements + size - 1) // size
 
     @staticmethod
     def _to_record(row: RowMapping) -> ScrapingPipelineRecord:

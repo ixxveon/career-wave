@@ -151,7 +151,7 @@ function InterviewReportPage() {
     return stored?.sessionId ?? null;
   }, [searchParams]);
 
-  const { data, isLoading, isError, refetch } = useInterviewReport(sessionId);
+  const { data, isLoading, isError, isAnalyzing, refetch } = useInterviewReport(sessionId);
 
   /* ── 로딩 ── */
   if (isLoading) {
@@ -159,6 +159,18 @@ function InterviewReportPage() {
       <div className="ir-state">
         <Loader2 size={32} className="ir-state__spinner" />
         <p>리포트를 불러오는 중입니다…</p>
+      </div>
+    );
+  }
+
+  /* ── 분석 중 (409 INTERVIEW_REPORT_NOT_READY — 재시도 소진) ── */
+  if (isAnalyzing) {
+    return (
+      <div className="ir-state">
+        <Loader2 size={32} className="ir-state__spinner" />
+        <p>AI가 면접 결과를 분석하고 있습니다…</p>
+        <p>분석이 완료되면 리포트가 자동으로 표시됩니다.</p>
+        <button className="ir-btn ir-btn--white" onClick={() => refetch()}>수동 새로고침</button>
       </div>
     );
   }

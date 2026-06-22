@@ -203,4 +203,13 @@ public class ResumeDTO {
             this(documentId, fileType.name(), status.name(), originalName, company, job, scoreTotal, createdAt);
         }
     }
+
+    // 서류 분석 횟수 조회 응답
+    @Schema(description = "서류 분석 횟수 조회 응답")
+    public record ResponseQuota(
+            @Schema(description = "이번 달 사용 횟수", example = "7")
+            int usedCount,
+            @Schema(description = "월 한도", example = "30")
+            int limitCount
+    ) {}
 }
