@@ -70,7 +70,7 @@
 
 ## Phase 6 - Security / Docs / Layering
 
-- [x] `scraping` 도메인 API 권한이 `MASTER`, `BACKEND`로만 제한된다.
+- [x] `scraping` 도메인 API 권한을 `MASTER`, `BACKEND`로만 제한한다.
 - [x] `ROLE_MASTER`, `ROLE_BACKEND` 매핑이 문서와 일치한다.
 - [x] `CS` 권한이 `scraping` 도메인에 사용되지 않는다.
 - [x] Swagger 어노테이션이 Controller가 아니라 Docs 인터페이스에 분리되어 있다.
