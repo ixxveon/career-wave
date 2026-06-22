@@ -275,6 +275,12 @@
   gap: 20px;
 }
 
+.dr-single__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .dr-single__row {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -161,7 +161,7 @@ export default function DocumentResultView({
       )}
 
       <div className={isResume ? 'dr-single' : 'dr-split'}>
-        <div className={isResume ? undefined : 'dr-split__left'}>
+        <div className={isResume ? 'dr-single__inner' : 'dr-split__left'}>
           <div className="dr-card dr-split__original">
             <p className="dr-card-title">입력 원문</p>
             <p className="dr-split__question">{fd.question}</p>
