@@ -10,9 +10,9 @@ INSERT INTO member_product_entitlements (
     entitlement_id,
     member_id,
     product_code,
-    entitlement_type,
-    entitlement_status,
-    warning_count,
+    plan_type,
+    free_remaining,
+    free_usage_status,
     created_at,
     updated_at
 )
@@ -21,8 +21,8 @@ SELECT
     m.member_id,
     p.product_code,
     'FREE',
-    'ACTIVE',
-    0,
+    1,
+    'AVAILABLE',
     NOW(),
     NOW()
 FROM members m

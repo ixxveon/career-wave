@@ -3,19 +3,28 @@ package kr.co.carrer.user.billing.service.impl;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.entity.MemberProductEntitlement;
 import kr.co.carrer.user.billing.entity.ServiceUsageRecord;
+import kr.co.carrer.user.billing.entity.Subscription;
+import kr.co.carrer.user.billing.entity.SubscriptionUsagePeriod;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.MemberProductEntitlementRepository;
 import kr.co.carrer.user.billing.repository.ServiceUsageRecordRepository;
+import kr.co.carrer.user.billing.repository.SubscriptionRepository;
+import kr.co.carrer.user.billing.repository.SubscriptionUsagePeriodRepository;
 import kr.co.carrer.user.billing.service.BillingMemberPort;
 import kr.co.carrer.user.billing.service.EntitlementService;
 import kr.co.carrer.user.billing.type.FreeUsageStatus;
+import kr.co.carrer.user.billing.type.PlanType;
 import kr.co.carrer.user.billing.type.ResourceType;
+import kr.co.carrer.user.billing.type.SubscriptionStatus;
+import kr.co.carrer.user.billing.type.UsageSource;
 import kr.co.carrer.user.billing.type.UsageStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,9 +33,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class EntitlementServiceImpl implements EntitlementService {
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     private final MemberProductEntitlementRepository entitlementRepository;
     private final ServiceUsageRecordRepository usageRecordRepository;
     private final BillingMemberPort billingMemberPort;
+    private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionUsagePeriodRepository usagePeriodRepository;
 
     @Override
     @Transactional
@@ -52,6 +65,11 @@ public class EntitlementServiceImpl implements EntitlementService {
                 .findByMemberIdAndProductCodeForUpdate(memberId, productCode)
                 .orElseThrow(() -> new CustomException(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
 
+        if (entitlement.getPlanType() == PlanType.PREMIUM) {
+            reserveSubscription(memberId, productCode, resourceType, resourceId, entitlement);
+            return;
+        }
+
         // 이용권 상태 사전 검증 — 명시적 오류 코드 반환
         FreeUsageStatus freeStatus = entitlement.getFreeUsageStatus();
         if (freeStatus == FreeUsageStatus.RESERVED) {
@@ -69,7 +87,7 @@ public class EntitlementServiceImpl implements EntitlementService {
     @Transactional
     public void consume(ResourceType resourceType, UUID resourceId) {
         ServiceUsageRecord record = usageRecordRepository
-                .findByResourceTypeAndResourceId(resourceType, resourceId)
+                .findByResourceTypeAndResourceIdForUpdate(resourceType, resourceId)
                 .orElseThrow(() -> new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED));
 
         // 멱등: 이미 CONSUMED이면 무시
@@ -82,11 +100,17 @@ public class EntitlementServiceImpl implements EntitlementService {
             throw new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
         }
 
-        MemberProductEntitlement entitlement = entitlementRepository
-                .findByMemberIdAndProductCodeForUpdate(record.getMemberId(), record.getProductCode())
-                .orElseThrow(() -> new CustomException(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
-
-        entitlement.consumeFree();
+        if (record.getUsageSource() == UsageSource.SUBSCRIPTION) {
+            SubscriptionUsagePeriod period = usagePeriodRepository
+                    .findByUsagePeriodIdForUpdate(record.getUsagePeriodId())
+                    .orElseThrow(() -> new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED));
+            period.consume();
+        } else {
+            MemberProductEntitlement entitlement = entitlementRepository
+                    .findByMemberIdAndProductCodeForUpdate(record.getMemberId(), record.getProductCode())
+                    .orElseThrow(() -> new CustomException(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
+            entitlement.consumeFree();
+        }
         record.consume();
     }
 
@@ -94,7 +118,7 @@ public class EntitlementServiceImpl implements EntitlementService {
     @Transactional
     public void release(ResourceType resourceType, UUID resourceId) {
         Optional<ServiceUsageRecord> opt =
-                usageRecordRepository.findByResourceTypeAndResourceId(resourceType, resourceId);
+                usageRecordRepository.findByResourceTypeAndResourceIdForUpdate(resourceType, resourceId);
 
         if (opt.isEmpty()) {
             throw new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
@@ -112,11 +136,56 @@ public class EntitlementServiceImpl implements EntitlementService {
             throw new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
         }
 
-        MemberProductEntitlement entitlement = entitlementRepository
-                .findByMemberIdAndProductCodeForUpdate(record.getMemberId(), record.getProductCode())
-                .orElseThrow(() -> new CustomException(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
-
-        entitlement.releaseFreeReservation();
+        if (record.getUsageSource() == UsageSource.SUBSCRIPTION) {
+            SubscriptionUsagePeriod period = usagePeriodRepository
+                    .findByUsagePeriodIdForUpdate(record.getUsagePeriodId())
+                    .orElseThrow(() -> new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED));
+            period.releaseReservation();
+        } else {
+            MemberProductEntitlement entitlement = entitlementRepository
+                    .findByMemberIdAndProductCodeForUpdate(record.getMemberId(), record.getProductCode())
+                    .orElseThrow(() -> new CustomException(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
+            entitlement.releaseFreeReservation();
+        }
         record.release();
+    }
+
+    private void reserveSubscription(UUID memberId, String productCode,
+                                     ResourceType resourceType, UUID resourceId,
+                                     MemberProductEntitlement entitlement) {
+        UUID subscriptionId = entitlement.getActiveSubscriptionId();
+        if (subscriptionId == null) {
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_REQUIRED);
+        }
+
+        Subscription subscription = subscriptionRepository
+                .findBySubscriptionIdAndMemberIdForUpdate(subscriptionId, memberId)
+                .orElseThrow(() -> new CustomException(BillingErrorCode.SUBSCRIPTION_NOT_FOUND));
+
+        ZonedDateTime now = ZonedDateTime.now(KST);
+        validateSubscriptionAvailability(subscription, now);
+
+        SubscriptionUsagePeriod period = usagePeriodRepository
+                .findCurrentPeriodForUpdate(subscriptionId, now)
+                .orElseThrow(() -> new CustomException(BillingErrorCode.SUBSCRIPTION_REQUIRED));
+
+        if (!productCode.equals(period.getProductCode())) {
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_REQUIRED);
+        }
+
+        period.reserve();
+        usageRecordRepository.save(ServiceUsageRecord.reserveSubscription(
+                memberId, productCode, resourceType, resourceId, period.getUsagePeriodId()));
+    }
+
+    private void validateSubscriptionAvailability(Subscription subscription, ZonedDateTime now) {
+        SubscriptionStatus status = subscription.getSubscriptionStatus();
+        if (status != SubscriptionStatus.ACTIVE && status != SubscriptionStatus.CANCEL_SCHEDULED) {
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_REQUIRED);
+        }
+        if (now.isBefore(subscription.getCurrentPeriodStart())
+                || !now.isBefore(subscription.getCurrentPeriodEnd())) {
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_REQUIRED);
+        }
     }
 }

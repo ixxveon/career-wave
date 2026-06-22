@@ -1,7 +1,5 @@
 package kr.co.carrer.user.resume.websocket;
 
-import kr.co.carrer.user.billing.service.EntitlementService;
-import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.resume.dto.WebSocketMessage;
 import kr.co.carrer.user.resume.event.DocumentAnalysisCompletedEvent;
 import kr.co.carrer.user.resume.event.DocumentAnalysisTriggerEvent;
@@ -40,7 +38,6 @@ public class DocumentAnalysisEventListener {
     private final WebSocketSessionRegistry sessionRegistry;
     private final FastApiClient fastApiClient;
     private final DocumentStatusService documentStatusService;
-    private final EntitlementService entitlementService;
 
     @Autowired
     public DocumentAnalysisEventListener(
@@ -48,15 +45,13 @@ public class DocumentAnalysisEventListener {
             TaskScheduler taskScheduler,
             WebSocketSessionRegistry sessionRegistry,
             FastApiClient fastApiClient,
-            DocumentStatusService documentStatusService,
-            EntitlementService entitlementService
+            DocumentStatusService documentStatusService
     ) {
         this.messagingTemplate = messagingTemplate;
         this.taskScheduler = taskScheduler;
         this.sessionRegistry = sessionRegistry;
         this.fastApiClient = fastApiClient;
         this.documentStatusService = documentStatusService;
-        this.entitlementService = entitlementService;
     }
 
     // Grace Period 타이머 관리: documentId → ScheduledFuture
@@ -66,10 +61,8 @@ public class DocumentAnalysisEventListener {
     public void onAnalysisTrigger(DocumentAnalysisTriggerEvent event) {
         fastApiClient.triggerAnalysis(
                 event,
-                () -> {
-                    documentStatusService.markFailed(event.documentId(), "FastAPI 분석 트리거 실패");
-                    entitlementService.release(ResourceType.DOCUMENT, event.documentId());
-                }
+                () -> documentStatusService.handleAnalysisTriggerFailure(
+                        event.documentId(), "FastAPI 분석 트리거 실패")
         );
         log.info("[FastAPI 트리거] DB 커밋 후 호출 — documentId: {}, fileType: {}", event.documentId(), event.fileType());
     }

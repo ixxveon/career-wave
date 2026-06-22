@@ -1,6 +1,8 @@
 package kr.co.carrer.user.billing.entity;
 
 import jakarta.persistence.*;
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -60,5 +62,27 @@ public class Plan {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = ZonedDateTime.now(KST);
+    }
+
+    public static Plan create(String productCode, String planName, int planPrice,
+                              int monthlyUsageLimit, String currency, String billingCycle,
+                              boolean active) {
+        if (productCode == null || productCode.isBlank()
+                || planName == null || planName.isBlank()
+                || planPrice < 0 || monthlyUsageLimit <= 0
+                || currency == null || currency.isBlank()
+                || billingCycle == null || billingCycle.isBlank()) {
+            throw new CustomException(BillingErrorCode.PRODUCT_INVALID_PARAM);
+        }
+
+        Plan plan = new Plan();
+        plan.productCode = productCode;
+        plan.planName = planName;
+        plan.planPrice = planPrice;
+        plan.monthlyUsageLimit = monthlyUsageLimit;
+        plan.currency = currency;
+        plan.billingCycle = billingCycle;
+        plan.isActive = active;
+        return plan;
     }
 }

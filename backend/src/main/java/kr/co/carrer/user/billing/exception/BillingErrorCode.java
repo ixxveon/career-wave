@@ -9,6 +9,7 @@ public enum BillingErrorCode implements BaseErrorCode {
 
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 상품입니다."),
     PRODUCT_NOT_ACTIVE(HttpStatus.CONFLICT, "현재 판매 중이지 않은 상품입니다."),
+    PRODUCT_INVALID_PARAM(HttpStatus.BAD_REQUEST, "상품 정보가 올바르지 않습니다."),
 
     SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "구독 정보를 찾을 수 없습니다."),
     SUBSCRIPTION_FORBIDDEN(HttpStatus.FORBIDDEN, "본인 소유의 구독만 접근할 수 있습니다."),
@@ -37,6 +38,8 @@ public enum BillingErrorCode implements BaseErrorCode {
     SUBSCRIPTION_INVALID_TRANSITION(HttpStatus.CONFLICT, "현재 구독 상태에서 허용되지 않는 상태 전이입니다."),
     SUBSCRIPTION_INVALID_PERIOD_NULL(HttpStatus.BAD_REQUEST, "구독 기간(periodStart, periodEnd)은 필수입니다."),
     SUBSCRIPTION_INVALID_PERIOD_RANGE(HttpStatus.BAD_REQUEST, "구독 기간의 시작일은 종료일보다 이전이어야 합니다."),
+    USAGE_PERIOD_INVALID_LIMIT(HttpStatus.BAD_REQUEST, "월 사용 한도는 1 이상이어야 합니다."),
+    USAGE_PERIOD_INVALID_RANGE(HttpStatus.BAD_REQUEST, "사용 기간의 시작일은 종료일보다 이전이어야 합니다."),
     ENTITLEMENT_INVALID_STATE(HttpStatus.CONFLICT, "현재 이용권 상태에서 허용되지 않는 조작입니다."),
     USAGE_RECORD_INVALID_STATE(HttpStatus.CONFLICT, "현재 사용 기록 상태에서 허용되지 않는 조작입니다.");
 

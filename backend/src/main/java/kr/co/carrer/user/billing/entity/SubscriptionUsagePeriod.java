@@ -70,10 +70,10 @@ public class SubscriptionUsagePeriod {
                                                   ZonedDateTime periodStart, ZonedDateTime periodEnd,
                                                   int limitCount) {
         if (limitCount <= 0) {
-            throw new IllegalArgumentException("limitCount는 1 이상이어야 합니다: " + limitCount);
+            throw new CustomException(BillingErrorCode.USAGE_PERIOD_INVALID_LIMIT);
         }
-        if (!periodStart.isBefore(periodEnd)) {
-            throw new IllegalArgumentException("periodStart는 periodEnd보다 이전이어야 합니다");
+        if (periodStart == null || periodEnd == null || !periodStart.isBefore(periodEnd)) {
+            throw new CustomException(BillingErrorCode.USAGE_PERIOD_INVALID_RANGE);
         }
         SubscriptionUsagePeriod p = new SubscriptionUsagePeriod();
         p.subscriptionId = subscriptionId;

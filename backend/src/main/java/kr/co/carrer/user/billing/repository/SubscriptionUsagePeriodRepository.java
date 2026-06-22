@@ -23,4 +23,9 @@ public interface SubscriptionUsagePeriodRepository extends JpaRepository<Subscri
            "AND p.periodStart <= :now AND p.periodEnd > :now")
     Optional<SubscriptionUsagePeriod> findCurrentPeriod(@Param("subscriptionId") UUID subscriptionId,
                                                           @Param("now") ZonedDateTime now);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM SubscriptionUsagePeriod p WHERE p.usagePeriodId = :usagePeriodId")
+    Optional<SubscriptionUsagePeriod> findByUsagePeriodIdForUpdate(
+            @Param("usagePeriodId") UUID usagePeriodId);
 }
