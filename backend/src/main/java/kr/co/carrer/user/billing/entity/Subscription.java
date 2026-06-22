@@ -94,6 +94,9 @@ public class Subscription {
     }
 
     public void scheduleCancel() {
+        if (this.subscriptionStatus != SubscriptionStatus.ACTIVE) {
+            throw new IllegalStateException("ACTIVE 상태에서만 해지 예약이 가능합니다: " + this.subscriptionStatus);
+        }
         this.subscriptionStatus = SubscriptionStatus.CANCEL_SCHEDULED;
         this.cancelScheduledAt = ZonedDateTime.now();
         this.autoRenew = false;
@@ -101,8 +104,11 @@ public class Subscription {
 
     public void markPaymentFailed() {
         this.subscriptionStatus = SubscriptionStatus.PAYMENT_FAILED;
-        this.paymentFailedAt = ZonedDateTime.now();
-        this.autoRenew = false;
+        // paymentFailedAt은 최초 실패 시각만 기록 — 재시도 실패에서 덮어쓰지 않음
+        if (this.paymentFailedAt == null) {
+            this.paymentFailedAt = ZonedDateTime.now();
+        }
+        // autoRenew는 유지 — 재시도 스케줄러가 PAYMENT_FAILED + autoRenew=true 조건으로 동작
     }
 
     public void incrementRetryCount() {
@@ -113,18 +119,30 @@ public class Subscription {
         this.subscriptionStatus = SubscriptionStatus.EXPIRED;
         this.cancelledAt = ZonedDateTime.now();
         this.autoRenew = false;
+        this.nextBillingAt = null;
     }
 
     public void markRefundPending() {
+        if (this.subscriptionStatus != SubscriptionStatus.ACTIVE
+                && this.subscriptionStatus != SubscriptionStatus.CANCEL_SCHEDULED) {
+            throw new IllegalStateException("환불 대기 전환 불가 상태: " + this.subscriptionStatus);
+        }
         this.subscriptionStatus = SubscriptionStatus.REFUND_PENDING;
         this.autoRenew = false;
     }
 
     public void markRefunded() {
+        if (this.subscriptionStatus != SubscriptionStatus.REFUND_PENDING) {
+            throw new IllegalStateException("REFUND_PENDING 상태에서만 환불 완료 처리가 가능합니다: " + this.subscriptionStatus);
+        }
         this.subscriptionStatus = SubscriptionStatus.REFUNDED;
     }
 
     public void renewPeriod(ZonedDateTime newPeriodStart, ZonedDateTime newPeriodEnd) {
+        if (this.subscriptionStatus != SubscriptionStatus.ACTIVE
+                && this.subscriptionStatus != SubscriptionStatus.PAYMENT_FAILED) {
+            throw new IllegalStateException("갱신 불가 상태: " + this.subscriptionStatus);
+        }
         this.subscriptionStatus = SubscriptionStatus.ACTIVE;
         this.currentPeriodStart = newPeriodStart;
         this.currentPeriodEnd = newPeriodEnd;

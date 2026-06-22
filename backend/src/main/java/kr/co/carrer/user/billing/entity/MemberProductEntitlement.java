@@ -70,19 +70,31 @@ public class MemberProductEntitlement {
     }
 
     public void reserveFree() {
+        if (this.freeUsageStatus != FreeUsageStatus.AVAILABLE) {
+            throw new IllegalStateException("AVAILABLE 상태에서만 무료 이용권 예약이 가능합니다: " + this.freeUsageStatus);
+        }
         this.freeUsageStatus = FreeUsageStatus.RESERVED;
     }
 
     public void consumeFree() {
+        if (this.freeUsageStatus != FreeUsageStatus.RESERVED) {
+            throw new IllegalStateException("RESERVED 상태에서만 무료 이용권 확정이 가능합니다: " + this.freeUsageStatus);
+        }
         this.freeUsageStatus = FreeUsageStatus.USED;
         this.freeRemaining = 0;
     }
 
     public void releaseFreeReservation() {
+        if (this.freeUsageStatus != FreeUsageStatus.RESERVED) {
+            throw new IllegalStateException("RESERVED 상태에서만 무료 이용권 해제가 가능합니다: " + this.freeUsageStatus);
+        }
         this.freeUsageStatus = FreeUsageStatus.AVAILABLE;
     }
 
     public void forfeitFree() {
+        if (this.freeUsageStatus == FreeUsageStatus.USED || this.freeUsageStatus == FreeUsageStatus.FORFEITED) {
+            throw new IllegalStateException("이미 소진·포기된 무료 이용권은 포기 처리할 수 없습니다: " + this.freeUsageStatus);
+        }
         this.freeUsageStatus = FreeUsageStatus.FORFEITED;
         this.freeRemaining = 0;
     }

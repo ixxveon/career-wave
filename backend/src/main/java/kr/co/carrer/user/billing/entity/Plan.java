@@ -37,7 +37,7 @@ public class Plan {
     private String billingCycle;
 
     @Column(name = "is_active", nullable = false)
-    private boolean isActive;
+    private boolean isActive = true;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;
@@ -52,7 +52,6 @@ public class Plan {
         updatedAt = now;
         if (currency == null) currency = "KRW";
         if (billingCycle == null) billingCycle = "MONTHLY";
-        isActive = true;
     }
 
     @PreUpdate

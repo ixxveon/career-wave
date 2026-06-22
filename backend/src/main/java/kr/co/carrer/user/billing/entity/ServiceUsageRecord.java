@@ -87,11 +87,17 @@ public class ServiceUsageRecord {
     }
 
     public void consume() {
+        if (this.usageStatus != UsageStatus.RESERVED) {
+            throw new IllegalStateException("RESERVED 상태에서만 사용 확정이 가능합니다: " + this.usageStatus);
+        }
         this.usageStatus = UsageStatus.CONSUMED;
         this.consumedAt = ZonedDateTime.now();
     }
 
     public void release() {
+        if (this.usageStatus != UsageStatus.RESERVED) {
+            throw new IllegalStateException("RESERVED 상태에서만 예약 해제가 가능합니다: " + this.usageStatus);
+        }
         this.usageStatus = UsageStatus.RELEASED;
         this.releasedAt = ZonedDateTime.now();
     }

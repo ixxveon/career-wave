@@ -676,6 +676,8 @@ COMMENT ON COLUMN subscriptions.auto_renew           IS '자동 갱신 여부 (�
 COMMENT ON COLUMN subscriptions.created_at           IS '생성 일시';
 COMMENT ON COLUMN subscriptions.updated_at           IS '구독 상태 변경 일시';
 
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status_billing ON subscriptions (subscription_status, next_billing_at);
+
 -- ================================================
 -- 21. payments
 -- ================================================
@@ -706,7 +708,7 @@ CREATE TABLE payments (
     CONSTRAINT fk_payments_member    FOREIGN KEY (member_id)       REFERENCES members (member_id),
     CONSTRAINT fk_payments_sub       FOREIGN KEY (subscription_id) REFERENCES subscriptions (subscription_id),
     CONSTRAINT fk_payments_plan      FOREIGN KEY (plan_id)         REFERENCES plans (plan_id),
-    CONSTRAINT chk_payment_status    CHECK (payment_status IN ('READY', 'CONFIRMING', 'PAID', 'FAILED', 'CANCELED', 'REFUNDED')),
+    CONSTRAINT chk_payment_status    CHECK (payment_status IN ('READY', 'AUTHORIZED', 'CONFIRMING', 'PAID', 'FAILED', 'CANCELED', 'RECONCILING', 'REFUNDED')),
     CONSTRAINT chk_failure_reason    CHECK (failure_reason IN ('USER_CANCELED', 'CARD_DECLINED', 'TIMEOUT', 'DUPLICATE_ORDER', 'CONFIRM_FAILED', 'FORBIDDEN', 'UNKNOWN')),
     CONSTRAINT chk_payment_type      CHECK (payment_type IN ('MANUAL', 'AUTO_RENEWAL')),
     CONSTRAINT chk_paid_approved_at  CHECK (payment_status != 'PAID' OR approved_at IS NOT NULL)
@@ -730,6 +732,8 @@ COMMENT ON COLUMN payments.approved_at       IS '결제 승인 일시';
 COMMENT ON COLUMN payments.expires_at        IS 'READY 주문 만료 시각 (MANUAL 주문만 설정, created_at + 30분)';
 COMMENT ON COLUMN payments.created_at        IS '결제 요청 생성 일시';
 COMMENT ON COLUMN payments.updated_at        IS '결제 상태 변경 일시';
+
+CREATE INDEX IF NOT EXISTS idx_payments_status_created  ON payments (payment_status, created_at DESC);
 
 -- ================================================
 -- 22. admins

@@ -9,8 +9,8 @@ import java.util.UUID;
 
 public interface BillingProfileRepository extends JpaRepository<BillingProfile, UUID> {
 
-    Optional<BillingProfile> findByMemberIdAndBillingProfileStatus(UUID memberId,
-                                                                    BillingProfileStatus status);
+    Optional<BillingProfile> findFirstByMemberIdAndBillingProfileStatusOrderByCreatedAtDesc(
+            UUID memberId, BillingProfileStatus status);
 
     Optional<BillingProfile> findByCustomerKey(String customerKey);
 }

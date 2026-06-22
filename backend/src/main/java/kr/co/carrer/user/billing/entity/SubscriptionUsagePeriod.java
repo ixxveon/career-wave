@@ -61,6 +61,12 @@ public class SubscriptionUsagePeriod {
     public static SubscriptionUsagePeriod create(UUID subscriptionId, String productCode,
                                                   ZonedDateTime periodStart, ZonedDateTime periodEnd,
                                                   int limitCount) {
+        if (limitCount <= 0) {
+            throw new IllegalArgumentException("limitCount는 1 이상이어야 합니다: " + limitCount);
+        }
+        if (!periodStart.isBefore(periodEnd)) {
+            throw new IllegalArgumentException("periodStart는 periodEnd보다 이전이어야 합니다");
+        }
         SubscriptionUsagePeriod p = new SubscriptionUsagePeriod();
         p.subscriptionId = subscriptionId;
         p.productCode = productCode;
@@ -73,15 +79,25 @@ public class SubscriptionUsagePeriod {
     }
 
     public void reserve() {
+        if (!canReserve()) {
+            throw new IllegalStateException("월 제공량을 초과했습니다 (limit=" + limitCount
+                    + ", used=" + usedCount + ", reserved=" + reservedCount + ")");
+        }
         this.reservedCount++;
     }
 
     public void consume() {
+        if (this.reservedCount <= 0) {
+            throw new IllegalStateException("예약된 사용량이 없습니다: reservedCount=" + reservedCount);
+        }
         this.reservedCount--;
         this.usedCount++;
     }
 
     public void releaseReservation() {
+        if (this.reservedCount <= 0) {
+            throw new IllegalStateException("해제할 예약된 사용량이 없습니다: reservedCount=" + reservedCount);
+        }
         this.reservedCount--;
     }
 

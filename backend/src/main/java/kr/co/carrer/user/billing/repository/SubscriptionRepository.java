@@ -18,8 +18,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     Optional<Subscription> findBySubscriptionIdAndMemberId(UUID subscriptionId, UUID memberId);
 
     @Query("SELECT s FROM Subscription s WHERE s.memberId = :memberId AND s.planId = :planId " +
-           "AND s.subscriptionStatus IN ('ACTIVE', 'CANCEL_SCHEDULED', 'PAYMENT_FAILED')")
-    Optional<Subscription> findActiveByMemberIdAndPlanId(@Param("memberId") UUID memberId,
+           "AND s.subscriptionStatus IN ('ACTIVE', 'CANCEL_SCHEDULED', 'PAYMENT_FAILED') " +
+           "ORDER BY s.createdAt DESC")
+    List<Subscription> findActiveLikeByMemberIdAndPlanId(@Param("memberId") UUID memberId,
                                                           @Param("planId") Long planId);
 
     List<Subscription> findAllByMemberId(UUID memberId);
@@ -30,6 +31,6 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
                                         @Param("threshold") ZonedDateTime threshold);
 
     @Query("SELECT s FROM Subscription s WHERE s.subscriptionStatus = 'PAYMENT_FAILED' " +
-           "AND s.paymentFailedAt IS NOT NULL")
+           "AND s.paymentFailedAt IS NOT NULL AND s.autoRenew = true")
     List<Subscription> findPaymentFailedSubscriptions();
 }
