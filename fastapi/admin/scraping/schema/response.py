@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from admin.scraping.schema.request import ScrapingActionType
+from admin.scraping.schema.request import ScrapingActionType, ScrapingPipelineStatusType
 
 
 class ScrapingResponseBase(BaseModel):
@@ -12,14 +12,14 @@ class ScrapingResponseBase(BaseModel):
 class PipelineActionResponse(ScrapingResponseBase):
     source_name: str = Field(alias="sourceName")
     accepted: bool
-    run_id: str | None = Field(default=None, alias="runId")
+    pipeline_status: ScrapingPipelineStatusType = Field(alias="pipelineStatus")
     requested_at: datetime = Field(alias="requestedAt")
 
 
 class PipelineBatchActionItemResponse(ScrapingResponseBase):
     source_name: str = Field(alias="sourceName")
     accepted: bool
-    message: str | None = None
+    pipeline_status: ScrapingPipelineStatusType = Field(alias="pipelineStatus")
 
 
 class PipelineBatchActionResponse(ScrapingResponseBase):
