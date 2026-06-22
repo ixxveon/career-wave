@@ -12,7 +12,13 @@ import java.util.UUID;
 
 @Getter
 @Entity
-@Table(name = "interview_messages")
+@Table(
+    name = "interview_messages",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uq_interview_messages_session_sender_order",
+        columnNames = {"session_id", "sender", "question_order"}
+    )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class InterviewMessage {
 

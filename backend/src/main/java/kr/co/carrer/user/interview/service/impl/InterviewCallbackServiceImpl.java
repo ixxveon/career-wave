@@ -17,6 +17,7 @@ import kr.co.carrer.user.interview.websocket.WebSocketMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,7 +62,13 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
             log.info("Question callback deduplicated (idempotent): sessionId={}, order={}", sessionId, dto.questionOrder());
             return;
         }
-        messageRepository.save(InterviewMessage.createQuestion(sessionId, dto.questionOrder(), dto.questionText()));
+        try {
+            messageRepository.save(InterviewMessage.createQuestion(sessionId, dto.questionOrder(), dto.questionText()));
+        } catch (DataIntegrityViolationException e) {
+            // 동시 요청으로 유니크 제약 위반 — 멱등 처리
+            log.info("Question callback deduplicated (concurrent): sessionId={}, order={}", sessionId, dto.questionOrder());
+            return;
+        }
         messagingTemplate.convertAndSend(
                 "/topic/interview/" + sessionId,
                 WebSocketMessage.question(dto.questionOrder(), dto.questionText(), dto.questionType())
