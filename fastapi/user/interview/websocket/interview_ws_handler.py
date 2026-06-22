@@ -60,10 +60,12 @@ _RECONNECT_WINDOW_SECONDS = 300  # 재연결 대기 윈도우 (5분)
 
 
 async def _expire_session(session_id: str, ctx: _SessionContext) -> None:
-    """재연결 윈도우 경과 후 세션 컨텍스트를 해제한다."""
+    """재연결 윈도우 경과 후 세션 컨텍스트 및 STT 버퍼를 해제한다."""
     await asyncio.sleep(_RECONNECT_WINDOW_SECONDS)
     if _sessions.get(session_id) is ctx:
         _sessions.pop(session_id, None)
+        from user.interview.pipeline.stt_pipeline import _audio_buffers
+        _audio_buffers.pop(session_id, None)
         _base_log.info("[Session: %s] session expired after reconnect window", session_id)
 
 
