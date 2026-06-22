@@ -3,7 +3,7 @@
 
 export const PLAN_LIMITS = {
   FREE:    { document: 1 },
-  PREMIUM: { document: 20 },
+  PREMIUM: { document: 30 },
 } as const;
 
 export type MembershipType = keyof typeof PLAN_LIMITS;
