@@ -48,7 +48,8 @@ function LoginPage() {
                 onClick={() => {
                   void memberSocialAuthApi
                     .authorize(provider.id)
-                    .then(({ authorizationUrl }) => { window.location.href = authorizationUrl; });
+                    .then(({ authorizationUrl }) => { window.location.href = authorizationUrl; })
+                    .catch(() => { alert(`${provider.label} 로그인을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.`); });
                 }}
               >
                 {provider.mark}

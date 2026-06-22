@@ -271,7 +271,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         } catch (CustomException e) {
             throw e;
         } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
-            log.error("Kakao API 호출 실패: HTTP {} body={}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Kakao API 호출 실패: HTTP {}", e.getStatusCode());
             throw new CustomException(UserAuthErrorCode.OAUTH_PROVIDER_AUTH_FAILED);
         } catch (org.springframework.web.reactive.function.client.WebClientRequestException e) {
             log.error("Kakao API 호출 실패: {}", e.getMessage());
