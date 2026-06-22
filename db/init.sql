@@ -656,7 +656,7 @@ CREATE TABLE subscriptions (
     CONSTRAINT fk_subscriptions_plan               FOREIGN KEY (plan_id)             REFERENCES plans (plan_id),
     CONSTRAINT fk_subscriptions_billing_profile    FOREIGN KEY (billing_profile_id)  REFERENCES billing_profiles (billing_profile_id),
     CONSTRAINT chk_subscription_status             CHECK (subscription_status IN ('ACTIVE', 'CANCEL_SCHEDULED', 'EXPIRED', 'PAYMENT_FAILED', 'REFUND_PENDING', 'REFUNDED')),
-    CONSTRAINT chk_retry_count                     CHECK (retry_count >= 0)
+    CONSTRAINT chk_retry_count                     CHECK (retry_count BETWEEN 0 AND 2)
 );
 COMMENT ON TABLE  subscriptions                      IS '구독 정보 테이블';
 COMMENT ON COLUMN subscriptions.subscription_id      IS '구독 고유 식별자';
@@ -711,7 +711,9 @@ CREATE TABLE payments (
     CONSTRAINT chk_payment_status    CHECK (payment_status IN ('READY', 'AUTHORIZED', 'CONFIRMING', 'PAID', 'FAILED', 'CANCELED', 'RECONCILING', 'REFUNDED')),
     CONSTRAINT chk_failure_reason    CHECK (failure_reason IN ('USER_CANCELED', 'CARD_DECLINED', 'TIMEOUT', 'DUPLICATE_ORDER', 'CONFIRM_FAILED', 'FORBIDDEN', 'UNKNOWN')),
     CONSTRAINT chk_payment_type      CHECK (payment_type IN ('MANUAL', 'AUTO_RENEWAL')),
-    CONSTRAINT chk_paid_approved_at  CHECK (payment_status != 'PAID' OR approved_at IS NOT NULL)
+    CONSTRAINT chk_paid_approved_at  CHECK (payment_status != 'PAID' OR approved_at IS NOT NULL),
+    CONSTRAINT chk_payment_amount    CHECK (amount > 0),
+    CONSTRAINT chk_attempt_sequence  CHECK (attempt_sequence IN (0, 1, 2))
 );
 COMMENT ON TABLE  payments                  IS '결제 내역 테이블 (토스페이먼츠 연동)';
 COMMENT ON COLUMN payments.payment_id       IS '결제 고유 식별자';
@@ -1301,7 +1303,9 @@ CREATE TABLE member_product_entitlements (
     CONSTRAINT fk_entitlement_subscription FOREIGN KEY (active_subscription_id) REFERENCES subscriptions (subscription_id),
     CONSTRAINT chk_plan_type               CHECK (plan_type IN ('FREE', 'PREMIUM')),
     CONSTRAINT chk_free_usage_status       CHECK (free_usage_status IN ('AVAILABLE', 'RESERVED', 'USED', 'FORFEITED')),
-    CONSTRAINT chk_free_remaining          CHECK (free_remaining BETWEEN 0 AND 1)
+    CONSTRAINT chk_free_remaining          CHECK (free_remaining BETWEEN 0 AND 1),
+    CONSTRAINT chk_available_remaining     CHECK (free_usage_status != 'AVAILABLE' OR free_remaining = 1),
+    CONSTRAINT chk_consumed_remaining      CHECK (free_usage_status NOT IN ('USED', 'FORFEITED') OR free_remaining = 0)
 );
 COMMENT ON TABLE  member_product_entitlements                        IS '회원별 상품 등급 및 무료 이용권 상태';
 COMMENT ON COLUMN member_product_entitlements.entitlement_id         IS '권한 고유 식별자';

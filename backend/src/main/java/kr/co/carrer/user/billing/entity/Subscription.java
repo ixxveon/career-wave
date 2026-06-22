@@ -1,6 +1,8 @@
 package kr.co.carrer.user.billing.entity;
 
 import jakarta.persistence.*;
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.type.SubscriptionStatus;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -65,6 +67,8 @@ public class Subscription {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
+    private static final int MAX_RETRY_COUNT = 2;
+
     @PrePersist
     protected void onCreate() {
         if (subscriptionId == null) subscriptionId = UUID.randomUUID();
@@ -80,6 +84,12 @@ public class Subscription {
 
     public static Subscription create(UUID memberId, Long planId,
                                       ZonedDateTime periodStart, ZonedDateTime periodEnd) {
+        if (periodStart == null || periodEnd == null) {
+            throw new IllegalArgumentException("periodStart와 periodEnd는 필수입니다");
+        }
+        if (!periodStart.isBefore(periodEnd)) {
+            throw new IllegalArgumentException("periodStart는 periodEnd보다 이전이어야 합니다");
+        }
         Subscription s = new Subscription();
         s.memberId = memberId;
         s.planId = planId;
@@ -95,7 +105,7 @@ public class Subscription {
 
     public void scheduleCancel() {
         if (this.subscriptionStatus != SubscriptionStatus.ACTIVE) {
-            throw new IllegalStateException("ACTIVE 상태에서만 해지 예약이 가능합니다: " + this.subscriptionStatus);
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_NOT_CANCELABLE);
         }
         this.subscriptionStatus = SubscriptionStatus.CANCEL_SCHEDULED;
         this.cancelScheduledAt = ZonedDateTime.now();
@@ -103,8 +113,12 @@ public class Subscription {
     }
 
     public void markPaymentFailed() {
+        if (this.subscriptionStatus != SubscriptionStatus.ACTIVE
+                && this.subscriptionStatus != SubscriptionStatus.PAYMENT_FAILED) {
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
         this.subscriptionStatus = SubscriptionStatus.PAYMENT_FAILED;
-        // paymentFailedAt은 최초 실패 시각만 기록 — 재시도 실패에서 덮어쓰지 않음
+        // 최초 실패 시각만 기록 — 재시도 실패에서 덮어쓰지 않음 (재시도 스케줄 계산 기준)
         if (this.paymentFailedAt == null) {
             this.paymentFailedAt = ZonedDateTime.now();
         }
@@ -112,10 +126,17 @@ public class Subscription {
     }
 
     public void incrementRetryCount() {
+        if (this.retryCount >= MAX_RETRY_COUNT) {
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
         this.retryCount++;
     }
 
     public void expire() {
+        if (this.subscriptionStatus == SubscriptionStatus.EXPIRED
+                || this.subscriptionStatus == SubscriptionStatus.REFUNDED) {
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
         this.subscriptionStatus = SubscriptionStatus.EXPIRED;
         this.cancelledAt = ZonedDateTime.now();
         this.autoRenew = false;
@@ -125,7 +146,7 @@ public class Subscription {
     public void markRefundPending() {
         if (this.subscriptionStatus != SubscriptionStatus.ACTIVE
                 && this.subscriptionStatus != SubscriptionStatus.CANCEL_SCHEDULED) {
-            throw new IllegalStateException("환불 대기 전환 불가 상태: " + this.subscriptionStatus);
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
         }
         this.subscriptionStatus = SubscriptionStatus.REFUND_PENDING;
         this.autoRenew = false;
@@ -133,7 +154,7 @@ public class Subscription {
 
     public void markRefunded() {
         if (this.subscriptionStatus != SubscriptionStatus.REFUND_PENDING) {
-            throw new IllegalStateException("REFUND_PENDING 상태에서만 환불 완료 처리가 가능합니다: " + this.subscriptionStatus);
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
         }
         this.subscriptionStatus = SubscriptionStatus.REFUNDED;
     }
@@ -141,7 +162,13 @@ public class Subscription {
     public void renewPeriod(ZonedDateTime newPeriodStart, ZonedDateTime newPeriodEnd) {
         if (this.subscriptionStatus != SubscriptionStatus.ACTIVE
                 && this.subscriptionStatus != SubscriptionStatus.PAYMENT_FAILED) {
-            throw new IllegalStateException("갱신 불가 상태: " + this.subscriptionStatus);
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
+        if (newPeriodStart == null || newPeriodEnd == null) {
+            throw new IllegalArgumentException("갱신 기간은 필수입니다");
+        }
+        if (!newPeriodStart.isBefore(newPeriodEnd)) {
+            throw new IllegalArgumentException("갱신 기간: start >= end 는 허용되지 않습니다");
         }
         this.subscriptionStatus = SubscriptionStatus.ACTIVE;
         this.currentPeriodStart = newPeriodStart;

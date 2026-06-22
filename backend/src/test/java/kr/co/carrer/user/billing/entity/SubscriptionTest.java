@@ -1,5 +1,7 @@
 package kr.co.carrer.user.billing.entity;
 
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.type.SubscriptionStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,7 +23,7 @@ class SubscriptionTest {
     }
 
     @Nested
-    @DisplayName("create() 초기 상태")
+    @DisplayName("create() 검증")
     class Create {
 
         @Test
@@ -35,6 +37,20 @@ class SubscriptionTest {
             assertThat(s.getPaymentFailedAt()).isNull();
             assertThat(s.getCancelScheduledAt()).isNull();
             assertThat(s.getNextBillingAt()).isEqualTo(NEXT_MONTH);
+        }
+
+        @Test
+        @DisplayName("periodStart >= periodEnd 이면 IllegalArgumentException")
+        void create_invalidDateRange_throws() {
+            assertThatThrownBy(() -> Subscription.create(UUID.randomUUID(), 1L, NEXT_MONTH, NOW))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("periodStart null이면 IllegalArgumentException")
+        void create_nullPeriodStart_throws() {
+            assertThatThrownBy(() -> Subscription.create(UUID.randomUUID(), 1L, null, NEXT_MONTH))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
     }
 
@@ -54,19 +70,25 @@ class SubscriptionTest {
         }
 
         @Test
-        @DisplayName("PAYMENT_FAILED 상태에서 해지 시 예외 발생")
+        @DisplayName("PAYMENT_FAILED 상태에서 해지 시 SUBSCRIPTION_NOT_CANCELABLE 예외")
         void scheduleCancel_fromPaymentFailed_throws() {
             Subscription s = newActive();
             s.markPaymentFailed();
-            assertThatThrownBy(s::scheduleCancel).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(s::scheduleCancel)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_NOT_CANCELABLE);
         }
 
         @Test
-        @DisplayName("EXPIRED 상태에서 해지 시 예외 발생")
+        @DisplayName("EXPIRED 상태에서 해지 시 SUBSCRIPTION_NOT_CANCELABLE 예외")
         void scheduleCancel_fromExpired_throws() {
             Subscription s = newActive();
             s.expire();
-            assertThatThrownBy(s::scheduleCancel).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(s::scheduleCancel)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_NOT_CANCELABLE);
         }
     }
 
@@ -75,8 +97,8 @@ class SubscriptionTest {
     class MarkPaymentFailed {
 
         @Test
-        @DisplayName("PAYMENT_FAILED로 전환, paymentFailedAt 최초 실패 시각 기록")
-        void markPaymentFailed_setsStatusAndTimestamp() {
+        @DisplayName("ACTIVE → PAYMENT_FAILED, paymentFailedAt 최초 실패 시각 기록")
+        void markPaymentFailed_fromActive_setsStatusAndTimestamp() {
             Subscription s = newActive();
             s.markPaymentFailed();
 
@@ -104,6 +126,56 @@ class SubscriptionTest {
 
             assertThat(s.getPaymentFailedAt()).isEqualTo(firstFailedAt);
         }
+
+        @Test
+        @DisplayName("EXPIRED 상태에서 결제 실패 전환 시 SUBSCRIPTION_INVALID_TRANSITION 예외")
+        void markPaymentFailed_fromExpired_throws() {
+            Subscription s = newActive();
+            s.expire();
+            assertThatThrownBy(s::markPaymentFailed)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
+
+        @Test
+        @DisplayName("REFUNDED 상태에서 결제 실패 전환 시 SUBSCRIPTION_INVALID_TRANSITION 예외")
+        void markPaymentFailed_fromRefunded_throws() {
+            Subscription s = newActive();
+            s.markRefundPending();
+            s.markRefunded();
+            assertThatThrownBy(s::markPaymentFailed)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
+    }
+
+    @Nested
+    @DisplayName("incrementRetryCount() — 재시도 횟수")
+    class IncrementRetryCount {
+
+        @Test
+        @DisplayName("최대 횟수(2)까지 증가 허용")
+        void incrementRetryCount_upToMax_success() {
+            Subscription s = newActive();
+            s.incrementRetryCount();
+            s.incrementRetryCount();
+
+            assertThat(s.getRetryCount()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("retryCount가 2인 상태에서 추가 증가 시 SUBSCRIPTION_INVALID_TRANSITION 예외")
+        void incrementRetryCount_overMax_throws() {
+            Subscription s = newActive();
+            s.incrementRetryCount();
+            s.incrementRetryCount();
+            assertThatThrownBy(s::incrementRetryCount)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
     }
 
     @Nested
@@ -120,6 +192,29 @@ class SubscriptionTest {
             assertThat(s.isAutoRenew()).isFalse();
             assertThat(s.getNextBillingAt()).isNull();
             assertThat(s.getCancelledAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("이미 EXPIRED 상태에서 재만료 시 SUBSCRIPTION_INVALID_TRANSITION 예외")
+        void expire_fromExpired_throws() {
+            Subscription s = newActive();
+            s.expire();
+            assertThatThrownBy(s::expire)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
+
+        @Test
+        @DisplayName("REFUNDED 상태에서 만료 시 SUBSCRIPTION_INVALID_TRANSITION 예외")
+        void expire_fromRefunded_throws() {
+            Subscription s = newActive();
+            s.markRefundPending();
+            s.markRefunded();
+            assertThatThrownBy(s::expire)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
         }
     }
 
@@ -144,7 +239,7 @@ class SubscriptionTest {
         }
 
         @Test
-        @DisplayName("PAYMENT_FAILED 상태에서 갱신 성공 — 재시도 성공 시 복구")
+        @DisplayName("PAYMENT_FAILED 상태에서 갱신 성공 — 재시도 성공 시 복구, autoRenew=true")
         void renewPeriod_fromPaymentFailed_success() {
             Subscription s = newActive();
             s.markPaymentFailed();
@@ -155,21 +250,33 @@ class SubscriptionTest {
         }
 
         @Test
-        @DisplayName("EXPIRED 상태에서 갱신 시 예외 발생")
+        @DisplayName("EXPIRED 상태에서 갱신 시 SUBSCRIPTION_INVALID_TRANSITION 예외")
         void renewPeriod_fromExpired_throws() {
             Subscription s = newActive();
             s.expire();
             assertThatThrownBy(() -> s.renewPeriod(NEXT_MONTH, NEXT_MONTH.plusMonths(1)))
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
         }
 
         @Test
-        @DisplayName("CANCEL_SCHEDULED 상태에서 갱신 시 예외 발생")
+        @DisplayName("CANCEL_SCHEDULED 상태에서 갱신 시 SUBSCRIPTION_INVALID_TRANSITION 예외")
         void renewPeriod_fromCancelScheduled_throws() {
             Subscription s = newActive();
             s.scheduleCancel();
             assertThatThrownBy(() -> s.renewPeriod(NEXT_MONTH, NEXT_MONTH.plusMonths(1)))
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
+
+        @Test
+        @DisplayName("start >= end 이면 IllegalArgumentException")
+        void renewPeriod_invalidRange_throws() {
+            Subscription s = newActive();
+            assertThatThrownBy(() -> s.renewPeriod(NEXT_MONTH.plusMonths(1), NEXT_MONTH))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
     }
 
@@ -198,18 +305,24 @@ class SubscriptionTest {
         }
 
         @Test
-        @DisplayName("EXPIRED 상태에서 환불 대기 전환 시 예외 발생")
+        @DisplayName("EXPIRED 상태에서 환불 대기 전환 시 SUBSCRIPTION_INVALID_TRANSITION 예외")
         void markRefundPending_fromExpired_throws() {
             Subscription s = newActive();
             s.expire();
-            assertThatThrownBy(s::markRefundPending).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(s::markRefundPending)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
         }
 
         @Test
-        @DisplayName("ACTIVE 상태에서 환불 완료 전환 시 예외 발생 — REFUND_PENDING 거치지 않음 금지")
+        @DisplayName("ACTIVE 상태에서 환불 완료 전환 시 SUBSCRIPTION_INVALID_TRANSITION 예외 — REFUND_PENDING 거치지 않음 금지")
         void markRefunded_fromActive_throws() {
             Subscription s = newActive();
-            assertThatThrownBy(s::markRefunded).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(s::markRefunded)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
         }
     }
 }

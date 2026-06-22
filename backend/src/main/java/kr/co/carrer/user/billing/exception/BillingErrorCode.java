@@ -32,7 +32,11 @@ public enum BillingErrorCode implements BaseErrorCode {
     PAYMENT_METHOD_REQUIRED(HttpStatus.CONFLICT, "활성 자동결제 수단이 없습니다."),
 
     ENTITLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품 이용 권한 정보를 찾을 수 없습니다."),
-    ACCOUNT_NOT_ELIGIBLE(HttpStatus.FORBIDDEN, "현재 계정 상태로는 결제·이용이 불가능합니다.");
+    ACCOUNT_NOT_ELIGIBLE(HttpStatus.FORBIDDEN, "현재 계정 상태로는 결제·이용이 불가능합니다."),
+
+    SUBSCRIPTION_INVALID_TRANSITION(HttpStatus.CONFLICT, "현재 구독 상태에서 허용되지 않는 상태 전이입니다."),
+    ENTITLEMENT_INVALID_STATE(HttpStatus.CONFLICT, "현재 이용권 상태에서 허용되지 않는 조작입니다."),
+    USAGE_RECORD_INVALID_STATE(HttpStatus.CONFLICT, "현재 사용 기록 상태에서 허용되지 않는 조작입니다.");
 
     private final HttpStatus status;
     private final String message;

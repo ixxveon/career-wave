@@ -1,6 +1,8 @@
 package kr.co.carrer.user.billing.entity;
 
 import jakarta.persistence.*;
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.type.FreeUsageStatus;
 import kr.co.carrer.user.billing.type.PlanType;
 import lombok.AccessLevel;
@@ -11,7 +13,10 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "member_product_entitlements")
+@Table(
+    name = "member_product_entitlements",
+    uniqueConstraints = @UniqueConstraint(name = "uq_member_product", columnNames = {"member_id", "product_code"})
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberProductEntitlement {
@@ -71,14 +76,14 @@ public class MemberProductEntitlement {
 
     public void reserveFree() {
         if (this.freeUsageStatus != FreeUsageStatus.AVAILABLE) {
-            throw new IllegalStateException("AVAILABLE 상태에서만 무료 이용권 예약이 가능합니다: " + this.freeUsageStatus);
+            throw new CustomException(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
         this.freeUsageStatus = FreeUsageStatus.RESERVED;
     }
 
     public void consumeFree() {
         if (this.freeUsageStatus != FreeUsageStatus.RESERVED) {
-            throw new IllegalStateException("RESERVED 상태에서만 무료 이용권 확정이 가능합니다: " + this.freeUsageStatus);
+            throw new CustomException(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
         this.freeUsageStatus = FreeUsageStatus.USED;
         this.freeRemaining = 0;
@@ -86,20 +91,24 @@ public class MemberProductEntitlement {
 
     public void releaseFreeReservation() {
         if (this.freeUsageStatus != FreeUsageStatus.RESERVED) {
-            throw new IllegalStateException("RESERVED 상태에서만 무료 이용권 해제가 가능합니다: " + this.freeUsageStatus);
+            throw new CustomException(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
         this.freeUsageStatus = FreeUsageStatus.AVAILABLE;
     }
 
     public void forfeitFree() {
-        if (this.freeUsageStatus == FreeUsageStatus.USED || this.freeUsageStatus == FreeUsageStatus.FORFEITED) {
-            throw new IllegalStateException("이미 소진·포기된 무료 이용권은 포기 처리할 수 없습니다: " + this.freeUsageStatus);
+        if (this.freeUsageStatus == FreeUsageStatus.USED
+                || this.freeUsageStatus == FreeUsageStatus.FORFEITED) {
+            throw new CustomException(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
         this.freeUsageStatus = FreeUsageStatus.FORFEITED;
         this.freeRemaining = 0;
     }
 
     public void activatePremium(UUID subscriptionId) {
+        if (subscriptionId == null) {
+            throw new IllegalArgumentException("subscriptionId는 필수입니다");
+        }
         this.planType = PlanType.PREMIUM;
         this.activeSubscriptionId = subscriptionId;
     }

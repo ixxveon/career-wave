@@ -1,6 +1,8 @@
 package kr.co.carrer.user.billing.entity;
 
 import jakarta.persistence.*;
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.billing.type.UsageSource;
 import kr.co.carrer.user.billing.type.UsageStatus;
@@ -12,7 +14,10 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "service_usage_records")
+@Table(
+    name = "service_usage_records",
+    uniqueConstraints = @UniqueConstraint(name = "uq_resource", columnNames = {"resource_type", "resource_id"})
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ServiceUsageRecord {
@@ -88,7 +93,7 @@ public class ServiceUsageRecord {
 
     public void consume() {
         if (this.usageStatus != UsageStatus.RESERVED) {
-            throw new IllegalStateException("RESERVED 상태에서만 사용 확정이 가능합니다: " + this.usageStatus);
+            throw new CustomException(BillingErrorCode.USAGE_RECORD_INVALID_STATE);
         }
         this.usageStatus = UsageStatus.CONSUMED;
         this.consumedAt = ZonedDateTime.now();
@@ -96,7 +101,7 @@ public class ServiceUsageRecord {
 
     public void release() {
         if (this.usageStatus != UsageStatus.RESERVED) {
-            throw new IllegalStateException("RESERVED 상태에서만 예약 해제가 가능합니다: " + this.usageStatus);
+            throw new CustomException(BillingErrorCode.USAGE_RECORD_INVALID_STATE);
         }
         this.usageStatus = UsageStatus.RELEASED;
         this.releasedAt = ZonedDateTime.now();

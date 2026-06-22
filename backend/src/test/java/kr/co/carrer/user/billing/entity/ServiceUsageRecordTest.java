@@ -1,5 +1,7 @@
 package kr.co.carrer.user.billing.entity;
 
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.billing.type.UsageSource;
 import kr.co.carrer.user.billing.type.UsageStatus;
@@ -50,21 +52,27 @@ class ServiceUsageRecordTest {
         }
 
         @Test
-        @DisplayName("CONSUMED 상태에서 재확정 시 예외 발생 — 이중 차감 방지")
+        @DisplayName("CONSUMED 상태에서 재확정 시 USAGE_RECORD_INVALID_STATE 예외 — 이중 차감 방지")
         void consume_fromConsumed_throws() {
             ServiceUsageRecord r = newFreeRecord();
             r.consume();
 
-            assertThatThrownBy(r::consume).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(r::consume)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.USAGE_RECORD_INVALID_STATE);
         }
 
         @Test
-        @DisplayName("RELEASED 상태에서 확정 시 예외 발생")
+        @DisplayName("RELEASED 상태에서 확정 시 USAGE_RECORD_INVALID_STATE 예외")
         void consume_fromReleased_throws() {
             ServiceUsageRecord r = newFreeRecord();
             r.release();
 
-            assertThatThrownBy(r::consume).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(r::consume)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.USAGE_RECORD_INVALID_STATE);
         }
     }
 
@@ -83,21 +91,27 @@ class ServiceUsageRecordTest {
         }
 
         @Test
-        @DisplayName("CONSUMED 상태에서 해제 시 예외 발생 — 이미 차감된 항목 복구 금지")
+        @DisplayName("CONSUMED 상태에서 해제 시 USAGE_RECORD_INVALID_STATE 예외 — 이미 차감된 항목 복구 금지")
         void release_fromConsumed_throws() {
             ServiceUsageRecord r = newFreeRecord();
             r.consume();
 
-            assertThatThrownBy(r::release).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(r::release)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.USAGE_RECORD_INVALID_STATE);
         }
 
         @Test
-        @DisplayName("RELEASED 상태에서 재해제 시 예외 발생")
+        @DisplayName("RELEASED 상태에서 재해제 시 USAGE_RECORD_INVALID_STATE 예외")
         void release_fromReleased_throws() {
             ServiceUsageRecord r = newFreeRecord();
             r.release();
 
-            assertThatThrownBy(r::release).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(r::release)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.USAGE_RECORD_INVALID_STATE);
         }
     }
 }

@@ -1,6 +1,8 @@
 package kr.co.carrer.user.billing.entity;
 
 import jakarta.persistence.*;
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,7 +11,10 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "subscription_usage_periods")
+@Table(
+    name = "subscription_usage_periods",
+    uniqueConstraints = @UniqueConstraint(name = "uq_sub_period_start", columnNames = {"subscription_id", "period_start"})
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SubscriptionUsagePeriod {
@@ -80,15 +85,14 @@ public class SubscriptionUsagePeriod {
 
     public void reserve() {
         if (!canReserve()) {
-            throw new IllegalStateException("월 제공량을 초과했습니다 (limit=" + limitCount
-                    + ", used=" + usedCount + ", reserved=" + reservedCount + ")");
+            throw new CustomException(BillingErrorCode.MONTHLY_LIMIT_EXCEEDED);
         }
         this.reservedCount++;
     }
 
     public void consume() {
         if (this.reservedCount <= 0) {
-            throw new IllegalStateException("예약된 사용량이 없습니다: reservedCount=" + reservedCount);
+            throw new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
         }
         this.reservedCount--;
         this.usedCount++;
@@ -96,7 +100,7 @@ public class SubscriptionUsagePeriod {
 
     public void releaseReservation() {
         if (this.reservedCount <= 0) {
-            throw new IllegalStateException("해제할 예약된 사용량이 없습니다: reservedCount=" + reservedCount);
+            throw new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
         }
         this.reservedCount--;
     }

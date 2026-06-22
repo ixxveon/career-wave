@@ -93,6 +93,52 @@ public class Payment {
         updatedAt = ZonedDateTime.now();
     }
 
+    public static Payment createReady(UUID memberId, Long planId, UUID subscriptionId,
+                                      String orderId, String idempotencyKey,
+                                      int amount, String currency,
+                                      PaymentType paymentType, int attemptSequence,
+                                      ZonedDateTime expiresAt) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("amount는 0보다 커야 합니다: " + amount);
+        }
+        Payment p = new Payment();
+        p.memberId = memberId;
+        p.planId = planId;
+        p.subscriptionId = subscriptionId;
+        p.orderId = orderId;
+        p.idempotencyKey = idempotencyKey;
+        p.amount = amount;
+        p.currency = currency;
+        p.paymentStatus = PaymentStatus.READY;
+        p.paymentType = paymentType;
+        p.attemptSequence = attemptSequence;
+        p.expiresAt = expiresAt;
+        return p;
+    }
+
+    public void authorize() {
+        this.paymentStatus = PaymentStatus.AUTHORIZED;
+    }
+
+    public void confirmStarted() {
+        this.paymentStatus = PaymentStatus.CONFIRMING;
+    }
+
+    public void paid(String paymentKey, ZonedDateTime approvedAt) {
+        this.paymentStatus = PaymentStatus.PAID;
+        this.paymentKey = paymentKey;
+        this.approvedAt = approvedAt;
+    }
+
+    public void fail(FailureReason reason) {
+        this.paymentStatus = PaymentStatus.FAILED;
+        this.failureReason = reason;
+    }
+
+    public void reconciling() {
+        this.paymentStatus = PaymentStatus.RECONCILING;
+    }
+
     public void cancel() {
         this.paymentStatus = PaymentStatus.CANCELED;
     }

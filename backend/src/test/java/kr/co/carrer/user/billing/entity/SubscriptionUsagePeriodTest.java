@@ -1,5 +1,7 @@
 package kr.co.carrer.user.billing.entity;
 
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,19 +38,19 @@ class SubscriptionUsagePeriodTest {
         }
 
         @Test
-        @DisplayName("limitCount=0 이면 예외 발생")
+        @DisplayName("limitCount=0 이면 IllegalArgumentException")
         void create_limitZero_throws() {
             assertThatThrownBy(() -> newPeriod(0)).isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
-        @DisplayName("limitCount<0 이면 예외 발생")
+        @DisplayName("limitCount<0 이면 IllegalArgumentException")
         void create_limitNegative_throws() {
             assertThatThrownBy(() -> newPeriod(-1)).isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
-        @DisplayName("periodStart >= periodEnd 이면 예외 발생")
+        @DisplayName("periodStart >= periodEnd 이면 IllegalArgumentException")
         void create_invalidDateRange_throws() {
             assertThatThrownBy(() -> SubscriptionUsagePeriod.create(
                     UUID.randomUUID(), "interview", END, START, 5))
@@ -71,23 +73,29 @@ class SubscriptionUsagePeriodTest {
         }
 
         @Test
-        @DisplayName("한도 소진 시 예약 시 예외 발생 — 음수 remaining 방지")
+        @DisplayName("한도 소진 시 MONTHLY_LIMIT_EXCEEDED 예외")
         void reserve_exhausted_throws() {
             SubscriptionUsagePeriod p = newPeriod(1);
             p.reserve();
 
-            assertThatThrownBy(p::reserve).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(p::reserve)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.MONTHLY_LIMIT_EXCEEDED);
         }
 
         @Test
-        @DisplayName("used+reserved = limit 일 때 추가 예약 불가")
+        @DisplayName("used+reserved = limit 일 때 추가 예약 시 MONTHLY_LIMIT_EXCEEDED 예외")
         void reserve_usedAndReservedFillLimit_throws() {
             SubscriptionUsagePeriod p = newPeriod(2);
             p.reserve();
             p.consume();
             p.reserve();
 
-            assertThatThrownBy(p::reserve).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(p::reserve)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.MONTHLY_LIMIT_EXCEEDED);
         }
     }
 
@@ -107,10 +115,13 @@ class SubscriptionUsagePeriodTest {
         }
 
         @Test
-        @DisplayName("예약 없이 확정 시 예외 발생 — reservedCount 음수 방지")
+        @DisplayName("예약 없이 확정 시 SERVICE_USAGE_NOT_RESERVED 예외")
         void consume_withoutReservation_throws() {
             SubscriptionUsagePeriod p = newPeriod(5);
-            assertThatThrownBy(p::consume).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(p::consume)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
         }
     }
 
@@ -130,20 +141,26 @@ class SubscriptionUsagePeriodTest {
         }
 
         @Test
-        @DisplayName("예약 없이 해제 시 예외 발생 — reservedCount 음수 방지")
+        @DisplayName("예약 없이 해제 시 SERVICE_USAGE_NOT_RESERVED 예외")
         void release_withoutReservation_throws() {
             SubscriptionUsagePeriod p = newPeriod(5);
-            assertThatThrownBy(p::releaseReservation).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(p::releaseReservation)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
         }
 
         @Test
-        @DisplayName("같은 예약을 두 번 해제 시 예외 발생 — 중복 해제 방지")
+        @DisplayName("같은 예약을 두 번 해제 시 SERVICE_USAGE_NOT_RESERVED 예외 — 중복 해제 방지")
         void release_twice_throws() {
             SubscriptionUsagePeriod p = newPeriod(5);
             p.reserve();
             p.releaseReservation();
 
-            assertThatThrownBy(p::releaseReservation).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(p::releaseReservation)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
         }
     }
 

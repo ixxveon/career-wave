@@ -1,5 +1,7 @@
 package kr.co.carrer.user.billing.entity;
 
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.type.FreeUsageStatus;
 import kr.co.carrer.user.billing.type.PlanType;
 import org.junit.jupiter.api.DisplayName;
@@ -46,28 +48,37 @@ class MemberProductEntitlementTest {
         }
 
         @Test
-        @DisplayName("RESERVED 상태에서 예약 시 예외 발생")
+        @DisplayName("RESERVED 상태에서 예약 시 ENTITLEMENT_INVALID_STATE 예외")
         void reserveFree_fromReserved_throws() {
             MemberProductEntitlement e = newFree();
             e.reserveFree();
-            assertThatThrownBy(e::reserveFree).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(e::reserveFree)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
 
         @Test
-        @DisplayName("USED 상태에서 예약 시 예외 발생")
+        @DisplayName("USED 상태에서 예약 시 ENTITLEMENT_INVALID_STATE 예외")
         void reserveFree_fromUsed_throws() {
             MemberProductEntitlement e = newFree();
             e.reserveFree();
             e.consumeFree();
-            assertThatThrownBy(e::reserveFree).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(e::reserveFree)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
 
         @Test
-        @DisplayName("FORFEITED 상태에서 예약 시 예외 발생")
+        @DisplayName("FORFEITED 상태에서 예약 시 ENTITLEMENT_INVALID_STATE 예외")
         void reserveFree_fromForfeited_throws() {
             MemberProductEntitlement e = newFree();
             e.forfeitFree();
-            assertThatThrownBy(e::reserveFree).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(e::reserveFree)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
     }
 
@@ -87,19 +98,25 @@ class MemberProductEntitlementTest {
         }
 
         @Test
-        @DisplayName("AVAILABLE 상태에서 확정 시 예외 발생")
+        @DisplayName("AVAILABLE 상태에서 확정 시 ENTITLEMENT_INVALID_STATE 예외")
         void consumeFree_fromAvailable_throws() {
             MemberProductEntitlement e = newFree();
-            assertThatThrownBy(e::consumeFree).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(e::consumeFree)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
 
         @Test
-        @DisplayName("USED 상태에서 다시 확정 시 예외 발생 — 이중 차감 방지")
+        @DisplayName("USED 상태에서 다시 확정 시 ENTITLEMENT_INVALID_STATE 예외 — 이중 차감 방지")
         void consumeFree_fromUsed_throws() {
             MemberProductEntitlement e = newFree();
             e.reserveFree();
             e.consumeFree();
-            assertThatThrownBy(e::consumeFree).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(e::consumeFree)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
     }
 
@@ -118,19 +135,25 @@ class MemberProductEntitlementTest {
         }
 
         @Test
-        @DisplayName("USED 상태에서 해제 시 예외 발생 — USED를 AVAILABLE로 되돌리기 금지")
+        @DisplayName("USED 상태에서 해제 시 ENTITLEMENT_INVALID_STATE 예외 — USED를 AVAILABLE로 되돌리기 금지")
         void release_fromUsed_throws() {
             MemberProductEntitlement e = newFree();
             e.reserveFree();
             e.consumeFree();
-            assertThatThrownBy(e::releaseFreeReservation).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(e::releaseFreeReservation)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
 
         @Test
-        @DisplayName("AVAILABLE 상태에서 해제 시 예외 발생")
+        @DisplayName("AVAILABLE 상태에서 해제 시 ENTITLEMENT_INVALID_STATE 예외")
         void release_fromAvailable_throws() {
             MemberProductEntitlement e = newFree();
-            assertThatThrownBy(e::releaseFreeReservation).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(e::releaseFreeReservation)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
     }
 
@@ -149,20 +172,26 @@ class MemberProductEntitlementTest {
         }
 
         @Test
-        @DisplayName("USED 상태에서 포기 시 예외 발생")
+        @DisplayName("USED 상태에서 포기 시 ENTITLEMENT_INVALID_STATE 예외")
         void forfeit_fromUsed_throws() {
             MemberProductEntitlement e = newFree();
             e.reserveFree();
             e.consumeFree();
-            assertThatThrownBy(e::forfeitFree).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(e::forfeitFree)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
 
         @Test
-        @DisplayName("FORFEITED 상태에서 재포기 시 예외 발생")
+        @DisplayName("FORFEITED 상태에서 재포기 시 ENTITLEMENT_INVALID_STATE 예외")
         void forfeit_fromForfeited_throws() {
             MemberProductEntitlement e = newFree();
             e.forfeitFree();
-            assertThatThrownBy(e::forfeitFree).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(e::forfeitFree)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
     }
 
@@ -179,6 +208,14 @@ class MemberProductEntitlementTest {
 
             assertThat(e.getPlanType()).isEqualTo(PlanType.PREMIUM);
             assertThat(e.getActiveSubscriptionId()).isEqualTo(subId);
+        }
+
+        @Test
+        @DisplayName("activatePremium() — subscriptionId null이면 IllegalArgumentException")
+        void activatePremium_nullSubscriptionId_throws() {
+            MemberProductEntitlement e = newFree();
+            assertThatThrownBy(() -> e.activatePremium(null))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
