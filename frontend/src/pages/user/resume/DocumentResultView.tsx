@@ -96,7 +96,7 @@ export default function DocumentResultView({
   const fd = feedbackDetails[activeSection];
 
   const isResume = fileType === 'RESUME';
-  const typeBadgeLabel = fileType === 'RESUME' ? '📄 이력서 분석' : fileType === 'COVER_LETTER' ? '✍️ 자기소개서 분석' : undefined;
+  const typeBadgeLabel = fileType === 'RESUME' ? '📄 이력서 분석' : '✍️ 자기소개서 분석';
   const typeBadgeColor = isResume ? '#2563eb' : '#7c3aed';
 
   return (
@@ -104,11 +104,9 @@ export default function DocumentResultView({
       <div className="dr-banner">
         <div>
           {typeSelector && <div className="dr-type-selector">{typeSelector}</div>}
-          {typeBadgeLabel && (
-            <span className="dr-type-badge" style={{ background: typeBadgeColor }}>
-              {typeBadgeLabel}
-            </span>
-          )}
+          <span className="dr-type-badge" style={{ background: typeBadgeColor }}>
+            {typeBadgeLabel}
+          </span>
           <span className="dr-eyebrow">{label}</span>
           <h1 className="dr-banner__title">AI 종합 진단 리포트</h1>
           {subtitle
