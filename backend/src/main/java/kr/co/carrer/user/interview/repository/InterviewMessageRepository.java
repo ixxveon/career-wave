@@ -15,4 +15,6 @@ public interface InterviewMessageRepository extends JpaRepository<InterviewMessa
 
     Optional<InterviewMessage> findTopBySessionIdAndSenderAndMessageTypeOrderByCreatedAtDesc(
             UUID sessionId, MessageSender sender, MessageType messageType);
+
+    boolean existsBySessionIdAndSenderAndMessageContent(UUID sessionId, MessageSender sender, String messageContent);
 }

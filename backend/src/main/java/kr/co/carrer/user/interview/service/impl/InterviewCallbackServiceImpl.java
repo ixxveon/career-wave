@@ -5,6 +5,7 @@ import kr.co.carrer.user.interview.dto.InterviewDTO;
 import kr.co.carrer.user.interview.entity.AIInterviewFeedback;
 import kr.co.carrer.user.interview.entity.CareerHistory;
 import kr.co.carrer.user.interview.entity.InterviewMessage;
+import kr.co.carrer.user.interview.type.MessageSender;
 import kr.co.carrer.user.interview.entity.InterviewSession;
 import kr.co.carrer.user.interview.exception.InterviewErrorCode;
 import kr.co.carrer.user.interview.repository.AIInterviewFeedbackRepository;
@@ -54,6 +55,12 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
     @Override
     @Transactional
     public void processQuestionCallback(UUID sessionId, InterviewDTO.RequestQuestionCallback dto) {
+        boolean alreadySaved = messageRepository.existsBySessionIdAndSenderAndMessageContent(
+                sessionId, MessageSender.AI, dto.questionText());
+        if (alreadySaved) {
+            log.info("Question callback deduplicated (idempotent): sessionId={}, order={}", sessionId, dto.questionOrder());
+            return;
+        }
         messageRepository.save(InterviewMessage.createQuestion(sessionId, dto.questionText()));
         messagingTemplate.convertAndSend(
                 "/topic/interview/" + sessionId,
