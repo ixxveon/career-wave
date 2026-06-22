@@ -271,4 +271,15 @@ describe('AdminManagementPage master-only controls', () => {
     expect(await findByText('Malformed Network')).toBeTruthy();
     expect(await findByText('넓은 대역')).toBeTruthy();
   });
+
+
+  it('does not render local fallback audit logs when the server returns an empty audit log list', async () => {
+    adminSession.setRole(ADMIN_ROLE.MASTER);
+
+    const { findByText, queryByText } = renderPage();
+
+    expect(await findByText('Master Admin')).toBeTruthy();
+    expect(queryByText('super_admin')).toBeNull();
+  });
+
 });

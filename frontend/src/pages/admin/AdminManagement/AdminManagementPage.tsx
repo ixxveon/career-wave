@@ -279,7 +279,7 @@ export default function AdminManagementPage() {
     queryFn: getAdminManagementSummary,
   });
   const [aclRules] = useState(initialAclRules);
-  const [logs, setLogs] = useState(initialLogs);
+  const logs: AuditLog[] = [];
   const [adminFilter, setAdminFilter] = useState('');
   const debouncedAdminFilter = useDebouncedValue(adminFilter.trim(), ADMIN_SEARCH_DEBOUNCE_MS);
   const [roleFilter, setRoleFilter] = useState<'ALL' | AdminRole>('ALL');
@@ -289,7 +289,6 @@ export default function AdminManagementPage() {
   const [adminDraft, setAdminDraft] = useState<AdminDraft>(createEmptyAdminDraft);
   const [aclPage, setAclPage] = useState(1);
   const [adminPage, setAdminPage] = useState(1);
-  const logIdSeedRef = useRef(initialLogs.length + 1);
   const createAdminPendingRef = useRef(false);
   const [aclDraft, setAclDraft] = useState<AclDraft>({ label: '', cidr: '', note: '' });
   const [aclCidrErrorMessage, setAclCidrErrorMessage] = useState('');
@@ -340,12 +339,6 @@ export default function AdminManagementPage() {
   });
   const visibleLogs = adminAuditLogs?.items.map(toAuditLogRow) ?? logs;
 
-  const addLog = (log: Omit<AuditLog, 'id' | 'time'>) => {
-    const nextLogId = logIdSeedRef.current;
-    logIdSeedRef.current += 1;
-    setLogs((prev) => [{ ...log, id: makeId('LOG', nextLogId), time: formatNow() }, ...prev].slice(0, MAX_SECURITY_LOGS));
-  };
-
   const refreshAdminManagementQueries = () => {
     void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY });
     void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_ADMINS_QUERY_KEY });
@@ -366,22 +359,12 @@ export default function AdminManagementPage() {
 
   const createAdminMutation = useMutation({
     mutationFn: createAdminAccountRequest,
-    onSuccess: (createdAdmin) => {
-      const nextAdmin = toAdminAccountRow(createdAdmin);
-
+    onSuccess: () => {
       setAdminFilter('');
       setRoleFilter('ALL');
       setStatusFilter('ALL');
       setAdminPage(1);
       closeCreateAdminPage({ force: true });
-
-      addLog({
-        actor: 'super_admin',
-        ip: '10.20.0.10',
-        action: '관리자 계정 생성',
-        target: nextAdmin.id,
-        severity: 'WARN',
-      });
       refreshAdminManagementQueries();
       refreshAuditLogQueries();
     },
@@ -389,16 +372,7 @@ export default function AdminManagementPage() {
 
   const updateAdminRoleMutation = useMutation({
     mutationFn: ({ id, role }: { id: string; role: AdminRole }) => updateAdminRole(id, { role }),
-    onSuccess: (updatedAdmin) => {
-      const nextAdmin = toAdminAccountRow(updatedAdmin);
-
-      addLog({
-        actor: 'super_admin',
-        ip: '10.20.0.10',
-        action: '권한 변경',
-        target: `${nextAdmin.id} / ${ROLE_META[nextAdmin.role].label}`,
-        severity: 'WARN',
-      });
+    onSuccess: () => {
       refreshAdminManagementQueries();
       refreshAuditLogQueries();
     },
@@ -406,16 +380,7 @@ export default function AdminManagementPage() {
 
   const updateAdminStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: AdminStatus }) => updateAdminStatus(id, { status }),
-    onSuccess: (updatedAdmin) => {
-      const nextAdmin = toAdminAccountRow(updatedAdmin);
-
-      addLog({
-        actor: 'super_admin',
-        ip: '10.20.0.10',
-        action: nextAdmin.status === 'LOCKED' ? '계정 잠금' : '계정 잠금 해제',
-        target: nextAdmin.id,
-        severity: nextAdmin.status === 'LOCKED' ? 'WARN' : 'INFO',
-      });
+    onSuccess: () => {
       refreshAdminManagementQueries();
       refreshAuditLogQueries();
     },
@@ -423,14 +388,7 @@ export default function AdminManagementPage() {
 
   const deleteAdminMutation = useMutation({
     mutationFn: (id: string) => deleteAdminAccount(id),
-    onSuccess: (_, deletedId) => {
-      addLog({
-        actor: 'super_admin',
-        ip: '10.20.0.10',
-        action: '관리자 계정 삭제',
-        target: deletedId,
-        severity: 'ERROR',
-      });
+    onSuccess: () => {
       refreshAdminManagementQueries();
       refreshAuditLogQueries();
     },
@@ -438,20 +396,10 @@ export default function AdminManagementPage() {
 
   const createAclRuleMutation = useMutation({
     mutationFn: createAdminAclRule,
-    onSuccess: (createdAclRule) => {
-      const nextRule = toAclRuleRow(createdAclRule);
-
+    onSuccess: () => {
       setAclPage(1);
       setAclDraft({ label: '', cidr: '', note: '' });
       setAclCidrErrorMessage('');
-
-      addLog({
-        actor: 'super_admin',
-        ip: '10.20.0.10',
-        action: 'IP ACL 등록',
-        target: nextRule.id,
-        severity: 'WARN',
-      });
       refreshAclManagementQueries();
       refreshAuditLogQueries();
     },
@@ -459,16 +407,7 @@ export default function AdminManagementPage() {
 
   const updateAclEnabledMutation = useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => updateAdminAclEnabled(id, { enabled }),
-    onSuccess: (updatedAclRule) => {
-      const nextRule = toAclRuleRow(updatedAclRule);
-
-      addLog({
-        actor: 'super_admin',
-        ip: '10.20.0.10',
-        action: nextRule.enabled ? 'IP ACL 활성화' : 'IP ACL 비활성화',
-        target: nextRule.id,
-        severity: nextRule.enabled ? 'INFO' : 'WARN',
-      });
+    onSuccess: () => {
       refreshAclManagementQueries();
       refreshAuditLogQueries();
     },
@@ -476,19 +415,11 @@ export default function AdminManagementPage() {
 
   const deleteAclRuleMutation = useMutation({
     mutationFn: (id: string) => deleteAdminAclRule(id),
-    onSuccess: (_, deletedAclId) => {
+    onSuccess: () => {
       const isCurrentPageEmptyAfterDelete = aclPage > 1 && visibleAclRules.length === 1;
       if (isCurrentPageEmptyAfterDelete) {
         setAclPage((page) => Math.max(1, page - 1));
       }
-
-      addLog({
-        actor: 'super_admin',
-        ip: '10.20.0.10',
-        action: 'IP ACL 삭제',
-        target: deletedAclId,
-        severity: 'ERROR',
-      });
       refreshAclManagementQueries();
       refreshAuditLogQueries();
     },
