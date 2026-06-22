@@ -53,53 +53,53 @@
 
 ### 회원 가입 연동
 
-- [ ] 회원 가입 성공 트랜잭션에서 상품별 FREE 권한 2개 생성
-- [ ] `document-coaching`: FREE, AVAILABLE, freeRemaining=1
-- [ ] `interview`: FREE, AVAILABLE, freeRemaining=1
-- [ ] 소셜 회원 가입에도 동일 규칙 적용
-- [ ] 기존 회원 backfill migration 작성
-- [ ] 가입 재처리 시 권한 중복 생성 방지
+- [x] 회원 가입 성공 트랜잭션에서 상품별 FREE 권한 2개 생성
+- [x] `document-coaching`: FREE, AVAILABLE, freeRemaining=1
+- [x] `interview`: FREE, AVAILABLE, freeRemaining=1
+- [x] 소셜 회원 가입에도 동일 규칙 적용
+- [x] 기존 회원 backfill migration 작성
+- [x] 가입 재처리 시 권한 중복 생성 방지
 
 ### 무료 이용권 공통 로직
 
-- [ ] `EntitlementService.reserve(memberId, productCode, resourceType, resourceId)`
+- [x] `EntitlementService.reserve(memberId, productCode, resourceType, resourceId)`
 - [ ] 회원 상태 ACTIVE 검증
-- [ ] 상품별 권한 `PESSIMISTIC_WRITE` 조회
-- [ ] 동일 resource 중복 예약 방지
-- [ ] FREE AVAILABLE → RESERVED 전이
-- [ ] `ServiceUsageRecord(RESERVED, FREE)` 저장
-- [ ] `EntitlementService.consume(resourceType, resourceId)`
-- [ ] FREE RESERVED → USED, freeRemaining 1 → 0
-- [ ] consume 중복 호출 멱등 처리
-- [ ] `EntitlementService.release(resourceType, resourceId)`
-- [ ] FREE RESERVED → AVAILABLE, freeRemaining=1 복구
-- [ ] release 중복 호출 멱등 처리
-- [ ] `SUBSCRIPTION_REQUIRED(402)` 처리
+- [x] 상품별 권한 `PESSIMISTIC_WRITE` 조회
+- [x] 동일 resource 중복 예약 방지
+- [x] FREE AVAILABLE → RESERVED 전이
+- [x] `ServiceUsageRecord(RESERVED, FREE)` 저장
+- [x] `EntitlementService.consume(resourceType, resourceId)`
+- [x] FREE RESERVED → USED, freeRemaining 1 → 0
+- [x] consume 중복 호출 멱등 처리
+- [x] `EntitlementService.release(resourceType, resourceId)`
+- [x] FREE RESERVED → AVAILABLE, freeRemaining=1 복구
+- [x] release 중복 호출 멱등 처리
+- [x] `SUBSCRIPTION_REQUIRED(402)` 처리
 
 ### Resume 실제 사용 연동
 
-- [ ] Document 생성과 무료 이용권 예약을 하나의 트랜잭션으로 처리
-- [ ] `uploadResume`에서 `document-coaching` 예약
-- [ ] `submitCoverLetter`에서 `document-coaching` 예약
-- [ ] COMPLETED Webhook 저장 성공 후 consume
-- [ ] FAILED Webhook에서 release
-- [ ] FastAPI trigger 실패에서 release
-- [ ] 동일 Webhook 재수신 중복 차감 방지
+- [x] Document 생성과 무료 이용권 예약을 하나의 트랜잭션으로 처리
+- [x] `uploadResume`에서 `document-coaching` 예약
+- [x] `submitCoverLetter`에서 `document-coaching` 예약
+- [x] COMPLETED Webhook 저장 성공 후 consume
+- [x] FAILED Webhook에서 release
+- [x] FastAPI trigger 실패에서 release
+- [x] 동일 Webhook 재수신 중복 차감 방지
 
 ### Interview 실제 사용 연동
 
-- [ ] InterviewSession 생성과 무료 이용권 예약을 하나의 트랜잭션으로 처리
-- [ ] `startSession`에서 `interview` 예약
-- [ ] report callback DB 저장 성공 후 consume
-- [ ] session FAILED에서 release
-- [ ] session timeout에서 release
-- [ ] 동일 report callback 재수신 중복 차감 방지
+- [x] InterviewSession 생성과 무료 이용권 예약을 하나의 트랜잭션으로 처리
+- [x] `startSession`에서 `interview` 예약
+- [x] report callback DB 저장 성공 후 consume
+- [x] session FAILED에서 release
+- [x] session timeout에서 release
+- [x] 동일 report callback 재수신 중복 차감 방지
 
 ### 조회 API
 
-- [ ] `GET /api/v1/user/subscriptions/me/entitlements`
-- [ ] 상품별 planType, freeRemaining, freeUsageStatus 반환
-- [ ] 상품별 serviceAvailable, unavailableReason 반환
+- [x] `GET /api/v1/user/subscriptions/me/entitlements`
+- [x] 상품별 planType, freeRemaining, freeUsageStatus 반환
+- [x] 상품별 serviceAvailable, unavailableReason 반환
 - [ ] 기존 Frontend가 기대하는 `entitlements` 응답 형태를 깨뜨리지 않는 호환 DTO 확정
 
 ### Phase 2 테스트
@@ -110,10 +110,10 @@
   - [ ] COMPANY 회원 제외
   - [ ] 중복 초기화 멱등
 - [ ] `EntitlementServiceFreeTest`
-  - [ ] AVAILABLE reserve 성공
-  - [ ] RESERVED 중복 reserve 차단
-  - [ ] consume 성공·재호출 멱등
-  - [ ] release 성공·재호출 멱등
+  - [x] AVAILABLE reserve 성공
+  - [x] RESERVED 중복 reserve 차단
+  - [x] consume 성공·재호출 멱등
+  - [x] release 성공·재호출 멱등
   - [ ] USED release 금지
   - [ ] RELEASED consume 금지
 - [ ] `ResumeFreeEntitlementIntegrationTest`
