@@ -78,4 +78,10 @@ public class BillingProfile {
     public void revoke() {
         this.billingProfileStatus = BillingProfileStatus.REVOKED;
     }
+
+    // getter 이름 규칙 미적용 → Jackson BeanSerializer 직렬화 대상 제외
+    // Toss 자동결제 API 호출 전용 — 응답 DTO·로그에 절대 포함 금지
+    public String encryptedBillingKeyForService() {
+        return this.encryptedBillingKey;
+    }
 }
