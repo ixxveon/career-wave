@@ -472,14 +472,8 @@ export function useInterviewSession({
       return;
     }
 
-    // 빈 답변(타임아웃/음성 종료 트리거)은 서버에 전송하지 않음
-    // 실제 LLM 꼬리 질문은 FastAPI WS를 통해 자동 수신됨
-    if (!text.trim()) {
-      dispatch({ type: 'SET_TYPING', typing: false });
-      return;
-    }
-
     try {
+      // 빈 답변(무음·STT 실패)도 서버에 전송하여 FastAPI 폴백 질문 트리거를 보장
       await interviewSessionApi.submitTextAnswer(sessionId, {
         questionOrder:  stateRef.current.questionOrder,
         messageContent: text.trim(),
