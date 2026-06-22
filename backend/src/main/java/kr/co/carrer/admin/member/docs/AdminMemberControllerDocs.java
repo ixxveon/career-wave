@@ -28,7 +28,7 @@ public interface AdminMemberControllerDocs {
 
     @Operation(summary = "개인 회원 목록 조회")
     ResponseEntity<ApiResponse<PaginationResponse<MemberDTO.ResponseList>>> getMembers(
-        @Parameter(description = "역할 (ROLE_USER / ROLE_COMPANY)") @RequestParam(required = false) String role,
+        @Parameter(description = "역할 (USER / COMPANY)") @RequestParam(required = false) String role,
         @Parameter(description = "상태 (ACTIVE / SUSPENDED / BANNED)") @RequestParam(required = false) String status,
         @Parameter(description = "구독 (FREE / PREMIUM)") @RequestParam(required = false) String plan,
         @Parameter(description = "이름·이메일·로그인ID 통합 검색") @RequestParam(required = false) String keyword,
