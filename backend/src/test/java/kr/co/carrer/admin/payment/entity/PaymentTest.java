@@ -263,7 +263,7 @@ class PaymentTest {
             assertThatThrownBy(() -> p.paid("tk_key", null))
                     .isInstanceOf(CustomException.class)
                     .extracting(ex -> ((CustomException) ex).getErrorCode())
-                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM;
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         @Test

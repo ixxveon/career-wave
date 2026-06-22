@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -33,10 +34,12 @@ public class BillingConsent {
     @Column(name = "revoked_at")
     private ZonedDateTime revokedAt;
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     @PrePersist
     protected void onCreate() {
         if (billingConsentId == null) billingConsentId = UUID.randomUUID();
-        if (agreedAt == null) agreedAt = ZonedDateTime.now();
+        if (agreedAt == null) agreedAt = ZonedDateTime.now(KST);
     }
 
     public static BillingConsent agree(UUID memberId, Long planId, String termsVersion) {
@@ -48,7 +51,7 @@ public class BillingConsent {
     }
 
     public void revoke() {
-        this.revokedAt = ZonedDateTime.now();
+        this.revokedAt = ZonedDateTime.now(KST);
     }
 
     public boolean isActive() {
