@@ -9,8 +9,13 @@ import kr.co.carrer.user.member.dto.OAuthCallbackResponse;
 import kr.co.carrer.user.member.dto.UserSocialAuthDto;
 import kr.co.carrer.user.member.service.UserSocialAuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
 
 @Tag(name = "User Social Auth", description = "소셜 OAuth 로그인 / 회원가입 API (Kakao · Naver · Google)")
 @RestController
@@ -20,6 +25,9 @@ public class UserSocialAuthController implements UserSocialAuthControllerDocs {
 
     private final UserSocialAuthService userSocialAuthService;
 
+    @Value("${frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
     @GetMapping("/oauth/{provider}/authorize")
     public ResponseEntity<ApiResponse<UserSocialAuthDto.ResponseOAuthAuthorize>> authorize(
             @PathVariable String provider) {
@@ -28,18 +36,40 @@ public class UserSocialAuthController implements UserSocialAuthControllerDocs {
     }
 
     @GetMapping("/oauth/{provider}/callback")
-    public ResponseEntity<ApiResponse<?>> callback(
+    public void callback(
             @PathVariable String provider,
             @RequestParam String code,
             @RequestParam String state,
-            HttpServletResponse response) {
+            HttpServletResponse response) throws IOException {
         OAuthCallbackResponse result = userSocialAuthService.callback(provider, code, state, response);
-        return switch (result) {
-            case UserSocialAuthDto.ResponseOAuthCallbackLogin login ->
-                    ResponseEntity.ok(ApiResponse.ok("로그인되었습니다.", login));
-            case UserSocialAuthDto.ResponseOAuthCallbackSignupRequired signup ->
-                    ResponseEntity.ok(ApiResponse.ok("추가정보 입력이 필요합니다.", signup));
+        String redirectUrl = switch (result) {
+            case UserSocialAuthDto.ResponseOAuthCallbackLogin login -> {
+                // 토큰을 URL이 아닌 단기 쿠키로 전달 (브라우저 히스토리·로그·Referer 노출 방지)
+                setHandoffCookie(response, "cw_oauth_login_token", login.getAccessToken());
+                yield UriComponentsBuilder.fromHttpUrl(frontendUrl + "/auth/oauth/callback")
+                        .queryParam("type", "login")
+                        .build().toUriString();
+            }
+            case UserSocialAuthDto.ResponseOAuthCallbackSignupRequired signup -> {
+                setHandoffCookie(response, "cw_oauth_signup_token", signup.socialSignupToken());
+                yield UriComponentsBuilder.fromHttpUrl(frontendUrl + "/auth/oauth/callback")
+                        .queryParam("type", "signup")
+                        .queryParam("provider", signup.provider())
+                        .queryParam("email", signup.socialEmail() != null ? signup.socialEmail() : "")
+                        .build().toUriString();
+            }
         };
+        response.sendRedirect(redirectUrl);
+    }
+
+    private void setHandoffCookie(HttpServletResponse response, String name, String value) {
+        ResponseCookie cookie = ResponseCookie.from(name, value)
+                .path("/")
+                .maxAge(60)
+                .sameSite("Strict")
+                .httpOnly(false)
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
     }
 
     @PostMapping("/register/social/complete")

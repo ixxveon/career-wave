@@ -77,6 +77,7 @@ public class MemberVerification {
         this.verificationToken = token;
         this.verificationStatus = VerificationStatus.VERIFIED;
         this.verifiedAt = Instant.now();
+        this.expiresAt = Instant.now().plus(java.time.Duration.ofMinutes(10));
     }
 
     public void decrementAttempts() {

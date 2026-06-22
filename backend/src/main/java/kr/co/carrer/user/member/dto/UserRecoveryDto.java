@@ -34,8 +34,8 @@ public class UserRecoveryDto {
     }
 
     public record ResponseFindId(
-            @Schema(description = "마스킹된 loginId 목록 (앞 3자 유지, 나머지 *)", example = "[\"car**********\"]") List<String> maskedLoginIds,
-            @Schema(description = "조회 결과 존재 여부 (false면 maskedLoginIds 빈 배열)") boolean found
+            @Schema(description = "loginId 목록", example = "[\"career01\"]") List<String> loginIds,
+            @Schema(description = "조회 결과 존재 여부 (false면 loginIds 빈 배열)") boolean found
     ) {
         // 계정 존재 여부 노출 금지 — 결과 없을 때도 동일 메시지, found=false + 빈 배열 (spec FR-011)
         public static ResponseFindId notFound() {
