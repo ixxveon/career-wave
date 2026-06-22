@@ -195,7 +195,7 @@ export function useInterviewSession({
   const [streamingText, setStreamingText] = useState('');
   const streamingAccRef    = useRef('');
   const streamingRafRef    = useRef<number | null>(null);
-  const sendTextAnswerRef  = useRef<(text: string) => Promise<void>>(async () => {});
+  const sendTextAnswerRef  = useRef<(text: string, skipAddMessage?: boolean) => Promise<void>>(async () => {});
   /**
    * 폴백이 발동된 questionOrder — turn 범위로 중복 메시지 방지
    * null: 폴백 미발동 / 숫자: 해당 questionOrder turn의 isFinal 무시
