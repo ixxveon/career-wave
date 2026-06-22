@@ -28,7 +28,7 @@
 | POST | `/api/v1/admin/admin-acls` | `MASTER` |
 | PATCH | `/api/v1/admin/admin-acls/{ipAclId}/enabled` | `MASTER` |
 | DELETE | `/api/v1/admin/admin-acls/{ipAclId}` | `MASTER` |
-| GET | `/api/v1/admin/admin-audit-logs` | `MASTER`, `BACKEND` |
+| GET | `/api/v1/admin/audit-logs` | `MASTER`, `BACKEND` |
 
 ## Endpoints
 
@@ -44,7 +44,7 @@
 | POST | `/api/v1/admin/admin-acls` | IP ACL 등록 |
 | PATCH | `/api/v1/admin/admin-acls/{ipAclId}/enabled` | IP ACL 활성/비활성 전환 |
 | DELETE | `/api/v1/admin/admin-acls/{ipAclId}` | IP ACL 삭제 |
-| GET | `/api/v1/admin/admin-audit-logs` | 관리자 보안 감사 로그 조회 |
+| GET | `/api/v1/admin/audit-logs` | 관리자 보안 감사 로그 조회 |
 
 ## Query Parameters
 
@@ -65,7 +65,7 @@
 | `page` | `number` | N | 1부터 시작 |
 | `size` | `number` | N | 기본값 20 |
 
-### `GET /api/v1/admin/admin-audit-logs`
+### `GET /api/v1/admin/audit-logs`
 
 | Name | Type | Required | Description |
 |---|---|---|---|

@@ -97,7 +97,7 @@
 | `page` | `number` | 없음 | 페이지 번호, 1-based |
 | `size` | `number` | 없음 | 페이지 크기 |
 
-> 입력 정보에 포함된 `GET /api/v1/admin/admin-audit-logs` Query Parameter는 `auditLog` 도메인 범위이므로 본 문서에는 포함하지 않는다.
+> 입력 정보에 포함된 `GET /api/v1/admin/audit-logs` Query Parameter는 `auditLog` 도메인 범위이므로 본 문서에는 포함하지 않는다.
 
 ---
 
