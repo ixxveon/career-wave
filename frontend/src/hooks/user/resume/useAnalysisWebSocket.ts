@@ -161,12 +161,14 @@ export function useAnalysisWebSocket({
             (frame) => handleMessage(frame.body),
           );
 
-          // 30초 타임아웃 (NFR-001)
+          // 30초 내 WS 메시지 없으면 polling fallback으로 조용히 전환 (NFR-001)
+          // 분석이 실제로 완료될 수 있으므로 에러 토스트 없이 polling만 시작
           timeoutRef.current = setTimeout(() => {
+            normalClosedRef.current = true;
             clientRef.current?.deactivate();
             clientRef.current = null;
             setIsConnected(false);
-            onFailed('분석 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.');
+            startPolling(documentId);
           }, ANALYSIS_TIMEOUT_MS);
         },
         onStompError: (frame) => {

@@ -75,6 +75,8 @@ public class ResumeDTO {
             UUID documentId,
             @Schema(description = "분석 상태", example = "COMPLETED")
             String status,
+            @Schema(description = "파일 타입", example = "RESUME")
+            String fileType,
             @Schema(description = "역량 점수 (분석 미완료 시 null)")
             ScoreDTO scores,
             @Schema(description = "AI 종합 총평 (분석 미완료 시 null)", example = "전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다.")
