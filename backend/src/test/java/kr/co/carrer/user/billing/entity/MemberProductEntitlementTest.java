@@ -184,6 +184,17 @@ class MemberProductEntitlementTest {
         }
 
         @Test
+        @DisplayName("RESERVED 상태에서 포기 시 ENTITLEMENT_INVALID_STATE 예외 — 진행 중 작업 보호")
+        void forfeit_fromReserved_throws() {
+            MemberProductEntitlement e = newFree();
+            e.reserveFree();
+            assertThatThrownBy(e::forfeitFree)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
+        }
+
+        @Test
         @DisplayName("FORFEITED 상태에서 재포기 시 ENTITLEMENT_INVALID_STATE 예외")
         void forfeit_fromForfeited_throws() {
             MemberProductEntitlement e = newFree();

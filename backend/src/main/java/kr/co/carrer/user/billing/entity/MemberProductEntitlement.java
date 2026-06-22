@@ -97,8 +97,9 @@ public class MemberProductEntitlement {
     }
 
     public void forfeitFree() {
-        if (this.freeUsageStatus == FreeUsageStatus.USED
-                || this.freeUsageStatus == FreeUsageStatus.FORFEITED) {
+        // RESERVED 차단: 진행 중인 서비스 작업이 있을 때 구독 전환 시 후속 consume/release 콜백이 깨짐
+        // 서비스 레이어에서 AVAILABLE 상태를 확인 후 호출해야 함
+        if (this.freeUsageStatus != FreeUsageStatus.AVAILABLE) {
             throw new CustomException(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
         this.freeUsageStatus = FreeUsageStatus.FORFEITED;
