@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACL_RISK_LEVEL, getAclRiskLevel, toAdminAclRule } from './adminManagementApi';
+import { ACL_RISK_LEVEL, AUDIT_SEVERITY, getAclRiskLevel, toAdminAclRule, toAdminAuditLog } from './adminManagementApi';
 
 describe('adminManagementApi ACL mapper', () => {
   it('normalizes raw backend ACL DTO fields to the frontend public type', () => {
@@ -49,5 +49,57 @@ describe('adminManagementApi ACL mapper', () => {
     ['10.20.0.0/16', ACL_RISK_LEVEL.HIGH],
   ])('maps CIDR %s to %s risk', (cidr, expectedRiskLevel) => {
     expect(getAclRiskLevel(cidr)).toBe(expectedRiskLevel);
+  });
+});
+
+describe('adminManagementApi audit log mapper', () => {
+  it('normalizes raw backend audit log DTO fields to the frontend public type', () => {
+    const auditLog = toAdminAuditLog({
+      auditLogId: 12,
+      adminId: 101,
+      logType: 'ADMIN_MANAGEMENT',
+      action: 'UPDATE_ADMIN_ROLE',
+      targetType: 'member',
+      targetId: 'U-1007',
+      ipAddress: '10.20.0.10',
+      severity: AUDIT_SEVERITY.SUCCESS,
+      detail: 'changed role to CS',
+      createdAt: '2026-06-11T09:10:00+09:00',
+    });
+
+    expect(auditLog).toEqual({
+      id: '12',
+      occurredAt: '2026-06-11T09:10:00+09:00',
+      actor: 'admin:101',
+      ip: '10.20.0.10',
+      action: 'UPDATE_ADMIN_ROLE',
+      target: 'member:U-1007',
+      severity: AUDIT_SEVERITY.SUCCESS,
+    });
+  });
+
+  it('falls back safely when backend audit log target or actor data is missing', () => {
+    const auditLog = toAdminAuditLog({
+      auditLogId: 13,
+      adminId: null,
+      logType: 'ADMIN_MANAGEMENT',
+      action: 'DELETE_ADMIN',
+      targetType: null,
+      targetId: '',
+      ipAddress: null,
+      severity: AUDIT_SEVERITY.WARN,
+      detail: null,
+      createdAt: '2026-06-11T09:10:00+09:00',
+    });
+
+    expect(auditLog).toEqual({
+      id: '13',
+      occurredAt: '2026-06-11T09:10:00+09:00',
+      actor: '-',
+      ip: '',
+      action: 'DELETE_ADMIN',
+      target: '-',
+      severity: AUDIT_SEVERITY.WARN,
+    });
   });
 });

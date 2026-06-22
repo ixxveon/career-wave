@@ -31,7 +31,7 @@ import '../../../styles/admin/admin.css';
 import MiniPagination from '../../../components/admin/MiniPagination';
 
 type AdminStatus = 'ACTIVE' | 'LOCKED';
-type AuditSeverity = 'INFO' | 'WARN' | 'ERROR';
+type AuditSeverity = 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
 
 interface AdminAccount {
   id: string;
@@ -2221,6 +2221,10 @@ export default function AdminManagementPage() {
           color: #ff8c8c;
         }
 
+        .amSecurityType.success {
+          color: #70f1ce;
+        }
+
         .amSecurityMessage {
           color: #f4f8fd;
           font-size: 13px;
@@ -2240,6 +2244,10 @@ export default function AdminManagementPage() {
 
         .amSecurityMessage.error {
           color: #ff9c9c;
+        }
+
+        .amSecurityMessage.success {
+          color: #8cefdc;
         }
 
         .amEmptyCell,
