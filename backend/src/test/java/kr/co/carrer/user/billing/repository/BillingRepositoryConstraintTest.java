@@ -236,8 +236,16 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
                     memberId, planId, null,
                     orderId, idempotencyKey,
                     9900, "KRW",
-                    PaymentType.AUTO_RENEWAL, 0,
+                    PaymentType.MANUAL, 0,
                     ZonedDateTime.now().plusMinutes(30));
+        }
+
+        private Payment newPaidPayment(String orderId, String idempotencyKey, String paymentKey) {
+            Payment p = newPayment(orderId, idempotencyKey);
+            p.authorize();
+            p.confirmStarted();
+            p.paid(paymentKey, ZonedDateTime.now());
+            return p;
         }
 
         @Test
@@ -263,6 +271,26 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
         void different_orderIdAndIdempotencyKey_allowed() {
             paymentRepository.saveAndFlush(newPayment("ORDER-004", "IDEM-D"));
             paymentRepository.saveAndFlush(newPayment("ORDER-005", "IDEM-E"));
+
+            assertThat(paymentRepository.count()).isGreaterThanOrEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("payment_key 중복 저장 시 DataIntegrityViolationException 발생 — PAID 결제 두 건 동일 키")
+        void duplicate_paymentKey_throws() {
+            paymentRepository.saveAndFlush(newPaidPayment("ORDER-006", "IDEM-F", "TOSS-KEY-001"));
+
+            assertThatThrownBy(() ->
+                    paymentRepository.saveAndFlush(newPaidPayment("ORDER-007", "IDEM-G", "TOSS-KEY-001")))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        @DisplayName("payment_key NULL은 여러 건 허용 — PAID 아닌 결제")
+        void null_paymentKey_multipleAllowed() {
+            // NULL은 UNIQUE 제약 예외 (PostgreSQL: NULL != NULL)
+            paymentRepository.saveAndFlush(newPayment("ORDER-008", "IDEM-H"));
+            paymentRepository.saveAndFlush(newPayment("ORDER-009", "IDEM-I"));
 
             assertThat(paymentRepository.count()).isGreaterThanOrEqualTo(2);
         }

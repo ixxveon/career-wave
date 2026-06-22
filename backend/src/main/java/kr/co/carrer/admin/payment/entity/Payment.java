@@ -18,7 +18,8 @@ import java.util.UUID;
     name = "payments",
     uniqueConstraints = {
         @UniqueConstraint(name = "uq_order_id",        columnNames = "order_id"),
-        @UniqueConstraint(name = "uq_idempotency_key", columnNames = "idempotency_key")
+        @UniqueConstraint(name = "uq_idempotency_key", columnNames = "idempotency_key"),
+        @UniqueConstraint(name = "uq_payment_key",     columnNames = "payment_key")
     }
 )
 @Getter
