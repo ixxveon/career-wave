@@ -608,6 +608,7 @@
   .dr-summary__ring-wrap { grid-column: auto; flex-direction: column; text-align: center; }
   .dr-summary__review { grid-column: auto; }
   .dr-split { grid-template-columns: 1fr; }
+  .dr-single__row { grid-template-columns: 1fr; }
   .dr-improved__panels { grid-template-columns: 1fr; }
   .dr-cta { font-size: 14px; padding: 16px 20px; }
 }
