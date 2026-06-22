@@ -152,7 +152,7 @@ export interface UseInterviewSessionResult {
   springWsStatus:  SpringWSStatus;
   fastApiWsStatus: FastApiWSStatus;
   dispatch:        React.Dispatch<SessionAction>;
-  sendTextAnswer:  (text: string) => Promise<void>;
+  sendTextAnswer:  (text: string, skipAddMessage?: boolean) => Promise<void>;
   finishSession:   () => Promise<void>;
 }
 
@@ -318,7 +318,8 @@ export function useInterviewSession({
           dispatch({ type: 'SET_PENDING_VOICE_ID', id: null });
         }
         dispatch({ type: 'SET_STT_LIVE', text: '' });
-        sendTextAnswerRef.current(text);
+        // 음성 경로: pending 말풍선이 이미 있으므로 ADD_MESSAGE 없이 서버 전송만
+        sendTextAnswerRef.current(text, true);
         break;
       }
       case FASTAPI_WS_MESSAGE_TYPE.STT_PARTIAL: {
@@ -441,9 +442,9 @@ export function useInterviewSession({
 
   // ── 액션 메서드 ────────────────────────────────────────────
 
-  const sendTextAnswer = useCallback(async (text: string) => {
+  const sendTextAnswer = useCallback(async (text: string, skipAddMessage = false) => {
     if (!sessionId) return;
-    if (text.trim()) {
+    if (!skipAddMessage && text.trim()) {
       dispatch({
         type:    'ADD_MESSAGE',
         message: { id: Date.now(), role: 'user', text: text.trim() },
