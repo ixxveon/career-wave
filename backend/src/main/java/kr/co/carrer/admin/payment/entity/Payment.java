@@ -1,9 +1,11 @@
 package kr.co.carrer.admin.payment.entity;
 
 import jakarta.persistence.*;
+import kr.co.carrer.admin.payment.exception.AdminPaymentErrorCode;
 import kr.co.carrer.admin.payment.type.FailureReason;
 import kr.co.carrer.admin.payment.type.PaymentStatus;
 import kr.co.carrer.admin.payment.type.PaymentType;
+import kr.co.carrer.global.exception.CustomException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -93,6 +95,8 @@ public class Payment {
         updatedAt = ZonedDateTime.now();
     }
 
+    // ── 팩토리 ──────────────────────────────────────────────────────────────
+
     public static Payment createReady(UUID memberId, Long planId, UUID subscriptionId,
                                       String orderId, String idempotencyKey,
                                       int amount, String currency,
@@ -116,34 +120,74 @@ public class Payment {
         return p;
     }
 
+    // ── 상태 전이 — constitution 4.3 상태 다이어그램 ──────────────────────
+    // READY → AUTHORIZED → CONFIRMING → PAID
+    // READY → CANCELED
+    // AUTHORIZED / CONFIRMING / RECONCILING → FAILED
+    // CONFIRMING → RECONCILING → PAID
+    // PAID → REFUNDED (admin)
+
     public void authorize() {
+        if (this.paymentStatus != PaymentStatus.READY) {
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_STATUS_TRANSITION);
+        }
         this.paymentStatus = PaymentStatus.AUTHORIZED;
     }
 
     public void confirmStarted() {
+        if (this.paymentStatus != PaymentStatus.AUTHORIZED) {
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_STATUS_TRANSITION);
+        }
         this.paymentStatus = PaymentStatus.CONFIRMING;
     }
 
     public void paid(String paymentKey, ZonedDateTime approvedAt) {
+        if (this.paymentStatus != PaymentStatus.CONFIRMING
+                && this.paymentStatus != PaymentStatus.RECONCILING) {
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_STATUS_TRANSITION);
+        }
+        if (paymentKey == null || paymentKey.isBlank()) {
+            throw new IllegalArgumentException("paymentKey는 필수입니다");
+        }
+        if (approvedAt == null) {
+            throw new IllegalArgumentException("approvedAt은 필수입니다");
+        }
         this.paymentStatus = PaymentStatus.PAID;
         this.paymentKey = paymentKey;
         this.approvedAt = approvedAt;
     }
 
     public void fail(FailureReason reason) {
+        if (this.paymentStatus != PaymentStatus.AUTHORIZED
+                && this.paymentStatus != PaymentStatus.CONFIRMING
+                && this.paymentStatus != PaymentStatus.RECONCILING) {
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_STATUS_TRANSITION);
+        }
+        if (reason == null) {
+            throw new IllegalArgumentException("failureReason은 필수입니다");
+        }
         this.paymentStatus = PaymentStatus.FAILED;
         this.failureReason = reason;
     }
 
     public void reconciling() {
+        if (this.paymentStatus != PaymentStatus.CONFIRMING) {
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_STATUS_TRANSITION);
+        }
         this.paymentStatus = PaymentStatus.RECONCILING;
     }
 
     public void cancel() {
+        if (this.paymentStatus != PaymentStatus.READY) {
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_STATUS_TRANSITION);
+        }
         this.paymentStatus = PaymentStatus.CANCELED;
     }
 
     public void refund() {
+        if (this.paymentStatus != PaymentStatus.PAID) {
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_STATUS_TRANSITION);
+        }
         this.paymentStatus = PaymentStatus.REFUNDED;
     }
 }
