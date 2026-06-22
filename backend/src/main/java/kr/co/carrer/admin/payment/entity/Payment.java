@@ -3,6 +3,7 @@ package kr.co.carrer.admin.payment.entity;
 import jakarta.persistence.*;
 import kr.co.carrer.admin.payment.type.FailureReason;
 import kr.co.carrer.admin.payment.type.PaymentStatus;
+import kr.co.carrer.admin.payment.type.PaymentType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -55,11 +56,42 @@ public class Payment {
     @Column(name = "payment_method", length = 30)
     private String paymentMethod;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_type", nullable = false, length = 20)
+    private PaymentType paymentType;
+
+    @Column(name = "attempt_sequence", nullable = false)
+    private int attemptSequence;
+
     @Column(name = "approved_at")
     private ZonedDateTime approvedAt;
 
+    @Column(name = "expires_at")
+    private ZonedDateTime expiresAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private ZonedDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (paymentId == null) {
+            paymentId = UUID.randomUUID();
+        }
+        ZonedDateTime now = ZonedDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+        if (paymentType == null) {
+            paymentType = PaymentType.MANUAL;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = ZonedDateTime.now();
+    }
 
     public void cancel() {
         this.paymentStatus = PaymentStatus.CANCELED;
