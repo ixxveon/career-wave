@@ -36,12 +36,13 @@ public interface UserSocialAuthControllerDocs {
 
     @Operation(summary = "소셜 OAuth 콜백 처리",
             description = "provider로부터 전달된 code와 state를 검증하고 기존 소셜 계정 여부에 따라 프론트엔드로 redirect한다. " +
-                    "기존 소셜 계정: ?type=login&accessToken=... 쿼리 파라미터와 함께 /auth/oauth/callback으로 redirect. " +
-                    "최초 소셜 가입: ?type=signup&provider=...&email=...&token=... 와 함께 /auth/oauth/callback으로 redirect. " +
+                    "토큰은 URL이 아닌 단기 쿠키(MaxAge=60s, SameSite=Strict)로 전달하여 히스토리·로그·Referer 노출을 방지한다. " +
+                    "기존 소셜 계정: cw_oauth_login_token 쿠키 + ?type=login 으로 /auth/oauth/callback redirect. " +
+                    "최초 소셜 가입: cw_oauth_signup_token 쿠키 + ?type=signup&provider=...&email=... 으로 redirect. " +
                     "회원 식별 기준은 email이 아니라 provider + providerUserId 조합이다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "302", description = "로그인 성공 시 /auth/oauth/callback?type=login&accessToken=... 으로 redirect"),
-            @ApiResponse(responseCode = "302", description = "신규 가입 필요 시 /auth/oauth/callback?type=signup&provider=...&email=...&token=... 으로 redirect"),
+            @ApiResponse(responseCode = "302", description = "로그인 성공 시 /auth/oauth/callback?type=login 으로 redirect (accessToken은 cw_oauth_login_token 쿠키)"),
+            @ApiResponse(responseCode = "302", description = "신규 가입 필요 시 /auth/oauth/callback?type=signup&provider=...&email=... 으로 redirect (socialSignupToken은 cw_oauth_signup_token 쿠키)"),
             @ApiResponse(responseCode = "400", description = "지원하지 않는 provider / state 불일치 또는 만료",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"소셜 인증 요청이 유효하지 않습니다. 다시 시도해 주세요.\",\"code\":\"OAUTH_STATE_INVALID\"}"))),

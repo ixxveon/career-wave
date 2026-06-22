@@ -8,6 +8,15 @@ const OAUTH_TYPE = {
   SIGNUP: 'signup',
 } as const;
 
+function getHandoffCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
+function clearHandoffCookie(name: string) {
+  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Strict`;
+}
+
 function OAuthCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -20,13 +29,15 @@ function OAuthCallbackPage() {
     const type = searchParams.get('type');
 
     if (type === OAUTH_TYPE.LOGIN) {
-      const accessToken = searchParams.get('accessToken');
+      const accessToken = getHandoffCookie('cw_oauth_login_token');
+      clearHandoffCookie('cw_oauth_login_token');
       if (accessToken) {
         authSession.setTokens({ accessToken });
       }
       navigate('/', { replace: true });
     } else if (type === OAUTH_TYPE.SIGNUP) {
-      const token = searchParams.get('token');
+      const token = getHandoffCookie('cw_oauth_signup_token');
+      clearHandoffCookie('cw_oauth_signup_token');
       const provider = searchParams.get('provider');
       const email = searchParams.get('email');
 
