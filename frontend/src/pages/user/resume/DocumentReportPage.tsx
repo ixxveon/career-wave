@@ -64,11 +64,11 @@ const MOCK_COVER: DocumentResult = {
 };
 
 type TabKey = 'resume' | 'cover';
-interface Tab { key: TabKey; label: string; Icon: LucideIcon; data: DocumentResult; resetTo: string; viewLabel: string; subtitle: string; }
+interface Tab { key: TabKey; label: string; Icon: LucideIcon; data: DocumentResult; resetTo: string; viewLabel: string; subtitle: string; fileType: 'RESUME' | 'COVER_LETTER'; }
 
 const TABS: Tab[] = [
-  { key: 'resume', label: '이력서 분석',    Icon: FileText,   data: MOCK_RESUME, resetTo: '/documents/resume',       viewLabel: 'RESUME ANALYSIS', subtitle: '이력서_최종본.pdf · 백엔드 개발자' },
-  { key: 'cover',  label: '자기소개서 분석', Icon: ScrollText, data: MOCK_COVER,  resetTo: '/documents/cover-letter', viewLabel: 'COVER LETTER AI', subtitle: '카카오 · 백엔드 개발자' },
+  { key: 'resume', label: '이력서 분석',    Icon: FileText,   data: MOCK_RESUME, resetTo: '/documents/resume',       viewLabel: 'RESUME ANALYSIS', subtitle: '이력서_최종본.pdf · 백엔드 개발자', fileType: 'RESUME' },
+  { key: 'cover',  label: '자기소개서 분석', Icon: ScrollText, data: MOCK_COVER,  resetTo: '/documents/cover-letter', viewLabel: 'COVER LETTER AI', subtitle: '카카오 · 백엔드 개발자',            fileType: 'COVER_LETTER' },
 ];
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────
@@ -141,6 +141,7 @@ export default function DocumentReportPage() {
       key={active}
       result={tab.data}
       onReset={() => navigate(tab.resetTo)}
+      fileType={tab.fileType}
       label={tab.viewLabel}
       subtitle={tab.subtitle}
       typeSelector={typeSelector}

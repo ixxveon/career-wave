@@ -60,7 +60,7 @@ interface DocumentResultViewProps {
   result: DocumentResult;
   onReset: () => void;
   label: string;
-  fileType?: 'RESUME' | 'COVER_LETTER';
+  fileType: 'RESUME' | 'COVER_LETTER';
   subtitle?: string;
   typeSelector?: React.ReactNode;
   onRevise?: (feedbackDetails: FeedbackDetail[]) => void;
