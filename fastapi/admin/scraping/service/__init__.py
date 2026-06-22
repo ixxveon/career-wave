@@ -9,6 +9,7 @@ from admin.scraping.service.job_notice_normalizer import JobNoticeNormalizer, No
 from admin.scraping.service.pipeline_query_service import PipelineQueryService
 from admin.scraping.service.pipeline_runner_service import PipelineRunnerService
 from admin.scraping.service.pipeline_status_service import PipelineStatusService
+from admin.scraping.service.scraping_log_service import ScrapingLogService
 
 __all__ = [
     "ActionService",
@@ -21,4 +22,5 @@ __all__ = [
     "PipelineQueryService",
     "PipelineRunnerService",
     "PipelineStatusService",
+    "ScrapingLogService",
 ]

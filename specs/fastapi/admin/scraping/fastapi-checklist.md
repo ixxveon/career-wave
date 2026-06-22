@@ -74,22 +74,22 @@
 
 ## Phase 11 - 실행 로그 기록
 
-- [ ] 모든 실행 시도가 `scraping_logs`에 기록된다.
-- [ ] TEST 액션도 `scraping_logs` 기록 대상이다.
-- [ ] 성공/실패 로그 기록 컬럼이 문서와 일치한다.
-- [ ] 실패 메시지 저장 로직이 존재한다.
+- [x] 모든 실행 시도가 `scraping_logs`에 기록된다.
+- [x] TEST 액션도 `scraping_logs` 기록 대상이다.
+- [x] 성공/실패 로그 기록 컬럼이 문서와 일치한다.
+- [x] 실패 메시지 저장 로직이 존재한다.
 
 ## Phase 12 - Router
 
-- [ ] `GET /internal/scraping/pipelines`가 Query Parameter를 사용한다.
-- [ ] `GET /internal/scraping/pipelines/summary`가 Request Body를 사용하지 않는다.
-- [ ] `GET /internal/scraping/pipelines/{sourceName}`가 Request Body를 사용하지 않는다.
-- [ ] `GET /internal/scraping/logs`가 Query Parameter를 사용한다.
-- [ ] 단일 액션 POST API만 Request Body를 사용한다.
-- [ ] 배치 액션 POST API가 Request Body를 사용한다.
-- [ ] 실행/재시도/TEST/배치 액션 POST API만 Request Body를 사용한다.
-- [ ] Spring API ↔ FastAPI 내부 API 매핑이 문서와 구현에서 일치한다.
-- [ ] GET 내부 API는 Request Body 없이 Query Parameter만 사용한다.
+- [x] `GET /internal/scraping/pipelines`가 Query Parameter를 사용한다.
+- [x] `GET /internal/scraping/pipelines/summary`가 Request Body를 사용하지 않는다.
+- [x] `GET /internal/scraping/pipelines/{sourceName}`가 Request Body를 사용하지 않는다.
+- [x] `GET /internal/scraping/logs`가 Query Parameter를 사용한다.
+- [x] 단일 액션 POST API만 Request Body를 사용한다.
+- [x] 배치 액션 POST API가 Request Body를 사용한다.
+- [x] 실행/재시도/TEST/배치 액션 POST API만 Request Body를 사용한다.
+- [x] Spring API ↔ FastAPI 내부 API 매핑이 문서와 구현에서 일치한다.
+- [x] GET 내부 API는 Request Body 없이 Query Parameter만 사용한다.
 
 ## Phase 13 - Background Task / Pipeline
 
