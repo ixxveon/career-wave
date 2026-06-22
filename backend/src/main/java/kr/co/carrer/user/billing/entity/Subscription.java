@@ -126,6 +126,9 @@ public class Subscription {
     }
 
     public void incrementRetryCount() {
+        if (this.subscriptionStatus != SubscriptionStatus.PAYMENT_FAILED) {
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
         if (this.retryCount >= MAX_RETRY_COUNT) {
             throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
         }
@@ -133,8 +136,9 @@ public class Subscription {
     }
 
     public void expire() {
-        if (this.subscriptionStatus == SubscriptionStatus.EXPIRED
-                || this.subscriptionStatus == SubscriptionStatus.REFUNDED) {
+        // constitution 4.2: CANCEL_SCHEDULED → EXPIRED, PAYMENT_FAILED → EXPIRED만 허용
+        if (this.subscriptionStatus != SubscriptionStatus.CANCEL_SCHEDULED
+                && this.subscriptionStatus != SubscriptionStatus.PAYMENT_FAILED) {
             throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
         }
         this.subscriptionStatus = SubscriptionStatus.EXPIRED;
