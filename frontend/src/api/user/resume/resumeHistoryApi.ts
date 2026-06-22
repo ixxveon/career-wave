@@ -14,12 +14,10 @@ export const resumeHistoryApi = {
     );
   },
 
-  async getByDocumentId(documentId: string, signal?: AbortSignal): Promise<ResumeHistoryItem | null> {
-    const params = new URLSearchParams({ page: '0', size: '50' });
-    const res = await memberApiClient<ResumeHistoryResponse>(
-      `/api/v1/user/resume/history?${params}`,
+  getByDocumentId(documentId: string, signal?: AbortSignal): Promise<ResumeHistoryItem> {
+    return memberApiClient<ResumeHistoryItem>(
+      `/api/v1/user/resume/${documentId}`,
       { auth: true, signal },
     );
-    return res.items.find(item => item.documentId === documentId) ?? null;
   },
 };

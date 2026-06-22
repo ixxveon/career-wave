@@ -63,10 +63,11 @@ export default function TextInterviewPage() {
     }
     resumeHistoryApi.getByDocumentId(documentId)
       .then(item => {
-        if (item?.originalName) {
+        if (item.originalName) {
           setResume({ fileName: item.originalName, s3Url: '' });
         }
       })
+      .catch(() => {})
       .finally(() => setResumeLoading(false));
   }, [documentId]);
 
