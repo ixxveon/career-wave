@@ -103,6 +103,14 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(HttpStatus.CONFLICT.value(), "이미 존재하거나 사용 중인 데이터와 충돌이 발생했습니다."));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Object>> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.warn("[잘못된 요청 파라미터] {}", e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleException(Exception e) {
         log.error("[미처리 예외 발생] 예외 타입: {} | 메시지: {}", e.getClass().getSimpleName(), e.getMessage(), e);
