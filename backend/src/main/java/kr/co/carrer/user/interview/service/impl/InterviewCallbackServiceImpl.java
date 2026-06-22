@@ -1,6 +1,8 @@
 package kr.co.carrer.user.interview.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.service.EntitlementService;
+import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
 import kr.co.carrer.user.interview.entity.AIInterviewFeedback;
 import kr.co.carrer.user.interview.entity.CareerHistory;
@@ -31,6 +33,7 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
     private final AIInterviewFeedbackRepository feedbackRepository;
     private final CareerHistoryRepository careerHistoryRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final EntitlementService entitlementService;
 
     // SimpMessagingTemplate은 WebSocket 브로커 초기화 이후에만 사용 가능하므로 @Lazy 주입
     @Autowired
@@ -38,12 +41,14 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
             InterviewSessionRepository sessionRepository,
             AIInterviewFeedbackRepository feedbackRepository,
             CareerHistoryRepository careerHistoryRepository,
-            @Lazy SimpMessagingTemplate messagingTemplate
+            @Lazy SimpMessagingTemplate messagingTemplate,
+            EntitlementService entitlementService
     ) {
         this.sessionRepository = sessionRepository;
         this.feedbackRepository = feedbackRepository;
         this.careerHistoryRepository = careerHistoryRepository;
         this.messagingTemplate = messagingTemplate;
+        this.entitlementService = entitlementService;
     }
 
     @Override
@@ -66,6 +71,7 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
             log.info("Report callback already processed (idempotent): sessionId={}", sessionId);
         } else {
             saveReportData(sessionId, dto);
+            entitlementService.consume(ResourceType.INTERVIEW_SESSION, sessionId);
         }
 
         // 신규 처리일 때만 REPORT_READY 전송 — 멱등 경로 중복 전송 방지

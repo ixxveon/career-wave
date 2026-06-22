@@ -1,5 +1,7 @@
 package kr.co.carrer.user.interview.scheduler;
 
+import kr.co.carrer.user.billing.service.EntitlementService;
+import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.interview.entity.InterviewSession;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import kr.co.carrer.user.interview.type.SessionStatus;
@@ -19,6 +21,7 @@ import java.util.List;
 public class InterviewSessionScheduler {
 
     private final InterviewSessionRepository sessionRepository;
+    private final EntitlementService entitlementService;
 
     // 1시간 주기: started_at < 24시간 전 AND updated_at < 5분 전인 IN_PROGRESS 세션을 FAILED로 전이
     @Scheduled(cron = "0 0 * * * *")
@@ -30,7 +33,10 @@ public class InterviewSessionScheduler {
         ZonedDateTime recentCutoff = now.minusMinutes(5);
 
         List<InterviewSession> timedOut = sessionRepository.findTimedOutSessions(cutoff, recentCutoff, SessionStatus.IN_PROGRESS);
-        timedOut.forEach(session -> session.fail(now));
+        timedOut.forEach(session -> {
+            session.fail(now);
+            entitlementService.release(ResourceType.INTERVIEW_SESSION, session.getSessionId());
+        });
 
         if (!timedOut.isEmpty()) {
             log.info("Timed out sessions marked as FAILED: count={}", timedOut.size());
