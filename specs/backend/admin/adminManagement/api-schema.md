@@ -129,7 +129,7 @@
     "totalAdminCount": 5,
     "activeAdminCount": 4,
     "lockedAdminCount": 1,
-    "masterAdminCount": 1
+    "activeAclCount": 3
   }
 }
 ```
@@ -604,7 +604,7 @@
 | `totalAdminCount` | `number` | Y | 없음 | 전체 관리자 수 |
 | `activeAdminCount` | `number` | Y | 없음 | 활성 관리자 수 |
 | `lockedAdminCount` | `number` | Y | 없음 | 잠금 관리자 수 |
-| `masterAdminCount` | `number` | Y | 없음 | `MASTER` 관리자 수 |
+| `activeAclCount` | `number` | Y | 없음 | 활성 ACL 수 |
 
 ### 6.2 `AdminManagementDTO.ResponseAdmin`
 

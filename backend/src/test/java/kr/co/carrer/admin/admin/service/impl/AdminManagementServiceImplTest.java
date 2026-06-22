@@ -69,14 +69,14 @@ class AdminManagementServiceImplTest {
             given(adminRepository.count()).willReturn(5L);
             given(adminRepository.countByStatus(AdminStatus.ACTIVE)).willReturn(3L);
             given(adminRepository.countByStatus(AdminStatus.LOCKED)).willReturn(2L);
-            given(adminRepository.countByAdminRole(AdminRole.MASTER)).willReturn(1L);
+            given(ipAclRepository.countByIsEnabledTrue()).willReturn(4L);
 
             AdminManagementService.SummaryResult result = adminManagementService.getAdminSummary();
 
             assertThat(result.totalAdminCount()).isEqualTo(5L);
             assertThat(result.activeAdminCount()).isEqualTo(3L);
             assertThat(result.lockedAdminCount()).isEqualTo(2L);
-            assertThat(result.masterAdminCount()).isEqualTo(1L);
+            assertThat(result.activeAclCount()).isEqualTo(4L);
         }
     }
 
