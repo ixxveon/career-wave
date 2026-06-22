@@ -132,7 +132,7 @@ CONFIRMING -> RECONCILING -> FAILED
 
 ### 5.1 결제 전 검증
 
-- 로그인 회원과 `ROLE_USER`를 확인한다.
+- 로그인 회원과 `USER` 권한을 확인한다.
 - 회원 상태가 `ACTIVE`인지 확인한다.
 - 상품이 존재하고 판매 중인지 확인한다.
 - 동일 상품의 `ACTIVE`, `CANCEL_SCHEDULED`, `PAYMENT_FAILED` 구독 존재 여부를 확인한다.

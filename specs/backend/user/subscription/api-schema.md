@@ -258,6 +258,8 @@ POST /api/v1/user/billing/payments/confirm
 
 > billingKey는 응답에 포함하지 않는다.
 >
+> 구독 기간 필드(`currentPeriodStart`, `currentPeriodEnd`)는 confirm 응답에 포함하지 않는다. FE `ConfirmPaymentResponse` 인터페이스에 해당 필드가 없으며, 성공 페이지 이후 `GET /subscriptions/me`를 통해 조회한다.
+>
 > 현재 Frontend가 호출하는 `/payments/confirm` endpoint와 Response 필드명을 유지한다.
 > Request 필드는 위 승인 게이트에서 월 자동결제용 DTO로 확정한다.
 > UI·버튼·route는 변경하지 않는다.

@@ -203,7 +203,7 @@ Backend는 현재 Frontend TypeScript가 사용하는 다음 응답 필드를 �
 | `subscription_id` | UUID | PK | 구독 ID |
 | `member_id` | UUID | FK, NOT NULL | 회원 ID |
 | `plan_id` | BIGINT | FK, NOT NULL | 플랜 ID |
-| `billing_profile_id` | UUID | FK, NOT NULL | 자동결제 수단 |
+| `billing_profile_id` | UUID | FK, NULL | 자동결제 수단 (Phase 4 이전 기존 row는 NULL) |
 | `subscription_status` | VARCHAR(30) | NOT NULL | 구독 상태 |
 | `started_at` | TIMESTAMPTZ | NOT NULL | 최초 구독 시작 |
 | `current_period_start` | TIMESTAMPTZ | NOT NULL | 현재 기간 시작 |
@@ -216,6 +216,25 @@ Backend는 현재 Frontend TypeScript가 사용하는 다음 응답 필드를 �
 | `auto_renew` | BOOLEAN | NOT NULL | 자동결제 여부 |
 | `created_at` | TIMESTAMPTZ | NOT NULL | 생성 시각 |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | 변경 시각 |
+
+**마이그레이션 주의사항 (subscriptions 확장)**
+
+1. `billing_profiles` 테이블을 먼저 생성한 뒤 FK 제약을 추가한다.
+2. `billing_profile_id`는 `NULL`로 추가한다. 기존 구독 row는 Phase 4 이전에 billingKey가 없으므로 채울 방법이 없다.
+3. Phase 4 이후 신규 구독 생성 시 서비스 레이어에서 `billing_profile_id != NULL`을 강제한다.
+4. 기존 데이터 마이그레이션이 완료되고 운영이 안정된 이후 `NOT NULL` 제약을 추가한다.
+
+```sql
+-- Phase 4 마이그레이션 순서
+-- 1) billing_profiles 테이블 생성
+-- 2) subscriptions 확장 (nullable)
+ALTER TABLE subscriptions
+    ADD COLUMN billing_profile_id UUID NULL,
+    ADD COLUMN payment_failed_at  TIMESTAMPTZ NULL,
+    ADD COLUMN retry_count        INTEGER NOT NULL DEFAULT 0,
+    ADD CONSTRAINT fk_subscriptions_billing_profile
+        FOREIGN KEY (billing_profile_id) REFERENCES billing_profiles (billing_profile_id);
+```
 
 ### 3.4 billing_profiles
 
