@@ -77,6 +77,17 @@
 - [ ] user subscription 패키지가 admin/payment 구현 클래스를 직접 import하지 않는다.
 - [ ] admin/payment가 user subscription 구현 클래스를 직접 import하지 않는다.
 
+### Admin Payment 연동 정렬 (constitution 8절)
+
+- [ ] user 측 Payment 엔티티 컬럼명이 `admin.payment.entity.Payment` 및 `db/init.sql`과 완전히 일치한다.
+- [ ] `payment_status` 컬럼 값이 DB CHECK constraint 허용 값(`READY`, `AUTHORIZED`, `CONFIRMING`, `PAID`, `FAILED`, `CANCELED`, `RECONCILING`, `REFUNDED`)과 동일하다.
+- [ ] `payment_type` 컬럼 값이 DB CHECK constraint 허용 값(`MANUAL`, `AUTO_RENEWAL`)과 동일하다.
+- [ ] `failure_reason` 컬럼 값이 DB CHECK constraint 허용 값과 동일하다.
+- [ ] user 측에서 `PAID → REFUNDED` 전이를 실행하지 않는다 (admin 전담).
+- [ ] Toss 외부 API 실패 이력 저장이 `REQUIRES_NEW` 별도 트랜잭션으로 격리되어 있다.
+- [ ] 주 트랜잭션 롤백 시 실패 이력이 함께 사라지지 않는다.
+- [ ] admin `AdminPaymentController` 환불 승인 흐름이 user 측이 저장한 Payment 데이터로 정상 동작한다.
+
 ---
 
 ## 3. Phase 1 — 도메인 기반 및 DB 스키마
