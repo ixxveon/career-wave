@@ -266,7 +266,6 @@ export default function AdminManagementPage() {
     queryFn: getAdminManagementSummary,
   });
   const [aclRules] = useState(initialAclRules);
-  const [logs] = useState(initialLogs);
   const [adminFilter, setAdminFilter] = useState('');
   const debouncedAdminFilter = useDebouncedValue(adminFilter.trim(), ADMIN_SEARCH_DEBOUNCE_MS);
   const [roleFilter, setRoleFilter] = useState<'ALL' | AdminRole>('ALL');
@@ -324,7 +323,7 @@ export default function AdminManagementPage() {
     queryKey: [...ADMIN_MANAGEMENT_AUDIT_LOGS_QUERY_KEY, auditLogQueryParams],
     queryFn: () => getAdminAuditLogs(auditLogQueryParams),
   });
-  const visibleLogs = adminAuditLogs?.items.map(toAuditLogRow) ?? logs;
+  const visibleLogs = adminAuditLogs?.items.map(toAuditLogRow) ?? [];
 
   const refreshAdminManagementQueries = () => {
     void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY });

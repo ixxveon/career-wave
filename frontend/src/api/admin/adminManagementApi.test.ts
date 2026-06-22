@@ -102,4 +102,25 @@ describe('adminManagementApi audit log mapper', () => {
       severity: AUDIT_SEVERITY.WARN,
     });
   });
+
+  it.each([
+    [{ targetType: 'member', targetId: null }, 'member'],
+    [{ targetType: null, targetId: 'U-1007' }, 'U-1007'],
+    [{ targetType: ' member ', targetId: ' U-1007 ' }, 'member:U-1007'],
+  ])('handles partial and trimmed target fields: %o -> %s', ({ targetType, targetId }, expectedTarget) => {
+    const auditLog = toAdminAuditLog({
+      auditLogId: 14,
+      adminId: 1,
+      logType: 'ADMIN_MANAGEMENT',
+      action: 'UPDATE_ADMIN',
+      targetType,
+      targetId,
+      ipAddress: '127.0.0.1',
+      severity: AUDIT_SEVERITY.INFO,
+      detail: null,
+      createdAt: '2026-06-11T09:10:00+09:00',
+    });
+
+    expect(auditLog.target).toBe(expectedTarget);
+  });
 });
