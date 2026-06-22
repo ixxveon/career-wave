@@ -32,13 +32,13 @@ import {
 interface RecoveryResultState {
   submitted: boolean;
   found: boolean;
-  maskedLoginIds: string[];
+  loginIds: string[];
 }
 
 const EMPTY_RESULT: RecoveryResultState = {
   submitted: false,
   found: false,
-  maskedLoginIds: [],
+  loginIds: [],
 };
 
 // ── 책임 경계 ────────────────────────────────────────────────────
@@ -394,7 +394,7 @@ export function useFindIdRecovery(isCompany: boolean) {
         setResult({
           submitted: true,
           found: response.found,
-          maskedLoginIds: response.maskedLoginIds,
+          loginIds: response.loginIds,
         });
         setFormMessage('');
         setFieldErrors({});
@@ -445,7 +445,7 @@ export function useFindIdRecovery(isCompany: boolean) {
       setResult({
         submitted: true,
         found: response.found,
-        maskedLoginIds: response.maskedLoginIds,
+        loginIds: response.loginIds,
       });
       setFormMessage('');
       setFieldErrors({});
