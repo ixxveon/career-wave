@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,8 +60,8 @@ class UserSocialAuthControllerTest {
     // ─── OAuth callback — 기존 소셜 계정 로그인 ───────────────────────────────────────
 
     @Test
-    @DisplayName("callback 기존 계정 로그인 시 200 + statusCode=200 + accessToken을 반환한다")
-    void callback_기존계정_로그인_200() throws Exception {
+    @DisplayName("callback 기존 계정 로그인 시 302 redirect — type=login 쿼리 파라미터 포함")
+    void callback_기존계정_로그인_302() throws Exception {
         UUID memberId = UUID.randomUUID();
         UserLoginDto.MemberInfo memberInfo = UserLoginDto.MemberInfo.of(
                 memberId, "social01", "홍길동",
@@ -79,19 +80,15 @@ class UserSocialAuthControllerTest {
         mockMvc.perform(get("/api/v1/user/members/oauth/kakao/callback")
                         .param("code", "auth-code")
                         .param("state", "state-abc"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
-                .andExpect(jsonPath("$.message").isNotEmpty())
-                .andExpect(jsonPath("$.data.accessToken").value("access-token"))
-                .andExpect(jsonPath("$.data.member.roleType").value("USER"));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("type=login")));
     }
 
     // ─── OAuth callback — 최초 소셜 가입 ──────────────────────────────────────────────
 
     @Test
-    @DisplayName("callback 최초 가입 시 200 + statusCode=200 + socialSignupToken을 반환한다")
-    void callback_최초가입_200() throws Exception {
+    @DisplayName("callback 최초 가입 시 302 redirect — type=signup·provider·email 쿼리 파라미터 포함")
+    void callback_최초가입_302() throws Exception {
         UserSocialAuthDto.ResponseOAuthCallbackSignupRequired signupResponse =
                 new UserSocialAuthDto.ResponseOAuthCallbackSignupRequired(
                         "kakao", "social@example.com", "signup-token", "/auth/register/verify");
@@ -102,14 +99,9 @@ class UserSocialAuthControllerTest {
         mockMvc.perform(get("/api/v1/user/members/oauth/kakao/callback")
                         .param("code", "auth-code")
                         .param("state", "state-abc"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
-                .andExpect(jsonPath("$.message").isNotEmpty())
-                .andExpect(jsonPath("$.data.provider").value("kakao"))
-                .andExpect(jsonPath("$.data.socialEmail").value("social@example.com"))
-                .andExpect(jsonPath("$.data.socialSignupToken").value("signup-token"))
-                .andExpect(jsonPath("$.data.nextPath").value("/auth/register/verify"));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("type=signup")))
+                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("provider=kakao")));
     }
 
     // ─── 소셜 회원가입 추가정보 완료 ────────────────────────────────────────────────────
@@ -135,6 +127,6 @@ class UserSocialAuthControllerTest {
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.roleType").value("USER"))
-                .andExpect(jsonPath("$.data.nextPath").value("/auth/login?registered=social"));
+                .andExpect(jsonPath("$.data.nextPath").value("/"));
     }
 }
