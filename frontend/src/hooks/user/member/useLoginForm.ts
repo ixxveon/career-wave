@@ -51,9 +51,9 @@ const BLOCK_MESSAGE_BY_REASON: Record<
   },
   RESTRICTED: {
     title: '현재 계정으로 서비스를 이용할 수 없습니다.',
-    description: '계정 보안 또는 이용 제한 상태입니다. 상세 내부 사유는 노출되지 않으며 복구 가능 여부는 고객센터에서 확인해주세요.',
+    description: '계정 이용이 제한된 상태입니다. 문의 사항은 cs@career-wave.com으로 연락해 주세요.',
     actionLabel: '고객센터로 이동',
-    actionPath: '/support',
+    actionPath: '/support/faq',
   },
 };
 

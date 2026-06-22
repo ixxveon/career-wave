@@ -121,8 +121,10 @@ psql -U careerwave -d careerwave -f src/main/resources/db/seed-local.sql
 | `testuser02` | `Test1234!` | `USER` | 일반회원 PREMIUM (면접) |
 | `testuser03` | `Test1234!` | `USER` | 일반회원 PREMIUM (서류) |
 | `testuser04` | `Test1234!` | `USER` | 일반회원 PREMIUM (전체) |
+| `testuser05` | `Test1234!` | `USER` | 일반회원 SUSPENDED (정지 계정 테스트용) |
 | `testcompany01` | `Test1234!` | `COMPANY` | 기업회원 |
 | `admin` | `1234` | — | 관리자 MASTER |
+| `cs` | `1234` | — | 관리자 CS (이메일: cs@career-wave.com) |
 
 ## 환경 변수
 
