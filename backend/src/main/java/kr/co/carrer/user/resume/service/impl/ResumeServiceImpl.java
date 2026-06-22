@@ -137,6 +137,7 @@ public class ResumeServiceImpl implements ResumeService {
             return new ResumeDTO.ResponseFeedback(
                     document.getDocumentId(),
                     document.getStatus().name(),
+                    document.getFileType().name(),
                     null, null, null,
                     document.getErrorMessage(),
                     document.getCreatedAt()
@@ -159,6 +160,7 @@ public class ResumeServiceImpl implements ResumeService {
         return new ResumeDTO.ResponseFeedback(
                 document.getDocumentId(),
                 document.getStatus().name(),
+                document.getFileType().name(),
                 scores,
                 feedback.getOverallReview(),
                 feedbackDetails,
