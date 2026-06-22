@@ -4,6 +4,8 @@
 -- 중복 방지: ON CONFLICT (member_id, product_code) DO NOTHING
 -- ============================================================
 
+BEGIN;
+
 INSERT INTO member_product_entitlements (
     entitlement_id,
     member_id,
@@ -27,3 +29,5 @@ FROM members m
          CROSS JOIN (VALUES ('document-coaching'), ('interview')) AS p(product_code)
 WHERE m.role_type = 'USER'
 ON CONFLICT (member_id, product_code) DO NOTHING;
+
+COMMIT;

@@ -62,7 +62,7 @@ public class EntitlementQueryServiceImpl implements EntitlementQueryService {
     private String resolveUnavailableReason(FreeUsageStatus status) {
         return switch (status) {
             case AVAILABLE -> null;
-            case RESERVED -> "SERVICE_IN_PROGRESS";
+            case RESERVED -> "SUBSCRIPTION_REQUIRED";
             case USED, FORFEITED -> "SUBSCRIPTION_REQUIRED";
         };
     }

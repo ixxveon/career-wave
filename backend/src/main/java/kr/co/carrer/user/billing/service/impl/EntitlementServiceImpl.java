@@ -6,6 +6,7 @@ import kr.co.carrer.user.billing.entity.ServiceUsageRecord;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.MemberProductEntitlementRepository;
 import kr.co.carrer.user.billing.repository.ServiceUsageRecordRepository;
+import kr.co.carrer.user.billing.service.BillingMemberPort;
 import kr.co.carrer.user.billing.service.EntitlementService;
 import kr.co.carrer.user.billing.type.FreeUsageStatus;
 import kr.co.carrer.user.billing.type.ResourceType;
@@ -25,10 +26,15 @@ public class EntitlementServiceImpl implements EntitlementService {
 
     private final MemberProductEntitlementRepository entitlementRepository;
     private final ServiceUsageRecordRepository usageRecordRepository;
+    private final BillingMemberPort billingMemberPort;
 
     @Override
     @Transactional
     public void reserve(UUID memberId, String productCode, ResourceType resourceType, UUID resourceId) {
+        if (!billingMemberPort.isEligibleForBilling(memberId)) {
+            throw new CustomException(BillingErrorCode.ACCOUNT_NOT_ELIGIBLE);
+        }
+
         // 멱등 체크: 동일 resourceId에 대한 UsageRecord가 이미 존재하면 중복 예약 거부
         Optional<ServiceUsageRecord> existing =
                 usageRecordRepository.findByResourceTypeAndResourceId(resourceType, resourceId);
@@ -71,6 +77,10 @@ public class EntitlementServiceImpl implements EntitlementService {
             log.debug("[EntitlementService] consume 멱등 — resourceType={}, resourceId={}", resourceType, resourceId);
             return;
         }
+        // RELEASED 상태에서 consume은 불가 — 예약이 취소된 후 차감 시도
+        if (record.getUsageStatus() == UsageStatus.RELEASED) {
+            throw new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
+        }
 
         MemberProductEntitlement entitlement = entitlementRepository
                 .findByMemberIdAndProductCodeForUpdate(record.getMemberId(), record.getProductCode())
@@ -87,9 +97,7 @@ public class EntitlementServiceImpl implements EntitlementService {
                 usageRecordRepository.findByResourceTypeAndResourceId(resourceType, resourceId);
 
         if (opt.isEmpty()) {
-            log.warn("[EntitlementService] release 대상 UsageRecord 없음 — resourceType={}, resourceId={}",
-                    resourceType, resourceId);
-            return;
+            throw new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
         }
 
         ServiceUsageRecord record = opt.get();
@@ -98,6 +106,10 @@ public class EntitlementServiceImpl implements EntitlementService {
         if (record.getUsageStatus() == UsageStatus.RELEASED) {
             log.debug("[EntitlementService] release 멱등 — resourceType={}, resourceId={}", resourceType, resourceId);
             return;
+        }
+        // CONSUMED(차감 완료) 상태에서 release는 불가 — 이미 사용된 이용권 복원 시도
+        if (record.getUsageStatus() == UsageStatus.CONSUMED) {
+            throw new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
         }
 
         MemberProductEntitlement entitlement = entitlementRepository
