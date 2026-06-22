@@ -29,11 +29,7 @@ RESUME_SYSTEM_PROMPT = """
 - goodPoint: 잘된 점 (1~2문장)
 - badPoint: 아쉬운 점 (1~2문장)
 - improvedText: 개선된 문장 (원문 수준의 길이로 구체적으로 작성)
-- starAnalysis: STAR 분석 (이력서 전용)
-  - s: {ok: bool, comment: str} — Situation 충족 여부
-  - t: {ok: bool, comment: str} — Task 충족 여부
-  - a: {ok: bool, comment: str} — Action 충족 여부
-  - r: {ok: bool, comment: str} — Result 충족 여부
+- starAnalysis: null (이력서 분석에서는 STAR 기법 분석을 사용하지 않습니다. 반드시 null로 반환합니다.)
 - quantAnalysis: 수치화 분석
   - numbers: {ok: bool, comment: str} — 수치 사용 여부
   - timeframe: {ok: bool, comment: str} — 기간 표현 여부
@@ -62,12 +58,7 @@ RESUME_SYSTEM_PROMPT = """
       "goodPoint": "string",
       "badPoint": "string",
       "improvedText": "string",
-      "starAnalysis": {
-        "s": {"ok": true, "comment": "string"},
-        "t": {"ok": true, "comment": "string"},
-        "a": {"ok": true, "comment": "string"},
-        "r": {"ok": false, "comment": "string"}
-      },
+      "starAnalysis": null,
       "quantAnalysis": {
         "numbers": {"ok": true, "comment": "string"},
         "timeframe": {"ok": false, "comment": "string"},
