@@ -60,6 +60,7 @@ interface DocumentResultViewProps {
   result: DocumentResult;
   onReset: () => void;
   label: string;
+  fileType?: 'RESUME' | 'COVER_LETTER';
   subtitle?: string;
   typeSelector?: React.ReactNode;
   onRevise?: (feedbackDetails: FeedbackDetail[]) => void;
@@ -71,6 +72,7 @@ export default function DocumentResultView({
   result,
   onReset,
   label,
+  fileType,
   subtitle,
   typeSelector,
   onRevise,
@@ -93,11 +95,20 @@ export default function DocumentResultView({
   const gradeColor = scoreColor(totalScore);
   const fd = feedbackDetails[activeSection];
 
+  const isResume = fileType === 'RESUME';
+  const typeBadgeLabel = fileType === 'RESUME' ? '📄 이력서 분석' : fileType === 'COVER_LETTER' ? '✍️ 자기소개서 분석' : undefined;
+  const typeBadgeColor = isResume ? '#2563eb' : '#7c3aed';
+
   return (
     <div className="dr">
       <div className="dr-banner">
         <div>
           {typeSelector && <div className="dr-type-selector">{typeSelector}</div>}
+          {typeBadgeLabel && (
+            <span className="dr-type-badge" style={{ background: typeBadgeColor }}>
+              {typeBadgeLabel}
+            </span>
+          )}
           <span className="dr-eyebrow">{label}</span>
           <h1 className="dr-banner__title">AI 종합 진단 리포트</h1>
           {subtitle
@@ -137,10 +148,13 @@ export default function DocumentResultView({
             <button
               key={i}
               className={`dr-section-tab${i === activeSection ? ' dr-section-tab--active' : ''}`}
+              style={i === activeSection ? { borderColor: typeBadgeColor, color: typeBadgeColor } : undefined}
               onClick={() => setActiveSection(i)}
             >
-              <span className="dr-section-tab__num">{item.sectionNumber}</span>
-              {item.question.length > 16 ? item.question.slice(0, 16) + '…' : item.question}
+              <span className="dr-section-tab__num" style={i === activeSection ? { background: typeBadgeColor } : undefined}>
+                {item.sectionNumber}
+              </span>
+              {item.question.length > 20 ? item.question.slice(0, 20) + '…' : item.question}
             </button>
           ))}
         </div>

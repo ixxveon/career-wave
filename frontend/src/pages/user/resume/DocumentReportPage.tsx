@@ -112,7 +112,8 @@ export default function DocumentReportPage() {
       <DocumentResultView
         result={toDocumentResult(data)}
         onReset={() => navigate('/documents/history')}
-        label={data.feedbackDetails.length > 0 ? 'RESUME ANALYSIS' : 'COVER LETTER AI'}
+        fileType={data.fileType}
+        label={data.fileType === 'RESUME' ? 'RESUME ANALYSIS' : 'COVER LETTER AI'}
         interviewDocumentId={documentId}
       />
     );

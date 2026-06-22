@@ -25,9 +25,21 @@
   margin-bottom: 16px;
 }
 
+.dr-type-badge {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 4px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
 .dr-eyebrow {
   display: inline-block;
   margin-bottom: 10px;
+  margin-left: 8px;
   padding: 4px 12px;
   border-radius: 100px;
   background: rgba(255, 255, 255, 0.12);
