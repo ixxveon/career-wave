@@ -27,8 +27,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class EntitlementServiceFreeTest {
 
     @InjectMocks
@@ -40,6 +43,9 @@ class EntitlementServiceFreeTest {
     @Mock
     private ServiceUsageRecordRepository usageRecordRepository;
 
+    @Mock
+    private BillingMemberPort billingMemberPort;
+
     private UUID memberId;
     private UUID resourceId;
     private MemberProductEntitlement availableEntitlement;
@@ -49,6 +55,7 @@ class EntitlementServiceFreeTest {
         memberId = UUID.randomUUID();
         resourceId = UUID.randomUUID();
         availableEntitlement = MemberProductEntitlement.createFree(memberId, "document-coaching");
+        when(billingMemberPort.isEligibleForBilling(memberId)).thenReturn(true);
     }
 
     @Nested
@@ -75,6 +82,19 @@ class EntitlementServiceFreeTest {
             assertThat(saved.getResourceType()).isEqualTo(ResourceType.DOCUMENT);
             assertThat(saved.getResourceId()).isEqualTo(resourceId);
             assertThat(saved.getUsageStatus()).isEqualTo(UsageStatus.RESERVED);
+        }
+
+        @Test
+        @DisplayName("회원 상태 비활성 — ACCOUNT_NOT_ELIGIBLE")
+        void reserve_memberNotActive_throws() {
+            when(billingMemberPort.isEligibleForBilling(memberId)).thenReturn(false);
+
+            assertThatThrownBy(() -> service.reserve(memberId, "document-coaching", ResourceType.DOCUMENT, resourceId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ACCOUNT_NOT_ELIGIBLE);
+
+            verify(usageRecordRepository, never()).findByResourceTypeAndResourceId(any(), any());
         }
 
         @Test
@@ -191,6 +211,27 @@ class EntitlementServiceFreeTest {
                     .extracting(e -> ((CustomException) e).getErrorCode())
                     .isEqualTo(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
         }
+
+        @Test
+        @DisplayName("USED 상태 이용권의 UsageRecord RELEASED 후 consume 금지 — SERVICE_USAGE_NOT_RESERVED")
+        void consume_afterRelease_throws() {
+            ServiceUsageRecord releasedRecord = ServiceUsageRecord.reserveFree(memberId, "document-coaching", ResourceType.DOCUMENT, resourceId);
+            releasedRecord.release();
+
+            when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.DOCUMENT, resourceId))
+                    .thenReturn(Optional.of(releasedRecord));
+
+            // RELEASED 상태 UsageRecord는 CONSUMED로 전이되어선 안 됨 — 현재 구현은
+            // RELEASED UsageRecord가 존재하면 reservedRecord가 없는 상태와 동일하게 처리해야 함.
+            // consume() 멱등 체크: CONSUMED면 무시, RESERVED면 처리, 그 외(RELEASED)는 not_reserved 에러
+            // 현재 구현: consumed 체크 → 아니면 이용권 조회. RELEASED는 잡히지 않으므로 에러 없이 이용권 consumeFree() 호출됨.
+            // 이를 막기 위해 RELEASED 상태에서 consume 호출 시 예외를 발생시켜야 함.
+            // 이 테스트는 현재 구현의 동작을 명시함 — RELEASED record에 consume 호출 시 SERVICE_USAGE_NOT_RESERVED
+            assertThatThrownBy(() -> service.consume(ResourceType.DOCUMENT, resourceId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
+        }
     }
 
     @Nested
@@ -233,14 +274,31 @@ class EntitlementServiceFreeTest {
         }
 
         @Test
-        @DisplayName("UsageRecord 없음 — 경고 로그만, 예외 없음")
-        void release_noRecord_noOp() {
+        @DisplayName("UsageRecord 없음 — SERVICE_USAGE_NOT_RESERVED 예외")
+        void release_noRecord_throws() {
             when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.DOCUMENT, resourceId))
                     .thenReturn(Optional.empty());
 
-            service.release(ResourceType.DOCUMENT, resourceId);
+            assertThatThrownBy(() -> service.release(ResourceType.DOCUMENT, resourceId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
+        }
 
-            verify(entitlementRepository, never()).findByMemberIdAndProductCodeForUpdate(any(), any());
+        @Test
+        @DisplayName("CONSUMED(USED) 이후 release 금지 — SERVICE_USAGE_NOT_RESERVED")
+        void release_afterConsume_throws() {
+            ServiceUsageRecord consumedRecord = ServiceUsageRecord.reserveFree(memberId, "document-coaching", ResourceType.DOCUMENT, resourceId);
+            consumedRecord.consume();
+
+            when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.DOCUMENT, resourceId))
+                    .thenReturn(Optional.of(consumedRecord));
+
+            // CONSUMED 상태에서 release 호출 시 예외가 발생해야 함
+            assertThatThrownBy(() -> service.release(ResourceType.DOCUMENT, resourceId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
         }
     }
 }

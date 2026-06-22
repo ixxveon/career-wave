@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import kr.co.carrer.user.billing.service.EntitlementService;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,6 +40,7 @@ class InterviewSessionServiceImplTest {
     @Mock private InterviewMessageRepository messageRepository;
     @Mock private DocumentRepository documentRepository;
     @Mock private InterviewFastApiClient fastApiClient;
+    @Mock private EntitlementService entitlementService;
 
     @Nested
     @DisplayName("세션 시작 - startSession()")
