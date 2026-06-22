@@ -76,6 +76,17 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
                 .getSingleResult();
         planId = ((Number) planIdResult).longValue();
 
+        // MemberProductEntitlement.memberId는 @Column UUID라 Hibernate DDL이 FK를 생성하지 않음.
+        // FK 제약 테스트를 위해 트랜잭션 내에서 명시적으로 생성 (PostgreSQL DDL은 트랜잭션 내 유효).
+        em.getEntityManager().createNativeQuery(
+                "DO $$ BEGIN " +
+                "  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_entitlement_member_test') THEN " +
+                "    ALTER TABLE member_product_entitlements ADD CONSTRAINT fk_entitlement_member_test " +
+                "    FOREIGN KEY (member_id) REFERENCES members (member_id); " +
+                "  END IF; " +
+                "END $$")
+                .executeUpdate();
+
         em.getEntityManager().flush();
     }
 
