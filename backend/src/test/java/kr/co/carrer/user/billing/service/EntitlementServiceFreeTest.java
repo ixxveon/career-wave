@@ -175,7 +175,7 @@ class EntitlementServiceFreeTest {
         @Test
         @DisplayName("RESERVED 상태 → CONSUMED 전이 성공")
         void consume_reserved_success() {
-            when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.DOCUMENT, resourceId))
+            when(usageRecordRepository.findByResourceTypeAndResourceIdForUpdate(ResourceType.DOCUMENT, resourceId))
                     .thenReturn(Optional.of(reservedRecord));
             when(entitlementRepository.findByMemberIdAndProductCodeForUpdate(memberId, "document-coaching"))
                     .thenReturn(Optional.of(availableEntitlement));
@@ -192,7 +192,7 @@ class EntitlementServiceFreeTest {
         void consume_alreadyConsumed_idempotent() {
             reservedRecord.consume();
 
-            when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.DOCUMENT, resourceId))
+            when(usageRecordRepository.findByResourceTypeAndResourceIdForUpdate(ResourceType.DOCUMENT, resourceId))
                     .thenReturn(Optional.of(reservedRecord));
 
             service.consume(ResourceType.DOCUMENT, resourceId);
@@ -203,7 +203,7 @@ class EntitlementServiceFreeTest {
         @Test
         @DisplayName("UsageRecord 없음 — SERVICE_USAGE_NOT_RESERVED")
         void consume_noRecord_throws() {
-            when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.DOCUMENT, resourceId))
+            when(usageRecordRepository.findByResourceTypeAndResourceIdForUpdate(ResourceType.DOCUMENT, resourceId))
                     .thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.consume(ResourceType.DOCUMENT, resourceId))
@@ -218,7 +218,7 @@ class EntitlementServiceFreeTest {
             ServiceUsageRecord releasedRecord = ServiceUsageRecord.reserveFree(memberId, "document-coaching", ResourceType.DOCUMENT, resourceId);
             releasedRecord.release();
 
-            when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.DOCUMENT, resourceId))
+            when(usageRecordRepository.findByResourceTypeAndResourceIdForUpdate(ResourceType.DOCUMENT, resourceId))
                     .thenReturn(Optional.of(releasedRecord));
 
             // RELEASED 상태 UsageRecord는 CONSUMED로 전이되어선 안 됨 — 현재 구현은
@@ -249,7 +249,7 @@ class EntitlementServiceFreeTest {
         @Test
         @DisplayName("RESERVED 상태 → RELEASED 전이 성공, 이용권 AVAILABLE 복원")
         void release_reserved_success() {
-            when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.DOCUMENT, resourceId))
+            when(usageRecordRepository.findByResourceTypeAndResourceIdForUpdate(ResourceType.DOCUMENT, resourceId))
                     .thenReturn(Optional.of(reservedRecord));
             when(entitlementRepository.findByMemberIdAndProductCodeForUpdate(memberId, "document-coaching"))
                     .thenReturn(Optional.of(availableEntitlement));
@@ -265,7 +265,7 @@ class EntitlementServiceFreeTest {
         void release_alreadyReleased_idempotent() {
             reservedRecord.release();
 
-            when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.DOCUMENT, resourceId))
+            when(usageRecordRepository.findByResourceTypeAndResourceIdForUpdate(ResourceType.DOCUMENT, resourceId))
                     .thenReturn(Optional.of(reservedRecord));
 
             service.release(ResourceType.DOCUMENT, resourceId);
@@ -276,7 +276,7 @@ class EntitlementServiceFreeTest {
         @Test
         @DisplayName("UsageRecord 없음 — SERVICE_USAGE_NOT_RESERVED 예외")
         void release_noRecord_throws() {
-            when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.DOCUMENT, resourceId))
+            when(usageRecordRepository.findByResourceTypeAndResourceIdForUpdate(ResourceType.DOCUMENT, resourceId))
                     .thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.release(ResourceType.DOCUMENT, resourceId))
@@ -291,7 +291,7 @@ class EntitlementServiceFreeTest {
             ServiceUsageRecord consumedRecord = ServiceUsageRecord.reserveFree(memberId, "document-coaching", ResourceType.DOCUMENT, resourceId);
             consumedRecord.consume();
 
-            when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.DOCUMENT, resourceId))
+            when(usageRecordRepository.findByResourceTypeAndResourceIdForUpdate(ResourceType.DOCUMENT, resourceId))
                     .thenReturn(Optional.of(consumedRecord));
 
             // CONSUMED 상태에서 release 호출 시 예외가 발생해야 함

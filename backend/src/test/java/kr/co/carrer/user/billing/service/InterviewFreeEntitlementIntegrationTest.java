@@ -9,6 +9,7 @@ import kr.co.carrer.user.interview.repository.CareerHistoryRepository;
 import kr.co.carrer.user.interview.repository.InterviewMessageRepository;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import kr.co.carrer.user.interview.scheduler.InterviewSessionScheduler;
+import kr.co.carrer.user.interview.service.InterviewTimeoutService;
 import kr.co.carrer.user.interview.service.impl.InterviewCallbackServiceImpl;
 import kr.co.carrer.user.interview.service.impl.InterviewSessionServiceImpl;
 import kr.co.carrer.user.interview.type.SessionStatus;
@@ -44,6 +45,7 @@ class InterviewFreeEntitlementIntegrationTest {
     @Mock CareerHistoryRepository careerHistoryRepository;
     @Mock SimpMessagingTemplate messagingTemplate;
     @Mock EntitlementService entitlementService;
+    @Mock InterviewTimeoutService interviewTimeoutService;
 
     private InterviewSessionServiceImpl sessionService;
     private InterviewCallbackServiceImpl callbackService;
@@ -58,7 +60,7 @@ class InterviewFreeEntitlementIntegrationTest {
                 sessionRepository, messageRepository, documentRepository, fastApiClient, entitlementService);
         callbackService = new InterviewCallbackServiceImpl(
                 sessionRepository, feedbackRepository, careerHistoryRepository, messagingTemplate, entitlementService);
-        scheduler = new InterviewSessionScheduler(sessionRepository, entitlementService);
+        scheduler = new InterviewSessionScheduler(sessionRepository, interviewTimeoutService);
 
         memberId = UUID.randomUUID();
         sessionId = UUID.randomUUID();
@@ -138,8 +140,8 @@ class InterviewFreeEntitlementIntegrationTest {
 
             scheduler.failTimedOutSessions();
 
-            verify(entitlementService).release(ResourceType.INTERVIEW_SESSION, id1);
-            verify(entitlementService).release(ResourceType.INTERVIEW_SESSION, id2);
+            verify(interviewTimeoutService).failTimedOutSession(eq(id1), any());
+            verify(interviewTimeoutService).failTimedOutSession(eq(id2), any());
         }
 
         @Test
@@ -150,7 +152,7 @@ class InterviewFreeEntitlementIntegrationTest {
 
             scheduler.failTimedOutSessions();
 
-            verify(entitlementService, never()).release(any(), any());
+            verify(interviewTimeoutService, never()).failTimedOutSession(any(), any());
         }
     }
 
