@@ -28,7 +28,9 @@ RESUME_SYSTEM_PROMPT = """
 - originalText: 해당 섹션 원문 (최대 300자, 초과 시 자름)
 - goodPoint: 잘된 점 (1~2문장)
 - badPoint: 아쉬운 점 (1~2문장)
-- improvedText: 개선된 문장 (원문 수준의 길이로 구체적으로 작성)
+- improvedText:
+  - 경력·프로젝트 섹션: 원문을 성과·수치·역할이 드러나도록 문장형으로 개선
+  - 학력·자격증·수상 섹션: 문장형으로 바꾸지 않고, 빠진 정보(취득 점수, 발급 기관, 성적 등)를 추가한 원문 형식 그대로 보완. 예: "2025.11.28 데이터분석 준전문가(ADsP) 한국데이터산업진흥원 → 2025.11.28 데이터분석 준전문가(ADsP) 한국데이터산업진흥원 (점수: 상위 10%)"
 - starAnalysis: null (이력서 분석에서는 STAR 기법 분석을 사용하지 않습니다. 반드시 null로 반환합니다.)
 - quantAnalysis: 수치화 분석
   - numbers: {ok: bool, comment: str} — 수치 사용 여부
