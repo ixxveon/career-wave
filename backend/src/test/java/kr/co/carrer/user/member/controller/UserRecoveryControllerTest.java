@@ -39,10 +39,10 @@ class UserRecoveryControllerTest {
     // ─── 아이디 찾기 ──────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("아이디 찾기 성공 시 200 + statusCode=200 + found=true + maskedLoginIds를 반환한다")
+    @DisplayName("아이디 찾기 성공 시 200 + statusCode=200 + found=true + loginIds를 반환한다")
     void findId_성공_200() throws Exception {
         when(userRecoveryService.findId(any()))
-                .thenReturn(new UserRecoveryDto.ResponseFindId(List.of("car***01"), true));
+                .thenReturn(new UserRecoveryDto.ResponseFindId(List.of("career01"), true));
 
         String body = """
                 {"roleType":"USER","verificationToken":"vtoken"}
@@ -56,7 +56,7 @@ class UserRecoveryControllerTest {
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.found").value(true))
-                .andExpect(jsonPath("$.data.maskedLoginIds[0]").value("car***01"));
+                .andExpect(jsonPath("$.data.loginIds[0]").value("car***01"));
     }
 
     @Test
@@ -76,7 +76,7 @@ class UserRecoveryControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.data.found").value(false))
-                .andExpect(jsonPath("$.data.maskedLoginIds").isEmpty());
+                .andExpect(jsonPath("$.data.loginIds").isEmpty());
     }
 
     // ─── 비밀번호 재설정 권한 발급 ────────────────────────────────────────────────────

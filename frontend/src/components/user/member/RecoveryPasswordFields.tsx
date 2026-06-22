@@ -44,7 +44,7 @@ function RecoveryPasswordFields({
           <button
             className="cw-auth-password-toggle"
             type="button"
-            tabIndex={-1}
+            aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
             onClick={() => setShowPassword((prev) => !prev)}
           >
             {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
@@ -67,7 +67,7 @@ function RecoveryPasswordFields({
           <button
             className="cw-auth-password-toggle"
             type="button"
-            tabIndex={-1}
+            aria-label={showPasswordConfirm ? '비밀번호 숨기기' : '비밀번호 표시'}
             onClick={() => setShowPasswordConfirm((prev) => !prev)}
           >
             {showPasswordConfirm ? <Eye size={16} /> : <EyeOff size={16} />}

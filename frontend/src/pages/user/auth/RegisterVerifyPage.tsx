@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CheckCircle2, ShieldCheck, UserRound } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authSession } from '../../../utils/user/member/authSession';
@@ -56,6 +56,8 @@ function RegisterVerifyPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (navTimerRef.current) clearTimeout(navTimerRef.current); }, []);
   const currentPhoneRef = useRef('');
   const verificationRequestRef = useRef(0);
   const sendPhoneCode = useSendVerificationCode();
@@ -251,7 +253,7 @@ function RegisterVerifyPage() {
       sessionStorage.removeItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY);
       if (result.accessToken) authSession.setTokens({ accessToken: result.accessToken });
       setSuccessMessage('소셜 가입이 완료되었습니다. 잠시 후 이동합니다.');
-      setTimeout(() => navigate(result.nextPath, { replace: true }), 1500);
+      navTimerRef.current = setTimeout(() => navigate(result.nextPath, { replace: true }), 1500);
     } catch (error) {
       setFormMessage(getRecoveryErrorMessage(error, '소셜 가입 완료 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
     }
