@@ -86,6 +86,33 @@
   text-align: initial;
 }
 
+.cw-auth-social {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cw-auth-social__label {
+  font-size: 13px;
+  color: #8a94a6;
+  text-align: center;
+  position: relative;
+}
+
+.cw-auth-social__label::before,
+.cw-auth-social__label::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 35%;
+  height: 1px;
+  background: #e5e8ed;
+}
+
+.cw-auth-social__label::before { left: 0; }
+.cw-auth-social__label::after { right: 0; }
+
 .cw-auth-card--login > p:not(.cw-auth-eyebrow) {
   font-size: 13px;
 }
@@ -247,6 +274,31 @@
   background: var(--color-surface-soft);
 }
 
+.cw-auth-form span.cw-auth-span--with-toggle {
+  grid-template-columns: auto 1fr auto;
+}
+
+.cw-auth-form .cw-auth-password-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  color: var(--color-text-secondary);
+  background: transparent;
+  cursor: pointer;
+  margin-top: 0;
+  box-shadow: none;
+}
+
+.cw-auth-form .cw-auth-password-toggle:hover {
+  color: var(--color-text-primary);
+  background: transparent;
+}
+
 .cw-auth-form svg {
   color: var(--color-text-secondary);
 }
@@ -338,6 +390,7 @@
   font-size: 13px;
   font-weight: 900;
 }
+
 
 .cw-auth-inline {
   display: grid;
@@ -874,6 +927,56 @@
   background: #ffffff;
   font-size: 14px;
   font-weight: 400;
+}
+
+.cw-register-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.cw-register-password-wrapper input {
+  flex: 1;
+  height: 54px;
+  padding: 0 44px 0 15px;
+  border: none !important;
+  border-radius: 8px;
+  outline: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 400;
+  box-shadow: none !important;
+}
+
+.cw-register-password-wrapper:focus-within {
+  border-color: #78a8ee;
+  box-shadow: 0 0 0 3px rgba(120, 168, 238, 0.16);
+}
+
+.cw-register-password-toggle {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  color: #a0aab8;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0;
+}
+
+.cw-register-password-toggle:hover {
+  color: var(--color-text-primary);
 }
 
 .cw-register-field input::placeholder,

@@ -17,6 +17,7 @@ const LoginPage = lazy(() => import('../pages/user/auth/LoginPage'));
 const FindAccountPage = lazy(() => import('../pages/user/auth/FindAccountPage'));
 const RegisterPage = lazy(() => import('../pages/user/auth/RegisterPage'));
 const RegisterVerifyPage = lazy(() => import('../pages/user/auth/RegisterVerifyPage'));
+const OAuthCallbackPage = lazy(() => import('../pages/user/auth/OAuthCallbackPage'));
 const FindIdPage = lazy(() => import('../pages/user/auth/FindIdPage'));
 const FindPasswordPage = lazy(() => import('../pages/user/auth/FindPasswordPage'));
 const ProfilePage = lazy(() => import('../pages/user/auth/ProfilePage'));
@@ -145,6 +146,7 @@ function AppRoutes() {
           <Route path="find-password/:roleType" element={lazyRoute(<FindPasswordPage />)} />
           <Route path="register" element={lazyRoute(<RegisterPage />)} />
           <Route path="register/verify" element={lazyRoute(<RegisterVerifyPage />)} />
+          <Route path="oauth/callback" element={lazyRoute(<OAuthCallbackPage />)} />
           <Route path="profile" element={lazyRoute(<ProfilePage />)} />
         </Route>
 

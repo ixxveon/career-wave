@@ -1,16 +1,16 @@
 interface RecoveryResultPanelProps {
   found: boolean;
-  maskedLoginIds: string[];
+  loginIds: string[];
 }
 
-function RecoveryResultPanel({ found, maskedLoginIds }: RecoveryResultPanelProps) {
+function RecoveryResultPanel({ found, loginIds }: RecoveryResultPanelProps) {
   return (
     <div className="cw-auth-result" aria-live="polite">
-      {found && maskedLoginIds.length > 0 ? (
+      {found && loginIds.length > 0 ? (
         <>
           <p>가입된 아이디를 확인했습니다.</p>
           <ul>
-            {maskedLoginIds.map((loginId) => (
+            {loginIds.map((loginId) => (
               <li key={loginId}>{loginId}</li>
             ))}
           </ul>

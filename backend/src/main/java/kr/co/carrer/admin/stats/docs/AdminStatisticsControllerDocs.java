@@ -22,4 +22,7 @@ public interface AdminStatisticsControllerDocs {
 
     @Operation(summary = "최근 가입 피드 (상위 5건)")
     ResponseEntity<ApiResponse<List<StatisticsDTO.RecentSubscriber>>> getRecentSubscribers();
+
+    @Operation(summary = "구독 유형별 매출 실적 (당월 / 결제 방식별)")
+    ResponseEntity<ApiResponse<List<StatisticsDTO.RevenueBreakdownItem>>> getRevenueBreakdown();
 }
