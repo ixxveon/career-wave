@@ -99,7 +99,7 @@
 
 .cw-header__submenu {
   position: absolute;
-  top: calc(100% - 6px);
+  top: 100%;
   left: 50%;
   z-index: 20;
   display: grid;
@@ -111,11 +111,11 @@
   box-shadow: 0 18px 38px rgba(35, 55, 91, 0.14);
   opacity: 0;
   pointer-events: none;
-  transform: translateX(-50%) translateY(8px);
-  transition: opacity 0.16s ease, transform 0.16s ease;
+  transform: translateX(-50%) translateY(4px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
 }
 
-.cw-header__nav-item:hover .cw-header__submenu {
+.cw-header__submenu--open {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);
@@ -176,7 +176,7 @@
   justify-content: center;
   background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(2px);
-  animation: fadeIn 0.15s ease;
+  animation: fade-In 0.15s ease;
 }
 
 .cw-modal {
@@ -188,7 +188,7 @@
   background: #ffffff;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
   text-align: center;
-  animation: slideUp 0.18s ease;
+  animation: slide-Up 0.18s ease;
 }
 
 .cw-modal__close {
@@ -205,9 +205,15 @@
   color: #64748b;
   cursor: pointer;
 }
-.cw-modal__close:hover { background: #e2e8f0; }
 
-.cw-modal__emoji { margin: 0 0 8px; font-size: 36px; }
+.cw-modal__close:hover {
+  background: #e2e8f0;
+}
+
+.cw-modal__emoji {
+  margin: 0 0 8px;
+  font-size: 36px;
+}
 
 .cw-modal__title {
   margin: 0 0 14px;
@@ -222,7 +228,10 @@
   line-height: 1.8;
   color: #64748b;
 }
-.cw-modal__desc strong { color: #4c1d95; }
+
+.cw-modal__desc strong {
+  color: #4c1d95;
+}
 
 .cw-modal__cta {
   display: inline-flex;
@@ -239,10 +248,32 @@
   cursor: pointer;
   transition: opacity 0.14s;
 }
-.cw-modal__cta:hover { opacity: 0.88; }
 
-@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.cw-modal__cta:hover {
+  opacity: 0.88;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-Up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 .cw-header__account {
   display: flex;
@@ -310,16 +341,17 @@
   }
 }
 
-/* ── 좁은 화면: 계정 버튼 일부 숨김 ─────────── */
+/* ── 좁은 화면: 메뉴 간격 축소 ─────────── */
 @media (max-width: 960px) {
   .cw-header__nav {
     font-size: 13px;
     gap: clamp(10px, 1.4vw, 18px);
   }
 
-  /* 마이페이지 버튼 숨기기 */
-  .cw-header__account a:first-child {
-    display: none;
+  .cw-header__account a,
+  .cw-header__account button {
+    min-width: 64px;
+    padding: 0 12px;
   }
 }
 

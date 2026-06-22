@@ -1,6 +1,7 @@
 package kr.co.carrer.admin.scraping.service;
 
 import kr.co.carrer.admin.scraping.type.ScrapingPipelineStatusType;
+import kr.co.carrer.admin.scraping.type.ScrapingActionType;
 import kr.co.carrer.admin.scraping.type.ScrapingStatusType;
 
 import java.time.ZonedDateTime;
@@ -47,7 +48,7 @@ public interface ScrapingFastApiGateway {
     }
 
     record BatchActionRequest(
-            String actionType,
+            ScrapingActionType actionType,
             List<String> sourceNames,
             String requestedBy
     ) {

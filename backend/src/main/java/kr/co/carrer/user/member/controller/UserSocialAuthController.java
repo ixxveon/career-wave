@@ -10,6 +10,7 @@ import kr.co.carrer.user.member.dto.UserSocialAuthDto;
 import kr.co.carrer.user.member.service.UserSocialAuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -42,20 +43,33 @@ public class UserSocialAuthController implements UserSocialAuthControllerDocs {
             HttpServletResponse response) throws IOException {
         OAuthCallbackResponse result = userSocialAuthService.callback(provider, code, state, response);
         String redirectUrl = switch (result) {
-            case UserSocialAuthDto.ResponseOAuthCallbackLogin login ->
-                    UriComponentsBuilder.fromHttpUrl(frontendUrl + "/auth/oauth/callback")
-                            .queryParam("type", "login")
-                            .queryParam("accessToken", login.getAccessToken())
-                            .build().toUriString();
-            case UserSocialAuthDto.ResponseOAuthCallbackSignupRequired signup ->
-                    UriComponentsBuilder.fromHttpUrl(frontendUrl + "/auth/oauth/callback")
-                            .queryParam("type", "signup")
-                            .queryParam("provider", signup.provider())
-                            .queryParam("email", signup.socialEmail() != null ? signup.socialEmail() : "")
-                            .queryParam("token", signup.socialSignupToken())
-                            .build().toUriString();
+            case UserSocialAuthDto.ResponseOAuthCallbackLogin login -> {
+                // 토큰을 URL이 아닌 단기 쿠키로 전달 (브라우저 히스토리·로그·Referer 노출 방지)
+                setHandoffCookie(response, "cw_oauth_login_token", login.getAccessToken());
+                yield UriComponentsBuilder.fromHttpUrl(frontendUrl + "/auth/oauth/callback")
+                        .queryParam("type", "login")
+                        .build().toUriString();
+            }
+            case UserSocialAuthDto.ResponseOAuthCallbackSignupRequired signup -> {
+                setHandoffCookie(response, "cw_oauth_signup_token", signup.socialSignupToken());
+                yield UriComponentsBuilder.fromHttpUrl(frontendUrl + "/auth/oauth/callback")
+                        .queryParam("type", "signup")
+                        .queryParam("provider", signup.provider())
+                        .queryParam("email", signup.socialEmail() != null ? signup.socialEmail() : "")
+                        .build().toUriString();
+            }
         };
         response.sendRedirect(redirectUrl);
+    }
+
+    private void setHandoffCookie(HttpServletResponse response, String name, String value) {
+        ResponseCookie cookie = ResponseCookie.from(name, value)
+                .path("/")
+                .maxAge(60)
+                .sameSite("Strict")
+                .httpOnly(false)
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
     }
 
     @PostMapping("/register/social/complete")

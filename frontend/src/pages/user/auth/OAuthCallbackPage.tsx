@@ -3,6 +3,20 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authSession } from '../../../utils/user/member/authSession';
 import { SOCIAL_SIGNUP_TOKEN_SESSION_KEY } from './RegisterVerifyPage';
 
+const OAUTH_TYPE = {
+  LOGIN: 'login',
+  SIGNUP: 'signup',
+} as const;
+
+function getHandoffCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
+function clearHandoffCookie(name: string) {
+  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Strict`;
+}
+
 function OAuthCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -14,19 +28,23 @@ function OAuthCallbackPage() {
 
     const type = searchParams.get('type');
 
-    if (type === 'login') {
-      const accessToken = searchParams.get('accessToken');
+    if (type === OAUTH_TYPE.LOGIN) {
+      const accessToken = getHandoffCookie('cw_oauth_login_token');
+      clearHandoffCookie('cw_oauth_login_token');
       if (accessToken) {
         authSession.setTokens({ accessToken });
       }
       navigate('/', { replace: true });
-    } else if (type === 'signup') {
-      const token = searchParams.get('token');
+    } else if (type === OAUTH_TYPE.SIGNUP) {
+      const token = getHandoffCookie('cw_oauth_signup_token');
+      clearHandoffCookie('cw_oauth_signup_token');
       const provider = searchParams.get('provider');
       const email = searchParams.get('email');
 
       if (token) {
         sessionStorage.setItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY, token);
+      } else {
+        sessionStorage.removeItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY);
       }
 
       const params = new URLSearchParams();

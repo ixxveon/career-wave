@@ -154,7 +154,7 @@ class UserRecoveryServiceImplTest {
     // ─── 개인회원 아이디 찾기 성공 — EMAIL 채널 ────────────────────────────────────────
 
     @Test
-    void findId_개인회원_EMAIL_성공_maskedLoginId() throws Exception {
+    void findId_개인회원_EMAIL_성공_loginId() throws Exception {
         MemberVerification verification = createEmailVerification("user@example.com", VerificationPurpose.FIND_ID);
         when(verificationRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(verification));
 
@@ -171,14 +171,14 @@ class UserRecoveryServiceImplTest {
         UserRecoveryDto.ResponseFindId resp = service.findId(req);
 
         assertThat(resp.found()).isTrue();
-        assertThat(resp.maskedLoginIds()).hasSize(1);
-        assertThat(resp.maskedLoginIds().get(0)).isEqualTo("career01");
+        assertThat(resp.loginIds()).hasSize(1);
+        assertThat(resp.loginIds().get(0)).isEqualTo("career01");
     }
 
     // ─── 기업회원 아이디 찾기 성공 ───────────────────────────────────────────────────
 
     @Test
-    void findId_기업회원_성공_maskedLoginId() throws Exception {
+    void findId_기업회원_성공_loginId() throws Exception {
         MemberVerification verification = createEmailVerification("hr@company.com", VerificationPurpose.FIND_ID);
         when(verificationRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(verification));
         when(memberQueryRepository.findLoginIdsByManagerNameAndBusinessNumberAndEmail(
@@ -194,7 +194,7 @@ class UserRecoveryServiceImplTest {
         UserRecoveryDto.ResponseFindId resp = service.findId(req);
 
         assertThat(resp.found()).isTrue();
-        assertThat(resp.maskedLoginIds().get(0)).isEqualTo("company01");
+        assertThat(resp.loginIds().get(0)).isEqualTo("company01");
     }
 
     // ─── 아이디 찾기 — 결과 없음 found=false ─────────────────────────────────────────
@@ -213,7 +213,7 @@ class UserRecoveryServiceImplTest {
         UserRecoveryDto.ResponseFindId resp = service.findId(req);
 
         assertThat(resp.found()).isFalse();
-        assertThat(resp.maskedLoginIds()).isEmpty();
+        assertThat(resp.loginIds()).isEmpty();
     }
 
     // ─── loginId 전체 반환 (마스킹 없음) ────────────────────────────────────────────
@@ -233,7 +233,7 @@ class UserRecoveryServiceImplTest {
 
         UserRecoveryDto.ResponseFindId resp = service.findId(req);
 
-        assertThat(resp.maskedLoginIds().get(0)).isEqualTo("abcdef");
+        assertThat(resp.loginIds().get(0)).isEqualTo("abcdef");
     }
 
     // ─── 비밀번호 resetToken 발급 성공 — 개인회원 ───────────────────────────────────────

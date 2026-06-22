@@ -18,7 +18,7 @@ function toDocumentResult(res: AnalysisResultResponse): DocumentResult {
       techStackScore:    res.scores?.techStack              ?? 0,
       quantifiedScore:   res.scores?.quantifiedAchievement ?? 0,
       logicalScore:      res.scores?.logicalStructure       ?? 0,
-      overallReview:     res.overallReview,
+      overallReview:     res.overallReview ?? '',
     },
     feedbackDetails: res.feedbackDetails,
   };

@@ -82,7 +82,7 @@ export function PasswordInput({ value, onChange, placeholder }: Omit<TextInputPr
       <button
         className="cw-register-password-toggle"
         type="button"
-        tabIndex={-1}
+        aria-label={show ? '비밀번호 숨기기' : '비밀번호 표시'}
         onClick={() => setShow((prev) => !prev)}
       >
         {show ? <Eye size={16} /> : <EyeOff size={16} />}

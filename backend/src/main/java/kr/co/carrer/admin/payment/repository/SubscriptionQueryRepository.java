@@ -72,6 +72,24 @@ public class SubscriptionQueryRepository {
         return result;
     }
 
+    public SubscriptionDTO.ResponseCounts countSubscriptionKpi() {
+        String sql = """
+            SELECT
+              COUNT(*) FILTER (WHERE s.subscription_status = 'ACTIVE') AS active,
+              COUNT(*) FILTER (WHERE s.subscription_status = 'RENEWAL_SCHEDULED') AS renewal_scheduled,
+              COUNT(*) FILTER (WHERE s.subscription_status = 'CANCEL_SCHEDULED') AS cancel_scheduled,
+              COUNT(*) FILTER (WHERE s.subscription_status = 'AT_RISK') AS at_risk
+            FROM subscriptions s
+            """;
+        Object[] row = (Object[]) em.createNativeQuery(sql).getSingleResult();
+        return new SubscriptionDTO.ResponseCounts(
+            ((Number) row[0]).longValue(),
+            ((Number) row[1]).longValue(),
+            ((Number) row[2]).longValue(),
+            ((Number) row[3]).longValue()
+        );
+    }
+
     public long countSubscriptions(SubscriptionStatus status) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM subscriptions s WHERE 1=1");
         List<Object> params = new ArrayList<>();

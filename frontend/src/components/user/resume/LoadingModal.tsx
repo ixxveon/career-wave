@@ -1,42 +1,39 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import type { WsStatusMessage } from '../../../types/user/resume';
 import './LoadingModal.css';
 
 interface LoadingModalProps {
-  /** WebSocket에서 수신한 현재 메시지 (null이면 기본 메시지 표시) */
-  wsMessage: WsStatusMessage | null;
-  /** 취소 버튼 클릭 시 — constitution: 클라이언트만 WS 닫고 IDLE 복귀 */
   onCancel: () => void;
 }
 
-// WebSocket 메시지 없을 때 표시할 기본 단계 메시지
-const DEFAULT_STEPS = [
-  { threshold: 0,  message: '분석을 준비하고 있어요' },
-  { threshold: 10, message: '파일을 읽고 있어요' },
-  { threshold: 40, message: '키워드를 추출하고 있어요' },
-  { threshold: 70, message: '피드백을 생성하고 있어요' },
+const STEP_MESSAGES = [
+  '분석을 준비하고 있어요',
+  '파일을 읽고 있어요',
+  '키워드를 추출하고 있어요',
+  '피드백을 생성하고 있어요',
 ];
+const STEP_INTERVAL_MS = 7_000;
 
 /**
  * AI 분석 로딩 모달
- *
  * constitution.md 상태 머신: ANALYZING 상태일 때만 렌더링
- * - WebSocket 메시지 기반 단계별 메시지 표시
- * - 취소 시 서버 취소 API 없음 — WS 연결 끊고 IDLE 복귀
+ * 취소 시 서버 취소 API 없음 — WS 연결 끊고 IDLE 복귀
  */
-export default function LoadingModal({ wsMessage, onCancel }: LoadingModalProps) {
+export default function LoadingModal({ onCancel }: LoadingModalProps) {
   const cancelBtnRef = useRef<HTMLButtonElement>(null);
+  const [stepIndex, setStepIndex] = useState(0);
 
-  // 모달 열릴 때 취소 버튼으로 포커스 이동 (a11y)
   useEffect(() => {
     cancelBtnRef.current?.focus();
   }, []);
 
-  const progress = wsMessage?.progress ?? 0;
-  const message  = wsMessage?.message
-    ?? [...DEFAULT_STEPS].reverse().find(s => progress >= s.threshold)?.message
-    ?? DEFAULT_STEPS[0].message;
+  // 일정 간격으로 메시지 단계 진행
+  useEffect(() => {
+    const id = setInterval(() => {
+      setStepIndex(prev => Math.min(prev + 1, STEP_MESSAGES.length - 1));
+    }, STEP_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div
@@ -47,34 +44,27 @@ export default function LoadingModal({ wsMessage, onCancel }: LoadingModalProps)
       aria-describedby="lm-desc"
     >
       <div className="lm-box">
-        {/* 스피너 */}
         <div className="lm-spinner" aria-hidden="true">
           <div className="lm-spinner__ring" />
         </div>
 
-        {/* 단계 메시지 */}
         <p id="lm-title" className="lm-message" aria-live="polite">
-          {message}
+          {STEP_MESSAGES[stepIndex]}
         </p>
 
-        {/* 진행률 바 */}
+        {/* 진행률 바 — indeterminate 애니메이션 */}
         <div
           className="lm-progress"
           role="progressbar"
-          aria-valuenow={progress}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label={`분석 진행률 ${progress}%`}
+          aria-label="분석 진행 중"
         >
-          <div className="lm-progress__fill" style={{ width: `${progress}%` }} />
+          <div className="lm-progress__fill" style={{ width: '100%' }} />
         </div>
-        <p className="lm-progress__label">{progress}%</p>
 
         <p id="lm-desc" className="lm-sub">
           AI가 열심히 분석 중이에요 · 약 30초 소요
         </p>
 
-        {/* 취소 버튼 */}
         <button
           ref={cancelBtnRef}
           type="button"

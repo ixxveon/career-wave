@@ -24,6 +24,7 @@ import {
   type SubStatus,
   type PaymentListParams,
   type SubscriptionListParams,
+  type SubscriptionCounts,
 } from '../../../api/admin/paymentApi';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Payment.css';
@@ -54,6 +55,10 @@ const SUB_STATUS_CLS: Record<string, string> = {
   RENEWAL_SCHEDULED: 'answering',
   CANCEL_SCHEDULED:  'pending',
   AT_RISK:           'blinded',
+  EXPIRED:           'dismissed',
+  PAYMENT_FAILED:    'blinded',
+  REFUND_PENDING:    'pending',
+  REFUNDED:          'dismissed',
 };
 
 const TABS: PayTab[] = ['결제 내역', '구독 현황', '정산 리포트'];
@@ -145,11 +150,15 @@ export default function PaymentPage() {
   const [subStatusFilter, setSubStatusFilter] = useState('');
   const appliedSubFilters = useRef<SubscriptionListParams>({});
 
-  // 구독 KPI (목록에서 파생)
-  const activeCount = subscriptions.filter((s) => s.subStatus === 'ACTIVE').length;
-  const renewCount  = subscriptions.filter((s) => s.subStatus === 'RENEWAL_SCHEDULED').length;
-  const cancelCount = subscriptions.filter((s) => s.subStatus === 'CANCEL_SCHEDULED').length;
-  const atRiskCount = subscriptions.filter((s) => s.subStatus === 'AT_RISK').length;
+  // 구독 KPI (전용 집계 API)
+  const [subCounts, setSubCounts] = useState<SubscriptionCounts | null>(null);
+
+  // ── 구독 KPI 조회 ─────────────────────────────────────────────
+  useEffect(() => {
+    paymentApi.getSubscriptionCounts().then(res => {
+      if (res.data.success) setSubCounts(res.data.data);
+    }).catch(() => {});
+  }, []);
 
   // ── KPI 조회 ──────────────────────────────────────────────────
   const fetchSummary = useCallback(async () => {
@@ -474,19 +483,19 @@ export default function PaymentPage() {
           {/* KPI */}
           <div className="kpiGrid">
             <div className="kpiCard kpi-green">
-              <div className="kpiContent"><p>활성 구독</p><h3>{activeCount}</h3><span>정상 이용 중</span></div>
+              <div className="kpiContent"><p>활성 구독</p><h3>{subCounts != null ? subCounts.active : '—'}</h3><span>정상 이용 중</span></div>
               <div className="kpiIcon kpi-green"><Users size={24} /></div>
             </div>
             <div className="kpiCard kpi-blue">
-              <div className="kpiContent"><p>갱신 예정 (D-7)</p><h3>{renewCount}</h3><span>자동 갱신 대기</span></div>
+              <div className="kpiContent"><p>갱신 예정 (D-7)</p><h3>{subCounts != null ? subCounts.renewalScheduled : '—'}</h3><span>자동 갱신 대기</span></div>
               <div className="kpiIcon kpi-blue"><RefreshCw size={24} /></div>
             </div>
             <div className="kpiCard kpi-yellow">
-              <div className="kpiContent"><p>취소 예정</p><h3>{cancelCount}</h3><span>기간 만료 후 종료</span></div>
+              <div className="kpiContent"><p>취소 예정</p><h3>{subCounts != null ? subCounts.cancelScheduled : '—'}</h3><span>기간 만료 후 종료</span></div>
               <div className="kpiIcon kpi-yellow"><Clock size={24} /></div>
             </div>
             <div className="kpiCard kpi-purple">
-              <div className="kpiContent"><p>이탈 위험</p><h3>{atRiskCount}</h3><span>자동 갱신 결제 실패</span></div>
+              <div className="kpiContent"><p>이탈 위험</p><h3>{subCounts != null ? subCounts.atRisk : '—'}</h3><span>자동 갱신 결제 실패</span></div>
               <div className="kpiIcon kpi-purple"><AlertTriangle size={24} /></div>
             </div>
           </div>
@@ -526,14 +535,20 @@ export default function PaymentPage() {
                     <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
                   ) : subscriptions.map((s) => (
                     <tr key={s.subscriptionId}>
-                      <td style={{ fontSize: 13, color: '#7a8da4' }}>{s.subscriptionId}</td>
+                      <td
+                        style={{ fontSize: 13, color: '#7a8da4', fontFamily: 'monospace', cursor: 'pointer', userSelect: 'none' }}
+                        title={`클릭하여 복사: ${s.subscriptionId}`}
+                        onClick={() => { navigator.clipboard.writeText(s.subscriptionId); showToast('구독 ID가 복사되었습니다.'); }}
+                      >
+                        {s.subscriptionId.slice(0, 8)}…
+                      </td>
                       <td>{s.memberName}</td>
-                      <td>{s.plan}</td>
-                      <td>{new Date(s.startDate).toLocaleDateString('ko-KR')}</td>
-                      <td>{new Date(s.renewDate).toLocaleDateString('ko-KR')}</td>
+                      <td>{s.planName}</td>
+                      <td>{new Date(s.startedAt).toLocaleDateString('ko-KR')}</td>
+                      <td>{new Date(s.currentPeriodEnd).toLocaleDateString('ko-KR')}</td>
                       <td>
-                        <span className={`statusBadge ${SUB_STATUS_CLS[s.subStatus]}`}>
-                          {SUB_STATUS_LABEL[s.subStatus]}
+                        <span className={`statusBadge ${SUB_STATUS_CLS[s.subscriptionStatus]}`}>
+                          {SUB_STATUS_LABEL[s.subscriptionStatus]}
                         </span>
                       </td>
                     </tr>

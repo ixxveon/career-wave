@@ -282,7 +282,7 @@ export interface FindIdRequest {
 }
 
 export interface FindIdResponse {
-  maskedLoginIds: string[];
+  loginIds: string[];
   found: boolean;
 }
 

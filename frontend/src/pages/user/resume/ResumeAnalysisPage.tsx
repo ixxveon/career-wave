@@ -4,12 +4,12 @@ import LoadingModal from '../../../components/user/resume/LoadingModal';
 import QuotaBar from '../../../components/user/resume/QuotaBar';
 import DocumentResultView from './DocumentResultView';
 import { useResumeUpload } from '../../../hooks/user/resume/useResumeUpload';
-import { PLAN_LIMITS, MOCK_QUOTA } from '../../../utils/user/resume/quota';
+import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
 import '@/styles/user/resume/ResumeAnalysisPage.css';
 
 export default function ResumeAnalysisPage() {
   const {
-    file, uiState, fileError, apiError, networkError, wsMessage,
+    file, uiState, fileError, apiError, networkError,
     analysisResult,
     handleFileSelect, handleFileRemove, handleUpload, reset, dismissNetworkError,
   } = useResumeUpload();
@@ -17,9 +17,8 @@ export default function ResumeAnalysisPage() {
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  const { membership, documentUsed } = MOCK_QUOTA;
-  const docLimit    = PLAN_LIMITS[membership].document;
-  const isExhausted = documentUsed >= docLimit;
+  const { data: quota } = useResumeQuota();
+  const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (
@@ -32,7 +31,7 @@ export default function ResumeAnalysisPage() {
             techStackScore:    analysisResult.scores?.techStack           ?? 0,
             quantifiedScore:   analysisResult.scores?.quantifiedAchievement ?? 0,
             logicalScore:      analysisResult.scores?.logicalStructure    ?? 0,
-            overallReview:     analysisResult.overallReview,
+            overallReview:     analysisResult.overallReview ?? '',
           },
           feedbackDetails: analysisResult.feedbackDetails,
         }}
@@ -46,7 +45,7 @@ export default function ResumeAnalysisPage() {
 
   return (
     <div className="ra">
-      {isAnalyzing && <LoadingModal wsMessage={wsMessage} onCancel={reset} />}
+      {isAnalyzing && <LoadingModal onCancel={reset} />}
 
       {networkError && (
         <div className="ra-toast" role="alert" aria-live="assertive">

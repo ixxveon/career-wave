@@ -50,6 +50,13 @@ public class MemberDTO {
         @Schema(description = "제재 사유 (최소 10자)", requiredMode = Schema.RequiredMode.REQUIRED) String reason
     ) {}
 
+    @Schema(description = "회원 KPI 집계 응답")
+    public record ResponseCounts(
+        @Schema(description = "오늘 신규 가입 수") long todayJoinCount,
+        @Schema(description = "프리미엄 구독 회원 수") long premiumCount,
+        @Schema(description = "정지 회원 수") long suspendedCount
+    ) {}
+
     @Schema(description = "회원 제재 응답")
     public record ResponseSanction(
         @Schema(description = "회원 UUID") UUID memberId,

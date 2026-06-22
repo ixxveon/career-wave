@@ -106,6 +106,7 @@ export interface CreateInquiryResult {
   inquiryStatus: 'PENDING';
 }
 
+
 // ── API 함수 ───────────────────────────────────────────────────
 
 export const supportApi = {
@@ -147,4 +148,5 @@ export const supportApi = {
       body: JSON.stringify(body),
       auth: true,
     }),
+
 };

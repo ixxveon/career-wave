@@ -2,11 +2,34 @@
 -- Career Wave 로컬 개발용 테스트 데이터 시드
 -- 실행 방법: psql -U careerwave -d careerwave -f seed-local.sql
 -- 비밀번호: 모든 계정 공통 Test1234! (관리자만 1234)
+-- testuser05: 정지 계정 테스트용 (SUSPENDED / 커뮤니티 운영정책 위반 / 7일)
 -- ============================================================
 
 -- 기존 테스트 데이터 초기화 (재실행 안전)
-DELETE FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testcompany01');
-DELETE FROM admins  WHERE login_id = 'admin';
+-- suspend_histories 자식 행 먼저 삭제 (FK 제약 위반 방지)
+DELETE FROM suspend_histories
+WHERE member_id IN (
+  SELECT member_id FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01')
+);
+DELETE FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01');
+DELETE FROM admins  WHERE login_id IN ('admin', 'cs');
+
+-- ────────────────────────────────────────────
+-- 관리자 먼저 삽입 (suspend_histories admin_id FK 보장)
+-- loginId=admin / 비밀번호: 1234
+-- ────────────────────────────────────────────
+INSERT INTO admins (login_id, email, password_hash, name, admin_role, status, created_at, updated_at)
+VALUES
+  ('admin', 'admin@career-wave.local',
+   '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
+   '슈퍼관리자', 'MASTER', 'ACTIVE', NOW(), NOW()),
+  ('cs', 'cs@career-wave.com',
+   '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
+   'CS 담당자', 'CS', 'ACTIVE', NOW(), NOW());
+
+-- ────────────────────────────────────────────
+-- 관리자 먼저 삽입 (suspend_histories admin_id FK 보장)
+-- loginId=admin / 비밀번호: 1234
 
 -- ────────────────────────────────────────────
 -- 일반 회원 (USER / 비밀번호: Test1234!)
@@ -27,7 +50,27 @@ VALUES
 
   (gen_random_uuid(), 'testuser04', 'testuser04@test.com',
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
-   '테스트유저(전체구독)', 'USER', 'ACTIVE', 'PREMIUM', 0, NOW(), NOW());
+   '테스트유저(전체구독)', 'USER', 'ACTIVE', 'PREMIUM', 0, NOW(), NOW()),
+
+  (gen_random_uuid(), 'testuser05', 'testuser05@test.com',
+   '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
+   '테스트유저(정지)', 'USER', 'SUSPENDED', 'FREE', 0, NOW(), NOW());
+
+-- ────────────────────────────────────────────
+-- 정지 회원 suspend_histories (testuser05)
+-- ────────────────────────────────────────────
+DO $$
+DECLARE
+  v_member_id UUID;
+  v_admin_id  BIGINT;
+BEGIN
+  SELECT member_id INTO v_member_id FROM members WHERE login_id = 'testuser05';
+  SELECT admin_id  INTO v_admin_id  FROM admins  WHERE login_id = 'admin';
+
+  INSERT INTO suspend_histories (member_id, admin_id, sanction_type, reason, duration, start_date, end_date, created_at)
+  VALUES (v_member_id, v_admin_id, 'SUSPEND', '커뮤니티 운영정책 위반', 'SEVEN_DAYS',
+          CURRENT_DATE, CURRENT_DATE + INTERVAL '7 days', NOW());
+END $$;
 
 -- ────────────────────────────────────────────
 -- 기업 회원 (COMPANY / 비밀번호: Test1234!)
@@ -38,14 +81,6 @@ VALUES
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
    '테스트기업담당자', 'COMPANY', 'ACTIVE', 'FREE', 0, NOW(), NOW());
 
--- ────────────────────────────────────────────
--- 관리자 (loginId=admin / 비밀번호: 1234)
--- ────────────────────────────────────────────
-INSERT INTO admins (login_id, email, password_hash, name, admin_role, status, created_at, updated_at)
-VALUES
-  ('admin', 'admin@career-wave.local',
-   '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
-   '슈퍼관리자', 'MASTER', 'ACTIVE', NOW(), NOW());
 
 -- ────────────────────────────────────────────
 -- 구독 플랜 (데모용)
@@ -57,6 +92,36 @@ VALUES
   ('PREMIUM_INTERVIEW_MONTHLY', '면접 프리미엄 월정액', 19900, 'KRW', 'MONTHLY', true, NOW()),
   ('PREMIUM_RESUME_MONTHLY',    '서류 프리미엄 월정액', 14900, 'KRW', 'MONTHLY', true, NOW()),
   ('PREMIUM_ALL_MONTHLY',       '전체 프리미엄 월정액', 29900, 'KRW', 'MONTHLY', true, NOW());
+
+-- ────────────────────────────────────────────
+-- 데모용 구독 데이터 (testuser02 — 면접, testuser03 — 서류)
+-- ────────────────────────────────────────────
+DELETE FROM subscriptions WHERE member_id IN (
+  SELECT member_id FROM members WHERE login_id IN ('testuser02', 'testuser03')
+);
+
+DO $$
+DECLARE
+  v_member02 UUID;
+  v_member03 UUID;
+  v_plan_interview BIGINT;
+  v_plan_resume    BIGINT;
+BEGIN
+  SELECT member_id INTO v_member02 FROM members WHERE login_id = 'testuser02';
+  SELECT member_id INTO v_member03 FROM members WHERE login_id = 'testuser03';
+  SELECT plan_id INTO v_plan_interview FROM plans WHERE product_code = 'PREMIUM_INTERVIEW_MONTHLY';
+  SELECT plan_id INTO v_plan_resume    FROM plans WHERE product_code = 'PREMIUM_RESUME_MONTHLY';
+
+  INSERT INTO subscriptions (subscription_id, member_id, plan_id, subscription_status,
+    started_at, current_period_start, current_period_end, next_billing_at, auto_renew, created_at, updated_at)
+  VALUES
+    (gen_random_uuid(), v_member02, v_plan_interview, 'ACTIVE',
+     NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days',
+     NOW() + INTERVAL '15 days', true, NOW() - INTERVAL '15 days', NOW()),
+    (gen_random_uuid(), v_member03, v_plan_resume, 'ACTIVE',
+     NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days', NOW() + INTERVAL '25 days',
+     NOW() + INTERVAL '25 days', true, NOW() - INTERVAL '5 days', NOW());
+END $$;
 
 -- ────────────────────────────────────────────
 -- 데모용 결제·환불 데이터 (testuser04 — 전체구독)

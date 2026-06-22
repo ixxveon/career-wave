@@ -35,15 +35,14 @@ public interface UserSocialAuthControllerDocs {
             @PathVariable String provider);
 
     @Operation(summary = "소셜 OAuth 콜백 처리",
-            description = "provider로부터 전달된 code와 state를 검증하고 기존 소셜 계정 여부에 따라 응답을 분기한다. " +
-                    "기존 소셜 계정: accessToken + 회원 정보 반환 (refresh token은 HttpOnly Cookie). " +
-                    "최초 소셜 가입: socialSignupToken 반환 후 프론트를 /register/social/complete로 유도. " +
+            description = "provider로부터 전달된 code와 state를 검증하고 기존 소셜 계정 여부에 따라 프론트엔드로 redirect한다. " +
+                    "토큰은 URL이 아닌 단기 쿠키(MaxAge=60s, SameSite=Strict)로 전달하여 히스토리·로그·Referer 노출을 방지한다. " +
+                    "기존 소셜 계정: cw_oauth_login_token 쿠키 + ?type=login 으로 /auth/oauth/callback redirect. " +
+                    "최초 소셜 가입: cw_oauth_signup_token 쿠키 + ?type=signup&provider=...&email=... 으로 redirect. " +
                     "회원 식별 기준은 email이 아니라 provider + providerUserId 조합이다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "기존 소셜 계정 로그인 성공 또는 추가정보 입력 필요",
-                    content = @Content(examples = @ExampleObject(
-                            name = "기존 계정 로그인",
-                            value = "{\"success\":true,\"statusCode\":200,\"message\":\"로그인되었습니다.\",\"data\":{\"accessToken\":\"jwt-access-token\",\"member\":{\"memberId\":\"uuid-v4\",\"loginId\":\"social_user01\",\"name\":\"홍길동\",\"roleType\":\"USER\",\"memberStatus\":\"ACTIVE\",\"subscriptionStatus\":\"FREE\",\"companyApprovalStatus\":\"NONE\",\"lastLoginAt\":\"2026-06-18T10:00:00Z\"},\"nextPath\":\"/user/dashboard\"}}"))),
+            @ApiResponse(responseCode = "302", description = "로그인 성공 시 /auth/oauth/callback?type=login 으로 redirect (accessToken은 cw_oauth_login_token 쿠키)"),
+            @ApiResponse(responseCode = "302", description = "신규 가입 필요 시 /auth/oauth/callback?type=signup&provider=...&email=... 으로 redirect (socialSignupToken은 cw_oauth_signup_token 쿠키)"),
             @ApiResponse(responseCode = "400", description = "지원하지 않는 provider / state 불일치 또는 만료",
                     content = @Content(examples = @ExampleObject(
                             value = "{\"success\":false,\"statusCode\":400,\"message\":\"소셜 인증 요청이 유효하지 않습니다. 다시 시도해 주세요.\",\"code\":\"OAUTH_STATE_INVALID\"}"))),
