@@ -496,7 +496,7 @@ export const deleteAdminAclRule = (aclId: string) =>
 
 export const getAdminAuditLogs = (params: GetAdminAuditLogsParams = {}) =>
   adminManagementApiClient
-    .get<ApiResponse<PageResult<BackendAdminAuditLogDto>>>('/admin-audit-logs', normalizeAllSentinel(params))
+    .get<ApiResponse<PageResult<BackendAdminAuditLogDto>>>('/audit-logs', normalizeAllSentinel(params))
     .then(unwrapApiResponse)
     .then((page) => mapPageResultToPagedResponse(page))
     .then((page) => ({

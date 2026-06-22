@@ -16,21 +16,24 @@ RESUME_SYSTEM_PROMPT = """
 - scoreTotal: 위 4개 점수의 가중 평균 (반올림 정수)
 
 ### 항목별 피드백 (feedbackDetails)
-이력서의 각 섹션(자기소개, 경력, 프로젝트, 기술 등)을 항목으로 분리합니다.
-섹션이 명확히 구분되지 않으면 의미 단위로 나눕니다.
+이력서의 핵심 스펙 섹션(경력, 프로젝트, 기술스택, 학력, 자격증 등)을 항목으로 분리합니다.
+
+※ 중요: 이력서 안에 자기소개 또는 자기소개서 텍스트가 포함되어 있더라도 별도 섹션으로 분리하지 않습니다.
+   자기소개 내용은 overallReview에만 간략히 반영하고, feedbackDetails는 경력·프로젝트·기술스택·학력 등 스펙 중심 섹션만 포함합니다.
 
 각 항목(FeedbackDetail):
 - sectionNumber: 1부터 시작하는 연속 정수
-- question: 해당 섹션 제목 또는 대표 주제 (예: "주요 프로젝트 경험")
+- question: 해당 섹션 제목 (예: "주요 프로젝트 경험", "핵심 기술 역량", "경력 사항", "학력 및 자격증")
+  ※ "자기소개서", "자기소개", "지원 동기", "성장 과정" 등의 단어는 절대 사용하지 않습니다.
 - originalText: 해당 섹션 원문 (최대 300자, 초과 시 자름)
 - goodPoint: 잘된 점 (1~2문장)
 - badPoint: 아쉬운 점 (1~2문장)
-- improvedText: 개선된 문장 (원문 수준의 길이로 구체적으로 작성)
-- starAnalysis: STAR 분석 (이력서 전용)
-  - s: {ok: bool, comment: str} — Situation 충족 여부
-  - t: {ok: bool, comment: str} — Task 충족 여부
-  - a: {ok: bool, comment: str} — Action 충족 여부
-  - r: {ok: bool, comment: str} — Result 충족 여부
+- improvedText:
+  ※ 원문의 분량과 문장 수를 반드시 유지합니다. 내용을 요약하거나 축약하지 않습니다.
+  ※ Before(원문)와 반드시 3곳 이상 다른 표현으로 개선해야 합니다. 추상적 표현은 구체적 수치·행동·결과로 바꾸고, 모호한 단어는 명확한 표현으로 대체합니다. 원문과 거의 동일한 improvedText는 허용되지 않습니다.
+  - 경력·프로젝트·성장배경 섹션: 원문의 모든 문장을 유지하면서, 성과·수치·역할이 더 구체적으로 드러나도록 표현만 개선합니다. 문장을 삭제하거나 합치지 않습니다.
+  - 학력·자격증·수상 섹션: 문장형으로 바꾸지 않고, 빠진 정보(취득 점수, 발급 기관, 성적 등)를 추가한 원문 형식 그대로 보완합니다.
+- starAnalysis: null (이력서 분석에서는 STAR 기법 분석을 사용하지 않습니다. 반드시 null로 반환합니다.)
 - quantAnalysis: 수치화 분석
   - numbers: {ok: bool, comment: str} — 수치 사용 여부
   - timeframe: {ok: bool, comment: str} — 기간 표현 여부
@@ -59,12 +62,7 @@ RESUME_SYSTEM_PROMPT = """
       "goodPoint": "string",
       "badPoint": "string",
       "improvedText": "string",
-      "starAnalysis": {
-        "s": {"ok": true, "comment": "string"},
-        "t": {"ok": true, "comment": "string"},
-        "a": {"ok": true, "comment": "string"},
-        "r": {"ok": false, "comment": "string"}
-      },
+      "starAnalysis": null,
       "quantAnalysis": {
         "numbers": {"ok": true, "comment": "string"},
         "timeframe": {"ok": false, "comment": "string"},
@@ -104,7 +102,8 @@ feedbackDetails 항목 수는 content 배열 길이와 반드시 동일해야 �
 - originalText: content[].answer 원문 (최대 300자, 초과 시 자름)
 - goodPoint: 잘된 점 (1~2문장)
 - badPoint: 아쉬운 점 (1~2문장)
-- improvedText: 개선된 문장 (원문 수준의 길이로 구체적으로 작성)
+- improvedText: 개선된 문장. 원문의 분량과 문장 수를 반드시 유지합니다. 내용을 요약하거나 축약하지 않고, 원문의 모든 문장을 유지하면서 표현만 더 구체적으로 개선합니다.
+  ※ Before(원문)와 반드시 3곳 이상 다른 표현으로 개선해야 합니다. 추상적 표현은 구체적 수치·행동·결과로 바꾸고, 모호한 단어는 명확한 표현으로 대체합니다. 원문과 거의 동일한 improvedText는 허용되지 않습니다.
 - starAnalysis: STAR 분석 (행동 기반 문항은 분석 필수, 지원 동기·포부 등 비행동 문항은 null 허용)
   - s: {ok: bool, comment: str} — Situation 충족 여부
   - t: {ok: bool, comment: str} — Task 충족 여부
