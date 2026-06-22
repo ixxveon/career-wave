@@ -52,6 +52,7 @@ export default function TextInterviewPage() {
 
   /* ── 이력서 정보 로드 ── */
   useEffect(() => {
+    setResume(null);
     if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
       setResume({ fileName: MOCK_SETUP.resumeFileName, s3Url: MOCK_SETUP.resumeS3Url });
       setResumeLoading(false);
@@ -69,7 +70,7 @@ export default function TextInterviewPage() {
           ?? '연결된 서류';
         setResume({ fileName, s3Url: '' });
       })
-      .catch(() => {})
+      .catch(() => { setResume(null); })
       .finally(() => setResumeLoading(false));
   }, [documentId]);
 
