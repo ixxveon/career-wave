@@ -221,7 +221,7 @@
 | `id` | `number` | Y | 경고 항목 식별자 |
 | `level` | `DashboardAlertLevelType` | Y | 경고 수준 계약 |
 | `domain` | `DashboardDomainType` | Y | 관리자 도메인 식별자 |
-| `title` | `string` | Y | 경고 제목 |  
+| `title` | `string` | Y | 경고 제목 |
 | `message` | `string` | Y | 경고 설명 |
 | `targetPath` | `string` | Y | 관리자 라우팅 경로 |
 | `createdAt` | `string` | Y | 집계 항목 기준 시각 |
