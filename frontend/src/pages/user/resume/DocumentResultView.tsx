@@ -160,52 +160,24 @@ export default function DocumentResultView({
         </div>
       )}
 
-      <div className="dr-split">
-        <div className="dr-split__left">
+      <div className={isResume ? 'dr-single' : 'dr-split'}>
+        <div className={isResume ? undefined : 'dr-split__left'}>
           <div className="dr-card dr-split__original">
             <p className="dr-card-title">입력 원문</p>
             <p className="dr-split__question">{fd.question}</p>
             <p className="dr-split__text">{fd.originalText}</p>
           </div>
-          <div className="dr-card dr-good-card">
-            <p className="dr-good-card__label"><ThumbsUp size={13} /> 잘한 점</p>
-            <p className="dr-good-card__text">{fd.goodPoint}</p>
-          </div>
-          <div className="dr-card dr-bad-card">
-            <p className="dr-bad-card__label"><ThumbsDown size={13} /> 아쉬운 점</p>
-            <p className="dr-bad-card__text">{fd.badPoint}</p>
-          </div>
-        </div>
-        <div className="dr-split__right">
-          {fd.starAnalysis && (
-            <div className="dr-card dr-star-card">
-              <p className="dr-star-card__label"><Star size={13} /> STAR 기법 분석</p>
-              <div className="dr-star-grid">
-                {(
-                  [
-                    { key: 's', name: 'S', ko: '상황' },
-                    { key: 't', name: 'T', ko: '과제' },
-                    { key: 'a', name: 'A', ko: '행동' },
-                    { key: 'r', name: 'R', ko: '결과' },
-                  ] as const
-                ).map(({ key, name, ko }) => {
-                  const item = fd.starAnalysis![key];
-                  return (
-                    <div key={key} className={`dr-star-row${item.ok ? ' dr-star-row--ok' : ' dr-star-row--bad'}`}>
-                      <span className="dr-star-row__badge">{name}</span>
-                      <span className="dr-star-row__ko">{ko}</span>
-                      <p className="dr-star-row__comment">{item.comment}</p>
-                      {item.ok
-                        ? <CheckCircle2 size={14} className="dr-star-row__icon" />
-                        : <XCircle size={14} className="dr-star-row__icon" />
-                      }
-                    </div>
-                  );
-                })}
-              </div>
+          <div className={isResume ? 'dr-single__row' : undefined}>
+            <div className="dr-card dr-good-card">
+              <p className="dr-good-card__label"><ThumbsUp size={13} /> 잘한 점</p>
+              <p className="dr-good-card__text">{fd.goodPoint}</p>
             </div>
-          )}
-          {fd.quantAnalysis && (
+            <div className="dr-card dr-bad-card">
+              <p className="dr-bad-card__label"><ThumbsDown size={13} /> 아쉬운 점</p>
+              <p className="dr-bad-card__text">{fd.badPoint}</p>
+            </div>
+          </div>
+          {isResume && fd.quantAnalysis && (
             <div className="dr-card dr-quant-card">
               <p className="dr-quant-card__label"><Hash size={13} /> 수치화·정량화 체크</p>
               <div className="dr-star-grid">
@@ -234,6 +206,66 @@ export default function DocumentResultView({
             </div>
           )}
         </div>
+        {!isResume && (
+          <div className="dr-split__right">
+            {fd.starAnalysis && (
+              <div className="dr-card dr-star-card">
+                <p className="dr-star-card__label"><Star size={13} /> STAR 기법 분석</p>
+                <div className="dr-star-grid">
+                  {(
+                    [
+                      { key: 's', name: 'S', ko: '상황' },
+                      { key: 't', name: 'T', ko: '과제' },
+                      { key: 'a', name: 'A', ko: '행동' },
+                      { key: 'r', name: 'R', ko: '결과' },
+                    ] as const
+                  ).map(({ key, name, ko }) => {
+                    const item = fd.starAnalysis![key];
+                    return (
+                      <div key={key} className={`dr-star-row${item.ok ? ' dr-star-row--ok' : ' dr-star-row--bad'}`}>
+                        <span className="dr-star-row__badge">{name}</span>
+                        <span className="dr-star-row__ko">{ko}</span>
+                        <p className="dr-star-row__comment">{item.comment}</p>
+                        {item.ok
+                          ? <CheckCircle2 size={14} className="dr-star-row__icon" />
+                          : <XCircle size={14} className="dr-star-row__icon" />
+                        }
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {fd.quantAnalysis && (
+              <div className="dr-card dr-quant-card">
+                <p className="dr-quant-card__label"><Hash size={13} /> 수치화·정량화 체크</p>
+                <div className="dr-star-grid">
+                  {(
+                    [
+                      { key: 'numbers',   ko: '수치/퍼센트' },
+                      { key: 'timeframe', ko: '기간/빈도'   },
+                      { key: 'scale',     ko: '규모/범위'   },
+                      { key: 'impact',    ko: '성과 임팩트' },
+                    ] as const
+                  ).map(({ key, ko }) => {
+                    const item = fd.quantAnalysis![key];
+                    return (
+                      <div key={key} className={`dr-star-row${item.ok ? ' dr-star-row--ok' : ' dr-star-row--bad'}`}>
+                        <span className="dr-star-row__badge dr-star-row__badge--quant">#</span>
+                        <span className="dr-star-row__ko">{ko}</span>
+                        <p className="dr-star-row__comment">{item.comment}</p>
+                        {item.ok
+                          ? <CheckCircle2 size={14} className="dr-star-row__icon" />
+                          : <XCircle size={14} className="dr-star-row__icon" />
+                        }
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="dr-card dr-improved">
