@@ -33,7 +33,6 @@ public class InterviewCallbackController {
             @PathVariable UUID sessionId,
             @RequestBody InterviewDTO.RequestQuestionCallback dto
     ) {
-        log.info("[debug] internalSecret='{}' received='{}'", internalSecret, secret);
         if (!MessageDigest.isEqual(
                 internalSecret.getBytes(StandardCharsets.UTF_8),
                 secret.getBytes(StandardCharsets.UTF_8))) {
