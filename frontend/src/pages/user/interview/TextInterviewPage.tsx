@@ -63,9 +63,11 @@ export default function TextInterviewPage() {
     }
     resumeHistoryApi.getByDocumentId(documentId)
       .then(item => {
-        if (item.originalName) {
-          setResume({ fileName: item.originalName, s3Url: '' });
-        }
+        const fileName = item.originalName
+          ?? (item.company && item.job ? `${item.company} · ${item.job}` : null)
+          ?? item.company
+          ?? '연결된 서류';
+        setResume({ fileName, s3Url: '' });
       })
       .catch(() => {})
       .finally(() => setResumeLoading(false));
