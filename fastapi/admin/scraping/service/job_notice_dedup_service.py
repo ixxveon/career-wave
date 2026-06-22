@@ -16,7 +16,7 @@ class JobNoticeDedupService:
         _ = notices
 
     def _save_all(self, notices: list[NormalizedJobNotice]) -> None:
-        for notice in self._deduplicate(notices):
+        for notice in self._distinct_notices(notices):
             self._job_notice_repository.save(
                 company_name=notice.company_name,
                 title=notice.title,
@@ -35,19 +35,13 @@ class JobNoticeDedupService:
                 deadline=notice.deadline,
             )
 
-    def _deduplicate(self, notices: list[NormalizedJobNotice]) -> list[NormalizedJobNotice]:
+    def _distinct_notices(self, notices: list[NormalizedJobNotice]) -> list[NormalizedJobNotice]:
         deduplicated: list[NormalizedJobNotice] = []
         seen_keys: set[tuple[str, str]] = set()
 
         for notice in notices:
             dedup_key = (notice.source, notice.original_url)
             if dedup_key in seen_keys:
-                continue
-
-            if self._job_notice_repository.exists_by_source_and_original_url(
-                notice.source,
-                notice.original_url,
-            ):
                 continue
 
             seen_keys.add(dedup_key)

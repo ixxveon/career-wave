@@ -1,4 +1,4 @@
-# FastAPI Checklist: scraping
+﻿# FastAPI Checklist: scraping
 
 > 구현 완료 후 Phase 순서로 검증 가능한 항목만 작성한다.
 
@@ -58,8 +58,8 @@
 
 ## Phase 9 - JobNotice 중복 제거 및 저장
 
-- [x] 실제 실행/재시도 액션은 `job_notices` 갱신을 수행한다.
-- [x] TEST 액션은 `job_notices` 갱신을 수행하지 않는다.
+- [ ] 실제 실행/재시도 액션은 `job_notices` 갱신을 수행한다.
+- [ ] TEST 액션은 `job_notices` 갱신을 수행하지 않는다.
 - [x] `source + original_url` 중복 제거 기준이 저장 로직에도 동일하게 적용된다.
 
 ## Phase 10 - Pipeline 상태 갱신
@@ -69,8 +69,8 @@
 - [x] 실행 성공 시 성공 시각, 소요 시간, 수집 건수, 수정 시각이 반영된다.
 - [x] 실행 실패 시 실패 시각, 에러 메시지, 수정 시각이 반영된다.
 - [x] 동일 `sourceName`에 대해 `RUNNING -> RUNNING` 중복 전이가 발생하지 않는다.
-- [x] `RUNNING -> SUCCESS` 상태 전이 흐름이 반영된다.
-- [x] `RUNNING -> FAILED` 상태 전이 흐름이 반영된다.
+- [ ] `RUNNING -> SUCCESS` 상태 전이 흐름이 반영된다.
+- [ ] `RUNNING -> FAILED` 상태 전이 흐름이 반영된다.
 
 ## Phase 11 - 실행 로그 기록
 

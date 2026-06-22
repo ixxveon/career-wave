@@ -92,6 +92,7 @@ class ScrapingPipelineRepository:
         statement = (
             update(scraping_pipelines_table)
             .where(scraping_pipelines_table.c.source_name == source_name)
+            .where(scraping_pipelines_table.c.pipeline_status != "RUNNING")
             .values(
                 pipeline_status="RUNNING",
                 last_started_at=started_at,
@@ -254,6 +255,7 @@ class ScrapingPipelineRepository:
         if total_elements == 0:
             return 0
         return (total_elements + size - 1) // size
+
     @staticmethod
     def _to_record(row: RowMapping) -> ScrapingPipelineRecord:
         return ScrapingPipelineRecord(
