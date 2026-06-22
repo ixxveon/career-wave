@@ -108,9 +108,18 @@ public class Payment {
                                       int amount, String currency,
                                       PaymentType paymentType, int attemptSequence,
                                       ZonedDateTime expiresAt) {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("amount는 0보다 커야 합니다: " + amount);
+        if (memberId == null) throw new IllegalArgumentException("memberId는 필수입니다");
+        if (planId == null) throw new IllegalArgumentException("planId는 필수입니다");
+        if (orderId == null || orderId.isBlank()) throw new IllegalArgumentException("orderId는 필수입니다");
+        if (idempotencyKey == null || idempotencyKey.isBlank()) throw new IllegalArgumentException("idempotencyKey는 필수입니다");
+        if (amount <= 0) throw new IllegalArgumentException("amount는 0보다 커야 합니다: " + amount);
+        if (currency == null || currency.isBlank()) throw new IllegalArgumentException("currency는 필수입니다");
+        if (paymentType == null) throw new IllegalArgumentException("paymentType은 필수입니다");
+        if (attemptSequence < 0 || attemptSequence > 2) throw new IllegalArgumentException("attemptSequence는 0~2 범위여야 합니다: " + attemptSequence);
+        if (paymentType == PaymentType.AUTO_RENEWAL && subscriptionId == null) {
+            throw new IllegalArgumentException("AUTO_RENEWAL 결제에는 subscriptionId가 필수입니다");
         }
+
         Payment p = new Payment();
         p.memberId = memberId;
         p.planId = planId;

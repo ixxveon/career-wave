@@ -49,6 +49,80 @@ class PaymentTest {
                     UUID.randomUUID(), 1L, null, "o", "i", 0, "KRW", PaymentType.MANUAL, 0, NOW))
                     .isInstanceOf(IllegalArgumentException.class);
         }
+
+        @Test
+        @DisplayName("memberId null이면 IllegalArgumentException")
+        void createReady_nullMemberId_throws() {
+            assertThatThrownBy(() -> Payment.createReady(
+                    null, 1L, null, "o", "i", 9900, "KRW", PaymentType.MANUAL, 0, NOW))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("planId null이면 IllegalArgumentException")
+        void createReady_nullPlanId_throws() {
+            assertThatThrownBy(() -> Payment.createReady(
+                    UUID.randomUUID(), null, null, "o", "i", 9900, "KRW", PaymentType.MANUAL, 0, NOW))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("orderId blank이면 IllegalArgumentException")
+        void createReady_blankOrderId_throws() {
+            assertThatThrownBy(() -> Payment.createReady(
+                    UUID.randomUUID(), 1L, null, "  ", "i", 9900, "KRW", PaymentType.MANUAL, 0, NOW))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("idempotencyKey blank이면 IllegalArgumentException")
+        void createReady_blankIdempotencyKey_throws() {
+            assertThatThrownBy(() -> Payment.createReady(
+                    UUID.randomUUID(), 1L, null, "o", "", 9900, "KRW", PaymentType.MANUAL, 0, NOW))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("paymentType null이면 IllegalArgumentException")
+        void createReady_nullPaymentType_throws() {
+            assertThatThrownBy(() -> Payment.createReady(
+                    UUID.randomUUID(), 1L, null, "o", "i", 9900, "KRW", null, 0, NOW))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("attemptSequence 음수이면 IllegalArgumentException")
+        void createReady_negativeAttemptSequence_throws() {
+            assertThatThrownBy(() -> Payment.createReady(
+                    UUID.randomUUID(), 1L, null, "o", "i", 9900, "KRW", PaymentType.MANUAL, -1, NOW))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("attemptSequence > 2이면 IllegalArgumentException")
+        void createReady_attemptSequenceOverMax_throws() {
+            assertThatThrownBy(() -> Payment.createReady(
+                    UUID.randomUUID(), 1L, null, "o", "i", 9900, "KRW", PaymentType.MANUAL, 3, NOW))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("AUTO_RENEWAL에 subscriptionId null이면 IllegalArgumentException")
+        void createReady_autoRenewalWithoutSubscriptionId_throws() {
+            assertThatThrownBy(() -> Payment.createReady(
+                    UUID.randomUUID(), 1L, null, "o", "i", 9900, "KRW",
+                    PaymentType.AUTO_RENEWAL, 0, NOW))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("AUTO_RENEWAL에 subscriptionId 있으면 정상 생성")
+        void createReady_autoRenewalWithSubscriptionId_success() {
+            Payment p = Payment.createReady(
+                    UUID.randomUUID(), 1L, UUID.randomUUID(), "o", "i", 9900, "KRW",
+                    PaymentType.AUTO_RENEWAL, 0, NOW);
+            assertThat(p.getPaymentStatus()).isEqualTo(PaymentStatus.READY);
+        }
     }
 
     @Nested
