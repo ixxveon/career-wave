@@ -105,10 +105,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Object>> handleIllegalArgumentException(IllegalArgumentException e) {
+        // 내부 메시지(JWT 포맷, accountType 등)가 클라이언트에 노출되지 않도록 고정 메시지 반환
         log.warn("[잘못된 요청 파라미터] {}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), "잘못된 요청 파라미터입니다."));
     }
 
     @ExceptionHandler(Exception.class)
