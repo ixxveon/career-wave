@@ -2,6 +2,7 @@
 -- CareerWave 전체 DDL v4
 -- ================================================
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "btree_gist";
 
 -- ================================================
 -- 1. members
@@ -658,7 +659,9 @@ CREATE TABLE subscriptions (
     CONSTRAINT fk_subscriptions_plan               FOREIGN KEY (plan_id)             REFERENCES plans (plan_id),
     CONSTRAINT fk_subscriptions_billing_profile    FOREIGN KEY (billing_profile_id)  REFERENCES billing_profiles (billing_profile_id),
     CONSTRAINT chk_subscription_status             CHECK (subscription_status IN ('ACTIVE', 'CANCEL_SCHEDULED', 'EXPIRED', 'PAYMENT_FAILED', 'REFUND_PENDING', 'REFUNDED')),
-    CONSTRAINT chk_retry_count                     CHECK (retry_count BETWEEN 0 AND 2)
+    CONSTRAINT chk_retry_count                     CHECK (retry_count BETWEEN 0 AND 2),
+    CONSTRAINT chk_period_order                    CHECK (current_period_start < current_period_end),
+    CONSTRAINT chk_payment_failed_at               CHECK (subscription_status != 'PAYMENT_FAILED' OR payment_failed_at IS NOT NULL)
 );
 COMMENT ON TABLE  subscriptions                      IS '구독 정보 테이블';
 COMMENT ON COLUMN subscriptions.subscription_id      IS '구독 고유 식별자';
@@ -1341,7 +1344,11 @@ CREATE TABLE subscription_usage_periods (
     CONSTRAINT chk_usage_count        CHECK (used_count + reserved_count <= limit_count),
     CONSTRAINT chk_limit_count        CHECK (limit_count > 0),
     CONSTRAINT chk_used_count         CHECK (used_count >= 0),
-    CONSTRAINT chk_reserved_count     CHECK (reserved_count >= 0)
+    CONSTRAINT chk_reserved_count     CHECK (reserved_count >= 0),
+    CONSTRAINT excl_sub_period_no_overlap EXCLUDE USING gist (
+        subscription_id WITH =,
+        tstzrange(period_start, period_end) WITH &&
+    )
 );
 COMMENT ON TABLE  subscription_usage_periods                    IS '구독 월별 제공량 및 사용량';
 COMMENT ON COLUMN subscription_usage_periods.usage_period_id   IS '사용 기간 고유 식별자';

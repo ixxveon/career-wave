@@ -19,6 +19,8 @@
 
 BEGIN;
 
+CREATE EXTENSION IF NOT EXISTS "btree_gist";
+
 -- ============================================================
 -- 1. subscriptions 테이블 확장
 -- ============================================================
@@ -218,16 +220,41 @@ CREATE TABLE IF NOT EXISTS billing_profiles (
     CONSTRAINT chk_billing_profile_status     CHECK (billing_profile_status IN ('ACTIVE', 'REVOKED'))
 );
 
--- subscriptions.billing_profile_id → billing_profiles FK
--- billing_profiles 생성 이후에 추가해야 하므로 이 위치에 배치
+-- subscriptions FK 제약 조건부 추가 (billing_profiles 생성 이후 배치)
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_subscriptions_billing_profile'
-    ) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_subscriptions_billing_profile') THEN
         ALTER TABLE subscriptions
             ADD CONSTRAINT fk_subscriptions_billing_profile
             FOREIGN KEY (billing_profile_id) REFERENCES billing_profiles(billing_profile_id);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_subscriptions_plan') THEN
+        ALTER TABLE subscriptions
+            ADD CONSTRAINT fk_subscriptions_plan
+            FOREIGN KEY (plan_id) REFERENCES plans(plan_id);
+    END IF;
+END $$;
+
+-- payments FK 제약 조건부 추가
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_payments_sub') THEN
+        ALTER TABLE payments
+            ADD CONSTRAINT fk_payments_sub
+            FOREIGN KEY (subscription_id) REFERENCES subscriptions(subscription_id);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_payments_plan') THEN
+        ALTER TABLE payments
+            ADD CONSTRAINT fk_payments_plan
+            FOREIGN KEY (plan_id) REFERENCES plans(plan_id);
     END IF;
 END $$;
 
@@ -279,7 +306,11 @@ CREATE TABLE IF NOT EXISTS subscription_usage_periods (
     CONSTRAINT chk_usage_count        CHECK (used_count + reserved_count <= limit_count),
     CONSTRAINT chk_limit_count        CHECK (limit_count > 0),
     CONSTRAINT chk_used_count         CHECK (used_count >= 0),
-    CONSTRAINT chk_reserved_count     CHECK (reserved_count >= 0)
+    CONSTRAINT chk_reserved_count     CHECK (reserved_count >= 0),
+    CONSTRAINT excl_sub_period_no_overlap EXCLUDE USING gist (
+        subscription_id WITH =,
+        tstzrange(period_start, period_end) WITH &&
+    )
 );
 
 -- ============================================================
