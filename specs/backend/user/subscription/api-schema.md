@@ -25,7 +25,7 @@
 | `PlanType` | `FREE`, `PREMIUM` |
 | `FreeUsageStatus` | `AVAILABLE`, `RESERVED`, `USED`, `FORFEITED` |
 | `SubscriptionStatus` | `ACTIVE`, `CANCEL_SCHEDULED`, `PAYMENT_FAILED`, `EXPIRED`, `REFUND_PENDING`, `REFUNDED` |
-| `PaymentStatus` | `READY`, `AUTHORIZED`, `CONFIRMING`, `PAID`, `FAILED`, `CANCELED`, `RECONCILING`, `REFUNDED` |
+| `PaymentStatus` | **FE 노출**: `READY`, `AGREED`, `REQUESTING`, `REDIRECTING`, `CONFIRMING`, `PAID`, `FAILED`, `CANCELED`, `REFUNDED` / **서버 내부 전용** (API 응답 미포함): `AUTHORIZED` (billingKey 인가 완료), `RECONCILING` (결제 기록 처리 중) |
 | `PaymentType` | `MANUAL`, `AUTO_RENEWAL` |
 
 ---
@@ -58,6 +58,8 @@ GET /api/v1/user/billing/products
 ```
 
 > `price`, `monthlyUsageLimit`의 0은 문서 초안 placeholder이다. 구현 전 확정값으로 교체한다.
+>
+> **주의**: `amount` 값은 반드시 양의 정수여야 한다. FE `usePaymentSuccessStatus()`는 `amount <= 0`이면 직접 접근으로 간주하여 `/mypage/subscription`으로 리다이렉트한다. 초안 예시에 표기된 `amount: 0`은 가격 미확정 placeholder이며 실제 구현 시 교체한다.
 
 ---
 
@@ -215,7 +217,7 @@ POST /api/v1/user/billing/payments/confirm
 {
   "paymentKey": "toss-payment-or-authorization-key",
   "orderId": "SUB-20260622-uuid",
-  "amount": 0
+  "amount": 9900
 }
 ```
 
@@ -244,13 +246,11 @@ POST /api/v1/user/billing/payments/confirm
     "orderId": "SUB-20260622-uuid",
     "productCode": "interview",
     "productName": "AI 모의면접",
-    "amount": 0,
+    "amount": 9900,
     "currency": "KRW",
     "paymentStatus": "PAID",
-    "subscriptionId": "uuid-v4",
     "subscriptionStatus": "ACTIVE",
     "paidAt": "2026-06-22T10:05:00+09:00",
-    "currentPeriodEnd": "2026-07-22T10:05:00+09:00",
     "nextBillingAt": "2026-07-22T10:05:00+09:00"
   }
 }
@@ -280,12 +280,14 @@ GET /api/v1/user/billing/payments/orders/{orderId}
     "paymentStatus": "PAID",
     "productCode": "interview",
     "productName": "AI 모의면접",
-    "amount": 0,
+    "amount": 9900,
     "paidAt": "2026-06-22T10:05:00+09:00",
-    "failureReason": null
+    "failure": null
   }
 }
 ```
+
+> 결제 실패 시 `failure` 구조: `{ "reasonCode": "CARD_DECLINED", "displayMessage": "카드 승인이 거절되었습니다.", "retryable": true }`. 성공 시 `null`.
 
 ---
 
@@ -354,7 +356,59 @@ GET /api/v1/user/billing/payments/history?period=12M&page=0&size=10
 
 ---
 
-## 10. 공통 Error 응답
+## 10. 결제 실패 기록
+
+```http
+POST /api/v1/user/billing/payments/fail
+```
+
+> FE `usePaymentFailStatus()`가 fail URL 진입 시 자동 호출한다. `orderId` 없이 진입하면 호출하지 않고 `/mypage/subscription`으로 리다이렉트한다.
+
+### Request
+
+```json
+{
+  "orderId": "SUB-20260622-uuid",
+  "productCode": "interview",
+  "reasonCode": "USER_CANCELED",
+  "message": "PAY_PROCESS_CANCELED"
+}
+```
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `orderId` | `string` | 실패한 주문 ID |
+| `productCode` | `ProductCode` | 상품 코드 |
+| `reasonCode` | `PaymentFailureReason` | FE가 매핑한 실패 사유 코드 |
+| `message` | `string` | Toss 원본 에러 코드 또는 reasonCode |
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "결제 실패를 기록했습니다.",
+  "data": {
+    "orderId": "SUB-20260622-uuid",
+    "paymentStatus": "FAILED",
+    "retryable": true
+  }
+}
+```
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `orderId` | `string` | 실패 처리된 주문 ID |
+| `paymentStatus` | `PaymentStatus` | 항상 `FAILED` |
+| `retryable` | `boolean` | FE `다시 결제하기` 버튼 노출 여부 |
+
+> `retryable` 판단 기준: `USER_CANCELED`, `CARD_DECLINED`, `TIMEOUT` → `true` / `DUPLICATE_ORDER`, `CONFIRM_FAILED`, `FORBIDDEN` → `false`.
+> `PaymentFailureReason`: `USER_CANCELED`, `CARD_DECLINED`, `TIMEOUT`, `DUPLICATE_ORDER`, `CONFIRM_FAILED`, `FORBIDDEN`, `UNKNOWN`
+
+---
+
+## 11. 공통 Error 응답
 
 ```json
 {
@@ -367,14 +421,14 @@ GET /api/v1/user/billing/payments/history?period=12M&page=0&size=10
 
 ---
 
-## 11. 현재 Frontend Button → Backend 계약
+## 12. 현재 Frontend Button → Backend 계약
 
 | Frontend 동작 | Backend 계약 |
 |---|---|
 | 상품 카드 `구매하기` | `GET /billing/products`가 query의 productCode와 동일한 상품을 반환 |
 | checkout 동의 후 `Toss Payments로 결제하기` | `POST /billing/checkout/orders`가 현재 `CreateOrderResponse` 필드를 모두 반환 |
 | success 페이지 진입 | `POST /billing/payments/confirm` 응답이 현재 `ConfirmPaymentResponse` 필드를 모두 반환 |
-| fail 페이지 진입 | `POST /billing/payments/fail`이 기존 request 필드를 수용 |
+| fail 페이지 진입 | `POST /billing/payments/fail`이 `{ orderId, productCode, reasonCode, message }` 수용, `{ orderId, paymentStatus, retryable }` 반환 |
 | `다시 결제하기` | 기존 order 재사용 없이 같은 productCode로 새 READY 주문 생성 |
 | `구독 해지` modal 확인 | `POST /subscriptions/{subscriptionId}/cancel`이 기존 `CancelSubscriptionResponse` 필드를 반환 |
 | 기간 select | `period=1M/3M/6M/12M` 지원 |
