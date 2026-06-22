@@ -12,6 +12,9 @@
 --   - payments.payment_type은 20260621_payments_add_payment_type.sql에서 이미 추가됨
 --   - IF NOT EXISTS를 사용해 중복 실행 안전하게 처리
 --   - 트랜잭션으로 래핑 — 중간 실패 시 전체 롤백됨
+--   - subscriptions 상태 일관성 CHECK 포함:
+--       current_period_start < current_period_end
+--       PAYMENT_FAILED → payment_failed_at NOT NULL
 -- ================================================
 
 BEGIN;
@@ -74,6 +77,30 @@ ALTER TABLE subscriptions
     DROP CONSTRAINT IF EXISTS chk_retry_count;
 ALTER TABLE subscriptions
     ADD CONSTRAINT chk_retry_count CHECK (retry_count BETWEEN 0 AND 2);
+
+-- ACTIVE row의 next_billing_at null 보완
+-- 자동 갱신 스케줄러가 ACTIVE + next_billing_at 조건으로 동작하므로, 기존 ACTIVE row에 값이 없으면
+-- 스케줄러가 해당 구독을 영원히 처리하지 못함 → current_period_end 값으로 채움
+UPDATE subscriptions
+SET next_billing_at = current_period_end
+WHERE subscription_status = 'ACTIVE'
+  AND next_billing_at IS NULL
+  AND current_period_end IS NOT NULL;
+
+-- 상태 일관성 CHECK 제약 추가
+ALTER TABLE subscriptions
+    DROP CONSTRAINT IF EXISTS chk_period_order;
+ALTER TABLE subscriptions
+    ADD CONSTRAINT chk_period_order
+        CHECK (current_period_start IS NULL
+            OR current_period_end   IS NULL
+            OR current_period_start < current_period_end);
+
+ALTER TABLE subscriptions
+    DROP CONSTRAINT IF EXISTS chk_payment_failed_at;
+ALTER TABLE subscriptions
+    ADD CONSTRAINT chk_payment_failed_at
+        CHECK (subscription_status != 'PAYMENT_FAILED' OR payment_failed_at IS NOT NULL);
 
 COMMENT ON COLUMN subscriptions.plan_id              IS '플랜 FK';
 COMMENT ON COLUMN subscriptions.billing_profile_id   IS 'Toss 자동결제 수단 FK (Phase 4 이전 생성된 row는 NULL)';
