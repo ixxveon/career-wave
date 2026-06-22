@@ -79,7 +79,8 @@ class InterviewSessionServiceImplTest {
             InterviewDTO.ResponseStartSession result = interviewSessionService.startSession(memberId, dto);
 
             assertThat(result.sessionStatus()).isEqualTo("IN_PROGRESS");
-            verify(sessionRepository, times(2)).save(any()); // 기존 세션 FAILED + 새 세션 생성
+            verify(sessionRepository, times(1)).save(any()); // 새 세션 생성 (기존 세션 FAILED는 dirty checking)
+            assertThat(existing.getSessionStatus()).isEqualTo(SessionStatus.FAILED);
         }
 
         @Test
