@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 
-from sqlalchemy import ARRAY, BigInteger, Column, Date, DateTime, Integer, MetaData, String, Table, Text, UniqueConstraint, insert, select
+from sqlalchemy import ARRAY, BigInteger, Column, Date, DateTime, Integer, MetaData, String, Table, Text, UniqueConstraint, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 
@@ -95,9 +96,17 @@ class JobNoticeRepository:
                 view_count=view_count,
                 deadline=deadline,
             )
+            .on_conflict_do_nothing(
+                constraint="uq_job_notices_source_original_url",
+            )
             .returning(job_notices_table)
         )
-        row = self._session.execute(statement).mappings().one()
+        row = self._session.execute(statement).mappings().one_or_none()
+        if row is None:
+            existing = self.find_by_source_and_original_url(source, original_url)
+            if existing is None:
+                raise RuntimeError("job notice insert conflicted but no existing row was found")
+            return existing
         self._session.flush()
         return self._to_record(row)
 
@@ -107,12 +116,16 @@ class JobNoticeRepository:
         return self._to_record(row) if row else None
 
     def exists_by_source_and_original_url(self, source: str, original_url: str) -> bool:
+        return self.find_by_source_and_original_url(source, original_url) is not None
+
+    def find_by_source_and_original_url(self, source: str, original_url: str) -> JobNoticeRecord | None:
         statement = (
-            select(job_notices_table.c.job_notice_id)
+            select(job_notices_table)
             .where(job_notices_table.c.source == source)
             .where(job_notices_table.c.original_url == original_url)
         )
-        return self._session.execute(statement).first() is not None
+        row = self._session.execute(statement).mappings().one_or_none()
+        return self._to_record(row) if row else None
 
     @staticmethod
     def _to_record(row) -> JobNoticeRecord:

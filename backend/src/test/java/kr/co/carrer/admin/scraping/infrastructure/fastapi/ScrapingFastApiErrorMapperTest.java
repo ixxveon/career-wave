@@ -71,15 +71,46 @@ class ScrapingFastApiErrorMapperTest {
         assertThat(exception.getErrorCode()).isEqualTo(ScrapingErrorCode.SCRAPING_ALREADY_RUNNING);
     }
 
+    @Test
+    void fallsBackToExecutionFailedWhenErrorCodeIsBlankOrMissing() {
+        CustomException blankCodeException = ScrapingFastApiErrorMapper.toCustomException(
+                responseExceptionFromBody("""
+                        {
+                          "success": false,
+                          "errorCode": "   ",
+                          "message": "fastapi error",
+                          "detail": {}
+                        }
+                        """),
+                objectMapper
+        );
+        CustomException missingCodeException = ScrapingFastApiErrorMapper.toCustomException(
+                responseExceptionFromBody("""
+                        {
+                          "success": false,
+                          "message": "fastapi error",
+                          "detail": {}
+                        }
+                        """),
+                objectMapper
+        );
+
+        assertThat(blankCodeException.getErrorCode()).isEqualTo(ScrapingErrorCode.SCRAPING_EXECUTION_FAILED);
+        assertThat(missingCodeException.getErrorCode()).isEqualTo(ScrapingErrorCode.SCRAPING_EXECUTION_FAILED);
+    }
+
     private WebClientResponseException responseException(String errorCode) {
-        String body = """
+        return responseExceptionFromBody("""
                 {
                   "success": false,
                   "errorCode": "%s",
                   "message": "fastapi error",
                   "detail": {}
                 }
-                """.formatted(errorCode);
+                """.formatted(errorCode));
+    }
+
+    private WebClientResponseException responseExceptionFromBody(String body) {
         return WebClientResponseException.create(
                 500,
                 "Internal Server Error",
