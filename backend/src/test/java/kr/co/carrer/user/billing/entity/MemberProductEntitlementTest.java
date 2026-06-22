@@ -222,11 +222,25 @@ class MemberProductEntitlementTest {
         }
 
         @Test
-        @DisplayName("activatePremium() — subscriptionId null이면 IllegalArgumentException")
+        @DisplayName("activatePremium() — subscriptionId null이면 CustomException")
         void activatePremium_nullSubscriptionId_throws() {
             MemberProductEntitlement e = newFree();
             assertThatThrownBy(() -> e.activatePremium(null))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
+        }
+
+        @Test
+        @DisplayName("RESERVED 상태에서는 activatePremium() 차단")
+        void activatePremium_fromReserved_throws() {
+            MemberProductEntitlement e = newFree();
+            e.reserveFree();
+
+            assertThatThrownBy(() -> e.activatePremium(UUID.randomUUID()))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
 
         @Test

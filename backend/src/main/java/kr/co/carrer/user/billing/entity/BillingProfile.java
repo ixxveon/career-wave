@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -48,17 +49,19 @@ public class BillingProfile {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     @PrePersist
     protected void onCreate() {
         if (billingProfileId == null) billingProfileId = UUID.randomUUID();
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(KST);
         createdAt = now;
         updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = ZonedDateTime.now();
+        updatedAt = ZonedDateTime.now(KST);
     }
 
     public static BillingProfile create(UUID memberId, String customerKey,
@@ -71,7 +74,7 @@ public class BillingProfile {
         bp.cardCompany = cardCompany;
         bp.cardNumberMasked = cardNumberMasked;
         bp.billingProfileStatus = BillingProfileStatus.ACTIVE;
-        bp.authenticatedAt = ZonedDateTime.now();
+        bp.authenticatedAt = ZonedDateTime.now(KST);
         return bp;
     }
 

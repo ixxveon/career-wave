@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -50,17 +51,19 @@ public class SubscriptionUsagePeriod {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     @PrePersist
     protected void onCreate() {
         if (usagePeriodId == null) usagePeriodId = UUID.randomUUID();
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(KST);
         createdAt = now;
         updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = ZonedDateTime.now();
+        updatedAt = ZonedDateTime.now(KST);
     }
 
     public static SubscriptionUsagePeriod create(UUID subscriptionId, String productCode,

@@ -43,76 +43,94 @@ class PaymentTest {
         }
 
         @Test
-        @DisplayName("amount <= 0 이면 IllegalArgumentException")
+        @DisplayName("amount <= 0 이면 CustomException(PAYMENT_INVALID_PARAM)")
         void createReady_zeroAmount_throws() {
             assertThatThrownBy(() -> Payment.createReady(
                     UUID.randomUUID(), 1L, null, "o", "i", 0, "KRW", PaymentType.MANUAL, 0, NOW))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         @Test
-        @DisplayName("memberId null이면 IllegalArgumentException")
+        @DisplayName("memberId null이면 CustomException(PAYMENT_INVALID_PARAM)")
         void createReady_nullMemberId_throws() {
             assertThatThrownBy(() -> Payment.createReady(
                     null, 1L, null, "o", "i", 9900, "KRW", PaymentType.MANUAL, 0, NOW))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         @Test
-        @DisplayName("planId null이면 IllegalArgumentException")
+        @DisplayName("planId null이면 CustomException(PAYMENT_INVALID_PARAM)")
         void createReady_nullPlanId_throws() {
             assertThatThrownBy(() -> Payment.createReady(
                     UUID.randomUUID(), null, null, "o", "i", 9900, "KRW", PaymentType.MANUAL, 0, NOW))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         @Test
-        @DisplayName("orderId blank이면 IllegalArgumentException")
+        @DisplayName("orderId blank이면 CustomException(PAYMENT_INVALID_PARAM)")
         void createReady_blankOrderId_throws() {
             assertThatThrownBy(() -> Payment.createReady(
                     UUID.randomUUID(), 1L, null, "  ", "i", 9900, "KRW", PaymentType.MANUAL, 0, NOW))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         @Test
-        @DisplayName("idempotencyKey blank이면 IllegalArgumentException")
+        @DisplayName("idempotencyKey blank이면 CustomException(PAYMENT_INVALID_PARAM)")
         void createReady_blankIdempotencyKey_throws() {
             assertThatThrownBy(() -> Payment.createReady(
                     UUID.randomUUID(), 1L, null, "o", "", 9900, "KRW", PaymentType.MANUAL, 0, NOW))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         @Test
-        @DisplayName("paymentType null이면 IllegalArgumentException")
+        @DisplayName("paymentType null이면 CustomException(PAYMENT_INVALID_PARAM)")
         void createReady_nullPaymentType_throws() {
             assertThatThrownBy(() -> Payment.createReady(
                     UUID.randomUUID(), 1L, null, "o", "i", 9900, "KRW", null, 0, NOW))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         @Test
-        @DisplayName("attemptSequence 음수이면 IllegalArgumentException")
+        @DisplayName("attemptSequence 음수이면 CustomException(PAYMENT_INVALID_PARAM)")
         void createReady_negativeAttemptSequence_throws() {
             assertThatThrownBy(() -> Payment.createReady(
                     UUID.randomUUID(), 1L, null, "o", "i", 9900, "KRW", PaymentType.MANUAL, -1, NOW))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         @Test
-        @DisplayName("attemptSequence > 2이면 IllegalArgumentException")
+        @DisplayName("attemptSequence > 2이면 CustomException(PAYMENT_INVALID_PARAM)")
         void createReady_attemptSequenceOverMax_throws() {
             assertThatThrownBy(() -> Payment.createReady(
                     UUID.randomUUID(), 1L, null, "o", "i", 9900, "KRW", PaymentType.MANUAL, 3, NOW))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         @Test
-        @DisplayName("AUTO_RENEWAL에 subscriptionId null이면 IllegalArgumentException")
+        @DisplayName("AUTO_RENEWAL에 subscriptionId null이면 CustomException(PAYMENT_INVALID_PARAM)")
         void createReady_autoRenewalWithoutSubscriptionId_throws() {
             assertThatThrownBy(() -> Payment.createReady(
                     UUID.randomUUID(), 1L, null, "o", "i", 9900, "KRW",
                     PaymentType.AUTO_RENEWAL, 0, NOW))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         @Test
@@ -225,23 +243,27 @@ class PaymentTest {
         }
 
         @Test
-        @DisplayName("paymentKey null이면 IllegalArgumentException — DB flush 전 사전 검증")
+        @DisplayName("paymentKey null이면 CustomException(PAYMENT_INVALID_PARAM)")
         void paid_nullPaymentKey_throws() {
             Payment p = newReady();
             p.authorize();
             p.confirmStarted();
             assertThatThrownBy(() -> p.paid(null, NOW))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         @Test
-        @DisplayName("approvedAt null이면 IllegalArgumentException — DB flush 전 사전 검증")
+        @DisplayName("approvedAt null이면 CustomException(PAYMENT_INVALID_PARAM)")
         void paid_nullApprovedAt_throws() {
             Payment p = newReady();
             p.authorize();
             p.confirmStarted();
             assertThatThrownBy(() -> p.paid("tk_key", null))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM;
         }
 
         @Test
@@ -320,12 +342,14 @@ class PaymentTest {
         }
 
         @Test
-        @DisplayName("reason null이면 IllegalArgumentException")
+        @DisplayName("reason null이면 CustomException(PAYMENT_INVALID_PARAM)")
         void fail_nullReason_throws() {
             Payment p = newReady();
             p.authorize();
             assertThatThrownBy(() -> p.fail(null))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
     }
 

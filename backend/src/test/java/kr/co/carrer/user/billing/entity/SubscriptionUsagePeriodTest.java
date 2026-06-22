@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -14,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SubscriptionUsagePeriodTest {
 
-    private static final ZonedDateTime START = ZonedDateTime.now();
+    private static final ZonedDateTime START = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
     private static final ZonedDateTime END = START.plusMonths(1);
 
     private SubscriptionUsagePeriod newPeriod(int limit) {

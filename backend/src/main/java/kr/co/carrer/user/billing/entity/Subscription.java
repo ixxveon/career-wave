@@ -8,6 +8,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -68,27 +69,28 @@ public class Subscription {
     private ZonedDateTime updatedAt;
 
     private static final int MAX_RETRY_COUNT = 2;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @PrePersist
     protected void onCreate() {
         if (subscriptionId == null) subscriptionId = UUID.randomUUID();
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(KST);
         createdAt = now;
         updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = ZonedDateTime.now();
+        updatedAt = ZonedDateTime.now(KST);
     }
 
     public static Subscription create(UUID memberId, Long planId,
                                       ZonedDateTime periodStart, ZonedDateTime periodEnd) {
         if (periodStart == null || periodEnd == null) {
-            throw new IllegalArgumentException("periodStart와 periodEnd는 필수입니다");
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_PERIOD_NULL);
         }
         if (!periodStart.isBefore(periodEnd)) {
-            throw new IllegalArgumentException("periodStart는 periodEnd보다 이전이어야 합니다");
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_PERIOD_RANGE);
         }
         Subscription s = new Subscription();
         s.memberId = memberId;
@@ -108,7 +110,7 @@ public class Subscription {
             throw new CustomException(BillingErrorCode.SUBSCRIPTION_NOT_CANCELABLE);
         }
         this.subscriptionStatus = SubscriptionStatus.CANCEL_SCHEDULED;
-        this.cancelScheduledAt = ZonedDateTime.now();
+        this.cancelScheduledAt = ZonedDateTime.now(KST);
         this.autoRenew = false;
     }
 
@@ -120,7 +122,7 @@ public class Subscription {
         this.subscriptionStatus = SubscriptionStatus.PAYMENT_FAILED;
         // 최초 실패 시각만 기록 — 재시도 실패에서 덮어쓰지 않음 (재시도 스케줄 계산 기준)
         if (this.paymentFailedAt == null) {
-            this.paymentFailedAt = ZonedDateTime.now();
+            this.paymentFailedAt = ZonedDateTime.now(KST);
         }
         // autoRenew는 유지 — 재시도 스케줄러가 PAYMENT_FAILED + autoRenew=true 조건으로 동작
     }
@@ -142,7 +144,7 @@ public class Subscription {
             throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
         }
         this.subscriptionStatus = SubscriptionStatus.EXPIRED;
-        this.cancelledAt = ZonedDateTime.now();
+        this.cancelledAt = ZonedDateTime.now(KST);
         this.autoRenew = false;
         this.nextBillingAt = null;
     }
@@ -169,10 +171,10 @@ public class Subscription {
             throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
         }
         if (newPeriodStart == null || newPeriodEnd == null) {
-            throw new IllegalArgumentException("갱신 기간은 필수입니다");
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_PERIOD_NULL);
         }
         if (!newPeriodStart.isBefore(newPeriodEnd)) {
-            throw new IllegalArgumentException("갱신 기간: start >= end 는 허용되지 않습니다");
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_PERIOD_RANGE);
         }
         this.subscriptionStatus = SubscriptionStatus.ACTIVE;
         this.currentPeriodStart = newPeriodStart;

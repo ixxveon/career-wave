@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -59,10 +60,12 @@ public class ServiceUsageRecord {
     @Column(name = "released_at")
     private ZonedDateTime releasedAt;
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     @PrePersist
     protected void onCreate() {
         if (usageRecordId == null) usageRecordId = UUID.randomUUID();
-        if (reservedAt == null) reservedAt = ZonedDateTime.now();
+        if (reservedAt == null) reservedAt = ZonedDateTime.now(KST);
     }
 
     public static ServiceUsageRecord reserveFree(UUID memberId, String productCode,
@@ -96,7 +99,7 @@ public class ServiceUsageRecord {
             throw new CustomException(BillingErrorCode.USAGE_RECORD_INVALID_STATE);
         }
         this.usageStatus = UsageStatus.CONSUMED;
-        this.consumedAt = ZonedDateTime.now();
+        this.consumedAt = ZonedDateTime.now(KST);
     }
 
     public void release() {
@@ -104,6 +107,6 @@ public class ServiceUsageRecord {
             throw new CustomException(BillingErrorCode.USAGE_RECORD_INVALID_STATE);
         }
         this.usageStatus = UsageStatus.RELEASED;
-        this.releasedAt = ZonedDateTime.now();
+        this.releasedAt = ZonedDateTime.now(KST);
     }
 }

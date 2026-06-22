@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -51,17 +52,19 @@ public class MemberProductEntitlement {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     @PrePersist
     protected void onCreate() {
         if (entitlementId == null) entitlementId = UUID.randomUUID();
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(KST);
         createdAt = now;
         updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = ZonedDateTime.now();
+        updatedAt = ZonedDateTime.now(KST);
     }
 
     public static MemberProductEntitlement createFree(UUID memberId, String productCode) {
@@ -108,7 +111,10 @@ public class MemberProductEntitlement {
 
     public void activatePremium(UUID subscriptionId) {
         if (subscriptionId == null) {
-            throw new IllegalArgumentException("subscriptionId는 필수입니다");
+            throw new CustomException(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
+        }
+        if (this.freeUsageStatus == FreeUsageStatus.RESERVED) {
+            throw new CustomException(BillingErrorCode.ENTITLEMENT_INVALID_STATE);
         }
         this.planType = PlanType.PREMIUM;
         this.activeSubscriptionId = subscriptionId;

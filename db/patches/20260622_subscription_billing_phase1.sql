@@ -335,4 +335,11 @@ CREATE INDEX IF NOT EXISTS idx_payments_status_created
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status_billing
     ON subscriptions (subscription_status, next_billing_at);
 
+CREATE INDEX IF NOT EXISTS idx_billing_profiles_member_status_created
+    ON billing_profiles (member_id, billing_profile_status, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_billing_consents_member_plan_active_agreed
+    ON billing_consents (member_id, plan_id, agreed_at DESC)
+    WHERE revoked_at IS NULL;
+
 COMMIT;

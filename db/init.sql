@@ -618,6 +618,8 @@ CREATE TABLE billing_profiles (
     CONSTRAINT fk_billing_profile_member FOREIGN KEY (member_id) REFERENCES members (member_id),
     CONSTRAINT chk_billing_status        CHECK (billing_profile_status IN ('ACTIVE', 'REVOKED'))
 );
+CREATE INDEX IF NOT EXISTS idx_billing_profiles_member_status_created
+    ON billing_profiles (member_id, billing_profile_status, created_at DESC);
 COMMENT ON TABLE  billing_profiles                        IS 'Toss billingKey 기반 자동결제 수단';
 COMMENT ON COLUMN billing_profiles.billing_profile_id     IS '결제 수단 고유 식별자';
 COMMENT ON COLUMN billing_profiles.member_id              IS '회원 FK';
@@ -1405,6 +1407,9 @@ CREATE TABLE billing_consents (
     CONSTRAINT fk_consent_member       FOREIGN KEY (member_id) REFERENCES members (member_id),
     CONSTRAINT fk_consent_plan         FOREIGN KEY (plan_id)   REFERENCES plans (plan_id)
 );
+CREATE INDEX IF NOT EXISTS idx_billing_consents_member_plan_active_agreed
+    ON billing_consents (member_id, plan_id, agreed_at DESC)
+    WHERE revoked_at IS NULL;
 COMMENT ON TABLE  billing_consents                    IS '자동결제 약관 동의 이력';
 COMMENT ON COLUMN billing_consents.billing_consent_id IS '동의 고유 식별자';
 COMMENT ON COLUMN billing_consents.member_id          IS '회원 FK';

@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -84,12 +85,14 @@ public class Payment {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     @PrePersist
     protected void onCreate() {
         if (paymentId == null) {
             paymentId = UUID.randomUUID();
         }
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(KST);
         createdAt = now;
         updatedAt = now;
         if (paymentType == null) {
@@ -99,7 +102,7 @@ public class Payment {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = ZonedDateTime.now();
+        updatedAt = ZonedDateTime.now(KST);
     }
 
     // ── 팩토리 ──────────────────────────────────────────────────────────────
@@ -109,16 +112,16 @@ public class Payment {
                                       int amount, String currency,
                                       PaymentType paymentType, int attemptSequence,
                                       ZonedDateTime expiresAt) {
-        if (memberId == null) throw new IllegalArgumentException("memberId는 필수입니다");
-        if (planId == null) throw new IllegalArgumentException("planId는 필수입니다");
-        if (orderId == null || orderId.isBlank()) throw new IllegalArgumentException("orderId는 필수입니다");
-        if (idempotencyKey == null || idempotencyKey.isBlank()) throw new IllegalArgumentException("idempotencyKey는 필수입니다");
-        if (amount <= 0) throw new IllegalArgumentException("amount는 0보다 커야 합니다: " + amount);
-        if (currency == null || currency.isBlank()) throw new IllegalArgumentException("currency는 필수입니다");
-        if (paymentType == null) throw new IllegalArgumentException("paymentType은 필수입니다");
-        if (attemptSequence < 0 || attemptSequence > 2) throw new IllegalArgumentException("attemptSequence는 0~2 범위여야 합니다: " + attemptSequence);
+        if (memberId == null) throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
+        if (planId == null) throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
+        if (orderId == null || orderId.isBlank()) throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
+        if (idempotencyKey == null || idempotencyKey.isBlank()) throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
+        if (amount <= 0) throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
+        if (currency == null || currency.isBlank()) throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
+        if (paymentType == null) throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
+        if (attemptSequence < 0 || attemptSequence > 2) throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         if (paymentType == PaymentType.AUTO_RENEWAL && subscriptionId == null) {
-            throw new IllegalArgumentException("AUTO_RENEWAL 결제에는 subscriptionId가 필수입니다");
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
 
         Payment p = new Payment();
@@ -163,10 +166,10 @@ public class Payment {
             throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_STATUS_TRANSITION);
         }
         if (paymentKey == null || paymentKey.isBlank()) {
-            throw new IllegalArgumentException("paymentKey는 필수입니다");
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
         if (approvedAt == null) {
-            throw new IllegalArgumentException("approvedAt은 필수입니다");
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
         this.paymentStatus = PaymentStatus.PAID;
         this.paymentKey = paymentKey;
@@ -180,7 +183,7 @@ public class Payment {
             throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_STATUS_TRANSITION);
         }
         if (reason == null) {
-            throw new IllegalArgumentException("failureReason은 필수입니다");
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
         }
         this.paymentStatus = PaymentStatus.FAILED;
         this.failureReason = reason;

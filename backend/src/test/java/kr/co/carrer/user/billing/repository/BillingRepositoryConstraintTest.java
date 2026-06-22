@@ -63,16 +63,16 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
         memberId = UUID.randomUUID();
 
         em.getEntityManager().createNativeQuery(
-                "INSERT INTO members (member_id, login_id, email, password, name, role_type, member_status, subscription_status, warning_count) " +
-                "VALUES (?, ?, ?, 'hashed', '테스터', 'USER', 'ACTIVE', 'FREE', 0)")
+                "INSERT INTO members (member_id, login_id, email, password, name, role_type, member_status, subscription_status, warning_count, created_at, updated_at) " +
+                "VALUES (?, ?, ?, 'hashed', '테스터', 'USER', 'ACTIVE', 'FREE', 0, now(), now())")
                 .setParameter(1, memberId)
                 .setParameter(2, "test_" + memberId)
                 .setParameter(3, memberId + "@test.com")
                 .executeUpdate();
 
         Object planIdResult = em.getEntityManager().createNativeQuery(
-                "INSERT INTO plans (product_code, plan_name, plan_price, monthly_usage_limit, currency, billing_cycle, is_active) " +
-                "VALUES ('interview', 'AI 모의면접', 9900, 20, 'KRW', 'MONTHLY', true) RETURNING plan_id")
+                "INSERT INTO plans (product_code, plan_name, plan_price, monthly_usage_limit, currency, billing_cycle, is_active, created_at, updated_at) " +
+                "VALUES ('interview', 'AI 모의면접', 9900, 20, 'KRW', 'MONTHLY', true, now(), now()) RETURNING plan_id")
                 .getSingleResult();
         planId = ((Number) planIdResult).longValue();
 
@@ -133,7 +133,7 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
             usageRecordRepository.saveAndFlush(ServiceUsageRecord.reserveFree(
                     memberId, "interview", ResourceType.INTERVIEW_SESSION, UUID.randomUUID()));
 
-            assertThat(usageRecordRepository.count()).isGreaterThanOrEqualTo(2);
+            assertThat(usageRecordRepository.count()).isEqualTo(2);
         }
     }
 
@@ -272,7 +272,7 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
             paymentRepository.saveAndFlush(newPayment("ORDER-004", "IDEM-D"));
             paymentRepository.saveAndFlush(newPayment("ORDER-005", "IDEM-E"));
 
-            assertThat(paymentRepository.count()).isGreaterThanOrEqualTo(2);
+            assertThat(paymentRepository.count()).isEqualTo(2);
         }
 
         @Test
@@ -292,7 +292,7 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
             paymentRepository.saveAndFlush(newPayment("ORDER-008", "IDEM-H"));
             paymentRepository.saveAndFlush(newPayment("ORDER-009", "IDEM-I"));
 
-            assertThat(paymentRepository.count()).isGreaterThanOrEqualTo(2);
+            assertThat(paymentRepository.count()).isEqualTo(2);
         }
     }
 }

@@ -35,6 +35,8 @@ public enum BillingErrorCode implements BaseErrorCode {
     ACCOUNT_NOT_ELIGIBLE(HttpStatus.FORBIDDEN, "현재 계정 상태로는 결제·이용이 불가능합니다."),
 
     SUBSCRIPTION_INVALID_TRANSITION(HttpStatus.CONFLICT, "현재 구독 상태에서 허용되지 않는 상태 전이입니다."),
+    SUBSCRIPTION_INVALID_PERIOD_NULL(HttpStatus.BAD_REQUEST, "구독 기간(periodStart, periodEnd)은 필수입니다."),
+    SUBSCRIPTION_INVALID_PERIOD_RANGE(HttpStatus.BAD_REQUEST, "구독 기간의 시작일은 종료일보다 이전이어야 합니다."),
     ENTITLEMENT_INVALID_STATE(HttpStatus.CONFLICT, "현재 이용권 상태에서 허용되지 않는 조작입니다."),
     USAGE_RECORD_INVALID_STATE(HttpStatus.CONFLICT, "현재 사용 기록 상태에서 허용되지 않는 조작입니다.");
 

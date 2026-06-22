@@ -40,17 +40,21 @@ class SubscriptionTest {
         }
 
         @Test
-        @DisplayName("periodStart >= periodEnd 이면 IllegalArgumentException")
+        @DisplayName("periodStart >= periodEnd 이면 CustomException(SUBSCRIPTION_INVALID_PERIOD_RANGE)")
         void create_invalidDateRange_throws() {
             assertThatThrownBy(() -> Subscription.create(UUID.randomUUID(), 1L, NEXT_MONTH, NOW))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_PERIOD_RANGE);
         }
 
         @Test
-        @DisplayName("periodStart null이면 IllegalArgumentException")
+        @DisplayName("periodStart null이면 CustomException(SUBSCRIPTION_INVALID_PERIOD_NULL)")
         void create_nullPeriodStart_throws() {
             assertThatThrownBy(() -> Subscription.create(UUID.randomUUID(), 1L, null, NEXT_MONTH))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_PERIOD_NULL);
         }
     }
 
@@ -309,11 +313,13 @@ class SubscriptionTest {
         }
 
         @Test
-        @DisplayName("start >= end 이면 IllegalArgumentException")
+        @DisplayName("start >= end 이면 CustomException(SUBSCRIPTION_INVALID_PERIOD_RANGE)")
         void renewPeriod_invalidRange_throws() {
             Subscription s = newActive();
             assertThatThrownBy(() -> s.renewPeriod(NEXT_MONTH.plusMonths(1), NEXT_MONTH))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_PERIOD_RANGE);
         }
     }
 
