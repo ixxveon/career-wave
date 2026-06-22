@@ -272,13 +272,13 @@
 .dr-single {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
 
 .dr-single__row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 20px;
 }
 
 /* ─── 2분할 첨삭 뷰 ──────────────────────────── */
