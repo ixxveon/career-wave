@@ -11,7 +11,10 @@
 -- 주의:
 --   - payments.payment_type은 20260621_payments_add_payment_type.sql에서 이미 추가됨
 --   - IF NOT EXISTS를 사용해 중복 실행 안전하게 처리
+--   - 트랜잭션으로 래핑 — 중간 실패 시 전체 롤백됨
 -- ================================================
+
+BEGIN;
 
 -- ============================================================
 -- 1. subscriptions 테이블 확장
@@ -139,7 +142,9 @@ COMMENT ON COLUMN payments.expires_at       IS 'READY 상태 만료 시각 (30�
 COMMENT ON COLUMN payments.updated_at       IS '마지막 변경 일시';
 
 -- ============================================================
--- 3. 신규 테이블: plans
+-- 3. plans 테이블: 신규 생성 또는 기존 테이블 컬럼 보완
+--    develop DB는 plans가 이미 존재하므로 CREATE TABLE IF NOT EXISTS가 스킵됨.
+--    이후 ALTER TABLE로 누락된 컬럼을 보장.
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS plans (
@@ -158,6 +163,11 @@ CREATE TABLE IF NOT EXISTS plans (
     CONSTRAINT uq_product_code   UNIQUE (product_code),
     CONSTRAINT chk_billing_cycle CHECK (billing_cycle IN ('MONTHLY', 'YEARLY'))
 );
+
+-- 기존 plans 테이블에 Phase 1 신규 컬럼 보완 (CREATE TABLE이 스킵된 경우 대응)
+ALTER TABLE plans
+    ADD COLUMN IF NOT EXISTS monthly_usage_limit INTEGER     NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
 -- ============================================================
 -- 4. 신규 테이블: billing_profiles
@@ -180,6 +190,19 @@ CREATE TABLE IF NOT EXISTS billing_profiles (
     CONSTRAINT fk_billing_profile_member      FOREIGN KEY (member_id) REFERENCES members (member_id),
     CONSTRAINT chk_billing_profile_status     CHECK (billing_profile_status IN ('ACTIVE', 'REVOKED'))
 );
+
+-- subscriptions.billing_profile_id → billing_profiles FK
+-- billing_profiles 생성 이후에 추가해야 하므로 이 위치에 배치
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'fk_subscriptions_billing_profile'
+    ) THEN
+        ALTER TABLE subscriptions
+            ADD CONSTRAINT fk_subscriptions_billing_profile
+            FOREIGN KEY (billing_profile_id) REFERENCES billing_profiles(billing_profile_id);
+    END IF;
+END $$;
 
 -- ============================================================
 -- 5. 신규 테이블: member_product_entitlements
@@ -284,3 +307,5 @@ CREATE INDEX IF NOT EXISTS idx_payments_status_created
 
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status_billing
     ON subscriptions (subscription_status, next_billing_at);
+
+COMMIT;
