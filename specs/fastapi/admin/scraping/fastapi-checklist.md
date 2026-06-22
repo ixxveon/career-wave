@@ -74,9 +74,9 @@
 
 ## Phase 11 - 실행 로그 기록
 
-- [x] 모든 실행 시도가 `scraping_logs`에 기록된다.
-- [x] TEST 액션도 `scraping_logs` 기록 대상이다.
-- [x] 성공/실패 로그 기록 컬럼이 문서와 일치한다.
+- [ ] 모든 실행 시도가 `scraping_logs`에 기록된다.
+- [ ] TEST 액션도 `scraping_logs` 기록 대상이다.
+- [ ] 성공/실패 로그 기록 컬럼이 문서와 일치한다.
 - [x] 실패 메시지 저장 로직이 존재한다.
 
 ## Phase 12 - Router
