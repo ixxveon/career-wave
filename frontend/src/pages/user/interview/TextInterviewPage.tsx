@@ -133,8 +133,7 @@ export default function TextInterviewPage() {
         job={job}
         sessionType={sessionType}
         initialQuestionOrder={initialQuestionOrder}
-        onExit={async () => {
-          try { await interviewSessionApi.end(sessionId); } catch { /* 이미 종료됐거나 실패해도 UI는 이동 */ }
+        onExit={() => {
           clearInterviewSession();
           setPhase('setup');
           setSessionId(null);
