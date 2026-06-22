@@ -25,6 +25,7 @@ public class BillingProfile {
     @Column(name = "customer_key", nullable = false, length = 100)
     private String customerKey;
 
+    @Getter(AccessLevel.NONE)
     @Column(name = "encrypted_billing_key", nullable = false, columnDefinition = "text")
     private String encryptedBillingKey;
 
