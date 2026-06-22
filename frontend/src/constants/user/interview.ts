@@ -30,4 +30,7 @@ export const LLM_STREAM_TIMEOUT_MS = 8_000;
 export const IMPROVEMENT_THRESHOLD = 85;
 
 /** 서버 설정 최대 질문 수 (추후 API 응답값으로 대체 예정) */
-export const MAX_QUESTION_COUNT = 5;
+export const MAX_QUESTION_COUNT = 10;
+
+/** 전체 세션 최대 시간 (초) — 안전망. 정상 플로우는 Q10 완료 시 자동 종료됨 */
+export const SESSION_LIMIT_SEC = 30 * 60;

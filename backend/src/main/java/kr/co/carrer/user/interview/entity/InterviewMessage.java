@@ -51,4 +51,13 @@ public class InterviewMessage {
         message.messageContent = messageContent;
         return message;
     }
+
+    public static InterviewMessage createQuestion(UUID sessionId, String messageContent) {
+        InterviewMessage message = new InterviewMessage();
+        message.sessionId = sessionId;
+        message.sender = MessageSender.AI;
+        message.messageType = MessageType.QUESTION;
+        message.messageContent = messageContent;
+        return message;
+    }
 }

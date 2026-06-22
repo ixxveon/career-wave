@@ -240,7 +240,7 @@ POST /api/v1/user/interview/sessions/{sessionId}/answer/voice
      Body: multipart/form-data (audioChunk + questionOrder + chunkIndex + isFinal)
      → ApiResponse<InterviewDTO.ResponseSubmitVoiceChunk>  (200)
      소유권 검증 필수, FastAPI STT 파이프라인 트리거
-     제약: 청크당 최대 5MB / 허용 포맷: audio/webm, audio/mp4, audio/ogg / Content-Type 검증 필수
+     제약: 청크당 최대 5MB / 허용 포맷: audio/webm, audio/mp4, audio/ogg (startsWith 검증 — audio/webm;codecs=opus 등 파라미터 포함 타입도 허용) / Content-Type 검증 필수
 
 POST /api/v1/user/interview/sessions/{sessionId}/end
      → ApiResponse<InterviewDTO.ResponseEndSession>  (200)
@@ -272,6 +272,7 @@ GET /api/v1/user/interview/history?page=0&size=10
 #### startSession(UUID memberId, RequestStartSession dto)
 - `session_id` UUID 생성
 - `document_id`가 있으면 FastAPI 측 RAG 컨텍스트 비동기 등록 요청
+- 동일 회원의 `IN_PROGRESS` 세션이 존재하면 `fail(ZonedDateTime.now(ZoneId.of("Asia/Seoul")))` 호출로 자동 FAILED 종료
 - `session_status = IN_PROGRESS`, `started_at = 현재 시각`으로 저장
 - `@Transactional` 적용
 - 반환: `ResponseStartSession`
@@ -279,7 +280,8 @@ GET /api/v1/user/interview/history?page=0&size=10
 #### submitTextAnswer(UUID memberId, String sessionId, RequestSubmitTextAnswer dto)
 - `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
 - `InterviewMessage` 저장 (`sender = USER`, `message_type = ANSWER`)
-- FastAPI WebSocket으로 LLM 파이프라인 트리거 (비동기)
+- `findTopBySessionIdAndSenderAndMessageTypeOrderByCreatedAtDesc`로 최근 AI 질문 텍스트 조회 → `questionText`로 FastAPI 전달
+- FastAPI LLM 파이프라인 트리거 (비동기) — 트리거 요청에 `questionText` 포함
 - `@Transactional` 적용
 - 반환: `ResponseSubmitTextAnswer`
 
@@ -359,7 +361,6 @@ SUBSCRIBE /topic/interview/{sessionId}
 | `INTERVIEW_SESSION_ALREADY_ENDED` | 400 | 이미 종료된 세션 재종료 시도 |
 | `INTERVIEW_INVALID_SESSION_TYPE` | 400 | 유효하지 않은 `sessionType` 값 |
 | `INTERVIEW_DOCUMENT_NOT_FOUND` | 404 | 유효하지 않은 `documentId` |
-| `INTERVIEW_SESSION_DUPLICATE` | 409 | 동일 회원이 `IN_PROGRESS` 세션을 이미 보유한 상태에서 신규 세션 시작 시도 |
 | `INTERVIEW_REPORT_NOT_READY` | 409 | 리포트 생성 중 상태에서 `getReport` 호출 |
 | `UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
 

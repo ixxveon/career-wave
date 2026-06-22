@@ -44,6 +44,7 @@
   - [x] `message_content` TEXT NOT NULL
   - [x] `created_at` ZonedDateTime NOT NULL
   - [x] `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용
+  - [x] `createQuestion(UUID sessionId, String messageContent)` — AI 질문 저장용 static factory method
 
 - [x] `AIInterviewFeedback.java` Entity
   - [x] `interviewFeedbackId` BIGSERIAL PK (컬럼명 `interview_feedback_id`)
@@ -94,6 +95,7 @@
 
 - [x] `InterviewMessageRepository.java`
   - [x] `findBySessionIdOrderByCreatedAtAsc(UUID sessionId)` — 세션 메시지 전체 조회
+  - [x] `findTopBySessionIdAndSenderAndMessageTypeOrderByCreatedAtDesc(UUID sessionId, MessageSender sender, MessageType messageType)` — 최근 AI 질문 조회 (LLM 트리거 시 questionText 전달용)
 
 - [x] `AIInterviewFeedbackRepository.java`
   - [x] `findBySessionIdOrderByQuestionOrderAsc(UUID sessionId)` — 리포트 피드백 조회
@@ -115,6 +117,7 @@
 - [x] `startSession(UUID memberId, RequestStartSession dto)`
   - [x] `SessionType` 유효성 검증 — 유효하지 않으면 `INTERVIEW_INVALID_SESSION_TYPE(400)`
   - [x] `documentId` 존재 시 유효성 검증 — 없으면 `INTERVIEW_DOCUMENT_NOT_FOUND(404)`
+  - [x] 동일 회원의 `IN_PROGRESS` 세션 존재 시 `fail()` 호출로 자동 FAILED 종료 (기존 DUPLICATE 에러 대신 자동 종료 정책 적용)
   - [x] `InterviewSession` 저장 (`session_status = IN_PROGRESS`, `started_at = 현재 시각`)
   - [x] FastAPI RAG 컨텍스트 비동기 등록 (documentId 있는 경우, 트랜잭션 외부)
   - [x] DB 저장은 `@Transactional` 내부 메서드로 분리, FastAPI 호출은 트랜잭션 외부
@@ -124,11 +127,12 @@
   - [x] `session_id` 존재 여부 검증 — 없으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
   - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
   - [x] `InterviewMessage` 저장 (`sender = USER`, `message_type = ANSWER`)
-  - [x] FastAPI LLM 파이프라인 비동기 트리거 (트랜잭션 외부)
+  - [x] `findTopBySessionIdAndSenderAndMessageTypeOrderByCreatedAtDesc`로 최근 AI 질문 조회 → `questionText` 추출
+  - [x] FastAPI LLM 파이프라인 비동기 트리거 (`questionText` 포함, 트랜잭션 외부)
   - [x] 반환: `ResponseSubmitTextAnswer`
 
 - [x] `submitVoiceChunk(UUID memberId, UUID sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal)`
-  - [x] Content-Type 검증 — audio/webm, audio/mp4, audio/ogg만 허용 (`INTERVIEW_INVALID_AUDIO_FORMAT(400)`)
+  - [x] Content-Type 검증 — audio/webm, audio/mp4, audio/ogg 허용 (`startsWith` 검증으로 `audio/webm;codecs=opus` 등 파라미터 포함 타입도 허용, 미일치 시 `INTERVIEW_INVALID_AUDIO_FORMAT(400)`)
   - [x] `session_id` 존재 여부 검증 — 없으면 `INTERVIEW_SESSION_NOT_FOUND(404)`
   - [x] `session_id` 소유권 검증 — 불일치 시 `INTERVIEW_SESSION_FORBIDDEN(403)`
   - [x] FastAPI STT 파이프라인으로 오디오 청크 비동기 전달 (트랜잭션 외부)
@@ -245,7 +249,6 @@
   - [ ] `INTERVIEW_SESSION_ALREADY_ENDED` (400)
   - [ ] `INTERVIEW_INVALID_SESSION_TYPE` (400)
   - [ ] `INTERVIEW_DOCUMENT_NOT_FOUND` (404)
-  - [ ] `INTERVIEW_SESSION_DUPLICATE` (409) — 동일 회원이 `IN_PROGRESS` 세션을 이미 보유한 경우
   - [ ] `INTERVIEW_REPORT_NOT_READY` (409) — 리포트 생성 중 상태에서 `getReport` 호출 시
   - [ ] 중복 선언 금지 — 기존 ErrorCode 재사용 여부 먼저 확인
 

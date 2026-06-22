@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { authSession } from '../../../utils/user/member/authSession';
+import { probeAuth } from '../../../api/user/member/memberApiClient';
 import { WS_PING_TIMEOUT_MS } from '../../../constants/user/interview';
 
 export type CheckStatus = 'idle' | 'checking' | 'pass' | 'fail';
@@ -38,17 +39,19 @@ export function usePreflightCheck(): PreflightResult {
     const wsBase =
       import.meta.env.VITE_WS_BASE_URL ||
       (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/^http/, 'ws');
-    const rawToken = authSession.getAccessToken();
+    let rawToken = authSession.getAccessToken();
     if (!rawToken) {
-      setNetworkStatus('fail');
-      return;
+      const ok = await probeAuth();
+      if (!ok) { setNetworkStatus('fail'); return; }
+      rawToken = authSession.getAccessToken();
+      if (!rawToken) { setNetworkStatus('fail'); return; }
     }
     const token = encodeURIComponent(rawToken);
 
     await new Promise<void>(resolve => {
       let ws: WebSocket;
       try {
-        ws = new WebSocket(`${wsBase}/ws/health?token=${token}`);
+        ws = new WebSocket(`${wsBase}/ws/user/interview?token=${token}`);
       } catch {
         // URL 형식 오류 등 WebSocket 생성 자체가 실패한 경우
         setNetworkStatus('fail');

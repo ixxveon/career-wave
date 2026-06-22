@@ -4,11 +4,13 @@ import { Clock, X, Loader2 } from 'lucide-react';
 
 import { SESSION_TYPE, SESSION_STATE } from '../../../types/user/interview';
 import type { SessionType } from '../../../types/user/interview';
-import { ANSWER_LIMIT_SEC, MAX_QUESTION_COUNT } from '../../../constants/user/interview';
+import { ANSWER_LIMIT_SEC, MAX_QUESTION_COUNT, SESSION_LIMIT_SEC } from '../../../constants/user/interview';
 
 import { useInterviewSession }  from '../../../hooks/user/interview/useInterviewSession';
 import { useInterviewTimer }    from '../../../hooks/user/interview/useInterviewTimer';
 import { useAudioRecorder }     from '../../../hooks/user/interview/useAudioRecorder';
+import { interviewSessionApi }  from '../../../api/user/interview';
+import { clearInterviewSession } from '../../../utils/user/interview/sessionStorage';
 
 import TTSPlayer       from '../../../components/user/interview/TTSPlayer';
 import ChatWindow      from '../../../components/user/interview/ChatWindow';
@@ -63,11 +65,21 @@ export default function InterviewRoom({
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── 총 경과 타이머 ── */
+  /* ── 총 경과 타이머 + 30분 안전망 강제 종료 ── */
+  const sessionEndedRef = useRef(false);
   useEffect(() => {
-    const id = setInterval(() => setElapsed(e => e + 1), 1000);
+    const id = setInterval(() => {
+      setElapsed(e => {
+        const next = e + 1;
+        if (next >= SESSION_LIMIT_SEC && !sessionEndedRef.current) {
+          sessionEndedRef.current = true;
+          interviewSessionApi.end(sessionId).catch(() => {});
+        }
+        return next;
+      });
+    }, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [sessionId]);
 
   /* ── FINISHED → 리포트 페이지 이동 ── */
   useEffect(() => {
@@ -83,6 +95,19 @@ export default function InterviewRoom({
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  /* ── 뒤로가기·탭 이탈 시 세션 강제 종료 ── */
+  const sessionStateRef = useRef(session.sessionState);
+  useEffect(() => { sessionStateRef.current = session.sessionState; }, [session.sessionState]);
+  useEffect(() => {
+    return () => {
+      if (sessionStateRef.current !== SESSION_STATE.FINISHED) {
+        interviewSessionApi.end(sessionId).catch(() => {});
+        clearInterviewSession();
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* ── 문항별 카운트다운 타이머 ── */

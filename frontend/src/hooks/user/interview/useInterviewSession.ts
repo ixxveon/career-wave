@@ -1,5 +1,5 @@
 import { useReducer, useRef, useState, useCallback, useEffect } from 'react';
-import { LLM_STREAM_TIMEOUT_MS } from '../../../constants/user/interview';
+import { LLM_STREAM_TIMEOUT_MS, MAX_QUESTION_COUNT } from '../../../constants/user/interview';
 import { useInvalidateInterviewHistory } from './useInterviewReport';
 import { useSpringWebSocket }  from './useSpringWebSocket';
 import { useFastApiWebSocket } from './useFastApiWebSocket';
@@ -156,6 +156,12 @@ export interface UseInterviewSessionResult {
   finishSession:   () => Promise<void>;
 }
 
+function mergeTtsChunks(chunks: string[]): string {
+  const binaries = chunks.map(b64 => atob(b64));
+  const combined = binaries.join('');
+  return btoa(combined);
+}
+
 // ── 훅 구현 ────────────────────────────────────────────────────
 
 export function useInterviewSession({
@@ -187,13 +193,15 @@ export function useInterviewSession({
    * → 리렌더링 부하 방지 (plan.md §Phase 3 스트리밍 텍스트 타이핑 효과)
    */
   const [streamingText, setStreamingText] = useState('');
-  const streamingAccRef = useRef('');
-  const streamingRafRef = useRef<number | null>(null);
+  const streamingAccRef    = useRef('');
+  const streamingRafRef    = useRef<number | null>(null);
+  const sendTextAnswerRef  = useRef<(text: string) => Promise<void>>(async () => {});
   /**
    * 폴백이 발동된 questionOrder — turn 범위로 중복 메시지 방지
    * null: 폴백 미발동 / 숫자: 해당 questionOrder turn의 isFinal 무시
    */
-  const llmFallbackFiredRef = useRef<number | null>(null);
+  const llmFallbackFiredRef  = useRef<number | null>(null);
+  const ttsChunkBufferRef    = useRef<string[]>([]);
 
   // 리듀서 state를 ref로 보관 — WS 콜백 내부에서 최신 state 참조
   const stateRef = useRef(state);
@@ -254,6 +262,11 @@ export function useInterviewSession({
         });
         if (msg.questionOrder !== null) {
           dispatch({ type: 'SET_QUESTION_ORDER', order: msg.questionOrder });
+          if (msg.questionOrder > MAX_QUESTION_COUNT) {
+            if (sessionId) interviewSessionApi.end(sessionId).catch(() => {});
+            clearInterviewSession();
+            dispatch({ type: 'FINISH' });
+          }
         }
         break;
       case SPRING_WS_MESSAGE_TYPE.SYSTEM:
@@ -296,25 +309,24 @@ export function useInterviewSession({
 
   const handleFastApiMessage = useCallback((msg: FastApiWSMessage) => {
     switch (msg.type) {
-      case FASTAPI_WS_MESSAGE_TYPE.STT_RESULT: {
+      case FASTAPI_WS_MESSAGE_TYPE.STT_RESULT:
+      case FASTAPI_WS_MESSAGE_TYPE.STT_FINAL: {
         const text = msg.content ?? '';
-        if (msg.isFinal) {
-          // 최종 STT 결과 — pending 말풍선 완료 처리
-          const pid = stateRef.current.pendingVoiceId;
-          if (pid !== null) {
-            dispatch({ type: 'UPDATE_MESSAGE', id: pid, updates: { isPending: false, text } });
-            dispatch({ type: 'SET_PENDING_VOICE_ID', id: null });
-          }
-          dispatch({ type: 'SET_STT_LIVE', text: '' });
-          dispatch({ type: 'SET_TYPING',   typing: true });
-          startLlmTimeout();
-        } else {
-          // 부분 STT — 실시간 미리보기 업데이트
-          dispatch({ type: 'SET_STT_LIVE', text });
-          const pid = stateRef.current.pendingVoiceId;
-          if (pid !== null) {
-            dispatch({ type: 'UPDATE_MESSAGE', id: pid, updates: { text } });
-          }
+        const pid = stateRef.current.pendingVoiceId;
+        if (pid !== null) {
+          dispatch({ type: 'UPDATE_MESSAGE', id: pid, updates: { isPending: false, text } });
+          dispatch({ type: 'SET_PENDING_VOICE_ID', id: null });
+        }
+        dispatch({ type: 'SET_STT_LIVE', text: '' });
+        sendTextAnswerRef.current(text);
+        break;
+      }
+      case FASTAPI_WS_MESSAGE_TYPE.STT_PARTIAL: {
+        const text = msg.content ?? '';
+        dispatch({ type: 'SET_STT_LIVE', text });
+        const pid = stateRef.current.pendingVoiceId;
+        if (pid !== null) {
+          dispatch({ type: 'UPDATE_MESSAGE', id: pid, updates: { text } });
         }
         break;
       }
@@ -354,8 +366,16 @@ export function useInterviewSession({
         break;
       }
       case FASTAPI_WS_MESSAGE_TYPE.TTS_AUDIO:
-        if (msg.audioChunk) tts.enqueue(msg.audioChunk);
+        if (msg.audioChunk) ttsChunkBufferRef.current.push(msg.audioChunk);
         break;
+      case FASTAPI_WS_MESSAGE_TYPE.TTS_AUDIO_END: {
+        if (ttsChunkBufferRef.current.length > 0) {
+          const merged = mergeTtsChunks(ttsChunkBufferRef.current);
+          ttsChunkBufferRef.current = [];
+          tts.enqueue(merged);
+        }
+        break;
+      }
       case FASTAPI_WS_MESSAGE_TYPE.ERROR:
         // STT/LLM/TTS 처리 오류 — 연결은 유지, 토스트로 표시 (api-schema.md §8)
         dispatch({
@@ -468,6 +488,8 @@ export function useInterviewSession({
       dispatch({ type: 'SET_TYPING', typing: false });
     }
   }, [sessionId, tts]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  sendTextAnswerRef.current = sendTextAnswer;
 
   const invalidateHistory = useInvalidateInterviewHistory();
 

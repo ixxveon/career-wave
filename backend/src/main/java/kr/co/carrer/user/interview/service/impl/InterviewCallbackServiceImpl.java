@@ -4,10 +4,12 @@ import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
 import kr.co.carrer.user.interview.entity.AIInterviewFeedback;
 import kr.co.carrer.user.interview.entity.CareerHistory;
+import kr.co.carrer.user.interview.entity.InterviewMessage;
 import kr.co.carrer.user.interview.entity.InterviewSession;
 import kr.co.carrer.user.interview.exception.InterviewErrorCode;
 import kr.co.carrer.user.interview.repository.AIInterviewFeedbackRepository;
 import kr.co.carrer.user.interview.repository.CareerHistoryRepository;
+import kr.co.carrer.user.interview.repository.InterviewMessageRepository;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import kr.co.carrer.user.interview.service.InterviewCallbackService;
 import kr.co.carrer.user.interview.websocket.WebSocketMessage;
@@ -30,6 +32,7 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
     private final InterviewSessionRepository sessionRepository;
     private final AIInterviewFeedbackRepository feedbackRepository;
     private final CareerHistoryRepository careerHistoryRepository;
+    private final InterviewMessageRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     // SimpMessagingTemplate은 WebSocket 브로커 초기화 이후에만 사용 가능하므로 @Lazy 주입
@@ -38,21 +41,25 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
             InterviewSessionRepository sessionRepository,
             AIInterviewFeedbackRepository feedbackRepository,
             CareerHistoryRepository careerHistoryRepository,
+            InterviewMessageRepository messageRepository,
             @Lazy SimpMessagingTemplate messagingTemplate
     ) {
         this.sessionRepository = sessionRepository;
         this.feedbackRepository = feedbackRepository;
         this.careerHistoryRepository = careerHistoryRepository;
+        this.messageRepository = messageRepository;
         this.messagingTemplate = messagingTemplate;
     }
 
     @Override
+    @Transactional
     public void processQuestionCallback(UUID sessionId, InterviewDTO.RequestQuestionCallback dto) {
+        messageRepository.save(InterviewMessage.createQuestion(sessionId, dto.questionText()));
         messagingTemplate.convertAndSend(
                 "/topic/interview/" + sessionId,
                 WebSocketMessage.question(dto.questionOrder(), dto.questionText(), dto.questionType())
         );
-        log.info("QUESTION sent via STOMP: sessionId={}, order={}, type={}", sessionId, dto.questionOrder(), dto.questionType());
+        log.info("QUESTION saved & sent via STOMP: sessionId={}, order={}, type={}", sessionId, dto.questionOrder(), dto.questionType());
     }
 
     @Override

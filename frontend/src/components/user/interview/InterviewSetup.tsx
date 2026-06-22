@@ -66,7 +66,7 @@ function InterviewSetup({
             ? <><Loader2 size={14} className="is__spin" /> 대표 이력서 불러오는 중...</>
             : resume
             ? <><FileText size={14} /><span>{resume.fileName}</span><span className="is__resume-badge">연결됨</span></>
-            : <><AlertCircle size={14} /><span className="is__resume-none">마이페이지에서 대표 이력서를 등록해주세요.</span></>
+            : <><AlertCircle size={14} /><span className="is__resume-none">서류 분석 페이지에서 이력서를 업로드한 뒤 면접을 시작해주세요.</span></>
           }
         </div>
 

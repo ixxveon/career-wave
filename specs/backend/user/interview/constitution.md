@@ -27,6 +27,7 @@
 |------|-----------|------|
 | IN_PROGRESS → COMPLETED | 허용 | 정상 세션 종료 (`/end` API 호출) |
 | IN_PROGRESS → FAILED | 허용 | 24시간 타임아웃 스케줄러에 의한 강제 종료 |
+| IN_PROGRESS → FAILED (신규 세션 생성 시) | 허용 | 동일 회원의 새 세션 시작 요청 시 기존 IN_PROGRESS 세션을 자동 FAILED 처리 |
 | COMPLETED → 任 | 금지 | 한 번 종료된 세션은 상태 변경 불가 |
 | FAILED → 任 | 금지 | 한 번 실패한 세션은 상태 변경 불가 |
 
@@ -34,6 +35,7 @@
 
 - `COMPLETED` 또는 `FAILED` 상태의 세션에 `/end`를 재호출하면 `INTERVIEW_SESSION_ALREADY_ENDED(400)` 반환.
 - 상태 변경은 반드시 Service 계층에서만 수행한다. Controller에서 Entity 상태를 직접 변경하는 것을 금지한다.
+- 동일 회원이 새 세션을 시작할 때, 기존 `IN_PROGRESS` 세션이 있으면 `DUPLICATE` 에러 대신 자동으로 `fail()`을 호출하여 `FAILED` 처리 후 새 세션을 생성한다.
 
 ---
 

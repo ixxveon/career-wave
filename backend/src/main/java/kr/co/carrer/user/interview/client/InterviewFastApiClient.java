@@ -64,12 +64,13 @@ public class InterviewFastApiClient {
     }
 
     public void triggerLlmPipeline(UUID sessionId, UUID memberId, int questionOrder,
-                                   String answerText, String sessionType, String interviewType) {
+                                   String answerText, String questionText, String sessionType, String interviewType) {
         Map<String, Object> body = Map.of(
                 "sessionId", sessionId.toString(),
                 "memberId", memberId.toString(),
                 "questionOrder", questionOrder,
                 "answerText", answerText != null ? answerText : "",
+                "questionText", questionText != null ? questionText : "",
                 "sessionType", sessionType != null ? sessionType : "",
                 "interviewType", interviewType != null ? interviewType : ""
         );
