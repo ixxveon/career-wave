@@ -21,6 +21,11 @@ public class AdminSubscriptionController implements AdminSubscriptionControllerD
 
     private final AdminSubscriptionService adminSubscriptionService;
 
+    @GetMapping("/counts")
+    public ResponseEntity<ApiResponse<SubscriptionDTO.ResponseCounts>> getSubscriptionCounts() {
+        return ResponseEntity.ok(ApiResponse.ok(adminSubscriptionService.getSubscriptionCounts()));
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponse<PaginationResponse<SubscriptionDTO.ResponseList>>> getSubscriptions(
         @RequestParam(required = false) String status,

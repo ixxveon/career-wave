@@ -147,12 +147,12 @@ export default function DocumentResultView({
       )}
 
       <div className="dr-split">
-        <div className="dr-card dr-split__original">
-          <p className="dr-card-title">입력 원문</p>
-          <p className="dr-split__question">{fd.question}</p>
-          <p className="dr-split__text">{fd.originalText}</p>
-        </div>
-        <div className="dr-split__feedback">
+        <div className="dr-split__left">
+          <div className="dr-card dr-split__original">
+            <p className="dr-card-title">입력 원문</p>
+            <p className="dr-split__question">{fd.question}</p>
+            <p className="dr-split__text">{fd.originalText}</p>
+          </div>
           <div className="dr-card dr-good-card">
             <p className="dr-good-card__label"><ThumbsUp size={13} /> 잘한 점</p>
             <p className="dr-good-card__text">{fd.goodPoint}</p>
@@ -161,6 +161,8 @@ export default function DocumentResultView({
             <p className="dr-bad-card__label"><ThumbsDown size={13} /> 아쉬운 점</p>
             <p className="dr-bad-card__text">{fd.badPoint}</p>
           </div>
+        </div>
+        <div className="dr-split__right">
           {fd.starAnalysis && (
             <div className="dr-card dr-star-card">
               <p className="dr-star-card__label"><Star size={13} /> STAR 기법 분석</p>

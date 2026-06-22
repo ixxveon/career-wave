@@ -41,6 +41,12 @@ public class AdminMemberServiceImpl implements AdminMemberService {
 
     @Override
     @Transactional(readOnly = true)
+    public MemberDTO.ResponseCounts getMemberCounts() {
+        return memberQueryRepository.countMemberKpi();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PaginationResponse<MemberDTO.ResponseList> getMembers(RoleType role, MemberStatus status,
                                                                   SubscriptionStatus plan, String keyword,
                                                                   LocalDate startDate, LocalDate endDate,

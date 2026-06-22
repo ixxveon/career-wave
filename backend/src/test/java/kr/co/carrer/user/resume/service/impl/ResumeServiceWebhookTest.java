@@ -116,13 +116,13 @@ class ResumeServiceWebhookTest {
     }
 
     @Test
-    @DisplayName("COMPLETED·FAILED 외의 알 수 없는 status 값은 WEBHOOK_INVALID_STATUS 예외가 발생한다")
+    @DisplayName("COMPLETED·FAILED·PENDING·ANALYZING 외의 알 수 없는 status 값은 WEBHOOK_INVALID_STATUS 예외가 발생한다")
     void receiveWebhook_unknownStatus_throwsException() {
         UUID documentId = UUID.randomUUID();
         stubAnalyzingDocument(documentId);
 
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
-                documentId, "ANALYZING",
+                documentId, "INVALID_STATUS",
                 null, null, null, null, null,
                 null, null, null
         );
@@ -134,6 +134,28 @@ class ResumeServiceWebhookTest {
 
         verify(documentFeedbackRepository, never()).save(any());
         verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    @DisplayName("PENDING·ANALYZING 중간 상태는 DB 갱신 없이 WebSocket 이벤트만 발행된다")
+    void receiveWebhook_intermediateStatus_publishesEventOnly() {
+        UUID documentId = UUID.randomUUID();
+        stubAnalyzingDocument(documentId);
+
+        ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
+                documentId, "ANALYZING",
+                null, null, null, null, null,
+                null, null, null
+        );
+
+        resumeService.receiveWebhook(documentId, VALID_SECRET, request);
+
+        verify(documentFeedbackRepository, never()).save(any());
+
+        ArgumentCaptor<DocumentAnalysisCompletedEvent> captor =
+                ArgumentCaptor.forClass(DocumentAnalysisCompletedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().status()).isEqualTo("ANALYZING");
     }
 
     @Test

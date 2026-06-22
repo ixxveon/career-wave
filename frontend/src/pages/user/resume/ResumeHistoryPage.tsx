@@ -1,10 +1,9 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FileSearch, FileText, ScrollText } from 'lucide-react';
 import HistoryItem from '../../../components/user/resume/HistoryItem';
 import { useResumeHistory } from '../../../hooks/user/resume/useResumeHistory';
-import type { FileType } from '../../../types/user/resume';
-import { useState } from 'react';
+import type { FileType, ResumeHistoryItem } from '../../../types/user/resume';
 import '@/styles/user/resume/ResumeHistoryPage.css';
 
 const TYPE_TABS: { label: string; value: FileType | 'ALL'; Icon: typeof FileText }[] = [
@@ -15,7 +14,6 @@ const TYPE_TABS: { label: string; value: FileType | 'ALL'; Icon: typeof FileText
 
 export default function ResumeHistoryPage() {
   const [activeType, setActiveType] = useState<FileType | 'ALL'>('ALL');
-  const fileTypeParam = activeType === 'ALL' ? undefined : activeType;
 
   const {
     data,
@@ -25,9 +23,10 @@ export default function ResumeHistoryPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useResumeHistory(fileTypeParam);
+  } = useResumeHistory();
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const listWrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -39,19 +38,23 @@ export default function ResumeHistoryPage() {
           fetchNextPage();
         }
       },
-      { threshold: 0.1 },
+      { root: listWrapRef.current, threshold: 0.1 },
     );
 
     observer.observe(el);
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  function handleTabChange(type: FileType | 'ALL') {
+  function handleTabChange(type: FileType | 'ALL'): void {
     setActiveType(type);
   }
 
-  const allItems = data?.pages.flatMap((page) => page.content) ?? [];
-  const totalElements = data?.pages[0]?.totalElements ?? 0;
+  const allItems: ResumeHistoryItem[] = data?.pages.flatMap((page) => page.items) ?? [];
+  // 탭 필터는 클라이언트 사이드 적용 (백엔드 미지원)
+  const filteredItems = activeType === 'ALL'
+    ? allItems
+    : allItems.filter(item => item.fileType === activeType);
+
 
   return (
     <div className="rh">
@@ -118,17 +121,19 @@ export default function ResumeHistoryPage() {
               </div>
             ) : (
               <>
-                <p className="rh-count">총 {totalElements}건</p>
-                <ul className="rh-list" aria-label="분석 이력 목록">
-                  {allItems.map(item => (
-                    <li key={item.documentId}>
-                      <HistoryItem item={item} />
-                    </li>
-                  ))}
-                </ul>
+                <p className="rh-count">총 {filteredItems.length}건</p>
+                <div className="rh-list-wrap" ref={listWrapRef}>
+                  <ul className="rh-list" aria-label="분석 이력 목록">
+                    {filteredItems.map((item) => (
+                      <li key={item.documentId}>
+                        <HistoryItem item={item} />
+                      </li>
+                    ))}
+                  </ul>
 
-                {/* 무한스크롤 센티넬 */}
-                <div ref={sentinelRef} aria-hidden="true" />
+                  {/* 무한스크롤 센티넬 */}
+                  <div ref={sentinelRef} aria-hidden="true" />
+                </div>
 
                 {isFetchingNextPage && (
                   <div role="status" aria-label="추가 항목 불러오는 중">

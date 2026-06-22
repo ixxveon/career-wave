@@ -75,6 +75,14 @@ public class ResumeController implements ResumeControllerDocs {
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
+    @GetMapping("/quota")
+    public ResponseEntity<ApiResponse<ResumeDTO.ResponseQuota>> getQuota(
+            @AuthenticationPrincipal AuthPrincipal principal
+    ) {
+        UUID memberId = UUID.fromString(principal.getId());
+        return ResponseEntity.ok(ApiResponse.ok(resumeService.getQuota(memberId)));
+    }
+
     @PostMapping("/{documentId}/webhook")
     public ResponseEntity<ApiResponse<Void>> receiveWebhook(
             @PathVariable UUID documentId,

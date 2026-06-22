@@ -15,7 +15,6 @@ import {
   PAY_STATUS,
   PAY_STATUS_LABEL,
   REFUND_STATUS_LABEL,
-  PAYMENT_TYPE_LABEL,
   SUB_STATUS,
   SUB_STATUS_LABEL,
   type Payment,
@@ -25,6 +24,7 @@ import {
   type SubStatus,
   type PaymentListParams,
   type SubscriptionListParams,
+  type SubscriptionCounts,
 } from '../../../api/admin/paymentApi';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Payment.css';
@@ -49,24 +49,24 @@ const REFUND_STATUS_CLS: Record<string, string> = {
   REJECTED:  'blinded',
 };
 
-const PAYMENT_TYPE_CLS: Record<string, string> = {
-  MANUAL:       'payType--manual',
-  AUTO_RENEWAL: 'payType--renewal',
-};
 
 const SUB_STATUS_CLS: Record<string, string> = {
   ACTIVE:            'normal',
   RENEWAL_SCHEDULED: 'answering',
   CANCEL_SCHEDULED:  'pending',
   AT_RISK:           'blinded',
+  EXPIRED:           'dismissed',
+  PAYMENT_FAILED:    'blinded',
+  REFUND_PENDING:    'pending',
+  REFUNDED:          'dismissed',
 };
 
 const TABS: PayTab[] = ['결제 내역', '구독 현황', '정산 리포트'];
 
 // ── 환불 가능 여부 판단 헬퍼 ──────────────────────────────────
 
-function daysSincePaid(paidAt: string): number {
-  const paid = new Date(paidAt);
+function daysSincePaid(approvedAt: string): number {
+  const paid = new Date(approvedAt);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   paid.setHours(0, 0, 0, 0);
@@ -74,11 +74,11 @@ function daysSincePaid(paidAt: string): number {
 }
 
 function checkRefundEligibility(p: Payment): { eligible: boolean; reason: string | null } {
-  const days = daysSincePaid(p.paidAt);
+  const days = daysSincePaid(p.approvedAt);
   if (days > 7) {
     return { eligible: false, reason: `결제일로부터 ${days}일 경과 — 환불 가능 기간(7일)을 초과하였습니다.` };
   }
-  if (p.aiUsage.resumePaidCount > 0 || p.aiUsage.interviewPaidCount > 0) {
+  if (p.aiUsage.documentCount > 0 || p.aiUsage.interviewCount > 0) {
     return { eligible: false, reason: '유료 AI 기능 이용 이력이 있어 환불이 불가합니다.' };
   }
   return { eligible: true, reason: null };
@@ -150,11 +150,15 @@ export default function PaymentPage() {
   const [subStatusFilter, setSubStatusFilter] = useState('');
   const appliedSubFilters = useRef<SubscriptionListParams>({});
 
-  // 구독 KPI (목록에서 파생)
-  const activeCount = subscriptions.filter((s) => s.subStatus === 'ACTIVE').length;
-  const renewCount  = subscriptions.filter((s) => s.subStatus === 'RENEWAL_SCHEDULED').length;
-  const cancelCount = subscriptions.filter((s) => s.subStatus === 'CANCEL_SCHEDULED').length;
-  const atRiskCount = subscriptions.filter((s) => s.subStatus === 'AT_RISK').length;
+  // 구독 KPI (전용 집계 API)
+  const [subCounts, setSubCounts] = useState<SubscriptionCounts | null>(null);
+
+  // ── 구독 KPI 조회 ─────────────────────────────────────────────
+  useEffect(() => {
+    paymentApi.getSubscriptionCounts().then(res => {
+      if (res.data.success) setSubCounts(res.data.data);
+    }).catch(() => {});
+  }, []);
 
   // ── KPI 조회 ──────────────────────────────────────────────────
   const fetchSummary = useCallback(async () => {
@@ -426,16 +430,18 @@ export default function PaymentPage() {
                     <tr><td colSpan={9} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
                   ) : payments.map((p) => (
                     <tr key={p.paymentId}>
-                      <td style={{ fontSize: 13, color: '#7a8da4' }}>{p.paymentId}</td>
+                      <td
+                        style={{ fontSize: 13, color: '#7a8da4', fontFamily: 'monospace', cursor: 'pointer', userSelect: 'none' }}
+                        title={`클릭하여 복사: ${p.paymentId}`}
+                        onClick={() => { navigator.clipboard.writeText(p.paymentId).then(() => showToast('결제 ID가 복사되었습니다.')).catch(() => showToast('복사에 실패했습니다.', 'error')); }}
+                      >
+                        {p.paymentId.slice(0, 8)}…
+                      </td>
                       <td className="payOrderId">{p.orderId}</td>
                       <td>{p.memberName}</td>
-                      <td>{p.product}</td>
-                      <td>
-                        <span className={`payTypeBadge ${PAYMENT_TYPE_CLS[p.paymentType]}`}>
-                          {PAYMENT_TYPE_LABEL[p.paymentType]}
-                        </span>
-                      </td>
-                      <td>{new Date(p.paidAt).toLocaleDateString('ko-KR')}</td>
+                      <td>{p.planName}</td>
+                      <td>—</td>
+                      <td>{p.approvedAt ? new Date(p.approvedAt).toLocaleDateString('ko-KR') : '—'}</td>
                       <td>₩{p.amount.toLocaleString()}</td>
                       <td>
                         {p.refundStatus ? (
@@ -477,19 +483,19 @@ export default function PaymentPage() {
           {/* KPI */}
           <div className="kpiGrid">
             <div className="kpiCard kpi-green">
-              <div className="kpiContent"><p>활성 구독</p><h3>{activeCount}</h3><span>정상 이용 중</span></div>
+              <div className="kpiContent"><p>활성 구독</p><h3>{subCounts != null ? subCounts.active : '—'}</h3><span>정상 이용 중</span></div>
               <div className="kpiIcon kpi-green"><Users size={24} /></div>
             </div>
             <div className="kpiCard kpi-blue">
-              <div className="kpiContent"><p>갱신 예정 (D-7)</p><h3>{renewCount}</h3><span>자동 갱신 대기</span></div>
+              <div className="kpiContent"><p>갱신 예정 (D-7)</p><h3>{subCounts != null ? subCounts.renewalScheduled : '—'}</h3><span>자동 갱신 대기</span></div>
               <div className="kpiIcon kpi-blue"><RefreshCw size={24} /></div>
             </div>
             <div className="kpiCard kpi-yellow">
-              <div className="kpiContent"><p>취소 예정</p><h3>{cancelCount}</h3><span>기간 만료 후 종료</span></div>
+              <div className="kpiContent"><p>취소 예정</p><h3>{subCounts != null ? subCounts.cancelScheduled : '—'}</h3><span>기간 만료 후 종료</span></div>
               <div className="kpiIcon kpi-yellow"><Clock size={24} /></div>
             </div>
             <div className="kpiCard kpi-purple">
-              <div className="kpiContent"><p>이탈 위험</p><h3>{atRiskCount}</h3><span>자동 갱신 결제 실패</span></div>
+              <div className="kpiContent"><p>이탈 위험</p><h3>{subCounts != null ? subCounts.atRisk : '—'}</h3><span>자동 갱신 결제 실패</span></div>
               <div className="kpiIcon kpi-purple"><AlertTriangle size={24} /></div>
             </div>
           </div>
@@ -529,14 +535,20 @@ export default function PaymentPage() {
                     <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
                   ) : subscriptions.map((s) => (
                     <tr key={s.subscriptionId}>
-                      <td style={{ fontSize: 13, color: '#7a8da4' }}>{s.subscriptionId}</td>
+                      <td
+                        style={{ fontSize: 13, color: '#7a8da4', fontFamily: 'monospace', cursor: 'pointer', userSelect: 'none' }}
+                        title={`클릭하여 복사: ${s.subscriptionId}`}
+                        onClick={() => { navigator.clipboard.writeText(s.subscriptionId); showToast('구독 ID가 복사되었습니다.'); }}
+                      >
+                        {s.subscriptionId.slice(0, 8)}…
+                      </td>
                       <td>{s.memberName}</td>
-                      <td>{s.plan}</td>
-                      <td>{new Date(s.startDate).toLocaleDateString('ko-KR')}</td>
-                      <td>{new Date(s.renewDate).toLocaleDateString('ko-KR')}</td>
+                      <td>{s.planName}</td>
+                      <td>{new Date(s.startedAt).toLocaleDateString('ko-KR')}</td>
+                      <td>{new Date(s.currentPeriodEnd).toLocaleDateString('ko-KR')}</td>
                       <td>
-                        <span className={`statusBadge ${SUB_STATUS_CLS[s.subStatus]}`}>
-                          {SUB_STATUS_LABEL[s.subStatus]}
+                        <span className={`statusBadge ${SUB_STATUS_CLS[s.subscriptionStatus]}`}>
+                          {SUB_STATUS_LABEL[s.subscriptionStatus]}
                         </span>
                       </td>
                     </tr>
@@ -577,7 +589,11 @@ export default function PaymentPage() {
           <div className="memberModal modal--scrollable" style={{ width: 540 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0, padding: '20px 24px 16px' }}>
               <div>
-                <h3>{selected.memberName} · {selected.paymentId}</h3>
+                <h3>{selected.memberName} · <span
+                  style={{ fontFamily: 'monospace', fontSize: 14, cursor: 'pointer', userSelect: 'none' }}
+                  title={`클릭하여 복사: ${selected.paymentId}`}
+                  onClick={() => { navigator.clipboard.writeText(selected.paymentId).then(() => showToast('결제 ID가 복사되었습니다.')).catch(() => showToast('복사에 실패했습니다.', 'error')); }}
+                >{selected.paymentId.slice(0, 8)}…</span></h3>
                 <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>
                   Toss 주문번호: {selected.orderId}
                 </p>
@@ -587,15 +603,10 @@ export default function PaymentPage() {
 
             <div className="modalBody">
               <div className="modalInfoGrid">
-                <div><span>상품명</span><strong>{selected.product}</strong></div>
-                <div><span>결제일</span><strong>{new Date(selected.paidAt).toLocaleDateString('ko-KR')}</strong></div>
+                <div><span>상품명</span><strong>{selected.planName}</strong></div>
+                <div><span>결제일</span><strong>{selected.approvedAt ? new Date(selected.approvedAt).toLocaleDateString('ko-KR') : '—'}</strong></div>
                 <div><span>결제 금액</span><strong>₩{selected.amount.toLocaleString()}</strong></div>
-                <div>
-                  <span>결제 유형</span>
-                  <span className={`payTypeBadge ${PAYMENT_TYPE_CLS[selected.paymentType]}`}>
-                    {PAYMENT_TYPE_LABEL[selected.paymentType]}
-                  </span>
-                </div>
+                <div><span>결제 수단</span><strong>{selected.paymentMethod ?? '—'}</strong></div>
                 <div>
                   <span>현재 상태</span>
                   <span className={`statusBadge ${PAY_STATUS_CLS[selected.paymentStatus]}`}>
@@ -613,26 +624,28 @@ export default function PaymentPage() {
               </div>
 
               {/* 환불 요청 건 — 환불 가능 여부 확인 섹션 */}
-              {selected.refundStatus === 'PENDING' && refundCheck && (
+              {selected.refundStatus === 'PENDING' && refundCheck && (() => {
+                const elapsedDays = daysSincePaid(selected.approvedAt);
+                return (
                 <div className="refundCheckSection">
                   <p className="refundCheckTitle">환불 가능 여부 확인</p>
                   <div className="refundCheckRow">
                     <span>결제일로부터 경과</span>
-                    <strong className={daysSincePaid(selected.paidAt) <= 7 ? 'refundOk' : 'refundFail'}>
-                      {daysSincePaid(selected.paidAt)}일 경과
-                      {daysSincePaid(selected.paidAt) <= 7 ? ' (7일 이내)' : ' (7일 초과)'}
+                    <strong className={elapsedDays <= 7 ? 'refundOk' : 'refundFail'}>
+                      {elapsedDays}일 경과
+                      {elapsedDays <= 7 ? ' (7일 이내)' : ' (7일 초과)'}
                     </strong>
                   </div>
                   <div className="refundCheckRow">
                     <span>이력서 분석 유료 이용</span>
-                    <strong className={selected.aiUsage.resumePaidCount === 0 ? 'refundOk' : 'refundFail'}>
-                      {selected.aiUsage.resumePaidCount === 0 ? '없음' : `${selected.aiUsage.resumePaidCount}회`}
+                    <strong className={selected.aiUsage.documentCount === 0 ? 'refundOk' : 'refundFail'}>
+                      {selected.aiUsage.documentCount === 0 ? '없음' : `${selected.aiUsage.documentCount}회`}
                     </strong>
                   </div>
                   <div className="refundCheckRow">
                     <span>AI 면접 유료 이용</span>
-                    <strong className={selected.aiUsage.interviewPaidCount === 0 ? 'refundOk' : 'refundFail'}>
-                      {selected.aiUsage.interviewPaidCount === 0 ? '없음' : `${selected.aiUsage.interviewPaidCount}회`}
+                    <strong className={selected.aiUsage.interviewCount === 0 ? 'refundOk' : 'refundFail'}>
+                      {selected.aiUsage.interviewCount === 0 ? '없음' : `${selected.aiUsage.interviewCount}회`}
                     </strong>
                   </div>
                   <div className="refundEligibleRow">
@@ -645,7 +658,8 @@ export default function PaymentPage() {
                     <p className="refundIneligibleNote">{refundCheck.reason}</p>
                   )}
                 </div>
-              )}
+                );
+              })()}
 
               {refundError && <p style={{ fontSize: 13, color: '#9a4444', marginTop: 12 }}>{refundError}</p>}
             </div>
