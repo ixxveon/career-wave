@@ -99,7 +99,7 @@
 
 .cw-header__submenu {
   position: absolute;
-  top: calc(100% - 6px);
+  top: 100%;
   left: 50%;
   z-index: 20;
   display: grid;
@@ -111,11 +111,11 @@
   box-shadow: 0 18px 38px rgba(35, 55, 91, 0.14);
   opacity: 0;
   pointer-events: none;
-  transform: translateX(-50%) translateY(8px);
-  transition: opacity 0.16s ease, transform 0.16s ease;
+  transform: translateX(-50%) translateY(4px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
 }
 
-.cw-header__nav-item:hover .cw-header__submenu {
+.cw-header__submenu--open {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);

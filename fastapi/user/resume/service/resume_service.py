@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import re
 from functools import lru_cache
 
 from openai import AsyncOpenAI, APIError, APITimeoutError
@@ -18,6 +19,15 @@ from user.resume.service.webhook_client import send_webhook
 
 logger = logging.getLogger(__name__)
 
+_CJK_PATTERN = re.compile(r'[㐀-䶿一-鿿豈-﫿]')
+# 임팩트/퍼센트 오염 패턴 교정 (LLM이 생성하는 깨진 음절 치환)
+# 임팩 = 임팩, 입팩 = 입팩, 트 = 트, 퍼 = 퍼, 비 = 비, 센 = 센
+_LOANWORD_FIXES: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r'[임입]팩(?!트)\S*'), '성과 영향'),
+    (re.compile(r'[퍼비]센(?!트)\S*'), '비율'),
+]
+
+
 
 @lru_cache
 def _get_openai_client() -> AsyncOpenAI:
@@ -31,6 +41,7 @@ _ERROR_MESSAGES = {
     "parse_response": "AI 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
     "unknown": "분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
 }
+
 
 def _failed_payload(document_id: str, error_message: str) -> dict:
     return {
@@ -72,8 +83,7 @@ async def analyze_document(request: AnalyzeDocumentRequest) -> None:
         await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["parse_response"]))
     except Exception:
         logger.error(f"[{document_id}] Unexpected error", exc_info=True)
-        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["unknown"]),
-        )
+        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["unknown"]))
 
 
 async def _analyze_resume(document_id: str, request: AnalyzeDocumentRequest) -> None:
@@ -139,6 +149,7 @@ async def _call_openai(
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
+        temperature=0,
         timeout=120,
     )
 
@@ -149,7 +160,21 @@ async def _call_openai(
     )
 
     content = completion.choices[0].message.content or ""
-    return json.loads(content)
+    result = json.loads(content)
+    return _sanitize_response(result)
+
+
+def _sanitize_response(obj: object) -> object:
+    if isinstance(obj, str):
+        text = _CJK_PATTERN.sub('', obj)
+        for pattern, replacement in _LOANWORD_FIXES:
+            text = pattern.sub(replacement, text)
+        return text
+    if isinstance(obj, dict):
+        return {k: _sanitize_response(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_response(item) for item in obj]
+    return obj
 
 
 async def _send_completed(document_id: str, result: dict) -> None:

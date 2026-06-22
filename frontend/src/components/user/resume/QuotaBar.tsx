@@ -1,22 +1,18 @@
 import { memo } from 'react';
-import { PLAN_LIMITS, MOCK_QUOTA } from '../../../utils/user/resume/quota';
+import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
 import './QuotaBar.css';
 
 interface QuotaBarProps {
-  /** 표시할 라벨 (기본: '이번 달 서류 분석') */
   label?: string;
 }
 
-/**
- * 이번 달 서류 분석 사용량 표시 바
- * - 이력서/자기소개서 분석 페이지 공용
- * TODO: 백엔드 quota API 연동 후 MOCK_QUOTA 제거
- */
 const QuotaBar = memo(function QuotaBar({ label = '이번 달 서류 분석' }: QuotaBarProps) {
-  const { membership, documentUsed } = MOCK_QUOTA;
-  const docLimit    = PLAN_LIMITS[membership].document;
-  const docLeft     = docLimit - documentUsed;
-  const pct         = Math.min((documentUsed / docLimit) * 100, 100);
+  const { data } = useResumeQuota();
+
+  const usedCount  = data?.usedCount  ?? 0;
+  const limitCount = data?.limitCount ?? 30;
+  const docLeft    = Math.max(limitCount - usedCount, 0);
+  const pct        = limitCount > 0 ? Math.min((usedCount / limitCount) * 100, 100) : 100;
   const isExhausted = docLeft <= 0;
   const isWarning   = !isExhausted && docLeft <= 3;
 
@@ -25,7 +21,7 @@ const QuotaBar = memo(function QuotaBar({ label = '이번 달 서류 분석' }: 
       <div className="qb__info">
         <span className="qb__label">{label}</span>
         <span className={`qb__count${isExhausted ? ' qb__count--full' : isWarning ? ' qb__count--warn' : ''}`}>
-          {documentUsed} / {docLimit}회 사용
+          {usedCount} / {limitCount}회 사용
           {isExhausted && <span className="qb__tag">한도 초과</span>}
           {isWarning   && <span className="qb__tag qb__tag--warn">잔여 {docLeft}회</span>}
         </span>
@@ -41,5 +37,4 @@ const QuotaBar = memo(function QuotaBar({ label = '이번 달 서류 분석' }: 
 });
 
 export default QuotaBar;
-export { PLAN_LIMITS, MOCK_QUOTA };
 export type { QuotaBarProps };
