@@ -55,13 +55,13 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
     @Override
     @Transactional
     public void processQuestionCallback(UUID sessionId, InterviewDTO.RequestQuestionCallback dto) {
-        boolean alreadySaved = messageRepository.existsBySessionIdAndSenderAndMessageContent(
-                sessionId, MessageSender.AI, dto.questionText());
+        boolean alreadySaved = messageRepository.existsBySessionIdAndSenderAndQuestionOrder(
+                sessionId, MessageSender.AI, dto.questionOrder());
         if (alreadySaved) {
             log.info("Question callback deduplicated (idempotent): sessionId={}, order={}", sessionId, dto.questionOrder());
             return;
         }
-        messageRepository.save(InterviewMessage.createQuestion(sessionId, dto.questionText()));
+        messageRepository.save(InterviewMessage.createQuestion(sessionId, dto.questionOrder(), dto.questionText()));
         messagingTemplate.convertAndSend(
                 "/topic/interview/" + sessionId,
                 WebSocketMessage.question(dto.questionOrder(), dto.questionText(), dto.questionType())

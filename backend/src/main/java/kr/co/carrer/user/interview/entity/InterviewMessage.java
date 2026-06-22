@@ -32,6 +32,9 @@ public class InterviewMessage {
     @Column(name = "message_type", nullable = false, length = 20)
     private MessageType messageType;
 
+    @Column(name = "question_order")
+    private Integer questionOrder;
+
     @Column(name = "message_content", nullable = false, columnDefinition = "TEXT")
     private String messageContent;
 
@@ -52,11 +55,12 @@ public class InterviewMessage {
         return message;
     }
 
-    public static InterviewMessage createQuestion(UUID sessionId, String messageContent) {
+    public static InterviewMessage createQuestion(UUID sessionId, int questionOrder, String messageContent) {
         InterviewMessage message = new InterviewMessage();
         message.sessionId = sessionId;
         message.sender = MessageSender.AI;
         message.messageType = MessageType.QUESTION;
+        message.questionOrder = questionOrder;
         message.messageContent = messageContent;
         return message;
     }
