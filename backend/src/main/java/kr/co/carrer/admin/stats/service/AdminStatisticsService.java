@@ -13,4 +13,6 @@ public interface AdminStatisticsService {
     List<StatisticsDTO.MonthlySubscribers> getMonthlySubscribers();
 
     List<StatisticsDTO.RecentSubscriber> getRecentSubscribers();
+
+    List<StatisticsDTO.RevenueBreakdownItem> getRevenueBreakdown();
 }
