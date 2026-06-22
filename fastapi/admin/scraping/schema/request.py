@@ -1,6 +1,7 @@
 from enum import Enum
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 
 class ScrapingPipelineStatusType(str, Enum):
@@ -29,7 +30,7 @@ class PipelineListQueryRequest(ScrapingRequestBase):
     keyword: str | None = None
     status: ScrapingPipelineStatusType | None = None
     page: int = Field(default=1, ge=1)
-    size: int = Field(default=20, ge=1)
+    size: int = Field(default=20, ge=1, le=100)
 
 
 class PipelineSummaryQueryRequest(ScrapingRequestBase):
@@ -40,7 +41,7 @@ class PipelineLogQueryRequest(ScrapingRequestBase):
     source_name: str | None = Field(default=None, alias="sourceName")
     status: ScrapingStatusType | None = None
     page: int = Field(default=1, ge=1)
-    size: int = Field(default=20, ge=1)
+    size: int = Field(default=20, ge=1, le=100)
 
 
 class PipelineActionRequest(ScrapingRequestBase):
@@ -49,5 +50,8 @@ class PipelineActionRequest(ScrapingRequestBase):
 
 class PipelineBatchActionRequest(ScrapingRequestBase):
     action_type: ScrapingActionType = Field(alias="actionType")
-    source_names: list[str] = Field(alias="sourceNames", min_length=1)
+    source_names: list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]] = Field(
+        alias="sourceNames",
+        min_length=1,
+    )
     requested_by: str = Field(alias="requestedBy", min_length=1)

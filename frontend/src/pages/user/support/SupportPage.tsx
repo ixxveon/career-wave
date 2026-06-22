@@ -3,9 +3,9 @@ import { Bell, HelpCircle, MessageSquare } from 'lucide-react';
 import '@/styles/user/support/SupportPage.css';
 
 const TABS = [
-  { to: '/support/notices',  label: '공지사항',  icon: <Bell size={15} /> },
-  { to: '/support/faq',      label: 'FAQ',        icon: <HelpCircle size={15} /> },
-  { to: '/support/inquiry',  label: '1:1 문의',   icon: <MessageSquare size={15} /> },
+  { to: '/support/notices', label: '공지사항', icon: <Bell size={15} /> },
+  { to: '/support/faq',     label: 'FAQ',      icon: <HelpCircle size={15} /> },
+  { to: '/support/inquiry', label: '1:1 문의', icon: <MessageSquare size={15} /> },
 ];
 
 export default function SupportPage() {
