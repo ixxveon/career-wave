@@ -141,65 +141,65 @@
 
 ### 조회 API
 
-- [ ] `GET /api/v1/user/billing/products`
-- [ ] `GET /api/v1/user/subscriptions/me`
-- [ ] `GET /api/v1/user/subscriptions/me/usages`
-- [ ] `GET /api/v1/user/subscriptions/me/entitlements` PREMIUM 응답 확장
-- [ ] 상품별 구독 상태와 다음 결제일 반환
-- [ ] `remaining = limit - used - reserved` 계산
-- [ ] `UsageSummary` 기존 필드 `limit`, `used`, `remaining`, `unit`, `resetAt` 유지
-- [ ] `Subscription` 기존 필드 전체 유지
+- [x] `GET /api/v1/user/billing/products`
+- [x] `GET /api/v1/user/subscriptions/me`
+- [x] `GET /api/v1/user/subscriptions/me/usages`
+- [x] `GET /api/v1/user/subscriptions/me/entitlements` PREMIUM 응답 확장
+- [x] 상품별 구독 상태와 다음 결제일 반환
+- [x] `remaining = limit - used - reserved` 계산
+- [x] `UsageSummary` 기존 필드 `limit`, `used`, `remaining`, `unit`, `resetAt` 유지
+- [x] `Subscription` 기존 필드 전체 유지
 
 ### PREMIUM 월 사용량 공통 로직
 
-- [ ] ACTIVE 구독 월 사용량 예약
-- [ ] CANCEL_SCHEDULED 구독 월 사용량 예약
-- [ ] PAYMENT_FAILED 구독 즉시 차단
-- [ ] EXPIRED 구독 차단
-- [ ] PREMIUM 사용 시 FREE 이용권 미사용
-- [ ] 구독 사용 consume 시 reserved -1, used +1
-- [ ] 구독 사용 release 시 reserved -1
-- [ ] `MONTHLY_LIMIT_EXCEEDED(429)` 처리
+- [x] ACTIVE 구독 월 사용량 예약
+- [x] CANCEL_SCHEDULED 구독 월 사용량 예약
+- [x] PAYMENT_FAILED 구독 즉시 차단
+- [x] EXPIRED 구독 차단
+- [x] PREMIUM 사용 시 FREE 이용권 미사용
+- [x] 구독 사용 consume 시 reserved -1, used +1
+- [x] 구독 사용 release 시 reserved -1
+- [x] `MONTHLY_LIMIT_EXCEEDED(429)` 처리
 
 ### Resume·Interview 실제 사용 연동
 
-- [ ] Resume 시작 시 ACTIVE/CANCEL_SCHEDULED document 구독 월 사용량 예약
-- [ ] Resume 성공·실패 시 구독 사용량 consume/release
-- [ ] Interview 시작 시 ACTIVE/CANCEL_SCHEDULED interview 구독 월 사용량 예약
-- [ ] Interview 성공·실패·timeout 시 구독 사용량 consume/release
+- [x] Resume 시작 시 ACTIVE/CANCEL_SCHEDULED document 구독 월 사용량 예약
+- [x] Resume 성공·실패 시 구독 사용량 consume/release
+- [x] Interview 시작 시 ACTIVE/CANCEL_SCHEDULED interview 구독 월 사용량 예약
+- [x] Interview 성공·실패·timeout 시 구독 사용량 consume/release
 
 ### Phase 3 테스트
 
-- [ ] `SubscriptionQueryServiceTest`
-  - [ ] 구독 없음
-  - [ ] document 단일 구독
-  - [ ] interview 단일 구독
-  - [ ] 두 상품 동시 구독
-  - [ ] 상태별 날짜·nullable 필드
-- [ ] `SubscriptionUsageServiceTest`
-  - [ ] ACTIVE 예약 성공
-  - [ ] CANCEL_SCHEDULED periodEnd 전 성공
-  - [ ] CANCEL_SCHEDULED periodEnd 도달 차단
-  - [ ] PAYMENT_FAILED·EXPIRED·REFUND 상태 차단
-  - [ ] consume/release 멱등
-  - [ ] PREMIUM 사용 시 FREE 상태 불변
-- [ ] `SubscriptionUsageConcurrencyTest`
-  - [ ] limit=1, 2-thread 경쟁
-  - [ ] limit=N, N+1-thread 경쟁
-- [ ] `ResumePremiumUsageIntegrationTest`
-  - [ ] ACTIVE document 구독으로 실제 사용
-  - [ ] 성공 시 document used 증가
-  - [ ] 실패 시 used 불변
-- [ ] `InterviewPremiumUsageIntegrationTest`
-  - [ ] ACTIVE interview 구독으로 실제 사용
-  - [ ] 성공 시 interview used 증가
-  - [ ] 실패·timeout 시 used 불변
-- [ ] `SubscriptionReadApiContractTest`
-  - [ ] Product 기존 필드 계약
-  - [ ] Subscription 기존 필드 계약
-  - [ ] UsageSummary 기존 필드 계약
-  - [ ] Entitlements 기존 필드 계약
-- [ ] document 구독이 interview 사용 권한을 부여하지 않는다.
+- [x] `SubscriptionQueryServiceTest`
+  - [x] 구독 없음
+  - [x] document 단일 구독
+  - [x] interview 단일 구독
+  - [x] 두 상품 동시 구독
+  - [x] 상태별 날짜·nullable 필드
+- [x] `SubscriptionUsageServiceTest`
+  - [x] ACTIVE 예약 성공
+  - [x] CANCEL_SCHEDULED periodEnd 전 성공
+  - [x] CANCEL_SCHEDULED periodEnd 도달 차단
+  - [x] PAYMENT_FAILED·EXPIRED·REFUND 상태 차단
+  - [x] consume/release 멱등
+  - [x] PREMIUM 사용 시 FREE 상태 불변
+- [x] `SubscriptionUsageConcurrencyTest`
+  - [x] limit=1, 2-thread 경쟁
+  - [x] limit=N, N+1-thread 경쟁
+- [x] `ResumePremiumUsageIntegrationTest`
+  - [x] ACTIVE document 구독으로 실제 사용
+  - [x] 성공 시 document used 증가
+  - [x] 실패 시 used 불변
+- [x] `InterviewPremiumUsageIntegrationTest`
+  - [x] ACTIVE interview 구독으로 실제 사용
+  - [x] 성공 시 interview used 증가
+  - [x] 실패·timeout 시 used 불변
+- [x] `SubscriptionReadApiContractTest`
+  - [x] Product 기존 필드 계약
+  - [x] Subscription 기존 필드 계약
+  - [x] UsageSummary 기존 필드 계약
+  - [x] Entitlements 기존 필드 계약
+- [x] document 구독이 interview 사용 권한을 부여하지 않는다.
 
 ## Phase 4 — Toss 최초 자동결제 구독 전체 흐름 완성
 
