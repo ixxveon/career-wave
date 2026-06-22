@@ -1,94 +1,95 @@
-# API Schema: dashboard
+﻿# API Schema: dashboard
 
-> 백엔드와 프론트엔드 간 `dashboard` 도메인 API 계약 문서다.
-> 이 문서는 기능 설명이 아니라 요청/응답 계약만 정의한다.
+> 諛깆뿏?쒖? ?꾨줎?몄뿏??媛?`dashboard` ?꾨찓??API 怨꾩빟 臾몄꽌??
+> ??臾몄꽌??湲곕뒫 ?ㅻ챸???꾨땲???붿껌/?묐떟 怨꾩빟留??뺤쓽?쒕떎.
 
 ---
 
-## 1. 공통 규칙
+## 1. 怨듯넻 洹쒖튃
 
-- 프로젝트 구조: Spring Boot + PostgreSQL + React
-- API 응답 규격: 모든 endpoint는 `ApiResponse<T>`를 사용한다.
-- 모든 `page` Query Parameter는 외부 API 기준 **1-based**다.
-- 백엔드 내부 Pageable 변환에서만 `page - 1`을 적용한다.
-- `from`, `to`는 ISO 8601 UTC 문자열 규칙을 사용하지만, 본 도메인 endpoint에는 적용 대상이 없다.
-- Swagger 어노테이션은 Controller가 아니라 `docs` 인터페이스에 작성한다.
-- 본 문서의 ErrorCode 표에는 `dashboard` 전용 코드가 아니라, 실제 본 endpoint에서 사용하는 공통 ErrorCode만 최소 범위로 작성한다.
+- ?꾨줈?앺듃 援ъ“: Spring Boot + PostgreSQL + React
+- API ?묐떟 洹쒓꺽: 紐⑤뱺 endpoint??`ApiResponse<T>`瑜??ъ슜?쒕떎.
+- 紐⑤뱺 `page` Query Parameter???몃? API 湲곗? **1-based**??
+- 諛깆뿏???대? Pageable 蹂?섏뿉?쒕쭔 `page - 1`???곸슜?쒕떎.
+- `from`, `to`??ISO 8601 UTC 臾몄옄??洹쒖튃???ъ슜?섏?留? 蹂??꾨찓??endpoint?먮뒗 ?곸슜 ??곸씠 ?녿떎.
+- Swagger ?대끂?뚯씠?섏? Controller媛 ?꾨땲??`docs` ?명꽣?섏씠?ㅼ뿉 ?묒꽦?쒕떎.
+- 蹂?臾몄꽌??ErrorCode ?쒖뿉??`dashboard` ?꾩슜 肄붾뱶媛 ?꾨땲?? ?ㅼ젣 蹂?endpoint?먯꽌 ?ъ슜?섎뒗 怨듯넻 ErrorCode留?理쒖냼 踰붿쐞濡??묒꽦?쒕떎.
 
-### 권한 표기
+### 沅뚰븳 ?쒓린
 
-- 문서상 권한 표기는 `MASTER`, `BACKEND`, `CS`를 사용한다.
-- Spring Security에서는 세부 역할 `MASTER`, `BACKEND`, `CS`를 각각 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`로 매핑한다.
-- 대시보드 요약 조회 API의 실제 접근 조건은 관리자 인증(`ROLE_ADMIN`) + 세부 역할 `MASTER` 또는 `BACKEND` 또는 `CS`다.
+- 臾몄꽌??沅뚰븳 ?쒓린??`MASTER`, `BACKEND`, `CS`瑜??ъ슜?쒕떎.
+- Spring Security?먯꽌???몃? ??븷 `MASTER`, `BACKEND`, `CS`瑜?媛곴컖 `ROLE_MASTER`, `ROLE_BACKEND`, `ROLE_CS`濡?留ㅽ븨?쒕떎.
+- ??쒕낫???붿빟 議고쉶 API???ㅼ젣 ?묎렐 議곌굔? 愿由ъ옄 ?몄쬆(`ROLE_ADMIN`) + ?몃? ??븷 `MASTER` ?먮뒗 `BACKEND` ?먮뒗 `CS`??
 
-### Pagination 규칙
+### Pagination 洹쒖튃
 
-- 목록 조회 API만 `page`, `size`를 사용한다.
-- 상세 조회 API는 `page`, `size`를 사용하지 않는다.
-- 생성/수정/삭제 API는 `page`, `size`를 사용하지 않는다.
+- 紐⑸줉 議고쉶 API留?`page`, `size`瑜??ъ슜?쒕떎.
+- ?곸꽭 議고쉶 API??`page`, `size`瑜??ъ슜?섏? ?딅뒗??
+- ?앹꽦/?섏젙/??젣 API??`page`, `size`瑜??ъ슜?섏? ?딅뒗??
 
-### 공통 성공 응답 예시
+### 怨듯넻 ?깃났 ?묐떟 ?덉떆
 
 ```json
 {
   "success": true,
-  "message": "요청이 성공했습니다.",
+  "message": "?붿껌???깃났?덉뒿?덈떎.",
   "data": {}
 }
 ```
 
-### 공통 실패 응답 예시
+### 怨듯넻 ?ㅽ뙣 ?묐떟 ?덉떆
 
 ```json
 {
   "success": false,
-  "status": 400,
-  "message": "유효하지 않은 요청입니다.",
+  "statusCode": 400,
+  "message": "?좏슚?섏? ?딆? ?붿껌?낅땲??",
+  "code": "BAD_REQUEST",
   "data": null
 }
 ```
 
 ---
 
-## 2. Enum 계약
+## 2. Enum 怨꾩빟
 
-| Enum | Values | ERD CHECK 제약 또는 계약 기준 |
+| Enum | Values | ERD CHECK ?쒖빟 ?먮뒗 怨꾩빟 湲곗? |
 |---|---|---|
-| `DashboardRangeType` | `TODAY`, `7D`, `30D` | 대시보드 기간 집계 계약 |
-| `DashboardKpiKeyType` | `TODAY_NEW_MEMBERS`, `REALTIME_ACTIVE_USERS`, `AI_INTERVIEW_SESSIONS`, `TODAY_REVENUE` | 관리자 대시보드 KPI 계약 |
-| `DashboardSeverityType` | `NORMAL`, `WARNING`, `CRITICAL` | 대시보드 표시 계약 |
-| `DashboardAlertLevelType` | `URGENT`, `WARNING`, `NORMAL` | 대시보드 표시 계약 |
-| `DashboardDomainType` | `ADMIN`, `MEMBER`, `REPORT`, `CS`, `PAYMENT`, `STATISTICS`, `AI_METRICS`, `SCRAPING`, `AUDIT_LOG` | 관리자 라우팅 계약 |
-| `DashboardSystemStatusType` | `NORMAL`, `WARNING`, `CRITICAL` | 대시보드 표시 계약 |
+| `DashboardRangeType` | `TODAY`, `7D`, `30D` | ??쒕낫??湲곌컙 吏묎퀎 怨꾩빟 |
+| `DashboardKpiKeyType` | `TODAY_NEW_MEMBERS`, `REALTIME_ACTIVE_USERS`, `AI_INTERVIEW_SESSIONS`, `TODAY_REVENUE` | 愿由ъ옄 ??쒕낫??KPI 怨꾩빟 |
+| `DashboardSeverityType` | `NORMAL`, `WARNING`, `CRITICAL` | ??쒕낫???쒖떆 怨꾩빟 |
+| `DashboardAlertLevelType` | `URGENT`, `WARNING`, `NORMAL` | ??쒕낫???쒖떆 怨꾩빟 |
+| `DashboardDomainType` | `ADMIN`, `MEMBER`, `REPORT`, `CS`, `PAYMENT`, `STATISTICS`, `AI_METRICS`, `SCRAPING`, `AUDIT_LOG` | 愿由ъ옄 ?쇱슦??怨꾩빟 |
+| `DashboardSystemStatusType` | `NORMAL`, `WARNING`, `CRITICAL` | ??쒕낫???쒖떆 怨꾩빟 |
 
 ---
 
-## 3. Query Parameter -> ERD 컬럼 매핑
+## 3. Query Parameter -> ERD 而щ읆 留ㅽ븨
 
 ### GET /api/v1/admin/dashboard/summary
 
-| Query Parameter | Type | ERD 컬럼 | Description |
+| Query Parameter | Type | ERD 而щ읆 | Description |
 |---|---|---|---|
-| `range` | `TODAY \| 7D \| 30D` | 다중 집계 기준 컬럼 | 관리자 대시보드 집계 범위 |
+| `range` | `TODAY \| 7D \| 30D` | ?ㅼ쨷 吏묎퀎 湲곗? 而щ읆 | 愿由ъ옄 ??쒕낫??吏묎퀎 踰붿쐞 |
 
-### range 적용 대상 컬럼
+### range ?곸슜 ???而щ읆
 
-> 본 endpoint는 단일 테이블 조회가 아니라 관리자 도메인 전반의 집계 응답이다.
-> 따라서 `range`는 아래 시간 기준 컬럼들에 공통 집계 윈도우로 적용된다.
+> 蹂?endpoint???⑥씪 ?뚯씠釉?議고쉶媛 ?꾨땲??愿由ъ옄 ?꾨찓???꾨컲??吏묎퀎 ?묐떟?대떎.
+> ?곕씪??`range`???꾨옒 ?쒓컙 湲곗? 而щ읆?ㅼ뿉 怨듯넻 吏묎퀎 ?덈룄?곕줈 ?곸슜?쒕떎.
 
-| 집계 영역 | ERD 기준 컬럼 |
+| 吏묎퀎 ?곸뿭 | ERD 湲곗? 而щ읆 |
 |---|---|
-| 관리자 계정 관련 | `admins.created_at`, `admins.last_login_at` |
-| 감사 로그 관련 | `audit_logs.created_at` |
-| AI 사용량 관련 | `ai_usage_logs.created_at` |
-| RAG 문서 관련 | `rag_documents.created_at`, `rag_documents.updated_at` |
-| 스크래핑 관련 | `scraping_logs.executed_at`, `scraping_pipelines.last_started_at`, `scraping_pipelines.last_success_at`, `scraping_pipelines.last_failed_at` |
+| 愿由ъ옄 怨꾩젙 愿??| `admins.created_at`, `admins.last_login_at` |
+| 媛먯궗 濡쒓렇 愿??| `audit_logs.created_at` |
+| AI ?ъ슜??愿??| `ai_usage_logs.created_at` |
+| RAG 臾몄꽌 愿??| `rag_documents.created_at`, `rag_documents.updated_at` |
+| ?ㅽ겕?섑븨 愿??| `scraping_logs.executed_at`, `scraping_pipelines.last_started_at`, `scraping_pipelines.last_success_at`, `scraping_pipelines.last_failed_at` |
 
-> 사용자/결제/신고 등 다른 관리자 KPI가 포함되는 경우에도 동일한 `range` 규칙을 적용하며, 해당 지표는 각 도메인의 최종 ERD 기준 시각 컬럼으로 집계한다.
+> ?ъ슜??寃곗젣/?좉퀬 ???ㅻⅨ 愿由ъ옄 KPI媛 ?ы븿?섎뒗 寃쎌슦?먮룄 ?숈씪??`range` 洹쒖튃???곸슜?섎ŉ, ?대떦 吏?쒕뒗 媛??꾨찓?몄쓽 理쒖쥌 ERD 湲곗? ?쒓컖 而щ읆?쇰줈 吏묎퀎?쒕떎.
 
 ---
 
-## 4. 종합 대시보드 API
+## 4. 醫낇빀 ??쒕낫??API
 
 ### 4.1 GET /api/v1/admin/dashboard/summary
 
@@ -100,13 +101,13 @@
 
 - Request DTO: `DashboardDTO.SummaryRequest`
 
-| Name | Type | Required | ERD 컬럼 | Description |
+| Name | Type | Required | ERD 而щ읆 | Description |
 |---|---|---|---|---|
-| `range` | `TODAY \| 7D \| 30D` | N | 다중 집계 기준 컬럼 | 집계 범위, 기본값 `TODAY` |
+| `range` | `TODAY \| 7D \| 30D` | N | ?ㅼ쨷 吏묎퀎 湲곗? 而щ읆 | 吏묎퀎 踰붿쐞, 湲곕낯媛?`TODAY` |
 
 #### Request Body
 
-- Request DTO: 없음
+- Request DTO: ?놁쓬
 
 #### Response Body
 
@@ -115,17 +116,17 @@
 ```json
 {
   "success": true,
-  "message": "관리자 대시보드 요약 조회에 성공했습니다.",
+  "message": "愿由ъ옄 ??쒕낫???붿빟 議고쉶???깃났?덉뒿?덈떎.",
   "data": {
     "baseDateTime": "2026-06-22T09:00:00Z",
     "range": "TODAY",
     "kpis": [
       {
         "key": "TODAY_NEW_MEMBERS",
-        "title": "오늘 신규 가입자",
+        "title": "?ㅻ뒛 ?좉퇋 媛?낆옄",
         "value": 128,
-        "unit": "명",
-        "deltaText": "어제 대비 +14명",
+        "unit": "紐?,
+        "deltaText": "?댁젣 ?鍮?+14紐?,
         "severity": "NORMAL",
         "targetPath": "/admin/members"
       }
@@ -135,31 +136,31 @@
         "id": 1,
         "level": "URGENT",
         "domain": "REPORT",
-        "title": "신고 처리 대기",
-        "message": "게시글 신고 3건 처리 대기 중",
+        "title": "?좉퀬 泥섎━ ?湲?,
+        "message": "寃뚯떆湲 ?좉퀬 3嫄?泥섎━ ?湲?以?,
         "targetPath": "/admin/reports",
         "createdAt": "2026-06-22T08:40:00Z"
       }
     ],
     "weeklySignups": [
       {
-        "label": "월",
+        "label": "??,
         "count": 70
       }
     ],
     "paymentRatio": [
       {
         "method": "CARD",
-        "label": "카드",
+        "label": "移대뱶",
         "ratio": 62
       }
     ],
     "serviceCards": [
       {
         "key": "MEMBER",
-        "title": "회원 관리",
-        "description": "가입자, 구독 상태, 권한, 정지 회원을 관리합니다.",
-        "summaryText": "신규 128명",
+        "title": "?뚯썝 愿由?,
+        "description": "媛?낆옄, 援щ룆 ?곹깭, 沅뚰븳, ?뺤? ?뚯썝??愿由ы빀?덈떎.",
+        "summaryText": "?좉퇋 128紐?,
         "targetPath": "/admin/members"
       }
     ],
@@ -168,7 +169,7 @@
         "key": "AI_API",
         "label": "AI API",
         "status": "NORMAL",
-        "valueText": "정상"
+        "valueText": "?뺤긽"
       }
     ],
     "recentActivities": [
@@ -176,7 +177,7 @@
         "id": 1,
         "occurredAt": "2026-06-22T09:12:00Z",
         "adminId": "cs_admin",
-        "message": "환불 요청 1건 확인",
+        "message": "?섎텋 ?붿껌 1嫄??뺤씤",
         "targetPath": "/admin/payments"
       }
     ]
@@ -188,137 +189,137 @@
 
 ##### `DashboardDTO.ResponseSummary`
 
-| Field | Type | Required | Entity 직접 매핑 컬럼 또는 집계 기준 |
+| Field | Type | Required | Entity 吏곸젒 留ㅽ븨 而щ읆 ?먮뒗 吏묎퀎 湲곗? |
 |---|---|---|---|
-| `baseDateTime` | `string` | Y | 집계 기준 시각 |
-| `range` | `TODAY \| 7D \| 30D` | Y | 요청 Query Parameter |
-| `kpis` | `DashboardDTO.Kpi[]` | Y | 관리자 도메인 집계 결과 |
-| `alerts` | `DashboardDTO.Alert[]` | Y | 관리자 도메인 경고/대기 항목 집계 결과 |
-| `weeklySignups` | `DashboardDTO.WeeklySignup[]` | Y | 기간 내 가입 추이 집계 결과 |
-| `paymentRatio` | `DashboardDTO.PaymentRatio[]` | Y | 결제 수단 비율 집계 결과 |
-| `serviceCards` | `DashboardDTO.ServiceCard[]` | Y | 관리자 기능별 요약 집계 결과 |
-| `systemStatus` | `DashboardDTO.SystemStatus[]` | Y | AI/스크래핑/운영 상태 집계 결과 |
-| `recentActivities` | `DashboardDTO.RecentActivity[]` | Y | 최근 관리자 활동 집계 결과 |
+| `baseDateTime` | `string` | Y | 吏묎퀎 湲곗? ?쒓컖 |
+| `range` | `TODAY \| 7D \| 30D` | Y | ?붿껌 Query Parameter |
+| `kpis` | `DashboardDTO.Kpi[]` | Y | 愿由ъ옄 ?꾨찓??吏묎퀎 寃곌낵 |
+| `alerts` | `DashboardDTO.Alert[]` | Y | 愿由ъ옄 ?꾨찓??寃쎄퀬/?湲???ぉ 吏묎퀎 寃곌낵 |
+| `weeklySignups` | `DashboardDTO.WeeklySignup[]` | Y | 湲곌컙 ??媛??異붿씠 吏묎퀎 寃곌낵 |
+| `paymentRatio` | `DashboardDTO.PaymentRatio[]` | Y | 寃곗젣 ?섎떒 鍮꾩쑉 吏묎퀎 寃곌낵 |
+| `serviceCards` | `DashboardDTO.ServiceCard[]` | Y | 愿由ъ옄 湲곕뒫蹂??붿빟 吏묎퀎 寃곌낵 |
+| `systemStatus` | `DashboardDTO.SystemStatus[]` | Y | AI/?ㅽ겕?섑븨/?댁쁺 ?곹깭 吏묎퀎 寃곌낵 |
+| `recentActivities` | `DashboardDTO.RecentActivity[]` | Y | 理쒓렐 愿由ъ옄 ?쒕룞 吏묎퀎 寃곌낵 |
 
 ##### `DashboardDTO.Kpi`
 
-| Field | Type | Required | Entity 직접 매핑 컬럼 또는 집계 기준 |
+| Field | Type | Required | Entity 吏곸젒 留ㅽ븨 而щ읆 ?먮뒗 吏묎퀎 湲곗? |
 |---|---|---|---|
-| `key` | `DashboardKpiKeyType` | Y | KPI 식별자 계약 |
-| `title` | `string` | Y | 화면 표시 텍스트 |
-| `value` | `number` | Y | 집계 결과 |
-| `unit` | `string` | N | 화면 표시 단위 |
-| `deltaText` | `string` | N | 비교 증감 텍스트 |
-| `severity` | `DashboardSeverityType` | Y | 상태 표시 계약 |
-| `targetPath` | `string` | Y | 관리자 라우팅 경로 |
+| `key` | `DashboardKpiKeyType` | Y | KPI ?앸퀎??怨꾩빟 |
+| `title` | `string` | Y | ?붾㈃ ?쒖떆 ?띿뒪??|
+| `value` | `number` | Y | 吏묎퀎 寃곌낵 |
+| `unit` | `string` | N | ?붾㈃ ?쒖떆 ?⑥쐞 |
+| `deltaText` | `string` | N | 鍮꾧탳 利앷컧 ?띿뒪??|
+| `severity` | `DashboardSeverityType` | Y | ?곹깭 ?쒖떆 怨꾩빟 |
+| `targetPath` | `string` | Y | 愿由ъ옄 ?쇱슦??寃쎈줈 |
 
 ##### `DashboardDTO.Alert`
 
-| Field | Type | Required | Entity 직접 매핑 컬럼 또는 집계 기준 |
+| Field | Type | Required | Entity 吏곸젒 留ㅽ븨 而щ읆 ?먮뒗 吏묎퀎 湲곗? |
 |---|---|---|---|
-| `id` | `number` | Y | 경고 항목 식별자 |
-| `level` | `DashboardAlertLevelType` | Y | 경고 수준 계약 |
-| `domain` | `DashboardDomainType` | Y | 관리자 도메인 식별자 |
-| `title` | `string` | Y | 경고 제목 |
-| `message` | `string` | Y | 경고 설명 |
-| `targetPath` | `string` | Y | 관리자 라우팅 경로 |
-| `createdAt` | `string` | Y | 집계 항목 기준 시각 |
+| `id` | `number` | Y | 寃쎄퀬 ??ぉ ?앸퀎??|
+| `level` | `DashboardAlertLevelType` | Y | 寃쎄퀬 ?섏? 怨꾩빟 |
+| `domain` | `DashboardDomainType` | Y | 愿由ъ옄 ?꾨찓???앸퀎??|
+| `title` | `string` | Y | 寃쎄퀬 ?쒕ぉ |
+| `message` | `string` | Y | 寃쎄퀬 ?ㅻ챸 |
+| `targetPath` | `string` | Y | 愿由ъ옄 ?쇱슦??寃쎈줈 |
+| `createdAt` | `string` | Y | 吏묎퀎 ??ぉ 湲곗? ?쒓컖 |
 
 ##### `DashboardDTO.WeeklySignup`
 
-| Field | Type | Required | Entity 직접 매핑 컬럼 또는 집계 기준 |
+| Field | Type | Required | Entity 吏곸젒 留ㅽ븨 而щ읆 ?먮뒗 吏묎퀎 湲곗? |
 |---|---|---|---|
-| `label` | `string` | Y | 구간 라벨 |
-| `count` | `number` | Y | 가입자 집계 결과 |
+| `label` | `string` | Y | 援ш컙 ?쇰꺼 |
+| `count` | `number` | Y | 媛?낆옄 吏묎퀎 寃곌낵 |
 
 ##### `DashboardDTO.PaymentRatio`
 
-| Field | Type | Required | Entity 직접 매핑 컬럼 또는 집계 기준 |
+| Field | Type | Required | Entity 吏곸젒 留ㅽ븨 而щ읆 ?먮뒗 吏묎퀎 湲곗? |
 |---|---|---|---|
-| `method` | `string` | Y | 결제 수단 식별자 |
-| `label` | `string` | Y | 결제 수단 표시명 |
-| `ratio` | `number` | Y | 결제 수단 비율 |
+| `method` | `string` | Y | 寃곗젣 ?섎떒 ?앸퀎??|
+| `label` | `string` | Y | 寃곗젣 ?섎떒 ?쒖떆紐?|
+| `ratio` | `number` | Y | 寃곗젣 ?섎떒 鍮꾩쑉 |
 
 ##### `DashboardDTO.ServiceCard`
 
-| Field | Type | Required | Entity 직접 매핑 컬럼 또는 집계 기준 |
+| Field | Type | Required | Entity 吏곸젒 留ㅽ븨 而щ읆 ?먮뒗 吏묎퀎 湲곗? |
 |---|---|---|---|
-| `key` | `string` | Y | 서비스 카드 식별자 |
-| `title` | `string` | Y | 서비스 카드 제목 |
-| `description` | `string` | Y | 서비스 카드 설명 |
-| `summaryText` | `string` | Y | 핵심 요약 문구 |
-| `targetPath` | `string` | Y | 관리자 라우팅 경로 |
+| `key` | `string` | Y | ?쒕퉬??移대뱶 ?앸퀎??|
+| `title` | `string` | Y | ?쒕퉬??移대뱶 ?쒕ぉ |
+| `description` | `string` | Y | ?쒕퉬??移대뱶 ?ㅻ챸 |
+| `summaryText` | `string` | Y | ?듭떖 ?붿빟 臾멸뎄 |
+| `targetPath` | `string` | Y | 愿由ъ옄 ?쇱슦??寃쎈줈 |
 
 ##### `DashboardDTO.SystemStatus`
 
-| Field | Type | Required | Entity 직접 매핑 컬럼 또는 집계 기준 |
+| Field | Type | Required | Entity 吏곸젒 留ㅽ븨 而щ읆 ?먮뒗 吏묎퀎 湲곗? |
 |---|---|---|---|
-| `key` | `string` | Y | 시스템 상태 식별자 |
-| `label` | `string` | Y | 표시명 |
-| `status` | `DashboardSystemStatusType` | Y | 상태 표시 계약 |
-| `valueText` | `string` | Y | 상태 설명 |
+| `key` | `string` | Y | ?쒖뒪???곹깭 ?앸퀎??|
+| `label` | `string` | Y | ?쒖떆紐?|
+| `status` | `DashboardSystemStatusType` | Y | ?곹깭 ?쒖떆 怨꾩빟 |
+| `valueText` | `string` | Y | ?곹깭 ?ㅻ챸 |
 
 ##### `DashboardDTO.RecentActivity`
 
-| Field | Type | Required | Entity 직접 매핑 컬럼 또는 집계 기준 |
+| Field | Type | Required | Entity 吏곸젒 留ㅽ븨 而щ읆 ?먮뒗 吏묎퀎 湲곗? |
 |---|---|---|---|
-| `id` | `number` | Y | 활동 식별자 |
-| `occurredAt` | `string` | Y | 활동 발생 시각 |
-| `adminId` | `string` | Y | 활동 수행 관리자 식별자 |
-| `message` | `string` | Y | 활동 설명 |
-| `targetPath` | `string` | N | 이동 경로 |
+| `id` | `number` | Y | ?쒕룞 ?앸퀎??|
+| `occurredAt` | `string` | Y | ?쒕룞 諛쒖깮 ?쒓컖 |
+| `adminId` | `string` | Y | ?쒕룞 ?섑뻾 愿由ъ옄 ?앸퀎??|
+| `message` | `string` | Y | ?쒕룞 ?ㅻ챸 |
+| `targetPath` | `string` | N | ?대룞 寃쎈줈 |
 
 #### Response Rules
 
-- `kpis`는 v1 기준 `TODAY_NEW_MEMBERS`, `REALTIME_ACTIVE_USERS`, `AI_INTERVIEW_SESSIONS`, `TODAY_REVENUE` 4개를 반환한다.
-- `paymentRatio.ratio` 합계는 100이어야 한다.
-- `targetPath`는 관리자 화면 라우팅 가능한 path여야 한다.
-- 데이터가 없는 섹션은 `null` 대신 빈 배열을 반환한다.
-- 집계 기준 시각은 `baseDateTime`으로 명시한다.
+- `kpis`??v1 湲곗? `TODAY_NEW_MEMBERS`, `REALTIME_ACTIVE_USERS`, `AI_INTERVIEW_SESSIONS`, `TODAY_REVENUE` 4媛쒕? 諛섑솚?쒕떎.
+- `paymentRatio.ratio` ?⑷퀎??100?댁뼱???쒕떎.
+- `targetPath`??愿由ъ옄 ?붾㈃ ?쇱슦??媛?ν븳 path?ъ빞 ?쒕떎.
+- ?곗씠?곌? ?녿뒗 ?뱀뀡? `null` ???鍮?諛곗뿴??諛섑솚?쒕떎.
+- 吏묎퀎 湲곗? ?쒓컖? `baseDateTime`?쇰줈 紐낆떆?쒕떎.
 
 #### Error Response
 
-> `dashboard` 도메인 전용 ErrorCode는 없다.
-> 아래 공통 ErrorCode만 사용한다.
+> `dashboard` ?꾨찓???꾩슜 ErrorCode???녿떎.
+> ?꾨옒 怨듯넻 ErrorCode留??ъ슜?쒕떎.
 
 | ErrorCode | Status | Description |
 |---|---|---|
-| `UNAUTHORIZED` | 401 | 관리자 인증이 없는 요청이다. |
-| `FORBIDDEN` | 403 | `MASTER`, `BACKEND`, `CS` 외 권한이 접근했다. |
-| `INVALID_QUERY_PARAMETER` | 400 | `range`가 `TODAY`, `7D`, `30D` 외 값이다. |
-| `INTERNAL_SERVER_ERROR` | 500 | 대시보드 요약 집계 중 서버 내부 오류가 발생했다. |
+| `UNAUTHORIZED` | 401 | 愿由ъ옄 ?몄쬆???녿뒗 ?붿껌?대떎. |
+| `FORBIDDEN` | 403 | `MASTER`, `BACKEND`, `CS` ??沅뚰븳???묎렐?덈떎. |
+| `BAD_REQUEST` | 400 | `range`가 `TODAY`, `7D`, `30D` 외 값이다. |
+| `INTERNAL_SERVER_ERROR` | 500 | ??쒕낫???붿빟 吏묎퀎 以??쒕쾭 ?대? ?ㅻ쪟媛 諛쒖깮?덈떎. |
 
 #### Error Response Example
 
 ```json
 {
   "success": false,
-  "status": 400,
-  "message": "유효하지 않은 Query Parameter 입니다.",
+  "statusCode": 400,
+  "message": "?좏슚?섏? ?딆? Query Parameter ?낅땲??",
+  "code": "BAD_REQUEST",
   "data": null
 }
 ```
 
 ---
 
-## 5. 도메인 응답 규칙
+## 5. ?꾨찓???묐떟 洹쒖튃
 
-- 본 endpoint는 페이지네이션 응답이 아니므로 `content`, `page`, `size`, `totalElements`, `totalPages`를 사용하지 않는다.
-- 본 endpoint는 단일 대시보드 응답만 반환한다.
-- `range` 기본값은 `TODAY`다.
-- `range=7D`는 최근 7일, `range=30D`는 최근 30일 집계 윈도우를 의미한다.
-- 집계 기준은 UTC 저장값을 사용하되, 응답 문자열은 ISO 8601 형식을 유지한다.
+- 蹂?endpoint???섏씠吏?ㅼ씠???묐떟???꾨땲誘濡?`content`, `page`, `size`, `totalElements`, `totalPages`瑜??ъ슜?섏? ?딅뒗??
+- 蹂?endpoint???⑥씪 ??쒕낫???묐떟留?諛섑솚?쒕떎.
+- `range` 湲곕낯媛믪? `TODAY`??
+- `range=7D`??理쒓렐 7?? `range=30D`??理쒓렐 30??吏묎퀎 ?덈룄?곕? ?섎??쒕떎.
+- 吏묎퀎 湲곗?? UTC ??κ컪???ъ슜?섎릺, ?묐떟 臾몄옄?댁? ISO 8601 ?뺤떇???좎??쒕떎.
 
 ---
 
-## 6. 연관 엔티티
-
-| 엔티티 | 주요 컬럼 | 용도 |
+## 6. ?곌? ?뷀떚??
+| ?뷀떚??| 二쇱슂 而щ읆 | ?⑸룄 |
 |---|---|---|
-| `admins` | `admin_id`, `created_at`, `last_login_at`, `status`, `admin_role` | 관리자 KPI, 최근 관리자 활동 집계 |
-| `audit_logs` | `audit_log_id`, `admin_id`, `log_type`, `severity`, `created_at` | 최근 관리자 활동, 운영 알림 집계 |
-| `ai_usage_logs` | `ai_usage_log_id`, `feature_type`, `input_tokens`, `output_tokens`, `cost`, `created_at` | AI 사용량 KPI 및 시스템 상태 집계 |
-| `ai_ops_settings` | `monthly_budget`, `alert_enabled`, `alert_threshold`, `rate_limit_enabled`, `updated_at` | AI 운영 상태 집계 |
-| `rag_documents` | `rag_document_id`, `status`, `indexing_progress`, `created_at`, `updated_at` | AI 운영 상태 및 경고 집계 |
-| `scraping_pipelines` | `scraping_pipeline_id`, `source_name`, `pipeline_status`, `last_started_at`, `last_success_at`, `last_failed_at` | 스크래핑 상태 집계 |
-| `scraping_logs` | `scraping_log_id`, `scraping_pipeline_id`, `scraping_status`, `executed_at`, `error_message` | 스크래핑 경고 및 최근 활동 집계 |
+| `admins` | `admin_id`, `created_at`, `last_login_at`, `status`, `admin_role` | 愿由ъ옄 KPI, 理쒓렐 愿由ъ옄 ?쒕룞 吏묎퀎 |
+| `audit_logs` | `audit_log_id`, `admin_id`, `log_type`, `severity`, `created_at` | 理쒓렐 愿由ъ옄 ?쒕룞, ?댁쁺 ?뚮┝ 吏묎퀎 |
+| `ai_usage_logs` | `ai_usage_log_id`, `feature_type`, `input_tokens`, `output_tokens`, `cost`, `created_at` | AI ?ъ슜??KPI 諛??쒖뒪???곹깭 吏묎퀎 |
+| `ai_ops_settings` | `monthly_budget`, `alert_enabled`, `alert_threshold`, `rate_limit_enabled`, `updated_at` | AI ?댁쁺 ?곹깭 吏묎퀎 |
+| `rag_documents` | `rag_document_id`, `status`, `indexing_progress`, `created_at`, `updated_at` | AI ?댁쁺 ?곹깭 諛?寃쎄퀬 吏묎퀎 |
+| `scraping_pipelines` | `scraping_pipeline_id`, `source_name`, `pipeline_status`, `last_started_at`, `last_success_at`, `last_failed_at` | ?ㅽ겕?섑븨 ?곹깭 吏묎퀎 |
+| `scraping_logs` | `scraping_log_id`, `scraping_pipeline_id`, `scraping_status`, `executed_at`, `error_message` | ?ㅽ겕?섑븨 寃쎄퀬 諛?理쒓렐 ?쒕룞 吏묎퀎 |
