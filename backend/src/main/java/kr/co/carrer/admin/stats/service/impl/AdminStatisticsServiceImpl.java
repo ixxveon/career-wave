@@ -79,6 +79,12 @@ public class AdminStatisticsServiceImpl implements AdminStatisticsService {
         }).toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<StatisticsDTO.RevenueBreakdownItem> getRevenueBreakdown() {
+        return queryRepository.findRevenueBreakdown();
+    }
+
     private String formatTimeAgo(ZonedDateTime now, ZonedDateTime target) {
         if (target == null) return "-";
         long minutes = Math.max(0, ChronoUnit.MINUTES.between(target, now));
