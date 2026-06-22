@@ -56,24 +56,24 @@
 - [x] TEST 액션 orchestration 로직을 작성한다.
 
 ## Phase 8 - JobNotice 정제
-
+    
 - [x] `job_notice_normalizer.py`를 작성한다.
 - [x] 원본 공고를 표준 JobNotice 구조로 변환하는 로직을 작성한다.
 - [x] 사이트별 필드 매핑 로직을 작성한다.
 
-## Phase 9 - JobNotice 중복 제거 및 저장
+## Phase 9 - JobNotice 중복 제거 및 저장    
 
-- [ ] `job_notice_dedup_service.py`를 작성한다.
-- [ ] 실제 실행/재시도 액션 대상 저장 로직을 작성한다.
-- [ ] TEST 액션 대상 제외 로직을 작성한다.
-- [ ] `source + original_url` 기준 중복 제거 로직을 작성한다.
+- [x] `job_notice_dedup_service.py`를 작성한다.
+- [x] 실제 실행/재시도 액션 대상 저장 로직을 작성한다.
+- [x] TEST 액션 대상 제외 로직을 작성한다.
+- [x] `source + original_url` 기준 중복 제거 로직을 작성한다.
 
 ## Phase 10 - Pipeline 상태 갱신
 
-- [ ] `pipeline_status_service.py`를 작성한다.
-- [ ] `RUNNING` 상태 전이 로직을 작성한다.
-- [ ] `SUCCESS` 상태 전이 로직을 작성한다.
-- [ ] `FAILED` 상태 전이 로직을 작성한다.
+- [x] `pipeline_status_service.py`를 작성한다.
+- [x] `RUNNING` 상태 전이 로직을 작성한다.
+- [x] `SUCCESS` 상태 전이 로직을 작성한다.
+- [x] `FAILED` 상태 전이 로직을 작성한다.
 
 ## Phase 11 - 실행 로그 기록
 
