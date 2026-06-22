@@ -77,7 +77,7 @@
 
 ## Phase 11 - 실행 로그 기록
 
-- [ ] `scraping_log_service.py`를 작성한다.
+- [x] `scraping_log_service.py`를 작성한다.
 - [ ] 성공 실행 로그 기록 로직을 작성한다.
 - [ ] 실패 실행 로그 기록 로직을 작성한다.
 - [ ] TEST 액션 로그 기록 로직을 작성한다.
@@ -85,15 +85,15 @@
 
 ## Phase 12 - Router
 
-- [ ] `scraping_router.py`를 작성한다.
-- [ ] `GET /internal/scraping/pipelines` Router를 작성한다.
-- [ ] `GET /internal/scraping/pipelines/summary` Router를 작성한다.
-- [ ] `GET /internal/scraping/pipelines/{sourceName}` Router를 작성한다.
-- [ ] `GET /internal/scraping/logs` Router를 작성한다.
-- [ ] `POST /internal/scraping/pipelines/{sourceName}/run` Router를 작성한다.
-- [ ] `POST /internal/scraping/pipelines/{sourceName}/retry` Router를 작성한다.
-- [ ] `POST /internal/scraping/pipelines/{sourceName}/test` Router를 작성한다.
-- [ ] `POST /internal/scraping/pipelines/batch-run` Router를 작성한다.
+- [x] `scraping_router.py`를 작성한다.
+- [x] `GET /internal/scraping/pipelines` Router를 작성한다.
+- [x] `GET /internal/scraping/pipelines/summary` Router를 작성한다.
+- [x] `GET /internal/scraping/pipelines/{sourceName}` Router를 작성한다.
+- [x] `GET /internal/scraping/logs` Router를 작성한다.
+- [x] `POST /internal/scraping/pipelines/{sourceName}/run` Router를 작성한다.
+- [x] `POST /internal/scraping/pipelines/{sourceName}/retry` Router를 작성한다.
+- [x] `POST /internal/scraping/pipelines/{sourceName}/test` Router를 작성한다.
+- [x] `POST /internal/scraping/pipelines/batch-run` Router를 작성한다.
 
 ## Phase 13 - Background Task / Pipeline
 
