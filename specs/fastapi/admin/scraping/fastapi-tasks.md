@@ -50,16 +50,16 @@
 
 ## Phase 7 - Pipeline Runner
 
-- [ ] `pipeline_runner_service.py`를 작성한다.
-- [ ] 실행 orchestration 로직을 작성한다.
-- [ ] 재시도 orchestration 로직을 작성한다.
-- [ ] TEST 액션 orchestration 로직을 작성한다.
+- [x] `pipeline_runner_service.py`를 작성한다.
+- [x] 실행 orchestration 로직을 작성한다.
+- [x] 재시도 orchestration 로직을 작성한다.
+- [x] TEST 액션 orchestration 로직을 작성한다.
 
 ## Phase 8 - JobNotice 정제
 
-- [ ] `job_notice_normalizer.py`를 작성한다.
-- [ ] 원본 공고를 표준 JobNotice 구조로 변환하는 로직을 작성한다.
-- [ ] 사이트별 필드 매핑 로직을 작성한다.
+- [x] `job_notice_normalizer.py`를 작성한다.
+- [x] 원본 공고를 표준 JobNotice 구조로 변환하는 로직을 작성한다.
+- [x] 사이트별 필드 매핑 로직을 작성한다.
 
 ## Phase 9 - JobNotice 중복 제거 및 저장
 
