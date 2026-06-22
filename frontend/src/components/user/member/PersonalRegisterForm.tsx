@@ -1,6 +1,6 @@
 import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 import { BadgeCheck, UserRound } from 'lucide-react';
-import { AuthButtonGroup, Field, StatusPill, TextInput } from './RegisterFormPrimitives';
+import { AuthButtonGroup, Field, PasswordInput, StatusPill, TextInput } from './RegisterFormPrimitives';
 import { LOGIN_ID_CHECK_STATE } from '../../../utils/user/member/validation';
 import { usePersonalRegisterForm } from '../../../hooks/user/member/usePersonalRegisterForm';
 import type { PersonalTermDetails, TermSection } from '../../../utils/user/member/registerTerms';
@@ -163,8 +163,7 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
             {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
           </Field>
           <Field label="비밀번호" required wide>
-            <TextInput
-              type="password"
+            <PasswordInput
               value={form.password}
               onChange={(value) => update('password', value)}
               placeholder="비밀번호(8~16자의 영문, 숫자, 특수기호)"
@@ -172,7 +171,7 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
             {fieldErrors.password && <p className="cw-register-error">{fieldErrors.password}</p>}
           </Field>
           <Field label="비밀번호 확인" required wide>
-            <TextInput type="password" value={form.passwordConfirm} onChange={(value) => update('passwordConfirm', value)} placeholder="비밀번호 재입력" />
+            <PasswordInput value={form.passwordConfirm} onChange={(value) => update('passwordConfirm', value)} placeholder="비밀번호 재입력" />
             {passwordMismatch && <p className="cw-register-error">비밀번호가 일치하지 않습니다.</p>}
             {fieldErrors.passwordConfirm && <p className="cw-register-error">{fieldErrors.passwordConfirm}</p>}
           </Field>

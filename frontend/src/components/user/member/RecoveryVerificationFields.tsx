@@ -69,11 +69,11 @@ export function RecoveryContactField({
         </span>
         <button
           className={buttonClassName}
-          disabled={sendPending || resendIn > 0}
+          disabled={sendPending || Boolean(verification.verificationToken) || resendIn > 0}
           type="button"
           onClick={onSend}
         >
-          {sendPending ? '전송 중' : resendIn > 0 ? `${formatRemaining(resendIn)}` : '인증번호 전송'}
+          {sendPending ? '전송 중' : (!verification.verificationToken && resendIn > 0) ? `${formatRemaining(resendIn)}` : '인증번호 전송'}
         </button>
       </div>
       {error && <p className="cw-register-error">{error}</p>}
@@ -104,7 +104,7 @@ export function RecoveryCodeField({
   return (
     <label>
       {label}
-      <div className="cw-auth-inline cw-auth-inline--triple">
+      <div className={`cw-auth-inline${!verification.verificationToken ? ' cw-auth-inline--triple' : ''}`}>
         <span>
           <CheckCircle2 size={18} />
           <input
@@ -125,14 +125,16 @@ export function RecoveryCodeField({
         >
           {confirmPending ? '확인 중' : '인증 확인'}
         </button>
-        <button
-          className="cw-auth-button-secondary cw-auth-button-secondary--resend"
-          disabled={sendPending || resendIn > 0}
-          type="button"
-          onClick={onResend}
-        >
-          {sendPending ? '전송 중' : resendIn > 0 ? `${formatRemaining(resendIn)}` : '재전송'}
-        </button>
+        {!verification.verificationToken && (
+          <button
+            className="cw-auth-button-secondary cw-auth-button-secondary--resend"
+            disabled={sendPending || resendIn > 0}
+            type="button"
+            onClick={onResend}
+          >
+            {sendPending ? '전송 중' : resendIn > 0 ? `${formatRemaining(resendIn)}` : '재전송'}
+          </button>
+        )}
       </div>
       {error && <p className="cw-register-error">{error}</p>}
       {verification.verificationToken && !error && (
