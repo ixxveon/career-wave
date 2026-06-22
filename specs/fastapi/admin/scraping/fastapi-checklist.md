@@ -30,7 +30,7 @@
 - [x] `GET /internal/scraping/pipelines/summary` 계약에 맞는 요약 조회 로직이 존재한다.
 - [x] `GET /internal/scraping/pipelines/{sourceName}` 계약에 맞는 상세 조회 로직이 존재한다.
 - [x] `GET /internal/scraping/logs` 계약에 맞는 로그 조회 로직이 존재한다.
-- [x] 내부 조회 API의 page 계약은 1-based로 유지된다.
+- [x] 내부 조회 API의 `page` 계약이 1-based로 유지된다.
 
 ## Phase 5 - 단일 액션 처리
 
@@ -42,7 +42,7 @@
 
 - [x] 배치 액션의 `actionType` 검증 로직이 존재한다.
 - [x] 배치 액션의 `sourceNames` 검증 로직이 존재한다.
-- [x] 배치 액션 응답에 요청 수, 접수 수, 대상별 결과를 포함한다.
+- [x] 배치 액션 응답에 요청 수, 수락 수, 대상별 결과가 포함된다.
 
 ## Phase 7 - Pipeline Runner
 
@@ -65,12 +65,12 @@
 ## Phase 10 - Pipeline 상태 갱신
 
 - [x] `scraping_pipelines` 상태 갱신 컬럼이 문서와 일치한다.
-- [x] 실행 시작 시 `pipeline_status = RUNNING`과 시작 시각이 반영된다.
-- [x] 실행 성공 시 성공 시각, 소요 시간, 수집 건수, 수정 시각이 반영된다.
-- [x] 실행 실패 시 실패 시각, 에러 메시지, 수정 시각이 반영된다.
-- [x] 동일 `sourceName`에 대해 `RUNNING -> RUNNING` 중복 전이가 발생하지 않는다.
-- [ ] `RUNNING -> SUCCESS` 상태 전이 흐름이 반영된다.
-- [ ] `RUNNING -> FAILED` 상태 전이 흐름이 반영된다.
+- [x] 실행 시작 시 `pipeline_status = RUNNING`과 시작 시각을 반영한다.
+- [x] 실행 성공 시 성공 시각, 소요 시간, 수집 건수, 수정 시각을 반영한다.
+- [x] 실행 실패 시 실패 시각, 에러 메시지, 수정 시각을 반영한다.
+- [x] 동일 `sourceName`에 대한 `RUNNING -> RUNNING` 중복 전이가 발생하지 않는다.
+- [x] `RUNNING -> SUCCESS` 상태 전이 흐름이 반영된다.
+- [x] `RUNNING -> FAILED` 상태 전이 흐름이 반영된다.
 
 ## Phase 11 - 실행 로그 기록
 
@@ -93,18 +93,18 @@
 
 ## Phase 13 - Background Task / Pipeline
 
-- [ ] 비동기 실행 시작 로직이 존재한다.
+- [x] 비동기 실행 시작 로직이 존재한다.
 - [ ] 실행/재시도/TEST/배치 액션이 비동기 실행 흐름으로 연결된다.
-- [ ] 실행 종료 후 상태/로그 후처리 로직이 존재한다.
-- [ ] 실행 실패 복구 및 종료 처리 로직이 존재한다.
+- [x] 실행 종료 시 상태/로그 후처리 로직이 존재한다.
+- [x] 실행 실패 복구 및 종료 처리 로직이 존재한다.
 
 ## Phase 14 - Spring ↔ FastAPI 계약 검증
 
-- [ ] FastAPI 내부 에러 응답은 Spring Boot에서 변환 가능한 `errorCode`를 포함한다.
-- [ ] FastAPI ErrorCode 와 Spring ErrorCode 매핑이 문서와 검증 코드에서 일치한다.
-- [ ] `FASTAPI_INTERNAL_ERROR`가 문서의 변환 규칙대로 처리된다.
-- [ ] `DISCORD_ALERT_SEND_FAILED`가 선택 기능 정책에 맞게 조건부로만 사용된다.
-- [ ] 알림 실패가 스크래핑 실행 결과 상태를 덮어쓰지 않는다.
+- [x] FastAPI 내부 에러 응답은 Spring Boot에서 변환 가능한 `errorCode`를 포함한다.
+- [x] FastAPI ErrorCode와 Spring ErrorCode 매핑이 문서와 검증 코드에서 일치한다.
+- [x] `FASTAPI_INTERNAL_ERROR`가 문서의 변환 규칙대로 처리된다.
+- [x] `DISCORD_ALERT_SEND_FAILED`가 선택 기능 정책에 맞게 조건부로만 사용된다.
+- [x] 알림 실패가 스크래핑 실행 결과 상태를 덮어쓰지 않는다.
 
 ## Phase 15 - Test
 
