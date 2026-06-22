@@ -63,8 +63,8 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
         memberId = UUID.randomUUID();
 
         em.getEntityManager().createNativeQuery(
-                "INSERT INTO members (member_id, login_id, email, password, name, role_type, member_status, subscription_status) " +
-                "VALUES (?, ?, ?, 'hashed', '테스터', 'USER', 'ACTIVE', 'FREE')")
+                "INSERT INTO members (member_id, login_id, email, password, name, role_type, member_status, subscription_status, warning_count) " +
+                "VALUES (?, ?, ?, 'hashed', '테스터', 'USER', 'ACTIVE', 'FREE', 0)")
                 .setParameter(1, memberId)
                 .setParameter(2, "test_" + memberId)
                 .setParameter(3, memberId + "@test.com")
