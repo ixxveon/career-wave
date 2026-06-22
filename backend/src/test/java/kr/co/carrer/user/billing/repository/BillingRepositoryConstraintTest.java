@@ -1,5 +1,8 @@
 package kr.co.carrer.user.billing.repository;
 
+import kr.co.carrer.admin.payment.entity.Payment;
+import kr.co.carrer.admin.payment.repository.PaymentRepository;
+import kr.co.carrer.admin.payment.type.PaymentType;
 import kr.co.carrer.support.PostgreSqlTestContainerSupport;
 import kr.co.carrer.user.billing.entity.*;
 import kr.co.carrer.user.billing.type.*;
@@ -39,7 +42,10 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
             "kr.co.carrer.user.member.entity",
             "kr.co.carrer.admin.payment.entity"
     })
-    @EnableJpaRepositories(basePackages = "kr.co.carrer.user.billing.repository")
+    @EnableJpaRepositories(basePackages = {
+            "kr.co.carrer.user.billing.repository",
+            "kr.co.carrer.admin.payment.repository"
+    })
     static class TestJpaConfig {}
 
     @Autowired private TestEntityManager em;
@@ -47,6 +53,7 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
     @Autowired private SubscriptionRepository subscriptionRepository;
     @Autowired private ServiceUsageRecordRepository usageRecordRepository;
     @Autowired private SubscriptionUsagePeriodRepository usagePeriodRepository;
+    @Autowired private PaymentRepository paymentRepository;
 
     private UUID memberId;
     private Long planId;
@@ -211,11 +218,53 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
         void findActiveLike_excludesExpired() {
             ZonedDateTime now = ZonedDateTime.now();
             Subscription s = Subscription.create(memberId, planId, now, now.plusMonths(1));
+            s.scheduleCancel(); // expire()는 CANCEL_SCHEDULED/PAYMENT_FAILED에서만 허용 (constitution 4.2)
             s.expire();
             subscriptionRepository.saveAndFlush(s);
 
             assertThat(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(memberId, planId))
                     .isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("Payment UNIQUE 제약 — order_id, idempotency_key")
+    class PaymentUnique {
+
+        private Payment newPayment(String orderId, String idempotencyKey) {
+            return Payment.createReady(
+                    memberId, planId, null,
+                    orderId, idempotencyKey,
+                    9900, "KRW",
+                    PaymentType.AUTO_RENEWAL, 0,
+                    ZonedDateTime.now().plusMinutes(30));
+        }
+
+        @Test
+        @DisplayName("order_id 중복 저장 시 DataIntegrityViolationException 발생")
+        void duplicate_orderId_throws() {
+            paymentRepository.saveAndFlush(newPayment("ORDER-001", "IDEM-A"));
+
+            assertThatThrownBy(() -> paymentRepository.saveAndFlush(newPayment("ORDER-001", "IDEM-B")))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        @DisplayName("idempotency_key 중복 저장 시 DataIntegrityViolationException 발생")
+        void duplicate_idempotencyKey_throws() {
+            paymentRepository.saveAndFlush(newPayment("ORDER-002", "IDEM-C"));
+
+            assertThatThrownBy(() -> paymentRepository.saveAndFlush(newPayment("ORDER-003", "IDEM-C")))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        @DisplayName("order_id와 idempotency_key 모두 다른 결제는 허용")
+        void different_orderIdAndIdempotencyKey_allowed() {
+            paymentRepository.saveAndFlush(newPayment("ORDER-004", "IDEM-D"));
+            paymentRepository.saveAndFlush(newPayment("ORDER-005", "IDEM-E"));
+
+            assertThat(paymentRepository.count()).isGreaterThanOrEqualTo(2);
         }
     }
 }

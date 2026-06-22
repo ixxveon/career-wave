@@ -14,7 +14,13 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "payments")
+@Table(
+    name = "payments",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uq_order_id",        columnNames = "order_id"),
+        @UniqueConstraint(name = "uq_idempotency_key", columnNames = "idempotency_key")
+    }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Payment {
