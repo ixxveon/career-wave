@@ -119,7 +119,7 @@ class UserSocialAuthControllerTest {
     void complete_성공_200() throws Exception {
         UUID memberId = UUID.randomUUID();
         when(userSocialAuthService.complete(any(), any()))
-                .thenReturn(UserSocialAuthDto.ResponseSocialComplete.of(memberId, "ACTIVE"));
+                .thenReturn(UserSocialAuthDto.ResponseSocialComplete.of(memberId, "ACTIVE", "mock-access-token"));
 
         String body = """
                 {"provider":"kakao","socialSignupToken":"signup-token","name":"홍길동",
