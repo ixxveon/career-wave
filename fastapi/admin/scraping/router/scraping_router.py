@@ -34,6 +34,38 @@ router = APIRouter(
 )
 
 
+async def _execute_pipeline_action(
+    source_name: str,
+    action_type: ScrapingActionType,
+    request: PipelineActionRequest,
+) -> PipelineActionResponse | JSONResponse:
+    try:
+        with get_session() as session:
+            scraping_pipeline_repository = ScrapingPipelineRepository(session)
+            action_service = ActionService(scraping_pipeline_repository)
+            pipeline_status_service = PipelineStatusService(scraping_pipeline_repository)
+
+            action_service.request_action(
+                source_name=source_name,
+                action_type=action_type,
+                request=request,
+            )
+            updated_pipeline = pipeline_status_service.mark_running(source_name)
+            session.commit()
+
+            return PipelineActionResponse(
+                sourceName=updated_pipeline.source_name,
+                accepted=True,
+                pipelineStatus=updated_pipeline.pipeline_status,
+                requestedAt=datetime.now(timezone.utc),
+            )
+    except ScrapingException as error:
+        return JSONResponse(
+            status_code=error.status_code,
+            content=build_error_response(error),
+        )
+
+
 @router.get("/pipelines")
 async def get_pipelines(
     keyword: str | None = None,
@@ -127,89 +159,17 @@ async def get_pipeline_logs(
 
 @router.post("/pipelines/{sourceName}/run")
 async def run_pipeline(sourceName: str, request: PipelineActionRequest):
-    try:
-        with get_session() as session:
-            scraping_pipeline_repository = ScrapingPipelineRepository(session)
-            action_service = ActionService(scraping_pipeline_repository)
-            pipeline_status_service = PipelineStatusService(scraping_pipeline_repository)
-
-            action_service.request_action(
-                source_name=sourceName,
-                action_type=ScrapingActionType.RUN,
-                request=request,
-            )
-            updated_pipeline = pipeline_status_service.mark_running(sourceName)
-            session.commit()
-
-            return PipelineActionResponse(
-                sourceName=updated_pipeline.source_name,
-                accepted=True,
-                pipelineStatus=updated_pipeline.pipeline_status,
-                requestedAt=datetime.now(timezone.utc),
-            )
-    except ScrapingException as error:
-        return JSONResponse(
-            status_code=error.status_code,
-            content=build_error_response(error),
-        )
+    return await _execute_pipeline_action(sourceName, ScrapingActionType.RUN, request)
 
 
 @router.post("/pipelines/{sourceName}/retry")
 async def retry_pipeline(sourceName: str, request: PipelineActionRequest):
-    try:
-        with get_session() as session:
-            scraping_pipeline_repository = ScrapingPipelineRepository(session)
-            action_service = ActionService(scraping_pipeline_repository)
-            pipeline_status_service = PipelineStatusService(scraping_pipeline_repository)
-
-            action_service.request_action(
-                source_name=sourceName,
-                action_type=ScrapingActionType.RETRY,
-                request=request,
-            )
-            updated_pipeline = pipeline_status_service.mark_running(sourceName)
-            session.commit()
-
-            return PipelineActionResponse(
-                sourceName=updated_pipeline.source_name,
-                accepted=True,
-                pipelineStatus=updated_pipeline.pipeline_status,
-                requestedAt=datetime.now(timezone.utc),
-            )
-    except ScrapingException as error:
-        return JSONResponse(
-            status_code=error.status_code,
-            content=build_error_response(error),
-        )
+    return await _execute_pipeline_action(sourceName, ScrapingActionType.RETRY, request)
 
 
 @router.post("/pipelines/{sourceName}/test")
 async def test_pipeline(sourceName: str, request: PipelineActionRequest):
-    try:
-        with get_session() as session:
-            scraping_pipeline_repository = ScrapingPipelineRepository(session)
-            action_service = ActionService(scraping_pipeline_repository)
-            pipeline_status_service = PipelineStatusService(scraping_pipeline_repository)
-
-            action_service.request_action(
-                source_name=sourceName,
-                action_type=ScrapingActionType.TEST,
-                request=request,
-            )
-            updated_pipeline = pipeline_status_service.mark_running(sourceName)
-            session.commit()
-
-            return PipelineActionResponse(
-                sourceName=updated_pipeline.source_name,
-                accepted=True,
-                pipelineStatus=updated_pipeline.pipeline_status,
-                requestedAt=datetime.now(timezone.utc),
-            )
-    except ScrapingException as error:
-        return JSONResponse(
-            status_code=error.status_code,
-            content=build_error_response(error),
-        )
+    return await _execute_pipeline_action(sourceName, ScrapingActionType.TEST, request)
 
 
 @router.post("/pipelines/batch-run")

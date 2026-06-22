@@ -16,7 +16,6 @@ public class StatisticsDTO {
         long total
     ) {}
 
-    // breakdown API — payment_type 컬럼 추가 후 구현 예정 (issue #554)
     public record RevenueBreakdownItem(
         String type,
         String label,

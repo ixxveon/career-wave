@@ -5,7 +5,15 @@ from admin.scraping.schema import ScrapingActionType
 
 class PipelineRunnerService:
     def __init__(self, scrapers: list[ScraperAdapter]) -> None:
-        self._scrapers = {scraper.source_name: scraper for scraper in scrapers}
+        self._scrapers: dict[str, ScraperAdapter] = {}
+        for scraper in scrapers:
+            if scraper.source_name in self._scrapers:
+                raise ScrapingException(
+                    error_code=ScrapingErrorCode.FASTAPI_INTERNAL_ERROR,
+                    message="Duplicate scraper adapter registration.",
+                    detail={"sourceName": scraper.source_name},
+                )
+            self._scrapers[scraper.source_name] = scraper
 
     def run(self, source_name: str) -> list[RawJobNotice]:
         scraper = self._require_scraper(source_name)

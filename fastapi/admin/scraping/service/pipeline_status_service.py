@@ -14,8 +14,19 @@ class PipelineStatusService:
             started_at=datetime.now(timezone.utc),
         )
         if pipeline is None:
+            current_status = self._scraping_pipeline_repository.find_status_by_source_name(source_name)
+            if current_status is None:
+                raise ScrapingException(
+                    error_code=ScrapingErrorCode.SCRAPING_PIPELINE_NOT_FOUND,
+                    detail={"sourceName": source_name},
+                )
+            if current_status == "RUNNING":
+                raise ScrapingException(
+                    error_code=ScrapingErrorCode.SCRAPING_ALREADY_RUNNING,
+                    detail={"sourceName": source_name},
+                )
             raise ScrapingException(
-                error_code=ScrapingErrorCode.SCRAPING_PIPELINE_NOT_FOUND,
+                error_code=ScrapingErrorCode.FASTAPI_INTERNAL_ERROR,
                 detail={"sourceName": source_name},
             )
         return pipeline

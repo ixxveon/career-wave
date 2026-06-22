@@ -178,6 +178,7 @@ export interface SocialRegisterCompletionResponse {
   memberId: string;
   roleType: 'USER';
   memberStatus: MemberStatus;
+  accessToken: string;
   nextPath: string;
 }
 
@@ -281,7 +282,7 @@ export interface FindIdRequest {
 }
 
 export interface FindIdResponse {
-  maskedLoginIds: string[];
+  loginIds: string[];
   found: boolean;
 }
 

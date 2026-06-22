@@ -648,6 +648,7 @@ CREATE TABLE payments (
     payment_status  VARCHAR(20)  NOT NULL DEFAULT 'READY',
     failure_reason  VARCHAR(30)  NULL,
     payment_method  VARCHAR(30)  NULL,
+    payment_type    VARCHAR(20)  NOT NULL DEFAULT 'MANUAL',
     approved_at     TIMESTAMPTZ  NULL,
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
@@ -660,23 +661,25 @@ CREATE TABLE payments (
     CONSTRAINT fk_payments_plan      FOREIGN KEY (plan_id)         REFERENCES plans (plan_id),
     CONSTRAINT chk_payment_status    CHECK (payment_status IN ('READY', 'CONFIRMING', 'PAID', 'FAILED', 'CANCELED', 'REFUNDED')),
     CONSTRAINT chk_failure_reason    CHECK (failure_reason IN ('USER_CANCELED', 'CARD_DECLINED', 'TIMEOUT', 'DUPLICATE_ORDER', 'CONFIRM_FAILED', 'FORBIDDEN', 'UNKNOWN')),
-    CONSTRAINT chk_paid_approved_at CHECK (payment_status != 'PAID' OR approved_at IS NOT NULL)
+    CONSTRAINT chk_payment_type      CHECK (payment_type IN ('MANUAL', 'AUTO_RENEWAL')),
+    CONSTRAINT chk_paid_approved_at  CHECK (payment_status != 'PAID' OR approved_at IS NOT NULL)
 );
-COMMENT ON TABLE  payments                 IS '결제 내역 테이블 (토스페이먼츠 연동)';
-COMMENT ON COLUMN payments.payment_id      IS '결제 고유 식별자';
-COMMENT ON COLUMN payments.member_id       IS '결제 회원 FK';
-COMMENT ON COLUMN payments.subscription_id IS '연결 구독 FK (FREE 플랜 또는 결제 전 READY 상태는 NULL)';
-COMMENT ON COLUMN payments.plan_id         IS '결제 당시 플랜 FK';
-COMMENT ON COLUMN payments.order_id        IS 'Toss 주문 번호 (UNIQUE)';
-COMMENT ON COLUMN payments.payment_key     IS 'Toss 결제 키 (UNIQUE, FAILED 시 NULL)';
-COMMENT ON COLUMN payments.idempotency_key IS '중복 결제 방지 키';
-COMMENT ON COLUMN payments.amount          IS '최종 결제 금액 (부가세 포함)';
-COMMENT ON COLUMN payments.currency        IS '통화 (기본값 KRW)';
-COMMENT ON COLUMN payments.payment_status  IS '결제 상태 (READY / CONFIRMING / PAID / FAILED / CANCELED / REFUNDED)';
-COMMENT ON COLUMN payments.failure_reason  IS '결제 실패 사유 (FAILED 상태일 때만 사용, USER_CANCELED 등 7종)';
-COMMENT ON COLUMN payments.payment_method  IS '결제 수단 (CARD / VIRTUAL_ACCOUNT 등)';
-COMMENT ON COLUMN payments.approved_at     IS '결제 승인 일시';
-COMMENT ON COLUMN payments.created_at      IS '결제 요청 생성 일시';
+COMMENT ON TABLE  payments                  IS '결제 내역 테이블 (토스페이먼츠 연동)';
+COMMENT ON COLUMN payments.payment_id       IS '결제 고유 식별자';
+COMMENT ON COLUMN payments.member_id        IS '결제 회원 FK';
+COMMENT ON COLUMN payments.subscription_id  IS '연결 구독 FK (FREE 플랜 또는 결제 전 READY 상태는 NULL)';
+COMMENT ON COLUMN payments.plan_id          IS '결제 당시 플랜 FK';
+COMMENT ON COLUMN payments.order_id         IS 'Toss 주문 번호 (UNIQUE)';
+COMMENT ON COLUMN payments.payment_key      IS 'Toss 결제 키 (UNIQUE, FAILED 시 NULL)';
+COMMENT ON COLUMN payments.idempotency_key  IS '중복 결제 방지 키';
+COMMENT ON COLUMN payments.amount           IS '최종 결제 금액 (부가세 포함)';
+COMMENT ON COLUMN payments.currency         IS '통화 (기본값 KRW)';
+COMMENT ON COLUMN payments.payment_status   IS '결제 상태 (READY / CONFIRMING / PAID / FAILED / CANCELED / REFUNDED)';
+COMMENT ON COLUMN payments.failure_reason   IS '결제 실패 사유 (FAILED 상태일 때만 사용, USER_CANCELED 등 7종)';
+COMMENT ON COLUMN payments.payment_method   IS '결제 수단 (CARD / VIRTUAL_ACCOUNT 등)';
+COMMENT ON COLUMN payments.payment_type     IS '결제 방식 (MANUAL / AUTO_RENEWAL)';
+COMMENT ON COLUMN payments.approved_at      IS '결제 승인 일시';
+COMMENT ON COLUMN payments.created_at       IS '결제 요청 생성 일시';
 
 -- ================================================
 -- 22. admins
