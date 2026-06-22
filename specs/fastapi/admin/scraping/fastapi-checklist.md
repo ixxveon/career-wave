@@ -1,6 +1,6 @@
 # FastAPI Checklist: scraping
 
-> 구현 완료 후 Phase 순위로 검증 가능한 항목만 작성한다.
+> 구현 완료 후 Phase 순서로 검증 가능한 항목만 작성한다.
 
 ## Phase 1 - Config / Schema
 
@@ -46,15 +46,15 @@
 
 ## Phase 7 - Pipeline Runner
 
-- [ ] 실행/재시도/TEST/배치 액션이 비동기 실행 흐름으로 연결된다.
-- [ ] `RUNNING -> SUCCESS` 상태 전이 흐름이 반영된다.
-- [ ] `RUNNING -> FAILED` 상태 전이 흐름이 반영된다.
-- [ ] 동일 `sourceName`에 대해 `RUNNING -> RUNNING` 중복 전이가 발생하지 않는다.
+- [x] 실행/재시도/TEST 액션 orchestration 로직이 존재한다.
+- [x] `PipelineRunnerService`가 액션 타입별 실행 경로를 분기한다.
+- [x] 실행/재시도는 scraper 실행 경로로 연결된다.
+- [x] TEST 액션은 scraper 테스트 경로로 연결된다.
 
 ## Phase 8 - JobNotice 정제
 
-- [ ] 원본 공고를 표준 JobNotice 구조로 변환하는 정제 로직이 존재한다.
-- [ ] 사이트별 필드 매핑 로직이 존재한다.
+- [x] 원본 공고를 표준 JobNotice 구조로 변환하는 정제 로직이 존재한다.
+- [x] 사이트별 필드 매핑 로직이 존재한다.
 
 ## Phase 9 - JobNotice 중복 제거 및 저장
 
@@ -68,6 +68,9 @@
 - [ ] 실행 시작 시 `pipeline_status = RUNNING`과 시작 시각이 반영된다.
 - [ ] 실행 성공 시 성공 시각, 소요 시간, 수집 건수, 수정 시각이 반영된다.
 - [ ] 실행 실패 시 실패 시각, 에러 메시지, 수정 시각이 반영된다.
+- [ ] 동일 `sourceName`에 대해 `RUNNING -> RUNNING` 중복 전이가 발생하지 않는다.
+- [ ] `RUNNING -> SUCCESS` 상태 전이 흐름이 반영된다.
+- [ ] `RUNNING -> FAILED` 상태 전이 흐름이 반영된다.
 
 ## Phase 11 - 실행 로그 기록
 
@@ -91,6 +94,7 @@
 ## Phase 13 - Background Task / Pipeline
 
 - [ ] 비동기 실행 시작 로직이 존재한다.
+- [ ] 실행/재시도/TEST/배치 액션이 비동기 실행 흐름으로 연결된다.
 - [ ] 실행 종료 후 상태/로그 후처리 로직이 존재한다.
 - [ ] 실행 실패 복구 및 종료 처리 로직이 존재한다.
 
