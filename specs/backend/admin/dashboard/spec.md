@@ -48,7 +48,7 @@
 - **FR-009**: 시스템은 데이터가 없는 섹션에 대해 `null`이 아니라 빈 배열 또는 0 기반 집계값을 반환해야 한다.
 - **FR-010**: 시스템은 `paymentRatio` 응답이 퍼센트 합계 기준으로 일관된 비율 정보를 제공해야 한다.
 - **FR-011**: 시스템은 관리자 계정, 감사 로그, AI 사용량, RAG 문서, 스크래핑 상태 등 관리자 도메인 전반의 집계 기준 시각 컬럼에 `range`를 공통 윈도우로 적용해야 한다.
-- **FR-012**: 시스템은 잘못된 `range` 값에 대해 공통 ErrorCode `INVALID_QUERY_PARAMETER`를 반환해야 한다.
+- **FR-012**: 시스템은 잘못된 `range` 값에 대해 공통 ErrorCode `BAD_REQUEST`를 반환해야 한다.
 - **FR-013**: 시스템은 인증이 없는 요청에 대해 `UNAUTHORIZED`, 권한이 없는 요청에 대해 `FORBIDDEN`을 반환해야 한다.
 - **FR-014**: 시스템은 서버 내부 집계 실패 시 `INTERNAL_SERVER_ERROR` 공통 오류 응답을 반환해야 한다.
 - **FR-015**: Swagger 명세는 Controller가 아니라 `docs` 인터페이스 기준으로 관리해야 한다.
@@ -68,7 +68,7 @@
 ## Success Criteria
 
 - **SC-001**: `GET /api/v1/admin/dashboard/summary` 정상 응답은 100% `ApiResponse<DashboardDTO.ResponseSummary>` 구조를 따른다.
-- **SC-002**: `range=TODAY`, `7D`, `30D` 요청은 100% 성공적으로 파싱되며, 허용되지 않은 값은 100% `INVALID_QUERY_PARAMETER`로 처리된다.
+- **SC-002**: `range=TODAY`, `7D`, `30D` 요청은 100% 성공적으로 파싱되며, 허용되지 않은 값은 100% `BAD_REQUEST`로 처리된다.
 - **SC-003**: 인증되지 않은 요청은 100% `UNAUTHORIZED`, 비허용 권한 요청은 100% `FORBIDDEN`으로 처리된다.
 - **SC-004**: 대시보드 응답의 KPI 섹션은 v1 기준 4개 식별자를 모두 포함한다.
 - **SC-005**: 데이터가 없는 하위 섹션은 100% `null`이 아닌 빈 배열 또는 0 값 구조로 반환된다.

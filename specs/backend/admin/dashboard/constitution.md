@@ -22,6 +22,7 @@
 | Spring Boot 응답 조합 책임 | 현재 범위에서는 Spring Boot가 관리자 인증/인가, Query Parameter 검증, 집계 응답 조합, `ApiResponse<T>` 래핑을 담당한다. | `fastapi-schema.md`가 없는 상태에서는 책임 경계를 명확히 고정해야 추후 문서 확장 시 충돌을 줄일 수 있다. |
 | 다중 도메인 집계 허용 | `admins`, `audit_logs`, `ai_usage_logs`, `rag_documents`, `scraping_pipelines`, `scraping_logs` 등 여러 관리자 도메인 테이블을 기준으로 요약 응답을 구성한다. | 종합 대시보드는 단일 엔티티 조회가 아니라 관리자 운영 현황을 한 화면에 요약하는 목적을 가지기 때문이다. |
 | 빈 값 구조 고정 | 데이터가 없는 섹션도 `null`이 아닌 빈 배열 또는 0 값 구조로 반환한다. | 프론트엔드가 섹션별 null 분기 없이 일관된 렌더링을 할 수 있어야 하기 때문이다. |
+| 애플리케이션 Enum 검증 | dashboard Enum은 애플리케이션 계층 계약으로 관리하고, 직접 매핑되는 DB CHECK 제약 Enum을 두지 않는다. | 대시보드는 다중 도메인 집계 응답 계약이 중심이므로 DB 스키마보다 응답 모델 기준으로 Enum을 유지하는 편이 책임 경계를 명확히 한다. |
 | docs 인터페이스 기반 Swagger | Swagger 어노테이션은 Controller가 아니라 `docs` 인터페이스에 작성한다. | 팀 컨벤션을 유지하고 Controller를 요청 위임 책임에만 집중시키기 위함이다. |
 
 ## 3. 불변 규칙 (Invariants)

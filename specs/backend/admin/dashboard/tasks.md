@@ -5,7 +5,7 @@
 
 ## Phase 1 - Query
 
-- [ ] `DashboardRangeType`, `DashboardKpiKeyType`, `DashboardSeverityType`, `DashboardAlertLevelType`, `DashboardDomainType`, `DashboardSystemStatusType` Enum 계약을 정의한다.
+- [ ] `DashboardRangeType`, `DashboardKpiKeyType`, `DashboardSeverityType`, `DashboardAlertLevelType`, `DashboardDomainType`, `DashboardSystemStatusType`, `DashboardPaymentMethod` Enum 계약을 정의한다.
 - [ ] `DashboardDTO` 조회 응답 구조 초안을 작성한다.
 - [ ] `DashboardSummaryQueryRepository` 인터페이스를 작성한다.
 - [ ] 관리자 계정, 감사 로그, AI 사용량, RAG 문서, 스크래핑 상태 집계용 Query 메서드 시그니처를 분리한다.
@@ -39,7 +39,7 @@
 
 - [ ] `GET /api/v1/admin/dashboard/summary` 정상 조회 테스트를 작성한다.
 - [ ] `range=TODAY`, `7D`, `30D` 허용값 테스트를 작성한다.
-- [ ] 잘못된 `range` 값에 대한 `INVALID_QUERY_PARAMETER` 테스트를 작성한다.
+- [ ] 잘못된 `range` 값에 대한 `BAD_REQUEST` 테스트를 작성한다.
 - [ ] 인증 없음 `UNAUTHORIZED`, 권한 없음 `FORBIDDEN` 테스트를 작성한다.
 - [ ] 빈 섹션이 `null`이 아닌 구조로 반환되는 테스트를 작성한다.
 - [ ] KPI 4개 식별자가 모두 포함되는 응답 구조 테스트를 작성한다.

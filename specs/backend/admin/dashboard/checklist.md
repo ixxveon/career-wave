@@ -5,7 +5,7 @@
 
 ## Phase 1 — Query
 
-- [ ] `DashboardRangeType`, `DashboardKpiKeyType`, `DashboardSeverityType`, `DashboardAlertLevelType`, `DashboardDomainType`, `DashboardSystemStatusType` Enum이 정의되어 있다.
+- [ ] `DashboardRangeType`, `DashboardKpiKeyType`, `DashboardSeverityType`, `DashboardAlertLevelType`, `DashboardDomainType`, `DashboardSystemStatusType`, `DashboardPaymentMethod` Enum이 정의되어 있다.
 - [ ] `DashboardSummaryQueryRepository`가 구현되어 있다.
 - [ ] `range` 값이 `TODAY`, `7D`, `30D` 기준 시간 윈도우로 변환된다.
 - [ ] Query Parameter `range`와 ERD 기준 시각 컬럼(`admins.created_at`, `admins.last_login_at`, `audit_logs.created_at`, `ai_usage_logs.created_at`, `rag_documents.created_at`, `rag_documents.updated_at`, `scraping_logs.executed_at`, `scraping_pipelines.last_started_at`, `scraping_pipelines.last_success_at`, `scraping_pipelines.last_failed_at`) 매핑이 구현과 일치한다.
@@ -24,7 +24,7 @@
 
 - [ ] `GET /api/v1/admin/dashboard/summary` endpoint가 구현되어 있다.
 - [ ] 정상 응답이 `ApiResponse<DashboardDTO.ResponseSummary>` 규격을 사용하고 성공 응답에 `statusCode`가 없다.
-- [ ] 예외 응답이 공통 ErrorCode 정책(`UNAUTHORIZED`, `FORBIDDEN`, `INVALID_QUERY_PARAMETER`, `INTERNAL_SERVER_ERROR`)과 일치한다.
+- [ ] 예외 응답이 공통 ErrorCode 정책(`UNAUTHORIZED`, `FORBIDDEN`, `BAD_REQUEST`, `INTERNAL_SERVER_ERROR`)과 일치한다.
 - [ ] 권한(Role) 정책이 `MASTER`, `BACKEND`, `CS`와 일치한다.
 - [ ] 인증 없음 요청은 `UNAUTHORIZED`, 비허용 권한 요청은 `FORBIDDEN`으로 처리된다.
 - [ ] 대시보드 조회 API가 생성/수정/삭제 동작을 수행하지 않는다.
@@ -40,7 +40,7 @@
 
 - [ ] `GET /api/v1/admin/dashboard/summary` 정상 조회 테스트가 존재한다.
 - [ ] `range=TODAY`, `7D`, `30D` 허용값 테스트가 존재한다.
-- [ ] 잘못된 `range` 값에 대한 `INVALID_QUERY_PARAMETER` 테스트가 존재한다.
+- [ ] 잘못된 `range` 값에 대한 `BAD_REQUEST` 테스트가 존재한다.
 - [ ] 인증 없음 `UNAUTHORIZED`, 권한 없음 `FORBIDDEN` 테스트가 존재한다.
 - [ ] 빈 섹션이 `null`이 아닌 구조로 반환되는 테스트가 존재한다.
 - [ ] KPI 4개 식별자가 모두 포함되는 응답 구조 테스트가 존재한다.

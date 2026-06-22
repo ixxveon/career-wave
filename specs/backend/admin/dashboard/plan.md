@@ -31,6 +31,7 @@ admin/dashboard/
 ├── type/         DashboardAlertLevelType.java
 ├── type/         DashboardDomainType.java
 ├── type/         DashboardSystemStatusType.java
+├── type/         DashboardPaymentMethod.java
 └── docs/         DashboardDocs.java
 
 global/
