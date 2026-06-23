@@ -30,12 +30,18 @@ const subGridSvgY  = [400, 300, 200, 100, 0].map(
   v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / SUB_MAX_VAL))
 ); // [28, 69, 110, 151, 192]
 
-// M 단위 축약 포맷
+// 금액 축약 포맷 (1M 미만은 만원 단위, 이상은 M 단위)
 function toM(n: number): string {
   const sign = n < 0 ? '-' : '';
-  const m    = Math.abs(n) / 1_000_000;
-  const val  = Math.round(m * 10) / 10;
-  const str  = val % 1 === 0 ? String(val) : val.toFixed(1);
+  const abs  = Math.abs(n);
+  if (abs < 1_000_000) {
+    const man = Math.round(abs / 10_000 * 10) / 10;
+    const str = man % 1 === 0 ? String(man) : man.toFixed(1);
+    return `${sign}₩${str}만`;
+  }
+  const m   = abs / 1_000_000;
+  const val = Math.round(m * 10) / 10;
+  const str = val % 1 === 0 ? String(val) : val.toFixed(1);
   return `${sign}₩${str}M`;
 }
 
