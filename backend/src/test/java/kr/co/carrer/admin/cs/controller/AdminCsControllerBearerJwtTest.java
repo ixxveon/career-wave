@@ -101,6 +101,20 @@ class AdminCsControllerBearerJwtTest {
         when(adminAccountStatusPort.supports(AccountType.ADMIN)).thenReturn(true);
     }
 
+    private void stubValidUserJwt(String token) throws Exception {
+        Claims claims = mock(Claims.class);
+        when(claims.getSubject()).thenReturn("uuid-1234");
+        when(claims.get("roleType", String.class)).thenReturn("USER");
+        when(claims.get("adminRole", String.class)).thenReturn(null);
+        when(claims.get("jti", String.class)).thenReturn("test-jti-user");
+
+        when(jwtTokenProvider.extractAccountType(token)).thenReturn(AccountType.USER);
+        when(jwtTokenProvider.validate(token, AccountType.USER)).thenReturn(true);
+        when(jwtTokenProvider.parse(token, AccountType.USER)).thenReturn(claims);
+        when(tokenBlacklistStore.isBlacklisted(eq("test-jti-user"), anyBoolean())).thenReturn(false);
+        when(userAccountStatusPort.supports(AccountType.USER)).thenReturn(true);
+    }
+
     @Nested
     @DisplayName("공지사항 등록 POST /api/v1/admin/notices")
     class CreateNotice {
@@ -146,17 +160,7 @@ class AdminCsControllerBearerJwtTest {
         @Test
         @DisplayName("USER role JWT로 요청하면 403을 반환한다")
         void user_role_returns_403() throws Exception {
-            Claims claims = mock(Claims.class);
-            when(claims.getSubject()).thenReturn("uuid-1234");
-            when(claims.get("roleType", String.class)).thenReturn("USER");
-            when(claims.get("adminRole", String.class)).thenReturn(null);
-            when(claims.get("jti", String.class)).thenReturn("test-jti-user");
-
-            when(jwtTokenProvider.extractAccountType("user.access.token")).thenReturn(AccountType.USER);
-            when(jwtTokenProvider.validate("user.access.token", AccountType.USER)).thenReturn(true);
-            when(jwtTokenProvider.parse("user.access.token", AccountType.USER)).thenReturn(claims);
-            when(tokenBlacklistStore.isBlacklisted(eq("test-jti-user"), anyBoolean())).thenReturn(false);
-            when(userAccountStatusPort.supports(AccountType.USER)).thenReturn(true);
+            stubValidUserJwt("user.access.token");
 
             mockMvc.perform(post("/api/v1/admin/notices")
                     .header("Authorization", "Bearer user.access.token")
@@ -278,17 +282,7 @@ class AdminCsControllerBearerJwtTest {
         @Test
         @DisplayName("USER role JWT로 요청하면 403을 반환한다")
         void user_role_returns_403() throws Exception {
-            Claims claims = mock(Claims.class);
-            when(claims.getSubject()).thenReturn("uuid-1234");
-            when(claims.get("roleType", String.class)).thenReturn("USER");
-            when(claims.get("adminRole", String.class)).thenReturn(null);
-            when(claims.get("jti", String.class)).thenReturn("test-jti-user");
-
-            when(jwtTokenProvider.extractAccountType("user.access.token")).thenReturn(AccountType.USER);
-            when(jwtTokenProvider.validate("user.access.token", AccountType.USER)).thenReturn(true);
-            when(jwtTokenProvider.parse("user.access.token", AccountType.USER)).thenReturn(claims);
-            when(tokenBlacklistStore.isBlacklisted(eq("test-jti-user"), anyBoolean())).thenReturn(false);
-            when(userAccountStatusPort.supports(AccountType.USER)).thenReturn(true);
+            stubValidUserJwt("user.access.token");
 
             mockMvc.perform(post("/api/v1/admin/faqs")
                     .header("Authorization", "Bearer user.access.token")
@@ -307,6 +301,58 @@ class AdminCsControllerBearerJwtTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
+        }
+
+        @Test
+        @DisplayName("위조된 토큰으로 요청하면 401을 반환한다")
+        void forged_token_returns_401() throws Exception {
+            when(jwtTokenProvider.extractAccountType("fake.invalid.token"))
+                .thenThrow(new JwtException("Malformed JWT"));
+
+            mockMvc.perform(post("/api/v1/admin/faqs")
+                    .header("Authorization", "Bearer fake.invalid.token")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
+        }
+
+        @Test
+        @DisplayName("만료된 토큰으로 요청하면 401을 반환한다")
+        void expired_token_returns_401() throws Exception {
+            when(jwtTokenProvider.extractAccountType("expired.token")).thenReturn(AccountType.ADMIN);
+            when(jwtTokenProvider.validate("expired.token", AccountType.ADMIN))
+                .thenThrow(new JwtException("JWT expired"));
+
+            mockMvc.perform(post("/api/v1/admin/faqs")
+                    .header("Authorization", "Bearer expired.token")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
+        }
+
+        @Test
+        @DisplayName("블랙리스트(로그아웃) 토큰으로 요청하면 401을 반환한다")
+        void blacklisted_token_returns_401() throws Exception {
+            Claims claims = stubAdminClaims("CS");
+            when(jwtTokenProvider.extractAccountType("blacklisted.token")).thenReturn(AccountType.ADMIN);
+            when(jwtTokenProvider.validate("blacklisted.token", AccountType.ADMIN)).thenReturn(true);
+            when(jwtTokenProvider.parse("blacklisted.token", AccountType.ADMIN)).thenReturn(claims);
+            when(tokenBlacklistStore.isBlacklisted(eq("test-jti-cs"), anyBoolean())).thenReturn(true);
+
+            mockMvc.perform(post("/api/v1/admin/faqs")
+                    .header("Authorization", "Bearer blacklisted.token")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.statusCode").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
         }
     }
@@ -357,17 +403,7 @@ class AdminCsControllerBearerJwtTest {
         @Test
         @DisplayName("USER role JWT로 요청하면 403을 반환한다")
         void user_role_returns_403() throws Exception {
-            Claims claims = mock(Claims.class);
-            when(claims.getSubject()).thenReturn("uuid-1234");
-            when(claims.get("roleType", String.class)).thenReturn("USER");
-            when(claims.get("adminRole", String.class)).thenReturn(null);
-            when(claims.get("jti", String.class)).thenReturn("test-jti-user");
-
-            when(jwtTokenProvider.extractAccountType("user.access.token")).thenReturn(AccountType.USER);
-            when(jwtTokenProvider.validate("user.access.token", AccountType.USER)).thenReturn(true);
-            when(jwtTokenProvider.parse("user.access.token", AccountType.USER)).thenReturn(claims);
-            when(tokenBlacklistStore.isBlacklisted(eq("test-jti-user"), anyBoolean())).thenReturn(false);
-            when(userAccountStatusPort.supports(AccountType.USER)).thenReturn(true);
+            stubValidUserJwt("user.access.token");
 
             mockMvc.perform(put("/api/v1/admin/inquiries/1/reply")
                     .header("Authorization", "Bearer user.access.token")
@@ -403,6 +439,39 @@ class AdminCsControllerBearerJwtTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
+        }
+
+        @Test
+        @DisplayName("위조된 토큰으로 요청하면 401을 반환한다")
+        void forged_token_returns_401() throws Exception {
+            when(jwtTokenProvider.extractAccountType("fake.invalid.token"))
+                .thenThrow(new JwtException("Malformed JWT"));
+
+            mockMvc.perform(put("/api/v1/admin/inquiries/1/reply")
+                    .header("Authorization", "Bearer fake.invalid.token")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
+        }
+
+        @Test
+        @DisplayName("만료된 토큰으로 요청하면 401을 반환한다")
+        void expired_token_returns_401() throws Exception {
+            when(jwtTokenProvider.extractAccountType("expired.token")).thenReturn(AccountType.ADMIN);
+            when(jwtTokenProvider.validate("expired.token", AccountType.ADMIN))
+                .thenThrow(new JwtException("JWT expired"));
+
+            mockMvc.perform(put("/api/v1/admin/inquiries/1/reply")
+                    .header("Authorization", "Bearer expired.token")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.statusCode").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
         }
     }
