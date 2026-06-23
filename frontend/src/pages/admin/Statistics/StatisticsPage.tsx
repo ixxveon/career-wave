@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { TrendingUp, DollarSign, Users, UserPlus, CreditCard, RefreshCw, Minus } from 'lucide-react';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Statistics.css';
@@ -66,6 +67,7 @@ const TOOLTIP_W = 104;
 
 
 export default function StatisticsPage() {
+  const navigate = useNavigate();
   const {
     data: summary,
     isLoading: summaryLoading,
@@ -430,7 +432,7 @@ export default function StatisticsPage() {
                 <span className="statsEyebrow">최근 구독 현황</span>
                 <h3>최근 가입 피드</h3>
               </div>
-              <button className="statsViewAllBtn">전체보기</button>
+              <button className="statsViewAllBtn" onClick={() => navigate('/admin/payments')}>전체보기</button>
             </div>
             {recentLoading && <p className="stats-loading">피드 데이터 로딩 중...</p>}
             {recentIsError && <p className="statsErrorMsg">{recentError?.message ?? '최근 가입 피드를 불러오지 못했습니다.'}</p>}
