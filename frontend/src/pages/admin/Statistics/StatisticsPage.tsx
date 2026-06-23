@@ -30,9 +30,22 @@ const subGridSvgY  = [400, 300, 200, 100, 0].map(
   v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / SUB_MAX_VAL))
 ); // [28, 69, 110, 151, 192]
 
-// 금액 포맷 (결제·정산 탭과 동일한 표기)
+// 금액 포맷 (구간별 단위 자동 전환)
+// 10만 미만: ₩29,000 / 10만~1억: ₩29만 / 1억 이상: ₩1.2억
 function toM(n: number): string {
-  return `₩${Math.abs(n).toLocaleString()}`;
+  const sign = n < 0 ? '-' : '';
+  const abs  = Math.abs(n);
+  if (abs < 100_000) {
+    return `${sign}₩${abs.toLocaleString()}`;
+  }
+  if (abs < 100_000_000) {
+    const man = Math.round(abs / 10_000 * 10) / 10;
+    const str = man % 1 === 0 ? String(man) : man.toFixed(1);
+    return `${sign}₩${str}만`;
+  }
+  const uk  = Math.round(abs / 100_000_000 * 10) / 10;
+  const str = uk % 1 === 0 ? String(uk) : uk.toFixed(1);
+  return `${sign}₩${str}억`;
 }
 
 // SVG 꺾은선 path 생성 (maxVal 파라미터로 매출/구독자 공용 사용)
