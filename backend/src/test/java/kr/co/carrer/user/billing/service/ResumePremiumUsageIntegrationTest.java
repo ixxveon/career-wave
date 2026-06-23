@@ -106,8 +106,12 @@ class ResumePremiumUsageIntegrationTest {
             return saved;
         });
 
+        BillingMemberPort memberPort = new BillingMemberPort() {
+            @Override public boolean isEligibleForBilling(java.util.UUID id) { return true; }
+            @Override public MemberBillingInfo getMemberBillingInfo(java.util.UUID id) { return null; }
+        };
         EntitlementService entitlementService = new EntitlementServiceImpl(
-                entitlementRepository, usageRecordRepository, id -> true,
+                entitlementRepository, usageRecordRepository, memberPort,
                 subscriptionRepository, usagePeriodRepository);
         resumeService = new ResumeServiceImpl(
                 documentRepository, coverLetterMetaRepository, coverLetterContentRepository,

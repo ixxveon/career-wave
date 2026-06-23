@@ -24,4 +24,12 @@ public class BillingMemberPortImpl implements BillingMemberPort {
                 .map(status -> status == MemberStatus.ACTIVE)
                 .orElse(false);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MemberBillingInfo getMemberBillingInfo(UUID memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalStateException("JWT member not found: " + memberId));
+        return new MemberBillingInfo(member.getName(), member.getEmail());
+    }
 }

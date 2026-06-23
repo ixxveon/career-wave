@@ -146,10 +146,14 @@ class SubscriptionUsageConcurrencyTest extends PostgreSqlTestContainerSupport {
     }
 
     private EntitlementServiceImpl service() {
+        BillingMemberPort memberPort = new BillingMemberPort() {
+            @Override public boolean isEligibleForBilling(java.util.UUID id) { return true; }
+            @Override public BillingMemberPort.MemberBillingInfo getMemberBillingInfo(java.util.UUID id) { return null; }
+        };
         return new EntitlementServiceImpl(
                 entitlementRepository,
                 usageRecordRepository,
-                memberId -> true,
+                memberPort,
                 subscriptionRepository,
                 usagePeriodRepository
         );
