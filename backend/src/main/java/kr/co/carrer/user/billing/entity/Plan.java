@@ -12,7 +12,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @Entity
-@Table(name = "plans")
+@Table(name = "plans", uniqueConstraints = @UniqueConstraint(name = "uq_plans_product_code", columnNames = "product_code"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Plan {

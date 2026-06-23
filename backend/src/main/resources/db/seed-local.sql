@@ -131,14 +131,14 @@ BEGIN
   SELECT plan_id INTO v_plan_resume    FROM plans WHERE product_code = 'document-coaching';
 
   INSERT INTO subscriptions (subscription_id, member_id, plan_id, subscription_status,
-    started_at, current_period_start, current_period_end, next_billing_at, auto_renew, created_at, updated_at)
+    started_at, current_period_start, current_period_end, next_billing_at, auto_renew, retry_count, created_at, updated_at)
   VALUES
     (v_sub_interview, v_member02, v_plan_interview, 'ACTIVE',
      NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days',
-     NOW() + INTERVAL '15 days', true, NOW() - INTERVAL '15 days', NOW()),
+     NOW() + INTERVAL '15 days', true, 0, NOW() - INTERVAL '15 days', NOW()),
     (v_sub_resume, v_member03, v_plan_resume, 'ACTIVE',
      NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days', NOW() + INTERVAL '25 days',
-     NOW() + INTERVAL '25 days', true, NOW() - INTERVAL '5 days', NOW());
+     NOW() + INTERVAL '25 days', true, 0, NOW() - INTERVAL '5 days', NOW());
 
   INSERT INTO subscription_usage_periods (
     usage_period_id, subscription_id, product_code, period_start, period_end,
@@ -183,23 +183,25 @@ BEGIN
   SELECT plan_id   INTO v_plan_id   FROM plans   WHERE product_code = 'interview';
 
   INSERT INTO subscriptions (subscription_id, member_id, plan_id, subscription_status,
-    started_at, current_period_start, current_period_end, next_billing_at, auto_renew, created_at, updated_at)
+    started_at, current_period_start, current_period_end, next_billing_at, auto_renew, retry_count, created_at, updated_at)
   VALUES (v_sub_id, v_member_id, v_plan_id, 'REFUND_PENDING',
     NOW() - INTERVAL '10 days',
     NOW() - INTERVAL '10 days',
     NOW() + INTERVAL '20 days',
     NOW() + INTERVAL '20 days',
-    true, NOW() - INTERVAL '10 days', NOW());
+    true, 0, NOW() - INTERVAL '10 days', NOW());
 
   INSERT INTO payments (payment_id, member_id, subscription_id, plan_id,
     order_id, payment_key, idempotency_key,
     payment_type, attempt_sequence, amount, currency, payment_status,
-    payment_method, approved_at, created_at, updated_at)
+    payment_method, customer_name, customer_email, customer_key, product_code,
+    approved_at, created_at, updated_at)
   VALUES (v_pay_id, v_member_id, v_sub_id, v_plan_id,
     'DEMO-ORDER-001',
     'DEMO-TOSS-KEY-001',
     'DEMO-IDEM-001',
     'MANUAL', 0, 29000, 'KRW', 'PAID', 'CARD',
+    '테스트유저(전체구독)', 'testuser04@example.com', gen_random_uuid()::text, 'interview',
     NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days', NOW());
 
   INSERT INTO refunds (payment_id, amount, reason, refund_status, created_at)
