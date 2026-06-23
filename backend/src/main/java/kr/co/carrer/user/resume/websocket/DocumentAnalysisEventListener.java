@@ -61,7 +61,8 @@ public class DocumentAnalysisEventListener {
     public void onAnalysisTrigger(DocumentAnalysisTriggerEvent event) {
         fastApiClient.triggerAnalysis(
                 event,
-                () -> documentStatusService.markFailedAndRelease(event.documentId(), "FastAPI 분석 트리거 실패")
+                () -> documentStatusService.handleAnalysisTriggerFailure(
+                        event.documentId(), "FastAPI 분석 트리거 실패")
         );
         log.info("[FastAPI 트리거] DB 커밋 후 호출 — documentId: {}, fileType: {}", event.documentId(), event.fileType());
     }

@@ -85,17 +85,33 @@ VALUES
 -- ────────────────────────────────────────────
 -- 구독 플랜 (데모용)
 -- ────────────────────────────────────────────
-DELETE FROM plans WHERE product_code IN ('PREMIUM_INTERVIEW_MONTHLY','PREMIUM_RESUME_MONTHLY','PREMIUM_ALL_MONTHLY');
-
-INSERT INTO plans (product_code, plan_name, plan_price, currency, billing_cycle, is_active, created_at)
+INSERT INTO plans (
+  product_code, plan_name, plan_price, monthly_usage_limit,
+  currency, billing_cycle, is_active, created_at, updated_at
+)
 VALUES
-  ('PREMIUM_INTERVIEW_MONTHLY', '면접 프리미엄 월정액', 19900, 'KRW', 'MONTHLY', true, NOW()),
-  ('PREMIUM_RESUME_MONTHLY',    '서류 프리미엄 월정액', 14900, 'KRW', 'MONTHLY', true, NOW()),
-  ('PREMIUM_ALL_MONTHLY',       '전체 프리미엄 월정액', 29900, 'KRW', 'MONTHLY', true, NOW());
+  ('interview',         'AI 모의면접',   29000, 20, 'KRW', 'MONTHLY', true, NOW(), NOW()),
+  ('document-coaching', '서류 AI 코칭', 29000, 30, 'KRW', 'MONTHLY', true, NOW(), NOW())
+ON CONFLICT (product_code) DO UPDATE SET
+  plan_name = EXCLUDED.plan_name,
+  plan_price = EXCLUDED.plan_price,
+  monthly_usage_limit = EXCLUDED.monthly_usage_limit,
+  currency = EXCLUDED.currency,
+  billing_cycle = EXCLUDED.billing_cycle,
+  is_active = EXCLUDED.is_active,
+  updated_at = NOW();
 
 -- ────────────────────────────────────────────
 -- 데모용 구독 데이터 (testuser02 — 면접, testuser03 — 서류)
 -- ────────────────────────────────────────────
+DELETE FROM member_product_entitlements WHERE member_id IN (
+  SELECT member_id FROM members WHERE login_id IN ('testuser02', 'testuser03')
+);
+DELETE FROM subscription_usage_periods WHERE subscription_id IN (
+  SELECT subscription_id FROM subscriptions WHERE member_id IN (
+    SELECT member_id FROM members WHERE login_id IN ('testuser02', 'testuser03')
+  )
+);
 DELETE FROM subscriptions WHERE member_id IN (
   SELECT member_id FROM members WHERE login_id IN ('testuser02', 'testuser03')
 );
@@ -106,21 +122,47 @@ DECLARE
   v_member03 UUID;
   v_plan_interview BIGINT;
   v_plan_resume    BIGINT;
+  v_sub_interview  UUID := gen_random_uuid();
+  v_sub_resume     UUID := gen_random_uuid();
 BEGIN
   SELECT member_id INTO v_member02 FROM members WHERE login_id = 'testuser02';
   SELECT member_id INTO v_member03 FROM members WHERE login_id = 'testuser03';
-  SELECT plan_id INTO v_plan_interview FROM plans WHERE product_code = 'PREMIUM_INTERVIEW_MONTHLY';
-  SELECT plan_id INTO v_plan_resume    FROM plans WHERE product_code = 'PREMIUM_RESUME_MONTHLY';
+  SELECT plan_id INTO v_plan_interview FROM plans WHERE product_code = 'interview';
+  SELECT plan_id INTO v_plan_resume    FROM plans WHERE product_code = 'document-coaching';
 
   INSERT INTO subscriptions (subscription_id, member_id, plan_id, subscription_status,
     started_at, current_period_start, current_period_end, next_billing_at, auto_renew, created_at, updated_at)
   VALUES
-    (gen_random_uuid(), v_member02, v_plan_interview, 'ACTIVE',
+    (v_sub_interview, v_member02, v_plan_interview, 'ACTIVE',
      NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days',
      NOW() + INTERVAL '15 days', true, NOW() - INTERVAL '15 days', NOW()),
-    (gen_random_uuid(), v_member03, v_plan_resume, 'ACTIVE',
+    (v_sub_resume, v_member03, v_plan_resume, 'ACTIVE',
      NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days', NOW() + INTERVAL '25 days',
      NOW() + INTERVAL '25 days', true, NOW() - INTERVAL '5 days', NOW());
+
+  INSERT INTO subscription_usage_periods (
+    usage_period_id, subscription_id, product_code, period_start, period_end,
+    limit_count, used_count, reserved_count, created_at, updated_at
+  )
+  VALUES
+    (gen_random_uuid(), v_sub_interview, 'interview',
+     NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 20, 5, 0, NOW(), NOW()),
+    (gen_random_uuid(), v_sub_resume, 'document-coaching',
+     NOW() - INTERVAL '5 days', NOW() + INTERVAL '25 days', 30, 8, 0, NOW(), NOW());
+
+  INSERT INTO member_product_entitlements (
+    entitlement_id, member_id, product_code, plan_type, free_remaining,
+    free_usage_status, active_subscription_id, created_at, updated_at
+  )
+  VALUES
+    (gen_random_uuid(), v_member02, 'interview', 'PREMIUM', 0, 'FORFEITED', v_sub_interview, NOW(), NOW()),
+    (gen_random_uuid(), v_member03, 'document-coaching', 'PREMIUM', 0, 'FORFEITED', v_sub_resume, NOW(), NOW())
+  ON CONFLICT (member_id, product_code) DO UPDATE SET
+    plan_type = EXCLUDED.plan_type,
+    free_remaining = EXCLUDED.free_remaining,
+    free_usage_status = EXCLUDED.free_usage_status,
+    active_subscription_id = EXCLUDED.active_subscription_id,
+    updated_at = NOW();
 END $$;
 
 -- ────────────────────────────────────────────
@@ -138,7 +180,7 @@ DECLARE
   v_pay_id      UUID := gen_random_uuid();
 BEGIN
   SELECT member_id INTO v_member_id FROM members WHERE login_id = 'testuser04';
-  SELECT plan_id   INTO v_plan_id   FROM plans   WHERE product_code = 'PREMIUM_ALL_MONTHLY';
+  SELECT plan_id   INTO v_plan_id   FROM plans   WHERE product_code = 'interview';
 
   INSERT INTO subscriptions (subscription_id, member_id, plan_id, subscription_status,
     started_at, current_period_start, current_period_end, next_billing_at, auto_renew, created_at, updated_at)
@@ -151,15 +193,17 @@ BEGIN
 
   INSERT INTO payments (payment_id, member_id, subscription_id, plan_id,
     order_id, payment_key, idempotency_key,
-    amount, currency, payment_status, payment_method, approved_at, created_at)
+    payment_type, attempt_sequence, amount, currency, payment_status,
+    payment_method, approved_at, created_at, updated_at)
   VALUES (v_pay_id, v_member_id, v_sub_id, v_plan_id,
     'DEMO-ORDER-001',
     'DEMO-TOSS-KEY-001',
     'DEMO-IDEM-001',
-    29900, 'KRW', 'PAID', 'CARD', NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days');
+    'MANUAL', 0, 29000, 'KRW', 'PAID', 'CARD',
+    NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days', NOW());
 
   INSERT INTO refunds (payment_id, amount, reason, refund_status, created_at)
-  VALUES (v_pay_id, 29900, '서비스 불만족으로 인한 환불 요청', 'PENDING', NOW() - INTERVAL '1 day');
+  VALUES (v_pay_id, 29000, '서비스 불만족으로 인한 환불 요청', 'PENDING', NOW() - INTERVAL '1 day');
 END $$;
 
 -- 결과 확인

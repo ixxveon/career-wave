@@ -1,6 +1,7 @@
 package kr.co.carrer.user.interview.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.service.EntitlementService;
 import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
@@ -92,10 +93,14 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
             log.info("Report callback already processed (idempotent): sessionId={}", sessionId);
         } else {
             saveReportData(sessionId, dto);
-            if (entitlementService.isConsumable(ResourceType.INTERVIEW_SESSION, sessionId)) {
+            try {
                 entitlementService.consume(ResourceType.INTERVIEW_SESSION, sessionId);
-            } else {
-                log.warn("Late report callback after timeout: entitlement already released, report saved but consume skipped. sessionId={}", sessionId);
+            } catch (CustomException e) {
+                if (e.getErrorCode() == BillingErrorCode.SERVICE_USAGE_NOT_RESERVED) {
+                    log.warn("Late report callback: consume skipped (already released or timeout). sessionId={}", sessionId);
+                } else {
+                    throw e;
+                }
             }
         }
 

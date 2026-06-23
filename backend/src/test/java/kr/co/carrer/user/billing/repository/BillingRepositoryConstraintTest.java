@@ -24,6 +24,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.ZonedDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -220,7 +221,11 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
             Subscription s = Subscription.create(memberId, planId, now, now.plusMonths(1));
             subscriptionRepository.saveAndFlush(s);
 
-            assertThat(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(memberId, planId))
+            assertThat(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(
+                    memberId, planId, Set.of(
+                            SubscriptionStatus.ACTIVE,
+                            SubscriptionStatus.CANCEL_SCHEDULED,
+                            SubscriptionStatus.PAYMENT_FAILED)))
                     .hasSize(1);
         }
 
@@ -233,7 +238,11 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
             s.expire();
             subscriptionRepository.saveAndFlush(s);
 
-            assertThat(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(memberId, planId))
+            assertThat(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(
+                    memberId, planId, Set.of(
+                            SubscriptionStatus.ACTIVE,
+                            SubscriptionStatus.CANCEL_SCHEDULED,
+                            SubscriptionStatus.PAYMENT_FAILED)))
                     .isEmpty();
         }
     }

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,10 +28,13 @@ class EntitlementControllerContractTest {
         UUID memberId = UUID.randomUUID();
         AuthPrincipal principal = new AuthPrincipal(memberId.toString(), AccountType.USER, "USER", null);
 
-        EntitlementDTO.ResponseEntitlementList result = new EntitlementDTO.ResponseEntitlementList(List.of(
-                new EntitlementDTO.EntitlementItem("document-coaching", "FREE", 1, "AVAILABLE", true, null),
-                new EntitlementDTO.EntitlementItem("interview", "FREE", 1, "AVAILABLE", true, null)
-        ));
+        EntitlementDTO.ResponseEntitlementList result = new EntitlementDTO.ResponseEntitlementList(
+                Map.of("document-coaching", true, "interview", true),
+                List.of(
+                        freeItem("document-coaching", 1, "AVAILABLE", true, null),
+                        freeItem("interview", 1, "AVAILABLE", true, null)
+                )
+        );
         given(queryService.getMyEntitlements(memberId)).willReturn(result);
 
         ResponseEntity<ApiResponse<EntitlementDTO.ResponseEntitlementList>> response =
@@ -39,7 +43,10 @@ class EntitlementControllerContractTest {
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getMessage()).isEqualTo("이용권 목록 조회 성공");
-        assertThat(response.getBody().getData().entitlements()).hasSize(2);
+        assertThat(response.getBody().getData().entitlements())
+                .containsEntry("document-coaching", true)
+                .containsEntry("interview", true);
+        assertThat(response.getBody().getData().entitlementDetails()).hasSize(2);
     }
 
     @Test
@@ -49,7 +56,7 @@ class EntitlementControllerContractTest {
         AuthPrincipal principal = new AuthPrincipal(memberId.toString(), AccountType.USER, "USER", null);
 
         given(queryService.getMyEntitlements(memberId))
-                .willReturn(new EntitlementDTO.ResponseEntitlementList(List.of()));
+                .willReturn(new EntitlementDTO.ResponseEntitlementList(Map.of(), List.of()));
 
         ResponseEntity<ApiResponse<EntitlementDTO.ResponseEntitlementList>> response =
                 controller.getMyEntitlements(principal);
@@ -65,19 +72,31 @@ class EntitlementControllerContractTest {
         AuthPrincipal principal = new AuthPrincipal(memberId.toString(), AccountType.USER, "USER", null);
 
         EntitlementDTO.EntitlementItem item = new EntitlementDTO.EntitlementItem(
-                "document-coaching", "FREE", 0, "USED", false, "SUBSCRIPTION_REQUIRED");
+                "document-coaching", "FREE", 0, "USED", null,
+                false, "SUBSCRIPTION_REQUIRED",
+                null, null, null, null, null);
         given(queryService.getMyEntitlements(memberId))
-                .willReturn(new EntitlementDTO.ResponseEntitlementList(List.of(item)));
+                .willReturn(new EntitlementDTO.ResponseEntitlementList(
+                        Map.of("document-coaching", false), List.of(item)));
 
         ResponseEntity<ApiResponse<EntitlementDTO.ResponseEntitlementList>> response =
                 controller.getMyEntitlements(principal);
 
-        EntitlementDTO.EntitlementItem returned = response.getBody().getData().entitlements().get(0);
+        EntitlementDTO.EntitlementItem returned = response.getBody().getData().entitlementDetails().get(0);
         assertThat(returned.productCode()).isEqualTo("document-coaching");
         assertThat(returned.planType()).isEqualTo("FREE");
         assertThat(returned.freeRemaining()).isZero();
         assertThat(returned.freeUsageStatus()).isEqualTo("USED");
         assertThat(returned.serviceAvailable()).isFalse();
         assertThat(returned.unavailableReason()).isEqualTo("SUBSCRIPTION_REQUIRED");
+    }
+
+    private EntitlementDTO.EntitlementItem freeItem(
+            String productCode, int freeRemaining, String freeUsageStatus,
+            boolean serviceAvailable, String unavailableReason) {
+        return new EntitlementDTO.EntitlementItem(
+                productCode, "FREE", freeRemaining, freeUsageStatus, null,
+                serviceAvailable, unavailableReason,
+                null, null, null, null, null);
     }
 }

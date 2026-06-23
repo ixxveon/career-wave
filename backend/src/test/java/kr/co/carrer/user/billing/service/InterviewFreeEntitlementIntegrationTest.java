@@ -9,7 +9,7 @@ import kr.co.carrer.user.interview.repository.CareerHistoryRepository;
 import kr.co.carrer.user.interview.repository.InterviewMessageRepository;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import kr.co.carrer.user.interview.scheduler.InterviewSessionScheduler;
-import kr.co.carrer.user.interview.scheduler.InterviewSessionTimeoutProcessor;
+import kr.co.carrer.user.interview.service.InterviewTimeoutService;
 import kr.co.carrer.user.interview.service.impl.InterviewCallbackServiceImpl;
 import kr.co.carrer.user.interview.service.impl.InterviewSessionServiceImpl;
 import kr.co.carrer.user.interview.type.SessionStatus;
@@ -46,7 +46,7 @@ class InterviewFreeEntitlementIntegrationTest {
     @Mock CareerHistoryRepository careerHistoryRepository;
     @Mock SimpMessagingTemplate messagingTemplate;
     @Mock EntitlementService entitlementService;
-    @Mock InterviewSessionTimeoutProcessor timeoutProcessor;
+    @Mock InterviewTimeoutService interviewTimeoutService;
 
     private InterviewSessionServiceImpl sessionService;
     private InterviewCallbackServiceImpl callbackService;
@@ -61,7 +61,7 @@ class InterviewFreeEntitlementIntegrationTest {
                 sessionRepository, messageRepository, documentRepository, fastApiClient, entitlementService);
         callbackService = new InterviewCallbackServiceImpl(
                 sessionRepository, feedbackRepository, careerHistoryRepository, messageRepository, messagingTemplate, entitlementService);
-        scheduler = new InterviewSessionScheduler(sessionRepository, timeoutProcessor);
+        scheduler = new InterviewSessionScheduler(sessionRepository, interviewTimeoutService, entitlementService);
 
         memberId = UUID.randomUUID();
         sessionId = UUID.randomUUID();
@@ -107,7 +107,6 @@ class InterviewFreeEntitlementIntegrationTest {
             when(feedbackRepository.existsBySessionId(sessionId)).thenReturn(false);
             when(feedbackRepository.saveAll(any())).thenReturn(List.of());
             when(careerHistoryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(entitlementService.isConsumable(ResourceType.INTERVIEW_SESSION, sessionId)).thenReturn(true);
 
             callbackService.processReportCallback(sessionId, buildReportCallback());
 
@@ -142,8 +141,8 @@ class InterviewFreeEntitlementIntegrationTest {
 
             scheduler.failTimedOutSessions();
 
-            verify(timeoutProcessor).process(eq(id1), any(ZonedDateTime.class));
-            verify(timeoutProcessor).process(eq(id2), any(ZonedDateTime.class));
+            verify(interviewTimeoutService).failTimedOutSession(eq(id1), any());
+            verify(interviewTimeoutService).failTimedOutSession(eq(id2), any());
         }
 
         @Test
@@ -154,7 +153,7 @@ class InterviewFreeEntitlementIntegrationTest {
 
             scheduler.failTimedOutSessions();
 
-            verify(timeoutProcessor, never()).process(any(), any());
+            verify(interviewTimeoutService, never()).failTimedOutSession(any(), any());
         }
     }
 

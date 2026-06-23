@@ -30,8 +30,14 @@ public class DocumentStatusService {
     }
 
     @Transactional
-    public void markFailedAndRelease(UUID documentId, String errorMessage) {
-        markFailed(documentId, errorMessage);
-        entitlementService.release(ResourceType.DOCUMENT, documentId);
+    public void handleAnalysisTriggerFailure(UUID documentId, String errorMessage) {
+        documentRepository.findById(documentId).ifPresentOrElse(
+                document -> {
+                    document.markFailed(errorMessage);
+                    entitlementService.release(ResourceType.DOCUMENT, documentId);
+                    log.warn("[분석 트리거 실패 처리] documentId: {}, 원인: {}", documentId, errorMessage);
+                },
+                () -> log.warn("[분석 트리거 실패 처리 스킵] 문서를 찾을 수 없음. documentId: {}", documentId)
+        );
     }
 }

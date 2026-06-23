@@ -39,30 +39,30 @@ class SubscriptionUsagePeriodTest {
         }
 
         @Test
-        @DisplayName("limitCount=0 이면 USAGE_PERIOD_INVALID_LIMIT 예외")
+        @DisplayName("limitCount=0 이면 USAGE_PERIOD_INVALID_LIMIT")
         void create_limitZero_throws() {
             assertThatThrownBy(() -> newPeriod(0))
                     .isInstanceOf(CustomException.class)
-                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .extracting(e -> ((CustomException) e).getErrorCode())
                     .isEqualTo(BillingErrorCode.USAGE_PERIOD_INVALID_LIMIT);
         }
 
         @Test
-        @DisplayName("limitCount<0 이면 USAGE_PERIOD_INVALID_LIMIT 예외")
+        @DisplayName("limitCount<0 이면 USAGE_PERIOD_INVALID_LIMIT")
         void create_limitNegative_throws() {
             assertThatThrownBy(() -> newPeriod(-1))
                     .isInstanceOf(CustomException.class)
-                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .extracting(e -> ((CustomException) e).getErrorCode())
                     .isEqualTo(BillingErrorCode.USAGE_PERIOD_INVALID_LIMIT);
         }
 
         @Test
-        @DisplayName("periodStart >= periodEnd 이면 USAGE_PERIOD_INVALID_RANGE 예외")
+        @DisplayName("periodStart >= periodEnd 이면 USAGE_PERIOD_INVALID_RANGE")
         void create_invalidDateRange_throws() {
             assertThatThrownBy(() -> SubscriptionUsagePeriod.create(
                     UUID.randomUUID(), "interview", END, START, 5))
                     .isInstanceOf(CustomException.class)
-                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .extracting(e -> ((CustomException) e).getErrorCode())
                     .isEqualTo(BillingErrorCode.USAGE_PERIOD_INVALID_RANGE);
         }
     }

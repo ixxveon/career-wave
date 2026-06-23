@@ -72,7 +72,7 @@ public class SubscriptionUsagePeriod {
         if (limitCount <= 0) {
             throw new CustomException(BillingErrorCode.USAGE_PERIOD_INVALID_LIMIT);
         }
-        if (!periodStart.isBefore(periodEnd)) {
+        if (periodStart == null || periodEnd == null || !periodStart.isBefore(periodEnd)) {
             throw new CustomException(BillingErrorCode.USAGE_PERIOD_INVALID_RANGE);
         }
         SubscriptionUsagePeriod p = new SubscriptionUsagePeriod();

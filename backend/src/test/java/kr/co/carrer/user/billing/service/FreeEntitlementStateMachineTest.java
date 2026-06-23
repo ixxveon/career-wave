@@ -6,6 +6,8 @@ import kr.co.carrer.user.billing.entity.ServiceUsageRecord;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.MemberProductEntitlementRepository;
 import kr.co.carrer.user.billing.repository.ServiceUsageRecordRepository;
+import kr.co.carrer.user.billing.repository.SubscriptionRepository;
+import kr.co.carrer.user.billing.repository.SubscriptionUsagePeriodRepository;
 import kr.co.carrer.user.billing.service.impl.EntitlementServiceImpl;
 import kr.co.carrer.user.billing.type.ResourceType;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,17 +29,19 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
- * 무료 이용권 동시성 보호 테스트.
+ * 무료 이용권 순차 상태 전이 보호 테스트.
  *
  * DB 레벨의 PESSIMISTIC_WRITE 락은 실제 컨테이너 환경에서 검증됨.
  * 본 테스트는 상태 머신(RESERVED → 추가 예약 거부)이 논리적으로 동시 예약을 차단함을 검증한다.
  */
 @ExtendWith(MockitoExtension.class)
-class FreeEntitlementConcurrencyTest {
+class FreeEntitlementStateMachineTest {
 
     @Mock MemberProductEntitlementRepository entitlementRepository;
     @Mock ServiceUsageRecordRepository usageRecordRepository;
     @Mock BillingMemberPort billingMemberPort;
+    @Mock SubscriptionRepository subscriptionRepository;
+    @Mock SubscriptionUsagePeriodRepository usagePeriodRepository;
 
     private EntitlementServiceImpl service;
     private UUID memberId;
@@ -45,7 +49,9 @@ class FreeEntitlementConcurrencyTest {
 
     @BeforeEach
     void setUp() {
-        service = new EntitlementServiceImpl(entitlementRepository, usageRecordRepository, billingMemberPort);
+        service = new EntitlementServiceImpl(
+                entitlementRepository, usageRecordRepository, billingMemberPort,
+                subscriptionRepository, usagePeriodRepository);
         memberId = UUID.randomUUID();
         entitlement = MemberProductEntitlement.createFree(memberId, "interview");
 
@@ -56,8 +62,8 @@ class FreeEntitlementConcurrencyTest {
     }
 
     @Test
-    @DisplayName("동시 요청 2건 — 첫 번째 성공 후 두 번째는 ALREADY_RESERVED")
-    void concurrent2_onlyFirstSucceeds() {
+    @DisplayName("순차 요청 2건 — 첫 번째 성공 후 두 번째는 ALREADY_RESERVED")
+    void sequential2_onlyFirstSucceeds() {
         UUID resourceId1 = UUID.randomUUID();
         UUID resourceId2 = UUID.randomUUID();
 
@@ -77,8 +83,8 @@ class FreeEntitlementConcurrencyTest {
     }
 
     @Test
-    @DisplayName("동시 요청 10건 — 첫 번째만 성공, 나머지 9건은 ALREADY_RESERVED")
-    void concurrent10_onlyOneSucceeds() {
+    @DisplayName("순차 요청 10건 — 첫 번째만 성공, 나머지 9건은 ALREADY_RESERVED")
+    void sequential10_onlyOneSucceeds() {
         List<UUID> resourceIds = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             UUID rid = UUID.randomUUID();
@@ -113,8 +119,9 @@ class FreeEntitlementConcurrencyTest {
                 memberId, "interview", ResourceType.INTERVIEW_SESSION, resourceId);
 
         when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.INTERVIEW_SESSION, resourceId))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(alreadyReserved)); // 두 번째는 RESERVED record 있음
+                .thenReturn(Optional.empty())   // 첫 번째 예약: pre-check
+                .thenReturn(Optional.empty())   // 첫 번째 예약: lock 후 재확인
+                .thenReturn(Optional.of(alreadyReserved)); // 두 번째 예약: pre-check → 즉시 거부
 
         // 첫 번째: 성공
         service.reserve(memberId, "interview", ResourceType.INTERVIEW_SESSION, resourceId);

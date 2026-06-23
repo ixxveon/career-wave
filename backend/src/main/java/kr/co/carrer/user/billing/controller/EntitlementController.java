@@ -7,6 +7,7 @@ import kr.co.carrer.user.billing.dto.EntitlementDTO;
 import kr.co.carrer.user.billing.service.EntitlementQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/user/subscriptions/me")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('USER')")
 public class EntitlementController implements EntitlementControllerDocs {
 
     private final EntitlementQueryService entitlementQueryService;
