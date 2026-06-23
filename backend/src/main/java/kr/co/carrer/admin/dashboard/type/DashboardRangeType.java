@@ -2,6 +2,8 @@ package kr.co.carrer.admin.dashboard.type;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import kr.co.carrer.global.exception.BadRequestException;
+import kr.co.carrer.global.exception.ErrorCode;
 
 public enum DashboardRangeType {
     TODAY("TODAY"),
@@ -31,6 +33,6 @@ public enum DashboardRangeType {
             }
         }
 
-        throw new IllegalArgumentException("지원하지 않는 dashboard range 입니다. " + value);
+        throw new BadRequestException(ErrorCode.BAD_REQUEST, "지원하지 않는 dashboard range 입니다. " + value);
     }
 }

@@ -18,7 +18,7 @@ public class DashboardDTO {
     }
 
     @Schema(description = "Dashboard summary request")
-    public record SummaryRequest(
+    public record RequestSummary(
             @Schema(description = "Dashboard range", allowableValues = {"TODAY", "7D", "30D"}, example = "TODAY")
             DashboardRangeType range
     ) {
