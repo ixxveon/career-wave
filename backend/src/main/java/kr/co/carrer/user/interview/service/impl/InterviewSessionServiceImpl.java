@@ -10,6 +10,8 @@ import kr.co.carrer.user.interview.entity.InterviewSession;
 import kr.co.carrer.user.interview.exception.InterviewErrorCode;
 import kr.co.carrer.user.interview.repository.InterviewMessageRepository;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
+import kr.co.carrer.user.interview.type.MessageSender;
+import kr.co.carrer.user.interview.type.MessageType;
 import kr.co.carrer.user.interview.service.InterviewSessionService;
 import kr.co.carrer.user.interview.type.InterviewType;
 import kr.co.carrer.user.interview.type.MessageSender;
@@ -50,7 +52,10 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         UUID documentId = parseDocumentId(dto.documentId());
 
         sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)
-                .ifPresent(s -> { throw new CustomException(InterviewErrorCode.INTERVIEW_SESSION_DUPLICATE); });
+                .ifPresent(s -> {
+                    s.fail(ZonedDateTime.now(ZoneId.of("Asia/Seoul")));
+                    log.info("기존 진행 중인 세션 자동 종료: sessionId={}", s.getSessionId());
+                });
 
         String fileUrl = null;
         if (documentId != null) {

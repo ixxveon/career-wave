@@ -54,15 +54,18 @@ class _SessionContext:
 
 
 _sessions: dict[str, _SessionContext] = {}
+_pending_llm: dict[str, dict[str, Any]] = {}  # WS 연결 전 도착한 LLM trigger 임시 보관
 _MSG_BUFFER_MAX = 50
 _RECONNECT_WINDOW_SECONDS = 300  # 재연결 대기 윈도우 (5분)
 
 
 async def _expire_session(session_id: str, ctx: _SessionContext) -> None:
-    """재연결 윈도우 경과 후 세션 컨텍스트를 해제한다."""
+    """재연결 윈도우 경과 후 세션 컨텍스트 및 STT 버퍼를 해제한다."""
     await asyncio.sleep(_RECONNECT_WINDOW_SECONDS)
     if _sessions.get(session_id) is ctx:
         _sessions.pop(session_id, None)
+        from user.interview.pipeline.stt_pipeline import _audio_buffers
+        _audio_buffers.pop(session_id, None)
         _base_log.info("[Session: %s] session expired after reconnect window", session_id)
 
 
@@ -137,6 +140,24 @@ async def interview_ws(
     _sessions[session_id] = ctx
 
     slog.info("WS connected: lastReceivedSeq=%s", lastReceivedSequenceNumber)
+
+    # ── WS 연결 전 도착한 LLM trigger가 있으면 지금 실행 ────────────────────
+    if session_id in _pending_llm and lastReceivedSequenceNumber is None and prev is None:
+        pending_llm = _pending_llm.pop(session_id)
+        if pending_llm.get("sessionType"):
+            ctx.session_type = pending_llm["sessionType"]
+        if pending_llm.get("interviewType"):
+            ctx.interview_type = pending_llm["interviewType"]
+        from user.interview.pipeline import llm_pipeline
+        asyncio.create_task(
+            llm_pipeline.generate_and_deliver_question(
+                session_id=session_id,
+                question_order=pending_llm["questionOrder"],
+                answer_text=pending_llm["answerText"],
+                question_text=pending_llm.get("questionText"),
+            )
+        )
+        slog.info("flushed pending LLM trigger: questionOrder=%s", pending_llm["questionOrder"])
 
     # ── 재연결 시 미전달 메시지 재전송 ──────────────────────────────────────
     if lastReceivedSequenceNumber is not None:
@@ -231,7 +252,7 @@ async def send_tts_audio(
         "chunkIndex": None if is_final else chunk_index,
         "isFinal": is_final,
         "voiceQualityRatio": None,
-        "audioData": None if is_final else audio_data,
+        "audioChunk": None if is_final else audio_data,
         "errorCode": None,
     })
 

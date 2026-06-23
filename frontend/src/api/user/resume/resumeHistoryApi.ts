@@ -1,4 +1,4 @@
-import type { ResumeHistoryParams, ResumeHistoryResponse } from '../../../types/user/resume';
+import type { ResumeHistoryItem, ResumeHistoryParams, ResumeHistoryResponse } from '../../../types/user/resume';
 import { memberApiClient } from '../member/memberApiClient';
 
 export const resumeHistoryApi = {
@@ -10,6 +10,13 @@ export const resumeHistoryApi = {
 
     return memberApiClient<ResumeHistoryResponse>(
       `/api/v1/user/resume/history?${params}`,
+      { auth: true, signal },
+    );
+  },
+
+  getByDocumentId(documentId: string, signal?: AbortSignal): Promise<ResumeHistoryItem> {
+    return memberApiClient<ResumeHistoryItem>(
+      `/api/v1/user/resume/${documentId}`,
       { auth: true, signal },
     );
   },
