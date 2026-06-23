@@ -24,4 +24,10 @@ public interface EntitlementService {
      * 멱등 보장: 이미 RELEASED 또는 레코드 없으면 무시.
      */
     void release(ResourceType resourceType, UUID resourceId);
+
+    /**
+     * consume 가능 여부 조회 — ServiceUsageRecord가 RESERVED 상태일 때만 true.
+     * 타임아웃 후 늦게 도착한 콜백에서 consume 호출 전 확인에 사용한다.
+     */
+    boolean isConsumable(ResourceType resourceType, UUID resourceId);
 }

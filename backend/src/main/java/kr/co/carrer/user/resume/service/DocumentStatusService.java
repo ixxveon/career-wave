@@ -1,5 +1,7 @@
 package kr.co.carrer.user.resume.service;
 
+import kr.co.carrer.user.billing.service.EntitlementService;
+import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,7 @@ import java.util.UUID;
 public class DocumentStatusService {
 
     private final DocumentRepository documentRepository;
+    private final EntitlementService entitlementService;
 
     @Transactional
     public void markFailed(UUID documentId, String errorMessage) {
@@ -24,5 +27,11 @@ public class DocumentStatusService {
                 },
                 () -> log.warn("[분석 실패 마킹 스킵] 문서를 찾을 수 없음. documentId: {}", documentId)
         );
+    }
+
+    @Transactional
+    public void markFailedAndRelease(UUID documentId, String errorMessage) {
+        markFailed(documentId, errorMessage);
+        entitlementService.release(ResourceType.DOCUMENT, documentId);
     }
 }

@@ -38,7 +38,10 @@ public enum BillingErrorCode implements BaseErrorCode {
     SUBSCRIPTION_INVALID_PERIOD_NULL(HttpStatus.BAD_REQUEST, "구독 기간(periodStart, periodEnd)은 필수입니다."),
     SUBSCRIPTION_INVALID_PERIOD_RANGE(HttpStatus.BAD_REQUEST, "구독 기간의 시작일은 종료일보다 이전이어야 합니다."),
     ENTITLEMENT_INVALID_STATE(HttpStatus.CONFLICT, "현재 이용권 상태에서 허용되지 않는 조작입니다."),
-    USAGE_RECORD_INVALID_STATE(HttpStatus.CONFLICT, "현재 사용 기록 상태에서 허용되지 않는 조작입니다.");
+    USAGE_RECORD_INVALID_STATE(HttpStatus.CONFLICT, "현재 사용 기록 상태에서 허용되지 않는 조작입니다."),
+
+    USAGE_PERIOD_INVALID_LIMIT(HttpStatus.BAD_REQUEST, "사용 한도는 1 이상이어야 합니다."),
+    USAGE_PERIOD_INVALID_RANGE(HttpStatus.BAD_REQUEST, "기간 시작일은 종료일보다 이전이어야 합니다.");
 
     private final HttpStatus status;
     private final String message;

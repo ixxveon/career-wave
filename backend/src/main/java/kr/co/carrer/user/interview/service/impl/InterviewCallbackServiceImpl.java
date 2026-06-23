@@ -71,7 +71,11 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
             log.info("Report callback already processed (idempotent): sessionId={}", sessionId);
         } else {
             saveReportData(sessionId, dto);
-            entitlementService.consume(ResourceType.INTERVIEW_SESSION, sessionId);
+            if (entitlementService.isConsumable(ResourceType.INTERVIEW_SESSION, sessionId)) {
+                entitlementService.consume(ResourceType.INTERVIEW_SESSION, sessionId);
+            } else {
+                log.warn("Late report callback after timeout: entitlement already released, report saved but consume skipped. sessionId={}", sessionId);
+            }
         }
 
         // 신규 처리일 때만 REPORT_READY 전송 — 멱등 경로 중복 전송 방지
