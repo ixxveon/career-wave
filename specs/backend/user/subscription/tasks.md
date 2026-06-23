@@ -11,38 +11,38 @@
 
 ## Phase 1 — 도메인 기반 및 DB 스키마
 
-- [ ] `PlanType` — `FREE`, `PREMIUM`
-- [ ] `FreeUsageStatus` — `AVAILABLE`, `RESERVED`, `USED`, `FORFEITED`
-- [ ] `SubscriptionStatus` — `ACTIVE`, `CANCEL_SCHEDULED`, `PAYMENT_FAILED`, `EXPIRED`, `REFUND_PENDING`, `REFUNDED`
-- [ ] `PaymentStatus` — `READY`, `AUTHORIZED`, `CONFIRMING`, `PAID`, `FAILED`, `CANCELED`, `RECONCILING`, `REFUNDED`
-- [ ] `PaymentType` — `MANUAL`, `AUTO_RENEWAL`
-- [ ] `UsageSource` — `FREE`, `SUBSCRIPTION`
-- [ ] `UsageStatus` — `RESERVED`, `CONSUMED`, `RELEASED`
-- [ ] `ResourceType` — `DOCUMENT`, `INTERVIEW_SESSION`
-- [ ] `BillingProfileStatus` — `ACTIVE`, `REVOKED`
-- [ ] `Plan` Entity에 `monthlyUsageLimit`, `updatedAt` 반영
-- [ ] `MemberProductEntitlement` Entity 작성
-- [ ] `Subscription` Entity 작성 및 기존 admin 조회 계약 정렬
-- [ ] `BillingProfile` Entity 작성
-- [ ] `Payment` Entity 작성 및 기존 admin/payment Entity 공유 전략 확정
-- [ ] `SubscriptionUsagePeriod` Entity 작성
-- [ ] `ServiceUsageRecord` Entity 작성
-- [ ] `BillingConsent` Entity 작성
-- [ ] DB UNIQUE, CHECK, FK, 인덱스 반영
-- [ ] Subscription/Billing ErrorCode 기본 등록
+- [x] `PlanType` — `FREE`, `PREMIUM`
+- [x] `FreeUsageStatus` — `AVAILABLE`, `RESERVED`, `USED`, `FORFEITED`
+- [x] `SubscriptionStatus` — `ACTIVE`, `CANCEL_SCHEDULED`, `PAYMENT_FAILED`, `EXPIRED`, `REFUND_PENDING`, `REFUNDED`
+- [x] `PaymentStatus` — `READY`, `AUTHORIZED`, `CONFIRMING`, `PAID`, `FAILED`, `CANCELED`, `RECONCILING`, `REFUNDED`
+- [x] `PaymentType` — `MANUAL`, `AUTO_RENEWAL`
+- [x] `UsageSource` — `FREE`, `SUBSCRIPTION`
+- [x] `UsageStatus` — `RESERVED`, `CONSUMED`, `RELEASED`
+- [x] `ResourceType` — `DOCUMENT`, `INTERVIEW_SESSION`
+- [x] `BillingProfileStatus` — `ACTIVE`, `REVOKED`
+- [x] `Plan` Entity에 `monthlyUsageLimit`, `updatedAt` 반영
+- [x] `MemberProductEntitlement` Entity 작성
+- [x] `Subscription` Entity 작성 및 기존 admin 조회 계약 정렬
+- [x] `BillingProfile` Entity 작성
+- [x] `Payment` Entity 작성 및 기존 admin/payment Entity 공유 전략 확정
+- [x] `SubscriptionUsagePeriod` Entity 작성
+- [x] `ServiceUsageRecord` Entity 작성
+- [x] `BillingConsent` Entity 작성
+- [x] DB UNIQUE, CHECK, FK, 인덱스 반영
+- [x] Subscription/Billing ErrorCode 기본 등록
 
 ### Phase 1 테스트
 
-- [ ] Entity 상태 전이 단위 테스트
-  - [ ] 허용 전이
-  - [ ] 금지 전이
-  - [ ] 필수 일시 필드 기록
-  - [ ] 음수 사용량 방지
-- [ ] Repository UNIQUE·CHECK·FK 통합 테스트
-  - [ ] 회원+상품 entitlement 중복
-  - [ ] resource 사용 기록 중복
-  - [ ] orderId/idempotencyKey/paymentKey 중복
-  - [ ] used+reserved 한도 초과
+- [x] Entity 상태 전이 단위 테스트
+  - [x] 허용 전이
+  - [x] 금지 전이
+  - [x] 필수 일시 필드 기록
+  - [x] 음수 사용량 방지
+- [x] Repository UNIQUE·CHECK·FK 통합 테스트
+  - [x] 회원+상품 entitlement 중복
+  - [x] resource 사용 기록 중복
+  - [x] orderId/idempotencyKey/paymentKey 중복
+  - [x] used+reserved 한도 초과
 - [ ] migration 적용 테스트
   - [ ] 빈 DB
   - [ ] 기존 데이터 DB

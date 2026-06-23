@@ -1,5 +1,5 @@
 package kr.co.carrer.admin.payment.type;
 
 public enum PaymentStatus {
-    READY, CONFIRMING, PAID, FAILED, CANCELED, REFUNDED
+    READY, AUTHORIZED, CONFIRMING, PAID, FAILED, CANCELED, RECONCILING, REFUNDED
 }
