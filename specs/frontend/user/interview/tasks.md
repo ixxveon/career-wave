@@ -28,14 +28,15 @@
 - [x] `TextAnswerInput` 컴포넌트 — 텍스트 입력 및 전송 로직, 중복 요청 방지
 - [x] `ChatWindow` 컴포넌트 — 실시간 대화 스크립트 렌더링
 - [x] `InterviewTimer` 컴포넌트 — 문항당 타이머 로직 및 시간 초과 시 자동 종료 처리
+- [x] 세션 30분 안전망 — `SESSION_LIMIT_SEC = 1800` 상수 추가, 경과 시 `endSession` 1회 호출 (`sessionEndedRef` 중복 방지)
 
 ---
 
 ## Phase 3 — 실시간 WebSocket & LLM 흐름
 
-- [x] `useSpringWebSocket` 구현 — STOMP 방식(`WS /ws/user/interview`, CONNECT 헤더: `Authorization: Bearer {token}`, 구독: `/topic/interview/{sessionId}`) 면접 세션 생명주기 이벤트(READY, RUNNING, FINISHED) 핸들링 및 RECONNECTING·ERROR 상태 전이 처리 (재연결 횟수 제한, 복구 불가 시 ERROR 전이)
+- [x] `useSpringWebSocket` 구현 — STOMP 방식(`WS /ws/user/interview?token={accessToken}`, 구독: `/topic/interview/{sessionId}`) 면접 세션 생명주기 이벤트(READY, RUNNING, FINISHED) 핸들링 및 RECONNECTING·ERROR 상태 전이 처리 (재연결 횟수 제한, 복구 불가 시 ERROR 전이)
 - [x] `useFastApiWebSocket` 구현 — LLM 스트리밍 응답 수신 로직 및 연결 단절 시 RECONNECTING 상태 전이 처리
-- [x] `TTSPlayer` & `useTTSQueue` 구현 — 문항 단위 TTS 오디오 순차 재생 큐 및 재생 제어
+- [x] `TTSPlayer` & `useTTSQueue` 구현 — `TTS_AUDIO` 청크 수신 중 버퍼 누적, `TTS_AUDIO_END` 수신 시 청크 병합 후 일괄 재생
 - [x] **스트리밍 타이핑 효과**: `requestAnimationFrame` 활용하여 텍스트 데이터 렌더링 최적화
 - [x] LLM 꼬리/압박 질문 생성 로직 및 이력서 RAG 컨텍스트 연동
 - [x] LLM 응답 지연/타임아웃 폴백 처리 — 로딩 UI 유지 및 사전 정의 질문으로 대체 로직 구현

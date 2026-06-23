@@ -218,6 +218,20 @@ public interface ResumeControllerDocs {
     );
 
     @Operation(
+            summary = "서류 단건 조회",
+            description = "documentId로 본인 소유의 서류 정보를 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 documentId 또는 접근 권한 없음")
+    })
+    ResponseEntity<ApiResponse<ResumeDTO.HistoryItem>> getDocument(
+            @Parameter(hidden = true) AuthPrincipal principal,
+            @Parameter(description = "문서 ID", required = true) UUID documentId
+    );
+
+    @Operation(
             summary = "서류 분석 이력 목록 조회",
             description = "본인이 제출한 이력서·자기소개서 목록을 최신순으로 페이징 조회합니다."
     )

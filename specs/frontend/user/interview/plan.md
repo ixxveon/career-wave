@@ -36,7 +36,7 @@
 - FastAPI WebSocket: LLM 실시간 응답, STT 결과, TTS 오디오 채널
 - WebSocket 재연결 전략 확정 필요 (heartbeat 주기, reconnect 횟수 제한, 복구 불가 시 세션 저장 후 이탈 처리)
 - LLM 응답 지연/타임아웃 폴백 정책 확정 필요 (로딩 UI 유지 or 사전 정의 질문으로 대체)
-- 질문 개수 정책 확정 필요 (고정값 or LLM 동적 결정)
+- 질문 개수: 최대 10개 확정. FastAPI가 10번째 답변 처리 후 자동으로 리포트 트리거.
 
 ---
 
@@ -126,12 +126,12 @@ src/
 - [ ] `ChatWindow` 컴포넌트 — 실시간 대화 스크립트 렌더링
 
 ### Phase 3: 실시간 WebSocket & LLM 흐름
-- [ ] `useSpringWebSocket` — 세션 생명주기 이벤트 처리 (`READY → RUNNING → FINISHED`)
+- [ ] `useSpringWebSocket` — 세션 생명주기 이벤트 처리 (`READY → RUNNING → FINISHED`), `?token=` 쿼리 파라미터 방식 JWT 전달
 - [ ] `useFastApiWebSocket` — LLM 스트리밍 응답 수신 및 ChatWindow 동기화
 - [ ] **스트리밍 텍스트 타이핑 효과** — `ref` + `requestAnimationFrame` 기반 렌더링으로 스트리밍 데이터 단순 `setState` 재렌더링 부하 방지, 텍스트가 부드럽게 나타나도록 구현
-- [ ] `useTTSQueue` 및 `TTSPlayer` 컴포넌트 — TTS 오디오 재생 큐 관리
-  - 이전 문장 재생 완료 후 다음 문장 순차 재생 (오디오 겹침 방지)
-  - 네트워크 지연 시 버퍼링 처리로 매끄러운 재생 보장
+- [ ] `useTTSQueue` 및 `TTSPlayer` 컴포넌트 — TTS 오디오 버퍼링 및 재생 관리
+  - `TTS_AUDIO` 청크 수신 시 배열에 누적, `TTS_AUDIO_END` 수신 시 전체 병합 후 한 번에 재생
+  - 청크 단위 즉시 재생은 끊김을 유발하므로 금지
 - [ ] LLM 꼬리 질문/압박 질문 동적 생성 흐름 구현
   - 응답 지연/타임아웃 시 폴백 처리 (로딩 UI + 사전 정의 질문 대체)
 - [ ] 이력서 데이터 RAG 컨텍스트 주입 (documentId 기반)

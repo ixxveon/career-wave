@@ -122,6 +122,13 @@ public class ResumeServiceImpl implements ResumeService {
 
     @Transactional(readOnly = true)
     @Override
+    public ResumeDTO.HistoryItem getDocument(UUID memberId, UUID documentId) {
+        return documentRepository.findHistoryItemByDocumentIdAndMemberId(documentId, memberId)
+                .orElseThrow(() -> new CustomException(ResumeErrorCode.DOCUMENT_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
     public ResumeDTO.ResponseFeedback getFeedback(UUID memberId, UUID documentId) {
         Document document = documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
                 .orElseThrow(() -> {
