@@ -35,7 +35,7 @@ class EntitlementInitServiceTest {
     @DisplayName("USER 가입 시 document-coaching, interview 이용권 2개 생성")
     void initFreeEntitlements_createsTwo() {
         UUID memberId = UUID.randomUUID();
-        when(entitlementRepository.findByMemberIdAndProductCode(eq(memberId), any()))
+        when(entitlementRepository.findByMemberIdAndProductCodeForUpdate(eq(memberId), any()))
                 .thenReturn(Optional.empty());
         when(entitlementRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -63,9 +63,9 @@ class EntitlementInitServiceTest {
         UUID memberId = UUID.randomUUID();
         MemberProductEntitlement existing = MemberProductEntitlement.createFree(memberId, "document-coaching");
 
-        when(entitlementRepository.findByMemberIdAndProductCode(memberId, "document-coaching"))
+        when(entitlementRepository.findByMemberIdAndProductCodeForUpdate(memberId, "document-coaching"))
                 .thenReturn(Optional.of(existing));
-        when(entitlementRepository.findByMemberIdAndProductCode(memberId, "interview"))
+        when(entitlementRepository.findByMemberIdAndProductCodeForUpdate(memberId, "interview"))
                 .thenReturn(Optional.empty());
         when(entitlementRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -80,7 +80,7 @@ class EntitlementInitServiceTest {
     @DisplayName("두 상품 모두 존재하면 save 호출 없음 (완전 멱등)")
     void initFreeEntitlements_allExist_noSave() {
         UUID memberId = UUID.randomUUID();
-        when(entitlementRepository.findByMemberIdAndProductCode(eq(memberId), any()))
+        when(entitlementRepository.findByMemberIdAndProductCodeForUpdate(eq(memberId), any()))
                 .thenReturn(Optional.of(MemberProductEntitlement.createFree(memberId, "dummy")));
 
         service.initFreeEntitlements(memberId);

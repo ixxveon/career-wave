@@ -67,6 +67,12 @@ public class BillingProfile {
     public static BillingProfile create(UUID memberId, String customerKey,
                                         String encryptedBillingKey, String cardCompany,
                                         String cardNumberMasked) {
+        return create(memberId, customerKey, encryptedBillingKey, cardCompany, cardNumberMasked, null);
+    }
+
+    public static BillingProfile create(UUID memberId, String customerKey,
+                                        String encryptedBillingKey, String cardCompany,
+                                        String cardNumberMasked, ZonedDateTime authenticatedAt) {
         BillingProfile bp = new BillingProfile();
         bp.memberId = memberId;
         bp.customerKey = customerKey;
@@ -74,7 +80,9 @@ public class BillingProfile {
         bp.cardCompany = cardCompany;
         bp.cardNumberMasked = cardNumberMasked;
         bp.billingProfileStatus = BillingProfileStatus.ACTIVE;
-        bp.authenticatedAt = ZonedDateTime.now(KST);
+        bp.authenticatedAt = authenticatedAt != null
+                ? authenticatedAt.withZoneSameInstant(KST)
+                : ZonedDateTime.now(KST);
         return bp;
     }
 

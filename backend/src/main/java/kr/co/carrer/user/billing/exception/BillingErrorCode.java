@@ -41,7 +41,9 @@ public enum BillingErrorCode implements BaseErrorCode {
     USAGE_PERIOD_INVALID_LIMIT(HttpStatus.BAD_REQUEST, "월 사용 한도는 1 이상이어야 합니다."),
     USAGE_PERIOD_INVALID_RANGE(HttpStatus.BAD_REQUEST, "사용 기간의 시작일은 종료일보다 이전이어야 합니다."),
     ENTITLEMENT_INVALID_STATE(HttpStatus.CONFLICT, "현재 이용권 상태에서 허용되지 않는 조작입니다."),
-    USAGE_RECORD_INVALID_STATE(HttpStatus.CONFLICT, "현재 사용 기록 상태에서 허용되지 않는 조작입니다.");
+    USAGE_RECORD_INVALID_STATE(HttpStatus.CONFLICT, "현재 사용 기록 상태에서 허용되지 않는 조작입니다."),
+
+    BILLING_KEY_CIPHER_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "billingKey 암/복호화에 실패했습니다.");
 
     private final HttpStatus status;
     private final String message;

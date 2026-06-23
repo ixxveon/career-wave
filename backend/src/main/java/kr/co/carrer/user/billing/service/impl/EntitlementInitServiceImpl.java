@@ -21,12 +21,13 @@ public class EntitlementInitServiceImpl implements EntitlementInitService {
     public void initFreeEntitlements(UUID memberId) {
         for (ProductCode product : ProductCode.values()) {
             String productCode = product.code();
-            boolean exists = entitlementRepository
-                    .findByMemberIdAndProductCode(memberId, productCode)
-                    .isPresent();
-            if (!exists) {
-                entitlementRepository.save(MemberProductEntitlement.createFree(memberId, productCode));
-            }
+            entitlementRepository
+                    .findByMemberIdAndProductCodeForUpdate(memberId, productCode)
+                    .ifPresentOrElse(
+                            existing -> {},
+                            () -> entitlementRepository.save(
+                                    MemberProductEntitlement.createFree(memberId, productCode))
+                    );
         }
     }
 }

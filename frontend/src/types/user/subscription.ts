@@ -187,13 +187,15 @@ export interface CreateOrderResponse {
   billingCycle: BillingCycle;
   customerName: string;
   customerEmail: string;
+  customerKey: string;
   expiresAt: string;
 }
 
+// billingKey 흐름 승인 완료 — authKey/customerKey/orderId 계약
 export interface ConfirmPaymentRequest {
-  paymentKey: string;
+  authKey: string;
+  customerKey: string;
   orderId: string;
-  amount: number;
 }
 
 export interface ConfirmPaymentResponse {

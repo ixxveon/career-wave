@@ -81,7 +81,16 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
                     if (finalDocumentId != null) {
                         fastApiClient.triggerRagContext(sessionId, memberId, finalDocumentId, finalFileUrl);
                     }
-                    fastApiClient.triggerLlmPipeline(sessionId, memberId, 0, "", "", finalSessionType, finalInterviewType);
+
+                    fastApiClient.triggerLlmPipeline(
+                            sessionId,
+                            memberId,
+                            0,
+                            "",
+                            "",
+                            finalSessionType,
+                            finalInterviewType
+                    );
                 }
             });
         }

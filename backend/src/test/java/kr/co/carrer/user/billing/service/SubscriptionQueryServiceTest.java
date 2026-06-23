@@ -8,6 +8,7 @@ import kr.co.carrer.user.billing.repository.PlanRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionUsagePeriodRepository;
 import kr.co.carrer.user.billing.service.impl.SubscriptionQueryServiceImpl;
+import kr.co.carrer.user.billing.type.SubscriptionStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -93,6 +94,35 @@ class SubscriptionQueryServiceTest {
             assertThat(item.status()).isEqualTo("ACTIVE");
             assertThat(item.currentPeriodEnd()).isNotNull();
         });
+    }
+
+    @Test
+    @DisplayName("모든 SubscriptionStatus 문자열과 nullable 날짜를 그대로 반환")
+    void getMySubscriptions_allStatuses() {
+        UUID memberId = UUID.randomUUID();
+        Plan interview = plan(2L, "interview", "AI 모의면접", 29000, 20);
+
+        for (SubscriptionStatus status : SubscriptionStatus.values()) {
+            Subscription subscription = subscription(memberId, UUID.randomUUID(), 2L);
+            setField(subscription, "subscriptionStatus", status);
+            if (status == SubscriptionStatus.CANCEL_SCHEDULED) {
+                setField(subscription, "cancelScheduledAt", ZonedDateTime.now());
+            }
+            if (status != SubscriptionStatus.ACTIVE) {
+                setField(subscription, "nextBillingAt", null);
+            }
+            when(subscriptionRepository.findAllByMemberIdOrderByCreatedAtDesc(memberId))
+                    .thenReturn(List.of(subscription));
+            when(planRepository.findAllById(any())).thenReturn(List.of(interview));
+
+            BillingDTO.SubscriptionItem item =
+                    service.getMySubscriptions(memberId).subscriptions().get(0);
+
+            assertThat(item.status()).isEqualTo(status.name());
+            if (status == SubscriptionStatus.CANCEL_SCHEDULED) {
+                assertThat(item.cancelScheduledAt()).isNotNull();
+            }
+        }
     }
 
     @Test

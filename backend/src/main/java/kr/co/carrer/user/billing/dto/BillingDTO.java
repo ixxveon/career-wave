@@ -1,6 +1,8 @@
 package kr.co.carrer.user.billing.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -51,5 +53,76 @@ public class BillingDTO {
             @Schema(example = "session") String unit,
             ZonedDateTime resetAt,
             int reserved
+    ) {}
+
+    // ── Phase 4: Checkout & Payment ────────────────────────────────────────
+
+    public record RequestCreateOrder(
+            @NotBlank @Schema(example = "document-coaching") String productCode,
+            @NotBlank String successUrl,
+            @NotBlank String failUrl
+    ) {}
+
+    public record ResponseCreateOrder(
+            String orderId,
+            String idempotencyKey,
+            String productCode,
+            String productName,
+            int amount,
+            String currency,
+            String billingCycle,
+            String customerName,
+            String customerEmail,
+            String customerKey,
+            ZonedDateTime expiresAt
+    ) {}
+
+    // billingKey 흐름 승인 완료 — authKey/customerKey/orderId 계약
+    public record RequestConfirmPayment(
+            @NotBlank String authKey,
+            @NotBlank String customerKey,
+            @NotBlank String orderId
+    ) {}
+
+    public record ResponseConfirmPayment(
+            UUID paymentId,
+            String orderId,
+            String productCode,
+            String productName,
+            int amount,
+            String currency,
+            @Schema(allowableValues = {"PAID"}) String paymentStatus,
+            @Schema(allowableValues = {"ACTIVE"}) String subscriptionStatus,
+            ZonedDateTime paidAt,
+            ZonedDateTime nextBillingAt
+    ) {}
+
+    public record PaymentFailureDetail(
+            String reasonCode,
+            String displayMessage,
+            boolean retryable
+    ) {}
+
+    public record ResponsePaymentStatus(
+            String orderId,
+            String paymentStatus,
+            String productCode,
+            String productName,
+            int amount,
+            ZonedDateTime paidAt,
+            PaymentFailureDetail failure
+    ) {}
+
+    public record RequestRecordPaymentFail(
+            @NotBlank String orderId,
+            @NotBlank String productCode,
+            @NotBlank String reasonCode,
+            String message
+    ) {}
+
+    public record ResponseRecordPaymentFail(
+            String orderId,
+            @Schema(allowableValues = {"FAILED"}) String paymentStatus,
+            boolean retryable
     ) {}
 }

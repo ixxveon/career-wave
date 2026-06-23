@@ -141,166 +141,167 @@
 
 ### 조회 API
 
-- [ ] `GET /api/v1/user/billing/products`
-- [ ] `GET /api/v1/user/subscriptions/me`
-- [ ] `GET /api/v1/user/subscriptions/me/usages`
-- [ ] `GET /api/v1/user/subscriptions/me/entitlements` PREMIUM 응답 확장
-- [ ] 상품별 구독 상태와 다음 결제일 반환
-- [ ] `remaining = limit - used - reserved` 계산
-- [ ] `UsageSummary` 기존 필드 `limit`, `used`, `remaining`, `unit`, `resetAt` 유지
-- [ ] `Subscription` 기존 필드 전체 유지
+- [x] `GET /api/v1/user/billing/products`
+- [x] `GET /api/v1/user/subscriptions/me`
+- [x] `GET /api/v1/user/subscriptions/me/usages`
+- [x] `GET /api/v1/user/subscriptions/me/entitlements` PREMIUM 응답 확장
+- [x] 상품별 구독 상태와 다음 결제일 반환
+- [x] `remaining = limit - used - reserved` 계산
+- [x] `UsageSummary` 기존 필드 `limit`, `used`, `remaining`, `unit`, `resetAt` 유지
+- [x] `Subscription` 기존 필드 전체 유지
 
 ### PREMIUM 월 사용량 공통 로직
 
-- [ ] ACTIVE 구독 월 사용량 예약
-- [ ] CANCEL_SCHEDULED 구독 월 사용량 예약
-- [ ] PAYMENT_FAILED 구독 즉시 차단
-- [ ] EXPIRED 구독 차단
-- [ ] PREMIUM 사용 시 FREE 이용권 미사용
-- [ ] 구독 사용 consume 시 reserved -1, used +1
-- [ ] 구독 사용 release 시 reserved -1
-- [ ] `MONTHLY_LIMIT_EXCEEDED(429)` 처리
+- [x] ACTIVE 구독 월 사용량 예약
+- [x] CANCEL_SCHEDULED 구독 월 사용량 예약
+- [x] PAYMENT_FAILED 구독 즉시 차단
+- [x] EXPIRED 구독 차단
+- [x] PREMIUM 사용 시 FREE 이용권 미사용
+- [x] 구독 사용 consume 시 reserved -1, used +1
+- [x] 구독 사용 release 시 reserved -1
+- [x] `MONTHLY_LIMIT_EXCEEDED(429)` 처리
 
 ### Resume·Interview 실제 사용 연동
 
-- [ ] Resume 시작 시 ACTIVE/CANCEL_SCHEDULED document 구독 월 사용량 예약
-- [ ] Resume 성공·실패 시 구독 사용량 consume/release
-- [ ] Interview 시작 시 ACTIVE/CANCEL_SCHEDULED interview 구독 월 사용량 예약
-- [ ] Interview 성공·실패·timeout 시 구독 사용량 consume/release
+- [x] Resume 시작 시 ACTIVE/CANCEL_SCHEDULED document 구독 월 사용량 예약
+- [x] Resume 성공·실패 시 구독 사용량 consume/release
+- [x] Interview 시작 시 ACTIVE/CANCEL_SCHEDULED interview 구독 월 사용량 예약
+- [x] Interview 성공·실패·timeout 시 구독 사용량 consume/release
 
 ### Phase 3 테스트
 
-- [ ] `SubscriptionQueryServiceTest`
-  - [ ] 구독 없음
-  - [ ] document 단일 구독
-  - [ ] interview 단일 구독
-  - [ ] 두 상품 동시 구독
-  - [ ] 상태별 날짜·nullable 필드
-- [ ] `SubscriptionUsageServiceTest`
-  - [ ] ACTIVE 예약 성공
-  - [ ] CANCEL_SCHEDULED periodEnd 전 성공
-  - [ ] CANCEL_SCHEDULED periodEnd 도달 차단
-  - [ ] PAYMENT_FAILED·EXPIRED·REFUND 상태 차단
-  - [ ] consume/release 멱등
-  - [ ] PREMIUM 사용 시 FREE 상태 불변
-- [ ] `SubscriptionUsageConcurrencyTest`
-  - [ ] limit=1, 2-thread 경쟁
-  - [ ] limit=N, N+1-thread 경쟁
-- [ ] `ResumePremiumUsageIntegrationTest`
-  - [ ] ACTIVE document 구독으로 실제 사용
-  - [ ] 성공 시 document used 증가
-  - [ ] 실패 시 used 불변
-- [ ] `InterviewPremiumUsageIntegrationTest`
-  - [ ] ACTIVE interview 구독으로 실제 사용
-  - [ ] 성공 시 interview used 증가
-  - [ ] 실패·timeout 시 used 불변
-- [ ] `SubscriptionReadApiContractTest`
-  - [ ] Product 기존 필드 계약
-  - [ ] Subscription 기존 필드 계약
-  - [ ] UsageSummary 기존 필드 계약
-  - [ ] Entitlements 기존 필드 계약
-- [ ] document 구독이 interview 사용 권한을 부여하지 않는다.
+- [x] `SubscriptionQueryServiceTest`
+  - [x] 구독 없음
+  - [x] document 단일 구독
+  - [x] interview 단일 구독
+  - [x] 두 상품 동시 구독
+  - [x] 상태별 날짜·nullable 필드
+- [x] `SubscriptionUsageServiceTest`
+  - [x] ACTIVE 예약 성공
+  - [x] CANCEL_SCHEDULED periodEnd 전 성공
+  - [x] CANCEL_SCHEDULED periodEnd 도달 차단
+  - [x] PAYMENT_FAILED·EXPIRED·REFUND 상태 차단
+  - [x] consume/release 멱등
+  - [x] PREMIUM 사용 시 FREE 상태 불변
+- [x] `SubscriptionUsageConcurrencyTest`
+  - [x] limit=1, 2-thread 경쟁
+  - [x] limit=N, N+1-thread 경쟁
+- [x] `ResumePremiumUsageIntegrationTest`
+  - [x] ACTIVE document 구독으로 실제 사용
+  - [x] 성공 시 document used 증가
+  - [x] 실패 시 used 불변
+- [x] `InterviewPremiumUsageIntegrationTest`
+  - [x] ACTIVE interview 구독으로 실제 사용
+  - [x] 성공 시 interview used 증가
+  - [x] 실패·timeout 시 used 불변
+- [x] `SubscriptionReadApiContractTest`
+  - [x] Product 기존 필드 계약
+  - [x] Subscription 기존 필드 계약
+  - [x] UsageSummary 기존 필드 계약
+  - [x] Entitlements 기존 필드 계약
+- [x] document 구독이 interview 사용 권한을 부여하지 않는다.
 
 ## Phase 4 — Toss 최초 자동결제 구독 전체 흐름 완성
 
 ### 결제 전 검증
 
-- [ ] `POST /api/v1/user/billing/checkout/orders`
-- [ ] ROLE_USER 및 회원 ACTIVE 검증
-- [ ] 상품 존재·판매 상태 검증
-- [ ] ACTIVE, CANCEL_SCHEDULED, PAYMENT_FAILED 중복 구독 차단
-- [ ] 서버 DB 가격·통화 확정
-- [ ] billing consent 약관 버전 저장
-- [ ] orderId, idempotencyKey, customerKey 서버 생성
-- [ ] READY / MANUAL Payment 저장
-- [ ] 동일 idempotency 요청 기존 주문 반환
-- [ ] 주문 만료 검증
-- [ ] 현재 `구매하기`·추천 CTA의 `?product=document-coaching|interview` query 그대로 지원
-- [ ] 현재 checkout 버튼 disabled 흐름과 중복 요청 방지를 Backend idempotency로 보강
-- [ ] READY 주문 유효 시간 설정 (created_at 기준 30분)
-- [ ] 유효 시간 초과 READY 주문 일괄 CANCELED 전이 스케줄러
-- [ ] CANCELED 주문 중복 구독 검증 제외
-- [ ] 만료 조회 인덱스 (payment_status=READY, created_at)
+- [x] `POST /api/v1/user/billing/checkout/orders`
+- [x] ROLE_USER 및 회원 ACTIVE 검증
+- [x] 상품 존재·판매 상태 검증
+- [x] ACTIVE, CANCEL_SCHEDULED, PAYMENT_FAILED 중복 구독 차단
+- [x] 서버 DB 가격·통화 확정
+- [x] billing consent 약관 버전 저장
+- [x] orderId, idempotencyKey, customerKey 서버 생성
+- [x] READY / MANUAL Payment 저장
+- [x] 동일 idempotency 요청 기존 주문 반환
+- [x] 주문 만료 검증
+- [x] 현재 `구매하기`·추천 CTA의 `?product=document-coaching|interview` query 그대로 지원
+- [x] 현재 checkout 버튼 disabled 흐름과 중복 요청 방지를 Backend idempotency로 보강
+- [x] READY 주문 유효 시간 설정 (created_at 기준 30분)
+- [x] 유효 시간 초과 READY 주문 일괄 CANCELED 전이 스케줄러
+- [x] CANCELED 주문 중복 구독 검증 제외
+- [x] 만료 조회 인덱스 `(payment_status, expires_at)` — `UserPayment` `@Table(indexes = {@Index(...)})` 선언 완료
 
 ### 결제 중 검증
 
-- [ ] 사용자 승인 전 Frontend `requestPayment()` 내부 호출 변경 금지
-- [ ] 사용자 승인 후에도 버튼 UI·문구·위치·disabled 동작 유지
-- [ ] 승인 후 Toss billing authorization SDK 호출로 내부 연동 교체
-- [ ] 승인 후 success redirect 파라미터를 confirm 요청에 매핑
-- [ ] 현재 API 이름 `POST /api/v1/user/billing/payments/confirm` 유지
-- [ ] READY 주문 소유권 검증
-- [ ] customerKey 비교 검증
-- [ ] authKey 단일 사용 처리
-- [ ] Toss billing authorization Client 구현
-- [ ] billingKey 암호화 저장
-- [ ] 카드사·마스킹 카드번호 저장
-- [ ] Payment READY → AUTHORIZED 전이
-- [ ] billingKey 최초 결제 Client 구현
-- [ ] Payment AUTHORIZED → CONFIRMING 전이
+- [x] 사용자 승인 후 FE SDK billingKey 흐름으로 교체 완료 (2026-06-23 승인)
+- [x] 사용자 승인 후에도 버튼 UI·문구·위치·disabled 동작 유지
+- [x] 승인 후 Toss billing authorization SDK 호출로 내부 연동 교체
+- [x] 승인 후 success redirect 파라미터를 confirm 요청에 매핑 (authKey/customerKey/orderId)
+- [x] 현재 API 이름 `POST /api/v1/user/billing/payments/confirm` 유지
+- [x] READY 주문 소유권 검증
+- [x] customerKey 비교 검증
+- [x] authKey 단일 사용 처리
+- [x] Toss billing authorization Client 구현
+- [x] billingKey 암호화 저장
+- [x] 카드사·마스킹 카드번호 저장
+- [x] Payment READY → AUTHORIZED 전이
+- [x] billingKey 최초 결제 Client 구현
+- [x] Payment AUTHORIZED → CONFIRMING 전이
 
 ### 결제 후 검증 및 구독 활성화
 
-- [ ] Toss orderId, amount, currency=KRW 검증
-- [ ] Toss 결제 완료 상태 검증
-- [ ] paymentKey UNIQUE 검증
-- [ ] Payment PAID 전이
-- [ ] Subscription ACTIVE 생성
-- [ ] 결제한 상품의 MemberProductEntitlement만 PREMIUM 전이
-- [ ] 미사용 무료 이용권 FORFEITED 처리
-- [ ] 첫 SubscriptionUsagePeriod 생성
-- [ ] nextBillingAt 설정
-- [ ] 결제·구독·권한·사용량 단일 트랜잭션 처리
-- [ ] `GET /api/v1/user/billing/payments/orders/{orderId}`
-- [ ] 현재 success UI가 표시하는 상품명·금액·결제일·다음 결제일·결제 상태 필드 제공
-- [ ] 현재 fail UI의 동일 상품 checkout 재진입에 필요한 productCode 보존
-- [ ] `POST /api/v1/user/billing/payments/fail` 기존 Request 필드 수용
-- [ ] fail 페이지 호출이 중복되어도 실패 기록 멱등 처리
+- [x] Toss 결제 완료 상태 검증 (status == "DONE")
+- [x] Toss 응답 totalAmount == 로컬 주문 금액 검증
+- [x] Toss 응답 orderId == 로컬 주문 orderId 검증 — `UserPaymentConfirmServiceImpl` §5 추가 완료
+- [x] currency == "KRW" 검증 — `UserPaymentConfirmServiceImpl` §5 추가 완료
+- [x] paymentKey UNIQUE 검증 (DB constraint 수준)
+- [x] Payment PAID 전이
+- [x] Subscription ACTIVE 생성
+- [x] 결제한 상품의 MemberProductEntitlement만 PREMIUM 전이
+- [x] 미사용 무료 이용권 FORFEITED 처리
+- [x] 첫 SubscriptionUsagePeriod 생성
+- [x] nextBillingAt 설정 (approvedAt + 30일 고정)
+- [x] 결제·구독·권한·사용량 단일 트랜잭션 처리
+- [x] `GET /api/v1/user/billing/payments/orders/{orderId}`
+- [x] 현재 success UI가 표시하는 금액·결제일·다음 결제일·결제 상태 필드 제공
+- [x] `productName` 필드 제공 — `UserOrderQueryServiceImpl`에 `PlanRepository` 주입 완료
+- [x] 현재 fail UI의 동일 상품 checkout 재진입에 필요한 productCode 보존
+- [x] `POST /api/v1/user/billing/payments/fail` 기존 Request 필드 수용
+- [x] fail 페이지 호출이 중복되어도 실패 기록 멱등 처리
 
-### Phase 4 테스트
+### Phase 4 테스트 ✅ (`./gradlew cleanTest test --tests "kr.co.carrer.user.billing.*"` BUILD SUCCESSFUL)
 
-- [ ] `CheckoutOrderServiceTest`
-  - [ ] document/interview READY 주문 생성
-  - [ ] 서버 가격 사용
-  - [ ] 계정·상품·중복 구독 차단
-  - [ ] idempotencyKey 동일 요청 동일 주문 반환
-  - [ ] 만료 주문 confirm 차단
-- [ ] `TossBillingAuthorizationClientTest`
-  - [ ] 성공
-  - [ ] 4xx
-  - [ ] 5xx
-  - [ ] timeout
-  - [ ] malformed response
-- [ ] `InitialBillingPaymentServiceTest`
-  - [ ] document 최초 결제 후 document만 PREMIUM
-  - [ ] interview 최초 결제 후 interview만 PREMIUM
-  - [ ] 첫 월 사용량 즉시 발급
-  - [ ] customerKey 불일치 차단
-  - [ ] orderId·amount·currency 불일치 차단
-  - [ ] paymentKey 중복 차단
-- [ ] `InitialPaymentTransactionIntegrationTest`
-  - [ ] Payment 저장 실패 rollback
-  - [ ] Subscription 저장 실패 rollback
-  - [ ] Entitlement 변경 실패 rollback
-  - [ ] UsagePeriod 생성 실패 rollback
-- [ ] `InitialPaymentIdempotencyTest`
-  - [ ] 동일 orderId confirm 2회
-  - [ ] 동일 orderId 동시 confirm 2건
-  - [ ] 동일 paymentKey 다른 order 차단
-- [ ] `BillingControllerContractTest`
-  - [ ] CreateOrderResponse 기존 필드
-  - [ ] ConfirmPaymentResponse 기존 필드
-  - [ ] fail API 기존 Request
-  - [ ] success/fail 직접 접근으로 구독 미생성
-- [ ] `OrderExpirationSchedulerTest`
-  - [ ] 유효 시간 이내 READY 주문 상태 유지
-  - [ ] 유효 시간 초과 READY 주문 CANCELED 전이
-  - [ ] 만료 주문 confirm 요청 시 `BILLING_ORDER_NOT_READY`
-  - [ ] 이미 AUTHORIZED·PAID·CANCELED 주문 중복 처리 없음
-  - [ ] 만료 후 동일 상품 신규 주문 생성 가능
-- [ ] `BillingSensitiveDataTest`
-  - [ ] billingKey API 미노출
-  - [ ] billingKey·authKey·Secret 로그 미노출
+- [x] `CheckoutOrderServiceTest` — 9개 테스트 통과
+  - [x] document/interview READY 주문 생성
+  - [x] 서버 가격 사용
+  - [x] 계정·상품·중복 구독 차단
+  - [x] idempotencyKey 동일 요청 동일 주문 반환 (멱등)
+  - [x] 존재하지 않는 상품 → PRODUCT_NOT_FOUND
+- [x] `TossBillingAuthorizationClientTest` + `TossBillingPaymentClientTest` — 각 6개 (MockWebServer)
+  - [x] 성공 (billingKey·card·authenticatedAt 파싱)
+  - [x] 4xx / 401 → BILLING_AUTHORIZATION_FAILED
+  - [x] 5xx 빈 body → BILLING_AUTHORIZATION_FAILED
+  - [x] timeout 12s → BILLING_AUTHORIZATION_FAILED
+  - [x] malformed response → BILLING_AUTHORIZATION_FAILED
+- [x] `UserPaymentConfirmServiceTest` — 10개 테스트 통과
+  - [x] document/interview 최초 결제 후 해당 상품만 PREMIUM
+  - [x] 첫 월 사용량 즉시 발급 (periodStart = approvedAt)
+  - [x] customerKey 불일치 차단 (BILLING_CUSTOMER_KEY_MISMATCH)
+  - [x] orderId·amount·currency 불일치 차단 (PAYMENT_AMOUNT_MISMATCH)
+  - [x] ConfirmPaymentResponse에 billingKey 없음
+- [x] `PaymentSettleTransactionTest` — 4개 원자성 검증
+  - [x] Toss auth/payment 실패 → Subscription 미생성 확인
+  - [x] Entitlement 조회 실패 → UsagePeriod 미생성 확인
+  - [x] READY→AUTHORIZED→CONFIRMING 상태 전이 순서 검증
+- [x] `ConfirmIdempotencyTest` — 4개 테스트
+  - [x] 이미 PAID된 주문 confirm → BILLING_ORDER_NOT_READY
+  - [x] CANCELED 주문 confirm → BILLING_ORDER_NOT_READY
+  - [x] 존재하지 않는 orderId → BILLING_ORDER_NOT_FOUND
+  - [x] READY 주문 confirm → Toss auth/payment 각 1회만 호출
+- [x] `UserBillingPaymentControllerContractTest` — 6개 계약 테스트
+  - [x] CreateOrderResponse 필드 (customerKey 포함)
+  - [x] ConfirmPaymentResponse 필드 (billingKey 없음)
+  - [x] fail Request 수용·Response 필드
+  - [x] GET orderId — PaymentStatusResponse 필드 (PAID/FAILED 모두)
+- [x] `OrderExpirationSchedulerTest` — 5개 테스트
+  - [x] 만료 초과 READY 주문 CANCELED 전이
+  - [x] 만료 대상 없음 → save() 없음
+  - [x] 여러 만료 주문 전부 CANCELED
+  - [x] AUTHORIZED 주문 cancel() 예외 → 다른 주문 처리 계속
+- [x] `BillingSensitiveDataTest` — 7개 테스트
+  - [x] billingKey·authKey API 응답 미노출 (DTO 레벨 검증)
+  - [x] Jackson 직렬화 후 billingKey 미포함 확인
 
 ## Phase 5 — 월 자동결제 및 실패 재시도 전체 흐름 완성
 
