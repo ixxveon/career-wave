@@ -565,8 +565,7 @@ export default function CustomerServicePage() {
               <button onClick={openNoticeCreate}>+ 공지 등록</button>
             </div>
             {noticeError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{noticeError}</p>}
-            <div className="tableScroll">
-              <table className="memberTable csNoticeTable">
+            <table className="memberTable csNoticeTable">
                 <thead>
                   <tr>
                     <th>번호</th><th>카테고리</th><th>제목</th><th>등록일</th><th>노출</th><th>관리</th>
@@ -591,8 +590,7 @@ export default function CustomerServicePage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
+            </table>
             <div className="memberTableFooter">
               <span className="memberTableCount">
                 {noticeTotalItems === 0 ? '총 0건' : `표시 중: ${(noticePage - 1) * 20 + 1} - ${Math.min(noticePage * 20, noticeTotalItems)} / 총 ${noticeTotalItems}건`}

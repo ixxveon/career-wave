@@ -6,5 +6,7 @@ import kr.co.carrer.global.response.PaginationResponse;
 
 public interface AdminSubscriptionService {
 
+    SubscriptionDTO.ResponseCounts getSubscriptionCounts();
+
     PaginationResponse<SubscriptionDTO.ResponseList> getSubscriptions(SubscriptionStatus status, int page, int size);
 }

@@ -6,6 +6,13 @@ import java.time.ZonedDateTime;
 
 public class SubscriptionDTO {
 
+    public record ResponseCounts(
+        long active,
+        long renewalScheduled,
+        long cancelScheduled,
+        long atRisk
+    ) {}
+
     public record ResponseList(
         String subscriptionId,
         String memberName,

@@ -40,4 +40,9 @@ public class AdminStatisticsController implements AdminStatisticsControllerDocs 
     public ResponseEntity<ApiResponse<List<StatisticsDTO.RecentSubscriber>>> getRecentSubscribers() {
         return ResponseEntity.ok(ApiResponse.ok("최근 가입 피드 조회에 성공했습니다.", adminStatisticsService.getRecentSubscribers()));
     }
+
+    @GetMapping("/revenue/breakdown")
+    public ResponseEntity<ApiResponse<List<StatisticsDTO.RevenueBreakdownItem>>> getRevenueBreakdown() {
+        return ResponseEntity.ok(ApiResponse.ok("구독 유형별 매출 실적 조회에 성공했습니다.", adminStatisticsService.getRevenueBreakdown()));
+    }
 }

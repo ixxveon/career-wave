@@ -1,11 +1,12 @@
 import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 import { BadgeCheck, UserRound } from 'lucide-react';
-import { AuthButtonGroup, Field, StatusPill, TextInput } from './RegisterFormPrimitives';
+import { AuthButtonGroup, Field, PasswordInput, StatusPill, TextInput } from './RegisterFormPrimitives';
 import { LOGIN_ID_CHECK_STATE } from '../../../utils/user/member/validation';
 import { usePersonalRegisterForm } from '../../../hooks/user/member/usePersonalRegisterForm';
 import type { PersonalTermDetails, TermSection } from '../../../utils/user/member/registerTerms';
 import { SOCIAL_PROVIDERS } from '../../../utils/user/member/socialAuth';
 import { formatRemaining } from '../../../utils/user/member/recoveryView';
+import { memberSocialAuthApi } from '../../../api/user/member/socialAuthApi';
 
 type PersonalTermsValues = {
   age: boolean;
@@ -66,14 +67,19 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
         </div>
         <div className="cw-social-login" aria-label="소셜 회원가입">
           {SOCIAL_PROVIDERS.map((provider) => (
-            <a
+            <button
               aria-label={`${provider.label} 회원가입`}
               className={`cw-social-login__button cw-social-login__${provider.id}`}
-              href={`/auth/register/verify?provider=${provider.id}`}
               key={provider.id}
+              type="button"
+              onClick={() => {
+                void memberSocialAuthApi
+                  .authorize(provider.id)
+                  .then(({ authorizationUrl }) => { window.location.href = authorizationUrl; });
+              }}
             >
               {provider.mark}
-            </a>
+            </button>
           ))}
         </div>
       </section>
@@ -157,8 +163,7 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
             {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
           </Field>
           <Field label="비밀번호" required wide>
-            <TextInput
-              type="password"
+            <PasswordInput
               value={form.password}
               onChange={(value) => update('password', value)}
               placeholder="비밀번호(8~16자의 영문, 숫자, 특수기호)"
@@ -166,7 +171,7 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
             {fieldErrors.password && <p className="cw-register-error">{fieldErrors.password}</p>}
           </Field>
           <Field label="비밀번호 확인" required wide>
-            <TextInput type="password" value={form.passwordConfirm} onChange={(value) => update('passwordConfirm', value)} placeholder="비밀번호 재입력" />
+            <PasswordInput value={form.passwordConfirm} onChange={(value) => update('passwordConfirm', value)} placeholder="비밀번호 재입력" />
             {passwordMismatch && <p className="cw-register-error">비밀번호가 일치하지 않습니다.</p>}
             {fieldErrors.passwordConfirm && <p className="cw-register-error">{fieldErrors.passwordConfirm}</p>}
           </Field>

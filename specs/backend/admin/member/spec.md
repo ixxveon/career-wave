@@ -29,7 +29,7 @@ email               VARCHAR(100)  UNIQUE
 password            VARCHAR(255)  NOT NULL
 name                VARCHAR(50)   NOT NULL
 phone               VARCHAR(20)   NULL
-role_type           VARCHAR(20)   NOT NULL CHECK (role_type IN ('ROLE_USER', 'ROLE_COMPANY'))
+role_type           VARCHAR(20)   NOT NULL CHECK (role_type IN ('USER', 'COMPANY'))
 member_status       VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE'
                     CHECK (member_status IN ('ACTIVE', 'SUSPENDED', 'BANNED'))
 subscription_status VARCHAR(10)   NOT NULL DEFAULT 'FREE'
@@ -86,7 +86,7 @@ admin/member/
 │   └── SuspendHistoryRepository.java
 ├── type/
 │   ├── MemberStatus.java        -- ACTIVE / SUSPENDED / BANNED
-│   ├── RoleType.java            -- ROLE_USER / ROLE_COMPANY
+│   ├── RoleType.java            -- USER / COMPANY
 │   ├── SubscriptionStatus.java  -- FREE / PREMIUM
 │   ├── SanctionType.java        -- WARNING / SUSPEND / BLACKLIST
 │   ├── SuspendDuration.java     -- THREE_DAYS / SEVEN_DAYS / THIRTY_DAYS / PERMANENT
@@ -248,7 +248,7 @@ public class HrManagerDTO {
 
 | 파라미터 | 타입 | 필수 | 설명 |
 |---|---|---|---|
-| `role` | String | N | `ROLE_USER` / `ROLE_COMPANY` |
+| `role` | String | N | `USER` / `COMPANY` |
 | `status` | String | N | `ACTIVE` / `SUSPENDED` / `BANNED` |
 | `plan` | String | N | `FREE` / `PREMIUM` |
 | `keyword` | String | N | 이름·이메일·로그인ID 통합 검색 (최대 100자) |

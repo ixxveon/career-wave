@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
 
 type FieldProps = {
@@ -62,6 +62,32 @@ export function TextInput({ type = 'text', value, onChange, placeholder }: TextI
       onBlur={(event) => clearInputFill(event.target)}
       placeholder={placeholder}
     />
+  );
+}
+
+export function PasswordInput({ value, onChange, placeholder }: Omit<TextInputProps, 'type'>) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="cw-register-password-wrapper">
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={(event) => {
+          onChange(event.target.value);
+          applyInputFill(event.target);
+        }}
+        onBlur={(event) => clearInputFill(event.target)}
+        placeholder={placeholder}
+      />
+      <button
+        className="cw-register-password-toggle"
+        type="button"
+        aria-label={show ? '비밀번호 숨기기' : '비밀번호 표시'}
+        onClick={() => setShow((prev) => !prev)}
+      >
+        {show ? <Eye size={16} /> : <EyeOff size={16} />}
+      </button>
+    </div>
   );
 }
 

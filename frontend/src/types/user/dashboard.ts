@@ -8,9 +8,9 @@ export interface UserProfile {
   email: string;
   name: string;
   phone: string;
-  roleType: string;
+  roleType: "USER" | "COMPANY";
   memberStatus: MemberStatus;
-  subscriptionStatus: string;
+  subscriptionStatus: "FREE" | "PREMIUM";
   notificationEnabled: boolean;
   createdAt: string;
 }
@@ -39,9 +39,9 @@ export interface ScrapJob {
 }
 
 export interface ScrapJobPageResponse {
-  content: ScrapJob[];
+  items: ScrapJob[];
   page: number;
   size: number;
-  totalElements: number;
+  totalItems: number;
   totalPages: number;
 }

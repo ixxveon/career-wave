@@ -3,7 +3,7 @@ import axiosInstance from '../../utils/axiosInstance';
 // ── 공통 타입 ──────────────────────────────────────────────────
 
 export const MEMBER_STATUS = { ACTIVE: 'ACTIVE', SUSPENDED: 'SUSPENDED', BANNED: 'BANNED', LOCKED: 'LOCKED', WITHDRAWN: 'WITHDRAWN' } as const;
-export const MEMBER_ROLE = { ROLE_USER: 'ROLE_USER', ROLE_COMPANY: 'ROLE_COMPANY' } as const;
+export const MEMBER_ROLE = { USER: 'USER', COMPANY: 'COMPANY' } as const;
 export const PLAN_TYPE = { FREE: 'FREE', PREMIUM: 'PREMIUM' } as const;
 export const SANCTION_TYPE = { WARNING: 'WARNING', SUSPEND: 'SUSPEND', BLACKLIST: 'BLACKLIST' } as const;
 export const SUSPEND_DURATION = { THREE_DAYS: 'THREE_DAYS', SEVEN_DAYS: 'SEVEN_DAYS', THIRTY_DAYS: 'THIRTY_DAYS', PERMANENT: 'PERMANENT' } as const;
@@ -116,9 +116,19 @@ export interface RejectRequest {
   rejectReason: string;
 }
 
+export interface MemberCounts {
+  todayJoinCount: number;
+  premiumCount: number;
+  suspendedCount: number;
+}
+
 // ── API 함수 ───────────────────────────────────────────────────
 
 export const memberApi = {
+  // 회원 KPI 집계 조회
+  getMemberCounts: () =>
+    axiosInstance.get<ApiResponse<MemberCounts>>('/api/v1/admin/members/counts'),
+
   // 개인 회원 목록 조회
   getMembers: (params?: MemberListParams) =>
     axiosInstance.get<ApiResponse<MemberListData>>('/api/v1/admin/members', { params }),

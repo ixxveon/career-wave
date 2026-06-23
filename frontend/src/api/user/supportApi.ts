@@ -89,9 +89,9 @@ export interface InquiryItem {
   inquiryId: number;
   category: InquiryCategory;
   title: string;
-  content: string;
+  contentPreview: string;
+  reply: string | null;
   inquiryStatus: InquiryStatus;
-  answer: string | null;
   createdAt: string;
 }
 
@@ -106,6 +106,7 @@ export interface CreateInquiryResult {
   inquiryStatus: 'PENDING';
 }
 
+
 // ── API 함수 ───────────────────────────────────────────────────
 
 export const supportApi = {
@@ -116,12 +117,12 @@ export const supportApi = {
     if (params.keyword)  query.set('keyword', params.keyword);
     query.set('page', String(params.page));
     query.set('size', String(params.size));
-    return memberApiClient<NoticeListResult>(`/api/v1/notices?${query}`);
+    return memberApiClient<NoticeListResult>(`/api/v1/user/notices?${query}`);
   },
 
   // 공지사항 상세
   getNoticeDetail: (noticeId: number) =>
-    memberApiClient<NoticeDetail>(`/api/v1/notices/${noticeId}`),
+    memberApiClient<NoticeDetail>(`/api/v1/user/notices/${noticeId}`),
 
   // FAQ 목록
   getFaqs: (params?: { category?: FaqCategory; keyword?: string }) => {
@@ -129,7 +130,7 @@ export const supportApi = {
     if (params?.category) query.set('category', params.category);
     if (params?.keyword)  query.set('keyword', params.keyword);
     const qs = query.toString();
-    return memberApiClient<FaqItem[]>(`/api/v1/faqs${qs ? `?${qs}` : ''}`);
+    return memberApiClient<FaqItem[]>(`/api/v1/user/faqs${qs ? `?${qs}` : ''}`);
   },
 
   // 나의 문의 목록 (로그인 필수)
@@ -137,14 +138,15 @@ export const supportApi = {
     const query = new URLSearchParams();
     if (params?.category) query.set('category', params.category);
     const qs = query.toString();
-    return memberApiClient<InquiryItem[]>(`/api/v1/inquiries${qs ? `?${qs}` : ''}`, { auth: true });
+    return memberApiClient<InquiryItem[]>(`/api/v1/user/inquiries${qs ? `?${qs}` : ''}`, { auth: true });
   },
 
   // 문의 접수 (로그인 필수)
   createInquiry: (body: CreateInquiryRequest) =>
-    memberApiClient<CreateInquiryResult>('/api/v1/inquiries', {
+    memberApiClient<CreateInquiryResult>('/api/v1/user/inquiries', {
       method: 'POST',
       body: JSON.stringify(body),
       auth: true,
     }),
+
 };

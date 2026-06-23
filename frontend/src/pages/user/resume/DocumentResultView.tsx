@@ -60,6 +60,7 @@ interface DocumentResultViewProps {
   result: DocumentResult;
   onReset: () => void;
   label: string;
+  fileType: 'RESUME' | 'COVER_LETTER';
   subtitle?: string;
   typeSelector?: React.ReactNode;
   onRevise?: (feedbackDetails: FeedbackDetail[]) => void;
@@ -71,6 +72,7 @@ export default function DocumentResultView({
   result,
   onReset,
   label,
+  fileType,
   subtitle,
   typeSelector,
   onRevise,
@@ -93,11 +95,18 @@ export default function DocumentResultView({
   const gradeColor = scoreColor(totalScore);
   const fd = feedbackDetails[activeSection];
 
+  const isResume = fileType === 'RESUME';
+  const typeBadgeLabel = fileType === 'RESUME' ? '📄 이력서 분석' : '✍️ 자기소개서 분석';
+  const typeBadgeColor = isResume ? '#2563eb' : '#7c3aed';
+
   return (
     <div className="dr">
       <div className="dr-banner">
         <div>
           {typeSelector && <div className="dr-type-selector">{typeSelector}</div>}
+          <span className="dr-type-badge" style={{ background: typeBadgeColor }}>
+            {typeBadgeLabel}
+          </span>
           <span className="dr-eyebrow">{label}</span>
           <h1 className="dr-banner__title">AI 종합 진단 리포트</h1>
           {subtitle
@@ -137,29 +146,34 @@ export default function DocumentResultView({
             <button
               key={i}
               className={`dr-section-tab${i === activeSection ? ' dr-section-tab--active' : ''}`}
+              style={i === activeSection ? { borderColor: typeBadgeColor, color: typeBadgeColor } : undefined}
               onClick={() => setActiveSection(i)}
             >
-              <span className="dr-section-tab__num">{item.sectionNumber}</span>
-              {item.question.length > 16 ? item.question.slice(0, 16) + '…' : item.question}
+              <span className="dr-section-tab__num" style={i === activeSection ? { background: typeBadgeColor } : undefined}>
+                {item.sectionNumber}
+              </span>
+              {item.question.length > 20 ? item.question.slice(0, 20) + '…' : item.question}
             </button>
           ))}
         </div>
       )}
 
-      <div className="dr-split">
-        <div className="dr-card dr-split__original">
-          <p className="dr-card-title">입력 원문</p>
-          <p className="dr-split__question">{fd.question}</p>
-          <p className="dr-split__text">{fd.originalText}</p>
-        </div>
-        <div className="dr-split__feedback">
-          <div className="dr-card dr-good-card">
-            <p className="dr-good-card__label"><ThumbsUp size={13} /> 잘한 점</p>
-            <p className="dr-good-card__text">{fd.goodPoint}</p>
+      <div className="dr-single">
+        <div className="dr-single__inner">
+          <div className="dr-card dr-split__original">
+            <p className="dr-card-title">입력 원문</p>
+            <p className="dr-split__question">{fd.question}</p>
+            <p className="dr-split__text">{fd.originalText}</p>
           </div>
-          <div className="dr-card dr-bad-card">
-            <p className="dr-bad-card__label"><ThumbsDown size={13} /> 아쉬운 점</p>
-            <p className="dr-bad-card__text">{fd.badPoint}</p>
+          <div className="dr-single__row">
+            <div className="dr-card dr-good-card">
+              <p className="dr-good-card__label"><ThumbsUp size={13} /> 잘한 점</p>
+              <p className="dr-good-card__text">{fd.goodPoint}</p>
+            </div>
+            <div className="dr-card dr-bad-card">
+              <p className="dr-bad-card__label"><ThumbsDown size={13} /> 아쉬운 점</p>
+              <p className="dr-bad-card__text">{fd.badPoint}</p>
+            </div>
           </div>
           {fd.starAnalysis && (
             <div className="dr-card dr-star-card">

@@ -12,6 +12,8 @@ import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,8 +40,8 @@ public class AdminReportController implements AdminReportControllerDocs {
         @RequestParam(required = false) String targetType,
         @RequestParam(required = false) String reason,
         @RequestParam(required = false) String keyword,
-        @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "20") int size
+        @RequestParam(defaultValue = "1") @Min(1) int page,
+        @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
 
         ReportStatus reportStatus   = parseEnum(ReportStatus.class, status);

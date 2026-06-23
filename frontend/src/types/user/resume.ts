@@ -142,8 +142,9 @@ export interface FeedbackDetail {
 export interface AnalysisResultResponse {
   documentId: string;
   status: BackendDocumentStatus;
+  fileType: 'RESUME' | 'COVER_LETTER';
   scores: ScoreBreakdown | null;
-  overallReview: string;
+  overallReview: string | null;
   feedbackDetails: FeedbackDetail[];
   errorMessage: string | null;
   createdAt: string;
@@ -167,15 +168,14 @@ export interface ResumeHistoryItem {
 export interface ResumeHistoryParams {
   page?: number;
   size?: number;
-  fileType?: FileType;
 }
 
 /** GET /api/v1/user/resume/history — Response data */
 export interface ResumeHistoryResponse {
-  content: ResumeHistoryItem[];
+  items: ResumeHistoryItem[];
   page: number;
   size: number;
-  totalElements: number;
+  totalItems: number;
   totalPages: number;
 }
 
@@ -188,7 +188,10 @@ export interface ResumeHistoryResponse {
  */
 export interface WsStatusMessage {
   status: WsAnalysisStatus;
-  message: string;
-  progress: number;
   errorMessage?: string | null;
+}
+
+export interface ResumeQuotaResponse {
+  usedCount: number;
+  limitCount: number;
 }

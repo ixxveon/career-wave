@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { UserRound, Mail, Phone, ShieldCheck, Github } from "lucide-react";
-import { mockUserProfile, mockGithubProfile } from "@/mocks/user/dashboardMock";
+import { updateDashboardProfile } from "@/api/user/dashboard";
+import {
+  useDashboardGithub,
+  useDashboardProfile,
+} from "../../../hooks/user/dashboard";
 
-import type {
-  GithubProfile,
-  UserProfile,
-} from "@/types/user/dashboard";
+import type { UserProfile } from "@/types/user/dashboard";
 
 import "@/styles/user/mypage/MyPage.css";
 
 const ROLE_TYPE_LABELS: Record<UserProfile["roleType"], string> = {
-  ROLE_USER: "일반 회원",
-  ROLE_COMPANY: "기업 회원",
+  USER: "일반 회원",
+  COMPANY: "기업 회원",
 };
 
 const SUBSCRIPTION_STATUS_LABELS: Record<
@@ -42,22 +43,28 @@ type EditProfileForm = {
 };
 
 function UserMyPage() {
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(
-    mockUserProfile,
-  );
-  const [githubProfile, setGithubProfile] = useState<GithubProfile | null>(
-    mockGithubProfile,
-  );
+  const {
+    data: userProfile,
+    isLoading: isProfileLoading,
+    isError: hasUserProfileError,
+    refetch: refetchProfile,
+  } = useDashboardProfile();
+
+  const {
+    data: githubProfile,
+    isLoading: isGithubLoading,
+    isError: hasGithubProfileError,
+    refetch: refetchGithub,
+  } = useDashboardGithub();
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<EditProfileForm>({
-    name: mockUserProfile.name,
-    phone: mockUserProfile.phone,
-    githubUrl: mockGithubProfile.githubUrl ?? "",
+    name: "",
+    phone: "",
+    githubUrl: "",
   });
 
-  const isLoading = false;
-  const hasUserProfileError = false;
-  const hasGithubProfileError = false;
+  const isLoading = isProfileLoading || isGithubLoading;
 
   function openEditModal() {
     if (!userProfile) return;
@@ -81,25 +88,24 @@ function UserMyPage() {
     }));
   }
 
-  function saveProfileEdit() {
+  async function saveProfileEdit() {
     if (!userProfile) return;
 
-    const normalizedGithubUrl = editForm.githubUrl.trim();
+    try {
+      await updateDashboardProfile({
+        name: editForm.name,
+        phone: editForm.phone,
+        githubUrl: editForm.githubUrl.trim(),
+      });
 
-    setUserProfile({
-      ...userProfile,
-      name: editForm.name,
-      phone: editForm.phone,
-    });
+      await Promise.all([refetchProfile(), refetchGithub()]);
 
-    setGithubProfile({
-      githubId: normalizedGithubUrl ? (githubProfile?.githubId ?? null) : null,
-      githubUrl: normalizedGithubUrl || null,
-      linked: Boolean(normalizedGithubUrl),
-    });
+      setIsEditModalOpen(false);
 
-    setIsEditModalOpen(false);
-    alert("회원 정보 수정 내용이 Mock 데이터에 반영되었습니다.");
+      alert("회원 정보가 수정되었습니다.");
+    } catch {
+      alert("회원 정보 수정에 실패했습니다.");
+    }
   }
 
   if (isLoading) {
@@ -339,7 +345,7 @@ function UserMyPage() {
                 이름
                 <input
                   type="text"
-                  value={editForm.name}
+                  value={editForm.name ?? ""}
                   onChange={(event) =>
                     handleEditFormChange("name", event.target.value)
                   }
@@ -350,7 +356,7 @@ function UserMyPage() {
                 휴대폰 번호
                 <input
                   type="text"
-                  value={editForm.phone}
+                  value={editForm.phone ?? ""}
                   onChange={(event) =>
                     handleEditFormChange("phone", event.target.value)
                   }
@@ -361,7 +367,7 @@ function UserMyPage() {
                 GitHub URL
                 <input
                   type="text"
-                  value={editForm.githubUrl}
+                  value={editForm.githubUrl ?? ""}
                   placeholder="https://github.com/username"
                   onChange={(event) =>
                     handleEditFormChange("githubUrl", event.target.value)

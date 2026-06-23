@@ -32,6 +32,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -135,6 +137,7 @@ public class ResumeServiceImpl implements ResumeService {
             return new ResumeDTO.ResponseFeedback(
                     document.getDocumentId(),
                     document.getStatus().name(),
+                    document.getFileType().name(),
                     null, null, null,
                     document.getErrorMessage(),
                     document.getCreatedAt()
@@ -157,6 +160,7 @@ public class ResumeServiceImpl implements ResumeService {
         return new ResumeDTO.ResponseFeedback(
                 document.getDocumentId(),
                 document.getStatus().name(),
+                document.getFileType().name(),
                 scores,
                 feedback.getOverallReview(),
                 feedbackDetails,
@@ -190,6 +194,13 @@ public class ResumeServiceImpl implements ResumeService {
             return;
         }
 
+        if ("PENDING".equals(dto.status()) || "ANALYZING".equals(dto.status())) {
+            // 중간 상태 — DB 갱신 없이 WebSocket 브로드캐스트만
+            log.info("[Webhook] 중간 상태 수신 — documentId: {}, status: {}", documentId, dto.status());
+            eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(documentId, dto.status()));
+            return;
+        }
+
         if ("COMPLETED".equals(dto.status())) {
             DocumentFeedback feedback = DocumentFeedback.of(
                     documentId,
@@ -209,8 +220,16 @@ public class ResumeServiceImpl implements ResumeService {
             throw new CustomException(ResumeErrorCode.WEBHOOK_INVALID_STATUS);
         }
 
-        // DB 커밋 후 WebSocket 브로드캐스트 (Phase 7에서 리스너 구현)
+        // DB 커밋 후 WebSocket 브로드캐스트
         eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(documentId, dto.status()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResumeDTO.ResponseQuota getQuota(UUID memberId) {
+        ZonedDateTime firstDayOfMonth = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        int usedCount = documentRepository.countUsedThisMonth(memberId, firstDayOfMonth, DocumentStatus.FAILED);
+        return new ResumeDTO.ResponseQuota(usedCount, 30);
     }
 
     private List<ResumeDTO.ResponseFeedback.FeedbackDetail> parseFeedbackDetails(String feedbackText, UUID documentId) {

@@ -23,9 +23,12 @@ import java.util.UUID;
 @Tag(name = "Admin Member", description = "관리자 회원관리 API")
 public interface AdminMemberControllerDocs {
 
+    @Operation(summary = "회원 KPI 집계 조회 (오늘 신규 가입 / 프리미엄 구독 / 정지 회원 수)")
+    ResponseEntity<ApiResponse<MemberDTO.ResponseCounts>> getMemberCounts();
+
     @Operation(summary = "개인 회원 목록 조회")
     ResponseEntity<ApiResponse<PaginationResponse<MemberDTO.ResponseList>>> getMembers(
-        @Parameter(description = "역할 (ROLE_USER / ROLE_COMPANY)") @RequestParam(required = false) String role,
+        @Parameter(description = "역할 (USER / COMPANY)") @RequestParam(required = false) String role,
         @Parameter(description = "상태 (ACTIVE / SUSPENDED / BANNED)") @RequestParam(required = false) String status,
         @Parameter(description = "구독 (FREE / PREMIUM)") @RequestParam(required = false) String plan,
         @Parameter(description = "이름·이메일·로그인ID 통합 검색") @RequestParam(required = false) String keyword,

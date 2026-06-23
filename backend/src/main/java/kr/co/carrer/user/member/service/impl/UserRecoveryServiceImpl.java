@@ -92,8 +92,7 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
         }
 
         if (rawIds.isEmpty()) return UserRecoveryDto.ResponseFindId.notFound();
-        List<String> masked = rawIds.stream().map(this::maskLoginId).toList();
-        return new UserRecoveryDto.ResponseFindId(masked, true);
+        return new UserRecoveryDto.ResponseFindId(rawIds, true);
     }
 
     private List<String> findUserLoginIds(MemberVerification verification) {
@@ -115,12 +114,6 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
             return memberQueryRepository.findLoginIdsByManagerNameAndBusinessNumberAndPhone(
                     managerName, businessNumber, verification.getTarget());
         }
-    }
-
-    // loginId 마스킹 — 앞 3자 + *** + 뒤 2자 고정 (spec §14 maskedLoginIds 형식)
-    private String maskLoginId(String loginId) {
-        if (loginId == null || loginId.length() <= 5) return loginId;
-        return loginId.substring(0, 3) + "***" + loginId.substring(loginId.length() - 2);
     }
 
     // ── 비밀번호 재설정 권한 발급 ────────────────────────────────────────────────
