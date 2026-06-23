@@ -119,7 +119,7 @@ class InterviewPremiumUsageIntegrationTest {
                 sessionRepository, messageRepository, documentRepository, fastApiClient, entitlementService);
         callbackService = new InterviewCallbackServiceImpl(
                 sessionRepository, feedbackRepository, careerHistoryRepository,
-                messagingTemplate, entitlementService);
+                messageRepository, messagingTemplate, entitlementService);
         timeoutService = new InterviewTimeoutServiceImpl(sessionRepository, entitlementService);
 
         session = InterviewSession.create(

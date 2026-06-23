@@ -59,7 +59,7 @@ class InterviewFreeEntitlementIntegrationTest {
         sessionService = new InterviewSessionServiceImpl(
                 sessionRepository, messageRepository, documentRepository, fastApiClient, entitlementService);
         callbackService = new InterviewCallbackServiceImpl(
-                sessionRepository, feedbackRepository, careerHistoryRepository, messagingTemplate, entitlementService);
+                sessionRepository, feedbackRepository, careerHistoryRepository, messageRepository, messagingTemplate, entitlementService);
         scheduler = new InterviewSessionScheduler(sessionRepository, interviewTimeoutService);
 
         memberId = UUID.randomUUID();

@@ -46,10 +46,9 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
             InterviewSessionRepository sessionRepository,
             AIInterviewFeedbackRepository feedbackRepository,
             CareerHistoryRepository careerHistoryRepository,
+            InterviewMessageRepository messageRepository,
             @Lazy SimpMessagingTemplate messagingTemplate,
             EntitlementService entitlementService
-            InterviewMessageRepository messageRepository,
-            @Lazy SimpMessagingTemplate messagingTemplate
     ) {
         this.sessionRepository = sessionRepository;
         this.feedbackRepository = feedbackRepository;
