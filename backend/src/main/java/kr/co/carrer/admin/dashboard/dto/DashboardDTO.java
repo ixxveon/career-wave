@@ -58,8 +58,8 @@ public class DashboardDTO {
     @Schema(description = "Dashboard KPI item")
     public record Kpi(
             @Schema(description = "KPI key", allowableValues = {
-                    "TODAY_NEW_MEMBERS",
-                    "REALTIME_ACTIVE_USERS",
+                    "TODAY_NEW_ADMINS",
+                    "REALTIME_ACTIVE_ADMINS",
                     "AI_INTERVIEW_SESSIONS",
                     "TODAY_REVENUE"
             })
