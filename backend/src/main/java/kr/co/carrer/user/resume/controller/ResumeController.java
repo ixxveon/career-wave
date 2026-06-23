@@ -54,6 +54,15 @@ public class ResumeController implements ResumeControllerDocs {
                 .body(ApiResponse.ok("자기소개서가 제출되었습니다.", response));
     }
 
+    @GetMapping("/{documentId}")
+    public ResponseEntity<ApiResponse<ResumeDTO.HistoryItem>> getDocument(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable UUID documentId
+    ) {
+        UUID memberId = UUID.fromString(principal.getId());
+        return ResponseEntity.ok(ApiResponse.ok(resumeService.getDocument(memberId, documentId)));
+    }
+
     @GetMapping("/{documentId}/feedback")
     public ResponseEntity<ApiResponse<ResumeDTO.ResponseFeedback>> getFeedback(
             @AuthenticationPrincipal AuthPrincipal principal,

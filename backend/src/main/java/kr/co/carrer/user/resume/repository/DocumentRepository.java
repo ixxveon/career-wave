@@ -38,6 +38,25 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
             """)
     Page<ResumeDTO.HistoryItem> findHistoryByMemberId(@Param("memberId") UUID memberId, Pageable pageable);
 
+    @Query("""
+            SELECT new kr.co.carrer.user.resume.dto.ResumeDTO$HistoryItem(
+                d.documentId,
+                d.fileType,
+                d.status,
+                d.originalName,
+                m.company,
+                m.job,
+                f.scoreTotal,
+                d.createdAt
+            )
+            FROM Document d
+            LEFT JOIN CoverLetterMeta m ON m.documentId = d.documentId
+            LEFT JOIN DocumentFeedback f ON f.documentId = d.documentId
+            WHERE d.documentId = :documentId AND d.memberId = :memberId
+            """)
+    Optional<ResumeDTO.HistoryItem> findHistoryItemByDocumentIdAndMemberId(
+            @Param("documentId") UUID documentId, @Param("memberId") UUID memberId);
+
     // 이번 달 분석 사용 횟수 (FAILED 제외)
     @Query("""
             SELECT COUNT(d)
