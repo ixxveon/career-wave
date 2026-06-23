@@ -37,19 +37,19 @@
 
 ## Phase 4 - 프론트엔드 화면 구현
 
-- [x] `CareerHistoryPage.jsx`에서 취업 준비 기록 목록 화면을 구현한다.
+- [x] `CareerHistoryPage.tsx`에서 취업 준비 기록 목록 화면을 구현한다.
 - [x] 날짜별/기업별 기록 목록 UI를 구현한다.
 - [x] 기록 카드에 활동 유형, 기업명, 날짜, 점수, 상태를 표시한다.
-- [x] `CareerHistoryDetailPage.jsx`에서 상세 기록 화면을 구현한다.
+- [x] `CareerHistoryDetailPage.tsx`에서 상세 기록 화면을 구현한다.
 - [x] 면접 스크립트, 질문-답변 매칭 데이터, AI 피드백 영역을 구현한다.
 - [x] AI 오답 및 개선 필요 답변 하이라이팅 UI를 구현한다.
-- [x] `CareerCompetencyReportPage.jsx`에서 누적 역량 평가 화면을 구현한다.
+- [x] `CareerCompetencyReportPage.tsx`에서 누적 역량 평가 화면을 구현한다.
 - [x] 서류 점수, 면접 점수, 종합 점수 표시 영역을 구현한다.
 - [x] 점수 변화 그래프 또는 통계 영역을 구현한다.
-- [x] `CareerRoadmapPage.jsx`에서 맞춤형 로드맵 화면을 구현한다.
+- [x] `CareerRoadmapPage.tsx`에서 맞춤형 로드맵 화면을 구현한다.
 - [x] 약점 보완용 우선 학습 타겟 및 액션 플랜 UI를 구현한다.
 - [x] 백엔드 API 연결 전 mock data 기반으로 화면을 렌더링한다.
-- [x] `careerHistoryApi.js`에 API 호출 함수 구조를 작성한다.
+- [x] `careerHistoryApi.ts`에 API 호출 함수 구조를 작성한다.
 
 ## Phase 5 - Polish
 
