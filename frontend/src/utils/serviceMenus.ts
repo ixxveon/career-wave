@@ -19,7 +19,7 @@ export const serviceMenus: MenuItem[] = [
     ],
   },
   {
-    label: '서류 분석',
+    label: '서류 AI 코칭',
     href: '/documents/resume',
     children: [
       { label: '이력서 분석',    href: '/documents/resume' },
@@ -35,7 +35,7 @@ export const serviceMenus: MenuItem[] = [
       { label: '면접 홈',            href: '/interview' },
       { label: 'AI 텍스트 · 음성 면접', href: '/interview/text' },
       { label: 'AI 화상 면접',       href: '/interview/media', comingSoon: true },
-      { label: '면접 리포트',        href: '/interview/report' },
+      { label: '면접 리포트',        href: '/interview' },
     ],
   },
   {

@@ -32,7 +32,7 @@
     - [x] 교체 직전 기존 소켓에 `{"type": "ERROR", "errorCode": "INTERVIEW_DUPLICATED_CONNECTION"}` 전송 후 `close(code=1000)` 호출 — 클라이언트가 종료 이유를 수신할 수 있도록 보장
   - [x] 세션별 WebSocket 저장: `active_sessions: dict[str, WebSocket]`
   - [x] 메시지 전송 헬퍼 구현
-    - [x] `send_stt_partial(session_id, content, question_order, chunk_index)`
+    - [x] `send_stt_partial(session_id, content, question_order, chunk_index)` — (현재 STT 청크 누적 방식으로 미전송)
     - [x] `send_stt_final(session_id, content, question_order, voice_quality_ratio)`
     - [x] `send_tts_audio(session_id, audio_data, question_order, chunk_index, is_final)`
     - [x] `send_error(session_id, content, error_code, question_order)`
@@ -43,7 +43,7 @@
 ## Phase 3 — STT 파이프라인
 
 - [x] `fastapi/user/pipeline/stt_pipeline.py` 생성
-  - [x] `transcribe_chunk(audio_bytes, session_id, question_order, chunk_index)` — OpenAI Whisper 호출
+  - [x] `transcribe_chunk(audio_bytes, session_id, question_order, chunk_index, is_final)` — 청크를 세션별 버퍼에 누적, `is_final=True` 시 합쳐서 Whisper 일괄 호출
   - [x] `calculate_voice_quality_ratio(whisper_response)` — `no_speech_prob` 기반 산정
   - [x] `should_mask_scores(voice_quality_ratio)` — `voiceQualityRatio < 50.00` 판단
   - [x] STT 실패 시 `INTERVIEW_STT_FAILED` WebSocket 메시지 전송
@@ -64,6 +64,7 @@
   - [x] 꼬리 질문·압박 질문 생성 가이드라인 프롬프트
 - [x] `fastapi/user/interview/pipeline/llm_pipeline.py` 생성
   - [x] `generate_and_deliver_question(session_id, question_order, answer_text, question_text)` — GPT-4o 호출 후 Spring 전달
+  - [x] `next_question_order > 10` 시 LLM 생성 없이 `report_pipeline.generate_and_send_report()` 직접 호출 (최대 질문 수: 10개)
   - [x] 이전 답변 이력 컨텍스트 조합 로직 (최근 10개)
   - [x] `asyncio.wait_for`로 LLM 타임아웃 처리 (`OPENAI_LLM_TIMEOUT_SECONDS`)
   - [x] 타임아웃 시 폴백 질문 반환
@@ -119,5 +120,5 @@
     - [x] JWT 검증 실패 → Close 1008 확인
     - [x] 중복 연결 시 이전 연결 종료 확인
 - [x] `python -m pytest fastapi/` 전체 통과 확인
-- [x] Spring BE 연동 E2E: 텍스트 면접 전체 플로우 확인
+- [x] Spring BE 연동 E2E: 텍스트 면접 전체 플로우 확인 (Q1~Q10, 자동 리포트 트리거 포함)
 - [ ] Spring BE 연동 E2E: 음성 면접 전체 플로우 확인

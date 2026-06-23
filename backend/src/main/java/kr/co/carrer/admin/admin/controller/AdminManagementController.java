@@ -45,7 +45,7 @@ public class AdminManagementController implements AdminManagementDocs {
             result.totalAdminCount(),
             result.activeAdminCount(),
             result.lockedAdminCount(),
-            result.masterAdminCount()
+            result.activeAclCount()
         );
 
         return ResponseEntity.ok(ApiResponse.ok("관리자 관리 KPI 요약 조회에 성공했습니다.", response));

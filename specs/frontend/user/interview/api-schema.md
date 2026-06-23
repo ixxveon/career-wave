@@ -55,7 +55,7 @@ Authorization: Bearer {accessToken}
 | `401` | 인증 토큰 없음 또는 만료 |
 | `403` | 본인 소유가 아닌 세션 접근 (IDOR 방어) |
 | `404` | 존재하지 않는 `sessionId` |
-| `409` | 중복 세션 생성 시도 또는 리포트 아직 생성 중 |
+| `409` | 리포트 아직 생성 중 |
 | `500` | 서버 내부 오류 |
 
 ---
@@ -108,8 +108,9 @@ Authorization: Bearer {accessToken}
 | statusCode | 상황 |
 |-----------|------|
 | `400` | 유효하지 않은 `sessionType` 값 |
-| `409` | 동일 회원이 이미 `IN_PROGRESS` 세션 보유 (`INTERVIEW_SESSION_DUPLICATE`) |
 | `401` | 토큰 없음 또는 만료 |
+
+> **Note**: 진행 중인 기존 세션은 자동으로 종료되므로 중복 세션 에러가 발생하지 않는다.
 
 ---
 
@@ -389,15 +390,14 @@ Authorization: Bearer {accessToken}
 ### 인증 및 구독
 
 ```
-// 1. STOMP 연결 — CONNECT 헤더에 JWT 전달
-WS /ws/user/interview
-CONNECT Headers: { Authorization: "Bearer {accessToken}" }
+// 1. STOMP 연결 — 쿼리 파라미터로 JWT 전달
+WS /ws/user/interview?token={accessToken}
 
 // 2. 세션 구독 (개인 큐)
 SUBSCRIBE /topic/interview/{sessionId}
 ```
 
-- STOMP CONNECT 헤더로 JWT 검증 → 실패 시 연결 거부
+- `?token=` 쿼리 파라미터로 JWT 검증 → 실패 시 연결 거부
 - SUBSCRIBE 시 `sessionId` 소유권 검증 → 실패 시 연결 종료
 - 구독 직후 현재 상태 스냅샷 수신 (`SESSION_START` 또는 `REPORT_READY`)
 
@@ -406,7 +406,7 @@ SUBSCRIBE /topic/interview/{sessionId}
 ```text
 클라이언트                                            Spring 서버
    │                                                  │
-   │── STOMP CONNECT (Authorization: Bearer token) ──▶│  JWT 검증
+   │── WS /ws/user/interview?token=... ───────────────▶│  JWT 검증
    │── SUBSCRIBE /topic/interview/{sessionId} ────────▶│  소유권 검증
    │◀─ {"type":"SYSTEM","subType":"SESSION_START"} ────│  구독 직후 스냅샷
    │                                                  │
@@ -474,7 +474,7 @@ WS /ws/user/interview/{sessionId}/ai?token={accessToken}
 
 ```json
 {
-  "type": "STT_RESULT",
+  "type": "STT_FINAL",
   "content": "Spring Boot에서 트랜잭션을 관리하기 위해서는...",
   "questionOrder": 1,
   "isFinal": true
@@ -483,11 +483,11 @@ WS /ws/user/interview/{sessionId}/ai?token={accessToken}
 
 | Field | Type | 설명 |
 |-------|------|------|
-| `type` | `string` | `STT_RESULT` \| `LLM_STREAM` \| `TTS_AUDIO` \| `ERROR` |
-| `content` | `string` \| `null` | 텍스트 내용 (`STT_RESULT`, `LLM_STREAM` 시 사용) |
+| `type` | `string` | `STT_FINAL` \| `STT_PARTIAL` \| `TTS_AUDIO` \| `TTS_AUDIO_END` \| `ERROR` |
+| `content` | `string` \| `null` | 텍스트 내용 (`STT_FINAL`, `STT_PARTIAL` 시 사용) |
 | `audioChunk` | `string` \| `null` | TTS 오디오 청크 base64 인코딩 (`TTS_AUDIO` 시 사용) |
 | `questionOrder` | `number` | 현재 처리 중인 질문 순서 — 모든 타입 필수 포함 |
-| `isFinal` | `boolean` \| `null` | 스트리밍 완료 여부 (`STT_RESULT`, `LLM_STREAM` 시 사용) |
+| `isFinal` | `boolean` \| `null` | 스트리밍 완료 여부 (`STT_FINAL`, `STT_PARTIAL` 시 사용) |
 
 > ℹ️ `questionOrder`는 모든 메시지 타입에 필수 포함된다. 클라이언트가 동시에 여러 메시지를 수신할 때 어느 질문에 대한 결과인지 시퀀스를 보장하기 위함이다.
 
@@ -495,9 +495,10 @@ WS /ws/user/interview/{sessionId}/ai?token={accessToken}
 
 | type | 설명 |
 |------|------|
-| `STT_RESULT` | 음성 청크 → 텍스트 변환 결과. `isFinal: true` 이면 해당 `questionOrder` 답변 전체 확정 |
-| `LLM_STREAM` | 꼬리 질문 또는 AI 응답 스트리밍 토큰. `isFinal: true` 이면 문장 완성 |
-| `TTS_AUDIO` | TTS 오디오 청크 (base64). 순차 재생 Queue에 추가 |
+| `STT_FINAL` | `isFinal: true`인 최종 STT 결과. 수신 시 자동으로 Spring에 텍스트 답변 전송 |
+| `STT_PARTIAL` | 중간 실시간 자막용 부분 STT 결과 (현재 미전송, 타입 정의만 유지) |
+| `TTS_AUDIO` | TTS 오디오 청크 (base64). `TTS_AUDIO_END` 수신 시까지 버퍼에 누적 후 한 번에 재생 |
+| `TTS_AUDIO_END` | TTS 전송 완료 신호. 수신 시 누적된 오디오 청크를 합쳐 재생 |
 | `ERROR` | STT / LLM / TTS 처리 오류 — 수신 시 에러 토스트 노출 (연결 유지) |
 
 ### Error Cases

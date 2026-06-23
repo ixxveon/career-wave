@@ -2,6 +2,7 @@
 -- CareerWave 전체 DDL v4
 -- ================================================
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "btree_gist";
 
 -- ================================================
 -- 1. members
@@ -571,66 +572,116 @@ COMMENT ON COLUMN bookmarks.created_at    IS '북마크 일시';
 -- 19. plans
 -- ================================================
 CREATE TABLE plans (
-    plan_id       BIGSERIAL    NOT NULL,
-    product_code  VARCHAR(30)  NOT NULL,
-    plan_name     VARCHAR(50)  NOT NULL,
-    plan_price    INTEGER      NOT NULL,
-    currency      VARCHAR(10)  NOT NULL DEFAULT 'KRW',
-    billing_cycle VARCHAR(20)  NOT NULL DEFAULT 'MONTHLY',
-    is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
-    created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    plan_id               BIGSERIAL    NOT NULL,
+    product_code          VARCHAR(30)  NOT NULL,
+    plan_name             VARCHAR(50)  NOT NULL,
+    plan_price            INTEGER      NOT NULL,
+    monthly_usage_limit   INTEGER      NOT NULL DEFAULT 0,
+    currency              VARCHAR(10)  NOT NULL DEFAULT 'KRW',
+    billing_cycle         VARCHAR(20)  NOT NULL DEFAULT 'MONTHLY',
+    is_active             BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at            TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at            TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_plans          PRIMARY KEY (plan_id),
     CONSTRAINT uq_product_code   UNIQUE (product_code),
     CONSTRAINT chk_billing_cycle CHECK (billing_cycle IN ('MONTHLY', 'YEARLY'))
 );
-COMMENT ON TABLE  plans               IS '구독 플랜 목록';
-COMMENT ON COLUMN plans.plan_id       IS '플랜 고유 식별자';
-COMMENT ON COLUMN plans.product_code  IS '상품 코드 (UNIQUE, document-coaching / interview)';
-COMMENT ON COLUMN plans.plan_name     IS '플랜명';
-COMMENT ON COLUMN plans.plan_price    IS '월 결제 금액';
-COMMENT ON COLUMN plans.currency      IS '통화 (기본값 KRW)';
-COMMENT ON COLUMN plans.billing_cycle IS '결제 주기 (MONTHLY / YEARLY)';
-COMMENT ON COLUMN plans.is_active     IS '현재 판매 여부 (기본값 TRUE)';
-COMMENT ON COLUMN plans.created_at    IS '생성 일시';
+COMMENT ON TABLE  plans                       IS '구독 플랜 목록';
+COMMENT ON COLUMN plans.plan_id               IS '플랜 고유 식별자';
+COMMENT ON COLUMN plans.product_code          IS '상품 코드 (UNIQUE, document-coaching / interview)';
+COMMENT ON COLUMN plans.plan_name             IS '플랜명';
+COMMENT ON COLUMN plans.plan_price            IS '월 결제 금액';
+COMMENT ON COLUMN plans.monthly_usage_limit   IS '월 최대 이용 횟수 (0은 미확정 placeholder, Phase 1에서 확정값으로 UPDATE 필요)';
+COMMENT ON COLUMN plans.currency              IS '통화 (기본값 KRW)';
+COMMENT ON COLUMN plans.billing_cycle         IS '결제 주기 (MONTHLY / YEARLY)';
+COMMENT ON COLUMN plans.is_active             IS '현재 판매 여부 (기본값 TRUE)';
+COMMENT ON COLUMN plans.created_at            IS '생성 일시';
+COMMENT ON COLUMN plans.updated_at            IS '수정 일시';
 
 -- ================================================
--- 20. subscriptions
+-- 20. billing_profiles
+-- ================================================
+CREATE TABLE billing_profiles (
+    billing_profile_id      UUID         NOT NULL DEFAULT gen_random_uuid(),
+    member_id               UUID         NOT NULL,
+    customer_key            VARCHAR(100) NOT NULL,
+    encrypted_billing_key   TEXT         NOT NULL,
+    card_company            VARCHAR(50)  NULL,
+    card_number_masked      VARCHAR(30)  NULL,
+    billing_profile_status  VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+    authenticated_at        TIMESTAMPTZ  NOT NULL,
+    created_at              TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at              TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT pk_billing_profiles       PRIMARY KEY (billing_profile_id),
+    CONSTRAINT uq_customer_key           UNIQUE (customer_key),
+    CONSTRAINT fk_billing_profile_member FOREIGN KEY (member_id) REFERENCES members (member_id),
+    CONSTRAINT chk_billing_status        CHECK (billing_profile_status IN ('ACTIVE', 'REVOKED'))
+);
+CREATE INDEX IF NOT EXISTS idx_billing_profiles_member_status_created
+    ON billing_profiles (member_id, billing_profile_status, created_at DESC);
+COMMENT ON TABLE  billing_profiles                        IS 'Toss billingKey 기반 자동결제 수단';
+COMMENT ON COLUMN billing_profiles.billing_profile_id     IS '결제 수단 고유 식별자';
+COMMENT ON COLUMN billing_profiles.member_id              IS '회원 FK';
+COMMENT ON COLUMN billing_profiles.customer_key           IS '서버 발급 Toss 고객 키 (UNIQUE)';
+COMMENT ON COLUMN billing_profiles.encrypted_billing_key  IS 'AES-256 암호화된 billingKey (평문 저장 금지)';
+COMMENT ON COLUMN billing_profiles.card_company           IS '카드사명';
+COMMENT ON COLUMN billing_profiles.card_number_masked     IS '마스킹 카드번호';
+COMMENT ON COLUMN billing_profiles.billing_profile_status IS '결제 수단 상태 (ACTIVE / REVOKED)';
+COMMENT ON COLUMN billing_profiles.authenticated_at       IS 'billingKey 인증 완료 일시';
+COMMENT ON COLUMN billing_profiles.created_at             IS '생성 일시';
+COMMENT ON COLUMN billing_profiles.updated_at             IS '수정 일시';
+
+-- ================================================
+-- 21. subscriptions
 -- ================================================
 CREATE TABLE subscriptions (
     subscription_id      UUID        NOT NULL DEFAULT gen_random_uuid(),
     member_id            UUID        NOT NULL,
     plan_id              BIGINT      NOT NULL,
+    billing_profile_id   UUID        NULL,
     subscription_status  VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     started_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     current_period_start TIMESTAMPTZ NOT NULL,
     current_period_end   TIMESTAMPTZ NOT NULL,
     next_billing_at      TIMESTAMPTZ NULL,
+    payment_failed_at    TIMESTAMPTZ NULL,
+    retry_count          INTEGER     NOT NULL DEFAULT 0,
     cancel_scheduled_at  TIMESTAMPTZ NULL,
     cancelled_at         TIMESTAMPTZ NULL,
     auto_renew           BOOLEAN     NOT NULL DEFAULT TRUE,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_subscriptions        PRIMARY KEY (subscription_id),
-    CONSTRAINT fk_subscriptions_member FOREIGN KEY (member_id) REFERENCES members (member_id),
-    CONSTRAINT fk_subscriptions_plan   FOREIGN KEY (plan_id)   REFERENCES plans (plan_id),
-    CONSTRAINT chk_subscription_status CHECK (subscription_status IN ('ACTIVE', 'CANCEL_SCHEDULED', 'EXPIRED', 'PAYMENT_FAILED', 'REFUND_PENDING', 'REFUNDED'))
+    CONSTRAINT pk_subscriptions                    PRIMARY KEY (subscription_id),
+    CONSTRAINT fk_subscriptions_member             FOREIGN KEY (member_id)           REFERENCES members (member_id),
+    CONSTRAINT fk_subscriptions_plan               FOREIGN KEY (plan_id)             REFERENCES plans (plan_id),
+    CONSTRAINT fk_subscriptions_billing_profile    FOREIGN KEY (billing_profile_id)  REFERENCES billing_profiles (billing_profile_id),
+    CONSTRAINT chk_subscription_status             CHECK (subscription_status IN ('ACTIVE', 'CANCEL_SCHEDULED', 'EXPIRED', 'PAYMENT_FAILED', 'REFUND_PENDING', 'REFUNDED')),
+    CONSTRAINT chk_retry_count                     CHECK (retry_count BETWEEN 0 AND 2),
+    CONSTRAINT chk_period_order                    CHECK (current_period_start < current_period_end),
+    CONSTRAINT chk_payment_failed_at               CHECK (subscription_status != 'PAYMENT_FAILED' OR payment_failed_at IS NOT NULL)
 );
 COMMENT ON TABLE  subscriptions                      IS '구독 정보 테이블';
 COMMENT ON COLUMN subscriptions.subscription_id      IS '구독 고유 식별자';
 COMMENT ON COLUMN subscriptions.member_id            IS '구독 회원 FK';
 COMMENT ON COLUMN subscriptions.plan_id              IS '플랜 FK';
+COMMENT ON COLUMN subscriptions.billing_profile_id   IS 'Toss 자동결제 수단 FK (Phase 4 이전 생성된 row는 NULL)';
 COMMENT ON COLUMN subscriptions.subscription_status  IS '구독 상태 (ACTIVE / CANCEL_SCHEDULED / EXPIRED 등 6종)';
 COMMENT ON COLUMN subscriptions.started_at           IS '구독 시작 일시';
 COMMENT ON COLUMN subscriptions.current_period_start IS '현재 이용 기간 시작';
 COMMENT ON COLUMN subscriptions.current_period_end   IS '구독 만료 일시';
 COMMENT ON COLUMN subscriptions.next_billing_at      IS '다음 자동 결제 예정일';
+COMMENT ON COLUMN subscriptions.payment_failed_at    IS '최초 자동결제 실패 일시';
+COMMENT ON COLUMN subscriptions.retry_count          IS '완료된 자동 재시도 횟수 (기본값 0)';
 COMMENT ON COLUMN subscriptions.cancel_scheduled_at  IS '해지 예약 시간';
 COMMENT ON COLUMN subscriptions.cancelled_at         IS '최종 해지 시간';
 COMMENT ON COLUMN subscriptions.auto_renew           IS '자동 갱신 여부 (기본값 TRUE)';
 COMMENT ON COLUMN subscriptions.created_at           IS '생성 일시';
 COMMENT ON COLUMN subscriptions.updated_at           IS '구독 상태 변경 일시';
+
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status_billing ON subscriptions (subscription_status, next_billing_at);
 
 -- ================================================
 -- 21. payments
@@ -648,9 +699,12 @@ CREATE TABLE payments (
     payment_status  VARCHAR(20)  NOT NULL DEFAULT 'READY',
     failure_reason  VARCHAR(30)  NULL,
     payment_method  VARCHAR(30)  NULL,
-    payment_type    VARCHAR(20)  NOT NULL DEFAULT 'MANUAL',
-    approved_at     TIMESTAMPTZ  NULL,
-    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    payment_type      VARCHAR(20)  NOT NULL DEFAULT 'MANUAL',
+    attempt_sequence  INTEGER      NOT NULL DEFAULT 0,
+    approved_at       TIMESTAMPTZ  NULL,
+    expires_at        TIMESTAMPTZ  NULL,
+    created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_payments           PRIMARY KEY (payment_id),
     CONSTRAINT uq_payment_key        UNIQUE (payment_key),
@@ -659,10 +713,12 @@ CREATE TABLE payments (
     CONSTRAINT fk_payments_member    FOREIGN KEY (member_id)       REFERENCES members (member_id),
     CONSTRAINT fk_payments_sub       FOREIGN KEY (subscription_id) REFERENCES subscriptions (subscription_id),
     CONSTRAINT fk_payments_plan      FOREIGN KEY (plan_id)         REFERENCES plans (plan_id),
-    CONSTRAINT chk_payment_status    CHECK (payment_status IN ('READY', 'CONFIRMING', 'PAID', 'FAILED', 'CANCELED', 'REFUNDED')),
+    CONSTRAINT chk_payment_status    CHECK (payment_status IN ('READY', 'AUTHORIZED', 'CONFIRMING', 'PAID', 'FAILED', 'CANCELED', 'RECONCILING', 'REFUNDED')),
     CONSTRAINT chk_failure_reason    CHECK (failure_reason IN ('USER_CANCELED', 'CARD_DECLINED', 'TIMEOUT', 'DUPLICATE_ORDER', 'CONFIRM_FAILED', 'FORBIDDEN', 'UNKNOWN')),
     CONSTRAINT chk_payment_type      CHECK (payment_type IN ('MANUAL', 'AUTO_RENEWAL')),
-    CONSTRAINT chk_paid_approved_at  CHECK (payment_status != 'PAID' OR approved_at IS NOT NULL)
+    CONSTRAINT chk_paid_approved_at  CHECK (payment_status != 'PAID' OR approved_at IS NOT NULL),
+    CONSTRAINT chk_payment_amount    CHECK (amount > 0),
+    CONSTRAINT chk_attempt_sequence  CHECK (attempt_sequence IN (0, 1, 2))
 );
 COMMENT ON TABLE  payments                  IS '결제 내역 테이블 (토스페이먼츠 연동)';
 COMMENT ON COLUMN payments.payment_id       IS '결제 고유 식별자';
@@ -677,9 +733,14 @@ COMMENT ON COLUMN payments.currency         IS '통화 (기본값 KRW)';
 COMMENT ON COLUMN payments.payment_status   IS '결제 상태 (READY / CONFIRMING / PAID / FAILED / CANCELED / REFUNDED)';
 COMMENT ON COLUMN payments.failure_reason   IS '결제 실패 사유 (FAILED 상태일 때만 사용, USER_CANCELED 등 7종)';
 COMMENT ON COLUMN payments.payment_method   IS '결제 수단 (CARD / VIRTUAL_ACCOUNT 등)';
-COMMENT ON COLUMN payments.payment_type     IS '결제 방식 (MANUAL / AUTO_RENEWAL)';
-COMMENT ON COLUMN payments.approved_at      IS '결제 승인 일시';
-COMMENT ON COLUMN payments.created_at       IS '결제 요청 생성 일시';
+COMMENT ON COLUMN payments.payment_type      IS '결제 방식 (MANUAL / AUTO_RENEWAL)';
+COMMENT ON COLUMN payments.attempt_sequence  IS '결제 시도 순번 (최초=0, 재시도=1/2)';
+COMMENT ON COLUMN payments.approved_at       IS '결제 승인 일시';
+COMMENT ON COLUMN payments.expires_at        IS 'READY 주문 만료 시각 (MANUAL 주문만 설정, created_at + 30분)';
+COMMENT ON COLUMN payments.created_at        IS '결제 요청 생성 일시';
+COMMENT ON COLUMN payments.updated_at        IS '결제 상태 변경 일시';
+
+CREATE INDEX IF NOT EXISTS idx_payments_status_created  ON payments (payment_status, created_at DESC);
 
 -- ================================================
 -- 22. admins
@@ -1226,3 +1287,140 @@ COMMENT ON COLUMN scraping_logs.scraping_status IS '수행 결과 (SUCCESS / FAI
 COMMENT ON COLUMN scraping_logs.total_count     IS '수집된 공고 수';
 COMMENT ON COLUMN scraping_logs.error_message   IS '실패 시 오류 메시지';
 COMMENT ON COLUMN scraping_logs.executed_at     IS '스크래핑 실행 일시';
+
+-- ================================================
+-- 39. member_product_entitlements
+-- ================================================
+CREATE TABLE member_product_entitlements (
+    entitlement_id         UUID        NOT NULL DEFAULT gen_random_uuid(),
+    member_id              UUID        NOT NULL,
+    product_code           VARCHAR(30) NOT NULL,
+    plan_type              VARCHAR(20) NOT NULL DEFAULT 'FREE',
+    free_remaining         INTEGER     NOT NULL DEFAULT 1,
+    free_usage_status      VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
+    active_subscription_id UUID        NULL,
+    created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT pk_entitlements             PRIMARY KEY (entitlement_id),
+    CONSTRAINT uq_member_product           UNIQUE (member_id, product_code),
+    CONSTRAINT fk_entitlement_member       FOREIGN KEY (member_id)              REFERENCES members (member_id),
+    CONSTRAINT fk_entitlement_subscription FOREIGN KEY (active_subscription_id) REFERENCES subscriptions (subscription_id),
+    CONSTRAINT chk_plan_type               CHECK (plan_type IN ('FREE', 'PREMIUM')),
+    CONSTRAINT chk_free_usage_status       CHECK (free_usage_status IN ('AVAILABLE', 'RESERVED', 'USED', 'FORFEITED')),
+    CONSTRAINT chk_free_remaining          CHECK (free_remaining BETWEEN 0 AND 1),
+    CONSTRAINT chk_available_remaining     CHECK (free_usage_status != 'AVAILABLE' OR free_remaining = 1),
+    CONSTRAINT chk_consumed_remaining      CHECK (free_usage_status NOT IN ('USED', 'FORFEITED') OR free_remaining = 0)
+);
+COMMENT ON TABLE  member_product_entitlements                        IS '회원별 상품 등급 및 무료 이용권 상태';
+COMMENT ON COLUMN member_product_entitlements.entitlement_id         IS '권한 고유 식별자';
+COMMENT ON COLUMN member_product_entitlements.member_id              IS '회원 FK';
+COMMENT ON COLUMN member_product_entitlements.product_code           IS '상품 코드 (document-coaching / interview)';
+COMMENT ON COLUMN member_product_entitlements.plan_type              IS '현재 등급 (FREE / PREMIUM)';
+COMMENT ON COLUMN member_product_entitlements.free_remaining         IS '무료 이용권 잔여 횟수 (0 또는 1)';
+COMMENT ON COLUMN member_product_entitlements.free_usage_status      IS '무료 이용권 상태 (AVAILABLE / RESERVED / USED / FORFEITED)';
+COMMENT ON COLUMN member_product_entitlements.active_subscription_id IS '현재 연결된 구독 ID (PREMIUM인 경우)';
+COMMENT ON COLUMN member_product_entitlements.created_at             IS '생성 일시';
+COMMENT ON COLUMN member_product_entitlements.updated_at             IS '수정 일시';
+
+-- ================================================
+-- 40. subscription_usage_periods
+-- ================================================
+CREATE TABLE subscription_usage_periods (
+    usage_period_id   UUID        NOT NULL DEFAULT gen_random_uuid(),
+    subscription_id   UUID        NOT NULL,
+    product_code      VARCHAR(30) NOT NULL,
+    period_start      TIMESTAMPTZ NOT NULL,
+    period_end        TIMESTAMPTZ NOT NULL,
+    limit_count       INTEGER     NOT NULL,
+    used_count        INTEGER     NOT NULL DEFAULT 0,
+    reserved_count    INTEGER     NOT NULL DEFAULT 0,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT pk_usage_periods       PRIMARY KEY (usage_period_id),
+    CONSTRAINT uq_sub_period_start    UNIQUE (subscription_id, period_start),
+    CONSTRAINT fk_usage_period_sub    FOREIGN KEY (subscription_id) REFERENCES subscriptions (subscription_id),
+    CONSTRAINT chk_usage_count        CHECK (used_count + reserved_count <= limit_count),
+    CONSTRAINT chk_limit_count        CHECK (limit_count > 0),
+    CONSTRAINT chk_used_count         CHECK (used_count >= 0),
+    CONSTRAINT chk_reserved_count     CHECK (reserved_count >= 0),
+    CONSTRAINT excl_sub_period_no_overlap EXCLUDE USING gist (
+        subscription_id WITH =,
+        tstzrange(period_start, period_end) WITH &&
+    )
+);
+COMMENT ON TABLE  subscription_usage_periods                    IS '구독 월별 제공량 및 사용량';
+COMMENT ON COLUMN subscription_usage_periods.usage_period_id   IS '사용 기간 고유 식별자';
+COMMENT ON COLUMN subscription_usage_periods.subscription_id   IS '구독 FK';
+COMMENT ON COLUMN subscription_usage_periods.product_code      IS '상품 코드';
+COMMENT ON COLUMN subscription_usage_periods.period_start      IS '기간 시작 일시';
+COMMENT ON COLUMN subscription_usage_periods.period_end        IS '기간 종료 일시';
+COMMENT ON COLUMN subscription_usage_periods.limit_count       IS '월 최대 제공 횟수';
+COMMENT ON COLUMN subscription_usage_periods.used_count        IS '확정된 사용 횟수';
+COMMENT ON COLUMN subscription_usage_periods.reserved_count    IS '진행 중 예약 횟수';
+COMMENT ON COLUMN subscription_usage_periods.created_at        IS '생성 일시';
+COMMENT ON COLUMN subscription_usage_periods.updated_at        IS '수정 일시';
+
+-- ================================================
+-- 41. service_usage_records
+-- ================================================
+CREATE TABLE service_usage_records (
+    usage_record_id   UUID        NOT NULL DEFAULT gen_random_uuid(),
+    member_id         UUID        NOT NULL,
+    product_code      VARCHAR(30) NOT NULL,
+    resource_type     VARCHAR(20) NOT NULL,
+    resource_id       UUID        NOT NULL,
+    usage_source      VARCHAR(20) NOT NULL,
+    usage_status      VARCHAR(20) NOT NULL DEFAULT 'RESERVED',
+    usage_period_id   UUID        NULL,
+    reserved_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    consumed_at       TIMESTAMPTZ NULL,
+    released_at       TIMESTAMPTZ NULL,
+
+    CONSTRAINT pk_usage_records        PRIMARY KEY (usage_record_id),
+    CONSTRAINT uq_resource             UNIQUE (resource_type, resource_id),
+    CONSTRAINT fk_usage_record_member  FOREIGN KEY (member_id)        REFERENCES members (member_id),
+    CONSTRAINT fk_usage_record_period  FOREIGN KEY (usage_period_id)  REFERENCES subscription_usage_periods (usage_period_id),
+    CONSTRAINT chk_resource_type       CHECK (resource_type IN ('DOCUMENT', 'INTERVIEW_SESSION')),
+    CONSTRAINT chk_usage_source        CHECK (usage_source IN ('FREE', 'SUBSCRIPTION')),
+    CONSTRAINT chk_usage_status        CHECK (usage_status IN ('RESERVED', 'CONSUMED', 'RELEASED'))
+);
+COMMENT ON TABLE  service_usage_records                  IS '무료·구독 서비스 사용 이력 통합 관리';
+COMMENT ON COLUMN service_usage_records.usage_record_id  IS '사용 기록 고유 식별자';
+COMMENT ON COLUMN service_usage_records.member_id        IS '회원 FK';
+COMMENT ON COLUMN service_usage_records.product_code     IS '상품 코드';
+COMMENT ON COLUMN service_usage_records.resource_type    IS '리소스 유형 (DOCUMENT / INTERVIEW_SESSION)';
+COMMENT ON COLUMN service_usage_records.resource_id      IS 'documentId 또는 sessionId';
+COMMENT ON COLUMN service_usage_records.usage_source     IS '사용 출처 (FREE / SUBSCRIPTION)';
+COMMENT ON COLUMN service_usage_records.usage_status     IS '사용 상태 (RESERVED / CONSUMED / RELEASED)';
+COMMENT ON COLUMN service_usage_records.usage_period_id  IS '구독 사용인 경우 연결된 사용 기간 FK';
+COMMENT ON COLUMN service_usage_records.reserved_at      IS '예약 일시';
+COMMENT ON COLUMN service_usage_records.consumed_at      IS '확정 일시';
+COMMENT ON COLUMN service_usage_records.released_at      IS '해제 일시';
+
+-- ================================================
+-- 42. billing_consents
+-- ================================================
+CREATE TABLE billing_consents (
+    billing_consent_id UUID        NOT NULL DEFAULT gen_random_uuid(),
+    member_id          UUID        NOT NULL,
+    plan_id            BIGINT      NOT NULL,
+    terms_version      VARCHAR(30) NOT NULL,
+    agreed_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    revoked_at         TIMESTAMPTZ NULL,
+
+    CONSTRAINT pk_billing_consents     PRIMARY KEY (billing_consent_id),
+    CONSTRAINT fk_consent_member       FOREIGN KEY (member_id) REFERENCES members (member_id),
+    CONSTRAINT fk_consent_plan         FOREIGN KEY (plan_id)   REFERENCES plans (plan_id)
+);
+CREATE INDEX IF NOT EXISTS idx_billing_consents_member_plan_active_agreed
+    ON billing_consents (member_id, plan_id, agreed_at DESC)
+    WHERE revoked_at IS NULL;
+COMMENT ON TABLE  billing_consents                    IS '자동결제 약관 동의 이력';
+COMMENT ON COLUMN billing_consents.billing_consent_id IS '동의 고유 식별자';
+COMMENT ON COLUMN billing_consents.member_id          IS '회원 FK';
+COMMENT ON COLUMN billing_consents.plan_id            IS '동의 대상 플랜 FK';
+COMMENT ON COLUMN billing_consents.terms_version      IS '동의한 약관 버전';
+COMMENT ON COLUMN billing_consents.agreed_at          IS '동의 일시';
+COMMENT ON COLUMN billing_consents.revoked_at         IS '동의 철회 일시';

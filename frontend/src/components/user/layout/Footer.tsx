@@ -23,7 +23,7 @@ const FOOTER_COLS: FooterCol[] = [
     title: '서비스',
     links: [
       { label: '채용공고',  href: '/jobs' },
-      { label: '서류 분석', href: '/documents/resume' },
+      { label: '서류 AI 코칭', href: '/documents/resume' },
       { label: 'AI 면접',  href: '/interview' },
     ],
   },
