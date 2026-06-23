@@ -13,12 +13,12 @@
 
 ## Phase 2 - Service
 
-- [ ] `DashboardService` 인터페이스를 작성한다.
-- [ ] `DashboardServiceImpl` 구현체를 작성한다.
-- [ ] `range` 기본값을 `TODAY`로 처리하는 서비스 로직을 작성한다.
-- [ ] Query 결과를 `DashboardDTO.ResponseSummary`로 조합하는 로직을 작성한다.
-- [ ] 빈 섹션을 `null`이 아닌 빈 배열 또는 0 값 구조로 보정하는 로직을 작성한다.
-- [ ] `paymentRatio` 비율 합계 일관성 규칙을 서비스 계층에서 검증한다.
+- [x] `DashboardService` 인터페이스를 작성한다.
+- [x] `DashboardServiceImpl` 구현체를 작성한다.
+- [x] `range` 기본값을 `TODAY`로 처리하는 서비스 로직을 작성한다.
+- [x] Query 결과를 `DashboardDTO.ResponseSummary`로 조합하는 로직을 작성한다.
+- [x] 빈 섹션을 `null`이 아닌 빈 배열 또는 0 값 구조로 보정하는 로직을 작성한다.
+- [x] `paymentRatio` 비율 합계 일관성 규칙을 서비스 계층에서 검증한다.
 
 ## Phase 3 - API
 
