@@ -6,11 +6,11 @@ import kr.co.carrer.user.billing.entity.Plan;
 import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.entity.UserPayment;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
-import kr.co.carrer.user.billing.repository.BillingConsentRepository;
 import kr.co.carrer.user.billing.repository.PlanRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.repository.UserPaymentRepository;
 import kr.co.carrer.user.billing.service.impl.UserCheckoutOrderServiceImpl;
+import kr.co.carrer.user.billing.service.impl.UserPaymentCreateTxService;
 import kr.co.carrer.user.billing.type.SubscriptionStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.lang.reflect.Field;
 import java.time.ZoneId;
@@ -39,7 +40,7 @@ class CheckoutOrderServiceTest {
     @Mock PlanRepository planRepository;
     @Mock SubscriptionRepository subscriptionRepository;
     @Mock UserPaymentRepository userPaymentRepository;
-    @Mock BillingConsentRepository billingConsentRepository;
+    @Mock UserPaymentCreateTxService createTxService;
 
     private UserCheckoutOrderServiceImpl service;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
@@ -49,13 +50,14 @@ class CheckoutOrderServiceTest {
     void setUp() {
         service = new UserCheckoutOrderServiceImpl(
                 billingMemberPort, planRepository, subscriptionRepository,
-                userPaymentRepository, billingConsentRepository);
+                userPaymentRepository, createTxService);
     }
 
     @Test
     @DisplayName("document-coaching 상품 READY 주문 생성 성공")
     void createOrder_document_success() {
         Plan plan = plan(1L, "document-coaching", "서류 AI 코칭", 29000);
+        UserPayment payment = readyPayment(memberId, 1L, "document-coaching", "ORDER-NEW");
         given(billingMemberPort.isEligibleForBilling(memberId)).willReturn(true);
         given(planRepository.findByProductCodeAndIsActive("document-coaching", true))
                 .willReturn(Optional.of(plan));
@@ -65,7 +67,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
-        given(userPaymentRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+        given(createTxService.createAndFlush(eq(memberId), eq(plan), any())).willReturn(payment);
 
         BillingDTO.ResponseCreateOrder response =
                 service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
@@ -73,16 +75,17 @@ class CheckoutOrderServiceTest {
         assertThat(response.productCode()).isEqualTo("document-coaching");
         assertThat(response.amount()).isEqualTo(29000);
         assertThat(response.currency()).isEqualTo("KRW");
-        assertThat(response.orderId()).startsWith("ORDER-");
+        assertThat(response.orderId()).isEqualTo("ORDER-NEW");
         assertThat(response.customerKey()).isNotNull();
         assertThat(response.expiresAt()).isAfter(ZonedDateTime.now(KST));
-        verify(billingConsentRepository).save(any());
+        verify(createTxService).createAndFlush(eq(memberId), eq(plan), any());
     }
 
     @Test
     @DisplayName("interview 상품 READY 주문 생성 성공")
     void createOrder_interview_success() {
         Plan plan = plan(2L, "interview", "AI 모의면접", 29000);
+        UserPayment payment = readyPayment(memberId, 2L, "interview", "ORDER-INT");
         given(billingMemberPort.isEligibleForBilling(memberId)).willReturn(true);
         given(planRepository.findByProductCodeAndIsActive("interview", true))
                 .willReturn(Optional.of(plan));
@@ -92,7 +95,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
-        given(userPaymentRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+        given(createTxService.createAndFlush(eq(memberId), eq(plan), any())).willReturn(payment);
 
         BillingDTO.ResponseCreateOrder response =
                 service.createOrder(memberId, new BillingDTO.RequestCreateOrder("interview", "http://localhost/success", "http://localhost/fail"));
@@ -105,6 +108,7 @@ class CheckoutOrderServiceTest {
     @DisplayName("가격은 DB에서 가져오며 FE 전달값을 사용하지 않음")
     void createOrder_priceFromDb() {
         Plan plan = plan(1L, "document-coaching", "서류 AI 코칭", 29000);
+        UserPayment payment = readyPayment(memberId, 1L, "document-coaching", "ORDER-P");
         given(billingMemberPort.isEligibleForBilling(memberId)).willReturn(true);
         given(planRepository.findByProductCodeAndIsActive("document-coaching", true))
                 .willReturn(Optional.of(plan));
@@ -114,12 +118,11 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
-        given(userPaymentRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+        given(createTxService.createAndFlush(eq(memberId), eq(plan), any())).willReturn(payment);
 
         BillingDTO.ResponseCreateOrder response =
                 service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
 
-        // FE가 가격을 요청에 포함시켜도 응답은 DB 가격(29000)
         assertThat(response.amount()).isEqualTo(29000);
     }
 
@@ -181,7 +184,7 @@ class CheckoutOrderServiceTest {
     @DisplayName("다른 상품 ACTIVE 구독은 이 상품 구매를 차단하지 않음")
     void createOrder_otherProductSubscriptionAllowed() {
         Plan interviewPlan = plan(2L, "interview", "AI 모의면접", 29000);
-        // interview 상품 조회 시 차단 구독 없음 (document-coaching의 구독은 영향 안 줌)
+        UserPayment payment = readyPayment(memberId, 2L, "interview", "ORDER-INT2");
         given(billingMemberPort.isEligibleForBilling(memberId)).willReturn(true);
         given(planRepository.findByProductCodeAndIsActive("interview", true))
                 .willReturn(Optional.of(interviewPlan));
@@ -191,7 +194,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
-        given(userPaymentRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+        given(createTxService.createAndFlush(eq(memberId), eq(interviewPlan), any())).willReturn(payment);
 
         BillingDTO.ResponseCreateOrder response =
                 service.createOrder(memberId, new BillingDTO.RequestCreateOrder("interview", "http://localhost/success", "http://localhost/fail"));
@@ -242,7 +245,31 @@ class CheckoutOrderServiceTest {
                 service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
 
         assertThat(response.orderId()).isEqualTo("ORDER-EXISTING");
-        verify(userPaymentRepository, never()).save(any());
+        verify(createTxService, never()).createAndFlush(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("동시 요청으로 유니크 제약 위반 — 경쟁 스레드 주문 readback 반환")
+    void createOrder_concurrentConflict_returnsRivalOrder() {
+        Plan plan = plan(1L, "document-coaching", "서류 AI 코칭", 29000);
+        UserPayment rivalPayment = readyPayment(memberId, 1L, "document-coaching", "ORDER-RIVAL");
+        given(billingMemberPort.isEligibleForBilling(memberId)).willReturn(true);
+        given(planRepository.findByProductCodeAndIsActive("document-coaching", true))
+                .willReturn(Optional.of(plan));
+        given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
+                .willReturn(List.of());
+        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
+                .willReturn(Optional.empty())           // 최초 조회: 없음
+                .willReturn(Optional.of(rivalPayment)); // readback: 경쟁 스레드 삽입 행
+        given(billingMemberPort.getMemberBillingInfo(memberId))
+                .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
+        given(createTxService.createAndFlush(any(), any(), any()))
+                .willThrow(new DataIntegrityViolationException("uq_payments_member_plan_ready"));
+
+        BillingDTO.ResponseCreateOrder response =
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
+
+        assertThat(response.orderId()).isEqualTo("ORDER-RIVAL");
     }
 
     // ── helpers ─────────────────────────────────────────────────────────────

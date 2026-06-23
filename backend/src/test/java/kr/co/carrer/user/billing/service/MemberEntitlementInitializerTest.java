@@ -140,14 +140,14 @@ class MemberEntitlementInitializerTest {
             EntitlementInitServiceImpl initService = new EntitlementInitServiceImpl(repo);
             UUID memberId = UUID.randomUUID();
 
-            when(repo.findByMemberIdAndProductCode(eq(memberId), any())).thenReturn(Optional.empty());
+            when(repo.findByMemberIdAndProductCodeForUpdate(eq(memberId), any())).thenReturn(Optional.empty());
             when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
             initService.initFreeEntitlements(memberId);
 
             MemberProductEntitlement doc = MemberProductEntitlement.createFree(memberId, "document-coaching");
             MemberProductEntitlement itv = MemberProductEntitlement.createFree(memberId, "interview");
-            when(repo.findByMemberIdAndProductCode(memberId, "document-coaching")).thenReturn(Optional.of(doc));
-            when(repo.findByMemberIdAndProductCode(memberId, "interview")).thenReturn(Optional.of(itv));
+            when(repo.findByMemberIdAndProductCodeForUpdate(memberId, "document-coaching")).thenReturn(Optional.of(doc));
+            when(repo.findByMemberIdAndProductCodeForUpdate(memberId, "interview")).thenReturn(Optional.of(itv));
 
             initService.initFreeEntitlements(memberId);
 
@@ -162,7 +162,7 @@ class MemberEntitlementInitializerTest {
             EntitlementInitServiceImpl initService = new EntitlementInitServiceImpl(repo);
             UUID memberId = UUID.randomUUID();
 
-            when(repo.findByMemberIdAndProductCode(eq(memberId), any())).thenReturn(Optional.empty());
+            when(repo.findByMemberIdAndProductCodeForUpdate(eq(memberId), any())).thenReturn(Optional.empty());
             when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             initService.initFreeEntitlements(memberId);
