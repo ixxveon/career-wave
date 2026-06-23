@@ -96,3 +96,36 @@ def test_validate_pipeline_list_response_raises_when_item_field_is_missing():
                 "totalPages": 1,
             }
         )
+
+
+def test_validate_pipeline_action_response_uses_spring_run_id_contract():
+    validator = SpringContractValidator()
+
+    validator.validate_pipeline_action_response(
+        {
+            "sourceName": "wanted",
+            "accepted": True,
+            "runId": "run-1",
+            "requestedAt": "2026-06-22T00:00:00Z",
+        }
+    )
+
+
+def test_validate_pipeline_batch_action_response_uses_spring_message_contract():
+    validator = SpringContractValidator()
+
+    validator.validate_pipeline_batch_action_response(
+        {
+            "actionType": "RUN",
+            "requestedCount": 1,
+            "acceptedCount": 1,
+            "results": [
+                {
+                    "sourceName": "wanted",
+                    "accepted": True,
+                    "message": "RUN action accepted. pipelineStatus=RUNNING",
+                }
+            ],
+            "requestedAt": "2026-06-22T00:00:00Z",
+        }
+    )
