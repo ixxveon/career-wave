@@ -23,12 +23,7 @@ const LINE_CHART_H_SVG = LINE_VBH - LINE_PAD * 2; // 164
 
 // 매출 Y축 레이블 — 컴포넌트 내에서 axisMax 기준으로 동적 계산
 
-// 구독자 Y축 레이블 (5항목, 동일 padding → 동일 CSS 재사용)
-const SUB_MAX_VAL  = 400;
-const subYLabels   = ['400명', '300명', '200명', '100명', '0'];
-const subGridSvgY  = [400, 300, 200, 100, 0].map(
-  v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / SUB_MAX_VAL))
-); // [28, 69, 110, 151, 192]
+// 구독자 Y축 — 데이터 기반 동적 계산 (컴포넌트 내부에서 처리)
 
 // 금액 포맷 (구간별 단위 자동 전환)
 // 10만 미만: ₩29,000 / 10만~1억: ₩29만 / 1억 이상: ₩1.2억
@@ -201,13 +196,32 @@ export default function StatisticsPage() {
   const peakIdx  = pts.reduce((max, p, i) => (p[1] < pts[max][1] ? i : max), 0);
   const tooltipX = Math.min(pts[peakIdx][0] - TOOLTIP_W / 2, LINE_VBW - TOOLTIP_W - 6);
 
+  const subMaxRaw  = Math.max(
+    ...monthlySubscribers.map(m => m.newSubs),
+    ...monthlySubscribers.map(m => m.churned),
+    1
+  );
+  // 깔끔한 눈금을 위해 최댓값을 올림 처리 (최소 5)
+  const subAxisMax = Math.max(Math.ceil(subMaxRaw / 5) * 5, 5);
+  const subGridValues = [
+    subAxisMax,
+    Math.round(subAxisMax * 0.75),
+    Math.round(subAxisMax * 0.5),
+    Math.round(subAxisMax * 0.25),
+    0,
+  ];
+  const subYLabels  = subGridValues.map(v => (v === 0 ? '0' : `${v}명`));
+  const subGridSvgY = subGridValues.map(
+    v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / subAxisMax))
+  );
+
   const subNewPath   = buildSvgPath(
     monthlySubscribers.length > 1 ? monthlySubscribers.map(m => m.newSubs) : [0, 0],
-    SUB_MAX_VAL
+    subAxisMax
   );
   const subChurnPath = buildSvgPath(
     monthlySubscribers.length > 1 ? monthlySubscribers.map(m => m.churned) : [0, 0],
-    SUB_MAX_VAL
+    subAxisMax
   );
 
   const subLast = monthlySubscribers[monthlySubscribers.length - 1] ?? { newSubs: 0, churned: 0 };
