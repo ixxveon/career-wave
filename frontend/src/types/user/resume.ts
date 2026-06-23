@@ -142,6 +142,7 @@ export interface FeedbackDetail {
 export interface AnalysisResultResponse {
   documentId: string;
   status: BackendDocumentStatus;
+  fileType: 'RESUME' | 'COVER_LETTER';
   scores: ScoreBreakdown | null;
   overallReview: string | null;
   feedbackDetails: FeedbackDetail[];

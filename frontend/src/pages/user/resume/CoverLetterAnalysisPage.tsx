@@ -36,6 +36,7 @@ export default function CoverLetterAnalysisPage() {
           },
           feedbackDetails: analysisResult.feedbackDetails,
         }}
+        fileType="COVER_LETTER"
         label="COVER LETTER AI"
         subtitle={`${company} · ${job}`}
         onReset={reset}

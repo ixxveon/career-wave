@@ -63,7 +63,7 @@ export function useSpringWebSocket({
     onStatusChangeRef.current(attemptRef.current === 0 ? 'CONNECTING' : 'RECONNECTING');
 
     const client = new Client({
-      brokerURL: `${WS_BASE_URL}/ws/user/interview`,
+      brokerURL: `${WS_BASE_URL}/ws/user/interview?token=${encodeURIComponent(token)}`,
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 0,
       onConnect: () => {

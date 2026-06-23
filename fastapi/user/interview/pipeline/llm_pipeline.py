@@ -56,10 +56,17 @@ async def generate_and_deliver_question(
         log.warning("[Session: %s] LLM skipped: no active session context", session_id)
         return
 
-    _record_answer(ctx, question_text, answer_text)
+    if question_order > 0:
+        _record_answer(ctx, question_text, answer_text)
 
     settings = get_settings()
     next_question_order = question_order + 1
+
+    if next_question_order > 10:
+        log.info("[Session: %s] max questions reached (%d), triggering report", session_id, settings.max_question_count)
+        from user.interview.pipeline import report_pipeline
+        await report_pipeline.generate_and_send_report(session_id, ctx.session_type or "TEXT")
+        return
 
     try:
         result = await asyncio.wait_for(

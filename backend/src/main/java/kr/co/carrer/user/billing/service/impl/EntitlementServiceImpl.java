@@ -115,6 +115,15 @@ public class EntitlementServiceImpl implements EntitlementService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public boolean isConsumable(ResourceType resourceType, UUID resourceId) {
+        return usageRecordRepository
+                .findByResourceTypeAndResourceId(resourceType, resourceId)
+                .map(r -> r.getUsageStatus() == UsageStatus.RESERVED)
+                .orElse(false);
+    }
+
+    @Override
     @Transactional
     public void release(ResourceType resourceType, UUID resourceId) {
         Optional<ServiceUsageRecord> opt =

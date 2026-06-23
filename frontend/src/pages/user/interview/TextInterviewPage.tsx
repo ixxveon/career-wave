@@ -11,6 +11,7 @@ import { usePreflightCheck } from '../../../hooks/user/interview/usePreflightChe
 import InterviewSetup from '../../../components/user/interview/InterviewSetup';
 import InterviewRoom  from './InterviewRoom';
 
+import { resumeHistoryApi } from '../../../api/user/resume';
 import { loadInterviewSession, clearInterviewSession } from '../../../utils/user/interview/sessionStorage';
 import '@/styles/user/interview/TextInterviewPage.css';
 
@@ -49,13 +50,29 @@ export default function TextInterviewPage() {
     }
   }, []);
 
-  /* ── 대표 이력서 로드 (추후 documentApi 연동 예정) ── */
+  /* ── 이력서 정보 로드 ── */
   useEffect(() => {
-    if (import.meta.env.DEV) {
+    setResume(null);
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
       setResume({ fileName: MOCK_SETUP.resumeFileName, s3Url: MOCK_SETUP.resumeS3Url });
+      setResumeLoading(false);
+      return;
     }
-    setResumeLoading(false);
-  }, []);
+    if (!documentId) {
+      setResumeLoading(false);
+      return;
+    }
+    resumeHistoryApi.getByDocumentId(documentId)
+      .then(item => {
+        const fileName = item.originalName
+          ?? (item.company && item.job ? `${item.company} · ${item.job}` : null)
+          ?? item.company
+          ?? '연결된 서류';
+        setResume({ fileName, s3Url: '' });
+      })
+      .catch(() => { setResume(null); })
+      .finally(() => setResumeLoading(false));
+  }, [documentId]);
 
   async function handleMicTest() {
     setMicStatus('testing');
@@ -105,7 +122,7 @@ export default function TextInterviewPage() {
       setSessionId(result.sessionId);
       setPhase('interview');
     } catch (err) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
         setSessionId(`dev-session-${Date.now()}`);
         setPhase('interview');
       } else {
