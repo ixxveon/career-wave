@@ -16,13 +16,12 @@ export function usePaymentSuccessStatus() {
   const location = useLocation();
   const confirmedRef = useRef(false);
 
-  const paymentKey = searchParams.get('paymentKey');
+  // billingKey 흐름: Toss가 redirect 시 authKey·customerKey·orderId 전달
+  const authKey = searchParams.get('authKey');
+  const customerKey = searchParams.get('customerKey');
   const orderId = searchParams.get('orderId');
-  const rawAmount = searchParams.get('amount');
-  const parsedAmount = Number(rawAmount);
 
-  const isDirectAccess =
-    !paymentKey || !orderId || !rawAmount || !Number.isFinite(parsedAmount) || parsedAmount <= 0;
+  const isDirectAccess = !authKey || !customerKey || !orderId;
 
   const { mutate: confirmPayment, isPending, isSuccess, isError, data } = useConfirmPayment();
 
@@ -37,11 +36,11 @@ export function usePaymentSuccessStatus() {
     confirmedRef.current = true;
 
     confirmPayment({
-      paymentKey: paymentKey!,
+      authKey: authKey!,
+      customerKey: customerKey!,
       orderId: orderId!,
-      amount: parsedAmount,
     });
-  }, [isDirectAccess, navigate, paymentKey, orderId, parsedAmount, confirmPayment]);
+  }, [isDirectAccess, navigate, authKey, customerKey, orderId, confirmPayment]);
 
   // confirm 완료 후 paymentKey·orderId·amount를 URL 히스토리에서 제거
   useEffect(() => {
