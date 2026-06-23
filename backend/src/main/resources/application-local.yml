@@ -46,6 +46,10 @@ logging:
     io.netty: WARN
     org.springframework.web.reactive: WARN
 
+toss:
+  secret-key: ${TOSS_SECRET_KEY}
+  billing-key-encryption-key: ${TOSS_BILLING_KEY_ENCRYPTION_KEY}
+
 jwt:
   user:
     secret: ${JWT_USER_SECRET}
