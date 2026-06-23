@@ -30,8 +30,7 @@ public interface DashboardDocs {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
-                    description = "Dashboard summary retrieved",
-                    content = @Content(schema = @Schema(implementation = DashboardDTO.ResponseSummary.class))
+                    description = "Dashboard summary retrieved"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
