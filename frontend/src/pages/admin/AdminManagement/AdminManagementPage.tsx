@@ -26,12 +26,12 @@ import type {
   AdminAclRule as AdminAclRuleResponse,
   AdminAuditLog as AdminAuditLogResponse,
   AdminRole,
+  AuditSeverity,
 } from '../../../api/admin/adminManagementApi';
 import '../../../styles/admin/admin.css';
 import MiniPagination from '../../../components/admin/MiniPagination';
 
 type AdminStatus = 'ACTIVE' | 'LOCKED';
-type AuditSeverity = 'INFO' | 'WARN' | 'ERROR';
 
 interface AdminAccount {
   id: string;
