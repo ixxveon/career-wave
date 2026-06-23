@@ -57,13 +57,13 @@ public class BillingDTO {
 
     // ── Phase 4: Checkout & Payment ────────────────────────────────────────
 
-    public record CreateOrderRequest(
+    public record RequestCreateOrder(
             @NotBlank @Schema(example = "document-coaching") String productCode,
             @NotBlank String successUrl,
             @NotBlank String failUrl
     ) {}
 
-    public record CreateOrderResponse(
+    public record ResponseCreateOrder(
             String orderId,
             String idempotencyKey,
             String productCode,
@@ -78,13 +78,13 @@ public class BillingDTO {
     ) {}
 
     // billingKey 흐름 승인 완료 — authKey/customerKey/orderId 계약
-    public record ConfirmPaymentRequest(
+    public record RequestConfirmPayment(
             @NotBlank String authKey,
             @NotBlank String customerKey,
             @NotBlank String orderId
     ) {}
 
-    public record ConfirmPaymentResponse(
+    public record ResponseConfirmPayment(
             UUID paymentId,
             String orderId,
             String productCode,
@@ -103,7 +103,7 @@ public class BillingDTO {
             boolean retryable
     ) {}
 
-    public record PaymentStatusResponse(
+    public record ResponsePaymentStatus(
             String orderId,
             String paymentStatus,
             String productCode,
@@ -113,14 +113,14 @@ public class BillingDTO {
             PaymentFailureDetail failure
     ) {}
 
-    public record RecordPaymentFailRequest(
+    public record RequestRecordPaymentFail(
             @NotBlank String orderId,
             @NotBlank String productCode,
-            @NotNull String reasonCode,
+            @NotBlank String reasonCode,
             String message
     ) {}
 
-    public record RecordPaymentFailResponse(
+    public record ResponseRecordPaymentFail(
             String orderId,
             @Schema(allowableValues = {"FAILED"}) String paymentStatus,
             boolean retryable

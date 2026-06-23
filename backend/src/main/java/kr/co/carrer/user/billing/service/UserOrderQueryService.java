@@ -6,5 +6,5 @@ import java.util.UUID;
 
 public interface UserOrderQueryService {
 
-    BillingDTO.PaymentStatusResponse getOrderStatus(UUID memberId, String orderId);
+    BillingDTO.ResponsePaymentStatus getOrderStatus(UUID memberId, String orderId);
 }

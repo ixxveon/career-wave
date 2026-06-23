@@ -12,6 +12,7 @@ import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.*;
 import kr.co.carrer.user.billing.service.impl.UserPaymentConfirmServiceImpl;
 import kr.co.carrer.user.billing.service.impl.UserPaymentFailureTxService;
+import kr.co.carrer.user.billing.service.impl.UserPaymentSettleTxService;
 import kr.co.carrer.user.billing.type.FreeUsageStatus;
 import kr.co.carrer.user.billing.type.UserPaymentStatus;
 import kr.co.carrer.user.billing.util.AesCipher;
@@ -50,15 +51,18 @@ class UserPaymentConfirmServiceTest {
     @Mock UserPaymentFailureTxService failureTxService;
 
     private UserPaymentConfirmServiceImpl service;
+    private UserPaymentSettleTxService settleTxService;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final UUID memberId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
+        settleTxService = new UserPaymentSettleTxService(
+                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
         service = new UserPaymentConfirmServiceImpl(
-                userPaymentRepository, billingProfileRepository, subscriptionRepository,
-                entitlementRepository, subscriptionUsagePeriodRepository, planRepository,
-                tossBillingAuthClient, tossBillingPaymentClient, aesCipher, failureTxService);
+                userPaymentRepository, billingProfileRepository, planRepository,
+                tossBillingAuthClient, tossBillingPaymentClient, aesCipher,
+                failureTxService, settleTxService);
     }
 
     @Test
@@ -89,8 +93,8 @@ class UserPaymentConfirmServiceTest {
         });
         given(subscriptionUsagePeriodRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        BillingDTO.ConfirmPaymentResponse response = service.confirm(
-                memberId, new BillingDTO.ConfirmPaymentRequest("authKey1", customerKey, orderId));
+        BillingDTO.ResponseConfirmPayment response = service.confirm(
+                memberId, new BillingDTO.RequestConfirmPayment("authKey1", customerKey, orderId));
 
         assertThat(response.paymentStatus()).isEqualTo("PAID");
         assertThat(response.subscriptionStatus()).isEqualTo("ACTIVE");
@@ -130,8 +134,8 @@ class UserPaymentConfirmServiceTest {
         });
         given(subscriptionUsagePeriodRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        BillingDTO.ConfirmPaymentResponse response = service.confirm(
-                memberId, new BillingDTO.ConfirmPaymentRequest("authKey2", customerKey, orderId));
+        BillingDTO.ResponseConfirmPayment response = service.confirm(
+                memberId, new BillingDTO.RequestConfirmPayment("authKey2", customerKey, orderId));
 
         assertThat(response.productCode()).isEqualTo("interview");
         // document-coaching entitlement는 조회하지 않음 (interview만 처리)
@@ -147,7 +151,7 @@ class UserPaymentConfirmServiceTest {
         given(userPaymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("authKey", "wrong-ck", orderId)))
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("authKey", "wrong-ck", orderId)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(BillingErrorCode.BILLING_CUSTOMER_KEY_MISMATCH));
@@ -162,7 +166,7 @@ class UserPaymentConfirmServiceTest {
         given(userPaymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", "ck", orderId)))
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", "ck", orderId)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(BillingErrorCode.BILLING_ORDER_NOT_READY));
@@ -177,7 +181,7 @@ class UserPaymentConfirmServiceTest {
         given(userPaymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", "ck", orderId)))
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", "ck", orderId)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(BillingErrorCode.BILLING_ORDER_NOT_FOUND));
@@ -203,7 +207,7 @@ class UserPaymentConfirmServiceTest {
                 .willReturn(payResponse("pay_key", "ORDER-TAMPERED", 29000, "KRW"));  // orderId 불일치
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId)))
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(BillingErrorCode.PAYMENT_AMOUNT_MISMATCH));
@@ -230,7 +234,7 @@ class UserPaymentConfirmServiceTest {
                 .willReturn(payResponse("pay_key", orderId, 1000, "KRW"));  // 금액 불일치
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId)))
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(BillingErrorCode.PAYMENT_AMOUNT_MISMATCH));
@@ -257,7 +261,7 @@ class UserPaymentConfirmServiceTest {
                 .willReturn(payResponse("pay_key", orderId, 29000, "USD"));  // currency 불일치
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId)))
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(BillingErrorCode.PAYMENT_AMOUNT_MISMATCH));
@@ -293,7 +297,7 @@ class UserPaymentConfirmServiceTest {
         });
         given(subscriptionUsagePeriodRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId));
+        service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId));
 
         assertThat(entitlement.getFreeUsageStatus()).isEqualTo(FreeUsageStatus.FORFEITED);
     }
@@ -327,8 +331,8 @@ class UserPaymentConfirmServiceTest {
         });
         given(subscriptionUsagePeriodRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        BillingDTO.ConfirmPaymentResponse response = service.confirm(
-                memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId));
+        BillingDTO.ResponseConfirmPayment response = service.confirm(
+                memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId));
 
         assertThat(response.nextBillingAt())
                 .isEqualTo(approvedAt.withZoneSameInstant(KST).plusDays(30));
@@ -337,7 +341,7 @@ class UserPaymentConfirmServiceTest {
     @Test
     @DisplayName("ConfirmPaymentResponse에 billingKey 필드 없음")
     void confirm_responseDoesNotContainBillingKey() {
-        var fieldNames = java.util.Arrays.stream(BillingDTO.ConfirmPaymentResponse.class.getRecordComponents())
+        var fieldNames = java.util.Arrays.stream(BillingDTO.ResponseConfirmPayment.class.getRecordComponents())
                 .map(java.lang.reflect.RecordComponent::getName)
                 .map(String::toLowerCase)
                 .toList();

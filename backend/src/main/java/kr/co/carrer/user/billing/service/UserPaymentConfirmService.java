@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public interface UserPaymentConfirmService {
 
-    BillingDTO.ConfirmPaymentResponse confirm(UUID memberId, BillingDTO.ConfirmPaymentRequest request);
+    BillingDTO.ResponseConfirmPayment confirm(UUID memberId, BillingDTO.RequestConfirmPayment request);
 
-    BillingDTO.RecordPaymentFailResponse recordFail(UUID memberId, BillingDTO.RecordPaymentFailRequest request);
+    BillingDTO.ResponseRecordPaymentFail recordFail(UUID memberId, BillingDTO.RequestRecordPaymentFail request);
 }

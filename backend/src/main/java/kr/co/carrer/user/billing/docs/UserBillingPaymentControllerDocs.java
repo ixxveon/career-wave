@@ -21,9 +21,9 @@ public interface UserBillingPaymentControllerDocs {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 상품"),
             @ApiResponse(responseCode = "409", description = "이미 구독 중인 상품")
     })
-    ResponseEntity<kr.co.carrer.global.response.ApiResponse<BillingDTO.CreateOrderResponse>> createOrder(
+    ResponseEntity<kr.co.carrer.global.response.ApiResponse<BillingDTO.ResponseCreateOrder>> createOrder(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody BillingDTO.CreateOrderRequest request
+            @RequestBody BillingDTO.RequestCreateOrder request
     );
 
     @Operation(summary = "결제 확인", description = "Toss billingKey 발행 및 최초 결제 승인을 처리합니다.")
@@ -34,9 +34,9 @@ public interface UserBillingPaymentControllerDocs {
             @ApiResponse(responseCode = "409", description = "처리 불가 주문 상태"),
             @ApiResponse(responseCode = "422", description = "Toss API 실패")
     })
-    ResponseEntity<kr.co.carrer.global.response.ApiResponse<BillingDTO.ConfirmPaymentResponse>> confirmPayment(
+    ResponseEntity<kr.co.carrer.global.response.ApiResponse<BillingDTO.ResponseConfirmPayment>> confirmPayment(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody BillingDTO.ConfirmPaymentRequest request
+            @RequestBody BillingDTO.RequestConfirmPayment request
     );
 
     @Operation(summary = "결제 실패 기록", description = "Toss redirect fail URL에서 결제 실패를 기록합니다.")
@@ -44,9 +44,9 @@ public interface UserBillingPaymentControllerDocs {
             @ApiResponse(responseCode = "200", description = "실패 기록 성공"),
             @ApiResponse(responseCode = "404", description = "주문 없음")
     })
-    ResponseEntity<kr.co.carrer.global.response.ApiResponse<BillingDTO.RecordPaymentFailResponse>> recordPaymentFail(
+    ResponseEntity<kr.co.carrer.global.response.ApiResponse<BillingDTO.ResponseRecordPaymentFail>> recordPaymentFail(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody BillingDTO.RecordPaymentFailRequest request
+            @RequestBody BillingDTO.RequestRecordPaymentFail request
     );
 
     @Operation(summary = "결제 주문 상태 조회", description = "주문 ID로 결제 상태를 조회합니다.")
@@ -54,7 +54,7 @@ public interface UserBillingPaymentControllerDocs {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "404", description = "주문 없음 또는 본인 소유 아님")
     })
-    ResponseEntity<kr.co.carrer.global.response.ApiResponse<BillingDTO.PaymentStatusResponse>> getOrderStatus(
+    ResponseEntity<kr.co.carrer.global.response.ApiResponse<BillingDTO.ResponsePaymentStatus>> getOrderStatus(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable String orderId
     );

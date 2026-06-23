@@ -1,5 +1,7 @@
 package kr.co.carrer.user.member.service.impl;
 
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.service.BillingMemberPort;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
@@ -29,7 +31,7 @@ public class BillingMemberPortImpl implements BillingMemberPort {
     @Transactional(readOnly = true)
     public MemberBillingInfo getMemberBillingInfo(UUID memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalStateException("JWT member not found: " + memberId));
+                .orElseThrow(() -> new CustomException(BillingErrorCode.ACCOUNT_NOT_ELIGIBLE));
         return new MemberBillingInfo(member.getName(), member.getEmail());
     }
 }

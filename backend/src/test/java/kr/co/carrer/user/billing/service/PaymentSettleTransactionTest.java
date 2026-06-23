@@ -12,6 +12,7 @@ import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.*;
 import kr.co.carrer.user.billing.service.impl.UserPaymentConfirmServiceImpl;
 import kr.co.carrer.user.billing.service.impl.UserPaymentFailureTxService;
+import kr.co.carrer.user.billing.service.impl.UserPaymentSettleTxService;
 import kr.co.carrer.user.billing.util.AesCipher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,15 +53,18 @@ class PaymentSettleTransactionTest {
     @Mock UserPaymentFailureTxService failureTxService;
 
     private UserPaymentConfirmServiceImpl service;
+    private UserPaymentSettleTxService settleTxService;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final UUID memberId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
+        settleTxService = new UserPaymentSettleTxService(
+                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
         service = new UserPaymentConfirmServiceImpl(
-                userPaymentRepository, billingProfileRepository, subscriptionRepository,
-                entitlementRepository, subscriptionUsagePeriodRepository, planRepository,
-                tossBillingAuthClient, tossBillingPaymentClient, aesCipher, failureTxService);
+                userPaymentRepository, billingProfileRepository, planRepository,
+                tossBillingAuthClient, tossBillingPaymentClient, aesCipher,
+                failureTxService, settleTxService);
     }
 
     @Test
@@ -79,7 +83,10 @@ class PaymentSettleTransactionTest {
                 .willThrow(new CustomException(BillingErrorCode.BILLING_AUTHORIZATION_FAILED));
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId)));
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId)))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(BillingErrorCode.BILLING_AUTHORIZATION_FAILED));
 
         verify(failureTxService).failPayment(eq(paymentId), any());
         verify(subscriptionRepository, never()).save(any());
@@ -107,7 +114,10 @@ class PaymentSettleTransactionTest {
                 .willThrow(new CustomException(BillingErrorCode.PAYMENT_CONFIRM_FAILED));
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId)));
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId)))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(BillingErrorCode.PAYMENT_CONFIRM_FAILED));
 
         verify(failureTxService).failPayment(eq(paymentId), any());
         verify(subscriptionRepository, never()).save(any());
@@ -141,7 +151,7 @@ class PaymentSettleTransactionTest {
                 .willReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId)))
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
@@ -178,7 +188,7 @@ class PaymentSettleTransactionTest {
         });
         given(subscriptionUsagePeriodRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId));
+        service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId));
 
         InOrder inOrder = inOrder(payment);
         inOrder.verify(payment).authorize();

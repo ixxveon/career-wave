@@ -28,9 +28,9 @@ public class UserBillingPaymentController implements UserBillingPaymentControlle
 
     @Override
     @PostMapping("/checkout/orders")
-    public ResponseEntity<ApiResponse<BillingDTO.CreateOrderResponse>> createOrder(
+    public ResponseEntity<ApiResponse<BillingDTO.ResponseCreateOrder>> createOrder(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @Valid @RequestBody BillingDTO.CreateOrderRequest request
+            @Valid @RequestBody BillingDTO.RequestCreateOrder request
     ) {
         UUID memberId = UUID.fromString(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(
@@ -41,9 +41,9 @@ public class UserBillingPaymentController implements UserBillingPaymentControlle
 
     @Override
     @PostMapping("/payments/confirm")
-    public ResponseEntity<ApiResponse<BillingDTO.ConfirmPaymentResponse>> confirmPayment(
+    public ResponseEntity<ApiResponse<BillingDTO.ResponseConfirmPayment>> confirmPayment(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @Valid @RequestBody BillingDTO.ConfirmPaymentRequest request
+            @Valid @RequestBody BillingDTO.RequestConfirmPayment request
     ) {
         UUID memberId = UUID.fromString(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(
@@ -54,9 +54,9 @@ public class UserBillingPaymentController implements UserBillingPaymentControlle
 
     @Override
     @PostMapping("/payments/fail")
-    public ResponseEntity<ApiResponse<BillingDTO.RecordPaymentFailResponse>> recordPaymentFail(
+    public ResponseEntity<ApiResponse<BillingDTO.ResponseRecordPaymentFail>> recordPaymentFail(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @Valid @RequestBody BillingDTO.RecordPaymentFailRequest request
+            @Valid @RequestBody BillingDTO.RequestRecordPaymentFail request
     ) {
         UUID memberId = UUID.fromString(principal.getId());
         return ResponseEntity.ok(ApiResponse.ok(
@@ -67,7 +67,7 @@ public class UserBillingPaymentController implements UserBillingPaymentControlle
 
     @Override
     @GetMapping("/payments/orders/{orderId}")
-    public ResponseEntity<ApiResponse<BillingDTO.PaymentStatusResponse>> getOrderStatus(
+    public ResponseEntity<ApiResponse<BillingDTO.ResponsePaymentStatus>> getOrderStatus(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable String orderId
     ) {

@@ -67,8 +67,8 @@ class CheckoutOrderServiceTest {
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
         given(userPaymentRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        BillingDTO.CreateOrderResponse response =
-                service.createOrder(memberId, new BillingDTO.CreateOrderRequest("document-coaching", "http://localhost/success", "http://localhost/fail"));
+        BillingDTO.ResponseCreateOrder response =
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
 
         assertThat(response.productCode()).isEqualTo("document-coaching");
         assertThat(response.amount()).isEqualTo(29000);
@@ -94,8 +94,8 @@ class CheckoutOrderServiceTest {
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
         given(userPaymentRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        BillingDTO.CreateOrderResponse response =
-                service.createOrder(memberId, new BillingDTO.CreateOrderRequest("interview", "http://localhost/success", "http://localhost/fail"));
+        BillingDTO.ResponseCreateOrder response =
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("interview", "http://localhost/success", "http://localhost/fail"));
 
         assertThat(response.productCode()).isEqualTo("interview");
         assertThat(response.amount()).isEqualTo(29000);
@@ -116,8 +116,8 @@ class CheckoutOrderServiceTest {
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
         given(userPaymentRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        BillingDTO.CreateOrderResponse response =
-                service.createOrder(memberId, new BillingDTO.CreateOrderRequest("document-coaching", "http://localhost/success", "http://localhost/fail"));
+        BillingDTO.ResponseCreateOrder response =
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
 
         // FE가 가격을 요청에 포함시켜도 응답은 DB 가격(29000)
         assertThat(response.amount()).isEqualTo(29000);
@@ -135,7 +135,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(List.of(active));
 
         assertThatThrownBy(() ->
-                service.createOrder(memberId, new BillingDTO.CreateOrderRequest("document-coaching", "http://localhost/success", "http://localhost/fail")))
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail")))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(BillingErrorCode.SUBSCRIPTION_ALREADY_ACTIVE);
@@ -153,7 +153,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(List.of(cs));
 
         assertThatThrownBy(() ->
-                service.createOrder(memberId, new BillingDTO.CreateOrderRequest("document-coaching", "http://localhost/success", "http://localhost/fail")))
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail")))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(BillingErrorCode.SUBSCRIPTION_ALREADY_ACTIVE);
@@ -171,7 +171,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(List.of(pf));
 
         assertThatThrownBy(() ->
-                service.createOrder(memberId, new BillingDTO.CreateOrderRequest("document-coaching", "http://localhost/success", "http://localhost/fail")))
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail")))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(BillingErrorCode.SUBSCRIPTION_ALREADY_ACTIVE);
@@ -193,8 +193,8 @@ class CheckoutOrderServiceTest {
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
         given(userPaymentRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        BillingDTO.CreateOrderResponse response =
-                service.createOrder(memberId, new BillingDTO.CreateOrderRequest("interview", "http://localhost/success", "http://localhost/fail"));
+        BillingDTO.ResponseCreateOrder response =
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("interview", "http://localhost/success", "http://localhost/fail"));
 
         assertThat(response.productCode()).isEqualTo("interview");
     }
@@ -205,7 +205,7 @@ class CheckoutOrderServiceTest {
         given(billingMemberPort.isEligibleForBilling(memberId)).willReturn(false);
 
         assertThatThrownBy(() ->
-                service.createOrder(memberId, new BillingDTO.CreateOrderRequest("document-coaching", "http://localhost/success", "http://localhost/fail")))
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail")))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(BillingErrorCode.ACCOUNT_NOT_ELIGIBLE);
@@ -219,7 +219,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-                service.createOrder(memberId, new BillingDTO.CreateOrderRequest("unknown", "http://localhost/success", "http://localhost/fail")))
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("unknown", "http://localhost/success", "http://localhost/fail")))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(BillingErrorCode.PRODUCT_NOT_FOUND);
@@ -238,8 +238,8 @@ class CheckoutOrderServiceTest {
         given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
                 .willReturn(Optional.of(existing));
 
-        BillingDTO.CreateOrderResponse response =
-                service.createOrder(memberId, new BillingDTO.CreateOrderRequest("document-coaching", "http://localhost/success", "http://localhost/fail"));
+        BillingDTO.ResponseCreateOrder response =
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
 
         assertThat(response.orderId()).isEqualTo("ORDER-EXISTING");
         verify(userPaymentRepository, never()).save(any());

@@ -166,8 +166,7 @@ public class UserPayment {
     public void fail(PaymentFailureReason reason) {
         if (this.paymentStatus != UserPaymentStatus.AUTHORIZED
                 && this.paymentStatus != UserPaymentStatus.CONFIRMING
-                && this.paymentStatus != UserPaymentStatus.RECONCILING
-                && this.paymentStatus != UserPaymentStatus.READY) {
+                && this.paymentStatus != UserPaymentStatus.RECONCILING) {
             throw new CustomException(BillingErrorCode.BILLING_ORDER_NOT_READY);
         }
         this.paymentStatus = UserPaymentStatus.FAILED;

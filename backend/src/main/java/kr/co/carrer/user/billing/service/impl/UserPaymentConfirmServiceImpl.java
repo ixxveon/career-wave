@@ -10,7 +10,6 @@ import kr.co.carrer.user.billing.entity.*;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.*;
 import kr.co.carrer.user.billing.service.UserPaymentConfirmService;
-import kr.co.carrer.user.billing.type.FreeUsageStatus;
 import kr.co.carrer.user.billing.type.PaymentFailureReason;
 import kr.co.carrer.user.billing.type.UserPaymentStatus;
 import kr.co.carrer.user.billing.util.AesCipher;
@@ -19,8 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Slf4j
@@ -28,22 +25,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserPaymentConfirmServiceImpl implements UserPaymentConfirmService {
 
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
-    private static final int BILLING_CYCLE_DAYS = 30;
-
     private final UserPaymentRepository userPaymentRepository;
     private final BillingProfileRepository billingProfileRepository;
-    private final SubscriptionRepository subscriptionRepository;
-    private final MemberProductEntitlementRepository entitlementRepository;
-    private final SubscriptionUsagePeriodRepository subscriptionUsagePeriodRepository;
     private final PlanRepository planRepository;
     private final TossBillingAuthorizationClient tossBillingAuthClient;
     private final TossBillingPaymentClient tossBillingPaymentClient;
     private final AesCipher aesCipher;
     private final UserPaymentFailureTxService failureTxService;
+    private final UserPaymentSettleTxService settleTxService;
 
     @Override
-    public BillingDTO.ConfirmPaymentResponse confirm(UUID memberId, BillingDTO.ConfirmPaymentRequest request) {
+    public BillingDTO.ResponseConfirmPayment confirm(UUID memberId, BillingDTO.RequestConfirmPayment request) {
 
         // 1. 주문 소유권·상태 검증
         UserPayment payment = userPaymentRepository.findByOrderId(request.orderId())
@@ -83,7 +75,6 @@ public class UserPaymentConfirmServiceImpl implements UserPaymentConfirmService 
         );
 
         // 4. Toss billing payment (트랜잭션 밖)
-        // 금액은 DB 기준 — 클라이언트 전달값 절대 사용 금지
         TossBillingPaymentResponse payResponse;
         try {
             payResponse = tossBillingPaymentClient.pay(
@@ -114,77 +105,24 @@ public class UserPaymentConfirmServiceImpl implements UserPaymentConfirmService 
             throw new CustomException(BillingErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
 
-        // 6. 원자 결산 트랜잭션
-        return settle(payment, billingProfile, plan, payResponse);
-    }
-
-    @Transactional
-    protected BillingDTO.ConfirmPaymentResponse settle(UserPayment payment, BillingProfile billingProfile,
-                                                        Plan plan, TossBillingPaymentResponse payResponse) {
-        // 상태 전이: READY → AUTHORIZED → CONFIRMING → PAID
-        payment.authorize();
-        payment.confirmStarted();
-        payment.paid(payResponse.paymentKey(), payResponse.approvedAt());
-
-        // 구독 생성
-        ZonedDateTime periodStart = payResponse.approvedAt().withZoneSameInstant(KST);
-        ZonedDateTime periodEnd = periodStart.plusDays(BILLING_CYCLE_DAYS);
-        Subscription subscription = Subscription.create(
-                payment.getMemberId(), plan.getPlanId(),
-                billingProfile.getBillingProfileId(), periodStart, periodEnd
-        );
-        subscriptionRepository.save(subscription);
-        payment.linkSubscription(subscription.getSubscriptionId());
-
-        // 이용권 처리
-        MemberProductEntitlement entitlement = entitlementRepository
-                .findByMemberIdAndProductCodeForUpdate(payment.getMemberId(), plan.getProductCode())
-                .orElseThrow(() -> new CustomException(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
-
-        if (entitlement.getFreeUsageStatus() == FreeUsageStatus.AVAILABLE) {
-            entitlement.forfeitFree();
-        }
-        entitlement.activatePremium(subscription.getSubscriptionId());
-
-        // 사용 기간 생성
-        subscriptionUsagePeriodRepository.save(
-                SubscriptionUsagePeriod.create(
-                        subscription.getSubscriptionId(),
-                        plan.getProductCode(),
-                        periodStart, periodEnd,
-                        plan.getMonthlyUsageLimit()
-                )
-        );
-
-        return new BillingDTO.ConfirmPaymentResponse(
-                payment.getPaymentId(),
-                payment.getOrderId(),
-                plan.getProductCode(),
-                plan.getPlanName(),
-                plan.getPlanPrice(),
-                plan.getCurrency(),
-                "PAID",
-                "ACTIVE",
-                payment.getApprovedAt(),
-                subscription.getNextBillingAt()
-        );
+        // 6. 원자 결산 트랜잭션 (별도 빈 — self-invocation 방지)
+        return settleTxService.settle(payment, billingProfile, plan, payResponse);
     }
 
     @Override
     @Transactional
-    public BillingDTO.RecordPaymentFailResponse recordFail(UUID memberId,
-                                                            BillingDTO.RecordPaymentFailRequest request) {
+    public BillingDTO.ResponseRecordPaymentFail recordFail(UUID memberId,
+                                                           BillingDTO.RequestRecordPaymentFail request) {
         UserPayment payment = userPaymentRepository
                 .findByOrderIdAndMemberId(request.orderId(), memberId)
                 .orElseThrow(() -> new CustomException(BillingErrorCode.BILLING_ORDER_NOT_FOUND));
 
         PaymentFailureReason reason = resolveReason(request.reasonCode());
-        if (payment.getPaymentStatus() == UserPaymentStatus.READY
-                || payment.getPaymentStatus() == UserPaymentStatus.AUTHORIZED) {
+        if (payment.getPaymentStatus() == UserPaymentStatus.AUTHORIZED) {
             payment.fail(reason);
         }
 
-        return new BillingDTO.RecordPaymentFailResponse(
+        return new BillingDTO.ResponseRecordPaymentFail(
                 payment.getOrderId(),
                 "FAILED",
                 isRetryable(reason)
@@ -192,6 +130,9 @@ public class UserPaymentConfirmServiceImpl implements UserPaymentConfirmService 
     }
 
     private PaymentFailureReason resolveReason(String reasonCode) {
+        if (reasonCode == null || reasonCode.isBlank()) {
+            return PaymentFailureReason.UNKNOWN;
+        }
         try {
             return PaymentFailureReason.valueOf(reasonCode);
         } catch (IllegalArgumentException e) {

@@ -12,6 +12,7 @@ import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.*;
 import kr.co.carrer.user.billing.service.impl.UserPaymentConfirmServiceImpl;
 import kr.co.carrer.user.billing.service.impl.UserPaymentFailureTxService;
+import kr.co.carrer.user.billing.service.impl.UserPaymentSettleTxService;
 import kr.co.carrer.user.billing.type.UserPaymentStatus;
 import kr.co.carrer.user.billing.util.AesCipher;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,15 +50,18 @@ class ConfirmIdempotencyTest {
     @Mock UserPaymentFailureTxService failureTxService;
 
     private UserPaymentConfirmServiceImpl service;
+    private UserPaymentSettleTxService settleTxService;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final UUID memberId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
+        settleTxService = new UserPaymentSettleTxService(
+                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
         service = new UserPaymentConfirmServiceImpl(
-                userPaymentRepository, billingProfileRepository, subscriptionRepository,
-                entitlementRepository, subscriptionUsagePeriodRepository, planRepository,
-                tossBillingAuthClient, tossBillingPaymentClient, aesCipher, failureTxService);
+                userPaymentRepository, billingProfileRepository, planRepository,
+                tossBillingAuthClient, tossBillingPaymentClient, aesCipher,
+                failureTxService, settleTxService);
     }
 
     @Test
@@ -74,7 +78,7 @@ class ConfirmIdempotencyTest {
         given(userPaymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId)))
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(BillingErrorCode.BILLING_ORDER_NOT_READY));
@@ -92,7 +96,7 @@ class ConfirmIdempotencyTest {
         given(userPaymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId)))
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(BillingErrorCode.BILLING_ORDER_NOT_READY));
@@ -105,15 +109,15 @@ class ConfirmIdempotencyTest {
                 .willReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", "ck", "ORDER-GHOST")))
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", "ck", "ORDER-GHOST")))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
                         .isEqualTo(BillingErrorCode.BILLING_ORDER_NOT_FOUND));
     }
 
     @Test
-    @DisplayName("READY 주문 처음 confirm — Toss auth 1회만 호출")
-    void confirm_readyOrder_tossAuthCalledOnce() {
+    @DisplayName("READY 주문 confirm 성공 후 재요청 — Toss API 추가 호출 없이 BILLING_ORDER_NOT_READY")
+    void confirm_readyOrder_idempotency() {
         String orderId = "ORDER-ONCE";
         String customerKey = "ck_once";
         UUID paymentId = UUID.randomUUID();
@@ -142,8 +146,19 @@ class ConfirmIdempotencyTest {
         });
         given(subscriptionUsagePeriodRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        service.confirm(memberId, new BillingDTO.ConfirmPaymentRequest("ak", customerKey, orderId));
+        // 첫 번째 confirm — 성공
+        service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId));
+        verify(tossBillingAuthClient, times(1)).issue(any(), any());
+        verify(tossBillingPaymentClient, times(1)).pay(any(), any(), any(), any(), any(), any(), anyInt());
 
+        // 두 번째 confirm — payment가 이미 PAID 상태이므로 즉시 거부
+        assertThatThrownBy(() ->
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId)))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(BillingErrorCode.BILLING_ORDER_NOT_READY));
+
+        // Toss API 추가 호출 없음 — 멱등성 보장
         verify(tossBillingAuthClient, times(1)).issue(any(), any());
         verify(tossBillingPaymentClient, times(1)).pay(any(), any(), any(), any(), any(), any(), anyInt());
     }

@@ -84,7 +84,7 @@ public class TossBillingPaymentClient {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("Toss billing payment error: {}", e.getMessage());
+            log.warn("Toss billing payment error: {}", e.getClass().getSimpleName());
             throw new CustomException(BillingErrorCode.PAYMENT_CONFIRM_FAILED);
         }
     }

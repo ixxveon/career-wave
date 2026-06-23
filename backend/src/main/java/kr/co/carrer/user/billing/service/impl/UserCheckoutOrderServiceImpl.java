@@ -44,7 +44,7 @@ public class UserCheckoutOrderServiceImpl implements UserCheckoutOrderService {
 
     @Override
     @Transactional
-    public BillingDTO.CreateOrderResponse createOrder(UUID memberId, BillingDTO.CreateOrderRequest request) {
+    public BillingDTO.ResponseCreateOrder createOrder(UUID memberId, BillingDTO.RequestCreateOrder request) {
 
         if (!billingMemberPort.isEligibleForBilling(memberId)) {
             throw new CustomException(BillingErrorCode.ACCOUNT_NOT_ELIGIBLE);
@@ -66,8 +66,8 @@ public class UserCheckoutOrderServiceImpl implements UserCheckoutOrderService {
                 .orElseGet(() -> createNewOrder(memberId, plan, request));
     }
 
-    private BillingDTO.CreateOrderResponse createNewOrder(UUID memberId, Plan plan,
-                                                           BillingDTO.CreateOrderRequest request) {
+    private BillingDTO.ResponseCreateOrder createNewOrder(UUID memberId, Plan plan,
+                                                           BillingDTO.RequestCreateOrder request) {
         BillingMemberPort.MemberBillingInfo memberInfo = billingMemberPort.getMemberBillingInfo(memberId);
         ZonedDateTime now = ZonedDateTime.now(KST);
         ZonedDateTime expiresAt = now.plusMinutes(ORDER_EXPIRY_MINUTES);
@@ -89,8 +89,8 @@ public class UserCheckoutOrderServiceImpl implements UserCheckoutOrderService {
         return toCreateOrderResponse(payment, plan);
     }
 
-    private BillingDTO.CreateOrderResponse toCreateOrderResponse(UserPayment payment, Plan plan) {
-        return new BillingDTO.CreateOrderResponse(
+    private BillingDTO.ResponseCreateOrder toCreateOrderResponse(UserPayment payment, Plan plan) {
+        return new BillingDTO.ResponseCreateOrder(
                 payment.getOrderId(),
                 payment.getIdempotencyKey(),
                 plan.getProductCode(),

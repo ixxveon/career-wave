@@ -37,16 +37,16 @@ class UserBillingPaymentControllerContractTest {
     @DisplayName("POST /billing/checkout/orders — 200, CreateOrderResponse 필드 전체")
     void createOrder_200_allFields() {
         ZonedDateTime expiresAt = ZonedDateTime.now(KST).plusMinutes(30);
-        BillingDTO.CreateOrderResponse orderResponse = new BillingDTO.CreateOrderResponse(
+        BillingDTO.ResponseCreateOrder orderResponse = new BillingDTO.ResponseCreateOrder(
                 "ORDER-ABC", "idempotency-key", "document-coaching", "서류 AI 코칭",
                 29000, "KRW", "MONTHLY", "홍길동", "test@example.com", "customer-key", expiresAt);
         given(checkoutService.createOrder(any(), any())).willReturn(orderResponse);
 
-        ResponseEntity<ApiResponse<BillingDTO.CreateOrderResponse>> response =
-                controller.createOrder(principal, new BillingDTO.CreateOrderRequest("document-coaching", "http://localhost/success", "http://localhost/fail"));
+        ResponseEntity<ApiResponse<BillingDTO.ResponseCreateOrder>> response =
+                controller.createOrder(principal, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
-        BillingDTO.CreateOrderResponse data = response.getBody().getData();
+        BillingDTO.ResponseCreateOrder data = response.getBody().getData();
         assertThat(data.orderId()).isEqualTo("ORDER-ABC");
         assertThat(data.productCode()).isEqualTo("document-coaching");
         assertThat(data.amount()).isEqualTo(29000);
@@ -62,17 +62,17 @@ class UserBillingPaymentControllerContractTest {
         ZonedDateTime paidAt = ZonedDateTime.now(KST);
         ZonedDateTime nextBillingAt = paidAt.plusDays(30);
         UUID paymentId = UUID.randomUUID();
-        BillingDTO.ConfirmPaymentResponse confirmResponse = new BillingDTO.ConfirmPaymentResponse(
+        BillingDTO.ResponseConfirmPayment confirmResponse = new BillingDTO.ResponseConfirmPayment(
                 paymentId, "ORDER-ABC", "document-coaching", "서류 AI 코칭",
                 29000, "KRW", "PAID", "ACTIVE", paidAt, nextBillingAt);
         given(confirmService.confirm(any(), any())).willReturn(confirmResponse);
 
-        ResponseEntity<ApiResponse<BillingDTO.ConfirmPaymentResponse>> response =
+        ResponseEntity<ApiResponse<BillingDTO.ResponseConfirmPayment>> response =
                 controller.confirmPayment(principal,
-                        new BillingDTO.ConfirmPaymentRequest("authKey", "ck", "ORDER-ABC"));
+                        new BillingDTO.RequestConfirmPayment("authKey", "ck", "ORDER-ABC"));
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
-        BillingDTO.ConfirmPaymentResponse data = response.getBody().getData();
+        BillingDTO.ResponseConfirmPayment data = response.getBody().getData();
         assertThat(data.paymentId()).isEqualTo(paymentId);
         assertThat(data.orderId()).isEqualTo("ORDER-ABC");
         assertThat(data.productCode()).isEqualTo("document-coaching");
@@ -86,7 +86,7 @@ class UserBillingPaymentControllerContractTest {
     @Test
     @DisplayName("ConfirmPaymentResponse — billingKey 필드 없음")
     void confirmPayment_responseNoBillingKey() {
-        var fieldNames = java.util.Arrays.stream(BillingDTO.ConfirmPaymentResponse.class.getRecordComponents())
+        var fieldNames = java.util.Arrays.stream(BillingDTO.ResponseConfirmPayment.class.getRecordComponents())
                 .map(rc -> rc.getName().toLowerCase())
                 .toList();
         assertThat(fieldNames).noneMatch(name -> name.equals("billingkey"));
@@ -96,16 +96,16 @@ class UserBillingPaymentControllerContractTest {
     @Test
     @DisplayName("POST /billing/payments/fail — 200, RecordPaymentFailResponse 필드")
     void recordPaymentFail_200() {
-        BillingDTO.RecordPaymentFailResponse failResponse =
-                new BillingDTO.RecordPaymentFailResponse("ORDER-ABC", "FAILED", true);
+        BillingDTO.ResponseRecordPaymentFail failResponse =
+                new BillingDTO.ResponseRecordPaymentFail("ORDER-ABC", "FAILED", true);
         given(confirmService.recordFail(any(), any())).willReturn(failResponse);
 
-        ResponseEntity<ApiResponse<BillingDTO.RecordPaymentFailResponse>> response =
-                controller.recordPaymentFail(principal, new BillingDTO.RecordPaymentFailRequest(
+        ResponseEntity<ApiResponse<BillingDTO.ResponseRecordPaymentFail>> response =
+                controller.recordPaymentFail(principal, new BillingDTO.RequestRecordPaymentFail(
                         "ORDER-ABC", "document-coaching", "CARD_DECLINED", "카드 거절"));
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
-        BillingDTO.RecordPaymentFailResponse data = response.getBody().getData();
+        BillingDTO.ResponseRecordPaymentFail data = response.getBody().getData();
         assertThat(data.orderId()).isEqualTo("ORDER-ABC");
         assertThat(data.paymentStatus()).isEqualTo("FAILED");
         assertThat(data.retryable()).isTrue();
@@ -115,16 +115,16 @@ class UserBillingPaymentControllerContractTest {
     @DisplayName("GET /billing/payments/orders/{orderId} — 200, PaymentStatusResponse 필드 전체")
     void getOrderStatus_200_allFields() {
         ZonedDateTime paidAt = ZonedDateTime.now(KST);
-        BillingDTO.PaymentStatusResponse statusResponse = new BillingDTO.PaymentStatusResponse(
+        BillingDTO.ResponsePaymentStatus statusResponse = new BillingDTO.ResponsePaymentStatus(
                 "ORDER-ABC", "PAID", "document-coaching", "서류 AI 코칭",
                 29000, paidAt, null);
         given(queryService.getOrderStatus(any(), any())).willReturn(statusResponse);
 
-        ResponseEntity<ApiResponse<BillingDTO.PaymentStatusResponse>> response =
+        ResponseEntity<ApiResponse<BillingDTO.ResponsePaymentStatus>> response =
                 controller.getOrderStatus(principal, "ORDER-ABC");
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
-        BillingDTO.PaymentStatusResponse data = response.getBody().getData();
+        BillingDTO.ResponsePaymentStatus data = response.getBody().getData();
         assertThat(data.orderId()).isEqualTo("ORDER-ABC");
         assertThat(data.paymentStatus()).isEqualTo("PAID");
         assertThat(data.productCode()).isEqualTo("document-coaching");
@@ -139,15 +139,15 @@ class UserBillingPaymentControllerContractTest {
     void getOrderStatus_failed_withFailureDetail() {
         BillingDTO.PaymentFailureDetail failure = new BillingDTO.PaymentFailureDetail(
                 "CARD_DECLINED", "카드 승인이 거절되었습니다.", true);
-        BillingDTO.PaymentStatusResponse statusResponse = new BillingDTO.PaymentStatusResponse(
+        BillingDTO.ResponsePaymentStatus statusResponse = new BillingDTO.ResponsePaymentStatus(
                 "ORDER-FAIL", "FAILED", "interview", "AI 모의면접",
                 29000, null, failure);
         given(queryService.getOrderStatus(any(), any())).willReturn(statusResponse);
 
-        ResponseEntity<ApiResponse<BillingDTO.PaymentStatusResponse>> response =
+        ResponseEntity<ApiResponse<BillingDTO.ResponsePaymentStatus>> response =
                 controller.getOrderStatus(principal, "ORDER-FAIL");
 
-        BillingDTO.PaymentStatusResponse data = response.getBody().getData();
+        BillingDTO.ResponsePaymentStatus data = response.getBody().getData();
         assertThat(data.failure()).isNotNull();
         assertThat(data.failure().reasonCode()).isEqualTo("CARD_DECLINED");
         assertThat(data.failure().retryable()).isTrue();
@@ -159,12 +159,12 @@ class UserBillingPaymentControllerContractTest {
     void allEndpoints_responseMessage() {
         ZonedDateTime expiresAt = ZonedDateTime.now(KST).plusMinutes(30);
         given(checkoutService.createOrder(any(), any()))
-                .willReturn(new BillingDTO.CreateOrderResponse(
+                .willReturn(new BillingDTO.ResponseCreateOrder(
                         "O", "ik", "document-coaching", "코칭", 29000, "KRW", "MONTHLY",
                         "홍길동", "e@e.com", "ck", expiresAt));
 
-        ResponseEntity<ApiResponse<BillingDTO.CreateOrderResponse>> response =
-                controller.createOrder(principal, new BillingDTO.CreateOrderRequest("document-coaching", "http://localhost/success", "http://localhost/fail"));
+        ResponseEntity<ApiResponse<BillingDTO.ResponseCreateOrder>> response =
+                controller.createOrder(principal, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
 
         assertThat(response.getBody().getMessage()).isEqualTo("결제 주문이 생성되었습니다.");
     }

@@ -6,5 +6,5 @@ import java.util.UUID;
 
 public interface UserCheckoutOrderService {
 
-    BillingDTO.CreateOrderResponse createOrder(UUID memberId, BillingDTO.CreateOrderRequest request);
+    BillingDTO.ResponseCreateOrder createOrder(UUID memberId, BillingDTO.RequestCreateOrder request);
 }

@@ -1,5 +1,7 @@
 package kr.co.carrer.user.billing.util;
 
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,9 @@ public class AesCipher {
 
     public AesCipher(@Value("${toss.billing-key-encryption-key}") String base64Key) {
         byte[] keyBytes = Base64.getDecoder().decode(base64Key);
+        if (keyBytes.length != 32) {
+            throw new IllegalStateException("AES-256 key must be exactly 32 bytes, got " + keyBytes.length);
+        }
         this.secretKey = new SecretKeySpec(keyBytes, "AES");
     }
 
@@ -38,7 +43,7 @@ public class AesCipher {
             System.arraycopy(ciphertext, 0, combined, IV_LENGTH, ciphertext.length);
             return Base64.getEncoder().encodeToString(combined);
         } catch (Exception e) {
-            throw new IllegalStateException("billingKey 암호화 실패", e);
+            throw new CustomException(BillingErrorCode.BILLING_KEY_CIPHER_FAILED);
         }
     }
 
@@ -53,7 +58,7 @@ public class AesCipher {
             cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(TAG_LENGTH_BIT, iv));
             return new String(cipher.doFinal(ciphertext));
         } catch (Exception e) {
-            throw new IllegalStateException("billingKey 복호화 실패", e);
+            throw new CustomException(BillingErrorCode.BILLING_KEY_CIPHER_FAILED);
         }
     }
 }

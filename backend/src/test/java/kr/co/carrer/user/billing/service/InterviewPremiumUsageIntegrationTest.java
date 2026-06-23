@@ -8,7 +8,9 @@ import kr.co.carrer.user.billing.repository.MemberProductEntitlementRepository;
 import kr.co.carrer.user.billing.repository.ServiceUsageRecordRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionUsagePeriodRepository;
+import kr.co.carrer.user.billing.service.EntitlementService;
 import kr.co.carrer.user.billing.service.impl.EntitlementServiceImpl;
+import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.interview.client.InterviewFastApiClient;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
 import kr.co.carrer.user.interview.entity.InterviewSession;
@@ -66,6 +68,7 @@ class InterviewPremiumUsageIntegrationTest {
     private InterviewSessionServiceImpl sessionService;
     private InterviewCallbackServiceImpl callbackService;
     private InterviewTimeoutServiceImpl timeoutService;
+    private EntitlementService entitlementService;
     private SubscriptionUsagePeriod period;
     private InterviewSession session;
     private UUID memberId;
@@ -112,7 +115,7 @@ class InterviewPremiumUsageIntegrationTest {
             @Override public boolean isEligibleForBilling(java.util.UUID id) { return true; }
             @Override public BillingMemberPort.MemberBillingInfo getMemberBillingInfo(java.util.UUID id) { return null; }
         };
-        EntitlementService entitlementService = new EntitlementServiceImpl(
+        entitlementService = new EntitlementServiceImpl(
                 entitlementRepository, usageRecordRepository, memberPort,
                 subscriptionRepository, usagePeriodRepository);
         sessionService = new InterviewSessionServiceImpl(
@@ -120,7 +123,7 @@ class InterviewPremiumUsageIntegrationTest {
         callbackService = new InterviewCallbackServiceImpl(
                 sessionRepository, feedbackRepository, careerHistoryRepository,
                 messageRepository, messagingTemplate, entitlementService);
-        timeoutService = new InterviewTimeoutServiceImpl(sessionRepository, entitlementService);
+        timeoutService = new InterviewTimeoutServiceImpl(sessionRepository);
 
         session = InterviewSession.create(
                 memberId, null, SessionType.TEXT, InterviewType.TECHNICAL, null);
@@ -157,9 +160,12 @@ class InterviewPremiumUsageIntegrationTest {
     void interviewPremium_timeoutReleasesMonthlyUsage() {
         sessionService.startSession(memberId,
                 new InterviewDTO.RequestStartSession(null, "TEXT", "TECHNICAL", null));
+        assertThat(period.getReservedCount()).isEqualTo(1);
         when(sessionRepository.findBySessionIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 
+        // 스케줄러 2단계 처리: 1) 세션 FAILED 처리, 2) 이용권 release (별도 트랜잭션)
         timeoutService.failTimedOutSession(sessionId, ZonedDateTime.now());
+        entitlementService.release(ResourceType.INTERVIEW_SESSION, sessionId);
 
         assertThat(session.getSessionStatus()).isEqualTo(SessionStatus.FAILED);
         assertThat(period.getReservedCount()).isZero();

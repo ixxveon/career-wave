@@ -37,7 +37,7 @@ public class UserOrderQueryServiceImpl implements UserOrderQueryService {
 
     @Override
     @Transactional(readOnly = true)
-    public BillingDTO.PaymentStatusResponse getOrderStatus(UUID memberId, String orderId) {
+    public BillingDTO.ResponsePaymentStatus getOrderStatus(UUID memberId, String orderId) {
         UserPayment payment = userPaymentRepository
                 .findByOrderIdAndMemberId(orderId, memberId)
                 .orElseThrow(() -> new CustomException(BillingErrorCode.BILLING_ORDER_NOT_FOUND));
@@ -57,7 +57,7 @@ public class UserOrderQueryServiceImpl implements UserOrderQueryService {
             );
         }
 
-        return new BillingDTO.PaymentStatusResponse(
+        return new BillingDTO.ResponsePaymentStatus(
                 payment.getOrderId(),
                 FE_STATUS_MAP.getOrDefault(payment.getPaymentStatus(), "FAILED"),
                 payment.getProductCode(),
