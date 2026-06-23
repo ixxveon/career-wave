@@ -12,6 +12,8 @@ import kr.co.carrer.user.interview.repository.InterviewMessageRepository;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import kr.co.carrer.user.interview.service.InterviewSessionService;
 import kr.co.carrer.user.interview.type.InterviewType;
+import kr.co.carrer.user.interview.type.MessageSender;
+import kr.co.carrer.user.interview.type.MessageType;
 import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
 import kr.co.carrer.user.resume.entity.Document;
@@ -61,18 +63,22 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
 
         entitlementService.reserve(memberId, "interview", ResourceType.INTERVIEW_SESSION, saved.getSessionId());
 
-        if (documentId != null) {
-            UUID sessionId = saved.getSessionId();
-            UUID finalDocumentId = documentId;
-            String finalFileUrl = fileUrl;
-            if (TransactionSynchronizationManager.isSynchronizationActive()) {
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
+        UUID sessionId = saved.getSessionId();
+        String finalSessionType = sessionType.name();
+        String finalInterviewType = interviewType != null ? interviewType.name() : null;
+        UUID finalDocumentId = documentId;
+        String finalFileUrl = fileUrl;
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    if (finalDocumentId != null) {
                         fastApiClient.triggerRagContext(sessionId, memberId, finalDocumentId, finalFileUrl);
                     }
-                });
-            }
+                    fastApiClient.triggerLlmPipeline(sessionId, memberId, 0, "", "", finalSessionType, finalInterviewType);
+                }
+            });
         }
 
         return new InterviewDTO.ResponseStartSession(
@@ -106,12 +112,16 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         String answerText = dto.messageContent();
         String sessionType = session.getSessionType().name();
         String interviewType = session.getInterviewType() != null ? session.getInterviewType().name() : null;
+        String questionText = messageRepository
+                .findTopBySessionIdAndSenderAndMessageTypeOrderByCreatedAtDesc(sessionId, MessageSender.AI, MessageType.QUESTION)
+                .map(InterviewMessage::getMessageContent)
+                .orElse("");
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    fastApiClient.triggerLlmPipeline(sessionId, memberId, questionOrder, answerText, sessionType, interviewType);
+                    fastApiClient.triggerLlmPipeline(sessionId, memberId, questionOrder, answerText, questionText, sessionType, interviewType);
                 }
             });
         }
@@ -146,7 +156,9 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
             throw new CustomException(InterviewErrorCode.INTERVIEW_INVALID_AUDIO_FORMAT);
         }
         String contentType = audioChunk.getContentType();
-        if (contentType == null || !ALLOWED_AUDIO_TYPES.contains(contentType)) {
+        boolean allowed = contentType != null && ALLOWED_AUDIO_TYPES.stream()
+                .anyMatch(contentType::startsWith);
+        if (!allowed) {
             throw new CustomException(InterviewErrorCode.INTERVIEW_INVALID_AUDIO_FORMAT);
         }
     }
