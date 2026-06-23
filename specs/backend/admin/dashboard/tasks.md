@@ -5,11 +5,11 @@
 
 ## Phase 1 - Query
 
-- [ ] `DashboardRangeType`, `DashboardKpiKeyType`, `DashboardSeverityType`, `DashboardAlertLevelType`, `DashboardDomainType`, `DashboardSystemStatusType`, `DashboardPaymentMethod` Enum 계약을 정의한다.
-- [ ] `DashboardDTO` 조회 응답 구조 초안을 작성한다.
-- [ ] `DashboardSummaryQueryRepository` 인터페이스를 작성한다.
-- [ ] 관리자 계정, 감사 로그, AI 사용량, RAG 문서, 스크래핑 상태 집계용 Query 메서드 시그니처를 분리한다.
-- [ ] `range=TODAY|7D|30D` 기준 시간 윈도우 변환 규칙을 Query 계층 입력 규약으로 정리한다.
+- [x] `DashboardRangeType`, `DashboardKpiKeyType`, `DashboardSeverityType`, `DashboardAlertLevelType`, `DashboardDomainType`, `DashboardSystemStatusType`, `DashboardPaymentMethod` Enum 계약을 정의한다.
+- [x] `DashboardDTO` 조회 응답 구조 초안을 작성한다.
+- [x] `DashboardSummaryQueryRepository` 인터페이스를 작성한다.
+- [x] 관리자 계정, 감사 로그, AI 사용량, RAG 문서, 스크래핑 상태 집계용 Query 메서드 시그니처를 분리한다.
+- [x] `range=TODAY|7D|30D` 기준 시간 윈도우 변환 규칙을 Query 계층 입력 규약으로 정리한다.
 
 ## Phase 2 - Service
 
