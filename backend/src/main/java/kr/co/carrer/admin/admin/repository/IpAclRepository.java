@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface IpAclRepository extends JpaRepository<IpAcl, Long> {
 
     boolean existsByIpRange(String ipRange);
+
+    long countByIsEnabledTrue();
 }

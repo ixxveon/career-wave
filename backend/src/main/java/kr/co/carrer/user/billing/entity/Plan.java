@@ -3,6 +3,7 @@ package kr.co.carrer.user.billing.entity;
 import jakarta.persistence.*;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
+import kr.co.carrer.user.billing.type.ProductCode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -72,6 +73,9 @@ public class Plan {
                 || planPrice < 0 || monthlyUsageLimit <= 0
                 || currency == null || currency.isBlank()
                 || billingCycle == null || billingCycle.isBlank()) {
+            throw new CustomException(BillingErrorCode.PRODUCT_INVALID_PARAM);
+        }
+        if (ProductCode.fromCode(productCode).isEmpty()) {
             throw new CustomException(BillingErrorCode.PRODUCT_INVALID_PARAM);
         }
 

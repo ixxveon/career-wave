@@ -21,7 +21,7 @@ public interface EntitlementService {
 
     /**
      * 서비스 실패/취소 시 호출 — 이용권 AVAILABLE 복원 + ServiceUsageRecord RELEASED 전이.
-     * 멱등 보장: 이미 RELEASED 또는 레코드 없으면 무시.
+     * 멱등 보장: 이미 RELEASED 또는 레코드 없으면 무시. CONSUMED 상태에서는 예외.
      */
     void release(ResourceType resourceType, UUID resourceId);
 }

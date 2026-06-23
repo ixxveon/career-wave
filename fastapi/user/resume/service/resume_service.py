@@ -34,6 +34,10 @@ def _get_openai_client() -> AsyncOpenAI:
     return AsyncOpenAI(api_key=get_settings().openai_api_key)
 
 
+# 동시 분석 요청 수 제한 — OpenAI API 과부하 방지
+_ANALYSIS_SEMAPHORE = asyncio.Semaphore(10)
+
+
 _ERROR_MESSAGES = {
     "parse_failed": "파일을 읽을 수 없습니다. PDF 또는 DOCX 형식인지 확인해 주세요.",
     "ai_timeout": "AI 분석 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.",
@@ -65,10 +69,11 @@ async def analyze_document(request: AnalyzeDocumentRequest) -> None:
     await _send_webhook_safe(document_id, {"documentId": document_id, "status": "PENDING"})
 
     try:
-        if request.file_type == "RESUME":
-            await _analyze_resume(document_id, request)
-        else:
-            await _analyze_cover_letter(document_id, request)
+        async with _ANALYSIS_SEMAPHORE:
+            if request.file_type == "RESUME":
+                await _analyze_resume(document_id, request)
+            else:
+                await _analyze_cover_letter(document_id, request)
     except FileParseError as e:
         logger.error(f"[{document_id}] File parse failed: {e.user_message}", exc_info=True)
         await _send_webhook_safe(document_id, _failed_payload(document_id, e.user_message))

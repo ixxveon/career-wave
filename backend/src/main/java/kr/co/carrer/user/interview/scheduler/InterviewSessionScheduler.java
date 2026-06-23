@@ -1,5 +1,7 @@
 package kr.co.carrer.user.interview.scheduler;
 
+import kr.co.carrer.user.billing.service.EntitlementService;
+import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.interview.entity.InterviewSession;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import kr.co.carrer.user.interview.service.InterviewTimeoutService;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Component;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -20,6 +23,7 @@ public class InterviewSessionScheduler {
 
     private final InterviewSessionRepository sessionRepository;
     private final InterviewTimeoutService interviewTimeoutService;
+    private final EntitlementService entitlementService;
 
     // 1시간 주기: started_at < 24시간 전 AND updated_at < 5분 전인 IN_PROGRESS 세션을 FAILED로 전이
     @Scheduled(cron = "0 0 * * * *")
@@ -32,11 +36,17 @@ public class InterviewSessionScheduler {
         List<InterviewSession> timedOut = sessionRepository.findTimedOutSessions(cutoff, recentCutoff, SessionStatus.IN_PROGRESS);
         int successCount = 0;
         for (InterviewSession session : timedOut) {
+            UUID sessionId = session.getSessionId();
             try {
-                interviewTimeoutService.failTimedOutSession(session.getSessionId(), now);
+                interviewTimeoutService.failTimedOutSession(sessionId, now);
                 successCount++;
             } catch (RuntimeException e) {
-                log.error("Timed out session processing failed: sessionId={}", session.getSessionId(), e);
+                log.error("Timed out session processing failed: sessionId={}", sessionId, e);
+            }
+            try {
+                entitlementService.release(ResourceType.INTERVIEW_SESSION, sessionId);
+            } catch (RuntimeException e) {
+                log.warn("Entitlement release failed for timed-out session: sessionId={}", sessionId, e);
             }
         }
 

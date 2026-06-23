@@ -26,6 +26,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.lang.reflect.Field;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -60,7 +61,7 @@ class InterviewFreeEntitlementIntegrationTest {
                 sessionRepository, messageRepository, documentRepository, fastApiClient, entitlementService);
         callbackService = new InterviewCallbackServiceImpl(
                 sessionRepository, feedbackRepository, careerHistoryRepository, messageRepository, messagingTemplate, entitlementService);
-        scheduler = new InterviewSessionScheduler(sessionRepository, interviewTimeoutService);
+        scheduler = new InterviewSessionScheduler(sessionRepository, interviewTimeoutService, entitlementService);
 
         memberId = UUID.randomUUID();
         sessionId = UUID.randomUUID();
@@ -124,12 +125,12 @@ class InterviewFreeEntitlementIntegrationTest {
     }
 
     @Nested
-    @DisplayName("failTimedOutSessions — release 호출")
+    @DisplayName("failTimedOutSessions — 세션별 독립 처리")
     class Scheduler {
 
         @Test
-        @DisplayName("타임아웃 세션마다 release 호출")
-        void failTimedOutSessions_callsReleaseForEach() {
+        @DisplayName("타임아웃 세션마다 processor.process 호출")
+        void failTimedOutSessions_callsProcessorForEach() {
             UUID id1 = UUID.randomUUID();
             UUID id2 = UUID.randomUUID();
             InterviewSession session1 = buildSession(id1, memberId);
@@ -145,8 +146,8 @@ class InterviewFreeEntitlementIntegrationTest {
         }
 
         @Test
-        @DisplayName("타임아웃 세션 없으면 release 미호출")
-        void failTimedOutSessions_noTimedOut_noRelease() {
+        @DisplayName("타임아웃 세션 없으면 processor 미호출")
+        void failTimedOutSessions_noTimedOut_noProcess() {
             when(sessionRepository.findTimedOutSessions(any(), any(), eq(SessionStatus.IN_PROGRESS)))
                     .thenReturn(List.of());
 

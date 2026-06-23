@@ -14,13 +14,16 @@ class _RecordingScrapingPipelineRepository:
         running_result: ScrapingPipelineRecord | None = None,
         success_result: ScrapingPipelineRecord | None = None,
         failed_result: ScrapingPipelineRecord | None = None,
+        pipeline_status_result: str | None = None,
     ) -> None:
         self.running_result = running_result
         self.success_result = success_result
         self.failed_result = failed_result
+        self.pipeline_status_result = pipeline_status_result
         self.running_calls: list[dict] = []
         self.success_calls: list[dict] = []
         self.failed_calls: list[dict] = []
+        self.find_status_calls: list[dict] = []
 
     def mark_running(self, source_name: str, started_at: datetime) -> ScrapingPipelineRecord | None:
         self.running_calls.append(
@@ -64,6 +67,10 @@ class _RecordingScrapingPipelineRepository:
             }
         )
         return self.failed_result
+
+    def find_status_by_source_name(self, source_name: str) -> str | None:
+        self.find_status_calls.append({"source_name": source_name})
+        return self.pipeline_status_result
 
 
 def _pipeline_record(*, source_name: str, pipeline_status: str) -> ScrapingPipelineRecord:

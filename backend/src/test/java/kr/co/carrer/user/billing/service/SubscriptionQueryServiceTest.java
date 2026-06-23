@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -48,7 +49,7 @@ class SubscriptionQueryServiceTest {
     void getProducts_contract() {
         Plan document = plan(1L, "document-coaching", "서류 AI 코칭", 29000, 30);
         Plan interview = plan(2L, "interview", "AI 모의면접", 29000, 20);
-        when(planRepository.findAllByOrderByPlanIdAsc()).thenReturn(List.of(document, interview));
+        when(planRepository.findAllByIsActiveTrueOrderByPlanIdAsc()).thenReturn(List.of(document, interview));
 
         List<BillingDTO.ProductItem> products = service.getProducts();
 
@@ -138,11 +139,11 @@ class SubscriptionQueryServiceTest {
         period.reserve();
         period.consume();
 
-        when(planRepository.findAll()).thenReturn(List.of(interview));
+        when(planRepository.findAllById(anyList())).thenReturn(List.of(interview));
         when(subscriptionRepository.findAllByMemberIdOrderByCreatedAtDesc(memberId))
                 .thenReturn(List.of(subscription));
-        when(usagePeriodRepository.findCurrentPeriod(eq(subscriptionId), any()))
-                .thenReturn(Optional.of(period));
+        when(usagePeriodRepository.findCurrentPeriodsForSubscriptions(anyList(), any()))
+                .thenReturn(List.of(period));
 
         BillingDTO.UsageItem usage = service.getMyUsages(memberId).usages().get(0);
 

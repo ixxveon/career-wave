@@ -116,10 +116,13 @@ class SubscriptionUsageConcurrencyTest extends PostgreSqlTestContainerSupport {
 
         ready.await();
         start.countDown();
-        for (Future<?> future : futures) {
-            future.get();
+        try {
+            for (Future<?> future : futures) {
+                future.get();
+            }
+        } finally {
+            executor.shutdown();
         }
-        executor.shutdown();
         return new CompetitionResult(success.get(), limitExceeded.get());
     }
 
