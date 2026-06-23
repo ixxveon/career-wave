@@ -44,4 +44,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     @Query("SELECT s FROM Subscription s WHERE s.subscriptionStatus = :status " +
            "AND s.paymentFailedAt IS NOT NULL AND s.autoRenew = true")
     List<Subscription> findPaymentFailedSubscriptions(@Param("status") SubscriptionStatus status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM Subscription s WHERE s.subscriptionId = :subscriptionId")
+    Optional<Subscription> findBySubscriptionIdForUpdate(@Param("subscriptionId") UUID subscriptionId);
 }
