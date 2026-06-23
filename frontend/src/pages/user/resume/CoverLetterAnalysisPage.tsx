@@ -1,8 +1,8 @@
-import { Send, AlertCircle, WifiOff, Zap } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Send, AlertCircle, WifiOff } from 'lucide-react';
 import CoverLetterForm from '../../../components/user/resume/CoverLetterForm';
 import LoadingModal from '../../../components/user/resume/LoadingModal';
 import QuotaBar from '../../../components/user/resume/QuotaBar';
+import QuotaExhaustedBanner from '../../../components/user/resume/QuotaExhaustedBanner';
 import DocumentResultView from './DocumentResultView';
 import { useCoverLetterForm } from '../../../hooks/user/resume/useCoverLetterForm';
 import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
@@ -19,7 +19,6 @@ export default function CoverLetterAnalysisPage() {
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  const navigate = useNavigate();
   const { data: quota } = useResumeQuota();
   const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
 
@@ -64,22 +63,7 @@ export default function CoverLetterAnalysisPage() {
       <div className="cl-input-wrap">
         <QuotaBar />
 
-        {isExhausted && (
-          <div className="ra-quota-banner">
-            <Zap size={18} className="ra-quota-banner__icon" />
-            <div className="ra-quota-banner__body">
-              <strong>이번 달 분석 한도를 모두 사용했어요</strong>
-              <p>요금제를 업그레이드하면 더 많은 서류를 분석할 수 있어요.</p>
-            </div>
-            <button
-              type="button"
-              className="ra-quota-banner__cta"
-              onClick={() => navigate('/billing/checkout?product=document-coaching')}
-            >
-              업그레이드
-            </button>
-          </div>
-        )}
+        {isExhausted && <QuotaExhaustedBanner />}
 
         <span className="cl-eyebrow">COVER LETTER AI</span>
         <h1 className="cl-input__title">자기소개서 AI 분석</h1>

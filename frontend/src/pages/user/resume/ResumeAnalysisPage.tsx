@@ -1,8 +1,8 @@
-import { Upload, AlertCircle, WifiOff, Zap } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Upload, AlertCircle, WifiOff } from 'lucide-react';
 import ResumeUpload from '../../../components/user/resume/ResumeUpload';
 import LoadingModal from '../../../components/user/resume/LoadingModal';
 import QuotaBar from '../../../components/user/resume/QuotaBar';
+import QuotaExhaustedBanner from '../../../components/user/resume/QuotaExhaustedBanner';
 import DocumentResultView from './DocumentResultView';
 import { useResumeUpload } from '../../../hooks/user/resume/useResumeUpload';
 import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
@@ -18,7 +18,6 @@ export default function ResumeAnalysisPage() {
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  const navigate = useNavigate();
   const { data: quota } = useResumeQuota();
   const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
 
@@ -61,22 +60,7 @@ export default function ResumeAnalysisPage() {
       <div className="ra-upload-wrap">
         <QuotaBar />
 
-        {isExhausted && (
-          <div className="ra-quota-banner">
-            <Zap size={18} className="ra-quota-banner__icon" />
-            <div className="ra-quota-banner__body">
-              <strong>이번 달 분석 한도를 모두 사용했어요</strong>
-              <p>요금제를 업그레이드하면 더 많은 서류를 분석할 수 있어요.</p>
-            </div>
-            <button
-              type="button"
-              className="ra-quota-banner__cta"
-              onClick={() => navigate('/billing/checkout?product=document-coaching')}
-            >
-              업그레이드
-            </button>
-          </div>
-        )}
+        {isExhausted && <QuotaExhaustedBanner />}
 
         <span className="ra-eyebrow">RESUME ANALYSIS</span>
         <h1 className="ra-upload__title">이력서 AI 분석</h1>
