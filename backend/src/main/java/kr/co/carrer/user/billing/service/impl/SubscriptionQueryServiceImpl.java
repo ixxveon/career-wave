@@ -34,7 +34,7 @@ public class SubscriptionQueryServiceImpl implements SubscriptionQueryService {
     @Override
     @Transactional(readOnly = true)
     public List<BillingDTO.ProductItem> getProducts() {
-        return planRepository.findAllByOrderByPlanIdAsc().stream()
+        return planRepository.findAllByIsActiveTrueOrderByPlanIdAsc().stream()
                 .filter(plan -> ProductCode.fromCode(plan.getProductCode()).isPresent())
                 .map(this::toProductItem)
                 .toList();
@@ -68,20 +68,38 @@ public class SubscriptionQueryServiceImpl implements SubscriptionQueryService {
     @Transactional(readOnly = true)
     public BillingDTO.ResponseUsageList getMyUsages(UUID memberId) {
         ZonedDateTime now = ZonedDateTime.now(KST);
-        Map<Long, Plan> plans = planRepository.findAll().stream()
+
+        List<Subscription> subscriptions =
+                subscriptionRepository.findAllByMemberIdOrderByCreatedAtDesc(memberId);
+        Map<Long, Plan> plans = planRepository.findAllById(
+                        subscriptions.stream()
+                                .map(Subscription::getPlanId)
+                                .distinct()
+                                .toList()
+                ).stream()
                 .collect(Collectors.toMap(Plan::getPlanId, Function.identity()));
 
-        List<BillingDTO.UsageItem> usages =
-                subscriptionRepository.findAllByMemberIdOrderByCreatedAtDesc(memberId).stream()
-                        .filter(subscription -> plans.containsKey(subscription.getPlanId()))
-                        .filter(subscription -> ProductCode.fromCode(
-                                plans.get(subscription.getPlanId()).getProductCode()).isPresent())
-                        .map(subscription -> usagePeriodRepository
-                                .findCurrentPeriod(subscription.getSubscriptionId(), now)
-                                .map(period -> toUsageItem(period,
-                                        ProductCode.fromCode(period.getProductCode()).orElseThrow())))
-                        .flatMap(java.util.Optional::stream)
-                        .toList();
+        List<Subscription> filtered = subscriptions.stream()
+                .filter(s -> plans.containsKey(s.getPlanId()))
+                .filter(s -> ProductCode.fromCode(plans.get(s.getPlanId()).getProductCode()).isPresent())
+                .toList();
+
+        List<UUID> subscriptionIds = filtered.stream()
+                .map(Subscription::getSubscriptionId)
+                .toList();
+        Map<UUID, SubscriptionUsagePeriod> periodMap = usagePeriodRepository
+                .findCurrentPeriodsForSubscriptions(subscriptionIds, now)
+                .stream()
+                .collect(Collectors.toMap(SubscriptionUsagePeriod::getSubscriptionId, Function.identity()));
+
+        List<BillingDTO.UsageItem> usages = filtered.stream()
+                .filter(s -> periodMap.containsKey(s.getSubscriptionId()))
+                .map(s -> {
+                    SubscriptionUsagePeriod period = periodMap.get(s.getSubscriptionId());
+                    ProductCode product = ProductCode.fromCode(plans.get(s.getPlanId()).getProductCode()).orElseThrow();
+                    return toUsageItem(period, product);
+                })
+                .toList();
 
         return new BillingDTO.ResponseUsageList(usages);
     }

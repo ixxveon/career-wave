@@ -65,6 +65,16 @@ public class EntitlementServiceImpl implements EntitlementService {
                 .findByMemberIdAndProductCodeForUpdate(memberId, productCode)
                 .orElseThrow(() -> new CustomException(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
 
+        // 잠금 획득 후 멱등 재확인 — 동시 요청이 pre-check 통과 후 먼저 삽입한 경우 방어
+        Optional<ServiceUsageRecord> reCheck =
+                usageRecordRepository.findByResourceTypeAndResourceId(resourceType, resourceId);
+        if (reCheck.isPresent()) {
+            if (reCheck.get().getUsageStatus() == UsageStatus.RESERVED) {
+                throw new CustomException(BillingErrorCode.SERVICE_USAGE_ALREADY_RESERVED);
+            }
+            return;
+        }
+
         if (entitlement.getPlanType() == PlanType.PREMIUM) {
             reserveSubscription(memberId, productCode, resourceType, resourceId, entitlement);
             return;
@@ -115,22 +125,14 @@ public class EntitlementServiceImpl implements EntitlementService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public boolean isConsumable(ResourceType resourceType, UUID resourceId) {
-        return usageRecordRepository
-                .findByResourceTypeAndResourceId(resourceType, resourceId)
-                .map(r -> r.getUsageStatus() == UsageStatus.RESERVED)
-                .orElse(false);
-    }
-
-    @Override
     @Transactional
     public void release(ResourceType resourceType, UUID resourceId) {
         Optional<ServiceUsageRecord> opt =
                 usageRecordRepository.findByResourceTypeAndResourceIdForUpdate(resourceType, resourceId);
 
         if (opt.isEmpty()) {
-            throw new CustomException(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
+            log.debug("[EntitlementService] release 무시 — 레코드 없음: resourceType={}, resourceId={}", resourceType, resourceId);
+            return;
         }
 
         ServiceUsageRecord record = opt.get();

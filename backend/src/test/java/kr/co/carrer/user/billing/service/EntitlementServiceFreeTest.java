@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -274,15 +275,13 @@ class EntitlementServiceFreeTest {
         }
 
         @Test
-        @DisplayName("UsageRecord 없음 — SERVICE_USAGE_NOT_RESERVED 예외")
-        void release_noRecord_throws() {
+        @DisplayName("UsageRecord 없음 — 조용히 무시 (멱등)")
+        void release_noRecord_ignored() {
             when(usageRecordRepository.findByResourceTypeAndResourceIdForUpdate(ResourceType.DOCUMENT, resourceId))
                     .thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.release(ResourceType.DOCUMENT, resourceId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting(e -> ((CustomException) e).getErrorCode())
-                    .isEqualTo(BillingErrorCode.SERVICE_USAGE_NOT_RESERVED);
+            assertThatCode(() -> service.release(ResourceType.DOCUMENT, resourceId))
+                    .doesNotThrowAnyException();
         }
 
         @Test

@@ -3,6 +3,7 @@ package kr.co.carrer.user.resume.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.global.s3.S3Uploader;
 import kr.co.carrer.user.billing.service.EntitlementService;
@@ -228,7 +229,15 @@ public class ResumeServiceImpl implements ResumeService {
             );
             documentFeedbackRepository.save(feedback);
             document.updateStatus(DocumentStatus.COMPLETED);
-            entitlementService.consume(ResourceType.DOCUMENT, documentId);
+            try {
+                entitlementService.consume(ResourceType.DOCUMENT, documentId);
+            } catch (CustomException e) {
+                if (e.getErrorCode() == BillingErrorCode.SERVICE_USAGE_NOT_RESERVED) {
+                    log.warn("Document consume skipped — no reserved record: documentId={}", documentId);
+                } else {
+                    throw e;
+                }
+            }
         } else if ("FAILED".equals(dto.status())) {
             document.markFailed(dto.errorMessage());
             entitlementService.release(ResourceType.DOCUMENT, documentId);

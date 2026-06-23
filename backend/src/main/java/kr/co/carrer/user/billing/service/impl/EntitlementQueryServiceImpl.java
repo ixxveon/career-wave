@@ -114,7 +114,7 @@ public class EntitlementQueryServiceImpl implements EntitlementQueryService {
                 period.getLimitCount(),
                 period.getUsedCount(),
                 period.getReservedCount(),
-                Math.max(0, period.remaining()),
+                period.remaining(),
                 period.getPeriodEnd()
         );
     }

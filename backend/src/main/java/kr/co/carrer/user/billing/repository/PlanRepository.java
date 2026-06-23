@@ -12,5 +12,5 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
 
     Optional<Plan> findByProductCodeAndIsActive(String productCode, boolean isActive);
 
-    List<Plan> findAllByOrderByPlanIdAsc();
+    List<Plan> findAllByIsActiveTrueOrderByPlanIdAsc();
 }

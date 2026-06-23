@@ -61,7 +61,7 @@ class InterviewFreeEntitlementIntegrationTest {
                 sessionRepository, messageRepository, documentRepository, fastApiClient, entitlementService);
         callbackService = new InterviewCallbackServiceImpl(
                 sessionRepository, feedbackRepository, careerHistoryRepository, messageRepository, messagingTemplate, entitlementService);
-        scheduler = new InterviewSessionScheduler(sessionRepository, interviewTimeoutService);
+        scheduler = new InterviewSessionScheduler(sessionRepository, interviewTimeoutService, entitlementService);
 
         memberId = UUID.randomUUID();
         sessionId = UUID.randomUUID();
@@ -107,7 +107,6 @@ class InterviewFreeEntitlementIntegrationTest {
             when(feedbackRepository.existsBySessionId(sessionId)).thenReturn(false);
             when(feedbackRepository.saveAll(any())).thenReturn(List.of());
             when(careerHistoryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(entitlementService.isConsumable(ResourceType.INTERVIEW_SESSION, sessionId)).thenReturn(true);
 
             callbackService.processReportCallback(sessionId, buildReportCallback());
 

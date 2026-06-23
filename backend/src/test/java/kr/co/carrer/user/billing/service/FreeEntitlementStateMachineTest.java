@@ -119,8 +119,9 @@ class FreeEntitlementStateMachineTest {
                 memberId, "interview", ResourceType.INTERVIEW_SESSION, resourceId);
 
         when(usageRecordRepository.findByResourceTypeAndResourceId(ResourceType.INTERVIEW_SESSION, resourceId))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(alreadyReserved)); // 두 번째는 RESERVED record 있음
+                .thenReturn(Optional.empty())   // 첫 번째 예약: pre-check
+                .thenReturn(Optional.empty())   // 첫 번째 예약: lock 후 재확인
+                .thenReturn(Optional.of(alreadyReserved)); // 두 번째 예약: pre-check → 즉시 거부
 
         // 첫 번째: 성공
         service.reserve(memberId, "interview", ResourceType.INTERVIEW_SESSION, resourceId);
