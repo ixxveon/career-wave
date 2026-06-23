@@ -648,17 +648,3 @@
 
 .ra-quota-banner__cta:hover { background: #4338ca; }
 
-/* QuotaBar 업그레이드 버튼 */
-.qb__upgrade-btn {
-  padding: 2px 10px;
-  border-radius: 999px;
-  border: none;
-  background: linear-gradient(90deg, #4f46e5, #7c3aed);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.qb__upgrade-btn:hover { opacity: 0.85; }
