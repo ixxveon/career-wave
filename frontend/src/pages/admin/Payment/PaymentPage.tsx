@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   CreditCard,
   CheckCircle2,
@@ -106,7 +107,9 @@ interface Toast { id: number; msg: string; type: 'success' | 'error'; }
 // ── Main Component ────────────────────────────────────────────
 
 export default function PaymentPage() {
-  const [tab, setTab] = useState<PayTab>('결제 내역');
+  const [searchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as PayTab) ?? '결제 내역';
+  const [tab, setTab] = useState<PayTab>(initialTab);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
 
