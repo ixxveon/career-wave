@@ -2,6 +2,7 @@ import { Send, AlertCircle, WifiOff } from 'lucide-react';
 import CoverLetterForm from '../../../components/user/resume/CoverLetterForm';
 import LoadingModal from '../../../components/user/resume/LoadingModal';
 import QuotaBar from '../../../components/user/resume/QuotaBar';
+import QuotaExhaustedBanner from '../../../components/user/resume/QuotaExhaustedBanner';
 import DocumentResultView from './DocumentResultView';
 import { useCoverLetterForm } from '../../../hooks/user/resume/useCoverLetterForm';
 import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
@@ -61,6 +62,8 @@ export default function CoverLetterAnalysisPage() {
 
       <div className="cl-input-wrap">
         <QuotaBar />
+
+        {isExhausted && <QuotaExhaustedBanner />}
 
         <span className="cl-eyebrow">COVER LETTER AI</span>
         <h1 className="cl-input__title">자기소개서 AI 분석</h1>
