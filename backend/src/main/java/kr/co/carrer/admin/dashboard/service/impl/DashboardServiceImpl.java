@@ -24,7 +24,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
+@Service("adminDashboardServiceImpl")
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
