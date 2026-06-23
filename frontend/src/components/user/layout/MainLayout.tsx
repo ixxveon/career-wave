@@ -1,9 +1,12 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import './MainLayout.css';
 
 function MainLayout() {
+  const { pathname } = useLocation();
+  const hideFooter = pathname.startsWith('/interview');
+
   return (
     <>
       <div className="cw-app-layout">
@@ -12,7 +15,7 @@ function MainLayout() {
           <Outlet />
         </main>
       </div>
-      <Footer />
+      {!hideFooter && <Footer />}
     </>
   );
 }

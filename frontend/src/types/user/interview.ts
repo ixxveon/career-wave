@@ -37,10 +37,13 @@ export const SPRING_WS_SYSTEM_SUBTYPE = {
 export type SpringWSSystemSubType = typeof SPRING_WS_SYSTEM_SUBTYPE[keyof typeof SPRING_WS_SYSTEM_SUBTYPE];
 
 export const FASTAPI_WS_MESSAGE_TYPE = {
-  STT_RESULT: 'STT_RESULT',
-  LLM_STREAM: 'LLM_STREAM',
-  TTS_AUDIO:  'TTS_AUDIO',
-  ERROR:      'ERROR',
+  STT_RESULT:    'STT_RESULT',
+  STT_FINAL:     'STT_FINAL',
+  STT_PARTIAL:   'STT_PARTIAL',
+  LLM_STREAM:    'LLM_STREAM',
+  TTS_AUDIO:     'TTS_AUDIO',
+  TTS_AUDIO_END: 'TTS_AUDIO_END',
+  ERROR:         'ERROR',
 } as const;
 
 // ── 타입 별칭 ──────────────────────────────────────────────────────

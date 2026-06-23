@@ -77,7 +77,7 @@
 
 ## Phase 11 - 실행 로그 기록
 
-- [ ] `scraping_log_service.py`를 작성한다.
+- [x] `scraping_log_service.py`를 작성한다.
 - [ ] 성공 실행 로그 기록 로직을 작성한다.
 - [ ] 실패 실행 로그 기록 로직을 작성한다.
 - [ ] TEST 액션 로그 기록 로직을 작성한다.
@@ -85,37 +85,37 @@
 
 ## Phase 12 - Router
 
-- [ ] `scraping_router.py`를 작성한다.
-- [ ] `GET /internal/scraping/pipelines` Router를 작성한다.
-- [ ] `GET /internal/scraping/pipelines/summary` Router를 작성한다.
-- [ ] `GET /internal/scraping/pipelines/{sourceName}` Router를 작성한다.
-- [ ] `GET /internal/scraping/logs` Router를 작성한다.
-- [ ] `POST /internal/scraping/pipelines/{sourceName}/run` Router를 작성한다.
-- [ ] `POST /internal/scraping/pipelines/{sourceName}/retry` Router를 작성한다.
-- [ ] `POST /internal/scraping/pipelines/{sourceName}/test` Router를 작성한다.
-- [ ] `POST /internal/scraping/pipelines/batch-run` Router를 작성한다.
+- [x] `scraping_router.py`를 작성한다.
+- [x] `GET /internal/scraping/pipelines` Router를 작성한다.
+- [x] `GET /internal/scraping/pipelines/summary` Router를 작성한다.
+- [x] `GET /internal/scraping/pipelines/{sourceName}` Router를 작성한다.
+- [x] `GET /internal/scraping/logs` Router를 작성한다.
+- [x] `POST /internal/scraping/pipelines/{sourceName}/run` Router를 작성한다.
+- [x] `POST /internal/scraping/pipelines/{sourceName}/retry` Router를 작성한다.
+- [x] `POST /internal/scraping/pipelines/{sourceName}/test` Router를 작성한다.
+- [x] `POST /internal/scraping/pipelines/batch-run` Router를 작성한다.
 
 ## Phase 13 - Background Task / Pipeline
 
-- [ ] `scraping_task.py`를 작성한다.
-- [ ] 비동기 실행 시작 로직을 작성한다.
-- [ ] 실행 종료 시 상태/로그 후처리 로직을 작성한다.
-- [ ] 실행 실패 복구 및 종료 처리 로직을 작성한다.
+- [x] `scraping_task.py`를 작성한다.
+- [x] 비동기 실행 시작 로직을 작성한다.
+- [x] 실행 종료 시 상태/로그 후처리 로직을 작성한다.
+- [x] 실행 실패 복구 및 종료 처리 로직을 작성한다.
 
 ## Phase 14 - Spring ↔ FastAPI 계약 검증
 
-- [ ] `spring_contract_validator.py`를 작성한다.
-- [ ] 목록/요약/상세/로그 응답 계약 검증 테스트를 작성한다.
-- [ ] 단일 액션 및 배치 액션 응답 계약 검증 테스트를 작성한다.
-- [ ] ErrorCode 변환 가능성 검증 테스트를 작성한다.
+- [x] `spring_contract_validator.py`를 작성한다.
+- [x] 목록/요약/상세/로그 응답 계약 검증 테스트를 작성한다.
+- [x] 단일 액션 및 배치 액션 응답 계약 검증 테스트를 작성한다.
+- [x] ErrorCode 변환 가능성 검증 테스트를 작성한다.
 
 ## Phase 15 - Test
 
-- [ ] GET 내부 API Query Parameter 테스트를 작성한다.
-- [ ] Source Registry 테스트를 작성한다.
-- [ ] 실행/재시도/TEST/배치 액션 테스트를 작성한다.
-- [ ] TEST 대상 제외 테스트를 작성한다.
-- [ ] 중복 실행 차단 테스트를 작성한다.
-- [ ] 중복 제거 및 저장 테스트를 작성한다.
-- [ ] 상태 전이 테스트를 작성한다.
-- [ ] 실행 로그 기록 테스트를 작성한다.
+- [x] GET 내부 API Query Parameter 테스트를 작성한다.
+- [x] Source Registry 테스트를 작성한다.
+- [x] 실행/재시도/TEST/배치 액션 테스트를 작성한다.
+- [x] TEST 대상 제외 테스트를 작성한다.
+- [x] 중복 실행 차단 테스트를 작성한다.
+- [x] 중복 제거 및 저장 테스트를 작성한다.
+- [x] 상태 전이 테스트를 작성한다.
+- [x] 실행 로그 기록 테스트를 작성한다.

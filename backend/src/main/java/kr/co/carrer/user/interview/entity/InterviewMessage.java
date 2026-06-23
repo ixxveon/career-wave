@@ -12,7 +12,13 @@ import java.util.UUID;
 
 @Getter
 @Entity
-@Table(name = "interview_messages")
+@Table(
+    name = "interview_messages",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uq_interview_messages_session_sender_order",
+        columnNames = {"session_id", "sender", "question_order"}
+    )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class InterviewMessage {
 
@@ -32,6 +38,9 @@ public class InterviewMessage {
     @Column(name = "message_type", nullable = false, length = 20)
     private MessageType messageType;
 
+    @Column(name = "question_order")
+    private Integer questionOrder;
+
     @Column(name = "message_content", nullable = false, columnDefinition = "TEXT")
     private String messageContent;
 
@@ -48,6 +57,16 @@ public class InterviewMessage {
         message.sessionId = sessionId;
         message.sender = MessageSender.USER;
         message.messageType = MessageType.ANSWER;
+        message.messageContent = messageContent;
+        return message;
+    }
+
+    public static InterviewMessage createQuestion(UUID sessionId, int questionOrder, String messageContent) {
+        InterviewMessage message = new InterviewMessage();
+        message.sessionId = sessionId;
+        message.sender = MessageSender.AI;
+        message.messageType = MessageType.QUESTION;
+        message.questionOrder = questionOrder;
         message.messageContent = messageContent;
         return message;
     }

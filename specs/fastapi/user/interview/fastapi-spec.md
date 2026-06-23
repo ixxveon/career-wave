@@ -35,7 +35,7 @@ Spring Boot는 세션 생명주기와 답변 저장을 담당하고, AI 처리 �
 
 **Acceptance Scenarios**:
 
-1. **Given** Spring이 `POST /answer/voice` 음성 청크를 수신해 FastAPI STT 파이프라인에 비동기 전달했을 때, **When** FastAPI가 청크를 받으면, **Then** FastAPI는 STT 변환 결과 텍스트를 WebSocket으로 클라이언트에 실시간 전송해야 한다.
+1. **Given** Spring이 `POST /answer/voice` 음성 청크를 수신해 FastAPI STT 파이프라인에 비동기 전달했을 때, **When** FastAPI가 `isFinal=true` 청크를 받으면, **Then** FastAPI는 누적된 모든 청크를 합쳐 Whisper에 일괄 전송하고 최종 STT 결과를 `STT_FINAL` 메시지로 클라이언트에 전송해야 한다. 중간 청크는 버퍼에 누적만 한다.
 2. **Given** 음성 인식 유효 비율(`voiceQualityRatio`)이 50% 미만인 청크가 포함된 답변이 완료됐을 때, **When** FastAPI가 해당 답변의 `voiceQualityRatio`를 산정하면, **Then** FastAPI는 Spring 콜백 시 해당 항목의 `deliveryScore` / `fluencyScore`를 `null`로 포함해 전송해야 한다.
 3. **Given** STT 처리 중 오류가 발생했을 때, **When** FastAPI가 오류를 감지하면, **Then** FastAPI는 WebSocket `ERROR` 메시지(`errorCode: INTERVIEW_STT_FAILED`)를 클라이언트에 전송해야 한다.
 
@@ -83,7 +83,7 @@ Spring Boot는 세션 생명주기와 답변 저장을 담당하고, AI 처리 �
 
 ### Functional Requirements
 
-- **FR-001**: FastAPI는 Spring이 전달한 음성 청크를 STT로 변환하여 결과 텍스트를 WebSocket(`/ws/user/interview/{sessionId}/ai`)으로 클라이언트에 실시간 전송해야 한다.
+- **FR-001**: FastAPI는 Spring이 전달한 음성 청크를 누적 버퍼에 저장하고, `isFinal=true` 청크 수신 시 누적 청크를 합쳐 Whisper에 일괄 전송하여 최종 결과를 `STT_FINAL` WebSocket 메시지로 클라이언트에 전송해야 한다.
 - **FR-002**: FastAPI는 `voiceQualityRatio`를 산정하고 50% 미만인 항목의 `deliveryScore` / `fluencyScore`를 `null`로 처리하여 리포트 콜백에 포함해야 한다.
 - **FR-003**: FastAPI는 STT 실패 시 `errorCode: INTERVIEW_STT_FAILED` WebSocket 메시지를 클라이언트에 전송해야 한다.
 - **FR-004**: FastAPI는 텍스트 답변 저장 완료 트리거를 수신하면 LLM으로 다음 질문을 생성해야 한다.
@@ -98,6 +98,7 @@ Spring Boot는 세션 생명주기와 답변 저장을 담당하고, AI 처리 �
 - **FR-013**: FastAPI는 WebSocket 연결 요청에서 `sessionId` 소유권을 검증해야 한다 (Spring에서 발급한 토큰 기반).
 - **FR-014**: FastAPI는 AI 파이프라인 처리 실패 시 `errorCode: INTERVIEW_AI_PIPELINE_ERROR` WebSocket 메시지를 전송해야 한다.
 - **FR-015**: FastAPI는 세션별 AI 사용 토큰과 비용을 사용 로그로 적재해야 한다.
+- **FR-016**: FastAPI는 다음 질문 순서가 10을 초과하면 LLM 질문 생성 없이 `report_pipeline.generate_and_send_report()`를 직접 호출하여 리포트 생성을 자동 트리거해야 한다. 최대 질문 수는 10개.
 
 ### Non-functional Requirements
 
@@ -192,4 +193,20 @@ class InterviewErrorCode(str, Enum):
     LLM_FAILED        = "INTERVIEW_LLM_FAILED"
     SESSION_EXPIRED   = "INTERVIEW_SESSION_EXPIRED"
     CALLBACK_FAILED   = "INTERVIEW_CALLBACK_FAILED"
+```
+
+### STT 청크 누적 방식
+
+Whisper는 스트리밍 API를 지원하지 않아, 청크를 수신할 때마다 Whisper를 호출하면 부분 WebM 포맷 오류가 발생한다.  
+세션별, 질문 순서별 버퍼(`_audio_buffers: dict[str, dict[int, list[bytes]]]`)에 청크를 누적하고 `isFinal=true` 시 병합하여 일괄 전송한다.
+
+```python
+_audio_buffers: dict[str, dict[int, list[bytes]]] = defaultdict(lambda: defaultdict(list))
+
+async def transcribe_chunk(audio_bytes, session_id, question_order, chunk_index, is_final):
+    _audio_buffers[session_id][question_order].append(audio_bytes)
+    if not is_final:
+        return  # 중간 청크: 누적만 함
+    merged = b"".join(_audio_buffers[session_id].pop(question_order, []))
+    # Whisper 일괄 전송
 ```

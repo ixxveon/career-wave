@@ -35,6 +35,7 @@ export default function ResumeAnalysisPage() {
           },
           feedbackDetails: analysisResult.feedbackDetails,
         }}
+        fileType="RESUME"
         label="RESUME ANALYSIS"
         subtitle={file?.name ?? '이력서'}
         onReset={reset}
