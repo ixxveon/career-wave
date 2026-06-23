@@ -7,9 +7,16 @@ export function computeWordDiff(before: string, after: string): { before: DiffTo
   const beforeWords = tokenize(before);
   const afterWords = tokenize(after);
 
-  const lcs = longestCommonSubsequence(beforeWords, afterWords);
-  const beforeTokens = markDiff(beforeWords, lcs);
-  const afterTokens = markDiff(afterWords, lcs);
+  const { aIndices, bIndices } = longestCommonSubsequence(beforeWords, afterWords);
+
+  const beforeTokens = beforeWords.map((word, idx) => ({
+    text: word,
+    changed: !aIndices.has(idx) && !/^\s+$/.test(word),
+  }));
+  const afterTokens = afterWords.map((word, idx) => ({
+    text: word,
+    changed: !bIndices.has(idx) && !/^\s+$/.test(word),
+  }));
 
   return { before: beforeTokens, after: afterTokens };
 }
@@ -18,7 +25,7 @@ function tokenize(text: string): string[] {
   return text.split(/(\s+)/).filter(Boolean);
 }
 
-function longestCommonSubsequence(a: string[], b: string[]): Set<string> {
+function longestCommonSubsequence(a: string[], b: string[]): { aIndices: Set<number>; bIndices: Set<number> } {
   const m = a.length;
   const n = b.length;
   const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -29,11 +36,13 @@ function longestCommonSubsequence(a: string[], b: string[]): Set<string> {
     }
   }
 
-  const common = new Set<string>();
+  const aIndices = new Set<number>();
+  const bIndices = new Set<number>();
   let i = m, j = n;
   while (i > 0 && j > 0) {
     if (a[i - 1] === b[j - 1]) {
-      common.add(`${i - 1}:${a[i - 1]}`);
+      aIndices.add(i - 1);
+      bIndices.add(j - 1);
       i--; j--;
     } else if (dp[i - 1][j] > dp[i][j - 1]) {
       i--;
@@ -41,16 +50,5 @@ function longestCommonSubsequence(a: string[], b: string[]): Set<string> {
       j--;
     }
   }
-  return common;
-}
-
-function markDiff(words: string[], lcs: Set<string>): DiffToken[] {
-  const usedKeys = new Set<string>();
-  return words.map((word, idx) => {
-    const key = `${idx}:${word}`;
-    const inLcs = lcs.has(key) && !usedKeys.has(key);
-    if (inLcs) usedKeys.add(key);
-    const isSpace = /^\s+$/.test(word);
-    return { text: word, changed: !inLcs && !isSpace };
-  });
+  return { aIndices, bIndices };
 }
