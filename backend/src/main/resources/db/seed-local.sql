@@ -12,8 +12,20 @@ WHERE member_id IN (
   SELECT member_id FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01')
 );
 DELETE FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01');
-DELETE FROM notices WHERE admin_id IN (SELECT admin_id FROM admins WHERE login_id IN ('admin', 'cs'));
-DELETE FROM faqs    WHERE admin_id IN (SELECT admin_id FROM admins WHERE login_id IN ('admin', 'cs'));
+DELETE FROM notices WHERE title IN (
+  '[필독] 개인정보 처리방침 개정 안내',
+  '서버 정기 점검 안내 (6월 28일 새벽 2시~4시)',
+  'AI 서류 분석 기능 개선 업데이트',
+  '허위 정보 기재 관련 이용 제한 안내',
+  '[이벤트] 친구 초대하고 AI 분석 1회 무료 이용권 받기'
+);
+DELETE FROM faqs WHERE question IN (
+  '계정이 정지되었습니다. 어떻게 해야 하나요?',
+  '계정 정지 이의 신청은 어떻게 하나요?',
+  '구독 해지 후 환불은 어떻게 받나요?',
+  'AI 면접 연습은 어떤 방식으로 진행되나요?',
+  '회원 탈퇴 후 데이터는 어떻게 되나요?'
+);
 DELETE FROM admins  WHERE login_id IN ('admin', 'cs');
 
 -- ────────────────────────────────────────────
@@ -212,8 +224,20 @@ END $$;
 -- 공지사항 / FAQ 샘플 데이터
 -- ============================================================
 
-DELETE FROM faqs    WHERE admin_id IN (SELECT admin_id FROM admins WHERE login_id IN ('admin', 'cs'));
-DELETE FROM notices WHERE admin_id IN (SELECT admin_id FROM admins WHERE login_id IN ('admin', 'cs'));
+DELETE FROM faqs WHERE question IN (
+  '계정이 정지되었습니다. 어떻게 해야 하나요?',
+  '계정 정지 이의 신청은 어떻게 하나요?',
+  '구독 해지 후 환불은 어떻게 받나요?',
+  'AI 면접 연습은 어떤 방식으로 진행되나요?',
+  '회원 탈퇴 후 데이터는 어떻게 되나요?'
+);
+DELETE FROM notices WHERE title IN (
+  '[필독] 개인정보 처리방침 개정 안내',
+  '서버 정기 점검 안내 (6월 28일 새벽 2시~4시)',
+  'AI 서류 분석 기능 개선 업데이트',
+  '허위 정보 기재 관련 이용 제한 안내',
+  '[이벤트] 친구 초대하고 AI 분석 1회 무료 이용권 받기'
+);
 
 DO $$
 DECLARE
