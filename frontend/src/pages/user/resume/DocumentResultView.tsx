@@ -1,10 +1,11 @@
-import { memo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Lightbulb, Mic, ThumbsUp, ThumbsDown, Wand2, Star,
   CheckCircle2, XCircle, Hash, PenLine,
 } from 'lucide-react';
 import type { DocumentResult, FeedbackDetail } from '../../../types/user/document';
+import { computeWordDiff } from '../../../utils/user/resume/textDiff';
 import '@/styles/user/resume/DocumentResultView.css';
 
 function scoreColor(v: number): string {
@@ -96,6 +97,10 @@ export default function DocumentResultView({
   const fd = feedbackDetails[activeSection];
 
   const isResume = fileType === 'RESUME';
+  const diff = useMemo(
+    () => fd.improvedText ? computeWordDiff(fd.originalText, fd.improvedText) : null,
+    [fd.originalText, fd.improvedText],
+  );
   const typeBadgeLabel = fileType === 'RESUME' ? '📄 이력서 분석' : '✍️ 자기소개서 분석';
   const typeBadgeColor = isResume ? '#2563eb' : '#7c3aed';
 
@@ -236,14 +241,31 @@ export default function DocumentResultView({
 
       <div className="dr-card dr-improved">
         <p className="dr-improved__label"><Wand2 size={13} /> 이렇게 고쳐보세요</p>
+        <p className="dr-improved__hint">변경된 부분이 강조 표시됩니다</p>
         <div className="dr-improved__panels">
           <div className="dr-improved__before">
             <span className="dr-improved__badge dr-improved__badge--before">Before</span>
-            <p>{fd.originalText}</p>
+            <p className="dr-improved__text">
+              {diff
+                ? diff.before.map((token, i) => (
+                    <span key={i} className={token.changed ? 'dr-diff--removed' : undefined}>
+                      {token.text}
+                    </span>
+                  ))
+                : fd.originalText}
+            </p>
           </div>
           <div className="dr-improved__after">
             <span className="dr-improved__badge dr-improved__badge--after">After</span>
-            <p>{fd.improvedText}</p>
+            <p className="dr-improved__text">
+              {diff
+                ? diff.after.map((token, i) => (
+                    <span key={i} className={token.changed ? 'dr-diff--added' : undefined}>
+                      {token.text}
+                    </span>
+                  ))
+                : fd.improvedText}
+            </p>
           </div>
         </div>
         {onRevise && (

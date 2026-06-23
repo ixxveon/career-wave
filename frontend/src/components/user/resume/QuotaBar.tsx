@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
 import './QuotaBar.css';
 
@@ -8,6 +9,7 @@ interface QuotaBarProps {
 
 const QuotaBar = memo(function QuotaBar({ label = '이번 달 서류 분석' }: QuotaBarProps) {
   const { data } = useResumeQuota();
+  const navigate = useNavigate();
 
   const usedCount  = data?.usedCount  ?? 0;
   const limitCount = data?.limitCount ?? 30;
@@ -22,7 +24,15 @@ const QuotaBar = memo(function QuotaBar({ label = '이번 달 서류 분석' }: 
         <span className="qb__label">{label}</span>
         <span className={`qb__count${isExhausted ? ' qb__count--full' : isWarning ? ' qb__count--warn' : ''}`}>
           {usedCount} / {limitCount}회 사용
-          {isExhausted && <span className="qb__tag">한도 초과</span>}
+          {isExhausted && (
+            <button
+              type="button"
+              className="qb__upgrade-btn"
+              onClick={() => navigate('/billing/checkout?product=document-coaching')}
+            >
+              요금제 업그레이드
+            </button>
+          )}
           {isWarning   && <span className="qb__tag qb__tag--warn">잔여 {docLeft}회</span>}
         </span>
       </div>
