@@ -121,54 +121,6 @@ const initialAclRules: AclRule[] = [
   },
 ];
 
-export const initialLogs: AuditLog[] = [
-  {
-    id: 'LOG-001',
-    time: '2026.05.25 14:29:12',
-    actor: 'super_admin',
-    ip: '10.20.0.10',
-    action: '권한 변경 승인',
-    target: 'member:U-1007 / role:CS',
-    severity: 'WARN',
-  },
-  {
-    id: 'LOG-002',
-    time: '2026.05.25 14:22:49',
-    actor: 'backend_admin',
-    ip: '10.20.0.22',
-    action: 'DB 변경 감지',
-    target: 'schema:member',
-    severity: 'ERROR',
-  },
-  {
-    id: 'LOG-003',
-    time: '2026.05.25 14:18:27',
-    actor: 'cs_admin',
-    ip: '10.20.0.21',
-    action: '회원 문의 처리',
-    target: 'ticket:CS-1842',
-    severity: 'INFO',
-  },
-  {
-    id: 'LOG-004',
-    time: '2026.05.25 14:12:08',
-    actor: 'ops_admin',
-    ip: '10.20.0.23',
-    action: 'IP ACL 갱신',
-    target: 'ACL-002',
-    severity: 'WARN',
-  },
-  {
-    id: 'LOG-005',
-    time: '2026.05.25 13:58:41',
-    actor: 'audit_admin',
-    ip: '10.20.10.8',
-    action: '감사 정책 검토',
-    target: 'policy:admin-access',
-    severity: 'INFO',
-  },
-];
-
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
