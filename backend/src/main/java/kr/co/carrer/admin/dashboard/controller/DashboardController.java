@@ -1,5 +1,6 @@
 package kr.co.carrer.admin.dashboard.controller;
 
+import kr.co.carrer.admin.dashboard.docs.DashboardDocs;
 import kr.co.carrer.admin.dashboard.dto.DashboardDTO;
 import kr.co.carrer.admin.dashboard.service.DashboardService;
 import kr.co.carrer.admin.dashboard.type.DashboardRangeType;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Validated
 @PreAuthorize("hasRole('ADMIN') and (hasRole('MASTER') or hasRole('BACKEND') or hasRole('CS'))")
-public class DashboardController {
+public class DashboardController implements DashboardDocs {
 
     private final DashboardService dashboardService;
 
