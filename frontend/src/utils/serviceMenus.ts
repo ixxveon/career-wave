@@ -19,7 +19,7 @@ export const serviceMenus: MenuItem[] = [
     ],
   },
   {
-    label: '서류 분석',
+    label: '서류 AI 코칭',
     href: '/documents/resume',
     children: [
       { label: '이력서 분석',    href: '/documents/resume' },
