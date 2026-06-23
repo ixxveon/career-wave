@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.global.s3.S3Uploader;
+import kr.co.carrer.user.billing.service.EntitlementService;
+import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
 import kr.co.carrer.user.resume.entity.CoverLetterContent;
 import kr.co.carrer.user.resume.entity.CoverLetterMeta;
@@ -54,6 +56,7 @@ public class ResumeServiceImpl implements ResumeService {
     private final ObjectMapper objectMapper;
     private final DocumentStatusService documentStatusService;
     private final ApplicationEventPublisher eventPublisher;
+    private final EntitlementService entitlementService;
 
     @Value("${webhook.secret}")
     private String configuredWebhookSecret;
@@ -69,6 +72,8 @@ public class ResumeServiceImpl implements ResumeService {
 
         Document document = Document.ofResume(memberId, fileUrl, originalName);
         documentRepository.save(document);
+
+        entitlementService.reserve(memberId, "document-coaching", ResourceType.DOCUMENT, document.getDocumentId());
 
         eventPublisher.publishEvent(DocumentAnalysisTriggerEvent.ofResume(document.getDocumentId(), fileUrl, originalName));
 
@@ -94,6 +99,8 @@ public class ResumeServiceImpl implements ResumeService {
 
         Document document = Document.ofCoverLetter(memberId);
         documentRepository.save(document);
+
+        entitlementService.reserve(memberId, "document-coaching", ResourceType.DOCUMENT, document.getDocumentId());
 
         CoverLetterMeta meta = CoverLetterMeta.of(document.getDocumentId(), dto.company(), dto.job());
         coverLetterMetaRepository.save(meta);
@@ -221,8 +228,10 @@ public class ResumeServiceImpl implements ResumeService {
             );
             documentFeedbackRepository.save(feedback);
             document.updateStatus(DocumentStatus.COMPLETED);
+            entitlementService.consume(ResourceType.DOCUMENT, documentId);
         } else if ("FAILED".equals(dto.status())) {
             document.markFailed(dto.errorMessage());
+            entitlementService.release(ResourceType.DOCUMENT, documentId);
         } else {
             throw new CustomException(ResumeErrorCode.WEBHOOK_INVALID_STATUS);
         }

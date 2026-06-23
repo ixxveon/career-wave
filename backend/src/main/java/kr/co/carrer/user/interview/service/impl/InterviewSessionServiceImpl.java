@@ -1,6 +1,8 @@
 package kr.co.carrer.user.interview.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.service.EntitlementService;
+import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.interview.client.InterviewFastApiClient;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
 import kr.co.carrer.user.interview.entity.InterviewMessage;
@@ -12,6 +14,8 @@ import kr.co.carrer.user.interview.type.MessageSender;
 import kr.co.carrer.user.interview.type.MessageType;
 import kr.co.carrer.user.interview.service.InterviewSessionService;
 import kr.co.carrer.user.interview.type.InterviewType;
+import kr.co.carrer.user.interview.type.MessageSender;
+import kr.co.carrer.user.interview.type.MessageType;
 import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
 import kr.co.carrer.user.resume.entity.Document;
@@ -38,6 +42,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     private final InterviewMessageRepository messageRepository;
     private final DocumentRepository documentRepository;
     private final InterviewFastApiClient fastApiClient;
+    private final EntitlementService entitlementService;
 
     @Override
     @Transactional
@@ -60,6 +65,8 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         }
 
         InterviewSession saved = saveNewSession(memberId, documentId, sessionType, interviewType, dto.targetCompany());
+
+        entitlementService.reserve(memberId, "interview", ResourceType.INTERVIEW_SESSION, saved.getSessionId());
 
         UUID sessionId = saved.getSessionId();
         String finalSessionType = sessionType.name();
