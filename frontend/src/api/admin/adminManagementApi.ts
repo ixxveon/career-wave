@@ -5,7 +5,6 @@ import {
   mapPageResultToPagedResponse,
   type ApiResponse,
   type PageResult,
-  type PagedResponse,
 } from '../../types/admin/index';
 
 const ADMIN_MANAGEMENT_BASE_PATH = '/api/v1/admin';
@@ -67,6 +66,7 @@ export const AUDIT_SEVERITY = {
   INFO: 'INFO',
   WARN: 'WARN',
   ERROR: 'ERROR',
+  SUCCESS: 'SUCCESS',
 } as const;
 
 export type AuditSeverity = (typeof AUDIT_SEVERITY)[keyof typeof AUDIT_SEVERITY];
@@ -116,6 +116,19 @@ export interface BackendAdminAclRuleDto {
   description: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BackendAdminAuditLogDto {
+  auditLogId: number;
+  adminId: number | null;
+  logType: string;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  ipAddress: string | null;
+  severity: AuditSeverity;
+  detail: string | null;
+  createdAt: string;
 }
 
 interface BackendRequestCreateAdmin {
@@ -372,6 +385,33 @@ export function toAdminAclRule(dto: BackendAdminAclRuleDto): AdminAclRule {
   };
 }
 
+function formatAuditActor(adminId: number | null): string {
+  return adminId == null ? '-' : `admin:${adminId}`;
+}
+
+function formatAuditTarget(targetType: string | null, targetId: string | null): string {
+  const normalizedTargetType = typeof targetType === 'string' ? targetType.trim() : '';
+  const normalizedTargetId = typeof targetId === 'string' ? targetId.trim() : '';
+
+  if (normalizedTargetType && normalizedTargetId) return `${normalizedTargetType}:${normalizedTargetId}`;
+  if (normalizedTargetType) return normalizedTargetType;
+  if (normalizedTargetId) return normalizedTargetId;
+
+  return '-';
+}
+
+export function toAdminAuditLog(dto: BackendAdminAuditLogDto): AdminAuditLog {
+  return {
+    id: String(dto.auditLogId),
+    occurredAt: dto.createdAt,
+    actor: formatAuditActor(dto.adminId),
+    ip: dto.ipAddress ?? '',
+    action: dto.action,
+    target: formatAuditTarget(dto.targetType, dto.targetId),
+    severity: dto.severity,
+  };
+}
+
 export const adminManagementApiClient = {
   get: <TData>(path: string, params?: Record<string, unknown>) =>
     adminHttpClient.get<TData>(`${ADMIN_MANAGEMENT_BASE_PATH}${path}`, { params }),
@@ -456,5 +496,10 @@ export const deleteAdminAclRule = (aclId: string) =>
 
 export const getAdminAuditLogs = (params: GetAdminAuditLogsParams = {}) =>
   adminManagementApiClient
-    .get<ApiResponse<PagedResponse<AdminAuditLog>>>('/audit-logs', normalizeAllSentinel(params))
-    .then(unwrapApiResponse);
+    .get<ApiResponse<PageResult<BackendAdminAuditLogDto>>>('/audit-logs', normalizeAllSentinel(params))
+    .then(unwrapApiResponse)
+    .then((page) => mapPageResultToPagedResponse(page))
+    .then((page) => ({
+      ...page,
+      items: page.items.map(toAdminAuditLog),
+    }));

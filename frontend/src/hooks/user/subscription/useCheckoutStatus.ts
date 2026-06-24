@@ -47,15 +47,12 @@ export function useCheckoutStatus() {
       });
 
       const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
-      const payment = tossPayments.payment({ customerKey: order.customerEmail });
+      const payment = tossPayments.payment({ customerKey: order.customerKey });
 
-      await payment.requestPayment({
+      await payment.requestBillingAuth({
         method: 'CARD',
-        amount: { currency: 'KRW', value: order.amount },
-        orderId: order.orderId,
-        orderName: order.productName,
-        successUrl: `${window.location.origin}/billing/success`,
-        failUrl: `${window.location.origin}/billing/fail?productCode=${productCode}`,
+        successUrl: `${window.location.origin}/billing/success?orderId=${order.orderId}`,
+        failUrl: `${window.location.origin}/billing/fail?productCode=${productCode}&orderId=${order.orderId}`,
         customerEmail: order.customerEmail,
         customerName: order.customerName,
       });

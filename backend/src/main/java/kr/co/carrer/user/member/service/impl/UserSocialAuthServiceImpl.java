@@ -8,6 +8,7 @@ import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.member.dto.OAuthCallbackResponse;
 import kr.co.carrer.user.member.dto.UserLoginDto;
 import kr.co.carrer.user.member.dto.UserSocialAuthDto;
@@ -63,6 +64,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
     private final SocialSignupTokenStore socialSignupTokenStore;
     private final StringRedisTemplate redisTemplate;
     private final WebClient.Builder webClientBuilder;
+    private final EntitlementInitService entitlementInitService;
 
     @Value("${oauth.kakao.client-id}") private String kakaoClientId;
     @Value("${oauth.kakao.client-secret}") private String kakaoClientSecret;
@@ -221,6 +223,9 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
                 request.getTerms().isService(),
                 request.getTerms().isPrivacy(),
                 request.getTerms().isMarketing()));
+
+        // 상품별 FREE 이용권 생성 (document-coaching, interview)
+        entitlementInitService.initFreeEntitlements(member.getMemberId());
 
         String accessToken = issueTokens(member, response);
         return UserSocialAuthDto.ResponseSocialComplete.of(
