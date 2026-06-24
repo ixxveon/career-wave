@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Search, Bookmark } from "lucide-react";
 import JobNoticeDetail from "@/pages/user/jobNotice/JobNoticeDetail";
@@ -83,6 +83,16 @@ function ScrappedJobPage() {
   });
   const scrappedJobs = scrapJobPage?.items ?? [];
   const totalPages = scrapJobPage?.totalPages ?? 0;
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [keyword]);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage >= totalPages) {
+      setCurrentPage(totalPages - 1);
+    }
+  }, [currentPage, totalPages]);
+
   const hasPreviousPage = currentPage > 0;
   const hasNextPage = currentPage + 1 < totalPages;
 

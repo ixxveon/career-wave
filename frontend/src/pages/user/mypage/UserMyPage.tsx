@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { UserRound, Mail, Phone, ShieldCheck, Github } from "lucide-react";
 import { updateDashboardProfile } from "@/api/user/dashboard";
@@ -19,14 +19,14 @@ function maskEmail(email: string) {
   }
 
   const visible = localPart.slice(0, 2);
-  const masked = "*".repeat(Math.max(localPart.length - 2, 0));
+  const masked = "*".repeat(Math.max(localPart.length - 2, 1));
 
   return `${visible}${masked}@${domain}`;
 }
 
 function maskLoginId(loginId: string) {
   const visible = loginId.slice(0, 4);
-  const masked = "*".repeat(Math.max(loginId.length - 4, 0));
+  const masked = "*".repeat(Math.max(loginId.length - 4, 1));
 
   return `${visible}${masked}`;
 }
@@ -85,6 +85,7 @@ function UserMyPage() {
   });
 
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const isSavingProfileRef = useRef(false);
 
   const isLoading = isProfileLoading || isGithubLoading;
 
@@ -114,7 +115,8 @@ function UserMyPage() {
   }
 
   async function saveProfileEdit() {
-    if (!userProfile || isSavingProfile) return;
+    if (!userProfile || isSavingProfileRef.current) return;
+    isSavingProfileRef.current = true;
 
     const trimmedName = editForm.name.trim();
     const normalizedPhone = editForm.phone.replace(/-/g, "").trim();
@@ -137,6 +139,7 @@ function UserMyPage() {
     } catch {
       alert("회원 정보 수정에 실패했습니다.");
     } finally {
+      isSavingProfileRef.current = false;
       setIsSavingProfile(false);
     }
   }
