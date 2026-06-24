@@ -43,9 +43,9 @@
 
 ## Phase 4 - 프론트엔드 리포트 화면 구현
 
-- [x] `ReportExportPage.jsx`에서 종합 진단 리포트 생성 화면을 구현한다.
+- [x] `ReportExportPage.tsx`에서 종합 진단 리포트 생성 화면을 구현한다.
 - [x] Document Analysis, Interview, Career History 통합 결과 요약 UI를 구현한다.
-- [x] `ReportPreviewPage.jsx`에서 PDF 미리보기 화면을 구현한다.
+- [x] `ReportPreviewPage.tsx`에서 PDF 미리보기 화면을 구현한다.
 - [x] 자기소개서 분석 결과 영역을 구현한다.
 - [x] 면접 분석 결과 영역을 구현한다.
 - [x] 취업 히스토리 및 성장 추이 영역을 구현한다.
@@ -54,7 +54,7 @@
 - [x] PDF 다운로드 버튼 UI를 구현한다.
 - [x] PDF 생성 실패 안내 메시지 UI를 구현한다.
 - [x] 백엔드 API 연결 전 mock data 기반으로 화면을 렌더링한다.
-- [x] `reportExportApi.js`에 API 호출 함수 구조를 작성한다.
+- [x] `reportExportApi.ts`에 API 호출 함수 구조를 작성한다.
 
 ## Phase 5 - Polish
 

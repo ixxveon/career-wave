@@ -1,8 +1,8 @@
-package kr.co.carrer.user.careerhistory.dto;
+package kr.co.carrer.user.careerhistory.dto.response;
 
 import kr.co.carrer.user.careerhistory.entity.CareerRoadmap;
 
-public record CareerRoadmapResponseDto(
+public record CareerRoadmapResponse(
         Long id,
         Long userId,
         Integer step,
@@ -11,8 +11,8 @@ public record CareerRoadmapResponseDto(
         String recommendedActions,
         String targetSkill
 ) {
-    public static CareerRoadmapResponseDto from(CareerRoadmap roadmap) {
-        return new CareerRoadmapResponseDto(
+    public static CareerRoadmapResponse from(CareerRoadmap roadmap) {
+        return new CareerRoadmapResponse(
                 roadmap.getId(),
                 roadmap.getUserId(),
                 roadmap.getStep(),

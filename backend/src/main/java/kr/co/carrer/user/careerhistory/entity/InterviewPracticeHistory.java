@@ -4,9 +4,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import kr.co.carrer.user.careerhistory.type.InterviewType;
 
@@ -18,7 +21,9 @@ public class InterviewPracticeHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long careerHistoryId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "career_history_id", nullable = false)
+    private CareerHistoryRecord careerHistory;
 
     @Enumerated(EnumType.STRING)
     private InterviewType interviewType;
@@ -41,30 +46,16 @@ public class InterviewPracticeHistory {
     protected InterviewPracticeHistory() {
     }
 
-    public InterviewPracticeHistory(
-            Long careerHistoryId,
-            InterviewType interviewType,
-            String script,
-            String question,
-            String answer,
-            String highlightedIssue,
-            String feedback
-    ) {
-        this.careerHistoryId = careerHistoryId;
-        this.interviewType = interviewType;
-        this.script = script;
-        this.question = question;
-        this.answer = answer;
-        this.highlightedIssue = highlightedIssue;
-        this.feedback = feedback;
-    }
-
     public Long getId() {
         return id;
     }
 
     public Long getCareerHistoryId() {
-        return careerHistoryId;
+        return careerHistory.getId();
+    }
+
+    public CareerHistoryRecord getCareerHistory() {
+        return careerHistory;
     }
 
     public InterviewType getInterviewType() {

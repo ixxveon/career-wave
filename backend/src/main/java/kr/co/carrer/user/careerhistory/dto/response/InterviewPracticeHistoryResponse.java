@@ -1,9 +1,9 @@
-package kr.co.carrer.user.careerhistory.dto;
+package kr.co.carrer.user.careerhistory.dto.response;
 
 import kr.co.carrer.user.careerhistory.entity.InterviewPracticeHistory;
 import kr.co.carrer.user.careerhistory.type.InterviewType;
 
-public record InterviewPracticeHistoryResponseDto(
+public record InterviewPracticeHistoryResponse(
         Long id,
         Long careerHistoryId,
         InterviewType interviewType,
@@ -13,8 +13,8 @@ public record InterviewPracticeHistoryResponseDto(
         String highlightedIssue,
         String feedback
 ) {
-    public static InterviewPracticeHistoryResponseDto from(InterviewPracticeHistory history) {
-        return new InterviewPracticeHistoryResponseDto(
+    public static InterviewPracticeHistoryResponse from(InterviewPracticeHistory history) {
+        return new InterviewPracticeHistoryResponse(
                 history.getId(),
                 history.getCareerHistoryId(),
                 history.getInterviewType(),

@@ -1,8 +1,8 @@
-package kr.co.carrer.user.careerhistory.dto;
+package kr.co.carrer.user.careerhistory.dto.response;
 
 import kr.co.carrer.user.careerhistory.entity.CareerCompetencyReport;
 
-public record CareerCompetencyReportResponseDto(
+public record CareerCompetencyReportResponse(
         Long id,
         Long userId,
         Integer documentScore,
@@ -12,8 +12,8 @@ public record CareerCompetencyReportResponseDto(
         String priorityTargets,
         String growthTrend
 ) {
-    public static CareerCompetencyReportResponseDto from(CareerCompetencyReport report) {
-        return new CareerCompetencyReportResponseDto(
+    public static CareerCompetencyReportResponse from(CareerCompetencyReport report) {
+        return new CareerCompetencyReportResponse(
                 report.getId(),
                 report.getUserId(),
                 report.getDocumentScore(),

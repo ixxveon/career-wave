@@ -1,4 +1,4 @@
-package kr.co.carrer.user.careerhistory.dto;
+package kr.co.carrer.user.careerhistory.dto.response;
 
 import kr.co.carrer.user.careerhistory.entity.CareerHistoryRecord;
 import kr.co.carrer.user.careerhistory.entity.InterviewPracticeHistory;
@@ -7,7 +7,7 @@ import kr.co.carrer.user.careerhistory.type.CareerHistoryStatus;
 
 import java.util.List;
 
-public record CareerHistoryDetailResponseDto(
+public record CareerHistoryDetailResponse(
         Long id,
         Long userId,
         String companyName,
@@ -17,13 +17,13 @@ public record CareerHistoryDetailResponseDto(
         CareerHistoryStatus status,
         Integer score,
         String summary,
-        List<InterviewPracticeHistoryResponseDto> interviewHistories
+        List<InterviewPracticeHistoryResponse> interviewHistories
 ) {
-    public static CareerHistoryDetailResponseDto from(
+    public static CareerHistoryDetailResponse from(
             CareerHistoryRecord record,
             List<InterviewPracticeHistory> interviewHistories
     ) {
-        return new CareerHistoryDetailResponseDto(
+        return new CareerHistoryDetailResponse(
                 record.getId(),
                 record.getUserId(),
                 record.getCompanyName(),
@@ -34,7 +34,7 @@ public record CareerHistoryDetailResponseDto(
                 record.getScore(),
                 record.getSummary(),
                 interviewHistories.stream()
-                        .map(InterviewPracticeHistoryResponseDto::from)
+                        .map(InterviewPracticeHistoryResponse::from)
                         .toList()
         );
     }

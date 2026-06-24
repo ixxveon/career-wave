@@ -1,10 +1,13 @@
 package kr.co.carrer.user.careerhistory.controller;
 
-import kr.co.carrer.user.careerhistory.dto.CareerCompetencyReportResponseDto;
-import kr.co.carrer.user.careerhistory.dto.CareerHistoryDetailResponseDto;
-import kr.co.carrer.user.careerhistory.dto.CareerHistoryResponseDto;
-import kr.co.carrer.user.careerhistory.dto.CareerRoadmapResponseDto;
+import kr.co.carrer.auth.principal.AuthPrincipal;
+import kr.co.carrer.global.response.ApiResponse;
+import kr.co.carrer.user.careerhistory.dto.response.CareerCompetencyReportResponse;
+import kr.co.carrer.user.careerhistory.dto.response.CareerHistoryDetailResponse;
+import kr.co.carrer.user.careerhistory.dto.response.CareerHistoryResponse;
+import kr.co.carrer.user.careerhistory.dto.response.CareerRoadmapResponse;
 import kr.co.carrer.user.careerhistory.service.CareerHistoryService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,26 +26,35 @@ public class CareerHistoryController {
     }
 
     @GetMapping
-    public List<CareerHistoryResponseDto> getHistories() {
-        Long userId = 1L;
-        return careerHistoryService.getHistories(userId);
+    public ApiResponse<List<CareerHistoryResponse>> getHistories(
+            @AuthenticationPrincipal AuthPrincipal principal
+    ) {
+        Long userId = Long.valueOf(principal.getId());
+        return ApiResponse.ok(careerHistoryService.getHistories(userId));
     }
 
     @GetMapping("/{historyId}")
-    public CareerHistoryDetailResponseDto getHistoryDetail(@PathVariable Long historyId) {
-        Long userId = 1L;
-        return careerHistoryService.getHistoryDetail(userId, historyId);
+    public ApiResponse<CareerHistoryDetailResponse> getHistoryDetail(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable Long historyId
+    ) {
+        Long userId = Long.valueOf(principal.getId());
+        return ApiResponse.ok(careerHistoryService.getHistoryDetail(userId, historyId));
     }
 
     @GetMapping("/competency-report")
-    public CareerCompetencyReportResponseDto getCompetencyReport() {
-        Long userId = 1L;
-        return careerHistoryService.getCompetencyReport(userId);
+    public ApiResponse<CareerCompetencyReportResponse> getCompetencyReport(
+            @AuthenticationPrincipal AuthPrincipal principal
+    ) {
+        Long userId = Long.valueOf(principal.getId());
+        return ApiResponse.ok(careerHistoryService.getCompetencyReport(userId));
     }
 
     @GetMapping("/roadmap")
-    public List<CareerRoadmapResponseDto> getRoadmap() {
-        Long userId = 1L;
-        return careerHistoryService.getRoadmap(userId);
+    public ApiResponse<List<CareerRoadmapResponse>> getRoadmap(
+            @AuthenticationPrincipal AuthPrincipal principal
+    ) {
+        Long userId = Long.valueOf(principal.getId());
+        return ApiResponse.ok(careerHistoryService.getRoadmap(userId));
     }
 }

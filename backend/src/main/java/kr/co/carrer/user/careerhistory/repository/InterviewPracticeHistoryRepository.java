@@ -8,5 +8,5 @@ import java.util.List;
 public interface InterviewPracticeHistoryRepository
         extends JpaRepository<InterviewPracticeHistory, Long> {
 
-    List<InterviewPracticeHistory> findByCareerHistoryId(Long careerHistoryId);
+    List<InterviewPracticeHistory> findByCareerHistory_Id(Long careerHistoryId);
 }

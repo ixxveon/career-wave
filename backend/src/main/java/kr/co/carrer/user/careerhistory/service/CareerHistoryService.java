@@ -1,19 +1,19 @@
 package kr.co.carrer.user.careerhistory.service;
 
-import kr.co.carrer.user.careerhistory.dto.CareerCompetencyReportResponseDto;
-import kr.co.carrer.user.careerhistory.dto.CareerHistoryDetailResponseDto;
-import kr.co.carrer.user.careerhistory.dto.CareerHistoryResponseDto;
-import kr.co.carrer.user.careerhistory.dto.CareerRoadmapResponseDto;
+import kr.co.carrer.user.careerhistory.dto.response.CareerCompetencyReportResponse;
+import kr.co.carrer.user.careerhistory.dto.response.CareerHistoryDetailResponse;
+import kr.co.carrer.user.careerhistory.dto.response.CareerHistoryResponse;
+import kr.co.carrer.user.careerhistory.dto.response.CareerRoadmapResponse;
 
 import java.util.List;
 
 public interface CareerHistoryService {
 
-    List<CareerHistoryResponseDto> getHistories(Long userId);
+    List<CareerHistoryResponse> getHistories(Long userId);
 
-    CareerHistoryDetailResponseDto getHistoryDetail(Long userId, Long historyId);
+    CareerHistoryDetailResponse getHistoryDetail(Long userId, Long historyId);
 
-    CareerCompetencyReportResponseDto getCompetencyReport(Long userId);
+    CareerCompetencyReportResponse getCompetencyReport(Long userId);
 
-    List<CareerRoadmapResponseDto> getRoadmap(Long userId);
+    List<CareerRoadmapResponse> getRoadmap(Long userId);
 }

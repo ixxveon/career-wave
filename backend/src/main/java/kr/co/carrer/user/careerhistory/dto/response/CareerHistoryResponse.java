@@ -1,10 +1,10 @@
-package kr.co.carrer.user.careerhistory.dto;
+package kr.co.carrer.user.careerhistory.dto.response;
 
 import kr.co.carrer.user.careerhistory.entity.CareerHistoryRecord;
 import kr.co.carrer.user.careerhistory.type.ActivityType;
 import kr.co.carrer.user.careerhistory.type.CareerHistoryStatus;
 
-public record CareerHistoryResponseDto(
+public record CareerHistoryResponse(
         Long id,
         Long userId,
         String companyName,
@@ -15,8 +15,8 @@ public record CareerHistoryResponseDto(
         Integer score,
         String summary
 ) {
-    public static CareerHistoryResponseDto from(CareerHistoryRecord record) {
-        return new CareerHistoryResponseDto(
+    public static CareerHistoryResponse from(CareerHistoryRecord record) {
+        return new CareerHistoryResponse(
                 record.getId(),
                 record.getUserId(),
                 record.getCompanyName(),

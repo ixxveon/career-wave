@@ -1,14 +1,17 @@
-package kr.co.carrer.user.careerhistory.service;
+package kr.co.carrer.user.careerhistory.service.impl;
 
-import kr.co.carrer.user.careerhistory.dto.CareerCompetencyReportResponseDto;
-import kr.co.carrer.user.careerhistory.dto.CareerHistoryDetailResponseDto;
-import kr.co.carrer.user.careerhistory.dto.CareerHistoryResponseDto;
-import kr.co.carrer.user.careerhistory.dto.CareerRoadmapResponseDto;
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.careerhistory.dto.response.CareerCompetencyReportResponse;
+import kr.co.carrer.user.careerhistory.dto.response.CareerHistoryDetailResponse;
+import kr.co.carrer.user.careerhistory.dto.response.CareerHistoryResponse;
+import kr.co.carrer.user.careerhistory.dto.response.CareerRoadmapResponse;
 import kr.co.carrer.user.careerhistory.entity.CareerHistoryRecord;
+import kr.co.carrer.user.careerhistory.exception.CareerHistoryErrorCode;
 import kr.co.carrer.user.careerhistory.repository.CareerCompetencyReportRepository;
 import kr.co.carrer.user.careerhistory.repository.CareerHistoryRecordRepository;
 import kr.co.carrer.user.careerhistory.repository.CareerRoadmapRepository;
 import kr.co.carrer.user.careerhistory.repository.InterviewPracticeHistoryRepository;
+import kr.co.carrer.user.careerhistory.service.CareerHistoryService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,40 +37,40 @@ public class CareerHistoryServiceImpl implements CareerHistoryService {
     }
 
     @Override
-    public List<CareerHistoryResponseDto> getHistories(Long userId) {
+    public List<CareerHistoryResponse> getHistories(Long userId) {
         return careerHistoryRecordRepository.findByUserId(userId)
                 .stream()
-                .map(CareerHistoryResponseDto::from)
+                .map(CareerHistoryResponse::from)
                 .toList();
     }
 
     @Override
-    public CareerHistoryDetailResponseDto getHistoryDetail(Long userId, Long historyId) {
+    public CareerHistoryDetailResponse getHistoryDetail(Long userId, Long historyId) {
         CareerHistoryRecord record = careerHistoryRecordRepository.findById(historyId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 취업 준비 기록입니다."));
+                .orElseThrow(() -> new CustomException(CareerHistoryErrorCode.CAREER_HISTORY_NOT_FOUND));
 
         if (!record.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("해당 취업 준비 기록에 접근할 수 없습니다.");
+            throw new CustomException(CareerHistoryErrorCode.CAREER_HISTORY_ACCESS_DENIED);
         }
 
-        return CareerHistoryDetailResponseDto.from(
+        return CareerHistoryDetailResponse.from(
                 record,
-                interviewPracticeHistoryRepository.findByCareerHistoryId(historyId)
+                interviewPracticeHistoryRepository.findByCareerHistory_Id(historyId)
         );
     }
 
     @Override
-    public CareerCompetencyReportResponseDto getCompetencyReport(Long userId) {
+    public CareerCompetencyReportResponse getCompetencyReport(Long userId) {
         return careerCompetencyReportRepository.findByUserId(userId)
-                .map(CareerCompetencyReportResponseDto::from)
-                .orElseThrow(() -> new IllegalArgumentException("역량 평가 데이터가 존재하지 않습니다."));
+                .map(CareerCompetencyReportResponse::from)
+                .orElseThrow(() -> new CustomException(CareerHistoryErrorCode.CAREER_COMPETENCY_REPORT_NOT_FOUND));
     }
 
     @Override
-    public List<CareerRoadmapResponseDto> getRoadmap(Long userId) {
+    public List<CareerRoadmapResponse> getRoadmap(Long userId) {
         return careerRoadmapRepository.findByUserIdOrderByStepAsc(userId)
                 .stream()
-                .map(CareerRoadmapResponseDto::from)
+                .map(CareerRoadmapResponse::from)
                 .toList();
     }
 }
