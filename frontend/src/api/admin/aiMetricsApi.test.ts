@@ -193,7 +193,7 @@ describe("aiMetricsApi usage DTO mapper", () => {
           userId: "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
           maskedUserLabel: "USER-2f3a",
           domain: AI_DOMAIN.DOCUMENT,
-          domainLabel: "?꾩껜 ?꾨찓??,
+          domainLabel: "전체 도메인",
           tokenUsage: 72000,
           requestCount: 9,
           riskLevel: AI_USAGE_RISK_LEVEL.WARNING,
