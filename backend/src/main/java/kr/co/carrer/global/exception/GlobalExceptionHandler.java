@@ -10,6 +10,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -101,6 +102,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.fail(HttpStatus.CONFLICT.value(), "이미 존재하거나 사용 중인 데이터와 충돌이 발생했습니다."));
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAuthorizationDeniedException(AuthorizationDeniedException e) {
+        ErrorCode errorCode = ErrorCode.FORBIDDEN;
+        log.warn("[Access denied] {}", e.getMessage());
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getMessage(), errorCode.name()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

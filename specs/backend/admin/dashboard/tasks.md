@@ -37,9 +37,9 @@
 
 ## Phase 5 - Test
 
-- [ ] `GET /api/v1/admin/dashboard/summary` 정상 조회 테스트를 작성한다.
-- [ ] `range=TODAY`, `7D`, `30D` 허용값 테스트를 작성한다.
-- [ ] 잘못된 `range` 값에 대한 `BAD_REQUEST` 테스트를 작성한다.
-- [ ] 인증 없음 `UNAUTHORIZED`, 권한 없음 `FORBIDDEN` 테스트를 작성한다.
-- [ ] 빈 섹션이 `null`이 아닌 구조로 반환되는 테스트를 작성한다.
-- [ ] KPI 4개 식별자가 모두 포함되는 응답 구조 테스트를 작성한다.
+- [x] `GET /api/v1/admin/dashboard/summary` 정상 조회 테스트를 작성한다.
+- [x] `range=TODAY`, `7D`, `30D` 허용값 테스트를 작성한다.
+- [x] 잘못된 `range` 값에 대한 `BAD_REQUEST` 테스트를 작성한다.
+- [x] 인증 없음 `UNAUTHORIZED`, 권한 없음 `FORBIDDEN` 테스트를 작성한다.
+- [x] 빈 섹션이 `null`이 아닌 구조로 반환되는 테스트를 작성한다.
+- [x] KPI 4개 식별자가 모두 포함되는 응답 구조 테스트를 작성한다.
