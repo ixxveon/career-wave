@@ -34,7 +34,8 @@ public class PaymentReconciliationTxService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markForReconciliation(UUID paymentId) {
-        userPaymentRepository.findById(paymentId).ifPresent(payment -> {
+        // 비관적 락으로 만료/실패 경로와의 동시 갱신 충돌 방지
+        userPaymentRepository.findByIdForUpdate(paymentId).ifPresent(payment -> {
             if (payment.getPaymentStatus().name().equals("READY")) {
                 payment.markForReconciliation();
             }

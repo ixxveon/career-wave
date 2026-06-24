@@ -1,8 +1,10 @@
 package kr.co.carrer.user.billing.service;
 
+import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.client.TossPaymentQueryClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingPaymentResponse;
 import kr.co.carrer.user.billing.entity.UserPayment;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.UserPaymentRepository;
 import kr.co.carrer.user.billing.service.impl.PaymentReconciliationServiceImpl;
 import kr.co.carrer.user.billing.service.impl.PaymentReconciliationTxService;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
@@ -44,12 +47,13 @@ class PaymentReconciliationServiceTest {
                 userPaymentRepository, tossPaymentQueryClient,
                 reconciliationTxService, failureTxService);
         ReflectionTestUtils.setField(service, "maxReconciliationMinutes", 30);
+        ReflectionTestUtils.setField(service, "batchSize", 50);
     }
 
     @Test
     @DisplayName("RECONCILING 없음 → 아무것도 호출 안 함")
     void reconcileAll_noReconcilingPayments_doesNothing() {
-        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of());
+        given(userPaymentRepository.findReconcilingPaymentIds(any(Pageable.class))).willReturn(List.of());
 
         service.reconcileAll();
 
@@ -60,7 +64,8 @@ class PaymentReconciliationServiceTest {
     @DisplayName("Toss DONE → reconcileAsPaid 호출")
     void reconcileAll_tossDone_callsReconcileAsPaid() {
         UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(5));
-        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findReconcilingPaymentIds(any(Pageable.class)))
+                .willReturn(List.of(payment.getPaymentId()));
         given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         TossBillingPaymentResponse tossResponse = new TossBillingPaymentResponse(
@@ -75,10 +80,11 @@ class PaymentReconciliationServiceTest {
     }
 
     @Test
-    @DisplayName("Toss CANCELED → failPayment 호출")
+    @DisplayName("Toss CANCELED(터미널) → failPayment 호출")
     void reconcileAll_tossCanceled_callsFailPayment() {
         UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(5));
-        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findReconcilingPaymentIds(any(Pageable.class)))
+                .willReturn(List.of(payment.getPaymentId()));
         given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         TossBillingPaymentResponse tossResponse = new TossBillingPaymentResponse(
@@ -93,10 +99,46 @@ class PaymentReconciliationServiceTest {
     }
 
     @Test
+    @DisplayName("Toss IN_PROGRESS(비터미널) → RECONCILING 유지 (failPayment/settle 미호출)")
+    void reconcileAll_tossInProgress_keepsReconciling() {
+        UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(5));
+        given(userPaymentRepository.findReconcilingPaymentIds(any(Pageable.class)))
+                .willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
+
+        TossBillingPaymentResponse tossResponse = new TossBillingPaymentResponse(
+                null, payment.getOrderId(), "IN_PROGRESS", 0, "KRW", null);
+        given(tossPaymentQueryClient.queryByOrderId(payment.getOrderId()))
+                .willReturn(Optional.of(tossResponse));
+
+        service.reconcileAll();
+
+        verify(failureTxService, never()).failPayment(any(), any());
+        verify(reconciliationTxService, never()).reconcileAsPaid(any(UUID.class), any());
+    }
+
+    @Test
+    @DisplayName("Toss 4xx(영구 실패) → BILLING_ORDER_NOT_FOUND 예외 → failPayment 호출")
+    void reconcileAll_toss4xx_callsFailPayment() {
+        UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(5));
+        given(userPaymentRepository.findReconcilingPaymentIds(any(Pageable.class)))
+                .willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
+        given(tossPaymentQueryClient.queryByOrderId(payment.getOrderId()))
+                .willThrow(new CustomException(BillingErrorCode.BILLING_ORDER_NOT_FOUND));
+
+        service.reconcileAll();
+
+        verify(failureTxService).failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
+        verify(reconciliationTxService, never()).reconcileAsPaid(any(UUID.class), any());
+    }
+
+    @Test
     @DisplayName("Toss 조회 timeout(empty) → RECONCILING 유지 (failPayment/settle 미호출)")
     void reconcileAll_tossTimeout_keepsReconciling() {
         UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(5));
-        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findReconcilingPaymentIds(any(Pageable.class)))
+                .willReturn(List.of(payment.getPaymentId()));
         given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
         given(tossPaymentQueryClient.queryByOrderId(any())).willReturn(Optional.empty());
 
@@ -110,7 +152,8 @@ class PaymentReconciliationServiceTest {
     @DisplayName("최대 대사 시간 초과 → RECONCILING 유지 + Toss 조회 미실행 (OPS 알림)")
     void reconcileAll_maxTimeExceeded_keepsReconcilingWithoutTossQuery() {
         UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(31));
-        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findReconcilingPaymentIds(any(Pageable.class)))
+                .willReturn(List.of(payment.getPaymentId()));
         given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         service.reconcileAll();
@@ -124,7 +167,7 @@ class PaymentReconciliationServiceTest {
     void reconcileAll_mixed_exceptionIsolated() {
         UserPayment p1 = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(5));
         UserPayment p2 = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(3));
-        given(userPaymentRepository.findReconcilingPaymentIds())
+        given(userPaymentRepository.findReconcilingPaymentIds(any(Pageable.class)))
                 .willReturn(List.of(p1.getPaymentId(), p2.getPaymentId()));
         given(userPaymentRepository.findById(p1.getPaymentId())).willReturn(Optional.of(p1));
         given(userPaymentRepository.findById(p2.getPaymentId())).willReturn(Optional.of(p2));
@@ -135,17 +178,17 @@ class PaymentReconciliationServiceTest {
         given(tossPaymentQueryClient.queryByOrderId(p2.getOrderId()))
                 .willThrow(new RuntimeException("Unexpected error"));
 
-        // 예외 발생해도 서비스가 중단되지 않음
         service.reconcileAll();
 
         verify(reconciliationTxService).reconcileAsPaid(p1.getPaymentId(), done);
     }
 
     @Test
-    @DisplayName("Toss ABORTED → failPayment 호출")
+    @DisplayName("Toss ABORTED(터미널) → failPayment 호출")
     void reconcileAll_tossAborted_callsFailPayment() {
         UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(2));
-        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findReconcilingPaymentIds(any(Pageable.class)))
+                .willReturn(List.of(payment.getPaymentId()));
         given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         TossBillingPaymentResponse tossResponse = new TossBillingPaymentResponse(

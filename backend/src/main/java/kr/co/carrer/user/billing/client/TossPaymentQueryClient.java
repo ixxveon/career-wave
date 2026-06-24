@@ -75,7 +75,10 @@ public class TossPaymentQueryClient {
             return Optional.ofNullable(response);
         } catch (CustomException e) {
             log.warn("Toss payment query failed: orderId={}, error={}", orderId, e.getErrorCode());
-            return Optional.empty();
+            if (e.getErrorCode() == BillingErrorCode.PAYMENT_RECONCILIATION_REQUIRED) {
+                return Optional.empty(); // 5xx 일시 오류 → RECONCILING 유지
+            }
+            throw e; // 4xx 영구 실패 → 호출자에서 FAILED 확정
         } catch (Exception e) {
             log.warn("Toss payment query error: orderId={}, type={}", orderId, e.getClass().getSimpleName());
             return Optional.empty();

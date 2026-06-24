@@ -1,14 +1,17 @@
 package kr.co.carrer.user.billing.service.impl;
 
+import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.client.TossPaymentQueryClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingPaymentResponse;
 import kr.co.carrer.user.billing.entity.UserPayment;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.UserPaymentRepository;
 import kr.co.carrer.user.billing.service.PaymentReconciliationService;
 import kr.co.carrer.user.billing.type.PaymentFailureReason;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -16,6 +19,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -25,8 +29,14 @@ public class PaymentReconciliationServiceImpl implements PaymentReconciliationSe
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
+    // Toss 장애로 backlog 누적 시 스케줄 실행 당 처리량을 제한해 병목 방지
+    private static final Set<String> TERMINAL_FAILURE_STATUSES = Set.of("ABORTED", "CANCELED", "EXPIRED");
+
     @Value("${billing.reconciliation.max-minutes:30}")
     private int maxReconciliationMinutes;
+
+    @Value("${billing.reconciliation.batch-size:50}")
+    private int batchSize;
 
     private final UserPaymentRepository userPaymentRepository;
     private final TossPaymentQueryClient tossPaymentQueryClient;
@@ -34,14 +44,14 @@ public class PaymentReconciliationServiceImpl implements PaymentReconciliationSe
     private final UserPaymentFailureTxService failureTxService;
 
     // @Transactional 없음 — 외부 Toss API 호출 중 DB 락 점유 방지
-    // 1. 짧은 TX로 paymentId 목록만 수집
+    // 1. 짧은 TX로 paymentId 배치(reconcilingAt ASC) 수집
     // 2. 각 건 처리 시 Toss 호출(TX 밖) → 상태 확정 시 건별 REQUIRES_NEW TX
     @Override
     public void reconcileAll() {
-        List<UUID> paymentIds = userPaymentRepository.findReconcilingPaymentIds();
+        List<UUID> paymentIds = userPaymentRepository.findReconcilingPaymentIds(PageRequest.of(0, batchSize));
         if (paymentIds.isEmpty()) return;
 
-        log.info("RECONCILING 대사 시작: {}건", paymentIds.size());
+        log.info("RECONCILING 대사 시작: {}건 (배치 상한={})", paymentIds.size(), batchSize);
         int settled = 0, failed = 0, pending = 0;
 
         for (UUID paymentId : paymentIds) {
@@ -61,7 +71,6 @@ public class PaymentReconciliationServiceImpl implements PaymentReconciliationSe
     }
 
     private ReconcileOutcome processOne(UUID paymentId) {
-        // 결제 상세 읽기 — 락 없는 단순 조회 (외부 API 호출 전)
         UserPayment payment = userPaymentRepository.findById(paymentId).orElse(null);
         if (payment == null) return ReconcileOutcome.PENDING;
 
@@ -72,24 +81,35 @@ public class PaymentReconciliationServiceImpl implements PaymentReconciliationSe
             return ReconcileOutcome.PENDING;
         }
 
-        Optional<TossBillingPaymentResponse> tossResult = tossPaymentQueryClient.queryByOrderId(payment.getOrderId());
+        Optional<TossBillingPaymentResponse> tossResult;
+        try {
+            tossResult = tossPaymentQueryClient.queryByOrderId(payment.getOrderId());
+        } catch (CustomException e) {
+            // 4xx 영구 실패(BILLING_ORDER_NOT_FOUND 등) → 즉시 실패 확정
+            log.warn("RECONCILING → FAILED: paymentId={} — Toss 4xx 영구 실패({})", paymentId, e.getErrorCode());
+            failureTxService.failPayment(paymentId, PaymentFailureReason.CONFIRM_FAILED);
+            return ReconcileOutcome.FAILED;
+        }
 
         if (tossResult.isEmpty()) {
-            // Toss 조회 실패 또는 timeout → RECONCILING 유지
+            // 5xx 일시 오류 또는 timeout → RECONCILING 유지
             log.info("RECONCILING 유지: paymentId={} — Toss 조회 실패/timeout", paymentId);
             return ReconcileOutcome.PENDING;
         }
 
         TossBillingPaymentResponse tossResponse = tossResult.get();
         if ("DONE".equals(tossResponse.status())) {
-            // REQUIRES_NEW TX 내에서 재조회/락 후 PAID 확정
             reconciliationTxService.reconcileAsPaid(paymentId, tossResponse);
             return ReconcileOutcome.PAID;
-        } else {
-            // CANCELED, ABORTED, EXPIRED, PARTIAL_CANCELED → 실패 확정
+        } else if (TERMINAL_FAILURE_STATUSES.contains(tossResponse.status())) {
+            // ABORTED, CANCELED, EXPIRED → 터미널 실패 확정
             log.info("RECONCILING → FAILED: paymentId={}, tossStatus={}", paymentId, tossResponse.status());
             failureTxService.failPayment(paymentId, PaymentFailureReason.CONFIRM_FAILED);
             return ReconcileOutcome.FAILED;
+        } else {
+            // READY, IN_PROGRESS, WAITING_FOR_DEPOSIT, PARTIAL_CANCELED → 미확정 유지
+            log.info("RECONCILING 유지: paymentId={} — 미확정 Toss 상태({})", paymentId, tossResponse.status());
+            return ReconcileOutcome.PENDING;
         }
     }
 
