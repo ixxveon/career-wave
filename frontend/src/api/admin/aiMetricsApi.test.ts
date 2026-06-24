@@ -148,6 +148,41 @@ describe('aiMetricsApi usage DTO mapper', () => {
     vi.useRealTimers();
   });
 
+  it('maps heavy users with the requested domain metadata', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-24T01:00:00.000Z'));
+
+    expect(
+      mapAiHeavyUsers(
+        {
+          users: [
+            {
+              memberId: '7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a',
+              requestCount: 9,
+              inputTokens: 60000,
+              outputTokens: 12000,
+              cost: '42',
+            },
+          ],
+        },
+        AI_DOMAIN.INTERVIEW
+      )
+    ).toEqual([
+      {
+        userId: '7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a',
+        maskedUserLabel: 'USER-2f3a',
+        domain: AI_DOMAIN.INTERVIEW,
+        domainLabel: 'AI 면접 기능',
+        tokenUsage: 72000,
+        requestCount: 9,
+        riskLevel: AI_USAGE_RISK_LEVEL.WARNING,
+        lastUsedAt: '2026-06-24T01:00:00.000Z',
+      },
+    ]);
+
+    vi.useRealTimers();
+  });
+
   it('maps Spring usage log page response to screen log page type', () => {
     expect(
       mapAiMetricLogs({

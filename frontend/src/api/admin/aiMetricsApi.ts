@@ -326,14 +326,14 @@ export const mapAiTokenTrend = (raw: AiTokenTrendRaw): AiTokenTrendPoint[] =>
     requestCount: 0,
   }));
 
-export const mapAiHeavyUsers = (raw: AiHeavyUsersRaw): AiHeavyUser[] =>
+export const mapAiHeavyUsers = (raw: AiHeavyUsersRaw, domain?: AiDomain): AiHeavyUser[] =>
   raw.users.map((user) => {
     const tokenUsage = user.inputTokens + user.outputTokens;
     return {
       userId: user.memberId,
       maskedUserLabel: getMaskedUserLabel(user.memberId),
-      domain: AI_DOMAIN.DOCUMENT,
-      domainLabel: '전체 도메인',
+      domain: domain ?? AI_DOMAIN.DOCUMENT,
+      domainLabel: domain ? DOMAIN_LABELS[domain] : '전체 도메인',
       tokenUsage,
       requestCount: user.requestCount,
       riskLevel: getRiskLevel(tokenUsage),
@@ -385,7 +385,7 @@ export const aiMetricsApi = {
       .get<ApiResponse<AiHeavyUsersRaw>>(`${AI_METRICS_API_BASE_PATH}/heavy-users`, { params: toFeatureTypeParams(params) })
       .then((response) => ({
         ...response,
-        data: mapApiResponse(response.data, mapAiHeavyUsers),
+        data: mapApiResponse(response.data, (raw) => mapAiHeavyUsers(raw, params?.domain)),
       })),
 
   getLogs: (params?: AiMetricLogsParams) =>
