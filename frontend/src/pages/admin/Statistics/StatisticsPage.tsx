@@ -432,7 +432,7 @@ export default function StatisticsPage() {
                 <span className="statsEyebrow">최근 구독 현황</span>
                 <h3>최근 가입 피드</h3>
               </div>
-              <button className="statsViewAllBtn" onClick={() => navigate('/admin/payments?tab=구독 현황')}>전체보기</button>
+              <button className="statsViewAllBtn" onClick={() => navigate('/admin/payments?tab=subscriptions')}>전체보기</button>
             </div>
             {recentLoading && <p className="stats-loading">피드 데이터 로딩 중...</p>}
             {recentIsError && <p className="statsErrorMsg">{recentError?.message ?? '최근 가입 피드를 불러오지 못했습니다.'}</p>}

@@ -64,6 +64,12 @@ const SUB_STATUS_CLS: Record<string, string> = {
 
 const TABS: PayTab[] = ['결제 내역', '구독 현황', '정산 리포트'];
 
+const TAB_KEY_MAP: Record<string, PayTab> = {
+  payments:      '결제 내역',
+  subscriptions: '구독 현황',
+  settlement:    '정산 리포트',
+};
+
 // ── 환불 가능 여부 판단 헬퍼 ──────────────────────────────────
 
 function daysSincePaid(approvedAt: string): number {
@@ -108,7 +114,8 @@ interface Toast { id: number; msg: string; type: 'success' | 'error'; }
 
 export default function PaymentPage() {
   const [searchParams] = useSearchParams();
-  const initialTab = (searchParams.get('tab') as PayTab) ?? '결제 내역';
+  const tabKey = searchParams.get('tab') ?? '';
+  const initialTab: PayTab = TAB_KEY_MAP[tabKey] ?? '결제 내역';
   const [tab, setTab] = useState<PayTab>(initialTab);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
