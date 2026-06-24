@@ -60,6 +60,22 @@ export interface ScrapingSource {
   updatedAt: string;
 }
 
+export interface BackendScrapingPipelineItem {
+  scrapingPipelineId: number;
+  sourceName: string;
+  displayName: string;
+  pipelineStatus: PipelineStatus;
+  isEnabled: boolean;
+  lastStartedAt: string | null;
+  lastSuccessAt: string | null;
+  lastFailedAt: string | null;
+  lastDurationMs: number | null;
+  lastTotalCount: number | null;
+  lastErrorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ScrapingSourceSummary {
   totalSources: number;
   successCount: number;
@@ -134,10 +150,54 @@ export interface ScrapingLogListParams {
 
 const SCRAPING_API_BASE_PATH = '/api/v1/admin/scraping';
 
+export const toScrapingSource = (item: BackendScrapingPipelineItem): ScrapingSource => ({
+  sourceName: item.sourceName,
+  status: item.pipelineStatus,
+  successRate: 0,
+  averageDurationMs: item.lastDurationMs ?? 0,
+  cycleExpression: '-',
+  collectedCount: item.lastTotalCount ?? 0,
+  recentErrorCode: null,
+  recentErrorMessage: item.lastErrorMessage,
+  live: item.pipelineStatus === PIPELINE_STATUS.RUNNING,
+  lastStartedAt: item.lastStartedAt,
+  lastFinishedAt: item.lastSuccessAt ?? item.lastFailedAt,
+  updatedAt: item.updatedAt,
+});
+
+export const toScrapingSourceDetail = (item: BackendScrapingPipelineItem): ScrapingSourceDetail => {
+  const source = toScrapingSource(item);
+
+  return {
+    sourceName: source.sourceName,
+    status: source.status,
+    successRate: source.successRate,
+    averageDurationMs: source.averageDurationMs,
+    cycleExpression: source.cycleExpression,
+    collectedCount: source.collectedCount,
+    recentErrorCode: source.recentErrorCode,
+    recentErrorMessage: source.recentErrorMessage,
+    lastStartedAt: source.lastStartedAt,
+    lastFinishedAt: source.lastFinishedAt,
+    lastRunId: null,
+  };
+};
+
 export const scrapingApi = {
   // 스크래핑 source 목록 조회
   getSources: (params?: ScrapingSourceListParams) =>
-    axiosInstance.get<ApiResponse<PageResult<ScrapingSource>>>(`${SCRAPING_API_BASE_PATH}/pipelines`, { params }),
+    axiosInstance
+      .get<ApiResponse<PageResult<BackendScrapingPipelineItem>>>(`${SCRAPING_API_BASE_PATH}/pipelines`, { params })
+      .then((response) => ({
+        ...response,
+        data: {
+          ...response.data,
+          data: {
+            ...response.data.data,
+            content: response.data.data.content.map(toScrapingSource),
+          },
+        },
+      })),
 
   // 스크래핑 source 요약 조회
   getSummary: () =>
@@ -145,9 +205,17 @@ export const scrapingApi = {
 
   // 단일 source 상세 조회
   getSourceDetail: (sourceName: string) =>
-    axiosInstance.get<ApiResponse<ScrapingSourceDetail>>(
-      `${SCRAPING_API_BASE_PATH}/pipelines/${encodeURIComponent(sourceName)}`
-    ),
+    axiosInstance
+      .get<ApiResponse<BackendScrapingPipelineItem>>(
+        `${SCRAPING_API_BASE_PATH}/pipelines/${encodeURIComponent(sourceName)}`
+      )
+      .then((response) => ({
+        ...response,
+        data: {
+          ...response.data,
+          data: toScrapingSourceDetail(response.data.data),
+        },
+      })),
 
   // 단일 source 실행 액션 요청
   requestAction: (sourceName: string, data: ScrapingActionRequest) =>
