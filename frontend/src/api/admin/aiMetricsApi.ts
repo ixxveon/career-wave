@@ -45,6 +45,7 @@ export type AiHealthStatus = typeof AI_HEALTH_STATUS[keyof typeof AI_HEALTH_STAT
 export type AiUsageRiskLevel = typeof AI_USAGE_RISK_LEVEL[keyof typeof AI_USAGE_RISK_LEVEL];
 export type RagIndexStatus = typeof RAG_INDEX_STATUS[keyof typeof RAG_INDEX_STATUS];
 export type AiMetricInterval = typeof AI_METRIC_INTERVAL[keyof typeof AI_METRIC_INTERVAL];
+export type RagDocumentStatusRaw = 'UPLOADED' | 'INDEXING' | 'COMPLETED' | 'FAILED';
 
 export interface PageResult<T> {
   content: T[];
@@ -131,6 +132,41 @@ export interface RagDocumentMetric {
   updatedAt: string;
 }
 
+export interface RagDocumentMetricRaw {
+  ragDocumentId: number;
+  uploadedBy: number;
+  fileUuid: string;
+  originalFileName: string;
+  mimeType: string | null;
+  fileSize: number | null;
+  chunkCount: number;
+  indexingProgress: number;
+  status: RagDocumentStatusRaw;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RagDocumentDetailRaw = RagDocumentMetricRaw & {
+  filePath: string;
+};
+
+export type RagDocumentListRaw = PageResult<RagDocumentMetricRaw>;
+
+export interface RagDocumentDownloadRaw {
+  ragDocumentId: number;
+  originalFileName: string;
+  fileUuid: string;
+  mimeType: string | null;
+  fileSize: number | null;
+  downloadUrl: string;
+}
+
+export interface RagDocumentDownload {
+  documentId: string;
+  name: string;
+  downloadUrl: string;
+}
+
 export interface UploadRagDocumentRequest {
   file: File;
   name?: string;
@@ -180,6 +216,41 @@ export function getAiDisplayModelName(model: AiModelNameFields): string {
 
 const AI_METRICS_API_BASE_PATH = '/api/v1/admin/ai-metrics';
 
+const mapApiResponse = <TRaw, TMapped>(
+  response: ApiResponse<TRaw>,
+  mapper: (data: TRaw) => TMapped
+): ApiResponse<TMapped> => {
+  if (!response.success) return response;
+  return {
+    ...response,
+    data: mapper(response.data),
+  };
+};
+
+export const mapRagDocumentStatus = (status: RagDocumentStatusRaw): RagIndexStatus => {
+  if (status === 'INDEXING') return RAG_INDEX_STATUS.INDEXING;
+  if (status === 'FAILED') return RAG_INDEX_STATUS.FAILED;
+  return RAG_INDEX_STATUS.SYNCED;
+};
+
+export const mapRagDocumentMetric = (raw: RagDocumentMetricRaw): RagDocumentMetric => ({
+  documentId: String(raw.ragDocumentId),
+  name: raw.originalFileName,
+  chunkCount: raw.chunkCount,
+  progressPercent: raw.indexingProgress,
+  status: mapRagDocumentStatus(raw.status),
+  updatedAt: raw.updatedAt,
+});
+
+export const mapRagDocumentList = (raw: RagDocumentListRaw): RagDocumentMetric[] =>
+  raw.content.map(mapRagDocumentMetric);
+
+export const mapRagDocumentDownload = (raw: RagDocumentDownloadRaw): RagDocumentDownload => ({
+  documentId: String(raw.ragDocumentId),
+  name: raw.originalFileName,
+  downloadUrl: raw.downloadUrl,
+});
+
 export const aiMetricsApi = {
   getSummary: (params?: AiDateRangeParams) =>
     axiosInstance.get<ApiResponse<AiMetricSummary>>(`${AI_METRICS_API_BASE_PATH}/summary`, { params }),
@@ -209,7 +280,12 @@ export const aiMetricsApi = {
     axiosInstance.patch<ApiResponse<AiBudgetSetting>>(`${AI_METRICS_API_BASE_PATH}/controls/rate-limit`, data),
 
   getRagDocuments: () =>
-    axiosInstance.get<ApiResponse<RagDocumentMetric[]>>(`${AI_METRICS_API_BASE_PATH}/rag-documents`),
+    axiosInstance
+      .get<ApiResponse<RagDocumentListRaw>>(`${AI_METRICS_API_BASE_PATH}/rag-documents`)
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapRagDocumentList),
+      })),
 
   uploadRagDocument: ({ file, name }: UploadRagDocumentRequest) => {
     const formData = new FormData();
@@ -218,13 +294,21 @@ export const aiMetricsApi = {
       formData.append('name', name.trim());
     }
 
-    return axiosInstance.post<ApiResponse<RagDocumentMetric>>(`${AI_METRICS_API_BASE_PATH}/rag-documents`, formData);
+    return axiosInstance
+      .post<ApiResponse<RagDocumentDetailRaw>>(`${AI_METRICS_API_BASE_PATH}/rag-documents`, formData)
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapRagDocumentMetric),
+      }));
   },
 
   downloadRagDocument: (documentId: string) =>
-    axiosInstance.get<Blob>(`${AI_METRICS_API_BASE_PATH}/rag-documents/${documentId}/download`, {
-      responseType: 'blob',
-    }),
+    axiosInstance
+      .get<ApiResponse<RagDocumentDownloadRaw>>(`${AI_METRICS_API_BASE_PATH}/rag-documents/${documentId}/download`)
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapRagDocumentDownload),
+      })),
 
   deleteRagDocument: (documentId: string) =>
     axiosInstance.delete<ApiResponse<null>>(`${AI_METRICS_API_BASE_PATH}/rag-documents/${documentId}`),

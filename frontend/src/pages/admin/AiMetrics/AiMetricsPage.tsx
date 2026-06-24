@@ -476,17 +476,14 @@ export default function AiMetricsPage() {
       try {
         setRagActionErrorMessage('');
         const response = await aiMetricsApi.downloadRagDocument(doc.documentId);
-        const contentDisposition = response.headers['content-disposition'];
-        const fileNameMatch = contentDisposition?.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
-        const downloadedFileName = fileNameMatch?.[1] ? decodeURIComponent(fileNameMatch[1]) : doc.name;
-        const objectUrl = URL.createObjectURL(response.data);
+        if (!response.data.success) throw new Error(response.data.message ?? 'RAG document download info failed.');
+        const download = response.data.data;
         const anchor = document.createElement('a');
-        anchor.href = objectUrl;
-        anchor.download = downloadedFileName;
+        anchor.href = download.downloadUrl;
+        anchor.download = download.name;
         document.body.appendChild(anchor);
         anchor.click();
         document.body.removeChild(anchor);
-        URL.revokeObjectURL(objectUrl);
       } catch (error) {
         setRagActionErrorMessage(getApiStateMessage(error, 'RAG 문서 다운로드에 실패했습니다.'));
       }
