@@ -22,11 +22,11 @@
 
 ## Phase 3 - API
 
-- [ ] `DashboardController`를 작성한다.
-- [ ] `GET /api/v1/admin/dashboard/summary` endpoint를 작성한다.
-- [ ] `MASTER`, `BACKEND`, `CS` 권한 정책이 반영된 접근 제어 구성을 작성한다.
-- [ ] `range` Query Parameter 검증과 공통 예외 변환 규칙을 API 계층에 연결한다.
-- [ ] 정상 응답을 `ApiResponse<DashboardDTO.ResponseSummary>`로 래핑하는 처리를 작성한다.
+- [x] `DashboardController`를 작성한다.
+- [x] `GET /api/v1/admin/dashboard/summary` endpoint를 작성한다.
+- [x] `MASTER`, `BACKEND`, `CS` 권한 정책이 반영된 접근 제어 구성을 작성한다.
+- [x] `range` Query Parameter 검증과 공통 예외 변환 규칙을 API 계층에 연결한다.
+- [x] 정상 응답을 `ApiResponse<DashboardDTO.ResponseSummary>`로 래핑하는 처리를 작성한다.
 
 ## Phase 4 - Documentation
 
