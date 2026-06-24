@@ -88,6 +88,11 @@ function ScrappedJobPage() {
   }, [keyword]);
 
   useEffect(() => {
+    if (totalPages === 0 && currentPage !== 0) {
+      setCurrentPage(0);
+      return;
+    }
+
     if (totalPages > 0 && currentPage >= totalPages) {
       setCurrentPage(totalPages - 1);
     }
