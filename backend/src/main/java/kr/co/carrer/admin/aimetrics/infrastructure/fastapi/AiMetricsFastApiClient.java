@@ -29,12 +29,16 @@ public class AiMetricsFastApiClient implements AiMetricsFastApiGateway {
     private static final String OPS_SETTING_SYNC_PATH = "/internal/admin/ai-metrics/ops/sync-settings";
     private static final String RAG_INDEX_START_PATH = "/internal/admin/ai-metrics/rag-documents/index";
     private static final String RAG_INDEX_DELETE_PATH = "/internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index";
+    private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
 
     private final WebClient.Builder webClientBuilder;
     private final ObjectMapper objectMapper;
 
     @Value("${fastapi.base-url}")
     private String fastApiBaseUrl;
+
+    @Value("${webhook.secret}")
+    private String webhookSecret;
 
     private WebClient webClient;
 
@@ -127,6 +131,7 @@ public class AiMetricsFastApiClient implements AiMetricsFastApiGateway {
         try {
             T response = webClient.post()
                     .uri(path)
+                    .header(INTERNAL_SECRET_HEADER, webhookSecret)
                     .bodyValue(request)
                     .retrieve()
                     .bodyToMono(responseType)
@@ -151,6 +156,7 @@ public class AiMetricsFastApiClient implements AiMetricsFastApiGateway {
         try {
             T response = webClient.delete()
                     .uri(path, ragDocumentId)
+                    .header(INTERNAL_SECRET_HEADER, webhookSecret)
                     .retrieve()
                     .bodyToMono(responseType)
                     .timeout(TIMEOUT)

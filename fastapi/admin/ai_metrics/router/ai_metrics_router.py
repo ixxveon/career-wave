@@ -233,8 +233,15 @@ async def create_usage_log(request: UsageLogCreateRequest):
         )
 
 
-def _parse_iso_datetime(value: str) -> datetime:
-    normalized = value.replace("Z", "+00:00")
+def _parse_iso_datetime(value: str | None) -> datetime | None:
+    if value is None:
+        return None
+
+    normalized = value.strip()
+    if not normalized:
+        return None
+
+    normalized = normalized.replace("Z", "+00:00")
     try:
         return datetime.fromisoformat(normalized)
     except ValueError as error:
