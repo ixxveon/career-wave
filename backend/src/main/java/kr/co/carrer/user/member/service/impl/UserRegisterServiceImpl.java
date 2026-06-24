@@ -1,6 +1,7 @@
 package kr.co.carrer.user.member.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.member.dto.UserRegisterDto;
 import kr.co.carrer.user.member.entity.*;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
@@ -31,6 +32,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     private final PasswordEncoder passwordEncoder;
     private final BusinessRegistrationVerificationPort businessVerificationPort;
     private final EmploymentCertificateFilePort employmentCertificateFilePort;
+    private final EntitlementInitService entitlementInitService;
 
     // ── loginId 중복 확인 ──────────────────────────────────────────────────────
 
@@ -102,6 +104,9 @@ public class UserRegisterServiceImpl implements UserRegisterService {
                 request.getTerms().isService(),
                 request.getTerms().isPrivacy(),
                 request.getTerms().isMarketing()));
+
+        // 상품별 FREE 이용권 생성 (document-coaching, interview)
+        entitlementInitService.initFreeEntitlements(member.getMemberId());
 
         return UserRegisterDto.ResponsePersonalRegister.of(member.getMemberId());
     }

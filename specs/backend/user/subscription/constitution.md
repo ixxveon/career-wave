@@ -227,7 +227,77 @@ CONFIRMING -> RECONCILING -> FAILED
 
 ---
 
-## 8. 초안 결정 필요 항목
+## 8. Admin Payment 연동 필수 정렬 원칙
+
+user 측 `payments`, `subscriptions` 테이블은 admin 측 `AdminPaymentController`, `AdminSubscriptionController`가 직접 읽고 쓴다.  
+두 패키지가 같은 DB 테이블을 공유하므로 아래 항목은 코딩 스타일이 아닌 **연동 필수 조건**이다.
+
+### 8.1 Enum 문자열 값 고정
+
+아래 enum 값은 DB `CHECK constraint`로 고정되어 있다. user 측 엔티티에서 이 문자열과 다른 값을 사용하면 DB가 INSERT를 거부한다.
+
+| DB 컬럼 | 허용 값 (변경 금지) |
+|---|---|
+| `payment_status` | `READY`, `AUTHORIZED`, `CONFIRMING`, `PAID`, `FAILED`, `CANCELED`, `RECONCILING`, `REFUNDED` |
+| `payment_type` | `MANUAL`, `AUTO_RENEWAL` |
+| `failure_reason` | `USER_CANCELED`, `CARD_DECLINED`, `TIMEOUT`, `DUPLICATE_ORDER`, `CONFIRM_FAILED`, `FORBIDDEN`, `UNKNOWN` |
+| `subscription_status` | `ACTIVE`, `CANCEL_SCHEDULED`, `PAYMENT_FAILED`, `EXPIRED`, `REFUND_PENDING`, `REFUNDED` |
+
+- user 측 `PaymentFailureReason` enum 값은 위 `failure_reason` 허용 값과 동일하게 유지한다.
+- user 측 신규 Payment 엔티티의 `@Enumerated(EnumType.STRING)` 컬럼은 위 값 외 다른 문자열을 생성하지 않는다.
+
+### 8.2 Payment 엔티티 컬럼명 정렬
+
+user 측 Payment 엔티티의 `@Column(name = "...")` 값은 `admin.payment.entity.Payment` 및 `db/init.sql`의 컬럼명과 동일해야 한다.
+
+| 필드 | DB 컬럼명 (변경 금지) |
+|---|---|
+| paymentId | `payment_id` |
+| memberId | `member_id` |
+| subscriptionId | `subscription_id` |
+| planId | `plan_id` |
+| orderId | `order_id` |
+| paymentKey | `payment_key` |
+| idempotencyKey | `idempotency_key` |
+| amount | `amount` |
+| currency | `currency` |
+| paymentStatus | `payment_status` |
+| failureReason | `failure_reason` |
+| paymentMethod | `payment_method` |
+| paymentType | `payment_type` |
+| attemptSequence | `attempt_sequence` |
+| approvedAt | `approved_at` |
+| expiresAt | `expires_at` |
+| createdAt | `created_at` |
+| updatedAt | `updated_at` |
+
+### 8.3 상태 전이 책임 분리
+
+admin과 user 측이 동일한 Payment 레코드에 쓰는 상태 전이 경로가 겹치지 않도록 책임을 나눈다.
+
+| 담당 | 허용 전이 |
+|---|---|
+| user 측 | `READY → AUTHORIZED → CONFIRMING → PAID` |
+| user 측 | `READY → CANCELED` |
+| user 측 | `AUTHORIZED / CONFIRMING / RECONCILING → FAILED` |
+| user 측 | `CONFIRMING → RECONCILING → PAID` |
+| **admin 측** | `PAID → REFUNDED` |
+
+- user 측은 `PAID → REFUNDED` 전이를 실행하지 않는다.
+- admin 측은 `READY` 이후 결제 진행 전이를 실행하지 않는다.
+- 두 쪽 모두 자신이 담당하지 않는 상태에서 전이를 시도하면 예외를 발생시켜 DB 데이터 이상을 방지한다.
+
+### 8.4 Toss 외부 API 실패 이력 격리
+
+Toss API 호출 실패 이력은 주 트랜잭션이 롤백되더라도 반드시 DB에 남아야 한다.
+
+- Toss 호출 실패 이력 저장은 `@Transactional(propagation = Propagation.REQUIRES_NEW)` 별도 트랜잭션으로 격리한다.
+- 별도 `*TxService` 클래스에 격리 메서드를 위치시킨다 (예: `PaymentFailureTxService`).
+- 주 트랜잭션 롤백 시 실패 이력이 함께 사라지는 구현을 금지한다.
+
+---
+
+## 9. 초안 결정 필요 항목
 
 아래 값은 구현 전 팀 결정 후 숫자 하나로 확정한다.
 

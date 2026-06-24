@@ -2,6 +2,7 @@ import { Upload, AlertCircle, WifiOff } from 'lucide-react';
 import ResumeUpload from '../../../components/user/resume/ResumeUpload';
 import LoadingModal from '../../../components/user/resume/LoadingModal';
 import QuotaBar from '../../../components/user/resume/QuotaBar';
+import QuotaExhaustedBanner from '../../../components/user/resume/QuotaExhaustedBanner';
 import DocumentResultView from './DocumentResultView';
 import { useResumeUpload } from '../../../hooks/user/resume/useResumeUpload';
 import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
@@ -58,6 +59,8 @@ export default function ResumeAnalysisPage() {
 
       <div className="ra-upload-wrap">
         <QuotaBar />
+
+        {isExhausted && <QuotaExhaustedBanner />}
 
         <span className="ra-eyebrow">RESUME ANALYSIS</span>
         <h1 className="ra-upload__title">이력서 AI 분석</h1>

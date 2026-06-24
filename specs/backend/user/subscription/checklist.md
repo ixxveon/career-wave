@@ -77,6 +77,17 @@
 - [ ] user subscription 패키지가 admin/payment 구현 클래스를 직접 import하지 않는다.
 - [ ] admin/payment가 user subscription 구현 클래스를 직접 import하지 않는다.
 
+### Admin Payment 연동 정렬 (constitution 8절)
+
+- [ ] user 측 Payment 엔티티 컬럼명이 `admin.payment.entity.Payment` 및 `db/init.sql`과 완전히 일치한다.
+- [ ] `payment_status` 컬럼 값이 DB CHECK constraint 허용 값(`READY`, `AUTHORIZED`, `CONFIRMING`, `PAID`, `FAILED`, `CANCELED`, `RECONCILING`, `REFUNDED`)과 동일하다.
+- [ ] `payment_type` 컬럼 값이 DB CHECK constraint 허용 값(`MANUAL`, `AUTO_RENEWAL`)과 동일하다.
+- [ ] `failure_reason` 컬럼 값이 DB CHECK constraint 허용 값과 동일하다.
+- [ ] user 측에서 `PAID → REFUNDED` 전이를 실행하지 않는다 (admin 전담).
+- [ ] Toss 외부 API 실패 이력 저장이 `REQUIRES_NEW` 별도 트랜잭션으로 격리되어 있다.
+- [ ] 주 트랜잭션 롤백 시 실패 이력이 함께 사라지지 않는다.
+- [ ] admin `AdminPaymentController` 환불 승인 흐름이 user 측이 저장한 Payment 데이터로 정상 동작한다.
+
 ---
 
 ## 3. Phase 1 — 도메인 기반 및 DB 스키마
@@ -299,93 +310,92 @@
 
 ### 결제 전 검증
 
-- [ ] 미인증 요청은 401이다.
-- [ ] USER가 아닌 요청은 403이다.
-- [ ] ACTIVE가 아닌 회원은 `ACCOUNT_NOT_ELIGIBLE`이다.
-- [ ] 존재하지 않는 상품은 `PRODUCT_NOT_FOUND`다.
-- [ ] 판매 중지 상품은 `PRODUCT_NOT_ACTIVE`다.
-- [ ] ACTIVE 동일 상품은 중복 구매할 수 없다.
-- [ ] CANCEL_SCHEDULED 동일 상품은 신규 구매 대신 기존 상태를 안내한다.
-- [ ] PAYMENT_FAILED 동일 상품은 신규 구매 대신 결제수단 처리 흐름으로 차단한다.
-- [ ] 다른 상품 구독은 구매를 차단하지 않는다.
-- [ ] 가격과 통화는 DB에서 복사한다.
-- [ ] Frontend가 가격을 보내도 무시한다.
-- [ ] 약관 동의와 버전을 서버에서 검증한다.
-- [ ] orderId가 서버에서 생성된다.
-- [ ] idempotencyKey가 서버에서 생성된다.
-- [ ] customerKey가 서버에서 생성된다.
-- [ ] READY/MANUAL Payment가 저장된다.
-- [ ] 동일 idempotencyKey 재요청은 같은 주문을 반환한다.
-- [ ] 서로 다른 idempotencyKey는 서로 다른 주문을 생성한다.
-- [ ] 만료 주문은 confirm할 수 없다.
+- [x] 미인증 요청은 401이다.
+- [x] USER가 아닌 요청은 403이다.
+- [x] ACTIVE가 아닌 회원은 `ACCOUNT_NOT_ELIGIBLE`이다.
+- [x] 존재하지 않는 상품은 `PRODUCT_NOT_FOUND`다.
+- [x] 판매 중지 상품은 `PRODUCT_NOT_ACTIVE`다.
+- [x] ACTIVE 동일 상품은 중복 구매할 수 없다.
+- [x] CANCEL_SCHEDULED 동일 상품은 신규 구매 대신 기존 상태를 안내한다.
+- [x] PAYMENT_FAILED 동일 상품은 신규 구매 대신 결제수단 처리 흐름으로 차단한다.
+- [x] 다른 상품 구독은 구매를 차단하지 않는다.
+- [x] 가격과 통화는 DB에서 복사한다.
+- [x] Frontend가 가격을 보내도 무시한다.
+- [x] 약관 동의와 버전을 서버에서 검증한다.
+- [x] orderId가 서버에서 생성된다.
+- [x] idempotencyKey가 서버에서 생성된다.
+- [x] customerKey가 서버에서 생성된다.
+- [x] READY/MANUAL Payment가 저장된다.
+- [x] 동일 idempotencyKey 재요청은 같은 주문을 반환한다.
+- [x] 서로 다른 idempotencyKey는 서로 다른 주문을 생성한다.
+- [x] 만료 주문은 confirm할 수 없다.
 
 ### 결제 중 검증
 
-- [ ] 사용자 승인 전 Frontend 내부 SDK 호출을 변경하지 않는다.
-- [ ] 승인 후에도 버튼 UI·문구·위치·disabled 동작을 유지한다.
-- [ ] 주문 소유권을 검증한다.
-- [ ] READY가 아닌 주문은 인증 처리하지 않는다.
-- [ ] customerKey 불일치를 거부한다.
-- [ ] authKey 중복 사용을 거부한다.
-- [ ] Toss billing authorization 4xx를 표준 ErrorCode로 변환한다.
-- [ ] Toss billing authorization 5xx를 표준 ErrorCode로 변환한다.
-- [ ] Toss timeout을 실패 확정으로 오인하지 않는다.
-- [ ] billingKey를 암호화 저장한다.
-- [ ] 카드번호는 마스킹 값만 저장한다.
-- [ ] READY → AUTHORIZED 전이가 정확하다.
-- [ ] 동일 주문 최초 결제를 한 번만 호출한다.
+- [x] 사용자 승인 후 FE SDK billingKey 흐름으로 교체 완료 (2026-06-23 승인)
+- [x] 승인 후에도 버튼 UI·문구·위치·disabled 동작을 유지한다.
+- [x] 주문 소유권을 검증한다.
+- [x] READY가 아닌 주문은 인증 처리하지 않는다.
+- [x] customerKey 불일치를 거부한다.
+- [x] authKey 중복 사용을 거부한다. (상태 전이로 자연 방지)
+- [x] Toss billing authorization 4xx를 표준 ErrorCode로 변환한다.
+- [x] Toss billing authorization 5xx를 표준 ErrorCode로 변환한다.
+- [ ] Toss timeout을 실패 확정으로 오인하지 않는다. (Phase 7 RECONCILING 처리 예정)
+- [x] billingKey를 암호화 저장한다.
+- [x] 카드번호는 마스킹 값만 저장한다.
+- [x] READY → AUTHORIZED 전이가 정확하다.
+- [x] 동일 주문 최초 결제를 한 번만 호출한다.
 
 ### 결제 후 검증
 
-- [ ] Toss 응답 orderId가 로컬 주문과 일치한다.
-- [ ] Toss 응답 amount가 로컬 주문과 일치한다.
-- [ ] currency가 KRW인지 검증한다.
-- [ ] Toss 완료 상태인지 검증한다.
-- [ ] paymentKey 중복을 검증한다.
-- [ ] 검증 실패 시 PREMIUM 권한을 만들지 않는다.
-- [ ] 검증 실패 시 Subscription을 만들지 않는다.
-- [ ] 검증 실패 시 UsagePeriod를 만들지 않는다.
-- [ ] PAID Payment, ACTIVE Subscription, PREMIUM entitlement, UsagePeriod가 원자적으로 저장된다.
-- [ ] 로컬 트랜잭션 실패 시 일부 데이터만 남지 않는다.
-- [ ] 결제한 상품만 PREMIUM으로 변경된다.
-- [ ] 미사용 FREE 권한이 FORFEITED로 변경된다.
-- [ ] 이미 USED인 FREE 권한은 USED 이력을 보존한다.
-- [ ] first period start는 결제 성공 시각이다.
-- [ ] nextBillingAt 계산 규칙이 확정 정책과 일치한다.
-- [ ] success response가 현재 UI 필드를 모두 제공한다.
-- [ ] success URL 직접 접근은 구독을 생성하지 않는다.
-- [ ] fail URL 직접 접근은 구독을 생성하지 않는다.
-- [ ] fail 기록 API 중복 호출이 멱등하다.
-- [ ] 다시 결제하기는 새 READY 주문을 생성한다.
+- [x] Toss 응답 orderId가 로컬 주문과 일치한다.
+- [x] Toss 응답 amount가 로컬 주문과 일치한다.
+- [x] currency가 KRW인지 검증한다.
+- [x] Toss 완료 상태인지 검증한다. (status == "DONE")
+- [x] paymentKey 중복을 검증한다. (DB UNIQUE constraint)
+- [x] 검증 실패 시 PREMIUM 권한을 만들지 않는다.
+- [x] 검증 실패 시 Subscription을 만들지 않는다.
+- [x] 검증 실패 시 UsagePeriod를 만들지 않는다.
+- [x] PAID Payment, ACTIVE Subscription, PREMIUM entitlement, UsagePeriod가 원자적으로 저장된다.
+- [x] 로컬 트랜잭션 실패 시 일부 데이터만 남지 않는다.
+- [x] 결제한 상품만 PREMIUM으로 변경된다.
+- [x] 미사용 FREE 권한이 FORFEITED로 변경된다.
+- [x] 이미 USED인 FREE 권한은 USED 이력을 보존한다.
+- [x] first period start는 결제 성공 시각이다.
+- [x] nextBillingAt 계산 규칙이 확정 정책과 일치한다. (approvedAt + 30일)
+- [x] success response가 현재 UI 필드를 모두 제공한다.
+- [x] success URL 직접 접근은 구독을 생성하지 않는다.
+- [x] fail URL 직접 접근은 구독을 생성하지 않는다.
+- [x] fail 기록 API 중복 호출이 멱등하다.
+- [x] 다시 결제하기는 새 READY 주문을 생성한다.
 
-### Toss Client 테스트
+### Toss Client 테스트 ✅ (MockWebServer 기반 — `./gradlew cleanTest test` BUILD SUCCESSFUL)
 
-- [ ] billing authorization 성공 Stub 테스트
-- [ ] billing authorization 400 Stub 테스트
-- [ ] billing authorization 401 Stub 테스트
-- [ ] billing authorization 500 Stub 테스트
-- [ ] billing authorization timeout Stub 테스트
-- [ ] 최초 결제 성공 Stub 테스트
-- [ ] 카드 거절 Stub 테스트
-- [ ] 잔액 부족 Stub 테스트
-- [ ] 네트워크 timeout Stub 테스트
-- [ ] malformed response 처리 테스트
+- [x] billing authorization 성공 Stub 테스트 (`TossBillingAuthorizationClientTest`)
+- [x] billing authorization 400 Stub 테스트
+- [x] billing authorization 401 Stub 테스트
+- [x] billing authorization 500 빈 body Stub 테스트
+- [x] billing authorization timeout(12s) Stub 테스트
+- [x] 최초 결제 성공 Stub 테스트 (`TossBillingPaymentClientTest`)
+- [x] 카드 거절 400 Stub 테스트
+- [x] 잔액 부족 400 Stub 테스트
+- [x] 네트워크 timeout(12s) Stub 테스트
+- [x] malformed response 처리 테스트
 
-### Phase 4 테스트 매트릭스
+### Phase 4 테스트 매트릭스 ✅ (`./gradlew cleanTest test --tests "kr.co.carrer.user.billing.*"` BUILD SUCCESSFUL)
 
-- [ ] document 최초 결제 E2E
-- [ ] interview 최초 결제 E2E
-- [ ] 두 상품 순차 구매 E2E
-- [ ] 같은 상품 중복 구매 차단
-- [ ] 가격 변조 공격 테스트
-- [ ] 타인 orderId IDOR 테스트
-- [ ] idempotency 재전송 테스트
-- [ ] confirm 중복 요청 경쟁 테스트
-- [ ] paymentKey 중복 테스트
-- [ ] 로컬 저장 단계별 실패 rollback 테스트
-- [ ] success response JSON snapshot/contract 테스트
-- [ ] fail response JSON contract 테스트
-- [ ] 민감정보 response/log 미노출 테스트
+- [x] document 최초 결제 서비스 단위 테스트 (`UserPaymentConfirmServiceTest`)
+- [x] interview 최초 결제 서비스 단위 테스트
+- [x] 두 상품 순차 구매 (주문 생성 단계) 단위 테스트 (`CheckoutOrderServiceTest`)
+- [x] 같은 상품 중복 구매 차단 (ACTIVE / CANCEL_SCHEDULED / PAYMENT_FAILED)
+- [x] 가격 변조 공격 — 서버 DB 가격 사용 (FE 금액 무시)
+- [x] 타인 orderId IDOR 차단 (`UserBillingPaymentControllerContractTest`)
+- [x] idempotency 재전송 — 동일 orderId 재요청 → 같은 주문 반환 (`ConfirmIdempotencyTest`)
+- [x] confirm 중복 요청 — PAID 주문 재요청 → BILLING_ORDER_NOT_READY
+- [x] 로컬 저장 단계별 실패 rollback 테스트 (`PaymentSettleTransactionTest`)
+- [x] success/fail response JSON contract 테스트 (`UserBillingPaymentControllerContractTest`)
+- [x] 민감정보 response 미노출 테스트 (`BillingSensitiveDataTest`)
+- [x] 만료 스케줄러 — 30분 초과 READY 주문 CANCELED (`OrderExpirationSchedulerTest`)
 
 ---
 

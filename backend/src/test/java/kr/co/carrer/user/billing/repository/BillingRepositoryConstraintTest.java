@@ -1,8 +1,5 @@
 package kr.co.carrer.user.billing.repository;
 
-import kr.co.carrer.admin.payment.entity.Payment;
-import kr.co.carrer.admin.payment.repository.PaymentRepository;
-import kr.co.carrer.admin.payment.type.PaymentType;
 import kr.co.carrer.support.PostgreSqlTestContainerSupport;
 import kr.co.carrer.user.billing.entity.*;
 import kr.co.carrer.user.billing.type.*;
@@ -24,6 +21,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.ZonedDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,7 +51,7 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
     @Autowired private SubscriptionRepository subscriptionRepository;
     @Autowired private ServiceUsageRecordRepository usageRecordRepository;
     @Autowired private SubscriptionUsagePeriodRepository usagePeriodRepository;
-    @Autowired private PaymentRepository paymentRepository;
+    @Autowired private UserPaymentRepository userPaymentRepository;
 
     private UUID memberId;
     private Long planId;
@@ -220,7 +218,11 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
             Subscription s = Subscription.create(memberId, planId, now, now.plusMonths(1));
             subscriptionRepository.saveAndFlush(s);
 
-            assertThat(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(memberId, planId))
+            assertThat(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(
+                    memberId, planId, Set.of(
+                            SubscriptionStatus.ACTIVE,
+                            SubscriptionStatus.CANCEL_SCHEDULED,
+                            SubscriptionStatus.PAYMENT_FAILED)))
                     .hasSize(1);
         }
 
@@ -233,7 +235,11 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
             s.expire();
             subscriptionRepository.saveAndFlush(s);
 
-            assertThat(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(memberId, planId))
+            assertThat(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(
+                    memberId, planId, Set.of(
+                            SubscriptionStatus.ACTIVE,
+                            SubscriptionStatus.CANCEL_SCHEDULED,
+                            SubscriptionStatus.PAYMENT_FAILED)))
                     .isEmpty();
         }
     }
@@ -242,17 +248,23 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
     @DisplayName("Payment UNIQUE 제약 — order_id, idempotency_key")
     class PaymentUnique {
 
-        private Payment newPayment(String orderId, String idempotencyKey) {
-            return Payment.createReady(
-                    memberId, planId, null,
-                    orderId, idempotencyKey,
-                    9900, "KRW",
-                    PaymentType.MANUAL, 0,
-                    ZonedDateTime.now().plusMinutes(30));
+        private UserPayment newPayment(String orderId, String idempotencyKey) {
+            return UserPayment.createReady(
+                    memberId,
+                    planId,
+                    "interview",
+                    orderId,
+                    idempotencyKey,
+                    "customer-key-" + orderId,
+                    "테스터",
+                    memberId + "@test.com",
+                    9900,
+                    ZonedDateTime.now().plusMinutes(30)
+            );
         }
 
-        private Payment newPaidPayment(String orderId, String idempotencyKey, String paymentKey) {
-            Payment p = newPayment(orderId, idempotencyKey);
+        private UserPayment newPaidPayment(String orderId, String idempotencyKey, String paymentKey) {
+            UserPayment p = newPayment(orderId, idempotencyKey);
             p.authorize();
             p.confirmStarted();
             p.paid(paymentKey, ZonedDateTime.now());
@@ -262,37 +274,37 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
         @Test
         @DisplayName("order_id 중복 저장 시 DataIntegrityViolationException 발생")
         void duplicate_orderId_throws() {
-            paymentRepository.saveAndFlush(newPayment("ORDER-001", "IDEM-A"));
+            userPaymentRepository.saveAndFlush(newPayment("ORDER-001", "IDEM-A"));
 
-            assertThatThrownBy(() -> paymentRepository.saveAndFlush(newPayment("ORDER-001", "IDEM-B")))
+            assertThatThrownBy(() -> userPaymentRepository.saveAndFlush(newPayment("ORDER-001", "IDEM-B")))
                     .isInstanceOf(DataIntegrityViolationException.class);
         }
 
         @Test
         @DisplayName("idempotency_key 중복 저장 시 DataIntegrityViolationException 발생")
         void duplicate_idempotencyKey_throws() {
-            paymentRepository.saveAndFlush(newPayment("ORDER-002", "IDEM-C"));
+            userPaymentRepository.saveAndFlush(newPayment("ORDER-002", "IDEM-C"));
 
-            assertThatThrownBy(() -> paymentRepository.saveAndFlush(newPayment("ORDER-003", "IDEM-C")))
+            assertThatThrownBy(() -> userPaymentRepository.saveAndFlush(newPayment("ORDER-003", "IDEM-C")))
                     .isInstanceOf(DataIntegrityViolationException.class);
         }
 
         @Test
         @DisplayName("order_id와 idempotency_key 모두 다른 결제는 허용")
         void different_orderIdAndIdempotencyKey_allowed() {
-            paymentRepository.saveAndFlush(newPayment("ORDER-004", "IDEM-D"));
-            paymentRepository.saveAndFlush(newPayment("ORDER-005", "IDEM-E"));
+            userPaymentRepository.saveAndFlush(newPayment("ORDER-004", "IDEM-D"));
+            userPaymentRepository.saveAndFlush(newPayment("ORDER-005", "IDEM-E"));
 
-            assertThat(paymentRepository.count()).isEqualTo(2);
+            assertThat(userPaymentRepository.count()).isEqualTo(2);
         }
 
         @Test
         @DisplayName("payment_key 중복 저장 시 DataIntegrityViolationException 발생 — PAID 결제 두 건 동일 키")
         void duplicate_paymentKey_throws() {
-            paymentRepository.saveAndFlush(newPaidPayment("ORDER-006", "IDEM-F", "TOSS-KEY-001"));
+            userPaymentRepository.saveAndFlush(newPaidPayment("ORDER-006", "IDEM-F", "TOSS-KEY-001"));
 
             assertThatThrownBy(() ->
-                    paymentRepository.saveAndFlush(newPaidPayment("ORDER-007", "IDEM-G", "TOSS-KEY-001")))
+                    userPaymentRepository.saveAndFlush(newPaidPayment("ORDER-007", "IDEM-G", "TOSS-KEY-001")))
                     .isInstanceOf(DataIntegrityViolationException.class);
         }
 
@@ -300,10 +312,10 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
         @DisplayName("payment_key NULL은 여러 건 허용 — PAID 아닌 결제")
         void null_paymentKey_multipleAllowed() {
             // NULL은 UNIQUE 제약 예외 (PostgreSQL: NULL != NULL)
-            paymentRepository.saveAndFlush(newPayment("ORDER-008", "IDEM-H"));
-            paymentRepository.saveAndFlush(newPayment("ORDER-009", "IDEM-I"));
+            userPaymentRepository.saveAndFlush(newPayment("ORDER-008", "IDEM-H"));
+            userPaymentRepository.saveAndFlush(newPayment("ORDER-009", "IDEM-I"));
 
-            assertThat(paymentRepository.count()).isEqualTo(2);
+            assertThat(userPaymentRepository.count()).isEqualTo(2);
         }
     }
 }

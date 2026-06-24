@@ -41,7 +41,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   setupCreateOrder();
   vi.mocked(loadTossPayments).mockResolvedValue({
-    payment: () => ({ requestPayment: vi.fn().mockResolvedValue(undefined) }),
+    payment: () => ({ requestBillingAuth: vi.fn().mockResolvedValue(undefined) }),
   } as unknown as Awaited<ReturnType<typeof loadTossPayments>>);
 });
 
@@ -80,10 +80,10 @@ describe('isPaymentRequesting — Toss SDK 구간 재진입 방지', () => {
 
   it('handleCheckout 진행 중 재호출해도 createOrder가 1번만 실행된다', async () => {
     const createOrderMock = vi.fn().mockResolvedValue(mockOrder);
-    const requestPaymentMock = vi.fn().mockImplementation(() => new Promise(() => {}));
+    const requestBillingAuthMock = vi.fn().mockImplementation(() => new Promise(() => {}));
     setupCreateOrder({ mutateAsync: createOrderMock });
     vi.mocked(loadTossPayments).mockResolvedValue({
-      payment: () => ({ requestPayment: requestPaymentMock }),
+      payment: () => ({ requestBillingAuth: requestBillingAuthMock }),
     } as unknown as Awaited<ReturnType<typeof loadTossPayments>>);
 
     const { result } = renderHook(() => useCheckoutStatus());
@@ -108,11 +108,11 @@ describe('isPaymentRequesting — Toss SDK 구간 재진입 방지', () => {
     expect(result.current.isPaymentRequesting).toBe(false);
   });
 
-  it('requestPayment 실패 후 isPaymentRequesting이 false로 초기화된다', async () => {
+  it('requestBillingAuth 실패 후 isPaymentRequesting이 false로 초기화된다', async () => {
     const createOrderMock = vi.fn().mockResolvedValue(mockOrder);
     setupCreateOrder({ mutateAsync: createOrderMock });
     vi.mocked(loadTossPayments).mockResolvedValue({
-      payment: () => ({ requestPayment: vi.fn().mockRejectedValue({ status: 0 }) }),
+      payment: () => ({ requestBillingAuth: vi.fn().mockRejectedValue({ status: 0 }) }),
     } as unknown as Awaited<ReturnType<typeof loadTossPayments>>);
 
     const { result } = renderHook(() => useCheckoutStatus());
