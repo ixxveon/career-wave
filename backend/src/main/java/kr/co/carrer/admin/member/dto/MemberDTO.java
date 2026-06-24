@@ -40,7 +40,11 @@ public class MemberDTO {
         @Schema(description = "경고 횟수") int warningCount,
         @Schema(description = "신고 횟수") long reportCount,
         @Schema(description = "가입 일시") ZonedDateTime joinedAt,
-        @Schema(description = "마지막 로그인 일시") ZonedDateTime lastLoginAt
+        @Schema(description = "마지막 로그인 일시") ZonedDateTime lastLoginAt,
+        @Schema(description = "최근 제재 유형 (정지 상태일 때만)") SanctionType sanctionType,
+        @Schema(description = "정지 기간") SuspendDuration suspendDuration,
+        @Schema(description = "정지 시작일") LocalDate suspendStartDate,
+        @Schema(description = "정지 종료일") LocalDate suspendEndDate
     ) {}
 
     @Schema(description = "회원 제재 요청")

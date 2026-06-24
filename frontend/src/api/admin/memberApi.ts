@@ -46,6 +46,10 @@ export interface MemberItem {
   reportCount: number;
   joinedAt: string;
   lastLoginAt: string;
+  sanctionType: SanctionType | null;
+  suspendDuration: SuspendDuration | null;
+  suspendStartDate: string | null;
+  suspendEndDate: string | null;
 }
 
 export interface MemberListData extends PageMeta {
