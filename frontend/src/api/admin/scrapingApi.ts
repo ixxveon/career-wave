@@ -61,13 +61,13 @@ export interface ScrapingSource {
 }
 
 export interface ScrapingSourceSummary {
-  totalSources: number;
+  totalCount: number;
+  idleCount: number;
+  runningCount: number;
   successCount: number;
   failedCount: number;
-  totalCollectedCount: number;
-  averageSuccessRate: number;
-  averageDurationMs: number;
-  lastSyncedAt: string;
+  enabledCount: number;
+  disabledCount: number;
 }
 
 export interface ScrapingSourceDetail extends Omit<ScrapingSource, 'live' | 'updatedAt'> {
