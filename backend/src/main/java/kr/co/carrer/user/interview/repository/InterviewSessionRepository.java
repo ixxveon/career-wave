@@ -21,6 +21,10 @@ public interface InterviewSessionRepository extends JpaRepository<InterviewSessi
     Optional<InterviewSession> findBySessionIdAndMemberId(UUID sessionId, UUID memberId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM InterviewSession s WHERE s.sessionId = :sessionId")
+    Optional<InterviewSession> findBySessionIdForUpdate(@Param("sessionId") UUID sessionId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM InterviewSession s WHERE s.memberId = :memberId AND s.sessionStatus = :status")
     Optional<InterviewSession> findInProgressByMemberId(@Param("memberId") UUID memberId,
             @Param("status") SessionStatus status);

@@ -7,6 +7,7 @@ import kr.co.carrer.user.member.entity.MemberTermsAgreement;
 import kr.co.carrer.user.member.entity.MemberVerification;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.*;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.member.service.BusinessRegistrationVerificationPort;
 import kr.co.carrer.user.member.service.EmploymentCertificateFilePort;
 import kr.co.carrer.user.member.type.*;
@@ -40,6 +41,7 @@ class UserRegisterServiceImplTest {
     @Mock MemberVerificationRepository verificationRepository;
     @Mock BusinessRegistrationVerificationPort businessVerificationPort;
     @Mock EmploymentCertificateFilePort employmentCertificateFilePort;
+    @Mock EntitlementInitService entitlementInitService;
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private UserRegisterServiceImpl service;
@@ -49,7 +51,8 @@ class UserRegisterServiceImplTest {
         service = new UserRegisterServiceImpl(
                 memberRepository, personalProfileRepository, companyProfileRepository,
                 hrManagerRepository, termsRepository, verificationRepository,
-                encoder, businessVerificationPort, employmentCertificateFilePort);
+                encoder, businessVerificationPort, employmentCertificateFilePort,
+                entitlementInitService);
     }
 
     // ─── 개인회원 가입 성공 시 PersonalProfile 빈 row 생성 ─────────────────────────
