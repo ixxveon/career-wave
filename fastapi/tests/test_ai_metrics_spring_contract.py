@@ -1,4 +1,5 @@
 from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException, build_error_response
+from admin.ai_metrics.router.ai_metrics_router import _parse_iso_datetime
 from admin.ai_metrics.schema import (
     AiFeatureType,
     AlertChannelType,
@@ -96,6 +97,57 @@ def test_usage_request_contracts_match_spring_boot_fields():
     assert summary_request.feature_type == AiFeatureType.DOCUMENT
     assert token_trend_request.interval == TokenTrendInterval.DAILY
     assert heavy_users_request.feature_type == AiFeatureType.INTERVIEW
+
+
+def test_usage_period_filters_are_optional_like_spring_boot():
+    summary_request = SummaryRequest.model_validate(
+        {
+            "featureType": "DOCUMENT",
+        }
+    )
+    domain_usage_request = DomainUsageRequest.model_validate({})
+    token_trend_request = TokenTrendRequest.model_validate(
+        {
+            "from": None,
+            "to": None,
+            "interval": "DAILY",
+        }
+    )
+    heavy_users_request = HeavyUsersRequest.model_validate(
+        {
+            "from": "",
+            "to": "   ",
+            "featureType": "INTERVIEW",
+            "limit": 10,
+        }
+    )
+
+    assert summary_request.model_dump(by_alias=True) == {
+        "from": None,
+        "to": None,
+        "featureType": "DOCUMENT",
+    }
+    assert domain_usage_request.model_dump(by_alias=True) == {
+        "from": None,
+        "to": None,
+    }
+    assert token_trend_request.model_dump(by_alias=True) == {
+        "from": None,
+        "to": None,
+        "featureType": None,
+        "interval": "DAILY",
+    }
+    assert heavy_users_request.model_dump(by_alias=True) == {
+        "from": "",
+        "to": "   ",
+        "featureType": "INTERVIEW",
+        "limit": 10,
+    }
+
+    assert _parse_iso_datetime(summary_request.from_) is None
+    assert _parse_iso_datetime(domain_usage_request.to) is None
+    assert _parse_iso_datetime(heavy_users_request.from_) is None
+    assert _parse_iso_datetime(heavy_users_request.to) is None
 
 
 def test_non_usage_request_contracts_match_spring_boot_fields():
