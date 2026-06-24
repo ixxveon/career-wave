@@ -7,6 +7,8 @@ export type ApiResponse<T> =
 export const AI_DOMAIN = {
   DOCUMENT: 'DOCUMENT',
   INTERVIEW: 'INTERVIEW',
+  ADMIN_CS: 'ADMIN_CS',
+  ADMIN_REPORT: 'ADMIN_REPORT',
 } as const;
 
 export const AI_EVENT_SEVERITY = {
@@ -204,6 +206,8 @@ export interface AiMetricSummaryRaw {
   totalCost: number | string | null;
   documentRequests: number;
   interviewRequests: number;
+  adminCsRequests: number;
+  adminReportRequests: number;
   activeModelId: number | null;
   activeModelName: string | null;
 }
@@ -218,6 +222,8 @@ export interface AiFeatureUsageRaw {
 export interface AiDomainUsageRaw {
   document: AiFeatureUsageRaw;
   interview: AiFeatureUsageRaw;
+  adminCs: AiFeatureUsageRaw;
+  adminReport: AiFeatureUsageRaw;
 }
 
 export interface AiTokenTrendPointRaw {
@@ -305,6 +311,8 @@ const AI_METRICS_API_BASE_PATH = '/api/v1/admin/ai-metrics';
 const DOMAIN_LABELS: Record<AiDomain, string> = {
   [AI_DOMAIN.DOCUMENT]: 'AI 서류 기능',
   [AI_DOMAIN.INTERVIEW]: 'AI 면접 기능',
+  [AI_DOMAIN.ADMIN_CS]: 'Admin CS AI',
+  [AI_DOMAIN.ADMIN_REPORT]: 'Admin Report AI',
 };
 
 const toNumberOrNull = (value: number | string | null | undefined): number | null => {
@@ -367,6 +375,8 @@ export const mapAiDomainUsage = (raw: AiDomainUsageRaw): AiDomainUsage[] =>
   ([
     [AI_DOMAIN.DOCUMENT, raw.document],
     [AI_DOMAIN.INTERVIEW, raw.interview],
+    [AI_DOMAIN.ADMIN_CS, raw.adminCs],
+    [AI_DOMAIN.ADMIN_REPORT, raw.adminReport],
   ] as const).map(([domain, usage]) => {
     const tokenUsage = usage.inputTokens + usage.outputTokens;
     return {

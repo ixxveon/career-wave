@@ -24,17 +24,21 @@ const HEAVY_USERS_QUERY_KEY = ['admin', 'aiMetrics', 'heavyUsers'] as const;
 const LOGS_QUERY_KEY = ['admin', 'aiMetrics', 'logs'] as const;
 const RAG_DOCUMENTS_QUERY_KEY = ['admin', 'aiMetrics', 'ragDocuments'] as const;
 
-const DOMAIN_CARD_ORDER: AiDomain[] = [AI_DOMAIN.DOCUMENT, AI_DOMAIN.INTERVIEW];
+const DOMAIN_CARD_ORDER: AiDomain[] = [AI_DOMAIN.DOCUMENT, AI_DOMAIN.INTERVIEW, AI_DOMAIN.ADMIN_CS, AI_DOMAIN.ADMIN_REPORT];
 
 const DOMAIN_CARD_LABELS: Record<AiDomain, string> = {
   [AI_DOMAIN.DOCUMENT]: 'AI 서류 기능',
   [AI_DOMAIN.INTERVIEW]: 'AI 면접 기능',
+  [AI_DOMAIN.ADMIN_CS]: 'Admin CS AI',
+  [AI_DOMAIN.ADMIN_REPORT]: 'Admin Report AI',
 };
 
 const DOMAIN_FILTER_OPTIONS: Array<{ value: 'ALL' | AiDomain; label: string }> = [
   { value: 'ALL', label: '전체 도메인' },
   { value: AI_DOMAIN.DOCUMENT, label: DOMAIN_CARD_LABELS[AI_DOMAIN.DOCUMENT] },
   { value: AI_DOMAIN.INTERVIEW, label: DOMAIN_CARD_LABELS[AI_DOMAIN.INTERVIEW] },
+  { value: AI_DOMAIN.ADMIN_CS, label: DOMAIN_CARD_LABELS[AI_DOMAIN.ADMIN_CS] },
+  { value: AI_DOMAIN.ADMIN_REPORT, label: DOMAIN_CARD_LABELS[AI_DOMAIN.ADMIN_REPORT] },
 ];
 
 const formatNumber = (value?: number) => (typeof value === 'number' ? value.toLocaleString() : '-');

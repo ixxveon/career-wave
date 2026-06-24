@@ -8,6 +8,8 @@ from pydantic import BaseModel, ConfigDict, Field
 class AiFeatureType(str, Enum):
     DOCUMENT = "DOCUMENT"
     INTERVIEW = "INTERVIEW"
+    ADMIN_CS = "ADMIN_CS"
+    ADMIN_REPORT = "ADMIN_REPORT"
 
 
 class TokenTrendInterval(str, Enum):

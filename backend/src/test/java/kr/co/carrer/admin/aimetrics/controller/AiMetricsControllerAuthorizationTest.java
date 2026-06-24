@@ -70,6 +70,8 @@ class AiMetricsControllerAuthorizationTest {
                         new BigDecimal("1.20"),
                         6L,
                         4L,
+                        0L,
+                        0L,
                         3L,
                         "gpt-4o-mini"
                 ));
@@ -93,6 +95,8 @@ class AiMetricsControllerAuthorizationTest {
                         new BigDecimal("1.20"),
                         6L,
                         4L,
+                        0L,
+                        0L,
                         3L,
                         "gpt-4o-mini"
                 ));

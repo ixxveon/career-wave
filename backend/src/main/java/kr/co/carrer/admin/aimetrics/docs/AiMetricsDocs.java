@@ -45,7 +45,7 @@ public interface AiMetricsDocs {
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<AiMetricsDTO.ResponseSummary>> getSummary(
             @Parameter(description = "조회 시작 일시, ISO 8601 UTC, ai_usage_logs.created_at 기준") @RequestParam(required = false) String from,
             @Parameter(description = "조회 종료 일시, ISO 8601 UTC, ai_usage_logs.created_at 기준") @RequestParam(required = false) String to,
-            @Parameter(description = "AI 기능 유형 필터, ai_usage_logs.feature_type 기준", schema = @Schema(allowableValues = {"DOCUMENT", "INTERVIEW"})) @RequestParam(required = false) AiFeatureType featureType
+            @Parameter(description = "AI 기능 유형 필터, ai_usage_logs.feature_type 기준", schema = @Schema(allowableValues = {"DOCUMENT", "INTERVIEW", "ADMIN_CS", "ADMIN_REPORT"})) @RequestParam(required = false) AiFeatureType featureType
     );
 
     @Operation(summary = "도메인별 AI 사용량 조회", description = "ai_usage_logs.created_at 기간 조건 기준으로 문서와 면접 도메인별 요청 수, 토큰 수, 비용을 조회합니다. from/to는 ISO 8601 UTC 문자열을 사용합니다.")
@@ -70,7 +70,7 @@ public interface AiMetricsDocs {
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<AiMetricsDTO.ResponseTokenTrend>> getTokenTrend(
             @Parameter(description = "조회 시작 일시, ISO 8601 UTC, ai_usage_logs.created_at 기준") @RequestParam(required = false) String from,
             @Parameter(description = "조회 종료 일시, ISO 8601 UTC, ai_usage_logs.created_at 기준") @RequestParam(required = false) String to,
-            @Parameter(description = "AI 기능 유형 필터, ai_usage_logs.feature_type 기준", schema = @Schema(allowableValues = {"DOCUMENT", "INTERVIEW"})) @RequestParam(required = false) AiFeatureType featureType,
+            @Parameter(description = "AI 기능 유형 필터, ai_usage_logs.feature_type 기준", schema = @Schema(allowableValues = {"DOCUMENT", "INTERVIEW", "ADMIN_CS", "ADMIN_REPORT"})) @RequestParam(required = false) AiFeatureType featureType,
             @Parameter(description = "집계 단위", required = true, schema = @Schema(allowableValues = {"HOURLY", "DAILY"})) @RequestParam IntervalType interval
     );
 
@@ -84,7 +84,7 @@ public interface AiMetricsDocs {
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<AiMetricsDTO.ResponseHeavyUsers>> getHeavyUsers(
             @Parameter(description = "조회 시작 일시, ISO 8601 UTC, ai_usage_logs.created_at 기준") @RequestParam(required = false) String from,
             @Parameter(description = "조회 종료 일시, ISO 8601 UTC, ai_usage_logs.created_at 기준") @RequestParam(required = false) String to,
-            @Parameter(description = "AI 기능 유형 필터, ai_usage_logs.feature_type 기준", schema = @Schema(allowableValues = {"DOCUMENT", "INTERVIEW"})) @RequestParam(required = false) AiFeatureType featureType,
+            @Parameter(description = "AI 기능 유형 필터, ai_usage_logs.feature_type 기준", schema = @Schema(allowableValues = {"DOCUMENT", "INTERVIEW", "ADMIN_CS", "ADMIN_REPORT"})) @RequestParam(required = false) AiFeatureType featureType,
             @Parameter(description = "상위 사용자 조회 건수, 1 이상") @RequestParam(required = false) Integer limit
     );
 
@@ -96,7 +96,7 @@ public interface AiMetricsDocs {
             @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(examples = @ExampleObject(value = FORBIDDEN_EXAMPLE)))
     })
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<AiUsageLogDTO.ResponseList>> getUsageLogs(
-            @Parameter(description = "AI 기능 유형 필터, ai_usage_logs.feature_type 기준", schema = @Schema(allowableValues = {"DOCUMENT", "INTERVIEW"})) @RequestParam(required = false) AiFeatureType featureType,
+            @Parameter(description = "AI 기능 유형 필터, ai_usage_logs.feature_type 기준", schema = @Schema(allowableValues = {"DOCUMENT", "INTERVIEW", "ADMIN_CS", "ADMIN_REPORT"})) @RequestParam(required = false) AiFeatureType featureType,
             @Parameter(description = "페이지 번호 (1-based)") @RequestParam(defaultValue = "1") int page,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") int size
     );

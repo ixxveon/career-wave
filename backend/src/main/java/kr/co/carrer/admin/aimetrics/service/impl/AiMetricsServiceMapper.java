@@ -19,6 +19,8 @@ final class AiMetricsServiceMapper {
                 response.totalCost(),
                 response.documentRequests(),
                 response.interviewRequests(),
+                response.adminCsRequests(),
+                response.adminReportRequests(),
                 response.activeModelId(),
                 response.activeModelName()
         );
@@ -27,7 +29,9 @@ final class AiMetricsServiceMapper {
     static AiMetricsService.ResponseDomainUsage toDomainUsage(AiMetricsFastApiGateway.DomainUsageResponse response) {
         return new AiMetricsService.ResponseDomainUsage(
                 toFeatureUsage(response.document()),
-                toFeatureUsage(response.interview())
+                toFeatureUsage(response.interview()),
+                toFeatureUsage(response.adminCs()),
+                toFeatureUsage(response.adminReport())
         );
     }
 
