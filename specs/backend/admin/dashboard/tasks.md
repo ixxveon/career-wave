@@ -30,10 +30,10 @@
 
 ## Phase 4 - Documentation
 
-- [ ] `DashboardDocs` 인터페이스를 작성한다.
-- [ ] Swagger 어노테이션을 `DashboardDocs`에 분리한다.
-- [ ] `api-schema.md`, `spec.md`, `constitution.md`와 실제 요청/응답 계약이 일치하는지 정리한다.
-- [ ] Query Parameter, 권한 정책, 공통 오류 응답 설명을 문서와 동일하게 맞춘다.
+- [x] `DashboardDocs` 인터페이스를 작성한다.
+- [x] Swagger 어노테이션을 `DashboardDocs`에 분리한다.
+- [x] `api-schema.md`, `spec.md`, `constitution.md`와 실제 요청/응답 계약이 일치하는지 정리한다.
+- [x] Query Parameter, 권한 정책, 공통 오류 응답 설명을 문서와 동일하게 맞춘다.
 
 ## Phase 5 - Test
 
