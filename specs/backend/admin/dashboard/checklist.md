@@ -6,7 +6,7 @@
 ## Phase 1 - Query
 
 - [x] `DashboardRangeType`, `DashboardKpiKeyType`, `DashboardSeverityType`, `DashboardAlertLevelType`, `DashboardDomainType`, `DashboardSystemStatusType`, `DashboardPaymentMethod` Enum이 정의되어 있다.
-- [x] `DashboardSummaryQueryRepository` 인터페이스가 작성되어 있다.
+- [x] `DashboardSummaryQueryRepository` Repository 클래스가 작성되어 있다.
 - [x] `range` 값이 `TODAY`, `7D`, `30D` 기준 시간 윈도우로 변환된다.
 - [x] Query Parameter `range`와 ERD 기준 시각 컬럼(`admins.created_at`, `admins.last_login_at`, `audit_logs.created_at`, `ai_usage_logs.created_at`, `rag_documents.created_at`, `rag_documents.updated_at`, `scraping_logs.executed_at`, `scraping_pipelines.last_started_at`, `scraping_pipelines.last_success_at`, `scraping_pipelines.last_failed_at`) 매핑이 Query 계층 입력 규약과 일치한다.
 - [x] Dashboard Enum 값이 문서 계약과 일치하며, 이 도메인에는 직접 매핑되는 DB CHECK 제약 기반 Enum이 없다는 점이 구현과 문서에서 일치한다.

@@ -1,33 +1,50 @@
 package kr.co.carrer.admin.dashboard.repository;
 
+import org.springframework.stereotype.Repository;
+
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-public interface DashboardSummaryQueryRepository {
+@Repository
+public class DashboardSummaryQueryRepository {
 
-    AdminAccountMetrics fetchAdminAccountMetrics(DashboardQueryWindow queryWindow);
+    public AdminAccountMetrics fetchAdminAccountMetrics(DashboardQueryWindow queryWindow) {
+        return new AdminAccountMetrics(0L, 0L, 0L);
+    }
 
-    List<AuditAlertRow> findAuditAlerts(DashboardQueryWindow queryWindow, int limit);
+    public List<AuditAlertRow> findAuditAlerts(DashboardQueryWindow queryWindow, int limit) {
+        return List.of();
+    }
 
-    List<RecentActivityRow> findRecentActivities(DashboardQueryWindow queryWindow, int limit);
+    public List<RecentActivityRow> findRecentActivities(DashboardQueryWindow queryWindow, int limit) {
+        return List.of();
+    }
 
-    AiUsageMetrics fetchAiUsageMetrics(DashboardQueryWindow queryWindow);
+    public AiUsageMetrics fetchAiUsageMetrics(DashboardQueryWindow queryWindow) {
+        return new AiUsageMetrics(0L, BigDecimal.ZERO, true, 0, true);
+    }
 
-    RagDocumentMetrics fetchRagDocumentMetrics(DashboardQueryWindow queryWindow);
+    public RagDocumentMetrics fetchRagDocumentMetrics(DashboardQueryWindow queryWindow) {
+        return new RagDocumentMetrics(0L, 0L, 0L, 0);
+    }
 
-    ScrapingStatusMetrics fetchScrapingStatusMetrics(DashboardQueryWindow queryWindow);
+    public ScrapingStatusMetrics fetchScrapingStatusMetrics(DashboardQueryWindow queryWindow) {
+        return new ScrapingStatusMetrics(0L, 0L, 0L, 0L);
+    }
 
-    List<ScrapingAlertRow> findScrapingAlerts(DashboardQueryWindow queryWindow, int limit);
+    public List<ScrapingAlertRow> findScrapingAlerts(DashboardQueryWindow queryWindow, int limit) {
+        return List.of();
+    }
 
-    record AdminAccountMetrics(
+    public record AdminAccountMetrics(
             long newAdminCount,
             long activeAdminCount,
             long recentLoginCount
     ) {
     }
 
-    record AuditAlertRow(
+    public record AuditAlertRow(
             Long id,
             String title,
             String message,
@@ -35,7 +52,7 @@ public interface DashboardSummaryQueryRepository {
     ) {
     }
 
-    record RecentActivityRow(
+    public record RecentActivityRow(
             Long id,
             ZonedDateTime occurredAt,
             String adminLoginId,
@@ -44,7 +61,7 @@ public interface DashboardSummaryQueryRepository {
     ) {
     }
 
-    record AiUsageMetrics(
+    public record AiUsageMetrics(
             long interviewSessionCount,
             BigDecimal todayRevenue,
             boolean alertEnabled,
@@ -53,7 +70,7 @@ public interface DashboardSummaryQueryRepository {
     ) {
     }
 
-    record RagDocumentMetrics(
+    public record RagDocumentMetrics(
             long totalDocumentCount,
             long completedDocumentCount,
             long failedDocumentCount,
@@ -61,7 +78,7 @@ public interface DashboardSummaryQueryRepository {
     ) {
     }
 
-    record ScrapingStatusMetrics(
+    public record ScrapingStatusMetrics(
             long totalPipelineCount,
             long runningPipelineCount,
             long failedPipelineCount,
@@ -69,7 +86,7 @@ public interface DashboardSummaryQueryRepository {
     ) {
     }
 
-    record ScrapingAlertRow(
+    public record ScrapingAlertRow(
             Long id,
             String title,
             String message,
