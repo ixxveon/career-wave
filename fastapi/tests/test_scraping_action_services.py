@@ -209,7 +209,8 @@ def test_batch_action_service_maps_batch_response_contract():
     assert payload["requestedCount"] == 2
     assert payload["acceptedCount"] == 1
     assert len(payload["results"]) == 2
-    assert {"sourceName", "accepted", "pipelineStatus"} == set(payload["results"][0].keys())
+    assert {"sourceName", "accepted", "message"} == set(payload["results"][0].keys())
+    assert payload["results"][0]["message"] == "RUN action accepted. pipelineStatus=SUCCESS"
     assert "requestedAt" in payload
 
 
