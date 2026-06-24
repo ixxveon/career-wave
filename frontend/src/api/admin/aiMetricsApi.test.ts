@@ -86,7 +86,7 @@ describe("aiMetricsApi usage DTO mapper", () => {
     ).toEqual([
       {
         domain: AI_DOMAIN.DOCUMENT,
-        domainLabel: "AI ?쒕쪟 湲곕뒫",
+        domainLabel: "AI 서류 기능",
         requestCount: 10,
         successCount: 10,
         failureCount: 0,
@@ -101,7 +101,7 @@ describe("aiMetricsApi usage DTO mapper", () => {
       },
       {
         domain: AI_DOMAIN.INTERVIEW,
-        domainLabel: "AI 硫댁젒 湲곕뒫",
+        domainLabel: "AI 면접 기능",
         requestCount: 3,
         successCount: 3,
         failureCount: 0,
@@ -230,7 +230,7 @@ describe("aiMetricsApi usage DTO mapper", () => {
           userId: "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
           maskedUserLabel: "USER-2f3a",
           domain: AI_DOMAIN.INTERVIEW,
-          domainLabel: "AI 硫댁젒 湲곕뒫",
+          domainLabel: "AI 면접 기능",
           tokenUsage: 72000,
           requestCount: 9,
           riskLevel: AI_USAGE_RISK_LEVEL.WARNING,
@@ -269,7 +269,7 @@ describe("aiMetricsApi usage DTO mapper", () => {
           eventId: 101,
           occurredAt: "2026-06-24T02:00:00Z",
           domain: AI_DOMAIN.INTERVIEW,
-          domainLabel: "AI 硫댁젒 湲곕뒫",
+          domainLabel: "AI 면접 기능",
           severity: AI_EVENT_SEVERITY.INFO,
           message:
             "AI usage recorded. inputTokens=120, outputTokens=45, cost=2.5",
