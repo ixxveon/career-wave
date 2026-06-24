@@ -20,6 +20,7 @@ import kr.co.carrer.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.dao.DataAccessException;
@@ -30,6 +31,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -47,6 +52,9 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     private final AiModelRepository aiModelRepository;
     private final AiOpsSettingRepository aiOpsSettingRepository;
     private final RagDocumentRepository ragDocumentRepository;
+
+    @Value("${ai-metrics.rag-storage.base-path:./storage/rag-documents}")
+    private String ragStorageBasePath = "./storage/rag-documents";
 
     @Override
     @Transactional(readOnly = true)
@@ -162,15 +170,17 @@ public class AiMetricsServiceImpl implements AiMetricsService {
             validateNoIndexingDocument();
 
             UUID fileUuid = UUID.randomUUID();
+            String originalFileName = sanitizeOriginalFileName(file.getOriginalFilename());
+            String filePath = buildRagFilePath(fileUuid, originalFileName);
             RagDocument document = RagDocument.upload(
                     actorAdminId,
                     fileUuid,
-                    file.getOriginalFilename(),
-                    buildRagFilePath(fileUuid, file.getOriginalFilename()),
+                    originalFileName,
+                    filePath,
                     file.getContentType(),
                     file.getSize()
             );
-            // TODO: Persist uploaded RAG files through the Phase 4 storage/FastAPI integration flow.
+            persistRagUploadFile(file, filePath);
 
             RagDocument savedDocument = ragDocumentRepository.save(document);
             runAfterCommit(() -> startRagIndexing(savedDocument));
@@ -356,6 +366,29 @@ public class AiMetricsServiceImpl implements AiMetricsService {
                 fileUuid,
                 originalFileName
         );
+    }
+
+    private void persistRagUploadFile(MultipartFile file, String filePath) {
+        Path storageRoot = Paths.get(ragStorageBasePath).toAbsolutePath().normalize();
+        Path targetPath = storageRoot.resolve(filePath.replaceFirst("^[/\\\\]+", "")).normalize();
+        if (!targetPath.startsWith(storageRoot)) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        try {
+            Files.createDirectories(targetPath.getParent());
+            file.transferTo(targetPath);
+        } catch (IOException | IllegalStateException exception) {
+            throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_UPLOAD_FAILED);
+        }
+    }
+
+    private String sanitizeOriginalFileName(String originalFileName) {
+        String sanitizedFileName = Paths.get(originalFileName.replace("\\", "/")).getFileName().toString().trim();
+        if (sanitizedFileName.isBlank()) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+        return sanitizedFileName;
     }
 
     private String buildRagDocumentDownloadUrl(Long documentId) {

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -32,6 +33,8 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -638,7 +641,8 @@ class AiMetricsServiceImplTest {
 
         @Test
         @DisplayName("문서 메타데이터를 저장하고 FastAPI 인덱싱 시작을 호출한다")
-        void uploadsRagDocumentAndStartsIndexing() {
+        void uploadsRagDocumentAndStartsIndexing(@TempDir Path storageRoot) throws Exception {
+            ReflectionTestUtils.setField(aiMetricsService, "ragStorageBasePath", storageRoot.toString());
             MockMultipartFile file = new MockMultipartFile(
                     "file",
                     "faq.pdf",
@@ -696,6 +700,48 @@ class AiMetricsServiceImplTest {
             assertThat(request.filePath()).isEqualTo(savedDocument.getFilePath());
             assertThat(request.mimeType()).isEqualTo("application/pdf");
             assertThat(request.fileSize()).isEqualTo(file.getSize());
+
+            Path storedFile = storageRoot.resolve(savedDocument.getFilePath().replaceFirst("^[/\\\\]+", ""));
+            assertThat(storedFile).exists();
+            assertThat(Files.readString(storedFile)).isEqualTo("career-wave faq");
+        }
+
+        @Test
+        @DisplayName("RAG document upload stores only the original file name without path segments")
+        void uploadsRagDocumentWithSanitizedOriginalFileName(@TempDir Path storageRoot) throws Exception {
+            ReflectionTestUtils.setField(aiMetricsService, "ragStorageBasePath", storageRoot.toString());
+            MockMultipartFile file = new MockMultipartFile(
+                    "file",
+                    "..\\unsafe\\guide.txt",
+                    "text/plain",
+                    "guide".getBytes()
+            );
+            given(ragDocumentRepository.existsByStatus(RagDocumentStatusType.INDEXING)).willReturn(false);
+            given(ragDocumentRepository.save(org.mockito.ArgumentMatchers.any(RagDocument.class)))
+                    .willAnswer(invocation -> {
+                        RagDocument document = invocation.getArgument(0);
+                        ReflectionTestUtils.setField(document, "ragDocumentId", 10L);
+                        ReflectionTestUtils.setField(document, "createdAt", ZonedDateTime.parse("2026-06-17T09:00:00Z"));
+                        ReflectionTestUtils.setField(document, "updatedAt", ZonedDateTime.parse("2026-06-17T09:00:00Z"));
+                        return document;
+                    });
+            given(aiMetricsFastApiGatewayProvider.getIfAvailable()).willReturn(aiMetricsFastApiGateway);
+            given(aiMetricsFastApiGateway.startRagIndexing(org.mockito.ArgumentMatchers.any(
+                    AiMetricsFastApiGateway.RagIndexStartRequest.class
+            ))).willReturn(new AiMetricsFastApiGateway.RagIndexStartResponse(true, 10L));
+
+            AiMetricsService.ResponseRagDocumentDetail result = aiMetricsService.uploadRagDocument(
+                    file,
+                    10L,
+                    "127.0.0.1"
+            );
+
+            assertThat(result.originalFileName()).isEqualTo("guide.txt");
+            assertThat(result.filePath()).contains("guide.txt");
+            assertThat(result.filePath()).doesNotContain("unsafe");
+            Path storedFile = storageRoot.resolve(result.filePath().replaceFirst("^[/\\\\]+", ""));
+            assertThat(storedFile).exists();
+            assertThat(Files.readString(storedFile)).isEqualTo("guide");
         }
     }
 
@@ -950,7 +996,8 @@ class AiMetricsServiceImplTest {
 
         @Test
         @DisplayName("RAG 문서 저장 중 예외가 발생하면 RAG_DOCUMENT_UPLOAD_FAILED 예외를 반환한다")
-        void convertsUploadRuntimeExceptionToRagDocumentUploadFailed() {
+        void convertsUploadRuntimeExceptionToRagDocumentUploadFailed(@TempDir Path storageRoot) {
+            ReflectionTestUtils.setField(aiMetricsService, "ragStorageBasePath", storageRoot.toString());
             MockMultipartFile file = new MockMultipartFile(
                     "file",
                     "faq.pdf",

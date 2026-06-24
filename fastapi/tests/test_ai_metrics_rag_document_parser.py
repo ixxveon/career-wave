@@ -45,3 +45,42 @@ def test_rag_document_parser_parses_plain_text_document(tmp_path):
     assert parsed.mime_type == "text/plain"
     assert parsed.file_path == "guide.txt"
     assert parsed.text == "Career Wave\nAI Metrics RAG"
+
+
+def test_rag_document_parser_treats_leading_slash_local_path_as_storage_relative(tmp_path):
+    storage_dir = tmp_path / "rag-storage"
+    document_path = storage_dir / "rag" / "2026" / "06" / "guide.txt"
+    document_path.parent.mkdir(parents=True)
+    document_path.write_text("Career Wave RAG", encoding="utf-8")
+
+    parser = RagDocumentParser()
+    rag_document = RagDocumentRecord(
+        rag_document_id=11,
+        uploaded_by=1,
+        file_uuid=UUID("77777777-7777-7777-7777-777777777777"),
+        original_file_name="guide.txt",
+        file_path="/rag/2026/06/guide.txt",
+        mime_type="text/plain",
+        file_size=document_path.stat().st_size,
+        chunk_count=0,
+        indexing_progress=0,
+        status="UPLOADED",
+        created_at=datetime(2026, 6, 18, 0, 0, tzinfo=timezone.utc),
+        updated_at=datetime(2026, 6, 18, 0, 0, tzinfo=timezone.utc),
+    )
+    settings = SimpleNamespace(
+        file_storage_provider="local",
+        file_storage_base_path=str(storage_dir),
+    )
+
+    from unittest.mock import patch
+
+    with patch(
+        "admin.ai_metrics.parser.rag_document_parser.get_ai_metrics_settings",
+        return_value=settings,
+    ):
+        parsed = parser.parse(rag_document)
+
+    assert parsed.rag_document_id == 11
+    assert parsed.file_path == "/rag/2026/06/guide.txt"
+    assert parsed.text == "Career Wave RAG"
