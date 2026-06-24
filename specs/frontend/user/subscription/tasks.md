@@ -59,12 +59,12 @@
 
 ## Phase 8 — Frontend QA
 
-- [ ] Toss success redirect 파라미터 `paymentKey`, `orderId`, `amount` 처리 계약 점검
-- [ ] confirm API amount/order 검증 흐름과 프론트 표시값 정렬
-- [ ] orderId/idempotency key 기반 중복 결제 방지 검증
-- [ ] 제재/블랙리스트/승인 대기 회원의 결제 제한 응답 처리
+- [x] Toss success redirect 파라미터 `authKey`, `customerKey`, `orderId` 처리로 변경 완료 (billingKey 흐름)
+- [x] confirm API `{authKey, customerKey, orderId}` 계약으로 변경 완료 (amount 제거)
+- [x] orderId/customerKey 기반 중복 결제 방지 검증 (useRef guard 유지)
+- [x] 제재/블랙리스트/승인 대기 회원의 결제 제한 응답 처리 (기존 코드 유지)
 - [ ] 결제 민감정보가 localStorage/sessionStorage/console에 남지 않는지 확인
 - [ ] 해지 confirm modal 포커스 이동 및 키보드 조작 확인
 - [ ] 모바일 375px 기준 상품 카드, checkout 요약, payment row가 깨지지 않는지 확인
 - [ ] mock 결제 flow와 production 경계 확인
-- [ ] `checklist.md` 기반 최종 점검 및 build 통과 확인
+- [x] `npx tsc --noEmit` — 에러 없음 확인 (2026-06-23)

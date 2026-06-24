@@ -86,6 +86,12 @@ public class Subscription {
 
     public static Subscription create(UUID memberId, Long planId,
                                       ZonedDateTime periodStart, ZonedDateTime periodEnd) {
+        return create(memberId, planId, null, periodStart, periodEnd);
+    }
+
+    // Phase 4: billingKey 자동결제 구독 생성 — billingProfileId 필수
+    public static Subscription create(UUID memberId, Long planId, UUID billingProfileId,
+                                      ZonedDateTime periodStart, ZonedDateTime periodEnd) {
         if (periodStart == null || periodEnd == null) {
             throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_PERIOD_NULL);
         }
@@ -95,6 +101,7 @@ public class Subscription {
         Subscription s = new Subscription();
         s.memberId = memberId;
         s.planId = planId;
+        s.billingProfileId = billingProfileId;
         s.subscriptionStatus = SubscriptionStatus.ACTIVE;
         s.startedAt = periodStart;
         s.currentPeriodStart = periodStart;

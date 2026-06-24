@@ -51,6 +51,8 @@
 - [x] order 생성 요청 중 결제 버튼이 disabled 되어 중복 요청이 방지되는가?
 - [x] 가격/상품 정보는 서버 order 생성 응답(createOrder) 기준으로 Toss SDK에 전달되는가?
 - [x] 제재/블랙리스트/승인 대기 회원의 결제 제한 응답(403)이 안내 UI로 표시되는가?
+- [x] Toss SDK `payment.requestBillingAuth()` billingKey 흐름으로 변경 완료 (2026-06-23)
+- [x] CreateOrderResponse에서 `customerKey` 사용으로 변경 완료
 
 ### Success / Fail
 
@@ -59,6 +61,8 @@
 - [x] confirm 중 loading UI가 표시되고 중복 confirm 요청이 방지되는가? (useRef guard)
 - [x] fail 페이지에서 다시 결제하기 CTA와 AI 서비스 복귀 CTA가 표시되는가?
 - [x] 사용자 취소(USER_CANCELED)와 결제 실패(CARD_DECLINED 등)가 구분되어 표시되는가?
+- [x] success redirect 파라미터가 `authKey/customerKey/orderId`로 변경됨 (billingKey 흐름)
+- [x] `ConfirmPaymentRequest` 타입이 `{authKey, customerKey, orderId}`로 변경됨
 - [-] PG raw error, billing key, payment key가 화면이나 로그에 노출되지 않는가? (Phase 8 QA에서 최종 확인)
 
 ## Phase 8 — Frontend QA

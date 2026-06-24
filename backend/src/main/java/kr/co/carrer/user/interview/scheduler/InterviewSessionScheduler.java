@@ -1,17 +1,20 @@
 package kr.co.carrer.user.interview.scheduler;
 
+import kr.co.carrer.user.billing.service.EntitlementService;
+import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.interview.entity.InterviewSession;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
+import kr.co.carrer.user.interview.service.InterviewTimeoutService;
 import kr.co.carrer.user.interview.type.SessionStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -19,10 +22,11 @@ import java.util.List;
 public class InterviewSessionScheduler {
 
     private final InterviewSessionRepository sessionRepository;
+    private final InterviewTimeoutService interviewTimeoutService;
+    private final EntitlementService entitlementService;
 
     // 1시간 주기: started_at < 24시간 전 AND updated_at < 5분 전인 IN_PROGRESS 세션을 FAILED로 전이
     @Scheduled(cron = "0 0 * * * *")
-    @Transactional
     public void failTimedOutSessions() {
         ZoneId kst = ZoneId.of("Asia/Seoul");
         ZonedDateTime now = ZonedDateTime.now(kst);
@@ -30,10 +34,24 @@ public class InterviewSessionScheduler {
         ZonedDateTime recentCutoff = now.minusMinutes(5);
 
         List<InterviewSession> timedOut = sessionRepository.findTimedOutSessions(cutoff, recentCutoff, SessionStatus.IN_PROGRESS);
-        timedOut.forEach(session -> session.fail(now));
+        int successCount = 0;
+        for (InterviewSession session : timedOut) {
+            UUID sessionId = session.getSessionId();
+            try {
+                interviewTimeoutService.failTimedOutSession(sessionId, now);
+                successCount++;
+            } catch (RuntimeException e) {
+                log.error("Timed out session processing failed: sessionId={}", sessionId, e);
+            }
+            try {
+                entitlementService.release(ResourceType.INTERVIEW_SESSION, sessionId);
+            } catch (RuntimeException e) {
+                log.warn("Entitlement release failed for timed-out session: sessionId={}", sessionId, e);
+            }
+        }
 
         if (!timedOut.isEmpty()) {
-            log.info("Timed out sessions marked as FAILED: count={}", timedOut.size());
+            log.info("Timed out sessions marked as FAILED: count={}/{}", successCount, timedOut.size());
         }
     }
 }
