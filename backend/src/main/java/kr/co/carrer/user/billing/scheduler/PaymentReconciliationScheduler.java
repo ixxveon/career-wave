@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 // RECONCILING 결제 대사 스케줄러
 // 5분마다 RECONCILING 상태 결제를 Toss에 조회하여 PAID 또는 FAILED로 확정
-// 인터벌: billing.reconciliation.max-minutes (application.yml)
+// 인터벌: billing.reconciliation.interval-ms (application.yml)
 @Slf4j
 @Component
 @RequiredArgsConstructor

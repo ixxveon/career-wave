@@ -167,6 +167,7 @@ public class UserPayment {
     // ── 상태 전이 — user 측 책임 범위만 구현 (constitution §8.3) ────────────
     // READY → AUTHORIZED → CONFIRMING → PAID
     // READY → RECONCILING (결제 결과 미확정 — Toss timeout/5xx 시)
+    // READY → FAILED (auth 단계 실패 시 — Toss 호출 전 즉시 확정)
     // READY → CANCELED (만료 스케줄러)
     // AUTHORIZED / CONFIRMING / RECONCILING → FAILED
 
@@ -195,7 +196,8 @@ public class UserPayment {
     }
 
     public void fail(PaymentFailureReason reason) {
-        if (this.paymentStatus != UserPaymentStatus.AUTHORIZED
+        if (this.paymentStatus != UserPaymentStatus.READY
+                && this.paymentStatus != UserPaymentStatus.AUTHORIZED
                 && this.paymentStatus != UserPaymentStatus.CONFIRMING
                 && this.paymentStatus != UserPaymentStatus.RECONCILING) {
             throw new CustomException(BillingErrorCode.BILLING_ORDER_NOT_READY);

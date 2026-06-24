@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * - 6개 핵심 테이블 존재 확인
  * - Phase 7 신규 컬럼(reconciling_at) 포함 여부
- * - 주요 UNIQUE 제약 존재 확인
+ * - 주요 UNIQUE 제약: 의도한 컬럼 조합에 대해 정확히 검증
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -48,7 +48,7 @@ class BillingMigrationSmokeTest extends PostgreSqlTestContainerSupport {
     JdbcTemplate jdbcTemplate;
 
     // ─── 헬퍼 ──────────────────────────────────────────────────────────────────
-    // SELECT LIMIT 0 방식: schema 이름 대소문자에 무관하게 테이블/컬럼 존재를 확인한다.
+    // SELECT WHERE 1=0: schema 이름 대소문자에 무관하게 테이블/컬럼 존재를 확인한다.
 
     private boolean tableExists(String tableName) {
         try {
@@ -68,13 +68,24 @@ class BillingMigrationSmokeTest extends PostgreSqlTestContainerSupport {
         }
     }
 
-    // LOWER()로 PostgreSQL 'public' / H2 'PUBLIC' 모두 대응
-    private int uniqueConstraintCount(String tableName) {
+    // 지정한 두 컬럼이 같은 UNIQUE 제약에 묶여 있는지 확인
+    private boolean hasCompositeUniqueConstraint(String tableName, String col1, String col2) {
         Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM information_schema.table_constraints " +
-                "WHERE LOWER(table_schema) = 'public' AND table_name = ? AND constraint_type = 'UNIQUE'",
-                Integer.class, tableName);
-        return count != null ? count : 0;
+                "SELECT COUNT(*) FROM (" +
+                "  SELECT tc.constraint_name " +
+                "  FROM information_schema.table_constraints tc " +
+                "  JOIN information_schema.key_column_usage kcu " +
+                "    ON tc.constraint_name = kcu.constraint_name " +
+                "    AND LOWER(tc.table_schema) = LOWER(kcu.table_schema) " +
+                "  WHERE LOWER(tc.table_schema) = 'public' " +
+                "    AND tc.table_name = ? " +
+                "    AND tc.constraint_type = 'UNIQUE' " +
+                "    AND kcu.column_name IN (?, ?) " +
+                "  GROUP BY tc.constraint_name " +
+                "  HAVING COUNT(DISTINCT kcu.column_name) = 2" +
+                ") sub",
+                Integer.class, tableName, col1, col2);
+        return count != null && count > 0;
     }
 
     // ─── 테이블 존재 확인 ─────────────────────────────────────────────────────
@@ -103,13 +114,13 @@ class BillingMigrationSmokeTest extends PostgreSqlTestContainerSupport {
         assertThat(columnExists("payments", "idempotency_key")).isTrue();
     }
 
-    // ─── UNIQUE 제약 존재 확인 ─────────────────────────────────────────────────
+    // ─── UNIQUE 제약 컬럼 조합 검증 ──────────────────────────────────────────
 
     @Test
     @DisplayName("member_product_entitlements — (member_id, product_code) UNIQUE 제약 존재")
-    void entitlements_hasUniqueConstraint() {
-        assertThat(uniqueConstraintCount("member_product_entitlements"))
-                .as("UNIQUE 제약이 1개 이상 존재해야 한다").isGreaterThanOrEqualTo(1);
+    void entitlements_hasUniqueConstraintOnMemberIdAndProductCode() {
+        assertThat(hasCompositeUniqueConstraint("member_product_entitlements", "member_id", "product_code"))
+                .as("(member_id, product_code) 복합 UNIQUE 제약이 존재해야 한다").isTrue();
     }
 
     @Test
@@ -130,9 +141,9 @@ class BillingMigrationSmokeTest extends PostgreSqlTestContainerSupport {
 
     @Test
     @DisplayName("subscription_usage_periods — (subscription_id, period_start) UNIQUE 제약 존재")
-    void usagePeriods_hasUniqueConstraint() {
-        assertThat(uniqueConstraintCount("subscription_usage_periods"))
-                .as("UNIQUE 제약이 1개 이상 존재해야 한다").isGreaterThanOrEqualTo(1);
+    void usagePeriods_hasUniqueConstraintOnSubscriptionIdAndPeriodStart() {
+        assertThat(hasCompositeUniqueConstraint("subscription_usage_periods", "subscription_id", "period_start"))
+                .as("(subscription_id, period_start) 복합 UNIQUE 제약이 존재해야 한다").isTrue();
     }
 
     // ─── 구독·이용권 컬럼 구조 확인 ────────────────────────────────────────────
