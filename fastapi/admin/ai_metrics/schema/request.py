@@ -33,8 +33,8 @@ class AiMetricsRequestBase(BaseModel):
 
 
 class PeriodRequest(AiMetricsRequestBase):
-    from_: str = Field(alias="from")
-    to: str
+    from_: str | None = Field(default=None, alias="from")
+    to: str | None = None
 
 
 class SummaryRequest(PeriodRequest):
