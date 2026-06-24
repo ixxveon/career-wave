@@ -11,7 +11,10 @@ class DashboardServiceContextTest {
     @Test
     void dashboardServiceCanBeCreatedWithSummaryQueryRepositoryBean() {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
-            context.register(DashboardSummaryQueryRepository.class, DashboardServiceImpl.class);
+            context.scan(
+                    "kr.co.carrer.admin.dashboard.repository",
+                    "kr.co.carrer.admin.dashboard.service.impl"
+            );
             context.refresh();
 
             assertThat(context.getBean(DashboardServiceImpl.class)).isNotNull();
