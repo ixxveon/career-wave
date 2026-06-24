@@ -600,6 +600,12 @@ export default function UserManagementPage() {
               <div><span>최근 접속</span><strong>{selectedMember.lastLoginAt ? new Date(selectedMember.lastLoginAt).toLocaleDateString('ko-KR') : '—'}</strong></div>
               <div><span>현재 상태</span><strong><span className={`statusBadge ${memberStatusCls[selectedMember.memberStatus]}`}>{memberStatusLabel[selectedMember.memberStatus]}</span></strong></div>
               <div><span>신고 받은 횟수</span><strong>{selectedMember.reportCount}건</strong></div>
+              {selectedMember.memberStatus === MEMBER_STATUS.SUSPENDED && selectedMember.suspendEndDate && (
+                <>
+                  <div><span>정지 유형</span><strong>{selectedMember.suspendDuration ? durationLabel[selectedMember.suspendDuration] : '—'}</strong></div>
+                  <div><span>정지 기간</span><strong>{selectedMember.suspendStartDate ? new Date(selectedMember.suspendStartDate).toLocaleDateString('ko-KR') : '—'} ~ {new Date(selectedMember.suspendEndDate).toLocaleDateString('ko-KR')}</strong></div>
+                </>
+              )}
               <div style={{ gridColumn: '1 / -1' }}>
                 <span>경고 횟수</span>
                 <div className="warnCountWrap">
