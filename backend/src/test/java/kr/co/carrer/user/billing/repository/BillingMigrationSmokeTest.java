@@ -3,15 +3,9 @@ package kr.co.carrer.user.billing.repository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
@@ -33,7 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers(disabledWithoutDocker = true)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ContextConfiguration(classes = BillingMigrationSmokeTest.TestJpaConfig.class)
 @TestPropertySource(properties = "spring.sql.init.mode=never")
 class BillingMigrationSmokeTest {
 
@@ -54,19 +47,6 @@ class BillingMigrationSmokeTest {
         registry.add("spring.jpa.properties.hibernate.dialect",
                 () -> "org.hibernate.dialect.PostgreSQLDialect");
     }
-
-    @SpringBootConfiguration
-    @EnableAutoConfiguration(exclude = JpaRepositoriesAutoConfiguration.class)
-    @EntityScan(basePackages = {
-            "kr.co.carrer.user.billing.entity",
-            "kr.co.carrer.user.member.entity",
-            "kr.co.carrer.admin.payment.entity"
-    })
-    @EnableJpaRepositories(basePackages = {
-            "kr.co.carrer.user.billing.repository",
-            "kr.co.carrer.admin.payment.repository"
-    })
-    static class TestJpaConfig {}
 
     @Autowired
     JdbcTemplate jdbcTemplate;
