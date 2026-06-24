@@ -42,13 +42,16 @@ public class PaymentReconciliationTxService {
     }
 
     // RECONCILING → PAID 멱등 복구
-    // 구독이 이미 존재하면 중복 생성 안 함
+    // paymentId만 받아 REQUIRES_NEW TX 내에서 재조회/비관적 락 후 상태 확정
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void reconcileAsPaid(UserPayment payment, TossBillingPaymentResponse tossResponse) {
+    public void reconcileAsPaid(UUID paymentId, TossBillingPaymentResponse tossResponse) {
+        UserPayment payment = userPaymentRepository.findByIdForUpdate(paymentId)
+                .orElseThrow(() -> new CustomException(BillingErrorCode.BILLING_ORDER_NOT_FOUND));
+
         if (payment.getSubscriptionId() != null) {
             // 이미 구독이 연결됨 — 멱등: PAID만 확정
             payment.paid(tossResponse.paymentKey(), tossResponse.approvedAt());
-            log.info("RECONCILING 복구(멱등): paymentId={}, 구독 기존 존재", payment.getPaymentId());
+            log.info("RECONCILING 복구(멱등): paymentId={}, 구독 기존 존재", paymentId);
             return;
         }
 
@@ -90,6 +93,6 @@ public class PaymentReconciliationTxService {
                 )
         );
 
-        log.info("RECONCILING 복구 완료: paymentId={}, subscriptionId={}", payment.getPaymentId(), subscription.getSubscriptionId());
+        log.info("RECONCILING 복구 완료: paymentId={}, subscriptionId={}", paymentId, subscription.getSubscriptionId());
     }
 }

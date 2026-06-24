@@ -8,7 +8,6 @@ import kr.co.carrer.user.billing.service.impl.PaymentReconciliationServiceImpl;
 import kr.co.carrer.user.billing.service.impl.PaymentReconciliationTxService;
 import kr.co.carrer.user.billing.service.impl.UserPaymentFailureTxService;
 import kr.co.carrer.user.billing.type.PaymentFailureReason;
-import kr.co.carrer.user.billing.type.UserPaymentStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -51,7 +49,7 @@ class PaymentReconciliationServiceTest {
     @Test
     @DisplayName("RECONCILING 없음 → 아무것도 호출 안 함")
     void reconcileAll_noReconcilingPayments_doesNothing() {
-        given(userPaymentRepository.findReconcilingPaymentsForUpdate()).willReturn(List.of());
+        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of());
 
         service.reconcileAll();
 
@@ -62,7 +60,8 @@ class PaymentReconciliationServiceTest {
     @DisplayName("Toss DONE → reconcileAsPaid 호출")
     void reconcileAll_tossDone_callsReconcileAsPaid() {
         UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(5));
-        given(userPaymentRepository.findReconcilingPaymentsForUpdate()).willReturn(List.of(payment));
+        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         TossBillingPaymentResponse tossResponse = new TossBillingPaymentResponse(
                 "pk_test", payment.getOrderId(), "DONE", 29000, "KRW", ZonedDateTime.now(KST));
@@ -71,7 +70,7 @@ class PaymentReconciliationServiceTest {
 
         service.reconcileAll();
 
-        verify(reconciliationTxService).reconcileAsPaid(payment, tossResponse);
+        verify(reconciliationTxService).reconcileAsPaid(payment.getPaymentId(), tossResponse);
         verify(failureTxService, never()).failPayment(any(), any());
     }
 
@@ -79,7 +78,8 @@ class PaymentReconciliationServiceTest {
     @DisplayName("Toss CANCELED → failPayment 호출")
     void reconcileAll_tossCanceled_callsFailPayment() {
         UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(5));
-        given(userPaymentRepository.findReconcilingPaymentsForUpdate()).willReturn(List.of(payment));
+        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         TossBillingPaymentResponse tossResponse = new TossBillingPaymentResponse(
                 null, payment.getOrderId(), "CANCELED", 0, "KRW", null);
@@ -89,27 +89,29 @@ class PaymentReconciliationServiceTest {
         service.reconcileAll();
 
         verify(failureTxService).failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
-        verify(reconciliationTxService, never()).reconcileAsPaid(any(), any());
+        verify(reconciliationTxService, never()).reconcileAsPaid(any(UUID.class), any());
     }
 
     @Test
     @DisplayName("Toss 조회 timeout(empty) → RECONCILING 유지 (failPayment/settle 미호출)")
     void reconcileAll_tossTimeout_keepsReconciling() {
         UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(5));
-        given(userPaymentRepository.findReconcilingPaymentsForUpdate()).willReturn(List.of(payment));
+        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
         given(tossPaymentQueryClient.queryByOrderId(any())).willReturn(Optional.empty());
 
         service.reconcileAll();
 
         verify(failureTxService, never()).failPayment(any(), any());
-        verify(reconciliationTxService, never()).reconcileAsPaid(any(), any());
+        verify(reconciliationTxService, never()).reconcileAsPaid(any(UUID.class), any());
     }
 
     @Test
     @DisplayName("최대 대사 시간 초과 → RECONCILING 유지 + Toss 조회 미실행 (OPS 알림)")
     void reconcileAll_maxTimeExceeded_keepsReconcilingWithoutTossQuery() {
         UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(31));
-        given(userPaymentRepository.findReconcilingPaymentsForUpdate()).willReturn(List.of(payment));
+        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         service.reconcileAll();
 
@@ -122,7 +124,10 @@ class PaymentReconciliationServiceTest {
     void reconcileAll_mixed_exceptionIsolated() {
         UserPayment p1 = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(5));
         UserPayment p2 = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(3));
-        given(userPaymentRepository.findReconcilingPaymentsForUpdate()).willReturn(List.of(p1, p2));
+        given(userPaymentRepository.findReconcilingPaymentIds())
+                .willReturn(List.of(p1.getPaymentId(), p2.getPaymentId()));
+        given(userPaymentRepository.findById(p1.getPaymentId())).willReturn(Optional.of(p1));
+        given(userPaymentRepository.findById(p2.getPaymentId())).willReturn(Optional.of(p2));
 
         TossBillingPaymentResponse done = new TossBillingPaymentResponse(
                 "pk", p1.getOrderId(), "DONE", 29000, "KRW", ZonedDateTime.now(KST));
@@ -133,14 +138,15 @@ class PaymentReconciliationServiceTest {
         // 예외 발생해도 서비스가 중단되지 않음
         service.reconcileAll();
 
-        verify(reconciliationTxService).reconcileAsPaid(p1, done);
+        verify(reconciliationTxService).reconcileAsPaid(p1.getPaymentId(), done);
     }
 
     @Test
     @DisplayName("Toss ABORTED → failPayment 호출")
     void reconcileAll_tossAborted_callsFailPayment() {
         UserPayment payment = reconcilingPayment(ZonedDateTime.now(KST).minusMinutes(2));
-        given(userPaymentRepository.findReconcilingPaymentsForUpdate()).willReturn(List.of(payment));
+        given(userPaymentRepository.findReconcilingPaymentIds()).willReturn(List.of(payment.getPaymentId()));
+        given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         TossBillingPaymentResponse tossResponse = new TossBillingPaymentResponse(
                 null, payment.getOrderId(), "ABORTED", 0, "KRW", null);

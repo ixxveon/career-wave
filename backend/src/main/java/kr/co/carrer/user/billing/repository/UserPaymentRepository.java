@@ -36,10 +36,14 @@ public interface UserPaymentRepository extends JpaRepository<UserPayment, UUID> 
 
     Optional<UserPayment> findByIdempotencyKey(String idempotencyKey);
 
-    // 대사 대상 조회 — 비관적 락으로 동시 scheduler 중복 처리 방지
+    // 대사 대상 ID 목록 조회 — 락 없이 짧은 TX, 외부 API 호출 전 ID만 수집
+    @Query("SELECT p.paymentId FROM UserPayment p WHERE p.paymentStatus = 'RECONCILING'")
+    List<UUID> findReconcilingPaymentIds();
+
+    // 건별 비관적 락 — reconcileAsPaid REQUIRES_NEW TX 내에서 상태 확정 시 사용
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT p FROM UserPayment p WHERE p.paymentStatus = 'RECONCILING'")
-    List<UserPayment> findReconcilingPaymentsForUpdate();
+    @Query("SELECT p FROM UserPayment p WHERE p.paymentId = :paymentId")
+    Optional<UserPayment> findByIdForUpdate(@Param("paymentId") UUID paymentId);
 
     @Query("SELECT p FROM UserPayment p WHERE p.memberId = :memberId " +
            "AND p.createdAt >= :from " +

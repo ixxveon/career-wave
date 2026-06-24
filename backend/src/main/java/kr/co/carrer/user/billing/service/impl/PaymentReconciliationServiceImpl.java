@@ -10,13 +10,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -33,36 +33,41 @@ public class PaymentReconciliationServiceImpl implements PaymentReconciliationSe
     private final PaymentReconciliationTxService reconciliationTxService;
     private final UserPaymentFailureTxService failureTxService;
 
+    // @Transactional 없음 — 외부 Toss API 호출 중 DB 락 점유 방지
+    // 1. 짧은 TX로 paymentId 목록만 수집
+    // 2. 각 건 처리 시 Toss 호출(TX 밖) → 상태 확정 시 건별 REQUIRES_NEW TX
     @Override
-    @Transactional
     public void reconcileAll() {
-        List<UserPayment> reconcilingPayments = userPaymentRepository.findReconcilingPaymentsForUpdate();
-        if (reconcilingPayments.isEmpty()) return;
+        List<UUID> paymentIds = userPaymentRepository.findReconcilingPaymentIds();
+        if (paymentIds.isEmpty()) return;
 
-        log.info("RECONCILING 대사 시작: {}건", reconcilingPayments.size());
+        log.info("RECONCILING 대사 시작: {}건", paymentIds.size());
         int settled = 0, failed = 0, pending = 0;
 
-        for (UserPayment payment : reconcilingPayments) {
+        for (UUID paymentId : paymentIds) {
             try {
-                ReconcileOutcome outcome = processOne(payment);
+                ReconcileOutcome outcome = processOne(paymentId);
                 switch (outcome) {
                     case PAID -> settled++;
                     case FAILED -> failed++;
                     case PENDING -> pending++;
                 }
             } catch (Exception e) {
-                log.warn("RECONCILING 처리 예외: paymentId={}, error={}", payment.getPaymentId(), e.getMessage());
+                log.warn("RECONCILING 처리 예외: paymentId={}, error={}", paymentId, e.getMessage());
             }
         }
 
         log.info("RECONCILING 대사 완료: 복구={}, 실패확정={}, 대기유지={}", settled, failed, pending);
     }
 
-    private ReconcileOutcome processOne(UserPayment payment) {
-        // 최대 대사 시간 초과 → 운영 알림 로그 (처리는 계속 대기)
+    private ReconcileOutcome processOne(UUID paymentId) {
+        // 결제 상세 읽기 — 락 없는 단순 조회 (외부 API 호출 전)
+        UserPayment payment = userPaymentRepository.findById(paymentId).orElse(null);
+        if (payment == null) return ReconcileOutcome.PENDING;
+
         if (isMaxTimeExceeded(payment)) {
             log.warn("[OPS-ALERT] RECONCILING 최대 시간({} 분) 초과: paymentId={}, orderId={}, reconcilingAt={}",
-                    maxReconciliationMinutes, payment.getPaymentId(), payment.getOrderId(),
+                    maxReconciliationMinutes, paymentId, payment.getOrderId(),
                     payment.getReconcilingAt());
             return ReconcileOutcome.PENDING;
         }
@@ -71,18 +76,19 @@ public class PaymentReconciliationServiceImpl implements PaymentReconciliationSe
 
         if (tossResult.isEmpty()) {
             // Toss 조회 실패 또는 timeout → RECONCILING 유지
-            log.info("RECONCILING 유지: paymentId={} — Toss 조회 실패/timeout", payment.getPaymentId());
+            log.info("RECONCILING 유지: paymentId={} — Toss 조회 실패/timeout", paymentId);
             return ReconcileOutcome.PENDING;
         }
 
         TossBillingPaymentResponse tossResponse = tossResult.get();
         if ("DONE".equals(tossResponse.status())) {
-            reconciliationTxService.reconcileAsPaid(payment, tossResponse);
+            // REQUIRES_NEW TX 내에서 재조회/락 후 PAID 확정
+            reconciliationTxService.reconcileAsPaid(paymentId, tossResponse);
             return ReconcileOutcome.PAID;
         } else {
             // CANCELED, ABORTED, EXPIRED, PARTIAL_CANCELED → 실패 확정
-            log.info("RECONCILING → FAILED: paymentId={}, tossStatus={}", payment.getPaymentId(), tossResponse.status());
-            failureTxService.failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
+            log.info("RECONCILING → FAILED: paymentId={}, tossStatus={}", paymentId, tossResponse.status());
+            failureTxService.failPayment(paymentId, PaymentFailureReason.CONFIRM_FAILED);
             return ReconcileOutcome.FAILED;
         }
     }
