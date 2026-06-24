@@ -166,6 +166,8 @@ class PaymentReconciliationServiceTest {
                 "ORDER-" + UUID.randomUUID(), UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), "테스트", "test@example.com", 29000,
                 ZonedDateTime.now(KST).plusMinutes(30));
+        // @PrePersist는 실제 저장 시점에만 호출되므로 테스트에서 직접 할당
+        setField(p, "paymentId", UUID.randomUUID());
         p.markForReconciliation();
         setField(p, "reconcilingAt", reconcilingAt);
         return p;
