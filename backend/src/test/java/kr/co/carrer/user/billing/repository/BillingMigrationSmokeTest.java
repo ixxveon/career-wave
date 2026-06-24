@@ -82,7 +82,7 @@ class BillingMigrationSmokeTest extends PostgreSqlTestContainerSupport {
     @Test
     @DisplayName("billing 핵심 6개 테이블 전체 생성 성공")
     void createsAllBillingTables() {
-        assertThat(tableExists("user_payments")).isTrue();
+        assertThat(tableExists("payments")).isTrue();
         assertThat(tableExists("subscriptions")).isTrue();
         assertThat(tableExists("member_product_entitlements")).isTrue();
         assertThat(tableExists("billing_profiles")).isTrue();
@@ -93,14 +93,14 @@ class BillingMigrationSmokeTest extends PostgreSqlTestContainerSupport {
     // ─── Phase 7 신규 컬럼 확인 ────────────────────────────────────────────────
 
     @Test
-    @DisplayName("user_payments — Phase 7 신규 컬럼(reconciling_at) 및 기존 핵심 컬럼 존재")
+    @DisplayName("payments — Phase 7 신규 컬럼(reconciling_at) 및 기존 핵심 컬럼 존재")
     void userPayments_includesReconcilingAtAndCoreColumns() {
-        assertThat(columnExists("user_payments", "reconciling_at"))
+        assertThat(columnExists("payments", "reconciling_at"))
                 .as("Phase 7에서 추가된 reconciling_at 컬럼이 존재해야 한다").isTrue();
-        assertThat(columnExists("user_payments", "order_id")).isTrue();
-        assertThat(columnExists("user_payments", "payment_status")).isTrue();
-        assertThat(columnExists("user_payments", "payment_type")).isTrue();
-        assertThat(columnExists("user_payments", "idempotency_key")).isTrue();
+        assertThat(columnExists("payments", "order_id")).isTrue();
+        assertThat(columnExists("payments", "payment_status")).isTrue();
+        assertThat(columnExists("payments", "payment_type")).isTrue();
+        assertThat(columnExists("payments", "idempotency_key")).isTrue();
     }
 
     // ─── UNIQUE 제약 존재 확인 ─────────────────────────────────────────────────
@@ -113,7 +113,7 @@ class BillingMigrationSmokeTest extends PostgreSqlTestContainerSupport {
     }
 
     @Test
-    @DisplayName("user_payments — order_id UNIQUE 제약 존재")
+    @DisplayName("payments — order_id UNIQUE 제약 존재")
     void userPayments_hasOrderIdUniqueConstraint() {
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.table_constraints tc " +
@@ -121,7 +121,7 @@ class BillingMigrationSmokeTest extends PostgreSqlTestContainerSupport {
                 "  ON tc.constraint_name = kcu.constraint_name " +
                 "  AND LOWER(tc.table_schema) = LOWER(kcu.table_schema) " +
                 "WHERE LOWER(tc.table_schema) = 'public' " +
-                "AND tc.table_name = 'user_payments' " +
+                "AND tc.table_name = 'payments' " +
                 "AND tc.constraint_type = 'UNIQUE' " +
                 "AND kcu.column_name = 'order_id'",
                 Integer.class);
