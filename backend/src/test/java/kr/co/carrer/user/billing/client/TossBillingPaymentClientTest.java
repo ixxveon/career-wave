@@ -111,7 +111,7 @@ class TossBillingPaymentClientTest {
     }
 
     @Test
-    @DisplayName("500 서버 오류 — PAYMENT_CONFIRM_FAILED")
+    @DisplayName("500 서버 오류 — PAYMENT_RECONCILIATION_REQUIRED (결제 결과 미확정)")
     void pay_serverError_500() {
         server.enqueue(new MockResponse().setResponseCode(500));
 
@@ -119,12 +119,12 @@ class TossBillingPaymentClientTest {
                 client.pay("bk", "ck", "e@e.com", "홍길동", "ORDER-123", "코칭", 29000))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
-                        .isEqualTo(BillingErrorCode.PAYMENT_CONFIRM_FAILED));
+                        .isEqualTo(BillingErrorCode.PAYMENT_RECONCILIATION_REQUIRED));
     }
 
     @Test
-    @DisplayName("응답 지연 — PAYMENT_CONFIRM_FAILED")
-    void pay_timeout_confirmFailed() {
+    @DisplayName("응답 지연(timeout) — PAYMENT_RECONCILIATION_REQUIRED (결제 결과 미확정)")
+    void pay_timeout_reconciliationRequired() {
         server.enqueue(new MockResponse()
                 .setBody("{\"status\":\"DONE\"}")
                 .addHeader("Content-Type", "application/json")
@@ -134,7 +134,7 @@ class TossBillingPaymentClientTest {
                 client.pay("bk", "ck", "e@e.com", "홍길동", "ORDER-123", "코칭", 29000))
                 .isInstanceOf(CustomException.class)
                 .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
-                        .isEqualTo(BillingErrorCode.PAYMENT_CONFIRM_FAILED));
+                        .isEqualTo(BillingErrorCode.PAYMENT_RECONCILIATION_REQUIRED));
     }
 
     private void setField(Object target, String name, Object value) throws Exception {

@@ -20,6 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+// Toss billing payment 호출 결과에 따른 분기:
+// 4xx → PAYMENT_CONFIRM_FAILED → 즉시 FAILED 확정
+// 5xx / timeout → PAYMENT_RECONCILIATION_REQUIRED → RECONCILING 전이 (대사 스케줄러가 처리)
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,6 +37,7 @@ public class UserPaymentConfirmServiceImpl implements UserPaymentConfirmService 
     private final AesCipher aesCipher;
     private final UserPaymentFailureTxService failureTxService;
     private final UserPaymentSettleTxService settleTxService;
+    private final PaymentReconciliationTxService reconciliationTxService;
 
     @Override
     public BillingDTO.ResponseConfirmPayment confirm(UUID memberId, BillingDTO.RequestConfirmPayment request) {
@@ -86,6 +91,15 @@ public class UserPaymentConfirmServiceImpl implements UserPaymentConfirmService 
                     plan.getPlanName(),
                     plan.getPlanPrice()
             );
+        } catch (CustomException e) {
+            if (e.getErrorCode() == BillingErrorCode.PAYMENT_RECONCILIATION_REQUIRED) {
+                // 5xx / timeout: 결제가 Toss에 도달했을 수 있음 → RECONCILING 전이
+                reconciliationTxService.markForReconciliation(payment.getPaymentId());
+                throw e; // 202 ACCEPTED 반환
+            }
+            // 4xx 등 즉시 실패
+            failureTxService.failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
+            throw e;
         } catch (Exception e) {
             failureTxService.failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
             throw e;

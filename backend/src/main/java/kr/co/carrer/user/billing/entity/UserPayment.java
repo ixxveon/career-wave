@@ -161,8 +161,13 @@ public class UserPayment {
         return p;
     }
 
+    @Column(name = "reconciling_at")
+    private ZonedDateTime reconcilingAt;
+
     // ── 상태 전이 — user 측 책임 범위만 구현 (constitution §8.3) ────────────
     // READY → AUTHORIZED → CONFIRMING → PAID
+    // READY → RECONCILING (결제 결과 미확정 — Toss timeout/5xx 시)
+    // READY → FAILED (auth 단계 실패 시 — Toss 호출 전 즉시 확정)
     // READY → CANCELED (만료 스케줄러)
     // AUTHORIZED / CONFIRMING / RECONCILING → FAILED
 
@@ -191,13 +196,24 @@ public class UserPayment {
     }
 
     public void fail(PaymentFailureReason reason) {
-        if (this.paymentStatus != UserPaymentStatus.AUTHORIZED
+        if (this.paymentStatus != UserPaymentStatus.READY
+                && this.paymentStatus != UserPaymentStatus.AUTHORIZED
                 && this.paymentStatus != UserPaymentStatus.CONFIRMING
                 && this.paymentStatus != UserPaymentStatus.RECONCILING) {
             throw new CustomException(BillingErrorCode.BILLING_ORDER_NOT_READY);
         }
         this.paymentStatus = UserPaymentStatus.FAILED;
         this.failureReason = reason;
+    }
+
+    // READY → RECONCILING: Toss 결제 호출 결과가 불확실할 때 (timeout/5xx)
+    // RECONCILING 상태에서 대사 스케줄러가 Toss에 재조회하여 PAID 또는 FAILED로 확정
+    public void markForReconciliation() {
+        if (this.paymentStatus != UserPaymentStatus.READY) {
+            throw new CustomException(BillingErrorCode.BILLING_ORDER_NOT_READY);
+        }
+        this.paymentStatus = UserPaymentStatus.RECONCILING;
+        this.reconcilingAt = ZonedDateTime.now(KST);
     }
 
     public void cancel() {
