@@ -385,7 +385,6 @@ export default function UserManagementPage() {
                 회원 목록
                 <span className="memberTotalCount">전체 {memberTotalItems.toLocaleString()}명</span>
               </h3>
-              <button>회원 데이터 내보내기</button>
             </div>
 
             {memberError && (
@@ -516,7 +515,6 @@ export default function UserManagementPage() {
                 기업회원 가입 신청 목록
                 <span className="memberTotalCount">전체 {hrTotalItems}건</span>
               </h3>
-              <button>데이터 내보내기</button>
             </div>
 
             {hrError && (
