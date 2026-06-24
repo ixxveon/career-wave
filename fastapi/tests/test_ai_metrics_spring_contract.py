@@ -189,6 +189,7 @@ def test_non_usage_request_contracts_match_spring_boot_fields():
         "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
         "sessionId": None,
         "aiModelId": 1,
+        "modelName": None,
         "featureType": "DOCUMENT",
         "inputTokens": 1200,
         "outputTokens": 450,
@@ -442,6 +443,31 @@ def test_usage_log_create_contract_matches_spring_boot_fields():
         "aiUsageLogId": 101,
         "recorded": True,
         "createdAt": usage_log_create_response.created_at,
+    }
+
+
+def test_usage_log_create_contract_accepts_model_name_without_ai_model_id():
+    usage_log_create_request = UsageLogCreateRequest.model_validate(
+        {
+            "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+            "sessionId": "1ec92044-9173-456b-b767-42cf5aa94c98",
+            "modelName": "gpt-4o-mini",
+            "featureType": "INTERVIEW",
+            "inputTokens": 800,
+            "outputTokens": 240,
+            "cost": "0",
+        }
+    )
+
+    assert usage_log_create_request.model_dump(mode="json", by_alias=True) == {
+        "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+        "sessionId": "1ec92044-9173-456b-b767-42cf5aa94c98",
+        "aiModelId": None,
+        "modelName": "gpt-4o-mini",
+        "featureType": "INTERVIEW",
+        "inputTokens": 800,
+        "outputTokens": 240,
+        "cost": "0",
     }
 
 
