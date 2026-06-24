@@ -1,19 +1,20 @@
 package kr.co.carrer.user.billing.service;
 
+import kr.co.carrer.user.billing.entity.BillingProfile;
 import kr.co.carrer.user.billing.entity.Plan;
 import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.entity.UserPayment;
 import kr.co.carrer.user.billing.repository.BillingProfileRepository;
 import kr.co.carrer.user.billing.repository.PlanRepository;
-import kr.co.carrer.user.billing.repository.UserPaymentRepository;
 import kr.co.carrer.user.billing.service.impl.RenewalFailureTxService;
+import kr.co.carrer.user.billing.service.impl.RenewalPaymentCreateTxService;
 import kr.co.carrer.user.billing.service.impl.RenewalSettleTxService;
 import kr.co.carrer.user.billing.service.impl.SubscriptionRenewalServiceImpl;
 import kr.co.carrer.user.billing.client.TossBillingPaymentClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingPaymentResponse;
 import kr.co.carrer.user.billing.util.AesCipher;
-import kr.co.carrer.user.billing.entity.BillingProfile;
 import kr.co.carrer.user.billing.type.BillingProfileStatus;
+import kr.co.carrer.user.billing.type.UserPaymentStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,12 +37,12 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class RenewalSchedulerConcurrencyTest {
 
-    @Mock UserPaymentRepository userPaymentRepository;
     @Mock BillingProfileRepository billingProfileRepository;
     @Mock PlanRepository planRepository;
     @Mock TossBillingPaymentClient tossBillingPaymentClient;
     @Mock AesCipher aesCipher;
     @Mock BillingMemberPort billingMemberPort;
+    @Mock RenewalPaymentCreateTxService renewalPaymentCreateTxService;
     @Mock RenewalSettleTxService renewalSettleTxService;
     @Mock RenewalFailureTxService renewalFailureTxService;
 
@@ -53,14 +54,15 @@ class RenewalSchedulerConcurrencyTest {
     @BeforeEach
     void setUp() {
         service = new SubscriptionRenewalServiceImpl(
-                userPaymentRepository, billingProfileRepository, planRepository,
+                billingProfileRepository, planRepository,
                 tossBillingPaymentClient, aesCipher, billingMemberPort,
+                renewalPaymentCreateTxService,
                 renewalSettleTxService, renewalFailureTxService);
     }
 
     @Test
-    @DisplayName("동일 idempotencyKey — 두 번 호출해도 Toss 결제는 1회만 실행")
-    void processRenewal_sameIdempotencyKey_tossCalledOnce() {
+    @DisplayName("동일 idempotencyKey CONFIRMING 상태 — createIfAbsent 2회, Toss 재시도 2회")
+    void processRenewal_sameIdempotencyKey_confirmingPaymentRetried() {
         Subscription sub = activeSubscription();
         Plan plan = plan(1L, "document-coaching", 29000);
         BillingProfile bp = billingProfile(memberId);
@@ -72,44 +74,42 @@ class RenewalSchedulerConcurrencyTest {
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
         given(aesCipher.decrypt(any())).willReturn("plain-key");
+        // CONFIRMING 상태 — RenewalPaymentCreateTxService가 결제 객체 중복 생성을 막음
+        given(renewalPaymentCreateTxService.createIfAbsent(any(), any(), any(), any(), any(), anyInt(), any()))
+                .willReturn(existingPayment);
         given(tossBillingPaymentClient.pay(any(), any(), any(), any(), any(), any(), anyInt()))
                 .willReturn(payResponse());
 
-        // 첫 번째 호출: 결제 신규 생성
-        given(userPaymentRepository.findByIdempotencyKey(any())).willReturn(Optional.empty());
-        given(userPaymentRepository.save(any())).willReturn(existingPayment);
+        service.processRenewal(sub, 0);
         service.processRenewal(sub, 0);
 
-        // 두 번째 호출: 동일 idempotencyKey → 기존 payment 반환 (재생성 없음)
-        given(userPaymentRepository.findByIdempotencyKey(any())).willReturn(Optional.of(existingPayment));
-        service.processRenewal(sub, 0);
-
-        // Toss 결제는 두 번 호출됨 — 이 테스트는 결제 객체 중복 생성을 방지하는 것을 검증
-        // (실제 DB 환경에서 idempotencyKey UNIQUE 제약이 동시 INSERT를 막음)
-        verify(userPaymentRepository, times(1)).save(any());
+        // 결제 객체 중복 생성 방지는 RenewalPaymentCreateTxService 책임 — service는 createIfAbsent만 호출
+        verify(renewalPaymentCreateTxService, times(2))
+                .createIfAbsent(any(), any(), any(), any(), any(), anyInt(), any());
+        verify(tossBillingPaymentClient, times(2)).pay(any(), any(), any(), any(), any(), any(), anyInt());
     }
 
     @Test
-    @DisplayName("동일 idempotencyKey 재실행 안전 — payment 신규 save 없이 기존 반환")
-    void processRenewal_idempotencyKeyExists_noNewPaymentSaved() {
+    @DisplayName("기존 PAID payment 반환 — Toss 중복 호출 없이 즉시 skip (멱등성 보장)")
+    void processRenewal_existingPaidPayment_tossSkipped() {
         Subscription sub = activeSubscription();
         Plan plan = plan(1L, "document-coaching", 29000);
         BillingProfile bp = billingProfile(memberId);
-        UserPayment existingPayment = autoRenewalPayment(memberId, 0);
+        UserPayment paidPayment = autoRenewalPayment(memberId, 0);
+        setField(paidPayment, "paymentStatus", UserPaymentStatus.PAID);
 
         given(planRepository.findById(1L)).willReturn(Optional.of(plan));
         given(billingProfileRepository.findFirstByMemberIdAndBillingProfileStatusOrderByCreatedAtDesc(
                 memberId, BillingProfileStatus.ACTIVE)).willReturn(Optional.of(bp));
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
-        given(aesCipher.decrypt(any())).willReturn("plain-key");
-        given(userPaymentRepository.findByIdempotencyKey(any())).willReturn(Optional.of(existingPayment));
-        given(tossBillingPaymentClient.pay(any(), any(), any(), any(), any(), any(), anyInt()))
-                .willReturn(payResponse());
+        given(renewalPaymentCreateTxService.createIfAbsent(any(), any(), any(), any(), any(), anyInt(), any()))
+                .willReturn(paidPayment);
 
         service.processRenewal(sub, 0);
 
-        verify(userPaymentRepository, never()).save(any());
+        verify(tossBillingPaymentClient, never()).pay(any(), any(), any(), any(), any(), any(), anyInt());
+        verify(renewalSettleTxService, never()).settle(any(), any(), any(), any());
     }
 
     @Test
@@ -128,8 +128,8 @@ class RenewalSchedulerConcurrencyTest {
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
         given(aesCipher.decrypt(any())).willReturn("plain-key");
-        given(userPaymentRepository.findByIdempotencyKey(any())).willReturn(Optional.empty());
-        given(userPaymentRepository.save(any())).willReturn(p1, p2);
+        given(renewalPaymentCreateTxService.createIfAbsent(any(), any(), any(), any(), any(), anyInt(), any()))
+                .willReturn(p1, p2);
         given(tossBillingPaymentClient.pay(any(), any(), any(), any(), any(), any(), anyInt()))
                 .willReturn(payResponse());
 

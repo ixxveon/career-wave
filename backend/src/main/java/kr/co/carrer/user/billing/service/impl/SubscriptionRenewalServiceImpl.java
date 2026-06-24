@@ -10,16 +10,14 @@ import kr.co.carrer.user.billing.entity.UserPayment;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.BillingProfileRepository;
 import kr.co.carrer.user.billing.repository.PlanRepository;
-import kr.co.carrer.user.billing.repository.UserPaymentRepository;
 import kr.co.carrer.user.billing.service.BillingMemberPort;
 import kr.co.carrer.user.billing.service.SubscriptionRenewalService;
 import kr.co.carrer.user.billing.type.BillingProfileStatus;
+import kr.co.carrer.user.billing.type.UserPaymentStatus;
 import kr.co.carrer.user.billing.util.AesCipher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -33,12 +31,12 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
-    private final UserPaymentRepository userPaymentRepository;
     private final BillingProfileRepository billingProfileRepository;
     private final PlanRepository planRepository;
     private final TossBillingPaymentClient tossBillingPaymentClient;
     private final AesCipher aesCipher;
     private final BillingMemberPort billingMemberPort;
+    private final RenewalPaymentCreateTxService renewalPaymentCreateTxService;
     private final RenewalSettleTxService renewalSettleTxService;
     private final RenewalFailureTxService renewalFailureTxService;
 
@@ -58,10 +56,23 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
         BillingMemberPort.MemberBillingInfo memberInfo =
                 billingMemberPort.getMemberBillingInfo(subscription.getMemberId());
 
-        // 2. AUTO_RENEWAL Payment 생성 (REQUIRES_NEW — 이하 Toss 호출 실패 시에도 결제 이력 보존)
-        UserPayment payment = createRenewalPayment(subscription, plan, billingProfile, memberInfo, attemptSequence);
+        // 2. AUTO_RENEWAL Payment 생성 또는 기존 조회 (REQUIRES_NEW 독립 TX)
+        String idempotencyKey = buildIdempotencyKey(subscriptionId, attemptSequence,
+                ZonedDateTime.now(KST).toLocalDate());
+        UserPayment payment = renewalPaymentCreateTxService.createIfAbsent(
+                subscriptionId, subscription.getMemberId(),
+                plan, billingProfile.getCustomerKey(), memberInfo,
+                attemptSequence, idempotencyKey);
 
-        // 3. Toss billing 호출 (트랜잭션 밖)
+        // 3. 이미 최종 처리된 payment면 Toss 중복 호출 방지
+        if (payment.getPaymentStatus() == UserPaymentStatus.PAID
+                || payment.getPaymentStatus() == UserPaymentStatus.FAILED) {
+            log.info("자동결제 이미 처리됨, skip: subscriptionId={}, attemptSequence={}, status={}",
+                    subscriptionId, attemptSequence, payment.getPaymentStatus());
+            return;
+        }
+
+        // 4. Toss billing 호출 (트랜잭션 밖)
         TossBillingPaymentResponse response;
         try {
             response = tossBillingPaymentClient.pay(
@@ -81,37 +92,9 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
             return;
         }
 
-        // 4. 결산
+        // 5. 결산
         renewalSettleTxService.settle(payment.getPaymentId(), subscriptionId, response, plan);
         log.info("자동결제 성공: subscriptionId={}, attemptSequence={}", subscriptionId, attemptSequence);
-    }
-
-    // REQUIRES_NEW — idempotencyKey UNIQUE 제약으로 동일 구독·회차 중복 실행 방지
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public UserPayment createRenewalPayment(Subscription subscription, Plan plan,
-                                             BillingProfile billingProfile,
-                                             BillingMemberPort.MemberBillingInfo memberInfo,
-                                             int attemptSequence) {
-        String idempotencyKey = buildIdempotencyKey(subscription.getSubscriptionId(),
-                attemptSequence, ZonedDateTime.now(KST).toLocalDate());
-
-        return userPaymentRepository.findByIdempotencyKey(idempotencyKey)
-                .orElseGet(() -> {
-                    String orderId = "RENEWAL-" + UUID.randomUUID().toString().replace("-", "");
-                    UserPayment payment = UserPayment.createAutoRenewal(
-                            subscription.getMemberId(),
-                            plan.getPlanId(),
-                            plan.getProductCode(),
-                            orderId,
-                            idempotencyKey,
-                            billingProfile.getCustomerKey(),
-                            memberInfo.name(),
-                            memberInfo.email(),
-                            plan.getPlanPrice(),
-                            attemptSequence
-                    );
-                    return userPaymentRepository.save(payment);
-                });
     }
 
     static String buildIdempotencyKey(UUID subscriptionId, int attemptSequence, LocalDate date) {
