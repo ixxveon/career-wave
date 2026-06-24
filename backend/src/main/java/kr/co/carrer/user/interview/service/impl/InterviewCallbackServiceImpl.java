@@ -1,11 +1,13 @@
 package kr.co.carrer.user.interview.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
+import kr.co.carrer.user.billing.service.EntitlementService;
+import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.interview.dto.InterviewDTO;
 import kr.co.carrer.user.interview.entity.AIInterviewFeedback;
 import kr.co.carrer.user.interview.entity.CareerHistory;
 import kr.co.carrer.user.interview.entity.InterviewMessage;
-import kr.co.carrer.user.interview.type.MessageSender;
 import kr.co.carrer.user.interview.entity.InterviewSession;
 import kr.co.carrer.user.interview.exception.InterviewErrorCode;
 import kr.co.carrer.user.interview.repository.AIInterviewFeedbackRepository;
@@ -13,6 +15,7 @@ import kr.co.carrer.user.interview.repository.CareerHistoryRepository;
 import kr.co.carrer.user.interview.repository.InterviewMessageRepository;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import kr.co.carrer.user.interview.service.InterviewCallbackService;
+import kr.co.carrer.user.interview.type.MessageSender;
 import kr.co.carrer.user.interview.websocket.WebSocketMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +39,7 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
     private final CareerHistoryRepository careerHistoryRepository;
     private final InterviewMessageRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final EntitlementService entitlementService;
 
     // SimpMessagingTemplate은 WebSocket 브로커 초기화 이후에만 사용 가능하므로 @Lazy 주입
     @Autowired
@@ -44,13 +48,15 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
             AIInterviewFeedbackRepository feedbackRepository,
             CareerHistoryRepository careerHistoryRepository,
             InterviewMessageRepository messageRepository,
-            @Lazy SimpMessagingTemplate messagingTemplate
+            @Lazy SimpMessagingTemplate messagingTemplate,
+            EntitlementService entitlementService
     ) {
         this.sessionRepository = sessionRepository;
         this.feedbackRepository = feedbackRepository;
         this.careerHistoryRepository = careerHistoryRepository;
         this.messageRepository = messageRepository;
         this.messagingTemplate = messagingTemplate;
+        this.entitlementService = entitlementService;
     }
 
     @Override
@@ -87,6 +93,15 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
             log.info("Report callback already processed (idempotent): sessionId={}", sessionId);
         } else {
             saveReportData(sessionId, dto);
+            try {
+                entitlementService.consume(ResourceType.INTERVIEW_SESSION, sessionId);
+            } catch (CustomException e) {
+                if (e.getErrorCode() == BillingErrorCode.SERVICE_USAGE_NOT_RESERVED) {
+                    log.warn("Late report callback: consume skipped (already released or timeout). sessionId={}", sessionId);
+                } else {
+                    throw e;
+                }
+            }
         }
 
         // 신규 처리일 때만 REPORT_READY 전송 — 멱등 경로 중복 전송 방지

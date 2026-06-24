@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service("adminDashboardServiceImpl")
@@ -86,7 +87,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         return List.of(
                 new DashboardDTO.Kpi(
-                        DashboardKpiKeyType.TODAY_NEW_MEMBERS,
+                        DashboardKpiKeyType.TODAY_NEW_ADMINS,
                         "오늘 신규 가입자",
                         newAdminCount,
                         "명",
@@ -95,7 +96,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "/admin/admins"
                 ),
                 new DashboardDTO.Kpi(
-                        DashboardKpiKeyType.REALTIME_ACTIVE_USERS,
+                        DashboardKpiKeyType.REALTIME_ACTIVE_ADMINS,
                         "실시간 활성 관리자",
                         activeAdminCount,
                         "명",
@@ -155,8 +156,19 @@ public class DashboardServiceImpl implements DashboardService {
                 .forEach(alerts::add);
 
         return alerts.stream()
+                .sorted(Comparator
+                        .comparing(DashboardDTO.Alert::level, Comparator.comparingInt(this::alertPriority))
+                        .thenComparing(DashboardDTO.Alert::createdAt, Comparator.reverseOrder()))
                 .limit(ALERT_LIMIT)
                 .toList();
+    }
+
+    private int alertPriority(DashboardAlertLevelType level) {
+        return switch (level) {
+            case URGENT -> 0;
+            case WARNING -> 1;
+            case NORMAL -> 2;
+        };
     }
 
     private List<DashboardDTO.PaymentRatio> buildPaymentRatio() {

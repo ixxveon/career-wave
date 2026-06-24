@@ -16,6 +16,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import kr.co.carrer.user.billing.service.EntitlementService;
+import kr.co.carrer.user.billing.type.ResourceType;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,6 +41,7 @@ class InterviewSessionServiceImplTest {
     @Mock private InterviewMessageRepository messageRepository;
     @Mock private DocumentRepository documentRepository;
     @Mock private InterviewFastApiClient fastApiClient;
+    @Mock private EntitlementService entitlementService;
 
     @Nested
     @DisplayName("세션 시작 - startSession()")
@@ -61,6 +64,8 @@ class InterviewSessionServiceImplTest {
             assertThat(result.sessionStatus()).isEqualTo("IN_PROGRESS");
             assertThat(result.sessionType()).isEqualTo("TEXT");
             verify(sessionRepository).save(any());
+            verify(entitlementService).reserve(eq(memberId), eq("interview"),
+                    eq(ResourceType.INTERVIEW_SESSION), any());
         }
 
         @Test

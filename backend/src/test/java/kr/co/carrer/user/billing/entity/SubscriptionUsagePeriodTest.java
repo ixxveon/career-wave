@@ -39,23 +39,31 @@ class SubscriptionUsagePeriodTest {
         }
 
         @Test
-        @DisplayName("limitCount=0 이면 IllegalArgumentException")
+        @DisplayName("limitCount=0 이면 USAGE_PERIOD_INVALID_LIMIT")
         void create_limitZero_throws() {
-            assertThatThrownBy(() -> newPeriod(0)).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> newPeriod(0))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(BillingErrorCode.USAGE_PERIOD_INVALID_LIMIT);
         }
 
         @Test
-        @DisplayName("limitCount<0 이면 IllegalArgumentException")
+        @DisplayName("limitCount<0 이면 USAGE_PERIOD_INVALID_LIMIT")
         void create_limitNegative_throws() {
-            assertThatThrownBy(() -> newPeriod(-1)).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> newPeriod(-1))
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(BillingErrorCode.USAGE_PERIOD_INVALID_LIMIT);
         }
 
         @Test
-        @DisplayName("periodStart >= periodEnd 이면 IllegalArgumentException")
+        @DisplayName("periodStart >= periodEnd 이면 USAGE_PERIOD_INVALID_RANGE")
         void create_invalidDateRange_throws() {
             assertThatThrownBy(() -> SubscriptionUsagePeriod.create(
                     UUID.randomUUID(), "interview", END, START, 5))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(BillingErrorCode.USAGE_PERIOD_INVALID_RANGE);
         }
     }
 

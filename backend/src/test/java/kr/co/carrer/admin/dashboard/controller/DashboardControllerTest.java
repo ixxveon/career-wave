@@ -188,8 +188,8 @@ class DashboardControllerTest {
                         ZonedDateTime.parse("2026-06-22T09:00:00Z"),
                         DashboardRangeType.TODAY,
                         List.of(
-                                createKpi(DashboardKpiKeyType.TODAY_NEW_MEMBERS),
-                                createKpi(DashboardKpiKeyType.REALTIME_ACTIVE_USERS),
+                                createKpi(DashboardKpiKeyType.TODAY_NEW_ADMINS),
+                                createKpi(DashboardKpiKeyType.REALTIME_ACTIVE_ADMINS),
                                 createKpi(DashboardKpiKeyType.AI_INTERVIEW_SESSIONS),
                                 createKpi(DashboardKpiKeyType.TODAY_REVENUE)
                         ),
@@ -204,8 +204,8 @@ class DashboardControllerTest {
         mockMvc.perform(get("/api/v1/admin/dashboard/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.kpis.length()").value(4))
-                .andExpect(jsonPath("$.data.kpis[?(@.key == 'TODAY_NEW_MEMBERS')]").exists())
-                .andExpect(jsonPath("$.data.kpis[?(@.key == 'REALTIME_ACTIVE_USERS')]").exists())
+                .andExpect(jsonPath("$.data.kpis[?(@.key == 'TODAY_NEW_ADMINS')]").exists())
+                .andExpect(jsonPath("$.data.kpis[?(@.key == 'REALTIME_ACTIVE_ADMINS')]").exists())
                 .andExpect(jsonPath("$.data.kpis[?(@.key == 'AI_INTERVIEW_SESSIONS')]").exists())
                 .andExpect(jsonPath("$.data.kpis[?(@.key == 'TODAY_REVENUE')]").exists());
     }

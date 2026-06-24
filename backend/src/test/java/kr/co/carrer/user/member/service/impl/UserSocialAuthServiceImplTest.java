@@ -6,6 +6,7 @@ import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.*;
@@ -58,6 +59,7 @@ class UserSocialAuthServiceImplTest {
     @Mock ValueOperations<String, String> valueOps;
     @Mock WebClient.Builder webClientBuilder;
     @Mock HttpServletResponse httpResponse;
+    @Mock EntitlementInitService entitlementInitService;
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private UserSocialAuthServiceImpl service;
@@ -68,7 +70,8 @@ class UserSocialAuthServiceImplTest {
                 memberRepository, personalProfileRepository, socialAccountRepository,
                 termsRepository, verificationRepository, encoder,
                 jwtTokenProvider, jwtProperties, refreshTokenStore, tokenBlacklistStore,
-                socialSignupTokenStore, redisTemplate, webClientBuilder);
+                socialSignupTokenStore, redisTemplate, webClientBuilder,
+                entitlementInitService);
         injectValue(service, "kakaoClientId", "kakao-id");
         injectValue(service, "kakaoClientSecret", "kakao-secret");
         injectValue(service, "kakaoRedirectUri", "http://localhost/kakao");
