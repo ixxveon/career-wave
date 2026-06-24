@@ -16,6 +16,7 @@ import {
   CAREER_LEVEL_LABELS,
   JOB_CATEGORY_LABELS,
   JOB_NOTICE_ALL_FILTER_VALUE,
+  JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES,
   JOB_NOTICE_FILTER_OPTIONS,
   JOB_TYPE_LABELS,
   mapJobNoticeApiToViewModel,
@@ -163,7 +164,9 @@ function createJobNoticeQueryParams({
   (Object.entries(API_FILTER_PARAM_BY_LABEL) as Array<[FilterLabel, JobNoticeFilterParamKey]>).forEach(([label, paramKey]) => {
     const value = filters[label];
     if (value !== DEFAULT_FILTER_VALUE) {
-      params[paramKey] = value;
+      params[paramKey] = paramKey === 'companySize'
+        ? JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES[value as keyof typeof JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES] ?? value
+        : value;
     }
   });
 
