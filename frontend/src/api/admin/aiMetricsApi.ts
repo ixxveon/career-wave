@@ -161,6 +161,65 @@ export interface AiMetricLogsParams {
   size?: number;
 }
 
+export interface AiMetricSummaryRaw {
+  totalRequests: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCost: number | string | null;
+  documentRequests: number;
+  interviewRequests: number;
+  activeModelId: number | null;
+  activeModelName: string | null;
+}
+
+export interface AiFeatureUsageRaw {
+  requestCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number | string | null;
+}
+
+export interface AiDomainUsageRaw {
+  document: AiFeatureUsageRaw;
+  interview: AiFeatureUsageRaw;
+}
+
+export interface AiTokenTrendPointRaw {
+  bucket: string;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number | string | null;
+}
+
+export interface AiTokenTrendRaw {
+  interval: AiMetricInterval;
+  points: AiTokenTrendPointRaw[];
+}
+
+export interface AiHeavyUserRaw {
+  memberId: string;
+  requestCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number | string | null;
+}
+
+export interface AiHeavyUsersRaw {
+  users: AiHeavyUserRaw[];
+}
+
+export interface AiMetricLogRaw {
+  aiUsageLogId: number;
+  memberId: string;
+  sessionId: string | null;
+  aiModelId: number;
+  featureType: AiDomain;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number | string | null;
+  createdAt: string;
+}
+
 export interface UpdateAiBudgetRequest {
   selectedModelId?: number | null;
   monthlyBudget: number;
@@ -207,6 +266,18 @@ export function getAiDisplayModelName(model: AiModelNameFields): string {
 
 const AI_METRICS_API_BASE_PATH = '/api/v1/admin/ai-metrics';
 
+const DOMAIN_LABELS: Record<AiDomain, string> = {
+  [AI_DOMAIN.DOCUMENT]: 'AI 서류 기능',
+  [AI_DOMAIN.INTERVIEW]: 'AI 면접 기능',
+};
+
+const toNumberOrNull = (value: number | string | null | undefined): number | null => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 const toNumber = (value: number | string): number => {
   if (typeof value === 'number') return value;
   const parsed = Number(value);
@@ -223,6 +294,99 @@ const mapApiResponse = <TRaw, TMapped>(
     data: mapper(response.data),
   };
 };
+
+const getRiskLevel = (tokenUsage: number): AiUsageRiskLevel => {
+  if (tokenUsage >= 100000) return AI_USAGE_RISK_LEVEL.CRITICAL;
+  if (tokenUsage >= 50000) return AI_USAGE_RISK_LEVEL.WARNING;
+  return AI_USAGE_RISK_LEVEL.NORMAL;
+};
+
+const getMaskedUserLabel = (memberId: string): string => {
+  const suffix = memberId.slice(-4).padStart(4, '*');
+  return `USER-${suffix}`;
+};
+
+const toFeatureTypeParams = <T extends AiDomainFilterParams | AiMetricLogsParams | undefined>(params: T) => {
+  if (!params || !('domain' in params)) return params;
+  const { domain, ...rest } = params;
+  return {
+    ...rest,
+    featureType: domain,
+  };
+};
+
+export const mapAiMetricSummary = (raw: AiMetricSummaryRaw): AiMetricSummary => ({
+  totalRequests: raw.totalRequests,
+  successRequests: raw.totalRequests,
+  failedRequests: 0,
+  totalInputTokens: raw.totalInputTokens,
+  totalOutputTokens: raw.totalOutputTokens,
+  estimatedCost: toNumberOrNull(raw.totalCost),
+  averageLatencyMs: 0,
+  healthStatus: AI_HEALTH_STATUS.NORMAL,
+  lastSyncedAt: new Date().toISOString(),
+});
+
+export const mapAiDomainUsage = (raw: AiDomainUsageRaw): AiDomainUsage[] =>
+  ([
+    [AI_DOMAIN.DOCUMENT, raw.document],
+    [AI_DOMAIN.INTERVIEW, raw.interview],
+  ] as const).map(([domain, usage]) => {
+    const tokenUsage = usage.inputTokens + usage.outputTokens;
+    return {
+      domain,
+      domainLabel: DOMAIN_LABELS[domain],
+      requestCount: usage.requestCount,
+      successCount: usage.requestCount,
+      failureCount: 0,
+      failureRate: 0,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      estimatedCost: toNumberOrNull(usage.cost),
+      averageLatencyMs: 0,
+      riskLevel: getRiskLevel(tokenUsage),
+      displayModelName: null,
+      actualModelName: null,
+    };
+  });
+
+export const mapAiTokenTrend = (raw: AiTokenTrendRaw): AiTokenTrendPoint[] =>
+  raw.points.map((point) => ({
+    bucket: point.bucket,
+    inputTokens: point.inputTokens,
+    outputTokens: point.outputTokens,
+    estimatedCost: toNumberOrNull(point.cost),
+    requestCount: 0,
+  }));
+
+export const mapAiHeavyUsers = (raw: AiHeavyUsersRaw, domain?: AiDomain): AiHeavyUser[] =>
+  raw.users.map((user) => {
+    const tokenUsage = user.inputTokens + user.outputTokens;
+    return {
+      userId: user.memberId,
+      maskedUserLabel: getMaskedUserLabel(user.memberId),
+      domain: domain ?? AI_DOMAIN.DOCUMENT,
+      domainLabel: domain ? DOMAIN_LABELS[domain] : '전체 도메인',
+      tokenUsage,
+      requestCount: user.requestCount,
+      riskLevel: getRiskLevel(tokenUsage),
+      lastUsedAt: new Date().toISOString(),
+    };
+  });
+
+export const mapAiMetricLogs = (raw: PageResult<AiMetricLogRaw>): PageResult<AiMetricLog> => ({
+  ...raw,
+  content: raw.content.map((item) => ({
+    eventId: item.aiUsageLogId,
+    occurredAt: item.createdAt,
+    domain: item.featureType,
+    domainLabel: DOMAIN_LABELS[item.featureType],
+    severity: AI_EVENT_SEVERITY.INFO,
+    message: `AI usage recorded. inputTokens=${item.inputTokens}, outputTokens=${item.outputTokens}, cost=${toNumberOrNull(item.cost) ?? 0}`,
+    displayModelName: null,
+    actualModelName: String(item.aiModelId),
+  })),
+});
 
 export const mapAiBudgetSetting = (raw: AiBudgetSettingRaw): AiBudgetSetting => ({
   selectedModelId: raw.selectedModelId,
@@ -250,11 +414,15 @@ export const toUpdateAiBudgetRequestRaw = (
   };
 };
 
-export const toUpdateAiDiscordAlertRequestRaw = (data: UpdateAiDiscordAlertRequest): UpdateAiDiscordAlertRequestRaw => ({
+export const toUpdateAiDiscordAlertRequestRaw = (
+  data: UpdateAiDiscordAlertRequest
+): UpdateAiDiscordAlertRequestRaw => ({
   alertEnabled: data.enabled,
 });
 
-export const toUpdateAiRateLimitRequestRaw = (data: UpdateAiRateLimitRequest): UpdateAiRateLimitRequestRaw => ({
+export const toUpdateAiRateLimitRequestRaw = (
+  data: UpdateAiRateLimitRequest
+): UpdateAiRateLimitRequestRaw => ({
   rateLimitEnabled: data.enabled,
 });
 
@@ -262,19 +430,44 @@ let cachedBudgetSetting: AiBudgetSetting | null = null;
 
 export const aiMetricsApi = {
   getSummary: (params?: AiDateRangeParams) =>
-    axiosInstance.get<ApiResponse<AiMetricSummary>>(`${AI_METRICS_API_BASE_PATH}/summary`, { params }),
+    axiosInstance
+      .get<ApiResponse<AiMetricSummaryRaw>>(`${AI_METRICS_API_BASE_PATH}/summary`, { params })
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapAiMetricSummary),
+      })),
 
   getDomainUsage: (params?: AiDateRangeParams) =>
-    axiosInstance.get<ApiResponse<AiDomainUsage[]>>(`${AI_METRICS_API_BASE_PATH}/domain-usage`, { params }),
+    axiosInstance
+      .get<ApiResponse<AiDomainUsageRaw>>(`${AI_METRICS_API_BASE_PATH}/domain-usage`, { params })
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapAiDomainUsage),
+      })),
 
   getTokenTrend: (params?: AiTokenTrendParams) =>
-    axiosInstance.get<ApiResponse<AiTokenTrendPoint[]>>(`${AI_METRICS_API_BASE_PATH}/token-trend`, { params }),
+    axiosInstance
+      .get<ApiResponse<AiTokenTrendRaw>>(`${AI_METRICS_API_BASE_PATH}/token-trend`, { params: toFeatureTypeParams(params) })
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapAiTokenTrend),
+      })),
 
   getHeavyUsers: (params?: AiHeavyUsersParams) =>
-    axiosInstance.get<ApiResponse<AiHeavyUser[]>>(`${AI_METRICS_API_BASE_PATH}/heavy-users`, { params }),
+    axiosInstance
+      .get<ApiResponse<AiHeavyUsersRaw>>(`${AI_METRICS_API_BASE_PATH}/heavy-users`, { params: toFeatureTypeParams(params) })
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, (raw) => mapAiHeavyUsers(raw, params?.domain)),
+      })),
 
   getLogs: (params?: AiMetricLogsParams) =>
-    axiosInstance.get<ApiResponse<PageResult<AiMetricLog>>>(`${AI_METRICS_API_BASE_PATH}/logs`, { params }),
+    axiosInstance
+      .get<ApiResponse<PageResult<AiMetricLogRaw>>>(`${AI_METRICS_API_BASE_PATH}/logs`, { params: toFeatureTypeParams(params) })
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapAiMetricLogs),
+      })),
 
   getBudget: () =>
     axiosInstance
