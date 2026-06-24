@@ -21,6 +21,8 @@ import java.util.Map;
 
 // billingKey 기반 자동결제 실행 클라이언트
 // billingKey는 URL 경로에 포함되지만 로그 레벨이 WARN으로 제한되어 평문 노출 없음 (application.yml 참고)
+// 4xx → PAYMENT_CONFIRM_FAILED (클라이언트 오류, 즉시 실패)
+// 5xx/timeout → PAYMENT_RECONCILIATION_REQUIRED (Toss 서버 측 문제 — 결제가 처리됐을 수 있음)
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -68,10 +70,17 @@ public class TossBillingPaymentClient {
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(body)
                     .retrieve()
-                    .onStatus(HttpStatusCode::isError, resp ->
+                    .onStatus(HttpStatusCode::is4xxClientError, resp ->
                             resp.bodyToMono(String.class).defaultIfEmpty("").map(b -> {
-                                log.warn("Toss billing payment failed: status={}", resp.statusCode().value());
+                                log.warn("Toss billing payment 4xx: status={}", resp.statusCode().value());
                                 return new CustomException(BillingErrorCode.PAYMENT_CONFIRM_FAILED);
+                            })
+                    )
+                    .onStatus(HttpStatusCode::is5xxServerError, resp ->
+                            resp.bodyToMono(String.class).defaultIfEmpty("").map(b -> {
+                                // 5xx: Toss 서버 측 오류 — 결제가 처리됐을 가능성 있음 → RECONCILING 전이
+                                log.warn("Toss billing payment 5xx: status={} — RECONCILING 필요", resp.statusCode().value());
+                                return new CustomException(BillingErrorCode.PAYMENT_RECONCILIATION_REQUIRED);
                             })
                     )
                     .bodyToMono(TossBillingPaymentResponse.class)
@@ -84,8 +93,28 @@ public class TossBillingPaymentClient {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
+            if (isTimeoutException(e)) {
+                // timeout: 요청이 Toss에 도달했을 수 있음 → RECONCILING 전이
+                log.warn("Toss billing payment timeout: {} — RECONCILING 필요", e.getClass().getSimpleName());
+                throw new CustomException(BillingErrorCode.PAYMENT_RECONCILIATION_REQUIRED);
+            }
             log.warn("Toss billing payment error: {}", e.getClass().getSimpleName());
             throw new CustomException(BillingErrorCode.PAYMENT_CONFIRM_FAILED);
         }
+    }
+
+    // 429 rate limit: 무한 재시도 방지 — caller가 재시도하지 않도록 4xx 경로로 처리됨
+    // (is4xxClientError가 429를 포함하므로 별도 처리 없이 PAYMENT_CONFIRM_FAILED로 즉시 실패)
+
+    private boolean isTimeoutException(Exception e) {
+        Throwable cause = e;
+        while (cause != null) {
+            String name = cause.getClass().getSimpleName();
+            if (name.contains("TimeoutException") || name.contains("ReadTimeout") || name.contains("ConnectTimeout")) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
     }
 }

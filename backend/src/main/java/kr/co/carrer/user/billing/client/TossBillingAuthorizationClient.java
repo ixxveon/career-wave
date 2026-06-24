@@ -20,6 +20,8 @@ import java.util.Base64;
 import java.util.Map;
 
 // billingKey 발행 전용 — 응답의 billingKey 필드를 로그에 절대 출력하지 않음
+// 4xx: 잘못된 authKey 등 클라이언트 오류 → BILLING_AUTHORIZATION_FAILED
+// 5xx: Toss 서버 오류 → BILLING_AUTHORIZATION_FAILED (billingKey 미발급 확실 — RECONCILING 불필요)
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -56,9 +58,15 @@ public class TossBillingAuthorizationClient {
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(Map.of("authKey", authKey, "customerKey", customerKey))
                     .retrieve()
-                    .onStatus(HttpStatusCode::isError, response ->
+                    .onStatus(HttpStatusCode::is4xxClientError, response ->
                             response.bodyToMono(String.class).defaultIfEmpty("").map(body -> {
-                                log.warn("Toss billing auth failed: status={}", response.statusCode().value());
+                                log.warn("Toss billing auth 4xx: status={}", response.statusCode().value());
+                                return new CustomException(BillingErrorCode.BILLING_AUTHORIZATION_FAILED);
+                            })
+                    )
+                    .onStatus(HttpStatusCode::is5xxServerError, response ->
+                            response.bodyToMono(String.class).defaultIfEmpty("").map(body -> {
+                                log.warn("Toss billing auth 5xx: status={}", response.statusCode().value());
                                 return new CustomException(BillingErrorCode.BILLING_AUTHORIZATION_FAILED);
                             })
                     )

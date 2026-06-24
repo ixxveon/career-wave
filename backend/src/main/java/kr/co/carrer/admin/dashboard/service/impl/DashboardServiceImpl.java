@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-@Service
+@Service("adminDashboardServiceImpl")
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 

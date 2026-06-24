@@ -1,10 +1,12 @@
 package kr.co.carrer.user.billing.repository;
 
+import jakarta.persistence.LockModeType;
 import kr.co.carrer.user.billing.entity.UserPayment;
 import kr.co.carrer.user.billing.type.UserPaymentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -33,6 +35,11 @@ public interface UserPaymentRepository extends JpaRepository<UserPayment, UUID> 
                                                        UserPaymentStatus paymentStatus);
 
     Optional<UserPayment> findByIdempotencyKey(String idempotencyKey);
+
+    // 대사 대상 조회 — 비관적 락으로 동시 scheduler 중복 처리 방지
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM UserPayment p WHERE p.paymentStatus = 'RECONCILING'")
+    List<UserPayment> findReconcilingPaymentsForUpdate();
 
     @Query("SELECT p FROM UserPayment p WHERE p.memberId = :memberId " +
            "AND p.createdAt >= :from " +
