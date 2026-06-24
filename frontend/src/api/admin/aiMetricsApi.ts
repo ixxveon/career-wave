@@ -114,6 +114,7 @@ export interface AiMetricLog extends AiModelNameFields {
 }
 
 export interface AiBudgetSetting {
+  selectedModelId: number | null;
   monthlyBudget: number;
   currentSpend: number | null;
   forecastSpend: number | null;
@@ -161,6 +162,7 @@ export interface AiMetricLogsParams {
 }
 
 export interface UpdateAiBudgetRequest {
+  selectedModelId?: number | null;
   monthlyBudget: number;
   thresholdPercent: number;
 }
@@ -174,11 +176,89 @@ export interface UpdateAiRateLimitRequest {
   reason: string;
 }
 
+export interface AiBudgetSettingRaw {
+  aiOpsSettingId: number;
+  selectedModelId: number | null;
+  monthlyBudget: number | string;
+  alertEnabled: boolean;
+  alertChannel: string;
+  alertThreshold: number;
+  rateLimitEnabled: boolean;
+  updatedAt: string;
+}
+
+export interface UpdateAiBudgetRequestRaw {
+  selectedModelId: number;
+  monthlyBudget: number;
+  alertThreshold: number;
+}
+
+export interface UpdateAiDiscordAlertRequestRaw {
+  alertEnabled: boolean;
+}
+
+export interface UpdateAiRateLimitRequestRaw {
+  rateLimitEnabled: boolean;
+}
+
 export function getAiDisplayModelName(model: AiModelNameFields): string {
   return model.displayModelName || model.actualModelName || '모델 정보 없음';
 }
 
 const AI_METRICS_API_BASE_PATH = '/api/v1/admin/ai-metrics';
+
+const toNumber = (value: number | string): number => {
+  if (typeof value === 'number') return value;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const mapApiResponse = <TRaw, TMapped>(
+  response: ApiResponse<TRaw>,
+  mapper: (data: TRaw) => TMapped
+): ApiResponse<TMapped> => {
+  if (!response.success) return response;
+  return {
+    ...response,
+    data: mapper(response.data),
+  };
+};
+
+export const mapAiBudgetSetting = (raw: AiBudgetSettingRaw): AiBudgetSetting => ({
+  selectedModelId: raw.selectedModelId,
+  monthlyBudget: toNumber(raw.monthlyBudget),
+  currentSpend: null,
+  forecastSpend: null,
+  thresholdPercent: raw.alertThreshold,
+  discordAlertEnabled: raw.alertEnabled,
+  rateLimitEnabled: raw.rateLimitEnabled,
+});
+
+export const toUpdateAiBudgetRequestRaw = (
+  data: UpdateAiBudgetRequest,
+  currentBudget: AiBudgetSetting | null
+): UpdateAiBudgetRequestRaw => {
+  const selectedModelId = data.selectedModelId ?? currentBudget?.selectedModelId;
+  if (selectedModelId == null) {
+    throw new Error('AI 운영 모델 정보가 없어 예산 설정을 수정할 수 없습니다.');
+  }
+
+  return {
+    selectedModelId,
+    monthlyBudget: data.monthlyBudget,
+    alertThreshold: data.thresholdPercent,
+  };
+};
+
+export const toUpdateAiDiscordAlertRequestRaw = (data: UpdateAiDiscordAlertRequest): UpdateAiDiscordAlertRequestRaw => ({
+  alertEnabled: data.enabled,
+});
+
+export const toUpdateAiRateLimitRequestRaw = (data: UpdateAiRateLimitRequest): UpdateAiRateLimitRequestRaw => ({
+  rateLimitEnabled: data.enabled,
+});
+
+let cachedBudgetSetting: AiBudgetSetting | null = null;
 
 export const aiMetricsApi = {
   getSummary: (params?: AiDateRangeParams) =>
@@ -197,16 +277,61 @@ export const aiMetricsApi = {
     axiosInstance.get<ApiResponse<PageResult<AiMetricLog>>>(`${AI_METRICS_API_BASE_PATH}/logs`, { params }),
 
   getBudget: () =>
-    axiosInstance.get<ApiResponse<AiBudgetSetting>>(`${AI_METRICS_API_BASE_PATH}/budget`),
+    axiosInstance
+      .get<ApiResponse<AiBudgetSettingRaw>>(`${AI_METRICS_API_BASE_PATH}/budget`)
+      .then((response) => {
+        const mappedData = mapApiResponse(response.data, mapAiBudgetSetting);
+        if (mappedData.success) cachedBudgetSetting = mappedData.data;
+        return {
+          ...response,
+          data: mappedData,
+        };
+      }),
 
   updateBudget: (data: UpdateAiBudgetRequest) =>
-    axiosInstance.patch<ApiResponse<AiBudgetSetting>>(`${AI_METRICS_API_BASE_PATH}/budget`, data),
+    axiosInstance
+      .patch<ApiResponse<AiBudgetSettingRaw>>(
+        `${AI_METRICS_API_BASE_PATH}/budget`,
+        toUpdateAiBudgetRequestRaw(data, cachedBudgetSetting)
+      )
+      .then((response) => {
+        const mappedData = mapApiResponse(response.data, mapAiBudgetSetting);
+        if (mappedData.success) cachedBudgetSetting = mappedData.data;
+        return {
+          ...response,
+          data: mappedData,
+        };
+      }),
 
   updateDiscordAlert: (data: UpdateAiDiscordAlertRequest) =>
-    axiosInstance.patch<ApiResponse<AiBudgetSetting>>(`${AI_METRICS_API_BASE_PATH}/alerts/discord`, data),
+    axiosInstance
+      .patch<ApiResponse<AiBudgetSettingRaw>>(
+        `${AI_METRICS_API_BASE_PATH}/alerts/discord`,
+        toUpdateAiDiscordAlertRequestRaw(data)
+      )
+      .then((response) => {
+        const mappedData = mapApiResponse(response.data, mapAiBudgetSetting);
+        if (mappedData.success) cachedBudgetSetting = mappedData.data;
+        return {
+          ...response,
+          data: mappedData,
+        };
+      }),
 
   updateRateLimit: (data: UpdateAiRateLimitRequest) =>
-    axiosInstance.patch<ApiResponse<AiBudgetSetting>>(`${AI_METRICS_API_BASE_PATH}/controls/rate-limit`, data),
+    axiosInstance
+      .patch<ApiResponse<AiBudgetSettingRaw>>(
+        `${AI_METRICS_API_BASE_PATH}/controls/rate-limit`,
+        toUpdateAiRateLimitRequestRaw(data)
+      )
+      .then((response) => {
+        const mappedData = mapApiResponse(response.data, mapAiBudgetSetting);
+        if (mappedData.success) cachedBudgetSetting = mappedData.data;
+        return {
+          ...response,
+          data: mappedData,
+        };
+      }),
 
   getRagDocuments: () =>
     axiosInstance.get<ApiResponse<RagDocumentMetric[]>>(`${AI_METRICS_API_BASE_PATH}/rag-documents`),
