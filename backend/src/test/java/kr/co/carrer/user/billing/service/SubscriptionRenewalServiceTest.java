@@ -10,11 +10,12 @@ import kr.co.carrer.user.billing.entity.UserPayment;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.BillingProfileRepository;
 import kr.co.carrer.user.billing.repository.PlanRepository;
-import kr.co.carrer.user.billing.repository.UserPaymentRepository;
 import kr.co.carrer.user.billing.service.impl.RenewalFailureTxService;
+import kr.co.carrer.user.billing.service.impl.RenewalPaymentCreateTxService;
 import kr.co.carrer.user.billing.service.impl.RenewalSettleTxService;
 import kr.co.carrer.user.billing.service.impl.SubscriptionRenewalServiceImpl;
 import kr.co.carrer.user.billing.type.BillingProfileStatus;
+import kr.co.carrer.user.billing.type.UserPaymentStatus;
 import kr.co.carrer.user.billing.util.AesCipher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -36,12 +37,12 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class SubscriptionRenewalServiceTest {
 
-    @Mock UserPaymentRepository userPaymentRepository;
     @Mock BillingProfileRepository billingProfileRepository;
     @Mock PlanRepository planRepository;
     @Mock TossBillingPaymentClient tossBillingPaymentClient;
     @Mock AesCipher aesCipher;
     @Mock BillingMemberPort billingMemberPort;
+    @Mock RenewalPaymentCreateTxService renewalPaymentCreateTxService;
     @Mock RenewalSettleTxService renewalSettleTxService;
     @Mock RenewalFailureTxService renewalFailureTxService;
 
@@ -54,8 +55,9 @@ class SubscriptionRenewalServiceTest {
     @BeforeEach
     void setUp() {
         service = new SubscriptionRenewalServiceImpl(
-                userPaymentRepository, billingProfileRepository, planRepository,
+                billingProfileRepository, planRepository,
                 tossBillingPaymentClient, aesCipher, billingMemberPort,
+                renewalPaymentCreateTxService,
                 renewalSettleTxService, renewalFailureTxService);
     }
 
@@ -182,6 +184,30 @@ class SubscriptionRenewalServiceTest {
                         .isEqualTo(BillingErrorCode.PAYMENT_METHOD_REQUIRED));
     }
 
+    @Test
+    @DisplayName("기존 PAID payment 반환 — Toss 중복 호출 없이 즉시 skip")
+    void processRenewal_existingPaidPayment_tossSkipped() {
+        Subscription sub = activeSubscription();
+        Plan plan = plan(1L, "document-coaching", 29000);
+        BillingProfile bp = billingProfile(memberId, billingProfileId);
+        UserPayment paidPayment = autoRenewalPayment(memberId, 0);
+        setField(paidPayment, "paymentStatus", UserPaymentStatus.PAID);
+
+        given(planRepository.findById(1L)).willReturn(Optional.of(plan));
+        given(billingProfileRepository.findFirstByMemberIdAndBillingProfileStatusOrderByCreatedAtDesc(
+                memberId, BillingProfileStatus.ACTIVE)).willReturn(Optional.of(bp));
+        given(billingMemberPort.getMemberBillingInfo(memberId))
+                .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
+        given(renewalPaymentCreateTxService.createIfAbsent(any(), any(), any(), any(), any(), anyInt(), any()))
+                .willReturn(paidPayment);
+
+        service.processRenewal(sub, 0);
+
+        verify(tossBillingPaymentClient, never()).pay(any(), any(), any(), any(), any(), any(), anyInt());
+        verify(renewalSettleTxService, never()).settle(any(), any(), any(), any());
+        verify(renewalFailureTxService, never()).fail(any(), any(), any(), anyInt());
+    }
+
     // ── helpers ─────────────────────────────────────────────────────────────
 
     private void stubDependencies(Subscription sub, Plan plan, BillingProfile bp, UserPayment payment) {
@@ -191,8 +217,8 @@ class SubscriptionRenewalServiceTest {
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
         given(aesCipher.decrypt(any())).willReturn("plain-billing-key");
-        given(userPaymentRepository.findByIdempotencyKey(any())).willReturn(Optional.empty());
-        given(userPaymentRepository.save(any())).willReturn(payment);
+        given(renewalPaymentCreateTxService.createIfAbsent(any(), any(), any(), any(), any(), anyInt(), any()))
+                .willReturn(payment);
     }
 
     private Subscription activeSubscription() {
