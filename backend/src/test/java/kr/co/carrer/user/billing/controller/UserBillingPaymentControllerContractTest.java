@@ -25,8 +25,10 @@ class UserBillingPaymentControllerContractTest {
     private final UserCheckoutOrderService checkoutService = mock(UserCheckoutOrderService.class);
     private final UserPaymentConfirmService confirmService = mock(UserPaymentConfirmService.class);
     private final UserOrderQueryService queryService = mock(UserOrderQueryService.class);
+    private final kr.co.carrer.user.billing.service.PaymentHistoryQueryService historyService =
+            mock(kr.co.carrer.user.billing.service.PaymentHistoryQueryService.class);
     private final UserBillingPaymentController controller =
-            new UserBillingPaymentController(checkoutService, confirmService, queryService);
+            new UserBillingPaymentController(checkoutService, confirmService, queryService, historyService);
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final UUID memberId = UUID.randomUUID();

@@ -22,6 +22,8 @@ import static org.mockito.Mockito.mock;
 class SubscriptionReadApiContractTest {
 
     private final SubscriptionQueryService queryService = mock(SubscriptionQueryService.class);
+    private final kr.co.carrer.user.billing.service.CancelSubscriptionService cancelService =
+            mock(kr.co.carrer.user.billing.service.CancelSubscriptionService.class);
 
     @Test
     @DisplayName("Product 기존 필드 계약")
@@ -52,7 +54,7 @@ class SubscriptionReadApiContractTest {
         UUID subscriptionId = UUID.randomUUID();
         ZonedDateTime now = ZonedDateTime.now();
         AuthPrincipal principal = new AuthPrincipal(memberId.toString(), AccountType.USER, "USER", null);
-        SubscriptionController controller = new SubscriptionController(queryService);
+        SubscriptionController controller = new SubscriptionController(queryService, cancelService);
         given(queryService.getMySubscriptions(memberId)).willReturn(
                 new BillingDTO.ResponseSubscriptionList(List.of(new BillingDTO.SubscriptionItem(
                         subscriptionId, "interview", "AI 모의면접", "ACTIVE",
@@ -79,7 +81,7 @@ class SubscriptionReadApiContractTest {
     void usageContract() throws Exception {
         UUID memberId = UUID.randomUUID();
         AuthPrincipal principal = new AuthPrincipal(memberId.toString(), AccountType.USER, "USER", null);
-        SubscriptionController controller = new SubscriptionController(queryService);
+        SubscriptionController controller = new SubscriptionController(queryService, cancelService);
         ZonedDateTime resetAt = ZonedDateTime.now().plusMonths(1);
         given(queryService.getMyUsages(memberId)).willReturn(
                 new BillingDTO.ResponseUsageList(List.of(new BillingDTO.UsageItem(
