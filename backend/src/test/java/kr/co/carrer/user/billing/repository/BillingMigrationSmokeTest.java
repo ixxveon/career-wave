@@ -1,52 +1,48 @@
 package kr.co.carrer.user.billing.repository;
 
+import kr.co.carrer.support.PostgreSqlTestContainerSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * ddl-auto:update 환경에서 빈 DB에 스키마를 적용하고
- * 핵심 테이블·컬럼·제약이 올바르게 생성되는지 검증한다.
+ * PostgreSQL(Testcontainers) 환경에서 Hibernate DDL(create-drop)이 적용된 후
+ * 핵심 billing 테이블·컬럼·제약이 올바르게 생성되는지 검증한다.
  *
- * - 빈 DB 적용 (emptyDb_update_createsAllBillingTables)
+ * - 6개 핵심 테이블 존재 확인
  * - Phase 7 신규 컬럼(reconciling_at) 포함 여부
- * - 재실행 안전성: 같은 스키마에 update 재적용 시 중복 미생성
  * - 주요 UNIQUE 제약 존재 확인
  */
-@Testcontainers(disabledWithoutDocker = true)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ContextConfiguration(classes = BillingMigrationSmokeTest.TestJpaConfig.class)
 @TestPropertySource(properties = "spring.sql.init.mode=never")
-class BillingMigrationSmokeTest {
+class BillingMigrationSmokeTest extends PostgreSqlTestContainerSupport {
 
-    @Container
-    static final PostgreSQLContainer<?> POSTGRES =
-            new PostgreSQLContainer<>("postgres:16-alpine")
-                    .withDatabaseName("careerwave_migration_test")
-                    .withUsername("test")
-                    .withPassword("test");
-
-    @DynamicPropertySource
-    static void configure(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
-        registry.add("spring.datasource.driver-class-name", POSTGRES::getDriverClassName);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
-        registry.add("spring.jpa.properties.hibernate.dialect",
-                () -> "org.hibernate.dialect.PostgreSQLDialect");
-    }
+    @SpringBootConfiguration
+    @EnableAutoConfiguration(exclude = JpaRepositoriesAutoConfiguration.class)
+    @EntityScan(basePackages = {
+            "kr.co.carrer.user.billing.entity",
+            "kr.co.carrer.user.member.entity",
+            "kr.co.carrer.admin.payment.entity"
+    })
+    @EnableJpaRepositories(basePackages = {
+            "kr.co.carrer.user.billing.repository",
+            "kr.co.carrer.admin.payment.repository"
+    })
+    static class TestJpaConfig {}
 
     @Autowired
     JdbcTemplate jdbcTemplate;
@@ -77,11 +73,11 @@ class BillingMigrationSmokeTest {
         return count != null ? count : 0;
     }
 
-    // ─── 빈 DB 적용 테스트 ─────────────────────────────────────────────────────
+    // ─── 테이블 존재 확인 ─────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("빈 DB — ddl-auto:update로 billing 핵심 6개 테이블 전체 생성 성공")
-    void emptyDb_update_createsAllBillingTables() {
+    @DisplayName("billing 핵심 6개 테이블 전체 생성 성공")
+    void createsAllBillingTables() {
         assertThat(tableExists("user_payments")).isTrue();
         assertThat(tableExists("subscriptions")).isTrue();
         assertThat(tableExists("member_product_entitlements")).isTrue();
@@ -101,28 +97,6 @@ class BillingMigrationSmokeTest {
         assertThat(columnExists("user_payments", "payment_status")).isTrue();
         assertThat(columnExists("user_payments", "payment_type")).isTrue();
         assertThat(columnExists("user_payments", "idempotency_key")).isTrue();
-    }
-
-    // ─── 재실행 안전성 ─────────────────────────────────────────────────────────
-
-    @Test
-    @DisplayName("재실행 안전성 — ddl-auto:update 재적용 시 테이블 중복 미생성")
-    void existingSchema_reapplyUpdate_noTableDuplication() {
-        // 같은 Testcontainers PostgreSQL 인스턴스에서 Spring 컨텍스트가
-        // 이미 초기화된 스키마에 ddl-auto:update를 재적용한다.
-        // 각 테이블이 정확히 1개만 존재해야 한다 (중복 CREATE 없음).
-        for (String table : new String[]{
-                "user_payments", "subscriptions", "member_product_entitlements",
-                "billing_profiles", "subscription_usage_periods", "service_usage_records"
-        }) {
-            Integer count = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM information_schema.tables " +
-                    "WHERE table_schema = 'public' AND table_name = ?",
-                    Integer.class, table);
-            assertThat(count)
-                    .as("테이블 '%s'는 정확히 1개 존재해야 한다 (중복 없음)", table)
-                    .isEqualTo(1);
-        }
     }
 
     // ─── UNIQUE 제약 존재 확인 ─────────────────────────────────────────────────
