@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     # Spring 연동
     spring_base_url: str = "http://localhost:8080"
     webhook_secret: str = ""
+    ai_metrics_internal_base_url: str = "http://localhost:8000/internal/admin/ai-metrics"
+    ai_usage_log_timeout_seconds: float = 2.0
 
     # JWT (Spring 공유 시크릿 — FastAPI WebSocket 토큰 검증용)
     jwt_secret: str = ""
