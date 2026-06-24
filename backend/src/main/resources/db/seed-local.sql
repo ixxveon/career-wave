@@ -208,12 +208,14 @@ BEGIN
   INSERT INTO payments (payment_id, member_id, subscription_id, plan_id,
     order_id, payment_key, idempotency_key,
     payment_type, attempt_sequence, amount, currency, payment_status,
-    payment_method, approved_at, created_at, updated_at)
+    payment_method, customer_name, customer_email, customer_key, product_code,
+    approved_at, created_at, updated_at)
   VALUES (v_pay_id, v_member_id, v_sub_id, v_plan_id,
     'DEMO-ORDER-001',
     'DEMO-TOSS-KEY-001',
     'DEMO-IDEM-001',
     'MANUAL', 0, 29000, 'KRW', 'PAID', 'CARD',
+    '테스트유저(전체구독)', 'testuser04@example.com', gen_random_uuid()::text, 'interview',
     NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days', NOW());
 
   INSERT INTO refunds (payment_id, amount, reason, refund_status, created_at)

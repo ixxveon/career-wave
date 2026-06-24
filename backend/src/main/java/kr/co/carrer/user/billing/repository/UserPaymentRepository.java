@@ -28,4 +28,6 @@ public interface UserPaymentRepository extends JpaRepository<UserPayment, UUID> 
 
     boolean existsByMemberIdAndPlanIdAndPaymentStatus(UUID memberId, Long planId,
                                                        UserPaymentStatus paymentStatus);
+
+    Optional<UserPayment> findByIdempotencyKey(String idempotencyKey);
 }

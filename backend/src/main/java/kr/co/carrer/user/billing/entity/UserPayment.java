@@ -18,9 +18,14 @@ import java.util.UUID;
 // 컬럼명·enum 값은 admin 엔티티와 1:1 정렬 — constitution §8.1 §8.2 준수
 // admin 패키지를 직접 import 하지 않음
 @Entity
-@Table(name = "payments", indexes = {
+@Table(name = "payments",
+    indexes = {
         @Index(name = "idx_payments_status_expires", columnList = "payment_status, expires_at")
-})
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uq_payments_idempotency_key", columnNames = "idempotency_key")
+    }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserPayment {
@@ -111,6 +116,28 @@ public class UserPayment {
     }
 
     // ── 팩토리 ──────────────────────────────────────────────────────────────
+
+    // AUTO_RENEWAL: READY/AUTHORIZED 단계 없이 CONFIRMING에서 시작 — billingKey 이미 보유
+    public static UserPayment createAutoRenewal(UUID memberId, Long planId, String productCode,
+                                                String orderId, String idempotencyKey,
+                                                String customerKey, String customerName, String customerEmail,
+                                                int amount, int attemptSequence) {
+        UserPayment p = new UserPayment();
+        p.memberId = memberId;
+        p.planId = planId;
+        p.productCode = productCode;
+        p.orderId = orderId;
+        p.idempotencyKey = idempotencyKey;
+        p.customerKey = customerKey;
+        p.customerName = customerName;
+        p.customerEmail = customerEmail;
+        p.amount = amount;
+        p.currency = "KRW";
+        p.paymentStatus = UserPaymentStatus.CONFIRMING;
+        p.paymentType = UserPaymentType.AUTO_RENEWAL;
+        p.attemptSequence = attemptSequence;
+        return p;
+    }
 
     public static UserPayment createReady(UUID memberId, Long planId, String productCode,
                                           String orderId, String idempotencyKey,
