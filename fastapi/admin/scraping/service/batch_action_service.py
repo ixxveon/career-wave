@@ -135,11 +135,19 @@ class BatchActionService:
                 PipelineBatchActionItemResponse(
                     sourceName=result.source_name,
                     accepted=result.accepted,
-                    pipelineStatus=result.pipeline_status,
+                    message=self._build_result_message(action_type, result),
                 )
                 for result in aggregation.results
             ],
             requestedAt=datetime.now(timezone.utc),
+        )
+
+    @staticmethod
+    def _build_result_message(action_type: ScrapingActionType, result: BatchActionResultItem) -> str:
+        outcome = "accepted" if result.accepted else "rejected"
+        return (
+            f"{action_type.value} action {outcome}. "
+            f"pipelineStatus={result.pipeline_status}"
         )
 
     @staticmethod

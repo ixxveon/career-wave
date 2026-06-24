@@ -5,6 +5,7 @@ import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.billing.docs.UserBillingPaymentControllerDocs;
 import kr.co.carrer.user.billing.dto.BillingDTO;
+import kr.co.carrer.user.billing.service.PaymentHistoryQueryService;
 import kr.co.carrer.user.billing.service.UserCheckoutOrderService;
 import kr.co.carrer.user.billing.service.UserOrderQueryService;
 import kr.co.carrer.user.billing.service.UserPaymentConfirmService;
@@ -25,6 +26,7 @@ public class UserBillingPaymentController implements UserBillingPaymentControlle
     private final UserCheckoutOrderService checkoutOrderService;
     private final UserPaymentConfirmService paymentConfirmService;
     private final UserOrderQueryService orderQueryService;
+    private final PaymentHistoryQueryService paymentHistoryQueryService;
 
     @Override
     @PostMapping("/checkout/orders")
@@ -75,6 +77,21 @@ public class UserBillingPaymentController implements UserBillingPaymentControlle
         return ResponseEntity.ok(ApiResponse.ok(
                 "주문 상태를 조회했습니다.",
                 orderQueryService.getOrderStatus(memberId, orderId)
+        ));
+    }
+
+    @Override
+    @GetMapping("/payments/history")
+    public ResponseEntity<ApiResponse<BillingDTO.ResponsePaymentHistory>> getPaymentHistory(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @RequestParam(defaultValue = "1M") String period,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        UUID memberId = UUID.fromString(principal.getId());
+        return ResponseEntity.ok(ApiResponse.ok(
+                "결제 내역을 조회했습니다.",
+                paymentHistoryQueryService.getPaymentHistory(memberId, period, page, size)
         ));
     }
 }

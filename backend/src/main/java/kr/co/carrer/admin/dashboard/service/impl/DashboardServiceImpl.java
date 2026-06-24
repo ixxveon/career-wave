@@ -14,7 +14,6 @@ import kr.co.carrer.admin.dashboard.type.DashboardSystemStatusType;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,14 +24,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-@Service
+@Service("adminDashboardServiceImpl")
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
     private static final int ALERT_LIMIT = 5;
     private static final int RECENT_ACTIVITY_LIMIT = 5;
 
-    private final ObjectProvider<DashboardSummaryQueryRepository> dashboardSummaryQueryRepositoryProvider;
+    private final DashboardSummaryQueryRepository dashboardSummaryQueryRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -40,20 +39,18 @@ public class DashboardServiceImpl implements DashboardService {
         DashboardRangeType range = resolveRange(request);
         ZonedDateTime baseDateTime = ZonedDateTime.now(ZoneOffset.UTC);
         DashboardQueryWindow queryWindow = DashboardQueryWindow.of(range, baseDateTime);
-        DashboardSummaryQueryRepository queryRepository = getQueryRepository();
-
         DashboardSummaryQueryRepository.AdminAccountMetrics adminMetrics =
-                queryRepository.fetchAdminAccountMetrics(queryWindow);
+                dashboardSummaryQueryRepository.fetchAdminAccountMetrics(queryWindow);
         DashboardSummaryQueryRepository.AiUsageMetrics aiUsageMetrics =
-                queryRepository.fetchAiUsageMetrics(queryWindow);
+                dashboardSummaryQueryRepository.fetchAiUsageMetrics(queryWindow);
         DashboardSummaryQueryRepository.RagDocumentMetrics ragDocumentMetrics =
-                queryRepository.fetchRagDocumentMetrics(queryWindow);
+                dashboardSummaryQueryRepository.fetchRagDocumentMetrics(queryWindow);
         DashboardSummaryQueryRepository.ScrapingStatusMetrics scrapingStatusMetrics =
-                queryRepository.fetchScrapingStatusMetrics(queryWindow);
+                dashboardSummaryQueryRepository.fetchScrapingStatusMetrics(queryWindow);
 
         List<DashboardDTO.Alert> alerts = buildAlerts(
-                queryRepository.findAuditAlerts(queryWindow, ALERT_LIMIT),
-                queryRepository.findScrapingAlerts(queryWindow, ALERT_LIMIT)
+                dashboardSummaryQueryRepository.findAuditAlerts(queryWindow, ALERT_LIMIT),
+                dashboardSummaryQueryRepository.findScrapingAlerts(queryWindow, ALERT_LIMIT)
         );
 
         return new DashboardDTO.ResponseSummary(
@@ -65,7 +62,7 @@ public class DashboardServiceImpl implements DashboardService {
                 validatePaymentRatio(buildPaymentRatio()),
                 buildServiceCards(adminMetrics, aiUsageMetrics, scrapingStatusMetrics, alerts.size()),
                 buildSystemStatus(aiUsageMetrics, ragDocumentMetrics, scrapingStatusMetrics),
-                buildRecentActivities(queryRepository.findRecentActivities(queryWindow, RECENT_ACTIVITY_LIMIT))
+                buildRecentActivities(dashboardSummaryQueryRepository.findRecentActivities(queryWindow, RECENT_ACTIVITY_LIMIT))
         );
     }
 
@@ -75,15 +72,6 @@ public class DashboardServiceImpl implements DashboardService {
         }
 
         return request.range();
-    }
-
-    private DashboardSummaryQueryRepository getQueryRepository() {
-        DashboardSummaryQueryRepository queryRepository = dashboardSummaryQueryRepositoryProvider.getIfAvailable();
-        if (queryRepository == null) {
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "Dashboard query repository is not available.");
-        }
-
-        return queryRepository;
     }
 
     private List<DashboardDTO.Kpi> buildKpis(
@@ -298,7 +286,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .sum();
 
         if (totalRatio != 100) {
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "Dashboard payment ratio total must be 100.");
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
         return paymentRatio;

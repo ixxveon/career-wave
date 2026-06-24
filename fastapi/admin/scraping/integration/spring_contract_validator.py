@@ -42,7 +42,7 @@ class SpringContractValidator:
         "errorMessage",
         "executedAt",
     }
-    PIPELINE_ACTION_FIELDS = {"sourceName", "accepted", "pipelineStatus", "requestedAt"}
+    PIPELINE_ACTION_FIELDS = {"sourceName", "accepted", "runId", "requestedAt"}
     PIPELINE_BATCH_ACTION_FIELDS = {
         "actionType",
         "requestedCount",
@@ -50,7 +50,7 @@ class SpringContractValidator:
         "results",
         "requestedAt",
     }
-    PIPELINE_BATCH_ACTION_ITEM_FIELDS = {"sourceName", "accepted", "pipelineStatus"}
+    PIPELINE_BATCH_ACTION_ITEM_FIELDS = {"sourceName", "accepted", "message"}
 
     ERROR_CODE_MAPPING = {
         ScrapingErrorCode.SCRAPING_PIPELINE_NOT_FOUND.value: "SCRAPING_PIPELINE_NOT_FOUND",

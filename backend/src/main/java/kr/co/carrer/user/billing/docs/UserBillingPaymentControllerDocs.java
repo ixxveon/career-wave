@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "User Billing Payment", description = "결제 주문·확인·조회 API")
 public interface UserBillingPaymentControllerDocs {
@@ -57,5 +58,16 @@ public interface UserBillingPaymentControllerDocs {
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<BillingDTO.ResponsePaymentStatus>> getOrderStatus(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable String orderId
+    );
+
+    @Operation(summary = "결제 내역 조회", description = "기간별 결제 내역을 최신순으로 조회합니다. period: 1M/3M/6M/12M, page: 0-based")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    ResponseEntity<kr.co.carrer.global.response.ApiResponse<BillingDTO.ResponsePaymentHistory>> getPaymentHistory(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @RequestParam(defaultValue = "1M") String period,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     );
 }

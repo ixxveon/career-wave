@@ -305,92 +305,92 @@
 
 ## Phase 5 — 월 자동결제 및 실패 재시도 전체 흐름 완성
 
-- [ ] 자동결제 대상 조회 쿼리
-- [ ] 구독 단위 중복 실행 방지 락
-- [ ] ACTIVE + autoRenew=true + nextBillingAt 도달 조건
-- [ ] AUTO_RENEWAL Payment 생성 (attemptSequence=0)
-- [ ] 정상 자동결제 성공 처리
-- [ ] 성공 시각 기준 새 UsagePeriod 생성
-- [ ] 최초 실패 즉시 PAYMENT_FAILED 전이
-- [ ] 최초 실패 즉시 서비스 권한 차단
-- [ ] paymentFailedAt 기록
-- [ ] 1일째 첫 번째 AUTO_RENEWAL Payment 실행 (attemptSequence=1)
-- [ ] 첫 실패 후 3일째 두 번째 AUTO_RENEWAL Payment 실행 (attemptSequence=2)
-- [ ] 재시도 성공 시 ACTIVE 복구
-- [ ] 재시도 성공 시 성공 시각 기준 새 기간 생성
-- [ ] 두 번째 실패 시 EXPIRED 전이
-- [ ] 두 번째 실패 시 autoRenew=false, nextBillingAt=null
-- [ ] 스케줄러 timezone Asia/Seoul 고정
+- [x] 자동결제 대상 조회 쿼리
+- [x] 구독 단위 중복 실행 방지 락
+- [x] ACTIVE + autoRenew=true + nextBillingAt 도달 조건
+- [x] AUTO_RENEWAL Payment 생성 (attemptSequence=0)
+- [x] 정상 자동결제 성공 처리
+- [x] 성공 시각 기준 새 UsagePeriod 생성
+- [x] 최초 실패 즉시 PAYMENT_FAILED 전이
+- [x] 최초 실패 즉시 서비스 권한 차단
+- [x] paymentFailedAt 기록
+- [x] 1일째 첫 번째 AUTO_RENEWAL Payment 실행 (attemptSequence=1)
+- [x] 첫 실패 후 3일째 두 번째 AUTO_RENEWAL Payment 실행 (attemptSequence=2)
+- [x] 재시도 성공 시 ACTIVE 복구
+- [x] 재시도 성공 시 성공 시각 기준 새 기간 생성
+- [x] 두 번째 실패 시 EXPIRED 전이
+- [x] 두 번째 실패 시 autoRenew=false, nextBillingAt=null
+- [x] 스케줄러 timezone Asia/Seoul 고정
 
 ### Phase 5 테스트
 
-- [ ] `SubscriptionRenewalServiceTest`
-  - [ ] 정상 자동결제 후 새 월 사용량 발급
-  - [ ] 이전 잔여량 미이월
-  - [ ] 최초 실패 즉시 PAYMENT_FAILED·서비스 차단
-  - [ ] 첫 재시도 성공
-  - [ ] 첫 실패·두 번째 성공
-  - [ ] 최종 실패 EXPIRED
-- [ ] `RenewalRetryScheduleTest` (`Clock` 주입)
-  - [ ] 실패 당일 재시도 없음
-  - [ ] +1일 직전 없음 / 정확히 +1일 실행
-  - [ ] +3일 직전 없음 / 정확히 +3일 실행
-  - [ ] Asia/Seoul 기준
-  - [ ] 월말·윤년 경계
-- [ ] `RenewalSchedulerConcurrencyTest`
-  - [ ] scheduler 2개 동시 실행
-  - [ ] 동일 subscription 1회 결제
-  - [ ] 동일 idempotencyKey 재실행 안전
-- [ ] `RenewalEntitlementIntegrationTest`
-  - [ ] 실패 즉시 Resume/Interview 차단
-  - [ ] 재시도 성공 즉시 서비스 복구
-  - [ ] 최종 실패 후 계속 차단
-- [ ] 최종 실패 이후 추가 자동결제가 실행되지 않는다.
+- [x] `SubscriptionRenewalServiceTest`
+  - [x] 정상 자동결제 후 새 월 사용량 발급
+  - [x] 이전 잔여량 미이월
+  - [x] 최초 실패 즉시 PAYMENT_FAILED·서비스 차단
+  - [x] 첫 재시도 성공
+  - [x] 첫 실패·두 번째 성공
+  - [x] 최종 실패 EXPIRED
+- [x] `RenewalRetryScheduleTest` (`Clock` 주입)
+  - [x] 실패 당일 재시도 없음
+  - [x] +1일 직전 없음 / 정확히 +1일 실행
+  - [x] +3일 직전 없음 / 정확히 +3일 실행
+  - [x] Asia/Seoul 기준
+  - [x] 월말·윤년 경계
+- [x] `RenewalSchedulerConcurrencyTest`
+  - [x] scheduler 2개 동시 실행
+  - [x] 동일 subscription 1회 결제
+  - [x] 동일 idempotencyKey 재실행 안전
+- [x] `RenewalEntitlementIntegrationTest`
+  - [x] 실패 즉시 Resume/Interview 차단
+  - [x] 재시도 성공 즉시 서비스 복구
+  - [x] 최종 실패 후 계속 차단
+- [x] 최종 실패 이후 추가 자동결제가 실행되지 않는다.
 
 ## Phase 6 — 구독 해지 및 결제 내역 전체 흐름 완성
 
-- [ ] `POST /api/v1/user/subscriptions/{subscriptionId}/cancel`
-- [ ] 본인 구독 소유권 검증
-- [ ] ACTIVE 상태에서만 해지 허용
-- [ ] CANCEL_SCHEDULED, autoRenew=false 전이
-- [ ] 현재 periodEnd까지 서비스 허용
-- [ ] periodEnd 도달 EXPIRED 스케줄러
-- [ ] 무료 이용권 재발급 금지
-- [ ] `GET /api/v1/user/billing/payments/history`
-- [ ] 1M, 3M, 6M, 12M 기간 필터
-- [ ] 0-based 페이지네이션
-- [ ] 결제 최신순 정렬
-- [ ] MANUAL, AUTO_RENEWAL 유형 반환 (재시도 구분은 attemptSequence로 표시)
-- [ ] 현재 `구독 해지` 버튼은 ACTIVE일 때만 표시될 수 있도록 응답 상태 정렬
-- [ ] 현재 해지 modal 문구와 일치하도록 `CANCEL_SCHEDULED`, `currentPeriodEnd`, `cancelScheduledAt` 반환
-- [ ] 현재 결제 내역 UI의 1M/3M/6M/12M 필터 지원
-- [ ] 현재 UI page=1 표시와 API page=0 변환 계약 유지
+- [x] `POST /api/v1/user/subscriptions/{subscriptionId}/cancel`
+- [x] 본인 구독 소유권 검증
+- [x] ACTIVE 상태에서만 해지 허용
+- [x] CANCEL_SCHEDULED, autoRenew=false 전이
+- [x] 현재 periodEnd까지 서비스 허용
+- [x] periodEnd 도달 EXPIRED 스케줄러
+- [x] 무료 이용권 재발급 금지
+- [x] `GET /api/v1/user/billing/payments/history`
+- [x] 1M, 3M, 6M, 12M 기간 필터
+- [x] 0-based 페이지네이션
+- [x] 결제 최신순 정렬
+- [x] MANUAL, AUTO_RENEWAL 유형 반환 (재시도 구분은 attemptSequence로 표시)
+- [x] 현재 `구독 해지` 버튼은 ACTIVE일 때만 표시될 수 있도록 응답 상태 정렬
+- [x] 현재 해지 modal 문구와 일치하도록 `CANCEL_SCHEDULED`, `currentPeriodEnd`, `cancelScheduledAt` 반환
+- [x] 현재 결제 내역 UI의 1M/3M/6M/12M 필터 지원
+- [x] 현재 UI page=1 표시와 API page=0 변환 계약 유지
 
 ### Phase 6 테스트
 
-- [ ] `CancelSubscriptionServiceTest`
-  - [ ] ACTIVE 해지 성공
-  - [ ] 상태별 해지 허용/거부 ParameterizedTest
-  - [ ] 중복 해지 요청
-  - [ ] 타인 subscriptionId 차단
-  - [ ] Refund 미생성
-- [ ] `SubscriptionExpirationSchedulerTest` (`Clock` 주입)
-  - [ ] periodEnd 직전 사용 가능
-  - [ ] periodEnd 정확히 도달 시 EXPIRED
-  - [ ] 무료 이용권 미재발급
-- [ ] `ProductIndependentCancellationTest`
-  - [ ] document 해지가 interview에 영향 없음
-  - [ ] interview 해지가 document에 영향 없음
-- [ ] `PaymentHistoryQueryTest`
-  - [ ] 1M/3M/6M/12M 경계 ParameterizedTest
-  - [ ] 최신순 정렬
-  - [ ] 빈 목록
-  - [ ] 첫·중간·마지막·범위 초과 페이지
-  - [ ] totalElements/totalPages
-- [ ] `PaymentHistoryControllerContractTest`
-  - [ ] 기존 PaymentHistory 필드
-  - [ ] 0-based API page
-  - [ ] MANUAL/AUTO_RENEWAL 확장 필드
+- [x] `CancelSubscriptionServiceTest`
+  - [x] ACTIVE 해지 성공
+  - [x] 상태별 해지 허용/거부 ParameterizedTest
+  - [x] 중복 해지 요청
+  - [x] 타인 subscriptionId 차단
+  - [x] Refund 미생성
+- [x] `SubscriptionExpirationSchedulerTest` (`Clock` 주입)
+  - [x] periodEnd 직전 사용 가능
+  - [x] periodEnd 정확히 도달 시 EXPIRED
+  - [x] 무료 이용권 미재발급
+- [x] `ProductIndependentCancellationTest`
+  - [x] document 해지가 interview에 영향 없음
+  - [x] interview 해지가 document에 영향 없음
+- [x] `PaymentHistoryQueryTest`
+  - [x] 1M/3M/6M/12M 경계 ParameterizedTest
+  - [x] 최신순 정렬
+  - [x] 빈 목록
+  - [x] 첫·중간·마지막·범위 초과 페이지
+  - [x] totalElements/totalPages
+- [x] `PaymentHistoryControllerContractTest`
+  - [x] 기존 PaymentHistory 필드
+  - [x] 0-based API page
+  - [x] MANUAL/AUTO_RENEWAL 확장 필드
 
 ## Phase 7 — 결제 상태 대사 및 운영 안전성 완성
 

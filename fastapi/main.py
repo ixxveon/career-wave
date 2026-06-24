@@ -72,9 +72,11 @@ app.include_router(interview_ws_handler.router)
 
 from admin.api import cs_ai_router  # noqa: E402
 from admin.api import report_ai_router  # noqa: E402
+from admin.scraping.router import scraping_router  # noqa: E402
 
 app.include_router(cs_ai_router.router, prefix="/api/v1/ai")
 app.include_router(report_ai_router.router, prefix="/api/v1/ai")
+app.include_router(scraping_router.router)
 
 # from admin.api import scraper_router
 # app.include_router(scraper_router.router, prefix="/internal/admin")

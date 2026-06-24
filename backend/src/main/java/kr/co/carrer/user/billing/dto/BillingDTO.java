@@ -125,4 +125,39 @@ public class BillingDTO {
             @Schema(allowableValues = {"FAILED"}) String paymentStatus,
             boolean retryable
     ) {}
+
+    // ── Phase 6: 구독 해지 ─────────────────────────────────────────────────────
+
+    public record ResponseCancelSubscription(
+            UUID subscriptionId,
+            String productCode,
+            @Schema(allowableValues = {"CANCEL_SCHEDULED"}) String status,
+            ZonedDateTime currentPeriodEnd,
+            ZonedDateTime cancelScheduledAt
+    ) {}
+
+    // ── Phase 6: 결제 내역 ─────────────────────────────────────────────────────
+
+    public record PaymentHistoryItem(
+            UUID paymentId,
+            String orderId,
+            String productCode,
+            String productName,
+            int amount,
+            String currency,
+            @Schema(allowableValues = {"PAID", "FAILED", "REFUNDED"}) String paymentStatus,
+            @Schema(allowableValues = {"MANUAL", "AUTO_RENEWAL"}) String paymentType,
+            int attemptSequence,
+            String failureReason,
+            ZonedDateTime paidAt,
+            ZonedDateTime createdAt
+    ) {}
+
+    public record ResponsePaymentHistory(
+            List<PaymentHistoryItem> content,
+            int page,
+            int size,
+            long totalElements,
+            int totalPages
+    ) {}
 }

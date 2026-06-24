@@ -85,13 +85,13 @@ type ScrapingActionType = 'RUN' | 'RETRY' | 'TEST';
 
 ```json
 {
-  "totalSources": 6,
-  "successCount": 5,
+  "totalCount": 4,
+  "idleCount": 1,
+  "runningCount": 1,
+  "successCount": 1,
   "failedCount": 1,
-  "totalCollectedCount": 4403,
-  "averageSuccessRate": 77.4,
-  "averageDurationMs": 2301,
-  "lastSyncedAt": "2026-06-01T09:00:00+09:00"
+  "enabledCount": 4,
+  "disabledCount": 0
 }
 ```
 
