@@ -360,6 +360,62 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 .containsExactly("Today Notice", "Seven Days Notice", "Thirty Days Notice");
     }
 
+    @Test
+    @DisplayName("returns active notice metadata for list stats and filter options")
+    void findActiveJobNoticeMetadata_returnsOnlyActiveNotices() {
+        ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
+        persistJobNotice(
+                "Meta Co",
+                "Today Backend Notice",
+                JobType.FULLTIME,
+                CompanySize.STARTUP,
+                CareerLevel.JUNIOR,
+                "Seoul",
+                JobNoticeStatus.ACTIVE,
+                10,
+                now.toLocalDate().plusDays(10),
+                now,
+                new String[]{"Java"},
+                new String[]{"BACKEND"}
+        );
+        persistJobNotice(
+                "Meta Co",
+                "Old Frontend Notice",
+                JobType.CONTRACT,
+                CompanySize.LARGE,
+                CareerLevel.SENIOR,
+                "Busan",
+                JobNoticeStatus.ACTIVE,
+                20,
+                now.toLocalDate().plusDays(20),
+                now.minusDays(2),
+                new String[]{"React"},
+                new String[]{"FRONTEND"}
+        );
+        persistJobNotice(
+                "Meta Co",
+                "Closed Data Notice",
+                JobType.INTERN,
+                CompanySize.SME,
+                CareerLevel.ANY,
+                "Daegu",
+                JobNoticeStatus.CLOSED,
+                30,
+                now.toLocalDate().plusDays(30),
+                now,
+                new String[]{"Python"},
+                new String[]{"DATA"}
+        );
+
+        flushAndClear();
+
+        assertThat(jobNoticeQueryRepository.countActiveJobNotices()).isEqualTo(2);
+        assertThat(jobNoticeQueryRepository.countTodayNewActiveJobNotices()).isEqualTo(1);
+        assertThat(jobNoticeQueryRepository.findActiveJobNoticesForFilterOptions())
+                .extracting(JobNotice::getTitle)
+                .containsExactlyInAnyOrder("Today Backend Notice", "Old Frontend Notice");
+    }
+
     private Page<JobNotice> findAllSortedBy(String sort) {
         return jobNoticeQueryRepository.findActiveJobNotices(
                 null, null, null, null, null, null, "all", sort, PageRequest.of(0, 20)

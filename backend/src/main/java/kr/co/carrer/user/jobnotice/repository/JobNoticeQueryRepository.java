@@ -116,6 +116,42 @@ public class JobNoticeQueryRepository {
         return Optional.ofNullable(result);
     }
 
+    public long countActiveJobNotices() {
+        Long count = queryFactory
+                .select(jobNotice.count())
+                .from(jobNotice)
+                .where(jobNotice.noticeStatus.eq(JobNoticeStatus.ACTIVE))
+                .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
+    public long countTodayNewActiveJobNotices() {
+        ZonedDateTime startOfToday = ZonedDateTime.now(SERVICE_ZONE_ID)
+                .toLocalDate()
+                .atStartOfDay(SERVICE_ZONE_ID);
+        ZonedDateTime startOfTomorrow = startOfToday.plusDays(1);
+
+        Long count = queryFactory
+                .select(jobNotice.count())
+                .from(jobNotice)
+                .where(
+                        jobNotice.noticeStatus.eq(JobNoticeStatus.ACTIVE),
+                        jobNotice.createdAt.goe(startOfToday),
+                        jobNotice.createdAt.lt(startOfTomorrow)
+                )
+                .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
+    public List<JobNotice> findActiveJobNoticesForFilterOptions() {
+        return queryFactory
+                .selectFrom(jobNotice)
+                .where(jobNotice.noticeStatus.eq(JobNoticeStatus.ACTIVE))
+                .fetch();
+    }
+
     private BooleanBuilder buildActiveJobNoticePredicate(
             String keyword,
             JobType jobType,

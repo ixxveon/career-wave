@@ -23,8 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -79,7 +81,9 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 result.getNumber() + 1,
                 result.getSize(),
                 result.getTotalElements(),
-                result.getTotalPages()
+                result.getTotalPages(),
+                createListStats(),
+                createFilterOptions()
         );
     }
 
@@ -175,6 +179,61 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
         return bookmarkRepository.findByMemberIdAndJobNoticeIdIn(memberId, jobNoticeIds).stream()
                 .map(Bookmark::getJobNoticeId)
                 .collect(HashSet::new, HashSet::add, HashSet::addAll);
+    }
+
+    private JobNoticeDTO.ResponseListStats createListStats() {
+        long totalOpenCount = jobNoticeQueryRepository.countActiveJobNotices();
+        long todayNewCount = jobNoticeQueryRepository.countTodayNewActiveJobNotices();
+        double todayNewRate = totalOpenCount == 0
+                ? 0
+                : Math.round((todayNewCount * 10000.0) / totalOpenCount) / 100.0;
+
+        return new JobNoticeDTO.ResponseListStats(
+                totalOpenCount,
+                todayNewCount,
+                todayNewCount,
+                todayNewRate
+        );
+    }
+
+    private JobNoticeDTO.ResponseFilterOptions createFilterOptions() {
+        List<JobNotice> activeJobNotices = jobNoticeQueryRepository.findActiveJobNoticesForFilterOptions();
+
+        return new JobNoticeDTO.ResponseFilterOptions(
+                enumNames(JobType.values()),
+                collectJobCategories(activeJobNotices),
+                enumNames(CareerLevel.values()),
+                collectLocations(activeJobNotices),
+                enumNames(CompanySize.values())
+        );
+    }
+
+    private <T extends Enum<T>> List<String> enumNames(T[] values) {
+        return Arrays.stream(values)
+                .map(Enum::name)
+                .toList();
+    }
+
+    private List<String> collectJobCategories(List<JobNotice> jobNotices) {
+        return jobNotices.stream()
+                .map(JobNotice::getJobCategory)
+                .filter(Objects::nonNull)
+                .flatMap(Arrays::stream)
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::trim)
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    private List<String> collectLocations(List<JobNotice> jobNotices) {
+        return jobNotices.stream()
+                .map(JobNotice::getLocation)
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::trim)
+                .distinct()
+                .sorted(Comparator.naturalOrder())
+                .toList();
     }
 
     private boolean isBookmarked(UUID memberId, Long jobNoticeId) {

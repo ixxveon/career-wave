@@ -78,7 +78,26 @@ public class JobNoticeDTO {
             long totalElements,
 
             @Schema(description = "전체 페이지 수")
-            int totalPages
+            int totalPages,
+
+            ResponseListStats stats,
+
+            ResponseFilterOptions filterOptions
+    ) {}
+
+    public record ResponseListStats(
+            long totalOpenCount,
+            long todayNewCount,
+            long todayNewDelta,
+            double todayNewRate
+    ) {}
+
+    public record ResponseFilterOptions(
+            List<String> jobType,
+            List<String> jobCategory,
+            List<String> careerLevel,
+            List<String> location,
+            List<String> companySize
     ) {}
 
     @Schema(description = "채용 공고 상세 응답")
