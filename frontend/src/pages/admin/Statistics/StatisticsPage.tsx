@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { TrendingUp, DollarSign, Users, UserPlus, CreditCard, RefreshCw, Minus } from 'lucide-react';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Statistics.css';
@@ -23,20 +24,24 @@ const LINE_CHART_H_SVG = LINE_VBH - LINE_PAD * 2; // 164
 
 // 매출 Y축 레이블 — 컴포넌트 내에서 axisMax 기준으로 동적 계산
 
-// 구독자 Y축 레이블 (5항목, 동일 padding → 동일 CSS 재사용)
-const SUB_MAX_VAL  = 400;
-const subYLabels   = ['400명', '300명', '200명', '100명', '0'];
-const subGridSvgY  = [400, 300, 200, 100, 0].map(
-  v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / SUB_MAX_VAL))
-); // [28, 69, 110, 151, 192]
+// 구독자 Y축 — 데이터 기반 동적 계산 (컴포넌트 내부에서 처리)
 
-// M 단위 축약 포맷
+// 금액 포맷 (구간별 단위 자동 전환)
+// 10만 미만: ₩29,000 / 10만~1억: ₩29만 / 1억 이상: ₩1.2억
 function toM(n: number): string {
   const sign = n < 0 ? '-' : '';
-  const m    = Math.abs(n) / 1_000_000;
-  const val  = Math.round(m * 10) / 10;
-  const str  = val % 1 === 0 ? String(val) : val.toFixed(1);
-  return `${sign}₩${str}M`;
+  const abs  = Math.abs(n);
+  if (abs < 100_000) {
+    return `${sign}₩${abs.toLocaleString()}`;
+  }
+  if (abs < 100_000_000) {
+    const man = Math.round(abs / 10_000 * 10) / 10;
+    const str = man % 1 === 0 ? String(man) : man.toFixed(1);
+    return `${sign}₩${str}만`;
+  }
+  const uk  = Math.round(abs / 100_000_000 * 10) / 10;
+  const str = uk % 1 === 0 ? String(uk) : uk.toFixed(1);
+  return `${sign}₩${str}억`;
 }
 
 // SVG 꺾은선 path 생성 (maxVal 파라미터로 매출/구독자 공용 사용)
@@ -62,6 +67,7 @@ const TOOLTIP_W = 104;
 
 
 export default function StatisticsPage() {
+  const navigate = useNavigate();
   const {
     data: summary,
     isLoading: summaryLoading,
@@ -192,13 +198,32 @@ export default function StatisticsPage() {
   const peakIdx  = pts.reduce((max, p, i) => (p[1] < pts[max][1] ? i : max), 0);
   const tooltipX = Math.min(pts[peakIdx][0] - TOOLTIP_W / 2, LINE_VBW - TOOLTIP_W - 6);
 
+  const subMaxRaw  = Math.max(
+    ...monthlySubscribers.map(m => m.newSubs),
+    ...monthlySubscribers.map(m => m.churned),
+    1
+  );
+  // 깔끔한 눈금을 위해 최댓값을 올림 처리 (최소 5)
+  const subAxisMax = Math.max(Math.ceil(subMaxRaw / 5) * 5, 5);
+  const subGridValues = [
+    subAxisMax,
+    Math.round(subAxisMax * 0.75),
+    Math.round(subAxisMax * 0.5),
+    Math.round(subAxisMax * 0.25),
+    0,
+  ];
+  const subYLabels  = subGridValues.map(v => (v === 0 ? '0' : `${v}명`));
+  const subGridSvgY = subGridValues.map(
+    v => Math.round(LINE_PAD + LINE_CHART_H_SVG * (1 - v / subAxisMax))
+  );
+
   const subNewPath   = buildSvgPath(
     monthlySubscribers.length > 1 ? monthlySubscribers.map(m => m.newSubs) : [0, 0],
-    SUB_MAX_VAL
+    subAxisMax
   );
   const subChurnPath = buildSvgPath(
     monthlySubscribers.length > 1 ? monthlySubscribers.map(m => m.churned) : [0, 0],
-    SUB_MAX_VAL
+    subAxisMax
   );
 
   const subLast = monthlySubscribers[monthlySubscribers.length - 1] ?? { newSubs: 0, churned: 0 };
@@ -407,7 +432,7 @@ export default function StatisticsPage() {
                 <span className="statsEyebrow">최근 구독 현황</span>
                 <h3>최근 가입 피드</h3>
               </div>
-              <button className="statsViewAllBtn">전체보기</button>
+              <button className="statsViewAllBtn" onClick={() => navigate('/admin/payments?tab=subscriptions')}>전체보기</button>
             </div>
             {recentLoading && <p className="stats-loading">피드 데이터 로딩 중...</p>}
             {recentIsError && <p className="statsErrorMsg">{recentError?.message ?? '최근 가입 피드를 불러오지 못했습니다.'}</p>}
