@@ -121,54 +121,6 @@ const initialAclRules: AclRule[] = [
   },
 ];
 
-export const initialLogs: AuditLog[] = [
-  {
-    id: 'LOG-001',
-    time: '2026.05.25 14:29:12',
-    actor: 'super_admin',
-    ip: '10.20.0.10',
-    action: '권한 변경 승인',
-    target: 'member:U-1007 / role:CS',
-    severity: 'WARN',
-  },
-  {
-    id: 'LOG-002',
-    time: '2026.05.25 14:22:49',
-    actor: 'backend_admin',
-    ip: '10.20.0.22',
-    action: 'DB 변경 감지',
-    target: 'schema:member',
-    severity: 'ERROR',
-  },
-  {
-    id: 'LOG-003',
-    time: '2026.05.25 14:18:27',
-    actor: 'cs_admin',
-    ip: '10.20.0.21',
-    action: '회원 문의 처리',
-    target: 'ticket:CS-1842',
-    severity: 'INFO',
-  },
-  {
-    id: 'LOG-004',
-    time: '2026.05.25 14:12:08',
-    actor: 'ops_admin',
-    ip: '10.20.0.23',
-    action: 'IP ACL 갱신',
-    target: 'ACL-002',
-    severity: 'WARN',
-  },
-  {
-    id: 'LOG-005',
-    time: '2026.05.25 13:58:41',
-    actor: 'audit_admin',
-    ip: '10.20.10.8',
-    action: '감사 정책 검토',
-    target: 'policy:admin-access',
-    severity: 'INFO',
-  },
-];
-
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -266,6 +218,7 @@ export default function AdminManagementPage() {
     queryFn: getAdminManagementSummary,
   });
   const [aclRules] = useState(initialAclRules);
+  const logs: AuditLog[] = [];
   const [adminFilter, setAdminFilter] = useState('');
   const debouncedAdminFilter = useDebouncedValue(adminFilter.trim(), ADMIN_SEARCH_DEBOUNCE_MS);
   const [roleFilter, setRoleFilter] = useState<'ALL' | AdminRole>('ALL');
@@ -323,7 +276,7 @@ export default function AdminManagementPage() {
     queryKey: [...ADMIN_MANAGEMENT_AUDIT_LOGS_QUERY_KEY, auditLogQueryParams],
     queryFn: () => getAdminAuditLogs(auditLogQueryParams),
   });
-  const visibleLogs = adminAuditLogs?.items.map(toAuditLogRow) ?? [];
+  const visibleLogs = adminAuditLogs?.items.map(toAuditLogRow) ?? logs;
 
   const refreshAdminManagementQueries = () => {
     void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY });
@@ -346,7 +299,6 @@ export default function AdminManagementPage() {
   const createAdminMutation = useMutation({
     mutationFn: createAdminAccountRequest,
     onSuccess: () => {
-
       setAdminFilter('');
       setRoleFilter('ALL');
       setStatusFilter('ALL');
@@ -384,7 +336,6 @@ export default function AdminManagementPage() {
   const createAclRuleMutation = useMutation({
     mutationFn: createAdminAclRule,
     onSuccess: () => {
-
       setAclPage(1);
       setAclDraft({ label: '', cidr: '', note: '' });
       setAclCidrErrorMessage('');
@@ -2140,10 +2091,6 @@ export default function AdminManagementPage() {
           color: #ff8c8c;
         }
 
-        .amSecurityType.success {
-          color: #70f1ce;
-        }
-
         .amSecurityMessage {
           color: #f4f8fd;
           font-size: 13px;
@@ -2163,10 +2110,6 @@ export default function AdminManagementPage() {
 
         .amSecurityMessage.error {
           color: #ff9c9c;
-        }
-
-        .amSecurityMessage.success {
-          color: #8cefdc;
         }
 
         .amEmptyCell,

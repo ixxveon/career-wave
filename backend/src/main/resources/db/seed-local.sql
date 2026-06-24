@@ -12,6 +12,20 @@ WHERE member_id IN (
   SELECT member_id FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01')
 );
 DELETE FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01');
+DELETE FROM notices WHERE title IN (
+  '[필독] 개인정보 처리방침 개정 안내',
+  '서버 정기 점검 안내 (6월 28일 새벽 2시~4시)',
+  'AI 서류 분석 기능 개선 업데이트',
+  '허위 정보 기재 관련 이용 제한 안내',
+  '[이벤트] 친구 초대하고 AI 분석 1회 무료 이용권 받기'
+);
+DELETE FROM faqs WHERE question IN (
+  '계정이 정지되었습니다. 어떻게 해야 하나요?',
+  '계정 정지 이의 신청은 어떻게 하나요?',
+  '구독 해지 후 환불은 어떻게 받나요?',
+  'AI 면접 연습은 어떤 방식으로 진행되나요?',
+  '회원 탈퇴 후 데이터는 어떻게 되나요?'
+);
 DELETE FROM admins  WHERE login_id IN ('admin', 'cs');
 
 -- ────────────────────────────────────────────
@@ -208,6 +222,84 @@ BEGIN
   VALUES (v_pay_id, 29000, '서비스 불만족으로 인한 환불 요청', 'PENDING', NOW() - INTERVAL '1 day');
 END $$;
 
+-- ============================================================
+-- 공지사항 / FAQ 샘플 데이터
+-- ============================================================
+
+DELETE FROM faqs WHERE question IN (
+  '계정이 정지되었습니다. 어떻게 해야 하나요?',
+  '계정 정지 이의 신청은 어떻게 하나요?',
+  '구독 해지 후 환불은 어떻게 받나요?',
+  'AI 면접 연습은 어떤 방식으로 진행되나요?',
+  '회원 탈퇴 후 데이터는 어떻게 되나요?'
+);
+DELETE FROM notices WHERE title IN (
+  '[필독] 개인정보 처리방침 개정 안내',
+  '서버 정기 점검 안내 (6월 28일 새벽 2시~4시)',
+  'AI 서류 분석 기능 개선 업데이트',
+  '허위 정보 기재 관련 이용 제한 안내',
+  '[이벤트] 친구 초대하고 AI 분석 1회 무료 이용권 받기'
+);
+
+DO $$
+DECLARE
+  v_master_id BIGINT;
+  v_cs_id     BIGINT;
+BEGIN
+  SELECT admin_id INTO v_master_id FROM admins WHERE login_id = 'admin';
+  SELECT admin_id INTO v_cs_id     FROM admins WHERE login_id = 'cs';
+
+  -- 공지사항 5개
+  INSERT INTO notices (admin_id, category, title, content, is_pinned, is_visible, created_at, updated_at) VALUES
+    (v_master_id, 'NOTICE',      '[필독] 개인정보 처리방침 개정 안내',
+     '2026년 7월 1일부터 개인정보 처리방침이 일부 개정됩니다. 주요 변경 사항은 수집 항목 명확화 및 보유 기간 조정이며, 변경된 내용은 홈페이지에서 확인하실 수 있습니다.',
+     TRUE, TRUE, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
+
+    (v_master_id, 'MAINTENANCE', '서버 정기 점검 안내 (6월 28일 새벽 2시~4시)',
+     '서비스 안정성 향상을 위한 정기 점검이 예정되어 있습니다. 점검 시간 동안 모든 서비스 이용이 일시 중단됩니다. 이용에 불편을 드려 죄송합니다.',
+     TRUE, TRUE, NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
+
+    (v_master_id, 'UPDATE',      'AI 서류 분석 기능 개선 업데이트',
+     '이번 업데이트를 통해 AI 서류 분석의 정확도가 향상되었습니다. 직무 적합도 분석 항목이 추가되었으며, 피드백 레포트 가독성이 개선되었습니다.',
+     FALSE, TRUE, NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'),
+
+    (v_cs_id,     'NOTICE',      '허위 정보 기재 관련 이용 제한 안내',
+     '허위 경력·학력 정보 기재 시 서비스 이용이 제한될 수 있습니다. 정확한 정보를 입력해 주시기 바랍니다. 반복 위반 시 영구 정지 처리됩니다.',
+     FALSE, TRUE, NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
+
+    (v_cs_id,     'EVENT',       '[이벤트] 친구 초대하고 AI 분석 1회 무료 이용권 받기',
+     '친구를 초대하면 초대한 분과 초대받은 분 모두에게 AI 서류 분석 무료 이용권 1회가 지급됩니다. 이벤트 기간: 2026년 6월 1일 ~ 7월 31일',
+     FALSE, TRUE, NOW() - INTERVAL '14 days', NOW() - INTERVAL '14 days');
+
+  -- FAQ 5개 (계정 제재 항목 포함)
+  INSERT INTO faqs (admin_id, category, question, answer, created_at, updated_at) VALUES
+    (v_cs_id, 'ACCOUNT',
+     '계정이 정지되었습니다. 어떻게 해야 하나요?',
+     '계정 정지는 운영 정책 위반 시 적용됩니다. 정지 사유와 기간은 가입 시 등록한 이메일로 안내됩니다. 정지 기간 종료 후 자동으로 이용이 재개되며, 이의 신청은 cs@career-wave.com으로 문의해 주세요.',
+     NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+
+    (v_cs_id, 'ACCOUNT',
+     '계정 정지 이의 신청은 어떻게 하나요?',
+     '계정 정지에 이의가 있으신 경우 cs@career-wave.com으로 이메일 문의 또는 고객센터 1:1 문의를 통해 이의 신청을 하실 수 있습니다. 검토 후 3~5 영업일 내에 결과를 안내해 드립니다.',
+     NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+
+    (v_cs_id, 'PAYMENT',
+     '구독 해지 후 환불은 어떻게 받나요?',
+     '구독 해지 시 남은 기간에 대한 일할 계산 환불이 가능합니다. 마이페이지 > 구독 관리에서 해지 신청 후 영업일 기준 3~5일 내 환불 처리됩니다. AI 서비스를 1회 이상 이용하신 경우 환불 정책이 다를 수 있습니다.',
+     NOW() - INTERVAL '6 days', NOW() - INTERVAL '6 days'),
+
+    (v_master_id, 'SERVICE',
+     'AI 면접 연습은 어떤 방식으로 진행되나요?',
+     'AI 면접 연습은 카메라와 마이크를 활용한 실시간 영상 면접 방식으로 진행됩니다. 직무에 맞는 질문이 자동으로 출제되며, 답변 내용과 표정·말투 등을 분석해 피드백 리포트를 제공합니다.',
+     NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
+
+    (v_master_id, 'ETC',
+     '회원 탈퇴 후 데이터는 어떻게 되나요?',
+     '회원 탈퇴 시 개인정보는 즉시 삭제되며, 관련 법령에 따라 일부 거래 정보는 일정 기간 보관 후 파기됩니다. 탈퇴 후에는 동일 아이디로 재가입이 불가하오니 신중하게 결정해 주세요.',
+     NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days');
+
+END $$;
+
 -- 결과 확인
 SELECT login_id, name, role_type, member_status, subscription_status FROM members ORDER BY login_id;
 SELECT login_id, name, admin_role, status FROM admins;
@@ -215,3 +307,5 @@ SELECT plan_id, plan_name, plan_price FROM plans;
 SELECT p.order_id, p.amount, p.payment_status, r.refund_status
   FROM payments p LEFT JOIN refunds r ON p.payment_id = r.payment_id
  WHERE p.order_id LIKE 'DEMO-%';
+SELECT category, title FROM notices ORDER BY created_at DESC;
+SELECT category, question FROM faqs ORDER BY created_at DESC;

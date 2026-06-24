@@ -32,6 +32,7 @@
 ```json
 {
   "success": true,
+  "statusCode": 200,
   "message": "요청이 성공했습니다.",
   "data": {}
 }
@@ -100,11 +101,14 @@
 
 #### Query Parameter
 
-- Request DTO: `DashboardDTO.SummaryRequest`
+- Request DTO: `DashboardDTO.RequestSummary`
 
 | Name | Type | Required | ERD 컬럼 | Description |
 |---|---|---|---|---|
 | `range` | `TODAY \| 7D \| 30D` | N | 다중 집계 기준 컬럼 | 집계 범위, 기본값 `TODAY` |
+
+> API 계층은 `range`를 문자열 Query Parameter로 수신한 뒤 `DashboardRangeType.fromJsonValue()`로 변환한다.
+> 허용값 외 문자열은 공통 `BAD_REQUEST` 오류 응답으로 변환한다.
 
 #### Request Body
 
@@ -129,7 +133,7 @@
         "unit": "명",
         "deltaText": "어제 대비 +14명",
         "severity": "NORMAL",
-        "targetPath": "/admin/members"
+        "targetPath": "/admin/admins"
       }
     ],
     "alerts": [
@@ -153,16 +157,16 @@
       {
         "method": "CARD",
         "label": "카드",
-        "ratio": 62
+        "ratio": 100
       }
     ],
     "serviceCards": [
       {
-        "key": "MEMBER",
-        "title": "회원 관리",
-        "description": "가입자, 구독 상태, 권한, 정지 회원을 관리합니다.",
+        "key": "ADMIN",
+        "title": "관리자 관리",
+        "description": "관리자 계정과 권한을 관리합니다.",
         "summaryText": "신규 128명",
-        "targetPath": "/admin/members"
+        "targetPath": "/admin/admins"
       }
     ],
     "systemStatus": [
@@ -289,6 +293,9 @@
 | `FORBIDDEN` | 403 | `MASTER`, `BACKEND`, `CS` 외 권한이 접근했다. |
 | `BAD_REQUEST` | 400 | `range`가 `TODAY`, `7D`, `30D` 외 값이다. |
 | `INTERNAL_SERVER_ERROR` | 500 | 대시보드 요약 집계 중 서버 내부 오류가 발생했다. |
+
+> 인증/인가 오류는 Spring Security 공통 예외 처리 정책을 따른다.
+> `range` 검증 실패는 `BadRequestException(ErrorCode.BAD_REQUEST)`로 변환된다.
 
 #### Error Response Example
 
