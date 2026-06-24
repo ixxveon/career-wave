@@ -67,7 +67,7 @@ const jobNotices: JobNoticeDetail[] = [
     title: 'Data Engineer Intern',
     skillTags: ['Python', 'SQL', 'Airflow'],
     jobType: 'INTERN',
-    companySize: '대기업',
+    companySize: 'LARGE',
     jobCategory: 'DATA',
     careerLevel: 'JUNIOR',
     location: '서울',
