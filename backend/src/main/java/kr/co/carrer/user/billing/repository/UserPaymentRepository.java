@@ -2,6 +2,8 @@ package kr.co.carrer.user.billing.repository;
 
 import kr.co.carrer.user.billing.entity.UserPayment;
 import kr.co.carrer.user.billing.type.UserPaymentStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface UserPaymentRepository extends JpaRepository<UserPayment, UUID> {
@@ -30,4 +33,12 @@ public interface UserPaymentRepository extends JpaRepository<UserPayment, UUID> 
                                                        UserPaymentStatus paymentStatus);
 
     Optional<UserPayment> findByIdempotencyKey(String idempotencyKey);
+
+    @Query("SELECT p FROM UserPayment p WHERE p.memberId = :memberId " +
+           "AND p.createdAt >= :from " +
+           "AND p.paymentStatus IN :statuses")
+    Page<UserPayment> findPaymentHistoryByMemberId(@Param("memberId") UUID memberId,
+                                                   @Param("from") ZonedDateTime from,
+                                                   @Param("statuses") Set<UserPaymentStatus> statuses,
+                                                   Pageable pageable);
 }
