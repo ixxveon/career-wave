@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -23,10 +24,11 @@ public class SubscriptionRenewalScheduler {
 
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionRenewalService subscriptionRenewalService;
+    private final Clock clock;
 
     @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
     public void renewDueSubscriptions() {
-        ZonedDateTime now = ZonedDateTime.now(KST);
+        ZonedDateTime now = ZonedDateTime.now(clock).withZoneSameInstant(KST);
         List<Subscription> due = subscriptionRepository.findDueBillings(SubscriptionStatus.ACTIVE, now);
         if (due.isEmpty()) return;
 

@@ -54,7 +54,7 @@ public class PaymentHistoryQueryServiceImpl implements PaymentHistoryQueryServic
                 .collect(Collectors.toMap(Plan::getProductCode, Plan::getPlanName, (a, b) -> a));
 
         List<BillingDTO.PaymentHistoryItem> items = paymentPage.getContent().stream()
-                .map(p -> toHistoryItem(p, productNames.get(p.getProductCode())))
+                .map(p -> toHistoryItem(p, productNames.getOrDefault(p.getProductCode(), "알 수 없는 상품")))
                 .toList();
 
         return new BillingDTO.ResponsePaymentHistory(
@@ -67,6 +67,9 @@ public class PaymentHistoryQueryServiceImpl implements PaymentHistoryQueryServic
     }
 
     private BillingDTO.PaymentHistoryItem toHistoryItem(UserPayment payment, String productName) {
+        String failureReason = payment.getFailureReason() != null
+                ? payment.getFailureReason().name()
+                : null;
         return new BillingDTO.PaymentHistoryItem(
                 payment.getPaymentId(),
                 payment.getOrderId(),
@@ -77,6 +80,7 @@ public class PaymentHistoryQueryServiceImpl implements PaymentHistoryQueryServic
                 payment.getPaymentStatus().name(),
                 payment.getPaymentType().name(),
                 payment.getAttemptSequence(),
+                failureReason,
                 payment.getApprovedAt(),
                 payment.getCreatedAt()
         );

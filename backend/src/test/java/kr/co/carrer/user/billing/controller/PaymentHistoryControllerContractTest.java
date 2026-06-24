@@ -7,6 +7,9 @@ import kr.co.carrer.user.billing.dto.BillingDTO;
 import kr.co.carrer.user.billing.service.CancelSubscriptionService;
 import kr.co.carrer.user.billing.service.PaymentHistoryQueryService;
 import kr.co.carrer.user.billing.service.SubscriptionQueryService;
+import kr.co.carrer.user.billing.service.UserCheckoutOrderService;
+import kr.co.carrer.user.billing.service.UserOrderQueryService;
+import kr.co.carrer.user.billing.service.UserPaymentConfirmService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
@@ -23,23 +26,20 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-class PaymentHistoryControllerContractTest {
+// BillingControllerContractTest: SubscriptionController(cancel) + UserBillingPaymentController(history) 계약 검증
+class BillingControllerContractTest {
 
     private final SubscriptionQueryService subscriptionQueryService = mock(SubscriptionQueryService.class);
     private final CancelSubscriptionService cancelSubscriptionService = mock(CancelSubscriptionService.class);
     private final PaymentHistoryQueryService paymentHistoryQueryService = mock(PaymentHistoryQueryService.class);
+    private final UserCheckoutOrderService checkoutService = mock(UserCheckoutOrderService.class);
+    private final UserPaymentConfirmService confirmService = mock(UserPaymentConfirmService.class);
+    private final UserOrderQueryService orderQueryService = mock(UserOrderQueryService.class);
 
     private final SubscriptionController subscriptionController =
             new SubscriptionController(subscriptionQueryService, cancelSubscriptionService);
-    private final kr.co.carrer.user.billing.service.UserCheckoutOrderService checkoutService =
-            mock(kr.co.carrer.user.billing.service.UserCheckoutOrderService.class);
-    private final kr.co.carrer.user.billing.service.UserPaymentConfirmService confirmService =
-            mock(kr.co.carrer.user.billing.service.UserPaymentConfirmService.class);
-    private final kr.co.carrer.user.billing.service.UserOrderQueryService orderQueryService =
-            mock(kr.co.carrer.user.billing.service.UserOrderQueryService.class);
-    private final kr.co.carrer.user.billing.controller.UserBillingPaymentController paymentController =
-            new kr.co.carrer.user.billing.controller.UserBillingPaymentController(
-                    checkoutService, confirmService, orderQueryService, paymentHistoryQueryService);
+    private final UserBillingPaymentController paymentController =
+            new UserBillingPaymentController(checkoutService, confirmService, orderQueryService, paymentHistoryQueryService);
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final UUID memberId = UUID.randomUUID();
@@ -53,7 +53,7 @@ class PaymentHistoryControllerContractTest {
         ZonedDateTime periodEnd = ZonedDateTime.now(KST).plusDays(15);
         ZonedDateTime cancelScheduledAt = ZonedDateTime.now(KST);
         BillingDTO.ResponseCancelSubscription cancelResponse = new BillingDTO.ResponseCancelSubscription(
-                subscriptionId, "CANCEL_SCHEDULED", periodEnd, cancelScheduledAt);
+                subscriptionId, "interview", "CANCEL_SCHEDULED", periodEnd, cancelScheduledAt);
         given(cancelSubscriptionService.cancel(any(), any())).willReturn(cancelResponse);
 
         ResponseEntity<ApiResponse<BillingDTO.ResponseCancelSubscription>> response =
@@ -62,6 +62,7 @@ class PaymentHistoryControllerContractTest {
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         BillingDTO.ResponseCancelSubscription data = response.getBody().getData();
         assertThat(data.subscriptionId()).isEqualTo(subscriptionId);
+        assertThat(data.productCode()).isEqualTo("interview");
         assertThat(data.status()).isEqualTo("CANCEL_SCHEDULED");
         assertThat(data.currentPeriodEnd()).isEqualTo(periodEnd);
         assertThat(data.cancelScheduledAt()).isEqualTo(cancelScheduledAt);
@@ -74,7 +75,7 @@ class PaymentHistoryControllerContractTest {
         ZonedDateTime now = ZonedDateTime.now(KST);
         BillingDTO.PaymentHistoryItem item = new BillingDTO.PaymentHistoryItem(
                 UUID.randomUUID(), "ORDER-ABC", "document-coaching", "서류 AI 코칭",
-                29000, "KRW", "PAID", "MANUAL", 0, now, now);
+                29000, "KRW", "PAID", "MANUAL", 0, null, now, now);
         BillingDTO.ResponsePaymentHistory historyResponse =
                 new BillingDTO.ResponsePaymentHistory(List.of(item), 0, 10, 1L, 1);
         given(paymentHistoryQueryService.getPaymentHistory(any(), anyString(), anyInt(), anyInt()))
@@ -100,7 +101,7 @@ class PaymentHistoryControllerContractTest {
         UUID paymentId = UUID.randomUUID();
         BillingDTO.PaymentHistoryItem item = new BillingDTO.PaymentHistoryItem(
                 paymentId, "RENEWAL-001", "interview", "AI 모의면접",
-                29000, "KRW", "PAID", "AUTO_RENEWAL", 1, now, now);
+                29000, "KRW", "PAID", "AUTO_RENEWAL", 1, null, now, now);
         given(paymentHistoryQueryService.getPaymentHistory(any(), anyString(), anyInt(), anyInt()))
                 .willReturn(new BillingDTO.ResponsePaymentHistory(List.of(item), 0, 10, 1L, 1));
 
@@ -117,6 +118,7 @@ class PaymentHistoryControllerContractTest {
         assertThat(result.paymentStatus()).isEqualTo("PAID");
         assertThat(result.paymentType()).isEqualTo("AUTO_RENEWAL");
         assertThat(result.attemptSequence()).isEqualTo(1);
+        assertThat(result.failureReason()).isNull();
         assertThat(result.paidAt()).isEqualTo(now);
         assertThat(result.createdAt()).isEqualTo(now);
     }

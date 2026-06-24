@@ -1,7 +1,9 @@
 package kr.co.carrer.user.billing.service;
 
 import kr.co.carrer.user.billing.dto.BillingDTO;
+import kr.co.carrer.user.billing.entity.Plan;
 import kr.co.carrer.user.billing.entity.Subscription;
+import kr.co.carrer.user.billing.repository.PlanRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.service.impl.CancelSubscriptionServiceImpl;
 import kr.co.carrer.user.billing.type.SubscriptionStatus;
@@ -19,12 +21,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class ProductIndependentCancellationTest {
 
     @Mock SubscriptionRepository subscriptionRepository;
+    @Mock PlanRepository planRepository;
 
     private CancelSubscriptionServiceImpl service;
 
@@ -35,21 +39,23 @@ class ProductIndependentCancellationTest {
 
     @BeforeEach
     void setUp() {
-        service = new CancelSubscriptionServiceImpl(subscriptionRepository);
+        service = new CancelSubscriptionServiceImpl(subscriptionRepository, planRepository);
     }
 
     @Test
     @DisplayName("document 구독 해지 — interview 구독 상태 영향 없음")
     void cancel_document_doesNotAffectInterview() {
-        Subscription documentSub = activeSubscription(documentSubId, "document-coaching");
-        Subscription interviewSub = activeSubscription(interviewSubId, "interview");
+        Subscription documentSub = activeSubscription(documentSubId);
+        Subscription interviewSub = activeSubscription(interviewSubId);
 
         given(subscriptionRepository.findBySubscriptionIdAndMemberIdForUpdate(documentSubId, memberId))
                 .willReturn(Optional.of(documentSub));
+        given(planRepository.findById(any())).willReturn(Optional.of(plan("document-coaching")));
 
         BillingDTO.ResponseCancelSubscription result = service.cancel(memberId, documentSubId);
 
         assertThat(result.status()).isEqualTo("CANCEL_SCHEDULED");
+        assertThat(result.productCode()).isEqualTo("document-coaching");
         assertThat(documentSub.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.CANCEL_SCHEDULED);
         // interview 구독은 그대로 ACTIVE
         assertThat(interviewSub.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.ACTIVE);
@@ -59,15 +65,17 @@ class ProductIndependentCancellationTest {
     @Test
     @DisplayName("interview 구독 해지 — document 구독 상태 영향 없음")
     void cancel_interview_doesNotAffectDocument() {
-        Subscription documentSub = activeSubscription(documentSubId, "document-coaching");
-        Subscription interviewSub = activeSubscription(interviewSubId, "interview");
+        Subscription documentSub = activeSubscription(documentSubId);
+        Subscription interviewSub = activeSubscription(interviewSubId);
 
         given(subscriptionRepository.findBySubscriptionIdAndMemberIdForUpdate(interviewSubId, memberId))
                 .willReturn(Optional.of(interviewSub));
+        given(planRepository.findById(any())).willReturn(Optional.of(plan("interview")));
 
         BillingDTO.ResponseCancelSubscription result = service.cancel(memberId, interviewSubId);
 
         assertThat(result.status()).isEqualTo("CANCEL_SCHEDULED");
+        assertThat(result.productCode()).isEqualTo("interview");
         assertThat(interviewSub.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.CANCEL_SCHEDULED);
         // document 구독은 그대로 ACTIVE
         assertThat(documentSub.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.ACTIVE);
@@ -76,11 +84,17 @@ class ProductIndependentCancellationTest {
 
     // ── helpers ─────────────────────────────────────────────────────────────
 
-    private Subscription activeSubscription(UUID subId, String productCode) {
+    private Subscription activeSubscription(UUID subId) {
         ZonedDateTime now = ZonedDateTime.now(KST);
         Subscription s = Subscription.create(memberId, 1L, now.minusDays(10), now.plusDays(20));
         setField(s, "subscriptionId", subId);
         return s;
+    }
+
+    private Plan plan(String productCode) {
+        Plan p = Plan.create(productCode, "코칭", 29000, 30, "KRW", "MONTHLY", true);
+        setField(p, "planId", 1L);
+        return p;
     }
 
     private void setField(Object target, String name, Object value) {

@@ -49,7 +49,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     @Query("SELECT s FROM Subscription s WHERE s.subscriptionId = :subscriptionId")
     Optional<Subscription> findBySubscriptionIdForUpdate(@Param("subscriptionId") UUID subscriptionId);
 
-    @Query("SELECT s FROM Subscription s WHERE s.subscriptionStatus = 'CANCEL_SCHEDULED' " +
+    @Query("SELECT s FROM Subscription s WHERE s.subscriptionStatus = :status " +
            "AND s.currentPeriodEnd <= :threshold")
-    List<Subscription> findExpiredCancelScheduled(@Param("threshold") ZonedDateTime threshold);
+    List<Subscription> findExpiredCancelScheduled(@Param("status") SubscriptionStatus status,
+                                                   @Param("threshold") ZonedDateTime threshold);
 }

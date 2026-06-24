@@ -45,7 +45,7 @@ class SubscriptionExpirationSchedulerTest {
     void expireCancelScheduled_periodEndReached_expired() {
         ZonedDateTime now = ZonedDateTime.now(KST);
         Subscription sub = cancelScheduledSubscription(now.minusDays(1));
-        given(subscriptionRepository.findExpiredCancelScheduled(any())).willReturn(List.of(sub));
+        given(subscriptionRepository.findExpiredCancelScheduled(any(), any())).willReturn(List.of(sub));
 
         scheduler.expireCancelScheduled();
 
@@ -57,7 +57,7 @@ class SubscriptionExpirationSchedulerTest {
     @Test
     @DisplayName("periodEnd 미도달 — 조회 결과 없음, 상태 변경 없음")
     void expireCancelScheduled_periodEndNotReached_noChange() {
-        given(subscriptionRepository.findExpiredCancelScheduled(any())).willReturn(List.of());
+        given(subscriptionRepository.findExpiredCancelScheduled(any(), any())).willReturn(List.of());
 
         scheduler.expireCancelScheduled();
 
@@ -70,7 +70,7 @@ class SubscriptionExpirationSchedulerTest {
         ZonedDateTime now = ZonedDateTime.now(KST);
         Subscription sub1 = cancelScheduledSubscription(now.minusHours(1));
         Subscription sub2 = cancelScheduledSubscription(now.minusDays(5));
-        given(subscriptionRepository.findExpiredCancelScheduled(any())).willReturn(List.of(sub1, sub2));
+        given(subscriptionRepository.findExpiredCancelScheduled(any(), any())).willReturn(List.of(sub1, sub2));
 
         scheduler.expireCancelScheduled();
 
@@ -83,7 +83,7 @@ class SubscriptionExpirationSchedulerTest {
     void expireCancelScheduled_exactBoundary_expired() {
         ZonedDateTime now = ZonedDateTime.now(KST);
         Subscription sub = cancelScheduledSubscription(now);
-        given(subscriptionRepository.findExpiredCancelScheduled(any())).willReturn(List.of(sub));
+        given(subscriptionRepository.findExpiredCancelScheduled(any(), any())).willReturn(List.of(sub));
 
         scheduler.expireCancelScheduled();
 
@@ -99,7 +99,7 @@ class SubscriptionExpirationSchedulerTest {
         scheduler = new SubscriptionExpirationScheduler(subscriptionRepository, kstClock);
 
         Subscription sub = cancelScheduledSubscription(kstMidnight.minusMinutes(1));
-        given(subscriptionRepository.findExpiredCancelScheduled(any())).willReturn(List.of(sub));
+        given(subscriptionRepository.findExpiredCancelScheduled(any(), any())).willReturn(List.of(sub));
 
         scheduler.expireCancelScheduled();
 

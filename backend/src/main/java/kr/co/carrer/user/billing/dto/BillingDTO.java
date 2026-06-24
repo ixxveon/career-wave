@@ -130,6 +130,7 @@ public class BillingDTO {
 
     public record ResponseCancelSubscription(
             UUID subscriptionId,
+            String productCode,
             @Schema(allowableValues = {"CANCEL_SCHEDULED"}) String status,
             ZonedDateTime currentPeriodEnd,
             ZonedDateTime cancelScheduledAt
@@ -147,6 +148,7 @@ public class BillingDTO {
             @Schema(allowableValues = {"PAID", "FAILED", "REFUNDED"}) String paymentStatus,
             @Schema(allowableValues = {"MANUAL", "AUTO_RENEWAL"}) String paymentType,
             int attemptSequence,
+            String failureReason,
             ZonedDateTime paidAt,
             ZonedDateTime createdAt
     ) {}

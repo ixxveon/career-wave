@@ -2,6 +2,7 @@ package kr.co.carrer.user.billing.scheduler;
 
 import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
+import kr.co.carrer.user.billing.type.SubscriptionStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,7 +29,8 @@ public class SubscriptionExpirationScheduler {
     @Transactional
     public void expireCancelScheduled() {
         ZonedDateTime now = ZonedDateTime.now(clock).withZoneSameInstant(KST);
-        List<Subscription> targets = subscriptionRepository.findExpiredCancelScheduled(now);
+        List<Subscription> targets = subscriptionRepository.findExpiredCancelScheduled(
+                SubscriptionStatus.CANCEL_SCHEDULED, now);
         if (targets.isEmpty()) return;
 
         int count = 0;

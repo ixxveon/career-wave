@@ -2,8 +2,10 @@ package kr.co.carrer.user.billing.service;
 
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.dto.BillingDTO;
+import kr.co.carrer.user.billing.entity.Plan;
 import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
+import kr.co.carrer.user.billing.repository.PlanRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.service.impl.CancelSubscriptionServiceImpl;
 import kr.co.carrer.user.billing.type.SubscriptionStatus;
@@ -24,12 +26,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class CancelSubscriptionServiceTest {
 
     @Mock SubscriptionRepository subscriptionRepository;
+    @Mock PlanRepository planRepository;
 
     private CancelSubscriptionServiceImpl service;
 
@@ -39,7 +43,7 @@ class CancelSubscriptionServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new CancelSubscriptionServiceImpl(subscriptionRepository);
+        service = new CancelSubscriptionServiceImpl(subscriptionRepository, planRepository);
     }
 
     @Test
@@ -48,10 +52,12 @@ class CancelSubscriptionServiceTest {
         Subscription sub = activeSubscription();
         given(subscriptionRepository.findBySubscriptionIdAndMemberIdForUpdate(subscriptionId, memberId))
                 .willReturn(Optional.of(sub));
+        given(planRepository.findById(any())).willReturn(Optional.of(plan("document-coaching")));
 
         BillingDTO.ResponseCancelSubscription result = service.cancel(memberId, subscriptionId);
 
         assertThat(result.status()).isEqualTo("CANCEL_SCHEDULED");
+        assertThat(result.productCode()).isEqualTo("document-coaching");
         assertThat(result.subscriptionId()).isEqualTo(subscriptionId);
         assertThat(result.currentPeriodEnd()).isNotNull();
         assertThat(result.cancelScheduledAt()).isNotNull();
@@ -90,6 +96,7 @@ class CancelSubscriptionServiceTest {
         Subscription sub = activeSubscription();
         given(subscriptionRepository.findBySubscriptionIdAndMemberIdForUpdate(subscriptionId, memberId))
                 .willReturn(Optional.of(sub));
+        given(planRepository.findById(any())).willReturn(Optional.of(plan("document-coaching")));
 
         service.cancel(memberId, subscriptionId);
 
@@ -102,6 +109,7 @@ class CancelSubscriptionServiceTest {
         Subscription sub = activeSubscription();
         given(subscriptionRepository.findBySubscriptionIdAndMemberIdForUpdate(subscriptionId, memberId))
                 .willReturn(Optional.of(sub));
+        given(planRepository.findById(any())).willReturn(Optional.of(plan("document-coaching")));
 
         service.cancel(memberId, subscriptionId);
 
@@ -127,6 +135,12 @@ class CancelSubscriptionServiceTest {
         setField(s, "subscriptionId", subscriptionId);
         setField(s, "subscriptionStatus", status);
         return s;
+    }
+
+    private Plan plan(String productCode) {
+        Plan p = Plan.create(productCode, "코칭", 29000, 30, "KRW", "MONTHLY", true);
+        setField(p, "planId", 1L);
+        return p;
     }
 
     private void setField(Object target, String name, Object value) {
