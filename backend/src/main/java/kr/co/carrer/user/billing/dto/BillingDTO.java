@@ -154,7 +154,7 @@ public class BillingDTO {
     ) {}
 
     public record ResponsePaymentHistory(
-            List<PaymentHistoryItem> payments,
+            List<PaymentHistoryItem> content,
             int page,
             int size,
             long totalElements,

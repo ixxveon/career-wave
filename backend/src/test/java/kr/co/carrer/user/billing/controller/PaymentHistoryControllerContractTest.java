@@ -86,7 +86,7 @@ class BillingControllerContractTest {
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         BillingDTO.ResponsePaymentHistory data = response.getBody().getData();
-        assertThat(data.payments()).hasSize(1);
+        assertThat(data.content()).hasSize(1);
         assertThat(data.page()).isEqualTo(0);
         assertThat(data.size()).isEqualTo(10);
         assertThat(data.totalElements()).isEqualTo(1L);
@@ -108,7 +108,7 @@ class BillingControllerContractTest {
         ResponseEntity<ApiResponse<BillingDTO.ResponsePaymentHistory>> response =
                 paymentController.getPaymentHistory(principal, "3M", 0, 10);
 
-        BillingDTO.PaymentHistoryItem result = response.getBody().getData().payments().get(0);
+        BillingDTO.PaymentHistoryItem result = response.getBody().getData().content().get(0);
         assertThat(result.paymentId()).isEqualTo(paymentId);
         assertThat(result.orderId()).isEqualTo("RENEWAL-001");
         assertThat(result.productCode()).isEqualTo("interview");
@@ -133,7 +133,7 @@ class BillingControllerContractTest {
                 paymentController.getPaymentHistory(principal, "12M", 0, 10);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
-        assertThat(response.getBody().getData().payments()).isEmpty();
+        assertThat(response.getBody().getData().content()).isEmpty();
         assertThat(response.getBody().getData().totalElements()).isEqualTo(0L);
     }
 }

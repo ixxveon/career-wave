@@ -76,8 +76,8 @@ class PaymentHistoryQueryTest {
 
         BillingDTO.ResponsePaymentHistory result = service.getPaymentHistory(memberId, "1M", 0, 10);
 
-        assertThat(result.payments()).hasSize(1);
-        BillingDTO.PaymentHistoryItem item = result.payments().get(0);
+        assertThat(result.content()).hasSize(1);
+        BillingDTO.PaymentHistoryItem item = result.content().get(0);
         assertThat(item.productCode()).isEqualTo("document-coaching");
         assertThat(item.productName()).isEqualTo("서류 AI 코칭");
         assertThat(item.amount()).isEqualTo(29000);
@@ -96,7 +96,7 @@ class PaymentHistoryQueryTest {
 
         BillingDTO.ResponsePaymentHistory result = service.getPaymentHistory(memberId, "3M", 0, 10);
 
-        assertThat(result.payments()).isEmpty();
+        assertThat(result.content()).isEmpty();
         assertThat(result.totalElements()).isEqualTo(0);
     }
 
@@ -147,8 +147,8 @@ class PaymentHistoryQueryTest {
 
         BillingDTO.ResponsePaymentHistory result = service.getPaymentHistory(memberId, "1M", 0, 10);
 
-        assertThat(result.payments().get(0).paymentType()).isEqualTo("AUTO_RENEWAL");
-        assertThat(result.payments().get(0).attemptSequence()).isEqualTo(1);
+        assertThat(result.content().get(0).paymentType()).isEqualTo("AUTO_RENEWAL");
+        assertThat(result.content().get(0).attemptSequence()).isEqualTo(1);
     }
 
     // ── helpers ─────────────────────────────────────────────────────────────
