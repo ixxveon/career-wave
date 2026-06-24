@@ -48,27 +48,31 @@ class BillingMigrationSmokeTest extends PostgreSqlTestContainerSupport {
     JdbcTemplate jdbcTemplate;
 
     // ─── 헬퍼 ──────────────────────────────────────────────────────────────────
+    // SELECT LIMIT 0 방식: schema 이름 대소문자에 무관하게 테이블/컬럼 존재를 확인한다.
 
     private boolean tableExists(String tableName) {
-        Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM information_schema.tables " +
-                "WHERE table_schema = 'public' AND table_name = ?",
-                Integer.class, tableName);
-        return count != null && count > 0;
+        try {
+            jdbcTemplate.queryForList("SELECT 1 FROM " + tableName + " WHERE 1=0");
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private boolean columnExists(String tableName, String columnName) {
-        Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM information_schema.columns " +
-                "WHERE table_schema = 'public' AND table_name = ? AND column_name = ?",
-                Integer.class, tableName, columnName);
-        return count != null && count > 0;
+        try {
+            jdbcTemplate.queryForList("SELECT " + columnName + " FROM " + tableName + " WHERE 1=0");
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
+    // LOWER()로 PostgreSQL 'public' / H2 'PUBLIC' 모두 대응
     private int uniqueConstraintCount(String tableName) {
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.table_constraints " +
-                "WHERE table_schema = 'public' AND table_name = ? AND constraint_type = 'UNIQUE'",
+                "WHERE LOWER(table_schema) = 'public' AND table_name = ? AND constraint_type = 'UNIQUE'",
                 Integer.class, tableName);
         return count != null ? count : 0;
     }
@@ -115,8 +119,8 @@ class BillingMigrationSmokeTest extends PostgreSqlTestContainerSupport {
                 "SELECT COUNT(*) FROM information_schema.table_constraints tc " +
                 "JOIN information_schema.key_column_usage kcu " +
                 "  ON tc.constraint_name = kcu.constraint_name " +
-                "  AND tc.table_schema = kcu.table_schema " +
-                "WHERE tc.table_schema = 'public' " +
+                "  AND LOWER(tc.table_schema) = LOWER(kcu.table_schema) " +
+                "WHERE LOWER(tc.table_schema) = 'public' " +
                 "AND tc.table_name = 'user_payments' " +
                 "AND tc.constraint_type = 'UNIQUE' " +
                 "AND kcu.column_name = 'order_id'",
