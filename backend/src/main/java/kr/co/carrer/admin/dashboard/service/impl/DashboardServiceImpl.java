@@ -286,7 +286,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .sum();
 
         if (totalRatio != 100) {
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "Dashboard payment ratio total must be 100.");
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
         return paymentRatio;
