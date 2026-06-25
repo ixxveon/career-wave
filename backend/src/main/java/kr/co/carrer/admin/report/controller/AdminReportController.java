@@ -55,9 +55,11 @@ public class AdminReportController implements AdminReportControllerDocs {
 
     @GetMapping("/reports/{reportId}")
     public ResponseEntity<ApiResponse<ReportDetailDTO.ResponseDetail>> getReportDetail(
-        @PathVariable Long reportId
+        @PathVariable Long reportId,
+        @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        return ResponseEntity.ok(ApiResponse.ok(adminReportService.getReportDetail(reportId)));
+        Long adminId = Long.parseLong(principal.getId());
+        return ResponseEntity.ok(ApiResponse.ok(adminReportService.getReportDetail(reportId, adminId)));
     }
 
     @PatchMapping("/reports/{reportId}/blind")

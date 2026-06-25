@@ -6,3 +6,4 @@ class ReportAnalysisRequest(BaseModel):
     reason: str
     contentTitle: str | None = None
     contentBody: str | None = None
+    adminId: int
