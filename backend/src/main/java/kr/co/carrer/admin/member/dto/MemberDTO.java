@@ -31,7 +31,8 @@ public class MemberDTO {
     ) {
         public ResponseList masked() {
             return new ResponseList(
-                memberId, loginId,
+                memberId,
+                PersonalInfoMasker.maskLoginId(loginId),
                 PersonalInfoMasker.maskName(name),
                 PersonalInfoMasker.maskEmail(email),
                 role, plan, memberStatus, warningCount, reportCount, joinedAt, lastLoginAt

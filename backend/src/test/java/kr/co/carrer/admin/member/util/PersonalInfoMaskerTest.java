@@ -25,9 +25,9 @@ class PersonalInfoMaskerTest {
         }
 
         @Test
-        @DisplayName("4글자 이름: 남궁세현 → 남**현")
+        @DisplayName("4글자 이름도 별표 1개 고정: 남궁세현 → 남*현")
         void fourChars() {
-            assertThat(PersonalInfoMasker.maskName("남궁세현")).isEqualTo("남**현");
+            assertThat(PersonalInfoMasker.maskName("남궁세현")).isEqualTo("남*현");
         }
 
         @Test
@@ -48,21 +48,21 @@ class PersonalInfoMaskerTest {
     class MaskEmail {
 
         @Test
-        @DisplayName("일반 이메일: hong@gmail.com → ho**@gmail.com")
+        @DisplayName("일반 이메일: hong@gmail.com → hon***@gmail.com")
         void normalEmail() {
-            assertThat(PersonalInfoMasker.maskEmail("hong@gmail.com")).isEqualTo("ho**@gmail.com");
+            assertThat(PersonalInfoMasker.maskEmail("hong@gmail.com")).isEqualTo("hon***@gmail.com");
         }
 
         @Test
-        @DisplayName("짧은 로컬파트: ab@x.com → ab**@x.com")
+        @DisplayName("짧은 로컬파트: ab@x.com → ab***@x.com")
         void shortLocal() {
-            assertThat(PersonalInfoMasker.maskEmail("ab@x.com")).isEqualTo("ab**@x.com");
+            assertThat(PersonalInfoMasker.maskEmail("ab@x.com")).isEqualTo("ab***@x.com");
         }
 
         @Test
-        @DisplayName("긴 로컬파트: username@domain.co.kr → us****@domain.co.kr")
+        @DisplayName("긴 로컬파트: username@domain.co.kr → use***@domain.co.kr")
         void longLocal() {
-            assertThat(PersonalInfoMasker.maskEmail("username@domain.co.kr")).isEqualTo("us******@domain.co.kr");
+            assertThat(PersonalInfoMasker.maskEmail("username@domain.co.kr")).isEqualTo("use***@domain.co.kr");
         }
 
         @Test
@@ -75,6 +75,29 @@ class PersonalInfoMaskerTest {
         @DisplayName("@ 없는 문자열은 그대로 반환")
         void noAtSign() {
             assertThat(PersonalInfoMasker.maskEmail("noemail")).isEqualTo("noemail");
+        }
+    }
+
+    @Nested
+    @DisplayName("로그인ID 마스킹 - maskLoginId()")
+    class MaskLoginId {
+
+        @Test
+        @DisplayName("일반 ID: user1234 → use***")
+        void normalId() {
+            assertThat(PersonalInfoMasker.maskLoginId("user1234")).isEqualTo("use***");
+        }
+
+        @Test
+        @DisplayName("3자 이하 ID는 그대로 반환")
+        void shortId() {
+            assertThat(PersonalInfoMasker.maskLoginId("abc")).isEqualTo("abc");
+        }
+
+        @Test
+        @DisplayName("null 입력 시 null 반환")
+        void nullInput() {
+            assertThat(PersonalInfoMasker.maskLoginId(null)).isNull();
         }
     }
 }
