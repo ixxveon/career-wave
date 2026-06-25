@@ -4,6 +4,7 @@ import kr.co.carrer.admin.member.service.AdminMemberService;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +33,9 @@ class AdminMemberControllerPaginationTest {
 
     @MockBean
     private TokenBlacklistStore tokenBlacklistStore;
+
+    @MockBean
+    private IpAclPort ipAclPort;
 
     @MockBean
     private AdminMemberService adminMemberService;
