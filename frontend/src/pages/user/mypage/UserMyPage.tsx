@@ -72,7 +72,6 @@ function UserMyPage() {
 
   const {
     subscribedItems,
-    unsubscribedItems,
     isLoading: isSubscriptionLoading,
   } = useSubscriptionStatus();
 
