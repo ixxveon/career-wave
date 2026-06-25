@@ -86,7 +86,6 @@ function UserMyPage() {
     isError: hasSubscriptionError,
   } = useSubscriptionStatus();
 
-
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<EditProfileForm>({
     name: "",
@@ -97,8 +96,7 @@ function UserMyPage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const isSavingProfileRef = useRef(false);
 
-  const isLoading =
-    isProfileLoading || isGithubLoading || isSubscriptionLoading;
+  const isLoading = isProfileLoading || isGithubLoading;
 
   function openEditModal() {
     if (!userProfile) return;
@@ -304,13 +302,15 @@ function UserMyPage() {
               <div className="cw-info-row">
                 <span>구독 상태</span>
                 <strong>
-                  {hasSubscriptionError
-                    ? "구독 상태 확인 불가"
-                    : subscribedItems.length > 0
-                      ? subscribedItems
-                          .map((item) => `${item.title} 구독중`)
-                          .join(" · ")
-                      : "미구독"}
+                  {isSubscriptionLoading
+                    ? "구독 상태 확인 중..."
+                    : hasSubscriptionError
+                      ? "구독 상태 확인 불가"
+                      : subscribedItems.length > 0
+                        ? subscribedItems
+                            .map((item) => `${item.title} 구독중`)
+                            .join(" · ")
+                        : "미구독"}
                 </strong>
               </div>
               <div className="cw-info-row">
