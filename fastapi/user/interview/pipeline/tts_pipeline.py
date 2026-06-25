@@ -46,6 +46,10 @@ async def synthesize_and_stream(
     settings = get_settings()
     client = _get_openai_client()
 
+    # TTS 요청 전 member_id 캡처 — 스트리밍 도중 세션 만료 시에도 사용량 기록 보장
+    ctx = _sessions.get(session_id)
+    member_id: str | None = ctx.member_id if ctx is not None else None
+
     log.info(
         "[Session: %s] TTS start: questionOrder=%d, textLen=%d",
         session_id, question_order, len(text),
@@ -58,6 +62,16 @@ async def synthesize_and_stream(
             input=text,
             response_format="mp3",
         ) as response:
+            # TTS 요청이 수락된 시점에 사용량 기록 — 이후 취소/끊김과 무관하게 과금 발생
+            await record_ai_usage(
+                member_id=member_id,
+                model_name=settings.openai_model_tts,
+                feature_type="INTERVIEW_TTS",
+                input_tokens=max(1, len(text)),
+                output_tokens=0,
+                session_id=session_id,
+            )
+
             chunk_index = 0
             async for audio_chunk in response.iter_bytes(chunk_size=_TTS_CHUNK_SIZE):
                 if _sessions.get(session_id) is None:
@@ -81,15 +95,3 @@ async def synthesize_and_stream(
 
     await send_tts_audio(session_id, "", question_order, 0, is_final=True)
     log.info("[Session: %s] TTS complete: questionOrder=%d", session_id, question_order)
-
-    # TTS 사용량 적재 — input_tokens: 입력 글자 수 (실제 토큰 아님)
-    ctx = _sessions.get(session_id)
-    member_id = ctx.member_id if ctx is not None else None
-    await record_ai_usage(
-        member_id=member_id,
-        model_name=settings.openai_model_tts,
-        feature_type="INTERVIEW_TTS",
-        input_tokens=max(1, len(text)),
-        output_tokens=0,
-        session_id=session_id,
-    )
