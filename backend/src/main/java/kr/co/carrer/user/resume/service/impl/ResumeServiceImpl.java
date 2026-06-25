@@ -200,7 +200,7 @@ public class ResumeServiceImpl implements ResumeService {
             throw new CustomException(ResumeErrorCode.WEBHOOK_SECRET_INVALID);
         }
 
-        Document document = documentRepository.findById(documentId)
+        Document document = documentRepository.findByIdForUpdate(documentId)
                 .orElseThrow(() -> new CustomException(ResumeErrorCode.DOCUMENT_NOT_FOUND));
 
         // 멱등성 처리 — 이미 최종 상태면 DB 갱신 없이 반환

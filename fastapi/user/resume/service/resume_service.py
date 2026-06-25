@@ -17,6 +17,7 @@ from user.resume.prompts.resume_prompts import (
 from user.resume.schema.request import AnalyzeDocumentRequest
 from user.resume.service.file_parser import FileParseError, parse_resume_file
 from user.resume.service.webhook_client import send_webhook
+from user.resume.service.webhook_outbox import send_final_webhook
 
 logger = logging.getLogger(__name__)
 
@@ -78,19 +79,19 @@ async def analyze_document(request: AnalyzeDocumentRequest) -> None:
                 usage_record = await _analyze_cover_letter(document_id, request)
     except FileParseError as e:
         logger.error(f"[{document_id}] File parse failed: {e.user_message}", exc_info=True)
-        await _send_webhook_safe(document_id, _failed_payload(document_id, e.user_message))
+        await _send_final_webhook_safe(document_id, _failed_payload(document_id, e.user_message))
     except APITimeoutError:
         logger.error(f"[{document_id}] OpenAI timeout", exc_info=True)
-        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["ai_timeout"]))
+        await _send_final_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["ai_timeout"]))
     except APIError as e:
         logger.error(f"[{document_id}] OpenAI API error: {e}", exc_info=True)
-        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["ai_error"]))
+        await _send_final_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["ai_error"]))
     except (json.JSONDecodeError, KeyError, ValueError) as e:
         logger.error(f"[{document_id}] AI response parse failed: {e}", exc_info=True)
-        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["parse_response"]))
+        await _send_final_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["parse_response"]))
     except Exception:
         logger.error(f"[{document_id}] Unexpected error", exc_info=True)
-        await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["unknown"]))
+        await _send_final_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["unknown"]))
 
     if usage_record is not None:
         await record_ai_usage(**usage_record)
@@ -212,7 +213,7 @@ async def _send_completed(document_id: str, result: dict) -> None:
     feedback_details = result["feedbackDetails"]
     feedback_text = json.dumps(feedback_details, ensure_ascii=False)
 
-    await _send_webhook_safe(
+    await _send_final_webhook_safe(
         document_id,
         {
             "documentId": document_id,
@@ -230,8 +231,19 @@ async def _send_completed(document_id: str, result: dict) -> None:
     logger.info(f"[{document_id}] Analysis completed successfully")
 
 
+async def _send_final_webhook_safe(document_id: str, payload: dict) -> None:
+    """최종 상태(COMPLETED / FAILED) — outbox 경유로 유실 방지."""
+    try:
+        await send_final_webhook(document_id, payload)
+    except Exception:
+        logger.error(
+            f"[{document_id}] 최종 webhook outbox 저장 실패 — status={payload.get('status')}", exc_info=True
+        )
+
+
 async def _send_webhook_safe(document_id: str, payload: dict) -> None:
+    """중간 상태(PENDING / ANALYZING) — best-effort 전송."""
     try:
         await send_webhook(document_id, payload)
     except Exception:
-        logger.error(f"[{document_id}] Webhook send failed — status={payload.get('status')}", exc_info=True)
+        logger.warning(f"[{document_id}] 중간 상태 webhook 전송 실패 (무시) — status={payload.get('status')}")

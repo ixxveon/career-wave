@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from admin.ai_metrics.client.openai_client import get_ai_metrics_openai_client
 from admin.ai_metrics.router import router as ai_metrics_router
+from user.resume.service.webhook_outbox import init_outbox_db, run_outbox_worker
 
 log = logging.getLogger(__name__)
 
@@ -17,6 +18,8 @@ scheduler = AsyncIOScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    init_outbox_db()
+    asyncio.create_task(run_outbox_worker())
     scheduler.start()
     yield
     if get_ai_metrics_openai_client.cache_info().currsize > 0:
