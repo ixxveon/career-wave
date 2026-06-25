@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { UserRound, Mail, Phone, ShieldCheck, Github } from "lucide-react";
+import { useSubscriptionStatus } from "@/hooks/user/subscription";
 import { updateDashboardProfile } from "@/api/user/dashboard";
 import {
   useDashboardGithub,
@@ -36,14 +37,6 @@ const ROLE_TYPE_LABELS: Record<UserProfile["roleType"], string> = {
   COMPANY: "기업 회원",
 };
 
-const SUBSCRIPTION_STATUS_LABELS: Record<
-  UserProfile["subscriptionStatus"],
-  string
-> = {
-  FREE: "무료",
-  PREMIUM: "프리미엄",
-};
-
 const MEMBER_STATUS_CONFIG: Record<
   UserProfile["memberStatus"],
   { label: string; className: string }
@@ -77,6 +70,12 @@ function UserMyPage() {
     refetch: refetchGithub,
   } = useDashboardGithub();
 
+  const {
+    subscribedItems,
+    unsubscribedItems,
+    isLoading: isSubscriptionLoading,
+  } = useSubscriptionStatus();
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<EditProfileForm>({
     name: "",
@@ -87,7 +86,8 @@ function UserMyPage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const isSavingProfileRef = useRef(false);
 
-  const isLoading = isProfileLoading || isGithubLoading;
+  const isLoading =
+    isProfileLoading || isGithubLoading || isSubscriptionLoading;
 
   function openEditModal() {
     if (!userProfile) return;
@@ -283,11 +283,15 @@ function UserMyPage() {
                 <span>로그인 ID</span>
                 <strong>{maskLoginId(userProfile.loginId)}</strong>
               </div>
+
               <div className="cw-info-row">
                 <span>구독 상태</span>
                 <strong>
-                  {SUBSCRIPTION_STATUS_LABELS[userProfile.subscriptionStatus] ??
-                    "무료"}
+                  {subscribedItems.length > 0
+                    ? subscribedItems
+                        .map((item) => `${item.title} 구독중`)
+                        .join(" · ")
+                    : "미구독"}
                 </strong>
               </div>
               <div className="cw-info-row">
