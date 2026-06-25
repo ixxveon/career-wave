@@ -942,21 +942,18 @@ CREATE TABLE ip_acl (
     ip_acl_id   BIGSERIAL    NOT NULL,
     label       VARCHAR(100) NOT NULL,
     ip_range    VARCHAR(50)  NOT NULL,
-    ip_active   VARCHAR(10)  NOT NULL DEFAULT 'ON',
     is_enabled  BOOLEAN      NOT NULL DEFAULT TRUE,
     description VARCHAR(200) NULL,
     created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_ip_acl         PRIMARY KEY (ip_acl_id),
-    CONSTRAINT uq_ip_acl_range   UNIQUE (ip_range),
-    CONSTRAINT chk_ip_acl_active CHECK (ip_active IN ('ON', 'OFF'))
+    CONSTRAINT pk_ip_acl       PRIMARY KEY (ip_acl_id),
+    CONSTRAINT uq_ip_acl_range UNIQUE (ip_range)
 );
 COMMENT ON TABLE  ip_acl              IS '관리자 IP 접근 제어 테이블';
 COMMENT ON COLUMN ip_acl.ip_acl_id   IS '설정 고유 식별자';
 COMMENT ON COLUMN ip_acl.label       IS '규칙명 (예: 본사 사내망)';
 COMMENT ON COLUMN ip_acl.ip_range    IS '허용 IP 대역 (CIDR 형식)';
-COMMENT ON COLUMN ip_acl.ip_active   IS 'IP 활성/비활성 상태 (ON / OFF)';
 COMMENT ON COLUMN ip_acl.is_enabled  IS '활성화 여부 (기본값 TRUE)';
 COMMENT ON COLUMN ip_acl.description IS '설정 설명';
 COMMENT ON COLUMN ip_acl.created_at  IS '등록 일시';

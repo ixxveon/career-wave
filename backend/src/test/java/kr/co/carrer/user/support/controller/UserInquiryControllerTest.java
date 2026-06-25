@@ -7,6 +7,7 @@ import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.principal.AuthPrincipal;
+import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
 import kr.co.carrer.user.support.dto.SupportDTO;
@@ -60,6 +61,9 @@ class UserInquiryControllerTest {
 
     @MockBean
     private TokenBlacklistStore tokenBlacklistStore;
+
+    @MockBean
+    private IpAclPort ipAclPort;
 
     @MockBean
     private AccountStatusPort accountStatusPort;

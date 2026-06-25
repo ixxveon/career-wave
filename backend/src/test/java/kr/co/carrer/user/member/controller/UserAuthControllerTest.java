@@ -6,6 +6,7 @@ import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
 import kr.co.carrer.user.member.service.UserLoginService;
@@ -36,6 +37,7 @@ class UserAuthControllerTest {
     @MockBean private UserMemberStatusService memberStatusService;
     @MockBean private JwtTokenProvider jwtTokenProvider;
     @MockBean private TokenBlacklistStore tokenBlacklistStore;
+    @MockBean private IpAclPort ipAclPort;
     @MockBean private CookieProperties cookieProperties;
 
     // ─── refresh cookie 없음 — 401 AUTH_REFRESH_INVALID ────────────────────────────
