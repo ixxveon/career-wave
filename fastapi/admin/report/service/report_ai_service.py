@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from functools import lru_cache
@@ -56,14 +57,15 @@ async def analyze_report(request: ReportAnalysisRequest) -> ReportAnalysisRespon
             f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
         )
 
-    # 사용량 적재 — 응답 파싱 이전에 호출해 토큰 소비분이 기록되도록 하며,
-    # 적재 실패는 분석 결과 반환에 영향을 주지 않는다(record_ai_usage 내부에서 예외를 흡수).
-    await record_ai_usage(
-        member_id=None,
-        admin_id=request.adminId,
-        model_name=settings.openai_model_deep,
-        feature_type=_REPORT_FEATURE_TYPE,
-        usage=usage,
+    # 사용량 적재 — 백그라운드로 실행하여 응답 지연을 방지하며, 파싱 전에 디스패치해 토큰 소비분이 기록되도록 한다.
+    asyncio.create_task(
+        record_ai_usage(
+            member_id=None,
+            admin_id=request.adminId,
+            model_name=settings.openai_model_deep,
+            feature_type=_REPORT_FEATURE_TYPE,
+            usage=usage,
+        )
     )
 
     raw = completion.choices[0].message.content or "{}"
