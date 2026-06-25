@@ -48,7 +48,10 @@ class SaraminScraper(ScraperAdapter):
                 params=self._search_params(),
             )
             response.raise_for_status()
-            payload = response.json()
+            try:
+                payload = response.json()
+            except ValueError:
+                return []
             inner_html = payload.get("innerHTML") if isinstance(payload, dict) else None
 
             soup = BeautifulSoup(inner_html or "", "lxml")

@@ -79,6 +79,78 @@ def test_wanted_scraper_test_connection_returns_false_on_request_error():
     assert scraper.test_connection() is False
 
 
+def test_wanted_scraper_keeps_html_fallback_after_sparse_detail_payload():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/v4/jobs":
+            return httpx.Response(
+                200,
+                json={"data": [{"id": 123, "position": "Backend Engineer", "company": {"name": "Career Wave"}}]},
+            )
+        if request.url.path == "/api/v4/jobs/123":
+            return httpx.Response(200, json={"job": {"skill_tags": [{"title": "Python"}]}})
+        if request.url.path == "/wd/123":
+            return httpx.Response(200, text="<html><section>Fallback description.</section></html>")
+        return httpx.Response(404)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://www.wanted.co.kr",
+    )
+    scraper = WantedScraper(client=client, request_delay_seconds=0)
+
+    notices = scraper.scrape()
+
+    assert len(notices) == 1
+    assert notices[0].description == "Fallback description."
+    assert notices[0].skill_tags == ["Python"]
+
+
+def test_wanted_scraper_returns_empty_list_for_invalid_list_payload():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text="<html>not json</html>")
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://www.wanted.co.kr",
+    )
+    scraper = WantedScraper(client=client, request_delay_seconds=0)
+
+    assert scraper.scrape() == []
+
+
+def test_wanted_scraper_maps_list_based_skill_tags_without_detail_payload():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/v4/jobs":
+            return httpx.Response(
+                200,
+                json={
+                    "data": [
+                        {
+                            "id": 123,
+                            "position": "Backend Engineer",
+                            "company": {"name": "Career Wave"},
+                            "intro": "List description.",
+                            "skills": [{"title": "Python"}, {"title": "FastAPI"}],
+                        }
+                    ]
+                },
+            )
+        if request.url.path == "/api/v4/jobs/123":
+            return httpx.Response(404)
+        return httpx.Response(404)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://www.wanted.co.kr",
+    )
+    scraper = WantedScraper(client=client, request_delay_seconds=0)
+
+    notices = scraper.scrape()
+
+    assert len(notices) == 1
+    assert notices[0].skill_tags == ["Python", "FastAPI"]
+
+
 def test_saramin_scraper_maps_search_html_to_raw_job_notices():
     search_html = """
     <html>
@@ -139,3 +211,16 @@ def test_saramin_scraper_test_connection_returns_false_for_forbidden_response():
     scraper = SaraminScraper(client=client)
 
     assert scraper.test_connection() is False
+
+
+def test_saramin_scraper_returns_empty_list_for_invalid_json_payload():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text="<html>not json</html>")
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://www.saramin.co.kr",
+    )
+    scraper = SaraminScraper(client=client, request_delay_seconds=0)
+
+    assert scraper.scrape() == []

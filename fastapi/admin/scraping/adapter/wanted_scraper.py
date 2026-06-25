@@ -51,7 +51,7 @@ class WantedScraper(ScraperAdapter):
                 detail = self._fetch_job_detail(client, item)
                 if detail is not None:
                     notice = self._merge_detail(notice, detail)
-                elif notice.description is None:
+                if notice.description is None:
                     description = self._fetch_html_description(client, notice.original_url)
                     if description:
                         notice = self._copy_notice(notice, description=description)
@@ -88,7 +88,11 @@ class WantedScraper(ScraperAdapter):
             params=self._list_params(limit=self._max_items, offset=0),
         )
         response.raise_for_status()
-        return response.json()
+        try:
+            payload = response.json()
+        except ValueError:
+            return {}
+        return payload if isinstance(payload, dict) else {}
 
     @staticmethod
     def _list_params(*, limit: int, offset: int) -> dict[str, str | int]:
@@ -177,7 +181,7 @@ class WantedScraper(ScraperAdapter):
             title=title,
             company_name=company,
             description=self._first(item, "intro", "description"),
-            skill_tags=self._string_list(self._first(item, "skills", "skill_tags", "tags")),
+            skill_tags=self._string_list(item.get("skills") or item.get("skill_tags") or item.get("tags")),
             job_type=self._first(item, "job_type"),
             company_size=self._first(item, "company_size"),
             job_category=self._company_industry(item)
