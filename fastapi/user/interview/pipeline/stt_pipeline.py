@@ -3,8 +3,9 @@ from collections import defaultdict
 
 from openai import AsyncOpenAI, OpenAIError
 
+from core.ai_usage.usage_log_client import record_ai_usage
 from core.config import get_settings
-from user.interview.websocket.interview_ws_handler import InterviewErrorCode, send_error, send_stt_final
+from user.interview.websocket.interview_ws_handler import InterviewErrorCode, _sessions, send_error, send_stt_final
 
 log = logging.getLogger(__name__)
 
@@ -97,9 +98,21 @@ async def transcribe_chunk(
         session_id, question_order, voice_quality_ratio, transcript[:50],
     )
 
-    from user.interview.websocket.interview_ws_handler import _sessions
     ctx = _sessions.get(session_id)
     if ctx is not None:
         ctx.voice_quality_by_order[question_order] = voice_quality_ratio
+
+    # STT 사용량 적재 — input_tokens: 오디오 duration(초) 기반 환산값 (실제 토큰 아님)
+    audio_duration_seconds = getattr(response, "duration", None)
+    if audio_duration_seconds is not None:
+        member_id = ctx.member_id if ctx is not None else None
+        await record_ai_usage(
+            member_id=member_id,
+            model_name=settings.openai_model_stt,
+            feature_type="INTERVIEW_STT",
+            input_tokens=max(1, round(audio_duration_seconds)),
+            output_tokens=0,
+            session_id=session_id,
+        )
 
     await send_stt_final(session_id, transcript, question_order, voice_quality_ratio)

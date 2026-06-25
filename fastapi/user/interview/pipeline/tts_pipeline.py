@@ -11,6 +11,7 @@ import logging
 
 from openai import AsyncOpenAI, OpenAIError
 
+from core.ai_usage.usage_log_client import record_ai_usage
 from core.config import get_settings
 from user.interview.websocket.interview_ws_handler import (
     InterviewErrorCode,
@@ -80,3 +81,15 @@ async def synthesize_and_stream(
 
     await send_tts_audio(session_id, "", question_order, 0, is_final=True)
     log.info("[Session: %s] TTS complete: questionOrder=%d", session_id, question_order)
+
+    # TTS 사용량 적재 — input_tokens: 입력 글자 수 (실제 토큰 아님)
+    ctx = _sessions.get(session_id)
+    member_id = ctx.member_id if ctx is not None else None
+    await record_ai_usage(
+        member_id=member_id,
+        model_name=settings.openai_model_tts,
+        feature_type="INTERVIEW_TTS",
+        input_tokens=max(1, len(text)),
+        output_tokens=0,
+        session_id=session_id,
+    )

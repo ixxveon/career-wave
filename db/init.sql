@@ -1148,7 +1148,7 @@ CREATE TABLE ai_usage_logs (
     CONSTRAINT fk_ai_usage_admin    FOREIGN KEY (admin_id)    REFERENCES admins (admin_id),
     CONSTRAINT fk_ai_usage_session  FOREIGN KEY (session_id)  REFERENCES interview_sessions (session_id),
     CONSTRAINT fk_ai_usage_model    FOREIGN KEY (ai_model_id) REFERENCES ai_models (ai_model_id),
-    CONSTRAINT chk_ai_usage_feature CHECK (feature_type IN ('DOCUMENT', 'INTERVIEW', 'ADMIN_CS', 'ADMIN_REPORT')),
+    CONSTRAINT chk_ai_usage_feature CHECK (feature_type IN ('DOCUMENT', 'INTERVIEW', 'INTERVIEW_STT', 'INTERVIEW_TTS', 'ADMIN_CS', 'ADMIN_REPORT')),
     CONSTRAINT chk_ai_usage_actor   CHECK (
         (member_id IS NOT NULL AND admin_id IS NULL)
         OR
