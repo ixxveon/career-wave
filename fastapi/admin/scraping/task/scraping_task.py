@@ -101,7 +101,10 @@ class ScrapingTask:
         action_type: ScrapingActionType,
     ) -> ScrapingTaskResult:
         started_at = perf_counter()
-        if self._has_injected_services():
+        if self._has_any_injected_service():
+            self._ensure_required_injected_services(action_type)
+            assert self._pipeline_status_service is not None
+            assert self._scraping_log_service is not None
             return self._execute_with_services(
                 source_name=source_name,
                 action_type=action_type,
@@ -131,12 +134,24 @@ class ScrapingTask:
                 session.commit()
                 raise
 
-    def _has_injected_services(self) -> bool:
+    def _has_any_injected_service(self) -> bool:
         return (
             self._pipeline_status_service is not None
-            and self._scraping_log_service is not None
-            and self._job_notice_dedup_service is not None
+            or self._scraping_log_service is not None
+            or self._job_notice_dedup_service is not None
         )
+
+    def _ensure_required_injected_services(self, action_type: ScrapingActionType) -> None:
+        missing_services: list[str] = []
+        if self._pipeline_status_service is None:
+            missing_services.append("pipeline_status_service")
+        if self._scraping_log_service is None:
+            missing_services.append("scraping_log_service")
+        if action_type != ScrapingActionType.TEST and self._job_notice_dedup_service is None:
+            missing_services.append("job_notice_dedup_service")
+
+        if missing_services:
+            raise ValueError(f"Missing injected scraping services: {', '.join(missing_services)}")
 
     def _execute_with_services(
         self,
@@ -146,7 +161,7 @@ class ScrapingTask:
         started_at: float,
         pipeline_status_service: _PipelineStatusService,
         scraping_log_service: _ScrapingLogService,
-        job_notice_dedup_service: _JobNoticeDedupService,
+        job_notice_dedup_service: _JobNoticeDedupService | None,
     ) -> ScrapingTaskResult:
         try:
             if action_type == ScrapingActionType.TEST:
@@ -181,6 +196,9 @@ class ScrapingTask:
                 )
                 for raw_notice in raw_notices
             ]
+
+            if job_notice_dedup_service is None:
+                raise RuntimeError("job_notice_dedup_service is required for scraping execution.")
 
             if action_type == ScrapingActionType.RUN:
                 job_notice_dedup_service.save_for_run(normalized_notices)
