@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.global.response.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -15,6 +16,7 @@ import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+@Slf4j
 public class IpAclFilter extends OncePerRequestFilter {
 
     private final IpAclPort ipAclPort;
@@ -67,7 +69,10 @@ public class IpAclFilter extends OncePerRequestFilter {
                 if (matchesCidr(clientIp, cidr)) {
                     return true;
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                // 잘못된 IP/CIDR 값이 활성 ACL로 저장된 경우 — 해당 항목만 건너뛰되,
+                // 조용히 무시하면 관리자 접근이 의도치 않게 차단될 수 있으므로 경고 로그를 남긴다.
+                log.warn("ip_acl에 잘못된 IP/CIDR 값이 저장되어 매칭을 건너뜁니다. cidr={}", cidr, e);
             }
         }
         return false;
