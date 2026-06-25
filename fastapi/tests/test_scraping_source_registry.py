@@ -21,13 +21,24 @@ def test_supported_source_registry_contains_only_wanted_and_saramin():
 
 def test_supported_source_registry_entries_follow_extension_contract():
     for source_name, entry in SUPPORTED_SOURCE_REGISTRY.items():
-        assert source_name == entry.source_name
-        assert source_name == source_name.lower()
-        assert source_name.strip() == source_name
-        assert source_name
-        assert entry.display_name.strip() == entry.display_name
-        assert entry.display_name
-        assert entry.adapter_name == f"{source_name}_scraper"
+        assert source_name == entry.source_name, (
+            f"[{source_name}] source_name must match registry key, got '{entry.source_name}'"
+        )
+        assert source_name == source_name.lower(), (
+            f"[{source_name}] source_name must be lowercase"
+        )
+        assert source_name.strip() == source_name, (
+            f"[{source_name}] source_name must not contain leading/trailing whitespace"
+        )
+        assert source_name, f"[{source_name}] source_name must not be empty"
+        assert entry.display_name.strip() == entry.display_name, (
+            f"[{source_name}] display_name must not contain leading/trailing whitespace"
+        )
+        assert entry.display_name, f"[{source_name}] display_name must not be empty"
+        assert entry.adapter_name == f"{source_name}_scraper", (
+            f"[{source_name}] adapter_name must be '{source_name}_scraper', "
+            f"got '{entry.adapter_name}'"
+        )
 
 
 @pytest.mark.parametrize("source_name", ["wanted", "saramin"])
