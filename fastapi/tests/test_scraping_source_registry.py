@@ -19,6 +19,17 @@ def test_supported_source_registry_contains_only_wanted_and_saramin():
     assert SUPPORTED_SOURCE_REGISTRY["saramin"].adapter_name == "saramin_scraper"
 
 
+def test_supported_source_registry_entries_follow_extension_contract():
+    for source_name, entry in SUPPORTED_SOURCE_REGISTRY.items():
+        assert source_name == entry.source_name
+        assert source_name == source_name.lower()
+        assert source_name.strip() == source_name
+        assert source_name
+        assert entry.display_name.strip() == entry.display_name
+        assert entry.display_name
+        assert entry.adapter_name == f"{source_name}_scraper"
+
+
 @pytest.mark.parametrize("source_name", ["wanted", "saramin"])
 def test_is_supported_source_returns_true_for_registered_sources(source_name: str):
     assert is_supported_source(source_name) is True
