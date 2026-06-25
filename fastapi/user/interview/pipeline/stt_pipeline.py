@@ -63,6 +63,9 @@ async def transcribe_chunk(
     settings = get_settings()
     client = AsyncOpenAI(api_key=settings.openai_api_key)
 
+    # Whisper await 전에 member_id 캡처 — 응답 대기 중 세션이 만료되어도 사용량 기록 가능
+    member_id: str | None = _sessions.get(session_id) and _sessions[session_id].member_id or None
+
     try:
         audio_file = ("audio.webm", merged_audio, "audio/webm")
         response = await client.audio.transcriptions.create(
@@ -105,7 +108,6 @@ async def transcribe_chunk(
     # STT 사용량 적재 — input_tokens: 오디오 duration(초) 기반 환산값 (실제 토큰 아님)
     audio_duration_seconds = getattr(response, "duration", None)
     if audio_duration_seconds is not None:
-        member_id = ctx.member_id if ctx is not None else None
         await record_ai_usage(
             member_id=member_id,
             model_name=settings.openai_model_stt,
