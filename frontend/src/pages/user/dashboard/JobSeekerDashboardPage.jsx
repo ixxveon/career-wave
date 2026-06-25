@@ -79,6 +79,12 @@ function formatDeadline(deadline) {
     return '상시 채용';
   }
 
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(deadline);
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    return `~ ${year}. ${month}. ${day}.`;
+  }
+
   const parsedDate = new Date(deadline);
   if (Number.isNaN(parsedDate.getTime())) {
     return deadline;
@@ -88,6 +94,7 @@ function formatDeadline(deadline) {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
+    timeZone: 'Asia/Seoul',
   })}`;
 }
 
@@ -120,18 +127,20 @@ function JobSeekerDashboardPage() {
     isError: isRecommendedJobsError,
     isLoading: isRecommendedJobsLoading,
     refetch: refetchRecommendedJobs,
-  } = useJobNoticeList(RECOMMENDED_JOB_QUERY_PARAMS);
+  } = useJobNoticeList(RECOMMENDED_JOB_QUERY_PARAMS, { enabled: isLoggedIn });
   const recommendedJobs =
     recommendedJobListApiResponse?.data?.content
       ?.map(mapJobNoticeApiToViewModel)
       .map(toRecommendedJobCard) ?? [];
-  const recommendedJobsStatus = isRecommendedJobsLoading
-    ? 'loading'
-    : isRecommendedJobsError
-      ? 'error'
-      : recommendedJobs.length > 0
-        ? 'success'
-        : 'empty';
+  const recommendedJobsStatus = !isLoggedIn
+    ? 'guest'
+    : isRecommendedJobsLoading
+      ? 'loading'
+      : isRecommendedJobsError
+        ? 'error'
+        : recommendedJobs.length > 0
+          ? 'success'
+          : 'empty';
 
   return (
     <div className="cw-page cw-home">
@@ -224,7 +233,7 @@ function JobSeekerDashboardPage() {
                 <article className="cw-home-job" key={job.id}>
                   <div className="cw-home-job__head">
                     <span className={`cw-home-job__logo is-${job.logoClass}`}>{job.logo}</span>
-                    <button type="button" aria-label={`${job.title} 저장`} tabIndex={isLoggedIn ? 0 : -1}>
+                    <button type="button" aria-label={`${job.title} 저장 준비 중`} disabled>
                       <Bookmark size={20} />
                     </button>
                   </div>
