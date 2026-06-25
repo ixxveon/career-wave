@@ -1,7 +1,10 @@
 package kr.co.carrer.global.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.co.carrer.auth.filter.AccountStatusAuthorizationFilter;
 import kr.co.carrer.auth.filter.AccountStatusPort;
+import kr.co.carrer.auth.filter.IpAclFilter;
+import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
@@ -34,6 +37,8 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
     private final List<AccountStatusPort> accountStatusPorts;
+    private final IpAclPort ipAclPort;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -59,6 +64,10 @@ public class SecurityConfig {
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler)
+            )
+            .addFilterBefore(
+                new IpAclFilter(ipAclPort, objectMapper),
+                JwtAuthenticationFilter.class
             )
             .addFilterBefore(
                 new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
