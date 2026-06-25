@@ -93,6 +93,6 @@ class UsageLogCreateRequest(AiMetricsRequestBase):
 
     @model_validator(mode="after")
     def validate_model_identifier(self):
-        if self.ai_model_id is None and not self.model_name:
-            raise ValueError("Either aiModelId or modelName is required.")
+        if self.ai_model_id is None and not (self.model_name or "").strip():
+            raise ValueError("Either aiModelId or a non-blank modelName is required.")
         return self

@@ -83,10 +83,7 @@ class UsageLogService:
                 detail={"field": "modelName"},
             )
 
-        ai_model = self._ai_model_repository.find_by_model_name(model_name)
-        if ai_model is None:
-            return None
-        return ai_model
+        return self._ai_model_repository.find_by_model_name(model_name)
 
     def _build_persist_request(
         self,

@@ -111,6 +111,12 @@ export const JOB_NOTICE_FILTER_OPTIONS = {
   companySize: [JOB_NOTICE_ALL_FILTER_VALUE, '스타트업', '중견', '대기업'],
 } as const;
 
+export const JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES = {
+  스타트업: 'STARTUP',
+  중견: 'SME',
+  대기업: 'LARGE',
+} as const;
+
 export const JOB_TYPE_LABELS = {
   FULLTIME: '정규직',
   INTERN: '인턴',
@@ -128,6 +134,12 @@ export const CAREER_LEVEL_LABELS = {
   JUNIOR: '신입',
   SENIOR: '경력',
   ANY: '경력무관',
+} as const;
+
+export const COMPANY_SIZE_LABELS = {
+  STARTUP: '스타트업',
+  SME: '중견',
+  LARGE: '대기업',
 } as const;
 
 export const JOB_NOTICE_PERIOD_OPTIONS = ['today', '7d', '30d', 'all'] as const;
@@ -173,6 +185,10 @@ function getPrimaryJobCategory(jobCategory: JobNoticeSummary['jobCategory']) {
 export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoticeDetail): JobNotice {
   const jobCategory = getPrimaryJobCategory(jobNotice.jobCategory);
   const tags = jobNotice.skillTags ?? [];
+  const companySize =
+    jobNotice.companySize in COMPANY_SIZE_LABELS
+      ? COMPANY_SIZE_LABELS[jobNotice.companySize as keyof typeof COMPANY_SIZE_LABELS]
+      : jobNotice.companySize;
 
   return {
     id: jobNotice.jobNoticeId,
@@ -182,7 +198,7 @@ export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoti
     jobCategory,
     careerLevel: jobNotice.careerLevel,
     location: jobNotice.location,
-    companySize: jobNotice.companySize,
+    companySize,
     salary: jobNotice.salary ?? undefined,
     deadline: jobNotice.deadline ?? '',
     postedAt: jobNotice.createdAt,

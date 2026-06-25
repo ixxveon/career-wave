@@ -199,7 +199,21 @@ def test_usage_log_create_request_requires_model_identifier():
             cost=Decimal("0"),
         )
 
-    assert "Either aiModelId or modelName is required." in str(error.value)
+    assert "Either aiModelId or a non-blank modelName is required." in str(error.value)
+
+
+def test_usage_log_create_request_rejects_blank_model_name():
+    with pytest.raises(ValidationError) as error:
+        UsageLogCreateRequest(
+            memberId=UUID("55555555-5555-5555-5555-555555555555"),
+            modelName="   ",
+            featureType="DOCUMENT",
+            inputTokens=100,
+            outputTokens=50,
+            cost=Decimal("0"),
+        )
+
+    assert "Either aiModelId or a non-blank modelName is required." in str(error.value)
 
 
 def test_usage_log_service_raises_when_model_name_does_not_match():

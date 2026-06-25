@@ -79,7 +79,9 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 result.getNumber() + 1,
                 result.getSize(),
                 result.getTotalElements(),
-                result.getTotalPages()
+                result.getTotalPages(),
+                createListStats(),
+                createFilterOptions()
         );
     }
 
@@ -175,6 +177,32 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
         return bookmarkRepository.findByMemberIdAndJobNoticeIdIn(memberId, jobNoticeIds).stream()
                 .map(Bookmark::getJobNoticeId)
                 .collect(HashSet::new, HashSet::add, HashSet::addAll);
+    }
+
+    private JobNoticeDTO.ResponseListStats createListStats() {
+        long totalOpenCount = jobNoticeQueryRepository.countActiveJobNotices();
+        long todayNewCount = jobNoticeQueryRepository.countTodayNewActiveJobNotices();
+        double todayNewRate = totalOpenCount == 0
+                ? 0
+                : Math.round((todayNewCount * 10000.0) / totalOpenCount) / 100.0;
+
+        return new JobNoticeDTO.ResponseListStats(
+                totalOpenCount,
+                todayNewCount,
+                null,
+                todayNewRate
+        );
+    }
+
+    private JobNoticeDTO.ResponseFilterOptions createFilterOptions() {
+        // TODO: 필터 옵션은 변경 빈도가 낮으므로 정책 확정 후 캐시 적용을 검토한다.
+        return new JobNoticeDTO.ResponseFilterOptions(
+                jobNoticeQueryRepository.findDistinctActiveJobTypes(),
+                jobNoticeQueryRepository.findDistinctActiveJobCategories(),
+                jobNoticeQueryRepository.findDistinctActiveCareerLevels(),
+                jobNoticeQueryRepository.findDistinctActiveLocations(),
+                jobNoticeQueryRepository.findDistinctActiveCompanySizes()
+        );
     }
 
     private boolean isBookmarked(UUID memberId, Long jobNoticeId) {
