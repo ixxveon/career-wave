@@ -13,6 +13,7 @@ import random
 
 from openai import AsyncOpenAI, OpenAIError
 
+from core.ai_usage.usage_log_client import record_ai_usage
 from core.config import get_settings
 from core.spring_client import QuestionPayload, send_question_to_spring
 from user.interview.prompts.interview_prompts import (
@@ -115,19 +116,29 @@ async def _call_llm(session_id: str, ctx: _SessionContext, settings) -> dict[str
     """GPT-4o 호출 후 JSON 파싱. 실패 시 1회 재시도."""
     client = _get_openai_client()
     messages = _build_messages(ctx)
+    model = settings.openai_model_interview
 
-    raw = await _chat(client, settings.openai_model_interview, messages)
+    raw, usage = await _chat(client, model, messages)
     try:
-        return _parse_llm_json(raw)
+        result = _parse_llm_json(raw)
     except (json.JSONDecodeError, KeyError, ValueError):
         log.warning("[Session: %s] LLM JSON parse failed, retrying with format hint", session_id)
         messages.append({"role": "assistant", "content": raw})
         messages.append({"role": "user", "content": "JSON 형식으로만 답해줘."})
-        raw2 = await _chat(client, settings.openai_model_interview, messages)
-        return _parse_llm_json(raw2)
+        raw2, usage = await _chat(client, model, messages)
+        result = _parse_llm_json(raw2)
+
+    await record_ai_usage(
+        member_id=ctx.member_id,
+        model_name=model,
+        feature_type="INTERVIEW",
+        usage=usage,
+        session_id=session_id,
+    )
+    return result
 
 
-async def _chat(client: AsyncOpenAI, model: str, messages: list[dict]) -> str:
+async def _chat(client: AsyncOpenAI, model: str, messages: list[dict]) -> tuple[str, object]:
     response = await client.chat.completions.create(
         model=model,
         messages=messages,  # type: ignore[arg-type]
@@ -136,7 +147,7 @@ async def _chat(client: AsyncOpenAI, model: str, messages: list[dict]) -> str:
     )
     content = response.choices[0].message.content or ""
     log.debug("LLM usage: tokens=%s", response.usage)
-    return content
+    return content, response.usage
 
 
 def _parse_llm_json(raw: str) -> dict[str, str]:
