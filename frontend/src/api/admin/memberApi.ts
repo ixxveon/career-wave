@@ -48,6 +48,13 @@ export interface MemberItem {
   lastLoginAt: string;
 }
 
+export interface MemberDetailItem extends MemberItem {
+  sanctionType: SanctionType | null;
+  suspendDuration: SuspendDuration | null;
+  suspendStartDate: string | null;
+  suspendEndDate: string | null;
+}
+
 export interface MemberListData extends PageMeta {
   items: MemberItem[];
 }
@@ -135,7 +142,7 @@ export const memberApi = {
 
   // 개인 회원 상세 조회
   getMemberDetail: (memberId: string) =>
-    axiosInstance.get<ApiResponse<MemberItem>>(`/api/v1/admin/members/${memberId}`),
+    axiosInstance.get<ApiResponse<MemberDetailItem>>(`/api/v1/admin/members/${memberId}`),
 
   // 회원 제재 처리
   sanctionMember: (memberId: string, data: SanctionRequest) =>

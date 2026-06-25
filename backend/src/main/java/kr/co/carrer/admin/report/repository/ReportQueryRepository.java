@@ -123,7 +123,7 @@ public class ReportQueryRepository {
         String sql = """
             SELECT r.report_id, r.target_type, r.target_id, r.reason, r.report_status,
                    reporter.name AS reporter_name, victim.name AS reported_name,
-                   r.ai_suggestion, r.created_at, r.processed_at, r.processed_by
+                   r.ai_suggestion, r.created_at, r.processed_at, r.processed_by, r.member_id
             FROM reports r
             JOIN members reporter ON reporter.member_id = r.reporter_id
             JOIN members victim   ON victim.member_id   = r.member_id
@@ -149,7 +149,8 @@ public class ReportQueryRepository {
             (String) row[7], // aiSuggestion — 서비스 레이어에서 FastAPI 호출 후 갱신 가능
             toZonedDateTime(row[8]),
             toZonedDateTime(row[9]),
-            row[10] != null ? ((Number) row[10]).longValue() : null
+            row[10] != null ? ((Number) row[10]).longValue() : null,
+            java.util.UUID.fromString(row[11].toString())
         ));
     }
 }
