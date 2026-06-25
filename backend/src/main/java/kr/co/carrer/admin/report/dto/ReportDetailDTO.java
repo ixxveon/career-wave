@@ -6,6 +6,7 @@ import kr.co.carrer.admin.report.type.ReportStatus;
 import kr.co.carrer.admin.report.type.TargetType;
 
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 public class ReportDetailDTO {
 
@@ -43,7 +44,8 @@ public class ReportDetailDTO {
         @Schema(description = "AI 검토 의견 JSON (severity/category/suggestion, AI 미호출 시 null)") String aiSuggestion,
         @Schema(description = "신고 접수 일시") ZonedDateTime createdAt,
         @Schema(description = "처리 일시 (미처리 시 null)") ZonedDateTime processedAt,
-        @Schema(description = "처리한 관리자 ID (미처리 시 null)") Long processedBy
+        @Schema(description = "처리한 관리자 ID (미처리 시 null)") Long processedBy,
+        @Schema(description = "피신고 회원 UUID") UUID memberId
     ) {}
 
     @Schema(description = "신고 처리 응답")

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Bot, Clock, EyeOff, Flag, UserX } from 'lucide-react';
 import { reportApi, REPORT_STATUS, type ReportItem, type ReportSummary, type ReportStatus, type TargetType, type ReportReason, type ReportDetail, type AiSuggestion } from '../../../api/admin/reportApi';
+import { memberApi } from '../../../api/admin/memberApi';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Report.css';
 
@@ -67,6 +68,7 @@ interface ReportWithAi extends ReportItem {
   targetId?: ReportDetail['targetId'];
   processedAt?: ReportDetail['processedAt'];
   processedBy?: ReportDetail['processedBy'];
+  memberId?: ReportDetail['memberId'];
 }
 
 export default function ReportPage() {
@@ -151,17 +153,34 @@ export default function ReportPage() {
     setCheckedIds((prev) => (checked ? [...prev, id] : prev.filter((v) => v !== id)));
 
 
-  const requestUserAiReview = (reportId: number) => {
+  const requestUserAiReview = async (reportId: number, memberId: string) => {
     setUserAiLoading(reportId);
-    setTimeout(() => {
-      const mockReview: UserAiReview = {
-        reportCount: 3, warningCount: 1, riskLevel: '중간', recommendation: 'WARNING',
-        summary: 'AI 분석 결과 최근 활동에서 반복적인 가이드라인 위반 패턴이 감지되었습니다. 경고 조치를 권고합니다.',
-      };
-      setReports((prev) => prev.map((r) => (r.reportId === reportId ? { ...r, userAiReview: mockReview } : r)));
-      setSelected((prev) => (prev && prev.reportId === reportId ? { ...prev, userAiReview: mockReview } : prev));
+    try {
+      const res = await memberApi.getMemberDetail(memberId);
+      if (!res.data.success) return;
+      const { warningCount, reportCount } = res.data.data;
+      const riskLevel: Severity =
+        reportCount >= 5 ? '높음' : reportCount >= 3 ? '중간' : '낮음';
+      const recommendation: SanctionRec =
+        warningCount >= WARN_THRESHOLD
+          ? 'BLACKLIST'
+          : warningCount >= WARN_THRESHOLD - 1
+          ? 'SUSPEND'
+          : reportCount >= 3
+          ? 'WARNING'
+          : 'NONE';
+      const summary =
+        warningCount >= WARN_THRESHOLD
+          ? `누적 경고 ${warningCount}회로 제재 기준을 초과했습니다. 이용 정지 또는 영구 제재를 권고합니다.`
+          : reportCount >= 3
+          ? `누적 신고 ${reportCount}건이 접수되어 있습니다. 경고 조치를 권고합니다.`
+          : `현재까지 경고 ${warningCount}회, 신고 ${reportCount}건이 기록되어 있습니다.`;
+      const review: UserAiReview = { reportCount: Number(reportCount), warningCount, riskLevel, recommendation, summary };
+      setReports((prev) => prev.map((r) => (r.reportId === reportId ? { ...r, userAiReview: review } : r)));
+      setSelected((prev) => (prev && prev.reportId === reportId ? { ...prev, userAiReview: review } : prev));
+    } finally {
       setUserAiLoading(null);
-    }, 1500);
+    }
   };
 
   const applySuspend = () => {
@@ -175,9 +194,9 @@ export default function ReportPage() {
   const openDetail = async (item: ReportWithAi) => {
     try {
       const res = await reportApi.getReportDetail(item.reportId);
-      setSelected({ ...item, ...res.data.data });
+      setSelected({ ...item, ...res.data.data, userAiReview: undefined });
     } catch {
-      setSelected(item);
+      alert('신고 상세를 불러오지 못했습니다.');
     }
   };
 
@@ -489,8 +508,8 @@ export default function ReportPage() {
                 ) : (
                   <button
                     className="aiReviewBtn"
-                    disabled={userAiLoading === selected.reportId}
-                    onClick={() => requestUserAiReview(selected.reportId)}
+                    disabled={userAiLoading === selected.reportId || !selected.memberId}
+                    onClick={() => selected.memberId && requestUserAiReview(selected.reportId, selected.memberId)}
                   >
                     <UserX size={14} />
                     {userAiLoading === selected.reportId ? '분석 중...' : '대상 회원 AI 검토 요청'}

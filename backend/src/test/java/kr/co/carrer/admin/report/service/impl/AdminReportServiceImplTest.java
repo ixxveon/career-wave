@@ -368,7 +368,8 @@ class AdminReportServiceImplTest {
             ReportReason.SPAM, ReportStatus.PENDING,
             "신고자", "피신고자",
             null, null, "{\"severity\":\"높음\",\"category\":\"SPAM\",\"suggestion\":\"테스트\"}",
-            ZonedDateTime.now(), null, null
+            ZonedDateTime.now(), null, null,
+            java.util.UUID.randomUUID()
         );
     }
 
@@ -378,7 +379,8 @@ class AdminReportServiceImplTest {
             ReportReason.SPAM, ReportStatus.PENDING,
             "신고자", "피신고자",
             null, null, null,
-            ZonedDateTime.now(), null, null
+            ZonedDateTime.now(), null, null,
+            java.util.UUID.randomUUID()
         );
     }
 
