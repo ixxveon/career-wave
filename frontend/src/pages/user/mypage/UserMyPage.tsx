@@ -240,36 +240,12 @@ function UserMyPage() {
 
             <p>Career Wave에서 계정 정보와 연동 상태를 관리 중입니다.</p>
 
-            <span className="cw-profile-status">이메일 인증 완료</span>
-          </div>
-          <div className="cw-account-profile-card">
-            <div className="cw-profile-avatar">
-              <UserRound size={34} />
-            </div>
-
-            <div className="cw-profile-main">
-              <div className="cw-profile-header">
-                <h3>{userProfile.name}님</h3>
-
-                <button
-                  type="button"
-                  className="cw-profile-edit-button"
-                  onClick={openEditModal}
-                >
-                  <Pencil size={16} />
-                  정보 수정
-                </button>
-              </div>
-
-              <p>Career Wave에서 계정 정보와 연동 상태를 관리 중입니다.</p>
-
-              <span className="cw-profile-status">
-                {userProfile.email ? "이메일 인증 완료" : "이메일 미등록"}
-              </span>
-            </div>
+            <span className="cw-profile-status">
+              {userProfile.email ? "이메일 인증 완료" : "이메일 미등록"}
+            </span>
           </div>
         </div>
-        
+
         <div className="cw-account-grid">
           <section className="cw-account-card">
             <div className="cw-card-title has-action">
