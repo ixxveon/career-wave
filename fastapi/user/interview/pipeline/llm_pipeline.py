@@ -64,7 +64,7 @@ async def generate_and_deliver_question(
     next_question_order = question_order + 1
 
     if next_question_order > 10:
-        log.info("[Session: %s] max questions reached (%d), triggering report", session_id, settings.max_question_count)
+        log.info("[Session: %s] max questions reached, triggering report", session_id)
         from user.interview.pipeline import report_pipeline
         await report_pipeline.generate_and_send_report(session_id, ctx.session_type or "TEXT")
         return
