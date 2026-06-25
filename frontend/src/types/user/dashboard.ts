@@ -5,7 +5,7 @@ export type { MemberStatus } from "@/types/user/member";
 export interface UserProfile {
   memberId: string;
   loginId: string;
-  email: string;
+  email: string | null;
   name: string;
   phone: string;
   roleType: "USER" | "COMPANY";

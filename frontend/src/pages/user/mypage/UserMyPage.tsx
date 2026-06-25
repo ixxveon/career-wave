@@ -11,7 +11,8 @@ import type { UserProfile } from "@/types/user/dashboard";
 
 import "@/styles/user/mypage/MyPage.css";
 
-function maskEmail(email: string) {
+function maskEmail(email: string | null) {
+  if (!email) return '이메일 없음';
   const [localPart, domain] = email.split("@");
 
   if (!localPart || !domain) {
@@ -218,7 +219,9 @@ function UserMyPage() {
             <p>Career Wave에서 계정 정보와 연동 상태를 관리 중입니다.</p>
           </div>
 
-          <span className="cw-profile-status">이메일 인증 완료</span>
+          <span className="cw-profile-status">
+            {userProfile.email ? '이메일 인증 완료' : '이메일 미등록'}
+          </span>
         </div>
 
         <div className="cw-account-grid">
