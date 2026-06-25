@@ -61,6 +61,15 @@ function getCompanyLogo(job) {
   return job.company?.trim().slice(0, 1).toUpperCase() || 'C';
 }
 
+function getLogoClass(source) {
+  const normalizedSource = source?.trim().toLowerCase();
+  if (normalizedSource === 'naver') return 'naver';
+  if (normalizedSource === 'kakao') return 'kakao';
+  if (normalizedSource === 'wanted') return 'wanted';
+  if (normalizedSource === 'saramin') return 'saramin';
+  return 'wave';
+}
+
 function getCareerLabel(careerLevel) {
   return CAREER_LEVEL_LABELS[careerLevel] ?? careerLevel ?? '경력무관';
 }
@@ -86,6 +95,7 @@ function toRecommendedJobCard(job) {
   return {
     id: job.id,
     logo: getCompanyLogo(job),
+    logoClass: getLogoClass(job.source),
     title: job.title,
     company: job.company,
     location: job.location || '지역 미정',
@@ -114,7 +124,6 @@ function JobSeekerDashboardPage() {
   const recommendedJobs =
     recommendedJobListApiResponse?.data?.content
       ?.map(mapJobNoticeApiToViewModel)
-      .slice(0, 3)
       .map(toRecommendedJobCard) ?? [];
   const recommendedJobsStatus = isRecommendedJobsLoading
     ? 'loading'
@@ -214,7 +223,7 @@ function JobSeekerDashboardPage() {
               {recommendedJobs.map((job) => (
                 <article className="cw-home-job" key={job.id}>
                   <div className="cw-home-job__head">
-                    <span className="cw-home-job__logo is-wave">{job.logo}</span>
+                    <span className={`cw-home-job__logo is-${job.logoClass}`}>{job.logo}</span>
                     <button type="button" aria-label={`${job.title} 저장`} tabIndex={isLoggedIn ? 0 : -1}>
                       <Bookmark size={20} />
                     </button>

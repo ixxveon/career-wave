@@ -635,6 +635,16 @@
   font-size: 14px;
 }
 
+.cw-home-job__logo.is-wanted {
+  background: #3366ff;
+  font-size: 22px;
+}
+
+.cw-home-job__logo.is-saramin {
+  background: #4876ef;
+  font-size: 22px;
+}
+
 .cw-home-job__logo.is-wave {
   background: linear-gradient(135deg, #18b8ff 8%, #1548db 58%, #f6fbff 59%);
 }
