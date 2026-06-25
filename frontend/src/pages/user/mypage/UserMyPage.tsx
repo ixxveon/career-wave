@@ -1,6 +1,13 @@
 import { useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { UserRound, Mail, Phone, ShieldCheck, Github } from "lucide-react";
+import {
+  UserRound,
+  Mail,
+  Phone,
+  ShieldCheck,
+  Github,
+  Pencil,
+} from "lucide-react";
 import { useSubscriptionStatus } from "@/hooks/user/subscription";
 import { updateDashboardProfile } from "@/api/user/dashboard";
 import {
@@ -13,7 +20,7 @@ import type { UserProfile } from "@/types/user/dashboard";
 import "@/styles/user/mypage/MyPage.css";
 
 function maskEmail(email: string | null) {
-  if (!email) return '이메일 없음';
+  if (!email) return "이메일 없음";
   const [localPart, domain] = email.split("@");
 
   if (!localPart || !domain) {
@@ -78,6 +85,7 @@ function UserMyPage() {
     isLoading: isSubscriptionLoading,
     isError: hasSubscriptionError,
   } = useSubscriptionStatus();
+
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<EditProfileForm>({
@@ -217,15 +225,51 @@ function UserMyPage() {
           </div>
 
           <div className="cw-profile-main">
-            <h3>{userProfile.name}님</h3>
+            <div className="cw-profile-header">
+              <h3>{userProfile.name}님</h3>
+
+              <button
+                type="button"
+                className="cw-profile-edit-button"
+                onClick={openEditModal}
+              >
+                <Pencil size={16} />
+                정보 수정
+              </button>
+            </div>
+
             <p>Career Wave에서 계정 정보와 연동 상태를 관리 중입니다.</p>
+
+            <span className="cw-profile-status">이메일 인증 완료</span>
           </div>
+          <div className="cw-account-profile-card">
+            <div className="cw-profile-avatar">
+              <UserRound size={34} />
+            </div>
 
-          <span className="cw-profile-status">
-            {userProfile.email ? '이메일 인증 완료' : '이메일 미등록'}
-          </span>
+            <div className="cw-profile-main">
+              <div className="cw-profile-header">
+                <h3>{userProfile.name}님</h3>
+
+                <button
+                  type="button"
+                  className="cw-profile-edit-button"
+                  onClick={openEditModal}
+                >
+                  <Pencil size={16} />
+                  정보 수정
+                </button>
+              </div>
+
+              <p>Career Wave에서 계정 정보와 연동 상태를 관리 중입니다.</p>
+
+              <span className="cw-profile-status">
+                {userProfile.email ? "이메일 인증 완료" : "이메일 미등록"}
+              </span>
+            </div>
+          </div>
         </div>
-
+        
         <div className="cw-account-grid">
           <section className="cw-account-card">
             <div className="cw-card-title has-action">
@@ -233,14 +277,6 @@ function UserMyPage() {
                 <UserRound size={18} />
                 <h3>기본 계정 정보</h3>
               </div>
-
-              <button
-                type="button"
-                className="cw-card-edit-button"
-                onClick={openEditModal}
-              >
-                수정
-              </button>
             </div>
 
             <div className="cw-info-list">
@@ -318,7 +354,7 @@ function UserMyPage() {
         </div>
 
         <section className="cw-account-card cw-github-card">
-          <div className="cw-card-title has-action">
+          <div className="cw-card-title">
             <div className="cw-card-title-left">
               <Github size={18} />
               <h3>GitHub 연동 정보</h3>
