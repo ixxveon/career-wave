@@ -691,9 +691,13 @@ CREATE TABLE payments (
     member_id       UUID         NOT NULL,
     subscription_id UUID         NULL,
     plan_id         BIGINT       NOT NULL,
+    product_code    VARCHAR(30)  NOT NULL,
     order_id        VARCHAR(100) NOT NULL,
     payment_key     VARCHAR(200) NULL,
     idempotency_key VARCHAR(100) NOT NULL,
+    customer_key    VARCHAR(100) NOT NULL,
+    customer_name   VARCHAR(100) NOT NULL,
+    customer_email  VARCHAR(200) NOT NULL,
     amount          INTEGER      NOT NULL,
     currency        VARCHAR(10)  NOT NULL DEFAULT 'KRW',
     payment_status  VARCHAR(20)  NOT NULL DEFAULT 'READY',
@@ -725,9 +729,13 @@ COMMENT ON COLUMN payments.payment_id       IS '결제 고유 식별자';
 COMMENT ON COLUMN payments.member_id        IS '결제 회원 FK';
 COMMENT ON COLUMN payments.subscription_id  IS '연결 구독 FK (FREE 플랜 또는 결제 전 READY 상태는 NULL)';
 COMMENT ON COLUMN payments.plan_id          IS '결제 당시 플랜 FK';
+COMMENT ON COLUMN payments.product_code     IS '결제 상품 식별자 (document-coaching / interview) — 결제 시점 스냅샷';
 COMMENT ON COLUMN payments.order_id         IS 'Toss 주문 번호 (UNIQUE)';
 COMMENT ON COLUMN payments.payment_key      IS 'Toss 결제 키 (UNIQUE, FAILED 시 NULL)';
 COMMENT ON COLUMN payments.idempotency_key  IS '중복 결제 방지 키';
+COMMENT ON COLUMN payments.customer_key     IS '주문 생성 시 서버 발급 고객 식별자 — Toss 본인 검증에 사용';
+COMMENT ON COLUMN payments.customer_name    IS '회원 이름 — Toss 결제 API 요청 시 전송 (결제 시점 스냅샷)';
+COMMENT ON COLUMN payments.customer_email   IS '회원 이메일 — Toss 결제 API 요청 시 전송 (결제 시점 스냅샷)';
 COMMENT ON COLUMN payments.amount           IS '최종 결제 금액 (부가세 포함)';
 COMMENT ON COLUMN payments.currency         IS '통화 (기본값 KRW)';
 COMMENT ON COLUMN payments.payment_status   IS '결제 상태 (READY / CONFIRMING / PAID / FAILED / CANCELED / REFUNDED)';
