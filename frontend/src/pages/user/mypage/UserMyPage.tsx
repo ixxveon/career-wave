@@ -19,15 +19,17 @@ function maskEmail(email: string | null) {
     return email;
   }
 
-  const visible = localPart.slice(0, 2);
-  const masked = "*".repeat(Math.max(localPart.length - 2, 1));
+  const visibleCount = Math.min(2, localPart.length);
+  const visible = localPart.slice(0, visibleCount);
+  const masked = "*".repeat(localPart.length - visibleCount);
 
   return `${visible}${masked}@${domain}`;
 }
 
 function maskLoginId(loginId: string) {
-  const visible = loginId.slice(0, 4);
-  const masked = "*".repeat(Math.max(loginId.length - 4, 1));
+  const visibleCount = Math.min(4, loginId.length);
+  const visible = loginId.slice(0, visibleCount);
+  const masked = "*".repeat(loginId.length - visibleCount);
 
   return `${visible}${masked}`;
 }
