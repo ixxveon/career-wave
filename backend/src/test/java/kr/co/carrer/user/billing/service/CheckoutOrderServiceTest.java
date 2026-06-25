@@ -249,6 +249,27 @@ class CheckoutOrderServiceTest {
     }
 
     @Test
+    @DisplayName("getMemberBillingInfo가 BILLING_EMAIL_REQUIRED를 던지면 그대로 전파된다")
+    void createOrder_emailRequired_propagates() {
+        Plan plan = plan(1L, "document-coaching", "서류 AI 코칭", 29000);
+        given(billingMemberPort.isEligibleForBilling(memberId)).willReturn(true);
+        given(planRepository.findByProductCodeAndIsActive("document-coaching", true))
+                .willReturn(Optional.of(plan));
+        given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
+                .willReturn(List.of());
+        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
+                .willReturn(Optional.empty());
+        given(billingMemberPort.getMemberBillingInfo(memberId))
+                .willThrow(new CustomException(BillingErrorCode.BILLING_EMAIL_REQUIRED));
+
+        assertThatThrownBy(() ->
+                service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail")))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(BillingErrorCode.BILLING_EMAIL_REQUIRED);
+    }
+
+    @Test
     @DisplayName("동시 요청으로 유니크 제약 위반 — 경쟁 스레드 주문 readback 반환")
     void createOrder_concurrentConflict_returnsRivalOrder() {
         Plan plan = plan(1L, "document-coaching", "서류 AI 코칭", 29000);
