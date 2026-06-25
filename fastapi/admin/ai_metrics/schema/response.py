@@ -22,6 +22,8 @@ class SummaryResponse(AiMetricsResponseBase):
     total_cost: Decimal = Field(alias="totalCost")
     document_requests: int = Field(alias="documentRequests")
     interview_requests: int = Field(alias="interviewRequests")
+    admin_cs_requests: int = Field(alias="adminCsRequests")
+    admin_report_requests: int = Field(alias="adminReportRequests")
     active_model_id: int | None = Field(default=None, alias="activeModelId")
     active_model_name: str | None = Field(default=None, alias="activeModelName")
 
@@ -36,6 +38,8 @@ class FeatureUsageResponse(AiMetricsResponseBase):
 class DomainUsageResponse(AiMetricsResponseBase):
     document: FeatureUsageResponse
     interview: FeatureUsageResponse
+    admin_cs: FeatureUsageResponse = Field(alias="adminCs")
+    admin_report: FeatureUsageResponse = Field(alias="adminReport")
 
 
 class TokenTrendPointResponse(AiMetricsResponseBase):

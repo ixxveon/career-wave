@@ -2,5 +2,7 @@ package kr.co.carrer.admin.aimetrics.type;
 
 public enum AiFeatureType {
     DOCUMENT,
-    INTERVIEW
+    INTERVIEW,
+    ADMIN_CS,
+    ADMIN_REPORT
 }

@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/ai-metrics.css';
 import MiniPagination from '../../../components/admin/MiniPagination';
-import { AI_DOMAIN, AI_EVENT_SEVERITY, AI_HEALTH_STATUS, AI_METRIC_INTERVAL, AI_USAGE_RISK_LEVEL, RAG_INDEX_STATUS, aiMetricsApi, getAiDisplayModelName } from '../../../api/admin/aiMetricsApi';
+import { AI_DOMAIN, AI_EVENT_SEVERITY, AI_HEALTH_STATUS, AI_METRIC_INTERVAL, AI_USAGE_RISK_LEVEL, DOMAIN_LABELS, RAG_INDEX_STATUS, aiMetricsApi, getAiDisplayModelName } from '../../../api/admin/aiMetricsApi';
 import type { AiBudgetSetting, AiDomain, AiDomainUsage, AiEventSeverity, AiHealthStatus, AiHeavyUser, AiMetricLog, AiMetricSummary, AiTokenTrendPoint, AiUsageRiskLevel, PageResult, RagDocumentMetric, RagIndexStatus } from '../../../api/admin/aiMetricsApi';
 import { sanitizeLogMessage } from '../../../utils/admin/aiMetricsLogSanitizer';
 
@@ -24,17 +24,14 @@ const HEAVY_USERS_QUERY_KEY = ['admin', 'aiMetrics', 'heavyUsers'] as const;
 const LOGS_QUERY_KEY = ['admin', 'aiMetrics', 'logs'] as const;
 const RAG_DOCUMENTS_QUERY_KEY = ['admin', 'aiMetrics', 'ragDocuments'] as const;
 
-const DOMAIN_CARD_ORDER: AiDomain[] = [AI_DOMAIN.DOCUMENT, AI_DOMAIN.INTERVIEW];
-
-const DOMAIN_CARD_LABELS: Record<AiDomain, string> = {
-  [AI_DOMAIN.DOCUMENT]: 'AI 서류 기능',
-  [AI_DOMAIN.INTERVIEW]: 'AI 면접 기능',
-};
+const DOMAIN_CARD_ORDER: AiDomain[] = [AI_DOMAIN.DOCUMENT, AI_DOMAIN.INTERVIEW, AI_DOMAIN.ADMIN_CS, AI_DOMAIN.ADMIN_REPORT];
 
 const DOMAIN_FILTER_OPTIONS: Array<{ value: 'ALL' | AiDomain; label: string }> = [
   { value: 'ALL', label: '전체 도메인' },
-  { value: AI_DOMAIN.DOCUMENT, label: DOMAIN_CARD_LABELS[AI_DOMAIN.DOCUMENT] },
-  { value: AI_DOMAIN.INTERVIEW, label: DOMAIN_CARD_LABELS[AI_DOMAIN.INTERVIEW] },
+  { value: AI_DOMAIN.DOCUMENT, label: DOMAIN_LABELS[AI_DOMAIN.DOCUMENT] },
+  { value: AI_DOMAIN.INTERVIEW, label: DOMAIN_LABELS[AI_DOMAIN.INTERVIEW] },
+  { value: AI_DOMAIN.ADMIN_CS, label: DOMAIN_LABELS[AI_DOMAIN.ADMIN_CS] },
+  { value: AI_DOMAIN.ADMIN_REPORT, label: DOMAIN_LABELS[AI_DOMAIN.ADMIN_REPORT] },
 ];
 
 const formatNumber = (value?: number) => (typeof value === 'number' ? value.toLocaleString() : '-');
@@ -618,7 +615,7 @@ export default function AiMetricsPage() {
               <div className="aiOpsDomainCardHead">
                 <div>
                   <span className="aiOpsEyebrow">{domain}</span>
-                  <h3>{usage?.domainLabel ?? DOMAIN_CARD_LABELS[domain]}</h3>
+                  <h3>{usage?.domainLabel ?? DOMAIN_LABELS[domain]}</h3>
                 </div>
                 <span className={`aiOpsDomainState ${domainUsageIsError ? 'danger' : usage ? 'normal' : 'warning'}`}>
                   {domainUsageIsError ? '연결 실패' : usage ? '연결됨' : domainUsageLoading ? '조회 중' : '데이터 없음'}

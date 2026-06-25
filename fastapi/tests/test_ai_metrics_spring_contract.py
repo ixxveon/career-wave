@@ -208,6 +208,8 @@ def test_usage_response_contracts_match_spring_boot_fields():
         totalCost="980000",
         documentRequests=820,
         interviewRequests=430,
+        adminCsRequests=25,
+        adminReportRequests=12,
         activeModelId=1,
         activeModelName="gpt-4o-mini",
     )
@@ -223,6 +225,18 @@ def test_usage_response_contracts_match_spring_boot_fields():
             inputTokens=170000,
             outputTokens=75000,
             cost="420000",
+        ),
+        adminCs=FeatureUsageResponse(
+            requestCount=25,
+            inputTokens=12000,
+            outputTokens=5000,
+            cost="25000",
+        ),
+        adminReport=FeatureUsageResponse(
+            requestCount=12,
+            inputTokens=9000,
+            outputTokens=3000,
+            cost="15000",
         ),
     )
     token_trend_response = TokenTrendResponse(
@@ -274,6 +288,8 @@ def test_usage_response_contracts_match_spring_boot_fields():
         "totalCost": summary_response.total_cost,
         "documentRequests": 820,
         "interviewRequests": 430,
+        "adminCsRequests": 25,
+        "adminReportRequests": 12,
         "activeModelId": 1,
         "activeModelName": "gpt-4o-mini",
     }
@@ -289,6 +305,18 @@ def test_usage_response_contracts_match_spring_boot_fields():
             "inputTokens": 170000,
             "outputTokens": 75000,
             "cost": domain_usage_response.interview.cost,
+        },
+        "adminCs": {
+            "requestCount": 25,
+            "inputTokens": 12000,
+            "outputTokens": 5000,
+            "cost": domain_usage_response.admin_cs.cost,
+        },
+        "adminReport": {
+            "requestCount": 12,
+            "inputTokens": 9000,
+            "outputTokens": 3000,
+            "cost": domain_usage_response.admin_report.cost,
         },
     }
     assert token_trend_response.model_dump(by_alias=True) == {

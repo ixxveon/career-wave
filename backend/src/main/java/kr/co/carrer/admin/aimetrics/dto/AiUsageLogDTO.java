@@ -19,7 +19,7 @@ public class AiUsageLogDTO {
             @Schema(description = "회원 ID") UUID memberId,
             @Schema(description = "세션 ID") UUID sessionId,
             @Schema(description = "AI 모델 ID") Long aiModelId,
-            @Schema(description = "AI 기능 유형", allowableValues = {"DOCUMENT", "INTERVIEW"}) AiFeatureType featureType,
+            @Schema(description = "AI 기능 유형", allowableValues = {"DOCUMENT", "INTERVIEW", "ADMIN_CS", "ADMIN_REPORT"}) AiFeatureType featureType,
             @Schema(description = "입력 토큰 수") long inputTokens,
             @Schema(description = "출력 토큰 수") long outputTokens,
             @Schema(description = "비용") BigDecimal cost,
