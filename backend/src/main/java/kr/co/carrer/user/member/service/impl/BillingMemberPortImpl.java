@@ -32,6 +32,9 @@ public class BillingMemberPortImpl implements BillingMemberPort {
     public MemberBillingInfo getMemberBillingInfo(UUID memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(BillingErrorCode.ACCOUNT_NOT_ELIGIBLE));
+        if (member.getEmail() == null || member.getEmail().isBlank()) {
+            throw new CustomException(BillingErrorCode.BILLING_EMAIL_REQUIRED);
+        }
         return new MemberBillingInfo(member.getName(), member.getEmail());
     }
 }
