@@ -108,7 +108,7 @@ export const JOB_NOTICE_FILTER_OPTIONS = {
   jobCategory: [JOB_NOTICE_ALL_FILTER_VALUE, 'BACKEND', 'FRONTEND', 'DATA', 'DEVOPS'],
   careerLevel: [JOB_NOTICE_ALL_FILTER_VALUE, 'JUNIOR', 'SENIOR', 'ANY'],
   location: [JOB_NOTICE_ALL_FILTER_VALUE, '서울', '경기', '원격'],
-  companySize: [JOB_NOTICE_ALL_FILTER_VALUE, '스타트업', '중견', '대기업'],
+  companySize: [JOB_NOTICE_ALL_FILTER_VALUE, '스타트업', '중소', '중견', '대기업'],
 } as const;
 
 export const JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES = {

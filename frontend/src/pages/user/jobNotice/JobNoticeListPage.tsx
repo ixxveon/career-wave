@@ -80,6 +80,8 @@ type JobNoticeFilterParamKey =
   | 'location'
   | 'companySize';
 
+const COMPANY_SIZE_FILTER_PARAM_KEY = 'companySize' satisfies JobNoticeFilterParamKey;
+
 const FILTER_GROUPS = [
   { label: '직무', options: JOB_NOTICE_FILTER_OPTIONS.jobCategory },
   { label: '경력', options: JOB_NOTICE_FILTER_OPTIONS.careerLevel },
@@ -164,9 +166,10 @@ function createJobNoticeQueryParams({
   (Object.entries(API_FILTER_PARAM_BY_LABEL) as Array<[FilterLabel, JobNoticeFilterParamKey]>).forEach(([label, paramKey]) => {
     const value = filters[label];
     if (value !== DEFAULT_FILTER_VALUE) {
-      params[paramKey] = paramKey === 'companySize'
-        ? JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES[value as keyof typeof JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES] ?? value
-        : value;
+      params[paramKey] =
+        paramKey === COMPANY_SIZE_FILTER_PARAM_KEY && value in JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES
+          ? JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES[value as keyof typeof JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES]
+          : value;
     }
   });
 
