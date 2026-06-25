@@ -3827,6 +3827,32 @@ a.cw-chart-filter {
 반응형
 */
 
+.cw-profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cw-profile-edit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid #2563eb;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.cw-profile-edit-button:hover {
+  background: #1d4ed8;
+}
+
 @media (max-width: 1180px) {
 
   .cw-account-grid,
@@ -4075,4 +4101,13 @@ a.cw-chart-filter {
     color: #ef4444;
   }
 
+  .cw-profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cw-profile-edit-button {
+    width: 100%;
+    justify-content: center;
+  }
 }
