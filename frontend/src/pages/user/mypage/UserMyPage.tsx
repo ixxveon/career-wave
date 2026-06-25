@@ -247,7 +247,7 @@ function UserMyPage() {
                 <span>이메일</span>
                 <strong>
                   <Mail size={15} />
-                  {maskEmail(userProfile.email)}
+                  {userProfile.email ? maskEmail(userProfile.email) : '이메일 없음'}
                 </strong>
               </div>
               <div className="cw-info-row">
