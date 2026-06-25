@@ -245,15 +245,15 @@ class WantedScraper(ScraperAdapter):
 
     @staticmethod
     def _career_level(item: dict[str, Any]) -> str | None:
-        annual_from = item.get("annual_from")
-        annual_to = item.get("annual_to")
-        if annual_from is None and annual_to is None:
+        experience_from_years = item.get("annual_from")
+        experience_to_years = item.get("annual_to")
+        if experience_from_years is None and experience_to_years is None:
             return None
-        if annual_from is not None and annual_to is not None:
-            return f"{annual_from}~{annual_to}"
-        if annual_from is not None:
-            return f"{annual_from}+"
-        return f"~{annual_to}"
+        if experience_from_years is not None and experience_to_years is not None:
+            return f"{experience_from_years}~{experience_to_years}"
+        if experience_from_years is not None:
+            return f"{experience_from_years}+"
+        return f"~{experience_to_years}"
 
     @staticmethod
     def _reward(item: dict[str, Any]) -> str | None:
