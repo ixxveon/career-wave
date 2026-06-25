@@ -11,7 +11,8 @@ import type { UserProfile } from "@/types/user/dashboard";
 
 import "@/styles/user/mypage/MyPage.css";
 
-function maskEmail(email: string) {
+function maskEmail(email: string | null) {
+  if (!email) return '이메일 없음';
   const [localPart, domain] = email.split("@");
 
   if (!localPart || !domain) {
@@ -247,7 +248,7 @@ function UserMyPage() {
                 <span>이메일</span>
                 <strong>
                   <Mail size={15} />
-                  {userProfile.email ? maskEmail(userProfile.email) : '이메일 없음'}
+                  {maskEmail(userProfile.email)}
                 </strong>
               </div>
               <div className="cw-info-row">
