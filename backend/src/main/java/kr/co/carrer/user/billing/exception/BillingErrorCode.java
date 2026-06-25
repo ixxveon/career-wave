@@ -34,6 +34,7 @@ public enum BillingErrorCode implements BaseErrorCode {
 
     ENTITLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품 이용 권한 정보를 찾을 수 없습니다."),
     ACCOUNT_NOT_ELIGIBLE(HttpStatus.FORBIDDEN, "현재 계정 상태로는 결제·이용이 불가능합니다."),
+    BILLING_EMAIL_REQUIRED(HttpStatus.UNPROCESSABLE_ENTITY, "결제를 위해 이메일 등록이 필요합니다. 마이페이지에서 이메일을 등록해주세요."),
 
     SUBSCRIPTION_INVALID_TRANSITION(HttpStatus.CONFLICT, "현재 구독 상태에서 허용되지 않는 상태 전이입니다."),
     SUBSCRIPTION_INVALID_PERIOD_NULL(HttpStatus.BAD_REQUEST, "구독 기간(periodStart, periodEnd)은 필수입니다."),

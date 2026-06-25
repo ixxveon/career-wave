@@ -1,4 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useJobNoticeList } from '@/hooks/user/jobNotice/useJobNoticeList';
+import {
+  CAREER_LEVEL_LABELS,
+  mapJobNoticeApiToViewModel,
+} from '@/types/user/jobNotice';
 import { authSession } from '@/utils/user/member/authSession';
 import {
   Bell,
@@ -8,15 +13,12 @@ import {
   CalendarDays,
   ChevronRight,
   FileSearch,
+  Filter,
   MapPin,
   Mic,
   ShieldCheck,
   Sparkles,
   Users,
-  ClipboardList,
-  FilePenLine,
-  UsersRound,
-  Github,
 } from 'lucide-react';
 import '@/styles/user/dashboard/DashboardPage.css';
 
@@ -44,38 +46,72 @@ const featureCards = [
   },
 ];
 
-const jobs = [
-  {
-    logo: 'N',
-    logoClass: 'naver',
-    title: '백엔드 개발자 (신입/경력)',
-    company: '네이버',
-    location: '경기 성남시 분당구',
-    career: '신입/경력',
-    date: '상시 채용',
-    tags: ['Backend', 'Java', 'Spring', 'MySQL'],
-  },
-  {
-    logo: 'kakao',
-    logoClass: 'kakao',
-    title: 'AI 서비스 개발자',
-    company: '카카오',
-    location: '경기 성남시 판교',
-    career: '경력 3년 이상',
-    date: '~ 2026.05.20',
-    tags: ['AI/ML', 'Python', 'PyTorch', 'Docker'],
-  },
-  {
-    logo: 'S',
-    logoClass: 'wave',
-    title: 'Server Engineer',
-    company: '토스',
-    location: '서울 강남구',
-    career: '경력 2년 이상',
-    date: '상시 채용',
-    tags: ['Server', 'Go', 'Kubernetes', 'AWS'],
-  },
-];
+const RECOMMENDED_JOB_QUERY_PARAMS = {
+  page: 1,
+  size: 3,
+  sort: 'recommend',
+  period: 'all',
+};
+
+function getCompanyLogo(job) {
+  const source = job.source?.trim();
+  if (source) {
+    return source.slice(0, 1).toUpperCase();
+  }
+  return job.company?.trim().slice(0, 1).toUpperCase() || 'C';
+}
+
+function getLogoClass(source) {
+  const normalizedSource = source?.trim().toLowerCase();
+  if (normalizedSource === 'naver') return 'naver';
+  if (normalizedSource === 'kakao') return 'kakao';
+  if (normalizedSource === 'wanted') return 'wanted';
+  if (normalizedSource === 'saramin') return 'saramin';
+  return 'wave';
+}
+
+function getCareerLabel(careerLevel) {
+  return CAREER_LEVEL_LABELS[careerLevel] ?? careerLevel ?? '경력무관';
+}
+
+function formatDeadline(deadline) {
+  if (!deadline) {
+    return '상시 채용';
+  }
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(deadline);
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    return `~ ${year}. ${month}. ${day}.`;
+  }
+
+  const parsedDate = new Date(deadline);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return deadline;
+  }
+
+  return `~ ${parsedDate.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'Asia/Seoul',
+  })}`;
+}
+
+function toRecommendedJobCard(job) {
+  return {
+    id: job.id,
+    logo: getCompanyLogo(job),
+    logoClass: getLogoClass(job.source),
+    title: job.title,
+    company: job.company,
+    location: job.location || '지역 미정',
+    career: getCareerLabel(job.careerLevel),
+    date: formatDeadline(job.deadline),
+    source: job.source,
+    tags: (job.tags ?? []).slice(0, 4),
+  };
+}
 
 const stats = [
   { icon: Sparkles, title: 'AI 기반 정밀 매칭', text: '정확도 높은 추천' },
@@ -86,6 +122,25 @@ const stats = [
 
 function JobSeekerDashboardPage() {
   const isLoggedIn = !!authSession.getAccessToken();
+  const {
+    data: recommendedJobListApiResponse,
+    isError: isRecommendedJobsError,
+    isLoading: isRecommendedJobsLoading,
+    refetch: refetchRecommendedJobs,
+  } = useJobNoticeList(RECOMMENDED_JOB_QUERY_PARAMS, { enabled: isLoggedIn });
+  const recommendedJobs =
+    recommendedJobListApiResponse?.data?.content
+      ?.map(mapJobNoticeApiToViewModel)
+      .map(toRecommendedJobCard) ?? [];
+  const recommendedJobsStatus = !isLoggedIn
+    ? 'guest'
+    : isRecommendedJobsLoading
+      ? 'loading'
+      : isRecommendedJobsError
+        ? 'error'
+        : recommendedJobs.length > 0
+          ? 'success'
+          : 'empty';
 
   return (
     <div className="cw-page cw-home">
@@ -172,46 +227,79 @@ function JobSeekerDashboardPage() {
             </div>
           )}
 
-          <div className="cw-home-job-grid" aria-hidden={!isLoggedIn}>
-            {jobs.map((job) => (
-              <article className="cw-home-job" key={job.title}>
-                <div className="cw-home-job__head">
-                  <span className={`cw-home-job__logo is-${job.logoClass}`}>{job.logo}</span>
-                  <button type="button" aria-label={`${job.title} 저장`} tabIndex={isLoggedIn ? 0 : -1}>
-                    <Bookmark size={20} />
-                  </button>
-                </div>
-                <h3>{job.title}</h3>
-                <p>{job.company}</p>
-                <div className="cw-home-job__tags">
-                  {job.tags.map((tag) => (
-                    <em key={tag}>{tag}</em>
-                  ))}
-                </div>
-                <dl className="cw-home-job__meta">
-                  <div>
-                    <MapPin size={14} />
-                    <dt>위치</dt>
-                    <dd>{job.location}</dd>
+          {recommendedJobsStatus === 'success' && (
+            <div className="cw-home-job-grid" aria-hidden={!isLoggedIn}>
+              {recommendedJobs.map((job) => (
+                <article className="cw-home-job" key={job.id}>
+                  <div className="cw-home-job__head">
+                    <span className={`cw-home-job__logo is-${job.logoClass}`}>{job.logo}</span>
+                    <button type="button" aria-label={`${job.title} 저장 준비 중`} disabled>
+                      <Bookmark size={20} />
+                    </button>
                   </div>
-                  <div>
-                    <Briefcase size={14} />
-                    <dt>경력</dt>
-                    <dd>{job.career}</dd>
+                  <h3>{job.title}</h3>
+                  <p>{job.company}</p>
+                  <div className="cw-home-job__tags">
+                    {job.tags.length > 0 ? (
+                      job.tags.map((tag) => (
+                        <em key={tag}>{tag}</em>
+                      ))
+                    ) : (
+                      <em>{job.source}</em>
+                    )}
                   </div>
-                  <div>
-                    <CalendarDays size={14} />
-                    <dt>마감</dt>
-                    <dd>{job.date}</dd>
-                  </div>
-                </dl>
-                <Link className="cw-home-job__detail" tabIndex={isLoggedIn ? 0 : -1} to="/jobs">
-                  상세보기
-                  <ChevronRight size={15} />
-                </Link>
-              </article>
-            ))}
-          </div>
+                  <dl className="cw-home-job__meta">
+                    <div>
+                      <MapPin size={14} />
+                      <dt>위치</dt>
+                      <dd>{job.location}</dd>
+                    </div>
+                    <div>
+                      <Briefcase size={14} />
+                      <dt>경력</dt>
+                      <dd>{job.career}</dd>
+                    </div>
+                    <div>
+                      <CalendarDays size={14} />
+                      <dt>마감</dt>
+                      <dd>{job.date}</dd>
+                    </div>
+                  </dl>
+                  <Link className="cw-home-job__detail" tabIndex={isLoggedIn ? 0 : -1} to="/jobs">
+                    상세보기
+                    <ChevronRight size={15} />
+                  </Link>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {recommendedJobsStatus === 'loading' && (
+            <div className="cw-home-job-state" role="status" aria-live="polite">
+              <Briefcase size={18} />
+              <strong>추천 공고를 불러오는 중입니다.</strong>
+              <span>실제 채용공고 데이터를 확인하고 있어요.</span>
+            </div>
+          )}
+
+          {recommendedJobsStatus === 'empty' && (
+            <div className="cw-home-job-state" role="status" aria-live="polite">
+              <Filter size={18} />
+              <strong>표시할 추천 공고가 없습니다.</strong>
+              <span>전체 공고 페이지에서 더 많은 채용 정보를 확인해보세요.</span>
+            </div>
+          )}
+
+          {recommendedJobsStatus === 'error' && (
+            <div className="cw-home-job-state" role="alert">
+              <Filter size={18} />
+              <strong>추천 공고를 불러오지 못했습니다.</strong>
+              <span>잠시 후 다시 시도해주세요.</span>
+              <button type="button" onClick={() => refetchRecommendedJobs()}>
+                다시 시도
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

@@ -13,7 +13,9 @@ import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.member.docs.UserAuthControllerDocs;
 import kr.co.carrer.user.member.service.UserLoginService;
 import kr.co.carrer.user.member.service.UserMemberStatusService;
+import kr.co.carrer.auth.jwt.CookieProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +29,7 @@ public class UserAuthController implements UserAuthControllerDocs {
 
     private final UserLoginService userLoginService;
     private final UserMemberStatusService memberStatusService;
+    private final CookieProperties cookieProperties;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<UserLoginDto.Response>> login(
@@ -75,8 +78,14 @@ public class UserAuthController implements UserAuthControllerDocs {
     }
 
     private void clearRefreshTokenCookie(HttpServletResponse response) {
-        response.addHeader("Set-Cookie",
-                "refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secure; SameSite=Strict");
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(cookieProperties.isSecure())
+                .path("/api/v1/user/members")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
     }
 
     private String extractRefreshTokenCookie(HttpServletRequest request) {
