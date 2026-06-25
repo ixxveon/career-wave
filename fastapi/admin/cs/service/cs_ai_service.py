@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from functools import lru_cache
 
@@ -45,13 +46,15 @@ async def _call_openai(system_prompt: str, user_prompt: str, admin_id: int) -> s
         f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
     )
 
-    # 사용량 적재 — 실패해도 초안 생성 응답에는 영향을 주지 않는다(record_ai_usage 내부에서 예외를 흡수).
-    await record_ai_usage(
-        member_id=None,
-        admin_id=admin_id,
-        model_name=settings.openai_model_light,
-        feature_type=_CS_FEATURE_TYPE,
-        usage=usage,
+    # 사용량 적재 — 백그라운드로 실행하여 응답 지연을 방지한다(record_ai_usage 내부에서 예외를 흡수).
+    asyncio.create_task(
+        record_ai_usage(
+            member_id=None,
+            admin_id=admin_id,
+            model_name=settings.openai_model_light,
+            feature_type=_CS_FEATURE_TYPE,
+            usage=usage,
+        )
     )
 
     return completion.choices[0].message.content or ""
