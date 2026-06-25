@@ -80,23 +80,43 @@ public class JobNoticeDTO {
             @Schema(description = "전체 페이지 수")
             int totalPages,
 
+            @Schema(description = "채용 공고 목록 통계")
             ResponseListStats stats,
 
+            @Schema(description = "채용 공고 목록 필터 옵션")
             ResponseFilterOptions filterOptions
     ) {}
 
+    @Schema(description = "채용 공고 목록 통계")
     public record ResponseListStats(
+            @Schema(description = "전체 활성 공고 수")
             long totalOpenCount,
+
+            @Schema(description = "오늘 신규 활성 공고 수")
             long todayNewCount,
-            long todayNewDelta,
+
+            @Schema(description = "오늘 신규 공고 변화량. 비교 기준이 없으면 null")
+            Long todayNewDelta,
+
+            @Schema(description = "오늘 신규 공고 비율 (%)")
             double todayNewRate
     ) {}
 
+    @Schema(description = "채용 공고 목록 필터 옵션")
     public record ResponseFilterOptions(
+            @Schema(description = "채용 유형 필터 옵션", allowableValues = {"FULLTIME", "INTERN", "CONTRACT"})
             List<String> jobType,
+
+            @Schema(description = "직무/직군 필터 옵션")
             List<String> jobCategory,
+
+            @Schema(description = "경력 필터 옵션", allowableValues = {"JUNIOR", "SENIOR", "ANY"})
             List<String> careerLevel,
+
+            @Schema(description = "근무 지역 필터 옵션")
             List<String> location,
+
+            @Schema(description = "회사 규모 필터 옵션", allowableValues = {"STARTUP", "SME", "LARGE"})
             List<String> companySize
     ) {}
 

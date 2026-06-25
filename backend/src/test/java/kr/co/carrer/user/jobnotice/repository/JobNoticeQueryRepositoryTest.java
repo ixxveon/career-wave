@@ -411,9 +411,16 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
 
         assertThat(jobNoticeQueryRepository.countActiveJobNotices()).isEqualTo(2);
         assertThat(jobNoticeQueryRepository.countTodayNewActiveJobNotices()).isEqualTo(1);
-        assertThat(jobNoticeQueryRepository.findActiveJobNoticesForFilterOptions())
-                .extracting(JobNotice::getTitle)
-                .containsExactlyInAnyOrder("Today Backend Notice", "Old Frontend Notice");
+        assertThat(jobNoticeQueryRepository.findDistinctActiveJobTypes())
+                .containsExactly("CONTRACT", "FULLTIME");
+        assertThat(jobNoticeQueryRepository.findDistinctActiveJobCategories())
+                .containsExactly("BACKEND", "FRONTEND");
+        assertThat(jobNoticeQueryRepository.findDistinctActiveCareerLevels())
+                .containsExactly("JUNIOR", "SENIOR");
+        assertThat(jobNoticeQueryRepository.findDistinctActiveLocations())
+                .containsExactly("Busan", "Seoul");
+        assertThat(jobNoticeQueryRepository.findDistinctActiveCompanySizes())
+                .containsExactly("LARGE", "STARTUP");
     }
 
     private Page<JobNotice> findAllSortedBy(String sort) {

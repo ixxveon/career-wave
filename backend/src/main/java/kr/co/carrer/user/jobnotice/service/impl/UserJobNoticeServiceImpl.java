@@ -23,10 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -191,49 +189,20 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
         return new JobNoticeDTO.ResponseListStats(
                 totalOpenCount,
                 todayNewCount,
-                todayNewCount,
+                null,
                 todayNewRate
         );
     }
 
     private JobNoticeDTO.ResponseFilterOptions createFilterOptions() {
-        List<JobNotice> activeJobNotices = jobNoticeQueryRepository.findActiveJobNoticesForFilterOptions();
-
+        // TODO: 필터 옵션은 변경 빈도가 낮으므로 정책 확정 후 캐시 적용을 검토한다.
         return new JobNoticeDTO.ResponseFilterOptions(
-                enumNames(JobType.values()),
-                collectJobCategories(activeJobNotices),
-                enumNames(CareerLevel.values()),
-                collectLocations(activeJobNotices),
-                enumNames(CompanySize.values())
+                jobNoticeQueryRepository.findDistinctActiveJobTypes(),
+                jobNoticeQueryRepository.findDistinctActiveJobCategories(),
+                jobNoticeQueryRepository.findDistinctActiveCareerLevels(),
+                jobNoticeQueryRepository.findDistinctActiveLocations(),
+                jobNoticeQueryRepository.findDistinctActiveCompanySizes()
         );
-    }
-
-    private <T extends Enum<T>> List<String> enumNames(T[] values) {
-        return Arrays.stream(values)
-                .map(Enum::name)
-                .toList();
-    }
-
-    private List<String> collectJobCategories(List<JobNotice> jobNotices) {
-        return jobNotices.stream()
-                .map(JobNotice::getJobCategory)
-                .filter(Objects::nonNull)
-                .flatMap(Arrays::stream)
-                .filter(value -> value != null && !value.isBlank())
-                .map(String::trim)
-                .distinct()
-                .sorted()
-                .toList();
-    }
-
-    private List<String> collectLocations(List<JobNotice> jobNotices) {
-        return jobNotices.stream()
-                .map(JobNotice::getLocation)
-                .filter(value -> value != null && !value.isBlank())
-                .map(String::trim)
-                .distinct()
-                .sorted(Comparator.naturalOrder())
-                .toList();
     }
 
     private boolean isBookmarked(UUID memberId, Long jobNoticeId) {

@@ -98,7 +98,11 @@ class UserJobNoticeServiceImplTest {
             )).willReturn(pageResult);
             given(jobNoticeQueryRepository.countActiveJobNotices()).willReturn(10L);
             given(jobNoticeQueryRepository.countTodayNewActiveJobNotices()).willReturn(2L);
-            given(jobNoticeQueryRepository.findActiveJobNoticesForFilterOptions()).willReturn(List.of(jobNotice));
+            given(jobNoticeQueryRepository.findDistinctActiveJobTypes()).willReturn(List.of("FULLTIME"));
+            given(jobNoticeQueryRepository.findDistinctActiveJobCategories()).willReturn(List.of("BACKEND"));
+            given(jobNoticeQueryRepository.findDistinctActiveCareerLevels()).willReturn(List.of("JUNIOR"));
+            given(jobNoticeQueryRepository.findDistinctActiveLocations()).willReturn(List.of("Seoul"));
+            given(jobNoticeQueryRepository.findDistinctActiveCompanySizes()).willReturn(List.of("STARTUP"));
 
             JobNoticeDTO.ResponseList response = userJobNoticeService.getJobNotices(
                     "backend",
@@ -121,13 +125,13 @@ class UserJobNoticeServiceImplTest {
             assertThat(response.totalPages()).isEqualTo(1);
             assertThat(response.stats().totalOpenCount()).isEqualTo(10);
             assertThat(response.stats().todayNewCount()).isEqualTo(2);
-            assertThat(response.stats().todayNewDelta()).isEqualTo(2);
+            assertThat(response.stats().todayNewDelta()).isNull();
             assertThat(response.stats().todayNewRate()).isEqualTo(20.0);
-            assertThat(response.filterOptions().jobType()).containsExactly("FULLTIME", "INTERN", "CONTRACT");
+            assertThat(response.filterOptions().jobType()).containsExactly("FULLTIME");
             assertThat(response.filterOptions().jobCategory()).containsExactly("BACKEND");
-            assertThat(response.filterOptions().careerLevel()).containsExactly("JUNIOR", "SENIOR", "ANY");
+            assertThat(response.filterOptions().careerLevel()).containsExactly("JUNIOR");
             assertThat(response.filterOptions().location()).containsExactly("Seoul");
-            assertThat(response.filterOptions().companySize()).containsExactly("STARTUP", "SME", "LARGE");
+            assertThat(response.filterOptions().companySize()).containsExactly("STARTUP");
 
             JobNoticeDTO.ResponseSummary summary = response.content().getFirst();
             assertThat(summary.jobNoticeId()).isEqualTo(101L);
@@ -205,8 +209,11 @@ class UserJobNoticeServiceImplTest {
                     .willReturn(List.of(Bookmark.of(memberId, secondJobNotice)));
             given(jobNoticeQueryRepository.countActiveJobNotices()).willReturn(2L);
             given(jobNoticeQueryRepository.countTodayNewActiveJobNotices()).willReturn(1L);
-            given(jobNoticeQueryRepository.findActiveJobNoticesForFilterOptions())
-                    .willReturn(List.of(firstJobNotice, secondJobNotice));
+            given(jobNoticeQueryRepository.findDistinctActiveJobTypes()).willReturn(List.of("FULLTIME"));
+            given(jobNoticeQueryRepository.findDistinctActiveJobCategories()).willReturn(List.of("BACKEND", "FRONTEND"));
+            given(jobNoticeQueryRepository.findDistinctActiveCareerLevels()).willReturn(List.of("JUNIOR", "SENIOR"));
+            given(jobNoticeQueryRepository.findDistinctActiveLocations()).willReturn(List.of("Seoul"));
+            given(jobNoticeQueryRepository.findDistinctActiveCompanySizes()).willReturn(List.of("STARTUP"));
 
             JobNoticeDTO.ResponseList response = userJobNoticeService.getJobNotices(
                     null,

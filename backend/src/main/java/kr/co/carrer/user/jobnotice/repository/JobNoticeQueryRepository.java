@@ -24,6 +24,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Repository
@@ -32,9 +33,11 @@ public class JobNoticeQueryRepository {
     private static final QJobNotice jobNotice = QJobNotice.jobNotice;
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
 
+    private final EntityManager entityManager;
     private final JPAQueryFactory queryFactory;
 
     public JobNoticeQueryRepository(EntityManager entityManager) {
+        this.entityManager = entityManager;
         this.queryFactory = new JPAQueryFactory(entityManager);
     }
 
@@ -145,11 +148,82 @@ public class JobNoticeQueryRepository {
         return count != null ? count : 0L;
     }
 
-    public List<JobNotice> findActiveJobNoticesForFilterOptions() {
+    public List<String> findDistinctActiveJobTypes() {
         return queryFactory
-                .selectFrom(jobNotice)
+                .select(jobNotice.jobType)
+                .distinct()
+                .from(jobNotice)
                 .where(jobNotice.noticeStatus.eq(JobNoticeStatus.ACTIVE))
-                .fetch();
+                .fetch()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(JobType::name)
+                .sorted()
+                .toList();
+    }
+
+    public List<String> findDistinctActiveJobCategories() {
+        List<?> categories = entityManager.createNativeQuery("""
+                        SELECT DISTINCT btrim(category)
+                        FROM job_notices j
+                        CROSS JOIN LATERAL unnest(j.job_category) AS category
+                        WHERE j.notice_status = 'ACTIVE'
+                          AND category IS NOT NULL
+                          AND btrim(category) <> ''
+                        ORDER BY btrim(category)
+                        """)
+                .getResultList();
+
+        return categories.stream()
+                .map(String.class::cast)
+                .toList();
+    }
+
+    public List<String> findDistinctActiveCareerLevels() {
+        return queryFactory
+                .select(jobNotice.careerLevel)
+                .distinct()
+                .from(jobNotice)
+                .where(jobNotice.noticeStatus.eq(JobNoticeStatus.ACTIVE))
+                .fetch()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(CareerLevel::name)
+                .sorted()
+                .toList();
+    }
+
+    public List<String> findDistinctActiveLocations() {
+        return queryFactory
+                .select(jobNotice.location)
+                .distinct()
+                .from(jobNotice)
+                .where(
+                        jobNotice.noticeStatus.eq(JobNoticeStatus.ACTIVE),
+                        jobNotice.location.isNotNull(),
+                        jobNotice.location.isNotEmpty()
+                )
+                .fetch()
+                .stream()
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    public List<String> findDistinctActiveCompanySizes() {
+        return queryFactory
+                .select(jobNotice.companySize)
+                .distinct()
+                .from(jobNotice)
+                .where(jobNotice.noticeStatus.eq(JobNoticeStatus.ACTIVE))
+                .fetch()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(CompanySize::name)
+                .sorted()
+                .toList();
     }
 
     private BooleanBuilder buildActiveJobNoticePredicate(

@@ -72,7 +72,7 @@ class UserJobNoticeControllerTest {
                 20,
                 1,
                 1,
-                new JobNoticeDTO.ResponseListStats(10, 2, 2, 20.0),
+                new JobNoticeDTO.ResponseListStats(10, 2, null, 20.0),
                 new JobNoticeDTO.ResponseFilterOptions(
                         List.of("FULLTIME", "INTERN", "CONTRACT"),
                         List.of("BACKEND"),
