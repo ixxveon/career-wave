@@ -80,6 +80,17 @@ def test_normalizer_maps_intern_contract_startup_large_and_senior_values():
     assert contract_notice.career_level == "SENIOR"
 
 
+def test_normalizer_maps_mid_sized_company_to_sme():
+    normalizer = JobNoticeNormalizer()
+
+    notice = normalizer.normalize(
+        source_name="wanted",
+        raw_notice=_raw_notice(company_size="중견"),
+    )
+
+    assert notice.company_size == "SME"
+
+
 def test_normalizer_uses_enum_safe_fallbacks_for_unknown_values():
     normalizer = JobNoticeNormalizer()
 
@@ -106,3 +117,14 @@ def test_normalizer_closes_notice_when_deadline_is_past():
     )
 
     assert notice.notice_status == "CLOSED"
+
+
+def test_normalizer_ignores_implausible_career_numbers():
+    normalizer = JobNoticeNormalizer()
+
+    notice = normalizer.normalize(
+        source_name="wanted",
+        raw_notice=_raw_notice(career_level="2024년 채용"),
+    )
+
+    assert notice.career_level == "ANY"

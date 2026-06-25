@@ -17,12 +17,6 @@ class JobNoticeDedupService:
 
     def _save_all(self, notices: list[NormalizedJobNotice]) -> None:
         for notice in self._distinct_notices(notices):
-            if self._job_notice_repository.exists_by_source_and_original_url(
-                notice.source,
-                notice.original_url,
-            ):
-                continue
-
             self._job_notice_repository.save(
                 company_name=notice.company_name,
                 title=notice.title,

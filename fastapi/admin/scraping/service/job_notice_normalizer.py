@@ -71,6 +71,7 @@ class JobNoticeNormalizer:
         location: str | None = None,
         salary: str | None = None,
     ) -> NormalizedJobNotice:
+        parsed_deadline = self._parse_deadline(raw_notice.deadline)
         return NormalizedJobNotice(
             company_name=company_name if company_name is not None else self._normalize_text(raw_notice.company_name),
             title=title if title is not None else self._normalize_required_text(raw_notice.title, fallback=raw_notice.original_url),
@@ -82,11 +83,11 @@ class JobNoticeNormalizer:
             career_level=self._normalize_career_level(career_level if career_level is not None else raw_notice.career_level),
             location=location if location is not None else self._normalize_text(raw_notice.location),
             salary=salary if salary is not None else self._normalize_text(raw_notice.salary),
-            notice_status=self._normalize_notice_status(raw_notice.deadline),
+            notice_status=self._notice_status_from_date(parsed_deadline),
             original_url=self._normalize_required_text(raw_notice.original_url, fallback=source_name),
             source=source_name,
             view_count=0,
-            deadline=self._parse_deadline(raw_notice.deadline),
+            deadline=parsed_deadline,
         )
 
     @staticmethod
@@ -157,11 +158,11 @@ class JobNoticeNormalizer:
         if normalized is None:
             return cls._DEFAULT_COMPANY_SIZE
 
-        if any(marker in normalized for marker in ("LARGE", "ENTERPRISE", "대기업", "중견")):
+        if any(marker in normalized for marker in ("LARGE", "ENTERPRISE", "대기업")):
             return "LARGE"
         if any(marker in normalized for marker in ("STARTUP", "스타트업", "벤처")):
             return "STARTUP"
-        if any(marker in normalized for marker in ("SME", "MID", "중소", "중소기업")):
+        if any(marker in normalized for marker in ("SME", "MID", "중소", "중소기업", "중견")):
             return "SME"
         return cls._DEFAULT_COMPANY_SIZE
 
@@ -184,8 +185,8 @@ class JobNoticeNormalizer:
         return cls._DEFAULT_CAREER_LEVEL
 
     @classmethod
-    def _normalize_notice_status(cls, deadline: str | None) -> str:
-        parsed_deadline = cls._parse_deadline(deadline)
+    @staticmethod
+    def _notice_status_from_date(parsed_deadline: date | None) -> str:
         if parsed_deadline is None:
             return "ACTIVE"
         return "CLOSED" if parsed_deadline < datetime.now(timezone.utc).date() else "ACTIVE"
@@ -206,10 +207,14 @@ class JobNoticeNormalizer:
                 current += char
                 continue
             if current:
-                numbers.append(int(current))
+                parsed = int(current)
+                if 0 <= parsed <= 50:
+                    numbers.append(parsed)
                 current = ""
         if current:
-            numbers.append(int(current))
+            parsed = int(current)
+            if 0 <= parsed <= 50:
+                numbers.append(parsed)
         return numbers
 
     @staticmethod

@@ -5,8 +5,10 @@ class _RecordingJobNoticeRepository:
     def __init__(self, existing_keys: set[tuple[str, str]] | None = None) -> None:
         self._existing_keys = existing_keys or set()
         self.saved_items: list[dict] = []
+        self.exists_calls: list[tuple[str, str]] = []
 
     def exists_by_source_and_original_url(self, source: str, original_url: str) -> bool:
+        self.exists_calls.append((source, original_url))
         return (source, original_url) in self._existing_keys
 
     def save(self, **kwargs) -> None:
@@ -50,7 +52,7 @@ def test_job_notice_dedup_service_skips_duplicates_within_same_batch():
     assert repository.saved_items[1]["original_url"] == "https://wanted.co.kr/2"
 
 
-def test_job_notice_dedup_service_skips_notices_that_already_exist_in_repository():
+def test_job_notice_dedup_service_delegates_existing_repository_duplicates_to_save_conflict():
     repository = _RecordingJobNoticeRepository(
         existing_keys={("saramin", "https://saramin.co.kr/jobs/10")}
     )
@@ -63,6 +65,8 @@ def test_job_notice_dedup_service_skips_notices_that_already_exist_in_repository
         ]
     )
 
-    assert len(repository.saved_items) == 1
+    assert repository.exists_calls == []
+    assert len(repository.saved_items) == 2
     assert repository.saved_items[0]["source"] == "saramin"
-    assert repository.saved_items[0]["original_url"] == "https://saramin.co.kr/jobs/11"
+    assert repository.saved_items[0]["original_url"] == "https://saramin.co.kr/jobs/10"
+    assert repository.saved_items[1]["original_url"] == "https://saramin.co.kr/jobs/11"
