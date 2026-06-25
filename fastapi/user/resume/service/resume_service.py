@@ -6,6 +6,7 @@ from functools import lru_cache
 
 from openai import AsyncOpenAI, APIError, APITimeoutError
 
+from core.ai_usage.usage_log_client import record_ai_usage
 from core.config import get_settings
 from user.resume.prompts.resume_prompts import (
     RESUME_SYSTEM_PROMPT,
@@ -68,12 +69,13 @@ async def analyze_document(request: AnalyzeDocumentRequest) -> None:
 
     await _send_webhook_safe(document_id, {"documentId": document_id, "status": "PENDING"})
 
+    usage_record: dict | None = None
     try:
         async with _ANALYSIS_SEMAPHORE:
             if request.file_type == "RESUME":
-                await _analyze_resume(document_id, request)
+                usage_record = await _analyze_resume(document_id, request)
             else:
-                await _analyze_cover_letter(document_id, request)
+                usage_record = await _analyze_cover_letter(document_id, request)
     except FileParseError as e:
         logger.error(f"[{document_id}] File parse failed: {e.user_message}", exc_info=True)
         await _send_webhook_safe(document_id, _failed_payload(document_id, e.user_message))
@@ -90,8 +92,11 @@ async def analyze_document(request: AnalyzeDocumentRequest) -> None:
         logger.error(f"[{document_id}] Unexpected error", exc_info=True)
         await _send_webhook_safe(document_id, _failed_payload(document_id, _ERROR_MESSAGES["unknown"]))
 
+    if usage_record is not None:
+        await record_ai_usage(**usage_record)
 
-async def _analyze_resume(document_id: str, request: AnalyzeDocumentRequest) -> None:
+
+async def _analyze_resume(document_id: str, request: AnalyzeDocumentRequest) -> dict:
     resume_text = await asyncio.to_thread(
         parse_resume_file,
         document_id,
@@ -101,19 +106,22 @@ async def _analyze_resume(document_id: str, request: AnalyzeDocumentRequest) -> 
 
     await _send_webhook_safe(document_id, {"documentId": document_id, "status": "ANALYZING"})
 
-    result = await _call_openai(
+    result, usage_record = await _call_openai(
         document_id=document_id,
+        member_id=str(request.member_id),
         system_prompt=RESUME_SYSTEM_PROMPT,
         user_prompt=build_resume_user_prompt(resume_text),
         model="deep",
+        feature_type="DOCUMENT",
     )
 
     await _send_webhook_safe(document_id, {"documentId": document_id, "status": "ANALYZING"})
 
     await _send_completed(document_id, result)
+    return usage_record
 
 
-async def _analyze_cover_letter(document_id: str, request: AnalyzeDocumentRequest) -> None:
+async def _analyze_cover_letter(document_id: str, request: AnalyzeDocumentRequest) -> dict:
     await _send_webhook_safe(document_id, {"documentId": document_id, "status": "ANALYZING"})
 
     content_dicts = [
@@ -121,8 +129,9 @@ async def _analyze_cover_letter(document_id: str, request: AnalyzeDocumentReques
         for item in (request.content or [])
     ]
 
-    result = await _call_openai(
+    result, usage_record = await _call_openai(
         document_id=document_id,
+        member_id=str(request.member_id),
         system_prompt=COVER_LETTER_SYSTEM_PROMPT,
         user_prompt=build_cover_letter_user_prompt(
             request.company,
@@ -130,19 +139,23 @@ async def _analyze_cover_letter(document_id: str, request: AnalyzeDocumentReques
             content_dicts,
         ),
         model="deep",
+        feature_type="DOCUMENT",
     )
 
     await _send_webhook_safe(document_id, {"documentId": document_id, "status": "ANALYZING"})
 
     await _send_completed(document_id, result)
+    return usage_record
 
 
 async def _call_openai(
     document_id: str,
+    member_id: str,
     system_prompt: str,
     user_prompt: str,
     model: str,
-) -> dict:
+    feature_type: str,
+) -> tuple[dict, dict]:
     settings = get_settings()
     client = _get_openai_client()
     model_id = settings.openai_model_deep if model == "deep" else settings.openai_model_light
@@ -159,14 +172,27 @@ async def _call_openai(
     )
 
     usage = completion.usage
-    logger.info(
-        f"[{document_id}] Token usage — "
-        f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
-    )
+    if usage is not None:
+        logger.info(
+            f"[{document_id}] Token usage — "
+            f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
+        )
+    else:
+        logger.warning(f"[{document_id}] Token usage not available in OpenAI response")
 
     content = completion.choices[0].message.content or ""
     result = json.loads(content)
-    return _sanitize_response(result)
+    usage_record = (
+        {
+            "member_id": member_id,
+            "model_name": model_id,
+            "feature_type": feature_type,
+            "usage": usage,
+        }
+        if usage is not None
+        else None
+    )
+    return _sanitize_response(result), usage_record
 
 
 def _sanitize_response(obj: object) -> object:
