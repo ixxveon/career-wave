@@ -73,6 +73,7 @@ function UserMyPage() {
   const {
     subscribedItems,
     isLoading: isSubscriptionLoading,
+    isError: hasSubscriptionError,
   } = useSubscriptionStatus();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -286,11 +287,13 @@ function UserMyPage() {
               <div className="cw-info-row">
                 <span>구독 상태</span>
                 <strong>
-                  {subscribedItems.length > 0
-                    ? subscribedItems
-                        .map((item) => `${item.title} 구독중`)
-                        .join(" · ")
-                    : "미구독"}
+                  {hasSubscriptionError
+                    ? "구독 상태 확인 불가"
+                    : subscribedItems.length > 0
+                      ? subscribedItems
+                          .map((item) => `${item.title} 구독중`)
+                          .join(" · ")
+                      : "미구독"}
                 </strong>
               </div>
               <div className="cw-info-row">
