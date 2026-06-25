@@ -460,8 +460,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
 
         assertThat(listResult.getContent())
                 .extracting(JobNotice::getJobNoticeId)
-                .containsExactly(activeJobNoticeId)
-                .doesNotContain(closedJobNoticeId);
+                .containsExactly(activeJobNoticeId);
 
         JobNotice activeNotice = listResult.getContent().getFirst();
         assertThat(activeNotice.getJobType()).isEqualTo(JobType.FULLTIME);
