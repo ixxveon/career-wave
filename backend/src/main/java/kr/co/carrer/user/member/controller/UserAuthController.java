@@ -13,8 +13,8 @@ import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.member.docs.UserAuthControllerDocs;
 import kr.co.carrer.user.member.service.UserLoginService;
 import kr.co.carrer.user.member.service.UserMemberStatusService;
+import kr.co.carrer.auth.jwt.CookieProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,8 +29,7 @@ public class UserAuthController implements UserAuthControllerDocs {
 
     private final UserLoginService userLoginService;
     private final UserMemberStatusService memberStatusService;
-
-    @Value("${cookie.secure:true}") private boolean cookieSecure;
+    private final CookieProperties cookieProperties;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<UserLoginDto.Response>> login(
@@ -81,7 +80,7 @@ public class UserAuthController implements UserAuthControllerDocs {
     private void clearRefreshTokenCookie(HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(cookieSecure)
+                .secure(cookieProperties.isSecure())
                 .path("/api/v1/user/members")
                 .maxAge(0)
                 .sameSite("Strict")
