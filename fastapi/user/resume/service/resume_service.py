@@ -36,7 +36,7 @@ def _get_openai_client() -> AsyncOpenAI:
 
 
 # 동시 분석 요청 수 제한 — OpenAI API 과부하 방지
-_ANALYSIS_SEMAPHORE = asyncio.Semaphore(100)
+_ANALYSIS_SEMAPHORE = asyncio.Semaphore(10)
 
 
 _ERROR_MESSAGES = {
