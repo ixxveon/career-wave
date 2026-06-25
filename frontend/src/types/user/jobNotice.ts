@@ -111,6 +111,12 @@ export const JOB_NOTICE_FILTER_OPTIONS = {
   companySize: [JOB_NOTICE_ALL_FILTER_VALUE, '스타트업', '중견', '대기업'],
 } as const;
 
+export const JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES = {
+  스타트업: 'STARTUP',
+  중견: 'SME',
+  대기업: 'LARGE',
+} as const;
+
 export const JOB_TYPE_LABELS = {
   FULLTIME: '정규직',
   INTERN: '인턴',
