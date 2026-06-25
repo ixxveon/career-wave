@@ -66,6 +66,8 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
     private final WebClient.Builder webClientBuilder;
     private final EntitlementInitService entitlementInitService;
 
+    @Value("${cookie.secure:true}") private boolean cookieSecure;
+
     @Value("${oauth.kakao.client-id}") private String kakaoClientId;
     @Value("${oauth.kakao.client-secret}") private String kakaoClientSecret;
     @Value("${oauth.kakao.redirect-uri}") private String kakaoRedirectUri;
@@ -479,7 +481,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         refreshTokenStore.saveAccessJti(accountType, subject, sessionId, jti, accessTtl);
 
         ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, refreshToken)
-                .httpOnly(true).secure(true).sameSite("Strict")
+                .httpOnly(true).secure(cookieSecure).sameSite("Strict")
                 .path("/api/v1/user/members")
                 .maxAge(refreshTtl.toSeconds())
                 .build();

@@ -23,6 +23,7 @@ import kr.co.carrer.user.member.type.MemberType;
 import kr.co.carrer.user.member.type.RoleType;
 import kr.co.carrer.user.member.service.UserLoginService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,8 @@ public class UserLoginServiceImpl implements UserLoginService {
     private final TokenBlacklistStore tokenBlacklistStore;
     private final LoginAttemptStore loginAttemptStore;
     private final UserMemberStatusQueryRepository statusQueryRepository;
+
+    @Value("${cookie.secure:true}") private boolean cookieSecure;
 
     private static final long LOCK_DURATION_MINUTES = 15L;
 
@@ -255,7 +258,7 @@ public class UserLoginServiceImpl implements UserLoginService {
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookieSecure)
                 .path("/api/v1/user/members")
                 .maxAge(jwtProperties.getUser().getRefreshExpiration() / 1000)
                 .sameSite("Strict")
