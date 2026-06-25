@@ -7,6 +7,8 @@ import kr.co.carrer.admin.member.type.SanctionType;
 import kr.co.carrer.admin.member.type.SubscriptionStatus;
 import kr.co.carrer.admin.member.type.SuspendDuration;
 
+import kr.co.carrer.admin.member.util.PersonalInfoMasker;
+
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -26,7 +28,16 @@ public class MemberDTO {
         @Schema(description = "신고 횟수") long reportCount,
         @Schema(description = "가입 일시") ZonedDateTime joinedAt,
         @Schema(description = "마지막 로그인 일시") ZonedDateTime lastLoginAt
-    ) {}
+    ) {
+        public ResponseList masked() {
+            return new ResponseList(
+                memberId, loginId,
+                PersonalInfoMasker.maskName(name),
+                PersonalInfoMasker.maskEmail(email),
+                role, plan, memberStatus, warningCount, reportCount, joinedAt, lastLoginAt
+            );
+        }
+    }
 
     @Schema(description = "개인 회원 상세 응답")
     public record ResponseDetail(
