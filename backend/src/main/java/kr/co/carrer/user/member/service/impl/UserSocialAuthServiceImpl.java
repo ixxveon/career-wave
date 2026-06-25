@@ -2,6 +2,7 @@ package kr.co.carrer.user.member.service.impl;
 
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.jwt.AccountType;
+import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
@@ -65,6 +66,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
     private final StringRedisTemplate redisTemplate;
     private final WebClient.Builder webClientBuilder;
     private final EntitlementInitService entitlementInitService;
+    private final CookieProperties cookieProperties;
 
     @Value("${oauth.kakao.client-id}") private String kakaoClientId;
     @Value("${oauth.kakao.client-secret}") private String kakaoClientSecret;
@@ -479,7 +481,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         refreshTokenStore.saveAccessJti(accountType, subject, sessionId, jti, accessTtl);
 
         ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, refreshToken)
-                .httpOnly(true).secure(true).sameSite("Strict")
+                .httpOnly(true).secure(cookieProperties.isSecure()).sameSite("Strict")
                 .path("/api/v1/user/members")
                 .maxAge(refreshTtl.toSeconds())
                 .build();
