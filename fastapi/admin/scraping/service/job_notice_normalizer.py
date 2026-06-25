@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from admin.scraping.adapter import RawJobNotice
 
@@ -24,6 +24,10 @@ class NormalizedJobNotice:
 
 
 class JobNoticeNormalizer:
+    _DEFAULT_JOB_TYPE = "FULLTIME"
+    _DEFAULT_COMPANY_SIZE = "SME"
+    _DEFAULT_CAREER_LEVEL = "ANY"
+
     def normalize(self, *, source_name: str, raw_notice: RawJobNotice) -> NormalizedJobNotice:
         if source_name == "wanted":
             return self._normalize_wanted(raw_notice)
@@ -72,13 +76,13 @@ class JobNoticeNormalizer:
             title=title if title is not None else self._normalize_required_text(raw_notice.title, fallback=raw_notice.original_url),
             description=description if description is not None else self._normalize_text(raw_notice.description),
             skill_tags=skill_tags if skill_tags is not None else self._normalize_list(raw_notice.skill_tags),
-            job_type=job_type if job_type is not None else self._normalize_text(raw_notice.job_type),
-            company_size=company_size if company_size is not None else self._normalize_text(raw_notice.company_size),
+            job_type=self._normalize_job_type(job_type if job_type is not None else raw_notice.job_type),
+            company_size=self._normalize_company_size(company_size if company_size is not None else raw_notice.company_size),
             job_category=job_category if job_category is not None else self._normalize_list(raw_notice.job_category),
-            career_level=career_level if career_level is not None else self._normalize_text(raw_notice.career_level),
+            career_level=self._normalize_career_level(career_level if career_level is not None else raw_notice.career_level),
             location=location if location is not None else self._normalize_text(raw_notice.location),
             salary=salary if salary is not None else self._normalize_text(raw_notice.salary),
-            notice_status="ACTIVE",
+            notice_status=self._normalize_notice_status(raw_notice.deadline),
             original_url=self._normalize_required_text(raw_notice.original_url, fallback=source_name),
             source=source_name,
             view_count=0,
@@ -132,6 +136,81 @@ class JobNoticeNormalizer:
         if normalized is None:
             return None
         return " ".join(normalized.split())
+
+    @classmethod
+    def _normalize_job_type(cls, value: str | None) -> str:
+        normalized = cls._normalize_token(value)
+        if normalized is None:
+            return cls._DEFAULT_JOB_TYPE
+
+        if any(marker in normalized for marker in ("INTERN", "INTERNSHIP", "인턴")):
+            return "INTERN"
+        if any(marker in normalized for marker in ("CONTRACT", "TEMPORARY", "계약", "프리랜서", "위촉")):
+            return "CONTRACT"
+        if any(marker in normalized for marker in ("FULLTIME", "FULL_TIME", "정규", "정직원")):
+            return "FULLTIME"
+        return cls._DEFAULT_JOB_TYPE
+
+    @classmethod
+    def _normalize_company_size(cls, value: str | None) -> str:
+        normalized = cls._normalize_token(value)
+        if normalized is None:
+            return cls._DEFAULT_COMPANY_SIZE
+
+        if any(marker in normalized for marker in ("LARGE", "ENTERPRISE", "대기업", "중견")):
+            return "LARGE"
+        if any(marker in normalized for marker in ("STARTUP", "스타트업", "벤처")):
+            return "STARTUP"
+        if any(marker in normalized for marker in ("SME", "MID", "중소", "중소기업")):
+            return "SME"
+        return cls._DEFAULT_COMPANY_SIZE
+
+    @classmethod
+    def _normalize_career_level(cls, value: str | None) -> str:
+        normalized = cls._normalize_token(value)
+        if normalized is None:
+            return cls._DEFAULT_CAREER_LEVEL
+
+        if any(marker in normalized for marker in ("ANY", "무관", "경력무관", "신입/경력")):
+            return "ANY"
+        if any(marker in normalized for marker in ("SENIOR", "시니어", "고급", "리드", "책임")):
+            return "SENIOR"
+        if any(marker in normalized for marker in ("JUNIOR", "주니어", "신입", "초급")):
+            return "JUNIOR"
+
+        years = cls._extract_year_numbers(normalized)
+        if years:
+            return "SENIOR" if max(years) >= 5 else "JUNIOR"
+        return cls._DEFAULT_CAREER_LEVEL
+
+    @classmethod
+    def _normalize_notice_status(cls, deadline: str | None) -> str:
+        parsed_deadline = cls._parse_deadline(deadline)
+        if parsed_deadline is None:
+            return "ACTIVE"
+        return "CLOSED" if parsed_deadline < datetime.now(timezone.utc).date() else "ACTIVE"
+
+    @classmethod
+    def _normalize_token(cls, value: str | None) -> str | None:
+        normalized = cls._normalize_text(value)
+        if normalized is None:
+            return None
+        return normalized.upper().replace(" ", "").replace("-", "_")
+
+    @staticmethod
+    def _extract_year_numbers(value: str) -> list[int]:
+        numbers: list[int] = []
+        current = ""
+        for char in value:
+            if char.isdigit():
+                current += char
+                continue
+            if current:
+                numbers.append(int(current))
+                current = ""
+        if current:
+            numbers.append(int(current))
+        return numbers
 
     @staticmethod
     def _parse_deadline(value: str | None) -> date | None:
