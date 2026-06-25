@@ -128,9 +128,6 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
               buttonLabel={confirmEmailCode.isPending ? '확인 중' : '인증 확인'}
               disabled={confirmEmailCode.isPending || !verification.emailId || emailExpiresIn <= 0}
               onClick={handleConfirmEmailCode}
-              secondButtonLabel="재전송"
-              secondDisabled={sendEmailCode.isPending || emailResendIn > 0}
-              onSecondClick={handleSendEmailCode}
             />
             {fieldErrors.emailCode && <p className="cw-register-error">{fieldErrors.emailCode}</p>}
           </Field>
@@ -155,9 +152,6 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
               buttonLabel={confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
               disabled={confirmPhoneCode.isPending || !verification.phoneId || phoneExpiresIn <= 0}
               onClick={handleConfirmPhoneCode}
-              secondButtonLabel="재전송"
-              secondDisabled={sendPhoneCode.isPending || phoneResendIn > 0}
-              onSecondClick={handleSendPhoneCode}
             />
             <StatusPill active={Boolean(verification.phoneToken)}>휴대폰 인증이 완료되었습니다.</StatusPill>
             {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
