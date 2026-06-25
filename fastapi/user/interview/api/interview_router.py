@@ -2,7 +2,7 @@ import asyncio
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
 from core.config import get_settings
@@ -16,6 +16,8 @@ from user.interview.websocket.interview_ws_handler import _sessions, _pending_ll
 log = logging.getLogger(__name__)
 
 _bg_tasks: set[asyncio.Task] = set()
+
+_ALLOWED_AUDIO_CONTENT_TYPES = {"audio/webm", "audio/mp4", "audio/ogg", "audio/wav", "application/octet-stream"}
 
 
 def _on_task_done(task: asyncio.Task) -> None:
@@ -60,6 +62,7 @@ class ReportTriggerRequest(BaseModel):
 
 @router.post("/sessions/{session_id}/trigger/voice-chunk", status_code=202)
 async def trigger_voice_chunk(
+    request: Request,
     session_id: str,
     questionOrder: int = Form(...),
     chunkIndex: int = Form(...),
@@ -70,7 +73,24 @@ async def trigger_voice_chunk(
     Spring → FastAPI 음성 청크 전달 트리거.
     STT 파이프라인을 백그라운드로 실행하고 202 응답을 즉시 반환한다.
     """
+    settings = get_settings()
+
+    if questionOrder < 1:
+        raise HTTPException(status_code=400, detail="questionOrder는 1 이상이어야 합니다.")
+    if chunkIndex < 0:
+        raise HTTPException(status_code=400, detail="chunkIndex는 0 이상이어야 합니다.")
+
+    content_type = (audioChunk.content_type or "").split(";")[0].strip().lower()
+    if content_type not in _ALLOWED_AUDIO_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail=f"허용되지 않는 audio content-type: {content_type}")
+
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > settings.audio_chunk_max_bytes:
+        raise HTTPException(status_code=413, detail="음성 청크 크기가 허용 한도를 초과했습니다.")
+
     audio_bytes = await audioChunk.read()
+    if len(audio_bytes) > settings.audio_chunk_max_bytes:
+        raise HTTPException(status_code=413, detail="음성 청크 크기가 허용 한도를 초과했습니다.")
 
     task = asyncio.create_task(
         stt_pipeline.transcribe_chunk(
