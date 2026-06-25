@@ -166,6 +166,13 @@ export default function UserManagementPage() {
     fetchHrManagers(1);
   };
 
+  const openMemberDetail = async (memberId: string) => {
+    try {
+      const res = await memberApi.getMemberDetail(memberId);
+      if (res.data.success) setSelectedMember(res.data.data);
+    } catch {}
+  };
+
   const fetchMemberCounts = useCallback(async () => {
     try {
       const res = await memberApi.getMemberCounts();
@@ -435,7 +442,7 @@ export default function UserManagementPage() {
                       <td><span className={`statusBadge ${memberStatusCls[m.memberStatus]}`}>{memberStatusLabel[m.memberStatus]}</span></td>
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="tableBtn" onClick={() => setSelectedMember(m)}>상세보기</button>
+                          <button className="tableBtn" onClick={() => openMemberDetail(m.memberId)}>상세보기</button>
                           <button className="tableBtn tableBtn--danger" onClick={() => openSuspend(m)} disabled={m.memberStatus === MEMBER_STATUS.WITHDRAWN}>정지처리</button>
                         </div>
                       </td>
@@ -598,10 +605,14 @@ export default function UserManagementPage() {
               <div><span>최근 접속</span><strong>{selectedMember.lastLoginAt ? new Date(selectedMember.lastLoginAt).toLocaleDateString('ko-KR') : '—'}</strong></div>
               <div><span>현재 상태</span><strong><span className={`statusBadge ${memberStatusCls[selectedMember.memberStatus]}`}>{memberStatusLabel[selectedMember.memberStatus]}</span></strong></div>
               <div><span>신고 받은 횟수</span><strong>{selectedMember.reportCount}건</strong></div>
-              {selectedMember.memberStatus === MEMBER_STATUS.SUSPENDED && selectedMember.suspendEndDate && (
+              {selectedMember.memberStatus === MEMBER_STATUS.SUSPENDED && selectedMember.sanctionType && (
                 <>
                   <div><span>정지 유형</span><strong>{selectedMember.suspendDuration ? durationLabel[selectedMember.suspendDuration] : '—'}</strong></div>
-                  <div><span>정지 기간</span><strong>{selectedMember.suspendStartDate ? new Date(selectedMember.suspendStartDate).toLocaleDateString('ko-KR') : '—'} ~ {new Date(selectedMember.suspendEndDate).toLocaleDateString('ko-KR')}</strong></div>
+                  <div><span>정지 기간</span><strong>
+                    {selectedMember.suspendStartDate ? new Date(selectedMember.suspendStartDate).toLocaleDateString('ko-KR') : '—'}
+                    {' ~ '}
+                    {selectedMember.suspendEndDate ? new Date(selectedMember.suspendEndDate).toLocaleDateString('ko-KR') : '영구'}
+                  </strong></div>
                 </>
               )}
               <div style={{ gridColumn: '1 / -1' }}>
