@@ -187,7 +187,7 @@ export const jobNoticeHandlers = [
         jobCategory: ['BACKEND', 'FRONTEND', 'DATA', 'DEVOPS'],
         careerLevel: ['JUNIOR', 'SENIOR', 'ANY'],
         location: ['서울', '경기', '원격'],
-        companySize: ['스타트업', '중소', '중견', '대기업'],
+        companySize: ['스타트업', '중견', '대기업'],
       },
     };
 
