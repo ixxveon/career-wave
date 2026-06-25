@@ -1,6 +1,7 @@
 package kr.co.carrer.user.member.service.impl;
 
 import jakarta.servlet.http.HttpServletResponse;
+import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.RefreshTokenStore;
@@ -74,7 +75,7 @@ class UserSocialAuthServiceImplTest {
                 termsRepository, verificationRepository, encoder,
                 jwtTokenProvider, jwtProperties, refreshTokenStore, tokenBlacklistStore,
                 socialSignupTokenStore, redisTemplate, webClientBuilder,
-                entitlementInitService);
+                entitlementInitService, new CookieProperties());
         injectValue(service, "kakaoClientId", "kakao-id");
         injectValue(service, "kakaoClientSecret", "kakao-secret");
         injectValue(service, "kakaoRedirectUri", "http://localhost/kakao");

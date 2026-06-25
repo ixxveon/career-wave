@@ -3,6 +3,7 @@ package kr.co.carrer.user.member.service.impl;
 import kr.co.carrer.user.member.repository.UserMemberStatusQueryRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.exception.AuthErrorCode;
+import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.LoginAttemptStore;
@@ -62,7 +63,7 @@ class LoginAttemptServiceImplTest {
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
         service = new UserLoginServiceImpl(memberRepository, encoder, provider, props,
-                refreshTokenStore, tokenBlacklistStore, loginAttemptStore, statusQueryRepository);
+                refreshTokenStore, tokenBlacklistStore, loginAttemptStore, statusQueryRepository, new CookieProperties());
     }
 
     // ── 로그인 실패 카운트 ───────────────────────────────────────

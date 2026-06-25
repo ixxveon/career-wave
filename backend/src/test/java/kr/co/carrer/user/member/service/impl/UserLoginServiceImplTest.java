@@ -2,6 +2,7 @@ package kr.co.carrer.user.member.service.impl;
 
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.jwt.AccountType;
+import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
@@ -59,7 +60,7 @@ class UserLoginServiceImplTest {
         props.getAdmin().setAccessExpiration(900000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore, statusQueryRepository);
+        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore, statusQueryRepository, new CookieProperties());
         // loginAttemptStore 기본 stub — 실패 카운트 테스트가 아닌 경우 5회 미만으로 설정
         lenient().when(loginAttemptStore.increment(any(), anyString())).thenReturn(1L);
         lenient().when(loginAttemptStore.getMaxAttempts()).thenReturn(5);
