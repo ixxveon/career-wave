@@ -37,26 +37,29 @@ public class AdminAiServiceImpl implements AdminAiService {
     }
 
     @Override
-    public AiDTO.ResponseDraft generateNoticeDraft(AiDTO.RequestNoticeDraft dto) {
+    public AiDTO.ResponseDraft generateNoticeDraft(AiDTO.RequestNoticeDraft dto, long adminId) {
         return callFastApi("/api/v1/ai/notice-draft", Map.of(
             "category", dto.category().name(),
-            "title", dto.title()
+            "title", dto.title(),
+            "adminId", adminId
         ));
     }
 
     @Override
-    public AiDTO.ResponseDraft generateFaqDraft(AiDTO.RequestFaqDraft dto) {
+    public AiDTO.ResponseDraft generateFaqDraft(AiDTO.RequestFaqDraft dto, long adminId) {
         return callFastApi("/api/v1/ai/faq-draft", Map.of(
-            "question", dto.question()
+            "question", dto.question(),
+            "adminId", adminId
         ));
     }
 
     @Override
-    public AiDTO.ResponseDraft generateInquiryDraft(AiDTO.RequestInquiryDraft dto) {
+    public AiDTO.ResponseDraft generateInquiryDraft(AiDTO.RequestInquiryDraft dto, long adminId) {
         return callFastApi("/api/v1/ai/inquiry-draft", Map.of(
             "category", dto.category().name(),
             "title", dto.title(),
-            "content", dto.content()
+            "content", dto.content(),
+            "adminId", adminId
         ));
     }
 
