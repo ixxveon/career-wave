@@ -423,6 +423,64 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 .containsExactly("LARGE", "STARTUP");
     }
 
+    @Test
+    @DisplayName("reads FastAPI scraped job_notices rows through user active list and detail contracts")
+    void fastApiScrapedJobNoticeRows_areReadByUserJobNoticeQueries() {
+        ZonedDateTime createdAt = ZonedDateTime.of(2026, 6, 20, 10, 30, 0, 0, SERVICE_ZONE_ID);
+        Long activeJobNoticeId = persistFastApiScrapedJobNotice(
+                "wanted",
+                "https://www.wanted.co.kr/wd/789",
+                "FastAPI Scraped Backend Engineer",
+                "ACTIVE",
+                LocalDate.of(2026, 7, 31),
+                createdAt
+        );
+        Long closedJobNoticeId = persistFastApiScrapedJobNotice(
+                "saramin",
+                "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=789",
+                "FastAPI Scraped Closed Engineer",
+                "CLOSED",
+                LocalDate.of(2026, 6, 1),
+                createdAt.plusMinutes(1)
+        );
+
+        flushAndClear();
+
+        Page<JobNotice> listResult = jobNoticeQueryRepository.findActiveJobNotices(
+                "FastAPI Scraped",
+                null,
+                null,
+                null,
+                null,
+                null,
+                "all",
+                "latest",
+                PageRequest.of(0, 20)
+        );
+
+        assertThat(listResult.getContent())
+                .extracting(JobNotice::getJobNoticeId)
+                .containsExactly(activeJobNoticeId)
+                .doesNotContain(closedJobNoticeId);
+
+        JobNotice activeNotice = listResult.getContent().getFirst();
+        assertThat(activeNotice.getJobType()).isEqualTo(JobType.FULLTIME);
+        assertThat(activeNotice.getCompanySize()).isEqualTo(CompanySize.SME);
+        assertThat(activeNotice.getCareerLevel()).isEqualTo(CareerLevel.JUNIOR);
+        assertThat(activeNotice.getNoticeStatus()).isEqualTo(JobNoticeStatus.ACTIVE);
+        assertThat(activeNotice.getSource()).isEqualTo("wanted");
+        assertThat(activeNotice.getSkillTags()).containsExactly("Python", "FastAPI");
+        assertThat(activeNotice.getJobCategory()).containsExactly("BACKEND", "AI");
+
+        assertThat(jobNoticeQueryRepository.findActiveJobNoticeById(activeJobNoticeId))
+                .hasValueSatisfying(detail -> {
+                    assertThat(detail.getOriginalUrl()).isEqualTo("https://www.wanted.co.kr/wd/789");
+                    assertThat(detail.getTitle()).isEqualTo("FastAPI Scraped Backend Engineer");
+                    assertThat(detail.getNoticeStatus()).isEqualTo(JobNoticeStatus.ACTIVE);
+                });
+        assertThat(jobNoticeQueryRepository.findActiveJobNoticeById(closedJobNoticeId)).isEmpty();
+    }
+
     private Page<JobNotice> findAllSortedBy(String sort) {
         return jobNoticeQueryRepository.findActiveJobNotices(
                 null, null, null, null, null, null, "all", sort, PageRequest.of(0, 20)
@@ -528,6 +586,71 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
+    }
+
+    private Long persistFastApiScrapedJobNotice(
+            String source,
+            String originalUrl,
+            String title,
+            String noticeStatus,
+            LocalDate deadline,
+            ZonedDateTime createdAt
+    ) {
+        Object result = testEntityManager.getEntityManager()
+                .createNativeQuery("""
+                        INSERT INTO job_notices (
+                            company_name,
+                            title,
+                            description,
+                            skill_tags,
+                            job_type,
+                            company_size,
+                            job_category,
+                            career_level,
+                            location,
+                            salary,
+                            notice_status,
+                            original_url,
+                            source,
+                            view_count,
+                            deadline,
+                            created_at,
+                            updated_at
+                        )
+                        VALUES (
+                            :companyName,
+                            :title,
+                            :description,
+                            ARRAY['Python', 'FastAPI'],
+                            'FULLTIME',
+                            'SME',
+                            ARRAY['BACKEND', 'AI'],
+                            'JUNIOR',
+                            :location,
+                            :salary,
+                            :noticeStatus,
+                            :originalUrl,
+                            :source,
+                            0,
+                            :deadline,
+                            :createdAt,
+                            :createdAt
+                        )
+                        RETURNING job_notice_id
+                        """)
+                .setParameter("companyName", "Scraped Company")
+                .setParameter("title", title)
+                .setParameter("description", title + " description")
+                .setParameter("location", "Seoul")
+                .setParameter("salary", "Negotiable")
+                .setParameter("noticeStatus", noticeStatus)
+                .setParameter("originalUrl", originalUrl)
+                .setParameter("source", source)
+                .setParameter("deadline", deadline)
+                .setParameter("createdAt", createdAt)
+                .getSingleResult();
+
+        return ((Number) result).longValue();
     }
 
     private void flushAndClear() {
