@@ -60,6 +60,8 @@ class InMemoryUsageLogRepository:
             total_cost=sum((record.cost for record in filtered_records), Decimal("0")),
             document_requests=sum(1 for record in filtered_records if record.feature_type == "DOCUMENT"),
             interview_requests=sum(1 for record in filtered_records if record.feature_type == "INTERVIEW"),
+            admin_cs_requests=sum(1 for record in filtered_records if record.feature_type == "ADMIN_CS"),
+            admin_report_requests=sum(1 for record in filtered_records if record.feature_type == "ADMIN_REPORT"),
         )
 
 
@@ -75,6 +77,8 @@ def test_usage_metrics_service_returns_summary_response():
         total_cost=Decimal("980000"),
         document_requests=820,
         interview_requests=430,
+        admin_cs_requests=25,
+        admin_report_requests=12,
     )
     ai_ops_setting_repository.find_selected_model_id.return_value = 1
     ai_model_repository.find_by_id.return_value = AiModelRecord(
@@ -108,6 +112,8 @@ def test_usage_metrics_service_returns_summary_response():
         "totalCost": Decimal("980000"),
         "documentRequests": 820,
         "interviewRequests": 430,
+        "adminCsRequests": 25,
+        "adminReportRequests": 12,
         "activeModelId": 1,
         "activeModelName": "gpt-4o-mini",
     }
@@ -191,6 +197,8 @@ def test_usage_metrics_summary_is_consistent_with_persisted_usage_logs():
         "totalCost": Decimal("1888.000000"),
         "documentRequests": 1,
         "interviewRequests": 1,
+        "adminCsRequests": 0,
+        "adminReportRequests": 0,
         "activeModelId": 5,
         "activeModelName": "gpt-4.1-mini",
     }
@@ -213,6 +221,18 @@ def test_usage_metrics_service_returns_domain_usage_response():
             input_tokens=170000,
             output_tokens=75000,
             cost=Decimal("420000"),
+        ),
+        admin_cs=FeatureUsageAggregateRecord(
+            request_count=25,
+            input_tokens=12000,
+            output_tokens=5000,
+            cost=Decimal("25000"),
+        ),
+        admin_report=FeatureUsageAggregateRecord(
+            request_count=12,
+            input_tokens=9000,
+            output_tokens=3000,
+            cost=Decimal("15000"),
         ),
     )
 
@@ -239,6 +259,18 @@ def test_usage_metrics_service_returns_domain_usage_response():
             "inputTokens": 170000,
             "outputTokens": 75000,
             "cost": Decimal("420000"),
+        },
+        "adminCs": {
+            "requestCount": 25,
+            "inputTokens": 12000,
+            "outputTokens": 5000,
+            "cost": Decimal("25000"),
+        },
+        "adminReport": {
+            "requestCount": 12,
+            "inputTokens": 9000,
+            "outputTokens": 3000,
+            "cost": Decimal("15000"),
         },
     }
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { UserRound, Mail, Phone, ShieldCheck, Github } from "lucide-react";
 import { updateDashboardProfile } from "@/api/user/dashboard";
@@ -10,6 +10,26 @@ import {
 import type { UserProfile } from "@/types/user/dashboard";
 
 import "@/styles/user/mypage/MyPage.css";
+
+function maskEmail(email: string) {
+  const [localPart, domain] = email.split("@");
+
+  if (!localPart || !domain) {
+    return email;
+  }
+
+  const visible = localPart.slice(0, 2);
+  const masked = "*".repeat(Math.max(localPart.length - 2, 1));
+
+  return `${visible}${masked}@${domain}`;
+}
+
+function maskLoginId(loginId: string) {
+  const visible = loginId.slice(0, 4);
+  const masked = "*".repeat(Math.max(loginId.length - 4, 1));
+
+  return `${visible}${masked}`;
+}
 
 const ROLE_TYPE_LABELS: Record<UserProfile["roleType"], string> = {
   USER: "일반 회원",
@@ -64,6 +84,9 @@ function UserMyPage() {
     githubUrl: "",
   });
 
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const isSavingProfileRef = useRef(false);
+
   const isLoading = isProfileLoading || isGithubLoading;
 
   function openEditModal() {
@@ -80,6 +103,9 @@ function UserMyPage() {
   function closeEditModal() {
     setIsEditModalOpen(false);
   }
+  function handleGithubManage() {
+    alert("GitHub OAuth 연동 기능은 v2에서 제공될 예정입니다.");
+  }
 
   function handleEditFormChange(field: keyof EditProfileForm, value: string) {
     setEditForm((prev) => ({
@@ -89,13 +115,20 @@ function UserMyPage() {
   }
 
   async function saveProfileEdit() {
-    if (!userProfile) return;
+    if (!userProfile || isSavingProfileRef.current) return;
+    isSavingProfileRef.current = true;
+
+    const trimmedName = editForm.name.trim();
+    const normalizedPhone = editForm.phone.replace(/-/g, "").trim();
+    const trimmedGithubUrl = editForm.githubUrl.trim();
 
     try {
+      setIsSavingProfile(true);
+
       await updateDashboardProfile({
-        name: editForm.name,
-        phone: editForm.phone,
-        githubUrl: editForm.githubUrl.trim(),
+        name: trimmedName,
+        phone: normalizedPhone,
+        githubUrl: trimmedGithubUrl,
       });
 
       await Promise.all([refetchProfile(), refetchGithub()]);
@@ -105,6 +138,9 @@ function UserMyPage() {
       alert("회원 정보가 수정되었습니다.");
     } catch {
       alert("회원 정보 수정에 실패했습니다.");
+    } finally {
+      isSavingProfileRef.current = false;
+      setIsSavingProfile(false);
     }
   }
 
@@ -211,7 +247,7 @@ function UserMyPage() {
                 <span>이메일</span>
                 <strong>
                   <Mail size={15} />
-                  {userProfile.email}
+                  {maskEmail(userProfile.email)}
                 </strong>
               </div>
               <div className="cw-info-row">
@@ -245,7 +281,7 @@ function UserMyPage() {
               </div>
               <div className="cw-info-row">
                 <span>로그인 ID</span>
-                <strong>{userProfile.loginId}</strong>
+                <strong>{maskLoginId(userProfile.loginId)}</strong>
               </div>
               <div className="cw-info-row">
                 <span>구독 상태</span>
@@ -280,7 +316,7 @@ function UserMyPage() {
             <button
               type="button"
               className="cw-card-edit-button"
-              onClick={openEditModal}
+              onClick={handleGithubManage}
             >
               연동 관리
             </button>
@@ -337,7 +373,7 @@ function UserMyPage() {
           <div className="cw-edit-modal" role="dialog" aria-modal="true">
             <div className="cw-edit-modal-header">
               <h3>회원 정보 수정</h3>
-              <p>Mock 데이터 기준으로 수정 UI 흐름을 확인합니다.</p>
+              <p>수정할 회원 정보를 입력한 뒤 저장해 주세요.</p>
             </div>
 
             <div className="cw-edit-form">
@@ -384,8 +420,9 @@ function UserMyPage() {
                 type="button"
                 className="is-primary"
                 onClick={saveProfileEdit}
+                disabled={isSavingProfile}
               >
-                저장
+                {isSavingProfile ? "저장 중..." : "저장"}
               </button>
             </div>
           </div>

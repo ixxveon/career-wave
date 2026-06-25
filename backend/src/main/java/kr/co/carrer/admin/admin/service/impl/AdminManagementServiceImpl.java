@@ -48,13 +48,13 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         long totalAdminCount = adminRepository.count();
         long activeAdminCount = adminRepository.countByStatus(AdminStatus.ACTIVE);
         long lockedAdminCount = adminRepository.countByStatus(AdminStatus.LOCKED);
-        long masterAdminCount = adminRepository.countByAdminRole(AdminRole.MASTER);
+        long activeAclCount = ipAclRepository.countByIsEnabledTrue();
 
         return new SummaryResult(
                 totalAdminCount,
                 activeAdminCount,
                 lockedAdminCount,
-                masterAdminCount
+                activeAclCount
         );
     }
 

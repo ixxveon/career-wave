@@ -132,6 +132,8 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 | `404` | `INTERVIEW_DOCUMENT_NOT_FOUND` | 유효하지 않은 `documentId` |
 | `401` | `UNAUTHORIZED` | 토큰 없음 또는 만료 |
 
+> **Note**: 진행 중인 기존 세션이 있으면 자동으로 FAILED 처리 후 새 세션을 생성한다.
+
 ---
 
 ## 2. 텍스트 답변 제출
@@ -447,7 +449,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 WS /ws/user/interview?token={accessToken}
 ```
 
-핸드셰이크 시 `?token=` JWT 검증 → `memberId` 추출.  
+핸드셰이크 시 `?token=` 쿼리 파라미터로 JWT 전달 및 검증 → `memberId` 추출.  
 SUBSCRIBE 시 `sessionId` 소유권을 DB로 재검증 (IDOR 방지).  
 검증 실패 시 `MessageDeliveryException` 발생 → 연결 종료.
 
@@ -468,7 +470,7 @@ SUBSCRIBE /topic/interview/{sessionId}
 ```
 클라이언트                                          Spring 서버
    │                                                │
-   │── STOMP CONNECT (/ws/user/interview?token=...) ▶│  JWT 검증 → memberId 추출
+   │── WS /ws/user/interview?token=... ─────────────▶│  JWT 검증 → memberId 추출
    │                                                │
    │── SUBSCRIBE /topic/interview/{sessionId} ──────▶│  sessionId 소유권 검증
    │◀─ {"type":"SYSTEM","subType":"SESSION_START",...} │  구독 직후 스냅샷 전송 (SessionSubscribeEvent)

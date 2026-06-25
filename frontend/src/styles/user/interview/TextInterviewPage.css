@@ -458,7 +458,7 @@
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  max-width: 78%;
+  max-width: 88%;
 }
 .ti-msg--ai   { align-self: flex-start; }
 .ti-msg--user { align-self: flex-end; flex-direction: row-reverse; }
@@ -819,6 +819,36 @@
   font-weight: 600;
   flex-shrink: 0;
   border-bottom: 1px solid #92400e;
+}
+
+/* ─── 에러 배너 ──────────────────────────────── */
+.ti-error-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: #450a0a;
+  color: #fca5a5;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+  border-top: 1px solid #7f1d1d;
+}
+
+.ti-error-bar button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #fca5a5;
+  background: transparent;
+  color: #fca5a5;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ti-error-bar button:hover {
+  background: rgba(252, 165, 165, 0.1);
 }
 
 /* ─── 종료 모달 ───────────────────────────────── */

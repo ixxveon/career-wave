@@ -7,6 +7,8 @@ export type ApiResponse<T> =
 export const AI_DOMAIN = {
   DOCUMENT: 'DOCUMENT',
   INTERVIEW: 'INTERVIEW',
+  ADMIN_CS: 'ADMIN_CS',
+  ADMIN_REPORT: 'ADMIN_REPORT',
 } as const;
 
 export const AI_EVENT_SEVERITY = {
@@ -45,6 +47,7 @@ export type AiHealthStatus = typeof AI_HEALTH_STATUS[keyof typeof AI_HEALTH_STAT
 export type AiUsageRiskLevel = typeof AI_USAGE_RISK_LEVEL[keyof typeof AI_USAGE_RISK_LEVEL];
 export type RagIndexStatus = typeof RAG_INDEX_STATUS[keyof typeof RAG_INDEX_STATUS];
 export type AiMetricInterval = typeof AI_METRIC_INTERVAL[keyof typeof AI_METRIC_INTERVAL];
+export type RagDocumentStatusRaw = 'UPLOADED' | 'INDEXING' | 'COMPLETED' | 'FAILED';
 
 export interface PageResult<T> {
   content: T[];
@@ -114,6 +117,7 @@ export interface AiMetricLog extends AiModelNameFields {
 }
 
 export interface AiBudgetSetting {
+  selectedModelId: number | null;
   monthlyBudget: number;
   currentSpend: number | null;
   forecastSpend: number | null;
@@ -129,6 +133,41 @@ export interface RagDocumentMetric {
   progressPercent: number;
   status: RagIndexStatus;
   updatedAt: string;
+}
+
+export interface RagDocumentMetricRaw {
+  ragDocumentId: number;
+  uploadedBy: number;
+  fileUuid: string;
+  originalFileName: string;
+  mimeType: string | null;
+  fileSize: number | null;
+  chunkCount: number;
+  indexingProgress: number;
+  status: RagDocumentStatusRaw;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RagDocumentDetailRaw = RagDocumentMetricRaw & {
+  filePath: string;
+};
+
+export type RagDocumentListRaw = PageResult<RagDocumentMetricRaw>;
+
+export interface RagDocumentDownloadRaw {
+  ragDocumentId: number;
+  originalFileName: string;
+  fileUuid: string;
+  mimeType: string | null;
+  fileSize: number | null;
+  downloadUrl: string;
+}
+
+export interface RagDocumentDownload {
+  documentId: string;
+  name: string;
+  downloadUrl: string;
 }
 
 export interface UploadRagDocumentRequest {
@@ -160,7 +199,71 @@ export interface AiMetricLogsParams {
   size?: number;
 }
 
+export interface AiMetricSummaryRaw {
+  totalRequests: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCost: number | string | null;
+  documentRequests: number;
+  interviewRequests: number;
+  adminCsRequests: number;
+  adminReportRequests: number;
+  activeModelId: number | null;
+  activeModelName: string | null;
+}
+
+export interface AiFeatureUsageRaw {
+  requestCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number | string | null;
+}
+
+export interface AiDomainUsageRaw {
+  document: AiFeatureUsageRaw;
+  interview: AiFeatureUsageRaw;
+  adminCs: AiFeatureUsageRaw;
+  adminReport: AiFeatureUsageRaw;
+}
+
+export interface AiTokenTrendPointRaw {
+  bucket: string;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number | string | null;
+}
+
+export interface AiTokenTrendRaw {
+  interval: AiMetricInterval;
+  points: AiTokenTrendPointRaw[];
+}
+
+export interface AiHeavyUserRaw {
+  memberId: string;
+  requestCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number | string | null;
+}
+
+export interface AiHeavyUsersRaw {
+  users: AiHeavyUserRaw[];
+}
+
+export interface AiMetricLogRaw {
+  aiUsageLogId: number;
+  memberId: string;
+  sessionId: string | null;
+  aiModelId: number;
+  featureType: AiDomain;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number | string | null;
+  createdAt: string;
+}
+
 export interface UpdateAiBudgetRequest {
+  selectedModelId?: number | null;
   monthlyBudget: number;
   thresholdPercent: number;
 }
@@ -174,42 +277,332 @@ export interface UpdateAiRateLimitRequest {
   reason: string;
 }
 
+export interface AiBudgetSettingRaw {
+  aiOpsSettingId: number;
+  selectedModelId: number | null;
+  monthlyBudget: number | string;
+  alertEnabled: boolean;
+  alertChannel: string;
+  alertThreshold: number;
+  rateLimitEnabled: boolean;
+  updatedAt: string;
+}
+
+export interface UpdateAiBudgetRequestRaw {
+  selectedModelId: number;
+  monthlyBudget: number;
+  alertThreshold: number;
+}
+
+export interface UpdateAiDiscordAlertRequestRaw {
+  alertEnabled: boolean;
+}
+
+export interface UpdateAiRateLimitRequestRaw {
+  rateLimitEnabled: boolean;
+}
+
 export function getAiDisplayModelName(model: AiModelNameFields): string {
   return model.displayModelName || model.actualModelName || '모델 정보 없음';
 }
 
 const AI_METRICS_API_BASE_PATH = '/api/v1/admin/ai-metrics';
 
+export const DOMAIN_LABELS: Record<AiDomain, string> = {
+  [AI_DOMAIN.DOCUMENT]: 'AI 서류 기능',
+  [AI_DOMAIN.INTERVIEW]: 'AI 면접 기능',
+  [AI_DOMAIN.ADMIN_CS]: '관리자 CS AI',
+  [AI_DOMAIN.ADMIN_REPORT]: '관리자 리포트 AI',
+};
+
+const toNumberOrNull = (value: number | string | null | undefined): number | null => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const toNumber = (value: number | string): number => {
+  if (typeof value === 'number') return value;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const mapApiResponse = <TRaw, TMapped>(
+  response: ApiResponse<TRaw>,
+  mapper: (data: TRaw) => TMapped
+): ApiResponse<TMapped> => {
+  if (!response.success) return response;
+  return {
+    ...response,
+    data: mapper(response.data),
+  };
+};
+
+const getRiskLevel = (tokenUsage: number): AiUsageRiskLevel => {
+  if (tokenUsage >= 100000) return AI_USAGE_RISK_LEVEL.CRITICAL;
+  if (tokenUsage >= 50000) return AI_USAGE_RISK_LEVEL.WARNING;
+  return AI_USAGE_RISK_LEVEL.NORMAL;
+};
+
+const getMaskedUserLabel = (memberId: string): string => {
+  const suffix = memberId.slice(-4).padStart(4, '*');
+  return `USER-${suffix}`;
+};
+
+const toFeatureTypeParams = <T extends AiDomainFilterParams | AiMetricLogsParams | undefined>(params: T) => {
+  if (!params || !('domain' in params)) return params;
+  const { domain, ...rest } = params;
+  return {
+    ...rest,
+    featureType: domain,
+  };
+};
+
+export const mapAiMetricSummary = (raw: AiMetricSummaryRaw): AiMetricSummary => ({
+  totalRequests: raw.totalRequests,
+  successRequests: raw.totalRequests,
+  failedRequests: 0,
+  totalInputTokens: raw.totalInputTokens,
+  totalOutputTokens: raw.totalOutputTokens,
+  estimatedCost: toNumberOrNull(raw.totalCost),
+  averageLatencyMs: 0,
+  healthStatus: AI_HEALTH_STATUS.NORMAL,
+  lastSyncedAt: new Date().toISOString(),
+});
+
+export const mapAiDomainUsage = (raw: AiDomainUsageRaw): AiDomainUsage[] =>
+  ([
+    [AI_DOMAIN.DOCUMENT, raw.document],
+    [AI_DOMAIN.INTERVIEW, raw.interview],
+    [AI_DOMAIN.ADMIN_CS, raw.adminCs],
+    [AI_DOMAIN.ADMIN_REPORT, raw.adminReport],
+  ] as const).map(([domain, usage]) => {
+    const tokenUsage = usage.inputTokens + usage.outputTokens;
+    return {
+      domain,
+      domainLabel: DOMAIN_LABELS[domain],
+      requestCount: usage.requestCount,
+      successCount: usage.requestCount,
+      failureCount: 0,
+      failureRate: 0,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      estimatedCost: toNumberOrNull(usage.cost),
+      averageLatencyMs: 0,
+      riskLevel: getRiskLevel(tokenUsage),
+      displayModelName: null,
+      actualModelName: null,
+    };
+  });
+
+export const mapAiTokenTrend = (raw: AiTokenTrendRaw): AiTokenTrendPoint[] =>
+  raw.points.map((point) => ({
+    bucket: point.bucket,
+    inputTokens: point.inputTokens,
+    outputTokens: point.outputTokens,
+    estimatedCost: toNumberOrNull(point.cost),
+    requestCount: 0,
+  }));
+
+export const mapAiHeavyUsers = (raw: AiHeavyUsersRaw, domain?: AiDomain): AiHeavyUser[] =>
+  raw.users.map((user) => {
+    const tokenUsage = user.inputTokens + user.outputTokens;
+    return {
+      userId: user.memberId,
+      maskedUserLabel: getMaskedUserLabel(user.memberId),
+      domain: domain ?? AI_DOMAIN.DOCUMENT,
+      domainLabel: domain ? DOMAIN_LABELS[domain] : '전체 도메인',
+      tokenUsage,
+      requestCount: user.requestCount,
+      riskLevel: getRiskLevel(tokenUsage),
+      lastUsedAt: new Date().toISOString(),
+    };
+  });
+
+export const mapAiMetricLogs = (raw: PageResult<AiMetricLogRaw>): PageResult<AiMetricLog> => ({
+  ...raw,
+  content: raw.content.map((item) => ({
+    eventId: item.aiUsageLogId,
+    occurredAt: item.createdAt,
+    domain: item.featureType,
+    domainLabel: DOMAIN_LABELS[item.featureType],
+    severity: AI_EVENT_SEVERITY.INFO,
+    message: `AI usage recorded. inputTokens=${item.inputTokens}, outputTokens=${item.outputTokens}, cost=${toNumberOrNull(item.cost) ?? 0}`,
+    displayModelName: null,
+    actualModelName: String(item.aiModelId),
+  })),
+});
+
+export const mapAiBudgetSetting = (raw: AiBudgetSettingRaw): AiBudgetSetting => ({
+  selectedModelId: raw.selectedModelId,
+  monthlyBudget: toNumber(raw.monthlyBudget),
+  currentSpend: null,
+  forecastSpend: null,
+  thresholdPercent: raw.alertThreshold,
+  discordAlertEnabled: raw.alertEnabled,
+  rateLimitEnabled: raw.rateLimitEnabled,
+});
+
+export const toUpdateAiBudgetRequestRaw = (
+  data: UpdateAiBudgetRequest,
+  currentBudget: AiBudgetSetting | null
+): UpdateAiBudgetRequestRaw => {
+  const selectedModelId = data.selectedModelId ?? currentBudget?.selectedModelId;
+  if (selectedModelId == null) {
+    throw new Error('AI 운영 모델 정보가 없어 예산 설정을 수정할 수 없습니다.');
+  }
+
+  return {
+    selectedModelId,
+    monthlyBudget: data.monthlyBudget,
+    alertThreshold: data.thresholdPercent,
+  };
+};
+
+export const toUpdateAiDiscordAlertRequestRaw = (
+  data: UpdateAiDiscordAlertRequest
+): UpdateAiDiscordAlertRequestRaw => ({
+  alertEnabled: data.enabled,
+});
+
+export const toUpdateAiRateLimitRequestRaw = (
+  data: UpdateAiRateLimitRequest
+): UpdateAiRateLimitRequestRaw => ({
+  rateLimitEnabled: data.enabled,
+});
+
+let cachedBudgetSetting: AiBudgetSetting | null = null;
+
+export const mapRagDocumentStatus = (status: RagDocumentStatusRaw): RagIndexStatus => {
+  if (status === 'INDEXING') return RAG_INDEX_STATUS.INDEXING;
+  if (status === 'FAILED') return RAG_INDEX_STATUS.FAILED;
+  return RAG_INDEX_STATUS.SYNCED;
+};
+
+export const mapRagDocumentMetric = (raw: RagDocumentMetricRaw): RagDocumentMetric => ({
+  documentId: String(raw.ragDocumentId),
+  name: raw.originalFileName,
+  chunkCount: raw.chunkCount,
+  progressPercent: raw.indexingProgress,
+  status: mapRagDocumentStatus(raw.status),
+  updatedAt: raw.updatedAt,
+});
+
+export const mapRagDocumentList = (raw: RagDocumentListRaw): RagDocumentMetric[] =>
+  raw.content.map(mapRagDocumentMetric);
+
+export const mapRagDocumentDownload = (raw: RagDocumentDownloadRaw): RagDocumentDownload => ({
+  documentId: String(raw.ragDocumentId),
+  name: raw.originalFileName,
+  downloadUrl: raw.downloadUrl,
+});
+
 export const aiMetricsApi = {
   getSummary: (params?: AiDateRangeParams) =>
-    axiosInstance.get<ApiResponse<AiMetricSummary>>(`${AI_METRICS_API_BASE_PATH}/summary`, { params }),
+    axiosInstance
+      .get<ApiResponse<AiMetricSummaryRaw>>(`${AI_METRICS_API_BASE_PATH}/summary`, { params })
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapAiMetricSummary),
+      })),
 
   getDomainUsage: (params?: AiDateRangeParams) =>
-    axiosInstance.get<ApiResponse<AiDomainUsage[]>>(`${AI_METRICS_API_BASE_PATH}/domain-usage`, { params }),
+    axiosInstance
+      .get<ApiResponse<AiDomainUsageRaw>>(`${AI_METRICS_API_BASE_PATH}/domain-usage`, { params })
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapAiDomainUsage),
+      })),
 
   getTokenTrend: (params?: AiTokenTrendParams) =>
-    axiosInstance.get<ApiResponse<AiTokenTrendPoint[]>>(`${AI_METRICS_API_BASE_PATH}/token-trend`, { params }),
+    axiosInstance
+      .get<ApiResponse<AiTokenTrendRaw>>(`${AI_METRICS_API_BASE_PATH}/token-trend`, { params: toFeatureTypeParams(params) })
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapAiTokenTrend),
+      })),
 
   getHeavyUsers: (params?: AiHeavyUsersParams) =>
-    axiosInstance.get<ApiResponse<AiHeavyUser[]>>(`${AI_METRICS_API_BASE_PATH}/heavy-users`, { params }),
+    axiosInstance
+      .get<ApiResponse<AiHeavyUsersRaw>>(`${AI_METRICS_API_BASE_PATH}/heavy-users`, { params: toFeatureTypeParams(params) })
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, (raw) => mapAiHeavyUsers(raw, params?.domain)),
+      })),
 
   getLogs: (params?: AiMetricLogsParams) =>
-    axiosInstance.get<ApiResponse<PageResult<AiMetricLog>>>(`${AI_METRICS_API_BASE_PATH}/logs`, { params }),
+    axiosInstance
+      .get<ApiResponse<PageResult<AiMetricLogRaw>>>(`${AI_METRICS_API_BASE_PATH}/logs`, { params: toFeatureTypeParams(params) })
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapAiMetricLogs),
+      })),
 
   getBudget: () =>
-    axiosInstance.get<ApiResponse<AiBudgetSetting>>(`${AI_METRICS_API_BASE_PATH}/budget`),
+    axiosInstance
+      .get<ApiResponse<AiBudgetSettingRaw>>(`${AI_METRICS_API_BASE_PATH}/budget`)
+      .then((response) => {
+        const mappedData = mapApiResponse(response.data, mapAiBudgetSetting);
+        if (mappedData.success) cachedBudgetSetting = mappedData.data;
+        return {
+          ...response,
+          data: mappedData,
+        };
+      }),
 
   updateBudget: (data: UpdateAiBudgetRequest) =>
-    axiosInstance.patch<ApiResponse<AiBudgetSetting>>(`${AI_METRICS_API_BASE_PATH}/budget`, data),
+    axiosInstance
+      .patch<ApiResponse<AiBudgetSettingRaw>>(
+        `${AI_METRICS_API_BASE_PATH}/budget`,
+        toUpdateAiBudgetRequestRaw(data, cachedBudgetSetting)
+      )
+      .then((response) => {
+        const mappedData = mapApiResponse(response.data, mapAiBudgetSetting);
+        if (mappedData.success) cachedBudgetSetting = mappedData.data;
+        return {
+          ...response,
+          data: mappedData,
+        };
+      }),
 
   updateDiscordAlert: (data: UpdateAiDiscordAlertRequest) =>
-    axiosInstance.patch<ApiResponse<AiBudgetSetting>>(`${AI_METRICS_API_BASE_PATH}/alerts/discord`, data),
+    axiosInstance
+      .patch<ApiResponse<AiBudgetSettingRaw>>(
+        `${AI_METRICS_API_BASE_PATH}/alerts/discord`,
+        toUpdateAiDiscordAlertRequestRaw(data)
+      )
+      .then((response) => {
+        const mappedData = mapApiResponse(response.data, mapAiBudgetSetting);
+        if (mappedData.success) cachedBudgetSetting = mappedData.data;
+        return {
+          ...response,
+          data: mappedData,
+        };
+      }),
 
   updateRateLimit: (data: UpdateAiRateLimitRequest) =>
-    axiosInstance.patch<ApiResponse<AiBudgetSetting>>(`${AI_METRICS_API_BASE_PATH}/controls/rate-limit`, data),
+    axiosInstance
+      .patch<ApiResponse<AiBudgetSettingRaw>>(
+        `${AI_METRICS_API_BASE_PATH}/controls/rate-limit`,
+        toUpdateAiRateLimitRequestRaw(data)
+      )
+      .then((response) => {
+        const mappedData = mapApiResponse(response.data, mapAiBudgetSetting);
+        if (mappedData.success) cachedBudgetSetting = mappedData.data;
+        return {
+          ...response,
+          data: mappedData,
+        };
+      }),
 
   getRagDocuments: () =>
-    axiosInstance.get<ApiResponse<RagDocumentMetric[]>>(`${AI_METRICS_API_BASE_PATH}/rag-documents`),
+    axiosInstance
+      .get<ApiResponse<RagDocumentListRaw>>(`${AI_METRICS_API_BASE_PATH}/rag-documents`)
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapRagDocumentList),
+      })),
 
   uploadRagDocument: ({ file, name }: UploadRagDocumentRequest) => {
     const formData = new FormData();
@@ -218,13 +611,21 @@ export const aiMetricsApi = {
       formData.append('name', name.trim());
     }
 
-    return axiosInstance.post<ApiResponse<RagDocumentMetric>>(`${AI_METRICS_API_BASE_PATH}/rag-documents`, formData);
+    return axiosInstance
+      .post<ApiResponse<RagDocumentDetailRaw>>(`${AI_METRICS_API_BASE_PATH}/rag-documents`, formData)
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapRagDocumentMetric),
+      }));
   },
 
   downloadRagDocument: (documentId: string) =>
-    axiosInstance.get<Blob>(`${AI_METRICS_API_BASE_PATH}/rag-documents/${documentId}/download`, {
-      responseType: 'blob',
-    }),
+    axiosInstance
+      .get<ApiResponse<RagDocumentDownloadRaw>>(`${AI_METRICS_API_BASE_PATH}/rag-documents/${documentId}/download`)
+      .then((response) => ({
+        ...response,
+        data: mapApiResponse(response.data, mapRagDocumentDownload),
+      })),
 
   deleteRagDocument: (documentId: string) =>
     axiosInstance.delete<ApiResponse<null>>(`${AI_METRICS_API_BASE_PATH}/rag-documents/${documentId}`),

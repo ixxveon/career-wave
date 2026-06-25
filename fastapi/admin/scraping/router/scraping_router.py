@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -56,7 +57,7 @@ async def _execute_pipeline_action(
             return PipelineActionResponse(
                 sourceName=updated_pipeline.source_name,
                 accepted=True,
-                pipelineStatus=updated_pipeline.pipeline_status,
+                runId=f"{action_type.value.lower()}-{uuid4()}",
                 requestedAt=datetime.now(timezone.utc),
             )
     except ScrapingException as error:

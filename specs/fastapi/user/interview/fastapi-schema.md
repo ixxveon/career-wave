@@ -115,6 +115,7 @@ POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer
   "memberId": "uuid-v4",
   "questionOrder": 1,
   "answerText": "저는 Spring Boot와 JPA를 활용한 백엔드 개발 경험이 있습니다...",
+  "questionText": "자신의 가장 큰 강점은 무엇이라고 생각하시나요?",
   "sessionType": "TEXT"
 }
 ```
@@ -125,6 +126,7 @@ POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer
 | `memberId` | `String` (UUID) | 회원 ID |
 | `questionOrder` | `Integer` | 현재 답변 완료된 질문 순서 (1-based) |
 | `answerText` | `String` | 사용자 답변 텍스트 |
+| `questionText` | `String` | 현재 답변 완료된 질문 텍스트 (answer_history 기록용, 최초 트리거 시 빈 문자열) |
 | `sessionType` | `String` | `TEXT` \| `VOICE` |
 
 #### Response (200 OK)
@@ -143,6 +145,7 @@ POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer
 - 생성된 질문을 Spring WebSocket 채널 경유로 클라이언트에 전달 (Spring 내부 API 호출)
 - TTS 변환 후 FastAPI WebSocket으로 클라이언트에 오디오 스트리밍 (음성 모드 시)
 - 타임아웃 시 폴백 질문으로 대체
+- `next_question_order > 10` (최대 질문 수: 10개) 이면 LLM 질문 생성 없이 `report_pipeline.generate_and_send_report()` 직접 호출
 
 #### LLM 응답 JSON 포맷 계약
 
@@ -198,9 +201,11 @@ POST /internal/user/interview/sessions/{sessionId}/trigger/voice-chunk
 
 #### 처리 책임
 
-- STT 변환 → 중간 결과 WebSocket 전송 (FastAPI WebSocket)
-- `isFinal = true` 시 해당 답변 완전 STT 결과 확정 + `voiceQualityRatio` 산정
-- `isFinal = true` 후 LLM 트리거 (다음 질문 생성)
+- 청크를 세션별로 누적 버퍼에 저장
+- `isFinal = true` 시 누적 청크를 합쳐 Whisper에 일괄 전송
+- STT 결과 확정 후 `STT_FINAL` 메시지를 FastAPI WebSocket으로 전송
+- `voiceQualityRatio` 산정 및 세션 컨텍스트에 저장
+- LLM 트리거는 Spring이 `STT_FINAL` 수신 후 `sendTextAnswer`로 처리 (FastAPI STT 파이프라인이 직접 LLM을 트리거하지 않음)
 
 #### 비동기 여부
 
@@ -377,14 +382,14 @@ v1은 서버 메모리에 세션별 미전달 메시지 목록을 보관한다 (
 
 ```json
 {
-  "type": "STT_PARTIAL",
-  "sequenceNumber": 3,
-  "content": "저는 Spring Boot와 JPA를 활용한...",
+  "type": "STT_FINAL",
+  "sequenceNumber": 7,
+  "content": "저는 Spring Boot와 JPA를 활용한 백엔드 개발 경험이 있습니다.",
   "questionOrder": 1,
-  "chunkIndex": 2,
-  "isFinal": false,
-  "voiceQualityRatio": null,
-  "audioData": null,
+  "chunkIndex": null,
+  "isFinal": true,
+  "voiceQualityRatio": 92.5,
+  "audioChunk": null,
   "errorCode": null
 }
 ```
@@ -394,22 +399,6 @@ v1은 서버 메모리에 세션별 미전달 메시지 목록을 보관한다 (
 | `sequenceNumber` | `Integer` | 세션 내 단조 증가 메시지 순서 번호 (1-based). 재연결 시 미전달 메시지 재전송 기준. |
 
 #### 메시지 타입별 정의
-
-**STT_PARTIAL** — 중간 STT 결과 (실시간 자막)
-
-```json
-{
-  "type": "STT_PARTIAL",
-  "sequenceNumber": 3,
-  "content": "저는 Spring...",
-  "questionOrder": 1,
-  "chunkIndex": 2,
-  "isFinal": false,
-  "voiceQualityRatio": null,
-  "audioData": null,
-  "errorCode": null
-}
-```
 
 **STT_FINAL** — 최종 STT 결과 (`isFinal = true` 청크 처리 완료)
 
@@ -422,7 +411,7 @@ v1은 서버 메모리에 세션별 미전달 메시지 목록을 보관한다 (
   "chunkIndex": null,
   "isFinal": true,
   "voiceQualityRatio": 92.5,
-  "audioData": null,
+  "audioChunk": null,
   "errorCode": null
 }
 ```
@@ -438,7 +427,7 @@ v1은 서버 메모리에 세션별 미전달 메시지 목록을 보관한다 (
   "chunkIndex": 0,
   "isFinal": false,
   "voiceQualityRatio": null,
-  "audioData": "base64-encoded-audio-chunk",
+  "audioChunk": "base64-encoded-audio-chunk",
   "errorCode": null
 }
 ```
@@ -454,7 +443,7 @@ v1은 서버 메모리에 세션별 미전달 메시지 목록을 보관한다 (
   "chunkIndex": null,
   "isFinal": true,
   "voiceQualityRatio": null,
-  "audioData": null,
+  "audioChunk": null,
   "errorCode": null
 }
 ```
@@ -470,7 +459,7 @@ v1은 서버 메모리에 세션별 미전달 메시지 목록을 보관한다 (
   "chunkIndex": null,
   "isFinal": null,
   "voiceQualityRatio": null,
-  "audioData": null,
+  "audioChunk": null,
   "errorCode": "INTERVIEW_STT_FAILED"
 }
 ```

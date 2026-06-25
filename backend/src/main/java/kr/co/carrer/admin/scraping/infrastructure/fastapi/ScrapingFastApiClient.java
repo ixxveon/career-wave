@@ -36,12 +36,16 @@ public class ScrapingFastApiClient implements ScrapingFastApiGateway {
     private static final String RETRY_PATH = "/internal/scraping/pipelines/{sourceName}/retry";
     private static final String TEST_PATH = "/internal/scraping/pipelines/{sourceName}/test";
     private static final String BATCH_RUN_PATH = "/internal/scraping/pipelines/batch-run";
+    private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
 
     private final WebClient.Builder webClientBuilder;
     private final ObjectMapper objectMapper;
 
     @Value("${fastapi.base-url}")
     private String fastApiBaseUrl;
+
+    @Value("${webhook.secret}")
+    private String webhookSecret;
 
     private WebClient webClient;
 
@@ -265,6 +269,7 @@ public class ScrapingFastApiClient implements ScrapingFastApiGateway {
         try {
             T response = webClient.get()
                     .uri(uriFunction)
+                    .header(INTERNAL_SECRET_HEADER, webhookSecret)
                     .retrieve()
                     .bodyToMono(responseType)
                     .timeout(TIMEOUT)
@@ -291,6 +296,7 @@ public class ScrapingFastApiClient implements ScrapingFastApiGateway {
         try {
             T response = webClient.post()
                     .uri(path, uriVariables)
+                    .header(INTERNAL_SECRET_HEADER, webhookSecret)
                     .bodyValue(payload)
                     .retrieve()
                     .bodyToMono(responseType)

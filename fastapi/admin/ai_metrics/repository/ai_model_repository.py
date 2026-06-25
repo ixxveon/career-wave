@@ -46,6 +46,19 @@ class AiModelRepository:
         row = self._session.execute(statement).mappings().first()
         return self._to_record(row) if row else None
 
+    def find_by_model_name(self, model_name: str) -> AiModelRecord | None:
+        statement = (
+            select(ai_models_table)
+            .where(
+                ai_models_table.c.model_name == model_name,
+                ai_models_table.c.is_enabled.is_(True),
+            )
+            # If enabled rows share a model_name, use the earliest registered model deterministically.
+            .order_by(ai_models_table.c.ai_model_id.asc())
+        )
+        row = self._session.execute(statement).mappings().first()
+        return self._to_record(row) if row else None
+
     def find_enabled_by_id(self, ai_model_id: int) -> AiModelRecord | None:
         statement = select(ai_models_table).where(
             ai_models_table.c.ai_model_id == ai_model_id,

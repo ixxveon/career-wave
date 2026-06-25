@@ -2,12 +2,14 @@ from enum import Enum
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class AiFeatureType(str, Enum):
     DOCUMENT = "DOCUMENT"
     INTERVIEW = "INTERVIEW"
+    ADMIN_CS = "ADMIN_CS"
+    ADMIN_REPORT = "ADMIN_REPORT"
 
 
 class TokenTrendInterval(str, Enum):
@@ -33,8 +35,8 @@ class AiMetricsRequestBase(BaseModel):
 
 
 class PeriodRequest(AiMetricsRequestBase):
-    from_: str = Field(alias="from")
-    to: str
+    from_: str | None = Field(default=None, alias="from")
+    to: str | None = None
 
 
 class SummaryRequest(PeriodRequest):
@@ -84,8 +86,15 @@ class RagIndexStartRequest(AiMetricsRequestBase):
 class UsageLogCreateRequest(AiMetricsRequestBase):
     member_id: UUID = Field(alias="memberId")
     session_id: UUID | None = Field(default=None, alias="sessionId")
-    ai_model_id: int = Field(alias="aiModelId")
+    ai_model_id: int | None = Field(default=None, alias="aiModelId")
+    model_name: str | None = Field(default=None, alias="modelName")
     feature_type: AiFeatureType = Field(alias="featureType")
     input_tokens: int = Field(alias="inputTokens", ge=0)
     output_tokens: int = Field(alias="outputTokens", ge=0)
     cost: Decimal = Field(ge=0)
+
+    @model_validator(mode="after")
+    def validate_model_identifier(self):
+        if self.ai_model_id is None and not (self.model_name or "").strip():
+            raise ValueError("Either aiModelId or a non-blank modelName is required.")
+        return self

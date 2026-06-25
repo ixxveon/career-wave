@@ -48,6 +48,8 @@ class UsageSummaryAggregateRecord:
     total_cost: Decimal
     document_requests: int
     interview_requests: int
+    admin_cs_requests: int
+    admin_report_requests: int
 
 
 @dataclass(frozen=True)
@@ -62,6 +64,8 @@ class FeatureUsageAggregateRecord:
 class DomainUsageAggregateRecord:
     document: FeatureUsageAggregateRecord
     interview: FeatureUsageAggregateRecord
+    admin_cs: FeatureUsageAggregateRecord
+    admin_report: FeatureUsageAggregateRecord
 
 
 @dataclass(frozen=True)
@@ -141,6 +145,14 @@ class AiUsageLogRepository:
                 func.sum(case((ai_usage_logs_table.c.feature_type == "INTERVIEW", 1), else_=0)),
                 0,
             ).label("interview_requests"),
+            func.coalesce(
+                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_CS", 1), else_=0)),
+                0,
+            ).label("admin_cs_requests"),
+            func.coalesce(
+                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_REPORT", 1), else_=0)),
+                0,
+            ).label("admin_report_requests"),
         )
         statement = self._apply_usage_filters(statement, created_from, created_to, feature_type)
         row = self._session.execute(statement).mappings().one()
@@ -151,6 +163,8 @@ class AiUsageLogRepository:
             total_cost=Decimal(row["total_cost"]),
             document_requests=row["document_requests"],
             interview_requests=row["interview_requests"],
+            admin_cs_requests=row["admin_cs_requests"],
+            admin_report_requests=row["admin_report_requests"],
         )
 
     def aggregate_domain_usage(
@@ -191,6 +205,38 @@ class AiUsageLogRepository:
                 func.sum(case((ai_usage_logs_table.c.feature_type == "INTERVIEW", ai_usage_logs_table.c.cost), else_=0)),
                 0,
             ).label("interview_cost"),
+            func.coalesce(
+                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_CS", 1), else_=0)),
+                0,
+            ).label("admin_cs_request_count"),
+            func.coalesce(
+                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_CS", ai_usage_logs_table.c.input_tokens), else_=0)),
+                0,
+            ).label("admin_cs_input_tokens"),
+            func.coalesce(
+                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_CS", ai_usage_logs_table.c.output_tokens), else_=0)),
+                0,
+            ).label("admin_cs_output_tokens"),
+            func.coalesce(
+                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_CS", ai_usage_logs_table.c.cost), else_=0)),
+                0,
+            ).label("admin_cs_cost"),
+            func.coalesce(
+                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_REPORT", 1), else_=0)),
+                0,
+            ).label("admin_report_request_count"),
+            func.coalesce(
+                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_REPORT", ai_usage_logs_table.c.input_tokens), else_=0)),
+                0,
+            ).label("admin_report_input_tokens"),
+            func.coalesce(
+                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_REPORT", ai_usage_logs_table.c.output_tokens), else_=0)),
+                0,
+            ).label("admin_report_output_tokens"),
+            func.coalesce(
+                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_REPORT", ai_usage_logs_table.c.cost), else_=0)),
+                0,
+            ).label("admin_report_cost"),
         )
         statement = self._apply_usage_filters(statement, created_from, created_to, None)
         row = self._session.execute(statement).mappings().one()
@@ -206,6 +252,18 @@ class AiUsageLogRepository:
                 input_tokens=row["interview_input_tokens"],
                 output_tokens=row["interview_output_tokens"],
                 cost=Decimal(row["interview_cost"]),
+            ),
+            admin_cs=FeatureUsageAggregateRecord(
+                request_count=row["admin_cs_request_count"],
+                input_tokens=row["admin_cs_input_tokens"],
+                output_tokens=row["admin_cs_output_tokens"],
+                cost=Decimal(row["admin_cs_cost"]),
+            ),
+            admin_report=FeatureUsageAggregateRecord(
+                request_count=row["admin_report_request_count"],
+                input_tokens=row["admin_report_input_tokens"],
+                output_tokens=row["admin_report_output_tokens"],
+                cost=Decimal(row["admin_report_cost"]),
             ),
         )
 

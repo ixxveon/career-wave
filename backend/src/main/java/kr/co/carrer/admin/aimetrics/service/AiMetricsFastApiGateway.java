@@ -96,6 +96,8 @@ public interface AiMetricsFastApiGateway {
             BigDecimal totalCost,
             long documentRequests,
             long interviewRequests,
+            long adminCsRequests,
+            long adminReportRequests,
             Long activeModelId,
             String activeModelName
     ) {
@@ -103,7 +105,9 @@ public interface AiMetricsFastApiGateway {
 
     record DomainUsageResponse(
             FeatureUsageResponse document,
-            FeatureUsageResponse interview
+            FeatureUsageResponse interview,
+            FeatureUsageResponse adminCs,
+            FeatureUsageResponse adminReport
     ) {
     }
 

@@ -32,7 +32,7 @@ public interface AdminManagementService {
             long totalAdminCount,
             long activeAdminCount,
             long lockedAdminCount,
-            long masterAdminCount
+            long activeAclCount
     ) {
     }
 

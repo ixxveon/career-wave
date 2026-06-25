@@ -26,6 +26,8 @@ class AiMetricsFastApiMapperTest {
                         new BigDecimal("12.75"),
                         80L,
                         40L,
+                        5L,
+                        3L,
                         3L,
                         "gpt-4o-mini"
                 )
@@ -37,6 +39,8 @@ class AiMetricsFastApiMapperTest {
         assertThat(result.totalCost()).isEqualByComparingTo("12.75");
         assertThat(result.documentRequests()).isEqualTo(80L);
         assertThat(result.interviewRequests()).isEqualTo(40L);
+        assertThat(result.adminCsRequests()).isEqualTo(5L);
+        assertThat(result.adminReportRequests()).isEqualTo(3L);
         assertThat(result.activeModelId()).isEqualTo(3L);
         assertThat(result.activeModelName()).isEqualTo("gpt-4o-mini");
     }
@@ -47,7 +51,9 @@ class AiMetricsFastApiMapperTest {
         AiMetricsFastApiGateway.DomainUsageResponse result = AiMetricsFastApiMapper.toDomainUsageResponse(
                 new AiMetricsFastApiResponse.DomainUsage(
                         new AiMetricsFastApiResponse.FeatureUsage(70L, 30_000L, 12_000L, new BigDecimal("8.40")),
-                        new AiMetricsFastApiResponse.FeatureUsage(50L, 15_000L, 6_000L, new BigDecimal("4.35"))
+                        new AiMetricsFastApiResponse.FeatureUsage(50L, 15_000L, 6_000L, new BigDecimal("4.35")),
+                        new AiMetricsFastApiResponse.FeatureUsage(8L, 2_000L, 900L, new BigDecimal("0.80")),
+                        new AiMetricsFastApiResponse.FeatureUsage(4L, 1_500L, 700L, new BigDecimal("0.50"))
                 )
         );
 
@@ -59,6 +65,8 @@ class AiMetricsFastApiMapperTest {
         assertThat(result.interview().inputTokens()).isEqualTo(15_000L);
         assertThat(result.interview().outputTokens()).isEqualTo(6_000L);
         assertThat(result.interview().cost()).isEqualByComparingTo("4.35");
+        assertThat(result.adminCs().requestCount()).isEqualTo(8L);
+        assertThat(result.adminReport().requestCount()).isEqualTo(4L);
     }
 
     @Test

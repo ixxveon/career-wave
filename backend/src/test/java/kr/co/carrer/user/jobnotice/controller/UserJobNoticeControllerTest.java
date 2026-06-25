@@ -71,7 +71,15 @@ class UserJobNoticeControllerTest {
                 1,
                 20,
                 1,
-                1
+                1,
+                new JobNoticeDTO.ResponseListStats(10, 2, null, 20.0),
+                new JobNoticeDTO.ResponseFilterOptions(
+                        List.of("FULLTIME", "INTERN", "CONTRACT"),
+                        List.of("BACKEND"),
+                        List.of("JUNIOR", "SENIOR", "ANY"),
+                        List.of("Seoul"),
+                        List.of("STARTUP", "SME", "LARGE")
+                )
         );
 
         when(userJobNoticeService.getJobNotices(
@@ -99,6 +107,10 @@ class UserJobNoticeControllerTest {
                 .andExpect(jsonPath("$.data.size").value(20))
                 .andExpect(jsonPath("$.data.totalElements").value(1))
                 .andExpect(jsonPath("$.data.totalPages").value(1))
+                .andExpect(jsonPath("$.data.stats.totalOpenCount").value(10))
+                .andExpect(jsonPath("$.data.stats.todayNewCount").value(2))
+                .andExpect(jsonPath("$.data.filterOptions.jobType[0]").value("FULLTIME"))
+                .andExpect(jsonPath("$.data.filterOptions.jobCategory[0]").value("BACKEND"))
                 .andExpect(jsonPath("$.data.content[0].jobNoticeId").value(101))
                 .andExpect(jsonPath("$.data.content[0].bookmarked").value(false));
     }

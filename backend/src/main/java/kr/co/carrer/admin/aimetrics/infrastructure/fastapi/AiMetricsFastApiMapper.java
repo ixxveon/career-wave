@@ -24,6 +24,8 @@ final class AiMetricsFastApiMapper {
                 response.totalCost(),
                 response.documentRequests(),
                 response.interviewRequests(),
+                response.adminCsRequests(),
+                response.adminReportRequests(),
                 response.activeModelId(),
                 response.activeModelName()
         );
@@ -39,7 +41,9 @@ final class AiMetricsFastApiMapper {
     static AiMetricsFastApiGateway.DomainUsageResponse toDomainUsageResponse(AiMetricsFastApiResponse.DomainUsage response) {
         return new AiMetricsFastApiGateway.DomainUsageResponse(
                 toFeatureUsageResponse(response.document()),
-                toFeatureUsageResponse(response.interview())
+                toFeatureUsageResponse(response.interview()),
+                toFeatureUsageResponse(response.adminCs()),
+                toFeatureUsageResponse(response.adminReport())
         );
     }
 

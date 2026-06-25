@@ -5,12 +5,21 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
+import java.time.Clock;
+import java.time.ZoneId;
+
 /**
- * WebSocket Grace Period 타이머에 사용할 TaskScheduler 빈 등록.
- * Thread.sleep 대신 TaskScheduler를 사용해 비동기 스케줄링을 처리한다.
+ * 스케줄링 관련 빈 등록 설정.
+ * - TaskScheduler: WebSocket Grace Period 타이머 등 비동기 스케줄링
+ * - Clock: 테스트 가능한 KST 시간 기준 제공 (빌링 스케줄러 등에서 사용)
  */
 @Configuration
 public class TaskSchedulerConfig {
+
+    @Bean
+    public Clock clock() {
+        return Clock.system(ZoneId.of("Asia/Seoul"));
+    }
 
     @Bean
     public TaskScheduler taskScheduler() {

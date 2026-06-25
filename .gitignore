@@ -55,5 +55,14 @@
 .DS_Store
 Thumbs.db
 
+# Eclipse / STS project files (local-only, must not be committed)
+**/backend/.project
+**/backend/.settings/
+
+# Local-only planning & checklist documents
+SELF_CHECKLIST.md
+PHASE3_CHECKLIST.md
+USER_AUTH_SPEC_SELF_CHECKLIST_CN.md
+
 # Spec Kit (agent credentials)
 .github/agents/

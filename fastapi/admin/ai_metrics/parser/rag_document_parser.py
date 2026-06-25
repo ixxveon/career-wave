@@ -70,7 +70,7 @@ class RagDocumentParser:
     def _resolve_local_path(self, file_path: str) -> Path:
         settings = get_ai_metrics_settings()
         base_path = Path(settings.file_storage_base_path).resolve()
-        candidate = Path(file_path)
+        candidate = Path(file_path.lstrip("/\\"))
         raw_path = candidate if candidate.is_absolute() else (base_path / candidate)
         resolved_path = raw_path.resolve()
 

@@ -20,6 +20,8 @@ public class AiMetricsFastApiResponse {
             BigDecimal totalCost,
             long documentRequests,
             long interviewRequests,
+            long adminCsRequests,
+            long adminReportRequests,
             Long activeModelId,
             String activeModelName
     ) {
@@ -27,7 +29,9 @@ public class AiMetricsFastApiResponse {
 
     public record DomainUsage(
             FeatureUsage document,
-            FeatureUsage interview
+            FeatureUsage interview,
+            FeatureUsage adminCs,
+            FeatureUsage adminReport
     ) {
     }
 

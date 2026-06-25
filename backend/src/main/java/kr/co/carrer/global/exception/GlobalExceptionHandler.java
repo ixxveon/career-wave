@@ -10,6 +10,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -101,6 +102,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.fail(HttpStatus.CONFLICT.value(), "이미 존재하거나 사용 중인 데이터와 충돌이 발생했습니다."));
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAuthorizationDeniedException(AuthorizationDeniedException e) {
+        ErrorCode errorCode = ErrorCode.FORBIDDEN;
+        log.warn("[Access denied] {}", e.getMessage());
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getMessage(), errorCode.name()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Object>> handleIllegalArgumentException(IllegalArgumentException e) {
+        // 내부 메시지(JWT 포맷, accountType 등)가 클라이언트에 노출되지 않도록 고정 메시지 반환
+        log.warn("[잘못된 요청 파라미터] {}", e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), "잘못된 요청 파라미터입니다."));
     }
 
     @ExceptionHandler(Exception.class)

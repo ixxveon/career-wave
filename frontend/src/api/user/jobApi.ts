@@ -11,7 +11,6 @@ const JOB_NOTICE_BASE_PATH = '/api/v1/user/job-notices';
 
 type QueryValue = string | number | boolean | null | undefined;
 type QueryParams = Partial<Record<keyof JobNoticeQueryParams, QueryValue>>;
-type JobPayload = Record<string, unknown>;
 
 function createQueryString(params: QueryParams = {}) {
     const query = new URLSearchParams();
@@ -55,19 +54,4 @@ export const jobApi = {
                 auth: true,
             },
         ),
-
-    getJobs: (params: QueryParams = {}): Promise<unknown | null> => {
-        const query = createQueryString(params);
-
-        return apiClient<unknown>(`/jobs${query ? `?${query}` : ''}`);
-    },
-
-    getJobDetail: (jobId: number | string): Promise<unknown | null> =>
-        apiClient<unknown>(`/jobs/${encodeURIComponent(String(jobId))}`),
-
-    createJob: (payload: JobPayload): Promise<unknown | null> =>
-        apiClient<unknown>('/jobs', {
-            method: 'POST',
-            body: JSON.stringify(payload),
-        }),
 };

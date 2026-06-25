@@ -11,7 +11,7 @@ from user.interview.pipeline import stt_pipeline
 from user.interview.pipeline import llm_pipeline
 from user.interview.pipeline import report_pipeline
 from user.interview.prompts.interview_prompts import MAX_RAG_CONTEXT_CHARS
-from user.interview.websocket.interview_ws_handler import _sessions
+from user.interview.websocket.interview_ws_handler import _sessions, _pending_llm
 
 log = logging.getLogger(__name__)
 
@@ -61,24 +61,24 @@ class ReportTriggerRequest(BaseModel):
 @router.post("/sessions/{session_id}/trigger/voice-chunk", status_code=202)
 async def trigger_voice_chunk(
     session_id: str,
-    question_order: int = Form(...),
-    chunk_index: int = Form(...),
-    is_final: bool = Form(...),
-    audio_chunk: UploadFile = File(...),
+    questionOrder: int = Form(...),
+    chunkIndex: int = Form(...),
+    isFinal: bool = Form(...),
+    audioChunk: UploadFile = File(...),
 ) -> dict[str, object]:
     """
     Spring → FastAPI 음성 청크 전달 트리거.
     STT 파이프라인을 백그라운드로 실행하고 202 응답을 즉시 반환한다.
     """
-    audio_bytes = await audio_chunk.read()
+    audio_bytes = await audioChunk.read()
 
     task = asyncio.create_task(
         stt_pipeline.transcribe_chunk(
             audio_bytes=audio_bytes,
             session_id=session_id,
-            question_order=question_order,
-            chunk_index=chunk_index,
-            is_final=is_final,
+            question_order=questionOrder,
+            chunk_index=chunkIndex,
+            is_final=isFinal,
         )
     )
     _bg_tasks.add(task)
@@ -87,11 +87,11 @@ async def trigger_voice_chunk(
     log.info(
         "STT pipeline triggered: sessionId=%s, chunkIndex=%d, isFinal=%s",
         session_id,
-        chunk_index,
-        is_final,
+        chunkIndex,
+        isFinal,
     )
 
-    return {"accepted": True, "sessionId": session_id, "chunkIndex": chunk_index}
+    return {"accepted": True, "sessionId": session_id, "chunkIndex": chunkIndex}
 
 
 @router.post("/sessions/{session_id}/trigger/text-answer", status_code=202)
@@ -107,22 +107,32 @@ async def trigger_text_answer(
         raise HTTPException(status_code=400, detail="path sessionId와 body sessionId가 일치하지 않습니다.")
 
     ctx = _sessions.get(session_id)
-    if ctx is not None:
+    if ctx is None:
+        # WS 연결 전 도착한 경우 — pending 큐에 보관 후 WS 연결 시 flush
+        _pending_llm[session_id] = {
+            "questionOrder": body.questionOrder,
+            "answerText": body.answerText,
+            "questionText": body.questionText,
+            "sessionType": body.sessionType,
+            "interviewType": body.interviewType,
+        }
+        log.info("LLM trigger queued (WS not yet connected): sessionId=%s", session_id)
+    else:
         if ctx.session_type is None:
             ctx.session_type = body.sessionType
         if ctx.interview_type is None and body.interviewType:
             ctx.interview_type = body.interviewType
 
-    task = asyncio.create_task(
-        llm_pipeline.generate_and_deliver_question(
-            session_id=session_id,
-            question_order=body.questionOrder,
-            answer_text=body.answerText,
-            question_text=body.questionText,
+        task = asyncio.create_task(
+            llm_pipeline.generate_and_deliver_question(
+                session_id=session_id,
+                question_order=body.questionOrder,
+                answer_text=body.answerText,
+                question_text=body.questionText,
+            )
         )
-    )
-    _bg_tasks.add(task)
-    task.add_done_callback(_on_task_done)
+        _bg_tasks.add(task)
+        task.add_done_callback(_on_task_done)
 
     log.info(
         "LLM pipeline triggered: sessionId=%s, questionOrder=%d, sessionType=%s",

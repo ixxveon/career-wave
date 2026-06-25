@@ -6,12 +6,14 @@ import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.*;
 import kr.co.carrer.user.member.service.SocialSignupTokenStore;
 import kr.co.carrer.user.member.type.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -36,6 +38,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.mockito.ArgumentCaptor;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
@@ -58,6 +62,7 @@ class UserSocialAuthServiceImplTest {
     @Mock ValueOperations<String, String> valueOps;
     @Mock WebClient.Builder webClientBuilder;
     @Mock HttpServletResponse httpResponse;
+    @Mock EntitlementInitService entitlementInitService;
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private UserSocialAuthServiceImpl service;
@@ -68,7 +73,8 @@ class UserSocialAuthServiceImplTest {
                 memberRepository, personalProfileRepository, socialAccountRepository,
                 termsRepository, verificationRepository, encoder,
                 jwtTokenProvider, jwtProperties, refreshTokenStore, tokenBlacklistStore,
-                socialSignupTokenStore, redisTemplate, webClientBuilder);
+                socialSignupTokenStore, redisTemplate, webClientBuilder,
+                entitlementInitService);
         injectValue(service, "kakaoClientId", "kakao-id");
         injectValue(service, "kakaoClientSecret", "kakao-secret");
         injectValue(service, "kakaoRedirectUri", "http://localhost/kakao");
@@ -331,6 +337,68 @@ class UserSocialAuthServiceImplTest {
 
         // 퇴출된 세션의 JTI가 blacklist에 등록되어야 함
         verify(tokenBlacklistStore).add(eq("expired-jti"), any(Duration.class));
+    }
+
+    // ─── 소셜 가입 성공 — FREE 이용권 생성 연동 검증 ─────────────────────────────────
+
+    @Test
+    @DisplayName("소셜 가입 성공 — initFreeEntitlements(memberId) 정확히 1회 호출 확인")
+    void complete_성공_initFreeEntitlements_호출됨() throws Exception {
+        UUID memberId = UUID.randomUUID();
+
+        // socialSignupToken 유효 (KAKAO payload)
+        SocialSignupTokenStore.SocialSignupPayload payload =
+                new SocialSignupTokenStore.SocialSignupPayload(
+                        SocialProvider.KAKAO, "kakao-uid-456", "social@example.com");
+        when(socialSignupTokenStore.consume(anyString())).thenReturn(Optional.of(payload));
+
+        // 휴대폰 인증 유효 — VERIFIED, purpose=REGISTER
+        kr.co.carrer.user.member.entity.MemberVerification phoneVerif =
+                mock(kr.co.carrer.user.member.entity.MemberVerification.class);
+        when(phoneVerif.getVerificationStatus()).thenReturn(VerificationStatus.VERIFIED);
+        when(phoneVerif.getChannel()).thenReturn(VerificationChannel.PHONE);
+        when(phoneVerif.getTarget()).thenReturn("01098765432");
+        when(phoneVerif.getPurpose()).thenReturn(VerificationPurpose.REGISTER);
+        when(phoneVerif.getExpiresAt()).thenReturn(Instant.now().plusSeconds(300));
+        when(verificationRepository.findByVerificationToken(anyString()))
+                .thenReturn(Optional.of(phoneVerif));
+
+        // 중복 없음
+        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(socialAccountRepository.existsByProviderAndProviderUserId(any(), anyString()))
+                .thenReturn(false);
+        when(memberRepository.existsByEmail(anyString())).thenReturn(false);
+
+        // Member 저장 시 memberId 주입
+        when(memberRepository.save(any())).thenAnswer(inv -> {
+            Member m = inv.getArgument(0);
+            setField(m, "memberId", memberId);
+            return m;
+        });
+        when(personalProfileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(socialAccountRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(termsRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        // JWT 발급
+        JwtProperties.TokenConfig tokenConfig = mock(JwtProperties.TokenConfig.class);
+        when(tokenConfig.getAccessExpiration()).thenReturn(1800000L);
+        when(tokenConfig.getRefreshExpiration()).thenReturn(604800000L);
+        when(jwtProperties.getUser()).thenReturn(tokenConfig);
+        when(jwtTokenProvider.createAccessToken(anyString(), any(), anyString(), any()))
+                .thenReturn("access-token");
+        when(jwtTokenProvider.createRefreshToken(anyString(), any(), any(), anyString()))
+                .thenReturn("refresh-token");
+        when(jwtTokenProvider.extractJti(anyString(), any())).thenReturn("jti-001");
+        when(refreshTokenStore.enforceSessionLimit(any(), anyString())).thenReturn(List.of());
+
+        var request = buildRequestSocialComplete("kakao", "01098765432", "ptoken");
+        var response = service.complete(request, httpResponse);
+
+        // initFreeEntitlements가 저장된 memberId로 정확히 1회 호출되어야 한다
+        ArgumentCaptor<UUID> captor = ArgumentCaptor.forClass(UUID.class);
+        verify(entitlementInitService, times(1)).initFreeEntitlements(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(memberId);
+        assertThat(response).isNotNull();
     }
 
     // ─── 내부 유틸 ───────────────────────────────────────────────────────────────

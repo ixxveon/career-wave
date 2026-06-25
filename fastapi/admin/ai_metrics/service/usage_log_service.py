@@ -55,13 +55,35 @@ class UsageLogService:
                 detail={"field": "featureType"},
             )
 
-        ai_model = self._ai_model_repository.find_by_id(request.ai_model_id)
+        ai_model = self._resolve_ai_model(request)
         if ai_model is None:
+            detail = (
+                {"aiModelId": request.ai_model_id}
+                if request.ai_model_id is not None
+                else {"modelName": request.model_name}
+            )
             raise AiMetricsException(
                 error_code=AiMetricsErrorCode.AI_MODEL_NOT_FOUND,
-                detail={"aiModelId": request.ai_model_id},
+                detail=detail,
             )
         return ai_model
+
+    def _resolve_ai_model(
+        self,
+        request: UsageLogCreateRequest,
+    ) -> AiModelRecord | None:
+        if request.ai_model_id is not None:
+            return self._ai_model_repository.find_by_id(request.ai_model_id)
+
+        model_name = request.model_name.strip() if request.model_name else ""
+        if not model_name:
+            raise AiMetricsException(
+                error_code=AiMetricsErrorCode.TOKEN_CALCULATION_FAILED,
+                message="Usage log request validation failed.",
+                detail={"field": "modelName"},
+            )
+
+        return self._ai_model_repository.find_by_model_name(model_name)
 
     def _build_persist_request(
         self,
@@ -94,6 +116,7 @@ class UsageLogService:
 
         return request.model_copy(
             update={
+                "ai_model_id": ai_model.ai_model_id,
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
                 "cost": Decimal(cost),

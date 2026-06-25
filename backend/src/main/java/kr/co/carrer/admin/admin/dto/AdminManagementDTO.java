@@ -17,7 +17,7 @@ public class AdminManagementDTO {
         @Schema(description = "전체 관리자 수") long totalAdminCount,
         @Schema(description = "활성 관리자 수") long activeAdminCount,
         @Schema(description = "잠금 관리자 수") long lockedAdminCount,
-        @Schema(description = "MASTER 관리자 수") long masterAdminCount
+        @Schema(description = "활성 ACL 수") long activeAclCount
     ) {}
 
     @Schema(description = "관리자 단건 응답")

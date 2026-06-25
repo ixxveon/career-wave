@@ -168,22 +168,8 @@ def test_batch_action_service_aggregates_accept_and_reject_results():
         requested_by="admin-service",
     )
 
-    assert aggregation == BatchActionAggregation(
-        requested_count=2,
-        accepted_count=1,
-        results=[
-            service.aggregate_results(
-                action_type=ScrapingActionType.RETRY,
-                source_names=["wanted"],
-                requested_by="admin-service",
-            ).results[0],
-            service.aggregate_results(
-                action_type=ScrapingActionType.RETRY,
-                source_names=["saramin"],
-                requested_by="admin-service",
-            ).results[0],
-        ],
-    )
+    assert aggregation.requested_count == 2
+    assert aggregation.accepted_count == 1
     assert aggregation.results[0].source_name == "wanted"
     assert aggregation.results[0].accepted is True
     assert aggregation.results[0].pipeline_status == "SUCCESS"
@@ -223,7 +209,8 @@ def test_batch_action_service_maps_batch_response_contract():
     assert payload["requestedCount"] == 2
     assert payload["acceptedCount"] == 1
     assert len(payload["results"]) == 2
-    assert {"sourceName", "accepted", "pipelineStatus"} == set(payload["results"][0].keys())
+    assert {"sourceName", "accepted", "message"} == set(payload["results"][0].keys())
+    assert payload["results"][0]["message"] == "RUN action accepted. pipelineStatus=SUCCESS"
     assert "requestedAt" in payload
 
 

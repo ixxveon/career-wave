@@ -51,6 +51,8 @@ public class AiMetricsController implements AiMetricsDocs {
                 result.totalCost(),
                 result.documentRequests(),
                 result.interviewRequests(),
+                result.adminCsRequests(),
+                result.adminReportRequests(),
                 result.activeModelId(),
                 result.activeModelName()
         );
@@ -65,7 +67,9 @@ public class AiMetricsController implements AiMetricsDocs {
         AiMetricsService.ResponseDomainUsage result = aiMetricsService.getDomainUsage(from, to);
         AiMetricsDTO.ResponseDomainUsage response = new AiMetricsDTO.ResponseDomainUsage(
                 toFeatureUsage(result.document()),
-                toFeatureUsage(result.interview())
+                toFeatureUsage(result.interview()),
+                toFeatureUsage(result.adminCs()),
+                toFeatureUsage(result.adminReport())
         );
         return ResponseEntity.ok(ApiResponse.ok("도메인별 AI 사용량 조회에 성공했습니다.", response));
     }

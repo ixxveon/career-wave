@@ -16,6 +16,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import kr.co.carrer.user.billing.service.EntitlementService;
+import kr.co.carrer.user.billing.type.ResourceType;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,6 +41,7 @@ class InterviewSessionServiceImplTest {
     @Mock private InterviewMessageRepository messageRepository;
     @Mock private DocumentRepository documentRepository;
     @Mock private InterviewFastApiClient fastApiClient;
+    @Mock private EntitlementService entitlementService;
 
     @Nested
     @DisplayName("세션 시작 - startSession()")
@@ -61,23 +64,28 @@ class InterviewSessionServiceImplTest {
             assertThat(result.sessionStatus()).isEqualTo("IN_PROGRESS");
             assertThat(result.sessionType()).isEqualTo("TEXT");
             verify(sessionRepository).save(any());
+            verify(entitlementService).reserve(eq(memberId), eq("interview"),
+                    eq(ResourceType.INTERVIEW_SESSION), any());
         }
 
         @Test
-        @DisplayName("이미 IN_PROGRESS 세션이 있으면 INTERVIEW_SESSION_DUPLICATE(409)를 던진다")
-        void startSession_duplicateSession_throwsException() {
+        @DisplayName("이미 IN_PROGRESS 세션이 있으면 기존 세션을 FAILED 처리하고 새 세션을 생성한다")
+        void startSession_existingInProgress_autoFailsAndCreatesNew() {
             UUID memberId = UUID.randomUUID();
             InterviewDTO.RequestStartSession dto = new InterviewDTO.RequestStartSession(
                     null, "TEXT", null, null
             );
             InterviewSession existing = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
+            InterviewSession newSession = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
 
             given(sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)).willReturn(Optional.of(existing));
+            given(sessionRepository.save(any())).willReturn(newSession);
 
-            assertThatThrownBy(() -> interviewSessionService.startSession(memberId, dto))
-                    .isInstanceOf(CustomException.class)
-                    .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
-                            .isEqualTo(InterviewErrorCode.INTERVIEW_SESSION_DUPLICATE));
+            InterviewDTO.ResponseStartSession result = interviewSessionService.startSession(memberId, dto);
+
+            assertThat(result.sessionStatus()).isEqualTo("IN_PROGRESS");
+            verify(sessionRepository, times(1)).save(any()); // 새 세션 생성 (기존 세션 FAILED는 dirty checking)
+            assertThat(existing.getSessionStatus()).isEqualTo(SessionStatus.FAILED);
         }
 
         @Test

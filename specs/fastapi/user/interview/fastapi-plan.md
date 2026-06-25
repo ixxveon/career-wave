@@ -208,11 +208,12 @@ log.error("Spring callback failed after all retries: sessionId=%s", session_id)
 
 ## 설계 결정
 
-### A. STT 중간 결과 전송
+### A. STT 청크 누적 방식
 
-Whisper는 스트리밍 API를 지원하지 않아 청크별로 처리 후 결과를 전송한다.  
-`STT_PARTIAL`은 청크 단위 Whisper 결과, `STT_FINAL`은 `isFinal=true` 청크 처리 완료 시 전송한다.  
-클라이언트는 `STT_PARTIAL`을 실시간 자막으로, `STT_FINAL`을 최종 답변 텍스트로 사용한다.
+Whisper는 스트리밍 API를 지원하지 않아 청크별로 Whisper를 호출하면 부분 WebM 포맷 오류가 발생한다.  
+세션별·질문 순서별 버퍼에 청크를 누적하고, `isFinal=true` 청크 수신 시 전체를 병합하여 Whisper에 일괄 전송한다.  
+`STT_PARTIAL`은 현재 미전송. `STT_FINAL` 메시지만 `isFinal=true` 처리 완료 후 클라이언트에 전송한다.  
+클라이언트는 `STT_FINAL`을 최종 답변 텍스트로 사용하고 Spring에 텍스트 답변으로 전송한다.
 
 ### B. `voiceQualityRatio` 산정 방식
 

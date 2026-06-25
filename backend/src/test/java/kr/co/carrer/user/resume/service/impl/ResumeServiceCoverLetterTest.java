@@ -17,6 +17,7 @@ import kr.co.carrer.user.resume.type.FileType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import kr.co.carrer.user.billing.service.EntitlementService;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -41,6 +42,7 @@ class ResumeServiceCoverLetterTest {
     @Mock private S3Uploader s3Uploader;
     @Mock private DocumentStatusService documentStatusService;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private EntitlementService entitlementService;
 
     @InjectMocks
     private ResumeServiceImpl resumeService;

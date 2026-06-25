@@ -76,7 +76,7 @@ AI 파이프라인(STT·LLM·TTS)은 FastAPI 서버가 전담한다.
 
 `startSession`에서 동일 회원의 `IN_PROGRESS` 세션 중복을 체크할 때, 두 요청이 동시에 들어오면 단순 조회 후 체크만으로는 Race Condition이 발생할 수 있다.
 
-**v1 채택 방식**: `InterviewSessionRepository`에서 `IN_PROGRESS` 세션 존재 여부를 조회할 때 **비관적 락(`SELECT FOR UPDATE`)**을 사용한다.
+**v1 채택 방식**: `InterviewSessionRepository`에서 `IN_PROGRESS` 세션 존재 여부를 조회할 때 **비관적 락(`SELECT FOR UPDATE`)**을 사용한다. 기존 에러(`INTERVIEW_SESSION_DUPLICATE`) 대신 기존 `IN_PROGRESS` 세션을 자동으로 `FAILED` 처리 후 새 세션을 생성한다.
 
 ```java
 @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -230,7 +230,7 @@ log.error("FastAPI callback failed after retry: sessionId={}", sessionId);
 > `submitTextAnswer` / `endSession` 모두 동일 원칙 적용.
 
 - [ ] `InterviewSessionService.java`
-  - [ ] `startSession(UUID memberId, RequestStartSession dto)` — 동시 세션 방어(IN_PROGRESS 중복 체크, **비관적 락 `SELECT FOR UPDATE`** 적용) + 세션 생성 + FastAPI 비동기 트리거
+  - [ ] `startSession(UUID memberId, RequestStartSession dto)` — 동시 세션 방어(**비관적 락 `SELECT FOR UPDATE`** 조회 후 기존 `IN_PROGRESS` 세션 자동 FAILED 종료) + 세션 생성 + FastAPI 비동기 트리거
   - [ ] `submitTextAnswer(UUID memberId, String sessionId, RequestSubmitTextAnswer dto)` — 소유권 검증 + IN_PROGRESS 상태 확인 + 저장 + FastAPI 트리거
   - [ ] `submitVoiceChunk(UUID memberId, String sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal)` — 소유권 검증 + IN_PROGRESS 상태 확인 + FastAPI 전달 (트랜잭션 외부)
   - [ ] `endSession(UUID memberId, String sessionId)` — 소유권 검증 + 멱등성 체크(COMPLETED면 즉시 반환) + 상태 변경 + 리포트 트리거 1회 보장
@@ -282,7 +282,6 @@ log.error("FastAPI callback failed after retry: sessionId={}", sessionId);
   - [ ] `INTERVIEW_SESSION_ALREADY_ENDED` (400)
   - [ ] `INTERVIEW_INVALID_SESSION_TYPE` (400)
   - [ ] `INTERVIEW_DOCUMENT_NOT_FOUND` (404)
-  - [ ] `INTERVIEW_SESSION_DUPLICATE` (409) — 동일 회원이 IN_PROGRESS 세션을 이미 보유한 경우
   - [ ] `INTERVIEW_REPORT_NOT_READY` (409) — 리포트 생성 중 상태에서 `getReport` 호출 시
 
 ### Phase 8 — 검증

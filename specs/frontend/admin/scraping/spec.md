@@ -86,7 +86,7 @@
 ## Key Entities
 
 - **ScrapingSource**: source명, 최근 실행 결과, 성공률, 평균 응답 시간, 주기, 수집 건수, 최근 오류, 갱신 시각
-- **ScrapingSourceSummary**: 실행 결과별 source 수, 총 수집 건수, 평균 성공률, 평균 응답 시간
+- **ScrapingSourceSummary**: 전체 source 수, 상태별 source 수, 활성/비활성 source 수
 - **ScrapingActionRequest**: 액션 타입, 사유, 대상 source
 - **ScrapingActionResult**: 액션 접수 여부, 실행 ID, 요청 시각
 - **ScrapingLog**: 발생 시각, source명, ERD `scraping_status`, 메시지, 상세, 실행 ID
