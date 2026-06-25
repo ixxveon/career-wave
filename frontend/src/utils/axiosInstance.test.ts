@@ -44,7 +44,7 @@ describe('applyAdminAuthHeader', () => {
 describe('handleAdminAuthError', () => {
   it('401 응답 시 adminSession을 정리한다', () => {
     const assignMock = vi.fn();
-    vi.stubGlobal('window', { location: { pathname: '/admin/dashboard', assign: assignMock } });
+    vi.stubGlobal('window', { location: { pathname: '/cw-manage-2026/dashboard', assign: assignMock } });
 
     handleAdminAuthError({ response: { status: 401 } });
 
@@ -53,19 +53,19 @@ describe('handleAdminAuthError', () => {
     vi.unstubAllGlobals();
   });
 
-  it('401 시 /admin/login으로 리다이렉트한다', () => {
+  it('401 시 /cw-manage-2026/login으로 리다이렉트한다', () => {
     const assignMock = vi.fn();
-    vi.stubGlobal('window', { location: { pathname: '/admin/dashboard', assign: assignMock } });
+    vi.stubGlobal('window', { location: { pathname: '/cw-manage-2026/dashboard', assign: assignMock } });
 
     handleAdminAuthError({ response: { status: 401 } });
 
-    expect(assignMock).toHaveBeenCalledWith('/admin/login');
+    expect(assignMock).toHaveBeenCalledWith('/cw-manage-2026/login');
     vi.unstubAllGlobals();
   });
 
-  it('이미 /admin/login이면 리다이렉트하지 않고 에러를 전파한다', async () => {
+  it('이미 /cw-manage-2026/login이면 리다이렉트하지 않고 에러를 전파한다', async () => {
     const assignMock = vi.fn();
-    vi.stubGlobal('window', { location: { pathname: '/admin/login', assign: assignMock } });
+    vi.stubGlobal('window', { location: { pathname: '/cw-manage-2026/login', assign: assignMock } });
 
     await expect(handleAdminAuthError({ response: { status: 401 } })).rejects.toBeDefined();
     expect(assignMock).not.toHaveBeenCalled();

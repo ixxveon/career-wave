@@ -37,7 +37,7 @@ export default function AdminLoginPage() {
       }
 
       syncAdminToken(data.accessToken, data.adminInfo.role);
-      navigate('/admin/dashboard', { replace: true });
+      navigate('/cw-manage-2026/dashboard', { replace: true });
     } catch {
       clearAdminToken();
       setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.');

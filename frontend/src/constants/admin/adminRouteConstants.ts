@@ -1,19 +1,19 @@
 import { ADMIN_DETAIL_ROLE, type AdminDetailRole } from './adminRoleConstants';
 
 export const ADMIN_ROUTE_PATHS = {
-  login: '/admin/login',
-  dashboard: '/admin/dashboard',
-  admins: '/admin/admins',
-  members: '/admin/members',
-  reports: '/admin/reports',
-  cs: '/admin/cs',
-  payments: '/admin/payments',
-  stats: '/admin/stats',
-  ai: '/admin/ai',
-  scraping: '/admin/scraping',
-  log: '/admin/log',
-  companies: '/admin/companies',
-  settlements: '/admin/settlements',
+  login: '/cw-manage-2026/login',
+  dashboard: '/cw-manage-2026/dashboard',
+  admins: '/cw-manage-2026/admins',
+  members: '/cw-manage-2026/members',
+  reports: '/cw-manage-2026/reports',
+  cs: '/cw-manage-2026/cs',
+  payments: '/cw-manage-2026/payments',
+  stats: '/cw-manage-2026/stats',
+  ai: '/cw-manage-2026/ai',
+  scraping: '/cw-manage-2026/scraping',
+  log: '/cw-manage-2026/log',
+  companies: '/cw-manage-2026/companies',
+  settlements: '/cw-manage-2026/settlements',
 } as const;
 
 export const ADMIN_NAVIGATION_PATH_SET = new Set<string>(Object.values(ADMIN_ROUTE_PATHS));
