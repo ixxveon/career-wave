@@ -38,7 +38,7 @@ export const SERVICE_CARDS = [
     href: '/billing/checkout?product=interview',
     icon: Mic,
     accent: 'interview',
-    highlights: ['다양한 꼬리질문 대응', '분석 리포트로 합격 진단', '답변 준비 시간 1분 제한'],
+    highlights: ['다양한 꼬리질문 대응', '분석 리포트로 합격 진단', '답변 준비 시간 2분 30초 제한'],
     footer: '실전 감각을 익히고 싶은 분, 돌발 질문 대응력을 키우고 싶은 분',
     bullets: ['실전 면접 연습', '답변 분석', 'AI 피드백 리포트', '면접 결과 저장'],
   },
