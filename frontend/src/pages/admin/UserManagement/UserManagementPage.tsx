@@ -432,7 +432,7 @@ export default function UserManagementPage() {
                           onChange={(e) => toggleOne(m.memberId, e.target.checked)}
                         />
                       </td>
-                      <td style={{ color: '#7a8da4', fontSize: 13 }}>{(memberPage - 1) * 20 + idx + 1}</td>
+                      <td style={{ color: '#7a8da4', fontSize: 13 }}>{memberTotalItems - (memberPage - 1) * 20 - idx}</td>
                       <td><strong style={{ color: '#1a2941' }}>{m.name}</strong></td>
                       <td>{m.email}</td>
                       <td style={{ color: '#7a8da4', fontSize: 13 }}>{m.loginId}</td>
