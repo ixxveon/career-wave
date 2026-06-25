@@ -19,18 +19,20 @@ function maskEmail(email: string | null) {
     return email;
   }
 
-const visibleCount = Math.min(2, localPart.length);
-const visible = localPart.slice(0, visibleCount);
-const masked = "*".repeat(localPart.length - visibleCount);
+  const visibleCount = Math.min(2, localPart.length);
+  const visible = localPart.slice(0, visibleCount);
+  const masked = "*".repeat(localPart.length - visibleCount);
 
-return `${visible}${masked}@${domain}`;
+  return `${visible}${masked}@${domain}`;
+}
 
 function maskLoginId(loginId: string) {
   const visibleCount = Math.min(4, loginId.length);
-const visible = loginId.slice(0, visibleCount);
-const masked = "*".repeat(loginId.length - visibleCount);
+  const visible = loginId.slice(0, visibleCount);
+  const masked = "*".repeat(loginId.length - visibleCount);
 
-return `${visible}${masked}`;
+  return `${visible}${masked}`;
+}
 
 const ROLE_TYPE_LABELS: Record<UserProfile["roleType"], string> = {
   USER: "일반 회원",
