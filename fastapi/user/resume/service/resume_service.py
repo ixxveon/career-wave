@@ -6,6 +6,7 @@ from functools import lru_cache
 
 from openai import AsyncOpenAI, APIError, APITimeoutError
 
+from core.ai_usage.usage_log_client import record_ai_usage
 from core.config import get_settings
 from user.resume.prompts.resume_prompts import (
     RESUME_SYSTEM_PROMPT,
@@ -35,7 +36,7 @@ def _get_openai_client() -> AsyncOpenAI:
 
 
 # 동시 분석 요청 수 제한 — OpenAI API 과부하 방지
-_ANALYSIS_SEMAPHORE = asyncio.Semaphore(10)
+_ANALYSIS_SEMAPHORE = asyncio.Semaphore(100)
 
 
 _ERROR_MESSAGES = {
@@ -103,9 +104,11 @@ async def _analyze_resume(document_id: str, request: AnalyzeDocumentRequest) -> 
 
     result = await _call_openai(
         document_id=document_id,
+        member_id=str(request.member_id),
         system_prompt=RESUME_SYSTEM_PROMPT,
         user_prompt=build_resume_user_prompt(resume_text),
         model="deep",
+        feature_type="DOCUMENT",
     )
 
     await _send_webhook_safe(document_id, {"documentId": document_id, "status": "ANALYZING"})
@@ -123,6 +126,7 @@ async def _analyze_cover_letter(document_id: str, request: AnalyzeDocumentReques
 
     result = await _call_openai(
         document_id=document_id,
+        member_id=str(request.member_id),
         system_prompt=COVER_LETTER_SYSTEM_PROMPT,
         user_prompt=build_cover_letter_user_prompt(
             request.company,
@@ -130,6 +134,7 @@ async def _analyze_cover_letter(document_id: str, request: AnalyzeDocumentReques
             content_dicts,
         ),
         model="deep",
+        feature_type="DOCUMENT",
     )
 
     await _send_webhook_safe(document_id, {"documentId": document_id, "status": "ANALYZING"})
@@ -139,9 +144,11 @@ async def _analyze_cover_letter(document_id: str, request: AnalyzeDocumentReques
 
 async def _call_openai(
     document_id: str,
+    member_id: str,
     system_prompt: str,
     user_prompt: str,
     model: str,
+    feature_type: str,
 ) -> dict:
     settings = get_settings()
     client = _get_openai_client()
@@ -162,6 +169,13 @@ async def _call_openai(
     logger.info(
         f"[{document_id}] Token usage — "
         f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
+    )
+
+    await record_ai_usage(
+        member_id=member_id,
+        model_name=model_id,
+        feature_type=feature_type,
+        usage=usage,
     )
 
     content = completion.choices[0].message.content or ""

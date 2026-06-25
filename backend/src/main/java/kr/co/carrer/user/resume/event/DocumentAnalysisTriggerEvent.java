@@ -11,6 +11,7 @@ import java.util.UUID;
  */
 public record DocumentAnalysisTriggerEvent(
         UUID documentId,
+        UUID memberId,
         String fileType,
         // RESUME 전용
         String fileUrl,
@@ -20,12 +21,12 @@ public record DocumentAnalysisTriggerEvent(
         String job,
         List<ResumeDTO.RequestCoverLetter.ContentItem> content
 ) {
-    public static DocumentAnalysisTriggerEvent ofResume(UUID documentId, String fileUrl, String originalName) {
-        return new DocumentAnalysisTriggerEvent(documentId, "RESUME", fileUrl, originalName, null, null, null);
+    public static DocumentAnalysisTriggerEvent ofResume(UUID documentId, UUID memberId, String fileUrl, String originalName) {
+        return new DocumentAnalysisTriggerEvent(documentId, memberId, "RESUME", fileUrl, originalName, null, null, null);
     }
 
-    public static DocumentAnalysisTriggerEvent ofCoverLetter(UUID documentId, String company, String job,
+    public static DocumentAnalysisTriggerEvent ofCoverLetter(UUID documentId, UUID memberId, String company, String job,
                                                               List<ResumeDTO.RequestCoverLetter.ContentItem> content) {
-        return new DocumentAnalysisTriggerEvent(documentId, "COVER_LETTER", null, null, company, job, content);
+        return new DocumentAnalysisTriggerEvent(documentId, memberId, "COVER_LETTER", null, null, company, job, content);
     }
 }
