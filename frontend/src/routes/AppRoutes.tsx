@@ -205,13 +205,13 @@ function AdminProtectedRoute() {
   const role = adminSession.getRole();
 
   if (!token) {
-    return <Navigate to="/cw-manage-2026/login" replace />;
+    return <Navigate to={ADMIN_ROUTE_PATHS.login} replace />;
   }
 
   if (!role) {
     adminSession.clearToken();
     adminSession.clearRole();
-    return <Navigate to="/cw-manage-2026/login" replace />;
+    return <Navigate to={ADMIN_ROUTE_PATHS.login} replace />;
   }
 
   // 현재 경로에 매핑되는 가장 구체적인 admin route를 찾아 role 접근 권한 확인
@@ -225,7 +225,7 @@ function AdminProtectedRoute() {
     isAdminNavigationPath(matchedRoute) &&
     !hasAdminRouteAccess(role, matchedRoute)
   ) {
-    return <Navigate to="/cw-manage-2026/dashboard" replace />;
+    return <Navigate to={ADMIN_ROUTE_PATHS.dashboard} replace />;
   }
 
   return <Outlet />;
@@ -415,7 +415,7 @@ function AppRoutes() {
       </Route>
 
       <Route path="cw-manage-2026">
-        <Route index element={<Navigate to="/cw-manage-2026/dashboard" replace />} />
+        <Route index element={<Navigate to={ADMIN_ROUTE_PATHS.dashboard} replace />} />
         <Route path="login" element={lazyRoute(<AdminLoginPage />)} />
 
         <Route element={<AdminProtectedRoute />}>

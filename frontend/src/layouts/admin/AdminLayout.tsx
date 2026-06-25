@@ -13,7 +13,7 @@ export default function AdminLayout() {
   useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
 
   if (!adminSession.getToken()) {
-    return <Navigate to="/cw-manage-2026/login" replace />;
+    return <Navigate to={ADMIN_ROUTE_PATHS.login} replace />;
   }
 
   const handleLogout = async () => {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminAuthApi, adminSession } from '../../../api/admin/adminAuthApi';
 import type { AdminDetailRole } from '../../../constants/admin/adminRoleConstants';
+import { ADMIN_ROUTE_PATHS } from '../../../constants/admin/adminRouteConstants';
 import '../../../styles/admin/admin-login.css';
 
 function syncAdminToken(token: string, role?: AdminDetailRole) {
@@ -37,7 +38,7 @@ export default function AdminLoginPage() {
       }
 
       syncAdminToken(data.accessToken, data.adminInfo.role);
-      navigate('/cw-manage-2026/dashboard', { replace: true });
+      navigate(ADMIN_ROUTE_PATHS.dashboard, { replace: true });
     } catch {
       clearAdminToken();
       setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.');
