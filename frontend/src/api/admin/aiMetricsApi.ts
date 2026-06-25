@@ -308,11 +308,11 @@ export function getAiDisplayModelName(model: AiModelNameFields): string {
 
 const AI_METRICS_API_BASE_PATH = '/api/v1/admin/ai-metrics';
 
-const DOMAIN_LABELS: Record<AiDomain, string> = {
+export const DOMAIN_LABELS: Record<AiDomain, string> = {
   [AI_DOMAIN.DOCUMENT]: 'AI 서류 기능',
   [AI_DOMAIN.INTERVIEW]: 'AI 면접 기능',
-  [AI_DOMAIN.ADMIN_CS]: 'Admin CS AI',
-  [AI_DOMAIN.ADMIN_REPORT]: 'Admin Report AI',
+  [AI_DOMAIN.ADMIN_CS]: '관리자 CS AI',
+  [AI_DOMAIN.ADMIN_REPORT]: '관리자 리포트 AI',
 };
 
 const toNumberOrNull = (value: number | string | null | undefined): number | null => {

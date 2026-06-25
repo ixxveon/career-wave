@@ -116,7 +116,7 @@ describe("aiMetricsApi usage DTO mapper", () => {
       },
       {
         domain: AI_DOMAIN.ADMIN_CS,
-        domainLabel: "Admin CS AI",
+        domainLabel: "관리자 CS AI",
         requestCount: 2,
         successCount: 2,
         failureCount: 0,
@@ -131,7 +131,7 @@ describe("aiMetricsApi usage DTO mapper", () => {
       },
       {
         domain: AI_DOMAIN.ADMIN_REPORT,
-        domainLabel: "Admin Report AI",
+        domainLabel: "관리자 리포트 AI",
         requestCount: 1,
         successCount: 1,
         failureCount: 0,
