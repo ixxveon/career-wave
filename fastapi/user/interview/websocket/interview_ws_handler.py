@@ -9,6 +9,8 @@ from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from jose import JWTError, jwt
 
+import httpx
+
 from core.config import get_settings
 
 _base_log = logging.getLogger(__name__)
@@ -74,6 +76,23 @@ def _verify_jwt(token: str) -> dict[str, Any]:
     return jwt.decode(token, settings.jwt_secret, algorithms=["HS256", "HS384"], audience="user")
 
 
+async def _verify_session_ownership(session_id: str, member_id: str) -> bool:
+    """Spring 내부 API로 session_id가 member_id 소유인지 검증한다."""
+    settings = get_settings()
+    url = (
+        f"{settings.spring_base_url.rstrip('/')}"
+        f"/internal/api/v1/interview/callback/{session_id}/verify"
+        f"?memberId={member_id}"
+    )
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            response = await client.get(url, headers={"X-Internal-Secret": settings.webhook_secret})
+            return response.status_code == 200
+    except Exception as exc:
+        _base_log.warning("[Session: %s] ownership verify request failed: %s", session_id, exc)
+        return False
+
+
 async def _close_existing(session_id: str, slog: _SessionAdapter) -> None:
     """중복 연결 감지 시 기존 소켓에 에러 메시지를 전송한 뒤 close(1000)한다."""
     existing = _sessions.get(session_id)
@@ -123,6 +142,22 @@ async def interview_ws(
         await websocket.close(code=1008)
         slog.warning("WS connection rejected: invalid or missing JWT")
         return
+
+    # ── 세션 소유권 검증 ────────────────────────────────────────────────────
+    # 재연결 시에는 메모리 내 ctx로 검증, 신규 연결 시에는 Spring 내부 API 호출
+    existing = _sessions.get(session_id)
+    if existing is not None:
+        if existing.member_id != member_id:
+            await websocket.accept()
+            await websocket.close(code=1008)
+            slog.warning("WS connection rejected: session ownership mismatch (reconnect)")
+            return
+    else:
+        if not await _verify_session_ownership(session_id, member_id):
+            await websocket.accept()
+            await websocket.close(code=1008)
+            slog.warning("WS connection rejected: session ownership mismatch memberId=%s", member_id)
+            return
 
     await websocket.accept()
 
