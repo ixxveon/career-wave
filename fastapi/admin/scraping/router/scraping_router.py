@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -5,6 +7,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from admin.ai_metrics.repository.database import get_session
+from admin.scraping.adapter import SaraminScraper, WantedScraper
 from admin.scraping.exception import ScrapingException, build_error_response
 from admin.scraping.repository import ScrapingLogRepository, ScrapingPipelineRepository
 from admin.scraping.schema import (
@@ -22,10 +25,17 @@ from admin.scraping.service import (
     BatchActionAggregation,
     BatchActionResultItem,
     BatchActionService,
+    JobNoticeNormalizer,
     PipelineQueryService,
+    PipelineRunnerService,
     PipelineStatusService,
 )
+from admin.scraping.task import ScrapingTask, ScrapingTaskResult
 from core.security import verify_internal_secret
+
+
+log = logging.getLogger(__name__)
+_bg_tasks: set[asyncio.Task[ScrapingTaskResult]] = set()
 
 
 router = APIRouter(
@@ -33,6 +43,47 @@ router = APIRouter(
     tags=["admin-scraping"],
     dependencies=[Depends(verify_internal_secret)],
 )
+
+
+def _create_scraping_task() -> ScrapingTask:
+    return ScrapingTask(
+        pipeline_runner_service=PipelineRunnerService(
+            [
+                WantedScraper(),
+                SaraminScraper(),
+            ]
+        ),
+        job_notice_normalizer=JobNoticeNormalizer(),
+    )
+
+
+async def _run_scraping_task(source_name: str, action_type: ScrapingActionType) -> ScrapingTaskResult:
+    return await _create_scraping_task().run(
+        source_name=source_name,
+        action_type=action_type,
+    )
+
+
+def _on_bg_task_done(task: asyncio.Task[ScrapingTaskResult]) -> None:
+    _bg_tasks.discard(task)
+    try:
+        result = task.result()
+        log.info(
+            "scraping task completed: source=%s action=%s status=%s total_count=%s duration_ms=%s",
+            result.source_name,
+            result.action_type.value,
+            result.pipeline_status,
+            result.total_count,
+            result.duration_ms,
+        )
+    except Exception as exc:
+        log.exception("scraping task failed: %s", exc)
+
+
+def _schedule_scraping_task(source_name: str, action_type: ScrapingActionType) -> None:
+    task = asyncio.create_task(_run_scraping_task(source_name, action_type))
+    _bg_tasks.add(task)
+    task.add_done_callback(_on_bg_task_done)
 
 
 async def _execute_pipeline_action(
@@ -53,6 +104,8 @@ async def _execute_pipeline_action(
             )
             updated_pipeline = pipeline_status_service.mark_running(source_name)
             session.commit()
+
+            _schedule_scraping_task(source_name, action_type)
 
             return PipelineActionResponse(
                 sourceName=updated_pipeline.source_name,
@@ -205,6 +258,10 @@ async def batch_run_pipelines(request: PipelineBatchActionRequest):
                     updated_results.append(result)
 
             session.commit()
+
+            for result in updated_results:
+                if result.accepted:
+                    _schedule_scraping_task(result.source_name, action_type)
 
             return batch_action_service.to_response(
                 action_type=action_type,
