@@ -18,6 +18,7 @@ class CoverLetterContentItem(BaseModel):
 
 class AnalyzeDocumentRequest(BaseModel):
     document_id: UUID = Field(..., alias="documentId")
+    member_id: UUID = Field(..., alias="memberId")
     file_type: Literal["RESUME", "COVER_LETTER"] = Field(..., alias="fileType")
 
     # RESUME 전용

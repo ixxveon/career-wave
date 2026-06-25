@@ -101,9 +101,7 @@ def test_job_notice_dedup_service_skip_for_test_does_not_save_any_notice():
 
 
 @pytest.mark.asyncio
-async def test_scraping_task_test_action_does_not_save_job_notices():
-    repository = _RecordingJobNoticeRepository()
-    dedup_service = JobNoticeDedupService(repository)
+async def test_scraping_task_test_action_uses_injected_services_without_dedup_service():
     runner_service = _RecordingPipelineRunnerService()
     status_service = _RecordingPipelineStatusService()
     log_service = _RecordingScrapingLogService()
@@ -112,7 +110,6 @@ async def test_scraping_task_test_action_does_not_save_job_notices():
         pipeline_status_service=status_service,
         scraping_log_service=log_service,
         job_notice_normalizer=JobNoticeNormalizer(),
-        job_notice_dedup_service=dedup_service,
     )
 
     result = await task.run(
@@ -125,6 +122,21 @@ async def test_scraping_task_test_action_does_not_save_job_notices():
     assert result.total_count == 0
     assert runner_service.test_calls == ["wanted"]
     assert runner_service.dispatch_calls == []
-    assert repository.saved_items == []
     assert len(log_service.test_logs) == 1
     assert log_service.success_logs == []
+
+
+@pytest.mark.asyncio
+async def test_scraping_task_run_action_fails_fast_when_dedup_service_is_missing():
+    task = ScrapingTask(
+        pipeline_runner_service=_RecordingPipelineRunnerService(),
+        pipeline_status_service=_RecordingPipelineStatusService(),
+        scraping_log_service=_RecordingScrapingLogService(),
+        job_notice_normalizer=JobNoticeNormalizer(),
+    )
+
+    with pytest.raises(ValueError, match="job_notice_dedup_service"):
+        await task.run(
+            source_name="wanted",
+            action_type=ScrapingActionType.RUN,
+        )

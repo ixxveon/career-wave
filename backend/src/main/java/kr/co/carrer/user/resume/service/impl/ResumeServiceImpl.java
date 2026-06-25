@@ -76,7 +76,7 @@ public class ResumeServiceImpl implements ResumeService {
 
         entitlementService.reserve(memberId, "document-coaching", ResourceType.DOCUMENT, document.getDocumentId());
 
-        eventPublisher.publishEvent(DocumentAnalysisTriggerEvent.ofResume(document.getDocumentId(), fileUrl, originalName));
+        eventPublisher.publishEvent(DocumentAnalysisTriggerEvent.ofResume(document.getDocumentId(), memberId, fileUrl, originalName));
 
         return new ResumeDTO.ResponseUpload(
                 document.getDocumentId(),
@@ -117,7 +117,7 @@ public class ResumeServiceImpl implements ResumeService {
         coverLetterContentRepository.saveAll(contents);
 
         eventPublisher.publishEvent(DocumentAnalysisTriggerEvent.ofCoverLetter(
-                document.getDocumentId(), dto.company(), dto.job(), dto.content()
+                document.getDocumentId(), memberId, dto.company(), dto.job(), dto.content()
         ));
 
         return new ResumeDTO.ResponseCoverLetter(

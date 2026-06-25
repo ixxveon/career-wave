@@ -63,6 +63,7 @@ public class FastApiClient {
     private Map<String, Object> buildRequestBody(DocumentAnalysisTriggerEvent event) {
         Map<String, Object> body = new HashMap<>();
         body.put("documentId", event.documentId().toString());
+        body.put("memberId", event.memberId().toString());
         body.put("fileType", event.fileType());
 
         if ("RESUME".equals(event.fileType())) {
