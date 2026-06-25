@@ -162,7 +162,13 @@ export default function ReportPage() {
       const riskLevel: Severity =
         reportCount >= 5 ? '높음' : reportCount >= 3 ? '중간' : '낮음';
       const recommendation: SanctionRec =
-        warningCount >= WARN_THRESHOLD ? 'BLACKLIST' : warningCount >= WARN_THRESHOLD - 1 ? 'SUSPEND' : 'WARNING';
+        warningCount >= WARN_THRESHOLD
+          ? 'BLACKLIST'
+          : warningCount >= WARN_THRESHOLD - 1
+          ? 'SUSPEND'
+          : reportCount >= 3
+          ? 'WARNING'
+          : 'NONE';
       const summary =
         warningCount >= WARN_THRESHOLD
           ? `누적 경고 ${warningCount}회로 제재 기준을 초과했습니다. 이용 정지 또는 영구 제재를 권고합니다.`
@@ -190,7 +196,7 @@ export default function ReportPage() {
       const res = await reportApi.getReportDetail(item.reportId);
       setSelected({ ...item, ...res.data.data, userAiReview: undefined });
     } catch {
-      setSelected({ ...item, userAiReview: undefined });
+      alert('신고 상세를 불러오지 못했습니다.');
     }
   };
 
@@ -502,7 +508,7 @@ export default function ReportPage() {
                 ) : (
                   <button
                     className="aiReviewBtn"
-                    disabled={userAiLoading === selected.reportId}
+                    disabled={userAiLoading === selected.reportId || !selected.memberId}
                     onClick={() => selected.memberId && requestUserAiReview(selected.reportId, selected.memberId)}
                   >
                     <UserX size={14} />

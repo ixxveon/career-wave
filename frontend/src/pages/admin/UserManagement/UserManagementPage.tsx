@@ -5,6 +5,7 @@ import {
   MEMBER_ROLE,
   MEMBER_STATUS,
   type MemberItem,
+  type MemberDetailItem,
   type MemberStatus,
   type MemberCounts,
   type SuspendDuration,
@@ -55,7 +56,7 @@ export default function UserManagementPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null);
+  const [selectedMember, setSelectedMember] = useState<MemberDetailItem | null>(null);
   const [suspendTarget, setSuspendTarget] = useState<MemberItem | null>(null);
   const [suspendPeriod, setSuspendPeriod] = useState<SuspendDuration>('SEVEN_DAYS');
   const [suspendReason, setSuspendReason] = useState('');
@@ -92,6 +93,7 @@ export default function UserManagementPage() {
 
   // ── 요청 ID ref (stale 응답 방지) ─────────────────────────
   const memberReqId = useRef(0);
+  const memberDetailReqId = useRef(0);
   const hrReqId = useRef(0);
 
   // ── 개인 회원 목록 조회 ────────────────────────────────────
@@ -167,10 +169,16 @@ export default function UserManagementPage() {
   };
 
   const openMemberDetail = async (memberId: string) => {
+    const reqId = ++memberDetailReqId.current;
     try {
       const res = await memberApi.getMemberDetail(memberId);
-      if (res.data.success) setSelectedMember(res.data.data);
-    } catch {}
+      if (reqId !== memberDetailReqId.current) return;
+      if (!res.data.success) throw new Error(res.data.message);
+      setSelectedMember(res.data.data);
+    } catch (err: any) {
+      if (reqId !== memberDetailReqId.current) return;
+      alert(err.message || '회원 상세 정보를 불러오지 못했습니다.');
+    }
   };
 
   const fetchMemberCounts = useCallback(async () => {
@@ -605,13 +613,17 @@ export default function UserManagementPage() {
               <div><span>최근 접속</span><strong>{selectedMember.lastLoginAt ? new Date(selectedMember.lastLoginAt).toLocaleDateString('ko-KR') : '—'}</strong></div>
               <div><span>현재 상태</span><strong><span className={`statusBadge ${memberStatusCls[selectedMember.memberStatus]}`}>{memberStatusLabel[selectedMember.memberStatus]}</span></strong></div>
               <div><span>신고 받은 횟수</span><strong>{selectedMember.reportCount}건</strong></div>
-              {selectedMember.memberStatus === MEMBER_STATUS.SUSPENDED && selectedMember.sanctionType && (
+              {(selectedMember.sanctionType === 'SUSPEND' || selectedMember.sanctionType === 'BLACKLIST') && (
                 <>
-                  <div><span>정지 유형</span><strong>{selectedMember.suspendDuration ? durationLabel[selectedMember.suspendDuration] : '—'}</strong></div>
+                  <div><span>제재 유형</span><strong>{{ WARNING: '경고', SUSPEND: '활동 정지', BLACKLIST: '영구 정지' }[selectedMember.sanctionType]}</strong></div>
                   <div><span>정지 기간</span><strong>
                     {selectedMember.suspendStartDate ? new Date(selectedMember.suspendStartDate).toLocaleDateString('ko-KR') : '—'}
                     {' ~ '}
-                    {selectedMember.suspendEndDate ? new Date(selectedMember.suspendEndDate).toLocaleDateString('ko-KR') : '영구'}
+                    {selectedMember.suspendDuration === 'PERMANENT'
+                      ? '영구'
+                      : selectedMember.suspendEndDate
+                      ? new Date(selectedMember.suspendEndDate).toLocaleDateString('ko-KR')
+                      : '—'}
                   </strong></div>
                 </>
               )}

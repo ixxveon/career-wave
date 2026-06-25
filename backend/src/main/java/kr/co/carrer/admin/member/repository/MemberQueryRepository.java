@@ -162,9 +162,10 @@ public class MemberQueryRepository {
                 SELECT sanction_type, duration, start_date, end_date
                 FROM suspend_histories
                 WHERE member_id = m.member_id
+                  AND sanction_type IN ('SUSPEND', 'BLACKLIST')
                 ORDER BY created_at DESC
                 LIMIT 1
-            ) sh ON true
+            ) sh ON m.member_status IN ('SUSPENDED', 'BANNED')
             WHERE m.member_id = ?1
             """;
         Query query = em.createNativeQuery(sql);
