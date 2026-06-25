@@ -119,23 +119,36 @@ async def _call_llm(session_id: str, ctx: _SessionContext, settings) -> dict[str
     model = settings.openai_model_interview
 
     raw, usage = await _chat(client, model, messages)
+    input_tokens = _get_tokens(usage, "prompt_tokens")
+    output_tokens = _get_tokens(usage, "completion_tokens")
     try:
         result = _parse_llm_json(raw)
     except (json.JSONDecodeError, KeyError, ValueError):
         log.warning("[Session: %s] LLM JSON parse failed, retrying with format hint", session_id)
         messages.append({"role": "assistant", "content": raw})
         messages.append({"role": "user", "content": "JSON 형식으로만 답해줘."})
-        raw2, usage = await _chat(client, model, messages)
+        raw2, usage2 = await _chat(client, model, messages)
+        input_tokens += _get_tokens(usage2, "prompt_tokens")
+        output_tokens += _get_tokens(usage2, "completion_tokens")
         result = _parse_llm_json(raw2)
 
     await record_ai_usage(
         member_id=ctx.member_id,
         model_name=model,
         feature_type="INTERVIEW",
-        usage=usage,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
         session_id=session_id,
     )
     return result
+
+
+def _get_tokens(usage: object, attr: str) -> int:
+    value = getattr(usage, attr, None) if usage else None
+    try:
+        return int(value) if value is not None else 0
+    except (TypeError, ValueError):
+        return 0
 
 
 async def _chat(client: AsyncOpenAI, model: str, messages: list[dict]) -> tuple[str, object]:
