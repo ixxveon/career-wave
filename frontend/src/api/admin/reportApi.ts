@@ -60,6 +60,7 @@ export interface ReportDetail extends ReportItem {
   aiSuggestion: AiSuggestion | null;
   processedAt: string | null;
   processedBy: number | null;
+  memberId: string;
 }
 
 interface RawReportDetail extends Omit<ReportDetail, 'aiSuggestion'> {
