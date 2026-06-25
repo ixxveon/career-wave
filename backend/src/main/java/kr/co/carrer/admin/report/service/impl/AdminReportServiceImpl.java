@@ -114,7 +114,8 @@ public class AdminReportServiceImpl implements AdminReportService {
             detail.reason(), detail.reportStatus(),
             detail.reporterName(), detail.reportedName(),
             detail.contentTitle(), detail.contentBody(), aiSuggestion,
-            detail.createdAt(), detail.processedAt(), detail.processedBy()
+            detail.createdAt(), detail.processedAt(), detail.processedBy(),
+            detail.memberId()
         );
     }
 
@@ -138,7 +139,8 @@ public class AdminReportServiceImpl implements AdminReportService {
             base.reason(), base.reportStatus(),
             base.reporterName(), base.reportedName(),
             contentTitle, contentBody, base.aiSuggestion(),
-            base.createdAt(), base.processedAt(), base.processedBy()
+            base.createdAt(), base.processedAt(), base.processedBy(),
+            base.memberId()
         );
     }
 

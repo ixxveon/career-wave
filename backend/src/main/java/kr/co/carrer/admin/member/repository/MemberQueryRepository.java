@@ -155,8 +155,17 @@ public class MemberQueryRepository {
             SELECT m.member_id, m.login_id, m.name, m.email, m.role_type, m.subscription_status,
                    m.member_status, m.warning_count,
                    (SELECT COUNT(*) FROM reports r WHERE r.member_id = m.member_id) AS report_count,
-                   m.created_at, m.last_login_at
+                   m.created_at, m.last_login_at,
+                   sh.sanction_type, sh.duration, sh.start_date, sh.end_date
             FROM members m
+            LEFT JOIN LATERAL (
+                SELECT sanction_type, duration, start_date, end_date
+                FROM suspend_histories
+                WHERE member_id = m.member_id
+                  AND sanction_type IN ('SUSPEND', 'BLACKLIST')
+                ORDER BY created_at DESC
+                LIMIT 1
+            ) sh ON m.member_status IN ('SUSPENDED', 'BANNED')
             WHERE m.member_id = ?1
             """;
         Query query = em.createNativeQuery(sql);
@@ -177,7 +186,11 @@ public class MemberQueryRepository {
             ((Number) row[7]).intValue(),
             ((Number) row[8]).longValue(),
             toZonedDateTime(row[9]),
-            toZonedDateTime(row[10])
+            toZonedDateTime(row[10]),
+            row[11] != null ? kr.co.carrer.admin.member.type.SanctionType.valueOf((String) row[11]) : null,
+            row[12] != null ? kr.co.carrer.admin.member.type.SuspendDuration.valueOf((String) row[12]) : null,
+            row[13] != null ? ((java.sql.Date) row[13]).toLocalDate() : null,
+            row[14] != null ? ((java.sql.Date) row[14]).toLocalDate() : null
         ));
     }
 
