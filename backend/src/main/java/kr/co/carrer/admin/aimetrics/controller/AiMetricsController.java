@@ -108,6 +108,7 @@ public class AiMetricsController implements AiMetricsDocs {
                 result.users().stream()
                         .map(user -> new AiMetricsDTO.ResponseHeavyUser(
                                 user.memberId(),
+                                user.adminId(),
                                 user.requestCount(),
                                 user.inputTokens(),
                                 user.outputTokens(),
@@ -130,6 +131,7 @@ public class AiMetricsController implements AiMetricsDocs {
                         .map(item -> new AiUsageLogDTO.ResponseItem(
                                 item.aiUsageLogId(),
                                 item.memberId(),
+                                item.adminId(),
                                 item.sessionId(),
                                 item.aiModelId(),
                                 item.featureType(),

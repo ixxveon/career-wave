@@ -64,6 +64,7 @@ public class AiMetricsFastApiResponse {
 
     public record HeavyUser(
             UUID memberId,
+            Long adminId,
             long requestCount,
             long inputTokens,
             long outputTokens,
@@ -83,6 +84,7 @@ public class AiMetricsFastApiResponse {
     public record UsageLogItem(
             Long aiUsageLogId,
             UUID memberId,
+            Long adminId,
             UUID sessionId,
             Long aiModelId,
             AiFeatureType featureType,

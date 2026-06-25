@@ -187,6 +187,7 @@ def test_non_usage_request_contracts_match_spring_boot_fields():
     }
     assert usage_log_create_request.model_dump(mode="json", by_alias=True) == {
         "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+        "adminId": None,
         "sessionId": None,
         "aiModelId": 1,
         "modelName": None,
@@ -254,6 +255,7 @@ def test_usage_response_contracts_match_spring_boot_fields():
         users=[
             HeavyUserResponse(
                 memberId="7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+                adminId=None,
                 requestCount=95,
                 inputTokens=52000,
                 outputTokens=21000,
@@ -266,6 +268,7 @@ def test_usage_response_contracts_match_spring_boot_fields():
             UsageLogItemResponse(
                 aiUsageLogId=101,
                 memberId="7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+                adminId=None,
                 sessionId=None,
                 aiModelId=1,
                 featureType="DOCUMENT",
@@ -334,6 +337,7 @@ def test_usage_response_contracts_match_spring_boot_fields():
         "users": [
             {
                 "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+                "adminId": None,
                 "requestCount": 95,
                 "inputTokens": 52000,
                 "outputTokens": 21000,
@@ -346,6 +350,7 @@ def test_usage_response_contracts_match_spring_boot_fields():
             {
                 "aiUsageLogId": 101,
                 "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+                "adminId": None,
                 "sessionId": None,
                 "aiModelId": 1,
                 "featureType": "DOCUMENT",
@@ -460,6 +465,7 @@ def test_usage_log_create_contract_matches_spring_boot_fields():
 
     assert usage_log_create_request.model_dump(mode="json", by_alias=True) == {
         "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+        "adminId": None,
         "sessionId": None,
         "aiModelId": 1,
         "featureType": "DOCUMENT",
@@ -489,6 +495,7 @@ def test_usage_log_create_contract_accepts_model_name_without_ai_model_id():
 
     assert usage_log_create_request.model_dump(mode="json", by_alias=True) == {
         "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+        "adminId": None,
         "sessionId": "1ec92044-9173-456b-b767-42cf5aa94c98",
         "aiModelId": None,
         "modelName": "gpt-4o-mini",
@@ -496,6 +503,100 @@ def test_usage_log_create_contract_accepts_model_name_without_ai_model_id():
         "inputTokens": 800,
         "outputTokens": 240,
         "cost": "0",
+    }
+
+
+def test_usage_log_create_contract_supports_admin_actor():
+    usage_log_create_request = UsageLogCreateRequest.model_validate(
+        {
+            "adminId": 44,
+            "sessionId": None,
+            "modelName": "gpt-4o-mini",
+            "featureType": "ADMIN_CS",
+            "inputTokens": 300,
+            "outputTokens": 80,
+            "cost": "0",
+        }
+    )
+
+    assert usage_log_create_request.model_dump(mode="json", by_alias=True) == {
+        "memberId": None,
+        "adminId": 44,
+        "sessionId": None,
+        "aiModelId": None,
+        "modelName": "gpt-4o-mini",
+        "featureType": "ADMIN_CS",
+        "inputTokens": 300,
+        "outputTokens": 80,
+        "cost": "0",
+    }
+
+
+def test_usage_response_contracts_support_admin_actor():
+    heavy_users_response = HeavyUsersResponse(
+        users=[
+            HeavyUserResponse(
+                memberId=None,
+                adminId=77,
+                requestCount=9,
+                inputTokens=12000,
+                outputTokens=3100,
+                cost="45000",
+            )
+        ]
+    )
+    usage_log_list_response = UsageLogListResponse(
+        content=[
+            UsageLogItemResponse(
+                aiUsageLogId=201,
+                memberId=None,
+                adminId=88,
+                sessionId=None,
+                aiModelId=9,
+                featureType="ADMIN_REPORT",
+                inputTokens=1600,
+                outputTokens=500,
+                cost="2400",
+                createdAt="2026-06-18T11:00:00Z",
+            )
+        ],
+        page=1,
+        size=20,
+        totalElements=1,
+        totalPages=1,
+    )
+
+    assert heavy_users_response.model_dump(mode="json", by_alias=True) == {
+        "users": [
+            {
+                "memberId": None,
+                "adminId": 77,
+                "requestCount": 9,
+                "inputTokens": 12000,
+                "outputTokens": 3100,
+                "cost": "45000",
+            }
+        ]
+    }
+    assert usage_log_list_response.model_dump(mode="json", by_alias=True) == {
+        "content": [
+            {
+                "aiUsageLogId": 201,
+                "memberId": None,
+                "adminId": 88,
+                "sessionId": None,
+                "aiModelId": 9,
+                "featureType": "ADMIN_REPORT",
+                "inputTokens": 1600,
+                "outputTokens": 500,
+                "cost": "2400",
+                "createdAt": "2026-06-18T11:00:00Z",
+            }
+        ],
+        "page": 1,
+        "size": 20,
+        "totalElements": 1,
+        "totalPages": 1,
     }
 
 

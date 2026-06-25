@@ -89,6 +89,7 @@ public interface AiMetricsService {
 
     record ResponseHeavyUser(
             UUID memberId,
+            Long adminId,
             long requestCount,
             long inputTokens,
             long outputTokens,
@@ -99,6 +100,7 @@ public interface AiMetricsService {
     record ResponseUsageLogItem(
             Long aiUsageLogId,
             UUID memberId,
+            Long adminId,
             UUID sessionId,
             Long aiModelId,
             AiFeatureType featureType,

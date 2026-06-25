@@ -268,6 +268,7 @@ class AiMetricsServiceImplTest {
                     List.of(
                             new AiMetricsFastApiGateway.HeavyUserResponse(
                                     firstMemberId,
+                                    null,
                                     35L,
                                     20_000L,
                                     8_000L,
@@ -275,6 +276,7 @@ class AiMetricsServiceImplTest {
                             ),
                             new AiMetricsFastApiGateway.HeavyUserResponse(
                                     secondMemberId,
+                                    null,
                                     28L,
                                     14_000L,
                                     6_000L,
@@ -334,6 +336,7 @@ class AiMetricsServiceImplTest {
                     List.of(new AiMetricsFastApiGateway.UsageLogItemResponse(
                             15L,
                             memberId,
+                            null,
                             sessionId,
                             3L,
                             AiFeatureType.INTERVIEW,

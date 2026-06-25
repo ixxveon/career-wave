@@ -39,6 +39,7 @@ def test_usage_log_service_persists_calculated_usage_log():
     usage_log_repository.save.return_value = AiUsageLogRecord(
         ai_usage_log_id=101,
         member_id=UUID("55555555-5555-5555-5555-555555555555"),
+        admin_id=None,
         session_id=UUID("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
         ai_model_id=5,
         feature_type="DOCUMENT",
@@ -109,6 +110,7 @@ def test_usage_log_service_resolves_model_by_model_name():
     usage_log_repository.save.return_value = AiUsageLogRecord(
         ai_usage_log_id=102,
         member_id=UUID("55555555-5555-5555-5555-555555555555"),
+        admin_id=None,
         session_id=None,
         ai_model_id=7,
         feature_type="INTERVIEW",
@@ -158,6 +160,7 @@ def test_usage_log_service_prefers_ai_model_id_when_both_identifiers_are_present
     usage_log_repository.save.return_value = AiUsageLogRecord(
         ai_usage_log_id=103,
         member_id=UUID("55555555-5555-5555-5555-555555555555"),
+        admin_id=None,
         session_id=None,
         ai_model_id=5,
         feature_type="DOCUMENT",
@@ -202,6 +205,32 @@ def test_usage_log_create_request_requires_model_identifier():
     assert "Either aiModelId or a non-blank modelName is required." in str(error.value)
 
 
+def test_usage_log_create_request_requires_exactly_one_actor_identifier():
+    with pytest.raises(ValidationError) as error:
+        UsageLogCreateRequest(
+            featureType="DOCUMENT",
+            inputTokens=100,
+            outputTokens=50,
+            cost=Decimal("0"),
+            aiModelId=5,
+        )
+
+    assert "Exactly one of memberId or adminId is required." in str(error.value)
+
+    with pytest.raises(ValidationError) as both_error:
+        UsageLogCreateRequest(
+            memberId=UUID("55555555-5555-5555-5555-555555555555"),
+            adminId=10,
+            featureType="DOCUMENT",
+            inputTokens=100,
+            outputTokens=50,
+            cost=Decimal("0"),
+            aiModelId=5,
+        )
+
+    assert "Exactly one of memberId or adminId is required." in str(both_error.value)
+
+
 def test_usage_log_create_request_rejects_blank_model_name():
     with pytest.raises(ValidationError) as error:
         UsageLogCreateRequest(
@@ -241,3 +270,48 @@ def test_usage_log_service_raises_when_model_name_does_not_match():
     assert error.value.error_code == AiMetricsErrorCode.AI_MODEL_NOT_FOUND
     assert error.value.detail == {"modelName": "unknown-model"}
     usage_log_repository.save.assert_not_called()
+
+
+def test_usage_log_service_accepts_admin_actor_identifier():
+    usage_log_repository = Mock()
+    ai_model_repository = Mock()
+    token_cost_calculator = Mock()
+
+    ai_model_repository.find_by_id.return_value = _ai_model_record(ai_model_id=9)
+    token_cost_calculator.calculate_input_tokens.return_value = 240
+    token_cost_calculator.calculate_output_tokens.return_value = 60
+    token_cost_calculator.calculate_cost.return_value = Decimal("144.000000")
+    usage_log_repository.save.return_value = AiUsageLogRecord(
+        ai_usage_log_id=104,
+        member_id=None,
+        admin_id=12,
+        session_id=None,
+        ai_model_id=9,
+        feature_type="ADMIN_CS",
+        input_tokens=240,
+        output_tokens=60,
+        cost=Decimal("144.000000"),
+        created_at=datetime(2026, 6, 18, 12, 0, tzinfo=timezone.utc),
+    )
+
+    service = UsageLogService(
+        usage_log_repository=usage_log_repository,
+        ai_model_repository=ai_model_repository,
+        token_cost_calculator=token_cost_calculator,
+    )
+
+    request = UsageLogCreateRequest(
+        adminId=12,
+        aiModelId=9,
+        featureType="ADMIN_CS",
+        inputTokens=200,
+        outputTokens=50,
+        cost=Decimal("0"),
+    )
+
+    saved_record = service.create_usage_log(request)
+
+    assert saved_record.ai_usage_log_id == 104
+    persisted_request = usage_log_repository.save.call_args.args[0]
+    assert persisted_request.member_id is None
+    assert persisted_request.admin_id == 12

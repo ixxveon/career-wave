@@ -1136,7 +1136,8 @@ COMMENT ON COLUMN ai_models.updated_at         IS '모델 수정 시간';
 -- ================================================
 CREATE TABLE ai_usage_logs (
     ai_usage_log_id BIGSERIAL   NOT NULL,
-    member_id       UUID        NOT NULL,
+    member_id       UUID        NULL,
+    admin_id        BIGINT      NULL,
     session_id      UUID        NULL,
     ai_model_id     BIGINT      NOT NULL,
     feature_type    VARCHAR(20) NOT NULL,
@@ -1147,20 +1148,29 @@ CREATE TABLE ai_usage_logs (
 
     CONSTRAINT pk_ai_usage_logs     PRIMARY KEY (ai_usage_log_id),
     CONSTRAINT fk_ai_usage_member   FOREIGN KEY (member_id)   REFERENCES members (member_id),
+    CONSTRAINT fk_ai_usage_admin    FOREIGN KEY (admin_id)    REFERENCES admins (admin_id),
     CONSTRAINT fk_ai_usage_session  FOREIGN KEY (session_id)  REFERENCES interview_sessions (session_id),
     CONSTRAINT fk_ai_usage_model    FOREIGN KEY (ai_model_id) REFERENCES ai_models (ai_model_id),
-    CONSTRAINT chk_ai_usage_feature CHECK (feature_type IN ('DOCUMENT', 'INTERVIEW'))
+    CONSTRAINT chk_ai_usage_feature CHECK (feature_type IN ('DOCUMENT', 'INTERVIEW', 'ADMIN_CS', 'ADMIN_REPORT')),
+    CONSTRAINT chk_ai_usage_actor   CHECK (
+        (member_id IS NOT NULL AND admin_id IS NULL)
+        OR
+        (member_id IS NULL AND admin_id IS NOT NULL)
+    )
 );
 COMMENT ON TABLE  ai_usage_logs                 IS 'AI API 사용량 로그 테이블';
 COMMENT ON COLUMN ai_usage_logs.ai_usage_log_id IS '사용량 로그 고유 식별자';
 COMMENT ON COLUMN ai_usage_logs.member_id       IS '사용 회원 FK';
+COMMENT ON COLUMN ai_usage_logs.admin_id        IS '사용 관리자 FK';
 COMMENT ON COLUMN ai_usage_logs.session_id      IS '면접 세션 FK (NULL 허용)';
 COMMENT ON COLUMN ai_usage_logs.ai_model_id     IS '모델 FK';
-COMMENT ON COLUMN ai_usage_logs.feature_type    IS '기능 유형 (DOCUMENT / INTERVIEW)';
+COMMENT ON COLUMN ai_usage_logs.feature_type    IS '기능 유형 (DOCUMENT / INTERVIEW / ADMIN_CS / ADMIN_REPORT)';
 COMMENT ON COLUMN ai_usage_logs.input_tokens    IS '입력 토큰 수';
 COMMENT ON COLUMN ai_usage_logs.output_tokens   IS '출력 토큰 수';
 COMMENT ON COLUMN ai_usage_logs.cost            IS '소모 비용 (원 단위)';
 COMMENT ON COLUMN ai_usage_logs.created_at      IS '사용 기록 일시';
+
+CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_admin_id ON ai_usage_logs (admin_id);
 
 -- ================================================
 -- 35. ai_ops_settings  ※ 싱글톤 테이블 (row = 1개)
@@ -1425,6 +1435,7 @@ CREATE TABLE billing_consents (
 CREATE INDEX IF NOT EXISTS idx_billing_consents_member_plan_active_agreed
     ON billing_consents (member_id, plan_id, agreed_at DESC)
     WHERE revoked_at IS NULL;
+
 COMMENT ON TABLE  billing_consents                    IS '자동결제 약관 동의 이력';
 COMMENT ON COLUMN billing_consents.billing_consent_id IS '동의 고유 식별자';
 COMMENT ON COLUMN billing_consents.member_id          IS '회원 FK';
