@@ -66,12 +66,12 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .addFilterBefore(
-                new IpAclFilter(ipAclPort, objectMapper),
-                JwtAuthenticationFilter.class
-            )
-            .addFilterBefore(
                 new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
                 UsernamePasswordAuthenticationFilter.class
+            )
+            .addFilterBefore(
+                new IpAclFilter(ipAclPort, objectMapper),
+                JwtAuthenticationFilter.class
             )
             .addFilterAfter(
                 new AccountStatusAuthorizationFilter(accountStatusPorts),
