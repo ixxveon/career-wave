@@ -141,9 +141,6 @@ export const COMPANY_SIZE_LABELS = {
   STARTUP: '스타트업',
   SME: '중견',
   LARGE: '대기업',
-  스타트업: '스타트업',
-  중견: '중견',
-  대기업: '대기업',
 } as const;
 
 export const JOB_NOTICE_PERIOD_OPTIONS = ['today', '7d', '30d', 'all'] as const;
@@ -190,8 +187,9 @@ export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoti
   const jobCategory = getPrimaryJobCategory(jobNotice.jobCategory);
   const tags = jobNotice.skillTags ?? [];
   const companySize =
-    COMPANY_SIZE_LABELS[jobNotice.companySize as keyof typeof COMPANY_SIZE_LABELS]
-    ?? jobNotice.companySize;
+    jobNotice.companySize in COMPANY_SIZE_LABELS
+      ? COMPANY_SIZE_LABELS[jobNotice.companySize as keyof typeof COMPANY_SIZE_LABELS]
+      : jobNotice.companySize;
 
   return {
     id: jobNotice.jobNoticeId,
