@@ -19,6 +19,8 @@ public class AiMetricsDTO {
             @Schema(description = "전체 비용") BigDecimal totalCost,
             @Schema(description = "문서 기능 요청 수") long documentRequests,
             @Schema(description = "면접 기능 요청 수") long interviewRequests,
+            @Schema(description = "관리자 CS AI 요청 수") long adminCsRequests,
+            @Schema(description = "관리자 리포트 AI 분석 요청 수") long adminReportRequests,
             @Schema(description = "활성 모델 ID") Long activeModelId,
             @Schema(description = "활성 모델명") String activeModelName
     ) {
@@ -27,7 +29,9 @@ public class AiMetricsDTO {
     @Schema(description = "도메인별 AI 사용량 응답")
     public record ResponseDomainUsage(
             @Schema(description = "문서 기능 사용량") ResponseFeatureUsage document,
-            @Schema(description = "면접 기능 사용량") ResponseFeatureUsage interview
+            @Schema(description = "면접 기능 사용량") ResponseFeatureUsage interview,
+            @Schema(description = "관리자 CS AI 사용량") ResponseFeatureUsage adminCs,
+            @Schema(description = "관리자 리포트 AI 분석 사용량") ResponseFeatureUsage adminReport
     ) {
     }
 

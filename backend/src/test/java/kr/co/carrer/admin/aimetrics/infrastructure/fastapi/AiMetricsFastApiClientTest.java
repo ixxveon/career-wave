@@ -50,6 +50,8 @@ class AiMetricsFastApiClientTest {
                           "totalCost": 12.50,
                           "documentRequests": 6,
                           "interviewRequests": 4,
+                          "adminCsRequests": 0,
+                          "adminReportRequests": 0,
                           "activeModelId": 1,
                           "activeModelName": "gpt-4o-mini"
                         }

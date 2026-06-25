@@ -63,6 +63,8 @@ class UsageMetricsService:
             totalCost=summary.total_cost,
             documentRequests=summary.document_requests,
             interviewRequests=summary.interview_requests,
+            adminCsRequests=summary.admin_cs_requests,
+            adminReportRequests=summary.admin_report_requests,
             activeModelId=active_model.ai_model_id if active_model else None,
             activeModelName=active_model.model_name if active_model else None,
         )
@@ -95,6 +97,18 @@ class UsageMetricsService:
                 inputTokens=domain_usage.interview.input_tokens,
                 outputTokens=domain_usage.interview.output_tokens,
                 cost=domain_usage.interview.cost,
+            ),
+            adminCs=FeatureUsageResponse(
+                requestCount=domain_usage.admin_cs.request_count,
+                inputTokens=domain_usage.admin_cs.input_tokens,
+                outputTokens=domain_usage.admin_cs.output_tokens,
+                cost=domain_usage.admin_cs.cost,
+            ),
+            adminReport=FeatureUsageResponse(
+                requestCount=domain_usage.admin_report.request_count,
+                inputTokens=domain_usage.admin_report.input_tokens,
+                outputTokens=domain_usage.admin_report.output_tokens,
+                cost=domain_usage.admin_report.cost,
             ),
         )
 
@@ -216,7 +230,7 @@ class UsageMetricsService:
     def _validate_feature_type(self, feature_type: str | None) -> None:
         if feature_type is None:
             return
-        if feature_type not in {AiFeatureType.DOCUMENT.value, AiFeatureType.INTERVIEW.value}:
+        if feature_type not in {item.value for item in AiFeatureType}:
             self._raise_validation_error("featureType")
 
     def _validate_interval(self, interval: TokenTrendInterval) -> None:

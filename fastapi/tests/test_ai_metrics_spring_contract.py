@@ -189,6 +189,7 @@ def test_non_usage_request_contracts_match_spring_boot_fields():
         "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
         "sessionId": None,
         "aiModelId": 1,
+        "modelName": None,
         "featureType": "DOCUMENT",
         "inputTokens": 1200,
         "outputTokens": 450,
@@ -207,6 +208,8 @@ def test_usage_response_contracts_match_spring_boot_fields():
         totalCost="980000",
         documentRequests=820,
         interviewRequests=430,
+        adminCsRequests=25,
+        adminReportRequests=12,
         activeModelId=1,
         activeModelName="gpt-4o-mini",
     )
@@ -222,6 +225,18 @@ def test_usage_response_contracts_match_spring_boot_fields():
             inputTokens=170000,
             outputTokens=75000,
             cost="420000",
+        ),
+        adminCs=FeatureUsageResponse(
+            requestCount=25,
+            inputTokens=12000,
+            outputTokens=5000,
+            cost="25000",
+        ),
+        adminReport=FeatureUsageResponse(
+            requestCount=12,
+            inputTokens=9000,
+            outputTokens=3000,
+            cost="15000",
         ),
     )
     token_trend_response = TokenTrendResponse(
@@ -273,6 +288,8 @@ def test_usage_response_contracts_match_spring_boot_fields():
         "totalCost": summary_response.total_cost,
         "documentRequests": 820,
         "interviewRequests": 430,
+        "adminCsRequests": 25,
+        "adminReportRequests": 12,
         "activeModelId": 1,
         "activeModelName": "gpt-4o-mini",
     }
@@ -288,6 +305,18 @@ def test_usage_response_contracts_match_spring_boot_fields():
             "inputTokens": 170000,
             "outputTokens": 75000,
             "cost": domain_usage_response.interview.cost,
+        },
+        "adminCs": {
+            "requestCount": 25,
+            "inputTokens": 12000,
+            "outputTokens": 5000,
+            "cost": domain_usage_response.admin_cs.cost,
+        },
+        "adminReport": {
+            "requestCount": 12,
+            "inputTokens": 9000,
+            "outputTokens": 3000,
+            "cost": domain_usage_response.admin_report.cost,
         },
     }
     assert token_trend_response.model_dump(by_alias=True) == {
@@ -442,6 +471,31 @@ def test_usage_log_create_contract_matches_spring_boot_fields():
         "aiUsageLogId": 101,
         "recorded": True,
         "createdAt": usage_log_create_response.created_at,
+    }
+
+
+def test_usage_log_create_contract_accepts_model_name_without_ai_model_id():
+    usage_log_create_request = UsageLogCreateRequest.model_validate(
+        {
+            "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+            "sessionId": "1ec92044-9173-456b-b767-42cf5aa94c98",
+            "modelName": "gpt-4o-mini",
+            "featureType": "INTERVIEW",
+            "inputTokens": 800,
+            "outputTokens": 240,
+            "cost": "0",
+        }
+    )
+
+    assert usage_log_create_request.model_dump(mode="json", by_alias=True) == {
+        "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+        "sessionId": "1ec92044-9173-456b-b767-42cf5aa94c98",
+        "aiModelId": None,
+        "modelName": "gpt-4o-mini",
+        "featureType": "INTERVIEW",
+        "inputTokens": 800,
+        "outputTokens": 240,
+        "cost": "0",
     }
 
 

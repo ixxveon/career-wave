@@ -45,6 +45,8 @@ public interface AiMetricsService {
             BigDecimal totalCost,
             long documentRequests,
             long interviewRequests,
+            long adminCsRequests,
+            long adminReportRequests,
             Long activeModelId,
             String activeModelName
     ) {
@@ -52,7 +54,9 @@ public interface AiMetricsService {
 
     record ResponseDomainUsage(
             ResponseFeatureUsage document,
-            ResponseFeatureUsage interview
+            ResponseFeatureUsage interview,
+            ResponseFeatureUsage adminCs,
+            ResponseFeatureUsage adminReport
     ) {
     }
 

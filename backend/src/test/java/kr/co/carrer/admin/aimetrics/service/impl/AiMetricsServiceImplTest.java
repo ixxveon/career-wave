@@ -92,6 +92,8 @@ class AiMetricsServiceImplTest {
                     new BigDecimal("12.75"),
                     80L,
                     40L,
+                    5L,
+                    3L,
                     3L,
                     "gpt-4o-mini"
             ));
@@ -104,6 +106,8 @@ class AiMetricsServiceImplTest {
             assertThat(result.totalCost()).isEqualByComparingTo("12.75");
             assertThat(result.documentRequests()).isEqualTo(80L);
             assertThat(result.interviewRequests()).isEqualTo(40L);
+            assertThat(result.adminCsRequests()).isEqualTo(5L);
+            assertThat(result.adminReportRequests()).isEqualTo(3L);
             assertThat(result.activeModelId()).isEqualTo(3L);
             assertThat(result.activeModelName()).isEqualTo("gpt-4o-mini");
 
@@ -142,6 +146,18 @@ class AiMetricsServiceImplTest {
                             15_000L,
                             6_000L,
                             new BigDecimal("4.35")
+                    ),
+                    new AiMetricsFastApiGateway.FeatureUsageResponse(
+                            8L,
+                            2_000L,
+                            900L,
+                            new BigDecimal("0.80")
+                    ),
+                    new AiMetricsFastApiGateway.FeatureUsageResponse(
+                            4L,
+                            1_500L,
+                            700L,
+                            new BigDecimal("0.50")
                     )
             ));
 
@@ -155,6 +171,8 @@ class AiMetricsServiceImplTest {
             assertThat(result.interview().inputTokens()).isEqualTo(15_000L);
             assertThat(result.interview().outputTokens()).isEqualTo(6_000L);
             assertThat(result.interview().cost()).isEqualByComparingTo("4.35");
+            assertThat(result.adminCs().requestCount()).isEqualTo(8L);
+            assertThat(result.adminReport().requestCount()).isEqualTo(4L);
 
             ArgumentCaptor<AiMetricsFastApiGateway.PeriodRequest> requestCaptor =
                     ArgumentCaptor.forClass(AiMetricsFastApiGateway.PeriodRequest.class);
@@ -1062,6 +1080,8 @@ class AiMetricsServiceImplTest {
                     new BigDecimal("1.20"),
                     6L,
                     4L,
+                    0L,
+                    0L,
                     3L,
                     "gpt-4o-mini"
             ));
