@@ -9,4 +9,6 @@ import java.util.List;
 public interface IpAclPort {
 
     List<String> findActiveIpRanges();
+
+    boolean hasAnyIpAcl();
 }

@@ -20,4 +20,9 @@ public class AdminIpAclPort implements IpAclPort {
                 .map(ipAcl -> ipAcl.getIpRange())
                 .toList();
     }
+
+    @Override
+    public boolean hasAnyIpAcl() {
+        return ipAclRepository.count() > 0;
+    }
 }

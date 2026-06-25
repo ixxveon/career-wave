@@ -29,10 +29,17 @@ public class IpAclFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        // 등록된 ACL 레코드가 하나도 없을 때만 전체 허용 (초기 세팅)
+        // 레코드가 있지만 전부 비활성화된 경우는 차단 유지
+        if (!ipAclPort.hasAnyIpAcl()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         List<String> activeRanges = ipAclPort.findActiveIpRanges();
 
         if (activeRanges.isEmpty()) {
-            filterChain.doFilter(request, response);
+            writeForbiddenResponse(response);
             return;
         }
 
@@ -78,6 +85,11 @@ public class IpAclFilter extends OncePerRequestFilter {
         byte[] clientBytes = InetAddress.getByName(clientIp).getAddress();
 
         if (networkBytes.length != clientBytes.length) {
+            return false;
+        }
+
+        int maxPrefix = networkBytes.length * 8;
+        if (prefixLength < 0 || prefixLength > maxPrefix) {
             return false;
         }
 
