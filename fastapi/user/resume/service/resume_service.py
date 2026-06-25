@@ -172,19 +172,26 @@ async def _call_openai(
     )
 
     usage = completion.usage
-    logger.info(
-        f"[{document_id}] Token usage — "
-        f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
-    )
+    if usage is not None:
+        logger.info(
+            f"[{document_id}] Token usage — "
+            f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
+        )
+    else:
+        logger.warning(f"[{document_id}] Token usage not available in OpenAI response")
 
     content = completion.choices[0].message.content or ""
     result = json.loads(content)
-    usage_record = {
-        "member_id": member_id,
-        "model_name": model_id,
-        "feature_type": feature_type,
-        "usage": usage,
-    }
+    usage_record = (
+        {
+            "member_id": member_id,
+            "model_name": model_id,
+            "feature_type": feature_type,
+            "usage": usage,
+        }
+        if usage is not None
+        else None
+    )
     return _sanitize_response(result), usage_record
 
 
