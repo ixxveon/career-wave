@@ -101,19 +101,18 @@ VALUES
 -- ────────────────────────────────────────────
 INSERT INTO plans (
   product_code, plan_name, plan_price, monthly_usage_limit,
-  currency, billing_cycle, is_active, created_at, updated_at
+  currency, billing_cycle, is_active, created_at
 )
 VALUES
-  ('interview',         'AI 모의면접',   29000, 20, 'KRW', 'MONTHLY', true, NOW(), NOW()),
-  ('document-coaching', '서류 AI 코칭', 29000, 30, 'KRW', 'MONTHLY', true, NOW(), NOW())
+  ('interview',         'AI 모의면접',   29000, 20, 'KRW', 'MONTHLY', true, NOW()),
+  ('document-coaching', '서류 AI 코칭', 29000, 30, 'KRW', 'MONTHLY', true, NOW())
 ON CONFLICT (product_code) DO UPDATE SET
   plan_name = EXCLUDED.plan_name,
   plan_price = EXCLUDED.plan_price,
   monthly_usage_limit = EXCLUDED.monthly_usage_limit,
   currency = EXCLUDED.currency,
   billing_cycle = EXCLUDED.billing_cycle,
-  is_active = EXCLUDED.is_active,
-  updated_at = NOW();
+  is_active = EXCLUDED.is_active;
 
 -- ────────────────────────────────────────────
 -- 데모용 구독 데이터 (testuser02 — 면접, testuser03 — 서류)
