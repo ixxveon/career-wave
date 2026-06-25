@@ -32,7 +32,10 @@ async def record_ai_usage(
     input_tokens: int | None = None,
     output_tokens: int | None = None,
 ) -> bool:
-    """Record AI usage without affecting the caller's AI workflow."""
+    """Record AI usage without affecting the caller's AI workflow.
+
+    Explicit input_tokens/output_tokens take precedence over values extracted from usage.
+    """
     payload = _build_payload(
         member_id=member_id,
         model_name=model_name,
@@ -47,7 +50,7 @@ async def record_ai_usage(
 
     settings = get_settings()
     url = f"{settings.ai_metrics_internal_base_url.rstrip('/')}/usage/log"
-    headers = {"X-Internal-Secret": settings.webhook_secret}
+    headers = {"X-Internal-Secret": settings.ai_metrics_internal_secret}
 
     try:
         async with httpx.AsyncClient(timeout=settings.ai_usage_log_timeout_seconds) as client:

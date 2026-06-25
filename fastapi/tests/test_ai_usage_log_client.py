@@ -21,11 +21,13 @@ class _Response:
 
 
 class _AsyncClient:
-    requests: list[dict] = []
+    instances: list["_AsyncClient"] = []
     should_raise = False
 
     def __init__(self, timeout: float) -> None:
         self.timeout = timeout
+        self.requests: list[dict] = []
+        _AsyncClient.instances.append(self)
 
     async def __aenter__(self):
         return self
@@ -47,7 +49,7 @@ class _AsyncClient:
 
 @pytest.fixture(autouse=True)
 def reset_async_client():
-    _AsyncClient.requests = []
+    _AsyncClient.instances = []
     _AsyncClient.should_raise = False
 
 
@@ -55,7 +57,7 @@ def reset_async_client():
 def usage_settings():
     return SimpleNamespace(
         ai_metrics_internal_base_url="http://fastapi.local/internal/admin/ai-metrics",
-        webhook_secret="secret",
+        ai_metrics_internal_secret="internal-secret",
         ai_usage_log_timeout_seconds=1.5,
     )
 
@@ -74,10 +76,10 @@ async def test_record_ai_usage_posts_usage_log(monkeypatch, usage_settings):
     )
 
     assert recorded is True
-    assert _AsyncClient.requests == [
+    assert _AsyncClient.instances[0].requests == [
         {
             "url": "http://fastapi.local/internal/admin/ai-metrics/usage/log",
-            "headers": {"X-Internal-Secret": "secret"},
+            "headers": {"X-Internal-Secret": "internal-secret"},
             "json": {
                 "memberId": "55555555-5555-5555-5555-555555555555",
                 "sessionId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
@@ -106,9 +108,28 @@ async def test_record_ai_usage_uses_explicit_token_values(monkeypatch, usage_set
     )
 
     assert recorded is True
-    assert _AsyncClient.requests[0]["json"]["inputTokens"] == 300
-    assert _AsyncClient.requests[0]["json"]["outputTokens"] == 80
-    assert "sessionId" not in _AsyncClient.requests[0]["json"]
+    assert _AsyncClient.instances[0].requests[0]["json"]["inputTokens"] == 300
+    assert _AsyncClient.instances[0].requests[0]["json"]["outputTokens"] == 80
+    assert "sessionId" not in _AsyncClient.instances[0].requests[0]["json"]
+
+
+@pytest.mark.asyncio
+async def test_record_ai_usage_prefers_explicit_token_values_over_usage(monkeypatch, usage_settings):
+    monkeypatch.setattr("core.ai_usage.usage_log_client.get_settings", lambda: usage_settings)
+    monkeypatch.setattr("core.ai_usage.usage_log_client.httpx.AsyncClient", _AsyncClient)
+
+    recorded = await record_ai_usage(
+        member_id="55555555-5555-5555-5555-555555555555",
+        model_name="gpt-4o-mini",
+        feature_type="DOCUMENT",
+        usage=_Usage(),
+        input_tokens=300,
+        output_tokens=80,
+    )
+
+    assert recorded is True
+    assert _AsyncClient.instances[0].requests[0]["json"]["inputTokens"] == 300
+    assert _AsyncClient.instances[0].requests[0]["json"]["outputTokens"] == 80
 
 
 @pytest.mark.asyncio
@@ -124,7 +145,7 @@ async def test_record_ai_usage_skips_when_required_context_is_missing(monkeypatc
     )
 
     assert recorded is False
-    assert _AsyncClient.requests == []
+    assert _AsyncClient.instances == []
 
 
 @pytest.mark.asyncio
@@ -141,4 +162,4 @@ async def test_record_ai_usage_returns_false_when_post_fails(monkeypatch, usage_
     )
 
     assert recorded is False
-    assert len(_AsyncClient.requests) == 1
+    assert len(_AsyncClient.instances[0].requests) == 1
