@@ -71,10 +71,24 @@ function ScrappedJobPage() {
     null,
   );
   const [searchKeyword, setSearchKeyword] = useState("");
-
   const [currentPage, setCurrentPage] = useState(0);
+  const [scrapMessage, setScrapMessage] = useState("");
 
   const keyword = searchKeyword.trim();
+
+  useEffect(() => {
+    if (!scrapMessage) return;
+
+    const timer = window.setTimeout(() => {
+      setScrapMessage("");
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [scrapMessage]);
+
+  useEffect(() => {
+    setScrapMessage("");
+  }, [keyword, currentPage]);
 
   const { data: scrapJobPage, refetch } = useDashboardBookmarks({
     keyword,
@@ -88,15 +102,13 @@ function ScrappedJobPage() {
   }, [keyword]);
 
   useEffect(() => {
-    if (totalPages === 0 && currentPage !== 0) {
+    if (totalPages === 0) {
       setCurrentPage(0);
       return;
     }
 
-    if (totalPages > 0 && currentPage >= totalPages) {
-      setCurrentPage(totalPages - 1);
-    }
-  }, [currentPage, totalPages]);
+    setCurrentPage((prev) => (prev >= totalPages ? totalPages - 1 : prev));
+  }, [totalPages]);
 
   const hasPreviousPage = currentPage > 0;
   const hasNextPage = currentPage + 1 < totalPages;
@@ -110,8 +122,6 @@ function ScrappedJobPage() {
 
   const hasScrapJobs = scrappedJobs.length > 0;
   const hasSearchResult = sortedScrapJobs.length > 0;
-
-  const [scrapMessage, setScrapMessage] = useState("");
 
   function closeDetail() {
     setSelectedJob(null);
@@ -185,15 +195,15 @@ function ScrappedJobPage() {
           </div>
         )}
 
-        {!hasScrapJobs ? (
-          <div className="cw-state-box">아직 스크랩한 채용공고가 없습니다.</div>
-        ) : !hasSearchResult ? (
+        {searchKeyword.trim() && !hasSearchResult ? (
           <div className="cw-state-box">
             <p>검색 조건에 맞는 스크랩 공고가 없습니다.</p>
             <button type="button" onClick={() => setSearchKeyword("")}>
               검색 초기화
             </button>
           </div>
+        ) : !hasScrapJobs ? (
+          <div className="cw-state-box">아직 스크랩한 채용공고가 없습니다.</div>
         ) : (
           <>
             <div className="cw-scrap-grid">
@@ -257,7 +267,7 @@ function ScrappedJobPage() {
                         className="cw-job-detail-button"
                         onClick={() => {
                           if (job.deleted) {
-                            alert("삭제된 공고입니다.");
+                            setScrapMessage("삭제된 공고입니다.");
                             return;
                           }
 
