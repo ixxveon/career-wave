@@ -9,6 +9,12 @@ import type {
 
 const BASE = '/api/v1/user/job-notices';
 
+const COMPANY_SIZE_LABEL_BY_QUERY_VALUE = {
+  STARTUP: '스타트업',
+  SME: '중견',
+  LARGE: '대기업',
+} as const;
+
 const jobNotices: JobNoticeDetail[] = [
   {
     jobNoticeId: 1001,
@@ -133,6 +139,11 @@ export const jobNoticeHandlers = [
     const careerLevel = url.searchParams.get('careerLevel');
     const location = url.searchParams.get('location');
     const companySize = url.searchParams.get('companySize');
+    const companySizeLabel = companySize
+      ? COMPANY_SIZE_LABEL_BY_QUERY_VALUE[
+        companySize as keyof typeof COMPANY_SIZE_LABEL_BY_QUERY_VALUE
+      ] ?? companySize
+      : null;
 
     const filtered = jobNotices.filter((jobNotice) => {
       const matchesKeyword = !keyword
@@ -143,7 +154,7 @@ export const jobNoticeHandlers = [
       const matchesJobCategory = !jobCategory || jobNotice.jobCategory === jobCategory;
       const matchesCareerLevel = !careerLevel || jobNotice.careerLevel === careerLevel;
       const matchesLocation = !location || jobNotice.location.includes(location);
-      const matchesCompanySize = !companySize || jobNotice.companySize === companySize;
+      const matchesCompanySize = !companySizeLabel || jobNotice.companySize === companySizeLabel;
 
       return matchesKeyword
         && matchesJobType
