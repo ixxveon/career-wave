@@ -11,6 +11,7 @@ import logging
 
 from openai import AsyncOpenAI, OpenAIError
 
+from core.ai_usage.usage_log_client import record_ai_usage
 from core.config import get_settings
 from core.spring_client import FeedbackPayload, ReportCallbackPayload, send_report_callback
 from user.interview.pipeline.stt_pipeline import should_mask_scores
@@ -51,7 +52,7 @@ async def generate_and_send_report(session_id: str, session_type: str) -> None:
     answers = _build_answer_list(ctx, session_type)
 
     try:
-        result = await _call_llm_report(session_id, answers)
+        result = await _call_llm_report(session_id, answers, ctx.member_id)
         feedbacks = _build_feedbacks(answers, result)
         total_score: int | None
         try:
@@ -77,13 +78,14 @@ async def generate_and_send_report(session_id: str, session_type: str) -> None:
     await send_report_callback(session_id, payload)
 
 
-async def _call_llm_report(session_id: str, answers: list[dict]) -> dict:
+async def _call_llm_report(session_id: str, answers: list[dict], member_id: str) -> dict:
     settings = get_settings()
     client = _get_openai_client()
+    model = settings.openai_model_interview
 
     user_prompt = build_report_user_prompt(answers)
     response = await client.chat.completions.create(
-        model=settings.openai_model_interview,
+        model=model,
         messages=[
             {"role": "system", "content": REPORT_SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
@@ -93,8 +95,16 @@ async def _call_llm_report(session_id: str, answers: list[dict]) -> dict:
     )
     raw = response.choices[0].message.content or "{}"
     log.debug("[Session: %s] report LLM usage: %s", session_id, response.usage)
-    data = json.loads(raw)
 
+    await record_ai_usage(
+        member_id=member_id,
+        model_name=model,
+        feature_type="INTERVIEW",
+        usage=response.usage,
+        session_id=session_id,
+    )
+
+    data = json.loads(raw)
     if "feedbacks" not in data:
         raise ValueError("missing feedbacks in LLM report response")
     return data

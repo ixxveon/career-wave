@@ -4,6 +4,11 @@
 .claude/
 
 # =====================
+# Local dev seed data
+# =====================
+db/seed_local.sql
+
+# =====================
 # Environment Variables
 # =====================
 .env

@@ -122,7 +122,7 @@ async def test_rag_context_injected_into_prompt():
 
     async def fake_chat(client, model, messages):
         captured_messages.extend(messages)
-        return json.dumps({"question": "질문입니다.", "questionType": "FOLLOW_UP"})
+        return json.dumps({"question": "질문입니다.", "questionType": "FOLLOW_UP"}), None
 
     with (
         patch("user.interview.pipeline.llm_pipeline._chat", side_effect=fake_chat),
