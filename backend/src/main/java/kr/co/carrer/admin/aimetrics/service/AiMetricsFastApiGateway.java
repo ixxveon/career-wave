@@ -140,6 +140,7 @@ public interface AiMetricsFastApiGateway {
 
     record HeavyUserResponse(
             UUID memberId,
+            Long adminId,
             long requestCount,
             long inputTokens,
             long outputTokens,
@@ -150,6 +151,7 @@ public interface AiMetricsFastApiGateway {
     record UsageLogItemResponse(
             Long aiUsageLogId,
             UUID memberId,
+            Long adminId,
             UUID sessionId,
             Long aiModelId,
             AiFeatureType featureType,

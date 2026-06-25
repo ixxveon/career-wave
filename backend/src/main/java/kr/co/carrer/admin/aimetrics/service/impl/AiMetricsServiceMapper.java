@@ -138,6 +138,7 @@ final class AiMetricsServiceMapper {
     private static AiMetricsService.ResponseHeavyUser toHeavyUser(AiMetricsFastApiGateway.HeavyUserResponse response) {
         return new AiMetricsService.ResponseHeavyUser(
                 response.memberId(),
+                response.adminId(),
                 response.requestCount(),
                 response.inputTokens(),
                 response.outputTokens(),
@@ -149,6 +150,7 @@ final class AiMetricsServiceMapper {
         return new AiMetricsService.ResponseUsageLogItem(
                 response.aiUsageLogId(),
                 response.memberId(),
+                response.adminId(),
                 response.sessionId(),
                 response.aiModelId(),
                 response.featureType(),

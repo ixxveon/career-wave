@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class AiUsageLogPayload:
-    member_id: UUID | str
+    member_id: UUID | str | None
+    admin_id: int | None
     model_name: str
     feature_type: str
     input_tokens: int
@@ -27,6 +28,7 @@ async def record_ai_usage(
     member_id: UUID | str | None,
     model_name: str | None,
     feature_type: str,
+    admin_id: int | None = None,
     usage: Any | None = None,
     session_id: UUID | str | None = None,
     input_tokens: int | None = None,
@@ -38,6 +40,7 @@ async def record_ai_usage(
     """
     payload = _build_payload(
         member_id=member_id,
+        admin_id=admin_id,
         model_name=model_name,
         feature_type=feature_type,
         usage=usage,
@@ -75,6 +78,7 @@ async def record_ai_usage(
 def _build_payload(
     *,
     member_id: UUID | str | None,
+    admin_id: int | None,
     model_name: str | None,
     feature_type: str,
     usage: Any | None,
@@ -83,9 +87,11 @@ def _build_payload(
     output_tokens: int | None,
 ) -> AiUsageLogPayload | None:
     normalized_model_name = model_name.strip() if model_name else ""
-    if member_id is None or not normalized_model_name:
+    has_member_id = member_id is not None
+    has_admin_id = admin_id is not None
+    if has_member_id == has_admin_id or not normalized_model_name:
         logger.warning(
-            "[AI Usage] usage log skipped: memberId or modelName missing featureType=%s",
+            "[AI Usage] usage log skipped: actorId or modelName missing featureType=%s",
             feature_type,
         )
         return None
@@ -102,6 +108,7 @@ def _build_payload(
 
     return AiUsageLogPayload(
         member_id=member_id,
+        admin_id=admin_id,
         session_id=session_id,
         model_name=normalized_model_name,
         feature_type=feature_type,
@@ -142,13 +149,16 @@ def _get_int_attr(value: Any, *names: str) -> int | None:
 
 def _to_request_body(payload: AiUsageLogPayload) -> dict[str, str | int]:
     body: dict[str, str | int] = {
-        "memberId": str(payload.member_id),
         "modelName": payload.model_name,
         "featureType": payload.feature_type,
         "inputTokens": payload.input_tokens,
         "outputTokens": payload.output_tokens,
         "cost": str(payload.cost),
     }
+    if payload.member_id is not None:
+        body["memberId"] = str(payload.member_id)
+    if payload.admin_id is not None:
+        body["adminId"] = payload.admin_id
     if payload.session_id is not None:
         body["sessionId"] = str(payload.session_id)
     return body

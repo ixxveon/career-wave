@@ -1136,7 +1136,8 @@ COMMENT ON COLUMN ai_models.updated_at         IS '모델 수정 시간';
 -- ================================================
 CREATE TABLE ai_usage_logs (
     ai_usage_log_id BIGSERIAL   NOT NULL,
-    member_id       UUID        NOT NULL,
+    member_id       UUID        NULL,
+    admin_id        BIGINT      NULL,
     session_id      UUID        NULL,
     ai_model_id     BIGINT      NOT NULL,
     feature_type    VARCHAR(20) NOT NULL,
@@ -1147,9 +1148,15 @@ CREATE TABLE ai_usage_logs (
 
     CONSTRAINT pk_ai_usage_logs     PRIMARY KEY (ai_usage_log_id),
     CONSTRAINT fk_ai_usage_member   FOREIGN KEY (member_id)   REFERENCES members (member_id),
+    CONSTRAINT fk_ai_usage_admin    FOREIGN KEY (admin_id)    REFERENCES admins (admin_id),
     CONSTRAINT fk_ai_usage_session  FOREIGN KEY (session_id)  REFERENCES interview_sessions (session_id),
     CONSTRAINT fk_ai_usage_model    FOREIGN KEY (ai_model_id) REFERENCES ai_models (ai_model_id),
-    CONSTRAINT chk_ai_usage_feature CHECK (feature_type IN ('DOCUMENT', 'INTERVIEW'))
+    CONSTRAINT chk_ai_usage_feature CHECK (feature_type IN ('DOCUMENT', 'INTERVIEW', 'ADMIN_CS', 'ADMIN_REPORT')),
+    CONSTRAINT chk_ai_usage_actor   CHECK (
+        (member_id IS NOT NULL AND admin_id IS NULL)
+        OR
+        (member_id IS NULL AND admin_id IS NOT NULL)
+    )
 );
 COMMENT ON TABLE  ai_usage_logs                 IS 'AI API 사용량 로그 테이블';
 COMMENT ON COLUMN ai_usage_logs.ai_usage_log_id IS '사용량 로그 고유 식별자';

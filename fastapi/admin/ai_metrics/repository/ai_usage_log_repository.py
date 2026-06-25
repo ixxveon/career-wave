@@ -16,7 +16,8 @@ ai_usage_logs_table = Table(
     "ai_usage_logs",
     metadata,
     Column("ai_usage_log_id", BigInteger, primary_key=True),
-    Column("member_id", PostgreSqlUUID(as_uuid=True), nullable=False),
+    Column("member_id", PostgreSqlUUID(as_uuid=True), nullable=True),
+    Column("admin_id", BigInteger, nullable=True),
     Column("session_id", PostgreSqlUUID(as_uuid=True), nullable=True),
     Column("ai_model_id", BigInteger, nullable=False),
     Column("feature_type", String(20), nullable=False),
@@ -30,7 +31,8 @@ ai_usage_logs_table = Table(
 @dataclass(frozen=True)
 class AiUsageLogRecord:
     ai_usage_log_id: int
-    member_id: UUID
+    member_id: UUID | None
+    admin_id: int | None
     session_id: UUID | None
     ai_model_id: int
     feature_type: str
@@ -78,7 +80,8 @@ class TokenTrendPointAggregateRecord:
 
 @dataclass(frozen=True)
 class HeavyUserAggregateRecord:
-    member_id: UUID
+    member_id: UUID | None
+    admin_id: int | None
     request_count: int
     input_tokens: int
     output_tokens: int
@@ -103,6 +106,7 @@ class AiUsageLogRepository:
             insert(ai_usage_logs_table)
             .values(
                 member_id=request.member_id,
+                admin_id=request.admin_id,
                 session_id=request.session_id,
                 ai_model_id=request.ai_model_id,
                 feature_type=request.feature_type.value,
@@ -117,6 +121,7 @@ class AiUsageLogRepository:
         return AiUsageLogRecord(
             ai_usage_log_id=row["ai_usage_log_id"],
             member_id=row["member_id"],
+            admin_id=row["admin_id"],
             session_id=row["session_id"],
             ai_model_id=row["ai_model_id"],
             feature_type=row["feature_type"],
@@ -320,13 +325,19 @@ class AiUsageLogRepository:
         statement = (
             select(
                 ai_usage_logs_table.c.member_id,
+                ai_usage_logs_table.c.admin_id,
                 request_count,
                 func.coalesce(func.sum(ai_usage_logs_table.c.input_tokens), 0).label("input_tokens"),
                 func.coalesce(func.sum(ai_usage_logs_table.c.output_tokens), 0).label("output_tokens"),
                 cost_sum,
             )
-            .group_by(ai_usage_logs_table.c.member_id)
-            .order_by(cost_sum.desc(), request_count.desc(), ai_usage_logs_table.c.member_id.asc())
+            .group_by(ai_usage_logs_table.c.member_id, ai_usage_logs_table.c.admin_id)
+            .order_by(
+                cost_sum.desc(),
+                request_count.desc(),
+                ai_usage_logs_table.c.member_id.asc(),
+                ai_usage_logs_table.c.admin_id.asc(),
+            )
         )
         statement = self._apply_usage_filters(statement, created_from, created_to, feature_type)
         if limit is not None:
@@ -335,6 +346,7 @@ class AiUsageLogRepository:
         return [
             HeavyUserAggregateRecord(
                 member_id=row["member_id"],
+                admin_id=row["admin_id"],
                 request_count=row["request_count"],
                 input_tokens=row["input_tokens"],
                 output_tokens=row["output_tokens"],
@@ -391,6 +403,7 @@ class AiUsageLogRepository:
         return AiUsageLogRecord(
             ai_usage_log_id=row["ai_usage_log_id"],
             member_id=row["member_id"],
+            admin_id=row["admin_id"],
             session_id=row["session_id"],
             ai_model_id=row["ai_model_id"],
             feature_type=row["feature_type"],

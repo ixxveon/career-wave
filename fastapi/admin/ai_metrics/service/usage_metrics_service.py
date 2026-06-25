@@ -171,6 +171,7 @@ class UsageMetricsService:
             users=[
                 HeavyUserResponse(
                     memberId=user.member_id,
+                    adminId=user.admin_id,
                     requestCount=user.request_count,
                     inputTokens=user.input_tokens,
                     outputTokens=user.output_tokens,
@@ -200,6 +201,7 @@ class UsageMetricsService:
                 UsageLogItemResponse(
                     aiUsageLogId=log.ai_usage_log_id,
                     memberId=log.member_id,
+                    adminId=log.admin_id,
                     sessionId=log.session_id,
                     aiModelId=log.ai_model_id,
                     featureType=log.feature_type,

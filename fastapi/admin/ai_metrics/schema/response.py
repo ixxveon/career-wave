@@ -55,7 +55,8 @@ class TokenTrendResponse(AiMetricsResponseBase):
 
 
 class HeavyUserResponse(AiMetricsResponseBase):
-    member_id: UUID = Field(alias="memberId")
+    member_id: UUID | None = Field(default=None, alias="memberId")
+    admin_id: int | None = Field(default=None, alias="adminId")
     request_count: int = Field(alias="requestCount")
     input_tokens: int = Field(alias="inputTokens")
     output_tokens: int = Field(alias="outputTokens")
@@ -68,7 +69,8 @@ class HeavyUsersResponse(AiMetricsResponseBase):
 
 class UsageLogItemResponse(AiMetricsResponseBase):
     ai_usage_log_id: int = Field(alias="aiUsageLogId")
-    member_id: UUID = Field(alias="memberId")
+    member_id: UUID | None = Field(default=None, alias="memberId")
+    admin_id: int | None = Field(default=None, alias="adminId")
     session_id: UUID | None = Field(default=None, alias="sessionId")
     ai_model_id: int = Field(alias="aiModelId")
     feature_type: AiFeatureType = Field(alias="featureType")

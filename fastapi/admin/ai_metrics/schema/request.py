@@ -84,7 +84,8 @@ class RagIndexStartRequest(AiMetricsRequestBase):
 
 
 class UsageLogCreateRequest(AiMetricsRequestBase):
-    member_id: UUID = Field(alias="memberId")
+    member_id: UUID | None = Field(default=None, alias="memberId")
+    admin_id: int | None = Field(default=None, alias="adminId")
     session_id: UUID | None = Field(default=None, alias="sessionId")
     ai_model_id: int | None = Field(default=None, alias="aiModelId")
     model_name: str | None = Field(default=None, alias="modelName")
@@ -94,7 +95,13 @@ class UsageLogCreateRequest(AiMetricsRequestBase):
     cost: Decimal = Field(ge=0)
 
     @model_validator(mode="after")
-    def validate_model_identifier(self):
+    def validate_identifiers(self):
+        has_member_id = self.member_id is not None
+        has_admin_id = self.admin_id is not None
+
+        if has_member_id == has_admin_id:
+            raise ValueError("Exactly one of memberId or adminId is required.")
+
         if self.ai_model_id is None and not (self.model_name or "").strip():
             raise ValueError("Either aiModelId or a non-blank modelName is required.")
         return self
