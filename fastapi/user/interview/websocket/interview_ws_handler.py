@@ -76,8 +76,14 @@ def _verify_jwt(token: str) -> dict[str, Any]:
     return jwt.decode(token, settings.jwt_secret, algorithms=["HS256", "HS384"], audience="user")
 
 
-async def _verify_session_ownership(session_id: str, member_id: str) -> bool:
-    """Spring 내부 API로 session_id가 member_id 소유인지 검증한다."""
+async def _verify_session_ownership(session_id: str, member_id: str) -> bool | None:
+    """Spring 내부 API로 session_id가 member_id 소유인지 검증한다.
+
+    Returns:
+        True  — 소유권 확인됨
+        False — 소유권 불일치 (명시적 거부)
+        None  — Spring 통신 장애 (네트워크 단절·재배포 등)
+    """
     settings = get_settings()
     url = (
         f"{settings.spring_base_url.rstrip('/')}"
@@ -90,7 +96,7 @@ async def _verify_session_ownership(session_id: str, member_id: str) -> bool:
             return response.status_code == 200
     except Exception as exc:
         _base_log.warning("[Session: %s] ownership verify request failed: %s", session_id, exc)
-        return False
+        return None
 
 
 async def _close_existing(session_id: str, slog: _SessionAdapter) -> None:
@@ -145,11 +151,33 @@ async def interview_ws(
 
     # ── 세션 소유권 검증 ────────────────────────────────────────────────────
     # 재연결 포함 모든 경로에서 Spring 내부 API로 소유권 및 세션 진행 상태 검증
-    if not await _verify_session_ownership(session_id, member_id):
+    is_reconnect = lastReceivedSequenceNumber is not None
+    spring_result = await _verify_session_ownership(session_id, member_id)
+
+    if spring_result is False:
+        # Spring이 명시적으로 소유권 불일치를 반환한 경우 → 즉시 거부
         await websocket.accept()
         await websocket.close(code=1008)
         slog.warning("WS connection rejected: session ownership mismatch memberId=%s", member_id)
         return
+    elif spring_result is None:
+        # Spring 통신 장애(재배포·네트워크 단절 등)
+        # 재연결 경로: 메모리 ctx가 동일 member_id이면 fallback 허용
+        # 신규 연결: 검증 불가이므로 차단
+        ctx_in_memory = _sessions.get(session_id)
+        if is_reconnect and ctx_in_memory is not None and ctx_in_memory.member_id == member_id:
+            slog.warning(
+                "Spring verify unavailable — allowing reconnect via memory fallback: memberId=%s",
+                member_id,
+            )
+        else:
+            await websocket.accept()
+            await websocket.close(code=1008)
+            slog.warning(
+                "WS connection rejected: Spring verify unavailable and no memory fallback: memberId=%s",
+                member_id,
+            )
+            return
 
     await websocket.accept()
 
