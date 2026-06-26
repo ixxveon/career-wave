@@ -138,12 +138,7 @@ psql -U careerwave -d careerwave -f src/main/resources/db/seed-local.sql
 
 ### 관리자 계정
 
-관리자 페이지 접속 경로는 보안상 내부 문서에서 확인하세요.
-
-| 아이디 | 비밀번호 | 설명 |
-| :--- | :--- | :--- |
-| `admin` | `1234` | 관리자 MASTER |
-| `cs` | `1234` | 관리자 CS (이메일: cs@career-wave.com) |
+관리자 계정 정보는 보안상 내부 문서에서 확인하세요.
 
 ## 환경 변수
 
