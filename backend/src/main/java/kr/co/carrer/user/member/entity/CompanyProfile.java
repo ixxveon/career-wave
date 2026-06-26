@@ -20,6 +20,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CompanyProfile {
+    private static final String LEGACY_CERTIFICATE_NUMBER_PLACEHOLDER = "UNUSED";
 
     @Id
     @Column(name = "company_profile_id", columnDefinition = "uuid")
@@ -105,9 +106,16 @@ public class CompanyProfile {
         p.jibunAddress = jibunAddress;
         p.addressDetail = addressDetail;
         p.isAgency = isAgency;
-        p.certificateNumber = certificateNumber;
+        p.certificateNumber = normalizeCertificateNumber(certificateNumber);
         p.certFileUrl = certFileUrl;
         p.certFileName = certFileName;
         return p;
+    }
+
+    private static String normalizeCertificateNumber(String certificateNumber) {
+        if (certificateNumber == null || certificateNumber.isBlank()) {
+            return LEGACY_CERTIFICATE_NUMBER_PLACEHOLDER;
+        }
+        return certificateNumber;
     }
 }

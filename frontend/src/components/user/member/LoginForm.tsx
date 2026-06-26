@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { AlertCircle, Eye, EyeOff, LockKeyhole, UserRound } from 'lucide-react';
 import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
-import { useState, type FormEventHandler } from 'react';
+import { useEffect, useRef, useState, type FormEventHandler } from 'react';
 import type { LoginRouteDecision } from '../../../types/user/member';
 import type { LoginFormErrors } from '../../../utils/user/member/loginSchema';
 
@@ -38,7 +38,18 @@ export function LoginForm({
   onSubmit,
   onCredentialChange,
 }: LoginFormProps) {
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const input = passwordInputRef.current;
+    if (!input) return;
+    if (input.value) {
+      applyInputFill(input);
+    } else {
+      clearInputFill(input);
+    }
+  }, [showPassword]);
 
   return (
     <form className="cw-auth-form" onSubmit={onSubmit} noValidate>
@@ -69,6 +80,7 @@ export function LoginForm({
         <span className="cw-auth-span--with-toggle">
           <LockKeyhole size={18} />
           <input
+            ref={passwordInputRef}
             aria-invalid={Boolean(fieldErrors.password)}
             aria-describedby={fieldErrors.password ? 'login-password-error' : undefined}
             autoComplete="current-password"
@@ -85,7 +97,7 @@ export function LoginForm({
             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
             onClick={() => setShowPassword((prev) => !prev)}
           >
-            {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </span>
         {fieldErrors.password && (

@@ -1124,7 +1124,8 @@
   cursor: pointer;
 }
 
-.cw-register-select__option:hover {
+.cw-register-select__option:hover,
+.cw-register-select__option.is-active {
   background: #f0f7ff;
   color: var(--color-primary-dark);
 }
