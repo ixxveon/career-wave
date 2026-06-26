@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 _bg_tasks: set[asyncio.Task] = set()
 
-_ALLOWED_AUDIO_CONTENT_TYPES = {"audio/webm", "audio/mp4", "audio/ogg", "audio/wav", "application/octet-stream"}
+_ALLOWED_AUDIO_CONTENT_TYPES = {"audio/webm", "audio/mp4", "audio/ogg"}
 
 
 def _on_task_done(task: asyncio.Task) -> None:
