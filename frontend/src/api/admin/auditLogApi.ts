@@ -51,6 +51,7 @@ export interface AuditLogSummary {
 
 export interface AuditLogItem {
   id: string;
+  requestId?: string;
   logType: AuditLogType;
   logTypeLabel: string;
   severity: AuditLogSeverity;

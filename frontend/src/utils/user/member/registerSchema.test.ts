@@ -18,7 +18,6 @@ const validSnapshot: CompanyRegisterFormSnapshot = {
   jibunAddress: '',
   addressDetail: '',
   isAgency: false,
-  certificateNumber: 'CERT-001',
   loginId: 'companyuser01',
   password: 'Password1!',
   passwordConfirm: 'Password1!',

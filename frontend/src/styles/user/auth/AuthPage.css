@@ -1015,9 +1015,14 @@
   white-space: nowrap;
 }
 
-.cw-register-sub-button:hover {
+.cw-register-sub-button:hover:not(:disabled) {
   border-color: #80aceb;
   background: #eaf3ff;
+}
+
+.cw-register-sub-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .cw-register-sub-button--ghost {
@@ -1043,6 +1048,92 @@
   color: #c85f5f;
   font-size: 12px;
   font-weight: 800;
+}
+
+.cw-register-status-area {
+  min-height: 26px;
+}
+
+/* ── 커스텀 셀렉트 ─────────────────────────────────────────────── */
+
+.cw-register-select {
+  position: relative;
+}
+
+.cw-register-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 54px;
+  padding: 0 15px;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: none;
+  margin-top: 0;
+}
+
+.cw-register-select__trigger:focus,
+.cw-register-select__trigger.is-open {
+  border-color: #78a8ee;
+  box-shadow: 0 0 0 3px rgba(120, 168, 238, 0.16);
+}
+
+.cw-register-select__placeholder {
+  color: #a0aab8;
+}
+
+.cw-register-select__chevron {
+  flex-shrink: 0;
+  color: #a0aab8;
+  transition: transform 0.15s ease;
+}
+
+.cw-register-select__trigger.is-open .cw-register-select__chevron {
+  transform: rotate(180deg);
+}
+
+.cw-register-select__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 200;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px 0;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgba(52, 65, 85, 0.12);
+  list-style: none;
+}
+
+.cw-register-select__option {
+  padding: 11px 15px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.cw-register-select__option:hover,
+.cw-register-select__option.is-active {
+  background: #f0f7ff;
+  color: var(--color-primary-dark);
+}
+
+.cw-register-select__option.is-selected {
+  background: #eaf3ff;
+  color: var(--color-primary-dark);
+  font-weight: 700;
 }
 
 .cw-register-terms {
