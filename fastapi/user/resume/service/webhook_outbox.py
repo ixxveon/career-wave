@@ -37,6 +37,7 @@ def _get_conn() -> sqlite3.Connection:
 
 
 def init_outbox_db() -> None:
+    _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with _get_conn() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS webhook_outbox (
