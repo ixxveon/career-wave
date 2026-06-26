@@ -1161,7 +1161,7 @@ COMMENT ON COLUMN ai_usage_logs.member_id       IS '사용 회원 FK';
 COMMENT ON COLUMN ai_usage_logs.admin_id        IS '사용 관리자 FK';
 COMMENT ON COLUMN ai_usage_logs.session_id      IS '면접 세션 FK (NULL 허용)';
 COMMENT ON COLUMN ai_usage_logs.ai_model_id     IS '모델 FK';
-COMMENT ON COLUMN ai_usage_logs.feature_type    IS '기능 유형 (DOCUMENT / INTERVIEW / ADMIN_CS / ADMIN_REPORT)';
+COMMENT ON COLUMN ai_usage_logs.feature_type    IS '기능 유형 (DOCUMENT / INTERVIEW / INTERVIEW_STT / INTERVIEW_TTS / ADMIN_CS / ADMIN_REPORT)';
 COMMENT ON COLUMN ai_usage_logs.input_tokens    IS '입력 토큰 수';
 COMMENT ON COLUMN ai_usage_logs.output_tokens   IS '출력 토큰 수';
 COMMENT ON COLUMN ai_usage_logs.cost            IS '소모 비용 (원 단위)';
