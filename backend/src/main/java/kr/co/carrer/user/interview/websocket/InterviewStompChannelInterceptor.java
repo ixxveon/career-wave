@@ -76,15 +76,18 @@ public class InterviewStompChannelInterceptor implements ChannelInterceptor {
             throw new MessageDeliveryException("인증되지 않은 WebSocket 연결입니다.");
         }
 
+        if (attributes == null) {
+            log.warn("[Interview STOMP CONNECT 거부] 세션 attributes 없음");
+            throw new MessageDeliveryException("인증되지 않은 WebSocket 연결입니다.");
+        }
+
         UUID memberId = jwtAuthenticator.authenticate(token).orElse(null);
         if (memberId == null) {
             log.warn("[Interview STOMP CONNECT 거부] JWT 검증 실패");
             throw new MessageDeliveryException("인증되지 않은 WebSocket 연결입니다.");
         }
 
-        if (attributes != null) {
-            attributes.put("memberId", memberId);
-        }
+        attributes.put("memberId", memberId);
         log.debug("[Interview STOMP CONNECT 승인] memberId={}", memberId);
         return message;
     }
