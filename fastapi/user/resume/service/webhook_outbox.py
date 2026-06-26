@@ -12,7 +12,7 @@ import asyncio
 import json
 import logging
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -40,20 +40,30 @@ def init_outbox_db() -> None:
     with _get_conn() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS webhook_outbox (
-                id            INTEGER  PRIMARY KEY AUTOINCREMENT,
-                document_id   TEXT     NOT NULL,
-                status        TEXT     NOT NULL,
-                payload       TEXT     NOT NULL,
-                delivery_status TEXT   NOT NULL DEFAULT 'PENDING_DELIVERY',
-                retry_count   INTEGER  NOT NULL DEFAULT 0,
-                last_error    TEXT,
-                created_at    TEXT     NOT NULL,
-                updated_at    TEXT     NOT NULL
+                id              INTEGER  PRIMARY KEY AUTOINCREMENT,
+                document_id     TEXT     NOT NULL,
+                status          TEXT     NOT NULL,
+                payload         TEXT     NOT NULL,
+                delivery_status TEXT     NOT NULL DEFAULT 'PENDING_DELIVERY',
+                retry_count     INTEGER  NOT NULL DEFAULT 0,
+                next_retry_at   TEXT     NOT NULL,
+                last_error      TEXT,
+                created_at      TEXT     NOT NULL,
+                updated_at      TEXT     NOT NULL
             )
         """)
+        # 기존 DB에 next_retry_at 컬럼이 없는 경우 마이그레이션
+        try:
+            conn.execute("ALTER TABLE webhook_outbox ADD COLUMN next_retry_at TEXT NOT NULL DEFAULT ''")
+        except sqlite3.OperationalError:
+            pass  # 이미 존재하는 경우 무시
         conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_outbox_delivery_status
             ON webhook_outbox (delivery_status)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_outbox_next_retry_at
+            ON webhook_outbox (next_retry_at)
         """)
 
 
@@ -75,10 +85,10 @@ def _save_pending(document_id: str, payload: dict[str, Any]) -> int:
         cur = conn.execute(
             """
             INSERT INTO webhook_outbox
-                (document_id, status, payload, delivery_status, retry_count, created_at, updated_at)
-            VALUES (?, ?, ?, 'PENDING_DELIVERY', 0, ?, ?)
+                (document_id, status, payload, delivery_status, retry_count, next_retry_at, created_at, updated_at)
+            VALUES (?, ?, ?, 'PENDING_DELIVERY', 0, ?, ?, ?)
             """,
-            (document_id, payload.get("status", ""), json.dumps(payload, ensure_ascii=False), now, now),
+            (document_id, payload.get("status", ""), json.dumps(payload, ensure_ascii=False), now, now, now),
         )
         return cur.lastrowid
 
@@ -120,13 +130,15 @@ def _increment_retry(outbox_id: int, error: str) -> None:
             return
         new_count = row["retry_count"] + 1
         new_status = "DEAD_LETTER" if new_count >= _MAX_RETRIES else "PENDING_DELIVERY"
+        backoff_seconds = min(_BACKOFF_BASE ** new_count, 300)
+        next_retry_at = (datetime.now(timezone.utc) + timedelta(seconds=backoff_seconds)).isoformat()
         conn.execute(
             """
             UPDATE webhook_outbox
-            SET retry_count=?, delivery_status=?, last_error=?, updated_at=?
+            SET retry_count=?, delivery_status=?, last_error=?, next_retry_at=?, updated_at=?
             WHERE id=?
             """,
-            (new_count, new_status, error[:500], _now_iso(), outbox_id),
+            (new_count, new_status, error[:500], next_retry_at, _now_iso(), outbox_id),
         )
         if new_status == "DEAD_LETTER":
             logger.error(
@@ -144,9 +156,15 @@ async def run_outbox_worker() -> None:
 
 
 async def _retry_pending() -> None:
+    now = _now_iso()
     with _get_conn() as conn:
         rows = conn.execute(
-            "SELECT id, document_id, payload FROM webhook_outbox WHERE delivery_status='PENDING_DELIVERY' LIMIT 50"
+            """
+            SELECT id, document_id, payload FROM webhook_outbox
+            WHERE delivery_status='PENDING_DELIVERY' AND next_retry_at <= ?
+            LIMIT 50
+            """,
+            (now,),
         ).fetchall()
 
     for row in rows:
@@ -158,20 +176,7 @@ async def _retry_pending() -> None:
             _increment_retry(outbox_id, "payload JSON 파싱 실패")
             continue
 
-        retry_count = _get_retry_count(outbox_id)
-        if retry_count > 0:
-            backoff = min(_BACKOFF_BASE ** retry_count, 300)
-            await asyncio.sleep(backoff)
-
         await _deliver(outbox_id, document_id, payload)
-
-
-def _get_retry_count(outbox_id: int) -> int:
-    with _get_conn() as conn:
-        row = conn.execute(
-            "SELECT retry_count FROM webhook_outbox WHERE id=?", (outbox_id,)
-        ).fetchone()
-        return row["retry_count"] if row else 0
 
 
 def _now_iso() -> str:
