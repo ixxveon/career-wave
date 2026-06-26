@@ -200,7 +200,7 @@ export function CompanyRegisterForm({
             <Field label="담당자 전화번호" required wide>
               <AuthButtonGroup
                 input={<TextInput type="tel" value={form.managerPhone} onChange={(value) => update('managerPhone', value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" />}
-                buttonLabel={sendPhoneCode.isPending ? '전송 중' : '인증번호 전송'}
+                buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
                 disabled={sendPhoneCode.isPending || phoneResendIn > 0}
                 onClick={handleSendPhoneCode}
               />
@@ -227,7 +227,7 @@ export function CompanyRegisterForm({
             <Field label="담당자 이메일" required wide>
               <AuthButtonGroup
                 input={<TextInput type="email" value={form.managerEmail} onChange={(value) => update('managerEmail', value)} placeholder="담당자 이메일 주소 입력" />}
-                buttonLabel={sendEmailCode.isPending ? '전송 중' : '인증번호 전송'}
+                buttonLabel={sendEmailCode.isPending ? '전송 중' : verification.emailId ? `재전송${emailResendIn > 0 ? ` ${formatRemaining(emailResendIn)}` : ''}` : '인증번호 전송'}
                 disabled={sendEmailCode.isPending || emailResendIn > 0}
                 onClick={handleSendEmailCode}
               />

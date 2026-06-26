@@ -1015,9 +1015,14 @@
   white-space: nowrap;
 }
 
-.cw-register-sub-button:hover {
+.cw-register-sub-button:hover:not(:disabled) {
   border-color: #80aceb;
   background: #eaf3ff;
+}
+
+.cw-register-sub-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .cw-register-sub-button--ghost {
