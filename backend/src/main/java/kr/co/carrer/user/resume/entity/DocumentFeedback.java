@@ -9,7 +9,10 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "document_feedbacks")
+@Table(
+    name = "document_feedbacks",
+    uniqueConstraints = @UniqueConstraint(name = "uq_document_feedbacks_document_id", columnNames = "document_id")
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DocumentFeedback {

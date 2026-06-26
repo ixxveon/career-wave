@@ -182,14 +182,14 @@ class ResumeServiceWebhookTest {
     private Document stubAnalyzingDocument(UUID documentId) {
         Document document = Document.ofResume(UUID.randomUUID(), "https://s3.example.com/file.pdf", "이력서.pdf");
         document.updateStatus(DocumentStatus.ANALYZING);
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentRepository.findByIdForUpdate(documentId)).thenReturn(Optional.of(document));
         return document;
     }
 
     private Document stubCompletedDocument(UUID documentId) {
         Document document = Document.ofResume(UUID.randomUUID(), "https://s3.example.com/file.pdf", "이력서.pdf");
         document.updateStatus(DocumentStatus.COMPLETED);
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentRepository.findByIdForUpdate(documentId)).thenReturn(Optional.of(document));
         return document;
     }
 }
