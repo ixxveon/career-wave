@@ -25,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.InetAddress;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -178,10 +179,40 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         return PaginationResponse.of(items, safePage, safeSize, ipAclPage.getTotalElements());
     }
 
+    private void validateIpCidrFormat(String ipRange) {
+        if (ipRange.contains("/")) {
+            String[] parts = ipRange.split("/", 2);
+            if (parts.length != 2) {
+                throw new CustomException(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
+            }
+
+            try {
+                byte[] addressBytes = InetAddress.getByName(parts[0]).getAddress();
+                int prefixLength = Integer.parseInt(parts[1]);
+                int maxPrefix = addressBytes.length * 8;
+                if (prefixLength < 0 || prefixLength > maxPrefix) {
+                    throw new CustomException(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
+                }
+            } catch (NumberFormatException e) {
+                throw new CustomException(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
+            } catch (java.net.UnknownHostException e) {
+                throw new CustomException(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
+            }
+        } else {
+            try {
+                InetAddress.getByName(ipRange);
+            } catch (java.net.UnknownHostException e) {
+                throw new CustomException(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
+            }
+        }
+    }
+
     @Override
     @Transactional
     public IpAclDetailResult createIpAcl(CreateIpAclCommand command, Long actorAdminId, String ipAddress) {
         String normalizedIpRange = command.ipRange().trim();
+
+        validateIpCidrFormat(normalizedIpRange);
 
         if (ipAclRepository.existsByIpRange(normalizedIpRange)) {
             throw new CustomException(AdminManagementErrorCode.IP_ACL_DUPLICATED_RANGE);
