@@ -90,6 +90,9 @@ export function CompanyRegisterForm({
           <div className="cw-register-grid">
             <Field label="기업형태" required>
               <SelectInput value={form.companyType} onChange={(value) => update('companyType', value)} placeholder="기업형태 선택" options={companyTypes} />
+              <div className="cw-register-status-area">
+                {fieldErrors.companyType && <p className="cw-register-error">{fieldErrors.companyType}</p>}
+              </div>
             </Field>
             <Field label="사업자등록번호" required>
               <AuthButtonGroup
@@ -104,12 +107,14 @@ export function CompanyRegisterForm({
                 onClick={() => void handleBusinessNumberCheck()}
                 disabled={checkBusinessNumber.isPending}
               />
-              {businessNumberCheckMessage && (
-                <StatusPill active={businessNumberCheckState === BUSINESS_NUMBER_CHECK_STATE.CONFIRMED}>
-                  {businessNumberCheckMessage}
-                </StatusPill>
-              )}
-              {fieldErrors.businessNumber && <p className="cw-register-error">{fieldErrors.businessNumber}</p>}
+              <div className="cw-register-status-area">
+                {businessNumberCheckMessage && (
+                  <StatusPill active={businessNumberCheckState === BUSINESS_NUMBER_CHECK_STATE.CONFIRMED}>
+                    {businessNumberCheckMessage}
+                  </StatusPill>
+                )}
+                {fieldErrors.businessNumber && <p className="cw-register-error">{fieldErrors.businessNumber}</p>}
+              </div>
             </Field>
             <Field label="회사명" required>
               <TextInput value={form.companyName} onChange={(value) => update('companyName', value)} placeholder="회사명 입력" />
