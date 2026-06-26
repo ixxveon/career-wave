@@ -26,6 +26,9 @@ vi.mock('../../../api/admin/adminManagementApi', () => ({
     CS: 'CS',
     BACKEND: 'BACKEND',
   },
+  ADMIN_AUDIT_LOG_TYPE: {
+    ADMIN_MANAGEMENT: 'ADMIN_MANAGEMENT',
+  },
   ACL_RISK_LEVEL: {
     LOW: 'LOW',
     MEDIUM: 'MEDIUM',
