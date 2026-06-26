@@ -118,9 +118,15 @@ export function CompanyRegisterForm({
             </Field>
             <Field label="회사명" required>
               <TextInput value={form.companyName} onChange={(value) => update('companyName', value)} placeholder="회사명 입력" />
+              <div className="cw-register-status-area">
+                {fieldErrors.companyName && <p className="cw-register-error">{fieldErrors.companyName}</p>}
+              </div>
             </Field>
             <Field label="대표자명" required>
               <TextInput value={form.ceoName} onChange={(value) => update('ceoName', value)} placeholder="대표자명 입력" />
+              <div className="cw-register-status-area">
+                {fieldErrors.ceoName && <p className="cw-register-error">{fieldErrors.ceoName}</p>}
+              </div>
             </Field>
             <Field label="회사주소" required wide>
               <AuthButtonGroup
@@ -167,20 +173,29 @@ export function CompanyRegisterForm({
                 disabled={checkLoginId.isPending || loginIdState === LOGIN_ID_CHECK_STATE.CHECKING}
                 onClick={handleLoginIdCheck}
               />
-              <StatusPill active={loginIdState === LOGIN_ID_CHECK_STATE.AVAILABLE}>사용 가능한 아이디입니다.</StatusPill>
-              {fieldErrors.loginId && <p className="cw-register-error">{fieldErrors.loginId}</p>}
+              <div className="cw-register-status-area">
+                <StatusPill active={loginIdState === LOGIN_ID_CHECK_STATE.AVAILABLE}>사용 가능한 아이디입니다.</StatusPill>
+                {fieldErrors.loginId && <p className="cw-register-error">{fieldErrors.loginId}</p>}
+              </div>
             </Field>
             <Field label="담당자명" required>
               <TextInput value={form.managerName} onChange={(value) => update('managerName', value)} placeholder="담당자명(실명)" />
+              <div className="cw-register-status-area">
+                {fieldErrors.managerName && <p className="cw-register-error">{fieldErrors.managerName}</p>}
+              </div>
             </Field>
             <Field label="비밀번호" required>
               <PasswordInput value={form.managerPassword} onChange={(value) => update('managerPassword', value)} placeholder="비밀번호(8~16자의 영문, 숫자, 특수기호)" />
-              {fieldErrors.password && <p className="cw-register-error">{fieldErrors.password}</p>}
+              <div className="cw-register-status-area">
+                {fieldErrors.password && <p className="cw-register-error">{fieldErrors.password}</p>}
+              </div>
             </Field>
             <Field label="비밀번호 확인" required>
               <PasswordInput value={form.managerPasswordConfirm} onChange={(value) => update('managerPasswordConfirm', value)} placeholder="비밀번호 재입력" />
-              {passwordMismatch && <p className="cw-register-error">비밀번호가 일치하지 않습니다.</p>}
-              {fieldErrors.passwordConfirm && <p className="cw-register-error">{fieldErrors.passwordConfirm}</p>}
+              <div className="cw-register-status-area">
+                {passwordMismatch && <p className="cw-register-error">비밀번호가 일치하지 않습니다.</p>}
+                {fieldErrors.passwordConfirm && <p className="cw-register-error">{fieldErrors.passwordConfirm}</p>}
+              </div>
             </Field>
             <Field label="담당자 전화번호" required wide>
               <AuthButtonGroup
