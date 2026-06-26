@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from admin.ai_metrics.client.openai_client import get_ai_metrics_openai_client
 from admin.ai_metrics.router import router as ai_metrics_router
+from core.config import get_settings
 from user.resume.service.webhook_outbox import init_outbox_db, run_outbox_worker
 
 log = logging.getLogger(__name__)
@@ -21,8 +22,21 @@ def _outbox_worker_done_callback(task: asyncio.Task) -> None:
         log.error("outbox worker crashed: %s", task.exception(), exc_info=task.exception())
 
 
+def _validate_required_settings() -> None:
+    """필수 환경 변수 누락 시 시작 단계에서 즉시 실패한다."""
+    settings = get_settings()
+    missing = [name for name, value in [
+        ("WEBHOOK_SECRET", settings.webhook_secret),
+        ("JWT_SECRET", settings.jwt_secret),
+        ("OPENAI_API_KEY", settings.openai_api_key),
+    ] if not value or not value.strip()]
+    if missing:
+        raise RuntimeError(f"필수 환경 변수가 설정되지 않았습니다: {', '.join(missing)}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    _validate_required_settings()
     init_outbox_db()
     outbox_task = asyncio.create_task(run_outbox_worker())
     outbox_task.add_done_callback(_outbox_worker_done_callback)
