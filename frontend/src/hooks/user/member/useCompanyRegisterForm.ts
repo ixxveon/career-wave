@@ -522,7 +522,28 @@ export function useCompanyRegisterForm() {
       setSuccessMessage('기업회원 가입 신청이 접수되었습니다.');
       setIsSubmitGuideOpen(true);
     } catch (error) {
-      setFormMessage(getRecoveryErrorMessage(error, '기업회원 가입 신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
+      const serverCode =
+        error && typeof error === 'object' && 'serverCode' in error
+          ? (error as { serverCode?: string }).serverCode
+          : undefined;
+
+      if (serverCode === 'VERIFICATION_TOKEN_INVALID') {
+        setVerification((current) => ({ ...current, phoneToken: '', emailToken: '' }));
+        setFormMessage('휴대폰 또는 이메일 인증이 만료되었습니다. 인증을 다시 진행해주세요.');
+      } else {
+        const backendData =
+          error && typeof error === 'object' && 'data' in error && error.data &&
+          typeof error.data === 'object' && !Array.isArray(error.data)
+            ? (error.data as Record<string, string>)
+            : null;
+        if (backendData && Object.keys(backendData).length > 0) {
+          const labels = Object.keys(backendData).map((k) => FIELD_LABEL_MAP[k] || k).filter(Boolean);
+          const display = labels.slice(0, 4).join(', ');
+          setFormMessage(`입력값 검증 실패: ${display || Object.values(backendData).slice(0, 2).join(' / ')}`);
+        } else {
+          setFormMessage(getRecoveryErrorMessage(error, '기업회원 가입 신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
+        }
+      }
     }
   };
 
