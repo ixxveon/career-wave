@@ -153,6 +153,12 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         return new InterviewDTO.ResponseSubmitVoiceChunk(chunkIndex, true);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public void verifySessionOwnership(UUID memberId, UUID sessionId) {
+        validateSessionOwnership(memberId, sessionId);
+    }
+
     @Transactional(readOnly = true)
     protected void validateSessionOwnership(UUID memberId, UUID sessionId) {
         InterviewSession session = sessionRepository.findBySessionId(sessionId)

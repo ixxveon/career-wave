@@ -14,4 +14,6 @@ public interface InterviewSessionService {
     InterviewDTO.ResponseSubmitVoiceChunk submitVoiceChunk(UUID memberId, UUID sessionId, MultipartFile audioChunk, int questionOrder, int chunkIndex, boolean isFinal);
 
     InterviewDTO.ResponseEndSession endSession(UUID memberId, UUID sessionId);
+
+    void verifySessionOwnership(UUID memberId, UUID sessionId);
 }
