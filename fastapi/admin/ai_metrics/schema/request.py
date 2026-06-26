@@ -8,6 +8,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 class AiFeatureType(str, Enum):
     DOCUMENT = "DOCUMENT"
     INTERVIEW = "INTERVIEW"
+    INTERVIEW_STT = "INTERVIEW_STT"
+    INTERVIEW_TTS = "INTERVIEW_TTS"
     ADMIN_CS = "ADMIN_CS"
     ADMIN_REPORT = "ADMIN_REPORT"
 
