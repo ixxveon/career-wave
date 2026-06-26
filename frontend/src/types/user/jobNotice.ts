@@ -79,7 +79,7 @@ export type JobNoticeBookmarkMap = Record<JobNotice['id'], JobNotice['bookmarked
 export interface JobNoticeListStats {
   totalOpenCount: number;
   todayNewCount: number;
-  todayNewDelta: number;
+  todayNewDelta: number | null;
   todayNewRate: number;
 }
 

@@ -1,6 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { LucideIcon } from 'lucide-react';
 import {
   ArrowUp,
   Bookmark,
@@ -9,10 +8,10 @@ import {
   Eye,
   FileText,
   Filter,
-  Flame,
   Search,
 } from 'lucide-react';
 import JobNoticeDetail from './JobNoticeDetail';
+import { createBannerStats, type BannerStat } from './jobNoticeStats';
 import {
   CAREER_LEVEL_LABELS,
   JOB_CATEGORY_LABELS,
@@ -97,37 +96,6 @@ const FILTER_OPTION_LABELS = {
   ...JOB_CATEGORY_LABELS,
   ...CAREER_LEVEL_LABELS,
 } as const;
-
-interface BannerStat {
-  label: string;
-  value: string;
-  description: string;
-  Icon: LucideIcon;
-  iconClassName: string;
-  highlight?: string;
-  valueClassName?: string;
-}
-
-function createBannerStats(stats: JobNoticeListStats): BannerStat[] {
-  return [
-    {
-      label: '전체 공고',
-      value: stats.totalOpenCount.toLocaleString(),
-      description: `+${stats.todayNewCount.toLocaleString()} 오늘`,
-      Icon: FileText,
-      iconClassName: 'jn-stat-card__icon--blue',
-    },
-    {
-      label: '오늘 신규 공고',
-      value: stats.todayNewCount.toLocaleString(),
-      description: `(${stats.todayNewRate.toLocaleString()}%)`,
-      highlight: `+${stats.todayNewDelta.toLocaleString()}`,
-      Icon: Flame,
-      iconClassName: 'jn-stat-card__icon--pink',
-      valueClassName: 'jn-stat-card__value--pink',
-    },
-  ];
-}
 
 
 function createInitialFilters(): Filters {
