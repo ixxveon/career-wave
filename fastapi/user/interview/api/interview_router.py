@@ -2,7 +2,7 @@ import asyncio
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from core.config import get_settings
@@ -62,7 +62,6 @@ class ReportTriggerRequest(BaseModel):
 
 @router.post("/sessions/{session_id}/trigger/voice-chunk", status_code=202)
 async def trigger_voice_chunk(
-    request: Request,
     session_id: str,
     questionOrder: int = Form(...),
     chunkIndex: int = Form(...),
@@ -83,10 +82,6 @@ async def trigger_voice_chunk(
     content_type = (audioChunk.content_type or "").split(";")[0].strip().lower()
     if content_type not in _ALLOWED_AUDIO_CONTENT_TYPES:
         raise HTTPException(status_code=400, detail=f"허용되지 않는 audio content-type: {content_type}")
-
-    content_length = request.headers.get("content-length")
-    if content_length and int(content_length) > settings.audio_chunk_max_bytes:
-        raise HTTPException(status_code=413, detail="음성 청크 크기가 허용 한도를 초과했습니다.")
 
     audio_bytes = await audioChunk.read()
     if len(audio_bytes) > settings.audio_chunk_max_bytes:
