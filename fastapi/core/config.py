@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     # 서류 파일 허용 기본 디렉터리 (Path Traversal 방지)
     document_base_dir: str = "/app/documents"
 
+    # Webhook Outbox SQLite 경로 (컨테이너 재시작 후에도 유지되는 영구 볼륨 마운트 경로 권장)
+    webhook_outbox_db_path: str = "/app/data/career-wave-webhook-outbox.db"
+
     # AWS S3
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""

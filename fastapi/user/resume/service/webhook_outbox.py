@@ -22,7 +22,7 @@ from core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-_DB_PATH = Path("/tmp/career-wave-webhook-outbox.db")
+_DB_PATH = Path(get_settings().webhook_outbox_db_path)
 _MAX_RETRIES = 10
 _RETRY_INTERVAL_SECONDS = 30
 _TIMEOUT_SECONDS = 10.0
