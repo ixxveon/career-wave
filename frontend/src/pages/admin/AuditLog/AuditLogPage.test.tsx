@@ -10,26 +10,16 @@ const auditLogApiMock = vi.hoisted(() => ({
   getLogDetail: vi.fn(),
 }));
 
-vi.mock('../../../api/admin/auditLogApi', () => ({
-  AUDIT_LOG_TYPE_FILTER: {
-    ALL: 'ALL',
-    ADMIN_ACTIVITY: 'ADMIN_ACTIVITY',
-    AI_METRICS_SYSTEM: 'AI_METRICS_SYSTEM',
-    SCRAPING_SYSTEM: 'SCRAPING_SYSTEM',
-  },
-  AUDIT_LOG_SEVERITY_FILTER: {
-    ALL: 'ALL',
-    INFO: 'INFO',
-    WARN: 'WARN',
-    ERROR: 'ERROR',
-  },
-  AUDIT_LOG_TYPE_LABELS: {
-    ADMIN_ACTIVITY: '관리자 관리',
-    AI_METRICS_SYSTEM: 'AI 메트릭스',
-    SCRAPING_SYSTEM: '스크래핑 관리',
-  },
-  auditLogApi: auditLogApiMock,
-}));
+vi.mock('../../../api/admin/auditLogApi', async () => {
+  const actual = await vi.importActual<typeof import('../../../api/admin/auditLogApi')>(
+    '../../../api/admin/auditLogApi',
+  );
+
+  return {
+    ...actual,
+    auditLogApi: auditLogApiMock,
+  };
+});
 
 function createQueryClient() {
   return new QueryClient({
