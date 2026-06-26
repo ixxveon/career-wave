@@ -87,7 +87,7 @@ export interface AuditLogListParams extends AuditLogDateRangeParams {
 }
 
 export const AUDIT_LOG_TYPE_LABELS: Record<AuditLogType, string> = {
-  ADMIN_ACTIVITY: '관리자 관리',
+  ADMIN_ACTIVITY: '관리자 활동',
   ADMIN_MANAGEMENT: '관리자 계정 관리',
   AI_METRICS_SYSTEM: 'AI 메트릭스',
   SCRAPING_SYSTEM: '스크래핑 관리',
