@@ -115,6 +115,7 @@ class PipelineLogItemResponse(ScrapingResponseBase):
             status=status,
             message="completed" if status == ScrapingStatusType.SUCCESS else "failed",
             detail=_build_log_detail(record),
+            # TODO: ScrapingLogRecord에 실행 단위 run_id가 저장되면 실제 값으로 매핑한다.
             runId=None,
         )
 
