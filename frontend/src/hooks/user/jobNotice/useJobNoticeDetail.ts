@@ -3,10 +3,17 @@ import { jobApi } from '../../../api/user/jobApi';
 import type { JobNoticeDetailApiResponse } from '../../../types/user/jobNotice';
 import { jobNoticeQueryKeys } from './useJobNoticeList';
 
-export function useJobNoticeDetail(jobNoticeId: number | null | undefined) {
+type UseJobNoticeDetailOptions = {
+  enabled?: boolean;
+};
+
+export function useJobNoticeDetail(
+  jobNoticeId: number | null | undefined,
+  options: UseJobNoticeDetailOptions = {},
+) {
   return useQuery({
     queryKey: jobNoticeQueryKeys.detail(jobNoticeId),
     queryFn: () => jobApi.getJobNoticeDetail(jobNoticeId as number) as Promise<JobNoticeDetailApiResponse>,
-    enabled: jobNoticeId != null,
+    enabled: jobNoticeId != null && (options.enabled ?? true),
   });
 }
