@@ -61,6 +61,33 @@ export interface AuditLogDetail extends AuditLogItem {
   requestId: string;
 }
 
+export interface BackendAuditLogSummary {
+  totalCount: number;
+  adminActivityCount: number;
+  adminManagementCount: number;
+  aiMetricsSystemCount: number;
+  scrapingSystemCount: number;
+  infoCount: number;
+  warnCount: number;
+  errorCount: number;
+  successCount: number;
+}
+
+export interface BackendAuditLogItem {
+  auditLogId: number;
+  adminId: number | null;
+  logType: string;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  ipAddress: string | null;
+  severity: string;
+  detail: string | null;
+  createdAt: string;
+}
+
+export type BackendAuditLogDetail = BackendAuditLogItem;
+
 export interface AuditLogPreview {
   id: string;
   logType: AuditLogType;
@@ -90,13 +117,121 @@ export const AUDIT_LOG_TYPE_LABELS: Record<AuditLogType, string> = {
   SCRAPING_SYSTEM: '스크래핑 관리',
 };
 
+const BACKEND_AUDIT_LOG_TYPE_LABELS: Record<string, string> = {
+  ...AUDIT_LOG_TYPE_LABELS,
+  ADMIN_MANAGEMENT: '관리자 관리',
+};
+
+function maskIpAddress(ipAddress: string | null) {
+  if (!ipAddress) return '-';
+
+  const ipv4Parts = ipAddress.split('.');
+  if (ipv4Parts.length === 4) {
+    return `${ipv4Parts[0]}.${ipv4Parts[1]}.${ipv4Parts[2]}.*`;
+  }
+
+  const ipv6Parts = ipAddress.split(':');
+  if (ipv6Parts.length > 2) {
+    return `${ipv6Parts.slice(0, 3).join(':')}:*`;
+  }
+
+  return ipAddress;
+}
+
+function formatAuditLogSummary(log: BackendAuditLogItem) {
+  return log.action || `${log.logType} audit event`;
+}
+
+function formatAuditLogDetail(log: BackendAuditLogItem) {
+  if (log.detail?.trim()) {
+    return log.detail.trim();
+  }
+
+  const target = [log.targetType, log.targetId].filter(Boolean).join(':');
+  return target ? `${log.action} / ${target}` : log.action;
+}
+
+export function mapBackendAuditLogSummary(summary: BackendAuditLogSummary): AuditLogSummary {
+  return {
+    totalCount: summary.totalCount,
+    adminCount: summary.adminActivityCount + summary.adminManagementCount,
+    aiCount: summary.aiMetricsSystemCount,
+    scrapingCount: summary.scrapingSystemCount,
+    warningCount: summary.warnCount,
+    errorCount: summary.errorCount,
+    lastSyncedAt: '',
+  };
+}
+
+export function mapBackendAuditLogItem(log: BackendAuditLogItem): AuditLogItem {
+  return {
+    id: String(log.auditLogId),
+    logType: log.logType as AuditLogType,
+    logTypeLabel: BACKEND_AUDIT_LOG_TYPE_LABELS[log.logType] ?? log.logType,
+    severity: log.severity as AuditLogSeverity,
+    summary: formatAuditLogSummary(log),
+    detailSummary: formatAuditLogDetail(log),
+    actorId: log.adminId == null ? '-' : String(log.adminId),
+    targetType: log.targetType ?? '-',
+    targetId: log.targetId ?? '-',
+    ipAddressMasked: maskIpAddress(log.ipAddress),
+    occurredAt: log.createdAt,
+  };
+}
+
+export function mapBackendAuditLogDetail(log: BackendAuditLogDetail): AuditLogDetail {
+  return {
+    ...mapBackendAuditLogItem(log),
+    requestId: '-',
+  };
+}
+
+function mapAuditLogSummaryResponse(response: ApiResponse<BackendAuditLogSummary>): ApiResponse<AuditLogSummary> {
+  return {
+    ...response,
+    data: mapBackendAuditLogSummary(response.data),
+  };
+}
+
+function mapAuditLogListResponse(response: ApiResponse<PageResult<BackendAuditLogItem>>): ApiResponse<PageResult<AuditLogItem>> {
+  return {
+    ...response,
+    data: {
+      ...response.data,
+      content: response.data.content.map(mapBackendAuditLogItem),
+    },
+  };
+}
+
+function mapAuditLogDetailResponse(response: ApiResponse<BackendAuditLogDetail>): ApiResponse<AuditLogDetail> {
+  return {
+    ...response,
+    data: mapBackendAuditLogDetail(response.data),
+  };
+}
+
 export const auditLogApi = {
   getSummary: (params?: AuditLogDateRangeParams) =>
-    axiosInstance.get<ApiResponse<AuditLogSummary>>(`${AUDIT_LOG_API_BASE_PATH}/summary`, { params }),
+    axiosInstance
+      .get<ApiResponse<BackendAuditLogSummary>>(`${AUDIT_LOG_API_BASE_PATH}/summary`, { params })
+      .then((response) => ({
+        ...response,
+        data: mapAuditLogSummaryResponse(response.data),
+      })),
 
   getLogs: (params?: AuditLogListParams) =>
-    axiosInstance.get<ApiResponse<PageResult<AuditLogItem>>>(AUDIT_LOG_API_BASE_PATH, { params }),
+    axiosInstance
+      .get<ApiResponse<PageResult<BackendAuditLogItem>>>(AUDIT_LOG_API_BASE_PATH, { params })
+      .then((response) => ({
+        ...response,
+        data: mapAuditLogListResponse(response.data),
+      })),
 
   getLogDetail: (logId: string) =>
-    axiosInstance.get<ApiResponse<AuditLogDetail>>(`${AUDIT_LOG_API_BASE_PATH}/${encodeURIComponent(logId)}`),
+    axiosInstance
+      .get<ApiResponse<BackendAuditLogDetail>>(`${AUDIT_LOG_API_BASE_PATH}/${encodeURIComponent(logId)}`)
+      .then((response) => ({
+        ...response,
+        data: mapAuditLogDetailResponse(response.data),
+      })),
 };
