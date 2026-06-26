@@ -36,6 +36,13 @@ public interface AdminPaymentControllerDocs {
         @Parameter(description = "결제 ID (UUID)") @PathVariable UUID paymentId
     );
 
+    @Operation(summary = "환불 요청 접수 (PENDING 생성)")
+    ResponseEntity<ApiResponse<RefundDTO.ResponseCreate>> createRefundRequest(
+        @Parameter(description = "결제 ID (UUID)") @PathVariable UUID paymentId,
+        @Valid @RequestBody RefundDTO.RequestCreate request,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
+    );
+
     @Operation(summary = "환불 확정 처리")
     ResponseEntity<ApiResponse<RefundDTO.ResponseApprove>> approveRefund(
         @Parameter(description = "결제 ID (UUID)") @PathVariable UUID paymentId,

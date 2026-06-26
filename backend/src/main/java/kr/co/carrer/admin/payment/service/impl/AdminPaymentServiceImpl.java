@@ -69,6 +69,26 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
 
     @Override
     @Transactional
+    public RefundDTO.ResponseCreate createRefundRequest(UUID paymentId, String reason, Long adminId) {
+        Payment payment = paymentRepository.findById(paymentId)
+            .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_FOUND));
+
+        if (payment.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_REFUNDABLE);
+        }
+
+        if (refundRepository.existsByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING)) {
+            throw new CustomException(AdminPaymentErrorCode.REFUND_ALREADY_PENDING);
+        }
+
+        Refund refund = Refund.create(paymentId, payment.getAmount(), reason);
+        refundRepository.save(refund);
+
+        return new RefundDTO.ResponseCreate(paymentId.toString(), refund.getRefundStatus());
+    }
+
+    @Override
+    @Transactional
     public RefundDTO.ResponseApprove approveRefund(UUID paymentId, Long adminId) {
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_FOUND));

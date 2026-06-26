@@ -39,6 +39,7 @@ type PayTab = '결제 내역' | '구독 현황' | '정산 리포트';
 const PAY_STATUS_CLS: Record<string, string> = {
   PENDING:  'pending',
   DONE:     'normal',
+  PAID:     'normal',
   CANCELED: 'dismissed',
   FAILED:   'blinded',
 };
@@ -147,6 +148,9 @@ export default function PaymentPage() {
   const [selected, setSelected]         = useState<Payment | null>(null);
   const [refundLoading, setRefundLoading] = useState(false);
   const [refundError, setRefundError]   = useState('');
+  const [requestReason, setRequestReason] = useState('');
+  const [requestMode, setRequestMode]   = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
   // ── 구독 현황 상태 ────────────────────────────────────────────
   const [subscriptions, setSubscriptions]   = useState<Subscription[]>([]);
@@ -251,6 +255,9 @@ export default function PaymentPage() {
   // ── 결제 상세 조회 (모달 열기) ────────────────────────────────
   const openDetail = async (p: Payment) => {
     setRefundError('');
+    setRequestReason('');
+    setRequestMode(false);
+    setRejectReason('');
     setSelected(p);
     const targetId = p.paymentId;
     try {
@@ -260,6 +267,30 @@ export default function PaymentPage() {
       setSelected((cur) => cur?.paymentId === targetId ? res.data.data : cur);
     } catch {
       // 상세 조회 실패 시 목록 데이터로 fallback
+    }
+  };
+
+  // ── 환불 요청 접수 ────────────────────────────────────────────
+  const submitRefundRequest = async () => {
+    if (!selected || !requestReason.trim()) return;
+    setRefundLoading(true);
+    setRefundError('');
+    try {
+      const res = await paymentApi.requestRefund(selected.paymentId, requestReason.trim());
+      if (!res.data.success) throw new Error(res.data.message);
+      const { refundStatus } = res.data.data;
+      setPayments((prev) =>
+        prev.map((p) => p.paymentId === selected.paymentId ? { ...p, refundStatus } : p)
+      );
+      setSelected((cur) => cur ? { ...cur, refundStatus } : null);
+      setRequestMode(false);
+      setRequestReason('');
+      fetchSummary();
+      showToast('환불 요청이 접수되었습니다.');
+    } catch (err: any) {
+      setRefundError(resolveErrorMsg(err, '환불 요청 접수에 실패했습니다.', 'refund'));
+    } finally {
+      setRefundLoading(false);
     }
   };
 
@@ -287,11 +318,11 @@ export default function PaymentPage() {
 
   // ── 환불 불가 처리 ────────────────────────────────────────────
   const rejectRefund = async () => {
-    if (!selected) return;
+    if (!selected || !rejectReason.trim()) return;
     setRefundLoading(true);
     setRefundError('');
     try {
-      const res = await paymentApi.rejectRefund(selected.paymentId);
+      const res = await paymentApi.rejectRefund(selected.paymentId, rejectReason.trim());
       if (!res.data.success) throw new Error(res.data.message);
       const { paymentStatus, refundStatus } = res.data.data;
       setPayments((prev) =>
@@ -633,7 +664,29 @@ export default function PaymentPage() {
                 )}
               </div>
 
-              {/* 환불 요청 건 — 환불 가능 여부 확인 섹션 */}
+              {/* 환불 요청 입력 — PAID 상태에서 요청 접수 */}
+              {selected.paymentStatus === 'PAID' && !selected.refundStatus && (
+                <div className="refundCheckSection">
+                  <p className="refundCheckTitle">환불 요청 접수</p>
+                  {requestMode ? (
+                    <>
+                      <textarea
+                        placeholder="환불 요청 사유를 입력하세요"
+                        value={requestReason}
+                        onChange={(e) => setRequestReason(e.target.value)}
+                        rows={3}
+                        style={{ width: '100%', resize: 'vertical', marginTop: 8, padding: '8px 10px', fontSize: 13, borderRadius: 6, border: '1px solid #d0d7de', boxSizing: 'border-box' }}
+                      />
+                    </>
+                  ) : (
+                    <p style={{ fontSize: 13, color: '#7a8da4', marginTop: 4 }}>
+                      결제 완료 건에 대해 환불 요청을 접수합니다.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* 환불 가능 여부 확인 섹션 — PENDING 상태 */}
               {selected.refundStatus === 'PENDING' && refundCheck && (() => {
                 const elapsedDays = daysSincePaid(selected.approvedAt);
                 return (
@@ -667,6 +720,16 @@ export default function PaymentPage() {
                   {!refundCheck.eligible && (
                     <p className="refundIneligibleNote">{refundCheck.reason}</p>
                   )}
+                  {/* 환불 불가 처리 시 사유 입력 */}
+                  {!refundCheck.eligible && (
+                    <textarea
+                      placeholder="환불 불가 사유를 입력하세요"
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      rows={2}
+                      style={{ width: '100%', resize: 'vertical', marginTop: 10, padding: '8px 10px', fontSize: 13, borderRadius: 6, border: '1px solid #d0d7de', boxSizing: 'border-box' }}
+                    />
+                  )}
                 </div>
                 );
               })()}
@@ -675,13 +738,38 @@ export default function PaymentPage() {
             </div>
 
             <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
+              {/* 환불 요청 접수 버튼 */}
+              {selected.paymentStatus === 'PAID' && !selected.refundStatus && !requestMode && (
+                <button onClick={() => setRequestMode(true)} disabled={refundLoading}>
+                  환불 요청
+                </button>
+              )}
+              {selected.paymentStatus === 'PAID' && !selected.refundStatus && requestMode && (
+                <>
+                  <button
+                    onClick={submitRefundRequest}
+                    disabled={refundLoading || !requestReason.trim()}
+                  >
+                    {refundLoading ? '처리 중...' : '접수 확인'}
+                  </button>
+                  <button onClick={() => { setRequestMode(false); setRequestReason(''); }} disabled={refundLoading}>
+                    취소
+                  </button>
+                </>
+              )}
+              {/* 환불 확정 버튼 */}
               {selected.refundStatus === 'PENDING' && refundCheck?.eligible && (
                 <button onClick={confirmRefund} disabled={refundLoading}>
                   {refundLoading ? '처리 중...' : '환불 처리 확정'}
                 </button>
               )}
+              {/* 환불 불가 처리 버튼 */}
               {selected.refundStatus === 'PENDING' && refundCheck && !refundCheck.eligible && (
-                <button className="tableBtn--danger" onClick={rejectRefund} disabled={refundLoading}>
+                <button
+                  className="tableBtn--danger"
+                  onClick={rejectRefund}
+                  disabled={refundLoading || !rejectReason.trim()}
+                >
                   {refundLoading ? '처리 중...' : '환불 불가 처리'}
                 </button>
               )}

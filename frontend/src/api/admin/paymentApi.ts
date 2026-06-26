@@ -22,6 +22,7 @@ export interface PageResult<T> {
 export const PAY_STATUS = {
   PENDING:  'PENDING',
   DONE:     'DONE',
+  PAID:     'PAID',
   CANCELED: 'CANCELED',
   FAILED:   'FAILED',
 } as const;
@@ -57,6 +58,7 @@ export type SubStatus    = typeof SUB_STATUS[keyof typeof SUB_STATUS];
 export const PAY_STATUS_LABEL: Record<PayStatus, string> = {
   PENDING:  '결제 대기',
   DONE:     '결제 완료',
+  PAID:     '결제 완료',
   CANCELED: '환불 완료',
   FAILED:   '결제 실패',
 };
@@ -164,6 +166,13 @@ export const paymentApi = {
   getPaymentDetail: (paymentId: string) =>
     axiosInstance.get<ApiResponse<Payment>>(`/api/v1/admin/payments/${paymentId}`),
 
+  // 환불 요청 접수 (PENDING 생성)
+  requestRefund: (paymentId: string, reason: string) =>
+    axiosInstance.post<ApiResponse<RefundResult>>(
+      `/api/v1/admin/payments/${paymentId}/refund-request`,
+      { reason }
+    ),
+
   // 환불 처리 확정
   confirmRefund: (paymentId: string) =>
     axiosInstance.post<ApiResponse<RefundResult>>(
@@ -171,9 +180,10 @@ export const paymentApi = {
     ),
 
   // 환불 불가 처리
-  rejectRefund: (paymentId: string) =>
+  rejectRefund: (paymentId: string, rejectReason: string) =>
     axiosInstance.post<ApiResponse<RefundResult>>(
-      `/api/v1/admin/payments/${paymentId}/refund-reject`
+      `/api/v1/admin/payments/${paymentId}/refund-reject`,
+      { rejectReason }
     ),
 
   // 구독 KPI 집계

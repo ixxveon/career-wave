@@ -52,6 +52,18 @@ public class AdminPaymentController implements AdminPaymentControllerDocs {
         return ResponseEntity.ok(ApiResponse.ok(adminPaymentService.getPaymentDetail(paymentId)));
     }
 
+    @PostMapping("/{paymentId}/refund-request")
+    public ResponseEntity<ApiResponse<RefundDTO.ResponseCreate>> createRefundRequest(
+        @PathVariable UUID paymentId,
+        @Valid @RequestBody RefundDTO.RequestCreate request,
+        @AuthenticationPrincipal AuthPrincipal principal
+    ) {
+        Long adminId = Long.parseLong(principal.getId());
+        return ResponseEntity.ok(ApiResponse.ok(
+            adminPaymentService.createRefundRequest(paymentId, request.reason(), adminId)
+        ));
+    }
+
     @PostMapping("/{paymentId}/refund")
     public ResponseEntity<ApiResponse<RefundDTO.ResponseApprove>> approveRefund(
         @PathVariable UUID paymentId,
