@@ -75,7 +75,7 @@ npm run dev
 | 플랫폼 | URL |
 | :--- | :--- |
 | 사용자 | http://localhost:5173 |
-| 관리자 | http://localhost:5173/cw-manage-2026 |
+| 관리자 | 내부 문서 참고 |
 
 ### FastAPI
 
@@ -138,7 +138,7 @@ psql -U careerwave -d careerwave -f src/main/resources/db/seed-local.sql
 
 ### 관리자 계정
 
-관리자 페이지 접속 URL: `http://localhost:5173/cw-manage-2026/login`
+관리자 페이지 접속 경로는 보안상 내부 문서에서 확인하세요.
 
 | 아이디 | 비밀번호 | 설명 |
 | :--- | :--- | :--- |
