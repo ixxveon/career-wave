@@ -61,6 +61,15 @@ public class InterviewStompChannelInterceptor implements ChannelInterceptor {
     }
 
     private Message<?> handleConnect(Message<?> message, StompHeaderAccessor accessor) {
+        // 핸드셰이크(예: ResumeHandshakeInterceptor)에서 이미 인증된 세션은 통과
+        // — resume 클라이언트는 ?token= 핸드셰이크로 인증하므로 Authorization 헤더가 없어도 됨
+        Map<String, Object> attributes = accessor.getSessionAttributes();
+        if (attributes != null && attributes.get("memberId") instanceof UUID) {
+            log.debug("[Interview STOMP CONNECT 통과] 핸드셰이크 인증 세션 — memberId={}", attributes.get("memberId"));
+            return message;
+        }
+
+        // 핸드셰이크 인증이 없는 경우 STOMP Authorization 헤더로 검증 (interview 전용 경로)
         String token = extractBearerToken(accessor);
         if (!StringUtils.hasText(token)) {
             log.warn("[Interview STOMP CONNECT 거부] Authorization 헤더 없음");
@@ -73,7 +82,6 @@ public class InterviewStompChannelInterceptor implements ChannelInterceptor {
             throw new MessageDeliveryException("인증되지 않은 WebSocket 연결입니다.");
         }
 
-        Map<String, Object> attributes = accessor.getSessionAttributes();
         if (attributes != null) {
             attributes.put("memberId", memberId);
         }
