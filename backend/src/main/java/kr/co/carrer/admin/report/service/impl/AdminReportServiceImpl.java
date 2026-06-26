@@ -95,13 +95,13 @@ public class AdminReportServiceImpl implements AdminReportService {
      * 3) 결과를 독립된 쓰기 트랜잭션으로 저장 (self.persistAiSuggestion)
      */
     @Override
-    public ReportDetailDTO.ResponseDetail getReportDetail(Long reportId) {
+    public ReportDetailDTO.ResponseDetail getReportDetail(Long reportId, Long adminId) {
         ReportDetailDTO.ResponseDetail detail = self.readReportDetail(reportId);
 
         String aiSuggestion = detail.aiSuggestion();
         if (aiSuggestion == null) {
             aiSuggestion = callFastApiForAiSuggestion(
-                reportId, detail.targetType(), detail.reason(),
+                reportId, adminId, detail.targetType(), detail.reason(),
                 detail.contentTitle(), detail.contentBody()
             );
             if (aiSuggestion != null) {
@@ -150,7 +150,7 @@ public class AdminReportServiceImpl implements AdminReportService {
             .ifPresent(report -> report.updateAiSuggestion(aiSuggestion));
     }
 
-    private String callFastApiForAiSuggestion(Long reportId, TargetType targetType, ReportReason reason,
+    private String callFastApiForAiSuggestion(Long reportId, Long adminId, TargetType targetType, ReportReason reason,
                                                String contentTitle, String contentBody) {
         try {
             Map<String, Object> body = new HashMap<>();
@@ -158,6 +158,7 @@ public class AdminReportServiceImpl implements AdminReportService {
             body.put("reason", reason.name());
             body.put("contentTitle", contentTitle);
             body.put("contentBody", contentBody);
+            body.put("adminId", adminId);
 
             Map<?, ?> response = webClient.post()
                 .uri(REPORT_ANALYSIS_PATH)

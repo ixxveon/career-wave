@@ -27,12 +27,9 @@ interface RecoveryCodeFieldProps {
   error?: string;
   verification: VerificationState;
   expiresIn: number;
-  resendIn: number;
   confirmPending: boolean;
-  sendPending: boolean;
   onCodeChange: (value: string) => void;
   onConfirm: () => void;
-  onResend: () => void;
 }
 
 export function RecoveryContactField({
@@ -94,17 +91,14 @@ export function RecoveryCodeField({
   error,
   verification,
   expiresIn,
-  resendIn,
   confirmPending,
-  sendPending,
   onCodeChange,
   onConfirm,
-  onResend,
 }: RecoveryCodeFieldProps) {
   return (
     <label>
       {label}
-      <div className={`cw-auth-inline${!verification.verificationToken ? ' cw-auth-inline--triple' : ''}`}>
+      <div className="cw-auth-inline">
         <span>
           <CheckCircle2 size={18} />
           <input
@@ -125,16 +119,6 @@ export function RecoveryCodeField({
         >
           {confirmPending ? '확인 중' : '인증 확인'}
         </button>
-        {!verification.verificationToken && (
-          <button
-            className="cw-auth-button-secondary cw-auth-button-secondary--resend"
-            disabled={sendPending || resendIn > 0}
-            type="button"
-            onClick={onResend}
-          >
-            {sendPending ? '전송 중' : resendIn > 0 ? `${formatRemaining(resendIn)}` : '재전송'}
-          </button>
-        )}
       </div>
       {error && <p className="cw-register-error">{error}</p>}
       {verification.verificationToken && !error && (

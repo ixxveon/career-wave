@@ -3,6 +3,7 @@ package kr.co.carrer.admin.member.docs;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import kr.co.carrer.admin.member.dto.HrManagerDTO;
@@ -35,19 +36,23 @@ public interface AdminMemberControllerDocs {
         @Parameter(description = "가입일 시작 (yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
         @Parameter(description = "가입일 종료 (yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
         @Parameter(description = "페이지 번호 (1-based)") @RequestParam(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+        @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
     );
 
     @Operation(summary = "개인 회원 상세 조회")
     ResponseEntity<ApiResponse<MemberDTO.ResponseDetail>> getMemberDetail(
-        @Parameter(description = "회원 UUID") @PathVariable UUID memberId
+        @Parameter(description = "회원 UUID") @PathVariable UUID memberId,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
+        HttpServletRequest httpServletRequest
     );
 
     @Operation(summary = "회원 제재 처리")
     ResponseEntity<ApiResponse<MemberDTO.ResponseSanction>> sanctionMember(
         @Parameter(description = "회원 UUID") @PathVariable UUID memberId,
         @RequestBody MemberDTO.RequestSanction request,
-        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
+        HttpServletRequest httpServletRequest
     );
 
     @Operation(summary = "기업 회원 목록 조회")

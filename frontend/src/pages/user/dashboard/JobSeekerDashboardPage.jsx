@@ -265,7 +265,7 @@ function JobSeekerDashboardPage() {
                       <dd>{job.date}</dd>
                     </div>
                   </dl>
-                  <Link className="cw-home-job__detail" tabIndex={isLoggedIn ? 0 : -1} to="/jobs">
+                  <Link className="cw-home-job__detail" tabIndex={isLoggedIn ? 0 : -1} to={`/jobs?jobNoticeId=${job.id}`}>
                     상세보기
                     <ChevronRight size={15} />
                   </Link>

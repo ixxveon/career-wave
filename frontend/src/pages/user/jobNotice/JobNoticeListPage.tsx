@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowUp,
@@ -27,6 +28,7 @@ import {
   type JobNoticeQueryParams,
 } from '../../../types/user/jobNotice';
 import { jobApi } from '../../../api/user/jobApi';
+import { useJobNoticeDetail } from '../../../hooks/user/jobNotice/useJobNoticeDetail';
 import { useJobNoticeList } from '../../../hooks/user/jobNotice/useJobNoticeList';
 import { authSession } from '../../../utils/user/member/authSession';
 import '@/styles/user/jobNotice/JobNoticeListPage.css';
@@ -438,6 +440,7 @@ function ActiveFilterChips({ filters, onReset }: { filters: Filters; onReset: (l
 }
 
 export default function JobNoticeListPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [period, setPeriod] = useState<Period>('기간 전체');
   const [sort, setSort] = useState<SortOption>('추천순');
   const [sortOpen, setSortOpen] = useState(false);
@@ -446,6 +449,12 @@ export default function JobNoticeListPage() {
   const [bookmarks, setBookmarks] = useState<Bookmarks>({});
   const [bookmarkErrorMessage, setBookmarkErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const jobNoticeIdParam = searchParams.get('jobNoticeId');
+  const parsedJobNoticeId = jobNoticeIdParam ? Number(jobNoticeIdParam) : null;
+  const deepLinkJobNoticeId =
+    parsedJobNoticeId != null && Number.isSafeInteger(parsedJobNoticeId) && parsedJobNoticeId > 0
+      ? parsedJobNoticeId
+      : null;
 
   function updateFilter(label: FilterLabel, value: string) {
     setFilters((current) => ({ ...current, [label]: value }));
@@ -505,6 +514,18 @@ export default function JobNoticeListPage() {
   } = useJobNoticeList(jobNoticeQueryParams);
   const jobNoticeListResponse = jobNoticeListApiResponse?.data;
   const filteredJobs = jobNoticeListResponse?.content.map(mapJobNoticeApiToViewModel) ?? [];
+  const listDeepLinkedJob = deepLinkJobNoticeId
+    ? filteredJobs.find((job) => job.id === deepLinkJobNoticeId) ?? null
+    : null;
+  const shouldFetchDeepLinkedJob = deepLinkJobNoticeId != null && !listDeepLinkedJob && !isJobNoticeListLoading;
+  const {
+    data: deepLinkedJobDetailApiResponse,
+    isError: isDeepLinkedJobDetailError,
+  } = useJobNoticeDetail(deepLinkJobNoticeId, { enabled: shouldFetchDeepLinkedJob });
+  const deepLinkedDetailJob =
+    deepLinkedJobDetailApiResponse?.data && deepLinkedJobDetailApiResponse.data.jobNoticeId === deepLinkJobNoticeId
+      ? mapJobNoticeApiToViewModel(deepLinkedJobDetailApiResponse.data)
+      : null;
   const resultTotalItems = jobNoticeListResponse?.totalElements ?? 0;
   const listStats = jobNoticeListResponse?.stats ?? EMPTY_LIST_STATS;
   const listStatus: JobNoticeListStatus = isJobNoticeListLoading
@@ -526,6 +547,49 @@ export default function JobNoticeListPage() {
       return next;
     });
   }, [jobNoticeListResponse?.content]);
+
+  useEffect(() => {
+    if (!jobNoticeIdParam) return;
+
+    if (deepLinkJobNoticeId == null) {
+      setBookmarkErrorMessage('요청한 공고 주소가 올바르지 않습니다.');
+      return;
+    }
+
+    if (selectedJob?.id === deepLinkJobNoticeId) return;
+
+    const nextSelectedJob = listDeepLinkedJob ?? deepLinkedDetailJob;
+    if (nextSelectedJob) {
+      setBookmarkErrorMessage('');
+      setSelectedJob(nextSelectedJob);
+      setBookmarks((current) => ({
+        ...current,
+        [nextSelectedJob.id]: current[nextSelectedJob.id] ?? nextSelectedJob.bookmarked,
+      }));
+      return;
+    }
+
+    if (isDeepLinkedJobDetailError) {
+      setBookmarkErrorMessage('요청한 채용 공고를 찾을 수 없습니다.');
+    }
+  }, [
+    deepLinkJobNoticeId,
+    deepLinkedDetailJob,
+    isDeepLinkedJobDetailError,
+    jobNoticeIdParam,
+    listDeepLinkedJob,
+    selectedJob?.id,
+  ]);
+
+  function closeSelectedJob() {
+    setSelectedJob(null);
+
+    if (!jobNoticeIdParam) return;
+
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete('jobNoticeId');
+    setSearchParams(nextSearchParams, { replace: true });
+  }
 
   function retryJobNoticeList() {
     void refetchJobNoticeList();
@@ -631,7 +695,7 @@ export default function JobNoticeListPage() {
         job={selectedJob}
         isOpen={Boolean(selectedJob)}
         bookmarked={selectedJob ? getJobBookmark(bookmarks, selectedJob) : false}
-        onClose={() => setSelectedJob(null)}
+        onClose={closeSelectedJob}
         onBookmark={(id) =>
           toggleBookmark(id, selectedJob ? getJobBookmark(bookmarks, selectedJob) : false)
         }

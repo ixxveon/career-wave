@@ -108,7 +108,7 @@ class AdminReportServiceImplTest {
             given(reportBoardRepository.findTitleById(10L)).willReturn("게시글 제목");
             given(reportBoardRepository.findContentById(10L)).willReturn("게시글 본문");
 
-            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(1L);
+            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(1L, 1L);
 
             assertThat(result.contentTitle()).isEqualTo("게시글 제목");
             assertThat(result.contentBody()).isEqualTo("게시글 본문");
@@ -122,7 +122,7 @@ class AdminReportServiceImplTest {
             given(reportQueryRepository.findReportDetail(2L)).willReturn(Optional.of(base));
             given(reportCommentRepository.findContentById(20L)).willReturn("댓글 본문");
 
-            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(2L);
+            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(2L, 1L);
 
             assertThat(result.contentTitle()).isNull();
             assertThat(result.contentBody()).isEqualTo("댓글 본문");
@@ -135,7 +135,7 @@ class AdminReportServiceImplTest {
             ReportDetailDTO.ResponseDetail base = createBaseDetail(3L, TargetType.MEMBER, 30L);
             given(reportQueryRepository.findReportDetail(3L)).willReturn(Optional.of(base));
 
-            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(3L);
+            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(3L, 1L);
 
             assertThat(result.contentTitle()).isNull();
             assertThat(result.contentBody()).isNull();
@@ -151,7 +151,7 @@ class AdminReportServiceImplTest {
             given(reportBoardRepository.findTitleById(40L)).willReturn(null);
             given(reportBoardRepository.findContentById(40L)).willReturn(null);
 
-            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(4L);
+            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(4L, 1L);
 
             assertThat(result.contentTitle()).isNull();
             assertThat(result.contentBody()).isNull();
@@ -162,7 +162,7 @@ class AdminReportServiceImplTest {
         void notFound_throws() {
             given(reportQueryRepository.findReportDetail(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> adminReportService.getReportDetail(999L))
+            assertThatThrownBy(() -> adminReportService.getReportDetail(999L, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminReportErrorCode.REPORT_NOT_FOUND);
@@ -185,7 +185,7 @@ class AdminReportServiceImplTest {
             Report report = createPendingReport(5L, TargetType.BOARD, 50L);
             given(reportRepository.findById(5L)).willReturn(Optional.of(report));
 
-            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(5L);
+            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(5L, 1L);
 
             assertThat(result.aiSuggestion()).isEqualTo("{\"severity\":\"높음\",\"category\":\"SPAM\",\"suggestion\":\"조치 필요\"}");
             verify(reportRepository).findById(5L);
@@ -198,7 +198,7 @@ class AdminReportServiceImplTest {
             given(reportQueryRepository.findReportDetail(6L)).willReturn(Optional.of(base));
             given(monoMock.block()).willThrow(new RuntimeException("Connection refused"));
 
-            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(6L);
+            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(6L, 1L);
 
             assertThat(result.aiSuggestion()).isNull();
             assertThat(result.reportId()).isEqualTo(6L);

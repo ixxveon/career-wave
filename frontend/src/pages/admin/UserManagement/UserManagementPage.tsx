@@ -13,6 +13,7 @@ import {
   type HrManagerDetail,
   type HrStatus,
 } from '../../../api/admin/memberApi';
+import { adminSession } from '../../../api/admin/adminSession';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/UserManagement.css';
 
@@ -63,6 +64,7 @@ export default function UserManagementPage() {
   const [suspendLoading, setSuspendLoading] = useState(false);
   const [suspendError, setSuspendError] = useState('');
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
+  const [confirmViewTarget, setConfirmViewTarget] = useState<string | null>(null);
 
   // ── KPI 집계 상태 ─────────────────────────────────────────
   const [memberCounts, setMemberCounts] = useState<MemberCounts | null>(null);
@@ -168,7 +170,16 @@ export default function UserManagementPage() {
     fetchHrManagers(1);
   };
 
-  const openMemberDetail = async (memberId: string) => {
+  const openMemberDetail = (memberId: string) => {
+    const role = adminSession.getRole();
+    if (role !== 'MASTER') {
+      setConfirmViewTarget(memberId);
+      return;
+    }
+    fetchMemberDetail(memberId);
+  };
+
+  const fetchMemberDetail = async (memberId: string) => {
     const reqId = ++memberDetailReqId.current;
     try {
       const res = await memberApi.getMemberDetail(memberId);
@@ -649,6 +660,32 @@ export default function UserManagementPage() {
             <div className="modalAction">
               <button onClick={() => openSuspend(selectedMember)} disabled={selectedMember?.memberStatus === MEMBER_STATUS.WITHDRAWN}>활동 정지</button>
               <button onClick={() => setSelectedMember(null)}>닫기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 개인정보 조회 확인 모달 ──────────────────────────── */}
+      {confirmViewTarget && (
+        <div className="modalOverlay" onClick={() => setConfirmViewTarget(null)}>
+          <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 420 }}>
+            <div className="modalHeader">
+              <div><h3>개인정보 열람 확인</h3></div>
+              <button onClick={() => setConfirmViewTarget(null)}>닫기</button>
+            </div>
+            <div className="modalInfoGrid">
+              <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 14, lineHeight: 1.7, color: '#3a4f6a' }}>
+                이 회원의 개인정보(이름·이메일)를 조회하시겠습니까?<br />
+                조회 시 감사로그에 기록됩니다.
+              </p>
+            </div>
+            <div className="modalAction">
+              <button onClick={() => {
+                const target = confirmViewTarget;
+                setConfirmViewTarget(null);
+                fetchMemberDetail(target);
+              }}>확인</button>
+              <button onClick={() => setConfirmViewTarget(null)}>취소</button>
             </div>
           </div>
         </div>
