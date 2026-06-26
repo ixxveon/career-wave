@@ -30,6 +30,7 @@ class Settings(BaseSettings):
 
     # 면접 파이프라인 임계값
     voice_quality_threshold: float = 50.0
+    audio_chunk_max_bytes: int = 5 * 1024 * 1024  # 5 MB
 
     # 서류 파일 허용 기본 디렉터리 (Path Traversal 방지)
     document_base_dir: str = "/app/documents"

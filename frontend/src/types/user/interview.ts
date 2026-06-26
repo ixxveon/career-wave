@@ -167,7 +167,6 @@ export interface FastApiWSMessage {
 // ── UI 전용 타입 (기존 페이지 호환) ──────────────────────────────
 import type { LucideIcon } from 'lucide-react';
 
-export type Membership = 'FREE' | 'PREMIUM';
 export type MicStatus  = 'idle' | 'testing' | 'ok' | 'error';
 export type InputMode  = 'voice' | 'text';
 export type Phase      = 'setup' | 'chat';
@@ -189,18 +188,6 @@ export interface Message {
   isPending?: boolean;
 }
 
-export interface PlanLimits {
-  FREE:    { document: number; interview: number };
-  PREMIUM: { document: number; interview: number };
-}
-
-export interface MockUser {
-  name: string;
-  membership: Membership;
-  documentUsed: number;
-  interviewUsed: number;
-}
-
 /** UI 전용 히스토리 표시 아이템 (InterviewHomePage mock 데이터용) */
 export interface HistoryDisplayItem {
   date: string;
@@ -217,7 +204,6 @@ export interface Report {
   type: SessionDisplayType;
   totalScore: number;
   grade: string;
-  membership: Membership;
 }
 
 export interface Metric {
