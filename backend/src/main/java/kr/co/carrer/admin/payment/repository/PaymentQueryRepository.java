@@ -53,7 +53,9 @@ public class PaymentQueryRepository {
             int idx = params.size() + 1;
             sql.append(" AND (CAST(p.payment_id AS TEXT) ILIKE ?").append(idx)
                .append(" OR p.order_id ILIKE ?").append(idx + 1)
-               .append(" OR m.name ILIKE ?").append(idx + 2).append(")");
+               .append(" OR m.name ILIKE ?").append(idx + 2)
+               .append(" OR m.email ILIKE ?").append(idx + 3).append(")");
+            params.add("%" + keyword + "%");
             params.add("%" + keyword + "%");
             params.add("%" + keyword + "%");
             params.add("%" + keyword + "%");
@@ -103,7 +105,9 @@ public class PaymentQueryRepository {
             int idx = params.size() + 1;
             sql.append(" AND (CAST(p.payment_id AS TEXT) ILIKE ?").append(idx)
                .append(" OR p.order_id ILIKE ?").append(idx + 1)
-               .append(" OR m.name ILIKE ?").append(idx + 2).append(")");
+               .append(" OR m.name ILIKE ?").append(idx + 2)
+               .append(" OR m.email ILIKE ?").append(idx + 3).append(")");
+            params.add("%" + keyword + "%");
             params.add("%" + keyword + "%");
             params.add("%" + keyword + "%");
             params.add("%" + keyword + "%");
