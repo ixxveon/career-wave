@@ -1,5 +1,6 @@
 package kr.co.carrer.user.interview.websocket;
 
+import kr.co.carrer.global.websocket.WebSocketJwtAuthenticator;
 import kr.co.carrer.user.interview.repository.AIInterviewFeedbackRepository;
 import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +15,10 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,16 +31,19 @@ public class InterviewStompChannelInterceptor implements ChannelInterceptor {
     private final InterviewSessionRepository sessionRepository;
     private final AIInterviewFeedbackRepository feedbackRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final WebSocketJwtAuthenticator jwtAuthenticator;
 
     @Autowired
     public InterviewStompChannelInterceptor(
             InterviewSessionRepository sessionRepository,
             AIInterviewFeedbackRepository feedbackRepository,
-            @Lazy SimpMessagingTemplate messagingTemplate
+            @Lazy SimpMessagingTemplate messagingTemplate,
+            WebSocketJwtAuthenticator jwtAuthenticator
     ) {
         this.sessionRepository = sessionRepository;
         this.feedbackRepository = feedbackRepository;
         this.messagingTemplate = messagingTemplate;
+        this.jwtAuthenticator = jwtAuthenticator;
     }
 
     @Override
@@ -55,13 +61,34 @@ public class InterviewStompChannelInterceptor implements ChannelInterceptor {
     }
 
     private Message<?> handleConnect(Message<?> message, StompHeaderAccessor accessor) {
-        UUID memberId = extractMemberId(accessor);
-        if (memberId == null) {
-            log.warn("[Interview STOMP CONNECT 거부] 세션에 memberId 없음");
+        String token = extractBearerToken(accessor);
+        if (!StringUtils.hasText(token)) {
+            log.warn("[Interview STOMP CONNECT 거부] Authorization 헤더 없음");
             throw new MessageDeliveryException("인증되지 않은 WebSocket 연결입니다.");
         }
-        log.debug("[Interview STOMP CONNECT] memberId={}", memberId);
+
+        UUID memberId = jwtAuthenticator.authenticate(token).orElse(null);
+        if (memberId == null) {
+            log.warn("[Interview STOMP CONNECT 거부] JWT 검증 실패");
+            throw new MessageDeliveryException("인증되지 않은 WebSocket 연결입니다.");
+        }
+
+        Map<String, Object> attributes = accessor.getSessionAttributes();
+        if (attributes != null) {
+            attributes.put("memberId", memberId);
+        }
+        log.debug("[Interview STOMP CONNECT 승인] memberId={}", memberId);
         return message;
+    }
+
+    private String extractBearerToken(StompHeaderAccessor accessor) {
+        List<String> authHeaders = accessor.getNativeHeader("Authorization");
+        if (authHeaders == null || authHeaders.isEmpty()) return null;
+        String header = authHeaders.get(0);
+        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
     }
 
     private Message<?> handleSubscribe(Message<?> message, StompHeaderAccessor accessor) {
