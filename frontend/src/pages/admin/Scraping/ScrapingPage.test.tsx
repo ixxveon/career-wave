@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import ScrapingPage from './ScrapingPage';
 
@@ -87,17 +87,17 @@ describe('ScrapingPage action guards', () => {
       },
     });
 
-    const { container, findByText } = renderPage();
+    renderPage();
 
-    await waitFor(() => expect(scrapingApiMock.getSources).toHaveBeenCalled());
-    await findByText('wanted');
+    const runButton = await screen.findByRole('button', { name: '실행' });
+    const retryButton = await screen.findByRole('button', { name: '재시도' });
+    const testButton = await screen.findByRole('button', { name: '테스트' });
+    const stopButton = await screen.findByRole('button', { name: '중지' });
 
-    const actionButtons = container.querySelectorAll<HTMLButtonElement>('.scrapeOpsActionGroup button');
-
-    expect(actionButtons).toHaveLength(4);
-    expect(actionButtons[0].disabled).toBe(true);
-    expect(actionButtons[1].disabled).toBe(true);
-    expect(actionButtons[2].disabled).toBe(true);
-    expect(actionButtons[0].getAttribute('title')).toBeTruthy();
+    expect(runButton).toBeDisabled();
+    expect(retryButton).toBeDisabled();
+    expect(testButton).toBeDisabled();
+    expect(stopButton).toBeDisabled();
+    expect(runButton).toHaveAttribute('title');
   });
 });
