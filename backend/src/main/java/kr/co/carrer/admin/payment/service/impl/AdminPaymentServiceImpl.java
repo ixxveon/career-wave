@@ -14,6 +14,7 @@ import kr.co.carrer.admin.payment.type.RefundStatus;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,8 +82,12 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
             throw new CustomException(AdminPaymentErrorCode.REFUND_ALREADY_PENDING);
         }
 
-        Refund refund = Refund.create(paymentId, payment.getAmount(), reason);
-        refundRepository.save(refund);
+        Refund refund = Refund.create(paymentId, payment.getAmount(), reason, adminId);
+        try {
+            refundRepository.save(refund);
+        } catch (DataIntegrityViolationException e) {
+            throw new CustomException(AdminPaymentErrorCode.REFUND_ALREADY_PENDING);
+        }
 
         return new RefundDTO.ResponseCreate(paymentId.toString(), refund.getRefundStatus());
     }

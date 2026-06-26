@@ -48,9 +48,10 @@ public class Refund {
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;
 
-    public static Refund create(UUID paymentId, int amount, String reason) {
+    public static Refund create(UUID paymentId, int amount, String reason, Long adminId) {
         Refund refund = new Refund();
         refund.paymentId = paymentId;
+        refund.adminId = adminId;
         refund.amount = amount;
         refund.reason = reason;
         refund.refundStatus = RefundStatus.PENDING;

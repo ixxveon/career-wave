@@ -805,6 +805,8 @@ CREATE TABLE refunds (
     CONSTRAINT chk_reject_reason  CHECK (refund_status != 'REJECTED'  OR reject_reason IS NOT NULL),
     CONSTRAINT chk_refunded_at    CHECK (refund_status != 'COMPLETED' OR refunded_at   IS NOT NULL)
 );
+CREATE UNIQUE INDEX uq_refunds_pending_per_payment ON refunds (payment_id) WHERE refund_status = 'PENDING';
+
 COMMENT ON TABLE  refunds               IS '환불 내역 테이블';
 COMMENT ON COLUMN refunds.refund_id     IS '환불 고유 식별자';
 COMMENT ON COLUMN refunds.payment_id    IS '결제 FK';
