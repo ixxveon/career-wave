@@ -29,7 +29,7 @@ def _validate_required_settings() -> None:
         ("WEBHOOK_SECRET", settings.webhook_secret),
         ("JWT_SECRET", settings.jwt_secret),
         ("OPENAI_API_KEY", settings.openai_api_key),
-    ] if not value]
+    ] if not value or not value.strip()]
     if missing:
         raise RuntimeError(f"필수 환경 변수가 설정되지 않았습니다: {', '.join(missing)}")
 
