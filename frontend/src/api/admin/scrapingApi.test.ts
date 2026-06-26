@@ -22,6 +22,7 @@ describe('scrapingApi pipeline mapper', () => {
     expect(toScrapingSource(backendPipelineItem)).toEqual({
       sourceName: 'wanted',
       status: PIPELINE_STATUS.RUNNING,
+      isEnabled: true,
       successRate: 0,
       averageDurationMs: 1234,
       cycleExpression: '-',
@@ -48,6 +49,7 @@ describe('scrapingApi pipeline mapper', () => {
 
     expect(source.averageDurationMs).toBe(0);
     expect(source.collectedCount).toBe(0);
+    expect(source.isEnabled).toBe(true);
     expect(source.recentErrorCode).toBeNull();
     expect(source.recentErrorMessage).toBe('network timeout');
     expect(source.live).toBe(false);
@@ -58,6 +60,7 @@ describe('scrapingApi pipeline mapper', () => {
     expect(toScrapingSourceDetail(backendPipelineItem)).toEqual({
       sourceName: 'wanted',
       status: PIPELINE_STATUS.RUNNING,
+      isEnabled: true,
       successRate: 0,
       averageDurationMs: 1234,
       cycleExpression: '-',
@@ -68,5 +71,15 @@ describe('scrapingApi pipeline mapper', () => {
       lastFinishedAt: '2026-06-21T09:10:00+09:00',
       lastRunId: null,
     });
+  });
+
+  it('preserves disabled state for the page action guards', () => {
+    const source = toScrapingSource({
+      ...backendPipelineItem,
+      isEnabled: false,
+      pipelineStatus: PIPELINE_STATUS.SUCCESS,
+    });
+
+    expect(source.isEnabled).toBe(false);
   });
 });
