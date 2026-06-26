@@ -192,10 +192,7 @@ export function mapBackendAuditLogItem(log: BackendAuditLogItem): AuditLogItem {
 }
 
 export function mapBackendAuditLogDetail(log: BackendAuditLogDetail): AuditLogDetail {
-  return {
-    ...mapBackendAuditLogItem(log),
-    requestId: '-',
-  };
+  return mapBackendAuditLogItem(log);
 }
 
 function mapAuditLogSummaryResponse(response: ApiResponse<BackendAuditLogSummary>): ApiResponse<AuditLogSummary> {
