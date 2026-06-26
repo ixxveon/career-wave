@@ -32,7 +32,8 @@ public interface AdminReportControllerDocs {
 
     @Operation(summary = "신고 상세 조회")
     ResponseEntity<ApiResponse<ReportDetailDTO.ResponseDetail>> getReportDetail(
-        @Parameter(description = "신고 ID") @PathVariable Long reportId
+        @Parameter(description = "신고 ID") @PathVariable Long reportId,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
     );
 
     @Operation(summary = "신고 블라인드 처리")

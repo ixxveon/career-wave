@@ -212,9 +212,6 @@ export function CompanyRegisterForm({
                 buttonLabel={confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
                 disabled={confirmPhoneCode.isPending || !verification.phoneId || phoneExpiresIn <= 0}
                 onClick={handleConfirmPhoneCode}
-                secondButtonLabel="재전송"
-                secondDisabled={sendPhoneCode.isPending || phoneResendIn > 0}
-                onSecondClick={handleSendPhoneCode}
               />
               <StatusPill active={Boolean(verification.phoneToken)}>휴대폰 인증이 완료되었습니다.</StatusPill>
               {fieldErrors.managerPhoneCode && <p className="cw-register-error">{fieldErrors.managerPhoneCode}</p>}
@@ -240,9 +237,6 @@ export function CompanyRegisterForm({
                 buttonLabel={confirmEmailCode.isPending ? '확인 중' : '인증 확인'}
                 disabled={confirmEmailCode.isPending || !verification.emailId || emailExpiresIn <= 0}
                 onClick={handleConfirmEmailCode}
-                secondButtonLabel="재전송"
-                secondDisabled={sendEmailCode.isPending || emailResendIn > 0}
-                onSecondClick={handleSendEmailCode}
               />
               <StatusPill active={Boolean(verification.emailToken)}>이메일 인증이 완료되었습니다.</StatusPill>
               {fieldErrors.managerEmailCode && <p className="cw-register-error">{fieldErrors.managerEmailCode}</p>}
