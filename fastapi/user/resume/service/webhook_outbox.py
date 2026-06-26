@@ -71,7 +71,7 @@ def init_outbox_db() -> None:
 
 async def send_final_webhook(document_id: str, payload: dict[str, Any]) -> None:
     """최종 상태 webhook — outbox 에 저장 후 즉시 전송 시도."""
-    outbox_id = _save_pending(document_id, payload)
+    outbox_id = await asyncio.to_thread(_save_pending, document_id, payload)
     success = await _deliver(outbox_id, document_id, payload)
     if not success:
         logger.warning(
@@ -104,7 +104,8 @@ def _claim_row(outbox_id: int) -> bool:
 
 
 async def _deliver(outbox_id: int, document_id: str, payload: dict[str, Any]) -> bool:
-    if not _claim_row(outbox_id):
+    claimed = await asyncio.to_thread(_claim_row, outbox_id)
+    if not claimed:
         logger.debug(f"[{document_id}] outbox id={outbox_id} 이미 처리 중 — 전송 건너뜀")
         return False
 
@@ -119,11 +120,11 @@ async def _deliver(outbox_id: int, document_id: str, payload: dict[str, Any]) ->
         async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
             response = await client.post(url, json=payload, headers=headers)
             response.raise_for_status()
-        _mark_delivered(outbox_id)
+        await asyncio.to_thread(_mark_delivered, outbox_id)
         logger.info(f"[{document_id}] 최종 webhook 전송 성공 (outbox id={outbox_id})")
         return True
     except Exception as e:
-        _increment_retry(outbox_id, str(e))
+        await asyncio.to_thread(_increment_retry, outbox_id, str(e))
         return False
 
 
@@ -172,10 +173,9 @@ async def run_outbox_worker() -> None:
             logger.exception("[outbox worker] _retry_pending 오류 — 다음 주기에 재시도")
 
 
-async def _retry_pending() -> None:
-    now = _now_iso()
+def _fetch_pending_rows(now: str) -> list[sqlite3.Row]:
     with _get_conn() as conn:
-        rows = conn.execute(
+        return conn.execute(
             """
             SELECT id, document_id, payload FROM webhook_outbox
             WHERE delivery_status='PENDING_DELIVERY' AND next_retry_at <= ?
@@ -184,13 +184,17 @@ async def _retry_pending() -> None:
             (now,),
         ).fetchall()
 
+
+async def _retry_pending() -> None:
+    rows = await asyncio.to_thread(_fetch_pending_rows, _now_iso())
+
     for row in rows:
         outbox_id = row["id"]
         document_id = row["document_id"]
         try:
             payload = json.loads(row["payload"])
         except json.JSONDecodeError:
-            _increment_retry(outbox_id, "payload JSON 파싱 실패")
+            await asyncio.to_thread(_increment_retry, outbox_id, "payload JSON 파싱 실패")
             continue
 
         await _deliver(outbox_id, document_id, payload)
