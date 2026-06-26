@@ -169,7 +169,6 @@ export default function AuditLogPage() {
         actorId: selectedLogDetail?.actorId ?? '-',
         target: selectedLogDetail ? `${selectedLogDetail.targetType}:${selectedLogDetail.targetId}` : '-',
         ipAddressMasked: selectedLogDetail?.ipAddressMasked ?? '-',
-        requestId: selectedLogDetail?.requestId ?? '-',
       }
     : null;
   const isAuditLogDetailEmpty =
@@ -381,10 +380,6 @@ export default function AuditLogPage() {
                   <div>
                     <span>IP</span>
                     <strong>{selectedLogDisplay.ipAddressMasked}</strong>
-                  </div>
-                  <div>
-                    <span>REQUEST</span>
-                    <strong>{selectedLogDisplay.requestId}</strong>
                   </div>
                 </div>
               </div>

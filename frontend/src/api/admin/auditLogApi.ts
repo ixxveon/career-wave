@@ -63,9 +63,7 @@ export interface AuditLogItem {
   occurredAt: string;
 }
 
-export interface AuditLogDetail extends AuditLogItem {
-  requestId: string;
-}
+export type AuditLogDetail = AuditLogItem;
 
 export interface BackendAuditLogSummary {
   totalCount: number;
