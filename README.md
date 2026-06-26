@@ -119,7 +119,8 @@ cd backend
 로컬 DB에 테스트 데이터를 넣으려면 아래 명령어를 실행하세요.
 
 ```bash
-psql -U careerwave -d careerwave -f db/seed-local.sql
+# backend/ 디렉토리에서 실행
+psql -U careerwave -d careerwave -f src/main/resources/db/seed-local.sql
 ```
 
 > 재실행해도 안전합니다 (기존 데이터 DELETE 후 재삽입).
@@ -172,15 +173,34 @@ cp backend/.env.example backend/.env
 | `DB_URL` | JDBC 접속 URL | `jdbc:postgresql://localhost:5432/careerwave` |
 | `DB_USERNAME` | DB 접속 유저명 | `careerwave` |
 | `DB_PASSWORD` | DB 접속 비밀번호 | `(루트 .env와 동일)` |
-| `JWT_SECRET` | JWT 서명 비밀키 (256bit 이상) | `(임의 생성)` |
-| `AWS_S3_BUCKET_NAME` | S3 버킷명 | `careerwave-files` |
+| `JWT_USER_SECRET` | 사용자 JWT 서명 비밀키 (256bit 이상) | `(임의 생성)` |
+| `JWT_ADMIN_SECRET` | 관리자 JWT 서명 비밀키 (256bit 이상) | `(임의 생성)` |
+| `REDIS_HOST` | Redis 호스트 | `localhost` |
+| `REDIS_PORT` | Redis 포트 | `6379` |
+| `REDIS_PASSWORD` | Redis 비밀번호 | `(docker-compose와 동일)` |
 | `AWS_ACCESS_KEY_ID` | AWS Access Key | `AKIA...` |
 | `AWS_SECRET_ACCESS_KEY` | AWS Secret Key | `(인프라 팀 요청)` |
+| `AWS_S3_BUCKET_NAME` | S3 버킷명 | `careerwave-files` |
 | `AWS_S3_REGION` | S3 버킷 리전 | `ap-northeast-2` |
+| `AWS_S3_MOCK_UPLOAD` | 로컬 S3 업로드 목업 여부 | `true` |
 | `AWS_SES_REGION` | SES 이메일 발송 리전 | `ap-southeast-2` |
 | `AWS_SES_FROM_EMAIL` | SES 발신 이메일 주소 | `no-reply@careerwave.kr` |
 | `FASTAPI_BASE_URL` | FastAPI 내부 통신 URL | `http://localhost:8000` |
 | `WEBHOOK_SECRET` | FastAPI → Spring Webhook 인증키 | `(임의 생성, FastAPI와 공유)` |
+| `WEBSOCKET_ALLOWED_ORIGINS` | WebSocket 허용 Origin | `*` |
+| `SOLAPI_API_KEY` | CoolSMS SMS 발송 API Key | `(SOLAPI 콘솔)` |
+| `SOLAPI_API_SECRET` | CoolSMS API Secret | `(SOLAPI 콘솔)` |
+| `SOLAPI_SENDER_PHONE` | SMS 발신 번호 | `(등록된 번호)` |
+| `KAKAO_CLIENT_ID` | 카카오 OAuth 앱 키 | `(카카오 개발자 콘솔)` |
+| `KAKAO_CLIENT_SECRET` | 카카오 OAuth 시크릿 | `(카카오 개발자 콘솔)` |
+| `NAVER_CLIENT_ID` | 네이버 OAuth 앱 키 | `(네이버 개발자 콘솔)` |
+| `NAVER_CLIENT_SECRET` | 네이버 OAuth 시크릿 | `(네이버 개발자 콘솔)` |
+| `GOOGLE_CLIENT_ID` | 구글 OAuth 클라이언트 ID | `(Google Cloud Console)` |
+| `GOOGLE_CLIENT_SECRET` | 구글 OAuth 시크릿 | `(Google Cloud Console)` |
+| `TOSS_SECRET_KEY` | 토스 페이먼츠 시크릿 키 | `(토스 페이먼츠 콘솔)` |
+| `TOSS_BILLING_KEY_ENCRYPTION_KEY` | 빌링키 암호화 키 | `(임의 생성)` |
+| `FRONTEND_URL` | OAuth 콜백 redirect 대상 URL | `http://localhost:5173` |
+| `COOKIE_SECURE` | 쿠키 Secure 속성 (로컬: false) | `false` |
 
 ### `fastapi/.env` (FastAPI 설정)
 
