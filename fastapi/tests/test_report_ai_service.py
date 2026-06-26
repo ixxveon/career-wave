@@ -1,3 +1,4 @@
+import asyncio
 from types import SimpleNamespace
 
 import pytest
@@ -63,15 +64,16 @@ def patched_service(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_analyze_report_records_usage_with_admin_actor(patched_service):
-    request = ReportAnalysisRequest(
-        targetType="BOARD",
-        reason="ABUSE",
-        contentTitle="제목",
-        contentBody="본문",
-        adminId=9,
-    )
+    request = ReportAnalysisRequest.model_validate({
+        "targetType": "BOARD",
+        "reason": "ABUSE",
+        "contentTitle": "제목",
+        "contentBody": "본문",
+        "adminId": 9,
+    })
 
     result = await report_ai_service.analyze_report(request)
+    await asyncio.sleep(0)
 
     assert result.severity == "높음"
     assert patched_service["admin_id"] == 9
@@ -86,4 +88,4 @@ def test_request_schema_requires_admin_id():
     request = ReportAnalysisRequest.model_validate(
         {"targetType": "BOARD", "reason": "ABUSE", "adminId": 42}
     )
-    assert request.adminId == 42
+    assert request.admin_id == 42

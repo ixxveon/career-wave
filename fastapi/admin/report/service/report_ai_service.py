@@ -27,7 +27,7 @@ def _get_openai_client() -> AsyncOpenAI:
 
 async def analyze_report(request: ReportAnalysisRequest) -> ReportAnalysisResponse:
     logger.info(
-        f"[Report AI] report-analysis — targetType={request.targetType} reason={request.reason}"
+        f"[Report AI] report-analysis — targetType={request.targetType} reason={request.reason} admin_id={request.admin_id}"
     )
 
     settings = get_settings()
@@ -61,7 +61,7 @@ async def analyze_report(request: ReportAnalysisRequest) -> ReportAnalysisRespon
     asyncio.create_task(
         record_ai_usage(
             member_id=None,
-            admin_id=request.adminId,
+            admin_id=request.admin_id,
             model_name=settings.openai_model_deep,
             feature_type=_REPORT_FEATURE_TYPE,
             usage=usage,
