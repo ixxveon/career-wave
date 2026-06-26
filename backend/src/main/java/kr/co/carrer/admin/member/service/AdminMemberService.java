@@ -18,11 +18,11 @@ public interface AdminMemberService {
     PaginationResponse<MemberDTO.ResponseList> getMembers(RoleType role, MemberStatus status,
                                                           SubscriptionStatus plan, String keyword,
                                                           LocalDate startDate, LocalDate endDate,
-                                                          int page, int size);
+                                                          int page, int size, String adminRole);
 
-    MemberDTO.ResponseDetail getMemberDetail(UUID memberId);
+    MemberDTO.ResponseDetail getMemberDetail(UUID memberId, Long adminId, String ipAddress);
 
-    MemberDTO.ResponseSanction sanctionMember(UUID memberId, MemberDTO.RequestSanction dto, Long adminId);
+    MemberDTO.ResponseSanction sanctionMember(UUID memberId, MemberDTO.RequestSanction dto, Long adminId, String ipAddress);
 
     HrManagerDTO.ResponsePage getHrManagers(HrStatus hrStatus, String keyword,
                                             LocalDate startDate, LocalDate endDate,
