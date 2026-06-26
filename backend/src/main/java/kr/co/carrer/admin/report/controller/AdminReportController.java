@@ -72,6 +72,15 @@ public class AdminReportController implements AdminReportControllerDocs {
         return ResponseEntity.ok(ApiResponse.ok(adminReportService.blindReport(reportId, adminId)));
     }
 
+    @PostMapping("/reports/{reportId}/member-analysis")
+    public ResponseEntity<ApiResponse<ReportDetailDTO.ResponseMemberAiReview>> getMemberAiReview(
+        @PathVariable Long reportId,
+        @AuthenticationPrincipal AuthPrincipal principal
+    ) {
+        Long adminId = parseAdminId(principal);
+        return ResponseEntity.ok(ApiResponse.ok(adminReportService.getMemberAiReview(reportId, adminId)));
+    }
+
     @PatchMapping("/reports/{reportId}/dismiss")
     public ResponseEntity<ApiResponse<ReportDetailDTO.ResponseProcess>> dismissReport(
         @PathVariable Long reportId,

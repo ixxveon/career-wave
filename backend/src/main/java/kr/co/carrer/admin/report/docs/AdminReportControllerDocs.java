@@ -36,6 +36,12 @@ public interface AdminReportControllerDocs {
         @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
     );
 
+    @Operation(summary = "대상 회원 AI 검토")
+    ResponseEntity<ApiResponse<ReportDetailDTO.ResponseMemberAiReview>> getMemberAiReview(
+        @Parameter(description = "신고 ID") @PathVariable Long reportId,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
+    );
+
     @Operation(summary = "신고 블라인드 처리")
     ResponseEntity<ApiResponse<ReportDetailDTO.ResponseProcess>> blindReport(
         @Parameter(description = "신고 ID") @PathVariable Long reportId,

@@ -81,6 +81,14 @@ export interface ReportActionResult {
   processedAt: string;
 }
 
+export interface MemberAiReview {
+  reportCount: number;
+  warningCount: number;
+  riskLevel: '높음' | '중간' | '낮음';
+  recommendation: 'NONE' | 'WARNING' | 'SUSPEND' | 'BLACKLIST';
+  summary: string;
+}
+
 // ── API 함수 ───────────────────────────────────────────────────
 
 export const reportApi = {
@@ -112,4 +120,8 @@ export const reportApi = {
   // 기각 처리
   dismissReport: (reportId: number) =>
     axiosInstance.patch<ApiResponse<ReportActionResult>>(`/api/v1/admin/reports/${reportId}/dismiss`),
+
+  // 대상 회원 AI 검토
+  requestMemberAnalysis: (reportId: number) =>
+    axiosInstance.post<ApiResponse<MemberAiReview>>(`/api/v1/admin/reports/${reportId}/member-analysis`),
 };
