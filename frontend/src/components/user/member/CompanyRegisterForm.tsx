@@ -1,4 +1,4 @@
-import { BadgeCheck, Building2, FileText, ShieldCheck, UserRound } from 'lucide-react';
+import { BadgeCheck, Building2, FileText, UserRound } from 'lucide-react';
 import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 import { useCompanyRegisterForm } from '../../../hooks/user/member/useCompanyRegisterForm';
 import { formatRemaining } from '../../../utils/user/member/recoveryView';
@@ -148,20 +148,6 @@ export function CompanyRegisterForm({
 
         <section className="cw-register-section">
           <div className="cw-register-section__title">
-            <ShieldCheck size={22} />
-            <div>
-              <h2>기업인증</h2>
-              <p>가입 심사 단계에서 확인할 사업자등록증명원 발급번호를 입력해주세요.</p>
-            </div>
-          </div>
-          <Field label="사업자등록증명원 발급번호" required wide>
-            <TextInput value={form.certificateNumber} onChange={(value) => update('certificateNumber', value)} placeholder="사업자등록증명원 발급번호 입력" />
-            {fieldErrors.certificateNumber && <p className="cw-register-error">{fieldErrors.certificateNumber}</p>}
-          </Field>
-        </section>
-
-        <section className="cw-register-section">
-          <div className="cw-register-section__title">
             <UserRound size={22} />
             <div>
               <h2>인사담당자 정보</h2>
@@ -194,17 +180,19 @@ export function CompanyRegisterForm({
             <Field label="담당자 전화번호" required wide>
               <AuthButtonGroup
                 input={<TextInput type="tel" value={form.managerPhone} onChange={(value) => update('managerPhone', value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" />}
-                buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
+                buttonLabel={sendPhoneCode.isPending ? '전송 중' : '인증번호 전송'}
                 disabled={sendPhoneCode.isPending || phoneResendIn > 0}
                 onClick={handleSendPhoneCode}
               />
-              <StatusPill active={Boolean(verification.phoneId) && !verification.phoneToken && phoneExpiresIn > 0}>
-                인증번호 유효 시간 {formatRemaining(phoneExpiresIn)}
-              </StatusPill>
-              {verification.phoneId && !verification.phoneToken && phoneExpiresIn <= 0 && (
-                <p className="cw-register-error">휴대폰 인증번호가 만료되었습니다. 다시 전송해주세요.</p>
-              )}
-              {fieldErrors.managerPhone && <p className="cw-register-error">{fieldErrors.managerPhone}</p>}
+              <div className="cw-register-status-area">
+                <StatusPill active={Boolean(verification.phoneId) && !verification.phoneToken && phoneExpiresIn > 0}>
+                  인증번호 유효 시간 {formatRemaining(phoneExpiresIn)}
+                </StatusPill>
+                {verification.phoneId && !verification.phoneToken && phoneExpiresIn <= 0 && (
+                  <p className="cw-register-error">휴대폰 인증번호가 만료되었습니다. 다시 전송해주세요.</p>
+                )}
+                {fieldErrors.managerPhone && <p className="cw-register-error">{fieldErrors.managerPhone}</p>}
+              </div>
             </Field>
             <Field label="휴대폰 인증번호" required wide>
               <AuthButtonGroup
@@ -219,17 +207,19 @@ export function CompanyRegisterForm({
             <Field label="담당자 이메일" required wide>
               <AuthButtonGroup
                 input={<TextInput type="email" value={form.managerEmail} onChange={(value) => update('managerEmail', value)} placeholder="담당자 이메일 주소 입력" />}
-                buttonLabel={sendEmailCode.isPending ? '전송 중' : verification.emailId ? `재전송${emailResendIn > 0 ? ` ${formatRemaining(emailResendIn)}` : ''}` : '인증번호 전송'}
+                buttonLabel={sendEmailCode.isPending ? '전송 중' : '인증번호 전송'}
                 disabled={sendEmailCode.isPending || emailResendIn > 0}
                 onClick={handleSendEmailCode}
               />
-              <StatusPill active={Boolean(verification.emailId) && !verification.emailToken && emailExpiresIn > 0}>
-                인증번호 유효 시간 {formatRemaining(emailExpiresIn)}
-              </StatusPill>
-              {verification.emailId && !verification.emailToken && emailExpiresIn <= 0 && (
-                <p className="cw-register-error">이메일 인증번호가 만료되었습니다. 다시 전송해주세요.</p>
-              )}
-              {fieldErrors.managerEmail && <p className="cw-register-error">{fieldErrors.managerEmail}</p>}
+              <div className="cw-register-status-area">
+                <StatusPill active={Boolean(verification.emailId) && !verification.emailToken && emailExpiresIn > 0}>
+                  인증번호 유효 시간 {formatRemaining(emailExpiresIn)}
+                </StatusPill>
+                {verification.emailId && !verification.emailToken && emailExpiresIn <= 0 && (
+                  <p className="cw-register-error">이메일 인증번호가 만료되었습니다. 다시 전송해주세요.</p>
+                )}
+                {fieldErrors.managerEmail && <p className="cw-register-error">{fieldErrors.managerEmail}</p>}
+              </div>
             </Field>
             <Field label="이메일 인증번호" required wide>
               <AuthButtonGroup

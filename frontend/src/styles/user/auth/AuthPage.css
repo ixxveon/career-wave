@@ -1045,6 +1045,10 @@
   font-weight: 800;
 }
 
+.cw-register-status-area {
+  min-height: 26px;
+}
+
 .cw-register-terms {
   display: grid;
   gap: 10px;

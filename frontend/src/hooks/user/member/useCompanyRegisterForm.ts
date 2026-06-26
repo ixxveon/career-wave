@@ -43,7 +43,6 @@ const initialCompanyForm = {
   jibunAddress: '',
   addressDetail: '',
   isAgency: false,
-  certificateNumber: '',
   managerId: '',
   managerPassword: '',
   managerPasswordConfirm: '',
@@ -139,7 +138,6 @@ export function useCompanyRegisterForm() {
     addressDetail: form.addressDetail,
     isAgency: form.isAgency,
     companyType: form.companyType,
-    certificateNumber: form.certificateNumber.trim(),
     managerPhoneCode: form.managerPhoneCode,
     managerEmailCode: form.managerEmailCode,
     employmentCertificate,
@@ -452,6 +450,33 @@ export function useCompanyRegisterForm() {
     }
   };
 
+  const FIELD_LABEL_MAP: Record<string, string> = {
+    companyType: '기업형태',
+    businessNumber: '사업자등록번호',
+    companyName: '회사명',
+    ceoName: '대표자명',
+    roadAddress: '회사주소',
+    loginId: '아이디',
+    managerName: '담당자명',
+    password: '비밀번호',
+    passwordConfirm: '비밀번호 확인',
+    managerPhone: '담당자 전화번호',
+    managerPhoneCode: '휴대폰 인증',
+    managerEmail: '담당자 이메일',
+    managerEmailCode: '이메일 인증',
+    employmentCertificate: '재직증명서 업로드',
+    terms: '약관 동의',
+  };
+
+  const buildSubmitErrorMessage = (errors: Record<string, string>): string => {
+    const labels = Object.keys(errors)
+      .map((key) => FIELD_LABEL_MAP[key])
+      .filter(Boolean);
+    if (labels.length === 0) return '입력값과 인증 완료 여부를 확인해주세요.';
+    const display = labels.slice(0, 4).join(', ');
+    return `미완료 항목: ${display}${labels.length > 4 ? ' 외' : ''}`;
+  };
+
   const handleSubmit = async () => {
     let nextSnapshot = companySnapshot;
     let errors = validateCompanyRegisterForm(nextSnapshot, loginIdState);
@@ -460,7 +485,7 @@ export function useCompanyRegisterForm() {
     setSuccessMessage('');
 
     if (Object.keys(errors).length > 0) {
-      setFormMessage('입력값과 인증 완료 여부를 확인해주세요.');
+      setFormMessage(buildSubmitErrorMessage(errors));
       return;
     }
 
@@ -488,7 +513,7 @@ export function useCompanyRegisterForm() {
     setFieldErrors(errors);
 
     if (Object.keys(errors).length > 0) {
-      setFormMessage('입력값과 인증 완료 여부를 확인해주세요.');
+      setFormMessage(buildSubmitErrorMessage(errors));
       return;
     }
 
