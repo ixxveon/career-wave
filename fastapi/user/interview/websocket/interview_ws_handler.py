@@ -144,20 +144,12 @@ async def interview_ws(
         return
 
     # ── 세션 소유권 검증 ────────────────────────────────────────────────────
-    # 재연결 시에는 메모리 내 ctx로 검증, 신규 연결 시에는 Spring 내부 API 호출
-    existing = _sessions.get(session_id)
-    if existing is not None:
-        if existing.member_id != member_id:
-            await websocket.accept()
-            await websocket.close(code=1008)
-            slog.warning("WS connection rejected: session ownership mismatch (reconnect)")
-            return
-    else:
-        if not await _verify_session_ownership(session_id, member_id):
-            await websocket.accept()
-            await websocket.close(code=1008)
-            slog.warning("WS connection rejected: session ownership mismatch memberId=%s", member_id)
-            return
+    # 재연결 포함 모든 경로에서 Spring 내부 API로 소유권 및 세션 진행 상태 검증
+    if not await _verify_session_ownership(session_id, member_id):
+        await websocket.accept()
+        await websocket.close(code=1008)
+        slog.warning("WS connection rejected: session ownership mismatch memberId=%s", member_id)
+        return
 
     await websocket.accept()
 
