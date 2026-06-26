@@ -166,7 +166,10 @@ async def run_outbox_worker() -> None:
     logger.info("[outbox worker] 시작")
     while True:
         await asyncio.sleep(_RETRY_INTERVAL_SECONDS)
-        await _retry_pending()
+        try:
+            await _retry_pending()
+        except Exception:
+            logger.exception("[outbox worker] _retry_pending 오류 — 다음 주기에 재시도")
 
 
 async def _retry_pending() -> None:
