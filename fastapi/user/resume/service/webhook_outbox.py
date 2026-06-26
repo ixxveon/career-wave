@@ -93,7 +93,21 @@ def _save_pending(document_id: str, payload: dict[str, Any]) -> int:
         return cur.lastrowid
 
 
+def _claim_row(outbox_id: int) -> bool:
+    """PENDING_DELIVERY → IN_PROGRESS 로 원자적 전환. 성공 시 True 반환."""
+    with _get_conn() as conn:
+        cur = conn.execute(
+            "UPDATE webhook_outbox SET delivery_status='IN_PROGRESS', updated_at=? WHERE id=? AND delivery_status='PENDING_DELIVERY'",
+            (_now_iso(), outbox_id),
+        )
+        return cur.rowcount == 1
+
+
 async def _deliver(outbox_id: int, document_id: str, payload: dict[str, Any]) -> bool:
+    if not _claim_row(outbox_id):
+        logger.debug(f"[{document_id}] outbox id={outbox_id} 이미 처리 중 — 전송 건너뜀")
+        return False
+
     settings = get_settings()
     url = f"{settings.spring_base_url}/api/v1/user/resume/{document_id}/webhook"
     headers = {
@@ -116,7 +130,7 @@ async def _deliver(outbox_id: int, document_id: str, payload: dict[str, Any]) ->
 def _mark_delivered(outbox_id: int) -> None:
     with _get_conn() as conn:
         conn.execute(
-            "UPDATE webhook_outbox SET delivery_status='DELIVERED', updated_at=? WHERE id=?",
+            "UPDATE webhook_outbox SET delivery_status='DELIVERED', updated_at=? WHERE id=? AND delivery_status='IN_PROGRESS'",
             (_now_iso(), outbox_id),
         )
 
@@ -124,7 +138,7 @@ def _mark_delivered(outbox_id: int) -> None:
 def _increment_retry(outbox_id: int, error: str) -> None:
     with _get_conn() as conn:
         row = conn.execute(
-            "SELECT retry_count FROM webhook_outbox WHERE id=?", (outbox_id,)
+            "SELECT retry_count FROM webhook_outbox WHERE id=? AND delivery_status='IN_PROGRESS'", (outbox_id,)
         ).fetchone()
         if row is None:
             return
@@ -136,7 +150,7 @@ def _increment_retry(outbox_id: int, error: str) -> None:
             """
             UPDATE webhook_outbox
             SET retry_count=?, delivery_status=?, last_error=?, next_retry_at=?, updated_at=?
-            WHERE id=?
+            WHERE id=? AND delivery_status='IN_PROGRESS'
             """,
             (new_count, new_status, error[:500], next_retry_at, _now_iso(), outbox_id),
         )
