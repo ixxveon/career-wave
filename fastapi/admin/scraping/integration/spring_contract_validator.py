@@ -33,14 +33,13 @@ class SpringContractValidator:
     }
     SCRAPING_LOG_PAGE_FIELDS = {"content", "page", "size", "totalElements", "totalPages"}
     SCRAPING_LOG_ITEM_FIELDS = {
-        "scrapingLogId",
-        "scrapingPipelineId",
+        "logId",
+        "occurredAt",
         "sourceName",
-        "targetSite",
-        "scrapingStatus",
-        "totalCount",
-        "errorMessage",
-        "executedAt",
+        "status",
+        "message",
+        "detail",
+        "runId",
     }
     PIPELINE_ACTION_FIELDS = {"sourceName", "accepted", "runId", "requestedAt"}
     PIPELINE_BATCH_ACTION_FIELDS = {
