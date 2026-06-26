@@ -356,6 +356,16 @@
   background: #2f9cff;
 }
 
+.jnd-description-text {
+  margin: 0;
+  color: #3f4b5f;
+  font-size: 14px;
+  line-height: 1.7;
+  font-weight: 700;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .jnd-action-bar {
   position: relative;
   bottom: 0;

@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   ArrowUp,
@@ -38,7 +38,8 @@ const DEFAULT_FILTER_VALUE = JOB_NOTICE_ALL_FILTER_VALUE;
 const POPULAR_SEARCH_TAGS = ['백엔드', '프론트엔드', 'Java', 'React', 'Spring Boot', 'AWS', 'Python'];
 
 const MOCK_PAGE = 1;
-const MOCK_PAGE_SIZE = 18;
+const INITIAL_PAGE_SIZE = 18;
+const PAGE_SIZE_STEP = 18;
 
 const API_FILTER_PARAM_BY_LABEL = {
   직무: 'jobCategory',
@@ -112,18 +113,20 @@ function getFilterOptionLabel(value: string) {
 
 function createJobNoticeQueryParams({
   filters,
+  pageSize,
   period,
   searchQuery,
   sort,
 }: {
   filters: Filters;
+  pageSize: number;
   period: Period;
   searchQuery: string;
   sort: SortOption;
 }): JobNoticeQueryParams {
   const params: JobNoticeQueryParams = {
     page: MOCK_PAGE,
-    size: MOCK_PAGE_SIZE,
+    size: pageSize,
     period: API_PERIOD_BY_LABEL[period],
     sort: API_SORT_BY_LABEL[sort],
   };
@@ -244,9 +247,21 @@ interface JobCardProps {
 }
 
 function JobCard({ job, bookmarked, onBookmark, onClick }: JobCardProps) {
+  function handleCardKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    event.preventDefault();
+    onClick();
+  }
+
   return (
     <article
       className={`jn-card${job.recommended ? ' jn-card--featured' : ''}`}
+      aria-label={`${job.company} ${job.title} 상세 보기`}
+      onClick={onClick}
+      onKeyDown={handleCardKeyDown}
+      role="button"
+      tabIndex={0}
     >
       <div className="jn-card__top">
         <div className="jn-card__logo">{job.company[0]}</div>
@@ -269,14 +284,7 @@ function JobCard({ job, bookmarked, onBookmark, onClick }: JobCardProps) {
       </div>
 
       <h3>
-        <button
-          type="button"
-          className="jn-card__detail-button"
-          aria-label={`${job.company} ${job.title} 상세 보기`}
-          onClick={onClick}
-        >
-          {job.title}
-        </button>
+        {job.title}
       </h3>
 
       <div className="jn-card__tags">
@@ -417,6 +425,7 @@ export default function JobNoticeListPage() {
   const [bookmarks, setBookmarks] = useState<Bookmarks>({});
   const [bookmarkErrorMessage, setBookmarkErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [pageSize, setPageSize] = useState(INITIAL_PAGE_SIZE);
   const jobNoticeIdParam = searchParams.get('jobNoticeId');
   const parsedJobNoticeId = jobNoticeIdParam ? Number(jobNoticeIdParam) : null;
   const deepLinkJobNoticeId =
@@ -473,7 +482,7 @@ export default function JobNoticeListPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  const jobNoticeQueryParams = createJobNoticeQueryParams({ filters, period, searchQuery, sort });
+  const jobNoticeQueryParams = createJobNoticeQueryParams({ filters, pageSize, period, searchQuery, sort });
   const {
     data: jobNoticeListApiResponse,
     isError: isJobNoticeListError,
@@ -496,6 +505,7 @@ export default function JobNoticeListPage() {
       : null;
   const resultTotalItems = jobNoticeListResponse?.totalElements ?? 0;
   const listStats = jobNoticeListResponse?.stats ?? EMPTY_LIST_STATS;
+  const hasMoreJobs = filteredJobs.length < resultTotalItems;
   const listStatus: JobNoticeListStatus = isJobNoticeListLoading
     ? 'loading'
     : isJobNoticeListError
@@ -503,6 +513,10 @@ export default function JobNoticeListPage() {
       : filteredJobs.length > 0
         ? 'success'
         : 'empty';
+
+  useEffect(() => {
+    setPageSize(INITIAL_PAGE_SIZE);
+  }, [filters, period, searchQuery, sort]);
 
   useEffect(() => {
     if (!jobNoticeListResponse?.content.length) return;
@@ -563,6 +577,10 @@ export default function JobNoticeListPage() {
     void refetchJobNoticeList();
   }
 
+  function loadMoreJobs() {
+    setPageSize((current) => Math.min(current + PAGE_SIZE_STEP, resultTotalItems || current + PAGE_SIZE_STEP));
+  }
+
   function resetSearchConditions() {
     setSearchQuery('');
     setFilters(createInitialFilters());
@@ -615,17 +633,24 @@ export default function JobNoticeListPage() {
           )}
 
           {listStatus === 'success' && (
-            <div className="jn-job-grid">
-              {filteredJobs.map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  bookmarked={getJobBookmark(bookmarks, job)}
-                  onBookmark={(id) => toggleBookmark(id, getJobBookmark(bookmarks, job))}
-                  onClick={() => setSelectedJob(job)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="jn-job-grid">
+                {filteredJobs.map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    bookmarked={getJobBookmark(bookmarks, job)}
+                    onBookmark={(id) => toggleBookmark(id, getJobBookmark(bookmarks, job))}
+                    onClick={() => setSelectedJob(job)}
+                  />
+                ))}
+              </div>
+              {hasMoreJobs && (
+                <button type="button" className="jn-load-more" onClick={loadMoreJobs}>
+                  더 보기 ({filteredJobs.length.toLocaleString()} / {resultTotalItems.toLocaleString()}개)
+                </button>
+              )}
+            </>
           )}
 
           {listStatus === 'loading' && (

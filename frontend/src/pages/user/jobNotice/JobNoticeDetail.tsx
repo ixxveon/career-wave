@@ -174,8 +174,20 @@ function getOriginalJobUrl(job: JobNotice) {
   return title ? `https://www.wanted.co.kr/search?query=${encodeURIComponent(title)}` : null;
 }
 
+function DeadlineSection({ deadline }: { deadline: string }) {
+  return (
+    <section className="jnd-description-section">
+      <h3>마감 정보</h3>
+      <ul>
+        <li>{deadline || '마감일 미정'}</li>
+        <li>정확한 마감 일정은 원본 공고에서 확인해 주세요.</li>
+      </ul>
+    </section>
+  );
+}
+
 function DetailTabContent({ activeTab, job }: { activeTab: DetailTab; job: JobNotice }) {
-  if (activeTab === '기업 정보') {
+  if (TABS.indexOf(activeTab) === 1) {
     return (
       <article className="jnd-job-description">
         <section className="jnd-description-section">
@@ -202,6 +214,7 @@ function DetailTabContent({ activeTab, job }: { activeTab: DetailTab; job: JobNo
     const items = job[field];
     return items?.length ? [{ title, items }] : [];
   });
+  const description = job.description?.trim();
 
   if (detailSections.length > 0) {
     return (
@@ -214,13 +227,19 @@ function DetailTabContent({ activeTab, job }: { activeTab: DetailTab; job: JobNo
             </ul>
           </section>
         ))}
+        <DeadlineSection deadline={job.deadline} />
+      </article>
+    );
+  }
+
+  if (description) {
+    return (
+      <article className="jnd-job-description">
         <section className="jnd-description-section">
-          <h3>마감 정보</h3>
-          <ul>
-            <li>{job.deadline}</li>
-            <li>정확한 마감 일정은 원본 공고에서 확인해 주세요.</li>
-          </ul>
+          <h3>공고 상세</h3>
+          <p className="jnd-description-text">{description}</p>
         </section>
+        <DeadlineSection deadline={job.deadline} />
       </article>
     );
   }
@@ -228,12 +247,12 @@ function DetailTabContent({ activeTab, job }: { activeTab: DetailTab; job: JobNo
   return (
     <article className="jnd-job-description">
       <section className="jnd-description-section">
-        <h3>마감 정보</h3>
+        <h3>공고 상세</h3>
         <ul>
-          <li>{job.deadline}</li>
           <li>상세 항목이 제공되지 않았습니다. 정확한 내용은 원본 공고에서 확인해 주세요.</li>
         </ul>
       </section>
+      <DeadlineSection deadline={job.deadline} />
     </article>
   );
 }
