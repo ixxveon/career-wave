@@ -42,6 +42,7 @@ final class ScrapingFastApiErrorMapper {
         return switch (normalized) {
             case "SCRAPING_PIPELINE_NOT_FOUND" -> ScrapingErrorCode.SCRAPING_PIPELINE_NOT_FOUND;
             case "SCRAPING_SOURCE_NOT_FOUND" -> ScrapingErrorCode.SCRAPING_SOURCE_NOT_FOUND;
+            case "SCRAPING_PIPELINE_DISABLED" -> ScrapingErrorCode.SCRAPING_PIPELINE_DISABLED;
             case "SCRAPING_ALREADY_RUNNING" -> ScrapingErrorCode.SCRAPING_ALREADY_RUNNING;
             case "SCRAPING_EXECUTION_FAILED" -> ScrapingErrorCode.SCRAPING_EXECUTION_FAILED;
             case "SCRAPING_TEST_FAILED" -> ScrapingErrorCode.SCRAPING_TEST_FAILED;

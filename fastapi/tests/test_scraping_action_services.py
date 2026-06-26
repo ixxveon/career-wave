@@ -12,14 +12,19 @@ from admin.scraping.schema import (
 from admin.scraping.service import ActionService, BatchActionAggregation, BatchActionService
 
 
-def _pipeline_record(*, source_name: str = "wanted", pipeline_status: str = "IDLE") -> ScrapingPipelineRecord:
+def _pipeline_record(
+    *,
+    source_name: str = "wanted",
+    pipeline_status: str = "IDLE",
+    is_enabled: bool = True,
+) -> ScrapingPipelineRecord:
     now = datetime.now(timezone.utc)
     return ScrapingPipelineRecord(
         scraping_pipeline_id=1,
         source_name=source_name,
         display_name=source_name.title(),
         pipeline_status=pipeline_status,
-        is_enabled=True,
+        is_enabled=is_enabled,
         last_started_at=None,
         last_success_at=None,
         last_failed_at=None,
@@ -87,6 +92,29 @@ def test_action_service_accepts_test_request_for_failed_pipeline():
 
     assert result.source_name == "saramin"
     assert result.pipeline_status == "FAILED"
+
+
+@pytest.mark.parametrize("action_type", [ScrapingActionType.RUN, ScrapingActionType.RETRY, ScrapingActionType.TEST])
+def test_action_service_rejects_request_for_disabled_pipeline(action_type: ScrapingActionType):
+    service = ActionService(
+        _DummyPipelineRepository(
+            {"wanted": _pipeline_record(source_name="wanted", pipeline_status="SUCCESS", is_enabled=False)}
+        )
+    )
+
+    with pytest.raises(ScrapingException) as exc_info:
+        service.request_action(
+            source_name="wanted",
+            action_type=action_type,
+            request=PipelineActionRequest(requestedBy="admin-service"),
+        )
+
+    assert exc_info.value.error_code == ScrapingErrorCode.SCRAPING_PIPELINE_DISABLED
+    assert exc_info.value.detail == {
+        "field": "isEnabled",
+        "sourceName": "wanted",
+        "isEnabled": False,
+    }
 
 
 def test_action_service_rejects_request_for_running_pipeline():
@@ -231,3 +259,24 @@ def test_batch_action_service_marks_running_pipeline_as_rejected_result():
     assert aggregation.results[0].source_name == "wanted"
     assert aggregation.results[0].accepted is False
     assert aggregation.results[0].pipeline_status == "RUNNING"
+
+
+def test_batch_action_service_marks_disabled_pipeline_as_rejected_result():
+    action_service = ActionService(
+        _DummyPipelineRepository(
+            {"wanted": _pipeline_record(source_name="wanted", pipeline_status="SUCCESS", is_enabled=False)}
+        )
+    )
+    service = BatchActionService(action_service)
+
+    aggregation = service.aggregate_results(
+        action_type=ScrapingActionType.RUN,
+        source_names=["wanted"],
+        requested_by="admin-service",
+    )
+
+    assert aggregation.requested_count == 1
+    assert aggregation.accepted_count == 0
+    assert aggregation.results[0].source_name == "wanted"
+    assert aggregation.results[0].accepted is False
+    assert aggregation.results[0].pipeline_status == "SUCCESS"
