@@ -11,6 +11,10 @@ export const AUDIT_LOG_TYPE = {
 
 export type AuditLogType = (typeof AUDIT_LOG_TYPE)[keyof typeof AUDIT_LOG_TYPE];
 
+export const BACKEND_AUDIT_LOG_TYPE = {
+  ADMIN_MANAGEMENT: 'ADMIN_MANAGEMENT',
+} as const;
+
 export const AUDIT_LOG_SEVERITY = {
   INFO: 'INFO',
   WARN: 'WARN',
@@ -119,20 +123,26 @@ export const AUDIT_LOG_TYPE_LABELS: Record<AuditLogType, string> = {
 
 const BACKEND_AUDIT_LOG_TYPE_LABELS: Record<string, string> = {
   ...AUDIT_LOG_TYPE_LABELS,
-  ADMIN_MANAGEMENT: '관리자 관리',
+  [BACKEND_AUDIT_LOG_TYPE.ADMIN_MANAGEMENT]: '관리자 관리',
 };
 
 function maskIpAddress(ipAddress: string | null) {
   if (!ipAddress) return '-';
 
+  if (ipAddress.includes(':')) {
+    const ipv4MappedAddress = ipAddress.slice(ipAddress.lastIndexOf(':') + 1);
+    const ipv4MappedParts = ipv4MappedAddress.split('.');
+    if (ipv4MappedParts.length === 4) {
+      return `${ipAddress.slice(0, ipAddress.lastIndexOf(':') + 1)}${ipv4MappedParts[0]}.${ipv4MappedParts[1]}.${ipv4MappedParts[2]}.*`;
+    }
+
+    const firstVisibleGroup = ipAddress.split(':').find(Boolean);
+    return firstVisibleGroup ? `${firstVisibleGroup}:*` : ':*';
+  }
+
   const ipv4Parts = ipAddress.split('.');
   if (ipv4Parts.length === 4) {
     return `${ipv4Parts[0]}.${ipv4Parts[1]}.${ipv4Parts[2]}.*`;
-  }
-
-  const ipv6Parts = ipAddress.split(':');
-  if (ipv6Parts.length > 2) {
-    return `${ipv6Parts.slice(0, 3).join(':')}:*`;
   }
 
   return ipAddress;
@@ -159,7 +169,7 @@ export function mapBackendAuditLogSummary(summary: BackendAuditLogSummary): Audi
     scrapingCount: summary.scrapingSystemCount,
     warningCount: summary.warnCount,
     errorCount: summary.errorCount,
-    lastSyncedAt: '',
+    lastSyncedAt: '-',
   };
 }
 
