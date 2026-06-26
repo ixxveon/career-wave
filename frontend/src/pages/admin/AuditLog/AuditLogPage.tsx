@@ -19,12 +19,13 @@ import type {
   AuditLogSummary,
 } from '../../../api/admin/auditLogApi';
 
-type AuditTone = 'normal' | 'warning' | 'danger' | 'info';
+type AuditTone = 'normal' | 'warning' | 'danger' | 'info' | 'success';
 
 const severityToneMap: Record<AuditLogSeverity, AuditTone> = {
   INFO: 'info',
   WARN: 'warning',
   ERROR: 'danger',
+  SUCCESS: 'success',
 };
 
 const splitTimestamp = (value: string) => {
@@ -41,6 +42,7 @@ const AUDIT_LOG_LIST_DEFAULT_SIZE = 20;
 const logTypeTabs: Array<{ key: AuditLogTypeFilter; label: string }> = [
   { key: AUDIT_LOG_TYPE_FILTER.ALL, label: '전체' },
   { key: AUDIT_LOG_TYPE_FILTER.ADMIN_ACTIVITY, label: AUDIT_LOG_TYPE_LABELS.ADMIN_ACTIVITY },
+  { key: AUDIT_LOG_TYPE_FILTER.ADMIN_MANAGEMENT, label: AUDIT_LOG_TYPE_LABELS.ADMIN_MANAGEMENT },
   { key: AUDIT_LOG_TYPE_FILTER.AI_METRICS_SYSTEM, label: AUDIT_LOG_TYPE_LABELS.AI_METRICS_SYSTEM },
   { key: AUDIT_LOG_TYPE_FILTER.SCRAPING_SYSTEM, label: AUDIT_LOG_TYPE_LABELS.SCRAPING_SYSTEM },
 ];
@@ -50,6 +52,7 @@ const severityOptions: Array<{ value: AuditLogSeverityFilter; label: string }> =
   { value: AUDIT_LOG_SEVERITY_FILTER.INFO, label: 'INFO' },
   { value: AUDIT_LOG_SEVERITY_FILTER.WARN, label: 'WARN' },
   { value: AUDIT_LOG_SEVERITY_FILTER.ERROR, label: 'ERROR' },
+  { value: AUDIT_LOG_SEVERITY_FILTER.SUCCESS, label: 'SUCCESS' },
 ];
 
 const toAuditLogPreview = (log: AuditLogItem): AuditLogPreview => ({

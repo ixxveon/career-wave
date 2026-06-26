@@ -366,6 +366,10 @@
   color: #7dd49a;
 }
 
+.auditOpsTag.success {
+  color: #7dd49a;
+}
+
 .auditOpsTag.warning {
   color: #e1c36d;
 }
