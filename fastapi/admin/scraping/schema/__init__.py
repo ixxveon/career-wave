@@ -13,6 +13,12 @@ from admin.scraping.schema.response import (
     PipelineActionResponse,
     PipelineBatchActionItemResponse,
     PipelineBatchActionResponse,
+    PipelineDetailResponse,
+    PipelineItemResponse,
+    PipelineLogItemResponse,
+    PipelineLogPageResponse,
+    PipelinePageResponse,
+    PipelineSummaryResponse,
 )
 
 __all__ = [
@@ -21,8 +27,14 @@ __all__ = [
     "PipelineBatchActionItemResponse",
     "PipelineBatchActionRequest",
     "PipelineBatchActionResponse",
+    "PipelineDetailResponse",
+    "PipelineItemResponse",
     "PipelineListQueryRequest",
+    "PipelineLogItemResponse",
     "PipelineLogQueryRequest",
+    "PipelineLogPageResponse",
+    "PipelinePageResponse",
+    "PipelineSummaryResponse",
     "PipelineSummaryQueryRequest",
     "ScrapingActionType",
     "ScrapingErrorResponse",

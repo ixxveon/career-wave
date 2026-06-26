@@ -14,8 +14,12 @@ from admin.scraping.schema import (
     PipelineActionRequest,
     PipelineActionResponse,
     PipelineBatchActionRequest,
+    PipelineDetailResponse,
     PipelineListQueryRequest,
+    PipelineLogPageResponse,
     PipelineLogQueryRequest,
+    PipelinePageResponse,
+    PipelineSummaryResponse,
     ScrapingActionType,
     ScrapingPipelineStatusType,
     ScrapingStatusType,
@@ -122,7 +126,7 @@ async def _execute_pipeline_action(
         )
 
 
-@router.get("/pipelines")
+@router.get("/pipelines", response_model=PipelinePageResponse)
 async def get_pipelines(
     keyword: str | None = None,
     status: ScrapingPipelineStatusType | None = None,
@@ -141,7 +145,7 @@ async def get_pipelines(
                 scraping_pipeline_repository=ScrapingPipelineRepository(session),
                 scraping_log_repository=ScrapingLogRepository(session),
             )
-            return service.get_pipelines(request)
+            return PipelinePageResponse.from_record(service.get_pipelines(request))
     except ScrapingException as error:
         return JSONResponse(
             status_code=error.status_code,
@@ -149,7 +153,7 @@ async def get_pipelines(
         )
 
 
-@router.get("/pipelines/summary")
+@router.get("/pipelines/summary", response_model=PipelineSummaryResponse)
 async def get_pipeline_summary():
     try:
         with get_session() as session:
@@ -157,7 +161,7 @@ async def get_pipeline_summary():
                 scraping_pipeline_repository=ScrapingPipelineRepository(session),
                 scraping_log_repository=ScrapingLogRepository(session),
             )
-            return service.get_pipeline_summary()
+            return PipelineSummaryResponse.from_record(service.get_pipeline_summary())
     except ScrapingException as error:
         return JSONResponse(
             status_code=error.status_code,
@@ -165,7 +169,7 @@ async def get_pipeline_summary():
         )
 
 
-@router.get("/pipelines/{sourceName}")
+@router.get("/pipelines/{sourceName}", response_model=PipelineDetailResponse)
 async def get_pipeline_detail(sourceName: str):
     try:
         with get_session() as session:
@@ -173,7 +177,7 @@ async def get_pipeline_detail(sourceName: str):
                 scraping_pipeline_repository=ScrapingPipelineRepository(session),
                 scraping_log_repository=ScrapingLogRepository(session),
             )
-            return service.get_pipeline_detail(sourceName)
+            return PipelineDetailResponse.from_record(service.get_pipeline_detail(sourceName))
     except ScrapingException as error:
         return JSONResponse(
             status_code=error.status_code,
@@ -181,7 +185,7 @@ async def get_pipeline_detail(sourceName: str):
         )
 
 
-@router.get("/logs")
+@router.get("/logs", response_model=PipelineLogPageResponse)
 async def get_pipeline_logs(
     sourceName: str | None = None,
     status: ScrapingStatusType | None = None,
@@ -200,11 +204,13 @@ async def get_pipeline_logs(
                 scraping_pipeline_repository=ScrapingPipelineRepository(session),
                 scraping_log_repository=ScrapingLogRepository(session),
             )
-            return service.get_pipeline_logs(
-                source_name=request.source_name,
-                status=request.status.value if request.status is not None else None,
-                page=request.page,
-                size=request.size,
+            return PipelineLogPageResponse.from_record(
+                service.get_pipeline_logs(
+                    source_name=request.source_name,
+                    status=request.status.value if request.status is not None else None,
+                    page=request.page,
+                    size=request.size,
+                )
             )
     except ScrapingException as error:
         return JSONResponse(
