@@ -8,6 +8,7 @@ class ScrapingErrorCode(str, Enum):
     SCRAPING_INVALID_REQUEST = "SCRAPING_INVALID_REQUEST"
     SCRAPING_PIPELINE_NOT_FOUND = "SCRAPING_PIPELINE_NOT_FOUND"
     SCRAPING_SOURCE_NOT_FOUND = "SCRAPING_SOURCE_NOT_FOUND"
+    SCRAPING_PIPELINE_DISABLED = "SCRAPING_PIPELINE_DISABLED"
     SCRAPING_ALREADY_RUNNING = "SCRAPING_ALREADY_RUNNING"
     SCRAPING_EXECUTION_FAILED = "SCRAPING_EXECUTION_FAILED"
     SCRAPING_TEST_FAILED = "SCRAPING_TEST_FAILED"
@@ -19,6 +20,7 @@ ERROR_STATUS_BY_CODE: dict[ScrapingErrorCode, int] = {
     ScrapingErrorCode.SCRAPING_INVALID_REQUEST: status.HTTP_400_BAD_REQUEST,
     ScrapingErrorCode.SCRAPING_PIPELINE_NOT_FOUND: status.HTTP_404_NOT_FOUND,
     ScrapingErrorCode.SCRAPING_SOURCE_NOT_FOUND: status.HTTP_404_NOT_FOUND,
+    ScrapingErrorCode.SCRAPING_PIPELINE_DISABLED: status.HTTP_409_CONFLICT,
     ScrapingErrorCode.SCRAPING_ALREADY_RUNNING: status.HTTP_409_CONFLICT,
     ScrapingErrorCode.SCRAPING_EXECUTION_FAILED: status.HTTP_500_INTERNAL_SERVER_ERROR,
     ScrapingErrorCode.SCRAPING_TEST_FAILED: status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -31,6 +33,7 @@ DEFAULT_MESSAGE_BY_CODE: dict[ScrapingErrorCode, str] = {
     ScrapingErrorCode.SCRAPING_INVALID_REQUEST: "Scraping request is invalid.",
     ScrapingErrorCode.SCRAPING_PIPELINE_NOT_FOUND: "Scraping pipeline was not found.",
     ScrapingErrorCode.SCRAPING_SOURCE_NOT_FOUND: "Scraping source was not found.",
+    ScrapingErrorCode.SCRAPING_PIPELINE_DISABLED: "Scraping pipeline is disabled.",
     ScrapingErrorCode.SCRAPING_ALREADY_RUNNING: "Scraping pipeline is already running.",
     ScrapingErrorCode.SCRAPING_EXECUTION_FAILED: "Scraping execution failed.",
     ScrapingErrorCode.SCRAPING_TEST_FAILED: "Scraping test execution failed.",

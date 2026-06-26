@@ -35,6 +35,7 @@ class ActionService:
         require_source_registry_entry(source_name)
 
         pipeline = self._require_pipeline(source_name)
+        self._ensure_enabled(pipeline)
         self._ensure_not_running(pipeline)
         return pipeline
 
@@ -50,6 +51,7 @@ class ActionService:
         require_source_registry_entry(source_name)
 
         pipeline = self._require_pipeline(source_name)
+        self._ensure_enabled(pipeline)
         self._ensure_not_running(pipeline)
         if pipeline.pipeline_status not in {"SUCCESS", "FAILED"}:
             raise ScrapingException(
@@ -75,6 +77,7 @@ class ActionService:
         require_source_registry_entry(source_name)
 
         pipeline = self._require_pipeline(source_name)
+        self._ensure_enabled(pipeline)
         self._ensure_not_running(pipeline)
         return pipeline
 
@@ -86,6 +89,18 @@ class ActionService:
                 detail={"sourceName": source_name},
             )
         return pipeline
+
+    @staticmethod
+    def _ensure_enabled(pipeline: ScrapingPipelineRecord) -> None:
+        if not pipeline.is_enabled:
+            raise ScrapingException(
+                error_code=ScrapingErrorCode.SCRAPING_PIPELINE_DISABLED,
+                detail={
+                    "field": "isEnabled",
+                    "sourceName": pipeline.source_name,
+                    "isEnabled": pipeline.is_enabled,
+                },
+            )
 
     @staticmethod
     def _ensure_not_running(pipeline: ScrapingPipelineRecord) -> None:

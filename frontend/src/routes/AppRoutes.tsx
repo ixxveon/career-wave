@@ -287,6 +287,10 @@ function AppRoutes() {
         <Route path="terms" element={lazyRoute(<TermsPage />)} />
         <Route path="privacy" element={lazyRoute(<PrivacyPage />)} />
 
+        {/* Toss 결제 콜백 — 외부 리디렉트이므로 세션 만료 시에도 렌더링 가능해야 함 (#854) */}
+        <Route path="billing/success" element={lazyRoute(<PaymentSuccessPage />)} />
+        <Route path="billing/fail" element={lazyRoute(<PaymentFailPage />)} />
+
         <Route element={<ProtectedRoute />}>
           <Route
             path="dashboard/company"
@@ -398,8 +402,6 @@ function AppRoutes() {
             {/* [non-MVP] <Route path="pricing" element={lazyRoute(<PricingPage />)} /> */}
             <Route path="payment" element={lazyRoute(<PaymentPage />)} />
             <Route path="checkout" element={lazyRoute(<CheckoutPage />)} />
-            <Route path="success" element={lazyRoute(<PaymentSuccessPage />)} />
-            <Route path="fail" element={lazyRoute(<PaymentFailPage />)} />
             <Route
               path="document-coaching/plans"
               element={lazyRoute(<PaymentPage />)}
