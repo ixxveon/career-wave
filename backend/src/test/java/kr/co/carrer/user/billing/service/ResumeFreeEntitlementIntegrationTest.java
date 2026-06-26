@@ -96,7 +96,7 @@ class ResumeFreeEntitlementIntegrationTest {
         void setUp() {
             uploadedDocument = Document.ofResume(memberId, "https://s3/resume.pdf", "resume.pdf");
             setDocumentId(uploadedDocument, documentId);
-            when(documentRepository.findById(documentId)).thenReturn(Optional.of(uploadedDocument));
+            when(documentRepository.findByIdForUpdate(documentId)).thenReturn(Optional.of(uploadedDocument));
         }
 
         @Test

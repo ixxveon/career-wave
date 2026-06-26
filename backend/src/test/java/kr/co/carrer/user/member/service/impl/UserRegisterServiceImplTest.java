@@ -394,6 +394,40 @@ class UserRegisterServiceImplTest {
         verify(termsRepository, times(1)).save(any());
     }
 
+    @Test
+    void registerCompany_certificateNumber_없으면_호환_기본값으로_저장() throws Exception {
+        MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "hr@company.com");
+        MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01099998888");
+        setField(phoneVerif, "verificationToken", "ptoken");
+        when(verificationRepository.findByVerificationToken("etoken")).thenReturn(Optional.of(emailVerif));
+        when(verificationRepository.findByVerificationToken("ptoken")).thenReturn(Optional.of(phoneVerif));
+        when(memberRepository.existsByLoginId(anyString())).thenReturn(false);
+        when(memberRepository.existsByEmail(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(companyProfileRepository.existsByBusinessNumber(anyString())).thenReturn(false);
+        when(businessVerificationPort.verify(anyString())).thenReturn(true);
+        when(employmentCertificateFilePort.resolveUrl(anyString())).thenReturn("http://s3/cert.pdf");
+        when(employmentCertificateFilePort.resolveFileName(anyString())).thenReturn("cert.pdf");
+        when(memberRepository.save(any())).thenAnswer(inv -> {
+            Member m = inv.getArgument(0);
+            setField(m, "memberId", UUID.randomUUID());
+            return m;
+        });
+        when(companyProfileRepository.save(any())).thenAnswer(inv -> {
+            CompanyProfile cp = inv.getArgument(0);
+            setField(cp, "companyProfileId", UUID.randomUUID());
+            return cp;
+        });
+        UserRegisterDto.RequestCompanyRegister request = buildCompanyRequest();
+        setField(request, "certificateNumber", null);
+
+        service.registerCompany(request);
+
+        ArgumentCaptor<CompanyProfile> captor = ArgumentCaptor.forClass(CompanyProfile.class);
+        verify(companyProfileRepository).save(captor.capture());
+        assertThat(captor.getValue().getCertificateNumber()).isEqualTo("UNUSED");
+    }
+
     // ─── 기업회원 필수 약관 미동의 ───────────────────────────────────────────────────
 
     @Test

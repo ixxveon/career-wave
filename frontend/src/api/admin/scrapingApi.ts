@@ -48,6 +48,7 @@ export type ScrapingActionType = typeof SCRAPING_ACTION_TYPE[keyof typeof SCRAPI
 export interface ScrapingSource {
   sourceName: string;
   status: PipelineStatus;
+  isEnabled: boolean;
   successRate: number;
   averageDurationMs: number;
   cycleExpression: string;
@@ -153,6 +154,7 @@ const SCRAPING_API_BASE_PATH = '/api/v1/admin/scraping';
 export const toScrapingSource = (item: BackendScrapingPipelineItem): ScrapingSource => ({
   sourceName: item.sourceName,
   status: item.pipelineStatus,
+  isEnabled: item.isEnabled,
   successRate: 0,
   averageDurationMs: item.lastDurationMs ?? 0,
   cycleExpression: '-',
@@ -171,6 +173,7 @@ export const toScrapingSourceDetail = (item: BackendScrapingPipelineItem): Scrap
   return {
     sourceName: source.sourceName,
     status: source.status,
+    isEnabled: source.isEnabled,
     successRate: source.successRate,
     averageDurationMs: source.averageDurationMs,
     cycleExpression: source.cycleExpression,

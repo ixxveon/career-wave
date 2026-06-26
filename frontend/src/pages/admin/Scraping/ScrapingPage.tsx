@@ -349,6 +349,8 @@ export default function ScrapingPage() {
                 {!isSourceListInitialLoading && !isSourceListError ? pagedPipelines.map((row) => {
                   const isRowActionPending = isSourceActionPending(row.sourceName);
                   const canRetryRow = row.status === PIPELINE_STATUS.FAILED;
+                  const isActionDisabled = isRowActionPending || !row.isEnabled;
+                  const disabledActionTitle = row.isEnabled ? undefined : '비활성화된 파이프라인은 실행할 수 없습니다.';
 
                   return (
                     <tr key={row.sourceName} style={{ height: `${pipelineRowHeight}px` }}>
@@ -386,7 +388,8 @@ export default function ScrapingPage() {
                           <button
                             type="button"
                             className="scrapeOpsActionButton subtle"
-                            disabled={isRowActionPending}
+                            disabled={isActionDisabled}
+                            title={disabledActionTitle}
                             onClick={() => handleSourceAction(row.sourceName, SCRAPING_ACTION_TYPE.RUN)}
                           >
                             실행
@@ -394,7 +397,8 @@ export default function ScrapingPage() {
                           <button
                             type="button"
                             className="scrapeOpsActionButton primary"
-                            disabled={isRowActionPending || !canRetryRow}
+                            disabled={isActionDisabled || !canRetryRow}
+                            title={disabledActionTitle}
                             onClick={() => handleSourceAction(row.sourceName, SCRAPING_ACTION_TYPE.RETRY)}
                           >
                             재시도
@@ -402,7 +406,8 @@ export default function ScrapingPage() {
                           <button
                             type="button"
                             className="scrapeOpsActionButton subtle"
-                            disabled={isRowActionPending}
+                            disabled={isActionDisabled}
+                            title={disabledActionTitle}
                             onClick={() => handleSourceAction(row.sourceName, SCRAPING_ACTION_TYPE.TEST)}
                           >
                             테스트

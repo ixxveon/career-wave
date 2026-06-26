@@ -164,8 +164,7 @@ public class UserRegisterDto {
         @NotBlank
         private String ceoName;
 
-        @Schema(description = "재직증명서 번호", example = "202606150001")
-        @NotBlank
+        @Schema(description = "재직증명서 번호 (미사용 — 하위 호환용 선택 필드)", example = "202606150001")
         private String certificateNumber;
 
         @Schema(description = "우편번호 (주소 검색 결과)", example = "06134")

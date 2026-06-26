@@ -8,6 +8,7 @@ import kr.co.carrer.admin.admin.dto.AdminManagementDTO;
 import kr.co.carrer.admin.admin.service.AdminManagementService;
 import kr.co.carrer.admin.admin.type.AdminRole;
 import kr.co.carrer.admin.admin.type.AdminStatus;
+import kr.co.carrer.admin.audit.util.AdminAuditClientIpExtractor;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
@@ -106,7 +107,7 @@ public class AdminManagementController implements AdminManagementDocs {
                 request.adminRole()
             ),
             extractAdminId(principal),
-            extractClientIp(httpServletRequest)
+            AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
         AdminManagementDTO.ResponseAdmin response = new AdminManagementDTO.ResponseAdmin(
@@ -136,7 +137,7 @@ public class AdminManagementController implements AdminManagementDocs {
             adminId,
             new AdminManagementService.UpdateAdminRoleCommand(request.adminRole()),
             extractAdminId(principal),
-            extractClientIp(httpServletRequest)
+            AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
         AdminManagementDTO.ResponseAdmin response = new AdminManagementDTO.ResponseAdmin(
@@ -166,7 +167,7 @@ public class AdminManagementController implements AdminManagementDocs {
             adminId,
             new AdminManagementService.UpdateAdminStatusCommand(request.status()),
             extractAdminId(principal),
-            extractClientIp(httpServletRequest)
+            AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
         AdminManagementDTO.ResponseAdmin response = new AdminManagementDTO.ResponseAdmin(
@@ -194,7 +195,7 @@ public class AdminManagementController implements AdminManagementDocs {
         adminManagementService.deleteAdmin(
             adminId,
             extractAdminId(principal),
-            extractClientIp(httpServletRequest)
+            AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
         return ResponseEntity.ok(ApiResponse.ok("관리자 계정 삭제에 성공했습니다."));
@@ -246,7 +247,7 @@ public class AdminManagementController implements AdminManagementDocs {
                 request.description()
             ),
             extractAdminId(principal),
-            extractClientIp(httpServletRequest)
+            AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
         AdminAclDTO.ResponseItem response = new AdminAclDTO.ResponseItem(
@@ -274,7 +275,7 @@ public class AdminManagementController implements AdminManagementDocs {
             aclId,
             new AdminManagementService.UpdateIpAclEnabledCommand(request.isEnabled()),
             extractAdminId(principal),
-            extractClientIp(httpServletRequest)
+            AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
         AdminAclDTO.ResponseItem response = new AdminAclDTO.ResponseItem(
@@ -300,7 +301,7 @@ public class AdminManagementController implements AdminManagementDocs {
         adminManagementService.deleteIpAcl(
             aclId,
             extractAdminId(principal),
-            extractClientIp(httpServletRequest)
+            AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
         return ResponseEntity.ok(ApiResponse.ok("IP ACL 삭제에 성공했습니다."));
@@ -315,10 +316,6 @@ public class AdminManagementController implements AdminManagementDocs {
         } catch (NumberFormatException exception) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
-    }
-
-    private String extractClientIp(HttpServletRequest request) {
-        return request.getRemoteAddr();
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {

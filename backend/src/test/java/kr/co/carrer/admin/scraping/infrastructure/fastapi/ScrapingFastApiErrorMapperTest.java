@@ -28,6 +28,17 @@ class ScrapingFastApiErrorMapperTest {
     }
 
     @Test
+    @DisplayName("FastAPI SCRAPING_PIPELINE_DISABLED 오류를 Spring 도메인 ErrorCode로 변환한다")
+    void mapsScrapingPipelineDisabled() {
+        CustomException exception = ScrapingFastApiErrorMapper.toCustomException(
+                responseException("SCRAPING_PIPELINE_DISABLED"),
+                objectMapper
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(ScrapingErrorCode.SCRAPING_PIPELINE_DISABLED);
+    }
+
+    @Test
     @DisplayName("FastAPI FASTAPI_INTERNAL_ERROR 오류를 SCRAPING_EXECUTION_FAILED로 변환한다")
     void mapsFastApiInternalErrorToExecutionFailed() {
         CustomException exception = ScrapingFastApiErrorMapper.toCustomException(
@@ -61,7 +72,7 @@ class ScrapingFastApiErrorMapperTest {
     }
 
     @Test
-    @DisplayName("오류 코드 값의 공백과 대소문자를 정규화해 변환한다")
+    @DisplayName("오류 코드 값의 공백과 대소문자를 정리해 변환한다")
     void normalizesErrorCodeBeforeMapping() {
         CustomException exception = ScrapingFastApiErrorMapper.toCustomException(
                 responseException("  scraping_already_running  "),

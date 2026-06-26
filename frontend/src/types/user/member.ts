@@ -196,7 +196,6 @@ export interface CompanyRegisterRequest {
   companyName: string;
   businessNumber: string;
   ceoName: string;
-  certificateNumber: string;
   postalCode: string;
   roadAddress: string;
   jibunAddress?: string;

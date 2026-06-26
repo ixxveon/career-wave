@@ -309,8 +309,9 @@ CREATE TABLE document_feedbacks (
     feedback_text        TEXT        NOT NULL,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_document_feedbacks PRIMARY KEY (document_feedback_id),
-    CONSTRAINT fk_feedback_document  FOREIGN KEY (document_id) REFERENCES documents (document_id)
+    CONSTRAINT pk_document_feedbacks          PRIMARY KEY (document_feedback_id),
+    CONSTRAINT uq_document_feedbacks_document_id UNIQUE      (document_id),
+    CONSTRAINT fk_feedback_document           FOREIGN KEY (document_id) REFERENCES documents (document_id)
 );
 COMMENT ON TABLE  document_feedbacks                      IS 'AI 서류 피드백 결과 테이블';
 COMMENT ON COLUMN document_feedbacks.document_feedback_id IS '피드백 고유 식별자';

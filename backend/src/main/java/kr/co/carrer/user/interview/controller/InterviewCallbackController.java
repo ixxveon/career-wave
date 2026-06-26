@@ -1,5 +1,6 @@
 package kr.co.carrer.user.interview.controller;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
@@ -10,6 +11,7 @@ import kr.co.carrer.user.interview.service.InterviewSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
@@ -27,8 +29,15 @@ public class InterviewCallbackController {
     private final InterviewCallbackService interviewCallbackService;
     private final InterviewSessionService interviewSessionService;
 
-    @Value("${interview.internal-secret}")
+    @Value("${webhook.secret}")
     private String internalSecret;
+
+    @PostConstruct
+    void validateSecret() {
+        if (!StringUtils.hasText(internalSecret)) {
+            throw new IllegalStateException("필수 환경 변수 WEBHOOK_SECRET이 설정되지 않았습니다.");
+        }
+    }
 
     @PostMapping("/{sessionId}/question")
     public ResponseEntity<ApiResponse<Void>> receiveQuestionCallback(
