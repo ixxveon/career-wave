@@ -41,21 +41,23 @@ async def _call_openai(system_prompt: str, user_prompt: str, admin_id: int) -> s
     )
 
     usage = completion.usage
-    logger.info(
-        f"[CS AI] Token usage — "
-        f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
-    )
-
-    # 사용량 적재 — 백그라운드로 실행하여 응답 지연을 방지한다(record_ai_usage 내부에서 예외를 흡수).
-    asyncio.create_task(
-        record_ai_usage(
-            member_id=None,
-            admin_id=admin_id,
-            model_name=settings.openai_model_light,
-            feature_type=_CS_FEATURE_TYPE,
-            usage=usage,
+    if usage is not None:
+        logger.info(
+            f"[CS AI] Token usage — "
+            f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
         )
-    )
+        # 사용량 적재 — 백그라운드로 실행하여 응답 지연을 방지한다(record_ai_usage 내부에서 예외를 흡수).
+        asyncio.create_task(
+            record_ai_usage(
+                member_id=None,
+                admin_id=admin_id,
+                model_name=settings.openai_model_light,
+                feature_type=_CS_FEATURE_TYPE,
+                usage=usage,
+            )
+        )
+    else:
+        logger.warning("[CS AI] completion.usage is None — 사용량 로깅을 건너뜁니다.")
 
     return completion.choices[0].message.content or ""
 
