@@ -16,16 +16,27 @@ log = logging.getLogger(__name__)
 scheduler = AsyncIOScheduler()
 
 
+def _outbox_worker_done_callback(task: asyncio.Task) -> None:
+    if not task.cancelled() and task.exception() is not None:
+        log.error("outbox worker crashed: %s", task.exception(), exc_info=task.exception())
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     init_outbox_db()
-    asyncio.create_task(run_outbox_worker())
+    outbox_task = asyncio.create_task(run_outbox_worker())
+    outbox_task.add_done_callback(_outbox_worker_done_callback)
     scheduler.start()
     yield
     if get_ai_metrics_openai_client.cache_info().currsize > 0:
         await get_ai_metrics_openai_client().close()
         get_ai_metrics_openai_client.cache_clear()
     scheduler.shutdown()
+    outbox_task.cancel()
+    try:
+        await outbox_task
+    except asyncio.CancelledError:
+        pass
     # Graceful shutdown: 진행 중인 AI 파이프라인 태스크 최대 15초 대기
     current = asyncio.current_task()
     pending = [t for t in asyncio.all_tasks() if not t.done() and t is not current]
