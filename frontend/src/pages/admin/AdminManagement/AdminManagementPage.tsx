@@ -5,6 +5,7 @@ import { adminSession } from '../../../api/admin/adminAuthApi';
 import {
   ADMIN_ROLE,
   ACL_RISK_LEVEL,
+  ADMIN_AUDIT_LOG_TYPE,
   ADMIN_MANAGEMENT_ERROR_CODE,
   createAdminAccount as createAdminAccountRequest,
   createAdminAclRule,
@@ -264,7 +265,7 @@ export default function AdminManagementPage() {
   });
   const visibleAclRules = adminAclRules?.items.map(toAclRuleRow) ?? aclRules;
   const auditLogQueryParams = {
-    logType: 'ADMIN_MANAGEMENT' as const,
+    logType: ADMIN_AUDIT_LOG_TYPE.ADMIN_MANAGEMENT,
     page: 1,
     size: MAX_SECURITY_LOGS,
   };
