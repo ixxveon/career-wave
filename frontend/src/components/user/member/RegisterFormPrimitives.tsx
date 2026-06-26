@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { CheckCircle2, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
 
 type FieldProps = {
@@ -92,15 +92,50 @@ export function PasswordInput({ value, onChange, placeholder }: Omit<TextInputPr
 }
 
 export function SelectInput({ value, onChange, placeholder, options }: SelectInputProps) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
   return (
-    <select value={value} onChange={(event) => onChange(event.target.value)}>
-      <option value="">{placeholder}</option>
-      {options.map((option) => (
-        <option value={option} key={option}>
-          {option}
-        </option>
-      ))}
-    </select>
+    <div className="cw-register-select" ref={containerRef}>
+      <button
+        type="button"
+        className={`cw-register-select__trigger ${open ? 'is-open' : ''}`}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <span className={value ? '' : 'cw-register-select__placeholder'}>
+          {value || placeholder}
+        </span>
+        <ChevronDown size={16} className="cw-register-select__chevron" />
+      </button>
+      {open && (
+        <ul className="cw-register-select__dropdown" role="listbox">
+          {options.map((option) => (
+            <li
+              key={option}
+              role="option"
+              aria-selected={value === option}
+              className={`cw-register-select__option ${value === option ? 'is-selected' : ''}`}
+              onMouseDown={() => {
+                onChange(option);
+                setOpen(false);
+              }}
+            >
+              {option}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
