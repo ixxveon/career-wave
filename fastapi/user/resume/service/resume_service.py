@@ -232,13 +232,19 @@ async def _send_completed(document_id: str, result: dict) -> None:
 
 
 async def _send_final_webhook_safe(document_id: str, payload: dict) -> None:
-    """최종 상태(COMPLETED / FAILED) — outbox 경유로 유실 방지."""
+    """최종 상태(COMPLETED / FAILED) — outbox 경유로 유실 방지.
+
+    outbox 저장 자체가 실패하면 직접 전송으로 fallback하여 document가
+    ANALYZING 상태에 영구 고착되는 상황을 방지한다.
+    """
     try:
         await send_final_webhook(document_id, payload)
     except Exception:
         logger.error(
-            f"[{document_id}] 최종 webhook outbox 저장 실패 — status={payload.get('status')}", exc_info=True
+            f"[{document_id}] 최종 webhook outbox 저장 실패 — status={payload.get('status')}, 직접 전송 fallback 시도",
+            exc_info=True,
         )
+        await _send_webhook_safe(document_id, payload)
 
 
 async def _send_webhook_safe(document_id: str, payload: dict) -> None:
