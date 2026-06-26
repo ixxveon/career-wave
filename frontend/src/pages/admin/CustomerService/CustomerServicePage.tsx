@@ -424,7 +424,7 @@ export default function CustomerServicePage() {
       setInquiryReply(res.data.data.reply ?? '');
     } catch {
       // 상세 조회 실패 시 목록 데이터로 fallback
-      setSelectedInquiry({ ...item, content: '', reply: null, repliedAt: null, completedAt: null });
+      setSelectedInquiry({ ...item, memberEmail: '', content: '', reply: null, repliedAt: null, completedAt: null });
     }
   };
 
@@ -881,7 +881,7 @@ export default function CustomerServicePage() {
               <div>
                 <h3>{selectedInquiry.title}</h3>
                 <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>
-                  #{selectedInquiry.inquiryId} · {selectedInquiry.memberName} · {new Date(selectedInquiry.createdAt).toLocaleDateString('ko-KR')}
+                  #{selectedInquiry.inquiryId} · {selectedInquiry.memberName}{selectedInquiry.memberEmail ? ` (${selectedInquiry.memberEmail})` : ''} · {new Date(selectedInquiry.createdAt).toLocaleDateString('ko-KR')}
                 </p>
               </div>
               <button onClick={() => setSelectedInquiry(null)}>닫기</button>
