@@ -87,9 +87,10 @@ describe('ScrapingPage action guards', () => {
       },
     });
 
-    const { container } = renderPage();
+    const { container, findByText } = renderPage();
 
     await waitFor(() => expect(scrapingApiMock.getSources).toHaveBeenCalled());
+    await findByText('wanted');
 
     const actionButtons = container.querySelectorAll<HTMLButtonElement>('.scrapeOpsActionGroup button');
 
