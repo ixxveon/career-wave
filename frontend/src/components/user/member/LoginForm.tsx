@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import { AlertCircle, LockKeyhole, UserRound } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, LockKeyhole, UserRound } from 'lucide-react';
 import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
-import type { FormEventHandler } from 'react';
+import { useEffect, useRef, useState, type FormEventHandler } from 'react';
 import type { LoginRouteDecision } from '../../../types/user/member';
 import type { LoginFormErrors } from '../../../utils/user/member/loginSchema';
 
@@ -38,6 +38,19 @@ export function LoginForm({
   onSubmit,
   onCredentialChange,
 }: LoginFormProps) {
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const input = passwordInputRef.current;
+    if (!input) return;
+    if (input.value) {
+      applyInputFill(input);
+    } else {
+      clearInputFill(input);
+    }
+  }, [showPassword]);
+
   return (
     <form className="cw-auth-form" onSubmit={onSubmit} noValidate>
       <label>
@@ -64,19 +77,28 @@ export function LoginForm({
       </label>
       <label>
         비밀번호
-        <span>
+        <span className="cw-auth-span--with-toggle">
           <LockKeyhole size={18} />
           <input
+            ref={passwordInputRef}
             aria-invalid={Boolean(fieldErrors.password)}
             aria-describedby={fieldErrors.password ? 'login-password-error' : undefined}
             autoComplete="current-password"
             name="password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             placeholder="비밀번호를 입력하세요"
             value={credentials.password}
             onChange={(event) => { onCredentialChange('password', event.target.value); applyInputFill(event.target); }}
             onBlur={(event) => clearInputFill(event.target)}
           />
+          <button
+            className="cw-auth-password-toggle"
+            type="button"
+            aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
+            onClick={() => setShowPassword((prev) => !prev)}
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
         </span>
         {fieldErrors.password && (
           <p className="cw-register-error" id="login-password-error">
