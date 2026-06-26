@@ -2,14 +2,17 @@ package kr.co.carrer.global.websocket;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
+import kr.co.carrer.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,7 +21,7 @@ import java.util.UUID;
  * - 서명 + audience + accountType 검증: JwtTokenProvider.parse() 재사용
  * - jti 존재 여부 확인
  * - blacklist(로그아웃) 확인: TokenBlacklistStore 재사용
- * AccountStatusPort(계정 상태) 검증은 도메인 의존성이 있으므로 각 핸드셰이크 인터셉터에서 직접 처리한다.
+ * - 계정 상태(정지·탈퇴 등) 확인: AccountStatusPort 구현체 위임
  */
 @Slf4j
 @Component
@@ -27,6 +30,7 @@ public class WebSocketJwtAuthenticator {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistStore tokenBlacklistStore;
+    private final List<AccountStatusPort> accountStatusPorts;
 
     /**
      * USER 토큰을 검증하고 memberId를 반환한다.
@@ -54,8 +58,17 @@ public class WebSocketJwtAuthenticator {
             }
 
             String subject = claims.getSubject();
+
+            accountStatusPorts.stream()
+                    .filter(port -> port.supports(AccountType.USER))
+                    .findFirst()
+                    .ifPresent(port -> port.validateActive(subject));
+
             return Optional.of(UUID.fromString(subject));
 
+        } catch (CustomException e) {
+            log.debug("[WebSocket JWT 거부] 계정 상태 검증 실패: {}", e.getMessage());
+            return Optional.empty();
         } catch (JwtException | IllegalArgumentException e) {
             log.debug("[WebSocket JWT 검증 실패] {}", e.getMessage());
             return Optional.empty();
