@@ -310,7 +310,7 @@ CREATE TABLE document_feedbacks (
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_document_feedbacks          PRIMARY KEY (document_feedback_id),
-    CONSTRAINT uq_document_feedbacks_document UNIQUE      (document_id),
+    CONSTRAINT uq_document_feedbacks_document_id UNIQUE      (document_id),
     CONSTRAINT fk_feedback_document           FOREIGN KEY (document_id) REFERENCES documents (document_id)
 );
 COMMENT ON TABLE  document_feedbacks                      IS 'AI 서류 피드백 결과 테이블';

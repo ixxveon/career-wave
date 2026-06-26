@@ -9,6 +9,6 @@
 BEGIN;
 
 ALTER TABLE document_feedbacks
-    ADD CONSTRAINT uq_document_feedbacks_document UNIQUE (document_id);
+    ADD CONSTRAINT uq_document_feedbacks_document_id UNIQUE (document_id);
 
 COMMIT;
