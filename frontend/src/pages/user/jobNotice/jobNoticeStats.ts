@@ -12,7 +12,7 @@ export interface BannerStat {
 }
 
 function formatStatNumber(value: number | null | undefined): string {
-  return (value ?? 0).toLocaleString();
+  return (value ?? 0).toLocaleString('en-US');
 }
 
 export function createBannerStats(stats: JobNoticeListStats): BannerStat[] {
