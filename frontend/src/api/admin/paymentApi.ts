@@ -151,6 +151,11 @@ export interface RefundResult {
   refundStatus: RefundStatus;
 }
 
+export interface RefundCreateResult {
+  paymentId: string;
+  refundStatus: RefundStatus;
+}
+
 // ── API 함수 ───────────────────────────────────────────────────
 
 export const paymentApi = {
@@ -168,7 +173,7 @@ export const paymentApi = {
 
   // 환불 요청 접수 (PENDING 생성)
   requestRefund: (paymentId: string, reason: string) =>
-    axiosInstance.post<ApiResponse<RefundResult>>(
+    axiosInstance.post<ApiResponse<RefundCreateResult>>(
       `/api/v1/admin/payments/${paymentId}/refund-request`,
       { reason }
     ),

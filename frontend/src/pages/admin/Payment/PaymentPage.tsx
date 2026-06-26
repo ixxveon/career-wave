@@ -27,6 +27,7 @@ import {
   type SubscriptionListParams,
   type SubscriptionCounts,
 } from '../../../api/admin/paymentApi';
+import { adminSession } from '../../../api/admin/adminSession';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Payment.css';
 
@@ -114,6 +115,7 @@ interface Toast { id: number; msg: string; type: 'success' | 'error'; }
 // ── Main Component ────────────────────────────────────────────
 
 export default function PaymentPage() {
+  const isMaster = adminSession.getRole() === 'MASTER';
   const [searchParams] = useSearchParams();
   const tabKey = searchParams.get('tab') ?? '';
   const initialTab: PayTab = TAB_KEY_MAP[tabKey] ?? '결제 내역';
@@ -203,7 +205,7 @@ export default function PaymentPage() {
       setPayTotalItems(totalItems);
       setPayTotalPages(totalPages);
       setPayPage(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== payReqId.current) return;
       setPayError(resolveErrorMsg(err, '결제 목록을 불러오지 못했습니다.'));
     } finally {
@@ -234,7 +236,7 @@ export default function PaymentPage() {
       setSubTotalItems(totalItems);
       setSubTotalPages(totalPages);
       setSubPage(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== subReqId.current) return;
       setSubError(resolveErrorMsg(err, '구독 목록을 불러오지 못했습니다.'));
     } finally {
@@ -288,7 +290,7 @@ export default function PaymentPage() {
       setRequestReason('');
       fetchSummary();
       showToast('환불 요청이 접수되었습니다.');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setRefundError(resolveErrorMsg(err, '환불 요청 접수에 실패했습니다.', 'refund'));
     } finally {
       setRefundLoading(false);
@@ -310,7 +312,7 @@ export default function PaymentPage() {
       setSelected(null);
       fetchSummary();
       showToast('환불 처리가 완료되었습니다.');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setRefundError(resolveErrorMsg(err, '환불 처리에 실패했습니다.', 'refund'));
     } finally {
       setRefundLoading(false);
@@ -332,7 +334,7 @@ export default function PaymentPage() {
       setSelected(null);
       fetchSummary();
       showToast('환불 불가 처리가 완료되었습니다.');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setRefundError(resolveErrorMsg(err, '환불 불가 처리에 실패했습니다.', 'refund'));
     } finally {
       setRefundLoading(false);
@@ -702,14 +704,14 @@ export default function PaymentPage() {
                   </div>
                   <div className="refundCheckRow">
                     <span>이력서 분석 유료 이용</span>
-                    <strong className={selected.aiUsage.documentCount === 0 ? 'refundOk' : 'refundFail'}>
-                      {selected.aiUsage.documentCount === 0 ? '없음' : `${selected.aiUsage.documentCount}회`}
+                    <strong className={(selected.aiUsage?.documentCount ?? 0) === 0 ? 'refundOk' : 'refundFail'}>
+                      {(selected.aiUsage?.documentCount ?? 0) === 0 ? '없음' : `${selected.aiUsage!.documentCount}회`}
                     </strong>
                   </div>
                   <div className="refundCheckRow">
                     <span>AI 면접 유료 이용</span>
-                    <strong className={selected.aiUsage.interviewCount === 0 ? 'refundOk' : 'refundFail'}>
-                      {selected.aiUsage.interviewCount === 0 ? '없음' : `${selected.aiUsage.interviewCount}회`}
+                    <strong className={(selected.aiUsage?.interviewCount ?? 0) === 0 ? 'refundOk' : 'refundFail'}>
+                      {(selected.aiUsage?.interviewCount ?? 0) === 0 ? '없음' : `${selected.aiUsage!.interviewCount}회`}
                     </strong>
                   </div>
                   <div className="refundEligibleRow">
@@ -721,8 +723,8 @@ export default function PaymentPage() {
                   {!refundCheck.eligible && (
                     <p className="refundIneligibleNote">{refundCheck.reason}</p>
                   )}
-                  {/* 환불 불가 처리 시 사유 입력 */}
-                  {!refundCheck.eligible && (
+                  {/* 환불 불가 처리 시 사유 입력 (MASTER 전용) */}
+                  {isMaster && !refundCheck.eligible && (
                     <textarea
                       placeholder="환불 불가 사유를 입력하세요"
                       value={rejectReason}
@@ -758,14 +760,14 @@ export default function PaymentPage() {
                   </button>
                 </>
               )}
-              {/* 환불 확정 버튼 */}
-              {selected.refundStatus === 'PENDING' && refundCheck?.eligible && (
+              {/* 환불 확정 버튼 (MASTER 전용) */}
+              {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible && (
                 <button onClick={confirmRefund} disabled={refundLoading}>
                   {refundLoading ? '처리 중...' : '환불 처리 확정'}
                 </button>
               )}
-              {/* 환불 불가 처리 버튼 */}
-              {selected.refundStatus === 'PENDING' && refundCheck && !refundCheck.eligible && (
+              {/* 환불 불가 처리 버튼 (MASTER 전용) */}
+              {isMaster && selected.refundStatus === 'PENDING' && refundCheck && !refundCheck.eligible && (
                 <button
                   className="tableBtn--danger"
                   onClick={rejectRefund}

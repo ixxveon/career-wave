@@ -17,7 +17,7 @@ public interface AdminPaymentService {
 
     RefundDTO.ResponseCreate createRefundRequest(UUID paymentId, String reason, Long adminId);
 
-    RefundDTO.ResponseApprove approveRefund(UUID paymentId, Long adminId);
+    RefundDTO.ResponseApprove approveRefund(UUID paymentId, Long adminId, String adminRole);
 
-    RefundDTO.ResponseReject rejectRefund(UUID paymentId, String rejectReason, Long adminId);
+    RefundDTO.ResponseReject rejectRefund(UUID paymentId, String rejectReason, Long adminId, String adminRole);
 }

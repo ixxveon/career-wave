@@ -89,7 +89,8 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
 
     @Override
     @Transactional
-    public RefundDTO.ResponseApprove approveRefund(UUID paymentId, Long adminId) {
+    public RefundDTO.ResponseApprove approveRefund(UUID paymentId, Long adminId, String adminRole) {
+        validateMasterRole(adminRole);
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_FOUND));
 
@@ -115,7 +116,8 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
 
     @Override
     @Transactional
-    public RefundDTO.ResponseReject rejectRefund(UUID paymentId, String rejectReason, Long adminId) {
+    public RefundDTO.ResponseReject rejectRefund(UUID paymentId, String rejectReason, Long adminId, String adminRole) {
+        validateMasterRole(adminRole);
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_FOUND));
 
@@ -130,5 +132,11 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
             payment.getPaymentStatus(),
             refund.getRefundStatus()
         );
+    }
+
+    private void validateMasterRole(String adminRole) {
+        if (!"MASTER".equals(adminRole)) {
+            throw new CustomException(AdminPaymentErrorCode.REFUND_APPROVAL_FORBIDDEN);
+        }
     }
 }

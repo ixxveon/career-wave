@@ -58,7 +58,7 @@ public class AdminPaymentController implements AdminPaymentControllerDocs {
         @Valid @RequestBody RefundDTO.RequestCreate request,
         @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        Long adminId = Long.parseLong(principal.getId());
+        Long adminId = resolveAdminId(principal);
         return ResponseEntity.ok(ApiResponse.ok(
             adminPaymentService.createRefundRequest(paymentId, request.reason(), adminId)
         ));
@@ -69,8 +69,8 @@ public class AdminPaymentController implements AdminPaymentControllerDocs {
         @PathVariable UUID paymentId,
         @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        Long adminId = Long.parseLong(principal.getId());
-        return ResponseEntity.ok(ApiResponse.ok(adminPaymentService.approveRefund(paymentId, adminId)));
+        Long adminId = resolveAdminId(principal);
+        return ResponseEntity.ok(ApiResponse.ok(adminPaymentService.approveRefund(paymentId, adminId, principal.getAdminRole())));
     }
 
     @PostMapping("/{paymentId}/refund-reject")
@@ -79,10 +79,21 @@ public class AdminPaymentController implements AdminPaymentControllerDocs {
         @Valid @RequestBody RefundDTO.RequestReject request,
         @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        Long adminId = Long.parseLong(principal.getId());
+        Long adminId = resolveAdminId(principal);
         return ResponseEntity.ok(ApiResponse.ok(
-            adminPaymentService.rejectRefund(paymentId, request.rejectReason(), adminId)
+            adminPaymentService.rejectRefund(paymentId, request.rejectReason(), adminId, principal.getAdminRole())
         ));
+    }
+
+    private Long resolveAdminId(AuthPrincipal principal) {
+        if (principal == null || principal.getId() == null) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+        try {
+            return Long.parseLong(principal.getId());
+        } catch (NumberFormatException e) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {
