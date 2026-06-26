@@ -5,6 +5,7 @@ import ProtectedRoute from "../components/user/common/ProtectedRoute";
 import AdminLayout from "../layouts/admin/AdminLayout";
 import { adminSession } from "../api/admin/adminSession";
 import {
+  ADMIN_ROUTE_BASE,
   ADMIN_ROUTE_PATHS,
   hasAdminRouteAccess,
   isAdminNavigationPath,
@@ -205,13 +206,13 @@ function AdminProtectedRoute() {
   const role = adminSession.getRole();
 
   if (!token) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to={ADMIN_ROUTE_PATHS.login} replace />;
   }
 
   if (!role) {
     adminSession.clearToken();
     adminSession.clearRole();
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to={ADMIN_ROUTE_PATHS.login} replace />;
   }
 
   // 현재 경로에 매핑되는 가장 구체적인 admin route를 찾아 role 접근 권한 확인
@@ -225,7 +226,7 @@ function AdminProtectedRoute() {
     isAdminNavigationPath(matchedRoute) &&
     !hasAdminRouteAccess(role, matchedRoute)
   ) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to={ADMIN_ROUTE_PATHS.dashboard} replace />;
   }
 
   return <Outlet />;
@@ -414,8 +415,8 @@ function AppRoutes() {
         <Route path="*" element={lazyRoute(<NotFoundPage />)} />
       </Route>
 
-      <Route path="admin">
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path={ADMIN_ROUTE_BASE}>
+        <Route index element={<Navigate to={ADMIN_ROUTE_PATHS.dashboard} replace />} />
         <Route path="login" element={lazyRoute(<AdminLoginPage />)} />
 
         <Route element={<AdminProtectedRoute />}>
