@@ -20,13 +20,13 @@ describe('hasAdminRouteAccess', () => {
       ADMIN_ROUTE_PATHS.members,
       ADMIN_ROUTE_PATHS.reports,
       ADMIN_ROUTE_PATHS.cs,
+      ADMIN_ROUTE_PATHS.payments,
     ])('%s 경로에 접근 가능하다', (path) => {
       expect(hasAdminRouteAccess(ADMIN_DETAIL_ROLE.CS, path as never)).toBe(true);
     });
 
     it.each([
       ADMIN_ROUTE_PATHS.admins,
-      ADMIN_ROUTE_PATHS.payments,
       ADMIN_ROUTE_PATHS.stats,
       ADMIN_ROUTE_PATHS.ai,
       ADMIN_ROUTE_PATHS.scraping,
