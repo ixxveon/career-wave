@@ -13,6 +13,15 @@ import httpx
 
 from core.config import get_settings
 
+_spring_client: httpx.AsyncClient | None = None
+
+
+def _get_spring_client() -> httpx.AsyncClient:
+    global _spring_client
+    if _spring_client is None:
+        _spring_client = httpx.AsyncClient(timeout=3.0)
+    return _spring_client
+
 _base_log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["interview-ws"])
@@ -91,9 +100,8 @@ async def _verify_session_ownership(session_id: str, member_id: str) -> bool | N
         f"?memberId={member_id}"
     )
     try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
-            response = await client.get(url, headers={"X-Internal-Secret": settings.webhook_secret})
-            return response.status_code == 200
+        response = await _get_spring_client().get(url, headers={"X-Internal-Secret": settings.webhook_secret})
+        return response.status_code == 200
     except Exception as exc:
         _base_log.warning("[Session: %s] ownership verify request failed: %s", session_id, exc)
         return None
