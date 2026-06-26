@@ -264,6 +264,7 @@ export default function AdminManagementPage() {
   });
   const visibleAclRules = adminAclRules?.items.map(toAclRuleRow) ?? aclRules;
   const auditLogQueryParams = {
+    logType: 'ADMIN_MANAGEMENT' as const,
     page: 1,
     size: MAX_SECURITY_LOGS,
   };

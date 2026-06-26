@@ -83,7 +83,6 @@ describe('auditLogApi mapper', () => {
       targetId: '-',
       ipAddressMasked: '-',
       occurredAt: '2026-06-26T12:30:00+09:00',
-      requestId: '-',
     });
   });
 

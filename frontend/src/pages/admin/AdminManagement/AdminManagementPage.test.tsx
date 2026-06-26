@@ -290,4 +290,19 @@ describe('AdminManagementPage master-only controls', () => {
     expect(queryByText('super_admin')).toBeNull();
   });
 
+  it('requests only ADMIN_MANAGEMENT audit logs for the security console', async () => {
+    adminSession.setRole(ADMIN_ROLE.MASTER);
+
+    const { findByText } = renderPage();
+
+    expect(await findByText('Master Admin')).toBeTruthy();
+    await waitFor(() => {
+      expect(adminManagementApiMock.getAdminAuditLogs).toHaveBeenCalledWith({
+        logType: 'ADMIN_MANAGEMENT',
+        page: 1,
+        size: 5,
+      });
+    });
+  });
+
 });

@@ -10,6 +10,7 @@ import kr.co.carrer.admin.aimetrics.dto.RagDocumentDTO;
 import kr.co.carrer.admin.aimetrics.service.AiMetricsService;
 import kr.co.carrer.admin.aimetrics.type.AiFeatureType;
 import kr.co.carrer.admin.aimetrics.type.IntervalType;
+import kr.co.carrer.admin.audit.util.AdminAuditClientIpExtractor;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
@@ -169,7 +170,7 @@ public class AiMetricsController implements AiMetricsDocs {
                         request.alertThreshold()
                 ),
                 extractAdminId(principal),
-                extractClientIp(httpServletRequest)
+                AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
         return ResponseEntity.ok(ApiResponse.ok("AI 예산 및 임계치 수정에 성공했습니다.", toBudget(result)));
     }
@@ -183,7 +184,7 @@ public class AiMetricsController implements AiMetricsDocs {
         AiMetricsService.ResponseBudget result = aiMetricsService.updateDiscordAlert(
                 new AiMetricsService.RequestUpdateDiscordAlert(request.alertEnabled()),
                 extractAdminId(principal),
-                extractClientIp(httpServletRequest)
+                AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
         return ResponseEntity.ok(ApiResponse.ok("Discord 알림 설정 변경에 성공했습니다.", toBudget(result)));
     }
@@ -198,7 +199,7 @@ public class AiMetricsController implements AiMetricsDocs {
         AiMetricsService.ResponseBudget result = aiMetricsService.updateRateLimit(
                 new AiMetricsService.RequestUpdateRateLimit(request.rateLimitEnabled()),
                 extractAdminId(principal),
-                extractClientIp(httpServletRequest)
+                AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
         return ResponseEntity.ok(ApiResponse.ok("AI rate limit 설정 변경에 성공했습니다.", toBudget(result)));
     }
@@ -230,7 +231,7 @@ public class AiMetricsController implements AiMetricsDocs {
         AiMetricsService.ResponseRagDocumentDetail result = aiMetricsService.uploadRagDocument(
                 file,
                 extractAdminId(principal),
-                extractClientIp(httpServletRequest)
+                AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
         return ResponseEntity.ok(ApiResponse.ok("RAG 문서 업로드에 성공했습니다.", toRagDocumentDetail(result)));
     }
@@ -261,7 +262,7 @@ public class AiMetricsController implements AiMetricsDocs {
         AiMetricsService.ResponseRagDocumentDelete result = aiMetricsService.deleteRagDocument(
                 documentId,
                 extractAdminId(principal),
-                extractClientIp(httpServletRequest)
+                AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
         RagDocumentDTO.ResponseDelete response = new RagDocumentDTO.ResponseDelete(
                 result.ragDocumentId(),
@@ -336,17 +337,4 @@ public class AiMetricsController implements AiMetricsDocs {
         }
     }
 
-    private String extractClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isBlank()) {
-            return xRealIp.trim();
-        }
-
-        return request.getRemoteAddr();
-    }
 }
