@@ -1,3 +1,4 @@
+import asyncio
 from types import SimpleNamespace
 
 import pytest
@@ -71,6 +72,7 @@ async def test_notice_draft_records_usage_with_admin_actor(patched_service):
     request = NoticeDraftRequest(category="NOTICE", title="제목", admin_id=7)
 
     draft = await cs_ai_service.generate_notice_draft(request)
+    await asyncio.sleep(0)
 
     assert draft == "생성된 초안"
     assert patched_service["admin_id"] == 7
@@ -85,6 +87,7 @@ async def test_faq_draft_records_usage_with_admin_actor(patched_service):
     request = FaqDraftRequest(question="질문", admin_id=11)
 
     await cs_ai_service.generate_faq_draft(request)
+    await asyncio.sleep(0)
 
     assert patched_service["admin_id"] == 11
     assert patched_service["feature_type"] == "ADMIN_CS"
@@ -97,6 +100,7 @@ async def test_inquiry_draft_records_usage_with_admin_actor(patched_service):
     )
 
     await cs_ai_service.generate_inquiry_draft(request)
+    await asyncio.sleep(0)
 
     assert patched_service["admin_id"] == 3
     assert patched_service["feature_type"] == "ADMIN_CS"
