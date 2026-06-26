@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.servlet.http.HttpServletRequest;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +59,7 @@ public class AdminMemberController implements AdminMemberControllerDocs {
 
         return ResponseEntity.ok(ApiResponse.ok(
             adminMemberService.getMembers(roleType, memberStatus, subscriptionStatus,
-                keyword, startDate, endDate, page, size, principal.getAdminRole())
+                keyword, startDate, endDate, page, size, parseAdminRole(principal))
         ));
     }
 
@@ -68,7 +69,7 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
         HttpServletRequest httpServletRequest
     ) {
-        Long adminId = Long.parseLong(principal.getId());
+        Long adminId = parseAdminId(principal);
         return ResponseEntity.ok(ApiResponse.ok(
             adminMemberService.getMemberDetail(memberId, adminId, extractClientIp(httpServletRequest))
         ));
@@ -81,7 +82,7 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
         HttpServletRequest httpServletRequest
     ) {
-        Long adminId = Long.parseLong(principal.getId());
+        Long adminId = parseAdminId(principal);
         return ResponseEntity.ok(ApiResponse.ok(
             adminMemberService.sanctionMember(memberId, request, adminId, extractClientIp(httpServletRequest))
         ));
@@ -122,6 +123,20 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         @RequestBody HrManagerDTO.RequestReject request
     ) {
         return ResponseEntity.ok(ApiResponse.ok(adminMemberService.rejectHrManager(memberId, request)));
+    }
+
+    private String parseAdminRole(AuthPrincipal principal) {
+        if (principal == null) throw new CustomException(ErrorCode.UNAUTHORIZED);
+        return principal.getAdminRole();
+    }
+
+    private Long parseAdminId(AuthPrincipal principal) {
+        if (principal == null) throw new CustomException(ErrorCode.UNAUTHORIZED);
+        try {
+            return Long.parseLong(principal.getId());
+        } catch (NumberFormatException e) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
     }
 
     private String extractClientIp(HttpServletRequest request) {

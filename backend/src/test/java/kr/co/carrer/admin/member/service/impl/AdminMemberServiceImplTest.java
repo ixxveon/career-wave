@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,6 +46,48 @@ class AdminMemberServiceImplTest {
     @Mock private HrManagerRepository hrManagerRepository;
     @Mock private SuspendHistoryRepository suspendHistoryRepository;
     @Mock private AuditLogRepository auditLogRepository;
+
+    @Nested
+    @DisplayName("회원 목록 마스킹 - getMembers()")
+    class GetMembers {
+
+        private MemberDTO.ResponseList rawMember() {
+            return new MemberDTO.ResponseList(
+                UUID.randomUUID(), "username1", "홍길동", "hong@gmail.com",
+                null, null, MemberStatus.ACTIVE, 0, 0L, null, null
+            );
+        }
+
+        @Test
+        @DisplayName("MASTER 역할 — 이름·이메일·로그인ID 원문 그대로 반환")
+        void master_returns_plain() {
+            given(memberQueryRepository.findMembers(any(), any(), any(), any(), any(), any(), any(int.class), any(int.class)))
+                .willReturn(List.of(rawMember()));
+            given(memberQueryRepository.countMembers(any(), any(), any(), any(), any(), any())).willReturn(1L);
+
+            var result = adminMemberService.getMembers(null, null, null, null, null, null, 1, 20, "MASTER");
+
+            MemberDTO.ResponseList item = result.items().get(0);
+            assertThat(item.name()).isEqualTo("홍길동");
+            assertThat(item.email()).isEqualTo("hong@gmail.com");
+            assertThat(item.loginId()).isEqualTo("username1");
+        }
+
+        @Test
+        @DisplayName("CS 역할 — 이름·이메일·로그인ID 마스킹 적용")
+        void cs_returns_masked() {
+            given(memberQueryRepository.findMembers(any(), any(), any(), any(), any(), any(), any(int.class), any(int.class)))
+                .willReturn(List.of(rawMember()));
+            given(memberQueryRepository.countMembers(any(), any(), any(), any(), any(), any())).willReturn(1L);
+
+            var result = adminMemberService.getMembers(null, null, null, null, null, null, 1, 20, "CS");
+
+            MemberDTO.ResponseList item = result.items().get(0);
+            assertThat(item.name()).isEqualTo("홍*동");
+            assertThat(item.email()).isEqualTo("hon***@gmail.com");
+            assertThat(item.loginId()).isEqualTo("use***");
+        }
+    }
 
     @Nested
     @DisplayName("회원 제재 처리 - sanctionMember()")

@@ -89,9 +89,21 @@ class PersonalInfoMaskerTest {
         }
 
         @Test
-        @DisplayName("3자 이하 ID는 그대로 반환")
-        void shortId() {
-            assertThat(PersonalInfoMasker.maskLoginId("abc")).isEqualTo("abc");
+        @DisplayName("3자 ID: abc → ab***")
+        void threeCharId() {
+            assertThat(PersonalInfoMasker.maskLoginId("abc")).isEqualTo("ab***");
+        }
+
+        @Test
+        @DisplayName("2자 ID: ab → a***")
+        void twoCharId() {
+            assertThat(PersonalInfoMasker.maskLoginId("ab")).isEqualTo("a***");
+        }
+
+        @Test
+        @DisplayName("1자 ID: a → ***")
+        void oneCharId() {
+            assertThat(PersonalInfoMasker.maskLoginId("a")).isEqualTo("***");
         }
 
         @Test

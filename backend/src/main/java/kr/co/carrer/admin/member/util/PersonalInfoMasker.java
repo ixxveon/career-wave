@@ -19,7 +19,8 @@ public final class PersonalInfoMasker {
     }
 
     public static String maskLoginId(String loginId) {
-        if (loginId == null || loginId.length() <= 3) return loginId;
-        return loginId.substring(0, 3) + "***";
+        if (loginId == null) return null;
+        int show = Math.min(3, Math.max(0, loginId.length() - 1));
+        return loginId.substring(0, show) + "***";
     }
 }
