@@ -118,6 +118,7 @@ export default function PaymentPage() {
   const tabKey = searchParams.get('tab') ?? '';
   const initialTab: PayTab = TAB_KEY_MAP[tabKey] ?? '결제 내역';
   const [tab, setTab] = useState<PayTab>(initialTab);
+  const urlKeyword = searchParams.get('keyword') ?? '';
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
 
@@ -140,9 +141,9 @@ export default function PaymentPage() {
   const [payError, setPayError]         = useState('');
   const payReqId = useRef(0);
 
-  const [keyword, setKeyword]           = useState('');
+  const [keyword, setKeyword]           = useState(urlKeyword);
   const [statusFilter, setStatusFilter] = useState('');
-  const appliedPayFilters = useRef<PaymentListParams>({});
+  const appliedPayFilters = useRef<PaymentListParams>(urlKeyword ? { keyword: urlKeyword } : {});
 
   // 결제 상세 / 환불 모달
   const [selected, setSelected]         = useState<Payment | null>(null);

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, HelpCircle, MessageSquare, AlertCircle, Sparkles } from 'lucide-react';
 import {
   csApi,
@@ -14,6 +15,7 @@ import {
 } from '../../../api/admin/csApi';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/CustomerService.css';
+import { ADMIN_ROUTE_PATHS } from '../../../constants/admin/adminRouteConstants';
 
 // ── 로컬 전용 타입 ────────────────────────────────────────────
 
@@ -64,6 +66,7 @@ interface FaqFormState {
 // ── Component ─────────────────────────────────────────────────
 
 export default function CustomerServicePage() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<CsTab>('notice');
 
   // ── KPI 상태 ─────────────────────────────────────────────
@@ -924,6 +927,14 @@ export default function CustomerServicePage() {
                     <button onClick={completeInquiry} disabled={inqActionLoading || !inquiryReply.trim()}>처리 완료</button>
                   )}
                 </>
+              )}
+              {(selectedInquiry.category === 'REFUND' || selectedInquiry.category === 'PAYMENT_ERROR') && selectedInquiry.memberEmail && (
+                <button
+                  onClick={() => navigate(`${ADMIN_ROUTE_PATHS.payments}?tab=payments&keyword=${encodeURIComponent(selectedInquiry.memberEmail)}`)}
+                  style={{ background: '#2e5eaa', color: '#fff', borderColor: '#2e5eaa' }}
+                >
+                  결제 내역 확인
+                </button>
               )}
               <button onClick={() => setSelectedInquiry(null)}>닫기</button>
             </div>
