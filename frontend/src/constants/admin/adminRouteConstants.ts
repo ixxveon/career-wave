@@ -1,5 +1,7 @@
 import { ADMIN_DETAIL_ROLE, type AdminDetailRole } from './adminRoleConstants';
 
+export const ADMIN_ROUTE_BASE = 'cw-manage-2026';
+
 export const ADMIN_ROUTE_PATHS = {
   login: '/cw-manage-2026/login',
   dashboard: '/cw-manage-2026/dashboard',

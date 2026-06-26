@@ -5,6 +5,7 @@ import ProtectedRoute from "../components/user/common/ProtectedRoute";
 import AdminLayout from "../layouts/admin/AdminLayout";
 import { adminSession } from "../api/admin/adminSession";
 import {
+  ADMIN_ROUTE_BASE,
   ADMIN_ROUTE_PATHS,
   hasAdminRouteAccess,
   isAdminNavigationPath,
@@ -414,7 +415,7 @@ function AppRoutes() {
         <Route path="*" element={lazyRoute(<NotFoundPage />)} />
       </Route>
 
-      <Route path="cw-manage-2026">
+      <Route path={ADMIN_ROUTE_BASE}>
         <Route index element={<Navigate to={ADMIN_ROUTE_PATHS.dashboard} replace />} />
         <Route path="login" element={lazyRoute(<AdminLoginPage />)} />
 
