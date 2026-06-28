@@ -211,7 +211,7 @@ public class DashboardSummaryQueryRepository {
             return decimal;
         }
         if (value instanceof Number number) {
-            return BigDecimal.valueOf(number.doubleValue());
+            return new BigDecimal(number.toString());
         }
         return BigDecimal.ZERO;
     }

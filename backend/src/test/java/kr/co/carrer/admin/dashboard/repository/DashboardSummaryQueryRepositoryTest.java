@@ -81,6 +81,31 @@ class DashboardSummaryQueryRepositoryTest {
     }
 
     @Test
+    void fetchAiUsageMetricsUsesDefaultsForEmptyEnvironment() {
+        Query query = singleResultQuery(0L, null, null, null, null);
+        when(entityManager.createNativeQuery(anyString())).thenReturn(query);
+
+        DashboardSummaryQueryRepository.AiUsageMetrics result = repository.fetchAiUsageMetrics(queryWindow);
+
+        assertThat(result.interviewSessionCount()).isZero();
+        assertThat(result.todayRevenue()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(result.alertEnabled()).isTrue();
+        assertThat(result.alertThreshold()).isZero();
+        assertThat(result.rateLimitEnabled()).isTrue();
+        verifyWindowParameters(query);
+    }
+
+    @Test
+    void fetchAiUsageMetricsPreservesNumberPrecisionForRevenue() {
+        Query query = singleResultQuery(1L, 0.1d, true, 80, true);
+        when(entityManager.createNativeQuery(anyString())).thenReturn(query);
+
+        DashboardSummaryQueryRepository.AiUsageMetrics result = repository.fetchAiUsageMetrics(queryWindow);
+
+        assertThat(result.todayRevenue()).isEqualByComparingTo("0.1");
+    }
+
+    @Test
     void fetchRagDocumentMetricsMapsStatusAggregate() {
         Query query = singleResultQuery(10L, 7L, 2L, 90);
         when(entityManager.createNativeQuery(anyString())).thenReturn(query);
