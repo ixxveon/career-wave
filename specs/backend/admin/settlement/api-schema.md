@@ -65,10 +65,10 @@ ApiResponse.fail(statusCode, message);
 
 ```json
 {
-  "items": [],
-  "page": 1,
-  "size": 20,
-  "totalItems": 100,
+  "content": [],
+  "pageNum": 1,
+  "pageSize": 20,
+  "totalElements": 100,
   "totalPages": 5
 }
 ```
@@ -104,7 +104,7 @@ ApiResponse.fail(statusCode, message);
 
 ```json
 {
-  "items": [
+  "content": [
     {
       "settlementId": 1,
       "periodStart": "2026-06-01",
@@ -117,9 +117,9 @@ ApiResponse.fail(statusCode, message);
       "createdAt": "2026-07-01T00:00:00+09:00"
     }
   ],
-  "page": 1,
-  "size": 20,
-  "totalItems": 6,
+  "pageNum": 1,
+  "pageSize": 20,
+  "totalElements": 6,
   "totalPages": 1
 }
 ```

@@ -1455,11 +1455,11 @@ CREATE TABLE settlement_reports (
     settlement_id           BIGSERIAL       PRIMARY KEY,
     settlement_period_start DATE            NOT NULL,
     settlement_period_end   DATE            NOT NULL,
-    total_sales_amount      INTEGER         NOT NULL DEFAULT 0,
-    total_refund_amount     INTEGER         NOT NULL DEFAULT 0,
-    net_sales_amount        INTEGER         NOT NULL DEFAULT 0,
-    supply_amount           INTEGER         NOT NULL DEFAULT 0,
-    vat_amount              INTEGER         NOT NULL DEFAULT 0,
+    total_sales_amount      BIGINT          NOT NULL DEFAULT 0,
+    total_refund_amount     BIGINT          NOT NULL DEFAULT 0,
+    net_sales_amount        BIGINT          NOT NULL DEFAULT 0,
+    supply_amount           BIGINT          NOT NULL DEFAULT 0,
+    vat_amount              BIGINT          NOT NULL DEFAULT 0,
     total_transaction_count INTEGER         NOT NULL DEFAULT 0,
     paid_count              INTEGER         NOT NULL DEFAULT 0,
     refund_count            INTEGER         NOT NULL DEFAULT 0,
@@ -1470,7 +1470,12 @@ CREATE TABLE settlement_reports (
     created_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_settlement_period     UNIQUE (settlement_period_start, settlement_period_end),
-    CONSTRAINT chk_settlement_status    CHECK (settlement_status IN ('PENDING', 'CONFIRMED'))
+    CONSTRAINT chk_settlement_period    CHECK (settlement_period_start < settlement_period_end),
+    CONSTRAINT chk_settlement_status    CHECK (settlement_status IN ('PENDING', 'CONFIRMED')),
+    CONSTRAINT chk_settlement_confirmed_fields CHECK (
+        (settlement_status = 'PENDING'   AND settled_at IS NULL     AND admin_id IS NULL) OR
+        (settlement_status = 'CONFIRMED' AND settled_at IS NOT NULL AND admin_id IS NOT NULL)
+    )
 );
 
 CREATE INDEX idx_settlement_period ON settlement_reports (settlement_period_start, settlement_period_end);

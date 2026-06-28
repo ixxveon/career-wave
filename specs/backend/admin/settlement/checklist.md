@@ -38,7 +38,7 @@
 
 - [ ] 모든 API 응답이 `ApiResponse<T>` 래퍼를 사용한다.
 - [ ] Entity 또는 Spring `Page<T>` 객체를 직접 반환하지 않는다.
-- [ ] 목록 조회 응답이 `items`, `page`, `size`, `totalItems`, `totalPages` 키를 포함한다.
+- [ ] 목록 조회 응답이 `content`, `pageNum`, `pageSize`, `totalElements`, `totalPages` 키를 포함한다.
 - [ ] `page=1` 요청 시 첫 번째 페이지 결과가 반환된다. (1-based → 0-based 변환 확인)
 - [ ] 정산 상세 응답에 `items`(결제/환불 항목 목록)이 포함된다.
 - [ ] 정산 상세 응답에 `settledByName`(확정 관리자 이름)이 포함된다.
