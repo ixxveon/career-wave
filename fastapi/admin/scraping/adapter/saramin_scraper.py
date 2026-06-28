@@ -223,7 +223,7 @@ class SaraminScraper(ScraperAdapter):
         if value is None:
             return False
         shell_marker_count = sum(marker in value for marker in cls._SHELL_CONTENT_MARKERS)
-        if shell_marker_count >= 2 and len(value) < 300:
+        if shell_marker_count >= 2:
             return False
         return True
 

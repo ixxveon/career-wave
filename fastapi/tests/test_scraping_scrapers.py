@@ -247,6 +247,12 @@ def test_saramin_scraper_does_not_store_shell_content_when_ajax_detail_missing()
     assert notices[0].description is None
 
 
+def test_saramin_scraper_does_not_store_long_shell_content():
+    shell_content = " ".join(SaraminScraper._SHELL_CONTENT_MARKERS) + " " + ("menu " * 80)
+
+    assert SaraminScraper._is_valid_description(shell_content) is False
+
+
 def test_saramin_scraper_test_connection_returns_false_for_forbidden_response():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(403)
