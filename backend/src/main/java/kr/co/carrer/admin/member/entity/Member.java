@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -67,24 +68,24 @@ public class Member {
 
     public void increaseWarningCount() {
         this.warningCount++;
-        this.updatedAt = ZonedDateTime.now();
+        this.updatedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 
     public void suspend(LocalDate suspendEndDate) {
         this.memberStatus = MemberStatus.SUSPENDED;
         this.suspendEndDate = suspendEndDate;
-        this.updatedAt = ZonedDateTime.now();
+        this.updatedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 
     public void ban() {
         this.memberStatus = MemberStatus.BANNED;
         this.suspendEndDate = null;
-        this.updatedAt = ZonedDateTime.now();
+        this.updatedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 
     public void unsuspend() {
         this.memberStatus = MemberStatus.ACTIVE;
         this.suspendEndDate = null;
-        this.updatedAt = ZonedDateTime.now();
+        this.updatedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 }
