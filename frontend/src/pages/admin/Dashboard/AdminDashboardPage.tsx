@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Activity, Bot, CreditCard, Users } from 'lucide-react';
+import { Activity, Bot, CreditCard, Users, type LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { adminSession } from '../../../api/admin/adminAuthApi';
 import {
   DASHBOARD_KPI_KEY,
+  type DashboardKpiKey,
   dashboardApi,
   getDashboardSummaryErrorMessage,
   unwrapDashboardSummaryResponse,
@@ -24,7 +25,7 @@ const KPI_PRESENTATION = {
   [DASHBOARD_KPI_KEY.REALTIME_ACTIVE_ADMINS]: { Icon: Activity, theme: 'kpi-green' },
   [DASHBOARD_KPI_KEY.AI_INTERVIEW_SESSIONS]: { Icon: Bot, theme: 'kpi-purple' },
   [DASHBOARD_KPI_KEY.TODAY_REVENUE]: { Icon: CreditCard, theme: 'kpi-yellow' },
-} as const;
+} as const satisfies Record<DashboardKpiKey, { Icon: LucideIcon; theme: string }>;
 
 const ALERT_PRESENTATION = {
   URGENT: { icon: '!', cls: 'danger' },
@@ -147,8 +148,7 @@ export default function AdminDashboardPage() {
   const { kpis, hasKpiSectionError } = useMemo(() => {
     try {
       const items = (dashboardSummary?.kpis ?? []).map((item) => {
-        const presentation =
-          KPI_PRESENTATION[item.key] ?? KPI_PRESENTATION[DASHBOARD_KPI_KEY.TODAY_NEW_ADMINS];
+        const presentation = KPI_PRESENTATION[item.key];
 
         return {
           ...item,

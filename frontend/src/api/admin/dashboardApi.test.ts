@@ -4,12 +4,15 @@ import { ADMIN_ROUTE_PATHS, isAdminNavigationPath } from '../../constants/admin/
 
 describe('admin dashboard API contract', () => {
   it('exposes backend KPI keys used by the dashboard page', () => {
-    expect(Object.values(DASHBOARD_KPI_KEY)).toEqual([
-      'TODAY_NEW_ADMINS',
-      'REALTIME_ACTIVE_ADMINS',
-      'AI_INTERVIEW_SESSIONS',
-      'TODAY_REVENUE',
-    ]);
+    expect(Object.values(DASHBOARD_KPI_KEY)).toHaveLength(4);
+    expect(Object.values(DASHBOARD_KPI_KEY)).toEqual(
+      expect.arrayContaining([
+        'TODAY_NEW_ADMINS',
+        'REALTIME_ACTIVE_ADMINS',
+        'AI_INTERVIEW_SESSIONS',
+        'TODAY_REVENUE',
+      ])
+    );
   });
 
   it('uses frontend admin routes for dashboard target paths', () => {

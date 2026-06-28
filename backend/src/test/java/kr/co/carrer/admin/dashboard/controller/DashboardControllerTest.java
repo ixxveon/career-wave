@@ -211,7 +211,8 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.data.kpis[?(@.key == 'TODAY_NEW_ADMINS')]").exists())
                 .andExpect(jsonPath("$.data.kpis[?(@.key == 'REALTIME_ACTIVE_ADMINS')]").exists())
                 .andExpect(jsonPath("$.data.kpis[?(@.key == 'AI_INTERVIEW_SESSIONS')]").exists())
-                .andExpect(jsonPath("$.data.kpis[?(@.key == 'TODAY_REVENUE')]").exists());
+                .andExpect(jsonPath("$.data.kpis[?(@.key == 'TODAY_REVENUE')]").exists())
+                .andExpect(jsonPath("$.data.kpis[0].targetPath").value("/cw-manage-2026/dashboard"));
     }
 
     private DashboardDTO.Kpi createKpi(DashboardKpiKeyType key) {

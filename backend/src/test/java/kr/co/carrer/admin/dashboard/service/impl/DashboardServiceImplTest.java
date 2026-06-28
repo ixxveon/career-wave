@@ -46,13 +46,29 @@ class DashboardServiceImplTest {
                         ZonedDateTime.parse("2026-06-22T09:01:00Z")
                 )));
         when(repository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))
-                .thenReturn(List.of(new DashboardSummaryQueryRepository.RecentActivityRow(
-                        3L,
-                        ZonedDateTime.parse("2026-06-22T09:02:00Z"),
-                        "admin",
-                        "Checked audit log",
-                        "/admin/log"
-                )));
+                .thenReturn(List.of(
+                        new DashboardSummaryQueryRepository.RecentActivityRow(
+                                3L,
+                                ZonedDateTime.parse("2026-06-22T09:02:00Z"),
+                                "admin",
+                                "Checked audit log",
+                                "/admin/log"
+                        ),
+                        new DashboardSummaryQueryRepository.RecentActivityRow(
+                                4L,
+                                ZonedDateTime.parse("2026-06-22T09:03:00Z"),
+                                "admin",
+                                "Opened dashboard",
+                                "/cw-manage-2026/dashboard"
+                        ),
+                        new DashboardSummaryQueryRepository.RecentActivityRow(
+                                5L,
+                                ZonedDateTime.parse("2026-06-22T09:04:00Z"),
+                                "admin",
+                                "Missing target path",
+                                " "
+                        )
+                ));
 
         DashboardServiceImpl service = new DashboardServiceImpl(repository);
 
@@ -82,6 +98,10 @@ class DashboardServiceImplTest {
                 );
         assertThat(summary.recentActivities())
                 .extracting(DashboardDTO.RecentActivity::targetPath)
-                .containsExactly(ADMIN_ROUTE_PREFIX + "/log");
+                .containsExactly(
+                        ADMIN_ROUTE_PREFIX + "/log",
+                        ADMIN_ROUTE_PREFIX + "/dashboard",
+                        ADMIN_ROUTE_PREFIX + "/dashboard"
+                );
     }
 }
