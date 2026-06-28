@@ -1,5 +1,6 @@
 package kr.co.carrer.user.resume.websocket;
 
+import kr.co.carrer.global.websocket.WebSocketJwtAuthenticator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
@@ -9,18 +10,18 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import java.util.Map;
-import java.util.UUID;
 
 /**
- * WebSocket 핸드셰이크 시 ?token= 쿼리 파라미터로 JWT를 검증하고
- * memberId를 세션 attributes에 저장한다.
+ * Resume WebSocket 핸드셰이크 인터셉터.
+ * ?token= 쿼리 파라미터로 JWT를 추출하고 HTTP API와 동일한 정책으로 검증한다.
+ * (서명 + audience + jti + blacklist)
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ResumeHandshakeInterceptor implements HandshakeInterceptor {
 
-    private final WebSocketJwtValidator jwtValidator;
+    private final WebSocketJwtAuthenticator jwtAuthenticator;
 
     @Override
     public boolean beforeHandshake(
@@ -33,17 +34,17 @@ public class ResumeHandshakeInterceptor implements HandshakeInterceptor {
         String token = extractTokenFromQuery(query);
 
         if (token == null) {
-            log.warn("[WebSocket 핸드셰이크 거부] ?token 파라미터 없음");
+            log.warn("[Resume WebSocket 핸드셰이크 거부] ?token 파라미터 없음");
             return false;
         }
 
-        return jwtValidator.extractMemberId(token)
+        return jwtAuthenticator.authenticate(token)
                 .map(memberId -> {
                     attributes.put("memberId", memberId);
                     return true;
                 })
                 .orElseGet(() -> {
-                    log.warn("[WebSocket 핸드셰이크 거부] JWT 검증 실패");
+                    log.warn("[Resume WebSocket 핸드셰이크 거부] JWT 검증 실패");
                     return false;
                 });
     }
@@ -55,7 +56,6 @@ public class ResumeHandshakeInterceptor implements HandshakeInterceptor {
             WebSocketHandler wsHandler,
             Exception exception
     ) {
-        // 핸드셰이크 완료 후 처리 없음
     }
 
     private String extractTokenFromQuery(String query) {
