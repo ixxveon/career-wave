@@ -9,10 +9,12 @@ from core.config import get_settings
 from core.ai_usage import record_ai_usage
 from admin.report.prompts.report_prompts import (
     REPORT_ANALYSIS_SYSTEM_PROMPT,
+    MEMBER_ANALYSIS_SYSTEM_PROMPT,
     build_report_analysis_user_prompt,
+    build_member_analysis_user_prompt,
 )
-from admin.report.schema.request import ReportAnalysisRequest
-from admin.report.schema.response import ReportAnalysisResponse
+from admin.report.schema.request import ReportAnalysisRequest, MemberAnalysisRequest
+from admin.report.schema.response import ReportAnalysisResponse, MemberAnalysisResponse
 
 logger = logging.getLogger(__name__)
 
@@ -74,4 +76,59 @@ async def analyze_report(request: ReportAnalysisRequest) -> ReportAnalysisRespon
         return ReportAnalysisResponse(**result)
     except (json.JSONDecodeError, KeyError) as e:
         logger.error(f"[Report AI] LLM 응답 파싱 실패: {e}")
+        raise
+
+
+_MEMBER_FEATURE_TYPE = "ADMIN_REPORT_MEMBER"
+
+
+async def analyze_member(request: MemberAnalysisRequest) -> MemberAnalysisResponse:
+    logger.info(
+        f"[Report AI] member-analysis — warningCount={request.warning_count} "
+        f"reportCount={request.report_count} memberStatus={request.member_status} admin_id={request.admin_id}"
+    )
+
+    settings = get_settings()
+    client = _get_openai_client()
+
+    user_prompt = build_member_analysis_user_prompt(
+        request.warning_count,
+        request.report_count,
+        request.member_status,
+        request.reason,
+    )
+
+    completion = await client.chat.completions.create(
+        model=settings.openai_model_deep,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": MEMBER_ANALYSIS_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        timeout=settings.openai_llm_timeout_seconds,
+    )
+
+    usage = completion.usage
+    if usage:
+        logger.info(
+            f"[Report AI] Member analysis token usage — "
+            f"input={usage.prompt_tokens} output={usage.completion_tokens} total={usage.total_tokens}"
+        )
+
+    asyncio.create_task(
+        record_ai_usage(
+            member_id=None,
+            admin_id=request.admin_id,
+            model_name=settings.openai_model_deep,
+            feature_type=_MEMBER_FEATURE_TYPE,
+            usage=usage,
+        )
+    )
+
+    raw = completion.choices[0].message.content or "{}"
+    try:
+        result = json.loads(raw)
+        return MemberAnalysisResponse(**result)
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.error(f"[Report AI] Member analysis LLM 응답 파싱 실패: {e}")
         raise

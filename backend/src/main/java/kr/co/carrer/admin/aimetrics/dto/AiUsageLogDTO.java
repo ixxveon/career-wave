@@ -20,7 +20,7 @@ public class AiUsageLogDTO {
             @Schema(description = "Admin ID") Long adminId,
             @Schema(description = "Session ID") UUID sessionId,
             @Schema(description = "AI model ID") Long aiModelId,
-            @Schema(description = "Feature type", allowableValues = {"DOCUMENT", "INTERVIEW", "ADMIN_CS", "ADMIN_REPORT"}) AiFeatureType featureType,
+            @Schema(description = "Feature type", allowableValues = {"DOCUMENT", "INTERVIEW", "ADMIN_CS", "ADMIN_REPORT", "ADMIN_REPORT_MEMBER"}) AiFeatureType featureType,
             @Schema(description = "Input tokens") long inputTokens,
             @Schema(description = "Output tokens") long outputTokens,
             @Schema(description = "Cost") BigDecimal cost,

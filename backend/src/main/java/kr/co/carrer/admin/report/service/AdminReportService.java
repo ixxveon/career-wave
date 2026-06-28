@@ -19,4 +19,6 @@ public interface AdminReportService {
     ReportDetailDTO.ResponseProcess blindReport(Long reportId, Long adminId);
 
     ReportDetailDTO.ResponseProcess dismissReport(Long reportId, Long adminId);
+
+    ReportDetailDTO.ResponseMemberAiReview getMemberAiReview(Long reportId, Long adminId);
 }
