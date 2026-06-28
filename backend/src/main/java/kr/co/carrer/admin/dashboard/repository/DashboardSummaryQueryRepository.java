@@ -93,9 +93,9 @@ public class DashboardSummaryQueryRepository {
                 SELECT
                     COALESCE(SUM(CASE WHEN feature_type IN ('INTERVIEW', 'INTERVIEW_STT', 'INTERVIEW_TTS') THEN 1 ELSE 0 END), 0) AS interview_session_count,
                     COALESCE(SUM(cost), 0) AS total_cost,
-                    COALESCE((SELECT alert_enabled FROM ai_ops_settings WHERE ai_ops_setting_id = 1), true) AS alert_enabled,
-                    COALESCE((SELECT alert_threshold FROM ai_ops_settings WHERE ai_ops_setting_id = 1), 0) AS alert_threshold,
-                    COALESCE((SELECT rate_limit_enabled FROM ai_ops_settings WHERE ai_ops_setting_id = 1), true) AS rate_limit_enabled
+                    COALESCE((SELECT alert_enabled FROM ai_ops_settings ORDER BY ai_ops_setting_id LIMIT 1), true) AS alert_enabled,
+                    COALESCE((SELECT alert_threshold FROM ai_ops_settings ORDER BY ai_ops_setting_id LIMIT 1), 0) AS alert_threshold,
+                    COALESCE((SELECT rate_limit_enabled FROM ai_ops_settings ORDER BY ai_ops_setting_id LIMIT 1), true) AS rate_limit_enabled
                 FROM ai_usage_logs
                 WHERE created_at >= ?1
                   AND created_at < ?2

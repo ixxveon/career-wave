@@ -5,6 +5,7 @@ import jakarta.persistence.Query;
 import kr.co.carrer.admin.dashboard.type.DashboardRangeType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -70,6 +72,12 @@ class DashboardSummaryQueryRepositoryTest {
         assertThat(result.alertThreshold()).isEqualTo(80);
         assertThat(result.rateLimitEnabled()).isTrue();
         verifyWindowParameters(query);
+
+        ArgumentCaptor<String> sqlCaptor = forClass(String.class);
+        verify(entityManager).createNativeQuery(sqlCaptor.capture());
+        assertThat(sqlCaptor.getValue())
+                .contains("FROM ai_ops_settings ORDER BY ai_ops_setting_id LIMIT 1")
+                .doesNotContain("ai_ops_setting_id = 1");
     }
 
     @Test
