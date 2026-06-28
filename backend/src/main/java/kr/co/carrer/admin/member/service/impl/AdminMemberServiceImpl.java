@@ -154,6 +154,30 @@ public class AdminMemberServiceImpl implements AdminMemberService {
         );
     }
 
+    @Override
+    @Transactional
+    public MemberDTO.ResponseUnsuspend unsuspendMember(UUID memberId, MemberDTO.RequestUnsuspend dto, Long adminId, String ipAddress) {
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new CustomException(AdminMemberErrorCode.MEMBER_NOT_FOUND));
+
+        if (member.getMemberStatus() != MemberStatus.SUSPENDED) {
+            throw new CustomException(AdminMemberErrorCode.NOT_SUSPENDED);
+        }
+
+        String reason = dto.reason();
+        validateReason(reason);
+
+        member.unsuspend();
+
+        auditLogRepository.save(AuditLog.create(
+            adminId, AuditLogType.ADMIN_ACTIVITY, "UNSUSPEND_MEMBER",
+            TARGET_TYPE_MEMBER, memberId.toString(), ipAddress,
+            AuditLogSeverity.INFO, reason
+        ));
+
+        return new MemberDTO.ResponseUnsuspend(member.getMemberId(), member.getMemberStatus());
+    }
+
     private LocalDate calculateSuspendEndDate(LocalDate from, SuspendDuration duration) {
         return switch (duration) {
             case THREE_DAYS  -> from.plusDays(3);

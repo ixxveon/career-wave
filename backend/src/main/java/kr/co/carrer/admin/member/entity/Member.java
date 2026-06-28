@@ -81,4 +81,10 @@ public class Member {
         this.suspendEndDate = null;
         this.updatedAt = ZonedDateTime.now();
     }
+
+    public void unsuspend() {
+        this.memberStatus = MemberStatus.ACTIVE;
+        this.suspendEndDate = null;
+        this.updatedAt = ZonedDateTime.now();
+    }
 }
