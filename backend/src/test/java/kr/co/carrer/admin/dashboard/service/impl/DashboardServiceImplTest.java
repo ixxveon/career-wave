@@ -90,6 +90,12 @@ class DashboardServiceImplTest {
                         "WARN",
                         DashboardAlertLevelType.WARNING,
                         ZonedDateTime.parse("2026-06-28T09:00:00Z")
+                ), new DashboardSummaryQueryRepository.AuditAlertRow(
+                        11L,
+                        "감사 로그 기본 레벨",
+                        "WARN",
+                        null,
+                        ZonedDateTime.parse("2026-06-28T09:02:00Z")
                 )));
         when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), anyInt()))
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.ScrapingAlertRow(
@@ -98,15 +104,23 @@ class DashboardServiceImplTest {
                         "FAILED",
                         DashboardAlertLevelType.URGENT,
                         ZonedDateTime.parse("2026-06-28T09:01:00Z")
+                ), new DashboardSummaryQueryRepository.ScrapingAlertRow(
+                        21L,
+                        "스크래핑 기본 레벨",
+                        "FAILED",
+                        null,
+                        ZonedDateTime.parse("2026-06-28T09:03:00Z")
                 )));
 
         DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
 
         assertThat(result.alerts())
-                .extracting(DashboardDTO.Alert::domain, DashboardDTO.Alert::level, DashboardDTO.Alert::targetPath)
+                .extracting(DashboardDTO.Alert::id, DashboardDTO.Alert::domain, DashboardDTO.Alert::level, DashboardDTO.Alert::targetPath)
                 .containsExactly(
-                        tuple(DashboardDomainType.SCRAPING, DashboardAlertLevelType.URGENT, ADMIN_SCRAPING_PATH),
-                        tuple(DashboardDomainType.AUDIT_LOG, DashboardAlertLevelType.WARNING, ADMIN_LOG_PATH)
+                        tuple(21L, DashboardDomainType.SCRAPING, DashboardAlertLevelType.URGENT, ADMIN_SCRAPING_PATH),
+                        tuple(20L, DashboardDomainType.SCRAPING, DashboardAlertLevelType.URGENT, ADMIN_SCRAPING_PATH),
+                        tuple(11L, DashboardDomainType.AUDIT_LOG, DashboardAlertLevelType.WARNING, ADMIN_LOG_PATH),
+                        tuple(10L, DashboardDomainType.AUDIT_LOG, DashboardAlertLevelType.WARNING, ADMIN_LOG_PATH)
                 );
     }
 

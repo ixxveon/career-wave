@@ -102,4 +102,13 @@ describe('admin dashboard backend targetPath contract', () => {
       expect(hasAdminRouteAccess(ADMIN_DETAIL_ROLE.BACKEND, path)).toBe(true);
     });
   });
+
+  it('BACKEND는 관리자/결제 targetPath에 접근할 수 없다', () => {
+    [
+      ADMIN_ROUTE_PATHS.admins,
+      ADMIN_ROUTE_PATHS.payments,
+    ].forEach((path) => {
+      expect(hasAdminRouteAccess(ADMIN_DETAIL_ROLE.BACKEND, path)).toBe(false);
+    });
+  });
 });
