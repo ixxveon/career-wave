@@ -1469,7 +1469,8 @@ CREATE TABLE settlement_reports (
     note                    TEXT,
     created_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    CONSTRAINT uq_settlement_period UNIQUE (settlement_period_start, settlement_period_end)
+    CONSTRAINT uq_settlement_period     UNIQUE (settlement_period_start, settlement_period_end),
+    CONSTRAINT chk_settlement_status    CHECK (settlement_status IN ('PENDING', 'CONFIRMED'))
 );
 
 CREATE INDEX idx_settlement_period ON settlement_reports (settlement_period_start, settlement_period_end);
@@ -1499,7 +1500,8 @@ CREATE TABLE settlement_items (
     amount              INTEGER         NOT NULL,
     item_type           VARCHAR(20)     NOT NULL,
     created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    CONSTRAINT uq_settlement_item_payment UNIQUE (settlement_id, payment_id, item_type)
+    CONSTRAINT uq_settlement_item_payment  UNIQUE (settlement_id, payment_id, item_type),
+    CONSTRAINT chk_settlement_item_type    CHECK (item_type IN ('PAYMENT', 'REFUND'))
 );
 
 CREATE INDEX idx_settlement_item_settlement ON settlement_items (settlement_id);
