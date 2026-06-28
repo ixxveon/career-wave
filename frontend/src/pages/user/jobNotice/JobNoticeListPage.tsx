@@ -429,6 +429,7 @@ export default function JobNoticeListPage() {
       : null;
 
   function updateFilter(label: FilterLabel, value: string) {
+    setPageSize(INITIAL_PAGE_SIZE);
     setFilters((current) => ({ ...current, [label]: value }));
   }
 
@@ -469,8 +470,19 @@ export default function JobNoticeListPage() {
   }
 
   function selectSort(option: SortOption) {
+    setPageSize(INITIAL_PAGE_SIZE);
     setSort(option);
     setSortOpen(false);
+  }
+
+  function updateSearchQuery(nextQuery: string) {
+    setPageSize(INITIAL_PAGE_SIZE);
+    setSearchQuery(nextQuery);
+  }
+
+  function updatePeriod(nextPeriod: Period) {
+    setPageSize(INITIAL_PAGE_SIZE);
+    setPeriod(nextPeriod);
   }
 
   function scrollToTop() {
@@ -508,10 +520,6 @@ export default function JobNoticeListPage() {
       : filteredJobs.length > 0
         ? 'success'
         : 'empty';
-
-  useEffect(() => {
-    setPageSize(INITIAL_PAGE_SIZE);
-  }, [filters, period, searchQuery, sort]);
 
   useEffect(() => {
     if (!jobNoticeListResponse?.content.length) return;
@@ -577,6 +585,7 @@ export default function JobNoticeListPage() {
   }
 
   function resetSearchConditions() {
+    setPageSize(INITIAL_PAGE_SIZE);
     setSearchQuery('');
     setFilters(createInitialFilters());
     setPeriod('기간 전체');
@@ -585,7 +594,7 @@ export default function JobNoticeListPage() {
   return (
     <div className="jn">
       <section className="jn-banner">
-        <BannerSearch value={searchQuery} onSearch={setSearchQuery} />
+        <BannerSearch value={searchQuery} onSearch={updateSearchQuery} />
         <BannerStats stats={listStats} />
       </section>
 
@@ -608,7 +617,7 @@ export default function JobNoticeListPage() {
               <ActiveFilterChips filters={filters} onReset={resetFilter} />
             </div>
             <div className="jn-results__tools">
-              <PeriodSelector period={period} onChange={setPeriod} />
+              <PeriodSelector period={period} onChange={updatePeriod} />
               <SortDropdown
                 selected={sort}
                 isOpen={sortOpen}
