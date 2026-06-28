@@ -668,7 +668,7 @@ export default function PaymentPage() {
               </div>
 
               {/* 환불 요청 입력 — PAID 상태에서 요청 접수 */}
-              {selected.paymentStatus === 'PAID' && !selected.refundStatus && (
+              {selected.paymentStatus === PAY_STATUS.PAID && !selected.refundStatus && (
                 <div className="refundCheckSection">
                   <p className="refundCheckTitle">환불 요청 접수</p>
                   {requestMode ? (
@@ -742,12 +742,12 @@ export default function PaymentPage() {
 
             <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
               {/* 환불 요청 접수 버튼 */}
-              {selected.paymentStatus === 'PAID' && !selected.refundStatus && !requestMode && (
+              {selected.paymentStatus === PAY_STATUS.PAID && !selected.refundStatus && !requestMode && (
                 <button onClick={() => setRequestMode(true)} disabled={refundLoading}>
                   환불 요청
                 </button>
               )}
-              {selected.paymentStatus === 'PAID' && !selected.refundStatus && requestMode && (
+              {selected.paymentStatus === PAY_STATUS.PAID && !selected.refundStatus && requestMode && (
                 <>
                   <button
                     onClick={submitRefundRequest}

@@ -111,6 +111,17 @@ class AdminPaymentServiceImplTest {
         }
 
         @Test
+        @DisplayName("CS 역할 → REFUND_APPROVAL_FORBIDDEN 예외")
+        void approveRefund_csRole_throwsForbidden() {
+            UUID paymentId = UUID.randomUUID();
+
+            assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "CS"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminPaymentErrorCode.REFUND_APPROVAL_FORBIDDEN);
+        }
+
+        @Test
         @DisplayName("PENDING 환불 없음 → REFUND_NOT_PENDING 예외")
         void approveRefund_noPendingRefund_throwsRefundNotPending() {
             UUID paymentId = UUID.randomUUID();
@@ -159,6 +170,17 @@ class AdminPaymentServiceImplTest {
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminPaymentErrorCode.PAYMENT_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("CS 역할 → REFUND_APPROVAL_FORBIDDEN 예외")
+        void rejectRefund_csRole_throwsForbidden() {
+            UUID paymentId = UUID.randomUUID();
+
+            assertThatThrownBy(() -> adminPaymentService.rejectRefund(paymentId, "사유", 1L, "CS"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminPaymentErrorCode.REFUND_APPROVAL_FORBIDDEN);
         }
 
         @Test

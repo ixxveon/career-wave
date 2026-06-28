@@ -791,7 +791,8 @@ COMMENT ON COLUMN admins.updated_at     IS '최종 수정 일시';
 CREATE TABLE refunds (
     refund_id     BIGSERIAL   NOT NULL,
     payment_id    UUID        NOT NULL,
-    admin_id      BIGINT      NULL,
+    requested_by_admin_id BIGINT NULL,
+    processed_by_admin_id BIGINT NULL,
     amount        INTEGER     NOT NULL,
     reason        TEXT        NOT NULL,
     refund_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
@@ -801,7 +802,8 @@ CREATE TABLE refunds (
 
     CONSTRAINT pk_refunds         PRIMARY KEY (refund_id),
     CONSTRAINT fk_refunds_payment FOREIGN KEY (payment_id) REFERENCES payments (payment_id),
-    CONSTRAINT fk_refunds_admin   FOREIGN KEY (admin_id)   REFERENCES admins (admin_id),
+    CONSTRAINT fk_refunds_requested_admin FOREIGN KEY (requested_by_admin_id) REFERENCES admins (admin_id),
+    CONSTRAINT fk_refunds_processed_admin FOREIGN KEY (processed_by_admin_id) REFERENCES admins (admin_id),
     CONSTRAINT chk_refund_status  CHECK (refund_status IN ('PENDING', 'COMPLETED', 'FAILED', 'REJECTED')),
     CONSTRAINT chk_reject_reason  CHECK (refund_status != 'REJECTED'  OR reject_reason IS NOT NULL),
     CONSTRAINT chk_refunded_at    CHECK (refund_status != 'COMPLETED' OR refunded_at   IS NOT NULL)
@@ -811,7 +813,8 @@ CREATE UNIQUE INDEX uq_refunds_pending_per_payment ON refunds (payment_id) WHERE
 COMMENT ON TABLE  refunds               IS '환불 내역 테이블';
 COMMENT ON COLUMN refunds.refund_id     IS '환불 고유 식별자';
 COMMENT ON COLUMN refunds.payment_id    IS '결제 FK';
-COMMENT ON COLUMN refunds.admin_id      IS '처리 관리자 FK (자동 환불 = NULL)';
+COMMENT ON COLUMN refunds.requested_by_admin_id IS '환불 요청 관리자 FK';
+COMMENT ON COLUMN refunds.processed_by_admin_id IS '환불 처리 관리자 FK (승인/거절/실패)';
 COMMENT ON COLUMN refunds.amount        IS '환불 금액';
 COMMENT ON COLUMN refunds.reason        IS '환불 사유';
 COMMENT ON COLUMN refunds.refund_status IS '환불 상태 (PENDING / COMPLETED / FAILED / REJECTED)';

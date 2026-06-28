@@ -928,7 +928,7 @@ export default function CustomerServicePage() {
                   )}
                 </>
               )}
-              {(selectedInquiry.category === 'REFUND' || selectedInquiry.category === 'PAYMENT_ERROR') && selectedInquiry.memberEmail && (
+              {(selectedInquiry.category === INQUIRY_CATEGORY.REFUND || selectedInquiry.category === INQUIRY_CATEGORY.PAYMENT_ERROR) && selectedInquiry.memberEmail && (
                 <button
                   onClick={() => navigate(`${ADMIN_ROUTE_PATHS.payments}?tab=payments&keyword=${encodeURIComponent(selectedInquiry.memberEmail)}`)}
                   style={{ background: '#2e5eaa', color: '#fff', borderColor: '#2e5eaa' }}
