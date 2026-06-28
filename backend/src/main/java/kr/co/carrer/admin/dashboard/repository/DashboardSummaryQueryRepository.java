@@ -1,5 +1,6 @@
 package kr.co.carrer.admin.dashboard.repository;
 
+import kr.co.carrer.admin.dashboard.type.DashboardAlertLevelType;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -48,6 +49,7 @@ public class DashboardSummaryQueryRepository {
             Long id,
             String title,
             String message,
+            DashboardAlertLevelType level,
             ZonedDateTime createdAt
     ) {
     }
@@ -90,6 +92,7 @@ public class DashboardSummaryQueryRepository {
             Long id,
             String title,
             String message,
+            DashboardAlertLevelType level,
             ZonedDateTime createdAt
     ) {
     }

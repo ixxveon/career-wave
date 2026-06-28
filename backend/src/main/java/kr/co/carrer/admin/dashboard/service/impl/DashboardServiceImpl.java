@@ -139,7 +139,7 @@ public class DashboardServiceImpl implements DashboardService {
         emptyIfNull(auditAlerts).stream()
                 .map(row -> new DashboardDTO.Alert(
                         row.id(),
-                        DashboardAlertLevelType.WARNING,
+                        resolveAlertLevel(row.level(), DashboardAlertLevelType.WARNING),
                         DashboardDomainType.AUDIT_LOG,
                         row.title(),
                         row.message(),
@@ -151,7 +151,7 @@ public class DashboardServiceImpl implements DashboardService {
         emptyIfNull(scrapingAlerts).stream()
                 .map(row -> new DashboardDTO.Alert(
                         row.id(),
-                        DashboardAlertLevelType.URGENT,
+                        resolveAlertLevel(row.level(), DashboardAlertLevelType.URGENT),
                         DashboardDomainType.SCRAPING,
                         row.title(),
                         row.message(),
@@ -166,6 +166,10 @@ public class DashboardServiceImpl implements DashboardService {
                         .thenComparing(DashboardDTO.Alert::createdAt, Comparator.reverseOrder()))
                 .limit(ALERT_LIMIT)
                 .toList();
+    }
+
+    private DashboardAlertLevelType resolveAlertLevel(DashboardAlertLevelType level, DashboardAlertLevelType defaultLevel) {
+        return level == null ? defaultLevel : level;
     }
 
     private int alertPriority(DashboardAlertLevelType level) {
