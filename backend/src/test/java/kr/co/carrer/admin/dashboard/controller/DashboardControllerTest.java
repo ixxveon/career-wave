@@ -222,7 +222,7 @@ class DashboardControllerTest {
                 "count",
                 "test",
                 DashboardSeverityType.NORMAL,
-                "/admin/dashboard"
+                "/cw-manage-2026/dashboard"
         );
     }
 }

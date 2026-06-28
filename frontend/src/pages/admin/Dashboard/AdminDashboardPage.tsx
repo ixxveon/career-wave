@@ -4,6 +4,7 @@ import { Activity, Bot, CreditCard, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { adminSession } from '../../../api/admin/adminAuthApi';
 import {
+  DASHBOARD_KPI_KEY,
   dashboardApi,
   getDashboardSummaryErrorMessage,
   unwrapDashboardSummaryResponse,
@@ -19,10 +20,10 @@ import '../../../styles/admin/admin.css';
 const DASHBOARD_SUMMARY_QUERY_KEY = ['admin', 'dashboard', 'summary'] as const;
 
 const KPI_PRESENTATION = {
-  TODAY_NEW_MEMBERS: { Icon: Users, theme: 'kpi-blue' },
-  REALTIME_ACTIVE_USERS: { Icon: Activity, theme: 'kpi-green' },
-  AI_INTERVIEW_SESSIONS: { Icon: Bot, theme: 'kpi-purple' },
-  TODAY_REVENUE: { Icon: CreditCard, theme: 'kpi-yellow' },
+  [DASHBOARD_KPI_KEY.TODAY_NEW_ADMINS]: { Icon: Users, theme: 'kpi-blue' },
+  [DASHBOARD_KPI_KEY.REALTIME_ACTIVE_ADMINS]: { Icon: Activity, theme: 'kpi-green' },
+  [DASHBOARD_KPI_KEY.AI_INTERVIEW_SESSIONS]: { Icon: Bot, theme: 'kpi-purple' },
+  [DASHBOARD_KPI_KEY.TODAY_REVENUE]: { Icon: CreditCard, theme: 'kpi-yellow' },
 } as const;
 
 const ALERT_PRESENTATION = {
@@ -147,7 +148,7 @@ export default function AdminDashboardPage() {
     try {
       const items = (dashboardSummary?.kpis ?? []).map((item) => {
         const presentation =
-          KPI_PRESENTATION[item.key as keyof typeof KPI_PRESENTATION] ?? KPI_PRESENTATION.TODAY_NEW_MEMBERS;
+          KPI_PRESENTATION[item.key] ?? KPI_PRESENTATION[DASHBOARD_KPI_KEY.TODAY_NEW_ADMINS];
 
         return {
           ...item,
