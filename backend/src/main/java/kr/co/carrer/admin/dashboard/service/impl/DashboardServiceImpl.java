@@ -93,7 +93,7 @@ public class DashboardServiceImpl implements DashboardService {
         return List.of(
                 new DashboardDTO.Kpi(
                         DashboardKpiKeyType.TODAY_NEW_ADMINS,
-                        "오늘 신규 가입자",
+                        "오늘 신규 관리자",
                         newAdminCount,
                         "명",
                         "선택 기간 기준",
@@ -123,7 +123,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "오늘 매출",
                         revenue,
                         "원",
-                        "카드 결제 기준",
+                        "결제 승인 기준",
                         DashboardSeverityType.NORMAL,
                         PAYMENT_PATH
                 )

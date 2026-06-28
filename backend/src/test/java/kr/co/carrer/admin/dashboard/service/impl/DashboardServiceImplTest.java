@@ -86,6 +86,7 @@ class DashboardServiceImplTest {
         assertThat(result.kpis()).anySatisfy(kpi -> {
             assertThat(kpi.key()).isEqualTo(DashboardKpiKeyType.TODAY_REVENUE);
             assertThat(kpi.value()).isEqualTo(29_000L);
+            assertThat(kpi.deltaText()).isEqualTo("결제 승인 기준");
         });
     }
 

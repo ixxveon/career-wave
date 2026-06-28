@@ -50,13 +50,13 @@ public class DashboardSummaryQueryRepository {
                 COUNT(*) FILTER (
                     WHERE created_at >= :rangeStartInclusive
                       AND created_at < :rangeEndExclusive
-                ) AS new_member_count,
-                COUNT(*) FILTER (WHERE member_status = 'ACTIVE') AS active_member_count,
+                ) AS new_admin_count,
+                COUNT(*) FILTER (WHERE status = 'ACTIVE') AS active_admin_count,
                 COUNT(*) FILTER (
                     WHERE last_login_at >= :rangeStartInclusive
                       AND last_login_at < :rangeEndExclusive
                 ) AS recent_login_count
-            FROM members
+            FROM admins
             """;
 
         MapSqlParameterSource params = windowParams(queryWindow);
@@ -65,8 +65,8 @@ public class DashboardSummaryQueryRepository {
                 return new AdminAccountMetrics(0L, 0L, 0L);
             }
             return new AdminAccountMetrics(
-                    rs.getLong("new_member_count"),
-                    rs.getLong("active_member_count"),
+                    rs.getLong("new_admin_count"),
+                    rs.getLong("active_admin_count"),
                     rs.getLong("recent_login_count")
             );
         });
@@ -482,6 +482,7 @@ public class DashboardSummaryQueryRepository {
 
     private ZonedDateTime todayStartInclusive(DashboardQueryWindow queryWindow) {
         return queryWindow.rangeEndExclusive()
+                .minusNanos(1)
                 .withZoneSameInstant(SERVICE_ZONE_ID)
                 .toLocalDate()
                 .atStartOfDay(SERVICE_ZONE_ID)
