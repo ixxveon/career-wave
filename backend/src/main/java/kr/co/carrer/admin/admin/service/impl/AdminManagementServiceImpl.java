@@ -25,9 +25,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.InetAddress;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -179,29 +179,42 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         return PaginationResponse.of(items, safePage, safeSize, ipAclPage.getTotalElements());
     }
 
+    private static final Pattern IPV4_PATTERN = Pattern.compile(
+        "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$"
+    );
+    private static final Pattern IPV6_PATTERN = Pattern.compile(
+        "^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^([0-9a-fA-F]{1,4}:){1,7}:$|"
+        + "^::[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){0,5}$|"
+        + "^[0-9a-fA-F]{1,4}::[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){0,4}$|"
+        + "^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$"
+    );
+
+    private boolean isIpLiteral(String value) {
+        return IPV4_PATTERN.matcher(value).matches() || IPV6_PATTERN.matcher(value).matches();
+    }
+
     private void validateIpCidrFormat(String ipRange) {
         if (ipRange.contains("/")) {
             String[] parts = ipRange.split("/", 2);
-            if (parts.length != 2) {
+            if (parts.length != 2 || parts[0].isEmpty() || parts[1].isEmpty()) {
+                throw new CustomException(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
+            }
+
+            if (!isIpLiteral(parts[0])) {
                 throw new CustomException(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
             }
 
             try {
-                byte[] addressBytes = InetAddress.getByName(parts[0]).getAddress();
                 int prefixLength = Integer.parseInt(parts[1]);
-                int maxPrefix = addressBytes.length * 8;
+                int maxPrefix = IPV4_PATTERN.matcher(parts[0]).matches() ? 32 : 128;
                 if (prefixLength < 0 || prefixLength > maxPrefix) {
                     throw new CustomException(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
                 }
             } catch (NumberFormatException e) {
                 throw new CustomException(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
-            } catch (java.net.UnknownHostException e) {
-                throw new CustomException(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
             }
         } else {
-            try {
-                InetAddress.getByName(ipRange);
-            } catch (java.net.UnknownHostException e) {
+            if (!isIpLiteral(ipRange)) {
                 throw new CustomException(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
             }
         }
