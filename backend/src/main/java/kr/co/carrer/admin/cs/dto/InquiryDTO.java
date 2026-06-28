@@ -27,6 +27,7 @@ public class InquiryDTO {
     public record ResponseDetail(
         Long inquiryId,
         String memberName,
+        String memberEmail,
         InquiryCategory category,
         String title,
         String content,
