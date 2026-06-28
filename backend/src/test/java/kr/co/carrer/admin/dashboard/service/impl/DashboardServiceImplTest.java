@@ -21,10 +21,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DashboardServiceImplTest {
+
+    private static final String ADMIN_ROUTE_PREFIX = "/cw-manage-2026";
 
     @Mock
     private DashboardSummaryQueryRepository dashboardSummaryQueryRepository;
@@ -35,14 +39,20 @@ class DashboardServiceImplTest {
     void setUp() {
         dashboardService = new DashboardServiceImpl(dashboardSummaryQueryRepository);
 
-        when(dashboardSummaryQueryRepository.fetchAdminAccountMetrics(any(DashboardQueryWindow.class)))
+        lenient().when(dashboardSummaryQueryRepository.fetchAdminAccountMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.AdminAccountMetrics(0L, 0L, 0L));
-        when(dashboardSummaryQueryRepository.fetchAiUsageMetrics(any(DashboardQueryWindow.class)))
+        lenient().when(dashboardSummaryQueryRepository.fetchAiUsageMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.AiUsageMetrics(0L, BigDecimal.ZERO, true, 0, true));
         when(dashboardSummaryQueryRepository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(0L, 0L, 0L, 0));
+                .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(5L, 4L, 1L, 90));
         when(dashboardSummaryQueryRepository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(0L, 0L, 0L, 0L));
+                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(6L, 1L, 1L, 4L));
+        lenient().when(dashboardSummaryQueryRepository.findAuditAlerts(any(DashboardQueryWindow.class), anyInt()))
+                .thenReturn(List.of());
+        lenient().when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), anyInt()))
+                .thenReturn(List.of());
+        lenient().when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), anyInt()))
+                .thenReturn(List.of());
     }
 
     @Test
@@ -97,8 +107,6 @@ class DashboardServiceImplTest {
                                 now.minusMinutes(5)
                         )
                 ));
-        when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), anyInt()))
-                .thenReturn(List.of());
 
         DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
 
@@ -117,10 +125,6 @@ class DashboardServiceImplTest {
     @DisplayName("최근 활동은 AuditLog 기반 row를 대시보드 응답으로 매핑한다")
     void recentActivitiesAreMappedFromAuditRows() {
         ZonedDateTime occurredAt = ZonedDateTime.parse("2026-06-28T10:00:00Z");
-        when(dashboardSummaryQueryRepository.findAuditAlerts(any(DashboardQueryWindow.class), anyInt()))
-                .thenReturn(List.of());
-        when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), anyInt()))
-                .thenReturn(List.of());
         when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), anyInt()))
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.RecentActivityRow(
                         10L,
@@ -140,6 +144,86 @@ class DashboardServiceImplTest {
                         DashboardDTO.RecentActivity::message,
                         DashboardDTO.RecentActivity::targetPath
                 )
-                .containsExactly(tuple(10L, occurredAt, "admin", "관리자 활동 - LOGIN", "/admin/log"));
+                .containsExactly(tuple(10L, occurredAt, "admin", "관리자 활동 - LOGIN", "/cw-manage-2026/log"));
+    }
+
+    @Test
+    void getSummaryReturnsFrontendAdminRoutePaths() {
+        when(dashboardSummaryQueryRepository.fetchAdminAccountMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.AdminAccountMetrics(3L, 2L, 1L));
+        when(dashboardSummaryQueryRepository.fetchAiUsageMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.AiUsageMetrics(4L, BigDecimal.valueOf(5000L), true, 80, true));
+        when(dashboardSummaryQueryRepository.findAuditAlerts(any(DashboardQueryWindow.class), eq(5)))
+                .thenReturn(List.of(new DashboardSummaryQueryRepository.AuditAlertRow(
+                        1L,
+                        DashboardAlertLevelType.WARNING,
+                        "Audit warning",
+                        "Audit warning message",
+                        ZonedDateTime.parse("2026-06-22T09:00:00Z")
+                )));
+        when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), eq(5)))
+                .thenReturn(List.of(new DashboardSummaryQueryRepository.ScrapingAlertRow(
+                        2L,
+                        DashboardAlertLevelType.URGENT,
+                        "Scraping failed",
+                        "Scraping failed message",
+                        ZonedDateTime.parse("2026-06-22T09:01:00Z")
+                )));
+        when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))
+                .thenReturn(List.of(
+                        new DashboardSummaryQueryRepository.RecentActivityRow(
+                                3L,
+                                ZonedDateTime.parse("2026-06-22T09:02:00Z"),
+                                "admin",
+                                "Checked audit log",
+                                "/admin/log"
+                        ),
+                        new DashboardSummaryQueryRepository.RecentActivityRow(
+                                4L,
+                                ZonedDateTime.parse("2026-06-22T09:03:00Z"),
+                                "admin",
+                                "Opened dashboard",
+                                "/cw-manage-2026/dashboard"
+                        ),
+                        new DashboardSummaryQueryRepository.RecentActivityRow(
+                                5L,
+                                ZonedDateTime.parse("2026-06-22T09:04:00Z"),
+                                "admin",
+                                "Missing target path",
+                                " "
+                        )
+                ));
+
+        DashboardDTO.ResponseSummary summary = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(summary.kpis())
+                .extracting(DashboardDTO.Kpi::targetPath)
+                .containsExactly(
+                        ADMIN_ROUTE_PREFIX + "/admins",
+                        ADMIN_ROUTE_PREFIX + "/admins",
+                        ADMIN_ROUTE_PREFIX + "/ai",
+                        ADMIN_ROUTE_PREFIX + "/payments"
+                );
+        assertThat(summary.alerts())
+                .extracting(DashboardDTO.Alert::targetPath)
+                .containsExactly(
+                        ADMIN_ROUTE_PREFIX + "/scraping",
+                        ADMIN_ROUTE_PREFIX + "/log"
+                );
+        assertThat(summary.serviceCards())
+                .extracting(DashboardDTO.ServiceCard::targetPath)
+                .containsExactly(
+                        ADMIN_ROUTE_PREFIX + "/admins",
+                        ADMIN_ROUTE_PREFIX + "/ai",
+                        ADMIN_ROUTE_PREFIX + "/scraping",
+                        ADMIN_ROUTE_PREFIX + "/log"
+                );
+        assertThat(summary.recentActivities())
+                .extracting(DashboardDTO.RecentActivity::targetPath)
+                .containsExactly(
+                        ADMIN_ROUTE_PREFIX + "/log",
+                        ADMIN_ROUTE_PREFIX + "/dashboard",
+                        ADMIN_ROUTE_PREFIX + "/dashboard"
+                );
     }
 }
