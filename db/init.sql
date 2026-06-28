@@ -1475,18 +1475,6 @@ CREATE TABLE settlement_reports (
 CREATE INDEX idx_settlement_period ON settlement_reports (settlement_period_start, settlement_period_end);
 CREATE INDEX idx_settlement_status ON settlement_reports (settlement_status);
 
-CREATE TABLE settlement_items (
-    settlement_item_id  BIGSERIAL       PRIMARY KEY,
-    settlement_id       BIGINT          NOT NULL REFERENCES settlement_reports(settlement_id),
-    payment_id          UUID            NOT NULL REFERENCES payments(payment_id),
-    amount              INTEGER         NOT NULL,
-    item_type           VARCHAR(20)     NOT NULL,
-    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    CONSTRAINT uq_settlement_item_payment UNIQUE (settlement_id, payment_id, item_type)
-);
-
-CREATE INDEX idx_settlement_item_settlement ON settlement_items (settlement_id);
-
 COMMENT ON TABLE  settlement_reports                           IS '월별 정산 리포트 요약';
 COMMENT ON COLUMN settlement_reports.settlement_id             IS '정산 리포트 PK';
 COMMENT ON COLUMN settlement_reports.settlement_period_start   IS '정산 기간 시작일';
@@ -1503,6 +1491,18 @@ COMMENT ON COLUMN settlement_reports.settlement_status         IS '정산 상태
 COMMENT ON COLUMN settlement_reports.settled_at                IS '정산 확정 일시';
 COMMENT ON COLUMN settlement_reports.settled_by                IS '정산 확정 관리자 FK';
 COMMENT ON COLUMN settlement_reports.note                      IS '비고/메모';
+
+CREATE TABLE settlement_items (
+    settlement_item_id  BIGSERIAL       PRIMARY KEY,
+    settlement_id       BIGINT          NOT NULL REFERENCES settlement_reports(settlement_id),
+    payment_id          UUID            NOT NULL REFERENCES payments(payment_id),
+    amount              INTEGER         NOT NULL,
+    item_type           VARCHAR(20)     NOT NULL,
+    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_settlement_item_payment UNIQUE (settlement_id, payment_id, item_type)
+);
+
+CREATE INDEX idx_settlement_item_settlement ON settlement_items (settlement_id);
 
 COMMENT ON TABLE  settlement_items                         IS '정산 포함 결제/환불 내역';
 COMMENT ON COLUMN settlement_items.settlement_item_id      IS '항목 PK';
