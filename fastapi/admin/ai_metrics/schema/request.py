@@ -12,6 +12,7 @@ class AiFeatureType(str, Enum):
     INTERVIEW_TTS = "INTERVIEW_TTS"
     ADMIN_CS = "ADMIN_CS"
     ADMIN_REPORT = "ADMIN_REPORT"
+    ADMIN_REPORT_MEMBER = "ADMIN_REPORT_MEMBER"
 
 
 class TokenTrendInterval(str, Enum):

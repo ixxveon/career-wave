@@ -183,12 +183,12 @@ public class AdminReportServiceImpl implements AdminReportService {
         Report report = reportRepository.findById(reportId)
             .orElseThrow(() -> new CustomException(AdminReportErrorCode.REPORT_NOT_FOUND));
 
-        Map<String, Object> memberSummary = reportQueryRepository.findMemberSummaryByReportId(reportId)
+        ReportQueryRepository.MemberSummary memberSummary = reportQueryRepository.findMemberSummaryByReportId(reportId)
             .orElseThrow(() -> new CustomException(AdminReportErrorCode.REPORT_NOT_FOUND));
 
-        int warningCount = (int) memberSummary.get("warningCount");
-        long reportCount = (long) memberSummary.get("reportCount");
-        String memberStatus = (String) memberSummary.get("memberStatus");
+        int warningCount = memberSummary.warningCount();
+        long reportCount = memberSummary.reportCount();
+        String memberStatus = memberSummary.memberStatus();
 
         Map<?, ?> aiResult = callFastApiForMemberAnalysis(
             reportId, adminId, warningCount, reportCount, memberStatus, report.getReason()

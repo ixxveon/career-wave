@@ -14,7 +14,6 @@ import org.springframework.stereotype.Repository;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -121,7 +120,9 @@ public class ReportQueryRepository {
         return ((Number) query.getSingleResult()).longValue();
     }
 
-    public Optional<Map<String, Object>> findMemberSummaryByReportId(Long reportId) {
+    public record MemberSummary(int warningCount, long reportCount, String memberStatus) {}
+
+    public Optional<MemberSummary> findMemberSummaryByReportId(Long reportId) {
         String sql = """
             SELECT m.warning_count,
                    (SELECT COUNT(*) FROM reports r2 WHERE r2.member_id = m.member_id) AS report_count,
@@ -137,10 +138,10 @@ public class ReportQueryRepository {
         if (rows.isEmpty()) return Optional.empty();
 
         Object[] row = (Object[]) rows.get(0);
-        return Optional.of(Map.of(
-            "warningCount", ((Number) row[0]).intValue(),
-            "reportCount", ((Number) row[1]).longValue(),
-            "memberStatus", (String) row[2]
+        return Optional.of(new MemberSummary(
+            ((Number) row[0]).intValue(),
+            ((Number) row[1]).longValue(),
+            (String) row[2]
         ));
     }
 
