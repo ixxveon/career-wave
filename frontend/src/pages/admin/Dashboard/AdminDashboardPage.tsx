@@ -19,8 +19,8 @@ import '../../../styles/admin/admin.css';
 const DASHBOARD_SUMMARY_QUERY_KEY = ['admin', 'dashboard', 'summary'] as const;
 
 const KPI_PRESENTATION = {
-  TODAY_NEW_MEMBERS: { Icon: Users, theme: 'kpi-blue' },
-  REALTIME_ACTIVE_USERS: { Icon: Activity, theme: 'kpi-green' },
+  TODAY_NEW_ADMINS: { Icon: Users, theme: 'kpi-blue' },
+  REALTIME_ACTIVE_ADMINS: { Icon: Activity, theme: 'kpi-green' },
   AI_INTERVIEW_SESSIONS: { Icon: Bot, theme: 'kpi-purple' },
   TODAY_REVENUE: { Icon: CreditCard, theme: 'kpi-yellow' },
 } as const;
@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
     try {
       const items = (dashboardSummary?.kpis ?? []).map((item) => {
         const presentation =
-          KPI_PRESENTATION[item.key as keyof typeof KPI_PRESENTATION] ?? KPI_PRESENTATION.TODAY_NEW_MEMBERS;
+          KPI_PRESENTATION[item.key as keyof typeof KPI_PRESENTATION] ?? KPI_PRESENTATION.TODAY_NEW_ADMINS;
 
         return {
           ...item,

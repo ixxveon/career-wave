@@ -2,9 +2,13 @@ package kr.co.carrer.admin.dashboard.controller;
 
 import kr.co.carrer.admin.dashboard.dto.DashboardDTO;
 import kr.co.carrer.admin.dashboard.service.DashboardService;
+import kr.co.carrer.admin.dashboard.type.DashboardAlertLevelType;
+import kr.co.carrer.admin.dashboard.type.DashboardDomainType;
 import kr.co.carrer.admin.dashboard.type.DashboardKpiKeyType;
+import kr.co.carrer.admin.dashboard.type.DashboardPaymentMethod;
 import kr.co.carrer.admin.dashboard.type.DashboardRangeType;
 import kr.co.carrer.admin.dashboard.type.DashboardSeverityType;
+import kr.co.carrer.admin.dashboard.type.DashboardSystemStatusType;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
@@ -212,6 +216,102 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.data.kpis[?(@.key == 'REALTIME_ACTIVE_ADMINS')]").exists())
                 .andExpect(jsonPath("$.data.kpis[?(@.key == 'AI_INTERVIEW_SESSIONS')]").exists())
                 .andExpect(jsonPath("$.data.kpis[?(@.key == 'TODAY_REVENUE')]").exists());
+    }
+
+    @Test
+    @WithMockUser(roles = {"ADMIN", "MASTER"})
+    @DisplayName("dashboard summary serializes frontend contract keys, domains, and target paths")
+    void summarySerializesFrontendContractValues() throws Exception {
+        given(dashboardService.getSummary(any(DashboardDTO.RequestSummary.class)))
+                .willReturn(new DashboardDTO.ResponseSummary(
+                        ZonedDateTime.parse("2026-06-22T09:00:00Z"),
+                        DashboardRangeType.TODAY,
+                        List.of(
+                                new DashboardDTO.Kpi(
+                                        DashboardKpiKeyType.TODAY_NEW_ADMINS,
+                                        "오늘 신규 가입자",
+                                        1L,
+                                        "명",
+                                        "선택 기간 기준",
+                                        DashboardSeverityType.NORMAL,
+                                        "/cw-manage-2026/admins"
+                                ),
+                                new DashboardDTO.Kpi(
+                                        DashboardKpiKeyType.TODAY_REVENUE,
+                                        "오늘 매출",
+                                        29000L,
+                                        "원",
+                                        "카드 결제 기준",
+                                        DashboardSeverityType.NORMAL,
+                                        "/cw-manage-2026/payments"
+                                )
+                        ),
+                        List.of(
+                                new DashboardDTO.Alert(
+                                        1L,
+                                        DashboardAlertLevelType.WARNING,
+                                        DashboardDomainType.AUDIT_LOG,
+                                        "감사 로그 경고",
+                                        "권한 변경 경고",
+                                        "/cw-manage-2026/log",
+                                        ZonedDateTime.parse("2026-06-22T08:00:00Z")
+                                ),
+                                new DashboardDTO.Alert(
+                                        2L,
+                                        DashboardAlertLevelType.URGENT,
+                                        DashboardDomainType.SCRAPING,
+                                        "스크래핑 실패",
+                                        "원티드 스크래핑 실패",
+                                        "/cw-manage-2026/scraping",
+                                        ZonedDateTime.parse("2026-06-22T08:10:00Z")
+                                )
+                        ),
+                        List.of(new DashboardDTO.WeeklySignup("06/22", 3L)),
+                        List.of(new DashboardDTO.PaymentRatio(DashboardPaymentMethod.CARD, "카드", 100)),
+                        List.of(
+                                new DashboardDTO.ServiceCard(
+                                        "SCRAPING",
+                                        "스크래핑 관리",
+                                        "채용 공고 수집 파이프라인 상태를 확인합니다.",
+                                        "실행중 1개",
+                                        "/cw-manage-2026/scraping"
+                                ),
+                                new DashboardDTO.ServiceCard(
+                                        "AUDIT_LOG",
+                                        "감사 로그",
+                                        "관리자 활동과 시스템 변경 이력을 확인합니다.",
+                                        "알림 1건",
+                                        "/cw-manage-2026/log"
+                                )
+                        ),
+                        List.of(new DashboardDTO.SystemStatus(
+                                "SCRAPING_PIPELINE",
+                                "스크래핑 파이프라인",
+                                DashboardSystemStatusType.WARNING,
+                                "실행중 1개 / 실패 0개"
+                        )),
+                        List.of(new DashboardDTO.RecentActivity(
+                                10L,
+                                ZonedDateTime.parse("2026-06-22T08:20:00Z"),
+                                "admin",
+                                "관리자 활동 - 권한 변경",
+                                "/cw-manage-2026/log"
+                        ))
+                ));
+
+        mockMvc.perform(get("/api/v1/admin/dashboard/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.kpis[0].key").value("TODAY_NEW_ADMINS"))
+                .andExpect(jsonPath("$.data.kpis[0].targetPath").value("/cw-manage-2026/admins"))
+                .andExpect(jsonPath("$.data.kpis[1].key").value("TODAY_REVENUE"))
+                .andExpect(jsonPath("$.data.kpis[1].targetPath").value("/cw-manage-2026/payments"))
+                .andExpect(jsonPath("$.data.alerts[0].domain").value("AUDIT_LOG"))
+                .andExpect(jsonPath("$.data.alerts[0].targetPath").value("/cw-manage-2026/log"))
+                .andExpect(jsonPath("$.data.alerts[1].domain").value("SCRAPING"))
+                .andExpect(jsonPath("$.data.alerts[1].targetPath").value("/cw-manage-2026/scraping"))
+                .andExpect(jsonPath("$.data.serviceCards[0].key").value("SCRAPING"))
+                .andExpect(jsonPath("$.data.serviceCards[0].targetPath").value("/cw-manage-2026/scraping"))
+                .andExpect(jsonPath("$.data.recentActivities[0].targetPath").value("/cw-manage-2026/log"));
     }
 
     private DashboardDTO.Kpi createKpi(DashboardKpiKeyType key) {

@@ -30,6 +30,11 @@ public class DashboardServiceImpl implements DashboardService {
 
     private static final int ALERT_LIMIT = 5;
     private static final int RECENT_ACTIVITY_LIMIT = 5;
+    private static final String ADMIN_ADMINS_PATH = "/cw-manage-2026/admins";
+    private static final String ADMIN_AI_PATH = "/cw-manage-2026/ai";
+    private static final String ADMIN_PAYMENTS_PATH = "/cw-manage-2026/payments";
+    private static final String ADMIN_SCRAPING_PATH = "/cw-manage-2026/scraping";
+    private static final String ADMIN_LOG_PATH = "/cw-manage-2026/log";
 
     private final DashboardSummaryQueryRepository dashboardSummaryQueryRepository;
 
@@ -93,7 +98,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "명",
                         "선택 기간 기준",
                         DashboardSeverityType.NORMAL,
-                        "/admin/admins"
+                        ADMIN_ADMINS_PATH
                 ),
                 new DashboardDTO.Kpi(
                         DashboardKpiKeyType.REALTIME_ACTIVE_ADMINS,
@@ -102,7 +107,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "명",
                         "최근 로그인 " + recentLoginCount + "명",
                         DashboardSeverityType.NORMAL,
-                        "/admin/admins"
+                        ADMIN_ADMINS_PATH
                 ),
                 new DashboardDTO.Kpi(
                         DashboardKpiKeyType.AI_INTERVIEW_SESSIONS,
@@ -111,7 +116,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "건",
                         "선택 기간 기준",
                         DashboardSeverityType.NORMAL,
-                        "/admin/ai"
+                        ADMIN_AI_PATH
                 ),
                 new DashboardDTO.Kpi(
                         DashboardKpiKeyType.TODAY_REVENUE,
@@ -120,7 +125,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "원",
                         "카드 결제 기준",
                         DashboardSeverityType.NORMAL,
-                        "/admin/payments"
+                        ADMIN_PAYMENTS_PATH
                 )
         );
     }
@@ -138,7 +143,7 @@ public class DashboardServiceImpl implements DashboardService {
                         DashboardDomainType.AUDIT_LOG,
                         row.title(),
                         row.message(),
-                        "/admin/log",
+                        ADMIN_LOG_PATH,
                         row.createdAt()
                 ))
                 .forEach(alerts::add);
@@ -150,7 +155,7 @@ public class DashboardServiceImpl implements DashboardService {
                         DashboardDomainType.SCRAPING,
                         row.title(),
                         row.message(),
-                        "/admin/scraping",
+                        ADMIN_SCRAPING_PATH,
                         row.createdAt()
                 ))
                 .forEach(alerts::add);
@@ -195,28 +200,28 @@ public class DashboardServiceImpl implements DashboardService {
                         "관리자 관리",
                         "관리자 계정과 권한을 관리합니다.",
                         "신규 " + newAdminCount + "명",
-                        "/admin/admins"
+                        ADMIN_ADMINS_PATH
                 ),
                 new DashboardDTO.ServiceCard(
                         "AI_METRICS",
                         "AI Metrics",
                         "AI 사용량과 RAG 문서 상태를 확인합니다.",
                         "세션 " + interviewSessionCount + "건",
-                        "/admin/ai"
+                        ADMIN_AI_PATH
                 ),
                 new DashboardDTO.ServiceCard(
                         "SCRAPING",
                         "스크래핑 관리",
                         "채용 공고 수집 파이프라인 상태를 확인합니다.",
                         "실행중 " + runningPipelineCount + "개",
-                        "/admin/scraping"
+                        ADMIN_SCRAPING_PATH
                 ),
                 new DashboardDTO.ServiceCard(
                         "AUDIT_LOG",
                         "감사 로그",
                         "관리자 활동과 시스템 변경 이력을 확인합니다.",
                         "알림 " + alertCount + "건",
-                        "/admin/log"
+                        ADMIN_LOG_PATH
                 )
         );
     }
