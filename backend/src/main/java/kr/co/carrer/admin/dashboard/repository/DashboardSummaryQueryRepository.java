@@ -114,7 +114,10 @@ public class DashboardSummaryQueryRepository {
     }
 
     public List<WeeklySignupRow> findWeeklySignups(DashboardQueryWindow queryWindow) {
-        LocalDate endDate = queryWindow.rangeEndExclusive().withZoneSameInstant(SERVICE_ZONE_ID).toLocalDate();
+        LocalDate endDate = queryWindow.rangeEndExclusive()
+                .minusNanos(1)
+                .withZoneSameInstant(SERVICE_ZONE_ID)
+                .toLocalDate();
         LocalDate startDate = endDate.minusDays(6);
         Map<LocalDate, Long> countsByDate = new LinkedHashMap<>();
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
