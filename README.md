@@ -203,15 +203,12 @@ cp backend/.env.example backend/.env
 cp fastapi/.env.example fastapi/.env
 ```
 
+> 전체 변수 목록과 설명은 [`fastapi/.env.example`](fastapi/.env.example)을 참고하세요. 아래는 초기 설정 시 반드시 채워야 하는 주요 변수만 안내합니다.
+
 | 변수명 | 설명 | 예시 |
 | :--- | :--- | :--- |
 | `DATABASE_URL` | PostgreSQL 접속 URL | `postgresql://careerwave:pw@localhost:5432/careerwave` |
 | `OPENAI_API_KEY` | OpenAI API Key | `sk-...` |
-| `OPENAI_MODEL_LIGHT` | 경량 모델 | `gpt-4o-mini` |
-| `OPENAI_MODEL_DEEP` | 고성능 모델 | `gpt-4o` |
-| `OPENAI_MODEL_INTERVIEW` | 면접 전용 모델 | `gpt-4o` |
-| `OPENAI_MODEL_STT` | 음성 인식 모델 | `whisper-1` |
-| `OPENAI_MODEL_TTS` | 음성 합성 모델 | `tts-1` |
 | `SPRING_BASE_URL` | Spring 서버 내부 URL | `http://localhost:8080` |
 | `WEBHOOK_SECRET` | Spring Webhook 인증키 | `(backend/.env와 동일 값)` |
 | `JWT_SECRET` | JWT 서명 비밀키 | `(backend/.env와 동일 값)` |
