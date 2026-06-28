@@ -6,6 +6,7 @@ import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
+import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +63,8 @@ public class WebSocketJwtAuthenticator {
             accountStatusPorts.stream()
                     .filter(port -> port.supports(AccountType.USER))
                     .findFirst()
-                    .ifPresent(port -> port.validateActive(subject));
+                    .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_UNAUTHENTICATED))
+                    .validateActive(subject);
 
             return Optional.of(UUID.fromString(subject));
 
