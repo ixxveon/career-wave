@@ -1,4 +1,4 @@
-import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   ArrowUp,
@@ -247,21 +247,9 @@ interface JobCardProps {
 }
 
 function JobCard({ job, bookmarked, onBookmark, onClick }: JobCardProps) {
-  function handleCardKeyDown(event: KeyboardEvent<HTMLElement>) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-
-    event.preventDefault();
-    onClick();
-  }
-
   return (
     <article
       className={`jn-card${job.recommended ? ' jn-card--featured' : ''}`}
-      aria-label={`${job.company} ${job.title} 상세 보기`}
-      onClick={onClick}
-      onKeyDown={handleCardKeyDown}
-      role="button"
-      tabIndex={0}
     >
       <div className="jn-card__top">
         <div className="jn-card__logo">{job.company[0]}</div>
@@ -284,7 +272,14 @@ function JobCard({ job, bookmarked, onBookmark, onClick }: JobCardProps) {
       </div>
 
       <h3>
-        {job.title}
+        <button
+          type="button"
+          className="jn-card__detail-button"
+          aria-label={`${job.company} ${job.title} 상세 보기`}
+          onClick={onClick}
+        >
+          {job.title}
+        </button>
       </h3>
 
       <div className="jn-card__tags">
@@ -578,7 +573,7 @@ export default function JobNoticeListPage() {
   }
 
   function loadMoreJobs() {
-    setPageSize((current) => Math.min(current + PAGE_SIZE_STEP, resultTotalItems || current + PAGE_SIZE_STEP));
+    setPageSize((current) => Math.min(current + PAGE_SIZE_STEP, resultTotalItems));
   }
 
   function resetSearchConditions() {

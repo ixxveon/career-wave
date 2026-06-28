@@ -187,7 +187,7 @@ function DeadlineSection({ deadline }: { deadline: string }) {
 }
 
 function DetailTabContent({ activeTab, job }: { activeTab: DetailTab; job: JobNotice }) {
-  if (TABS.indexOf(activeTab) === 1) {
+  if (activeTab === '기업 정보') {
     return (
       <article className="jnd-job-description">
         <section className="jnd-description-section">
