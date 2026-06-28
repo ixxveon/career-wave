@@ -1492,6 +1492,8 @@ COMMENT ON COLUMN settlement_reports.settlement_status         IS '정산 상태
 COMMENT ON COLUMN settlement_reports.settled_at                IS '정산 확정 일시';
 COMMENT ON COLUMN settlement_reports.admin_id                  IS '정산 확정 관리자 FK';
 COMMENT ON COLUMN settlement_reports.note                      IS '비고/메모';
+COMMENT ON COLUMN settlement_reports.created_at                IS '생성 일시';
+COMMENT ON COLUMN settlement_reports.updated_at                IS '최종 수정 일시';
 
 CREATE TABLE settlement_items (
     settlement_item_id  BIGSERIAL       PRIMARY KEY,
@@ -1512,3 +1514,4 @@ COMMENT ON COLUMN settlement_items.settlement_id           IS '소속 정산 리
 COMMENT ON COLUMN settlement_items.payment_id              IS '결제 FK';
 COMMENT ON COLUMN settlement_items.amount                  IS '해당 결제/환불 금액';
 COMMENT ON COLUMN settlement_items.item_type               IS '항목 유형 (PAYMENT / REFUND)';
+COMMENT ON COLUMN settlement_items.created_at              IS '생성 일시';
