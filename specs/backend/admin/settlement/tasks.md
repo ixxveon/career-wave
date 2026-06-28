@@ -40,7 +40,7 @@
   - [ ] 동적 필터 쿼리 (`status`)
   - [ ] 기본 정렬: `settlement_period_start DESC`
   - [ ] 상세 조회: `settlement_items` JOIN `payments` → 항목 상세 포함
-  - [ ] 상세 조회: `settled_by` JOIN `admins` → 확정 관리자 이름 포함
+  - [ ] 상세 조회: `admin_id` JOIN `admins` → 확정 관리자 이름 포함
 
 - [ ] `SettlementItemRepository.java`
   - [ ] `JpaRepository<SettlementItem, Long>`

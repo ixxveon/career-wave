@@ -1465,7 +1465,7 @@ CREATE TABLE settlement_reports (
     refund_count            INTEGER         NOT NULL DEFAULT 0,
     settlement_status       VARCHAR(20)     NOT NULL,
     settled_at              TIMESTAMPTZ,
-    settled_by              BIGINT          REFERENCES admins(admin_id),
+    admin_id                BIGINT          REFERENCES admins(admin_id),
     note                    TEXT,
     created_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
@@ -1490,7 +1490,7 @@ COMMENT ON COLUMN settlement_reports.paid_count                IS '결제 완료
 COMMENT ON COLUMN settlement_reports.refund_count              IS '환불 건수';
 COMMENT ON COLUMN settlement_reports.settlement_status         IS '정산 상태 (PENDING / CONFIRMED)';
 COMMENT ON COLUMN settlement_reports.settled_at                IS '정산 확정 일시';
-COMMENT ON COLUMN settlement_reports.settled_by                IS '정산 확정 관리자 FK';
+COMMENT ON COLUMN settlement_reports.admin_id                  IS '정산 확정 관리자 FK';
 COMMENT ON COLUMN settlement_reports.note                      IS '비고/메모';
 
 CREATE TABLE settlement_items (

@@ -42,7 +42,7 @@
 > 관리자가 검증이 완료된 정산 리포트를 확정 처리한다.
 
 **Acceptance Scenarios**:
-1. **Given** PENDING 상태의 정산 리포트에 대해, **When** PATCH /api/v1/admin/settlements/{settlementId}/confirm 요청 시, **Then** settlement_status = CONFIRMED, settled_at, settled_by가 저장된다
+1. **Given** PENDING 상태의 정산 리포트에 대해, **When** PATCH /api/v1/admin/settlements/{settlementId}/confirm 요청 시, **Then** settlement_status = CONFIRMED, settled_at, admin_id가 저장된다
 2. **Given** CONFIRMED 상태의 정산 리포트에 대해, **When** PATCH /api/v1/admin/settlements/{settlementId}/confirm 요청 시, **Then** 409 ALREADY_CONFIRMED를 반환한다
 
 ---
@@ -74,7 +74,7 @@
 
 ### Key Entities
 
-- **SettlementReport**: settlementId, periodStart, periodEnd, totalSalesAmount, totalRefundAmount, netSalesAmount, supplyAmount, vatAmount, totalTransactionCount, paidCount, refundCount, settlementStatus, settledAt, settledBy, note
+- **SettlementReport**: settlementId, periodStart, periodEnd, totalSalesAmount, totalRefundAmount, netSalesAmount, supplyAmount, vatAmount, totalTransactionCount, paidCount, refundCount, settlementStatus, settledAt, adminId, note
 - **SettlementItem**: settlementItemId, settlementId, paymentId, amount, itemType
 
 ## Success Criteria
