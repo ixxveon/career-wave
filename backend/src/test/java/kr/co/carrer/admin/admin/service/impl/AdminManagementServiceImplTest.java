@@ -14,6 +14,8 @@ import kr.co.carrer.admin.admin.type.AdminStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -570,6 +572,36 @@ class AdminManagementServiceImplTest {
             assertThat(result.ipRange()).isEqualTo("10.0.0.0/24");
             assertThat(result.isEnabled()).isTrue();
             assertThat(result.description()).isEqualTo("본사 내부망");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {
+            "localhost",
+            "example.com",
+            "example.com/24",
+            "google.com",
+            "not-an-ip",
+            "999.999.999.999",
+            "10.0.0.1/33",
+            "10.0.0.1/-1",
+            "10.0.0.1/abc",
+            "/24",
+            "10.0.0/24"
+        })
+        @DisplayName("유효하지 않은 IP/CIDR 형식이면 INVALID_IP_CIDR_FORMAT 예외를 반환한다")
+        void throwsWhenInvalidIpCidrFormat(String invalidIpRange) {
+            var command = new AdminManagementService.CreateIpAclCommand(
+                "테스트",
+                invalidIpRange,
+                "테스트 설명"
+            );
+
+            assertThatThrownBy(() -> adminManagementService.createIpAcl(command, 1L, "10.0.0.6"))
+                .isInstanceOf(kr.co.carrer.global.exception.CustomException.class)
+                .extracting(exception -> ((kr.co.carrer.global.exception.CustomException) exception).getErrorCode())
+                .isEqualTo(AdminManagementErrorCode.INVALID_IP_CIDR_FORMAT);
+
+            verify(ipAclRepository, never()).saveAndFlush(org.mockito.ArgumentMatchers.any(IpAcl.class));
         }
 
         @Test

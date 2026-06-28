@@ -6,5 +6,6 @@ public enum AiFeatureType {
     INTERVIEW_STT,
     INTERVIEW_TTS,
     ADMIN_CS,
-    ADMIN_REPORT
+    ADMIN_REPORT,
+    ADMIN_REPORT_MEMBER
 }

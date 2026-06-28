@@ -71,6 +71,12 @@ export const AUDIT_SEVERITY = {
 
 export type AuditSeverity = (typeof AUDIT_SEVERITY)[keyof typeof AUDIT_SEVERITY];
 
+export const ADMIN_AUDIT_LOG_TYPE = {
+  ADMIN_MANAGEMENT: 'ADMIN_MANAGEMENT',
+} as const;
+
+export type AdminAuditLogType = (typeof ADMIN_AUDIT_LOG_TYPE)[keyof typeof ADMIN_AUDIT_LOG_TYPE];
+
 const FILTER_SENTINEL = {
   ALL: 'ALL',
 } as const;
@@ -191,6 +197,7 @@ export interface RequestUpdateAclEnabled {
 }
 
 export interface GetAdminAuditLogsParams {
+  logType?: AdminAuditLogType | FilterSentinel;
   actor?: string | FilterSentinel;
   severity?: AuditSeverity | FilterSentinel;
   page?: number;

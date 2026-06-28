@@ -129,6 +129,7 @@ export interface InquiryItem {
 }
 
 export interface InquiryDetail extends InquiryItem {
+  memberEmail: string;
   content: string;
   reply: string | null;
   repliedAt: string | null;

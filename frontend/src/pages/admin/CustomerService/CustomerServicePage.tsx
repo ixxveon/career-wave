@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, HelpCircle, MessageSquare, AlertCircle, Sparkles } from 'lucide-react';
 import {
   csApi,
@@ -14,6 +15,7 @@ import {
 } from '../../../api/admin/csApi';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/CustomerService.css';
+import { ADMIN_ROUTE_PATHS } from '../../../constants/admin/adminRouteConstants';
 
 // ── 로컬 전용 타입 ────────────────────────────────────────────
 
@@ -64,6 +66,7 @@ interface FaqFormState {
 // ── Component ─────────────────────────────────────────────────
 
 export default function CustomerServicePage() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<CsTab>('notice');
 
   // ── KPI 상태 ─────────────────────────────────────────────
@@ -424,7 +427,7 @@ export default function CustomerServicePage() {
       setInquiryReply(res.data.data.reply ?? '');
     } catch {
       // 상세 조회 실패 시 목록 데이터로 fallback
-      setSelectedInquiry({ ...item, content: '', reply: null, repliedAt: null, completedAt: null });
+      setSelectedInquiry({ ...item, memberEmail: '', content: '', reply: null, repliedAt: null, completedAt: null });
     }
   };
 
@@ -881,7 +884,7 @@ export default function CustomerServicePage() {
               <div>
                 <h3>{selectedInquiry.title}</h3>
                 <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>
-                  #{selectedInquiry.inquiryId} · {selectedInquiry.memberName} · {new Date(selectedInquiry.createdAt).toLocaleDateString('ko-KR')}
+                  #{selectedInquiry.inquiryId} · {selectedInquiry.memberName}{selectedInquiry.memberEmail ? ` (${selectedInquiry.memberEmail})` : ''} · {new Date(selectedInquiry.createdAt).toLocaleDateString('ko-KR')}
                 </p>
               </div>
               <button onClick={() => setSelectedInquiry(null)}>닫기</button>
@@ -924,6 +927,14 @@ export default function CustomerServicePage() {
                     <button onClick={completeInquiry} disabled={inqActionLoading || !inquiryReply.trim()}>처리 완료</button>
                   )}
                 </>
+              )}
+              {(selectedInquiry.category === INQUIRY_CATEGORY.REFUND || selectedInquiry.category === INQUIRY_CATEGORY.PAYMENT_ERROR) && selectedInquiry.memberEmail && (
+                <button
+                  onClick={() => navigate(`${ADMIN_ROUTE_PATHS.payments}?tab=payments&keyword=${encodeURIComponent(selectedInquiry.memberEmail)}`)}
+                  style={{ background: '#2e5eaa', color: '#fff', borderColor: '#2e5eaa' }}
+                >
+                  결제 내역 확인
+                </button>
               )}
               <button onClick={() => setSelectedInquiry(null)}>닫기</button>
             </div>

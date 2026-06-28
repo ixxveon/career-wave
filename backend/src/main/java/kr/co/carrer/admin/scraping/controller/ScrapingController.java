@@ -2,6 +2,7 @@ package kr.co.carrer.admin.scraping.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import kr.co.carrer.admin.audit.util.AdminAuditClientIpExtractor;
 import kr.co.carrer.admin.scraping.docs.ScrapingDocs;
 import kr.co.carrer.admin.scraping.dto.ScrapingLogDTO;
 import kr.co.carrer.admin.scraping.dto.ScrapingPipelineDTO;
@@ -132,7 +133,7 @@ public class ScrapingController implements ScrapingDocs {
                         request.reason()
                 ),
                 extractAdminId(principal),
-                extractClientIp(httpServletRequest)
+                AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
         ScrapingPipelineDTO.ResponseAction response = new ScrapingPipelineDTO.ResponseAction(
@@ -159,7 +160,7 @@ public class ScrapingController implements ScrapingDocs {
                         request.sourceNames()
                 ),
                 extractAdminId(principal),
-                extractClientIp(httpServletRequest)
+                AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
         ScrapingPipelineDTO.ResponseBatchAction response = new ScrapingPipelineDTO.ResponseBatchAction(
@@ -232,7 +233,4 @@ public class ScrapingController implements ScrapingDocs {
         }
     }
 
-    private String extractClientIp(HttpServletRequest request) {
-        return request.getRemoteAddr();
-    }
 }
