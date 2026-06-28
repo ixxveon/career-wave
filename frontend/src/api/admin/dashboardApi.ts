@@ -44,6 +44,7 @@ export type DashboardAlertDomain = (typeof DASHBOARD_ALERT_DOMAIN)[keyof typeof 
 
 export const DASHBOARD_PAYMENT_METHOD = {
   CARD: 'CARD',
+  OTHER: 'OTHER',
 } as const;
 
 export type DashboardPaymentMethod =

@@ -7,7 +7,6 @@ import kr.co.carrer.admin.dashboard.service.DashboardService;
 import kr.co.carrer.admin.dashboard.type.DashboardAlertLevelType;
 import kr.co.carrer.admin.dashboard.type.DashboardDomainType;
 import kr.co.carrer.admin.dashboard.type.DashboardKpiKeyType;
-import kr.co.carrer.admin.dashboard.type.DashboardPaymentMethod;
 import kr.co.carrer.admin.dashboard.type.DashboardRangeType;
 import kr.co.carrer.admin.dashboard.type.DashboardSeverityType;
 import kr.co.carrer.admin.dashboard.type.DashboardSystemStatusType;
@@ -58,8 +57,8 @@ public class DashboardServiceImpl implements DashboardService {
                 range,
                 buildKpis(adminMetrics, aiUsageMetrics),
                 alerts,
-                List.of(),
-                validatePaymentRatio(buildPaymentRatio()),
+                buildWeeklySignups(dashboardSummaryQueryRepository.findWeeklySignups(queryWindow)),
+                validatePaymentRatio(buildPaymentRatio(dashboardSummaryQueryRepository.findPaymentRatios(queryWindow))),
                 buildServiceCards(adminMetrics, aiUsageMetrics, scrapingStatusMetrics, alerts.size()),
                 buildSystemStatus(aiUsageMetrics, ragDocumentMetrics, scrapingStatusMetrics),
                 buildRecentActivities(dashboardSummaryQueryRepository.findRecentActivities(queryWindow, RECENT_ACTIVITY_LIMIT))
@@ -171,12 +170,27 @@ public class DashboardServiceImpl implements DashboardService {
         };
     }
 
-    private List<DashboardDTO.PaymentRatio> buildPaymentRatio() {
-        return List.of(new DashboardDTO.PaymentRatio(
-                DashboardPaymentMethod.CARD,
-                "카드",
-                100
-        ));
+    private List<DashboardDTO.WeeklySignup> buildWeeklySignups(
+            List<DashboardSummaryQueryRepository.WeeklySignupRow> weeklySignups
+    ) {
+        return emptyIfNull(weeklySignups).stream()
+                .map(row -> new DashboardDTO.WeeklySignup(
+                        row.label(),
+                        row.count()
+                ))
+                .toList();
+    }
+
+    private List<DashboardDTO.PaymentRatio> buildPaymentRatio(
+            List<DashboardSummaryQueryRepository.PaymentRatioRow> paymentRatios
+    ) {
+        return emptyIfNull(paymentRatios).stream()
+                .map(row -> new DashboardDTO.PaymentRatio(
+                        row.method(),
+                        row.label(),
+                        row.ratio()
+                ))
+                .toList();
     }
 
     private List<DashboardDTO.ServiceCard> buildServiceCards(
@@ -281,6 +295,10 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private List<DashboardDTO.PaymentRatio> validatePaymentRatio(List<DashboardDTO.PaymentRatio> paymentRatio) {
+        if (paymentRatio == null || paymentRatio.isEmpty()) {
+            return List.of();
+        }
+
         int totalRatio = emptyIfNull(paymentRatio).stream()
                 .mapToInt(DashboardDTO.PaymentRatio::ratio)
                 .sum();
