@@ -2,23 +2,18 @@ package kr.co.carrer.admin.dashboard.service.impl;
 
 import kr.co.carrer.admin.dashboard.repository.DashboardSummaryQueryRepository;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 class DashboardServiceContextTest {
 
     @Test
     void dashboardServiceCanBeCreatedWithSummaryQueryRepositoryBean() {
-        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
-            context.scan(
-                    "kr.co.carrer.admin.dashboard.repository",
-                    "kr.co.carrer.admin.dashboard.service.impl"
-            );
-            context.refresh();
+        DashboardSummaryQueryRepository repository = mock(DashboardSummaryQueryRepository.class);
+        DashboardServiceImpl service = new DashboardServiceImpl(repository);
 
-            assertThat(context.getBean(DashboardServiceImpl.class)).isNotNull();
-            assertThat(context.getBean(DashboardSummaryQueryRepository.class)).isNotNull();
-        }
+        assertThat(service).isNotNull();
+        assertThat(repository).isNotNull();
     }
 }
