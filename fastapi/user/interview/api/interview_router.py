@@ -75,10 +75,6 @@ async def trigger_voice_chunk(
     """
     settings = get_settings()
 
-    if not voice_chunk_limiter.is_allowed(session_id):
-        log.warning("rate limit exceeded: sessionId=%s", session_id)
-        raise HTTPException(status_code=429, detail="요청이 너무 많습니다. 잠시 후 다시 시도해주세요.")
-
     if questionOrder < 1:
         raise HTTPException(status_code=400, detail="questionOrder는 1 이상이어야 합니다.")
     if chunkIndex < 0:
@@ -91,6 +87,10 @@ async def trigger_voice_chunk(
     audio_bytes = await audioChunk.read()
     if len(audio_bytes) > settings.audio_chunk_max_bytes:
         raise HTTPException(status_code=413, detail="음성 청크 크기가 허용 한도를 초과했습니다.")
+
+    if not voice_chunk_limiter.is_allowed(session_id):
+        log.warning("rate limit exceeded: sessionId=%s", session_id)
+        raise HTTPException(status_code=429, detail="요청이 너무 많습니다. 잠시 후 다시 시도해주세요.")
 
     task = asyncio.create_task(
         stt_pipeline.transcribe_chunk(
