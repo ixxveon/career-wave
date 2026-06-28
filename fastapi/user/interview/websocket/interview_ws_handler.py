@@ -156,8 +156,11 @@ async def interview_ws(
             raise JWTError("token missing")
         claims = _verify_jwt(token)
         member_id: str = claims.get("sub", "")
-        token_exp: float = float(claims.get("exp", 0))
-    except JWTError:
+        raw_exp = claims.get("exp")
+        if raw_exp is None:
+            raise JWTError("exp claim missing")
+        token_exp: float = float(raw_exp)
+    except (JWTError, TypeError, ValueError):
         await websocket.accept()
         await websocket.close(code=1008)
         slog.warning("WS connection rejected: invalid or missing JWT")
@@ -244,6 +247,12 @@ async def interview_ws(
         now = time.time()
         remaining = ctx.token_exp - now
         if remaining <= 0:
+            await send_error(session_id, "JWT가 이미 만료되었습니다. 재연결이 필요합니다.", InterviewErrorCode.SESSION_EXPIRED)
+            slog.warning("token already expired on connect — closing WS: exp=%.0f", ctx.token_exp)
+            try:
+                await ctx.ws.close(code=1008)
+            except Exception:
+                pass
             return
 
         # 만료 N초 전 사전 경고
