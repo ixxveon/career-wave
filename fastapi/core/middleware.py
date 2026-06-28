@@ -13,7 +13,7 @@ class InternalRouteGuardMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next):
-        if request.url.path.startswith("/internal/"):
+        if request.url.path.startswith("/internal/") and request.method != "OPTIONS":
             secret = request.headers.get("x-internal-secret")
             settings = get_settings()
             if not secret or secret != settings.webhook_secret:
