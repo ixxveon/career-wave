@@ -27,6 +27,11 @@ class SessionRateLimiter:
             while bucket and bucket[0] < cutoff:
                 bucket.popleft()
 
+            # 윈도우 만료로 버킷이 비었으면 엔트리 자체를 제거
+            if not bucket and session_id in self._buckets:
+                del self._buckets[session_id]
+                bucket = self._buckets.setdefault(session_id, deque())
+
             if len(bucket) >= self._max_requests:
                 return False
 

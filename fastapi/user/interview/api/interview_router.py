@@ -267,6 +267,9 @@ async def trigger_report(
     _bg_tasks.add(task)
     task.add_done_callback(_on_task_done)
 
+    # 세션 종료 시점에 Rate Limit 버킷 정리
+    voice_chunk_limiter.clear(session_id)
+
     log.info(
         "report pipeline triggered: sessionId=%s, sessionType=%s",
         session_id,
