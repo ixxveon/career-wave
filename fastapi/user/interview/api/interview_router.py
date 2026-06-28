@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from core.config import get_settings
+from core.rate_limit import voice_chunk_limiter
 from core.security import verify_internal_secret
 from user.interview.pipeline import stt_pipeline
 from user.interview.pipeline import llm_pipeline
@@ -73,6 +74,10 @@ async def trigger_voice_chunk(
     STT 파이프라인을 백그라운드로 실행하고 202 응답을 즉시 반환한다.
     """
     settings = get_settings()
+
+    if not voice_chunk_limiter.is_allowed(session_id):
+        log.warning("rate limit exceeded: sessionId=%s", session_id)
+        raise HTTPException(status_code=429, detail="요청이 너무 많습니다. 잠시 후 다시 시도해주세요.")
 
     if questionOrder < 1:
         raise HTTPException(status_code=400, detail="questionOrder는 1 이상이어야 합니다.")
