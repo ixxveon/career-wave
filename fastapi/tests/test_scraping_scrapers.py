@@ -173,13 +173,23 @@ def test_saramin_scraper_maps_search_html_to_raw_job_notices():
       </div>
     </html>
     """
-    detail_html = "<html><div class='user_content'>Develop user job notice features.</div></html>"
+    ajax_detail_html = """
+    <html>
+      <div class="wrap_jv_cont">
+        <section class="jv_cont">Develop user job notice features.</section>
+      </div>
+    </html>
+    """
+    shell_html = "<html><div id='content'>로그인 회원가입 메뉴 홈 채용정보 포지션 제안 TOP</div></html>"
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/zf_user/search/get-recruit-list":
             return httpx.Response(200, json={"count": "1", "innerHTML": search_html})
+        if request.url.path == "/zf_user/jobs/relay/view-ajax":
+            assert request.url.params["rec_idx"] == "456"
+            return httpx.Response(200, text=ajax_detail_html)
         if request.url.path == "/zf_user/jobs/relay/view":
-            return httpx.Response(200, text=detail_html)
+            return httpx.Response(200, text=shell_html)
         return httpx.Response(404)
 
     client = httpx.Client(
@@ -201,6 +211,40 @@ def test_saramin_scraper_maps_search_html_to_raw_job_notices():
     assert notices[0].location == "서울 강남구"
     assert notices[0].salary == "면접후 결정"
     assert notices[0].deadline == "2026.12.31"
+
+
+def test_saramin_scraper_does_not_store_shell_content_when_ajax_detail_missing():
+    search_html = """
+    <html>
+      <div class="item_recruit">
+        <div class="corp_name"><a>Career Wave</a></div>
+        <h2 class="job_tit">
+          <a href="/zf_user/jobs/relay/view?rec_idx=789">Python Backend</a>
+        </h2>
+      </div>
+    </html>
+    """
+    shell_html = "<html><div id='content'>로그인 회원가입 메뉴 홈 채용정보 포지션 제안 TOP</div></html>"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/zf_user/search/get-recruit-list":
+            return httpx.Response(200, json={"count": "1", "innerHTML": search_html})
+        if request.url.path == "/zf_user/jobs/relay/view-ajax":
+            return httpx.Response(404)
+        if request.url.path == "/zf_user/jobs/relay/view":
+            return httpx.Response(200, text=shell_html)
+        return httpx.Response(404)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://www.saramin.co.kr",
+    )
+    scraper = SaraminScraper(client=client, request_delay_seconds=0)
+
+    notices = scraper.scrape()
+
+    assert len(notices) == 1
+    assert notices[0].description is None
 
 
 def test_saramin_scraper_test_connection_returns_false_for_forbidden_response():
