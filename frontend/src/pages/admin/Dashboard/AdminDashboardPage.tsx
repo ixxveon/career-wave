@@ -27,6 +27,8 @@ const KPI_PRESENTATION = {
   [DASHBOARD_KPI_KEY.TODAY_REVENUE]: { Icon: CreditCard, theme: 'kpi-yellow' },
 } as const satisfies Record<DashboardKpiKey, { Icon: LucideIcon; theme: string }>;
 
+type KpiPresentation = (typeof KPI_PRESENTATION)[DashboardKpiKey];
+
 const ALERT_PRESENTATION = {
   URGENT: { icon: '!', cls: 'danger' },
   WARNING: { icon: '!!', cls: 'warning' },
@@ -147,15 +149,17 @@ export default function AdminDashboardPage() {
 
   const { kpis, hasKpiSectionError } = useMemo(() => {
     try {
-      const items = (dashboardSummary?.kpis ?? []).map((item) => {
-        const presentation = KPI_PRESENTATION[item.key];
+      const items = (dashboardSummary?.kpis ?? []).flatMap((item) => {
+        const presentation = (KPI_PRESENTATION as Partial<Record<string, KpiPresentation>>)[item.key];
 
-        return {
+        if (!presentation) return [];
+
+        return [{
           ...item,
           value: item.unit ? `${item.value.toLocaleString()}${item.unit}` : item.value.toLocaleString(),
           desc: item.deltaText,
           ...presentation,
-        };
+        }];
       });
 
       return { kpis: items, hasKpiSectionError: false };
