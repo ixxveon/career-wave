@@ -284,6 +284,9 @@ public class DashboardSummaryQueryRepository {
     }
 
     private String auditAlertTitle(String severity, String logType) {
+        if (logType == null) {
+            return "ERROR".equals(severity) ? "관리자 활동 오류 감지" : "관리자 활동 경고 감지";
+        }
         String domain = switch (logType) {
             case "ADMIN_MANAGEMENT" -> "관리자 관리";
             case "AI_METRICS_SYSTEM" -> "AI Metrics";
@@ -309,6 +312,9 @@ public class DashboardSummaryQueryRepository {
     }
 
     private String activityMessage(String logType, String action, String targetType, String targetId, String detail) {
+        if (logType == null) {
+            return "관리자 활동 - " + auditMessage(action, targetType, targetId, detail);
+        }
         String domain = switch (logType) {
             case "ADMIN_MANAGEMENT" -> "관리자 관리";
             case "AI_METRICS_SYSTEM" -> "AI Metrics";
