@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
 import { Building2, CheckCircle, Clock, UserPlus, UserX, Users, XCircle } from 'lucide-react';
 import {
   memberApi,
@@ -259,7 +260,9 @@ export default function UserManagementPage() {
       fetchMembers(memberPage);
       fetchMemberCounts();
     } catch (err: unknown) {
-      const msg = (err as any).response?.data?.message || (err instanceof Error ? err.message : '');
+      const msg = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message
+        : err instanceof Error ? err.message : '';
       setUnsuspendError(msg || '정지 해제에 실패했습니다.');
     } finally {
       setUnsuspendLoading(false);
