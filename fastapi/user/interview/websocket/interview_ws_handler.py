@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -48,11 +49,15 @@ def _make_log(session_id: str) -> _SessionAdapter:
     return _SessionAdapter(_base_log, {"session_id": session_id})
 
 
+_EXPIRY_WARNING_SECONDS = 60  # 만료 N초 전 사전 경고
+
+
 @dataclass
 class _SessionContext:
     ws: WebSocket
     member_id: str = ""
     seq: int = 0
+    token_exp: float = 0.0  # JWT exp (Unix timestamp) — 만료 감시용
     # 재연결 시 미전달 메시지 재전송용 버퍼 (Scale-out 시 Redis 전환 예정)
     msg_buffer: list[dict[str, Any]] = field(default_factory=list)
     # Phase 4 — LLM 파이프라인 컨텍스트
@@ -151,6 +156,7 @@ async def interview_ws(
             raise JWTError("token missing")
         claims = _verify_jwt(token)
         member_id: str = claims.get("sub", "")
+        token_exp: float = float(claims.get("exp", 0))
     except JWTError:
         await websocket.accept()
         await websocket.close(code=1008)
@@ -198,6 +204,7 @@ async def interview_ws(
         ws=websocket,
         member_id=member_id,
         seq=prev.seq if prev else 0,
+        token_exp=token_exp,
         msg_buffer=prev.msg_buffer if prev else [],
     )
     _sessions[session_id] = ctx
@@ -232,6 +239,38 @@ async def interview_ws(
                 slog.warning("replay send failed: seq=%d", msg["sequenceNumber"])
         slog.info("replayed %d messages after reconnect", len(pending))
 
+    # ── JWT 만료 감시 태스크 ────────────────────────────────────────────────
+    async def _watch_token_expiry() -> None:
+        now = time.time()
+        remaining = ctx.token_exp - now
+        if remaining <= 0:
+            return
+
+        # 만료 N초 전 사전 경고
+        warning_delay = remaining - _EXPIRY_WARNING_SECONDS
+        if warning_delay > 0:
+            await asyncio.sleep(warning_delay)
+            if _sessions.get(session_id) is ctx:
+                await send_error(
+                    session_id,
+                    f"JWT가 {_EXPIRY_WARNING_SECONDS}초 후 만료됩니다. 토큰을 갱신해주세요.",
+                    InterviewErrorCode.SESSION_EXPIRED,
+                )
+                slog.info("token expiry warning sent: exp=%.0f", ctx.token_exp)
+                await asyncio.sleep(_EXPIRY_WARNING_SECONDS)
+        else:
+            await asyncio.sleep(remaining)
+
+        if _sessions.get(session_id) is ctx:
+            await send_error(session_id, "JWT가 만료되었습니다. 재연결이 필요합니다.", InterviewErrorCode.SESSION_EXPIRED)
+            slog.warning("token expired — closing WS: exp=%.0f", ctx.token_exp)
+            try:
+                await ctx.ws.close(code=1008)
+            except Exception:
+                pass
+
+    expiry_task = asyncio.create_task(_watch_token_expiry())
+
     # ── 연결 유지 (서버 Push 전용 채널) ─────────────────────────────────────
     try:
         while True:
@@ -240,6 +279,7 @@ async def interview_ws(
     except WebSocketDisconnect:
         slog.info("WS disconnected")
     finally:
+        expiry_task.cancel()
         # 새 연결로 교체된 경우엔 타이머를 걸지 않음
         if _sessions.get(session_id) is ctx:
             # 소켓은 끊겼지만 seq·buffer는 재연결 윈도우 동안 보존
