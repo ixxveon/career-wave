@@ -25,7 +25,7 @@ const SESSION_TYPE_LABEL: Record<string, string> = {
 
 function InterviewHomePage() {
   const navigate = useNavigate();
-  const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
+  const { data: historyData, isLoading: historyLoading, isError: historyError } = useInterviewHistory(0, 3);
   const { subscribedItems, unsubscribedItems } = useSubscriptionStatus();
 
   /* 서류 AI 코칭 / AI 모의면접 usage 항목 (구독 여부 무관) */
@@ -167,8 +167,8 @@ function InterviewHomePage() {
           <div className="iv-history-loading"><Loader2 size={20} className="iv-history-loading__spinner" /> 불러오는 중…</div>
         ) : historyError ? (
           <div className="iv-history-empty">
-            <p>이력을 불러오지 못했습니다.</p>
-            <button className="iv-tip__cta" onClick={() => refetchHistory()}>다시 시도 →</button>
+            <p>아직 면접 이력이 없어요.</p>
+            <button className="iv-tip__cta" onClick={() => navigate('/interview/text')}>첫 면접 시작하기 →</button>
           </div>
         ) : !historyData?.items.length ? (
           <div className="iv-history-empty">
