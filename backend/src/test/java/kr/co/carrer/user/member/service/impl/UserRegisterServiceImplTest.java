@@ -10,6 +10,7 @@ import kr.co.carrer.user.member.repository.*;
 import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.member.service.BusinessRegistrationVerificationPort;
 import kr.co.carrer.user.member.service.EmploymentCertificateFilePort;
+import kr.co.carrer.user.member.service.TermsAgreementEvidenceRecorder;
 import kr.co.carrer.user.member.type.*;
 import kr.co.carrer.global.exception.CustomException;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,7 @@ class UserRegisterServiceImplTest {
     @Mock BusinessRegistrationVerificationPort businessVerificationPort;
     @Mock EmploymentCertificateFilePort employmentCertificateFilePort;
     @Mock EntitlementInitService entitlementInitService;
+    @Mock TermsAgreementEvidenceRecorder termsAgreementEvidenceRecorder;
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private UserRegisterServiceImpl service;
@@ -52,13 +54,14 @@ class UserRegisterServiceImplTest {
                 memberRepository, personalProfileRepository, companyProfileRepository,
                 hrManagerRepository, termsRepository, verificationRepository,
                 encoder, businessVerificationPort, employmentCertificateFilePort,
-                entitlementInitService);
+                entitlementInitService, termsAgreementEvidenceRecorder);
     }
 
     // ─── 개인회원 가입 성공 시 PersonalProfile 빈 row 생성 ─────────────────────────
 
     @Test
     void registerUser_성공_시_personalProfile_저장() throws Exception {
+        UUID memberId = UUID.randomUUID();
         // 이메일 인증 mock
         MemberVerification emailVerif = createVerification(VerificationChannel.EMAIL, "test@example.com");
         MemberVerification phoneVerif = createVerification(VerificationChannel.PHONE, "01012345678");
@@ -73,7 +76,7 @@ class UserRegisterServiceImplTest {
         // Member save 시 memberId 주입
         when(memberRepository.save(any())).thenAnswer(inv -> {
             Member m = inv.getArgument(0);
-            setField(m, "memberId", UUID.randomUUID());
+            setField(m, "memberId", memberId);
             return m;
         });
 
@@ -88,6 +91,7 @@ class UserRegisterServiceImplTest {
         verify(personalProfileRepository, times(1)).save(any());
         // 약관 저장 확인
         verify(termsRepository, times(1)).save(any());
+        verify(termsAgreementEvidenceRecorder).recordPersonalSignup(memberId, true, true, false);
         assertThat(emailVerif.getVerificationStatus()).isEqualTo(VerificationStatus.CONSUMED);
         assertThat(phoneVerif.getVerificationStatus()).isEqualTo(VerificationStatus.CONSUMED);
     }
@@ -392,6 +396,8 @@ class UserRegisterServiceImplTest {
         assertThat(resp.getCompanyApprovalStatus()).isEqualTo("PENDING_REVIEW");
         verify(hrManagerRepository, times(1)).save(any());
         verify(termsRepository, times(1)).save(any());
+        verify(termsAgreementEvidenceRecorder).recordCompanySignup(
+                any(UUID.class), eq(true), eq(true), eq(false), eq(true), eq(true));
     }
 
     @Test
@@ -573,4 +579,5 @@ class UserRegisterServiceImplTest {
         }
         throw new NoSuchFieldException(name);
     }
+
 }

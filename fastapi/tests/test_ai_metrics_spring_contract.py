@@ -468,6 +468,7 @@ def test_usage_log_create_contract_matches_spring_boot_fields():
         "adminId": None,
         "sessionId": None,
         "aiModelId": 1,
+        "modelName": None,
         "featureType": "DOCUMENT",
         "inputTokens": 1200,
         "outputTokens": 450,
@@ -615,6 +616,8 @@ def test_error_codes_are_returned_in_spring_boot_mappable_identifiers():
         "OPENAI_API_ERROR",
         "AI_USAGE_LOG_CREATE_FAILED",
         "TOKEN_CALCULATION_FAILED",
+        "VECTOR_INDEX_FAILED",
+        "VECTOR_INDEX_DELETE_FAILED",
     }
 
     actual_codes = {error_code.value for error_code in AiMetricsErrorCode}

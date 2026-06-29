@@ -24,6 +24,8 @@ public interface AdminMemberService {
 
     MemberDTO.ResponseSanction sanctionMember(UUID memberId, MemberDTO.RequestSanction dto, Long adminId, String ipAddress);
 
+    MemberDTO.ResponseUnsuspend unsuspendMember(UUID memberId, MemberDTO.RequestUnsuspend dto, Long adminId, String ipAddress);
+
     HrManagerDTO.ResponsePage getHrManagers(HrStatus hrStatus, String keyword,
                                             LocalDate startDate, LocalDate endDate,
                                             int page, int size);

@@ -44,7 +44,7 @@ public class UserRegisterDto {
         @AssertTrue(message = "서비스 이용약관 동의는 필수입니다.")
         private boolean service;
 
-        @AssertTrue(message = "개인정보 처리방침 동의는 필수입니다.")
+        @AssertTrue(message = "개인정보 수집·이용 동의는 필수입니다.")
         private boolean privacy;
 
         private boolean marketing;
@@ -55,7 +55,7 @@ public class UserRegisterDto {
         @AssertTrue(message = "서비스 이용약관 동의는 필수입니다.")
         private boolean service;
 
-        @AssertTrue(message = "개인정보 처리방침 동의는 필수입니다.")
+        @AssertTrue(message = "개인정보 수집·이용 동의는 필수입니다.")
         private boolean privacy;
 
         @AssertTrue(message = "기업 인증 정보 제공 동의는 필수입니다.")
