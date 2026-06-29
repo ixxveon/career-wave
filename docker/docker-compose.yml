@@ -1,6 +1,6 @@
 services:
   spring:
-    image: ${ECR_REGISTRY}/${ECR_SPRING_REPOSITORY}:latest
+    image: ${ECR_REGISTRY}/${ECR_SPRING_REPOSITORY}:${IMAGE_TAG}
     container_name: career-wave-spring
     ports:
       - "8080:8080"
@@ -9,7 +9,7 @@ services:
     restart: always
 
   fastapi:
-    image: ${ECR_REGISTRY}/${ECR_FASTAPI_REPOSITORY}:latest
+    image: ${ECR_REGISTRY}/${ECR_FASTAPI_REPOSITORY}:${IMAGE_TAG}
     container_name: career-wave-fastapi
     ports:
       - "8000:8000"

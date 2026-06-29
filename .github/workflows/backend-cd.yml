@@ -7,7 +7,7 @@ on:
       - develop
 
 env:
-  IMAGE_TAG: latest
+  IMAGE_TAG: ${{ github.sha }}
 
 permissions:
   contents: read
@@ -32,13 +32,13 @@ jobs:
 
       - name: Build and push Spring image
         run: |
-          SPRING_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_SPRING_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          SPRING_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_SPRING_REPOSITORY }}:${IMAGE_TAG}
           docker build -t $SPRING_IMAGE ./backend
           docker push $SPRING_IMAGE
 
       - name: Build and push FastAPI image
         run: |
-          FASTAPI_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_FASTAPI_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          FASTAPI_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_FASTAPI_REPOSITORY }}:${IMAGE_TAG}
           docker build -t $FASTAPI_IMAGE ./fastapi
           docker push $FASTAPI_IMAGE
 
@@ -61,6 +61,7 @@ jobs:
           script: |
             set -e
             cd ~/career-wave
+            grep -q '^IMAGE_TAG=' .env && sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ env.IMAGE_TAG }}/' .env || echo 'IMAGE_TAG=${{ env.IMAGE_TAG }}' >> .env
 
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
             | docker login \
@@ -90,6 +91,7 @@ jobs:
           script: |
             set -e
             cd ~/career-wave
+            grep -q '^IMAGE_TAG=' .env && sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ env.IMAGE_TAG }}/' .env || echo 'IMAGE_TAG=${{ env.IMAGE_TAG }}' >> .env
 
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
             | docker login \
