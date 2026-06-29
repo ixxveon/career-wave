@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import '@/styles/user/interview/InterviewHomePage.css';
 import {
   MessageSquare, Video, ChevronRight, Lightbulb,
@@ -225,6 +225,7 @@ function InterviewHomePage() {
           <span className="iv-card__icon-wrap iv-card__icon-wrap--green"><ClipboardList size={16} /></span>
           최근 연습 히스토리
           <span className="iv-card__subtitle">최신 3개</span>
+          <Link to="/interview/history" className="iv-card__view-all">전체 보기 →</Link>
         </h2>
         {historyLoading ? (
           <div className="iv-history-loading"><Loader2 size={20} className="iv-history-loading__spinner" /> 불러오는 중…</div>
