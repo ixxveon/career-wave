@@ -123,6 +123,15 @@ export interface RejectRequest {
   rejectReason: string;
 }
 
+export interface UnsuspendRequest {
+  reason: string;
+}
+
+export interface UnsuspendResult {
+  memberId: string;
+  memberStatus: MemberStatus;
+}
+
 export interface MemberCounts {
   todayJoinCount: number;
   premiumCount: number;
@@ -147,6 +156,10 @@ export const memberApi = {
   // 회원 제재 처리
   sanctionMember: (memberId: string, data: SanctionRequest) =>
     axiosInstance.post<ApiResponse<SanctionResult>>(`/api/v1/admin/members/${memberId}/sanctions`, data),
+
+  // 회원 정지 해제
+  unsuspendMember: (memberId: string, data: UnsuspendRequest) =>
+    axiosInstance.patch<ApiResponse<UnsuspendResult>>(`/api/v1/admin/members/${memberId}/unsuspend`, data),
 
   // 기업 회원 목록 조회
   getHrManagers: (params?: HrManagerListParams) =>

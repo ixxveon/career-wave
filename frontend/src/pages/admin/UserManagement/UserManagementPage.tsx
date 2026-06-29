@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
 import { Building2, CheckCircle, Clock, UserPlus, UserX, Users, XCircle } from 'lucide-react';
 import {
   memberApi,
@@ -63,6 +64,10 @@ export default function UserManagementPage() {
   const [suspendReason, setSuspendReason] = useState('');
   const [suspendLoading, setSuspendLoading] = useState(false);
   const [suspendError, setSuspendError] = useState('');
+  const [unsuspendTarget, setUnsuspendTarget] = useState<MemberItem | null>(null);
+  const [unsuspendReason, setUnsuspendReason] = useState('');
+  const [unsuspendLoading, setUnsuspendLoading] = useState(false);
+  const [unsuspendError, setUnsuspendError] = useState('');
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const [confirmViewTarget, setConfirmViewTarget] = useState<string | null>(null);
 
@@ -231,6 +236,36 @@ export default function UserManagementPage() {
       setSuspendError(msg || '제재 처리에 실패했습니다.');
     } finally {
       setSuspendLoading(false);
+    }
+  };
+
+  // ── 정지 해제 처리 ─────────────────────────────────────────
+  const openUnsuspend = (member: MemberItem) => {
+    setSelectedMember(null);
+    setUnsuspendTarget(member);
+    setUnsuspendReason('');
+    setUnsuspendError('');
+  };
+
+  const handleUnsuspend = async () => {
+    if (!unsuspendTarget) return;
+    setUnsuspendLoading(true);
+    setUnsuspendError('');
+    try {
+      const res = await memberApi.unsuspendMember(unsuspendTarget.memberId, {
+        reason: unsuspendReason,
+      });
+      if (!res.data.success) throw new Error(res.data.message);
+      setUnsuspendTarget(null);
+      fetchMembers(memberPage);
+      fetchMemberCounts();
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message
+        : err instanceof Error ? err.message : '';
+      setUnsuspendError(msg || '정지 해제에 실패했습니다.');
+    } finally {
+      setUnsuspendLoading(false);
     }
   };
 
@@ -462,7 +497,11 @@ export default function UserManagementPage() {
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="tableBtn" onClick={() => openMemberDetail(m.memberId)}>상세보기</button>
-                          <button className="tableBtn tableBtn--danger" onClick={() => openSuspend(m)} disabled={m.memberStatus === MEMBER_STATUS.WITHDRAWN}>정지처리</button>
+                          {m.memberStatus === MEMBER_STATUS.SUSPENDED ? (
+                            <button className="tableBtn tableBtn--success" onClick={() => openUnsuspend(m)}>정지해제</button>
+                          ) : (
+                            <button className="tableBtn tableBtn--danger" onClick={() => openSuspend(m)} disabled={m.memberStatus === MEMBER_STATUS.WITHDRAWN}>정지처리</button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -658,7 +697,11 @@ export default function UserManagementPage() {
               </div>
             </div>
             <div className="modalAction">
-              <button onClick={() => openSuspend(selectedMember)} disabled={selectedMember?.memberStatus === MEMBER_STATUS.WITHDRAWN}>활동 정지</button>
+              {selectedMember.memberStatus === MEMBER_STATUS.SUSPENDED ? (
+                <button onClick={() => openUnsuspend(selectedMember)} style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}>정지 해제</button>
+              ) : (
+                <button onClick={() => openSuspend(selectedMember)} disabled={selectedMember?.memberStatus === MEMBER_STATUS.WITHDRAWN}>활동 정지</button>
+              )}
               <button onClick={() => setSelectedMember(null)}>닫기</button>
             </div>
           </div>
@@ -750,6 +793,50 @@ export default function UserManagementPage() {
                 {suspendLoading ? '처리 중...' : `${durationLabel[suspendPeriod]} 정지 처리`}
               </button>
               <button onClick={() => setSuspendTarget(null)} disabled={suspendLoading}>취소</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 정지 해제 모달 ──────────────────────────────────── */}
+      {unsuspendTarget && (
+        <div className="modalOverlay" onClick={() => setUnsuspendTarget(null)}>
+          <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 480 }}>
+            <div className="modalHeader">
+              <div>
+                <h3>정지 해제</h3>
+                <p>{unsuspendTarget.name} · {unsuspendTarget.loginId}</p>
+              </div>
+              <button onClick={() => setUnsuspendTarget(null)}>닫기</button>
+            </div>
+            <div className="modalBody" style={{ display: 'grid', gap: 16, padding: '20px 24px' }}>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <span>해제 사유</span>
+                <textarea
+                  placeholder="정지 해제 사유를 입력하세요 (최소 10자)"
+                  value={unsuspendReason}
+                  onChange={(e) => setUnsuspendReason(e.target.value)}
+                  style={{
+                    marginTop: 8, width: '100%', minHeight: 90, boxSizing: 'border-box',
+                    border: '1px solid #d8e3ed', borderRadius: 10, padding: '10px 12px',
+                    outline: 'none', resize: 'vertical', background: 'white',
+                    fontSize: 14, fontFamily: 'inherit', color: '#10243f', lineHeight: 1.7,
+                  }}
+                />
+              </div>
+              {unsuspendError && (
+                <p style={{ gridColumn: '1 / -1', fontSize: 13, color: '#9a4444', margin: 0 }}>{unsuspendError}</p>
+              )}
+            </div>
+            <div className="modalAction">
+              <button
+                onClick={handleUnsuspend}
+                disabled={unsuspendLoading || unsuspendReason.trim().length < 10}
+                style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}
+              >
+                {unsuspendLoading ? '처리 중...' : '정지 해제'}
+              </button>
+              <button onClick={() => setUnsuspendTarget(null)} disabled={unsuspendLoading}>취소</button>
             </div>
           </div>
         </div>

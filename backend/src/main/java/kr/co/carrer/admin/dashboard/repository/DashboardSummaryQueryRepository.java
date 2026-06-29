@@ -1,23 +1,39 @@
 package kr.co.carrer.admin.dashboard.repository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import kr.co.carrer.admin.dashboard.type.DashboardAlertLevelType;
+import kr.co.carrer.admin.dashboard.type.DashboardPaymentMethod;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public class DashboardSummaryQueryRepository {
 
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
-    private static final String AUDIT_LOG_TARGET_PATH = "/admin/log";
-    private static final int SCRAPING_RUNNING_ALERT_MINUTES = 30;
+    private static final DateTimeFormatter WEEKLY_SIGNUP_LABEL_FORMATTER = DateTimeFormatter.ofPattern("MM/dd");
+    private static final String PAID_STATUS = "PAID";
+    private static final String CARD_PAYMENT_METHOD = "CARD";
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -26,179 +42,369 @@ public class DashboardSummaryQueryRepository {
     }
 
     public AdminAccountMetrics fetchAdminAccountMetrics(DashboardQueryWindow queryWindow) {
-        return new AdminAccountMetrics(0L, 0L, 0L);
-    }
-
-    public List<AuditAlertRow> findAuditAlerts(DashboardQueryWindow queryWindow, int limit) {
-        if (jdbcTemplate == null || limit <= 0) {
-            return List.of();
+        if (jdbcTemplate == null) {
+            return new AdminAccountMetrics(0L, 0L, 0L);
         }
 
         String sql = """
-            SELECT audit_log_id,
-                   severity,
-                   log_type,
-                   action,
-                   target_type,
-                   target_id,
-                   detail,
-                   created_at
-            FROM audit_logs
-            WHERE severity IN ('WARN', 'ERROR')
-              AND created_at >= :rangeStartInclusive
-              AND created_at < :rangeEndExclusive
-            ORDER BY CASE severity WHEN 'ERROR' THEN 0 ELSE 1 END,
-                     created_at DESC,
-                     audit_log_id DESC
-            LIMIT :limit
+            SELECT
+                COUNT(*) FILTER (
+                    WHERE created_at >= :rangeStartInclusive
+                      AND created_at < :rangeEndExclusive
+                ) AS new_admin_count,
+                COUNT(*) FILTER (WHERE status = 'ACTIVE') AS active_admin_count,
+                COUNT(*) FILTER (
+                    WHERE last_login_at >= :rangeStartInclusive
+                      AND last_login_at < :rangeEndExclusive
+                ) AS recent_login_count
+            FROM admins
             """;
 
-        return jdbcTemplate.query(sql, windowParams(queryWindow, limit), (rs, rowNum) -> {
-            String severity = rs.getString("severity");
-            String logType = rs.getString("log_type");
-            String action = rs.getString("action");
-            String targetType = rs.getString("target_type");
-            String targetId = rs.getString("target_id");
-            String detail = rs.getString("detail");
-            return new AuditAlertRow(
-                    rs.getLong("audit_log_id"),
-                    "ERROR".equals(severity) ? DashboardAlertLevelType.URGENT : DashboardAlertLevelType.WARNING,
-                    auditAlertTitle(severity, logType),
-                    auditMessage(action, targetType, targetId, detail),
-                    toZonedDateTime(rs.getObject("created_at"))
+        MapSqlParameterSource params = windowParams(queryWindow);
+        return jdbcTemplate.query(sql, params, rs -> {
+            if (!rs.next()) {
+                return new AdminAccountMetrics(0L, 0L, 0L);
+            }
+            return new AdminAccountMetrics(
+                    rs.getLong("new_admin_count"),
+                    rs.getLong("active_admin_count"),
+                    rs.getLong("recent_login_count")
             );
         });
     }
 
-    public List<RecentActivityRow> findRecentActivities(DashboardQueryWindow queryWindow, int limit) {
-        if (jdbcTemplate == null || limit <= 0) {
-            return List.of();
-        }
-
+    public List<AuditAlertRow> findAuditAlerts(DashboardQueryWindow queryWindow, int limit) {
         String sql = """
-            SELECT al.audit_log_id,
-                   al.created_at,
-                   COALESCE(a.login_id, 'system') AS admin_login_id,
-                   al.log_type,
-                   al.action,
-                   al.target_type,
-                   al.target_id,
-                   al.detail
-            FROM audit_logs al
-            LEFT JOIN admins a ON a.admin_id = al.admin_id
-            WHERE al.created_at >= :rangeStartInclusive
-              AND al.created_at < :rangeEndExclusive
-            ORDER BY al.created_at DESC,
-                     al.audit_log_id DESC
-            LIMIT :limit
-            """;
+                SELECT
+                    audit_log_id,
+                    action,
+                    COALESCE(NULLIF(detail, ''), CONCAT(COALESCE(target_type, 'SYSTEM'), ' ', COALESCE(target_id, ''))) AS message,
+                    created_at
+                FROM audit_logs
+                WHERE severity IN ('WARN', 'ERROR')
+                  AND created_at >= ?1
+                  AND created_at < ?2
+                ORDER BY created_at DESC, audit_log_id DESC
+                LIMIT ?3
+                """;
+        Query query = createWindowQuery(sql, queryWindow);
+        query.setParameter(3, limit);
+        return resultRows(query).stream()
+                .map(row -> new AuditAlertRow(
+                        longObjectValue(row, 0),
+                        stringValue(row, 1),
+                        stringValue(row, 2),
+                        DashboardAlertLevelType.WARNING,
+                        zonedDateTimeValue(row, 3)
+                ))
+                .toList();
+    }
 
-        return jdbcTemplate.query(sql, windowParams(queryWindow, limit), (rs, rowNum) -> new RecentActivityRow(
-                rs.getLong("audit_log_id"),
-                toZonedDateTime(rs.getObject("created_at")),
-                rs.getString("admin_login_id"),
-                activityMessage(
-                        rs.getString("log_type"),
-                        rs.getString("action"),
-                        rs.getString("target_type"),
-                        rs.getString("target_id"),
-                        rs.getString("detail")
-                ),
-                AUDIT_LOG_TARGET_PATH
-        ));
+    public List<RecentActivityRow> findRecentActivities(DashboardQueryWindow queryWindow, int limit) {
+        String sql = """
+                SELECT
+                    l.audit_log_id,
+                    l.created_at,
+                    COALESCE(a.login_id, CAST(l.admin_id AS TEXT), 'system') AS admin_login_id,
+                    CONCAT(l.action, CASE WHEN l.target_type IS NULL THEN '' ELSE CONCAT(' - ', l.target_type) END) AS message,
+                    '/admin/log' AS target_path
+                FROM audit_logs l
+                LEFT JOIN admins a ON a.admin_id = l.admin_id
+                WHERE l.created_at >= ?1
+                  AND l.created_at < ?2
+                ORDER BY l.created_at DESC, l.audit_log_id DESC
+                LIMIT ?3
+                """;
+        Query query = createWindowQuery(sql, queryWindow);
+        query.setParameter(3, limit);
+        return resultRows(query).stream()
+                .map(row -> new RecentActivityRow(
+                        longObjectValue(row, 0),
+                        zonedDateTimeValue(row, 1),
+                        stringValue(row, 2),
+                        stringValue(row, 3),
+                        stringValue(row, 4)
+                ))
+                .toList();
     }
 
     public AiUsageMetrics fetchAiUsageMetrics(DashboardQueryWindow queryWindow) {
-        return new AiUsageMetrics(0L, BigDecimal.ZERO, true, 0, true);
+        if (jdbcTemplate == null) {
+            return new AiUsageMetrics(0L, BigDecimal.ZERO, true, 0, true);
+        }
+
+        String sql = """
+            SELECT
+                (
+                    SELECT COUNT(*)
+                    FROM interview_sessions
+                    WHERE created_at >= :rangeStartInclusive
+                      AND created_at < :rangeEndExclusive
+                ) AS interview_session_count,
+                (
+                    SELECT COALESCE(SUM(amount), 0)
+                    FROM payments
+                    WHERE payment_status = :paidStatus
+                      AND approved_at >= :todayStartInclusive
+                      AND approved_at < :todayEndExclusive
+                ) AS today_revenue
+            """;
+
+        MapSqlParameterSource params = windowParams(queryWindow)
+                .addValue("paidStatus", PAID_STATUS)
+                .addValue("todayStartInclusive", Timestamp.from(todayStartInclusive(queryWindow).toInstant()))
+                .addValue("todayEndExclusive", Timestamp.from(queryWindow.rangeEndExclusive().toInstant()));
+
+        return jdbcTemplate.query(sql, params, rs -> {
+            if (!rs.next()) {
+                return new AiUsageMetrics(0L, BigDecimal.ZERO, true, 0, true);
+            }
+            return new AiUsageMetrics(
+                    rs.getLong("interview_session_count"),
+                    rs.getBigDecimal("today_revenue"),
+                    true,
+                    0,
+                    true
+            );
+        });
     }
 
-    public RagDocumentMetrics fetchRagDocumentMetrics(DashboardQueryWindow queryWindow) {
-        return new RagDocumentMetrics(0L, 0L, 0L, 0);
+    public List<WeeklySignupRow> findWeeklySignups(DashboardQueryWindow queryWindow) {
+        LocalDate endDate = queryWindow.rangeEndExclusive()
+                .minusNanos(1)
+                .withZoneSameInstant(SERVICE_ZONE_ID)
+                .toLocalDate();
+        LocalDate startDate = endDate.minusDays(6);
+        Map<LocalDate, Long> countsByDate = new LinkedHashMap<>();
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            countsByDate.put(date, 0L);
+        }
+
+        if (jdbcTemplate == null) {
+            return toWeeklySignupRows(countsByDate);
+        }
+
+        ZonedDateTime startInclusive = startDate.atStartOfDay(SERVICE_ZONE_ID).withZoneSameInstant(ZoneId.of("UTC"));
+        String sql = """
+            SELECT DATE(created_at AT TIME ZONE 'Asia/Seoul') AS signup_date,
+                   COUNT(*) AS signup_count
+            FROM members
+            WHERE created_at >= :startInclusive
+              AND created_at < :endExclusive
+            GROUP BY signup_date
+            ORDER BY signup_date ASC
+            """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("startInclusive", Timestamp.from(startInclusive.toInstant()))
+                .addValue("endExclusive", Timestamp.from(queryWindow.rangeEndExclusive().toInstant()));
+
+        jdbcTemplate.query(sql, params, rs -> {
+            while (rs.next()) {
+                LocalDate signupDate = toLocalDate(rs.getObject("signup_date"));
+                if (countsByDate.containsKey(signupDate)) {
+                    countsByDate.put(signupDate, rs.getLong("signup_count"));
+                }
+            }
+            return null;
+        });
+
+        return toWeeklySignupRows(countsByDate);
     }
 
-    public ScrapingStatusMetrics fetchScrapingStatusMetrics(DashboardQueryWindow queryWindow) {
-        return new ScrapingStatusMetrics(0L, 0L, 0L, 0L);
-    }
-
-    public List<ScrapingAlertRow> findScrapingAlerts(DashboardQueryWindow queryWindow, int limit) {
-        if (jdbcTemplate == null || limit <= 0) {
+    public List<PaymentRatioRow> findPaymentRatios(DashboardQueryWindow queryWindow) {
+        if (jdbcTemplate == null) {
             return List.of();
         }
 
         String sql = """
-            SELECT id,
-                   level,
-                   title,
-                   message,
-                   created_at
-            FROM (
-                SELECT sp.scraping_pipeline_id AS id,
-                       'URGENT' AS level,
-                       '스크래핑 파이프라인 실패' AS title,
-                       CONCAT(sp.display_name, ' 파이프라인이 실패했습니다',
-                              CASE WHEN NULLIF(sp.last_error_message, '') IS NULL
-                                   THEN ''
-                                   ELSE CONCAT(': ', sp.last_error_message)
-                              END) AS message,
-                       COALESCE(sp.last_failed_at, sp.updated_at) AS created_at,
-                       0 AS priority
-                FROM scraping_pipelines sp
-                WHERE sp.pipeline_status = 'FAILED'
-                  AND COALESCE(sp.last_failed_at, sp.updated_at) >= :rangeStartInclusive
-                  AND COALESCE(sp.last_failed_at, sp.updated_at) < :rangeEndExclusive
-
-                UNION ALL
-
-                SELECT sp.scraping_pipeline_id AS id,
-                       'WARNING' AS level,
-                       '스크래핑 장시간 실행' AS title,
-                       CONCAT(sp.display_name, ' 파이프라인이 ', :runningAlertMinutes, '분 이상 실행 중입니다') AS message,
-                       sp.last_started_at AS created_at,
-                       1 AS priority
-                FROM scraping_pipelines sp
-                WHERE sp.pipeline_status = 'RUNNING'
-                  AND sp.last_started_at IS NOT NULL
-                  AND sp.last_started_at < :runningAlertStartedBefore
-
-                UNION ALL
-
-                SELECT sl.scraping_log_id AS id,
-                       'URGENT' AS level,
-                       '스크래핑 실행 실패' AS title,
-                       CONCAT(sl.target_site, ' 스크래핑 실행이 실패했습니다',
-                              CASE WHEN NULLIF(sl.error_message, '') IS NULL
-                                   THEN ''
-                                   ELSE CONCAT(': ', sl.error_message)
-                              END) AS message,
-                       sl.executed_at AS created_at,
-                       0 AS priority
-                FROM scraping_logs sl
-                WHERE sl.scraping_status = 'FAILED'
-                  AND sl.executed_at >= :rangeStartInclusive
-                  AND sl.executed_at < :rangeEndExclusive
-            ) alerts
-            ORDER BY priority ASC,
-                     created_at DESC,
-                     id DESC
-            LIMIT :limit
+            SELECT
+                COUNT(*) AS total_count,
+                COUNT(*) FILTER (
+                    WHERE UPPER(COALESCE(payment_method, '')) = :cardPaymentMethod
+                ) AS card_count
+            FROM payments
+            WHERE payment_status = :paidStatus
+              AND approved_at >= :rangeStartInclusive
+              AND approved_at < :rangeEndExclusive
             """;
 
-        MapSqlParameterSource params = windowParams(queryWindow, limit)
-                .addValue("runningAlertMinutes", SCRAPING_RUNNING_ALERT_MINUTES)
-                .addValue(
-                        "runningAlertStartedBefore",
-                        Timestamp.from(queryWindow.rangeEndExclusive()
-                                .minusMinutes(SCRAPING_RUNNING_ALERT_MINUTES)
-                                .toInstant())
-                );
+        MapSqlParameterSource params = windowParams(queryWindow)
+                .addValue("paidStatus", PAID_STATUS)
+                .addValue("cardPaymentMethod", CARD_PAYMENT_METHOD);
 
-        return jdbcTemplate.query(sql, params, (rs, rowNum) -> new ScrapingAlertRow(
-                rs.getLong("id"),
-                DashboardAlertLevelType.valueOf(rs.getString("level")),
-                rs.getString("title"),
-                rs.getString("message"),
-                toZonedDateTime(rs.getObject("created_at"))
-        ));
+        return jdbcTemplate.query(sql, params, rs -> {
+            if (!rs.next()) {
+                return List.of();
+            }
+
+            long totalCount = rs.getLong("total_count");
+            long cardCount = rs.getLong("card_count");
+            if (totalCount <= 0L) {
+                return List.of();
+            }
+
+            long otherCount = Math.max(totalCount - cardCount, 0L);
+            List<PaymentRatioRow> ratios = new ArrayList<>();
+            if (cardCount > 0L) {
+                int cardRatio = otherCount > 0L
+                        ? (int) Math.round((cardCount * 100.0d) / totalCount)
+                        : 100;
+                ratios.add(new PaymentRatioRow(DashboardPaymentMethod.CARD, "카드", cardRatio));
+            }
+            if (otherCount > 0L) {
+                int otherRatio = 100 - ratios.stream().mapToInt(PaymentRatioRow::ratio).sum();
+                ratios.add(new PaymentRatioRow(DashboardPaymentMethod.OTHER, "기타", otherRatio));
+            }
+            return ratios;
+        });
+    }
+
+    public RagDocumentMetrics fetchRagDocumentMetrics(DashboardQueryWindow queryWindow) {
+        String sql = """
+                SELECT
+                    COUNT(*) AS total_document_count,
+                    COALESCE(SUM(CASE WHEN status IN ('COMPLETED', 'SYNCED') THEN 1 ELSE 0 END), 0) AS completed_document_count,
+                    COALESCE(SUM(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END), 0) AS failed_document_count,
+                    COALESCE(MAX(indexing_progress), 0) AS highest_indexing_progress
+                FROM rag_documents
+                """;
+        Object[] row = singleRow(entityManager.createNativeQuery(sql));
+        return new RagDocumentMetrics(longValue(row, 0), longValue(row, 1), longValue(row, 2), intValue(row, 3));
+    }
+
+    public ScrapingStatusMetrics fetchScrapingStatusMetrics(DashboardQueryWindow queryWindow) {
+        String sql = """
+                SELECT
+                    COUNT(*) AS total_pipeline_count,
+                    COALESCE(SUM(CASE WHEN pipeline_status = 'RUNNING' THEN 1 ELSE 0 END), 0) AS running_pipeline_count,
+                    COALESCE(SUM(CASE WHEN pipeline_status = 'FAILED' THEN 1 ELSE 0 END), 0) AS failed_pipeline_count,
+                    COALESCE(SUM(CASE WHEN pipeline_status = 'SUCCESS' THEN 1 ELSE 0 END), 0) AS success_pipeline_count
+                FROM scraping_pipelines
+                """;
+        Object[] row = singleRow(entityManager.createNativeQuery(sql));
+        return new ScrapingStatusMetrics(longValue(row, 0), longValue(row, 1), longValue(row, 2), longValue(row, 3));
+    }
+
+    public List<ScrapingAlertRow> findScrapingAlerts(DashboardQueryWindow queryWindow, int limit) {
+        String sql = """
+                SELECT
+                    scraping_log_id,
+                    CONCAT('Scraping failed: ', target_site) AS title,
+                    COALESCE(NULLIF(error_message, ''), 'Scraping pipeline failed.') AS message,
+                    executed_at
+                FROM scraping_logs
+                WHERE scraping_status = 'FAILED'
+                  AND executed_at >= ?1
+                  AND executed_at < ?2
+                ORDER BY executed_at DESC, scraping_log_id DESC
+                LIMIT ?3
+                """;
+        Query query = createWindowQuery(sql, queryWindow);
+        query.setParameter(3, limit);
+        return resultRows(query).stream()
+                .map(row -> new ScrapingAlertRow(
+                        longObjectValue(row, 0),
+                        stringValue(row, 1),
+                        stringValue(row, 2),
+                        DashboardAlertLevelType.URGENT,
+                        zonedDateTimeValue(row, 3)
+                ))
+                .toList();
+    }
+
+    private Query createWindowQuery(String sql, DashboardQueryWindow queryWindow) {
+        Query query = entityManager.createNativeQuery(sql);
+        query.setParameter(1, queryWindow.rangeStartInclusive());
+        query.setParameter(2, queryWindow.rangeEndExclusive());
+        return query;
+    }
+
+    private Object[] singleRow(Query query) {
+        Object row = query.getSingleResult();
+        if (row instanceof Object[] values) {
+            return values;
+        }
+        return new Object[]{row};
+    }
+
+    private List<Object[]> resultRows(Query query) {
+        List<?> rows = query.getResultList();
+        List<Object[]> result = new ArrayList<>();
+        for (Object row : rows) {
+            if (row instanceof Object[] values) {
+                result.add(values);
+            } else {
+                result.add(new Object[]{row});
+            }
+        }
+        return result;
+    }
+
+    private long longValue(Object[] row, int index) {
+        Object value = rowValue(row, index);
+        return value instanceof Number number ? number.longValue() : 0L;
+    }
+
+    private Long longObjectValue(Object[] row, int index) {
+        Object value = rowValue(row, index);
+        return value instanceof Number number ? number.longValue() : null;
+    }
+
+    private int intValue(Object[] row, int index) {
+        Object value = rowValue(row, index);
+        return value instanceof Number number ? number.intValue() : 0;
+    }
+
+    private BigDecimal bigDecimalValue(Object[] row, int index) {
+        Object value = rowValue(row, index);
+        if (value instanceof BigDecimal decimal) {
+            return decimal;
+        }
+        if (value instanceof Number number) {
+            return new BigDecimal(number.toString());
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private boolean booleanValue(Object[] row, int index, boolean defaultValue) {
+        Object value = rowValue(row, index);
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        if (value instanceof Number number) {
+            return number.intValue() != 0;
+        }
+        return defaultValue;
+    }
+
+    private String stringValue(Object[] row, int index) {
+        Object value = rowValue(row, index);
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private ZonedDateTime zonedDateTimeValue(Object[] row, int index) {
+        Object value = rowValue(row, index);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof ZonedDateTime zonedDateTime) {
+            return zonedDateTime;
+        }
+        if (value instanceof OffsetDateTime offsetDateTime) {
+            return offsetDateTime.atZoneSameInstant(SERVICE_ZONE_ID);
+        }
+        if (value instanceof Timestamp timestamp) {
+            return timestamp.toInstant().atZone(SERVICE_ZONE_ID);
+        }
+        if (value instanceof Instant instant) {
+            return instant.atZone(SERVICE_ZONE_ID);
+        }
+        return null;
+    }
+
+    private Object rowValue(Object[] row, int index) {
+        return row != null && index < row.length ? row[index] : null;
     }
 
     public record AdminAccountMetrics(
@@ -210,9 +416,9 @@ public class DashboardSummaryQueryRepository {
 
     public record AuditAlertRow(
             Long id,
-            DashboardAlertLevelType level,
             String title,
             String message,
+            DashboardAlertLevelType level,
             ZonedDateTime createdAt
     ) {
     }
@@ -253,78 +459,57 @@ public class DashboardSummaryQueryRepository {
 
     public record ScrapingAlertRow(
             Long id,
-            DashboardAlertLevelType level,
             String title,
             String message,
+            DashboardAlertLevelType level,
             ZonedDateTime createdAt
     ) {
     }
 
-    private MapSqlParameterSource windowParams(DashboardQueryWindow queryWindow, int limit) {
+    public record WeeklySignupRow(
+            String label,
+            long count
+    ) {
+    }
+
+    public record PaymentRatioRow(
+            DashboardPaymentMethod method,
+            String label,
+            int ratio
+    ) {
+    }
+
+    private MapSqlParameterSource windowParams(DashboardQueryWindow queryWindow) {
         return new MapSqlParameterSource()
                 .addValue("rangeStartInclusive", Timestamp.from(queryWindow.rangeStartInclusive().toInstant()))
-                .addValue("rangeEndExclusive", Timestamp.from(queryWindow.rangeEndExclusive().toInstant()))
-                .addValue("limit", limit);
+                .addValue("rangeEndExclusive", Timestamp.from(queryWindow.rangeEndExclusive().toInstant()));
     }
 
-    private ZonedDateTime toZonedDateTime(Object value) {
-        if (value instanceof ZonedDateTime zonedDateTime) {
-            return zonedDateTime.withZoneSameInstant(SERVICE_ZONE_ID);
-        }
-        if (value instanceof java.time.OffsetDateTime offsetDateTime) {
-            return offsetDateTime.atZoneSameInstant(SERVICE_ZONE_ID);
-        }
-        if (value instanceof java.time.Instant instant) {
-            return instant.atZone(SERVICE_ZONE_ID);
-        }
-        if (value instanceof Timestamp timestamp) {
-            return timestamp.toInstant().atZone(SERVICE_ZONE_ID);
-        }
-        return null;
+    private ZonedDateTime todayStartInclusive(DashboardQueryWindow queryWindow) {
+        return queryWindow.rangeEndExclusive()
+                .minusNanos(1)
+                .withZoneSameInstant(SERVICE_ZONE_ID)
+                .toLocalDate()
+                .atStartOfDay(SERVICE_ZONE_ID)
+                .withZoneSameInstant(ZoneId.of("UTC"));
     }
 
-    private String auditAlertTitle(String severity, String logType) {
-        if (logType == null) {
-            return "ERROR".equals(severity) ? "관리자 활동 오류 감지" : "관리자 활동 경고 감지";
+    private LocalDate toLocalDate(Object value) {
+        if (value instanceof LocalDate localDate) {
+            return localDate;
         }
-        String domain = switch (logType) {
-            case "ADMIN_MANAGEMENT" -> "관리자 관리";
-            case "AI_METRICS_SYSTEM" -> "AI Metrics";
-            case "SCRAPING_SYSTEM" -> "스크래핑";
-            default -> "관리자 활동";
-        };
-        return "ERROR".equals(severity) ? domain + " 오류 감지" : domain + " 경고 감지";
+        if (value instanceof Date date) {
+            return date.toLocalDate();
+        }
+        return LocalDate.parse(String.valueOf(value));
     }
 
-    private String auditMessage(String action, String targetType, String targetId, String detail) {
-        StringBuilder message = new StringBuilder();
-        message.append(blankToDefault(action, "관리자 작업"));
-        if (targetType != null && !targetType.isBlank()) {
-            message.append(" / 대상: ").append(targetType);
-            if (targetId != null && !targetId.isBlank()) {
-                message.append("(").append(targetId).append(")");
-            }
-        }
-        if (detail != null && !detail.isBlank()) {
-            message.append(" / ").append(detail);
-        }
-        return message.toString();
-    }
-
-    private String activityMessage(String logType, String action, String targetType, String targetId, String detail) {
-        if (logType == null) {
-            return "관리자 활동 - " + auditMessage(action, targetType, targetId, detail);
-        }
-        String domain = switch (logType) {
-            case "ADMIN_MANAGEMENT" -> "관리자 관리";
-            case "AI_METRICS_SYSTEM" -> "AI Metrics";
-            case "SCRAPING_SYSTEM" -> "스크래핑 관리";
-            default -> "관리자 활동";
-        };
-        return domain + " - " + auditMessage(action, targetType, targetId, detail);
-    }
-
-    private String blankToDefault(String value, String defaultValue) {
-        return value == null || value.isBlank() ? defaultValue : value;
+    private List<WeeklySignupRow> toWeeklySignupRows(Map<LocalDate, Long> countsByDate) {
+        return countsByDate.entrySet().stream()
+                .map(entry -> new WeeklySignupRow(
+                        entry.getKey().format(WEEKLY_SIGNUP_LABEL_FORMATTER),
+                        entry.getValue()
+                ))
+                .toList();
     }
 }

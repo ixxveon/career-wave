@@ -5,6 +5,8 @@ import kr.co.carrer.admin.dashboard.repository.DashboardQueryWindow;
 import kr.co.carrer.admin.dashboard.repository.DashboardSummaryQueryRepository;
 import kr.co.carrer.admin.dashboard.type.DashboardAlertLevelType;
 import kr.co.carrer.admin.dashboard.type.DashboardDomainType;
+import kr.co.carrer.admin.dashboard.type.DashboardKpiKeyType;
+import kr.co.carrer.admin.dashboard.type.DashboardPaymentMethod;
 import kr.co.carrer.admin.dashboard.type.DashboardRangeType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,12 +42,12 @@ class DashboardServiceImplTest {
         dashboardService = new DashboardServiceImpl(dashboardSummaryQueryRepository);
 
         lenient().when(dashboardSummaryQueryRepository.fetchAdminAccountMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.AdminAccountMetrics(0L, 0L, 0L));
+                .thenReturn(new DashboardSummaryQueryRepository.AdminAccountMetrics(3L, 10L, 4L));
         lenient().when(dashboardSummaryQueryRepository.fetchAiUsageMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.AiUsageMetrics(0L, BigDecimal.ZERO, true, 0, true));
-        when(dashboardSummaryQueryRepository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.AiUsageMetrics(5L, BigDecimal.valueOf(29_000L), true, 0, true));
+        lenient().when(dashboardSummaryQueryRepository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(5L, 4L, 1L, 90));
-        when(dashboardSummaryQueryRepository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
+        lenient().when(dashboardSummaryQueryRepository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(6L, 1L, 1L, 4L));
         lenient().when(dashboardSummaryQueryRepository.findAuditAlerts(any(DashboardQueryWindow.class), anyInt()))
                 .thenReturn(List.of());
@@ -56,6 +58,54 @@ class DashboardServiceImplTest {
     }
 
     @Test
+    @DisplayName("회원 가입 추이, 오늘 매출, 결제 비율을 repository 집계 결과로 반환한다")
+    void getSummaryUsesMemberAndPaymentMetricsFromRepository() {
+        when(dashboardSummaryQueryRepository.findWeeklySignups(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of(
+                        new DashboardSummaryQueryRepository.WeeklySignupRow("06/22", 2L),
+                        new DashboardSummaryQueryRepository.WeeklySignupRow("06/23", 1L)
+                ));
+        when(dashboardSummaryQueryRepository.findPaymentRatios(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of(
+                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.CARD, "카드", 75),
+                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.OTHER, "기타", 25)
+                ));
+
+        DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(result.weeklySignups())
+                .extracting(DashboardDTO.WeeklySignup::label, DashboardDTO.WeeklySignup::count)
+                .containsExactly(
+                        tuple("06/22", 2L),
+                        tuple("06/23", 1L)
+                );
+        assertThat(result.paymentRatio())
+                .extracting(DashboardDTO.PaymentRatio::method, DashboardDTO.PaymentRatio::label, DashboardDTO.PaymentRatio::ratio)
+                .containsExactly(
+                        tuple(DashboardPaymentMethod.CARD, "카드", 75),
+                        tuple(DashboardPaymentMethod.OTHER, "기타", 25)
+                );
+        assertThat(result.kpis()).anySatisfy(kpi -> {
+            assertThat(kpi.key()).isEqualTo(DashboardKpiKeyType.TODAY_REVENUE);
+            assertThat(kpi.value()).isEqualTo(29_000L);
+            assertThat(kpi.deltaText()).isEqualTo("결제 승인 기준");
+        });
+    }
+
+    @Test
+    @DisplayName("결제 데이터가 없으면 결제 비율은 빈 배열로 안전하게 반환한다")
+    void getSummaryAllowsEmptyPaymentRatio() {
+        when(dashboardSummaryQueryRepository.findWeeklySignups(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
+        when(dashboardSummaryQueryRepository.findPaymentRatios(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
+
+        DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(result.paymentRatio()).isEmpty();
+    }
+
+    @Test
     @DisplayName("알림은 level 우선순위와 생성일 역순으로 최대 5개 반환한다")
     void alertsAreSortedAndLimited() {
         ZonedDateTime now = ZonedDateTime.parse("2026-06-28T10:00:00Z");
@@ -63,9 +113,9 @@ class DashboardServiceImplTest {
                 .thenReturn(List.of(
                         new DashboardSummaryQueryRepository.AuditAlertRow(
                                 1L,
-                                DashboardAlertLevelType.WARNING,
                                 "감사 경고",
                                 "WARN",
+                                DashboardAlertLevelType.WARNING,
                                 now.minusMinutes(1)
                         )
                 ));
@@ -73,37 +123,37 @@ class DashboardServiceImplTest {
                 .thenReturn(List.of(
                         new DashboardSummaryQueryRepository.ScrapingAlertRow(
                                 2L,
-                                DashboardAlertLevelType.URGENT,
-                                "스크래핑 실패",
+                                "Scraping failed",
                                 "FAILED",
+                                DashboardAlertLevelType.URGENT,
                                 now.minusMinutes(3)
                         ),
                         new DashboardSummaryQueryRepository.ScrapingAlertRow(
                                 3L,
-                                DashboardAlertLevelType.URGENT,
-                                "스크래핑 실패",
+                                "Scraping failed",
                                 "FAILED",
+                                DashboardAlertLevelType.URGENT,
                                 now.minusMinutes(2)
                         ),
                         new DashboardSummaryQueryRepository.ScrapingAlertRow(
                                 4L,
-                                DashboardAlertLevelType.WARNING,
-                                "스크래핑 지연",
+                                "Scraping running",
                                 "RUNNING",
+                                DashboardAlertLevelType.URGENT,
                                 now.minusMinutes(4)
                         ),
                         new DashboardSummaryQueryRepository.ScrapingAlertRow(
                                 5L,
-                                DashboardAlertLevelType.NORMAL,
-                                "스크래핑 참고",
+                                "Scraping info",
                                 "INFO",
+                                DashboardAlertLevelType.URGENT,
                                 now
                         ),
                         new DashboardSummaryQueryRepository.ScrapingAlertRow(
                                 6L,
-                                DashboardAlertLevelType.WARNING,
-                                "스크래핑 경고",
+                                "Scraping warn",
                                 "WARN",
+                                DashboardAlertLevelType.URGENT,
                                 now.minusMinutes(5)
                         )
                 ));
@@ -113,11 +163,11 @@ class DashboardServiceImplTest {
         assertThat(result.alerts())
                 .extracting(DashboardDTO.Alert::id, DashboardDTO.Alert::level, DashboardDTO.Alert::domain)
                 .containsExactly(
+                        tuple(5L, DashboardAlertLevelType.URGENT, DashboardDomainType.SCRAPING),
                         tuple(3L, DashboardAlertLevelType.URGENT, DashboardDomainType.SCRAPING),
                         tuple(2L, DashboardAlertLevelType.URGENT, DashboardDomainType.SCRAPING),
-                        tuple(1L, DashboardAlertLevelType.WARNING, DashboardDomainType.AUDIT_LOG),
-                        tuple(4L, DashboardAlertLevelType.WARNING, DashboardDomainType.SCRAPING),
-                        tuple(6L, DashboardAlertLevelType.WARNING, DashboardDomainType.SCRAPING)
+                        tuple(4L, DashboardAlertLevelType.URGENT, DashboardDomainType.SCRAPING),
+                        tuple(6L, DashboardAlertLevelType.URGENT, DashboardDomainType.SCRAPING)
                 );
     }
 
@@ -149,24 +199,24 @@ class DashboardServiceImplTest {
 
     @Test
     void getSummaryReturnsFrontendAdminRoutePaths() {
-        when(dashboardSummaryQueryRepository.fetchAdminAccountMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.AdminAccountMetrics(3L, 2L, 1L));
-        when(dashboardSummaryQueryRepository.fetchAiUsageMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.AiUsageMetrics(4L, BigDecimal.valueOf(5000L), true, 80, true));
+        when(dashboardSummaryQueryRepository.findWeeklySignups(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
+        when(dashboardSummaryQueryRepository.findPaymentRatios(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
         when(dashboardSummaryQueryRepository.findAuditAlerts(any(DashboardQueryWindow.class), eq(5)))
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.AuditAlertRow(
                         1L,
-                        DashboardAlertLevelType.WARNING,
                         "Audit warning",
                         "Audit warning message",
+                        DashboardAlertLevelType.WARNING,
                         ZonedDateTime.parse("2026-06-22T09:00:00Z")
                 )));
         when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), eq(5)))
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.ScrapingAlertRow(
                         2L,
-                        DashboardAlertLevelType.URGENT,
                         "Scraping failed",
                         "Scraping failed message",
+                        DashboardAlertLevelType.URGENT,
                         ZonedDateTime.parse("2026-06-22T09:01:00Z")
                 )));
         when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))

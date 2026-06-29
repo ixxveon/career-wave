@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from core.config import get_settings
+from core.rate_limit import voice_chunk_limiter
 from core.security import verify_internal_secret
 from user.interview.pipeline import stt_pipeline
 from user.interview.pipeline import llm_pipeline
@@ -86,6 +87,10 @@ async def trigger_voice_chunk(
     audio_bytes = await audioChunk.read()
     if len(audio_bytes) > settings.audio_chunk_max_bytes:
         raise HTTPException(status_code=413, detail="음성 청크 크기가 허용 한도를 초과했습니다.")
+
+    if not voice_chunk_limiter.is_allowed(session_id):
+        log.warning("rate limit exceeded: sessionId=%s", session_id)
+        raise HTTPException(status_code=429, detail="요청이 너무 많습니다. 잠시 후 다시 시도해주세요.")
 
     task = asyncio.create_task(
         stt_pipeline.transcribe_chunk(
@@ -261,6 +266,9 @@ async def trigger_report(
     )
     _bg_tasks.add(task)
     task.add_done_callback(_on_task_done)
+
+    # 세션 종료 시점에 Rate Limit 버킷 정리
+    voice_chunk_limiter.clear(session_id)
 
     log.info(
         "report pipeline triggered: sessionId=%s, sessionType=%s",
