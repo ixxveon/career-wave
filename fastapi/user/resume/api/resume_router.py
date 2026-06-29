@@ -1,7 +1,6 @@
 import logging
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
 
 from core.security import verify_internal_secret
 from user.resume.schema.request import AnalyzeDocumentRequest
