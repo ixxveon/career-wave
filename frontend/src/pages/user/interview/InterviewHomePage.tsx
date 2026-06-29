@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '@/styles/user/interview/InterviewHomePage.css';
 import {
-  MessageSquare, Video, ChevronRight, Lightbulb,
-  FileText, User, Zap, ClipboardList, X, Loader2,
+  MessageSquare, ChevronRight, Lightbulb,
+  FileText, User, Zap, ClipboardList, Loader2,
 } from 'lucide-react';
 import { SESSION_TYPE } from '../../../types/user/interview';
 import { useInterviewHistory } from '../../../hooks/user/interview/useInterviewReport';
@@ -23,35 +22,9 @@ const SESSION_TYPE_LABEL: Record<string, string> = {
   [SESSION_TYPE.VIDEO]: '비디오 면접',
 };
 
-interface ComingSoonModalProps {
-  onClose: () => void;
-  onTextStart: () => void;
-}
-
-function ComingSoonModal({ onClose, onTextStart }: ComingSoonModalProps) {
-  return (
-    <div className="iv-cs-overlay" onClick={onClose}>
-      <div className="iv-cs-modal" onClick={e => e.stopPropagation()}>
-        <button className="iv-cs-modal__close" onClick={onClose}><X size={18} /></button>
-        <div className="iv-cs-modal__badge">COMING SOON</div>
-        <h3 className="iv-cs-modal__title">AI 비디오 면접</h3>
-        <p className="iv-cs-modal__desc">
-          웹캠·마이크를 활용한 AI 화상 면접 기능을<br />
-          현재 열심히 개발 중이에요!<br />
-          그 전에 텍스트 면접으로 먼저 연습해보세요.
-        </p>
-        <button className="iv-cs-modal__cta" onClick={() => { onClose(); onTextStart(); }}>
-          텍스트 면접 시작하기 →
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function InterviewHomePage() {
   const navigate = useNavigate();
-  const [showComingSoon, setShowComingSoon] = useState(false);
-
   const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
   const { subscribedItems, unsubscribedItems } = useSubscriptionStatus();
 
@@ -73,13 +46,6 @@ function InterviewHomePage() {
 
   return (
     <div className="iv-home">
-      {showComingSoon && (
-        <ComingSoonModal
-          onClose={() => setShowComingSoon(false)}
-          onTextStart={() => navigate('/interview/text')}
-        />
-      )}
-
       {/* ── Hero ── */}
       <section className="iv-hero">
         <div className="iv-hero__deco iv-hero__deco--1" />
@@ -203,15 +169,6 @@ function InterviewHomePage() {
               <div className="iv-mode-card__body">
                 <p className="iv-mode-card__label">AI 텍스트 · 음성 면접</p>
                 <p className="iv-mode-card__desc">타이핑 또는 마이크로 답변, 채팅 스타일</p>
-              </div>
-              <span className="iv-mode-card__cta">시작하기 <ChevronRight size={14} /></span>
-            </button>
-            <button className="iv-mode-card iv-mode-card--video" onClick={() => setShowComingSoon(true)}>
-              <div className="iv-mode-card__deco" />
-              <div className="iv-mode-card__icon"><Video size={22} /></div>
-              <div className="iv-mode-card__body">
-                <p className="iv-mode-card__label">AI 비디오 면접 시작</p>
-                <p className="iv-mode-card__desc">웹캠/마이크 사용, 시선 및 태도 분석</p>
               </div>
               <span className="iv-mode-card__cta">시작하기 <ChevronRight size={14} /></span>
             </button>
