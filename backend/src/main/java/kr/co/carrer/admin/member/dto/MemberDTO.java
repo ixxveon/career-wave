@@ -73,6 +73,17 @@ public class MemberDTO {
         @Schema(description = "정지 회원 수") long suspendedCount
     ) {}
 
+    @Schema(description = "정지 해제 요청")
+    public record RequestUnsuspend(
+        @Schema(description = "해제 사유 (최소 10자)", requiredMode = Schema.RequiredMode.REQUIRED) String reason
+    ) {}
+
+    @Schema(description = "정지 해제 응답")
+    public record ResponseUnsuspend(
+        @Schema(description = "회원 UUID") UUID memberId,
+        @Schema(description = "변경된 계정 상태") MemberStatus memberStatus
+    ) {}
+
     @Schema(description = "회원 제재 응답")
     public record ResponseSanction(
         @Schema(description = "회원 UUID") UUID memberId,
