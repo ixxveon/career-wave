@@ -1,7 +1,6 @@
 export interface MenuChild {
   label: string;
   href: string;
-  comingSoon?: boolean;
 }
 
 export interface MenuItem {
