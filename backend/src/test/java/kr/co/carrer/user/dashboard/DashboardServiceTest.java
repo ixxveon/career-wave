@@ -119,6 +119,7 @@ class DashboardServiceTest {
 
         DashboardDTO.ProfileUpdateRequest request = new DashboardDTO.ProfileUpdateRequest(
                 "고유리",
+                null,
                 "010-9999-8888",
                 "https://github.com/yul941117");
 
@@ -147,6 +148,7 @@ class DashboardServiceTest {
 
         DashboardDTO.ProfileUpdateRequest request = new DashboardDTO.ProfileUpdateRequest(
                 "고유리",
+                null,
                 "010-9999-8888",
                 "https://github.com/yul941117");
 
@@ -169,6 +171,7 @@ class DashboardServiceTest {
 
         DashboardDTO.ProfileUpdateRequest request = new DashboardDTO.ProfileUpdateRequest(
                 "고유리",
+                null,
                 "010-9999-8888",
                 "https://github.com/yul941117");
 
