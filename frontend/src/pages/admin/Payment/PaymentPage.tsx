@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
 import {
   CreditCard,
@@ -97,15 +98,15 @@ const isRefundPending = (p: Payment) => p.refundStatus === 'PENDING';
 
 // ── 에러 메시지 헬퍼 ──────────────────────────────────────────
 
-function resolveErrorMsg(err: any, fallback: string, domain?: 'refund'): string {
-  const status = err.response?.status;
+function resolveErrorMsg(err: unknown, fallback: string, domain?: 'refund'): string {
+  const status = axios.isAxiosError(err) ? err.response?.status : undefined;
   if (domain === 'refund') {
     if (status === 409) return '이미 처리된 환불 건입니다. (409)';
     if (status === 400) return '환불 조건을 충족하지 않는 건입니다. (400)';
     if (status === 404) return '결제 건을 찾을 수 없습니다. (404)';
   }
   if (!status) return '네트워크 연결을 확인해주세요.';
-  return err.response?.data?.message || `${fallback} (${status})`;
+  return (axios.isAxiosError(err) && err.response?.data?.message) || `${fallback} (${status})`;
 }
 
 // ── Toast ─────────────────────────────────────────────────────
@@ -705,13 +706,13 @@ export default function PaymentPage() {
                   <div className="refundCheckRow">
                     <span>이력서 분석 유료 이용</span>
                     <strong className={(selected.aiUsage?.documentCount ?? 0) === 0 ? 'refundOk' : 'refundFail'}>
-                      {(selected.aiUsage?.documentCount ?? 0) === 0 ? '없음' : `${selected.aiUsage!.documentCount}회`}
+                      {(selected.aiUsage?.documentCount ?? 0) === 0 ? '없음' : `${selected.aiUsage?.documentCount}회`}
                     </strong>
                   </div>
                   <div className="refundCheckRow">
                     <span>AI 면접 유료 이용</span>
                     <strong className={(selected.aiUsage?.interviewCount ?? 0) === 0 ? 'refundOk' : 'refundFail'}>
-                      {(selected.aiUsage?.interviewCount ?? 0) === 0 ? '없음' : `${selected.aiUsage!.interviewCount}회`}
+                      {(selected.aiUsage?.interviewCount ?? 0) === 0 ? '없음' : `${selected.aiUsage?.interviewCount}회`}
                     </strong>
                   </div>
                   <div className="refundEligibleRow">
