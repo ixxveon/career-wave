@@ -88,3 +88,13 @@ def test_token_cost_calculator_raises_for_invalid_cost_inputs():
         "inputTokens": -1,
         "outputTokens": 450,
     }
+
+
+def test_token_cost_calculator_rejects_bool_tokens():
+    calculator = TokenCostCalculator()
+
+    with pytest.raises(AiMetricsException):
+        calculator.calculate_input_tokens(
+            SimpleNamespace(prompt_tokens=True),
+            fallback_input_tokens=False,
+        )
