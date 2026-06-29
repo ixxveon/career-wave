@@ -50,7 +50,6 @@ def test_should_mask_scores_above_threshold():
 async def test_stt_failure_sends_error_message():
     """OpenAIError 발생 시 INTERVIEW_STT_FAILED WebSocket 메시지가 전송된다."""
     from openai import OpenAIError
-    from user.interview.pipeline import stt_pipeline
 
     mock_ws = AsyncMock()
     ctx = _SessionContext(ws=mock_ws)
@@ -61,14 +60,14 @@ async def test_stt_failure_sends_error_message():
         mock_openai_cls.return_value = mock_client
         mock_client.audio.transcriptions.create.side_effect = OpenAIError("STT error")
 
-        with patch("user.interview.pipeline.stt_pipeline.send_error") as mock_send_error:
-            from user.interview.pipeline.stt_pipeline import transcribe_chunk
-            await transcribe_chunk(
+        import user.interview.pipeline.stt_pipeline as stt_mod
+        with patch.object(stt_mod, "send_error", new=AsyncMock()) as mock_send_error:
+            await stt_mod.transcribe_chunk(
                 audio_bytes=b"fake-audio",
                 session_id=TEST_SESSION_ID,
                 question_order=1,
                 chunk_index=0,
-                is_final=False,
+                is_final=True,
             )
 
             mock_send_error.assert_called_once()
@@ -92,15 +91,16 @@ async def test_stt_final_stores_voice_quality():
     mock_response.text = "테스트 답변입니다."
     mock_response.no_speech_prob = 0.1  # voiceQualityRatio = 90.0
     mock_response.segments = []
+    mock_response.duration = None  # audio_duration 없으면 usage 기록 스킵
 
+    import user.interview.pipeline.stt_pipeline as stt_mod
     with patch("user.interview.pipeline.stt_pipeline.AsyncOpenAI") as mock_openai_cls:
         mock_client = AsyncMock()
         mock_openai_cls.return_value = mock_client
         mock_client.audio.transcriptions.create = AsyncMock(return_value=mock_response)
 
-        with patch("user.interview.pipeline.stt_pipeline.send_stt_final") as mock_send_final:
-            from user.interview.pipeline.stt_pipeline import transcribe_chunk
-            await transcribe_chunk(
+        with patch.object(stt_mod, "send_stt_final", new=AsyncMock()) as mock_send_final:
+            await stt_mod.transcribe_chunk(
                 audio_bytes=b"fake-audio",
                 session_id=TEST_SESSION_ID,
                 question_order=2,
@@ -129,22 +129,22 @@ async def test_stt_partial_sends_partial_message():
     mock_response.no_speech_prob = 0.2
     mock_response.segments = []
 
+    import user.interview.pipeline.stt_pipeline as stt_mod
     with patch("user.interview.pipeline.stt_pipeline.AsyncOpenAI") as mock_openai_cls:
         mock_client = AsyncMock()
         mock_openai_cls.return_value = mock_client
         mock_client.audio.transcriptions.create = AsyncMock(return_value=mock_response)
 
-        with patch("user.interview.pipeline.stt_pipeline.send_stt_partial") as mock_send_partial:
-            from user.interview.pipeline.stt_pipeline import transcribe_chunk
-            await transcribe_chunk(
-                audio_bytes=b"fake-audio",
-                session_id=TEST_SESSION_ID,
-                question_order=1,
-                chunk_index=3,
-                is_final=False,
-            )
+        # is_final=False 경로는 STT 호출 자체를 하지 않으므로 send_stt_partial 호출 없음
+        await stt_mod.transcribe_chunk(
+            audio_bytes=b"fake-audio",
+            session_id=TEST_SESSION_ID,
+            question_order=1,
+            chunk_index=3,
+            is_final=False,
+        )
 
-            mock_send_partial.assert_called_once()
-            assert 1 not in ctx.voice_quality_by_order
+        # 중간 청크는 버퍼에만 누적되고 voice_quality 저장 안 됨
+        assert 1 not in ctx.voice_quality_by_order
 
     _sessions.clear()

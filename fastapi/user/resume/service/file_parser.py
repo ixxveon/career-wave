@@ -43,7 +43,7 @@ def _resolve_extension(file_url: str, original_name: str | None) -> str:
     name = original_name or file_url.split("?")[0].split("/")[-1]
     _, ext = os.path.splitext(name.lower())
     if ext not in (SupportedExtension.PDF, SupportedExtension.DOCX):
-        raise FileParseError(f"지원하지 않는 파일 형식입니다. (지원: PDF, DOCX)")
+        raise FileParseError("지원하지 않는 파일 형식입니다. (지원: PDF, DOCX)")
     return ext
 
 
@@ -90,7 +90,6 @@ def _download_to_tempfile(document_id: str, file_url: str) -> str:
     if "amazonaws.com" not in file_url:
         return _download_via_http(document_id, file_url)
 
-    settings = get_settings()
     bucket, key = _parse_s3_url(file_url)
     s3 = _get_s3_client()
 
