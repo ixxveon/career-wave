@@ -9,7 +9,7 @@ from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException
 class TokenCostCalculator:
     @staticmethod
     def _is_non_negative_int(value: Any) -> bool:
-        return type(value) is int and value >= 0
+        return isinstance(value, int) and not isinstance(value, bool) and value >= 0
 
     def calculate_input_tokens(
         self,
