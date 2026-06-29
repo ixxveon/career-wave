@@ -24,7 +24,7 @@ import kr.co.carrer.user.interview.service.impl.InterviewTimeoutServiceImpl;
 import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
 import kr.co.carrer.user.interview.type.InterviewType;
-import kr.co.carrer.user.resume.repository.DocumentRepository;
+import kr.co.carrer.user.resume.service.ResumeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,7 +55,7 @@ class InterviewPremiumUsageIntegrationTest {
 
     @Mock InterviewSessionRepository sessionRepository;
     @Mock InterviewMessageRepository messageRepository;
-    @Mock DocumentRepository documentRepository;
+    @Mock ResumeService resumeService;
     @Mock InterviewFastApiClient fastApiClient;
     @Mock AIInterviewFeedbackRepository feedbackRepository;
     @Mock CareerHistoryRepository careerHistoryRepository;
@@ -119,7 +119,7 @@ class InterviewPremiumUsageIntegrationTest {
                 entitlementRepository, usageRecordRepository, memberPort,
                 subscriptionRepository, usagePeriodRepository);
         sessionService = new InterviewSessionServiceImpl(
-                sessionRepository, messageRepository, documentRepository, fastApiClient, entitlementService);
+                sessionRepository, messageRepository, resumeService, fastApiClient, entitlementService);
         callbackService = new InterviewCallbackServiceImpl(
                 sessionRepository, feedbackRepository, careerHistoryRepository,
                 messageRepository, messagingTemplate, entitlementService);
