@@ -1508,3 +1508,77 @@ COMMENT ON COLUMN billing_consents.plan_id            IS '동의 대상 플랜 F
 COMMENT ON COLUMN billing_consents.terms_version      IS '동의한 약관 버전';
 COMMENT ON COLUMN billing_consents.agreed_at          IS '동의 일시';
 COMMENT ON COLUMN billing_consents.revoked_at         IS '동의 철회 일시';
+
+-- ─────────────────────────────────────────────────────────────────
+-- 정산 리포트 (settlement_reports / settlement_items)
+-- ─────────────────────────────────────────────────────────────────
+
+CREATE TABLE settlement_reports (
+    settlement_id           BIGSERIAL       PRIMARY KEY,
+    settlement_period_start DATE            NOT NULL,
+    settlement_period_end   DATE            NOT NULL,
+    total_sales_amount      BIGINT          NOT NULL DEFAULT 0,
+    total_refund_amount     BIGINT          NOT NULL DEFAULT 0,
+    net_sales_amount        BIGINT          NOT NULL DEFAULT 0,
+    supply_amount           BIGINT          NOT NULL DEFAULT 0,
+    vat_amount              BIGINT          NOT NULL DEFAULT 0,
+    total_transaction_count INTEGER         NOT NULL DEFAULT 0,
+    paid_count              INTEGER         NOT NULL DEFAULT 0,
+    refund_count            INTEGER         NOT NULL DEFAULT 0,
+    settlement_status       VARCHAR(20)     NOT NULL,
+    settled_at              TIMESTAMPTZ,
+    admin_id                BIGINT          REFERENCES admins(admin_id),
+    note                    TEXT,
+    created_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_settlement_period     UNIQUE (settlement_period_start, settlement_period_end),
+    CONSTRAINT chk_settlement_period    CHECK (settlement_period_start < settlement_period_end),
+    CONSTRAINT chk_settlement_status    CHECK (settlement_status IN ('PENDING', 'CONFIRMED')),
+    CONSTRAINT chk_settlement_confirmed_fields CHECK (
+        (settlement_status = 'PENDING'   AND settled_at IS NULL     AND admin_id IS NULL) OR
+        (settlement_status = 'CONFIRMED' AND settled_at IS NOT NULL AND admin_id IS NOT NULL)
+    )
+);
+
+CREATE INDEX idx_settlement_period ON settlement_reports (settlement_period_start, settlement_period_end);
+CREATE INDEX idx_settlement_status ON settlement_reports (settlement_status);
+
+COMMENT ON TABLE  settlement_reports                           IS '월별 정산 리포트 요약';
+COMMENT ON COLUMN settlement_reports.settlement_id             IS '정산 리포트 PK';
+COMMENT ON COLUMN settlement_reports.settlement_period_start   IS '정산 기간 시작일';
+COMMENT ON COLUMN settlement_reports.settlement_period_end     IS '정산 기간 종료일';
+COMMENT ON COLUMN settlement_reports.total_sales_amount        IS '총 매출액 (원)';
+COMMENT ON COLUMN settlement_reports.total_refund_amount       IS '총 환불액 (원)';
+COMMENT ON COLUMN settlement_reports.net_sales_amount          IS '순매출액 (매출 - 환불)';
+COMMENT ON COLUMN settlement_reports.supply_amount             IS '공급가액 (VAT 제외)';
+COMMENT ON COLUMN settlement_reports.vat_amount                IS '부가세';
+COMMENT ON COLUMN settlement_reports.total_transaction_count   IS '총 결제 건수';
+COMMENT ON COLUMN settlement_reports.paid_count                IS '결제 완료 건수';
+COMMENT ON COLUMN settlement_reports.refund_count              IS '환불 건수';
+COMMENT ON COLUMN settlement_reports.settlement_status         IS '정산 상태 (PENDING / CONFIRMED)';
+COMMENT ON COLUMN settlement_reports.settled_at                IS '정산 확정 일시';
+COMMENT ON COLUMN settlement_reports.admin_id                  IS '정산 확정 관리자 FK';
+COMMENT ON COLUMN settlement_reports.note                      IS '비고/메모';
+COMMENT ON COLUMN settlement_reports.created_at                IS '생성 일시';
+COMMENT ON COLUMN settlement_reports.updated_at                IS '최종 수정 일시';
+
+CREATE TABLE settlement_items (
+    settlement_item_id  BIGSERIAL       PRIMARY KEY,
+    settlement_id       BIGINT          NOT NULL REFERENCES settlement_reports(settlement_id),
+    payment_id          UUID            NOT NULL REFERENCES payments(payment_id),
+    amount              INTEGER         NOT NULL,
+    item_type           VARCHAR(20)     NOT NULL,
+    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_settlement_item_payment  UNIQUE (settlement_id, payment_id, item_type),
+    CONSTRAINT chk_settlement_item_type    CHECK (item_type IN ('PAYMENT', 'REFUND'))
+);
+
+CREATE INDEX idx_settlement_item_settlement ON settlement_items (settlement_id);
+
+COMMENT ON TABLE  settlement_items                         IS '정산 포함 결제/환불 내역';
+COMMENT ON COLUMN settlement_items.settlement_item_id      IS '항목 PK';
+COMMENT ON COLUMN settlement_items.settlement_id           IS '소속 정산 리포트 FK';
+COMMENT ON COLUMN settlement_items.payment_id              IS '결제 FK';
+COMMENT ON COLUMN settlement_items.amount                  IS '해당 결제/환불 금액';
+COMMENT ON COLUMN settlement_items.item_type               IS '항목 유형 (PAYMENT / REFUND)';
+COMMENT ON COLUMN settlement_items.created_at              IS '생성 일시';
