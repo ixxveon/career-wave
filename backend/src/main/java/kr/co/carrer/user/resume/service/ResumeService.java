@@ -21,4 +21,6 @@ public interface ResumeService {
     void receiveWebhook(UUID documentId, String webhookSecret, ResumeDTO.RequestWebhook dto);
 
     ResumeDTO.ResponseQuota getQuota(UUID memberId);
+
+    String getDocumentFileUrl(UUID memberId, UUID documentId);
 }
