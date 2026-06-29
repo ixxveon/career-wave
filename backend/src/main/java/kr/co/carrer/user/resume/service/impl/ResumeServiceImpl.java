@@ -269,4 +269,11 @@ public class ResumeServiceImpl implements ResumeService {
             throw new CustomException(ResumeErrorCode.FEEDBACK_PARSE_ERROR);
         }
     }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Optional<String> findDocumentFileUrl(UUID memberId, UUID documentId) {
+        return documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
+                .map(Document::getFileUrl);
+    }
 }
