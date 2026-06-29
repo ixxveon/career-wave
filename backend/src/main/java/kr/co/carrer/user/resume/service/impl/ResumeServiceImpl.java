@@ -272,9 +272,8 @@ public class ResumeServiceImpl implements ResumeService {
 
     @Transactional(readOnly = true)
     @Override
-    public String getDocumentFileUrl(UUID memberId, UUID documentId) {
+    public Optional<String> findDocumentFileUrl(UUID memberId, UUID documentId) {
         return documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
-                .orElseThrow(() -> new CustomException(ResumeErrorCode.DOCUMENT_NOT_FOUND))
-                .getFileUrl();
+                .map(Document::getFileUrl);
     }
 }

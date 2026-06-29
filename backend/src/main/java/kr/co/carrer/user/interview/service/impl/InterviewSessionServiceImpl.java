@@ -56,7 +56,8 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
 
         String fileUrl = null;
         if (documentId != null) {
-            fileUrl = resumeService.getDocumentFileUrl(memberId, documentId);
+            fileUrl = resumeService.findDocumentFileUrl(memberId, documentId)
+                    .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_DOCUMENT_NOT_FOUND));
         }
 
         InterviewSession saved = saveNewSession(memberId, documentId, sessionType, interviewType, dto.targetCompany());
