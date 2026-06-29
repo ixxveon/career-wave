@@ -93,6 +93,26 @@ class InterviewFreeEntitlementIntegrationTest {
 
             verify(entitlementService).reserve(memberId, "interview", ResourceType.INTERVIEW_SESSION, sessionId);
         }
+
+        @Test
+        @DisplayName("documentId 있을 때 resumeService.findDocumentFileUrl 호출")
+        void startSession_withDocumentId_callsFindDocumentFileUrl() {
+            UUID documentId = UUID.randomUUID();
+            String fileUrl = "https://s3.example.com/resume.pdf";
+
+            when(sessionRepository.findInProgressByMemberId(eq(memberId), any())).thenReturn(Optional.empty());
+            when(sessionRepository.save(any())).thenAnswer(inv -> {
+                InterviewSession session = inv.getArgument(0);
+                setField(session, "sessionId", sessionId);
+                return session;
+            });
+            when(resumeService.findDocumentFileUrl(memberId, documentId)).thenReturn(Optional.of(fileUrl));
+
+            sessionService.startSession(memberId,
+                    new InterviewDTO.RequestStartSession(documentId.toString(), "TEXT", "TECHNICAL", null));
+
+            verify(resumeService).findDocumentFileUrl(memberId, documentId);
+        }
     }
 
     @Nested

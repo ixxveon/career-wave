@@ -156,6 +156,25 @@ class InterviewPremiumUsageIntegrationTest {
     }
 
     @Test
+    @DisplayName("documentId 있을 때 resumeService.findDocumentFileUrl 호출")
+    void startSession_withDocumentId_callsFindDocumentFileUrl() {
+        UUID documentId = UUID.randomUUID();
+        String fileUrl = "https://s3.example.com/resume.pdf";
+
+        when(resumeService.findDocumentFileUrl(memberId, documentId)).thenReturn(Optional.of(fileUrl));
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            sessionService.startSession(memberId,
+                    new InterviewDTO.RequestStartSession(documentId.toString(), "TEXT", "TECHNICAL", null));
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+
+        verify(resumeService).findDocumentFileUrl(memberId, documentId);
+    }
+
+    @Test
     @DisplayName("Interview PREMIUM timeout — release, used 불변")
     void interviewPremium_timeoutReleasesMonthlyUsage() {
         sessionService.startSession(memberId,
