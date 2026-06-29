@@ -23,6 +23,10 @@ public class InterviewSessionTimeoutProcessor {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void process(UUID sessionId, ZonedDateTime now) {
         sessionRepository.findById(sessionId).ifPresent(session -> {
+            if (!session.isInProgress()) {
+                log.debug("Timeout skipped — session not in progress: sessionId={}", sessionId);
+                return;
+            }
             session.fail(now);
             entitlementService.release(ResourceType.INTERVIEW_SESSION, sessionId);
             log.info("Timed out session marked FAILED: sessionId={}", sessionId);
