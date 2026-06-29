@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from admin.ai_metrics.client.openai_client import get_ai_metrics_openai_client
 from admin.ai_metrics.router import router as ai_metrics_router
 from core.config import get_settings
+from core.middleware import InternalRouteGuardMiddleware
 from user.resume.service.webhook_outbox import init_outbox_db, run_outbox_worker
 
 log = logging.getLogger(__name__)
@@ -75,6 +76,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(InternalRouteGuardMiddleware)
 
 
 @app.get("/health", tags=["health"])
@@ -86,11 +88,11 @@ async def health_check() -> dict[str, str]:
 
 from user.resume.api import resume_router  # noqa: E402
 
-app.include_router(resume_router.router, prefix="/internal/user")
+app.include_router(resume_router.router, prefix="/internal/user", include_in_schema=False)
 
 from user.interview.api import interview_router  # noqa: E402
 
-app.include_router(interview_router.router, prefix="/internal/user")
+app.include_router(interview_router.router, prefix="/internal/user", include_in_schema=False)
 
 from user.interview.websocket import interview_ws_handler  # noqa: E402
 
@@ -108,4 +110,4 @@ app.include_router(scraping_router.router)
 
 # from admin.api import scraper_router
 # app.include_router(scraper_router.router, prefix="/internal/admin")
-app.include_router(ai_metrics_router, prefix="/internal/admin")
+app.include_router(ai_metrics_router, prefix="/internal/admin", include_in_schema=False)
