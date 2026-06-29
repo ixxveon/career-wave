@@ -62,7 +62,9 @@ public class DashboardServiceImpl implements DashboardService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         String name = request.name() != null ? request.name() : member.getName();
-        String email = request.email() != null ? request.email() : member.getEmail();
+        String email = request.email() != null && !request.email().isBlank()
+        ? request.email()
+        : member.getEmail();
         String phone = request.phone() != null ? request.phone() : member.getPhone();
 
         member.updateProfile(name, email, phone);
