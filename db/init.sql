@@ -247,7 +247,8 @@ CREATE TABLE terms_documents (
     published_url  VARCHAR(500) NOT NULL,
     required       BOOLEAN      NOT NULL,
 
-    CONSTRAINT pk_terms_documents PRIMARY KEY (document_code, version)
+    CONSTRAINT pk_terms_documents PRIMARY KEY (document_code, version),
+    CONSTRAINT uq_terms_documents_effective UNIQUE (document_code, effective_from)
 );
 COMMENT ON TABLE  terms_documents                IS '약관 및 동의 문서 버전 정의 테이블';
 COMMENT ON COLUMN terms_documents.document_code  IS '문서 코드';

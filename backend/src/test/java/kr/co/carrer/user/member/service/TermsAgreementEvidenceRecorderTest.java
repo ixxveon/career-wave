@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -46,7 +47,11 @@ class TermsAgreementEvidenceRecorderTest {
                 .thenReturn(Optional.of(doc));
         when(httpRequest.getRemoteAddr()).thenReturn("127.0.0.1");
         when(httpRequest.getHeader("User-Agent")).thenReturn("test-agent");
-        return new TermsAgreementEvidenceRecorder(agreementRepository, termsDocumentRepository, httpRequest);
+
+        TermsAgreementEvidenceRecorder recorder =
+                new TermsAgreementEvidenceRecorder(agreementRepository, termsDocumentRepository, httpRequest);
+        ReflectionTestUtils.setField(recorder, "hashSecret", "test-privacy-hmac-secret");
+        return recorder;
     }
 
     @Test
@@ -70,6 +75,7 @@ class TermsAgreementEvidenceRecorderTest {
                 .allSatisfy(agreement -> {
                     assertThat(agreement.getMemberId()).isEqualTo(memberId);
                     assertThat(agreement.getVersion()).isEqualTo(TEST_VERSION);
+                    assertThat(agreement.getAgreedAt()).isNotNull();
                     assertThat(agreement.getIpAddressHash()).isNotNull();
                     assertThat(agreement.getUserAgentHash()).isNotNull();
                 });

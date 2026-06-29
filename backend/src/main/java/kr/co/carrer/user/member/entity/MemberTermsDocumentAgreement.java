@@ -52,16 +52,18 @@ public class MemberTermsDocumentAgreement {
     }
 
     public static MemberTermsDocumentAgreement record(UUID memberId, TermsDocumentCode documentCode,
-                                                      String version, boolean agreed,
+                                                      String version, boolean agreed, Instant agreedAt,
                                                       String ipAddressHash, String userAgentHash) {
         Objects.requireNonNull(memberId, "memberId must not be null");
         Objects.requireNonNull(documentCode, "documentCode must not be null");
         Objects.requireNonNull(version, "version must not be null");
+        Objects.requireNonNull(agreedAt, "agreedAt must not be null");
         MemberTermsDocumentAgreement agreement = new MemberTermsDocumentAgreement();
         agreement.memberId = memberId;
         agreement.documentCode = documentCode;
         agreement.version = version;
         agreement.agreed = agreed;
+        agreement.agreedAt = agreedAt;
         agreement.ipAddressHash = ipAddressHash;
         agreement.userAgentHash = userAgentHash;
         return agreement;

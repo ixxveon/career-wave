@@ -6,8 +6,10 @@ CREATE TABLE IF NOT EXISTS terms_documents (
     published_url  VARCHAR(500) NOT NULL,
     required       BOOLEAN      NOT NULL,
 
-    CONSTRAINT pk_terms_documents PRIMARY KEY (document_code, version)
+    CONSTRAINT pk_terms_documents PRIMARY KEY (document_code, version),
+    CONSTRAINT uq_terms_documents_effective UNIQUE (document_code, effective_from)
 );
+ALTER TABLE terms_documents ADD CONSTRAINT IF NOT EXISTS uq_terms_documents_effective UNIQUE (document_code, effective_from);
 
 COMMENT ON TABLE  terms_documents                IS '약관 및 동의 문서 버전 정의 테이블';
 COMMENT ON COLUMN terms_documents.document_code  IS '문서 코드';
@@ -25,11 +27,7 @@ INSERT INTO terms_documents (document_code, version, effective_from, content_has
 ('COMPANY_VERIFICATION', '2026-06-26', '2026-06-26T00:00:00+09:00', '9d50c632843156bcf34ddf7436fece7adaffac8feeebe5473b383489ed0363a7', '/terms', TRUE),
 ('SMS_TERMS', '2026-06-26', '2026-06-26T00:00:00+09:00', '615af848202df4b47b4ef00ba3da71f71c306954c54a7e471153fdcf65c7f8bd', '/terms', TRUE),
 ('BILLING_TERMS', '2026-06-26', '2026-06-26T00:00:00+09:00', 'ae7fc33a5b3ceb655e130dccc00e1016b716d5ceb9a3f966ad50015e6954c7b9', '/billing/terms', FALSE)
-ON CONFLICT (document_code, version) DO UPDATE SET
-    effective_from = EXCLUDED.effective_from,
-    content_hash = EXCLUDED.content_hash,
-    published_url = EXCLUDED.published_url,
-    required = EXCLUDED.required;
+ON CONFLICT (document_code, version) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS member_terms_document_agreements (
     agreement_event_id BIGSERIAL    NOT NULL,

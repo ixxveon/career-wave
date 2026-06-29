@@ -1,17 +1,20 @@
 package kr.co.carrer.user.member.service;
 
 import jakarta.servlet.http.HttpServletRequest;
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.user.member.entity.MemberTermsDocumentAgreement;
 import kr.co.carrer.user.member.entity.TermsDocument;
 import kr.co.carrer.user.member.repository.MemberTermsDocumentAgreementRepository;
 import kr.co.carrer.user.member.repository.TermsDocumentRepository;
 import kr.co.carrer.user.member.type.TermsDocumentCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +26,9 @@ public class TermsAgreementEvidenceRecorder {
     private final MemberTermsDocumentAgreementRepository agreementRepository;
     private final TermsDocumentRepository termsDocumentRepository;
     private final HttpServletRequest httpServletRequest;
+
+    @Value("${privacy.hash-secret}")
+    private String hashSecret;
 
     public void recordPersonalSignup(UUID memberId, boolean service, boolean privacy, boolean marketing) {
         Instant now = Instant.now();
@@ -53,35 +59,29 @@ public class TermsAgreementEvidenceRecorder {
                                                     Instant now, String ipHash, String uaHash) {
         String version = termsDocumentRepository.findLatestEffective(code, now)
                 .map(TermsDocument::getVersion)
-                .orElseThrow(() -> new IllegalStateException(
-                        "No effective terms document found for code: " + code));
-        return MemberTermsDocumentAgreement.record(memberId, code, version, agreed, ipHash, uaHash);
+                .orElseThrow(() -> new CustomException(ErrorCode.TERMS_DOCUMENT_NOT_FOUND));
+        return MemberTermsDocumentAgreement.record(memberId, code, version, agreed, now, ipHash, uaHash);
     }
 
     private String hashIp() {
-        String ip = httpServletRequest.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isBlank()) {
-            ip = httpServletRequest.getRemoteAddr();
-        } else if (ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return sha256(ip);
+        return hmac(httpServletRequest.getRemoteAddr());
     }
 
     private String hashUa() {
-        return sha256(httpServletRequest.getHeader("User-Agent"));
+        return hmac(httpServletRequest.getHeader("User-Agent"));
     }
 
-    private static String sha256(String value) {
+    private String hmac(String value) {
         if (value == null) return null;
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(hashSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] hash = mac.doFinal(value.getBytes(StandardCharsets.UTF_8));
             StringBuilder hex = new StringBuilder(64);
             for (byte b : hash) hex.append(String.format("%02x", b));
             return hex.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 }
