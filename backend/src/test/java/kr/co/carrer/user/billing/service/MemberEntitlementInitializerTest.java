@@ -10,6 +10,7 @@ import kr.co.carrer.user.member.entity.MemberVerification;
 import kr.co.carrer.user.member.repository.*;
 import kr.co.carrer.user.member.service.BusinessRegistrationVerificationPort;
 import kr.co.carrer.user.member.service.EmploymentCertificateFilePort;
+import kr.co.carrer.user.member.service.TermsAgreementEvidenceRecorder;
 import kr.co.carrer.user.member.service.impl.UserRegisterServiceImpl;
 import kr.co.carrer.user.member.entity.CompanyProfile;
 import kr.co.carrer.user.member.type.CompanyType;
@@ -48,6 +49,7 @@ class MemberEntitlementInitializerTest {
     @Mock BusinessRegistrationVerificationPort businessVerificationPort;
     @Mock EmploymentCertificateFilePort employmentCertificateFilePort;
     @Mock EntitlementInitService entitlementInitService;
+    @Mock TermsAgreementEvidenceRecorder termsAgreementEvidenceRecorder;
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private UserRegisterServiceImpl registerService;
@@ -58,7 +60,7 @@ class MemberEntitlementInitializerTest {
                 memberRepository, personalProfileRepository, companyProfileRepository,
                 hrManagerRepository, termsRepository, verificationRepository,
                 encoder, businessVerificationPort, employmentCertificateFilePort,
-                entitlementInitService);
+                entitlementInitService, termsAgreementEvidenceRecorder);
     }
 
     @Nested

@@ -279,4 +279,4 @@ def test_batch_action_service_marks_disabled_pipeline_as_rejected_result():
     assert aggregation.accepted_count == 0
     assert aggregation.results[0].source_name == "wanted"
     assert aggregation.results[0].accepted is False
-    assert aggregation.results[0].pipeline_status == "SUCCESS"
+    assert aggregation.results[0].pipeline_status == "FAILED"

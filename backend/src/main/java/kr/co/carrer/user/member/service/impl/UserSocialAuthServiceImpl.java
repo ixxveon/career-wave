@@ -20,6 +20,7 @@ import kr.co.carrer.user.member.entity.SocialAccount;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.*;
 import kr.co.carrer.user.member.service.SocialSignupTokenStore;
+import kr.co.carrer.user.member.service.TermsAgreementEvidenceRecorder;
 import kr.co.carrer.user.member.service.UserSocialAuthService;
 import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.SocialProvider;
@@ -67,6 +68,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
     private final WebClient.Builder webClientBuilder;
     private final EntitlementInitService entitlementInitService;
     private final CookieProperties cookieProperties;
+    private final TermsAgreementEvidenceRecorder termsAgreementEvidenceRecorder;
 
     @Value("${oauth.kakao.client-id}") private String kakaoClientId;
     @Value("${oauth.kakao.client-secret}") private String kakaoClientSecret;
@@ -225,6 +227,11 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
                 request.getTerms().isService(),
                 request.getTerms().isPrivacy(),
                 request.getTerms().isMarketing()));
+        termsAgreementEvidenceRecorder.recordPersonalSignup(
+                member.getMemberId(),
+                request.getTerms().isService(),
+                request.getTerms().isPrivacy(),
+                request.getTerms().isMarketing());
 
         // 상품별 FREE 이용권 생성 (document-coaching, interview)
         entitlementInitService.initFreeEntitlements(member.getMemberId());

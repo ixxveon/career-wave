@@ -8,6 +8,7 @@ import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.*;
 import kr.co.carrer.user.member.service.BusinessRegistrationVerificationPort;
 import kr.co.carrer.user.member.service.EmploymentCertificateFilePort;
+import kr.co.carrer.user.member.service.TermsAgreementEvidenceRecorder;
 import kr.co.carrer.user.member.service.UserRegisterService;
 import kr.co.carrer.user.member.type.*;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     private final BusinessRegistrationVerificationPort businessVerificationPort;
     private final EmploymentCertificateFilePort employmentCertificateFilePort;
     private final EntitlementInitService entitlementInitService;
+    private final TermsAgreementEvidenceRecorder termsAgreementEvidenceRecorder;
 
     // ── loginId 중복 확인 ──────────────────────────────────────────────────────
 
@@ -104,6 +106,11 @@ public class UserRegisterServiceImpl implements UserRegisterService {
                 request.getTerms().isService(),
                 request.getTerms().isPrivacy(),
                 request.getTerms().isMarketing()));
+        termsAgreementEvidenceRecorder.recordPersonalSignup(
+                member.getMemberId(),
+                request.getTerms().isService(),
+                request.getTerms().isPrivacy(),
+                request.getTerms().isMarketing());
 
         // 상품별 FREE 이용권 생성 (document-coaching, interview)
         entitlementInitService.initFreeEntitlements(member.getMemberId());
@@ -199,6 +206,13 @@ public class UserRegisterServiceImpl implements UserRegisterService {
                 request.getTerms().isMarketing(),
                 request.getTerms().isCompanyVerification(),
                 request.getTerms().isSms()));
+        termsAgreementEvidenceRecorder.recordCompanySignup(
+                member.getMemberId(),
+                request.getTerms().isService(),
+                request.getTerms().isPrivacy(),
+                request.getTerms().isMarketing(),
+                request.getTerms().isCompanyVerification(),
+                request.getTerms().isSms());
 
         // 기업회원 가입 응답 — access/refresh token 미발급 (spec FR-019, FR-020)
         // 재직증명서 재사용 방지: company_profiles.cert_file_url UNIQUE 제약으로 DB 레벨에서 보장
