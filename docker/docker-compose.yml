@@ -1,0 +1,18 @@
+services:
+  spring:
+    image: ${ECR_REGISTRY}/${ECR_SPRING_REPOSITORY}:latest
+    container_name: career-wave-spring
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    restart: always
+
+  fastapi:
+    image: ${ECR_REGISTRY}/${ECR_FASTAPI_REPOSITORY}:latest
+    container_name: career-wave-fastapi
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: always

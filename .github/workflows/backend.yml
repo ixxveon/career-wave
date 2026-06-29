@@ -1,6 +1,7 @@
 name: Backend Deploy
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - develop
@@ -28,15 +29,25 @@ jobs:
 
       - name: Build and push Spring image
         run: |
-          SPRING_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_SPRING_REPOSITORY }}:${IMAGE_TAG}
+          SPRING_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_SPRING_REPOSITORY }}:${{ env.IMAGE_TAG }}
           docker build -t $SPRING_IMAGE ./backend
           docker push $SPRING_IMAGE
 
       - name: Build and push FastAPI image
         run: |
-          FASTAPI_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_FASTAPI_REPOSITORY }}:${IMAGE_TAG}
+          FASTAPI_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_FASTAPI_REPOSITORY }}:${{ env.IMAGE_TAG }}
           docker build -t $FASTAPI_IMAGE ./fastapi
           docker push $FASTAPI_IMAGE
+
+      - name: Copy compose file to App1
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.APP1_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.APP1_SSH_KEY }}
+          source: "docker/docker-compose.yml"
+          target: "/home/ec2-user/career-wave"
+          strip_components: 1
 
       - name: Deploy to App1
         uses: appleboy/ssh-action@v1.0.3
@@ -45,11 +56,27 @@ jobs:
           username: ${{ secrets.APP_USER }}
           key: ${{ secrets.APP1_SSH_KEY }}
           script: |
+            set -e
             cd ~/career-wave
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
+            | docker login \
+              --username AWS \
+              --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
             docker compose pull
             docker compose up -d
             docker image prune -f
+
+      - name: Copy compose file to App2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.APP2_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.APP2_SSH_KEY }}
+          source: "docker/docker-compose.yml"
+          target: "/home/ec2-user/career-wave"
+          strip_components: 1
 
       - name: Deploy to App2
         uses: appleboy/ssh-action@v1.0.3
@@ -58,8 +85,14 @@ jobs:
           username: ${{ secrets.APP_USER }}
           key: ${{ secrets.APP2_SSH_KEY }}
           script: |
+            set -e
             cd ~/career-wave
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
+            | docker login \
+              --username AWS \
+              --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
             docker compose pull
             docker compose up -d
             docker image prune -f
