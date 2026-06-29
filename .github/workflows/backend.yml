@@ -9,6 +9,9 @@ on:
 env:
   IMAGE_TAG: latest
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
