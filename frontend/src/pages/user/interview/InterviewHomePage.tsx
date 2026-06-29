@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import '@/styles/user/interview/InterviewHomePage.css';
 import {
-  MessageSquare, ChevronRight, Lightbulb,
+  MessageSquare, ChevronRight,
   User, Zap, ClipboardList, Loader2,
 } from 'lucide-react';
 import { SESSION_TYPE } from '../../../types/user/interview';
@@ -218,18 +218,6 @@ function InterviewHomePage() {
         )}
       </div>
 
-      {/* ── AI 팁 ── */}
-      <div className="iv-tip">
-        <div className="iv-tip__icon"><Lightbulb size={20} /></div>
-        <div className="iv-tip__body">
-          <p className="iv-tip__label">오늘의 AI 추천 면접 팁</p>
-          <p className="iv-tip__text">
-            000님은 지난 면접에서 &apos;기술적 예외 처리&apos; 답변 시 목소리 떨림이 있었습니다.<br />
-            오늘은 텍스트 모드로 답변 논리 구조를 먼저 배대 잡고 시작하는 걸 추천해요!
-          </p>
-          <button className="iv-tip__cta" onClick={() => navigate('/interview/text')}>추천 질문 연습하기 →</button>
-        </div>
-      </div>
 
     </div>
   );
