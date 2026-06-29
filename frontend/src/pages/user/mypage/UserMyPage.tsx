@@ -61,6 +61,7 @@ const MEMBER_STATUS_CONFIG: Record<
 
 type EditProfileForm = {
   name: string;
+  email: string;
   phone: string;
   githubUrl: string;
 };
@@ -89,6 +90,7 @@ function UserMyPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<EditProfileForm>({
     name: "",
+    email: "",
     phone: "",
     githubUrl: "",
   });
@@ -103,9 +105,11 @@ function UserMyPage() {
 
     setEditForm({
       name: userProfile.name,
+      email: userProfile.email ?? "",
       phone: userProfile.phone,
       githubUrl: githubProfile?.githubUrl ?? "",
     });
+
     setIsEditModalOpen(true);
   }
 
@@ -128,14 +132,22 @@ function UserMyPage() {
     isSavingProfileRef.current = true;
 
     const trimmedName = editForm.name.trim();
+    const trimmedEmail = editForm.email.trim();
     const normalizedPhone = editForm.phone.replace(/-/g, "").trim();
     const trimmedGithubUrl = editForm.githubUrl.trim();
+
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
+      alert("이메일 형식이 올바르지 않습니다.");
+      isSavingProfileRef.current = false;
+      return;
+    }
 
     try {
       setIsSavingProfile(true);
 
       await updateDashboardProfile({
         name: trimmedName,
+        email: trimmedEmail,
         phone: normalizedPhone,
         githubUrl: trimmedGithubUrl,
       });
@@ -407,6 +419,18 @@ function UserMyPage() {
                   value={editForm.name ?? ""}
                   onChange={(event) =>
                     handleEditFormChange("name", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                이메일
+                <input
+                  type="email"
+                  value={editForm.email ?? ""}
+                  placeholder="example@email.com"
+                  onChange={(event) =>
+                    handleEditFormChange("email", event.target.value)
                   }
                 />
               </label>
