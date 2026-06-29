@@ -95,6 +95,10 @@ jobs:
         working-directory: fastapi
         run: pip install -r requirements.txt
 
-      - name: Check Python modules
+      - name: Lint
         working-directory: fastapi
-        run: python -m compileall .
+        run: ruff check .
+
+      - name: Run tests
+        working-directory: fastapi
+        run: pytest tests --tb=short -q
