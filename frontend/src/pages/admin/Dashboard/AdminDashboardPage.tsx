@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Activity, Bot, CreditCard, Users } from 'lucide-react';
+import { Activity, Bot, CreditCard, Users, type LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { adminSession } from '../../../api/admin/adminAuthApi';
 import {
+  DASHBOARD_KPI_KEY,
+  type DashboardKpiKey,
   dashboardApi,
   getDashboardSummaryErrorMessage,
   unwrapDashboardSummaryResponse,
@@ -19,11 +21,13 @@ import '../../../styles/admin/admin.css';
 const DASHBOARD_SUMMARY_QUERY_KEY = ['admin', 'dashboard', 'summary'] as const;
 
 const KPI_PRESENTATION = {
-  TODAY_NEW_ADMINS: { Icon: Users, theme: 'kpi-blue' },
-  REALTIME_ACTIVE_ADMINS: { Icon: Activity, theme: 'kpi-green' },
-  AI_INTERVIEW_SESSIONS: { Icon: Bot, theme: 'kpi-purple' },
-  TODAY_REVENUE: { Icon: CreditCard, theme: 'kpi-yellow' },
-} as const;
+  [DASHBOARD_KPI_KEY.TODAY_NEW_ADMINS]: { Icon: Users, theme: 'kpi-blue' },
+  [DASHBOARD_KPI_KEY.REALTIME_ACTIVE_ADMINS]: { Icon: Activity, theme: 'kpi-green' },
+  [DASHBOARD_KPI_KEY.AI_INTERVIEW_SESSIONS]: { Icon: Bot, theme: 'kpi-purple' },
+  [DASHBOARD_KPI_KEY.TODAY_REVENUE]: { Icon: CreditCard, theme: 'kpi-yellow' },
+} as const satisfies Record<DashboardKpiKey, { Icon: LucideIcon; theme: string }>;
+
+type KpiPresentation = (typeof KPI_PRESENTATION)[DashboardKpiKey];
 
 const ALERT_PRESENTATION = {
   URGENT: { icon: '!', cls: 'danger' },
@@ -145,16 +149,17 @@ export default function AdminDashboardPage() {
 
   const { kpis, hasKpiSectionError } = useMemo(() => {
     try {
-      const items = (dashboardSummary?.kpis ?? []).map((item) => {
-        const presentation =
-          KPI_PRESENTATION[item.key as keyof typeof KPI_PRESENTATION] ?? KPI_PRESENTATION.TODAY_NEW_ADMINS;
+      const items = (dashboardSummary?.kpis ?? []).flatMap((item) => {
+        const presentation = (KPI_PRESENTATION as Partial<Record<string, KpiPresentation>>)[item.key];
 
-        return {
+        if (!presentation) return [];
+
+        return [{
           ...item,
           value: item.unit ? `${item.value.toLocaleString()}${item.unit}` : item.value.toLocaleString(),
           desc: item.deltaText,
           ...presentation,
-        };
+        }];
       });
 
       return { kpis: items, hasKpiSectionError: false };

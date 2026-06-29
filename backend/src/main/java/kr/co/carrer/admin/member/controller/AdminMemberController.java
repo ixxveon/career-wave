@@ -88,6 +88,19 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         ));
     }
 
+    @PatchMapping("/members/{memberId}/unsuspend")
+    public ResponseEntity<ApiResponse<MemberDTO.ResponseUnsuspend>> unsuspendMember(
+        @PathVariable UUID memberId,
+        @RequestBody MemberDTO.RequestUnsuspend request,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
+        HttpServletRequest httpServletRequest
+    ) {
+        Long adminId = parseAdminId(principal);
+        return ResponseEntity.ok(ApiResponse.ok(
+            adminMemberService.unsuspendMember(memberId, request, adminId, extractClientIp(httpServletRequest))
+        ));
+    }
+
     @GetMapping("/hr-managers")
     public ResponseEntity<ApiResponse<HrManagerDTO.ResponsePage>> getHrManagers(
         @RequestParam(required = false) String hrStatus,
