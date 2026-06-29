@@ -9,8 +9,7 @@ llm_pipeline.py — 단위 테스트
 """
 import asyncio
 import json
-from dataclasses import field
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 

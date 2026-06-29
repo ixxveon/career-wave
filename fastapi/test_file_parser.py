@@ -9,7 +9,6 @@ S3 없이 로컬 파일로 PDF/DOCX 파싱 함수를 직접 검증한다.
 """
 import sys
 import os
-import tempfile
 
 # fastapi/ 디렉터리를 모듈 경로에 추가
 sys.path.insert(0, os.path.dirname(__file__))
@@ -20,7 +19,6 @@ from user.resume.service.file_parser import (
     _extract_pdf,
     _extract_docx,
     _resolve_extension,
-    _safe_remove,
 )
 
 
@@ -45,7 +43,7 @@ def test_parse(file_path: str) -> None:
             return
 
         print(f"[OK] 추출 성공 — {len(text)}자")
-        print(f"\n--- 텍스트 미리보기 (최대 500자) ---")
+        print("\n--- 텍스트 미리보기 (최대 500자) ---")
         print(text[:500])
         print("..." if len(text) > 500 else "")
 
