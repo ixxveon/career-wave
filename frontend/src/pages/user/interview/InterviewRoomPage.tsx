@@ -448,10 +448,12 @@ export default function InterviewRoomPage({ mode = 'text' }: InterviewRoomPagePr
     );
   }
 
+  if (!config) return null;
+
   const Room = mode === 'video' ? VideoRoom : TextRoom;
   return (
     <Room
-      config={config!}
+      config={config}
       onFinish={() => navigate('/interview/report')}
       onExit={() => navigate('/interview')}
     />

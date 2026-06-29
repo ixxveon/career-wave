@@ -115,8 +115,8 @@ function MediaInterviewPage() {
     stream?.getVideoTracks().forEach(t => { t.enabled = camOn; });
   }, [camOn, stream]);
 
-  function startInterview() { setSec(0); setQIdx(0); setPhase('interview'); }
-  function endInterview()   {
+  function startInterview(): void { setSec(0); setQIdx(0); setPhase('interview'); }
+  function endInterview(): void   {
     if (timerRef.current !== null) clearInterval(timerRef.current);
     setSec(0); setQIdx(0); setPhase('setup');
   }
