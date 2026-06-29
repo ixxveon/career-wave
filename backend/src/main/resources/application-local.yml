@@ -44,6 +44,9 @@ logging:
     io.netty: WARN
     org.springframework.web.reactive: WARN
 
+privacy:
+  hash-secret: local-dev-privacy-hmac-secret-not-for-prod
+
 toss:
   secret-key: ${TOSS_SECRET_KEY}
   billing-key-encryption-key: ${TOSS_BILLING_KEY_ENCRYPTION_KEY}
