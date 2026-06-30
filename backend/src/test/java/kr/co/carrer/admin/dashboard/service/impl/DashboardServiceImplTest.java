@@ -332,6 +332,7 @@ class DashboardServiceImplTest {
                         10L,
                         "감사 로그 경고",
                         "WARN",
+                        DashboardAlertLevelType.WARNING,
                         ZonedDateTime.parse("2026-06-28T09:00:00Z")
                 )));
         when(repository.findScrapingAlerts(any(DashboardQueryWindow.class), eq(5)))
@@ -339,6 +340,7 @@ class DashboardServiceImplTest {
                         20L,
                         "스크래핑 실패",
                         "FAILED",
+                        DashboardAlertLevelType.URGENT,
                         ZonedDateTime.parse("2026-06-28T09:01:00Z")
                 )));
         when(repository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))
