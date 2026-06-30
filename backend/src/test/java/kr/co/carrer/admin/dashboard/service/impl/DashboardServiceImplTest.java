@@ -3,6 +3,8 @@ package kr.co.carrer.admin.dashboard.service.impl;
 import kr.co.carrer.admin.dashboard.dto.DashboardDTO;
 import kr.co.carrer.admin.dashboard.repository.DashboardQueryWindow;
 import kr.co.carrer.admin.dashboard.repository.DashboardSummaryQueryRepository;
+import kr.co.carrer.admin.dashboard.type.DashboardAlertLevelType;
+import kr.co.carrer.admin.dashboard.type.DashboardDomainType;
 import kr.co.carrer.admin.dashboard.type.DashboardKpiKeyType;
 import kr.co.carrer.admin.dashboard.type.DashboardPaymentMethod;
 import kr.co.carrer.admin.dashboard.type.DashboardRangeType;
@@ -39,13 +41,13 @@ class DashboardServiceImplTest {
     void setUp() {
         dashboardService = new DashboardServiceImpl(dashboardSummaryQueryRepository);
 
-        when(dashboardSummaryQueryRepository.fetchAdminAccountMetrics(any(DashboardQueryWindow.class)))
+        lenient().when(dashboardSummaryQueryRepository.fetchAdminAccountMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.AdminAccountMetrics(3L, 10L, 4L));
-        when(dashboardSummaryQueryRepository.fetchAiUsageMetrics(any(DashboardQueryWindow.class)))
+        lenient().when(dashboardSummaryQueryRepository.fetchAiUsageMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.AiUsageMetrics(5L, BigDecimal.valueOf(29_000L), true, 0, true));
-        when(dashboardSummaryQueryRepository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
+        lenient().when(dashboardSummaryQueryRepository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(5L, 4L, 1L, 90));
-        when(dashboardSummaryQueryRepository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
+        lenient().when(dashboardSummaryQueryRepository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(6L, 1L, 1L, 4L));
         lenient().when(dashboardSummaryQueryRepository.findAuditAlerts(any(DashboardQueryWindow.class), anyInt()))
                 .thenReturn(List.of());
@@ -104,6 +106,98 @@ class DashboardServiceImplTest {
     }
 
     @Test
+    @DisplayName("알림은 level 우선순위와 생성일 역순으로 최대 5개 반환한다")
+    void alertsAreSortedAndLimited() {
+        ZonedDateTime now = ZonedDateTime.parse("2026-06-28T10:00:00Z");
+        when(dashboardSummaryQueryRepository.findAuditAlerts(any(DashboardQueryWindow.class), anyInt()))
+                .thenReturn(List.of(
+                        new DashboardSummaryQueryRepository.AuditAlertRow(
+                                1L,
+                                "감사 경고",
+                                "WARN",
+                                DashboardAlertLevelType.WARNING,
+                                now.minusMinutes(1)
+                        )
+                ));
+        when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), anyInt()))
+                .thenReturn(List.of(
+                        new DashboardSummaryQueryRepository.ScrapingAlertRow(
+                                2L,
+                                "Scraping failed",
+                                "FAILED",
+                                DashboardAlertLevelType.URGENT,
+                                now.minusMinutes(3)
+                        ),
+                        new DashboardSummaryQueryRepository.ScrapingAlertRow(
+                                3L,
+                                "Scraping failed",
+                                "FAILED",
+                                DashboardAlertLevelType.URGENT,
+                                now.minusMinutes(2)
+                        ),
+                        new DashboardSummaryQueryRepository.ScrapingAlertRow(
+                                4L,
+                                "Scraping running",
+                                "RUNNING",
+                                DashboardAlertLevelType.URGENT,
+                                now.minusMinutes(4)
+                        ),
+                        new DashboardSummaryQueryRepository.ScrapingAlertRow(
+                                5L,
+                                "Scraping info",
+                                "INFO",
+                                DashboardAlertLevelType.URGENT,
+                                now
+                        ),
+                        new DashboardSummaryQueryRepository.ScrapingAlertRow(
+                                6L,
+                                "Scraping warn",
+                                "WARN",
+                                DashboardAlertLevelType.URGENT,
+                                now.minusMinutes(5)
+                        )
+                ));
+
+        DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(result.alerts())
+                .extracting(DashboardDTO.Alert::id, DashboardDTO.Alert::level, DashboardDTO.Alert::domain)
+                .containsExactly(
+                        tuple(5L, DashboardAlertLevelType.URGENT, DashboardDomainType.SCRAPING),
+                        tuple(3L, DashboardAlertLevelType.URGENT, DashboardDomainType.SCRAPING),
+                        tuple(2L, DashboardAlertLevelType.URGENT, DashboardDomainType.SCRAPING),
+                        tuple(4L, DashboardAlertLevelType.URGENT, DashboardDomainType.SCRAPING),
+                        tuple(6L, DashboardAlertLevelType.URGENT, DashboardDomainType.SCRAPING)
+                );
+    }
+
+    @Test
+    @DisplayName("최근 활동은 AuditLog 기반 row를 대시보드 응답으로 매핑한다")
+    void recentActivitiesAreMappedFromAuditRows() {
+        ZonedDateTime occurredAt = ZonedDateTime.parse("2026-06-28T10:00:00Z");
+        when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), anyInt()))
+                .thenReturn(List.of(new DashboardSummaryQueryRepository.RecentActivityRow(
+                        10L,
+                        occurredAt,
+                        "admin",
+                        "관리자 활동 - LOGIN",
+                        "/admin/log"
+                )));
+
+        DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(result.recentActivities())
+                .extracting(
+                        DashboardDTO.RecentActivity::id,
+                        DashboardDTO.RecentActivity::occurredAt,
+                        DashboardDTO.RecentActivity::adminId,
+                        DashboardDTO.RecentActivity::message,
+                        DashboardDTO.RecentActivity::targetPath
+                )
+                .containsExactly(tuple(10L, occurredAt, "admin", "관리자 활동 - LOGIN", "/cw-manage-2026/log"));
+    }
+
+    @Test
     void getSummaryReturnsFrontendAdminRoutePaths() {
         when(dashboardSummaryQueryRepository.findWeeklySignups(any(DashboardQueryWindow.class)))
                 .thenReturn(List.of());
@@ -114,6 +208,7 @@ class DashboardServiceImplTest {
                         1L,
                         "Audit warning",
                         "Audit warning message",
+                        DashboardAlertLevelType.WARNING,
                         ZonedDateTime.parse("2026-06-22T09:00:00Z")
                 )));
         when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), eq(5)))
@@ -121,6 +216,7 @@ class DashboardServiceImplTest {
                         2L,
                         "Scraping failed",
                         "Scraping failed message",
+                        DashboardAlertLevelType.URGENT,
                         ZonedDateTime.parse("2026-06-22T09:01:00Z")
                 )));
         when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))
