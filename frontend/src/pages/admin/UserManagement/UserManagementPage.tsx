@@ -127,9 +127,12 @@ export default function UserManagementPage() {
       setMemberTotalItems(totalItems);
       setMemberTotalPages(totalPages);
       setMemberPage(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== memberReqId.current) return;
-      setMemberError(err.response?.data?.message || (err.response ? `회원 목록을 불러오지 못했습니다. (${err.response.status})` : err.message) || '회원 목록을 불러오지 못했습니다.');
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        setMemberError(err.response?.data?.message || (status ? `회원 목록을 불러오지 못했습니다. (${status})` : '네트워크 연결을 확인해주세요.'));
+      } else setMemberError(err instanceof Error ? err.message : '회원 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === memberReqId.current) setMemberLoading(false);
     }
@@ -156,9 +159,12 @@ export default function UserManagementPage() {
       setHrTotalPages(totalPages);
       setHrPendingCount(pendingCount);
       setHrPage(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== hrReqId.current) return;
-      setHrError(err.response?.data?.message || (err.response ? `기업 회원 목록을 불러오지 못했습니다. (${err.response.status})` : err.message) || '기업 회원 목록을 불러오지 못했습니다.');
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        setHrError(err.response?.data?.message || (status ? `기업 회원 목록을 불러오지 못했습니다. (${status})` : '네트워크 연결을 확인해주세요.'));
+      } else setHrError(err instanceof Error ? err.message : '기업 회원 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === hrReqId.current) setHrLoading(false);
     }
@@ -191,9 +197,10 @@ export default function UserManagementPage() {
       if (reqId !== memberDetailReqId.current) return;
       if (!res.data.success) throw new Error(res.data.message);
       setSelectedMember(res.data.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== memberDetailReqId.current) return;
-      alert(err.message || '회원 상세 정보를 불러오지 못했습니다.');
+      const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
+      alert(msg || '회원 상세 정보를 불러오지 못했습니다.');
     }
   };
 
@@ -231,8 +238,8 @@ export default function UserManagementPage() {
       setSuspendTarget(null);
       fetchMembers(memberPage);
       fetchMemberCounts();
-    } catch (err: any) {
-      const msg = err.response?.data?.message || (err instanceof Error ? err.message : '');
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
       setSuspendError(msg || '제재 처리에 실패했습니다.');
     } finally {
       setSuspendLoading(false);
@@ -290,8 +297,8 @@ export default function UserManagementPage() {
       if (!res.data.success) throw new Error(res.data.message);
       setApproveTarget(null);
       fetchHrManagers(hrPage);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || (err instanceof Error ? err.message : '');
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
       setActionError(msg || '승인 처리에 실패했습니다.');
     } finally {
       setApproveLoading(false);
@@ -313,8 +320,8 @@ export default function UserManagementPage() {
       setRejectTarget(null);
       setRejectReasonInput('');
       fetchHrManagers(hrPage);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || (err instanceof Error ? err.message : '');
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
       setActionError(msg || '반려 처리에 실패했습니다.');
     } finally {
       setRejectLoading(false);
