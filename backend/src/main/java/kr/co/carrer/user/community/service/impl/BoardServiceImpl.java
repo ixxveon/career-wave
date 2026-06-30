@@ -53,9 +53,13 @@ public class BoardServiceImpl implements BoardService {
                 .filter(item -> !item.getBlind())
                 .orElseThrow(() -> new CustomException(CommunityErrorCode.BOARD_NOT_FOUND));
 
-        boardRepository.increaseViewCount(boardId);
+        boardRepository.increaseViewCount(board.getBoardId());
 
-        return BoardDTO.Response.from(board);
+        Board updatedBoard = boardRepository.findById(board.getBoardId())
+                .filter(item -> !item.getBlind())
+                .orElseThrow(() -> new CustomException(CommunityErrorCode.BOARD_NOT_FOUND));
+
+        return BoardDTO.Response.from(updatedBoard);
     }
 
     @Override
