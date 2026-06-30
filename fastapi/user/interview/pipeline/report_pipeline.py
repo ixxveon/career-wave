@@ -9,7 +9,7 @@
 import json
 import logging
 
-from openai import AsyncOpenAI, OpenAIError
+from openai import AsyncOpenAI
 
 from core.ai_usage.usage_log_client import record_ai_usage
 from core.config import get_settings

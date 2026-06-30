@@ -4,6 +4,7 @@ import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ResumeService {
@@ -21,4 +22,6 @@ public interface ResumeService {
     void receiveWebhook(UUID documentId, String webhookSecret, ResumeDTO.RequestWebhook dto);
 
     ResumeDTO.ResponseQuota getQuota(UUID memberId);
+
+    Optional<String> findDocumentFileUrl(UUID memberId, UUID documentId);
 }

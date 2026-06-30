@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '@/styles/user/interview/InterviewHomePage.css';
 import {
-  MessageSquare, Video, ChevronRight, Lightbulb,
-  FileText, User, Zap, ClipboardList, X, Loader2,
+  MessageSquare, ChevronRight,
+  User, Zap, ClipboardList, Loader2,
 } from 'lucide-react';
 import { SESSION_TYPE } from '../../../types/user/interview';
 import { useInterviewHistory } from '../../../hooks/user/interview/useInterviewReport';
@@ -23,36 +22,10 @@ const SESSION_TYPE_LABEL: Record<string, string> = {
   [SESSION_TYPE.VIDEO]: '비디오 면접',
 };
 
-interface ComingSoonModalProps {
-  onClose: () => void;
-  onTextStart: () => void;
-}
-
-function ComingSoonModal({ onClose, onTextStart }: ComingSoonModalProps) {
-  return (
-    <div className="iv-cs-overlay" onClick={onClose}>
-      <div className="iv-cs-modal" onClick={e => e.stopPropagation()}>
-        <button className="iv-cs-modal__close" onClick={onClose}><X size={18} /></button>
-        <div className="iv-cs-modal__badge">COMING SOON</div>
-        <h3 className="iv-cs-modal__title">AI 비디오 면접</h3>
-        <p className="iv-cs-modal__desc">
-          웹캠·마이크를 활용한 AI 화상 면접 기능을<br />
-          현재 열심히 개발 중이에요!<br />
-          그 전에 텍스트 면접으로 먼저 연습해보세요.
-        </p>
-        <button className="iv-cs-modal__cta" onClick={() => { onClose(); onTextStart(); }}>
-          텍스트 면접 시작하기 →
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function InterviewHomePage() {
   const navigate = useNavigate();
-  const [showComingSoon, setShowComingSoon] = useState(false);
-
-  const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
+  const { data: historyData, isLoading: historyLoading, isError: historyError } = useInterviewHistory(0, 3);
   const { subscribedItems, unsubscribedItems } = useSubscriptionStatus();
 
   /* 서류 AI 코칭 / AI 모의면접 usage 항목 (구독 여부 무관) */
@@ -73,13 +46,6 @@ function InterviewHomePage() {
 
   return (
     <div className="iv-home">
-      {showComingSoon && (
-        <ComingSoonModal
-          onClose={() => setShowComingSoon(false)}
-          onTextStart={() => navigate('/interview/text')}
-        />
-      )}
-
       {/* ── Hero ── */}
       <section className="iv-hero">
         <div className="iv-hero__deco iv-hero__deco--1" />
@@ -122,26 +88,6 @@ function InterviewHomePage() {
             내 준비 상태
           </h2>
           <ul className="iv-status-list">
-            <li className="iv-status-item">
-              <span className="iv-status-item__label">연결된 이력서</span>
-              <span className="iv-status-item__value iv-status-item__value--file">
-                <FileText size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                이력서_최종본.pdf
-              </span>
-            </li>
-            <li className="iv-status-item">
-              <span className="iv-status-item__label">이력서 완성도</span>
-              <div className="iv-progress-wrap">
-                <div className="iv-progress">
-                  <div className="iv-progress__bar" style={{ width: '75%' }} />
-                </div>
-                <span className="iv-status-item__value">75%</span>
-              </div>
-            </li>
-            <li className="iv-status-item">
-              <span className="iv-status-item__label">목표 직무</span>
-              <span className="iv-status-item__value">백엔드 개발자</span>
-            </li>
             <li className="iv-status-item">
               <span className="iv-status-item__label">서류 AI 코칭</span>
               <span className={`iv-status-item__value iv-status-item__value--${docSubscribed ? 'premium' : 'free'}`}>
@@ -206,15 +152,6 @@ function InterviewHomePage() {
               </div>
               <span className="iv-mode-card__cta">시작하기 <ChevronRight size={14} /></span>
             </button>
-            <button className="iv-mode-card iv-mode-card--video" onClick={() => setShowComingSoon(true)}>
-              <div className="iv-mode-card__deco" />
-              <div className="iv-mode-card__icon"><Video size={22} /></div>
-              <div className="iv-mode-card__body">
-                <p className="iv-mode-card__label">AI 비디오 면접 시작</p>
-                <p className="iv-mode-card__desc">웹캠/마이크 사용, 시선 및 태도 분석</p>
-              </div>
-              <span className="iv-mode-card__cta">시작하기 <ChevronRight size={14} /></span>
-            </button>
           </div>
         </div>
       </div>
@@ -230,8 +167,8 @@ function InterviewHomePage() {
           <div className="iv-history-loading"><Loader2 size={20} className="iv-history-loading__spinner" /> 불러오는 중…</div>
         ) : historyError ? (
           <div className="iv-history-empty">
-            <p>이력을 불러오지 못했습니다.</p>
-            <button className="iv-tip__cta" onClick={() => refetchHistory()}>다시 시도 →</button>
+            <p>아직 면접 이력이 없어요.</p>
+            <button className="iv-tip__cta" onClick={() => navigate('/interview/text')}>첫 면접 시작하기 →</button>
           </div>
         ) : !historyData?.items.length ? (
           <div className="iv-history-empty">
@@ -281,18 +218,6 @@ function InterviewHomePage() {
         )}
       </div>
 
-      {/* ── AI 팁 ── */}
-      <div className="iv-tip">
-        <div className="iv-tip__icon"><Lightbulb size={20} /></div>
-        <div className="iv-tip__body">
-          <p className="iv-tip__label">오늘의 AI 추천 면접 팁</p>
-          <p className="iv-tip__text">
-            000님은 지난 면접에서 &apos;기술적 예외 처리&apos; 답변 시 목소리 떨림이 있었습니다.<br />
-            오늘은 텍스트 모드로 답변 논리 구조를 먼저 배대 잡고 시작하는 걸 추천해요!
-          </p>
-          <button className="iv-tip__cta" onClick={() => navigate('/interview/text')}>추천 질문 연습하기 →</button>
-        </div>
-      </div>
 
     </div>
   );

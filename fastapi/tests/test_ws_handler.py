@@ -10,7 +10,6 @@ interview_ws_handler.py — 단위 테스트
 - send_* 헬퍼 메시지 구조                 [AsyncMock 단위]
 """
 import json
-from dataclasses import dataclass, field
 from typing import Any
 from unittest.mock import AsyncMock
 
@@ -65,8 +64,13 @@ def test_connect_with_wrong_secret_closes_1008(client: TestClient):
 
 def test_connect_with_valid_token_accepted(client: TestClient, valid_token: str):
     _sessions.clear()
-    with client.websocket_connect(f"{WS_PATH}?token={valid_token}"):
-        assert TEST_SESSION_ID in _sessions
+    from unittest.mock import patch, AsyncMock
+    with patch(
+        "user.interview.websocket.interview_ws_handler._verify_session_ownership",
+        new=AsyncMock(return_value=True),
+    ):
+        with client.websocket_connect(f"{WS_PATH}?token={valid_token}"):
+            assert TEST_SESSION_ID in _sessions
     _sessions.clear()
 
 
@@ -77,11 +81,16 @@ def test_duplicate_connection_sends_error_to_existing(client: TestClient, valid_
     _sessions.clear()
     url = f"{WS_PATH}?token={valid_token}"
 
-    with client.websocket_connect(url) as ws1:
-        with client.websocket_connect(url):
-            msg = json.loads(ws1.receive_text())
-            assert msg["type"] == "ERROR"
-            assert msg["errorCode"] == InterviewErrorCode.DUPLICATED_CONNECTION
+    from unittest.mock import patch, AsyncMock
+    with patch(
+        "user.interview.websocket.interview_ws_handler._verify_session_ownership",
+        new=AsyncMock(return_value=True),
+    ):
+        with client.websocket_connect(url) as ws1:
+            with client.websocket_connect(url):
+                msg = json.loads(ws1.receive_text())
+                assert msg["type"] == "ERROR"
+                assert msg["errorCode"] == InterviewErrorCode.DUPLICATED_CONNECTION
 
     _sessions.clear()
 
@@ -186,7 +195,7 @@ async def test_send_tts_audio_chunk_message_structure():
 
     msg = json.loads(mock_ws.send_text.call_args.args[0])
     assert msg["type"] == "TTS_AUDIO"
-    assert msg["audioData"] == "base64data=="
+    assert msg["audioChunk"] == "base64data=="
     assert msg["isFinal"] is False
     assert msg["chunkIndex"] == 0
 
@@ -204,7 +213,7 @@ async def test_send_tts_audio_end_message_structure():
     msg = json.loads(mock_ws.send_text.call_args.args[0])
     assert msg["type"] == "TTS_AUDIO_END"
     assert msg["isFinal"] is True
-    assert msg["audioData"] is None
+    assert msg["audioChunk"] is None
 
     _sessions.clear()
 
