@@ -8,10 +8,26 @@ ALTER TABLE interview_messages
 
 COMMENT ON COLUMN interview_messages.question_order IS '질문 순서 (QUESTION 타입은 NOT NULL, ANSWER/SYSTEM은 NULL 허용)';
 
-ALTER TABLE interview_messages
-    ADD CONSTRAINT uq_interview_messages_session_sender_order
-        UNIQUE (session_id, sender, question_order);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'uq_interview_messages_session_sender_order'
+    ) THEN
+        ALTER TABLE interview_messages
+            ADD CONSTRAINT uq_interview_messages_session_sender_order
+                UNIQUE (session_id, sender, question_order);
+    END IF;
+END $$;
 
-ALTER TABLE interview_messages
-    ADD CONSTRAINT chk_question_order_not_null_for_question
-        CHECK (message_type != 'QUESTION' OR question_order IS NOT NULL);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'chk_question_order_not_null_for_question'
+    ) THEN
+        ALTER TABLE interview_messages
+            ADD CONSTRAINT chk_question_order_not_null_for_question
+                CHECK (message_type != 'QUESTION' OR question_order IS NOT NULL);
+    END IF;
+END $$;
