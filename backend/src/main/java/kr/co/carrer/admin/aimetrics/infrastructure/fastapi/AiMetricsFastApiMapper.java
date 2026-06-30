@@ -177,6 +177,7 @@ final class AiMetricsFastApiMapper {
     private static AiMetricsFastApiGateway.HeavyUserResponse toHeavyUserResponse(AiMetricsFastApiResponse.HeavyUser response) {
         return new AiMetricsFastApiGateway.HeavyUserResponse(
                 response.memberId(),
+                response.adminId(),
                 response.requestCount(),
                 response.inputTokens(),
                 response.outputTokens(),
@@ -188,6 +189,7 @@ final class AiMetricsFastApiMapper {
         return new AiMetricsFastApiGateway.UsageLogItemResponse(
                 response.aiUsageLogId(),
                 response.memberId(),
+                response.adminId(),
                 response.sessionId(),
                 response.aiModelId(),
                 response.featureType(),

@@ -200,7 +200,7 @@ public class ResumeServiceImpl implements ResumeService {
             throw new CustomException(ResumeErrorCode.WEBHOOK_SECRET_INVALID);
         }
 
-        Document document = documentRepository.findById(documentId)
+        Document document = documentRepository.findByIdForUpdate(documentId)
                 .orElseThrow(() -> new CustomException(ResumeErrorCode.DOCUMENT_NOT_FOUND));
 
         // 멱등성 처리 — 이미 최종 상태면 DB 갱신 없이 반환
@@ -268,5 +268,12 @@ public class ResumeServiceImpl implements ResumeService {
             log.error("[피드백 파싱 실패] documentId: {}, 원인: {}", documentId, e.getMessage());
             throw new CustomException(ResumeErrorCode.FEEDBACK_PARSE_ERROR);
         }
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Optional<String> findDocumentFileUrl(UUID memberId, UUID documentId) {
+        return documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
+                .map(Document::getFileUrl);
     }
 }

@@ -33,14 +33,13 @@ class SpringContractValidator:
     }
     SCRAPING_LOG_PAGE_FIELDS = {"content", "page", "size", "totalElements", "totalPages"}
     SCRAPING_LOG_ITEM_FIELDS = {
-        "scrapingLogId",
-        "scrapingPipelineId",
+        "logId",
+        "occurredAt",
         "sourceName",
-        "targetSite",
-        "scrapingStatus",
-        "totalCount",
-        "errorMessage",
-        "executedAt",
+        "status",
+        "message",
+        "detail",
+        "runId",
     }
     PIPELINE_ACTION_FIELDS = {"sourceName", "accepted", "runId", "requestedAt"}
     PIPELINE_BATCH_ACTION_FIELDS = {
@@ -55,6 +54,7 @@ class SpringContractValidator:
     ERROR_CODE_MAPPING = {
         ScrapingErrorCode.SCRAPING_PIPELINE_NOT_FOUND.value: "SCRAPING_PIPELINE_NOT_FOUND",
         ScrapingErrorCode.SCRAPING_SOURCE_NOT_FOUND.value: "SCRAPING_SOURCE_NOT_FOUND",
+        ScrapingErrorCode.SCRAPING_PIPELINE_DISABLED.value: "SCRAPING_PIPELINE_DISABLED",
         ScrapingErrorCode.SCRAPING_ALREADY_RUNNING.value: "SCRAPING_ALREADY_RUNNING",
         ScrapingErrorCode.SCRAPING_EXECUTION_FAILED.value: "SCRAPING_EXECUTION_FAILED",
         ScrapingErrorCode.SCRAPING_TEST_FAILED.value: "SCRAPING_TEST_FAILED",

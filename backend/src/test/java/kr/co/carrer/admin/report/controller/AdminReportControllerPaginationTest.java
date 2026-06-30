@@ -7,6 +7,7 @@ import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.principal.AuthPrincipal;
+import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,7 @@ class AdminReportControllerPaginationTest {
     @MockBean private AdminReportService adminReportService;
     @MockBean private JwtTokenProvider jwtTokenProvider;
     @MockBean private TokenBlacklistStore tokenBlacklistStore;
+    @MockBean private IpAclPort ipAclPort;
     @MockBean private AccountStatusPort accountStatusPort;
 
     private AuthPrincipal adminPrincipal;

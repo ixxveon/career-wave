@@ -9,6 +9,7 @@ import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.admin.auth.filter.AdminAccountStatusPort;
+import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
 import kr.co.carrer.user.member.filter.UserAccountStatusPort;
@@ -41,6 +42,9 @@ class SecurityExceptionHandlerTest {
 
     @MockBean
     private TokenBlacklistStore tokenBlacklistStore;
+
+    @MockBean
+    private IpAclPort ipAclPort;
 
     @MockBean
     private AdminMemberService adminMemberService;

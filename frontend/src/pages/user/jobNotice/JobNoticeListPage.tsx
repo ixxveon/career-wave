@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import {
   ArrowUp,
   Bookmark,
@@ -8,10 +8,10 @@ import {
   Eye,
   FileText,
   Filter,
-  Flame,
   Search,
 } from 'lucide-react';
 import JobNoticeDetail from './JobNoticeDetail';
+import { createBannerStats, type BannerStat } from './jobNoticeStats';
 import {
   CAREER_LEVEL_LABELS,
   JOB_CATEGORY_LABELS,
@@ -27,6 +27,7 @@ import {
   type JobNoticeQueryParams,
 } from '../../../types/user/jobNotice';
 import { jobApi } from '../../../api/user/jobApi';
+import { useJobNoticeDetail } from '../../../hooks/user/jobNotice/useJobNoticeDetail';
 import { useJobNoticeList } from '../../../hooks/user/jobNotice/useJobNoticeList';
 import { authSession } from '../../../utils/user/member/authSession';
 import '@/styles/user/jobNotice/JobNoticeListPage.css';
@@ -37,7 +38,8 @@ const DEFAULT_FILTER_VALUE = JOB_NOTICE_ALL_FILTER_VALUE;
 const POPULAR_SEARCH_TAGS = ['백엔드', '프론트엔드', 'Java', 'React', 'Spring Boot', 'AWS', 'Python'];
 
 const MOCK_PAGE = 1;
-const MOCK_PAGE_SIZE = 18;
+const INITIAL_PAGE_SIZE = 18;
+const PAGE_SIZE_STEP = 18;
 
 const API_FILTER_PARAM_BY_LABEL = {
   직무: 'jobCategory',
@@ -96,37 +98,6 @@ const FILTER_OPTION_LABELS = {
   ...CAREER_LEVEL_LABELS,
 } as const;
 
-interface BannerStat {
-  label: string;
-  value: string;
-  description: string;
-  Icon: LucideIcon;
-  iconClassName: string;
-  highlight?: string;
-  valueClassName?: string;
-}
-
-function createBannerStats(stats: JobNoticeListStats): BannerStat[] {
-  return [
-    {
-      label: '전체 공고',
-      value: stats.totalOpenCount.toLocaleString(),
-      description: `+${stats.todayNewCount.toLocaleString()} 오늘`,
-      Icon: FileText,
-      iconClassName: 'jn-stat-card__icon--blue',
-    },
-    {
-      label: '오늘 신규 공고',
-      value: stats.todayNewCount.toLocaleString(),
-      description: `(${stats.todayNewRate.toLocaleString()}%)`,
-      highlight: `+${stats.todayNewDelta.toLocaleString()}`,
-      Icon: Flame,
-      iconClassName: 'jn-stat-card__icon--pink',
-      valueClassName: 'jn-stat-card__value--pink',
-    },
-  ];
-}
-
 
 function createInitialFilters(): Filters {
   return Object.fromEntries(FILTER_GROUPS.map((group) => [group.label, DEFAULT_FILTER_VALUE])) as Filters;
@@ -142,18 +113,20 @@ function getFilterOptionLabel(value: string) {
 
 function createJobNoticeQueryParams({
   filters,
+  pageSize,
   period,
   searchQuery,
   sort,
 }: {
   filters: Filters;
+  pageSize: number;
   period: Period;
   searchQuery: string;
   sort: SortOption;
 }): JobNoticeQueryParams {
   const params: JobNoticeQueryParams = {
     page: MOCK_PAGE,
-    size: MOCK_PAGE_SIZE,
+    size: pageSize,
     period: API_PERIOD_BY_LABEL[period],
     sort: API_SORT_BY_LABEL[sort],
   };
@@ -438,6 +411,7 @@ function ActiveFilterChips({ filters, onReset }: { filters: Filters; onReset: (l
 }
 
 export default function JobNoticeListPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [period, setPeriod] = useState<Period>('기간 전체');
   const [sort, setSort] = useState<SortOption>('추천순');
   const [sortOpen, setSortOpen] = useState(false);
@@ -446,8 +420,16 @@ export default function JobNoticeListPage() {
   const [bookmarks, setBookmarks] = useState<Bookmarks>({});
   const [bookmarkErrorMessage, setBookmarkErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [pageSize, setPageSize] = useState(INITIAL_PAGE_SIZE);
+  const jobNoticeIdParam = searchParams.get('jobNoticeId');
+  const parsedJobNoticeId = jobNoticeIdParam ? Number(jobNoticeIdParam) : null;
+  const deepLinkJobNoticeId =
+    parsedJobNoticeId != null && Number.isSafeInteger(parsedJobNoticeId) && parsedJobNoticeId > 0
+      ? parsedJobNoticeId
+      : null;
 
   function updateFilter(label: FilterLabel, value: string) {
+    setPageSize(INITIAL_PAGE_SIZE);
     setFilters((current) => ({ ...current, [label]: value }));
   }
 
@@ -488,15 +470,26 @@ export default function JobNoticeListPage() {
   }
 
   function selectSort(option: SortOption) {
+    setPageSize(INITIAL_PAGE_SIZE);
     setSort(option);
     setSortOpen(false);
+  }
+
+  function updateSearchQuery(nextQuery: string) {
+    setPageSize(INITIAL_PAGE_SIZE);
+    setSearchQuery(nextQuery);
+  }
+
+  function updatePeriod(nextPeriod: Period) {
+    setPageSize(INITIAL_PAGE_SIZE);
+    setPeriod(nextPeriod);
   }
 
   function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  const jobNoticeQueryParams = createJobNoticeQueryParams({ filters, period, searchQuery, sort });
+  const jobNoticeQueryParams = createJobNoticeQueryParams({ filters, pageSize, period, searchQuery, sort });
   const {
     data: jobNoticeListApiResponse,
     isError: isJobNoticeListError,
@@ -505,8 +498,21 @@ export default function JobNoticeListPage() {
   } = useJobNoticeList(jobNoticeQueryParams);
   const jobNoticeListResponse = jobNoticeListApiResponse?.data;
   const filteredJobs = jobNoticeListResponse?.content.map(mapJobNoticeApiToViewModel) ?? [];
+  const listDeepLinkedJob = deepLinkJobNoticeId
+    ? filteredJobs.find((job) => job.id === deepLinkJobNoticeId) ?? null
+    : null;
+  const shouldFetchDeepLinkedJob = deepLinkJobNoticeId != null && !listDeepLinkedJob && !isJobNoticeListLoading;
+  const {
+    data: deepLinkedJobDetailApiResponse,
+    isError: isDeepLinkedJobDetailError,
+  } = useJobNoticeDetail(deepLinkJobNoticeId, { enabled: shouldFetchDeepLinkedJob });
+  const deepLinkedDetailJob =
+    deepLinkedJobDetailApiResponse?.data && deepLinkedJobDetailApiResponse.data.jobNoticeId === deepLinkJobNoticeId
+      ? mapJobNoticeApiToViewModel(deepLinkedJobDetailApiResponse.data)
+      : null;
   const resultTotalItems = jobNoticeListResponse?.totalElements ?? 0;
   const listStats = jobNoticeListResponse?.stats ?? EMPTY_LIST_STATS;
+  const hasMoreJobs = filteredJobs.length < resultTotalItems;
   const listStatus: JobNoticeListStatus = isJobNoticeListLoading
     ? 'loading'
     : isJobNoticeListError
@@ -527,11 +533,59 @@ export default function JobNoticeListPage() {
     });
   }, [jobNoticeListResponse?.content]);
 
+  useEffect(() => {
+    if (!jobNoticeIdParam) return;
+
+    if (deepLinkJobNoticeId == null) {
+      setBookmarkErrorMessage('요청한 공고 주소가 올바르지 않습니다.');
+      return;
+    }
+
+    if (selectedJob?.id === deepLinkJobNoticeId) return;
+
+    const nextSelectedJob = listDeepLinkedJob ?? deepLinkedDetailJob;
+    if (nextSelectedJob) {
+      setBookmarkErrorMessage('');
+      setSelectedJob(nextSelectedJob);
+      setBookmarks((current) => ({
+        ...current,
+        [nextSelectedJob.id]: current[nextSelectedJob.id] ?? nextSelectedJob.bookmarked,
+      }));
+      return;
+    }
+
+    if (isDeepLinkedJobDetailError) {
+      setBookmarkErrorMessage('요청한 채용 공고를 찾을 수 없습니다.');
+    }
+  }, [
+    deepLinkJobNoticeId,
+    deepLinkedDetailJob,
+    isDeepLinkedJobDetailError,
+    jobNoticeIdParam,
+    listDeepLinkedJob,
+    selectedJob?.id,
+  ]);
+
+  function closeSelectedJob() {
+    setSelectedJob(null);
+
+    if (!jobNoticeIdParam) return;
+
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete('jobNoticeId');
+    setSearchParams(nextSearchParams, { replace: true });
+  }
+
   function retryJobNoticeList() {
     void refetchJobNoticeList();
   }
 
+  function loadMoreJobs() {
+    setPageSize((current) => Math.min(current + PAGE_SIZE_STEP, resultTotalItems));
+  }
+
   function resetSearchConditions() {
+    setPageSize(INITIAL_PAGE_SIZE);
     setSearchQuery('');
     setFilters(createInitialFilters());
     setPeriod('기간 전체');
@@ -540,7 +594,7 @@ export default function JobNoticeListPage() {
   return (
     <div className="jn">
       <section className="jn-banner">
-        <BannerSearch value={searchQuery} onSearch={setSearchQuery} />
+        <BannerSearch value={searchQuery} onSearch={updateSearchQuery} />
         <BannerStats stats={listStats} />
       </section>
 
@@ -563,7 +617,7 @@ export default function JobNoticeListPage() {
               <ActiveFilterChips filters={filters} onReset={resetFilter} />
             </div>
             <div className="jn-results__tools">
-              <PeriodSelector period={period} onChange={setPeriod} />
+              <PeriodSelector period={period} onChange={updatePeriod} />
               <SortDropdown
                 selected={sort}
                 isOpen={sortOpen}
@@ -583,17 +637,24 @@ export default function JobNoticeListPage() {
           )}
 
           {listStatus === 'success' && (
-            <div className="jn-job-grid">
-              {filteredJobs.map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  bookmarked={getJobBookmark(bookmarks, job)}
-                  onBookmark={(id) => toggleBookmark(id, getJobBookmark(bookmarks, job))}
-                  onClick={() => setSelectedJob(job)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="jn-job-grid">
+                {filteredJobs.map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    bookmarked={getJobBookmark(bookmarks, job)}
+                    onBookmark={(id) => toggleBookmark(id, getJobBookmark(bookmarks, job))}
+                    onClick={() => setSelectedJob(job)}
+                  />
+                ))}
+              </div>
+              {hasMoreJobs && (
+                <button type="button" className="jn-load-more" onClick={loadMoreJobs}>
+                  더 보기 ({filteredJobs.length.toLocaleString()} / {resultTotalItems.toLocaleString()}개)
+                </button>
+              )}
+            </>
           )}
 
           {listStatus === 'loading' && (
@@ -631,7 +692,7 @@ export default function JobNoticeListPage() {
         job={selectedJob}
         isOpen={Boolean(selectedJob)}
         bookmarked={selectedJob ? getJobBookmark(bookmarks, selectedJob) : false}
-        onClose={() => setSelectedJob(null)}
+        onClose={closeSelectedJob}
         onBookmark={(id) =>
           toggleBookmark(id, selectedJob ? getJobBookmark(bookmarks, selectedJob) : false)
         }

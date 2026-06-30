@@ -13,27 +13,28 @@ public class AiUsageLogDTO {
     private AiUsageLogDTO() {
     }
 
-    @Schema(description = "AI 사용 로그 항목 응답")
+    @Schema(description = "AI usage log item response")
     public record ResponseItem(
-            @Schema(description = "AI 사용 로그 ID") Long aiUsageLogId,
-            @Schema(description = "회원 ID") UUID memberId,
-            @Schema(description = "세션 ID") UUID sessionId,
-            @Schema(description = "AI 모델 ID") Long aiModelId,
-            @Schema(description = "AI 기능 유형", allowableValues = {"DOCUMENT", "INTERVIEW", "ADMIN_CS", "ADMIN_REPORT"}) AiFeatureType featureType,
-            @Schema(description = "입력 토큰 수") long inputTokens,
-            @Schema(description = "출력 토큰 수") long outputTokens,
-            @Schema(description = "비용") BigDecimal cost,
-            @Schema(description = "생성 시각") ZonedDateTime createdAt
+            @Schema(description = "AI usage log ID") Long aiUsageLogId,
+            @Schema(description = "Member ID") UUID memberId,
+            @Schema(description = "Admin ID") Long adminId,
+            @Schema(description = "Session ID") UUID sessionId,
+            @Schema(description = "AI model ID") Long aiModelId,
+            @Schema(description = "Feature type", allowableValues = {"DOCUMENT", "INTERVIEW", "ADMIN_CS", "ADMIN_REPORT", "ADMIN_REPORT_MEMBER"}) AiFeatureType featureType,
+            @Schema(description = "Input tokens") long inputTokens,
+            @Schema(description = "Output tokens") long outputTokens,
+            @Schema(description = "Cost") BigDecimal cost,
+            @Schema(description = "Created at") ZonedDateTime createdAt
     ) {
     }
 
-    @Schema(description = "AI 사용 로그 목록 응답")
+    @Schema(description = "AI usage log list response")
     public record ResponseList(
-            @Schema(description = "AI 사용 로그 목록") List<ResponseItem> content,
-            @Schema(description = "현재 페이지, 1-based") int page,
-            @Schema(description = "페이지 크기") int size,
-            @Schema(description = "전체 건수") long totalElements,
-            @Schema(description = "전체 페이지 수") int totalPages
+            @Schema(description = "Usage log items") List<ResponseItem> content,
+            @Schema(description = "Current page, 1-based") int page,
+            @Schema(description = "Page size") int size,
+            @Schema(description = "Total elements") long totalElements,
+            @Schema(description = "Total pages") int totalPages
     ) {
     }
 }

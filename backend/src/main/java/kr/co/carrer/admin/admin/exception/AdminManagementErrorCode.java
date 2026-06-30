@@ -20,7 +20,8 @@ public enum AdminManagementErrorCode implements BaseErrorCode {
     IP_ACL_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 IP ACL 정보입니다."),
     IP_ACL_DUPLICATED_RANGE(HttpStatus.CONFLICT, "이미 등록된 IP 범위입니다."),
     IP_ACL_ALREADY_ENABLED(HttpStatus.CONFLICT, "이미 활성 상태인 IP ACL입니다."),
-    IP_ACL_ALREADY_DISABLED(HttpStatus.CONFLICT, "이미 비활성 상태인 IP ACL입니다.");
+    IP_ACL_ALREADY_DISABLED(HttpStatus.CONFLICT, "이미 비활성 상태인 IP ACL입니다."),
+    INVALID_IP_CIDR_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 IP 또는 CIDR 형식입니다. (예: 192.168.0.1, 10.0.0.0/24)");
 
     private final HttpStatus status;
     private final String message;

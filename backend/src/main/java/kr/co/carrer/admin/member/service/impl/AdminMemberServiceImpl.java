@@ -17,6 +17,10 @@ import kr.co.carrer.admin.member.type.SubscriptionStatus;
 import kr.co.carrer.admin.member.type.SuspendDuration;
 import kr.co.carrer.admin.member.exception.AdminMemberErrorCode;
 import kr.co.carrer.admin.member.service.AdminMemberService;
+import kr.co.carrer.admin.audit.entity.AuditLog;
+import kr.co.carrer.admin.audit.repository.AuditLogRepository;
+import kr.co.carrer.admin.audit.type.AuditLogSeverity;
+import kr.co.carrer.admin.audit.type.AuditLogType;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
@@ -38,6 +42,9 @@ public class AdminMemberServiceImpl implements AdminMemberService {
     private final MemberQueryRepository memberQueryRepository;
     private final HrManagerRepository hrManagerRepository;
     private final SuspendHistoryRepository suspendHistoryRepository;
+    private final AuditLogRepository auditLogRepository;
+
+    private static final String TARGET_TYPE_MEMBER = "MEMBER";
 
     @Override
     @Transactional(readOnly = true)
@@ -50,7 +57,7 @@ public class AdminMemberServiceImpl implements AdminMemberService {
     public PaginationResponse<MemberDTO.ResponseList> getMembers(RoleType role, MemberStatus status,
                                                                   SubscriptionStatus plan, String keyword,
                                                                   LocalDate startDate, LocalDate endDate,
-                                                                  int page, int size) {
+                                                                  int page, int size, String adminRole) {
         size = Math.min(size, 100);
         int offset = (page - 1) * size;
         DateRange range = toDateRange(startDate, endDate);
@@ -58,19 +65,31 @@ public class AdminMemberServiceImpl implements AdminMemberService {
         List<MemberDTO.ResponseList> items = memberQueryRepository.findMembers(role, status, plan, keyword, range.from(), range.to(), offset, size);
         long total = memberQueryRepository.countMembers(role, status, plan, keyword, range.from(), range.to());
 
+        if (!"MASTER".equals(adminRole)) {
+            items = items.stream().map(MemberDTO.ResponseList::masked).toList();
+        }
+
         return PaginationResponse.of(items, page, size, total);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public MemberDTO.ResponseDetail getMemberDetail(UUID memberId) {
-        return memberQueryRepository.findMemberDetail(memberId)
+    @Transactional
+    public MemberDTO.ResponseDetail getMemberDetail(UUID memberId, Long adminId, String ipAddress) {
+        MemberDTO.ResponseDetail detail = memberQueryRepository.findMemberDetail(memberId)
             .orElseThrow(() -> new CustomException(AdminMemberErrorCode.MEMBER_NOT_FOUND));
+
+        auditLogRepository.save(AuditLog.create(
+            adminId, AuditLogType.ADMIN_ACTIVITY, "VIEW_MEMBER_DETAIL",
+            TARGET_TYPE_MEMBER, memberId.toString(), ipAddress,
+            AuditLogSeverity.INFO, null
+        ));
+
+        return detail;
     }
 
     @Override
     @Transactional
-    public MemberDTO.ResponseSanction sanctionMember(UUID memberId, MemberDTO.RequestSanction dto, Long adminId) {
+    public MemberDTO.ResponseSanction sanctionMember(UUID memberId, MemberDTO.RequestSanction dto, Long adminId, String ipAddress) {
         Member member = memberRepository.findById(memberId)
             .orElseThrow(() -> new CustomException(AdminMemberErrorCode.MEMBER_NOT_FOUND));
 
@@ -117,6 +136,14 @@ public class AdminMemberServiceImpl implements AdminMemberService {
         );
         suspendHistoryRepository.save(history);
 
+        AuditLogSeverity severity = (sanctionType == SanctionType.BLACKLIST)
+            ? AuditLogSeverity.WARN : AuditLogSeverity.INFO;
+        auditLogRepository.save(AuditLog.create(
+            adminId, AuditLogType.ADMIN_ACTIVITY, "SANCTION_MEMBER_" + sanctionType.name(),
+            TARGET_TYPE_MEMBER, memberId.toString(), ipAddress,
+            severity, reason
+        ));
+
         return new MemberDTO.ResponseSanction(
             member.getMemberId(),
             member.getMemberStatus(),
@@ -125,6 +152,30 @@ public class AdminMemberServiceImpl implements AdminMemberService {
             history.getStartDate(),
             history.getEndDate()
         );
+    }
+
+    @Override
+    @Transactional
+    public MemberDTO.ResponseUnsuspend unsuspendMember(UUID memberId, MemberDTO.RequestUnsuspend dto, Long adminId, String ipAddress) {
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new CustomException(AdminMemberErrorCode.MEMBER_NOT_FOUND));
+
+        if (member.getMemberStatus() != MemberStatus.SUSPENDED) {
+            throw new CustomException(AdminMemberErrorCode.NOT_SUSPENDED);
+        }
+
+        String reason = dto.reason();
+        validateReason(reason);
+
+        member.unsuspend();
+
+        auditLogRepository.save(AuditLog.create(
+            adminId, AuditLogType.ADMIN_ACTIVITY, "UNSUSPEND_MEMBER",
+            TARGET_TYPE_MEMBER, memberId.toString(), ipAddress,
+            AuditLogSeverity.INFO, reason
+        ));
+
+        return new MemberDTO.ResponseUnsuspend(member.getMemberId(), member.getMemberStatus());
     }
 
     private LocalDate calculateSuspendEndDate(LocalDate from, SuspendDuration duration) {

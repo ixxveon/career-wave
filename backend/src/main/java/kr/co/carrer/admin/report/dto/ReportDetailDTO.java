@@ -54,4 +54,13 @@ public class ReportDetailDTO {
         @Schema(description = "변경된 처리 상태") ReportStatus reportStatus,
         @Schema(description = "처리 일시") ZonedDateTime processedAt
     ) {}
+
+    @Schema(description = "대상 회원 AI 검토 응답")
+    public record ResponseMemberAiReview(
+        @Schema(description = "누적 신고 건수") long reportCount,
+        @Schema(description = "경고 횟수") int warningCount,
+        @Schema(description = "위험도", allowableValues = {"높음", "중간", "낮음"}) String riskLevel,
+        @Schema(description = "제재 권고", allowableValues = {"NONE", "WARNING", "SUSPEND", "BLACKLIST"}) String recommendation,
+        @Schema(description = "AI 분석 요약") String summary
+    ) {}
 }

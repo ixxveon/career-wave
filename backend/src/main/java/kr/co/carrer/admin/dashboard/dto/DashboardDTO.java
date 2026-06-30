@@ -132,7 +132,7 @@ public class DashboardDTO {
 
     @Schema(description = "Payment ratio item")
     public record PaymentRatio(
-            @Schema(description = "Payment method", allowableValues = {"CARD"})
+            @Schema(description = "Payment method", allowableValues = {"CARD", "OTHER"})
             DashboardPaymentMethod method,
 
             @Schema(description = "Payment method label")

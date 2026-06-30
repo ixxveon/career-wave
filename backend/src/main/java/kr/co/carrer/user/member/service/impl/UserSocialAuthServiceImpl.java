@@ -2,6 +2,7 @@ package kr.co.carrer.user.member.service.impl;
 
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.jwt.AccountType;
+import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.exception.AuthErrorCode;
@@ -19,6 +20,7 @@ import kr.co.carrer.user.member.entity.SocialAccount;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.*;
 import kr.co.carrer.user.member.service.SocialSignupTokenStore;
+import kr.co.carrer.user.member.service.TermsAgreementEvidenceRecorder;
 import kr.co.carrer.user.member.service.UserSocialAuthService;
 import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.SocialProvider;
@@ -65,6 +67,8 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
     private final StringRedisTemplate redisTemplate;
     private final WebClient.Builder webClientBuilder;
     private final EntitlementInitService entitlementInitService;
+    private final CookieProperties cookieProperties;
+    private final TermsAgreementEvidenceRecorder termsAgreementEvidenceRecorder;
 
     @Value("${oauth.kakao.client-id}") private String kakaoClientId;
     @Value("${oauth.kakao.client-secret}") private String kakaoClientSecret;
@@ -223,6 +227,11 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
                 request.getTerms().isService(),
                 request.getTerms().isPrivacy(),
                 request.getTerms().isMarketing()));
+        termsAgreementEvidenceRecorder.recordPersonalSignup(
+                member.getMemberId(),
+                request.getTerms().isService(),
+                request.getTerms().isPrivacy(),
+                request.getTerms().isMarketing());
 
         // 상품별 FREE 이용권 생성 (document-coaching, interview)
         entitlementInitService.initFreeEntitlements(member.getMemberId());
@@ -479,7 +488,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         refreshTokenStore.saveAccessJti(accountType, subject, sessionId, jti, accessTtl);
 
         ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, refreshToken)
-                .httpOnly(true).secure(true).sameSite("Strict")
+                .httpOnly(true).secure(cookieProperties.isSecure()).sameSite("Strict")
                 .path("/api/v1/user/members")
                 .maxAge(refreshTtl.toSeconds())
                 .build();

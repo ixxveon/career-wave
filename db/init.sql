@@ -237,6 +237,68 @@ COMMENT ON COLUMN member_terms_agreements.sms_agreed                  IS 'SMS �
 COMMENT ON COLUMN member_terms_agreements.agreed_at                   IS '약관 동의 일시';
 
 -- ================================================
+-- 7-1. terms_documents
+-- ================================================
+CREATE TABLE terms_documents (
+    document_code  VARCHAR(40)  NOT NULL,
+    version        VARCHAR(30)  NOT NULL,
+    effective_from TIMESTAMPTZ  NOT NULL,
+    content_hash   VARCHAR(128) NOT NULL,
+    published_url  VARCHAR(500) NOT NULL,
+    required       BOOLEAN      NOT NULL,
+
+    CONSTRAINT pk_terms_documents PRIMARY KEY (document_code, version),
+    CONSTRAINT uq_terms_documents_effective UNIQUE (document_code, effective_from)
+);
+COMMENT ON TABLE  terms_documents                IS '약관 및 동의 문서 버전 정의 테이블';
+COMMENT ON COLUMN terms_documents.document_code  IS '문서 코드';
+COMMENT ON COLUMN terms_documents.version        IS '문서 버전';
+COMMENT ON COLUMN terms_documents.effective_from IS '문서 적용 시작 일시';
+COMMENT ON COLUMN terms_documents.content_hash   IS '문서 전문 식별용 해시';
+COMMENT ON COLUMN terms_documents.published_url  IS '공개 문서 URL';
+COMMENT ON COLUMN terms_documents.required       IS '가입 시 필수 동의 여부';
+
+INSERT INTO terms_documents (document_code, version, effective_from, content_hash, published_url, required) VALUES
+('SERVICE_TERMS', '2026-06-26', '2026-06-26T00:00:00+09:00', 'e180aceefd614676f625c7d06dc5c93131e026a90a80c3e9cf75f0947a057119', '/terms', TRUE),
+('PRIVACY_COLLECTION', '2026-06-26', '2026-06-26T00:00:00+09:00', '8db0fe932d63bfefbe5ae78ff87827b9a9f2b03002df0093aa2d94dee5c53df2', '/privacy', TRUE),
+('PRIVACY_POLICY', '2026-06-26', '2026-06-26T00:00:00+09:00', '457d24d5da82f1bbd972cbec3c8c3b41edbb4d55ca6cf632f123dc85965f35a5', '/privacy', FALSE),
+('MARKETING', '2026-06-26', '2026-06-26T00:00:00+09:00', '5c02234e33e97d8ab4dc65c9ae79cc6bfa31fef8ac0822f23067892286d3a7b1', '/terms', FALSE),
+('COMPANY_VERIFICATION', '2026-06-26', '2026-06-26T00:00:00+09:00', '9d50c632843156bcf34ddf7436fece7adaffac8feeebe5473b383489ed0363a7', '/terms', TRUE),
+('SMS_TERMS', '2026-06-26', '2026-06-26T00:00:00+09:00', '615af848202df4b47b4ef00ba3da71f71c306954c54a7e471153fdcf65c7f8bd', '/terms', TRUE),
+('BILLING_TERMS', '2026-06-26', '2026-06-26T00:00:00+09:00', 'ae7fc33a5b3ceb655e130dccc00e1016b716d5ceb9a3f966ad50015e6954c7b9', '/billing/terms', FALSE);
+
+-- ================================================
+-- 7-2. member_terms_document_agreements
+-- ================================================
+CREATE TABLE member_terms_document_agreements (
+    agreement_event_id BIGSERIAL    NOT NULL,
+    member_id          UUID         NOT NULL,
+    document_code      VARCHAR(40)  NOT NULL,
+    version            VARCHAR(30)  NOT NULL,
+    agreed             BOOLEAN      NOT NULL,
+    agreed_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    revoked_at         TIMESTAMPTZ  NULL,
+    ip_address_hash    VARCHAR(128) NULL,
+    user_agent_hash    VARCHAR(128) NULL,
+
+    CONSTRAINT pk_member_terms_document_agreements PRIMARY KEY (agreement_event_id),
+    CONSTRAINT fk_terms_document_agreement_member FOREIGN KEY (member_id) REFERENCES members (member_id),
+    CONSTRAINT fk_terms_document_agreement_document FOREIGN KEY (document_code, version) REFERENCES terms_documents (document_code, version)
+);
+CREATE INDEX idx_member_terms_document_agreements_member_document
+    ON member_terms_document_agreements (member_id, document_code, version);
+COMMENT ON TABLE  member_terms_document_agreements                    IS '회원별 약관 문서 버전 동의 증적 테이블';
+COMMENT ON COLUMN member_terms_document_agreements.agreement_event_id IS '약관 문서 동의 증적 식별자';
+COMMENT ON COLUMN member_terms_document_agreements.member_id          IS '회원 FK';
+COMMENT ON COLUMN member_terms_document_agreements.document_code      IS '동의 문서 코드';
+COMMENT ON COLUMN member_terms_document_agreements.version            IS '동의 문서 버전';
+COMMENT ON COLUMN member_terms_document_agreements.agreed             IS '동의 여부';
+COMMENT ON COLUMN member_terms_document_agreements.agreed_at          IS '동의 또는 거부 기록 시각';
+COMMENT ON COLUMN member_terms_document_agreements.revoked_at         IS '선택 동의 철회 시각';
+COMMENT ON COLUMN member_terms_document_agreements.ip_address_hash    IS '동의 요청 IP 해시';
+COMMENT ON COLUMN member_terms_document_agreements.user_agent_hash    IS '동의 요청 User-Agent 해시';
+
+-- ================================================
 -- 8. social_accounts
 -- ================================================
 CREATE TABLE social_accounts (
@@ -309,8 +371,9 @@ CREATE TABLE document_feedbacks (
     feedback_text        TEXT        NOT NULL,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_document_feedbacks PRIMARY KEY (document_feedback_id),
-    CONSTRAINT fk_feedback_document  FOREIGN KEY (document_id) REFERENCES documents (document_id)
+    CONSTRAINT pk_document_feedbacks          PRIMARY KEY (document_feedback_id),
+    CONSTRAINT uq_document_feedbacks_document_id UNIQUE      (document_id),
+    CONSTRAINT fk_feedback_document           FOREIGN KEY (document_id) REFERENCES documents (document_id)
 );
 COMMENT ON TABLE  document_feedbacks                      IS 'AI 서류 피드백 결과 테이블';
 COMMENT ON COLUMN document_feedbacks.document_feedback_id IS '피드백 고유 식별자';
@@ -790,7 +853,8 @@ COMMENT ON COLUMN admins.updated_at     IS '최종 수정 일시';
 CREATE TABLE refunds (
     refund_id     BIGSERIAL   NOT NULL,
     payment_id    UUID        NOT NULL,
-    admin_id      BIGINT      NULL,
+    requested_by_admin_id BIGINT NULL,
+    processed_by_admin_id BIGINT NULL,
     amount        INTEGER     NOT NULL,
     reason        TEXT        NOT NULL,
     refund_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
@@ -800,15 +864,19 @@ CREATE TABLE refunds (
 
     CONSTRAINT pk_refunds         PRIMARY KEY (refund_id),
     CONSTRAINT fk_refunds_payment FOREIGN KEY (payment_id) REFERENCES payments (payment_id),
-    CONSTRAINT fk_refunds_admin   FOREIGN KEY (admin_id)   REFERENCES admins (admin_id),
+    CONSTRAINT fk_refunds_requested_admin FOREIGN KEY (requested_by_admin_id) REFERENCES admins (admin_id),
+    CONSTRAINT fk_refunds_processed_admin FOREIGN KEY (processed_by_admin_id) REFERENCES admins (admin_id),
     CONSTRAINT chk_refund_status  CHECK (refund_status IN ('PENDING', 'COMPLETED', 'FAILED', 'REJECTED')),
     CONSTRAINT chk_reject_reason  CHECK (refund_status != 'REJECTED'  OR reject_reason IS NOT NULL),
     CONSTRAINT chk_refunded_at    CHECK (refund_status != 'COMPLETED' OR refunded_at   IS NOT NULL)
 );
+CREATE UNIQUE INDEX uq_refunds_pending_per_payment ON refunds (payment_id) WHERE refund_status = 'PENDING';
+
 COMMENT ON TABLE  refunds               IS '환불 내역 테이블';
 COMMENT ON COLUMN refunds.refund_id     IS '환불 고유 식별자';
 COMMENT ON COLUMN refunds.payment_id    IS '결제 FK';
-COMMENT ON COLUMN refunds.admin_id      IS '처리 관리자 FK (자동 환불 = NULL)';
+COMMENT ON COLUMN refunds.requested_by_admin_id IS '환불 요청 관리자 FK';
+COMMENT ON COLUMN refunds.processed_by_admin_id IS '환불 처리 관리자 FK (승인/거절/실패)';
 COMMENT ON COLUMN refunds.amount        IS '환불 금액';
 COMMENT ON COLUMN refunds.reason        IS '환불 사유';
 COMMENT ON COLUMN refunds.refund_status IS '환불 상태 (PENDING / COMPLETED / FAILED / REJECTED)';
@@ -942,21 +1010,18 @@ CREATE TABLE ip_acl (
     ip_acl_id   BIGSERIAL    NOT NULL,
     label       VARCHAR(100) NOT NULL,
     ip_range    VARCHAR(50)  NOT NULL,
-    ip_active   VARCHAR(10)  NOT NULL DEFAULT 'ON',
     is_enabled  BOOLEAN      NOT NULL DEFAULT TRUE,
     description VARCHAR(200) NULL,
     created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_ip_acl         PRIMARY KEY (ip_acl_id),
-    CONSTRAINT uq_ip_acl_range   UNIQUE (ip_range),
-    CONSTRAINT chk_ip_acl_active CHECK (ip_active IN ('ON', 'OFF'))
+    CONSTRAINT pk_ip_acl       PRIMARY KEY (ip_acl_id),
+    CONSTRAINT uq_ip_acl_range UNIQUE (ip_range)
 );
 COMMENT ON TABLE  ip_acl              IS '관리자 IP 접근 제어 테이블';
 COMMENT ON COLUMN ip_acl.ip_acl_id   IS '설정 고유 식별자';
 COMMENT ON COLUMN ip_acl.label       IS '규칙명 (예: 본사 사내망)';
 COMMENT ON COLUMN ip_acl.ip_range    IS '허용 IP 대역 (CIDR 형식)';
-COMMENT ON COLUMN ip_acl.ip_active   IS 'IP 활성/비활성 상태 (ON / OFF)';
 COMMENT ON COLUMN ip_acl.is_enabled  IS '활성화 여부 (기본값 TRUE)';
 COMMENT ON COLUMN ip_acl.description IS '설정 설명';
 COMMENT ON COLUMN ip_acl.created_at  IS '등록 일시';
@@ -1136,7 +1201,8 @@ COMMENT ON COLUMN ai_models.updated_at         IS '모델 수정 시간';
 -- ================================================
 CREATE TABLE ai_usage_logs (
     ai_usage_log_id BIGSERIAL   NOT NULL,
-    member_id       UUID        NOT NULL,
+    member_id       UUID        NULL,
+    admin_id        BIGINT      NULL,
     session_id      UUID        NULL,
     ai_model_id     BIGINT      NOT NULL,
     feature_type    VARCHAR(20) NOT NULL,
@@ -1147,20 +1213,29 @@ CREATE TABLE ai_usage_logs (
 
     CONSTRAINT pk_ai_usage_logs     PRIMARY KEY (ai_usage_log_id),
     CONSTRAINT fk_ai_usage_member   FOREIGN KEY (member_id)   REFERENCES members (member_id),
+    CONSTRAINT fk_ai_usage_admin    FOREIGN KEY (admin_id)    REFERENCES admins (admin_id),
     CONSTRAINT fk_ai_usage_session  FOREIGN KEY (session_id)  REFERENCES interview_sessions (session_id),
     CONSTRAINT fk_ai_usage_model    FOREIGN KEY (ai_model_id) REFERENCES ai_models (ai_model_id),
-    CONSTRAINT chk_ai_usage_feature CHECK (feature_type IN ('DOCUMENT', 'INTERVIEW'))
+    CONSTRAINT chk_ai_usage_feature CHECK (feature_type IN ('DOCUMENT', 'INTERVIEW', 'INTERVIEW_STT', 'INTERVIEW_TTS', 'ADMIN_CS', 'ADMIN_REPORT', 'ADMIN_REPORT_MEMBER')),
+    CONSTRAINT chk_ai_usage_actor   CHECK (
+        (member_id IS NOT NULL AND admin_id IS NULL)
+        OR
+        (member_id IS NULL AND admin_id IS NOT NULL)
+    )
 );
 COMMENT ON TABLE  ai_usage_logs                 IS 'AI API 사용량 로그 테이블';
 COMMENT ON COLUMN ai_usage_logs.ai_usage_log_id IS '사용량 로그 고유 식별자';
 COMMENT ON COLUMN ai_usage_logs.member_id       IS '사용 회원 FK';
+COMMENT ON COLUMN ai_usage_logs.admin_id        IS '사용 관리자 FK';
 COMMENT ON COLUMN ai_usage_logs.session_id      IS '면접 세션 FK (NULL 허용)';
 COMMENT ON COLUMN ai_usage_logs.ai_model_id     IS '모델 FK';
-COMMENT ON COLUMN ai_usage_logs.feature_type    IS '기능 유형 (DOCUMENT / INTERVIEW)';
+COMMENT ON COLUMN ai_usage_logs.feature_type    IS '기능 유형 (DOCUMENT / INTERVIEW / INTERVIEW_STT / INTERVIEW_TTS / ADMIN_CS / ADMIN_REPORT / ADMIN_REPORT_MEMBER)';
 COMMENT ON COLUMN ai_usage_logs.input_tokens    IS '입력 토큰 수';
 COMMENT ON COLUMN ai_usage_logs.output_tokens   IS '출력 토큰 수';
 COMMENT ON COLUMN ai_usage_logs.cost            IS '소모 비용 (원 단위)';
 COMMENT ON COLUMN ai_usage_logs.created_at      IS '사용 기록 일시';
+
+CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_admin_id ON ai_usage_logs (admin_id);
 
 -- ================================================
 -- 35. ai_ops_settings  ※ 싱글톤 테이블 (row = 1개)
@@ -1425,6 +1500,7 @@ CREATE TABLE billing_consents (
 CREATE INDEX IF NOT EXISTS idx_billing_consents_member_plan_active_agreed
     ON billing_consents (member_id, plan_id, agreed_at DESC)
     WHERE revoked_at IS NULL;
+
 COMMENT ON TABLE  billing_consents                    IS '자동결제 약관 동의 이력';
 COMMENT ON COLUMN billing_consents.billing_consent_id IS '동의 고유 식별자';
 COMMENT ON COLUMN billing_consents.member_id          IS '회원 FK';
@@ -1432,3 +1508,77 @@ COMMENT ON COLUMN billing_consents.plan_id            IS '동의 대상 플랜 F
 COMMENT ON COLUMN billing_consents.terms_version      IS '동의한 약관 버전';
 COMMENT ON COLUMN billing_consents.agreed_at          IS '동의 일시';
 COMMENT ON COLUMN billing_consents.revoked_at         IS '동의 철회 일시';
+
+-- ─────────────────────────────────────────────────────────────────
+-- 정산 리포트 (settlement_reports / settlement_items)
+-- ─────────────────────────────────────────────────────────────────
+
+CREATE TABLE settlement_reports (
+    settlement_id           BIGSERIAL       PRIMARY KEY,
+    settlement_period_start DATE            NOT NULL,
+    settlement_period_end   DATE            NOT NULL,
+    total_sales_amount      BIGINT          NOT NULL DEFAULT 0,
+    total_refund_amount     BIGINT          NOT NULL DEFAULT 0,
+    net_sales_amount        BIGINT          NOT NULL DEFAULT 0,
+    supply_amount           BIGINT          NOT NULL DEFAULT 0,
+    vat_amount              BIGINT          NOT NULL DEFAULT 0,
+    total_transaction_count INTEGER         NOT NULL DEFAULT 0,
+    paid_count              INTEGER         NOT NULL DEFAULT 0,
+    refund_count            INTEGER         NOT NULL DEFAULT 0,
+    settlement_status       VARCHAR(20)     NOT NULL,
+    settled_at              TIMESTAMPTZ,
+    admin_id                BIGINT          REFERENCES admins(admin_id),
+    note                    TEXT,
+    created_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_settlement_period     UNIQUE (settlement_period_start, settlement_period_end),
+    CONSTRAINT chk_settlement_period    CHECK (settlement_period_start < settlement_period_end),
+    CONSTRAINT chk_settlement_status    CHECK (settlement_status IN ('PENDING', 'CONFIRMED')),
+    CONSTRAINT chk_settlement_confirmed_fields CHECK (
+        (settlement_status = 'PENDING'   AND settled_at IS NULL     AND admin_id IS NULL) OR
+        (settlement_status = 'CONFIRMED' AND settled_at IS NOT NULL AND admin_id IS NOT NULL)
+    )
+);
+
+CREATE INDEX idx_settlement_period ON settlement_reports (settlement_period_start, settlement_period_end);
+CREATE INDEX idx_settlement_status ON settlement_reports (settlement_status);
+
+COMMENT ON TABLE  settlement_reports                           IS '월별 정산 리포트 요약';
+COMMENT ON COLUMN settlement_reports.settlement_id             IS '정산 리포트 PK';
+COMMENT ON COLUMN settlement_reports.settlement_period_start   IS '정산 기간 시작일';
+COMMENT ON COLUMN settlement_reports.settlement_period_end     IS '정산 기간 종료일';
+COMMENT ON COLUMN settlement_reports.total_sales_amount        IS '총 매출액 (원)';
+COMMENT ON COLUMN settlement_reports.total_refund_amount       IS '총 환불액 (원)';
+COMMENT ON COLUMN settlement_reports.net_sales_amount          IS '순매출액 (매출 - 환불)';
+COMMENT ON COLUMN settlement_reports.supply_amount             IS '공급가액 (VAT 제외)';
+COMMENT ON COLUMN settlement_reports.vat_amount                IS '부가세';
+COMMENT ON COLUMN settlement_reports.total_transaction_count   IS '총 결제 건수';
+COMMENT ON COLUMN settlement_reports.paid_count                IS '결제 완료 건수';
+COMMENT ON COLUMN settlement_reports.refund_count              IS '환불 건수';
+COMMENT ON COLUMN settlement_reports.settlement_status         IS '정산 상태 (PENDING / CONFIRMED)';
+COMMENT ON COLUMN settlement_reports.settled_at                IS '정산 확정 일시';
+COMMENT ON COLUMN settlement_reports.admin_id                  IS '정산 확정 관리자 FK';
+COMMENT ON COLUMN settlement_reports.note                      IS '비고/메모';
+COMMENT ON COLUMN settlement_reports.created_at                IS '생성 일시';
+COMMENT ON COLUMN settlement_reports.updated_at                IS '최종 수정 일시';
+
+CREATE TABLE settlement_items (
+    settlement_item_id  BIGSERIAL       PRIMARY KEY,
+    settlement_id       BIGINT          NOT NULL REFERENCES settlement_reports(settlement_id),
+    payment_id          UUID            NOT NULL REFERENCES payments(payment_id),
+    amount              INTEGER         NOT NULL,
+    item_type           VARCHAR(20)     NOT NULL,
+    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_settlement_item_payment  UNIQUE (settlement_id, payment_id, item_type),
+    CONSTRAINT chk_settlement_item_type    CHECK (item_type IN ('PAYMENT', 'REFUND'))
+);
+
+CREATE INDEX idx_settlement_item_settlement ON settlement_items (settlement_id);
+
+COMMENT ON TABLE  settlement_items                         IS '정산 포함 결제/환불 내역';
+COMMENT ON COLUMN settlement_items.settlement_item_id      IS '항목 PK';
+COMMENT ON COLUMN settlement_items.settlement_id           IS '소속 정산 리포트 FK';
+COMMENT ON COLUMN settlement_items.payment_id              IS '결제 FK';
+COMMENT ON COLUMN settlement_items.amount                  IS '해당 결제/환불 금액';
+COMMENT ON COLUMN settlement_items.item_type               IS '항목 유형 (PAYMENT / REFUND)';
+COMMENT ON COLUMN settlement_items.created_at              IS '생성 일시';

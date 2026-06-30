@@ -100,6 +100,7 @@ class AiMetricsFastApiMapperTest {
         AiMetricsFastApiGateway.HeavyUsersResponse result = AiMetricsFastApiMapper.toHeavyUsersResponse(
                 new AiMetricsFastApiResponse.HeavyUsers(List.of(new AiMetricsFastApiResponse.HeavyUser(
                         memberId,
+                        null,
                         35L,
                         20_000L,
                         8_000L,
@@ -116,6 +117,26 @@ class AiMetricsFastApiMapperTest {
     }
 
     @Test
+    @DisplayName("FastAPI heavy-users 응답에서 admin actor도 gateway 응답으로 매핑된다")
+    void mapsHeavyUsersAggregationResponseForAdminActor() {
+        AiMetricsFastApiGateway.HeavyUsersResponse result = AiMetricsFastApiMapper.toHeavyUsersResponse(
+                new AiMetricsFastApiResponse.HeavyUsers(List.of(new AiMetricsFastApiResponse.HeavyUser(
+                        null,
+                        77L,
+                        9L,
+                        12_000L,
+                        3_100L,
+                        new BigDecimal("45.00")
+                )))
+        );
+
+        assertThat(result.users()).hasSize(1);
+        assertThat(result.users().getFirst().memberId()).isNull();
+        assertThat(result.users().getFirst().adminId()).isEqualTo(77L);
+        assertThat(result.users().getFirst().requestCount()).isEqualTo(9L);
+    }
+
+    @Test
     @DisplayName("FastAPI usage logs 검색 응답을 gateway 페이지 응답으로 매핑한다")
     void mapsUsageLogsSearchResponse() {
         UUID memberId = UUID.fromString("22222222-2222-2222-2222-222222222222");
@@ -127,6 +148,7 @@ class AiMetricsFastApiMapperTest {
                         List.of(new AiMetricsFastApiResponse.UsageLogItem(
                                 15L,
                                 memberId,
+                                null,
                                 sessionId,
                                 3L,
                                 AiFeatureType.INTERVIEW,
@@ -155,6 +177,39 @@ class AiMetricsFastApiMapperTest {
         assertThat(result.content().getFirst().inputTokens()).isEqualTo(1_500L);
         assertThat(result.content().getFirst().outputTokens()).isEqualTo(700L);
         assertThat(result.content().getFirst().cost()).isEqualByComparingTo("0.42");
+        assertThat(result.content().getFirst().createdAt()).isEqualTo(createdAt);
+    }
+
+    @Test
+    @DisplayName("FastAPI usage logs 응답에서 admin actor도 gateway 페이지 응답으로 매핑된다")
+    void mapsUsageLogsSearchResponseForAdminActor() {
+        ZonedDateTime createdAt = ZonedDateTime.parse("2026-06-18T11:00:00Z");
+
+        AiMetricsFastApiGateway.UsageLogListResponse result = AiMetricsFastApiMapper.toUsageLogListResponse(
+                new AiMetricsFastApiResponse.UsageLogList(
+                        List.of(new AiMetricsFastApiResponse.UsageLogItem(
+                                201L,
+                                null,
+                                88L,
+                                null,
+                                9L,
+                                AiFeatureType.ADMIN_REPORT,
+                                1_600L,
+                                500L,
+                                new BigDecimal("2.40"),
+                                createdAt
+                        )),
+                        1,
+                        20,
+                        1L,
+                        1
+                )
+        );
+
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().getFirst().memberId()).isNull();
+        assertThat(result.content().getFirst().adminId()).isEqualTo(88L);
+        assertThat(result.content().getFirst().featureType()).isEqualTo(AiFeatureType.ADMIN_REPORT);
         assertThat(result.content().getFirst().createdAt()).isEqualTo(createdAt);
     }
 

@@ -94,7 +94,7 @@ public class InquiryQueryRepository {
 
     public Optional<InquiryDTO.ResponseDetail> findDetail(Long inquiryId) {
         Query query = em.createNativeQuery("""
-            SELECT i.inquiry_id, m.name, i.category, i.title, i.content, i.reply,
+            SELECT i.inquiry_id, m.name, m.email, i.category, i.title, i.content, i.reply,
                    i.inquiry_status, i.created_at, i.replied_at, i.completed_at
             FROM inquiries i
             JOIN members m ON m.member_id = i.member_id
@@ -109,14 +109,15 @@ public class InquiryQueryRepository {
         return Optional.of(new InquiryDTO.ResponseDetail(
             ((Number) row[0]).longValue(),
             (String) row[1],
-            InquiryCategory.valueOf((String) row[2]),
-            (String) row[3],
+            (String) row[2],
+            InquiryCategory.valueOf((String) row[3]),
             (String) row[4],
             (String) row[5],
-            InquiryStatus.valueOf((String) row[6]),
-            toZdt(row[7]),
+            (String) row[6],
+            InquiryStatus.valueOf((String) row[7]),
             toZdt(row[8]),
-            toZdt(row[9])
+            toZdt(row[9]),
+            toZdt(row[10])
         ));
     }
 }

@@ -1,7 +1,6 @@
 export interface MenuChild {
   label: string;
   href: string;
-  comingSoon?: boolean;
 }
 
 export interface MenuItem {
@@ -32,10 +31,10 @@ export const serviceMenus: MenuItem[] = [
     label: 'AI 면접',
     href: '/interview',
     children: [
-      { label: '면접 홈',            href: '/interview' },
+      { label: '면접 홈',             href: '/interview' },
       { label: 'AI 텍스트 · 음성 면접', href: '/interview/text' },
-      { label: 'AI 화상 면접',       href: '/interview/media', comingSoon: true },
-      { label: '면접 리포트',        href: '/interview' },
+      { label: '면접 이력',           href: '/interview/sessions' },
+      { label: '면접 리포트',         href: '/interview/report' },
     ],
   },
   {

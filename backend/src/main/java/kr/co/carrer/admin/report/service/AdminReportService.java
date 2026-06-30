@@ -14,9 +14,11 @@ public interface AdminReportService {
                                                                 ReportReason reason, String keyword,
                                                                 int page, int size);
 
-    ReportDetailDTO.ResponseDetail getReportDetail(Long reportId);
+    ReportDetailDTO.ResponseDetail getReportDetail(Long reportId, Long adminId);
 
     ReportDetailDTO.ResponseProcess blindReport(Long reportId, Long adminId);
 
     ReportDetailDTO.ResponseProcess dismissReport(Long reportId, Long adminId);
+
+    ReportDetailDTO.ResponseMemberAiReview getMemberAiReview(Long reportId, Long adminId);
 }

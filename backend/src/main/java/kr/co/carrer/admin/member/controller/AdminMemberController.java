@@ -10,8 +10,10 @@ import kr.co.carrer.admin.member.type.RoleType;
 import kr.co.carrer.admin.member.type.SubscriptionStatus;
 import kr.co.carrer.admin.member.exception.AdminMemberErrorCode;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.servlet.http.HttpServletRequest;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +50,8 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
         @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "20") int size
+        @RequestParam(defaultValue = "20") int size,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
     ) {
         RoleType roleType = parseEnum(RoleType.class, role);
         MemberStatus memberStatus = parseEnum(MemberStatus.class, status);
@@ -56,25 +59,46 @@ public class AdminMemberController implements AdminMemberControllerDocs {
 
         return ResponseEntity.ok(ApiResponse.ok(
             adminMemberService.getMembers(roleType, memberStatus, subscriptionStatus,
-                keyword, startDate, endDate, page, size)
+                keyword, startDate, endDate, page, size, parseAdminRole(principal))
         ));
     }
 
     @GetMapping("/members/{memberId}")
     public ResponseEntity<ApiResponse<MemberDTO.ResponseDetail>> getMemberDetail(
-        @PathVariable UUID memberId
+        @PathVariable UUID memberId,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
+        HttpServletRequest httpServletRequest
     ) {
-        return ResponseEntity.ok(ApiResponse.ok(adminMemberService.getMemberDetail(memberId)));
+        Long adminId = parseAdminId(principal);
+        return ResponseEntity.ok(ApiResponse.ok(
+            adminMemberService.getMemberDetail(memberId, adminId, extractClientIp(httpServletRequest))
+        ));
     }
 
     @PostMapping("/members/{memberId}/sanctions")
     public ResponseEntity<ApiResponse<MemberDTO.ResponseSanction>> sanctionMember(
         @PathVariable UUID memberId,
         @RequestBody MemberDTO.RequestSanction request,
-        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
+        HttpServletRequest httpServletRequest
     ) {
-        Long adminId = Long.parseLong(principal.getId());
-        return ResponseEntity.ok(ApiResponse.ok(adminMemberService.sanctionMember(memberId, request, adminId)));
+        Long adminId = parseAdminId(principal);
+        return ResponseEntity.ok(ApiResponse.ok(
+            adminMemberService.sanctionMember(memberId, request, adminId, extractClientIp(httpServletRequest))
+        ));
+    }
+
+    @PatchMapping("/members/{memberId}/unsuspend")
+    public ResponseEntity<ApiResponse<MemberDTO.ResponseUnsuspend>> unsuspendMember(
+        @PathVariable UUID memberId,
+        @RequestBody MemberDTO.RequestUnsuspend request,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
+        HttpServletRequest httpServletRequest
+    ) {
+        Long adminId = parseAdminId(principal);
+        return ResponseEntity.ok(ApiResponse.ok(
+            adminMemberService.unsuspendMember(memberId, request, adminId, extractClientIp(httpServletRequest))
+        ));
     }
 
     @GetMapping("/hr-managers")
@@ -112,6 +136,24 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         @RequestBody HrManagerDTO.RequestReject request
     ) {
         return ResponseEntity.ok(ApiResponse.ok(adminMemberService.rejectHrManager(memberId, request)));
+    }
+
+    private String parseAdminRole(AuthPrincipal principal) {
+        if (principal == null) throw new CustomException(ErrorCode.UNAUTHORIZED);
+        return principal.getAdminRole();
+    }
+
+    private Long parseAdminId(AuthPrincipal principal) {
+        if (principal == null) throw new CustomException(ErrorCode.UNAUTHORIZED);
+        try {
+            return Long.parseLong(principal.getId());
+        } catch (NumberFormatException e) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        return request.getRemoteAddr();
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {

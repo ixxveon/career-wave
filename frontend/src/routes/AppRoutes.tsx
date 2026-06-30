@@ -5,6 +5,7 @@ import ProtectedRoute from "../components/user/common/ProtectedRoute";
 import AdminLayout from "../layouts/admin/AdminLayout";
 import { adminSession } from "../api/admin/adminSession";
 import {
+  ADMIN_ROUTE_BASE,
   ADMIN_ROUTE_PATHS,
   hasAdminRouteAccess,
   isAdminNavigationPath,
@@ -86,11 +87,12 @@ const InterviewHomePage = lazy(
 const TextInterviewPage = lazy(
   () => import("../pages/user/interview/TextInterviewPage"),
 );
-const MediaInterviewPage = lazy(
-  () => import("../pages/user/interview/MediaInterviewPage"),
-);
 const InterviewReportPage = lazy(
   () => import("../pages/user/interview/InterviewReportPage"),
+);
+
+const InterviewHistoryPage = lazy(
+  () => import("../pages/user/interview/InterviewHistoryPage"),
 );
 
 const DiagnosisHistoryPage = lazy(
@@ -205,13 +207,13 @@ function AdminProtectedRoute() {
   const role = adminSession.getRole();
 
   if (!token) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to={ADMIN_ROUTE_PATHS.login} replace />;
   }
 
   if (!role) {
     adminSession.clearToken();
     adminSession.clearRole();
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to={ADMIN_ROUTE_PATHS.login} replace />;
   }
 
   // 현재 경로에 매핑되는 가장 구체적인 admin route를 찾아 role 접근 권한 확인
@@ -225,7 +227,7 @@ function AdminProtectedRoute() {
     isAdminNavigationPath(matchedRoute) &&
     !hasAdminRouteAccess(role, matchedRoute)
   ) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to={ADMIN_ROUTE_PATHS.dashboard} replace />;
   }
 
   return <Outlet />;
@@ -285,6 +287,10 @@ function AppRoutes() {
         <Route path="about" element={lazyRoute(<AboutPage />)} />
         <Route path="terms" element={lazyRoute(<TermsPage />)} />
         <Route path="privacy" element={lazyRoute(<PrivacyPage />)} />
+
+        {/* Toss 결제 콜백 — 외부 리디렉트이므로 세션 만료 시에도 렌더링 가능해야 함 (#854) */}
+        <Route path="billing/success" element={lazyRoute(<PaymentSuccessPage />)} />
+        <Route path="billing/fail" element={lazyRoute(<PaymentFailPage />)} />
 
         <Route element={<ProtectedRoute />}>
           <Route
@@ -361,12 +367,12 @@ function AppRoutes() {
               element={lazyRoute(<LearningRoadmapPage />)}
             />
             <Route path="report" element={lazyRoute(<InterviewReportPage />)} />
+            <Route path="sessions" element={lazyRoute(<InterviewHistoryPage />)} />
             <Route
               path="report-export"
               element={lazyRoute(<ComprehensiveReportPage />)}
             />
             <Route path="text" element={lazyRoute(<TextInterviewPage />)} />
-            <Route path="media" element={lazyRoute(<MediaInterviewPage />)} />
           </Route>
 
           <Route path="career-diagnosis">
@@ -397,8 +403,6 @@ function AppRoutes() {
             {/* [non-MVP] <Route path="pricing" element={lazyRoute(<PricingPage />)} /> */}
             <Route path="payment" element={lazyRoute(<PaymentPage />)} />
             <Route path="checkout" element={lazyRoute(<CheckoutPage />)} />
-            <Route path="success" element={lazyRoute(<PaymentSuccessPage />)} />
-            <Route path="fail" element={lazyRoute(<PaymentFailPage />)} />
             <Route
               path="document-coaching/plans"
               element={lazyRoute(<PaymentPage />)}
@@ -414,8 +418,8 @@ function AppRoutes() {
         <Route path="*" element={lazyRoute(<NotFoundPage />)} />
       </Route>
 
-      <Route path="admin">
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path={ADMIN_ROUTE_BASE}>
+        <Route index element={<Navigate to={ADMIN_ROUTE_PATHS.dashboard} replace />} />
         <Route path="login" element={lazyRoute(<AdminLoginPage />)} />
 
         <Route element={<AdminProtectedRoute />}>

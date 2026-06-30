@@ -61,6 +61,11 @@ const formatDateTime = (value: string) => {
   return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
+const formatLastSyncedLabel = (value?: string) => {
+  if (!value?.trim() || value === '-') return '동기화 정보 없음';
+  return `${formatDateTime(value)} 동기화`;
+};
+
 const getMaskedHeavyUserLabel = (user: AiHeavyUser) => {
   const label = user.maskedUserLabel.trim();
   if (label) return label;
@@ -465,7 +470,7 @@ export default function AiMetricsPage() {
   const summaryStatusLabel = summaryIsError
     ? getApiStateMessage(summaryError, 'AI 요약 상태를 불러오지 못했습니다.')
     : getHealthStatusLabel(summaryData?.healthStatus);
-  const summaryLastSyncedLabel = summaryData ? `${formatDateTime(summaryData.lastSyncedAt)} 동기화` : summaryLoading ? '요약 조회 중' : '동기화 정보 없음';
+  const summaryLastSyncedLabel = summaryData ? formatLastSyncedLabel(summaryData.lastSyncedAt) : summaryLoading ? '요약 조회 중' : '동기화 정보 없음';
   const totalTokens = summaryData ? summaryData.totalInputTokens + summaryData.totalOutputTokens : undefined;
 
   const handleDownloadDocument = (doc: RagDocumentMetric) => {

@@ -74,7 +74,7 @@ export default function TextInterviewPage() {
       .finally(() => setResumeLoading(false));
   }, [documentId]);
 
-  async function handleMicTest() {
+  async function handleMicTest(): Promise<void> {
     setMicStatus('testing');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -85,7 +85,7 @@ export default function TextInterviewPage() {
     }
   }
 
-  function handleAudioTest() {
+  function handleAudioTest(): void {
     if (audioPlaying) return;
     setAudioPlaying(true);
     try {
@@ -106,7 +106,7 @@ export default function TextInterviewPage() {
     }
   }
 
-  async function handleStart() {
+  async function handleStart(): Promise<void> {
     if (!company.trim() || resumeLoading) return;
     // pre-flight gate (spec FR-001) — 모드별 조건 분리
     if (preflight.networkStatus === 'fail') return;

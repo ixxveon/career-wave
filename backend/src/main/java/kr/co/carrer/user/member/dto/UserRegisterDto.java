@@ -44,7 +44,7 @@ public class UserRegisterDto {
         @AssertTrue(message = "서비스 이용약관 동의는 필수입니다.")
         private boolean service;
 
-        @AssertTrue(message = "개인정보 처리방침 동의는 필수입니다.")
+        @AssertTrue(message = "개인정보 수집·이용 동의는 필수입니다.")
         private boolean privacy;
 
         private boolean marketing;
@@ -55,7 +55,7 @@ public class UserRegisterDto {
         @AssertTrue(message = "서비스 이용약관 동의는 필수입니다.")
         private boolean service;
 
-        @AssertTrue(message = "개인정보 처리방침 동의는 필수입니다.")
+        @AssertTrue(message = "개인정보 수집·이용 동의는 필수입니다.")
         private boolean privacy;
 
         @AssertTrue(message = "기업 인증 정보 제공 동의는 필수입니다.")
@@ -164,8 +164,7 @@ public class UserRegisterDto {
         @NotBlank
         private String ceoName;
 
-        @Schema(description = "재직증명서 번호", example = "202606150001")
-        @NotBlank
+        @Schema(description = "재직증명서 번호 (미사용 — 하위 호환용 선택 필드)", example = "202606150001")
         private String certificateNumber;
 
         @Schema(description = "우편번호 (주소 검색 결과)", example = "06134")

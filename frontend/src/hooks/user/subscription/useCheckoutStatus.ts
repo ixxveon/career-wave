@@ -59,11 +59,13 @@ export function useCheckoutStatus() {
     } catch (err: unknown) {
       isPaymentRequestingRef.current = false;
       setIsPaymentRequesting(false);
-      const error = err as { status?: number };
-      if (error.status === 403) {
+      const error = err as { statusCode?: number };
+      if (error.statusCode === 403) {
         setCheckoutError('결제가 제한된 계정입니다. 고객센터에 문의해주세요.');
-      } else if (error.status === 409) {
+      } else if (error.statusCode === 409) {
         setCheckoutError('이미 구독 중인 상품입니다. 구독 현황을 확인해주세요.');
+      } else if (error.statusCode === 422) {
+        setCheckoutError('결제를 위해 이메일 등록이 필요합니다. 마이페이지에서 이메일을 등록해주세요.');
       } else {
         setCheckoutError('결제 요청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       }

@@ -486,6 +486,50 @@
   gap: 24px;
 }
 
+.cw-home-job-state {
+  display: grid;
+  min-height: 260px;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 28px;
+  border: 1px solid #e3eaf5;
+  border-radius: 10px;
+  color: #65738a;
+  text-align: center;
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(34, 63, 104, 0.06);
+}
+
+.cw-home-job-state svg {
+  color: #3d7cea;
+}
+
+.cw-home-job-state strong {
+  color: #102c57;
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 950;
+}
+
+.cw-home-job-state span {
+  color: #65738a;
+  font-size: 13px;
+  line-height: 1.55;
+  font-weight: 700;
+}
+
+.cw-home-job-state button {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid #c9d8f2;
+  border-radius: 6px;
+  color: #2f6fce;
+  background: #f7fbff;
+  font-size: 12px;
+  font-weight: 950;
+}
+
 .cw-home-job-lockup {
   position: relative;
 }
@@ -591,6 +635,16 @@
   font-size: 14px;
 }
 
+.cw-home-job__logo.is-wanted {
+  background: #3366ff;
+  font-size: 22px;
+}
+
+.cw-home-job__logo.is-saramin {
+  background: #4876ef;
+  font-size: 22px;
+}
+
 .cw-home-job__logo.is-wave {
   background: linear-gradient(135deg, #18b8ff 8%, #1548db 58%, #f6fbff 59%);
 }
@@ -602,6 +656,11 @@
   height: 32px;
   color: #51627b;
   background: transparent;
+}
+
+.cw-home-job__head button:disabled {
+  color: #a6b2c3;
+  cursor: not-allowed;
 }
 
 .cw-home-job h3 {

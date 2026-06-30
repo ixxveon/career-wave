@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
 import { Building2, CheckCircle, Clock, UserPlus, UserX, Users, XCircle } from 'lucide-react';
 import {
   memberApi,
@@ -13,6 +14,7 @@ import {
   type HrManagerDetail,
   type HrStatus,
 } from '../../../api/admin/memberApi';
+import { adminSession } from '../../../api/admin/adminSession';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/UserManagement.css';
 
@@ -62,7 +64,12 @@ export default function UserManagementPage() {
   const [suspendReason, setSuspendReason] = useState('');
   const [suspendLoading, setSuspendLoading] = useState(false);
   const [suspendError, setSuspendError] = useState('');
+  const [unsuspendTarget, setUnsuspendTarget] = useState<MemberItem | null>(null);
+  const [unsuspendReason, setUnsuspendReason] = useState('');
+  const [unsuspendLoading, setUnsuspendLoading] = useState(false);
+  const [unsuspendError, setUnsuspendError] = useState('');
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
+  const [confirmViewTarget, setConfirmViewTarget] = useState<string | null>(null);
 
   // ── KPI 집계 상태 ─────────────────────────────────────────
   const [memberCounts, setMemberCounts] = useState<MemberCounts | null>(null);
@@ -120,9 +127,12 @@ export default function UserManagementPage() {
       setMemberTotalItems(totalItems);
       setMemberTotalPages(totalPages);
       setMemberPage(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== memberReqId.current) return;
-      setMemberError(err.response?.data?.message || (err.response ? `회원 목록을 불러오지 못했습니다. (${err.response.status})` : err.message) || '회원 목록을 불러오지 못했습니다.');
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        setMemberError(err.response?.data?.message || (status ? `회원 목록을 불러오지 못했습니다. (${status})` : '네트워크 연결을 확인해주세요.'));
+      } else setMemberError(err instanceof Error ? err.message : '회원 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === memberReqId.current) setMemberLoading(false);
     }
@@ -149,9 +159,12 @@ export default function UserManagementPage() {
       setHrTotalPages(totalPages);
       setHrPendingCount(pendingCount);
       setHrPage(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== hrReqId.current) return;
-      setHrError(err.response?.data?.message || (err.response ? `기업 회원 목록을 불러오지 못했습니다. (${err.response.status})` : err.message) || '기업 회원 목록을 불러오지 못했습니다.');
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        setHrError(err.response?.data?.message || (status ? `기업 회원 목록을 불러오지 못했습니다. (${status})` : '네트워크 연결을 확인해주세요.'));
+      } else setHrError(err instanceof Error ? err.message : '기업 회원 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === hrReqId.current) setHrLoading(false);
     }
@@ -168,16 +181,26 @@ export default function UserManagementPage() {
     fetchHrManagers(1);
   };
 
-  const openMemberDetail = async (memberId: string) => {
+  const openMemberDetail = (memberId: string) => {
+    const role = adminSession.getRole();
+    if (role !== 'MASTER') {
+      setConfirmViewTarget(memberId);
+      return;
+    }
+    fetchMemberDetail(memberId);
+  };
+
+  const fetchMemberDetail = async (memberId: string) => {
     const reqId = ++memberDetailReqId.current;
     try {
       const res = await memberApi.getMemberDetail(memberId);
       if (reqId !== memberDetailReqId.current) return;
       if (!res.data.success) throw new Error(res.data.message);
       setSelectedMember(res.data.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== memberDetailReqId.current) return;
-      alert(err.message || '회원 상세 정보를 불러오지 못했습니다.');
+      const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
+      alert(msg || '회원 상세 정보를 불러오지 못했습니다.');
     }
   };
 
@@ -215,11 +238,41 @@ export default function UserManagementPage() {
       setSuspendTarget(null);
       fetchMembers(memberPage);
       fetchMemberCounts();
-    } catch (err: any) {
-      const msg = err.response?.data?.message || (err instanceof Error ? err.message : '');
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
       setSuspendError(msg || '제재 처리에 실패했습니다.');
     } finally {
       setSuspendLoading(false);
+    }
+  };
+
+  // ── 정지 해제 처리 ─────────────────────────────────────────
+  const openUnsuspend = (member: MemberItem) => {
+    setSelectedMember(null);
+    setUnsuspendTarget(member);
+    setUnsuspendReason('');
+    setUnsuspendError('');
+  };
+
+  const handleUnsuspend = async () => {
+    if (!unsuspendTarget) return;
+    setUnsuspendLoading(true);
+    setUnsuspendError('');
+    try {
+      const res = await memberApi.unsuspendMember(unsuspendTarget.memberId, {
+        reason: unsuspendReason,
+      });
+      if (!res.data.success) throw new Error(res.data.message);
+      setUnsuspendTarget(null);
+      fetchMembers(memberPage);
+      fetchMemberCounts();
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message
+        : err instanceof Error ? err.message : '';
+      setUnsuspendError(msg || '정지 해제에 실패했습니다.');
+    } finally {
+      setUnsuspendLoading(false);
     }
   };
 
@@ -244,8 +297,8 @@ export default function UserManagementPage() {
       if (!res.data.success) throw new Error(res.data.message);
       setApproveTarget(null);
       fetchHrManagers(hrPage);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || (err instanceof Error ? err.message : '');
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
       setActionError(msg || '승인 처리에 실패했습니다.');
     } finally {
       setApproveLoading(false);
@@ -267,8 +320,8 @@ export default function UserManagementPage() {
       setRejectTarget(null);
       setRejectReasonInput('');
       fetchHrManagers(hrPage);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || (err instanceof Error ? err.message : '');
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
       setActionError(msg || '반려 처리에 실패했습니다.');
     } finally {
       setRejectLoading(false);
@@ -451,7 +504,11 @@ export default function UserManagementPage() {
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="tableBtn" onClick={() => openMemberDetail(m.memberId)}>상세보기</button>
-                          <button className="tableBtn tableBtn--danger" onClick={() => openSuspend(m)} disabled={m.memberStatus === MEMBER_STATUS.WITHDRAWN}>정지처리</button>
+                          {m.memberStatus === MEMBER_STATUS.SUSPENDED ? (
+                            <button className="tableBtn tableBtn--success" onClick={() => openUnsuspend(m)}>정지해제</button>
+                          ) : (
+                            <button className="tableBtn tableBtn--danger" onClick={() => openSuspend(m)} disabled={m.memberStatus === MEMBER_STATUS.WITHDRAWN}>정지처리</button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -647,8 +704,38 @@ export default function UserManagementPage() {
               </div>
             </div>
             <div className="modalAction">
-              <button onClick={() => openSuspend(selectedMember)} disabled={selectedMember?.memberStatus === MEMBER_STATUS.WITHDRAWN}>활동 정지</button>
+              {selectedMember.memberStatus === MEMBER_STATUS.SUSPENDED ? (
+                <button onClick={() => openUnsuspend(selectedMember)} style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}>정지 해제</button>
+              ) : (
+                <button onClick={() => openSuspend(selectedMember)} disabled={selectedMember?.memberStatus === MEMBER_STATUS.WITHDRAWN}>활동 정지</button>
+              )}
               <button onClick={() => setSelectedMember(null)}>닫기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 개인정보 조회 확인 모달 ──────────────────────────── */}
+      {confirmViewTarget && (
+        <div className="modalOverlay" onClick={() => setConfirmViewTarget(null)}>
+          <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 420 }}>
+            <div className="modalHeader">
+              <div><h3>개인정보 열람 확인</h3></div>
+              <button onClick={() => setConfirmViewTarget(null)}>닫기</button>
+            </div>
+            <div className="modalInfoGrid">
+              <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 14, lineHeight: 1.7, color: '#3a4f6a' }}>
+                이 회원의 개인정보(이름·이메일)를 조회하시겠습니까?<br />
+                조회 시 감사로그에 기록됩니다.
+              </p>
+            </div>
+            <div className="modalAction">
+              <button onClick={() => {
+                const target = confirmViewTarget;
+                setConfirmViewTarget(null);
+                fetchMemberDetail(target);
+              }}>확인</button>
+              <button onClick={() => setConfirmViewTarget(null)}>취소</button>
             </div>
           </div>
         </div>
@@ -713,6 +800,50 @@ export default function UserManagementPage() {
                 {suspendLoading ? '처리 중...' : `${durationLabel[suspendPeriod]} 정지 처리`}
               </button>
               <button onClick={() => setSuspendTarget(null)} disabled={suspendLoading}>취소</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 정지 해제 모달 ──────────────────────────────────── */}
+      {unsuspendTarget && (
+        <div className="modalOverlay" onClick={() => setUnsuspendTarget(null)}>
+          <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 480 }}>
+            <div className="modalHeader">
+              <div>
+                <h3>정지 해제</h3>
+                <p>{unsuspendTarget.name} · {unsuspendTarget.loginId}</p>
+              </div>
+              <button onClick={() => setUnsuspendTarget(null)}>닫기</button>
+            </div>
+            <div className="modalBody" style={{ display: 'grid', gap: 16, padding: '20px 24px' }}>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <span>해제 사유</span>
+                <textarea
+                  placeholder="정지 해제 사유를 입력하세요 (최소 10자)"
+                  value={unsuspendReason}
+                  onChange={(e) => setUnsuspendReason(e.target.value)}
+                  style={{
+                    marginTop: 8, width: '100%', minHeight: 90, boxSizing: 'border-box',
+                    border: '1px solid #d8e3ed', borderRadius: 10, padding: '10px 12px',
+                    outline: 'none', resize: 'vertical', background: 'white',
+                    fontSize: 14, fontFamily: 'inherit', color: '#10243f', lineHeight: 1.7,
+                  }}
+                />
+              </div>
+              {unsuspendError && (
+                <p style={{ gridColumn: '1 / -1', fontSize: 13, color: '#9a4444', margin: 0 }}>{unsuspendError}</p>
+              )}
+            </div>
+            <div className="modalAction">
+              <button
+                onClick={handleUnsuspend}
+                disabled={unsuspendLoading || unsuspendReason.trim().length < 10}
+                style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}
+              >
+                {unsuspendLoading ? '처리 중...' : '정지 해제'}
+              </button>
+              <button onClick={() => setUnsuspendTarget(null)} disabled={unsuspendLoading}>취소</button>
             </div>
           </div>
         </div>

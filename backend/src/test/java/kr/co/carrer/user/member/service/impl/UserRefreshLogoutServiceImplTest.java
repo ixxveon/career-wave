@@ -4,6 +4,7 @@ import kr.co.carrer.user.member.repository.UserMemberStatusQueryRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.jwt.AccountType;
+import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.RefreshTokenStore;
@@ -58,7 +59,7 @@ class UserRefreshLogoutServiceImplTest {
         provider = new JwtTokenProvider(props);
         service = new UserLoginServiceImpl(memberRepository, encoder, provider, props,
                 refreshTokenStore, tokenBlacklistStore,
-                mock(kr.co.carrer.auth.store.LoginAttemptStore.class), statusQueryRepository);
+                mock(kr.co.carrer.auth.store.LoginAttemptStore.class), statusQueryRepository, new CookieProperties());
     }
 
     private Member createActiveMember() throws Exception {

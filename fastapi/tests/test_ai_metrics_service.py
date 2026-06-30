@@ -34,6 +34,7 @@ class InMemoryUsageLogRepository:
         persisted = AiUsageLogRecord(
             ai_usage_log_id=len(self.records) + 1,
             member_id=record.member_id,
+            admin_id=record.admin_id,
             session_id=record.session_id,
             ai_model_id=record.ai_model_id,
             feature_type=record.feature_type.value if hasattr(record.feature_type, "value") else record.feature_type,
@@ -344,6 +345,7 @@ def test_usage_metrics_service_returns_heavy_users_response():
     usage_log_repository.aggregate_heavy_users.return_value = [
         HeavyUserAggregateRecord(
             member_id=UUID("11111111-1111-1111-1111-111111111111"),
+            admin_id=None,
             request_count=34,
             input_tokens=220000,
             output_tokens=91000,
@@ -351,6 +353,7 @@ def test_usage_metrics_service_returns_heavy_users_response():
         ),
         HeavyUserAggregateRecord(
             member_id=UUID("22222222-2222-2222-2222-222222222222"),
+            admin_id=None,
             request_count=21,
             input_tokens=150000,
             output_tokens=64000,
@@ -375,6 +378,7 @@ def test_usage_metrics_service_returns_heavy_users_response():
         "users": [
             {
                 "memberId": UUID("11111111-1111-1111-1111-111111111111"),
+                "adminId": None,
                 "requestCount": 34,
                 "inputTokens": 220000,
                 "outputTokens": 91000,
@@ -382,6 +386,7 @@ def test_usage_metrics_service_returns_heavy_users_response():
             },
             {
                 "memberId": UUID("22222222-2222-2222-2222-222222222222"),
+                "adminId": None,
                 "requestCount": 21,
                 "inputTokens": 150000,
                 "outputTokens": 64000,
@@ -398,6 +403,49 @@ def test_usage_metrics_service_returns_heavy_users_response():
     )
 
 
+def test_usage_metrics_service_returns_heavy_users_response_for_admin_actor():
+    usage_log_repository = Mock()
+    ai_ops_setting_repository = Mock()
+    ai_model_repository = Mock()
+
+    usage_log_repository.aggregate_heavy_users.return_value = [
+        HeavyUserAggregateRecord(
+            member_id=None,
+            admin_id=77,
+            request_count=9,
+            input_tokens=12000,
+            output_tokens=3100,
+            cost=Decimal("45000"),
+        )
+    ]
+
+    service = UsageMetricsService(
+        usage_log_repository=usage_log_repository,
+        ai_ops_setting_repository=ai_ops_setting_repository,
+        ai_model_repository=ai_model_repository,
+    )
+
+    response = service.get_heavy_users(
+        created_from=datetime(2026, 6, 1, tzinfo=timezone.utc),
+        created_to=datetime(2026, 6, 30, 23, 59, 59, tzinfo=timezone.utc),
+        feature_type="ADMIN_CS",
+        limit=3,
+    )
+
+    assert response.model_dump(by_alias=True) == {
+        "users": [
+            {
+                "memberId": None,
+                "adminId": 77,
+                "requestCount": 9,
+                "inputTokens": 12000,
+                "outputTokens": 3100,
+                "cost": Decimal("45000"),
+            }
+        ]
+    }
+
+
 def test_usage_metrics_service_returns_usage_logs_response():
     usage_log_repository = Mock()
     ai_ops_setting_repository = Mock()
@@ -408,6 +456,7 @@ def test_usage_metrics_service_returns_usage_logs_response():
             AiUsageLogRecord(
                 ai_usage_log_id=101,
                 member_id=UUID("33333333-3333-3333-3333-333333333333"),
+                admin_id=None,
                 session_id=UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                 ai_model_id=7,
                 feature_type="DOCUMENT",
@@ -419,6 +468,7 @@ def test_usage_metrics_service_returns_usage_logs_response():
             AiUsageLogRecord(
                 ai_usage_log_id=100,
                 member_id=UUID("44444444-4444-4444-4444-444444444444"),
+                admin_id=None,
                 session_id=None,
                 ai_model_id=8,
                 feature_type="DOCUMENT",
@@ -451,6 +501,7 @@ def test_usage_metrics_service_returns_usage_logs_response():
             {
                 "aiUsageLogId": 101,
                 "memberId": UUID("33333333-3333-3333-3333-333333333333"),
+                "adminId": None,
                 "sessionId": UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                 "aiModelId": 7,
                 "featureType": AiFeatureType.DOCUMENT,
@@ -462,6 +513,7 @@ def test_usage_metrics_service_returns_usage_logs_response():
             {
                 "aiUsageLogId": 100,
                 "memberId": UUID("44444444-4444-4444-4444-444444444444"),
+                "adminId": None,
                 "sessionId": None,
                 "aiModelId": 8,
                 "featureType": AiFeatureType.DOCUMENT,
@@ -482,6 +534,66 @@ def test_usage_metrics_service_returns_usage_logs_response():
         page=2,
         size=2,
     )
+
+
+def test_usage_metrics_service_returns_usage_logs_response_for_admin_actor():
+    usage_log_repository = Mock()
+    ai_ops_setting_repository = Mock()
+    ai_model_repository = Mock()
+
+    usage_log_repository.find_usage_logs.return_value = UsageLogPageRecord(
+        content=[
+            AiUsageLogRecord(
+                ai_usage_log_id=201,
+                member_id=None,
+                admin_id=88,
+                session_id=None,
+                ai_model_id=9,
+                feature_type="ADMIN_REPORT",
+                input_tokens=1600,
+                output_tokens=500,
+                cost=Decimal("2400"),
+                created_at=datetime(2026, 6, 18, 11, 0, tzinfo=timezone.utc),
+            )
+        ],
+        page=1,
+        size=20,
+        total_elements=1,
+        total_pages=1,
+    )
+
+    service = UsageMetricsService(
+        usage_log_repository=usage_log_repository,
+        ai_ops_setting_repository=ai_ops_setting_repository,
+        ai_model_repository=ai_model_repository,
+    )
+
+    response = service.get_usage_logs(
+        feature_type="ADMIN_REPORT",
+        page=1,
+        size=20,
+    )
+
+    assert response.model_dump(by_alias=True) == {
+        "content": [
+            {
+                "aiUsageLogId": 201,
+                "memberId": None,
+                "adminId": 88,
+                "sessionId": None,
+                "aiModelId": 9,
+                "featureType": AiFeatureType.ADMIN_REPORT,
+                "inputTokens": 1600,
+                "outputTokens": 500,
+                "cost": Decimal("2400"),
+                "createdAt": datetime(2026, 6, 18, 11, 0, tzinfo=timezone.utc),
+            }
+        ],
+        "page": 1,
+        "size": 20,
+        "totalElements": 1,
+        "totalPages": 1,
+    }
 
 
 def test_ops_settings_service_syncs_runtime_context():

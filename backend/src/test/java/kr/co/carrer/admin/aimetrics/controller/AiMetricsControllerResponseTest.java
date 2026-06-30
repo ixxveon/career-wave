@@ -33,6 +33,7 @@ class AiMetricsControllerResponseTest {
                         List.of(new AiMetricsService.ResponseUsageLogItem(
                                 15L,
                                 memberId,
+                                null,
                                 sessionId,
                                 3L,
                                 AiFeatureType.INTERVIEW,

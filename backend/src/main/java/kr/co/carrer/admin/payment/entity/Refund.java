@@ -26,8 +26,11 @@ public class Refund {
     @Column(name = "payment_id", nullable = false, columnDefinition = "UUID")
     private UUID paymentId;
 
-    @Column(name = "admin_id")
-    private Long adminId;
+    @Column(name = "requested_by_admin_id")
+    private Long requestedByAdminId;
+
+    @Column(name = "processed_by_admin_id")
+    private Long processedByAdminId;
 
     @Column(name = "amount", nullable = false)
     private int amount;
@@ -48,9 +51,10 @@ public class Refund {
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;
 
-    public static Refund create(UUID paymentId, int amount, String reason) {
+    public static Refund create(UUID paymentId, int amount, String reason, Long adminId) {
         Refund refund = new Refund();
         refund.paymentId = paymentId;
+        refund.requestedByAdminId = adminId;
         refund.amount = amount;
         refund.reason = reason;
         refund.refundStatus = RefundStatus.PENDING;
@@ -60,18 +64,18 @@ public class Refund {
 
     public void approve(Long adminId) {
         this.refundStatus = RefundStatus.COMPLETED;
-        this.adminId = adminId;
+        this.processedByAdminId = adminId;
         this.refundedAt = ZonedDateTime.now(SERVICE_ZONE_ID);
     }
 
     public void fail(Long adminId) {
         this.refundStatus = RefundStatus.FAILED;
-        this.adminId = adminId;
+        this.processedByAdminId = adminId;
     }
 
     public void reject(Long adminId, String rejectReason) {
         this.refundStatus = RefundStatus.REJECTED;
-        this.adminId = adminId;
+        this.processedByAdminId = adminId;
         this.rejectReason = rejectReason;
     }
 }

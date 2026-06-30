@@ -20,6 +20,15 @@ export const DASHBOARD_SEVERITY = {
 
 export type DashboardSeverity = (typeof DASHBOARD_SEVERITY)[keyof typeof DASHBOARD_SEVERITY];
 
+export const DASHBOARD_KPI_KEY = {
+  TODAY_NEW_ADMINS: 'TODAY_NEW_ADMINS',
+  REALTIME_ACTIVE_ADMINS: 'REALTIME_ACTIVE_ADMINS',
+  AI_INTERVIEW_SESSIONS: 'AI_INTERVIEW_SESSIONS',
+  TODAY_REVENUE: 'TODAY_REVENUE',
+} as const;
+
+export type DashboardKpiKey = (typeof DASHBOARD_KPI_KEY)[keyof typeof DASHBOARD_KPI_KEY];
+
 export const DASHBOARD_ALERT_LEVEL = {
   URGENT: 'URGENT',
   WARNING: 'WARNING',
@@ -44,6 +53,7 @@ export type DashboardAlertDomain = (typeof DASHBOARD_ALERT_DOMAIN)[keyof typeof 
 
 export const DASHBOARD_PAYMENT_METHOD = {
   CARD: 'CARD',
+  OTHER: 'OTHER',
 } as const;
 
 export type DashboardPaymentMethod =
@@ -62,7 +72,7 @@ export interface DashboardSummaryParams {
 }
 
 export interface DashboardKpi {
-  key: string;
+  key: DashboardKpiKey;
   title: string;
   value: number;
   unit: string;

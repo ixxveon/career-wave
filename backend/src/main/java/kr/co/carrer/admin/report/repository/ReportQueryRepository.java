@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class ReportQueryRepository {
@@ -117,6 +118,31 @@ public class ReportQueryRepository {
             query.setParameter(i + 1, params.get(i));
         }
         return ((Number) query.getSingleResult()).longValue();
+    }
+
+    public record MemberSummary(int warningCount, long reportCount, String memberStatus) {}
+
+    public Optional<MemberSummary> findMemberSummaryByReportId(Long reportId) {
+        String sql = """
+            SELECT m.warning_count,
+                   (SELECT COUNT(*) FROM reports r2 WHERE r2.member_id = m.member_id) AS report_count,
+                   m.member_status
+            FROM reports r
+            JOIN members m ON m.member_id = r.member_id
+            WHERE r.report_id = ?1
+            """;
+        Query query = em.createNativeQuery(sql);
+        query.setParameter(1, reportId);
+
+        List<?> rows = query.getResultList();
+        if (rows.isEmpty()) return Optional.empty();
+
+        Object[] row = (Object[]) rows.get(0);
+        return Optional.of(new MemberSummary(
+            ((Number) row[0]).intValue(),
+            ((Number) row[1]).longValue(),
+            (String) row[2]
+        ));
     }
 
     public Optional<ReportDetailDTO.ResponseDetail> findReportDetail(Long reportId) {

@@ -149,6 +149,43 @@ async def test_record_ai_usage_skips_when_required_context_is_missing(monkeypatc
 
 
 @pytest.mark.asyncio
+async def test_record_ai_usage_supports_admin_actor(monkeypatch, usage_settings):
+    monkeypatch.setattr("core.ai_usage.usage_log_client.get_settings", lambda: usage_settings)
+    monkeypatch.setattr("core.ai_usage.usage_log_client.httpx.AsyncClient", _AsyncClient)
+
+    recorded = await record_ai_usage(
+        member_id=None,
+        admin_id=44,
+        model_name="gpt-4o-mini",
+        feature_type="ADMIN_CS",
+        input_tokens=300,
+        output_tokens=80,
+    )
+
+    assert recorded is True
+    assert _AsyncClient.instances[0].requests[0]["json"]["adminId"] == 44
+    assert "memberId" not in _AsyncClient.instances[0].requests[0]["json"]
+
+
+@pytest.mark.asyncio
+async def test_record_ai_usage_skips_when_both_actor_identifiers_are_provided(monkeypatch, usage_settings):
+    monkeypatch.setattr("core.ai_usage.usage_log_client.get_settings", lambda: usage_settings)
+    monkeypatch.setattr("core.ai_usage.usage_log_client.httpx.AsyncClient", _AsyncClient)
+
+    recorded = await record_ai_usage(
+        member_id="55555555-5555-5555-5555-555555555555",
+        admin_id=44,
+        model_name="gpt-4o-mini",
+        feature_type="ADMIN_CS",
+        input_tokens=300,
+        output_tokens=80,
+    )
+
+    assert recorded is False
+    assert _AsyncClient.instances == []
+
+
+@pytest.mark.asyncio
 async def test_record_ai_usage_returns_false_when_post_fails(monkeypatch, usage_settings):
     monkeypatch.setattr("core.ai_usage.usage_log_client.get_settings", lambda: usage_settings)
     monkeypatch.setattr("core.ai_usage.usage_log_client.httpx.AsyncClient", _AsyncClient)

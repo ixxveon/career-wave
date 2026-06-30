@@ -1,6 +1,6 @@
 from contextlib import nullcontext
 from time import sleep
-from urllib.parse import urljoin
+from urllib.parse import parse_qs, urljoin, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -12,6 +12,13 @@ from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter
 class SaraminScraper(ScraperAdapter):
     _BASE_URL = "https://www.saramin.co.kr"
     _LIST_API_URL = f"{_BASE_URL}/zf_user/search/get-recruit-list"
+    _DETAIL_AJAX_PATH = "/zf_user/jobs/relay/view-ajax"
+    _SHELL_CONTENT_MARKERS = (
+        "로그인 회원가입 메뉴",
+        "홈 채용정보",
+        "포지션 제안",
+        "TOP",
+    )
     _DEFAULT_HEADERS = {
         "User-Agent": "CareerWaveScraper/1.0 (+https://github.com/ixxveon/career-wave)",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -154,6 +161,12 @@ class SaraminScraper(ScraperAdapter):
         )
 
     def _fetch_description(self, client: httpx.Client, original_url: str) -> str | None:
+        rec_idx = self._extract_rec_idx(original_url)
+        if rec_idx is not None:
+            ajax_description = self._fetch_ajax_description(client, rec_idx)
+            if ajax_description:
+                return ajax_description
+
         try:
             response = client.get(original_url)
             response.raise_for_status()
@@ -165,13 +178,54 @@ class SaraminScraper(ScraperAdapter):
             ".user_content",
             ".cont_recruit",
             ".wrap_jv_cont",
-            "#content",
+            ".jv_cont",
         ):
             element = soup.select_one(selector)
             text = self._clean_text(element.get_text(" ")) if element else None
-            if text:
+            if self._is_valid_description(text):
                 return text
-        return self._clean_text(soup.get_text(" "))
+        return None
+
+    def _fetch_ajax_description(self, client: httpx.Client, rec_idx: str) -> str | None:
+        try:
+            response = client.get(
+                urljoin(self._BASE_URL, self._DETAIL_AJAX_PATH),
+                params={"rec_idx": rec_idx},
+            )
+            response.raise_for_status()
+        except httpx.HTTPError:
+            return None
+
+        soup = BeautifulSoup(response.text, "lxml")
+        for selector in (
+            ".wrap_jv_cont",
+            ".jv_cont",
+            ".user_content",
+            ".cont_recruit",
+            "#jvContainer",
+        ):
+            element = soup.select_one(selector)
+            text = self._clean_text(element.get_text(" ")) if element else None
+            if self._is_valid_description(text):
+                return text
+        return None
+
+    @staticmethod
+    def _extract_rec_idx(original_url: str) -> str | None:
+        rec_idx_values = parse_qs(urlparse(original_url).query).get("rec_idx")
+        if not rec_idx_values:
+            return None
+        rec_idx = rec_idx_values[0].strip()
+        return rec_idx or None
+
+    @classmethod
+    def _is_valid_description(cls, value: str | None) -> bool:
+        if value is None:
+            return False
+        shell_marker_count = sum(marker in value for marker in cls._SHELL_CONTENT_MARKERS)
+        if shell_marker_count >= 2:
+            return False
+        return True
 
     @staticmethod
     def _first_text(item: Tag, *selectors: str) -> str | None:

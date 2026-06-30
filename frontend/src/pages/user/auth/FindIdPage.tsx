@@ -99,12 +99,9 @@ function FindIdPage() {
                 error={fieldErrors.code}
                 verification={activeUserVerification}
                 expiresIn={userExpiresIn}
-                resendIn={userResendIn}
                 confirmPending={confirmVerificationPending}
-                sendPending={sendVerificationPending}
                 onCodeChange={(value) => updateUser('code', value)}
                 onConfirm={handleConfirmUserCode}
-                onResend={handleSendUserCode}
               />
             )}
 
@@ -139,12 +136,9 @@ function FindIdPage() {
                   error={fieldErrors.code}
                   verification={companyVerification}
                   expiresIn={companyExpiresIn}
-                  resendIn={companyResendIn}
                   confirmPending={confirmVerificationPending}
-                  sendPending={sendVerificationPending}
                   onCodeChange={(value) => updateCompany('code', value)}
                   onConfirm={handleConfirmCompanyCode}
-                  onResend={handleSendCompanyCode}
                 />
               </>
             )}

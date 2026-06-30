@@ -35,8 +35,6 @@ aws:
 websocket:
   allowed-origins: "*"
 
-interview:
-  internal-secret: ${WEBHOOK_SECRET}
 
 # 로컬 로그 설정 — reactor.netty/io.netty DEBUG는 URI(serviceKey), request body(인증번호, 전화번호) 전문 출력
 # NFR-002 위반 방지를 위해 WARN 으로 제한
@@ -45,6 +43,9 @@ logging:
     reactor.netty: WARN
     io.netty: WARN
     org.springframework.web.reactive: WARN
+
+privacy:
+  hash-secret: local-dev-privacy-hmac-secret-not-for-prod
 
 toss:
   secret-key: ${TOSS_SECRET_KEY}

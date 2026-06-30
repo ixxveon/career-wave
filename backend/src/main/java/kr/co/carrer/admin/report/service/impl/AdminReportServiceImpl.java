@@ -54,6 +54,7 @@ public class AdminReportServiceImpl implements AdminReportService {
 
     private static final Duration AI_TIMEOUT = Duration.ofSeconds(10);
     private static final String REPORT_ANALYSIS_PATH = "/api/v1/ai/report-analysis";
+    private static final String MEMBER_ANALYSIS_PATH = "/api/v1/ai/member-analysis";
 
     private WebClient webClient;
 
@@ -95,13 +96,13 @@ public class AdminReportServiceImpl implements AdminReportService {
      * 3) 결과를 독립된 쓰기 트랜잭션으로 저장 (self.persistAiSuggestion)
      */
     @Override
-    public ReportDetailDTO.ResponseDetail getReportDetail(Long reportId) {
+    public ReportDetailDTO.ResponseDetail getReportDetail(Long reportId, Long adminId) {
         ReportDetailDTO.ResponseDetail detail = self.readReportDetail(reportId);
 
         String aiSuggestion = detail.aiSuggestion();
         if (aiSuggestion == null) {
             aiSuggestion = callFastApiForAiSuggestion(
-                reportId, detail.targetType(), detail.reason(),
+                reportId, adminId, detail.targetType(), detail.reason(),
                 detail.contentTitle(), detail.contentBody()
             );
             if (aiSuggestion != null) {
@@ -150,7 +151,7 @@ public class AdminReportServiceImpl implements AdminReportService {
             .ifPresent(report -> report.updateAiSuggestion(aiSuggestion));
     }
 
-    private String callFastApiForAiSuggestion(Long reportId, TargetType targetType, ReportReason reason,
+    private String callFastApiForAiSuggestion(Long reportId, Long adminId, TargetType targetType, ReportReason reason,
                                                String contentTitle, String contentBody) {
         try {
             Map<String, Object> body = new HashMap<>();
@@ -158,6 +159,7 @@ public class AdminReportServiceImpl implements AdminReportService {
             body.put("reason", reason.name());
             body.put("contentTitle", contentTitle);
             body.put("contentBody", contentBody);
+            body.put("adminId", adminId);
 
             Map<?, ?> response = webClient.post()
                 .uri(REPORT_ANALYSIS_PATH)
@@ -172,6 +174,64 @@ public class AdminReportServiceImpl implements AdminReportService {
             return objectMapper.writeValueAsString(response);
         } catch (Exception e) {
             log.warn("[ReportAI] FastAPI 호출 실패 — reportId={}, 원인={}", reportId, e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public ReportDetailDTO.ResponseMemberAiReview getMemberAiReview(Long reportId, Long adminId) {
+        Report report = reportRepository.findById(reportId)
+            .orElseThrow(() -> new CustomException(AdminReportErrorCode.REPORT_NOT_FOUND));
+
+        ReportQueryRepository.MemberSummary memberSummary = reportQueryRepository.findMemberSummaryByReportId(reportId)
+            .orElseThrow(() -> new CustomException(AdminReportErrorCode.REPORT_NOT_FOUND));
+
+        int warningCount = memberSummary.warningCount();
+        long reportCount = memberSummary.reportCount();
+        String memberStatus = memberSummary.memberStatus();
+
+        Map<?, ?> aiResult = callFastApiForMemberAnalysis(
+            reportId, adminId, warningCount, reportCount, memberStatus, report.getReason()
+        );
+
+        if (aiResult == null) {
+            String riskLevel = reportCount >= 5 ? "높음" : reportCount >= 3 ? "중간" : "낮음";
+            String recommendation = warningCount >= 3 ? "BLACKLIST"
+                : warningCount >= 2 ? "SUSPEND"
+                : reportCount >= 3 ? "WARNING" : "NONE";
+            String summary = String.format("AI 분석 서버에 연결할 수 없어 규칙 기반으로 산출했습니다. 경고 %d회, 신고 %d건.", warningCount, reportCount);
+            return new ReportDetailDTO.ResponseMemberAiReview(reportCount, warningCount, riskLevel, recommendation, summary);
+        }
+
+        return new ReportDetailDTO.ResponseMemberAiReview(
+            reportCount,
+            warningCount,
+            (String) aiResult.get("riskLevel"),
+            (String) aiResult.get("recommendation"),
+            (String) aiResult.get("summary")
+        );
+    }
+
+    private Map<?, ?> callFastApiForMemberAnalysis(Long reportId, Long adminId, int warningCount,
+                                                    long reportCount, String memberStatus, ReportReason reason) {
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("warningCount", warningCount);
+            body.put("reportCount", reportCount);
+            body.put("memberStatus", memberStatus);
+            body.put("reason", reason.name());
+            body.put("adminId", adminId);
+
+            return webClient.post()
+                .uri(MEMBER_ANALYSIS_PATH)
+                .header("X-Internal-Secret", webhookSecret)
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .timeout(AI_TIMEOUT)
+                .block();
+        } catch (Exception e) {
+            log.warn("[ReportAI] Member analysis FastAPI 호출 실패 — reportId={}, 원인={}", reportId, e.getMessage());
             return null;
         }
     }

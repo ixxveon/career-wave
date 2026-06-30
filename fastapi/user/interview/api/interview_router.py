@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from core.config import get_settings
+from core.rate_limit import voice_chunk_limiter
 from core.security import verify_internal_secret
 from user.interview.pipeline import stt_pipeline
 from user.interview.pipeline import llm_pipeline
@@ -16,6 +17,8 @@ from user.interview.websocket.interview_ws_handler import _sessions, _pending_ll
 log = logging.getLogger(__name__)
 
 _bg_tasks: set[asyncio.Task] = set()
+
+_ALLOWED_AUDIO_CONTENT_TYPES = {"audio/webm", "audio/mp4", "audio/ogg"}
 
 
 def _on_task_done(task: asyncio.Task) -> None:
@@ -70,7 +73,24 @@ async def trigger_voice_chunk(
     Spring → FastAPI 음성 청크 전달 트리거.
     STT 파이프라인을 백그라운드로 실행하고 202 응답을 즉시 반환한다.
     """
+    settings = get_settings()
+
+    if questionOrder < 1:
+        raise HTTPException(status_code=400, detail="questionOrder는 1 이상이어야 합니다.")
+    if chunkIndex < 0:
+        raise HTTPException(status_code=400, detail="chunkIndex는 0 이상이어야 합니다.")
+
+    content_type = (audioChunk.content_type or "").split(";")[0].strip().lower()
+    if content_type not in _ALLOWED_AUDIO_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail=f"허용되지 않는 audio content-type: {content_type}")
+
     audio_bytes = await audioChunk.read()
+    if len(audio_bytes) > settings.audio_chunk_max_bytes:
+        raise HTTPException(status_code=413, detail="음성 청크 크기가 허용 한도를 초과했습니다.")
+
+    if not voice_chunk_limiter.is_allowed(session_id):
+        log.warning("rate limit exceeded: sessionId=%s", session_id)
+        raise HTTPException(status_code=429, detail="요청이 너무 많습니다. 잠시 후 다시 시도해주세요.")
 
     task = asyncio.create_task(
         stt_pipeline.transcribe_chunk(
@@ -246,6 +266,9 @@ async def trigger_report(
     )
     _bg_tasks.add(task)
     task.add_done_callback(_on_task_done)
+
+    # 세션 종료 시점에 Rate Limit 버킷 정리
+    voice_chunk_limiter.clear(session_id)
 
     log.info(
         "report pipeline triggered: sessionId=%s, sessionType=%s",

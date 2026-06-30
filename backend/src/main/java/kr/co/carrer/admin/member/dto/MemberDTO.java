@@ -7,6 +7,8 @@ import kr.co.carrer.admin.member.type.SanctionType;
 import kr.co.carrer.admin.member.type.SubscriptionStatus;
 import kr.co.carrer.admin.member.type.SuspendDuration;
 
+import kr.co.carrer.admin.member.util.PersonalInfoMasker;
+
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -26,7 +28,17 @@ public class MemberDTO {
         @Schema(description = "신고 횟수") long reportCount,
         @Schema(description = "가입 일시") ZonedDateTime joinedAt,
         @Schema(description = "마지막 로그인 일시") ZonedDateTime lastLoginAt
-    ) {}
+    ) {
+        public ResponseList masked() {
+            return new ResponseList(
+                memberId,
+                PersonalInfoMasker.maskLoginId(loginId),
+                PersonalInfoMasker.maskName(name),
+                PersonalInfoMasker.maskEmail(email),
+                role, plan, memberStatus, warningCount, reportCount, joinedAt, lastLoginAt
+            );
+        }
+    }
 
     @Schema(description = "개인 회원 상세 응답")
     public record ResponseDetail(
@@ -59,6 +71,17 @@ public class MemberDTO {
         @Schema(description = "오늘 신규 가입 수") long todayJoinCount,
         @Schema(description = "프리미엄 구독 회원 수") long premiumCount,
         @Schema(description = "정지 회원 수") long suspendedCount
+    ) {}
+
+    @Schema(description = "정지 해제 요청")
+    public record RequestUnsuspend(
+        @Schema(description = "해제 사유 (최소 10자)", requiredMode = Schema.RequiredMode.REQUIRED) String reason
+    ) {}
+
+    @Schema(description = "정지 해제 응답")
+    public record ResponseUnsuspend(
+        @Schema(description = "회원 UUID") UUID memberId,
+        @Schema(description = "변경된 계정 상태") MemberStatus memberStatus
     ) {}
 
     @Schema(description = "회원 제재 응답")

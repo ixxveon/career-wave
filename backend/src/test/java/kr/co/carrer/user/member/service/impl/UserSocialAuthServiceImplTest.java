@@ -1,6 +1,7 @@
 package kr.co.carrer.user.member.service.impl;
 
 import jakarta.servlet.http.HttpServletResponse;
+import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.store.RefreshTokenStore;
@@ -11,6 +12,7 @@ import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.*;
 import kr.co.carrer.user.member.service.SocialSignupTokenStore;
+import kr.co.carrer.user.member.service.TermsAgreementEvidenceRecorder;
 import kr.co.carrer.user.member.type.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -63,6 +65,7 @@ class UserSocialAuthServiceImplTest {
     @Mock WebClient.Builder webClientBuilder;
     @Mock HttpServletResponse httpResponse;
     @Mock EntitlementInitService entitlementInitService;
+    @Mock TermsAgreementEvidenceRecorder termsAgreementEvidenceRecorder;
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private UserSocialAuthServiceImpl service;
@@ -74,7 +77,7 @@ class UserSocialAuthServiceImplTest {
                 termsRepository, verificationRepository, encoder,
                 jwtTokenProvider, jwtProperties, refreshTokenStore, tokenBlacklistStore,
                 socialSignupTokenStore, redisTemplate, webClientBuilder,
-                entitlementInitService);
+                entitlementInitService, new CookieProperties(), termsAgreementEvidenceRecorder);
         injectValue(service, "kakaoClientId", "kakao-id");
         injectValue(service, "kakaoClientSecret", "kakao-secret");
         injectValue(service, "kakaoRedirectUri", "http://localhost/kakao");
@@ -398,6 +401,7 @@ class UserSocialAuthServiceImplTest {
         ArgumentCaptor<UUID> captor = ArgumentCaptor.forClass(UUID.class);
         verify(entitlementInitService, times(1)).initFreeEntitlements(captor.capture());
         assertThat(captor.getValue()).isEqualTo(memberId);
+        verify(termsAgreementEvidenceRecorder).recordPersonalSignup(memberId, true, true, false);
         assertThat(response).isNotNull();
     }
 

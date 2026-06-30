@@ -10,4 +10,6 @@ import java.util.UUID;
 public interface RefundRepository extends JpaRepository<Refund, Long> {
 
     Optional<Refund> findByPaymentIdAndRefundStatus(UUID paymentId, RefundStatus refundStatus);
+
+    boolean existsByPaymentIdAndRefundStatus(UUID paymentId, RefundStatus refundStatus);
 }

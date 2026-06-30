@@ -43,7 +43,6 @@ const initialCompanyForm = {
   jibunAddress: '',
   addressDetail: '',
   isAgency: false,
-  certificateNumber: '',
   managerId: '',
   managerPassword: '',
   managerPasswordConfirm: '',
@@ -139,7 +138,6 @@ export function useCompanyRegisterForm() {
     addressDetail: form.addressDetail,
     isAgency: form.isAgency,
     companyType: form.companyType,
-    certificateNumber: form.certificateNumber.trim(),
     managerPhoneCode: form.managerPhoneCode,
     managerEmailCode: form.managerEmailCode,
     employmentCertificate,
@@ -452,6 +450,33 @@ export function useCompanyRegisterForm() {
     }
   };
 
+  const FIELD_LABEL_MAP: Record<string, string> = {
+    companyType: '기업형태',
+    businessNumber: '사업자등록번호',
+    companyName: '회사명',
+    ceoName: '대표자명',
+    roadAddress: '회사주소',
+    loginId: '아이디',
+    managerName: '담당자명',
+    password: '비밀번호',
+    passwordConfirm: '비밀번호 확인',
+    managerPhone: '담당자 전화번호',
+    managerPhoneCode: '휴대폰 인증',
+    managerEmail: '담당자 이메일',
+    managerEmailCode: '이메일 인증',
+    employmentCertificate: '재직증명서 업로드',
+    terms: '약관 동의',
+  };
+
+  const buildSubmitErrorMessage = (errors: Record<string, string>): string => {
+    const labels = Object.keys(errors)
+      .map((key) => FIELD_LABEL_MAP[key])
+      .filter(Boolean);
+    if (labels.length === 0) return '입력값과 인증 완료 여부를 확인해주세요.';
+    const display = labels.slice(0, 4).join(', ');
+    return `미완료 항목: ${display}${labels.length > 4 ? ' 외' : ''}`;
+  };
+
   const handleSubmit = async () => {
     let nextSnapshot = companySnapshot;
     let errors = validateCompanyRegisterForm(nextSnapshot, loginIdState);
@@ -460,7 +485,7 @@ export function useCompanyRegisterForm() {
     setSuccessMessage('');
 
     if (Object.keys(errors).length > 0) {
-      setFormMessage('입력값과 인증 완료 여부를 확인해주세요.');
+      setFormMessage(buildSubmitErrorMessage(errors));
       return;
     }
 
@@ -488,7 +513,7 @@ export function useCompanyRegisterForm() {
     setFieldErrors(errors);
 
     if (Object.keys(errors).length > 0) {
-      setFormMessage('입력값과 인증 완료 여부를 확인해주세요.');
+      setFormMessage(buildSubmitErrorMessage(errors));
       return;
     }
 
@@ -497,7 +522,28 @@ export function useCompanyRegisterForm() {
       setSuccessMessage('기업회원 가입 신청이 접수되었습니다.');
       setIsSubmitGuideOpen(true);
     } catch (error) {
-      setFormMessage(getRecoveryErrorMessage(error, '기업회원 가입 신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
+      const serverCode =
+        error && typeof error === 'object' && 'serverCode' in error
+          ? (error as { serverCode?: string }).serverCode
+          : undefined;
+
+      if (serverCode === 'VERIFICATION_TOKEN_INVALID') {
+        setVerification((current) => ({ ...current, phoneToken: '', emailToken: '' }));
+        setFormMessage('휴대폰 또는 이메일 인증이 만료되었습니다. 인증을 다시 진행해주세요.');
+      } else {
+        const backendData =
+          error && typeof error === 'object' && 'data' in error && error.data &&
+          typeof error.data === 'object' && !Array.isArray(error.data)
+            ? (error.data as Record<string, string>)
+            : null;
+        if (backendData && Object.keys(backendData).length > 0) {
+          const labels = Object.keys(backendData).map((k) => FIELD_LABEL_MAP[k] || k).filter(Boolean);
+          const display = labels.slice(0, 4).join(', ');
+          setFormMessage(`입력값 검증 실패: ${display || Object.values(backendData).slice(0, 2).join(' / ')}`);
+        } else {
+          setFormMessage(getRecoveryErrorMessage(error, '기업회원 가입 신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
+        }
+      }
     }
   };
 

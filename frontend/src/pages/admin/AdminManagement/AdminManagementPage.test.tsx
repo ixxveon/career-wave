@@ -26,6 +26,9 @@ vi.mock('../../../api/admin/adminManagementApi', () => ({
     CS: 'CS',
     BACKEND: 'BACKEND',
   },
+  ADMIN_AUDIT_LOG_TYPE: {
+    ADMIN_MANAGEMENT: 'ADMIN_MANAGEMENT',
+  },
   ACL_RISK_LEVEL: {
     LOW: 'LOW',
     MEDIUM: 'MEDIUM',
@@ -288,6 +291,21 @@ describe('AdminManagementPage master-only controls', () => {
     expect(await findByText('Master Admin')).toBeTruthy();
     expect(await findByText('표시할 보안 로그가 없습니다.')).toBeTruthy();
     expect(queryByText('super_admin')).toBeNull();
+  });
+
+  it('requests only ADMIN_MANAGEMENT audit logs for the security console', async () => {
+    adminSession.setRole(ADMIN_ROLE.MASTER);
+
+    const { findByText } = renderPage();
+
+    expect(await findByText('Master Admin')).toBeTruthy();
+    await waitFor(() => {
+      expect(adminManagementApiMock.getAdminAuditLogs).toHaveBeenCalledWith({
+        logType: 'ADMIN_MANAGEMENT',
+        page: 1,
+        size: 5,
+      });
+    });
   });
 
 });

@@ -14,6 +14,7 @@ import kr.co.carrer.admin.member.type.MemberStatus;
 import kr.co.carrer.admin.member.type.SanctionType;
 import kr.co.carrer.admin.member.type.SuspendDuration;
 import kr.co.carrer.admin.member.exception.AdminMemberErrorCode;
+import kr.co.carrer.admin.audit.repository.AuditLogRepository;
 import kr.co.carrer.global.exception.CustomException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,6 +45,49 @@ class AdminMemberServiceImplTest {
     @Mock private MemberQueryRepository memberQueryRepository;
     @Mock private HrManagerRepository hrManagerRepository;
     @Mock private SuspendHistoryRepository suspendHistoryRepository;
+    @Mock private AuditLogRepository auditLogRepository;
+
+    @Nested
+    @DisplayName("회원 목록 마스킹 - getMembers()")
+    class GetMembers {
+
+        private MemberDTO.ResponseList rawMember() {
+            return new MemberDTO.ResponseList(
+                UUID.randomUUID(), "username1", "홍길동", "hong@gmail.com",
+                null, null, MemberStatus.ACTIVE, 0, 0L, null, null
+            );
+        }
+
+        @Test
+        @DisplayName("MASTER 역할 — 이름·이메일·로그인ID 원문 그대로 반환")
+        void master_returns_plain() {
+            given(memberQueryRepository.findMembers(any(), any(), any(), any(), any(), any(), any(int.class), any(int.class)))
+                .willReturn(List.of(rawMember()));
+            given(memberQueryRepository.countMembers(any(), any(), any(), any(), any(), any())).willReturn(1L);
+
+            var result = adminMemberService.getMembers(null, null, null, null, null, null, 1, 20, "MASTER");
+
+            MemberDTO.ResponseList item = result.items().get(0);
+            assertThat(item.name()).isEqualTo("홍길동");
+            assertThat(item.email()).isEqualTo("hong@gmail.com");
+            assertThat(item.loginId()).isEqualTo("username1");
+        }
+
+        @Test
+        @DisplayName("CS 역할 — 이름·이메일·로그인ID 마스킹 적용")
+        void cs_returns_masked() {
+            given(memberQueryRepository.findMembers(any(), any(), any(), any(), any(), any(), any(int.class), any(int.class)))
+                .willReturn(List.of(rawMember()));
+            given(memberQueryRepository.countMembers(any(), any(), any(), any(), any(), any())).willReturn(1L);
+
+            var result = adminMemberService.getMembers(null, null, null, null, null, null, 1, 20, "CS");
+
+            MemberDTO.ResponseList item = result.items().get(0);
+            assertThat(item.name()).isEqualTo("홍*동");
+            assertThat(item.email()).isEqualTo("hon***@gmail.com");
+            assertThat(item.loginId()).isEqualTo("use***");
+        }
+    }
 
     @Nested
     @DisplayName("회원 제재 처리 - sanctionMember()")
@@ -55,12 +100,13 @@ class AdminMemberServiceImplTest {
             Member member = createActiveMember(memberId);
             given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
             given(suspendHistoryRepository.save(any())).willAnswer(i -> i.getArgument(0));
+            given(auditLogRepository.save(any())).willAnswer(i -> i.getArgument(0));
 
             MemberDTO.RequestSanction request = new MemberDTO.RequestSanction(
                 SanctionType.WARNING, null, "커뮤니티 규정 반복 위반으로 경고 처리합니다."
             );
 
-            MemberDTO.ResponseSanction result = adminMemberService.sanctionMember(memberId, request, 1L);
+            MemberDTO.ResponseSanction result = adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1");
 
             assertThat(result.sanctionType()).isEqualTo(SanctionType.WARNING);
             assertThat(member.getWarningCount()).isEqualTo(1);
@@ -73,12 +119,13 @@ class AdminMemberServiceImplTest {
             Member member = createActiveMember(memberId);
             given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
             given(suspendHistoryRepository.save(any())).willAnswer(i -> i.getArgument(0));
+            given(auditLogRepository.save(any())).willAnswer(i -> i.getArgument(0));
 
             MemberDTO.RequestSanction request = new MemberDTO.RequestSanction(
                 SanctionType.SUSPEND, SuspendDuration.THREE_DAYS, "스팸 게시글 반복 작성으로 3일 정지합니다."
             );
 
-            MemberDTO.ResponseSanction result = adminMemberService.sanctionMember(memberId, request, 1L);
+            MemberDTO.ResponseSanction result = adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1");
 
             assertThat(result.memberStatus()).isEqualTo(MemberStatus.SUSPENDED);
             assertThat(result.endDate()).isEqualTo(LocalDate.now().plusDays(3));
@@ -91,12 +138,13 @@ class AdminMemberServiceImplTest {
             Member member = createActiveMember(memberId);
             given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
             given(suspendHistoryRepository.save(any())).willAnswer(i -> i.getArgument(0));
+            given(auditLogRepository.save(any())).willAnswer(i -> i.getArgument(0));
 
             MemberDTO.RequestSanction request = new MemberDTO.RequestSanction(
                 SanctionType.BLACKLIST, null, "사기 행위 확인으로 영구 정지 처리합니다."
             );
 
-            MemberDTO.ResponseSanction result = adminMemberService.sanctionMember(memberId, request, 1L);
+            MemberDTO.ResponseSanction result = adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1");
 
             assertThat(result.memberStatus()).isEqualTo(MemberStatus.BANNED);
         }
@@ -112,7 +160,7 @@ class AdminMemberServiceImplTest {
                 SanctionType.SUSPEND, SuspendDuration.PERMANENT, "테스트 사유입니다. 최소 열 글자."
             );
 
-            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
+            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.INVALID_SANCTION_DURATION);
@@ -129,7 +177,7 @@ class AdminMemberServiceImplTest {
                 SanctionType.SUSPEND, null, "테스트 사유입니다. 최소 열 글자."
             );
 
-            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
+            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.INVALID_SANCTION_DURATION);
@@ -146,7 +194,7 @@ class AdminMemberServiceImplTest {
                 SanctionType.WARNING, null, "테스트 사유입니다. 최소 열 글자."
             );
 
-            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
+            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.ALREADY_BANNED);
@@ -163,7 +211,7 @@ class AdminMemberServiceImplTest {
                 SanctionType.WARNING, null, null
             );
 
-            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
+            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.REASON_REQUIRED);
@@ -180,7 +228,7 @@ class AdminMemberServiceImplTest {
                 SanctionType.WARNING, null, "짧음"
             );
 
-            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
+            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.REASON_TOO_SHORT);
@@ -197,7 +245,7 @@ class AdminMemberServiceImplTest {
                 SanctionType.SUSPEND, SuspendDuration.THREE_DAYS, "테스트 사유입니다. 최소 열 글자."
             );
 
-            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
+            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.ALREADY_SUSPENDED);
@@ -214,7 +262,7 @@ class AdminMemberServiceImplTest {
                 SanctionType.WARNING, null, "테스트 사유입니다. 최소 열 글자."
             );
 
-            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
+            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.MAX_WARNING_EXCEEDED);
@@ -230,7 +278,7 @@ class AdminMemberServiceImplTest {
                 SanctionType.WARNING, null, "테스트 사유입니다. 최소 열 글자."
             );
 
-            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L))
+            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.MEMBER_NOT_FOUND);

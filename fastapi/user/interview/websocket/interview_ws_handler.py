@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -9,7 +10,18 @@ from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from jose import JWTError, jwt
 
+import httpx
+
 from core.config import get_settings
+
+_spring_client: httpx.AsyncClient | None = None
+
+
+def _get_spring_client() -> httpx.AsyncClient:
+    global _spring_client
+    if _spring_client is None:
+        _spring_client = httpx.AsyncClient(timeout=3.0)
+    return _spring_client
 
 _base_log = logging.getLogger(__name__)
 
@@ -37,11 +49,15 @@ def _make_log(session_id: str) -> _SessionAdapter:
     return _SessionAdapter(_base_log, {"session_id": session_id})
 
 
+_EXPIRY_WARNING_SECONDS = 60  # 만료 N초 전 사전 경고
+
+
 @dataclass
 class _SessionContext:
     ws: WebSocket
     member_id: str = ""
     seq: int = 0
+    token_exp: float = 0.0  # JWT exp (Unix timestamp) — 만료 감시용
     # 재연결 시 미전달 메시지 재전송용 버퍼 (Scale-out 시 Redis 전환 예정)
     msg_buffer: list[dict[str, Any]] = field(default_factory=list)
     # Phase 4 — LLM 파이프라인 컨텍스트
@@ -72,6 +88,28 @@ async def _expire_session(session_id: str, ctx: _SessionContext) -> None:
 def _verify_jwt(token: str) -> dict[str, Any]:
     settings = get_settings()
     return jwt.decode(token, settings.jwt_secret, algorithms=["HS256", "HS384"], audience="user")
+
+
+async def _verify_session_ownership(session_id: str, member_id: str) -> bool | None:
+    """Spring 내부 API로 session_id가 member_id 소유인지 검증한다.
+
+    Returns:
+        True  — 소유권 확인됨
+        False — 소유권 불일치 (명시적 거부)
+        None  — Spring 통신 장애 (네트워크 단절·재배포 등)
+    """
+    settings = get_settings()
+    url = (
+        f"{settings.spring_base_url.rstrip('/')}"
+        f"/internal/api/v1/interview/callback/{session_id}/verify"
+        f"?memberId={member_id}"
+    )
+    try:
+        response = await _get_spring_client().get(url, headers={"X-Internal-Secret": settings.webhook_secret})
+        return response.status_code == 200
+    except Exception as exc:
+        _base_log.warning("[Session: %s] ownership verify request failed: %s", session_id, exc)
+        return None
 
 
 async def _close_existing(session_id: str, slog: _SessionAdapter) -> None:
@@ -118,11 +156,45 @@ async def interview_ws(
             raise JWTError("token missing")
         claims = _verify_jwt(token)
         member_id: str = claims.get("sub", "")
-    except JWTError:
+        raw_exp = claims.get("exp")
+        if raw_exp is None:
+            raise JWTError("exp claim missing")
+        token_exp: float = float(raw_exp)
+    except (JWTError, TypeError, ValueError):
         await websocket.accept()
         await websocket.close(code=1008)
         slog.warning("WS connection rejected: invalid or missing JWT")
         return
+
+    # ── 세션 소유권 검증 ────────────────────────────────────────────────────
+    # 재연결 포함 모든 경로에서 Spring 내부 API로 소유권 및 세션 진행 상태 검증
+    is_reconnect = lastReceivedSequenceNumber is not None
+    spring_result = await _verify_session_ownership(session_id, member_id)
+
+    if spring_result is False:
+        # Spring이 명시적으로 소유권 불일치를 반환한 경우 → 즉시 거부
+        await websocket.accept()
+        await websocket.close(code=1008)
+        slog.warning("WS connection rejected: session ownership mismatch memberId=%s", member_id)
+        return
+    elif spring_result is None:
+        # Spring 통신 장애(재배포·네트워크 단절 등)
+        # 재연결 경로: 메모리 ctx가 동일 member_id이면 fallback 허용
+        # 신규 연결: 검증 불가이므로 차단
+        ctx_in_memory = _sessions.get(session_id)
+        if is_reconnect and ctx_in_memory is not None and ctx_in_memory.member_id == member_id:
+            slog.warning(
+                "Spring verify unavailable — allowing reconnect via memory fallback: memberId=%s",
+                member_id,
+            )
+        else:
+            await websocket.accept()
+            await websocket.close(code=1008)
+            slog.warning(
+                "WS connection rejected: Spring verify unavailable and no memory fallback: memberId=%s",
+                member_id,
+            )
+            return
 
     await websocket.accept()
 
@@ -135,6 +207,7 @@ async def interview_ws(
         ws=websocket,
         member_id=member_id,
         seq=prev.seq if prev else 0,
+        token_exp=token_exp,
         msg_buffer=prev.msg_buffer if prev else [],
     )
     _sessions[session_id] = ctx
@@ -169,6 +242,44 @@ async def interview_ws(
                 slog.warning("replay send failed: seq=%d", msg["sequenceNumber"])
         slog.info("replayed %d messages after reconnect", len(pending))
 
+    # ── JWT 만료 감시 태스크 ────────────────────────────────────────────────
+    async def _watch_token_expiry() -> None:
+        now = time.time()
+        remaining = ctx.token_exp - now
+        if remaining <= 0:
+            await send_error(session_id, "JWT가 이미 만료되었습니다. 재연결이 필요합니다.", InterviewErrorCode.SESSION_EXPIRED)
+            slog.warning("token already expired on connect — closing WS: exp=%.0f", ctx.token_exp)
+            try:
+                await ctx.ws.close(code=1008)
+            except Exception:
+                pass
+            return
+
+        # 만료 N초 전 사전 경고
+        warning_delay = remaining - _EXPIRY_WARNING_SECONDS
+        if warning_delay > 0:
+            await asyncio.sleep(warning_delay)
+            if _sessions.get(session_id) is ctx:
+                await send_error(
+                    session_id,
+                    f"JWT가 {_EXPIRY_WARNING_SECONDS}초 후 만료됩니다. 토큰을 갱신해주세요.",
+                    InterviewErrorCode.SESSION_EXPIRED,
+                )
+                slog.info("token expiry warning sent: exp=%.0f", ctx.token_exp)
+                await asyncio.sleep(_EXPIRY_WARNING_SECONDS)
+        else:
+            await asyncio.sleep(remaining)
+
+        if _sessions.get(session_id) is ctx:
+            await send_error(session_id, "JWT가 만료되었습니다. 재연결이 필요합니다.", InterviewErrorCode.SESSION_EXPIRED)
+            slog.warning("token expired — closing WS: exp=%.0f", ctx.token_exp)
+            try:
+                await ctx.ws.close(code=1008)
+            except Exception:
+                pass
+
+    expiry_task = asyncio.create_task(_watch_token_expiry())
+
     # ── 연결 유지 (서버 Push 전용 채널) ─────────────────────────────────────
     try:
         while True:
@@ -177,6 +288,7 @@ async def interview_ws(
     except WebSocketDisconnect:
         slog.info("WS disconnected")
     finally:
+        expiry_task.cancel()
         # 새 연결로 교체된 경우엔 타이머를 걸지 않음
         if _sessions.get(session_id) is ctx:
             # 소켓은 끊겼지만 seq·buffer는 재연결 윈도우 동안 보존

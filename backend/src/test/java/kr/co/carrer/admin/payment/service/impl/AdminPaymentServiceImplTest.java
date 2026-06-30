@@ -77,7 +77,7 @@ class AdminPaymentServiceImplTest {
             given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
                 .willReturn(Optional.of(refund));
 
-            RefundDTO.ResponseApprove result = adminPaymentService.approveRefund(paymentId, 1L);
+            RefundDTO.ResponseApprove result = adminPaymentService.approveRefund(paymentId, 1L, "MASTER");
 
             assertThat(result.paymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
             assertThat(result.refundStatus()).isEqualTo(RefundStatus.COMPLETED);
@@ -91,7 +91,7 @@ class AdminPaymentServiceImplTest {
             UUID paymentId = UUID.randomUUID();
             given(paymentRepository.findById(paymentId)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L))
+            assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "MASTER"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminPaymentErrorCode.PAYMENT_NOT_FOUND);
@@ -104,10 +104,21 @@ class AdminPaymentServiceImplTest {
             Payment payment = createPayment(paymentId, PaymentStatus.FAILED);
             given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
 
-            assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L))
+            assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "MASTER"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminPaymentErrorCode.PAYMENT_NOT_REFUNDABLE);
+        }
+
+        @Test
+        @DisplayName("CS 역할 → REFUND_APPROVAL_FORBIDDEN 예외")
+        void approveRefund_csRole_throwsForbidden() {
+            UUID paymentId = UUID.randomUUID();
+
+            assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "CS"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminPaymentErrorCode.REFUND_APPROVAL_FORBIDDEN);
         }
 
         @Test
@@ -119,7 +130,7 @@ class AdminPaymentServiceImplTest {
             given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
                 .willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L))
+            assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "MASTER"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminPaymentErrorCode.REFUND_NOT_PENDING);
@@ -143,7 +154,7 @@ class AdminPaymentServiceImplTest {
             given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
                 .willReturn(Optional.of(refund));
 
-            RefundDTO.ResponseReject result = adminPaymentService.rejectRefund(paymentId, "정책 위반", 1L);
+            RefundDTO.ResponseReject result = adminPaymentService.rejectRefund(paymentId, "정책 위반", 1L, "MASTER");
 
             assertThat(result.refundStatus()).isEqualTo(RefundStatus.REJECTED);
             verify(refundRepository).save(refund);
@@ -155,10 +166,21 @@ class AdminPaymentServiceImplTest {
             UUID paymentId = UUID.randomUUID();
             given(paymentRepository.findById(paymentId)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> adminPaymentService.rejectRefund(paymentId, "사유", 1L))
+            assertThatThrownBy(() -> adminPaymentService.rejectRefund(paymentId, "사유", 1L, "MASTER"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminPaymentErrorCode.PAYMENT_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("CS 역할 → REFUND_APPROVAL_FORBIDDEN 예외")
+        void rejectRefund_csRole_throwsForbidden() {
+            UUID paymentId = UUID.randomUUID();
+
+            assertThatThrownBy(() -> adminPaymentService.rejectRefund(paymentId, "사유", 1L, "CS"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminPaymentErrorCode.REFUND_APPROVAL_FORBIDDEN);
         }
 
         @Test
@@ -170,7 +192,7 @@ class AdminPaymentServiceImplTest {
             given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
                 .willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> adminPaymentService.rejectRefund(paymentId, "정책 위반", 1L))
+            assertThatThrownBy(() -> adminPaymentService.rejectRefund(paymentId, "정책 위반", 1L, "MASTER"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminPaymentErrorCode.REFUND_NOT_PENDING);

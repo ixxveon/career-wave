@@ -6,8 +6,17 @@ import kr.co.carrer.admin.payment.type.RefundStatus;
 
 public class RefundDTO {
 
+    public record RequestCreate(
+        @NotBlank String reason
+    ) {}
+
     public record RequestReject(
         @NotBlank String rejectReason
+    ) {}
+
+    public record ResponseCreate(
+        String paymentId,
+        RefundStatus refundStatus
     ) {}
 
     public record ResponseApprove(

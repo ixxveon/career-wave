@@ -34,11 +34,28 @@ class UsageLogService:
         self,
         request: UsageLogCreateRequest,
     ) -> AiModelRecord:
-        if not isinstance(request.member_id, UUID):
+        has_member_id = request.member_id is not None
+        has_admin_id = request.admin_id is not None
+
+        if has_member_id == has_admin_id:
+            raise AiMetricsException(
+                error_code=AiMetricsErrorCode.TOKEN_CALCULATION_FAILED,
+                message="Usage log request validation failed.",
+                detail={"field": "actorId"},
+            )
+
+        if has_member_id and not isinstance(request.member_id, UUID):
             raise AiMetricsException(
                 error_code=AiMetricsErrorCode.TOKEN_CALCULATION_FAILED,
                 message="Usage log request validation failed.",
                 detail={"field": "memberId"},
+            )
+
+        if has_admin_id and not isinstance(request.admin_id, int):
+            raise AiMetricsException(
+                error_code=AiMetricsErrorCode.TOKEN_CALCULATION_FAILED,
+                message="Usage log request validation failed.",
+                detail={"field": "adminId"},
             )
 
         if request.session_id is not None and not isinstance(request.session_id, UUID):

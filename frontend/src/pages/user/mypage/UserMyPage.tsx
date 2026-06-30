@@ -1,6 +1,14 @@
 import { useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { UserRound, Mail, Phone, ShieldCheck, Github } from "lucide-react";
+import {
+  UserRound,
+  Mail,
+  Phone,
+  ShieldCheck,
+  Github,
+  Pencil,
+} from "lucide-react";
+import { useSubscriptionStatus } from "@/hooks/user/subscription";
 import { updateDashboardProfile } from "@/api/user/dashboard";
 import {
   useDashboardGithub,
@@ -12,7 +20,7 @@ import type { UserProfile } from "@/types/user/dashboard";
 import "@/styles/user/mypage/MyPage.css";
 
 function maskEmail(email: string | null) {
-  if (!email) return '이메일 없음';
+  if (!email) return "이메일 없음";
   const [localPart, domain] = email.split("@");
 
   if (!localPart || !domain) {
@@ -39,14 +47,6 @@ const ROLE_TYPE_LABELS: Record<UserProfile["roleType"], string> = {
   COMPANY: "기업 회원",
 };
 
-const SUBSCRIPTION_STATUS_LABELS: Record<
-  UserProfile["subscriptionStatus"],
-  string
-> = {
-  FREE: "무료",
-  PREMIUM: "프리미엄",
-};
-
 const MEMBER_STATUS_CONFIG: Record<
   UserProfile["memberStatus"],
   { label: string; className: string }
@@ -61,6 +61,7 @@ const MEMBER_STATUS_CONFIG: Record<
 
 type EditProfileForm = {
   name: string;
+  email: string;
   phone: string;
   githubUrl: string;
 };
@@ -80,9 +81,16 @@ function UserMyPage() {
     refetch: refetchGithub,
   } = useDashboardGithub();
 
+  const {
+    subscribedItems,
+    isLoading: isSubscriptionLoading,
+    isError: hasSubscriptionError,
+  } = useSubscriptionStatus();
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<EditProfileForm>({
     name: "",
+    email: "",
     phone: "",
     githubUrl: "",
   });
@@ -97,9 +105,11 @@ function UserMyPage() {
 
     setEditForm({
       name: userProfile.name,
+      email: userProfile.email ?? "",
       phone: userProfile.phone,
       githubUrl: githubProfile?.githubUrl ?? "",
     });
+
     setIsEditModalOpen(true);
   }
 
@@ -122,14 +132,22 @@ function UserMyPage() {
     isSavingProfileRef.current = true;
 
     const trimmedName = editForm.name.trim();
+    const trimmedEmail = editForm.email.trim();
     const normalizedPhone = editForm.phone.replace(/-/g, "").trim();
     const trimmedGithubUrl = editForm.githubUrl.trim();
+
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
+      alert("이메일 형식이 올바르지 않습니다.");
+      isSavingProfileRef.current = false;
+      return;
+    }
 
     try {
       setIsSavingProfile(true);
 
       await updateDashboardProfile({
         name: trimmedName,
+        email: trimmedEmail,
         phone: normalizedPhone,
         githubUrl: trimmedGithubUrl,
       });
@@ -217,13 +235,25 @@ function UserMyPage() {
           </div>
 
           <div className="cw-profile-main">
-            <h3>{userProfile.name}님</h3>
-            <p>Career Wave에서 계정 정보와 연동 상태를 관리 중입니다.</p>
-          </div>
+            <div className="cw-profile-header">
+              <h3>{userProfile.name}님</h3>
 
-          <span className="cw-profile-status">
-            {userProfile.email ? '이메일 인증 완료' : '이메일 미등록'}
-          </span>
+              <button
+                type="button"
+                className="cw-profile-edit-button"
+                onClick={openEditModal}
+              >
+                <Pencil size={16} />
+                정보 수정
+              </button>
+            </div>
+
+            <p>Career Wave에서 계정 정보와 연동 상태를 관리 중입니다.</p>
+
+            <span className="cw-profile-status">
+              {userProfile.email ? "이메일 인증 완료" : "이메일 미등록"}
+            </span>
+          </div>
         </div>
 
         <div className="cw-account-grid">
@@ -233,14 +263,6 @@ function UserMyPage() {
                 <UserRound size={18} />
                 <h3>기본 계정 정보</h3>
               </div>
-
-              <button
-                type="button"
-                className="cw-card-edit-button"
-                onClick={openEditModal}
-              >
-                수정
-              </button>
             </div>
 
             <div className="cw-info-list">
@@ -288,11 +310,19 @@ function UserMyPage() {
                 <span>로그인 ID</span>
                 <strong>{maskLoginId(userProfile.loginId)}</strong>
               </div>
+
               <div className="cw-info-row">
                 <span>구독 상태</span>
                 <strong>
-                  {SUBSCRIPTION_STATUS_LABELS[userProfile.subscriptionStatus] ??
-                    "무료"}
+                  {isSubscriptionLoading
+                    ? "구독 상태 확인 중..."
+                    : hasSubscriptionError
+                      ? "구독 상태 확인 불가"
+                      : subscribedItems.length > 0
+                        ? subscribedItems
+                            .map((item) => `${item.title} 구독중`)
+                            .join(" · ")
+                        : "미구독"}
                 </strong>
               </div>
               <div className="cw-info-row">
@@ -312,7 +342,7 @@ function UserMyPage() {
         </div>
 
         <section className="cw-account-card cw-github-card">
-          <div className="cw-card-title has-action">
+          <div className="cw-card-title">
             <div className="cw-card-title-left">
               <Github size={18} />
               <h3>GitHub 연동 정보</h3>
@@ -389,6 +419,18 @@ function UserMyPage() {
                   value={editForm.name ?? ""}
                   onChange={(event) =>
                     handleEditFormChange("name", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                이메일
+                <input
+                  type="email"
+                  value={editForm.email ?? ""}
+                  placeholder="example@email.com"
+                  onChange={(event) =>
+                    handleEditFormChange("email", event.target.value)
                   }
                 />
               </label>

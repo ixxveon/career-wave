@@ -7,6 +7,7 @@ import kr.co.carrer.admin.audit.type.AuditLogType;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +50,9 @@ class AuditLogControllerValidationTest {
 
     @MockBean
     private TokenBlacklistStore tokenBlacklistStore;
+
+    @MockBean
+    private IpAclPort ipAclPort;
 
     @Test
     @WithMockUser(roles = {"ADMIN", "MASTER"})
