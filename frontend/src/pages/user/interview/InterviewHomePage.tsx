@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import '@/styles/user/interview/InterviewHomePage.css';
 import {
   MessageSquare, Video, ChevronRight, Lightbulb,
-  FileText, User, Zap, ClipboardList, X, Loader2,
+  User, Zap, ClipboardList, X, Loader2,
 } from 'lucide-react';
 import { useInterviewHistory } from '../../../hooks/user/interview/useInterviewReport';
 import { useSubscriptionStatus } from '../../../hooks/user/subscription';
@@ -116,26 +116,6 @@ function InterviewHomePage() {
             내 준비 상태
           </h2>
           <ul className="iv-status-list">
-            <li className="iv-status-item">
-              <span className="iv-status-item__label">연결된 이력서</span>
-              <span className="iv-status-item__value iv-status-item__value--file">
-                <FileText size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                이력서_최종본.pdf
-              </span>
-            </li>
-            <li className="iv-status-item">
-              <span className="iv-status-item__label">이력서 완성도</span>
-              <div className="iv-progress-wrap">
-                <div className="iv-progress">
-                  <div className="iv-progress__bar" style={{ width: '75%' }} />
-                </div>
-                <span className="iv-status-item__value">75%</span>
-              </div>
-            </li>
-            <li className="iv-status-item">
-              <span className="iv-status-item__label">목표 직무</span>
-              <span className="iv-status-item__value">백엔드 개발자</span>
-            </li>
             <li className="iv-status-item">
               <span className="iv-status-item__label">서류 AI 코칭</span>
               <span className={`iv-status-item__value iv-status-item__value--${docSubscribed ? 'premium' : 'free'}`}>
