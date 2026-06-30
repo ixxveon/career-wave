@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Bell, HelpCircle, MessageSquare, AlertCircle, Sparkles } from 'lucide-react';
 import {
   csApi,
@@ -167,11 +168,13 @@ export default function CustomerServicePage() {
       setNoticeTotalItems(totalItems);
       setNoticeTotalPages(totalPages);
       setNoticePage(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== noticeReqId.current) return;
-      const status = err.response?.status;
-      if (!status) setNoticeError('네트워크 연결을 확인해주세요.');
-      else setNoticeError(err.response?.data?.message || `공지사항 목록을 불러오지 못했습니다. (${status})`);
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (!status) setNoticeError('네트워크 연결을 확인해주세요.');
+        else setNoticeError(err.response?.data?.message || `공지사항 목록을 불러오지 못했습니다. (${status})`);
+      } else setNoticeError('공지사항 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === noticeReqId.current) setNoticeLoading(false);
     }
@@ -200,11 +203,13 @@ export default function CustomerServicePage() {
       setFaqTotalItems(totalItems);
       setFaqTotalPages(totalPages);
       setFaqPage(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== faqReqId.current) return;
-      const status = err.response?.status;
-      if (!status) setFaqError('네트워크 연결을 확인해주세요.');
-      else setFaqError(err.response?.data?.message || `FAQ 목록을 불러오지 못했습니다. (${status})`);
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (!status) setFaqError('네트워크 연결을 확인해주세요.');
+        else setFaqError(err.response?.data?.message || `FAQ 목록을 불러오지 못했습니다. (${status})`);
+      } else setFaqError('FAQ 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === faqReqId.current) setFaqLoading(false);
     }
@@ -230,11 +235,13 @@ export default function CustomerServicePage() {
       setInqTotalItems(totalItems);
       setInqTotalPages(totalPages);
       setInqPage(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== inqReqId.current) return;
-      const status = err.response?.status;
-      if (!status) setInqError('네트워크 연결을 확인해주세요.');
-      else setInqError(err.response?.data?.message || `문의 목록을 불러오지 못했습니다. (${status})`);
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (!status) setInqError('네트워크 연결을 확인해주세요.');
+        else setInqError(err.response?.data?.message || `문의 목록을 불러오지 못했습니다. (${status})`);
+      } else setInqError('문의 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === inqReqId.current) setInqLoading(false);
     }
@@ -281,9 +288,9 @@ export default function CustomerServicePage() {
       if (!res.data.success) throw new Error(res.data.message);
       const d = res.data.data;
       setNoticeForm({ noticeId: d.noticeId, category: d.category, title: d.title, content: d.content, isVisible: d.isVisible });
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== noticeDetailReqId.current) return;
-      setNoticeFormError(err.response?.data?.message || '공지 내용을 불러오지 못했습니다.');
+      setNoticeFormError(axios.isAxiosError(err) ? err.response?.data?.message || '공지 내용을 불러오지 못했습니다.' : '공지 내용을 불러오지 못했습니다.');
     } finally {
       if (reqId === noticeDetailReqId.current) setNoticeDetailLoading(false);
     }
@@ -306,11 +313,13 @@ export default function CustomerServicePage() {
       closeNoticeModal();
       fetchNotices(noticePage);
       fetchSummary();
-    } catch (err: any) {
-      const status = err.response?.status;
-      if (status === 500) setNoticeFormError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-      else if (!status) setNoticeFormError('네트워크 연결을 확인해주세요.');
-      else setNoticeFormError(err.response?.data?.message || err.message || '저장에 실패했습니다.');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 500) setNoticeFormError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        else if (!status) setNoticeFormError('네트워크 연결을 확인해주세요.');
+        else setNoticeFormError(err.response?.data?.message || '저장에 실패했습니다.');
+      } else setNoticeFormError(err instanceof Error ? err.message : '저장에 실패했습니다.');
     } finally {
       setNoticeFormLoading(false);
     }
@@ -325,9 +334,11 @@ export default function CustomerServicePage() {
       setDeleteConfirmId(null);
       fetchNotices(noticePage);
       fetchSummary();
-    } catch (err: any) {
-      const status = err.response?.status;
-      alert(status === 500 ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' : err.response?.data?.message || '삭제에 실패했습니다.');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        alert(status === 500 ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' : err.response?.data?.message || '삭제에 실패했습니다.');
+      } else alert('삭제에 실패했습니다.');
     }
   };
 
@@ -376,11 +387,13 @@ export default function CustomerServicePage() {
       setFaqModal(null);
       fetchFaqs(faqPage);
       fetchSummary();
-    } catch (err: any) {
-      const status = err.response?.status;
-      if (status === 500) setFaqFormError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-      else if (!status) setFaqFormError('네트워크 연결을 확인해주세요.');
-      else setFaqFormError(err.response?.data?.message || '저장에 실패했습니다.');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 500) setFaqFormError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        else if (!status) setFaqFormError('네트워크 연결을 확인해주세요.');
+        else setFaqFormError(err.response?.data?.message || '저장에 실패했습니다.');
+      } else setFaqFormError(err instanceof Error ? err.message : '저장에 실패했습니다.');
     } finally {
       setFaqFormLoading(false);
     }
@@ -393,9 +406,11 @@ export default function CustomerServicePage() {
       setFaqDeleteId(null);
       fetchFaqs(faqPage);
       fetchSummary();
-    } catch (err: any) {
-      const status = err.response?.status;
-      alert(status === 500 ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' : err.response?.data?.message || '삭제에 실패했습니다.');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        alert(status === 500 ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' : err.response?.data?.message || '삭제에 실패했습니다.');
+      } else alert('삭제에 실패했습니다.');
     }
   };
   const handleAiFaqDraft = async () => {
@@ -441,10 +456,12 @@ export default function CustomerServicePage() {
       setInquiries((p) => p.map((i) => i.inquiryId === selectedInquiry.inquiryId ? { ...i, inquiryStatus: res.data.data.inquiryStatus } : i));
       setSelectedInquiry((p) => p ? { ...p, inquiryStatus: res.data.data.inquiryStatus, reply: inquiryReply } : p);
       fetchSummary();
-    } catch (err: any) {
-      const status = err.response?.status;
-      if (status === 409) setInqActionError('이미 완료된 문의입니다.');
-      else setInqActionError(err.response?.data?.message || '답변 저장에 실패했습니다.');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 409) setInqActionError('이미 완료된 문의입니다.');
+        else setInqActionError(err.response?.data?.message || '답변 저장에 실패했습니다.');
+      } else setInqActionError('답변 저장에 실패했습니다.');
     } finally {
       setInqActionLoading(false);
     }
@@ -460,11 +477,13 @@ export default function CustomerServicePage() {
       setInquiries((p) => p.map((i) => i.inquiryId === selectedInquiry.inquiryId ? { ...i, inquiryStatus: res.data.data.inquiryStatus } : i));
       setSelectedInquiry(null);
       fetchSummary();
-    } catch (err: any) {
-      const status = err.response?.status;
-      if (status === 409) setInqActionError('이미 완료된 문의입니다.');
-      else if (err.response?.status === 400) setInqActionError('답변 저장 후 처리 완료할 수 있습니다.');
-      else setInqActionError(err.response?.data?.message || '처리 완료에 실패했습니다.');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 409) setInqActionError('이미 완료된 문의입니다.');
+        else if (status === 400) setInqActionError('답변 저장 후 처리 완료할 수 있습니다.');
+        else setInqActionError(err.response?.data?.message || '처리 완료에 실패했습니다.');
+      } else setInqActionError('처리 완료에 실패했습니다.');
     } finally {
       setInqActionLoading(false);
     }
