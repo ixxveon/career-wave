@@ -8,6 +8,7 @@ import type {
 
 export interface UpdateDashboardProfileRequest {
   name: string;
+  email: string;
   phone: string;
   githubUrl: string;
 }

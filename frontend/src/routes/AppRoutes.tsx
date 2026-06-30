@@ -87,9 +87,6 @@ const InterviewHomePage = lazy(
 const TextInterviewPage = lazy(
   () => import("../pages/user/interview/TextInterviewPage"),
 );
-const MediaInterviewPage = lazy(
-  () => import("../pages/user/interview/MediaInterviewPage"),
-);
 const InterviewReportPage = lazy(
   () => import("../pages/user/interview/InterviewReportPage"),
 );
@@ -376,7 +373,6 @@ function AppRoutes() {
               element={lazyRoute(<ComprehensiveReportPage />)}
             />
             <Route path="text" element={lazyRoute(<TextInterviewPage />)} />
-            <Route path="media" element={lazyRoute(<MediaInterviewPage />)} />
           </Route>
 
           <Route path="career-diagnosis">

@@ -69,7 +69,8 @@ public class Member {
 
     @PrePersist
     protected void onCreate() {
-        if (memberId == null) memberId = UUID.randomUUID();
+        if (memberId == null)
+            memberId = UUID.randomUUID();
         Instant now = Instant.now();
         createdAt = now;
         updatedAt = now;
@@ -81,7 +82,7 @@ public class Member {
     }
 
     public static Member createUser(String loginId, String encodedPassword,
-                                    String name, String email, String phone) {
+            String name, String email, String phone) {
         Member m = new Member();
         m.loginId = loginId;
         m.password = encodedPassword;
@@ -96,7 +97,7 @@ public class Member {
     }
 
     public static Member createCompany(String loginId, String encodedPassword,
-                                       String managerName, String managerEmail, String managerPhone) {
+            String managerName, String managerEmail, String managerPhone) {
         Member m = new Member();
         m.loginId = loginId;
         m.password = encodedPassword;
@@ -110,7 +111,9 @@ public class Member {
         return m;
     }
 
-    public void updateLastLoginAt(Instant time) { this.lastLoginAt = time; }
+    public void updateLastLoginAt(Instant time) {
+        this.lastLoginAt = time;
+    }
 
     // locked_until 경과 시 ACTIVE 자동 복구 — dirty checking으로 DB 저장
     public void recoverFromLock() {
@@ -123,12 +126,14 @@ public class Member {
         this.memberStatus = MemberStatus.LOCKED;
         this.lockedUntil = lockedUntil;
     }
+
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
 
-    public void updateProfile(String name, String phone) {
+    public void updateProfile(String name, String email, String phone) {
         this.name = name;
+        this.email = email;
         this.phone = phone;
     }
 }

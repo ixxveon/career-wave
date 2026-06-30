@@ -14,12 +14,9 @@ import kr.co.carrer.user.interview.type.MessageSender;
 import kr.co.carrer.user.interview.type.MessageType;
 import kr.co.carrer.user.interview.service.InterviewSessionService;
 import kr.co.carrer.user.interview.type.InterviewType;
-import kr.co.carrer.user.interview.type.MessageSender;
-import kr.co.carrer.user.interview.type.MessageType;
 import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
-import kr.co.carrer.user.resume.entity.Document;
-import kr.co.carrer.user.resume.repository.DocumentRepository;
+import kr.co.carrer.user.resume.service.ResumeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,7 +37,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
 
     private final InterviewSessionRepository sessionRepository;
     private final InterviewMessageRepository messageRepository;
-    private final DocumentRepository documentRepository;
+    private final ResumeService resumeService;
     private final InterviewFastApiClient fastApiClient;
     private final EntitlementService entitlementService;
 
@@ -59,9 +56,8 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
 
         String fileUrl = null;
         if (documentId != null) {
-            Document document = documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
+            fileUrl = resumeService.findDocumentFileUrl(memberId, documentId)
                     .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_DOCUMENT_NOT_FOUND));
-            fileUrl = document.getFileUrl();
         }
 
         InterviewSession saved = saveNewSession(memberId, documentId, sessionType, interviewType, dto.targetCompany());

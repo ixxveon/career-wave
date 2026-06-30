@@ -3,49 +3,127 @@ package kr.co.carrer.admin.dashboard.service.impl;
 import kr.co.carrer.admin.dashboard.dto.DashboardDTO;
 import kr.co.carrer.admin.dashboard.repository.DashboardQueryWindow;
 import kr.co.carrer.admin.dashboard.repository.DashboardSummaryQueryRepository;
+import kr.co.carrer.admin.dashboard.type.DashboardKpiKeyType;
+import kr.co.carrer.admin.dashboard.type.DashboardPaymentMethod;
 import kr.co.carrer.admin.dashboard.type.DashboardRangeType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class DashboardServiceImplTest {
 
     private static final String ADMIN_ROUTE_PREFIX = "/cw-manage-2026";
 
+    @Mock
+    private DashboardSummaryQueryRepository dashboardSummaryQueryRepository;
+
+    private DashboardServiceImpl dashboardService;
+
+    @BeforeEach
+    void setUp() {
+        dashboardService = new DashboardServiceImpl(dashboardSummaryQueryRepository);
+
+        when(dashboardSummaryQueryRepository.fetchAdminAccountMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.AdminAccountMetrics(3L, 10L, 4L));
+        when(dashboardSummaryQueryRepository.fetchAiUsageMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.AiUsageMetrics(5L, BigDecimal.valueOf(29_000L), true, 0, true));
+        when(dashboardSummaryQueryRepository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(5L, 4L, 1L, 90));
+        when(dashboardSummaryQueryRepository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(6L, 1L, 1L, 4L));
+        lenient().when(dashboardSummaryQueryRepository.findAuditAlerts(any(DashboardQueryWindow.class), anyInt()))
+                .thenReturn(List.of());
+        lenient().when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), anyInt()))
+                .thenReturn(List.of());
+        lenient().when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), anyInt()))
+                .thenReturn(List.of());
+    }
+
+    @Test
+    @DisplayName("회원 가입 추이, 오늘 매출, 결제 비율을 repository 집계 결과로 반환한다")
+    void getSummaryUsesMemberAndPaymentMetricsFromRepository() {
+        when(dashboardSummaryQueryRepository.findWeeklySignups(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of(
+                        new DashboardSummaryQueryRepository.WeeklySignupRow("06/22", 2L),
+                        new DashboardSummaryQueryRepository.WeeklySignupRow("06/23", 1L)
+                ));
+        when(dashboardSummaryQueryRepository.findPaymentRatios(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of(
+                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.CARD, "카드", 75),
+                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.OTHER, "기타", 25)
+                ));
+
+        DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(result.weeklySignups())
+                .extracting(DashboardDTO.WeeklySignup::label, DashboardDTO.WeeklySignup::count)
+                .containsExactly(
+                        tuple("06/22", 2L),
+                        tuple("06/23", 1L)
+                );
+        assertThat(result.paymentRatio())
+                .extracting(DashboardDTO.PaymentRatio::method, DashboardDTO.PaymentRatio::label, DashboardDTO.PaymentRatio::ratio)
+                .containsExactly(
+                        tuple(DashboardPaymentMethod.CARD, "카드", 75),
+                        tuple(DashboardPaymentMethod.OTHER, "기타", 25)
+                );
+        assertThat(result.kpis()).anySatisfy(kpi -> {
+            assertThat(kpi.key()).isEqualTo(DashboardKpiKeyType.TODAY_REVENUE);
+            assertThat(kpi.value()).isEqualTo(29_000L);
+            assertThat(kpi.deltaText()).isEqualTo("결제 승인 기준");
+        });
+    }
+
+    @Test
+    @DisplayName("결제 데이터가 없으면 결제 비율은 빈 배열로 안전하게 반환한다")
+    void getSummaryAllowsEmptyPaymentRatio() {
+        when(dashboardSummaryQueryRepository.findWeeklySignups(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
+        when(dashboardSummaryQueryRepository.findPaymentRatios(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
+
+        DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(result.paymentRatio()).isEmpty();
+    }
+
     @Test
     void getSummaryReturnsFrontendAdminRoutePaths() {
-        DashboardSummaryQueryRepository repository = mock(DashboardSummaryQueryRepository.class);
-        when(repository.fetchAdminAccountMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.AdminAccountMetrics(3L, 2L, 1L));
-        when(repository.fetchAiUsageMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.AiUsageMetrics(4L, BigDecimal.valueOf(5000L), true, 80, true));
-        when(repository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(5L, 4L, 1L, 90));
-        when(repository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(6L, 1L, 1L, 4L));
-        when(repository.findAuditAlerts(any(DashboardQueryWindow.class), eq(5)))
+        when(dashboardSummaryQueryRepository.findWeeklySignups(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
+        when(dashboardSummaryQueryRepository.findPaymentRatios(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
+        when(dashboardSummaryQueryRepository.findAuditAlerts(any(DashboardQueryWindow.class), eq(5)))
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.AuditAlertRow(
                         1L,
                         "Audit warning",
                         "Audit warning message",
                         ZonedDateTime.parse("2026-06-22T09:00:00Z")
                 )));
-        when(repository.findScrapingAlerts(any(DashboardQueryWindow.class), eq(5)))
+        when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), eq(5)))
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.ScrapingAlertRow(
                         2L,
                         "Scraping failed",
                         "Scraping failed message",
                         ZonedDateTime.parse("2026-06-22T09:01:00Z")
                 )));
-        when(repository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))
+        when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))
                 .thenReturn(List.of(
                         new DashboardSummaryQueryRepository.RecentActivityRow(
                                 3L,
@@ -70,9 +148,7 @@ class DashboardServiceImplTest {
                         )
                 ));
 
-        DashboardServiceImpl service = new DashboardServiceImpl(repository);
-
-        DashboardDTO.ResponseSummary summary = service.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+        DashboardDTO.ResponseSummary summary = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
 
         assertThat(summary.kpis())
                 .extracting(DashboardDTO.Kpi::targetPath)
