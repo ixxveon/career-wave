@@ -1,10 +1,10 @@
-import { useMemo, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ThumbsUp, MessageCircle, Bookmark, Flame, Star, Clock, Database } from 'lucide-react';
 import '@/styles/user/community/CommunityPage.css';
 
 const CATEGORIES = ['전체', '질문', '면접 후기', '이력서 팁', '합격 후기', '자유'];
-const PAGE_SIZE = 4;
+const PAGE_SIZE = 10;
 
 type CommunityPost = {
   id: number;
@@ -21,115 +21,61 @@ type CommunityPost = {
   reportCount: number;
 };
 
-const MOCK_POSTS: CommunityPost[] = [
-  {
-    id: 1,
-    category: '면접 후기',
-    title: '카카오 백엔드 1차 면접 후기',
-    preview: '자료구조, OS, 네트워크, Spring 트랜잭션 질문이 이어졌고 프로젝트 장애 대응 경험을 깊게 물어봤습니다.',
-    author: '개발자지망생',
-    createdAt: '2026-05-20',
-    views: 1240,
-    likes: 87,
-    comments: 23,
-    bookmarked: false,
-    hot: true,
-    reportCount: 0,
-  },
-  {
-    id: 2,
-    category: '합격 후기',
-    title: '토스 프론트엔드 최종 합격 후기와 준비 방법',
-    preview: '과제 전형에서 상태 관리 선택 근거와 성능 측정 방식을 정리한 것이 가장 큰 도움이 됐습니다.',
-    author: 'toss_fe_21',
-    createdAt: '2026-05-19',
-    views: 3560,
-    likes: 215,
-    comments: 61,
-    bookmarked: true,
-    hot: true,
-    reportCount: 1,
-  },
-  {
-    id: 3,
-    category: '질문',
-    title: 'Spring Boot에서 @Transactional 내부 호출 문제 해결법',
-    preview: '같은 클래스 내부 메서드 호출에서는 프록시가 적용되지 않는다고 들었는데 실무에서는 어떻게 분리하시나요?',
-    author: 'java_dev_kim',
-    createdAt: '2026-05-18',
-    views: 840,
-    likes: 42,
-    comments: 17,
-    bookmarked: false,
-    hot: false,
-    reportCount: 0,
-  },
-  {
-    id: 4,
-    category: '이력서 팁',
-    title: '신입 백엔드 이력서 통과율 높이는 5가지 방법',
-    preview: '프로젝트 설명보다 성과 수치, 트러블슈팅 근거, 기술 선택 이유를 먼저 보이게 구성해보세요.',
-    author: '취준컨설턴트',
-    createdAt: '2026-05-17',
-    views: 2100,
-    likes: 130,
-    comments: 38,
-    bookmarked: false,
-    hot: false,
-    reportCount: 0,
-  },
-  {
-    id: 5,
-    category: '질문',
-    title: '네이버 공채 코딩테스트 난이도 어느 정도인가요?',
-    preview: '이번 공채를 처음 지원하는데 그래프와 DP 비중이 어느 정도인지 궁금합니다.',
-    author: 'algo_beginner',
-    createdAt: '2026-05-16',
-    views: 580,
-    likes: 21,
-    comments: 14,
-    bookmarked: false,
-    hot: false,
-    reportCount: 0,
-  },
-  {
-    id: 6,
-    category: '자유',
-    title: '취준 6개월 차, 멘탈 관리하는 법 공유합니다',
-    preview: '서류 탈락이 반복될 때 기록을 남기고 루틴을 작게 쪼개면서 버텼던 방법을 정리했습니다.',
-    author: '버티는중',
-    createdAt: '2026-05-15',
-    views: 1890,
-    likes: 178,
-    comments: 54,
-    bookmarked: false,
-    hot: false,
-    reportCount: 2,
-  },
-  {
-    id: 7,
-    category: '면접 후기',
-    title: '대기업 인성 면접에서 STAR 답변 구조가 중요했던 이유',
-    preview: '갈등 상황 질문에서 상황, 행동, 결과를 짧게 정리하니 꼬리 질문 대응이 훨씬 쉬웠습니다.',
-    author: 'star_practice',
-    createdAt: '2026-05-14',
-    views: 960,
-    likes: 64,
-    comments: 19,
-    bookmarked: false,
-    hot: false,
-    reportCount: 0,
-  },
-];
-
-const POPULAR = MOCK_POSTS.slice(0, 3).sort((a, b) => b.likes - a.likes);
-
-type PostCardProps = {
-  post: CommunityPost;
-  onClick: () => void;
+type BoardResponse = {
+  boardId: number;
+  memberId: string;
+  category: string;
+  title: string;
+  content: string;
+  viewCount: number;
+  blind: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
-function PostCard({ post, onClick }: PostCardProps) {
+type PaginationResponse<T> = {
+  content?: T[];
+  items?: T[];
+  data?: T[];
+  list?: T[];
+  totalElements?: number;
+  totalCount?: number;
+  page?: number;
+  size?: number;
+  totalPages?: number;
+};
+
+type ApiResponse<T> = {
+  data?: T;
+  result?: T;
+};
+
+function toPosts(response: BoardResponse[]): CommunityPost[] {
+  return response.map((board) => ({
+    id: board.boardId,
+    category: board.category,
+    title: board.title,
+    preview: board.content,
+    author: '익명',
+    createdAt: board.createdAt?.slice(0, 10) ?? '',
+    views: board.viewCount,
+    likes: 0,
+    comments: 0,
+    bookmarked: false,
+    hot: board.viewCount >= 100,
+    reportCount: 0,
+  }));
+}
+
+function getPaginationPayload(response: ApiResponse<PaginationResponse<BoardResponse>>) {
+  return response.data ?? response.result;
+}
+
+function getBoardList(payload?: PaginationResponse<BoardResponse>) {
+  return payload?.content ?? payload?.items ?? payload?.data ?? payload?.list ?? [];
+}
+
+function PostCard({ post, onClick }: { post: CommunityPost; onClick: () => void }) {
   const [bookmarked, setBookmarked] = useState(post.bookmarked);
 
   function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -142,20 +88,16 @@ function PostCard({ post, onClick }: PostCardProps) {
   }
 
   return (
-      <div
-          className="cm-post"
-          onClick={onClick}
-          onKeyDown={handleCardKeyDown}
-          role="button"
-          tabIndex={0}
-      >
+      <div className="cm-post" onClick={onClick} onKeyDown={handleCardKeyDown} role="button" tabIndex={0}>
         <div className="cm-post__top">
           <span className="cm-post__cat">{post.category}</span>
+
           {post.hot && (
               <span className="cm-post__hot">
             <Flame size={11} /> HOT
           </span>
           )}
+
           {post.reportCount > 0 && <span className="cm-post__report">신고 {post.reportCount}</span>}
 
           <button
@@ -194,22 +136,54 @@ function PostCard({ post, onClick }: PostCardProps) {
 
 export default function CommunityPage() {
   const navigate = useNavigate();
+
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('전체');
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [page, setPage] = useState(0);
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const filtered = useMemo(() => {
-    return MOCK_POSTS.filter((post) => {
-      if (category !== '전체' && post.category !== category) return false;
-      if (search && !post.title.includes(search) && !post.preview.includes(search)) return false;
-      return true;
-    });
-  }, [category, search]);
+  useEffect(() => {
+    async function fetchBoards() {
+      setLoading(true);
 
-  const visiblePosts = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
-  const lastVisiblePost = visiblePosts[visiblePosts.length - 1];
-  const nextCursor = hasMore && lastVisiblePost ? `cursor-${lastVisiblePost.id}` : 'end';
+      try {
+        const params = new URLSearchParams({
+          page: String(page),
+          size: String(PAGE_SIZE),
+        });
+
+        if (category !== '전체') {
+          params.append('category', category);
+        }
+
+        const response = await fetch(`/api/v1/user/community/boards?${params.toString()}`);
+        const json: ApiResponse<PaginationResponse<BoardResponse>> = await response.json();
+        const payload = getPaginationPayload(json);
+
+        const boards = getBoardList(payload);
+        const total = payload?.totalElements ?? payload?.totalCount ?? boards.length;
+
+        setPosts(toPosts(boards));
+        setTotalElements(total);
+        setTotalPages(payload?.totalPages ?? Math.max(1, Math.ceil(total / PAGE_SIZE)));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchBoards();
+  }, [category, page]);
+
+  const filteredPosts = useMemo(() => {
+    if (!search) return posts;
+
+    return posts.filter((post) => post.title.includes(search) || post.preview.includes(search));
+  }, [posts, search]);
+
+  const popularPosts = useMemo(() => posts.slice(0, 3), [posts]);
 
   return (
       <div className="cm-page">
@@ -222,24 +196,18 @@ export default function CommunityPage() {
         <div className="cm-ops-panel">
           <div>
             <Database size={18} />
-            <strong>커서 기반 게시글 목록</strong>
-            <span>다음 커서: {nextCursor}</span>
+            <strong>페이지 기반 게시글 목록</strong>
+            <span>
+            현재 페이지: {page + 1} / {totalPages}
+          </span>
           </div>
-          <p>인기 게시글과 카테고리 목록은 캐시 대상 데이터로 분리하고, 목록은 커서 기반 더보기 UI로 표현합니다.</p>
+          <p>게시글 목록은 page/size 기반 API로 조회하며, 총 {totalElements}개의 게시글을 페이지 단위로 확인합니다.</p>
         </div>
 
         <div className="cm-toolbar">
           <div className="cm-search">
             <Search size={16} />
-            <input
-                type="search"
-                placeholder="게시글 검색"
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setVisibleCount(PAGE_SIZE);
-                }}
-            />
+            <input type="search" placeholder="현재 페이지 내 검색" value={search} onChange={(event) => setSearch(event.target.value)} />
           </div>
 
           <button className="cm-write" type="button" onClick={() => navigate('/community/posts/create')}>
@@ -255,7 +223,8 @@ export default function CommunityPage() {
                   type="button"
                   onClick={() => {
                     setCategory(item);
-                    setVisibleCount(PAGE_SIZE);
+                    setSearch('');
+                    setPage(0);
                   }}
               >
                 {item}
@@ -264,28 +233,41 @@ export default function CommunityPage() {
         </div>
 
         <section className="cm-highlight">
-          {POPULAR.map((post) => (
+          {popularPosts.map((post) => (
               <article key={post.id}>
                 <Star size={14} />
                 <strong>{post.title}</strong>
-                <span>{post.likes}명이 도움됨</span>
+                <span>조회수 {post.views}</span>
               </article>
           ))}
         </section>
 
         <div className="cm-list">
-          {filtered.length === 0 && <div className="cm-empty">검색 결과가 없습니다.</div>}
+          {loading && <div className="cm-empty">게시글을 불러오는 중입니다.</div>}
 
-          {visiblePosts.map((post) => (
-              <PostCard key={post.id} post={post} onClick={() => navigate(`/community/posts/${post.id}`)} />
-          ))}
+          {!loading && filteredPosts.length === 0 && <div className="cm-empty">검색 결과가 없습니다.</div>}
+
+          {!loading &&
+              filteredPosts.map((post) => (
+                  <PostCard key={post.id} post={post} onClick={() => navigate(`/community/posts/${post.id}`)} />
+              ))}
         </div>
 
-        {hasMore && (
-            <button className="cm-load-more" type="button" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}>
-              더 보기 <span>{nextCursor}</span>
-            </button>
-        )}
+        <div className="cm-pagination">
+          <button type="button" disabled={page === 0} onClick={() => setPage((current) => Math.max(0, current - 1))}>
+            이전
+          </button>
+
+          {Array.from({ length: totalPages }, (_, index) => (
+              <button key={index} type="button" className={page === index ? 'is-active' : ''} onClick={() => setPage(index)}>
+                {index + 1}
+              </button>
+          ))}
+
+          <button type="button" disabled={page + 1 >= totalPages} onClick={() => setPage((current) => current + 1)}>
+            다음
+          </button>
+        </div>
       </div>
   );
 }
