@@ -367,7 +367,7 @@ function AppRoutes() {
               element={lazyRoute(<LearningRoadmapPage />)}
             />
             <Route path="report" element={lazyRoute(<InterviewReportPage />)} />
-            <Route path="history" element={lazyRoute(<InterviewHistoryPage />)} />
+            <Route path="sessions" element={lazyRoute(<InterviewHistoryPage />)} />
             <Route
               path="report-export"
               element={lazyRoute(<ComprehensiveReportPage />)}
