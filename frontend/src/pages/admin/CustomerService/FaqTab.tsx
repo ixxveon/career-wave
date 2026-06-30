@@ -73,13 +73,23 @@ export default function FaqTab({ onMutate }: FaqTabProps) {
     fetchFaqs(1);
   };
 
+  const closeFaqModal = () => {
+    ++aiFaqReqId.current;
+    setAiFaqLoading(false);
+    setFaqModal(null);
+  };
+
   const openFaqCreate = () => {
+    ++aiFaqReqId.current;
+    setAiFaqLoading(false);
     setFaqForm({ category: 'ACCOUNT', question: '', answer: '' });
     setFaqFormError('');
     setFaqModal('create');
   };
 
   const openFaqEdit = (f: FaqItem) => {
+    ++aiFaqReqId.current;
+    setAiFaqLoading(false);
     setFaqForm({ faqId: f.faqId, category: f.category, question: f.question, answer: f.answer });
     setFaqFormError('');
     setFaqModal('edit');
@@ -199,11 +209,11 @@ export default function FaqTab({ onMutate }: FaqTabProps) {
       </section>
 
       {faqModal && (
-        <div className="modalOverlay" onClick={() => setFaqModal(null)}>
+        <div className="modalOverlay" onClick={closeFaqModal}>
           <div className="memberModal modal--scrollable" style={{ width: 580 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0 }}>
               <div><h3>{faqModal === 'create' ? 'FAQ 등록' : 'FAQ 수정'}</h3></div>
-              <button onClick={() => setFaqModal(null)}>닫기</button>
+              <button onClick={closeFaqModal}>닫기</button>
             </div>
             <div className="modalBody">
               <div className="csFormRows">
@@ -237,7 +247,7 @@ export default function FaqTab({ onMutate }: FaqTabProps) {
               <button onClick={saveFaq} disabled={faqFormLoading || !faqForm.question.trim()}>
                 {faqFormLoading ? '저장 중...' : faqModal === 'create' ? '등록' : '저장'}
               </button>
-              <button onClick={() => setFaqModal(null)} disabled={faqFormLoading}>취소</button>
+              <button onClick={closeFaqModal} disabled={faqFormLoading}>취소</button>
             </div>
           </div>
         </div>

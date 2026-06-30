@@ -135,6 +135,10 @@ export function SuspendModal({ target, onClose, onSuccess }: SuspendModalProps) 
   const [error, setError] = useState('');
 
   const handleSuspend = async () => {
+    if (reason.trim().length < 10) {
+      setError('정지 사유는 최소 10자 이상 입력해주세요.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -206,7 +210,7 @@ export function SuspendModal({ target, onClose, onSuccess }: SuspendModalProps) 
         <div className="modalAction">
           <button
             onClick={handleSuspend}
-            disabled={loading}
+            disabled={loading || reason.trim().length < 10}
             style={period === 'PERMANENT' ? { background: '#9a6767', color: 'white', borderColor: '#9a6767' } : {}}
           >
             {loading ? '처리 중...' : `${durationLabel[period]} 정지 처리`}

@@ -81,20 +81,21 @@ export default function NoticeTab({ onMutate }: NoticeTabProps) {
   };
 
   const closeNoticeModal = () => {
-    ++noticeDetailReqId.current;
-    setNoticeDetailLoading(false);
+    ++noticeDetailReqId.current; ++aiNoticeReqId.current;
+    setAiNoticeLoading(false); setNoticeDetailLoading(false);
     setNoticeModal(null);
   };
 
   const openNoticeCreate = () => {
-    ++noticeDetailReqId.current;
+    ++noticeDetailReqId.current; ++aiNoticeReqId.current;
+    setAiNoticeLoading(false);
     setNoticeForm({ category: 'NOTICE', title: '', content: '', isVisible: true });
-    setNoticeFormError('');
-    setNoticeModal('create');
+    setNoticeFormError(''); setNoticeModal('create');
   };
 
   const openNoticeEdit = async (item: NoticeItem) => {
     const reqId = ++noticeDetailReqId.current;
+    ++aiNoticeReqId.current; setAiNoticeLoading(false);
     setNoticeFormError('');
     setNoticeDetailLoading(true);
     setNoticeModal('edit');
@@ -115,6 +116,7 @@ export default function NoticeTab({ onMutate }: NoticeTabProps) {
 
   const saveNotice = async () => {
     if (!noticeForm.title.trim()) return;
+    if (noticeModal === 'edit' && (!noticeForm.noticeId || noticeFormError)) return;
     setNoticeFormLoading(true);
     setNoticeFormError('');
     try {
@@ -257,21 +259,19 @@ export default function NoticeTab({ onMutate }: NoticeTabProps) {
                   <p className="csAiDesc">카테고리와 제목을 입력하면 AI가 공지 내용 초안을 생성합니다.</p>
                   <button className="csAiBtn" onClick={handleAiNoticeDraft} disabled={aiNoticeLoading || !noticeForm.title.trim()}>
                     <Sparkles size={14} />{aiNoticeLoading ? 'AI 생성 중...' : '초안 생성'}
-                  </button>
-                </div>
+                  </button></div>
                 <div className="csFormRow">
                   <label>노출 여부</label>
                   <label className="csCheckLabel">
                     <input type="checkbox" checked={noticeForm.isVisible}
                       onChange={(e) => setNoticeForm((p) => ({ ...p, isVisible: e.target.checked }))} />
                     사용자에게 노출
-                  </label>
-                </div>
+                  </label></div>
                 {noticeFormError && <p style={{ fontSize: 13, color: '#9a4444' }}>{noticeFormError}</p>}
               </div>
             </div>
             <div className="modalAction" style={{ flexShrink: 0 }}>
-              <button onClick={saveNotice} disabled={noticeFormLoading || noticeDetailLoading || !noticeForm.title.trim()}>
+              <button onClick={saveNotice} disabled={noticeFormLoading || noticeDetailLoading || !noticeForm.title.trim() || (noticeModal === 'edit' && (!noticeForm.noticeId || !!noticeFormError))}>
                 {noticeFormLoading ? '저장 중...' : noticeModal === 'create' ? '등록' : '저장'}
               </button>
               <button onClick={() => closeNoticeModal()} disabled={noticeFormLoading}>취소</button>

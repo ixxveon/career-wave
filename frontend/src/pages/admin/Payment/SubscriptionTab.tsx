@@ -58,7 +58,8 @@ export default function SubscriptionTab({ showToast }: SubscriptionTabProps) {
     } catch (err: unknown) {
       if (reqId !== subReqId.current) return;
       const status = axios.isAxiosError(err) ? err.response?.status : undefined;
-      if (!status) setSubError('네트워크 연결을 확인해주세요.');
+      if (!axios.isAxiosError(err) && err instanceof Error && err.message) setSubError(err.message);
+      else if (!status) setSubError('네트워크 연결을 확인해주세요.');
       else setSubError((axios.isAxiosError(err) && err.response?.data?.message) || `구독 목록을 불러오지 못했습니다. (${status})`);
     } finally {
       if (reqId === subReqId.current) setSubLoading(false);
@@ -135,7 +136,7 @@ export default function SubscriptionTab({ showToast }: SubscriptionTabProps) {
                   <td
                     style={{ fontSize: 13, color: '#7a8da4', fontFamily: 'monospace', cursor: 'pointer', userSelect: 'none' }}
                     title={`클릭하여 복사: ${s.subscriptionId}`}
-                    onClick={() => { navigator.clipboard.writeText(s.subscriptionId); showToast('구독 ID가 복사되었습니다.'); }}
+                    onClick={() => { navigator.clipboard.writeText(s.subscriptionId).then(() => showToast('구독 ID가 복사되었습니다.')).catch(() => showToast('복사에 실패했습니다.', 'error')); }}
                   >
                     {s.subscriptionId.slice(0, 8)}…
                   </td>

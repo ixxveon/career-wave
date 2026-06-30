@@ -37,6 +37,7 @@ function resolveErrorMsg(err: unknown, fallback: string, domain?: 'refund'): str
     if (status === 400) return '환불 조건을 충족하지 않는 건입니다. (400)';
     if (status === 404) return '결제 건을 찾을 수 없습니다. (404)';
   }
+  if (!axios.isAxiosError(err) && err instanceof Error && err.message) return err.message;
   if (!status) return '네트워크 연결을 확인해주세요.';
   return (axios.isAxiosError(err) && err.response?.data?.message) || `${fallback} (${status})`;
 }
@@ -57,6 +58,7 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
   const [rejectReason, setRejectReason] = useState('');
 
   const refundCheck = selected.refundStatus === 'PENDING' ? checkRefundEligibility(selected) : null;
+  const isCompletedPayment = selected.paymentStatus === PAY_STATUS.PAID || selected.paymentStatus === PAY_STATUS.DONE;
 
   const submitRefundRequest = async () => {
     if (!requestReason.trim()) return;
@@ -140,7 +142,7 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
             )}
           </div>
 
-          {selected.paymentStatus === PAY_STATUS.PAID && !selected.refundStatus && (
+          {isCompletedPayment && !selected.refundStatus && (
             <div className="refundCheckSection">
               <p className="refundCheckTitle">환불 요청 접수</p>
               {requestMode ? (
@@ -196,10 +198,10 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
         </div>
 
         <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
-          {selected.paymentStatus === PAY_STATUS.PAID && !selected.refundStatus && !requestMode && (
+          {isCompletedPayment && !selected.refundStatus && !requestMode && (
             <button onClick={() => setRequestMode(true)} disabled={refundLoading}>환불 요청</button>
           )}
-          {selected.paymentStatus === PAY_STATUS.PAID && !selected.refundStatus && requestMode && (
+          {isCompletedPayment && !selected.refundStatus && requestMode && (
             <>
               <button onClick={submitRefundRequest} disabled={refundLoading || !requestReason.trim()}>
                 {refundLoading ? '처리 중...' : '접수 확인'}

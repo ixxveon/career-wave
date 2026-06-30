@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Construction } from 'lucide-react';
 import { adminSession } from '../../../api/admin/adminSession';
@@ -28,6 +28,8 @@ export default function PaymentPage() {
   const urlKeyword = searchParams.get('keyword') ?? '';
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
+
+  useEffect(() => { setTab(initialTab); }, [initialTab]);
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     const id = ++toastId.current;
@@ -60,7 +62,7 @@ export default function PaymentPage() {
         ))}
       </div>
 
-      {tab === '결제 내역' && <PaymentHistoryTab isMaster={isMaster} initialKeyword={urlKeyword} showToast={showToast} />}
+      {tab === '결제 내역' && <PaymentHistoryTab key={urlKeyword} isMaster={isMaster} initialKeyword={urlKeyword} showToast={showToast} />}
       {tab === '구독 현황' && <SubscriptionTab showToast={showToast} />}
       {tab === '정산 리포트' && (
         <div className="memberPage">

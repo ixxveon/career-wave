@@ -75,7 +75,8 @@ export default function PaymentHistoryTab({ isMaster, initialKeyword, showToast 
     } catch (err: unknown) {
       if (reqId !== payReqId.current) return;
       const status = axios.isAxiosError(err) ? err.response?.status : undefined;
-      if (!status) setPayError('네트워크 연결을 확인해주세요.');
+      if (!axios.isAxiosError(err) && err instanceof Error && err.message) setPayError(err.message);
+      else if (!status) setPayError('네트워크 연결을 확인해주세요.');
       else setPayError((axios.isAxiosError(err) && err.response?.data?.message) || `결제 목록을 불러오지 못했습니다. (${status})`);
     } finally {
       if (reqId === payReqId.current) setPayLoading(false);

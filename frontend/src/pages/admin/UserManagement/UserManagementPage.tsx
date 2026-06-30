@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { memberApi } from '../../../api/admin/memberApi';
 import MemberTab from './MemberTab';
 import CompanyTab from './CompanyTab';
 import '../../../styles/admin/admin.css';
@@ -9,6 +10,15 @@ type TabKey = 'user' | 'company';
 export default function UserManagementPage() {
   const [tab, setTab] = useState<TabKey>('user');
   const [hrPendingCount, setHrPendingCount] = useState(0);
+
+  const fetchHrPendingCount = useCallback(async () => {
+    try {
+      const res = await memberApi.getHrManagers({ page: 1, size: 1 });
+      if (res.data.success) setHrPendingCount(res.data.data.pendingCount);
+    } catch {}
+  }, []);
+
+  useEffect(() => { fetchHrPendingCount(); }, [fetchHrPendingCount]);
 
   return (
     <section>

@@ -50,6 +50,7 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
   const [inqActionError, setInqActionError] = useState('');
   const [aiInqLoading, setAiInqLoading] = useState(false);
   const aiInqReqId = useRef(0);
+  const inquiryDetailReqId = useRef(0);
 
   const fetchInquiries = useCallback(async (page = 1) => {
     const reqId = ++inqReqId.current;
@@ -87,15 +88,24 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
     fetchInquiries(1);
   };
 
+  const closeInquiryModal = () => {
+    ++inquiryDetailReqId.current; ++aiInqReqId.current;
+    setAiInqLoading(false);
+    setSelectedInquiry(null);
+  };
+
   const openInquiry = async (item: InquiryItem) => {
-    setInqActionError('');
-    setInquiryReply('');
+    const reqId = ++inquiryDetailReqId.current;
+    ++aiInqReqId.current; setAiInqLoading(false);
+    setInqActionError(''); setInquiryReply('');
     try {
       const res = await csApi.getInquiryDetail(item.inquiryId);
+      if (reqId !== inquiryDetailReqId.current) return;
       if (!res.data.success) throw new Error(res.data.message);
       setSelectedInquiry(res.data.data);
       setInquiryReply(res.data.data.reply ?? '');
     } catch {
+      if (reqId !== inquiryDetailReqId.current) return;
       setSelectedInquiry({ ...item, memberEmail: '', content: '', reply: null, repliedAt: null, completedAt: null });
     }
   };
@@ -222,7 +232,7 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
       </section>
 
       {selectedInquiry && (
-        <div className="modalOverlay" onClick={() => setSelectedInquiry(null)}>
+        <div className="modalOverlay" onClick={closeInquiryModal}>
           <div className="memberModal modal--scrollable" style={{ width: 580 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0, padding: '20px 24px 16px' }}>
               <div>
@@ -231,7 +241,7 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
                   #{selectedInquiry.inquiryId} · {selectedInquiry.memberName}{selectedInquiry.memberEmail ? ` (${selectedInquiry.memberEmail})` : ''} · {new Date(selectedInquiry.createdAt).toLocaleDateString('ko-KR')}
                 </p>
               </div>
-              <button onClick={() => setSelectedInquiry(null)}>닫기</button>
+              <button onClick={closeInquiryModal}>닫기</button>
             </div>
             <div className="modalBody">
               <div className="modalInfoGrid">
@@ -280,7 +290,7 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
                   결제 내역 확인
                 </button>
               )}
-              <button onClick={() => setSelectedInquiry(null)}>닫기</button>
+              <button onClick={closeInquiryModal}>닫기</button>
             </div>
           </div>
         </div>
