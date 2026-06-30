@@ -10,16 +10,26 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import kr.co.carrer.user.community.type.ReportReason;
 import kr.co.carrer.user.community.type.ReportStatus;
 import kr.co.carrer.user.community.type.ReportTargetType;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Entity(name = "CommunityReport")
-@Table(name = "reports")
+@Table(
+        name = "reports",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_reports_reporter_target",
+                columnNames = {"reporter_id", "target_type", "target_id"}
+        )
+)
 public class CommunityReport {
+
+    private static final ZoneId SEOUL_ZONE = ZoneId.of("Asia/Seoul");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -76,14 +86,14 @@ public class CommunityReport {
 
     @PrePersist
     protected void onCreate() {
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(SEOUL_ZONE);
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = ZonedDateTime.now();
+        this.updatedAt = ZonedDateTime.now(SEOUL_ZONE);
     }
 
     public Long getReportId() {

@@ -3,12 +3,9 @@ package kr.co.carrer.user.community.docs;
 import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
-import kr.co.carrer.user.community.dto.BoardCreateRequest;
-import kr.co.carrer.user.community.dto.BoardResponse;
-import kr.co.carrer.user.community.dto.BoardUpdateRequest;
-import kr.co.carrer.user.community.dto.CommentCreateRequest;
-import kr.co.carrer.user.community.dto.CommentResponse;
-import kr.co.carrer.user.community.dto.ReportCreateRequest;
+import kr.co.carrer.user.community.dto.BoardDTO;
+import kr.co.carrer.user.community.dto.CommentDTO;
+import kr.co.carrer.user.community.dto.ReportDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,25 +16,25 @@ import java.util.List;
 
 public interface CommunityControllerDocs {
 
-    ResponseEntity<ApiResponse<PaginationResponse<BoardResponse>>> getBoards(
+    ResponseEntity<ApiResponse<PaginationResponse<BoardDTO.Response>>> getBoards(
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     );
 
-    ResponseEntity<ApiResponse<BoardResponse>> getBoard(
+    ResponseEntity<ApiResponse<BoardDTO.Response>> getBoard(
             @PathVariable Long boardId
     );
 
-    ResponseEntity<ApiResponse<BoardResponse>> createBoard(
+    ResponseEntity<ApiResponse<BoardDTO.Response>> createBoard(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody BoardCreateRequest request
+            @RequestBody BoardDTO.CreateRequest request
     );
 
-    ResponseEntity<ApiResponse<BoardResponse>> updateBoard(
+    ResponseEntity<ApiResponse<BoardDTO.Response>> updateBoard(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long boardId,
-            @RequestBody BoardUpdateRequest request
+            @RequestBody BoardDTO.UpdateRequest request
     );
 
     ResponseEntity<ApiResponse<Void>> deleteBoard(
@@ -45,14 +42,14 @@ public interface CommunityControllerDocs {
             @PathVariable Long boardId
     );
 
-    ResponseEntity<ApiResponse<List<CommentResponse>>> getComments(
+    ResponseEntity<ApiResponse<List<CommentDTO.Response>>> getComments(
             @PathVariable Long boardId
     );
 
-    ResponseEntity<ApiResponse<CommentResponse>> createComment(
+    ResponseEntity<ApiResponse<CommentDTO.Response>> createComment(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long boardId,
-            @RequestBody CommentCreateRequest request
+            @RequestBody CommentDTO.CreateRequest request
     );
 
     ResponseEntity<ApiResponse<Void>> deleteComment(
@@ -62,6 +59,6 @@ public interface CommunityControllerDocs {
 
     ResponseEntity<ApiResponse<Void>> createReport(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody ReportCreateRequest request
+            @RequestBody ReportDTO.CreateRequest request
     );
 }

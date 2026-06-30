@@ -1,21 +1,19 @@
 package kr.co.carrer.user.community.service;
 
 import kr.co.carrer.global.response.PaginationResponse;
-import kr.co.carrer.user.community.dto.BoardCreateRequest;
-import kr.co.carrer.user.community.dto.BoardResponse;
-import kr.co.carrer.user.community.dto.BoardUpdateRequest;
+import kr.co.carrer.user.community.dto.BoardDTO;
 
 import java.util.UUID;
 
 public interface BoardService {
 
-    PaginationResponse<BoardResponse> getBoards(String category, int page, int size);
+    PaginationResponse<BoardDTO.Response> getBoards(String category, int page, int size);
 
-    BoardResponse getBoard(Long boardId);
+    BoardDTO.Response getBoard(Long boardId);
 
-    BoardResponse createBoard(UUID memberId, BoardCreateRequest request);
+    BoardDTO.Response createBoard(UUID memberId, BoardDTO.CreateRequest request);
 
-    BoardResponse updateBoard(UUID memberId, Long boardId, BoardUpdateRequest request);
+    BoardDTO.Response updateBoard(UUID memberId, Long boardId, BoardDTO.UpdateRequest request);
 
     void deleteBoard(UUID memberId, Long boardId);
 }

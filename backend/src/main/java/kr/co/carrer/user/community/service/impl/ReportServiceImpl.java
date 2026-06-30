@@ -1,7 +1,7 @@
 package kr.co.carrer.user.community.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.user.community.dto.ReportCreateRequest;
+import kr.co.carrer.user.community.dto.ReportDTO;
 import kr.co.carrer.user.community.entity.Board;
 import kr.co.carrer.user.community.entity.Comment;
 import kr.co.carrer.user.community.entity.CommunityReport;
@@ -35,7 +35,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     @Transactional
-    public void createReport(UUID reporterId, ReportCreateRequest request) {
+    public void createReport(UUID reporterId, ReportDTO.CreateRequest request) {
         reportRepository.findByReporterIdAndTargetTypeAndTargetId(
                 reporterId,
                 request.targetType(),
@@ -57,7 +57,7 @@ public class ReportServiceImpl implements ReportService {
         reportRepository.save(report);
     }
 
-    private UUID findReportedMemberId(ReportCreateRequest request) {
+    private UUID findReportedMemberId(ReportDTO.CreateRequest request) {
         if (request.targetType() == ReportTargetType.BOARD) {
             Board board = boardRepository.findById(request.targetId())
                     .orElseThrow(() -> new CustomException(CommunityErrorCode.BOARD_NOT_FOUND));
@@ -72,6 +72,6 @@ public class ReportServiceImpl implements ReportService {
             return comment.getMemberId();
         }
 
-        throw new CustomException(CommunityErrorCode.UNSUPPORTED_REPORT_TARGET);
+        throw new CustomException(CommunityErrorCode.INVALID_REPORT_TARGET);
     }
 }

@@ -9,12 +9,15 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "boards")
 public class Board {
+
+    private static final ZoneId SEOUL_ZONE = ZoneId.of("Asia/Seoul");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,24 +62,20 @@ public class Board {
 
     @PrePersist
     protected void onCreate() {
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(SEOUL_ZONE);
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = ZonedDateTime.now();
+        this.updatedAt = ZonedDateTime.now(SEOUL_ZONE);
     }
 
     public void update(String category, String title, String content) {
         this.category = category;
         this.title = title;
         this.content = content;
-    }
-
-    public void increaseViewCount() {
-        this.viewCount++;
     }
 
     public Long getBoardId() {

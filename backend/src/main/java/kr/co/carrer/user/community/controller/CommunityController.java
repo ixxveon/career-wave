@@ -5,26 +5,15 @@ import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.community.docs.CommunityControllerDocs;
-import kr.co.carrer.user.community.dto.BoardCreateRequest;
-import kr.co.carrer.user.community.dto.BoardResponse;
-import kr.co.carrer.user.community.dto.BoardUpdateRequest;
-import kr.co.carrer.user.community.dto.CommentCreateRequest;
-import kr.co.carrer.user.community.dto.CommentResponse;
-import kr.co.carrer.user.community.dto.ReportCreateRequest;
+import kr.co.carrer.user.community.dto.BoardDTO;
+import kr.co.carrer.user.community.dto.CommentDTO;
+import kr.co.carrer.user.community.dto.ReportDTO;
 import kr.co.carrer.user.community.service.BoardService;
 import kr.co.carrer.user.community.service.CommentService;
 import kr.co.carrer.user.community.service.ReportService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,11 +26,7 @@ public class CommunityController implements CommunityControllerDocs {
     private final CommentService commentService;
     private final ReportService reportService;
 
-    public CommunityController(
-            BoardService boardService,
-            CommentService commentService,
-            ReportService reportService
-    ) {
+    public CommunityController(BoardService boardService, CommentService commentService, ReportService reportService) {
         this.boardService = boardService;
         this.commentService = commentService;
         this.reportService = reportService;
@@ -49,7 +34,7 @@ public class CommunityController implements CommunityControllerDocs {
 
     @Override
     @GetMapping("/boards")
-    public ResponseEntity<ApiResponse<PaginationResponse<BoardResponse>>> getBoards(
+    public ResponseEntity<ApiResponse<PaginationResponse<BoardDTO.Response>>> getBoards(
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
@@ -59,29 +44,27 @@ public class CommunityController implements CommunityControllerDocs {
 
     @Override
     @GetMapping("/boards/{boardId}")
-    public ResponseEntity<ApiResponse<BoardResponse>> getBoard(@PathVariable Long boardId) {
+    public ResponseEntity<ApiResponse<BoardDTO.Response>> getBoard(@PathVariable Long boardId) {
         return ResponseEntity.ok(ApiResponse.ok(boardService.getBoard(boardId)));
     }
 
     @Override
     @PostMapping("/boards")
-    public ResponseEntity<ApiResponse<BoardResponse>> createBoard(
+    public ResponseEntity<ApiResponse<BoardDTO.Response>> createBoard(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @Valid @RequestBody BoardCreateRequest request
+            @Valid @RequestBody BoardDTO.CreateRequest request
     ) {
-        UUID memberId = UUID.fromString(principal.getId());
-        return ResponseEntity.ok(ApiResponse.ok(boardService.createBoard(memberId, request)));
+        return ResponseEntity.ok(ApiResponse.ok(boardService.createBoard(getMemberId(principal), request)));
     }
 
     @Override
     @PutMapping("/boards/{boardId}")
-    public ResponseEntity<ApiResponse<BoardResponse>> updateBoard(
+    public ResponseEntity<ApiResponse<BoardDTO.Response>> updateBoard(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long boardId,
-            @Valid @RequestBody BoardUpdateRequest request
+            @Valid @RequestBody BoardDTO.UpdateRequest request
     ) {
-        UUID memberId = UUID.fromString(principal.getId());
-        return ResponseEntity.ok(ApiResponse.ok(boardService.updateBoard(memberId, boardId, request)));
+        return ResponseEntity.ok(ApiResponse.ok(boardService.updateBoard(getMemberId(principal), boardId, request)));
     }
 
     @Override
@@ -90,28 +73,24 @@ public class CommunityController implements CommunityControllerDocs {
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long boardId
     ) {
-        UUID memberId = UUID.fromString(principal.getId());
-        boardService.deleteBoard(memberId, boardId);
-        return ResponseEntity.ok(ApiResponse.ok(null));
+        boardService.deleteBoard(getMemberId(principal), boardId);
+        return ResponseEntity.ok(ApiResponse.ok((Void) null));
     }
 
     @Override
     @GetMapping("/boards/{boardId}/comments")
-    public ResponseEntity<ApiResponse<List<CommentResponse>>> getComments(
-            @PathVariable Long boardId
-    ) {
+    public ResponseEntity<ApiResponse<List<CommentDTO.Response>>> getComments(@PathVariable Long boardId) {
         return ResponseEntity.ok(ApiResponse.ok(commentService.getComments(boardId)));
     }
 
     @Override
     @PostMapping("/boards/{boardId}/comments")
-    public ResponseEntity<ApiResponse<CommentResponse>> createComment(
+    public ResponseEntity<ApiResponse<CommentDTO.Response>> createComment(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long boardId,
-            @Valid @RequestBody CommentCreateRequest request
+            @Valid @RequestBody CommentDTO.CreateRequest request
     ) {
-        UUID memberId = UUID.fromString(principal.getId());
-        return ResponseEntity.ok(ApiResponse.ok(commentService.createComment(memberId, boardId, request)));
+        return ResponseEntity.ok(ApiResponse.ok(commentService.createComment(getMemberId(principal), boardId, request)));
     }
 
     @Override
@@ -120,19 +99,21 @@ public class CommunityController implements CommunityControllerDocs {
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long commentId
     ) {
-        UUID memberId = UUID.fromString(principal.getId());
-        commentService.deleteComment(memberId, commentId);
-        return ResponseEntity.ok(ApiResponse.ok(null));
+        commentService.deleteComment(getMemberId(principal), commentId);
+        return ResponseEntity.ok(ApiResponse.ok((Void) null));
     }
 
     @Override
     @PostMapping("/reports")
     public ResponseEntity<ApiResponse<Void>> createReport(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @Valid @RequestBody ReportCreateRequest request
+            @Valid @RequestBody ReportDTO.CreateRequest request
     ) {
-        UUID reporterId = UUID.fromString(principal.getId());
-        reportService.createReport(reporterId, request);
-        return ResponseEntity.ok(ApiResponse.ok(null));
+        reportService.createReport(getMemberId(principal), request);
+        return ResponseEntity.ok(ApiResponse.ok((Void) null));
+    }
+
+    private UUID getMemberId(AuthPrincipal principal) {
+        return UUID.fromString(principal.getId());
     }
 }

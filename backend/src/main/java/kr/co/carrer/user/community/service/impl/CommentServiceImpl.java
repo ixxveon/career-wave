@@ -1,8 +1,7 @@
 package kr.co.carrer.user.community.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.user.community.dto.CommentCreateRequest;
-import kr.co.carrer.user.community.dto.CommentResponse;
+import kr.co.carrer.user.community.dto.CommentDTO;
 import kr.co.carrer.user.community.entity.Board;
 import kr.co.carrer.user.community.entity.Comment;
 import kr.co.carrer.user.community.exception.CommunityErrorCode;
@@ -31,16 +30,20 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CommentResponse> getComments(Long boardId) {
-        return commentRepository.findByBoardIdAndBlindFalseOrderByCreatedAtAsc(boardId)
+    public List<CommentDTO.Response> getComments(Long boardId) {
+        Board board = boardRepository.findById(boardId)
+                .filter(item -> !item.getBlind())
+                .orElseThrow(() -> new CustomException(CommunityErrorCode.BOARD_NOT_FOUND));
+
+        return commentRepository.findByBoardIdAndBlindFalseOrderByCreatedAtAsc(board.getBoardId())
                 .stream()
-                .map(CommentResponse::from)
+                .map(CommentDTO.Response::from)
                 .toList();
     }
 
     @Override
     @Transactional
-    public CommentResponse createComment(UUID memberId, Long boardId, CommentCreateRequest request) {
+    public CommentDTO.Response createComment(UUID memberId, Long boardId, CommentDTO.CreateRequest request) {
         Board board = boardRepository.findById(boardId)
                 .filter(item -> !item.getBlind())
                 .orElseThrow(() -> new CustomException(CommunityErrorCode.BOARD_NOT_FOUND));
@@ -61,7 +64,7 @@ public class CommentServiceImpl implements CommentService {
                 request.content()
         );
 
-        return CommentResponse.from(commentRepository.save(comment));
+        return CommentDTO.Response.from(commentRepository.save(comment));
     }
 
     @Override
