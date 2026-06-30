@@ -174,7 +174,7 @@ export default function CustomerServicePage() {
         const status = err.response?.status;
         if (!status) setNoticeError('네트워크 연결을 확인해주세요.');
         else setNoticeError(err.response?.data?.message || `공지사항 목록을 불러오지 못했습니다. (${status})`);
-      } else setNoticeError('공지사항 목록을 불러오지 못했습니다.');
+      } else setNoticeError(err instanceof Error ? err.message : '공지사항 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === noticeReqId.current) setNoticeLoading(false);
     }
@@ -209,7 +209,7 @@ export default function CustomerServicePage() {
         const status = err.response?.status;
         if (!status) setFaqError('네트워크 연결을 확인해주세요.');
         else setFaqError(err.response?.data?.message || `FAQ 목록을 불러오지 못했습니다. (${status})`);
-      } else setFaqError('FAQ 목록을 불러오지 못했습니다.');
+      } else setFaqError(err instanceof Error ? err.message : 'FAQ 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === faqReqId.current) setFaqLoading(false);
     }
@@ -241,7 +241,7 @@ export default function CustomerServicePage() {
         const status = err.response?.status;
         if (!status) setInqError('네트워크 연결을 확인해주세요.');
         else setInqError(err.response?.data?.message || `문의 목록을 불러오지 못했습니다. (${status})`);
-      } else setInqError('문의 목록을 불러오지 못했습니다.');
+      } else setInqError(err instanceof Error ? err.message : '문의 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === inqReqId.current) setInqLoading(false);
     }
@@ -290,7 +290,7 @@ export default function CustomerServicePage() {
       setNoticeForm({ noticeId: d.noticeId, category: d.category, title: d.title, content: d.content, isVisible: d.isVisible });
     } catch (err: unknown) {
       if (reqId !== noticeDetailReqId.current) return;
-      setNoticeFormError(axios.isAxiosError(err) ? err.response?.data?.message || '공지 내용을 불러오지 못했습니다.' : '공지 내용을 불러오지 못했습니다.');
+      setNoticeFormError(axios.isAxiosError(err) ? err.response?.data?.message || '공지 내용을 불러오지 못했습니다.' : err instanceof Error ? err.message : '공지 내용을 불러오지 못했습니다.');
     } finally {
       if (reqId === noticeDetailReqId.current) setNoticeDetailLoading(false);
     }
@@ -338,7 +338,7 @@ export default function CustomerServicePage() {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
         alert(status === 500 ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' : err.response?.data?.message || '삭제에 실패했습니다.');
-      } else alert('삭제에 실패했습니다.');
+      } else alert(err instanceof Error ? err.message : '삭제에 실패했습니다.');
     }
   };
 
@@ -410,7 +410,7 @@ export default function CustomerServicePage() {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
         alert(status === 500 ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' : err.response?.data?.message || '삭제에 실패했습니다.');
-      } else alert('삭제에 실패했습니다.');
+      } else alert(err instanceof Error ? err.message : '삭제에 실패했습니다.');
     }
   };
   const handleAiFaqDraft = async () => {
@@ -461,7 +461,7 @@ export default function CustomerServicePage() {
         const status = err.response?.status;
         if (status === 409) setInqActionError('이미 완료된 문의입니다.');
         else setInqActionError(err.response?.data?.message || '답변 저장에 실패했습니다.');
-      } else setInqActionError('답변 저장에 실패했습니다.');
+      } else setInqActionError(err instanceof Error ? err.message : '답변 저장에 실패했습니다.');
     } finally {
       setInqActionLoading(false);
     }
@@ -483,7 +483,7 @@ export default function CustomerServicePage() {
         if (status === 409) setInqActionError('이미 완료된 문의입니다.');
         else if (status === 400) setInqActionError('답변 저장 후 처리 완료할 수 있습니다.');
         else setInqActionError(err.response?.data?.message || '처리 완료에 실패했습니다.');
-      } else setInqActionError('처리 완료에 실패했습니다.');
+      } else setInqActionError(err instanceof Error ? err.message : '처리 완료에 실패했습니다.');
     } finally {
       setInqActionLoading(false);
     }

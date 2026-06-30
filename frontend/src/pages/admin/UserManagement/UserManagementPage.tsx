@@ -130,7 +130,8 @@ export default function UserManagementPage() {
     } catch (err: unknown) {
       if (reqId !== memberReqId.current) return;
       if (axios.isAxiosError(err)) {
-        setMemberError(err.response?.data?.message || `회원 목록을 불러오지 못했습니다. (${err.response?.status})`);
+        const status = err.response?.status;
+        setMemberError(err.response?.data?.message || (status ? `회원 목록을 불러오지 못했습니다. (${status})` : '네트워크 연결을 확인해주세요.'));
       } else setMemberError(err instanceof Error ? err.message : '회원 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === memberReqId.current) setMemberLoading(false);
@@ -161,7 +162,8 @@ export default function UserManagementPage() {
     } catch (err: unknown) {
       if (reqId !== hrReqId.current) return;
       if (axios.isAxiosError(err)) {
-        setHrError(err.response?.data?.message || `기업 회원 목록을 불러오지 못했습니다. (${err.response?.status})`);
+        const status = err.response?.status;
+        setHrError(err.response?.data?.message || (status ? `기업 회원 목록을 불러오지 못했습니다. (${status})` : '네트워크 연결을 확인해주세요.'));
       } else setHrError(err instanceof Error ? err.message : '기업 회원 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === hrReqId.current) setHrLoading(false);
@@ -197,7 +199,8 @@ export default function UserManagementPage() {
       setSelectedMember(res.data.data);
     } catch (err: unknown) {
       if (reqId !== memberDetailReqId.current) return;
-      alert(err instanceof Error ? err.message : '회원 상세 정보를 불러오지 못했습니다.');
+      const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
+      alert(msg || '회원 상세 정보를 불러오지 못했습니다.');
     }
   };
 

@@ -133,7 +133,7 @@ export default function ReportPage() {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
         setListError(err.response?.data?.message || (status ? `신고 목록을 불러오지 못했습니다. (${status})` : '네트워크 연결을 확인해주세요.'));
-      } else setListError('신고 목록을 불러오지 못했습니다.');
+      } else setListError(err instanceof Error ? err.message : '신고 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === reportReqId.current) setListLoading(false);
     }
