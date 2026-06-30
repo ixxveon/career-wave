@@ -42,6 +42,20 @@ jobs:
           docker build -t $FASTAPI_IMAGE ./fastapi
           docker push $FASTAPI_IMAGE
 
+      - name: Get GitHub Actions runner IP
+        id: runner-ip
+        run: |
+          RUNNER_IP=$(curl -s https://checkip.amazonaws.com)
+          echo "ip=$RUNNER_IP" >> $GITHUB_OUTPUT
+
+      - name: Allow SSH from runner IP
+        run: |
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ secrets.APP_SECURITY_GROUP_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.runner-ip.outputs.ip }}/32 || true
+
       - name: Copy compose file to App1
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -103,3 +117,12 @@ jobs:
             docker compose pull
             docker compose up -d
             docker image prune -f
+
+      - name: Remove SSH from runner IP
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id ${{ secrets.APP_SECURITY_GROUP_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.runner-ip.outputs.ip }}/32 || true
