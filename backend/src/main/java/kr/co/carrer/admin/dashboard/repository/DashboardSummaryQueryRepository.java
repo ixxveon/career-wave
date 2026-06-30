@@ -3,6 +3,7 @@ package kr.co.carrer.admin.dashboard.repository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import kr.co.carrer.admin.dashboard.type.DashboardAlertLevelType;
 import kr.co.carrer.admin.dashboard.type.DashboardPaymentMethod;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -93,6 +94,7 @@ public class DashboardSummaryQueryRepository {
                         longObjectValue(row, 0),
                         stringValue(row, 1),
                         stringValue(row, 2),
+                        DashboardAlertLevelType.WARNING,
                         zonedDateTimeValue(row, 3)
                 ))
                 .toList();
@@ -305,6 +307,7 @@ public class DashboardSummaryQueryRepository {
                         longObjectValue(row, 0),
                         stringValue(row, 1),
                         stringValue(row, 2),
+                        DashboardAlertLevelType.URGENT,
                         zonedDateTimeValue(row, 3)
                 ))
                 .toList();
@@ -415,6 +418,7 @@ public class DashboardSummaryQueryRepository {
             Long id,
             String title,
             String message,
+            DashboardAlertLevelType level,
             ZonedDateTime createdAt
     ) {
     }
@@ -457,6 +461,7 @@ public class DashboardSummaryQueryRepository {
             Long id,
             String title,
             String message,
+            DashboardAlertLevelType level,
             ZonedDateTime createdAt
     ) {
     }
