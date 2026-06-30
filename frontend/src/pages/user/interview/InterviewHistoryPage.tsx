@@ -17,7 +17,7 @@ const PAGE_SIZE = 10;
 export default function InterviewHistoryPage() {
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
-  const { data, isLoading, isError } = useInterviewHistory(page, PAGE_SIZE);
+  const { data, isLoading, isError, refetch } = useInterviewHistory(page, PAGE_SIZE);
 
   const totalPages = data?.totalPages ?? 0;
 
@@ -62,7 +62,12 @@ export default function InterviewHistoryPage() {
           <div className="ih-state">
             <Loader2 size={20} className="ih-state__spinner" /> 불러오는 중…
           </div>
-        ) : isError || !data?.items.length ? (
+        ) : isError ? (
+          <div className="ih-state">
+            <p>이력을 불러오지 못했어요.</p>
+            <button className="ih-cta" onClick={() => refetch()}>다시 시도 →</button>
+          </div>
+        ) : !data?.items.length ? (
           <div className="ih-state">
             <p>아직 면접 이력이 없어요.</p>
             <button className="ih-cta" onClick={() => navigate('/interview/text')}>첫 면접 시작하기 →</button>
