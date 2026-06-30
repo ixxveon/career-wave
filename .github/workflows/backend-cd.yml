@@ -57,6 +57,7 @@ jobs:
           echo "ip=$RUNNER_IP" >> $GITHUB_OUTPUT
 
       - name: Allow SSH from runner IP
+        id: allow_ssh
         run: |
           set +e
           OUTPUT=$(aws ec2 authorize-security-group-ingress \
@@ -69,6 +70,11 @@ jobs:
           if [ $STATUS -ne 0 ] && ! echo "$OUTPUT" | grep -q "InvalidPermission.Duplicate"; then
             echo "$OUTPUT"
             exit $STATUS
+          fi
+          if [ $STATUS -eq 0 ]; then
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "created=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Copy compose file to App1
@@ -134,10 +140,17 @@ jobs:
             docker image prune -f
 
       - name: Remove SSH from runner IP
-        if: always()
+        if: always() && steps.allow_ssh.outputs.created == 'true'
         run: |
-          aws ec2 revoke-security-group-ingress \
+          set +e
+          OUTPUT=$(aws ec2 revoke-security-group-ingress \
             --group-id ${{ secrets.APP_SECURITY_GROUP_ID }} \
             --protocol tcp \
             --port 22 \
-            --cidr ${{ steps.runner-ip.outputs.ip }}/32 || true
+            --cidr ${{ steps.runner-ip.outputs.ip }}/32 2>&1)
+          STATUS=$?
+          set -e
+          if [ $STATUS -ne 0 ] && ! echo "$OUTPUT" | grep -q "InvalidPermission.NotFound"; then
+            echo "$OUTPUT"
+            exit $STATUS
+          fi
