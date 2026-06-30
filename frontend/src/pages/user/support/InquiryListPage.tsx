@@ -82,15 +82,19 @@ export default function InquiryListPage() {
   const [error,    setError]     = useState('');
 
   useEffect(() => {
+    let ignore = false;
     setLoading(true);
     setError('');
     supportApi.getMyInquiries({ category: category || undefined, page, size: PAGE_SIZE })
       .then(res => {
+        if (ignore) return;
         setInquiries(res.items);
         setTotalPages(res.totalPages);
       })
-      .catch(() => setError('문의 내역을 불러오지 못했습니다.'))
-      .finally(() => setLoading(false));
+      .catch(() => { if (!ignore) setError('문의 내역을 불러오지 못했습니다.'); })
+      .finally(() => { if (!ignore) setLoading(false); });
+
+    return () => { ignore = true; };
   }, [category, page]);
 
   function handleCategoryChange(val: InquiryCategory | '') {

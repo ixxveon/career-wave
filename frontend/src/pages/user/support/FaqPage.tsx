@@ -27,15 +27,19 @@ export default function FaqPage() {
   const debouncedSearch = useDebounce(search, 300);
 
   useEffect(() => {
+    let ignore = false;
     setLoading(true);
     setError('');
     supportApi.getFaqs({ category: category || undefined, keyword: debouncedSearch || undefined, page, size: PAGE_SIZE })
       .then(res => {
+        if (ignore) return;
         setFaqs(res.items);
         setTotalPages(res.totalPages);
       })
-      .catch(() => setError('FAQ를 불러오지 못했습니다.'))
-      .finally(() => setLoading(false));
+      .catch(() => { if (!ignore) setError('FAQ를 불러오지 못했습니다.'); })
+      .finally(() => { if (!ignore) setLoading(false); });
+
+    return () => { ignore = true; };
   }, [category, debouncedSearch, page]);
 
   function handleCategoryChange(val: FaqCategory | '') {

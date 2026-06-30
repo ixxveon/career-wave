@@ -24,9 +24,10 @@ public class UserFaqServiceImpl implements UserFaqService {
     public PaginationResponse<SupportDTO.FaqItem> getFaqs(FaqCategory category, String keyword, int page, int size) {
         if (page < 1 || size < 1) throw new CustomException(ErrorCode.BAD_REQUEST);
         size = Math.min(size, 100);
-        int offset = (page - 1) * size;
+        long offset = (long) (page - 1) * size;
+        if (offset > Integer.MAX_VALUE) throw new CustomException(ErrorCode.BAD_REQUEST);
 
-        List<SupportDTO.FaqItem> items = faqQueryRepository.findFaqs(category, keyword, offset, size);
+        List<SupportDTO.FaqItem> items = faqQueryRepository.findFaqs(category, keyword, (int) offset, size);
         long total = faqQueryRepository.countFaqs(category, keyword);
         return PaginationResponse.of(items, page, size, total);
     }

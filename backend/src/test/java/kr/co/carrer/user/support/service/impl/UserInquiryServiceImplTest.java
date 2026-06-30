@@ -18,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -50,7 +49,7 @@ class UserInquiryServiceImplTest {
             UUID memberId = UUID.randomUUID();
             SupportInquiry inquiry = createInquiry(1L, memberId, InquiryCategory.SERVICE, "제목", "내용입니다열자이상", InquiryStatus.PENDING);
             Page<SupportInquiry> page = new PageImpl<>(List.of(inquiry), PageRequest.of(0, 20), 1);
-            given(inquiryRepository.findByMemberIdAndCategory(any(UUID.class), eq(null), any(Pageable.class)))
+            given(inquiryRepository.findByMemberIdAndCategory(any(UUID.class), eq(null), eq(PageRequest.of(0, 20))))
                 .willReturn(page);
 
             PaginationResponse<SupportDTO.InquiryList> result = userInquiryService.getMyInquiries(memberId, null, 1, 20);
@@ -70,7 +69,7 @@ class UserInquiryServiceImplTest {
             String longContent = "a".repeat(150);
             SupportInquiry inquiry = createInquiry(1L, memberId, InquiryCategory.SERVICE, "제목", longContent, InquiryStatus.PENDING);
             Page<SupportInquiry> page = new PageImpl<>(List.of(inquiry), PageRequest.of(0, 20), 1);
-            given(inquiryRepository.findByMemberIdAndCategory(any(UUID.class), eq(null), any(Pageable.class)))
+            given(inquiryRepository.findByMemberIdAndCategory(any(UUID.class), eq(null), eq(PageRequest.of(0, 20))))
                 .willReturn(page);
 
             PaginationResponse<SupportDTO.InquiryList> result = userInquiryService.getMyInquiries(memberId, null, 1, 20);

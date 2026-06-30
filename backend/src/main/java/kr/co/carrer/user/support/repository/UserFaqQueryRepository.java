@@ -47,7 +47,7 @@ public class UserFaqQueryRepository {
             idx += 2;
         }
 
-        sql.append(" ORDER BY created_at ASC LIMIT ?").append(idx).append(" OFFSET ?").append(idx + 1);
+        sql.append(" ORDER BY created_at ASC, faq_id ASC LIMIT ?").append(idx).append(" OFFSET ?").append(idx + 1);
         params.add(size);
         params.add(offset);
 

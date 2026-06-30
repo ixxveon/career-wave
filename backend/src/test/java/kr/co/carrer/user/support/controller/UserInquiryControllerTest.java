@@ -98,6 +98,10 @@ class UserInquiryControllerTest {
                     .with(user(userPrincipal())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.page").value(1))
+                .andExpect(jsonPath("$.data.size").value(20))
+                .andExpect(jsonPath("$.data.totalItems").value(1))
+                .andExpect(jsonPath("$.data.totalPages").value(1))
                 .andExpect(jsonPath("$.data.items.length()").value(1))
                 .andExpect(jsonPath("$.data.items[0].inquiryId").value(1))
                 .andExpect(jsonPath("$.data.items[0].inquiryStatus").value("PENDING"));
