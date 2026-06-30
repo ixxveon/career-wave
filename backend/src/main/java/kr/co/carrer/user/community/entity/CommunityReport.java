@@ -17,9 +17,9 @@ import kr.co.carrer.user.community.type.ReportTargetType;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-@Entity
+@Entity(name = "CommunityReport")
 @Table(name = "reports")
-public class Report {
+public class CommunityReport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,10 +62,10 @@ public class Report {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
-    protected Report() {
+    protected CommunityReport() {
     }
 
-    public Report(UUID memberId, UUID reporterId, ReportTargetType targetType, Long targetId, ReportReason reason) {
+    public CommunityReport(UUID memberId, UUID reporterId, ReportTargetType targetType, Long targetId, ReportReason reason) {
         this.memberId = memberId;
         this.reporterId = reporterId;
         this.targetType = targetType;

@@ -4,7 +4,7 @@ import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.community.dto.ReportCreateRequest;
 import kr.co.carrer.user.community.entity.Board;
 import kr.co.carrer.user.community.entity.Comment;
-import kr.co.carrer.user.community.entity.Report;
+import kr.co.carrer.user.community.entity.CommunityReport;
 import kr.co.carrer.user.community.exception.CommunityErrorCode;
 import kr.co.carrer.user.community.repository.BoardRepository;
 import kr.co.carrer.user.community.repository.CommentRepository;
@@ -46,7 +46,7 @@ public class ReportServiceImpl implements ReportService {
 
         UUID reportedMemberId = findReportedMemberId(request);
 
-        Report report = new Report(
+        CommunityReport report = new CommunityReport(
                 reportedMemberId,
                 reporterId,
                 request.targetType(),
