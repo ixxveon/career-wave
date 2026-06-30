@@ -5,9 +5,9 @@ import {
   MessageSquare, Video, ChevronRight, Lightbulb,
   FileText, User, Zap, ClipboardList, X, Loader2,
 } from 'lucide-react';
-import { SESSION_TYPE } from '../../../types/user/interview';
 import { useInterviewHistory } from '../../../hooks/user/interview/useInterviewReport';
 import { useSubscriptionStatus } from '../../../hooks/user/subscription';
+import { SESSION_TYPE_LABEL } from '../../../constants/user/interview';
 
 /* ── 상품별 월 이용 한도 기본값 (API 미구독 시 fallback) */
 const DEFAULT_DOC_LIMIT = 30;
@@ -16,12 +16,6 @@ const DEFAULT_IV_LIMIT  = 20;
 function scoreClass(s: number): string {
   return s >= 80 ? 'iv-score--high' : s >= 65 ? 'iv-score--mid' : 'iv-score--low';
 }
-
-const SESSION_TYPE_LABEL: Record<string, string> = {
-  [SESSION_TYPE.TEXT]:  '텍스트 면접',
-  [SESSION_TYPE.VOICE]: '음성 면접',
-  [SESSION_TYPE.VIDEO]: '비디오 면접',
-};
 
 interface ComingSoonModalProps {
   onClose: () => void;

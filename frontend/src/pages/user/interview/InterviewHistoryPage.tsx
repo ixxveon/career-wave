@@ -2,15 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, ClipboardList, FileText } from 'lucide-react';
 import { useInterviewHistory } from '../../../hooks/user/interview/useInterviewReport';
-import { SESSION_TYPE, SESSION_STATUS } from '../../../types/user/interview';
+import { SESSION_STATUS } from '../../../types/user/interview';
 import type { HistoryItem } from '../../../types/user/interview';
+import { SESSION_TYPE_LABEL } from '../../../constants/user/interview';
 import '@/styles/user/interview/InterviewHistoryPage.css';
-
-const SESSION_TYPE_LABEL: Record<string, string> = {
-  [SESSION_TYPE.TEXT]:  '텍스트 면접',
-  [SESSION_TYPE.VOICE]: '음성 면접',
-  [SESSION_TYPE.VIDEO]: '비디오 면접',
-};
 
 const PAGE_SIZE = 10;
 
