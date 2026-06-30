@@ -20,7 +20,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.LocalDate;
@@ -31,7 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest(excludeAutoConfiguration = JpaRepositoriesAutoConfiguration.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ActiveProfiles("test")
 @ContextConfiguration(classes = JobNoticeQueryRepositoryTest.TestJpaConfig.class)
 @TestPropertySource(properties = {
         "spring.sql.init.mode=never"

@@ -139,7 +139,7 @@ public class DashboardServiceImpl implements DashboardService {
         emptyIfNull(auditAlerts).stream()
                 .map(row -> new DashboardDTO.Alert(
                         row.id(),
-                        DashboardAlertLevelType.WARNING,
+                        row.level(),
                         DashboardDomainType.AUDIT_LOG,
                         row.title(),
                         row.message(),
@@ -151,7 +151,7 @@ public class DashboardServiceImpl implements DashboardService {
         emptyIfNull(scrapingAlerts).stream()
                 .map(row -> new DashboardDTO.Alert(
                         row.id(),
-                        DashboardAlertLevelType.URGENT,
+                        row.level(),
                         DashboardDomainType.SCRAPING,
                         row.title(),
                         row.message(),
