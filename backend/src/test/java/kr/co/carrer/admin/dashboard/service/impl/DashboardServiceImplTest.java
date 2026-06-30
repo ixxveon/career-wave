@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -274,6 +275,86 @@ class DashboardServiceImplTest {
                         ADMIN_ROUTE_PREFIX + "/log",
                         ADMIN_ROUTE_PREFIX + "/dashboard",
                         ADMIN_ROUTE_PREFIX + "/dashboard"
+                );
+    }
+
+    @Test
+    void kpiContractMatchesAdminDashboardFrontendRoutes() {
+        DashboardSummaryQueryRepository repository = mock(DashboardSummaryQueryRepository.class);
+        when(repository.fetchAdminAccountMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.AdminAccountMetrics(2L, 3L, 1L));
+        when(repository.fetchAiUsageMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.AiUsageMetrics(4L, BigDecimal.valueOf(10_000L), true, 0, true));
+        when(repository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(0L, 0L, 0L, 0));
+        when(repository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(3L, 1L, 0L, 2L));
+        when(repository.findAuditAlerts(any(DashboardQueryWindow.class), eq(5)))
+                .thenReturn(List.of());
+        when(repository.findScrapingAlerts(any(DashboardQueryWindow.class), eq(5)))
+                .thenReturn(List.of());
+        when(repository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))
+                .thenReturn(List.of(new DashboardSummaryQueryRepository.RecentActivityRow(
+                        30L,
+                        ZonedDateTime.parse("2026-06-28T09:00:00Z"),
+                        "admin",
+                        "관리자 활동",
+                        "/admin/log"
+                )));
+
+        DashboardServiceImpl service = new DashboardServiceImpl(repository);
+
+        DashboardDTO.ResponseSummary result = service.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(result.kpis())
+                .extracting(DashboardDTO.Kpi::key, DashboardDTO.Kpi::targetPath)
+                .containsExactly(
+                        tuple(DashboardKpiKeyType.TODAY_NEW_ADMINS, ADMIN_ROUTE_PREFIX + "/admins"),
+                        tuple(DashboardKpiKeyType.REALTIME_ACTIVE_ADMINS, ADMIN_ROUTE_PREFIX + "/admins"),
+                        tuple(DashboardKpiKeyType.AI_INTERVIEW_SESSIONS, ADMIN_ROUTE_PREFIX + "/ai"),
+                        tuple(DashboardKpiKeyType.TODAY_REVENUE, ADMIN_ROUTE_PREFIX + "/payments")
+                );
+    }
+
+    @Test
+    void alertContractMatchesFrontendDomainAndRouteFilters() {
+        DashboardSummaryQueryRepository repository = mock(DashboardSummaryQueryRepository.class);
+        when(repository.fetchAdminAccountMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.AdminAccountMetrics(0L, 0L, 0L));
+        when(repository.fetchAiUsageMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.AiUsageMetrics(0L, BigDecimal.ZERO, true, 0, true));
+        when(repository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(0L, 0L, 0L, 0));
+        when(repository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
+                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(0L, 0L, 0L, 0L));
+        when(repository.findAuditAlerts(any(DashboardQueryWindow.class), eq(5)))
+                .thenReturn(List.of(new DashboardSummaryQueryRepository.AuditAlertRow(
+                        10L,
+                        "감사 로그 경고",
+                        "WARN",
+                        DashboardAlertLevelType.WARNING,
+                        ZonedDateTime.parse("2026-06-28T09:00:00Z")
+                )));
+        when(repository.findScrapingAlerts(any(DashboardQueryWindow.class), eq(5)))
+                .thenReturn(List.of(new DashboardSummaryQueryRepository.ScrapingAlertRow(
+                        20L,
+                        "스크래핑 실패",
+                        "FAILED",
+                        DashboardAlertLevelType.URGENT,
+                        ZonedDateTime.parse("2026-06-28T09:01:00Z")
+                )));
+        when(repository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))
+                .thenReturn(List.of());
+
+        DashboardServiceImpl service = new DashboardServiceImpl(repository);
+
+        DashboardDTO.ResponseSummary result = service.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(result.alerts())
+                .extracting(DashboardDTO.Alert::id, DashboardDTO.Alert::domain, DashboardDTO.Alert::level, DashboardDTO.Alert::targetPath)
+                .containsExactly(
+                        tuple(20L, DashboardDomainType.SCRAPING, DashboardAlertLevelType.URGENT, ADMIN_ROUTE_PREFIX + "/scraping"),
+                        tuple(10L, DashboardDomainType.AUDIT_LOG, DashboardAlertLevelType.WARNING, ADMIN_ROUTE_PREFIX + "/log")
                 );
     }
 }
