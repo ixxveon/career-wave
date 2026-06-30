@@ -1,6 +1,7 @@
 package kr.co.carrer.user.support.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.support.dto.SupportDTO;
 import kr.co.carrer.user.support.entity.SupportInquiry;
 import kr.co.carrer.user.support.exception.UserSupportErrorCode;
@@ -14,6 +15,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -23,6 +28,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,16 +49,18 @@ class UserInquiryServiceImplTest {
         void getMyInquiries_success() {
             UUID memberId = UUID.randomUUID();
             SupportInquiry inquiry = createInquiry(1L, memberId, InquiryCategory.SERVICE, "제목", "내용입니다열자이상", InquiryStatus.PENDING);
-            given(inquiryRepository.findByMemberIdAndCategory(memberId, null))
-                .willReturn(List.of(inquiry));
+            Page<SupportInquiry> page = new PageImpl<>(List.of(inquiry), PageRequest.of(0, 20), 1);
+            given(inquiryRepository.findByMemberIdAndCategory(any(UUID.class), eq(null), any(Pageable.class)))
+                .willReturn(page);
 
-            List<SupportDTO.InquiryList> result = userInquiryService.getMyInquiries(memberId, null);
+            PaginationResponse<SupportDTO.InquiryList> result = userInquiryService.getMyInquiries(memberId, null, 1, 20);
 
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).inquiryId()).isEqualTo(1L);
-            assertThat(result.get(0).category()).isEqualTo(InquiryCategory.SERVICE);
-            assertThat(result.get(0).title()).isEqualTo("제목");
-            assertThat(result.get(0).inquiryStatus()).isEqualTo(InquiryStatus.PENDING);
+            assertThat(result.items()).hasSize(1);
+            assertThat(result.items().get(0).inquiryId()).isEqualTo(1L);
+            assertThat(result.items().get(0).category()).isEqualTo(InquiryCategory.SERVICE);
+            assertThat(result.items().get(0).title()).isEqualTo("제목");
+            assertThat(result.items().get(0).inquiryStatus()).isEqualTo(InquiryStatus.PENDING);
+            assertThat(result.totalItems()).isEqualTo(1);
         }
 
         @Test
@@ -61,12 +69,22 @@ class UserInquiryServiceImplTest {
             UUID memberId = UUID.randomUUID();
             String longContent = "a".repeat(150);
             SupportInquiry inquiry = createInquiry(1L, memberId, InquiryCategory.SERVICE, "제목", longContent, InquiryStatus.PENDING);
-            given(inquiryRepository.findByMemberIdAndCategory(memberId, null))
-                .willReturn(List.of(inquiry));
+            Page<SupportInquiry> page = new PageImpl<>(List.of(inquiry), PageRequest.of(0, 20), 1);
+            given(inquiryRepository.findByMemberIdAndCategory(any(UUID.class), eq(null), any(Pageable.class)))
+                .willReturn(page);
 
-            List<SupportDTO.InquiryList> result = userInquiryService.getMyInquiries(memberId, null);
+            PaginationResponse<SupportDTO.InquiryList> result = userInquiryService.getMyInquiries(memberId, null, 1, 20);
 
-            assertThat(result.get(0).contentPreview()).hasSize(100);
+            assertThat(result.items().get(0).contentPreview()).hasSize(100);
+        }
+
+        @Test
+        @DisplayName("page가 1 미만이면 BAD_REQUEST 예외")
+        void getMyInquiries_invalidPageThrows() {
+            UUID memberId = UUID.randomUUID();
+
+            assertThatThrownBy(() -> userInquiryService.getMyInquiries(memberId, null, 0, 20))
+                .isInstanceOf(CustomException.class);
         }
     }
 

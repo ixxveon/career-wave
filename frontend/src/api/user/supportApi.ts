@@ -85,6 +85,14 @@ export interface FaqItem {
   answer: string;
 }
 
+export interface FaqListResult {
+  items: FaqItem[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+}
+
 export interface InquiryItem {
   inquiryId: number;
   category: InquiryCategory;
@@ -93,6 +101,14 @@ export interface InquiryItem {
   reply: string | null;
   inquiryStatus: InquiryStatus;
   createdAt: string;
+}
+
+export interface InquiryListResult {
+  items: InquiryItem[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
 }
 
 export interface CreateInquiryRequest {
@@ -125,20 +141,22 @@ export const supportApi = {
     memberApiClient<NoticeDetail>(`/api/v1/user/notices/${noticeId}`),
 
   // FAQ 목록
-  getFaqs: (params?: { category?: FaqCategory; keyword?: string }) => {
+  getFaqs: (params: { category?: FaqCategory; keyword?: string; page: number; size: number }) => {
     const query = new URLSearchParams();
-    if (params?.category) query.set('category', params.category);
-    if (params?.keyword)  query.set('keyword', params.keyword);
-    const qs = query.toString();
-    return memberApiClient<FaqItem[]>(`/api/v1/user/faqs${qs ? `?${qs}` : ''}`);
+    if (params.category) query.set('category', params.category);
+    if (params.keyword)  query.set('keyword', params.keyword);
+    query.set('page', String(params.page));
+    query.set('size', String(params.size));
+    return memberApiClient<FaqListResult>(`/api/v1/user/faqs?${query}`);
   },
 
   // 나의 문의 목록 (로그인 필수)
-  getMyInquiries: (params?: { category?: InquiryCategory }) => {
+  getMyInquiries: (params: { category?: InquiryCategory; page: number; size: number }) => {
     const query = new URLSearchParams();
-    if (params?.category) query.set('category', params.category);
-    const qs = query.toString();
-    return memberApiClient<InquiryItem[]>(`/api/v1/user/inquiries${qs ? `?${qs}` : ''}`, { auth: true });
+    if (params.category) query.set('category', params.category);
+    query.set('page', String(params.page));
+    query.set('size', String(params.size));
+    return memberApiClient<InquiryListResult>(`/api/v1/user/inquiries?${query}`, { auth: true });
   },
 
   // 문의 접수 (로그인 필수)
