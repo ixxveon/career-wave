@@ -61,6 +61,7 @@ jobs:
           script: |
             set -e
             cd ~/career-wave
+            test -f .env || { echo "Missing ~/career-wave/.env"; exit 1; }
             grep -q '^IMAGE_TAG=' .env && sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ env.IMAGE_TAG }}/' .env || echo 'IMAGE_TAG=${{ env.IMAGE_TAG }}' >> .env
 
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
@@ -91,6 +92,7 @@ jobs:
           script: |
             set -e
             cd ~/career-wave
+            test -f .env || { echo "Missing ~/career-wave/.env"; exit 1; }
             grep -q '^IMAGE_TAG=' .env && sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ env.IMAGE_TAG }}/' .env || echo 'IMAGE_TAG=${{ env.IMAGE_TAG }}' >> .env
 
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
