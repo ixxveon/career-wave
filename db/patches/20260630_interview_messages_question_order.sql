@@ -6,8 +6,12 @@
 ALTER TABLE interview_messages
     ADD COLUMN IF NOT EXISTS question_order INTEGER NULL;
 
-COMMENT ON COLUMN interview_messages.question_order IS '질문 순서 (SYSTEM 메시지는 NULL 허용)';
+COMMENT ON COLUMN interview_messages.question_order IS '질문 순서 (QUESTION 타입은 NOT NULL, ANSWER/SYSTEM은 NULL 허용)';
 
 ALTER TABLE interview_messages
     ADD CONSTRAINT uq_interview_messages_session_sender_order
         UNIQUE (session_id, sender, question_order);
+
+ALTER TABLE interview_messages
+    ADD CONSTRAINT chk_question_order_not_null_for_question
+        CHECK (message_type != 'QUESTION' OR question_order IS NOT NULL);
