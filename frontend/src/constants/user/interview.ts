@@ -25,6 +25,13 @@ export const WS_PING_TIMEOUT_MS = 5_000;
 /** LLM 첫 토큰 대기 제한 시간 ms — 초과 시 폴백 질문 삽입 (spec FR-005) */
 export const LLM_STREAM_TIMEOUT_MS = 8_000;
 
+// ── 세션 타입 레이블 ───────────────────────────────────────────
+export const SESSION_TYPE_LABEL: Record<string, string> = {
+  TEXT:  '텍스트 면접',
+  VOICE: '음성 면접',
+  VIDEO: '비디오 면접',
+};
+
 // ── 리포트 ────────────────────────────────────────────────────
 /** 개선 추천 임계값 — 이 점수 미만 지표는 개선 항목으로 표시 */
 export const IMPROVEMENT_THRESHOLD = 85;

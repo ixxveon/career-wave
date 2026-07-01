@@ -61,14 +61,14 @@ export default function NoticeDetailPage() {
 
       <div className="nd-nav">
         {notice.nextNotice ? (
-          <button type="button" className="nd-nav__item nd-nav__item--next" onClick={() => navigate(`/support/notices/${notice.nextNotice!.noticeId}`)}>
+          <button type="button" className="nd-nav__item nd-nav__item--next" onClick={() => navigate(`/support/notices/${notice.nextNotice?.noticeId}`)}>
             <span className="nd-nav__label"><ChevronLeft size={13} /> 다음 공지</span>
             <span className="nd-nav__title">{notice.nextNotice.title}</span>
           </button>
         ) : <div className="nd-nav__item nd-nav__item--empty" />}
 
         {notice.prevNotice ? (
-          <button type="button" className="nd-nav__item nd-nav__item--prev" onClick={() => navigate(`/support/notices/${notice.prevNotice!.noticeId}`)}>
+          <button type="button" className="nd-nav__item nd-nav__item--prev" onClick={() => navigate(`/support/notices/${notice.prevNotice?.noticeId}`)}>
             <span className="nd-nav__label">이전 공지 <ChevronRight size={13} /></span>
             <span className="nd-nav__title">{notice.prevNotice.title}</span>
           </button>

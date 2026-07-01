@@ -76,7 +76,7 @@ function Header() {
                 </NavLink>
                 {item.children && (
                   <div className={`cw-header__submenu${openMenu === item.label ? ' cw-header__submenu--open' : ''}`} role="menu">
-                    {item.children.map((child) =>
+                    {item.children.map((child) => (
                       <NavLink
                         className={({ isActive }) => (isActive ? 'is-active' : undefined)}
                         end
@@ -86,7 +86,7 @@ function Header() {
                       >
                         {child.label}
                       </NavLink>
-                    )}
+                    ))}
                   </div>
                 )}
               </div>

@@ -1,12 +1,12 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import '@/styles/user/interview/InterviewHomePage.css';
 import {
   MessageSquare, ChevronRight,
   User, Zap, ClipboardList, Loader2,
 } from 'lucide-react';
-import { SESSION_TYPE } from '../../../types/user/interview';
 import { useInterviewHistory } from '../../../hooks/user/interview/useInterviewReport';
 import { useSubscriptionStatus } from '../../../hooks/user/subscription';
+import { SESSION_TYPE_LABEL } from '../../../constants/user/interview';
 
 /* ── 상품별 월 이용 한도 기본값 (API 미구독 시 fallback) */
 const DEFAULT_DOC_LIMIT = 30;
@@ -16,16 +16,10 @@ function scoreClass(s: number): string {
   return s >= 80 ? 'iv-score--high' : s >= 65 ? 'iv-score--mid' : 'iv-score--low';
 }
 
-const SESSION_TYPE_LABEL: Record<string, string> = {
-  [SESSION_TYPE.TEXT]:  '텍스트 면접',
-  [SESSION_TYPE.VOICE]: '음성 면접',
-  [SESSION_TYPE.VIDEO]: '비디오 면접',
-};
-
 
 function InterviewHomePage() {
   const navigate = useNavigate();
-  const { data: historyData, isLoading: historyLoading, isError: historyError } = useInterviewHistory(0, 3);
+  const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
   const { subscribedItems, unsubscribedItems } = useSubscriptionStatus();
 
   /* 서류 AI 코칭 / AI 모의면접 usage 항목 (구독 여부 무관) */
@@ -162,13 +156,14 @@ function InterviewHomePage() {
           <span className="iv-card__icon-wrap iv-card__icon-wrap--green"><ClipboardList size={16} /></span>
           최근 연습 히스토리
           <span className="iv-card__subtitle">최신 3개</span>
+          <Link to="/interview/sessions" className="iv-card__view-all">전체 보기 →</Link>
         </h2>
         {historyLoading ? (
           <div className="iv-history-loading"><Loader2 size={20} className="iv-history-loading__spinner" /> 불러오는 중…</div>
         ) : historyError ? (
           <div className="iv-history-empty">
-            <p>아직 면접 이력이 없어요.</p>
-            <button className="iv-tip__cta" onClick={() => navigate('/interview/text')}>첫 면접 시작하기 →</button>
+            <p>이력을 불러오지 못했습니다.</p>
+            <button className="iv-tip__cta" onClick={() => refetchHistory()}>다시 시도 →</button>
           </div>
         ) : !historyData?.items.length ? (
           <div className="iv-history-empty">

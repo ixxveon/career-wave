@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
 import { AlertTriangle, Bot, Clock, EyeOff, Flag, UserX } from 'lucide-react';
 import { reportApi, REPORT_STATUS, type ReportItem, type ReportSummary, type ReportStatus, type TargetType, type ReportReason, type ReportDetail, type AiSuggestion } from '../../../api/admin/reportApi';
 import '../../../styles/admin/admin.css';
@@ -127,10 +128,12 @@ export default function ReportPage() {
       setTotalItems(totalItems);
       setTotalPages(totalPages);
       setCurrentPage(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (reqId !== reportReqId.current) return;
-      const status = err.response?.status;
-      setListError(err.response?.data?.message || (status ? `신고 목록을 불러오지 못했습니다. (${status})` : '네트워크 연결을 확인해주세요.'));
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        setListError(err.response?.data?.message || (status ? `신고 목록을 불러오지 못했습니다. (${status})` : '네트워크 연결을 확인해주세요.'));
+      } else setListError(err instanceof Error ? err.message : '신고 목록을 불러오지 못했습니다.');
     } finally {
       if (reqId === reportReqId.current) setListLoading(false);
     }
@@ -462,7 +465,7 @@ export default function ReportPage() {
                         <div className="warnCountWrap">
                           <div className="warnDots">
                             {Array.from({ length: WARN_THRESHOLD }).map((_, i) => (
-                              <span key={i} className={`warnDot ${i < selected.userAiReview!.warningCount ? 'filled' : ''}`} />
+                              <span key={i} className={`warnDot ${i < (selected.userAiReview?.warningCount ?? 0) ? 'filled' : ''}`} />
                             ))}
                           </div>
                           <strong className={`warnCountText ${

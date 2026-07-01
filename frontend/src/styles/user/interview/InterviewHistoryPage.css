@@ -1,0 +1,167 @@
+.ih-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.ih-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.ih-header__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.ih-header__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.ih-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  padding: 24px;
+}
+
+/* ─── 상태 (로딩/빈) ─── */
+.ih-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.ih-state__spinner {
+  animation: ih-spin 1s linear infinite;
+  color: var(--color-primary);
+}
+
+@keyframes ih-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ih-cta {
+  padding: 10px 22px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.14s;
+}
+.ih-cta:hover { opacity: 0.88; }
+
+/* ─── 테이블 ─── */
+.ih-table-wrap {
+  overflow-x: auto;
+}
+
+.ih-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ih-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.ih-table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border-light, #f1f5f9);
+  color: var(--color-text-primary);
+  vertical-align: middle;
+}
+
+.ih-table tbody tr:last-child td { border-bottom: none; }
+.ih-table tbody tr:hover { background: var(--color-surface-soft, #f8fafd); }
+
+.ih-table__date { color: var(--color-text-secondary); white-space: nowrap; }
+
+/* ─── 배지 ─── */
+.ih-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ih-badge--text  { background: #e8f5e9; color: #2e7d32; }
+.ih-badge--voice { background: #e3f2fd; color: #1565c0; }
+.ih-badge--video { background: #fce4ec; color: #c62828; }
+
+/* ─── 리포트 버튼 ─── */
+.ih-report-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.ih-report-btn:hover { background: #f0f4ff; }
+
+.ih-status {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* ─── 페이지네이션 ─── */
+.ih-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.ih-pagination__btn {
+  padding: 8px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.ih-pagination__btn:hover:not(:disabled) { background: var(--color-surface-soft, #f8fafd); }
+.ih-pagination__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ih-pagination__info {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  min-width: 60px;
+  text-align: center;
+}

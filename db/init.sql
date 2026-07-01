@@ -478,21 +478,25 @@ CREATE TABLE interview_messages (
     session_id      UUID        NOT NULL,
     sender          VARCHAR(10) NOT NULL,
     message_type    VARCHAR(20) NOT NULL,
+    question_order  INTEGER     NULL,
     message_content TEXT        NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_interview_messages    PRIMARY KEY (message_id),
-    CONSTRAINT fk_interview_msg_session FOREIGN KEY (session_id) REFERENCES interview_sessions (session_id),
-    CONSTRAINT chk_interview_sender     CHECK (sender       IN ('AI', 'USER')),
-    CONSTRAINT chk_message_type         CHECK (message_type IN ('QUESTION', 'ANSWER', 'SYSTEM'))
+    CONSTRAINT pk_interview_messages                       PRIMARY KEY (message_id),
+    CONSTRAINT fk_interview_msg_session                    FOREIGN KEY (session_id) REFERENCES interview_sessions (session_id),
+    CONSTRAINT chk_interview_sender                        CHECK (sender       IN ('AI', 'USER')),
+    CONSTRAINT chk_message_type                            CHECK (message_type IN ('QUESTION', 'ANSWER', 'SYSTEM')),
+    CONSTRAINT chk_question_order_not_null_for_question    CHECK (message_type != 'QUESTION' OR question_order IS NOT NULL),
+    CONSTRAINT uq_interview_messages_session_sender_order  UNIQUE (session_id, sender, question_order)
 );
-COMMENT ON TABLE  interview_messages                 IS 'AI 면접 채팅 내역 테이블';
-COMMENT ON COLUMN interview_messages.message_id      IS '메시지 고유 식별자';
-COMMENT ON COLUMN interview_messages.session_id      IS '면접 세션 FK';
-COMMENT ON COLUMN interview_messages.sender          IS '발신자 구분 (AI / USER)';
-COMMENT ON COLUMN interview_messages.message_type    IS '메시지 유형 (QUESTION / ANSWER / SYSTEM)';
-COMMENT ON COLUMN interview_messages.message_content IS '메시지 본문';
-COMMENT ON COLUMN interview_messages.created_at      IS '메시지 전송 일시';
+COMMENT ON TABLE  interview_messages                  IS 'AI 면접 채팅 내역 테이블';
+COMMENT ON COLUMN interview_messages.message_id       IS '메시지 고유 식별자';
+COMMENT ON COLUMN interview_messages.session_id       IS '면접 세션 FK';
+COMMENT ON COLUMN interview_messages.sender           IS '발신자 구분 (AI / USER)';
+COMMENT ON COLUMN interview_messages.message_type     IS '메시지 유형 (QUESTION / ANSWER / SYSTEM)';
+COMMENT ON COLUMN interview_messages.question_order   IS '질문 순서 (QUESTION 타입은 NOT NULL, ANSWER/SYSTEM은 NULL 허용)';
+COMMENT ON COLUMN interview_messages.message_content  IS '메시지 본문';
+COMMENT ON COLUMN interview_messages.created_at       IS '메시지 전송 일시';
 
 -- ================================================
 -- 15. ai_interview_feedbacks
