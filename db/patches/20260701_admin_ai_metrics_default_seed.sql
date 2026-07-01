@@ -8,12 +8,12 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1
         FROM information_schema.tables
-        WHERE table_schema = 'public'
+        WHERE table_schema = current_schema()
           AND table_name = 'ai_models'
     ) OR NOT EXISTS (
         SELECT 1
         FROM information_schema.tables
-        WHERE table_schema = 'public'
+        WHERE table_schema = current_schema()
           AND table_name = 'ai_ops_settings'
     ) THEN
         RETURN;
