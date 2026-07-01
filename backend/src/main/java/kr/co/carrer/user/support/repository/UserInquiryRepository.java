@@ -16,7 +16,7 @@ public interface UserInquiryRepository extends JpaRepository<SupportInquiry, Lon
         SELECT i FROM SupportInquiry i
         WHERE i.memberId = :memberId
         AND (:category IS NULL OR i.category = :category)
-        ORDER BY i.createdAt DESC
+        ORDER BY i.createdAt DESC, i.inquiryId DESC
         """)
     Page<SupportInquiry> findByMemberIdAndCategory(
         @Param("memberId") UUID memberId,
