@@ -55,7 +55,10 @@ jobs:
 
       - name: Check injected env
         run: |
-          grep -R "3.38.191.47" dist || true
+          if ! grep -R "${{ secrets.VITE_API_BASE_URL }}" dist; then
+            echo "::error::VITE_API_BASE_URL was not found in dist output"
+            exit 1
+          fi
 
       - name: Upload frontend assets
         run: |
