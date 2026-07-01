@@ -28,6 +28,10 @@ BEGIN
     ) THEN
         ALTER TABLE interview_messages
             ADD CONSTRAINT chk_question_order_not_null_for_question
-                CHECK (message_type != 'QUESTION' OR question_order IS NOT NULL);
+                CHECK (message_type != 'QUESTION' OR question_order IS NOT NULL)
+                NOT VALID;
     END IF;
 END $$;
+
+-- 기존 데이터 보정 후 아래 명령어로 제약 검증 실행
+-- ALTER TABLE interview_messages VALIDATE CONSTRAINT chk_question_order_not_null_for_question;
