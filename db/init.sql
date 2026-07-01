@@ -616,6 +616,14 @@ COMMENT ON COLUMN job_notices.deadline      IS '지원 마감일';
 COMMENT ON COLUMN job_notices.created_at    IS '공고 등록 일시';
 COMMENT ON COLUMN job_notices.updated_at    IS '공고 수정 일시 (재스크래핑 포함)';
 
+CREATE INDEX idx_job_notices_active_created
+    ON job_notices (created_at DESC)
+    WHERE notice_status = 'ACTIVE';
+
+CREATE INDEX idx_job_notices_active_deadline
+    ON job_notices (deadline ASC NULLS LAST)
+    WHERE notice_status = 'ACTIVE';
+
 -- ================================================
 -- 18. bookmarks
 -- ================================================
