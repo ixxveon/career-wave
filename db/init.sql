@@ -1196,6 +1196,24 @@ COMMENT ON COLUMN ai_models.is_enabled         IS '모델 활성화 여부';
 COMMENT ON COLUMN ai_models.created_at         IS '모델 등록 시간';
 COMMENT ON COLUMN ai_models.updated_at         IS '모델 수정 시간';
 
+-- Default AI Metrics model seed for fresh databases.
+INSERT INTO ai_models (
+    model_name,
+    display_type,
+    provider,
+    input_token_price,
+    output_token_price,
+    is_enabled
+)
+VALUES (
+    'gpt-4o-mini',
+    'GPT-4o Mini',
+    'OPENAI',
+    0.150000,
+    0.600000,
+    TRUE
+);
+
 -- ================================================
 -- 34. ai_usage_logs
 -- ================================================
@@ -1266,6 +1284,29 @@ COMMENT ON COLUMN ai_ops_settings.alert_channel      IS '알림 채널 (DISCORD 
 COMMENT ON COLUMN ai_ops_settings.alert_threshold    IS '알림 발생 임계치 (1~100)';
 COMMENT ON COLUMN ai_ops_settings.rate_limit_enabled IS '속도 제한 제어 활성화 여부';
 COMMENT ON COLUMN ai_ops_settings.updated_at         IS '운영 설정 수정 일시';
+
+-- Default singleton AI ops setting seed for fresh databases.
+INSERT INTO ai_ops_settings (
+    ai_ops_setting_id,
+    selected_model_id,
+    monthly_budget,
+    alert_enabled,
+    alert_channel,
+    alert_threshold,
+    rate_limit_enabled
+)
+SELECT
+    1,
+    ai_model_id,
+    3000000.00,
+    TRUE,
+    'DISCORD',
+    85,
+    FALSE
+FROM ai_models
+WHERE model_name = 'gpt-4o-mini'
+ORDER BY ai_model_id
+LIMIT 1;
 
 -- ================================================
 -- 36. rag_documents
