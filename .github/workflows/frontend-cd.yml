@@ -53,6 +53,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Check injected env
+        run: |
+          if ! grep -R "${{ secrets.VITE_API_BASE_URL }}" dist; then
+            echo "::error::VITE_API_BASE_URL was not found in dist output"
+            exit 1
+          fi
+
       - name: Upload frontend assets
         run: |
           aws s3 sync dist s3://${{ secrets.FRONTEND_S3_BUCKET_NAME }} --delete \
