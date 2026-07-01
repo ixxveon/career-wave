@@ -666,6 +666,19 @@ COMMENT ON COLUMN plans.is_active             IS '현재 판매 여부 (기본�
 COMMENT ON COLUMN plans.created_at            IS '생성 일시';
 COMMENT ON COLUMN plans.updated_at            IS '수정 일시';
 
+INSERT INTO plans (product_code, plan_name, plan_price, monthly_usage_limit, currency, billing_cycle, is_active, created_at, updated_at)
+VALUES
+    ('interview',         'AI 모의면접',  29000, 20, 'KRW', 'MONTHLY', TRUE, NOW(), NOW()),
+    ('document-coaching', '서류 AI 코칭', 29000, 30, 'KRW', 'MONTHLY', TRUE, NOW(), NOW())
+ON CONFLICT (product_code) DO UPDATE SET
+    plan_name             = EXCLUDED.plan_name,
+    plan_price            = EXCLUDED.plan_price,
+    monthly_usage_limit   = EXCLUDED.monthly_usage_limit,
+    currency              = EXCLUDED.currency,
+    billing_cycle         = EXCLUDED.billing_cycle,
+    is_active             = EXCLUDED.is_active,
+    updated_at            = NOW();
+
 -- ================================================
 -- 20. billing_profiles
 -- ================================================
@@ -774,6 +787,7 @@ CREATE TABLE payments (
     attempt_sequence  INTEGER      NOT NULL DEFAULT 0,
     approved_at       TIMESTAMPTZ  NULL,
     expires_at        TIMESTAMPTZ  NULL,
+    reconciling_at    TIMESTAMPTZ  NULL,
     created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
@@ -805,13 +819,14 @@ COMMENT ON COLUMN payments.customer_name    IS '회원 이름 — Toss 결제 AP
 COMMENT ON COLUMN payments.customer_email   IS '회원 이메일 — Toss 결제 API 요청 시 전송 (결제 시점 스냅샷)';
 COMMENT ON COLUMN payments.amount           IS '최종 결제 금액 (부가세 포함)';
 COMMENT ON COLUMN payments.currency         IS '통화 (기본값 KRW)';
-COMMENT ON COLUMN payments.payment_status   IS '결제 상태 (READY / CONFIRMING / PAID / FAILED / CANCELED / REFUNDED)';
+COMMENT ON COLUMN payments.payment_status   IS '결제 상태 (READY / AUTHORIZED / CONFIRMING / PAID / FAILED / CANCELED / RECONCILING / REFUNDED)';
 COMMENT ON COLUMN payments.failure_reason   IS '결제 실패 사유 (FAILED 상태일 때만 사용, USER_CANCELED 등 7종)';
 COMMENT ON COLUMN payments.payment_method   IS '결제 수단 (CARD / VIRTUAL_ACCOUNT 등)';
 COMMENT ON COLUMN payments.payment_type      IS '결제 방식 (MANUAL / AUTO_RENEWAL)';
 COMMENT ON COLUMN payments.attempt_sequence  IS '결제 시도 순번 (최초=0, 재시도=1/2)';
 COMMENT ON COLUMN payments.approved_at       IS '결제 승인 일시';
 COMMENT ON COLUMN payments.expires_at        IS 'READY 주문 만료 시각 (MANUAL 주문만 설정, created_at + 30분)';
+COMMENT ON COLUMN payments.reconciling_at    IS '결제 결과 불확실 시 대사 처리 시작 일시 (RECONCILING 상태 진입 시각)';
 COMMENT ON COLUMN payments.created_at        IS '결제 요청 생성 일시';
 COMMENT ON COLUMN payments.updated_at        IS '결제 상태 변경 일시';
 
