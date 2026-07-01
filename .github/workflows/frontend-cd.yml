@@ -53,6 +53,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Check injected env
+        run: |
+          grep -R "3.38.191.47" dist || true
+
       - name: Upload frontend assets
         run: |
           aws s3 sync dist s3://${{ secrets.FRONTEND_S3_BUCKET_NAME }} --delete \
