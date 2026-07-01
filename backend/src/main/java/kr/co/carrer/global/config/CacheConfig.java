@@ -27,7 +27,8 @@ public class CacheConfig {
                         .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new GenericJackson2JsonRedisSerializer()))
-                .disableCachingNullValues();
+                .disableCachingNullValues()
+                .entryTtl(Duration.ofMinutes(30));
 
         Map<String, RedisCacheConfiguration> cacheConfigs = Map.of(
                 JOB_NOTICE_FILTER_OPTIONS, defaults.entryTtl(Duration.ofHours(12)),
