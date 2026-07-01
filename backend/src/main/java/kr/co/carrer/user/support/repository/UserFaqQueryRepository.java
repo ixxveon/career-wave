@@ -28,7 +28,7 @@ public class UserFaqQueryRepository {
         throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
-    public List<SupportDTO.FaqItem> findFaqs(FaqCategory category, String keyword) {
+    public List<SupportDTO.FaqItem> findFaqs(FaqCategory category, String keyword, int offset, int size) {
         StringBuilder sql = new StringBuilder(
             "SELECT faq_id, category, question, answer, created_at FROM faqs WHERE 1=1"
         );
@@ -47,7 +47,9 @@ public class UserFaqQueryRepository {
             idx += 2;
         }
 
-        sql.append(" ORDER BY created_at ASC");
+        sql.append(" ORDER BY created_at ASC, faq_id ASC LIMIT ?").append(idx).append(" OFFSET ?").append(idx + 1);
+        params.add(size);
+        params.add(offset);
 
         Query query = em.createNativeQuery(sql.toString());
         for (int i = 0; i < params.size(); i++) query.setParameter(i + 1, params.get(i));
@@ -65,5 +67,27 @@ public class UserFaqQueryRepository {
             ));
         }
         return result;
+    }
+
+    public long countFaqs(FaqCategory category, String keyword) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM faqs WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+        int idx = 1;
+
+        if (category != null) {
+            sql.append(" AND category = ?").append(idx++);
+            params.add(category.name());
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            sql.append(" AND (question ILIKE ?").append(idx)
+               .append(" OR answer ILIKE ?").append(idx + 1).append(")");
+            params.add("%" + keyword + "%");
+            params.add("%" + keyword + "%");
+            idx += 2;
+        }
+
+        Query query = em.createNativeQuery(sql.toString());
+        for (int i = 0; i < params.size(); i++) query.setParameter(i + 1, params.get(i));
+        return ((Number) query.getSingleResult()).longValue();
     }
 }
