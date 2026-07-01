@@ -5,6 +5,7 @@ import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.ApiResponse;
+import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.support.docs.UserInquiryControllerDocs;
 import kr.co.carrer.user.support.dto.SupportDTO;
 import kr.co.carrer.user.support.service.UserInquiryService;
@@ -13,11 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
+@Validated
 @RestController
 @RequestMapping("/api/v1/user/inquiries")
 @RequiredArgsConstructor
@@ -26,13 +28,15 @@ public class UserInquiryController implements UserInquiryControllerDocs {
     private final UserInquiryService userInquiryService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<SupportDTO.InquiryList>>> getMyInquiries(
+    public ResponseEntity<ApiResponse<PaginationResponse<SupportDTO.InquiryList>>> getMyInquiries(
         @RequestParam(required = false) String category,
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "20") int size,
         @AuthenticationPrincipal AuthPrincipal principal
     ) {
         UUID memberId = UUID.fromString(principal.getId());
         InquiryCategory cat = parseEnum(InquiryCategory.class, category);
-        return ResponseEntity.ok(ApiResponse.ok(userInquiryService.getMyInquiries(memberId, cat)));
+        return ResponseEntity.ok(ApiResponse.ok(userInquiryService.getMyInquiries(memberId, cat, page, size)));
     }
 
     @PostMapping
