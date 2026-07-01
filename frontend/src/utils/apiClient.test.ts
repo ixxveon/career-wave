@@ -21,13 +21,13 @@ afterEach(() => {
 
 describe('apiClient base URL', () => {
   it('prepends VITE_API_BASE_URL to relative endpoints', async () => {
-    const { apiClient } = await loadApiClient('http://3.38.191.47');
+    const { apiClient } = await loadApiClient('http://example.com');
     vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ ok: true }));
 
     await apiClient('/api/v1/user/job-notices');
 
     expect(fetch).toHaveBeenCalledWith(
-      'http://3.38.191.47/api/v1/user/job-notices',
+      'http://example.com/api/v1/user/job-notices',
       expect.any(Object),
     );
   });
@@ -42,7 +42,7 @@ describe('apiClient base URL', () => {
   });
 
   it('does not prepend VITE_API_BASE_URL to absolute endpoints', async () => {
-    const { apiClient } = await loadApiClient('http://3.38.191.47');
+    const { apiClient } = await loadApiClient('http://example.com');
     vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ ok: true }));
 
     await apiClient('https://example.com/api/v1/user/job-notices');
