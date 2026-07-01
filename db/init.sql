@@ -670,14 +670,7 @@ INSERT INTO plans (product_code, plan_name, plan_price, monthly_usage_limit, cur
 VALUES
     ('interview',         'AI 모의면접',  29000, 20, 'KRW', 'MONTHLY', TRUE, NOW(), NOW()),
     ('document-coaching', '서류 AI 코칭', 29000, 30, 'KRW', 'MONTHLY', TRUE, NOW(), NOW())
-ON CONFLICT (product_code) DO UPDATE SET
-    plan_name             = EXCLUDED.plan_name,
-    plan_price            = EXCLUDED.plan_price,
-    monthly_usage_limit   = EXCLUDED.monthly_usage_limit,
-    currency              = EXCLUDED.currency,
-    billing_cycle         = EXCLUDED.billing_cycle,
-    is_active             = EXCLUDED.is_active,
-    updated_at            = NOW();
+ON CONFLICT (product_code) DO NOTHING;
 
 -- ================================================
 -- 20. billing_profiles
