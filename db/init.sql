@@ -588,8 +588,9 @@ CREATE TABLE job_notices (
     created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_job_notices    PRIMARY KEY (job_notice_id),
-    CONSTRAINT chk_job_type      CHECK (job_type      IN ('FULLTIME', 'INTERN', 'CONTRACT')),
+    CONSTRAINT pk_job_notices                     PRIMARY KEY (job_notice_id),
+    CONSTRAINT uq_job_notices_source_original_url UNIQUE (source, original_url),
+    CONSTRAINT chk_job_type                       CHECK (job_type      IN ('FULLTIME', 'INTERN', 'CONTRACT')),
     CONSTRAINT chk_company_size  CHECK (company_size  IN ('STARTUP', 'SME', 'LARGE')),
     CONSTRAINT chk_career_level  CHECK (career_level  IN ('JUNIOR', 'SENIOR', 'ANY')),
     CONSTRAINT chk_notice_status CHECK (notice_status IN ('ACTIVE', 'CLOSED')),
