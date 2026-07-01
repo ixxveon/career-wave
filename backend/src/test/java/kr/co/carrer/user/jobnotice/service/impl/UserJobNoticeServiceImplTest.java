@@ -8,6 +8,7 @@ import kr.co.carrer.user.jobnotice.exception.JobNoticeErrorCode;
 import kr.co.carrer.user.jobnotice.repository.BookmarkRepository;
 import kr.co.carrer.user.jobnotice.repository.JobNoticeQueryRepository;
 import kr.co.carrer.user.jobnotice.repository.JobNoticeRepository;
+import kr.co.carrer.user.jobnotice.service.JobNoticeCacheService;
 import kr.co.carrer.user.jobnotice.type.CareerLevel;
 import kr.co.carrer.user.jobnotice.type.CompanySize;
 import kr.co.carrer.user.jobnotice.type.JobNoticeStatus;
@@ -56,6 +57,9 @@ class UserJobNoticeServiceImplTest {
     @Mock
     private BookmarkRepository bookmarkRepository;
 
+    @Mock
+    private JobNoticeCacheService jobNoticeCacheService;
+
     @Nested
     @DisplayName("채용 공고 목록 조회 - getJobNotices()")
     class GetJobNotices {
@@ -96,13 +100,18 @@ class UserJobNoticeServiceImplTest {
                     eq("latest"),
                     any(PageRequest.class)
             )).willReturn(pageResult);
-            given(jobNoticeQueryRepository.countActiveJobNotices()).willReturn(10L);
-            given(jobNoticeQueryRepository.countTodayNewActiveJobNotices()).willReturn(2L);
-            given(jobNoticeQueryRepository.findDistinctActiveJobTypes()).willReturn(List.of("FULLTIME"));
-            given(jobNoticeQueryRepository.findDistinctActiveJobCategories()).willReturn(List.of("BACKEND"));
-            given(jobNoticeQueryRepository.findDistinctActiveCareerLevels()).willReturn(List.of("JUNIOR"));
-            given(jobNoticeQueryRepository.findDistinctActiveLocations()).willReturn(List.of("Seoul"));
-            given(jobNoticeQueryRepository.findDistinctActiveCompanySizes()).willReturn(List.of("STARTUP"));
+            given(jobNoticeCacheService.getListStats()).willReturn(
+                    new JobNoticeDTO.ResponseListStats(10L, 2L, null, 20.0)
+            );
+            given(jobNoticeCacheService.getFilterOptions()).willReturn(
+                    new JobNoticeDTO.ResponseFilterOptions(
+                            List.of("FULLTIME"),
+                            List.of("BACKEND"),
+                            List.of("JUNIOR"),
+                            List.of("Seoul"),
+                            List.of("STARTUP")
+                    )
+            );
 
             JobNoticeDTO.ResponseList response = userJobNoticeService.getJobNotices(
                     "backend",
@@ -207,13 +216,18 @@ class UserJobNoticeServiceImplTest {
             )).willReturn(pageResult);
             given(bookmarkRepository.findByMemberIdAndJobNoticeIdIn(memberId, List.of(101L, 102L)))
                     .willReturn(List.of(Bookmark.of(memberId, secondJobNotice)));
-            given(jobNoticeQueryRepository.countActiveJobNotices()).willReturn(2L);
-            given(jobNoticeQueryRepository.countTodayNewActiveJobNotices()).willReturn(1L);
-            given(jobNoticeQueryRepository.findDistinctActiveJobTypes()).willReturn(List.of("FULLTIME"));
-            given(jobNoticeQueryRepository.findDistinctActiveJobCategories()).willReturn(List.of("BACKEND", "FRONTEND"));
-            given(jobNoticeQueryRepository.findDistinctActiveCareerLevels()).willReturn(List.of("JUNIOR", "SENIOR"));
-            given(jobNoticeQueryRepository.findDistinctActiveLocations()).willReturn(List.of("Seoul"));
-            given(jobNoticeQueryRepository.findDistinctActiveCompanySizes()).willReturn(List.of("STARTUP"));
+            given(jobNoticeCacheService.getListStats()).willReturn(
+                    new JobNoticeDTO.ResponseListStats(2L, 1L, null, 50.0)
+            );
+            given(jobNoticeCacheService.getFilterOptions()).willReturn(
+                    new JobNoticeDTO.ResponseFilterOptions(
+                            List.of("FULLTIME"),
+                            List.of("BACKEND", "FRONTEND"),
+                            List.of("JUNIOR", "SENIOR"),
+                            List.of("Seoul"),
+                            List.of("STARTUP")
+                    )
+            );
 
             JobNoticeDTO.ResponseList response = userJobNoticeService.getJobNotices(
                     null,
