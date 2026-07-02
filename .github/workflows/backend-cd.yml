@@ -104,6 +104,9 @@ jobs:
               --username AWS \
               --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
+            docker image prune -a -f
+            docker builder prune -a -f
+
             docker compose pull
             docker compose up -d
             docker image prune -f
@@ -134,6 +137,9 @@ jobs:
             | docker login \
               --username AWS \
               --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+            docker image prune -a -f
+            docker builder prune -a -f
 
             docker compose pull
             docker compose up -d
