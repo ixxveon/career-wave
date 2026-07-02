@@ -8,6 +8,7 @@ import DocumentResultView from './DocumentResultView';
 import { useResumeUpload } from '../../../hooks/user/resume/useResumeUpload';
 import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
 import { useEntitlements } from '../../../hooks/user/subscription/useEntitlements';
+import { PRODUCT_CODE } from '../../../types/user/subscription';
 import '@/styles/user/resume/ResumeAnalysisPage.css';
 
 export default function ResumeAnalysisPage() {
@@ -23,10 +24,10 @@ export default function ResumeAnalysisPage() {
   const { data: quota, isLoading: isQuotaLoading } = useResumeQuota();
   const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
 
-  const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements();
-  const noEntitlement = entitlements ? !entitlements['document-coaching'] : false;
-  // 로딩 중 페이월 노출 없이 제출만 차단 — 이용권 확인 전 ENTITLEMENT_NOT_FOUND 방지
-  const isAccessChecking = isQuotaLoading || isEntitlementsLoading;
+  const { data: entitlements, isLoading: isEntitlementsLoading, isError: isEntitlementsError } = useEntitlements();
+  const noEntitlement = entitlements ? !entitlements[PRODUCT_CODE.DOCUMENT_COACHING] : false;
+  // 로딩·에러 중 페이월 노출 없이 제출만 차단 — 이용권 확인 전 ENTITLEMENT_NOT_FOUND 방지
+  const isAccessChecking = isQuotaLoading || isEntitlementsLoading || isEntitlementsError;
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (
