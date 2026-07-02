@@ -19,8 +19,18 @@ export default function CoverLetterAnalysisPage() {
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  const { data: quota } = useResumeQuota();
+  const { data: quota, isEntitlementNotFound } = useResumeQuota();
   const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
+
+  if (isEntitlementNotFound) {
+    return (
+      <div className="cla">
+        <div className="cla-form-wrap">
+          <QuotaExhaustedBanner noEntitlement />
+        </div>
+      </div>
+    );
+  }
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (

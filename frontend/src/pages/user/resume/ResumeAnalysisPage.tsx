@@ -18,8 +18,18 @@ export default function ResumeAnalysisPage() {
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  const { data: quota } = useResumeQuota();
+  const { data: quota, isEntitlementNotFound } = useResumeQuota();
   const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
+
+  if (isEntitlementNotFound) {
+    return (
+      <div className="ra">
+        <div className="ra-upload-wrap">
+          <QuotaExhaustedBanner noEntitlement />
+        </div>
+      </div>
+    );
+  }
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (
