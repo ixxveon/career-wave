@@ -50,13 +50,16 @@ export function useCheckoutStatus() {
       });
 
       if (TOSS_MOCK) {
-        // 팝업 없이 성공 URL로 이동 — 백엔드 mock issue가 가짜 authKey를 그대로 승인한다.
+        // 주문 생성(createOrder)은 mock 모드에서도 반드시 선행한다 — 백엔드 confirm 이
+        // orderId 로 READY 주문을 조회해 구독/결제내역을 만들기 때문. (건너뛰면 데모 플로우가 끊김)
+        // 여기서는 Toss 카드등록 팝업만 생략하고, order 에서 받은 orderId/customerKey 로 성공 URL 이동.
+        // mock issue 가 가짜 authKey 를 그대로 승인하므로 이후 흐름이 실제와 동일하게 이어진다.
         const successUrl = new URL(`${window.location.origin}/billing/success`);
         successUrl.searchParams.set('orderId', order.orderId);
         successUrl.searchParams.set('authKey', `mock_auth_${order.orderId}`);
         successUrl.searchParams.set('customerKey', order.customerKey);
         window.location.assign(successUrl.toString());
-        return;
+        return; // assign 이후 아래 Toss 실 연동 코드가 실행되지 않도록 즉시 종료
       }
 
       const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
