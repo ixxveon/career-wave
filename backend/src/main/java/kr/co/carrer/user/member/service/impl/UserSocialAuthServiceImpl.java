@@ -487,10 +487,10 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         String jti = jwtTokenProvider.extractJti(accessToken, accountType);
         refreshTokenStore.saveAccessJti(accountType, subject, sessionId, jti, accessTtl);
 
-        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, refreshToken)
-                .httpOnly(true).secure(cookieProperties.isSecure()).sameSite("Strict")
-                .path("/api/v1/user/members")
-                .maxAge(refreshTtl.toSeconds())
+        ResponseCookie cookie = cookieProperties.applyDomain(ResponseCookie.from(COOKIE_NAME, refreshToken)
+                        .httpOnly(true).secure(cookieProperties.isSecure()).sameSite("Strict")
+                        .path("/api/v1/user/members")
+                        .maxAge(refreshTtl.toSeconds()))
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
         return accessToken;

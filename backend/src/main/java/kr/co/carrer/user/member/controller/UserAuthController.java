@@ -78,12 +78,12 @@ public class UserAuthController implements UserAuthControllerDocs {
     }
 
     private void clearRefreshTokenCookie(HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true)
-                .secure(cookieProperties.isSecure())
-                .path("/api/v1/user/members")
-                .maxAge(0)
-                .sameSite("Strict")
+        ResponseCookie cookie = cookieProperties.applyDomain(ResponseCookie.from("refreshToken", "")
+                        .httpOnly(true)
+                        .secure(cookieProperties.isSecure())
+                        .path("/api/v1/user/members")
+                        .maxAge(0)
+                        .sameSite("Strict"))
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
     }

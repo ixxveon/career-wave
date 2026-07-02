@@ -255,12 +255,12 @@ public class UserLoginServiceImpl implements UserLoginService {
     }
 
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)
-                .secure(cookieProperties.isSecure())
-                .path("/api/v1/user/members")
-                .maxAge(jwtProperties.getUser().getRefreshExpiration() / 1000)
-                .sameSite("Strict")
+        ResponseCookie cookie = cookieProperties.applyDomain(ResponseCookie.from("refreshToken", refreshToken)
+                        .httpOnly(true)
+                        .secure(cookieProperties.isSecure())
+                        .path("/api/v1/user/members")
+                        .maxAge(jwtProperties.getUser().getRefreshExpiration() / 1000)
+                        .sameSite("Strict"))
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
     }

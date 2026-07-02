@@ -3,6 +3,7 @@ package kr.co.carrer.user.member.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.member.docs.UserSocialAuthControllerDocs;
 import kr.co.carrer.user.member.dto.OAuthCallbackResponse;
@@ -24,6 +25,7 @@ import java.io.IOException;
 public class UserSocialAuthController implements UserSocialAuthControllerDocs {
 
     private final UserSocialAuthService userSocialAuthService;
+    private final CookieProperties cookieProperties;
 
     @Value("${frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -63,11 +65,12 @@ public class UserSocialAuthController implements UserSocialAuthControllerDocs {
     }
 
     private void setHandoffCookie(HttpServletResponse response, String name, String value) {
-        ResponseCookie cookie = ResponseCookie.from(name, value)
-                .path("/")
-                .maxAge(60)
-                .sameSite("Strict")
-                .httpOnly(false)
+        // 백엔드(api)에서 설정한 handoff 쿠키를 프론트(www)에서 읽을 수 있도록 Domain을 적용한다.
+        ResponseCookie cookie = cookieProperties.applyDomain(ResponseCookie.from(name, value)
+                        .path("/")
+                        .maxAge(60)
+                        .sameSite("Strict")
+                        .httpOnly(false))
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
     }
