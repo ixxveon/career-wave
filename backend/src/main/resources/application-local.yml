@@ -48,7 +48,10 @@ privacy:
   hash-secret: local-dev-privacy-hmac-secret-not-for-prod
 
 toss:
-  secret-key: ${TOSS_SECRET_KEY}
+  # true → 실 Toss 호출 없이 mock 게이트웨이 주입 (데모/시연용, 자동결제 계약 미개통 우회)
+  # false(기본) → 실제 Toss 연동. 자세한 배경은 이슈 #986 참고
+  mock: ${TOSS_MOCK:false}
+  secret-key: ${TOSS_SECRET_KEY:mock-secret-not-used}   # mock=true 시 실 클라이언트 미생성이라 사용되지 않음
   billing-key-encryption-key: ${TOSS_BILLING_KEY_ENCRYPTION_KEY}
 
 billing:
