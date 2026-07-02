@@ -68,20 +68,24 @@ public class ResumeServiceImpl implements ResumeService {
         fileValidator.validate(file);
         String extension = fileValidator.extractExtension(file);
 
-        String fileUrl = s3Uploader.upload(file, extension);
+        String fileKey = s3Uploader.upload(file, extension);
         String originalName = file.getOriginalFilename();
 
-        Document document = Document.ofResume(memberId, fileUrl, originalName);
+        Document document = Document.ofResume(memberId, fileKey, originalName);
         documentRepository.save(document);
 
         entitlementService.reserve(memberId, "document-coaching", ResourceType.DOCUMENT, document.getDocumentId());
 
-        eventPublisher.publishEvent(DocumentAnalysisTriggerEvent.ofResume(document.getDocumentId(), memberId, fileUrl, originalName));
+        eventPublisher.publishEvent(DocumentAnalysisTriggerEvent.ofResume(
+                document.getDocumentId(),
+                memberId,
+                s3Uploader.createPresignedGetUrl(fileKey),
+                originalName));
 
         return new ResumeDTO.ResponseUpload(
                 document.getDocumentId(),
                 document.getStatus().name(),
-                document.getFileUrl(),
+                s3Uploader.createPresignedGetUrl(fileKey),
                 document.getOriginalName(),
                 document.getFileType().name(),
                 document.getCreatedAt()
@@ -132,6 +136,7 @@ public class ResumeServiceImpl implements ResumeService {
     @Override
     public ResumeDTO.HistoryItem getDocument(UUID memberId, UUID documentId) {
         return documentRepository.findHistoryItemByDocumentIdAndMemberId(documentId, memberId)
+                .map(this::withPresignedFileUrl)
                 .orElseThrow(() -> new CustomException(ResumeErrorCode.DOCUMENT_NOT_FOUND));
     }
 
@@ -190,7 +195,10 @@ public class ResumeServiceImpl implements ResumeService {
         Page<ResumeDTO.HistoryItem> result = documentRepository.findHistoryByMemberId(
                 memberId, PageRequest.of(page, size)
         );
-        return PaginationResponse.of(result.getContent(), page, size, result.getTotalElements());
+        List<ResumeDTO.HistoryItem> items = result.getContent().stream()
+                .map(this::withPresignedFileUrl)
+                .toList();
+        return PaginationResponse.of(items, page, size, result.getTotalElements());
     }
 
     @Transactional
@@ -274,6 +282,11 @@ public class ResumeServiceImpl implements ResumeService {
     @Override
     public Optional<String> findDocumentFileUrl(UUID memberId, UUID documentId) {
         return documentRepository.findByDocumentIdAndMemberId(documentId, memberId)
-                .map(Document::getFileUrl);
+                .map(Document::getFileUrl)
+                .map(s3Uploader::createPresignedGetUrl);
+    }
+
+    private ResumeDTO.HistoryItem withPresignedFileUrl(ResumeDTO.HistoryItem item) {
+        return item.withFileUrl(s3Uploader.createPresignedGetUrl(item.fileUrl()));
     }
 }
