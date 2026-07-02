@@ -21,11 +21,13 @@ export default function CoverLetterAnalysisPage() {
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  const { data: quota } = useResumeQuota();
+  const { data: quota, isLoading: isQuotaLoading } = useResumeQuota();
   const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
 
-  const { data: entitlements } = useEntitlements();
+  const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements();
   const noEntitlement = entitlements ? !entitlements['document-coaching'] : false;
+  // 로딩 중 페이월 노출 없이 제출만 차단 — 이용권 확인 전 ENTITLEMENT_NOT_FOUND 방지
+  const isAccessChecking = isQuotaLoading || isEntitlementsLoading;
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (
@@ -70,7 +72,7 @@ export default function CoverLetterAnalysisPage() {
         company={company}
         job={job}
         items={items}
-        disabled={isSubmitting || isExhausted || noEntitlement}
+        disabled={isSubmitting || isExhausted || noEntitlement || isAccessChecking}
         onCompanyChange={setCompany}
         onJobChange={setJob}
         onAddItem={addItem}
@@ -87,7 +89,7 @@ export default function CoverLetterAnalysisPage() {
       <button
         type="button"
         className="cl-btn cl-btn--primary"
-        disabled={!canSubmit || isSubmitting || isExhausted || noEntitlement}
+        disabled={!canSubmit || isSubmitting || isExhausted || noEntitlement || isAccessChecking}
         onClick={handleSubmit}
         aria-busy={isSubmitting}
       >
