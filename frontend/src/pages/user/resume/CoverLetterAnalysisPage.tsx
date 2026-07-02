@@ -3,9 +3,11 @@ import CoverLetterForm from '../../../components/user/resume/CoverLetterForm';
 import LoadingModal from '../../../components/user/resume/LoadingModal';
 import QuotaBar from '../../../components/user/resume/QuotaBar';
 import QuotaExhaustedBanner from '../../../components/user/resume/QuotaExhaustedBanner';
+import EntitlementPaywall from '../../../components/user/resume/EntitlementPaywall';
 import DocumentResultView from './DocumentResultView';
 import { useCoverLetterForm } from '../../../hooks/user/resume/useCoverLetterForm';
 import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
+import { useEntitlements } from '../../../hooks/user/subscription/useEntitlements';
 import '@/styles/user/resume/CoverLetterAnalysisPage.css';
 
 export default function CoverLetterAnalysisPage() {
@@ -19,18 +21,11 @@ export default function CoverLetterAnalysisPage() {
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  const { data: quota, isEntitlementNotFound } = useResumeQuota();
+  const { data: quota } = useResumeQuota();
   const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
 
-  if (isEntitlementNotFound) {
-    return (
-      <div className="cla">
-        <div className="cla-form-wrap">
-          <QuotaExhaustedBanner noEntitlement />
-        </div>
-      </div>
-    );
-  }
+  const { data: entitlements } = useEntitlements();
+  const noEntitlement = entitlements ? !entitlements['document-coaching'] : false;
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (
@@ -58,6 +53,50 @@ export default function CoverLetterAnalysisPage() {
     );
   }
 
+  const formContent = (
+    <div className="cl-input-wrap">
+      <QuotaBar />
+
+      {isExhausted && <QuotaExhaustedBanner />}
+
+      <span className="cl-eyebrow">COVER LETTER AI</span>
+      <h1 className="cl-input__title">자기소개서 AI 분석</h1>
+      <p className="cl-input__desc">
+        문항과 답변을 입력하면 AI가 논리 구조, 표현 교정, 수정안을 제시합니다.<br />
+        최대 5개 문항까지 한 번에 분석할 수 있습니다.
+      </p>
+
+      <CoverLetterForm
+        company={company}
+        job={job}
+        items={items}
+        disabled={isSubmitting || isExhausted || noEntitlement}
+        onCompanyChange={setCompany}
+        onJobChange={setJob}
+        onAddItem={addItem}
+        onRemoveItem={removeItem}
+        onUpdateItem={updateItem}
+      />
+
+      {apiError && (
+        <p className="cl-api-error" role="alert">
+          <AlertCircle size={13} aria-hidden="true" /> {apiError}
+        </p>
+      )}
+
+      <button
+        type="button"
+        className="cl-btn cl-btn--primary"
+        disabled={!canSubmit || isSubmitting || isExhausted || noEntitlement}
+        onClick={handleSubmit}
+        aria-busy={isSubmitting}
+      >
+        <Send size={15} aria-hidden="true" />
+        {isSubmitting ? '제출 중...' : 'AI 분석 시작하기'}
+      </button>
+    </div>
+  );
+
   return (
     <div className="cl">
       {isAnalyzing && <LoadingModal onCancel={reset} />}
@@ -70,47 +109,7 @@ export default function CoverLetterAnalysisPage() {
         </div>
       )}
 
-      <div className="cl-input-wrap">
-        <QuotaBar />
-
-        {isExhausted && <QuotaExhaustedBanner />}
-
-        <span className="cl-eyebrow">COVER LETTER AI</span>
-        <h1 className="cl-input__title">자기소개서 AI 분석</h1>
-        <p className="cl-input__desc">
-          문항과 답변을 입력하면 AI가 논리 구조, 표현 교정, 수정안을 제시합니다.<br />
-          최대 5개 문항까지 한 번에 분석할 수 있습니다.
-        </p>
-
-        <CoverLetterForm
-          company={company}
-          job={job}
-          items={items}
-          disabled={isSubmitting || isExhausted}
-          onCompanyChange={setCompany}
-          onJobChange={setJob}
-          onAddItem={addItem}
-          onRemoveItem={removeItem}
-          onUpdateItem={updateItem}
-        />
-
-        {apiError && (
-          <p className="cl-api-error" role="alert">
-            <AlertCircle size={13} aria-hidden="true" /> {apiError}
-          </p>
-        )}
-
-        <button
-          type="button"
-          className="cl-btn cl-btn--primary"
-          disabled={!canSubmit || isSubmitting || isExhausted}
-          onClick={handleSubmit}
-          aria-busy={isSubmitting}
-        >
-          <Send size={15} aria-hidden="true" />
-          {isSubmitting ? '제출 중...' : 'AI 분석 시작하기'}
-        </button>
-      </div>
+      {noEntitlement ? <EntitlementPaywall>{formContent}</EntitlementPaywall> : formContent}
     </div>
   );
 }
