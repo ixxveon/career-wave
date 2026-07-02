@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { memberApiClient } from './memberApiClient';
+import { memberApiClient, probeAuth } from './memberApiClient';
 import { authSession } from '../../../utils/user/member/authSession';
 
 vi.mock('../../../utils/user/member/authSession', () => ({
@@ -47,6 +47,40 @@ describe('Authorization 헤더 주입', () => {
     const [, init] = vi.mocked(fetch).mock.calls[0];
     const headers = new Headers(init?.headers as HeadersInit);
     expect(headers.get('Authorization')).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────
+// 동시 refresh single-flight (새로고침 시 로그아웃 방지)
+// ─────────────────────────────────────────────
+describe('동시 refresh 요청 — single-flight로 1회만 발송', () => {
+  it('probeAuth를 동시에 여러 번 호출해도 /token/refresh는 1회만 요청한다', async () => {
+    let resolveRefresh: (value: Response) => void = () => {};
+    const pending = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const fetchSpy = vi.spyOn(global, 'fetch').mockReturnValue(pending as Promise<Response>);
+
+    // ProtectedRoute + useAuth(Header)가 새로고침 시 동시에 호출하는 상황
+    const first = probeAuth();
+    const second = probeAuth();
+
+    resolveRefresh(jsonResponse({ data: { accessToken: 'new-token' } }));
+
+    await expect(first).resolves.toBe(true);
+    await expect(second).resolves.toBe(true);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('진행 중이던 refresh가 끝난 뒤의 호출은 새로운 요청을 발송한다', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValue(
+      jsonResponse({ data: { accessToken: 'new-token' } }),
+    );
+
+    await probeAuth();
+    await probeAuth();
+
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });
 
