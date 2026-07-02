@@ -34,8 +34,8 @@ function OAuthCallbackPage() {
       clearHandoffCookie('cw_oauth_login_token');
       if (accessToken) {
         authSession.setTokens({ accessToken });
-        // 302 redirect(localhost:8080) 응답에서 설정된 refresh 쿠키는 F5 시 불안정할 수 있으므로
-        // Vite proxy 경유로 즉시 rotate하여 localhost:5173 응답 쿠키로 교체한다.
+        // OAuth 콜백(백엔드) 응답에서 설정된 refresh 쿠키를 프론트가 사용하는 API 경로로
+        // 즉시 rotate하여 이후 요청과 동일한 조건의 쿠키로 교체한다. (실패해도 무시)
         probeAuth().catch(() => {});
       }
       navigate('/', { replace: true });
