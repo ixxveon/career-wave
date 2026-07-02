@@ -38,6 +38,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate frontend env
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+        run: |
+          case "$VITE_API_BASE_URL" in
+            https://*) echo "VITE_API_BASE_URL uses HTTPS" ;;
+            *) echo "::error::VITE_API_BASE_URL must start with https://"; exit 1 ;;
+          esac
+
       - name: Build frontend
         run: npm run build
         env:
@@ -54,8 +63,10 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Check injected env
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
         run: |
-          if ! grep -R "${{ secrets.VITE_API_BASE_URL }}" dist; then
+          if ! grep -R "$VITE_API_BASE_URL" dist; then
             echo "::error::VITE_API_BASE_URL was not found in dist output"
             exit 1
           fi
