@@ -188,6 +188,8 @@ public class ResumeDTO {
             String fileType,
             @Schema(description = "분석 상태", example = "COMPLETED")
             String status,
+            @Schema(description = "임시 파일 접근 URL (이력서 전용, 자기소개서는 null)")
+            String fileUrl,
             @Schema(description = "원본 파일명 (자기소개서는 null)", example = "홍길동_이력서.pdf")
             String originalName,
             @Schema(description = "지원 회사명 (이력서는 null)", example = "카카오")
@@ -200,9 +202,18 @@ public class ResumeDTO {
             ZonedDateTime createdAt
     ) {
         // JPQL SELECT new 생성자용 — Enum → String 변환
-        public HistoryItem(UUID documentId, FileType fileType, DocumentStatus status, String originalName,
+        public HistoryItem(UUID documentId, FileType fileType, DocumentStatus status, String fileUrl, String originalName,
                            String company, String job, Integer scoreTotal, ZonedDateTime createdAt) {
-            this(documentId, fileType.name(), status.name(), originalName, company, job, scoreTotal, createdAt);
+            this(documentId, fileType.name(), status.name(), fileUrl, originalName, company, job, scoreTotal, createdAt);
+        }
+
+        public HistoryItem(UUID documentId, String fileType, String status, String originalName,
+                           String company, String job, Integer scoreTotal, ZonedDateTime createdAt) {
+            this(documentId, fileType, status, null, originalName, company, job, scoreTotal, createdAt);
+        }
+
+        public HistoryItem withFileUrl(String fileUrl) {
+            return new HistoryItem(documentId, fileType, status, fileUrl, originalName, company, job, scoreTotal, createdAt);
         }
     }
 
