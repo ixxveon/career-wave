@@ -171,7 +171,7 @@ CREATE TABLE member_verifications (
     CONSTRAINT uq_member_verification_token    UNIQUE      (verification_token),
     CONSTRAINT chk_verification_channel        CHECK (channel             IN ('EMAIL', 'PHONE')),
     CONSTRAINT chk_verification_purpose        CHECK (purpose             IN ('REGISTER', 'FIND_ID', 'RESET_PASSWORD')),
-    CONSTRAINT chk_verification_status         CHECK (verification_status IN ('SENT', 'VERIFIED', 'EXPIRED', 'FAILED', 'RATE_LIMITED'))
+    CONSTRAINT chk_verification_status         CHECK (verification_status IN ('SENT', 'VERIFIED', 'CONSUMED', 'EXPIRED', 'FAILED', 'RATE_LIMITED'))
 );
 COMMENT ON TABLE  member_verifications                      IS '이메일/휴대폰 인증 테이블 (회원 FK 없음 - 가입 전 인증)';
 COMMENT ON COLUMN member_verifications.verification_id     IS '인증 요청 고유 식별자';
@@ -180,7 +180,7 @@ COMMENT ON COLUMN member_verifications.target              IS '인증 대상 (�
 COMMENT ON COLUMN member_verifications.purpose             IS '인증 목적 (REGISTER / FIND_ID / RESET_PASSWORD)';
 COMMENT ON COLUMN member_verifications.code_hash           IS '인증번호 해시값';
 COMMENT ON COLUMN member_verifications.verification_token  IS '인증 완료 후 발급되는 단기 토큰';
-COMMENT ON COLUMN member_verifications.verification_status IS '인증 상태 (SENT / VERIFIED / EXPIRED / FAILED / RATE_LIMITED)';
+COMMENT ON COLUMN member_verifications.verification_status IS '인증 상태 (SENT / VERIFIED / CONSUMED / EXPIRED / FAILED / RATE_LIMITED)';
 COMMENT ON COLUMN member_verifications.remaining_attempts  IS '남은 인증 시도 횟수 (기본값 5)';
 COMMENT ON COLUMN member_verifications.expires_at          IS '인증번호 만료 시간';
 COMMENT ON COLUMN member_verifications.resend_available_at IS '재발송 가능 시간';
