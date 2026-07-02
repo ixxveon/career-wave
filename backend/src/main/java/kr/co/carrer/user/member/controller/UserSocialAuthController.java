@@ -11,7 +11,6 @@ import kr.co.carrer.user.member.dto.UserSocialAuthDto;
 import kr.co.carrer.user.member.service.UserSocialAuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -65,14 +64,7 @@ public class UserSocialAuthController implements UserSocialAuthControllerDocs {
     }
 
     private void setHandoffCookie(HttpServletResponse response, String name, String value) {
-        // 백엔드(api)에서 설정한 handoff 쿠키를 프론트(www)에서 읽을 수 있도록 Domain을 적용한다.
-        ResponseCookie cookie = cookieProperties.applyDomain(ResponseCookie.from(name, value)
-                        .path("/")
-                        .maxAge(60)
-                        .sameSite("Strict")
-                        .httpOnly(false))
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
+        response.addHeader("Set-Cookie", cookieProperties.handoffCookie(name, value).toString());
     }
 
     @PostMapping("/register/social/complete")

@@ -2,7 +2,6 @@ package kr.co.carrer.user.member.service.impl;
 
 import kr.co.carrer.user.member.dto.UserLoginDto;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.ResponseCookie;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
@@ -255,13 +254,8 @@ public class UserLoginServiceImpl implements UserLoginService {
     }
 
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
-        ResponseCookie cookie = cookieProperties.applyDomain(ResponseCookie.from("refreshToken", refreshToken)
-                        .httpOnly(true)
-                        .secure(cookieProperties.isSecure())
-                        .path("/api/v1/user/members")
-                        .maxAge(jwtProperties.getUser().getRefreshExpiration() / 1000)
-                        .sameSite("Strict"))
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
+        long maxAgeSeconds = jwtProperties.getUser().getRefreshExpiration() / 1000;
+        response.addHeader("Set-Cookie",
+                cookieProperties.refreshTokenCookie(refreshToken, maxAgeSeconds).toString());
     }
 }

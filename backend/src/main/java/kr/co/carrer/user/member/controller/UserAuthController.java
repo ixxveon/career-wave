@@ -15,7 +15,6 @@ import kr.co.carrer.user.member.service.UserLoginService;
 import kr.co.carrer.user.member.service.UserMemberStatusService;
 import kr.co.carrer.auth.jwt.CookieProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -78,14 +77,7 @@ public class UserAuthController implements UserAuthControllerDocs {
     }
 
     private void clearRefreshTokenCookie(HttpServletResponse response) {
-        ResponseCookie cookie = cookieProperties.applyDomain(ResponseCookie.from("refreshToken", "")
-                        .httpOnly(true)
-                        .secure(cookieProperties.isSecure())
-                        .path("/api/v1/user/members")
-                        .maxAge(0)
-                        .sameSite("Strict"))
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
+        response.addHeader("Set-Cookie", cookieProperties.refreshTokenCookie("", 0).toString());
     }
 
     private String extractRefreshTokenCookie(HttpServletRequest request) {

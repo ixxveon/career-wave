@@ -30,7 +30,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.http.ResponseCookie;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -51,7 +50,6 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
 
     private static final String STATE_PREFIX = "oauth:state:";
     private static final Duration STATE_TTL = Duration.ofMinutes(10);
-    private static final String COOKIE_NAME = "refreshToken";
 
     private final UserMemberRepository memberRepository;
     private final UserMemberPersonalProfileRepository personalProfileRepository;
@@ -487,12 +485,8 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         String jti = jwtTokenProvider.extractJti(accessToken, accountType);
         refreshTokenStore.saveAccessJti(accountType, subject, sessionId, jti, accessTtl);
 
-        ResponseCookie cookie = cookieProperties.applyDomain(ResponseCookie.from(COOKIE_NAME, refreshToken)
-                        .httpOnly(true).secure(cookieProperties.isSecure()).sameSite("Strict")
-                        .path("/api/v1/user/members")
-                        .maxAge(refreshTtl.toSeconds()))
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
+        response.addHeader("Set-Cookie",
+                cookieProperties.refreshTokenCookie(refreshToken, refreshTtl.toSeconds()).toString());
         return accessToken;
     }
 }
