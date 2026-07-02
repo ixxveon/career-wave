@@ -62,6 +62,9 @@ public class ResumeServiceImpl implements ResumeService {
     @Value("${webhook.secret}")
     private String configuredWebhookSecret;
 
+    @Value("${aws.s3.fastapi-presigned-url-expiration-minutes:60}")
+    private long fastApiPresignedUrlExpirationMinutes;
+
     @Transactional
     @Override
     public ResumeDTO.ResponseUpload uploadResume(UUID memberId, MultipartFile file) {
@@ -76,16 +79,19 @@ public class ResumeServiceImpl implements ResumeService {
 
         entitlementService.reserve(memberId, "document-coaching", ResourceType.DOCUMENT, document.getDocumentId());
 
+        String responseFileUrl = s3Uploader.createPresignedGetUrl(fileKey);
+        String analysisFileUrl = s3Uploader.createPresignedGetUrl(fileKey, fastApiPresignedUrlExpirationMinutes);
+
         eventPublisher.publishEvent(DocumentAnalysisTriggerEvent.ofResume(
                 document.getDocumentId(),
                 memberId,
-                s3Uploader.createPresignedGetUrl(fileKey),
+                analysisFileUrl,
                 originalName));
 
         return new ResumeDTO.ResponseUpload(
                 document.getDocumentId(),
                 document.getStatus().name(),
-                s3Uploader.createPresignedGetUrl(fileKey),
+                responseFileUrl,
                 document.getOriginalName(),
                 document.getFileType().name(),
                 document.getCreatedAt()

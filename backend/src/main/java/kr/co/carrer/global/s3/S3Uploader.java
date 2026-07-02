@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -87,23 +89,68 @@ public class S3Uploader {
     }
 
     public String createPresignedGetUrl(String s3Key) {
+        return createPresignedGetUrl(s3Key, presignedUrlExpirationMinutes);
+    }
+
+    public String createPresignedGetUrl(String s3Key, long expirationMinutes) {
         if (s3Key == null || s3Key.isBlank()) {
             return s3Key;
         }
-        if (mockUpload || s3Key.startsWith("http://") || s3Key.startsWith("https://")) {
+        if (mockUpload || isNonS3HttpUrl(s3Key)) {
             return s3Key;
         }
 
+        String objectKey = toObjectKey(s3Key);
+
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucketName)
-                .key(s3Key)
+                .key(objectKey)
                 .build();
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(presignedUrlExpirationMinutes))
+                .signatureDuration(Duration.ofMinutes(expirationMinutes))
                 .getObjectRequest(getObjectRequest)
                 .build();
 
         return s3Presigner.presignGetObject(presignRequest).url().toString();
+    }
+
+    private boolean isNonS3HttpUrl(String value) {
+        return isHttpUrl(value) && !isLegacyBucketUrl(value);
+    }
+
+    private boolean isHttpUrl(String value) {
+        return value.startsWith("http://") || value.startsWith("https://");
+    }
+
+    private boolean isLegacyBucketUrl(String value) {
+        try {
+            URI uri = new URI(value);
+            String host = uri.getHost();
+            return host != null && host.equals(bucketName + ".s3." + uriHostRegion(host) + ".amazonaws.com");
+        } catch (URISyntaxException e) {
+            return false;
+        }
+    }
+
+    private String uriHostRegion(String host) {
+        String prefix = bucketName + ".s3.";
+        String suffix = ".amazonaws.com";
+        if (!host.startsWith(prefix) || !host.endsWith(suffix)) {
+            return "";
+        }
+        return host.substring(prefix.length(), host.length() - suffix.length());
+    }
+
+    private String toObjectKey(String value) {
+        if (!isLegacyBucketUrl(value)) {
+            return value;
+        }
+        try {
+            String path = new URI(value).getPath();
+            return path != null && path.startsWith("/") ? path.substring(1) : path;
+        } catch (URISyntaxException e) {
+            return value;
+        }
     }
 
     private String buildS3Key(String extension) {
