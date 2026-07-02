@@ -1407,6 +1407,21 @@ COMMENT ON COLUMN scraping_pipelines.last_error_message  IS '최근 실행 시 �
 COMMENT ON COLUMN scraping_pipelines.created_at          IS '생성 일시';
 COMMENT ON COLUMN scraping_pipelines.updated_at          IS '수정 일시';
 
+INSERT INTO scraping_pipelines (
+    source_name,
+    display_name,
+    pipeline_status,
+    is_enabled
+)
+VALUES
+    ('wanted', 'Wanted', 'IDLE', TRUE),
+    ('saramin', 'Saramin', 'IDLE', TRUE)
+ON CONFLICT (source_name) DO UPDATE
+SET
+    display_name = EXCLUDED.display_name,
+    is_enabled = EXCLUDED.is_enabled,
+    updated_at = NOW();
+
 -- ================================================
 -- 38. scraping_logs
 -- ================================================
