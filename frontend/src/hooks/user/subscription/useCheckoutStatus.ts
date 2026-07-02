@@ -7,6 +7,9 @@ import { PRODUCT_CODE } from '../../../types/user/subscription';
 import type { ProductCode } from '../../../types/user/subscription';
 
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY as string;
+// 데모용: Toss 자동결제 계약 미개통 환경에서 카드등록 팝업을 건너뛰고 성공 URL로 리다이렉트한다.
+// 백엔드의 toss.mock 과 짝을 이룬다 (이슈 #986). 기본 false → 실제 Toss 팝업.
+const TOSS_MOCK = import.meta.env.VITE_TOSS_MOCK === 'true';
 const KNOWN_PRODUCT_CODES: ProductCode[] = [PRODUCT_CODE.DOCUMENT_COACHING, PRODUCT_CODE.INTERVIEW];
 
 export function useCheckoutStatus() {
@@ -45,6 +48,16 @@ export function useCheckoutStatus() {
         successUrl: `${window.location.origin}/billing/success`,
         failUrl: `${window.location.origin}/billing/fail?productCode=${productCode}`,
       });
+
+      if (TOSS_MOCK) {
+        // 팝업 없이 성공 URL로 이동 — 백엔드 mock issue가 가짜 authKey를 그대로 승인한다.
+        const successUrl = new URL(`${window.location.origin}/billing/success`);
+        successUrl.searchParams.set('orderId', order.orderId);
+        successUrl.searchParams.set('authKey', `mock_auth_${order.orderId}`);
+        successUrl.searchParams.set('customerKey', order.customerKey);
+        window.location.assign(successUrl.toString());
+        return;
+      }
 
       const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
       const payment = tossPayments.payment({ customerKey: order.customerKey });
