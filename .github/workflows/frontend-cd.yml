@@ -55,6 +55,8 @@ jobs:
           VITE_FASTAPI_BASE_URL: ${{ secrets.VITE_FASTAPI_BASE_URL }}
           VITE_FASTAPI_WS_URL: ${{ secrets.VITE_FASTAPI_WS_URL }}
           VITE_TOSS_CLIENT_KEY: ${{ secrets.VITE_TOSS_CLIENT_KEY }}
+          # 데모용 mock 스위치 — Secret 미설정 시 빈 값(false) → 실제 Toss 팝업 (이슈 #986)
+          VITE_TOSS_MOCK: ${{ secrets.VITE_TOSS_MOCK }}
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
