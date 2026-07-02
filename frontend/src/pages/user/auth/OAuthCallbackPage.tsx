@@ -14,8 +14,18 @@ function getHandoffCookie(name: string): string | null {
   return match ? decodeURIComponent(match[2]) : null;
 }
 
+// 백엔드가 서브도메인 배포 환경에서 handoff 쿠키를 Domain=.careerwave.kr(host-only 아님)로
+// 설정하므로, 만료 시에도 동일 Domain을 지정해야 domain-scoped 쿠키가 삭제된다.
+// VITE_COOKIE_DOMAIN 미설정(로컬)이면 host-only 쿠키만 만료.
+const COOKIE_DOMAIN = import.meta.env.VITE_COOKIE_DOMAIN as string | undefined;
+
 function clearHandoffCookie(name: string) {
+  // host-only 쿠키 만료 (로컬)
   document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Strict`;
+  // domain-scoped 쿠키 만료 (서브도메인 배포)
+  if (COOKIE_DOMAIN) {
+    document.cookie = `${name}=; Max-Age=0; Path=/; Domain=${COOKIE_DOMAIN}; SameSite=Strict`;
+  }
 }
 
 function OAuthCallbackPage() {
