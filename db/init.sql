@@ -624,6 +624,12 @@ CREATE INDEX idx_job_notices_active_deadline
     ON job_notices (deadline ASC NULLS LAST)
     WHERE notice_status = 'ACTIVE';
 
+-- 목록 조회 기본/추천 정렬(deadline ASC, created_at DESC)과 컬럼 순서를 맞춘 복합 인덱스.
+-- 단일 컬럼 인덱스로는 정렬 조건을 커버하지 못해 Seq Scan + 정렬이 발생했음 (#956).
+CREATE INDEX idx_job_notices_active_deadline_created
+    ON job_notices (deadline ASC NULLS LAST, created_at DESC)
+    WHERE notice_status = 'ACTIVE';
+
 -- ================================================
 -- 18. bookmarks
 -- ================================================

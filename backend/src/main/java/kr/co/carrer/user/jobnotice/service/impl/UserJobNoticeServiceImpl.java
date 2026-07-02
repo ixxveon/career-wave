@@ -17,6 +17,7 @@ import kr.co.carrer.user.jobnotice.type.JobType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +60,16 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
         int normalizedPage = Math.max(page, DEFAULT_PAGE);
         int normalizedSize = Math.min(Math.max(size, 1), MAX_SIZE);
 
-        Page<JobNotice> result = jobNoticeQueryRepository.findActiveJobNotices(
+        if (memberId == null) {
+            return jobNoticeCacheService.getAnonymousJobNoticeList(
+                    keyword, jobType, jobCategory, careerLevel, location,
+                    companySize, period, sort, normalizedPage, normalizedSize
+            );
+        }
+
+        PageRequest pageRequest = PageRequest.of(normalizedPage - 1, normalizedSize);
+
+        List<JobNotice> jobNotices = jobNoticeQueryRepository.findActiveJobNoticeContent(
                 keyword,
                 jobType,
                 jobCategory,
@@ -68,8 +78,18 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 companySize,
                 period,
                 sort,
-                PageRequest.of(normalizedPage - 1, normalizedSize)
+                pageRequest
         );
+        long totalElements = jobNoticeCacheService.getActiveJobNoticeCount(
+                keyword,
+                jobType,
+                jobCategory,
+                careerLevel,
+                location,
+                companySize,
+                period
+        );
+        Page<JobNotice> result = new PageImpl<>(jobNotices, pageRequest, totalElements);
 
         Set<Long> bookmarkedJobNoticeIds = getBookmarkedJobNoticeIds(memberId, result.getContent());
         List<JobNoticeDTO.ResponseSummary> content = result.getContent().stream()

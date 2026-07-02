@@ -21,8 +21,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
@@ -83,13 +81,7 @@ class UserJobNoticeServiceImplTest {
                     LocalDate.of(2026, 6, 30),
                     ZonedDateTime.of(2026, 6, 1, 0, 0, 0, 0, SERVICE_ZONE_ID)
             );
-            Page<JobNotice> pageResult = new PageImpl<>(
-                    List.of(jobNotice),
-                    PageRequest.of(0, 20),
-                    1
-            );
-
-            given(jobNoticeQueryRepository.findActiveJobNotices(
+            given(jobNoticeCacheService.getAnonymousJobNoticeList(
                     eq("backend"),
                     eq(JobType.FULLTIME),
                     eq("BACKEND"),
@@ -98,12 +90,29 @@ class UserJobNoticeServiceImplTest {
                     eq(CompanySize.STARTUP),
                     eq("7d"),
                     eq("latest"),
-                    any(PageRequest.class)
-            )).willReturn(pageResult);
-            given(jobNoticeCacheService.getListStats()).willReturn(
-                    new JobNoticeDTO.ResponseListStats(10L, 2L, null, 20.0)
-            );
-            given(jobNoticeCacheService.getFilterOptions()).willReturn(
+                    eq(1),
+                    eq(20)
+            )).willReturn(new JobNoticeDTO.ResponseList(
+                    List.of(new JobNoticeDTO.ResponseSummary(
+                            jobNotice.getJobNoticeId(),
+                            jobNotice.getCompanyName(),
+                            jobNotice.getTitle(),
+                            List.of(jobNotice.getSkillTags()),
+                            jobNotice.getJobType(),
+                            jobNotice.getCompanySize(),
+                            List.of(jobNotice.getJobCategory()),
+                            jobNotice.getCareerLevel(),
+                            jobNotice.getLocation(),
+                            jobNotice.getSalary(),
+                            jobNotice.getNoticeStatus(),
+                            jobNotice.getSource(),
+                            jobNotice.getViewCount(),
+                            jobNotice.getDeadline(),
+                            jobNotice.getCreatedAt(),
+                            false
+                    )),
+                    1, 20, 1, 1,
+                    new JobNoticeDTO.ResponseListStats(10L, 2L, null, 20.0),
                     new JobNoticeDTO.ResponseFilterOptions(
                             List.of("FULLTIME"),
                             List.of("BACKEND"),
@@ -111,7 +120,7 @@ class UserJobNoticeServiceImplTest {
                             List.of("Seoul"),
                             List.of("STARTUP")
                     )
-            );
+            ));
 
             JobNoticeDTO.ResponseList response = userJobNoticeService.getJobNotices(
                     "backend",
@@ -197,13 +206,7 @@ class UserJobNoticeServiceImplTest {
                     LocalDate.of(2026, 7, 7),
                     ZonedDateTime.of(2026, 6, 2, 0, 0, 0, 0, SERVICE_ZONE_ID)
             );
-            Page<JobNotice> pageResult = new PageImpl<>(
-                    List.of(firstJobNotice, secondJobNotice),
-                    PageRequest.of(0, 20),
-                    2
-            );
-
-            given(jobNoticeQueryRepository.findActiveJobNotices(
+            given(jobNoticeQueryRepository.findActiveJobNoticeContent(
                     eq(null),
                     eq(null),
                     eq(null),
@@ -213,7 +216,16 @@ class UserJobNoticeServiceImplTest {
                     eq(null),
                     eq(null),
                     any(PageRequest.class)
-            )).willReturn(pageResult);
+            )).willReturn(List.of(firstJobNotice, secondJobNotice));
+            given(jobNoticeCacheService.getActiveJobNoticeCount(
+                    eq(null),
+                    eq(null),
+                    eq(null),
+                    eq(null),
+                    eq(null),
+                    eq(null),
+                    eq(null)
+            )).willReturn(2L);
             given(bookmarkRepository.findByMemberIdAndJobNoticeIdIn(memberId, List.of(101L, 102L)))
                     .willReturn(List.of(Bookmark.of(memberId, secondJobNotice)));
             given(jobNoticeCacheService.getListStats()).willReturn(
