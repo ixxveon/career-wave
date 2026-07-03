@@ -83,22 +83,23 @@ public class CacheConfig implements CachingConfigurer {
 
         @Override
         public void handleCacheGetError(RuntimeException e, Cache cache, Object key) {
-            log.warn("Cache GET failed [cache={}, key={}]: {}", cache.getName(), key, e.getMessage());
+            log.warn("Cache GET failed [cache={}, key={}]", cache.getName(), key, e);
         }
 
         @Override
         public void handleCachePutError(RuntimeException e, Cache cache, Object key, Object value) {
-            log.warn("Cache PUT failed [cache={}, key={}]: {}", cache.getName(), key, e.getMessage());
+            log.warn("Cache PUT failed [cache={}, key={}]", cache.getName(), key, e);
         }
 
+        // GET/PUT 실패는 DB 조회로 자연 폴백되지만, EVICT/CLEAR 실패는 stale 데이터가 TTL까지 캐시에 남을 수 있어 error로 구분한다.
         @Override
         public void handleCacheEvictError(RuntimeException e, Cache cache, Object key) {
-            log.warn("Cache EVICT failed [cache={}, key={}]: {}", cache.getName(), key, e.getMessage());
+            log.error("Cache EVICT failed — stale data may persist until TTL expires [cache={}, key={}]", cache.getName(), key, e);
         }
 
         @Override
         public void handleCacheClearError(RuntimeException e, Cache cache) {
-            log.warn("Cache CLEAR failed [cache={}]: {}", cache.getName(), e.getMessage());
+            log.error("Cache CLEAR failed — stale data may persist until TTL expires [cache={}]", cache.getName(), e);
         }
     }
 }
