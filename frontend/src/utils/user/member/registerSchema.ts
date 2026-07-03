@@ -97,8 +97,8 @@ export function validatePersonalRegisterForm(
   }
   if (!form.name.trim()) {
     errors.name = '이름을 입력해주세요.';
-  } else if (!isValidName(form.name)) {
-    errors.name = '이름은 2~10자 한글로 입력해주세요.';
+  } else if (!isValidName(form.name.trim())) {
+    errors.name = '이름은 2~10자 한글로 입력해 주세요.';
   }
   if (!isValidEmail(form.email)) errors.email = '올바른 이메일 주소를 입력해주세요.';
   if (!form.emailVerificationToken?.trim()) errors.emailCode = '이메일 인증을 완료해주세요.';
