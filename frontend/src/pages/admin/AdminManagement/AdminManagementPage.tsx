@@ -248,6 +248,7 @@ export default function AdminManagementPage() {
   } = useQuery({
     queryKey: [...ADMIN_MANAGEMENT_ADMINS_QUERY_KEY, adminListQueryParams],
     queryFn: () => getAdminAccounts(adminListQueryParams),
+    refetchOnMount: 'always',
   });
   const filteredAdmins = adminAccounts?.items.map(toAdminAccountRow) ?? [];
   const aclListQueryParams = {

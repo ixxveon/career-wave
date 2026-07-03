@@ -4,6 +4,7 @@ import kr.co.carrer.admin.auth.dto.AdminLoginDto;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import kr.co.carrer.admin.audit.util.AdminAuditClientIpExtractor;
 import jakarta.validation.Valid;
 import kr.co.carrer.admin.auth.docs.AdminAuthControllerDocs;
 import kr.co.carrer.admin.auth.service.AdminLoginService;
@@ -28,7 +29,7 @@ public class AdminAuthController implements AdminAuthControllerDocs {
             @Valid @RequestBody AdminLoginDto.Request request,
             HttpServletRequest httpRequest,
             HttpServletResponse response) {
-        String clientIp = extractClientIp(httpRequest);
+        String clientIp = AdminAuditClientIpExtractor.extract(httpRequest);
         return ResponseEntity.ok(ApiResponse.ok("로그인되었습니다.", adminLoginService.login(request, response, clientIp)));
     }
 
@@ -53,15 +54,6 @@ public class AdminAuthController implements AdminAuthControllerDocs {
         );
         clearRefreshTokenCookie(response);
         return ResponseEntity.ok(ApiResponse.ok("로그아웃 되었습니다."));
-    }
-
-    private String extractClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            String ip = forwarded.split(",")[0].trim();
-            if (!ip.isBlank()) return ip;
-        }
-        return request.getRemoteAddr();
     }
 
     private void clearRefreshTokenCookie(HttpServletResponse response) {
