@@ -1,6 +1,11 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { validateCompanyRegisterForm, type CompanyRegisterFormSnapshot } from './registerSchema';
+import {
+  validateCompanyRegisterForm,
+  validatePersonalRegisterForm,
+  type CompanyRegisterFormSnapshot,
+  type PersonalRegisterFormSnapshot,
+} from './registerSchema';
 import { BUSINESS_NUMBER_CHECK_STATE, LOGIN_ID_CHECK_STATE } from './validation';
 
 // ─── 최소 유효 스냅샷 (모든 필수 항목 충족) ────────────────────────────────────
@@ -76,5 +81,52 @@ describe('validateCompanyRegisterForm — 유효 케이스', () => {
   it('모든 필드가 유효하면 오류가 없다', () => {
     const errors = validateCompanyRegisterForm(validSnapshot, LOGIN_ID_CHECK_STATE.AVAILABLE);
     expect(Object.keys(errors)).toHaveLength(0);
+  });
+});
+
+// ─── 개인회원 이름 형식 검증 (#991) ───────────────────────────────────────────
+
+const validPersonalSnapshot: PersonalRegisterFormSnapshot = {
+  loginId: 'personaluser1',
+  password: 'Password1!',
+  passwordConfirm: 'Password1!',
+  name: '홍길동',
+  email: 'user@example.com',
+  phone: '01012345678',
+  emailVerificationToken: 'email-token',
+  phoneVerificationToken: 'phone-token',
+  emailCode: '123456',
+  phoneCode: '654321',
+  terms: { age: true, service: true, privacy: true, marketing: false },
+};
+
+describe('validatePersonalRegisterForm — 이름 형식 검증', () => {
+  it('한글 실명이면 이름 오류가 없다', () => {
+    const errors = validatePersonalRegisterForm(validPersonalSnapshot, LOGIN_ID_CHECK_STATE.AVAILABLE);
+    expect(errors.name).toBeUndefined();
+  });
+
+  it('이름이 비어 있으면 입력 요청 오류가 발생한다', () => {
+    const errors = validatePersonalRegisterForm(
+      { ...validPersonalSnapshot, name: '  ' },
+      LOGIN_ID_CHECK_STATE.AVAILABLE,
+    );
+    expect(errors.name).toBe('이름을 입력해주세요.');
+  });
+
+  it('한글이 아닌 값(sss)은 형식 오류가 발생한다', () => {
+    const errors = validatePersonalRegisterForm(
+      { ...validPersonalSnapshot, name: 'sss' },
+      LOGIN_ID_CHECK_STATE.AVAILABLE,
+    );
+    expect(errors.name).toBe('이름은 2~10자 한글로 입력해주세요.');
+  });
+
+  it('한 글자 한글은 형식 오류가 발생한다', () => {
+    const errors = validatePersonalRegisterForm(
+      { ...validPersonalSnapshot, name: '홍' },
+      LOGIN_ID_CHECK_STATE.AVAILABLE,
+    );
+    expect(errors.name).toBe('이름은 2~10자 한글로 입력해주세요.');
   });
 });

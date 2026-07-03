@@ -13,6 +13,7 @@ export const LOGIN_ID_PATTERN = /^[A-Za-z0-9]{6,20}$/;
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_PATTERN = /^010\d{8}$/;
 export const VERIFICATION_CODE_PATTERN = /^\d{6}$/;
+export const NAME_PATTERN = /^[가-힣]{2,10}$/;
 
 export const COMPANY_TYPE_LABELS = {
   ENTERPRISE: '대기업',
@@ -78,6 +79,10 @@ export function isValidVerificationCode(value: string): boolean {
   return VERIFICATION_CODE_PATTERN.test(value.trim());
 }
 
+export function isValidName(value: string): boolean {
+  return NAME_PATTERN.test(value.trim());
+}
+
 export function validatePersonalRegisterForm(
   form: PersonalRegisterFormSnapshot,
   loginIdState: LoginIdCheckState,
@@ -90,7 +95,11 @@ export function validatePersonalRegisterForm(
   } else if (loginIdState !== LOGIN_ID_CHECK_STATE.AVAILABLE) {
     errors.loginId = '아이디 중복 확인을 완료해주세요.';
   }
-  if (!form.name.trim()) errors.name = '이름을 입력해주세요.';
+  if (!form.name.trim()) {
+    errors.name = '이름을 입력해주세요.';
+  } else if (!isValidName(form.name)) {
+    errors.name = '이름은 2~10자 한글로 입력해주세요.';
+  }
   if (!isValidEmail(form.email)) errors.email = '올바른 이메일 주소를 입력해주세요.';
   if (!form.emailVerificationToken?.trim()) errors.emailCode = '이메일 인증을 완료해주세요.';
   if (!isValidPhone(form.phone)) errors.phone = '휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해주세요.';
