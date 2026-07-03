@@ -15,9 +15,13 @@ export const memberAuthApi = {
   },
 
   async logout() {
+    // 로그인과 동일하게 cross-origin 환경에서 요청에 refreshToken 쿠키를 실어 보내고,
+    // 서버의 Set-Cookie: refreshToken=; Max-Age=0 삭제 응답이 브라우저에 반영되도록
+    // credentials를 포함한다. 누락 시 HttpOnly refreshToken이 남아 세션이 복구될 수 있다.
     await memberApiClient('/api/v1/user/members/logout', {
       method: 'POST',
       auth: true,
+      credentials: 'include',
     }).catch(() => {});
     authSession.clear();
   },
