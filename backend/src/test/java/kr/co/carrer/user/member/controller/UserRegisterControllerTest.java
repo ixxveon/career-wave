@@ -24,6 +24,8 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -97,6 +99,27 @@ class UserRegisterControllerTest {
                 .andExpect(jsonPath("$.statusCode").value(201))
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.roleType").value("USER"));
+    }
+
+    @Test
+    @DisplayName("이름이 한글 실명 형식이 아니면 HTTP 400 + name 필드 검증 메시지를 반환한다")
+    void registerUser_이름형식오류_400() throws Exception {
+        String body = """
+                {"loginId":"newuser01","password":"Password1!","name":"sss",
+                 "email":"user@example.com","phone":"01012345678",
+                 "emailVerificationToken":"etoken","phoneVerificationToken":"ptoken",
+                 "terms":{"service":true,"privacy":true,"marketing":false}}
+                """;
+
+        mockMvc.perform(post("/api/v1/user/members/register/user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.data.name").value("이름은 2~10자 한글로 입력해 주세요."));
+
+        verify(userRegisterService, never()).registerUser(any());
     }
 
     // ─── 기업회원 가입 ────────────────────────────────────────────────────────────
