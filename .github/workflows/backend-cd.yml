@@ -106,7 +106,8 @@ jobs:
 
             docker compose pull
             docker compose up -d
-            docker image prune -f
+            docker image prune -a -f --filter "until=24h"
+            docker builder prune -a -f --filter "until=24h"
 
       - name: Copy compose file to App2
         uses: appleboy/scp-action@v0.1.7
@@ -137,7 +138,8 @@ jobs:
 
             docker compose pull
             docker compose up -d
-            docker image prune -f
+            docker image prune -a -f --filter "until=24h"
+            docker builder prune -a -f --filter "until=24h"
 
       - name: Remove SSH from runner IP
         if: always() && steps.allow_ssh.outputs.created == 'true'
