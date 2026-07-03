@@ -160,7 +160,7 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
             <PasswordInput
               value={form.password}
               onChange={(value) => update('password', value)}
-              placeholder="비밀번호(8~64자의 영문, 숫자, 특수기호)"
+              placeholder="비밀번호(8~64자의 영문, 숫자, 특수문자 포함)"
             />
             {fieldErrors.password && <p className="cw-register-error">{fieldErrors.password}</p>}
           </Field>

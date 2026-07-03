@@ -185,7 +185,7 @@ export function CompanyRegisterForm({
               </div>
             </Field>
             <Field label="비밀번호" required>
-              <PasswordInput value={form.managerPassword} onChange={(value) => update('managerPassword', value)} placeholder="비밀번호(8~64자의 영문, 숫자, 특수기호)" />
+              <PasswordInput value={form.managerPassword} onChange={(value) => update('managerPassword', value)} placeholder="비밀번호(8~64자의 영문, 숫자, 특수문자 포함)" />
               <div className="cw-register-status-area">
                 {fieldErrors.password && <p className="cw-register-error">{fieldErrors.password}</p>}
               </div>
