@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useInterviewHistory } from '../../../hooks/user/interview/useInterviewReport';
 import { useSubscriptionStatus } from '../../../hooks/user/subscription';
+import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
 import { SESSION_TYPE_LABEL } from '../../../constants/user/interview';
 
 /* ── 상품별 월 이용 한도 기본값 (API 미구독 시 fallback) */
@@ -21,14 +22,17 @@ function InterviewHomePage() {
   const navigate = useNavigate();
   const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
   const { subscribedItems, unsubscribedItems } = useSubscriptionStatus();
+  const { data: resumeQuota } = useResumeQuota();
 
   /* 서류 AI 코칭 / AI 모의면접 usage 항목 (구독 여부 무관) */
   const allSubItems = [...subscribedItems, ...unsubscribedItems];
-  const docItem = allSubItems.find(i => i.key === 'document');
   const ivItem  = allSubItems.find(i => i.key === 'interview');
 
-  const docUsed  = docItem?.usage?.used  ?? 0;
-  const docLimit = docItem?.usage?.limit ?? DEFAULT_DOC_LIMIT;
+  const docItem = allSubItems.find(i => i.key === 'document');
+
+  // 서류 분석 사용량은 resume/quota API 기준 (ResumeAnalysisPage와 동일)
+  const docUsed  = resumeQuota?.usedCount  ?? 0;
+  const docLimit = resumeQuota?.limitCount ?? DEFAULT_DOC_LIMIT;
   const ivUsed   = ivItem?.usage?.used   ?? 0;
   const ivLimit  = ivItem?.usage?.limit  ?? DEFAULT_IV_LIMIT;
 
@@ -58,7 +62,12 @@ function InterviewHomePage() {
 
         <div className="iv-hero__stats">
           <div className="iv-stat">
-            <span className="iv-stat__value">88점</span>
+            <span className="iv-stat__value">
+              {(() => {
+                const scores = historyData?.items.map(i => i.totalScore).filter((s): s is number => s !== null) ?? [];
+                return scores.length > 0 ? `${Math.max(...scores)}점` : '—';
+              })()}
+            </span>
             <span className="iv-stat__label">최고 점수</span>
           </div>
           <div className="iv-stat">
