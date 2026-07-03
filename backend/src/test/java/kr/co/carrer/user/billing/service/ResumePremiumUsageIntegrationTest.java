@@ -10,6 +10,7 @@ import kr.co.carrer.user.billing.repository.MemberProductEntitlementRepository;
 import kr.co.carrer.user.billing.repository.ServiceUsageRecordRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionUsagePeriodRepository;
+import kr.co.carrer.user.billing.service.impl.EntitlementQueryServiceImpl;
 import kr.co.carrer.user.billing.service.impl.EntitlementServiceImpl;
 import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
@@ -113,10 +114,12 @@ class ResumePremiumUsageIntegrationTest {
         EntitlementService entitlementService = new EntitlementServiceImpl(
                 entitlementRepository, usageRecordRepository, memberPort,
                 subscriptionRepository, usagePeriodRepository);
+        EntitlementQueryService entitlementQueryService = new EntitlementQueryServiceImpl(
+                entitlementRepository, subscriptionRepository, usagePeriodRepository);
         resumeService = new ResumeServiceImpl(
                 documentRepository, coverLetterMetaRepository, coverLetterContentRepository,
                 documentFeedbackRepository, fileValidator, s3Uploader, objectMapper,
-                documentStatusService, eventPublisher, entitlementService);
+                documentStatusService, eventPublisher, entitlementService, entitlementQueryService);
         ReflectionTestUtils.setField(resumeService, "configuredWebhookSecret", "test-secret");
     }
 
