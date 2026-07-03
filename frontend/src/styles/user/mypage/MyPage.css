@@ -3081,6 +3081,7 @@ a.cw-chart-filter {
 /* GitHub 연동 정보 */
 
 .cw-github-card {
+  margin-bottom: 16px;
   background:
     radial-gradient(circle at right top, rgba(95, 150, 238, 0.1), transparent 28%),
     #ffffff;
