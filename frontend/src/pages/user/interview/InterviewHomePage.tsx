@@ -33,8 +33,8 @@ function InterviewHomePage() {
   // 서류 분석 사용량은 resume/quota API 기준 (ResumeAnalysisPage와 동일)
   const docUsed  = resumeQuota?.usedCount  ?? 0;
   const docLimit = resumeQuota?.limitCount ?? DEFAULT_DOC_LIMIT;
-  const ivUsed   = ivItem?.usage?.used   ?? 0;
   const ivLimit  = ivItem?.usage?.limit  ?? DEFAULT_IV_LIMIT;
+  const ivUsed   = ivItem?.usage ? Math.max(ivLimit - (ivItem.usage.remaining ?? 0), 0) : 0;
 
   const docPct = Math.min((docUsed / docLimit) * 100, 100);
   const ivPct  = Math.min((ivUsed  / ivLimit)  * 100, 100);
