@@ -21,10 +21,12 @@ public class IpAclFilter extends OncePerRequestFilter {
 
     private final IpAclPort ipAclPort;
     private final ObjectMapper objectMapper;
+    private final List<String> trustedProxies;
 
-    public IpAclFilter(IpAclPort ipAclPort, ObjectMapper objectMapper) {
+    public IpAclFilter(IpAclPort ipAclPort, ObjectMapper objectMapper, List<String> trustedProxies) {
         this.ipAclPort = ipAclPort;
         this.objectMapper = objectMapper;
+        this.trustedProxies = trustedProxies;
     }
 
     @Override
@@ -56,11 +58,26 @@ public class IpAclFilter extends OncePerRequestFilter {
     }
 
     private String extractClientIp(HttpServletRequest request) {
+        String remoteAddr = request.getRemoteAddr();
         String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+
+        if (xForwardedFor != null && !xForwardedFor.isBlank() && isTrustedProxy(remoteAddr)) {
             return xForwardedFor.split(",")[0].trim();
         }
-        return request.getRemoteAddr();
+        return remoteAddr;
+    }
+
+    private boolean isTrustedProxy(String remoteAddr) {
+        for (String trustedProxy : trustedProxies) {
+            try {
+                if (matchesCidr(remoteAddr, trustedProxy)) {
+                    return true;
+                }
+            } catch (Exception e) {
+                log.warn("신뢰 프록시 설정값이 올바르지 않아 매칭을 건너뜁니다. trustedProxy={}", trustedProxy, e);
+            }
+        }
+        return false;
     }
 
     private boolean isAllowed(String clientIp, List<String> cidrRanges) {
