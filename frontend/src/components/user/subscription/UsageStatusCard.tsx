@@ -8,7 +8,7 @@ export function UsageStatusCard({ item }: { item: UsageItem }) {
   const limit = item.usage?.limit ?? 0;
   const remaining = item.usage?.remaining ?? 0;
   // reserved(분석 중) 포함 실제 차감 횟수 = limit - remaining
-  const consumedCount = limit > 0 ? limit - remaining : 0;
+  const consumedCount = limit > 0 ? Math.max(limit - remaining, 0) : 0;
   const isOverLimit = consumedCount > limit;
   const percent = limit > 0 ? Math.min(Math.round((consumedCount / limit) * 100), 100) : 0;
   const clampedLimit = Math.min(limit, MAX_USAGE_BOXES);
