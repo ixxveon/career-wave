@@ -8,6 +8,7 @@ import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
@@ -25,8 +26,9 @@ import java.util.Optional;
 //       그 외 → 실패 확정
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "toss.mock", havingValue = "false", matchIfMissing = true)
 @RequiredArgsConstructor
-public class TossPaymentQueryClient {
+public class TossPaymentQueryClient implements PaymentQueryClient {
 
     @Value("${toss.base-url:https://api.tosspayments.com}")
     private String baseUrl;
@@ -52,6 +54,7 @@ public class TossPaymentQueryClient {
     }
 
     // Optional.empty() → Toss 오류 또는 timeout → RECONCILING 유지
+    @Override
     public Optional<TossBillingPaymentResponse> queryByOrderId(String orderId) {
         try {
             TossBillingPaymentResponse response = webClient.get()

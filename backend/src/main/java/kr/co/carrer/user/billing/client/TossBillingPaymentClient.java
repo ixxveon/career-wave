@@ -8,6 +8,7 @@ import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -25,8 +26,9 @@ import java.util.Map;
 // 5xx/timeout → PAYMENT_RECONCILIATION_REQUIRED (Toss 서버 측 문제 — 결제가 처리됐을 수 있음)
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "toss.mock", havingValue = "false", matchIfMissing = true)
 @RequiredArgsConstructor
-public class TossBillingPaymentClient {
+public class TossBillingPaymentClient implements BillingPaymentClient {
 
     @Value("${toss.base-url:https://api.tosspayments.com}")
     private String baseUrl;
@@ -52,6 +54,7 @@ public class TossBillingPaymentClient {
     }
 
     // plainBillingKey: AesCipher.decrypt() 결과 — 이 메서드 밖으로 유출 금지
+    @Override
     public TossBillingPaymentResponse pay(String plainBillingKey,
                                            String customerKey, String customerEmail, String customerName,
                                            String orderId, String orderName, int amount) {

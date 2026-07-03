@@ -1,8 +1,8 @@
 package kr.co.carrer.user.billing.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.user.billing.client.TossBillingAuthorizationClient;
-import kr.co.carrer.user.billing.client.TossBillingPaymentClient;
+import kr.co.carrer.user.billing.client.BillingAuthorizationClient;
+import kr.co.carrer.user.billing.client.BillingPaymentClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingAuthResponse;
 import kr.co.carrer.user.billing.client.dto.TossBillingPaymentResponse;
 import kr.co.carrer.user.billing.dto.BillingDTO;
@@ -32,8 +32,8 @@ public class UserPaymentConfirmServiceImpl implements UserPaymentConfirmService 
     private final UserPaymentRepository userPaymentRepository;
     private final BillingProfileRepository billingProfileRepository;
     private final PlanRepository planRepository;
-    private final TossBillingAuthorizationClient tossBillingAuthClient;
-    private final TossBillingPaymentClient tossBillingPaymentClient;
+    private final BillingAuthorizationClient tossBillingAuthClient;
+    private final BillingPaymentClient tossBillingPaymentClient;
     private final AesCipher aesCipher;
     private final UserPaymentFailureTxService failureTxService;
     private final UserPaymentSettleTxService settleTxService;

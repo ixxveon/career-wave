@@ -1,7 +1,7 @@
 package kr.co.carrer.user.billing.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.user.billing.client.TossBillingPaymentClient;
+import kr.co.carrer.user.billing.client.BillingPaymentClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingPaymentResponse;
 import kr.co.carrer.user.billing.entity.BillingProfile;
 import kr.co.carrer.user.billing.entity.Plan;
@@ -33,7 +33,7 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
 
     private final BillingProfileRepository billingProfileRepository;
     private final PlanRepository planRepository;
-    private final TossBillingPaymentClient tossBillingPaymentClient;
+    private final BillingPaymentClient tossBillingPaymentClient;
     private final AesCipher aesCipher;
     private final BillingMemberPort billingMemberPort;
     private final RenewalPaymentCreateTxService renewalPaymentCreateTxService;
