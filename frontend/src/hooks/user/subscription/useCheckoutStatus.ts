@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 import { useProducts } from './useProducts';
 import { useCreateOrder } from './useCreateOrder';
+import { useSubscribedProductCodes } from './useSubscribedProductCodes';
 import { PRODUCT_CODE } from '../../../types/user/subscription';
 import type { ProductCode } from '../../../types/user/subscription';
 
@@ -27,9 +28,17 @@ export function useCheckoutStatus() {
   const { data: products, isLoading: isProductsLoading } = useProducts();
   const product = products?.find((p) => p.productCode === productCode) ?? null;
 
+  // URL 직접 접근 등으로 이미 구독 중인 상품의 결제 화면에 들어온 경우를 방어한다. (이슈 #1007)
+  const { subscribedCodes, isLoading: isSubscriptionLoading } = useSubscribedProductCodes();
+  const isAlreadySubscribed = productCode !== null && subscribedCodes.has(productCode);
+
   const { mutateAsync: createOrder, isPending: isCreatingOrder } = useCreateOrder();
 
   async function handleCheckout() {
+    if (isAlreadySubscribed) {
+      setCheckoutError('이미 구독 중인 상품입니다. 구독 현황을 확인해주세요.');
+      return;
+    }
     if (!agreed) {
       setWarning('자동 정기 결제 및 이용 조건에 동의해주세요.');
       return;
@@ -97,6 +106,8 @@ export function useCheckoutStatus() {
     isKnownProduct,
     product,
     isProductsLoading,
+    isSubscriptionLoading,
+    isAlreadySubscribed,
     agreed,
     warning,
     checkoutError,

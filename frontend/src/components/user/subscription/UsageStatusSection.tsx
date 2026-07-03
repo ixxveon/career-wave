@@ -23,7 +23,7 @@ export function UsageStatusSection({
   hasPartialSubscription,
 }: UsageStatusSectionProps) {
   return (
-    <section className="cw-subscription-section cw-subscription-section--plain">
+    <section id="cw-my-usage" className="cw-subscription-section cw-subscription-section--plain">
       <div className="cw-subscription-section__head">
         <div>
           <h3>AI 서비스 이용 현황</h3>

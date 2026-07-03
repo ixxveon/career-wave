@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, BadgeCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import '@/styles/user/billing/Billing.css';
 import { useCheckoutStatus } from '../../../hooks/user/subscription/useCheckoutStatus';
@@ -9,6 +9,8 @@ function CheckoutPage() {
   const {
     isKnownProduct,
     product,
+    isSubscriptionLoading,
+    isAlreadySubscribed,
     agreed,
     warning,
     checkoutError,
@@ -37,7 +39,7 @@ function CheckoutPage() {
     );
   }
 
-  if (!product) {
+  if (!product || isSubscriptionLoading) {
     return (
       <div className="cw-billing-flow-page">
         <div className="cw-billing-flow-shell">
@@ -47,6 +49,27 @@ function CheckoutPage() {
             </div>
             <strong>상품 정보를 불러오는 중입니다.</strong>
             <p>잠시 후 다시 시도해주세요.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 이미 구독 중인 상품은 결제 폼 대신 안내 화면을 노출한다.
+  // (서버도 주문 생성 시 409로 최종 차단하지만, 화면 진입 자체를 막아 중복 구매 오해를 방지) (이슈 #1007)
+  if (isAlreadySubscribed) {
+    return (
+      <div className="cw-billing-flow-page">
+        <div className="cw-billing-flow-shell">
+          <div className="cw-billing-card cw-billing-missing-card">
+            <div className="cw-billing-state-icon is-success" aria-hidden="true">
+              <BadgeCheck size={30} />
+            </div>
+            <strong>이미 구독 중인 상품입니다.</strong>
+            <p>이 상품은 현재 이용 중이라 추가 결제가 필요하지 않아요. 이용 현황은 AI 서비스 페이지에서 확인할 수 있어요.</p>
+            <Link className="cw-billing-outline-button" to="/mypage/subscription">
+              구독 현황 확인하기
+            </Link>
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ export { useMySubscriptions } from './useMySubscriptions';
 export { useUsages } from './useUsages';
 export { useEntitlements } from './useEntitlements';
 export { useSubscriptionStatus } from './useSubscriptionStatus';
+export { useSubscribedProductCodes } from './useSubscribedProductCodes';
 export { usePaymentHistoryStatus } from './usePaymentHistoryStatus';
 export { usePaymentHistory } from './usePaymentHistory';
 export { useCancelSubscription } from './useCancelSubscription';

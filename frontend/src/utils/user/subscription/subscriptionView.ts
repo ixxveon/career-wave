@@ -62,11 +62,17 @@ export const ALL_PRODUCT_CODES: ProductCode[] = [
   PRODUCT_CODE.INTERVIEW,
 ];
 
+// 구매(신규 결제)를 차단해야 하는 구독 상태.
+// 백엔드 UserCheckoutOrderServiceImpl 의 BLOCKING_STATUSES 와 반드시 일치해야 한다.
 const ACTIVE_STATUSES = new Set<SubscriptionStatus>([
   SUBSCRIPTION_STATUS.ACTIVE,
   SUBSCRIPTION_STATUS.CANCEL_SCHEDULED,
   SUBSCRIPTION_STATUS.PAYMENT_FAILED,
 ]);
+
+export function isActiveSubscriptionStatus(status: SubscriptionStatus): boolean {
+  return ACTIVE_STATUSES.has(status);
+}
 
 const USAGE_UNIT_LABELS: Record<string, string> = {
   analysis: '회',
@@ -104,11 +110,11 @@ export function buildUsageItems(
   return ALL_PRODUCT_CODES.map((code) => {
     const productSubs = subscriptions.filter((s) => s.productCode === code);
     const subscription =
-      productSubs.find((s) => ACTIVE_STATUSES.has(s.status)) ??
+      productSubs.find((s) => isActiveSubscriptionStatus(s.status)) ??
       productSubs[productSubs.length - 1] ??
       null;
     const usage = usages.find((u) => u.productCode === code) ?? null;
-    const isSubscribed = subscription !== null && ACTIVE_STATUSES.has(subscription.status);
+    const isSubscribed = subscription !== null && isActiveSubscriptionStatus(subscription.status);
 
     return {
       productCode: code,
