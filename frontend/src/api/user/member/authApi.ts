@@ -4,9 +4,13 @@ import { memberApiClient } from './memberApiClient';
 
 export const memberAuthApi = {
   async login(payload: LoginRequest): Promise<LoginResponse> {
+    // cross-origin(www→api) 환경에서 로그인 응답의 Set-Cookie: refreshToken=... 를
+    // 브라우저가 저장하도록 credentials를 포함한다. 누락 시 새로고침 후 refresh cookie가
+    // 없어 /token/refresh가 401로 실패하고 세션이 풀린다.
     return memberApiClient<LoginResponse>('/api/v1/user/members/login', {
       method: 'POST',
       body: JSON.stringify(payload),
+      credentials: 'include',
     });
   },
 
