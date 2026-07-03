@@ -127,20 +127,18 @@ function JobSeekerDashboardPage() {
     isError: isRecommendedJobsError,
     isLoading: isRecommendedJobsLoading,
     refetch: refetchRecommendedJobs,
-  } = useJobNoticeList(RECOMMENDED_JOB_QUERY_PARAMS, { enabled: isLoggedIn });
+  } = useJobNoticeList(RECOMMENDED_JOB_QUERY_PARAMS);
   const recommendedJobs =
     recommendedJobListApiResponse?.data?.content
       ?.map(mapJobNoticeApiToViewModel)
       .map(toRecommendedJobCard) ?? [];
-  const recommendedJobsStatus = !isLoggedIn
-    ? 'guest'
-    : isRecommendedJobsLoading
-      ? 'loading'
-      : isRecommendedJobsError
-        ? 'error'
-        : recommendedJobs.length > 0
-          ? 'success'
-          : 'empty';
+  const recommendedJobsStatus = isRecommendedJobsLoading
+    ? 'loading'
+    : isRecommendedJobsError
+      ? 'error'
+      : recommendedJobs.length > 0
+        ? 'success'
+        : 'empty';
 
   return (
     <div className="cw-page cw-home">
