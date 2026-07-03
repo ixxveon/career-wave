@@ -66,6 +66,17 @@ class AdminAuditClientIpExtractorTest {
     }
 
     @Test
+    void fallsBackToRemoteAddressWhenIpv6LikeHeaderIsInvalid() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Forwarded-For", "not:a:valid:ipv6");
+        request.setRemoteAddr("127.0.0.1");
+
+        String clientIp = AdminAuditClientIpExtractor.extract(request);
+
+        assertThat(clientIp).isEqualTo("127.0.0.1");
+    }
+
+    @Test
     void fallsBackToRemoteAddressWhenProxyHeadersAreMissing() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("127.0.0.1");

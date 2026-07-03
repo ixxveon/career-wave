@@ -2,8 +2,6 @@ package kr.co.carrer.admin.audit.util;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.regex.Pattern;
 
 public final class AdminAuditClientIpExtractor {
@@ -38,14 +36,59 @@ public final class AdminAuditClientIpExtractor {
         if (IPV4_PATTERN.matcher(value).matches()) {
             return true;
         }
-        if (!value.contains(":")) {
+        return isValidIpv6Literal(value);
+    }
+
+    private static boolean isValidIpv6Literal(String value) {
+        if (!value.contains(":") || value.indexOf(":::") >= 0) {
             return false;
         }
-        try {
-            InetAddress.getByName(value);
-            return true;
-        } catch (UnknownHostException e) {
+
+        String[] compressedParts = value.split("::", -1);
+        if (compressedParts.length > 2) {
             return false;
         }
+
+        int hextetCount = countValidHextets(compressedParts[0]);
+        if (hextetCount < 0) {
+            return false;
+        }
+
+        if (compressedParts.length == 2) {
+            int rightCount = countValidHextets(compressedParts[1]);
+            return rightCount >= 0 && hextetCount + rightCount < 8;
+        }
+
+        return hextetCount == 8;
+    }
+
+    private static int countValidHextets(String value) {
+        if (value.isEmpty()) {
+            return 0;
+        }
+
+        String[] hextets = value.split(":", -1);
+        for (String hextet : hextets) {
+            if (!isValidHextet(hextet)) {
+                return -1;
+            }
+        }
+        return hextets.length;
+    }
+
+    private static boolean isValidHextet(String value) {
+        if (value.isEmpty() || value.length() > 4) {
+            return false;
+        }
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            boolean isHexDigit = (ch >= '0' && ch <= '9')
+                    || (ch >= 'a' && ch <= 'f')
+                    || (ch >= 'A' && ch <= 'F');
+            if (!isHexDigit) {
+                return false;
+            }
+        }
+        return true;
     }
 }
