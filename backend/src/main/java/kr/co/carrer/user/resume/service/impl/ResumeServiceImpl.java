@@ -272,16 +272,18 @@ public class ResumeServiceImpl implements ResumeService {
     public ResumeDTO.ResponseQuota getQuota(UUID memberId) {
         ZonedDateTime firstDayOfMonth = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
         int usedCount = documentRepository.countUsedThisMonth(memberId, firstDayOfMonth, DocumentStatus.FAILED);
-        int limitCount = resolveDocumentLimitCount(memberId);
+        int limitCount = resolveDocumentLimitCount(memberId, usedCount);
         return new ResumeDTO.ResponseQuota(usedCount, limitCount);
     }
 
-    private int resolveDocumentLimitCount(UUID memberId) {
+    private int resolveDocumentLimitCount(UUID memberId, int usedCount) {
         EntitlementDTO.ResponseEntitlementList entitlements = entitlementQueryService.getMyEntitlements(memberId);
         return entitlements.entitlementDetails().stream()
                 .filter(item -> ProductCode.DOCUMENT_COACHING.code().equals(item.productCode()))
                 .findFirst()
-                .map(item -> item.monthlyLimit() != null ? item.monthlyLimit() : item.freeRemaining())
+                .map(item -> item.monthlyLimit() != null
+                        ? item.monthlyLimit()
+                        : item.freeRemaining() + usedCount)
                 .orElse(0);
     }
 
