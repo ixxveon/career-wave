@@ -1,17 +1,16 @@
 package kr.co.carrer.global.config;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import kr.co.carrer.user.jobnotice.dto.JobNoticeDTO;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -29,33 +28,42 @@ public class CacheConfig {
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        ObjectMapper cacheObjectMapper = new ObjectMapper()
+        ObjectMapper objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        cacheObjectMapper.activateDefaultTyping(
-                BasicPolymorphicTypeValidator.builder().allowIfSubType("kr.co.carrer.").build(),
-                ObjectMapper.DefaultTyping.EVERYTHING,
-                JsonTypeInfo.As.PROPERTY
-        );
+
+        RedisSerializationContext.SerializationPair<String> keySerializer =
+                RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer());
 
         RedisCacheConfiguration defaults = RedisCacheConfiguration.defaultCacheConfig()
-                .serializeKeysWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheObjectMapper)))
+                .serializeKeysWith(keySerializer)
                 .disableCachingNullValues()
                 .entryTtl(Duration.ofMinutes(30));
 
         Map<String, RedisCacheConfiguration> cacheConfigs = Map.of(
-                JOB_NOTICE_FILTER_OPTIONS, defaults.entryTtl(Duration.ofHours(12)),
-                JOB_NOTICE_STATS,          defaults.entryTtl(Duration.ofMinutes(10)),
-                JOB_NOTICE_LIST_COUNT,     defaults.entryTtl(Duration.ofSeconds(30)),
-                JOB_NOTICE_LIST,           defaults.entryTtl(Duration.ofMinutes(1))
+                JOB_NOTICE_FILTER_OPTIONS, defaults
+                        .serializeValuesWith(typedSerializer(objectMapper, JobNoticeDTO.ResponseFilterOptions.class))
+                        .entryTtl(Duration.ofHours(12)),
+                JOB_NOTICE_STATS, defaults
+                        .serializeValuesWith(typedSerializer(objectMapper, JobNoticeDTO.ResponseListStats.class))
+                        .entryTtl(Duration.ofMinutes(10)),
+                JOB_NOTICE_LIST_COUNT, defaults
+                        .serializeValuesWith(typedSerializer(objectMapper, Long.class))
+                        .entryTtl(Duration.ofSeconds(30)),
+                JOB_NOTICE_LIST, defaults
+                        .serializeValuesWith(typedSerializer(objectMapper, JobNoticeDTO.ResponseList.class))
+                        .entryTtl(Duration.ofMinutes(1))
         );
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaults)
                 .withInitialCacheConfigurations(cacheConfigs)
                 .build();
+    }
+
+    private static <T> RedisSerializationContext.SerializationPair<T> typedSerializer(
+            ObjectMapper objectMapper, Class<T> type) {
+        return RedisSerializationContext.SerializationPair
+                .fromSerializer(new Jackson2JsonRedisSerializer<>(objectMapper, type));
     }
 }
