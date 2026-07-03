@@ -620,8 +620,8 @@ CREATE INDEX idx_job_notices_active_created
     ON job_notices (created_at DESC)
     WHERE notice_status = 'ACTIVE';
 
-CREATE INDEX idx_job_notices_active_deadline
-    ON job_notices (deadline ASC NULLS LAST)
+CREATE INDEX idx_job_notices_active_deadline_created
+    ON job_notices (deadline ASC NULLS LAST, created_at DESC)
     WHERE notice_status = 'ACTIVE';
 
 -- ================================================
