@@ -6,7 +6,10 @@ import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.global.s3.S3Uploader;
+import kr.co.carrer.user.billing.dto.EntitlementDTO;
+import kr.co.carrer.user.billing.service.EntitlementQueryService;
 import kr.co.carrer.user.billing.service.EntitlementService;
+import kr.co.carrer.user.billing.type.ProductCode;
 import kr.co.carrer.user.billing.type.ResourceType;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
 import kr.co.carrer.user.resume.entity.CoverLetterContent;
@@ -58,6 +61,7 @@ public class ResumeServiceImpl implements ResumeService {
     private final DocumentStatusService documentStatusService;
     private final ApplicationEventPublisher eventPublisher;
     private final EntitlementService entitlementService;
+    private final EntitlementQueryService entitlementQueryService;
 
     @Value("${webhook.secret}")
     private String configuredWebhookSecret;
@@ -268,7 +272,17 @@ public class ResumeServiceImpl implements ResumeService {
     public ResumeDTO.ResponseQuota getQuota(UUID memberId) {
         ZonedDateTime firstDayOfMonth = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
         int usedCount = documentRepository.countUsedThisMonth(memberId, firstDayOfMonth, DocumentStatus.FAILED);
-        return new ResumeDTO.ResponseQuota(usedCount, 30);
+        int limitCount = resolveDocumentLimitCount(memberId);
+        return new ResumeDTO.ResponseQuota(usedCount, limitCount);
+    }
+
+    private int resolveDocumentLimitCount(UUID memberId) {
+        EntitlementDTO.ResponseEntitlementList entitlements = entitlementQueryService.getMyEntitlements(memberId);
+        return entitlements.entitlementDetails().stream()
+                .filter(item -> ProductCode.DOCUMENT_COACHING.code().equals(item.productCode()))
+                .findFirst()
+                .map(item -> item.monthlyLimit() != null ? item.monthlyLimit() : item.freeRemaining())
+                .orElse(0);
     }
 
     private List<ResumeDTO.ResponseFeedback.FeedbackDetail> parseFeedbackDetails(String feedbackText, UUID documentId) {
