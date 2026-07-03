@@ -45,10 +45,16 @@ function OAuthCallbackPage() {
       if (accessToken) {
         authSession.setTokens({ accessToken });
         // OAuth 콜백(백엔드) 응답에서 설정된 refresh 쿠키를 프론트가 사용하는 API 경로로
-        // 즉시 rotate하여 이후 요청과 동일한 조건의 쿠키로 교체한다. (실패해도 무시)
-        probeAuth().catch(() => {});
+        // 즉시 rotate하여 이후 요청과 동일한 조건의 쿠키로 교체한다.
+        // 회전이 끝나기 전에 navigate하면 이후 페이지의 요청/ProtectedRoute가 구 refresh
+        // 쿠키로 refresh를 재발사해 백엔드 재사용 탐지에 걸려 세션 전체가 폐기된다.
+        // 따라서 회전 완료(성공/실패 무관)를 기다린 뒤 이동해 경쟁 창을 닫는다. (이슈 #1025)
+        probeAuth()
+          .catch(() => {})
+          .finally(() => navigate('/', { replace: true }));
+      } else {
+        navigate('/', { replace: true });
       }
-      navigate('/', { replace: true });
     } else if (type === OAUTH_TYPE.SIGNUP) {
       const token = getHandoffCookie('cw_oauth_signup_token');
       clearHandoffCookie('cw_oauth_signup_token');
