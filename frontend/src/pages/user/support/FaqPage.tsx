@@ -12,32 +12,49 @@ const CATEGORY_FILTERS: { label: string; value: FaqCategory | '' }[] = [
   { label: '기타',      value: 'ETC' },
 ];
 
+const PAGE_SIZE = 10;
+
 export default function FaqPage() {
   const [search,   setSearch]   = useState('');
   const [category, setCategory] = useState<FaqCategory | ''>('');
   const [faqs,     setFaqs]     = useState<FaqItem[]>([]);
   const [openId,   setOpenId]   = useState<number | null>(null);
+  const [page,     setPage]     = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
 
   const debouncedSearch = useDebounce(search, 300);
 
   useEffect(() => {
+    let ignore = false;
     setLoading(true);
     setError('');
-    supportApi.getFaqs({ category: category || undefined, keyword: debouncedSearch || undefined })
-      .then(res => setFaqs(res))
-      .catch(() => setError('FAQ를 불러오지 못했습니다.'))
-      .finally(() => setLoading(false));
-  }, [category, debouncedSearch]);
+    supportApi.getFaqs({ category: category || undefined, keyword: debouncedSearch || undefined, page, size: PAGE_SIZE })
+      .then(res => {
+        if (ignore) return;
+        setFaqs(res.items);
+        setTotalPages(res.totalPages);
+      })
+      .catch(() => { if (!ignore) setError('FAQ를 불러오지 못했습니다.'); })
+      .finally(() => { if (!ignore) setLoading(false); });
+
+    return () => { ignore = true; };
+  }, [category, debouncedSearch, page]);
 
   function handleCategoryChange(val: FaqCategory | '') {
     setCategory(val);
     setOpenId(null);
+    setPage(1);
   }
 
   function toggle(id: number) {
     setOpenId(prev => prev === id ? null : id);
+  }
+
+  function handleSearch(val: string) {
+    setSearch(val);
+    setPage(1);
   }
 
   return (
@@ -66,7 +83,7 @@ export default function FaqPage() {
             aria-label="FAQ 검색"
             placeholder="질문 검색"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => handleSearch(e.target.value)}
           />
         </div>
       </div>
@@ -104,6 +121,20 @@ export default function FaqPage() {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {!loading && !error && totalPages > 1 && (
+        <div className="fq-pagination">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button
+              key={p}
+              className={`fq-page-btn${page === p ? ' fq-page-btn--on' : ''}`}
+              onClick={() => setPage(p)}
+            >
+              {p}
+            </button>
+          ))}
         </div>
       )}
     </div>

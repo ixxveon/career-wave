@@ -8,6 +8,7 @@ import kr.co.carrer.user.jobnotice.exception.JobNoticeErrorCode;
 import kr.co.carrer.user.jobnotice.repository.BookmarkRepository;
 import kr.co.carrer.user.jobnotice.repository.JobNoticeRepository;
 import kr.co.carrer.user.jobnotice.repository.JobNoticeQueryRepository;
+import kr.co.carrer.user.jobnotice.service.JobNoticeCacheService;
 import kr.co.carrer.user.jobnotice.service.UserJobNoticeService;
 import kr.co.carrer.user.jobnotice.type.CareerLevel;
 import kr.co.carrer.user.jobnotice.type.CompanySize;
@@ -16,6 +17,7 @@ import kr.co.carrer.user.jobnotice.type.JobType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,7 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
     private final JobNoticeQueryRepository jobNoticeQueryRepository;
     private final JobNoticeRepository jobNoticeRepository;
     private final BookmarkRepository bookmarkRepository;
+    private final JobNoticeCacheService jobNoticeCacheService;
 
     @Override
     @Transactional(readOnly = true)
@@ -57,7 +60,16 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
         int normalizedPage = Math.max(page, DEFAULT_PAGE);
         int normalizedSize = Math.min(Math.max(size, 1), MAX_SIZE);
 
-        Page<JobNotice> result = jobNoticeQueryRepository.findActiveJobNotices(
+        if (memberId == null) {
+            return jobNoticeCacheService.getAnonymousJobNoticeList(
+                    keyword, jobType, jobCategory, careerLevel, location,
+                    companySize, period, sort, normalizedPage, normalizedSize
+            );
+        }
+
+        PageRequest pageRequest = PageRequest.of(normalizedPage - 1, normalizedSize);
+
+        List<JobNotice> jobNotices = jobNoticeQueryRepository.findActiveJobNoticeContent(
                 keyword,
                 jobType,
                 jobCategory,
@@ -66,8 +78,18 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 companySize,
                 period,
                 sort,
-                PageRequest.of(normalizedPage - 1, normalizedSize)
+                pageRequest
         );
+        long totalElements = jobNoticeCacheService.getActiveJobNoticeCount(
+                keyword,
+                jobType,
+                jobCategory,
+                careerLevel,
+                location,
+                companySize,
+                period
+        );
+        Page<JobNotice> result = new PageImpl<>(jobNotices, pageRequest, totalElements);
 
         Set<Long> bookmarkedJobNoticeIds = getBookmarkedJobNoticeIds(memberId, result.getContent());
         List<JobNoticeDTO.ResponseSummary> content = result.getContent().stream()
@@ -80,8 +102,8 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 result.getSize(),
                 result.getTotalElements(),
                 result.getTotalPages(),
-                createListStats(),
-                createFilterOptions()
+                jobNoticeCacheService.getListStats(),
+                jobNoticeCacheService.getFilterOptions()
         );
     }
 
@@ -177,32 +199,6 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
         return bookmarkRepository.findByMemberIdAndJobNoticeIdIn(memberId, jobNoticeIds).stream()
                 .map(Bookmark::getJobNoticeId)
                 .collect(HashSet::new, HashSet::add, HashSet::addAll);
-    }
-
-    private JobNoticeDTO.ResponseListStats createListStats() {
-        long totalOpenCount = jobNoticeQueryRepository.countActiveJobNotices();
-        long todayNewCount = jobNoticeQueryRepository.countTodayNewActiveJobNotices();
-        double todayNewRate = totalOpenCount == 0
-                ? 0
-                : Math.round((todayNewCount * 10000.0) / totalOpenCount) / 100.0;
-
-        return new JobNoticeDTO.ResponseListStats(
-                totalOpenCount,
-                todayNewCount,
-                null,
-                todayNewRate
-        );
-    }
-
-    private JobNoticeDTO.ResponseFilterOptions createFilterOptions() {
-        // TODO: 필터 옵션은 변경 빈도가 낮으므로 정책 확정 후 캐시 적용을 검토한다.
-        return new JobNoticeDTO.ResponseFilterOptions(
-                jobNoticeQueryRepository.findDistinctActiveJobTypes(),
-                jobNoticeQueryRepository.findDistinctActiveJobCategories(),
-                jobNoticeQueryRepository.findDistinctActiveCareerLevels(),
-                jobNoticeQueryRepository.findDistinctActiveLocations(),
-                jobNoticeQueryRepository.findDistinctActiveCompanySizes()
-        );
     }
 
     private boolean isBookmarked(UUID memberId, Long jobNoticeId) {

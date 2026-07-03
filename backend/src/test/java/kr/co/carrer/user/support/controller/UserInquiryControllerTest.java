@@ -10,6 +10,7 @@ import kr.co.carrer.auth.principal.AuthPrincipal;
 import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.support.dto.SupportDTO;
 import kr.co.carrer.user.support.service.UserInquiryService;
 import kr.co.carrer.user.support.type.InquiryCategory;
@@ -90,16 +91,20 @@ class UserInquiryControllerTest {
                 null, InquiryStatus.PENDING,
                 ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
             );
-            given(userInquiryService.getMyInquiries(any(UUID.class), eq(null)))
-                .willReturn(List.of(item));
+            given(userInquiryService.getMyInquiries(any(UUID.class), eq(null), eq(1), eq(20)))
+                .willReturn(PaginationResponse.of(List.of(item), 1, 20, 1));
 
             mockMvc.perform(get("/api/v1/user/inquiries")
                     .with(user(userPrincipal())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].inquiryId").value(1))
-                .andExpect(jsonPath("$.data[0].inquiryStatus").value("PENDING"));
+                .andExpect(jsonPath("$.data.page").value(1))
+                .andExpect(jsonPath("$.data.size").value(20))
+                .andExpect(jsonPath("$.data.totalItems").value(1))
+                .andExpect(jsonPath("$.data.totalPages").value(1))
+                .andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].inquiryId").value(1))
+                .andExpect(jsonPath("$.data.items[0].inquiryStatus").value("PENDING"));
         }
 
         @Test

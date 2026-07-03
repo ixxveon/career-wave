@@ -3,6 +3,7 @@ package kr.co.carrer.user.member.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.user.member.docs.UserSocialAuthControllerDocs;
 import kr.co.carrer.user.member.dto.OAuthCallbackResponse;
@@ -10,7 +11,6 @@ import kr.co.carrer.user.member.dto.UserSocialAuthDto;
 import kr.co.carrer.user.member.service.UserSocialAuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -24,6 +24,7 @@ import java.io.IOException;
 public class UserSocialAuthController implements UserSocialAuthControllerDocs {
 
     private final UserSocialAuthService userSocialAuthService;
+    private final CookieProperties cookieProperties;
 
     @Value("${frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -63,13 +64,7 @@ public class UserSocialAuthController implements UserSocialAuthControllerDocs {
     }
 
     private void setHandoffCookie(HttpServletResponse response, String name, String value) {
-        ResponseCookie cookie = ResponseCookie.from(name, value)
-                .path("/")
-                .maxAge(60)
-                .sameSite("Strict")
-                .httpOnly(false)
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
+        response.addHeader("Set-Cookie", cookieProperties.handoffCookie(name, value).toString());
     }
 
     @PostMapping("/register/social/complete")

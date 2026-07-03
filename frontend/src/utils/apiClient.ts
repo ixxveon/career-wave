@@ -3,13 +3,21 @@ interface ApiError extends Error {
   body: Record<string, unknown>;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+function buildApiUrl(endpoint: string): string {
+  if (/^https?:\/\//i.test(endpoint)) return endpoint;
+  return `${API_BASE_URL}${endpoint}`;
+}
+
 export async function apiClient<T = unknown>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T | null> {
   const isFormData = options.body instanceof FormData;
+  const url = buildApiUrl(endpoint);
 
-  const response = await fetch(endpoint, {
+  const response = await fetch(url, {
     ...options,
     // FormData는 브라우저가 Content-Type + boundary를 자동 설정하므로 헤더를 건드리지 않는다
     headers: isFormData

@@ -4,6 +4,7 @@ import kr.co.carrer.admin.member.docs.AdminMemberControllerDocs;
 import kr.co.carrer.admin.member.dto.HrManagerDTO;
 import kr.co.carrer.admin.member.dto.MemberDTO;
 import kr.co.carrer.admin.member.service.AdminMemberService;
+import kr.co.carrer.admin.audit.util.AdminAuditClientIpExtractor;
 import kr.co.carrer.admin.member.type.HrStatus;
 import kr.co.carrer.admin.member.type.MemberStatus;
 import kr.co.carrer.admin.member.type.RoleType;
@@ -71,7 +72,7 @@ public class AdminMemberController implements AdminMemberControllerDocs {
     ) {
         Long adminId = parseAdminId(principal);
         return ResponseEntity.ok(ApiResponse.ok(
-            adminMemberService.getMemberDetail(memberId, adminId, extractClientIp(httpServletRequest))
+            adminMemberService.getMemberDetail(memberId, adminId, AdminAuditClientIpExtractor.extract(httpServletRequest))
         ));
     }
 
@@ -84,7 +85,7 @@ public class AdminMemberController implements AdminMemberControllerDocs {
     ) {
         Long adminId = parseAdminId(principal);
         return ResponseEntity.ok(ApiResponse.ok(
-            adminMemberService.sanctionMember(memberId, request, adminId, extractClientIp(httpServletRequest))
+            adminMemberService.sanctionMember(memberId, request, adminId, AdminAuditClientIpExtractor.extract(httpServletRequest))
         ));
     }
 
@@ -97,7 +98,7 @@ public class AdminMemberController implements AdminMemberControllerDocs {
     ) {
         Long adminId = parseAdminId(principal);
         return ResponseEntity.ok(ApiResponse.ok(
-            adminMemberService.unsuspendMember(memberId, request, adminId, extractClientIp(httpServletRequest))
+            adminMemberService.unsuspendMember(memberId, request, adminId, AdminAuditClientIpExtractor.extract(httpServletRequest))
         ));
     }
 
@@ -150,10 +151,6 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         } catch (NumberFormatException e) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
-    }
-
-    private String extractClientIp(HttpServletRequest request) {
-        return request.getRemoteAddr();
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {

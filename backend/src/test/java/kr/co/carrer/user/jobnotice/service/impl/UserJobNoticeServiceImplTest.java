@@ -8,6 +8,7 @@ import kr.co.carrer.user.jobnotice.exception.JobNoticeErrorCode;
 import kr.co.carrer.user.jobnotice.repository.BookmarkRepository;
 import kr.co.carrer.user.jobnotice.repository.JobNoticeQueryRepository;
 import kr.co.carrer.user.jobnotice.repository.JobNoticeRepository;
+import kr.co.carrer.user.jobnotice.service.JobNoticeCacheService;
 import kr.co.carrer.user.jobnotice.type.CareerLevel;
 import kr.co.carrer.user.jobnotice.type.CompanySize;
 import kr.co.carrer.user.jobnotice.type.JobNoticeStatus;
@@ -20,8 +21,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
@@ -56,6 +55,9 @@ class UserJobNoticeServiceImplTest {
     @Mock
     private BookmarkRepository bookmarkRepository;
 
+    @Mock
+    private JobNoticeCacheService jobNoticeCacheService;
+
     @Nested
     @DisplayName("채용 공고 목록 조회 - getJobNotices()")
     class GetJobNotices {
@@ -79,13 +81,7 @@ class UserJobNoticeServiceImplTest {
                     LocalDate.of(2026, 6, 30),
                     ZonedDateTime.of(2026, 6, 1, 0, 0, 0, 0, SERVICE_ZONE_ID)
             );
-            Page<JobNotice> pageResult = new PageImpl<>(
-                    List.of(jobNotice),
-                    PageRequest.of(0, 20),
-                    1
-            );
-
-            given(jobNoticeQueryRepository.findActiveJobNotices(
+            given(jobNoticeCacheService.getAnonymousJobNoticeList(
                     eq("backend"),
                     eq(JobType.FULLTIME),
                     eq("BACKEND"),
@@ -94,15 +90,37 @@ class UserJobNoticeServiceImplTest {
                     eq(CompanySize.STARTUP),
                     eq("7d"),
                     eq("latest"),
-                    any(PageRequest.class)
-            )).willReturn(pageResult);
-            given(jobNoticeQueryRepository.countActiveJobNotices()).willReturn(10L);
-            given(jobNoticeQueryRepository.countTodayNewActiveJobNotices()).willReturn(2L);
-            given(jobNoticeQueryRepository.findDistinctActiveJobTypes()).willReturn(List.of("FULLTIME"));
-            given(jobNoticeQueryRepository.findDistinctActiveJobCategories()).willReturn(List.of("BACKEND"));
-            given(jobNoticeQueryRepository.findDistinctActiveCareerLevels()).willReturn(List.of("JUNIOR"));
-            given(jobNoticeQueryRepository.findDistinctActiveLocations()).willReturn(List.of("Seoul"));
-            given(jobNoticeQueryRepository.findDistinctActiveCompanySizes()).willReturn(List.of("STARTUP"));
+                    eq(1),
+                    eq(20)
+            )).willReturn(new JobNoticeDTO.ResponseList(
+                    List.of(new JobNoticeDTO.ResponseSummary(
+                            jobNotice.getJobNoticeId(),
+                            jobNotice.getCompanyName(),
+                            jobNotice.getTitle(),
+                            List.of(jobNotice.getSkillTags()),
+                            jobNotice.getJobType(),
+                            jobNotice.getCompanySize(),
+                            List.of(jobNotice.getJobCategory()),
+                            jobNotice.getCareerLevel(),
+                            jobNotice.getLocation(),
+                            jobNotice.getSalary(),
+                            jobNotice.getNoticeStatus(),
+                            jobNotice.getSource(),
+                            jobNotice.getViewCount(),
+                            jobNotice.getDeadline(),
+                            jobNotice.getCreatedAt(),
+                            false
+                    )),
+                    1, 20, 1, 1,
+                    new JobNoticeDTO.ResponseListStats(10L, 2L, null, 20.0),
+                    new JobNoticeDTO.ResponseFilterOptions(
+                            List.of("FULLTIME"),
+                            List.of("BACKEND"),
+                            List.of("JUNIOR"),
+                            List.of("Seoul"),
+                            List.of("STARTUP")
+                    )
+            ));
 
             JobNoticeDTO.ResponseList response = userJobNoticeService.getJobNotices(
                     "backend",
@@ -150,6 +168,7 @@ class UserJobNoticeServiceImplTest {
             assertThat(summary.deadline()).isEqualTo(LocalDate.of(2026, 6, 30));
             assertThat(summary.createdAt()).isEqualTo(ZonedDateTime.of(2026, 6, 1, 0, 0, 0, 0, SERVICE_ZONE_ID));
             assertThat(summary.bookmarked()).isFalse();
+            verifyNoInteractions(jobNoticeQueryRepository, bookmarkRepository);
         }
 
         @Test
@@ -188,13 +207,7 @@ class UserJobNoticeServiceImplTest {
                     LocalDate.of(2026, 7, 7),
                     ZonedDateTime.of(2026, 6, 2, 0, 0, 0, 0, SERVICE_ZONE_ID)
             );
-            Page<JobNotice> pageResult = new PageImpl<>(
-                    List.of(firstJobNotice, secondJobNotice),
-                    PageRequest.of(0, 20),
-                    2
-            );
-
-            given(jobNoticeQueryRepository.findActiveJobNotices(
+            given(jobNoticeQueryRepository.findActiveJobNoticeContent(
                     eq(null),
                     eq(null),
                     eq(null),
@@ -204,16 +217,30 @@ class UserJobNoticeServiceImplTest {
                     eq(null),
                     eq(null),
                     any(PageRequest.class)
-            )).willReturn(pageResult);
+            )).willReturn(List.of(firstJobNotice, secondJobNotice));
+            given(jobNoticeCacheService.getActiveJobNoticeCount(
+                    eq(null),
+                    eq(null),
+                    eq(null),
+                    eq(null),
+                    eq(null),
+                    eq(null),
+                    eq(null)
+            )).willReturn(2L);
             given(bookmarkRepository.findByMemberIdAndJobNoticeIdIn(memberId, List.of(101L, 102L)))
                     .willReturn(List.of(Bookmark.of(memberId, secondJobNotice)));
-            given(jobNoticeQueryRepository.countActiveJobNotices()).willReturn(2L);
-            given(jobNoticeQueryRepository.countTodayNewActiveJobNotices()).willReturn(1L);
-            given(jobNoticeQueryRepository.findDistinctActiveJobTypes()).willReturn(List.of("FULLTIME"));
-            given(jobNoticeQueryRepository.findDistinctActiveJobCategories()).willReturn(List.of("BACKEND", "FRONTEND"));
-            given(jobNoticeQueryRepository.findDistinctActiveCareerLevels()).willReturn(List.of("JUNIOR", "SENIOR"));
-            given(jobNoticeQueryRepository.findDistinctActiveLocations()).willReturn(List.of("Seoul"));
-            given(jobNoticeQueryRepository.findDistinctActiveCompanySizes()).willReturn(List.of("STARTUP"));
+            given(jobNoticeCacheService.getListStats()).willReturn(
+                    new JobNoticeDTO.ResponseListStats(2L, 1L, null, 50.0)
+            );
+            given(jobNoticeCacheService.getFilterOptions()).willReturn(
+                    new JobNoticeDTO.ResponseFilterOptions(
+                            List.of("FULLTIME"),
+                            List.of("BACKEND", "FRONTEND"),
+                            List.of("JUNIOR", "SENIOR"),
+                            List.of("Seoul"),
+                            List.of("STARTUP")
+                    )
+            );
 
             JobNoticeDTO.ResponseList response = userJobNoticeService.getJobNotices(
                     null,

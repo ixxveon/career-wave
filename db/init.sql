@@ -171,7 +171,7 @@ CREATE TABLE member_verifications (
     CONSTRAINT uq_member_verification_token    UNIQUE      (verification_token),
     CONSTRAINT chk_verification_channel        CHECK (channel             IN ('EMAIL', 'PHONE')),
     CONSTRAINT chk_verification_purpose        CHECK (purpose             IN ('REGISTER', 'FIND_ID', 'RESET_PASSWORD')),
-    CONSTRAINT chk_verification_status         CHECK (verification_status IN ('SENT', 'VERIFIED', 'EXPIRED', 'FAILED', 'RATE_LIMITED'))
+    CONSTRAINT chk_verification_status         CHECK (verification_status IN ('SENT', 'VERIFIED', 'CONSUMED', 'EXPIRED', 'FAILED', 'RATE_LIMITED'))
 );
 COMMENT ON TABLE  member_verifications                      IS '이메일/휴대폰 인증 테이블 (회원 FK 없음 - 가입 전 인증)';
 COMMENT ON COLUMN member_verifications.verification_id     IS '인증 요청 고유 식별자';
@@ -180,7 +180,7 @@ COMMENT ON COLUMN member_verifications.target              IS '인증 대상 (�
 COMMENT ON COLUMN member_verifications.purpose             IS '인증 목적 (REGISTER / FIND_ID / RESET_PASSWORD)';
 COMMENT ON COLUMN member_verifications.code_hash           IS '인증번호 해시값';
 COMMENT ON COLUMN member_verifications.verification_token  IS '인증 완료 후 발급되는 단기 토큰';
-COMMENT ON COLUMN member_verifications.verification_status IS '인증 상태 (SENT / VERIFIED / EXPIRED / FAILED / RATE_LIMITED)';
+COMMENT ON COLUMN member_verifications.verification_status IS '인증 상태 (SENT / VERIFIED / CONSUMED / EXPIRED / FAILED / RATE_LIMITED)';
 COMMENT ON COLUMN member_verifications.remaining_attempts  IS '남은 인증 시도 횟수 (기본값 5)';
 COMMENT ON COLUMN member_verifications.expires_at          IS '인증번호 만료 시간';
 COMMENT ON COLUMN member_verifications.resend_available_at IS '재발송 가능 시간';
@@ -478,21 +478,25 @@ CREATE TABLE interview_messages (
     session_id      UUID        NOT NULL,
     sender          VARCHAR(10) NOT NULL,
     message_type    VARCHAR(20) NOT NULL,
+    question_order  INTEGER     NULL,
     message_content TEXT        NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_interview_messages    PRIMARY KEY (message_id),
-    CONSTRAINT fk_interview_msg_session FOREIGN KEY (session_id) REFERENCES interview_sessions (session_id),
-    CONSTRAINT chk_interview_sender     CHECK (sender       IN ('AI', 'USER')),
-    CONSTRAINT chk_message_type         CHECK (message_type IN ('QUESTION', 'ANSWER', 'SYSTEM'))
+    CONSTRAINT pk_interview_messages                       PRIMARY KEY (message_id),
+    CONSTRAINT fk_interview_msg_session                    FOREIGN KEY (session_id) REFERENCES interview_sessions (session_id),
+    CONSTRAINT chk_interview_sender                        CHECK (sender       IN ('AI', 'USER')),
+    CONSTRAINT chk_message_type                            CHECK (message_type IN ('QUESTION', 'ANSWER', 'SYSTEM')),
+    CONSTRAINT chk_question_order_not_null_for_question    CHECK (message_type != 'QUESTION' OR question_order IS NOT NULL),
+    CONSTRAINT uq_interview_messages_session_sender_order  UNIQUE (session_id, sender, question_order)
 );
-COMMENT ON TABLE  interview_messages                 IS 'AI 면접 채팅 내역 테이블';
-COMMENT ON COLUMN interview_messages.message_id      IS '메시지 고유 식별자';
-COMMENT ON COLUMN interview_messages.session_id      IS '면접 세션 FK';
-COMMENT ON COLUMN interview_messages.sender          IS '발신자 구분 (AI / USER)';
-COMMENT ON COLUMN interview_messages.message_type    IS '메시지 유형 (QUESTION / ANSWER / SYSTEM)';
-COMMENT ON COLUMN interview_messages.message_content IS '메시지 본문';
-COMMENT ON COLUMN interview_messages.created_at      IS '메시지 전송 일시';
+COMMENT ON TABLE  interview_messages                  IS 'AI 면접 채팅 내역 테이블';
+COMMENT ON COLUMN interview_messages.message_id       IS '메시지 고유 식별자';
+COMMENT ON COLUMN interview_messages.session_id       IS '면접 세션 FK';
+COMMENT ON COLUMN interview_messages.sender           IS '발신자 구분 (AI / USER)';
+COMMENT ON COLUMN interview_messages.message_type     IS '메시지 유형 (QUESTION / ANSWER / SYSTEM)';
+COMMENT ON COLUMN interview_messages.question_order   IS '질문 순서 (QUESTION 타입은 NOT NULL, ANSWER/SYSTEM은 NULL 허용)';
+COMMENT ON COLUMN interview_messages.message_content  IS '메시지 본문';
+COMMENT ON COLUMN interview_messages.created_at       IS '메시지 전송 일시';
 
 -- ================================================
 -- 15. ai_interview_feedbacks
@@ -584,8 +588,9 @@ CREATE TABLE job_notices (
     created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_job_notices    PRIMARY KEY (job_notice_id),
-    CONSTRAINT chk_job_type      CHECK (job_type      IN ('FULLTIME', 'INTERN', 'CONTRACT')),
+    CONSTRAINT pk_job_notices                     PRIMARY KEY (job_notice_id),
+    CONSTRAINT uq_job_notices_source_original_url UNIQUE (source, original_url),
+    CONSTRAINT chk_job_type                       CHECK (job_type      IN ('FULLTIME', 'INTERN', 'CONTRACT')),
     CONSTRAINT chk_company_size  CHECK (company_size  IN ('STARTUP', 'SME', 'LARGE')),
     CONSTRAINT chk_career_level  CHECK (career_level  IN ('JUNIOR', 'SENIOR', 'ANY')),
     CONSTRAINT chk_notice_status CHECK (notice_status IN ('ACTIVE', 'CLOSED')),
@@ -610,6 +615,14 @@ COMMENT ON COLUMN job_notices.view_count    IS '조회수';
 COMMENT ON COLUMN job_notices.deadline      IS '지원 마감일';
 COMMENT ON COLUMN job_notices.created_at    IS '공고 등록 일시';
 COMMENT ON COLUMN job_notices.updated_at    IS '공고 수정 일시 (재스크래핑 포함)';
+
+CREATE INDEX idx_job_notices_active_created
+    ON job_notices (created_at DESC)
+    WHERE notice_status = 'ACTIVE';
+
+CREATE INDEX idx_job_notices_active_deadline_created
+    ON job_notices (deadline ASC NULLS LAST, created_at DESC)
+    WHERE notice_status = 'ACTIVE';
 
 -- ================================================
 -- 18. bookmarks
@@ -661,6 +674,12 @@ COMMENT ON COLUMN plans.billing_cycle         IS '결제 주기 (MONTHLY / YEARL
 COMMENT ON COLUMN plans.is_active             IS '현재 판매 여부 (기본값 TRUE)';
 COMMENT ON COLUMN plans.created_at            IS '생성 일시';
 COMMENT ON COLUMN plans.updated_at            IS '수정 일시';
+
+INSERT INTO plans (product_code, plan_name, plan_price, monthly_usage_limit, currency, billing_cycle, is_active, created_at, updated_at)
+VALUES
+    ('interview',         'AI 모의면접',  29000, 20, 'KRW', 'MONTHLY', TRUE, NOW(), NOW()),
+    ('document-coaching', '서류 AI 코칭', 29000, 30, 'KRW', 'MONTHLY', TRUE, NOW(), NOW())
+ON CONFLICT (product_code) DO NOTHING;
 
 -- ================================================
 -- 20. billing_profiles
@@ -770,6 +789,7 @@ CREATE TABLE payments (
     attempt_sequence  INTEGER      NOT NULL DEFAULT 0,
     approved_at       TIMESTAMPTZ  NULL,
     expires_at        TIMESTAMPTZ  NULL,
+    reconciling_at    TIMESTAMPTZ  NULL,
     created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
@@ -801,13 +821,14 @@ COMMENT ON COLUMN payments.customer_name    IS '회원 이름 — Toss 결제 AP
 COMMENT ON COLUMN payments.customer_email   IS '회원 이메일 — Toss 결제 API 요청 시 전송 (결제 시점 스냅샷)';
 COMMENT ON COLUMN payments.amount           IS '최종 결제 금액 (부가세 포함)';
 COMMENT ON COLUMN payments.currency         IS '통화 (기본값 KRW)';
-COMMENT ON COLUMN payments.payment_status   IS '결제 상태 (READY / CONFIRMING / PAID / FAILED / CANCELED / REFUNDED)';
+COMMENT ON COLUMN payments.payment_status   IS '결제 상태 (READY / AUTHORIZED / CONFIRMING / PAID / FAILED / CANCELED / RECONCILING / REFUNDED)';
 COMMENT ON COLUMN payments.failure_reason   IS '결제 실패 사유 (FAILED 상태일 때만 사용, USER_CANCELED 등 7종)';
 COMMENT ON COLUMN payments.payment_method   IS '결제 수단 (CARD / VIRTUAL_ACCOUNT 등)';
 COMMENT ON COLUMN payments.payment_type      IS '결제 방식 (MANUAL / AUTO_RENEWAL)';
 COMMENT ON COLUMN payments.attempt_sequence  IS '결제 시도 순번 (최초=0, 재시도=1/2)';
 COMMENT ON COLUMN payments.approved_at       IS '결제 승인 일시';
 COMMENT ON COLUMN payments.expires_at        IS 'READY 주문 만료 시각 (MANUAL 주문만 설정, created_at + 30분)';
+COMMENT ON COLUMN payments.reconciling_at    IS '결제 결과 불확실 시 대사 처리 시작 일시 (RECONCILING 상태 진입 시각)';
 COMMENT ON COLUMN payments.created_at        IS '결제 요청 생성 일시';
 COMMENT ON COLUMN payments.updated_at        IS '결제 상태 변경 일시';
 
@@ -1196,6 +1217,24 @@ COMMENT ON COLUMN ai_models.is_enabled         IS '모델 활성화 여부';
 COMMENT ON COLUMN ai_models.created_at         IS '모델 등록 시간';
 COMMENT ON COLUMN ai_models.updated_at         IS '모델 수정 시간';
 
+-- Default AI Metrics model seed for fresh databases.
+INSERT INTO ai_models (
+    model_name,
+    display_type,
+    provider,
+    input_token_price,
+    output_token_price,
+    is_enabled
+)
+VALUES (
+    'gpt-4o-mini',
+    'GPT-4o Mini',
+    'OPENAI',
+    0.150000,
+    0.600000,
+    TRUE
+);
+
 -- ================================================
 -- 34. ai_usage_logs
 -- ================================================
@@ -1266,6 +1305,29 @@ COMMENT ON COLUMN ai_ops_settings.alert_channel      IS '알림 채널 (DISCORD 
 COMMENT ON COLUMN ai_ops_settings.alert_threshold    IS '알림 발생 임계치 (1~100)';
 COMMENT ON COLUMN ai_ops_settings.rate_limit_enabled IS '속도 제한 제어 활성화 여부';
 COMMENT ON COLUMN ai_ops_settings.updated_at         IS '운영 설정 수정 일시';
+
+-- Default singleton AI ops setting seed for fresh databases.
+INSERT INTO ai_ops_settings (
+    ai_ops_setting_id,
+    selected_model_id,
+    monthly_budget,
+    alert_enabled,
+    alert_channel,
+    alert_threshold,
+    rate_limit_enabled
+)
+SELECT
+    1,
+    ai_model_id,
+    3000000.00,
+    TRUE,
+    'DISCORD',
+    85,
+    FALSE
+FROM ai_models
+WHERE model_name = 'gpt-4o-mini'
+ORDER BY ai_model_id
+LIMIT 1;
 
 -- ================================================
 -- 36. rag_documents
@@ -1344,6 +1406,21 @@ COMMENT ON COLUMN scraping_pipelines.last_total_count    IS '마지막 실행 �
 COMMENT ON COLUMN scraping_pipelines.last_error_message  IS '최근 실행 시 발생한 오류 메시지';
 COMMENT ON COLUMN scraping_pipelines.created_at          IS '생성 일시';
 COMMENT ON COLUMN scraping_pipelines.updated_at          IS '수정 일시';
+
+INSERT INTO scraping_pipelines (
+    source_name,
+    display_name,
+    pipeline_status,
+    is_enabled
+)
+VALUES
+    ('wanted', 'Wanted', 'IDLE', TRUE),
+    ('saramin', 'Saramin', 'IDLE', TRUE)
+ON CONFLICT (source_name) DO UPDATE
+SET
+    display_name = EXCLUDED.display_name,
+    is_enabled = EXCLUDED.is_enabled,
+    updated_at = NOW();
 
 -- ================================================
 -- 38. scraping_logs

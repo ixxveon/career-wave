@@ -53,6 +53,28 @@ public class JobNoticeQueryRepository {
             Pageable pageable
     ) {
         Pageable normalizedPageable = normalizePageable(pageable);
+        List<JobNotice> content = findActiveJobNoticeContent(
+                keyword, jobType, jobCategory, careerLevel, location, companySize, period, sort, normalizedPageable
+        );
+        long total = countActiveJobNotices(
+                keyword, jobType, jobCategory, careerLevel, location, companySize, period
+        );
+
+        return new PageImpl<>(content, normalizedPageable, total);
+    }
+
+    public List<JobNotice> findActiveJobNoticeContent(
+            String keyword,
+            JobType jobType,
+            String jobCategory,
+            CareerLevel careerLevel,
+            String location,
+            CompanySize companySize,
+            String period,
+            String sort,
+            Pageable pageable
+    ) {
+        Pageable normalizedPageable = normalizePageable(pageable);
         BooleanBuilder predicate = buildActiveJobNoticePredicate(
                 keyword,
                 jobType,
@@ -63,13 +85,33 @@ public class JobNoticeQueryRepository {
                 period
         );
 
-        List<JobNotice> content = queryFactory
+        return queryFactory
                 .selectFrom(jobNotice)
                 .where(predicate)
                 .orderBy(resolveOrderSpecifiers(sort))
                 .offset(normalizedPageable.getOffset())
                 .limit(normalizedPageable.getPageSize())
                 .fetch();
+    }
+
+    public long countActiveJobNotices(
+            String keyword,
+            JobType jobType,
+            String jobCategory,
+            CareerLevel careerLevel,
+            String location,
+            CompanySize companySize,
+            String period
+    ) {
+        BooleanBuilder predicate = buildActiveJobNoticePredicate(
+                keyword,
+                jobType,
+                jobCategory,
+                careerLevel,
+                location,
+                companySize,
+                period
+        );
 
         Long total = queryFactory
                 .select(jobNotice.count())
@@ -77,7 +119,7 @@ public class JobNoticeQueryRepository {
                 .where(predicate)
                 .fetchOne();
 
-        return new PageImpl<>(content, normalizedPageable, total != null ? total : 0L);
+        return total != null ? total : 0L;
     }
 
     public Page<JobNotice> findActiveJobNotices(

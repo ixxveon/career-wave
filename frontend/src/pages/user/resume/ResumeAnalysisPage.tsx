@@ -3,9 +3,12 @@ import ResumeUpload from '../../../components/user/resume/ResumeUpload';
 import LoadingModal from '../../../components/user/resume/LoadingModal';
 import QuotaBar from '../../../components/user/resume/QuotaBar';
 import QuotaExhaustedBanner from '../../../components/user/resume/QuotaExhaustedBanner';
+import EntitlementPaywall from '../../../components/user/resume/EntitlementPaywall';
 import DocumentResultView from './DocumentResultView';
 import { useResumeUpload } from '../../../hooks/user/resume/useResumeUpload';
 import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
+import { useEntitlements } from '../../../hooks/user/subscription/useEntitlements';
+import { PRODUCT_CODE } from '../../../types/user/subscription';
 import '@/styles/user/resume/ResumeAnalysisPage.css';
 
 export default function ResumeAnalysisPage() {
@@ -18,8 +21,13 @@ export default function ResumeAnalysisPage() {
   const isSubmitting = uiState === 'SUBMITTING';
   const isAnalyzing  = uiState === 'ANALYZING';
 
-  const { data: quota } = useResumeQuota();
+  const { data: quota, isLoading: isQuotaLoading } = useResumeQuota();
   const isExhausted = quota ? quota.usedCount >= quota.limitCount : false;
+
+  const { data: entitlements, isLoading: isEntitlementsLoading, isError: isEntitlementsError } = useEntitlements();
+  const noEntitlement = entitlements ? !entitlements[PRODUCT_CODE.DOCUMENT_COACHING] : false;
+  // 로딩·에러 중 페이월 노출 없이 제출만 차단 — 이용권 확인 전 ENTITLEMENT_NOT_FOUND 방지
+  const isAccessChecking = isQuotaLoading || isEntitlementsLoading || isEntitlementsError;
 
   if (uiState === 'SUCCESS' && analysisResult) {
     return (
@@ -45,6 +53,46 @@ export default function ResumeAnalysisPage() {
     );
   }
 
+  const uploadContent = (
+    <div className="ra-upload-wrap">
+      <QuotaBar />
+
+      {isExhausted && <QuotaExhaustedBanner />}
+
+      <span className="ra-eyebrow">RESUME ANALYSIS</span>
+      <h1 className="ra-upload__title">이력서 AI 분석</h1>
+      <p className="ra-upload__desc">
+        PDF 또는 Word 파일을 업로드하면 AI가 직무 적합도와<br />
+        KPI 부족 문장을 찾아 개선 문장을 제안해드립니다.
+      </p>
+
+      <ResumeUpload
+        file={file}
+        error={fileError}
+        disabled={isSubmitting || isExhausted || noEntitlement || isAccessChecking}
+        onFileSelect={handleFileSelect}
+        onFileRemove={handleFileRemove}
+      />
+
+      {apiError && (
+        <p className="ra-api-error" role="alert">
+          <AlertCircle size={13} aria-hidden="true" /> {apiError}
+        </p>
+      )}
+
+      <button
+        type="button"
+        className="ra-btn ra-btn--primary"
+        disabled={!file || isSubmitting || isExhausted || noEntitlement || isAccessChecking}
+        onClick={handleUpload}
+        aria-busy={isSubmitting}
+      >
+        <Upload size={15} aria-hidden="true" />
+        {isSubmitting ? '업로드 중...' : 'AI 분석 시작하기'}
+      </button>
+    </div>
+  );
+
   return (
     <div className="ra">
       {isAnalyzing && <LoadingModal onCancel={reset} />}
@@ -57,43 +105,7 @@ export default function ResumeAnalysisPage() {
         </div>
       )}
 
-      <div className="ra-upload-wrap">
-        <QuotaBar />
-
-        {isExhausted && <QuotaExhaustedBanner />}
-
-        <span className="ra-eyebrow">RESUME ANALYSIS</span>
-        <h1 className="ra-upload__title">이력서 AI 분석</h1>
-        <p className="ra-upload__desc">
-          PDF 또는 Word 파일을 업로드하면 AI가 직무 적합도와<br />
-          KPI 부족 문장을 찾아 개선 문장을 제안해드립니다.
-        </p>
-
-        <ResumeUpload
-          file={file}
-          error={fileError}
-          disabled={isSubmitting || isExhausted}
-          onFileSelect={handleFileSelect}
-          onFileRemove={handleFileRemove}
-        />
-
-        {apiError && (
-          <p className="ra-api-error" role="alert">
-            <AlertCircle size={13} aria-hidden="true" /> {apiError}
-          </p>
-        )}
-
-        <button
-          type="button"
-          className="ra-btn ra-btn--primary"
-          disabled={!file || isSubmitting || isExhausted}
-          onClick={handleUpload}
-          aria-busy={isSubmitting}
-        >
-          <Upload size={15} aria-hidden="true" />
-          {isSubmitting ? '업로드 중...' : 'AI 분석 시작하기'}
-        </button>
-      </div>
+      {noEntitlement ? <EntitlementPaywall>{uploadContent}</EntitlementPaywall> : uploadContent}
     </div>
   );
 }

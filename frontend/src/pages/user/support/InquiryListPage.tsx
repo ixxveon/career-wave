@@ -69,22 +69,38 @@ function InquiryDetailModal({ inquiry, onClose }: InquiryDetailModalProps) {
   );
 }
 
+const PAGE_SIZE = 10;
+
 export default function InquiryListPage() {
   const navigate = useNavigate();
   const [category, setCategory] = useState<InquiryCategory | ''>('');
   const [inquiries, setInquiries] = useState<InquiryItem[]>([]);
   const [selected, setSelected]  = useState<InquiryItem | null>(null);
+  const [page,     setPage]      = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading,  setLoading]   = useState(true);
   const [error,    setError]     = useState('');
 
   useEffect(() => {
+    let ignore = false;
     setLoading(true);
     setError('');
-    supportApi.getMyInquiries({ category: category || undefined })
-      .then(res => setInquiries(res))
-      .catch(() => setError('문의 내역을 불러오지 못했습니다.'))
-      .finally(() => setLoading(false));
-  }, [category]);
+    supportApi.getMyInquiries({ category: category || undefined, page, size: PAGE_SIZE })
+      .then(res => {
+        if (ignore) return;
+        setInquiries(res.items);
+        setTotalPages(res.totalPages);
+      })
+      .catch(() => { if (!ignore) setError('문의 내역을 불러오지 못했습니다.'); })
+      .finally(() => { if (!ignore) setLoading(false); });
+
+    return () => { ignore = true; };
+  }, [category, page]);
+
+  function handleCategoryChange(val: InquiryCategory | '') {
+    setCategory(val);
+    setPage(1);
+  }
 
   return (
     <div className="iq-page">
@@ -100,7 +116,7 @@ export default function InquiryListPage() {
             <button
               key={label}
               className={`iq-cat${category === value ? ' iq-cat--on' : ''}`}
-              onClick={() => setCategory(value)}
+              onClick={() => handleCategoryChange(value)}
             >
               {label}
             </button>
@@ -145,6 +161,20 @@ export default function InquiryListPage() {
               );
             })
           )}
+        </div>
+      )}
+
+      {!loading && !error && totalPages > 1 && (
+        <div className="iq-pagination">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button
+              key={p}
+              className={`iq-page-btn${page === p ? ' iq-page-btn--on' : ''}`}
+              onClick={() => setPage(p)}
+            >
+              {p}
+            </button>
+          ))}
         </div>
       )}
 

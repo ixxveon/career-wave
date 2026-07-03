@@ -1,6 +1,8 @@
 package kr.co.carrer.user.support.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.support.dto.SupportDTO;
 import kr.co.carrer.user.support.entity.SupportInquiry;
 import kr.co.carrer.user.support.exception.UserSupportErrorCode;
@@ -8,6 +10,8 @@ import kr.co.carrer.user.support.repository.UserInquiryRepository;
 import kr.co.carrer.user.support.service.UserInquiryService;
 import kr.co.carrer.user.support.type.InquiryCategory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,9 +26,12 @@ public class UserInquiryServiceImpl implements UserInquiryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SupportDTO.InquiryList> getMyInquiries(UUID memberId, InquiryCategory category) {
-        return inquiryRepository.findByMemberIdAndCategory(memberId, category)
-            .stream()
+    public PaginationResponse<SupportDTO.InquiryList> getMyInquiries(UUID memberId, InquiryCategory category, int page, int size) {
+        if (page < 1 || size < 1) throw new CustomException(ErrorCode.BAD_REQUEST);
+        size = Math.min(size, 100);
+
+        Page<SupportInquiry> result = inquiryRepository.findByMemberIdAndCategory(memberId, category, PageRequest.of(page - 1, size));
+        List<SupportDTO.InquiryList> items = result.getContent().stream()
             .map(i -> new SupportDTO.InquiryList(
                 i.getInquiryId(),
                 i.getCategory(),
@@ -35,6 +42,7 @@ public class UserInquiryServiceImpl implements UserInquiryService {
                 i.getCreatedAt()
             ))
             .toList();
+        return PaginationResponse.of(items, page, size, result.getTotalElements());
     }
 
     @Override

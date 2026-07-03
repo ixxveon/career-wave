@@ -1,5 +1,8 @@
 package kr.co.carrer.user.support.service.impl;
 
+import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.support.dto.SupportDTO;
 import kr.co.carrer.user.support.repository.UserFaqQueryRepository;
 import kr.co.carrer.user.support.service.UserFaqService;
@@ -18,7 +21,14 @@ public class UserFaqServiceImpl implements UserFaqService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SupportDTO.FaqItem> getFaqs(FaqCategory category, String keyword) {
-        return faqQueryRepository.findFaqs(category, keyword);
+    public PaginationResponse<SupportDTO.FaqItem> getFaqs(FaqCategory category, String keyword, int page, int size) {
+        if (page < 1 || size < 1) throw new CustomException(ErrorCode.BAD_REQUEST);
+        size = Math.min(size, 100);
+        long offset = (long) (page - 1) * size;
+        if (offset > Integer.MAX_VALUE) throw new CustomException(ErrorCode.BAD_REQUEST);
+
+        List<SupportDTO.FaqItem> items = faqQueryRepository.findFaqs(category, keyword, (int) offset, size);
+        long total = faqQueryRepository.countFaqs(category, keyword);
+        return PaginationResponse.of(items, page, size, total);
     }
 }
