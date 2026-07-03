@@ -33,7 +33,7 @@ public class CacheConfig {
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         cacheObjectMapper.activateDefaultTyping(
-                BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
+                BasicPolymorphicTypeValidator.builder().allowIfSubType("kr.co.carrer.").build(),
                 ObjectMapper.DefaultTyping.EVERYTHING,
                 JsonTypeInfo.As.PROPERTY
         );

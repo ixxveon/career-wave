@@ -168,6 +168,7 @@ class UserJobNoticeServiceImplTest {
             assertThat(summary.deadline()).isEqualTo(LocalDate.of(2026, 6, 30));
             assertThat(summary.createdAt()).isEqualTo(ZonedDateTime.of(2026, 6, 1, 0, 0, 0, 0, SERVICE_ZONE_ID));
             assertThat(summary.bookmarked()).isFalse();
+            verifyNoInteractions(jobNoticeQueryRepository, bookmarkRepository);
         }
 
         @Test

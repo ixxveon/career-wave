@@ -7,8 +7,8 @@ import kr.co.carrer.user.jobnotice.repository.JobNoticeQueryRepository;
 import kr.co.carrer.user.jobnotice.type.CareerLevel;
 import kr.co.carrer.user.jobnotice.type.CompanySize;
 import kr.co.carrer.user.jobnotice.type.JobType;
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,10 +17,18 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class JobNoticeCacheService {
 
     private final JobNoticeQueryRepository jobNoticeQueryRepository;
+    private final JobNoticeCacheService self;
+
+    public JobNoticeCacheService(
+            JobNoticeQueryRepository jobNoticeQueryRepository,
+            @Lazy JobNoticeCacheService self
+    ) {
+        this.jobNoticeQueryRepository = jobNoticeQueryRepository;
+        this.self = self;
+    }
 
     @Cacheable(value = CacheConfig.JOB_NOTICE_LIST)
     @Transactional(readOnly = true)
@@ -42,7 +50,7 @@ public class JobNoticeCacheService {
                 keyword, jobType, jobCategory, careerLevel, location, companySize,
                 period, sort, pageRequest
         );
-        long totalElements = getActiveJobNoticeCount(
+        long totalElements = self.getActiveJobNoticeCount(
                 keyword, jobType, jobCategory, careerLevel, location, companySize, period
         );
         int totalPages = (int) Math.ceil((double) totalElements / size);
@@ -57,8 +65,8 @@ public class JobNoticeCacheService {
                 size,
                 totalElements,
                 totalPages,
-                getListStats(),
-                getFilterOptions()
+                self.getListStats(),
+                self.getFilterOptions()
         );
     }
 
@@ -93,7 +101,7 @@ public class JobNoticeCacheService {
 
     @Cacheable(
             value = CacheConfig.JOB_NOTICE_LIST_COUNT,
-            key = "#keyword + '|' + #jobType + '|' + #jobCategory + '|' + #careerLevel + '|' + #location + '|' + #companySize + '|' + #period"
+            key = "{#keyword, #jobType, #jobCategory, #careerLevel, #location, #companySize, #period}"
     )
     @Transactional(readOnly = true)
     public long getActiveJobNoticeCount(
