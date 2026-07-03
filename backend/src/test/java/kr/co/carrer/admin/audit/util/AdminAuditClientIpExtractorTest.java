@@ -31,6 +31,41 @@ class AdminAuditClientIpExtractorTest {
     }
 
     @Test
+    void skipsInvalidForwardedAddressAndUsesRealIp() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Forwarded-For", "fake-value");
+        request.addHeader("X-Real-IP", "198.51.100.20");
+        request.setRemoteAddr("127.0.0.1");
+
+        String clientIp = AdminAuditClientIpExtractor.extract(request);
+
+        assertThat(clientIp).isEqualTo("198.51.100.20");
+    }
+
+    @Test
+    void fallsBackToRemoteAddressWhenProxyHeadersAreInvalid() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Forwarded-For", "999.999.999.999");
+        request.addHeader("X-Real-IP", "not-an-ip");
+        request.setRemoteAddr("127.0.0.1");
+
+        String clientIp = AdminAuditClientIpExtractor.extract(request);
+
+        assertThat(clientIp).isEqualTo("127.0.0.1");
+    }
+
+    @Test
+    void usesIpv6ProxyHeaderWhenValid() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Forwarded-For", "2001:db8::1");
+        request.setRemoteAddr("127.0.0.1");
+
+        String clientIp = AdminAuditClientIpExtractor.extract(request);
+
+        assertThat(clientIp).isEqualTo("2001:db8::1");
+    }
+
+    @Test
     void fallsBackToRemoteAddressWhenProxyHeadersAreMissing() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("127.0.0.1");
