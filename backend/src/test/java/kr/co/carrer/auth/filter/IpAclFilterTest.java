@@ -58,4 +58,47 @@ class IpAclFilterTest {
         verifyNoInteractions(filterChain);
         assertThat(response.getStatus()).isEqualTo(403);
     }
+
+    @Test
+    void 멀티홉_XForwardedFor에서_왼쪽_스푸핑값이_아닌_실제_클라이언트_hop을_사용한다() throws Exception {
+        IpAclPort ipAclPort = Mockito.mock(IpAclPort.class);
+        given(ipAclPort.hasAnyIpAcl()).willReturn(true);
+        given(ipAclPort.findActiveIpRanges()).willReturn(List.of("203.0.113.5/32"));
+
+        IpAclFilter filter = new IpAclFilter(ipAclPort, objectMapper, List.of("10.0.2.92"));
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("10.0.2.92");
+        // 클라이언트가 직접 심은 스푸핑 값(허용 IP)에 신뢰 프록시가 실제 클라이언트 IP(비허용)를 append한 형태
+        request.addHeader("X-Forwarded-For", "203.0.113.5, 198.51.100.7");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain filterChain = Mockito.mock(FilterChain.class);
+
+        filter.doFilter(request, response, filterChain);
+
+        // 왼쪽 스푸핑 값이 아니라 오른쪽 실제 클라이언트 hop을 사용해야 하므로 차단되어야 한다
+        verifyNoInteractions(filterChain);
+        assertThat(response.getStatus()).isEqualTo(403);
+    }
+
+    @Test
+    void 멀티홉_XForwardedFor에서_실제_클라이언트_hop이_허용IP면_통과한다() throws Exception {
+        IpAclPort ipAclPort = Mockito.mock(IpAclPort.class);
+        given(ipAclPort.hasAnyIpAcl()).willReturn(true);
+        given(ipAclPort.findActiveIpRanges()).willReturn(List.of("203.0.113.5/32"));
+
+        IpAclFilter filter = new IpAclFilter(ipAclPort, objectMapper, List.of("10.0.2.92"));
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("10.0.2.92");
+        // 스푸핑 값(비허용 IP)에 신뢰 프록시가 실제 클라이언트 IP(허용)를 append한 형태
+        request.addHeader("X-Forwarded-For", "198.51.100.7, 203.0.113.5");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain filterChain = Mockito.mock(FilterChain.class);
+
+        filter.doFilter(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
 }
