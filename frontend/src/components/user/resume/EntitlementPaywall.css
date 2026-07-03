@@ -1,0 +1,72 @@
+.epw {
+  position: relative;
+}
+
+.epw__blur {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.epw__card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: min(90%, 360px);
+  padding: 32px 36px;
+  border-radius: var(--radius-md);
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.16);
+  text-align: center;
+}
+
+.epw__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #eff6ff, #f5f3ff);
+}
+
+.epw__icon {
+  color: #4f46e5;
+}
+
+.epw__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e1b4b;
+}
+
+.epw__desc {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+.epw__cta {
+  padding: 11px 28px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.epw__cta:hover {
+  background: #4338ca;
+}

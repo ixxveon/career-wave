@@ -1,7 +1,7 @@
 package kr.co.carrer.user.billing.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.user.billing.client.TossPaymentQueryClient;
+import kr.co.carrer.user.billing.client.PaymentQueryClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingPaymentResponse;
 import kr.co.carrer.user.billing.entity.UserPayment;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
@@ -39,7 +39,7 @@ public class PaymentReconciliationServiceImpl implements PaymentReconciliationSe
     private int batchSize;
 
     private final UserPaymentRepository userPaymentRepository;
-    private final TossPaymentQueryClient tossPaymentQueryClient;
+    private final PaymentQueryClient tossPaymentQueryClient;
     private final PaymentReconciliationTxService reconciliationTxService;
     private final UserPaymentFailureTxService failureTxService;
 

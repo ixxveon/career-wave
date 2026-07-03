@@ -8,6 +8,7 @@ import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -24,8 +25,9 @@ import java.util.Map;
 // 5xx: Toss 서버 오류 → BILLING_AUTHORIZATION_FAILED (billingKey 미발급 확실 — RECONCILING 불필요)
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "toss.mock", havingValue = "false", matchIfMissing = true)
 @RequiredArgsConstructor
-public class TossBillingAuthorizationClient {
+public class TossBillingAuthorizationClient implements BillingAuthorizationClient {
 
     @Value("${toss.base-url:https://api.tosspayments.com}")
     private String baseUrl;
@@ -50,6 +52,7 @@ public class TossBillingAuthorizationClient {
                 .build();
     }
 
+    @Override
     public TossBillingAuthResponse issue(String authKey, String customerKey) {
         try {
             return webClient.post()

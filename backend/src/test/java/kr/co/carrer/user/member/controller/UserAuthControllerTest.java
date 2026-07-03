@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserAuthController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, CookieProperties.class})
 class UserAuthControllerTest {
 
     @Autowired
@@ -38,7 +38,6 @@ class UserAuthControllerTest {
     @MockBean private JwtTokenProvider jwtTokenProvider;
     @MockBean private TokenBlacklistStore tokenBlacklistStore;
     @MockBean private IpAclPort ipAclPort;
-    @MockBean private CookieProperties cookieProperties;
 
     // ─── refresh cookie 없음 — 401 AUTH_REFRESH_INVALID ────────────────────────────
 

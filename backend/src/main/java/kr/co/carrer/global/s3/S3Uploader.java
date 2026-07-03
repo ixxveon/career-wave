@@ -9,13 +9,19 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -27,18 +33,21 @@ public class S3Uploader {
     @Autowired(required = false)
     private S3Client s3Client;
 
+    @Autowired(required = false)
+    private S3Presigner s3Presigner;
+
     @Value("${aws.s3.bucket-name:mock-bucket}")
     private String bucketName;
-
-    @Value("${aws.s3.region:ap-northeast-2}")
-    private String region;
 
     // 로컬 개발 환경에서 S3 업로드를 건너뛸지 여부 (기본값: false)
     @Value("${aws.s3.mock-upload:false}")
     private boolean mockUpload;
 
+    @Value("${aws.s3.presigned-url-expiration-minutes:10}")
+    private long presignedUrlExpirationMinutes;
+
     /**
-     * 이력서 파일을 S3에 업로드하고 파일 URL을 반환한다.
+     * 이력서 파일을 S3에 업로드하고 S3 key를 반환한다.
      * S3 키 형식: resumes/{yyyy-MM-dd}/{UUID}.{확장자}
      * mock-upload=true 시 실제 업로드 없이 가짜 URL 반환 (로컬 Swagger 테스트용)
      */
@@ -76,7 +85,72 @@ public class S3Uploader {
             throw new CustomException(ErrorCode.S3_UPLOAD_FAILED);
         }
 
-        return buildFileUrl(s3Key);
+        return s3Key;
+    }
+
+    public String createPresignedGetUrl(String s3Key) {
+        return createPresignedGetUrl(s3Key, presignedUrlExpirationMinutes);
+    }
+
+    public String createPresignedGetUrl(String s3Key, long expirationMinutes) {
+        if (s3Key == null || s3Key.isBlank()) {
+            return s3Key;
+        }
+        if (mockUpload || isNonS3HttpUrl(s3Key)) {
+            return s3Key;
+        }
+
+        String objectKey = toObjectKey(s3Key);
+
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(objectKey)
+                .build();
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(expirationMinutes))
+                .getObjectRequest(getObjectRequest)
+                .build();
+
+        return s3Presigner.presignGetObject(presignRequest).url().toString();
+    }
+
+    private boolean isNonS3HttpUrl(String value) {
+        return isHttpUrl(value) && !isLegacyBucketUrl(value);
+    }
+
+    private boolean isHttpUrl(String value) {
+        return value.startsWith("http://") || value.startsWith("https://");
+    }
+
+    private boolean isLegacyBucketUrl(String value) {
+        try {
+            URI uri = new URI(value);
+            String host = uri.getHost();
+            return host != null && host.equals(bucketName + ".s3." + uriHostRegion(host) + ".amazonaws.com");
+        } catch (URISyntaxException e) {
+            return false;
+        }
+    }
+
+    private String uriHostRegion(String host) {
+        String prefix = bucketName + ".s3.";
+        String suffix = ".amazonaws.com";
+        if (!host.startsWith(prefix) || !host.endsWith(suffix)) {
+            return "";
+        }
+        return host.substring(prefix.length(), host.length() - suffix.length());
+    }
+
+    private String toObjectKey(String value) {
+        if (!isLegacyBucketUrl(value)) {
+            return value;
+        }
+        try {
+            String path = new URI(value).getPath();
+            return path != null && path.startsWith("/") ? path.substring(1) : path;
+        } catch (URISyntaxException e) {
+            return value;
+        }
     }
 
     private String buildS3Key(String extension) {
@@ -85,7 +159,4 @@ public class S3Uploader {
         return String.format("resumes/%s/%s.%s", date, uuid, extension);
     }
 
-    private String buildFileUrl(String s3Key) {
-        return String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, s3Key);
-    }
 }
