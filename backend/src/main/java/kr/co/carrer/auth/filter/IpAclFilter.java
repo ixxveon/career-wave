@@ -21,10 +21,12 @@ public class IpAclFilter extends OncePerRequestFilter {
 
     private final IpAclPort ipAclPort;
     private final ObjectMapper objectMapper;
+    private final List<String> trustedProxies;
 
-    public IpAclFilter(IpAclPort ipAclPort, ObjectMapper objectMapper) {
+    public IpAclFilter(IpAclPort ipAclPort, ObjectMapper objectMapper, List<String> trustedProxies) {
         this.ipAclPort = ipAclPort;
         this.objectMapper = objectMapper;
+        this.trustedProxies = trustedProxies;
     }
 
     @Override
@@ -56,11 +58,36 @@ public class IpAclFilter extends OncePerRequestFilter {
     }
 
     private String extractClientIp(HttpServletRequest request) {
+        String remoteAddr = request.getRemoteAddr();
         String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-            return xForwardedFor.split(",")[0].trim();
+
+        if (xForwardedFor == null || xForwardedFor.isBlank() || !isTrustedProxy(remoteAddr)) {
+            return remoteAddr;
         }
-        return request.getRemoteAddr();
+
+        // 신뢰 프록시가 XFF를 overwrite하지 않고 append하면 왼쪽 값은 클라이언트가 직접 심은 값일 수 있다.
+        // 오른쪽부터 신뢰 프록시 체인을 하나씩 걷어내고, 신뢰 프록시가 아닌 첫 hop을 실제 클라이언트로 본다.
+        String[] hops = xForwardedFor.split(",");
+        for (int i = hops.length - 1; i >= 0; i--) {
+            String hop = hops[i].trim();
+            if (!isTrustedProxy(hop)) {
+                return hop;
+            }
+        }
+        return hops[0].trim();
+    }
+
+    private boolean isTrustedProxy(String remoteAddr) {
+        for (String trustedProxy : trustedProxies) {
+            try {
+                if (matchesCidr(remoteAddr, trustedProxy)) {
+                    return true;
+                }
+            } catch (Exception e) {
+                log.warn("신뢰 프록시 설정값이 올바르지 않아 매칭을 건너뜁니다. trustedProxy={}", trustedProxy, e);
+            }
+        }
+        return false;
     }
 
     private boolean isAllowed(String clientIp, List<String> cidrRanges) {
