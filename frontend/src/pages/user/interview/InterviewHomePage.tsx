@@ -68,7 +68,7 @@ function InterviewHomePage() {
                 return scores.length > 0 ? `${Math.max(...scores)}점` : '—';
               })()}
             </span>
-            <span className="iv-stat__label">최고 점수</span>
+            <span className="iv-stat__label">최근 3회 최고점</span>
           </div>
           <div className="iv-stat">
             <span className="iv-stat__value">{historyData ? historyData.totalItems : '—'}회</span>
