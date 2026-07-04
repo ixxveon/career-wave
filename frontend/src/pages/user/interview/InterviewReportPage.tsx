@@ -132,9 +132,7 @@ function InterviewReportPage() {
       <div className="ir-state ir-state--error">
         <AlertCircle size={32} />
         <p>리포트를 불러올 수 없습니다.</p>
-        {sessionId
-          ? <button className="ir-btn ir-btn--white" onClick={() => refetch()}>다시 시도</button>
-          : <button className="ir-btn ir-btn--white" onClick={() => navigate('/interview')}>면접 홈으로</button>}
+        <button className="ir-btn ir-btn--white" onClick={() => refetch()}>다시 시도</button>
       </div>
     );
   }
