@@ -48,6 +48,9 @@ public class SecurityConfig {
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
+    @Value("${security.ip-acl.trusted-proxies:}")
+    private String trustedProxies;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -99,7 +102,7 @@ public class SecurityConfig {
                 UsernamePasswordAuthenticationFilter.class
             )
             .addFilterBefore(
-                new IpAclFilter(ipAclPort, objectMapper),
+                new IpAclFilter(ipAclPort, objectMapper, parseCommaSeparated(trustedProxies)),
                 JwtAuthenticationFilter.class
             )
             .addFilterAfter(
