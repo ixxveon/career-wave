@@ -91,6 +91,19 @@ function InterviewReportPage() {
 
   const { data, isLoading, isError, isAnalyzing, refetch } = useInterviewReport(sessionId);
 
+  /* ── sessionId 없음 — 이력 목록으로 안내 ── */
+  if (!sessionId) {
+    return (
+      <div className="ir-state ir-state--error">
+        <AlertCircle size={32} />
+        <p>조회할 면접 세션이 없습니다.</p>
+        <button className="ir-btn ir-btn--white" onClick={() => navigate('/interview/sessions')}>
+          면접 이력에서 선택하기
+        </button>
+      </div>
+    );
+  }
+
   /* ── 로딩 ── */
   if (isLoading) {
     return (
@@ -119,9 +132,7 @@ function InterviewReportPage() {
       <div className="ir-state ir-state--error">
         <AlertCircle size={32} />
         <p>리포트를 불러올 수 없습니다.</p>
-        {sessionId
-          ? <button className="ir-btn ir-btn--white" onClick={() => refetch()}>다시 시도</button>
-          : <button className="ir-btn ir-btn--white" onClick={() => navigate('/interview')}>면접 홈으로</button>}
+        <button className="ir-btn ir-btn--white" onClick={() => refetch()}>다시 시도</button>
       </div>
     );
   }
