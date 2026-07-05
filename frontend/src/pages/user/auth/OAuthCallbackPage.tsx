@@ -9,6 +9,10 @@ const OAUTH_TYPE = {
   SIGNUP: 'signup',
 } as const;
 
+// probeAuth(refresh 회전)가 서버 무응답으로 영원히 pending되면 콜백 화면에서 무한 대기하게
+// 되므로, 타임아웃을 걸어 회전 완료 또는 일정 시간 경과 중 먼저 도달하는 시점에 이동한다.
+const PROBE_TIMEOUT_MS = 5000;
+
 function getHandoffCookie(name: string): string | null {
   const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
   return match ? decodeURIComponent(match[2]) : null;
@@ -49,9 +53,9 @@ function OAuthCallbackPage() {
         // 회전이 끝나기 전에 navigate하면 이후 페이지의 요청/ProtectedRoute가 구 refresh
         // 쿠키로 refresh를 재발사해 백엔드 재사용 탐지에 걸려 세션 전체가 폐기된다.
         // 따라서 회전 완료(성공/실패 무관)를 기다린 뒤 이동해 경쟁 창을 닫는다. (이슈 #1025)
-        probeAuth()
-          .catch(() => {})
-          .finally(() => navigate('/', { replace: true }));
+        const rotation = probeAuth().catch(() => {});
+        const timeout = new Promise<void>((resolve) => setTimeout(resolve, PROBE_TIMEOUT_MS));
+        Promise.race([rotation, timeout]).finally(() => navigate('/', { replace: true }));
       } else {
         navigate('/', { replace: true });
       }
