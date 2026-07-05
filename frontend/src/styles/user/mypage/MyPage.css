@@ -2264,8 +2264,13 @@ a.cw-chart-filter {
     min-height: 260px;
   }
 
+  /*
+   * 마이페이지는 사이드바가 있어 이 구간(약 821~1180px)에서 카드 폭이 크게 줄어든다.
+   * 2열을 유지하면 카드 내부 __hero(minmax(0,1fr) 220px)의 텍스트 영역이 100px 미만으로
+   * 좁아져 제목/설명이 글자 단위로 세로 줄바꿈되므로, 이 구간부터 1열로 전환한다.
+   */
   .cw-subscription-carousel {
-    grid-template-columns: repeat(2, minmax(320px, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .cw-subscription-record-empty {
@@ -3899,8 +3904,13 @@ a.cw-chart-filter {
     min-height: 260px;
   }
 
+  /*
+   * 마이페이지는 사이드바가 있어 이 구간(약 821~1180px)에서 카드 폭이 크게 줄어든다.
+   * 2열을 유지하면 카드 내부 __hero(minmax(0,1fr) 220px)의 텍스트 영역이 100px 미만으로
+   * 좁아져 제목/설명이 글자 단위로 세로 줄바꿈되므로, 이 구간부터 1열로 전환한다.
+   */
   .cw-subscription-carousel {
-    grid-template-columns: repeat(2, minmax(320px, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .cw-subscription-record-empty {

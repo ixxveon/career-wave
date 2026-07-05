@@ -1,6 +1,7 @@
 package kr.co.carrer.user.billing.service;
 
 import kr.co.carrer.user.billing.type.ResourceType;
+import kr.co.carrer.user.billing.service.EntitlementQueryService;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
 import kr.co.carrer.user.resume.entity.Document;
 import kr.co.carrer.user.resume.repository.CoverLetterContentRepository;
@@ -45,6 +46,7 @@ class ResumeFreeEntitlementIntegrationTest {
     @Mock DocumentStatusService documentStatusService;
     @Mock ApplicationEventPublisher eventPublisher;
     @Mock EntitlementService entitlementService;
+    @Mock EntitlementQueryService entitlementQueryService;
 
     private ResumeServiceImpl resumeService;
 
@@ -56,7 +58,7 @@ class ResumeFreeEntitlementIntegrationTest {
         resumeService = new ResumeServiceImpl(
                 documentRepository, coverLetterMetaRepository, coverLetterContentRepository,
                 documentFeedbackRepository, fileValidator, s3Uploader, objectMapper,
-                documentStatusService, eventPublisher, entitlementService);
+                documentStatusService, eventPublisher, entitlementService, entitlementQueryService);
         ReflectionTestUtils.setField(resumeService, "configuredWebhookSecret", "test-secret");
 
         memberId = UUID.randomUUID();
