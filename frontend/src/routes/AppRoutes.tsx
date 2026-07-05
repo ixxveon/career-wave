@@ -175,9 +175,6 @@ const AuditLogPage = lazy(() => import("../pages/admin/AuditLog/AuditLogPage"));
 const AdminCompanyListPage = lazy(
   () => import("../pages/admin/Company/CompanyListPage"),
 );
-const AdminSettlementListPage = lazy(
-  () => import("../pages/admin/Settlement/SettlementListPage"),
-);
 const AdminSettlementDetailPage = lazy(
   () => import("../pages/admin/Settlement/SettlementDetailPage"),
 );
@@ -443,10 +440,6 @@ function AppRoutes() {
             <Route
               path="companies"
               element={lazyRoute(<AdminCompanyListPage />)}
-            />
-            <Route
-              path="settlements"
-              element={lazyRoute(<AdminSettlementListPage />)}
             />
             <Route
               path="settlements/:settlementId"
