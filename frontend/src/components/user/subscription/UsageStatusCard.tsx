@@ -6,12 +6,13 @@ const MAX_USAGE_BOXES = 30;
 
 export function UsageStatusCard({ item }: { item: UsageItem }) {
   const limit = item.usage?.limit ?? 0;
-  const used = item.usage?.used ?? 0;
   const remaining = item.usage?.remaining ?? 0;
-  const isOverLimit = used > limit;
-  const percent = limit > 0 ? Math.min(Math.round((used / limit) * 100), 100) : 0;
+  // reserved(분석 중) 포함 실제 차감 횟수 = limit - remaining
+  const consumedCount = limit > 0 ? Math.max(limit - remaining, 0) : 0;
+  const isOverLimit = consumedCount > limit;
+  const percent = limit > 0 ? Math.min(Math.round((consumedCount / limit) * 100), 100) : 0;
   const clampedLimit = Math.min(limit, MAX_USAGE_BOXES);
-  const clampedUsed = limit > 0 ? Math.min(Math.max(used, 0), limit) : 0;
+  const clampedUsed = limit > 0 ? Math.min(Math.max(consumedCount, 0), limit) : 0;
   const filledBoxes =
     limit > 0 ? Math.min(Math.round((clampedUsed / limit) * clampedLimit), clampedLimit) : 0;
   const usageBoxes = limit > 0 ? Array.from({ length: clampedLimit }, (_, i) => i < filledBoxes) : [];
@@ -26,7 +27,7 @@ export function UsageStatusCard({ item }: { item: UsageItem }) {
           <h3>{item.title}</h3>
           {limit > 0 ? (
             <span className="cw-subscription-usage-card__meta">
-              {limit}{unit} 중 {used}{unit} 사용
+              {limit}{unit} 중 {consumedCount}{unit} 사용
             </span>
           ) : (
             <span className="cw-subscription-usage-card__meta">사용량 정보 준비 중</span>
