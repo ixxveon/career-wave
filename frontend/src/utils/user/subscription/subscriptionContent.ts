@@ -1,5 +1,5 @@
 import { FileText, Headphones, Mic, RefreshCw, Sparkles } from 'lucide-react';
-import { PAYMENT_HISTORY_PERIOD, type PaymentHistoryPeriod } from '../../../types/user/subscription';
+import { PAYMENT_HISTORY_PERIOD, PRODUCT_CODE, type PaymentHistoryPeriod } from '../../../types/user/subscription';
 
 export const PAYMENT_HISTORY_PERIOD_OPTIONS: Array<{ label: string; value: PaymentHistoryPeriod }> = [
   { label: '최근 1개월', value: PAYMENT_HISTORY_PERIOD.ONE_MONTH },
@@ -22,6 +22,7 @@ export const BILLING_NOTICE_ITEMS = [
 export const SERVICE_CARDS = [
   {
     key: 'document',
+    productCode: PRODUCT_CODE.DOCUMENT_COACHING,
     title: '서류 AI 코칭',
     description: '가이드와 피드백을 보면서 차근차근 서류 완성도를 끌어올릴 수 있어요.',
     href: '/billing/checkout?product=document-coaching',
@@ -33,6 +34,7 @@ export const SERVICE_CARDS = [
   },
   {
     key: 'interview',
+    productCode: PRODUCT_CODE.INTERVIEW,
     title: 'AI 모의면접',
     description: '가이드 없이 실전처럼 연습하고, 답변 분석과 리포트까지 한 번에 확인할 수 있어요.',
     href: '/billing/checkout?product=interview',

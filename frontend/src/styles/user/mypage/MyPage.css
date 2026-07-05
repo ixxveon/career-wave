@@ -1172,6 +1172,19 @@ a.cw-chart-filter {
   text-decoration: none;
 }
 
+/* 이미 구독 중인 상품의 CTA — 결제가 아닌 이용 현황 안내용 (이슈 #1007) */
+.cw-subscription-service-card__button.is-subscribed {
+  gap: 8px;
+  color: #1f9d5b;
+  background: #eafaf1;
+  border: 1px solid #b7e4c7;
+  box-shadow: none;
+}
+
+.cw-subscription-service-card__button.is-subscribed svg {
+  flex: 0 0 auto;
+}
+
 .cw-subscription-service-card__cta-wrap {
   padding: 0 22px;
 }

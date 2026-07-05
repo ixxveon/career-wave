@@ -1,10 +1,16 @@
-import { CheckCircle2, FileText, MessageSquareMore, Mic, Sparkles } from 'lucide-react';
+import { BadgeCheck, CheckCircle2, FileText, MessageSquareMore, Mic, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { SERVICE_CARDS } from '../../../utils/user/subscription/subscriptionContent';
 
 type ServiceCardItem = (typeof SERVICE_CARDS)[number];
 
-export function ServiceCard({ service }: { service: ServiceCardItem }) {
+export function ServiceCard({
+  service,
+  isSubscribed = false,
+}: {
+  service: ServiceCardItem;
+  isSubscribed?: boolean;
+}) {
   return (
     <article
       className={`cw-subscription-service-card is-${service.accent}`}
@@ -58,9 +64,21 @@ export function ServiceCard({ service }: { service: ServiceCardItem }) {
       </div>
 
       <div className="cw-subscription-service-card__cta-wrap">
-        <Link to={service.href} className="cw-subscription-service-card__button">
-          구매하기
-        </Link>
+        {isSubscribed ? (
+          // 이미 구독 중인 상품은 결제 진입을 막고, 이용 현황으로 안내한다. (이슈 #1007)
+          <a
+            href="#cw-my-usage"
+            className="cw-subscription-service-card__button is-subscribed"
+            aria-label={`${service.title} 구독중 · 이용 현황 관리하기`}
+          >
+            <BadgeCheck size={16} />
+            구독중 · 관리하기
+          </a>
+        ) : (
+          <Link to={service.href} className="cw-subscription-service-card__button">
+            구매하기
+          </Link>
+        )}
       </div>
 
       <p className="cw-subscription-service-card__footer">
