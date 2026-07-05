@@ -20,6 +20,7 @@ import kr.co.carrer.admin.settlement.type.SettlementStatus;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,6 +82,7 @@ public class AdminSettlementServiceImpl implements AdminSettlementService {
             if (existingReport.getSettlementStatus() == SettlementStatus.CONFIRMED) {
                 throw new CustomException(AdminSettlementErrorCode.DUPLICATE_PERIOD);
             }
+            saveAuditLog(adminId, "REGENERATE_SETTLEMENT_DELETE_PENDING", existingReport.getSettlementId(), ipAddress);
             settlementItemRepository.deleteBySettlementId(existingReport.getSettlementId());
             settlementReportRepository.delete(existingReport);
             settlementReportRepository.flush();
@@ -129,6 +131,12 @@ public class AdminSettlementServiceImpl implements AdminSettlementService {
 
         report.confirm(adminId, request.note());
 
+        try {
+            settlementReportRepository.saveAndFlush(report);
+        } catch (OptimisticLockingFailureException e) {
+            throw new CustomException(AdminSettlementErrorCode.ALREADY_CONFIRMED);
+        }
+
         saveAuditLog(adminId, "CONFIRM_SETTLEMENT", report.getSettlementId(), ipAddress);
 
         return new SettlementDTO.ResponseConfirm(
@@ -139,17 +147,22 @@ public class AdminSettlementServiceImpl implements AdminSettlementService {
     }
 
     private AggregateResult aggregatePaymentsAndRefunds(LocalDate periodStart, LocalDate periodEnd) {
+        // periodEnd는 관리자가 고른 마지막 날짜를 포함(inclusive)하므로, 실제 상한은 그 다음날 자정으로 잡는다.
+        // KST 벽시계 문자열을 AT TIME ZONE으로 명시 고정해 DB 세션 타임존에 따른 경계 오분류를 방지한다.
+        String rangeStart = periodStart.atStartOfDay().toString();
+        String rangeEnd = periodEnd.plusDays(1).atStartOfDay().toString();
+
         String paymentSql = """
             SELECT p.payment_id, p.amount
             FROM payments p
             WHERE p.payment_status = 'PAID'
-              AND p.approved_at >= CAST(?1 AS TIMESTAMPTZ)
-              AND p.approved_at <  CAST(?2 AS TIMESTAMPTZ)
+              AND p.approved_at >= (CAST(?1 AS TIMESTAMP) AT TIME ZONE 'Asia/Seoul')
+              AND p.approved_at <  (CAST(?2 AS TIMESTAMP) AT TIME ZONE 'Asia/Seoul')
             """;
 
         Query paymentQuery = em.createNativeQuery(paymentSql);
-        paymentQuery.setParameter(1, periodStart.atStartOfDay().toString());
-        paymentQuery.setParameter(2, periodEnd.atStartOfDay().toString());
+        paymentQuery.setParameter(1, rangeStart);
+        paymentQuery.setParameter(2, rangeEnd);
 
         @SuppressWarnings("unchecked")
         List<Object[]> paymentRows = paymentQuery.getResultList();
@@ -167,13 +180,13 @@ public class AdminSettlementServiceImpl implements AdminSettlementService {
             SELECT r.payment_id, r.amount
             FROM refunds r
             WHERE r.refund_status = 'COMPLETED'
-              AND r.refunded_at >= CAST(?1 AS TIMESTAMPTZ)
-              AND r.refunded_at <  CAST(?2 AS TIMESTAMPTZ)
+              AND r.refunded_at >= (CAST(?1 AS TIMESTAMP) AT TIME ZONE 'Asia/Seoul')
+              AND r.refunded_at <  (CAST(?2 AS TIMESTAMP) AT TIME ZONE 'Asia/Seoul')
             """;
 
         Query refundQuery = em.createNativeQuery(refundSql);
-        refundQuery.setParameter(1, periodStart.atStartOfDay().toString());
-        refundQuery.setParameter(2, periodEnd.atStartOfDay().toString());
+        refundQuery.setParameter(1, rangeStart);
+        refundQuery.setParameter(2, rangeEnd);
 
         @SuppressWarnings("unchecked")
         List<Object[]> refundRows = refundQuery.getResultList();

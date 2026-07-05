@@ -80,6 +80,10 @@ public class SettlementReport {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     @PrePersist
     protected void onCreate() {
         ZonedDateTime now = ZonedDateTime.now(KST);

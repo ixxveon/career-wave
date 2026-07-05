@@ -11,20 +11,24 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SettlementScheduler {
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     private final AdminSettlementService adminSettlementService;
     private final SettlementReportRepository settlementReportRepository;
 
     @Scheduled(cron = "0 0 0 1 * *", zone = "Asia/Seoul")
     public void generateMonthlySettlement() {
-        YearMonth lastMonth = YearMonth.now().minusMonths(1);
+        YearMonth lastMonth = YearMonth.now(KST).minusMonths(1);
         LocalDate periodStart = lastMonth.atDay(1);
-        LocalDate periodEnd = lastMonth.atEndOfMonth().plusDays(1);
+        // periodEnd는 마지막 날짜를 포함(inclusive)하는 값으로 저장한다 — 수동 생성(FE 입력)과 규약을 통일.
+        LocalDate periodEnd = lastMonth.atEndOfMonth();
 
         boolean exists = settlementReportRepository
             .findBySettlementPeriodStartAndSettlementPeriodEnd(periodStart, periodEnd)

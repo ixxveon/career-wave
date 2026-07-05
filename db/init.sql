@@ -1608,6 +1608,7 @@ CREATE TABLE settlement_reports (
     note                    TEXT,
     created_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    version                 BIGINT          NOT NULL DEFAULT 0,
     CONSTRAINT uq_settlement_period     UNIQUE (settlement_period_start, settlement_period_end),
     CONSTRAINT chk_settlement_period    CHECK (settlement_period_start < settlement_period_end),
     CONSTRAINT chk_settlement_status    CHECK (settlement_status IN ('PENDING', 'CONFIRMED')),
@@ -1623,7 +1624,7 @@ CREATE INDEX idx_settlement_status ON settlement_reports (settlement_status);
 COMMENT ON TABLE  settlement_reports                           IS '월별 정산 리포트 요약';
 COMMENT ON COLUMN settlement_reports.settlement_id             IS '정산 리포트 PK';
 COMMENT ON COLUMN settlement_reports.settlement_period_start   IS '정산 기간 시작일';
-COMMENT ON COLUMN settlement_reports.settlement_period_end     IS '정산 기간 종료일';
+COMMENT ON COLUMN settlement_reports.settlement_period_end     IS '정산 기간 종료일 (해당 날짜 포함, inclusive)';
 COMMENT ON COLUMN settlement_reports.total_sales_amount        IS '총 매출액 (원)';
 COMMENT ON COLUMN settlement_reports.total_refund_amount       IS '총 환불액 (원)';
 COMMENT ON COLUMN settlement_reports.net_sales_amount          IS '순매출액 (매출 - 환불)';
@@ -1638,6 +1639,7 @@ COMMENT ON COLUMN settlement_reports.admin_id                  IS '정산 확정
 COMMENT ON COLUMN settlement_reports.note                      IS '비고/메모';
 COMMENT ON COLUMN settlement_reports.created_at                IS '생성 일시';
 COMMENT ON COLUMN settlement_reports.updated_at                IS '최종 수정 일시';
+COMMENT ON COLUMN settlement_reports.version                   IS '낙관적 락 버전 (동시 확정 충돌 감지)';
 
 CREATE TABLE settlement_items (
     settlement_item_id  BIGSERIAL       PRIMARY KEY,

@@ -2,6 +2,7 @@ package kr.co.carrer.admin.settlement.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import kr.co.carrer.admin.audit.util.AdminAuditClientIpExtractor;
 import kr.co.carrer.admin.settlement.docs.AdminSettlementControllerDocs;
 import kr.co.carrer.admin.settlement.dto.SettlementDTO;
 import kr.co.carrer.admin.settlement.service.AdminSettlementService;
@@ -16,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/v1/admin/settlements")
@@ -83,13 +86,13 @@ public class AdminSettlementController implements AdminSettlementControllerDocs 
     }
 
     private String extractClientIp(HttpServletRequest request) {
-        return request.getRemoteAddr();
+        return AdminAuditClientIpExtractor.extract(request);
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {
         if (value == null || value.isBlank()) return null;
         try {
-            return Enum.valueOf(enumClass, value.toUpperCase());
+            return Enum.valueOf(enumClass, value.toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
