@@ -23,6 +23,7 @@ const MOCK_SETUP = {
 export default function TextInterviewPage() {
   const [searchParams] = useSearchParams();
   const documentId     = searchParams.get('documentId');
+  const focusType      = searchParams.get('focusType');
 
   const preflight = usePreflightCheck();
 
@@ -118,6 +119,7 @@ export default function TextInterviewPage() {
         sessionType,
         targetCompany: company,
         documentId:    documentId ?? null,
+        focusType:     focusType ?? null,
       });
       setSessionId(result.sessionId);
       setPhase('interview');

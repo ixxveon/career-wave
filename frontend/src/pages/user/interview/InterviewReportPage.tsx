@@ -30,6 +30,13 @@ const RETRY_ROUTE: Record<SessionType, string> = {
   [SESSION_TYPE.VIDEO]: '/interview/text',
 };
 
+const FOCUS_TYPE_MAP: Record<string, string> = {
+  relevance: 'FOLLOW_UP',
+  depth:     'TECHNICAL_DEPTH',
+  delivery:  'DELIVERY',
+  fluency:   'FLUENCY',
+};
+
 /* ── 등급 산정 ────────────────────────────────────── */
 function getGrade(score: number | null): string {
   if (score === null) return '—';
@@ -323,7 +330,14 @@ const ReportContent = memo(function ReportContent({
               <span className="ir-improve-card__num">{String(i + 1).padStart(2, '0')}</span>
               <p className="ir-improve-card__title">{item.title}</p>
               <p className="ir-improve-card__desc">{item.desc}</p>
-              <button className="ir-improve-card__cta" onClick={() => onNavigate(retryRoute)}>
+              <button
+                className="ir-improve-card__cta"
+                onClick={() => {
+                  const focusType = 'metricKey' in item ? FOCUS_TYPE_MAP[item.metricKey] : undefined;
+                  const route = focusType ? `${retryRoute}?focusType=${focusType}` : retryRoute;
+                  onNavigate(route);
+                }}
+              >
                 {item.cta} →
               </button>
             </div>

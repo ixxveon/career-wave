@@ -21,6 +21,7 @@ from user.interview.prompts.interview_prompts import (
     TEMPERATURE,
     build_rag_injection,
     get_fallback_questions,
+    get_focus_overlay,
     get_system_prompt,
 )
 from user.interview.websocket.interview_ws_handler import (
@@ -174,6 +175,9 @@ def _parse_llm_json(raw: str) -> dict[str, str]:
 
 def _build_messages(ctx: _SessionContext) -> list[dict[str, str]]:
     system_prompt = get_system_prompt(ctx.interview_type)
+    focus_overlay = get_focus_overlay(ctx.focus_type)
+    if focus_overlay:
+        system_prompt = system_prompt + "\n\n" + focus_overlay
     if ctx.rag_context:
         system_prompt = system_prompt + "\n\n" + build_rag_injection(ctx.rag_context)
 
