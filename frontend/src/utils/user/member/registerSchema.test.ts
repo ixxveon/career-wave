@@ -119,7 +119,7 @@ describe('validatePersonalRegisterForm — 이름 형식 검증', () => {
       { ...validPersonalSnapshot, name: 'sss' },
       LOGIN_ID_CHECK_STATE.AVAILABLE,
     );
-    expect(errors.name).toBe('이름은 2~10자 한글로 입력해 주세요.');
+    expect(errors.name).toBe('이름은 2~10자 한글로 입력해주세요.');
   });
 
   it('한 글자 한글은 형식 오류가 발생한다', () => {
@@ -127,7 +127,7 @@ describe('validatePersonalRegisterForm — 이름 형식 검증', () => {
       { ...validPersonalSnapshot, name: '홍' },
       LOGIN_ID_CHECK_STATE.AVAILABLE,
     );
-    expect(errors.name).toBe('이름은 2~10자 한글로 입력해 주세요.');
+    expect(errors.name).toBe('이름은 2~10자 한글로 입력해주세요.');
   });
 
   it('앞뒤 공백은 제거 후 검증되어 유효한 한글 이름은 통과한다', () => {

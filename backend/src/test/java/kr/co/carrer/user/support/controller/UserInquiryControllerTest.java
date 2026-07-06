@@ -5,11 +5,9 @@ import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.jwt.AccountType;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.principal.AuthPrincipal;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import kr.co.carrer.global.response.PaginationResponse;
 import kr.co.carrer.user.support.dto.SupportDTO;
 import kr.co.carrer.user.support.service.UserInquiryService;
@@ -43,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserInquiryController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, SecurityMockConfig.class})
 class UserInquiryControllerTest {
 
     private static final String TEST_MEMBER_ID = UUID.randomUUID().toString();
@@ -56,15 +54,6 @@ class UserInquiryControllerTest {
 
     @MockBean
     private UserInquiryService userInquiryService;
-
-    @MockBean
-    private JwtTokenProvider jwtTokenProvider;
-
-    @MockBean
-    private TokenBlacklistStore tokenBlacklistStore;
-
-    @MockBean
-    private IpAclPort ipAclPort;
 
     @MockBean
     private AccountStatusPort accountStatusPort;
