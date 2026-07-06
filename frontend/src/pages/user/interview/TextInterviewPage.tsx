@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { interviewSessionApi }              from '../../../api/user/interview';
 import { SESSION_TYPE }                     from '../../../types/user/interview';
-import type { SessionType, Resume, MicStatus } from '../../../types/user/interview';
+import type { SessionType, Resume, MicStatus, FocusType } from '../../../types/user/interview';
 import type { MemberApiError }              from '../../../utils/user/member/errorMapping';
 
 import { usePreflightCheck } from '../../../hooks/user/interview/usePreflightCheck';
@@ -119,7 +119,7 @@ export default function TextInterviewPage() {
         sessionType,
         targetCompany: company,
         documentId:    documentId ?? null,
-        focusType:     focusType ?? null,
+        focusType:     (focusType ?? null) as FocusType | null,
       });
       setSessionId(result.sessionId);
       setPhase('interview');

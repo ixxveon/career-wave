@@ -333,7 +333,7 @@ const ReportContent = memo(function ReportContent({
               <button
                 className="ir-improve-card__cta"
                 onClick={() => {
-                  const focusType = 'metricKey' in item ? FOCUS_TYPE_MAP[item.metricKey] : undefined;
+                  const focusType = 'metricKey' in item ? FOCUS_TYPE_MAP[(item as { metricKey: string }).metricKey] : undefined;
                   const route = focusType ? `${retryRoute}?focusType=${focusType}` : retryRoute;
                   onNavigate(route);
                 }}
