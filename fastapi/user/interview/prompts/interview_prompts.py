@@ -169,7 +169,8 @@ def get_focus_overlay(focus_type: str | None) -> str | None:
 def get_company_overlay(target_company: str | None) -> str | None:
     if not target_company or not target_company.strip():
         return None
-    company = target_company.strip()
+    # 개행 제거 — 사용자 입력이 시스템 프롬프트 구조를 흔드는 것을 방지
+    company = target_company.strip().replace("\n", " ").replace("\r", " ")
     return f"""
 [목표 기업: {company}]
 - 지원자는 {company} 입사를 목표로 면접을 준비하고 있습니다.

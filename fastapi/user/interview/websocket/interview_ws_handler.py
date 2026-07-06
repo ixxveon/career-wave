@@ -225,6 +225,8 @@ async def interview_ws(
             ctx.interview_type = pending_llm["interviewType"]
         if pending_llm.get("focusType"):
             ctx.focus_type = pending_llm["focusType"]
+        if pending_llm.get("targetCompany"):
+            ctx.target_company = pending_llm["targetCompany"]
         from user.interview.pipeline import llm_pipeline
         asyncio.create_task(
             llm_pipeline.generate_and_deliver_question(
