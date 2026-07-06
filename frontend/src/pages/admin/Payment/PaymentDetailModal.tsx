@@ -198,15 +198,16 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
         </div>
 
         <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
+          <button onClick={onClose} disabled={refundLoading}>닫기</button>
           {isCompletedPayment && !selected.refundStatus && !requestMode && (
             <button onClick={() => setRequestMode(true)} disabled={refundLoading}>환불 요청</button>
           )}
           {isCompletedPayment && !selected.refundStatus && requestMode && (
             <>
+              <button onClick={() => { setRequestMode(false); setRequestReason(''); }} disabled={refundLoading}>취소</button>
               <button onClick={submitRefundRequest} disabled={refundLoading || !requestReason.trim()}>
                 {refundLoading ? '처리 중...' : '접수 확인'}
               </button>
-              <button onClick={() => { setRequestMode(false); setRequestReason(''); }} disabled={refundLoading}>취소</button>
             </>
           )}
           {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible && (
@@ -217,7 +218,6 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
               {refundLoading ? '처리 중...' : '환불 불가 처리'}
             </button>
           )}
-          <button onClick={onClose} disabled={refundLoading}>닫기</button>
         </div>
       </div>
     </div>

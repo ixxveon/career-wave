@@ -280,10 +280,10 @@ function ConfirmModal({ settlementId, periodLabel, onClose, onSuccess }: Confirm
           {confirmError && <p style={{ fontSize: 13, color: '#9a4444', marginTop: 12 }}>{confirmError}</p>}
         </div>
         <div className="modalAction">
+          <button onClick={onClose} disabled={confirmLoading}>취소</button>
           <button onClick={handleConfirm} disabled={confirmLoading}>
             {confirmLoading ? '확정 중...' : '확정'}
           </button>
-          <button onClick={onClose} disabled={confirmLoading}>취소</button>
         </div>
       </div>
     </div>
