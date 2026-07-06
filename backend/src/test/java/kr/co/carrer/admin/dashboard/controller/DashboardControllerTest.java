@@ -11,10 +11,8 @@ import kr.co.carrer.admin.dashboard.type.DashboardSeverityType;
 import kr.co.carrer.admin.dashboard.type.DashboardSystemStatusType;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -39,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(DashboardController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, SecurityMockConfig.class})
 class DashboardControllerTest {
 
     @Autowired
@@ -47,15 +45,6 @@ class DashboardControllerTest {
 
     @MockBean
     private DashboardService dashboardService;
-
-    @MockBean
-    private JwtTokenProvider jwtTokenProvider;
-
-    @MockBean
-    private TokenBlacklistStore tokenBlacklistStore;
-
-    @MockBean
-    private IpAclPort ipAclPort;
 
     @Test
     @WithMockUser(roles = {"ADMIN", "MASTER"})
