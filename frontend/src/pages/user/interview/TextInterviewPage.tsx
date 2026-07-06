@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { interviewSessionApi }              from '../../../api/user/interview';
 import { SESSION_TYPE }                     from '../../../types/user/interview';
-import type { SessionType, Resume, MicStatus } from '../../../types/user/interview';
+import type { SessionType, Resume, MicStatus, InProgressSessionResponse } from '../../../types/user/interview';
 import type { MemberApiError }              from '../../../utils/user/member/errorMapping';
 
 import { usePreflightCheck } from '../../../hooks/user/interview/usePreflightCheck';
@@ -38,16 +38,25 @@ export default function TextInterviewPage() {
   const [audioPlaying,  setAudioPlaying]  = useState(false);
   const [isLoading,     setIsLoading]     = useState(false);
   const [apiError,      setApiError]      = useState<string | null>(null);
+  const [resumeModal,   setResumeModal]   = useState<InProgressSessionResponse | null>(null);
 
-  /* ── 비정상 종료 세션 복구 (constitution.md §상태 복원력) ── */
+  /* ── 비정상 종료 세션 복구 — 서버 상태 확인 후 재개 모달 노출 (constitution.md §상태 복원력) ── */
   useEffect(() => {
     const stored = loadInterviewSession();
-    if (stored) {
-      setSessionId(stored.sessionId);
-      if (stored.sessionType) setSessionType(stored.sessionType as SessionType);
-      if (stored.questionOrder > 1) setInitialQuestionOrder(stored.questionOrder);
-      setPhase('interview');
-    }
+    if (!stored) return;
+
+    interviewSessionApi.getInProgress()
+      .then(session => {
+        if (session.sessionId === stored.sessionId) {
+          setResumeModal(session);
+        } else {
+          clearInterviewSession();
+        }
+      })
+      .catch(() => {
+        // 404 or error → 저장된 세션 더 이상 유효하지 않음
+        clearInterviewSession();
+      });
   }, []);
 
   /* ── 이력서 정보 로드 ── */
@@ -106,6 +115,24 @@ export default function TextInterviewPage() {
     }
   }
 
+  function handleResumeSession(): void {
+    if (!resumeModal) return;
+    const stored = loadInterviewSession();
+    setSessionId(resumeModal.sessionId);
+    setSessionType(resumeModal.sessionType);
+    setCompany(resumeModal.targetCompany ?? '');
+    if (stored?.questionOrder && stored.questionOrder > 1) {
+      setInitialQuestionOrder(stored.questionOrder);
+    }
+    setResumeModal(null);
+    setPhase('interview');
+  }
+
+  function handleNewSession(): void {
+    clearInterviewSession();
+    setResumeModal(null);
+  }
+
   async function handleStart(): Promise<void> {
     if (!company.trim() || resumeLoading) return;
     // pre-flight gate (spec FR-001) — 모드별 조건 분리
@@ -157,6 +184,29 @@ export default function TextInterviewPage() {
           setApiError(null);
         }}
       />
+    );
+  }
+
+  if (resumeModal) {
+    return (
+      <div className="iv-resume-modal-overlay">
+        <div className="iv-resume-modal">
+          <h2 className="iv-resume-modal__title">이전 면접을 이어하시겠어요?</h2>
+          <p className="iv-resume-modal__desc">
+            중단된 면접 세션이 있습니다.
+            {resumeModal.targetCompany && ` (${resumeModal.targetCompany})`}
+            {' '}이어서 진행하거나 새로 시작할 수 있습니다.
+          </p>
+          <div className="iv-resume-modal__actions">
+            <button className="iv-resume-modal__btn iv-resume-modal__btn--primary" onClick={handleResumeSession}>
+              이어하기
+            </button>
+            <button className="iv-resume-modal__btn iv-resume-modal__btn--secondary" onClick={handleNewSession}>
+              새로 시작
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 
