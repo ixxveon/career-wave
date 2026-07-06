@@ -8,6 +8,7 @@ import kr.co.carrer.user.member.repository.MemberVerificationRepository;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.service.EmailSenderPort;
 import kr.co.carrer.user.member.service.SmsSenderPort;
+import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.VerificationChannel;
 import kr.co.carrer.user.member.type.VerificationPurpose;
 import kr.co.carrer.user.member.type.VerificationStatus;
@@ -145,7 +146,10 @@ class UserVerificationServiceImplTest {
         setField(request, "target", "user@example.com");
         setField(request, "purpose", VerificationPurpose.REGISTER);
 
-        when(memberRepository.existsByEmail("user@example.com")).thenReturn(true);
+        when(verificationRepository.findTopByTargetAndPurposeOrderByCreatedAtDesc(anyString(), any()))
+                .thenReturn(Optional.empty());
+        when(memberRepository.existsByEmailAndMemberStatusNot("user@example.com", MemberStatus.WITHDRAWN))
+                .thenReturn(true);
 
         assertThatThrownBy(() -> service.send(request))
                 .isInstanceOf(CustomException.class)
@@ -159,6 +163,32 @@ class UserVerificationServiceImplTest {
     }
 
     @Test
+    void send_REGISTER_EMAIL_재발송제한이_중복검증보다_먼저_적용됨() throws Exception {
+        MemberVerification prev = createVerification(5, VerificationStatus.SENT, "hash");
+        setField(prev, "resendAvailableAt", Instant.now().plusSeconds(60));
+
+        when(verificationRepository.findTopByTargetAndPurposeOrderByCreatedAtDesc(anyString(), any()))
+                .thenReturn(Optional.of(prev));
+
+        UserVerificationDto.RequestSendVerification request =
+                new UserVerificationDto.RequestSendVerification();
+        setField(request, "channel", VerificationChannel.EMAIL);
+        setField(request, "target", "user@example.com");
+        setField(request, "purpose", VerificationPurpose.REGISTER);
+
+        assertThatThrownBy(() -> service.send(request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.VERIFICATION_RATE_LIMITED));
+
+        verifyNoInteractions(memberRepository);
+        verify(verificationRepository, never()).save(any());
+        verify(emailSenderPort, never()).sendVerificationCode(any(), any());
+        verify(smsSenderPort, never()).sendVerificationCode(any(), any());
+    }
+
+    @Test
     void send_REGISTER_PHONE_이미가입된_휴대폰_PHONE_ALREADY_EXISTS() throws Exception {
         UserVerificationDto.RequestSendVerification request =
                 new UserVerificationDto.RequestSendVerification();
@@ -166,7 +196,10 @@ class UserVerificationServiceImplTest {
         setField(request, "target", "01012345678");
         setField(request, "purpose", VerificationPurpose.REGISTER);
 
-        when(memberRepository.existsByPhone("01012345678")).thenReturn(true);
+        when(verificationRepository.findTopByTargetAndPurposeOrderByCreatedAtDesc(anyString(), any()))
+                .thenReturn(Optional.empty());
+        when(memberRepository.existsByPhoneAndMemberStatusNot("01012345678", MemberStatus.WITHDRAWN))
+                .thenReturn(true);
 
         assertThatThrownBy(() -> service.send(request))
                 .isInstanceOf(CustomException.class)

@@ -9,6 +9,7 @@ import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.service.EmailSenderPort;
 import kr.co.carrer.user.member.service.SmsSenderPort;
 import kr.co.carrer.user.member.service.UserVerificationService;
+import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.VerificationChannel;
 import kr.co.carrer.user.member.type.VerificationPurpose;
 import kr.co.carrer.user.member.type.VerificationStatus;
@@ -47,7 +48,6 @@ public class UserVerificationServiceImpl implements UserVerificationService {
     @Transactional
     public UserVerificationDto.ResponseSendVerification send(UserVerificationDto.RequestSendVerification request) {
         validateTarget(request.getChannel(), request.getTarget());
-        validateRegisterTargetAvailable(request);
 
         Instant now = Instant.now();
 
@@ -59,6 +59,7 @@ public class UserVerificationServiceImpl implements UserVerificationService {
                         throw new CustomException(UserAuthErrorCode.VERIFICATION_RATE_LIMITED);
                     }
                 });
+        validateRegisterTargetAvailable(request);
 
         String code = generateCode();
         String codeHash = hash(code);
@@ -145,10 +146,12 @@ public class UserVerificationServiceImpl implements UserVerificationService {
         if (request.getPurpose() != VerificationPurpose.REGISTER) {
             return;
         }
-        if (request.getChannel() == VerificationChannel.EMAIL && memberRepository.existsByEmail(request.getTarget())) {
+        if (request.getChannel() == VerificationChannel.EMAIL
+                && memberRepository.existsByEmailAndMemberStatusNot(request.getTarget(), MemberStatus.WITHDRAWN)) {
             throw new CustomException(UserAuthErrorCode.EMAIL_ALREADY_EXISTS);
         }
-        if (request.getChannel() == VerificationChannel.PHONE && memberRepository.existsByPhone(request.getTarget())) {
+        if (request.getChannel() == VerificationChannel.PHONE
+                && memberRepository.existsByPhoneAndMemberStatusNot(request.getTarget(), MemberStatus.WITHDRAWN)) {
             throw new CustomException(UserAuthErrorCode.PHONE_ALREADY_EXISTS);
         }
     }
