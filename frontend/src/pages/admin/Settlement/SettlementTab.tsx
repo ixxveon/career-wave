@@ -243,10 +243,10 @@ function GenerateModal({ onClose, onSuccess }: GenerateModalProps) {
           {genError && <p style={{ fontSize: 13, color: '#9a4444', marginTop: 12 }}>{genError}</p>}
         </div>
         <div className="modalAction">
+          <button onClick={onClose} disabled={genLoading}>취소</button>
           <button onClick={handleGenerate} disabled={genLoading || !isValid}>
             {genLoading ? '생성 중...' : '생성'}
           </button>
-          <button onClick={onClose} disabled={genLoading}>취소</button>
         </div>
       </div>
     </div>

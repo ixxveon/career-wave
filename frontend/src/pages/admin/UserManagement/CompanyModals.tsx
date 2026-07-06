@@ -60,6 +60,7 @@ export function CompanyDetailModal({ company, onClose, onApprove, onReject }: Co
           </div>
         )}
         <div className="modalAction">
+          <button onClick={onClose}>닫기</button>
           {company.hrStatus === 'PENDING' && (
             <>
               <button
@@ -76,7 +77,6 @@ export function CompanyDetailModal({ company, onClose, onApprove, onReject }: Co
               </button>
             </>
           )}
-          <button onClick={onClose}>닫기</button>
         </div>
       </div>
     </div>
@@ -126,6 +126,7 @@ export function ApproveModal({ target, onClose, onSuccess }: ApproveModalProps) 
         </div>
         {error && <p style={{ fontSize: 13, color: '#9a4444', margin: '8px 0 0' }}>{error}</p>}
         <div className="modalAction">
+          <button onClick={onClose} disabled={loading}>취소</button>
           <button
             style={{ background: '#24496f', color: 'white', borderColor: '#24496f' }}
             onClick={handleApprove}
@@ -133,7 +134,6 @@ export function ApproveModal({ target, onClose, onSuccess }: ApproveModalProps) 
           >
             {loading ? '처리 중...' : '승인 확정'}
           </button>
-          <button onClick={onClose} disabled={loading}>취소</button>
         </div>
       </div>
     </div>
@@ -195,6 +195,7 @@ export function RejectModal({ target, onClose, onSuccess }: RejectModalProps) {
           {error && <p style={{ fontSize: 13, color: '#9a4444', margin: '0' }}>{error}</p>}
         </div>
         <div className="modalAction">
+          <button onClick={onClose} disabled={loading}>취소</button>
           <button
             style={{ background: '#9a6767', color: 'white', borderColor: '#9a6767' }}
             onClick={handleReject}
@@ -202,7 +203,6 @@ export function RejectModal({ target, onClose, onSuccess }: RejectModalProps) {
           >
             {loading ? '처리 중...' : '반려 처리'}
           </button>
-          <button onClick={onClose} disabled={loading}>취소</button>
         </div>
       </div>
     </div>
