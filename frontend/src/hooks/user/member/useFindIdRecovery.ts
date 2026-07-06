@@ -169,6 +169,28 @@ export function useFindIdRecovery(isCompany: boolean) {
     setUserForm((current) => ({ ...current, code: '' }));
   };
 
+  // 「변경」— 전송한 이메일/휴대폰을 다시 편집 가능하게 잠금 해제하고 인증 상태를 초기화한다. (issue #1036)
+  const handleResetUserContact = () => {
+    const method = currentUserMethodRef.current;
+    if (method === RECOVERY_METHOD.EMAIL) {
+      userEmailRequestRef.current += 1;
+    } else {
+      userPhoneRequestRef.current += 1;
+    }
+    setUserVerification((current) => ({ ...current, [method]: { ...EMPTY_VERIFICATION } }));
+    setUserForm((current) => ({ ...current, code: '' }));
+    setFieldErrors((current) => ({ ...current, email: '', phone: '', code: '', form: '' }));
+    clearResultState();
+  };
+
+  const handleResetCompanyContact = () => {
+    companyEmailRequestRef.current += 1;
+    setCompanyVerification(() => ({ ...EMPTY_VERIFICATION }));
+    setCompanyForm((current) => ({ ...current, code: '' }));
+    setFieldErrors((current) => ({ ...current, email: '', code: '', form: '' }));
+    clearResultState();
+  };
+
   const handleSendUserCode = async () => {
     const errors = validateUserRecoveryTarget(userForm, userMethod);
     if (hasRecoveryFieldErrors(errors)) {
@@ -484,6 +506,8 @@ export function useFindIdRecovery(isCompany: boolean) {
     updateUser,
     updateCompany,
     resetUserMethod,
+    handleResetUserContact,
+    handleResetCompanyContact,
     handleSendUserCode,
     handleConfirmUserCode,
     handleSendCompanyCode,

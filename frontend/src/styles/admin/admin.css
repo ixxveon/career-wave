@@ -1034,7 +1034,7 @@ button {
   min-height: 42px;
   border-bottom: 1px solid #e5edf6;
   display: grid;
-  grid-template-columns: 58px 120px minmax(0, 1fr);
+  grid-template-columns: 108px minmax(88px, 132px) minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   padding: 8px 4px;
@@ -1062,6 +1062,25 @@ button {
   color: #50657d;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.logRow__time {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.logRow__adminId {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logRow__message {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @keyframes dashboard-pulse {
@@ -1549,10 +1568,11 @@ button {
   }
 
   .logRow {
-    grid-template-columns: 58px minmax(0, 1fr);
+    grid-template-columns: 108px minmax(0, 1fr);
   }
 
-  .logRow p {
+  .logRow__adminId,
+  .logRow__message {
     grid-column: 2;
   }
 }

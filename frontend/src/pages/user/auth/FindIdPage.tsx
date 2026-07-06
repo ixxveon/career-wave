@@ -32,6 +32,8 @@ function FindIdPage() {
     updateUser,
     updateCompany,
     resetUserMethod,
+    handleResetUserContact,
+    handleResetCompanyContact,
     handleSendUserCode,
     handleConfirmUserCode,
     handleSendCompanyCode,
@@ -71,6 +73,7 @@ function FindIdPage() {
                 inputType="email"
                 onChange={(value) => updateUser('email', value)}
                 onSend={handleSendUserCode}
+                onReset={handleResetUserContact}
               />
             )}
 
@@ -89,6 +92,7 @@ function FindIdPage() {
                 inputMode="numeric"
                 onChange={(value) => updateUser('phone', value)}
                 onSend={handleSendUserCode}
+                onReset={handleResetUserContact}
               />
             )}
 
@@ -129,6 +133,7 @@ function FindIdPage() {
                   inputType="email"
                   onChange={(value) => updateCompany('email', value)}
                   onSend={handleSendCompanyCode}
+                  onReset={handleResetCompanyContact}
                 />
                 <RecoveryCodeField
                   label="이메일 인증번호 입력"
