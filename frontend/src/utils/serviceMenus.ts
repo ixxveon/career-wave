@@ -38,10 +38,10 @@ export const serviceMenus: MenuItem[] = [
   },
   {
     label: '지원 관리',
-    href: '/applications/applicants',
+    href: '/career-diagnosis/detail/backend-20260522',
     children: [
-      { label: '지원자 관리', href: '/applications/applicants' },
-      { label: '진단 상세',   href: '/career-diagnosis/detail/backend-20260522' },
+      // { label: '지원자 관리', href: '/applications/applicants' }, // TODO(#977, #1049): 백엔드 미구현으로 임시 비활성화
+      { label: '진단 상세', href: '/career-diagnosis/detail/backend-20260522' },
     ],
   },
   {
