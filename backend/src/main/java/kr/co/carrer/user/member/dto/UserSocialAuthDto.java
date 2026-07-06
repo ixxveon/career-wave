@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import kr.co.carrer.user.member.validation.NormalizedPattern;
 import lombok.Getter;
 
 import java.util.UUID;
@@ -65,7 +66,7 @@ public class UserSocialAuthDto {
 
         @Schema(description = "이름", example = "홍길동")
         @NotBlank
-        @Pattern(regexp = "^[가-힣]{2,10}$", message = "이름은 2~10자 한글로 입력해 주세요.")
+        @NormalizedPattern(regexp = "^[가-힣]{2,10}$", message = "이름은 2~10자 한글로 입력해 주세요.")
         private String name;
 
         @Schema(description = "통신사", example = "SKT")

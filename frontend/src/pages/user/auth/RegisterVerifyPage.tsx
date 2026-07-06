@@ -138,7 +138,7 @@ function RegisterVerifyPage() {
     if (!form.name.trim()) {
       nextErrors.name = '이름을 입력해주세요.';
     } else if (!isValidName(form.name)) {
-      nextErrors.name = '이름은 2~10자 한글로 입력해 주세요.';
+      nextErrors.name = '이름은 2~10자 한글로 입력해주세요.';
     }
     if (!form.carrier.trim()) nextErrors.carrier = '통신사를 선택해주세요.';
     if (!isValidPhone(form.phone)) nextErrors.phone = '휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해주세요.';
