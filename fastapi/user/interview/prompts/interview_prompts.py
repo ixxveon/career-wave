@@ -162,3 +162,38 @@ _FOCUS_OVERLAYS: dict[str, str] = {
 
 def get_focus_overlay(focus_type: str | None) -> str | None:
     return _FOCUS_OVERLAYS.get((focus_type or "").upper())
+
+
+# ── 답변 품질 기반 난이도 동적 조절 오버레이 ────────────────────────────────
+# 직전 답변의 품질 신호(INSUFFICIENT / ADEQUATE / STRONG)에 따라 다음 질문 방향을 조절한다.
+# focusType 오버레이와 독립적으로 동작하며, 프롬프트 가장 마지막에 append한다.
+
+_DIFFICULTY_OVERLAYS: dict[str, str] = {
+    "INSUFFICIENT": """
+[답변 품질 신호: 보충 필요]
+- 직전 답변이 짧거나 내용이 부족했습니다.
+- 지원자가 답변을 보완할 수 있도록 유도하는 방향으로 질문하세요.
+- "조금 더 구체적으로 설명해 주실 수 있나요?", "어떤 경험을 바탕으로 그렇게 생각하셨나요?" 형태의 FOLLOW_UP을 우선 생성하세요.
+- 압박 질문(PRESSURE)은 피하고 지원자가 자신감을 회복할 수 있도록 돕는 질문을 생성하세요.""",
+
+    "ADEQUATE": """
+[답변 품질 신호: 적절]
+- 직전 답변이 충분한 수준이었습니다.
+- 표준적인 면접 흐름을 유지하며 다음 주제로 자연스럽게 전환하거나 꼬리 질문을 생성하세요.""",
+
+    "STRONG": """
+[답변 품질 신호: 우수]
+- 직전 답변이 충실하고 깊이가 있었습니다.
+- 지원자의 역량을 더 검증하기 위해 심화 질문 또는 압박 질문(PRESSURE)을 생성하세요.
+- "그렇다면 더 복잡한 상황에서는 어떻게 대처하시겠나요?", "그 결정의 단점은 무엇이라고 생각하시나요?" 형태로 깊이를 파고드세요.""",
+}
+
+
+def get_difficulty_overlay(quality: str | None) -> str | None:
+    """직전 답변 품질 신호를 받아 난이도 조절 오버레이를 반환한다. ADEQUATE는 중립이므로 생략 가능."""
+    if not quality:
+        return None
+    key = quality.upper()
+    if key == "ADEQUATE":
+        return None  # 중립 상태 — 프롬프트에 불필요한 힌트 추가하지 않음
+    return _DIFFICULTY_OVERLAYS.get(key)

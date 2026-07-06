@@ -64,6 +64,7 @@ class _SessionContext:
     interview_type: str | None = None       # TECHNICAL | PERSONALITY | PROJECT
     focus_type: str | None = None           # FOLLOW_UP | TECHNICAL_DEPTH | DELIVERY | FLUENCY
     session_type: str | None = None         # TEXT | VOICE
+    recent_answer_quality: str | None = None  # INSUFFICIENT | ADEQUATE | STRONG — 난이도 동적 조절용
     answer_history: list[dict[str, str]] = field(default_factory=list)  # [{question, answer}, ...]
     rag_context: str | None = None          # RAG 인덱싱된 문서 텍스트
     used_fallback_questions: set[str] = field(default_factory=set)  # 중복 폴백 방지
