@@ -105,6 +105,7 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
           </Field>
           <Field label="이름" required wide>
             <TextInput value={form.name} onChange={(value) => update('name', value)} placeholder="이름(실명)" />
+            {fieldErrors.name && <p className="cw-register-error">{fieldErrors.name}</p>}
           </Field>
           <Field label="이메일" required wide>
             <AuthButtonGroup

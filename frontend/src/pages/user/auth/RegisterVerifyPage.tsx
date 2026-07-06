@@ -6,7 +6,7 @@ import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE, type SocialProviderId } fro
 import { useCompleteSocialRegister, useConfirmVerificationCode, useSendVerificationCode, useVerificationNow } from '../../../hooks/user/member';
 import { getSocialProviderLabel } from '../../../utils/user/member/socialAuth';
 import { formatRemaining, getRecoveryErrorMessage, getRemainingSeconds } from '../../../utils/user/member/recoveryView';
-import { isValidPhone, isValidVerificationCode, normalizePhone } from '../../../utils/user/member/registerSchema';
+import { isValidName, isValidPhone, isValidVerificationCode, normalizePhone } from '../../../utils/user/member/registerSchema';
 import '@/styles/user/auth/AuthPage.css';
 
 // Phase 5 OAuth callback 페이지에서 이 키로 저장: sessionStorage.setItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY, token)
@@ -135,7 +135,11 @@ function RegisterVerifyPage() {
     if (!socialSignupToken.trim()) {
       nextErrors.provider = '소셜 가입 세션이 만료되었습니다. 소셜 로그인을 다시 진행해주세요.';
     }
-    if (!form.name.trim()) nextErrors.name = '이름을 입력해주세요.';
+    if (!form.name.trim()) {
+      nextErrors.name = '이름을 입력해주세요.';
+    } else if (!isValidName(form.name)) {
+      nextErrors.name = '이름은 2~10자 한글로 입력해주세요.';
+    }
     if (!form.carrier.trim()) nextErrors.carrier = '통신사를 선택해주세요.';
     if (!isValidPhone(form.phone)) nextErrors.phone = '휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해주세요.';
     if (!verification.verificationId) {
