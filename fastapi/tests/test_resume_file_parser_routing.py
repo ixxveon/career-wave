@@ -7,8 +7,6 @@ presigned URL(쿼리 파라미터 포함) → _download_via_http 경로
 """
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from user.resume.service.file_parser import _download_to_tempfile
 
 
@@ -54,7 +52,6 @@ def test_plain_s3_url_routes_to_boto3(mock_parse, mock_s3_factory, mock_http):
     mock_client = MagicMock()
     mock_client.head_object.return_value = {"ContentLength": 1024}
 
-    tmp_fd_mock = MagicMock()
     mock_s3_factory.return_value = mock_client
 
     # boto3 download_fileobj 호출까지 흉내내기 위해 tempfile 경로만 확인
