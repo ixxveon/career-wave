@@ -218,6 +218,19 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         return new InterviewDTO.ResponseEndSession(sessionId.toString(), SessionStatus.COMPLETED.name(), endedAt);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<InterviewDTO.ResponseInProgressSession> findInProgressSession(UUID memberId) {
+        return sessionRepository.findInProgressByMemberIdReadOnly(memberId, SessionStatus.IN_PROGRESS)
+                .map(s -> new InterviewDTO.ResponseInProgressSession(
+                        s.getSessionId().toString(),
+                        s.getSessionType().name(),
+                        s.getInterviewType() != null ? s.getInterviewType().name() : null,
+                        s.getTargetCompany(),
+                        s.getCreatedAt()
+                ));
+    }
+
     private SessionType parseSessionType(String sessionType) {
         try {
             return SessionType.valueOf(sessionType);
