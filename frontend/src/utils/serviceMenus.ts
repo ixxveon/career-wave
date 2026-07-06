@@ -34,7 +34,6 @@ export const serviceMenus: MenuItem[] = [
       { label: '면접 홈',             href: '/interview' },
       { label: 'AI 텍스트 · 음성 면접', href: '/interview/text' },
       { label: '면접 이력',           href: '/interview/sessions' },
-      { label: '면접 리포트',         href: '/interview/sessions' },
     ],
   },
   {

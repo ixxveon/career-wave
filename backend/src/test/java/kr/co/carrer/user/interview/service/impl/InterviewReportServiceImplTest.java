@@ -43,7 +43,7 @@ class InterviewReportServiceImplTest {
         void getReport_voiceQuality50_returnsScores() {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null);
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null, null);
             AIInterviewFeedback feedback = AIInterviewFeedback.create(
                     sessionId, 1, "질문", "답변", 80, 70, 75, 65,
                     new BigDecimal("50.00"), "피드백"
@@ -65,7 +65,7 @@ class InterviewReportServiceImplTest {
         void getReport_voiceQualityBelow50_masksScores() {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null);
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null, null);
             AIInterviewFeedback feedback = AIInterviewFeedback.create(
                     sessionId, 1, "질문", "답변", 80, 70, 75, 65,
                     new BigDecimal("49.99"), "피드백"
@@ -86,7 +86,7 @@ class InterviewReportServiceImplTest {
         void getReport_voiceQualityNull_masksScores() {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null, null);
             AIInterviewFeedback feedback = AIInterviewFeedback.create(
                     sessionId, 1, "질문", "답변", 80, 70, null, null,
                     null, "피드백"
@@ -107,7 +107,7 @@ class InterviewReportServiceImplTest {
         void getReport_notReady_throwsException() {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null);
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null, null);
 
             given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.of(session));
             given(feedbackRepository.existsBySessionId(sessionId)).willReturn(false);

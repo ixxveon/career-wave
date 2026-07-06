@@ -13,6 +13,7 @@ import kr.co.carrer.user.interview.repository.InterviewSessionRepository;
 import kr.co.carrer.user.interview.type.MessageSender;
 import kr.co.carrer.user.interview.type.MessageType;
 import kr.co.carrer.user.interview.service.InterviewSessionService;
+import kr.co.carrer.user.interview.type.FocusType;
 import kr.co.carrer.user.interview.type.InterviewType;
 import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
@@ -46,6 +47,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     public InterviewDTO.ResponseStartSession startSession(UUID memberId, InterviewDTO.RequestStartSession dto) {
         SessionType sessionType = parseSessionType(dto.sessionType());
         InterviewType interviewType = parseInterviewType(dto.interviewType());
+        FocusType focusType = parseFocusType(dto.focusType());
         UUID documentId = parseDocumentId(dto.documentId());
 
         sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)
@@ -60,13 +62,14 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
                     .orElseThrow(() -> new CustomException(InterviewErrorCode.INTERVIEW_DOCUMENT_NOT_FOUND));
         }
 
-        InterviewSession saved = saveNewSession(memberId, documentId, sessionType, interviewType, dto.targetCompany());
+        InterviewSession saved = saveNewSession(memberId, documentId, sessionType, interviewType, dto.targetCompany(), focusType);
 
         entitlementService.reserve(memberId, "interview", ResourceType.INTERVIEW_SESSION, saved.getSessionId());
 
         UUID sessionId = saved.getSessionId();
         String finalSessionType = sessionType.name();
         String finalInterviewType = interviewType != null ? interviewType.name() : null;
+        String finalFocusType = focusType != null ? focusType.name() : null;
         UUID finalDocumentId = documentId;
         String finalFileUrl = fileUrl;
 
@@ -85,7 +88,8 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
                             "",
                             "",
                             finalSessionType,
-                            finalInterviewType
+                            finalInterviewType,
+                            finalFocusType
                     );
                 }
             });
@@ -101,8 +105,8 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     }
 
     @Transactional
-    protected InterviewSession saveNewSession(UUID memberId, UUID documentId, SessionType sessionType, InterviewType interviewType, String targetCompany) {
-        InterviewSession session = InterviewSession.create(memberId, documentId, sessionType, interviewType, targetCompany);
+    protected InterviewSession saveNewSession(UUID memberId, UUID documentId, SessionType sessionType, InterviewType interviewType, String targetCompany, FocusType focusType) {
+        InterviewSession session = InterviewSession.create(memberId, documentId, sessionType, interviewType, targetCompany, focusType);
         return sessionRepository.save(session);
     }
 
@@ -122,6 +126,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         String answerText = dto.messageContent();
         String sessionType = session.getSessionType().name();
         String interviewType = session.getInterviewType() != null ? session.getInterviewType().name() : null;
+        String focusType = session.getFocusType() != null ? session.getFocusType().name() : null;
         String questionText = messageRepository
                 .findTopBySessionIdAndSenderAndMessageTypeOrderByCreatedAtDesc(sessionId, MessageSender.AI, MessageType.QUESTION)
                 .map(InterviewMessage::getMessageContent)
@@ -131,7 +136,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    fastApiClient.triggerLlmPipeline(sessionId, memberId, questionOrder, answerText, questionText, sessionType, interviewType);
+                    fastApiClient.triggerLlmPipeline(sessionId, memberId, questionOrder, answerText, questionText, sessionType, interviewType, focusType);
                 }
             });
         }
@@ -224,6 +229,15 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
             return InterviewType.valueOf(interviewType);
         } catch (IllegalArgumentException e) {
             throw new CustomException(InterviewErrorCode.INTERVIEW_INVALID_SESSION_TYPE);
+        }
+    }
+
+    private FocusType parseFocusType(String focusType) {
+        if (focusType == null || focusType.isBlank()) return null;
+        try {
+            return FocusType.valueOf(focusType);
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(InterviewErrorCode.INTERVIEW_INVALID_FOCUS_TYPE);
         }
     }
 
