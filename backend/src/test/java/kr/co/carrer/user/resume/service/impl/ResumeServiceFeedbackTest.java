@@ -76,7 +76,8 @@ class ResumeServiceFeedbackTest {
         DocumentFeedback feedback = DocumentFeedback.of(
                 documentId, 85, 90, 75, 80, 82,
                 "전반적으로 우수합니다.",
-                "[{\"sectionNumber\":1,\"question\":\"지원동기\",\"originalText\":\"원문\",\"goodPoint\":\"good\",\"badPoint\":\"bad\",\"improvedText\":\"improved\"}]"
+                "[{\"sectionNumber\":1,\"question\":\"지원동기\",\"originalText\":\"원문\",\"goodPoint\":\"good\",\"badPoint\":\"bad\",\"improvedText\":\"improved\"}]",
+                null
         );
 
         when(documentRepository.findByDocumentIdAndMemberId(documentId, memberId))

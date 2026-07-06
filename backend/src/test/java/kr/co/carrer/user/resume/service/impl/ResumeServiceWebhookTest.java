@@ -67,7 +67,7 @@ class ResumeServiceWebhookTest {
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 documentId, "COMPLETED",
                 85, 90, 75, 80, 82,
-                "전반적으로 우수합니다.", "[{\"sectionNumber\":1}]", null
+                "전반적으로 우수합니다.", "[{\"sectionNumber\":1}]", null, null
         );
 
         resumeService.receiveWebhook(documentId, VALID_SECRET, request);
@@ -91,7 +91,7 @@ class ResumeServiceWebhookTest {
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 documentId, "FAILED",
                 null, null, null, null, null,
-                null, null, "AI 분석 오류 발생"
+                null, null, null, "AI 분석 오류 발생"
         );
 
         resumeService.receiveWebhook(documentId, VALID_SECRET, request);
@@ -108,7 +108,7 @@ class ResumeServiceWebhookTest {
     void receiveWebhook_invalidSecret_throwsException() {
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 UUID.randomUUID(), "COMPLETED",
-                85, 90, 75, 80, 82, "총평", "[]", null
+                85, 90, 75, 80, 82, "총평", "[]", null, null
         );
 
         assertThatThrownBy(() -> resumeService.receiveWebhook(request.documentId(), "wrong-secret", request))
@@ -126,7 +126,7 @@ class ResumeServiceWebhookTest {
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 documentId, "INVALID_STATUS",
                 null, null, null, null, null,
-                null, null, null
+                null, null, null, null
         );
 
         assertThatThrownBy(() -> resumeService.receiveWebhook(documentId, VALID_SECRET, request))
@@ -147,7 +147,7 @@ class ResumeServiceWebhookTest {
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 documentId, "ANALYZING",
                 null, null, null, null, null,
-                null, null, null
+                null, null, null, null
         );
 
         resumeService.receiveWebhook(documentId, VALID_SECRET, request);
@@ -168,7 +168,7 @@ class ResumeServiceWebhookTest {
 
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 documentId, "COMPLETED",
-                85, 90, 75, 80, 82, "총평", "[]", null
+                85, 90, 75, 80, 82, "총평", "[]", null, null
         );
 
         resumeService.receiveWebhook(documentId, VALID_SECRET, request);
