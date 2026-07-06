@@ -14,7 +14,7 @@ class AiMetricsSettings(BaseSettings):
 
     database_url: str = Field(
         default="postgresql://careerwave:@localhost:5432/careerwave",
-        alias="DATABASE_URL",
+        alias="DB_URL",
     )
 
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
