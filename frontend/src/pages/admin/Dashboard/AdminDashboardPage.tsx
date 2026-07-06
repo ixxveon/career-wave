@@ -107,6 +107,31 @@ function hasAccessibleAdminTarget(currentAdminRole: AdminDetailRole | null, targ
   return isAdminNavigationPath(targetPath) && hasAdminRouteAccess(currentAdminRole, targetPath);
 }
 
+function formatKstDateTime(value?: string | null) {
+  if (!value) return '-';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const lookup = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, part.value])
+  );
+
+  return `${lookup.year}.${lookup.month}.${lookup.day} ${lookup.hour}:${lookup.minute}`;
+}
+
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const currentAdminRole = adminSession.getRole();
@@ -146,6 +171,8 @@ export default function AdminDashboardPage() {
     dashboardSummary.serviceCards.length === 0 &&
     dashboardSummary.systemStatus.length === 0 &&
     dashboardSummary.recentActivities.length === 0;
+
+  const dashboardBaseDateTimeLabel = formatKstDateTime(dashboardSummary?.baseDateTime);
 
   const { kpis, hasKpiSectionError } = useMemo(() => {
     try {
@@ -301,6 +328,7 @@ export default function AdminDashboardPage() {
     try {
       const items = (dashboardSummary?.recentActivities ?? []).map((item) => ({
         ...item,
+        occurredAtLabel: formatKstDateTime(item.occurredAt),
         hasAccessibleTarget: hasAccessibleAdminTarget(currentAdminRole, item.targetPath),
       }));
 
@@ -331,8 +359,8 @@ export default function AdminDashboardPage() {
 
           <div className="adminText">
             <strong>super_admin</strong>
-            <span>전체 권한 활성화</span>
-            <small>최근 로그인 09:12</small>
+            <span>{currentAdminRole ?? '-'}</span>
+            <small>{dashboardBaseDateTimeLabel}</small>
           </div>
 
         </div>
@@ -597,9 +625,9 @@ export default function AdminDashboardPage() {
                         navigate(activity.targetPath);
                       }}
                     >
-                      <span>{activity.occurredAt}</span>
-                      <strong>{activity.adminId}</strong>
-                      <p>{activity.message}</p>
+                      <span className="logRow__time">{activity.occurredAtLabel}</span>
+                      <strong className="logRow__adminId" title={activity.adminId}>{activity.adminId}</strong>
+                      <p className="logRow__message" title={activity.message}>{activity.message}</p>
                     </div>
                   ))
                 )}
