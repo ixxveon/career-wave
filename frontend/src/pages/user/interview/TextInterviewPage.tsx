@@ -58,9 +58,12 @@ export default function TextInterviewPage() {
           clearInterviewSession();
         }
       })
-      .catch(() => {
-        // 404 or error → 저장된 세션 더 이상 유효하지 않음
-        clearInterviewSession();
+      .catch((err: unknown) => {
+        const status = (err as { statusCode?: number }).statusCode;
+        if (status === 404) {
+          clearInterviewSession();
+        }
+        // 네트워크 오류·5xx → 서버 상태 불확실, 저장된 세션 유지
       });
   }, []);
 
