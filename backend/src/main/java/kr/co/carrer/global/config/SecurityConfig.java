@@ -148,6 +148,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/user/resume/*/webhook").permitAll()
                 .requestMatchers(HttpMethod.POST, "/internal/api/v1/interview/callback/*/report").permitAll()
                 .requestMatchers(HttpMethod.POST, "/internal/api/v1/interview/callback/*/question").permitAll()
+                .requestMatchers(HttpMethod.GET, "/internal/api/v1/interview/callback/*/verify").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/user/job-notices", "/api/v1/user/job-notices/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/user/notices", "/api/v1/user/notices/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/user/faqs", "/api/v1/user/faqs/*").permitAll()
