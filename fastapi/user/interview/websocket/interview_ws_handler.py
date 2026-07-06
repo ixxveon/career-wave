@@ -372,6 +372,23 @@ async def send_tts_audio(
     })
 
 
+async def send_answer_hint(
+    session_id: str,
+    hint: str,
+    question_order: int,
+) -> None:
+    await _push(session_id, {
+        "type": "ANSWER_HINT",
+        "content": hint,
+        "questionOrder": question_order,
+        "chunkIndex": None,
+        "isFinal": None,
+        "voiceQualityRatio": None,
+        "audioData": None,
+        "errorCode": None,
+    })
+
+
 async def send_error(
     session_id: str,
     content: str,

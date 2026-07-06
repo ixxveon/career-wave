@@ -5,12 +5,54 @@ from openai import AsyncOpenAI, OpenAIError
 
 from core.ai_usage.usage_log_client import record_ai_usage
 from core.config import get_settings
-from user.interview.websocket.interview_ws_handler import InterviewErrorCode, _sessions, send_error, send_stt_final
+from user.interview.websocket.interview_ws_handler import (
+    InterviewErrorCode,
+    _sessions,
+    send_answer_hint,
+    send_error,
+    send_stt_final,
+)
 
 log = logging.getLogger(__name__)
 
 # session_id → question_order → 누적 청크 목록
 _audio_buffers: dict[str, dict[int, list[bytes]]] = defaultdict(lambda: defaultdict(list))
+
+
+_STAR_KEYWORDS = {
+    "상황", "문제", "행동", "결과",          # 한국어 STAR 키워드
+    "situation", "task", "action", "result",  # 영어 STAR 키워드
+    "그래서", "때문에", "결국", "최종적으로",
+}
+
+_SHORT_ANSWER_WORD_THRESHOLD = 30   # 단어 수 기준 짧은 답변
+_LONG_ANSWER_WORD_THRESHOLD = 150   # 단어 수 기준 충분한 답변 (힌트 불필요)
+
+
+def _generate_answer_hint(transcript: str) -> str | None:
+    """STT 변환 결과를 규칙 기반으로 분석해 힌트 메시지를 반환한다.
+
+    힌트가 필요 없으면 None을 반환한다.
+    우선순위: 짧은 답변 > STAR 구조 부재 (둘 다 해당하면 짧은 답변 힌트 우선)
+    """
+    words = transcript.split()
+    word_count = len(words)
+
+    if word_count == 0:
+        return None
+
+    if word_count >= _LONG_ANSWER_WORD_THRESHOLD:
+        return None
+
+    if word_count < _SHORT_ANSWER_WORD_THRESHOLD:
+        return "답변이 조금 짧은 것 같아요. 구체적인 경험이나 사례를 추가하면 더 좋은 답변이 될 거예요."
+
+    transcript_lower = transcript.lower()
+    has_star_keyword = any(kw in transcript_lower for kw in _STAR_KEYWORDS)
+    if not has_star_keyword:
+        return "STAR 구조(상황 → 문제 → 행동 → 결과)로 답변하면 면접관이 이해하기 더 쉬워요."
+
+    return None
 
 
 def calculate_voice_quality_ratio(no_speech_prob: float) -> float:
@@ -118,3 +160,8 @@ async def transcribe_chunk(
         )
 
     await send_stt_final(session_id, transcript, question_order, voice_quality_ratio)
+
+    hint = _generate_answer_hint(transcript)
+    if hint:
+        await send_answer_hint(session_id, hint, question_order)
+        log.info("answer hint sent: sessionId=%s, questionOrder=%d", session_id, question_order)
