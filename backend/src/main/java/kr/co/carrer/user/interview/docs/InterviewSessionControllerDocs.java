@@ -22,6 +22,19 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "User Interview Session", description = "AI 면접 세션 API")
 public interface InterviewSessionControllerDocs {
 
+    @Operation(summary = "진행 중인 면접 세션 조회",
+            description = "현재 IN_PROGRESS 상태인 세션이 있으면 반환합니다. 재진입 시 재개 모달 표시 여부 판단에 사용합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "진행 중인 세션 있음"),
+            @ApiResponse(responseCode = "404", description = "진행 중인 세션 없음"),
+            @ApiResponse(responseCode = "401", description = "인증 토큰 없음 또는 만료",
+                    content = @Content(examples = @ExampleObject(value = """
+                            {"success":false,"statusCode":401,"message":"인증이 필요합니다.","code":"UNAUTHORIZED","data":null}""")))
+    })
+    ResponseEntity<kr.co.carrer.global.response.ApiResponse<InterviewDTO.ResponseInProgressSession>> getInProgressSession(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
+    );
+
     @Operation(summary = "면접 세션 시작",
             description = "면접 세션을 생성하고 sessionId를 발급합니다. 세션 생성 후 Spring WebSocket 연결을 시작하세요.")
     @ApiResponses({
