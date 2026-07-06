@@ -308,11 +308,12 @@ class UserJobNoticeServiceImplTest {
             assertThat(response.noticeStatus()).isEqualTo(JobNoticeStatus.ACTIVE);
             assertThat(response.originalUrl()).isEqualTo("https://example.com/job/101");
             assertThat(response.source()).isEqualTo("WANTED");
-            assertThat(response.viewCount()).isEqualTo(123);
+            assertThat(response.viewCount()).isEqualTo(124);
             assertThat(response.deadline()).isEqualTo(LocalDate.of(2026, 6, 30));
             assertThat(response.createdAt()).isEqualTo(ZonedDateTime.of(2026, 6, 1, 0, 0, 0, 0, SERVICE_ZONE_ID));
             assertThat(response.updatedAt()).isEqualTo(ZonedDateTime.of(2026, 6, 1, 0, 0, 0, 0, SERVICE_ZONE_ID));
             assertThat(response.bookmarked()).isTrue();
+            verify(jobNoticeRepository).incrementViewCountById(101L);
         }
 
         @Test
@@ -340,8 +341,10 @@ class UserJobNoticeServiceImplTest {
 
             JobNoticeDTO.ResponseDetail response = userJobNoticeService.getJobNoticeDetail(101L, null);
 
+            assertThat(response.viewCount()).isEqualTo(124);
             assertThat(response.bookmarked()).isFalse();
             verifyNoInteractions(bookmarkRepository);
+            verify(jobNoticeRepository).incrementViewCountById(101L);
         }
 
         @Test

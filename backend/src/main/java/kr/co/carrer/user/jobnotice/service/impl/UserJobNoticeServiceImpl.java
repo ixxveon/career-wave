@@ -108,10 +108,12 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public JobNoticeDTO.ResponseDetail getJobNoticeDetail(Long jobNoticeId, UUID memberId) {
         JobNotice jobNotice = jobNoticeQueryRepository.findActiveJobNoticeById(jobNoticeId)
                 .orElseThrow(() -> new CustomException(JobNoticeErrorCode.JOB_NOTICE_NOT_FOUND));
+        jobNoticeRepository.incrementViewCountById(jobNoticeId);
+        int incrementedViewCount = jobNotice.getViewCount() == null ? 1 : jobNotice.getViewCount() + 1;
 
         return new JobNoticeDTO.ResponseDetail(
                 jobNotice.getJobNoticeId(),
@@ -128,7 +130,7 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 jobNotice.getNoticeStatus(),
                 jobNotice.getOriginalUrl(),
                 jobNotice.getSource(),
-                jobNotice.getViewCount(),
+                incrementedViewCount,
                 jobNotice.getDeadline(),
                 jobNotice.getCreatedAt(),
                 jobNotice.getUpdatedAt(),
