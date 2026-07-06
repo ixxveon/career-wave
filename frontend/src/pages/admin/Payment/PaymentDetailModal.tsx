@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { X } from 'lucide-react';
 import {
   paymentApi,
   PAY_STATUS,
@@ -110,7 +111,7 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
   };
 
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal modal--scrollable" style={{ width: 540 }} onClick={(e) => e.stopPropagation()}>
         <div className="modalHeader" style={{ flexShrink: 0, padding: '20px 24px 16px' }}>
           <div>
@@ -121,7 +122,7 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
             >{selected.paymentId.slice(0, 8)}…</span></h3>
             <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>Toss 주문번호: {selected.orderId}</p>
           </div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
 
         <div className="modalBody">

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { X } from 'lucide-react';
 import {
   settlementApi,
   SETTLEMENT_STATUS_LABEL,
@@ -304,14 +305,14 @@ function ConfirmModal({ settlementId, periodLabel, onClose, onSuccess }: Confirm
   };
 
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal" style={{ width: 440 }} onClick={(e) => e.stopPropagation()}>
         <div className="modalHeader">
           <div>
             <h3>정산 확정</h3>
             <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>{periodLabel}</p>
           </div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modalBody">
           <p style={{ fontSize: 14, color: '#3a4d63', marginBottom: 16 }}>

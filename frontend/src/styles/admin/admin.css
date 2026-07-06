@@ -1336,7 +1336,6 @@ button {
   font-size: 14px;
 }
 
-.modalHeader button,
 .modalAction button {
   height: 36px;
   padding: 0 14px;
@@ -1347,6 +1346,26 @@ button {
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+}
+
+.modalCloseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #708397;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.modalCloseBtn:hover {
+  background: #eef2f7;
+  color: #24496f;
 }
 
 .modalInfoGrid {

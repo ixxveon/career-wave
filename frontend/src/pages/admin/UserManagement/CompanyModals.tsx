@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { X } from 'lucide-react';
 import {
   memberApi,
   type HrManagerItem,
@@ -23,14 +24,14 @@ interface CompanyDetailModalProps {
 
 export function CompanyDetailModal({ company, onClose, onApprove, onReject }: CompanyDetailModalProps) {
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 560 }}>
         <div className="modalHeader">
           <div>
             <h3>{company.companyName} HR 담당자</h3>
             <p>{company.memberId.slice(0, 8)}… · {company.email}</p>
           </div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modalInfoGrid">
           <div><span>HR 담당자명</span><strong>{company.hrName}</strong></div>
@@ -110,14 +111,14 @@ export function ApproveModal({ target, onClose, onSuccess }: ApproveModalProps) 
   };
 
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 460 }}>
         <div className="modalHeader">
           <div>
             <h3>기업회원 승인 처리</h3>
             <p>{target.hrName} · {target.companyName}</p>
           </div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
         <div style={{ padding: '16px', borderRadius: 12, background: '#f0f8f4', border: '1px solid #b8dece', fontSize: 14, color: '#2c6e4f', lineHeight: 1.7 }}>
           <strong>{target.hrName}</strong> 담당자의 재직증명서를 확인하고<br />
@@ -172,14 +173,14 @@ export function RejectModal({ target, onClose, onSuccess }: RejectModalProps) {
   };
 
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 480 }}>
         <div className="modalHeader">
           <div>
             <h3>기업회원 반려 처리</h3>
             <p>{target.hrName} · {target.companyName}</p>
           </div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="csFormRows">
           <div className="csFormRow">

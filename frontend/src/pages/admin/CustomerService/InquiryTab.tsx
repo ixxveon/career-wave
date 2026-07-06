@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import {
   csApi,
   INQUIRY_CATEGORY, INQUIRY_CATEGORY_LABEL,
@@ -232,7 +232,7 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
       </section>
 
       {selectedInquiry && (
-        <div className="modalOverlay" onClick={closeInquiryModal}>
+        <div className="modalOverlay">
           <div className="memberModal modal--scrollable" style={{ width: 580 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0, padding: '20px 24px 16px' }}>
               <div>
@@ -241,7 +241,7 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
                   #{selectedInquiry.inquiryId} · {selectedInquiry.memberName}{selectedInquiry.memberEmail ? ` (${selectedInquiry.memberEmail})` : ''} · {new Date(selectedInquiry.createdAt).toLocaleDateString('ko-KR')}
                 </p>
               </div>
-              <button onClick={closeInquiryModal}>닫기</button>
+              <button className="modalCloseBtn" aria-label="닫기" onClick={closeInquiryModal}><X size={18} /></button>
             </div>
             <div className="modalBody">
               <div className="modalInfoGrid">
