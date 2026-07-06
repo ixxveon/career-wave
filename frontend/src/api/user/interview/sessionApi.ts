@@ -17,8 +17,8 @@ export interface SubmitVoiceBlobParams {
 }
 
 export const interviewSessionApi = {
-  getInProgress(signal?: AbortSignal): Promise<InProgressSessionResponse> {
-    return memberApiClient<InProgressSessionResponse>('/api/v1/user/interview/sessions/in-progress', {
+  getInProgress(signal?: AbortSignal): Promise<InProgressSessionResponse | null> {
+    return memberApiClient<InProgressSessionResponse | null>('/api/v1/user/interview/sessions/in-progress', {
       method: 'GET',
       auth: true,
       signal,
