@@ -5,6 +5,7 @@ import kr.co.carrer.user.member.dto.UserVerificationDto;
 import kr.co.carrer.user.member.entity.MemberVerification;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.MemberVerificationRepository;
+import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.service.EmailSenderPort;
 import kr.co.carrer.user.member.service.SmsSenderPort;
 import kr.co.carrer.user.member.service.UserVerificationService;
@@ -38,6 +39,7 @@ public class UserVerificationServiceImpl implements UserVerificationService {
             Pattern.compile("^010[0-9]{8}$");
 
     private final MemberVerificationRepository verificationRepository;
+    private final UserMemberRepository memberRepository;
     private final EmailSenderPort emailSenderPort;
     private final SmsSenderPort smsSenderPort;
 
@@ -45,6 +47,7 @@ public class UserVerificationServiceImpl implements UserVerificationService {
     @Transactional
     public UserVerificationDto.ResponseSendVerification send(UserVerificationDto.RequestSendVerification request) {
         validateTarget(request.getChannel(), request.getTarget());
+        validateRegisterTargetAvailable(request);
 
         Instant now = Instant.now();
 
@@ -135,6 +138,18 @@ public class UserVerificationServiceImpl implements UserVerificationService {
         }
         if (channel == VerificationChannel.PHONE && !PHONE_PATTERN.matcher(target).matches()) {
             throw new CustomException(UserAuthErrorCode.VERIFICATION_TARGET_INVALID);
+        }
+    }
+
+    private void validateRegisterTargetAvailable(UserVerificationDto.RequestSendVerification request) {
+        if (request.getPurpose() != VerificationPurpose.REGISTER) {
+            return;
+        }
+        if (request.getChannel() == VerificationChannel.EMAIL && memberRepository.existsByEmail(request.getTarget())) {
+            throw new CustomException(UserAuthErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+        if (request.getChannel() == VerificationChannel.PHONE && memberRepository.existsByPhone(request.getTarget())) {
+            throw new CustomException(UserAuthErrorCode.PHONE_ALREADY_EXISTS);
         }
     }
 
