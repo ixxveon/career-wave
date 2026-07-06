@@ -20,6 +20,7 @@ from user.interview.prompts.interview_prompts import (
     MAX_ANSWER_HISTORY,
     TEMPERATURE,
     build_rag_injection,
+    get_company_overlay,
     get_difficulty_overlay,
     get_fallback_questions,
     get_focus_overlay,
@@ -181,6 +182,9 @@ def _parse_llm_json(raw: str) -> dict[str, str]:
 
 def _build_messages(ctx: _SessionContext) -> list[dict[str, str]]:
     system_prompt = get_system_prompt(ctx.interview_type)
+    company_overlay = get_company_overlay(ctx.target_company)
+    if company_overlay:
+        system_prompt = system_prompt + "\n\n" + company_overlay
     focus_overlay = get_focus_overlay(ctx.focus_type)
     if focus_overlay:
         system_prompt = system_prompt + "\n\n" + focus_overlay

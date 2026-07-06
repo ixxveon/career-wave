@@ -28,9 +28,9 @@ public class InterviewSessionController implements InterviewSessionControllerDoc
             @AuthenticationPrincipal AuthPrincipal principal
     ) {
         UUID memberId = UUID.fromString(principal.getId());
-        return interviewSessionService.findInProgressSession(memberId)
-                .map(session -> ResponseEntity.ok(ApiResponse.ok(session)))
-                .orElse(ResponseEntity.notFound().<ApiResponse<InterviewDTO.ResponseInProgressSession>>build());
+        InterviewDTO.ResponseInProgressSession session = interviewSessionService.findInProgressSession(memberId)
+                .orElse(null);
+        return ResponseEntity.ok(ApiResponse.ok(session));
     }
 
     @Override
