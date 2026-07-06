@@ -11,7 +11,7 @@ type ResultState =
  * 데모 결제 결과 페이지 훅. Toss 리다이렉트 쿼리를 읽어 승인(confirm)하거나 실패를 표시한다.
  * 성공: ?paymentType&amount&orderId&paymentKey / 실패: ?code&message&orderId
  */
-export function useTossDemoResult() {
+export function useTossDemoResult(): { state: ResultState } {
   const [searchParams] = useSearchParams();
   const confirmedRef = useRef(false);
   const [state, setState] = useState<ResultState>({ phase: 'confirming' });

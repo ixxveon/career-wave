@@ -11,12 +11,16 @@ const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY as string;
  * requestPayment(단건결제) 를 호출한다. card.flowMode='DIRECT' + easyPay='TOSSPAY' 로
  * 토스페이 자체창(QR)을 바로 띄운다. (Toss 테스트 키 → 실제 화면, 실제 미결제)
  */
-export function useTossDemoCheckout() {
+export function useTossDemoCheckout(): {
+  isRequesting: boolean;
+  error: string;
+  handlePay: () => Promise<void>;
+} {
   const [isRequesting, setIsRequesting] = useState(false);
   const [error, setError] = useState('');
   const requestingRef = useRef(false);
 
-  async function handlePay() {
+  async function handlePay(): Promise<void> {
     if (requestingRef.current) return;
     requestingRef.current = true;
     setIsRequesting(true);
