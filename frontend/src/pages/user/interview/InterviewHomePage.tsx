@@ -34,7 +34,7 @@ function InterviewHomePage() {
   const docUsed  = resumeQuota?.usedCount  ?? 0;
   const docLimit = resumeQuota?.limitCount ?? DEFAULT_DOC_LIMIT;
   const ivLimit  = ivItem?.usage?.limit  ?? DEFAULT_IV_LIMIT;
-  const ivUsed   = ivItem?.usage ? Math.max(ivLimit - (ivItem.usage.remaining ?? 0), 0) : 0;
+  const ivUsed   = historyData?.totalItems ?? 0;
 
   const docPct = Math.min((docUsed / docLimit) * 100, 100);
   const ivPct  = Math.min((ivUsed  / ivLimit)  * 100, 100);

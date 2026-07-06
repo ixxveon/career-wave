@@ -1,6 +1,7 @@
 package kr.co.carrer.user.interview.entity;
 
 import jakarta.persistence.*;
+import kr.co.carrer.user.interview.type.FocusType;
 import kr.co.carrer.user.interview.type.InterviewType;
 import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
@@ -42,6 +43,10 @@ public class InterviewSession {
     @Column(name = "target_company", length = 100)
     private String targetCompany;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "focus_type", length = 20)
+    private FocusType focusType;
+
     @Column(name = "total_score")
     private Integer totalScore;
 
@@ -77,7 +82,8 @@ public class InterviewSession {
             UUID documentId,
             SessionType sessionType,
             InterviewType interviewType,
-            String targetCompany
+            String targetCompany,
+            FocusType focusType
     ) {
         InterviewSession session = new InterviewSession();
         session.sessionId = UUID.randomUUID();
@@ -87,6 +93,7 @@ public class InterviewSession {
         session.sessionStatus = SessionStatus.IN_PROGRESS;
         session.interviewType = interviewType;
         session.targetCompany = targetCompany;
+        session.focusType = focusType;
         session.startedAt = ZonedDateTime.now();
         session.createdAt = ZonedDateTime.now();
         return session;

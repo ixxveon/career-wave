@@ -87,7 +87,9 @@ def _download_via_http(document_id: str, file_url: str) -> str:
 
 def _download_to_tempfile(document_id: str, file_url: str) -> str:
     """파일을 다운로드하여 임시 파일 경로를 반환한다."""
-    if "amazonaws.com" not in file_url:
+    # presigned URL(쿼리 파라미터 포함)은 인증 정보가 URL에 내장되어 있으므로 httpx로 직접 다운로드
+    # boto3 재인증이 필요한 경우는 쿼리 파라미터 없는 순수 S3 경로일 때만 해당
+    if "amazonaws.com" not in file_url or "?" in file_url:
         return _download_via_http(document_id, file_url)
 
     bucket, key = _parse_s3_url(file_url)

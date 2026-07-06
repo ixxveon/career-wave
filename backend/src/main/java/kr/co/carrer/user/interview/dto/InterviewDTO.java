@@ -46,7 +46,10 @@ public class InterviewDTO {
 
             @Size(max = 100)
             @Schema(description = "준비 대상 기업명 (최대 100자)", example = "카카오")
-            String targetCompany
+            String targetCompany,
+
+            @Schema(description = "개선 집중 유형 (리포트 액션 버튼 진입 시)", allowableValues = {"FOLLOW_UP", "TECHNICAL_DEPTH", "DELIVERY", "FLUENCY"})
+            String focusType
     ) {}
 
     @Schema(description = "면접 세션 시작 응답")

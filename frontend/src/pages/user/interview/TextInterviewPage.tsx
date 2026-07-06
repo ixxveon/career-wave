@@ -3,7 +3,11 @@ import { useSearchParams } from 'react-router-dom';
 
 import { interviewSessionApi }              from '../../../api/user/interview';
 import { SESSION_TYPE }                     from '../../../types/user/interview';
-import type { SessionType, Resume, MicStatus, InProgressSessionResponse } from '../../../types/user/interview';
+import type { SessionType, Resume, MicStatus, FocusType, InProgressSessionResponse } from '../../../types/user/interview';
+
+const VALID_FOCUS_TYPES: readonly FocusType[] = ['FOLLOW_UP', 'TECHNICAL_DEPTH', 'DELIVERY', 'FLUENCY'];
+const parseFocusType = (value: string | null): FocusType | null =>
+  VALID_FOCUS_TYPES.includes(value as FocusType) ? (value as FocusType) : null;
 import type { MemberApiError }              from '../../../utils/user/member/errorMapping';
 
 import { usePreflightCheck } from '../../../hooks/user/interview/usePreflightCheck';
@@ -23,6 +27,7 @@ const MOCK_SETUP = {
 export default function TextInterviewPage() {
   const [searchParams] = useSearchParams();
   const documentId     = searchParams.get('documentId');
+  const focusType      = parseFocusType(searchParams.get('focusType'));
 
   const preflight = usePreflightCheck();
 
@@ -145,6 +150,7 @@ export default function TextInterviewPage() {
         sessionType,
         targetCompany: company,
         documentId:    documentId ?? null,
+        focusType:     focusType,
       });
       setSessionId(result.sessionId);
       setPhase('interview');

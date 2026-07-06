@@ -67,6 +67,8 @@ export type InterviewSessionState = typeof SESSION_STATE[keyof typeof SESSION_ST
 
 // ── API Request DTOs ──────────────────────────────────────────────
 
+export type FocusType = 'FOLLOW_UP' | 'TECHNICAL_DEPTH' | 'DELIVERY' | 'FLUENCY';
+
 export interface InProgressSessionResponse {
   sessionId: string;
   sessionType: SessionType;
@@ -80,6 +82,7 @@ export interface StartSessionRequest {
   sessionType: SessionType;
   interviewType?: InterviewType | null;
   targetCompany?: string | null;
+  focusType?: FocusType | null;
 }
 
 export interface SubmitTextAnswerRequest {
