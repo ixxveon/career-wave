@@ -21,6 +21,7 @@ from user.interview.prompts.interview_prompts import (
     TEMPERATURE,
     build_rag_injection,
     get_company_overlay,
+    get_difficulty_overlay,
     get_fallback_questions,
     get_focus_overlay,
     get_system_prompt,
@@ -61,6 +62,11 @@ async def generate_and_deliver_question(
 
     if question_order > 0:
         _record_answer(ctx, question_text, answer_text)
+        ctx.recent_answer_quality = _assess_answer_quality(ctx, question_order, answer_text)
+        log.debug(
+            "[Session: %s] answer quality assessed: order=%d, quality=%s",
+            session_id, question_order, ctx.recent_answer_quality,
+        )
 
     settings = get_settings()
     next_question_order = question_order + 1
@@ -182,6 +188,9 @@ def _build_messages(ctx: _SessionContext) -> list[dict[str, str]]:
     focus_overlay = get_focus_overlay(ctx.focus_type)
     if focus_overlay:
         system_prompt = system_prompt + "\n\n" + focus_overlay
+    difficulty_overlay = get_difficulty_overlay(ctx.recent_answer_quality)
+    if difficulty_overlay:
+        system_prompt = system_prompt + "\n\n" + difficulty_overlay
     if ctx.rag_context:
         system_prompt = system_prompt + "\n\n" + build_rag_injection(ctx.rag_context)
 
@@ -199,6 +208,34 @@ def _build_messages(ctx: _SessionContext) -> list[dict[str, str]]:
 
 def _record_answer(ctx: _SessionContext, question: str, answer: str) -> None:
     ctx.answer_history.append({"question": question, "answer": answer})
+
+
+_QUALITY_TEXT_INSUFFICIENT = 50   # 글자 수 기준: 미달
+_QUALITY_TEXT_STRONG = 200        # 글자 수 기준: 우수
+
+
+def _assess_answer_quality(ctx: _SessionContext, question_order: int, answer_text: str) -> str:
+    """직전 답변의 품질 신호를 반환한다.
+
+    음성 면접: voice_quality_by_order의 해당 순서 비율로 판단.
+    텍스트 면접: 답변 길이로 판단.
+    """
+    if ctx.session_type == "VOICE":
+        ratio = ctx.voice_quality_by_order.get(question_order)
+        if ratio is None:
+            return "ADEQUATE"
+        if ratio < 50.0:
+            return "INSUFFICIENT"
+        if ratio >= 80.0:
+            return "STRONG"
+        return "ADEQUATE"
+
+    text_len = len(answer_text.strip())
+    if text_len < _QUALITY_TEXT_INSUFFICIENT:
+        return "INSUFFICIENT"
+    if text_len >= _QUALITY_TEXT_STRONG:
+        return "STRONG"
+    return "ADEQUATE"
 
 
 def _pick_fallback(ctx: _SessionContext) -> str:
