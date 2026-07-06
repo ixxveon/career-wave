@@ -1,8 +1,8 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Lightbulb, Mic, ThumbsUp, ThumbsDown, Wand2, Star,
-  CheckCircle2, XCircle, Hash, PenLine,
+  CheckCircle2, XCircle, Hash, PenLine, Download,
 } from 'lucide-react';
 import type { DocumentResult, FeedbackDetail } from '../../../types/user/document';
 import { computeWordDiff } from '../../../utils/user/resume/textDiff';
@@ -82,6 +82,14 @@ export default function DocumentResultView({
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState(0);
 
+  const handlePdfDownload = useCallback((): void => {
+    const label = fileType === 'RESUME' ? '이력서_분석_리포트' : '자기소개서_분석_리포트';
+    const prev = document.title;
+    document.title = `${label}_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}`;
+    window.print();
+    document.title = prev;
+  }, [fileType]);
+
   const { evaluation, feedbackDetails } = result;
   const { totalScore, jobFitnessScore, techStackScore, quantifiedScore, logicalScore, overallReview } = evaluation;
 
@@ -126,6 +134,9 @@ export default function DocumentResultView({
             </button>
           )}
           <button className="dr-btn--outline" onClick={onReset}>다시 작성하기</button>
+          <button className="dr-btn--pdf" onClick={handlePdfDownload}>
+            <Download size={14} /> PDF 저장
+          </button>
         </div>
       </div>
 
