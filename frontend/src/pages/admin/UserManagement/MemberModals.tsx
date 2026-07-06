@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { X } from 'lucide-react';
 import {
   memberApi,
   MEMBER_ROLE,
@@ -31,14 +32,14 @@ interface MemberDetailModalProps {
 
 export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: MemberDetailModalProps) {
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal" onClick={(e) => e.stopPropagation()}>
         <div className="modalHeader">
           <div>
             <h3>{member.name} 상세 정보</h3>
             <p>{member.loginId} · {member.email}</p>
           </div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modalInfoGrid">
           <div><span>권한</span><strong>{member.role === MEMBER_ROLE.USER ? '개인 회원' : '기업 회원'}</strong></div>
@@ -101,11 +102,11 @@ interface ConfirmViewModalProps {
 
 export function ConfirmViewModal({ memberId, onConfirm, onClose }: ConfirmViewModalProps) {
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 420 }}>
         <div className="modalHeader">
           <div><h3>개인정보 열람 확인</h3></div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modalInfoGrid">
           <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 14, lineHeight: 1.7, color: '#3a4f6a' }}>
@@ -159,14 +160,14 @@ export function SuspendModal({ target, onClose, onSuccess }: SuspendModalProps) 
   };
 
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal" onClick={(e) => e.stopPropagation()}>
         <div className="modalHeader">
           <div>
             <h3>활동 정지 처리</h3>
             <p>{target.name} · {target.loginId}</p>
           </div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modalInfoGrid">
           <div style={{ gridColumn: '1 / -1' }}>
@@ -252,14 +253,14 @@ export function UnsuspendModal({ target, onClose, onSuccess }: UnsuspendModalPro
   };
 
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 480 }}>
         <div className="modalHeader">
           <div>
             <h3>정지 해제</h3>
             <p>{target.name} · {target.loginId}</p>
           </div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modalBody" style={{ display: 'grid', gap: 16, padding: '20px 24px' }}>
           <div style={{ gridColumn: '1 / -1' }}>

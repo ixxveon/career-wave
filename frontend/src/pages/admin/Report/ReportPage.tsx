@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
-import { AlertTriangle, Bot, Clock, EyeOff, Flag, UserX } from 'lucide-react';
+import { AlertTriangle, Bot, Clock, EyeOff, Flag, UserX, X } from 'lucide-react';
 import { reportApi, REPORT_STATUS, type ReportItem, type ReportSummary, type ReportStatus, type TargetType, type ReportReason, type ReportDetail, type AiSuggestion } from '../../../api/admin/reportApi';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Report.css';
@@ -375,14 +375,14 @@ export default function ReportPage() {
 
       {/* ── Detail Modal ───────────────────────────────────────── */}
       {selected && (
-        <div className="modalOverlay" onClick={() => setSelected(null)}>
+        <div className="modalOverlay">
           <div className="memberModal modal--scrollable" onClick={(e) => e.stopPropagation()} style={{ width: 600 }}>
             <div className="modalHeader">
               <div>
                 <h3>신고 상세 · #{selected.reportId}</h3>
                 <p>{typeLabel[selected.targetType]} · {new Date(selected.createdAt).toLocaleDateString('ko-KR')}</p>
               </div>
-              <button onClick={() => setSelected(null)}>닫기</button>
+              <button className="modalCloseBtn" aria-label="닫기" onClick={() => setSelected(null)}><X size={18} /></button>
             </div>
 
             <div className="modalBody">
@@ -535,14 +535,14 @@ export default function ReportPage() {
 
       {/* ── 회원 제재 Modal ────────────────────────────────────── */}
       {suspendTarget && (
-        <div className="modalOverlay" onClick={() => setSuspendTarget(null)}>
+        <div className="modalOverlay">
           <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 460 }}>
             <div className="modalHeader">
               <div>
                 <h3>회원 제재</h3>
                 <p>신고 대상 회원에게 제재를 적용합니다</p>
               </div>
-              <button onClick={() => setSuspendTarget(null)}>닫기</button>
+              <button className="modalCloseBtn" aria-label="닫기" onClick={() => setSuspendTarget(null)}><X size={18} /></button>
             </div>
 
             <div className="sanctionTarget">

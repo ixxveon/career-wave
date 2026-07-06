@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { X } from 'lucide-react';
 import {
   settlementApi,
   SETTLEMENT_STATUS_LABEL,
@@ -197,14 +198,14 @@ function GenerateModal({ onClose, onSuccess }: GenerateModalProps) {
   };
 
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal" style={{ width: 440 }} onClick={(e) => e.stopPropagation()}>
         <div className="modalHeader">
           <div>
             <h3>정산 리포트 생성</h3>
             <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>정산 기간을 입력하세요.</p>
           </div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modalBody">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
