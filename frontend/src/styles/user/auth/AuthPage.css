@@ -469,6 +469,11 @@
   width: 108px;
 }
 
+.cw-auth-form .cw-auth-button-secondary--change {
+  width: 84px;
+  background: #ffffff;
+}
+
 .cw-auth-feedback {
   display: inline-flex;
   align-items: center;
@@ -982,6 +987,14 @@
 .cw-register-field input::placeholder,
 .cw-register-inline input::placeholder {
   color: #a0aab8;
+}
+
+/* 전송·인증 완료된 필드: readOnly 잠금 시각 표시 (issue #1036) */
+.cw-register-inline input:read-only:not(.cw-register-upload__display),
+.cw-auth-inline span input:read-only {
+  background: #f1f4f8;
+  color: #6b7684;
+  cursor: not-allowed;
 }
 
 .cw-register-field input:focus,
