@@ -141,7 +141,7 @@ const splitDateTime = (value: string) => {
   return { date, time };
 };
 
-const formatAdminLastLogin = (value: string) => {
+const formatAdminLastLogin = (value: string): string => {
   if (!value) {
     return '—';
   }
@@ -155,17 +155,18 @@ const formatAdminLastLogin = (value: string) => {
     return value;
   }
 
-  const datePart = parsedDate.toLocaleDateString('sv-SE', {
+  const parts = new Intl.DateTimeFormat('ko-KR', {
     timeZone: 'Asia/Seoul',
-  });
-  const timePart = parsedDate.toLocaleTimeString('sv-SE', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Seoul',
-  });
+    hourCycle: 'h23',
+  }).formatToParts(parsedDate);
+  const lookup = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
 
-  return `${datePart} ${timePart}`;
+  return `${lookup.year}-${lookup.month}-${lookup.day} ${lookup.hour}:${lookup.minute}`;
 };
 
 const isValidCidr = (value: string) => {
