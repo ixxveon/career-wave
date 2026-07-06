@@ -81,6 +81,7 @@ Authorization: Bearer {accessToken}
 | `documentId` | `string` | ❌ | 연결할 서류 `documentId` (RAG 컨텍스트용, 없으면 `null`) |
 | `sessionType` | `string` | ✅ | `TEXT` \| `VOICE` \| `VIDEO` |
 | `interviewType` | `string` | ❌ | `TECHNICAL` \| `PERSONALITY` \| `PROJECT` |
+| `focusType` | `string` | ❌ | `FOLLOW_UP` \| `TECHNICAL_DEPTH` \| `DELIVERY` \| `FLUENCY` — 리포트 하단 '개선 추천 액션' 버튼에서 전달 |
 | `targetCompany` | `string` | ❌ | 준비 대상 기업명 |
 
 ### Response `200 OK`
@@ -114,7 +115,39 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 2. 텍스트 답변 제출
+## 2. 진행 중 세션 조회
+
+- **Endpoint**: `GET /api/v1/user/interview/sessions/in-progress`
+- **Description**: 현재 회원의 `IN_PROGRESS` 상태 세션을 단건 조회. 면접 페이지 진입 시 이전 세션 재개 모달 표시 여부 결정에 사용한다.
+
+### Response `200 OK` — 진행 중 세션 존재 시
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": {
+    "sessionId": "uuid-v4",
+    "sessionType": "TEXT",
+    "interviewType": "TECHNICAL",
+    "targetCompany": "카카오",
+    "createdAt": "2026-05-29T14:53:44Z"
+  }
+}
+```
+
+> `data`가 `null`이면 진행 중 세션 없음 → 모달 미표시.
+
+### Error Cases
+
+| statusCode | 상황 |
+|-----------|------|
+| `401` | 토큰 없음 또는 만료 |
+
+---
+
+## 3. 텍스트 답변 제출
 
 - **Endpoint**: `POST /api/v1/user/interview/sessions/{sessionId}/answer/text`
 - **Description**: 텍스트 입력 답변 저장
