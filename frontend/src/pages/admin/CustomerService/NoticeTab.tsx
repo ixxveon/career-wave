@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import {
   csApi,
   NOTICE_CATEGORY_LABEL,
@@ -8,6 +8,8 @@ import {
   type NoticeItem,
   type NoticeListParams,
 } from '../../../api/admin/csApi';
+
+const NOTICE_TITLE_MAX_LENGTH = 200;
 
 interface NoticeFormState {
   noticeId?: number;
@@ -231,11 +233,11 @@ export default function NoticeTab({ onMutate }: NoticeTabProps) {
       </section>
 
       {noticeModal && (
-        <div className="modalOverlay" onClick={() => closeNoticeModal()}>
+        <div className="modalOverlay">
           <div className="memberModal modal--scrollable" style={{ width: 560 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0 }}>
               <div><h3>{noticeModal === 'create' ? '공지사항 등록' : '공지사항 수정'}</h3></div>
-              <button onClick={() => closeNoticeModal()}>닫기</button>
+              <button className="modalCloseBtn" aria-label="닫기" onClick={() => closeNoticeModal()}><X size={18} /></button>
             </div>
             <div className="modalBody">
               <div className="csFormRows">
@@ -247,8 +249,9 @@ export default function NoticeTab({ onMutate }: NoticeTabProps) {
                   </select></div>
                 <div className="csFormRow">
                   <label>제목</label>
-                  <input className="csFormInput" type="text" placeholder="공지 제목을 입력하세요"
+                  <input className="csFormInput" type="text" placeholder="공지 제목을 입력하세요" maxLength={NOTICE_TITLE_MAX_LENGTH}
                     value={noticeForm.title} onChange={(e) => setNoticeForm((p) => ({ ...p, title: e.target.value }))} />
+                  <span className="csFormCharCount">{noticeForm.title.length}/{NOTICE_TITLE_MAX_LENGTH}</span>
                 </div>
                 <div className="csFormRow">
                   <label>내용</label>
@@ -281,11 +284,11 @@ export default function NoticeTab({ onMutate }: NoticeTabProps) {
       )}
 
       {deleteConfirmId !== null && (
-        <div className="modalOverlay" onClick={() => setDeleteConfirmId(null)}>
+        <div className="modalOverlay">
           <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 400 }}>
             <div className="modalHeader">
               <div><h3>공지사항 삭제</h3></div>
-              <button onClick={() => setDeleteConfirmId(null)}>닫기</button>
+              <button className="modalCloseBtn" aria-label="닫기" onClick={() => setDeleteConfirmId(null)}><X size={18} /></button>
             </div>
             <p style={{ padding: '16px 24px', fontSize: 14, color: '#31475f' }}>해당 공지사항을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.</p>
             <div className="modalAction">

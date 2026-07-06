@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import {
   csApi,
   INQUIRY_CATEGORY, INQUIRY_CATEGORY_LABEL,
@@ -232,7 +232,7 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
       </section>
 
       {selectedInquiry && (
-        <div className="modalOverlay" onClick={closeInquiryModal}>
+        <div className="modalOverlay">
           <div className="memberModal modal--scrollable" style={{ width: 580 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0, padding: '20px 24px 16px' }}>
               <div>
@@ -241,7 +241,7 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
                   #{selectedInquiry.inquiryId} · {selectedInquiry.memberName}{selectedInquiry.memberEmail ? ` (${selectedInquiry.memberEmail})` : ''} · {new Date(selectedInquiry.createdAt).toLocaleDateString('ko-KR')}
                 </p>
               </div>
-              <button onClick={closeInquiryModal}>닫기</button>
+              <button className="modalCloseBtn" aria-label="닫기" onClick={closeInquiryModal}><X size={18} /></button>
             </div>
             <div className="modalBody">
               <div className="modalInfoGrid">
@@ -270,28 +270,30 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
                   disabled={selectedInquiry.inquiryStatus === 'COMPLETED'} />
               </div>
             </div>
-            <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
-              {inqActionError && <p style={{ fontSize: 13, color: '#9a4444', flex: '1 1 100%', marginBottom: 8 }}>{inqActionError}</p>}
-              <button onClick={closeInquiryModal}>닫기</button>
-              {selectedInquiry.inquiryStatus !== 'COMPLETED' && (
-                <>
-                  <button onClick={saveInquiryReply} disabled={inqActionLoading || !inquiryReply.trim()}>
-                    {inqActionLoading ? '저장 중...' : '답변 저장'}
+            {(inqActionError || selectedInquiry.inquiryStatus !== 'COMPLETED' ||
+              ((selectedInquiry.category === INQUIRY_CATEGORY.REFUND || selectedInquiry.category === INQUIRY_CATEGORY.PAYMENT_ERROR) && selectedInquiry.memberEmail)) && (
+              <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
+                {inqActionError && <p style={{ fontSize: 13, color: '#9a4444', flex: '1 1 100%', marginBottom: 8 }}>{inqActionError}</p>}
+                {selectedInquiry.inquiryStatus !== 'COMPLETED' && (
+                  <>
+                    <button onClick={saveInquiryReply} disabled={inqActionLoading || !inquiryReply.trim()}>
+                      {inqActionLoading ? '저장 중...' : '답변 저장'}
+                    </button>
+                    {selectedInquiry.inquiryStatus === 'IN_PROGRESS' && (
+                      <button onClick={completeInquiry} disabled={inqActionLoading || !inquiryReply.trim()}>처리 완료</button>
+                    )}
+                  </>
+                )}
+                {(selectedInquiry.category === INQUIRY_CATEGORY.REFUND || selectedInquiry.category === INQUIRY_CATEGORY.PAYMENT_ERROR) && selectedInquiry.memberEmail && (
+                  <button
+                    onClick={() => navigate(`${ADMIN_ROUTE_PATHS.payments}?tab=payments&keyword=${encodeURIComponent(selectedInquiry.memberEmail)}`)}
+                    style={{ background: '#2e5eaa', color: '#fff', borderColor: '#2e5eaa' }}
+                  >
+                    결제 내역 확인
                   </button>
-                  {selectedInquiry.inquiryStatus === 'IN_PROGRESS' && (
-                    <button onClick={completeInquiry} disabled={inqActionLoading || !inquiryReply.trim()}>처리 완료</button>
-                  )}
-                </>
-              )}
-              {(selectedInquiry.category === INQUIRY_CATEGORY.REFUND || selectedInquiry.category === INQUIRY_CATEGORY.PAYMENT_ERROR) && selectedInquiry.memberEmail && (
-                <button
-                  onClick={() => navigate(`${ADMIN_ROUTE_PATHS.payments}?tab=payments&keyword=${encodeURIComponent(selectedInquiry.memberEmail)}`)}
-                  style={{ background: '#2e5eaa', color: '#fff', borderColor: '#2e5eaa' }}
-                >
-                  결제 내역 확인
-                </button>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
