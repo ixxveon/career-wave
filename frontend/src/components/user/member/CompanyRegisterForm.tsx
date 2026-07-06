@@ -314,7 +314,7 @@ export function CompanyRegisterForm({
 
       {isSubmitGuideOpen && (
         <div aria-labelledby="company-submit-guide-title" aria-modal="true" className="cw-register-modal" role="dialog">
-          <button aria-label="모달 닫기" className="cw-register-modal__backdrop" onClick={handleSubmitGuideConfirm} type="button" />
+          <button aria-label="확인 후 로그인 페이지로 이동" className="cw-register-modal__backdrop" onClick={handleSubmitGuideConfirm} type="button" />
           <div className="cw-register-modal__dialog">
             <h3 id="company-submit-guide-title">가입 신청이 접수되었습니다.</h3>
             <p>제출해주신 기업 정보와 재직증명서를 검토한 후 기업회원 가입이 승인됩니다.</p>
