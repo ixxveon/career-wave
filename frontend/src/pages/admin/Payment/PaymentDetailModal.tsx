@@ -218,7 +218,6 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
               {refundLoading ? '처리 중...' : '환불 불가 처리'}
             </button>
           )}
-          <button onClick={onClose} disabled={refundLoading}>닫기</button>
         </div>
       </div>
     </div>

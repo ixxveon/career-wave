@@ -290,7 +290,6 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
                   결제 내역 확인
                 </button>
               )}
-              <button onClick={closeInquiryModal}>닫기</button>
             </div>
           </div>
         </div>

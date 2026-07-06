@@ -87,7 +87,6 @@ export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: M
           ) : (
             <button onClick={() => onSuspend(member)} disabled={member?.memberStatus === MEMBER_STATUS.WITHDRAWN}>활동 정지</button>
           )}
-          <button onClick={onClose}>닫기</button>
         </div>
       </div>
     </div>

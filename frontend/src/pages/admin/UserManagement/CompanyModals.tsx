@@ -77,7 +77,6 @@ export function CompanyDetailModal({ company, onClose, onApprove, onReject }: Co
               </button>
             </>
           )}
-          <button onClick={onClose}>닫기</button>
         </div>
       </div>
     </div>

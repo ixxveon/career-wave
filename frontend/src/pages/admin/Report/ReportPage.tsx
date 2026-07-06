@@ -526,7 +526,6 @@ export default function ReportPage() {
                 >
                   회원 제재
                 </button>
-                <button className="tableBtn" onClick={() => setSelected(null)}>닫기</button>
               </div>
             </div>
           </div>
