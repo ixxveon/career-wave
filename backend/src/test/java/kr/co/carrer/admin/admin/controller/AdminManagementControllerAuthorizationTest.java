@@ -137,7 +137,7 @@ class AdminManagementControllerAuthorizationTest {
         authenticateAs("MASTER");
 
         var response = adminManagementController.createAdmin(
-            new AdminManagementDTO.RequestCreateAdmin("master@career-wave.com", "temporary-password", "master-admin", AdminRole.MASTER),
+            new AdminManagementDTO.RequestCreateAdmin("master-admin", "master@career-wave.com", "temporary-password", "master-admin", AdminRole.MASTER),
             adminPrincipal("MASTER"),
             requestWithRemoteAddr("203.0.113.10")
         );
@@ -151,7 +151,7 @@ class AdminManagementControllerAuthorizationTest {
         authenticateAs("BACKEND");
 
         assertThatThrownBy(() -> adminManagementController.createAdmin(
-            new AdminManagementDTO.RequestCreateAdmin("master@career-wave.com", "temporary-password", "master-admin", AdminRole.MASTER),
+            new AdminManagementDTO.RequestCreateAdmin("master-admin", "master@career-wave.com", "temporary-password", "master-admin", AdminRole.MASTER),
             adminPrincipal("BACKEND"),
             requestWithRemoteAddr("203.0.113.10")
         )).isInstanceOf(AccessDeniedException.class);

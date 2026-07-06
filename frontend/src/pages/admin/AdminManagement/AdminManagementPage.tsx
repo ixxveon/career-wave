@@ -72,6 +72,7 @@ interface AclDraft {
 }
 
 interface AdminDraft {
+  loginId: string;
   email: string;
   password: string;
   name: string;
@@ -170,6 +171,7 @@ const getAclRiskMeta = (cidr?: string | null) => {
 };
 
 const createEmptyAdminDraft = (): AdminDraft => ({
+  loginId: '',
   email: '',
   password: '',
   name: '',
@@ -396,12 +398,14 @@ export default function AdminManagementPage() {
   const handleCreateAdminAccount = () => {
     if (isAccountMasterRoleRequired) return;
 
+    const loginId = adminDraft.loginId.trim();
     const email = adminDraft.email.trim();
     const name = adminDraft.name.trim();
     const password = adminDraft.password.trim();
-    if (!email || !name || !password) return;
+    if (!loginId || !email || !name || !password) return;
 
     createAdminMutation.mutate({
+      loginId,
       name,
       email,
       password,
@@ -1026,14 +1030,24 @@ export default function AdminManagementPage() {
 
             <div className="amCreatePageBody">
               <label>
-                로그인 이메일
+                로그인 아이디
+                <input
+                  type="text"
+                  value={adminDraft.loginId}
+                  onChange={(e) => setAdminDraft((prev) => ({ ...prev, loginId: e.target.value }))}
+                  placeholder="admin_master"
+                  disabled={createAdminMutation.isPending}
+                  autoFocus
+                />
+              </label>
+              <label>
+                이메일
                 <input
                   type="email"
                   value={adminDraft.email}
                   onChange={(e) => setAdminDraft((prev) => ({ ...prev, email: e.target.value }))}
                   placeholder="admin@career-wave.com"
                   disabled={createAdminMutation.isPending}
-                  autoFocus
                 />
               </label>
               <label>

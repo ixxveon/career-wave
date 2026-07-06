@@ -44,6 +44,8 @@ public class AdminManagementDTO {
 
     @Schema(description = "관리자 계정 생성 요청")
     public record RequestCreateAdmin(
+        @Schema(description = "관리자 로그인 아이디", requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotBlank String loginId,
         @Schema(description = "관리자 이메일", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank @Email String email,
         @Schema(description = "초기 비밀번호", requiredMode = Schema.RequiredMode.REQUIRED)
