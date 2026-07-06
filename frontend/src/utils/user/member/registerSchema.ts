@@ -14,6 +14,8 @@ export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_PATTERN = /^010\d{8}$/;
 export const VERIFICATION_CODE_PATTERN = /^\d{6}$/;
 export const NAME_PATTERN = /^[가-힣]{2,10}$/;
+// 대표자명은 외국계·외국법인 대표(영문명, 공백 포함)를 허용 (#1030)
+export const CEO_NAME_PATTERN = /^[가-힣a-zA-Z\s]{2,20}$/;
 
 export const COMPANY_TYPE_LABELS = {
   ENTERPRISE: '대기업',
@@ -83,6 +85,10 @@ export function isValidName(value: string): boolean {
   return NAME_PATTERN.test(value.trim());
 }
 
+export function isValidCeoName(value: string): boolean {
+  return CEO_NAME_PATTERN.test(value.trim());
+}
+
 export function validatePersonalRegisterForm(
   form: PersonalRegisterFormSnapshot,
   loginIdState: LoginIdCheckState,
@@ -125,14 +131,22 @@ export function validateCompanyRegisterForm(
     errors.businessNumber = '사업자등록번호 확인을 완료해주세요.';
   }
   if (!form.companyName.trim()) errors.companyName = '회사명을 입력해주세요.';
-  if (!form.ceoName.trim()) errors.ceoName = '대표자명을 입력해주세요.';
+  if (!form.ceoName.trim()) {
+    errors.ceoName = '대표자명을 입력해주세요.';
+  } else if (!isValidCeoName(form.ceoName)) {
+    errors.ceoName = '대표자명은 2~20자의 한글 또는 영문으로 입력해 주세요.';
+  }
   if (!form.postalCode.trim() || !form.roadAddress.trim()) errors.roadAddress = '주소 검색을 완료해주세요.';
   if (!isValidLoginId(form.loginId)) {
     errors.loginId = '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.';
   } else if (loginIdState !== LOGIN_ID_CHECK_STATE.AVAILABLE) {
     errors.loginId = '아이디 중복 확인을 완료해주세요.';
   }
-  if (!form.managerName.trim()) errors.managerName = '담당자명을 입력해주세요.';
+  if (!form.managerName.trim()) {
+    errors.managerName = '담당자명을 입력해주세요.';
+  } else if (!isValidName(form.managerName)) {
+    errors.managerName = '담당자명은 2~10자 한글로 입력해 주세요.';
+  }
   if (!isValidPhone(form.managerPhone)) errors.managerPhone = '담당자 전화번호를 올바르게 입력해주세요.';
   if (!form.managerPhoneVerificationToken?.trim()) errors.managerPhoneCode = '담당자 휴대폰 인증을 완료해주세요.';
   if (!isValidEmail(form.managerEmail)) errors.managerEmail = '담당자 이메일을 올바르게 입력해주세요.';

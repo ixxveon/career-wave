@@ -138,6 +138,7 @@ public class UserRegisterDto {
 
         @Schema(description = "HR 담당자 이름", example = "김담당")
         @NotBlank
+        @Pattern(regexp = "^[가-힣]{2,10}$", message = "담당자명은 2~10자 한글로 입력해 주세요.")
         private String managerName;
 
         @Schema(description = "HR 담당자 이메일", example = "hr@example.com")
@@ -163,6 +164,8 @@ public class UserRegisterDto {
 
         @Schema(description = "대표자 이름", example = "이대표")
         @NotBlank
+        @Pattern(regexp = "^[가-힣a-zA-Z\\s]{2,20}$",
+                message = "대표자명은 2~20자의 한글 또는 영문으로 입력해 주세요.")
         private String ceoName;
 
         @Schema(description = "재직증명서 번호 (미사용 — 하위 호환용 선택 필드)", example = "202606150001")
