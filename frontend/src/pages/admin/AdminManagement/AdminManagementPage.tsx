@@ -141,6 +141,34 @@ const splitDateTime = (value: string) => {
   return { date, time };
 };
 
+const formatAdminLastLogin = (value: string): string => {
+  if (!value) {
+    return '—';
+  }
+
+  if (value.includes(' ')) {
+    return value;
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return value;
+  }
+
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(parsedDate);
+  const lookup = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+
+  return `${lookup.year}-${lookup.month}-${lookup.day} ${lookup.hour}:${lookup.minute}`;
+};
+
 const isValidCidr = (value: string) => {
   const match = value.match(/^(\d{1,3})(?:\.(\d{1,3})){3}\/(\d{1,2})$/);
   if (!match) return false;
@@ -184,7 +212,7 @@ const toAdminAccountRow = (admin: AdminAccountResponse): AdminAccount => ({
   scope: admin.scope,
   ip: admin.ip,
   createdAt: admin.createdAt,
-  lastLogin: admin.lastLoginAt,
+  lastLogin: formatAdminLastLogin(admin.lastLoginAt),
   status: admin.status,
 });
 
