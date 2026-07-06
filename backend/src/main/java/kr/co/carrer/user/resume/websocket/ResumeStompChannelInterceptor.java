@@ -87,8 +87,10 @@ public class ResumeStompChannelInterceptor implements ChannelInterceptor, Applic
     private Message<?> handleConnect(Message<?> message, StompHeaderAccessor accessor) {
         UUID memberId = extractMemberIdFromSession(accessor);
         if (memberId == null) {
-            log.warn("[STOMP CONNECT 거부] 세션에 memberId 없음");
-            throw new MessageDeliveryException("인증되지 않은 WebSocket 연결입니다.");
+            // Resume WS는 핸드셰이크 시 memberId를 세션에 저장함.
+            // null이면 다른 엔드포인트(interview 등)의 연결이므로 통과시킨다.
+            log.debug("[STOMP CONNECT] Resume 세션 아님 — 통과");
+            return message;
         }
         log.debug("[STOMP CONNECT] memberId: {}", memberId);
         return message;
