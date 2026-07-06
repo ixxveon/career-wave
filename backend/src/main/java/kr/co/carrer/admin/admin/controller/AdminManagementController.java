@@ -101,6 +101,7 @@ public class AdminManagementController implements AdminManagementDocs {
     ) {
         AdminManagementService.AdminDetailResult result = adminManagementService.createAdmin(
             new AdminManagementService.CreateAdminCommand(
+                request.loginId(),
                 request.email(),
                 request.password(),
                 request.name(),
