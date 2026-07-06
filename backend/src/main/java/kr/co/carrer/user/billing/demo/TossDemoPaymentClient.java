@@ -71,7 +71,8 @@ public class TossDemoPaymentClient {
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, resp ->
                             resp.bodyToMono(String.class).defaultIfEmpty("").map(b -> {
-                                log.warn("[TOSS-DEMO] confirm 실패: status={}", resp.statusCode().value());
+                                // Toss 에러 본문(code/message)은 진단에 유용하며 사용자 PII가 아니므로 함께 로깅한다.
+                                log.warn("[TOSS-DEMO] confirm 실패: status={}, body={}", resp.statusCode().value(), b);
                                 return new CustomException(BillingErrorCode.PAYMENT_CONFIRM_FAILED);
                             })
                     )
@@ -87,7 +88,7 @@ public class TossDemoPaymentClient {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("[TOSS-DEMO] confirm 오류: {}", e.getClass().getSimpleName());
+            log.warn("[TOSS-DEMO] confirm 오류: {}", e.getClass().getSimpleName(), e);
             throw new CustomException(BillingErrorCode.PAYMENT_CONFIRM_FAILED);
         }
     }

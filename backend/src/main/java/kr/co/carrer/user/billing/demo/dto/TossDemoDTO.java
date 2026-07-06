@@ -1,4 +1,4 @@
-package kr.co.carrer.user.billing.demo;
+package kr.co.carrer.user.billing.demo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

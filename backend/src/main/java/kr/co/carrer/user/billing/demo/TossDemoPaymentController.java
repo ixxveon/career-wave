@@ -1,10 +1,10 @@
 package kr.co.carrer.user.billing.demo;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.ApiResponse;
+import kr.co.carrer.user.billing.demo.docs.TossDemoPaymentControllerDocs;
+import kr.co.carrer.user.billing.demo.dto.TossDemoDTO;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,12 +25,11 @@ import java.util.UUID;
  * DB에 주문을 저장하지 않는다(confirm 시 금액이 고정 상수와 일치하는지만 검증).
  * 구독/entitlement 는 발급하지 않는다.
  */
-@Tag(name = "Billing - Toss Demo", description = "데모용 일반결제(토스페이 QR) — 구독 발급 없음")
 @RestController
 @RequestMapping("/api/v1/user/billing/demo")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('USER')")
-public class TossDemoPaymentController {
+public class TossDemoPaymentController implements TossDemoPaymentControllerDocs {
 
     @Value("${toss.demo.amount:1000}")
     private int demoAmount;
@@ -40,7 +39,7 @@ public class TossDemoPaymentController {
 
     private final TossDemoPaymentClient demoPaymentClient;
 
-    @Operation(summary = "데모 주문 생성", description = "고정 금액의 orderId 를 발급한다. 프론트가 Toss requestPayment() 에 사용한다.")
+    @Override
     @PostMapping("/orders")
     public ResponseEntity<ApiResponse<TossDemoDTO.ResponseCreateOrder>> createOrder() {
         String orderId = "demo_" + UUID.randomUUID().toString().replace("-", "");
@@ -50,7 +49,7 @@ public class TossDemoPaymentController {
         ));
     }
 
-    @Operation(summary = "데모 결제 승인", description = "Toss 성공 리다이렉트로 받은 paymentKey/orderId/amount 로 결제를 승인한다.")
+    @Override
     @PostMapping("/confirm")
     public ResponseEntity<ApiResponse<TossDemoDTO.ResponseConfirm>> confirm(
             @Valid @RequestBody TossDemoDTO.RequestConfirm request

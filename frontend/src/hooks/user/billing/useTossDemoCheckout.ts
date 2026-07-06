@@ -23,6 +23,11 @@ export function useTossDemoCheckout() {
     setError('');
 
     try {
+      if (!TOSS_CLIENT_KEY) {
+        // 설정 누락을 SDK의 모호한 에러 대신 명확한 메시지로 조기 실패시킨다.
+        throw new Error('VITE_TOSS_CLIENT_KEY is not configured.');
+      }
+
       const order = await tossDemoApi.createOrder();
 
       const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
