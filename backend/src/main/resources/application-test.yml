@@ -27,5 +27,5 @@ jwt:
     refresh-expiration: 1209600000
   admin:
     secret: test-admin-secret-key-must-be-at-least-32-bytes!
-    access-expiration: 900000
+    access-expiration: 10800000
     refresh-expiration: 86400000
