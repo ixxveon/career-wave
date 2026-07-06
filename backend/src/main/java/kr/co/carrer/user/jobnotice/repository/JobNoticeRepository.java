@@ -16,7 +16,7 @@ public interface JobNoticeRepository extends JpaRepository<JobNotice, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
             UPDATE JobNotice j
-               SET j.viewCount = j.viewCount + 1
+               SET j.viewCount = COALESCE(j.viewCount, 0) + 1
              WHERE j.jobNoticeId = :jobNoticeId
                AND j.noticeStatus = kr.co.carrer.user.jobnotice.type.JobNoticeStatus.ACTIVE
             """)

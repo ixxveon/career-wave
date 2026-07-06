@@ -289,6 +289,11 @@ class UserJobNoticeServiceImplTest {
 
             given(jobNoticeQueryRepository.findActiveJobNoticeById(101L))
                     .willReturn(Optional.of(jobNotice));
+            given(jobNoticeRepository.incrementViewCountById(101L))
+                    .willAnswer(invocation -> {
+                        org.springframework.test.util.ReflectionTestUtils.setField(jobNotice, "viewCount", 124);
+                        return 1;
+                    });
             given(bookmarkRepository.existsByMemberIdAndJobNoticeId(memberId, 101L))
                     .willReturn(true);
 
@@ -338,6 +343,11 @@ class UserJobNoticeServiceImplTest {
 
             given(jobNoticeQueryRepository.findActiveJobNoticeById(101L))
                     .willReturn(Optional.of(jobNotice));
+            given(jobNoticeRepository.incrementViewCountById(101L))
+                    .willAnswer(invocation -> {
+                        org.springframework.test.util.ReflectionTestUtils.setField(jobNotice, "viewCount", 124);
+                        return 1;
+                    });
 
             JobNoticeDTO.ResponseDetail response = userJobNoticeService.getJobNoticeDetail(101L, null);
 

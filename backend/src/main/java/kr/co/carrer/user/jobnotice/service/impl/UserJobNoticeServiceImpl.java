@@ -113,28 +113,29 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
         JobNotice jobNotice = jobNoticeQueryRepository.findActiveJobNoticeById(jobNoticeId)
                 .orElseThrow(() -> new CustomException(JobNoticeErrorCode.JOB_NOTICE_NOT_FOUND));
         jobNoticeRepository.incrementViewCountById(jobNoticeId);
-        int incrementedViewCount = jobNotice.getViewCount() == null ? 1 : jobNotice.getViewCount() + 1;
+        JobNotice updatedJobNotice = jobNoticeQueryRepository.findActiveJobNoticeById(jobNoticeId)
+                .orElse(jobNotice);
 
         return new JobNoticeDTO.ResponseDetail(
-                jobNotice.getJobNoticeId(),
-                jobNotice.getCompanyName(),
-                jobNotice.getTitle(),
-                jobNotice.getDescription(),
-                toList(jobNotice.getSkillTags()),
-                jobNotice.getJobType(),
-                jobNotice.getCompanySize(),
-                toList(jobNotice.getJobCategory()),
-                jobNotice.getCareerLevel(),
-                jobNotice.getLocation(),
-                jobNotice.getSalary(),
-                jobNotice.getNoticeStatus(),
-                jobNotice.getOriginalUrl(),
-                jobNotice.getSource(),
-                incrementedViewCount,
-                jobNotice.getDeadline(),
-                jobNotice.getCreatedAt(),
-                jobNotice.getUpdatedAt(),
-                isBookmarked(memberId, jobNotice.getJobNoticeId())
+                updatedJobNotice.getJobNoticeId(),
+                updatedJobNotice.getCompanyName(),
+                updatedJobNotice.getTitle(),
+                updatedJobNotice.getDescription(),
+                toList(updatedJobNotice.getSkillTags()),
+                updatedJobNotice.getJobType(),
+                updatedJobNotice.getCompanySize(),
+                toList(updatedJobNotice.getJobCategory()),
+                updatedJobNotice.getCareerLevel(),
+                updatedJobNotice.getLocation(),
+                updatedJobNotice.getSalary(),
+                updatedJobNotice.getNoticeStatus(),
+                updatedJobNotice.getOriginalUrl(),
+                updatedJobNotice.getSource(),
+                updatedJobNotice.getViewCount(),
+                updatedJobNotice.getDeadline(),
+                updatedJobNotice.getCreatedAt(),
+                updatedJobNotice.getUpdatedAt(),
+                isBookmarked(memberId, updatedJobNotice.getJobNoticeId())
         );
     }
 
