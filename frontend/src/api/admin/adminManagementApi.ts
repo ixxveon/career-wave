@@ -138,6 +138,7 @@ export interface BackendAdminAuditLogDto {
 }
 
 interface BackendRequestCreateAdmin {
+  loginId: string;
   email: string;
   password: string;
   name: string;
@@ -167,6 +168,7 @@ export interface GetAdminAccountsParams {
 }
 
 export interface RequestCreateAdmin {
+  loginId: string;
   email: string;
   password: string;
   name: string;
@@ -445,6 +447,7 @@ export const getAdminAccounts = (params: GetAdminAccountsParams = {}) =>
 export const createAdminAccount = (body: RequestCreateAdmin) =>
   adminManagementApiClient
     .post<ApiResponse<BackendAdminAccountDto>, BackendRequestCreateAdmin>('/admins', {
+      loginId: body.loginId,
       email: body.email,
       password: body.password,
       name: body.name,

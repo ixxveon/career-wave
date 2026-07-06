@@ -82,18 +82,27 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public AdminDetailResult createAdmin(CreateAdminCommand command, Long actorAdminId, String ipAddress) {
+        String normalizedLoginId = command.loginId().trim();
+        String normalizedEmail = command.email().trim();
+        String normalizedName = command.name().trim();
+
         if (command.adminRole() == null) {
             throw new CustomException(AdminManagementErrorCode.INVALID_ADMIN_ROLE);
         }
 
-        if (adminRepository.existsByEmail(command.email())) {
+        if (adminRepository.existsByLoginId(normalizedLoginId)) {
+            throw new CustomException(AdminManagementErrorCode.ADMIN_LOGIN_ID_ALREADY_EXISTS);
+        }
+
+        if (adminRepository.existsByEmail(normalizedEmail)) {
             throw new CustomException(AdminManagementErrorCode.ADMIN_EMAIL_ALREADY_EXISTS);
         }
 
         Admin admin = Admin.create(
-                command.email(),
+                normalizedLoginId,
+                normalizedEmail,
                 passwordEncoder.encode(command.password()),
-                command.name(),
+                normalizedName,
                 command.adminRole()
         );
 
@@ -101,6 +110,9 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         try {
             savedAdmin = adminRepository.saveAndFlush(admin);
         } catch (DataIntegrityViolationException exception) {
+            if (isUniqueConstraintViolation(exception, "admins_login_id_key")) {
+                throw new CustomException(AdminManagementErrorCode.ADMIN_LOGIN_ID_ALREADY_EXISTS);
+            }
             if (isUniqueConstraintViolation(exception, "admins_email_key")) {
                 throw new CustomException(AdminManagementErrorCode.ADMIN_EMAIL_ALREADY_EXISTS);
             }

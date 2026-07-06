@@ -338,6 +338,10 @@
   font-weight: 900;
 }
 
+.jn-results__head span.is-muted {
+  color: #7b8595;
+}
+
 .jn-results__head b {
   color: #2f9cff;
 }
