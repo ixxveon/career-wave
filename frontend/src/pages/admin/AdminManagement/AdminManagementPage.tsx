@@ -72,6 +72,7 @@ interface AclDraft {
 }
 
 interface AdminDraft {
+  loginId: string;
   email: string;
   password: string;
   name: string;
@@ -141,6 +142,34 @@ const splitDateTime = (value: string) => {
   return { date, time };
 };
 
+const formatAdminLastLogin = (value: string): string => {
+  if (!value) {
+    return '—';
+  }
+
+  if (value.includes(' ')) {
+    return value;
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return value;
+  }
+
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(parsedDate);
+  const lookup = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+
+  return `${lookup.year}-${lookup.month}-${lookup.day} ${lookup.hour}:${lookup.minute}`;
+};
+
 const isValidCidr = (value: string) => {
   const match = value.match(/^(\d{1,3})(?:\.(\d{1,3})){3}\/(\d{1,2})$/);
   if (!match) return false;
@@ -170,6 +199,7 @@ const getAclRiskMeta = (cidr?: string | null) => {
 };
 
 const createEmptyAdminDraft = (): AdminDraft => ({
+  loginId: '',
   email: '',
   password: '',
   name: '',
@@ -184,7 +214,7 @@ const toAdminAccountRow = (admin: AdminAccountResponse): AdminAccount => ({
   scope: admin.scope,
   ip: admin.ip,
   createdAt: admin.createdAt,
-  lastLogin: admin.lastLoginAt,
+  lastLogin: formatAdminLastLogin(admin.lastLoginAt),
   status: admin.status,
 });
 
@@ -396,12 +426,14 @@ export default function AdminManagementPage() {
   const handleCreateAdminAccount = () => {
     if (isAccountMasterRoleRequired) return;
 
+    const loginId = adminDraft.loginId.trim();
     const email = adminDraft.email.trim();
     const name = adminDraft.name.trim();
     const password = adminDraft.password.trim();
-    if (!email || !name || !password) return;
+    if (!loginId || !email || !name || !password) return;
 
     createAdminMutation.mutate({
+      loginId,
       name,
       email,
       password,
@@ -1026,14 +1058,24 @@ export default function AdminManagementPage() {
 
             <div className="amCreatePageBody">
               <label>
-                로그인 이메일
+                로그인 아이디
+                <input
+                  type="text"
+                  value={adminDraft.loginId}
+                  onChange={(e) => setAdminDraft((prev) => ({ ...prev, loginId: e.target.value }))}
+                  placeholder="admin_master"
+                  disabled={createAdminMutation.isPending}
+                  autoFocus
+                />
+              </label>
+              <label>
+                이메일
                 <input
                   type="email"
                   value={adminDraft.email}
                   onChange={(e) => setAdminDraft((prev) => ({ ...prev, email: e.target.value }))}
                   placeholder="admin@career-wave.com"
                   disabled={createAdminMutation.isPending}
-                  autoFocus
                 />
               </label>
               <label>

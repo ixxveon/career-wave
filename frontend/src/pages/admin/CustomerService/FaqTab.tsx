@@ -247,10 +247,10 @@ export default function FaqTab({ onMutate }: FaqTabProps) {
               </div>
             </div>
             <div className="modalAction" style={{ flexShrink: 0 }}>
+              <button onClick={closeFaqModal} disabled={faqFormLoading}>취소</button>
               <button onClick={saveFaq} disabled={faqFormLoading || !faqForm.question.trim()}>
                 {faqFormLoading ? '저장 중...' : faqModal === 'create' ? '등록' : '저장'}
               </button>
-              <button onClick={closeFaqModal} disabled={faqFormLoading}>취소</button>
             </div>
           </div>
         </div>
@@ -265,8 +265,8 @@ export default function FaqTab({ onMutate }: FaqTabProps) {
             </div>
             <p style={{ padding: '16px 24px', fontSize: 14, color: '#31475f' }}>해당 FAQ를 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.</p>
             <div className="modalAction">
-              <button style={{ background: '#9a6767', color: 'white', borderColor: '#9a6767' }} onClick={confirmDeleteFaq}>삭제</button>
               <button onClick={() => setFaqDeleteId(null)}>취소</button>
+              <button style={{ background: '#9a6767', color: 'white', borderColor: '#9a6767' }} onClick={confirmDeleteFaq}>삭제</button>
             </div>
           </div>
         </div>

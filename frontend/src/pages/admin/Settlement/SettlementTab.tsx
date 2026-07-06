@@ -15,14 +15,6 @@ const STATUS_BADGE_CLS: Record<SettlementStatus, string> = {
   CONFIRMED: 'normal',
 };
 
-// TODO: 백엔드 정산 API 배포 완료 후 제거 — 더미 데이터
-const USE_DUMMY = true;
-const DUMMY_SETTLEMENTS: SettlementListItem[] = [
-  { settlementId: 1, periodStart: '2026-06-01', periodEnd: '2026-06-30', totalSalesAmount: 2450000, totalRefundAmount: 150000, netSalesAmount: 2300000, totalTransactionCount: 28, settlementStatus: 'CONFIRMED', createdAt: '2026-07-01T00:00:00' },
-  { settlementId: 2, periodStart: '2026-05-01', periodEnd: '2026-05-31', totalSalesAmount: 1980000, totalRefundAmount: 0, netSalesAmount: 1980000, totalTransactionCount: 22, settlementStatus: 'CONFIRMED', createdAt: '2026-06-01T00:00:00' },
-  { settlementId: 3, periodStart: '2026-07-01', periodEnd: '2026-07-31', totalSalesAmount: 890000, totalRefundAmount: 50000, netSalesAmount: 840000, totalTransactionCount: 12, settlementStatus: 'PENDING', createdAt: '2026-07-02T00:00:00' },
-];
-
 interface SettlementTabProps {
   showToast: (msg: string, type?: 'success' | 'error') => void;
 }
@@ -40,16 +32,6 @@ export default function SettlementTab({ showToast }: SettlementTabProps) {
   const [generateOpen, setGenerateOpen] = useState(false);
 
   const fetchList = useCallback(async (p = 1) => {
-    if (USE_DUMMY) {
-      const filtered = statusFilter
-        ? DUMMY_SETTLEMENTS.filter((s) => s.settlementStatus === statusFilter)
-        : DUMMY_SETTLEMENTS;
-      setSettlements(filtered);
-      setTotalItems(filtered.length);
-      setTotalPages(1);
-      setPage(p);
-      return;
-    }
     const rid = ++reqId.current;
     setLoading(true);
     setError('');
@@ -244,10 +226,10 @@ function GenerateModal({ onClose, onSuccess }: GenerateModalProps) {
           {genError && <p style={{ fontSize: 13, color: '#9a4444', marginTop: 12 }}>{genError}</p>}
         </div>
         <div className="modalAction">
+          <button onClick={onClose} disabled={genLoading}>취소</button>
           <button onClick={handleGenerate} disabled={genLoading || !isValid}>
             {genLoading ? '생성 중...' : '생성'}
           </button>
-          <button onClick={onClose} disabled={genLoading}>취소</button>
         </div>
       </div>
     </div>

@@ -82,6 +82,7 @@ export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: M
           </div>
         </div>
         <div className="modalAction">
+          <button onClick={onClose}>닫기</button>
           {member.memberStatus === MEMBER_STATUS.SUSPENDED ? (
             <button onClick={() => onUnsuspend(member)} style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}>정지 해제</button>
           ) : (
@@ -114,8 +115,8 @@ export function ConfirmViewModal({ memberId, onConfirm, onClose }: ConfirmViewMo
           </p>
         </div>
         <div className="modalAction">
-          <button onClick={() => onConfirm(memberId)}>확인</button>
           <button onClick={onClose}>취소</button>
+          <button onClick={() => onConfirm(memberId)}>확인</button>
         </div>
       </div>
     </div>
@@ -208,6 +209,7 @@ export function SuspendModal({ target, onClose, onSuccess }: SuspendModalProps) 
           )}
         </div>
         <div className="modalAction">
+          <button onClick={onClose} disabled={loading}>취소</button>
           <button
             onClick={handleSuspend}
             disabled={loading || reason.trim().length < 10}
@@ -215,7 +217,6 @@ export function SuspendModal({ target, onClose, onSuccess }: SuspendModalProps) 
           >
             {loading ? '처리 중...' : `${durationLabel[period]} 정지 처리`}
           </button>
-          <button onClick={onClose} disabled={loading}>취소</button>
         </div>
       </div>
     </div>
@@ -281,6 +282,7 @@ export function UnsuspendModal({ target, onClose, onSuccess }: UnsuspendModalPro
           )}
         </div>
         <div className="modalAction">
+          <button onClick={onClose} disabled={loading}>취소</button>
           <button
             onClick={handleUnsuspend}
             disabled={loading || reason.trim().length < 10}
@@ -288,7 +290,6 @@ export function UnsuspendModal({ target, onClose, onSuccess }: UnsuspendModalPro
           >
             {loading ? '처리 중...' : '정지 해제'}
           </button>
-          <button onClick={onClose} disabled={loading}>취소</button>
         </div>
       </div>
     </div>

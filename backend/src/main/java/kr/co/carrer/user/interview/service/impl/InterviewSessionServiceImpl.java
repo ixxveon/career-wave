@@ -70,6 +70,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         String finalSessionType = sessionType.name();
         String finalInterviewType = interviewType != null ? interviewType.name() : null;
         String finalFocusType = focusType != null ? focusType.name() : null;
+        String finalTargetCompany = dto.targetCompany();
         UUID finalDocumentId = documentId;
         String finalFileUrl = fileUrl;
 
@@ -89,7 +90,8 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
                             "",
                             finalSessionType,
                             finalInterviewType,
-                            finalFocusType
+                            finalFocusType,
+                            finalTargetCompany
                     );
                 }
             });
@@ -127,6 +129,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         String sessionType = session.getSessionType().name();
         String interviewType = session.getInterviewType() != null ? session.getInterviewType().name() : null;
         String focusType = session.getFocusType() != null ? session.getFocusType().name() : null;
+        String targetCompany = session.getTargetCompany();
         String questionText = messageRepository
                 .findTopBySessionIdAndSenderAndMessageTypeOrderByCreatedAtDesc(sessionId, MessageSender.AI, MessageType.QUESTION)
                 .map(InterviewMessage::getMessageContent)
@@ -136,7 +139,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    fastApiClient.triggerLlmPipeline(sessionId, memberId, questionOrder, answerText, questionText, sessionType, interviewType, focusType);
+                    fastApiClient.triggerLlmPipeline(sessionId, memberId, questionOrder, answerText, questionText, sessionType, interviewType, focusType, targetCompany);
                 }
             });
         }
@@ -213,6 +216,19 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         }
 
         return new InterviewDTO.ResponseEndSession(sessionId.toString(), SessionStatus.COMPLETED.name(), endedAt);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<InterviewDTO.ResponseInProgressSession> findInProgressSession(UUID memberId) {
+        return sessionRepository.findInProgressByMemberIdReadOnly(memberId, SessionStatus.IN_PROGRESS)
+                .map(s -> new InterviewDTO.ResponseInProgressSession(
+                        s.getSessionId().toString(),
+                        s.getSessionType().name(),
+                        s.getInterviewType() != null ? s.getInterviewType().name() : null,
+                        s.getTargetCompany(),
+                        s.getCreatedAt()
+                ));
     }
 
     private SessionType parseSessionType(String sessionType) {

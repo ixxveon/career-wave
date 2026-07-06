@@ -1,5 +1,6 @@
 import { memberApiClient } from '../member/memberApiClient';
 import type {
+  InProgressSessionResponse,
   StartSessionRequest,
   StartSessionResponse,
   SubmitTextAnswerRequest,
@@ -16,6 +17,14 @@ export interface SubmitVoiceBlobParams {
 }
 
 export const interviewSessionApi = {
+  getInProgress(signal?: AbortSignal): Promise<InProgressSessionResponse | null> {
+    return memberApiClient<InProgressSessionResponse | null>('/api/v1/user/interview/sessions/in-progress', {
+      method: 'GET',
+      auth: true,
+      signal,
+    });
+  },
+
   start(params: StartSessionRequest, signal?: AbortSignal): Promise<StartSessionResponse> {
     return memberApiClient<StartSessionResponse>('/api/v1/user/interview/sessions', {
       method: 'POST',

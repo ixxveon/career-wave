@@ -31,6 +31,7 @@
 | `session_type` | VARCHAR(10) | NOT NULL | `TEXT` \| `VOICE` \| `VIDEO` |
 | `session_status` | VARCHAR(20) | NOT NULL, DEFAULT 'IN_PROGRESS' | `IN_PROGRESS` \| `COMPLETED` \| `FAILED` |
 | `interview_type` | VARCHAR(20) | NULL | `TECHNICAL` \| `PERSONALITY` \| `PROJECT` |
+| `focus_type` | VARCHAR(30) | NULL | `FOLLOW_UP` \| `TECHNICAL_DEPTH` \| `DELIVERY` \| `FLUENCY` — 개선 추천 액션 집중 유형 |
 | `target_company` | VARCHAR(100) | NULL | 준비 대상 기업명 |
 | `total_score` | INTEGER | NULL | 종합 점수 (리포트 완료 후 산정) |
 | `started_at` | TIMESTAMPTZ | NULL | 면접 시작 일시 |
