@@ -59,7 +59,7 @@ class LoginAttemptServiceImplTest {
         props.getUser().setAccessExpiration(1800000L);
         props.getUser().setRefreshExpiration(1209600000L);
         props.getAdmin().setSecret("test-admin-secret-key-must-be-at-least-32-bytes!");
-        props.getAdmin().setAccessExpiration(900000L);
+        props.getAdmin().setAccessExpiration(10800000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
         service = new UserLoginServiceImpl(memberRepository, encoder, provider, props,
