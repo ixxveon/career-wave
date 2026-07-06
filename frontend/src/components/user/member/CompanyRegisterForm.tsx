@@ -1,5 +1,6 @@
 import { BadgeCheck, Building2, FileText, UserRound } from 'lucide-react';
 import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCompanyRegisterForm } from '../../../hooks/user/member/useCompanyRegisterForm';
 import { formatRemaining } from '../../../utils/user/member/recoveryView';
 import type { CompanyTermDetails } from '../../../utils/user/member/registerTerms';
@@ -48,6 +49,9 @@ export function CompanyRegisterForm({
     handleAddressSearch,
     handleBusinessNumberCheck,
     handleCertificateChange,
+    handleChangeBusinessNumber,
+    handleChangeEmail,
+    handleChangePhone,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,
     handleLoginIdCheck,
@@ -64,16 +68,22 @@ export function CompanyRegisterForm({
     sendPhoneCode,
     setIsSubmitGuideOpen,
     setTerms,
-    successMessage,
     terms,
     update,
     uploadEmploymentCertificate,
     verification,
   } = useCompanyRegisterForm();
+  const navigate = useNavigate();
 
   const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     void handleSubmit();
+  };
+
+  // 가입 신청 접수 모달 확인 → 로그인 페이지로 이동 (issue #1045)
+  const handleSubmitGuideConfirm = () => {
+    setIsSubmitGuideOpen(false);
+    navigate('/auth/login');
   };
 
   return (
@@ -101,11 +111,14 @@ export function CompanyRegisterForm({
                     value={form.businessNumber}
                     onChange={(value) => update('businessNumber', value)}
                     placeholder="사업자등록번호('-' 없이 숫자만 입력)"
+                    readOnly={businessNumberCheckState === BUSINESS_NUMBER_CHECK_STATE.CONFIRMED}
                   />
                 }
                 buttonLabel={checkBusinessNumber.isPending ? '확인 중...' : '확인'}
                 onClick={() => void handleBusinessNumberCheck()}
-                disabled={checkBusinessNumber.isPending}
+                disabled={checkBusinessNumber.isPending || businessNumberCheckState === BUSINESS_NUMBER_CHECK_STATE.CONFIRMED}
+                secondButtonLabel={businessNumberCheckState === BUSINESS_NUMBER_CHECK_STATE.CONFIRMED ? '변경' : undefined}
+                onSecondClick={handleChangeBusinessNumber}
               />
               <div className="cw-register-status-area">
                 {businessNumberCheckMessage && (
@@ -199,10 +212,12 @@ export function CompanyRegisterForm({
             </Field>
             <Field label="담당자 전화번호" required wide>
               <AuthButtonGroup
-                input={<TextInput type="tel" value={form.managerPhone} onChange={(value) => update('managerPhone', value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" />}
-                buttonLabel="인증번호 전송"
-                disabled={sendPhoneCode.isPending || phoneResendIn > 0}
+                input={<TextInput type="tel" value={form.managerPhone} onChange={(value) => update('managerPhone', value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" readOnly={Boolean(verification.phoneId)} />}
+                buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
+                disabled={sendPhoneCode.isPending || phoneResendIn > 0 || Boolean(verification.phoneToken)}
                 onClick={handleSendPhoneCode}
+                secondButtonLabel={verification.phoneId ? '변경' : undefined}
+                onSecondClick={handleChangePhone}
               />
               <div className="cw-register-status-area">
                 <StatusPill active={Boolean(verification.phoneId) && !verification.phoneToken && phoneExpiresIn > 0}>
@@ -214,22 +229,26 @@ export function CompanyRegisterForm({
                 {fieldErrors.managerPhone && <p className="cw-register-error">{fieldErrors.managerPhone}</p>}
               </div>
             </Field>
-            <Field label="휴대폰 인증번호" required wide>
-              <AuthButtonGroup
-                input={<TextInput value={form.managerPhoneCode} onChange={(value) => update('managerPhoneCode', value)} placeholder="인증번호 6자리 입력" />}
-                buttonLabel={confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
-                disabled={confirmPhoneCode.isPending || !verification.phoneId || phoneExpiresIn <= 0}
-                onClick={handleConfirmPhoneCode}
-              />
-              <StatusPill active={Boolean(verification.phoneToken)}>휴대폰 인증이 완료되었습니다.</StatusPill>
-              {fieldErrors.managerPhoneCode && <p className="cw-register-error">{fieldErrors.managerPhoneCode}</p>}
-            </Field>
+            {verification.phoneId && (
+              <Field label="휴대폰 인증번호" required wide>
+                <AuthButtonGroup
+                  input={<TextInput value={form.managerPhoneCode} onChange={(value) => update('managerPhoneCode', value)} placeholder="인증번호 6자리 입력" readOnly={Boolean(verification.phoneToken)} />}
+                  buttonLabel={confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
+                  disabled={confirmPhoneCode.isPending || !verification.phoneId || phoneExpiresIn <= 0 || Boolean(verification.phoneToken)}
+                  onClick={handleConfirmPhoneCode}
+                />
+                <StatusPill active={Boolean(verification.phoneToken)}>휴대폰 인증이 완료되었습니다.</StatusPill>
+                {fieldErrors.managerPhoneCode && <p className="cw-register-error">{fieldErrors.managerPhoneCode}</p>}
+              </Field>
+            )}
             <Field label="담당자 이메일" required wide>
               <AuthButtonGroup
-                input={<TextInput type="email" value={form.managerEmail} onChange={(value) => update('managerEmail', value)} placeholder="담당자 이메일 주소 입력" />}
-                buttonLabel="인증번호 전송"
-                disabled={sendEmailCode.isPending || emailResendIn > 0}
+                input={<TextInput type="email" value={form.managerEmail} onChange={(value) => update('managerEmail', value)} placeholder="담당자 이메일 주소 입력" readOnly={Boolean(verification.emailId)} />}
+                buttonLabel={sendEmailCode.isPending ? '전송 중' : verification.emailId ? `재전송${emailResendIn > 0 ? ` ${formatRemaining(emailResendIn)}` : ''}` : '인증번호 전송'}
+                disabled={sendEmailCode.isPending || emailResendIn > 0 || Boolean(verification.emailToken)}
                 onClick={handleSendEmailCode}
+                secondButtonLabel={verification.emailId ? '변경' : undefined}
+                onSecondClick={handleChangeEmail}
               />
               <div className="cw-register-status-area">
                 <StatusPill active={Boolean(verification.emailId) && !verification.emailToken && emailExpiresIn > 0}>
@@ -241,16 +260,18 @@ export function CompanyRegisterForm({
                 {fieldErrors.managerEmail && <p className="cw-register-error">{fieldErrors.managerEmail}</p>}
               </div>
             </Field>
-            <Field label="이메일 인증번호" required wide>
-              <AuthButtonGroup
-                input={<TextInput value={form.managerEmailCode} onChange={(value) => update('managerEmailCode', value)} placeholder="인증번호 6자리 입력" />}
-                buttonLabel={confirmEmailCode.isPending ? '확인 중' : '인증 확인'}
-                disabled={confirmEmailCode.isPending || !verification.emailId || emailExpiresIn <= 0}
-                onClick={handleConfirmEmailCode}
-              />
-              <StatusPill active={Boolean(verification.emailToken)}>이메일 인증이 완료되었습니다.</StatusPill>
-              {fieldErrors.managerEmailCode && <p className="cw-register-error">{fieldErrors.managerEmailCode}</p>}
-            </Field>
+            {verification.emailId && (
+              <Field label="이메일 인증번호" required wide>
+                <AuthButtonGroup
+                  input={<TextInput value={form.managerEmailCode} onChange={(value) => update('managerEmailCode', value)} placeholder="인증번호 6자리 입력" readOnly={Boolean(verification.emailToken)} />}
+                  buttonLabel={confirmEmailCode.isPending ? '확인 중' : '인증 확인'}
+                  disabled={confirmEmailCode.isPending || !verification.emailId || emailExpiresIn <= 0 || Boolean(verification.emailToken)}
+                  onClick={handleConfirmEmailCode}
+                />
+                <StatusPill active={Boolean(verification.emailToken)}>이메일 인증이 완료되었습니다.</StatusPill>
+                {fieldErrors.managerEmailCode && <p className="cw-register-error">{fieldErrors.managerEmailCode}</p>}
+              </Field>
+            )}
             <Field label="재직증명서 업로드" required wide>
               <div className="cw-register-upload">
                 <div className="cw-register-upload__hint">
@@ -285,7 +306,6 @@ export function CompanyRegisterForm({
         </section>
 
         {formMessage && <p className="cw-register-error">{formMessage}</p>}
-        {successMessage && <StatusPill active>{successMessage}</StatusPill>}
 
         <button className="cw-register-submit" disabled={uploadEmploymentCertificate.isPending || registerCompany.isPending} type="submit">
           {uploadEmploymentCertificate.isPending || registerCompany.isPending ? '가입 신청 처리 중' : '기업회원 가입하기'}
@@ -294,13 +314,13 @@ export function CompanyRegisterForm({
 
       {isSubmitGuideOpen && (
         <div aria-labelledby="company-submit-guide-title" aria-modal="true" className="cw-register-modal" role="dialog">
-          <button aria-label="모달 닫기" className="cw-register-modal__backdrop" onClick={() => setIsSubmitGuideOpen(false)} type="button" />
+          <button aria-label="모달 닫기" className="cw-register-modal__backdrop" onClick={handleSubmitGuideConfirm} type="button" />
           <div className="cw-register-modal__dialog">
             <h3 id="company-submit-guide-title">가입 신청이 접수되었습니다.</h3>
             <p>제출해주신 기업 정보와 재직증명서를 검토한 후 기업회원 가입이 승인됩니다.</p>
             <p>심사는 영업일 기준 2~3일 정도 소요될 수 있으며, 승인 결과는 입력하신 담당자 이메일로 안내드릴 예정입니다.</p>
-            <button className="cw-register-submit cw-register-modal__confirm" onClick={() => setIsSubmitGuideOpen(false)} type="button">
-              확인
+            <button className="cw-register-submit cw-register-modal__confirm" onClick={handleSubmitGuideConfirm} type="button">
+              로그인 페이지로 이동
             </button>
           </div>
         </div>

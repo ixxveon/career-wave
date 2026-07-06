@@ -227,6 +227,21 @@ function RegisterVerifyPage() {
     }
   };
 
+  // 「변경」— 전송한 휴대폰 번호를 다시 편집 가능하게 잠금 해제하고 인증 상태를 초기화한다. (issue #1036)
+  const handleChangePhone = () => {
+    verificationRequestRef.current += 1;
+    setVerification({
+      verificationId: '',
+      verificationToken: '',
+      expiresAt: '',
+      resendAvailableAt: '',
+      remainingAttempts: 0,
+    });
+    setForm((current) => ({ ...current, phoneCode: '' }));
+    setFieldErrors((current) => ({ ...current, phone: '', phoneCode: '' }));
+    clearMessages();
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -324,11 +339,16 @@ function RegisterVerifyPage() {
                 <span className="cw-register-label">
                   휴대폰 번호 <em>*</em>
                 </span>
-                <div className="cw-register-inline">
-                  <input value={form.phone} onChange={(event) => update('phone', event.target.value)} placeholder="010-0000-0000" />
-                  <button className="cw-register-sub-button" type="button" onClick={() => void handleSendPhoneCode()} disabled={sendPhoneCode.isPending || phoneResendIn > 0}>
+                <div className={verification.verificationId ? 'cw-register-inline cw-register-inline--triple' : 'cw-register-inline'}>
+                  <input value={form.phone} readOnly={Boolean(verification.verificationId)} onChange={(event) => update('phone', event.target.value)} placeholder="010-0000-0000" />
+                  <button className="cw-register-sub-button" type="button" onClick={() => void handleSendPhoneCode()} disabled={sendPhoneCode.isPending || phoneResendIn > 0 || Boolean(verification.verificationToken)}>
                     {sendPhoneCode.isPending ? '전송 중' : verification.verificationId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
                   </button>
+                  {verification.verificationId && (
+                    <button className="cw-register-sub-button cw-register-sub-button--ghost" type="button" onClick={handleChangePhone}>
+                      변경
+                    </button>
+                  )}
                 </div>
                 {verification.verificationId && !verification.verificationToken && phoneExpiresIn > 0 && (
                   <span className="cw-register-status">
@@ -341,27 +361,29 @@ function RegisterVerifyPage() {
                 )}
                 {fieldErrors.phone && <p className="cw-register-error">{fieldErrors.phone}</p>}
               </label>
-              <label className="cw-register-field cw-register-field--wide">
-                <span className="cw-register-label">휴대폰 인증번호</span>
-                <div className="cw-register-inline">
-                  <input value={form.phoneCode} onChange={(event) => update('phoneCode', event.target.value)} placeholder="인증번호 입력" />
-                  <button
-                    className="cw-register-sub-button"
-                    type="button"
-                    onClick={() => void handleConfirmPhoneCode()}
-                    disabled={confirmPhoneCode.isPending || !verification.verificationId || phoneExpiresIn <= 0}
-                  >
-                    {confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
-                  </button>
-                </div>
-                {verification.verificationToken && (
-                  <span className="cw-register-status">
-                    <CheckCircle2 size={15} />
-                    휴대폰 인증 완료
-                  </span>
-                )}
-                {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
-              </label>
+              {verification.verificationId && (
+                <label className="cw-register-field cw-register-field--wide">
+                  <span className="cw-register-label">휴대폰 인증번호</span>
+                  <div className="cw-register-inline">
+                    <input value={form.phoneCode} readOnly={Boolean(verification.verificationToken)} onChange={(event) => update('phoneCode', event.target.value)} placeholder="인증번호 입력" />
+                    <button
+                      className="cw-register-sub-button"
+                      type="button"
+                      onClick={() => void handleConfirmPhoneCode()}
+                      disabled={confirmPhoneCode.isPending || !verification.verificationId || phoneExpiresIn <= 0 || Boolean(verification.verificationToken)}
+                    >
+                      {confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
+                    </button>
+                  </div>
+                  {verification.verificationToken && (
+                    <span className="cw-register-status">
+                      <CheckCircle2 size={15} />
+                      휴대폰 인증 완료
+                    </span>
+                  )}
+                  {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
+                </label>
+              )}
             </div>
           </section>
 
