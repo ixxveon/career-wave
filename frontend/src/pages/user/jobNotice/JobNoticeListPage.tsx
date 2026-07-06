@@ -520,7 +520,7 @@ export default function JobNoticeListPage() {
       : filteredJobs.length > 0
         ? 'success'
         : 'empty';
-  const shouldShowResultCount = listStatus !== 'error';
+  const shouldShowResultCount = listStatus === 'success' || listStatus === 'empty';
 
   useEffect(() => {
     if (!jobNoticeListResponse?.content.length) return;
