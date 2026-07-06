@@ -132,7 +132,7 @@ export default function TextInterviewPage() {
         } else if (e.statusCode === 403) {
           setApiError('연결된 서류에 접근 권한이 없습니다. 본인 소유의 서류인지 확인해주세요.');
         } else if (e.statusCode === 404) {
-          setApiError('연결된 서류를 찾을 수 없습니다. 서류 분석 페이지에서 다시 시도해주세요.');
+          setApiError('연결된 서류를 찾을 수 없습니다. 이력서·자기소개서 분석 페이지에서 다시 시도해주세요.');
         } else {
           setApiError('세션 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
         }
