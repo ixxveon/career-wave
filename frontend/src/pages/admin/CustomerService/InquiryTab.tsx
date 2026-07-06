@@ -270,27 +270,30 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
                   disabled={selectedInquiry.inquiryStatus === 'COMPLETED'} />
               </div>
             </div>
-            <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
-              {inqActionError && <p style={{ fontSize: 13, color: '#9a4444', flex: '1 1 100%', marginBottom: 8 }}>{inqActionError}</p>}
-              {selectedInquiry.inquiryStatus !== 'COMPLETED' && (
-                <>
-                  <button onClick={saveInquiryReply} disabled={inqActionLoading || !inquiryReply.trim()}>
-                    {inqActionLoading ? '저장 중...' : '답변 저장'}
+            {(inqActionError || selectedInquiry.inquiryStatus !== 'COMPLETED' ||
+              ((selectedInquiry.category === INQUIRY_CATEGORY.REFUND || selectedInquiry.category === INQUIRY_CATEGORY.PAYMENT_ERROR) && selectedInquiry.memberEmail)) && (
+              <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
+                {inqActionError && <p style={{ fontSize: 13, color: '#9a4444', flex: '1 1 100%', marginBottom: 8 }}>{inqActionError}</p>}
+                {selectedInquiry.inquiryStatus !== 'COMPLETED' && (
+                  <>
+                    <button onClick={saveInquiryReply} disabled={inqActionLoading || !inquiryReply.trim()}>
+                      {inqActionLoading ? '저장 중...' : '답변 저장'}
+                    </button>
+                    {selectedInquiry.inquiryStatus === 'IN_PROGRESS' && (
+                      <button onClick={completeInquiry} disabled={inqActionLoading || !inquiryReply.trim()}>처리 완료</button>
+                    )}
+                  </>
+                )}
+                {(selectedInquiry.category === INQUIRY_CATEGORY.REFUND || selectedInquiry.category === INQUIRY_CATEGORY.PAYMENT_ERROR) && selectedInquiry.memberEmail && (
+                  <button
+                    onClick={() => navigate(`${ADMIN_ROUTE_PATHS.payments}?tab=payments&keyword=${encodeURIComponent(selectedInquiry.memberEmail)}`)}
+                    style={{ background: '#2e5eaa', color: '#fff', borderColor: '#2e5eaa' }}
+                  >
+                    결제 내역 확인
                   </button>
-                  {selectedInquiry.inquiryStatus === 'IN_PROGRESS' && (
-                    <button onClick={completeInquiry} disabled={inqActionLoading || !inquiryReply.trim()}>처리 완료</button>
-                  )}
-                </>
-              )}
-              {(selectedInquiry.category === INQUIRY_CATEGORY.REFUND || selectedInquiry.category === INQUIRY_CATEGORY.PAYMENT_ERROR) && selectedInquiry.memberEmail && (
-                <button
-                  onClick={() => navigate(`${ADMIN_ROUTE_PATHS.payments}?tab=payments&keyword=${encodeURIComponent(selectedInquiry.memberEmail)}`)}
-                  style={{ background: '#2e5eaa', color: '#fff', borderColor: '#2e5eaa' }}
-                >
-                  결제 내역 확인
-                </button>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

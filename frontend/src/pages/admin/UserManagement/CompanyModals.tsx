@@ -60,24 +60,22 @@ export function CompanyDetailModal({ company, onClose, onApprove, onReject }: Co
             <strong>반려 사유:</strong> {company.rejectReason}
           </div>
         )}
-        <div className="modalAction">
-          {company.hrStatus === 'PENDING' && (
-            <>
-              <button
-                style={{ background: '#24496f', color: 'white', borderColor: '#24496f' }}
-                onClick={() => { onApprove(company); }}
-              >
-                승인 처리
-              </button>
-              <button
-                style={{ background: '#fff1f2', color: '#9a6767', borderColor: '#ffd5d5' }}
-                onClick={() => { onReject(company); }}
-              >
-                반려 처리
-              </button>
-            </>
-          )}
-        </div>
+        {company.hrStatus === 'PENDING' && (
+          <div className="modalAction">
+            <button
+              style={{ background: '#24496f', color: 'white', borderColor: '#24496f' }}
+              onClick={() => { onApprove(company); }}
+            >
+              승인 처리
+            </button>
+            <button
+              style={{ background: '#fff1f2', color: '#9a6767', borderColor: '#ffd5d5' }}
+              onClick={() => { onReject(company); }}
+            >
+              반려 처리
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
