@@ -2,10 +2,8 @@ package kr.co.carrer.user.member.controller;
 
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import kr.co.carrer.user.member.dto.UserRecoveryDto;
 import kr.co.carrer.user.member.service.UserRecoveryService;
 import org.junit.jupiter.api.DisplayName;
@@ -28,15 +26,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserRecoveryController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, SecurityMockConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
 class UserRecoveryControllerTest {
 
     @Autowired MockMvc mockMvc;
 
     @MockBean UserRecoveryService userRecoveryService;
-    @MockBean JwtTokenProvider jwtTokenProvider;
-    @MockBean TokenBlacklistStore tokenBlacklistStore;
-    @MockBean IpAclPort ipAclPort;
 
     // ─── 아이디 찾기 ──────────────────────────────────────────────────────────────
 
