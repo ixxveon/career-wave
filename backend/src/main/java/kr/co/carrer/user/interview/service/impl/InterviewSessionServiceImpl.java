@@ -218,7 +218,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     @Override
     @Transactional(readOnly = true)
     public java.util.Optional<InterviewDTO.ResponseInProgressSession> findInProgressSession(UUID memberId) {
-        return sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)
+        return sessionRepository.findInProgressByMemberIdReadOnly(memberId, SessionStatus.IN_PROGRESS)
                 .map(s -> new InterviewDTO.ResponseInProgressSession(
                         s.getSessionId().toString(),
                         s.getSessionType().name(),
