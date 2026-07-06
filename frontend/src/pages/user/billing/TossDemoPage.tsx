@@ -7,7 +7,8 @@ import { useTossDemoCheckout } from '../../../hooks/user/billing/useTossDemoChec
  * Toss 테스트 키로 실제 결제창을 띄워 QR 결제 흐름을 시연한다. (구독/entitlement 발급 없음, 실제 미결제)
  */
 function TossDemoPage() {
-  const { isRequesting, error, handlePay } = useTossDemoCheckout();
+  const { order, isLoadingOrder, isRequesting, error, handlePay } = useTossDemoCheckout();
+  const amountText = order ? `${order.amount.toLocaleString('ko-KR')}원` : '불러오는 중…';
 
   return (
     <div className="cw-billing-flow-page">
@@ -26,11 +27,11 @@ function TossDemoPage() {
           <div className="cw-billing-summary-card" style={{ margin: '20px 0' }}>
             <div className="cw-billing-summary-row">
               <span>상품</span>
-              <span>커리어웨이브 데모 결제</span>
+              <span>{order?.orderName ?? '커리어웨이브 데모 결제'}</span>
             </div>
             <div className="cw-billing-summary-row">
               <span>결제 금액</span>
-              <span>1,000원</span>
+              <span>{amountText}</span>
             </div>
             <div className="cw-billing-summary-row">
               <span>결제 수단</span>
@@ -50,7 +51,7 @@ function TossDemoPage() {
               type="button"
               className="cw-billing-primary-button"
               onClick={handlePay}
-              disabled={isRequesting}
+              disabled={isRequesting || isLoadingOrder || !order}
             >
               {isRequesting ? (
                 <>
