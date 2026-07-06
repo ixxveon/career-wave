@@ -69,6 +69,14 @@ export type InterviewSessionState = typeof SESSION_STATE[keyof typeof SESSION_ST
 
 export type FocusType = 'FOLLOW_UP' | 'TECHNICAL_DEPTH' | 'DELIVERY' | 'FLUENCY';
 
+export interface InProgressSessionResponse {
+  sessionId: string;
+  sessionType: SessionType;
+  interviewType: InterviewType | null;
+  targetCompany: string | null;
+  createdAt: string;
+}
+
 export interface StartSessionRequest {
   documentId?: string | null;
   sessionType: SessionType;

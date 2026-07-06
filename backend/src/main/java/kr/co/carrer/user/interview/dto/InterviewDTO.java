@@ -12,6 +12,25 @@ import java.util.List;
 
 public class InterviewDTO {
 
+    @Schema(description = "진행 중인 면접 세션 조회 응답 (재개 모달용)")
+    public record ResponseInProgressSession(
+
+            @Schema(description = "면접 세션 ID (UUID)")
+            String sessionId,
+
+            @Schema(description = "세션 타입", example = "TEXT")
+            String sessionType,
+
+            @Schema(description = "면접 유형 (미입력 시 null)")
+            String interviewType,
+
+            @Schema(description = "준비 대상 기업명 (미입력 시 null)")
+            String targetCompany,
+
+            @Schema(description = "세션 생성 일시 (ISO 8601)")
+            ZonedDateTime createdAt
+    ) {}
+
     @Schema(description = "면접 세션 시작 요청")
     public record RequestStartSession(
 
