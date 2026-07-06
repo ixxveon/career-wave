@@ -231,6 +231,48 @@ describe('AdminManagementPage master-only controls', () => {
     getAclInputs(container).forEach((input) => expect(input.disabled).toBe(true));
   });
 
+  it('submits loginId and email separately when creating an admin account', async () => {
+    adminSession.setRole(ADMIN_ROLE.MASTER);
+    adminManagementApiMock.createAdminAccount.mockResolvedValueOnce({
+      id: 'ADM-003',
+      name: 'CS Admin',
+      email: 'cs-admin@careerwave.kr',
+      role: ADMIN_ROLE.CS,
+      scope: '회원 문의, 신고, 1차 조치',
+      ip: null,
+      createdAt: '2026.06.10 09:00:00',
+      lastLoginAt: '',
+      status: 'ACTIVE',
+    });
+
+    const { container, findByPlaceholderText } = renderPage();
+
+    await waitFor(() => expect(getCreateAdminButton(container).disabled).toBe(false));
+    fireEvent.click(getCreateAdminButton(container));
+
+    fireEvent.change(await findByPlaceholderText('admin_master'), { target: { value: 'csadmin01' } });
+    fireEvent.change(await findByPlaceholderText('admin@career-wave.com'), { target: { value: 'cs-admin@careerwave.kr' } });
+    fireEvent.change(await findByPlaceholderText('초기 비밀번호 입력'), { target: { value: 'temporary-password' } });
+    fireEvent.change(await findByPlaceholderText('관리자 이름'), { target: { value: 'CS Admin' } });
+
+    const dialog = container.querySelector<HTMLFormElement>('.amCreatePage');
+    if (!dialog) throw new Error('.amCreatePage form was not found.');
+
+    fireEvent.submit(dialog);
+
+    await waitFor(() => {
+      expect(adminManagementApiMock.createAdminAccount).toHaveBeenCalled();
+    });
+
+    expect(adminManagementApiMock.createAdminAccount.mock.calls[0]?.[0]).toEqual({
+      loginId: 'csadmin01',
+      email: 'cs-admin@careerwave.kr',
+      password: 'temporary-password',
+      name: 'CS Admin',
+      role: ADMIN_ROLE.CS,
+    });
+  });
+
   it('keeps master-only controls disabled after MASTER_ROLE_REQUIRED fallback responses', async () => {
     adminSession.setRole(ADMIN_ROLE.MASTER);
     adminManagementApiMock.updateAdminRole.mockRejectedValueOnce({
