@@ -102,7 +102,7 @@ function seedApiMocks() {
         scope: '전체 권한 통제 및 보안 승인',
         ip: '10.20.0.1',
         createdAt: '2026.06.01 09:00:00',
-        lastLoginAt: '2026.06.09 09:00:00',
+        lastLoginAt: '2026-07-02T09:06:53.949209Z',
         status: 'ACTIVE',
       },
       {
@@ -113,7 +113,7 @@ function seedApiMocks() {
         scope: 'API, DB, 배포, 장애 대응',
         ip: '10.20.0.2',
         createdAt: '2026.06.01 09:00:00',
-        lastLoginAt: '2026.06.09 09:00:00',
+        lastLoginAt: '2026-07-01T23:45:00Z',
         status: 'ACTIVE',
       },
     ],
@@ -205,6 +205,19 @@ describe('AdminManagementPage master-only controls', () => {
 
     expect(getCreateAdminButton(container).disabled).toBe(false);
     getAclInputs(container).forEach((input) => expect(input.disabled).toBe(false));
+  });
+
+  it('formats recent login timestamps in KST for the admin account table', async () => {
+    adminSession.setRole(ADMIN_ROLE.MASTER);
+
+    const { container, findByText } = renderPage();
+
+    expect(await findByText('Master Admin')).toBeTruthy();
+
+    const rowTexts = Array.from(container.querySelectorAll('.amCompactTable tbody tr')).map((row) => row.textContent ?? '');
+
+    expect(rowTexts.some((text) => text.includes('Master Admin') && text.includes('2026-07-02') && text.includes('18:06'))).toBe(true);
+    expect(rowTexts.some((text) => text.includes('Backend Admin') && text.includes('2026-07-02') && text.includes('08:45'))).toBe(true);
   });
 
   it('preemptively disables master-only controls on initial render for non-MASTER admins', async () => {

@@ -141,6 +141,33 @@ const splitDateTime = (value: string) => {
   return { date, time };
 };
 
+const formatAdminLastLogin = (value: string) => {
+  if (!value) {
+    return '—';
+  }
+
+  if (value.includes(' ')) {
+    return value;
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return value;
+  }
+
+  const datePart = parsedDate.toLocaleDateString('sv-SE', {
+    timeZone: 'Asia/Seoul',
+  });
+  const timePart = parsedDate.toLocaleTimeString('sv-SE', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Seoul',
+  });
+
+  return `${datePart} ${timePart}`;
+};
+
 const isValidCidr = (value: string) => {
   const match = value.match(/^(\d{1,3})(?:\.(\d{1,3})){3}\/(\d{1,2})$/);
   if (!match) return false;
@@ -184,7 +211,7 @@ const toAdminAccountRow = (admin: AdminAccountResponse): AdminAccount => ({
   scope: admin.scope,
   ip: admin.ip,
   createdAt: admin.createdAt,
-  lastLogin: admin.lastLoginAt,
+  lastLogin: formatAdminLastLogin(admin.lastLoginAt),
   status: admin.status,
 });
 
