@@ -175,8 +175,8 @@ const AuditLogPage = lazy(() => import("../pages/admin/AuditLog/AuditLogPage"));
 const AdminCompanyListPage = lazy(
   () => import("../pages/admin/Company/CompanyListPage"),
 );
-const AdminSettlementListPage = lazy(
-  () => import("../pages/admin/Settlement/SettlementListPage"),
+const AdminSettlementDetailPage = lazy(
+  () => import("../pages/admin/Settlement/SettlementDetailPage"),
 );
 
 function RouteLoadingFallback() {
@@ -442,8 +442,8 @@ function AppRoutes() {
               element={lazyRoute(<AdminCompanyListPage />)}
             />
             <Route
-              path="settlements"
-              element={lazyRoute(<AdminSettlementListPage />)}
+              path="settlements/:settlementId"
+              element={lazyRoute(<AdminSettlementDetailPage />)}
             />
           </Route>
         </Route>

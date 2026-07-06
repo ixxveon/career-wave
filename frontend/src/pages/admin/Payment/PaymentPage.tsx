@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Construction } from 'lucide-react';
 import { adminSession } from '../../../api/admin/adminSession';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Payment.css';
 import PaymentHistoryTab from './PaymentHistoryTab';
 import SubscriptionTab from './SubscriptionTab';
+import SettlementTab from '../Settlement/SettlementTab';
 
 type PayTab = '결제 내역' | '구독 현황' | '정산 리포트';
 
@@ -64,21 +64,7 @@ export default function PaymentPage() {
 
       {tab === '결제 내역' && <PaymentHistoryTab key={urlKeyword} isMaster={isMaster} initialKeyword={urlKeyword} showToast={showToast} />}
       {tab === '구독 현황' && <SubscriptionTab showToast={showToast} />}
-      {tab === '정산 리포트' && (
-        <div className="memberPage">
-          <div className="payV2Blind">
-            <div className="payV2BlindInner">
-              <div className="payV2IconWrap"><Construction size={40} /></div>
-              <h3 className="payV2Title">정산 리포트</h3>
-              <p className="payV2Msg">다음 버전에 구현 될 예정입니다.</p>
-              <span className="payV2Sub">
-                현재 해당 기능은 준비 중입니다.<br />
-                v2 업데이트 시 제공될 예정입니다.
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+      {tab === '정산 리포트' && <SettlementTab showToast={showToast} />}
     </section>
   );
 }
