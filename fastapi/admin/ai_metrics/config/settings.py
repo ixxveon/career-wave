@@ -1,4 +1,5 @@
 from functools import lru_cache
+from urllib.parse import quote
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -12,10 +13,11 @@ class AiMetricsSettings(BaseSettings):
         populate_by_name=True,
     )
 
-    database_url: str = Field(
-        default="postgresql://careerwave:@localhost:5432/careerwave",
-        alias="DATABASE_URL",
-    )
+    db_host: str = Field(default="localhost", alias="DB_HOST")
+    db_port: int = Field(default=5432, alias="DB_PORT")
+    db_name: str = Field(default="careerwave", alias="DB_NAME")
+    db_username: str = Field(default="careerwave", alias="DB_USERNAME")
+    db_password: str = Field(default="", alias="DB_PASSWORD")
 
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model_light: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL_LIGHT")
@@ -52,6 +54,12 @@ class AiMetricsSettings(BaseSettings):
         default="./storage/vector-store",
         alias="VECTOR_STORE_BASE_PATH",
     )
+
+    @property
+    def database_url(self) -> str:
+        username = quote(self.db_username, safe="")
+        password = quote(self.db_password, safe="")
+        return f"postgresql://{username}:{password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
 
 @lru_cache
