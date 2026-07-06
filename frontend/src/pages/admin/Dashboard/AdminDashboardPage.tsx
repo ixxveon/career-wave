@@ -20,6 +20,16 @@ import '../../../styles/admin/admin.css';
 
 const DASHBOARD_SUMMARY_QUERY_KEY = ['admin', 'dashboard', 'summary'] as const;
 
+const KST_DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: 'Asia/Seoul',
+  hourCycle: 'h23',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
 const KPI_PRESENTATION = {
   [DASHBOARD_KPI_KEY.TODAY_NEW_ADMINS]: { Icon: Users, theme: 'kpi-blue' },
   [DASHBOARD_KPI_KEY.REALTIME_ACTIVE_ADMINS]: { Icon: Activity, theme: 'kpi-green' },
@@ -107,21 +117,13 @@ function hasAccessibleAdminTarget(currentAdminRole: AdminDetailRole | null, targ
   return isAdminNavigationPath(targetPath) && hasAdminRouteAccess(currentAdminRole, targetPath);
 }
 
-function formatKstDateTime(value?: string | null) {
+function formatKstDateTime(value?: string | null): string {
   if (!value) return '-';
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
 
-  const parts = new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(date);
+  const parts = KST_DATE_FORMATTER.formatToParts(date);
 
   const lookup = Object.fromEntries(
     parts
