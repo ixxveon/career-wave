@@ -34,11 +34,15 @@ export function useInterviewReport(sessionId: string | null) {
     },
   });
 
-  // isAnalyzing: 모든 재시도 소진 후에도 리포트 미완성 상태
+  // isAnalyzing: 재시도 중(failureCount < 8)에만 분석 중으로 처리
+  // 재시도 소진(isError) 후에는 일반 에러로 떨어뜨려 "불러올 수 없습니다" 화면을 노출
+  const is409NotReady = (e: MemberApiError | null | undefined): boolean =>
+    e?.statusCode === 409 && e?.serverCode === 'INTERVIEW_REPORT_NOT_READY';
+
   const isAnalyzing =
-    query.isError &&
-    query.error?.statusCode === 409 &&
-    query.error?.serverCode === 'INTERVIEW_REPORT_NOT_READY';
+    !query.isError &&
+    query.failureCount > 0 &&
+    is409NotReady(query.failureReason as MemberApiError | null);
 
   return { ...query, isAnalyzing };
 }

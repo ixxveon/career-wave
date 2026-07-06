@@ -220,7 +220,14 @@ export default function AdminDashboardPage() {
       return [0];
     }
 
-    return [1, 0.75, 0.5, 0.25, 0].map((ratio) => Math.round(weeklySignupMax * ratio));
+    const tickStep = Math.max(1, Math.ceil(weeklySignupMax / 4));
+
+    return Array.from(
+      new Set(
+        [weeklySignupMax, weeklySignupMax - tickStep, weeklySignupMax - tickStep * 2, weeklySignupMax - tickStep * 3, 0]
+          .map((value) => Math.max(value, 0))
+      )
+    );
   }, [weeklySignupMax]);
 
   const { paymentRatio, hasPaymentRatioSectionError } = useMemo(() => {

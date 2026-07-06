@@ -3,10 +3,8 @@ package kr.co.carrer.user.member.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import kr.co.carrer.user.member.dto.UserRegisterDto;
 import kr.co.carrer.user.member.service.UserRegisterService;
 import org.junit.jupiter.api.DisplayName;
@@ -31,16 +29,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserRegisterController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, SecurityMockConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
 class UserRegisterControllerTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
     @MockBean UserRegisterService userRegisterService;
-    @MockBean JwtTokenProvider jwtTokenProvider;
-    @MockBean TokenBlacklistStore tokenBlacklistStore;
-    @MockBean IpAclPort ipAclPort;
 
     // ─── loginId 중복 확인 ────────────────────────────────────────────────────────
 

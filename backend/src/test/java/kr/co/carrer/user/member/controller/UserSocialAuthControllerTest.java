@@ -3,10 +3,8 @@ package kr.co.carrer.user.member.controller;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.CookieProperties;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import kr.co.carrer.user.member.dto.UserLoginDto;
 import kr.co.carrer.user.member.dto.UserSocialAuthDto;
 import kr.co.carrer.user.member.service.UserSocialAuthService;
@@ -31,15 +29,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserSocialAuthController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, CookieProperties.class})
+@Import({SecurityConfig.class, SecurityMockConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, CookieProperties.class})
 class UserSocialAuthControllerTest {
 
     @Autowired MockMvc mockMvc;
 
     @MockBean UserSocialAuthService userSocialAuthService;
-    @MockBean JwtTokenProvider jwtTokenProvider;
-    @MockBean TokenBlacklistStore tokenBlacklistStore;
-    @MockBean IpAclPort ipAclPort;
 
     // ─── OAuth authorize ──────────────────────────────────────────────────────────
 

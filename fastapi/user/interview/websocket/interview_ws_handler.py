@@ -62,6 +62,7 @@ class _SessionContext:
     msg_buffer: list[dict[str, Any]] = field(default_factory=list)
     # Phase 4 — LLM 파이프라인 컨텍스트
     interview_type: str | None = None       # TECHNICAL | PERSONALITY | PROJECT
+    focus_type: str | None = None           # FOLLOW_UP | TECHNICAL_DEPTH | DELIVERY | FLUENCY
     session_type: str | None = None         # TEXT | VOICE
     answer_history: list[dict[str, str]] = field(default_factory=list)  # [{question, answer}, ...]
     rag_context: str | None = None          # RAG 인덱싱된 문서 텍스트
@@ -221,6 +222,8 @@ async def interview_ws(
             ctx.session_type = pending_llm["sessionType"]
         if pending_llm.get("interviewType"):
             ctx.interview_type = pending_llm["interviewType"]
+        if pending_llm.get("focusType"):
+            ctx.focus_type = pending_llm["focusType"]
         from user.interview.pipeline import llm_pipeline
         asyncio.create_task(
             llm_pipeline.generate_and_deliver_question(
