@@ -237,7 +237,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         try {
             return FocusType.valueOf(focusType);
         } catch (IllegalArgumentException e) {
-            throw new CustomException(InterviewErrorCode.INTERVIEW_INVALID_SESSION_TYPE);
+            throw new CustomException(InterviewErrorCode.INTERVIEW_INVALID_FOCUS_TYPE);
         }
     }
 
