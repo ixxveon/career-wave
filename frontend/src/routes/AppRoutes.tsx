@@ -60,12 +60,13 @@ const JobNoticeListPage = lazy(
 const ApplicationStatusPage = lazy(
   () => import("../pages/user/application/ApplicationStatusPage"),
 );
-const ApplicantManagementPage = lazy(
-  () => import("../pages/user/application/ApplicantManagementPage"),
-);
-const ApplicantDetailPage = lazy(
-  () => import("../pages/user/application/ApplicantDetailPage"),
-);
+// TODO(#977, #1049): 백엔드 미구현으로 지원자 관리 페이지 임시 비활성화
+// const ApplicantManagementPage = lazy(
+//   () => import("../pages/user/application/ApplicantManagementPage"),
+// );
+// const ApplicantDetailPage = lazy(
+//   () => import("../pages/user/application/ApplicantDetailPage"),
+// );
 const ApplyPage = lazy(() => import("../pages/user/application/ApplyPage"));
 
 const ResumeAnalysisPage = lazy(
@@ -327,6 +328,7 @@ function AppRoutes() {
               path="status"
               element={lazyRoute(<ApplicationStatusPage />)}
             />
+            {/* TODO(#977, #1049): 백엔드 미구현으로 지원자 관리 라우트 임시 비활성화
             <Route
               path="applicants"
               element={lazyRoute(<ApplicantManagementPage />)}
@@ -335,6 +337,7 @@ function AppRoutes() {
               path="applicants/:applicationId"
               element={lazyRoute(<ApplicantDetailPage />)}
             />
+            */}
             <Route path="apply" element={lazyRoute(<ApplyPage />)} />
           </Route>
 
