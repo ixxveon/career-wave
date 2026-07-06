@@ -10,7 +10,6 @@
   justify-content: center;
   padding: 32px;
   background: rgba(15, 23, 42, 0.48);
-  backdrop-filter: blur(2px);
 }
 
 .jnd-drawer {
@@ -33,6 +32,7 @@
   display: grid;
   gap: 12px;
   padding: 20px 26px 16px;
+  overscroll-behavior: contain;
 }
 
 .jnd-header {
@@ -236,16 +236,12 @@
 }
 
 .jnd-tabs {
-  position: sticky;
-  top: 0;
-  z-index: 2;
   display: flex;
   gap: 4px;
   padding: 5px;
   border: 1px solid #d8e3f0;
   border-radius: 11px;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(10px);
+  background: #ffffff;
 }
 
 .jnd-tabs button {
@@ -374,9 +370,8 @@
   gap: 9px;
   padding: 12px 26px;
   border-top: 1px solid #d8e3f0;
-  background: rgba(255, 255, 255, 0.96);
+  background: #ffffff;
   box-shadow: 0 -8px 20px rgba(42, 62, 90, 0.06);
-  backdrop-filter: blur(12px);
 }
 
 .jnd-action-btn {
