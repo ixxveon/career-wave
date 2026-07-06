@@ -271,10 +271,10 @@ export default function NoticeTab({ onMutate }: NoticeTabProps) {
               </div>
             </div>
             <div className="modalAction" style={{ flexShrink: 0 }}>
+              <button onClick={() => closeNoticeModal()} disabled={noticeFormLoading}>취소</button>
               <button onClick={saveNotice} disabled={noticeFormLoading || noticeDetailLoading || !noticeForm.title.trim() || (noticeModal === 'edit' && (!noticeForm.noticeId || !!noticeFormError))}>
                 {noticeFormLoading ? '저장 중...' : noticeModal === 'create' ? '등록' : '저장'}
               </button>
-              <button onClick={() => closeNoticeModal()} disabled={noticeFormLoading}>취소</button>
             </div>
           </div>
         </div>
@@ -289,8 +289,8 @@ export default function NoticeTab({ onMutate }: NoticeTabProps) {
             </div>
             <p style={{ padding: '16px 24px', fontSize: 14, color: '#31475f' }}>해당 공지사항을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.</p>
             <div className="modalAction">
-              <button style={{ background: '#9a6767', color: 'white', borderColor: '#9a6767' }} onClick={confirmDeleteNotice}>삭제</button>
               <button onClick={() => setDeleteConfirmId(null)}>취소</button>
+              <button style={{ background: '#9a6767', color: 'white', borderColor: '#9a6767' }} onClick={confirmDeleteNotice}>삭제</button>
             </div>
           </div>
         </div>

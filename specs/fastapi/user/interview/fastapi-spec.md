@@ -99,6 +99,8 @@ Spring Boot는 세션 생명주기와 답변 저장을 담당하고, AI 처리 �
 - **FR-014**: FastAPI는 AI 파이프라인 처리 실패 시 `errorCode: INTERVIEW_AI_PIPELINE_ERROR` WebSocket 메시지를 전송해야 한다.
 - **FR-015**: FastAPI는 세션별 AI 사용 토큰과 비용을 사용 로그로 적재해야 한다.
 - **FR-016**: FastAPI는 다음 질문 순서가 10을 초과하면 LLM 질문 생성 없이 `report_pipeline.generate_and_send_report()`를 직접 호출하여 리포트 생성을 자동 트리거해야 한다. 최대 질문 수는 10개.
+- **FR-017**: FastAPI는 LLM 질문 생성 시 `focusType`이 있으면 기존 `interviewType` 시스템 프롬프트 뒤에 집중 목표 오버레이(`get_focus_overlay`)를 append하여 질문 방향을 조정해야 한다. 지원 값: `FOLLOW_UP` \| `TECHNICAL_DEPTH` \| `DELIVERY` \| `FLUENCY`.
+- **FR-018**: FastAPI는 LLM 질문 생성 시 `targetCompany`가 있으면 `interviewType` 프롬프트 뒤, `focusType` 오버레이 앞에 기업 맞춤 오버레이(`get_company_overlay`)를 append하여 해당 기업 인재상·기술 스택을 반영한 질문을 생성해야 한다. 기업 정보가 불확실한 경우 일반 질문으로 대체한다.
 
 ### Non-functional Requirements
 

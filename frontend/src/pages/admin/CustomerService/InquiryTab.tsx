@@ -272,6 +272,7 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
             </div>
             <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
               {inqActionError && <p style={{ fontSize: 13, color: '#9a4444', flex: '1 1 100%', marginBottom: 8 }}>{inqActionError}</p>}
+              <button onClick={closeInquiryModal}>닫기</button>
               {selectedInquiry.inquiryStatus !== 'COMPLETED' && (
                 <>
                   <button onClick={saveInquiryReply} disabled={inqActionLoading || !inquiryReply.trim()}>
@@ -290,7 +291,6 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
                   결제 내역 확인
                 </button>
               )}
-              <button onClick={closeInquiryModal}>닫기</button>
             </div>
           </div>
         </div>
