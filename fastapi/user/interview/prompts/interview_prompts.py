@@ -162,3 +162,18 @@ _FOCUS_OVERLAYS: dict[str, str] = {
 
 def get_focus_overlay(focus_type: str | None) -> str | None:
     return _FOCUS_OVERLAYS.get((focus_type or "").upper())
+
+
+# ── 목표 기업 맞춤 오버레이 ───────────────────────────────────────────────────
+
+def get_company_overlay(target_company: str | None) -> str | None:
+    if not target_company or not target_company.strip():
+        return None
+    # 개행 제거 — 사용자 입력이 시스템 프롬프트 구조를 흔드는 것을 방지
+    company = target_company.strip().replace("\n", " ").replace("\r", " ")
+    return f"""
+[목표 기업: {company}]
+- 지원자는 {company} 입사를 목표로 면접을 준비하고 있습니다.
+- {company}의 인재상, 기술 스택, 서비스 특성을 고려한 질문을 생성하세요.
+- {company}에서 실제로 중요하게 평가하는 역량(문제 해결력, 데이터 기반 사고, 협업 등)을 검증하는 방향으로 질문하세요.
+- 단, {company} 관련 정보가 불확실한 경우 일반적인 면접 질문으로 대체하세요."""
