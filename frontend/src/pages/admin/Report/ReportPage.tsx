@@ -514,6 +514,7 @@ export default function ReportPage() {
                 <span />
               )}
               <div style={{ display: 'flex', gap: 8 }}>
+                <button className="tableBtn" onClick={() => setSelected(null)}>닫기</button>
                 {selected.reportStatus === REPORT_STATUS.PENDING && (
                   <>
                     <button className="tableBtn tableBtn--approve" disabled={processing} onClick={() => handleBlind(selected.reportId)}>블라인드</button>
@@ -526,7 +527,6 @@ export default function ReportPage() {
                 >
                   회원 제재
                 </button>
-                <button className="tableBtn" onClick={() => setSelected(null)}>닫기</button>
               </div>
             </div>
           </div>
@@ -598,6 +598,7 @@ export default function ReportPage() {
             </div>
 
             <div className="modalAction">
+              <button className="tableBtn" onClick={() => setSuspendTarget(null)}>취소</button>
               <button
                 className="tableBtn tableBtn--danger"
                 onClick={applySuspend}
@@ -605,7 +606,6 @@ export default function ReportPage() {
               >
                 제재 적용
               </button>
-              <button className="tableBtn" onClick={() => setSuspendTarget(null)}>취소</button>
             </div>
           </div>
         </div>
