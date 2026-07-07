@@ -200,7 +200,7 @@ function ScrappedJobPage() {
             <p>검색 조건에 맞는 스크랩 공고가 없습니다.</p>
             <button
               type="button"
-              className="cw-empty-action"
+              className="cw-profile-edit-button"
               onClick={() => setSearchKeyword("")}
             >
               검색 초기화
