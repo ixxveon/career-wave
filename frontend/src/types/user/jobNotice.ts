@@ -210,7 +210,7 @@ export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoti
     location: jobNotice.location,
     companySize,
     salary: jobNotice.salary ?? undefined,
-    deadline: formatJobNoticeDeadline(jobNotice.deadline),
+    deadline: jobNotice.deadline?.trim() ?? '',
     postedAt: jobNotice.createdAt,
     tags,
     source: jobNotice.source,
