@@ -1051,9 +1051,6 @@ export default function AdminManagementPage() {
                 <h3 id="amCreatePageTitle">관리자 계정 생성</h3>
                 <p>새 관리자에게 로그인 정보와 초기 권한을 부여합니다.</p>
               </div>
-              <button className="amGhostButton" type="button" onClick={() => closeCreateAdminPage()}>
-                닫기
-              </button>
             </div>
 
             <div className="amCreatePageBody">
@@ -1522,7 +1519,7 @@ export default function AdminManagementPage() {
         .amCreatePageHero {
           display: flex;
           align-items: flex-start;
-          justify-content: space-between;
+          justify-content: flex-start;
           gap: 20px;
           padding: 28px 30px;
           border-bottom: 1px solid #e7eef7;
