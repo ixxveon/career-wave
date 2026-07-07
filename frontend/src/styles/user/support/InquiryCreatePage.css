@@ -1,17 +1,8 @@
 /* ═══════════════════════════════════════════════
    InquiryCreatePage
    ═══════════════════════════════════════════════ */
-.ic-page { padding: 36px 0 60px; }
-.ic-wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-
-.ic-back {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 7px 14px; border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border); background: var(--color-surface);
-  font-size: 13px; font-weight: 600; color: var(--color-text-secondary);
-  cursor: pointer; transition: all 0.12s; width: fit-content;
-}
-.ic-back:hover { background: var(--color-sky); color: var(--color-primary-dark); border-color: var(--color-primary); }
+.ic-page { padding: 24px 0 40px; }
+.ic-wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 
 .ic-eyebrow {
   display: inline-block; margin-bottom: 12px;
@@ -23,8 +14,8 @@
 .ic-header__desc  { margin: 0; font-size: 14px; color: var(--color-text-secondary); }
 
 .ic-card {
-  display: flex; flex-direction: column; gap: 24px;
-  padding: 32px 36px;
+  display: flex; flex-direction: column; gap: 18px;
+  padding: 24px 32px;
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border); background: var(--color-surface);
   box-shadow: 0 4px 16px rgba(52,65,85,0.05);
@@ -97,8 +88,12 @@
 .ic-btn--outline:hover { background: var(--color-sky); color: var(--color-primary-dark); }
 
 /* 접수 완료 */
+.ic-page--success {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 60vh;
+}
 .ic-success {
-  max-width: 480px; margin: 80px auto 0;
+  max-width: 480px;
   display: flex; flex-direction: column; align-items: center; gap: 16px;
   padding: 48px 40px;
   border-radius: var(--radius-xl);

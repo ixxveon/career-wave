@@ -5,6 +5,7 @@ import {
   paymentApi,
   PAY_STATUS,
   PAY_STATUS_LABEL,
+  PAYMENT_TYPE_LABEL,
   REFUND_STATUS_LABEL,
   type Payment,
   type PaymentSummary,
@@ -45,6 +46,7 @@ export default function PaymentHistoryTab({ isMaster, initialKeyword, showToast 
   const appliedPayFilters = useRef<PaymentListParams>(initialKeyword ? { keyword: initialKeyword } : {});
 
   const [selected, setSelected] = useState<Payment | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const fetchSummary = useCallback(async () => {
     const reqId = ++summaryReqId.current;
@@ -111,6 +113,54 @@ export default function PaymentHistoryTab({ isMaster, initialKeyword, showToast 
     fetchSummary();
   };
 
+  const escapeCsvCell = (value: string | number) => {
+    const s = String(value);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const f = appliedPayFilters.current;
+      const all: Payment[] = [];
+      let page = 1;
+      let totalPages = 1;
+      do {
+        const res = await paymentApi.getPayments({ ...f, page, size: 100 });
+        if (!res.data.success) throw new Error(res.data.message);
+        all.push(...res.data.data.items);
+        totalPages = res.data.data.totalPages;
+        page += 1;
+      } while (page <= totalPages);
+
+      const header = ['결제 ID', 'Toss 주문번호', '회원명', '상품명', '유형', '결제일', '금액', '상태'];
+      const rows = all.map((p) => [
+        p.paymentId,
+        p.orderId,
+        p.memberName,
+        p.planName,
+        PAYMENT_TYPE_LABEL[p.paymentType],
+        p.approvedAt ? new Date(p.approvedAt).toLocaleDateString('ko-KR') : '',
+        p.amount,
+        p.refundStatus ? REFUND_STATUS_LABEL[p.refundStatus] : PAY_STATUS_LABEL[p.paymentStatus],
+      ]);
+      const csv = [header, ...rows].map((row) => row.map(escapeCsvCell).join(',')).join('\r\n');
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `결제내역_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`결제 내역 ${all.length}건을 내보냈습니다.`);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.data?.message) showToast(err.response.data.message, 'error');
+      else showToast('내보내기에 실패했습니다.', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const renderPagination = (page: number, totalPages: number, loading: boolean, onPage: (p: number) => void) => (
     <div className="pagination">
       <button disabled={loading || page <= 1} onClick={() => onPage(page - 1)}>{'<'}</button>
@@ -160,7 +210,7 @@ export default function PaymentHistoryTab({ isMaster, initialKeyword, showToast 
       <section className="admin-card memberTableCard">
         <div className="memberTableHeader">
           <h3>결제 내역 <span className="payTotalCount">{payTotalItems}건</span></h3>
-          <button>내역 내보내기</button>
+          <button onClick={handleExport} disabled={exporting}>{exporting ? '내보내는 중...' : '내역 내보내기'}</button>
         </div>
         {payError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{payError}</p>}
         <div className="tableScroll">
@@ -183,7 +233,7 @@ export default function PaymentHistoryTab({ isMaster, initialKeyword, showToast 
                   <td className="payOrderId">{p.orderId}</td>
                   <td>{p.memberName}</td>
                   <td>{p.planName}</td>
-                  <td>—</td>
+                  <td>{PAYMENT_TYPE_LABEL[p.paymentType]}</td>
                   <td>{p.approvedAt ? new Date(p.approvedAt).toLocaleDateString('ko-KR') : '—'}</td>
                   <td>₩{p.amount.toLocaleString()}</td>
                   <td>

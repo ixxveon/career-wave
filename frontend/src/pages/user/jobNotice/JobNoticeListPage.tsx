@@ -37,10 +37,6 @@ const SORT_OPTIONS = ['추천순', '최신순', '조회순'] as const;
 const DEFAULT_FILTER_VALUE = JOB_NOTICE_ALL_FILTER_VALUE;
 const POPULAR_SEARCH_TAGS = ['백엔드', '프론트엔드', 'Java', 'React', 'Spring Boot', 'AWS', 'Python'];
 
-const MOCK_PAGE = 1;
-const INITIAL_PAGE_SIZE = 18;
-const PAGE_SIZE_STEP = 18;
-
 const API_FILTER_PARAM_BY_LABEL = {
   직무: 'jobCategory',
   경력: 'careerLevel',
@@ -113,20 +109,16 @@ function getFilterOptionLabel(value: string) {
 
 function createJobNoticeQueryParams({
   filters,
-  pageSize,
   period,
   searchQuery,
   sort,
 }: {
   filters: Filters;
-  pageSize: number;
   period: Period;
   searchQuery: string;
   sort: SortOption;
 }): JobNoticeQueryParams {
   const params: JobNoticeQueryParams = {
-    page: MOCK_PAGE,
-    size: pageSize,
     period: API_PERIOD_BY_LABEL[period],
     sort: API_SORT_BY_LABEL[sort],
   };
@@ -420,7 +412,6 @@ export default function JobNoticeListPage() {
   const [bookmarks, setBookmarks] = useState<Bookmarks>({});
   const [bookmarkErrorMessage, setBookmarkErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [pageSize, setPageSize] = useState(INITIAL_PAGE_SIZE);
   const jobNoticeIdParam = searchParams.get('jobNoticeId');
   const parsedJobNoticeId = jobNoticeIdParam ? Number(jobNoticeIdParam) : null;
   const deepLinkJobNoticeId =
@@ -429,7 +420,6 @@ export default function JobNoticeListPage() {
       : null;
 
   function updateFilter(label: FilterLabel, value: string) {
-    setPageSize(INITIAL_PAGE_SIZE);
     setFilters((current) => ({ ...current, [label]: value }));
   }
 
@@ -470,18 +460,15 @@ export default function JobNoticeListPage() {
   }
 
   function selectSort(option: SortOption) {
-    setPageSize(INITIAL_PAGE_SIZE);
     setSort(option);
     setSortOpen(false);
   }
 
   function updateSearchQuery(nextQuery: string) {
-    setPageSize(INITIAL_PAGE_SIZE);
     setSearchQuery(nextQuery);
   }
 
   function updatePeriod(nextPeriod: Period) {
-    setPageSize(INITIAL_PAGE_SIZE);
     setPeriod(nextPeriod);
   }
 
@@ -489,15 +476,22 @@ export default function JobNoticeListPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  const jobNoticeQueryParams = createJobNoticeQueryParams({ filters, pageSize, period, searchQuery, sort });
+  const jobNoticeQueryParams = createJobNoticeQueryParams({ filters, period, searchQuery, sort });
   const {
     data: jobNoticeListApiResponse,
     isError: isJobNoticeListError,
     isLoading: isJobNoticeListLoading,
+    isFetchingNextPage: isFetchingNextJobNoticePage,
+    fetchNextPage: fetchNextJobNoticePage,
+    hasNextPage,
     refetch: refetchJobNoticeList,
   } = useJobNoticeList(jobNoticeQueryParams);
-  const jobNoticeListResponse = jobNoticeListApiResponse?.data;
-  const filteredJobs = jobNoticeListResponse?.content.map(mapJobNoticeApiToViewModel) ?? [];
+  const jobNoticeListPages =
+    jobNoticeListApiResponse?.pages
+      .map((page) => page?.data)
+      .filter((page): page is NonNullable<typeof page> => page != null) ?? [];
+  const jobNoticeListResponse = jobNoticeListPages[0];
+  const filteredJobs = jobNoticeListPages.flatMap((page) => page.content.map(mapJobNoticeApiToViewModel));
   const listDeepLinkedJob = deepLinkJobNoticeId
     ? filteredJobs.find((job) => job.id === deepLinkJobNoticeId) ?? null
     : null;
@@ -512,27 +506,28 @@ export default function JobNoticeListPage() {
       : null;
   const resultTotalItems = jobNoticeListResponse?.totalElements ?? 0;
   const listStats = jobNoticeListResponse?.stats ?? EMPTY_LIST_STATS;
-  const hasMoreJobs = filteredJobs.length < resultTotalItems;
-  const listStatus: JobNoticeListStatus = isJobNoticeListLoading
+  const hasMoreJobs = hasNextPage ?? false;
+  const listStatus: JobNoticeListStatus = isJobNoticeListLoading && filteredJobs.length === 0
     ? 'loading'
-    : isJobNoticeListError
+    : isJobNoticeListError && filteredJobs.length === 0
       ? 'error'
       : filteredJobs.length > 0
         ? 'success'
         : 'empty';
-  const shouldShowResultCount = listStatus === 'success' || listStatus === 'empty';
 
   useEffect(() => {
-    if (!jobNoticeListResponse?.content.length) return;
+    const allLoadedJobs = jobNoticeListPages.flatMap((page) => page.content);
+
+    if (allLoadedJobs.length === 0) return;
 
     setBookmarks((current) => {
       const next = { ...current };
-      jobNoticeListResponse.content.forEach((job) => {
+      allLoadedJobs.forEach((job) => {
         next[job.jobNoticeId] = current[job.jobNoticeId] ?? job.bookmarked;
       });
       return next;
     });
-  }, [jobNoticeListResponse?.content]);
+  }, [jobNoticeListPages]);
 
   useEffect(() => {
     if (!jobNoticeIdParam) return;
@@ -582,11 +577,12 @@ export default function JobNoticeListPage() {
   }
 
   function loadMoreJobs() {
-    setPageSize((current) => Math.min(current + PAGE_SIZE_STEP, resultTotalItems));
+    if (!hasMoreJobs || isFetchingNextJobNoticePage) return;
+
+    void fetchNextJobNoticePage();
   }
 
   function resetSearchConditions() {
-    setPageSize(INITIAL_PAGE_SIZE);
     setSearchQuery('');
     setFilters(createInitialFilters());
     setPeriod('기간 전체');
@@ -614,15 +610,7 @@ export default function JobNoticeListPage() {
         <main className="jn-results">
           <div className="jn-results__head">
             <div>
-              <span className={shouldShowResultCount ? undefined : 'is-muted'}>
-                {shouldShowResultCount ? (
-                  <>
-                    해당 공고 <b>{resultTotalItems.toLocaleString()}</b>개
-                  </>
-                ) : (
-                  '공고 수를 확인하지 못했습니다.'
-                )}
-              </span>
+              <span>해당 공고 <b>{resultTotalItems.toLocaleString()}</b>개</span>
               <ActiveFilterChips filters={filters} onReset={resetFilter} />
             </div>
             <div className="jn-results__tools">
@@ -659,8 +647,15 @@ export default function JobNoticeListPage() {
                 ))}
               </div>
               {hasMoreJobs && (
-                <button type="button" className="jn-load-more" onClick={loadMoreJobs}>
-                  더 보기 ({filteredJobs.length.toLocaleString()} / {resultTotalItems.toLocaleString()}개)
+                <button
+                  type="button"
+                  className="jn-load-more"
+                  onClick={loadMoreJobs}
+                  disabled={isFetchingNextJobNoticePage}
+                >
+                  {isFetchingNextJobNoticePage
+                    ? '불러오는 중...'
+                    : `더 보기 (${filteredJobs.length.toLocaleString()} / ${resultTotalItems.toLocaleString()}개)`}
                 </button>
               )}
             </>

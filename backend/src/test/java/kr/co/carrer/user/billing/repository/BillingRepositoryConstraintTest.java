@@ -267,7 +267,7 @@ class BillingRepositoryConstraintTest extends PostgreSqlTestContainerSupport {
             UserPayment p = newPayment(orderId, idempotencyKey);
             p.authorize();
             p.confirmStarted();
-            p.paid(paymentKey, ZonedDateTime.now());
+            p.paid(paymentKey, "카드", ZonedDateTime.now());
             return p;
         }
 

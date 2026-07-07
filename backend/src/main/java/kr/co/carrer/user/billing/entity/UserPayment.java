@@ -185,13 +185,14 @@ public class UserPayment {
         this.paymentStatus = UserPaymentStatus.CONFIRMING;
     }
 
-    public void paid(String paymentKey, ZonedDateTime approvedAt) {
+    public void paid(String paymentKey, String paymentMethod, ZonedDateTime approvedAt) {
         if (this.paymentStatus != UserPaymentStatus.CONFIRMING
                 && this.paymentStatus != UserPaymentStatus.RECONCILING) {
             throw new CustomException(BillingErrorCode.BILLING_ORDER_NOT_READY);
         }
         this.paymentStatus = UserPaymentStatus.PAID;
         this.paymentKey = paymentKey;
+        this.paymentMethod = paymentMethod;
         this.approvedAt = approvedAt;
     }
 

@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 public record TossBillingPaymentResponse(
         String paymentKey,
         String orderId,
+        String method,
         String status,          // "DONE" 이면 성공
         int totalAmount,
         String currency,
