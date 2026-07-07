@@ -594,7 +594,7 @@ CREATE TABLE job_notices (
     CONSTRAINT pk_job_notices                     PRIMARY KEY (job_notice_id),
     CONSTRAINT uq_job_notices_source_original_url UNIQUE (source, original_url),
     CONSTRAINT chk_job_type                       CHECK (job_type      IN ('FULLTIME', 'INTERN', 'CONTRACT')),
-    CONSTRAINT chk_company_size  CHECK (company_size  IN ('STARTUP', 'SME', 'LARGE')),
+    CONSTRAINT chk_company_size  CHECK (company_size  IN ('STARTUP', 'SME', 'MID_MARKET', 'LARGE')),
     CONSTRAINT chk_career_level  CHECK (career_level  IN ('JUNIOR', 'SENIOR', 'ANY')),
     CONSTRAINT chk_notice_status CHECK (notice_status IN ('ACTIVE', 'CLOSED')),
     CONSTRAINT chk_view_count    CHECK (view_count >= 0)
@@ -606,7 +606,7 @@ COMMENT ON COLUMN job_notices.title         IS '공고 제목';
 COMMENT ON COLUMN job_notices.description   IS '공고 상세 내용';
 COMMENT ON COLUMN job_notices.skill_tags    IS '요구 기술 스택 (다중 선택, TEXT[])';
 COMMENT ON COLUMN job_notices.job_type      IS '채용 유형 (FULLTIME / INTERN / CONTRACT)';
-COMMENT ON COLUMN job_notices.company_size  IS '기업 규모 (STARTUP / SME / LARGE)';
+COMMENT ON COLUMN job_notices.company_size  IS '기업 규모 (STARTUP / SME / MID_MARKET / LARGE)';
 COMMENT ON COLUMN job_notices.job_category  IS '직무 카테고리 (다중 선택, TEXT[])';
 COMMENT ON COLUMN job_notices.career_level  IS '경력 조건 (JUNIOR / SENIOR / ANY)';
 COMMENT ON COLUMN job_notices.location      IS '근무지';
