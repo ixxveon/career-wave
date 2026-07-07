@@ -60,15 +60,14 @@
   background: #fff;
   color: var(--color-primary-dark);
 }
-/* PDF 잠금 버튼 — disabled 스타일이지만 클릭 가능 (onClick → v2 모달) */
-.ir-btn--pdf-locked {
-  background: rgba(255, 255, 255, .08);
-  color: rgba(255, 255, 255, .45);
-  border: 1.5px solid rgba(255, 255, 255, .15);
-  cursor: not-allowed;
+/* PDF 저장 버튼 */
+.ir-btn--pdf {
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, .4);
   opacity: 0.7;
 }
-.ir-btn--pdf-locked:hover { opacity: 0.7; transform: none; }
+.ir-btn--pdf:hover { opacity: 0.7; transform: none; }
 
 .ir-btn__premium-badge {
   display: inline-flex;
@@ -665,4 +664,42 @@
   .ir-review-item__q { font-size: 12.5px; }
   .ir-improve-grid   { grid-template-columns: 1fr; }
   .ir-card           { padding: 20px 16px; }
+}
+
+/* ── PDF 인쇄 스타일 ── */
+@media print {
+  /* 헤더·네비·버튼 영역 숨김 */
+  header, nav, footer,
+  .ir-banner__actions,
+  .ir-improve-section { display: none !important; }
+
+  body { background: #fff !important; }
+
+  .ir {
+    padding: 0;
+    gap: 16px;
+    max-width: 100%;
+  }
+
+  .ir-banner {
+    background: #4f46e5 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    border-radius: 0;
+    page-break-inside: avoid;
+  }
+
+  .ir-card {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
+  }
+
+  .ir-review-item {
+    page-break-inside: avoid;
+  }
+
+  .ir-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
