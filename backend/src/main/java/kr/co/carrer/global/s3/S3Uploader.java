@@ -18,6 +18,8 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -61,7 +63,7 @@ public class S3Uploader {
                 Files.createDirectories(dir);
                 Files.write(dir.resolve(fileName), file.getBytes());
                 log.warn("[S3 Mock] local save - {}", dir.resolve(fileName));
-                return "http://localhost:8080/mock-files/" + fileName;
+                return "http://localhost:8080/mock-files/" + URLEncoder.encode(fileName, StandardCharsets.UTF_8);
             } catch (IOException e) {
                 log.error("[S3 Mock] local save failed", e);
                 throw new CustomException(ErrorCode.S3_UPLOAD_FAILED);

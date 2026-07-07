@@ -191,7 +191,14 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     @Transactional(readOnly = true)
     public ResponseRagDocumentDownload getRagDocumentDownload(Long documentId) {
         RagDocument document = getRagDocument(documentId);
-        return AiMetricsServiceMapper.toRagDocumentDownload(document, s3Uploader.createPresignedGetUrl(document.getFilePath()));
+        try {
+            String downloadUrl = s3Uploader.createPresignedGetUrl(document.getFilePath());
+            return AiMetricsServiceMapper.toRagDocumentDownload(document, downloadUrl);
+        } catch (CustomException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_DOWNLOAD_FAILED);
+        }
     }
 
     @Override

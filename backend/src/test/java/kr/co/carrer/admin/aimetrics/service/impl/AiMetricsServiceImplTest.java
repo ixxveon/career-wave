@@ -794,6 +794,28 @@ class AiMetricsServiceImplTest {
             verify(ragDocumentRepository).findById(8L);
             verify(s3Uploader).createPresignedGetUrl("/rag/2026/06/guide.pdf");
         }
+
+        @Test
+        @DisplayName("Presigned URL 생성 실패를 RAG_DOCUMENT_DOWNLOAD_FAILED 예외로 변환한다")
+        void convertsPresignedUrlFailureToRagDocumentDownloadFailed() {
+            RagDocument document = RagDocument.upload(
+                    10L,
+                    UUID.fromString("66666666-6666-6666-6666-666666666666"),
+                    "guide.pdf",
+                    "rag/2026/06/guide.pdf",
+                    "application/pdf",
+                    77_000L
+            );
+            ReflectionTestUtils.setField(document, "ragDocumentId", 8L);
+            given(ragDocumentRepository.findById(8L)).willReturn(Optional.of(document));
+            given(s3Uploader.createPresignedGetUrl("rag/2026/06/guide.pdf"))
+                    .willThrow(new IllegalStateException("presign failed"));
+
+            assertThatThrownBy(() -> aiMetricsService.getRagDocumentDownload(8L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AiMetricsErrorCode.RAG_DOCUMENT_DOWNLOAD_FAILED);
+        }
     }
 
     @Nested
