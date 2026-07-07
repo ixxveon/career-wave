@@ -189,7 +189,8 @@ export function formatJobNoticeDeadline(deadline?: string | null) {
 }
 
 export function formatJobNoticeDeadlineBadge(deadline?: string | null) {
-  return `\uB9C8\uAC10\uC77C ${formatJobNoticeDeadline(deadline)}`;
+  const normalizedDeadline = deadline?.trim();
+  return normalizedDeadline ? `\uB9C8\uAC10\uC77C ${normalizedDeadline}` : JOB_NOTICE_DEADLINE_FALLBACK;
 }
 
 export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoticeDetail): JobNotice {

@@ -658,6 +658,8 @@
 }
 
 .jn-badge--deadline {
+  display: inline-block;
+  line-height: 26px;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
