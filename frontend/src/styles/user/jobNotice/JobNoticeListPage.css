@@ -664,6 +664,14 @@
   white-space: nowrap;
 }
 
+.jn-badge--deadline {
+  display: inline-block;
+  line-height: 26px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .jn-badge--recommend {
   background: #e7f2ff;
   color: #1f8eea;
