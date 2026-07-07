@@ -193,15 +193,15 @@ describe('AdminDashboardPage contract rendering', () => {
     expect(screen.getByText('원티드 스크래핑 실패')).toBeTruthy();
     expect(screen.getByText('Toss Payments')).toBeTruthy();
     expect(screen.getByText('100%')).toBeTruthy();
-    expect(screen.getByText('Toss Payments 100%')).toBeTruthy();
+    expect(screen.getAllByText('Toss Payments 100%')).toHaveLength(2);
     expect(screen.getByText('관리자 활동 - 권한 변경')).toBeTruthy();
   });
 
-  it('does not render a disabled all alerts button without a destination page', async () => {
+  it('renders the recent activity all alerts button when the destination page is accessible', async () => {
     renderPage();
 
     expect(await screen.findByText('권한 변경 경고')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: '전체 보기' })).toBeNull();
+    expect(screen.getByRole('button', { name: '전체 보기' })).toBeEnabled();
   });
 
   it('navigates through valid alert, service card, and recent activity target paths', async () => {
@@ -229,10 +229,10 @@ describe('AdminDashboardPage contract rendering', () => {
     renderPage();
 
     expect(await screen.findByText('오늘 신규 가입자')).toBeTruthy();
-    expect(screen.queryByText('권한 변경 경고')).toBeNull();
-    expect(screen.queryByText('원티드 스크래핑 실패')).toBeNull();
-    expect(screen.queryByText('스크래핑 관리')).toBeNull();
-    expect(screen.queryByText('감사 로그')).toBeNull();
+    expect(screen.queryByText('권한 변경 경고')).toBeEnabled();
+    expect(screen.queryByText('원티드 스크래핑 실패')).toBeEnabled();
+    expect(screen.queryByText('스크래핑 관리')).toBeEnabled();
+    expect(screen.queryByText('감사 로그')).toBeEnabled();
     expect(screen.getByText('현재 처리할 주요 알림이 없습니다.')).toBeTruthy();
   });
 
