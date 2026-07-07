@@ -91,6 +91,35 @@ describe('apiClient optional auth', () => {
     expect(vi.mocked(authSession.setAccessToken)).toHaveBeenCalledWith('new-token');
   });
 
+  it('shares one refresh request for concurrent optional auth calls', async () => {
+    const { apiClient } = await loadApiClient('http://example.com');
+    const { authSession } = await import('./user/member/authSession');
+    vi.mocked(authSession.getAccessToken).mockReturnValue(null);
+
+    let resolveRefresh: (value: Response) => void = () => {};
+    const pendingRefresh = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation((input) => {
+      const url = String(input);
+      if (url.includes('/token/refresh')) return pendingRefresh;
+      return Promise.resolve(jsonResponse({ ok: true }));
+    });
+
+    const first = apiClient('/api/v1/user/job-notices', { auth: 'optional' });
+    const second = apiClient('/api/v1/user/job-notices/1', { auth: 'optional' });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    resolveRefresh(jsonResponse({ data: { accessToken: 'shared-token' } }));
+
+    await Promise.all([first, second]);
+
+    const refreshCalls = fetchSpy.mock.calls.filter(([input]) => String(input).includes('/token/refresh'));
+    expect(refreshCalls).toHaveLength(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+    expect(vi.mocked(authSession.setAccessToken)).toHaveBeenCalledWith('shared-token');
+  });
+
   it('falls back to anonymous retry when an optional auth token is rejected', async () => {
     const { apiClient } = await loadApiClient('http://example.com');
     const { authSession } = await import('./user/member/authSession');
