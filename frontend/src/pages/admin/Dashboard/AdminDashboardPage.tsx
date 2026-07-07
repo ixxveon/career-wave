@@ -134,9 +134,31 @@ function formatKstDateTime(value?: string | null): string {
   return `${lookup.year}.${lookup.month}.${lookup.day} ${lookup.hour}:${lookup.minute}`;
 }
 
+function getAdminAvatarInitial(name?: string | null, fallbackId?: string | null): string {
+  const source = name?.trim() || fallbackId?.trim() || '';
+  if (!source) {
+    return '--';
+  }
+
+  const parts = source
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 2) {
+    return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+  }
+
+  return source.slice(0, 2).toUpperCase();
+}
+
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const currentAdminRole = adminSession.getRole();
+  const currentAdminId = adminSession.getId();
+  const currentAdminName = adminSession.getName();
+  const currentAdminDisplayName = currentAdminName?.trim() || currentAdminId?.trim() || '-';
+  const currentAdminAvatarInitial = getAdminAvatarInitial(currentAdminName, currentAdminId);
   const {
     data: dashboardSummary,
     isLoading: isDashboardLoading,
@@ -364,10 +386,10 @@ export default function AdminDashboardPage() {
         <div className="adminProfile">
           <span className="serviceBadge">서비스 정상</span>
 
-          <div className="avatar">SA</div>
+          <div className="avatar">{currentAdminAvatarInitial}</div>
 
           <div className="adminText">
-            <strong>super_admin</strong>
+            <strong>{currentAdminDisplayName}</strong>
             <span>{currentAdminRole ?? '-'}</span>
             <small>{dashboardBaseDateTimeLabel}</small>
           </div>
