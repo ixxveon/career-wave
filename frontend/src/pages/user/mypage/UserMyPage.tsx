@@ -202,6 +202,13 @@ function UserMyPage() {
     const normalizedPhone = editForm.phone.replace(/-/g, "").trim();
     const normalizedGithubUrl = normalizeGithubUrl(editForm.githubUrl);
 
+    if (!hasEditFormChanges) {
+      setIsEditModalOpen(false);
+      setEditErrorMessage("");
+      isSavingProfileRef.current = false;
+      return;
+    }
+
     if (!isValidName(trimmedName)) {
       setEditErrorMessage("이름은 2~20자의 한글 또는 영문으로 입력해 주세요.");
       isSavingProfileRef.current = false;
@@ -214,7 +221,7 @@ function UserMyPage() {
       return;
     }
 
-    if (!/^01[0-9]{8,9}$/.test(normalizedPhone)) {
+    if (normalizedPhone && !/^010[0-9]{8,9}$/.test(normalizedPhone)) {
       setEditErrorMessage("휴대폰 번호는 01012345678 형식으로 입력해 주세요.");
       isSavingProfileRef.current = false;
       return;
@@ -224,13 +231,6 @@ function UserMyPage() {
       setEditErrorMessage(
         "GitHub URL은 github.com/username 또는 https://github.com/username 형식으로 입력해 주세요.",
       );
-      isSavingProfileRef.current = false;
-      return;
-    }
-
-    if (!hasEditFormChanges) {
-      setIsEditModalOpen(false);
-      setEditErrorMessage("");
       isSavingProfileRef.current = false;
       return;
     }
