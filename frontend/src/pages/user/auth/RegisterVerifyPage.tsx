@@ -6,7 +6,7 @@ import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE, type SocialProviderId } fro
 import { useCompleteSocialRegister, useConfirmVerificationCode, useSendVerificationCode, useVerificationNow } from '../../../hooks/user/member';
 import { getSocialProviderLabel } from '../../../utils/user/member/socialAuth';
 import { formatRemaining, getRecoveryErrorMessage, getRemainingSeconds } from '../../../utils/user/member/recoveryView';
-import { isValidName, isValidPhone, isValidVerificationCode, normalizePhone } from '../../../utils/user/member/registerSchema';
+import { PHONE_MAX_LENGTH, formatPhoneNumber, isValidName, isValidPhone, isValidVerificationCode, normalizePhone } from '../../../utils/user/member/registerSchema';
 import '@/styles/user/auth/AuthPage.css';
 
 // Phase 5 OAuth callback 페이지에서 이 키로 저장: sessionStorage.setItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY, token)
@@ -77,7 +77,7 @@ function RegisterVerifyPage() {
   const update = (key: RegisterVerifyFormKey, value: RegisterVerifyForm[RegisterVerifyFormKey]) => {
     setForm((current) => ({
       ...current,
-      [key]: value,
+      [key]: key === 'phone' && typeof value === 'string' ? formatPhoneNumber(value) : value,
       ...(key === 'phone' ? { phoneCode: '' } : {}),
     }));
     clearMessages();
@@ -340,7 +340,7 @@ function RegisterVerifyPage() {
                   휴대폰 번호 <em>*</em>
                 </span>
                 <div className={verification.verificationId ? 'cw-register-inline cw-register-inline--triple' : 'cw-register-inline'}>
-                  <input value={form.phone} readOnly={Boolean(verification.verificationId)} onChange={(event) => update('phone', event.target.value)} placeholder="010-0000-0000" />
+                  <input inputMode="numeric" maxLength={PHONE_MAX_LENGTH} value={form.phone} readOnly={Boolean(verification.verificationId)} onChange={(event) => update('phone', event.target.value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" />
                   <button className="cw-register-sub-button" type="button" onClick={() => void handleSendPhoneCode()} disabled={sendPhoneCode.isPending || phoneResendIn > 0 || Boolean(verification.verificationToken)}>
                     {sendPhoneCode.isPending ? '전송 중' : verification.verificationId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
                   </button>

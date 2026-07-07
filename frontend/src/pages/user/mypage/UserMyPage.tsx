@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useSubscriptionStatus } from "@/hooks/user/subscription";
 import { updateDashboardProfile } from "@/api/user/dashboard";
+import { formatPhoneNumber, PHONE_MAX_LENGTH } from "@/utils/user/member/registerSchema";
 import {
   useDashboardGithub,
   useDashboardProfile,
@@ -41,20 +42,6 @@ function normalizeGithubUrl(githubUrl: string) {
   }
 
   return trimmedGithubUrl;
-}
-
-function formatPhoneNumber(phone: string) {
-  const numbers = phone.replace(/\D/g, "").slice(0, 11);
-
-  if (numbers.length < 4) {
-    return numbers;
-  }
-
-  if (numbers.length < 8) {
-    return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
-  }
-
-  return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
 }
 
 function isValidGithubUrl(githubUrl: string) {
@@ -165,7 +152,7 @@ function UserMyPage() {
     setEditForm({
       name: userProfile.name,
       email: userProfile.email ?? "",
-      phone: userProfile.phone ?? "",
+      phone: formatPhoneNumber(userProfile.phone ?? ""),
       githubUrl: githubProfile?.githubUrl ?? "",
     });
 
@@ -220,7 +207,7 @@ function UserMyPage() {
       return;
     }
 
-    if (normalizedPhone && !/^010[0-9]{8,9}$/.test(normalizedPhone)) {
+    if (normalizedPhone && !/^010[0-9]{8}$/.test(normalizedPhone)) {
       setEditErrorMessage("휴대폰 번호는 01012345678 형식으로 입력해 주세요.");
       isSavingProfileRef.current = false;
       return;
@@ -376,7 +363,7 @@ function UserMyPage() {
                 <span>휴대폰 번호</span>
                 <strong>
                   <Phone size={15} />
-                  {userProfile.phone || "등록된 휴대폰 번호가 없습니다."}
+                  {userProfile.phone ? formatPhoneNumber(userProfile.phone) : "등록된 휴대폰 번호가 없습니다."}
                 </strong>
               </div>
               <div className="cw-info-row">
@@ -544,7 +531,10 @@ function UserMyPage() {
                   휴대폰 번호
                   <input
                     type="text"
+                    inputMode="numeric"
+                    maxLength={PHONE_MAX_LENGTH}
                     value={editForm.phone ?? ""}
+                    placeholder="휴대폰번호('-' 없이 숫자만 입력)"
                     onChange={(event) =>
                       handleEditFormChange("phone", event.target.value)
                     }

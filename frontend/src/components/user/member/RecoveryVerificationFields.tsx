@@ -3,6 +3,7 @@ import { CheckCircle2 } from 'lucide-react';
 import type { VerificationState } from '../../../utils/user/member/recoveryView';
 import { formatRemaining } from '../../../utils/user/member/recoveryView';
 import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
+import { PHONE_MAX_LENGTH, formatPhoneNumber } from '../../../utils/user/member/registerSchema';
 
 interface RecoveryContactFieldProps {
   label: string;
@@ -17,6 +18,8 @@ interface RecoveryContactFieldProps {
   buttonClassName?: string;
   inputType?: InputHTMLAttributes<HTMLInputElement>['type'];
   inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode'];
+  maxLength?: InputHTMLAttributes<HTMLInputElement>['maxLength'];
+  formatValue?: (value: string) => string;
   onChange: (value: string) => void;
   onSend: () => void;
   onReset: () => void;
@@ -46,6 +49,8 @@ export function RecoveryContactField({
   buttonClassName = 'cw-auth-sub-button',
   inputType = 'text',
   inputMode,
+  maxLength,
+  formatValue,
   onChange,
   onSend,
   onReset,
@@ -62,10 +67,11 @@ export function RecoveryContactField({
             aria-invalid={Boolean(error)}
             type={inputType}
             inputMode={inputMode}
+            maxLength={maxLength}
             placeholder={placeholder}
             value={value}
             readOnly={locked}
-            onChange={(event) => { onChange(event.target.value); applyInputFill(event.target); }}
+            onChange={(event) => { onChange(formatValue ? formatValue(event.target.value) : event.target.value); applyInputFill(event.target); }}
             onBlur={(event) => clearInputFill(event.target)}
           />
         </span>
@@ -98,6 +104,13 @@ export function RecoveryContactField({
     </label>
   );
 }
+
+export const PHONE_CONTACT_FIELD_PROPS = {
+  inputType: 'tel' as const,
+  inputMode: 'numeric' as const,
+  maxLength: PHONE_MAX_LENGTH,
+  formatValue: formatPhoneNumber,
+};
 
 export function RecoveryCodeField({
   label,
