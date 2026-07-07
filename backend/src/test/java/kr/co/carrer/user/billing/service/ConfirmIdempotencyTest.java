@@ -76,6 +76,7 @@ class ConfirmIdempotencyTest {
         payment.confirmStarted();
         payment.paid("pay_key", "카드", ZonedDateTime.now(KST));
         assertThat(payment.getPaymentStatus()).isEqualTo(UserPaymentStatus.PAID);
+        assertThat(payment.getPaymentMethod()).isEqualTo("카드");
 
         given(userPaymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
@@ -150,6 +151,8 @@ class ConfirmIdempotencyTest {
 
         // 첫 번째 confirm — 성공
         service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId));
+        assertThat(payment.getPaymentStatus()).isEqualTo(UserPaymentStatus.PAID);
+        assertThat(payment.getPaymentMethod()).isEqualTo("카드");
         verify(tossBillingAuthClient, times(1)).issue(any(), any());
         verify(tossBillingPaymentClient, times(1)).pay(any(), any(), any(), any(), any(), any(), anyInt());
 
