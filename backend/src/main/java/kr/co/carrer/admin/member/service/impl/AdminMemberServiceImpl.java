@@ -24,6 +24,7 @@ import kr.co.carrer.admin.audit.type.AuditLogType;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
 import kr.co.carrer.global.response.PaginationResponse;
+import kr.co.carrer.global.s3.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,7 @@ public class AdminMemberServiceImpl implements AdminMemberService {
     private final HrManagerRepository hrManagerRepository;
     private final SuspendHistoryRepository suspendHistoryRepository;
     private final AuditLogRepository auditLogRepository;
+    private final S3Uploader s3Uploader;
 
     private static final String TARGET_TYPE_MEMBER = "MEMBER";
 
@@ -196,7 +198,10 @@ public class AdminMemberServiceImpl implements AdminMemberService {
         int offset = (page - 1) * size;
         DateRange range = toDateRange(startDate, endDate);
 
-        List<HrManagerDTO.ResponseList> items = memberQueryRepository.findHrManagers(hrStatus, keyword, range.from(), range.to(), offset, size);
+        List<HrManagerDTO.ResponseList> items = memberQueryRepository.findHrManagers(hrStatus, keyword, range.from(), range.to(), offset, size)
+            .stream()
+            .map(item -> item.withCertFileUrl(s3Uploader.createPresignedGetUrl(item.certFileUrl())))
+            .toList();
         long total = memberQueryRepository.countHrManagers(hrStatus, keyword, range.from(), range.to());
         long pendingCount = hrManagerRepository.countByHrStatus(HrStatus.PENDING_REVIEW);
 
@@ -214,8 +219,9 @@ public class AdminMemberServiceImpl implements AdminMemberService {
     @Override
     @Transactional(readOnly = true)
     public HrManagerDTO.ResponseDetail getHrManagerDetail(UUID memberId) {
-        return memberQueryRepository.findHrManagerDetail(memberId)
+        HrManagerDTO.ResponseDetail detail = memberQueryRepository.findHrManagerDetail(memberId)
             .orElseThrow(() -> new CustomException(AdminMemberErrorCode.HR_MANAGER_NOT_FOUND));
+        return detail.withCertFileUrl(s3Uploader.createPresignedGetUrl(detail.certFileUrl()));
     }
 
     @Override

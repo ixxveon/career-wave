@@ -3,16 +3,17 @@ import axios from 'axios';
 import { X } from 'lucide-react';
 import {
   memberApi,
+  HR_STATUS,
   type HrManagerItem,
   type HrManagerDetail,
   type HrStatus,
 } from '../../../api/admin/memberApi';
 
 const hrStatusLabel: Record<HrStatus, string> = {
-  PENDING: '승인 대기', ACTIVE: '승인 완료', REMOVED: '반려',
+  PENDING_REVIEW: '승인 대기', APPROVED: '승인 완료', REJECTED: '반려', NEEDS_REVISION: '보완 필요', REMOVED: '삭제됨',
 };
 const hrStatusCls: Record<HrStatus, string> = {
-  PENDING: 'pending', ACTIVE: 'normal', REMOVED: 'blinded',
+  PENDING_REVIEW: 'pending', APPROVED: 'normal', REJECTED: 'blinded', NEEDS_REVISION: 'dismissed', REMOVED: 'dismissed',
 };
 
 interface CompanyDetailModalProps {
@@ -60,7 +61,7 @@ export function CompanyDetailModal({ company, onClose, onApprove, onReject }: Co
             <strong>반려 사유:</strong> {company.rejectReason}
           </div>
         )}
-        {company.hrStatus === 'PENDING' && (
+        {company.hrStatus === HR_STATUS.PENDING_REVIEW && (
           <div className="modalAction">
             <button
               style={{ background: '#24496f', color: 'white', borderColor: '#24496f' }}
