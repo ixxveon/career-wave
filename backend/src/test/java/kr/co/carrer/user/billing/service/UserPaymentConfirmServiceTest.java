@@ -387,7 +387,7 @@ class UserPaymentConfirmServiceTest {
     private TossBillingPaymentResponse payResponseWithTime(String paymentKey, String orderId,
                                                             int amount, String currency,
                                                             ZonedDateTime approvedAt) {
-        return new TossBillingPaymentResponse(paymentKey, orderId, "DONE", amount, currency, approvedAt);
+        return new TossBillingPaymentResponse(paymentKey, orderId, "카드", "DONE", amount, currency, approvedAt);
     }
 
     private void setField(Object target, String name, Object value) {

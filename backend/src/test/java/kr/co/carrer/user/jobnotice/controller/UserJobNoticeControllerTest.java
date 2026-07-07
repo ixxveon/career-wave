@@ -71,7 +71,7 @@ class UserJobNoticeControllerTest {
                         List.of("BACKEND"),
                         List.of("JUNIOR", "SENIOR", "ANY"),
                         List.of("Seoul"),
-                        List.of("STARTUP", "SME", "LARGE")
+                        List.of("STARTUP", "SME", "MID_MARKET", "LARGE")
                 )
         );
 

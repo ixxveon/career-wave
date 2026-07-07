@@ -17,7 +17,7 @@ export interface JobNoticeSummary {
   jobType: string;
   careerLevel: string;
   location: string;
-  companySize: string;
+  companySize: string | null;
   salary?: string | null;
   deadline?: string | null;
   source: string;
@@ -108,12 +108,13 @@ export const JOB_NOTICE_FILTER_OPTIONS = {
   jobCategory: [JOB_NOTICE_ALL_FILTER_VALUE, 'BACKEND', 'FRONTEND', 'DATA', 'DEVOPS'],
   careerLevel: [JOB_NOTICE_ALL_FILTER_VALUE, 'JUNIOR', 'SENIOR', 'ANY'],
   location: [JOB_NOTICE_ALL_FILTER_VALUE, '서울', '경기', '원격'],
-  companySize: [JOB_NOTICE_ALL_FILTER_VALUE, '스타트업', '중견', '대기업'],
+  companySize: [JOB_NOTICE_ALL_FILTER_VALUE, '스타트업', '중소', '중견', '대기업'],
 } as const;
 
 export const JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES = {
   스타트업: 'STARTUP',
-  중견: 'SME',
+  중소: 'SME',
+  중견: 'MID_MARKET',
   대기업: 'LARGE',
 } as const;
 
@@ -138,7 +139,8 @@ export const CAREER_LEVEL_LABELS = {
 
 export const COMPANY_SIZE_LABELS = {
   STARTUP: '스타트업',
-  SME: '중견',
+  SME: '중소',
+  MID_MARKET: '중견',
   LARGE: '대기업',
 } as const;
 
@@ -172,6 +174,7 @@ export interface JobNoticeQueryParams {
 export type JobNoticeListApiResponse = ApiResponse<JobNoticeListResponse>;
 export type JobNoticeDetailApiResponse = ApiResponse<JobNoticeDetail>;
 export type JobNoticeBookmarkApiResponse = ApiResponse<JobNoticeBookmarkResponse>;
+export const JOB_NOTICE_DEADLINE_FALLBACK = '\uB9C8\uAC10\uC77C \uBBF8\uC815';
 
 export const JOB_NOTICE_VIEW_FIELD_MAP = {
   careerLevel: 'exp',
@@ -182,13 +185,23 @@ function getPrimaryJobCategory(jobCategory: JobNoticeSummary['jobCategory']) {
   return Array.isArray(jobCategory) ? (jobCategory[0] ?? '') : jobCategory;
 }
 
+export function formatJobNoticeDeadline(deadline?: string | null): string {
+  const normalizedDeadline = deadline?.trim();
+  return normalizedDeadline || JOB_NOTICE_DEADLINE_FALLBACK;
+}
+
+export function formatJobNoticeDeadlineBadge(deadline?: string | null): string {
+  const normalizedDeadline = deadline?.trim();
+  return normalizedDeadline ? `\uB9C8\uAC10\uC77C ${normalizedDeadline}` : JOB_NOTICE_DEADLINE_FALLBACK;
+}
+
 export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoticeDetail): JobNotice {
   const jobCategory = getPrimaryJobCategory(jobNotice.jobCategory);
   const tags = jobNotice.skillTags ?? [];
   const companySize =
-    jobNotice.companySize in COMPANY_SIZE_LABELS
+    jobNotice.companySize && jobNotice.companySize in COMPANY_SIZE_LABELS
       ? COMPANY_SIZE_LABELS[jobNotice.companySize as keyof typeof COMPANY_SIZE_LABELS]
-      : jobNotice.companySize;
+      : jobNotice.companySize ?? '미정';
 
   return {
     id: jobNotice.jobNoticeId,
@@ -200,7 +213,7 @@ export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoti
     location: jobNotice.location,
     companySize,
     salary: jobNotice.salary ?? undefined,
-    deadline: jobNotice.deadline ?? '',
+    deadline: jobNotice.deadline?.trim() ?? '',
     postedAt: jobNotice.createdAt,
     tags,
     source: jobNotice.source,
@@ -224,13 +237,19 @@ export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoti
 }
 
 export function mapJobNoticeViewToApiModel(jobNotice: JobNotice): JobNoticeDetail {
+  const companySize = jobNotice.companySize in JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES
+    ? JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES[
+      jobNotice.companySize as keyof typeof JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES
+    ]
+    : jobNotice.companySize;
+
   return {
     jobNoticeId: jobNotice.id,
     companyName: jobNotice.company,
     title: jobNotice.title,
     skillTags: jobNotice.tags,
     jobType: jobNotice.employment,
-    companySize: jobNotice.companySize,
+    companySize,
     jobCategory: jobNotice.jobCategory,
     careerLevel: jobNotice.exp,
     location: jobNotice.location,

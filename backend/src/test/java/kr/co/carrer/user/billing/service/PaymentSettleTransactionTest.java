@@ -195,7 +195,9 @@ class PaymentSettleTransactionTest {
         InOrder inOrder = inOrder(payment);
         inOrder.verify(payment).authorize();
         inOrder.verify(payment).confirmStarted();
-        inOrder.verify(payment).paid(any(), any());
+        inOrder.verify(payment).paid(any(), any(), any());
+
+        assertThat(payment.getPaymentMethod()).isEqualTo("카드");
     }
 
     // ── helpers ─────────────────────────────────────────────────────────────
@@ -223,7 +225,7 @@ class PaymentSettleTransactionTest {
 
     private TossBillingPaymentResponse payResponse(String paymentKey, String orderId,
                                                     int amount, String currency) {
-        return new TossBillingPaymentResponse(paymentKey, orderId, "DONE", amount, currency,
+        return new TossBillingPaymentResponse(paymentKey, orderId, "카드", "DONE", amount, currency,
                 ZonedDateTime.now(KST));
     }
 

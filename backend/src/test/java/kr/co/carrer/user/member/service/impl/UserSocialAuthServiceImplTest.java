@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.jwt.SessionProperties;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
@@ -75,7 +76,7 @@ class UserSocialAuthServiceImplTest {
         service = new UserSocialAuthServiceImpl(
                 memberRepository, personalProfileRepository, socialAccountRepository,
                 termsRepository, verificationRepository, encoder,
-                jwtTokenProvider, jwtProperties, refreshTokenStore, tokenBlacklistStore,
+                jwtTokenProvider, jwtProperties, new SessionProperties(), refreshTokenStore, tokenBlacklistStore,
                 socialSignupTokenStore, redisTemplate, webClientBuilder,
                 entitlementInitService, new CookieProperties(), termsAgreementEvidenceRecorder);
         injectValue(service, "kakaoClientId", "kakao-id");
@@ -177,13 +178,13 @@ class UserSocialAuthServiceImplTest {
         when(phoneVerif.getVerificationStatus()).thenReturn(VerificationStatus.VERIFIED);
         when(phoneVerif.getChannel()).thenReturn(VerificationChannel.PHONE);
         when(phoneVerif.getTarget()).thenReturn("01012345678");
-        when(phoneVerif.getPurpose()).thenReturn(VerificationPurpose.REGISTER);
+        when(phoneVerif.getPurpose()).thenReturn(VerificationPurpose.SOCIAL_SIGNUP);
         when(phoneVerif.getExpiresAt()).thenReturn(Instant.now().plusSeconds(300));
         when(verificationRepository.findByVerificationToken(anyString()))
                 .thenReturn(Optional.of(phoneVerif));
 
         // phone 중복 없음, social account 중복 없음, 이메일 충돌
-        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhoneAndMemberStatusNot(anyString(), any())).thenReturn(false);
         when(socialAccountRepository.existsByProviderAndProviderUserId(any(), anyString())).thenReturn(false);
         when(memberRepository.existsByEmail("conflict@example.com")).thenReturn(true);
 
@@ -323,7 +324,7 @@ class UserSocialAuthServiceImplTest {
         when(tokenConfig.getAccessExpiration()).thenReturn(1800000L);
         when(tokenConfig.getRefreshExpiration()).thenReturn(604800000L);
         when(jwtProperties.getUser()).thenReturn(tokenConfig);
-        when(jwtTokenProvider.createAccessToken(anyString(), any(), anyString(), any()))
+        when(jwtTokenProvider.createAccessToken(anyString(), any(), anyString(), any(), anyString()))
                 .thenReturn("new-access-token");
         when(jwtTokenProvider.createRefreshToken(anyString(), any(), any(), anyString()))
                 .thenReturn("new-refresh-token");
@@ -361,13 +362,13 @@ class UserSocialAuthServiceImplTest {
         when(phoneVerif.getVerificationStatus()).thenReturn(VerificationStatus.VERIFIED);
         when(phoneVerif.getChannel()).thenReturn(VerificationChannel.PHONE);
         when(phoneVerif.getTarget()).thenReturn("01098765432");
-        when(phoneVerif.getPurpose()).thenReturn(VerificationPurpose.REGISTER);
+        when(phoneVerif.getPurpose()).thenReturn(VerificationPurpose.SOCIAL_SIGNUP);
         when(phoneVerif.getExpiresAt()).thenReturn(Instant.now().plusSeconds(300));
         when(verificationRepository.findByVerificationToken(anyString()))
                 .thenReturn(Optional.of(phoneVerif));
 
         // 중복 없음
-        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhoneAndMemberStatusNot(anyString(), any())).thenReturn(false);
         when(socialAccountRepository.existsByProviderAndProviderUserId(any(), anyString()))
                 .thenReturn(false);
         when(memberRepository.existsByEmail(anyString())).thenReturn(false);
@@ -387,7 +388,7 @@ class UserSocialAuthServiceImplTest {
         when(tokenConfig.getAccessExpiration()).thenReturn(1800000L);
         when(tokenConfig.getRefreshExpiration()).thenReturn(604800000L);
         when(jwtProperties.getUser()).thenReturn(tokenConfig);
-        when(jwtTokenProvider.createAccessToken(anyString(), any(), anyString(), any()))
+        when(jwtTokenProvider.createAccessToken(anyString(), any(), anyString(), any(), anyString()))
                 .thenReturn("access-token");
         when(jwtTokenProvider.createRefreshToken(anyString(), any(), any(), anyString()))
                 .thenReturn("refresh-token");
@@ -425,7 +426,6 @@ class UserSocialAuthServiceImplTest {
         setField(req, "provider", provider);
         setField(req, "socialSignupToken", "signup-token");
         setField(req, "name", "홍길동");
-        setField(req, "carrier", "SKT");
         setField(req, "phone", phone);
         setField(req, "phoneVerificationToken", phoneToken);
         var terms = new kr.co.carrer.user.member.dto.UserRegisterDto.PersonalTerms();

@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { LoginForm } from '../../../components/user/member/LoginForm';
 import { LoginPageLinks } from '../../../components/user/member/LoginPageLinks';
 import { LoginTypeTabs } from '../../../components/user/member/LoginTypeTabs';
+import { LastLoginMethodModal } from '../../../components/user/member/LastLoginMethodModal';
 import { useLoginForm } from '../../../hooks/user/member';
 import { SOCIAL_PROVIDERS } from '../../../utils/user/member/socialAuth';
+import { getLastSocialLoginProvider } from '../../../utils/user/member/lastLoginMethod';
 import { memberSocialAuthApi } from '../../../api/user/member/socialAuthApi';
 import '@/styles/user/auth/AuthPage.css';
 
@@ -18,6 +21,9 @@ function LoginPage() {
     updateCredential,
     updateLoginType,
   } = useLoginForm();
+
+  // 지난번 로그인이 소셜이었을 때만 안내 모달을 노출(로컬/미기록이면 null). 진입 시 1회 판정.
+  const [lastSocialProvider, setLastSocialProvider] = useState(() => getLastSocialLoginProvider());
 
   return (
     <section className="cw-auth-page">
@@ -59,6 +65,9 @@ function LoginPage() {
         </div>
         <LoginPageLinks />
       </div>
+      {lastSocialProvider && (
+        <LastLoginMethodModal provider={lastSocialProvider} onClose={() => setLastSocialProvider(null)} />
+      )}
     </section>
   );
 }

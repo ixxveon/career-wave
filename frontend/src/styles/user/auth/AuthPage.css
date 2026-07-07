@@ -567,6 +567,64 @@
   background: #191919;
 }
 
+/* 지난번 로그인 방식 안내 모달 (소셜 전용) */
+.cw-last-login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.cw-last-login-modal {
+  width: 100%;
+  max-width: 360px;
+  padding: 32px 28px 24px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.cw-last-login-modal__title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+
+.cw-last-login-modal__desc {
+  margin: 10px 0 24px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.cw-last-login-modal__action {
+  margin-bottom: 20px;
+}
+
+.cw-last-login-modal__other {
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cw-last-login-modal__other:hover {
+  color: var(--color-text-primary);
+}
+
+.cw-last-login-modal__other:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .cw-auth-primary-link {
   display: flex;
   align-items: center;

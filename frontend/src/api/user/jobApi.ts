@@ -29,12 +29,14 @@ export const jobApi = {
 
         return apiClient<JobNoticeListApiResponse>(
             `${JOB_NOTICE_BASE_PATH}${query ? `?${query}` : ''}`,
+            { auth: 'optional' },
         );
     },
 
     getJobNoticeDetail: (jobNoticeId: number | string): Promise<JobNoticeDetailApiResponse | null> =>
         apiClient<JobNoticeDetailApiResponse>(
             `${JOB_NOTICE_BASE_PATH}/${encodeURIComponent(String(jobNoticeId))}`,
+            { auth: 'optional' },
         ),
 
     addJobNoticeBookmark: (jobNoticeId: number | string): Promise<JobNoticeBookmarkResponse | null> =>

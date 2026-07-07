@@ -5,7 +5,7 @@ from admin.scraping.service import JobNoticeNormalizer
 
 
 SPRING_JOB_TYPES = {"FULLTIME", "INTERN", "CONTRACT"}
-SPRING_COMPANY_SIZES = {"STARTUP", "SME", "LARGE"}
+SPRING_COMPANY_SIZES = {"STARTUP", "SME", "MID_MARKET", "LARGE"}
 SPRING_CAREER_LEVELS = {"JUNIOR", "SENIOR", "ANY"}
 SPRING_NOTICE_STATUSES = {"ACTIVE", "CLOSED"}
 
@@ -80,7 +80,7 @@ def test_normalizer_maps_intern_contract_startup_large_and_senior_values():
     assert contract_notice.career_level == "SENIOR"
 
 
-def test_normalizer_maps_mid_sized_company_to_sme():
+def test_normalizer_maps_mid_sized_company_to_mid_market():
     normalizer = JobNoticeNormalizer()
 
     notice = normalizer.normalize(
@@ -88,7 +88,7 @@ def test_normalizer_maps_mid_sized_company_to_sme():
         raw_notice=_raw_notice(company_size="중견"),
     )
 
-    assert notice.company_size == "SME"
+    assert notice.company_size == "MID_MARKET"
 
 
 def test_normalizer_uses_enum_safe_fallbacks_for_unknown_values():
@@ -104,8 +104,19 @@ def test_normalizer_uses_enum_safe_fallbacks_for_unknown_values():
     )
 
     assert notice.job_type == "FULLTIME"
-    assert notice.company_size == "SME"
+    assert notice.company_size is None
     assert notice.career_level == "ANY"
+
+
+def test_normalizer_keeps_company_size_empty_when_source_value_is_missing():
+    normalizer = JobNoticeNormalizer()
+
+    notice = normalizer.normalize(
+        source_name="wanted",
+        raw_notice=_raw_notice(company_size=None),
+    )
+
+    assert notice.company_size is None
 
 
 def test_normalizer_closes_notice_when_deadline_is_past():

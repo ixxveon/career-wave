@@ -99,6 +99,7 @@ export interface Payment {
   approvedAt: string;
   amount: number;
   paymentStatus: PayStatus;
+  paymentType: PaymentType;
   paymentMethod?: string;
   aiUsage: AiUsage;
   refundStatus?: RefundStatus;

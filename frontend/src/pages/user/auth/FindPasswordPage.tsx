@@ -9,7 +9,7 @@ import RecoveryPasswordActionArea from '../../../components/user/member/Recovery
 import RecoveryPasswordFields from '../../../components/user/member/RecoveryPasswordFields';
 import RecoveryPageLinks from '../../../components/user/member/RecoveryPageLinks';
 import RecoverySupportPanel from '../../../components/user/member/RecoverySupportPanel';
-import { RecoveryCodeField, RecoveryContactField } from '../../../components/user/member/RecoveryVerificationFields';
+import { PHONE_CONTACT_FIELD_PROPS, RecoveryCodeField, RecoveryContactField } from '../../../components/user/member/RecoveryVerificationFields';
 import '@/styles/user/auth/AuthPage.css';
 
 function FindPasswordPage() {
@@ -103,8 +103,7 @@ function FindPasswordPage() {
                 feedbackText="휴대폰 인증번호가 발송되었습니다."
                 sendPending={sendVerificationPending}
                 resendIn={userResendIn}
-                inputType="tel"
-                inputMode="numeric"
+                {...PHONE_CONTACT_FIELD_PROPS}
                 onChange={(value) => updateUser('phone', value)}
                 onSend={handleSendUserCode}
                 onReset={handleResetUserContact}
