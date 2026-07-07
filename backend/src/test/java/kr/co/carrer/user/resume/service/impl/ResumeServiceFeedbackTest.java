@@ -96,6 +96,32 @@ class ResumeServiceFeedbackTest {
     }
 
     @Test
+    @DisplayName("recommended_keywords JSON이 저장된 피드백 조회 시 List<String>으로 복원된다")
+    void getFeedback_withRecommendedKeywords_deserializedAsList() {
+        UUID memberId = UUID.randomUUID();
+        UUID documentId = UUID.randomUUID();
+        Document document = Document.ofResume(memberId, "https://s3.example.com/file.pdf", "이력서.pdf");
+        document.updateStatus(DocumentStatus.COMPLETED);
+
+        DocumentFeedback feedback = DocumentFeedback.of(
+                documentId, 85, 90, 75, 80, 82,
+                "총평",
+                "[{\"sectionNumber\":1,\"question\":\"q\",\"originalText\":\"o\",\"goodPoint\":\"g\",\"badPoint\":\"b\",\"improvedText\":\"i\"}]",
+                "[\"Spring Boot\",\"Redis\"]"
+        );
+
+        when(documentRepository.findByDocumentIdAndMemberId(documentId, memberId))
+                .thenReturn(Optional.of(document));
+        when(documentFeedbackRepository.findByDocumentId(documentId))
+                .thenReturn(Optional.of(feedback));
+
+        ResumeDTO.ResponseFeedback response = resumeService.getFeedback(memberId, documentId);
+
+        assertThat(response.recommendedKeywords())
+                .containsExactly("Spring Boot", "Redis");
+    }
+
+    @Test
     @DisplayName("존재하지 않는 documentId로 조회 시 DOCUMENT_NOT_FOUND 예외가 발생한다")
     void getFeedback_notFound_throwsException() {
         UUID memberId = UUID.randomUUID();
