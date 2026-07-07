@@ -15,7 +15,9 @@ import kr.co.carrer.admin.member.type.SanctionType;
 import kr.co.carrer.admin.member.type.SuspendDuration;
 import kr.co.carrer.admin.member.exception.AdminMemberErrorCode;
 import kr.co.carrer.admin.audit.repository.AuditLogRepository;
+import kr.co.carrer.admin.member.type.PermissionLevel;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.s3.S3Uploader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,6 +49,7 @@ class AdminMemberServiceImplTest {
     @Mock private HrManagerRepository hrManagerRepository;
     @Mock private SuspendHistoryRepository suspendHistoryRepository;
     @Mock private AuditLogRepository auditLogRepository;
+    @Mock private S3Uploader s3Uploader;
 
     @Nested
     @DisplayName("회원 목록 마스킹 - getMembers()")
@@ -282,6 +286,42 @@ class AdminMemberServiceImplTest {
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.MEMBER_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("기업 회원 상세 조회 - getHrManagerDetail()")
+    class GetHrManagerDetail {
+
+        @Test
+        @DisplayName("재직증명서 URL을 presigned URL로 치환해 반환한다")
+        void returnsPresignedCertFileUrl() {
+            UUID memberId = UUID.randomUUID();
+            String rawUrl = "https://bucket.s3.ap-northeast-2.amazonaws.com/employment-certificates/2026-07-07/abc.pdf";
+            String presignedUrl = rawUrl + "?X-Amz-Signature=xxx";
+            HrManagerDTO.ResponseDetail detail = new HrManagerDTO.ResponseDetail(
+                memberId, "홍길동", "hr@company.com", "테스트기업", "123-45-67890",
+                PermissionLevel.FULL, rawUrl, "재직증명서.pdf",
+                ZonedDateTime.now(), null, HrStatus.PENDING_REVIEW, null
+            );
+            given(memberQueryRepository.findHrManagerDetail(memberId)).willReturn(Optional.of(detail));
+            given(s3Uploader.createPresignedGetUrl(rawUrl)).willReturn(presignedUrl);
+
+            HrManagerDTO.ResponseDetail result = adminMemberService.getHrManagerDetail(memberId);
+
+            assertThat(result.certFileUrl()).isEqualTo(presignedUrl);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 기업 회원 조회 시 HR_MANAGER_NOT_FOUND 예외")
+        void notFound_throws() {
+            UUID memberId = UUID.randomUUID();
+            given(memberQueryRepository.findHrManagerDetail(memberId)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> adminMemberService.getHrManagerDetail(memberId))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminMemberErrorCode.HR_MANAGER_NOT_FOUND);
         }
     }
 

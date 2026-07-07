@@ -7,7 +7,13 @@ export const MEMBER_ROLE = { USER: 'USER', COMPANY: 'COMPANY' } as const;
 export const PLAN_TYPE = { FREE: 'FREE', PREMIUM: 'PREMIUM' } as const;
 export const SANCTION_TYPE = { WARNING: 'WARNING', SUSPEND: 'SUSPEND', BLACKLIST: 'BLACKLIST' } as const;
 export const SUSPEND_DURATION = { THREE_DAYS: 'THREE_DAYS', SEVEN_DAYS: 'SEVEN_DAYS', THIRTY_DAYS: 'THIRTY_DAYS', PERMANENT: 'PERMANENT' } as const;
-export const HR_STATUS = { PENDING: 'PENDING', ACTIVE: 'ACTIVE', REMOVED: 'REMOVED' } as const;
+export const HR_STATUS = {
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  APPROVED:       'APPROVED',
+  REJECTED:       'REJECTED',
+  NEEDS_REVISION: 'NEEDS_REVISION',
+  REMOVED:        'REMOVED',
+} as const;
 export const PERMISSION_LEVEL = { FULL: 'FULL', NOTICE: 'NOTICE', VIEWER: 'VIEWER' } as const;
 
 export type MemberStatus = typeof MEMBER_STATUS[keyof typeof MEMBER_STATUS];
