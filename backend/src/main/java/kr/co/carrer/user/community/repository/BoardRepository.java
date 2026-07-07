@@ -13,7 +13,7 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 
     Page<Board> findByCategoryAndBlindFalse(String category, Pageable pageable);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Board b SET b.viewCount = b.viewCount + 1 WHERE b.boardId = :boardId")
     void increaseViewCount(Long boardId);
 }

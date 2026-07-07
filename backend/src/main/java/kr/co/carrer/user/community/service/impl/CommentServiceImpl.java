@@ -22,8 +22,7 @@ public class CommentServiceImpl implements CommentService {
 
     public CommentServiceImpl(
             BoardRepository boardRepository,
-            CommentRepository commentRepository
-    ) {
+            CommentRepository commentRepository) {
         this.boardRepository = boardRepository;
         this.commentRepository = commentRepository;
     }
@@ -61,8 +60,7 @@ public class CommentServiceImpl implements CommentService {
                 board.getBoardId(),
                 memberId,
                 request.parentId(),
-                request.content()
-        );
+                request.content());
 
         return CommentDTO.Response.from(commentRepository.save(comment));
     }
@@ -71,12 +69,13 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     public void deleteComment(UUID memberId, Long commentId) {
         Comment comment = commentRepository.findById(commentId)
+                .filter(item -> !item.getBlind())
                 .orElseThrow(() -> new CustomException(CommunityErrorCode.COMMENT_NOT_FOUND));
 
         if (!comment.getMemberId().equals(memberId)) {
             throw new CustomException(CommunityErrorCode.COMMUNITY_ACCESS_DENIED);
         }
 
-        commentRepository.delete(comment);
+        comment.blind();
     }
 }

@@ -72,6 +72,10 @@ public class Comment {
         this.content = content;
     }
 
+    public void blind() {
+        this.blind = true;
+    }
+
     public Long getCommentId() {
         return commentId;
     }

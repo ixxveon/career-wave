@@ -26,8 +26,7 @@ public class ReportServiceImpl implements ReportService {
     public ReportServiceImpl(
             BoardRepository boardRepository,
             CommentRepository commentRepository,
-            CommunityReportRepository reportRepository
-    ) {
+            CommunityReportRepository reportRepository) {
         this.boardRepository = boardRepository;
         this.commentRepository = commentRepository;
         this.reportRepository = reportRepository;
@@ -39,20 +38,22 @@ public class ReportServiceImpl implements ReportService {
         reportRepository.findByReporterIdAndTargetTypeAndTargetId(
                 reporterId,
                 request.targetType(),
-                request.targetId()
-        ).ifPresent(report -> {
-            throw new CustomException(CommunityErrorCode.DUPLICATE_REPORT);
-        });
+                request.targetId()).ifPresent(report -> {
+                    throw new CustomException(CommunityErrorCode.DUPLICATE_REPORT);
+                });
 
         UUID reportedMemberId = findReportedMemberId(request);
+
+        if (reporterId.equals(reportedMemberId)) {
+            throw new CustomException(CommunityErrorCode.INVALID_REPORT_TARGET);
+        }
 
         CommunityReport report = new CommunityReport(
                 reportedMemberId,
                 reporterId,
                 request.targetType(),
                 request.targetId(),
-                request.reason()
-        );
+                request.reason());
 
         reportRepository.save(report);
     }

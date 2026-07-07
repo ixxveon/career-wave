@@ -31,8 +31,7 @@ public class BoardServiceImpl implements BoardService {
         PageRequest pageRequest = PageRequest.of(
                 page,
                 size,
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+                Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Board> boardPage = category == null || category.isBlank()
                 ? boardRepository.findByBlindFalse(pageRequest)
@@ -69,8 +68,7 @@ public class BoardServiceImpl implements BoardService {
                 memberId,
                 request.category(),
                 request.title(),
-                request.content()
-        );
+                request.content());
 
         return BoardDTO.Response.from(boardRepository.save(board));
     }
@@ -79,6 +77,7 @@ public class BoardServiceImpl implements BoardService {
     @Transactional
     public BoardDTO.Response updateBoard(UUID memberId, Long boardId, BoardDTO.UpdateRequest request) {
         Board board = boardRepository.findById(boardId)
+                .filter(item -> !item.getBlind())
                 .orElseThrow(() -> new CustomException(CommunityErrorCode.BOARD_NOT_FOUND));
 
         if (!board.getMemberId().equals(memberId)) {
@@ -88,8 +87,7 @@ public class BoardServiceImpl implements BoardService {
         board.update(
                 request.category(),
                 request.title(),
-                request.content()
-        );
+                request.content());
 
         return BoardDTO.Response.from(board);
     }
@@ -98,12 +96,13 @@ public class BoardServiceImpl implements BoardService {
     @Transactional
     public void deleteBoard(UUID memberId, Long boardId) {
         Board board = boardRepository.findById(boardId)
+                .filter(item -> !item.getBlind())
                 .orElseThrow(() -> new CustomException(CommunityErrorCode.BOARD_NOT_FOUND));
 
         if (!board.getMemberId().equals(memberId)) {
             throw new CustomException(CommunityErrorCode.COMMUNITY_ACCESS_DENIED);
         }
 
-        boardRepository.delete(board);
+        board.blind();
     }
 }

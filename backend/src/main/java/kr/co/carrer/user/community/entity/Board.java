@@ -78,6 +78,10 @@ public class Board {
         this.content = content;
     }
 
+    public void blind() {
+        this.blind = true;
+    }
+
     public Long getBoardId() {
         return boardId;
     }
