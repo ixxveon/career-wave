@@ -19,14 +19,26 @@ log = logging.getLogger(__name__)
 _audio_buffers: dict[str, dict[int, list[bytes]]] = defaultdict(lambda: defaultdict(list))
 
 
-_STAR_KEYWORDS = {
-    "상황", "문제", "행동", "결과",          # 한국어 STAR 키워드
-    "situation", "task", "action", "result",  # 영어 STAR 키워드
-    "그래서", "때문에", "결국", "최종적으로",
+# STAR 4요소를 카테고리별로 분리. 최소 2개 이상 카테고리가 매칭돼야 구조화된 답변으로 인정한다.
+# any() 단일 매칭은 "그래서", "문제" 같은 일반 단어로도 통과되므로 카테고리 집합 방식으로 변경.
+_STAR_CATEGORY_KEYWORDS: dict[str, set[str]] = {
+    "situation": {"상황", "배경", "당시", "situation", "context", "background"},
+    "task":      {"과제", "목표", "task", "challenge", "목적"},
+    "action":    {"행동", "조치", "수행", "진행", "action", "했습니다", "했어요", "적용"},
+    "result":    {"결과", "성과", "달성", "result", "outcome", "이루었"},
 }
+
+_STAR_HINT_MIN_CATEGORIES = 2  # 이 개수 미만의 카테고리만 매칭되면 STAR 힌트 발동
 
 _SHORT_ANSWER_WORD_THRESHOLD = 30   # 단어 수 기준 짧은 답변
 _LONG_ANSWER_WORD_THRESHOLD = 150   # 단어 수 기준 충분한 답변 (힌트 불필요)
+
+
+def _count_matched_star_categories(transcript_lower: str) -> int:
+    return sum(
+        any(kw in transcript_lower for kw in keywords)
+        for keywords in _STAR_CATEGORY_KEYWORDS.values()
+    )
 
 
 def _generate_answer_hint(transcript: str) -> str | None:
@@ -48,8 +60,9 @@ def _generate_answer_hint(transcript: str) -> str | None:
         return "답변이 조금 짧은 것 같아요. 구체적인 경험이나 사례를 추가하면 더 좋은 답변이 될 거예요."
 
     transcript_lower = transcript.lower()
-    has_star_keyword = any(kw in transcript_lower for kw in _STAR_KEYWORDS)
-    if not has_star_keyword:
+    matched_categories = _count_matched_star_categories(transcript_lower)
+    if matched_categories < _STAR_HINT_MIN_CATEGORIES:
+        log.debug("STAR hint triggered: matched %d/%d categories", matched_categories, len(_STAR_CATEGORY_KEYWORDS))
         return "STAR 구조(상황 → 문제 → 행동 → 결과)로 답변하면 면접관이 이해하기 더 쉬워요."
 
     return None
