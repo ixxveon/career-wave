@@ -62,37 +62,37 @@ function createSummary(overrides: Partial<AdminDashboardSummary> = {}): AdminDas
     kpis: [
       {
         key: 'TODAY_NEW_ADMINS',
-        title: '?ㅻ뒛 ?좉퇋 媛?낆옄',
+        title: '오늘 신규 가입자',
         value: 7,
-        unit: '紐?,
-        deltaText: '?좏깮 湲곌컙 湲곗?',
+        unit: '명',
+        deltaText: '선택 기간 기준',
         severity: 'NORMAL',
         targetPath: ADMIN_ROUTE_PATHS.admins,
       },
       {
         key: 'REALTIME_ACTIVE_ADMINS',
-        title: '?ㅼ떆媛??쒖꽦 愿由ъ옄',
+        title: '실시간 활성 관리자',
         value: 3,
-        unit: '紐?,
-        deltaText: '理쒓렐 濡쒓렇??1紐?,
+        unit: '명',
+        deltaText: '최근 로그인 1명',
         severity: 'NORMAL',
         targetPath: ADMIN_ROUTE_PATHS.admins,
       },
       {
         key: 'AI_INTERVIEW_SESSIONS',
-        title: 'AI ?명꽣酉??몄뀡',
+        title: 'AI 인터뷰 세션',
         value: 12,
-        unit: '嫄?,
-        deltaText: '?좏깮 湲곌컙 湲곗?',
+        unit: '건',
+        deltaText: '선택 기간 기준',
         severity: 'NORMAL',
         targetPath: ADMIN_ROUTE_PATHS.ai,
       },
       {
         key: 'TODAY_REVENUE',
-        title: '?ㅻ뒛 留ㅼ텧',
+        title: '오늘 매출',
         value: 29000,
-        unit: '??,
-        deltaText: '移대뱶 寃곗젣 湲곗?',
+        unit: '원',
+        deltaText: '카드 결제 기준',
         severity: 'NORMAL',
         targetPath: ADMIN_ROUTE_PATHS.payments,
       },
@@ -102,8 +102,8 @@ function createSummary(overrides: Partial<AdminDashboardSummary> = {}): AdminDas
         id: 1,
         level: 'WARNING',
         domain: 'AUDIT_LOG',
-        title: '媛먯궗 濡쒓렇 寃쎄퀬',
-        message: '沅뚰븳 蹂寃?寃쎄퀬',
+        title: '감사 로그 경고',
+        message: '권한 변경 경고',
         targetPath: ADMIN_ROUTE_PATHS.log,
         createdAt: '2026-06-28T08:55:00Z',
       },
@@ -111,8 +111,8 @@ function createSummary(overrides: Partial<AdminDashboardSummary> = {}): AdminDas
         id: 2,
         level: 'URGENT',
         domain: 'SCRAPING',
-        title: '?ㅽ겕?섑븨 ?ㅽ뙣',
-        message: '?먰떚???ㅽ겕?섑븨 ?ㅽ뙣',
+        title: '스크래핑 실패',
+        message: '원티드 스크래핑 실패',
         targetPath: ADMIN_ROUTE_PATHS.scraping,
         createdAt: '2026-06-28T08:58:00Z',
       },
@@ -127,32 +127,32 @@ function createSummary(overrides: Partial<AdminDashboardSummary> = {}): AdminDas
     serviceCards: [
       {
         key: 'ADMIN',
-        title: '愿由ъ옄 愿由?,
-        description: '愿由ъ옄 怨꾩젙怨?沅뚰븳??愿由ы빀?덈떎.',
-        summaryText: '?좉퇋 7紐?,
+        title: '관리자 관리',
+        description: '관리자 계정과 권한을 관리합니다.',
+        summaryText: '신규 7명',
         targetPath: ADMIN_ROUTE_PATHS.admins,
       },
       {
         key: 'SCRAPING',
-        title: '?ㅽ겕?섑븨 愿由?,
-        description: '梨꾩슜 怨듦퀬 ?섏쭛 ?뚯씠?꾨씪???곹깭瑜??뺤씤?⑸땲??',
-        summaryText: '?ㅽ뻾以?1媛?,
+        title: '스크래핑 관리',
+        description: '채용 공고 수집 파이프라인 상태를 확인합니다.',
+        summaryText: '실행중 1개',
         targetPath: ADMIN_ROUTE_PATHS.scraping,
       },
       {
         key: 'AUDIT_LOG',
-        title: '媛먯궗 濡쒓렇',
-        description: '愿由ъ옄 ?쒕룞怨??쒖뒪??蹂寃??대젰???뺤씤?⑸땲??',
-        summaryText: '?뚮┝ 2嫄?,
+        title: '감사 로그',
+        description: '관리자 활동과 시스템 변경 이력을 확인합니다.',
+        summaryText: '알림 2건',
         targetPath: ADMIN_ROUTE_PATHS.log,
       },
     ],
     systemStatus: [
       {
         key: 'SCRAPING_PIPELINE',
-        label: '?ㅽ겕?섑븨 ?뚯씠?꾨씪??,
+        label: '스크래핑 파이프라인',
         status: 'WARNING',
-        valueText: '?ㅽ뻾以?1媛?/ ?ㅽ뙣 0媛?,
+        valueText: '실행중 1개 / 실패 0개',
       },
     ],
     recentActivities: [
@@ -160,7 +160,7 @@ function createSummary(overrides: Partial<AdminDashboardSummary> = {}): AdminDas
         id: 100,
         occurredAt: '2026-06-28T08:50:00Z',
         adminId: 'master',
-        message: '愿由ъ옄 ?쒕룞 - 沅뚰븳 蹂寃?,
+        message: '관리자 활동 - 권한 변경',
         targetPath: ADMIN_ROUTE_PATHS.log,
       },
     ],
@@ -184,34 +184,34 @@ describe('AdminDashboardPage contract rendering', () => {
   it('renders dashboard summary using backend KPI keys, target paths, and domain values', async () => {
     renderPage();
 
-    expect(await screen.findByText('?ㅻ뒛 ?좉퇋 媛?낆옄')).toBeTruthy();
-    expect(screen.getByText('7紐?)).toBeTruthy();
-    expect(screen.getByText('?ㅼ떆媛??쒖꽦 愿由ъ옄')).toBeTruthy();
-    expect(screen.getByText('AI ?명꽣酉??몄뀡')).toBeTruthy();
-    expect(screen.getByText('29,000??)).toBeTruthy();
-    expect(screen.getByText('沅뚰븳 蹂寃?寃쎄퀬')).toBeTruthy();
-    expect(screen.getByText('?먰떚???ㅽ겕?섑븨 ?ㅽ뙣')).toBeTruthy();
+    expect(await screen.findByText('오늘 신규 가입자')).toBeTruthy();
+    expect(screen.getByText('7명')).toBeTruthy();
+    expect(screen.getByText('실시간 활성 관리자')).toBeTruthy();
+    expect(screen.getByText('AI 인터뷰 세션')).toBeTruthy();
+    expect(screen.getByText('29,000원')).toBeTruthy();
+    expect(screen.getByText('권한 변경 경고')).toBeTruthy();
+    expect(screen.getByText('원티드 스크래핑 실패')).toBeTruthy();
     expect(screen.getByText('Toss Payments')).toBeTruthy();
     expect(screen.getByText('100%')).toBeTruthy();
     expect(screen.getAllByText('Toss Payments 100%')).toHaveLength(2);
-    expect(screen.getByText('愿由ъ옄 ?쒕룞 - 沅뚰븳 蹂寃?)).toBeTruthy();
+    expect(screen.getByText('관리자 활동 - 권한 변경')).toBeTruthy();
   });
 
   it('renders the recent activity all alerts button when the destination page is accessible', async () => {
     renderPage();
 
-    expect(await screen.findByText('沅뚰븳 蹂寃?寃쎄퀬')).toBeTruthy();
-    expect(screen.getByRole('button', { name: '?꾩껜 蹂닿린' }).hasAttribute('disabled')).toBe(false);
+    expect(await screen.findByText('권한 변경 경고')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '전체 보기' }).hasAttribute('disabled')).toBe(false);
   });
 
   it('navigates through valid alert, service card, and recent activity target paths', async () => {
     const { container } = renderPage();
 
-    expect(await screen.findByText('沅뚰븳 蹂寃?寃쎄퀬')).toBeTruthy();
-    fireEvent.click(screen.getAllByRole('button', { name: '?곸꽭 蹂닿린' })[0]);
+    expect(await screen.findByText('권한 변경 경고')).toBeTruthy();
+    fireEvent.click(screen.getAllByRole('button', { name: '상세 보기' })[0]);
     expect(navigateMock).toHaveBeenCalledWith(ADMIN_ROUTE_PATHS.log);
 
-    const scrapingCard = screen.getByText('?ㅽ겕?섑븨 愿由?).closest('.adminCard');
+    const scrapingCard = screen.getByText('스크래핑 관리').closest('.adminCard');
     const scrapingButton = scrapingCard?.querySelector('button');
     expect(scrapingButton).toBeTruthy();
     fireEvent.click(scrapingButton as HTMLButtonElement);
@@ -228,12 +228,12 @@ describe('AdminDashboardPage contract rendering', () => {
 
     renderPage();
 
-    expect(await screen.findByText('?ㅻ뒛 ?좉퇋 媛?낆옄')).toBeTruthy();
-    expect(screen.queryByText('沅뚰븳 蹂寃?寃쎄퀬')).toBeNull();
-    expect(screen.queryByText('?먰떚???ㅽ겕?섑븨 ?ㅽ뙣')).toBeNull();
-    expect(screen.queryByText('?ㅽ겕?섑븨 愿由?)).toBeNull();
-    expect(screen.queryByText('媛먯궗 濡쒓렇')).toBeNull();
-    expect(screen.getByText('?꾩옱 泥섎━??二쇱슂 ?뚮┝???놁뒿?덈떎.')).toBeTruthy();
+    expect(await screen.findByText('오늘 신규 가입자')).toBeTruthy();
+    expect(screen.queryByText('권한 변경 경고')).toBeNull();
+    expect(screen.queryByText('원티드 스크래핑 실패')).toBeNull();
+    expect(screen.queryByText('스크래핑 관리')).toBeNull();
+    expect(screen.queryByText('감사 로그')).toBeNull();
+    expect(screen.getByText('현재 처리할 주요 알림이 없습니다.')).toBeTruthy();
   });
 
   it('renders complete empty state when every dashboard section is empty', async () => {
@@ -249,7 +249,7 @@ describe('AdminDashboardPage contract rendering', () => {
 
     renderPage();
 
-    expect(await screen.findByText('?쒖떆????쒕낫???곗씠?곌? ?놁뒿?덈떎.')).toBeTruthy();
+    expect(await screen.findByText('표시할 대시보드 데이터가 없습니다.')).toBeTruthy();
   });
 
   it('renders error state and retries the summary request', async () => {
@@ -259,10 +259,10 @@ describe('AdminDashboardPage contract rendering', () => {
 
     renderPage();
 
-    expect(await screen.findByText('??쒕낫???곗씠?곕? 遺덈윭?ㅼ? 紐삵뻽?듬땲??')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: '?ㅼ떆 ?쒕룄' }));
+    expect(await screen.findByText('대시보드 데이터를 불러오지 못했습니다.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
 
     await waitFor(() => expect(dashboardApiMock.getSummary).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText('?ㅻ뒛 ?좉퇋 媛?낆옄')).toBeTruthy();
+    expect(await screen.findByText('오늘 신규 가입자')).toBeTruthy();
   });
 });
