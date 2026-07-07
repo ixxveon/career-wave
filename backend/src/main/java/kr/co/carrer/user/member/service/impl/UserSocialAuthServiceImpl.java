@@ -24,12 +24,14 @@ import kr.co.carrer.user.member.service.SocialSignupTokenStore;
 import kr.co.carrer.user.member.service.TermsAgreementEvidenceRecorder;
 import kr.co.carrer.user.member.service.UserSocialAuthService;
 import kr.co.carrer.user.member.type.MemberStatus;
+import kr.co.carrer.user.member.type.RoleType;
 import kr.co.carrer.user.member.type.SocialProvider;
 import kr.co.carrer.user.member.type.VerificationChannel;
 import kr.co.carrer.user.member.type.VerificationPurpose;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -189,14 +191,14 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
                 .filter(p -> p.provider() == provider)
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.SOCIAL_SIGNUP_TOKEN_INVALID));
 
-        // 휴대폰 인증 검증 — purpose=REGISTER
+        // 휴대폰 인증 검증 — purpose=SOCIAL_SIGNUP
         var phoneVerification = verificationRepository.findByVerificationToken(request.getPhoneVerificationToken())
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
         UserVerificationServiceImpl.validateVerificationToken(
-                phoneVerification, VerificationChannel.PHONE, request.getPhone(), VerificationPurpose.REGISTER);
+                phoneVerification, VerificationChannel.PHONE, request.getPhone(), VerificationPurpose.SOCIAL_SIGNUP);
 
-        // 중복 검증
-        if (memberRepository.existsByPhone(request.getPhone()))
+        // 중복 검증 — 탈퇴 회원 번호는 재사용 가능(resolve()/일반 가입과 동일 기준)
+        if (memberRepository.existsByPhoneAndMemberStatusNot(request.getPhone(), MemberStatus.WITHDRAWN))
             throw new CustomException(UserAuthErrorCode.PHONE_ALREADY_EXISTS);
         if (socialAccountRepository.existsByProviderAndProviderUserId(provider, payload.providerUserId()))
             throw new CustomException(UserAuthErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
@@ -239,6 +241,72 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         String accessToken = issueTokens(member, response);
         return UserSocialAuthDto.ResponseSocialComplete.of(
                 member.getMemberId(), member.getMemberStatus().name(), accessToken);
+    }
+
+    // ── social/resolve — 휴대폰 인증 후 기존 회원 연동 / 신규 분기 ──────────────────────
+
+    @Override
+    @Transactional
+    public UserSocialAuthDto.ResponseSocialResolve resolve(
+            UserSocialAuthDto.RequestSocialResolve request, HttpServletResponse response) {
+
+        SocialProvider provider = resolveSocialProvider(request.getProvider());
+
+        // 휴대폰 인증 검증 — purpose=SOCIAL_SIGNUP (consume은 연동/가입 확정 시점에만)
+        var phoneVerification = verificationRepository.findByVerificationToken(request.getPhoneVerificationToken())
+                .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
+        UserVerificationServiceImpl.validateVerificationToken(
+                phoneVerification, VerificationChannel.PHONE, request.getPhone(), VerificationPurpose.SOCIAL_SIGNUP);
+
+        // 인증한 번호의 기존 회원(탈퇴 제외) 조회
+        Optional<Member> existing = memberRepository
+                .findByPhoneAndRoleType(request.getPhone(), RoleType.USER)
+                .filter(m -> m.getMemberStatus() != MemberStatus.WITHDRAWN);
+
+        // 신규 번호 — 토큰 미소비, 프론트에서 이름·약관 입력 후 complete() 호출
+        if (existing.isEmpty()) {
+            return UserSocialAuthDto.ResponseSocialResolve.newMember();
+        }
+
+        // 기존 회원 — 소셜 계정 연동 후 로그인. socialSignupToken은 이 시점에만 소비
+        Member member = existing.get();
+        SocialSignupTokenStore.SocialSignupPayload payload = socialSignupTokenStore
+                .consume(request.getSocialSignupToken())
+                .filter(p -> p.provider() == provider)
+                .orElseThrow(() -> new CustomException(UserAuthErrorCode.SOCIAL_SIGNUP_TOKEN_INVALID));
+
+        // 이 소셜 신원이 이미 다른 회원에 연동됨(정상 흐름이면 callback에서 로그인됐어야 함) — 방어
+        if (socialAccountRepository.existsByProviderAndProviderUserId(provider, payload.providerUserId()))
+            throw new CustomException(UserAuthErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
+        // 이 회원이 이미 동일 provider를 연동함(다른 계정)
+        if (socialAccountRepository.existsByMemberIdAndProvider(member.getMemberId(), provider))
+            throw new CustomException(UserAuthErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
+
+        // 계정 상태 검증 — 일반 로그인과 동일한 정책
+        validateAccountStatus(member);
+
+        phoneVerification.markConsumed();
+
+        try {
+            socialAccountRepository.saveAndFlush(SocialAccount.link(
+                    member.getMemberId(), provider,
+                    payload.providerUserId(), payload.providerEmail()));
+        } catch (DataIntegrityViolationException e) {
+            // 유니크 제약(provider+providerUserId / member+provider) 동시성 위반
+            throw new CustomException(UserAuthErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
+        }
+
+        member.updateLastLoginAt(Instant.now());
+        String accessToken = issueTokens(member, response);
+
+        UserLoginDto.MemberInfo memberInfo = UserLoginDto.MemberInfo.of(
+                member.getMemberId(), member.getLoginId(), member.getName(),
+                member.getRoleType(), member.getMemberStatus(),
+                member.getSubscriptionStatus(),
+                kr.co.carrer.user.member.type.CompanyApprovalStatus.NONE,
+                member.getLastLoginAt());
+
+        return UserSocialAuthDto.ResponseSocialResolve.linked(accessToken, memberInfo);
     }
 
     // ── OAuth 외부 API 호출 ────────────────────────────────────────────────────

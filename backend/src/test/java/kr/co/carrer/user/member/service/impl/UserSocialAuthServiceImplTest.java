@@ -178,13 +178,13 @@ class UserSocialAuthServiceImplTest {
         when(phoneVerif.getVerificationStatus()).thenReturn(VerificationStatus.VERIFIED);
         when(phoneVerif.getChannel()).thenReturn(VerificationChannel.PHONE);
         when(phoneVerif.getTarget()).thenReturn("01012345678");
-        when(phoneVerif.getPurpose()).thenReturn(VerificationPurpose.REGISTER);
+        when(phoneVerif.getPurpose()).thenReturn(VerificationPurpose.SOCIAL_SIGNUP);
         when(phoneVerif.getExpiresAt()).thenReturn(Instant.now().plusSeconds(300));
         when(verificationRepository.findByVerificationToken(anyString()))
                 .thenReturn(Optional.of(phoneVerif));
 
         // phone 중복 없음, social account 중복 없음, 이메일 충돌
-        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhoneAndMemberStatusNot(anyString(), any())).thenReturn(false);
         when(socialAccountRepository.existsByProviderAndProviderUserId(any(), anyString())).thenReturn(false);
         when(memberRepository.existsByEmail("conflict@example.com")).thenReturn(true);
 
@@ -362,13 +362,13 @@ class UserSocialAuthServiceImplTest {
         when(phoneVerif.getVerificationStatus()).thenReturn(VerificationStatus.VERIFIED);
         when(phoneVerif.getChannel()).thenReturn(VerificationChannel.PHONE);
         when(phoneVerif.getTarget()).thenReturn("01098765432");
-        when(phoneVerif.getPurpose()).thenReturn(VerificationPurpose.REGISTER);
+        when(phoneVerif.getPurpose()).thenReturn(VerificationPurpose.SOCIAL_SIGNUP);
         when(phoneVerif.getExpiresAt()).thenReturn(Instant.now().plusSeconds(300));
         when(verificationRepository.findByVerificationToken(anyString()))
                 .thenReturn(Optional.of(phoneVerif));
 
         // 중복 없음
-        when(memberRepository.existsByPhone(anyString())).thenReturn(false);
+        when(memberRepository.existsByPhoneAndMemberStatusNot(anyString(), any())).thenReturn(false);
         when(socialAccountRepository.existsByProviderAndProviderUserId(any(), anyString()))
                 .thenReturn(false);
         when(memberRepository.existsByEmail(anyString())).thenReturn(false);
@@ -426,7 +426,6 @@ class UserSocialAuthServiceImplTest {
         setField(req, "provider", provider);
         setField(req, "socialSignupToken", "signup-token");
         setField(req, "name", "홍길동");
-        setField(req, "carrier", "SKT");
         setField(req, "phone", phone);
         setField(req, "phoneVerificationToken", phoneToken);
         var terms = new kr.co.carrer.user.member.dto.UserRegisterDto.PersonalTerms();
