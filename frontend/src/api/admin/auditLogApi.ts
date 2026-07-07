@@ -3,6 +3,17 @@ import type { ApiResponse, PageResult } from '../../types/admin/index';
 
 export const AUDIT_LOG_API_BASE_PATH = '/api/v1/admin/audit-logs';
 
+const KST_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: 'Asia/Seoul',
+  hourCycle: 'h23',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+});
+
 export const AUDIT_LOG_TYPE = {
   ADMIN_ACTIVITY: 'ADMIN_ACTIVITY',
   ADMIN_MANAGEMENT: 'ADMIN_MANAGEMENT',
@@ -163,6 +174,22 @@ function formatAuditLogDetail(log: BackendAuditLogItem) {
   return target ? `${log.action} / ${target}` : log.action;
 }
 
+function formatAuditLogOccurredAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const parts = KST_DATE_TIME_FORMATTER.formatToParts(date);
+  const lookup = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, part.value]),
+  );
+
+  return `${lookup.year}-${lookup.month}-${lookup.day} ${lookup.hour}:${lookup.minute}:${lookup.second}`;
+}
+
 export function mapBackendAuditLogSummary(summary: BackendAuditLogSummary): AuditLogSummary {
   return {
     totalCount: summary.totalCount,
@@ -187,7 +214,7 @@ export function mapBackendAuditLogItem(log: BackendAuditLogItem): AuditLogItem {
     targetType: log.targetType ?? '-',
     targetId: log.targetId ?? '-',
     ipAddressMasked: maskIpAddress(log.ipAddress),
-    occurredAt: log.createdAt,
+    occurredAt: formatAuditLogOccurredAt(log.createdAt),
   };
 }
 

@@ -560,7 +560,7 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
   gap: 22px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .leftColumn {
@@ -575,9 +575,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  height: calc(100vh - 48px);
-  position: sticky;
-  top: 24px;
+  height: 100%;
 }
 
 /* alert */
