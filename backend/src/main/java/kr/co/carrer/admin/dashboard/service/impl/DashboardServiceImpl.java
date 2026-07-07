@@ -44,6 +44,7 @@ public class DashboardServiceImpl implements DashboardService {
         DashboardRangeType range = resolveRange(request);
         ZonedDateTime baseDateTime = ZonedDateTime.now(ZoneOffset.UTC);
         DashboardQueryWindow queryWindow = DashboardQueryWindow.of(range, baseDateTime);
+
         DashboardSummaryQueryRepository.AdminAccountMetrics adminMetrics =
                 dashboardSummaryQueryRepository.fetchAdminAccountMetrics(queryWindow);
         DashboardSummaryQueryRepository.AiUsageMetrics aiUsageMetrics =
@@ -207,7 +208,7 @@ public class DashboardServiceImpl implements DashboardService {
     ) {
         long newAdminCount = adminMetrics == null ? 0L : adminMetrics.newAdminCount();
         long interviewSessionCount = aiUsageMetrics == null ? 0L : aiUsageMetrics.interviewSessionCount();
-        long runningPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.runningPipelineCount();
+        String scrapingSummaryText = formatScrapingSummaryText(scrapingStatusMetrics);
 
         return List.of(
                 new DashboardDTO.ServiceCard(
@@ -228,7 +229,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "SCRAPING",
                         "스크래핑 관리",
                         "채용 공고 수집 파이프라인 상태를 확인합니다.",
-                        "실행중 " + runningPipelineCount + "개",
+                        scrapingSummaryText,
                         SCRAPING_PATH
                 ),
                 new DashboardDTO.ServiceCard(
@@ -252,6 +253,7 @@ public class DashboardServiceImpl implements DashboardService {
         long failedDocumentCount = ragDocumentMetrics == null ? 0L : ragDocumentMetrics.failedDocumentCount();
         long failedPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.failedPipelineCount();
         long runningPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.runningPipelineCount();
+        String scrapingSummaryText = formatScrapingSummaryText(scrapingStatusMetrics);
 
         return List.of(
                 new DashboardDTO.SystemStatus(
@@ -270,9 +272,21 @@ public class DashboardServiceImpl implements DashboardService {
                         "SCRAPING_PIPELINE",
                         "스크래핑 파이프라인",
                         resolveScrapingStatus(failedPipelineCount, runningPipelineCount),
-                        "실행중 " + runningPipelineCount + "개 / 실패 " + failedPipelineCount + "개"
+                        scrapingSummaryText
                 )
         );
+    }
+
+    private String formatScrapingSummaryText(
+            DashboardSummaryQueryRepository.ScrapingStatusMetrics scrapingStatusMetrics
+    ) {
+        long totalPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.totalPipelineCount();
+        long successPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.successPipelineCount();
+        long runningPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.runningPipelineCount();
+        long failedPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.failedPipelineCount();
+
+        return "전체 " + totalPipelineCount + "개 / 성공 " + successPipelineCount
+                + "개 / 실행 중 " + runningPipelineCount + "개 / 실패 " + failedPipelineCount + "개";
     }
 
     private DashboardSystemStatusType resolveScrapingStatus(long failedPipelineCount, long runningPipelineCount) {

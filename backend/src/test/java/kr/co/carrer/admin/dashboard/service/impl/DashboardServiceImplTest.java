@@ -59,6 +59,25 @@ class DashboardServiceImplTest {
     }
 
     @Test
+    @DisplayName("스크래핑 상태 문구는 전체/성공/실행 중/실패 집계를 함께 노출한다")
+    void scrapingStatusTextIncludesAllSummaryCounts() {
+        when(dashboardSummaryQueryRepository.findWeeklySignups(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
+        when(dashboardSummaryQueryRepository.findPaymentRatios(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
+
+        DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(result.serviceCards())
+                .extracting(DashboardDTO.ServiceCard::key, DashboardDTO.ServiceCard::summaryText)
+                .contains(tuple("SCRAPING", "전체 6개 / 성공 4개 / 실행 중 1개 / 실패 1개"));
+
+        assertThat(result.systemStatus())
+                .extracting(DashboardDTO.SystemStatus::key, DashboardDTO.SystemStatus::valueText)
+                .contains(tuple("SCRAPING_PIPELINE", "전체 6개 / 성공 4개 / 실행 중 1개 / 실패 1개"));
+    }
+
+    @Test
     @DisplayName("회원 가입 추이, 오늘 매출, 결제 비율을 repository 집계 결과로 반환한다")
     void getSummaryUsesMemberAndPaymentMetricsFromRepository() {
         when(dashboardSummaryQueryRepository.findWeeklySignups(any(DashboardQueryWindow.class)))
