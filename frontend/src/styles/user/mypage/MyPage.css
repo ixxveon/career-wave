@@ -3294,11 +3294,14 @@ a.cw-chart-filter {
 }
 
 .cw-scrap-card {
+  min-height: 238px;
   padding: 18px;
   border: 1px solid #dfe8f5;
   border-radius: 20px;
   background: #ffffff;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
 }
 
 .cw-scrap-card:hover {
@@ -3369,6 +3372,7 @@ a.cw-chart-filter {
   font-weight: 800;
   line-height: 1.45;
   letter-spacing: -0.03em;
+  min-height: 56px;
 }
 
 .cw-scrap-keywords {
@@ -3382,7 +3386,9 @@ a.cw-chart-filter {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 22px;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 22px;
 }
 
 .cw-scrap-card-bottom span {
@@ -3406,6 +3412,7 @@ a.cw-chart-filter {
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .cw-job-detail-button:hover {
@@ -3416,6 +3423,46 @@ a.cw-chart-filter {
 
 .cw-job-detail-button:active {
   transform: translateY(0);
+}
+
+.cw-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.cw-pagination button {
+  min-width: 58px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #dfe8f5;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #2f6fce;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+}
+
+.cw-pagination button:hover:not(:disabled) {
+  border-color: #9fc1f5;
+  background: #edf4ff;
+}
+
+.cw-pagination button:disabled {
+  color: #b7c4d8;
+  background: #f8fbff;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.cw-pagination span {
+  color: #64748f;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 /* 
