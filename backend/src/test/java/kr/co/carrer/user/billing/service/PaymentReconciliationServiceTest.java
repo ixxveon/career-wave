@@ -69,7 +69,7 @@ class PaymentReconciliationServiceTest {
         given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         TossBillingPaymentResponse tossResponse = new TossBillingPaymentResponse(
-                "pk_test", payment.getOrderId(), "DONE", 29000, "KRW", ZonedDateTime.now(KST));
+                "pk_test", payment.getOrderId(), "카드", "DONE", 29000, "KRW", ZonedDateTime.now(KST));
         given(tossPaymentQueryClient.queryByOrderId(payment.getOrderId()))
                 .willReturn(Optional.of(tossResponse));
 
@@ -88,7 +88,7 @@ class PaymentReconciliationServiceTest {
         given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         TossBillingPaymentResponse tossResponse = new TossBillingPaymentResponse(
-                null, payment.getOrderId(), "CANCELED", 0, "KRW", null);
+                null, payment.getOrderId(), null, "CANCELED", 0, "KRW", null);
         given(tossPaymentQueryClient.queryByOrderId(payment.getOrderId()))
                 .willReturn(Optional.of(tossResponse));
 
@@ -107,7 +107,7 @@ class PaymentReconciliationServiceTest {
         given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         TossBillingPaymentResponse tossResponse = new TossBillingPaymentResponse(
-                null, payment.getOrderId(), "IN_PROGRESS", 0, "KRW", null);
+                null, payment.getOrderId(), null, "IN_PROGRESS", 0, "KRW", null);
         given(tossPaymentQueryClient.queryByOrderId(payment.getOrderId()))
                 .willReturn(Optional.of(tossResponse));
 
@@ -173,7 +173,7 @@ class PaymentReconciliationServiceTest {
         given(userPaymentRepository.findById(p2.getPaymentId())).willReturn(Optional.of(p2));
 
         TossBillingPaymentResponse done = new TossBillingPaymentResponse(
-                "pk", p1.getOrderId(), "DONE", 29000, "KRW", ZonedDateTime.now(KST));
+                "pk", p1.getOrderId(), "카드", "DONE", 29000, "KRW", ZonedDateTime.now(KST));
         given(tossPaymentQueryClient.queryByOrderId(p1.getOrderId())).willReturn(Optional.of(done));
         given(tossPaymentQueryClient.queryByOrderId(p2.getOrderId()))
                 .willThrow(new RuntimeException("Unexpected error"));
@@ -192,7 +192,7 @@ class PaymentReconciliationServiceTest {
         given(userPaymentRepository.findById(payment.getPaymentId())).willReturn(Optional.of(payment));
 
         TossBillingPaymentResponse tossResponse = new TossBillingPaymentResponse(
-                null, payment.getOrderId(), "ABORTED", 0, "KRW", null);
+                null, payment.getOrderId(), null, "ABORTED", 0, "KRW", null);
         given(tossPaymentQueryClient.queryByOrderId(payment.getOrderId()))
                 .willReturn(Optional.of(tossResponse));
 
