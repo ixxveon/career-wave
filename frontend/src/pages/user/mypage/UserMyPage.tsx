@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   UserRound,
@@ -18,6 +18,48 @@ import {
 import type { UserProfile } from "@/types/user/dashboard";
 
 import "@/styles/user/mypage/MyPage.css";
+
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidName(name: string) {
+  return /^[가-힣a-zA-Z\s]{2,20}$/.test(name);
+}
+
+function normalizeGithubUrl(githubUrl: string) {
+  const trimmedGithubUrl = githubUrl.trim();
+
+  if (!trimmedGithubUrl) return "";
+
+  if (trimmedGithubUrl.startsWith("https://")) {
+    return trimmedGithubUrl.replace(/\/$/, "");
+  }
+
+  if (trimmedGithubUrl.startsWith("github.com/")) {
+    return `https://${trimmedGithubUrl}`.replace(/\/$/, "");
+  }
+
+  return trimmedGithubUrl;
+}
+
+function formatPhoneNumber(phone: string) {
+  const numbers = phone.replace(/\D/g, "").slice(0, 11);
+
+  if (numbers.length < 4) {
+    return numbers;
+  }
+
+  if (numbers.length < 8) {
+    return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+  }
+
+  return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
+}
+
+function isValidGithubUrl(githubUrl: string) {
+  return /^https:\/\/(www\.)?github\.com\/[A-Za-z0-9-]+$/.test(githubUrl);
+}
 
 function maskEmail(email: string | null) {
   if (!email) return "이메일 없음";
@@ -97,8 +139,25 @@ function UserMyPage() {
 
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const isSavingProfileRef = useRef(false);
+  const [editErrorMessage, setEditErrorMessage] = useState("");
 
   const isLoading = isProfileLoading || isGithubLoading;
+
+  useEffect(() => {
+    if (!isEditModalOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeEditModal();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isEditModalOpen]);
 
   function openEditModal() {
     if (!userProfile) return;
@@ -110,10 +169,12 @@ function UserMyPage() {
       githubUrl: githubProfile?.githubUrl ?? "",
     });
 
+    setEditErrorMessage("");
     setIsEditModalOpen(true);
   }
 
   function closeEditModal() {
+    setEditErrorMessage("");
     setIsEditModalOpen(false);
   }
   function handleGithubManage() {
@@ -121,23 +182,54 @@ function UserMyPage() {
   }
 
   function handleEditFormChange(field: keyof EditProfileForm, value: string) {
+    setEditErrorMessage("");
+
+    const formattedValue = field === "phone" ? formatPhoneNumber(value) : value;
+
     setEditForm((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: formattedValue,
     }));
   }
 
   async function saveProfileEdit() {
     if (!userProfile || isSavingProfileRef.current) return;
     isSavingProfileRef.current = true;
+    setEditErrorMessage("");
 
     const trimmedName = editForm.name.trim();
     const trimmedEmail = editForm.email.trim();
     const normalizedPhone = (editForm.phone ?? "").replace(/-/g, "").trim();
-    const trimmedGithubUrl = editForm.githubUrl.trim();
+    const normalizedGithubUrl = normalizeGithubUrl(editForm.githubUrl);
+    if (!hasEditFormChanges) {
+      setIsEditModalOpen(false);
+      setEditErrorMessage("");
+      isSavingProfileRef.current = false;
+      return;
+    }
 
-    if (!trimmedEmail || !trimmedEmail.includes("@")) {
-      alert("이메일 형식이 올바르지 않습니다.");
+    if (!isValidName(trimmedName)) {
+      setEditErrorMessage("이름은 2~20자의 한글 또는 영문으로 입력해 주세요.");
+      isSavingProfileRef.current = false;
+      return;
+    }
+
+    if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+      setEditErrorMessage("이메일 형식이 올바르지 않습니다.");
+      isSavingProfileRef.current = false;
+      return;
+    }
+
+    if (normalizedPhone && !/^010[0-9]{8,9}$/.test(normalizedPhone)) {
+      setEditErrorMessage("휴대폰 번호는 01012345678 형식으로 입력해 주세요.");
+      isSavingProfileRef.current = false;
+      return;
+    }
+
+    if (normalizedGithubUrl && !isValidGithubUrl(normalizedGithubUrl)) {
+      setEditErrorMessage(
+        "GitHub URL은 github.com/username 또는 https://github.com/username 형식으로 입력해 주세요.",
+      );
       isSavingProfileRef.current = false;
       return;
     }
@@ -149,16 +241,14 @@ function UserMyPage() {
         name: trimmedName,
         email: trimmedEmail,
         phone: normalizedPhone,
-        githubUrl: trimmedGithubUrl,
+        githubUrl: normalizedGithubUrl,
       });
 
       await Promise.all([refetchProfile(), refetchGithub()]);
 
       setIsEditModalOpen(false);
-
-      alert("회원 정보가 수정되었습니다.");
     } catch {
-      alert("회원 정보 수정에 실패했습니다.");
+      setEditErrorMessage("회원 정보 수정에 실패했습니다.");
     } finally {
       isSavingProfileRef.current = false;
       setIsSavingProfile(false);
@@ -201,6 +291,11 @@ function UserMyPage() {
     label: "알 수 없음",
     className: "cw-warning",
   };
+  const hasEditFormChanges =
+    editForm.name.trim() !== userProfile.name ||
+    editForm.email.trim() !== (userProfile.email ?? "") ||
+    editForm.phone.replace(/-/g, "").trim() !== userProfile.phone ||
+    normalizeGithubUrl(editForm.githubUrl) !== (githubProfile?.githubUrl ?? "");
 
   return (
     <div className="cw-mypage-layout">
@@ -411,72 +506,89 @@ function UserMyPage() {
               <p>수정할 회원 정보를 입력한 뒤 저장해 주세요.</p>
             </div>
 
-            <div className="cw-edit-form">
-              <label>
-                이름
-                <input
-                  type="text"
-                  value={editForm.name ?? ""}
-                  onChange={(event) =>
-                    handleEditFormChange("name", event.target.value)
-                  }
-                />
-              </label>
+            <form
+              noValidate
+              onSubmit={(event) => {
+                event.preventDefault();
+                void saveProfileEdit();
+              }}
+            >
+              <div className="cw-edit-form">
+                <label>
+                  이름
+                  <input
+                    type="text"
+                    value={editForm.name ?? ""}
+                    onChange={(event) =>
+                      handleEditFormChange("name", event.target.value)
+                    }
+                  />
+                </label>
 
-              <label>
-                이메일
-                <input
-                  type="email"
-                  value={editForm.email ?? ""}
-                  placeholder="example@email.com"
-                  onChange={(event) =>
-                    handleEditFormChange("email", event.target.value)
-                  }
-                />
-              </label>
+                <label>
+                  이메일
+                  <input
+                    type="text"
+                    value={editForm.email ?? ""}
+                    placeholder="example@email.com"
+                    spellCheck={false}
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    onChange={(event) =>
+                      handleEditFormChange("email", event.target.value)
+                    }
+                  />
+                </label>
 
-              <label>
-                휴대폰 번호
-                <input
-                  type="text"
-                  value={editForm.phone ?? ""}
-                  onChange={(event) =>
-                    handleEditFormChange("phone", event.target.value)
-                  }
-                />
-              </label>
+                <label>
+                  휴대폰 번호
+                  <input
+                    type="text"
+                    value={editForm.phone ?? ""}
+                    onChange={(event) =>
+                      handleEditFormChange("phone", event.target.value)
+                    }
+                  />
+                </label>
 
-              <label>
-                GitHub URL
-                <input
-                  type="text"
-                  value={editForm.githubUrl ?? ""}
-                  placeholder="https://github.com/username"
-                  onChange={(event) =>
-                    handleEditFormChange("githubUrl", event.target.value)
-                  }
-                />
-              </label>
-            </div>
+                <label>
+                  GitHub URL
+                  <input
+                    type="text"
+                    value={editForm.githubUrl ?? ""}
+                    placeholder="https://github.com/username"
+                    onChange={(event) =>
+                      handleEditFormChange("githubUrl", event.target.value)
+                    }
+                  />
+                  <small className="cw-input-help">
+                    github.com/username 형식으로 입력하면 https://는 자동으로
+                    추가됩니다.
+                  </small>
+                </label>
+              </div>
 
-            <div className="cw-edit-modal-actions">
-              <button type="button" onClick={closeEditModal}>
-                취소
-              </button>
-              <button
-                type="button"
-                className="is-primary"
-                onClick={saveProfileEdit}
-                disabled={isSavingProfile}
-              >
-                {isSavingProfile ? "저장 중..." : "저장"}
-              </button>
-            </div>
+              {editErrorMessage && (
+                <p className="cw-edit-error-message">{editErrorMessage}</p>
+              )}
+
+              <div className="cw-edit-modal-actions">
+                <button type="button" onClick={closeEditModal}>
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="is-primary"
+                  disabled={isSavingProfile}
+                >
+                  {isSavingProfile ? "저장 중..." : "저장"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
     </div>
   );
 }
-
 export default UserMyPage;
