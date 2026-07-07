@@ -17,10 +17,10 @@ import kr.co.carrer.admin.aimetrics.type.AiFeatureType;
 import kr.co.carrer.admin.aimetrics.type.RagDocumentStatusType;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.global.s3.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.dao.DataAccessException;
@@ -31,9 +31,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -52,9 +49,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     private final AiModelRepository aiModelRepository;
     private final AiOpsSettingRepository aiOpsSettingRepository;
     private final RagDocumentRepository ragDocumentRepository;
-
-    @Value("${ai-metrics.rag-storage.base-path:./storage/rag-documents}")
-    private String ragStorageBasePath = "./storage/rag-documents";
+    private final S3Uploader s3Uploader;
 
     @Override
     @Transactional(readOnly = true)
@@ -171,7 +166,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
 
             UUID fileUuid = UUID.randomUUID();
             String originalFileName = sanitizeOriginalFileName(file.getOriginalFilename());
-            String filePath = buildRagFilePath(fileUuid, originalFileName);
+            String filePath = uploadRagDocumentFile(file, fileUuid, originalFileName);
             RagDocument document = RagDocument.upload(
                     actorAdminId,
                     fileUuid,
@@ -180,7 +175,6 @@ public class AiMetricsServiceImpl implements AiMetricsService {
                     file.getContentType(),
                     file.getSize()
             );
-            persistRagUploadFile(file, filePath);
 
             RagDocument savedDocument = ragDocumentRepository.save(document);
             runAfterCommit(() -> startRagIndexing(savedDocument));
@@ -197,7 +191,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     @Transactional(readOnly = true)
     public ResponseRagDocumentDownload getRagDocumentDownload(Long documentId) {
         RagDocument document = getRagDocument(documentId);
-        return AiMetricsServiceMapper.toRagDocumentDownload(document, buildRagDocumentDownloadUrl(document.getRagDocumentId()));
+        return AiMetricsServiceMapper.toRagDocumentDownload(document, s3Uploader.createPresignedGetUrl(document.getFilePath()));
     }
 
     @Override
@@ -360,7 +354,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     private String buildRagFilePath(UUID fileUuid, String originalFileName) {
         LocalDate today = LocalDate.now(AiMetricsTimeZone.SERVICE_ZONE_ID);
         return String.format(
-                "/rag/%d/%02d/%s-%s",
+                "rag/%d/%02d/%s-%s",
                 today.getYear(),
                 today.getMonthValue(),
                 fileUuid,
@@ -368,18 +362,15 @@ public class AiMetricsServiceImpl implements AiMetricsService {
         );
     }
 
-    private void persistRagUploadFile(MultipartFile file, String filePath) {
-        Path storageRoot = Paths.get(ragStorageBasePath).toAbsolutePath().normalize();
-        Path targetPath = storageRoot.resolve(filePath.replaceFirst("^[/\\\\]+", "")).normalize();
-        if (!targetPath.startsWith(storageRoot)) {
-            throw new CustomException(ErrorCode.BAD_REQUEST);
-        }
-
+    private String uploadRagDocumentFile(MultipartFile file, UUID fileUuid, String originalFileName) {
+        String filePath = buildRagFilePath(fileUuid, originalFileName);
         try {
-            Files.createDirectories(targetPath.getParent());
-            file.transferTo(targetPath);
-        } catch (IOException | IllegalStateException exception) {
-            throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_UPLOAD_FAILED);
+            return s3Uploader.uploadToKey(file, filePath);
+        } catch (CustomException exception) {
+            if (exception.getErrorCode() == ErrorCode.S3_UPLOAD_FAILED) {
+                throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_UPLOAD_FAILED);
+            }
+            throw exception;
         }
     }
 
@@ -389,10 +380,6 @@ public class AiMetricsServiceImpl implements AiMetricsService {
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
         return sanitizedFileName;
-    }
-
-    private String buildRagDocumentDownloadUrl(Long documentId) {
-        return String.format("/api/v1/admin/ai-metrics/rag-documents/%d/download", documentId);
     }
 
     private void saveAuditLog(Long actorAdminId, String action, String targetType, Long targetId, String ipAddress) {
