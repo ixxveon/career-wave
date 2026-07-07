@@ -68,7 +68,7 @@ function RecoveryCompanyIdentityFields({
             inputMode="numeric"
             type="text"
             maxLength={BUSINESS_NUMBER_MAX_LENGTH}
-            placeholder="사업자등록번호 숫자 입력"
+            placeholder="사업자등록번호('-' 없이 숫자만 입력)"
             value={businessNumber}
             onChange={(event) => { onBusinessNumberChange(formatBusinessNumber(event.target.value)); applyInputFill(event.target); }}
             onBlur={(event) => clearInputFill(event.target)}

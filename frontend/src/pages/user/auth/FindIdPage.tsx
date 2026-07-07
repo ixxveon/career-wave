@@ -82,7 +82,7 @@ function FindIdPage() {
                 label="휴대폰 번호"
                 icon={<Phone size={18} />}
                 value={userForm.phone}
-                placeholder="휴대폰번호 숫자 입력"
+                placeholder="휴대폰번호('-' 없이 숫자만 입력)"
                 error={fieldErrors.phone}
                 verification={activeUserVerification}
                 feedbackText="휴대폰 인증번호가 발송되었습니다."

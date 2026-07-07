@@ -340,7 +340,7 @@ function RegisterVerifyPage() {
                   휴대폰 번호 <em>*</em>
                 </span>
                 <div className={verification.verificationId ? 'cw-register-inline cw-register-inline--triple' : 'cw-register-inline'}>
-                  <input inputMode="numeric" maxLength={PHONE_MAX_LENGTH} value={form.phone} readOnly={Boolean(verification.verificationId)} onChange={(event) => update('phone', event.target.value)} placeholder="휴대폰번호 숫자 입력" />
+                  <input inputMode="numeric" maxLength={PHONE_MAX_LENGTH} value={form.phone} readOnly={Boolean(verification.verificationId)} onChange={(event) => update('phone', event.target.value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" />
                   <button className="cw-register-sub-button" type="button" onClick={() => void handleSendPhoneCode()} disabled={sendPhoneCode.isPending || phoneResendIn > 0 || Boolean(verification.verificationToken)}>
                     {sendPhoneCode.isPending ? '전송 중' : verification.verificationId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
                   </button>

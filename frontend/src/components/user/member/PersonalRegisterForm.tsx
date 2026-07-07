@@ -141,7 +141,7 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
           )}
           <Field label="휴대폰 번호" required wide>
             <AuthButtonGroup
-              input={<TextInput type="tel" inputMode="numeric" maxLength={PHONE_MAX_LENGTH} value={form.phone} onChange={(value) => update('phone', value)} placeholder="휴대폰번호 숫자 입력" readOnly={Boolean(verification.phoneId)} />}
+              input={<TextInput type="tel" inputMode="numeric" maxLength={PHONE_MAX_LENGTH} value={form.phone} onChange={(value) => update('phone', value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" readOnly={Boolean(verification.phoneId)} />}
               buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
               disabled={sendPhoneCode.isPending || phoneResendIn > 0 || Boolean(verification.phoneToken)}
               onClick={handleSendPhoneCode}

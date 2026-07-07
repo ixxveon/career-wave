@@ -443,7 +443,7 @@ function UserMyPage() {
                   inputMode="numeric"
                   maxLength={PHONE_MAX_LENGTH}
                   value={editForm.phone ?? ""}
-                  placeholder="휴대폰번호 숫자 입력"
+                  placeholder="휴대폰번호('-' 없이 숫자만 입력)"
                   onChange={(event) =>
                     handleEditFormChange("phone", event.target.value)
                   }

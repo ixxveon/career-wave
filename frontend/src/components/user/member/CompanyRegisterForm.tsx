@@ -113,7 +113,7 @@ export function CompanyRegisterForm({
                     onChange={(value) => update('businessNumber', value)}
                     inputMode="numeric"
                     maxLength={BUSINESS_NUMBER_MAX_LENGTH}
-                    placeholder="사업자등록번호 숫자 입력"
+                    placeholder="사업자등록번호('-' 없이 숫자만 입력)"
                     readOnly={businessNumberCheckState === BUSINESS_NUMBER_CHECK_STATE.CONFIRMED}
                   />
                 }
@@ -215,7 +215,7 @@ export function CompanyRegisterForm({
             </Field>
             <Field label="담당자 전화번호" required wide>
               <AuthButtonGroup
-                input={<TextInput type="tel" inputMode="numeric" maxLength={PHONE_MAX_LENGTH} value={form.managerPhone} onChange={(value) => update('managerPhone', value)} placeholder="휴대폰번호 숫자 입력" readOnly={Boolean(verification.phoneId)} />}
+                input={<TextInput type="tel" inputMode="numeric" maxLength={PHONE_MAX_LENGTH} value={form.managerPhone} onChange={(value) => update('managerPhone', value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" readOnly={Boolean(verification.phoneId)} />}
                 buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
                 disabled={sendPhoneCode.isPending || phoneResendIn > 0 || Boolean(verification.phoneToken)}
                 onClick={handleSendPhoneCode}
