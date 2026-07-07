@@ -74,7 +74,7 @@ class ConfirmIdempotencyTest {
         UserPayment payment = readyPayment(memberId, 1L, "document-coaching", orderId, customerKey);
         payment.authorize();
         payment.confirmStarted();
-        payment.paid("pay_key", ZonedDateTime.now(KST));
+        payment.paid("pay_key", "카드", ZonedDateTime.now(KST));
         assertThat(payment.getPaymentStatus()).isEqualTo(UserPaymentStatus.PAID);
 
         given(userPaymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
@@ -137,7 +137,7 @@ class ConfirmIdempotencyTest {
         given(billingProfileRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
         given(aesCipher.decrypt("bk_enc")).willReturn("bk");
         given(tossBillingPaymentClient.pay(any(), any(), any(), any(), any(), any(), anyInt()))
-                .willReturn(new TossBillingPaymentResponse("pk", orderId, "DONE", 29000, "KRW",
+                .willReturn(new TossBillingPaymentResponse("pk", orderId, "카드", "DONE", 29000, "KRW",
                         ZonedDateTime.now(KST)));
         given(entitlementRepository.findByMemberIdAndProductCodeForUpdate(any(), any()))
                 .willReturn(Optional.of(entitlement));

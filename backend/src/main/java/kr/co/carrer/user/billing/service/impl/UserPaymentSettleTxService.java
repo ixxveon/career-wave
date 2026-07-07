@@ -33,7 +33,7 @@ public class UserPaymentSettleTxService {
                                                     Plan plan, TossBillingPaymentResponse payResponse) {
         payment.authorize();
         payment.confirmStarted();
-        payment.paid(payResponse.paymentKey(), payResponse.approvedAt());
+        payment.paid(payResponse.paymentKey(), payResponse.method(), payResponse.approvedAt());
 
         ZonedDateTime periodStart = payResponse.approvedAt().withZoneSameInstant(KST);
         ZonedDateTime periodEnd = periodStart.plusDays(BILLING_CYCLE_DAYS);
