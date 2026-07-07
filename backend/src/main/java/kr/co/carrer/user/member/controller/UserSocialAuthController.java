@@ -47,8 +47,10 @@ public class UserSocialAuthController implements UserSocialAuthControllerDocs {
             case UserSocialAuthDto.ResponseOAuthCallbackLogin login -> {
                 // 토큰을 URL이 아닌 단기 쿠키로 전달 (브라우저 히스토리·로그·Referer 노출 방지)
                 setHandoffCookie(response, "cw_oauth_login_token", login.getAccessToken());
+                // provider는 "마지막 로그인 방식" 안내(프론트 localStorage 기록)에만 사용 — 민감정보 아님
                 yield UriComponentsBuilder.fromHttpUrl(frontendUrl + "/auth/oauth/callback")
                         .queryParam("type", "login")
+                        .queryParam("provider", provider)
                         .build().toUriString();
             }
             case UserSocialAuthDto.ResponseOAuthCallbackSignupRequired signup -> {

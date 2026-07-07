@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authSession } from '../../../utils/user/member/authSession';
 import { probeAuth } from '../../../api/user/member/memberApiClient';
+import { setLastLoginMethod } from '../../../utils/user/member/lastLoginMethod';
+import { SOCIAL_PROVIDER_LABELS, type SocialProviderId } from '../../../utils/user/member/socialAuth';
 import { SOCIAL_SIGNUP_TOKEN_SESSION_KEY } from './RegisterVerifyPage';
 
 const OAUTH_TYPE = {
@@ -48,6 +50,11 @@ function OAuthCallbackPage() {
       clearHandoffCookie('cw_oauth_login_token');
       if (accessToken) {
         authSession.setTokens({ accessToken });
+        // 마지막 로그인 방식 기록 — 다음 방문 시 소셜 로그인 안내에 사용
+        const provider = searchParams.get('provider');
+        if (provider && provider in SOCIAL_PROVIDER_LABELS) {
+          setLastLoginMethod(provider as SocialProviderId);
+        }
         // OAuth 콜백(백엔드) 응답에서 설정된 refresh 쿠키를 프론트가 사용하는 API 경로로
         // 즉시 rotate하여 이후 요청과 동일한 조건의 쿠키로 교체한다.
         // 회전이 끝나기 전에 navigate하면 이후 페이지의 요청/ProtectedRoute가 구 refresh

@@ -5,6 +5,7 @@ import { authSession } from '../../../utils/user/member/authSession';
 import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE, type SocialProviderId } from '../../../types/user/member';
 import { useCompleteSocialRegister, useConfirmVerificationCode, useResolveSocialRegister, useSendVerificationCode, useVerificationNow } from '../../../hooks/user/member';
 import { getSocialProviderLabel } from '../../../utils/user/member/socialAuth';
+import { setLastLoginMethod } from '../../../utils/user/member/lastLoginMethod';
 import { formatRemaining, getRecoveryErrorMessage, getRemainingSeconds } from '../../../utils/user/member/recoveryView';
 import { isValidName, isValidPhone, isValidVerificationCode, normalizePhone } from '../../../utils/user/member/registerSchema';
 import '@/styles/user/auth/AuthPage.css';
@@ -209,6 +210,7 @@ function RegisterVerifyPage() {
         sessionStorage.removeItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY);
         authSession.setTokens({ accessToken: result.accessToken });
         if (result.member) authSession.setMember(result.member);
+        setLastLoginMethod(providerId);
         setSuccessMessage('인증 성공! 잠시 후 홈으로 이동합니다.');
         navTimerRef.current = setTimeout(() => navigate(result.nextPath ?? '/', { replace: true }), 900);
         return;
@@ -306,6 +308,7 @@ function RegisterVerifyPage() {
       });
       sessionStorage.removeItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY);
       if (result.accessToken) authSession.setTokens({ accessToken: result.accessToken });
+      if (providerId) setLastLoginMethod(providerId);
       setSuccessMessage('소셜 가입이 완료되었습니다. 잠시 후 이동합니다.');
       navTimerRef.current = setTimeout(() => navigate(result.nextPath, { replace: true }), 1500);
     } catch (error) {
