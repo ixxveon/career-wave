@@ -6,6 +6,7 @@ import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.jwt.SessionProperties;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import io.jsonwebtoken.JwtException;
 import kr.co.carrer.auth.store.LoginAttemptStore;
@@ -45,6 +46,7 @@ public class UserLoginServiceImpl implements UserLoginService {
     private final LoginAttemptStore loginAttemptStore;
     private final UserMemberStatusQueryRepository statusQueryRepository;
     private final CookieProperties cookieProperties;
+    private final SessionProperties sessionProperties;
 
     private static final long LOCK_DURATION_MINUTES = 15L;
 
@@ -82,14 +84,15 @@ public class UserLoginServiceImpl implements UserLoginService {
 
         member.updateLastLoginAt(Instant.now());
 
+        String sessionId = UUID.randomUUID().toString();
         String accessToken = jwtTokenProvider.createAccessToken(
                 member.getMemberId().toString(),
                 accountType,
                 member.getRoleType().name(),
-                null
+                null,
+                sessionId
         );
 
-        String sessionId = UUID.randomUUID().toString();
         String refreshToken = jwtTokenProvider.createRefreshToken(
                 member.getMemberId().toString(),
                 accountType,
@@ -108,9 +111,10 @@ public class UserLoginServiceImpl implements UserLoginService {
                     refreshTokenStore.delete(accountType, memberId, expiredSessionId);
                 });
 
-        // refresh token Redis 저장 (SHA-256 hash, TTL = refresh 만료시간)
+        // refresh token Redis 저장 (SHA-256 hash, TTL = 유휴 타임아웃 — 요청마다 슬라이딩 갱신)
+        // 절대 상한(refresh 14일)은 refresh 토큰 자체의 exp로 고정된다.
         refreshTokenStore.save(accountType, memberId, sessionId,
-                refreshToken, Duration.ofMillis(jwtProperties.getUser().getRefreshExpiration()));
+                refreshToken, Duration.ofMillis(sessionProperties.getIdleTimeout()));
 
         // access token jti 저장 — 이후 세션 퇴출 시 blacklist 등록에 사용
         String jti = jwtTokenProvider.extractJti(accessToken, accountType);
@@ -216,11 +220,16 @@ public class UserLoginServiceImpl implements UserLoginService {
             throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         }
 
-        String newAccessToken = jwtTokenProvider.createAccessToken(subject, accountType, member.getRoleType().name(), null);
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(subject, accountType, null, sessionId);
+        // 절대 상한 고정: 회전 시 원본 refresh 만료 시각(exp)을 유지한다.
+        java.util.Date originalExp = claims.getExpiration();
+        String newAccessToken = jwtTokenProvider.createAccessToken(
+                subject, accountType, member.getRoleType().name(), null, sessionId);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(
+                subject, accountType, null, sessionId, originalExp);
 
+        // rotate TTL = 유휴 타임아웃(슬라이딩). 절대 상한은 refresh exp가 담당.
         refreshTokenStore.rotate(accountType, subject, sessionId,
-                newRefreshToken, Duration.ofMillis(jwtProperties.getUser().getRefreshExpiration()));
+                newRefreshToken, Duration.ofMillis(sessionProperties.getIdleTimeout()));
         setRefreshTokenCookie(response, newRefreshToken);
         return newAccessToken;
     }

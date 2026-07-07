@@ -11,6 +11,7 @@ import kr.co.carrer.admin.auth.service.AdminLoginService;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.jwt.SessionProperties;
 import io.jsonwebtoken.JwtException;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.store.LoginAttemptStore;
@@ -39,6 +40,7 @@ public class AdminLoginServiceImpl implements AdminLoginService {
     private final RefreshTokenStore refreshTokenStore;
     private final TokenBlacklistStore tokenBlacklistStore;
     private final LoginAttemptStore loginAttemptStore;
+    private final SessionProperties sessionProperties;
 
     @Transactional
     public AdminLoginDto.Response login(AdminLoginDto.Request request, HttpServletResponse response, String clientIp) {
@@ -75,17 +77,18 @@ public class AdminLoginServiceImpl implements AdminLoginService {
                 });
         refreshTokenStore.deleteAll(AccountType.ADMIN, adminId);
 
+        String sessionId = UUID.randomUUID().toString();
         String accessToken = jwtTokenProvider.createAccessToken(
-                adminId, AccountType.ADMIN, "ADMIN", adminRole
+                adminId, AccountType.ADMIN, "ADMIN", adminRole, sessionId
         );
 
-        String sessionId = UUID.randomUUID().toString();
         String refreshToken = jwtTokenProvider.createRefreshToken(
                 adminId, AccountType.ADMIN, adminRole, sessionId
         );
 
+        // TTL = 유휴 타임아웃(슬라이딩). 절대 상한(refresh 1일)은 refresh 토큰 exp가 담당.
         refreshTokenStore.save(AccountType.ADMIN, adminId, sessionId,
-                refreshToken, Duration.ofMillis(jwtProperties.getAdmin().getRefreshExpiration()));
+                refreshToken, Duration.ofMillis(sessionProperties.getIdleTimeout()));
 
         // access token jti 저장 — 다음 로그인 시 단일 세션 정책으로 blacklist 등록에 사용
         String jti = jwtTokenProvider.extractJti(accessToken, AccountType.ADMIN);
@@ -133,13 +136,16 @@ public class AdminLoginServiceImpl implements AdminLoginService {
 
         // adminRole은 DB 최신값 사용 — claim의 stale role 방지
         String currentAdminRole = admin.getAdminRole().name();
+        // 절대 상한 고정: 회전 시 원본 refresh 만료 시각(exp)을 유지한다.
+        java.util.Date originalExp = claims.getExpiration();
         String newAccessToken = jwtTokenProvider.createAccessToken(
-                subject, AccountType.ADMIN, "ADMIN", currentAdminRole);
+                subject, AccountType.ADMIN, "ADMIN", currentAdminRole, sessionId);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(
-                subject, AccountType.ADMIN, currentAdminRole, sessionId);
+                subject, AccountType.ADMIN, currentAdminRole, sessionId, originalExp);
 
+        // rotate TTL = 유휴 타임아웃(슬라이딩). 절대 상한은 refresh exp가 담당.
         refreshTokenStore.rotate(AccountType.ADMIN, subject, sessionId,
-                newRefreshToken, Duration.ofMillis(jwtProperties.getAdmin().getRefreshExpiration()));
+                newRefreshToken, Duration.ofMillis(sessionProperties.getIdleTimeout()));
         setRefreshTokenCookie(response, newRefreshToken);
         return newAccessToken;
     }

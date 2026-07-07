@@ -2,6 +2,8 @@ package kr.co.carrer.auth.store;
 
 import kr.co.carrer.auth.jwt.AccountType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -15,6 +17,7 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Redis key: refresh:{accountType}:{subjectId}:{sessionId}
@@ -23,6 +26,7 @@ import java.util.Set;
  * access jti key: session_jti:{accountType}:{subjectId}:{sessionId}
  * value: jti — 세션 퇴출/단일 세션 정책 시 access token blacklist 등록용
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RefreshTokenStore {
@@ -32,6 +36,30 @@ public class RefreshTokenStore {
     private static final int USER_SESSION_LIMIT = 5;
 
     private final StringRedisTemplate redisTemplate;
+
+    /**
+     * 유휴 세션 존재성 확인 + 슬라이딩 TTL 갱신을 단일 TTL 조회로 처리한다.
+     * TTL 반환값: -2=키 부재(유휴 만료/퇴출/로그아웃), -1=만료 없음, >=0=남은 초.
+     * 잔여가 renewThreshold 미만일 때만 EXPIRE로 idleTtl 갱신 → 요청당 write 최소화.
+     *
+     * @param conservativeOnFailure Redis 장애 시 정책 — true(관리자): 부재 간주(거부), false(사용자): 존재 간주(fail-open)
+     * @return true=세션 유효, false=세션 부재
+     */
+    public boolean touchSession(AccountType accountType, String subjectId, String sessionId,
+                                Duration idleTtl, Duration renewThreshold, boolean conservativeOnFailure) {
+        String key = buildKey(accountType, subjectId, sessionId);
+        try {
+            Long remaining = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+            if (remaining == null || remaining == -2) return false;
+            if (remaining == -1 || remaining < renewThreshold.getSeconds()) {
+                redisTemplate.expire(key, idleTtl);
+            }
+            return true;
+        } catch (DataAccessException e) {
+            log.warn("[session] Redis 세션 존재성 확인 실패 — subject={}, session={}: {}", subjectId, sessionId, e.getMessage());
+            return !conservativeOnFailure; // 사용자: 허용(fail-open) / 관리자: 거부(보수적)
+        }
+    }
 
     public void save(AccountType accountType, String subjectId, String sessionId,
                      String refreshToken, Duration ttl) {

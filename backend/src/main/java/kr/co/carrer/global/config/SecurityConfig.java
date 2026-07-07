@@ -9,6 +9,8 @@ import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.jwt.SessionProperties;
+import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +41,8 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistStore tokenBlacklistStore;
+    private final RefreshTokenStore refreshTokenStore;
+    private final SessionProperties sessionProperties;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
     private final List<AccountStatusPort> accountStatusPorts;
@@ -98,7 +102,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .addFilterBefore(
-                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
+                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore, refreshTokenStore, sessionProperties),
                 UsernamePasswordAuthenticationFilter.class
             )
             .addFilterBefore(
@@ -166,7 +170,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .addFilterBefore(
-                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
+                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore, refreshTokenStore, sessionProperties),
                 UsernamePasswordAuthenticationFilter.class
             )
             .addFilterAfter(

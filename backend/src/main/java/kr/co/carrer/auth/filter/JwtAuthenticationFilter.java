@@ -8,7 +8,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.jwt.SessionProperties;
 import kr.co.carrer.auth.principal.AuthPrincipal;
+import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,16 +18,23 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Duration;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistStore tokenBlacklistStore;
+    private final RefreshTokenStore refreshTokenStore;
+    private final SessionProperties sessionProperties;
 
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
-                                    TokenBlacklistStore tokenBlacklistStore) {
+                                    TokenBlacklistStore tokenBlacklistStore,
+                                    RefreshTokenStore refreshTokenStore,
+                                    SessionProperties sessionProperties) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.tokenBlacklistStore = tokenBlacklistStore;
+        this.refreshTokenStore = refreshTokenStore;
+        this.sessionProperties = sessionProperties;
     }
 
     @Override
@@ -59,6 +68,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
 
                     String id = claims.getSubject();
+
+                    // 유휴 세션 타임아웃: sessionId에 대응하는 Redis 세션이 살아있을 때만 인증 성공.
+                    // sessionId 미보유(배포 과도기 구 토큰)는 skip. kill-switch로 전체 비활성화 가능.
+                    // 세션 확인과 동시에 슬라이딩 TTL을 갱신(touchSession)한다.
+                    String sessionId = claims.get("sessionId", String.class);
+                    if (sessionProperties.isExistenceCheckEnabled() && StringUtils.hasText(sessionId)) {
+                        boolean sessionAlive = refreshTokenStore.touchSession(
+                                accountType, id, sessionId,
+                                Duration.ofMillis(sessionProperties.getIdleTimeout()),
+                                Duration.ofMillis(sessionProperties.getRenewThreshold()),
+                                adminConservative);
+                        if (!sessionAlive) {
+                            request.setAttribute("jwtException", "Session expired (idle timeout)");
+                            filterChain.doFilter(request, response);
+                            return;
+                        }
+                    }
+
                     String roleType = claims.get("roleType", String.class);
                     String adminRole = claims.get("adminRole", String.class);
 
