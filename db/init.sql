@@ -1250,7 +1250,7 @@ VALUES
     'whisper-1',
     'Whisper-1',
     'OPENAI',
-    0.006000,
+    0.000100,
     0.000000,
     TRUE
 ),
@@ -1258,10 +1258,11 @@ VALUES
     'tts-1',
     'TTS-1',
     'OPENAI',
+    0.000015,
     0.000000,
-    0.015000,
     TRUE
-);
+)
+ON CONFLICT (model_name) DO NOTHING;
 
 -- ================================================
 -- 34. ai_usage_logs

@@ -30,8 +30,8 @@ BEGIN
     FROM (
         VALUES
             ('gpt-4o', 'GPT-4o', 'OPENAI', 2.500000::NUMERIC(12, 6), 10.000000::NUMERIC(12, 6), TRUE),
-            ('whisper-1', 'Whisper-1', 'OPENAI', 0.006000::NUMERIC(12, 6), 0.000000::NUMERIC(12, 6), TRUE),
-            ('tts-1', 'TTS-1', 'OPENAI', 0.000000::NUMERIC(12, 6), 0.015000::NUMERIC(12, 6), TRUE)
+            ('whisper-1', 'Whisper-1', 'OPENAI', 0.000100::NUMERIC(12, 6), 0.000000::NUMERIC(12, 6), TRUE),
+            ('tts-1', 'TTS-1', 'OPENAI', 0.000015::NUMERIC(12, 6), 0.000000::NUMERIC(12, 6), TRUE)
     ) AS seed(model_name, display_type, provider, input_token_price, output_token_price, is_enabled)
     WHERE NOT EXISTS (
         SELECT 1
