@@ -183,12 +183,12 @@ function getPrimaryJobCategory(jobCategory: JobNoticeSummary['jobCategory']) {
   return Array.isArray(jobCategory) ? (jobCategory[0] ?? '') : jobCategory;
 }
 
-export function formatJobNoticeDeadline(deadline?: string | null) {
+export function formatJobNoticeDeadline(deadline?: string | null): string {
   const normalizedDeadline = deadline?.trim();
   return normalizedDeadline || JOB_NOTICE_DEADLINE_FALLBACK;
 }
 
-export function formatJobNoticeDeadlineBadge(deadline?: string | null) {
+export function formatJobNoticeDeadlineBadge(deadline?: string | null): string {
   const normalizedDeadline = deadline?.trim();
   return normalizedDeadline ? `\uB9C8\uAC10\uC77C ${normalizedDeadline}` : JOB_NOTICE_DEADLINE_FALLBACK;
 }
