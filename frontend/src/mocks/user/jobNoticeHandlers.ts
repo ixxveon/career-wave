@@ -81,7 +81,7 @@ const jobNotices: JobNoticeDetail[] = [
     noticeStatus: 'OPEN',
     source: 'JobKorea',
     viewCount: 516,
-    deadline: '2026-07-01',
+    deadline: null,
     createdAt: '2026-06-13T14:20:00',
     bookmarked: false,
     responsibilities: ['데이터 파이프라인 보조', '대시보드 데이터 검증'],

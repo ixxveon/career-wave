@@ -172,6 +172,7 @@ export interface JobNoticeQueryParams {
 export type JobNoticeListApiResponse = ApiResponse<JobNoticeListResponse>;
 export type JobNoticeDetailApiResponse = ApiResponse<JobNoticeDetail>;
 export type JobNoticeBookmarkApiResponse = ApiResponse<JobNoticeBookmarkResponse>;
+export const JOB_NOTICE_DEADLINE_FALLBACK = '\uB9C8\uAC10\uC77C \uBBF8\uC815';
 
 export const JOB_NOTICE_VIEW_FIELD_MAP = {
   careerLevel: 'exp',
@@ -180,6 +181,15 @@ export const JOB_NOTICE_VIEW_FIELD_MAP = {
 
 function getPrimaryJobCategory(jobCategory: JobNoticeSummary['jobCategory']) {
   return Array.isArray(jobCategory) ? (jobCategory[0] ?? '') : jobCategory;
+}
+
+export function formatJobNoticeDeadline(deadline?: string | null) {
+  const normalizedDeadline = deadline?.trim();
+  return normalizedDeadline || JOB_NOTICE_DEADLINE_FALLBACK;
+}
+
+export function formatJobNoticeDeadlineBadge(deadline?: string | null) {
+  return `\uB9C8\uAC10\uC77C ${formatJobNoticeDeadline(deadline)}`;
 }
 
 export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoticeDetail): JobNotice {
@@ -200,7 +210,7 @@ export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoti
     location: jobNotice.location,
     companySize,
     salary: jobNotice.salary ?? undefined,
-    deadline: jobNotice.deadline ?? '',
+    deadline: formatJobNoticeDeadline(jobNotice.deadline),
     postedAt: jobNotice.createdAt,
     tags,
     source: jobNotice.source,

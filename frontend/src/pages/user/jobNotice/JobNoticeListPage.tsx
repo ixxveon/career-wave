@@ -14,6 +14,7 @@ import JobNoticeDetail from './JobNoticeDetail';
 import { createBannerStats, type BannerStat } from './jobNoticeStats';
 import {
   CAREER_LEVEL_LABELS,
+  formatJobNoticeDeadlineBadge,
   JOB_CATEGORY_LABELS,
   JOB_NOTICE_ALL_FILTER_VALUE,
   JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES,
@@ -288,7 +289,7 @@ function JobCard({ job, bookmarked, onBookmark, onClick }: JobCardProps) {
 
       <div className="jn-card__footer">
         {job.recommended && <span className="jn-badge jn-badge--recommend">추천</span>}
-        <span className="jn-badge">{job.deadline}</span>
+        <span className="jn-badge jn-badge--deadline">{formatJobNoticeDeadlineBadge(job.deadline)}</span>
         <span className="jn-badge jn-badge--source">{job.source}</span>
         <span className="jn-views"><Eye size={14} /> {job.views.toLocaleString()}</span>
       </div>
