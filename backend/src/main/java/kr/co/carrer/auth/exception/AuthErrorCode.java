@@ -13,6 +13,7 @@ public enum AuthErrorCode implements BaseErrorCode {
     AUTH_REFRESH_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
     AUTH_UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다."),
     AUTH_FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+    AUTH_SESSION_EXPIRED(HttpStatus.UNAUTHORIZED, "세션이 만료되었습니다. 다시 로그인하세요."),
     AUTH_REFRESH_REUSE_DETECTED(HttpStatus.UNAUTHORIZED, "이미 폐기된 토큰이 재사용되어 전체 세션을 폐기했습니다. 다시 로그인하세요.");
 
     private final HttpStatus status;

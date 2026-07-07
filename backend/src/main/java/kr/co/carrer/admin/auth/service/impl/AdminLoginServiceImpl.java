@@ -115,8 +115,14 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         String sessionId = claims.get("sessionId", String.class);
         if (sessionId == null) throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
 
-        // 재사용 탐지: hash 불일치 → 전체 세션 폐기 + 401
-        if (!refreshTokenStore.matches(AccountType.ADMIN, subject, sessionId, refreshToken)) {
+        // 세션 부재 vs 재사용 분리:
+        //  - Redis 키 부재(null) → 유휴 만료/로그아웃/퇴출 → 조용한 재로그인(SESSION_EXPIRED)
+        //  - 키 존재 + hash 불일치 → 진짜 재사용 → 전체 세션 폐기 + 경보(REUSE_DETECTED)
+        String storedHash = refreshTokenStore.get(AccountType.ADMIN, subject, sessionId);
+        if (storedHash == null) {
+            throw new CustomException(AuthErrorCode.AUTH_SESSION_EXPIRED);
+        }
+        if (!storedHash.equals(RefreshTokenStore.hash(refreshToken))) {
             refreshTokenStore.deleteAll(AccountType.ADMIN, subject);
             throw new CustomException(AuthErrorCode.AUTH_REFRESH_REUSE_DETECTED);
         }
@@ -146,6 +152,12 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         // rotate TTL = 유휴 타임아웃(슬라이딩). 절대 상한은 refresh exp가 담당.
         refreshTokenStore.rotate(AccountType.ADMIN, subject, sessionId,
                 newRefreshToken, Duration.ofMillis(sessionProperties.getIdleTimeout()));
+
+        // session_jti를 회전된 access token의 jti로 갱신 — 세션 퇴출 시 최신 access를 blacklist 등록(보조 방어)
+        String newJti = jwtTokenProvider.extractJti(newAccessToken, AccountType.ADMIN);
+        refreshTokenStore.saveAccessJti(AccountType.ADMIN, subject, sessionId, newJti,
+                Duration.ofMillis(jwtProperties.getAdmin().getAccessExpiration()));
+
         setRefreshTokenCookie(response, newRefreshToken);
         return newAccessToken;
     }
