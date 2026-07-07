@@ -26,6 +26,15 @@ public class JwtTokenProvider {
     private final JwtProperties jwtProperties;
 
     public String createAccessToken(String subject, AccountType accountType, String roleType, String adminRole) {
+        return createAccessToken(subject, accountType, roleType, adminRole, null);
+    }
+
+    /**
+     * @param sessionId 유휴 세션 타임아웃 검증용 — 필터가 이 값으로 Redis 세션 존재성/TTL을 확인한다.
+     *                  null이면 sessionId claim 없이 발급(배포 과도기 구 토큰 호환 · 세션 무관 컨텍스트).
+     */
+    public String createAccessToken(String subject, AccountType accountType, String roleType,
+                                    String adminRole, String sessionId) {
         JwtProperties.TokenConfig config = resolveConfig(accountType);
         Date now = new Date();
         var builder = Jwts.builder()
@@ -40,6 +49,7 @@ public class JwtTokenProvider {
                 .signWith(resolveKey(config.getSecret()));
 
         if (adminRole != null) builder.claim("adminRole", adminRole);
+        if (sessionId != null) builder.claim("sessionId", sessionId);
         return builder.compact();
     }
 
@@ -49,6 +59,17 @@ public class JwtTokenProvider {
     public String createRefreshToken(String subject, AccountType accountType,
                                      String adminRole, String sessionId) {
         JwtProperties.TokenConfig config = resolveConfig(accountType);
+        Date expiration = new Date(System.currentTimeMillis() + config.getRefreshExpiration());
+        return createRefreshToken(subject, accountType, adminRole, sessionId, expiration);
+    }
+
+    /**
+     * 회전(rotation) 시 원본 만료 시각을 그대로 넘겨 절대 상한(로그인 시점 기준 refresh 만료)을 고정한다.
+     * 이렇게 하지 않고 매 회전마다 exp를 now+refreshExpiration으로 갱신하면 절대 상한이 무한 연장된다.
+     */
+    public String createRefreshToken(String subject, AccountType accountType,
+                                     String adminRole, String sessionId, Date expiration) {
+        JwtProperties.TokenConfig config = resolveConfig(accountType);
         Date now = new Date();
         var builder = Jwts.builder()
                 .subject(subject)
@@ -57,7 +78,7 @@ public class JwtTokenProvider {
                 .claim("sessionId", sessionId)
                 .claim("jti", UUID.randomUUID().toString())
                 .issuedAt(now)
-                .expiration(new Date(now.getTime() + config.getRefreshExpiration()))
+                .expiration(expiration)
                 .signWith(resolveKey(config.getSecret()));
 
         if (adminRole != null) builder.claim("adminRole", adminRole);

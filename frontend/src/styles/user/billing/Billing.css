@@ -275,6 +275,11 @@
   color: #d14f67;
 }
 
+.cw-billing-state-icon.is-success {
+  background: #eafaf1;
+  color: #1f9d5b;
+}
+
 .cw-billing-state-card h2 {
   margin: 0;
   color: #102f60;

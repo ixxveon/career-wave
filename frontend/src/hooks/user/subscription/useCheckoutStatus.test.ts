@@ -11,6 +11,14 @@ vi.mock('./useCreateOrder', () => ({
   useCreateOrder: vi.fn(),
 }));
 
+vi.mock('./useSubscribedProductCodes', () => ({
+  useSubscribedProductCodes: vi.fn(() => ({
+    subscribedCodes: new Set<string>(),
+    isLoading: false,
+    isError: false,
+  })),
+}));
+
 vi.mock('@tosspayments/tosspayments-sdk', () => ({
   loadTossPayments: vi.fn(),
 }));
@@ -20,6 +28,7 @@ vi.mock('react-router-dom', () => ({
 }));
 
 import { useCreateOrder } from './useCreateOrder';
+import { useSubscribedProductCodes } from './useSubscribedProductCodes';
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 
 const mockOrder = {
@@ -37,9 +46,18 @@ function setupCreateOrder(overrides: { mutateAsync?: ReturnType<typeof vi.fn>; i
   } as unknown as ReturnType<typeof useCreateOrder>);
 }
 
+function setupSubscribedCodes(codes: string[] = []) {
+  vi.mocked(useSubscribedProductCodes).mockReturnValue({
+    subscribedCodes: new Set(codes),
+    isLoading: false,
+    isError: false,
+  } as unknown as ReturnType<typeof useSubscribedProductCodes>);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   setupCreateOrder();
+  setupSubscribedCodes();
   vi.mocked(loadTossPayments).mockResolvedValue({
     payment: () => ({ requestBillingAuth: vi.fn().mockResolvedValue(undefined) }),
   } as unknown as Awaited<ReturnType<typeof loadTossPayments>>);
@@ -121,6 +139,41 @@ describe('isPaymentRequesting — Toss SDK 구간 재진입 방지', () => {
     await act(async () => { await result.current.handleCheckout(); });
 
     expect(result.current.isPaymentRequesting).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────
+// 이미 구독 중인 상품 결제 진입 방어 (이슈 #1007)
+// ─────────────────────────────────────────────
+describe('이미 구독 중인 상품 결제 진입 방어', () => {
+  it('구독 중인 상품이면 isAlreadySubscribed가 true다', () => {
+    setupSubscribedCodes(['document-coaching']);
+
+    const { result } = renderHook(() => useCheckoutStatus());
+
+    expect(result.current.isAlreadySubscribed).toBe(true);
+  });
+
+  it('구독 중인 상품은 handleCheckout이 createOrder를 호출하지 않고 안내 메시지를 설정한다', async () => {
+    const createOrderMock = vi.fn().mockResolvedValue(mockOrder);
+    setupCreateOrder({ mutateAsync: createOrderMock });
+    setupSubscribedCodes(['document-coaching']);
+
+    const { result } = renderHook(() => useCheckoutStatus());
+    act(() => { result.current.handleAgreeChange(true); });
+
+    await act(async () => { await result.current.handleCheckout(); });
+
+    expect(createOrderMock).not.toHaveBeenCalled();
+    expect(result.current.checkoutError).toBe('이미 구독 중인 상품입니다. 구독 현황을 확인해주세요.');
+  });
+
+  it('구독 중이 아니면 isAlreadySubscribed가 false다', () => {
+    setupSubscribedCodes(['interview']);
+
+    const { result } = renderHook(() => useCheckoutStatus());
+
+    expect(result.current.isAlreadySubscribed).toBe(false);
   });
 });
 

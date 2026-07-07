@@ -14,6 +14,7 @@ type TextInputProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  readOnly?: boolean;
 };
 
 type SelectInputProps = {
@@ -50,11 +51,12 @@ export function Field({ label, children, required = false, wide = false }: Field
   );
 }
 
-export function TextInput({ type = 'text', value, onChange, placeholder }: TextInputProps) {
+export function TextInput({ type = 'text', value, onChange, placeholder, readOnly = false }: TextInputProps) {
   return (
     <input
       type={type}
       value={value}
+      readOnly={readOnly}
       onChange={(event) => {
         onChange(event.target.value);
         applyInputFill(event.target);
@@ -98,7 +100,7 @@ export function PasswordInput({ value, onChange, placeholder }: Omit<TextInputPr
         aria-label={show ? '비밀번호 숨기기' : '비밀번호 표시'}
         onClick={() => setShow((prev) => !prev)}
       >
-        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+        {show ? <Eye size={16} /> : <EyeOff size={16} />}
       </button>
     </div>
   );

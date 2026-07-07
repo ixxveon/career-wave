@@ -19,6 +19,7 @@ interface RecoveryContactFieldProps {
   inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode'];
   onChange: (value: string) => void;
   onSend: () => void;
+  onReset: () => void;
 }
 
 interface RecoveryCodeFieldProps {
@@ -47,11 +48,14 @@ export function RecoveryContactField({
   inputMode,
   onChange,
   onSend,
+  onReset,
 }: RecoveryContactFieldProps) {
+  // 인증번호 전송 후에는 대상(이메일/휴대폰)을 잠가 실제 인증 대상과 제출 값의 불일치를 방지한다.
+  const locked = Boolean(verification.verificationId);
   return (
     <label>
       {label}
-      <div className="cw-auth-inline">
+      <div className={locked ? 'cw-auth-inline cw-auth-inline--triple' : 'cw-auth-inline'}>
         <span>
           {icon}
           <input
@@ -60,6 +64,7 @@ export function RecoveryContactField({
             inputMode={inputMode}
             placeholder={placeholder}
             value={value}
+            readOnly={locked}
             onChange={(event) => { onChange(event.target.value); applyInputFill(event.target); }}
             onBlur={(event) => clearInputFill(event.target)}
           />
@@ -72,6 +77,15 @@ export function RecoveryContactField({
         >
           {sendPending ? '전송 중' : (!verification.verificationToken && resendIn > 0) ? `${formatRemaining(resendIn)}` : '인증번호 전송'}
         </button>
+        {locked && (
+          <button
+            className="cw-auth-button-secondary cw-auth-button-secondary--change"
+            type="button"
+            onClick={onReset}
+          >
+            변경
+          </button>
+        )}
       </div>
       {error && <p className="cw-register-error">{error}</p>}
       {verification.verificationId && !error && (
@@ -95,6 +109,10 @@ export function RecoveryCodeField({
   onCodeChange,
   onConfirm,
 }: RecoveryCodeFieldProps) {
+  // 인증번호 입력 필드는 전송 후(verificationId 존재)에만 노출한다. (issue #1036)
+  if (!verification.verificationId) return null;
+
+  const verified = Boolean(verification.verificationToken);
   return (
     <label>
       {label}
@@ -107,13 +125,14 @@ export function RecoveryCodeField({
             type="text"
             placeholder="인증번호 6자리 입력"
             value={code}
+            readOnly={verified}
             onChange={(event) => { onCodeChange(event.target.value); applyInputFill(event.target); }}
             onBlur={(event) => clearInputFill(event.target)}
           />
         </span>
         <button
           className="cw-auth-button-secondary cw-auth-button-secondary--confirm"
-          disabled={confirmPending}
+          disabled={confirmPending || verified}
           type="button"
           onClick={onConfirm}
         >

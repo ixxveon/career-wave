@@ -520,6 +520,7 @@ export default function JobNoticeListPage() {
       : filteredJobs.length > 0
         ? 'success'
         : 'empty';
+  const shouldShowResultCount = listStatus === 'success' || listStatus === 'empty';
 
   useEffect(() => {
     if (!jobNoticeListResponse?.content.length) return;
@@ -613,7 +614,15 @@ export default function JobNoticeListPage() {
         <main className="jn-results">
           <div className="jn-results__head">
             <div>
-              <span>해당 공고 <b>{resultTotalItems.toLocaleString()}</b>개</span>
+              <span className={shouldShowResultCount ? undefined : 'is-muted'}>
+                {shouldShowResultCount ? (
+                  <>
+                    해당 공고 <b>{resultTotalItems.toLocaleString()}</b>개
+                  </>
+                ) : (
+                  '공고 수를 확인하지 못했습니다.'
+                )}
+              </span>
               <ActiveFilterChips filters={filters} onReset={resetFilter} />
             </div>
             <div className="jn-results__tools">

@@ -1191,6 +1191,19 @@ a.cw-chart-filter {
   text-decoration: none;
 }
 
+/* 이미 구독 중인 상품의 CTA — 결제가 아닌 이용 현황 안내용 (이슈 #1007) */
+.cw-subscription-service-card__button.is-subscribed {
+  gap: 8px;
+  color: #1f9d5b;
+  background: #eafaf1;
+  border: 1px solid #b7e4c7;
+  box-shadow: none;
+}
+
+.cw-subscription-service-card__button.is-subscribed svg {
+  flex: 0 0 auto;
+}
+
 .cw-subscription-service-card__cta-wrap {
   padding: 0 22px;
 }
@@ -2283,8 +2296,13 @@ a.cw-chart-filter {
     min-height: 260px;
   }
 
+  /*
+   * 마이페이지는 사이드바가 있어 이 구간(약 821~1180px)에서 카드 폭이 크게 줄어든다.
+   * 2열을 유지하면 카드 내부 __hero(minmax(0,1fr) 220px)의 텍스트 영역이 100px 미만으로
+   * 좁아져 제목/설명이 글자 단위로 세로 줄바꿈되므로, 이 구간부터 1열로 전환한다.
+   */
   .cw-subscription-carousel {
-    grid-template-columns: repeat(2, minmax(320px, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .cw-subscription-record-empty {
@@ -3100,6 +3118,7 @@ a.cw-chart-filter {
 /* GitHub 연동 정보 */
 
 .cw-github-card {
+  margin-bottom: 16px;
   background:
     radial-gradient(circle at right top, rgba(95, 150, 238, 0.1), transparent 28%),
     #ffffff;
@@ -3918,8 +3937,13 @@ a.cw-chart-filter {
     min-height: 260px;
   }
 
+  /*
+   * 마이페이지는 사이드바가 있어 이 구간(약 821~1180px)에서 카드 폭이 크게 줄어든다.
+   * 2열을 유지하면 카드 내부 __hero(minmax(0,1fr) 220px)의 텍스트 영역이 100px 미만으로
+   * 좁아져 제목/설명이 글자 단위로 세로 줄바꿈되므로, 이 구간부터 1열로 전환한다.
+   */
   .cw-subscription-carousel {
-    grid-template-columns: repeat(2, minmax(320px, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .cw-subscription-record-empty {

@@ -51,22 +51,6 @@
   line-height: 1.6;
 }
 
-.rh-new-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 18px;
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.12);
-  color: #e0f0ff;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background 0.14s;
-  flex-shrink: 0;
-}
-.rh-new-btn:hover { background: rgba(255, 255, 255, 0.2); }
-
 /* ─── 카드 래퍼 ───────────────────────────────── */
 .rh-card {
   display: flex;

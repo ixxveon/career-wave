@@ -52,7 +52,7 @@ class InterviewSessionServiceVoiceTest {
         void submitVoiceChunk_success() {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null);
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null, null);
             MultipartFile audioChunk = new MockMultipartFile("audioChunk", "chunk.webm", "audio/webm", new byte[1024]);
 
             given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
@@ -69,7 +69,7 @@ class InterviewSessionServiceVoiceTest {
         void submitVoiceChunk_mp4_allowed() {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null);
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null, null);
             MultipartFile audioChunk = new MockMultipartFile("audioChunk", "chunk.mp4", "audio/mp4", new byte[512]);
 
             given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
@@ -143,7 +143,7 @@ class InterviewSessionServiceVoiceTest {
             UUID memberId = UUID.randomUUID();
             UUID otherMemberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            InterviewSession session = InterviewSession.create(otherMemberId, null, SessionType.VOICE, null, null);
+            InterviewSession session = InterviewSession.create(otherMemberId, null, SessionType.VOICE, null, null, null);
             MultipartFile audioChunk = new MockMultipartFile("audioChunk", "chunk.webm", "audio/webm", new byte[1024]);
 
             given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
@@ -159,7 +159,7 @@ class InterviewSessionServiceVoiceTest {
         void submitVoiceChunk_alreadyEnded_throwsException() {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null);
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.VOICE, null, null, null);
             session.complete(java.time.ZonedDateTime.now());
             MultipartFile audioChunk = new MockMultipartFile("audioChunk", "chunk.webm", "audio/webm", new byte[1024]);
 

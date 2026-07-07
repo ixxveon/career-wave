@@ -165,7 +165,7 @@ function UserMyPage() {
     setEditForm({
       name: userProfile.name,
       email: userProfile.email ?? "",
-      phone: userProfile.phone,
+      phone: userProfile.phone ?? "",
       githubUrl: githubProfile?.githubUrl ?? "",
     });
 
@@ -199,9 +199,8 @@ function UserMyPage() {
 
     const trimmedName = editForm.name.trim();
     const trimmedEmail = editForm.email.trim();
-    const normalizedPhone = editForm.phone.replace(/-/g, "").trim();
+    const normalizedPhone = (editForm.phone ?? "").replace(/-/g, "").trim();
     const normalizedGithubUrl = normalizeGithubUrl(editForm.githubUrl);
-
     if (!hasEditFormChanges) {
       setIsEditModalOpen(false);
       setEditErrorMessage("");

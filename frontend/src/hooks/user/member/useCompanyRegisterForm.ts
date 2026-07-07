@@ -450,6 +450,49 @@ export function useCompanyRegisterForm() {
     }
   };
 
+  // 「변경」— 전송·확인된 담당자 이메일/휴대폰/사업자등록번호를 다시 편집 가능하게 잠금 해제하고 상태를 초기화한다. (issue #1036)
+  const handleChangeEmail = () => {
+    managerEmailVerificationRequestRef.current += 1;
+    managerEmailVerificationIdRef.current = '';
+    setVerification((current) => ({
+      ...current,
+      emailId: '',
+      emailToken: '',
+      emailExpiresAt: '',
+      emailResendAvailableAt: '',
+      emailRemainingAttempts: 0,
+    }));
+    setForm((current) => ({ ...current, managerEmailCode: '' }));
+    setFieldErrors((current) => ({ ...current, managerEmail: '', managerEmailCode: '' }));
+    setFormMessage('');
+    setSuccessMessage('');
+  };
+
+  const handleChangePhone = () => {
+    managerPhoneVerificationRequestRef.current += 1;
+    managerPhoneVerificationIdRef.current = '';
+    setVerification((current) => ({
+      ...current,
+      phoneId: '',
+      phoneToken: '',
+      phoneExpiresAt: '',
+      phoneResendAvailableAt: '',
+      phoneRemainingAttempts: 0,
+    }));
+    setForm((current) => ({ ...current, managerPhoneCode: '' }));
+    setFieldErrors((current) => ({ ...current, managerPhone: '', managerPhoneCode: '' }));
+    setFormMessage('');
+    setSuccessMessage('');
+  };
+
+  const handleChangeBusinessNumber = () => {
+    setBusinessNumberCheckState(BUSINESS_NUMBER_CHECK_STATE.UNCHECKED);
+    setBusinessNumberCheckMessage('');
+    setFieldErrors((current) => ({ ...current, businessNumber: '' }));
+    setFormMessage('');
+    setSuccessMessage('');
+  };
+
   const FIELD_LABEL_MAP: Record<string, string> = {
     companyType: '기업형태',
     businessNumber: '사업자등록번호',
@@ -567,6 +610,9 @@ export function useCompanyRegisterForm() {
     handleAddressSearch,
     handleBusinessNumberCheck,
     handleCertificateChange,
+    handleChangeBusinessNumber,
+    handleChangeEmail,
+    handleChangePhone,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,
     handleLoginIdCheck,

@@ -22,7 +22,8 @@ _BASE_SYSTEM = """당신은 전문 면접관입니다. 지원자의 답변을 �
   - PRESSURE: 압박 질문 (모순점 지적, 더 어려운 시나리오 제시)
   - NEXT: 새로운 주제로 전환하는 질문
 - 질문은 명확하고 구체적으로 작성하세요.
-- 존댓말을 사용하세요."""
+- 존댓말을 사용하세요.
+- 이전 대화에서 이미 한 질문과 동일하거나 매우 유사한 질문을 절대 반복하지 마세요."""
 
 SYSTEM_PROMPT_TECHNICAL = _BASE_SYSTEM + """
 
@@ -127,3 +128,88 @@ _FALLBACK_MAP: dict[str, list[str]] = {
 
 def get_fallback_questions(interview_type: str | None) -> list[str]:
     return _FALLBACK_MAP.get((interview_type or "").upper(), FALLBACK_QUESTIONS_DEFAULT)
+
+
+# ── 개선 추천 액션 focusType 오버레이 ───────────────────────────────────────
+# 리포트 하단 '개선 추천 액션' 버튼 클릭 시 해당 유형에 집중하는 추가 지시사항.
+# 기존 interviewType 시스템 프롬프트 뒤에 append하여 프롬프트 복잡도를 최소화한다.
+
+_FOCUS_OVERLAYS: dict[str, str] = {
+    "FOLLOW_UP": """
+[이번 세션 집중 목표: 꼬리 질문 대응력]
+- 지원자의 답변에서 구체성이 부족하거나 모호한 표현을 집중 공략하세요.
+- 매 답변마다 "구체적으로 어떤 방식이었나요?", "그 결과는 어떠했나요?" 형태의 FOLLOW_UP 질문을 우선 생성하세요.
+- PRESSURE 질문을 30% 이상 포함해 답변의 깊이를 검증하세요.""",
+
+    "TECHNICAL_DEPTH": """
+[이번 세션 집중 목표: 기술 심화]
+- CS 원리, 알고리즘 복잡도, 아키텍처 트레이드오프에 집중하는 질문을 생성하세요.
+- "왜 그 기술을 선택하셨나요?", "다른 대안과 비교했을 때 장단점은?" 형태의 질문을 포함하세요.
+- 단순 경험 나열이 아닌 기술적 근거와 판단력을 평가하세요.""",
+
+    "DELIVERY": """
+[이번 세션 집중 목표: 발성·자신감 향상]
+- 지원자가 명확하고 자신감 있게 답변할 수 있도록 유도하는 질문을 생성하세요.
+- 답변 길이가 짧거나 불분명한 경우 "조금 더 자세히 설명해 주실 수 있나요?" 형태의 FOLLOW_UP을 생성하세요.
+- 긴장을 낮출 수 있도록 친근하지만 전문적인 어조를 유지하세요.""",
+
+    "FLUENCY": """
+[이번 세션 집중 목표: 표현 유창성 향상]
+- 지원자가 핵심을 간결하고 명확하게 전달할 수 있도록 구체적인 사례 중심 질문을 생성하세요.
+- "한 문장으로 요약하면 어떻게 되나요?", "가장 중요한 포인트 하나만 말씀해 주세요." 형태의 질문을 포함하세요.
+- 장황한 답변을 유도하지 않고 핵심 전달력을 평가하는 질문을 구성하세요.""",
+}
+
+
+def get_focus_overlay(focus_type: str | None) -> str | None:
+    return _FOCUS_OVERLAYS.get((focus_type or "").upper())
+
+
+# ── 목표 기업 맞춤 오버레이 ───────────────────────────────────────────────────
+
+def get_company_overlay(target_company: str | None) -> str | None:
+    if not target_company or not target_company.strip():
+        return None
+    # 개행 제거 — 사용자 입력이 시스템 프롬프트 구조를 흔드는 것을 방지
+    company = target_company.strip().replace("\n", " ").replace("\r", " ")
+    return f"""
+[목표 기업: {company}]
+- 지원자는 {company} 입사를 목표로 면접을 준비하고 있습니다.
+- {company}의 인재상, 기술 스택, 서비스 특성을 고려한 질문을 생성하세요.
+- {company}에서 실제로 중요하게 평가하는 역량(문제 해결력, 데이터 기반 사고, 협업 등)을 검증하는 방향으로 질문하세요.
+- 단, {company} 관련 정보가 불확실한 경우 일반적인 면접 질문으로 대체하세요."""
+
+
+# ── 답변 품질 기반 난이도 동적 조절 오버레이 ────────────────────────────────
+# 직전 답변의 품질 신호(INSUFFICIENT / ADEQUATE / STRONG)에 따라 다음 질문 방향을 조절한다.
+# focusType 오버레이와 독립적으로 동작하며, 프롬프트 가장 마지막에 append한다.
+
+_DIFFICULTY_OVERLAYS: dict[str, str] = {
+    "INSUFFICIENT": """
+[답변 품질 신호: 보충 필요]
+- 직전 답변이 짧거나 내용이 부족했습니다.
+- 지원자가 답변을 보완할 수 있도록 유도하는 방향으로 질문하세요.
+- "조금 더 구체적으로 설명해 주실 수 있나요?", "어떤 경험을 바탕으로 그렇게 생각하셨나요?" 형태의 FOLLOW_UP을 우선 생성하세요.
+- 압박 질문(PRESSURE)은 피하고 지원자가 자신감을 회복할 수 있도록 돕는 질문을 생성하세요.""",
+
+    "ADEQUATE": """
+[답변 품질 신호: 적절]
+- 직전 답변이 충분한 수준이었습니다.
+- 표준적인 면접 흐름을 유지하며 다음 주제로 자연스럽게 전환하거나 꼬리 질문을 생성하세요.""",
+
+    "STRONG": """
+[답변 품질 신호: 우수]
+- 직전 답변이 충실하고 깊이가 있었습니다.
+- 지원자의 역량을 더 검증하기 위해 심화 질문 또는 압박 질문(PRESSURE)을 생성하세요.
+- "그렇다면 더 복잡한 상황에서는 어떻게 대처하시겠나요?", "그 결정의 단점은 무엇이라고 생각하시나요?" 형태로 깊이를 파고드세요.""",
+}
+
+
+def get_difficulty_overlay(quality: str | None) -> str | None:
+    """직전 답변 품질 신호를 받아 난이도 조절 오버레이를 반환한다. ADEQUATE는 중립이므로 생략 가능."""
+    if not quality:
+        return None
+    key = quality.upper()
+    if key == "ADEQUATE":
+        return None  # 중립 상태 — 프롬프트에 불필요한 힌트 추가하지 않음
+    return _DIFFICULTY_OVERLAYS.get(key)

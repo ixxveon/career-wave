@@ -116,7 +116,10 @@ POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer
   "questionOrder": 1,
   "answerText": "저는 Spring Boot와 JPA를 활용한 백엔드 개발 경험이 있습니다...",
   "questionText": "자신의 가장 큰 강점은 무엇이라고 생각하시나요?",
-  "sessionType": "TEXT"
+  "sessionType": "TEXT",
+  "interviewType": "TECHNICAL",
+  "focusType": "TECHNICAL_DEPTH",
+  "targetCompany": "카카오"
 }
 ```
 
@@ -128,6 +131,9 @@ POST /internal/user/interview/sessions/{sessionId}/trigger/text-answer
 | `answerText` | `String` | 사용자 답변 텍스트 |
 | `questionText` | `String` | 현재 답변 완료된 질문 텍스트 (answer_history 기록용, 최초 트리거 시 빈 문자열) |
 | `sessionType` | `String` | `TEXT` \| `VOICE` |
+| `interviewType` | `String` \| `null` | `TECHNICAL` \| `PERSONALITY` \| `PROJECT` — LLM 시스템 프롬프트 선택용 |
+| `focusType` | `String` \| `null` | `FOLLOW_UP` \| `TECHNICAL_DEPTH` \| `DELIVERY` \| `FLUENCY` — 집중 목표 오버레이용 |
+| `targetCompany` | `String` \| `null` | 목표 기업명 — LLM 기업 맞춤 오버레이용 |
 
 #### Response (200 OK)
 

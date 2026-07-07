@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import {
   csApi,
   FAQ_CATEGORY_LABEL,
@@ -8,6 +8,8 @@ import {
   type FaqItem,
   type FaqListParams,
 } from '../../../api/admin/csApi';
+
+const FAQ_QUESTION_MAX_LENGTH = 500;
 
 interface FaqFormState {
   faqId?: number;
@@ -209,11 +211,11 @@ export default function FaqTab({ onMutate }: FaqTabProps) {
       </section>
 
       {faqModal && (
-        <div className="modalOverlay" onClick={closeFaqModal}>
+        <div className="modalOverlay">
           <div className="memberModal modal--scrollable" style={{ width: 580 }} onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader" style={{ flexShrink: 0 }}>
               <div><h3>{faqModal === 'create' ? 'FAQ 등록' : 'FAQ 수정'}</h3></div>
-              <button onClick={closeFaqModal}>닫기</button>
+              <button className="modalCloseBtn" aria-label="닫기" onClick={closeFaqModal}><X size={18} /></button>
             </div>
             <div className="modalBody">
               <div className="csFormRows">
@@ -226,8 +228,9 @@ export default function FaqTab({ onMutate }: FaqTabProps) {
                 </div>
                 <div className="csFormRow">
                   <label>질문</label>
-                  <input className="csFormInput" type="text" placeholder="자주 묻는 질문을 입력하세요"
+                  <input className="csFormInput" type="text" placeholder="자주 묻는 질문을 입력하세요" maxLength={FAQ_QUESTION_MAX_LENGTH}
                     value={faqForm.question} onChange={(e) => setFaqForm((p) => ({ ...p, question: e.target.value }))} />
+                  <span className="csFormCharCount">{faqForm.question.length}/{FAQ_QUESTION_MAX_LENGTH}</span>
                 </div>
                 <div className="csFormRow">
                   <div className="csFormLabelRow">
@@ -244,26 +247,26 @@ export default function FaqTab({ onMutate }: FaqTabProps) {
               </div>
             </div>
             <div className="modalAction" style={{ flexShrink: 0 }}>
+              <button onClick={closeFaqModal} disabled={faqFormLoading}>취소</button>
               <button onClick={saveFaq} disabled={faqFormLoading || !faqForm.question.trim()}>
                 {faqFormLoading ? '저장 중...' : faqModal === 'create' ? '등록' : '저장'}
               </button>
-              <button onClick={closeFaqModal} disabled={faqFormLoading}>취소</button>
             </div>
           </div>
         </div>
       )}
 
       {faqDeleteId !== null && (
-        <div className="modalOverlay" onClick={() => setFaqDeleteId(null)}>
+        <div className="modalOverlay">
           <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 400 }}>
             <div className="modalHeader">
               <div><h3>FAQ 삭제</h3></div>
-              <button onClick={() => setFaqDeleteId(null)}>닫기</button>
+              <button className="modalCloseBtn" aria-label="닫기" onClick={() => setFaqDeleteId(null)}><X size={18} /></button>
             </div>
             <p style={{ padding: '16px 24px', fontSize: 14, color: '#31475f' }}>해당 FAQ를 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.</p>
             <div className="modalAction">
-              <button style={{ background: '#9a6767', color: 'white', borderColor: '#9a6767' }} onClick={confirmDeleteFaq}>삭제</button>
               <button onClick={() => setFaqDeleteId(null)}>취소</button>
+              <button style={{ background: '#9a6767', color: 'white', borderColor: '#9a6767' }} onClick={confirmDeleteFaq}>삭제</button>
             </div>
           </div>
         </div>

@@ -13,6 +13,9 @@ export const LOGIN_ID_PATTERN = /^[A-Za-z0-9]{6,20}$/;
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_PATTERN = /^010\d{8}$/;
 export const VERIFICATION_CODE_PATTERN = /^\d{6}$/;
+export const NAME_PATTERN = /^[가-힣]{2,10}$/;
+// 대표자명은 외국계·외국법인 대표(영문명, 공백 포함)를 허용 (#1030)
+export const CEO_NAME_PATTERN = /^[가-힣a-zA-Z ]{2,20}$/;
 
 export const COMPANY_TYPE_LABELS = {
   ENTERPRISE: '대기업',
@@ -78,6 +81,15 @@ export function isValidVerificationCode(value: string): boolean {
   return VERIFICATION_CODE_PATTERN.test(value.trim());
 }
 
+export function isValidName(value: string): boolean {
+  // NFD(자모 분해형)로 들어온 정상 한글 이름이 거짓 거부되지 않도록 NFC로 정규화 (#1030)
+  return NAME_PATTERN.test(value.trim().normalize('NFC'));
+}
+
+export function isValidCeoName(value: string): boolean {
+  return CEO_NAME_PATTERN.test(value.trim().normalize('NFC'));
+}
+
 export function validatePersonalRegisterForm(
   form: PersonalRegisterFormSnapshot,
   loginIdState: LoginIdCheckState,
@@ -90,7 +102,11 @@ export function validatePersonalRegisterForm(
   } else if (loginIdState !== LOGIN_ID_CHECK_STATE.AVAILABLE) {
     errors.loginId = '아이디 중복 확인을 완료해주세요.';
   }
-  if (!form.name.trim()) errors.name = '이름을 입력해주세요.';
+  if (!form.name.trim()) {
+    errors.name = '이름을 입력해주세요.';
+  } else if (!isValidName(form.name.trim())) {
+    errors.name = '이름은 2~10자 한글로 입력해주세요.';
+  }
   if (!isValidEmail(form.email)) errors.email = '올바른 이메일 주소를 입력해주세요.';
   if (!form.emailVerificationToken?.trim()) errors.emailCode = '이메일 인증을 완료해주세요.';
   if (!isValidPhone(form.phone)) errors.phone = '휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해주세요.';
@@ -116,14 +132,22 @@ export function validateCompanyRegisterForm(
     errors.businessNumber = '사업자등록번호 확인을 완료해주세요.';
   }
   if (!form.companyName.trim()) errors.companyName = '회사명을 입력해주세요.';
-  if (!form.ceoName.trim()) errors.ceoName = '대표자명을 입력해주세요.';
+  if (!form.ceoName.trim()) {
+    errors.ceoName = '대표자명을 입력해주세요.';
+  } else if (!isValidCeoName(form.ceoName)) {
+    errors.ceoName = '대표자명은 2~20자의 한글 또는 영문으로 입력해주세요.';
+  }
   if (!form.postalCode.trim() || !form.roadAddress.trim()) errors.roadAddress = '주소 검색을 완료해주세요.';
   if (!isValidLoginId(form.loginId)) {
     errors.loginId = '아이디는 영문과 숫자 조합 6~20자로 입력해주세요.';
   } else if (loginIdState !== LOGIN_ID_CHECK_STATE.AVAILABLE) {
     errors.loginId = '아이디 중복 확인을 완료해주세요.';
   }
-  if (!form.managerName.trim()) errors.managerName = '담당자명을 입력해주세요.';
+  if (!form.managerName.trim()) {
+    errors.managerName = '담당자명을 입력해주세요.';
+  } else if (!isValidName(form.managerName)) {
+    errors.managerName = '담당자명은 2~10자 한글로 입력해주세요.';
+  }
   if (!isValidPhone(form.managerPhone)) errors.managerPhone = '담당자 전화번호를 올바르게 입력해주세요.';
   if (!form.managerPhoneVerificationToken?.trim()) errors.managerPhoneCode = '담당자 휴대폰 인증을 완료해주세요.';
   if (!isValidEmail(form.managerEmail)) errors.managerEmail = '담당자 이메일을 올바르게 입력해주세요.';

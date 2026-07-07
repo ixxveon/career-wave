@@ -443,18 +443,20 @@ CREATE TABLE interview_sessions (
     session_status VARCHAR(20)  NOT NULL DEFAULT 'IN_PROGRESS',
     interview_type VARCHAR(20)  NULL,
     target_company VARCHAR(100) NULL,
+    focus_type     VARCHAR(20)  NULL,
     total_score    INTEGER      NULL,
     started_at     TIMESTAMPTZ  NULL,
     ended_at       TIMESTAMPTZ  NULL,
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_interview_sessions PRIMARY KEY (session_id),
-    CONSTRAINT fk_interview_member   FOREIGN KEY (member_id)   REFERENCES members (member_id),
-    CONSTRAINT fk_interview_document FOREIGN KEY (document_id) REFERENCES documents (document_id),
-    CONSTRAINT chk_session_type      CHECK (session_type   IN ('TEXT', 'VOICE', 'VIDEO')),
-    CONSTRAINT chk_session_status    CHECK (session_status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED')),
-    CONSTRAINT chk_interview_type    CHECK (interview_type IN ('TECHNICAL', 'PERSONALITY', 'PROJECT'))
+    CONSTRAINT pk_interview_sessions     PRIMARY KEY (session_id),
+    CONSTRAINT fk_interview_member       FOREIGN KEY (member_id)   REFERENCES members (member_id),
+    CONSTRAINT fk_interview_document     FOREIGN KEY (document_id) REFERENCES documents (document_id),
+    CONSTRAINT chk_session_type          CHECK (session_type   IN ('TEXT', 'VOICE', 'VIDEO')),
+    CONSTRAINT chk_session_status        CHECK (session_status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED')),
+    CONSTRAINT chk_interview_type        CHECK (interview_type IN ('TECHNICAL', 'PERSONALITY', 'PROJECT')),
+    CONSTRAINT chk_interview_focus_type  CHECK (focus_type     IN ('FOLLOW_UP', 'TECHNICAL_DEPTH', 'DELIVERY', 'FLUENCY'))
 );
 COMMENT ON TABLE  interview_sessions                IS 'AI 모의 면접 세션 테이블';
 COMMENT ON COLUMN interview_sessions.session_id     IS '면접 세션 고유 식별자';
@@ -464,6 +466,7 @@ COMMENT ON COLUMN interview_sessions.session_type   IS '면접 형식 (TEXT / VO
 COMMENT ON COLUMN interview_sessions.session_status IS '진행 상태 (IN_PROGRESS / COMPLETED / FAILED)';
 COMMENT ON COLUMN interview_sessions.interview_type IS '면접 내용 유형 (TECHNICAL / PERSONALITY / PROJECT)';
 COMMENT ON COLUMN interview_sessions.target_company IS '준비 대상 기업명';
+COMMENT ON COLUMN interview_sessions.focus_type     IS '개선 집중 유형 (FOLLOW_UP / TECHNICAL_DEPTH / DELIVERY / FLUENCY), 리포트 액션 버튼 진입 시 설정';
 COMMENT ON COLUMN interview_sessions.total_score    IS '면접 종합 점수';
 COMMENT ON COLUMN interview_sessions.started_at     IS '면접 시작 일시';
 COMMENT ON COLUMN interview_sessions.ended_at       IS '면접 종료 일시';
@@ -1009,13 +1012,13 @@ CREATE TABLE audit_logs (
 
     CONSTRAINT pk_audit_logs  PRIMARY KEY (audit_log_id),
     CONSTRAINT fk_audit_admin FOREIGN KEY (admin_id) REFERENCES admins (admin_id),
-    CONSTRAINT chk_log_type   CHECK (log_type  IN ('ADMIN_ACTIVITY', 'ADMIN_MANAGEMENT', 'AI_METRICS_SYSTEM', 'SCRAPING_SYSTEM')),
+    CONSTRAINT chk_log_type   CHECK (log_type  IN ('ADMIN_ACTIVITY', 'ADMIN_MANAGEMENT', 'AI_METRICS_SYSTEM', 'SCRAPING_SYSTEM', 'SETTLEMENT_ACTIVITY')),
     CONSTRAINT chk_severity   CHECK (severity  IN ('INFO', 'WARN', 'ERROR', 'SUCCESS'))
 );
 COMMENT ON TABLE  audit_logs              IS '관리자 작업 감사 로그 테이블';
 COMMENT ON COLUMN audit_logs.audit_log_id IS '로그 고유 식별자';
 COMMENT ON COLUMN audit_logs.admin_id     IS '작업 관리자 FK';
-COMMENT ON COLUMN audit_logs.log_type     IS '로그 타입 (ADMIN_ACTIVITY / ADMIN_MANAGEMENT / AI_METRICS_SYSTEM / SCRAPING_SYSTEM)';
+COMMENT ON COLUMN audit_logs.log_type     IS '로그 타입 (ADMIN_ACTIVITY / ADMIN_MANAGEMENT / AI_METRICS_SYSTEM / SCRAPING_SYSTEM / SETTLEMENT_ACTIVITY)';
 COMMENT ON COLUMN audit_logs.action       IS '수행 액션 (SUSPEND / REFUND / BLIND 등)';
 COMMENT ON COLUMN audit_logs.target_type  IS '대상 유형 (MEMBER / BOARD / PAYMENT 등)';
 COMMENT ON COLUMN audit_logs.target_id    IS '대상 레코드 ID';
@@ -1608,6 +1611,7 @@ CREATE TABLE settlement_reports (
     note                    TEXT,
     created_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    version                 BIGINT          NOT NULL DEFAULT 0,
     CONSTRAINT uq_settlement_period     UNIQUE (settlement_period_start, settlement_period_end),
     CONSTRAINT chk_settlement_period    CHECK (settlement_period_start < settlement_period_end),
     CONSTRAINT chk_settlement_status    CHECK (settlement_status IN ('PENDING', 'CONFIRMED')),
@@ -1623,7 +1627,7 @@ CREATE INDEX idx_settlement_status ON settlement_reports (settlement_status);
 COMMENT ON TABLE  settlement_reports                           IS '월별 정산 리포트 요약';
 COMMENT ON COLUMN settlement_reports.settlement_id             IS '정산 리포트 PK';
 COMMENT ON COLUMN settlement_reports.settlement_period_start   IS '정산 기간 시작일';
-COMMENT ON COLUMN settlement_reports.settlement_period_end     IS '정산 기간 종료일';
+COMMENT ON COLUMN settlement_reports.settlement_period_end     IS '정산 기간 종료일 (해당 날짜 포함, inclusive)';
 COMMENT ON COLUMN settlement_reports.total_sales_amount        IS '총 매출액 (원)';
 COMMENT ON COLUMN settlement_reports.total_refund_amount       IS '총 환불액 (원)';
 COMMENT ON COLUMN settlement_reports.net_sales_amount          IS '순매출액 (매출 - 환불)';
@@ -1638,6 +1642,7 @@ COMMENT ON COLUMN settlement_reports.admin_id                  IS '정산 확정
 COMMENT ON COLUMN settlement_reports.note                      IS '비고/메모';
 COMMENT ON COLUMN settlement_reports.created_at                IS '생성 일시';
 COMMENT ON COLUMN settlement_reports.updated_at                IS '최종 수정 일시';
+COMMENT ON COLUMN settlement_reports.version                   IS '낙관적 락 버전 (동시 확정 충돌 감지)';
 
 CREATE TABLE settlement_items (
     settlement_item_id  BIGSERIAL       PRIMARY KEY,

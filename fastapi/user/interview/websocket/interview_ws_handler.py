@@ -62,7 +62,10 @@ class _SessionContext:
     msg_buffer: list[dict[str, Any]] = field(default_factory=list)
     # Phase 4 — LLM 파이프라인 컨텍스트
     interview_type: str | None = None       # TECHNICAL | PERSONALITY | PROJECT
+    focus_type: str | None = None           # FOLLOW_UP | TECHNICAL_DEPTH | DELIVERY | FLUENCY
     session_type: str | None = None         # TEXT | VOICE
+    target_company: str | None = None       # 기업명 (맞춤 질문 생성용)
+    recent_answer_quality: str | None = None  # INSUFFICIENT | ADEQUATE | STRONG — 난이도 동적 조절용
     answer_history: list[dict[str, str]] = field(default_factory=list)  # [{question, answer}, ...]
     rag_context: str | None = None          # RAG 인덱싱된 문서 텍스트
     used_fallback_questions: set[str] = field(default_factory=set)  # 중복 폴백 방지
@@ -221,6 +224,10 @@ async def interview_ws(
             ctx.session_type = pending_llm["sessionType"]
         if pending_llm.get("interviewType"):
             ctx.interview_type = pending_llm["interviewType"]
+        if pending_llm.get("focusType"):
+            ctx.focus_type = pending_llm["focusType"]
+        if pending_llm.get("targetCompany"):
+            ctx.target_company = pending_llm["targetCompany"]
         from user.interview.pipeline import llm_pipeline
         asyncio.create_task(
             llm_pipeline.generate_and_deliver_question(
@@ -365,6 +372,23 @@ async def send_tts_audio(
         "isFinal": is_final,
         "voiceQualityRatio": None,
         "audioChunk": None if is_final else audio_data,
+        "errorCode": None,
+    })
+
+
+async def send_answer_hint(
+    session_id: str,
+    hint: str,
+    question_order: int,
+) -> None:
+    await _push(session_id, {
+        "type": "ANSWER_HINT",
+        "content": hint,
+        "questionOrder": question_order,
+        "chunkIndex": None,
+        "isFinal": None,
+        "voiceQualityRatio": None,
+        "audioData": None,
         "errorCode": None,
     })
 

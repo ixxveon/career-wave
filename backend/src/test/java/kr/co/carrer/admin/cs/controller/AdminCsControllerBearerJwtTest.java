@@ -18,11 +18,12 @@ import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import kr.co.carrer.user.member.filter.UserAccountStatusPort;
 import org.junit.jupiter.api.BeforeEach;
+import org.mockito.Mockito;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -49,7 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest({AdminCsController.class, AdminNoticeController.class, AdminFaqController.class, AdminInquiryController.class})
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, SecurityMockConfig.class})
 class AdminCsControllerBearerJwtTest {
 
     @Autowired
@@ -70,14 +71,11 @@ class AdminCsControllerBearerJwtTest {
     @MockBean
     private AdminInquiryService adminInquiryService;
 
-    @MockBean
+    @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    @MockBean
+    @Autowired
     private TokenBlacklistStore tokenBlacklistStore;
-
-    @MockBean
-    private IpAclPort ipAclPort;
 
     @MockBean
     private AdminAccountStatusPort adminAccountStatusPort;
@@ -86,6 +84,11 @@ class AdminCsControllerBearerJwtTest {
     private UserAccountStatusPort userAccountStatusPort;
 
     private static final ZonedDateTime NOW = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+
+    @BeforeEach
+    void resetSecurityMocks() {
+        Mockito.reset(jwtTokenProvider, tokenBlacklistStore);
+    }
 
     private Claims stubAdminClaims(String adminRole) {
         Claims claims = mock(Claims.class);

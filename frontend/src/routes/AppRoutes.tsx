@@ -60,12 +60,13 @@ const JobNoticeListPage = lazy(
 const ApplicationStatusPage = lazy(
   () => import("../pages/user/application/ApplicationStatusPage"),
 );
-const ApplicantManagementPage = lazy(
-  () => import("../pages/user/application/ApplicantManagementPage"),
-);
-const ApplicantDetailPage = lazy(
-  () => import("../pages/user/application/ApplicantDetailPage"),
-);
+// TODO(#977, #1049): 백엔드 미구현으로 지원자 관리 페이지 임시 비활성화
+// const ApplicantManagementPage = lazy(
+//   () => import("../pages/user/application/ApplicantManagementPage"),
+// );
+// const ApplicantDetailPage = lazy(
+//   () => import("../pages/user/application/ApplicantDetailPage"),
+// );
 const ApplyPage = lazy(() => import("../pages/user/application/ApplyPage"));
 
 const ResumeAnalysisPage = lazy(
@@ -123,6 +124,10 @@ const MentorPage = lazy(() => import("../pages/user/community/MentorPage"));
 const PaymentPage = lazy(() => import("../pages/user/billing/PaymentPage"));
 // [non-MVP] const CompanyProductPage = lazy(() => import('../pages/user/billing/CompanyProductPage'));
 const CheckoutPage = lazy(() => import("../pages/user/billing/CheckoutPage"));
+const TossDemoPage = lazy(() => import("../pages/user/billing/TossDemoPage"));
+const TossDemoResultPage = lazy(
+  () => import("../pages/user/billing/TossDemoResultPage"),
+);
 const PaymentSuccessPage = lazy(
   () => import("../pages/user/billing/PaymentSuccessPage"),
 );
@@ -175,8 +180,8 @@ const AuditLogPage = lazy(() => import("../pages/admin/AuditLog/AuditLogPage"));
 const AdminCompanyListPage = lazy(
   () => import("../pages/admin/Company/CompanyListPage"),
 );
-const AdminSettlementListPage = lazy(
-  () => import("../pages/admin/Settlement/SettlementListPage"),
+const AdminSettlementDetailPage = lazy(
+  () => import("../pages/admin/Settlement/SettlementDetailPage"),
 );
 
 function RouteLoadingFallback() {
@@ -291,6 +296,8 @@ function AppRoutes() {
         {/* Toss 결제 콜백 — 외부 리디렉트이므로 세션 만료 시에도 렌더링 가능해야 함 (#854) */}
         <Route path="billing/success" element={lazyRoute(<PaymentSuccessPage />)} />
         <Route path="billing/fail" element={lazyRoute(<PaymentFailPage />)} />
+        {/* 데모 일반결제(토스페이 QR) 결과 콜백 — 위와 같은 이유로 ProtectedRoute 밖에 둔다 */}
+        <Route path="billing/demo/result" element={lazyRoute(<TossDemoResultPage />)} />
 
         <Route element={<ProtectedRoute />}>
           <Route
@@ -327,6 +334,7 @@ function AppRoutes() {
               path="status"
               element={lazyRoute(<ApplicationStatusPage />)}
             />
+            {/* TODO(#977, #1049): 백엔드 미구현으로 지원자 관리 라우트 임시 비활성화
             <Route
               path="applicants"
               element={lazyRoute(<ApplicantManagementPage />)}
@@ -335,6 +343,7 @@ function AppRoutes() {
               path="applicants/:applicationId"
               element={lazyRoute(<ApplicantDetailPage />)}
             />
+            */}
             <Route path="apply" element={lazyRoute(<ApplyPage />)} />
           </Route>
 
@@ -403,6 +412,8 @@ function AppRoutes() {
             {/* [non-MVP] <Route path="pricing" element={lazyRoute(<PricingPage />)} /> */}
             <Route path="payment" element={lazyRoute(<PaymentPage />)} />
             <Route path="checkout" element={lazyRoute(<CheckoutPage />)} />
+            {/* 데모 전용 일반결제(토스페이 QR) 진입 페이지 */}
+            <Route path="demo" element={lazyRoute(<TossDemoPage />)} />
             <Route
               path="document-coaching/plans"
               element={lazyRoute(<PaymentPage />)}
@@ -442,8 +453,8 @@ function AppRoutes() {
               element={lazyRoute(<AdminCompanyListPage />)}
             />
             <Route
-              path="settlements"
-              element={lazyRoute(<AdminSettlementListPage />)}
+              path="settlements/:settlementId"
+              element={lazyRoute(<AdminSettlementDetailPage />)}
             />
           </Route>
         </Route>

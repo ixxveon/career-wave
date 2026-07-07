@@ -11,6 +11,7 @@ import io.jsonwebtoken.Claims;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.jwt.SessionProperties;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.store.LoginAttemptStore;
 import kr.co.carrer.auth.store.RefreshTokenStore;
@@ -57,10 +58,10 @@ class AdminLoginServiceImplTest {
         props.getUser().setAccessExpiration(1800000L);
         props.getUser().setRefreshExpiration(1209600000L);
         props.getAdmin().setSecret("test-admin-secret-key-must-be-at-least-32-bytes!");
-        props.getAdmin().setAccessExpiration(900000L);
+        props.getAdmin().setAccessExpiration(10800000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new AdminLoginServiceImpl(adminRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore);
+        service = new AdminLoginServiceImpl(adminRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore, new SessionProperties());
         // 잠금 카운트 테스트가 아닌 경우 MAX 미달로 설정
         lenient().when(loginAttemptStore.increment(any(), anyString())).thenReturn(1L);
         lenient().when(loginAttemptStore.getMaxAttempts()).thenReturn(5);
@@ -205,7 +206,7 @@ class AdminLoginServiceImplTest {
 
         JwtProperties props = new JwtProperties();
         props.getAdmin().setSecret("test-admin-secret-key-must-be-at-least-32-bytes!");
-        props.getAdmin().setAccessExpiration(900000L);
+        props.getAdmin().setAccessExpiration(10800000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         props.getUser().setSecret("test-user-secret-key-must-be-at-least-32-bytes!!");
         props.getUser().setAccessExpiration(1800000L);

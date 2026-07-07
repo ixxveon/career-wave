@@ -43,7 +43,9 @@ class TextAnswerRequest(BaseModel):
     answerText: str
     questionText: str = ""
     sessionType: str = "TEXT"  # TEXT | VOICE
-    interviewType: str | None = None  # TECHNICAL | PERSONALITY | PROJECT
+    interviewType: str | None = None   # TECHNICAL | PERSONALITY | PROJECT
+    focusType: str | None = None       # FOLLOW_UP | TECHNICAL_DEPTH | DELIVERY | FLUENCY
+    targetCompany: str | None = None   # 기업명 (맞춤 질문 생성용)
 
 
 class RagContextRequest(BaseModel):
@@ -135,6 +137,8 @@ async def trigger_text_answer(
             "questionText": body.questionText,
             "sessionType": body.sessionType,
             "interviewType": body.interviewType,
+            "focusType": body.focusType,
+            "targetCompany": body.targetCompany,
         }
         log.info("LLM trigger queued (WS not yet connected): sessionId=%s", session_id)
     else:
@@ -142,6 +146,10 @@ async def trigger_text_answer(
             ctx.session_type = body.sessionType
         if ctx.interview_type is None and body.interviewType:
             ctx.interview_type = body.interviewType
+        if ctx.focus_type is None and body.focusType:
+            ctx.focus_type = body.focusType
+        if ctx.target_company is None and body.targetCompany:
+            ctx.target_company = body.targetCompany
 
         task = asyncio.create_task(
             llm_pipeline.generate_and_deliver_question(

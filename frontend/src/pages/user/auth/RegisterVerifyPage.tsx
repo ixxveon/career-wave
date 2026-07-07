@@ -6,7 +6,7 @@ import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE, type SocialProviderId } fro
 import { useCompleteSocialRegister, useConfirmVerificationCode, useSendVerificationCode, useVerificationNow } from '../../../hooks/user/member';
 import { getSocialProviderLabel } from '../../../utils/user/member/socialAuth';
 import { formatRemaining, getRecoveryErrorMessage, getRemainingSeconds } from '../../../utils/user/member/recoveryView';
-import { isValidPhone, isValidVerificationCode, normalizePhone } from '../../../utils/user/member/registerSchema';
+import { isValidName, isValidPhone, isValidVerificationCode, normalizePhone } from '../../../utils/user/member/registerSchema';
 import '@/styles/user/auth/AuthPage.css';
 
 // Phase 5 OAuth callback 페이지에서 이 키로 저장: sessionStorage.setItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY, token)
@@ -135,7 +135,11 @@ function RegisterVerifyPage() {
     if (!socialSignupToken.trim()) {
       nextErrors.provider = '소셜 가입 세션이 만료되었습니다. 소셜 로그인을 다시 진행해주세요.';
     }
-    if (!form.name.trim()) nextErrors.name = '이름을 입력해주세요.';
+    if (!form.name.trim()) {
+      nextErrors.name = '이름을 입력해주세요.';
+    } else if (!isValidName(form.name)) {
+      nextErrors.name = '이름은 2~10자 한글로 입력해주세요.';
+    }
     if (!form.carrier.trim()) nextErrors.carrier = '통신사를 선택해주세요.';
     if (!isValidPhone(form.phone)) nextErrors.phone = '휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해주세요.';
     if (!verification.verificationId) {
@@ -221,6 +225,21 @@ function RegisterVerifyPage() {
       if (requestOrder !== verificationRequestRef.current || target !== currentPhoneRef.current) return;
       setFieldErrors((current) => ({ ...current, phoneCode: getRecoveryErrorMessage(error, '휴대폰 인증 확인에 실패했습니다.') }));
     }
+  };
+
+  // 「변경」— 전송한 휴대폰 번호를 다시 편집 가능하게 잠금 해제하고 인증 상태를 초기화한다. (issue #1036)
+  const handleChangePhone = () => {
+    verificationRequestRef.current += 1;
+    setVerification({
+      verificationId: '',
+      verificationToken: '',
+      expiresAt: '',
+      resendAvailableAt: '',
+      remainingAttempts: 0,
+    });
+    setForm((current) => ({ ...current, phoneCode: '' }));
+    setFieldErrors((current) => ({ ...current, phone: '', phoneCode: '' }));
+    clearMessages();
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -320,11 +339,16 @@ function RegisterVerifyPage() {
                 <span className="cw-register-label">
                   휴대폰 번호 <em>*</em>
                 </span>
-                <div className="cw-register-inline">
-                  <input value={form.phone} onChange={(event) => update('phone', event.target.value)} placeholder="010-0000-0000" />
-                  <button className="cw-register-sub-button" type="button" onClick={() => void handleSendPhoneCode()} disabled={sendPhoneCode.isPending || phoneResendIn > 0}>
+                <div className={verification.verificationId ? 'cw-register-inline cw-register-inline--triple' : 'cw-register-inline'}>
+                  <input value={form.phone} readOnly={Boolean(verification.verificationId)} onChange={(event) => update('phone', event.target.value)} placeholder="010-0000-0000" />
+                  <button className="cw-register-sub-button" type="button" onClick={() => void handleSendPhoneCode()} disabled={sendPhoneCode.isPending || phoneResendIn > 0 || Boolean(verification.verificationToken)}>
                     {sendPhoneCode.isPending ? '전송 중' : verification.verificationId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
                   </button>
+                  {verification.verificationId && (
+                    <button className="cw-register-sub-button cw-register-sub-button--ghost" type="button" onClick={handleChangePhone}>
+                      변경
+                    </button>
+                  )}
                 </div>
                 {verification.verificationId && !verification.verificationToken && phoneExpiresIn > 0 && (
                   <span className="cw-register-status">
@@ -337,27 +361,29 @@ function RegisterVerifyPage() {
                 )}
                 {fieldErrors.phone && <p className="cw-register-error">{fieldErrors.phone}</p>}
               </label>
-              <label className="cw-register-field cw-register-field--wide">
-                <span className="cw-register-label">휴대폰 인증번호</span>
-                <div className="cw-register-inline">
-                  <input value={form.phoneCode} onChange={(event) => update('phoneCode', event.target.value)} placeholder="인증번호 입력" />
-                  <button
-                    className="cw-register-sub-button"
-                    type="button"
-                    onClick={() => void handleConfirmPhoneCode()}
-                    disabled={confirmPhoneCode.isPending || !verification.verificationId || phoneExpiresIn <= 0}
-                  >
-                    {confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
-                  </button>
-                </div>
-                {verification.verificationToken && (
-                  <span className="cw-register-status">
-                    <CheckCircle2 size={15} />
-                    휴대폰 인증 완료
-                  </span>
-                )}
-                {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
-              </label>
+              {verification.verificationId && (
+                <label className="cw-register-field cw-register-field--wide">
+                  <span className="cw-register-label">휴대폰 인증번호</span>
+                  <div className="cw-register-inline">
+                    <input value={form.phoneCode} readOnly={Boolean(verification.verificationToken)} onChange={(event) => update('phoneCode', event.target.value)} placeholder="인증번호 입력" />
+                    <button
+                      className="cw-register-sub-button"
+                      type="button"
+                      onClick={() => void handleConfirmPhoneCode()}
+                      disabled={confirmPhoneCode.isPending || !verification.verificationId || phoneExpiresIn <= 0 || Boolean(verification.verificationToken)}
+                    >
+                      {confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
+                    </button>
+                  </div>
+                  {verification.verificationToken && (
+                    <span className="cw-register-status">
+                      <CheckCircle2 size={15} />
+                      휴대폰 인증 완료
+                    </span>
+                  )}
+                  {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
+                </label>
+              )}
             </div>
           </section>
 

@@ -29,6 +29,10 @@ public interface InterviewSessionRepository extends JpaRepository<InterviewSessi
     Optional<InterviewSession> findInProgressByMemberId(@Param("memberId") UUID memberId,
             @Param("status") SessionStatus status);
 
+    @Query("SELECT s FROM InterviewSession s WHERE s.memberId = :memberId AND s.sessionStatus = :status")
+    Optional<InterviewSession> findInProgressByMemberIdReadOnly(@Param("memberId") UUID memberId,
+            @Param("status") SessionStatus status);
+
     List<InterviewSession> findAllBySessionIdIn(Collection<UUID> sessionIds);
 
     @Query("SELECT s FROM InterviewSession s WHERE s.sessionStatus = :status " +

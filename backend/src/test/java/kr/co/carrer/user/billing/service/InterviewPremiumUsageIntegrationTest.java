@@ -126,7 +126,7 @@ class InterviewPremiumUsageIntegrationTest {
         timeoutService = new InterviewTimeoutServiceImpl(sessionRepository);
 
         session = InterviewSession.create(
-                memberId, null, SessionType.TEXT, InterviewType.TECHNICAL, null);
+                memberId, null, SessionType.TEXT, InterviewType.TECHNICAL, null, null);
         setField(session, "sessionId", sessionId);
         when(sessionRepository.findInProgressByMemberId(eq(memberId), any())).thenReturn(Optional.empty());
         when(sessionRepository.save(any())).thenReturn(session);
@@ -138,7 +138,7 @@ class InterviewPremiumUsageIntegrationTest {
         TransactionSynchronizationManager.initSynchronization();
         try {
             sessionService.startSession(memberId,
-                    new InterviewDTO.RequestStartSession(null, "TEXT", "TECHNICAL", null));
+                    new InterviewDTO.RequestStartSession(null, "TEXT", "TECHNICAL", null, null));
             assertThat(period.getReservedCount()).isEqualTo(1);
 
             when(feedbackRepository.existsBySessionId(sessionId)).thenReturn(false);
@@ -166,7 +166,7 @@ class InterviewPremiumUsageIntegrationTest {
         TransactionSynchronizationManager.initSynchronization();
         try {
             sessionService.startSession(memberId,
-                    new InterviewDTO.RequestStartSession(documentId.toString(), "TEXT", "TECHNICAL", null));
+                    new InterviewDTO.RequestStartSession(documentId.toString(), "TEXT", "TECHNICAL", null, null));
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }
@@ -178,7 +178,7 @@ class InterviewPremiumUsageIntegrationTest {
     @DisplayName("Interview PREMIUM timeout — release, used 불변")
     void interviewPremium_timeoutReleasesMonthlyUsage() {
         sessionService.startSession(memberId,
-                new InterviewDTO.RequestStartSession(null, "TEXT", "TECHNICAL", null));
+                new InterviewDTO.RequestStartSession(null, "TEXT", "TECHNICAL", null, null));
         assertThat(period.getReservedCount()).isEqualTo(1);
         when(sessionRepository.findBySessionIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 

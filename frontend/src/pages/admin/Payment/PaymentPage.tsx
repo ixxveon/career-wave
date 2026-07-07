@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Construction } from 'lucide-react';
 import { adminSession } from '../../../api/admin/adminSession';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Payment.css';
 import PaymentHistoryTab from './PaymentHistoryTab';
 import SubscriptionTab from './SubscriptionTab';
+import SettlementTab from '../Settlement/SettlementTab';
 
 type PayTab = '결제 내역' | '구독 현황' | '정산 리포트';
 
-const TABS: PayTab[] = ['결제 내역', '구독 현황', '정산 리포트'];
+const ALL_TABS: PayTab[] = ['결제 내역', '구독 현황', '정산 리포트'];
 
 const TAB_KEY_MAP: Record<string, PayTab> = {
   payments:      '결제 내역',
@@ -21,9 +21,11 @@ interface Toast { id: number; msg: string; type: 'success' | 'error'; }
 
 export default function PaymentPage() {
   const isMaster = adminSession.getRole() === 'MASTER';
+  const TABS = isMaster ? ALL_TABS : ALL_TABS.filter((t) => t !== '정산 리포트');
   const [searchParams] = useSearchParams();
   const tabKey = searchParams.get('tab') ?? '';
-  const initialTab: PayTab = TAB_KEY_MAP[tabKey] ?? '결제 내역';
+  const requestedTab: PayTab = TAB_KEY_MAP[tabKey] ?? '결제 내역';
+  const initialTab: PayTab = requestedTab === '정산 리포트' && !isMaster ? '결제 내역' : requestedTab;
   const [tab, setTab] = useState<PayTab>(initialTab);
   const urlKeyword = searchParams.get('keyword') ?? '';
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -64,21 +66,7 @@ export default function PaymentPage() {
 
       {tab === '결제 내역' && <PaymentHistoryTab key={urlKeyword} isMaster={isMaster} initialKeyword={urlKeyword} showToast={showToast} />}
       {tab === '구독 현황' && <SubscriptionTab showToast={showToast} />}
-      {tab === '정산 리포트' && (
-        <div className="memberPage">
-          <div className="payV2Blind">
-            <div className="payV2BlindInner">
-              <div className="payV2IconWrap"><Construction size={40} /></div>
-              <h3 className="payV2Title">정산 리포트</h3>
-              <p className="payV2Msg">다음 버전에 구현 될 예정입니다.</p>
-              <span className="payV2Sub">
-                현재 해당 기능은 준비 중입니다.<br />
-                v2 업데이트 시 제공될 예정입니다.
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+      {tab === '정산 리포트' && <SettlementTab showToast={showToast} />}
     </section>
   );
 }

@@ -65,9 +65,14 @@ public class Admin {
     private ZonedDateTime updatedAt;
 
     public static Admin create(String email, String passwordHash, String name, AdminRole adminRole) {
+        return create(email, email, passwordHash, name, adminRole);
+    }
+
+    // 로그인 UI는 이메일이 아닌 별도 아이디(loginId)를 입력받으므로, 커스텀 loginId가 필요한 경우 사용한다.
+    public static Admin create(String loginId, String email, String passwordHash, String name, AdminRole adminRole) {
         Admin admin = new Admin();
         admin.email = email;
-        admin.loginId = email;
+        admin.loginId = loginId;
         admin.passwordHash = passwordHash;
         admin.name = name;
         admin.adminRole = adminRole;
