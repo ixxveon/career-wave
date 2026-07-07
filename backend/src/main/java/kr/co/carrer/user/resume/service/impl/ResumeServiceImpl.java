@@ -40,8 +40,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -303,7 +305,9 @@ public class ResumeServiceImpl implements ResumeService {
             return List.of();
         }
         try {
-            return List.of(objectMapper.readValue(keywordsJson, String[].class));
+            return Arrays.stream(objectMapper.readValue(keywordsJson, String[].class))
+                    .filter(Objects::nonNull)
+                    .toList();
         } catch (JsonProcessingException e) {
             log.warn("[키워드 파싱 실패] 원인: {}", e.getMessage());
             return List.of();
