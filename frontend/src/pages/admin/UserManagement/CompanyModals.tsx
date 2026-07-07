@@ -3,6 +3,7 @@ import axios from 'axios';
 import { X } from 'lucide-react';
 import {
   memberApi,
+  HR_STATUS,
   type HrManagerItem,
   type HrManagerDetail,
   type HrStatus,
@@ -60,7 +61,7 @@ export function CompanyDetailModal({ company, onClose, onApprove, onReject }: Co
             <strong>반려 사유:</strong> {company.rejectReason}
           </div>
         )}
-        {company.hrStatus === 'PENDING_REVIEW' && (
+        {company.hrStatus === HR_STATUS.PENDING_REVIEW && (
           <div className="modalAction">
             <button
               style={{ background: '#24496f', color: 'white', borderColor: '#24496f' }}

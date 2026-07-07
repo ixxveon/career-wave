@@ -35,6 +35,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -286,6 +287,43 @@ class AdminMemberServiceImplTest {
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.MEMBER_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("기업 회원 목록 조회 - getHrManagers()")
+    class GetHrManagers {
+
+        @Test
+        @DisplayName("목록의 각 항목마다 재직증명서 URL을 presigned URL로 치환해 반환한다")
+        void returnsPresignedCertFileUrlForEachItem() {
+            String rawUrl1 = "https://bucket.s3.ap-northeast-2.amazonaws.com/employment-certificates/2026-07-07/aaa.pdf";
+            String rawUrl2 = "https://bucket.s3.ap-northeast-2.amazonaws.com/employment-certificates/2026-07-07/bbb.pdf";
+            String presignedUrl1 = rawUrl1 + "?X-Amz-Signature=xxx";
+            String presignedUrl2 = rawUrl2 + "?X-Amz-Signature=yyy";
+
+            HrManagerDTO.ResponseList item1 = new HrManagerDTO.ResponseList(
+                UUID.randomUUID(), "홍길동", "hr1@company.com", "테스트기업1", "111-11-11111",
+                PermissionLevel.FULL, rawUrl1, "재직증명서1.pdf",
+                ZonedDateTime.now(), null, HrStatus.PENDING_REVIEW
+            );
+            HrManagerDTO.ResponseList item2 = new HrManagerDTO.ResponseList(
+                UUID.randomUUID(), "김철수", "hr2@company.com", "테스트기업2", "222-22-22222",
+                PermissionLevel.FULL, rawUrl2, "재직증명서2.pdf",
+                ZonedDateTime.now(), null, HrStatus.APPROVED
+            );
+
+            given(memberQueryRepository.findHrManagers(any(), any(), any(), any(), anyInt(), anyInt()))
+                .willReturn(List.of(item1, item2));
+            given(memberQueryRepository.countHrManagers(any(), any(), any(), any())).willReturn(2L);
+            given(hrManagerRepository.countByHrStatus(HrStatus.PENDING_REVIEW)).willReturn(1L);
+            given(s3Uploader.createPresignedGetUrl(rawUrl1)).willReturn(presignedUrl1);
+            given(s3Uploader.createPresignedGetUrl(rawUrl2)).willReturn(presignedUrl2);
+
+            HrManagerDTO.ResponsePage result = adminMemberService.getHrManagers(null, null, null, null, 1, 20);
+
+            assertThat(result.items()).extracting(HrManagerDTO.ResponseList::certFileUrl)
+                .containsExactly(presignedUrl1, presignedUrl2);
         }
     }
 
