@@ -167,6 +167,7 @@ public class SecurityConfig {
                     "/api/v1/user/members/login-id/check",
                     "/api/v1/user/members/register/user",
                     "/api/v1/user/members/register/company",
+                    "/api/v1/user/members/register/social/resolve",
                     "/api/v1/user/members/register/social/complete",
                     "/api/v1/user/members/company/employment-certificate",
                     "/api/v1/user/members/company/business-number/check",

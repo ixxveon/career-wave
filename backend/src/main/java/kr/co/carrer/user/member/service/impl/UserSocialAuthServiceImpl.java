@@ -197,8 +197,8 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         UserVerificationServiceImpl.validateVerificationToken(
                 phoneVerification, VerificationChannel.PHONE, request.getPhone(), VerificationPurpose.SOCIAL_SIGNUP);
 
-        // 중복 검증
-        if (memberRepository.existsByPhone(request.getPhone()))
+        // 중복 검증 — 탈퇴 회원 번호는 재사용 가능(resolve()/일반 가입과 동일 기준)
+        if (memberRepository.existsByPhoneAndMemberStatusNot(request.getPhone(), MemberStatus.WITHDRAWN))
             throw new CustomException(UserAuthErrorCode.PHONE_ALREADY_EXISTS);
         if (socialAccountRepository.existsByProviderAndProviderUserId(provider, payload.providerUserId()))
             throw new CustomException(UserAuthErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);

@@ -127,4 +127,70 @@ class UserSocialAuthControllerTest {
                 .andExpect(jsonPath("$.data.roleType").value("USER"))
                 .andExpect(jsonPath("$.data.nextPath").value("/"));
     }
+
+    // ─── 소셜 가입 휴대폰 인증 후 분기(resolve) ─────────────────────────────────────────
+
+    @Test
+    @DisplayName("resolve LINKED 시 200 + status=LINKED + accessToken을 반환한다")
+    void resolve_LINKED_200() throws Exception {
+        UUID memberId = UUID.randomUUID();
+        UserLoginDto.MemberInfo memberInfo = UserLoginDto.MemberInfo.of(
+                memberId, "social01", "홍길동",
+                kr.co.carrer.user.member.type.RoleType.USER,
+                kr.co.carrer.user.member.type.MemberStatus.ACTIVE,
+                kr.co.carrer.user.member.type.SubscriptionStatus.FREE,
+                kr.co.carrer.user.member.type.CompanyApprovalStatus.NONE,
+                Instant.now());
+        when(userSocialAuthService.resolve(any(), any()))
+                .thenReturn(UserSocialAuthDto.ResponseSocialResolve.linked("mock-access-token", memberInfo));
+
+        String body = """
+                {"provider":"kakao","socialSignupToken":"signup-token",
+                 "phone":"01012345678","phoneVerificationToken":"ptoken"}
+                """;
+
+        mockMvc.perform(post("/api/v1/user/members/register/social/resolve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.data.status").value("LINKED"))
+                .andExpect(jsonPath("$.data.accessToken").value("mock-access-token"))
+                .andExpect(jsonPath("$.data.nextPath").value("/"));
+    }
+
+    @Test
+    @DisplayName("resolve NEW_MEMBER 시 200 + status=NEW_MEMBER + accessToken=null을 반환한다")
+    void resolve_NEW_MEMBER_200() throws Exception {
+        when(userSocialAuthService.resolve(any(), any()))
+                .thenReturn(UserSocialAuthDto.ResponseSocialResolve.newMember());
+
+        String body = """
+                {"provider":"kakao","socialSignupToken":"signup-token",
+                 "phone":"01012345678","phoneVerificationToken":"ptoken"}
+                """;
+
+        mockMvc.perform(post("/api/v1/user/members/register/social/resolve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.data.status").value("NEW_MEMBER"))
+                .andExpect(jsonPath("$.data.accessToken").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("resolve 휴대폰 번호 형식 오류 시 400 검증 실패를 반환한다")
+    void resolve_검증실패_400() throws Exception {
+        // phone이 010 11자리 패턴에 맞지 않아 @Valid 바인딩 단계에서 실패
+        String body = """
+                {"provider":"kakao","socialSignupToken":"signup-token",
+                 "phone":"123","phoneVerificationToken":"ptoken"}
+                """;
+
+        mockMvc.perform(post("/api/v1/user/members/register/social/resolve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+    }
 }
