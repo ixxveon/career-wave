@@ -5,6 +5,7 @@ import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.jwt.SessionProperties;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
@@ -59,6 +60,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
+    private final SessionProperties sessionProperties;
     private final RefreshTokenStore refreshTokenStore;
     private final TokenBlacklistStore tokenBlacklistStore;
     private final SocialSignupTokenStore socialSignupTokenStore;
@@ -463,12 +465,14 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         String sessionId = UUID.randomUUID().toString();
 
         String accessToken = jwtTokenProvider.createAccessToken(
-                subject, accountType, member.getRoleType().name(), null);
+                subject, accountType, member.getRoleType().name(), null, sessionId);
         String refreshToken = jwtTokenProvider.createRefreshToken(
                 subject, accountType, null, sessionId);
 
         Duration accessTtl = Duration.ofMillis(jwtProperties.getUser().getAccessExpiration());
+        // 쿠키 maxAge는 절대 상한(refresh 만료), Redis 세션 TTL은 유휴 타임아웃(슬라이딩)로 분리
         Duration refreshTtl = Duration.ofMillis(jwtProperties.getUser().getRefreshExpiration());
+        Duration idleTtl = Duration.ofMillis(sessionProperties.getIdleTimeout());
 
         // session limit — 일반 로그인과 동일하게 5세션 상한 적용
         refreshTokenStore.enforceSessionLimit(accountType, subject).forEach(expiredKey -> {
@@ -479,7 +483,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
             refreshTokenStore.delete(accountType, subject, expiredSessionId);
         });
 
-        refreshTokenStore.save(accountType, subject, sessionId, refreshToken, refreshTtl);
+        refreshTokenStore.save(accountType, subject, sessionId, refreshToken, idleTtl);
 
         // access JTI 저장 — 세션 퇴출 시 blacklist 등록에 사용
         String jti = jwtTokenProvider.extractJti(accessToken, accountType);

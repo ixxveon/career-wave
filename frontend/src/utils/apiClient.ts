@@ -1,6 +1,13 @@
+import { authSession } from './user/member/authSession';
+import { requestAccessTokenRefresh } from './user/member/tokenRefresh';
+
 interface ApiError extends Error {
   status: number;
   body: Record<string, unknown>;
+}
+
+interface ApiClientOptions extends RequestInit {
+  auth?: 'optional';
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -10,20 +17,55 @@ function buildApiUrl(endpoint: string): string {
   return `${API_BASE_URL}${endpoint}`;
 }
 
+function createRequestHeaders(options: ApiClientOptions, isFormData: boolean) {
+  const headers = new Headers(options.headers);
+
+  if (!isFormData && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  return headers;
+}
+
+function buildRequestInit(options: RequestInit, headers: Headers): RequestInit {
+  return {
+    ...options,
+    headers,
+  };
+}
+
 export async function apiClient<T = unknown>(
   endpoint: string,
-  options: RequestInit = {}
+  options: ApiClientOptions = {},
 ): Promise<T | null> {
-  const isFormData = options.body instanceof FormData;
+  const { auth, ...requestInit } = options;
+  const isFormData = requestInit.body instanceof FormData;
   const url = buildApiUrl(endpoint);
+  const requestHeaders = createRequestHeaders(requestInit, isFormData);
 
-  const response = await fetch(url, {
-    ...options,
-    // FormData는 브라우저가 Content-Type + boundary를 자동 설정하므로 헤더를 건드리지 않는다
-    headers: isFormData
-      ? { ...options.headers }
-      : { 'Content-Type': 'application/json', ...options.headers },
-  });
+  const accessToken = auth === 'optional'
+    ? authSession.getAccessToken() ?? await requestAccessTokenRefresh()
+    : null;
+
+  if (accessToken) {
+    requestHeaders.set('Authorization', `Bearer ${accessToken}`);
+  }
+
+  let response = await fetch(url, buildRequestInit(requestInit, requestHeaders));
+
+  if (response.status === 401 && auth === 'optional') {
+    const refreshedToken = await requestAccessTokenRefresh();
+
+    if (refreshedToken) {
+      const retryHeaders = new Headers(requestHeaders);
+      retryHeaders.set('Authorization', `Bearer ${refreshedToken}`);
+      response = await fetch(url, buildRequestInit(requestInit, retryHeaders));
+    } else if (requestHeaders.has('Authorization')) {
+      const anonymousHeaders = new Headers(requestHeaders);
+      anonymousHeaders.delete('Authorization');
+      response = await fetch(url, buildRequestInit(requestInit, anonymousHeaders));
+    }
+  }
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
@@ -34,7 +76,6 @@ export async function apiClient<T = unknown>(
     throw error;
   }
 
-  // 204 No Content 또는 빈 바디 응답은 null 반환 (JSON 파싱 시도 않음)
   const contentType = response.headers.get('content-type');
   const contentLength = response.headers.get('content-length');
   if (

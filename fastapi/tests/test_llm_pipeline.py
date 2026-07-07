@@ -72,6 +72,32 @@ def test_pick_fallback_resets_after_all_used():
     assert extra in candidates
 
 
+def test_pick_fallback_excludes_answer_history():
+    """answer_history에 이미 출제된 질문은 폴백 후보에서 제외된다."""
+    candidates = get_fallback_questions("TECHNICAL")
+    if len(candidates) < 2:
+        pytest.skip("폴백 후보가 2개 미만이면 검증 불가")
+
+    already_asked = candidates[0]
+    ctx = _make_ctx(interview_type="TECHNICAL")
+    ctx.answer_history.append({"question": already_asked, "answer": "답변"})
+
+    for _ in range(10):
+        chosen = _pick_fallback(ctx)
+        assert chosen != already_asked, "answer_history에 있는 질문이 폴백으로 선택됐습니다."
+
+
+def test_pick_fallback_relaxes_when_all_candidates_in_history():
+    """모든 후보가 answer_history에 있을 때는 완화 조건으로 후보 전체에서 선택된다."""
+    candidates = get_fallback_questions("TECHNICAL")
+    ctx = _make_ctx(interview_type="TECHNICAL")
+    for q in candidates:
+        ctx.answer_history.append({"question": q, "answer": "답변"})
+
+    chosen = _pick_fallback(ctx)
+    assert chosen in candidates, "완화 조건에서도 후보 목록 내 질문이어야 합니다."
+
+
 # ── LLM 타임아웃 → 폴백 ─────────────────────────────────────────────────────
 
 @pytest.mark.asyncio

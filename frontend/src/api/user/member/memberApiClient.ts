@@ -6,8 +6,8 @@
  * 인터셉터로 인증 헤더 주입과 401 처리를 중앙화한다.
  */
 import { authSession } from '../../../utils/user/member/authSession';
+import { requestAccessTokenRefresh } from '../../../utils/user/member/tokenRefresh';
 import { toMemberApiError } from '../../../utils/user/member/errorMapping';
-import type { TokenRefreshResponse } from '../../../types/user/member';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -36,50 +36,6 @@ function redirectToLoginOnSessionExpired() {
   const currentPath = `${pathname}${search}`;
   const next = currentPath && currentPath !== '/' ? `?next=${encodeURIComponent(currentPath)}` : '';
   window.location.assign(`/auth/login${next}`);
-}
-
-async function fetchAccessTokenRefresh(): Promise<string | null> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/user/members/token/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-
-    const contentType = response.headers.get('content-type');
-    const payload = contentType?.includes('application/json') ? await response.json().catch(() => null) : null;
-
-    if (!response.ok) return null;
-
-    const data = payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
-    const tokenData = data as TokenRefreshResponse | null;
-
-    if (!tokenData?.accessToken) return null;
-
-    authSession.setAccessToken(tokenData.accessToken);
-
-    return tokenData.accessToken;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * refresh token 회전(rotation) + 재사용 탐지 백엔드와의 경쟁 조건 방지용 single-flight.
- * 새로고침(F5) 시 ProtectedRoute와 useAuth(Header)가 동시에 refresh를 호출하면,
- * 동일 refresh token으로 두 요청이 나가 한쪽이 회전시킨 뒤 다른 쪽이 구 토큰으로 도착 →
- * 재사용 탐지에 걸려 전체 세션이 폐기되고 로그아웃된다.
- * 진행 중인 요청이 있으면 그 Promise를 공유해 refresh 요청을 항상 1회로 합친다.
- */
-let inflightRefresh: Promise<string | null> | null = null;
-
-function requestAccessTokenRefresh(): Promise<string | null> {
-  if (inflightRefresh) return inflightRefresh;
-
-  inflightRefresh = fetchAccessTokenRefresh().finally(() => {
-    inflightRefresh = null;
-  });
-
-  return inflightRefresh;
 }
 
 async function requestWithAuthRetry(endpoint: string, init: RequestInit, auth: boolean, allowRetry = false): Promise<Response> {

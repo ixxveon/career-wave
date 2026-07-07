@@ -239,10 +239,13 @@ def _assess_answer_quality(ctx: _SessionContext, question_order: int, answer_tex
 
 
 def _pick_fallback(ctx: _SessionContext) -> str:
+    asked = {r["question"] for r in ctx.answer_history}
     candidates = get_fallback_questions(ctx.interview_type)
-    unused = [q for q in candidates if q not in ctx.used_fallback_questions]
+    unused = [q for q in candidates if q not in ctx.used_fallback_questions and q not in asked]
     if not unused:
-        ctx.used_fallback_questions.clear()
+        # 미사용 폴백이 없을 경우 answer_history에 없는 것만 재사용
+        unused = [q for q in candidates if q not in asked]
+    if not unused:
         unused = candidates
     chosen = random.choice(unused)
     ctx.used_fallback_questions.add(chosen)

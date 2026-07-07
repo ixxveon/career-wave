@@ -7,6 +7,7 @@ import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.jwt.SessionProperties;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
@@ -59,7 +60,7 @@ class UserRefreshLogoutServiceImplTest {
         provider = new JwtTokenProvider(props);
         service = new UserLoginServiceImpl(memberRepository, encoder, provider, props,
                 refreshTokenStore, tokenBlacklistStore,
-                mock(kr.co.carrer.auth.store.LoginAttemptStore.class), statusQueryRepository, new CookieProperties());
+                mock(kr.co.carrer.auth.store.LoginAttemptStore.class), statusQueryRepository, new CookieProperties(), new SessionProperties());
     }
 
     private Member createActiveMember() throws Exception {
@@ -84,7 +85,7 @@ class UserRefreshLogoutServiceImplTest {
         Member member = createActiveMember();
         setField(member, "memberId", UUID.fromString(subjectId));
 
-        when(refreshTokenStore.matches(AccountType.USER, subjectId, sessionId, refreshToken)).thenReturn(true);
+        when(refreshTokenStore.get(AccountType.USER, subjectId, sessionId)).thenReturn(storedHash);
         when(memberRepository.findById(UUID.fromString(subjectId))).thenReturn(Optional.of(member));
 
         String newAccessToken = service.refresh(refreshToken, httpResponse);
@@ -100,7 +101,8 @@ class UserRefreshLogoutServiceImplTest {
         String subjectId = UUID.randomUUID().toString();
         String refreshToken = provider.createRefreshToken(subjectId, AccountType.USER, null, sessionId);
 
-        when(refreshTokenStore.matches(AccountType.USER, subjectId, sessionId, refreshToken)).thenReturn(false);
+        // Redis 키는 존재하지만 저장된 hash가 제시된 토큰과 불일치 → 재사용으로 판정
+        when(refreshTokenStore.get(AccountType.USER, subjectId, sessionId)).thenReturn("hash-of-a-rotated-out-token");
 
         assertThatThrownBy(() -> service.refresh(refreshToken, httpResponse))
                 .isInstanceOf(CustomException.class)
@@ -110,16 +112,33 @@ class UserRefreshLogoutServiceImplTest {
     }
 
     @Test
+    void refresh_세션부재_유휴만료_SESSION_EXPIRED() throws Exception {
+        String sessionId = UUID.randomUUID().toString();
+        String subjectId = UUID.randomUUID().toString();
+        String refreshToken = provider.createRefreshToken(subjectId, AccountType.USER, null, sessionId);
+
+        // Redis 세션 키 부재(유휴 만료/로그아웃/퇴출) → 재사용이 아니라 세션 만료로 처리, 전체 세션 폐기 없음
+        when(refreshTokenStore.get(AccountType.USER, subjectId, sessionId)).thenReturn(null);
+
+        assertThatThrownBy(() -> service.refresh(refreshToken, httpResponse))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_SESSION_EXPIRED);
+
+        verify(refreshTokenStore, never()).deleteAll(any(), anyString());
+    }
+
+    @Test
     void refresh_비ACTIVE_회원_재발급_차단() throws Exception {
         String sessionId = UUID.randomUUID().toString();
         String subjectId = UUID.randomUUID().toString();
         String refreshToken = provider.createRefreshToken(subjectId, AccountType.USER, null, sessionId);
+        String storedHash = RefreshTokenStore.hash(refreshToken);
 
         Member suspended = createActiveMember();
         setField(suspended, "memberId", UUID.fromString(subjectId));
         setField(suspended, "memberStatus", MemberStatus.SUSPENDED);
 
-        when(refreshTokenStore.matches(AccountType.USER, subjectId, sessionId, refreshToken)).thenReturn(true);
+        when(refreshTokenStore.get(AccountType.USER, subjectId, sessionId)).thenReturn(storedHash);
         when(memberRepository.findById(UUID.fromString(subjectId))).thenReturn(Optional.of(suspended));
 
         assertThatThrownBy(() -> service.refresh(refreshToken, httpResponse))

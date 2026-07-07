@@ -1,10 +1,10 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   RotateCcw, Home, Award,
   MessageSquare, Calendar,
   Volume2, Gauge,
-  TrendingUp, Loader2, AlertCircle,
+  TrendingUp, Loader2, AlertCircle, Download,
 } from 'lucide-react';
 
 import { useInterviewReport } from '../../../hooks/user/interview/useInterviewReport';
@@ -164,6 +164,13 @@ const ReportContent = memo(function ReportContent({
   const grade             = getGrade(displayScore);
   const retryRoute        = RETRY_ROUTE[data.sessionType];
 
+  const handlePdfDownload = useCallback((): void => {
+    const prev = document.title;
+    document.title = `면접_결과_리포트_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}`;
+    window.print();
+    document.title = prev;
+  }, []);
+
   const improvements = useMemo(() => {
     const items = IMPROVEMENT_POOL.filter(def => {
       const score = hybridScores[def.metricKey];
@@ -236,6 +243,9 @@ const ReportContent = memo(function ReportContent({
             </button>
             <button className="ir-btn ir-btn--white" onClick={() => onNavigate(retryRoute)}>
               <RotateCcw size={14} /> 다시 연습하기
+            </button>
+            <button className="ir-btn ir-btn--pdf" onClick={handlePdfDownload}>
+              <Download size={14} /> PDF 저장
             </button>
           </div>
         </div>
