@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useSubscriptionStatus } from "@/hooks/user/subscription";
 import { updateDashboardProfile } from "@/api/user/dashboard";
+import { formatPhoneNumber, PHONE_MAX_LENGTH } from "@/utils/user/member/registerSchema";
 import {
   useDashboardGithub,
   useDashboardProfile,
@@ -106,7 +107,7 @@ function UserMyPage() {
     setEditForm({
       name: userProfile.name,
       email: userProfile.email ?? "",
-      phone: userProfile.phone ?? "",
+      phone: formatPhoneNumber(userProfile.phone ?? ""),
       githubUrl: githubProfile?.githubUrl ?? "",
     });
 
@@ -123,7 +124,7 @@ function UserMyPage() {
   function handleEditFormChange(field: keyof EditProfileForm, value: string) {
     setEditForm((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: field === "phone" ? formatPhoneNumber(value) : value,
     }));
   }
 
@@ -281,7 +282,7 @@ function UserMyPage() {
                 <span>휴대폰 번호</span>
                 <strong>
                   <Phone size={15} />
-                  {userProfile.phone || "등록된 휴대폰 번호가 없습니다."}
+                  {userProfile.phone ? formatPhoneNumber(userProfile.phone) : "등록된 휴대폰 번호가 없습니다."}
                 </strong>
               </div>
               <div className="cw-info-row">
@@ -439,7 +440,10 @@ function UserMyPage() {
                 휴대폰 번호
                 <input
                   type="text"
+                  inputMode="numeric"
+                  maxLength={PHONE_MAX_LENGTH}
                   value={editForm.phone ?? ""}
+                  placeholder="휴대폰번호 숫자 입력"
                   onChange={(event) =>
                     handleEditFormChange("phone", event.target.value)
                   }

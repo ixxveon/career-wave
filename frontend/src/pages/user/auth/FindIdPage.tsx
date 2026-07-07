@@ -6,7 +6,7 @@ import RecoveryCompanyIdentityFields from '../../../components/user/member/Recov
 import RecoveryMethodTabs from '../../../components/user/member/RecoveryMethodTabs';
 import RecoveryPageLinks from '../../../components/user/member/RecoveryPageLinks';
 import RecoverySupportPanel from '../../../components/user/member/RecoverySupportPanel';
-import { RecoveryCodeField, RecoveryContactField } from '../../../components/user/member/RecoveryVerificationFields';
+import { PHONE_CONTACT_FIELD_PROPS, RecoveryCodeField, RecoveryContactField } from '../../../components/user/member/RecoveryVerificationFields';
 import RecoveryResultPanel from '../../../components/user/member/RecoveryResultPanel';
 import '@/styles/user/auth/AuthPage.css';
 
@@ -82,14 +82,13 @@ function FindIdPage() {
                 label="휴대폰 번호"
                 icon={<Phone size={18} />}
                 value={userForm.phone}
-                placeholder="휴대폰번호('-' 없이 숫자만 입력)"
+                placeholder="휴대폰번호 숫자 입력"
                 error={fieldErrors.phone}
                 verification={activeUserVerification}
                 feedbackText="휴대폰 인증번호가 발송되었습니다."
                 sendPending={sendVerificationPending}
                 resendIn={userResendIn}
-                inputType="tel"
-                inputMode="numeric"
+                {...PHONE_CONTACT_FIELD_PROPS}
                 onChange={(value) => updateUser('phone', value)}
                 onSend={handleSendUserCode}
                 onReset={handleResetUserContact}

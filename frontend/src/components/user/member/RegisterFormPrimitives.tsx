@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type InputHTMLAttributes, type KeyboardEvent, type ReactNode } from 'react';
 import { CheckCircle2, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
 
@@ -15,6 +15,8 @@ type TextInputProps = {
   onChange: (value: string) => void;
   placeholder: string;
   readOnly?: boolean;
+  inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode'];
+  maxLength?: number;
 };
 
 type SelectInputProps = {
@@ -51,12 +53,14 @@ export function Field({ label, children, required = false, wide = false }: Field
   );
 }
 
-export function TextInput({ type = 'text', value, onChange, placeholder, readOnly = false }: TextInputProps) {
+export function TextInput({ type = 'text', value, onChange, placeholder, readOnly = false, inputMode, maxLength }: TextInputProps) {
   return (
     <input
       type={type}
       value={value}
       readOnly={readOnly}
+      inputMode={inputMode}
+      maxLength={maxLength}
       onChange={(event) => {
         onChange(event.target.value);
         applyInputFill(event.target);
