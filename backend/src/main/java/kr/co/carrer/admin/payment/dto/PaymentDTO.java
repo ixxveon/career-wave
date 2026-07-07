@@ -1,6 +1,7 @@
 package kr.co.carrer.admin.payment.dto;
 
 import kr.co.carrer.admin.payment.type.PaymentStatus;
+import kr.co.carrer.admin.payment.type.PaymentType;
 import kr.co.carrer.admin.payment.type.RefundStatus;
 
 import java.time.ZonedDateTime;
@@ -15,6 +16,7 @@ public class PaymentDTO {
         ZonedDateTime approvedAt,
         int amount,
         PaymentStatus paymentStatus,
+        PaymentType paymentType,
         RefundStatus refundStatus
     ) {}
 

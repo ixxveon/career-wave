@@ -1,10 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { jobApi } from '../../../api/user/jobApi';
 import type { JobNoticeListApiResponse, JobNoticeQueryParams } from '../../../types/user/jobNotice';
 
 type UseJobNoticeListOptions = {
   enabled?: boolean;
 };
+
+const INITIAL_PAGE = 1;
+const PAGE_SIZE = 18;
 
 export const jobNoticeQueryKeys = {
   all: ['jobNotice'] as const,
@@ -16,9 +19,25 @@ export const jobNoticeQueryKeys = {
 };
 
 export function useJobNoticeList(params: JobNoticeQueryParams, options: UseJobNoticeListOptions = {}) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: jobNoticeQueryKeys.list(params),
-    queryFn: () => jobApi.getJobNoticeList(params) as Promise<JobNoticeListApiResponse>,
+    queryFn: ({ pageParam }) =>
+      jobApi.getJobNoticeList({
+        ...params,
+        page: pageParam,
+        size: PAGE_SIZE,
+      }) as Promise<JobNoticeListApiResponse>,
+    initialPageParam: INITIAL_PAGE,
+    getNextPageParam: (lastPage) => {
+      const response = lastPage?.data;
+
+      if (!response) {
+        return undefined;
+      }
+
+      const nextPage = response.page + 1;
+      return nextPage <= response.totalPages ? nextPage : undefined;
+    },
     enabled: options.enabled ?? true,
   });
 }

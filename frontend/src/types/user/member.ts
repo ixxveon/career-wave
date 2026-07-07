@@ -49,6 +49,8 @@ export const VERIFICATION_PURPOSE = {
   REGISTER: 'REGISTER',
   FIND_ID: 'FIND_ID',
   RESET_PASSWORD: 'RESET_PASSWORD',
+  // 소셜 가입 추가정보 단계 휴대폰 인증 — 기존 가입 번호도 허용(계정 연동을 위해)
+  SOCIAL_SIGNUP: 'SOCIAL_SIGNUP',
 } as const;
 
 export type VerificationPurpose = (typeof VERIFICATION_PURPOSE)[keyof typeof VERIFICATION_PURPOSE];
@@ -168,7 +170,6 @@ export interface SocialRegisterCompletionRequest {
   socialSignupToken: string;
   socialEmail?: string;
   name: string;
-  carrier: string;
   phone: string;
   phoneVerificationToken: string;
   terms: SocialRegisterTerms;
@@ -180,6 +181,22 @@ export interface SocialRegisterCompletionResponse {
   memberStatus: MemberStatus;
   accessToken: string;
   nextPath: string;
+}
+
+// 소셜 가입 휴대폰 인증 후 분기 요청 — 인증 성공 직후 호출
+export interface SocialResolveRequest {
+  provider: SocialProviderId;
+  socialSignupToken: string;
+  phone: string;
+  phoneVerificationToken: string;
+}
+
+// status=LINKED: 기존 회원 연동·로그인 완료 / status=NEW_MEMBER: 신규 번호(추가정보 입력 필요)
+export interface SocialResolveResponse {
+  status: 'LINKED' | 'NEW_MEMBER';
+  accessToken: string | null;
+  member: MemberSummary | null;
+  nextPath: string | null;
 }
 
 export interface CompanyRegisterTerms extends TermsAgreement {

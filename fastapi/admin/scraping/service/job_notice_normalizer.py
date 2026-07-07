@@ -25,7 +25,7 @@ class NormalizedJobNotice:
 
 class JobNoticeNormalizer:
     _DEFAULT_JOB_TYPE = "FULLTIME"
-    _DEFAULT_COMPANY_SIZE = "SME"
+    _DEFAULT_COMPANY_SIZE = None
     _DEFAULT_CAREER_LEVEL = "ANY"
 
     def normalize(self, *, source_name: str, raw_notice: RawJobNotice) -> NormalizedJobNotice:
@@ -153,7 +153,7 @@ class JobNoticeNormalizer:
         return cls._DEFAULT_JOB_TYPE
 
     @classmethod
-    def _normalize_company_size(cls, value: str | None) -> str:
+    def _normalize_company_size(cls, value: str | None) -> str | None:
         normalized = cls._normalize_token(value)
         if normalized is None:
             return cls._DEFAULT_COMPANY_SIZE
@@ -162,7 +162,9 @@ class JobNoticeNormalizer:
             return "LARGE"
         if any(marker in normalized for marker in ("STARTUP", "스타트업", "벤처")):
             return "STARTUP"
-        if any(marker in normalized for marker in ("SME", "MID", "중소", "중소기업", "중견")):
+        if any(marker in normalized for marker in ("MID_MARKET", "MIDMARKET", "MIDSIZE", "중견", "중견기업")):
+            return "MID_MARKET"
+        if any(marker in normalized for marker in ("SME", "SMALLMEDIUM", "중소", "중소기업")):
             return "SME"
         return cls._DEFAULT_COMPANY_SIZE
 

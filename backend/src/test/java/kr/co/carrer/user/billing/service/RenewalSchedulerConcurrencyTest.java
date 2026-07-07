@@ -179,7 +179,7 @@ class RenewalSchedulerConcurrencyTest {
 
     private TossBillingPaymentResponse payResponse() {
         return new TossBillingPaymentResponse(
-                "pay-key", "RENEWAL-ORDER", "DONE", 29000, "KRW", ZonedDateTime.now(KST));
+                "pay-key", "RENEWAL-ORDER", "카드", "DONE", 29000, "KRW", ZonedDateTime.now(KST));
     }
 
     private void setField(Object target, String name, Object value) {

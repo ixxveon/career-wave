@@ -1,5 +1,6 @@
 import { Building2, UserRound } from 'lucide-react';
 import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
+import { BUSINESS_NUMBER_MAX_LENGTH, formatBusinessNumber } from '../../../utils/user/member/registerSchema';
 
 interface RecoveryCompanyIdentityFieldsProps {
   loginId?: string;
@@ -66,9 +67,10 @@ function RecoveryCompanyIdentityFields({
             aria-invalid={Boolean(businessNumberError)}
             inputMode="numeric"
             type="text"
+            maxLength={BUSINESS_NUMBER_MAX_LENGTH}
             placeholder="사업자등록번호('-' 없이 숫자만 입력)"
             value={businessNumber}
-            onChange={(event) => { onBusinessNumberChange(event.target.value); applyInputFill(event.target); }}
+            onChange={(event) => { onBusinessNumberChange(formatBusinessNumber(event.target.value)); applyInputFill(event.target); }}
             onBlur={(event) => clearInputFill(event.target)}
           />
         </span>

@@ -51,7 +51,7 @@ public class PaymentReconciliationTxService {
 
         if (payment.getSubscriptionId() != null) {
             // 이미 구독이 연결됨 — 멱등: PAID만 확정
-            payment.paid(tossResponse.paymentKey(), tossResponse.approvedAt());
+            payment.paid(tossResponse.paymentKey(), tossResponse.method(), tossResponse.approvedAt());
             log.info("RECONCILING 복구(멱등): paymentId={}, 구독 기존 존재", paymentId);
             return;
         }
@@ -59,7 +59,7 @@ public class PaymentReconciliationTxService {
         Plan plan = planRepository.findByProductCodeAndIsActive(payment.getProductCode(), true)
                 .orElseThrow(() -> new CustomException(BillingErrorCode.PRODUCT_NOT_FOUND));
 
-        payment.paid(tossResponse.paymentKey(), tossResponse.approvedAt());
+        payment.paid(tossResponse.paymentKey(), tossResponse.method(), tossResponse.approvedAt());
 
         ZonedDateTime periodStart = tossResponse.approvedAt().withZoneSameInstant(KST);
         ZonedDateTime periodEnd = periodStart.plusDays(BILLING_CYCLE_DAYS);

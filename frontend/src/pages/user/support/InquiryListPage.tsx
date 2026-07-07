@@ -43,7 +43,7 @@ function InquiryDetailModal({ inquiry, onClose }: InquiryDetailModalProps) {
             <span className={`iq-status ${cfg.cls}`}>{cfg.icon} {INQUIRY_STATUS_LABEL[inquiry.inquiryStatus]}</span>
           </div>
           <h2 className="iq-modal__title">{inquiry.title}</h2>
-          <p className="iq-modal__date">{inquiry.createdAt} 접수</p>
+          <p className="iq-modal__date">{new Date(inquiry.createdAt).toLocaleDateString('ko-KR')} 접수</p>
         </div>
 
         <div className="iq-modal__section">
@@ -154,7 +154,7 @@ export default function InquiryListPage() {
                   </div>
                   <div className="iq-item__right">
                     <span className={`iq-status ${cfg.cls}`}>{cfg.icon} {INQUIRY_STATUS_LABEL[i.inquiryStatus]}</span>
-                    <span className="iq-item__date">{i.createdAt}</span>
+                    <span className="iq-item__date">{new Date(i.createdAt).toLocaleDateString('ko-KR')}</span>
                     <ChevronRight size={14} className="iq-item__arrow" />
                   </div>
                 </button>

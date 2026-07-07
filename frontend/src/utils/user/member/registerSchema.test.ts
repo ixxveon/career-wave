@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import {
+  formatBusinessNumber,
+  formatPhoneNumber,
   validateCompanyRegisterForm,
   validatePersonalRegisterForm,
   type CompanyRegisterFormSnapshot,
@@ -73,6 +75,15 @@ describe('validateCompanyRegisterForm — businessNumberCheckState', () => {
     const errors = validateCompanyRegisterForm(snapshot, LOGIN_ID_CHECK_STATE.AVAILABLE);
     expect(errors.businessNumber).toBe('사업자등록번호 10자리를 입력해주세요.');
   });
+
+  it('하이픈이 포함된 사업자번호도 10자리 숫자로 정규화되어 통과한다', () => {
+    const snapshot = {
+      ...validSnapshot,
+      businessNumber: '123-45-67890',
+    };
+    const errors = validateCompanyRegisterForm(snapshot, LOGIN_ID_CHECK_STATE.AVAILABLE);
+    expect(errors.businessNumber).toBeUndefined();
+  });
 });
 
 // ─── 전체 유효 스냅샷은 오류 없음 ─────────────────────────────────────────────
@@ -136,5 +147,15 @@ describe('validatePersonalRegisterForm — 이름 형식 검증', () => {
       LOGIN_ID_CHECK_STATE.AVAILABLE,
     );
     expect(errors.name).toBeUndefined();
+  });
+});
+
+describe('번호 포맷 유틸', () => {
+  it('휴대폰 번호는 숫자만 남기고 010-1234-5678 형식으로 표시한다', () => {
+    expect(formatPhoneNumber('01012a34-56789')).toBe('010-1234-5678');
+  });
+
+  it('사업자등록번호는 숫자만 남기고 123-45-67890 형식으로 표시한다', () => {
+    expect(formatBusinessNumber('123ab45-678901')).toBe('123-45-67890');
   });
 });

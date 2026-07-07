@@ -14,6 +14,10 @@ export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_PATTERN = /^010\d{8}$/;
 export const VERIFICATION_CODE_PATTERN = /^\d{6}$/;
 export const NAME_PATTERN = /^[가-힣]{2,10}$/;
+export const PHONE_DIGIT_LENGTH = 11;
+export const BUSINESS_NUMBER_DIGIT_LENGTH = 10;
+export const PHONE_MAX_LENGTH = 13;
+export const BUSINESS_NUMBER_MAX_LENGTH = 12;
 // 대표자명은 외국계·외국법인 대표(영문명, 공백 포함)를 허용 (#1030)
 export const CEO_NAME_PATTERN = /^[가-힣a-zA-Z ]{2,20}$/;
 
@@ -62,7 +66,27 @@ export interface CompanyRegisterFormSnapshot extends CompanyRegisterDraft {
 }
 
 export function normalizePhone(value: string): string {
-  return value.replace(/\D/g, '');
+  return value.replace(/\D/g, '').slice(0, PHONE_DIGIT_LENGTH);
+}
+
+export function formatPhoneNumber(value: string): string {
+  const digits = normalizePhone(value);
+
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
+export function normalizeBusinessNumber(value: string): string {
+  return value.replace(/\D/g, '').slice(0, BUSINESS_NUMBER_DIGIT_LENGTH);
+}
+
+export function formatBusinessNumber(value: string): string {
+  const digits = normalizeBusinessNumber(value);
+
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 5) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`;
 }
 
 export function isValidLoginId(value: string): boolean {
@@ -75,6 +99,10 @@ export function isValidEmail(value: string): boolean {
 
 export function isValidPhone(value: string): boolean {
   return PHONE_PATTERN.test(normalizePhone(value));
+}
+
+export function isValidBusinessNumber(value: string): boolean {
+  return new RegExp(`^\\d{${BUSINESS_NUMBER_DIGIT_LENGTH}}$`).test(normalizeBusinessNumber(value));
 }
 
 export function isValidVerificationCode(value: string): boolean {
@@ -126,7 +154,7 @@ export function validateCompanyRegisterForm(
   const password = validatePasswordPolicy(form.password, form.loginId);
 
   if (!COMPANY_TYPE_BY_LABEL[form.companyType]) errors.companyType = '기업형태를 선택해주세요.';
-  if (!/^\d{10}$/.test(form.businessNumber.trim())) {
+  if (!isValidBusinessNumber(form.businessNumber)) {
     errors.businessNumber = '사업자등록번호 10자리를 입력해주세요.';
   } else if (form.businessNumberCheckState !== BUSINESS_NUMBER_CHECK_STATE.CONFIRMED) {
     errors.businessNumber = '사업자등록번호 확인을 완료해주세요.';
@@ -204,7 +232,7 @@ export function toCompanyRegisterRequest(form: CompanyRegisterFormSnapshot): Com
     managerEmail: form.managerEmail.trim(),
     managerPhone: normalizePhone(form.managerPhone),
     companyName: form.companyName.trim(),
-    businessNumber: form.businessNumber.trim(),
+    businessNumber: normalizeBusinessNumber(form.businessNumber),
     ceoName: form.ceoName.trim(),
     postalCode: form.postalCode.trim(),
     roadAddress: form.roadAddress.trim(),

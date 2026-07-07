@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../../types/user/member';
 import {
+  formatPhoneNumber,
   isValidEmail,
   isValidLoginId,
   isValidPhone,
@@ -105,7 +106,9 @@ export function usePersonalRegisterForm() {
     !registerUser.isPending;
 
   const update = (key: PersonalFormKey, value: PersonalForm[PersonalFormKey]) => {
-    setForm((current) => ({ ...current, [key]: value }));
+    const nextValue = key === 'phone' && typeof value === 'string' ? formatPhoneNumber(value) : value;
+
+    setForm((current) => ({ ...current, [key]: nextValue }));
     setFieldErrors((current) => ({
       ...current,
       [key]: '',
@@ -129,7 +132,7 @@ export function usePersonalRegisterForm() {
       }));
     }
     if (key === 'phone') {
-      currentPhoneRef.current = typeof value === 'string' ? value : currentPhoneRef.current;
+      currentPhoneRef.current = typeof nextValue === 'string' ? nextValue : currentPhoneRef.current;
       phoneVerificationIdRef.current = '';
       setVerification((current) => ({
         ...current,

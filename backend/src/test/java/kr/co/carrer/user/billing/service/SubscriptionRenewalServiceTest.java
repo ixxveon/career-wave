@@ -264,7 +264,7 @@ class SubscriptionRenewalServiceTest {
 
     private TossBillingPaymentResponse payResponse() {
         return new TossBillingPaymentResponse(
-                "pay-key-123", "RENEWAL-ORDER", "DONE",
+                "pay-key-123", "RENEWAL-ORDER", "카드", "DONE",
                 29000, "KRW", ZonedDateTime.now(KST));
     }
 
