@@ -45,7 +45,7 @@ public interface UserJobNoticeControllerDocs {
             @RequestParam(required = false) CareerLevel careerLevel,
             @Parameter(description = "Location contains filter.")
             @RequestParam(required = false) String location,
-            @Parameter(description = "Company size filter.", schema = @Schema(allowableValues = {"STARTUP", "SME", "LARGE"}))
+            @Parameter(description = "Company size filter.", schema = @Schema(allowableValues = {"STARTUP", "SME", "MID_MARKET", "LARGE"}))
             @RequestParam(required = false) CompanySize companySize,
             @Parameter(description = "Created-at period filter.", schema = @Schema(allowableValues = {"today", "7d", "30d", "all"}))
             @RequestParam(required = false) String period,
