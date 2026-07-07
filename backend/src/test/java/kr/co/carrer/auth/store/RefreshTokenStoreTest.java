@@ -7,25 +7,23 @@ import org.springframework.dao.QueryTimeoutException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 유휴 세션 존재성 확인 + 슬라이딩 TTL 갱신(touchSession)의 단일 TTL 판단 로직 검증.
- * 핵심: TTL(-2)=부재, 임계값 미만일 때만 EXPIRE, Redis 장애 시 fail-open(User)/보수적 거부(Admin).
+ * touchSession — 존재성 확인 + 슬라이딩 갱신을 단일 원자 EXPIRE로 처리.
+ * EXPIRE true=키 존재(갱신됨)=세션 유효, false=키 부재=세션 만료/퇴출.
+ * Redis 장애 시 fail-open(User)/보수적 거부(Admin).
  */
 class RefreshTokenStoreTest {
 
-    private static final Duration IDLE = Duration.ofMinutes(60);       // 3600s
-    private static final Duration THRESHOLD = Duration.ofMinutes(50);  // 3000s
+    private static final Duration IDLE = Duration.ofMinutes(60);
 
     private StringRedisTemplate redisTemplate;
     private RefreshTokenStore store;
@@ -37,61 +35,40 @@ class RefreshTokenStoreTest {
     }
 
     @Test
-    void touchSession_잔여TTL이_임계값보다_크면_갱신없이_true() {
-        when(redisTemplate.getExpire(anyString(), eq(TimeUnit.SECONDS))).thenReturn(3500L); // > 3000
+    void touchSession_키_존재하면_TTL을_idle로_갱신하고_true() {
+        when(redisTemplate.expire(anyString(), eq(IDLE))).thenReturn(true);
 
-        boolean alive = store.touchSession(AccountType.USER, "sub", "sess", IDLE, THRESHOLD, false);
+        boolean alive = store.touchSession(AccountType.USER, "sub", "sess", IDLE, false);
 
         assertThat(alive).isTrue();
-        verify(redisTemplate, never()).expire(anyString(), any(Duration.class)); // write 미발생
+        verify(redisTemplate).expire(anyString(), eq(IDLE)); // 매 요청 full idle 창으로 재설정
     }
 
     @Test
-    void touchSession_잔여TTL이_임계값_미만이면_EXPIRE로_갱신하고_true() {
-        when(redisTemplate.getExpire(anyString(), eq(TimeUnit.SECONDS))).thenReturn(100L); // < 3000
+    void touchSession_키_부재면_세션만료_false() {
+        when(redisTemplate.expire(anyString(), eq(IDLE))).thenReturn(false);
 
-        boolean alive = store.touchSession(AccountType.USER, "sub", "sess", IDLE, THRESHOLD, false);
-
-        assertThat(alive).isTrue();
-        verify(redisTemplate).expire(anyString(), eq(IDLE));
-    }
-
-    @Test
-    void touchSession_키_부재_minus2_면_세션부재_false() {
-        when(redisTemplate.getExpire(anyString(), eq(TimeUnit.SECONDS))).thenReturn(-2L);
-
-        boolean alive = store.touchSession(AccountType.USER, "sub", "sess", IDLE, THRESHOLD, false);
+        boolean alive = store.touchSession(AccountType.USER, "sub", "sess", IDLE, false);
 
         assertThat(alive).isFalse();
-        verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
-    }
-
-    @Test
-    void touchSession_만료없음_minus1_이면_갱신하고_true() {
-        when(redisTemplate.getExpire(anyString(), eq(TimeUnit.SECONDS))).thenReturn(-1L);
-
-        boolean alive = store.touchSession(AccountType.USER, "sub", "sess", IDLE, THRESHOLD, false);
-
-        assertThat(alive).isTrue();
-        verify(redisTemplate).expire(anyString(), eq(IDLE));
     }
 
     @Test
     void touchSession_Redis장애시_사용자는_fail_open_true() {
-        when(redisTemplate.getExpire(anyString(), eq(TimeUnit.SECONDS)))
+        when(redisTemplate.expire(anyString(), any(Duration.class)))
                 .thenThrow(new QueryTimeoutException("redis down"));
 
-        boolean alive = store.touchSession(AccountType.USER, "sub", "sess", IDLE, THRESHOLD, false);
+        boolean alive = store.touchSession(AccountType.USER, "sub", "sess", IDLE, false);
 
         assertThat(alive).isTrue(); // 가용성 우선
     }
 
     @Test
     void touchSession_Redis장애시_관리자는_보수적_거부_false() {
-        when(redisTemplate.getExpire(anyString(), eq(TimeUnit.SECONDS)))
+        when(redisTemplate.expire(anyString(), any(Duration.class)))
                 .thenThrow(new QueryTimeoutException("redis down"));
 
-        boolean alive = store.touchSession(AccountType.ADMIN, "sub", "sess", IDLE, THRESHOLD, true);
+        boolean alive = store.touchSession(AccountType.ADMIN, "sub", "sess", IDLE, true);
 
         assertThat(alive).isFalse(); // 보수적 거부
     }

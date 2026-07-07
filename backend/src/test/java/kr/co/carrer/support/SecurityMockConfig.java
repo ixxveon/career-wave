@@ -4,6 +4,7 @@ import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.jwt.SessionProperties;
 import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.store.RefreshTokenStore;
+import kr.co.carrer.auth.store.SessionLivenessChecker;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -30,6 +31,12 @@ public class SecurityMockConfig {
     @Bean
     public SessionProperties sessionProperties() {
         return new SessionProperties();
+    }
+
+    @Bean
+    public SessionLivenessChecker sessionLivenessChecker(RefreshTokenStore refreshTokenStore,
+                                                         SessionProperties sessionProperties) {
+        return new SessionLivenessChecker(refreshTokenStore, sessionProperties);
     }
 
     @Bean

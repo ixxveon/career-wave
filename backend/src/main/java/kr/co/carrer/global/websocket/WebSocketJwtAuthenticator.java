@@ -5,8 +5,7 @@ import io.jsonwebtoken.JwtException;
 import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.jwt.SessionProperties;
-import kr.co.carrer.auth.store.RefreshTokenStore;
+import kr.co.carrer.auth.store.SessionLivenessChecker;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.global.exception.CustomException;
@@ -15,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,8 +32,7 @@ public class WebSocketJwtAuthenticator {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistStore tokenBlacklistStore;
-    private final RefreshTokenStore refreshTokenStore;
-    private final SessionProperties sessionProperties;
+    private final SessionLivenessChecker sessionLivenessChecker;
     private final List<AccountStatusPort> accountStatusPorts;
 
     /**
@@ -65,19 +62,12 @@ public class WebSocketJwtAuthenticator {
 
             String subject = claims.getSubject();
 
-            // 유휴 세션 타임아웃: HTTP 필터와 동일하게 핸드셰이크 시 세션 존재성 검증(유휴 우회 차단).
-            // sessionId 미보유(구 토큰)는 skip, kill-switch로 비활성화 가능. 사용자 정책이므로 fail-open.
+            // 유휴 세션 타임아웃: HTTP 필터와 동일 정책(SessionLivenessChecker)으로 핸드셰이크 시 검증(유휴 우회 차단).
+            // 사용자 정책이므로 fail-open. sessionId 미보유·kill-switch는 checker 내부에서 skip.
             String sessionId = claims.get("sessionId", String.class);
-            if (sessionProperties.isExistenceCheckEnabled() && StringUtils.hasText(sessionId)) {
-                boolean sessionAlive = refreshTokenStore.touchSession(
-                        AccountType.USER, subject, sessionId,
-                        Duration.ofMillis(sessionProperties.getIdleTimeout()),
-                        Duration.ofMillis(sessionProperties.getRenewThreshold()),
-                        false);
-                if (!sessionAlive) {
-                    log.debug("[WebSocket JWT 거부] 유휴 만료 세션: sessionId={}", sessionId);
-                    return Optional.empty();
-                }
+            if (!sessionLivenessChecker.isAliveOrSkip(AccountType.USER, subject, sessionId, false)) {
+                log.debug("[WebSocket JWT 거부] 유휴 만료 세션: sessionId={}", sessionId);
+                return Optional.empty();
             }
 
             accountStatusPorts.stream()

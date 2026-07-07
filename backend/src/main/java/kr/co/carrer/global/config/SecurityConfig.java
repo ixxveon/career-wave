@@ -9,8 +9,7 @@ import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.jwt.SessionProperties;
-import kr.co.carrer.auth.store.RefreshTokenStore;
+import kr.co.carrer.auth.store.SessionLivenessChecker;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,8 +41,7 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistStore tokenBlacklistStore;
-    private final RefreshTokenStore refreshTokenStore;
-    private final SessionProperties sessionProperties;
+    private final SessionLivenessChecker sessionLivenessChecker;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
     private final List<AccountStatusPort> accountStatusPorts;
@@ -105,9 +103,11 @@ public class SecurityConfig {
             .contentSecurityPolicy(csp -> csp.policyDirectives(CSP_POLICY).reportOnly())
             .referrerPolicy(referrer -> referrer.policy(
                     ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+            // 초기 롤아웃: 짧은 max-age + includeSubDomains 미적용(모든 서브도메인 HTTPS 확인 후 상향).
+            // CSP를 Report-Only로 신중히 배포하는 것과 동일한 보수적 기조.
             .httpStrictTransportSecurity(hsts -> hsts
-                    .includeSubDomains(true)
-                    .maxAgeInSeconds(31_536_000))
+                    .includeSubDomains(false)
+                    .maxAgeInSeconds(86_400))
         );
     }
 
@@ -133,7 +133,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .addFilterBefore(
-                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore, refreshTokenStore, sessionProperties),
+                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore, sessionLivenessChecker),
                 UsernamePasswordAuthenticationFilter.class
             )
             .addFilterBefore(
@@ -202,7 +202,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .addFilterBefore(
-                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore, refreshTokenStore, sessionProperties),
+                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore, sessionLivenessChecker),
                 UsernamePasswordAuthenticationFilter.class
             )
             .addFilterAfter(
