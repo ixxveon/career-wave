@@ -9,6 +9,7 @@ import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.store.SessionLivenessChecker;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -39,11 +41,27 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistStore tokenBlacklistStore;
+    private final SessionLivenessChecker sessionLivenessChecker;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
     private final List<AccountStatusPort> accountStatusPorts;
     private final IpAclPort ipAclPort;
     private final ObjectMapper objectMapper;
+
+    /**
+     * CSP 정책 — HttpOnly가 막지 못하는 XSS 주입 자체를 브라우저 레벨에서 억제하는 심층 방어.
+     * 1차 Report-Only로 배포해 Swagger 등 정상 리소스가 깨지지 않는지 검증한 뒤 enforce로 전환한다.
+     * (script/style 'unsafe-inline'은 Swagger UI 호환용 — enforce 전환 시 재검토)
+     */
+    private static final String CSP_POLICY =
+            "default-src 'self'; " +
+            "script-src 'self' 'unsafe-inline'; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data:; " +
+            "connect-src 'self'; " +
+            "object-src 'none'; " +
+            "base-uri 'self'; " +
+            "frame-ancestors 'none'";
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
@@ -76,6 +94,23 @@ public class SecurityConfig {
             .toList();
     }
 
+    /**
+     * 다층 방어용 보안 응답 헤더. CSP(Report-Only) + Referrer-Policy + HSTS를 admin/user 체인 공통 적용한다.
+     * X-Frame-Options / X-Content-Type-Options는 Spring Security 기본값을 그대로 사용한다.
+     */
+    private void applySecurityHeaders(HttpSecurity http) throws Exception {
+        http.headers(headers -> headers
+            .contentSecurityPolicy(csp -> csp.policyDirectives(CSP_POLICY).reportOnly())
+            .referrerPolicy(referrer -> referrer.policy(
+                    ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+            // 초기 롤아웃: 짧은 max-age + includeSubDomains 미적용(모든 서브도메인 HTTPS 확인 후 상향).
+            // CSP를 Report-Only로 신중히 배포하는 것과 동일한 보수적 기조.
+            .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(false)
+                    .maxAgeInSeconds(86_400))
+        );
+    }
+
     @Bean
     @Order(1)
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -98,7 +133,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .addFilterBefore(
-                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
+                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore, sessionLivenessChecker),
                 UsernamePasswordAuthenticationFilter.class
             )
             .addFilterBefore(
@@ -110,6 +145,7 @@ public class SecurityConfig {
                 JwtAuthenticationFilter.class
             );
 
+        applySecurityHeaders(http);
         return http.build();
     }
 
@@ -166,7 +202,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .addFilterBefore(
-                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore),
+                new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore, sessionLivenessChecker),
                 UsernamePasswordAuthenticationFilter.class
             )
             .addFilterAfter(
@@ -174,6 +210,7 @@ public class SecurityConfig {
                 JwtAuthenticationFilter.class
             );
 
+        applySecurityHeaders(http);
         return http.build();
     }
 }

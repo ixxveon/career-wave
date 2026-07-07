@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.jwt.SessionProperties;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.exception.CustomException;
@@ -75,7 +76,7 @@ class UserSocialAuthServiceImplTest {
         service = new UserSocialAuthServiceImpl(
                 memberRepository, personalProfileRepository, socialAccountRepository,
                 termsRepository, verificationRepository, encoder,
-                jwtTokenProvider, jwtProperties, refreshTokenStore, tokenBlacklistStore,
+                jwtTokenProvider, jwtProperties, new SessionProperties(), refreshTokenStore, tokenBlacklistStore,
                 socialSignupTokenStore, redisTemplate, webClientBuilder,
                 entitlementInitService, new CookieProperties(), termsAgreementEvidenceRecorder);
         injectValue(service, "kakaoClientId", "kakao-id");
@@ -323,7 +324,7 @@ class UserSocialAuthServiceImplTest {
         when(tokenConfig.getAccessExpiration()).thenReturn(1800000L);
         when(tokenConfig.getRefreshExpiration()).thenReturn(604800000L);
         when(jwtProperties.getUser()).thenReturn(tokenConfig);
-        when(jwtTokenProvider.createAccessToken(anyString(), any(), anyString(), any()))
+        when(jwtTokenProvider.createAccessToken(anyString(), any(), anyString(), any(), anyString()))
                 .thenReturn("new-access-token");
         when(jwtTokenProvider.createRefreshToken(anyString(), any(), any(), anyString()))
                 .thenReturn("new-refresh-token");
@@ -387,7 +388,7 @@ class UserSocialAuthServiceImplTest {
         when(tokenConfig.getAccessExpiration()).thenReturn(1800000L);
         when(tokenConfig.getRefreshExpiration()).thenReturn(604800000L);
         when(jwtProperties.getUser()).thenReturn(tokenConfig);
-        when(jwtTokenProvider.createAccessToken(anyString(), any(), anyString(), any()))
+        when(jwtTokenProvider.createAccessToken(anyString(), any(), anyString(), any(), anyString()))
                 .thenReturn("access-token");
         when(jwtTokenProvider.createRefreshToken(anyString(), any(), any(), anyString()))
                 .thenReturn("refresh-token");
