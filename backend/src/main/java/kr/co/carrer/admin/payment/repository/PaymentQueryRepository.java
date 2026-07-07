@@ -5,6 +5,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import kr.co.carrer.admin.payment.dto.PaymentDTO;
 import kr.co.carrer.admin.payment.type.PaymentStatus;
+import kr.co.carrer.admin.payment.type.PaymentType;
 import kr.co.carrer.admin.payment.type.RefundStatus;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
@@ -38,7 +39,7 @@ public class PaymentQueryRepository {
             SELECT p.payment_id, p.order_id,
                    m.name AS member_name,
                    pl.plan_name,
-                   p.approved_at, p.amount, p.payment_status,
+                   p.approved_at, p.amount, p.payment_status, p.payment_type,
                    r.refund_status
             FROM payments p
             JOIN members m   ON m.member_id = p.member_id
@@ -85,7 +86,8 @@ public class PaymentQueryRepository {
                 toZdt(row[4]),
                 ((Number) row[5]).intValue(),
                 PaymentStatus.valueOf((String) row[6]),
-                row[7] != null ? RefundStatus.valueOf((String) row[7]) : null
+                PaymentType.valueOf((String) row[7]),
+                row[8] != null ? RefundStatus.valueOf((String) row[8]) : null
             ));
         }
         return result;
