@@ -113,7 +113,7 @@ class UserSocialAuthControllerTest {
 
         String body = """
                 {"provider":"kakao","socialSignupToken":"signup-token","name":"홍길동",
-                 "carrier":"SKT","phone":"01012345678","phoneVerificationToken":"ptoken",
+                 "phone":"01012345678","phoneVerificationToken":"ptoken",
                  "terms":{"service":true,"privacy":true,"marketing":false}}
                 """;
 

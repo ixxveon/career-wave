@@ -67,6 +67,17 @@ public class UserSocialAuthController implements UserSocialAuthControllerDocs {
         response.addHeader("Set-Cookie", cookieProperties.handoffCookie(name, value).toString());
     }
 
+    @PostMapping("/register/social/resolve")
+    public ResponseEntity<ApiResponse<UserSocialAuthDto.ResponseSocialResolve>> resolve(
+            @Valid @RequestBody UserSocialAuthDto.RequestSocialResolve request,
+            HttpServletResponse response) {
+        UserSocialAuthDto.ResponseSocialResolve result = userSocialAuthService.resolve(request, response);
+        String message = "LINKED".equals(result.status())
+                ? "기존 계정에 소셜 로그인을 연동했습니다."
+                : "추가 정보 입력이 필요합니다.";
+        return ResponseEntity.ok(ApiResponse.ok(message, result));
+    }
+
     @PostMapping("/register/social/complete")
     public ResponseEntity<ApiResponse<UserSocialAuthDto.ResponseSocialComplete>> complete(
             @Valid @RequestBody UserSocialAuthDto.RequestSocialComplete request,

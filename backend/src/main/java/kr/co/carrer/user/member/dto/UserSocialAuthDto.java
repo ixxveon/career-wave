@@ -69,10 +69,6 @@ public class UserSocialAuthDto {
         @NormalizedPattern(regexp = "^[가-힣]{2,10}$", message = "이름은 2~10자 한글로 입력해 주세요.")
         private String name;
 
-        @Schema(description = "통신사", example = "SKT")
-        @NotBlank
-        private String carrier;
-
         @Schema(description = "휴대폰 번호 (010 시작 11자리)", example = "01012345678")
         @NotBlank
         @Pattern(regexp = "^010[0-9]{8}$",
@@ -98,6 +94,49 @@ public class UserSocialAuthDto {
     ) {
         public static ResponseSocialComplete of(UUID memberId, String memberStatus, String accessToken) {
             return new ResponseSocialComplete(memberId, "USER", memberStatus, accessToken, "/");
+        }
+    }
+
+    // ───────────────────────────── 소셜 가입 휴대폰 인증 후 분기(resolve) ─────────────────────────────
+
+    // 추가 정보 페이지에서 휴대폰 인증 성공 직후 호출.
+    // 인증한 번호가 기존 회원이면 소셜 계정을 연동하고 바로 로그인, 신규 번호면 추가정보 입력을 이어간다.
+    @Getter
+    public static class RequestSocialResolve {
+        @Schema(description = "소셜 provider", allowableValues = {"kakao", "naver", "google"}, example = "kakao")
+        @NotBlank
+        @Pattern(regexp = "^(kakao|naver|google)$", message = "지원하지 않는 소셜 provider입니다.")
+        private String provider;
+
+        @Schema(description = "OAuth callback 응답에서 받은 1회용 socialSignupToken")
+        @NotBlank
+        private String socialSignupToken;
+
+        @Schema(description = "휴대폰 번호 (010 시작 11자리)", example = "01012345678")
+        @NotBlank
+        @Pattern(regexp = "^010[0-9]{8}$",
+                message = "휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해 주세요.")
+        private String phone;
+
+        @Schema(description = "휴대폰 인증 token (purpose=SOCIAL_SIGNUP)")
+        @NotBlank
+        private String phoneVerificationToken;
+    }
+
+    // status=LINKED  → 기존 회원 연동·로그인 완료 (accessToken/member/nextPath 포함)
+    // status=NEW_MEMBER → 신규 번호, 프론트에서 이름·약관 입력 후 complete() 호출
+    public record ResponseSocialResolve(
+            String status,
+            String accessToken,
+            UserLoginDto.MemberInfo member,
+            String nextPath
+    ) {
+        public static ResponseSocialResolve linked(String accessToken, UserLoginDto.MemberInfo member) {
+            return new ResponseSocialResolve("LINKED", accessToken, member, "/");
+        }
+
+        public static ResponseSocialResolve newMember() {
+            return new ResponseSocialResolve("NEW_MEMBER", null, null, null);
         }
     }
 }
