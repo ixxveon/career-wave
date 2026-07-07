@@ -67,7 +67,7 @@
   border: 1.5px solid rgba(255, 255, 255, .4);
   opacity: 0.7;
 }
-.ir-btn--pdf-locked:hover { opacity: 0.7; transform: none; }
+.ir-btn--pdf:hover { opacity: 0.7; transform: none; }
 
 .ir-btn__premium-badge {
   display: inline-flex;
