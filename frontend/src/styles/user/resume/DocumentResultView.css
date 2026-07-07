@@ -695,4 +695,16 @@
   .dr-feedback-item {
     page-break-inside: avoid;
   }
+
+  .dr-feedback-section {
+    page-break-before: auto;
+    border-top: 2px solid #e2e8f0;
+    padding-top: 24px;
+    margin-top: 8px;
+  }
+  .dr-feedback-section:first-child {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
 }
