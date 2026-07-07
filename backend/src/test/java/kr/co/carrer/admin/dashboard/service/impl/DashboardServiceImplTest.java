@@ -49,7 +49,7 @@ class DashboardServiceImplTest {
         lenient().when(dashboardSummaryQueryRepository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(5L, 4L, 1L, 90));
         lenient().when(dashboardSummaryQueryRepository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(6L, 1L, 1L, 4L));
+                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(8L, 1L, 1L, 4L, 2L));
         lenient().when(dashboardSummaryQueryRepository.findAuditAlerts(any(DashboardQueryWindow.class), anyInt()))
                 .thenReturn(List.of());
         lenient().when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), anyInt()))
@@ -70,11 +70,11 @@ class DashboardServiceImplTest {
 
         assertThat(result.serviceCards())
                 .extracting(DashboardDTO.ServiceCard::key, DashboardDTO.ServiceCard::summaryText)
-                .contains(tuple("SCRAPING", "전체 6개 / 성공 4개 / 실행 중 1개 / 실패 1개"));
+                .contains(tuple("SCRAPING", "전체 8개 / 대기 2개 / 성공 4개 / 실행 중 1개 / 실패 1개"));
 
         assertThat(result.systemStatus())
                 .extracting(DashboardDTO.SystemStatus::key, DashboardDTO.SystemStatus::valueText)
-                .contains(tuple("SCRAPING_PIPELINE", "전체 6개 / 성공 4개 / 실행 중 1개 / 실패 1개"));
+                .contains(tuple("SCRAPING_PIPELINE", "전체 8개 / 대기 2개 / 성공 4개 / 실행 중 1개 / 실패 1개"));
     }
 
     @Test
@@ -307,7 +307,7 @@ class DashboardServiceImplTest {
         when(repository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(0L, 0L, 0L, 0));
         when(repository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(3L, 1L, 0L, 2L));
+                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(3L, 1L, 0L, 2L, 0L));
         when(repository.findAuditAlerts(any(DashboardQueryWindow.class), eq(5)))
                 .thenReturn(List.of());
         when(repository.findScrapingAlerts(any(DashboardQueryWindow.class), eq(5)))
@@ -345,7 +345,7 @@ class DashboardServiceImplTest {
         when(repository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(0L, 0L, 0L, 0));
         when(repository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(0L, 0L, 0L, 0L));
+                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(0L, 0L, 0L, 0L, 0L));
         when(repository.findAuditAlerts(any(DashboardQueryWindow.class), eq(5)))
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.AuditAlertRow(
                         10L,

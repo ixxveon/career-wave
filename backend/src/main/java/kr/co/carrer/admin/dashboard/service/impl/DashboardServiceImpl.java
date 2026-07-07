@@ -281,11 +281,12 @@ public class DashboardServiceImpl implements DashboardService {
             DashboardSummaryQueryRepository.ScrapingStatusMetrics scrapingStatusMetrics
     ) {
         long totalPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.totalPipelineCount();
+        long idlePipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.idlePipelineCount();
         long successPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.successPipelineCount();
         long runningPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.runningPipelineCount();
         long failedPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.failedPipelineCount();
 
-        return "전체 " + totalPipelineCount + "개 / 성공 " + successPipelineCount
+        return "전체 " + totalPipelineCount + "개 / 대기 " + idlePipelineCount + "개 / 성공 " + successPipelineCount
                 + "개 / 실행 중 " + runningPipelineCount + "개 / 실패 " + failedPipelineCount + "개";
     }
 
