@@ -123,20 +123,23 @@ public class UserSocialAuthDto {
         private String phoneVerificationToken;
     }
 
-    // status=LINKED  → 기존 회원 연동·로그인 완료 (accessToken/member/nextPath 포함)
-    // status=NEW_MEMBER → 신규 번호, 프론트에서 이름·약관 입력 후 complete() 호출
+    // LINKED  → 기존 회원 연동·로그인 완료 (accessToken/member/nextPath 포함)
+    // NEW_MEMBER → 신규 번호, 프론트에서 이름·약관 입력 후 complete() 호출
+    // Jackson이 enum을 "LINKED"/"NEW_MEMBER" 문자열로 직렬화 — 프론트 계약 동일, 오타 컴파일 방지
+    public enum ResolveStatus { LINKED, NEW_MEMBER }
+
     public record ResponseSocialResolve(
-            String status,
+            ResolveStatus status,
             String accessToken,
             UserLoginDto.MemberInfo member,
             String nextPath
     ) {
         public static ResponseSocialResolve linked(String accessToken, UserLoginDto.MemberInfo member) {
-            return new ResponseSocialResolve("LINKED", accessToken, member, "/");
+            return new ResponseSocialResolve(ResolveStatus.LINKED, accessToken, member, "/");
         }
 
         public static ResponseSocialResolve newMember() {
-            return new ResponseSocialResolve("NEW_MEMBER", null, null, null);
+            return new ResponseSocialResolve(ResolveStatus.NEW_MEMBER, null, null, null);
         }
     }
 }

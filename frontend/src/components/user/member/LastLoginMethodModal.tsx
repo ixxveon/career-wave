@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { memberSocialAuthApi } from '../../../api/user/member/socialAuthApi';
 import { SOCIAL_PROVIDERS, type SocialProviderId } from '../../../utils/user/member/socialAuth';
 
@@ -10,7 +10,18 @@ interface LastLoginMethodModalProps {
 // 지난번 로그인이 소셜이었을 때, 로그인 페이지 진입 시 같은 방식으로 이어서 로그인하도록 안내한다.
 export function LastLoginMethodModal({ provider, onClose }: LastLoginMethodModalProps) {
   const [isStarting, setIsStarting] = useState(false);
+  const continueButtonRef = useRef<HTMLButtonElement>(null);
   const social = SOCIAL_PROVIDERS.find((item) => item.id === provider);
+
+  // 초기 포커스를 기본 액션(소셜 아이콘 버튼)으로 이동하고, Escape로 닫을 수 있게 한다.
+  useEffect(() => {
+    continueButtonRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   if (!social) return null;
 
@@ -38,6 +49,7 @@ export function LastLoginMethodModal({ provider, onClose }: LastLoginMethodModal
         <div className="cw-social-login cw-last-login-modal__action">
           <button
             type="button"
+            ref={continueButtonRef}
             aria-label={`${social.label}로 로그인`}
             className={`cw-social-login__button cw-social-login__${social.id}`}
             onClick={handleContinue}

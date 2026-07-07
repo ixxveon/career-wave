@@ -46,6 +46,8 @@ function RegisterVerifyPage() {
     () => sessionStorage.getItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY) ?? ''
   );
   const [phase, setPhase] = useState<RegisterPhase>('verify');
+  // OTP 인증은 성공했으나 resolve(연동/분기 판별)가 실패한 상태 — OTP 재발송 없이 재시도 가능하게 한다.
+  const [resolveFailed, setResolveFailed] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [terms, setTerms] = useState(initialTerms);
   const [verification, setVerification] = useState({
@@ -95,6 +97,7 @@ function RegisterVerifyPage() {
       verificationRequestRef.current += 1;
       // 번호를 바꾸면 인증·판별 상태를 처음으로 되돌린다.
       setPhase('verify');
+      setResolveFailed(false);
       setVerification({
         verificationId: '',
         verificationToken: '',
@@ -197,6 +200,7 @@ function RegisterVerifyPage() {
       setFieldErrors((current) => ({ ...current, provider: '유효한 소셜 가입 경로가 아닙니다. 다시 시도해주세요.' }));
       return;
     }
+    setResolveFailed(false);
     try {
       const result = await resolveSocialRegister.mutateAsync({
         provider: providerId,
@@ -205,7 +209,13 @@ function RegisterVerifyPage() {
         phoneVerificationToken,
       });
 
-      if (result.status === 'LINKED' && result.accessToken) {
+      if (result.status === 'LINKED') {
+        // 계약 위반 방어 — LINKED인데 accessToken이 없으면 신규 가입 흐름으로 떨어뜨리지 않고 명시적 오류로 처리
+        if (!result.accessToken) {
+          setResolveFailed(true);
+          setFormMessage('로그인 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+          return;
+        }
         // 기존 회원 연동·로그인 완료 — 바로 홈으로 이동
         sessionStorage.removeItem(SOCIAL_SIGNUP_TOKEN_SESSION_KEY);
         authSession.setTokens({ accessToken: result.accessToken });
@@ -220,6 +230,8 @@ function RegisterVerifyPage() {
       setPhase('profile');
       setSuccessMessage('휴대폰 인증이 완료되었어요. 가입을 위해 추가 정보를 입력해주세요.');
     } catch (error) {
+      // OTP는 이미 인증됨 — 재발송 없이 resolve만 재시도할 수 있도록 표시
+      setResolveFailed(true);
       setFormMessage(getRecoveryErrorMessage(error, '휴대폰 인증 확인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
     }
   };
@@ -268,6 +280,7 @@ function RegisterVerifyPage() {
   const handleChangePhone = () => {
     verificationRequestRef.current += 1;
     setPhase('verify');
+    setResolveFailed(false);
     setVerification({
       verificationId: '',
       verificationToken: '',
@@ -399,6 +412,16 @@ function RegisterVerifyPage() {
                       <CheckCircle2 size={15} />
                       휴대폰 인증 완료
                     </span>
+                  )}
+                  {resolveFailed && verification.verificationToken && phase === 'verify' && (
+                    <button
+                      className="cw-register-sub-button"
+                      type="button"
+                      onClick={() => void runResolve(verification.verificationToken)}
+                      disabled={isResolving}
+                    >
+                      {isResolving ? '확인 중' : '다시 시도'}
+                    </button>
                   )}
                   {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
                 </label>

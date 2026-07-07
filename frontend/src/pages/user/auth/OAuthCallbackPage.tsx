@@ -52,7 +52,7 @@ function OAuthCallbackPage() {
         authSession.setTokens({ accessToken });
         // 마지막 로그인 방식 기록 — 다음 방문 시 소셜 로그인 안내에 사용
         const provider = searchParams.get('provider');
-        if (provider && provider in SOCIAL_PROVIDER_LABELS) {
+        if (provider && Object.prototype.hasOwnProperty.call(SOCIAL_PROVIDER_LABELS, provider)) {
           setLastLoginMethod(provider as SocialProviderId);
         }
         // OAuth 콜백(백엔드) 응답에서 설정된 refresh 쿠키를 프론트가 사용하는 API 경로로
