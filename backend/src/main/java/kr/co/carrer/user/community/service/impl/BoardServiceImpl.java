@@ -28,8 +28,10 @@ public class BoardServiceImpl implements BoardService {
     @Override
     @Transactional(readOnly = true)
     public PaginationResponse<BoardDTO.Response> getBoards(String category, int page, int size) {
+        int pageIndex = Math.max(page - 1, 0);
+
         PageRequest pageRequest = PageRequest.of(
-                page,
+                pageIndex,
                 size,
                 Sort.by(Sort.Direction.DESC, "createdAt"));
 

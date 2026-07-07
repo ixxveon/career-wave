@@ -36,7 +36,7 @@ public class CommunityController implements CommunityControllerDocs {
     @GetMapping("/boards")
     public ResponseEntity<ApiResponse<PaginationResponse<BoardDTO.Response>>> getBoards(
             @RequestParam(required = false) String category,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         return ResponseEntity.ok(ApiResponse.ok(boardService.getBoards(category, page, size)));
