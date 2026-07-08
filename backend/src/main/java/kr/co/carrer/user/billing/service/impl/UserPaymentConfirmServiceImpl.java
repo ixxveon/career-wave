@@ -165,11 +165,11 @@ public class UserPaymentConfirmServiceImpl implements UserPaymentConfirmService 
         }
         if (!payment.getOrderId().equals(result.orderId())) {
             failureTxService.failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
-            throw new CustomException(BillingErrorCode.PAYMENT_AMOUNT_MISMATCH);
+            throw new CustomException(BillingErrorCode.PAYMENT_ORDER_MISMATCH);
         }
         if (!"KRW".equals(result.currency())) {
             failureTxService.failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
-            throw new CustomException(BillingErrorCode.PAYMENT_AMOUNT_MISMATCH);
+            throw new CustomException(BillingErrorCode.PAYMENT_CURRENCY_MISMATCH);
         }
 
         // 5. 원자 결산 트랜잭션 (billingProfile 없이 구독/이용권 발급)

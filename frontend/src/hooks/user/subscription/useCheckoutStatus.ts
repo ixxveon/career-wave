@@ -43,6 +43,13 @@ export function useCheckoutStatus() {
     if (!productCode) return;
     if (isPaymentRequestingRef.current) return;
 
+    // 결제창을 열기 전에 클라이언트 키 주입 여부를 먼저 확인한다.
+    // (미주입 시 loadTossPayments(undefined)가 SDK 내부 오류로 터지므로, 사용자 메시지로 선차단)
+    if (!TOSS_CLIENT_KEY) {
+      setCheckoutError('결제 환경 설정이 올바르지 않습니다. 잠시 후 다시 시도하거나 고객센터에 문의해주세요.');
+      return;
+    }
+
     setWarning('');
     setCheckoutError('');
     isPaymentRequestingRef.current = true;
