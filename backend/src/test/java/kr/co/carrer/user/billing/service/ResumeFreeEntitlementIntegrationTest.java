@@ -146,7 +146,7 @@ class ResumeFreeEntitlementIntegrationTest {
         @DisplayName("PENDING 중간 상태 웹훅 — consume/release 미호출")
         void receiveWebhook_pendingStatus_noEntitlementCall() {
             resumeService.receiveWebhook(documentId, "test-secret",
-                    new ResumeDTO.RequestWebhook(documentId, "PENDING", null, null, null, null, null, null, null, null));
+                    new ResumeDTO.RequestWebhook(documentId, "PENDING", null, null, null, null, null, null, null, null, null));
 
             verify(entitlementService, never()).consume(any(), any());
             verify(entitlementService, never()).release(any(), any());
@@ -156,11 +156,11 @@ class ResumeFreeEntitlementIntegrationTest {
     // ─── Helpers ───────────────────────────────────────────────────────────────
 
     private ResumeDTO.RequestWebhook completedDto() {
-        return new ResumeDTO.RequestWebhook(documentId, "COMPLETED", 85, 90, 75, 80, 82, "총평", "[]", null);
+        return new ResumeDTO.RequestWebhook(documentId, "COMPLETED", 85, 90, 75, 80, 82, "총평", "[]", null, null);
     }
 
     private ResumeDTO.RequestWebhook failedDto() {
-        return new ResumeDTO.RequestWebhook(documentId, "FAILED", null, null, null, null, null, null, null, "오류");
+        return new ResumeDTO.RequestWebhook(documentId, "FAILED", null, null, null, null, null, null, null, null, "오류");
     }
 
     private void setDocumentId(Document document, UUID id) {

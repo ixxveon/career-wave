@@ -369,6 +369,7 @@ CREATE TABLE document_feedbacks (
     score_total          INTEGER     NULL,
     overall_review       TEXT        NULL,
     feedback_text        TEXT        NOT NULL,
+    recommended_keywords TEXT        NULL,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_document_feedbacks          PRIMARY KEY (document_feedback_id),
@@ -385,6 +386,7 @@ COMMENT ON COLUMN document_feedbacks.score_logical        IS '논리력 점수 (
 COMMENT ON COLUMN document_feedbacks.score_total          IS '종합 점수 (0~100)';
 COMMENT ON COLUMN document_feedbacks.overall_review       IS 'AI 종합 총평';
 COMMENT ON COLUMN document_feedbacks.feedback_text        IS 'AI 상세 첨삭 결과 (JSON 문자열)';
+COMMENT ON COLUMN document_feedbacks.recommended_keywords IS '직무별 핵심 추천 키워드 (JSON 배열 문자열)';
 COMMENT ON COLUMN document_feedbacks.created_at           IS '생성 일시';
 
 -- ================================================

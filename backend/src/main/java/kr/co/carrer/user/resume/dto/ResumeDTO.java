@@ -83,6 +83,8 @@ public class ResumeDTO {
             String overallReview,
             @Schema(description = "항목별 첨삭 결과 (분석 미완료 시 null)")
             List<FeedbackDetail> feedbackDetails,
+            @Schema(description = "추천 키워드 목록 (분석 미완료 시 null)", example = "[\"Spring Boot\", \"Redis\"]")
+            List<String> recommendedKeywords,
             @Schema(description = "분석 실패 메시지 (정상 완료 시 null)", example = "null")
             String errorMessage,
             @Schema(description = "생성 일시", example = "2026-06-10T12:00:00+09:00")
@@ -175,6 +177,8 @@ public class ResumeDTO {
             String overallReview,
             @Schema(description = "항목별 첨삭 JSON 문자열 (FAILED 시 null)")
             String feedbackText,
+            @Schema(description = "추천 키워드 목록 (FAILED 시 null)", example = "[\"Spring Boot\", \"Redis\"]")
+            List<String> recommendedKeywords,
             @Schema(description = "분석 실패 메시지 (COMPLETED 시 null)", example = "AI 분석 중 오류 발생")
             String errorMessage
     ) {}

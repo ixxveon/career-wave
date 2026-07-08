@@ -146,6 +146,7 @@ export interface AnalysisResultResponse {
   scores: ScoreBreakdown | null;
   overallReview: string | null;
   feedbackDetails: FeedbackDetail[];
+  recommendedKeywords: string[] | null;
   errorMessage: string | null;
   createdAt: string;
 }

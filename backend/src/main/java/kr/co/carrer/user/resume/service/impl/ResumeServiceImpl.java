@@ -40,8 +40,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -168,7 +170,7 @@ public class ResumeServiceImpl implements ResumeService {
                     document.getDocumentId(),
                     document.getStatus().name(),
                     document.getFileType().name(),
-                    null, null, null,
+                    null, null, null, null,
                     document.getErrorMessage(),
                     document.getCreatedAt()
             );
@@ -186,6 +188,7 @@ public class ResumeServiceImpl implements ResumeService {
         List<ResumeDTO.ResponseFeedback.FeedbackDetail> feedbackDetails = parseFeedbackDetails(
                 feedback.getFeedbackText(), documentId
         );
+        List<String> recommendedKeywords = parseRecommendedKeywords(feedback.getRecommendedKeywords());
 
         return new ResumeDTO.ResponseFeedback(
                 document.getDocumentId(),
@@ -194,6 +197,7 @@ public class ResumeServiceImpl implements ResumeService {
                 scores,
                 feedback.getOverallReview(),
                 feedbackDetails,
+                recommendedKeywords,
                 document.getErrorMessage(),
                 feedback.getCreatedAt()
         );
@@ -235,6 +239,14 @@ public class ResumeServiceImpl implements ResumeService {
         }
 
         if ("COMPLETED".equals(dto.status())) {
+            String keywordsJson = null;
+            if (dto.recommendedKeywords() != null && !dto.recommendedKeywords().isEmpty()) {
+                try {
+                    keywordsJson = objectMapper.writeValueAsString(dto.recommendedKeywords());
+                } catch (JsonProcessingException e) {
+                    log.warn("[키워드 직렬화 실패] documentId: {}, 원인: {}", documentId, e.getMessage());
+                }
+            }
             DocumentFeedback feedback = DocumentFeedback.of(
                     documentId,
                     dto.scoreJobFitness(),
@@ -243,7 +255,8 @@ public class ResumeServiceImpl implements ResumeService {
                     dto.scoreLogical(),
                     dto.scoreTotal(),
                     dto.overallReview(),
-                    dto.feedbackText()
+                    dto.feedbackText(),
+                    keywordsJson
             );
             documentFeedbackRepository.save(feedback);
             document.updateStatus(DocumentStatus.COMPLETED);
@@ -285,6 +298,20 @@ public class ResumeServiceImpl implements ResumeService {
                         ? item.monthlyLimit()
                         : item.freeRemaining() + usedCount)
                 .orElse(0);
+    }
+
+    private List<String> parseRecommendedKeywords(String keywordsJson) {
+        if (keywordsJson == null) {
+            return List.of();
+        }
+        try {
+            return Arrays.stream(objectMapper.readValue(keywordsJson, String[].class))
+                    .filter(Objects::nonNull)
+                    .toList();
+        } catch (JsonProcessingException e) {
+            log.warn("[키워드 파싱 실패] 원인: {}", e.getMessage());
+            return List.of();
+        }
     }
 
     private List<ResumeDTO.ResponseFeedback.FeedbackDetail> parseFeedbackDetails(String feedbackText, UUID documentId) {

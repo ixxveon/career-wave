@@ -212,6 +212,7 @@ def _sanitize_response(obj: object) -> object:
 async def _send_completed(document_id: str, result: dict) -> None:
     feedback_details = result["feedbackDetails"]
     feedback_text = json.dumps(feedback_details, ensure_ascii=False)
+    recommended_keywords = result.get("recommendedKeywords") or []
 
     await _send_final_webhook_safe(
         document_id,
@@ -225,6 +226,7 @@ async def _send_completed(document_id: str, result: dict) -> None:
             "scoreTotal": result["scoreTotal"],
             "overallReview": result["overallReview"],
             "feedbackText": feedback_text,
+            "recommendedKeywords": recommended_keywords,
             "errorMessage": None,
         },
     )

@@ -48,6 +48,7 @@ export interface DocumentResult {
   documentId: string | number;
   evaluation: Evaluation;
   feedbackDetails: FeedbackDetail[];
+  recommendedKeywords?: string[];
 }
 
 export interface CoverLetterItem {
