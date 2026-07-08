@@ -20,8 +20,7 @@ export default function AdminLayout() {
     try {
       await adminAuthApi.logout();
     } finally {
-      adminSession.clearToken();
-      adminSession.clearRole();
+      adminSession.clearAll();
       navigate(ADMIN_ROUTE_PATHS.login, { replace: true });
     }
   };

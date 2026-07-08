@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -44,24 +45,32 @@ public class AdminLoginServiceImpl implements AdminLoginService {
 
     @Transactional
     public AdminLoginDto.Response login(AdminLoginDto.Request request, HttpServletResponse response, String clientIp) {
-        Admin admin = adminRepository.findByLoginId(request.getLoginId())
-                .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS));
+        // login_id/email 각각 독립 unique 제약만 있어(교차 중복은 생성 시 별도 검증으로 방지),
+        // 이론상 2건이 매칭되는 모호한 경우가 있을 수 있다 — 그 경우도 동일하게 로그인 실패로 처리한다.
+        List<Admin> candidates = adminRepository.findByLoginIdOrEmail(request.getLoginId(), request.getLoginId());
+        if (candidates.size() != 1) {
+            throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
+        Admin admin = candidates.get(0);
 
         if (admin.getStatus() == AdminStatus.LOCKED) {
             throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), admin.getPasswordHash())) {
-            long count = loginAttemptStore.increment(AccountType.ADMIN, request.getLoginId());
+            // 실패 카운터 key는 사용자가 입력한 값(loginId 또는 email)이 아니라 계정의 canonical
+            // loginId로 고정한다. 입력값 기준으로 두면 같은 계정을 아이디/이메일 번갈아 입력해
+            // 잠금 기준(maxAttempts)을 사실상 우회할 수 있기 때문이다.
+            long count = loginAttemptStore.increment(AccountType.ADMIN, admin.getLoginId());
             if (count >= loginAttemptStore.getMaxAttempts()) {
                 admin.lockAccount();
-                loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
+                loginAttemptStore.clear(AccountType.ADMIN, admin.getLoginId());
                 throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
             }
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
-        loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
+        loginAttemptStore.clear(AccountType.ADMIN, admin.getLoginId());
         admin.updateLastLoginAt(Instant.now());
         admin.updateLastLoginIp(clientIp);
 

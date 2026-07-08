@@ -13,8 +13,7 @@ export function applyAdminAuthHeader(config: InternalAxiosRequestConfig): Intern
 
 export function handleAdminAuthError(error: { response?: { status?: number } }): Promise<never> | Promise<void> {
   if (error.response?.status === 401) {
-    adminSession.clearToken();
-    adminSession.clearRole();
+    adminSession.clearAll();
     if (typeof window !== 'undefined' && window.location.pathname !== ADMIN_ROUTE_PATHS.login) {
       window.location.assign(ADMIN_ROUTE_PATHS.login);
       return new Promise(() => {});

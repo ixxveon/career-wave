@@ -98,6 +98,17 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             throw new CustomException(AdminManagementErrorCode.ADMIN_EMAIL_ALREADY_EXISTS);
         }
 
+        // login_id/email 각각 독립 unique 제약만 있어 같은 컬럼끼리의 중복만으로는
+        // 교차 중복(A의 email이 B의 login_id와 동일한 문자열)을 막지 못한다.
+        // 로그인 시 "아이디 또는 이메일" 조회가 모호해지지 않도록 생성 시점에 교차 중복도 차단한다.
+        if (adminRepository.existsByEmail(normalizedLoginId)) {
+            throw new CustomException(AdminManagementErrorCode.ADMIN_LOGIN_ID_ALREADY_EXISTS);
+        }
+
+        if (adminRepository.existsByLoginId(normalizedEmail)) {
+            throw new CustomException(AdminManagementErrorCode.ADMIN_EMAIL_ALREADY_EXISTS);
+        }
+
         Admin admin = Admin.create(
                 normalizedLoginId,
                 normalizedEmail,

@@ -5,8 +5,7 @@ import { type InternalAxiosRequestConfig } from 'axios';
 vi.mock('../api/admin/adminSession', () => ({
   adminSession: {
     getToken: vi.fn(),
-    clearToken: vi.fn(),
-    clearRole: vi.fn(),
+    clearAll: vi.fn(),
   },
 }));
 
@@ -48,8 +47,7 @@ describe('handleAdminAuthError', () => {
 
     handleAdminAuthError({ response: { status: 401 } });
 
-    expect(adminSession.clearToken).toHaveBeenCalled();
-    expect(adminSession.clearRole).toHaveBeenCalled();
+    expect(adminSession.clearAll).toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 
@@ -74,6 +72,6 @@ describe('handleAdminAuthError', () => {
 
   it('401이 아닌 에러는 세션을 정리하지 않고 에러를 전파한다', async () => {
     await expect(handleAdminAuthError({ response: { status: 403 } })).rejects.toBeDefined();
-    expect(adminSession.clearToken).not.toHaveBeenCalled();
+    expect(adminSession.clearAll).not.toHaveBeenCalled();
   });
 });
