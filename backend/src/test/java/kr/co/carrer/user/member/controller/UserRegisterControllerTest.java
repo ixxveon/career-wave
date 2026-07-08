@@ -73,7 +73,7 @@ class UserRegisterControllerTest {
     // ─── 개인회원 가입 ────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("개인회원 가입 성공 시 HTTP 201 + roleType=USER를 반환한다")
+    @DisplayName("개인회원 가입 성공 시 HTTP 201 + statusCode=201 + roleType=USER를 반환한다")
     void registerUser_성공_201() throws Exception {
         UUID memberId = UUID.randomUUID();
         when(userRegisterService.registerUser(any()))
@@ -91,7 +91,7 @@ class UserRegisterControllerTest {
                         .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.status").doesNotExist())
+                .andExpect(jsonPath("$.status").value(201))
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.roleType").value("USER"));
     }
@@ -120,7 +120,7 @@ class UserRegisterControllerTest {
     // ─── 기업회원 가입 ────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("기업회원 가입 성공 시 HTTP 201 + companyApprovalStatus=PENDING_REVIEW를 반환한다")
+    @DisplayName("기업회원 가입 성공 시 HTTP 201 + statusCode=201 + companyApprovalStatus=PENDING_REVIEW를 반환한다")
     void registerCompany_성공_201() throws Exception {
         UUID memberId = UUID.randomUUID();
         UUID companyId = UUID.randomUUID();
@@ -145,7 +145,7 @@ class UserRegisterControllerTest {
                         .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.status").doesNotExist())
+                .andExpect(jsonPath("$.status").value(201))
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.companyApprovalStatus").value("PENDING_REVIEW"));
     }
