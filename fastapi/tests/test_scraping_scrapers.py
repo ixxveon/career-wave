@@ -1,6 +1,138 @@
 import httpx
 
-from admin.scraping.adapter import SaraminScraper, WantedScraper
+from admin.scraping.adapter import GroupByScraper, SaraminScraper, WantedScraper
+
+
+def test_groupby_scraper_maps_sitemap_and_job_posting_html_to_raw_job_notices():
+    sitemap_index_xml = """
+    <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <sitemap>
+        <loc>https://groupby.kr/server-sitemap.xml</loc>
+      </sitemap>
+    </sitemapindex>
+    """
+    urlset_xml = """
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url><loc>https://groupby.kr/careers/backend-engineer</loc></url>
+      <url><loc>https://groupby.kr/blog/hello</loc></url>
+    </urlset>
+    """
+    job_html = """
+    <html>
+      <head>
+        <meta name="keywords" content="Python, FastAPI, Backend" />
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "JobPosting",
+          "title": "Backend Engineer",
+          "description": "<p>Build reliable admin scraping pipelines.</p>",
+          "validThrough": "2026-12-31",
+          "employmentType": "FULL_TIME",
+          "occupationalCategory": "Backend, Platform",
+          "skills": "Python, FastAPI",
+          "jobLocation": {
+            "@type": "Place",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Seoul",
+              "addressRegion": "Gangnam"
+            }
+          },
+          "hiringOrganization": {
+            "@type": "Organization",
+            "name": "Career Wave"
+          }
+        }
+        </script>
+      </head>
+      <body>
+        <main>
+          <h1>Backend Engineer</h1>
+        </main>
+      </body>
+    </html>
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/sitemap.xml":
+            return httpx.Response(200, text=sitemap_index_xml)
+        if request.url.path == "/server-sitemap.xml":
+            return httpx.Response(200, text=urlset_xml)
+        if request.url.path == "/careers/backend-engineer":
+            return httpx.Response(200, text=job_html)
+        return httpx.Response(404)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://groupby.kr",
+    )
+    scraper = GroupByScraper(client=client, request_delay_seconds=0)
+
+    notices = scraper.scrape()
+
+    assert len(notices) == 1
+    assert notices[0].original_url == "https://groupby.kr/careers/backend-engineer"
+    assert notices[0].title == "Backend Engineer"
+    assert notices[0].company_name == "Career Wave"
+    assert notices[0].description == "Build reliable admin scraping pipelines."
+    assert notices[0].skill_tags == ["Python", "FastAPI"]
+    assert notices[0].job_type == "FULL_TIME"
+    assert notices[0].job_category == ["Backend", "Platform"]
+    assert notices[0].location == "Seoul Gangnam"
+    assert notices[0].deadline == "2026-12-31"
+
+
+def test_groupby_scraper_falls_back_to_meta_and_html_content_when_schema_missing():
+    urlset_xml = """
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url><loc>https://groupby.kr/jobs/frontend-engineer</loc></url>
+    </urlset>
+    """
+    html = """
+    <html>
+      <head>
+        <meta property="og:title" content="Frontend Engineer" />
+        <meta name="description" content="Build web interfaces." />
+      </head>
+      <body>
+        <div>Location: Seoul</div>
+        <div>Deadline: 2026-11-30</div>
+        <article>Build web interfaces.</article>
+      </body>
+    </html>
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path in ("/sitemap.xml", "/server-sitemap.xml"):
+            return httpx.Response(200, text=urlset_xml)
+        if request.url.path == "/jobs/frontend-engineer":
+            return httpx.Response(200, text=html)
+        return httpx.Response(404)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://groupby.kr",
+    )
+    scraper = GroupByScraper(client=client, request_delay_seconds=0)
+
+    notices = scraper.scrape()
+
+    assert len(notices) == 1
+    assert notices[0].title == "Frontend Engineer"
+    assert notices[0].description == "Build web interfaces."
+    assert notices[0].location == "Seoul"
+    assert notices[0].deadline == "2026-11-30"
+
+
+def test_groupby_scraper_test_connection_returns_false_on_request_error():
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectTimeout("timeout", request=request)
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    scraper = GroupByScraper(client=client)
+
+    assert scraper.test_connection() is False
 
 
 def test_wanted_scraper_maps_api_jobs_to_raw_job_notices():

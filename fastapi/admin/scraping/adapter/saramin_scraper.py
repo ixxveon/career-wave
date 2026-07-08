@@ -61,7 +61,7 @@ class SaraminScraper(ScraperAdapter):
                 return []
             inner_html = payload.get("innerHTML") if isinstance(payload, dict) else None
 
-            soup = BeautifulSoup(inner_html or "", "lxml")
+            soup = BeautifulSoup(inner_html or "", "html.parser")
             notices: list[RawJobNotice] = []
             for item in soup.select("div.item_recruit, div.item_recruit_list, li.item_recruit"):
                 notice = self._to_raw_notice(item)
@@ -173,7 +173,7 @@ class SaraminScraper(ScraperAdapter):
         except httpx.HTTPError:
             return None
 
-        soup = BeautifulSoup(response.text, "lxml")
+        soup = BeautifulSoup(response.text, "html.parser")
         for selector in (
             ".user_content",
             ".cont_recruit",
@@ -196,7 +196,7 @@ class SaraminScraper(ScraperAdapter):
         except httpx.HTTPError:
             return None
 
-        soup = BeautifulSoup(response.text, "lxml")
+        soup = BeautifulSoup(response.text, "html.parser")
         for selector in (
             ".wrap_jv_cont",
             ".jv_cont",
