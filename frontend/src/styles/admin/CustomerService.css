@@ -283,6 +283,26 @@
 .csNoticeTable th:nth-child(6),
 .csNoticeTable td:nth-child(6) { width: 14%; white-space: nowrap; }   /* 관리 */
 
+/* ── FAQ 테이블 컬럼 너비 ───────────────────────────────────── */
+
+.csFaqTable {
+  table-layout: fixed;
+  width: 100%;
+  min-width: 0;
+}
+
+.csFaqTable th:nth-child(1),
+.csFaqTable td:nth-child(1) { width: 16%; }   /* 카테고리 */
+
+.csFaqTable th:nth-child(2),
+.csFaqTable td:nth-child(2) { width: 52%; }   /* 질문 */
+
+.csFaqTable th:nth-child(3),
+.csFaqTable td:nth-child(3) { width: 16%; }   /* 등록일 */
+
+.csFaqTable th:nth-child(4),
+.csFaqTable td:nth-child(4) { width: 16%; white-space: nowrap; }   /* 관리 */
+
 /* ── 반응형 ──────────────────────────────────────────────────── */
 
 @media (max-width: 640px) {

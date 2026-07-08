@@ -173,7 +173,7 @@ export default function FaqTab({ onMutate }: FaqTabProps) {
         </div>
         {faqError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{faqError}</p>}
         <div className="tableScroll">
-          <table className="memberTable">
+          <table className="memberTable csFaqTable">
             <thead><tr><th>카테고리</th><th>질문</th><th>등록일</th><th>관리</th></tr></thead>
             <tbody>
               {faqLoading ? (
