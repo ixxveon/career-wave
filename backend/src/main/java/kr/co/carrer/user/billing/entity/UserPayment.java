@@ -227,15 +227,4 @@ public class UserPayment {
     public void linkSubscription(UUID subscriptionId) {
         this.subscriptionId = subscriptionId;
     }
-
-    // 재사용되는 READY 주문에 새 orderId·만료시각을 부여한다.
-    // 단건결제(Toss requestPayment)는 orderId 를 1회만 사용할 수 있어, 이전 시도에서 Toss 가 소비한 orderId 를
-    // 그대로 재사용하면 DUPLICATED_ORDER_ID 로 막힌다. 재결제 진입마다 새 orderId 를 발급해 이를 방지한다.
-    public void renewOrderForRetry(String newOrderId, ZonedDateTime newExpiresAt) {
-        if (this.paymentStatus != UserPaymentStatus.READY) {
-            throw new CustomException(BillingErrorCode.BILLING_ORDER_NOT_READY);
-        }
-        this.orderId = newOrderId;
-        this.expiresAt = newExpiresAt;
-    }
 }
