@@ -34,6 +34,7 @@ export default function SubscriptionTab({ showToast }: SubscriptionTabProps) {
   const appliedSubFilters = useRef<SubscriptionListParams>({});
 
   const [subCounts, setSubCounts] = useState<SubscriptionCounts | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     paymentApi.getSubscriptionCounts().then(res => {
@@ -71,6 +72,52 @@ export default function SubscriptionTab({ showToast }: SubscriptionTabProps) {
   const applySubSearch = () => {
     appliedSubFilters.current = { ...(subStatusFilter && { status: subStatusFilter as SubStatus }) };
     fetchSubscriptions(1);
+  };
+
+  const escapeCsvCell = (value: string | number) => {
+    const s = String(value);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const f = appliedSubFilters.current;
+      const all: Subscription[] = [];
+      let page = 1;
+      let totalPages = 1;
+      do {
+        const res = await paymentApi.getSubscriptions({ ...f, page, size: 100 });
+        if (!res.data.success) throw new Error(res.data.message);
+        all.push(...res.data.data.items);
+        totalPages = res.data.data.totalPages;
+        page += 1;
+      } while (page <= totalPages);
+
+      const header = ['구독 ID', '회원명', '구독 플랜', '시작일', '다음 갱신일', '상태'];
+      const rows = all.map((s) => [
+        s.subscriptionId,
+        s.memberName,
+        s.planName,
+        new Date(s.startedAt).toLocaleDateString('ko-KR'),
+        new Date(s.currentPeriodEnd).toLocaleDateString('ko-KR'),
+        SUB_STATUS_LABEL[s.subscriptionStatus],
+      ]);
+      const csv = [header, ...rows].map((row) => row.map(escapeCsvCell).join(',')).join('\r\n');
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `구독현황_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`구독 현황 ${all.length}건을 내보냈습니다.`);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.data?.message) showToast(err.response.data.message, 'error');
+      else showToast('내보내기에 실패했습니다.', 'error');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const renderPagination = (page: number, totalPages: number, loading: boolean, onPage: (p: number) => void) => (
@@ -120,7 +167,7 @@ export default function SubscriptionTab({ showToast }: SubscriptionTabProps) {
       <section className="admin-card memberTableCard">
         <div className="memberTableHeader">
           <h3>구독 현황 <span className="payTotalCount">{subTotalItems}건</span></h3>
-          <button>내보내기</button>
+          <button onClick={handleExport} disabled={exporting}>{exporting ? '내보내는 중...' : '내보내기'}</button>
         </div>
         {subError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{subError}</p>}
         <div className="tableScroll">
