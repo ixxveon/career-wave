@@ -156,7 +156,7 @@ describe('memberSocialAuthApi.callback — invalid state', () => {
       new Response(
         JSON.stringify({
           success: false,
-          statusCode: 400,
+          status: 400,
           message: 'OAuth state가 유효하지 않습니다.',
           code: 'OAUTH_STATE_INVALID',
         }),
