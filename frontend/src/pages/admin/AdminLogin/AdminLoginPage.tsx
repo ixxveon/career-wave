@@ -19,10 +19,7 @@ function syncAdminToken(token: string, adminInfo?: { id?: string; name?: string;
 }
 
 function clearAdminToken() {
-  adminSession.clearToken();
-  adminSession.clearRole();
-  adminSession.clearId();
-  adminSession.clearName();
+  adminSession.clearAll();
 }
 
 export default function AdminLoginPage() {

@@ -59,4 +59,11 @@ export const adminSession = {
   clearName() {
     sessionStorage.removeItem(ADMIN_NAME_KEY);
   },
+
+  clearAll() {
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    sessionStorage.removeItem(ADMIN_ROLE_KEY);
+    sessionStorage.removeItem(ADMIN_ID_KEY);
+    sessionStorage.removeItem(ADMIN_NAME_KEY);
+  },
 };

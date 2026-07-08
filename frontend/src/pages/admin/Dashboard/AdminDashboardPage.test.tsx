@@ -192,7 +192,7 @@ describe('AdminDashboardPage contract rendering', () => {
     expect(screen.getByText('AI 인터뷰 세션')).toBeTruthy();
     expect(screen.getByText('29,000원')).toBeTruthy();
     expect(screen.getByText('Super Admin')).toBeTruthy();
-    expect(screen.getByText('SU')).toBeTruthy();
+    expect(screen.getByText('SA')).toBeTruthy();
     expect(screen.getByText('권한 변경 경고')).toBeTruthy();
     expect(screen.getByText('원티드 스크래핑 실패')).toBeTruthy();
     expect(screen.getByText('카드')).toBeTruthy();
@@ -208,7 +208,7 @@ describe('AdminDashboardPage contract rendering', () => {
     renderPage();
 
     expect(await screen.findByText('CS Manager')).toBeTruthy();
-    expect(screen.getByText('CS')).toBeTruthy();
+    expect(document.querySelector('.avatar')?.textContent).toBe('CM');
   });
 
   it('navigates through valid alert, service card, and recent activity target paths', async () => {
