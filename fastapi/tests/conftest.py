@@ -1,4 +1,5 @@
 import os
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from jose import jwt
@@ -9,6 +10,7 @@ os.environ.setdefault("JWT_SECRET", "test-jwt-secret")
 os.environ.setdefault("WEBHOOK_SECRET", "test-webhook-secret")
 os.environ.setdefault("SPRING_BASE_URL", "http://localhost:8080")
 os.environ.setdefault("OPENAI_API_KEY", "sk-test")
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 
 # Settings 캐시 무효화 후 테스트용 값으로 재로드
 from core.config import get_settings  # noqa: E402
@@ -32,6 +34,24 @@ def make_token(secret: str = TEST_JWT_SECRET, expired: bool = False) -> str:
     )
 
 
+def make_meta(**kwargs) -> dict:
+    """테스트용 세션 메타 딕셔너리 생성."""
+    defaults = {
+        "member_id": TEST_MEMBER_ID,
+        "interview_type": None,
+        "focus_type": None,
+        "session_type": None,
+        "target_company": None,
+        "recent_answer_quality": None,
+        "answer_history": [],
+        "rag_context": None,
+        "used_fallback_questions": set(),
+        "voice_quality_by_order": {},
+    }
+    defaults.update(kwargs)
+    return defaults
+
+
 @pytest.fixture()
 def client() -> TestClient:
     from main import app
@@ -47,3 +67,10 @@ def valid_token() -> str:
 @pytest.fixture()
 def expired_token() -> str:
     return make_token(expired=True)
+
+
+@pytest.fixture()
+def mock_redis():
+    """Redis 클라이언트를 AsyncMock으로 대체한다."""
+    with patch("core.redis.get_redis", return_value=AsyncMock()) as mock:
+        yield mock
