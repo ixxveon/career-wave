@@ -210,34 +210,35 @@ async def interview_ws(
     slog.info("WS connected: lastReceivedSeq=%s", lastReceivedSequenceNumber)
 
     # ── WS 연결 전 도착한 LLM trigger flush ───────────────────────────────────
-    if not is_reconnect and not existing_meta:
-        pending_llm = await session_store.pop_pending_llm(redis, session_id)
-        if pending_llm:
-            # pending에 담긴 컨텍스트를 메타에 반영
-            patch: dict[str, Any] = {}
-            for field in ("sessionType", "interviewType", "focusType", "targetCompany"):
-                if pending_llm.get(field):
-                    meta_key = {
-                        "sessionType": "session_type",
-                        "interviewType": "interview_type",
-                        "focusType": "focus_type",
-                        "targetCompany": "target_company",
-                    }[field]
-                    patch[meta_key] = pending_llm[field]
-            if patch:
-                merged = {**(existing_meta or {}), **patch}
-                await session_store.save_session_meta(redis, session_id, merged)
+    # 재연결 윈도우 중 WS가 끊긴 상태로 trigger가 도착한 경우에도 flush가 필요하므로
+    # is_reconnect / existing_meta 여부와 무관하게 항상 pending을 확인한다.
+    pending_llm = await session_store.pop_pending_llm(redis, session_id)
+    if pending_llm:
+        # pending에 담긴 컨텍스트를 메타에 반영
+        patch: dict[str, Any] = {}
+        for field in ("sessionType", "interviewType", "focusType", "targetCompany"):
+            if pending_llm.get(field):
+                meta_key = {
+                    "sessionType": "session_type",
+                    "interviewType": "interview_type",
+                    "focusType": "focus_type",
+                    "targetCompany": "target_company",
+                }[field]
+                patch[meta_key] = pending_llm[field]
+        if patch:
+            merged = {**(existing_meta or {}), **patch}
+            await session_store.save_session_meta(redis, session_id, merged)
 
-            from user.interview.pipeline import llm_pipeline
-            asyncio.create_task(
-                llm_pipeline.generate_and_deliver_question(
-                    session_id=session_id,
-                    question_order=pending_llm["questionOrder"],
-                    answer_text=pending_llm["answerText"],
-                    question_text=pending_llm.get("questionText"),
-                )
+        from user.interview.pipeline import llm_pipeline
+        asyncio.create_task(
+            llm_pipeline.generate_and_deliver_question(
+                session_id=session_id,
+                question_order=pending_llm["questionOrder"],
+                answer_text=pending_llm["answerText"],
+                question_text=pending_llm.get("questionText"),
             )
-            slog.info("flushed pending LLM trigger: questionOrder=%s", pending_llm["questionOrder"])
+        )
+        slog.info("flushed pending LLM trigger: questionOrder=%s", pending_llm["questionOrder"])
 
     # ── 재연결 시 미전달 메시지 재전송 ────────────────────────────────────────
     if lastReceivedSequenceNumber is not None:
