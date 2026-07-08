@@ -31,7 +31,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {}
 }
@@ -42,14 +41,13 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": false,
-  "statusCode": 400,
   "message": "에러 설명 메시지"
 }
 ```
 
-### 에러 상황별 statusCode
+### 에러 상황별 status
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `400` | 입력값 검증 실패 (유형 오류, 필수 필드 누락 등) |
 | `401` | 인증 토큰 없음 또는 만료 |
@@ -88,7 +86,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "sessionId": "uuid-v4",
@@ -106,7 +103,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `400` | 유효하지 않은 `sessionType` 값 |
 | `401` | 토큰 없음 또는 만료 |
@@ -125,7 +122,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "sessionId": "uuid-v4",
@@ -141,7 +137,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `401` | 토큰 없음 또는 만료 |
 
@@ -170,7 +166,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "messageId": 1,
@@ -184,7 +179,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `400` | `messageContent` 누락 |
 | `403` | 본인 소유가 아닌 세션 |
@@ -215,7 +210,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "chunkIndex": 0,
@@ -226,7 +220,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `400` | 지원하지 않는 오디오 포맷 |
 | `403` | 본인 소유가 아닌 세션 |
@@ -245,7 +239,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "sessionId": "uuid-v4",
@@ -260,7 +253,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `400` | 이미 종료된 세션 |
 | `403` | 본인 소유가 아닌 세션 |
@@ -282,7 +275,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "sessionId": "uuid-v4",
@@ -320,7 +312,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `403` | 존재하지 않는 `sessionId` 또는 본인 소유가 아닌 세션 (IDOR 방어: 두 경우 모두 동일 응답) |
 | `409` | 리포트 아직 생성 중 (`INTERVIEW_REPORT_NOT_READY`) — 응답 `code: "INTERVIEW_REPORT_NOT_READY"`, `data.estimatedWaitSeconds` 참고 |
@@ -331,7 +323,7 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": false,
-  "statusCode": 409,
+  "status": 409,
   "message": "리포트가 아직 생성 중입니다.",
   "code": "INTERVIEW_REPORT_NOT_READY",
   "data": {
@@ -362,7 +354,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "items": [
@@ -408,7 +399,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `401` | 토큰 없음 또는 만료 |
 

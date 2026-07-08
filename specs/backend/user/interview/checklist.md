@@ -145,7 +145,7 @@ Phase 10 "먼저 작성할 3가지 ★"를 구현 코드보다 먼저 작성한�
 
 > ⚠️ **미구현**: `getReport` 409 응답 및 WebSocket 메시지 스펙은 FE 연동 전 구현 예정 (Phase 7-1).
 
-- [ ] `getReport` 409 응답에 `data.status = "ANALYZING"`, `data.estimatedWaitSeconds` 필드가 포함되어 있다. (`code: "INTERVIEW_REPORT_NOT_READY"`, `data: { status: "ANALYZING", estimatedWaitSeconds: 15 }` 포함, `ApiResponse.fail(statusCode, message, code, data)` 오버로드 사용)
+- [ ] `getReport` 409 응답에 `data.status = "ANALYZING"`, `data.estimatedWaitSeconds` 필드가 포함되어 있다. (`code: "INTERVIEW_REPORT_NOT_READY"`, `data: { status: "ANALYZING", estimatedWaitSeconds: 15 }` 포함, `ApiResponse.fail(status, message, code, data)` 오버로드 사용)
 - [ ] WebSocket `REPORT_READY` 메시지에 `data.reportUrl` 필드가 포함되어 있다.
 - [ ] WebSocket `ERROR` 메시지에 `errorCode` 필드가 포함되어 있다 (예: `INTERVIEW_AI_PIPELINE_ERROR`).
 - [ ] 모든 WebSocket 메시지에 `data` / `errorCode` 필드가 일관되게 포함되어 있다 (없으면 `null`).
