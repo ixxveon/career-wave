@@ -28,7 +28,7 @@ import java.util.List;
 public class DashboardServiceImpl implements DashboardService {
 
     private static final int ALERT_LIMIT = 5;
-    private static final int RECENT_ACTIVITY_LIMIT = 5;
+    private static final int RECENT_ACTIVITY_LIMIT = 8;
     private static final String ADMIN_ROUTE_PREFIX = "/cw-manage-2026";
     private static final String ADMIN_MANAGEMENT_PATH = ADMIN_ROUTE_PREFIX + "/admins";
     private static final String AI_METRICS_PATH = ADMIN_ROUTE_PREFIX + "/ai";
