@@ -66,7 +66,7 @@ class DashboardControllerTest {
         mockMvc.perform(get("/api/v1/admin/dashboard/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.data.baseDateTime").value("2026-06-22T09:00:00Z"))
                 .andExpect(jsonPath("$.data.range").value("TODAY"))
                 .andExpect(jsonPath("$.data.kpis").isArray())
@@ -115,7 +115,7 @@ class DashboardControllerTest {
         mockMvc.perform(get("/api/v1/admin/dashboard/summary").param("range", "YESTERDAY"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400));
+                .andExpect(jsonPath("$.status").value(400));
 
         verify(dashboardService, never()).getSummary(any(DashboardDTO.RequestSummary.class));
     }

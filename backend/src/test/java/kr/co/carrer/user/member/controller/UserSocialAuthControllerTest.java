@@ -48,7 +48,7 @@ class UserSocialAuthControllerTest {
         mockMvc.perform(get("/api/v1/user/members/oauth/kakao/authorize"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.provider").value("kakao"))
                 .andExpect(jsonPath("$.data.authorizationUrl").isNotEmpty())
@@ -122,7 +122,7 @@ class UserSocialAuthControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.roleType").value("USER"))
                 .andExpect(jsonPath("$.data.nextPath").value("/"));
@@ -153,7 +153,7 @@ class UserSocialAuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.data.status").value("LINKED"))
                 .andExpect(jsonPath("$.data.accessToken").value("mock-access-token"))
                 .andExpect(jsonPath("$.data.nextPath").value("/"));
@@ -174,7 +174,7 @@ class UserSocialAuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.data.status").value("NEW_MEMBER"))
                 .andExpect(jsonPath("$.data.accessToken").doesNotExist());
     }

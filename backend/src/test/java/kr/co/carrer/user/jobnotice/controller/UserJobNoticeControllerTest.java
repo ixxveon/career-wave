@@ -92,7 +92,7 @@ class UserJobNoticeControllerTest {
         mockMvc.perform(get("/api/v1/user/job-notices"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.code").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.content.length()").value(1))

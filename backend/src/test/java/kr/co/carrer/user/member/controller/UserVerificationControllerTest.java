@@ -52,7 +52,7 @@ class UserVerificationControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.verificationId").isNotEmpty())
                 .andExpect(jsonPath("$.data.remainingAttempts").value(5));
@@ -66,7 +66,7 @@ class UserVerificationControllerTest {
                         .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."))
                 .andExpect(jsonPath("$.code").doesNotExist());
     }
@@ -89,7 +89,7 @@ class UserVerificationControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.verificationToken").value("verified-token"));
     }
@@ -106,7 +106,7 @@ class UserVerificationControllerTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."))
                 .andExpect(jsonPath("$.code").doesNotExist());
     }

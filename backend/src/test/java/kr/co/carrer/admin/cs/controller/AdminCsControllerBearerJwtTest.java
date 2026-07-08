@@ -175,7 +175,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(403))
+                .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.code").value("AUTH_FORBIDDEN"));
         }
 
@@ -187,7 +187,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
         }
 
@@ -203,7 +203,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
         }
 
@@ -220,7 +220,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
         }
 
@@ -239,7 +239,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
         }
     }
@@ -297,7 +297,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(403))
+                .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.code").value("AUTH_FORBIDDEN"));
         }
 
@@ -323,7 +323,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
         }
 
@@ -340,7 +340,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
         }
 
@@ -359,7 +359,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
         }
     }
@@ -418,7 +418,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(403))
+                .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.code").value("AUTH_FORBIDDEN"));
         }
 
@@ -461,7 +461,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
         }
 
@@ -478,7 +478,7 @@ class AdminCsControllerBearerJwtTest {
                     .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
         }
     }
