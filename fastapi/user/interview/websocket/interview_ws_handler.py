@@ -13,6 +13,8 @@ from jose import JWTError, jwt
 import httpx
 
 from core.config import get_settings
+from core.redis import get_redis
+from user.interview.store import session_store
 
 _spring_client: httpx.AsyncClient | None = None
 
@@ -39,8 +41,6 @@ class InterviewErrorCode(str, Enum):
 
 
 class _SessionAdapter(logging.LoggerAdapter):
-    """모든 파이프라인 로그에 [Session: {sessionId}] 컨텍스트를 자동 주입한다."""
-
     def process(self, msg: str, kwargs: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         return f"[Session: {self.extra['session_id']}] {msg}", kwargs
 
@@ -49,40 +49,30 @@ def _make_log(session_id: str) -> _SessionAdapter:
     return _SessionAdapter(_base_log, {"session_id": session_id})
 
 
-_EXPIRY_WARNING_SECONDS = 60  # 만료 N초 전 사전 경고
+_EXPIRY_WARNING_SECONDS = 60
 
-
+# 인프로세스 WebSocket 레지스트리 (직렬화 불가 — 각 노드에서 유지)
 @dataclass
-class _SessionContext:
+class _LiveSession:
     ws: WebSocket
-    member_id: str = ""
-    seq: int = 0
-    token_exp: float = 0.0  # JWT exp (Unix timestamp) — 만료 감시용
-    # 재연결 시 미전달 메시지 재전송용 버퍼 (Scale-out 시 Redis 전환 예정)
-    msg_buffer: list[dict[str, Any]] = field(default_factory=list)
-    # Phase 4 — LLM 파이프라인 컨텍스트
-    interview_type: str | None = None       # TECHNICAL | PERSONALITY | PROJECT
-    focus_type: str | None = None           # FOLLOW_UP | TECHNICAL_DEPTH | DELIVERY | FLUENCY
-    session_type: str | None = None         # TEXT | VOICE
-    target_company: str | None = None       # 기업명 (맞춤 질문 생성용)
-    recent_answer_quality: str | None = None  # INSUFFICIENT | ADEQUATE | STRONG — 난이도 동적 조절용
-    answer_history: list[dict[str, str]] = field(default_factory=list)  # [{question, answer}, ...]
-    rag_context: str | None = None          # RAG 인덱싱된 문서 텍스트
-    used_fallback_questions: set[str] = field(default_factory=set)  # 중복 폴백 방지
-    voice_quality_by_order: dict[int, float] = field(default_factory=dict)  # questionOrder → voiceQualityRatio
+    member_id: str
+    token_exp: float
+    # Redis 장애 시 fallback용 in-process seq (정상 시엔 Redis seq 사용)
+    _local_seq: int = field(default=0)
 
 
-_sessions: dict[str, _SessionContext] = {}
-_pending_llm: dict[str, dict[str, Any]] = {}  # WS 연결 전 도착한 LLM trigger 임시 보관
-_MSG_BUFFER_MAX = 50
-_RECONNECT_WINDOW_SECONDS = 300  # 재연결 대기 윈도우 (5분)
+_live_sessions: dict[str, _LiveSession] = {}
+
+_RECONNECT_WINDOW_SECONDS = 300
 
 
-async def _expire_session(session_id: str, ctx: _SessionContext) -> None:
-    """재연결 윈도우 경과 후 세션 컨텍스트 및 STT 버퍼를 해제한다."""
+async def _expire_session(session_id: str, live: _LiveSession) -> None:
+    """재연결 윈도우 경과 후 세션 상태를 Redis에서 제거한다."""
     await asyncio.sleep(_RECONNECT_WINDOW_SECONDS)
-    if _sessions.get(session_id) is ctx:
-        _sessions.pop(session_id, None)
+    if _live_sessions.get(session_id) is live:
+        _live_sessions.pop(session_id, None)
+        redis = await get_redis()
+        await session_store.delete_session(redis, session_id)
         from user.interview.pipeline.stt_pipeline import _audio_buffers
         _audio_buffers.pop(session_id, None)
         _base_log.info("[Session: %s] session expired after reconnect window", session_id)
@@ -94,13 +84,6 @@ def _verify_jwt(token: str) -> dict[str, Any]:
 
 
 async def _verify_session_ownership(session_id: str, member_id: str) -> bool | None:
-    """Spring 내부 API로 session_id가 member_id 소유인지 검증한다.
-
-    Returns:
-        True  — 소유권 확인됨
-        False — 소유권 불일치 (명시적 거부)
-        None  — Spring 통신 장애 (네트워크 단절·재배포 등)
-    """
     settings = get_settings()
     url = (
         f"{settings.spring_base_url.rstrip('/')}"
@@ -116,8 +99,7 @@ async def _verify_session_ownership(session_id: str, member_id: str) -> bool | N
 
 
 async def _close_existing(session_id: str, slog: _SessionAdapter) -> None:
-    """중복 연결 감지 시 기존 소켓에 에러 메시지를 전송한 뒤 close(1000)한다."""
-    existing = _sessions.get(session_id)
+    existing = _live_sessions.get(session_id)
     if existing is None:
         return
     try:
@@ -146,14 +128,9 @@ async def interview_ws(
     token: str | None = Query(default=None),
     lastReceivedSequenceNumber: int | None = Query(default=None),
 ) -> None:
-    """
-    FastAPI WebSocket — Server → Client 단방향 Push 채널.
-    클라이언트는 연결만 수립하며 업링크 메시지를 전송하지 않는다.
-    sequenceNumber는 서버가 Push하는 메시지에만 포함된다.
-    """
     slog = _make_log(session_id)
 
-    # ── JWT 검증 ────────────────────────────────────────────────────────────
+    # ── JWT 검증 ──────────────────────────────────────────────────────────────
     try:
         if not token:
             raise JWTError("token missing")
@@ -169,79 +146,103 @@ async def interview_ws(
         slog.warning("WS connection rejected: invalid or missing JWT")
         return
 
-    # ── 세션 소유권 검증 ────────────────────────────────────────────────────
-    # 재연결 포함 모든 경로에서 Spring 내부 API로 소유권 및 세션 진행 상태 검증
+    # ── 세션 소유권 검증 ──────────────────────────────────────────────────────
     is_reconnect = lastReceivedSequenceNumber is not None
     spring_result = await _verify_session_ownership(session_id, member_id)
 
     if spring_result is False:
-        # Spring이 명시적으로 소유권 불일치를 반환한 경우 → 즉시 거부
         await websocket.accept()
         await websocket.close(code=1008)
         slog.warning("WS connection rejected: session ownership mismatch memberId=%s", member_id)
         return
     elif spring_result is None:
-        # Spring 통신 장애(재배포·네트워크 단절 등)
-        # 재연결 경로: 메모리 ctx가 동일 member_id이면 fallback 허용
-        # 신규 연결: 검증 불가이므로 차단
-        ctx_in_memory = _sessions.get(session_id)
-        if is_reconnect and ctx_in_memory is not None and ctx_in_memory.member_id == member_id:
+        # Spring 통신 장애 — Redis 또는 인프로세스 메타로 fallback
+        redis = await get_redis()
+        meta = await session_store.load_session_meta(redis, session_id)
+        stored_member = (meta or {}).get("member_id") or (
+            _live_sessions[session_id].member_id if session_id in _live_sessions else None
+        )
+        if is_reconnect and stored_member == member_id:
             slog.warning(
-                "Spring verify unavailable — allowing reconnect via memory fallback: memberId=%s",
+                "Spring verify unavailable — allowing reconnect via stored state: memberId=%s",
                 member_id,
             )
         else:
             await websocket.accept()
             await websocket.close(code=1008)
             slog.warning(
-                "WS connection rejected: Spring verify unavailable and no memory fallback: memberId=%s",
+                "WS connection rejected: Spring verify unavailable and no stored state: memberId=%s",
                 member_id,
             )
             return
 
     await websocket.accept()
 
-    # ── 중복 연결 처리 ───────────────────────────────────────────────────────
+    # ── 중복 연결 처리 ────────────────────────────────────────────────────────
     await _close_existing(session_id, slog)
 
-    # 기존 컨텍스트에서 seq·buffer 계승 (재연결 시 sequenceNumber 연속성 보장)
-    prev = _sessions.get(session_id)
-    ctx = _SessionContext(
-        ws=websocket,
-        member_id=member_id,
-        seq=prev.seq if prev else 0,
-        token_exp=token_exp,
-        msg_buffer=prev.msg_buffer if prev else [],
-    )
-    _sessions[session_id] = ctx
+    redis = await get_redis()
+
+    # Redis에서 기존 seq 계승 (재연결 시 연속성 보장)
+    prev_seq = await session_store.get_seq(redis, session_id)
+    live = _LiveSession(ws=websocket, member_id=member_id, token_exp=token_exp)
+    live._local_seq = prev_seq
+    _live_sessions[session_id] = live
+
+    # 세션 메타 저장 (LLM 파이프라인 컨텍스트 — connect 시점에 기존 메타 유지 또는 초기화)
+    existing_meta = await session_store.load_session_meta(redis, session_id)
+    if not existing_meta:
+        await session_store.save_session_meta(redis, session_id, {
+            "member_id": member_id,
+            "interview_type": None,
+            "focus_type": None,
+            "session_type": None,
+            "target_company": None,
+            "recent_answer_quality": None,
+            "answer_history": [],
+            "rag_context": None,
+            "used_fallback_questions": set(),
+            "voice_quality_by_order": {},
+        })
+    else:
+        await session_store.refresh_session_ttl(redis, session_id)
 
     slog.info("WS connected: lastReceivedSeq=%s", lastReceivedSequenceNumber)
 
-    # ── WS 연결 전 도착한 LLM trigger가 있으면 지금 실행 ────────────────────
-    if session_id in _pending_llm and lastReceivedSequenceNumber is None and prev is None:
-        pending_llm = _pending_llm.pop(session_id)
-        if pending_llm.get("sessionType"):
-            ctx.session_type = pending_llm["sessionType"]
-        if pending_llm.get("interviewType"):
-            ctx.interview_type = pending_llm["interviewType"]
-        if pending_llm.get("focusType"):
-            ctx.focus_type = pending_llm["focusType"]
-        if pending_llm.get("targetCompany"):
-            ctx.target_company = pending_llm["targetCompany"]
-        from user.interview.pipeline import llm_pipeline
-        asyncio.create_task(
-            llm_pipeline.generate_and_deliver_question(
-                session_id=session_id,
-                question_order=pending_llm["questionOrder"],
-                answer_text=pending_llm["answerText"],
-                question_text=pending_llm.get("questionText"),
-            )
-        )
-        slog.info("flushed pending LLM trigger: questionOrder=%s", pending_llm["questionOrder"])
+    # ── WS 연결 전 도착한 LLM trigger flush ───────────────────────────────────
+    if not is_reconnect and not existing_meta:
+        pending_llm = await session_store.pop_pending_llm(redis, session_id)
+        if pending_llm:
+            # pending에 담긴 컨텍스트를 메타에 반영
+            patch: dict[str, Any] = {}
+            for field in ("sessionType", "interviewType", "focusType", "targetCompany"):
+                if pending_llm.get(field):
+                    meta_key = {
+                        "sessionType": "session_type",
+                        "interviewType": "interview_type",
+                        "focusType": "focus_type",
+                        "targetCompany": "target_company",
+                    }[field]
+                    patch[meta_key] = pending_llm[field]
+            if patch:
+                merged = {**(existing_meta or {}), **patch}
+                await session_store.save_session_meta(redis, session_id, merged)
 
-    # ── 재연결 시 미전달 메시지 재전송 ──────────────────────────────────────
+            from user.interview.pipeline import llm_pipeline
+            asyncio.create_task(
+                llm_pipeline.generate_and_deliver_question(
+                    session_id=session_id,
+                    question_order=pending_llm["questionOrder"],
+                    answer_text=pending_llm["answerText"],
+                    question_text=pending_llm.get("questionText"),
+                )
+            )
+            slog.info("flushed pending LLM trigger: questionOrder=%s", pending_llm["questionOrder"])
+
+    # ── 재연결 시 미전달 메시지 재전송 ────────────────────────────────────────
     if lastReceivedSequenceNumber is not None:
-        pending = [m for m in ctx.msg_buffer if m["sequenceNumber"] > lastReceivedSequenceNumber]
+        buffer = await session_store.get_buffer(redis, session_id)
+        pending = [m for m in buffer if m["sequenceNumber"] > lastReceivedSequenceNumber]
         for msg in pending:
             try:
                 await websocket.send_text(json.dumps(msg))
@@ -249,77 +250,100 @@ async def interview_ws(
                 slog.warning("replay send failed: seq=%d", msg["sequenceNumber"])
         slog.info("replayed %d messages after reconnect", len(pending))
 
-    # ── JWT 만료 감시 태스크 ────────────────────────────────────────────────
+    # ── JWT 만료 감시 태스크 ──────────────────────────────────────────────────
     async def _watch_token_expiry() -> None:
         now = time.time()
-        remaining = ctx.token_exp - now
+        remaining = live.token_exp - now
         if remaining <= 0:
             await send_error(session_id, "JWT가 이미 만료되었습니다. 재연결이 필요합니다.", InterviewErrorCode.SESSION_EXPIRED)
-            slog.warning("token already expired on connect — closing WS: exp=%.0f", ctx.token_exp)
+            slog.warning("token already expired on connect — closing WS: exp=%.0f", live.token_exp)
             try:
-                await ctx.ws.close(code=1008)
+                await live.ws.close(code=1008)
             except Exception:
                 pass
             return
 
-        # 만료 N초 전 사전 경고
         warning_delay = remaining - _EXPIRY_WARNING_SECONDS
         if warning_delay > 0:
             await asyncio.sleep(warning_delay)
-            if _sessions.get(session_id) is ctx:
+            if _live_sessions.get(session_id) is live:
                 await send_error(
                     session_id,
                     f"JWT가 {_EXPIRY_WARNING_SECONDS}초 후 만료됩니다. 토큰을 갱신해주세요.",
                     InterviewErrorCode.SESSION_EXPIRED,
                 )
-                slog.info("token expiry warning sent: exp=%.0f", ctx.token_exp)
+                slog.info("token expiry warning sent: exp=%.0f", live.token_exp)
                 await asyncio.sleep(_EXPIRY_WARNING_SECONDS)
         else:
             await asyncio.sleep(remaining)
 
-        if _sessions.get(session_id) is ctx:
+        if _live_sessions.get(session_id) is live:
             await send_error(session_id, "JWT가 만료되었습니다. 재연결이 필요합니다.", InterviewErrorCode.SESSION_EXPIRED)
-            slog.warning("token expired — closing WS: exp=%.0f", ctx.token_exp)
+            slog.warning("token expired — closing WS: exp=%.0f", live.token_exp)
             try:
-                await ctx.ws.close(code=1008)
+                await live.ws.close(code=1008)
             except Exception:
                 pass
 
     expiry_task = asyncio.create_task(_watch_token_expiry())
 
-    # ── 연결 유지 (서버 Push 전용 채널) ─────────────────────────────────────
+    # ── 연결 유지 ─────────────────────────────────────────────────────────────
     try:
         while True:
-            # 클라이언트 ping/keep-alive 수신 후 무시 (연결 유지 목적)
             await websocket.receive_text()
     except WebSocketDisconnect:
         slog.info("WS disconnected")
     finally:
         expiry_task.cancel()
-        # 새 연결로 교체된 경우엔 타이머를 걸지 않음
-        if _sessions.get(session_id) is ctx:
-            # 소켓은 끊겼지만 seq·buffer는 재연결 윈도우 동안 보존
-            asyncio.create_task(_expire_session(session_id, ctx))
+        if _live_sessions.get(session_id) is live:
+            asyncio.create_task(_expire_session(session_id, live))
             slog.info("holding buffer for %ds reconnect window", _RECONNECT_WINDOW_SECONDS)
 
 
-# ── 내부 Push 헬퍼 ──────────────────────────────────────────────────────────
+# ── 내부 Push 헬퍼 ────────────────────────────────────────────────────────────
 
 async def _push(session_id: str, payload: dict[str, Any]) -> None:
-    ctx = _sessions.get(session_id)
-    if ctx is None:
+    live = _live_sessions.get(session_id)
+    if live is None:
         _base_log.warning("[Session: %s] push skipped: no active WS", session_id)
         return
-    ctx.seq += 1
-    payload["sequenceNumber"] = ctx.seq
-    ctx.msg_buffer.append(payload)
-    if len(ctx.msg_buffer) > _MSG_BUFFER_MAX:
-        ctx.msg_buffer.pop(0)
-    try:
-        await ctx.ws.send_text(json.dumps(payload, ensure_ascii=False))
-    except Exception:
-        _base_log.warning("[Session: %s] push failed: seq=%d", session_id, ctx.seq)
 
+    redis = await get_redis()
+    seq = await session_store.increment_seq(redis, session_id)
+    if seq == -1:
+        # Redis 장애 시 in-process fallback
+        live._local_seq += 1
+        seq = live._local_seq
+
+    payload["sequenceNumber"] = seq
+    await session_store.push_to_buffer(redis, session_id, payload)
+
+    try:
+        await live.ws.send_text(json.dumps(payload, ensure_ascii=False))
+    except Exception:
+        _base_log.warning("[Session: %s] push failed: seq=%d", session_id, seq)
+
+
+# ── 세션 메타 접근 헬퍼 (파이프라인에서 사용) ─────────────────────────────────
+
+async def get_session_meta(session_id: str) -> dict[str, Any] | None:
+    redis = await get_redis()
+    return await session_store.load_session_meta(redis, session_id)
+
+
+async def update_session_meta(session_id: str, patch: dict[str, Any]) -> None:
+    redis = await get_redis()
+    meta = await session_store.load_session_meta(redis, session_id) or {}
+    meta.update(patch)
+    await session_store.save_session_meta(redis, session_id, meta)
+
+
+def is_session_live(session_id: str) -> bool:
+    """현재 프로세스에 살아있는 WS 연결이 있는지 확인한다."""
+    return session_id in _live_sessions
+
+
+# ── Public Push API ──────────────────────────────────────────────────────────
 
 async def send_stt_partial(
     session_id: str,
