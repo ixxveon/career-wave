@@ -314,6 +314,9 @@ async def _push(session_id: str, payload: dict[str, Any]) -> None:
         # Redis 장애 시 in-process fallback
         live._local_seq += 1
         seq = live._local_seq
+    else:
+        # Redis 정상 시에도 fallback 카운터를 동기화해 일시 장애 후 seq 역행 방지
+        live._local_seq = seq
 
     payload["sequenceNumber"] = seq
     await session_store.push_to_buffer(redis, session_id, payload)
