@@ -1,8 +1,9 @@
-package kr.co.carrer.user.billing.demo;
+package kr.co.carrer.user.billing.client;
 
 import io.netty.channel.ChannelOption;
 import jakarta.annotation.PostConstruct;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.client.dto.TossOneTimeConfirmResult;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,21 +20,21 @@ import java.util.Base64;
 import java.util.Map;
 
 /**
- * 데모 전용 일반결제(단건) 승인 클라이언트.
+ * Toss 일반결제(단건) 승인 클라이언트.
  *
- * <p>기존 자동결제(빌링) 클라이언트({@link kr.co.carrer.user.billing.client.TossBillingPaymentClient})와 달리
- * {@code toss.mock} 스위치의 영향을 받지 않는다 — 항상 실제 Toss 테스트 API를 호출해 토스페이 QR 결제창을 띄운다.
- * (이슈 #986 의 mock 게이트웨이와 완전히 독립적)
+ * <p>자동결제(빌링) 계약이 없는 환경에서도 토스페이 QR 단건결제 창을 실제로 띄우기 위한 경로다.
+ * 자동결제 클라이언트({@link TossBillingPaymentClient})와 달리 {@code toss.mock} 스위치의 영향을 받지 않고
+ * 항상 실제 Toss 테스트 API를 호출한다. (이슈 #986 의 mock 게이트웨이와 독립적)
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TossDemoPaymentClient {
+public class OneTimePaymentClient {
 
     @Value("${toss.base-url:https://api.tosspayments.com}")
     private String baseUrl;
 
-    // 데모 클라이언트는 무조건 로드되므로, 키 미설정 환경(예: toss.mock=true 로만 운영)에서도
+    // 이 클라이언트는 무조건 로드되므로, 키 미설정 환경(예: toss.mock=true 로만 운영)에서도
     // 컨텍스트 기동이 실패하지 않도록 빈 기본값을 둔다. 키가 없으면 실제 confirm 호출만 401로 실패한다.
     @Value("${toss.secret-key:}")
     private String secretKey;
@@ -56,14 +57,14 @@ public class TossDemoPaymentClient {
     }
 
     /** Toss 일반결제 승인. 성공 시 status=DONE 인 결제 결과를 반환한다. */
-    public TossPaymentConfirmResult confirm(String paymentKey, String orderId, int amount) {
+    public TossOneTimeConfirmResult confirm(String paymentKey, String orderId, int amount) {
         Map<String, Object> body = Map.of(
                 "paymentKey", paymentKey,
                 "orderId", orderId,
                 "amount", amount
         );
         try {
-            TossPaymentConfirmResult result = webClient.post()
+            TossOneTimeConfirmResult result = webClient.post()
                     .uri("/v1/payments/confirm")
                     .header("Authorization", "Basic " + encodedSecretKey)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -72,23 +73,23 @@ public class TossDemoPaymentClient {
                     .onStatus(HttpStatusCode::isError, resp ->
                             resp.bodyToMono(String.class).defaultIfEmpty("").map(b -> {
                                 // Toss 에러 본문(code/message)은 진단에 유용하며 사용자 PII가 아니므로 함께 로깅한다.
-                                log.warn("[TOSS-DEMO] confirm 실패: status={}, body={}", resp.statusCode().value(), b);
+                                log.warn("[TOSS-ONETIME] confirm 실패: status={}, body={}", resp.statusCode().value(), b);
                                 return new CustomException(BillingErrorCode.PAYMENT_CONFIRM_FAILED);
                             })
                     )
-                    .bodyToMono(TossPaymentConfirmResult.class)
+                    .bodyToMono(TossOneTimeConfirmResult.class)
                     .block();
 
             if (result == null || !"DONE".equals(result.status())) {
                 throw new CustomException(BillingErrorCode.PAYMENT_CONFIRM_FAILED);
             }
-            log.info("[TOSS-DEMO] confirm 성공(DONE): orderId={}, amount={}, method={}",
+            log.info("[TOSS-ONETIME] confirm 성공(DONE): orderId={}, amount={}, method={}",
                     orderId, result.totalAmount(), result.method());
             return result;
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("[TOSS-DEMO] confirm 오류: {}", e.getClass().getSimpleName(), e);
+            log.warn("[TOSS-ONETIME] confirm 오류: {}", e.getClass().getSimpleName(), e);
             throw new CustomException(BillingErrorCode.PAYMENT_CONFIRM_FAILED);
         }
     }

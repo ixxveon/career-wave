@@ -34,7 +34,9 @@ import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 const mockOrder = {
   orderId: 'order-1',
   amount: 9900,
+  currency: 'KRW',
   productName: '서류 코칭',
+  customerKey: 'cust-1',
   customerEmail: 'test@test.com',
   customerName: '홍길동',
 };
@@ -59,7 +61,7 @@ beforeEach(() => {
   setupCreateOrder();
   setupSubscribedCodes();
   vi.mocked(loadTossPayments).mockResolvedValue({
-    payment: () => ({ requestBillingAuth: vi.fn().mockResolvedValue(undefined) }),
+    payment: () => ({ requestPayment: vi.fn().mockResolvedValue(undefined) }),
   } as unknown as Awaited<ReturnType<typeof loadTossPayments>>);
 });
 
@@ -98,10 +100,10 @@ describe('isPaymentRequesting — Toss SDK 구간 재진입 방지', () => {
 
   it('handleCheckout 진행 중 재호출해도 createOrder가 1번만 실행된다', async () => {
     const createOrderMock = vi.fn().mockResolvedValue(mockOrder);
-    const requestBillingAuthMock = vi.fn().mockImplementation(() => new Promise(() => {}));
+    const requestPaymentMock = vi.fn().mockImplementation(() => new Promise(() => {}));
     setupCreateOrder({ mutateAsync: createOrderMock });
     vi.mocked(loadTossPayments).mockResolvedValue({
-      payment: () => ({ requestBillingAuth: requestBillingAuthMock }),
+      payment: () => ({ requestPayment: requestPaymentMock }),
     } as unknown as Awaited<ReturnType<typeof loadTossPayments>>);
 
     const { result } = renderHook(() => useCheckoutStatus());
@@ -126,11 +128,11 @@ describe('isPaymentRequesting — Toss SDK 구간 재진입 방지', () => {
     expect(result.current.isPaymentRequesting).toBe(false);
   });
 
-  it('requestBillingAuth 실패 후 isPaymentRequesting이 false로 초기화된다', async () => {
+  it('requestPayment 실패 후 isPaymentRequesting이 false로 초기화된다', async () => {
     const createOrderMock = vi.fn().mockResolvedValue(mockOrder);
     setupCreateOrder({ mutateAsync: createOrderMock });
     vi.mocked(loadTossPayments).mockResolvedValue({
-      payment: () => ({ requestBillingAuth: vi.fn().mockRejectedValue({ status: 0 }) }),
+      payment: () => ({ requestPayment: vi.fn().mockRejectedValue({ status: 0 }) }),
     } as unknown as Awaited<ReturnType<typeof loadTossPayments>>);
 
     const { result } = renderHook(() => useCheckoutStatus());

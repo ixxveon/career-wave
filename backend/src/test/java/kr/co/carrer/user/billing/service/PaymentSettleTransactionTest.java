@@ -2,6 +2,7 @@ package kr.co.carrer.user.billing.service;
 
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.dto.BillingDTO;
+import kr.co.carrer.user.billing.client.OneTimePaymentClient;
 import kr.co.carrer.user.billing.client.TossBillingAuthorizationClient;
 import kr.co.carrer.user.billing.client.TossBillingPaymentClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingAuthResponse;
@@ -50,6 +51,7 @@ class PaymentSettleTransactionTest {
     @Mock PlanRepository planRepository;
     @Mock TossBillingAuthorizationClient tossBillingAuthClient;
     @Mock TossBillingPaymentClient tossBillingPaymentClient;
+    @Mock OneTimePaymentClient oneTimePaymentClient;
     @Mock AesCipher aesCipher;
     @Mock UserPaymentFailureTxService failureTxService;
     @Mock PaymentReconciliationTxService reconciliationTxService;
@@ -65,7 +67,7 @@ class PaymentSettleTransactionTest {
                 subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
         service = new UserPaymentConfirmServiceImpl(
                 userPaymentRepository, billingProfileRepository, planRepository,
-                tossBillingAuthClient, tossBillingPaymentClient, aesCipher,
+                tossBillingAuthClient, tossBillingPaymentClient, oneTimePaymentClient, aesCipher,
                 failureTxService, settleTxService, reconciliationTxService);
     }
 

@@ -8,9 +8,6 @@ import { PRODUCT_CODE } from '../../../types/user/subscription';
 import type { ProductCode } from '../../../types/user/subscription';
 
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY as string;
-// 데모용: Toss 자동결제 계약 미개통 환경에서 카드등록 팝업을 건너뛰고 성공 URL로 리다이렉트한다.
-// 백엔드의 toss.mock 과 짝을 이룬다 (이슈 #986). 기본 false → 실제 Toss 팝업.
-const TOSS_MOCK = import.meta.env.VITE_TOSS_MOCK === 'true';
 const KNOWN_PRODUCT_CODES: ProductCode[] = [PRODUCT_CODE.DOCUMENT_COACHING, PRODUCT_CODE.INTERVIEW];
 
 export function useCheckoutStatus() {
@@ -58,28 +55,25 @@ export function useCheckoutStatus() {
         failUrl: `${window.location.origin}/billing/fail?productCode=${productCode}`,
       });
 
-      if (TOSS_MOCK) {
-        // 주문 생성(createOrder)은 mock 모드에서도 반드시 선행한다 — 백엔드 confirm 이
-        // orderId 로 READY 주문을 조회해 구독/결제내역을 만들기 때문. (건너뛰면 데모 플로우가 끊김)
-        // 여기서는 Toss 카드등록 팝업만 생략하고, order 에서 받은 orderId/customerKey 로 성공 URL 이동.
-        // mock issue 가 가짜 authKey 를 그대로 승인하므로 이후 흐름이 실제와 동일하게 이어진다.
-        const successUrl = new URL(`${window.location.origin}/billing/success`);
-        successUrl.searchParams.set('orderId', order.orderId);
-        successUrl.searchParams.set('authKey', `mock_auth_${order.orderId}`);
-        successUrl.searchParams.set('customerKey', order.customerKey);
-        window.location.assign(successUrl.toString());
-        return; // assign 이후 아래 Toss 실 연동 코드가 실행되지 않도록 즉시 종료
-      }
-
       const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
       const payment = tossPayments.payment({ customerKey: order.customerKey });
 
-      await payment.requestBillingAuth({
+      // 자동결제(빌링) 계약이 없는 환경이므로 카드등록(requestBillingAuth) 대신
+      // 토스페이 QR 단건결제(requestPayment)를 띄운다. (테스트키 → 실제 결제창, 실제 미결제)
+      // 화면 문구는 월 자동결제이지만 실제 승인은 단건으로 처리되고, 서버가 orderId 의 실제 상품
+      // 금액으로 confirm 한 뒤 1개월 이용권(구독)을 발급한다. (성공 시 /billing/success 로 리다이렉트)
+      await payment.requestPayment({
         method: 'CARD',
-        successUrl: `${window.location.origin}/billing/success?orderId=${order.orderId}`,
+        amount: { currency: order.currency, value: order.amount },
+        orderId: order.orderId,
+        orderName: order.productName,
+        successUrl: `${window.location.origin}/billing/success`,
         failUrl: `${window.location.origin}/billing/fail?productCode=${productCode}&orderId=${order.orderId}`,
-        customerEmail: order.customerEmail,
-        customerName: order.customerName,
+        card: {
+          // DIRECT + easyPay=TOSSPAY → 카드 입력 없이 토스페이 자체창(QR)이 바로 열린다.
+          flowMode: 'DIRECT',
+          easyPay: 'TOSSPAY',
+        },
       });
     } catch (err: unknown) {
       isPaymentRequestingRef.current = false;

@@ -1,6 +1,7 @@
 package kr.co.carrer.user.billing.service;
 
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.client.OneTimePaymentClient;
 import kr.co.carrer.user.billing.client.TossBillingAuthorizationClient;
 import kr.co.carrer.user.billing.client.TossBillingPaymentClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingAuthResponse;
@@ -47,6 +48,7 @@ class ConfirmIdempotencyTest {
     @Mock PlanRepository planRepository;
     @Mock TossBillingAuthorizationClient tossBillingAuthClient;
     @Mock TossBillingPaymentClient tossBillingPaymentClient;
+    @Mock OneTimePaymentClient oneTimePaymentClient;
     @Mock AesCipher aesCipher;
     @Mock UserPaymentFailureTxService failureTxService;
     @Mock PaymentReconciliationTxService reconciliationTxService;
@@ -62,7 +64,7 @@ class ConfirmIdempotencyTest {
                 subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
         service = new UserPaymentConfirmServiceImpl(
                 userPaymentRepository, billingProfileRepository, planRepository,
-                tossBillingAuthClient, tossBillingPaymentClient, aesCipher,
+                tossBillingAuthClient, tossBillingPaymentClient, oneTimePaymentClient, aesCipher,
                 failureTxService, settleTxService, reconciliationTxService);
     }
 

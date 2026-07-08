@@ -1,6 +1,7 @@
-package kr.co.carrer.user.billing.demo;
+package kr.co.carrer.user.billing.client;
 
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.client.dto.TossOneTimeConfirmResult;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -17,17 +18,17 @@ import java.lang.reflect.Field;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class TossDemoPaymentClientTest {
+class OneTimePaymentClientTest {
 
     private MockWebServer server;
-    private TossDemoPaymentClient client;
+    private OneTimePaymentClient client;
 
     @BeforeEach
     void setUp() throws Exception {
         server = new MockWebServer();
         server.start();
 
-        client = new TossDemoPaymentClient(WebClient.builder());
+        client = new OneTimePaymentClient(WebClient.builder());
         setField(client, "baseUrl", server.url("").toString().replaceAll("/$", ""));
         setField(client, "secretKey", "test-secret-key");
         client.init();
@@ -48,7 +49,7 @@ class TossDemoPaymentClientTest {
                          "\"easyPay\":{\"provider\":\"토스페이\",\"amount\":1000,\"discountAmount\":0}}")
                 .addHeader("Content-Type", "application/json"));
 
-        TossPaymentConfirmResult result = client.confirm("pay_demo", "demo_1", 1000);
+        TossOneTimeConfirmResult result = client.confirm("pay_demo", "demo_1", 1000);
 
         assertThat(result.status()).isEqualTo("DONE");
         assertThat(result.totalAmount()).isEqualTo(1000);
