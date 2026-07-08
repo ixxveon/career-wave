@@ -279,11 +279,13 @@ public class DashboardSummaryQueryRepository {
                     COUNT(*) AS total_pipeline_count,
                     COALESCE(SUM(CASE WHEN pipeline_status = 'RUNNING' THEN 1 ELSE 0 END), 0) AS running_pipeline_count,
                     COALESCE(SUM(CASE WHEN pipeline_status = 'FAILED' THEN 1 ELSE 0 END), 0) AS failed_pipeline_count,
-                    COALESCE(SUM(CASE WHEN pipeline_status = 'SUCCESS' THEN 1 ELSE 0 END), 0) AS success_pipeline_count
+                    COALESCE(SUM(CASE WHEN pipeline_status = 'SUCCESS' THEN 1 ELSE 0 END), 0) AS success_pipeline_count,
+                    COALESCE(SUM(CASE WHEN pipeline_status = 'IDLE' THEN 1 ELSE 0 END), 0) AS idle_pipeline_count
                 FROM scraping_pipelines
                 """;
         Object[] row = singleRow(entityManager.createNativeQuery(sql));
-        return new ScrapingStatusMetrics(longValue(row, 0), longValue(row, 1), longValue(row, 2), longValue(row, 3));
+        return new ScrapingStatusMetrics(longValue(row, 0), longValue(row, 1), longValue(row, 2), longValue(row, 3),
+                longValue(row, 4));
     }
 
     public List<ScrapingAlertRow> findScrapingAlerts(DashboardQueryWindow queryWindow, int limit) {
@@ -453,7 +455,8 @@ public class DashboardSummaryQueryRepository {
             long totalPipelineCount,
             long runningPipelineCount,
             long failedPipelineCount,
-            long successPipelineCount
+            long successPipelineCount,
+            long idlePipelineCount
     ) {
     }
 
