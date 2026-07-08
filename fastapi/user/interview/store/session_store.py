@@ -12,6 +12,7 @@ import json
 import logging
 import time
 from typing import Any
+from uuid import uuid4
 
 import redis.asyncio as aioredis
 
@@ -223,7 +224,7 @@ async def rate_limit_check_and_record(
         pipe = redis.pipeline()
         pipe.zremrangebyscore(key, "-inf", window_start)  # 만료 항목 제거
         pipe.zcard(key)                                    # 현재 윈도우 내 count
-        pipe.zadd(key, {str(now): now})                   # 현재 요청 기록
+        pipe.zadd(key, {f"{now}:{uuid4().hex}": now})      # 현재 요청 기록 (멤버 충돌 방지)
         pipe.expire(key, ttl)
         results = await pipe.execute()
         current_count = results[1]

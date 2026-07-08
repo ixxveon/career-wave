@@ -29,6 +29,12 @@ _base_log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["interview-ws"])
 
+_bg_tasks: set[asyncio.Task] = set()
+
+
+def _on_bg_task_done(task: asyncio.Task) -> None:
+    _bg_tasks.discard(task)
+
 
 class InterviewErrorCode(str, Enum):
     AI_PIPELINE_ERROR = "INTERVIEW_AI_PIPELINE_ERROR"
@@ -230,7 +236,7 @@ async def interview_ws(
             await session_store.save_session_meta(redis, session_id, merged)
 
         from user.interview.pipeline import llm_pipeline
-        asyncio.create_task(
+        _t = asyncio.create_task(
             llm_pipeline.generate_and_deliver_question(
                 session_id=session_id,
                 question_order=pending_llm["questionOrder"],
@@ -238,6 +244,8 @@ async def interview_ws(
                 question_text=pending_llm.get("questionText"),
             )
         )
+        _bg_tasks.add(_t)
+        _t.add_done_callback(_on_bg_task_done)
         slog.info("flushed pending LLM trigger: questionOrder=%s", pending_llm["questionOrder"])
 
     # ── 재연결 시 미전달 메시지 재전송 ────────────────────────────────────────
@@ -297,7 +305,9 @@ async def interview_ws(
     finally:
         expiry_task.cancel()
         if _live_sessions.get(session_id) is live:
-            asyncio.create_task(_expire_session(session_id, live))
+            _t = asyncio.create_task(_expire_session(session_id, live))
+            _bg_tasks.add(_t)
+            _t.add_done_callback(_on_bg_task_done)
             slog.info("holding buffer for %ds reconnect window", _RECONNECT_WINDOW_SECONDS)
 
 
