@@ -11,6 +11,11 @@ class SourceRegistryEntry:
 
 
 SUPPORTED_SOURCE_REGISTRY: dict[str, SourceRegistryEntry] = {
+    "jumpit": SourceRegistryEntry(
+        source_name="jumpit",
+        display_name="Jumpit",
+        adapter_name="jumpit_scraper",
+    ),
     "wanted": SourceRegistryEntry(
         source_name="wanted",
         display_name="Wanted",
