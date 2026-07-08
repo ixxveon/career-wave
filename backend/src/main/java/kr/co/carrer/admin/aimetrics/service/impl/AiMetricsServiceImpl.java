@@ -193,6 +193,9 @@ public class AiMetricsServiceImpl implements AiMetricsService {
         RagDocument document = getRagDocument(documentId);
         try {
             String downloadUrl = s3Uploader.createPresignedGetUrl(document.getFilePath());
+            if (downloadUrl == null || downloadUrl.isBlank()) {
+                throw new CustomException(AiMetricsErrorCode.RAG_DOCUMENT_DOWNLOAD_FAILED);
+            }
             return AiMetricsServiceMapper.toRagDocumentDownload(document, downloadUrl);
         } catch (CustomException e) {
             throw e;

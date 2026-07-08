@@ -816,6 +816,27 @@ class AiMetricsServiceImplTest {
                     .extracting("errorCode")
                     .isEqualTo(AiMetricsErrorCode.RAG_DOCUMENT_DOWNLOAD_FAILED);
         }
+
+        @Test
+        @DisplayName("Presigned URL이 비어 있으면 RAG_DOCUMENT_DOWNLOAD_FAILED 예외를 반환한다")
+        void rejectsBlankPresignedUrl() {
+            RagDocument document = RagDocument.upload(
+                    10L,
+                    UUID.fromString("66666666-6666-6666-6666-666666666666"),
+                    "guide.pdf",
+                    "",
+                    "application/pdf",
+                    77_000L
+            );
+            ReflectionTestUtils.setField(document, "ragDocumentId", 8L);
+            given(ragDocumentRepository.findById(8L)).willReturn(Optional.of(document));
+            given(s3Uploader.createPresignedGetUrl("")).willReturn("");
+
+            assertThatThrownBy(() -> aiMetricsService.getRagDocumentDownload(8L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AiMetricsErrorCode.RAG_DOCUMENT_DOWNLOAD_FAILED);
+        }
     }
 
     @Nested

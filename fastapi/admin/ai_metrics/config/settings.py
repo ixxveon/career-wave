@@ -46,6 +46,7 @@ class AiMetricsSettings(BaseSettings):
     aws_s3_bucket: str = Field(
         default="",
         validation_alias=AliasChoices("AWS_S3_BUCKET", "AWS_S3_BUCKET_NAME"),
+        alias="AWS_S3_BUCKET",
     )
 
     vector_store_provider: str = Field(default="mock", alias="VECTOR_STORE_PROVIDER")
