@@ -296,6 +296,7 @@
 
 .csFaqTable th:nth-child(2),
 .csFaqTable td:nth-child(2) { width: 52%; }   /* 질문 */
+.csFaqTable td:nth-child(2) { overflow: hidden; text-overflow: ellipsis; }   /* 최대 500자 입력 가능 — 등록일/관리 컬럼 침범 방지 */
 
 .csFaqTable th:nth-child(3),
 .csFaqTable td:nth-child(3) { width: 16%; }   /* 등록일 */
