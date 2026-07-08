@@ -27,6 +27,14 @@ public interface UserPaymentRepository extends JpaRepository<UserPayment, UUID> 
     Optional<UserPayment> findReadyByMemberIdAndPlanId(@Param("memberId") UUID memberId,
                                                         @Param("planId") Long planId);
 
+    // createOrder 재사용 경로 전용 — READY 주문을 행 잠금으로 조회한다.
+    // orderId 재발급(renewOrderForRetry)이 동시 요청 간 서로 덮어쓰지 않도록 read-renew-commit 을 직렬화한다.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM UserPayment p WHERE p.memberId = :memberId AND p.planId = :planId " +
+           "AND p.paymentStatus = 'READY'")
+    Optional<UserPayment> findReadyByMemberIdAndPlanIdForUpdate(@Param("memberId") UUID memberId,
+                                                                @Param("planId") Long planId);
+
     @Query("SELECT p FROM UserPayment p WHERE p.paymentStatus = 'READY' " +
            "AND p.expiresAt <= :now")
     List<UserPayment> findExpiredReadyOrders(@Param("now") ZonedDateTime now);

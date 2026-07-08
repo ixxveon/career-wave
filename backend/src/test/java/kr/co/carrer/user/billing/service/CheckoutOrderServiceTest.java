@@ -63,7 +63,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 1L))
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
@@ -91,7 +91,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 2L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 2L))
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
@@ -114,7 +114,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 1L))
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
@@ -190,7 +190,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(interviewPlan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(eq(memberId), eq(2L), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 2L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 2L))
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
@@ -229,8 +229,8 @@ class CheckoutOrderServiceTest {
     }
 
     @Test
-    @DisplayName("같은 상품·회원의 READY 주문이 이미 있으면 기존 주문 반환 (멱등)")
-    void createOrder_idempotentReturnExisting() {
+    @DisplayName("같은 상품·회원의 READY 주문이 있으면 새 row 없이 재사용하되 orderId 는 재발급 (Toss DUPLICATED 방지)")
+    void createOrder_reuseRowWithFreshOrderId() {
         Plan plan = plan(1L, "document-coaching", "서류 AI 코칭", 29000);
         UserPayment existing = readyPayment(memberId, 1L, "document-coaching", "ORDER-EXISTING");
         given(billingMemberPort.isEligibleForBilling(memberId)).willReturn(true);
@@ -238,13 +238,16 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 1L))
                 .willReturn(Optional.of(existing));
 
         BillingDTO.ResponseCreateOrder response =
                 service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
 
-        assertThat(response.orderId()).isEqualTo("ORDER-EXISTING");
+        // 새 주문 row 는 만들지 않되(멱등), 재사용 주문의 orderId 는 새로 발급한다.
+        assertThat(response.orderId())
+                .isNotEqualTo("ORDER-EXISTING")
+                .startsWith("ORDER-");
         verify(createTxService, never()).createAndFlush(any(), any(), any());
     }
 
@@ -257,7 +260,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 1L))
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willThrow(new CustomException(BillingErrorCode.BILLING_EMAIL_REQUIRED));
@@ -270,8 +273,8 @@ class CheckoutOrderServiceTest {
     }
 
     @Test
-    @DisplayName("동시 요청으로 유니크 제약 위반 — 경쟁 스레드 주문 readback 반환")
-    void createOrder_concurrentConflict_returnsRivalOrder() {
+    @DisplayName("동시 요청으로 유니크 제약 위반 — 경쟁 스레드 주문을 잠금 readback 후 새 orderId 재발급")
+    void createOrder_concurrentConflict_reissuesFreshOrderId() {
         Plan plan = plan(1L, "document-coaching", "서류 AI 코칭", 29000);
         UserPayment rivalPayment = readyPayment(memberId, 1L, "document-coaching", "ORDER-RIVAL");
         given(billingMemberPort.isEligibleForBilling(memberId)).willReturn(true);
@@ -279,9 +282,9 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
-                .willReturn(Optional.empty())           // 최초 조회: 없음
-                .willReturn(Optional.of(rivalPayment)); // readback: 경쟁 스레드 삽입 행
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 1L))
+                .willReturn(Optional.empty())           // 최초 조회(행 잠금): 없음
+                .willReturn(Optional.of(rivalPayment)); // DataIntegrityViolation 후 잠금 readback: 경쟁 스레드 삽입 행
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
         given(createTxService.createAndFlush(any(), any(), any()))
@@ -290,7 +293,10 @@ class CheckoutOrderServiceTest {
         BillingDTO.ResponseCreateOrder response =
                 service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
 
-        assertThat(response.orderId()).isEqualTo("ORDER-RIVAL");
+        // 경쟁 주문 row 를 재사용하되 orderId 는 새로 발급 → 두 클라이언트가 같은 orderId 를 받지 않는다.
+        assertThat(response.orderId())
+                .isNotEqualTo("ORDER-RIVAL")
+                .startsWith("ORDER-");
     }
 
     // ── helpers ─────────────────────────────────────────────────────────────

@@ -173,7 +173,17 @@ public class UserPaymentConfirmServiceImpl implements UserPaymentConfirmService 
         }
 
         // 5. 원자 결산 트랜잭션 (billingProfile 없이 구독/이용권 발급)
-        return settleTxService.settleOneTime(payment, plan, result);
+        // Toss 승인(DONE)은 이미 끝났으나 결산(구독/이용권 발급)이 실패하면, 주문을 READY 로 방치하면
+        // 다음 결제가 같은 orderId 를 재사용해 Toss DUPLICATED_ORDER_ID 로 교착된다. 따라서 FAILED 로 확정하고
+        // 원인 파악을 위해 상세 로그를 남긴 뒤, 원본 예외를 그대로 전파해 프론트가 실제 사유를 표시하게 한다.
+        try {
+            return settleTxService.settleOneTime(payment, plan, result);
+        } catch (RuntimeException e) {
+            log.error("[ONETIME] Toss 승인 후 결산 실패 — orderId={}, paymentKey={}, memberId={}, productCode={}",
+                    request.orderId(), request.paymentKey(), memberId, payment.getProductCode(), e);
+            failureTxService.failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
+            throw e;
+        }
     }
 
     @Override
