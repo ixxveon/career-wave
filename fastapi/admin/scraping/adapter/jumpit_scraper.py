@@ -12,7 +12,7 @@ from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter
 class JumpitScraper(ScraperAdapter):
     _BASE_URL = "https://jumpit.saramin.co.kr"
     _POSITION_SITEMAP_URL = f"{_BASE_URL}/sitemap/sitemap_position_view_1.xml"
-    _DETAIL_API_PATH = "/api/position/{position_id}"
+    _DETAIL_API_PATH = f"{_BASE_URL}/api/position/{{position_id}}"
     _DEFAULT_HEADERS = {
         "User-Agent": "CareerWaveScraper/1.0 (+https://github.com/ixxveon/career-wave)",
         "Accept": "application/json, text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8",
