@@ -48,7 +48,7 @@ function isLoginBlockServerCode(code: string): code is LoginBlockServerCode {
 export function parseLoginBlockedDecision(
   error: MemberApiError,
 ): (LoginRouteDecision & { type: 'BLOCK' }) | null {
-  if (error.statusCode !== 403) return null;
+  if (error.status !== 403) return null;
   if (!error.serverCode || !isLoginBlockServerCode(error.serverCode)) return null;
   return ACCOUNT_RESTRICTION_SERVER_CODES[error.serverCode];
 }
@@ -98,7 +98,7 @@ export function toMemberApiError(statusCode: number, body?: ApiErrorBody): Membe
 
   return {
     code,
-    statusCode,
+    status: statusCode,
     message: body?.message || fallbackMessages[code],
     serverCode: body?.code,
     fieldErrors,
@@ -108,7 +108,7 @@ export function toMemberApiError(statusCode: number, body?: ApiErrorBody): Membe
 
 export function getSafeLoginMessage(error: MemberApiError): string {
   if (error.code === MEMBER_ERROR_CODE.NETWORK_ERROR) return fallbackMessages.NETWORK_ERROR;
-  if (error.code === MEMBER_ERROR_CODE.SERVER_ERROR || error.statusCode >= 500) return fallbackMessages.SERVER_ERROR;
+  if (error.code === MEMBER_ERROR_CODE.SERVER_ERROR || error.status >= 500) return fallbackMessages.SERVER_ERROR;
   if (error.code === MEMBER_ERROR_CODE.LOCKED) return fallbackMessages.LOCKED;
   if (error.code === MEMBER_ERROR_CODE.RATE_LIMITED) return fallbackMessages.RATE_LIMITED;
   if (error.code === MEMBER_ERROR_CODE.FORBIDDEN) return fallbackMessages.FORBIDDEN;

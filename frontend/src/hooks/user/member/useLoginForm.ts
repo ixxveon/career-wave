@@ -65,7 +65,7 @@ function isMemberApiError(e: unknown): e is MemberApiError {
   if (typeof e !== 'object' || e === null) return false;
   const obj = e as Record<string, unknown>;
   return (
-    'statusCode' in e &&
+    'status' in e &&
     'code' in e &&
     'message' in e &&
     typeof obj.code === 'string' &&
@@ -149,7 +149,7 @@ export function useLoginForm() {
       navigate(compatiblePath ?? decision.path, { replace: true });
     } catch (error) {
       if (!isMemberApiError(error)) {
-        setFieldErrors({ form: getSafeLoginMessage({ code: MEMBER_ERROR_CODE.NETWORK_ERROR, statusCode: 0, message: '' }) });
+        setFieldErrors({ form: getSafeLoginMessage({ code: MEMBER_ERROR_CODE.NETWORK_ERROR, status: 0, message: '' }) });
         return;
       }
       const blockedFromError = parseLoginBlockedDecision(error);
