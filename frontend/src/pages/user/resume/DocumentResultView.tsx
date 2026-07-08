@@ -2,7 +2,7 @@ import { memo, useMemo, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Lightbulb, Mic, ThumbsUp, ThumbsDown, Wand2, Star,
-  CheckCircle2, XCircle, Hash, PenLine, Download,
+  CheckCircle2, XCircle, Hash, PenLine, Tag, Download,
 } from 'lucide-react';
 import type { DocumentResult, FeedbackDetail } from '../../../types/user/document';
 import { computeWordDiff } from '../../../utils/user/resume/textDiff';
@@ -116,6 +116,7 @@ export default function DocumentResultView({
   const gradeColor = scoreColor(totalScore);
   const fd = feedbackDetails[activeSection];
 
+  const keywords = result.recommendedKeywords ?? [];
   const isResume = fileType === 'RESUME';
   const diff = useMemo(
     () => fd.improvedText ? computeWordDiff(fd.originalText, fd.improvedText) : null,
@@ -174,6 +175,18 @@ export default function DocumentResultView({
           <p className="dr-review__text">{overallReview}</p>
         </div>
       </div>
+
+      {keywords.length > 0 && (
+        <div className="dr-card dr-keywords">
+          <p className="dr-card-title"><Tag size={14} /> 보완이 필요한 핵심 키워드</p>
+          <p className="dr-keywords__desc">이력서에 강조하면 좋을 키워드입니다. 관련 경험이 있다면 구체적으로 추가해보세요.</p>
+          <div className="dr-keywords__tags">
+            {keywords.map((kw, i) => (
+              <span key={i} className="dr-keyword-tag">{kw}</span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {feedbackDetails.length > 1 && (
         <div className="dr-section-tabs">
