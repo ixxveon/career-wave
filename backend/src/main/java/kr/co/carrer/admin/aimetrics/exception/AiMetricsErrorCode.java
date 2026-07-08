@@ -20,6 +20,7 @@ public enum AiMetricsErrorCode implements BaseErrorCode {
     RAG_DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "RAG 문서를 찾을 수 없습니다."),
     RAG_DOCUMENT_ALREADY_INDEXING(HttpStatus.CONFLICT, "현재 인덱싱 중인 RAG 문서가 있습니다."),
     RAG_DOCUMENT_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "RAG 문서 업로드에 실패했습니다."),
+    RAG_DOCUMENT_DOWNLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "RAG 문서 다운로드 URL 생성에 실패했습니다."),
     RAG_DOCUMENT_INDEXING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "RAG 문서 인덱싱 시작 요청에 실패했습니다."),
     RAG_DOCUMENT_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "RAG 문서 삭제에 실패했습니다.");
 
