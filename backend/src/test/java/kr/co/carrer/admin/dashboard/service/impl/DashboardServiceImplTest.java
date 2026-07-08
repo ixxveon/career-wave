@@ -87,8 +87,8 @@ class DashboardServiceImplTest {
                 ));
         when(dashboardSummaryQueryRepository.findPaymentRatios(any(DashboardQueryWindow.class)))
                 .thenReturn(List.of(
-                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.CARD, "카드", 75),
-                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.OTHER, "기타", 25)
+                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.CARD, "Toss Payments", 75),
+                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.OTHER, "기타 결제 수단", 25)
                 ));
 
         DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
@@ -102,8 +102,8 @@ class DashboardServiceImplTest {
         assertThat(result.paymentRatio())
                 .extracting(DashboardDTO.PaymentRatio::method, DashboardDTO.PaymentRatio::label, DashboardDTO.PaymentRatio::ratio)
                 .containsExactly(
-                        tuple(DashboardPaymentMethod.CARD, "카드", 75),
-                        tuple(DashboardPaymentMethod.OTHER, "기타", 25)
+                        tuple(DashboardPaymentMethod.CARD, "Toss Payments", 75),
+                        tuple(DashboardPaymentMethod.OTHER, "기타 결제 수단", 25)
                 );
         assertThat(result.kpis()).anySatisfy(kpi -> {
             assertThat(kpi.key()).isEqualTo(DashboardKpiKeyType.TODAY_REVENUE);

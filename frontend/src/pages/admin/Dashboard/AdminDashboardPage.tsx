@@ -286,6 +286,18 @@ export default function AdminDashboardPage() {
       .join(', ');
   }, [paymentRatio]);
 
+  const paymentRatioSummaryText = useMemo(() => {
+    if (paymentRatio.length === 0) {
+      return '';
+    }
+
+    if (paymentRatio.length === 1) {
+      return `${paymentRatio[0].label} ${paymentRatio[0].ratio}%`;
+    }
+
+    return '승인 완료 결제 기준';
+  }, [paymentRatio]);
+
   const { adminCards, hasAdminCardSectionError } = useMemo(() => {
     try {
       const items = (dashboardSummary?.serviceCards ?? []).map((item) => {
@@ -428,7 +440,6 @@ export default function AdminDashboardPage() {
               <section className="admin-card alertPanel">
                 <div className="sectionHead">
                   <h3>오늘 처리할 주요 알림</h3>
-                  <button disabled>전체 보기</button>
                 </div>
 
                 <div className="alertList">
@@ -502,7 +513,12 @@ export default function AdminDashboardPage() {
                 </article>
 
                 <article className="admin-card donutCard">
-                  <h3>결제 비중</h3>
+                  <div className="chartCardHead">
+                    <div>
+                      <h3>결제 수단 비중</h3>
+                      <p>{paymentRatioSummaryText || '승인 완료 결제 기준'}</p>
+                    </div>
+                  </div>
                   {isDashboardInitialLoading ? (
                     <div className="dashboardStateBox dashboardStateBox--chart">
                       결제 비중을 불러오는 중입니다.
@@ -522,7 +538,9 @@ export default function AdminDashboardPage() {
                         style={{
                           background: paymentRatioStops ? `conic-gradient(${paymentRatioStops})` : undefined,
                         }}
-                      />
+                      >
+                        <span>{paymentRatioSummaryText}</span>
+                      </div>
                       <ul>
                         {paymentRatio.map((item) => (
                           <li key={item.method}>
