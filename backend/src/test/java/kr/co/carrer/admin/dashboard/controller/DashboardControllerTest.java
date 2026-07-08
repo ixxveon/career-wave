@@ -257,7 +257,7 @@ class DashboardControllerTest {
                                 )
                         ),
                         List.of(new DashboardDTO.WeeklySignup("06/22", 3L)),
-                        List.of(new DashboardDTO.PaymentRatio(DashboardPaymentMethod.CARD, "카드", 100)),
+                        List.of(new DashboardDTO.PaymentRatio(DashboardPaymentMethod.CARD, "Toss Payments", 100)),
                         List.of(
                                 new DashboardDTO.ServiceCard(
                                         "SCRAPING",

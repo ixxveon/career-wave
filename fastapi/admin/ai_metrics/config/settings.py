@@ -1,7 +1,7 @@
 from functools import lru_cache
 from urllib.parse import quote
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -43,7 +43,11 @@ class AiMetricsSettings(BaseSettings):
     aws_access_key_id: str = Field(default="", alias="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: str = Field(default="", alias="AWS_SECRET_ACCESS_KEY")
     aws_region: str = Field(default="ap-northeast-2", alias="AWS_REGION")
-    aws_s3_bucket: str = Field(default="", alias="AWS_S3_BUCKET")
+    aws_s3_bucket: str = Field(
+        default="",
+        validation_alias=AliasChoices("AWS_S3_BUCKET", "AWS_S3_BUCKET_NAME"),
+        alias="AWS_S3_BUCKET",
+    )
 
     vector_store_provider: str = Field(default="mock", alias="VECTOR_STORE_PROVIDER")
     vector_store_collection: str = Field(
