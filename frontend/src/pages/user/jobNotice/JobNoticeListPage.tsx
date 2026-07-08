@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   ArrowUp,
@@ -487,24 +487,35 @@ export default function JobNoticeListPage() {
     hasNextPage,
     refetch: refetchJobNoticeList,
   } = useJobNoticeList(jobNoticeQueryParams);
-  const jobNoticeListPages =
-    jobNoticeListApiResponse?.pages
-      .map((page) => page?.data)
-      .filter((page): page is NonNullable<typeof page> => page != null) ?? [];
+  const jobNoticeListPages = useMemo(
+    () =>
+      jobNoticeListApiResponse?.pages
+        .map((page) => page?.data)
+        .filter((page): page is NonNullable<typeof page> => page != null) ?? [],
+    [jobNoticeListApiResponse?.pages]
+  );
   const jobNoticeListResponse = jobNoticeListPages[0];
-  const filteredJobs = jobNoticeListPages.flatMap((page) => page.content.map(mapJobNoticeApiToViewModel));
-  const listDeepLinkedJob = deepLinkJobNoticeId
-    ? filteredJobs.find((job) => job.id === deepLinkJobNoticeId) ?? null
-    : null;
+  const filteredJobs = useMemo(
+    () => jobNoticeListPages.flatMap((page) => page.content.map(mapJobNoticeApiToViewModel)),
+    [jobNoticeListPages]
+  );
+  const listDeepLinkedJob = useMemo(
+    () => (deepLinkJobNoticeId ? filteredJobs.find((job) => job.id === deepLinkJobNoticeId) ?? null : null),
+    [deepLinkJobNoticeId, filteredJobs]
+  );
   const shouldFetchDeepLinkedJob = deepLinkJobNoticeId != null && !listDeepLinkedJob && !isJobNoticeListLoading;
   const {
     data: deepLinkedJobDetailApiResponse,
     isError: isDeepLinkedJobDetailError,
   } = useJobNoticeDetail(deepLinkJobNoticeId, { enabled: shouldFetchDeepLinkedJob });
-  const deepLinkedDetailJob =
-    deepLinkedJobDetailApiResponse?.data && deepLinkedJobDetailApiResponse.data.jobNoticeId === deepLinkJobNoticeId
-      ? mapJobNoticeApiToViewModel(deepLinkedJobDetailApiResponse.data)
-      : null;
+  const deepLinkedDetailJob = useMemo(
+    () => (
+      deepLinkedJobDetailApiResponse?.data && deepLinkedJobDetailApiResponse.data.jobNoticeId === deepLinkJobNoticeId
+        ? mapJobNoticeApiToViewModel(deepLinkedJobDetailApiResponse.data)
+        : null
+    ),
+    [deepLinkJobNoticeId, deepLinkedJobDetailApiResponse?.data]
+  );
   const resultTotalItems = jobNoticeListResponse?.totalElements ?? 0;
   const listStats = jobNoticeListResponse?.stats ?? EMPTY_LIST_STATS;
   const hasMoreJobs = hasNextPage ?? false;
@@ -523,10 +534,16 @@ export default function JobNoticeListPage() {
 
     setBookmarks((current) => {
       const next = { ...current };
+      let hasChanges = false;
+
       allLoadedJobs.forEach((job) => {
-        next[job.jobNoticeId] = current[job.jobNoticeId] ?? job.bookmarked;
+        if (!(job.jobNoticeId in current)) {
+          next[job.jobNoticeId] = job.bookmarked;
+          hasChanges = true;
+        }
       });
-      return next;
+
+      return hasChanges ? next : current;
     });
   }, [jobNoticeListPages]);
 
@@ -544,10 +561,16 @@ export default function JobNoticeListPage() {
     if (nextSelectedJob) {
       setBookmarkErrorMessage('');
       setSelectedJob(nextSelectedJob);
-      setBookmarks((current) => ({
-        ...current,
-        [nextSelectedJob.id]: current[nextSelectedJob.id] ?? nextSelectedJob.bookmarked,
-      }));
+      setBookmarks((current) => {
+        if (nextSelectedJob.id in current) {
+          return current;
+        }
+
+        return {
+          ...current,
+          [nextSelectedJob.id]: nextSelectedJob.bookmarked,
+        };
+      });
       return;
     }
 
