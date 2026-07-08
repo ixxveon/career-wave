@@ -172,6 +172,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   window.sessionStorage.clear();
   adminSession.setRole(ADMIN_DETAIL_ROLE.MASTER);
+  adminSession.setId('super_admin');
+  adminSession.setName('Super Admin');
   dashboardApiMock.getSummary.mockResolvedValue(apiResponse(createSummary()));
 });
 
@@ -189,12 +191,25 @@ describe('AdminDashboardPage contract rendering', () => {
     expect(screen.getByText('실시간 활성 관리자')).toBeTruthy();
     expect(screen.getByText('AI 인터뷰 세션')).toBeTruthy();
     expect(screen.getByText('29,000원')).toBeTruthy();
+    expect(screen.getByText('Super Admin')).toBeTruthy();
+    expect(screen.getByText('SA')).toBeTruthy();
     expect(screen.getByText('권한 변경 경고')).toBeTruthy();
     expect(screen.getByText('원티드 스크래핑 실패')).toBeTruthy();
     expect(screen.getByText('Toss Payments')).toBeTruthy();
     expect(screen.getByText('100%')).toBeTruthy();
     expect(screen.getAllByText('Toss Payments 100%')).toHaveLength(2);
     expect(screen.getByText('관리자 활동 - 권한 변경')).toBeTruthy();
+  });
+
+  it('renders the logged-in admin profile using session name and id', async () => {
+    adminSession.setRole(ADMIN_DETAIL_ROLE.CS);
+    adminSession.setId('cs_manager');
+    adminSession.setName('CS Manager');
+
+    renderPage();
+
+    expect(await screen.findByText('CS Manager')).toBeTruthy();
+    expect(document.querySelector('.avatar')?.textContent).toBe('CM');
   });
 
   it('renders the recent activity all alerts button when the destination page is accessible', async () => {
