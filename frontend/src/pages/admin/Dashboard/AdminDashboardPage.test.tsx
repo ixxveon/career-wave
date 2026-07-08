@@ -201,7 +201,7 @@ describe('AdminDashboardPage contract rendering', () => {
     renderPage();
 
     expect(await screen.findByText('권한 변경 경고')).toBeTruthy();
-    expect(screen.getByRole('button', { name: '전체 보기' })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: '전체 보기' })).toHaveProperty('disabled', false);
   });
 
   it('navigates through valid alert, service card, and recent activity target paths', async () => {
