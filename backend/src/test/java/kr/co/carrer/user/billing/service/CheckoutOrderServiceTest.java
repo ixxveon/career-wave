@@ -63,7 +63,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 1L))
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
@@ -91,7 +91,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 2L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 2L))
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
@@ -114,7 +114,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 1L))
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
@@ -190,7 +190,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(interviewPlan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(eq(memberId), eq(2L), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 2L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 2L))
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
@@ -238,7 +238,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 1L))
                 .willReturn(Optional.of(existing));
 
         BillingDTO.ResponseCreateOrder response =
@@ -260,7 +260,7 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 1L))
                 .willReturn(Optional.empty());
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willThrow(new CustomException(BillingErrorCode.BILLING_EMAIL_REQUIRED));
@@ -282,9 +282,10 @@ class CheckoutOrderServiceTest {
                 .willReturn(Optional.of(plan));
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
+        given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 1L))
+                .willReturn(Optional.empty());          // 최초 조회(행 잠금): 없음
         given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
-                .willReturn(Optional.empty())           // 최초 조회: 없음
-                .willReturn(Optional.of(rivalPayment)); // readback: 경쟁 스레드 삽입 행
+                .willReturn(Optional.of(rivalPayment)); // DataIntegrityViolation 후 readback: 경쟁 스레드 삽입 행
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
         given(createTxService.createAndFlush(any(), any(), any()))

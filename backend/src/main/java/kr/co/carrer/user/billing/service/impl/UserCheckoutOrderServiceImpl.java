@@ -60,8 +60,9 @@ public class UserCheckoutOrderServiceImpl implements UserCheckoutOrderService {
             throw new CustomException(BillingErrorCode.SUBSCRIPTION_ALREADY_ACTIVE);
         }
 
+        // 재사용 주문은 행 잠금으로 조회한다 — 동시 재결제 요청이 orderId 재발급을 서로 덮어쓰지 않도록 직렬화.
         Optional<UserPayment> existing =
-                userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, plan.getPlanId());
+                userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, plan.getPlanId());
         if (existing.isPresent()) {
             // 재결제 진입마다 새 orderId·만료시각을 부여한다. (이전 시도에서 Toss 가 소비한 orderId 를 재사용하면
             // 단건결제가 DUPLICATED_ORDER_ID 로 막히므로, 재사용 주문에 항상 새 orderId 를 발급한다)
