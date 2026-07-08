@@ -93,6 +93,10 @@ def test_connect_with_valid_token_accepted(client: TestClient, valid_token: str)
             "user.interview.websocket.interview_ws_handler.session_store.get_seq",
             new=AsyncMock(return_value=0),
         ),
+        patch(
+            "user.interview.websocket.interview_ws_handler.session_store.pop_pending_llm",
+            new=AsyncMock(return_value=None),
+        ),
     ):
         with client.websocket_connect(f"{WS_PATH}?token={valid_token}"):
             assert TEST_SESSION_ID in _live_sessions
@@ -123,8 +127,12 @@ def test_duplicate_connection_sends_error_to_existing(client: TestClient, valid_
             "user.interview.websocket.interview_ws_handler.session_store.get_seq",
             new=AsyncMock(return_value=0),
         ),
+        patch(
+            "user.interview.websocket.interview_ws_handler.session_store.pop_pending_llm",
+            new=AsyncMock(return_value=None),
+        ),
     )
-    with common_patches[0], common_patches[1], common_patches[2], common_patches[3]:
+    with common_patches[0], common_patches[1], common_patches[2], common_patches[3], common_patches[4]:
         with client.websocket_connect(url) as ws1:
             with client.websocket_connect(url):
                 msg = json.loads(ws1.receive_text())
