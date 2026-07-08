@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
         <form onSubmit={handleLogin} style={{ display: 'contents' }}>
           <input
             type="text"
-            placeholder="아이디"
+            placeholder="아이디 또는 이메일"
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
             required

@@ -621,7 +621,7 @@ export default function AdminManagementPage() {
         </section>
       ) : null}
 
-      <section className="amOverviewGrid">
+      <section className="memberSummaryGrid">
         {kpiItems.map((item) => (
           <article className={`admin-card amKpiCard ${item.tone}`} key={item.label}>
             <div className="amKpiContent">
@@ -1156,12 +1156,6 @@ export default function AdminManagementPage() {
           gap: 14px;
           min-height: calc(100vh - 62px);
           padding-bottom: 20px;
-        }
-
-        .amOverviewGrid {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 18px;
         }
 
         .amGlobalErrorState {
@@ -2184,20 +2178,12 @@ export default function AdminManagementPage() {
         }
 
         @media (max-width: 1400px) {
-          .amOverviewGrid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-
           .amLayout {
             grid-template-columns: 1fr;
           }
         }
 
         @media (max-width: 1200px) {
-          .amOverviewGrid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-
           .amToolbar,
           .amAclForm {
             grid-template-columns: 1fr 1fr;
@@ -2205,7 +2191,6 @@ export default function AdminManagementPage() {
         }
 
         @media (max-width: 900px) {
-          .amOverviewGrid,
           .amToolbar,
           .amCreatePageBody,
           .amAclForm {
