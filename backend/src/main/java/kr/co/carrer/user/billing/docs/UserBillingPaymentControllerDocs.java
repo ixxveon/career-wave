@@ -40,6 +40,21 @@ public interface UserBillingPaymentControllerDocs {
             @RequestBody BillingDTO.RequestConfirmPayment request
     );
 
+    @Operation(summary = "일반결제(단건) 확인",
+            description = "토스페이 QR 단건결제(requestPayment)의 paymentKey를 최종 승인하고 구독을 개통합니다. "
+                    + "자동결제 계약이 없는 환경용 경로입니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "결제 성공"),
+            @ApiResponse(responseCode = "400", description = "금액 불일치"),
+            @ApiResponse(responseCode = "404", description = "주문 없음"),
+            @ApiResponse(responseCode = "409", description = "처리 불가 주문 상태"),
+            @ApiResponse(responseCode = "422", description = "Toss API 실패")
+    })
+    ResponseEntity<kr.co.carrer.global.response.ApiResponse<BillingDTO.ResponseConfirmPayment>> confirmOneTimePayment(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @RequestBody BillingDTO.RequestConfirmOneTimePayment request
+    );
+
     @Operation(summary = "결제 실패 기록", description = "Toss redirect fail URL에서 결제 실패를 기록합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "실패 기록 성공"),
