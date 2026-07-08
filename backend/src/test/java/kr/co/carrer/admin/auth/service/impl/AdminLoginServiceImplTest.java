@@ -218,6 +218,22 @@ class AdminLoginServiceImplTest {
     }
 
     @Test
+    void 실패_카운터_key는_입력값이_아닌_계정의_canonical_loginId를_사용한다() throws Exception {
+        // loginId="admin1234", email="admin@test.com" — 이메일로 로그인 시도해도
+        // 카운터 key는 반드시 loginId("admin1234")여야 한다. 그래야 같은 계정을
+        // 아이디/이메일 번갈아 입력해 잠금 기준을 우회하는 것을 막을 수 있다.
+        Admin admin = createAdminWithDistinctLoginIdAndEmail(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
+        assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
+                .isInstanceOf(CustomException.class);
+
+        verify(loginAttemptStore).increment(AccountType.ADMIN, "admin1234");
+        verify(loginAttemptStore, org.mockito.Mockito.never()).increment(AccountType.ADMIN, "admin@test.com");
+    }
+
+    @Test
     void ADMIN_단일세션_신규_로그인_시_기존_세션_jti_blacklist_등록() throws Exception {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
         when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));

@@ -58,16 +58,19 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         }
 
         if (!passwordEncoder.matches(request.getPassword(), admin.getPasswordHash())) {
-            long count = loginAttemptStore.increment(AccountType.ADMIN, request.getLoginId());
+            // 실패 카운터 key는 사용자가 입력한 값(loginId 또는 email)이 아니라 계정의 canonical
+            // loginId로 고정한다. 입력값 기준으로 두면 같은 계정을 아이디/이메일 번갈아 입력해
+            // 잠금 기준(maxAttempts)을 사실상 우회할 수 있기 때문이다.
+            long count = loginAttemptStore.increment(AccountType.ADMIN, admin.getLoginId());
             if (count >= loginAttemptStore.getMaxAttempts()) {
                 admin.lockAccount();
-                loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
+                loginAttemptStore.clear(AccountType.ADMIN, admin.getLoginId());
                 throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
             }
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
-        loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
+        loginAttemptStore.clear(AccountType.ADMIN, admin.getLoginId());
         admin.updateLastLoginAt(Instant.now());
         admin.updateLastLoginIp(clientIp);
 
