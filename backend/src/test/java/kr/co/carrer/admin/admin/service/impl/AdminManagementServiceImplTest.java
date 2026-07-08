@@ -328,6 +328,55 @@ class AdminManagementServiceImplTest {
             verify(adminRepository, never()).saveAndFlush(org.mockito.ArgumentMatchers.any(Admin.class));
             verify(auditLogRepository, never()).save(org.mockito.ArgumentMatchers.any());
         }
+
+        @Test
+        @DisplayName("새 아이디가 다른 관리자의 이메일과 같으면 ADMIN_LOGIN_ID_ALREADY_EXISTS 예외를 반환한다(교차 중복)")
+        void throwsWhenNewLoginIdMatchesExistingEmail() {
+            given(adminRepository.existsByLoginId("backend-admin")).willReturn(false);
+            given(adminRepository.existsByEmail("backend@career-wave.com")).willReturn(false);
+            given(adminRepository.existsByEmail("backend-admin")).willReturn(true);
+
+            var command = new AdminManagementService.CreateAdminCommand(
+                "backend-admin",
+                "backend@career-wave.com",
+                "temporary-password",
+                "backend-admin",
+                AdminRole.BACKEND
+            );
+
+            assertThatThrownBy(() -> adminManagementService.createAdmin(command, 1L, "10.0.0.2"))
+                .isInstanceOf(kr.co.carrer.global.exception.CustomException.class)
+                .extracting(exception -> ((kr.co.carrer.global.exception.CustomException) exception).getErrorCode())
+                .isEqualTo(AdminManagementErrorCode.ADMIN_LOGIN_ID_ALREADY_EXISTS);
+
+            verify(adminRepository, never()).saveAndFlush(org.mockito.ArgumentMatchers.any(Admin.class));
+            verify(auditLogRepository, never()).save(org.mockito.ArgumentMatchers.any());
+        }
+
+        @Test
+        @DisplayName("새 이메일이 다른 관리자의 아이디와 같으면 ADMIN_EMAIL_ALREADY_EXISTS 예외를 반환한다(교차 중복)")
+        void throwsWhenNewEmailMatchesExistingLoginId() {
+            given(adminRepository.existsByLoginId("backend-admin")).willReturn(false);
+            given(adminRepository.existsByEmail("backend@career-wave.com")).willReturn(false);
+            given(adminRepository.existsByEmail("backend-admin")).willReturn(false);
+            given(adminRepository.existsByLoginId("backend@career-wave.com")).willReturn(true);
+
+            var command = new AdminManagementService.CreateAdminCommand(
+                "backend-admin",
+                "backend@career-wave.com",
+                "temporary-password",
+                "backend-admin",
+                AdminRole.BACKEND
+            );
+
+            assertThatThrownBy(() -> adminManagementService.createAdmin(command, 1L, "10.0.0.2"))
+                .isInstanceOf(kr.co.carrer.global.exception.CustomException.class)
+                .extracting(exception -> ((kr.co.carrer.global.exception.CustomException) exception).getErrorCode())
+                .isEqualTo(AdminManagementErrorCode.ADMIN_EMAIL_ALREADY_EXISTS);
+
+            verify(adminRepository, never()).saveAndFlush(org.mockito.ArgumentMatchers.any(Admin.class));
+            verify(auditLogRepository, never()).save(org.mockito.ArgumentMatchers.any());
+        }
     }
 
     @Nested
