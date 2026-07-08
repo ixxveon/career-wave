@@ -134,7 +134,7 @@ class ResumePremiumUsageIntegrationTest {
         when(documentRepository.findByIdForUpdate(documentId)).thenReturn(Optional.of(document));
         when(documentFeedbackRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         resumeService.receiveWebhook(documentId, "test-secret", new ResumeDTO.RequestWebhook(
-                documentId, "COMPLETED", 80, 80, 80, 80, 80, "총평", "[]", null));
+                documentId, "COMPLETED", 80, 80, 80, 80, 80, "총평", "[]", null, null));
 
         assertThat(period.getReservedCount()).isZero();
         assertThat(period.getUsedCount()).isEqualTo(1);
@@ -148,7 +148,7 @@ class ResumePremiumUsageIntegrationTest {
         resumeService.uploadResume(memberId, mock(MultipartFile.class));
         when(documentRepository.findByIdForUpdate(documentId)).thenReturn(Optional.of(document));
         resumeService.receiveWebhook(documentId, "test-secret", new ResumeDTO.RequestWebhook(
-                documentId, "FAILED", null, null, null, null, null, null, null, "오류"));
+                documentId, "FAILED", null, null, null, null, null, null, null, null, "오류"));
 
         assertThat(period.getReservedCount()).isZero();
         assertThat(period.getUsedCount()).isZero();

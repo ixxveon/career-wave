@@ -122,7 +122,7 @@ function createSummary(overrides: Partial<AdminDashboardSummary> = {}): AdminDas
       { label: '06/23', count: 5 },
     ],
     paymentRatio: [
-      { method: 'CARD', label: '카드', ratio: 100 },
+      { method: 'CARD', label: 'Toss Payments', ratio: 100 },
     ],
     serviceCards: [
       {
@@ -195,8 +195,9 @@ describe('AdminDashboardPage contract rendering', () => {
     expect(screen.getByText('SA')).toBeTruthy();
     expect(screen.getByText('권한 변경 경고')).toBeTruthy();
     expect(screen.getByText('원티드 스크래핑 실패')).toBeTruthy();
-    expect(screen.getByText('카드')).toBeTruthy();
+    expect(screen.getByText('Toss Payments')).toBeTruthy();
     expect(screen.getByText('100%')).toBeTruthy();
+    expect(screen.getAllByText('Toss Payments 100%')).toHaveLength(2);
     expect(screen.getByText('관리자 활동 - 권한 변경')).toBeTruthy();
   });
 
@@ -209,6 +210,13 @@ describe('AdminDashboardPage contract rendering', () => {
 
     expect(await screen.findByText('CS Manager')).toBeTruthy();
     expect(document.querySelector('.avatar')?.textContent).toBe('CM');
+  });
+
+  it('renders the recent activity all alerts button when the destination page is accessible', async () => {
+    renderPage();
+
+    expect(await screen.findByText('권한 변경 경고')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '전체 보기' })).toHaveProperty('disabled', false);
   });
 
   it('navigates through valid alert, service card, and recent activity target paths', async () => {

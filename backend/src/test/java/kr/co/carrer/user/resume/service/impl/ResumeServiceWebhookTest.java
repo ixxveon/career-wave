@@ -27,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -67,7 +68,7 @@ class ResumeServiceWebhookTest {
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 documentId, "COMPLETED",
                 85, 90, 75, 80, 82,
-                "전반적으로 우수합니다.", "[{\"sectionNumber\":1}]", null
+                "전반적으로 우수합니다.", "[{\"sectionNumber\":1}]", null, null
         );
 
         resumeService.receiveWebhook(documentId, VALID_SECRET, request);
@@ -91,7 +92,7 @@ class ResumeServiceWebhookTest {
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 documentId, "FAILED",
                 null, null, null, null, null,
-                null, null, "AI 분석 오류 발생"
+                null, null, null, "AI 분석 오류 발생"
         );
 
         resumeService.receiveWebhook(documentId, VALID_SECRET, request);
@@ -108,7 +109,7 @@ class ResumeServiceWebhookTest {
     void receiveWebhook_invalidSecret_throwsException() {
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 UUID.randomUUID(), "COMPLETED",
-                85, 90, 75, 80, 82, "총평", "[]", null
+                85, 90, 75, 80, 82, "총평", "[]", null, null
         );
 
         assertThatThrownBy(() -> resumeService.receiveWebhook(request.documentId(), "wrong-secret", request))
@@ -126,7 +127,7 @@ class ResumeServiceWebhookTest {
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 documentId, "INVALID_STATUS",
                 null, null, null, null, null,
-                null, null, null
+                null, null, null, null
         );
 
         assertThatThrownBy(() -> resumeService.receiveWebhook(documentId, VALID_SECRET, request))
@@ -147,7 +148,7 @@ class ResumeServiceWebhookTest {
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 documentId, "ANALYZING",
                 null, null, null, null, null,
-                null, null, null
+                null, null, null, null
         );
 
         resumeService.receiveWebhook(documentId, VALID_SECRET, request);
@@ -168,13 +169,39 @@ class ResumeServiceWebhookTest {
 
         ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
                 documentId, "COMPLETED",
-                85, 90, 75, 80, 82, "총평", "[]", null
+                85, 90, 75, 80, 82, "총평", "[]", null, null
         );
 
         resumeService.receiveWebhook(documentId, VALID_SECRET, request);
 
         verify(documentFeedbackRepository, never()).save(any());
         verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    @DisplayName("recommendedKeywords가 있으면 저장 엔티티에 JSON 문자열로 직렬화된다")
+    void receiveWebhook_withRecommendedKeywords_serializedAsJson() throws Exception {
+        UUID documentId = UUID.randomUUID();
+        stubAnalyzingDocument(documentId);
+
+        List<String> keywords = List.of("Spring Boot", "Redis");
+        ResumeDTO.RequestWebhook request = new ResumeDTO.RequestWebhook(
+                documentId, "COMPLETED",
+                85, 90, 75, 80, 82,
+                "총평", "[]", keywords, null
+        );
+
+        ArgumentCaptor<DocumentFeedback> captor = ArgumentCaptor.forClass(DocumentFeedback.class);
+        when(documentFeedbackRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        resumeService.receiveWebhook(documentId, VALID_SECRET, request);
+
+        verify(documentFeedbackRepository).save(captor.capture());
+        String savedJson = captor.getValue().getRecommendedKeywords();
+        assertThat(savedJson).isNotNull();
+
+        String[] parsed = new com.fasterxml.jackson.databind.ObjectMapper().readValue(savedJson, String[].class);
+        assertThat(parsed).containsExactly("Spring Boot", "Redis");
     }
 
     // --- Helpers ---

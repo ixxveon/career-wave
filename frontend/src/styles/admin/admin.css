@@ -560,7 +560,7 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
   gap: 22px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .leftColumn {
@@ -575,9 +575,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  height: calc(100vh - 48px);
-  position: sticky;
-  top: 24px;
+  height: 100%;
 }
 
 /* alert */
@@ -602,6 +600,20 @@ button {
   font-weight: 700;
   letter-spacing: -0.5px;
   color: #1c3e63;
+}
+
+.chartCardHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chartCardHead p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6a7f95;
 }
 
 .sectionHead button,
@@ -840,6 +852,9 @@ button {
   background: conic-gradient(#27577f 0 62%, #8daeca 62% 90%, #d6e3ee 90% 100%);
   position: relative;
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .donut::after {
@@ -850,6 +865,18 @@ button {
   background: white;
   position: absolute;
   inset: 24.7%;
+}
+
+.donut span {
+  position: relative;
+  z-index: 1;
+  width: 54%;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #30506f;
+  word-break: keep-all;
 }
 
 .donutContent ul {
@@ -1258,6 +1285,9 @@ button {
 /* table button */
 
 .tableBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: 34px;
   padding: 0 14px;
   border: 1px solid #d7e4f2;
@@ -1267,6 +1297,7 @@ button {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .tableBtn:hover {

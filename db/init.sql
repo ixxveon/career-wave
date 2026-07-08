@@ -170,14 +170,14 @@ CREATE TABLE member_verifications (
     CONSTRAINT pk_member_verifications         PRIMARY KEY (verification_id),
     CONSTRAINT uq_member_verification_token    UNIQUE      (verification_token),
     CONSTRAINT chk_verification_channel        CHECK (channel             IN ('EMAIL', 'PHONE')),
-    CONSTRAINT chk_verification_purpose        CHECK (purpose             IN ('REGISTER', 'FIND_ID', 'RESET_PASSWORD')),
+    CONSTRAINT chk_verification_purpose        CHECK (purpose             IN ('REGISTER', 'FIND_ID', 'RESET_PASSWORD', 'SOCIAL_SIGNUP')),
     CONSTRAINT chk_verification_status         CHECK (verification_status IN ('SENT', 'VERIFIED', 'CONSUMED', 'EXPIRED', 'FAILED', 'RATE_LIMITED'))
 );
 COMMENT ON TABLE  member_verifications                      IS '이메일/휴대폰 인증 테이블 (회원 FK 없음 - 가입 전 인증)';
 COMMENT ON COLUMN member_verifications.verification_id     IS '인증 요청 고유 식별자';
 COMMENT ON COLUMN member_verifications.channel             IS '인증 채널 (EMAIL / PHONE)';
 COMMENT ON COLUMN member_verifications.target              IS '인증 대상 (이메일 주소 또는 휴대폰 번호)';
-COMMENT ON COLUMN member_verifications.purpose             IS '인증 목적 (REGISTER / FIND_ID / RESET_PASSWORD)';
+COMMENT ON COLUMN member_verifications.purpose             IS '인증 목적 (REGISTER / FIND_ID / RESET_PASSWORD / SOCIAL_SIGNUP)';
 COMMENT ON COLUMN member_verifications.code_hash           IS '인증번호 해시값';
 COMMENT ON COLUMN member_verifications.verification_token  IS '인증 완료 후 발급되는 단기 토큰';
 COMMENT ON COLUMN member_verifications.verification_status IS '인증 상태 (SENT / VERIFIED / CONSUMED / EXPIRED / FAILED / RATE_LIMITED)';
@@ -369,6 +369,7 @@ CREATE TABLE document_feedbacks (
     score_total          INTEGER     NULL,
     overall_review       TEXT        NULL,
     feedback_text        TEXT        NOT NULL,
+    recommended_keywords TEXT        NULL,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_document_feedbacks          PRIMARY KEY (document_feedback_id),
@@ -385,6 +386,7 @@ COMMENT ON COLUMN document_feedbacks.score_logical        IS '논리력 점수 (
 COMMENT ON COLUMN document_feedbacks.score_total          IS '종합 점수 (0~100)';
 COMMENT ON COLUMN document_feedbacks.overall_review       IS 'AI 종합 총평';
 COMMENT ON COLUMN document_feedbacks.feedback_text        IS 'AI 상세 첨삭 결과 (JSON 문자열)';
+COMMENT ON COLUMN document_feedbacks.recommended_keywords IS '직무별 핵심 추천 키워드 (JSON 배열 문자열)';
 COMMENT ON COLUMN document_feedbacks.created_at           IS '생성 일시';
 
 -- ================================================
@@ -1229,14 +1231,40 @@ INSERT INTO ai_models (
     output_token_price,
     is_enabled
 )
-VALUES (
+VALUES
+(
     'gpt-4o-mini',
     'GPT-4o Mini',
     'OPENAI',
     0.150000,
     0.600000,
     TRUE
-);
+),
+(
+    'gpt-4o',
+    'GPT-4o',
+    'OPENAI',
+    2.500000,
+    10.000000,
+    TRUE
+),
+(
+    'whisper-1',
+    'Whisper-1',
+    'OPENAI',
+    0.000100,
+    0.000000,
+    TRUE
+),
+(
+    'tts-1',
+    'TTS-1',
+    'OPENAI',
+    0.000015,
+    0.000000,
+    TRUE
+)
+ON CONFLICT (model_name) DO NOTHING;
 
 -- ================================================
 -- 34. ai_usage_logs

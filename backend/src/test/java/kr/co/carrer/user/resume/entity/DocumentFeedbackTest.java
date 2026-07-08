@@ -17,7 +17,7 @@ class DocumentFeedbackTest {
         String overallReview = "전반적으로 우수한 이력서입니다.";
 
         DocumentFeedback feedback = DocumentFeedback.of(
-                documentId, 85, 90, 75, 80, 82, overallReview, feedbackText
+                documentId, 85, 90, 75, 80, 82, overallReview, feedbackText, null
         );
 
         assertThat(feedback.getDocumentId()).isEqualTo(documentId);
@@ -37,7 +37,7 @@ class DocumentFeedbackTest {
         UUID documentId = UUID.randomUUID();
 
         DocumentFeedback feedback = DocumentFeedback.of(
-                documentId, null, null, null, null, null, null, "[]"
+                documentId, null, null, null, null, null, null, "[]", null
         );
 
         assertThat(feedback.getScoreJobFitness()).isNull();

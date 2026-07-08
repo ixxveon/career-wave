@@ -76,7 +76,8 @@ class ResumeServiceFeedbackTest {
         DocumentFeedback feedback = DocumentFeedback.of(
                 documentId, 85, 90, 75, 80, 82,
                 "전반적으로 우수합니다.",
-                "[{\"sectionNumber\":1,\"question\":\"지원동기\",\"originalText\":\"원문\",\"goodPoint\":\"good\",\"badPoint\":\"bad\",\"improvedText\":\"improved\"}]"
+                "[{\"sectionNumber\":1,\"question\":\"지원동기\",\"originalText\":\"원문\",\"goodPoint\":\"good\",\"badPoint\":\"bad\",\"improvedText\":\"improved\"}]",
+                null
         );
 
         when(documentRepository.findByDocumentIdAndMemberId(documentId, memberId))
@@ -92,6 +93,32 @@ class ResumeServiceFeedbackTest {
         assertThat(response.overallReview()).isEqualTo("전반적으로 우수합니다.");
         assertThat(response.feedbackDetails()).hasSize(1);
         assertThat(response.feedbackDetails().get(0).sectionNumber()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("recommended_keywords JSON이 저장된 피드백 조회 시 List<String>으로 복원된다")
+    void getFeedback_withRecommendedKeywords_deserializedAsList() {
+        UUID memberId = UUID.randomUUID();
+        UUID documentId = UUID.randomUUID();
+        Document document = Document.ofResume(memberId, "https://s3.example.com/file.pdf", "이력서.pdf");
+        document.updateStatus(DocumentStatus.COMPLETED);
+
+        DocumentFeedback feedback = DocumentFeedback.of(
+                documentId, 85, 90, 75, 80, 82,
+                "총평",
+                "[{\"sectionNumber\":1,\"question\":\"q\",\"originalText\":\"o\",\"goodPoint\":\"g\",\"badPoint\":\"b\",\"improvedText\":\"i\"}]",
+                "[\"Spring Boot\",\"Redis\"]"
+        );
+
+        when(documentRepository.findByDocumentIdAndMemberId(documentId, memberId))
+                .thenReturn(Optional.of(document));
+        when(documentFeedbackRepository.findByDocumentId(documentId))
+                .thenReturn(Optional.of(feedback));
+
+        ResumeDTO.ResponseFeedback response = resumeService.getFeedback(memberId, documentId);
+
+        assertThat(response.recommendedKeywords())
+                .containsExactly("Spring Boot", "Redis");
     }
 
     @Test
