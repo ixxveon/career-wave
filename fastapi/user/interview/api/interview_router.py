@@ -6,13 +6,19 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from core.config import get_settings
-from core.rate_limit import voice_chunk_limiter
+from core.rate_limit import is_rate_limited
 from core.security import verify_internal_secret
 from user.interview.pipeline import stt_pipeline
 from user.interview.pipeline import llm_pipeline
 from user.interview.pipeline import report_pipeline
 from user.interview.prompts.interview_prompts import MAX_RAG_CONTEXT_CHARS
-from user.interview.websocket.interview_ws_handler import _sessions, _pending_llm
+from core.redis import get_redis
+from user.interview.store import session_store
+from user.interview.websocket.interview_ws_handler import (
+    get_session_meta,
+    is_session_live,
+    update_session_meta,
+)
 
 log = logging.getLogger(__name__)
 
@@ -70,6 +76,7 @@ async def trigger_voice_chunk(
     chunkIndex: int = Form(...),
     isFinal: bool = Form(...),
     audioChunk: UploadFile = File(...),
+    redis=Depends(get_redis),
 ) -> dict[str, object]:
     """
     Spring → FastAPI 음성 청크 전달 트리거.
@@ -90,7 +97,7 @@ async def trigger_voice_chunk(
     if len(audio_bytes) > settings.audio_chunk_max_bytes:
         raise HTTPException(status_code=413, detail="음성 청크 크기가 허용 한도를 초과했습니다.")
 
-    if not voice_chunk_limiter.is_allowed(session_id):
+    if await is_rate_limited(redis, session_id):
         log.warning("rate limit exceeded: sessionId=%s", session_id)
         raise HTTPException(status_code=429, detail="요청이 너무 많습니다. 잠시 후 다시 시도해주세요.")
 
@@ -128,10 +135,10 @@ async def trigger_text_answer(
     if body.sessionId != session_id:
         raise HTTPException(status_code=400, detail="path sessionId와 body sessionId가 일치하지 않습니다.")
 
-    ctx = _sessions.get(session_id)
-    if ctx is None:
-        # WS 연결 전 도착한 경우 — pending 큐에 보관 후 WS 연결 시 flush
-        _pending_llm[session_id] = {
+    if not is_session_live(session_id):
+        # WS 연결 전 도착한 경우 — Redis pending 큐에 보관 후 WS 연결 시 flush
+        redis = await get_redis()
+        await session_store.save_pending_llm(redis, session_id, {
             "questionOrder": body.questionOrder,
             "answerText": body.answerText,
             "questionText": body.questionText,
@@ -139,17 +146,22 @@ async def trigger_text_answer(
             "interviewType": body.interviewType,
             "focusType": body.focusType,
             "targetCompany": body.targetCompany,
-        }
+        })
         log.info("LLM trigger queued (WS not yet connected): sessionId=%s", session_id)
     else:
-        if ctx.session_type is None:
-            ctx.session_type = body.sessionType
-        if ctx.interview_type is None and body.interviewType:
-            ctx.interview_type = body.interviewType
-        if ctx.focus_type is None and body.focusType:
-            ctx.focus_type = body.focusType
-        if ctx.target_company is None and body.targetCompany:
-            ctx.target_company = body.targetCompany
+        # WS 연결 중 — 세션 메타를 Redis에서 읽어 컨텍스트 필드 보완
+        meta = await get_session_meta(session_id) or {}
+        patch: dict = {}
+        if not meta.get("session_type"):
+            patch["session_type"] = body.sessionType
+        if not meta.get("interview_type") and body.interviewType:
+            patch["interview_type"] = body.interviewType
+        if not meta.get("focus_type") and body.focusType:
+            patch["focus_type"] = body.focusType
+        if not meta.get("target_company") and body.targetCompany:
+            patch["target_company"] = body.targetCompany
+        if patch:
+            await update_session_meta(session_id, patch)
 
         task = asyncio.create_task(
             llm_pipeline.generate_and_deliver_question(
@@ -218,12 +230,8 @@ async def _index_rag_context(session_id: str, document_file_path: str) -> None:
         safe_path = _resolve_safe_path(document_file_path)
         text = await _extract_document_text(str(safe_path))
         truncated = text[:MAX_RAG_CONTEXT_CHARS]
-        ctx = _sessions.get(session_id)
-        if ctx is not None:
-            ctx.rag_context = truncated
-            log.info("[Session: %s] RAG context indexed: charLen=%d", session_id, len(truncated))
-        else:
-            log.warning("[Session: %s] RAG index skipped: no active session", session_id)
+        await update_session_meta(session_id, {"rag_context": truncated})
+        log.info("[Session: %s] RAG context indexed: charLen=%d", session_id, len(truncated))
     except Exception as e:
         log.warning(
             "[Session: %s] RAG indexing failed (fallback to general mode): %s",
@@ -275,8 +283,7 @@ async def trigger_report(
     _bg_tasks.add(task)
     task.add_done_callback(_on_task_done)
 
-    # 세션 종료 시점에 Rate Limit 버킷 정리
-    voice_chunk_limiter.clear(session_id)
+    # Redis Sorted Set TTL이 만료 처리하므로 별도 정리 불필요
 
     log.info(
         "report pipeline triggered: sessionId=%s, sessionType=%s",

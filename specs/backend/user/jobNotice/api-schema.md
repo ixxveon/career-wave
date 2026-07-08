@@ -69,7 +69,7 @@
 | Enum | Values | ERD CHECK 제약 |
 |---|---|---|
 | `JobType` | `FULLTIME`, `INTERN`, `CONTRACT` | `job_notices.job_type` |
-| `CompanySizeType` | `STARTUP`, `SME`, `LARGE` | `job_notices.company_size` |
+| `CompanySizeType` | `STARTUP`, `SME`, `MID_MARKET`, `LARGE` | `job_notices.company_size` |
 | `CareerLevelType` | `JUNIOR`, `SENIOR`, `ANY` | `job_notices.career_level` |
 | `JobNoticeStatusType` | `ACTIVE`, `CLOSED` | `job_notices.notice_status` |
 
@@ -86,7 +86,7 @@
 | `jobCategory` | `string` | `job_notices.job_category` | 직무/직군 |
 | `careerLevel` | `JUNIOR \| SENIOR \| ANY` | `job_notices.career_level` | 경력 수준 |
 | `location` | `string` | `job_notices.location` | 지역 |
-| `companySize` | `STARTUP \| SME \| LARGE` | `job_notices.company_size` | 회사 규모 |
+| `companySize` | `STARTUP \| SME \| MID_MARKET \| LARGE` | `job_notices.company_size` | 회사 규모 |
 | `period` | `today \| 7d \| 30d \| all` | `job_notices.created_at`, `job_notices.deadline` | 기간 필터 |
 | `sort` | `recommend \| latest \| views` | `job_notices.created_at`, `job_notices.deadline`, `job_notices.view_count` | 정렬 |
 | `page` | `number` | 없음 | 페이지 번호, 1-based |
@@ -115,7 +115,7 @@
 | `jobCategory` | `string` | N | `job_notices.job_category` | 직무/직군 |
 | `careerLevel` | `JUNIOR \| SENIOR \| ANY` | N | `job_notices.career_level` | 경력 수준 |
 | `location` | `string` | N | `job_notices.location` | 지역 |
-| `companySize` | `STARTUP \| SME \| LARGE` | N | `job_notices.company_size` | 회사 규모 |
+| `companySize` | `STARTUP \| SME \| MID_MARKET \| LARGE` | N | `job_notices.company_size` | 회사 규모 |
 | `period` | `today \| 7d \| 30d \| all` | N | `job_notices.created_at`, `job_notices.deadline` | 기간 필터 |
 | `sort` | `recommend \| latest \| views` | N | `job_notices.created_at`, `job_notices.deadline`, `job_notices.view_count` | 정렬 |
 | `page` | `number` | N | 없음 | 페이지 번호, 1-based |
@@ -321,7 +321,7 @@
 | `title` | `string` | Y | `job_notices.title` | 공고 제목 |
 | `skillTags` | `string[] \| null` | N | `job_notices.skill_tags` | 기술 태그 목록 |
 | `jobType` | `FULLTIME \| INTERN \| CONTRACT \| null` | N | `job_notices.job_type` | 채용 유형 |
-| `companySize` | `STARTUP \| SME \| LARGE \| null` | N | `job_notices.company_size` | 회사 규모 |
+| `companySize` | `STARTUP \| SME \| MID_MARKET \| LARGE \| null` | N | `job_notices.company_size` | 회사 규모 |
 | `jobCategory` | `string[] \| null` | N | `job_notices.job_category` | 직무/직군 |
 | `careerLevel` | `JUNIOR \| SENIOR \| ANY \| null` | N | `job_notices.career_level` | 경력 수준 |
 | `location` | `string \| null` | N | `job_notices.location` | 지역 |
@@ -353,7 +353,7 @@
 | `description` | `string \| null` | N | `job_notices.description` | 공고 설명 |
 | `skillTags` | `string[] \| null` | N | `job_notices.skill_tags` | 기술 태그 목록 |
 | `jobType` | `FULLTIME \| INTERN \| CONTRACT \| null` | N | `job_notices.job_type` | 채용 유형 |
-| `companySize` | `STARTUP \| SME \| LARGE \| null` | N | `job_notices.company_size` | 회사 규모 |
+| `companySize` | `STARTUP \| SME \| MID_MARKET \| LARGE \| null` | N | `job_notices.company_size` | 회사 규모 |
 | `jobCategory` | `string[] \| null` | N | `job_notices.job_category` | 직무/직군 |
 | `careerLevel` | `JUNIOR \| SENIOR \| ANY \| null` | N | `job_notices.career_level` | 경력 수준 |
 | `location` | `string \| null` | N | `job_notices.location` | 지역 |

@@ -20,7 +20,7 @@ from user.interview.prompts.report_prompts import (
     build_report_user_prompt,
     REPORT_SYSTEM_PROMPT,
 )
-from user.interview.websocket.interview_ws_handler import _sessions
+from user.interview.websocket.interview_ws_handler import get_session_meta
 
 log = logging.getLogger(__name__)
 
@@ -39,20 +39,20 @@ async def generate_and_send_report(session_id: str, session_type: str) -> None:
     세션 컨텍스트의 답변 이력을 분석하여 리포트를 생성하고 Spring에 콜백 전송한다.
     실패 시 빈 feedbacks로 부분 콜백을 전송하여 Spring이 REPORT_READY를 처리할 수 있도록 한다.
     """
-    ctx = _sessions.get(session_id)
-    if ctx is None:
+    meta = await get_session_meta(session_id)
+    if meta is None:
         log.warning("[Session: %s] report skipped: no active session context", session_id)
         return
 
-    if not ctx.answer_history:
+    if not meta.get("answer_history"):
         log.warning("[Session: %s] report skipped: no answer history", session_id)
         await _send_empty_report(session_id)
         return
 
-    answers = _build_answer_list(ctx, session_type)
+    answers = _build_answer_list(meta, session_type)
 
     try:
-        result = await _call_llm_report(session_id, answers, ctx.member_id)
+        result = await _call_llm_report(session_id, answers, meta.get("member_id") or "")
         feedbacks = _build_feedbacks(answers, result)
         total_score: int | None
         try:
@@ -110,13 +110,14 @@ async def _call_llm_report(session_id: str, answers: list[dict], member_id: str)
     return data
 
 
-def _build_answer_list(ctx, session_type: str) -> list[dict]:
+def _build_answer_list(meta: dict, session_type: str) -> list[dict]:
     """answer_history + voice_quality_by_order를 합쳐 평가용 답변 목록을 구성한다."""
     result = []
-    for idx, record in enumerate(ctx.answer_history):
+    vqbo: dict = meta.get("voice_quality_by_order") or {}
+    for idx, record in enumerate(meta.get("answer_history") or []):
         order = idx + 1
         is_voice = session_type.upper() == "VOICE"
-        vqr: float | None = ctx.voice_quality_by_order.get(order) if is_voice else None
+        vqr: float | None = vqbo.get(order) if is_voice else None
         # voiceQualityRatio가 None(텍스트 면접)이거나 50 미만이면 delivery/fluency null 처리
         mask = vqr is None or should_mask_scores(vqr)
         result.append({

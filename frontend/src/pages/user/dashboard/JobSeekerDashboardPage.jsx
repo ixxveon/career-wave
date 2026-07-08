@@ -273,7 +273,7 @@ function JobSeekerDashboardPage() {
           )}
 
           {recommendedJobsStatus === 'loading' && (
-            <div className="cw-home-job-state" role="status" aria-live="polite">
+            <div className="cw-home-job-state" role="status" aria-live="polite" aria-hidden={!isLoggedIn}>
               <Briefcase size={18} />
               <strong>추천 공고를 불러오는 중입니다.</strong>
               <span>실제 채용공고 데이터를 확인하고 있어요.</span>
@@ -281,7 +281,7 @@ function JobSeekerDashboardPage() {
           )}
 
           {recommendedJobsStatus === 'empty' && (
-            <div className="cw-home-job-state" role="status" aria-live="polite">
+            <div className="cw-home-job-state" role="status" aria-live="polite" aria-hidden={!isLoggedIn}>
               <Filter size={18} />
               <strong>표시할 추천 공고가 없습니다.</strong>
               <span>전체 공고 페이지에서 더 많은 채용 정보를 확인해보세요.</span>
@@ -289,7 +289,7 @@ function JobSeekerDashboardPage() {
           )}
 
           {recommendedJobsStatus === 'error' && (
-            <div className="cw-home-job-state" role="alert">
+            <div className="cw-home-job-state" role="alert" aria-hidden={!isLoggedIn}>
               <Filter size={18} />
               <strong>추천 공고를 불러오지 못했습니다.</strong>
               <span>잠시 후 다시 시도해주세요.</span>

@@ -134,7 +134,7 @@ All saved enum-like fields must remain compatible with the Spring user job
 notice enums:
 
 - `job_type`: `FULLTIME`, `INTERN`, `CONTRACT`
-- `company_size`: `STARTUP`, `SME`, `LARGE`
+- `company_size`: `STARTUP`, `SME`, `MID_MARKET`, `LARGE`
 - `career_level`: `JUNIOR`, `SENIOR`, `ANY`
 - `notice_status`: `ACTIVE`, `CLOSED`
 

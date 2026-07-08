@@ -9,9 +9,11 @@ from admin.scraping.adapter import (
 from admin.scraping.exception import ScrapingErrorCode, ScrapingException
 
 
-def test_supported_source_registry_contains_jumpit_wanted_and_saramin():
-    assert set(SUPPORTED_SOURCE_REGISTRY.keys()) == {"jumpit", "wanted", "saramin"}
+def test_supported_source_registry_contains_registered_scraping_sources():
+    assert set(SUPPORTED_SOURCE_REGISTRY.keys()) == {"groupby", "jumpit", "wanted", "saramin"}
 
+    assert SUPPORTED_SOURCE_REGISTRY["groupby"].display_name == "GroupBy"
+    assert SUPPORTED_SOURCE_REGISTRY["groupby"].adapter_name == "groupby_scraper"
     assert SUPPORTED_SOURCE_REGISTRY["jumpit"].display_name == "Jumpit"
     assert SUPPORTED_SOURCE_REGISTRY["jumpit"].adapter_name == "jumpit_scraper"
 
@@ -44,7 +46,7 @@ def test_supported_source_registry_entries_follow_extension_contract():
         )
 
 
-@pytest.mark.parametrize("source_name", ["jumpit", "wanted", "saramin"])
+@pytest.mark.parametrize("source_name", ["groupby", "jumpit", "wanted", "saramin"])
 def test_is_supported_source_returns_true_for_registered_sources(source_name: str):
     assert is_supported_source(source_name) is True
 

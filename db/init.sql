@@ -1445,6 +1445,7 @@ INSERT INTO scraping_pipelines (
     is_enabled
 )
 VALUES
+    ('groupby', 'GroupBy', 'IDLE', TRUE),
     ('jumpit', 'Jumpit', 'IDLE', TRUE),
     ('wanted', 'Wanted', 'IDLE', TRUE),
     ('saramin', 'Saramin', 'IDLE', TRUE)

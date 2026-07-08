@@ -10,6 +10,7 @@ import asyncio
 import json
 import logging
 import random
+from typing import Any
 
 from openai import AsyncOpenAI
 
@@ -28,8 +29,8 @@ from user.interview.prompts.interview_prompts import (
 )
 from user.interview.websocket.interview_ws_handler import (
     InterviewErrorCode,
-    _SessionContext,
-    _sessions,
+    get_session_meta,
+    update_session_meta,
     send_error,
 )
 
@@ -55,17 +56,17 @@ async def generate_and_deliver_question(
     텍스트 답변 수신 후 LLM으로 다음 질문을 생성하고 Spring에 전달한다.
     실패 시 폴백 질문으로 대체하며 세션을 중단하지 않는다.
     """
-    ctx = _sessions.get(session_id)
-    if ctx is None:
+    meta = await get_session_meta(session_id)
+    if meta is None:
         log.warning("[Session: %s] LLM skipped: no active session context", session_id)
         return
 
     if question_order > 0:
-        _record_answer(ctx, question_text, answer_text)
-        ctx.recent_answer_quality = _assess_answer_quality(ctx, question_order, answer_text)
+        _record_answer(meta, question_text, answer_text)
+        meta["recent_answer_quality"] = _assess_answer_quality(meta, question_order, answer_text)
         log.debug(
             "[Session: %s] answer quality assessed: order=%d, quality=%s",
-            session_id, question_order, ctx.recent_answer_quality,
+            session_id, question_order, meta["recent_answer_quality"],
         )
 
     settings = get_settings()
@@ -73,13 +74,14 @@ async def generate_and_deliver_question(
 
     if next_question_order > 10:
         log.info("[Session: %s] max questions reached, triggering report", session_id)
+        await update_session_meta(session_id, meta)
         from user.interview.pipeline import report_pipeline
-        await report_pipeline.generate_and_send_report(session_id, ctx.session_type or "TEXT")
+        await report_pipeline.generate_and_send_report(session_id, meta.get("session_type") or "TEXT")
         return
 
     try:
         result = await asyncio.wait_for(
-            _call_llm(session_id, ctx, settings),
+            _call_llm(session_id, meta, settings),
             timeout=settings.openai_llm_timeout_seconds,
         )
         question_text_generated = result["question"]
@@ -96,8 +98,10 @@ async def generate_and_deliver_question(
             InterviewErrorCode.LLM_FAILED,
             question_order=next_question_order,
         )
-        question_text_generated = _pick_fallback(ctx)
+        question_text_generated = _pick_fallback(meta)
         question_type = "NEXT"
+
+    await update_session_meta(session_id, meta)
 
     payload = QuestionPayload(
         questionOrder=next_question_order,
@@ -115,15 +119,15 @@ async def generate_and_deliver_question(
         )
         return
 
-    if ctx.session_type == "VOICE":
+    if meta.get("session_type") == "VOICE":
         from user.interview.pipeline import tts_pipeline
         await tts_pipeline.synthesize_and_stream(question_text_generated, session_id, next_question_order)
 
 
-async def _call_llm(session_id: str, ctx: _SessionContext, settings) -> dict[str, str]:
+async def _call_llm(session_id: str, meta: dict[str, Any], settings) -> dict[str, str]:
     """GPT-4o 호출 후 JSON 파싱. 실패 시 1회 재시도."""
     client = _get_openai_client()
-    messages = _build_messages(ctx)
+    messages = _build_messages(meta)
     model = settings.openai_model_interview
 
     raw, usage = await _chat(client, model, messages)
@@ -141,7 +145,7 @@ async def _call_llm(session_id: str, ctx: _SessionContext, settings) -> dict[str
         result = _parse_llm_json(raw2)
 
     await record_ai_usage(
-        member_id=ctx.member_id,
+        member_id=meta.get("member_id"),
         model_name=model,
         feature_type="INTERVIEW",
         input_tokens=input_tokens,
@@ -180,24 +184,25 @@ def _parse_llm_json(raw: str) -> dict[str, str]:
     return {"question": str(data["question"]), "questionType": str(data["questionType"])}
 
 
-def _build_messages(ctx: _SessionContext) -> list[dict[str, str]]:
-    system_prompt = get_system_prompt(ctx.interview_type)
-    company_overlay = get_company_overlay(ctx.target_company)
+def _build_messages(meta: dict[str, Any]) -> list[dict[str, str]]:
+    system_prompt = get_system_prompt(meta.get("interview_type"))
+    company_overlay = get_company_overlay(meta.get("target_company"))
     if company_overlay:
         system_prompt = system_prompt + "\n\n" + company_overlay
-    focus_overlay = get_focus_overlay(ctx.focus_type)
+    focus_overlay = get_focus_overlay(meta.get("focus_type"))
     if focus_overlay:
         system_prompt = system_prompt + "\n\n" + focus_overlay
-    difficulty_overlay = get_difficulty_overlay(ctx.recent_answer_quality)
+    difficulty_overlay = get_difficulty_overlay(meta.get("recent_answer_quality"))
     if difficulty_overlay:
         system_prompt = system_prompt + "\n\n" + difficulty_overlay
-    if ctx.rag_context:
-        system_prompt = system_prompt + "\n\n" + build_rag_injection(ctx.rag_context)
+    rag_context = meta.get("rag_context")
+    if rag_context:
+        system_prompt = system_prompt + "\n\n" + build_rag_injection(rag_context)
 
     messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
 
     # LLM 컨텍스트 초과 방지: 최근 N개만 포함
-    history = ctx.answer_history[-MAX_ANSWER_HISTORY:]
+    history = (meta.get("answer_history") or [])[-MAX_ANSWER_HISTORY:]
     for record in history:
         messages.append({"role": "assistant", "content": record["question"]})
         messages.append({"role": "user", "content": record["answer"]})
@@ -206,22 +211,25 @@ def _build_messages(ctx: _SessionContext) -> list[dict[str, str]]:
     return messages
 
 
-def _record_answer(ctx: _SessionContext, question: str, answer: str) -> None:
-    ctx.answer_history.append({"question": question, "answer": answer})
+def _record_answer(meta: dict[str, Any], question: str, answer: str) -> None:
+    history: list[dict] = list(meta.get("answer_history") or [])
+    history.append({"question": question, "answer": answer})
+    meta["answer_history"] = history
 
 
 _QUALITY_TEXT_INSUFFICIENT = 50   # 글자 수 기준: 미달
 _QUALITY_TEXT_STRONG = 200        # 글자 수 기준: 우수
 
 
-def _assess_answer_quality(ctx: _SessionContext, question_order: int, answer_text: str) -> str:
+def _assess_answer_quality(meta: dict[str, Any], question_order: int, answer_text: str) -> str:
     """직전 답변의 품질 신호를 반환한다.
 
     음성 면접: voice_quality_by_order의 해당 순서 비율로 판단.
     텍스트 면접: 답변 길이로 판단.
     """
-    if ctx.session_type == "VOICE":
-        ratio = ctx.voice_quality_by_order.get(question_order)
+    if meta.get("session_type") == "VOICE":
+        vqbo = meta.get("voice_quality_by_order") or {}
+        ratio = vqbo.get(question_order)
         if ratio is None:
             return "ADEQUATE"
         if ratio < 50.0:
@@ -238,15 +246,18 @@ def _assess_answer_quality(ctx: _SessionContext, question_order: int, answer_tex
     return "ADEQUATE"
 
 
-def _pick_fallback(ctx: _SessionContext) -> str:
-    asked = {r["question"] for r in ctx.answer_history}
-    candidates = get_fallback_questions(ctx.interview_type)
-    unused = [q for q in candidates if q not in ctx.used_fallback_questions and q not in asked]
+def _pick_fallback(meta: dict[str, Any]) -> str:
+    history = meta.get("answer_history") or []
+    asked = {r["question"] for r in history}
+    interview_type = meta.get("interview_type")
+    used_fallback: set[str] = set(meta.get("used_fallback_questions") or [])
+    candidates = get_fallback_questions(interview_type)
+    unused = [q for q in candidates if q not in used_fallback and q not in asked]
     if not unused:
-        # 미사용 폴백이 없을 경우 answer_history에 없는 것만 재사용
         unused = [q for q in candidates if q not in asked]
     if not unused:
         unused = candidates
     chosen = random.choice(unused)
-    ctx.used_fallback_questions.add(chosen)
+    used_fallback.add(chosen)
+    meta["used_fallback_questions"] = used_fallback
     return chosen
