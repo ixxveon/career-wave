@@ -1271,7 +1271,6 @@ button {
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  box-sizing: border-box;
 }
 
 .tableBtn:hover {
