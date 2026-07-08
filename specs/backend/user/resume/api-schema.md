@@ -223,6 +223,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
       "total": 74
     },
     "overallReview": "전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다.",
+    "recommendedKeywords": ["Spring Boot", "Redis", "성과 수치화", "MSA"],
     "feedbackDetails": [
       {
         "sectionNumber": 1,
@@ -267,6 +268,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 | `data.scores.logicalStructure` | `number` | 논리력 (0~100) |
 | `data.scores.total` | `number` | 종합 점수 (0~100) |
 | `data.overallReview` | `string` \| `null` | AI 종합 총평, 분석 미완료 시 `null` |
+| `data.recommendedKeywords` | `string[]` \| `null` | 직무 핵심 키워드 추천 목록, 분석 미완료 시 `null` |
 | `data.feedbackDetails` | `array` \| `null` | 항목별 첨삭 결과, 분석 미완료 시 `null` |
 | `data.feedbackDetails[].starAnalysis` | `object` \| `null` | STAR 분석, 이력서 전용 (자기소개서는 `null`) |
 | `data.feedbackDetails[].quantAnalysis` | `object` \| `null` | 수치화 분석, 항목에 따라 `null` 허용 |
@@ -373,6 +375,7 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
   "scoreTotal": 74,
   "overallReview": "전반적으로 백엔드 역량이 우수하나 성과의 정량적 수치화가 아쉽습니다.",
   "feedbackText": "[{\"sectionNumber\":1,\"question\":\"...\",\"goodPoint\":\"...\", ...}]",
+  "recommendedKeywords": ["Spring Boot", "Redis", "성과 수치화", "MSA"],
   "errorMessage": null
 }
 ```
@@ -388,11 +391,13 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 | `scoreTotal` | `number` \| `null` | 종합 점수 (0~100), `FAILED` 시 `null` |
 | `overallReview` | `string` \| `null` | AI 종합 총평, `FAILED` 시 `null` — `document_feedbacks.overall_review` 컬럼에 저장 |
 | `feedbackText` | `string` \| `null` | 항목별 첨삭 배열을 JSON 직렬화한 문자열. `FAILED` 시 `document_feedbacks` 행 미생성 → `null` 반환 |
+| `recommendedKeywords` | `string[]` \| `null` | 추천 키워드 목록, `FAILED` 시 `null` — `document_feedbacks.recommended_keywords` 컬럼에 JSON 배열로 저장 |
 | `errorMessage` | `string` \| `null` | 실패 시 오류 메시지 — `documents.error_message` 컬럼에 저장 |
 
 > **DB 매핑**  
 > - `overallReview` → `document_feedbacks.overall_review TEXT NULL`  
 > - `feedbackText` → `document_feedbacks.feedback_text TEXT NOT NULL` (JSON 직렬화 문자열)  
+> - `recommendedKeywords` → `document_feedbacks.recommended_keywords TEXT NULL` (JSON 배열 직렬화 문자열)  
 > - `errorMessage` → `documents.error_message TEXT NULL`  
 > Spring에서 `ObjectMapper.readValue(feedbackText, FeedbackDetail[].class)`로 역직렬화 후 응답 반환.
 

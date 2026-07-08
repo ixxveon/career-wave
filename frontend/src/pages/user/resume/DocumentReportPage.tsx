@@ -21,6 +21,7 @@ function toDocumentResult(res: AnalysisResultResponse): DocumentResult {
       overallReview:     res.overallReview ?? '',
     },
     feedbackDetails: res.feedbackDetails,
+    recommendedKeywords: res.recommendedKeywords ?? [],
   };
 }
 

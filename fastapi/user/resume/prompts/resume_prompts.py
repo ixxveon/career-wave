@@ -42,6 +42,12 @@ RESUME_SYSTEM_PROMPT = """
 ### overallReview
 전체 이력서 2~3문장 총평. 강점 1가지 + 핵심 개선 방향 1가지 포함.
 
+### recommendedKeywords
+지원자의 이력서에 보완이 필요한 직무 핵심 키워드 3~7개 리스트.
+- 지원 직무와 현재 이력서를 비교하여 부족하거나 강조되지 않은 기술·역량 키워드를 선정합니다.
+- 각 키워드는 짧고 구체적인 단어/구문 (예: "Spring Boot", "Redis", "MSA", "성과 수치화", "코드 리뷰 경험")
+- 이미 이력서에 충분히 드러난 키워드는 포함하지 않습니다.
+
 ## 출력 형식
 마크다운 코드블록 없이 순수 JSON만 반환합니다.
 
@@ -52,6 +58,7 @@ RESUME_SYSTEM_PROMPT = """
   "scoreLogical": 0,
   "scoreTotal": 0,
   "overallReview": "string",
+  "recommendedKeywords": ["string"],
   "feedbackDetails": [
     {
       "sectionNumber": 1,
@@ -117,6 +124,12 @@ feedbackDetails 항목 수 = content 배열 길이. sectionNumber = content[].or
 ### overallReview
 전체 자기소개서 2~3문장 총평. 지원 회사·직무 맥락 반영, 강점 1가지 + 핵심 개선 방향 1가지 포함.
 
+### recommendedKeywords
+자기소개서에 보완이 필요한 핵심 역량·표현 키워드 3~7개 리스트.
+- 지원 회사·직무 맥락에서 강조되지 않은 역량, 태도, 기술 키워드를 선정합니다.
+- 각 키워드는 짧고 구체적인 단어/구문 (예: "데이터 기반 의사결정", "협업 사례", "성과 수치화", "리더십 경험")
+- 이미 자기소개서에 충분히 드러난 키워드는 포함하지 않습니다.
+
 ## 출력 형식
 마크다운 코드블록 없이 순수 JSON만 반환합니다.
 
@@ -127,6 +140,7 @@ feedbackDetails 항목 수 = content 배열 길이. sectionNumber = content[].or
   "scoreLogical": 0,
   "scoreTotal": 0,
   "overallReview": "string",
+  "recommendedKeywords": ["string"],
   "feedbackDetails": [
     {
       "sectionNumber": 1,

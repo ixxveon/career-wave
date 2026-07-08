@@ -46,6 +46,9 @@ public class DocumentFeedback {
     @Column(name = "feedback_text", nullable = false, columnDefinition = "TEXT")
     private String feedbackText;
 
+    @Column(name = "recommended_keywords", columnDefinition = "TEXT")
+    private String recommendedKeywords;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;
 
@@ -57,7 +60,8 @@ public class DocumentFeedback {
             Integer scoreLogical,
             Integer scoreTotal,
             String overallReview,
-            String feedbackText
+            String feedbackText,
+            String recommendedKeywords
     ) {
         DocumentFeedback feedback = new DocumentFeedback();
         feedback.documentId = documentId;
@@ -68,6 +72,7 @@ public class DocumentFeedback {
         feedback.scoreTotal = scoreTotal;
         feedback.overallReview = overallReview;
         feedback.feedbackText = feedbackText;
+        feedback.recommendedKeywords = recommendedKeywords;
         feedback.createdAt = ZonedDateTime.now();
         return feedback;
     }
