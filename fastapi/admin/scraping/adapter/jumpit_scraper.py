@@ -47,6 +47,8 @@ class JumpitScraper(ScraperAdapter):
                 position_urls = self._fetch_position_urls(client)
                 notices: list[RawJobNotice] = []
                 for index, position_url in enumerate(position_urls):
+                    if index > 0:
+                        self._delay()
                     detail = self._fetch_position_detail(client, position_url)
                     if detail is None:
                         continue
@@ -58,8 +60,6 @@ class JumpitScraper(ScraperAdapter):
                     notices.append(notice)
                     if len(notices) >= self._max_items:
                         break
-                    if index < len(position_urls) - 1:
-                        self._delay()
                 return notices
         except (httpx.HTTPError, ElementTree.ParseError):
             return []

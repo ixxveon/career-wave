@@ -518,6 +518,43 @@ def test_jumpit_scraper_uses_html_fallback_when_detail_api_fails():
     assert notices[0].description == "[service]\nFallback detail description."
 
 
+def test_jumpit_scraper_delays_between_positions_after_failed_detail(monkeypatch):
+    sitemap_xml = """
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url><loc>https://jumpit.saramin.co.kr/position/111</loc></url>
+      <url><loc>https://jumpit.saramin.co.kr/position/222</loc></url>
+    </urlset>
+    """
+    request_paths: list[str] = []
+    delays: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        request_paths.append(request.url.path)
+        if request.url.path == "/sitemap/sitemap_position_view_1.xml":
+            return httpx.Response(200, text=sitemap_xml)
+        if request.url.path == "/api/position/111":
+            return httpx.Response(500)
+        if request.url.path == "/position/111":
+            return httpx.Response(404)
+        if request.url.path == "/api/position/222":
+            return httpx.Response(200, json={"result": {"id": 222, "title": "Second", "companyName": "Career Wave"}})
+        return httpx.Response(404)
+
+    monkeypatch.setattr("admin.scraping.adapter.jumpit_scraper.sleep", delays.append)
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://jumpit.saramin.co.kr",
+    )
+    scraper = JumpitScraper(client=client, request_delay_seconds=0.1)
+
+    notices = scraper.scrape()
+
+    assert len(notices) == 1
+    assert notices[0].title == "Second"
+    assert delays == [0.1]
+    assert request_paths.index("/api/position/222") > request_paths.index("/position/111")
+
+
 def test_jumpit_scraper_returns_empty_list_for_invalid_sitemap_payload():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, text="<html>not xml</html>")
