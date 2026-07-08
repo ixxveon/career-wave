@@ -17,6 +17,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -24,6 +26,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class UserCheckoutOrderServiceImpl implements UserCheckoutOrderService {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final int ORDER_EXPIRY_MINUTES = 30;
 
     private static final Set<SubscriptionStatus> BLOCKING_STATUSES = Set.of(
             SubscriptionStatus.ACTIVE,
@@ -58,7 +63,11 @@ public class UserCheckoutOrderServiceImpl implements UserCheckoutOrderService {
         Optional<UserPayment> existing =
                 userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, plan.getPlanId());
         if (existing.isPresent()) {
-            return toCreateOrderResponse(existing.get(), plan);
+            // 재결제 진입마다 새 orderId·만료시각을 부여한다. (이전 시도에서 Toss 가 소비한 orderId 를 재사용하면
+            // 단건결제가 DUPLICATED_ORDER_ID 로 막히므로, 재사용 주문에 항상 새 orderId 를 발급한다)
+            UserPayment order = existing.get();
+            order.renewOrderForRetry(newOrderId(), ZonedDateTime.now(KST).plusMinutes(ORDER_EXPIRY_MINUTES));
+            return toCreateOrderResponse(order, plan);
         }
 
         BillingMemberPort.MemberBillingInfo memberInfo = billingMemberPort.getMemberBillingInfo(memberId);
@@ -71,6 +80,10 @@ public class UserCheckoutOrderServiceImpl implements UserCheckoutOrderService {
                     .map(p -> toCreateOrderResponse(p, plan))
                     .orElseThrow(() -> new CustomException(BillingErrorCode.BILLING_ORDER_NOT_FOUND));
         }
+    }
+
+    private static String newOrderId() {
+        return "ORDER-" + UUID.randomUUID().toString().replace("-", "");
     }
 
     private BillingDTO.ResponseCreateOrder toCreateOrderResponse(UserPayment payment, Plan plan) {

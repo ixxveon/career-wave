@@ -229,8 +229,8 @@ class CheckoutOrderServiceTest {
     }
 
     @Test
-    @DisplayName("같은 상품·회원의 READY 주문이 이미 있으면 기존 주문 반환 (멱등)")
-    void createOrder_idempotentReturnExisting() {
+    @DisplayName("같은 상품·회원의 READY 주문이 있으면 새 row 없이 재사용하되 orderId 는 재발급 (Toss DUPLICATED 방지)")
+    void createOrder_reuseRowWithFreshOrderId() {
         Plan plan = plan(1L, "document-coaching", "서류 AI 코칭", 29000);
         UserPayment existing = readyPayment(memberId, 1L, "document-coaching", "ORDER-EXISTING");
         given(billingMemberPort.isEligibleForBilling(memberId)).willReturn(true);
@@ -244,7 +244,10 @@ class CheckoutOrderServiceTest {
         BillingDTO.ResponseCreateOrder response =
                 service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
 
-        assertThat(response.orderId()).isEqualTo("ORDER-EXISTING");
+        // 새 주문 row 는 만들지 않되(멱등), 재사용 주문의 orderId 는 새로 발급한다.
+        assertThat(response.orderId())
+                .isNotEqualTo("ORDER-EXISTING")
+                .startsWith("ORDER-");
         verify(createTxService, never()).createAndFlush(any(), any(), any());
     }
 
