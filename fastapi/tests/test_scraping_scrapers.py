@@ -1,6 +1,6 @@
 import httpx
 
-from admin.scraping.adapter import GroupByScraper, SaraminScraper, WantedScraper
+from admin.scraping.adapter import GroupByScraper, JumpitScraper, SaraminScraper, WantedScraper
 
 
 def test_groupby_scraper_maps_sitemap_and_job_posting_html_to_raw_job_notices():
@@ -406,3 +406,173 @@ def test_saramin_scraper_returns_empty_list_for_invalid_json_payload():
     scraper = SaraminScraper(client=client, request_delay_seconds=0)
 
     assert scraper.scrape() == []
+
+
+def test_jumpit_scraper_maps_sitemap_and_detail_api_to_raw_job_notices():
+    sitemap_xml = """
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url><loc>https://jumpit.saramin.co.kr/position/54365723</loc></url>
+      <url><loc>https://jumpit.saramin.co.kr/position/54397427</loc></url>
+    </urlset>
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/sitemap/sitemap_position_view_1.xml":
+            return httpx.Response(200, text=sitemap_xml)
+        if request.url.path == "/api/position/54365723":
+            return httpx.Response(
+                200,
+                json={
+                    "result": {
+                        "id": 54365723,
+                        "title": "Backend Platform Engineer",
+                        "companyName": "Career Wave",
+                        "techStacks": [{"stack": "Python"}, {"stack": "FastAPI"}, {"stack": "Python"}],
+                        "serviceInfo": "Build internal platforms.",
+                        "responsibility": "Operate scraping services.",
+                        "qualifications": "3+ years backend experience.",
+                        "preferredRequirements": "Search infra experience.",
+                        "welfares": "Lunch support.",
+                        "recruitProcess": "Document -> Interview",
+                        "newcomer": False,
+                        "minCareer": 3,
+                        "maxCareer": 8,
+                        "closedAt": "2026-12-31 23:59:59",
+                        "location": "Seoul Gangnam",
+                        "jobCategories": [{"id": 1, "name": "Backend"}],
+                        "tags": [{"id": "com_131", "name": "스타트업"}],
+                    }
+                },
+            )
+        if request.url.path == "/api/position/54397427":
+            return httpx.Response(
+                200,
+                json={
+                    "result": {
+                        "id": 54397427,
+                        "title": "Frontend Engineer",
+                        "companyName": "Career Wave 2",
+                    }
+                },
+            )
+        return httpx.Response(404)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://jumpit.saramin.co.kr",
+    )
+    scraper = JumpitScraper(client=client, request_delay_seconds=0)
+
+    notices = scraper.scrape()
+
+    assert len(notices) == 2
+    assert notices[0].original_url == "https://jumpit.saramin.co.kr/position/54365723"
+    assert notices[0].title == "Backend Platform Engineer"
+    assert notices[0].company_name == "Career Wave"
+    assert "[service]\nBuild internal platforms." in notices[0].description
+    assert "[responsibility]\nOperate scraping services." in notices[0].description
+    assert notices[0].skill_tags == ["Python", "FastAPI"]
+    assert notices[0].company_size == "스타트업"
+    assert notices[0].job_category == ["Backend"]
+    assert notices[0].career_level == "3~8"
+    assert notices[0].location == "Seoul Gangnam"
+    assert notices[0].deadline == "2026-12-31 23:59:59"
+    assert notices[1].title == "Frontend Engineer"
+
+
+def test_jumpit_scraper_uses_html_fallback_when_detail_api_fails():
+    sitemap_xml = """
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url><loc>https://jumpit.saramin.co.kr/position/54365723</loc></url>
+    </urlset>
+    """
+    html = """
+    <html>
+      <head>
+        <meta property="og:title" content="Jumpit Platform Engineer" />
+        <meta name="description" content="Fallback detail description." />
+      </head>
+      <body><h1>Jumpit Platform Engineer</h1></body>
+    </html>
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/sitemap/sitemap_position_view_1.xml":
+            return httpx.Response(200, text=sitemap_xml)
+        if request.url.path == "/api/position/54365723":
+            return httpx.Response(500)
+        if request.url.path == "/position/54365723":
+            return httpx.Response(200, text=html)
+        return httpx.Response(404)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://jumpit.saramin.co.kr",
+    )
+    scraper = JumpitScraper(client=client, request_delay_seconds=0)
+
+    notices = scraper.scrape()
+
+    assert len(notices) == 1
+    assert notices[0].title == "Jumpit Platform Engineer"
+    assert notices[0].description == "[service]\nFallback detail description."
+
+
+def test_jumpit_scraper_delays_between_positions_after_failed_detail(monkeypatch):
+    sitemap_xml = """
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url><loc>https://jumpit.saramin.co.kr/position/111</loc></url>
+      <url><loc>https://jumpit.saramin.co.kr/position/222</loc></url>
+    </urlset>
+    """
+    request_paths: list[str] = []
+    delays: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        request_paths.append(request.url.path)
+        if request.url.path == "/sitemap/sitemap_position_view_1.xml":
+            return httpx.Response(200, text=sitemap_xml)
+        if request.url.path == "/api/position/111":
+            return httpx.Response(500)
+        if request.url.path == "/position/111":
+            return httpx.Response(404)
+        if request.url.path == "/api/position/222":
+            return httpx.Response(200, json={"result": {"id": 222, "title": "Second", "companyName": "Career Wave"}})
+        return httpx.Response(404)
+
+    monkeypatch.setattr("admin.scraping.adapter.jumpit_scraper.sleep", delays.append)
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://jumpit.saramin.co.kr",
+    )
+    scraper = JumpitScraper(client=client, request_delay_seconds=0.1)
+
+    notices = scraper.scrape()
+
+    assert len(notices) == 1
+    assert notices[0].title == "Second"
+    assert delays == [0.1]
+    assert request_paths.index("/api/position/222") > request_paths.index("/position/111")
+
+
+def test_jumpit_scraper_returns_empty_list_for_invalid_sitemap_payload():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text="<html>not xml</html>")
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://jumpit.saramin.co.kr",
+    )
+    scraper = JumpitScraper(client=client, request_delay_seconds=0)
+
+    assert scraper.scrape() == []
+
+
+def test_jumpit_scraper_test_connection_returns_false_on_request_error():
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectTimeout("timeout", request=request)
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    scraper = JumpitScraper(client=client)
+
+    assert scraper.test_connection() is False

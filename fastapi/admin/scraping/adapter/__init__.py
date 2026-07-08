@@ -1,4 +1,5 @@
 from admin.scraping.adapter.groupby_scraper import GroupByScraper
+from admin.scraping.adapter.jumpit_scraper import JumpitScraper
 from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter
 from admin.scraping.adapter.saramin_scraper import SaraminScraper
 from admin.scraping.adapter.source_registry import (
@@ -12,6 +13,7 @@ from admin.scraping.adapter.wanted_scraper import WantedScraper
 
 __all__ = [
     "GroupByScraper",
+    "JumpitScraper",
     "RawJobNotice",
     "SaraminScraper",
     "ScraperAdapter",
