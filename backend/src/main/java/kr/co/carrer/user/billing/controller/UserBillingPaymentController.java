@@ -55,6 +55,19 @@ public class UserBillingPaymentController implements UserBillingPaymentControlle
     }
 
     @Override
+    @PostMapping("/payments/confirm-onetime")
+    public ResponseEntity<ApiResponse<BillingDTO.ResponseConfirmPayment>> confirmOneTimePayment(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @Valid @RequestBody BillingDTO.RequestConfirmOneTimePayment request
+    ) {
+        UUID memberId = UUID.fromString(principal.getId());
+        return ResponseEntity.ok(ApiResponse.ok(
+                "결제가 완료되었습니다.",
+                paymentConfirmService.confirmOneTime(memberId, request)
+        ));
+    }
+
+    @Override
     @PostMapping("/payments/fail")
     public ResponseEntity<ApiResponse<BillingDTO.ResponseRecordPaymentFail>> recordPaymentFail(
             @AuthenticationPrincipal AuthPrincipal principal,

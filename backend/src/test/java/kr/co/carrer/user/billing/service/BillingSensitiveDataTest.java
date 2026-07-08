@@ -1,5 +1,6 @@
 package kr.co.carrer.user.billing.service;
 
+import kr.co.carrer.user.billing.client.OneTimePaymentClient;
 import kr.co.carrer.user.billing.client.TossBillingAuthorizationClient;
 import kr.co.carrer.user.billing.client.TossBillingPaymentClient;
 import kr.co.carrer.user.billing.dto.BillingDTO;
@@ -45,6 +46,7 @@ class BillingSensitiveDataTest {
     @Mock PlanRepository planRepository;
     @Mock TossBillingAuthorizationClient tossBillingAuthClient;
     @Mock TossBillingPaymentClient tossBillingPaymentClient;
+    @Mock OneTimePaymentClient oneTimePaymentClient;
     @Mock AesCipher aesCipher;
     @Mock UserPaymentFailureTxService failureTxService;
     @Mock PaymentReconciliationTxService reconciliationTxService;
@@ -57,7 +59,7 @@ class BillingSensitiveDataTest {
                 subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
         confirmService = new UserPaymentConfirmServiceImpl(
                 userPaymentRepository, billingProfileRepository, planRepository,
-                tossBillingAuthClient, tossBillingPaymentClient, aesCipher,
+                tossBillingAuthClient, tossBillingPaymentClient, oneTimePaymentClient, aesCipher,
                 failureTxService, settleTxService, reconciliationTxService);
     }
 

@@ -15,7 +15,8 @@ from core.ai_usage.usage_log_client import record_ai_usage
 from core.config import get_settings
 from user.interview.websocket.interview_ws_handler import (
     InterviewErrorCode,
-    _sessions,
+    get_session_meta,
+    is_session_live,
     send_error,
     send_tts_audio,
 )
@@ -47,8 +48,8 @@ async def synthesize_and_stream(
     client = _get_openai_client()
 
     # TTS 요청 전 member_id 캡처 — 스트리밍 도중 세션 만료 시에도 사용량 기록 보장
-    ctx = _sessions.get(session_id)
-    member_id: str | None = ctx.member_id if ctx is not None else None
+    _meta = await get_session_meta(session_id)
+    member_id: str | None = (_meta or {}).get("member_id")
 
     log.info(
         "[Session: %s] TTS start: questionOrder=%d, textLen=%d",
@@ -74,7 +75,7 @@ async def synthesize_and_stream(
 
             chunk_index = 0
             async for audio_chunk in response.iter_bytes(chunk_size=_TTS_CHUNK_SIZE):
-                if _sessions.get(session_id) is None:
+                if not is_session_live(session_id):
                     log.info("[Session: %s] TTS cancelled: session gone", session_id)
                     return
 

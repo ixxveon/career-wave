@@ -195,27 +195,29 @@ export default function NoticeTab({ onMutate }: NoticeTabProps) {
           <button onClick={openNoticeCreate}>+ 공지 등록</button>
         </div>
         {noticeError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{noticeError}</p>}
-        <table className="memberTable csNoticeTable">
-          <thead><tr><th>번호</th><th>카테고리</th><th>제목</th><th>등록일</th><th>노출</th><th>관리</th></tr></thead>
-          <tbody>
-            {noticeLoading ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
-            ) : notices.map((n, idx) => (
-              <tr key={n.noticeId}>
-                <td style={{ color: '#7a8da4', fontSize: 13 }}>{(noticePage - 1) * 20 + idx + 1}</td>
-                <td><span className="statusBadge normal csNoticeCat">{NOTICE_CATEGORY_LABEL[n.category]}</span></td>
-                <td>{n.title}</td>
-                <td>{new Date(n.createdAt).toLocaleDateString('ko-KR')}</td>
-                <td><span className={`statusBadge ${n.isVisible ? 'normal' : 'dismissed'}`}>{n.isVisible ? '노출' : '숨김'}</span></td>
-                <td>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="tableBtn" onClick={() => openNoticeEdit(n)}>수정</button>
-                    <button className="tableBtn tableBtn--danger" onClick={() => setDeleteConfirmId(n.noticeId)}>삭제</button>
-                  </div></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="tableScroll">
+          <table className="memberTable csNoticeTable">
+            <thead><tr><th>번호</th><th>카테고리</th><th>제목</th><th>등록일</th><th>노출</th><th>관리</th></tr></thead>
+            <tbody>
+              {noticeLoading ? (
+                <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
+              ) : notices.map((n, idx) => (
+                <tr key={n.noticeId}>
+                  <td style={{ color: '#7a8da4', fontSize: 13 }}>{(noticePage - 1) * 20 + idx + 1}</td>
+                  <td><span className="statusBadge normal csNoticeCat">{NOTICE_CATEGORY_LABEL[n.category]}</span></td>
+                  <td>{n.title}</td>
+                  <td>{new Date(n.createdAt).toLocaleDateString('ko-KR')}</td>
+                  <td><span className={`statusBadge ${n.isVisible ? 'normal' : 'dismissed'}`}>{n.isVisible ? '노출' : '숨김'}</span></td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="tableBtn" onClick={() => openNoticeEdit(n)}>수정</button>
+                      <button className="tableBtn tableBtn--danger" onClick={() => setDeleteConfirmId(n.noticeId)}>삭제</button>
+                    </div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         <div className="memberTableFooter">
           <span className="memberTableCount">
             {noticeTotalItems === 0 ? '총 0건' : `표시 중: ${(noticePage - 1) * 20 + 1} - ${Math.min(noticePage * 20, noticeTotalItems)} / 총 ${noticeTotalItems}건`}

@@ -124,10 +124,6 @@ const MentorPage = lazy(() => import("../pages/user/community/MentorPage"));
 const PaymentPage = lazy(() => import("../pages/user/billing/PaymentPage"));
 // [non-MVP] const CompanyProductPage = lazy(() => import('../pages/user/billing/CompanyProductPage'));
 const CheckoutPage = lazy(() => import("../pages/user/billing/CheckoutPage"));
-const TossDemoPage = lazy(() => import("../pages/user/billing/TossDemoPage"));
-const TossDemoResultPage = lazy(
-  () => import("../pages/user/billing/TossDemoResultPage"),
-);
 const PaymentSuccessPage = lazy(
   () => import("../pages/user/billing/PaymentSuccessPage"),
 );
@@ -295,8 +291,6 @@ function AppRoutes() {
         {/* Toss 결제 콜백 — 외부 리디렉트이므로 세션 만료 시에도 렌더링 가능해야 함 (#854) */}
         <Route path="billing/success" element={lazyRoute(<PaymentSuccessPage />)} />
         <Route path="billing/fail" element={lazyRoute(<PaymentFailPage />)} />
-        {/* 데모 일반결제(토스페이 QR) 결과 콜백 — 위와 같은 이유로 ProtectedRoute 밖에 둔다 */}
-        <Route path="billing/demo/result" element={lazyRoute(<TossDemoResultPage />)} />
 
         <Route element={<ProtectedRoute />}>
           <Route
@@ -411,8 +405,6 @@ function AppRoutes() {
             {/* [non-MVP] <Route path="pricing" element={lazyRoute(<PricingPage />)} /> */}
             <Route path="payment" element={lazyRoute(<PaymentPage />)} />
             <Route path="checkout" element={lazyRoute(<CheckoutPage />)} />
-            {/* 데모 전용 일반결제(토스페이 QR) 진입 페이지 */}
-            <Route path="demo" element={lazyRoute(<TossDemoPage />)} />
             <Route
               path="document-coaching/plans"
               element={lazyRoute(<PaymentPage />)}

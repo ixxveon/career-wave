@@ -3,8 +3,10 @@ package kr.co.carrer.user.billing.service.impl;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.client.BillingAuthorizationClient;
 import kr.co.carrer.user.billing.client.BillingPaymentClient;
+import kr.co.carrer.user.billing.client.OneTimePaymentClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingAuthResponse;
 import kr.co.carrer.user.billing.client.dto.TossBillingPaymentResponse;
+import kr.co.carrer.user.billing.client.dto.TossOneTimeConfirmResult;
 import kr.co.carrer.user.billing.dto.BillingDTO;
 import kr.co.carrer.user.billing.entity.*;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
@@ -34,6 +36,7 @@ public class UserPaymentConfirmServiceImpl implements UserPaymentConfirmService 
     private final PlanRepository planRepository;
     private final BillingAuthorizationClient tossBillingAuthClient;
     private final BillingPaymentClient tossBillingPaymentClient;
+    private final OneTimePaymentClient oneTimePaymentClient;
     private final AesCipher aesCipher;
     private final UserPaymentFailureTxService failureTxService;
     private final UserPaymentSettleTxService settleTxService;
@@ -121,6 +124,56 @@ public class UserPaymentConfirmServiceImpl implements UserPaymentConfirmService 
 
         // 6. 원자 결산 트랜잭션 (별도 빈 — self-invocation 방지)
         return settleTxService.settle(payment, billingProfile, plan, payResponse);
+    }
+
+    // 일반결제(단건) 승인 — 자동결제 계약 없이 토스페이 QR 단건결제로 구독을 개통한다.
+    // billingAuth(카드등록) 대신 Toss가 이미 승인한 paymentKey 를 서버에서 최종 confirm 한 뒤 결산한다.
+    @Override
+    public BillingDTO.ResponseConfirmPayment confirmOneTime(UUID memberId,
+                                                            BillingDTO.RequestConfirmOneTimePayment request) {
+
+        // 1. 주문 소유권·상태 검증
+        UserPayment payment = userPaymentRepository.findByOrderId(request.orderId())
+                .filter(p -> p.getMemberId().equals(memberId))
+                .orElseThrow(() -> new CustomException(BillingErrorCode.BILLING_ORDER_NOT_FOUND));
+
+        if (payment.getPaymentStatus() != UserPaymentStatus.READY) {
+            throw new CustomException(BillingErrorCode.BILLING_ORDER_NOT_READY);
+        }
+
+        Plan plan = planRepository.findByProductCodeAndIsActive(payment.getProductCode(), true)
+                .orElseThrow(() -> new CustomException(BillingErrorCode.PRODUCT_NOT_FOUND));
+
+        // 2. 금액 위·변조 방어: 클라이언트가 보낸 금액이 서버 상품 금액과 일치해야 한다.
+        if (request.amount() != plan.getPlanPrice()) {
+            throw new CustomException(BillingErrorCode.PAYMENT_AMOUNT_MISMATCH);
+        }
+
+        // 3. Toss 단건결제 승인 (트랜잭션 밖)
+        TossOneTimeConfirmResult result;
+        try {
+            result = oneTimePaymentClient.confirm(request.paymentKey(), request.orderId(), request.amount());
+        } catch (Exception e) {
+            failureTxService.failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
+            throw e;
+        }
+
+        // 4. 금액·orderId·통화 검증 (Toss 승인 결과 재검증)
+        if (result.totalAmount() != plan.getPlanPrice()) {
+            failureTxService.failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
+            throw new CustomException(BillingErrorCode.PAYMENT_AMOUNT_MISMATCH);
+        }
+        if (!payment.getOrderId().equals(result.orderId())) {
+            failureTxService.failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
+            throw new CustomException(BillingErrorCode.PAYMENT_ORDER_MISMATCH);
+        }
+        if (!"KRW".equals(result.currency())) {
+            failureTxService.failPayment(payment.getPaymentId(), PaymentFailureReason.CONFIRM_FAILED);
+            throw new CustomException(BillingErrorCode.PAYMENT_CURRENCY_MISMATCH);
+        }
+
+        // 5. 원자 결산 트랜잭션 (billingProfile 없이 구독/이용권 발급)
+        return settleTxService.settleOneTime(payment, plan, result);
     }
 
     @Override

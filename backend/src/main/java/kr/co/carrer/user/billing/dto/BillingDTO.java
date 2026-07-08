@@ -3,6 +3,7 @@ package kr.co.carrer.user.billing.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -82,6 +83,14 @@ public class BillingDTO {
             @NotBlank String authKey,
             @NotBlank String customerKey,
             @NotBlank String orderId
+    ) {}
+
+    // 일반결제(단건) 흐름 승인 — Toss requestPayment 성공 리다이렉트의 paymentKey/orderId/amount 계약.
+    // 자동결제 계약이 없는 환경에서 토스페이 QR 단건결제로 구독을 발급하기 위한 경로다.
+    public record RequestConfirmOneTimePayment(
+            @NotBlank String paymentKey,
+            @NotBlank String orderId,
+            @Positive int amount
     ) {}
 
     public record ResponseConfirmPayment(

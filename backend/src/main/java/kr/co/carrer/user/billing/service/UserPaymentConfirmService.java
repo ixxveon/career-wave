@@ -8,5 +8,7 @@ public interface UserPaymentConfirmService {
 
     BillingDTO.ResponseConfirmPayment confirm(UUID memberId, BillingDTO.RequestConfirmPayment request);
 
+    BillingDTO.ResponseConfirmPayment confirmOneTime(UUID memberId, BillingDTO.RequestConfirmOneTimePayment request);
+
     BillingDTO.ResponseRecordPaymentFail recordFail(UUID memberId, BillingDTO.RequestRecordPaymentFail request);
 }

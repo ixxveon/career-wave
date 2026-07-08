@@ -7,7 +7,8 @@ from core.ai_usage.usage_log_client import record_ai_usage
 from core.config import get_settings
 from user.interview.websocket.interview_ws_handler import (
     InterviewErrorCode,
-    _sessions,
+    get_session_meta,
+    update_session_meta,
     send_answer_hint,
     send_error,
     send_stt_final,
@@ -119,7 +120,8 @@ async def transcribe_chunk(
     client = AsyncOpenAI(api_key=settings.openai_api_key)
 
     # Whisper await 전에 member_id 캡처 — 응답 대기 중 세션이 만료되어도 사용량 기록 가능
-    member_id: str | None = _sessions.get(session_id) and _sessions[session_id].member_id or None
+    _pre_meta = await get_session_meta(session_id)
+    member_id: str | None = (_pre_meta or {}).get("member_id")
 
     try:
         audio_file = ("audio.webm", merged_audio, "audio/webm")
@@ -156,9 +158,11 @@ async def transcribe_chunk(
         session_id, question_order, voice_quality_ratio, transcript[:50],
     )
 
-    ctx = _sessions.get(session_id)
-    if ctx is not None:
-        ctx.voice_quality_by_order[question_order] = voice_quality_ratio
+    _meta = await get_session_meta(session_id)
+    if _meta is not None:
+        vqbo: dict[int, float] = _meta.get("voice_quality_by_order") or {}
+        vqbo[question_order] = voice_quality_ratio
+        await update_session_meta(session_id, {"voice_quality_by_order": vqbo})
 
     # STT 사용량 적재 — input_tokens: 오디오 duration(초) 기반 환산값 (실제 토큰 아님)
     audio_duration_seconds = getattr(response, "duration", None)
