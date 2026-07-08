@@ -76,10 +76,14 @@ public class UserCheckoutOrderServiceImpl implements UserCheckoutOrderService {
             UserPayment payment = createTxService.createAndFlush(memberId, plan, memberInfo);
             return toCreateOrderResponse(payment, plan);
         } catch (DataIntegrityViolationException e) {
-            // 동시 요청으로 uq_payments_member_plan_ready 위반 — 경쟁 스레드가 삽입한 행을 반환
-            return userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, plan.getPlanId())
-                    .map(p -> toCreateOrderResponse(p, plan))
+            // 동시 요청으로 uq_payments_member_plan_ready 위반 — 경쟁 스레드가 삽입한 READY 주문을
+            // 행 잠금으로 다시 읽고 새 orderId 를 재발급해 반환한다. (경쟁한 두 클라이언트가 같은 orderId 로
+            // Toss 결제에 진입해 한쪽이 DUPLICATED_ORDER_ID 에 걸리지 않도록, 응답마다 서로 다른 orderId 를 보장)
+            UserPayment rival = userPaymentRepository
+                    .findReadyByMemberIdAndPlanIdForUpdate(memberId, plan.getPlanId())
                     .orElseThrow(() -> new CustomException(BillingErrorCode.BILLING_ORDER_NOT_FOUND));
+            rival.renewOrderForRetry(newOrderId(), ZonedDateTime.now(KST).plusMinutes(ORDER_EXPIRY_MINUTES));
+            return toCreateOrderResponse(rival, plan);
         }
     }
 

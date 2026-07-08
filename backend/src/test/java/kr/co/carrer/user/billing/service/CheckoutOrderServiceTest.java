@@ -273,8 +273,8 @@ class CheckoutOrderServiceTest {
     }
 
     @Test
-    @DisplayName("동시 요청으로 유니크 제약 위반 — 경쟁 스레드 주문 readback 반환")
-    void createOrder_concurrentConflict_returnsRivalOrder() {
+    @DisplayName("동시 요청으로 유니크 제약 위반 — 경쟁 스레드 주문을 잠금 readback 후 새 orderId 재발급")
+    void createOrder_concurrentConflict_reissuesFreshOrderId() {
         Plan plan = plan(1L, "document-coaching", "서류 AI 코칭", 29000);
         UserPayment rivalPayment = readyPayment(memberId, 1L, "document-coaching", "ORDER-RIVAL");
         given(billingMemberPort.isEligibleForBilling(memberId)).willReturn(true);
@@ -283,9 +283,8 @@ class CheckoutOrderServiceTest {
         given(subscriptionRepository.findActiveLikeByMemberIdAndPlanId(any(), any(), any()))
                 .willReturn(List.of());
         given(userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, 1L))
-                .willReturn(Optional.empty());          // 최초 조회(행 잠금): 없음
-        given(userPaymentRepository.findReadyByMemberIdAndPlanId(memberId, 1L))
-                .willReturn(Optional.of(rivalPayment)); // DataIntegrityViolation 후 readback: 경쟁 스레드 삽입 행
+                .willReturn(Optional.empty())           // 최초 조회(행 잠금): 없음
+                .willReturn(Optional.of(rivalPayment)); // DataIntegrityViolation 후 잠금 readback: 경쟁 스레드 삽입 행
         given(billingMemberPort.getMemberBillingInfo(memberId))
                 .willReturn(new BillingMemberPort.MemberBillingInfo("홍길동", "test@example.com"));
         given(createTxService.createAndFlush(any(), any(), any()))
@@ -294,7 +293,10 @@ class CheckoutOrderServiceTest {
         BillingDTO.ResponseCreateOrder response =
                 service.createOrder(memberId, new BillingDTO.RequestCreateOrder("document-coaching", "http://localhost/success", "http://localhost/fail"));
 
-        assertThat(response.orderId()).isEqualTo("ORDER-RIVAL");
+        // 경쟁 주문 row 를 재사용하되 orderId 는 새로 발급 → 두 클라이언트가 같은 orderId 를 받지 않는다.
+        assertThat(response.orderId())
+                .isNotEqualTo("ORDER-RIVAL")
+                .startsWith("ORDER-");
     }
 
     // ── helpers ─────────────────────────────────────────────────────────────
