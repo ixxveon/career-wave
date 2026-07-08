@@ -1,5 +1,4 @@
 import logging
-from typing import AsyncGenerator
 
 import redis.asyncio as aioredis
 

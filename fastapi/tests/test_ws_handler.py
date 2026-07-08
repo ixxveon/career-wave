@@ -16,7 +16,7 @@ import pytest
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
-from tests.conftest import TEST_SESSION_ID, make_token, make_meta
+from tests.conftest import TEST_SESSION_ID, make_token
 from user.interview.websocket.interview_ws_handler import (
     InterviewErrorCode,
     _live_sessions,
