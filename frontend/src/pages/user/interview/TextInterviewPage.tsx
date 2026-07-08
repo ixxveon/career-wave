@@ -163,11 +163,11 @@ export default function TextInterviewPage() {
         setPhase('interview');
       } else {
         const e = err as MemberApiError;
-        if (e.statusCode === 409 && e.serverCode === 'INTERVIEW_SESSION_DUPLICATE') {
+        if (e.status === 409 && e.serverCode === 'INTERVIEW_SESSION_DUPLICATE') {
           setApiError('이미 진행 중인 면접이 있습니다. 잠시 후 다시 시도하거나 페이지를 새로고침해주세요.');
-        } else if (e.statusCode === 403) {
+        } else if (e.status === 403) {
           setApiError('연결된 서류에 접근 권한이 없습니다. 본인 소유의 서류인지 확인해주세요.');
-        } else if (e.statusCode === 404) {
+        } else if (e.status === 404) {
           setApiError('연결된 서류를 찾을 수 없습니다. 이력서·자기소개서 분석 페이지에서 다시 시도해주세요.');
         } else {
           setApiError('세션 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');

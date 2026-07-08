@@ -67,7 +67,7 @@ class SecurityExceptionHandlerTest {
         mockMvc.perform(get("/api/v1/admin/members"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("인증 정보가 없습니다."))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
     }
@@ -81,7 +81,7 @@ class SecurityExceptionHandlerTest {
                         .header("Authorization", "Bearer fake.invalid.token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("인증 정보가 없습니다."))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
     }
@@ -97,7 +97,7 @@ class SecurityExceptionHandlerTest {
                         .header("Authorization", "Bearer expired.token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("인증 정보가 없습니다."))
                 .andExpect(jsonPath("$.code").value("AUTH_UNAUTHENTICATED"));
     }
@@ -123,7 +123,7 @@ class SecurityExceptionHandlerTest {
                         .header("Authorization", "Bearer user.access.token"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(403))
+                .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.message").value("접근 권한이 없습니다."))
                 .andExpect(jsonPath("$.code").value("AUTH_FORBIDDEN"));
     }

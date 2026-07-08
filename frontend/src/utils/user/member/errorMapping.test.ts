@@ -57,7 +57,7 @@ describe('parseLoginBlockedDecision — 계정 제한 판별', () => {
   });
 
   it('403이지만 serverCode 없으면 null 반환 (generic 403)', () => {
-    const error = { code: MEMBER_ERROR_CODE.FORBIDDEN, statusCode: 403, message: '권한 없음' };
+    const error = { code: MEMBER_ERROR_CODE.FORBIDDEN, status: 403, message: '권한 없음' };
     expect(parseLoginBlockedDecision(error)).toBeNull();
   });
 

@@ -112,7 +112,7 @@ describe('refresh 응답 실패 — 원래 401 전파', () => {
 
     await expect(
       memberApiClient('/api/test', { method: 'GET', auth: true }),
-    ).rejects.toMatchObject({ statusCode: 401 });
+    ).rejects.toMatchObject({ status: 401 });
 
     expect(vi.mocked(authSession.setAccessToken)).not.toHaveBeenCalled();
     expect(vi.mocked(authSession.clear)).toHaveBeenCalled();
@@ -146,7 +146,7 @@ describe('POST 요청 — 401 시 기본적으로 replay 안 함', () => {
 
     await expect(
       memberApiClient('/api/test', { method: 'POST', auth: true }),
-    ).rejects.toMatchObject({ statusCode: 401 });
+    ).rejects.toMatchObject({ status: 401 });
 
     expect(fetch).toHaveBeenCalledTimes(1);
   });

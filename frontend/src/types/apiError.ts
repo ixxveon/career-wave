@@ -5,7 +5,7 @@
  */
 export interface ApiError {
   /** HTTP 상태 코드 (네트워크 단절 시 0) */
-  statusCode: number;
+  status: number;
   /** 사용자에게 노출 가능한 메시지 */
   message: string;
   /** 백엔드가 내려주는 도메인 에러 코드 (선택) */

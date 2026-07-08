@@ -20,13 +20,13 @@ export function useInterviewReport(sessionId: string | null) {
     queryFn: ({ signal }) => interviewReportApi.get(sessionId!, signal),
     enabled: !!sessionId,
     retry: (failureCount, error) => {
-      if (error.statusCode === 409 && error.serverCode === 'INTERVIEW_REPORT_NOT_READY') {
+      if (error.status === 409 && error.serverCode === 'INTERVIEW_REPORT_NOT_READY') {
         return failureCount < 8;
       }
       return failureCount < 1;
     },
     retryDelay: (_failureCount, error) => {
-      if (error.statusCode === 409 && error.serverCode === 'INTERVIEW_REPORT_NOT_READY') {
+      if (error.status === 409 && error.serverCode === 'INTERVIEW_REPORT_NOT_READY') {
         const waitData = error.data as { estimatedWaitSeconds?: number } | undefined;
         return (waitData?.estimatedWaitSeconds ?? 15) * 1000;
       }
@@ -37,7 +37,7 @@ export function useInterviewReport(sessionId: string | null) {
   // isAnalyzing: 재시도 중(failureCount < 8)에만 분석 중으로 처리
   // 재시도 소진(isError) 후에는 일반 에러로 떨어뜨려 "불러올 수 없습니다" 화면을 노출
   const is409NotReady = (e: MemberApiError | null | undefined): boolean =>
-    e?.statusCode === 409 && e?.serverCode === 'INTERVIEW_REPORT_NOT_READY';
+    e?.status === 409 && e?.serverCode === 'INTERVIEW_REPORT_NOT_READY';
 
   const isAnalyzing =
     !query.isError &&

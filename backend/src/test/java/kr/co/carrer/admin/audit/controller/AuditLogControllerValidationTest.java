@@ -57,7 +57,7 @@ class AuditLogControllerValidationTest {
             )
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.success").value(false))
-            .andExpect(jsonPath("$.statusCode").value(400))
+            .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.data.keyword").exists());
     }
 
@@ -72,7 +72,7 @@ class AuditLogControllerValidationTest {
             )
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.success").value(false))
-            .andExpect(jsonPath("$.statusCode").value(400))
+            .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.data.size").exists());
     }
 
@@ -147,7 +147,7 @@ class AuditLogControllerValidationTest {
                 )
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(403))
+                .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.code").value("AUTH_FORBIDDEN"));
         }
     }
@@ -177,7 +177,7 @@ class AuditLogControllerValidationTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.code").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.content.length()").value(1))
