@@ -27,7 +27,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -71,6 +70,19 @@ class AdminLoginServiceImplTest {
         Admin a = createAdminInstance();
         setField(a, "adminId", 1L);
         setField(a, "loginId", "admin@test.com");
+        setField(a, "email", "admin@test.com");
+        setField(a, "passwordHash", encoder.encode("adminpw123"));
+        setField(a, "name", "관리자");
+        setField(a, "adminRole", AdminRole.MASTER);
+        setField(a, "status", status);
+        return a;
+    }
+
+    private Admin createAdminWithDistinctLoginIdAndEmail(AdminStatus status) throws Exception {
+        Admin a = createAdminInstance();
+        setField(a, "adminId", 1L);
+        setField(a, "loginId", "admin1234");
+        setField(a, "email", "admin@test.com");
         setField(a, "passwordHash", encoder.encode("adminpw123"));
         setField(a, "name", "관리자");
         setField(a, "adminRole", AdminRole.MASTER);
@@ -93,7 +105,7 @@ class AdminLoginServiceImplTest {
     @Test
     void 정상_로그인_accessToken_및_adminInfo_반환() throws Exception {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
-        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
         AdminLoginDto.Response result = service.login(req, httpResponse, "127.0.0.1");
@@ -105,8 +117,52 @@ class AdminLoginServiceImplTest {
 
     @Test
     void 존재하지_않는_loginId_AUTH_INVALID_CREDENTIALS() {
-        when(adminRepository.findByLoginId(anyString())).thenReturn(Optional.empty());
+        when(adminRepository.findByLoginIdOrEmail(anyString(), anyString())).thenReturn(List.of());
         AdminLoginDto.Request req = new AdminLoginDto.Request("wrong@test.com", "pw");
+
+        assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", AuthErrorCode.AUTH_INVALID_CREDENTIALS);
+    }
+
+    @Test
+    void 이메일로_로그인_성공() throws Exception {
+        Admin admin = createAdminWithDistinctLoginIdAndEmail(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
+        AdminLoginDto.Response result = service.login(req, httpResponse, "127.0.0.1");
+
+        assertThat(result.getAdminInfo().getId()).isEqualTo(1L);
+    }
+
+    @Test
+    void 아이디로도_로그인_성공() throws Exception {
+        Admin admin = createAdminWithDistinctLoginIdAndEmail(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginIdOrEmail("admin1234", "admin1234")).thenReturn(List.of(admin));
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin1234", "adminpw123");
+        AdminLoginDto.Response result = service.login(req, httpResponse, "127.0.0.1");
+
+        assertThat(result.getAdminInfo().getId()).isEqualTo(1L);
+    }
+
+    @Test
+    void 아이디_이메일_교차중복으로_2건_매칭시_AUTH_INVALID_CREDENTIALS() throws Exception {
+        Admin adminA = createAdminWithDistinctLoginIdAndEmail(AdminStatus.ACTIVE);
+        Admin adminB = createAdminInstance();
+        setField(adminB, "adminId", 2L);
+        setField(adminB, "loginId", "admin@test.com");
+        setField(adminB, "email", "other@test.com");
+        setField(adminB, "passwordHash", encoder.encode("otherpw123"));
+        setField(adminB, "name", "다른관리자");
+        setField(adminB, "adminRole", AdminRole.CS);
+        setField(adminB, "status", AdminStatus.ACTIVE);
+
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com"))
+                .thenReturn(List.of(adminA, adminB));
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
 
         assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
@@ -116,7 +172,7 @@ class AdminLoginServiceImplTest {
     @Test
     void 비밀번호_불일치_AUTH_INVALID_CREDENTIALS() throws Exception {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
-        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
 
         assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
@@ -127,7 +183,7 @@ class AdminLoginServiceImplTest {
     @Test
     void LOCKED_관리자_AUTH_ACCOUNT_LOCKED() throws Exception {
         Admin admin = createAdmin(AdminStatus.LOCKED);
-        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
 
         assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
@@ -138,7 +194,7 @@ class AdminLoginServiceImplTest {
     @Test
     void 비밀번호_5회_실패_시_LOCKED_처리() throws Exception {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
-        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));
         when(loginAttemptStore.increment(any(), anyString())).thenReturn(5L);
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
@@ -153,7 +209,7 @@ class AdminLoginServiceImplTest {
     @Test
     void 로그인_성공_시_실패_카운터_초기화() throws Exception {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
-        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
         service.login(req, httpResponse, "127.0.0.1");
@@ -162,9 +218,25 @@ class AdminLoginServiceImplTest {
     }
 
     @Test
+    void 실패_카운터_key는_입력값이_아닌_계정의_canonical_loginId를_사용한다() throws Exception {
+        // loginId="admin1234", email="admin@test.com" — 이메일로 로그인 시도해도
+        // 카운터 key는 반드시 loginId("admin1234")여야 한다. 그래야 같은 계정을
+        // 아이디/이메일 번갈아 입력해 잠금 기준을 우회하는 것을 막을 수 있다.
+        Admin admin = createAdminWithDistinctLoginIdAndEmail(AdminStatus.ACTIVE);
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));
+
+        AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "wrongpw");
+        assertThatThrownBy(() -> service.login(req, httpResponse, "127.0.0.1"))
+                .isInstanceOf(CustomException.class);
+
+        verify(loginAttemptStore).increment(AccountType.ADMIN, "admin1234");
+        verify(loginAttemptStore, org.mockito.Mockito.never()).increment(AccountType.ADMIN, "admin@test.com");
+    }
+
+    @Test
     void ADMIN_단일세션_신규_로그인_시_기존_세션_jti_blacklist_등록() throws Exception {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
-        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));
 
         String existingSessionId = "existing-session";
         String existingJti = "existing-jti";
@@ -183,7 +255,7 @@ class AdminLoginServiceImplTest {
     @Test
     void admin_logout_후_access_token_blacklist_등록() throws Exception {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
-        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
         AdminLoginDto.Response loginResult = service.login(req, httpResponse, "127.0.0.1");
@@ -197,7 +269,7 @@ class AdminLoginServiceImplTest {
     @Test
     void 발급된_JWT에_adminRole_claim_포함() throws Exception {
         Admin admin = createAdmin(AdminStatus.ACTIVE);
-        when(adminRepository.findByLoginId("admin@test.com")).thenReturn(Optional.of(admin));
+        when(adminRepository.findByLoginIdOrEmail("admin@test.com", "admin@test.com")).thenReturn(List.of(admin));
 
         AdminLoginDto.Request req = new AdminLoginDto.Request("admin@test.com", "adminpw123");
         AdminLoginDto.Response result = service.login(req, httpResponse, "127.0.0.1");
