@@ -74,12 +74,12 @@ export default function SubscriptionTab({ showToast }: SubscriptionTabProps) {
     fetchSubscriptions(1);
   };
 
-  const escapeCsvCell = (value: string | number) => {
+  const escapeCsvCell = (value: string | number): string => {
     const s = String(value);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
 
-  const handleExport = async () => {
+  const handleExport = async (): Promise<void> => {
     setExporting(true);
     try {
       const f = appliedSubFilters.current;
@@ -93,6 +93,11 @@ export default function SubscriptionTab({ showToast }: SubscriptionTabProps) {
         totalPages = res.data.data.totalPages;
         page += 1;
       } while (page <= totalPages);
+
+      if (all.length === 0) {
+        showToast('내보낼 구독 데이터가 없습니다.');
+        return;
+      }
 
       const header = ['구독 ID', '회원명', '구독 플랜', '시작일', '다음 갱신일', '상태'];
       const rows = all.map((s) => [
