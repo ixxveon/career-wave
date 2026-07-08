@@ -122,3 +122,54 @@
 - [x] `python -m pytest fastapi/` 전체 통과 확인
 - [x] Spring BE 연동 E2E: 텍스트 면접 전체 플로우 확인 (Q1~Q10, 자동 리포트 트리거 포함)
 - [ ] Spring BE 연동 E2E: 음성 면접 전체 플로우 확인
+
+---
+
+## Phase 7 — Redis 기반 세션 상태 저장소 (v2, 브랜치: `feat/952-redis-session-store`)
+
+> 관련 이슈: #952, #802 / Scale-out 대비 in-process dict → Redis 전환
+
+- [x] `fastapi/requirements.txt` — `redis[asyncio]==5.0.8` 추가
+- [x] `fastapi/core/config.py` — `redis_url`, `redis_session_ttl_seconds`, `redis_rate_limit_ttl_seconds` 환경 변수 추가
+- [x] `fastapi/core/redis.py` 생성
+  - [x] 비동기 Redis 클라이언트 싱글톤 (`get_redis` / `close_redis`)
+- [x] `fastapi/user/interview/store/session_store.py` 생성
+  - [x] `save_session_meta` / `load_session_meta` / `delete_session` / `refresh_session_ttl` — Redis Hash
+  - [x] `increment_seq` / `get_seq` / `set_seq` — Redis INCR (원자적 seq 증가)
+  - [x] `push_to_buffer` / `get_buffer` — Redis List (최근 50개)
+  - [x] `save_pending_llm` / `pop_pending_llm` / `has_pending_llm` — WS 연결 전 도착한 LLM trigger 보관
+  - [x] `rate_limit_check_and_record` — Redis Sorted Set 슬라이딩 윈도우 rate limit
+  - [x] Redis 장애 정책: 허용(false-negative) 방향 fallback
+- [x] `fastapi/core/rate_limit.py` 업데이트
+  - [x] `is_rate_limited(redis, session_id, …)` 비동기 함수 추가 (session_store 위임)
+  - [x] 기존 `SessionRateLimiter` (in-process) 하위 호환 유지
+- [x] `fastapi/user/interview/websocket/interview_ws_handler.py` 리팩터링
+  - [x] `_SessionContext` / `_sessions` / `_pending_llm` 제거
+  - [x] `_LiveSession` (WS + member_id + token_exp만 인프로세스 유지)
+  - [x] 연결 시 `load_session_meta` → 재연결 seq 계승 / 신규 세션 초기화
+  - [x] `_push()` → `increment_seq` + `push_to_buffer` (Redis 장애 시 `_local_seq` fallback)
+  - [x] `get_session_meta` / `update_session_meta` / `is_session_live` 헬퍼 노출
+  - [x] WS 연결 전 도착한 LLM trigger: `pop_pending_llm`으로 flush
+  - [x] 재연결 시 `get_buffer`로 미전달 메시지 재전송 (`lastReceivedSequenceNumber` 기준)
+  - [x] Spring 검증 실패 + Redis 메타 있는 재연결 → false-negative 허용 fallback
+- [x] `fastapi/user/interview/pipeline/llm_pipeline.py` 리팩터링
+  - [x] `_SessionContext` → `dict[str, Any]` (get_session_meta 기반)
+  - [x] 모든 내부 함수 signature `meta: dict[str, Any]`로 변경
+  - [x] 변경된 메타 (`answer_history`, `recent_answer_quality`, `used_fallback_questions`) `update_session_meta`로 저장
+- [x] `fastapi/user/interview/pipeline/stt_pipeline.py` 리팩터링
+  - [x] `_sessions` → `get_session_meta` (member_id 캡처)
+  - [x] `ctx.voice_quality_by_order` → `update_session_meta` 저장
+- [x] `fastapi/user/interview/pipeline/tts_pipeline.py` 리팩터링
+  - [x] `_sessions` → `get_session_meta` (member_id 캡처) + `is_session_live` (스트리밍 중단 체크)
+- [x] `fastapi/user/interview/pipeline/report_pipeline.py` 리팩터링
+  - [x] `_sessions` → `get_session_meta` (answer_history, voice_quality_by_order, member_id)
+- [x] `fastapi/user/interview/api/interview_router.py` 리팩터링
+  - [x] `_sessions` → `is_session_live` / `_pending_llm` → `session_store.save_pending_llm` (Redis)
+  - [x] RAG context → `update_session_meta` (WS 연결 없이도 저장 가능)
+- [x] 테스트 전면 리팩터링
+  - [x] `conftest.py` — `make_meta()` 헬퍼, `REDIS_URL` 환경변수 추가
+  - [x] `test_ws_handler.py` — `_LiveSession` / `_live_sessions` 기반, `increment_seq` / `push_to_buffer` mock
+  - [x] `test_stt_pipeline.py` — `get_session_meta` / `update_session_meta` mock
+  - [x] `test_llm_pipeline.py` — `make_meta()` dict 기반 폴백 / RAG 테스트
+  - [x] `test_report_pipeline.py` — `get_session_meta` mock
+- [x] `python -m pytest fastapi/` 전체 통과 확인 (186개)

@@ -11,6 +11,7 @@ from admin.ai_metrics.client.openai_client import get_ai_metrics_openai_client
 from admin.ai_metrics.router import router as ai_metrics_router
 from core.config import get_settings
 from core.middleware import InternalRouteGuardMiddleware
+from core.redis import close_redis
 from user.resume.service.webhook_outbox import init_outbox_db, run_outbox_worker
 
 log = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     if get_ai_metrics_openai_client.cache_info().currsize > 0:
         await get_ai_metrics_openai_client().close()
         get_ai_metrics_openai_client.cache_clear()
+    await close_redis()
     scheduler.shutdown()
     outbox_task.cancel()
     try:

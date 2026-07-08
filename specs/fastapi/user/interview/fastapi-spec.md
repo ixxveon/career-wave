@@ -200,7 +200,8 @@ class InterviewErrorCode(str, Enum):
 ### STT 청크 누적 방식
 
 Whisper는 스트리밍 API를 지원하지 않아, 청크를 수신할 때마다 Whisper를 호출하면 부분 WebM 포맷 오류가 발생한다.  
-세션별, 질문 순서별 버퍼(`_audio_buffers: dict[str, dict[int, list[bytes]]]`)에 청크를 누적하고 `isFinal=true` 시 병합하여 일괄 전송한다.
+세션별, 질문 순서별 인프로세스 버퍼(`_audio_buffers: dict[str, dict[int, list[bytes]]]`)에 청크를 누적하고 `isFinal=true` 시 병합하여 일괄 전송한다.  
+음성 청크(바이너리)는 Redis 저장 대상이 아니며 인프로세스에서만 유지한다.
 
 ```python
 _audio_buffers: dict[str, dict[int, list[bytes]]] = defaultdict(lambda: defaultdict(list))
@@ -212,3 +213,18 @@ async def transcribe_chunk(audio_bytes, session_id, question_order, chunk_index,
     merged = b"".join(_audio_buffers[session_id].pop(question_order, []))
     # Whisper 일괄 전송
 ```
+
+### 세션 상태 저장소 (v2: Redis)
+
+v2부터 세션 메타 / seq / 메시지 버퍼 / pending_llm / rate_limit을 Redis에 저장한다.  
+WebSocket 객체(`ws`)는 직렬화 불가이므로 각 프로세스의 `_live_sessions` dict에 유지한다.
+
+| 키 | 타입 | TTL | 내용 |
+|----|------|-----|------|
+| `interview:session:{sid}:meta` | Hash | 300s | member_id, interview_type, answer_history 등 |
+| `interview:session:{sid}:seq` | String (INCR) | 300s | sequenceNumber 카운터 |
+| `interview:session:{sid}:buffer` | List | 300s | 최근 50개 메시지 (재연결 재전송용) |
+| `interview:pending_llm:{sid}` | String (JSON) | 300s | WS 연결 전 도착한 LLM trigger |
+| `interview:rate:{sid}` | Sorted Set | 20s | 슬라이딩 윈도우 rate limit |
+
+Redis 장애 시 in-process seq fallback으로 동작을 유지한다 (false-negative 방향).

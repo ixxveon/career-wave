@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     # Webhook Outbox SQLite 경로 (컨테이너 재시작 후에도 유지되는 영구 볼륨 마운트 경로 권장)
     webhook_outbox_db_path: str = "/app/data/career-wave-webhook-outbox.db"
 
+    # Redis
+    redis_url: str = "redis://localhost:6379/0"
+    redis_session_ttl_seconds: int = 300   # 재연결 윈도우 = 5분
+    redis_rate_limit_ttl_seconds: int = 20  # rate limit 슬라이딩 윈도우 여유분
+
     # AWS S3
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""
