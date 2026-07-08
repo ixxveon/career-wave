@@ -7,7 +7,6 @@ import { useSubscribedProductCodes } from './useSubscribedProductCodes';
 import { PRODUCT_CODE } from '../../../types/user/subscription';
 import type { ProductCode } from '../../../types/user/subscription';
 
-const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY as string;
 const KNOWN_PRODUCT_CODES: ProductCode[] = [PRODUCT_CODE.DOCUMENT_COACHING, PRODUCT_CODE.INTERVIEW];
 
 export function useCheckoutStatus() {
@@ -45,7 +44,9 @@ export function useCheckoutStatus() {
 
     // 결제창을 열기 전에 클라이언트 키 주입 여부를 먼저 확인한다.
     // (미주입 시 loadTossPayments(undefined)가 SDK 내부 오류로 터지므로, 사용자 메시지로 선차단)
-    if (!TOSS_CLIENT_KEY) {
+    // 빌드 시점 상수 대신 호출 시점에 읽어 배포 환경/테스트 stub 을 그대로 반영한다.
+    const tossClientKey = import.meta.env.VITE_TOSS_CLIENT_KEY as string;
+    if (!tossClientKey) {
       setCheckoutError('결제 환경 설정이 올바르지 않습니다. 잠시 후 다시 시도하거나 고객센터에 문의해주세요.');
       return;
     }
@@ -62,7 +63,7 @@ export function useCheckoutStatus() {
         failUrl: `${window.location.origin}/billing/fail?productCode=${productCode}`,
       });
 
-      const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
+      const tossPayments = await loadTossPayments(tossClientKey);
       const payment = tossPayments.payment({ customerKey: order.customerKey });
 
       // 자동결제(빌링) 계약이 없는 환경이므로 카드등록(requestBillingAuth) 대신

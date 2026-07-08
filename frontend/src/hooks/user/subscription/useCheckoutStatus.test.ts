@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCheckoutStatus } from './useCheckoutStatus';
 
@@ -58,11 +58,18 @@ function setupSubscribedCodes(codes: string[] = []) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // CI 등 .env 없는 환경에서도 결정적으로 동작하도록 Toss 클라이언트 키를 주입한다.
+  // (미주입 시 handleCheckout 이 키 가드에서 조기 종료하므로, 결제 경로 테스트는 키가 있어야 한다)
+  vi.stubEnv('VITE_TOSS_CLIENT_KEY', 'test_ck_dummy');
   setupCreateOrder();
   setupSubscribedCodes();
   vi.mocked(loadTossPayments).mockResolvedValue({
     payment: () => ({ requestPayment: vi.fn().mockResolvedValue(undefined) }),
   } as unknown as Awaited<ReturnType<typeof loadTossPayments>>);
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 // ─────────────────────────────────────────────
@@ -214,6 +221,20 @@ describe('handleCheckout error handling — statusCode 분기', () => {
     await act(async () => { await result.current.handleCheckout(); });
 
     expect(result.current.checkoutError).toBe('결제를 위해 이메일 등록이 필요합니다. 마이페이지에서 이메일을 등록해주세요.');
+  });
+
+  it('VITE_TOSS_CLIENT_KEY 미주입 시 createOrder 호출 없이 환경 설정 오류 메시지가 설정된다', async () => {
+    vi.stubEnv('VITE_TOSS_CLIENT_KEY', '');
+    const createOrderMock = vi.fn().mockResolvedValue(mockOrder);
+    setupCreateOrder({ mutateAsync: createOrderMock });
+
+    const { result } = renderHook(() => useCheckoutStatus());
+    act(() => { result.current.handleAgreeChange(true); });
+
+    await act(async () => { await result.current.handleCheckout(); });
+
+    expect(createOrderMock).not.toHaveBeenCalled();
+    expect(result.current.checkoutError).toBe('결제 환경 설정이 올바르지 않습니다. 잠시 후 다시 시도하거나 고객센터에 문의해주세요.');
   });
 
   it('{ status: 0 }처럼 statusCode 없는 오류는 기본 메시지가 설정된다 (회귀 방지)', async () => {
