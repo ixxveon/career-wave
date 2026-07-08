@@ -174,7 +174,7 @@ function formatAuditLogDetail(log: BackendAuditLogItem) {
   return target ? `${log.action} / ${target}` : log.action;
 }
 
-function formatAuditLogOccurredAt(value: string) {
+function formatAuditLogOccurredAt(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value;
@@ -184,10 +184,10 @@ function formatAuditLogOccurredAt(value: string) {
   const lookup = Object.fromEntries(
     parts
       .filter((part) => part.type !== 'literal')
-      .map((part) => [part.type, part.value]),
-  );
+      .map((part): [Intl.DateTimeFormatPartTypes, string] => [part.type, part.value]),
+  ) as Partial<Record<Intl.DateTimeFormatPartTypes, string>>;
 
-  return `${lookup.year}-${lookup.month}-${lookup.day} ${lookup.hour}:${lookup.minute}:${lookup.second}`;
+  return `${lookup.year ?? ''}-${lookup.month ?? ''}-${lookup.day ?? ''} ${lookup.hour ?? ''}:${lookup.minute ?? ''}:${lookup.second ?? ''}`;
 }
 
 export function mapBackendAuditLogSummary(summary: BackendAuditLogSummary): AuditLogSummary {
