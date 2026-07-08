@@ -51,14 +51,14 @@ def _ttl() -> int:
 
 async def save_session_meta(redis: aioredis.Redis, session_id: str, meta: dict[str, Any]) -> None:
     """직렬화 가능한 세션 필드를 Redis Hash에 저장한다."""
-    serializable = {
-        k: json.dumps(v, ensure_ascii=False) if isinstance(v, (list, dict, set)) else (v if v is not None else "")
-        for k, v in meta.items()
-    }
-    # set → list 변환 (JSON 직렬화)
-    for k, v in meta.items():
+    def _serialize(v: Any) -> str:
         if isinstance(v, set):
-            serializable[k] = json.dumps(list(v), ensure_ascii=False)
+            return json.dumps(list(v), ensure_ascii=False)
+        if isinstance(v, (list, dict)):
+            return json.dumps(v, ensure_ascii=False)
+        return v if v is not None else ""
+
+    serializable = {k: _serialize(v) for k, v in meta.items()}
     try:
         pipe = redis.pipeline()
         pipe.hset(_key_meta(session_id), mapping=serializable)
