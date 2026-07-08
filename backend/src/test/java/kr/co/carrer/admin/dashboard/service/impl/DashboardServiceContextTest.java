@@ -29,7 +29,7 @@ class DashboardServiceContextTest {
         when(repository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(0L, 0L, 0L, 0));
         when(repository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(0L, 0L, 0L, 0L));
+                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(0L, 0L, 0L, 0L, 0L));
         when(repository.findAuditAlerts(any(DashboardQueryWindow.class), anyInt())).thenReturn(List.of());
         when(repository.findScrapingAlerts(any(DashboardQueryWindow.class), anyInt())).thenReturn(List.of());
         when(repository.findRecentActivities(any(DashboardQueryWindow.class), anyInt())).thenReturn(List.of());

@@ -49,7 +49,7 @@ class UserRegisterControllerTest {
                         .param("loginId", "newuser01"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.available").value(true));
     }
@@ -65,7 +65,7 @@ class UserRegisterControllerTest {
                         .param("loginId", "a!"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.code").value("LOGIN_ID_INVALID"));
     }
@@ -91,7 +91,7 @@ class UserRegisterControllerTest {
                         .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(201))
+                .andExpect(jsonPath("$.status").value(201))
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.roleType").value("USER"));
     }
@@ -111,7 +111,7 @@ class UserRegisterControllerTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.data.name").value("이름은 2~10자 한글로 입력해 주세요."));
 
         verify(userRegisterService, never()).registerUser(any());
@@ -145,7 +145,7 @@ class UserRegisterControllerTest {
                         .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(201))
+                .andExpect(jsonPath("$.status").value(201))
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.companyApprovalStatus").value("PENDING_REVIEW"));
     }
@@ -163,7 +163,7 @@ class UserRegisterControllerTest {
                         .content("{\"businessNumber\":\"1234567890\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").value("정상 영업 중인 사업자입니다."))
                 .andExpect(jsonPath("$.code").doesNotExist())
                 .andExpect(jsonPath("$.data.valid").value(true))
@@ -192,7 +192,7 @@ class UserRegisterControllerTest {
                         .content("{\"businessNumber\":\"12345\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."))
                 .andExpect(jsonPath("$.code").doesNotExist());
     }
@@ -213,7 +213,7 @@ class UserRegisterControllerTest {
                         .file(pdfFile))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.fileId").isNotEmpty());
     }
