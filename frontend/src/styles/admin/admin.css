@@ -1660,6 +1660,15 @@ button {
     display: block;
     overflow-x: auto;
   }
+
+  /* table-layout:fixed로 nth-child 퍼센트 폭을 지정하는 테이블은 display:block으로
+     바뀌면 익명 테이블 박스가 생성되며 table-layout이 auto로 리셋되어 컬럼 정렬이
+     깨진다. 이런 테이블은 display:table을 유지하고, 가로 스크롤은 바깥 .tableScroll
+     wrapper가 담당한다. */
+  .memberTable.csNoticeTable,
+  .memberTable.csFaqTable {
+    display: table;
+  }
 }
 
 /* ── report page ───────────────────────────────────────────── */
