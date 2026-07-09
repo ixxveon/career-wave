@@ -17,18 +17,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UserCheckoutOrderServiceImpl implements UserCheckoutOrderService {
-
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
-    private static final int ORDER_EXPIRY_MINUTES = 30;
 
     private static final Set<SubscriptionStatus> BLOCKING_STATUSES = Set.of(
             SubscriptionStatus.ACTIVE,
@@ -60,35 +54,24 @@ public class UserCheckoutOrderServiceImpl implements UserCheckoutOrderService {
             throw new CustomException(BillingErrorCode.SUBSCRIPTION_ALREADY_ACTIVE);
         }
 
-        // 재사용 주문은 행 잠금으로 조회한다 — 동시 재결제 요청이 orderId 재발급을 서로 덮어쓰지 않도록 직렬화.
-        Optional<UserPayment> existing =
-                userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, plan.getPlanId());
-        if (existing.isPresent()) {
-            // 재결제 진입마다 새 orderId·만료시각을 부여한다. (이전 시도에서 Toss 가 소비한 orderId 를 재사용하면
-            // 단건결제가 DUPLICATED_ORDER_ID 로 막히므로, 재사용 주문에 항상 새 orderId 를 발급한다)
-            UserPayment order = existing.get();
-            order.renewOrderForRetry(newOrderId(), ZonedDateTime.now(KST).plusMinutes(ORDER_EXPIRY_MINUTES));
-            return toCreateOrderResponse(order, plan);
-        }
+        // 재결제 진입 시 기존 READY 주문을 취소하고, 항상 새 주문(고정 orderId)을 만든다.
+        // orderId 를 사후에 바꾸지 않으므로 createOrder→requestPayment→confirm 사이에 orderId 가 어긋나
+        // BILLING_ORDER_NOT_FOUND(404) 가 나던 문제를 없애고, 매번 새 orderId 라 Toss 가 이미 소비한
+        // orderId 를 재사용하지 않아 DUPLICATED_ORDER_ID 도 발생하지 않는다.
+        // (취소는 REQUIRES_NEW 로 먼저 커밋되어야 새 READY INSERT 가 부분 유니크 인덱스와 충돌하지 않는다)
+        createTxService.cancelReadyIfPresent(memberId, plan.getPlanId());
 
         BillingMemberPort.MemberBillingInfo memberInfo = billingMemberPort.getMemberBillingInfo(memberId);
         try {
             UserPayment payment = createTxService.createAndFlush(memberId, plan, memberInfo);
             return toCreateOrderResponse(payment, plan);
         } catch (DataIntegrityViolationException e) {
-            // 동시 요청으로 uq_payments_member_plan_ready 위반 — 경쟁 스레드가 삽입한 READY 주문을
-            // 행 잠금으로 다시 읽고 새 orderId 를 재발급해 반환한다. (경쟁한 두 클라이언트가 같은 orderId 로
-            // Toss 결제에 진입해 한쪽이 DUPLICATED_ORDER_ID 에 걸리지 않도록, 응답마다 서로 다른 orderId 를 보장)
-            UserPayment rival = userPaymentRepository
-                    .findReadyByMemberIdAndPlanIdForUpdate(memberId, plan.getPlanId())
+            // 동시 요청으로 uq_payments_member_plan_ready 위반 — 경쟁 스레드가 방금 삽입한 READY 주문을
+            // 그대로 반환한다. (이 주문은 아직 Toss 에 제출되지 않은 신규 orderId 이므로 재사용해도 안전)
+            return userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, plan.getPlanId())
+                    .map(p -> toCreateOrderResponse(p, plan))
                     .orElseThrow(() -> new CustomException(BillingErrorCode.BILLING_ORDER_NOT_FOUND));
-            rival.renewOrderForRetry(newOrderId(), ZonedDateTime.now(KST).plusMinutes(ORDER_EXPIRY_MINUTES));
-            return toCreateOrderResponse(rival, plan);
         }
-    }
-
-    private static String newOrderId() {
-        return "ORDER-" + UUID.randomUUID().toString().replace("-", "");
     }
 
     private BillingDTO.ResponseCreateOrder toCreateOrderResponse(UserPayment payment, Plan plan) {
