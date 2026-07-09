@@ -1,12 +1,15 @@
 package kr.co.carrer.user.billing.service.impl;
 
+import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.client.dto.TossBillingPaymentResponse;
 import kr.co.carrer.user.billing.client.dto.TossOneTimeConfirmResult;
 import kr.co.carrer.user.billing.dto.BillingDTO;
 import kr.co.carrer.user.billing.entity.*;
+import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.MemberProductEntitlementRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionUsagePeriodRepository;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.billing.type.FreeUsageStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,7 @@ public class UserPaymentSettleTxService {
     private final SubscriptionRepository subscriptionRepository;
     private final MemberProductEntitlementRepository entitlementRepository;
     private final SubscriptionUsagePeriodRepository subscriptionUsagePeriodRepository;
+    private final EntitlementInitService entitlementInitService;
 
     // 자동결제(빌링) 결산 — billingProfile(billingKey) 기반 구독 개통.
     @Transactional
@@ -73,11 +77,12 @@ public class UserPaymentSettleTxService {
         payment.linkSubscription(subscription.getSubscriptionId());
 
         // 결산은 프리미엄을 부여하는 최종 단계이므로, 이용권 row 가 없으면(가입 전 로직으로 생성된 계정 등)
-        // 여기서 생성해 결제한 사용자가 반드시 이용권을 받도록 보장한다. (없다고 발급을 막지 않음)
+        // 발급을 막지 않고 여기서 생성한다. 동시 결산 경합에 안전하도록 생성은 REQUIRES_NEW
+        // (ensureFreeEntitlement, 유니크 제약 충돌 무시)로 분리하고, 이후 잠금 조회로 다시 읽어 활성화한다.
+        entitlementInitService.ensureFreeEntitlement(payment.getMemberId(), plan.getProductCode());
         MemberProductEntitlement entitlement = entitlementRepository
                 .findByMemberIdAndProductCodeForUpdate(payment.getMemberId(), plan.getProductCode())
-                .orElseGet(() -> entitlementRepository.save(
-                        MemberProductEntitlement.createFree(payment.getMemberId(), plan.getProductCode())));
+                .orElseThrow(() -> new CustomException(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
 
         if (entitlement.getFreeUsageStatus() == FreeUsageStatus.AVAILABLE) {
             entitlement.forfeitFree();

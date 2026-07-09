@@ -11,6 +11,7 @@ import kr.co.carrer.user.billing.entity.*;
 import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.*;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.billing.service.impl.PaymentReconciliationTxService;
 import kr.co.carrer.user.billing.service.impl.UserPaymentConfirmServiceImpl;
 import kr.co.carrer.user.billing.service.impl.UserPaymentFailureTxService;
@@ -55,6 +56,7 @@ class PaymentSettleTransactionTest {
     @Mock AesCipher aesCipher;
     @Mock UserPaymentFailureTxService failureTxService;
     @Mock PaymentReconciliationTxService reconciliationTxService;
+    @Mock EntitlementInitService entitlementInitService;
 
     private UserPaymentConfirmServiceImpl service;
     private UserPaymentSettleTxService settleTxService;
@@ -64,7 +66,8 @@ class PaymentSettleTransactionTest {
     @BeforeEach
     void setUp() {
         settleTxService = new UserPaymentSettleTxService(
-                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
+                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository,
+                entitlementInitService);
         service = new UserPaymentConfirmServiceImpl(
                 userPaymentRepository, billingProfileRepository, planRepository,
                 tossBillingAuthClient, tossBillingPaymentClient, oneTimePaymentClient, aesCipher,
@@ -151,16 +154,16 @@ class PaymentSettleTransactionTest {
             if (sub.getSubscriptionId() == null) setField(sub, "subscriptionId", UUID.randomUUID());
             return sub;
         });
+        // ensureFreeEntitlement(REQUIRES_NEW) 가 없던 이용권을 생성한 뒤, 잠금 조회로 다시 읽는다.
         given(entitlementRepository.findByMemberIdAndProductCodeForUpdate(any(), any()))
-                .willReturn(Optional.empty());
-        given(entitlementRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+                .willReturn(Optional.of(MemberProductEntitlement.createFree(memberId, "document-coaching")));
 
         BillingDTO.ResponseConfirmPayment response =
                 service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId));
 
         // 이용권이 없으면 발급을 막지 않고 생성해 프리미엄 활성화까지 진행하고, 사용기간도 기록한다.
         assertThat(response.paymentStatus()).isEqualTo("PAID");
-        verify(entitlementRepository).save(any());
+        verify(entitlementInitService).ensureFreeEntitlement(memberId, "document-coaching");
         verify(subscriptionUsagePeriodRepository).save(any());
     }
 
