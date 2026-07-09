@@ -36,7 +36,7 @@ class UserRecoveryControllerTest {
     // ─── 아이디 찾기 ──────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("아이디 찾기 성공 시 200 + statusCode=200 + found=true + loginIds를 반환한다")
+    @DisplayName("아이디 찾기 성공 시 200 + found=true + loginIds를 반환한다")
     void findId_성공_200() throws Exception {
         when(userRecoveryService.findId(any()))
                 .thenReturn(new UserRecoveryDto.ResponseFindId(List.of("career01"), true));
@@ -79,7 +79,7 @@ class UserRecoveryControllerTest {
     // ─── 비밀번호 재설정 권한 발급 ────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("resetToken 발급 성공 시 200 + statusCode=200 + resetToken을 반환한다")
+    @DisplayName("resetToken 발급 성공 시 200 + resetToken을 반환한다")
     void issuePasswordToken_성공_200() throws Exception {
         when(userRecoveryService.issuePasswordToken(any(), anyString()))
                 .thenReturn(new UserRecoveryDto.ResponsePasswordToken("raw-token", Instant.now().plusSeconds(600)));
@@ -101,7 +101,7 @@ class UserRecoveryControllerTest {
     // ─── 비밀번호 재설정 ──────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("비밀번호 재설정 성공 시 200 + statusCode=200 + changedAt을 반환한다")
+    @DisplayName("비밀번호 재설정 성공 시 200 + changedAt을 반환한다")
     void resetPassword_성공_200() throws Exception {
         when(userRecoveryService.resetPassword(any()))
                 .thenReturn(new UserRecoveryDto.ResponseResetPassword(Instant.now()));

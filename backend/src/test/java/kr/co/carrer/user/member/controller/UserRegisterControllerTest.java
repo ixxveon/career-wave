@@ -40,7 +40,7 @@ class UserRegisterControllerTest {
     // ─── loginId 중복 확인 ────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("사용 가능한 loginId 조회 시 200 + statusCode=200 + available=true를 반환한다")
+    @DisplayName("사용 가능한 loginId 조회 시 200 + available=true를 반환한다")
     void checkLoginId_사용가능_200() throws Exception {
         when(userRegisterService.checkLoginId("newuser01"))
                 .thenReturn(new UserRegisterDto.ResponseCheckLoginId(true));
@@ -55,7 +55,7 @@ class UserRegisterControllerTest {
     }
 
     @Test
-    @DisplayName("LOGIN_ID_INVALID 시 success=false statusCode=400 code=LOGIN_ID_INVALID를 반환한다")
+    @DisplayName("LOGIN_ID_INVALID 시 success=false status=400 code=LOGIN_ID_INVALID를 반환한다")
     void checkLoginId_형식오류_400() throws Exception {
         when(userRegisterService.checkLoginId(anyString()))
                 .thenThrow(new kr.co.carrer.global.exception.CustomException(
@@ -200,7 +200,7 @@ class UserRegisterControllerTest {
     // ─── 재직증명서 업로드 ────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("PDF 업로드 성공 시 200 + statusCode=200 + fileId를 반환한다")
+    @DisplayName("PDF 업로드 성공 시 200 + fileId를 반환한다")
     void uploadCertificate_성공_200() throws Exception {
         when(userRegisterService.uploadEmploymentCertificate(any()))
                 .thenReturn(new UserRegisterDto.ResponseEmploymentCertificateUpload(
