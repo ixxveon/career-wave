@@ -472,28 +472,15 @@ export default function PostDetailPage() {
   }
 
   function submitReply(commentId: number, content: string) {
-    setComments((current) =>
-      current.map((item) =>
-        item.id === commentId
-          ? {
-              ...item,
-              replies: [
-                ...item.replies,
-                {
-                  id: Date.now(),
-                  author: "나",
-                  createdAt: "방금 전",
-                  content,
-                  likes: 0,
-                  reportCount: 0,
-                },
-              ],
-            }
-          : item,
-      ),
-    );
-  }
+    const trimmedContent = content.trim();
 
+    if (!trimmedContent || validBoardId === null) return;
+
+    createComment({
+      parentId: commentId,
+      content: trimmedContent,
+    });
+  }
   function submitReport() {
     if (!reportTarget) return;
 
