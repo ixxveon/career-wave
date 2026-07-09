@@ -36,7 +36,16 @@ export const serviceMenus: MenuItem[] = [
       { label: '면접 이력',           href: '/interview/sessions' },
     ],
   },
-  // QA #1140 — '지원 관리'(진단 상세) 도메인은 미완성이라 전체 회원에게 노출하지 않음
+  // QA #1140 — '지원 관리'(진단 상세) 도메인은 미완성이라 전체 회원에게 헤더 메뉴 노출만 숨김.
+  // 라우트/페이지(/career-diagnosis/detail/:id)는 그대로 유지 — 완성 후 아래 메뉴 주석만 해제하면 복원됨.
+  // {
+  //   label: '지원 관리',
+  //   href: '/career-diagnosis/detail/backend-20260522',
+  //   children: [
+  //     // { label: '지원자 관리', href: '/applications/applicants' }, // TODO(#977, #1049): 백엔드 미구현으로 임시 비활성화
+  //     { label: '진단 상세', href: '/career-diagnosis/detail/backend-20260522' },
+  //   ],
+  // },
   {
     label: '커뮤니티',
     href: '/community',
