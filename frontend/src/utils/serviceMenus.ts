@@ -63,11 +63,10 @@ export const serviceMenus: MenuItem[] = [
 ];
 
 // QA #1140 — 기업 회원에게는 노출하지 않는 개인 전용 서비스 메뉴
-const COMPANY_HIDDEN_MENU_LABELS = ['서류 AI 코칭', 'AI 면접', '지원 관리'];
+const COMPANY_HIDDEN_MENU_LABELS = ['서류 AI 코칭', 'AI 면접', '지원 관리'] as const;
 
 export function getServiceMenus(isCompanyMember: boolean): MenuItem[] {
   if (!isCompanyMember) return serviceMenus;
-  return serviceMenus.filter(
-    (menu) => !COMPANY_HIDDEN_MENU_LABELS.includes(menu.label),
-  );
+  const hiddenLabels: readonly string[] = COMPANY_HIDDEN_MENU_LABELS;
+  return serviceMenus.filter((menu) => !hiddenLabels.includes(menu.label));
 }

@@ -16,6 +16,7 @@ import {
   useDashboardProfile,
 } from "../../../hooks/user/dashboard";
 
+import { MEMBER_TYPE } from "@/types/user/member";
 import type { UserProfile } from "@/types/user/dashboard";
 
 import "@/styles/user/mypage/MyPage.css";
@@ -279,7 +280,7 @@ function UserMyPage() {
     className: "cw-warning",
   };
   // QA #1140 — 기업 회원에게는 AI 서비스 / 구독·결제 / GitHub 연동 정보를 노출하지 않는다.
-  const isCompanyMember = userProfile.roleType === "COMPANY";
+  const isCompanyMember = userProfile.roleType === MEMBER_TYPE.COMPANY;
   const hasEditFormChanges =
     editForm.name.trim() !== userProfile.name ||
     editForm.email.trim() !== (userProfile.email ?? "") ||
