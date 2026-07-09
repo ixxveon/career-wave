@@ -6,6 +6,7 @@ import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.mock.web.MockMultipartFile;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -13,6 +14,8 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.lang.reflect.Field;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,6 +57,29 @@ class S3EmploymentCertificateFileAdapterTest {
         assertThat(result.originalName()).isEqualTo("certificate.pdf");
         assertThat(result.mimeType()).isEqualTo("application/pdf");
         verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+    }
+
+    @Test
+    @DisplayName("한글 파일명도 업로드 가능하다 — 메타데이터는 US-ASCII로 인코딩하고 원본명은 그대로 반환한다")
+    void upload_한글_파일명_인코딩_저장() {
+        when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
+                .thenReturn(PutObjectResponse.builder().build());
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "재직증명서_홍길동.pdf", "application/pdf", MINIMAL_PDF_BYTES);
+
+        UserRegisterDto.ResponseEmploymentCertificateUpload result = adapter.upload(file);
+
+        // 사용자에게 보여줄 응답에는 원본(한글) 파일명을 그대로 반환
+        assertThat(result.originalName()).isEqualTo("재직증명서_홍길동.pdf");
+
+        // S3 user-metadata(x-amz-meta-*)는 US-ASCII만 허용 → 인코딩된 값이 저장되어야 한다
+        ArgumentCaptor<PutObjectRequest> captor = ArgumentCaptor.forClass(PutObjectRequest.class);
+        verify(s3Client).putObject(captor.capture(), any(RequestBody.class));
+        String storedMeta = captor.getValue().metadata().get("original-name");
+        assertThat(storedMeta)
+                .isEqualTo(URLEncoder.encode("재직증명서_홍길동.pdf", StandardCharsets.UTF_8));
+        assertThat(storedMeta.chars().allMatch(c -> c < 128)).isTrue();
     }
 
     // ─── upload — 확장자 오류 ───────────────────────────────────────────────────────
@@ -229,6 +255,19 @@ class S3EmploymentCertificateFileAdapterTest {
 
         String result = adapter.resolveFileName("employment-certificates/2026/uuid.pdf");
         assertThat(result).isEqualTo("my_certificate.pdf");
+    }
+
+    @Test
+    @DisplayName("인코딩된 한글 파일명 메타데이터를 디코딩해 원본으로 복원한다")
+    void resolveFileName_한글_디코딩_복원() {
+        String encoded = URLEncoder.encode("재직증명서_홍길동.pdf", StandardCharsets.UTF_8);
+        HeadObjectResponse headResponse = HeadObjectResponse.builder()
+                .metadata(Map.of("original-name", encoded))
+                .build();
+        when(s3Client.headObject(any(HeadObjectRequest.class))).thenReturn(headResponse);
+
+        String result = adapter.resolveFileName("employment-certificates/2026/uuid.pdf");
+        assertThat(result).isEqualTo("재직증명서_홍길동.pdf");
     }
 
     @Test

@@ -36,14 +36,7 @@ export const serviceMenus: MenuItem[] = [
       { label: '면접 이력',           href: '/interview/sessions' },
     ],
   },
-  {
-    label: '지원 관리',
-    href: '/career-diagnosis/detail/backend-20260522',
-    children: [
-      // { label: '지원자 관리', href: '/applications/applicants' }, // TODO(#977, #1049): 백엔드 미구현으로 임시 비활성화
-      { label: '진단 상세', href: '/career-diagnosis/detail/backend-20260522' },
-    ],
-  },
+  // QA #1140 — '지원 관리'(진단 상세) 도메인은 미완성이라 전체 회원에게 노출하지 않음
   {
     label: '커뮤니티',
     href: '/community',
@@ -63,7 +56,7 @@ export const serviceMenus: MenuItem[] = [
 ];
 
 // QA #1140 — 기업 회원에게는 노출하지 않는 개인 전용 서비스 메뉴
-const COMPANY_HIDDEN_MENU_LABELS = ['서류 AI 코칭', 'AI 면접', '지원 관리'] as const;
+const COMPANY_HIDDEN_MENU_LABELS = ['서류 AI 코칭', 'AI 면접'] as const;
 
 export function getServiceMenus(isCompanyMember: boolean): MenuItem[] {
   if (!isCompanyMember) return serviceMenus;
