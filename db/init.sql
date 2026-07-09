@@ -1226,12 +1226,37 @@ INSERT INTO ai_models (
     output_token_price,
     is_enabled
 )
-VALUES (
+VALUES
+(
     'gpt-4o-mini',
     'GPT-4o Mini',
     'OPENAI',
     0.150000,
     0.600000,
+    TRUE
+),
+(
+    'gpt-4o',
+    'GPT-4o',
+    'OPENAI',
+    2.500000,
+    10.000000,
+    TRUE
+),
+(
+    'whisper-1',
+    'Whisper-1',
+    'OPENAI',
+    0.000000,
+    0.000000,
+    TRUE
+),
+(
+    'tts-1',
+    'TTS-1',
+    'OPENAI',
+    0.000000,
+    0.000000,
     TRUE
 );
 
