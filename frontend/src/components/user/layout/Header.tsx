@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { serviceMenus } from '../../../utils/serviceMenus';
+import { getServiceMenus } from '../../../utils/serviceMenus';
 import { useAuth } from '../../../hooks/user/useAuth';
+import { useIsCompanyMember } from '../../../hooks/user/useIsCompanyMember';
 import logo from '../../../assets/logo.svg';
 import './Header.css';
 
@@ -13,6 +14,8 @@ function Header() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isLoggedIn, isChecking, logout } = useAuth();
+  const isCompanyMember = useIsCompanyMember();
+  const serviceMenus = getServiceMenus(isCompanyMember);
 
   const handleMenuEnter = useCallback((label: string) => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
