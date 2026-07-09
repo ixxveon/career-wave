@@ -11,8 +11,11 @@ import {
   Trash2,
 } from "lucide-react";
 import "@/styles/user/community/PostDetailPage.css";
-import { useCommunityBoard } from "@/hooks/user/community";
-import type { CommunityBoard } from "@/types/user/community";
+import {
+  useCommunityBoard,
+  useCommunityComments,
+} from "@/hooks/user/community";
+import type { CommunityBoard, CommunityComment } from "@/types/user/community";
 
 const REPORT_TYPE = {
   BOARD: "BOARD",
@@ -86,6 +89,29 @@ function toPost(board: CommunityBoard): CommunityPost {
     reportCount: 0,
     content: board.content,
   };
+}
+
+function toComments(apiComments: CommunityComment[]): Comment[] {
+  return apiComments
+    .filter((item) => item.parentId === null)
+    .map((item) => ({
+      id: item.commentId,
+      author: item.memberId,
+      createdAt: item.createdAt?.slice(0, 10) ?? "",
+      content: item.content,
+      likes: 0,
+      reportCount: 0,
+      replies: apiComments
+        .filter((reply) => reply.parentId === item.commentId)
+        .map((reply) => ({
+          id: reply.commentId,
+          author: reply.memberId,
+          createdAt: reply.createdAt?.slice(0, 10) ?? "",
+          content: reply.content,
+          likes: 0,
+          reportCount: 0,
+        })),
+    }));
 }
 
 type CommentItemProps = {
@@ -384,6 +410,8 @@ export default function PostDetailPage() {
     isError: isBoardError,
   } = useCommunityBoard(validBoardId);
 
+  const { data: apiComments = [] } = useCommunityComments(validBoardId);
+
   const post = useMemo(() => {
     if (!board) return null;
 
@@ -409,6 +437,10 @@ export default function PostDetailPage() {
     setReportTarget(null);
     setReportReason("AD");
   }, [post?.id, post?.likes, post?.reportCount]);
+
+  useEffect(() => {
+    setComments(toComments(apiComments));
+  }, [apiComments]);
 
   function handleLike() {
     setLiked((current) => {
