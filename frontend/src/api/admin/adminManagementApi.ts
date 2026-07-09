@@ -95,7 +95,7 @@ export interface AdminAuditLog {
 
 export interface ApiErrorBody<TData = unknown> {
   success?: false;
-  statusCode?: number;
+  status?: number;
   code?: string;
   errorCode?: string;
   message?: string;
@@ -223,7 +223,7 @@ export type AdminManagementErrorCode =
 
 export interface AdminManagementApiError {
   code: AdminManagementErrorCode;
-  statusCode: number;
+  status: number;
   message: string;
   fieldErrors?: Record<string, string>;
 }
@@ -268,37 +268,45 @@ function getAdminManagementErrorCode(statusCode: number): AdminManagementErrorCo
 }
 
 function getFieldErrors(data: unknown): Record<string, string> | undefined {
-  if (!data || typeof data !== 'object' || !('fieldErrors' in data)) return undefined;
+  if (!data || typeof data !== 'object') return undefined;
 
-  const fieldErrors = (data as { fieldErrors?: unknown }).fieldErrors;
-  if (!fieldErrors || typeof fieldErrors !== 'object') return undefined;
+  if ('fieldErrors' in data) {
+    const fieldErrors = (data as { fieldErrors?: unknown }).fieldErrors;
+    if (fieldErrors && typeof fieldErrors === 'object') {
+      return fieldErrors as Record<string, string>;
+    }
+  }
 
-  return fieldErrors as Record<string, string>;
+  const entries = Object.entries(data);
+  if (entries.length === 0) return undefined;
+
+  const isStringMap = entries.every(([, value]) => typeof value === 'string');
+  return isStringMap ? data as Record<string, string> : undefined;
 }
 
 export function toAdminManagementApiError(error: unknown): AdminManagementApiError {
   if (!axios.isAxiosError<ApiErrorBody>(error)) {
     return {
       code: ADMIN_MANAGEMENT_ERROR_CODE.UNKNOWN,
-      statusCode: 0,
+      status: 0,
       message: error instanceof Error ? error.message : adminManagementFallbackMessages.UNKNOWN,
     };
   }
 
   const axiosError = error;
-  const statusCode = axiosError.response?.data?.statusCode ?? axiosError.response?.status ?? 0;
+  const status = axiosError.response?.data?.status ?? axiosError.response?.status ?? 0;
   const body = axiosError.response?.data;
   const isMasterRoleError =
-    statusCode === 403
+    status === 403
     && (body?.code === ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED
       || body?.errorCode === ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED);
   const code = isMasterRoleError
     ? ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED
-    : getAdminManagementErrorCode(statusCode);
+    : getAdminManagementErrorCode(status);
 
   return {
     code,
-    statusCode,
+    status,
     message: body?.message || adminManagementFallbackMessages[code],
     fieldErrors: getFieldErrors(body?.data),
   };
@@ -318,12 +326,13 @@ function unwrapApiResponse<TData>(response: AxiosResponse<ApiResponse<TData>>): 
   const payload = response.data;
 
   if (!payload.success) {
-    const code = getAdminManagementErrorCode(payload.statusCode);
+    const code = getAdminManagementErrorCode(payload.status);
 
     throw {
       code,
-      statusCode: payload.statusCode,
+      status: payload.status,
       message: payload.message || adminManagementFallbackMessages[code],
+      fieldErrors: getFieldErrors(payload.data),
     } satisfies AdminManagementApiError;
   }
 

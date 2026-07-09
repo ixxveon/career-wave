@@ -1,9 +1,17 @@
 export interface ApiResponse<T> {
-  success: boolean;
-  statusCode: number;
+  success: true;
   message: string;
-  data: T | null;
+  data: T;
 }
+
+export interface ApiErrorResponse {
+  success: false;
+  status: number;
+  message: string;
+  data: null;
+}
+
+export type JobNoticeApiResponse<T> = ApiResponse<T> | ApiErrorResponse;
 
 export interface JobNoticeSummary {
   jobNoticeId: number;
@@ -171,9 +179,9 @@ export interface JobNoticeQueryParams {
   size?: number;
 }
 
-export type JobNoticeListApiResponse = ApiResponse<JobNoticeListResponse>;
-export type JobNoticeDetailApiResponse = ApiResponse<JobNoticeDetail>;
-export type JobNoticeBookmarkApiResponse = ApiResponse<JobNoticeBookmarkResponse>;
+export type JobNoticeListApiResponse = JobNoticeApiResponse<JobNoticeListResponse>;
+export type JobNoticeDetailApiResponse = JobNoticeApiResponse<JobNoticeDetail>;
+export type JobNoticeBookmarkApiResponse = JobNoticeApiResponse<JobNoticeBookmarkResponse>;
 export const JOB_NOTICE_DEADLINE_FALLBACK = '\uB9C8\uAC10\uC77C \uBBF8\uC815';
 
 export const JOB_NOTICE_VIEW_FIELD_MAP = {

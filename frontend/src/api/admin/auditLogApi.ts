@@ -223,6 +223,8 @@ export function mapBackendAuditLogDetail(log: BackendAuditLogDetail): AuditLogDe
 }
 
 function mapAuditLogSummaryResponse(response: ApiResponse<BackendAuditLogSummary>): ApiResponse<AuditLogSummary> {
+  if (!response.success) return response;
+
   return {
     ...response,
     data: mapBackendAuditLogSummary(response.data),
@@ -230,6 +232,8 @@ function mapAuditLogSummaryResponse(response: ApiResponse<BackendAuditLogSummary
 }
 
 function mapAuditLogListResponse(response: ApiResponse<PageResult<BackendAuditLogItem>>): ApiResponse<PageResult<AuditLogItem>> {
+  if (!response.success) return response;
+
   return {
     ...response,
     data: {
@@ -240,6 +244,8 @@ function mapAuditLogListResponse(response: ApiResponse<PageResult<BackendAuditLo
 }
 
 function mapAuditLogDetailResponse(response: ApiResponse<BackendAuditLogDetail>): ApiResponse<AuditLogDetail> {
+  if (!response.success) return response;
+
   return {
     ...response,
     data: mapBackendAuditLogDetail(response.data),

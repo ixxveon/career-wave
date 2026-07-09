@@ -139,7 +139,7 @@ export function unwrapDashboardSummaryResponse(
 
   if (!payload.success) {
     throw {
-      statusCode: payload.statusCode,
+      status: payload.status,
       message: getDashboardSummaryErrorMessage(payload.message),
     };
   }

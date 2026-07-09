@@ -1,9 +1,21 @@
-export interface ApiResponse<TData> {
-  success: boolean;
-  statusCode: number;
+export interface ApiSuccessResponse<TData> {
+  success: true;
   message: string | null;
   data: TData;
 }
+
+export interface ApiFailureResponse<TData = unknown> {
+  success: false;
+  status: number;
+  message: string | null;
+  data: TData | null;
+  code?: string;
+  errorCode?: string;
+}
+
+export type ApiResponse<TData, TErrorData = unknown> =
+  | ApiSuccessResponse<TData>
+  | ApiFailureResponse<TErrorData>;
 
 export interface PageResult<TItem> {
   content: TItem[];

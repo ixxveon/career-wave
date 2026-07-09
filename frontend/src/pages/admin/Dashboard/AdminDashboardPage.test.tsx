@@ -49,7 +49,6 @@ function apiResponse(data: AdminDashboardSummary) {
   return {
     data: {
       success: true,
-      statusCode: 200,
       message: 'OK',
       data,
     },
