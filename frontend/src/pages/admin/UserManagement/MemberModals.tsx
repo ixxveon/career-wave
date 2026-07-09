@@ -216,7 +216,7 @@ export function SuspendModal({ target, onClose, onSuccess }: SuspendModalProps) 
           <button onClick={onClose} disabled={loading}>취소</button>
           <button
             onClick={handleSuspend}
-            disabled={loading || reason.trim().length < 10}
+            disabled={loading}
             style={period === 'PERMANENT' ? { background: '#9a6767', color: 'white', borderColor: '#9a6767' } : {}}
           >
             {loading ? '처리 중...' : `${durationLabel[period]} 정지 처리`}
@@ -239,6 +239,10 @@ export function UnsuspendModal({ target, onClose, onSuccess }: UnsuspendModalPro
   const [error, setError] = useState('');
 
   const handleUnsuspend = async () => {
+    if (reason.trim().length < 10) {
+      setError('해제 사유는 최소 10자 이상 입력해주세요.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -289,7 +293,7 @@ export function UnsuspendModal({ target, onClose, onSuccess }: UnsuspendModalPro
           <button onClick={onClose} disabled={loading}>취소</button>
           <button
             onClick={handleUnsuspend}
-            disabled={loading || reason.trim().length < 10}
+            disabled={loading}
             style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}
           >
             {loading ? '처리 중...' : '정지 해제'}
