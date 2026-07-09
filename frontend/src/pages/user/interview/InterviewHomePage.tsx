@@ -123,17 +123,21 @@ function InterviewHomePage() {
             {/* ── 이번 달 AI 면접 사용량 ── */}
             <li className="iv-status-item iv-status-item--usage">
               <span className="iv-status-item__label">이번 달 AI 면접</span>
-              <div className="iv-quota-wrap">
-                <div className="iv-quota-bar">
-                  <div
-                    className={`iv-quota-bar__fill${ivPct >= 90 ? ' iv-quota-bar__fill--warn' : ''}`}
-                    style={{ width: `${ivPct}%` }}
-                  />
+              {ivSubscribed ? (
+                <div className="iv-quota-wrap">
+                  <div className="iv-quota-bar">
+                    <div
+                      className={`iv-quota-bar__fill${ivPct >= 90 ? ' iv-quota-bar__fill--warn' : ''}`}
+                      style={{ width: `${ivPct}%` }}
+                    />
+                  </div>
+                  <span className={`iv-quota-count${ivPct >= 90 ? ' iv-quota-count--warn' : ''}`}>
+                    {ivUsed} / {ivLimit}회
+                  </span>
                 </div>
-                <span className={`iv-quota-count${ivPct >= 90 ? ' iv-quota-count--warn' : ''}`}>
-                  {ivUsed} / {ivLimit}회
-                </span>
-              </div>
+              ) : (
+                <span className="iv-status-item__value iv-status-item__value--free">구독 후 이용 가능</span>
+              )}
             </li>
           </ul>
         </div>
