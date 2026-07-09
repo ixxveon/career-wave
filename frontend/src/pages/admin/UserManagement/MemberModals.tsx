@@ -63,24 +63,27 @@ export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: M
               </strong></div>
             </>
           )}
-          <div style={{ gridColumn: '1 / -1' }}>
-            <span>경고 횟수</span>
-            <div className="warnCountWrap">
-              <div className="warnDots">
-                {Array.from({ length: WARN_THRESHOLD }).map((_, i) => (
-                  <span key={i} className={`warnDot ${i < member.warningCount ? 'filled' : ''}`} />
-                ))}
+          {/* 경고(WARNING)는 커뮤니티 신고 관리 화면에서만 부여되며, 기업 회원은 커뮤니티 접근이 차단되어 있음 (#1171) */}
+          {member.role === MEMBER_ROLE.USER && (
+            <div style={{ gridColumn: '1 / -1' }}>
+              <span>경고 횟수</span>
+              <div className="warnCountWrap">
+                <div className="warnDots">
+                  {Array.from({ length: WARN_THRESHOLD }).map((_, i) => (
+                    <span key={i} className={`warnDot ${i < member.warningCount ? 'filled' : ''}`} />
+                  ))}
+                </div>
+                <strong className={`warnCountText ${
+                  member.warningCount >= WARN_THRESHOLD ? 'danger' :
+                  member.warningCount === WARN_THRESHOLD - 1 ? 'caution' : ''
+                }`}>
+                  {member.warningCount}/{WARN_THRESHOLD}회
+                </strong>
+                {member.warningCount >= WARN_THRESHOLD && <span className="warnAlert">활동정지 권고</span>}
+                {member.warningCount === WARN_THRESHOLD - 1 && <span className="warnCaution">1회 추가 시 활동정지 권고</span>}
               </div>
-              <strong className={`warnCountText ${
-                member.warningCount >= WARN_THRESHOLD ? 'danger' :
-                member.warningCount === WARN_THRESHOLD - 1 ? 'caution' : ''
-              }`}>
-                {member.warningCount}/{WARN_THRESHOLD}회
-              </strong>
-              {member.warningCount >= WARN_THRESHOLD && <span className="warnAlert">활동정지 권고</span>}
-              {member.warningCount === WARN_THRESHOLD - 1 && <span className="warnCaution">1회 추가 시 활동정지 권고</span>}
             </div>
-          </div>
+          )}
         </div>
         <div className="modalAction">
           <button onClick={onClose}>닫기</button>
