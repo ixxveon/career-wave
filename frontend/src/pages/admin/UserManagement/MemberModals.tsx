@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { X } from 'lucide-react';
 import {
@@ -9,6 +9,7 @@ import {
   type MemberDetailItem,
   type MemberStatus,
   type SuspendDuration,
+  type HrManagerDetail,
 } from '../../../api/admin/memberApi';
 
 const WARN_THRESHOLD = 3;
@@ -31,6 +32,28 @@ interface MemberDetailModalProps {
 }
 
 export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: MemberDetailModalProps) {
+  const [hrDetail, setHrDetail] = useState<HrManagerDetail | null>(null);
+  const [hrDetailError, setHrDetailError] = useState('');
+
+  useEffect(() => {
+    if (member.role !== MEMBER_ROLE.COMPANY) return;
+    let cancelled = false;
+    setHrDetail(null);
+    setHrDetailError('');
+    memberApi.getHrManagerDetail(member.memberId)
+      .then((res) => {
+        if (cancelled) return;
+        if (!res.data.success) throw new Error(res.data.message);
+        setHrDetail(res.data.data);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
+        setHrDetailError(msg || '재직증명서 정보를 불러오지 못했습니다.');
+      });
+    return () => { cancelled = true; };
+  }, [member.role, member.memberId]);
+
   return (
     <div className="modalOverlay">
       <div className="memberModal" onClick={(e) => e.stopPropagation()}>
@@ -82,6 +105,19 @@ export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: M
                 {member.warningCount >= WARN_THRESHOLD && <span className="warnAlert">활동정지 권고</span>}
                 {member.warningCount === WARN_THRESHOLD - 1 && <span className="warnCaution">1회 추가 시 활동정지 권고</span>}
               </div>
+            </div>
+          )}
+          {member.role === MEMBER_ROLE.COMPANY && (
+            <div style={{ gridColumn: '1 / -1', padding: '14px 16px', borderRadius: 12, background: '#f3f7fc', border: '1px solid #d8e8f5' }}>
+              <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: '#31475f' }}>재직증명서</p>
+              {hrDetailError && <p style={{ margin: 0, fontSize: 13, color: '#9a4444' }}>{hrDetailError}</p>}
+              {!hrDetailError && !hrDetail && <p style={{ margin: 0, fontSize: 13, color: '#7a8da4' }}>불러오는 중...</p>}
+              {hrDetail && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 13, color: '#4a7299' }}>📄 {hrDetail.certFileName}</span>
+                  <a href={hrDetail.certFileUrl} target="_blank" rel="noopener noreferrer" className="tableBtn" style={{ marginLeft: 'auto' }}>파일 확인</a>
+                </div>
+              )}
             </div>
           )}
         </div>
