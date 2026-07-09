@@ -299,15 +299,9 @@ export default function CommunityPage() {
       <div className="cm-ops-panel">
         <div>
           <Database size={18} />
-          <strong>페이지 기반 게시글 목록</strong>
-          <span>
-            현재 페이지: {page + 1} / {totalPages}
-          </span>
+          <strong>궁금한 점을 질문하고, 면접 후기와 이력서 팁을 함께 나눠보세요.</strong>
         </div>
-        <p>
-          게시글 목록은 page/size 기반 API로 조회하며, 총 {totalElements}개의
-          게시글을 페이지 단위로 확인합니다.
-        </p>
+  
       </div>
 
       <div className="cm-toolbar">
@@ -315,7 +309,7 @@ export default function CommunityPage() {
           <Search size={16} />
           <input
             type="search"
-            placeholder="현재 페이지 내 검색"
+            placeholder="게시글 검색"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
