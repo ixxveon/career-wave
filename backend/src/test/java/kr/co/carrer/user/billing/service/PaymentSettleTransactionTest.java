@@ -129,9 +129,9 @@ class PaymentSettleTransactionTest {
     }
 
     @Test
-    @DisplayName("Entitlement 조회 실패 — Subscription 저장 후 UsagePeriod 저장 없음")
-    void settle_entitlementNotFound_usagePeriodNotCreated() {
-        String orderId = "ORDER-ENT-FAIL";
+    @DisplayName("Entitlement 없음 — 결산 시 생성 후 프리미엄 활성화 및 UsagePeriod 저장")
+    void settle_entitlementMissing_createsAndActivates() {
+        String orderId = "ORDER-ENT-NEW";
         String customerKey = "ck_ef";
         UUID paymentId = UUID.randomUUID();
         UserPayment payment = readyPayment(memberId, 1L, "document-coaching", orderId, customerKey, paymentId);
@@ -153,14 +153,15 @@ class PaymentSettleTransactionTest {
         });
         given(entitlementRepository.findByMemberIdAndProductCodeForUpdate(any(), any()))
                 .willReturn(Optional.empty());
+        given(entitlementRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId)))
-                .isInstanceOf(CustomException.class)
-                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
-                        .isEqualTo(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
+        BillingDTO.ResponseConfirmPayment response =
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId));
 
-        verify(subscriptionUsagePeriodRepository, never()).save(any());
+        // 이용권이 없으면 발급을 막지 않고 생성해 프리미엄 활성화까지 진행하고, 사용기간도 기록한다.
+        assertThat(response.paymentStatus()).isEqualTo("PAID");
+        verify(entitlementRepository).save(any());
+        verify(subscriptionUsagePeriodRepository).save(any());
     }
 
     @Test

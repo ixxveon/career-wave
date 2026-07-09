@@ -1,11 +1,9 @@
 package kr.co.carrer.user.billing.service.impl;
 
-import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.client.dto.TossBillingPaymentResponse;
 import kr.co.carrer.user.billing.client.dto.TossOneTimeConfirmResult;
 import kr.co.carrer.user.billing.dto.BillingDTO;
 import kr.co.carrer.user.billing.entity.*;
-import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.MemberProductEntitlementRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionUsagePeriodRepository;
@@ -74,9 +72,12 @@ public class UserPaymentSettleTxService {
         subscriptionRepository.save(subscription);
         payment.linkSubscription(subscription.getSubscriptionId());
 
+        // 결산은 프리미엄을 부여하는 최종 단계이므로, 이용권 row 가 없으면(가입 전 로직으로 생성된 계정 등)
+        // 여기서 생성해 결제한 사용자가 반드시 이용권을 받도록 보장한다. (없다고 발급을 막지 않음)
         MemberProductEntitlement entitlement = entitlementRepository
                 .findByMemberIdAndProductCodeForUpdate(payment.getMemberId(), plan.getProductCode())
-                .orElseThrow(() -> new CustomException(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
+                .orElseGet(() -> entitlementRepository.save(
+                        MemberProductEntitlement.createFree(payment.getMemberId(), plan.getProductCode())));
 
         if (entitlement.getFreeUsageStatus() == FreeUsageStatus.AVAILABLE) {
             entitlement.forfeitFree();
