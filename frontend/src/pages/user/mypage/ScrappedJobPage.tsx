@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
+import MyPageSidebar from "../../../components/user/mypage/MyPageSidebar";
 import { Search, Bookmark } from "lucide-react";
 import JobNoticeDetail from "@/pages/user/jobNotice/JobNoticeDetail";
 import { deleteDashboardBookmark } from "@/api/user/dashboard";
@@ -145,23 +145,7 @@ function ScrappedJobPage() {
 
   return (
     <div className="cw-mypage-layout">
-      <aside className="cw-mypage-sidebar">
-        <strong>마이페이지</strong>
-
-        <nav>
-          <NavLink to="/mypage" end>
-            내 정보 관리
-          </NavLink>
-          <NavLink
-            to="/mypage/favorites"
-            className={({ isActive }) => (isActive ? "is-active" : "")}
-          >
-            스크랩 공고
-          </NavLink>
-          <NavLink to="/mypage/subscription">AI 서비스</NavLink>
-          <NavLink to="/mypage/payment-history">구독/결제 내역</NavLink>
-        </nav>
-      </aside>
+      <MyPageSidebar />
 
       <section className="cw-scrap-page">
         <div className="cw-scrap-header">
