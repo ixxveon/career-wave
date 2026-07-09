@@ -109,7 +109,7 @@ class InterviewFreeEntitlementIntegrationTest {
             when(resumeService.findDocumentFileUrl(memberId, documentId)).thenReturn(Optional.of(fileUrl));
 
             sessionService.startSession(memberId,
-                    new InterviewDTO.RequestStartSession(documentId.toString(), "TEXT", "TECHNICAL", null));
+                    new InterviewDTO.RequestStartSession(documentId.toString(), "TEXT", "TECHNICAL", null, null));
 
             verify(resumeService).findDocumentFileUrl(memberId, documentId);
         }
@@ -181,7 +181,7 @@ class InterviewFreeEntitlementIntegrationTest {
 
     private InterviewDTO.RequestStartSession buildStartRequest() {
         // 인자 순서: (documentId, sessionType, interviewType, targetCompany)
-        return new InterviewDTO.RequestStartSession(null, "TEXT", "TECHNICAL", null);
+        return new InterviewDTO.RequestStartSession(null, "TEXT", "TECHNICAL", null, null);
     }
 
     private InterviewDTO.RequestReportCallback buildReportCallback() {
@@ -189,7 +189,7 @@ class InterviewFreeEntitlementIntegrationTest {
     }
 
     private InterviewSession buildSession(UUID id, UUID memberId) {
-        InterviewSession session = InterviewSession.create(memberId, null, null, null, null);
+        InterviewSession session = InterviewSession.create(memberId, null, null, null, null, null);
         setField(session, "sessionId", id);
         setField(session, "sessionStatus", SessionStatus.IN_PROGRESS);
         return session;

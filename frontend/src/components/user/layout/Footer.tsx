@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Github, Send, type LucideIcon } from 'lucide-react';
 import logo from '../../../assets/logo.svg';
 import './Footer.css';
 
@@ -11,11 +10,6 @@ interface FooterLink {
 interface FooterCol {
   title: string;
   links: FooterLink[];
-}
-
-interface SnsItem {
-  label: string;
-  icon: LucideIcon;
 }
 
 const FOOTER_COLS: FooterCol[] = [
@@ -45,12 +39,6 @@ const FOOTER_COLS: FooterCol[] = [
   },
 ];
 
-const SNS: SnsItem[] = [
-  { label: 'Instagram', icon: Instagram },
-  { label: 'GitHub',    icon: Github    },
-  { label: 'Kakao',     icon: Send      },
-];
-
 function Footer() {
   return (
     <footer className="cw-footer">
@@ -67,14 +55,6 @@ function Footer() {
               AI가 이력서부터 면접까지,<br />
               취업 준비의 모든 단계를 함께합니다.
             </p>
-            <div className="cw-footer__sns">
-              {SNS.map(({ label, icon: Icon }) => (
-                // TODO: SNS 채널 개설 후 <a href={url}> 로 교체
-                <button key={label} type="button" aria-label={label} className="cw-footer__sns-btn" disabled>
-                  <Icon size={16} />
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* ── 링크 컬럼 ── */}

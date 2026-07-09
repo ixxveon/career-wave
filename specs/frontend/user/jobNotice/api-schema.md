@@ -79,7 +79,7 @@
 | `jobCategory` | `BACKEND`, `FRONTEND`, `DATA`, `DEVOPS` |
 | `careerLevel` | `JUNIOR`, `SENIOR`, `ANY` |
 | `location` | `전체`, `서울`, `경기`, `원격` |
-| `companySize` | `전체`, `스타트업`, `중견`, `대기업` |
+| `companySize` | `전체`, `스타트업`, `중소`, `중견`, `대기업` |
 | `period` | `today`, `7d`, `30d`, `all` |
 | `sort` | `recommend`, `latest`, `views` |
 
@@ -195,7 +195,7 @@
       "jobCategory": ["BACKEND", "FRONTEND", "DATA", "DEVOPS"],
       "careerLevel": ["JUNIOR", "SENIOR", "ANY"],
       "location": ["전체", "서울", "경기", "원격"],
-      "companySize": ["전체", "스타트업", "중견", "대기업"]
+      "companySize": ["전체", "스타트업", "중소", "중견", "대기업"]
     }
   }
 }

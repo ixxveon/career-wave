@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import MyPageSidebar from '../../../components/user/mypage/MyPageSidebar';
 import '@/styles/user/mypage/MyPage.css';
 import { useSubscriptionStatus } from '../../../hooks/user/subscription';
 import { SubscriptionHero } from '../../../components/user/subscription/SubscriptionHero';
@@ -19,17 +19,7 @@ function SubscriptionPage() {
   return (
     <>
       <div className="cw-mypage-layout">
-        <aside className="cw-mypage-sidebar">
-          <strong>마이페이지</strong>
-          <nav>
-            <Link to="/mypage">내 정보 관리</Link>
-            <Link to="/mypage/favorites">스크랩 공고</Link>
-            <Link to="/mypage/subscription" className="is-active">
-              AI 서비스
-            </Link>
-            <Link to="/mypage/payment-history">구독/결제 내역</Link>
-          </nav>
-        </aside>
+        <MyPageSidebar />
 
         <section className="cw-dashboard-section cw-subscription-page">
           <SubscriptionHero />

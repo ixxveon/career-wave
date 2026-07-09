@@ -3,10 +3,8 @@ package kr.co.carrer.user.member.controller;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.CookieProperties;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import kr.co.carrer.user.member.dto.UserLoginDto;
 import kr.co.carrer.user.member.dto.UserSocialAuthDto;
 import kr.co.carrer.user.member.service.UserSocialAuthService;
@@ -31,20 +29,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserSocialAuthController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, CookieProperties.class})
+@Import({SecurityConfig.class, SecurityMockConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, CookieProperties.class})
 class UserSocialAuthControllerTest {
 
     @Autowired MockMvc mockMvc;
 
     @MockBean UserSocialAuthService userSocialAuthService;
-    @MockBean JwtTokenProvider jwtTokenProvider;
-    @MockBean TokenBlacklistStore tokenBlacklistStore;
-    @MockBean IpAclPort ipAclPort;
 
     // ─── OAuth authorize ──────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("authorize 성공 시 200 + statusCode=200 + authorizationUrl을 반환한다")
+    @DisplayName("authorize 성공 시 200 + authorizationUrl을 반환한다")
     void authorize_성공_200() throws Exception {
         when(userSocialAuthService.authorize("kakao"))
                 .thenReturn(new UserSocialAuthDto.ResponseOAuthAuthorize(
@@ -53,7 +48,7 @@ class UserSocialAuthControllerTest {
         mockMvc.perform(get("/api/v1/user/members/oauth/kakao/authorize"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.provider").value("kakao"))
                 .andExpect(jsonPath("$.data.authorizationUrl").isNotEmpty())
@@ -110,7 +105,7 @@ class UserSocialAuthControllerTest {
     // ─── 소셜 회원가입 추가정보 완료 ────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("소셜 가입 완료 성공 시 200 + statusCode=200 + roleType=USER를 반환한다")
+    @DisplayName("소셜 가입 완료 성공 시 200 + roleType=USER를 반환한다")
     void complete_성공_200() throws Exception {
         UUID memberId = UUID.randomUUID();
         when(userSocialAuthService.complete(any(), any()))
@@ -118,7 +113,7 @@ class UserSocialAuthControllerTest {
 
         String body = """
                 {"provider":"kakao","socialSignupToken":"signup-token","name":"홍길동",
-                 "carrier":"SKT","phone":"01012345678","phoneVerificationToken":"ptoken",
+                 "phone":"01012345678","phoneVerificationToken":"ptoken",
                  "terms":{"service":true,"privacy":true,"marketing":false}}
                 """;
 
@@ -127,9 +122,75 @@ class UserSocialAuthControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.roleType").value("USER"))
                 .andExpect(jsonPath("$.data.nextPath").value("/"));
+    }
+
+    // ─── 소셜 가입 휴대폰 인증 후 분기(resolve) ─────────────────────────────────────────
+
+    @Test
+    @DisplayName("resolve LINKED 시 200 + status=LINKED + accessToken을 반환한다")
+    void resolve_LINKED_200() throws Exception {
+        UUID memberId = UUID.randomUUID();
+        UserLoginDto.MemberInfo memberInfo = UserLoginDto.MemberInfo.of(
+                memberId, "social01", "홍길동",
+                kr.co.carrer.user.member.type.RoleType.USER,
+                kr.co.carrer.user.member.type.MemberStatus.ACTIVE,
+                kr.co.carrer.user.member.type.SubscriptionStatus.FREE,
+                kr.co.carrer.user.member.type.CompanyApprovalStatus.NONE,
+                Instant.now());
+        when(userSocialAuthService.resolve(any(), any()))
+                .thenReturn(UserSocialAuthDto.ResponseSocialResolve.linked("mock-access-token", memberInfo));
+
+        String body = """
+                {"provider":"kakao","socialSignupToken":"signup-token",
+                 "phone":"01012345678","phoneVerificationToken":"ptoken"}
+                """;
+
+        mockMvc.perform(post("/api/v1/user/members/register/social/resolve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").doesNotExist())
+                .andExpect(jsonPath("$.data.status").value("LINKED"))
+                .andExpect(jsonPath("$.data.accessToken").value("mock-access-token"))
+                .andExpect(jsonPath("$.data.nextPath").value("/"));
+    }
+
+    @Test
+    @DisplayName("resolve NEW_MEMBER 시 200 + status=NEW_MEMBER + accessToken=null을 반환한다")
+    void resolve_NEW_MEMBER_200() throws Exception {
+        when(userSocialAuthService.resolve(any(), any()))
+                .thenReturn(UserSocialAuthDto.ResponseSocialResolve.newMember());
+
+        String body = """
+                {"provider":"kakao","socialSignupToken":"signup-token",
+                 "phone":"01012345678","phoneVerificationToken":"ptoken"}
+                """;
+
+        mockMvc.perform(post("/api/v1/user/members/register/social/resolve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").doesNotExist())
+                .andExpect(jsonPath("$.data.status").value("NEW_MEMBER"))
+                .andExpect(jsonPath("$.data.accessToken").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("resolve 휴대폰 번호 형식 오류 시 400 검증 실패를 반환한다")
+    void resolve_검증실패_400() throws Exception {
+        // phone이 010 11자리 패턴에 맞지 않아 @Valid 바인딩 단계에서 실패
+        String body = """
+                {"provider":"kakao","socialSignupToken":"signup-token",
+                 "phone":"123","phoneVerificationToken":"ptoken"}
+                """;
+
+        mockMvc.perform(post("/api/v1/user/members/register/social/resolve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
     }
 }

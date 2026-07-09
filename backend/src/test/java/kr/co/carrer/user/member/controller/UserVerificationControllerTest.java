@@ -2,10 +2,8 @@ package kr.co.carrer.user.member.controller;
 
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import kr.co.carrer.user.member.dto.UserVerificationDto;
 import kr.co.carrer.user.member.service.UserVerificationService;
 import org.junit.jupiter.api.DisplayName;
@@ -27,20 +25,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserVerificationController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, SecurityMockConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
 class UserVerificationControllerTest {
 
     @Autowired MockMvc mockMvc;
 
     @MockBean UserVerificationService userVerificationService;
-    @MockBean JwtTokenProvider jwtTokenProvider;
-    @MockBean TokenBlacklistStore tokenBlacklistStore;
-    @MockBean IpAclPort ipAclPort;
 
     // ─── 인증번호 발송 ─────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("인증번호 발송 성공 시 200 + statusCode=200 + verificationId를 반환한다")
+    @DisplayName("인증번호 발송 성공 시 200 + verificationId를 반환한다")
     void send_성공_200() throws Exception {
         UUID verificationId = UUID.randomUUID();
         Instant now = Instant.now();
@@ -57,7 +52,7 @@ class UserVerificationControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.verificationId").isNotEmpty())
                 .andExpect(jsonPath("$.data.remainingAttempts").value(5));
@@ -71,7 +66,7 @@ class UserVerificationControllerTest {
                         .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."))
                 .andExpect(jsonPath("$.code").doesNotExist());
     }
@@ -79,7 +74,7 @@ class UserVerificationControllerTest {
     // ─── 인증번호 확인 ─────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("인증번호 확인 성공 시 200 + statusCode=200 + verificationToken을 반환한다")
+    @DisplayName("인증번호 확인 성공 시 200 + verificationToken을 반환한다")
     void confirm_성공_200() throws Exception {
         when(userVerificationService.confirm(any()))
                 .thenReturn(new UserVerificationDto.ResponseConfirmVerification(
@@ -94,7 +89,7 @@ class UserVerificationControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.verificationToken").value("verified-token"));
     }
@@ -111,7 +106,7 @@ class UserVerificationControllerTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."))
                 .andExpect(jsonPath("$.code").doesNotExist());
     }

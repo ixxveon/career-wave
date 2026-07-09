@@ -72,6 +72,7 @@ interface AclDraft {
 }
 
 interface AdminDraft {
+  loginId: string;
   email: string;
   password: string;
   name: string;
@@ -141,6 +142,34 @@ const splitDateTime = (value: string) => {
   return { date, time };
 };
 
+const formatAdminLastLogin = (value: string): string => {
+  if (!value) {
+    return '—';
+  }
+
+  if (value.includes(' ')) {
+    return value;
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return value;
+  }
+
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(parsedDate);
+  const lookup = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+
+  return `${lookup.year}-${lookup.month}-${lookup.day} ${lookup.hour}:${lookup.minute}`;
+};
+
 const isValidCidr = (value: string) => {
   const match = value.match(/^(\d{1,3})(?:\.(\d{1,3})){3}\/(\d{1,2})$/);
   if (!match) return false;
@@ -170,6 +199,7 @@ const getAclRiskMeta = (cidr?: string | null) => {
 };
 
 const createEmptyAdminDraft = (): AdminDraft => ({
+  loginId: '',
   email: '',
   password: '',
   name: '',
@@ -184,7 +214,7 @@ const toAdminAccountRow = (admin: AdminAccountResponse): AdminAccount => ({
   scope: admin.scope,
   ip: admin.ip,
   createdAt: admin.createdAt,
-  lastLogin: admin.lastLoginAt,
+  lastLogin: formatAdminLastLogin(admin.lastLoginAt),
   status: admin.status,
 });
 
@@ -396,12 +426,14 @@ export default function AdminManagementPage() {
   const handleCreateAdminAccount = () => {
     if (isAccountMasterRoleRequired) return;
 
+    const loginId = adminDraft.loginId.trim();
     const email = adminDraft.email.trim();
     const name = adminDraft.name.trim();
     const password = adminDraft.password.trim();
-    if (!email || !name || !password) return;
+    if (!loginId || !email || !name || !password) return;
 
     createAdminMutation.mutate({
+      loginId,
       name,
       email,
       password,
@@ -589,7 +621,7 @@ export default function AdminManagementPage() {
         </section>
       ) : null}
 
-      <section className="amOverviewGrid">
+      <section className="memberSummaryGrid">
         {kpiItems.map((item) => (
           <article className={`admin-card amKpiCard ${item.tone}`} key={item.label}>
             <div className="amKpiContent">
@@ -1019,21 +1051,28 @@ export default function AdminManagementPage() {
                 <h3 id="amCreatePageTitle">관리자 계정 생성</h3>
                 <p>새 관리자에게 로그인 정보와 초기 권한을 부여합니다.</p>
               </div>
-              <button className="amGhostButton" type="button" onClick={() => closeCreateAdminPage()}>
-                닫기
-              </button>
             </div>
 
             <div className="amCreatePageBody">
               <label>
-                로그인 이메일
+                로그인 아이디
+                <input
+                  type="text"
+                  value={adminDraft.loginId}
+                  onChange={(e) => setAdminDraft((prev) => ({ ...prev, loginId: e.target.value }))}
+                  placeholder="admin_master"
+                  disabled={createAdminMutation.isPending}
+                  autoFocus
+                />
+              </label>
+              <label>
+                이메일
                 <input
                   type="email"
                   value={adminDraft.email}
                   onChange={(e) => setAdminDraft((prev) => ({ ...prev, email: e.target.value }))}
                   placeholder="admin@career-wave.com"
                   disabled={createAdminMutation.isPending}
-                  autoFocus
                 />
               </label>
               <label>
@@ -1117,12 +1156,6 @@ export default function AdminManagementPage() {
           gap: 14px;
           min-height: calc(100vh - 62px);
           padding-bottom: 20px;
-        }
-
-        .amOverviewGrid {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 18px;
         }
 
         .amGlobalErrorState {
@@ -1480,7 +1513,7 @@ export default function AdminManagementPage() {
         .amCreatePageHero {
           display: flex;
           align-items: flex-start;
-          justify-content: space-between;
+          justify-content: flex-start;
           gap: 20px;
           padding: 28px 30px;
           border-bottom: 1px solid #e7eef7;
@@ -2145,20 +2178,12 @@ export default function AdminManagementPage() {
         }
 
         @media (max-width: 1400px) {
-          .amOverviewGrid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-
           .amLayout {
             grid-template-columns: 1fr;
           }
         }
 
         @media (max-width: 1200px) {
-          .amOverviewGrid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-
           .amToolbar,
           .amAclForm {
             grid-template-columns: 1fr 1fr;
@@ -2166,7 +2191,6 @@ export default function AdminManagementPage() {
         }
 
         @media (max-width: 900px) {
-          .amOverviewGrid,
           .amToolbar,
           .amCreatePageBody,
           .amAclForm {

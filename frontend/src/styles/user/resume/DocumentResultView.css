@@ -105,6 +105,24 @@
 }
 .dr-btn--revise:hover { background: #fff; }
 
+.dr-btn--pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.14s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.dr-btn--pdf:hover { background: rgba(255, 255, 255, 0.25); }
+
 /* ─── 공통 카드 ──────────────────────────────── */
 .dr-card {
   padding: 24px;
@@ -122,6 +140,33 @@
   font-size: 13px;
   font-weight: 700;
   color: var(--color-text-primary);
+}
+
+/* ─── 추천 키워드 카드 ───────────────────────── */
+.dr-keywords { border-left: 4px solid #6366f1; }
+
+.dr-keywords__desc {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.dr-keywords__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dr-keyword-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1.5px solid #c7d2fe;
 }
 
 /* ─── 점수 요약 그리드 ───────────────────────── */
@@ -644,4 +689,49 @@
   .dr-single__row { grid-template-columns: 1fr; }
   .dr-improved__panels { grid-template-columns: 1fr; }
   .dr-cta { font-size: 14px; padding: 16px 20px; }
+}
+
+/* ── PDF 인쇄 스타일 ── */
+@media print {
+  header, nav, footer,
+  .dr-banner__actions,
+  .dr-type-selector,
+  .dr-section-tabs,
+  .dr-cta { display: none !important; }
+
+  body { background: #fff !important; }
+
+  .dr {
+    padding: 0;
+    gap: 16px;
+  }
+
+  .dr-banner {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    border-radius: 0;
+    page-break-inside: avoid;
+  }
+
+  .dr-card {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
+  }
+
+  .dr-feedback-item {
+    page-break-inside: avoid;
+  }
+
+  .dr-feedback-section {
+    page-break-before: auto;
+    border-top: 2px solid #e2e8f0;
+    padding-top: 24px;
+    margin-top: 8px;
+  }
+  .dr-feedback-section:first-child {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
 }

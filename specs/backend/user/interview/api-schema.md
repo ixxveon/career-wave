@@ -31,7 +31,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {}
 }
@@ -41,16 +40,15 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": false,
-  "statusCode": 403,
   "message": "해당 면접 세션에 접근할 권한이 없습니다.",
   "code": "INTERVIEW_SESSION_FORBIDDEN",
   "data": null
 }
 ```
 
-### 에러 상황별 statusCode
+### 에러 상황별 status
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `400` | 유효하지 않은 입력값 (sessionType 오류, 이미 종료된 세션 재종료 등) |
 | `401` | 인증 토큰 없음 또는 만료 |
@@ -97,6 +95,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
   "documentId": "uuid-v4",
   "sessionType": "VOICE",
   "interviewType": "TECHNICAL",
+  "focusType": "TECHNICAL_DEPTH",
   "targetCompany": "카카오"
 }
 ```
@@ -106,13 +105,13 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 | `documentId` | `String` | ❌ | RAG 컨텍스트용 서류 ID. null/생략 시 RAG 없이 일반 면접 진행. 값이 있으면 존재하는 서류여야 하며, 유효하지 않으면 `404 INTERVIEW_DOCUMENT_NOT_FOUND` 반환 |
 | `sessionType` | `String` | ✅ | `@NotBlank`, `TEXT` \| `VOICE` \| `VIDEO` |
 | `interviewType` | `String` | ❌ | `TECHNICAL` \| `PERSONALITY` \| `PROJECT` |
+| `focusType` | `String` | ❌ | `FOLLOW_UP` \| `TECHNICAL_DEPTH` \| `DELIVERY` \| `FLUENCY` — 개선 추천 액션 집중 유형 |
 | `targetCompany` | `String` | ❌ | `@Size(max=100)` |
 
 ### Response `200 OK`
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "sessionId": "uuid-v4",
@@ -126,7 +125,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `400` | `INTERVIEW_INVALID_SESSION_TYPE` | 유효하지 않은 `sessionType` 값 |
 | `404` | `INTERVIEW_DOCUMENT_NOT_FOUND` | 유효하지 않은 `documentId` |
@@ -136,7 +135,57 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ---
 
-## 2. 텍스트 답변 제출
+## 2. 진행 중 세션 조회
+
+- **Endpoint**: `GET /api/v1/user/interview/sessions/in-progress`
+- **Description**: 현재 로그인 회원의 `IN_PROGRESS` 상태 세션을 단건 조회한다. 면접 페이지 진입 시 이전 세션 재개 여부를 확인하는 데 사용한다.
+- **Auth**: `hasRole('USER')`
+
+### Response `200 OK` — 진행 중 세션 존재 시
+
+```json
+{
+  "success": true,
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": {
+    "sessionId": "uuid-v4",
+    "sessionType": "TEXT",
+    "interviewType": "TECHNICAL",
+    "targetCompany": "카카오",
+    "createdAt": "2026-05-29T14:53:44Z"
+  }
+}
+```
+
+| Field | Type | 설명 |
+|-------|------|------|
+| `data.sessionId` | `String` (UUID) | 재개 가능한 세션 ID |
+| `data.sessionType` | `String` | `TEXT` \| `VOICE` \| `VIDEO` |
+| `data.interviewType` | `String` \| `null` | 미입력 시 `null` |
+| `data.targetCompany` | `String` \| `null` | 미입력 시 `null` |
+| `data.createdAt` | `String` | ISO 8601 형식 |
+
+### Response `200 OK` — 진행 중 세션 없을 시
+
+```json
+{
+  "success": true,
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": null
+}
+```
+
+### Error Cases
+
+| status | ErrorCode | 상황 |
+|-----------|-----------|------|
+| `401` | `UNAUTHORIZED` | 토큰 없음 또는 만료 |
+
+> **Note**: 이 API는 읽기 전용이며 쓰기 락을 획득하지 않는다 (`findInProgressByMemberIdReadOnly` 사용).
+
+---
+
+## 3. 텍스트 답변 제출
 
 - **Endpoint**: `POST /api/v1/user/interview/sessions/{sessionId}/answer/text`
 - **Description**: 텍스트 입력 답변 저장
@@ -166,7 +215,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "messageId": 1,
@@ -177,7 +225,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `400` | — | `messageContent` 누락 또는 `questionOrder` 1 미만 |
 | `403` | `INTERVIEW_SESSION_FORBIDDEN` | 본인 소유가 아닌 세션 |
@@ -223,7 +271,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "chunkIndex": 0,
@@ -234,7 +281,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `400` | — | 지원하지 않는 오디오 포맷 또는 필수 파라미터 누락 |
 | `403` | `INTERVIEW_SESSION_FORBIDDEN` | 본인 소유가 아닌 세션 |
@@ -260,7 +307,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "sessionId": "uuid-v4",
@@ -275,7 +321,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `400` | `INTERVIEW_SESSION_ALREADY_ENDED` | 이미 종료된 세션 (`COMPLETED` / `FAILED`) |
 | `403` | `INTERVIEW_SESSION_FORBIDDEN` | 본인 소유가 아닌 세션 |
@@ -300,7 +346,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "sessionId": "uuid-v4",
@@ -342,7 +387,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `403` | `INTERVIEW_SESSION_FORBIDDEN` | 존재하지 않는 `sessionId` 또는 본인 소유가 아닌 세션 (IDOR 방어: 두 경우 모두 동일 응답) |
 | `409` | `INTERVIEW_REPORT_NOT_READY` | 리포트 아직 생성 중 |
@@ -353,7 +398,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": false,
-  "statusCode": 409,
+  "status": 409,
   "message": "리포트가 아직 생성 중입니다.",
   "code": "INTERVIEW_REPORT_NOT_READY",
   "data": {
@@ -387,7 +432,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "items": [
@@ -431,7 +475,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `401` | `UNAUTHORIZED` | 토큰 없음 또는 만료 |
 

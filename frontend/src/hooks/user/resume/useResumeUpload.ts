@@ -6,6 +6,7 @@ import { validateResumeFile } from '../../../utils/user/resume/validation';
 import { resumeStorage } from '../../../utils/user/resume/resumeStorage';
 import { useAnalysisWebSocket } from './useAnalysisWebSocket';
 import { QUOTA_QUERY_KEY } from './useResumeQuota';
+import { resumeQueryKeys } from './queryKeys';
 import type {
   ResumeUIState,
   UploadResumeResponse,
@@ -59,6 +60,7 @@ export function useResumeUpload(): UseResumeUploadReturn {
   const handleCompleted = useCallback(async () => {
     resumeStorage.removeUIState('RESUME');
     queryClient.invalidateQueries({ queryKey: QUOTA_QUERY_KEY });
+    queryClient.invalidateQueries({ queryKey: resumeQueryKeys.historyInfinite() });
     if (documentIdRef.current) {
       navigate(`/documents/report?documentId=${documentIdRef.current}`, { replace: true });
     } else {

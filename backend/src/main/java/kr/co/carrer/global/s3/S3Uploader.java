@@ -16,11 +16,13 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -29,7 +31,6 @@ import java.util.UUID;
 @Component
 public class S3Uploader {
 
-    // mock-upload=true 시 S3Client 빈이 존재하지 않으므로 optional 주입
     @Autowired(required = false)
     private S3Client s3Client;
 
@@ -39,31 +40,32 @@ public class S3Uploader {
     @Value("${aws.s3.bucket-name:mock-bucket}")
     private String bucketName;
 
-    // 로컬 개발 환경에서 S3 업로드를 건너뛸지 여부 (기본값: false)
     @Value("${aws.s3.mock-upload:false}")
     private boolean mockUpload;
 
     @Value("${aws.s3.presigned-url-expiration-minutes:10}")
     private long presignedUrlExpirationMinutes;
 
-    /**
-     * 이력서 파일을 S3에 업로드하고 S3 key를 반환한다.
-     * S3 키 형식: resumes/{yyyy-MM-dd}/{UUID}.{확장자}
-     * mock-upload=true 시 실제 업로드 없이 가짜 URL 반환 (로컬 Swagger 테스트용)
-     */
     public String upload(MultipartFile file, String extension) {
         String s3Key = buildS3Key(extension);
+        return uploadToKey(file, s3Key);
+    }
+
+    public String uploadToKey(MultipartFile file, String s3Key) {
+        if (s3Key == null || s3Key.isBlank()) {
+            throw new CustomException(ErrorCode.S3_UPLOAD_FAILED);
+        }
 
         if (mockUpload) {
             try {
-                String fileName = UUID.randomUUID() + "." + extension;
+                String fileName = Paths.get(s3Key.replace("\\", "/")).getFileName().toString();
                 Path dir = Paths.get(System.getProperty("java.io.tmpdir"), "career-wave-mock-files");
                 Files.createDirectories(dir);
                 Files.write(dir.resolve(fileName), file.getBytes());
-                log.warn("[S3 Mock] 로컬 저장 — {}", dir.resolve(fileName));
-                return "http://localhost:8080/mock-files/" + fileName;
+                log.warn("[S3 Mock] local save - {}", dir.resolve(fileName));
+                return "http://localhost:8080/mock-files/" + URLEncoder.encode(fileName, StandardCharsets.UTF_8);
             } catch (IOException e) {
-                log.error("[S3 Mock] 로컬 저장 실패", e);
+                log.error("[S3 Mock] local save failed", e);
                 throw new CustomException(ErrorCode.S3_UPLOAD_FAILED);
             }
         }
@@ -78,10 +80,10 @@ public class S3Uploader {
 
             s3Client.putObject(request, RequestBody.fromBytes(file.getBytes()));
         } catch (IOException e) {
-            log.error("[S3] 파일 읽기 실패 — key: {}, error: {}", s3Key, e.getMessage());
+            log.error("[S3] file read failed - key: {}, error: {}", s3Key, e.getMessage());
             throw new CustomException(ErrorCode.S3_UPLOAD_FAILED);
         } catch (S3Exception e) {
-            log.error("[S3] 업로드 실패 — key: {}, statusCode: {}, error: {}", s3Key, e.statusCode(), e.getMessage());
+            log.error("[S3] upload failed - key: {}, statusCode: {}, error: {}", s3Key, e.statusCode(), e.getMessage());
             throw new CustomException(ErrorCode.S3_UPLOAD_FAILED);
         }
 
@@ -158,5 +160,4 @@ public class S3Uploader {
         String uuid = UUID.randomUUID().toString();
         return String.format("resumes/%s/%s.%s", date, uuid, extension);
     }
-
 }

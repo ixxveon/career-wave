@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from '../../../types/user/member';
 import {
+  formatPhoneNumber,
   isValidEmail,
   isValidLoginId,
   isValidPhone,
@@ -105,7 +106,9 @@ export function usePersonalRegisterForm() {
     !registerUser.isPending;
 
   const update = (key: PersonalFormKey, value: PersonalForm[PersonalFormKey]) => {
-    setForm((current) => ({ ...current, [key]: value }));
+    const nextValue = key === 'phone' && typeof value === 'string' ? formatPhoneNumber(value) : value;
+
+    setForm((current) => ({ ...current, [key]: nextValue }));
     setFieldErrors((current) => ({
       ...current,
       [key]: '',
@@ -129,7 +132,7 @@ export function usePersonalRegisterForm() {
       }));
     }
     if (key === 'phone') {
-      currentPhoneRef.current = typeof value === 'string' ? value : currentPhoneRef.current;
+      currentPhoneRef.current = typeof nextValue === 'string' ? nextValue : currentPhoneRef.current;
       phoneVerificationIdRef.current = '';
       setVerification((current) => ({
         ...current,
@@ -284,6 +287,41 @@ export function usePersonalRegisterForm() {
     }
   };
 
+  // 「변경」— 전송한 이메일/휴대폰을 다시 편집 가능하게 잠금 해제하고 인증 상태를 초기화한다. (issue #1036)
+  const handleChangeEmail = () => {
+    emailVerificationRequestRef.current += 1;
+    emailVerificationIdRef.current = '';
+    setVerification((current) => ({
+      ...current,
+      emailId: '',
+      emailToken: '',
+      emailExpiresAt: '',
+      emailResendAvailableAt: '',
+      emailRemainingAttempts: 0,
+    }));
+    setForm((current) => ({ ...current, emailCode: '' }));
+    setFieldErrors((current) => ({ ...current, email: '', emailCode: '' }));
+    setFormMessage('');
+    setSuccessMessage('');
+  };
+
+  const handleChangePhone = () => {
+    phoneVerificationRequestRef.current += 1;
+    phoneVerificationIdRef.current = '';
+    setVerification((current) => ({
+      ...current,
+      phoneId: '',
+      phoneToken: '',
+      phoneExpiresAt: '',
+      phoneResendAvailableAt: '',
+      phoneRemainingAttempts: 0,
+    }));
+    setForm((current) => ({ ...current, phoneCode: '' }));
+    setFieldErrors((current) => ({ ...current, phone: '', phoneCode: '' }));
+    setFormMessage('');
+    setSuccessMessage('');
+  };
+
   const handleSubmit = async () => {
     const errors = validatePersonalRegisterForm(personalSnapshot, loginIdState);
     setFieldErrors(errors);
@@ -314,6 +352,8 @@ export function usePersonalRegisterForm() {
     fieldErrors,
     form,
     formMessage,
+    handleChangeEmail,
+    handleChangePhone,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,
     handleLoginIdCheck,

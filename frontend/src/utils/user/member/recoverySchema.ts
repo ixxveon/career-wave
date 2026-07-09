@@ -10,9 +10,11 @@ import {
 } from '../../../types/user/member';
 import { validatePasswordPolicy } from './passwordPolicy';
 import {
+  isValidBusinessNumber,
   isValidEmail,
   isValidPhone,
   isValidVerificationCode,
+  normalizeBusinessNumber,
   normalizePhone,
 } from './registerSchema';
 
@@ -57,14 +59,6 @@ export interface CompanyFindPasswordForm {
   code: string;
   nextPassword: string;
   nextPasswordConfirm: string;
-}
-
-export function normalizeBusinessNumber(value: string): string {
-  return value.replace(/\D/g, '');
-}
-
-export function isValidBusinessNumber(value: string): boolean {
-  return /^\d{10}$/.test(normalizeBusinessNumber(value));
 }
 
 export function hasRecoveryFieldErrors(errors: RecoveryFieldErrors): boolean {

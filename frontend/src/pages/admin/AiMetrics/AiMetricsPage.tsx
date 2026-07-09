@@ -14,7 +14,7 @@ type EventSeverity = AiEventSeverity;
 const DOC_PAGE_SIZE = 3;
 const MAX_RAG_UPLOAD_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_RAG_UPLOAD_EXTENSIONS = ['pdf', 'txt', 'md'] as const;
-const ALLOWED_RAG_UPLOAD_MIME_TYPES = ['application/pdf', 'text/plain', 'text/markdown'] as const;
+const TEXT_RAG_UPLOAD_EXTENSIONS = ['txt', 'md'] as const;
 
 const SUMMARY_QUERY_KEY = ['admin', 'aiMetrics', 'summary'] as const;
 const DOMAIN_USAGE_QUERY_KEY = ['admin', 'aiMetrics', 'domainUsage'] as const;
@@ -77,10 +77,40 @@ const getApiErrorStatus = (error: unknown) => {
   return (error as { response?: { status?: number } }).response?.status;
 };
 
-const getApiStateMessage = (error: unknown, fallback: string) => {
+const getApiErrorMessage = (error: unknown) => {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined;
+  return (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+};
+
+export const isAllowedRagUploadFile = (file: Pick<File, 'name' | 'type'>) => {
+  const fileExtension = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const hasAllowedExtension = ALLOWED_RAG_UPLOAD_EXTENSIONS.includes(fileExtension as (typeof ALLOWED_RAG_UPLOAD_EXTENSIONS)[number]);
+
+  if (!hasAllowedExtension) {
+    return false;
+  }
+
+  if (!file.type) {
+    return true;
+  }
+
+  if (fileExtension === 'pdf') {
+    return file.type === 'application/pdf';
+  }
+
+  if (TEXT_RAG_UPLOAD_EXTENSIONS.includes(fileExtension as (typeof TEXT_RAG_UPLOAD_EXTENSIONS)[number])) {
+    return file.type.startsWith('text/');
+  }
+
+  return false;
+};
+
+export const getApiStateMessage = (error: unknown, fallback: string) => {
   const status = getApiErrorStatus(error);
   if (status === 401) return '로그인이 만료되어 데이터를 처리할 수 없습니다. 다시 로그인해 주세요.';
   if (status === 403) return '관리자 권한이 없어 데이터를 처리할 수 없습니다.';
+  const message = getApiErrorMessage(error);
+  if (typeof message === 'string' && message.trim()) return message;
   return fallback;
 };
 
@@ -500,16 +530,13 @@ export default function AiMetricsPage() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    const fileExtension = file.name.split('.').pop()?.toLowerCase() ?? '';
-    const hasAllowedExtension = ALLOWED_RAG_UPLOAD_EXTENSIONS.includes(fileExtension as (typeof ALLOWED_RAG_UPLOAD_EXTENSIONS)[number]);
-    const hasAllowedMimeType = ALLOWED_RAG_UPLOAD_MIME_TYPES.includes(file.type as (typeof ALLOWED_RAG_UPLOAD_MIME_TYPES)[number]);
 
     if (!file.name.trim()) {
       setRagUploadErrorMessage('업로드할 문서 파일을 다시 선택해 주세요.');
       return;
     }
 
-    if (!hasAllowedExtension || !hasAllowedMimeType) {
+    if (!isAllowedRagUploadFile(file)) {
       setRagUploadErrorMessage('PDF, TXT, MD 형식의 문서만 업로드할 수 있습니다.');
       return;
     }

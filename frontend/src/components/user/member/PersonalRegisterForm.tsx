@@ -6,6 +6,7 @@ import { usePersonalRegisterForm } from '../../../hooks/user/member/usePersonalR
 import type { PersonalTermDetails, TermSection } from '../../../utils/user/member/registerTerms';
 import { SOCIAL_PROVIDERS } from '../../../utils/user/member/socialAuth';
 import { formatRemaining } from '../../../utils/user/member/recoveryView';
+import { PHONE_MAX_LENGTH } from '../../../utils/user/member/registerSchema';
 import { memberSocialAuthApi } from '../../../api/user/member/socialAuthApi';
 
 type PersonalTermsValues = {
@@ -33,6 +34,8 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
     fieldErrors,
     form,
     formMessage,
+    handleChangeEmail,
+    handleChangePhone,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,
     handleLoginIdCheck,
@@ -105,13 +108,16 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
           </Field>
           <Field label="이름" required wide>
             <TextInput value={form.name} onChange={(value) => update('name', value)} placeholder="이름(실명)" />
+            {fieldErrors.name && <p className="cw-register-error">{fieldErrors.name}</p>}
           </Field>
           <Field label="이메일" required wide>
             <AuthButtonGroup
-              input={<TextInput type="email" value={form.email} onChange={(value) => update('email', value)} placeholder="이메일 주소 입력" />}
+              input={<TextInput type="email" value={form.email} onChange={(value) => update('email', value)} placeholder="이메일 주소 입력" readOnly={Boolean(verification.emailId)} />}
               buttonLabel={sendEmailCode.isPending ? '전송 중' : verification.emailId ? `재전송${emailResendIn > 0 ? ` ${formatRemaining(emailResendIn)}` : ''}` : '인증번호 전송'}
-              disabled={sendEmailCode.isPending || emailResendIn > 0}
+              disabled={sendEmailCode.isPending || emailResendIn > 0 || Boolean(verification.emailToken)}
               onClick={handleSendEmailCode}
+              secondButtonLabel={verification.emailId ? '변경' : undefined}
+              onSecondClick={handleChangeEmail}
             />
             <StatusPill active={Boolean(verification.emailId) && !verification.emailToken && emailExpiresIn > 0}>
               인증번호 유효 시간 {formatRemaining(emailExpiresIn)}
@@ -122,21 +128,25 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
             )}
             {fieldErrors.email && <p className="cw-register-error">{fieldErrors.email}</p>}
           </Field>
-          <Field label="이메일 인증번호" required wide>
-            <AuthButtonGroup
-              input={<TextInput value={form.emailCode} onChange={(value) => update('emailCode', value)} placeholder="인증번호 6자리 입력" />}
-              buttonLabel={confirmEmailCode.isPending ? '확인 중' : '인증 확인'}
-              disabled={confirmEmailCode.isPending || !verification.emailId || emailExpiresIn <= 0}
-              onClick={handleConfirmEmailCode}
-            />
-            {fieldErrors.emailCode && <p className="cw-register-error">{fieldErrors.emailCode}</p>}
-          </Field>
+          {verification.emailId && (
+            <Field label="이메일 인증번호" required wide>
+              <AuthButtonGroup
+                input={<TextInput value={form.emailCode} onChange={(value) => update('emailCode', value)} placeholder="인증번호 6자리 입력" readOnly={Boolean(verification.emailToken)} />}
+                buttonLabel={confirmEmailCode.isPending ? '확인 중' : '인증 확인'}
+                disabled={confirmEmailCode.isPending || !verification.emailId || emailExpiresIn <= 0 || Boolean(verification.emailToken)}
+                onClick={handleConfirmEmailCode}
+              />
+              {fieldErrors.emailCode && <p className="cw-register-error">{fieldErrors.emailCode}</p>}
+            </Field>
+          )}
           <Field label="휴대폰 번호" required wide>
             <AuthButtonGroup
-              input={<TextInput type="tel" value={form.phone} onChange={(value) => update('phone', value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" />}
+              input={<TextInput type="tel" inputMode="numeric" maxLength={PHONE_MAX_LENGTH} value={form.phone} onChange={(value) => update('phone', value)} placeholder="휴대폰번호('-' 없이 숫자만 입력)" readOnly={Boolean(verification.phoneId)} />}
               buttonLabel={sendPhoneCode.isPending ? '전송 중' : verification.phoneId ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ''}` : '인증번호 전송'}
-              disabled={sendPhoneCode.isPending || phoneResendIn > 0}
+              disabled={sendPhoneCode.isPending || phoneResendIn > 0 || Boolean(verification.phoneToken)}
               onClick={handleSendPhoneCode}
+              secondButtonLabel={verification.phoneId ? '변경' : undefined}
+              onSecondClick={handleChangePhone}
             />
             <StatusPill active={Boolean(verification.phoneId) && !verification.phoneToken && phoneExpiresIn > 0}>
               인증번호 유효 시간 {formatRemaining(phoneExpiresIn)}
@@ -146,16 +156,18 @@ export function PersonalRegisterForm({ termDetails }: { termDetails: PersonalTer
             )}
             {fieldErrors.phone && <p className="cw-register-error">{fieldErrors.phone}</p>}
           </Field>
-          <Field label="휴대폰 인증번호" required wide>
-            <AuthButtonGroup
-              input={<TextInput value={form.phoneCode} onChange={(value) => update('phoneCode', value)} placeholder="인증번호 6자리 입력" />}
-              buttonLabel={confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
-              disabled={confirmPhoneCode.isPending || !verification.phoneId || phoneExpiresIn <= 0}
-              onClick={handleConfirmPhoneCode}
-            />
-            <StatusPill active={Boolean(verification.phoneToken)}>휴대폰 인증이 완료되었습니다.</StatusPill>
-            {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
-          </Field>
+          {verification.phoneId && (
+            <Field label="휴대폰 인증번호" required wide>
+              <AuthButtonGroup
+                input={<TextInput value={form.phoneCode} onChange={(value) => update('phoneCode', value)} placeholder="인증번호 6자리 입력" readOnly={Boolean(verification.phoneToken)} />}
+                buttonLabel={confirmPhoneCode.isPending ? '확인 중' : '인증 확인'}
+                disabled={confirmPhoneCode.isPending || !verification.phoneId || phoneExpiresIn <= 0 || Boolean(verification.phoneToken)}
+                onClick={handleConfirmPhoneCode}
+              />
+              <StatusPill active={Boolean(verification.phoneToken)}>휴대폰 인증이 완료되었습니다.</StatusPill>
+              {fieldErrors.phoneCode && <p className="cw-register-error">{fieldErrors.phoneCode}</p>}
+            </Field>
+          )}
           <Field label="비밀번호" required wide>
             <PasswordInput
               value={form.password}
@@ -227,7 +239,7 @@ function PersonalTerms({ values, onChange, termDetails }: PersonalTermsProps) {
     label: string;
     details?: TermSection[];
   }> = [
-    { key: 'age', type: 'required', label: '만 15세 이상입니다' },
+    { key: 'age', type: 'required', label: '만 14세 이상입니다' },
     { key: 'service', type: 'required', label: '이용약관 동의', details: termDetails.service },
     { key: 'privacy', type: 'required', label: '개인정보 수집 및 이용 동의', details: termDetails.privacy },
     { key: 'marketing', type: 'optional', label: '광고성 정보 수신 동의', details: termDetails.marketing },

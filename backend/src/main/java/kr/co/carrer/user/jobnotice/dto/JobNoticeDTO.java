@@ -12,180 +12,180 @@ import java.util.List;
 
 public class JobNoticeDTO {
 
-    @Schema(description = "채용 공고 목록 요약 응답")
+    @Schema(description = "Job notice list item")
     public record ResponseSummary(
-            @Schema(description = "채용 공고 ID")
+            @Schema(description = "Job notice ID")
             Long jobNoticeId,
 
-            @Schema(description = "회사명")
+            @Schema(description = "Company name")
             String companyName,
 
-            @Schema(description = "공고 제목")
+            @Schema(description = "Job notice title")
             String title,
 
-            @Schema(description = "기술 태그 목록")
+            @Schema(description = "Skill tags")
             List<String> skillTags,
 
-            @Schema(description = "채용 유형", allowableValues = {"FULLTIME", "INTERN", "CONTRACT"})
+            @Schema(description = "Job type", allowableValues = {"FULLTIME", "INTERN", "CONTRACT"})
             JobType jobType,
 
-            @Schema(description = "회사 규모", allowableValues = {"STARTUP", "SME", "LARGE"})
+            @Schema(description = "Company size", allowableValues = {"STARTUP", "SME", "MID_MARKET", "LARGE"})
             CompanySize companySize,
 
-            @Schema(description = "직무/직군")
+            @Schema(description = "Job categories")
             List<String> jobCategory,
 
-            @Schema(description = "경력 수준", allowableValues = {"JUNIOR", "SENIOR", "ANY"})
+            @Schema(description = "Career level", allowableValues = {"JUNIOR", "SENIOR", "ANY"})
             CareerLevel careerLevel,
 
-            @Schema(description = "근무 지역")
+            @Schema(description = "Location")
             String location,
 
-            @Schema(description = "급여 정보")
+            @Schema(description = "Salary information")
             String salary,
 
-            @Schema(description = "공고 상태", allowableValues = {"ACTIVE", "CLOSED"})
+            @Schema(description = "Notice status", allowableValues = {"ACTIVE", "CLOSED"})
             JobNoticeStatus noticeStatus,
 
-            @Schema(description = "공고 출처")
+            @Schema(description = "Notice source")
             String source,
 
-            @Schema(description = "조회 수")
+            @Schema(description = "View count")
             Integer viewCount,
 
-            @Schema(description = "마감일")
+            @Schema(description = "Deadline")
             LocalDate deadline,
 
-            @Schema(description = "생성 시각")
+            @Schema(description = "Created at")
             ZonedDateTime createdAt,
 
-            @Schema(description = "현재 사용자 기준 북마크 여부")
+            @Schema(description = "Whether the current user bookmarked the notice")
             boolean bookmarked
     ) {}
 
-    @Schema(description = "채용 공고 목록 응답")
+    @Schema(description = "Job notice list response")
     public record ResponseList(
-            @Schema(description = "채용 공고 목록")
+            @Schema(description = "Job notice items")
             List<ResponseSummary> content,
 
-            @Schema(description = "현재 페이지, 1-based")
+            @Schema(description = "Current page, 1-based")
             int page,
 
-            @Schema(description = "페이지 크기")
+            @Schema(description = "Page size")
             int size,
 
-            @Schema(description = "전체 건수")
+            @Schema(description = "Total element count")
             long totalElements,
 
-            @Schema(description = "전체 페이지 수")
+            @Schema(description = "Total page count")
             int totalPages,
 
-            @Schema(description = "채용 공고 목록 통계")
+            @Schema(description = "List stats")
             ResponseListStats stats,
 
-            @Schema(description = "채용 공고 목록 필터 옵션")
+            @Schema(description = "Filter options")
             ResponseFilterOptions filterOptions
     ) {}
 
-    @Schema(description = "채용 공고 목록 통계")
+    @Schema(description = "Job notice list stats")
     public record ResponseListStats(
-            @Schema(description = "전체 활성 공고 수")
+            @Schema(description = "Total active notice count")
             long totalOpenCount,
 
-            @Schema(description = "오늘 신규 활성 공고 수")
+            @Schema(description = "Today's new active notice count")
             long todayNewCount,
 
-            @Schema(description = "오늘 신규 공고 변화량. 비교 기준이 없으면 null")
+            @Schema(description = "Today's new notice delta; null when there is no comparison base")
             Long todayNewDelta,
 
-            @Schema(description = "오늘 신규 공고 비율 (%)")
+            @Schema(description = "Today's new notice rate in percent")
             double todayNewRate
     ) {}
 
-    @Schema(description = "채용 공고 목록 필터 옵션")
+    @Schema(description = "Job notice filter options")
     public record ResponseFilterOptions(
-            @Schema(description = "채용 유형 필터 옵션", allowableValues = {"FULLTIME", "INTERN", "CONTRACT"})
+            @Schema(description = "Job type filter options", allowableValues = {"FULLTIME", "INTERN", "CONTRACT"})
             List<String> jobType,
 
-            @Schema(description = "직무/직군 필터 옵션")
+            @Schema(description = "Job category filter options")
             List<String> jobCategory,
 
-            @Schema(description = "경력 필터 옵션", allowableValues = {"JUNIOR", "SENIOR", "ANY"})
+            @Schema(description = "Career level filter options", allowableValues = {"JUNIOR", "SENIOR", "ANY"})
             List<String> careerLevel,
 
-            @Schema(description = "근무 지역 필터 옵션")
+            @Schema(description = "Location filter options")
             List<String> location,
 
-            @Schema(description = "회사 규모 필터 옵션", allowableValues = {"STARTUP", "SME", "LARGE"})
+            @Schema(description = "Company size filter options", allowableValues = {"STARTUP", "SME", "MID_MARKET", "LARGE"})
             List<String> companySize
     ) {}
 
-    @Schema(description = "채용 공고 상세 응답")
+    @Schema(description = "Job notice detail response")
     public record ResponseDetail(
-            @Schema(description = "채용 공고 ID")
+            @Schema(description = "Job notice ID")
             Long jobNoticeId,
 
-            @Schema(description = "회사명")
+            @Schema(description = "Company name")
             String companyName,
 
-            @Schema(description = "공고 제목")
+            @Schema(description = "Job notice title")
             String title,
 
-            @Schema(description = "공고 설명")
+            @Schema(description = "Job notice description")
             String description,
 
-            @Schema(description = "기술 태그 목록")
+            @Schema(description = "Skill tags")
             List<String> skillTags,
 
-            @Schema(description = "채용 유형", allowableValues = {"FULLTIME", "INTERN", "CONTRACT"})
+            @Schema(description = "Job type", allowableValues = {"FULLTIME", "INTERN", "CONTRACT"})
             JobType jobType,
 
-            @Schema(description = "회사 규모", allowableValues = {"STARTUP", "SME", "LARGE"})
+            @Schema(description = "Company size", allowableValues = {"STARTUP", "SME", "MID_MARKET", "LARGE"})
             CompanySize companySize,
 
-            @Schema(description = "직무/직군")
+            @Schema(description = "Job categories")
             List<String> jobCategory,
 
-            @Schema(description = "경력 수준", allowableValues = {"JUNIOR", "SENIOR", "ANY"})
+            @Schema(description = "Career level", allowableValues = {"JUNIOR", "SENIOR", "ANY"})
             CareerLevel careerLevel,
 
-            @Schema(description = "근무 지역")
+            @Schema(description = "Location")
             String location,
 
-            @Schema(description = "급여 정보")
+            @Schema(description = "Salary information")
             String salary,
 
-            @Schema(description = "공고 상태", allowableValues = {"ACTIVE", "CLOSED"})
+            @Schema(description = "Notice status", allowableValues = {"ACTIVE", "CLOSED"})
             JobNoticeStatus noticeStatus,
 
-            @Schema(description = "원문 URL")
+            @Schema(description = "Original URL")
             String originalUrl,
 
-            @Schema(description = "공고 출처")
+            @Schema(description = "Notice source")
             String source,
 
-            @Schema(description = "조회 수")
+            @Schema(description = "View count")
             Integer viewCount,
 
-            @Schema(description = "마감일")
+            @Schema(description = "Deadline")
             LocalDate deadline,
 
-            @Schema(description = "생성 시각")
+            @Schema(description = "Created at")
             ZonedDateTime createdAt,
 
-            @Schema(description = "수정 시각")
+            @Schema(description = "Updated at")
             ZonedDateTime updatedAt,
 
-            @Schema(description = "현재 사용자 기준 북마크 여부")
+            @Schema(description = "Whether the current user bookmarked the notice")
             boolean bookmarked
     ) {}
 
-    @Schema(description = "채용 공고 북마크 응답")
+    @Schema(description = "Job notice bookmark response")
     public record ResponseBookmark(
-            @Schema(description = "채용 공고 ID")
+            @Schema(description = "Job notice ID")
             Long jobNoticeId,
 
-            @Schema(description = "북마크 상태")
+            @Schema(description = "Bookmark status")
             boolean bookmarked
     ) {}
 }

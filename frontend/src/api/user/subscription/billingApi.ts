@@ -5,6 +5,7 @@ import type {
   CreateOrderRequest,
   CreateOrderResponse,
   ConfirmPaymentRequest,
+  ConfirmOneTimePaymentRequest,
   ConfirmPaymentResponse,
   PaymentStatusResponse,
   RecordPaymentFailRequest,
@@ -39,6 +40,14 @@ export const billingApi = {
 
   confirmPayment(body: ConfirmPaymentRequest): Promise<ConfirmPaymentResponse> {
     return memberApiClient<ConfirmPaymentResponse>('/api/v1/user/billing/payments/confirm', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      auth: true,
+    });
+  },
+
+  confirmOneTimePayment(body: ConfirmOneTimePaymentRequest): Promise<ConfirmPaymentResponse> {
+    return memberApiClient<ConfirmPaymentResponse>('/api/v1/user/billing/payments/confirm-onetime', {
       method: 'POST',
       body: JSON.stringify(body),
       auth: true,

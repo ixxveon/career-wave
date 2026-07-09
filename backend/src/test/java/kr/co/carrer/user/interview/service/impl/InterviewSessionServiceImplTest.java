@@ -52,9 +52,9 @@ class InterviewSessionServiceImplTest {
         void startSession_success() {
             UUID memberId = UUID.randomUUID();
             InterviewDTO.RequestStartSession dto = new InterviewDTO.RequestStartSession(
-                    null, "TEXT", "TECHNICAL", "카카오"
+                    null, "TEXT", "TECHNICAL", "카카오", null
             );
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, InterviewType.TECHNICAL, "카카오");
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, InterviewType.TECHNICAL, "카카오", null);
 
             given(sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)).willReturn(Optional.empty());
             given(sessionRepository.save(any())).willReturn(session);
@@ -73,10 +73,10 @@ class InterviewSessionServiceImplTest {
         void startSession_existingInProgress_autoFailsAndCreatesNew() {
             UUID memberId = UUID.randomUUID();
             InterviewDTO.RequestStartSession dto = new InterviewDTO.RequestStartSession(
-                    null, "TEXT", null, null
+                    null, "TEXT", null, null, null
             );
-            InterviewSession existing = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
-            InterviewSession newSession = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
+            InterviewSession existing = InterviewSession.create(memberId, null, SessionType.TEXT, null, null, null);
+            InterviewSession newSession = InterviewSession.create(memberId, null, SessionType.TEXT, null, null, null);
 
             given(sessionRepository.findInProgressByMemberId(memberId, SessionStatus.IN_PROGRESS)).willReturn(Optional.of(existing));
             given(sessionRepository.save(any())).willReturn(newSession);
@@ -93,7 +93,7 @@ class InterviewSessionServiceImplTest {
         void startSession_invalidSessionType_throwsException() {
             UUID memberId = UUID.randomUUID();
             InterviewDTO.RequestStartSession dto = new InterviewDTO.RequestStartSession(
-                    null, "INVALID_TYPE", null, null
+                    null, "INVALID_TYPE", null, null, null
             );
 
             assertThatThrownBy(() -> interviewSessionService.startSession(memberId, dto))
@@ -113,7 +113,7 @@ class InterviewSessionServiceImplTest {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
             InterviewDTO.RequestSubmitTextAnswer dto = new InterviewDTO.RequestSubmitTextAnswer(1, "답변 내용입니다.");
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null, null);
             InterviewMessage message = InterviewMessage.createAnswer(sessionId, "답변 내용입니다.");
 
             given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.of(session));
@@ -146,7 +146,7 @@ class InterviewSessionServiceImplTest {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
             InterviewDTO.RequestSubmitTextAnswer dto = new InterviewDTO.RequestSubmitTextAnswer(1, "답변");
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null, null);
             session.complete(java.time.ZonedDateTime.now());
 
             given(sessionRepository.findBySessionIdAndMemberId(sessionId, memberId)).willReturn(Optional.of(session));
@@ -167,7 +167,7 @@ class InterviewSessionServiceImplTest {
         void endSession_success() {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null, null);
 
             given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
 
@@ -196,7 +196,7 @@ class InterviewSessionServiceImplTest {
         void endSession_alreadyCompleted_throwsException() {
             UUID memberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null);
+            InterviewSession session = InterviewSession.create(memberId, null, SessionType.TEXT, null, null, null);
             session.complete(java.time.ZonedDateTime.now());
 
             given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
@@ -215,7 +215,7 @@ class InterviewSessionServiceImplTest {
             UUID memberId = UUID.randomUUID();
             UUID otherMemberId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            InterviewSession session = InterviewSession.create(otherMemberId, null, SessionType.TEXT, null, null);
+            InterviewSession session = InterviewSession.create(otherMemberId, null, SessionType.TEXT, null, null, null);
 
             given(sessionRepository.findBySessionId(sessionId)).willReturn(Optional.of(session));
 

@@ -3,10 +3,8 @@ package kr.co.carrer.user.member.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import kr.co.carrer.user.member.dto.UserRegisterDto;
 import kr.co.carrer.user.member.service.UserRegisterService;
 import org.junit.jupiter.api.DisplayName;
@@ -31,21 +29,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserRegisterController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, SecurityMockConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
 class UserRegisterControllerTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
     @MockBean UserRegisterService userRegisterService;
-    @MockBean JwtTokenProvider jwtTokenProvider;
-    @MockBean TokenBlacklistStore tokenBlacklistStore;
-    @MockBean IpAclPort ipAclPort;
 
     // ─── loginId 중복 확인 ────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("사용 가능한 loginId 조회 시 200 + statusCode=200 + available=true를 반환한다")
+    @DisplayName("사용 가능한 loginId 조회 시 200 + available=true를 반환한다")
     void checkLoginId_사용가능_200() throws Exception {
         when(userRegisterService.checkLoginId("newuser01"))
                 .thenReturn(new UserRegisterDto.ResponseCheckLoginId(true));
@@ -54,13 +49,13 @@ class UserRegisterControllerTest {
                         .param("loginId", "newuser01"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.available").value(true));
     }
 
     @Test
-    @DisplayName("LOGIN_ID_INVALID 시 success=false statusCode=400 code=LOGIN_ID_INVALID를 반환한다")
+    @DisplayName("LOGIN_ID_INVALID 시 success=false status=400 code=LOGIN_ID_INVALID를 반환한다")
     void checkLoginId_형식오류_400() throws Exception {
         when(userRegisterService.checkLoginId(anyString()))
                 .thenThrow(new kr.co.carrer.global.exception.CustomException(
@@ -70,7 +65,7 @@ class UserRegisterControllerTest {
                         .param("loginId", "a!"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.code").value("LOGIN_ID_INVALID"));
     }
@@ -78,7 +73,7 @@ class UserRegisterControllerTest {
     // ─── 개인회원 가입 ────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("개인회원 가입 성공 시 HTTP 201 + statusCode=201 + roleType=USER를 반환한다")
+    @DisplayName("개인회원 가입 성공 시 HTTP 201 + roleType=USER를 반환한다")
     void registerUser_성공_201() throws Exception {
         UUID memberId = UUID.randomUUID();
         when(userRegisterService.registerUser(any()))
@@ -96,7 +91,7 @@ class UserRegisterControllerTest {
                         .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(201))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.roleType").value("USER"));
     }
@@ -116,7 +111,7 @@ class UserRegisterControllerTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.data.name").value("이름은 2~10자 한글로 입력해 주세요."));
 
         verify(userRegisterService, never()).registerUser(any());
@@ -125,7 +120,7 @@ class UserRegisterControllerTest {
     // ─── 기업회원 가입 ────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("기업회원 가입 성공 시 HTTP 201 + statusCode=201 + companyApprovalStatus=PENDING_REVIEW를 반환한다")
+    @DisplayName("기업회원 가입 성공 시 HTTP 201 + companyApprovalStatus=PENDING_REVIEW를 반환한다")
     void registerCompany_성공_201() throws Exception {
         UUID memberId = UUID.randomUUID();
         UUID companyId = UUID.randomUUID();
@@ -150,7 +145,7 @@ class UserRegisterControllerTest {
                         .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(201))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.companyApprovalStatus").value("PENDING_REVIEW"));
     }
@@ -168,7 +163,7 @@ class UserRegisterControllerTest {
                         .content("{\"businessNumber\":\"1234567890\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").value("정상 영업 중인 사업자입니다."))
                 .andExpect(jsonPath("$.code").doesNotExist())
                 .andExpect(jsonPath("$.data.valid").value(true))
@@ -197,7 +192,7 @@ class UserRegisterControllerTest {
                         .content("{\"businessNumber\":\"12345\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."))
                 .andExpect(jsonPath("$.code").doesNotExist());
     }
@@ -205,7 +200,7 @@ class UserRegisterControllerTest {
     // ─── 재직증명서 업로드 ────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("PDF 업로드 성공 시 200 + statusCode=200 + fileId를 반환한다")
+    @DisplayName("PDF 업로드 성공 시 200 + fileId를 반환한다")
     void uploadCertificate_성공_200() throws Exception {
         when(userRegisterService.uploadEmploymentCertificate(any()))
                 .thenReturn(new UserRegisterDto.ResponseEmploymentCertificateUpload(
@@ -218,7 +213,7 @@ class UserRegisterControllerTest {
                         .file(pdfFile))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.fileId").isNotEmpty());
     }

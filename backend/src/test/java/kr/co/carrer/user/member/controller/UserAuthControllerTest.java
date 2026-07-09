@@ -6,11 +6,12 @@ import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import kr.co.carrer.user.member.service.UserLoginService;
 import kr.co.carrer.user.member.service.UserMemberStatusService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserAuthController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, CookieProperties.class})
+@Import({SecurityConfig.class, SecurityMockConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, CookieProperties.class})
 class UserAuthControllerTest {
 
     @Autowired
@@ -35,9 +36,16 @@ class UserAuthControllerTest {
 
     @MockBean private UserLoginService userLoginService;
     @MockBean private UserMemberStatusService memberStatusService;
-    @MockBean private JwtTokenProvider jwtTokenProvider;
-    @MockBean private TokenBlacklistStore tokenBlacklistStore;
-    @MockBean private IpAclPort ipAclPort;
+    // SecurityMockConfig 가 제공하는 공통 mock — 스텁이 필요해 @Autowired 로 주입받는다.
+    @Autowired private JwtTokenProvider jwtTokenProvider;
+    @Autowired private TokenBlacklistStore tokenBlacklistStore;
+
+    // @TestConfiguration 의 @Bean mock 은 @MockBean 과 달리 테스트 간 자동 리셋되지 않으므로
+    // 스텁이 누수되지 않도록 각 테스트 전에 초기화한다.
+    @BeforeEach
+    void resetCommonMocks() {
+        reset(jwtTokenProvider, tokenBlacklistStore);
+    }
 
     // ─── refresh cookie 없음 — 401 AUTH_REFRESH_INVALID ────────────────────────────
 
@@ -47,7 +55,7 @@ class UserAuthControllerTest {
         mockMvc.perform(post("/api/v1/user/members/token/refresh"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.code").value("AUTH_REFRESH_INVALID"));
     }
@@ -64,7 +72,7 @@ class UserAuthControllerTest {
                         .cookie(new jakarta.servlet.http.Cookie("refreshToken", "valid-refresh-token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.accessToken").value("new-access-token"))
                 .andExpect(jsonPath("$.data.refreshToken").doesNotExist());
@@ -93,7 +101,7 @@ class UserAuthControllerTest {
                         .cookie(new jakarta.servlet.http.Cookie("refreshToken", "valid-refresh-token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(header().string("Set-Cookie", containsString("refreshToken=")))
                 .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")));

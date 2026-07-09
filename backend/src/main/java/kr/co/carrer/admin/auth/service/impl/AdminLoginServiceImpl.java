@@ -11,6 +11,7 @@ import kr.co.carrer.admin.auth.service.AdminLoginService;
 import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.jwt.SessionProperties;
 import io.jsonwebtoken.JwtException;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.store.LoginAttemptStore;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -39,27 +41,36 @@ public class AdminLoginServiceImpl implements AdminLoginService {
     private final RefreshTokenStore refreshTokenStore;
     private final TokenBlacklistStore tokenBlacklistStore;
     private final LoginAttemptStore loginAttemptStore;
+    private final SessionProperties sessionProperties;
 
     @Transactional
     public AdminLoginDto.Response login(AdminLoginDto.Request request, HttpServletResponse response, String clientIp) {
-        Admin admin = adminRepository.findByLoginId(request.getLoginId())
-                .orElseThrow(() -> new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS));
+        // login_id/email 각각 독립 unique 제약만 있어(교차 중복은 생성 시 별도 검증으로 방지),
+        // 이론상 2건이 매칭되는 모호한 경우가 있을 수 있다 — 그 경우도 동일하게 로그인 실패로 처리한다.
+        List<Admin> candidates = adminRepository.findByLoginIdOrEmail(request.getLoginId(), request.getLoginId());
+        if (candidates.size() != 1) {
+            throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
+        Admin admin = candidates.get(0);
 
         if (admin.getStatus() == AdminStatus.LOCKED) {
             throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), admin.getPasswordHash())) {
-            long count = loginAttemptStore.increment(AccountType.ADMIN, request.getLoginId());
+            // 실패 카운터 key는 사용자가 입력한 값(loginId 또는 email)이 아니라 계정의 canonical
+            // loginId로 고정한다. 입력값 기준으로 두면 같은 계정을 아이디/이메일 번갈아 입력해
+            // 잠금 기준(maxAttempts)을 사실상 우회할 수 있기 때문이다.
+            long count = loginAttemptStore.increment(AccountType.ADMIN, admin.getLoginId());
             if (count >= loginAttemptStore.getMaxAttempts()) {
                 admin.lockAccount();
-                loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
+                loginAttemptStore.clear(AccountType.ADMIN, admin.getLoginId());
                 throw new CustomException(AuthErrorCode.AUTH_ACCOUNT_LOCKED);
             }
             throw new CustomException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
-        loginAttemptStore.clear(AccountType.ADMIN, request.getLoginId());
+        loginAttemptStore.clear(AccountType.ADMIN, admin.getLoginId());
         admin.updateLastLoginAt(Instant.now());
         admin.updateLastLoginIp(clientIp);
 
@@ -75,17 +86,18 @@ public class AdminLoginServiceImpl implements AdminLoginService {
                 });
         refreshTokenStore.deleteAll(AccountType.ADMIN, adminId);
 
+        String sessionId = UUID.randomUUID().toString();
         String accessToken = jwtTokenProvider.createAccessToken(
-                adminId, AccountType.ADMIN, "ADMIN", adminRole
+                adminId, AccountType.ADMIN, "ADMIN", adminRole, sessionId
         );
 
-        String sessionId = UUID.randomUUID().toString();
         String refreshToken = jwtTokenProvider.createRefreshToken(
                 adminId, AccountType.ADMIN, adminRole, sessionId
         );
 
+        // TTL = 유휴 타임아웃(슬라이딩). 절대 상한(refresh 1일)은 refresh 토큰 exp가 담당.
         refreshTokenStore.save(AccountType.ADMIN, adminId, sessionId,
-                refreshToken, Duration.ofMillis(jwtProperties.getAdmin().getRefreshExpiration()));
+                refreshToken, Duration.ofMillis(sessionProperties.getIdleTimeout()));
 
         // access token jti 저장 — 다음 로그인 시 단일 세션 정책으로 blacklist 등록에 사용
         String jti = jwtTokenProvider.extractJti(accessToken, AccountType.ADMIN);
@@ -112,8 +124,14 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         String sessionId = claims.get("sessionId", String.class);
         if (sessionId == null) throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
 
-        // 재사용 탐지: hash 불일치 → 전체 세션 폐기 + 401
-        if (!refreshTokenStore.matches(AccountType.ADMIN, subject, sessionId, refreshToken)) {
+        // 세션 부재 vs 재사용 분리:
+        //  - Redis 키 부재(null) → 유휴 만료/로그아웃/퇴출 → 조용한 재로그인(SESSION_EXPIRED)
+        //  - 키 존재 + hash 불일치 → 진짜 재사용 → 전체 세션 폐기 + 경보(REUSE_DETECTED)
+        String storedHash = refreshTokenStore.get(AccountType.ADMIN, subject, sessionId);
+        if (storedHash == null) {
+            throw new CustomException(AuthErrorCode.AUTH_SESSION_EXPIRED);
+        }
+        if (!storedHash.equals(RefreshTokenStore.hash(refreshToken))) {
             refreshTokenStore.deleteAll(AccountType.ADMIN, subject);
             throw new CustomException(AuthErrorCode.AUTH_REFRESH_REUSE_DETECTED);
         }
@@ -133,13 +151,22 @@ public class AdminLoginServiceImpl implements AdminLoginService {
 
         // adminRole은 DB 최신값 사용 — claim의 stale role 방지
         String currentAdminRole = admin.getAdminRole().name();
+        // 절대 상한 고정: 회전 시 원본 refresh 만료 시각(exp)을 유지한다.
+        java.util.Date originalExp = claims.getExpiration();
         String newAccessToken = jwtTokenProvider.createAccessToken(
-                subject, AccountType.ADMIN, "ADMIN", currentAdminRole);
+                subject, AccountType.ADMIN, "ADMIN", currentAdminRole, sessionId);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(
-                subject, AccountType.ADMIN, currentAdminRole, sessionId);
+                subject, AccountType.ADMIN, currentAdminRole, sessionId, originalExp);
 
+        // rotate TTL = 유휴 타임아웃(슬라이딩). 절대 상한은 refresh exp가 담당.
         refreshTokenStore.rotate(AccountType.ADMIN, subject, sessionId,
-                newRefreshToken, Duration.ofMillis(jwtProperties.getAdmin().getRefreshExpiration()));
+                newRefreshToken, Duration.ofMillis(sessionProperties.getIdleTimeout()));
+
+        // session_jti를 회전된 access token의 jti로 갱신 — 세션 퇴출 시 최신 access를 blacklist 등록(보조 방어)
+        String newJti = jwtTokenProvider.extractJti(newAccessToken, AccountType.ADMIN);
+        refreshTokenStore.saveAccessJti(AccountType.ADMIN, subject, sessionId, newJti,
+                Duration.ofMillis(jwtProperties.getAdmin().getAccessExpiration()));
+
         setRefreshTokenCookie(response, newRefreshToken);
         return newAccessToken;
     }

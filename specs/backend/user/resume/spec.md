@@ -52,12 +52,14 @@ FastAPI AI 서비스가 분석하여 직무 적합도 및 항목별 피드백 �
 | `score_total` | INTEGER | | 종합 점수 (0~100) |
 | `feedback_text` | TEXT | NOT NULL | AI 서류 피드백 텍스트 |
 | `overall_review` | TEXT | NULL | AI 종합 총평 |
+| `recommended_keywords` | TEXT | NULL | 추천 키워드 JSON 배열 문자열 (예: `["Spring Boot","Redis"]`) |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | 생성 일시 |
 
 > 점수 컬럼 5개는 분석 완료 전까지 `null`. FastAPI Webhook 수신 시 저장됨.  
 > `feedback_text`는 항목별 첨삭 배열(`feedbackDetails`)을 JSON 직렬화한 문자열로 확정.  
 > Spring에서 `ObjectMapper.readValue()`로 역직렬화하여 `ResponseFeedback.feedbackDetails`로 반환.  
-> `overall_review`는 FastAPI Webhook이 함께 전달하는 AI 종합 총평 — `ResponseFeedback.overallReview`로 반환.
+> `overall_review`는 FastAPI Webhook이 함께 전달하는 AI 종합 총평 — `ResponseFeedback.overallReview`로 반환.  
+> `recommended_keywords`는 FastAPI가 분석 완료 시 전달하는 직무 핵심 키워드 목록 — JSON 배열 문자열로 저장, `ResponseFeedback.recommendedKeywords`로 반환.
 
 ### cover_letter_meta
 
@@ -183,14 +185,16 @@ public class ResumeDTO {
     // DB score_* 컬럼 5개 → ScoreDTO로 감싸 반환 (필드명 camelCase 변환)
     // feedback_text(TEXT) → ObjectMapper 역직렬화 → feedbackDetails 배열로 반환
     // overall_review(TEXT) → overallReview 필드로 반환
+    // recommended_keywords(TEXT) → ObjectMapper 역직렬화 → List<String>으로 반환
     // documents.error_message → errorMessage 필드로 반환
     public record ResponseFeedback(
         UUID documentId,
         String status,
-        ScoreDTO scores,                      // null: 분석 미완료
-        String overallReview,                 // null: 분석 미완료 — document_feedbacks.overall_review
-        List<FeedbackDetail> feedbackDetails, // null: 분석 미완료, feedback_text JSON 파싱 결과
-        String errorMessage,                  // null: 정상 완료 — documents.error_message
+        ScoreDTO scores,                           // null: 분석 미완료
+        String overallReview,                      // null: 분석 미완료 — document_feedbacks.overall_review
+        List<FeedbackDetail> feedbackDetails,      // null: 분석 미완료, feedback_text JSON 파싱 결과
+        List<String> recommendedKeywords,          // null: 분석 미완료 — document_feedbacks.recommended_keywords
+        String errorMessage,                       // null: 정상 완료 — documents.error_message
         ZonedDateTime createdAt
     ) {
 
@@ -348,6 +352,7 @@ STOMP /ws/user/resume?token={accessToken}
 - members 테이블 PK는 UUID (`gen_random_uuid()`) — `document.member_id` FK 타입 동일하게 UUID 적용
 - `documents` 테이블에 `error_message TEXT NULL` 컬럼 추가 — 분석 `FAILED` 시 오류 메시지 저장, 정상 완료 시 `null`
 - `document_feedbacks` 테이블에 `overall_review TEXT NULL` 컬럼 추가 — FastAPI가 Webhook으로 전달하는 AI 종합 총평 저장
+- `document_feedbacks` 테이블에 `recommended_keywords TEXT NULL` 컬럼 추가 — FastAPI가 분석 완료 시 전달하는 직무 핵심 키워드 목록(JSON 배열 문자열) 저장 (#873)
 
 ---
 

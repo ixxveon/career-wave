@@ -20,6 +20,16 @@ import '../../../styles/admin/admin.css';
 
 const DASHBOARD_SUMMARY_QUERY_KEY = ['admin', 'dashboard', 'summary'] as const;
 
+const KST_DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: 'Asia/Seoul',
+  hourCycle: 'h23',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
 const KPI_PRESENTATION = {
   [DASHBOARD_KPI_KEY.TODAY_NEW_ADMINS]: { Icon: Users, theme: 'kpi-blue' },
   [DASHBOARD_KPI_KEY.REALTIME_ACTIVE_ADMINS]: { Icon: Activity, theme: 'kpi-green' },
@@ -107,9 +117,48 @@ function hasAccessibleAdminTarget(currentAdminRole: AdminDetailRole | null, targ
   return isAdminNavigationPath(targetPath) && hasAdminRouteAccess(currentAdminRole, targetPath);
 }
 
+function formatKstDateTime(value?: string | null): string {
+  if (!value) return '-';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+
+  const parts = KST_DATE_FORMATTER.formatToParts(date);
+
+  const lookup = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, part.value])
+  );
+
+  return `${lookup.year}.${lookup.month}.${lookup.day} ${lookup.hour}:${lookup.minute}`;
+}
+
+function getAdminAvatarInitial(name?: string | null, fallbackId?: string | null): string {
+  const source = name?.trim() || fallbackId?.trim() || '';
+  if (!source) {
+    return '--';
+  }
+
+  const parts = source
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 2) {
+    return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+  }
+
+  return source.slice(0, 2).toUpperCase();
+}
+
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const currentAdminRole = adminSession.getRole();
+  const currentAdminId = adminSession.getId();
+  const currentAdminName = adminSession.getName();
+  const currentAdminDisplayName = currentAdminName?.trim() || currentAdminId?.trim() || '-';
+  const currentAdminAvatarInitial = getAdminAvatarInitial(currentAdminName, currentAdminId);
   const {
     data: dashboardSummary,
     isLoading: isDashboardLoading,
@@ -146,6 +195,8 @@ export default function AdminDashboardPage() {
     dashboardSummary.serviceCards.length === 0 &&
     dashboardSummary.systemStatus.length === 0 &&
     dashboardSummary.recentActivities.length === 0;
+
+  const dashboardBaseDateTimeLabel = formatKstDateTime(dashboardSummary?.baseDateTime);
 
   const { kpis, hasKpiSectionError } = useMemo(() => {
     try {
@@ -220,7 +271,14 @@ export default function AdminDashboardPage() {
       return [0];
     }
 
-    return [1, 0.75, 0.5, 0.25, 0].map((ratio) => Math.round(weeklySignupMax * ratio));
+    const tickStep = Math.max(1, Math.ceil(weeklySignupMax / 4));
+
+    return Array.from(
+      new Set(
+        [weeklySignupMax, weeklySignupMax - tickStep, weeklySignupMax - tickStep * 2, weeklySignupMax - tickStep * 3, 0]
+          .map((value) => Math.max(value, 0))
+      )
+    );
   }, [weeklySignupMax]);
 
   const { paymentRatio, hasPaymentRatioSectionError } = useMemo(() => {
@@ -248,6 +306,18 @@ export default function AdminDashboardPage() {
         return `var(--donut-${index + 1}) ${start}% ${end}%`;
       })
       .join(', ');
+  }, [paymentRatio]);
+
+  const paymentRatioSummaryText = useMemo(() => {
+    if (paymentRatio.length === 0) {
+      return '';
+    }
+
+    if (paymentRatio.length === 1) {
+      return `${paymentRatio[0].label} ${paymentRatio[0].ratio}%`;
+    }
+
+    return '승인 완료 결제 기준';
   }, [paymentRatio]);
 
   const { adminCards, hasAdminCardSectionError } = useMemo(() => {
@@ -301,6 +371,7 @@ export default function AdminDashboardPage() {
     try {
       const items = (dashboardSummary?.recentActivities ?? []).map((item) => ({
         ...item,
+        occurredAtLabel: formatKstDateTime(item.occurredAt),
         hasAccessibleTarget: hasAccessibleAdminTarget(currentAdminRole, item.targetPath),
       }));
 
@@ -327,12 +398,12 @@ export default function AdminDashboardPage() {
         <div className="adminProfile">
           <span className="serviceBadge">서비스 정상</span>
 
-          <div className="avatar">SA</div>
+          <div className="avatar">{currentAdminAvatarInitial}</div>
 
           <div className="adminText">
-            <strong>super_admin</strong>
-            <span>전체 권한 활성화</span>
-            <small>최근 로그인 09:12</small>
+            <strong>{currentAdminDisplayName}</strong>
+            <span>{currentAdminRole ?? '-'}</span>
+            <small>{dashboardBaseDateTimeLabel}</small>
           </div>
 
         </div>
@@ -391,7 +462,6 @@ export default function AdminDashboardPage() {
               <section className="admin-card alertPanel">
                 <div className="sectionHead">
                   <h3>오늘 처리할 주요 알림</h3>
-                  <button disabled>전체 보기</button>
                 </div>
 
                 <div className="alertList">
@@ -465,7 +535,12 @@ export default function AdminDashboardPage() {
                 </article>
 
                 <article className="admin-card donutCard">
-                  <h3>결제 비중</h3>
+                  <div className="chartCardHead">
+                    <div>
+                      <h3>결제 수단 비중</h3>
+                      <p>{paymentRatioSummaryText || '승인 완료 결제 기준'}</p>
+                    </div>
+                  </div>
                   {isDashboardInitialLoading ? (
                     <div className="dashboardStateBox dashboardStateBox--chart">
                       결제 비중을 불러오는 중입니다.
@@ -485,7 +560,9 @@ export default function AdminDashboardPage() {
                         style={{
                           background: paymentRatioStops ? `conic-gradient(${paymentRatioStops})` : undefined,
                         }}
-                      />
+                      >
+                        <span>{paymentRatioSummaryText}</span>
+                      </div>
                       <ul>
                         {paymentRatio.map((item) => (
                           <li key={item.method}>
@@ -597,9 +674,9 @@ export default function AdminDashboardPage() {
                         navigate(activity.targetPath);
                       }}
                     >
-                      <span>{activity.occurredAt}</span>
-                      <strong>{activity.adminId}</strong>
-                      <p>{activity.message}</p>
+                      <span className="logRow__time">{activity.occurredAtLabel}</span>
+                      <strong className="logRow__adminId" title={activity.adminId}>{activity.adminId}</strong>
+                      <p className="logRow__message" title={activity.message}>{activity.message}</p>
                     </div>
                   ))
                 )}

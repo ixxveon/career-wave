@@ -1,10 +1,12 @@
 package kr.co.carrer.user.billing.service;
 
+import kr.co.carrer.user.billing.client.OneTimePaymentClient;
 import kr.co.carrer.user.billing.client.TossBillingAuthorizationClient;
 import kr.co.carrer.user.billing.client.TossBillingPaymentClient;
 import kr.co.carrer.user.billing.dto.BillingDTO;
 import kr.co.carrer.user.billing.entity.UserPayment;
 import kr.co.carrer.user.billing.repository.*;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.billing.service.impl.PaymentReconciliationTxService;
 import kr.co.carrer.user.billing.service.impl.UserPaymentConfirmServiceImpl;
 import kr.co.carrer.user.billing.service.impl.UserPaymentFailureTxService;
@@ -45,19 +47,22 @@ class BillingSensitiveDataTest {
     @Mock PlanRepository planRepository;
     @Mock TossBillingAuthorizationClient tossBillingAuthClient;
     @Mock TossBillingPaymentClient tossBillingPaymentClient;
+    @Mock OneTimePaymentClient oneTimePaymentClient;
     @Mock AesCipher aesCipher;
     @Mock UserPaymentFailureTxService failureTxService;
     @Mock PaymentReconciliationTxService reconciliationTxService;
+    @Mock EntitlementInitService entitlementInitService;
 
     private UserPaymentConfirmServiceImpl confirmService;
 
     @BeforeEach
     void setUp() {
         UserPaymentSettleTxService settleTxService = new UserPaymentSettleTxService(
-                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
+                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository,
+                entitlementInitService);
         confirmService = new UserPaymentConfirmServiceImpl(
                 userPaymentRepository, billingProfileRepository, planRepository,
-                tossBillingAuthClient, tossBillingPaymentClient, aesCipher,
+                tossBillingAuthClient, tossBillingPaymentClient, oneTimePaymentClient, aesCipher,
                 failureTxService, settleTxService, reconciliationTxService);
     }
 

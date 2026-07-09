@@ -74,4 +74,29 @@ public interface UserSocialAuthControllerDocs {
     })
     ResponseEntity<?> complete(@Valid @RequestBody UserSocialAuthDto.RequestSocialComplete request,
                                HttpServletResponse response);
+
+    @Operation(summary = "소셜 가입 휴대폰 인증 후 분기(연동/신규)",
+            description = "추가 정보 단계에서 휴대폰 인증(purpose=SOCIAL_SIGNUP) 성공 직후 호출한다. " +
+                    "인증한 번호가 이미 가입된 회원(탈퇴 제외)이면 소셜 계정을 해당 회원에 연동하고 바로 로그인 처리하여 " +
+                    "status=LINKED(accessToken 포함, refresh 쿠키 발급)를 반환한다. " +
+                    "가입 이력이 없는 번호면 어떤 것도 저장하지 않고 status=NEW_MEMBER를 반환하며, " +
+                    "프론트는 이름·약관을 입력받아 complete를 호출한다. " +
+                    "연동은 반드시 휴대폰 OTP로 소유를 증명한 뒤에만 이루어진다(이메일 기반 자동 연동 금지).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "연동·로그인 완료(LINKED) 또는 신규 번호(NEW_MEMBER)",
+                    content = @Content(examples = {
+                            @ExampleObject(name = "LINKED",
+                                    value = "{\"success\":true,\"statusCode\":200,\"message\":\"기존 계정에 소셜 로그인을 연동했습니다.\",\"data\":{\"status\":\"LINKED\",\"accessToken\":\"jwt...\",\"member\":{\"memberId\":\"uuid-v4\"},\"nextPath\":\"/\"}}"),
+                            @ExampleObject(name = "NEW_MEMBER",
+                                    value = "{\"success\":true,\"statusCode\":200,\"message\":\"추가 정보 입력이 필요합니다.\",\"data\":{\"status\":\"NEW_MEMBER\",\"accessToken\":null,\"member\":null,\"nextPath\":null}}")
+                    })),
+            @ApiResponse(responseCode = "400", description = "socialSignupToken 또는 휴대폰 인증 token 오류",
+                    content = @Content(examples = @ExampleObject(
+                            value = "{\"success\":false,\"statusCode\":400,\"message\":\"인증 토큰이 유효하지 않습니다. 인증을 다시 진행해 주세요.\",\"code\":\"VERIFICATION_TOKEN_INVALID\"}"))),
+            @ApiResponse(responseCode = "409", description = "이미 연결된 소셜 계정",
+                    content = @Content(examples = @ExampleObject(
+                            value = "{\"success\":false,\"statusCode\":409,\"message\":\"이미 연결된 소셜 계정입니다.\",\"code\":\"SOCIAL_ACCOUNT_ALREADY_LINKED\"}")))
+    })
+    ResponseEntity<?> resolve(@Valid @RequestBody UserSocialAuthDto.RequestSocialResolve request,
+                              HttpServletResponse response);
 }

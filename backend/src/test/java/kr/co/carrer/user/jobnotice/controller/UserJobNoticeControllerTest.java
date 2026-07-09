@@ -2,10 +2,8 @@ package kr.co.carrer.user.jobnotice.controller;
 
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import kr.co.carrer.user.jobnotice.dto.JobNoticeDTO;
 import kr.co.carrer.user.jobnotice.service.UserJobNoticeService;
 import kr.co.carrer.user.jobnotice.type.CareerLevel;
@@ -31,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserJobNoticeController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, SecurityMockConfig.class})
 class UserJobNoticeControllerTest {
 
     @Autowired
@@ -39,15 +37,6 @@ class UserJobNoticeControllerTest {
 
     @MockBean
     private UserJobNoticeService userJobNoticeService;
-
-    @MockBean
-    private JwtTokenProvider jwtTokenProvider;
-
-    @MockBean
-    private TokenBlacklistStore tokenBlacklistStore;
-
-    @MockBean
-    private IpAclPort ipAclPort;
 
     @Test
     @DisplayName("목록 조회 응답은 ApiResponse 래퍼와 1-based 페이지 형식을 유지한다")
@@ -82,7 +71,7 @@ class UserJobNoticeControllerTest {
                         List.of("BACKEND"),
                         List.of("JUNIOR", "SENIOR", "ANY"),
                         List.of("Seoul"),
-                        List.of("STARTUP", "SME", "LARGE")
+                        List.of("STARTUP", "SME", "MID_MARKET", "LARGE")
                 )
         );
 
@@ -103,7 +92,7 @@ class UserJobNoticeControllerTest {
         mockMvc.perform(get("/api/v1/user/job-notices"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.code").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.content.length()").value(1))

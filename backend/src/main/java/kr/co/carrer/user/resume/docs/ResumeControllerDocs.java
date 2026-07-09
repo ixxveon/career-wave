@@ -51,7 +51,6 @@ public interface ResumeControllerDocs {
                             examples = @ExampleObject(value = """
                                     {
                                       "success": true,
-                                      "statusCode": 201,
                                       "message": "이력서가 업로드되었습니다.",
                                       "data": {
                                         "documentId": "46f85686-eeb6-49b0-867f-e36908b5f0ed",
@@ -74,7 +73,7 @@ public interface ResumeControllerDocs {
                                     @ExampleObject(name = "파일 크기 초과", summary = "파일 크기 초과 (10MB 이상)", value = """
                                             {
                                               "success": false,
-                                              "statusCode": 400,
+                                              "status": 400,
                                               "message": "파일 크기가 최대 허용 용량(10MB)을 초과했습니다.",
                                               "data": null
                                             }
@@ -82,7 +81,7 @@ public interface ResumeControllerDocs {
                                     @ExampleObject(name = "지원하지 않는 형식", summary = "지원하지 않는 파일 형식 (PDF·DOC·DOCX 외)", value = """
                                             {
                                               "success": false,
-                                              "statusCode": 400,
+                                              "status": 400,
                                               "message": "지원하지 않는 파일 형식입니다.",
                                               "data": null
                                             }
@@ -98,7 +97,7 @@ public interface ResumeControllerDocs {
                             examples = @ExampleObject(value = """
                                     {
                                       "success": false,
-                                      "statusCode": 401,
+                                      "status": 401,
                                       "message": "인증이 필요합니다.",
                                       "data": null
                                     }
@@ -124,7 +123,6 @@ public interface ResumeControllerDocs {
                             examples = @ExampleObject(value = """
                                     {
                                       "success": true,
-                                      "statusCode": 201,
                                       "message": "자기소개서가 제출되었습니다.",
                                       "data": {
                                         "documentId": "46f85686-eeb6-49b0-867f-e36908b5f0ed",
@@ -145,7 +143,7 @@ public interface ResumeControllerDocs {
                                     @ExampleObject(name = "문항 수 초과", summary = "문항 6개 이상 제출", value = """
                                             {
                                               "success": false,
-                                              "statusCode": 400,
+                                              "status": 400,
                                               "message": "입력값 검증에 실패했습니다.",
                                               "data": {
                                                 "content": "자기소개서 문항은 1개 이상 5개 이하로 입력해주세요."
@@ -155,7 +153,7 @@ public interface ResumeControllerDocs {
                                     @ExampleObject(name = "빈 문항 제출", summary = "content 빈 배열 제출", value = """
                                             {
                                               "success": false,
-                                              "statusCode": 400,
+                                              "status": 400,
                                               "message": "입력값 검증에 실패했습니다.",
                                               "data": {
                                                 "content": "자기소개서 문항은 1개 이상 5개 이하로 입력해주세요."
@@ -165,7 +163,7 @@ public interface ResumeControllerDocs {
                                     @ExampleObject(name = "답변 1000자 초과", summary = "답변 1001자 이상 제출", value = """
                                             {
                                               "success": false,
-                                              "statusCode": 400,
+                                              "status": 400,
                                               "message": "입력값 검증에 실패했습니다.",
                                               "data": {
                                                 "content[0].answer": "자기소개서 답변은 1000자를 초과할 수 없습니다."
@@ -183,7 +181,7 @@ public interface ResumeControllerDocs {
                             examples = @ExampleObject(value = """
                                     {
                                       "success": false,
-                                      "statusCode": 401,
+                                      "status": 401,
                                       "message": "인증이 필요합니다.",
                                       "data": null
                                     }
@@ -261,7 +259,6 @@ public interface ResumeControllerDocs {
                             examples = @ExampleObject(value = """
                                     {
                                       "success": true,
-                                      "statusCode": 200,
                                       "message": "OK",
                                       "data": {
                                         "usedCount": 7,

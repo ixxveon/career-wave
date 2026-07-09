@@ -31,7 +31,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": { }
 }
@@ -42,14 +41,13 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": false,
-  "statusCode": 400,
   "message": "에러 설명 메시지"
 }
 ```
 
-### 에러 상황별 statusCode
+### 에러 상황별 status
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `400` | 파일 크기 10MB 초과 / 지원하지 않는 파일 형식 / 문항 수·글자 수 초과 등 입력값 검증 실패 |
 | `401` | 인증 토큰 없음 또는 만료 |
@@ -75,7 +73,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "documentId": "uuid-v4",
@@ -93,7 +90,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `400` | 파일 크기 10MB 초과 |
 | `400` | PDF·DOC·DOCX 이외 파일 |
@@ -134,7 +131,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "documentId": "uuid-v4",
@@ -150,7 +146,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `400` | 문항 수 5개 초과 또는 답변 1000자 초과 |
 | `401` | 토큰 없음 또는 만료 |
@@ -170,7 +166,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "documentId": "uuid-v4",
@@ -233,7 +228,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `404` | 존재하지 않는 `documentId` |
 | `403` | 본인 소유가 아닌 문서 접근 |
@@ -259,7 +254,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "content": [
@@ -303,7 +297,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `401` | 토큰 없음 또는 만료 |
 

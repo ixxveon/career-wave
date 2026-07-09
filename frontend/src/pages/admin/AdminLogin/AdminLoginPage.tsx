@@ -5,16 +5,21 @@ import type { AdminDetailRole } from '../../../constants/admin/adminRoleConstant
 import { ADMIN_ROUTE_PATHS } from '../../../constants/admin/adminRouteConstants';
 import '../../../styles/admin/admin-login.css';
 
-function syncAdminToken(token: string, role?: AdminDetailRole) {
+function syncAdminToken(token: string, adminInfo?: { id?: string; name?: string; role?: AdminDetailRole }) {
   adminSession.setToken(token);
-  if (role) {
-    adminSession.setRole(role);
+  if (adminInfo?.role) {
+    adminSession.setRole(adminInfo.role);
+  }
+  if (adminInfo?.id) {
+    adminSession.setId(adminInfo.id);
+  }
+  if (adminInfo?.name) {
+    adminSession.setName(adminInfo.name);
   }
 }
 
 function clearAdminToken() {
-  adminSession.clearToken();
-  adminSession.clearRole();
+  adminSession.clearAll();
 }
 
 export default function AdminLoginPage() {
@@ -37,7 +42,7 @@ export default function AdminLoginPage() {
         throw new Error('INVALID_LOGIN_RESPONSE');
       }
 
-      syncAdminToken(data.accessToken, data.adminInfo.role);
+      syncAdminToken(data.accessToken, data.adminInfo);
       navigate(ADMIN_ROUTE_PATHS.dashboard, { replace: true });
     } catch {
       clearAdminToken();
@@ -59,7 +64,7 @@ export default function AdminLoginPage() {
         <form onSubmit={handleLogin} style={{ display: 'contents' }}>
           <input
             type="text"
-            placeholder="아이디"
+            placeholder="아이디 또는 이메일"
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
             required

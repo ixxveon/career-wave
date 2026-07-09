@@ -11,7 +11,8 @@ const BASE = '/api/v1/user/job-notices';
 
 const COMPANY_SIZE_LABEL_BY_QUERY_VALUE = {
   STARTUP: '스타트업',
-  SME: '중견',
+  SME: '중소',
+  MID_MARKET: '중견',
   LARGE: '대기업',
 } as const;
 
@@ -81,7 +82,7 @@ const jobNotices: JobNoticeDetail[] = [
     noticeStatus: 'OPEN',
     source: 'JobKorea',
     viewCount: 516,
-    deadline: '2026-07-01',
+    deadline: null,
     createdAt: '2026-06-13T14:20:00',
     bookmarked: false,
     responsibilities: ['데이터 파이프라인 보조', '대시보드 데이터 검증'],
@@ -187,7 +188,7 @@ export const jobNoticeHandlers = [
         jobCategory: ['BACKEND', 'FRONTEND', 'DATA', 'DEVOPS'],
         careerLevel: ['JUNIOR', 'SENIOR', 'ANY'],
         location: ['서울', '경기', '원격'],
-        companySize: ['스타트업', '중견', '대기업'],
+        companySize: ['스타트업', '중소', '중견', '대기업'],
       },
     };
 

@@ -15,11 +15,11 @@ import kr.co.carrer.admin.aimetrics.type.AlertChannelType;
 import kr.co.carrer.admin.aimetrics.type.RagDocumentStatusType;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.global.s3.S3Uploader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -33,8 +33,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -70,6 +68,9 @@ class AiMetricsServiceImplTest {
 
     @Mock
     private RagDocumentRepository ragDocumentRepository;
+
+    @Mock
+    private S3Uploader s3Uploader;
 
     @Nested
     @DisplayName("AI 사용량 요약 조회 - getSummary()")
@@ -662,8 +663,7 @@ class AiMetricsServiceImplTest {
 
         @Test
         @DisplayName("문서 메타데이터를 저장하고 FastAPI 인덱싱 시작을 호출한다")
-        void uploadsRagDocumentAndStartsIndexing(@TempDir Path storageRoot) throws Exception {
-            ReflectionTestUtils.setField(aiMetricsService, "ragStorageBasePath", storageRoot.toString());
+        void uploadsRagDocumentAndStartsIndexing() {
             MockMultipartFile file = new MockMultipartFile(
                     "file",
                     "faq.pdf",
@@ -671,6 +671,8 @@ class AiMetricsServiceImplTest {
                     "career-wave faq".getBytes()
             );
             given(ragDocumentRepository.existsByStatus(RagDocumentStatusType.INDEXING)).willReturn(false);
+            given(s3Uploader.uploadToKey(org.mockito.ArgumentMatchers.eq(file), org.mockito.ArgumentMatchers.anyString()))
+                    .willAnswer(invocation -> invocation.getArgument(1));
             given(ragDocumentRepository.save(org.mockito.ArgumentMatchers.any(RagDocument.class)))
                     .willAnswer(invocation -> {
                         RagDocument document = invocation.getArgument(0);
@@ -693,7 +695,7 @@ class AiMetricsServiceImplTest {
             assertThat(result.ragDocumentId()).isEqualTo(9L);
             assertThat(result.uploadedBy()).isEqualTo(10L);
             assertThat(result.originalFileName()).isEqualTo("faq.pdf");
-            assertThat(result.filePath()).contains("/rag/").contains("faq.pdf");
+            assertThat(result.filePath()).contains("rag/").contains("faq.pdf");
             assertThat(result.mimeType()).isEqualTo("application/pdf");
             assertThat(result.fileSize()).isEqualTo(file.getSize());
             assertThat(result.chunkCount()).isZero();
@@ -721,16 +723,11 @@ class AiMetricsServiceImplTest {
             assertThat(request.filePath()).isEqualTo(savedDocument.getFilePath());
             assertThat(request.mimeType()).isEqualTo("application/pdf");
             assertThat(request.fileSize()).isEqualTo(file.getSize());
-
-            Path storedFile = storageRoot.resolve(savedDocument.getFilePath().replaceFirst("^[/\\\\]+", ""));
-            assertThat(storedFile).exists();
-            assertThat(Files.readString(storedFile)).isEqualTo("career-wave faq");
         }
 
         @Test
         @DisplayName("RAG document upload stores only the original file name without path segments")
-        void uploadsRagDocumentWithSanitizedOriginalFileName(@TempDir Path storageRoot) throws Exception {
-            ReflectionTestUtils.setField(aiMetricsService, "ragStorageBasePath", storageRoot.toString());
+        void uploadsRagDocumentWithSanitizedOriginalFileName() {
             MockMultipartFile file = new MockMultipartFile(
                     "file",
                     "..\\unsafe\\guide.txt",
@@ -738,6 +735,8 @@ class AiMetricsServiceImplTest {
                     "guide".getBytes()
             );
             given(ragDocumentRepository.existsByStatus(RagDocumentStatusType.INDEXING)).willReturn(false);
+            given(s3Uploader.uploadToKey(org.mockito.ArgumentMatchers.eq(file), org.mockito.ArgumentMatchers.anyString()))
+                    .willAnswer(invocation -> invocation.getArgument(1));
             given(ragDocumentRepository.save(org.mockito.ArgumentMatchers.any(RagDocument.class)))
                     .willAnswer(invocation -> {
                         RagDocument document = invocation.getArgument(0);
@@ -760,9 +759,6 @@ class AiMetricsServiceImplTest {
             assertThat(result.originalFileName()).isEqualTo("guide.txt");
             assertThat(result.filePath()).contains("guide.txt");
             assertThat(result.filePath()).doesNotContain("unsafe");
-            Path storedFile = storageRoot.resolve(result.filePath().replaceFirst("^[/\\\\]+", ""));
-            assertThat(storedFile).exists();
-            assertThat(Files.readString(storedFile)).isEqualTo("guide");
         }
     }
 
@@ -784,6 +780,8 @@ class AiMetricsServiceImplTest {
             );
             ReflectionTestUtils.setField(document, "ragDocumentId", 8L);
             given(ragDocumentRepository.findById(8L)).willReturn(Optional.of(document));
+            given(s3Uploader.createPresignedGetUrl("/rag/2026/06/guide.pdf"))
+                    .willReturn("https://careerwave-files.example.com/rag/2026/06/guide.pdf");
 
             AiMetricsService.ResponseRagDocumentDownload result = aiMetricsService.getRagDocumentDownload(8L);
 
@@ -792,8 +790,52 @@ class AiMetricsServiceImplTest {
             assertThat(result.fileUuid()).isEqualTo(fileUuid);
             assertThat(result.mimeType()).isEqualTo("application/pdf");
             assertThat(result.fileSize()).isEqualTo(77_000L);
-            assertThat(result.downloadUrl()).isEqualTo("/api/v1/admin/ai-metrics/rag-documents/8/download");
+            assertThat(result.downloadUrl()).isEqualTo("https://careerwave-files.example.com/rag/2026/06/guide.pdf");
             verify(ragDocumentRepository).findById(8L);
+            verify(s3Uploader).createPresignedGetUrl("/rag/2026/06/guide.pdf");
+        }
+
+        @Test
+        @DisplayName("Presigned URL 생성 실패를 RAG_DOCUMENT_DOWNLOAD_FAILED 예외로 변환한다")
+        void convertsPresignedUrlFailureToRagDocumentDownloadFailed() {
+            RagDocument document = RagDocument.upload(
+                    10L,
+                    UUID.fromString("66666666-6666-6666-6666-666666666666"),
+                    "guide.pdf",
+                    "rag/2026/06/guide.pdf",
+                    "application/pdf",
+                    77_000L
+            );
+            ReflectionTestUtils.setField(document, "ragDocumentId", 8L);
+            given(ragDocumentRepository.findById(8L)).willReturn(Optional.of(document));
+            given(s3Uploader.createPresignedGetUrl("rag/2026/06/guide.pdf"))
+                    .willThrow(new IllegalStateException("presign failed"));
+
+            assertThatThrownBy(() -> aiMetricsService.getRagDocumentDownload(8L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AiMetricsErrorCode.RAG_DOCUMENT_DOWNLOAD_FAILED);
+        }
+
+        @Test
+        @DisplayName("Presigned URL이 비어 있으면 RAG_DOCUMENT_DOWNLOAD_FAILED 예외를 반환한다")
+        void rejectsBlankPresignedUrl() {
+            RagDocument document = RagDocument.upload(
+                    10L,
+                    UUID.fromString("66666666-6666-6666-6666-666666666666"),
+                    "guide.pdf",
+                    "",
+                    "application/pdf",
+                    77_000L
+            );
+            ReflectionTestUtils.setField(document, "ragDocumentId", 8L);
+            given(ragDocumentRepository.findById(8L)).willReturn(Optional.of(document));
+            given(s3Uploader.createPresignedGetUrl("")).willReturn("");
+
+            assertThatThrownBy(() -> aiMetricsService.getRagDocumentDownload(8L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AiMetricsErrorCode.RAG_DOCUMENT_DOWNLOAD_FAILED);
         }
     }
 
@@ -1017,8 +1059,7 @@ class AiMetricsServiceImplTest {
 
         @Test
         @DisplayName("RAG 문서 저장 중 예외가 발생하면 RAG_DOCUMENT_UPLOAD_FAILED 예외를 반환한다")
-        void convertsUploadRuntimeExceptionToRagDocumentUploadFailed(@TempDir Path storageRoot) {
-            ReflectionTestUtils.setField(aiMetricsService, "ragStorageBasePath", storageRoot.toString());
+        void convertsUploadRuntimeExceptionToRagDocumentUploadFailed() {
             MockMultipartFile file = new MockMultipartFile(
                     "file",
                     "faq.pdf",
@@ -1026,8 +1067,8 @@ class AiMetricsServiceImplTest {
                     "career-wave faq".getBytes()
             );
             given(ragDocumentRepository.existsByStatus(RagDocumentStatusType.INDEXING)).willReturn(false);
-            given(ragDocumentRepository.save(org.mockito.ArgumentMatchers.any(RagDocument.class)))
-                    .willThrow(new IllegalStateException("storage failed"));
+            given(s3Uploader.uploadToKey(org.mockito.ArgumentMatchers.eq(file), org.mockito.ArgumentMatchers.anyString()))
+                    .willThrow(new CustomException(ErrorCode.S3_UPLOAD_FAILED));
 
             assertThatThrownBy(() -> aiMetricsService.uploadRagDocument(file, 10L, "127.0.0.1"))
                     .isInstanceOf(CustomException.class)

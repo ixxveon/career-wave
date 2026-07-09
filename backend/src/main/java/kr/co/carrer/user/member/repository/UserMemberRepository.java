@@ -1,6 +1,7 @@
 package kr.co.carrer.user.member.repository;
 
 import kr.co.carrer.user.member.entity.Member;
+import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.RoleType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -16,6 +17,10 @@ public interface UserMemberRepository extends JpaRepository<Member, UUID> {
     boolean existsByEmail(String email);
 
     boolean existsByPhone(String phone);
+
+    boolean existsByEmailAndMemberStatusNot(String email, MemberStatus memberStatus);
+
+    boolean existsByPhoneAndMemberStatusNot(String phone, MemberStatus memberStatus);
 
     // 개인회원 아이디 찾기: 이메일 + 회원 유형으로 조회
     Optional<Member> findByEmailAndRoleType(String email, RoleType roleType);

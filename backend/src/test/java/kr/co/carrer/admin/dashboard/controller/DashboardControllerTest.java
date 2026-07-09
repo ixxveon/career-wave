@@ -11,10 +11,8 @@ import kr.co.carrer.admin.dashboard.type.DashboardSeverityType;
 import kr.co.carrer.admin.dashboard.type.DashboardSystemStatusType;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -39,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(DashboardController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, SecurityMockConfig.class})
 class DashboardControllerTest {
 
     @Autowired
@@ -47,15 +45,6 @@ class DashboardControllerTest {
 
     @MockBean
     private DashboardService dashboardService;
-
-    @MockBean
-    private JwtTokenProvider jwtTokenProvider;
-
-    @MockBean
-    private TokenBlacklistStore tokenBlacklistStore;
-
-    @MockBean
-    private IpAclPort ipAclPort;
 
     @Test
     @WithMockUser(roles = {"ADMIN", "MASTER"})
@@ -77,7 +66,7 @@ class DashboardControllerTest {
         mockMvc.perform(get("/api/v1/admin/dashboard/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.data.baseDateTime").value("2026-06-22T09:00:00Z"))
                 .andExpect(jsonPath("$.data.range").value("TODAY"))
                 .andExpect(jsonPath("$.data.kpis").isArray())
@@ -126,7 +115,7 @@ class DashboardControllerTest {
         mockMvc.perform(get("/api/v1/admin/dashboard/summary").param("range", "YESTERDAY"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.statusCode").value(400));
+                .andExpect(jsonPath("$.status").value(400));
 
         verify(dashboardService, never()).getSummary(any(DashboardDTO.RequestSummary.class));
     }
@@ -268,7 +257,7 @@ class DashboardControllerTest {
                                 )
                         ),
                         List.of(new DashboardDTO.WeeklySignup("06/22", 3L)),
-                        List.of(new DashboardDTO.PaymentRatio(DashboardPaymentMethod.CARD, "카드", 100)),
+                        List.of(new DashboardDTO.PaymentRatio(DashboardPaymentMethod.CARD, "Toss Payments", 100)),
                         List.of(
                                 new DashboardDTO.ServiceCard(
                                         "SCRAPING",

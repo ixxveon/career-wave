@@ -57,7 +57,7 @@ describe('auditLogApi mapper', () => {
       targetType: 'ADMIN',
       targetId: '10',
       ipAddressMasked: '10.20.30.*',
-      occurredAt: '2026-06-26T12:30:00+09:00',
+      occurredAt: '2026-06-26 12:30:00',
     });
   });
 
@@ -82,7 +82,7 @@ describe('auditLogApi mapper', () => {
       targetType: '-',
       targetId: '-',
       ipAddressMasked: '-',
-      occurredAt: '2026-06-26T12:30:00+09:00',
+      occurredAt: '2026-06-26 12:30:00',
     });
   });
 

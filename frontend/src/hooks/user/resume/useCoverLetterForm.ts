@@ -10,6 +10,7 @@ import {
 import { resumeStorage } from '../../../utils/user/resume/resumeStorage';
 import { useAnalysisWebSocket } from './useAnalysisWebSocket';
 import { QUOTA_QUERY_KEY } from './useResumeQuota';
+import { resumeQueryKeys } from './queryKeys';
 import type {
   ResumeUIState,
   SubmitCoverLetterResponse,
@@ -84,6 +85,7 @@ export function useCoverLetterForm(): UseCoverLetterFormReturn {
   const handleCompleted = useCallback(async () => {
     resumeStorage.removeUIState('COVER_LETTER');
     queryClient.invalidateQueries({ queryKey: QUOTA_QUERY_KEY });
+    queryClient.invalidateQueries({ queryKey: resumeQueryKeys.historyInfinite() });
     if (documentIdRef.current) {
       navigate(`/documents/report?documentId=${documentIdRef.current}`, { replace: true });
     } else {

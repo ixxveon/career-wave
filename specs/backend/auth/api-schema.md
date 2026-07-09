@@ -2,7 +2,7 @@
 
 > 응답 필드 규칙: **camelCase** (프론트 정렬).
 > 모든 인증 필요 API: `Authorization: Bearer {accessToken}`
-> 공통 응답 포맷: `ApiResponse<T>` (`{ success, statusCode, message, data }`)
+> 공통 응답 포맷: `ApiResponse<T>` — 성공 `{ success, message, data }`, 실패 `{ success, status, message, code?, data }`
 
 ---
 
@@ -22,7 +22,6 @@
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "로그인되었습니다.",
   "data": {
     "accessToken": "eyJ...",
@@ -64,7 +63,6 @@
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "토큰이 갱신되었습니다.",
   "data": {
     "accessToken": "eyJ..."
@@ -92,7 +90,6 @@
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "memberId": "uuid",
@@ -147,7 +144,6 @@
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "로그인되었습니다.",
   "data": {
     "accessToken": "eyJ...",
@@ -193,7 +189,6 @@
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "로그아웃 되었습니다.",
   "data": null
 }

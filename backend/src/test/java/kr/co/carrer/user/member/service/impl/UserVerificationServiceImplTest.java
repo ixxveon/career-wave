@@ -5,8 +5,10 @@ import kr.co.carrer.user.member.dto.UserVerificationDto;
 import kr.co.carrer.user.member.entity.MemberVerification;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.MemberVerificationRepository;
+import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.service.EmailSenderPort;
 import kr.co.carrer.user.member.service.SmsSenderPort;
+import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.VerificationChannel;
 import kr.co.carrer.user.member.type.VerificationPurpose;
 import kr.co.carrer.user.member.type.VerificationStatus;
@@ -30,6 +32,7 @@ import static org.mockito.Mockito.*;
 class UserVerificationServiceImplTest {
 
     @Mock MemberVerificationRepository verificationRepository;
+    @Mock UserMemberRepository memberRepository;
     @Mock EmailSenderPort emailSenderPort;
     @Mock SmsSenderPort smsSenderPort;
 
@@ -37,7 +40,8 @@ class UserVerificationServiceImplTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        service = new UserVerificationServiceImpl(verificationRepository, emailSenderPort, smsSenderPort);
+        service = new UserVerificationServiceImpl(
+                verificationRepository, memberRepository, emailSenderPort, smsSenderPort);
     }
 
     // ─── 인증번호 확인 실패 시 decrementAttempts() 호출 검증 ───────────────────────
@@ -132,6 +136,80 @@ class UserVerificationServiceImplTest {
                 .satisfies(e ->
                         assertThat(((CustomException) e).getErrorCode())
                                 .isEqualTo(UserAuthErrorCode.VERIFICATION_TARGET_INVALID));
+    }
+
+    @Test
+    void send_REGISTER_EMAIL_이미가입된_이메일_EMAIL_ALREADY_EXISTS() throws Exception {
+        UserVerificationDto.RequestSendVerification request =
+                new UserVerificationDto.RequestSendVerification();
+        setField(request, "channel", VerificationChannel.EMAIL);
+        setField(request, "target", "user@example.com");
+        setField(request, "purpose", VerificationPurpose.REGISTER);
+
+        when(verificationRepository.findTopByTargetAndPurposeOrderByCreatedAtDesc(anyString(), any()))
+                .thenReturn(Optional.empty());
+        when(memberRepository.existsByEmailAndMemberStatusNot("user@example.com", MemberStatus.WITHDRAWN))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> service.send(request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.EMAIL_ALREADY_EXISTS));
+
+        verify(verificationRepository, never()).save(any());
+        verify(emailSenderPort, never()).sendVerificationCode(any(), any());
+        verify(smsSenderPort, never()).sendVerificationCode(any(), any());
+    }
+
+    @Test
+    void send_REGISTER_EMAIL_재발송제한이_중복검증보다_먼저_적용됨() throws Exception {
+        MemberVerification prev = createVerification(5, VerificationStatus.SENT, "hash");
+        setField(prev, "resendAvailableAt", Instant.now().plusSeconds(60));
+
+        when(verificationRepository.findTopByTargetAndPurposeOrderByCreatedAtDesc(anyString(), any()))
+                .thenReturn(Optional.of(prev));
+
+        UserVerificationDto.RequestSendVerification request =
+                new UserVerificationDto.RequestSendVerification();
+        setField(request, "channel", VerificationChannel.EMAIL);
+        setField(request, "target", "user@example.com");
+        setField(request, "purpose", VerificationPurpose.REGISTER);
+
+        assertThatThrownBy(() -> service.send(request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.VERIFICATION_RATE_LIMITED));
+
+        verifyNoInteractions(memberRepository);
+        verify(verificationRepository, never()).save(any());
+        verify(emailSenderPort, never()).sendVerificationCode(any(), any());
+        verify(smsSenderPort, never()).sendVerificationCode(any(), any());
+    }
+
+    @Test
+    void send_REGISTER_PHONE_이미가입된_휴대폰_PHONE_ALREADY_EXISTS() throws Exception {
+        UserVerificationDto.RequestSendVerification request =
+                new UserVerificationDto.RequestSendVerification();
+        setField(request, "channel", VerificationChannel.PHONE);
+        setField(request, "target", "01012345678");
+        setField(request, "purpose", VerificationPurpose.REGISTER);
+
+        when(verificationRepository.findTopByTargetAndPurposeOrderByCreatedAtDesc(anyString(), any()))
+                .thenReturn(Optional.empty());
+        when(memberRepository.existsByPhoneAndMemberStatusNot("01012345678", MemberStatus.WITHDRAWN))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> service.send(request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode())
+                                .isEqualTo(UserAuthErrorCode.PHONE_ALREADY_EXISTS));
+
+        verify(verificationRepository, never()).save(any());
+        verify(emailSenderPort, never()).sendVerificationCode(any(), any());
+        verify(smsSenderPort, never()).sendVerificationCode(any(), any());
     }
 
     // ─── 인증번호 발송 성공 ────────────────────────────────────────────────────────

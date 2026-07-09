@@ -8,7 +8,7 @@
 /** 백엔드 ApiResponse<T> 래퍼 */
 export interface ApiResponse<T> {
   success: boolean;
-  statusCode: number;
+  status?: number;
   message: string;
   data: T;
 }
@@ -146,6 +146,7 @@ export interface AnalysisResultResponse {
   scores: ScoreBreakdown | null;
   overallReview: string | null;
   feedbackDetails: FeedbackDetail[];
+  recommendedKeywords: string[] | null;
   errorMessage: string | null;
   createdAt: string;
 }

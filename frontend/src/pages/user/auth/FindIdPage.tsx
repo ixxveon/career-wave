@@ -6,7 +6,7 @@ import RecoveryCompanyIdentityFields from '../../../components/user/member/Recov
 import RecoveryMethodTabs from '../../../components/user/member/RecoveryMethodTabs';
 import RecoveryPageLinks from '../../../components/user/member/RecoveryPageLinks';
 import RecoverySupportPanel from '../../../components/user/member/RecoverySupportPanel';
-import { RecoveryCodeField, RecoveryContactField } from '../../../components/user/member/RecoveryVerificationFields';
+import { PHONE_CONTACT_FIELD_PROPS, RecoveryCodeField, RecoveryContactField } from '../../../components/user/member/RecoveryVerificationFields';
 import RecoveryResultPanel from '../../../components/user/member/RecoveryResultPanel';
 import '@/styles/user/auth/AuthPage.css';
 
@@ -32,6 +32,8 @@ function FindIdPage() {
     updateUser,
     updateCompany,
     resetUserMethod,
+    handleResetUserContact,
+    handleResetCompanyContact,
     handleSendUserCode,
     handleConfirmUserCode,
     handleSendCompanyCode,
@@ -71,6 +73,7 @@ function FindIdPage() {
                 inputType="email"
                 onChange={(value) => updateUser('email', value)}
                 onSend={handleSendUserCode}
+                onReset={handleResetUserContact}
               />
             )}
 
@@ -85,10 +88,10 @@ function FindIdPage() {
                 feedbackText="휴대폰 인증번호가 발송되었습니다."
                 sendPending={sendVerificationPending}
                 resendIn={userResendIn}
-                inputType="tel"
-                inputMode="numeric"
+                {...PHONE_CONTACT_FIELD_PROPS}
                 onChange={(value) => updateUser('phone', value)}
                 onSend={handleSendUserCode}
+                onReset={handleResetUserContact}
               />
             )}
 
@@ -129,6 +132,7 @@ function FindIdPage() {
                   inputType="email"
                   onChange={(value) => updateCompany('email', value)}
                   onSend={handleSendCompanyCode}
+                  onReset={handleResetCompanyContact}
                 />
                 <RecoveryCodeField
                   label="이메일 인증번호 입력"

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Building2, CheckCircle, Clock, XCircle } from 'lucide-react';
 import {
   memberApi,
+  HR_STATUS,
   type HrManagerItem,
   type HrManagerDetail,
   type HrStatus,
@@ -10,10 +11,10 @@ import {
 import { CompanyDetailModal, ApproveModal, RejectModal } from './CompanyModals';
 
 const hrStatusLabel: Record<HrStatus, string> = {
-  PENDING: '승인 대기', ACTIVE: '승인 완료', REMOVED: '반려',
+  PENDING_REVIEW: '승인 대기', APPROVED: '승인 완료', REJECTED: '반려', NEEDS_REVISION: '보완 필요', REMOVED: '삭제됨',
 };
 const hrStatusCls: Record<HrStatus, string> = {
-  PENDING: 'pending', ACTIVE: 'normal', REMOVED: 'blinded',
+  PENDING_REVIEW: 'pending', APPROVED: 'normal', REJECTED: 'blinded', NEEDS_REVISION: 'dismissed', REMOVED: 'dismissed',
 };
 
 interface CompanyTabProps {
@@ -111,13 +112,13 @@ export default function CompanyTab({ onPendingCountChange }: CompanyTabProps) {
           <div className="memberKpiIcon kpi-yellow"><Clock size={26} /></div>
         </article>
         <article className="memberSummaryCard kpi-green">
-          <div className="memberKpiContent"><p>승인 완료</p><h3>{hrManagers.filter((c) => c.hrStatus === 'ACTIVE').length}</h3><span>현재 페이지 기준</span></div>
+          <div className="memberKpiContent"><p>승인 완료</p><h3>{hrManagers.filter((c) => c.hrStatus === HR_STATUS.APPROVED).length}</h3><span>현재 페이지 기준</span></div>
           <div className="memberKpiIcon kpi-green"><CheckCircle size={26} /></div>
         </article>
         <article className="memberSummaryCard kpi-yellow" style={{ background: 'linear-gradient(135deg, #fde8e8 0%, #fef2f2 100%)', borderColor: '#f0b8b8' }}>
           <div className="memberKpiContent">
             <p style={{ color: '#8a2020' }}>반려</p>
-            <h3 style={{ color: '#5e1010' }}>{hrManagers.filter((c) => c.hrStatus === 'REMOVED').length}</h3>
+            <h3 style={{ color: '#5e1010' }}>{hrManagers.filter((c) => c.hrStatus === HR_STATUS.REJECTED).length}</h3>
             <span style={{ color: '#9e3030' }}>현재 페이지 기준</span>
           </div>
           <div className="memberKpiIcon kpi-yellow" style={{ background: 'rgba(178, 58, 58, 0.16)', color: '#8a2020' }}><XCircle size={26} /></div>
@@ -129,7 +130,11 @@ export default function CompanyTab({ onPendingCountChange }: CompanyTabProps) {
           onChange={(e) => setCompanyKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && applyHrSearch()} />
         <select value={hrStatusFilter} onChange={(e) => setHrStatusFilter(e.target.value)}>
           <option value="">전체</option>
-          <option value="PENDING">승인 대기</option><option value="ACTIVE">승인 완료</option><option value="REMOVED">반려</option>
+          <option value={HR_STATUS.PENDING_REVIEW}>승인 대기</option>
+          <option value={HR_STATUS.APPROVED}>승인 완료</option>
+          <option value={HR_STATUS.REJECTED}>반려</option>
+          <option value={HR_STATUS.NEEDS_REVISION}>보완 필요</option>
+          <option value={HR_STATUS.REMOVED}>삭제됨</option>
         </select>
         <button className="memberFilterBtn" onClick={applyHrSearch}>검색</button>
       </section>
@@ -158,16 +163,16 @@ export default function CompanyTab({ onPendingCountChange }: CompanyTabProps) {
                   <td>{c.companyName}</td>
                   <td style={{ color: '#7a8da4', fontSize: 13 }}>{c.certificateNumber}</td>
                   <td>
-                    <span className="certFileLink" title={c.certFileName}>
+                    <a href={c.certFileUrl} target="_blank" rel="noopener noreferrer" className="certFileLink" title={c.certFileName}>
                       📄 {c.certFileName.length > 18 ? c.certFileName.slice(0, 18) + '…' : c.certFileName}
-                    </span>
+                    </a>
                   </td>
                   <td>{new Date(c.joinedAt).toLocaleDateString('ko-KR')}</td>
                   <td><span className={`statusBadge ${hrStatusCls[c.hrStatus]}`}>{hrStatusLabel[c.hrStatus]}</span></td>
                   <td>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button className="tableBtn" onClick={() => openCompanyDetail(c)}>상세보기</button>
-                      {c.hrStatus === 'PENDING' && (
+                      {c.hrStatus === HR_STATUS.PENDING_REVIEW && (
                         <button className="tableBtn tableBtn--approve" onClick={() => setApproveTarget(c)}>승인</button>
                       )}
                     </div>

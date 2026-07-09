@@ -2,6 +2,7 @@ package kr.co.carrer.user.billing.service;
 
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.dto.BillingDTO;
+import kr.co.carrer.user.billing.client.OneTimePaymentClient;
 import kr.co.carrer.user.billing.client.TossBillingAuthorizationClient;
 import kr.co.carrer.user.billing.client.TossBillingPaymentClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingAuthResponse;
@@ -10,6 +11,7 @@ import kr.co.carrer.user.billing.entity.*;
 import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.*;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.billing.service.impl.PaymentReconciliationTxService;
 import kr.co.carrer.user.billing.service.impl.UserPaymentConfirmServiceImpl;
 import kr.co.carrer.user.billing.service.impl.UserPaymentFailureTxService;
@@ -50,9 +52,11 @@ class PaymentSettleTransactionTest {
     @Mock PlanRepository planRepository;
     @Mock TossBillingAuthorizationClient tossBillingAuthClient;
     @Mock TossBillingPaymentClient tossBillingPaymentClient;
+    @Mock OneTimePaymentClient oneTimePaymentClient;
     @Mock AesCipher aesCipher;
     @Mock UserPaymentFailureTxService failureTxService;
     @Mock PaymentReconciliationTxService reconciliationTxService;
+    @Mock EntitlementInitService entitlementInitService;
 
     private UserPaymentConfirmServiceImpl service;
     private UserPaymentSettleTxService settleTxService;
@@ -62,10 +66,11 @@ class PaymentSettleTransactionTest {
     @BeforeEach
     void setUp() {
         settleTxService = new UserPaymentSettleTxService(
-                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
+                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository,
+                entitlementInitService);
         service = new UserPaymentConfirmServiceImpl(
                 userPaymentRepository, billingProfileRepository, planRepository,
-                tossBillingAuthClient, tossBillingPaymentClient, aesCipher,
+                tossBillingAuthClient, tossBillingPaymentClient, oneTimePaymentClient, aesCipher,
                 failureTxService, settleTxService, reconciliationTxService);
     }
 
@@ -127,9 +132,9 @@ class PaymentSettleTransactionTest {
     }
 
     @Test
-    @DisplayName("Entitlement 조회 실패 — Subscription 저장 후 UsagePeriod 저장 없음")
-    void settle_entitlementNotFound_usagePeriodNotCreated() {
-        String orderId = "ORDER-ENT-FAIL";
+    @DisplayName("Entitlement 없음 — 결산 시 생성 후 프리미엄 활성화 및 UsagePeriod 저장")
+    void settle_entitlementMissing_createsAndActivates() {
+        String orderId = "ORDER-ENT-NEW";
         String customerKey = "ck_ef";
         UUID paymentId = UUID.randomUUID();
         UserPayment payment = readyPayment(memberId, 1L, "document-coaching", orderId, customerKey, paymentId);
@@ -149,16 +154,17 @@ class PaymentSettleTransactionTest {
             if (sub.getSubscriptionId() == null) setField(sub, "subscriptionId", UUID.randomUUID());
             return sub;
         });
+        // ensureFreeEntitlement(REQUIRES_NEW) 가 없던 이용권을 생성한 뒤, 잠금 조회로 다시 읽는다.
         given(entitlementRepository.findByMemberIdAndProductCodeForUpdate(any(), any()))
-                .willReturn(Optional.empty());
+                .willReturn(Optional.of(MemberProductEntitlement.createFree(memberId, "document-coaching")));
 
-        assertThatThrownBy(() ->
-                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId)))
-                .isInstanceOf(CustomException.class)
-                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
-                        .isEqualTo(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
+        BillingDTO.ResponseConfirmPayment response =
+                service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId));
 
-        verify(subscriptionUsagePeriodRepository, never()).save(any());
+        // 이용권이 없으면 발급을 막지 않고 생성해 프리미엄 활성화까지 진행하고, 사용기간도 기록한다.
+        assertThat(response.paymentStatus()).isEqualTo("PAID");
+        verify(entitlementInitService).ensureFreeEntitlement(memberId, "document-coaching");
+        verify(subscriptionUsagePeriodRepository).save(any());
     }
 
     @Test
@@ -195,7 +201,9 @@ class PaymentSettleTransactionTest {
         InOrder inOrder = inOrder(payment);
         inOrder.verify(payment).authorize();
         inOrder.verify(payment).confirmStarted();
-        inOrder.verify(payment).paid(any(), any());
+        inOrder.verify(payment).paid(any(), any(), any());
+
+        assertThat(payment.getPaymentMethod()).isEqualTo("카드");
     }
 
     // ── helpers ─────────────────────────────────────────────────────────────
@@ -223,7 +231,7 @@ class PaymentSettleTransactionTest {
 
     private TossBillingPaymentResponse payResponse(String paymentKey, String orderId,
                                                     int amount, String currency) {
-        return new TossBillingPaymentResponse(paymentKey, orderId, "DONE", amount, currency,
+        return new TossBillingPaymentResponse(paymentKey, orderId, "카드", "DONE", amount, currency,
                 ZonedDateTime.now(KST));
     }
 
