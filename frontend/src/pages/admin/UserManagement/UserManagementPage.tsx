@@ -35,7 +35,7 @@ export default function UserManagementPage() {
             전체 회원
           </button>
           <button className={`csTab${tab === 'company' ? ' active' : ''}`} onClick={() => setTab('company')}>
-            기업 회원
+            기업 회원 승인
             {hrPendingCount > 0 && <span className="tabBadge">{hrPendingCount}</span>}
           </button>
         </div>
