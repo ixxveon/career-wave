@@ -27,6 +27,7 @@ import java.util.Map;
 @Repository
 public class DashboardSummaryQueryRepository {
 
+    private static final int ALERT_LOOKBACK_DAYS = 7;
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter WEEKLY_SIGNUP_LABEL_FORMATTER = DateTimeFormatter.ofPattern("MM/dd");
     private static final String PAID_STATUS = "PAID";
@@ -87,7 +88,7 @@ public class DashboardSummaryQueryRepository {
                 ORDER BY created_at DESC, audit_log_id DESC
                 LIMIT ?3
                 """;
-        Query query = createWindowQuery(sql, queryWindow);
+        Query query = createRecentWindowQuery(sql, queryWindow, ALERT_LOOKBACK_DAYS);
         query.setParameter(3, limit);
         return resultRows(query).stream()
                 .map(row -> new AuditAlertRow(
@@ -100,7 +101,7 @@ public class DashboardSummaryQueryRepository {
                 .toList();
     }
 
-    public List<RecentActivityRow> findRecentActivities(DashboardQueryWindow queryWindow, int limit) {
+    public List<RecentActivityRow> findRecentActivities(DashboardQueryWindow queryWindow) {
         String sql = """
                 SELECT
                     l.audit_log_id,
@@ -110,13 +111,9 @@ public class DashboardSummaryQueryRepository {
                     '/admin/log' AS target_path
                 FROM audit_logs l
                 LEFT JOIN admins a ON a.admin_id = l.admin_id
-                WHERE l.created_at >= ?1
-                  AND l.created_at < ?2
                 ORDER BY l.created_at DESC, l.audit_log_id DESC
-                LIMIT ?3
                 """;
-        Query query = createWindowQuery(sql, queryWindow);
-        query.setParameter(3, limit);
+        Query query = entityManager.createNativeQuery(sql);
         return resultRows(query).stream()
                 .map(row -> new RecentActivityRow(
                         longObjectValue(row, 0),
@@ -304,7 +301,7 @@ public class DashboardSummaryQueryRepository {
                 ORDER BY executed_at DESC, scraping_log_id DESC
                 LIMIT ?3
                 """;
-        Query query = createWindowQuery(sql, queryWindow);
+        Query query = createRecentWindowQuery(sql, queryWindow, ALERT_LOOKBACK_DAYS);
         query.setParameter(3, limit);
         return resultRows(query).stream()
                 .map(row -> new ScrapingAlertRow(
@@ -320,6 +317,13 @@ public class DashboardSummaryQueryRepository {
     private Query createWindowQuery(String sql, DashboardQueryWindow queryWindow) {
         Query query = entityManager.createNativeQuery(sql);
         query.setParameter(1, queryWindow.rangeStartInclusive());
+        query.setParameter(2, queryWindow.rangeEndExclusive());
+        return query;
+    }
+
+    private Query createRecentWindowQuery(String sql, DashboardQueryWindow queryWindow, int lookbackDays) {
+        Query query = entityManager.createNativeQuery(sql);
+        query.setParameter(1, queryWindow.rangeEndExclusive().minusDays(lookbackDays));
         query.setParameter(2, queryWindow.rangeEndExclusive());
         return query;
     }

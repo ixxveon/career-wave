@@ -576,47 +576,58 @@ export default function AdminDashboardPage() {
                 </article>
               </section>
 
-              <section className="adminCardGrid adminCardGrid--dashboard">
+              <section className="admin-card serviceListCard">
+                <div className="sectionHead">
+                  <h3>관리 기능 바로가기</h3>
+                </div>
                 {isDashboardInitialLoading ? (
-                  Array.from({ length: 3 }, (_, index) => (
-                    <article className="adminCard dashboardLoadingCard" key={`card-loading-${index}`}>
-                      <div className="adminTop">
-                        <div className="adminIcon blue">...</div>
-                        <h3>데이터 준비 중</h3>
-                      </div>
-                      <p>관리자 기능 카드를 불러오고 있습니다.</p>
-                      <div className="adminBottom">
-                        <strong>잠시만 기다려 주세요.</strong>
-                      </div>
-                    </article>
-                  ))
+                  <div className="serviceList serviceList--loading">
+                    {Array.from({ length: 4 }, (_, index) => (
+                      <article className="serviceListRow dashboardLoadingCard" key={`card-loading-${index}`}>
+                        <div className="serviceListRow__main">
+                          <div className="adminIcon blue">...</div>
+                          <div className="serviceListRow__text">
+                            <h4>데이터 준비 중</h4>
+                            <p>관리 기능 목록을 불러오고 있습니다.</p>
+                          </div>
+                        </div>
+                        <div className="serviceListRow__meta">
+                          <strong>잠시만 기다려 주세요</strong>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
                 ) : hasAdminCardSectionError ? (
                   <div className="dashboardStateBox dashboardStateBox--inline dashboardStateBox--error">
-                    관리자 기능 카드를 표시하지 못했습니다.
+                    관리 기능 카드를 표시하지 못했습니다.
                   </div>
                 ) : (
-                  adminCards.map((card) => (
-                    <article className="adminCard" key={card.key}>
-                      <div className="adminTop">
-                        <div className={`adminIcon ${card.cls}`}>{card.icon}</div>
-                        <h3>{card.title}</h3>
-                      </div>
-                      <p>{card.description}</p>
-                      <div className="adminBottom">
-                        <strong>{card.value}</strong>
-                        <button
-                          type="button"
-                          disabled={!card.hasValidTargetPath}
-                          onClick={() => {
-                            if (!card.hasValidTargetPath) return;
-                            navigate(card.path);
-                          }}
-                        >
-                          상세 보기
-                        </button>
-                      </div>
-                    </article>
-                  ))
+                  <div className="serviceList">
+                    {adminCards.map((card) => (
+                      <article className="serviceListRow" key={card.key}>
+                        <div className="serviceListRow__main">
+                          <div className={`adminIcon ${card.cls}`}>{card.icon}</div>
+                          <div className="serviceListRow__text">
+                            <h4>{card.title}</h4>
+                            <p>{card.description}</p>
+                          </div>
+                        </div>
+                        <div className="serviceListRow__meta">
+                          <strong>{card.value}</strong>
+                          <button
+                            type="button"
+                            disabled={!card.hasValidTargetPath}
+                            onClick={() => {
+                              if (!card.hasValidTargetPath) return;
+                              navigate(card.path);
+                            }}
+                          >
+                            상세 보기
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
                 )}
               </section>
             </div>
@@ -655,31 +666,33 @@ export default function AdminDashboardPage() {
                     전체 보기
                   </button>
                 </div>
-                {isDashboardInitialLoading ? (
-                  <div className="dashboardStateBox dashboardStateBox--inline">
-                    최근 관리자 활동을 불러오는 중입니다.
-                  </div>
-                ) : hasRecentActivitySectionError ? (
-                  <div className="dashboardStateBox dashboardStateBox--inline dashboardStateBox--error">
-                    최근 관리자 활동을 표시하지 못했습니다.
-                  </div>
-                ) : (
-                  recentActivities.map((activity) => (
-                    <div
-                      className="logRow"
-                      key={activity.id}
-                      style={{ cursor: activity.hasAccessibleTarget ? 'pointer' : 'default' }}
-                      onClick={() => {
-                        if (!activity.hasAccessibleTarget) return;
-                        navigate(activity.targetPath);
-                      }}
-                    >
-                      <span className="logRow__time">{activity.occurredAtLabel}</span>
-                      <strong className="logRow__adminId" title={activity.adminId}>{activity.adminId}</strong>
-                      <p className="logRow__message" title={activity.message}>{activity.message}</p>
+                <div className="logList">
+                  {isDashboardInitialLoading ? (
+                    <div className="dashboardStateBox dashboardStateBox--inline">
+                      최근 관리자 활동을 불러오는 중입니다.
                     </div>
-                  ))
-                )}
+                  ) : hasRecentActivitySectionError ? (
+                    <div className="dashboardStateBox dashboardStateBox--inline dashboardStateBox--error">
+                      최근 관리자 활동을 표시하지 못했습니다.
+                    </div>
+                  ) : (
+                    recentActivities.map((activity) => (
+                      <div
+                        className="logRow"
+                        key={activity.id}
+                        style={{ cursor: activity.hasAccessibleTarget ? 'pointer' : 'default' }}
+                        onClick={() => {
+                          if (!activity.hasAccessibleTarget) return;
+                          navigate(activity.targetPath);
+                        }}
+                      >
+                        <span className="logRow__time">{activity.occurredAtLabel}</span>
+                        <strong className="logRow__adminId" title={activity.adminId}>{activity.adminId}</strong>
+                        <p className="logRow__message" title={activity.message}>{activity.message}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
               </section>
             </aside>
           </section>
