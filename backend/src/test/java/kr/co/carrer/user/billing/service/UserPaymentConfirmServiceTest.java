@@ -11,6 +11,7 @@ import kr.co.carrer.user.billing.entity.*;
 import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.*;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.billing.service.impl.PaymentReconciliationTxService;
 import kr.co.carrer.user.billing.service.impl.UserPaymentConfirmServiceImpl;
 import kr.co.carrer.user.billing.service.impl.UserPaymentFailureTxService;
@@ -53,6 +54,7 @@ class UserPaymentConfirmServiceTest {
     @Mock AesCipher aesCipher;
     @Mock UserPaymentFailureTxService failureTxService;
     @Mock PaymentReconciliationTxService reconciliationTxService;
+    @Mock EntitlementInitService entitlementInitService;
 
     private UserPaymentConfirmServiceImpl service;
     private UserPaymentSettleTxService settleTxService;
@@ -62,7 +64,8 @@ class UserPaymentConfirmServiceTest {
     @BeforeEach
     void setUp() {
         settleTxService = new UserPaymentSettleTxService(
-                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
+                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository,
+                entitlementInitService);
         service = new UserPaymentConfirmServiceImpl(
                 userPaymentRepository, billingProfileRepository, planRepository,
                 tossBillingAuthClient, tossBillingPaymentClient, oneTimePaymentClient, aesCipher,
