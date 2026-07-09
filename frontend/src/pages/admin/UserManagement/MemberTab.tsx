@@ -29,7 +29,6 @@ export default function MemberTab() {
   const [memberError, setMemberError] = useState('');
 
   const [userKeyword, setUserKeyword] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
   const [planFilter, setPlanFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -42,7 +41,8 @@ export default function MemberTab() {
   const [confirmViewTarget, setConfirmViewTarget] = useState<string | null>(null);
   const [memberCounts, setMemberCounts] = useState<MemberCounts | null>(null);
 
-  const appliedMemberFilters = useRef({ role: '', status: '', plan: '', keyword: '', startDate: '', endDate: '' });
+  // 이 탭은 "개인 회원" 전용이므로 role은 항상 USER로 고정한다 (기업 회원은 별도 탭에서 관리)
+  const appliedMemberFilters = useRef({ status: '', plan: '', keyword: '', startDate: '', endDate: '' });
   const memberReqId = useRef(0);
   const memberDetailReqId = useRef(0);
 
@@ -53,7 +53,7 @@ export default function MemberTab() {
     setMemberError('');
     try {
       const res = await memberApi.getMembers({
-        ...(f.role && { role: f.role as any }),
+        role: MEMBER_ROLE.USER,
         ...(f.status && { status: f.status as any }),
         ...(f.plan && { plan: f.plan as any }),
         ...(f.keyword && { keyword: f.keyword }),
@@ -104,7 +104,7 @@ export default function MemberTab() {
   useEffect(() => { fetchMemberCounts(); }, [fetchMemberCounts]);
 
   const applyMemberSearch = () => {
-    appliedMemberFilters.current = { role: roleFilter, status: statusFilter, plan: planFilter, keyword: userKeyword, startDate, endDate };
+    appliedMemberFilters.current = { status: statusFilter, plan: planFilter, keyword: userKeyword, startDate, endDate };
     fetchMembers(1);
   };
 
@@ -161,11 +161,6 @@ export default function MemberTab() {
       <section className="admin-card memberFilter">
         <input type="text" placeholder="이름, 이메일, 회원 ID 검색" value={userKeyword}
           onChange={(e) => setUserKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && applyMemberSearch()} />
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-          <option value="">권한 전체</option>
-          <option value={MEMBER_ROLE.USER}>일반 회원</option>
-          <option value={MEMBER_ROLE.COMPANY}>기업 회원</option>
-        </select>
         <select value={planFilter} onChange={(e) => setPlanFilter(e.target.value)}>
           <option value="">구독 전체</option><option value="FREE">FREE</option><option value="PREMIUM">PREMIUM</option>
         </select>
