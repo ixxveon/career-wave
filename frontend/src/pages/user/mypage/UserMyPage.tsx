@@ -278,6 +278,8 @@ function UserMyPage() {
     label: "알 수 없음",
     className: "cw-warning",
   };
+  // QA #1140 — 기업 회원에게는 AI 서비스 / 구독·결제 / GitHub 연동 정보를 노출하지 않는다.
+  const isCompanyMember = userProfile.roleType === "COMPANY";
   const hasEditFormChanges =
     editForm.name.trim() !== userProfile.name ||
     editForm.email.trim() !== (userProfile.email ?? "") ||
@@ -297,8 +299,12 @@ function UserMyPage() {
             내 정보 관리
           </NavLink>
           <NavLink to="/mypage/favorites">스크랩 공고</NavLink>
-          <NavLink to="/mypage/subscription">AI 서비스</NavLink>
-          <NavLink to="/mypage/payment-history">구독/결제 내역</NavLink>
+          {!isCompanyMember && (
+            <>
+              <NavLink to="/mypage/subscription">AI 서비스</NavLink>
+              <NavLink to="/mypage/payment-history">구독/결제 내역</NavLink>
+            </>
+          )}
         </nav>
       </aside>
 
@@ -307,7 +313,11 @@ function UserMyPage() {
           <div>
             <span className="cw-account-badge">ACCOUNT SETTINGS</span>
             <h2>내 정보 관리</h2>
-            <p>회원 정보와 GitHub 연동 정보를 관리할 수 있어요.</p>
+            <p>
+              {isCompanyMember
+                ? "회원 정보를 관리할 수 있어요."
+                : "회원 정보와 GitHub 연동 정보를 관리할 수 있어요."}
+            </p>
           </div>
         </div>
 
@@ -393,20 +403,22 @@ function UserMyPage() {
                 <strong>{maskLoginId(userProfile.loginId)}</strong>
               </div>
 
-              <div className="cw-info-row">
-                <span>구독 상태</span>
-                <strong>
-                  {isSubscriptionLoading
-                    ? "구독 상태 확인 중..."
-                    : hasSubscriptionError
-                      ? "구독 상태 확인 불가"
-                      : subscribedItems.length > 0
-                        ? subscribedItems
-                            .map((item) => `${item.title} 구독중`)
-                            .join(" · ")
-                        : "미구독"}
-                </strong>
-              </div>
+              {!isCompanyMember && (
+                <div className="cw-info-row">
+                  <span>구독 상태</span>
+                  <strong>
+                    {isSubscriptionLoading
+                      ? "구독 상태 확인 중..."
+                      : hasSubscriptionError
+                        ? "구독 상태 확인 불가"
+                        : subscribedItems.length > 0
+                          ? subscribedItems
+                              .map((item) => `${item.title} 구독중`)
+                              .join(" · ")
+                          : "미구독"}
+                  </strong>
+                </div>
+              )}
               <div className="cw-info-row">
                 <span>알림 수신</span>
                 <strong>
@@ -423,6 +435,7 @@ function UserMyPage() {
           </section>
         </div>
 
+        {!isCompanyMember && (
         <section className="cw-account-card cw-github-card">
           <div className="cw-card-title">
             <div className="cw-card-title-left">
@@ -483,6 +496,7 @@ function UserMyPage() {
             </div>
           )}
         </section>
+        )}
       </section>
 
       {isEditModalOpen && (
@@ -541,21 +555,23 @@ function UserMyPage() {
                   />
                 </label>
 
-                <label>
-                  GitHub URL
-                  <input
-                    type="text"
-                    value={editForm.githubUrl ?? ""}
-                    placeholder="https://github.com/username"
-                    onChange={(event) =>
-                      handleEditFormChange("githubUrl", event.target.value)
-                    }
-                  />
-                  <small className="cw-input-help">
-                    github.com/username 형식으로 입력하면 https://는 자동으로
-                    추가됩니다.
-                  </small>
-                </label>
+                {!isCompanyMember && (
+                  <label>
+                    GitHub URL
+                    <input
+                      type="text"
+                      value={editForm.githubUrl ?? ""}
+                      placeholder="https://github.com/username"
+                      onChange={(event) =>
+                        handleEditFormChange("githubUrl", event.target.value)
+                      }
+                    />
+                    <small className="cw-input-help">
+                      github.com/username 형식으로 입력하면 https://는 자동으로
+                      추가됩니다.
+                    </small>
+                  </label>
+                )}
               </div>
 
               {editErrorMessage && (
