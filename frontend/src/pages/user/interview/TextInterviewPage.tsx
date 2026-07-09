@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { useSubscriptionStatus } from '../../../hooks/user/subscription';
+import { useEntitlements } from '../../../hooks/user/subscription/useEntitlements';
+import { PRODUCT_CODE } from '../../../types/user/subscription';
 import InterviewPaywall from '../../../components/user/interview/InterviewPaywall';
 
 import { interviewSessionApi }              from '../../../api/user/interview';
@@ -32,8 +33,8 @@ export default function TextInterviewPage() {
   const documentId     = searchParams.get('documentId');
   const focusType      = parseFocusType(searchParams.get('focusType'));
 
-  const { subscribedItems, isLoading: subLoading } = useSubscriptionStatus();
-  const ivSubscribed = subscribedItems.some((item) => item.key === 'interview');
+  const { data: entitlements, isLoading: entitlementsLoading } = useEntitlements();
+  const hasInterviewEntitlement = entitlements ? entitlements[PRODUCT_CODE.INTERVIEW] : true;
 
   const preflight = usePreflightCheck();
 
@@ -184,7 +185,7 @@ export default function TextInterviewPage() {
     }
   }
 
-  if (!subLoading && !ivSubscribed) {
+  if (!entitlementsLoading && !hasInterviewEntitlement) {
     return <InterviewPaywall />;
   }
 
