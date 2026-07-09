@@ -16,6 +16,7 @@ import {
   useCommunityComments,
   useCreateCommunityComment,
   useDeleteCommunityBoard,
+  useDeleteCommunityComment,
 } from "@/hooks/user/community";
 import type { CommunityBoard, CommunityComment } from "@/types/user/community";
 
@@ -120,6 +121,7 @@ type CommentItemProps = {
   comment: Comment;
   onReply: (commentId: number, content: string) => void;
   onReport: (type: ReportType, id: number) => void;
+  onDelete: (commentId: number) => void;
 };
 
 const MOCK_POSTS: CommunityPost[] = [
@@ -285,7 +287,12 @@ const INITIAL_COMMENTS: Comment[] = [
   },
 ];
 
-function CommentItem({ comment, onReply, onReport }: CommentItemProps) {
+function CommentItem({
+  comment,
+  onReply,
+  onReport,
+  onDelete,
+}: CommentItemProps) {
   const [replyText, setReplyText] = useState("");
   const [replyOpen, setReplyOpen] = useState(false);
 
@@ -334,6 +341,13 @@ function CommentItem({ comment, onReply, onReport }: CommentItemProps) {
           >
             신고
           </button>
+          <button
+            className="pd-comment__link"
+            type="button"
+            onClick={() => onDelete(comment.id)}
+          >
+            삭제
+          </button>
         </div>
 
         {!!comment.replies.length && (
@@ -366,6 +380,13 @@ function CommentItem({ comment, onReply, onReport }: CommentItemProps) {
                       onClick={() => onReport(REPORT_TYPE.COMMENT, reply.id)}
                     >
                       신고
+                    </button>
+                    <button
+                      className="pd-comment__link"
+                      type="button"
+                      onClick={() => onDelete(reply.id)}
+                    >
+                      삭제
                     </button>
                   </div>
                 </div>
@@ -419,6 +440,10 @@ export default function PostDetailPage() {
 
   const { mutate: deleteBoard, isPending: isDeletingBoard } =
     useDeleteCommunityBoard();
+
+  const { mutate: deleteComment } = useDeleteCommunityComment(
+    validBoardId ?? 0,
+  );
 
   const post = useMemo(() => {
     if (!board) return null;
@@ -497,7 +522,15 @@ export default function PostDetailPage() {
       },
     });
   }
-  
+
+  function handleDeleteComment(commentId: number) {
+    if (validBoardId === null) return;
+
+    if (!window.confirm("댓글을 삭제하시겠습니까?")) return;
+
+    deleteComment(commentId);
+  }
+
   function submitReport() {
     if (!reportTarget) return;
 
@@ -675,6 +708,7 @@ export default function PostDetailPage() {
               comment={item}
               onReply={submitReply}
               onReport={(type, id) => setReportTarget({ type, id })}
+              onDelete={handleDeleteComment}
             />
           ))}
         </div>
