@@ -163,9 +163,9 @@ export default function CompanyTab({ onPendingCountChange }: CompanyTabProps) {
                   <td>{c.companyName}</td>
                   <td style={{ color: '#7a8da4', fontSize: 13 }}>{c.certificateNumber}</td>
                   <td>
-                    <span className="certFileLink" title={c.certFileName}>
+                    <a href={c.certFileUrl} target="_blank" rel="noopener noreferrer" className="certFileLink" title={c.certFileName}>
                       📄 {c.certFileName.length > 18 ? c.certFileName.slice(0, 18) + '…' : c.certFileName}
-                    </span>
+                    </a>
                   </td>
                   <td>{new Date(c.joinedAt).toLocaleDateString('ko-KR')}</td>
                   <td><span className={`statusBadge ${hrStatusCls[c.hrStatus]}`}>{hrStatusLabel[c.hrStatus]}</span></td>
