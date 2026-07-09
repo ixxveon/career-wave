@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import reactor.core.publisher.Mono;
+
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +30,7 @@ public class FastApiClient {
     @Value("${webhook.secret}")
     private String webhookSecret;
 
-    private static final Duration TIMEOUT = Duration.ofSeconds(3);
+    private static final Duration TIMEOUT = Duration.ofSeconds(10);
 
     private WebClient webClient;
 
@@ -51,12 +53,14 @@ public class FastApiClient {
                 .retrieve()
                 .toBodilessEntity()
                 .timeout(TIMEOUT)
+                .onErrorResume(ex -> {
+                    String type = ex.getClass().getSimpleName();
+                    log.error("[FastAPI 트리거 실패] documentId: {}, 유형: {}, 원인: {}", event.documentId(), type, ex.getMessage());
+                    onFailure.run();
+                    return Mono.empty();
+                })
                 .subscribe(
-                        response -> log.info("[FastAPI 트리거 성공] documentId: {}, status: {}", event.documentId(), response.getStatusCode()),
-                        error -> {
-                            log.error("[FastAPI 트리거 실패] documentId: {}, 원인: {}", event.documentId(), error.getMessage());
-                            onFailure.run();
-                        }
+                        response -> log.info("[FastAPI 트리거 성공] documentId: {}, status: {}", event.documentId(), response.getStatusCode())
                 );
     }
 
