@@ -101,7 +101,7 @@ export interface Payment {
   paymentStatus: PayStatus;
   paymentType: PaymentType;
   paymentMethod?: string;
-  aiUsage: AiUsage;
+  aiUsage?: AiUsage;
   refundStatus?: RefundStatus;
 }
 

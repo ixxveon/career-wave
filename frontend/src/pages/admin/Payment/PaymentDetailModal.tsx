@@ -27,7 +27,7 @@ function daysSincePaid(approvedAt: string): number {
 function checkRefundEligibility(p: Payment): { eligible: boolean; reason: string | null } {
   const days = daysSincePaid(p.approvedAt);
   if (days > 7) return { eligible: false, reason: `결제일로부터 ${days}일 경과 — 환불 가능 기간(7일)을 초과하였습니다.` };
-  if (p.aiUsage.documentCount > 0 || p.aiUsage.interviewCount > 0) return { eligible: false, reason: '유료 AI 기능 이용 이력이 있어 환불이 불가합니다.' };
+  if ((p.aiUsage?.documentCount ?? 0) > 0 || (p.aiUsage?.interviewCount ?? 0) > 0) return { eligible: false, reason: '유료 AI 기능 이용 이력이 있어 환불이 불가합니다.' };
   return { eligible: true, reason: null };
 }
 
