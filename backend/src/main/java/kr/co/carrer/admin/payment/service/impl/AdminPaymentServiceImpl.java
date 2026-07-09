@@ -1,5 +1,6 @@
 package kr.co.carrer.admin.payment.service.impl;
 
+import kr.co.carrer.admin.payment.client.PaymentCancelClient;
 import kr.co.carrer.admin.payment.dto.PaymentDTO;
 import kr.co.carrer.admin.payment.dto.RefundDTO;
 import kr.co.carrer.admin.payment.entity.Payment;
@@ -28,7 +29,8 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentQueryRepository paymentQueryRepository;
     private final RefundRepository refundRepository;
-    // v1 stub: Toss 실제 연동 시 try-catch 추가 후 실패 경로에서 호출 (REQUIRES_NEW로 실패 이력 별도 커밋)
+    private final PaymentCancelClient paymentCancelClient;
+    // Toss 취소 API 실패 시 호출 (REQUIRES_NEW로 실패 이력 별도 커밋)
     private final RefundFailureTxService refundFailureTxService;
 
     @Override
@@ -106,7 +108,18 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
         Refund refund = refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING)
             .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.REFUND_NOT_PENDING));
 
-        // Toss 환불 API — v1 stub 처리 (실제 연동 시 외부 호출 후 TossApiException catch 추가)
+        if (payment.getPaymentKey() == null || payment.getPaymentKey().isBlank()) {
+            throw new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
+        }
+
+        try {
+            paymentCancelClient.cancel(payment.getPaymentKey(), refund.getReason(), refund.getAmount());
+        } catch (CustomException e) {
+            // 별도 REQUIRES_NEW 트랜잭션으로 실패 이력만 커밋 — 이 메서드의 @Transactional은 아래에서 롤백된다
+            refundFailureTxService.saveRefundFailed(refund, adminId);
+            throw e;
+        }
+
         refund.approve(adminId);
         payment.refund();
         refundRepository.save(refund);

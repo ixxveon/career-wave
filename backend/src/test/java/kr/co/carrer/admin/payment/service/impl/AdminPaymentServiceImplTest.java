@@ -1,5 +1,7 @@
 package kr.co.carrer.admin.payment.service.impl;
 
+import kr.co.carrer.admin.payment.client.PaymentCancelClient;
+import kr.co.carrer.admin.payment.client.dto.TossCancelResponse;
 import kr.co.carrer.admin.payment.dto.PaymentDTO;
 import kr.co.carrer.admin.payment.dto.RefundDTO;
 import kr.co.carrer.admin.payment.entity.Payment;
@@ -24,7 +26,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +41,8 @@ class AdminPaymentServiceImplTest {
     @Mock private PaymentRepository paymentRepository;
     @Mock private PaymentQueryRepository paymentQueryRepository;
     @Mock private RefundRepository refundRepository;
+    @Mock private PaymentCancelClient paymentCancelClient;
+    @Mock private RefundFailureTxService refundFailureTxService;
 
     // ── getSummary ────────────────────────────────────────────────────────────
 
@@ -67,7 +74,7 @@ class AdminPaymentServiceImplTest {
     class ApproveRefund {
 
         @Test
-        @DisplayName("PAID 결제 + PENDING 환불 → CANCELED / COMPLETED 반환")
+        @DisplayName("PAID 결제 + PENDING 환불 → Toss 취소 호출 후 CANCELED / COMPLETED 반환")
         void approveRefund_success() {
             UUID paymentId = UUID.randomUUID();
             Payment payment = createPayment(paymentId, PaymentStatus.PAID);
@@ -76,13 +83,56 @@ class AdminPaymentServiceImplTest {
             given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
             given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
                 .willReturn(Optional.of(refund));
+            given(paymentCancelClient.cancel("test_payment_key", refund.getReason(), refund.getAmount()))
+                .willReturn(new TossCancelResponse("test_payment_key", "CANCELED"));
 
             RefundDTO.ResponseApprove result = adminPaymentService.approveRefund(paymentId, 1L, "MASTER");
 
             assertThat(result.paymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
             assertThat(result.refundStatus()).isEqualTo(RefundStatus.COMPLETED);
+            verify(paymentCancelClient).cancel("test_payment_key", refund.getReason(), refund.getAmount());
             verify(refundRepository).save(refund);
             verify(paymentRepository).save(payment);
+        }
+
+        @Test
+        @DisplayName("Toss 결제 키 없음 → PAYMENT_INVALID_PARAM 예외, Toss 취소 미호출")
+        void approveRefund_missingPaymentKey_throwsInvalidParam() {
+            UUID paymentId = UUID.randomUUID();
+            Payment payment = createPayment(paymentId, PaymentStatus.PAID, null);
+            Refund refund = createRefund(paymentId, RefundStatus.PENDING);
+
+            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
+            given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+                .willReturn(Optional.of(refund));
+
+            assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "MASTER"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM);
+            verify(paymentCancelClient, never()).cancel(any(), any(), anyInt());
+        }
+
+        @Test
+        @DisplayName("Toss 취소 API 실패 → TOSS_REFUND_FAILED 예외, 환불 실패 이력 별도 저장")
+        void approveRefund_tossCancelFails_throwsAndSavesFailure() {
+            UUID paymentId = UUID.randomUUID();
+            Payment payment = createPayment(paymentId, PaymentStatus.PAID);
+            Refund refund = createRefund(paymentId, RefundStatus.PENDING);
+
+            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
+            given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+                .willReturn(Optional.of(refund));
+            given(paymentCancelClient.cancel("test_payment_key", refund.getReason(), refund.getAmount()))
+                .willThrow(new CustomException(AdminPaymentErrorCode.TOSS_REFUND_FAILED));
+
+            assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "MASTER"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminPaymentErrorCode.TOSS_REFUND_FAILED);
+
+            verify(refundFailureTxService).saveRefundFailed(refund, 1L);
+            verify(paymentRepository, never()).save(any());
         }
 
         @Test
@@ -202,12 +252,17 @@ class AdminPaymentServiceImplTest {
     // ── 헬퍼 ──────────────────────────────────────────────────────────────────
 
     private Payment createPayment(UUID paymentId, PaymentStatus status) {
+        return createPayment(paymentId, status, "test_payment_key");
+    }
+
+    private Payment createPayment(UUID paymentId, PaymentStatus status, String paymentKey) {
         try {
             var constructor = Payment.class.getDeclaredConstructor();
             constructor.setAccessible(true);
             Payment payment = constructor.newInstance();
             setField(payment, "paymentId", paymentId);
             setField(payment, "paymentStatus", status);
+            setField(payment, "paymentKey", paymentKey);
             return payment;
         } catch (Exception e) {
             throw new RuntimeException(e);
