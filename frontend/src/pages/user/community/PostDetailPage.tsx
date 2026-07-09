@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "@/hooks/user/useAuth";
 import {
   ChevronLeft,
   ThumbsUp,
@@ -52,6 +53,7 @@ type ReportTarget = {
 
 type Reply = {
   id: number;
+  memberId: string;
   author: string;
   createdAt: string;
   content: string;
@@ -61,6 +63,7 @@ type Reply = {
 
 type Comment = {
   id: number;
+  memberId: string;
   author: string;
   createdAt: string;
   content: string;
@@ -71,6 +74,7 @@ type Comment = {
 
 type CommunityPost = {
   id: number;
+  memberId: string;
   category: string;
   title: string;
   author: string;
@@ -80,12 +84,14 @@ type CommunityPost = {
   reportCount: number;
   content: string;
 };
+
 function toPost(board: CommunityBoard): CommunityPost {
   return {
     id: board.boardId,
+    memberId: board.memberId,
     category: board.category,
     title: board.title,
-    author: "익명",
+    author: board.memberId,
     createdAt: board.createdAt?.slice(0, 10) ?? "",
     views: board.viewCount,
     likes: 0,
@@ -99,6 +105,7 @@ function toComments(apiComments: CommunityComment[]): Comment[] {
     .filter((item) => item.parentId === null)
     .map((item) => ({
       id: item.commentId,
+      memberId: item.memberId,
       author: item.memberId,
       createdAt: item.createdAt?.slice(0, 10) ?? "",
       content: item.content,
@@ -108,6 +115,7 @@ function toComments(apiComments: CommunityComment[]): Comment[] {
         .filter((reply) => reply.parentId === item.commentId)
         .map((reply) => ({
           id: reply.commentId,
+          memberId: reply.memberId,
           author: reply.memberId,
           createdAt: reply.createdAt?.slice(0, 10) ?? "",
           content: reply.content,
@@ -122,11 +130,13 @@ type CommentItemProps = {
   onReply: (commentId: number, content: string) => void;
   onReport: (type: ReportType, id: number) => void;
   onDelete: (commentId: number) => void;
+  currentMemberId: string | null;
 };
 
 const MOCK_POSTS: CommunityPost[] = [
   {
     id: 1,
+    memberId: "mock-member",
     category: "면접 후기",
     title: "카카오 백엔드 1차 면접 후기",
     author: "개발자지망생",
@@ -154,6 +164,7 @@ CS 기본기를 충실히 준비하면 충분히 대응 가능한 수준이었�
   },
   {
     id: 2,
+    memberId: "mock-member",
     category: "합격 후기",
     title: "토스 프론트엔드 최종 합격 후기와 준비 방법",
     author: "toss_fe_21",
@@ -174,6 +185,7 @@ CS 기본기를 충실히 준비하면 충분히 대응 가능한 수준이었�
   },
   {
     id: 3,
+    memberId: "mock-member",
     category: "질문",
     title: "Spring Boot에서 @Transactional 내부 호출 문제 해결법",
     author: "java_dev_kim",
@@ -187,6 +199,7 @@ CS 기본기를 충실히 준비하면 충분히 대응 가능한 수준이었�
   },
   {
     id: 4,
+    memberId: "mock-member",
     category: "이력서 팁",
     title: "신입 백엔드 이력서 통과율 높이는 5가지 방법",
     author: "취준컨설턴트",
@@ -208,6 +221,7 @@ CS 기본기를 충실히 준비하면 충분히 대응 가능한 수준이었�
   },
   {
     id: 5,
+    memberId: "mock-member",
     category: "질문",
     title: "네이버 공채 코딩테스트 난이도 어느 정도인가요?",
     author: "algo_beginner",
@@ -221,6 +235,7 @@ CS 기본기를 충실히 준비하면 충분히 대응 가능한 수준이었�
   },
   {
     id: 6,
+    memberId: "mock-member",
     category: "자유",
     title: "취준 6개월 차, 멘탈 관리하는 법 공유합니다",
     author: "버티는중",
@@ -236,6 +251,7 @@ CS 기본기를 충실히 준비하면 충분히 대응 가능한 수준이었�
   },
   {
     id: 7,
+    memberId: "mock-member",
     category: "면접 후기",
     title: "대기업 인성 면접에서 STAR 답변 구조가 중요했던 이유",
     author: "star_practice",
@@ -258,6 +274,7 @@ CS 기본기를 충실히 준비하면 충분히 대응 가능한 수준이었�
 const INITIAL_COMMENTS: Comment[] = [
   {
     id: 1,
+    memberId: "mock-member",
     author: "spring_master",
     createdAt: "2026-05-20",
     content:
@@ -267,6 +284,7 @@ const INITIAL_COMMENTS: Comment[] = [
     replies: [
       {
         id: 11,
+        memberId: "mock-member",
         author: "개발자지망생",
         createdAt: "2026-05-20",
         content:
@@ -278,6 +296,7 @@ const INITIAL_COMMENTS: Comment[] = [
   },
   {
     id: 2,
+    memberId: "mock-member",
     author: "취준러",
     createdAt: "2026-05-21",
     content: "인성 질문도 있었나요? 기술 면접 비중이 궁금합니다.",
@@ -292,9 +311,11 @@ function CommentItem({
   onReply,
   onReport,
   onDelete,
+  currentMemberId,
 }: CommentItemProps) {
   const [replyText, setReplyText] = useState("");
   const [replyOpen, setReplyOpen] = useState(false);
+  const isCommentOwner = comment.memberId === currentMemberId;
 
   function submitReply() {
     if (!replyText.trim()) return;
@@ -341,57 +362,68 @@ function CommentItem({
           >
             신고
           </button>
-          <button
-            className="pd-comment__link"
-            type="button"
-            onClick={() => onDelete(comment.id)}
-          >
-            삭제
-          </button>
+          {isCommentOwner && (
+            <button
+              className="pd-comment__link"
+              type="button"
+              onClick={() => onDelete(comment.id)}
+            >
+              삭제
+            </button>
+          )}
         </div>
 
         {!!comment.replies.length && (
           <div className="pd-replies">
-            {comment.replies.map((reply) => (
-              <div key={reply.id} className="pd-reply">
-                <div className="pd-comment__avatar">{reply.author[0]}</div>
+            {comment.replies.map((reply) => {
+              const isReplyOwner = reply.memberId === currentMemberId;
 
-                <div className="pd-comment__body">
-                  <div className="pd-comment__top">
-                    <span className="pd-comment__author">{reply.author}</span>
-                    <span className="pd-comment__date">{reply.createdAt}</span>
-                    {reply.reportCount > 0 && (
-                      <span className="pd-comment__reported">
-                        신고 {reply.reportCount}
+              return (
+                <div key={reply.id} className="pd-reply">
+                  <div className="pd-comment__avatar">{reply.author[0]}</div>
+
+                  <div className="pd-comment__body">
+                    <div className="pd-comment__top">
+                      <span className="pd-comment__author">{reply.author}</span>
+                      <span className="pd-comment__date">
+                        {reply.createdAt}
                       </span>
-                    )}
-                  </div>
+                      {reply.reportCount > 0 && (
+                        <span className="pd-comment__reported">
+                          신고 {reply.reportCount}
+                        </span>
+                      )}
+                    </div>
 
-                  <p className="pd-comment__text">{reply.content}</p>
+                    <p className="pd-comment__text">{reply.content}</p>
 
-                  <div className="pd-comment__actions">
-                    <button className="pd-comment__like" type="button">
-                      <ThumbsUp size={11} /> {reply.likes}
-                    </button>
+                    <div className="pd-comment__actions">
+                      <button className="pd-comment__like" type="button">
+                        <ThumbsUp size={11} /> {reply.likes}
+                      </button>
 
-                    <button
-                      className="pd-comment__link is-report"
-                      type="button"
-                      onClick={() => onReport(REPORT_TYPE.COMMENT, reply.id)}
-                    >
-                      신고
-                    </button>
-                    <button
-                      className="pd-comment__link"
-                      type="button"
-                      onClick={() => onDelete(reply.id)}
-                    >
-                      삭제
-                    </button>
+                      <button
+                        className="pd-comment__link is-report"
+                        type="button"
+                        onClick={() => onReport(REPORT_TYPE.COMMENT, reply.id)}
+                      >
+                        신고
+                      </button>
+
+                      {isReplyOwner && (
+                        <button
+                          className="pd-comment__link"
+                          type="button"
+                          onClick={() => onDelete(reply.id)}
+                        >
+                          삭제
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -423,7 +455,8 @@ function CommentItem({
 export default function PostDetailPage() {
   const navigate = useNavigate();
   const { postId } = useParams();
-
+  const { member } = useAuth();
+  const currentMemberId = member?.memberId ?? null;
   const boardId = postId ? Number(postId) : NaN;
   const validBoardId = Number.isFinite(boardId) ? boardId : null;
 
@@ -450,6 +483,8 @@ export default function PostDetailPage() {
 
     return toPost(board);
   }, [board]);
+
+  const isPostOwner = post?.memberId === currentMemberId;
 
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -635,19 +670,21 @@ export default function PostDetailPage() {
           </div>
         </div>
 
-        <div className="pd-owner-actions">
-          <button type="button">
-            <Pencil size={14} /> 수정
-          </button>
+        {isPostOwner && (
+          <div className="pd-owner-actions">
+            <button type="button">
+              <Pencil size={14} /> 수정
+            </button>
 
-          <button
-            type="button"
-            onClick={handleDeleteBoard}
-            disabled={isDeletingBoard}
-          >
-            <Trash2 size={14} /> 삭제
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={handleDeleteBoard}
+              disabled={isDeletingBoard}
+            >
+              <Trash2 size={14} /> 삭제
+            </button>
+          </div>
+        )}
 
         <div className="pd-body">
           {post.content.split("\n").map((line, index) => {
