@@ -1279,6 +1279,7 @@ button {
 
 .planBadge.free     { background: #edf3f9; color: #5f7388; }
 .planBadge.premium  { background: #edf7f2; color: #5d7b69; }
+.planBadge.na       { background: #f0f2f5; color: #8592a6; }
 .statusBadge.normal  { background: #edf7f2; color: #5d7b69; }
 .statusBadge.blocked { background: #fff1f2; color: #9a6767; }
 
