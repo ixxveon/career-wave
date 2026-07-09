@@ -192,7 +192,7 @@ export default function InquiryTab({ onMutate }: InquiryTabProps) {
         </div>
         {inqError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{inqError}</p>}
         <div className="tableScroll">
-          <table className="memberTable">
+          <table className="memberTable csInquiryTable">
             <thead><tr><th>문의 ID</th><th>회원명</th><th>카테고리</th><th>제목</th><th>접수일</th><th>상태</th><th>관리</th></tr></thead>
             <tbody>
               {inqLoading ? (
