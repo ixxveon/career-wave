@@ -1262,6 +1262,24 @@ button {
   background: #fafcff;
 }
 
+/* 전체 회원 목록 — 이름/이메일/로그인ID(텍스트) 외 컬럼은 가운데 정렬 */
+.memberListTable th:nth-child(1),
+.memberListTable td:nth-child(1),
+.memberListTable th:nth-child(2),
+.memberListTable td:nth-child(2),
+.memberListTable th:nth-child(6),
+.memberListTable td:nth-child(6),
+.memberListTable th:nth-child(7),
+.memberListTable td:nth-child(7),
+.memberListTable th:nth-child(8),
+.memberListTable td:nth-child(8),
+.memberListTable th:nth-child(9),
+.memberListTable td:nth-child(9),
+.memberListTable th:nth-child(10),
+.memberListTable td:nth-child(10) {
+  text-align: center;
+}
+
 /* badge */
 
 .planBadge,

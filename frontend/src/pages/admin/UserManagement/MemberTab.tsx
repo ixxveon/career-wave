@@ -186,7 +186,7 @@ export default function MemberTab() {
         </div>
         {memberError && <p style={{ padding: '12px 16px', color: '#9a4444', fontSize: 14 }}>{memberError}</p>}
         <div className="tableScroll">
-          <table className="memberTable">
+          <table className="memberTable memberListTable">
             <thead>
               <tr>
                 <th><input type="checkbox" checked={checkedIds.length === members.length && members.length > 0} onChange={(e) => toggleAll(e.target.checked)} /></th>
@@ -212,7 +212,7 @@ export default function MemberTab() {
                   <td>{new Date(m.joinedAt).toLocaleDateString('ko-KR')}</td>
                   <td><span className={`statusBadge ${memberStatusCls[m.memberStatus]}`}>{memberStatusLabel[m.memberStatus]}</span></td>
                   <td>
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
                       <button className="tableBtn" onClick={() => openMemberDetail(m.memberId)}>상세보기</button>
                       {m.memberStatus === MEMBER_STATUS.SUSPENDED ? (
                         <button className="tableBtn tableBtn--success" onClick={() => { setSelectedMember(null); setUnsuspendTarget(m); }}>정지해제</button>
