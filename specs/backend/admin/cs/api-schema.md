@@ -129,13 +129,12 @@ ResponseEntity<ApiResponse<AiDTO.ResponseDraft>> generateInquiryDraft(
 ```java
 ApiResponse.ok(data);             // 200 성공
 ApiResponse.ok(message, data);    // 200 성공 + 메시지
-ApiResponse.fail(statusCode, message);  // 실패
+ApiResponse.fail(status, message);  // 실패
 ```
 
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공했습니다.",
   "data": {}
 }
