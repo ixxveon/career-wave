@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -56,11 +57,12 @@ public class FastApiClient {
                 .onErrorResume(ex -> {
                     String type = ex.getClass().getSimpleName();
                     log.error("[FastAPI 트리거 실패] documentId: {}, 유형: {}, 원인: {}", event.documentId(), type, ex.getMessage());
-                    onFailure.run();
-                    return Mono.empty();
+                    // handleAnalysisTriggerFailure는 @Transactional 블로킹 JPA 작업이므로 boundedElastic으로 오프로드
+                    return Mono.fromRunnable(onFailure).subscribeOn(Schedulers.boundedElastic()).then(Mono.empty());
                 })
                 .subscribe(
-                        response -> log.info("[FastAPI 트리거 성공] documentId: {}, status: {}", event.documentId(), response.getStatusCode())
+                        response -> log.info("[FastAPI 트리거 성공] documentId: {}, status: {}", event.documentId(), response.getStatusCode()),
+                        err -> log.error("[FastAPI 트리거 실패 콜백 오류] documentId: {}", event.documentId(), err)
                 );
     }
 
