@@ -14,6 +14,7 @@ import "@/styles/user/community/PostDetailPage.css";
 import {
   useCommunityBoard,
   useCommunityComments,
+  useCreateCommunityComment,
 } from "@/hooks/user/community";
 import type { CommunityBoard, CommunityComment } from "@/types/user/community";
 
@@ -412,6 +413,9 @@ export default function PostDetailPage() {
 
   const { data: apiComments = [] } = useCommunityComments(validBoardId);
 
+  const { mutate: createComment, isPending: isCreatingComment } =
+    useCreateCommunityComment(validBoardId ?? 0);
+
   const post = useMemo(() => {
     if (!board) return null;
 
@@ -450,22 +454,21 @@ export default function PostDetailPage() {
   }
 
   function submitComment() {
-    if (!comment.trim()) return;
+    const trimmedComment = comment.trim();
 
-    setComments((current) => [
-      ...current,
+    if (!trimmedComment || validBoardId === null) return;
+
+    createComment(
       {
-        id: Date.now(),
-        author: "나",
-        createdAt: "방금 전",
-        content: comment.trim(),
-        likes: 0,
-        reportCount: 0,
-        replies: [],
+        parentId: null,
+        content: trimmedComment,
       },
-    ]);
-
-    setComment("");
+      {
+        onSuccess: () => {
+          setComment("");
+        },
+      },
+    );
   }
 
   function submitReply(commentId: number, content: string) {
@@ -688,7 +691,7 @@ export default function PostDetailPage() {
             <button
               className="pd-comment-write__btn"
               type="button"
-              disabled={!comment.trim()}
+              disabled={!comment.trim() || isCreatingComment}
               onClick={submitComment}
             >
               <Send size={14} /> 등록
