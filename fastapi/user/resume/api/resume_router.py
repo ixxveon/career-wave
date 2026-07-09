@@ -1,7 +1,9 @@
 import logging
 
+import redis.asyncio as aioredis
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
+from core.redis import get_redis
 from core.security import verify_internal_secret
 from user.resume.schema.request import AnalyzeDocumentRequest
 from user.resume.schema.response import TriggerAcceptedResponse
@@ -11,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["resume"])
 
-# 현재 처리 중인 documentId 추적 (단일 프로세스 MVP 용도)
-_processing: set[str] = set()
+_PROCESSING_KEY_PREFIX = "resume:processing:"
+_PROCESSING_TTL = 300  # 분석 최대 소요 시간 5분
 
 _responses = {
     202: {
@@ -86,10 +88,13 @@ _responses = {
 async def analyze_resume(
     request: AnalyzeDocumentRequest,
     background_tasks: BackgroundTasks,
+    redis: aioredis.Redis = Depends(get_redis),
 ) -> TriggerAcceptedResponse:
     document_id = str(request.document_id)
+    lock_key = f"{_PROCESSING_KEY_PREFIX}{document_id}"
 
-    if document_id in _processing:
+    acquired = await redis.set(lock_key, "1", nx=True, ex=_PROCESSING_TTL)
+    if not acquired:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={
@@ -100,16 +105,15 @@ async def analyze_resume(
             },
         )
 
-    _processing.add(document_id)
-    background_tasks.add_task(_run_analysis, request)
+    background_tasks.add_task(_run_analysis, request, redis)
     logger.info(f"[{document_id}] Analysis accepted — queued as background task")
 
     return TriggerAcceptedResponse(documentId=document_id)
 
 
-async def _run_analysis(request: AnalyzeDocumentRequest) -> None:
+async def _run_analysis(request: AnalyzeDocumentRequest, redis: aioredis.Redis) -> None:
     document_id = str(request.document_id)
     try:
         await resume_service.analyze_document(request)
     finally:
-        _processing.discard(document_id)
+        await redis.delete(f"{_PROCESSING_KEY_PREFIX}{document_id}")
