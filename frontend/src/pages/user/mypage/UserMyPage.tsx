@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink } from "react-router-dom";
+import MyPageSidebar from "../../../components/user/mypage/MyPageSidebar";
 import {
   UserRound,
   Mail,
@@ -289,25 +289,7 @@ function UserMyPage() {
 
   return (
     <div className="cw-mypage-layout">
-      <aside className="cw-mypage-sidebar">
-        <strong>마이페이지</strong>
-        <nav>
-          <NavLink
-            to="/mypage"
-            end
-            className={({ isActive }) => (isActive ? "is-active" : "")}
-          >
-            내 정보 관리
-          </NavLink>
-          <NavLink to="/mypage/favorites">스크랩 공고</NavLink>
-          {!isCompanyMember && (
-            <>
-              <NavLink to="/mypage/subscription">AI 서비스</NavLink>
-              <NavLink to="/mypage/payment-history">구독/결제 내역</NavLink>
-            </>
-          )}
-        </nav>
-      </aside>
+      <MyPageSidebar />
 
       <section className="cw-account-section">
         <div className="cw-account-header">
