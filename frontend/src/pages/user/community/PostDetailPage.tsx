@@ -15,6 +15,7 @@ import {
   useCommunityBoard,
   useCommunityComments,
   useCreateCommunityComment,
+  useDeleteCommunityBoard,
 } from "@/hooks/user/community";
 import type { CommunityBoard, CommunityComment } from "@/types/user/community";
 
@@ -416,6 +417,9 @@ export default function PostDetailPage() {
   const { mutate: createComment, isPending: isCreatingComment } =
     useCreateCommunityComment(validBoardId ?? 0);
 
+  const { mutate: deleteBoard, isPending: isDeletingBoard } =
+    useDeleteCommunityBoard();
+
   const post = useMemo(() => {
     if (!board) return null;
 
@@ -481,6 +485,19 @@ export default function PostDetailPage() {
       content: trimmedContent,
     });
   }
+
+  function handleDeleteBoard() {
+    if (validBoardId === null) return;
+
+    if (!window.confirm("게시글을 삭제하시겠습니까?")) return;
+
+    deleteBoard(validBoardId, {
+      onSuccess: () => {
+        navigate("/community");
+      },
+    });
+  }
+  
   function submitReport() {
     if (!reportTarget) return;
 
@@ -592,9 +609,8 @@ export default function PostDetailPage() {
 
           <button
             type="button"
-            onClick={() =>
-              window.alert("삭제 기능은 백엔드 연동 단계에서 연결됩니다.")
-            }
+            onClick={handleDeleteBoard}
+            disabled={isDeletingBoard}
           >
             <Trash2 size={14} /> 삭제
           </button>
