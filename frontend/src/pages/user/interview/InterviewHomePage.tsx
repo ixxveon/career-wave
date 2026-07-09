@@ -7,11 +7,11 @@ import {
 import { useInterviewHistory } from '../../../hooks/user/interview/useInterviewReport';
 import { useSubscriptionStatus } from '../../../hooks/user/subscription';
 import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
+import { useEntitlements } from '../../../hooks/user/subscription/useEntitlements';
+import { PRODUCT_CODE } from '../../../types/user/subscription';
 import { SESSION_TYPE_LABEL } from '../../../constants/user/interview';
 
-/* ── 상품별 월 이용 한도 기본값 (API 미구독 시 fallback) */
 const DEFAULT_DOC_LIMIT = 30;
-const DEFAULT_IV_LIMIT  = 20;
 
 function scoreClass(s: number): string {
   return s >= 80 ? 'iv-score--high' : s >= 65 ? 'iv-score--mid' : 'iv-score--low';
@@ -23,24 +23,25 @@ function InterviewHomePage() {
   const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
   const { subscribedItems, unsubscribedItems } = useSubscriptionStatus();
   const { data: resumeQuota } = useResumeQuota();
+  const { data: entitlements } = useEntitlements();
 
   /* 서류 AI 코칭 / AI 모의면접 usage 항목 (구독 여부 무관) */
   const allSubItems = [...subscribedItems, ...unsubscribedItems];
   const ivItem  = allSubItems.find(i => i.key === 'interview');
-
   const docItem = allSubItems.find(i => i.key === 'document');
-
-  // 서류 분석 사용량은 resume/quota API 기준 (ResumeAnalysisPage와 동일)
-  const docUsed  = resumeQuota?.usedCount  ?? 0;
-  const docLimit = resumeQuota?.limitCount ?? DEFAULT_DOC_LIMIT;
-  const ivLimit  = ivItem?.usage?.limit  ?? DEFAULT_IV_LIMIT;
-  const ivUsed   = historyData?.totalItems ?? 0;
-
-  const docPct = Math.min((docUsed / docLimit) * 100, 100);
-  const ivPct  = Math.min((ivUsed  / ivLimit)  * 100, 100);
 
   const docSubscribed = docItem?.isSubscribed ?? false;
   const ivSubscribed  = ivItem?.isSubscribed  ?? false;
+  const hasIvEntitlement = entitlements ? entitlements[PRODUCT_CODE.INTERVIEW] : true;
+
+  const docUsed  = resumeQuota?.usedCount  ?? 0;
+  const docLimit = resumeQuota?.limitCount ?? DEFAULT_DOC_LIMIT;
+  const docPct   = Math.min((docUsed / docLimit) * 100, 100);
+
+  // 미구독: 무료 체험 1회 기준 / 구독 중: API 사용량 기준
+  const ivUsed  = ivSubscribed ? (ivItem?.usage?.used ?? 0) : (hasIvEntitlement ? 0 : 1);
+  const ivLimit = ivSubscribed ? (ivItem?.usage?.limit ?? 0) : 1;
+  const ivPct   = ivLimit > 0 ? Math.min((ivUsed / ivLimit) * 100, 100) : 100;
 
   return (
     <div className="iv-home">
