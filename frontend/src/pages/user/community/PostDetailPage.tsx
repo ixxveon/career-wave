@@ -84,6 +84,7 @@ type CommunityPost = {
   reportCount: number;
   content: string;
 };
+const DEFAULT_AUTHOR_NAME = "커뮤니티 회원";
 
 function toPost(board: CommunityBoard): CommunityPost {
   return {
@@ -91,7 +92,7 @@ function toPost(board: CommunityBoard): CommunityPost {
     memberId: board.memberId,
     category: board.category,
     title: board.title,
-    author: board.memberId,
+    author: DEFAULT_AUTHOR_NAME,
     createdAt: board.createdAt?.slice(0, 10) ?? "",
     views: board.viewCount,
     likes: 0,
@@ -106,7 +107,7 @@ function toComments(apiComments: CommunityComment[]): Comment[] {
     .map((item) => ({
       id: item.commentId,
       memberId: item.memberId,
-      author: item.memberId,
+      author: DEFAULT_AUTHOR_NAME,
       createdAt: item.createdAt?.slice(0, 10) ?? "",
       content: item.content,
       likes: 0,
@@ -116,7 +117,7 @@ function toComments(apiComments: CommunityComment[]): Comment[] {
         .map((reply) => ({
           id: reply.commentId,
           memberId: reply.memberId,
-          author: reply.memberId,
+          author: DEFAULT_AUTHOR_NAME,
           createdAt: reply.createdAt?.slice(0, 10) ?? "",
           content: reply.content,
           likes: 0,
