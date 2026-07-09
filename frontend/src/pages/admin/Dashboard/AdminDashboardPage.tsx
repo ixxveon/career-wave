@@ -11,7 +11,6 @@ import {
   unwrapDashboardSummaryResponse,
 } from '../../../api/admin/dashboardApi';
 import {
-  ADMIN_ROUTE_PATHS,
   hasAdminRouteAccess,
   isAdminNavigationPath,
 } from '../../../constants/admin/adminRouteConstants';
@@ -39,12 +38,6 @@ const KPI_PRESENTATION = {
 
 type KpiPresentation = (typeof KPI_PRESENTATION)[DashboardKpiKey];
 
-const ALERT_PRESENTATION = {
-  URGENT: { icon: '!', cls: 'danger' },
-  WARNING: { icon: '!!', cls: 'warning' },
-  NORMAL: { icon: 'i', cls: 'normal' },
-} as const;
-
 const PAYMENT_RATIO_CLASSES = ['c1', 'c2', 'c3'] as const;
 
 const SERVICE_CARD_PRESENTATION = {
@@ -59,37 +52,16 @@ const SERVICE_CARD_PRESENTATION = {
   AUDIT_LOG: { icon: 'LOG', cls: 'red' },
 } as const;
 
-const SYSTEM_STATUS_PRESENTATION = {
-  NORMAL: { dotClass: 'normal' },
-  WARNING: { dotClass: 'warning' },
-  CRITICAL: { dotClass: 'danger' },
-} as const;
-
-const DASHBOARD_ACCESS_KEY = {
-  ADMIN: 'ADMIN',
-  MEMBER: 'MEMBER',
-  REPORT: 'REPORT',
-  CS: 'CS',
-  PAYMENT: 'PAYMENT',
-  STATISTICS: 'STATISTICS',
-  AI_METRICS: 'AI_METRICS',
-  SCRAPING: 'SCRAPING',
-  AUDIT_LOG: 'AUDIT_LOG',
-} as const;
-
-type DashboardAccessKey = (typeof DASHBOARD_ACCESS_KEY)[keyof typeof DASHBOARD_ACCESS_KEY];
-
-const DASHBOARD_DOMAIN_ALLOWED_ROLES = {
-  ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
-  MEMBER: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  REPORT: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  CS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.CS],
-  PAYMENT: [ADMIN_DETAIL_ROLE.MASTER],
-  STATISTICS: [ADMIN_DETAIL_ROLE.MASTER],
-  AI_METRICS: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-  AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
-} satisfies Record<DashboardAccessKey, AdminDetailRole[]>;
+type DashboardAccessKey =
+  | 'ADMIN'
+  | 'MEMBER'
+  | 'REPORT'
+  | 'CS'
+  | 'PAYMENT'
+  | 'STATISTICS'
+  | 'AI_METRICS'
+  | 'SCRAPING'
+  | 'AUDIT_LOG';
 
 const DASHBOARD_CARD_ALLOWED_ROLES = {
   ADMIN: [ADMIN_DETAIL_ROLE.MASTER],
@@ -102,6 +74,12 @@ const DASHBOARD_CARD_ALLOWED_ROLES = {
   SCRAPING: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
   AUDIT_LOG: [ADMIN_DETAIL_ROLE.MASTER, ADMIN_DETAIL_ROLE.BACKEND],
 } satisfies Partial<Record<DashboardAccessKey, AdminDetailRole[]>>;
+
+const SYSTEM_STATUS_PRESENTATION = {
+  NORMAL: { dotClass: 'normal' },
+  WARNING: { dotClass: 'warning' },
+  CRITICAL: { dotClass: 'danger' },
+} as const;
 
 function hasDashboardRoleAccess(
   currentAdminRole: AdminDetailRole | null,
@@ -165,7 +143,7 @@ export default function AdminDashboardPage() {
     isError: isDashboardError,
     error: dashboardError,
     refetch: refetchDashboardSummary,
-  } = useQuery({
+      } = useQuery({
     queryKey: DASHBOARD_SUMMARY_QUERY_KEY,
     queryFn: async () => {
       const response = await dashboardApi.getSummary();
@@ -189,12 +167,10 @@ export default function AdminDashboardPage() {
     !isDashboardError &&
     !!dashboardSummary &&
     dashboardSummary.kpis.length === 0 &&
-    dashboardSummary.alerts.length === 0 &&
     dashboardSummary.weeklySignups.length === 0 &&
     dashboardSummary.paymentRatio.length === 0 &&
     dashboardSummary.serviceCards.length === 0 &&
-    dashboardSummary.systemStatus.length === 0 &&
-    dashboardSummary.recentActivities.length === 0;
+    dashboardSummary.systemStatus.length === 0;
 
   const dashboardBaseDateTimeLabel = formatKstDateTime(dashboardSummary?.baseDateTime);
 
@@ -218,34 +194,6 @@ export default function AdminDashboardPage() {
       return { kpis: [], hasKpiSectionError: !!dashboardSummary };
     }
   }, [dashboardSummary]);
-
-  const { alerts, hasAlertSectionError } = useMemo(() => {
-    try {
-      const items = (dashboardSummary?.alerts ?? []).map((item) => {
-        const presentation =
-          ALERT_PRESENTATION[item.level as keyof typeof ALERT_PRESENTATION] ?? ALERT_PRESENTATION.NORMAL;
-        const hasRoleAccess = hasDashboardRoleAccess(
-          currentAdminRole,
-          DASHBOARD_DOMAIN_ALLOWED_ROLES[item.domain as DashboardAccessKey]
-        ) && hasAccessibleAdminTarget(currentAdminRole, item.targetPath);
-
-        return {
-          ...item,
-          icon: presentation.icon,
-          cls: presentation.cls,
-          text: item.message,
-          button: '상세 보기',
-          path: item.targetPath,
-          hasValidTargetPath: isAdminNavigationPath(item.targetPath),
-          hasRoleAccess,
-        };
-      }).filter((item) => item.hasRoleAccess);
-
-      return { alerts: items, hasAlertSectionError: false };
-    } catch {
-      return { alerts: [], hasAlertSectionError: !!dashboardSummary };
-    }
-  }, [currentAdminRole, dashboardSummary]);
 
   const { weeklySignups, hasWeeklySignupSectionError } = useMemo(() => {
     try {
@@ -367,26 +315,6 @@ export default function AdminDashboardPage() {
     }
   }, [dashboardSummary]);
 
-  const { recentActivities, hasRecentActivitySectionError } = useMemo(() => {
-    try {
-      const items = (dashboardSummary?.recentActivities ?? []).map((item) => ({
-        ...item,
-        occurredAtLabel: formatKstDateTime(item.occurredAt),
-        hasAccessibleTarget: hasAccessibleAdminTarget(currentAdminRole, item.targetPath),
-      }));
-
-      return {
-        recentActivities: items,
-        hasRecentActivitySectionError: false,
-      };
-    } catch {
-      return {
-        recentActivities: [],
-        hasRecentActivitySectionError: !!dashboardSummary,
-      };
-    }
-  }, [currentAdminRole, dashboardSummary]);
-
   return (
     <>
       <header className="admin-header">
@@ -423,7 +351,7 @@ export default function AdminDashboardPage() {
         <section className="dashboardEmptyPage">
           <div className="dashboardEmptyPage__card">
             <h3>표시할 대시보드 데이터가 없습니다.</h3>
-            <p>요약, 알림, 차트, 관리자 활동 데이터가 아직 집계되지 않았습니다.</p>
+            <p>요약, 차트, 관리자 기능 카드, 시스템 상태 데이터가 아직 집계되지 않았습니다.</p>
           </div>
         </section>
       ) : (
@@ -459,43 +387,6 @@ export default function AdminDashboardPage() {
 
           <section className="layoutGrid">
             <div className="leftColumn">
-              <section className="admin-card alertPanel">
-                <div className="sectionHead">
-                  <h3>오늘 처리할 주요 알림</h3>
-                </div>
-
-                <div className="alertList">
-                  {isDashboardInitialLoading ? (
-                    <div className="dashboardStateBox">주요 알림을 불러오는 중입니다.</div>
-                  ) : hasAlertSectionError ? (
-                    <div className="dashboardStateBox dashboardStateBox--error">
-                      주요 알림 데이터를 표시하지 못했습니다.
-                    </div>
-                  ) : alerts.length === 0 ? (
-                    <div className="dashboardStateBox">현재 처리할 주요 알림이 없습니다.</div>
-                  ) : (
-                    alerts.map((item) => (
-                      <div className={`alertRow ${item.cls}`} key={`${item.domain}-${item.id}`}>
-                        <span className="alertIcon">{item.icon}</span>
-                        <span className="alertLevel">{item.level}</span>
-                        <strong>{item.domain}</strong>
-                        <p>{item.text}</p>
-                        <button
-                          type="button"
-                          disabled={!item.hasValidTargetPath}
-                          onClick={() => {
-                            if (!item.hasValidTargetPath) return;
-                            navigate(item.path);
-                          }}
-                        >
-                          {item.button}
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </section>
-
               <section className="chartGrid">
                 <article className="admin-card chartCard">
                   <h3>주간 가입자 추이</h3>
@@ -637,46 +528,6 @@ export default function AdminDashboardPage() {
                     <div className="statusRow" key={item.key}>
                       <span className={item.dotClass} />
                       {item.label} <b>{item.valueText}</b>
-                    </div>
-                  ))
-                )}
-              </section>
-
-              <section className="admin-card logCard">
-                <div className="sectionHead">
-                  <h3>최근 관리자 활동</h3>
-                  <button
-                    disabled={!hasAccessibleAdminTarget(currentAdminRole, ADMIN_ROUTE_PATHS.log)}
-                    onClick={() => {
-                      if (!hasAccessibleAdminTarget(currentAdminRole, ADMIN_ROUTE_PATHS.log)) return;
-                      navigate(ADMIN_ROUTE_PATHS.log);
-                    }}
-                  >
-                    전체 보기
-                  </button>
-                </div>
-                {isDashboardInitialLoading ? (
-                  <div className="dashboardStateBox dashboardStateBox--inline">
-                    최근 관리자 활동을 불러오는 중입니다.
-                  </div>
-                ) : hasRecentActivitySectionError ? (
-                  <div className="dashboardStateBox dashboardStateBox--inline dashboardStateBox--error">
-                    최근 관리자 활동을 표시하지 못했습니다.
-                  </div>
-                ) : (
-                  recentActivities.map((activity) => (
-                    <div
-                      className="logRow"
-                      key={activity.id}
-                      style={{ cursor: activity.hasAccessibleTarget ? 'pointer' : 'default' }}
-                      onClick={() => {
-                        if (!activity.hasAccessibleTarget) return;
-                        navigate(activity.targetPath);
-                      }}
-                    >
-                      <span className="logRow__time">{activity.occurredAtLabel}</span>
-                      <strong className="logRow__adminId" title={activity.adminId}>{activity.adminId}</strong>
-                      <p className="logRow__message" title={activity.message}>{activity.message}</p>
                     </div>
                   ))
                 )}

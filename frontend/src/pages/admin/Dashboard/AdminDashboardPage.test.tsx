@@ -62,7 +62,7 @@ function createSummary(overrides: Partial<AdminDashboardSummary> = {}): AdminDas
     kpis: [
       {
         key: 'TODAY_NEW_ADMINS',
-        title: '오늘 신규 가입자',
+        title: '오늘 신규 관리자',
         value: 7,
         unit: '명',
         deltaText: '선택 기간 기준',
@@ -183,22 +183,21 @@ afterEach(() => {
 });
 
 describe('AdminDashboardPage contract rendering', () => {
-  it('renders dashboard summary using backend KPI keys, target paths, and domain values', async () => {
+  it('renders dashboard summary without alert and recent activity sections', async () => {
     renderPage();
 
-    expect(await screen.findByText('오늘 신규 가입자')).toBeTruthy();
+    expect(await screen.findByText('오늘 신규 관리자')).toBeTruthy();
     expect(screen.getByText('7명')).toBeTruthy();
     expect(screen.getByText('실시간 활성 관리자')).toBeTruthy();
     expect(screen.getByText('AI 인터뷰 세션')).toBeTruthy();
     expect(screen.getByText('29,000원')).toBeTruthy();
     expect(screen.getByText('Super Admin')).toBeTruthy();
     expect(screen.getByText('SA')).toBeTruthy();
-    expect(screen.getByText('권한 변경 경고')).toBeTruthy();
-    expect(screen.getByText('원티드 스크래핑 실패')).toBeTruthy();
     expect(screen.getByText('Toss Payments')).toBeTruthy();
     expect(screen.getByText('100%')).toBeTruthy();
     expect(screen.getAllByText('Toss Payments 100%')).toHaveLength(2);
-    expect(screen.getByText('관리자 활동 - 권한 변경')).toBeTruthy();
+    expect(screen.queryByText('오늘 처리할 주요 알림')).toBeNull();
+    expect(screen.queryByText('최근 관리자 활동')).toBeNull();
   });
 
   it('renders the logged-in admin profile using session name and id', async () => {
@@ -212,54 +211,56 @@ describe('AdminDashboardPage contract rendering', () => {
     expect(document.querySelector('.avatar')?.textContent).toBe('CM');
   });
 
-  it('renders the recent activity all alerts button when the destination page is accessible', async () => {
+  it('navigates through valid service card target paths', async () => {
     renderPage();
 
-    expect(await screen.findByText('권한 변경 경고')).toBeTruthy();
-    expect(screen.getByRole('button', { name: '전체 보기' })).toHaveProperty('disabled', false);
-  });
-
-  it('navigates through valid alert, service card, and recent activity target paths', async () => {
-    const { container } = renderPage();
-
-    expect(await screen.findByText('권한 변경 경고')).toBeTruthy();
-    fireEvent.click(screen.getAllByRole('button', { name: '상세 보기' })[0]);
-    expect(navigateMock).toHaveBeenCalledWith(ADMIN_ROUTE_PATHS.log);
-
+    expect(await screen.findByText('스크래핑 관리')).toBeTruthy();
     const scrapingCard = screen.getByText('스크래핑 관리').closest('.adminCard');
     const scrapingButton = scrapingCard?.querySelector('button');
     expect(scrapingButton).toBeTruthy();
     fireEvent.click(scrapingButton as HTMLButtonElement);
     expect(navigateMock).toHaveBeenCalledWith(ADMIN_ROUTE_PATHS.scraping);
-
-    const activityRow = container.querySelector('.logRow');
-    expect(activityRow).toBeTruthy();
-    fireEvent.click(activityRow as HTMLElement);
-    expect(navigateMock).toHaveBeenCalledWith(ADMIN_ROUTE_PATHS.log);
   });
 
-  it('filters restricted alert and service card domains for CS admins', async () => {
+  it('filters restricted service card domains for CS admins', async () => {
     adminSession.setRole(ADMIN_DETAIL_ROLE.CS);
 
     renderPage();
 
-    expect(await screen.findByText('오늘 신규 가입자')).toBeTruthy();
-    expect(screen.queryByText('권한 변경 경고')).toBeNull();
-    expect(screen.queryByText('원티드 스크래핑 실패')).toBeNull();
+    expect(await screen.findByText('오늘 신규 관리자')).toBeTruthy();
     expect(screen.queryByText('스크래핑 관리')).toBeNull();
     expect(screen.queryByText('감사 로그')).toBeNull();
-    expect(screen.getByText('현재 처리할 주요 알림이 없습니다.')).toBeTruthy();
+    expect(screen.queryByText('오늘 처리할 주요 알림')).toBeNull();
+    expect(screen.queryByText('최근 관리자 활동')).toBeNull();
   });
 
-  it('renders complete empty state when every dashboard section is empty', async () => {
+  it('renders complete empty state when every visible dashboard section is empty', async () => {
     dashboardApiMock.getSummary.mockResolvedValueOnce(apiResponse(createSummary({
       kpis: [],
-      alerts: [],
+      alerts: [
+        {
+          id: 1,
+          level: 'WARNING',
+          domain: 'AUDIT_LOG',
+          title: '감사 로그 경고',
+          message: '권한 변경 경고',
+          targetPath: ADMIN_ROUTE_PATHS.log,
+          createdAt: '2026-06-28T08:55:00Z',
+        },
+      ],
       weeklySignups: [],
       paymentRatio: [],
       serviceCards: [],
       systemStatus: [],
-      recentActivities: [],
+      recentActivities: [
+        {
+          id: 100,
+          occurredAt: '2026-06-28T08:50:00Z',
+          adminId: 'master',
+          message: '관리자 활동 - 권한 변경',
+          targetPath: ADMIN_ROUTE_PATHS.log,
+        },
+      ],
     })));
 
     renderPage();
@@ -278,6 +279,6 @@ describe('AdminDashboardPage contract rendering', () => {
     fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
 
     await waitFor(() => expect(dashboardApiMock.getSummary).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText('오늘 신규 가입자')).toBeTruthy();
+    expect(await screen.findByText('오늘 신규 관리자')).toBeTruthy();
   });
 });
