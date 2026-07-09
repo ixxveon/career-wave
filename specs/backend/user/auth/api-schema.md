@@ -15,7 +15,6 @@
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {}
 }
@@ -26,7 +25,7 @@
 ```json
 {
   "success": false,
-  "statusCode": 400,
+  "status": 400,
   "message": "요청을 처리할 수 없습니다.",
   "data": null
 }
@@ -163,7 +162,6 @@ GET  /me/status
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "로그인되었습니다.",
   "data": {
     "accessToken": "jwt-access-token",
@@ -216,7 +214,6 @@ Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/us
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "토큰이 갱신되었습니다.",
   "data": {
     "accessToken": "new-jwt-access-token"
@@ -250,7 +247,6 @@ Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/us
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "로그아웃 되었습니다.",
   "data": null
 }
@@ -275,7 +271,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "memberId": "uuid-v4",
@@ -300,7 +295,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "사용 가능한 아이디입니다.",
   "data": {
     "available": true
@@ -339,7 +333,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "인증번호가 발송되었습니다.",
   "data": {
     "verificationId": "uuid-v4",
@@ -389,7 +382,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "인증이 완료되었습니다.",
   "data": {
     "verificationToken": "short-lived-token",
@@ -450,7 +442,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 201,
   "message": "회원가입이 완료되었습니다.",
   "data": {
     "memberId": "uuid-v4",
@@ -558,7 +549,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 201,
   "message": "기업회원 가입 신청이 접수되었습니다. 관리자 승인 후 이메일로 안내드립니다.",
   "data": {
     "memberId": "uuid-v4",
@@ -623,7 +613,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "파일이 업로드되었습니다.",
   "data": {
     "fileId": "uploaded-file-id",
@@ -659,7 +648,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "소셜 인증 URL이 생성되었습니다.",
   "data": {
     "provider": "kakao",
@@ -682,7 +670,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "로그인되었습니다.",
   "data": {
     "accessToken": "jwt-access-token",
@@ -706,7 +693,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "추가정보 입력이 필요합니다.",
   "data": {
     "provider": "kakao",
@@ -761,7 +747,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "소셜 회원가입이 완료되었습니다.",
   "data": {
     "memberId": "uuid-v4",
@@ -816,7 +801,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 처리되었습니다.",
   "data": {
     "maskedLoginIds": ["car***01"],
@@ -865,7 +849,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "비밀번호를 재설정할 수 있습니다.",
   "data": {
     "resetToken": "password-reset-token",
@@ -896,7 +879,6 @@ Set-Cookie: refreshToken=; Path=/api/v1/user/members; Max-Age=0; HttpOnly; Secur
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "비밀번호가 변경되었습니다.",
   "data": {
     "changedAt": "2026-05-31T12:39:00Z"
