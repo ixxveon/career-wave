@@ -209,14 +209,12 @@ export default function CommunityPage() {
   const [page, setPage] = useState(0);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isChecking || !isLoggedIn) {
       setPosts([]);
-      setTotalElements(0);
       setTotalPages(1);
       setLoading(false);
       setError(null);
@@ -252,7 +250,6 @@ export default function CommunityPage() {
 
         if (!ignore) {
           setPosts(toPosts(boards));
-          setTotalElements(total);
           setTotalPages(
             Math.max(1, payload?.totalPages ?? Math.ceil(total / PAGE_SIZE)),
           );
