@@ -204,7 +204,7 @@ export default function MemberTab() {
                   <td>{m.email}</td>
                   <td style={{ color: '#7a8da4', fontSize: 13 }}>{m.loginId}</td>
                   <td><span className={`roleBadge ${m.role === MEMBER_ROLE.USER ? 'roleBadge--user' : 'roleBadge--company'}`}>{m.role === MEMBER_ROLE.USER ? '개인' : '기업'}</span></td>
-                  <td><span className={`planBadge ${m.plan.toLowerCase()}`}>{m.plan}</span></td>
+                  <td>{m.role === MEMBER_ROLE.USER ? <span className={`planBadge ${m.plan.toLowerCase()}`}>{m.plan}</span> : '—'}</td>
                   <td>{new Date(m.joinedAt).toLocaleDateString('ko-KR')}</td>
                   <td><span className={`statusBadge ${memberStatusCls[m.memberStatus]}`}>{memberStatusLabel[m.memberStatus]}</span></td>
                   <td>

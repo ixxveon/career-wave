@@ -43,11 +43,12 @@ export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: M
         </div>
         <div className="modalInfoGrid">
           <div><span>권한</span><strong>{member.role === MEMBER_ROLE.USER ? '개인 회원' : '기업 회원'}</strong></div>
-          <div><span>구독 플랜</span><strong>{member.plan}</strong></div>
+          {member.role === MEMBER_ROLE.USER && <div><span>구독 플랜</span><strong>{member.plan}</strong></div>}
           <div><span>가입일</span><strong>{new Date(member.joinedAt).toLocaleDateString('ko-KR')}</strong></div>
           <div><span>최근 접속</span><strong>{member.lastLoginAt ? new Date(member.lastLoginAt).toLocaleDateString('ko-KR') : '—'}</strong></div>
           <div><span>현재 상태</span><strong><span className={`statusBadge ${memberStatusCls[member.memberStatus]}`}>{memberStatusLabel[member.memberStatus]}</span></strong></div>
-          <div><span>신고 받은 횟수</span><strong>{member.reportCount}건</strong></div>
+          {/* 신고(report)는 커뮤니티 기능 전용이며 기업 회원은 커뮤니티 접근이 차단되어 있음 (#1171) */}
+          {member.role === MEMBER_ROLE.USER && <div><span>신고 받은 횟수</span><strong>{member.reportCount}건</strong></div>}
           {(member.sanctionType === 'SUSPEND' || member.sanctionType === 'BLACKLIST') && (
             <>
               <div><span>제재 유형</span><strong>{{ WARNING: '경고', SUSPEND: '활동 정지', BLACKLIST: '영구 정지' }[member.sanctionType]}</strong></div>
