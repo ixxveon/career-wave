@@ -31,7 +31,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {}
 }
@@ -41,16 +40,15 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": false,
-  "statusCode": 403,
   "message": "해당 면접 세션에 접근할 권한이 없습니다.",
   "code": "INTERVIEW_SESSION_FORBIDDEN",
   "data": null
 }
 ```
 
-### 에러 상황별 statusCode
+### 에러 상황별 status
 
-| statusCode | 상황 |
+| status | 상황 |
 |-----------|------|
 | `400` | 유효하지 않은 입력값 (sessionType 오류, 이미 종료된 세션 재종료 등) |
 | `401` | 인증 토큰 없음 또는 만료 |
@@ -114,7 +112,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "sessionId": "uuid-v4",
@@ -128,7 +125,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `400` | `INTERVIEW_INVALID_SESSION_TYPE` | 유효하지 않은 `sessionType` 값 |
 | `404` | `INTERVIEW_DOCUMENT_NOT_FOUND` | 유효하지 않은 `documentId` |
@@ -149,7 +146,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "sessionId": "uuid-v4",
@@ -174,7 +170,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": null
 }
@@ -182,7 +177,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `401` | `UNAUTHORIZED` | 토큰 없음 또는 만료 |
 
@@ -220,7 +215,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "messageId": 1,
@@ -231,7 +225,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `400` | — | `messageContent` 누락 또는 `questionOrder` 1 미만 |
 | `403` | `INTERVIEW_SESSION_FORBIDDEN` | 본인 소유가 아닌 세션 |
@@ -277,7 +271,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "chunkIndex": 0,
@@ -288,7 +281,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `400` | — | 지원하지 않는 오디오 포맷 또는 필수 파라미터 누락 |
 | `403` | `INTERVIEW_SESSION_FORBIDDEN` | 본인 소유가 아닌 세션 |
@@ -314,7 +307,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "sessionId": "uuid-v4",
@@ -329,7 +321,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `400` | `INTERVIEW_SESSION_ALREADY_ENDED` | 이미 종료된 세션 (`COMPLETED` / `FAILED`) |
 | `403` | `INTERVIEW_SESSION_FORBIDDEN` | 본인 소유가 아닌 세션 |
@@ -354,7 +346,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "sessionId": "uuid-v4",
@@ -396,7 +387,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `403` | `INTERVIEW_SESSION_FORBIDDEN` | 존재하지 않는 `sessionId` 또는 본인 소유가 아닌 세션 (IDOR 방어: 두 경우 모두 동일 응답) |
 | `409` | `INTERVIEW_REPORT_NOT_READY` | 리포트 아직 생성 중 |
@@ -407,7 +398,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": false,
-  "statusCode": 409,
+  "status": 409,
   "message": "리포트가 아직 생성 중입니다.",
   "code": "INTERVIEW_REPORT_NOT_READY",
   "data": {
@@ -441,7 +432,6 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "items": [
@@ -485,7 +475,7 @@ WebSocket `ERROR` 메시지의 `errorCode` 필드 값은 아래 상수로 관리
 
 ### Error Cases
 
-| statusCode | ErrorCode | 상황 |
+| status | ErrorCode | 상황 |
 |-----------|-----------|------|
 | `401` | `UNAUTHORIZED` | 토큰 없음 또는 만료 |
 

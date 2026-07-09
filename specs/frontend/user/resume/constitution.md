@@ -54,7 +54,7 @@ ANY → [IDLE]  # 폼 초기화 및 재시도
 
 **에러 처리 정책**
 * `ANALYZING → ERROR` 전이 시 상태는 `IDLE`로 복원하여 재시도를 허용한다.
-* API 에러는 `statusCode` 기반 공통 모달로 처리한다.
+* API 에러는 `status` 기반 공통 모달로 처리한다.
 * 네트워크 단절은 별도 토스트 메시지로 처리한다.
 * `LoadingModal`은 `ERROR` 전이 시 반드시 닫혀야 한다.
 

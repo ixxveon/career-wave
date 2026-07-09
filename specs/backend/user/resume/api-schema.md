@@ -36,14 +36,13 @@ Authorization: Bearer {accessToken}
 ApiResponse.ok(data);
 
 // 실패
-ApiResponse.fail(statusCode, message);
+ApiResponse.fail(status, message);
 ```
 
 ```json
 // 성공 응답
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": { }
 }
@@ -51,7 +50,6 @@ ApiResponse.fail(statusCode, message);
 // 에러 응답 (data 필드 NON_NULL 설정으로 생략)
 {
   "success": false,
-  "statusCode": 400,
   "message": "에러 설명 메시지"
 }
 ```
@@ -107,7 +105,6 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 ```json
 {
   "success": true,
-  "statusCode": 201,
   "message": "이력서가 업로드되었습니다.",
   "data": {
     "documentId": "550e8400-e29b-41d4-a716-446655440000",
@@ -175,7 +172,6 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 ```json
 {
   "success": true,
-  "statusCode": 201,
   "message": "자기소개서가 제출되었습니다.",
   "data": {
     "documentId": "550e8400-e29b-41d4-a716-446655440000",
@@ -210,7 +206,6 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "documentId": "550e8400-e29b-41d4-a716-446655440000",
@@ -301,7 +296,6 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "content": [
@@ -406,7 +400,6 @@ ResponseEntity<ApiResponse<PaginationResponse<ResumeDTO.HistoryItem>>> getHistor
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": null
 }
