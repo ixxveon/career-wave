@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { X } from 'lucide-react';
 import {
@@ -9,6 +9,7 @@ import {
   type MemberDetailItem,
   type MemberStatus,
   type SuspendDuration,
+  type HrManagerDetail,
 } from '../../../api/admin/memberApi';
 
 const WARN_THRESHOLD = 3;
@@ -31,6 +32,28 @@ interface MemberDetailModalProps {
 }
 
 export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: MemberDetailModalProps) {
+  const [hrDetail, setHrDetail] = useState<HrManagerDetail | null>(null);
+  const [hrDetailError, setHrDetailError] = useState('');
+
+  useEffect(() => {
+    if (member.role !== MEMBER_ROLE.COMPANY) return;
+    let cancelled = false;
+    setHrDetail(null);
+    setHrDetailError('');
+    memberApi.getHrManagerDetail(member.memberId)
+      .then((res) => {
+        if (cancelled) return;
+        if (!res.data.success) throw new Error(res.data.message);
+        setHrDetail(res.data.data);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
+        setHrDetailError(msg || '재직증명서 정보를 불러오지 못했습니다.');
+      });
+    return () => { cancelled = true; };
+  }, [member.role, member.memberId]);
+
   return (
     <div className="modalOverlay">
       <div className="memberModal" onClick={(e) => e.stopPropagation()}>
@@ -43,11 +66,12 @@ export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: M
         </div>
         <div className="modalInfoGrid">
           <div><span>권한</span><strong>{member.role === MEMBER_ROLE.USER ? '개인 회원' : '기업 회원'}</strong></div>
-          <div><span>구독 플랜</span><strong>{member.plan}</strong></div>
+          {member.role === MEMBER_ROLE.USER && <div><span>구독 플랜</span><strong>{member.plan}</strong></div>}
           <div><span>가입일</span><strong>{new Date(member.joinedAt).toLocaleDateString('ko-KR')}</strong></div>
           <div><span>최근 접속</span><strong>{member.lastLoginAt ? new Date(member.lastLoginAt).toLocaleDateString('ko-KR') : '—'}</strong></div>
           <div><span>현재 상태</span><strong><span className={`statusBadge ${memberStatusCls[member.memberStatus]}`}>{memberStatusLabel[member.memberStatus]}</span></strong></div>
-          <div><span>신고 받은 횟수</span><strong>{member.reportCount}건</strong></div>
+          {/* 신고(report)는 커뮤니티 기능 전용이며 기업 회원은 커뮤니티 접근이 차단되어 있음 (#1171) */}
+          {member.role === MEMBER_ROLE.USER && <div><span>신고 받은 횟수</span><strong>{member.reportCount}건</strong></div>}
           {(member.sanctionType === 'SUSPEND' || member.sanctionType === 'BLACKLIST') && (
             <>
               <div><span>제재 유형</span><strong>{{ WARNING: '경고', SUSPEND: '활동 정지', BLACKLIST: '영구 정지' }[member.sanctionType]}</strong></div>
@@ -62,24 +86,40 @@ export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: M
               </strong></div>
             </>
           )}
-          <div style={{ gridColumn: '1 / -1' }}>
-            <span>경고 횟수</span>
-            <div className="warnCountWrap">
-              <div className="warnDots">
-                {Array.from({ length: WARN_THRESHOLD }).map((_, i) => (
-                  <span key={i} className={`warnDot ${i < member.warningCount ? 'filled' : ''}`} />
-                ))}
+          {/* 경고(WARNING)는 커뮤니티 신고 관리 화면에서만 부여되며, 기업 회원은 커뮤니티 접근이 차단되어 있음 (#1171) */}
+          {member.role === MEMBER_ROLE.USER && (
+            <div style={{ gridColumn: '1 / -1' }}>
+              <span>경고 횟수</span>
+              <div className="warnCountWrap">
+                <div className="warnDots">
+                  {Array.from({ length: WARN_THRESHOLD }).map((_, i) => (
+                    <span key={i} className={`warnDot ${i < member.warningCount ? 'filled' : ''}`} />
+                  ))}
+                </div>
+                <strong className={`warnCountText ${
+                  member.warningCount >= WARN_THRESHOLD ? 'danger' :
+                  member.warningCount === WARN_THRESHOLD - 1 ? 'caution' : ''
+                }`}>
+                  {member.warningCount}/{WARN_THRESHOLD}회
+                </strong>
+                {member.warningCount >= WARN_THRESHOLD && <span className="warnAlert">활동정지 권고</span>}
+                {member.warningCount === WARN_THRESHOLD - 1 && <span className="warnCaution">1회 추가 시 활동정지 권고</span>}
               </div>
-              <strong className={`warnCountText ${
-                member.warningCount >= WARN_THRESHOLD ? 'danger' :
-                member.warningCount === WARN_THRESHOLD - 1 ? 'caution' : ''
-              }`}>
-                {member.warningCount}/{WARN_THRESHOLD}회
-              </strong>
-              {member.warningCount >= WARN_THRESHOLD && <span className="warnAlert">활동정지 권고</span>}
-              {member.warningCount === WARN_THRESHOLD - 1 && <span className="warnCaution">1회 추가 시 활동정지 권고</span>}
             </div>
-          </div>
+          )}
+          {member.role === MEMBER_ROLE.COMPANY && (
+            <div style={{ gridColumn: '1 / -1', padding: '14px 16px', borderRadius: 12, background: '#f3f7fc', border: '1px solid #d8e8f5' }}>
+              <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: '#31475f' }}>재직증명서</p>
+              {hrDetailError && <p style={{ margin: 0, fontSize: 13, color: '#9a4444' }}>{hrDetailError}</p>}
+              {!hrDetailError && !hrDetail && <p style={{ margin: 0, fontSize: 13, color: '#7a8da4' }}>불러오는 중...</p>}
+              {hrDetail && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 13, color: '#4a7299' }}>📄 {hrDetail.certFileName}</span>
+                  <a href={hrDetail.certFileUrl} target="_blank" rel="noopener noreferrer" className="tableBtn" style={{ marginLeft: 'auto' }}>파일 확인</a>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="modalAction">
           <button onClick={onClose}>닫기</button>
@@ -212,7 +252,7 @@ export function SuspendModal({ target, onClose, onSuccess }: SuspendModalProps) 
           <button onClick={onClose} disabled={loading}>취소</button>
           <button
             onClick={handleSuspend}
-            disabled={loading || reason.trim().length < 10}
+            disabled={loading}
             style={period === 'PERMANENT' ? { background: '#9a6767', color: 'white', borderColor: '#9a6767' } : {}}
           >
             {loading ? '처리 중...' : `${durationLabel[period]} 정지 처리`}
@@ -235,6 +275,10 @@ export function UnsuspendModal({ target, onClose, onSuccess }: UnsuspendModalPro
   const [error, setError] = useState('');
 
   const handleUnsuspend = async () => {
+    if (reason.trim().length < 10) {
+      setError('해제 사유는 최소 10자 이상 입력해주세요.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -285,7 +329,7 @@ export function UnsuspendModal({ target, onClose, onSuccess }: UnsuspendModalPro
           <button onClick={onClose} disabled={loading}>취소</button>
           <button
             onClick={handleUnsuspend}
-            disabled={loading || reason.trim().length < 10}
+            disabled={loading}
             style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}
           >
             {loading ? '처리 중...' : '정지 해제'}

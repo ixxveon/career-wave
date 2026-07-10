@@ -191,6 +191,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/user/faqs", "/api/v1/user/faqs/*").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/user/job-notices/*/bookmarks").hasRole("USER")
+                // QA #1171 — 커뮤니티(신고 기능 포함)는 개인 회원 전용, 기업 회원은 접근 불가
+                .requestMatchers("/api/v1/user/community/**").hasRole("USER")
                 .requestMatchers(
                     "/api/v1/user/members/logout",
                     "/api/v1/user/members/me/status"

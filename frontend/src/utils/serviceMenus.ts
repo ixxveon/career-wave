@@ -64,8 +64,9 @@ export const serviceMenus: MenuItem[] = [
   },
 ];
 
-// QA #1140 — 기업 회원에게는 노출하지 않는 개인 전용 서비스 메뉴
-const COMPANY_HIDDEN_MENU_LABELS = ['서류 AI 코칭', 'AI 면접'] as const;
+// QA #1140/#1171 — 기업 회원에게는 노출하지 않는 개인 전용 서비스 메뉴
+// 커뮤니티(신고 기능 포함)는 기업 회원 대상이 아니므로 함께 숨긴다.
+const COMPANY_HIDDEN_MENU_LABELS = ['서류 AI 코칭', 'AI 면접', '커뮤니티'] as const;
 
 export function getServiceMenus(isCompanyMember: boolean): MenuItem[] {
   if (!isCompanyMember) return serviceMenus;

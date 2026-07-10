@@ -1265,6 +1265,24 @@ button {
   background: #fafcff;
 }
 
+/* 전체 회원 목록 — 이름/이메일/로그인ID(텍스트) 외 컬럼은 가운데 정렬 */
+.memberListTable th:nth-child(1),
+.memberListTable td:nth-child(1),
+.memberListTable th:nth-child(2),
+.memberListTable td:nth-child(2),
+.memberListTable th:nth-child(6),
+.memberListTable td:nth-child(6),
+.memberListTable th:nth-child(7),
+.memberListTable td:nth-child(7),
+.memberListTable th:nth-child(8),
+.memberListTable td:nth-child(8),
+.memberListTable th:nth-child(9),
+.memberListTable td:nth-child(9),
+.memberListTable th:nth-child(10),
+.memberListTable td:nth-child(10) {
+  text-align: center;
+}
+
 /* badge */
 
 .planBadge,
@@ -1282,6 +1300,7 @@ button {
 
 .planBadge.free     { background: #edf3f9; color: #5f7388; }
 .planBadge.premium  { background: #edf7f2; color: #5d7b69; }
+.planBadge.na       { background: #f0f2f5; color: #8592a6; }
 .statusBadge.normal  { background: #edf7f2; color: #5d7b69; }
 .statusBadge.blocked { background: #fff1f2; color: #9a6767; }
 
