@@ -37,6 +37,7 @@
   justify-content: flex-start;
   gap: clamp(10px, 1.2vw, 18px);
   min-width: 0;
+  padding-left: clamp(32px, 4vw, 56px);
   color: #172744;
   font-size: 14px;
   font-weight: 900;
