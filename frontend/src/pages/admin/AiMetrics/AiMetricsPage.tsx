@@ -3,9 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/ai-metrics.css';
 import {
-  AI_DOMAIN,
   AI_METRIC_INTERVAL,
-  DOMAIN_LABELS,
   aiMetricsApi,
   type AiBudgetSetting,
   type AiDomain,
@@ -29,6 +27,7 @@ import {
   formatCost,
   formatLatency,
   formatLastSyncedLabel,
+  formatTrendBucket,
   getApiStateMessage,
   getHealthStatusLabel,
   HEAVY_USERS_QUERY_KEY,
@@ -140,7 +139,7 @@ export default function AiMetricsPage() {
 
   const domainUsageByDomain = useMemo(() => new Map((domainUsageData ?? []).map((usage) => [usage.domain, usage])), [domainUsageData]);
   const domainUsageEmpty = !domainUsageLoading && !domainUsageIsError && (domainUsageData?.length ?? 0) === 0;
-  const tokenTrendChartData = useMemo(() => (tokenTrendData ?? []).map((point) => ({ bucket: point.bucket, label: point.label ?? point.bucket, input: point.inputTokens, output: point.outputTokens, requestCount: point.requestCount })), [tokenTrendData]);
+  const tokenTrendChartData = useMemo(() => (tokenTrendData ?? []).map((point) => ({ bucket: point.bucket, label: formatTrendBucket(point.bucket), input: point.inputTokens, output: point.outputTokens, requestCount: point.requestCount })), [tokenTrendData]);
   const tokenTrendEmpty = !tokenTrendLoading && !tokenTrendIsError && tokenTrendChartData.length === 0;
   const selectedTrendDomainLabel = useMemo(() => DOMAIN_FILTER_OPTIONS.find((option) => option.value === selectedTrendDomain)?.label ?? '전체 도메인', [selectedTrendDomain]);
   const isBudgetLoaded = budgetSetting != null;

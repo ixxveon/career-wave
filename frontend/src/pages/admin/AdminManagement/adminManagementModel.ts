@@ -160,7 +160,7 @@ export function toAclRuleRow(aclRule: AdminAclRuleResponse): AclRule {
 export function toAuditLogRow(auditLog: AdminAuditLogResponse): AuditLog {
   return {
     id: auditLog.id,
-    time: auditLog.time,
+    time: auditLog.occurredAt,
     actor: auditLog.actor,
     ip: auditLog.ip,
     action: auditLog.action,

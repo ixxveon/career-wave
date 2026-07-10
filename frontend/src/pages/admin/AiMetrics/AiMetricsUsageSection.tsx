@@ -1,4 +1,4 @@
-import { type AiBudgetSetting, type AiDomain, type AiTokenTrendPoint } from '../../../api/admin/aiMetricsApi';
+import type { AiDomain } from '../../../api/admin/aiMetricsApi';
 import { DOMAIN_FILTER_OPTIONS, formatBudgetPercent, formatCompactToken, formatCost, getApiStateMessage } from './aiMetricsPageUtils';
 
 interface AiMetricsUsageSectionProps {
