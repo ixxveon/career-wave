@@ -63,7 +63,27 @@ def test_token_cost_calculator_validates_token_cost_result():
         cost=cost,
     )
 
-    assert cost == Decimal("1200") * Decimal("0.400000") + Decimal("450") * Decimal("1.600000")
+    assert cost == Decimal("0.001200")
+
+
+def test_token_cost_calculator_keeps_non_token_unit_prices_unscaled():
+    calculator = TokenCostCalculator()
+    context = AiMetricsModelExecutionContext(
+        ai_model_id=4,
+        provider="openai",
+        model_name="whisper-1",
+        input_token_price=Decimal("0.000100"),
+        output_token_price=Decimal("0"),
+        pricing_unit="PER_SECOND",
+    )
+
+    cost = calculator.calculate_cost(
+        context,
+        input_tokens=75,
+        output_tokens=0,
+    )
+
+    assert cost == Decimal("0.007500")
 
 
 def test_token_cost_calculator_raises_for_invalid_cost_inputs():

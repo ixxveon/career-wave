@@ -23,7 +23,11 @@ export const DOMAIN_FILTER_OPTIONS: Array<{ value: 'ALL' | AiDomain; label: stri
 export const formatNumber = (value?: number) => (typeof value === 'number' ? value.toLocaleString() : '-');
 export const formatPercent = (value?: number) => (typeof value === 'number' ? `${value.toFixed(1)}%` : '-');
 export const formatLatency = (value?: number) => (typeof value === 'number' ? `${Math.round(value).toLocaleString()}ms` : '-');
-export const formatCost = (value?: number | null) => (typeof value === 'number' ? `$${value.toLocaleString()}` : '-');
+export const formatCost = (value?: number | null) => (
+  typeof value === 'number'
+    ? `$${value.toLocaleString(undefined, { maximumFractionDigits: 6 })}`
+    : '-'
+);
 export const formatBudgetPercent = (value: number) => `${Math.min(100, Math.max(0, Math.round(value))).toLocaleString()}%`;
 
 export function formatCompactToken(value: number) {
