@@ -9,8 +9,8 @@ function MainLayout() {
 
   return (
     <>
+      <Header />
       <div className="cw-app-layout">
-        <Header />
         <main className="cw-app-main">
           <Outlet />
         </main>
