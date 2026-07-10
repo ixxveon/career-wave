@@ -45,7 +45,7 @@ public class AdminFaqServiceImpl implements AdminFaqService {
         size = Math.min(size, 100);
         int offset = (page - 1) * size;
 
-        StringBuilder sql = new StringBuilder("SELECT faq_id, category, question, created_at FROM faqs WHERE 1=1");
+        StringBuilder sql = new StringBuilder("SELECT faq_id, category, question, answer, created_at FROM faqs WHERE 1=1");
         List<Object> params = new ArrayList<>();
         int idx = 1;
 
@@ -68,7 +68,8 @@ public class AdminFaqServiceImpl implements AdminFaqService {
                 ((Number) row[0]).longValue(),
                 FaqCategory.valueOf((String) row[1]),
                 (String) row[2],
-                toZdt(row[3])
+                (String) row[3],
+                toZdt(row[4])
             ));
         }
 
