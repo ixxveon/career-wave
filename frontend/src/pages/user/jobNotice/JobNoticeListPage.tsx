@@ -409,6 +409,7 @@ export default function JobNoticeListPage() {
   const [sort, setSort] = useState<SortOption>('추천순');
   const [sortOpen, setSortOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobNotice | null>(null);
+  const isClosingRef = useRef(false);
   const [filters, setFilters] = useState(createInitialFilters);
   const [bookmarks, setBookmarks] = useState<Bookmarks>({});
   const [bookmarkErrorMessage, setBookmarkErrorMessage] = useState('');
@@ -548,7 +549,12 @@ export default function JobNoticeListPage() {
   }, [jobNoticeListPages]);
 
   useEffect(() => {
-    if (!jobNoticeIdParam) return;
+    if (!jobNoticeIdParam) {
+      isClosingRef.current = false;
+      return;
+    }
+
+    if (isClosingRef.current) return;
 
     if (deepLinkJobNoticeId == null) {
       setBookmarkErrorMessage('요청한 공고 주소가 올바르지 않습니다.');
@@ -587,6 +593,7 @@ export default function JobNoticeListPage() {
   ]);
 
   function closeSelectedJob() {
+    isClosingRef.current = true;
     setSelectedJob(null);
 
     if (!jobNoticeIdParam) return;
