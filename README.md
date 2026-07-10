@@ -28,8 +28,7 @@ CareerWave는 수많은 채용 공고 속에서 방향을 잃은 IT 취준생들
 
 | 마이페이지 / 구독 | 관리자 백오피스 |
 | :---: | :---: |
-| <img width="1492" alt="마이페이지 / 구독" src="https://github.com/user-attachments/assets/78080265-1eb9-4c3b-8f41-0e40a9a67001" /> | <img width="1896" height="901" alt="image" src="https://github.com/user-attachments/assets/7d2d243b-bbd6-4fee-a580-e870fb2aaa60" />
- |
+| <img width="1492" alt="마이페이지 / 구독" src="https://github.com/user-attachments/assets/78080265-1eb9-4c3b-8f41-0e40a9a67001" /> | <img width="1896" height="901" alt="image" src="https://github.com/user-attachments/assets/7d2d243b-bbd6-4fee-a580-e870fb2aaa60" /> |
 
 ---
 
