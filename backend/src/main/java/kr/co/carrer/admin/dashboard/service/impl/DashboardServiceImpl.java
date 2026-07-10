@@ -67,7 +67,7 @@ public class DashboardServiceImpl implements DashboardService {
                 validatePaymentRatio(buildPaymentRatio(dashboardSummaryQueryRepository.findPaymentRatios(queryWindow))),
                 buildServiceCards(adminMetrics, aiUsageMetrics, scrapingStatusMetrics, alerts.size()),
                 buildSystemStatus(aiUsageMetrics, ragDocumentMetrics, scrapingStatusMetrics),
-                buildRecentActivities(dashboardSummaryQueryRepository.findRecentActivities(queryWindow))
+                buildRecentActivities(dashboardSummaryQueryRepository.findRecentActivities())
         );
     }
 

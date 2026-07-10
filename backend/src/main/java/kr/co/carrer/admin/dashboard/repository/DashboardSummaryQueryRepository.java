@@ -102,7 +102,7 @@ public class DashboardSummaryQueryRepository {
                 .toList();
     }
 
-    public List<RecentActivityRow> findRecentActivities(DashboardQueryWindow queryWindow) {
+    public List<RecentActivityRow> findRecentActivities() {
         String sql = """
                 SELECT
                     l.audit_log_id,
@@ -112,13 +112,11 @@ public class DashboardSummaryQueryRepository {
                     '/admin/log' AS target_path
                 FROM audit_logs l
                 LEFT JOIN admins a ON a.admin_id = l.admin_id
-                WHERE l.created_at >= ?1
-                  AND l.created_at < ?2
                 ORDER BY l.created_at DESC, l.audit_log_id DESC
-                LIMIT ?3
+                LIMIT ?1
                 """;
-        Query query = createRecentWindowQuery(sql, queryWindow, ALERT_LOOKBACK_DAYS);
-        query.setParameter(3, RECENT_ACTIVITY_SAFETY_LIMIT);
+        Query query = entityManager.createNativeQuery(sql);
+        query.setParameter(1, RECENT_ACTIVITY_SAFETY_LIMIT);
         return resultRows(query).stream()
                 .map(row -> new RecentActivityRow(
                         longObjectValue(row, 0),
