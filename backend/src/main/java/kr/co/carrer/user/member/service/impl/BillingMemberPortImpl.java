@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Set;
 import java.util.UUID;
 
+import static kr.co.carrer.user.member.type.SubscriptionStatus.FREE;
+import static kr.co.carrer.user.member.type.SubscriptionStatus.PREMIUM;
+
 @Service
 @RequiredArgsConstructor
 public class BillingMemberPortImpl implements BillingMemberPort {
@@ -45,8 +48,7 @@ public class BillingMemberPortImpl implements BillingMemberPort {
     @Override
     @Transactional
     public void markPremium(UUID memberId) {
-        memberRepository.findById(memberId).ifPresent(m ->
-                m.updateSubscriptionStatus(kr.co.carrer.user.member.type.SubscriptionStatus.PREMIUM));
+        memberRepository.findById(memberId).ifPresent(m -> m.updateSubscriptionStatus(PREMIUM));
     }
 
     @Override
@@ -55,8 +57,7 @@ public class BillingMemberPortImpl implements BillingMemberPort {
         boolean hasActiveSub = subscriptionRepository.existsByMemberIdAndSubscriptionStatusIn(
                 memberId, Set.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.CANCEL_SCHEDULED));
         if (!hasActiveSub) {
-            memberRepository.findById(memberId).ifPresent(m ->
-                    m.updateSubscriptionStatus(kr.co.carrer.user.member.type.SubscriptionStatus.FREE));
+            memberRepository.findById(memberId).ifPresent(m -> m.updateSubscriptionStatus(FREE));
         }
     }
 }
