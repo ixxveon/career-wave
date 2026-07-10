@@ -280,24 +280,39 @@ public class ResumeServiceImpl implements ResumeService {
         eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(documentId, dto.status()));
     }
 
+    private static final int FREE_DOCUMENT_LIMIT = 1;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     @Override
     @Transactional(readOnly = true)
     public ResumeDTO.ResponseQuota getQuota(UUID memberId) {
-        ZonedDateTime firstDayOfMonth = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        int usedCount = documentRepository.countUsedThisMonth(memberId, firstDayOfMonth, DocumentStatus.FAILED);
-        int limitCount = resolveDocumentLimitCount(memberId, usedCount);
+        EntitlementDTO.ResponseEntitlementList entitlements = entitlementQueryService.getMyEntitlements(memberId);
+        EntitlementDTO.EntitlementItem docItem = entitlements.entitlementDetails().stream()
+                .filter(item -> ProductCode.DOCUMENT_COACHING.code().equals(item.productCode()))
+                .findFirst()
+                .orElse(null);
+
+        ZonedDateTime from = resolveCountFrom(docItem);
+        int usedCount = documentRepository.countUsedThisMonth(memberId, from, DocumentStatus.FAILED);
+        int limitCount = resolveDocumentLimitCount(docItem);
         return new ResumeDTO.ResponseQuota(usedCount, limitCount);
     }
 
-    private int resolveDocumentLimitCount(UUID memberId, int usedCount) {
-        EntitlementDTO.ResponseEntitlementList entitlements = entitlementQueryService.getMyEntitlements(memberId);
-        return entitlements.entitlementDetails().stream()
-                .filter(item -> ProductCode.DOCUMENT_COACHING.code().equals(item.productCode()))
-                .findFirst()
-                .map(item -> item.monthlyLimit() != null
-                        ? item.monthlyLimit()
-                        : item.freeRemaining() + usedCount)
-                .orElse(0);
+    private ZonedDateTime resolveCountFrom(EntitlementDTO.EntitlementItem item) {
+        ZonedDateTime firstDayOfMonth = ZonedDateTime.now(KST)
+                .withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        if (item != null && item.currentPeriodStart() != null) {
+            ZonedDateTime periodStart = item.currentPeriodStart().withZoneSameInstant(KST);
+            if (periodStart.isAfter(firstDayOfMonth)) {
+                return periodStart;
+            }
+        }
+        return firstDayOfMonth;
+    }
+
+    private int resolveDocumentLimitCount(EntitlementDTO.EntitlementItem item) {
+        if (item == null) return 0;
+        return item.monthlyLimit() != null ? item.monthlyLimit() : FREE_DOCUMENT_LIMIT;
     }
 
     private List<String> parseRecommendedKeywords(String keywordsJson) {
