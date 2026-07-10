@@ -1,5 +1,6 @@
 import { Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import '../../user/resume/EntitlementPaywall.css';
 import './InterviewPaywall.css';
 
 export default function InterviewPaywall(): React.ReactElement {
