@@ -234,7 +234,7 @@
 - [x] `api-schema.md`와 Swagger 예시가 일치하는지 확인
 - [x] DTO 필드에 Swagger `@Schema` 설명 추가 — UserRegisterDto/UserVerificationDto/UserRecoveryDto/UserSocialAuthDto
 - [x] Enum field의 Swagger allowable values 정리
-- [x] ApiResponse.ok() statusCode=200, created() statusCode=201 수정 — API schema 계약 일치
+- [x] ApiResponse 성공 응답에서 statusCode 제거, 실패 응답은 status 필드로 통일 — API schema 계약 일치
 - [x] 24시간 orphan file 설명 — "별도 배치 작업 예정"으로 수정 (미구현 기능 오해 제거)
 
 ---

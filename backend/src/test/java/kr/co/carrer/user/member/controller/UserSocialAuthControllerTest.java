@@ -39,7 +39,7 @@ class UserSocialAuthControllerTest {
     // ─── OAuth authorize ──────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("authorize 성공 시 200 + statusCode=200 + authorizationUrl을 반환한다")
+    @DisplayName("authorize 성공 시 200 + authorizationUrl을 반환한다")
     void authorize_성공_200() throws Exception {
         when(userSocialAuthService.authorize("kakao"))
                 .thenReturn(new UserSocialAuthDto.ResponseOAuthAuthorize(
@@ -105,7 +105,7 @@ class UserSocialAuthControllerTest {
     // ─── 소셜 회원가입 추가정보 완료 ────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("소셜 가입 완료 성공 시 200 + statusCode=200 + roleType=USER를 반환한다")
+    @DisplayName("소셜 가입 완료 성공 시 200 + roleType=USER를 반환한다")
     void complete_성공_200() throws Exception {
         UUID memberId = UUID.randomUUID();
         when(userSocialAuthService.complete(any(), any()))
