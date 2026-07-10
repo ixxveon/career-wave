@@ -202,6 +202,34 @@ async def has_pending_llm(redis: aioredis.Redis, session_id: str) -> bool:
         return False
 
 
+# ── LLM 중복 실행 방지 락 ────────────────────────────────────────────────────
+
+_LLM_LOCK_TTL = 90  # seconds — LLM timeout(~60s)보다 넉넉히
+
+
+def _key_llm_lock(session_id: str, question_order: int) -> str:
+    return f"{_PREFIX}:llm_lock:{session_id}:{question_order}"
+
+
+async def acquire_llm_lock(redis: aioredis.Redis, session_id: str, question_order: int) -> bool:
+    """
+    (session_id, question_order) 쌍에 대한 분산 락을 획득한다.
+    Returns True(획득 성공) / False(이미 다른 서버에서 처리 중).
+    Redis 장애 시 True 반환 — 완전 중단보다 드문 중복이 낫다.
+    """
+    try:
+        acquired = await redis.set(
+            _key_llm_lock(session_id, question_order),
+            "1",
+            nx=True,
+            ex=_LLM_LOCK_TTL,
+        )
+        return bool(acquired)
+    except Exception as exc:
+        _log.warning("[Session: %s] acquire_llm_lock failed (allowing): %s", session_id, exc)
+        return True
+
+
 # ── rate limit (슬라이딩 윈도우 — Redis Sorted Set) ──────────────────────────
 
 async def rate_limit_check_and_record(
