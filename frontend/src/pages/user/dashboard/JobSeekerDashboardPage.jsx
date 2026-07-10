@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useJobNoticeList } from '@/hooks/user/jobNotice/useJobNoticeList';
 import {
@@ -54,8 +54,6 @@ const RECOMMENDED_JOB_QUERY_PARAMS = {
   sort: 'recommend',
   period: 'all',
 };
-
-const CAROUSEL_VISIBLE = 3;
 
 function getCompanyLogo(job) {
   const source = job.source?.trim();
@@ -139,7 +137,30 @@ const stats = [
 
 function JobSeekerDashboardPage() {
   const isLoggedIn = !!authSession.getAccessToken();
-  const [carouselIndex, setCarouselIndex] = useState(0);
+  const viewportRef = useRef(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+
+  const syncScrollState = useCallback(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft <= 2);
+    setAtEnd(el.scrollLeft >= el.scrollWidth - el.clientWidth - 2);
+  }, []);
+
+  useEffect(() => {
+    syncScrollState();
+  }, [syncScrollState]);
+
+  function scrollCarousel(dir) {
+    const el = viewportRef.current;
+    if (!el) return;
+    const card = el.querySelector('.cw-home-job');
+    if (!card) return;
+    const step = card.offsetWidth + 12;
+    el.scrollBy({ left: dir * step, behavior: 'smooth' });
+  }
+
   const {
     data: recommendedJobListApiResponse,
     isError: isRecommendedJobsError,
@@ -248,54 +269,53 @@ function JobSeekerDashboardPage() {
 
           {recommendedJobsStatus === 'success' && (
             <div className="cw-home-job-carousel" aria-hidden={!isLoggedIn}>
-              {carouselIndex > 0 && (
+              {!atStart && (
                 <button
                   type="button"
                   className="cw-home-job-carousel__arrow cw-home-job-carousel__arrow--prev"
                   aria-label="이전 공고"
-                  onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
+                  onClick={() => scrollCarousel(-1)}
                 >
                   <ChevronLeft size={18} />
                 </button>
               )}
-              <div className="cw-home-job-carousel__viewport">
-                <div
-                  className="cw-home-job-carousel__track"
-                  style={{ transform: `translateX(calc(-${carouselIndex} * ((100% + 12px) / ${CAROUSEL_VISIBLE})))` }}
-                >
-                  {recommendedJobs.map((job) => (
-                    <Link
-                      key={job.id}
-                      className="cw-home-job"
-                      tabIndex={isLoggedIn ? 0 : -1}
-                      to={`/jobs?jobNoticeId=${job.id}`}
-                    >
-                      <div className="cw-home-job__title-row">
-                        <h3>{job.title}</h3>
-                      </div>
-                      <p className="cw-home-job__company">
-                        {job.company}
-                        {job.dday && <em className="cw-home-job__dday">{job.dday}</em>}
-                      </p>
-                      <div className="cw-home-job__tags">
-                        {job.tags.length > 0
-                          ? job.tags.map((tag) => <span key={tag}>{tag}</span>)
-                          : <span>{job.source}</span>}
-                      </div>
-                      <p className="cw-home-job__location">
-                        <MapPin size={12} />
-                        {job.location}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
+              <div
+                className="cw-home-job-carousel__viewport"
+                ref={viewportRef}
+                onScroll={syncScrollState}
+              >
+                {recommendedJobs.map((job) => (
+                  <Link
+                    key={job.id}
+                    className="cw-home-job"
+                    tabIndex={isLoggedIn ? 0 : -1}
+                    to={`/jobs?jobNoticeId=${job.id}`}
+                  >
+                    <div className="cw-home-job__title-row">
+                      <h3>{job.title}</h3>
+                    </div>
+                    <p className="cw-home-job__company">
+                      {job.company}
+                      {job.dday && <em className="cw-home-job__dday">{job.dday}</em>}
+                    </p>
+                    <div className="cw-home-job__tags">
+                      {job.tags.length > 0
+                        ? job.tags.map((tag) => <span key={tag}>{tag}</span>)
+                        : <span>{job.source}</span>}
+                    </div>
+                    <p className="cw-home-job__location">
+                      <MapPin size={12} />
+                      {job.location}
+                    </p>
+                  </Link>
+                ))}
               </div>
-              {carouselIndex < recommendedJobs.length - CAROUSEL_VISIBLE && (
+              {!atEnd && (
                 <button
                   type="button"
                   className="cw-home-job-carousel__arrow cw-home-job-carousel__arrow--next"
                   aria-label="다음 공고"
-                  onClick={() => setCarouselIndex((i) => Math.min(recommendedJobs.length - CAROUSEL_VISIBLE, i + 1))}
+                  onClick={() => scrollCarousel(1)}
                 >
                   <ChevronRight size={18} />
                 </button>

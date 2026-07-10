@@ -458,18 +458,22 @@
 }
 
 .cw-home-job-carousel__viewport {
-  overflow: hidden;
-}
-
-.cw-home-job-carousel__track {
   display: flex;
   gap: 12px;
-  transition: transform 0.3s ease;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.cw-home-job-carousel__track .cw-home-job {
+.cw-home-job-carousel__viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.cw-home-job-carousel__viewport .cw-home-job {
   flex: 0 0 calc((100% - 24px) / 3);
   min-width: 0;
+  scroll-snap-align: start;
 }
 
 .cw-home-job-carousel__arrow {
@@ -846,7 +850,7 @@
     grid-template-columns: 1fr;
   }
 
-  .cw-home-job-carousel__track .cw-home-job {
+  .cw-home-job-carousel__viewport .cw-home-job {
     flex: 0 0 calc(100% - 12px);
   }
 
