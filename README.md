@@ -87,6 +87,7 @@ docker compose exec redis redis-cli ping
 > ```bash
 > docker compose down -v && docker compose up -d
 > ```
+> 🚨 `-v` 옵션은 **PostgreSQL과 Redis 데이터를 포함한 모든 로컬 볼륨을 삭제**합니다. 로컬 개발 환경에서만 사용하세요.
 
 ### Frontend
 
