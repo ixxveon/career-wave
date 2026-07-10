@@ -72,7 +72,7 @@ describe('memberRegisterApi.checkBusinessNumber', () => {
       new Response(
         JSON.stringify({
           success: false,
-          statusCode: 503,
+          status: 503,
           message: '사업자 검증 서비스를 이용할 수 없습니다.',
           code: 'COMPANY_BUSINESS_VERIFICATION_UNAVAILABLE',
         }),

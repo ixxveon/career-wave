@@ -22,22 +22,35 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "User Interview Session", description = "AI 면접 세션 API")
 public interface InterviewSessionControllerDocs {
 
+    @Operation(summary = "진행 중인 면접 세션 조회",
+            description = "현재 IN_PROGRESS 상태인 세션이 있으면 반환합니다. 재진입 시 재개 모달 표시 여부 판단에 사용합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "진행 중인 세션 있음"),
+            @ApiResponse(responseCode = "404", description = "진행 중인 세션 없음"),
+            @ApiResponse(responseCode = "401", description = "인증 토큰 없음 또는 만료",
+                    content = @Content(examples = @ExampleObject(value = """
+                            {"success":false,"status":401,"message":"인증이 필요합니다.","code":"UNAUTHORIZED","data":null}""")))
+    })
+    ResponseEntity<kr.co.carrer.global.response.ApiResponse<InterviewDTO.ResponseInProgressSession>> getInProgressSession(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
+    );
+
     @Operation(summary = "면접 세션 시작",
             description = "면접 세션을 생성하고 sessionId를 발급합니다. 세션 생성 후 Spring WebSocket 연결을 시작하세요.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "세션 생성 성공"),
             @ApiResponse(responseCode = "400", description = "유효하지 않은 sessionType",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":400,"message":"유효하지 않은 면접 세션 타입입니다.","code":"INTERVIEW_INVALID_SESSION_TYPE","data":null}"""))),
+                            {"success":false,"status":400,"message":"유효하지 않은 면접 세션 타입입니다.","code":"INTERVIEW_INVALID_SESSION_TYPE","data":null}"""))),
             @ApiResponse(responseCode = "401", description = "인증 토큰 없음 또는 만료",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":401,"message":"인증이 필요합니다.","code":"UNAUTHORIZED","data":null}"""))),
+                            {"success":false,"status":401,"message":"인증이 필요합니다.","code":"UNAUTHORIZED","data":null}"""))),
             @ApiResponse(responseCode = "404", description = "유효하지 않은 documentId",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":404,"message":"해당 서류를 찾을 수 없습니다.","code":"INTERVIEW_DOCUMENT_NOT_FOUND","data":null}"""))),
+                            {"success":false,"status":404,"message":"해당 서류를 찾을 수 없습니다.","code":"INTERVIEW_DOCUMENT_NOT_FOUND","data":null}"""))),
             @ApiResponse(responseCode = "409", description = "이미 IN_PROGRESS 세션 존재",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":409,"message":"이미 진행 중인 면접 세션이 있습니다.","code":"INTERVIEW_SESSION_DUPLICATE","data":null}""")))
+                            {"success":false,"status":409,"message":"이미 진행 중인 면접 세션이 있습니다.","code":"INTERVIEW_SESSION_DUPLICATE","data":null}""")))
     })
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<InterviewDTO.ResponseStartSession>> startSession(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
@@ -50,13 +63,13 @@ public interface InterviewSessionControllerDocs {
             @ApiResponse(responseCode = "200", description = "답변 제출 성공"),
             @ApiResponse(responseCode = "400", description = "입력값 검증 실패 또는 이미 종료된 세션",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":400,"message":"이미 종료된 면접 세션입니다.","code":"INTERVIEW_SESSION_ALREADY_ENDED","data":null}"""))),
+                            {"success":false,"status":400,"message":"이미 종료된 면접 세션입니다.","code":"INTERVIEW_SESSION_ALREADY_ENDED","data":null}"""))),
             @ApiResponse(responseCode = "401", description = "인증 토큰 없음 또는 만료",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":401,"message":"인증이 필요합니다.","code":"UNAUTHORIZED","data":null}"""))),
+                            {"success":false,"status":401,"message":"인증이 필요합니다.","code":"UNAUTHORIZED","data":null}"""))),
             @ApiResponse(responseCode = "403", description = "본인 소유가 아닌 세션",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":403,"message":"본인 소유의 면접 세션만 접근할 수 있습니다.","code":"INTERVIEW_SESSION_FORBIDDEN","data":null}""")))
+                            {"success":false,"status":403,"message":"본인 소유의 면접 세션만 접근할 수 있습니다.","code":"INTERVIEW_SESSION_FORBIDDEN","data":null}""")))
     })
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<InterviewDTO.ResponseSubmitTextAnswer>> submitTextAnswer(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
@@ -89,13 +102,13 @@ public interface InterviewSessionControllerDocs {
             @ApiResponse(responseCode = "200", description = "세션 종료 성공"),
             @ApiResponse(responseCode = "400", description = "이미 종료된 세션",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":400,"message":"이미 종료된 면접 세션입니다.","code":"INTERVIEW_SESSION_ALREADY_ENDED","data":null}"""))),
+                            {"success":false,"status":400,"message":"이미 종료된 면접 세션입니다.","code":"INTERVIEW_SESSION_ALREADY_ENDED","data":null}"""))),
             @ApiResponse(responseCode = "401", description = "인증 토큰 없음 또는 만료",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":401,"message":"인증이 필요합니다.","code":"UNAUTHORIZED","data":null}"""))),
+                            {"success":false,"status":401,"message":"인증이 필요합니다.","code":"UNAUTHORIZED","data":null}"""))),
             @ApiResponse(responseCode = "403", description = "본인 소유가 아닌 세션",
                     content = @Content(examples = @ExampleObject(value = """
-                            {"success":false,"statusCode":403,"message":"본인 소유의 면접 세션만 접근할 수 있습니다.","code":"INTERVIEW_SESSION_FORBIDDEN","data":null}""")))
+                            {"success":false,"status":403,"message":"본인 소유의 면접 세션만 접근할 수 있습니다.","code":"INTERVIEW_SESSION_FORBIDDEN","data":null}""")))
     })
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<InterviewDTO.ResponseEndSession>> endSession(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,

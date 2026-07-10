@@ -24,7 +24,7 @@ class InterviewSessionTest {
             UUID memberId = UUID.randomUUID();
 
             InterviewSession session = InterviewSession.create(
-                    memberId, null, SessionType.TEXT, InterviewType.TECHNICAL, "카카오"
+                    memberId, null, SessionType.TEXT, InterviewType.TECHNICAL, "카카오", null
             );
 
             assertThat(session.getSessionStatus()).isEqualTo(SessionStatus.IN_PROGRESS);
@@ -39,7 +39,7 @@ class InterviewSessionTest {
         @DisplayName("documentId 없이 생성 시 documentId는 null이다")
         void create_withoutDocumentId_shouldHaveNullDocumentId() {
             InterviewSession session = InterviewSession.create(
-                    UUID.randomUUID(), null, SessionType.VOICE, null, null
+                    UUID.randomUUID(), null, SessionType.VOICE, null, null, null
             );
 
             assertThat(session.getDocumentId()).isNull();
@@ -56,7 +56,7 @@ class InterviewSessionTest {
         @DisplayName("complete() 호출 시 세션 상태가 COMPLETED로 변경되고 endedAt이 설정된다")
         void complete_shouldSetCompletedAndEndedAt() {
             InterviewSession session = InterviewSession.create(
-                    UUID.randomUUID(), null, SessionType.TEXT, null, null
+                    UUID.randomUUID(), null, SessionType.TEXT, null, null, null
             );
             ZonedDateTime endedAt = ZonedDateTime.now();
 
@@ -70,7 +70,7 @@ class InterviewSessionTest {
         @DisplayName("complete() 후 isCompleted()는 true, isInProgress()는 false를 반환한다")
         void complete_shouldUpdateStateFlags() {
             InterviewSession session = InterviewSession.create(
-                    UUID.randomUUID(), null, SessionType.TEXT, null, null
+                    UUID.randomUUID(), null, SessionType.TEXT, null, null, null
             );
 
             session.complete(ZonedDateTime.now());
@@ -89,7 +89,7 @@ class InterviewSessionTest {
         @DisplayName("fail() 호출 시 세션 상태가 FAILED로 변경되고 endedAt이 기록된다")
         void fail_shouldSetFailedStatusAndEndedAt() {
             InterviewSession session = InterviewSession.create(
-                    UUID.randomUUID(), null, SessionType.VOICE, null, null
+                    UUID.randomUUID(), null, SessionType.VOICE, null, null, null
             );
             ZonedDateTime failedAt = ZonedDateTime.now();
 
@@ -110,7 +110,7 @@ class InterviewSessionTest {
         @DisplayName("updateTotalScore() 호출 시 totalScore가 업데이트된다")
         void updateTotalScore_shouldUpdateScore() {
             InterviewSession session = InterviewSession.create(
-                    UUID.randomUUID(), null, SessionType.TEXT, null, null
+                    UUID.randomUUID(), null, SessionType.TEXT, null, null, null
             );
 
             session.updateTotalScore(85);
@@ -127,7 +127,7 @@ class InterviewSessionTest {
         @DisplayName("IN_PROGRESS 상태에서 isEnded()는 false를 반환한다")
         void isEnded_whenInProgress_returnsFalse() {
             InterviewSession session = InterviewSession.create(
-                    UUID.randomUUID(), null, SessionType.TEXT, null, null
+                    UUID.randomUUID(), null, SessionType.TEXT, null, null, null
             );
 
             assertThat(session.isEnded()).isFalse();
@@ -137,7 +137,7 @@ class InterviewSessionTest {
         @DisplayName("COMPLETED 상태에서 isEnded()는 true를 반환한다")
         void isEnded_whenCompleted_returnsTrue() {
             InterviewSession session = InterviewSession.create(
-                    UUID.randomUUID(), null, SessionType.TEXT, null, null
+                    UUID.randomUUID(), null, SessionType.TEXT, null, null, null
             );
             session.complete(ZonedDateTime.now());
 
@@ -148,7 +148,7 @@ class InterviewSessionTest {
         @DisplayName("FAILED 상태에서 isEnded()는 true를 반환한다")
         void isEnded_whenFailed_returnsTrue() {
             InterviewSession session = InterviewSession.create(
-                    UUID.randomUUID(), null, SessionType.TEXT, null, null
+                    UUID.randomUUID(), null, SessionType.TEXT, null, null, null
             );
             session.fail(ZonedDateTime.now());
 

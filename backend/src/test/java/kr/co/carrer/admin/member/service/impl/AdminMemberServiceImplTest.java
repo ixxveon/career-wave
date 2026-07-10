@@ -15,7 +15,9 @@ import kr.co.carrer.admin.member.type.SanctionType;
 import kr.co.carrer.admin.member.type.SuspendDuration;
 import kr.co.carrer.admin.member.exception.AdminMemberErrorCode;
 import kr.co.carrer.admin.audit.repository.AuditLogRepository;
+import kr.co.carrer.admin.member.type.PermissionLevel;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.global.s3.S3Uploader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,6 +35,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -46,6 +50,7 @@ class AdminMemberServiceImplTest {
     @Mock private HrManagerRepository hrManagerRepository;
     @Mock private SuspendHistoryRepository suspendHistoryRepository;
     @Mock private AuditLogRepository auditLogRepository;
+    @Mock private S3Uploader s3Uploader;
 
     @Nested
     @DisplayName("회원 목록 마스킹 - getMembers()")
@@ -282,6 +287,79 @@ class AdminMemberServiceImplTest {
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.MEMBER_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("기업 회원 목록 조회 - getHrManagers()")
+    class GetHrManagers {
+
+        @Test
+        @DisplayName("목록의 각 항목마다 재직증명서 URL을 presigned URL로 치환해 반환한다")
+        void returnsPresignedCertFileUrlForEachItem() {
+            String rawUrl1 = "https://bucket.s3.ap-northeast-2.amazonaws.com/employment-certificates/2026-07-07/aaa.pdf";
+            String rawUrl2 = "https://bucket.s3.ap-northeast-2.amazonaws.com/employment-certificates/2026-07-07/bbb.pdf";
+            String presignedUrl1 = rawUrl1 + "?X-Amz-Signature=xxx";
+            String presignedUrl2 = rawUrl2 + "?X-Amz-Signature=yyy";
+
+            HrManagerDTO.ResponseList item1 = new HrManagerDTO.ResponseList(
+                UUID.randomUUID(), "홍길동", "hr1@company.com", "테스트기업1", "111-11-11111",
+                PermissionLevel.FULL, rawUrl1, "재직증명서1.pdf",
+                ZonedDateTime.now(), null, HrStatus.PENDING_REVIEW
+            );
+            HrManagerDTO.ResponseList item2 = new HrManagerDTO.ResponseList(
+                UUID.randomUUID(), "김철수", "hr2@company.com", "테스트기업2", "222-22-22222",
+                PermissionLevel.FULL, rawUrl2, "재직증명서2.pdf",
+                ZonedDateTime.now(), null, HrStatus.APPROVED
+            );
+
+            given(memberQueryRepository.findHrManagers(any(), any(), any(), any(), anyInt(), anyInt()))
+                .willReturn(List.of(item1, item2));
+            given(memberQueryRepository.countHrManagers(any(), any(), any(), any())).willReturn(2L);
+            given(hrManagerRepository.countByHrStatus(HrStatus.PENDING_REVIEW)).willReturn(1L);
+            given(s3Uploader.createPresignedGetUrl(rawUrl1)).willReturn(presignedUrl1);
+            given(s3Uploader.createPresignedGetUrl(rawUrl2)).willReturn(presignedUrl2);
+
+            HrManagerDTO.ResponsePage result = adminMemberService.getHrManagers(null, null, null, null, 1, 20);
+
+            assertThat(result.items()).extracting(HrManagerDTO.ResponseList::certFileUrl)
+                .containsExactly(presignedUrl1, presignedUrl2);
+        }
+    }
+
+    @Nested
+    @DisplayName("기업 회원 상세 조회 - getHrManagerDetail()")
+    class GetHrManagerDetail {
+
+        @Test
+        @DisplayName("재직증명서 URL을 presigned URL로 치환해 반환한다")
+        void returnsPresignedCertFileUrl() {
+            UUID memberId = UUID.randomUUID();
+            String rawUrl = "https://bucket.s3.ap-northeast-2.amazonaws.com/employment-certificates/2026-07-07/abc.pdf";
+            String presignedUrl = rawUrl + "?X-Amz-Signature=xxx";
+            HrManagerDTO.ResponseDetail detail = new HrManagerDTO.ResponseDetail(
+                memberId, "홍길동", "hr@company.com", "테스트기업", "123-45-67890",
+                PermissionLevel.FULL, rawUrl, "재직증명서.pdf",
+                ZonedDateTime.now(), null, HrStatus.PENDING_REVIEW, null
+            );
+            given(memberQueryRepository.findHrManagerDetail(memberId)).willReturn(Optional.of(detail));
+            given(s3Uploader.createPresignedGetUrl(rawUrl)).willReturn(presignedUrl);
+
+            HrManagerDTO.ResponseDetail result = adminMemberService.getHrManagerDetail(memberId);
+
+            assertThat(result.certFileUrl()).isEqualTo(presignedUrl);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 기업 회원 조회 시 HR_MANAGER_NOT_FOUND 예외")
+        void notFound_throws() {
+            UUID memberId = UUID.randomUUID();
+            given(memberQueryRepository.findHrManagerDetail(memberId)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> adminMemberService.getHrManagerDetail(memberId))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminMemberErrorCode.HR_MANAGER_NOT_FOUND);
         }
     }
 

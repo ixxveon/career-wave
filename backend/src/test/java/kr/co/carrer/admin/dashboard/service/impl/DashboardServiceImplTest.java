@@ -49,13 +49,32 @@ class DashboardServiceImplTest {
         lenient().when(dashboardSummaryQueryRepository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(5L, 4L, 1L, 90));
         lenient().when(dashboardSummaryQueryRepository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(6L, 1L, 1L, 4L));
+                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(8L, 1L, 1L, 4L, 2L));
         lenient().when(dashboardSummaryQueryRepository.findAuditAlerts(any(DashboardQueryWindow.class), anyInt()))
                 .thenReturn(List.of());
         lenient().when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), anyInt()))
                 .thenReturn(List.of());
-        lenient().when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), anyInt()))
+        lenient().when(dashboardSummaryQueryRepository.findRecentActivities())
                 .thenReturn(List.of());
+    }
+
+    @Test
+    @DisplayName("스크래핑 상태 문구는 전체/성공/실행 중/실패 집계를 함께 노출한다")
+    void scrapingStatusTextIncludesAllSummaryCounts() {
+        when(dashboardSummaryQueryRepository.findWeeklySignups(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
+        when(dashboardSummaryQueryRepository.findPaymentRatios(any(DashboardQueryWindow.class)))
+                .thenReturn(List.of());
+
+        DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(result.serviceCards())
+                .extracting(DashboardDTO.ServiceCard::key, DashboardDTO.ServiceCard::summaryText)
+                .contains(tuple("SCRAPING", "전체 8개 / 대기 2개 / 성공 4개 / 실행 중 1개 / 실패 1개"));
+
+        assertThat(result.systemStatus())
+                .extracting(DashboardDTO.SystemStatus::key, DashboardDTO.SystemStatus::valueText)
+                .contains(tuple("SCRAPING_PIPELINE", "전체 8개 / 대기 2개 / 성공 4개 / 실행 중 1개 / 실패 1개"));
     }
 
     @Test
@@ -68,8 +87,8 @@ class DashboardServiceImplTest {
                 ));
         when(dashboardSummaryQueryRepository.findPaymentRatios(any(DashboardQueryWindow.class)))
                 .thenReturn(List.of(
-                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.CARD, "카드", 75),
-                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.OTHER, "기타", 25)
+                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.CARD, "Toss Payments", 75),
+                        new DashboardSummaryQueryRepository.PaymentRatioRow(DashboardPaymentMethod.OTHER, "기타 결제 수단", 25)
                 ));
 
         DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
@@ -83,13 +102,13 @@ class DashboardServiceImplTest {
         assertThat(result.paymentRatio())
                 .extracting(DashboardDTO.PaymentRatio::method, DashboardDTO.PaymentRatio::label, DashboardDTO.PaymentRatio::ratio)
                 .containsExactly(
-                        tuple(DashboardPaymentMethod.CARD, "카드", 75),
-                        tuple(DashboardPaymentMethod.OTHER, "기타", 25)
+                        tuple(DashboardPaymentMethod.CARD, "Toss Payments", 75),
+                        tuple(DashboardPaymentMethod.OTHER, "기타 결제 수단", 25)
                 );
         assertThat(result.kpis()).anySatisfy(kpi -> {
             assertThat(kpi.key()).isEqualTo(DashboardKpiKeyType.TODAY_REVENUE);
             assertThat(kpi.value()).isEqualTo(29_000L);
-            assertThat(kpi.deltaText()).isEqualTo("결제 승인 기준");
+            assertThat(kpi.deltaText()).isEqualTo("오늘 결제 승인 금액 기준");
         });
     }
 
@@ -176,7 +195,7 @@ class DashboardServiceImplTest {
     @DisplayName("최근 활동은 AuditLog 기반 row를 대시보드 응답으로 매핑한다")
     void recentActivitiesAreMappedFromAuditRows() {
         ZonedDateTime occurredAt = ZonedDateTime.parse("2026-06-28T10:00:00Z");
-        when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), anyInt()))
+        when(dashboardSummaryQueryRepository.findRecentActivities())
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.RecentActivityRow(
                         10L,
                         occurredAt,
@@ -220,7 +239,7 @@ class DashboardServiceImplTest {
                         DashboardAlertLevelType.URGENT,
                         ZonedDateTime.parse("2026-06-22T09:01:00Z")
                 )));
-        when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))
+        when(dashboardSummaryQueryRepository.findRecentActivities())
                 .thenReturn(List.of(
                         new DashboardSummaryQueryRepository.RecentActivityRow(
                                 3L,
@@ -288,12 +307,12 @@ class DashboardServiceImplTest {
         when(repository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(0L, 0L, 0L, 0));
         when(repository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(3L, 1L, 0L, 2L));
+                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(3L, 1L, 0L, 2L, 0L));
         when(repository.findAuditAlerts(any(DashboardQueryWindow.class), eq(5)))
                 .thenReturn(List.of());
         when(repository.findScrapingAlerts(any(DashboardQueryWindow.class), eq(5)))
                 .thenReturn(List.of());
-        when(repository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))
+        when(repository.findRecentActivities())
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.RecentActivityRow(
                         30L,
                         ZonedDateTime.parse("2026-06-28T09:00:00Z"),
@@ -326,7 +345,7 @@ class DashboardServiceImplTest {
         when(repository.fetchRagDocumentMetrics(any(DashboardQueryWindow.class)))
                 .thenReturn(new DashboardSummaryQueryRepository.RagDocumentMetrics(0L, 0L, 0L, 0));
         when(repository.fetchScrapingStatusMetrics(any(DashboardQueryWindow.class)))
-                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(0L, 0L, 0L, 0L));
+                .thenReturn(new DashboardSummaryQueryRepository.ScrapingStatusMetrics(0L, 0L, 0L, 0L, 0L));
         when(repository.findAuditAlerts(any(DashboardQueryWindow.class), eq(5)))
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.AuditAlertRow(
                         10L,
@@ -343,7 +362,7 @@ class DashboardServiceImplTest {
                         DashboardAlertLevelType.URGENT,
                         ZonedDateTime.parse("2026-06-28T09:01:00Z")
                 )));
-        when(repository.findRecentActivities(any(DashboardQueryWindow.class), eq(5)))
+        when(repository.findRecentActivities())
                 .thenReturn(List.of());
 
         DashboardServiceImpl service = new DashboardServiceImpl(repository);

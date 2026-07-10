@@ -27,10 +27,12 @@ import java.util.Map;
 @Repository
 public class DashboardSummaryQueryRepository {
 
+    private static final int ALERT_LOOKBACK_DAYS = 7;
+    private static final int RECENT_ACTIVITY_SAFETY_LIMIT = 100;
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter WEEKLY_SIGNUP_LABEL_FORMATTER = DateTimeFormatter.ofPattern("MM/dd");
     private static final String PAID_STATUS = "PAID";
-    private static final String CARD_PAYMENT_METHOD = "CARD";
+    private static final List<String> CARD_PAYMENT_METHODS = List.of("CARD", "카드");
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -87,7 +89,7 @@ public class DashboardSummaryQueryRepository {
                 ORDER BY created_at DESC, audit_log_id DESC
                 LIMIT ?3
                 """;
-        Query query = createWindowQuery(sql, queryWindow);
+        Query query = createRecentWindowQuery(sql, queryWindow, ALERT_LOOKBACK_DAYS);
         query.setParameter(3, limit);
         return resultRows(query).stream()
                 .map(row -> new AuditAlertRow(
@@ -100,7 +102,7 @@ public class DashboardSummaryQueryRepository {
                 .toList();
     }
 
-    public List<RecentActivityRow> findRecentActivities(DashboardQueryWindow queryWindow, int limit) {
+    public List<RecentActivityRow> findRecentActivities() {
         String sql = """
                 SELECT
                     l.audit_log_id,
@@ -110,13 +112,11 @@ public class DashboardSummaryQueryRepository {
                     '/admin/log' AS target_path
                 FROM audit_logs l
                 LEFT JOIN admins a ON a.admin_id = l.admin_id
-                WHERE l.created_at >= ?1
-                  AND l.created_at < ?2
                 ORDER BY l.created_at DESC, l.audit_log_id DESC
-                LIMIT ?3
+                LIMIT ?1
                 """;
-        Query query = createWindowQuery(sql, queryWindow);
-        query.setParameter(3, limit);
+        Query query = entityManager.createNativeQuery(sql);
+        query.setParameter(1, RECENT_ACTIVITY_SAFETY_LIMIT);
         return resultRows(query).stream()
                 .map(row -> new RecentActivityRow(
                         longObjectValue(row, 0),
@@ -221,7 +221,7 @@ public class DashboardSummaryQueryRepository {
             SELECT
                 COUNT(*) AS total_count,
                 COUNT(*) FILTER (
-                    WHERE UPPER(COALESCE(payment_method, '')) = :cardPaymentMethod
+                    WHERE UPPER(COALESCE(payment_method, '')) IN (:cardPaymentMethods)
                 ) AS card_count
             FROM payments
             WHERE payment_status = :paidStatus
@@ -231,7 +231,9 @@ public class DashboardSummaryQueryRepository {
 
         MapSqlParameterSource params = windowParams(queryWindow)
                 .addValue("paidStatus", PAID_STATUS)
-                .addValue("cardPaymentMethod", CARD_PAYMENT_METHOD);
+                .addValue("cardPaymentMethods", CARD_PAYMENT_METHODS.stream()
+                        .map(String::toUpperCase)
+                        .toList());
 
         return jdbcTemplate.query(sql, params, rs -> {
             if (!rs.next()) {
@@ -250,11 +252,11 @@ public class DashboardSummaryQueryRepository {
                 int cardRatio = otherCount > 0L
                         ? (int) Math.round((cardCount * 100.0d) / totalCount)
                         : 100;
-                ratios.add(new PaymentRatioRow(DashboardPaymentMethod.CARD, "카드", cardRatio));
+                ratios.add(new PaymentRatioRow(DashboardPaymentMethod.CARD, "Toss Payments", cardRatio));
             }
             if (otherCount > 0L) {
                 int otherRatio = 100 - ratios.stream().mapToInt(PaymentRatioRow::ratio).sum();
-                ratios.add(new PaymentRatioRow(DashboardPaymentMethod.OTHER, "기타", otherRatio));
+                ratios.add(new PaymentRatioRow(DashboardPaymentMethod.OTHER, "기타 결제 수단", otherRatio));
             }
             return ratios;
         });
@@ -279,11 +281,13 @@ public class DashboardSummaryQueryRepository {
                     COUNT(*) AS total_pipeline_count,
                     COALESCE(SUM(CASE WHEN pipeline_status = 'RUNNING' THEN 1 ELSE 0 END), 0) AS running_pipeline_count,
                     COALESCE(SUM(CASE WHEN pipeline_status = 'FAILED' THEN 1 ELSE 0 END), 0) AS failed_pipeline_count,
-                    COALESCE(SUM(CASE WHEN pipeline_status = 'SUCCESS' THEN 1 ELSE 0 END), 0) AS success_pipeline_count
+                    COALESCE(SUM(CASE WHEN pipeline_status = 'SUCCESS' THEN 1 ELSE 0 END), 0) AS success_pipeline_count,
+                    COALESCE(SUM(CASE WHEN pipeline_status = 'IDLE' THEN 1 ELSE 0 END), 0) AS idle_pipeline_count
                 FROM scraping_pipelines
                 """;
         Object[] row = singleRow(entityManager.createNativeQuery(sql));
-        return new ScrapingStatusMetrics(longValue(row, 0), longValue(row, 1), longValue(row, 2), longValue(row, 3));
+        return new ScrapingStatusMetrics(longValue(row, 0), longValue(row, 1), longValue(row, 2), longValue(row, 3),
+                longValue(row, 4));
     }
 
     public List<ScrapingAlertRow> findScrapingAlerts(DashboardQueryWindow queryWindow, int limit) {
@@ -300,7 +304,7 @@ public class DashboardSummaryQueryRepository {
                 ORDER BY executed_at DESC, scraping_log_id DESC
                 LIMIT ?3
                 """;
-        Query query = createWindowQuery(sql, queryWindow);
+        Query query = createRecentWindowQuery(sql, queryWindow, ALERT_LOOKBACK_DAYS);
         query.setParameter(3, limit);
         return resultRows(query).stream()
                 .map(row -> new ScrapingAlertRow(
@@ -313,9 +317,9 @@ public class DashboardSummaryQueryRepository {
                 .toList();
     }
 
-    private Query createWindowQuery(String sql, DashboardQueryWindow queryWindow) {
+    private Query createRecentWindowQuery(String sql, DashboardQueryWindow queryWindow, int lookbackDays) {
         Query query = entityManager.createNativeQuery(sql);
-        query.setParameter(1, queryWindow.rangeStartInclusive());
+        query.setParameter(1, queryWindow.rangeEndExclusive().minusDays(lookbackDays));
         query.setParameter(2, queryWindow.rangeEndExclusive());
         return query;
     }
@@ -453,7 +457,8 @@ public class DashboardSummaryQueryRepository {
             long totalPipelineCount,
             long runningPipelineCount,
             long failedPipelineCount,
-            long successPipelineCount
+            long successPipelineCount,
+            long idlePipelineCount
     ) {
     }
 

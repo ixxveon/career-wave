@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { useJobNoticeDetail } from '../../../hooks/user/jobNotice/useJobNoticeDetail';
-import { mapJobNoticeApiToViewModel, type JobNotice } from '../../../types/user/jobNotice';
+import { formatJobNoticeDeadline, mapJobNoticeApiToViewModel, type JobNotice } from '../../../types/user/jobNotice';
 import '@/styles/user/jobNotice/JobNoticeDetail.css';
 
 const TABS = ['공고 상세', '기업 정보'] as const;
@@ -150,7 +150,7 @@ function InfoGrid({ job }: { job: JobNotice }) {
     { label: '경력', value: job.exp, Icon: BriefcaseBusiness },
     { label: '고용 형태', value: job.employment, Icon: CheckCircle2 },
     { label: '근무 지역', value: job.location, Icon: MapPin },
-    { label: '마감일', value: job.deadline, Icon: Timer },
+    { label: '마감일', value: formatJobNoticeDeadline(job.deadline), Icon: Timer },
     { label: '출처 사이트', value: job.source, Icon: Link2 },
   ];
 
@@ -175,11 +175,13 @@ function getOriginalJobUrl(job: JobNotice) {
 }
 
 function DeadlineSection({ deadline }: { deadline: string }) {
+  const formattedDeadline = formatJobNoticeDeadline(deadline);
+
   return (
     <section className="jnd-description-section">
       <h3>마감 정보</h3>
       <ul>
-        <li>{deadline || '마감일 미정'}</li>
+        <li>{formattedDeadline}</li>
         <li>정확한 마감 일정은 원본 공고에서 확인해 주세요.</li>
       </ul>
     </section>

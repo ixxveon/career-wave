@@ -97,7 +97,7 @@ export function LoginForm({
             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
             onClick={() => setShowPassword((prev) => !prev)}
           >
-            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
           </button>
         </span>
         {fieldErrors.password && (

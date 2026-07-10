@@ -31,6 +31,17 @@ public class UserPaymentCreateTxService {
      * saveAndFlush()로 즉시 uq_payments_member_plan_ready 제약을 검사하므로,
      * 호출 측에서 DataIntegrityViolationException을 잡아 readback할 수 있다.
      */
+    /**
+     * REQUIRES_NEW: 기존 READY 주문을 행 잠금으로 조회해 CANCELED 로 확정한다.
+     * 새 주문 INSERT 전에 이 취소가 커밋되어야 부분 유니크 인덱스(uq_payments_member_plan_ready) 와
+     * 충돌하지 않으므로, 상위 트랜잭션과 분리된 독립 트랜잭션에서 처리한다.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void cancelReadyIfPresent(UUID memberId, Long planId) {
+        userPaymentRepository.findReadyByMemberIdAndPlanIdForUpdate(memberId, planId)
+                .ifPresent(UserPayment::cancel);
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public UserPayment createAndFlush(UUID memberId, Plan plan,
                                       BillingMemberPort.MemberBillingInfo memberInfo) {

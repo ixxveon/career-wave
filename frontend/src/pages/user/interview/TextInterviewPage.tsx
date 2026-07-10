@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { useEntitlements } from '../../../hooks/user/subscription/useEntitlements';
+import { PRODUCT_CODE } from '../../../types/user/subscription';
+import InterviewPaywall from '../../../components/user/interview/InterviewPaywall';
+
 import { interviewSessionApi }              from '../../../api/user/interview';
 import { SESSION_TYPE }                     from '../../../types/user/interview';
-import type { SessionType, Resume, MicStatus } from '../../../types/user/interview';
+import type { SessionType, Resume, MicStatus, FocusType, InProgressSessionResponse } from '../../../types/user/interview';
+
+const VALID_FOCUS_TYPES: readonly FocusType[] = ['FOLLOW_UP', 'TECHNICAL_DEPTH', 'DELIVERY', 'FLUENCY'];
+const parseFocusType = (value: string | null): FocusType | null =>
+  VALID_FOCUS_TYPES.includes(value as FocusType) ? (value as FocusType) : null;
 import type { MemberApiError }              from '../../../utils/user/member/errorMapping';
 
 import { usePreflightCheck } from '../../../hooks/user/interview/usePreflightCheck';
@@ -23,6 +31,10 @@ const MOCK_SETUP = {
 export default function TextInterviewPage() {
   const [searchParams] = useSearchParams();
   const documentId     = searchParams.get('documentId');
+  const focusType      = parseFocusType(searchParams.get('focusType'));
+
+  const { data: entitlements, isLoading: entitlementsLoading, isError: isEntitlementsError } = useEntitlements();
+  const hasInterviewEntitlement = entitlements ? entitlements[PRODUCT_CODE.INTERVIEW] : !isEntitlementsError;
 
   const preflight = usePreflightCheck();
 
@@ -38,16 +50,28 @@ export default function TextInterviewPage() {
   const [audioPlaying,  setAudioPlaying]  = useState(false);
   const [isLoading,     setIsLoading]     = useState(false);
   const [apiError,      setApiError]      = useState<string | null>(null);
+  const [resumeModal,   setResumeModal]   = useState<InProgressSessionResponse | null>(null);
 
-  /* ── 비정상 종료 세션 복구 (constitution.md §상태 복원력) ── */
+  /* ── 비정상 종료 세션 복구 — 서버 상태 확인 후 재개 모달 노출 (constitution.md §상태 복원력) ── */
   useEffect(() => {
     const stored = loadInterviewSession();
-    if (stored) {
-      setSessionId(stored.sessionId);
-      if (stored.sessionType) setSessionType(stored.sessionType as SessionType);
-      if (stored.questionOrder > 1) setInitialQuestionOrder(stored.questionOrder);
-      setPhase('interview');
-    }
+    if (!stored) return;
+
+    interviewSessionApi.getInProgress()
+      .then(session => {
+        if (!session) {
+          clearInterviewSession();
+          return;
+        }
+        if (session.sessionId === stored.sessionId) {
+          setResumeModal(session);
+        } else {
+          clearInterviewSession();
+        }
+      })
+      .catch(() => {
+        // 네트워크 오류·5xx → 서버 상태 불확실, 저장된 세션 유지
+      });
   }, []);
 
   /* ── 이력서 정보 로드 ── */
@@ -106,6 +130,24 @@ export default function TextInterviewPage() {
     }
   }
 
+  function handleResumeSession(): void {
+    if (!resumeModal) return;
+    const stored = loadInterviewSession();
+    setSessionId(resumeModal.sessionId);
+    setSessionType(resumeModal.sessionType);
+    setCompany(resumeModal.targetCompany ?? '');
+    if (stored?.questionOrder && stored.questionOrder > 1) {
+      setInitialQuestionOrder(stored.questionOrder);
+    }
+    setResumeModal(null);
+    setPhase('interview');
+  }
+
+  function handleNewSession(): void {
+    clearInterviewSession();
+    setResumeModal(null);
+  }
+
   async function handleStart(): Promise<void> {
     if (!company.trim() || resumeLoading) return;
     // pre-flight gate (spec FR-001) — 모드별 조건 분리
@@ -118,6 +160,7 @@ export default function TextInterviewPage() {
         sessionType,
         targetCompany: company,
         documentId:    documentId ?? null,
+        focusType:     focusType,
       });
       setSessionId(result.sessionId);
       setPhase('interview');
@@ -127,12 +170,12 @@ export default function TextInterviewPage() {
         setPhase('interview');
       } else {
         const e = err as MemberApiError;
-        if (e.statusCode === 409 && e.serverCode === 'INTERVIEW_SESSION_DUPLICATE') {
+        if (e.status === 409 && e.serverCode === 'INTERVIEW_SESSION_DUPLICATE') {
           setApiError('이미 진행 중인 면접이 있습니다. 잠시 후 다시 시도하거나 페이지를 새로고침해주세요.');
-        } else if (e.statusCode === 403) {
+        } else if (e.status === 403) {
           setApiError('연결된 서류에 접근 권한이 없습니다. 본인 소유의 서류인지 확인해주세요.');
-        } else if (e.statusCode === 404) {
-          setApiError('연결된 서류를 찾을 수 없습니다. 서류 분석 페이지에서 다시 시도해주세요.');
+        } else if (e.status === 404) {
+          setApiError('연결된 서류를 찾을 수 없습니다. 이력서·자기소개서 분석 페이지에서 다시 시도해주세요.');
         } else {
           setApiError('세션 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
         }
@@ -140,6 +183,10 @@ export default function TextInterviewPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (!entitlementsLoading && (isEntitlementsError || !hasInterviewEntitlement)) {
+    return <InterviewPaywall />;
   }
 
   if (phase === 'interview' && sessionId) {
@@ -157,6 +204,29 @@ export default function TextInterviewPage() {
           setApiError(null);
         }}
       />
+    );
+  }
+
+  if (resumeModal) {
+    return (
+      <div className="iv-resume-modal-overlay">
+        <div className="iv-resume-modal">
+          <h2 className="iv-resume-modal__title">이전 면접을 이어하시겠어요?</h2>
+          <p className="iv-resume-modal__desc">
+            중단된 면접 세션이 있습니다.
+            {resumeModal.targetCompany && ` (${resumeModal.targetCompany})`}
+            {' '}이어서 진행하거나 새로 시작할 수 있습니다.
+          </p>
+          <div className="iv-resume-modal__actions">
+            <button className="iv-resume-modal__btn iv-resume-modal__btn--primary" onClick={handleResumeSession}>
+              이어하기
+            </button>
+            <button className="iv-resume-modal__btn iv-resume-modal__btn--secondary" onClick={handleNewSession}>
+              새로 시작
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 

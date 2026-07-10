@@ -2,6 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type FormEvent, useMemo, useState } from 'react';
 import type { LoginRouteDecision } from '../../../types/user/member';
 import { authSession } from '../../../utils/user/member/authSession';
+import { setLastLoginMethod } from '../../../utils/user/member/lastLoginMethod';
 import { MEMBER_ERROR_CODE, getSafeLoginMessage, parseLoginBlockedDecision, type MemberApiError, type MemberErrorCode } from '../../../utils/user/member/errorMapping';
 import { FAQ_CATEGORY } from '../../../api/user/supportApi';
 import {
@@ -64,7 +65,7 @@ function isMemberApiError(e: unknown): e is MemberApiError {
   if (typeof e !== 'object' || e === null) return false;
   const obj = e as Record<string, unknown>;
   return (
-    'statusCode' in e &&
+    'status' in e &&
     'code' in e &&
     'message' in e &&
     typeof obj.code === 'string' &&
@@ -137,6 +138,8 @@ export function useLoginForm() {
 
       authSession.setTokens({ accessToken: response.accessToken });
       authSession.setMember(response.member);
+      // 다음 방문 시 안내를 위해 마지막 로그인 방식을 기록(로컬 = 아이디/비밀번호)
+      setLastLoginMethod('local');
 
       // ?next= 파라미터가 있고, 안전한 내부 경로이며, 회원 유형과 호환될 때만 해당 경로로 이동
       // startsWith('/') && !startsWith('//') — //evil.com 같은 프로토콜 상대 URL 차단
@@ -146,7 +149,7 @@ export function useLoginForm() {
       navigate(compatiblePath ?? decision.path, { replace: true });
     } catch (error) {
       if (!isMemberApiError(error)) {
-        setFieldErrors({ form: getSafeLoginMessage({ code: MEMBER_ERROR_CODE.NETWORK_ERROR, statusCode: 0, message: '' }) });
+        setFieldErrors({ form: getSafeLoginMessage({ code: MEMBER_ERROR_CODE.NETWORK_ERROR, status: 0, message: '' }) });
         return;
       }
       const blockedFromError = parseLoginBlockedDecision(error);

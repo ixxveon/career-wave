@@ -5,12 +5,68 @@ from openai import AsyncOpenAI, OpenAIError
 
 from core.ai_usage.usage_log_client import record_ai_usage
 from core.config import get_settings
-from user.interview.websocket.interview_ws_handler import InterviewErrorCode, _sessions, send_error, send_stt_final
+from user.interview.websocket.interview_ws_handler import (
+    InterviewErrorCode,
+    get_session_meta,
+    update_session_meta,
+    send_answer_hint,
+    send_error,
+    send_stt_final,
+)
 
 log = logging.getLogger(__name__)
 
 # session_id → question_order → 누적 청크 목록
 _audio_buffers: dict[str, dict[int, list[bytes]]] = defaultdict(lambda: defaultdict(list))
+
+
+# STAR 4요소를 카테고리별로 분리. 최소 2개 이상 카테고리가 매칭돼야 구조화된 답변으로 인정한다.
+# any() 단일 매칭은 "그래서", "문제" 같은 일반 단어로도 통과되므로 카테고리 집합 방식으로 변경.
+_STAR_CATEGORY_KEYWORDS: dict[str, set[str]] = {
+    "situation": {"상황", "배경", "당시", "situation", "context", "background"},
+    "task":      {"과제", "목표", "task", "challenge", "목적"},
+    "action":    {"행동", "조치", "수행", "진행", "action", "했습니다", "했어요", "적용"},
+    "result":    {"결과", "성과", "달성", "result", "outcome", "이루었"},
+}
+
+_STAR_HINT_MIN_CATEGORIES = 2  # 이 개수 미만의 카테고리만 매칭되면 STAR 힌트 발동
+
+_SHORT_ANSWER_WORD_THRESHOLD = 30   # 단어 수 기준 짧은 답변
+_LONG_ANSWER_WORD_THRESHOLD = 150   # 단어 수 기준 충분한 답변 (힌트 불필요)
+
+
+def _count_matched_star_categories(transcript_lower: str) -> int:
+    return sum(
+        any(kw in transcript_lower for kw in keywords)
+        for keywords in _STAR_CATEGORY_KEYWORDS.values()
+    )
+
+
+def _generate_answer_hint(transcript: str) -> str | None:
+    """STT 변환 결과를 규칙 기반으로 분석해 힌트 메시지를 반환한다.
+
+    힌트가 필요 없으면 None을 반환한다.
+    우선순위: 짧은 답변 > STAR 구조 부재 (둘 다 해당하면 짧은 답변 힌트 우선)
+    """
+    words = transcript.split()
+    word_count = len(words)
+
+    if word_count == 0:
+        return None
+
+    if word_count >= _LONG_ANSWER_WORD_THRESHOLD:
+        return None
+
+    if word_count < _SHORT_ANSWER_WORD_THRESHOLD:
+        return "답변이 조금 짧은 것 같아요. 구체적인 경험이나 사례를 추가하면 더 좋은 답변이 될 거예요."
+
+    transcript_lower = transcript.lower()
+    matched_categories = _count_matched_star_categories(transcript_lower)
+    if matched_categories < _STAR_HINT_MIN_CATEGORIES:
+        log.debug("STAR hint triggered: matched %d/%d categories", matched_categories, len(_STAR_CATEGORY_KEYWORDS))
+        return "STAR 구조(상황 → 문제 → 행동 → 결과)로 답변하면 면접관이 이해하기 더 쉬워요."
+
+    return None
 
 
 def calculate_voice_quality_ratio(no_speech_prob: float) -> float:
@@ -64,7 +120,8 @@ async def transcribe_chunk(
     client = AsyncOpenAI(api_key=settings.openai_api_key)
 
     # Whisper await 전에 member_id 캡처 — 응답 대기 중 세션이 만료되어도 사용량 기록 가능
-    member_id: str | None = _sessions.get(session_id) and _sessions[session_id].member_id or None
+    _pre_meta = await get_session_meta(session_id)
+    member_id: str | None = (_pre_meta or {}).get("member_id")
 
     try:
         audio_file = ("audio.webm", merged_audio, "audio/webm")
@@ -101,9 +158,11 @@ async def transcribe_chunk(
         session_id, question_order, voice_quality_ratio, transcript[:50],
     )
 
-    ctx = _sessions.get(session_id)
-    if ctx is not None:
-        ctx.voice_quality_by_order[question_order] = voice_quality_ratio
+    _meta = await get_session_meta(session_id)
+    if _meta is not None:
+        vqbo: dict[int, float] = _meta.get("voice_quality_by_order") or {}
+        vqbo[question_order] = voice_quality_ratio
+        await update_session_meta(session_id, {"voice_quality_by_order": vqbo})
 
     # STT 사용량 적재 — input_tokens: 오디오 duration(초) 기반 환산값 (실제 토큰 아님)
     audio_duration_seconds = getattr(response, "duration", None)
@@ -118,3 +177,8 @@ async def transcribe_chunk(
         )
 
     await send_stt_final(session_id, transcript, question_order, voice_quality_ratio)
+
+    hint = _generate_answer_hint(transcript)
+    if hint:
+        await send_answer_hint(session_id, hint, question_order)
+        log.info("answer hint sent: sessionId=%s, questionOrder=%d", session_id, question_order)

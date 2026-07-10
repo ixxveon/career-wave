@@ -47,7 +47,7 @@ vi.mock('../../../api/admin/adminManagementApi', () => ({
 
     return {
       code: 'UNKNOWN',
-      statusCode: 0,
+      status: 0,
       message: error instanceof Error ? error.message : 'Unknown error',
     };
   },
@@ -102,7 +102,7 @@ function seedApiMocks() {
         scope: '전체 권한 통제 및 보안 승인',
         ip: '10.20.0.1',
         createdAt: '2026.06.01 09:00:00',
-        lastLoginAt: '2026.06.09 09:00:00',
+        lastLoginAt: '2026-07-02T09:06:53.949209Z',
         status: 'ACTIVE',
       },
       {
@@ -113,7 +113,7 @@ function seedApiMocks() {
         scope: 'API, DB, 배포, 장애 대응',
         ip: '10.20.0.2',
         createdAt: '2026.06.01 09:00:00',
-        lastLoginAt: '2026.06.09 09:00:00',
+        lastLoginAt: '2026-07-01T23:45:00Z',
         status: 'ACTIVE',
       },
     ],
@@ -207,6 +207,19 @@ describe('AdminManagementPage master-only controls', () => {
     getAclInputs(container).forEach((input) => expect(input.disabled).toBe(false));
   });
 
+  it('formats recent login timestamps in KST for the admin account table', async () => {
+    adminSession.setRole(ADMIN_ROLE.MASTER);
+
+    const { container, findByText } = renderPage();
+
+    expect(await findByText('Master Admin')).toBeTruthy();
+
+    const rowTexts = Array.from(container.querySelectorAll('.amCompactTable tbody tr')).map((row) => row.textContent ?? '');
+
+    expect(rowTexts.some((text) => text.includes('Master Admin') && text.includes('2026-07-02') && text.includes('18:06'))).toBe(true);
+    expect(rowTexts.some((text) => text.includes('Backend Admin') && text.includes('2026-07-02') && text.includes('08:45'))).toBe(true);
+  });
+
   it('preemptively disables master-only controls on initial render for non-MASTER admins', async () => {
     adminSession.setRole(ADMIN_ROLE.CS);
 
@@ -218,17 +231,59 @@ describe('AdminManagementPage master-only controls', () => {
     getAclInputs(container).forEach((input) => expect(input.disabled).toBe(true));
   });
 
+  it('submits loginId and email separately when creating an admin account', async () => {
+    adminSession.setRole(ADMIN_ROLE.MASTER);
+    adminManagementApiMock.createAdminAccount.mockResolvedValueOnce({
+      id: 'ADM-003',
+      name: 'CS Admin',
+      email: 'cs-admin@careerwave.kr',
+      role: ADMIN_ROLE.CS,
+      scope: '회원 문의, 신고, 1차 조치',
+      ip: null,
+      createdAt: '2026.06.10 09:00:00',
+      lastLoginAt: '',
+      status: 'ACTIVE',
+    });
+
+    const { container, findByPlaceholderText } = renderPage();
+
+    await waitFor(() => expect(getCreateAdminButton(container).disabled).toBe(false));
+    fireEvent.click(getCreateAdminButton(container));
+
+    fireEvent.change(await findByPlaceholderText('admin_master'), { target: { value: 'csadmin01' } });
+    fireEvent.change(await findByPlaceholderText('admin@career-wave.com'), { target: { value: 'cs-admin@careerwave.kr' } });
+    fireEvent.change(await findByPlaceholderText('초기 비밀번호 입력'), { target: { value: 'temporary-password' } });
+    fireEvent.change(await findByPlaceholderText('관리자 이름'), { target: { value: 'CS Admin' } });
+
+    const dialog = container.querySelector<HTMLFormElement>('.amCreatePage');
+    if (!dialog) throw new Error('.amCreatePage form was not found.');
+
+    fireEvent.submit(dialog);
+
+    await waitFor(() => {
+      expect(adminManagementApiMock.createAdminAccount).toHaveBeenCalled();
+    });
+
+    expect(adminManagementApiMock.createAdminAccount.mock.calls[0]?.[0]).toEqual({
+      loginId: 'csadmin01',
+      email: 'cs-admin@careerwave.kr',
+      password: 'temporary-password',
+      name: 'CS Admin',
+      role: ADMIN_ROLE.CS,
+    });
+  });
+
   it('keeps master-only controls disabled after MASTER_ROLE_REQUIRED fallback responses', async () => {
     adminSession.setRole(ADMIN_ROLE.MASTER);
     adminManagementApiMock.updateAdminRole.mockRejectedValueOnce({
       code: 'MASTER_ROLE_REQUIRED',
-      statusCode: 403,
+      status: 403,
       message: '마스터 관리자만 수행할 수 있는 작업입니다.',
     });
 
     adminManagementApiMock.createAdminAclRule.mockRejectedValueOnce({
       code: 'MASTER_ROLE_REQUIRED',
-      statusCode: 403,
+      status: 403,
       message: '마스터 관리자만 수행할 수 있는 작업입니다.',
     });
 

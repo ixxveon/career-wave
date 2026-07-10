@@ -17,6 +17,9 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Map;
@@ -78,7 +81,8 @@ public class S3EmploymentCertificateFileAdapter implements EmploymentCertificate
                 .key(s3Key)
                 .contentType(ALLOWED_MIME)
                 .contentLength((long) bytes.length)
-                .metadata(Map.of(META_ORIGINAL_NAME, safeOriginalName))
+                // S3 user-metadata(x-amz-meta-*)는 US-ASCII만 허용 → 한글 파일명은 URL 인코딩하여 저장
+                .metadata(Map.of(META_ORIGINAL_NAME, encodeMetadataValue(safeOriginalName)))
                 .build();
 
         try {
@@ -141,7 +145,7 @@ public class S3EmploymentCertificateFileAdapter implements EmploymentCertificate
             if (originalName == null || originalName.isBlank()) {
                 throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
             }
-            return originalName;
+            return decodeMetadataValue(originalName);
         } catch (SdkException e) {
             log.error("[재직증명서 파일명 조회] S3 headObject 실패 — key: {}, error: {}", fileId, e.getMessage());
             throw new CustomException(UserAuthErrorCode.EMPLOYMENT_FILE_INVALID);
@@ -150,5 +154,19 @@ public class S3EmploymentCertificateFileAdapter implements EmploymentCertificate
 
     private String buildS3Key() {
         return String.format("%s/%s/%s.pdf", KEY_PREFIX, LocalDate.now(), UUID.randomUUID());
+    }
+
+    // S3 user-metadata는 US-ASCII만 허용하므로 한글 등 비 ASCII 파일명을 URL 인코딩/디코딩하여 왕복 보존한다.
+    private String encodeMetadataValue(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private String decodeMetadataValue(String value) {
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            // 인코딩되지 않은 레거시 값(순수 ASCII 파일명)은 원본 그대로 반환
+            return value;
+        }
     }
 }

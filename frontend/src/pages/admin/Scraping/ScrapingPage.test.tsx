@@ -10,24 +10,16 @@ const scrapingApiMock = vi.hoisted(() => ({
   requestAction: vi.fn(),
 }));
 
-vi.mock('../../../api/admin/scrapingApi', () => ({
-  PIPELINE_STATUS: {
-    IDLE: 'IDLE',
-    RUNNING: 'RUNNING',
-    SUCCESS: 'SUCCESS',
-    FAILED: 'FAILED',
-  },
-  SCRAPING_STATUS: {
-    SUCCESS: 'SUCCESS',
-    FAILED: 'FAILED',
-  },
-  SCRAPING_ACTION_TYPE: {
-    RUN: 'RUN',
-    RETRY: 'RETRY',
-    TEST: 'TEST',
-  },
-  scrapingApi: scrapingApiMock,
-}));
+vi.mock('../../../api/admin/scrapingApi', async () => {
+  const actual = await vi.importActual<typeof import('../../../api/admin/scrapingApi')>(
+    '../../../api/admin/scrapingApi',
+  );
+
+  return {
+    ...actual,
+    scrapingApi: scrapingApiMock,
+  };
+});
 
 function createQueryClient() {
   return new QueryClient({
@@ -46,51 +38,59 @@ function renderPage() {
   );
 }
 
+function apiResponse<T>(data: T) {
+  return {
+    data: {
+      success: true,
+      message: 'OK',
+      data,
+    },
+  };
+}
+
 describe('ScrapingPage action guards', () => {
   it('disables run, retry, and test actions for disabled pipelines', async () => {
-    scrapingApiMock.getSources.mockResolvedValueOnce({
-      data: {
-        data: {
-          content: [
-            {
-              sourceName: 'wanted',
-              status: 'FAILED',
-              isEnabled: false,
-              successRate: 0,
-              averageDurationMs: 0,
-              cycleExpression: '-',
-              collectedCount: 0,
-              recentErrorCode: null,
-              recentErrorMessage: null,
-              live: false,
-              lastStartedAt: null,
-              lastFinishedAt: null,
-              updatedAt: '2026-06-26T00:00:00+09:00',
-            },
-          ],
-          page: 1,
-          size: 5,
-          totalElements: 1,
-          totalPages: 1,
-        },
-      },
-    });
-    scrapingApiMock.getLogs.mockResolvedValueOnce({
-      data: {
-        data: {
-          content: [],
-          page: 1,
-          size: 5,
-          totalElements: 0,
-          totalPages: 1,
-        },
-      },
-    });
+    scrapingApiMock.getSources.mockResolvedValue(
+      apiResponse({
+        content: [
+          {
+            sourceName: 'wanted',
+            status: 'FAILED',
+            isEnabled: false,
+            successRate: 0,
+            averageDurationMs: 0,
+            cycleExpression: '-',
+            collectedCount: 0,
+            recentErrorCode: null,
+            recentErrorMessage: null,
+            live: false,
+            lastStartedAt: null,
+            lastFinishedAt: null,
+            updatedAt: '2026-06-26T00:00:00+09:00',
+          },
+        ],
+        page: 1,
+        size: 5,
+        totalElements: 1,
+        totalPages: 1,
+      }),
+    );
+    scrapingApiMock.getLogs.mockResolvedValue(
+      apiResponse({
+        content: [],
+        page: 1,
+        size: 5,
+        totalElements: 0,
+        totalPages: 1,
+      }),
+    );
 
-    const { container, findByText } = renderPage();
+    const { container } = renderPage();
 
     await waitFor(() => expect(scrapingApiMock.getSources).toHaveBeenCalled());
-    await findByText('wanted');
+    await waitFor(() =>
+      expect(container.querySelectorAll<HTMLButtonElement>('.scrapeOpsActionGroup button')).toHaveLength(4),
+    );
 
     const actionButtons = container.querySelectorAll<HTMLButtonElement>('.scrapeOpsActionGroup button');
 

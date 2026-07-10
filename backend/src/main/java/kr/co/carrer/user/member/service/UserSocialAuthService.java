@@ -17,4 +17,12 @@ public interface UserSocialAuthService {
 
     UserSocialAuthDto.ResponseSocialComplete complete(
             UserSocialAuthDto.RequestSocialComplete request, HttpServletResponse response);
+
+    /**
+     * 소셜 가입 추가정보 단계에서 휴대폰 인증 성공 직후 호출.
+     * 인증한 번호가 기존 회원이면 소셜 계정을 연동하고 로그인(LINKED),
+     * 신규 번호면 이후 {@link #complete}로 신규 가입을 진행하도록 NEW_MEMBER를 반환한다.
+     */
+    UserSocialAuthDto.ResponseSocialResolve resolve(
+            UserSocialAuthDto.RequestSocialResolve request, HttpServletResponse response);
 }

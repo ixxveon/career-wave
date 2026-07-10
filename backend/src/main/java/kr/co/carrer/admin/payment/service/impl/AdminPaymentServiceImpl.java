@@ -1,5 +1,6 @@
 package kr.co.carrer.admin.payment.service.impl;
 
+import kr.co.carrer.admin.payment.client.PaymentCancelClient;
 import kr.co.carrer.admin.payment.dto.PaymentDTO;
 import kr.co.carrer.admin.payment.dto.RefundDTO;
 import kr.co.carrer.admin.payment.entity.Payment;
@@ -28,8 +29,11 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentQueryRepository paymentQueryRepository;
     private final RefundRepository refundRepository;
-    // v1 stub: Toss 실제 연동 시 try-catch 추가 후 실패 경로에서 호출 (REQUIRES_NEW로 실패 이력 별도 커밋)
+    private final PaymentCancelClient paymentCancelClient;
+    // Toss 취소 API 실패 시 호출 (REQUIRES_NEW로 실패 이력 별도 커밋)
     private final RefundFailureTxService refundFailureTxService;
+    // Toss 취소 호출 전/후 DB 읽기·쓰기를 별도 트랜잭션으로 분리 (아래 approveRefund 참고)
+    private final RefundApprovalTxService refundApprovalTxService;
 
     @Override
     @Transactional(readOnly = true)
@@ -93,30 +97,28 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     }
 
     @Override
-    @Transactional
     public RefundDTO.ResponseApprove approveRefund(UUID paymentId, Long adminId, String adminRole) {
         validateMasterRole(adminRole);
-        Payment payment = paymentRepository.findById(paymentId)
-            .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_FOUND));
 
-        if (payment.getPaymentStatus() != PaymentStatus.PAID) {
-            throw new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_REFUNDABLE);
+        // 검증/조회는 짧은 읽기 전용 트랜잭션으로 끝내고, Toss HTTP 호출(최대 10초 블로킹)은
+        // 트랜잭션 밖에서 수행한다 — DB 커넥션이 외부 API 응답을 기다리며 점유되는 것을 방지.
+        RefundApprovalTxService.CancelRequest req = refundApprovalTxService.prepareCancel(paymentId);
+
+        try {
+            paymentCancelClient.cancel(req.paymentKey(), req.reason(), req.amount());
+        } catch (CustomException e) {
+            if (e.getErrorCode() == AdminPaymentErrorCode.TOSS_REFUND_AMBIGUOUS) {
+                // Toss 쪽에서 실제로는 취소가 처리됐을 수도 있는 불확실한 상태 — 확정 실패로
+                // 기록하지 않는다. 환불은 PENDING으로 유지되어 관리자가 Toss 대시보드 확인 후
+                // 재시도하거나 수동으로 처리할 수 있다.
+                throw e;
+            }
+            // 4xx 등 Toss가 명시적으로 거부한 확정 실패만 별도 REQUIRES_NEW 트랜잭션으로 기록한다.
+            refundFailureTxService.saveRefundFailed(paymentId, adminId);
+            throw e;
         }
 
-        Refund refund = refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING)
-            .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.REFUND_NOT_PENDING));
-
-        // Toss 환불 API — v1 stub 처리 (실제 연동 시 외부 호출 후 TossApiException catch 추가)
-        refund.approve(adminId);
-        payment.refund();
-        refundRepository.save(refund);
-        paymentRepository.save(payment);
-
-        return new RefundDTO.ResponseApprove(
-            paymentId.toString(),
-            payment.getPaymentStatus(),
-            refund.getRefundStatus()
-        );
+        return refundApprovalTxService.finalizeApproval(paymentId, adminId);
     }
 
     @Override

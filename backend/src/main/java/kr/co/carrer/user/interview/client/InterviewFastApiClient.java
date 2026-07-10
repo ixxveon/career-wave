@@ -64,16 +64,18 @@ public class InterviewFastApiClient {
     }
 
     public void triggerLlmPipeline(UUID sessionId, UUID memberId, int questionOrder,
-                                   String answerText, String questionText, String sessionType, String interviewType) {
-        Map<String, Object> body = Map.of(
-                "sessionId", sessionId.toString(),
-                "memberId", memberId.toString(),
-                "questionOrder", questionOrder,
-                "answerText", answerText != null ? answerText : "",
-                "questionText", questionText != null ? questionText : "",
-                "sessionType", sessionType != null ? sessionType : "",
-                "interviewType", interviewType != null ? interviewType : ""
-        );
+                                   String answerText, String questionText, String sessionType,
+                                   String interviewType, String focusType, String targetCompany) {
+        Map<String, Object> body = new java.util.HashMap<>();
+        body.put("sessionId", sessionId.toString());
+        body.put("memberId", memberId.toString());
+        body.put("questionOrder", questionOrder);
+        body.put("answerText", answerText != null ? answerText : "");
+        body.put("questionText", questionText != null ? questionText : "");
+        body.put("sessionType", sessionType != null ? sessionType : "");
+        body.put("interviewType", interviewType != null ? interviewType : "");
+        if (focusType != null) body.put("focusType", focusType);
+        if (targetCompany != null) body.put("targetCompany", targetCompany);
 
         webClient.post()
                 .uri(BASE_PATH + sessionId + "/trigger/text-answer")

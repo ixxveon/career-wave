@@ -28,6 +28,7 @@ public class MockBillingPaymentClient implements BillingPaymentClient {
         return new TossBillingPaymentResponse(
                 "mock_pk_" + UUID.randomUUID().toString().replace("-", ""),
                 orderId,
+                "카드",
                 "DONE",
                 amount,
                 "KRW",

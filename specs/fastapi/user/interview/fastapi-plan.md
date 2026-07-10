@@ -45,6 +45,7 @@ Spring Boot는 세션 생명주기와 DB 저장을 담당하고, FastAPI는 AI �
 | TTS | OpenAI TTS (`tts-1`) | 동일 OpenAI SDK 내 지원, 낮은 지연 |
 | RAG | LangChain (`langchain==0.2.0`) | 기존 의존성, 벡터 검색 추상화 |
 | 벡터 스토어 | LangChain 추상 클라이언트 | MVP는 인메모리 또는 파일 기반, 추후 교체 가능 |
+| 세션 상태 저장소 | `redis[asyncio]==5.0.8` | Scale-out 대비 세션 메타·seq·버퍼·rate limit Redis 저장 (v2) |
 | WebSocket 서버 | FastAPI + `websockets==12.0` | 기존 의존성 |
 | HTTP 클라이언트 | `httpx==0.27.0` | Spring 내부 API 호출 (비동기 지원) |
 | 설정 관리 | `pydantic-settings==2.3.0` | 환경 변수 타입 안전 접근 |
@@ -225,14 +226,26 @@ voice_quality_ratio = (1 - no_speech_prob) * 100  # 0.00~100.00
 
 `voiceQualityRatio < 50.00`이면 해당 답변의 `deliveryScore` / `fluencyScore`를 `null`로 처리한다.
 
-### C. 세션별 WebSocket 관리
+### C. 세션별 WebSocket 관리 (v2: Redis 기반)
 
 ```python
-active_sessions: dict[str, WebSocket] = {}
+# 인프로세스: WebSocket 객체만 유지 (직렬화 불가)
+_live_sessions: dict[str, _LiveSession] = {}
+
+# Redis: 세션 메타 / seq / 메시지 버퍼 / pending_llm / rate_limit
+# key 스키마:
+#   interview:session:{sid}:meta    — Hash (member_id, answer_history, …)
+#   interview:session:{sid}:seq     — INCR 카운터
+#   interview:session:{sid}:buffer  — List (최근 50개)
+#   interview:pending_llm:{sid}     — String (JSON)
+#   interview:rate:{sid}            — Sorted Set (슬라이딩 윈도우)
 ```
 
-`ConcurrentDict` 대신 단일 프로세스 내 `dict`로 관리한다.  
-v1 단일 프로세스 환경에서는 충분하며, Scale-out 시 Redis Pub/Sub으로 전환을 고려한다.
+v1은 단일 프로세스 `dict`로 관리했으나, v2(브랜치 `feat/952-redis-session-store`)에서 Redis로 전환했다.  
+WS 객체는 직렬화 불가이므로 각 노드의 `_live_sessions`에 유지하고, 모든 직렬화 가능 상태는 Redis에 저장한다.  
+재연결 시 `get_seq` + `get_buffer`로 seq 연속성과 미전달 메시지 재전송을 보장한다.  
+Redis 장애 시 in-process seq fallback으로 동작을 유지한다 (false-negative 방향).  
+TTL: 세션 메타 300s (재연결 윈도우), rate limit 20s.
 
 ### D. 리포트 생성 실패 시 처리
 

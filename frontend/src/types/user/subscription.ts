@@ -198,6 +198,13 @@ export interface ConfirmPaymentRequest {
   orderId: string;
 }
 
+// 일반결제(단건) 흐름 승인 — Toss requestPayment 성공 리다이렉트의 paymentKey/orderId/amount 계약
+export interface ConfirmOneTimePaymentRequest {
+  paymentKey: string;
+  orderId: string;
+  amount: number;
+}
+
 export interface ConfirmPaymentResponse {
   paymentId: string;
   orderId: string;

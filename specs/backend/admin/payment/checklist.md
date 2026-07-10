@@ -55,7 +55,7 @@
 
 - [ ] `PAYMENT_NOT_FOUND(404)`, `SUBSCRIPTION_NOT_FOUND(404)`가 `ErrorCode`에 등록되어 있다.
 - [ ] `REFUND_NOT_PENDING(409)`이 `ErrorCode`에 등록되어 있다.
-- [ ] `REJECT_REASON_REQUIRED(400)`, `TOSS_REFUND_FAILED(502)`이 `ErrorCode`에 등록되어 있다.
+- [ ] `REJECT_REASON_REQUIRED(400)`, `TOSS_REFUND_FAILED(502)`, `TOSS_REFUND_AMBIGUOUS(503)`이 `ErrorCode`에 등록되어 있다.
 - [ ] Controller에서 `try-catch`로 비즈니스 예외를 처리하지 않는다.
 - [ ] `new RuntimeException(...)`을 직접 생성하지 않는다. `CustomException(ErrorCode.xxx)`를 사용한다.
 

@@ -24,14 +24,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 @SecurityRequirement(name = "bearerAuth")
 public interface ScrapingDocs {
 
-    String UNAUTHORIZED_EXAMPLE = "{\"success\":false,\"statusCode\":401,\"message\":\"인증 정보가 없습니다.\",\"code\":\"AUTH_UNAUTHENTICATED\",\"data\":null}";
-    String FORBIDDEN_EXAMPLE = "{\"success\":false,\"statusCode\":403,\"message\":\"접근 권한이 없습니다.\",\"code\":\"AUTH_FORBIDDEN\",\"data\":null}";
-    String BAD_REQUEST_EXAMPLE = "{\"success\":false,\"statusCode\":400,\"message\":\"요청 파라미터가 올바르지 않습니다.\",\"code\":\"BAD_REQUEST\",\"data\":null}";
-    String PIPELINE_NOT_FOUND_EXAMPLE = "{\"success\":false,\"statusCode\":404,\"message\":\"스크래핑 파이프라인을 찾을 수 없습니다.\",\"code\":\"SCRAPING_PIPELINE_NOT_FOUND\",\"data\":null}";
-    String SOURCE_NOT_FOUND_EXAMPLE = "{\"success\":false,\"statusCode\":404,\"message\":\"지원하지 않는 스크래핑 소스입니다.\",\"code\":\"SCRAPING_SOURCE_NOT_FOUND\",\"data\":null}";
-    String ALREADY_RUNNING_EXAMPLE = "{\"success\":false,\"statusCode\":409,\"message\":\"이미 실행 중인 스크래핑 파이프라인입니다.\",\"code\":\"SCRAPING_ALREADY_RUNNING\",\"data\":null}";
-    String EXECUTION_FAILED_EXAMPLE = "{\"success\":false,\"statusCode\":500,\"message\":\"스크래핑 실행 요청 처리에 실패했습니다.\",\"code\":\"SCRAPING_EXECUTION_FAILED\",\"data\":null}";
-    String TEST_FAILED_EXAMPLE = "{\"success\":false,\"statusCode\":500,\"message\":\"스크래핑 테스트 실행에 실패했습니다.\",\"code\":\"SCRAPING_TEST_FAILED\",\"data\":null}";
+    String UNAUTHORIZED_EXAMPLE = "{\"success\":false,\"status\":401,\"message\":\"인증 정보가 없습니다.\",\"code\":\"AUTH_UNAUTHENTICATED\",\"data\":null}";
+    String FORBIDDEN_EXAMPLE = "{\"success\":false,\"status\":403,\"message\":\"접근 권한이 없습니다.\",\"code\":\"AUTH_FORBIDDEN\",\"data\":null}";
+    String BAD_REQUEST_EXAMPLE = "{\"success\":false,\"status\":400,\"message\":\"요청 파라미터가 올바르지 않습니다.\",\"code\":\"BAD_REQUEST\",\"data\":null}";
+    String PIPELINE_NOT_FOUND_EXAMPLE = "{\"success\":false,\"status\":404,\"message\":\"스크래핑 파이프라인을 찾을 수 없습니다.\",\"code\":\"SCRAPING_PIPELINE_NOT_FOUND\",\"data\":null}";
+    String SOURCE_NOT_FOUND_EXAMPLE = "{\"success\":false,\"status\":404,\"message\":\"지원하지 않는 스크래핑 소스입니다.\",\"code\":\"SCRAPING_SOURCE_NOT_FOUND\",\"data\":null}";
+    String ALREADY_RUNNING_EXAMPLE = "{\"success\":false,\"status\":409,\"message\":\"이미 실행 중인 스크래핑 파이프라인입니다.\",\"code\":\"SCRAPING_ALREADY_RUNNING\",\"data\":null}";
+    String EXECUTION_FAILED_EXAMPLE = "{\"success\":false,\"status\":500,\"message\":\"스크래핑 실행 요청 처리에 실패했습니다.\",\"code\":\"SCRAPING_EXECUTION_FAILED\",\"data\":null}";
+    String TEST_FAILED_EXAMPLE = "{\"success\":false,\"status\":500,\"message\":\"스크래핑 테스트 실행에 실패했습니다.\",\"code\":\"SCRAPING_TEST_FAILED\",\"data\":null}";
 
     @Operation(
             summary = "스크래핑 파이프라인 목록 조회",

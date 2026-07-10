@@ -35,7 +35,7 @@ public class RenewalSettleTxService {
                        TossBillingPaymentResponse response, Plan plan) {
         UserPayment payment = userPaymentRepository.findById(paymentId)
                 .orElseThrow(() -> new CustomException(BillingErrorCode.BILLING_ORDER_NOT_FOUND));
-        payment.paid(response.paymentKey(), response.approvedAt());
+        payment.paid(response.paymentKey(), response.method(), response.approvedAt());
 
         Subscription sub = subscriptionRepository.findBySubscriptionIdForUpdate(subscriptionId)
                 .orElseThrow(() -> new CustomException(BillingErrorCode.SUBSCRIPTION_NOT_FOUND));

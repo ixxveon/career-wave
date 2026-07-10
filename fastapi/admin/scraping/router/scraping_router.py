@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from admin.ai_metrics.repository.database import get_session
-from admin.scraping.adapter import SaraminScraper, WantedScraper
+from admin.scraping.adapter import GroupByScraper, JumpitScraper, SaraminScraper, WantedScraper
 from admin.scraping.exception import ScrapingException, build_error_response
 from admin.scraping.repository import ScrapingLogRepository, ScrapingPipelineRepository
 from admin.scraping.schema import (
@@ -53,6 +53,8 @@ def _create_scraping_task() -> ScrapingTask:
     return ScrapingTask(
         pipeline_runner_service=PipelineRunnerService(
             [
+                GroupByScraper(),
+                JumpitScraper(),
                 WantedScraper(),
                 SaraminScraper(),
             ]

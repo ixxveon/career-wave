@@ -170,14 +170,14 @@ CREATE TABLE member_verifications (
     CONSTRAINT pk_member_verifications         PRIMARY KEY (verification_id),
     CONSTRAINT uq_member_verification_token    UNIQUE      (verification_token),
     CONSTRAINT chk_verification_channel        CHECK (channel             IN ('EMAIL', 'PHONE')),
-    CONSTRAINT chk_verification_purpose        CHECK (purpose             IN ('REGISTER', 'FIND_ID', 'RESET_PASSWORD')),
+    CONSTRAINT chk_verification_purpose        CHECK (purpose             IN ('REGISTER', 'FIND_ID', 'RESET_PASSWORD', 'SOCIAL_SIGNUP')),
     CONSTRAINT chk_verification_status         CHECK (verification_status IN ('SENT', 'VERIFIED', 'CONSUMED', 'EXPIRED', 'FAILED', 'RATE_LIMITED'))
 );
 COMMENT ON TABLE  member_verifications                      IS '이메일/휴대폰 인증 테이블 (회원 FK 없음 - 가입 전 인증)';
 COMMENT ON COLUMN member_verifications.verification_id     IS '인증 요청 고유 식별자';
 COMMENT ON COLUMN member_verifications.channel             IS '인증 채널 (EMAIL / PHONE)';
 COMMENT ON COLUMN member_verifications.target              IS '인증 대상 (이메일 주소 또는 휴대폰 번호)';
-COMMENT ON COLUMN member_verifications.purpose             IS '인증 목적 (REGISTER / FIND_ID / RESET_PASSWORD)';
+COMMENT ON COLUMN member_verifications.purpose             IS '인증 목적 (REGISTER / FIND_ID / RESET_PASSWORD / SOCIAL_SIGNUP)';
 COMMENT ON COLUMN member_verifications.code_hash           IS '인증번호 해시값';
 COMMENT ON COLUMN member_verifications.verification_token  IS '인증 완료 후 발급되는 단기 토큰';
 COMMENT ON COLUMN member_verifications.verification_status IS '인증 상태 (SENT / VERIFIED / CONSUMED / EXPIRED / FAILED / RATE_LIMITED)';
@@ -369,6 +369,7 @@ CREATE TABLE document_feedbacks (
     score_total          INTEGER     NULL,
     overall_review       TEXT        NULL,
     feedback_text        TEXT        NOT NULL,
+    recommended_keywords TEXT        NULL,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_document_feedbacks          PRIMARY KEY (document_feedback_id),
@@ -385,6 +386,7 @@ COMMENT ON COLUMN document_feedbacks.score_logical        IS '논리력 점수 (
 COMMENT ON COLUMN document_feedbacks.score_total          IS '종합 점수 (0~100)';
 COMMENT ON COLUMN document_feedbacks.overall_review       IS 'AI 종합 총평';
 COMMENT ON COLUMN document_feedbacks.feedback_text        IS 'AI 상세 첨삭 결과 (JSON 문자열)';
+COMMENT ON COLUMN document_feedbacks.recommended_keywords IS '직무별 핵심 추천 키워드 (JSON 배열 문자열)';
 COMMENT ON COLUMN document_feedbacks.created_at           IS '생성 일시';
 
 -- ================================================
@@ -443,18 +445,20 @@ CREATE TABLE interview_sessions (
     session_status VARCHAR(20)  NOT NULL DEFAULT 'IN_PROGRESS',
     interview_type VARCHAR(20)  NULL,
     target_company VARCHAR(100) NULL,
+    focus_type     VARCHAR(20)  NULL,
     total_score    INTEGER      NULL,
     started_at     TIMESTAMPTZ  NULL,
     ended_at       TIMESTAMPTZ  NULL,
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT pk_interview_sessions PRIMARY KEY (session_id),
-    CONSTRAINT fk_interview_member   FOREIGN KEY (member_id)   REFERENCES members (member_id),
-    CONSTRAINT fk_interview_document FOREIGN KEY (document_id) REFERENCES documents (document_id),
-    CONSTRAINT chk_session_type      CHECK (session_type   IN ('TEXT', 'VOICE', 'VIDEO')),
-    CONSTRAINT chk_session_status    CHECK (session_status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED')),
-    CONSTRAINT chk_interview_type    CHECK (interview_type IN ('TECHNICAL', 'PERSONALITY', 'PROJECT'))
+    CONSTRAINT pk_interview_sessions     PRIMARY KEY (session_id),
+    CONSTRAINT fk_interview_member       FOREIGN KEY (member_id)   REFERENCES members (member_id),
+    CONSTRAINT fk_interview_document     FOREIGN KEY (document_id) REFERENCES documents (document_id),
+    CONSTRAINT chk_session_type          CHECK (session_type   IN ('TEXT', 'VOICE', 'VIDEO')),
+    CONSTRAINT chk_session_status        CHECK (session_status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED')),
+    CONSTRAINT chk_interview_type        CHECK (interview_type IN ('TECHNICAL', 'PERSONALITY', 'PROJECT')),
+    CONSTRAINT chk_interview_focus_type  CHECK (focus_type     IN ('FOLLOW_UP', 'TECHNICAL_DEPTH', 'DELIVERY', 'FLUENCY'))
 );
 COMMENT ON TABLE  interview_sessions                IS 'AI 모의 면접 세션 테이블';
 COMMENT ON COLUMN interview_sessions.session_id     IS '면접 세션 고유 식별자';
@@ -464,6 +468,7 @@ COMMENT ON COLUMN interview_sessions.session_type   IS '면접 형식 (TEXT / VO
 COMMENT ON COLUMN interview_sessions.session_status IS '진행 상태 (IN_PROGRESS / COMPLETED / FAILED)';
 COMMENT ON COLUMN interview_sessions.interview_type IS '면접 내용 유형 (TECHNICAL / PERSONALITY / PROJECT)';
 COMMENT ON COLUMN interview_sessions.target_company IS '준비 대상 기업명';
+COMMENT ON COLUMN interview_sessions.focus_type     IS '개선 집중 유형 (FOLLOW_UP / TECHNICAL_DEPTH / DELIVERY / FLUENCY), 리포트 액션 버튼 진입 시 설정';
 COMMENT ON COLUMN interview_sessions.total_score    IS '면접 종합 점수';
 COMMENT ON COLUMN interview_sessions.started_at     IS '면접 시작 일시';
 COMMENT ON COLUMN interview_sessions.ended_at       IS '면접 종료 일시';
@@ -591,7 +596,7 @@ CREATE TABLE job_notices (
     CONSTRAINT pk_job_notices                     PRIMARY KEY (job_notice_id),
     CONSTRAINT uq_job_notices_source_original_url UNIQUE (source, original_url),
     CONSTRAINT chk_job_type                       CHECK (job_type      IN ('FULLTIME', 'INTERN', 'CONTRACT')),
-    CONSTRAINT chk_company_size  CHECK (company_size  IN ('STARTUP', 'SME', 'LARGE')),
+    CONSTRAINT chk_company_size  CHECK (company_size  IN ('STARTUP', 'SME', 'MID_MARKET', 'LARGE')),
     CONSTRAINT chk_career_level  CHECK (career_level  IN ('JUNIOR', 'SENIOR', 'ANY')),
     CONSTRAINT chk_notice_status CHECK (notice_status IN ('ACTIVE', 'CLOSED')),
     CONSTRAINT chk_view_count    CHECK (view_count >= 0)
@@ -603,7 +608,7 @@ COMMENT ON COLUMN job_notices.title         IS '공고 제목';
 COMMENT ON COLUMN job_notices.description   IS '공고 상세 내용';
 COMMENT ON COLUMN job_notices.skill_tags    IS '요구 기술 스택 (다중 선택, TEXT[])';
 COMMENT ON COLUMN job_notices.job_type      IS '채용 유형 (FULLTIME / INTERN / CONTRACT)';
-COMMENT ON COLUMN job_notices.company_size  IS '기업 규모 (STARTUP / SME / LARGE)';
+COMMENT ON COLUMN job_notices.company_size  IS '기업 규모 (STARTUP / SME / MID_MARKET / LARGE)';
 COMMENT ON COLUMN job_notices.job_category  IS '직무 카테고리 (다중 선택, TEXT[])';
 COMMENT ON COLUMN job_notices.career_level  IS '경력 조건 (JUNIOR / SENIOR / ANY)';
 COMMENT ON COLUMN job_notices.location      IS '근무지';
@@ -1226,14 +1231,40 @@ INSERT INTO ai_models (
     output_token_price,
     is_enabled
 )
-VALUES (
+VALUES
+(
     'gpt-4o-mini',
     'GPT-4o Mini',
     'OPENAI',
     0.150000,
     0.600000,
     TRUE
-);
+),
+(
+    'gpt-4o',
+    'GPT-4o',
+    'OPENAI',
+    2.500000,
+    10.000000,
+    TRUE
+),
+(
+    'whisper-1',
+    'Whisper-1',
+    'OPENAI',
+    0.000100,
+    0.000000,
+    TRUE
+),
+(
+    'tts-1',
+    'TTS-1',
+    'OPENAI',
+    0.000015,
+    0.000000,
+    TRUE
+)
+ON CONFLICT (model_name) DO NOTHING;
 
 -- ================================================
 -- 34. ai_usage_logs
@@ -1414,6 +1445,8 @@ INSERT INTO scraping_pipelines (
     is_enabled
 )
 VALUES
+    ('groupby', 'GroupBy', 'IDLE', TRUE),
+    ('jumpit', 'Jumpit', 'IDLE', TRUE),
     ('wanted', 'Wanted', 'IDLE', TRUE),
     ('saramin', 'Saramin', 'IDLE', TRUE)
 ON CONFLICT (source_name) DO UPDATE

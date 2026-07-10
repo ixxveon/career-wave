@@ -5,6 +5,7 @@ import kr.co.carrer.auth.jwt.AccountType;
 import kr.co.carrer.auth.jwt.CookieProperties;
 import kr.co.carrer.auth.jwt.JwtProperties;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
+import kr.co.carrer.auth.jwt.SessionProperties;
 import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
@@ -57,10 +58,10 @@ class UserLoginServiceImplTest {
         props.getUser().setAccessExpiration(1800000L);
         props.getUser().setRefreshExpiration(1209600000L);
         props.getAdmin().setSecret("test-admin-secret-key-must-be-at-least-32-bytes!");
-        props.getAdmin().setAccessExpiration(900000L);
+        props.getAdmin().setAccessExpiration(10800000L);
         props.getAdmin().setRefreshExpiration(86400000L);
         JwtTokenProvider provider = new JwtTokenProvider(props);
-        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore, statusQueryRepository, new CookieProperties());
+        service = new UserLoginServiceImpl(memberRepository, encoder, provider, props, refreshTokenStore, tokenBlacklistStore, loginAttemptStore, statusQueryRepository, new CookieProperties(), new SessionProperties());
         // loginAttemptStore 기본 stub — 실패 카운트 테스트가 아닌 경우 5회 미만으로 설정
         lenient().when(loginAttemptStore.increment(any(), anyString())).thenReturn(1L);
         lenient().when(loginAttemptStore.getMaxAttempts()).thenReturn(5);

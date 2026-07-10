@@ -2,12 +2,14 @@ package kr.co.carrer.user.billing.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.client.dto.TossBillingPaymentResponse;
+import kr.co.carrer.user.billing.client.dto.TossOneTimeConfirmResult;
 import kr.co.carrer.user.billing.dto.BillingDTO;
 import kr.co.carrer.user.billing.entity.*;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.MemberProductEntitlementRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionUsagePeriodRepository;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.billing.type.FreeUsageStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 // 결산 원자 트랜잭션 — self-invocation 우회를 위해 분리
 @Service
@@ -27,23 +30,56 @@ public class UserPaymentSettleTxService {
     private final SubscriptionRepository subscriptionRepository;
     private final MemberProductEntitlementRepository entitlementRepository;
     private final SubscriptionUsagePeriodRepository subscriptionUsagePeriodRepository;
+    private final EntitlementInitService entitlementInitService;
 
+    // 자동결제(빌링) 결산 — billingProfile(billingKey) 기반 구독 개통.
     @Transactional
     public BillingDTO.ResponseConfirmPayment settle(UserPayment payment, BillingProfile billingProfile,
                                                     Plan plan, TossBillingPaymentResponse payResponse) {
+        return doSettle(payment, plan,
+                payResponse.paymentKey(), payResponse.method(), payResponse.approvedAt(),
+                billingProfile.getBillingProfileId());
+    }
+
+    /**
+     * 일반결제(단건) 결산. billingProfile(billingKey) 없이 구독/이용권을 발급한다.
+     *
+     * <p>자동결제 계약이 없는 환경에서 토스페이 QR 단건결제로 구독을 개통하기 위한 경로다.
+     * 화면상으로는 월 자동결제 구독과 동일하게 보이도록 billingProfileId=null 로 구독을 생성한다
+     * ({@link Subscription#create}가 autoRenew=true, nextBillingAt=periodEnd 로 설정). 실제 billingKey가
+     * 없으므로 다음 결제일에 자동 갱신은 되지 않는다 — 갱신 스케줄러가 nextBillingAt 도달 시 ACTIVE
+     * billingProfile을 찾지 못해 PAYMENT_METHOD_REQUIRED로 해당 구독만 실패 처리하며(스케줄러 루프는
+     * 구독별 try/catch로 격리), 다른 구독에는 영향을 주지 않는다.
+     */
+    @Transactional
+    public BillingDTO.ResponseConfirmPayment settleOneTime(UserPayment payment, Plan plan,
+                                                           TossOneTimeConfirmResult result) {
+        return doSettle(payment, plan,
+                result.paymentKey(), result.method(), result.approvedAt(),
+                null);
+    }
+
+    // 결산 공통 로직 — 결제 확정 → 구독 생성 → 이용권 활성화 → 사용기간 기록.
+    // billingProfileId 가 null 이면 단건결제(자동결제 계약 없음)로 처리한다.
+    private BillingDTO.ResponseConfirmPayment doSettle(UserPayment payment, Plan plan,
+                                                       String paymentKey, String paymentMethod,
+                                                       ZonedDateTime approvedAt, UUID billingProfileId) {
         payment.authorize();
         payment.confirmStarted();
-        payment.paid(payResponse.paymentKey(), payResponse.approvedAt());
+        payment.paid(paymentKey, paymentMethod, approvedAt);
 
-        ZonedDateTime periodStart = payResponse.approvedAt().withZoneSameInstant(KST);
+        ZonedDateTime periodStart = approvedAt.withZoneSameInstant(KST);
         ZonedDateTime periodEnd = periodStart.plusDays(BILLING_CYCLE_DAYS);
-        Subscription subscription = Subscription.create(
-                payment.getMemberId(), plan.getPlanId(),
-                billingProfile.getBillingProfileId(), periodStart, periodEnd
-        );
+        Subscription subscription = billingProfileId != null
+                ? Subscription.create(payment.getMemberId(), plan.getPlanId(), billingProfileId, periodStart, periodEnd)
+                : Subscription.create(payment.getMemberId(), plan.getPlanId(), periodStart, periodEnd);
         subscriptionRepository.save(subscription);
         payment.linkSubscription(subscription.getSubscriptionId());
 
+        // 결산은 프리미엄을 부여하는 최종 단계이므로, 이용권 row 가 없으면(가입 전 로직으로 생성된 계정 등)
+        // 발급을 막지 않고 여기서 생성한다. 동시 결산 경합에 안전하도록 생성은 REQUIRES_NEW
+        // (ensureFreeEntitlement, 유니크 제약 충돌 무시)로 분리하고, 이후 잠금 조회로 다시 읽어 활성화한다.
+        entitlementInitService.ensureFreeEntitlement(payment.getMemberId(), plan.getProductCode());
         MemberProductEntitlement entitlement = entitlementRepository
                 .findByMemberIdAndProductCodeForUpdate(payment.getMemberId(), plan.getProductCode())
                 .orElseThrow(() -> new CustomException(BillingErrorCode.ENTITLEMENT_NOT_FOUND));

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { X } from 'lucide-react';
 import {
   settlementApi,
   SETTLEMENT_STATUS_LABEL,
@@ -11,7 +12,6 @@ import {
 } from '../../../api/admin/settlementApi';
 import { ADMIN_ROUTE_PATHS } from '../../../constants/admin/adminRouteConstants';
 import '../../../styles/admin/admin.css';
-import '../../../styles/admin/UserManagement.css';
 
 const STATUS_BADGE_CLS: Record<SettlementStatus, string> = {
   PENDING: 'pending',
@@ -21,47 +21,6 @@ const STATUS_BADGE_CLS: Record<SettlementStatus, string> = {
 const ITEM_TYPE_BADGE_CLS: Record<SettlementItemType, string> = {
   PAYMENT: 'answering',
   REFUND: 'blinded',
-};
-
-// TODO: 백엔드 정산 API 배포 완료 후 제거 — 더미 데이터 (SettlementTab의 더미 목록과 동일 ID 체계)
-const USE_DUMMY = true;
-const DUMMY_DETAILS: Record<number, SettlementDetail> = {
-  1: {
-    settlementId: 1, periodStart: '2026-06-01', periodEnd: '2026-06-30',
-    totalSalesAmount: 2450000, totalRefundAmount: 150000, netSalesAmount: 2300000,
-    supplyAmount: 2090909, vatAmount: 209091,
-    totalTransactionCount: 28, paidCount: 26, refundCount: 2,
-    settlementStatus: 'CONFIRMED', settledAt: '2026-07-01T09:00:00', settledByName: '신보라', note: '6월 정산 확정',
-    createdAt: '2026-07-01T00:00:00',
-    items: [
-      { settlementItemId: 1, paymentId: 'b1a2c3d4-e5f6-7890-1234-56789abcdef0', orderId: 'ORD-20260615-001', memberName: '김취준', planName: '프리미엄 3개월', amount: 89000, itemType: 'PAYMENT', paymentApprovedAt: '2026-06-15T10:00:00' },
-      { settlementItemId: 2, paymentId: 'c2b3d4e5-f6a7-8901-2345-6789abcdef01', orderId: 'ORD-20260618-002', memberName: '이지원', planName: '베이직 1개월', amount: 29000, itemType: 'PAYMENT', paymentApprovedAt: '2026-06-18T14:30:00' },
-      { settlementItemId: 3, paymentId: 'd3c4e5f6-a7b8-9012-3456-789abcdef012', orderId: 'ORD-20260610-003', memberName: '박서류', planName: '프리미엄 1개월', amount: 39000, itemType: 'REFUND', paymentApprovedAt: '2026-06-10T09:15:00' },
-      { settlementItemId: 4, paymentId: 'e4d5f6a7-b8c9-0123-4567-89abcdef0123', orderId: 'ORD-20260622-004', memberName: '최면접', planName: '베이직 3개월', amount: 69000, itemType: 'PAYMENT', paymentApprovedAt: '2026-06-22T11:20:00' },
-    ],
-  },
-  2: {
-    settlementId: 2, periodStart: '2026-05-01', periodEnd: '2026-05-31',
-    totalSalesAmount: 1980000, totalRefundAmount: 0, netSalesAmount: 1980000,
-    supplyAmount: 1800000, vatAmount: 180000,
-    totalTransactionCount: 22, paidCount: 22, refundCount: 0,
-    settlementStatus: 'CONFIRMED', settledAt: '2026-06-01T09:00:00', settledByName: '신보라', note: null,
-    createdAt: '2026-06-01T00:00:00',
-    items: [
-      { settlementItemId: 5, paymentId: 'f5e6a7b8-c9d0-1234-5678-9abcdef01234', orderId: 'ORD-20260512-005', memberName: '정합격', planName: '프리미엄 1개월', amount: 39000, itemType: 'PAYMENT', paymentApprovedAt: '2026-05-12T10:00:00' },
-    ],
-  },
-  3: {
-    settlementId: 3, periodStart: '2026-07-01', periodEnd: '2026-07-31',
-    totalSalesAmount: 890000, totalRefundAmount: 50000, netSalesAmount: 840000,
-    supplyAmount: 763636, vatAmount: 76364,
-    totalTransactionCount: 12, paidCount: 11, refundCount: 1,
-    settlementStatus: 'PENDING', settledAt: null, settledByName: null, note: null,
-    createdAt: '2026-07-02T00:00:00',
-    items: [
-      { settlementItemId: 6, paymentId: 'a6b7c8d9-e0f1-2345-6789-abcdef012345', orderId: 'ORD-20260703-006', memberName: '한신입', planName: '베이직 1개월', amount: 29000, itemType: 'PAYMENT', paymentApprovedAt: '2026-07-03T13:00:00' },
-    ],
-  },
 };
 
 interface Toast { id: number; msg: string; type: 'success' | 'error'; }
@@ -85,15 +44,6 @@ export default function SettlementDetailPage() {
 
   const fetchDetail = useCallback(async () => {
     if (!settlementId) return;
-    if (USE_DUMMY) {
-      const found = DUMMY_DETAILS[Number(settlementId)];
-      if (!found) {
-        setError('정산 리포트를 찾을 수 없습니다.');
-        return;
-      }
-      setDetail(found);
-      return;
-    }
     const rid = ++reqId.current;
     setLoading(true);
     setError('');
@@ -304,14 +254,14 @@ function ConfirmModal({ settlementId, periodLabel, onClose, onSuccess }: Confirm
   };
 
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal" style={{ width: 440 }} onClick={(e) => e.stopPropagation()}>
         <div className="modalHeader">
           <div>
             <h3>정산 확정</h3>
             <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>{periodLabel}</p>
           </div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modalBody">
           <p style={{ fontSize: 14, color: '#3a4d63', marginBottom: 16 }}>
@@ -330,10 +280,10 @@ function ConfirmModal({ settlementId, periodLabel, onClose, onSuccess }: Confirm
           {confirmError && <p style={{ fontSize: 13, color: '#9a4444', marginTop: 12 }}>{confirmError}</p>}
         </div>
         <div className="modalAction">
+          <button onClick={onClose} disabled={confirmLoading}>취소</button>
           <button onClick={handleConfirm} disabled={confirmLoading}>
             {confirmLoading ? '확정 중...' : '확정'}
           </button>
-          <button onClick={onClose} disabled={confirmLoading}>취소</button>
         </div>
       </div>
     </div>

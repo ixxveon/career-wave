@@ -32,10 +32,10 @@ export default function UserManagementPage() {
       <div className="admin-card" style={{ padding: '0 22px', marginBottom: 18 }}>
         <div className="csTabBar">
           <button className={`csTab${tab === 'user' ? ' active' : ''}`} onClick={() => setTab('user')}>
-            개인 회원
+            전체 회원
           </button>
           <button className={`csTab${tab === 'company' ? ' active' : ''}`} onClick={() => setTab('company')}>
-            기업 회원
+            기업 회원 승인
             {hrPendingCount > 0 && <span className="tabBadge">{hrPendingCount}</span>}
           </button>
         </div>

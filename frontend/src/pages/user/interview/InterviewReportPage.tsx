@@ -1,10 +1,10 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   RotateCcw, Home, Award,
   MessageSquare, Calendar,
   Volume2, Gauge,
-  TrendingUp, Loader2, AlertCircle,
+  TrendingUp, Loader2, AlertCircle, Download,
 } from 'lucide-react';
 
 import { useInterviewReport } from '../../../hooks/user/interview/useInterviewReport';
@@ -28,6 +28,13 @@ const RETRY_ROUTE: Record<SessionType, string> = {
   [SESSION_TYPE.TEXT]:  '/interview/text',
   [SESSION_TYPE.VOICE]: '/interview/text',
   [SESSION_TYPE.VIDEO]: '/interview/text',
+};
+
+const FOCUS_TYPE_MAP: Record<string, string> = {
+  relevance: 'FOLLOW_UP',
+  depth:     'TECHNICAL_DEPTH',
+  delivery:  'DELIVERY',
+  fluency:   'FLUENCY',
 };
 
 /* ── 등급 산정 ────────────────────────────────────── */
@@ -104,17 +111,7 @@ function InterviewReportPage() {
     );
   }
 
-  /* ── 로딩 ── */
-  if (isLoading) {
-    return (
-      <div className="ir-state">
-        <Loader2 size={32} className="ir-state__spinner" />
-        <p>리포트를 불러오는 중입니다…</p>
-      </div>
-    );
-  }
-
-  /* ── 분석 중 (409 INTERVIEW_REPORT_NOT_READY — 재시도 소진) ── */
+  /* ── 분석 중 (409 INTERVIEW_REPORT_NOT_READY — 재시도 포함) ── */
   if (isAnalyzing) {
     return (
       <div className="ir-state">
@@ -122,6 +119,16 @@ function InterviewReportPage() {
         <p>AI가 면접 결과를 분석하고 있습니다…</p>
         <p>분석이 완료되면 리포트가 자동으로 표시됩니다.</p>
         <button className="ir-btn ir-btn--white" onClick={() => refetch()}>수동 새로고침</button>
+      </div>
+    );
+  }
+
+  /* ── 최초 로딩 (캐시 없음) ── */
+  if (isLoading) {
+    return (
+      <div className="ir-state">
+        <Loader2 size={32} className="ir-state__spinner" />
+        <p>리포트를 불러오는 중입니다…</p>
       </div>
     );
   }
@@ -156,6 +163,13 @@ const ReportContent = memo(function ReportContent({
   const displayScore      = data.totalScore ?? hybridScores.total;
   const grade             = getGrade(displayScore);
   const retryRoute        = RETRY_ROUTE[data.sessionType];
+
+  const handlePdfDownload = useCallback((): void => {
+    const prev = document.title;
+    document.title = `면접_결과_리포트_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}`;
+    window.print();
+    document.title = prev;
+  }, []);
 
   const improvements = useMemo(() => {
     const items = IMPROVEMENT_POOL.filter(def => {
@@ -229,6 +243,9 @@ const ReportContent = memo(function ReportContent({
             </button>
             <button className="ir-btn ir-btn--white" onClick={() => onNavigate(retryRoute)}>
               <RotateCcw size={14} /> 다시 연습하기
+            </button>
+            <button className="ir-btn ir-btn--pdf" onClick={handlePdfDownload}>
+              <Download size={14} /> PDF 저장
             </button>
           </div>
         </div>
@@ -323,7 +340,14 @@ const ReportContent = memo(function ReportContent({
               <span className="ir-improve-card__num">{String(i + 1).padStart(2, '0')}</span>
               <p className="ir-improve-card__title">{item.title}</p>
               <p className="ir-improve-card__desc">{item.desc}</p>
-              <button className="ir-improve-card__cta" onClick={() => onNavigate(retryRoute)}>
+              <button
+                className="ir-improve-card__cta"
+                onClick={() => {
+                  const focusType = 'metricKey' in item ? FOCUS_TYPE_MAP[(item as { metricKey: string }).metricKey] : undefined;
+                  const route = focusType ? `${retryRoute}?focusType=${focusType}` : retryRoute;
+                  onNavigate(route);
+                }}
+              >
                 {item.cta} →
               </button>
             </div>

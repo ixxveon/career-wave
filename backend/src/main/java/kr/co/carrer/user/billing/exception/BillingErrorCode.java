@@ -28,6 +28,8 @@ public enum BillingErrorCode implements BaseErrorCode {
     BILLING_AUTHORIZATION_FAILED(HttpStatus.UNPROCESSABLE_ENTITY, "billingKey 발급에 실패했습니다."),
 
     PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "결제 금액이 일치하지 않습니다."),
+    PAYMENT_ORDER_MISMATCH(HttpStatus.BAD_REQUEST, "주문 번호가 일치하지 않습니다."),
+    PAYMENT_CURRENCY_MISMATCH(HttpStatus.BAD_REQUEST, "결제 통화가 일치하지 않습니다."),
     PAYMENT_CONFIRM_FAILED(HttpStatus.UNPROCESSABLE_ENTITY, "결제 승인 중 오류가 발생했습니다."),
     PAYMENT_RECONCILIATION_REQUIRED(HttpStatus.ACCEPTED, "결제 결과를 확인 중입니다."),
     PAYMENT_METHOD_REQUIRED(HttpStatus.CONFLICT, "활성 자동결제 수단이 없습니다."),

@@ -1,6 +1,7 @@
 package kr.co.carrer.user.billing.service;
 
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.client.OneTimePaymentClient;
 import kr.co.carrer.user.billing.client.TossBillingAuthorizationClient;
 import kr.co.carrer.user.billing.client.TossBillingPaymentClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingAuthResponse;
@@ -10,6 +11,7 @@ import kr.co.carrer.user.billing.entity.*;
 import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.*;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.billing.service.impl.PaymentReconciliationTxService;
 import kr.co.carrer.user.billing.service.impl.UserPaymentConfirmServiceImpl;
 import kr.co.carrer.user.billing.service.impl.UserPaymentFailureTxService;
@@ -47,9 +49,11 @@ class ConfirmIdempotencyTest {
     @Mock PlanRepository planRepository;
     @Mock TossBillingAuthorizationClient tossBillingAuthClient;
     @Mock TossBillingPaymentClient tossBillingPaymentClient;
+    @Mock OneTimePaymentClient oneTimePaymentClient;
     @Mock AesCipher aesCipher;
     @Mock UserPaymentFailureTxService failureTxService;
     @Mock PaymentReconciliationTxService reconciliationTxService;
+    @Mock EntitlementInitService entitlementInitService;
 
     private UserPaymentConfirmServiceImpl service;
     private UserPaymentSettleTxService settleTxService;
@@ -59,10 +63,11 @@ class ConfirmIdempotencyTest {
     @BeforeEach
     void setUp() {
         settleTxService = new UserPaymentSettleTxService(
-                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
+                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository,
+                entitlementInitService);
         service = new UserPaymentConfirmServiceImpl(
                 userPaymentRepository, billingProfileRepository, planRepository,
-                tossBillingAuthClient, tossBillingPaymentClient, aesCipher,
+                tossBillingAuthClient, tossBillingPaymentClient, oneTimePaymentClient, aesCipher,
                 failureTxService, settleTxService, reconciliationTxService);
     }
 
@@ -74,8 +79,9 @@ class ConfirmIdempotencyTest {
         UserPayment payment = readyPayment(memberId, 1L, "document-coaching", orderId, customerKey);
         payment.authorize();
         payment.confirmStarted();
-        payment.paid("pay_key", ZonedDateTime.now(KST));
+        payment.paid("pay_key", "카드", ZonedDateTime.now(KST));
         assertThat(payment.getPaymentStatus()).isEqualTo(UserPaymentStatus.PAID);
+        assertThat(payment.getPaymentMethod()).isEqualTo("카드");
 
         given(userPaymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
@@ -137,7 +143,7 @@ class ConfirmIdempotencyTest {
         given(billingProfileRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
         given(aesCipher.decrypt("bk_enc")).willReturn("bk");
         given(tossBillingPaymentClient.pay(any(), any(), any(), any(), any(), any(), anyInt()))
-                .willReturn(new TossBillingPaymentResponse("pk", orderId, "DONE", 29000, "KRW",
+                .willReturn(new TossBillingPaymentResponse("pk", orderId, "카드", "DONE", 29000, "KRW",
                         ZonedDateTime.now(KST)));
         given(entitlementRepository.findByMemberIdAndProductCodeForUpdate(any(), any()))
                 .willReturn(Optional.of(entitlement));
@@ -150,6 +156,8 @@ class ConfirmIdempotencyTest {
 
         // 첫 번째 confirm — 성공
         service.confirm(memberId, new BillingDTO.RequestConfirmPayment("ak", customerKey, orderId));
+        assertThat(payment.getPaymentStatus()).isEqualTo(UserPaymentStatus.PAID);
+        assertThat(payment.getPaymentMethod()).isEqualTo("카드");
         verify(tossBillingAuthClient, times(1)).issue(any(), any());
         verify(tossBillingPaymentClient, times(1)).pay(any(), any(), any(), any(), any(), any(), anyInt());
 

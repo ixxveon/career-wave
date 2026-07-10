@@ -47,8 +47,10 @@ public class UserSocialAuthController implements UserSocialAuthControllerDocs {
             case UserSocialAuthDto.ResponseOAuthCallbackLogin login -> {
                 // 토큰을 URL이 아닌 단기 쿠키로 전달 (브라우저 히스토리·로그·Referer 노출 방지)
                 setHandoffCookie(response, "cw_oauth_login_token", login.getAccessToken());
+                // provider는 "마지막 로그인 방식" 안내(프론트 localStorage 기록)에만 사용 — 민감정보 아님
                 yield UriComponentsBuilder.fromHttpUrl(frontendUrl + "/auth/oauth/callback")
                         .queryParam("type", "login")
+                        .queryParam("provider", provider)
                         .build().toUriString();
             }
             case UserSocialAuthDto.ResponseOAuthCallbackSignupRequired signup -> {
@@ -65,6 +67,17 @@ public class UserSocialAuthController implements UserSocialAuthControllerDocs {
 
     private void setHandoffCookie(HttpServletResponse response, String name, String value) {
         response.addHeader("Set-Cookie", cookieProperties.handoffCookie(name, value).toString());
+    }
+
+    @PostMapping("/register/social/resolve")
+    public ResponseEntity<ApiResponse<UserSocialAuthDto.ResponseSocialResolve>> resolve(
+            @Valid @RequestBody UserSocialAuthDto.RequestSocialResolve request,
+            HttpServletResponse response) {
+        UserSocialAuthDto.ResponseSocialResolve result = userSocialAuthService.resolve(request, response);
+        String message = result.status() == UserSocialAuthDto.ResolveStatus.LINKED
+                ? "기존 계정에 소셜 로그인을 연동했습니다."
+                : "추가 정보 입력이 필요합니다.";
+        return ResponseEntity.ok(ApiResponse.ok(message, result));
     }
 
     @PostMapping("/register/social/complete")

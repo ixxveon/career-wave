@@ -13,6 +13,9 @@ import { BUSINESS_STATUS_LABELS, VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } fr
 import { BUSINESS_NUMBER_CHECK_STATE, type BusinessNumberCheckState } from '../../../utils/user/member/validation';
 import { validateEmploymentCertificateFile } from '../../../utils/user/member/fileValidation';
 import {
+  formatBusinessNumber,
+  formatPhoneNumber,
+  normalizeBusinessNumber,
   isValidEmail,
   isValidLoginId,
   isValidPhone,
@@ -157,9 +160,16 @@ export function useCompanyRegisterForm() {
     !registerCompany.isPending;
 
   const update = (key: CompanyFormKey, value: CompanyForm[CompanyFormKey]) => {
+    const nextValue =
+      key === 'businessNumber' && typeof value === 'string'
+        ? formatBusinessNumber(value)
+        : key === 'managerPhone' && typeof value === 'string'
+          ? formatPhoneNumber(value)
+          : value;
+
     setForm((current) => ({
       ...current,
-      [key]: value,
+      [key]: nextValue,
       ...(key === 'managerPhone' ? { managerPhoneCode: '' } : {}),
       ...(key === 'managerEmail' ? { managerEmailCode: '' } : {}),
     }));
@@ -173,13 +183,13 @@ export function useCompanyRegisterForm() {
 
     if (key === 'managerId') setLoginIdState(LOGIN_ID_CHECK_STATE.UNCHECKED);
     if (key === 'businessNumber') {
-      currentBusinessNumberRef.current = typeof value === 'string' ? value : currentBusinessNumberRef.current;
+      currentBusinessNumberRef.current = typeof nextValue === 'string' ? normalizeBusinessNumber(nextValue) : currentBusinessNumberRef.current;
       setBusinessNumberCheckState(BUSINESS_NUMBER_CHECK_STATE.UNCHECKED);
       setBusinessNumberCheckMessage('');
     }
     if (key === 'managerId') currentLoginIdRef.current = typeof value === 'string' ? value : currentLoginIdRef.current;
     if (key === 'managerPhone') {
-      currentManagerPhoneRef.current = typeof value === 'string' ? value : currentManagerPhoneRef.current;
+      currentManagerPhoneRef.current = typeof nextValue === 'string' ? nextValue : currentManagerPhoneRef.current;
       managerPhoneVerificationIdRef.current = '';
       setVerification((current) => ({
         ...current,
@@ -282,7 +292,7 @@ export function useCompanyRegisterForm() {
   };
 
   const handleBusinessNumberCheck = async () => {
-    const bn = form.businessNumber.trim();
+    const bn = normalizeBusinessNumber(form.businessNumber);
     if (!/^\d{10}$/.test(bn)) {
       setFieldErrors((current) => ({ ...current, businessNumber: '사업자등록번호 10자리를 입력해주세요.' }));
       return;
@@ -292,7 +302,7 @@ export function useCompanyRegisterForm() {
     try {
       const result = await checkBusinessNumber.mutateAsync({ businessNumber: bn });
       // stale guard — 조회 중 번호가 변경되면 구 결과 무시
-      if (bn !== currentBusinessNumberRef.current.trim()) return;
+      if (bn !== currentBusinessNumberRef.current) return;
       const label = BUSINESS_STATUS_LABELS[result.businessStatus] ?? result.businessStatus;
       setBusinessNumberCheckState(result.valid ? BUSINESS_NUMBER_CHECK_STATE.CONFIRMED : BUSINESS_NUMBER_CHECK_STATE.REJECTED);
       setBusinessNumberCheckMessage(label);
@@ -301,7 +311,7 @@ export function useCompanyRegisterForm() {
         businessNumber: result.valid ? '' : label,
       }));
     } catch (error) {
-      if (bn !== currentBusinessNumberRef.current.trim()) return;
+      if (bn !== currentBusinessNumberRef.current) return;
       setBusinessNumberCheckState(BUSINESS_NUMBER_CHECK_STATE.ERROR);
       setBusinessNumberCheckMessage('사업자 확인 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해주세요.');
       setFieldErrors((current) => ({ ...current, businessNumber: getRecoveryErrorMessage(error, '사업자 확인에 실패했습니다.') }));
@@ -450,6 +460,49 @@ export function useCompanyRegisterForm() {
     }
   };
 
+  // 「변경」— 전송·확인된 담당자 이메일/휴대폰/사업자등록번호를 다시 편집 가능하게 잠금 해제하고 상태를 초기화한다. (issue #1036)
+  const handleChangeEmail = () => {
+    managerEmailVerificationRequestRef.current += 1;
+    managerEmailVerificationIdRef.current = '';
+    setVerification((current) => ({
+      ...current,
+      emailId: '',
+      emailToken: '',
+      emailExpiresAt: '',
+      emailResendAvailableAt: '',
+      emailRemainingAttempts: 0,
+    }));
+    setForm((current) => ({ ...current, managerEmailCode: '' }));
+    setFieldErrors((current) => ({ ...current, managerEmail: '', managerEmailCode: '' }));
+    setFormMessage('');
+    setSuccessMessage('');
+  };
+
+  const handleChangePhone = () => {
+    managerPhoneVerificationRequestRef.current += 1;
+    managerPhoneVerificationIdRef.current = '';
+    setVerification((current) => ({
+      ...current,
+      phoneId: '',
+      phoneToken: '',
+      phoneExpiresAt: '',
+      phoneResendAvailableAt: '',
+      phoneRemainingAttempts: 0,
+    }));
+    setForm((current) => ({ ...current, managerPhoneCode: '' }));
+    setFieldErrors((current) => ({ ...current, managerPhone: '', managerPhoneCode: '' }));
+    setFormMessage('');
+    setSuccessMessage('');
+  };
+
+  const handleChangeBusinessNumber = () => {
+    setBusinessNumberCheckState(BUSINESS_NUMBER_CHECK_STATE.UNCHECKED);
+    setBusinessNumberCheckMessage('');
+    setFieldErrors((current) => ({ ...current, businessNumber: '' }));
+    setFormMessage('');
+    setSuccessMessage('');
+  };
+
   const FIELD_LABEL_MAP: Record<string, string> = {
     companyType: '기업형태',
     businessNumber: '사업자등록번호',
@@ -567,6 +620,9 @@ export function useCompanyRegisterForm() {
     handleAddressSearch,
     handleBusinessNumberCheck,
     handleCertificateChange,
+    handleChangeBusinessNumber,
+    handleChangeEmail,
+    handleChangePhone,
     handleConfirmEmailCode,
     handleConfirmPhoneCode,
     handleLoginIdCheck,

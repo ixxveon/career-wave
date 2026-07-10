@@ -28,7 +28,6 @@ import java.util.List;
 public class DashboardServiceImpl implements DashboardService {
 
     private static final int ALERT_LIMIT = 5;
-    private static final int RECENT_ACTIVITY_LIMIT = 5;
     private static final String ADMIN_ROUTE_PREFIX = "/cw-manage-2026";
     private static final String ADMIN_MANAGEMENT_PATH = ADMIN_ROUTE_PREFIX + "/admins";
     private static final String AI_METRICS_PATH = ADMIN_ROUTE_PREFIX + "/ai";
@@ -44,6 +43,7 @@ public class DashboardServiceImpl implements DashboardService {
         DashboardRangeType range = resolveRange(request);
         ZonedDateTime baseDateTime = ZonedDateTime.now(ZoneOffset.UTC);
         DashboardQueryWindow queryWindow = DashboardQueryWindow.of(range, baseDateTime);
+
         DashboardSummaryQueryRepository.AdminAccountMetrics adminMetrics =
                 dashboardSummaryQueryRepository.fetchAdminAccountMetrics(queryWindow);
         DashboardSummaryQueryRepository.AiUsageMetrics aiUsageMetrics =
@@ -67,7 +67,7 @@ public class DashboardServiceImpl implements DashboardService {
                 validatePaymentRatio(buildPaymentRatio(dashboardSummaryQueryRepository.findPaymentRatios(queryWindow))),
                 buildServiceCards(adminMetrics, aiUsageMetrics, scrapingStatusMetrics, alerts.size()),
                 buildSystemStatus(aiUsageMetrics, ragDocumentMetrics, scrapingStatusMetrics),
-                buildRecentActivities(dashboardSummaryQueryRepository.findRecentActivities(queryWindow, RECENT_ACTIVITY_LIMIT))
+                buildRecentActivities(dashboardSummaryQueryRepository.findRecentActivities())
         );
     }
 
@@ -114,7 +114,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "AI 인터뷰 세션",
                         interviewSessionCount,
                         "건",
-                        "선택 기간 기준",
+                        "선택 기간 내 생성 세션 기준",
                         DashboardSeverityType.NORMAL,
                         AI_METRICS_PATH
                 ),
@@ -123,7 +123,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "오늘 매출",
                         revenue,
                         "원",
-                        "결제 승인 기준",
+                        "오늘 결제 승인 금액 기준",
                         DashboardSeverityType.NORMAL,
                         PAYMENT_PATH
                 )
@@ -207,7 +207,7 @@ public class DashboardServiceImpl implements DashboardService {
     ) {
         long newAdminCount = adminMetrics == null ? 0L : adminMetrics.newAdminCount();
         long interviewSessionCount = aiUsageMetrics == null ? 0L : aiUsageMetrics.interviewSessionCount();
-        long runningPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.runningPipelineCount();
+        String scrapingSummaryText = formatScrapingSummaryText(scrapingStatusMetrics);
 
         return List.of(
                 new DashboardDTO.ServiceCard(
@@ -228,7 +228,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "SCRAPING",
                         "스크래핑 관리",
                         "채용 공고 수집 파이프라인 상태를 확인합니다.",
-                        "실행중 " + runningPipelineCount + "개",
+                        scrapingSummaryText,
                         SCRAPING_PATH
                 ),
                 new DashboardDTO.ServiceCard(
@@ -252,6 +252,7 @@ public class DashboardServiceImpl implements DashboardService {
         long failedDocumentCount = ragDocumentMetrics == null ? 0L : ragDocumentMetrics.failedDocumentCount();
         long failedPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.failedPipelineCount();
         long runningPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.runningPipelineCount();
+        String scrapingSummaryText = formatScrapingSummaryText(scrapingStatusMetrics);
 
         return List.of(
                 new DashboardDTO.SystemStatus(
@@ -270,9 +271,22 @@ public class DashboardServiceImpl implements DashboardService {
                         "SCRAPING_PIPELINE",
                         "스크래핑 파이프라인",
                         resolveScrapingStatus(failedPipelineCount, runningPipelineCount),
-                        "실행중 " + runningPipelineCount + "개 / 실패 " + failedPipelineCount + "개"
+                        scrapingSummaryText
                 )
         );
+    }
+
+    private String formatScrapingSummaryText(
+            DashboardSummaryQueryRepository.ScrapingStatusMetrics scrapingStatusMetrics
+    ) {
+        long totalPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.totalPipelineCount();
+        long idlePipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.idlePipelineCount();
+        long successPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.successPipelineCount();
+        long runningPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.runningPipelineCount();
+        long failedPipelineCount = scrapingStatusMetrics == null ? 0L : scrapingStatusMetrics.failedPipelineCount();
+
+        return "전체 " + totalPipelineCount + "개 / 대기 " + idlePipelineCount + "개 / 성공 " + successPipelineCount
+                + "개 / 실행 중 " + runningPipelineCount + "개 / 실패 " + failedPipelineCount + "개";
     }
 
     private DashboardSystemStatusType resolveScrapingStatus(long failedPipelineCount, long runningPipelineCount) {

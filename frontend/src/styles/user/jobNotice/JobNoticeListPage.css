@@ -338,6 +338,10 @@
   font-weight: 900;
 }
 
+.jn-results__head span.is-muted {
+  color: #7b8595;
+}
+
 .jn-results__head b {
   color: #2f9cff;
 }
@@ -468,6 +472,13 @@
   border-color: #2f9cff;
   color: #0f7edb;
   transform: translateY(-1px);
+}
+
+.jn-load-more:disabled {
+  cursor: wait;
+  border-color: #d8e3f0;
+  color: #7b8595;
+  transform: none;
 }
 
 .jn-card {
@@ -651,6 +662,14 @@
   font-size: 11px;
   font-weight: 900;
   white-space: nowrap;
+}
+
+.jn-badge--deadline {
+  display: inline-block;
+  line-height: 26px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .jn-badge--recommend {

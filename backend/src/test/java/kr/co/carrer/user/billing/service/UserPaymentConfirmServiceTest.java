@@ -1,6 +1,7 @@
 package kr.co.carrer.user.billing.service;
 
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.client.OneTimePaymentClient;
 import kr.co.carrer.user.billing.client.TossBillingAuthorizationClient;
 import kr.co.carrer.user.billing.client.TossBillingPaymentClient;
 import kr.co.carrer.user.billing.client.dto.TossBillingAuthResponse;
@@ -10,6 +11,7 @@ import kr.co.carrer.user.billing.entity.*;
 import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.*;
+import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.billing.service.impl.PaymentReconciliationTxService;
 import kr.co.carrer.user.billing.service.impl.UserPaymentConfirmServiceImpl;
 import kr.co.carrer.user.billing.service.impl.UserPaymentFailureTxService;
@@ -48,9 +50,11 @@ class UserPaymentConfirmServiceTest {
     @Mock PlanRepository planRepository;
     @Mock TossBillingAuthorizationClient tossBillingAuthClient;
     @Mock TossBillingPaymentClient tossBillingPaymentClient;
+    @Mock OneTimePaymentClient oneTimePaymentClient;
     @Mock AesCipher aesCipher;
     @Mock UserPaymentFailureTxService failureTxService;
     @Mock PaymentReconciliationTxService reconciliationTxService;
+    @Mock EntitlementInitService entitlementInitService;
 
     private UserPaymentConfirmServiceImpl service;
     private UserPaymentSettleTxService settleTxService;
@@ -60,10 +64,11 @@ class UserPaymentConfirmServiceTest {
     @BeforeEach
     void setUp() {
         settleTxService = new UserPaymentSettleTxService(
-                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository);
+                subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository,
+                entitlementInitService);
         service = new UserPaymentConfirmServiceImpl(
                 userPaymentRepository, billingProfileRepository, planRepository,
-                tossBillingAuthClient, tossBillingPaymentClient, aesCipher,
+                tossBillingAuthClient, tossBillingPaymentClient, oneTimePaymentClient, aesCipher,
                 failureTxService, settleTxService, reconciliationTxService);
     }
 
@@ -387,7 +392,7 @@ class UserPaymentConfirmServiceTest {
     private TossBillingPaymentResponse payResponseWithTime(String paymentKey, String orderId,
                                                             int amount, String currency,
                                                             ZonedDateTime approvedAt) {
-        return new TossBillingPaymentResponse(paymentKey, orderId, "DONE", amount, currency, approvedAt);
+        return new TossBillingPaymentResponse(paymentKey, orderId, "카드", "DONE", amount, currency, approvedAt);
     }
 
     private void setField(Object target, String name, Object value) {

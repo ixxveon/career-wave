@@ -2,10 +2,8 @@ package kr.co.carrer.user.member.controller;
 
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import kr.co.carrer.user.member.dto.UserRecoveryDto;
 import kr.co.carrer.user.member.service.UserRecoveryService;
 import org.junit.jupiter.api.DisplayName;
@@ -28,20 +26,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserRecoveryController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, SecurityMockConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
 class UserRecoveryControllerTest {
 
     @Autowired MockMvc mockMvc;
 
     @MockBean UserRecoveryService userRecoveryService;
-    @MockBean JwtTokenProvider jwtTokenProvider;
-    @MockBean TokenBlacklistStore tokenBlacklistStore;
-    @MockBean IpAclPort ipAclPort;
 
     // ─── 아이디 찾기 ──────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("아이디 찾기 성공 시 200 + statusCode=200 + found=true + loginIds를 반환한다")
+    @DisplayName("아이디 찾기 성공 시 200 + found=true + loginIds를 반환한다")
     void findId_성공_200() throws Exception {
         when(userRecoveryService.findId(any()))
                 .thenReturn(new UserRecoveryDto.ResponseFindId(List.of("career01"), true));
@@ -55,7 +50,7 @@ class UserRecoveryControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.found").value(true))
                 .andExpect(jsonPath("$.data.loginIds[0]").value("career01"));
@@ -76,7 +71,7 @@ class UserRecoveryControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.data.found").value(false))
                 .andExpect(jsonPath("$.data.loginIds").isEmpty());
     }
@@ -84,7 +79,7 @@ class UserRecoveryControllerTest {
     // ─── 비밀번호 재설정 권한 발급 ────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("resetToken 발급 성공 시 200 + statusCode=200 + resetToken을 반환한다")
+    @DisplayName("resetToken 발급 성공 시 200 + resetToken을 반환한다")
     void issuePasswordToken_성공_200() throws Exception {
         when(userRecoveryService.issuePasswordToken(any(), anyString()))
                 .thenReturn(new UserRecoveryDto.ResponsePasswordToken("raw-token", Instant.now().plusSeconds(600)));
@@ -98,7 +93,7 @@ class UserRecoveryControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.resetToken").value("raw-token"));
     }
@@ -106,7 +101,7 @@ class UserRecoveryControllerTest {
     // ─── 비밀번호 재설정 ──────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("비밀번호 재설정 성공 시 200 + statusCode=200 + changedAt을 반환한다")
+    @DisplayName("비밀번호 재설정 성공 시 200 + changedAt을 반환한다")
     void resetPassword_성공_200() throws Exception {
         when(userRecoveryService.resetPassword(any()))
                 .thenReturn(new UserRecoveryDto.ResponseResetPassword(Instant.now()));
@@ -120,7 +115,7 @@ class UserRecoveryControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").doesNotExist())
                 .andExpect(jsonPath("$.message").isNotEmpty())
                 .andExpect(jsonPath("$.data.changedAt").isNotEmpty());
     }

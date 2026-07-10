@@ -11,6 +11,16 @@ class SourceRegistryEntry:
 
 
 SUPPORTED_SOURCE_REGISTRY: dict[str, SourceRegistryEntry] = {
+    "groupby": SourceRegistryEntry(
+        source_name="groupby",
+        display_name="GroupBy",
+        adapter_name="groupby_scraper",
+    ),
+    "jumpit": SourceRegistryEntry(
+        source_name="jumpit",
+        display_name="Jumpit",
+        adapter_name="jumpit_scraper",
+    ),
     "wanted": SourceRegistryEntry(
         source_name="wanted",
         display_name="Wanted",

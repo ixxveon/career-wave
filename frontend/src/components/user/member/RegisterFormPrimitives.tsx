@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type InputHTMLAttributes, type KeyboardEvent, type ReactNode } from 'react';
 import { CheckCircle2, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { applyInputFill, clearInputFill } from '../../../utils/user/member/inputFill';
 
@@ -14,6 +14,9 @@ type TextInputProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  readOnly?: boolean;
+  inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode'];
+  maxLength?: number;
 };
 
 type SelectInputProps = {
@@ -50,11 +53,14 @@ export function Field({ label, children, required = false, wide = false }: Field
   );
 }
 
-export function TextInput({ type = 'text', value, onChange, placeholder }: TextInputProps) {
+export function TextInput({ type = 'text', value, onChange, placeholder, readOnly = false, inputMode, maxLength }: TextInputProps) {
   return (
     <input
       type={type}
       value={value}
+      readOnly={readOnly}
+      inputMode={inputMode}
+      maxLength={maxLength}
       onChange={(event) => {
         onChange(event.target.value);
         applyInputFill(event.target);
@@ -98,7 +104,7 @@ export function PasswordInput({ value, onChange, placeholder }: Omit<TextInputPr
         aria-label={show ? '비밀번호 숨기기' : '비밀번호 표시'}
         onClick={() => setShow((prev) => !prev)}
       >
-        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+        {show ? <Eye size={16} /> : <EyeOff size={16} />}
       </button>
     </div>
   );

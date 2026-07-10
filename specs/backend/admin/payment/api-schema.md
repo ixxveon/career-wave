@@ -99,6 +99,7 @@ return ApiResponse.ok(result);
 | `PAYMENT_NOT_FOUND` | 404 | 결제 건 조회 실패 |
 | `REFUND_NOT_PENDING` | 409 | 이미 처리된 환불 건 재처리 시도 |
 | `REJECT_REASON_REQUIRED` | 400 | 환불 불가 처리 시 사유 미입력 |
-| `TOSS_REFUND_FAILED` | 502 | Toss 환불 API 호출 실패 |
+| `TOSS_REFUND_FAILED` | 502 | Toss 환불 API 호출 실패(4xx, Toss가 명시적으로 거부 — 확정 실패로 기록) |
+| `TOSS_REFUND_AMBIGUOUS` | 503 | Toss 환불 API 응답 불확실(5xx/timeout/네트워크 예외 — 실제 취소 여부 불명, 확정 실패로 기록하지 않고 PENDING 유지) |
 | `SUBSCRIPTION_NOT_FOUND` | 404 | 구독 건 조회 실패 |
 | `UNAUTHORIZED` | 401 | 인증 실패 |

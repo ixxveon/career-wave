@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { X } from 'lucide-react';
 import {
   paymentApi,
   PAY_STATUS,
@@ -9,7 +10,7 @@ import {
 } from '../../../api/admin/paymentApi';
 
 const PAY_STATUS_CLS: Record<string, string> = {
-  PENDING: 'pending', DONE: 'normal', PAID: 'normal', CANCELED: 'dismissed', FAILED: 'blinded',
+  PENDING: 'pending', DONE: 'normal', PAID: 'normal', CANCELED: 'dismissed', FAILED: 'blinded', REFUNDED: 'dismissed',
 };
 const REFUND_STATUS_CLS: Record<string, string> = {
   PENDING: 'pending', COMPLETED: 'dismissed', FAILED: 'blinded', REJECTED: 'blinded',
@@ -23,9 +24,10 @@ function daysSincePaid(approvedAt: string): number {
   return Math.round((today.getTime() - paid.getTime()) / 86400000);
 }
 
-function checkRefundEligibility(p: Payment): { eligible: boolean; reason: string | null } {
+function checkRefundEligibility(p: Payment): { eligible: boolean | null; reason: string | null } {
   const days = daysSincePaid(p.approvedAt);
   if (days > 7) return { eligible: false, reason: `결제일로부터 ${days}일 경과 — 환불 가능 기간(7일)을 초과하였습니다.` };
+  if (!p.aiUsage) return { eligible: null, reason: '유료 AI 기능 이용 이력을 확인하는 중입니다.' };
   if (p.aiUsage.documentCount > 0 || p.aiUsage.interviewCount > 0) return { eligible: false, reason: '유료 AI 기능 이용 이력이 있어 환불이 불가합니다.' };
   return { eligible: true, reason: null };
 }
@@ -59,6 +61,7 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
 
   const refundCheck = selected.refundStatus === 'PENDING' ? checkRefundEligibility(selected) : null;
   const isCompletedPayment = selected.paymentStatus === PAY_STATUS.PAID || selected.paymentStatus === PAY_STATUS.DONE;
+  const hasRefundActions = (isCompletedPayment && !selected.refundStatus) || (isMaster && selected.refundStatus === 'PENDING');
 
   const submitRefundRequest = async () => {
     if (!requestReason.trim()) return;
@@ -110,7 +113,7 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
   };
 
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="memberModal modal--scrollable" style={{ width: 540 }} onClick={(e) => e.stopPropagation()}>
         <div className="modalHeader" style={{ flexShrink: 0, padding: '20px 24px 16px' }}>
           <div>
@@ -121,7 +124,7 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
             >{selected.paymentId.slice(0, 8)}…</span></h3>
             <p style={{ fontSize: 12, color: '#7a8da4', marginTop: 4 }}>Toss 주문번호: {selected.orderId}</p>
           </div>
-          <button onClick={onClose}>닫기</button>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
         </div>
 
         <div className="modalBody">
@@ -168,24 +171,24 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
                 </div>
                 <div className="refundCheckRow">
                   <span>이력서 분석 유료 이용</span>
-                  <strong className={(selected.aiUsage?.documentCount ?? 0) === 0 ? 'refundOk' : 'refundFail'}>
-                    {(selected.aiUsage?.documentCount ?? 0) === 0 ? '없음' : `${selected.aiUsage?.documentCount}회`}
+                  <strong className={!selected.aiUsage ? '' : selected.aiUsage.documentCount === 0 ? 'refundOk' : 'refundFail'}>
+                    {!selected.aiUsage ? '확인 중' : selected.aiUsage.documentCount === 0 ? '없음' : `${selected.aiUsage.documentCount}회`}
                   </strong>
                 </div>
                 <div className="refundCheckRow">
                   <span>AI 면접 유료 이용</span>
-                  <strong className={(selected.aiUsage?.interviewCount ?? 0) === 0 ? 'refundOk' : 'refundFail'}>
-                    {(selected.aiUsage?.interviewCount ?? 0) === 0 ? '없음' : `${selected.aiUsage?.interviewCount}회`}
+                  <strong className={!selected.aiUsage ? '' : selected.aiUsage.interviewCount === 0 ? 'refundOk' : 'refundFail'}>
+                    {!selected.aiUsage ? '확인 중' : selected.aiUsage.interviewCount === 0 ? '없음' : `${selected.aiUsage.interviewCount}회`}
                   </strong>
                 </div>
                 <div className="refundEligibleRow">
                   <span>환불 가능 여부</span>
-                  <span className={`refundEligibleBadge ${refundCheck.eligible ? 'eligible' : 'ineligible'}`}>
-                    {refundCheck.eligible ? '환불 가능' : '환불 불가'}
+                  <span className={`refundEligibleBadge ${refundCheck.eligible === true ? 'eligible' : refundCheck.eligible === false ? 'ineligible' : ''}`}>
+                    {refundCheck.eligible === true ? '환불 가능' : refundCheck.eligible === false ? '환불 불가' : '확인 중'}
                   </span>
                 </div>
-                {!refundCheck.eligible && <p className="refundIneligibleNote">{refundCheck.reason}</p>}
-                {isMaster && !refundCheck.eligible && (
+                {refundCheck.eligible !== true && <p className="refundIneligibleNote">{refundCheck.reason}</p>}
+                {isMaster && refundCheck.eligible === false && (
                   <textarea placeholder="환불 불가 사유를 입력하세요" value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)} rows={2}
                     style={{ width: '100%', resize: 'vertical', marginTop: 10, padding: '8px 10px', fontSize: 13, borderRadius: 6, border: '1px solid #d0d7de', boxSizing: 'border-box' }} />
@@ -197,28 +200,29 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
           {refundError && <p style={{ fontSize: 13, color: '#9a4444', marginTop: 12 }}>{refundError}</p>}
         </div>
 
-        <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
-          {isCompletedPayment && !selected.refundStatus && !requestMode && (
-            <button onClick={() => setRequestMode(true)} disabled={refundLoading}>환불 요청</button>
-          )}
-          {isCompletedPayment && !selected.refundStatus && requestMode && (
-            <>
-              <button onClick={submitRefundRequest} disabled={refundLoading || !requestReason.trim()}>
-                {refundLoading ? '처리 중...' : '접수 확인'}
+        {hasRefundActions && (
+          <div className="modalAction" style={{ flexShrink: 0, padding: '16px 24px 20px' }}>
+            {isCompletedPayment && !selected.refundStatus && !requestMode && (
+              <button onClick={() => setRequestMode(true)} disabled={refundLoading}>환불 요청</button>
+            )}
+            {isCompletedPayment && !selected.refundStatus && requestMode && (
+              <>
+                <button onClick={submitRefundRequest} disabled={refundLoading || !requestReason.trim()}>
+                  {refundLoading ? '처리 중...' : '접수 확인'}
+                </button>
+                <button onClick={() => { setRequestMode(false); setRequestReason(''); }} disabled={refundLoading}>취소</button>
+              </>
+            )}
+            {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible === true && (
+              <button onClick={confirmRefund} disabled={refundLoading}>{refundLoading ? '처리 중...' : '환불 처리 확정'}</button>
+            )}
+            {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible === false && (
+              <button className="tableBtn--danger" onClick={rejectRefundAction} disabled={refundLoading || !rejectReason.trim()}>
+                {refundLoading ? '처리 중...' : '환불 불가 처리'}
               </button>
-              <button onClick={() => { setRequestMode(false); setRequestReason(''); }} disabled={refundLoading}>취소</button>
-            </>
-          )}
-          {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible && (
-            <button onClick={confirmRefund} disabled={refundLoading}>{refundLoading ? '처리 중...' : '환불 처리 확정'}</button>
-          )}
-          {isMaster && selected.refundStatus === 'PENDING' && refundCheck && !refundCheck.eligible && (
-            <button className="tableBtn--danger" onClick={rejectRefundAction} disabled={refundLoading || !rejectReason.trim()}>
-              {refundLoading ? '처리 중...' : '환불 불가 처리'}
-            </button>
-          )}
-          <button onClick={onClose} disabled={refundLoading}>닫기</button>
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

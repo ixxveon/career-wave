@@ -56,11 +56,11 @@ class ResumeStompChannelInterceptorTest {
     }
 
     @Test
-    @DisplayName("CONNECT 프레임에 memberId가 없으면 예외가 발생한다")
-    void connect_withoutMemberId_throwsException() {
+    @DisplayName("CONNECT 프레임에 memberId가 없으면 Resume WS가 아닌 연결로 간주하고 통과한다")
+    void connect_withoutMemberId_passes() {
         Message<?> message = buildStompMessage(StompCommand.CONNECT, null, null);
-        assertThatThrownBy(() -> interceptor.preSend(message, null))
-                .isInstanceOf(MessageDeliveryException.class);
+        Message<?> result = interceptor.preSend(message, null);
+        assertThat(result).isNotNull();
     }
 
     @Test

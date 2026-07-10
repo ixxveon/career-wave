@@ -5,11 +5,9 @@ import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.filter.AccountStatusPort;
 import kr.co.carrer.auth.jwt.AccountType;
-import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.principal.AuthPrincipal;
-import kr.co.carrer.auth.filter.IpAclPort;
-import kr.co.carrer.auth.store.TokenBlacklistStore;
 import kr.co.carrer.global.config.SecurityConfig;
+import kr.co.carrer.support.SecurityMockConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,16 +25,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AdminReportController.class)
-@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class, SecurityMockConfig.class})
 class AdminReportControllerPaginationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean private AdminReportService adminReportService;
-    @MockBean private JwtTokenProvider jwtTokenProvider;
-    @MockBean private TokenBlacklistStore tokenBlacklistStore;
-    @MockBean private IpAclPort ipAclPort;
     @MockBean private AccountStatusPort accountStatusPort;
 
     private AuthPrincipal adminPrincipal;

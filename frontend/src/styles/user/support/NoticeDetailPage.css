@@ -70,15 +70,6 @@
   display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-.nd-list-btn {
-  align-self: center;
-  padding: 10px 28px; border-radius: var(--radius-md);
-  border: 1.5px solid var(--color-border); background: var(--color-surface);
-  font-size: 13px; font-weight: 700; color: var(--color-text-secondary);
-  cursor: pointer; transition: all 0.12s;
-}
-.nd-list-btn:hover { background: var(--color-sky); color: var(--color-primary-dark); border-color: var(--color-primary); }
-
 .nd-empty {
   padding: 80px; text-align: center;
   font-size: 14px; color: var(--color-text-secondary);

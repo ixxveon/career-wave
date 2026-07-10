@@ -50,6 +50,7 @@ public interface AdminManagementService {
     }
 
     record CreateAdminCommand(
+            String loginId,
             String email,
             String password,
             String name,

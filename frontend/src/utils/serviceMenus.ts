@@ -34,17 +34,18 @@ export const serviceMenus: MenuItem[] = [
       { label: '면접 홈',             href: '/interview' },
       { label: 'AI 텍스트 · 음성 면접', href: '/interview/text' },
       { label: '면접 이력',           href: '/interview/sessions' },
-      { label: '면접 리포트',         href: '/interview/sessions' },
     ],
   },
-  {
-    label: '지원 관리',
-    href: '/applications/applicants',
-    children: [
-      { label: '지원자 관리', href: '/applications/applicants' },
-      { label: '진단 상세',   href: '/career-diagnosis/detail/backend-20260522' },
-    ],
-  },
+  // QA #1140 — '지원 관리'(진단 상세) 도메인은 미완성이라 전체 회원에게 헤더 메뉴 노출만 숨김.
+  // 라우트/페이지(/career-diagnosis/detail/:id)는 그대로 유지 — 완성 후 아래 메뉴 주석만 해제하면 복원됨.
+  // {
+  //   label: '지원 관리',
+  //   href: '/career-diagnosis/detail/backend-20260522',
+  //   children: [
+  //     // { label: '지원자 관리', href: '/applications/applicants' }, // TODO(#977, #1049): 백엔드 미구현으로 임시 비활성화
+  //     { label: '진단 상세', href: '/career-diagnosis/detail/backend-20260522' },
+  //   ],
+  // },
   {
     label: '커뮤니티',
     href: '/community',
@@ -62,3 +63,13 @@ export const serviceMenus: MenuItem[] = [
     ],
   },
 ];
+
+// QA #1140/#1171 — 기업 회원에게는 노출하지 않는 개인 전용 서비스 메뉴
+// 커뮤니티(신고 기능 포함)는 기업 회원 대상이 아니므로 함께 숨긴다.
+const COMPANY_HIDDEN_MENU_LABELS = ['서류 AI 코칭', 'AI 면접', '커뮤니티'] as const;
+
+export function getServiceMenus(isCompanyMember: boolean): MenuItem[] {
+  if (!isCompanyMember) return serviceMenus;
+  const hiddenLabels: readonly string[] = COMPANY_HIDDEN_MENU_LABELS;
+  return serviceMenus.filter((menu) => !hiddenLabels.includes(menu.label));
+}

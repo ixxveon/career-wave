@@ -44,7 +44,7 @@ class TossBillingPaymentClientTest {
     void pay_success() throws Exception {
         server.enqueue(new MockResponse()
                 .setBody("{\"paymentKey\":\"pay_abc\",\"orderId\":\"ORDER-123\"," +
-                         "\"status\":\"DONE\",\"totalAmount\":29000,\"currency\":\"KRW\"," +
+                         "\"method\":\"카드\",\"status\":\"DONE\",\"totalAmount\":29000,\"currency\":\"KRW\"," +
                          "\"approvedAt\":\"2026-06-23T10:00:00+09:00\"}")
                 .addHeader("Content-Type", "application/json"));
 
@@ -54,6 +54,7 @@ class TossBillingPaymentClientTest {
 
         assertThat(response.paymentKey()).isEqualTo("pay_abc");
         assertThat(response.orderId()).isEqualTo("ORDER-123");
+        assertThat(response.method()).isEqualTo("카드");
         assertThat(response.status()).isEqualTo("DONE");
         assertThat(response.totalAmount()).isEqualTo(29000);
         assertThat(response.currency()).isEqualTo("KRW");

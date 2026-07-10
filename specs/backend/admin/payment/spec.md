@@ -290,13 +290,12 @@ GET /api/v1/admin/subscriptions?status=&page=1&size=20
 - `@Transactional(readOnly = true)`
 
 #### approveRefund(UUID paymentId, Long adminId)
-- `PAYMENT_NOT_FOUND(404)` 예외 처리
-- `refund_status != PENDING` → `REFUND_NOT_PENDING(409)` 예외
-- `payment_status != PAID` → `PAYMENT_NOT_REFUNDABLE(409)` 예외
-- Toss 환불 API 호출 — v1은 stub 처리 (실제 연동 미정)
-  - 성공(stub): `refund_status = COMPLETED`, `refunded_at = now()`, `admin_id = adminId`, `payment_status = CANCELED` — 동일 트랜잭션
-  - 실패(stub): `refund_status = FAILED`, `admin_id = adminId` — 별도 트랜잭션(`REQUIRES_NEW`) 후 `TOSS_REFUND_FAILED(502)` throw
-- `@Transactional`
+- 조회/검증(`prepareCancel`)과 확정 반영(`finalizeApproval`)을 별도 트랜잭션 메서드(`RefundApprovalTxService`, 별도 빈)로 분리 — Toss HTTP 호출(최대 10초 블로킹)을 트랜잭션 밖에서 수행해 DB 커넥션이 외부 API 응답을 기다리며 점유되지 않도록 함
+- `prepareCancel`: `PAYMENT_NOT_FOUND(404)`, `payment_status != PAID` → `PAYMENT_NOT_REFUNDABLE(409)`, `refund_status != PENDING` → `REFUND_NOT_PENDING(409)`, `payment_key` 없음 → `PAYMENT_INVALID_PARAM(400)` — `@Transactional(readOnly = true)`
+- Toss 결제 취소 API 호출(트랜잭션 밖)
+  - 성공(`status = CANCELED`): `finalizeApproval` 호출 — `refund_status = COMPLETED`, `refunded_at = now()`, `admin_id = adminId`, `payment_status = REFUNDED` — `@Transactional`
+  - 확정 실패(4xx, Toss가 명시적으로 거부): `refund_status = FAILED`, `admin_id = adminId` — 별도 트랜잭션(`REQUIRES_NEW`, `RefundFailureTxService`) 후 `TOSS_REFUND_FAILED(502)` throw
+  - 불확실한 실패(5xx/timeout/네트워크 예외): Toss 쪽에서 실제로는 취소가 처리됐을 수도 있는 상태라 `FAILED`로 기록하지 않음(환불은 `PENDING` 유지, 관리자가 Toss 대시보드 확인 후 재시도/수동 처리) — `TOSS_REFUND_AMBIGUOUS(503)` throw
 
 #### rejectRefund(UUID paymentId, String rejectReason, Long adminId)
 - `PAYMENT_NOT_FOUND(404)` 예외 처리
@@ -380,12 +379,17 @@ GET /api/v1/admin/subscriptions?status=&page=1&size=20
 **Scenario 1**: 정상 환불 확정
 - Given PENDING 상태의 환불 요청이 있는 PAID 결제에 대해
 - When POST /api/v1/admin/payments/{paymentId}/refund 요청 시
-- Then Toss 환불 API가 호출되고 refund_status = COMPLETED, payment_status = CANCELED로 동일 트랜잭션 처리 후 결과를 반환한다
+- Then Toss 환불 API가 호출되고(트랜잭션 밖) 성공(CANCELED) 시 refund_status = COMPLETED, payment_status = REFUNDED로 별도 트랜잭션(finalizeApproval) 처리 후 결과를 반환한다
 
-**Scenario 2**: Toss API 실패
-- Given Toss 환불 API 호출이 실패한 경우
+**Scenario 2**: Toss API 확정 실패(4xx)
+- Given Toss 환불 API가 4xx로 명시적으로 거부한 경우
 - When POST /api/v1/admin/payments/{paymentId}/refund 요청 시
-- Then refund_status = FAILED가 별도 트랜잭션으로 저장되고 502 TOSS_REFUND_FAILED를 반환한다
+- Then refund_status = FAILED가 별도 트랜잭션(REQUIRES_NEW)으로 저장되고 502 TOSS_REFUND_FAILED를 반환한다
+
+**Scenario 2-1**: Toss API 결과 불확실(5xx/timeout)
+- Given Toss 환불 API 호출이 5xx 또는 timeout/네트워크 예외로 응답을 받지 못한 경우
+- When POST /api/v1/admin/payments/{paymentId}/refund 요청 시
+- Then refund_status는 FAILED로 바뀌지 않고 PENDING을 유지하며 503 TOSS_REFUND_AMBIGUOUS를 반환한다(Toss 쪽에서 실제로는 취소가 처리됐을 수도 있는 불확실한 상태이기 때문)
 
 **Scenario 3**: 이미 처리된 환불
 - Given PENDING이 아닌 환불 요청에 대해
@@ -487,5 +491,6 @@ GET /api/v1/admin/subscriptions?status=&page=1&size=20
 | REFUND_NOT_PENDING | 409 | 이미 처리된 환불 건 재처리 시도 |
 | PAYMENT_NOT_REFUNDABLE | 409 | PAID 아닌 결제 환불 시도 |
 | REJECT_REASON_REQUIRED | 400 | 환불 불가 처리 시 사유 미입력 |
-| TOSS_REFUND_FAILED | 502 | Toss 환불 API 호출 실패 |
+| TOSS_REFUND_FAILED | 502 | Toss 환불 API 호출 실패(4xx, 확정 실패) |
+| TOSS_REFUND_AMBIGUOUS | 503 | Toss 환불 API 응답 불확실(5xx/timeout, PENDING 유지) |
 | UNAUTHORIZED | 401 | 인증 실패 |

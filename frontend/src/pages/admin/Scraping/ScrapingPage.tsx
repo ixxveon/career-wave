@@ -82,6 +82,8 @@ const getActionErrorMessage = (error: unknown) =>
   error instanceof Error && error.message
     ? error.message
     : '액션 요청에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+const getScrapingResponseMessage = (message: string | null | undefined, fallback: string) =>
+  message?.trim() || fallback;
 const actionReason: Record<ScrapingActionType, string> = {
   [SCRAPING_ACTION_TYPE.RUN]: '관리자 수동 실행 요청',
   [SCRAPING_ACTION_TYPE.RETRY]: '관리자 수동 재시도 요청',
@@ -120,6 +122,9 @@ export default function ScrapingPage() {
         page: pipelinePage,
         size: PIPELINE_PAGE_SIZE,
       });
+      if (!response.data.success) {
+        throw new Error(getScrapingResponseMessage(response.data.message, 'Failed to load scraping sources.'));
+      }
       return response.data.data;
     },
     placeholderData: (previousData) => previousData,
@@ -140,17 +145,27 @@ export default function ScrapingPage() {
         page: logPage,
         size: LOG_PAGE_SIZE,
       });
+      if (!response.data.success) {
+        throw new Error(getScrapingResponseMessage(response.data.message, 'Failed to load scraping logs.'));
+      }
       return response.data.data;
     },
     placeholderData: (previousData) => previousData,
   });
 
   const sourceActionMutation = useMutation({
-    mutationFn: ({ sourceName, actionType }: { sourceName: string; actionType: ScrapingActionType }) =>
-      scrapingApi.requestAction(sourceName, {
+    mutationFn: async ({ sourceName, actionType }: { sourceName: string; actionType: ScrapingActionType }) => {
+      const response = await scrapingApi.requestAction(sourceName, {
         actionType,
         reason: actionReason[actionType],
-      }),
+      });
+
+      if (!response.data.success) {
+        throw new Error(getScrapingResponseMessage(response.data.message, 'Failed to request scraping action.'));
+      }
+
+      return response.data.data;
+    },
     onMutate: ({ sourceName }) => {
       setActionErrorMessage(null);
       pendingSourceNamesRef.current.add(sourceName);

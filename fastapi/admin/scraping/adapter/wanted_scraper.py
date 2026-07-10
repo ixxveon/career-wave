@@ -127,7 +127,7 @@ class WantedScraper(ScraperAdapter):
         except httpx.HTTPError:
             return None
 
-        soup = BeautifulSoup(response.text, "lxml")
+        soup = BeautifulSoup(response.text, "html.parser")
         for selector in (
             "[data-testid='JobDescription']",
             "section.JobDescription",

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { supportApi, INQUIRY_CATEGORY_LABEL, type InquiryCategory } from '../../../api/user/supportApi';
 import '@/styles/user/support/InquiryCreatePage.css';
 
@@ -15,21 +15,28 @@ export default function InquiryCreatePage() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState('');
 
-  const canSubmit = category && title.trim() && content.trim().length >= 10;
+  const TITLE_MAX = 100;
+  const CONTENT_MAX = 2000;
+  const CONTENT_MIN = 10;
+
+  const canSubmit =
+    category &&
+    title.trim() && title.length <= TITLE_MAX &&
+    content.trim().length >= CONTENT_MIN && content.length <= CONTENT_MAX;
 
   function handleSubmit() {
     if (!canSubmit || loading) return;
     setLoading(true);
     setError('');
     supportApi.createInquiry({ category, title, content })
-      .then(() => setSubmitted(true))
+      .then(() => { setSubmitted(true); window.scrollTo(0, 0); })
       .catch(() => setError('문의 접수 중 오류가 발생했습니다. 다시 시도해 주세요.'))
       .finally(() => setLoading(false));
   }
 
   if (submitted) {
     return (
-      <div className="ic-page">
+      <div className="ic-page ic-page--success">
         <div className="ic-success">
           <div className="ic-success__icon">
             <Send size={28} />
@@ -55,10 +62,6 @@ export default function InquiryCreatePage() {
   return (
     <div className="ic-page">
       <div className="ic-wrap">
-        <button className="ic-back" onClick={() => navigate('/support/inquiry')}>
-          <ChevronLeft size={14} /> 문의 내역
-        </button>
-
         <div className="ic-header">
           <span className="ic-eyebrow">1:1 문의</span>
           <h1 className="ic-header__title">문의하기</h1>
@@ -86,11 +89,11 @@ export default function InquiryCreatePage() {
             <input
               className="ic-input"
               placeholder="문의 내용을 한 줄로 요약해 주세요"
-              maxLength={100}
+              maxLength={TITLE_MAX}
               value={title}
-              onChange={e => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value.slice(0, TITLE_MAX))}
             />
-            <span className="ic-field__count">{title.length} / 100</span>
+            <span className="ic-field__count">{title.length} / {TITLE_MAX}</span>
           </div>
 
           <div className="ic-field">
@@ -98,12 +101,13 @@ export default function InquiryCreatePage() {
             <textarea
               className="ic-textarea"
               placeholder="문의 내용을 자세히 작성해 주세요. (최소 10자)"
-              rows={10}
+              rows={6}
+              maxLength={CONTENT_MAX}
               value={content}
-              onChange={e => setContent(e.target.value)}
+              onChange={e => setContent(e.target.value.slice(0, CONTENT_MAX))}
             />
             <span className="ic-field__count ic-field__count--bottom">
-              {content.length}자 {content.trim().length < 10 && <span className="ic-field__hint">(최소 10자 이상)</span>}
+              {content.length} / {CONTENT_MAX}자 {content.trim().length < CONTENT_MIN && <span className="ic-field__hint">(최소 {CONTENT_MIN}자 이상)</span>}
             </span>
           </div>
 

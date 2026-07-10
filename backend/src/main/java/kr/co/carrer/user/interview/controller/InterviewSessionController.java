@@ -23,6 +23,17 @@ public class InterviewSessionController implements InterviewSessionControllerDoc
     private final InterviewSessionService interviewSessionService;
 
     @Override
+    @GetMapping("/in-progress")
+    public ResponseEntity<ApiResponse<InterviewDTO.ResponseInProgressSession>> getInProgressSession(
+            @AuthenticationPrincipal AuthPrincipal principal
+    ) {
+        UUID memberId = UUID.fromString(principal.getId());
+        InterviewDTO.ResponseInProgressSession session = interviewSessionService.findInProgressSession(memberId)
+                .orElse(null);
+        return ResponseEntity.ok(ApiResponse.ok(session));
+    }
+
+    @Override
     @PostMapping
     public ResponseEntity<ApiResponse<InterviewDTO.ResponseStartSession>> startSession(
             @AuthenticationPrincipal AuthPrincipal principal,

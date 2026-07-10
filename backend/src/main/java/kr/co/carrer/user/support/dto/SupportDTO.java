@@ -56,8 +56,8 @@ public class SupportDTO {
 
     public record RequestCreateInquiry(
         @NotNull InquiryCategory category,
-        @NotBlank @Size(max = 200) String title,
-        @NotBlank String content
+        @NotBlank @Size(max = 100, message = "제목은 100자를 초과할 수 없습니다.") String title,
+        @NotBlank @Size(min = 10, max = 2000, message = "문의 내용은 10자 이상 2000자 이하로 입력해주세요.") String content
     ) {}
 
     public record ResponseCreateInquiry(
