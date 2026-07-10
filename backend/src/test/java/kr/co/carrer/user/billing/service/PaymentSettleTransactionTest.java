@@ -57,6 +57,7 @@ class PaymentSettleTransactionTest {
     @Mock UserPaymentFailureTxService failureTxService;
     @Mock PaymentReconciliationTxService reconciliationTxService;
     @Mock EntitlementInitService entitlementInitService;
+    @Mock BillingMemberPort billingMemberPort;
 
     private UserPaymentConfirmServiceImpl service;
     private UserPaymentSettleTxService settleTxService;
@@ -67,7 +68,7 @@ class PaymentSettleTransactionTest {
     void setUp() {
         settleTxService = new UserPaymentSettleTxService(
                 subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository,
-                entitlementInitService);
+                entitlementInitService, billingMemberPort);
         service = new UserPaymentConfirmServiceImpl(
                 userPaymentRepository, billingProfileRepository, planRepository,
                 tossBillingAuthClient, tossBillingPaymentClient, oneTimePaymentClient, aesCipher,

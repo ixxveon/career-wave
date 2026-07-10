@@ -2,7 +2,9 @@ package kr.co.carrer.user.member.service.impl;
 
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
+import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.service.BillingMemberPort;
+import kr.co.carrer.user.billing.type.SubscriptionStatus;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.type.MemberStatus;
@@ -10,13 +12,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
 import java.util.UUID;
+
+import static kr.co.carrer.user.member.type.SubscriptionStatus.FREE;
+import static kr.co.carrer.user.member.type.SubscriptionStatus.PREMIUM;
 
 @Service
 @RequiredArgsConstructor
 public class BillingMemberPortImpl implements BillingMemberPort {
 
     private final UserMemberRepository memberRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -36,5 +43,21 @@ public class BillingMemberPortImpl implements BillingMemberPort {
             throw new CustomException(BillingErrorCode.BILLING_EMAIL_REQUIRED);
         }
         return new MemberBillingInfo(member.getName(), member.getEmail());
+    }
+
+    @Override
+    @Transactional
+    public void markPremium(UUID memberId) {
+        memberRepository.findById(memberId).ifPresent(m -> m.updateSubscriptionStatus(PREMIUM));
+    }
+
+    @Override
+    @Transactional
+    public void markFreeIfNoActivePlan(UUID memberId) {
+        boolean hasActiveSub = subscriptionRepository.existsByMemberIdAndSubscriptionStatusIn(
+                memberId, Set.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.CANCEL_SCHEDULED));
+        if (!hasActiveSub) {
+            memberRepository.findById(memberId).ifPresent(m -> m.updateSubscriptionStatus(FREE));
+        }
     }
 }

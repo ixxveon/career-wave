@@ -2,6 +2,7 @@ package kr.co.carrer.user.billing.scheduler;
 
 import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
+import kr.co.carrer.user.billing.service.BillingMemberPort;
 import kr.co.carrer.user.billing.type.SubscriptionStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class SubscriptionExpirationScheduler {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final SubscriptionRepository subscriptionRepository;
+    private final BillingMemberPort billingMemberPort;
     private final Clock clock;
 
     @Scheduled(fixedRate = 300_000)
@@ -37,6 +39,7 @@ public class SubscriptionExpirationScheduler {
         for (Subscription sub : targets) {
             try {
                 sub.expire();
+                billingMemberPort.markFreeIfNoActivePlan(sub.getMemberId());
                 count++;
             } catch (Exception e) {
                 log.warn("구독 만료 전이 실패: subscriptionId={}", sub.getSubscriptionId());

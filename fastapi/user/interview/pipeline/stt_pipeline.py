@@ -69,6 +69,11 @@ def _generate_answer_hint(transcript: str) -> str | None:
     return None
 
 
+# no_speech_prob이 이 임계값 이상이면 Whisper hallucination으로 판단해 transcript를 폐기한다.
+# Whisper는 무음/소음 오디오에서 학습 데이터 기반의 텍스트를 상상해 출력하는 경향이 있다.
+_NO_SPEECH_PROB_THRESHOLD = 0.85
+
+
 def calculate_voice_quality_ratio(no_speech_prob: float) -> float:
     """Whisper no_speech_prob 기반 음성 품질 비율 산정 (0.00 ~ 100.00)."""
     return round((1.0 - no_speech_prob) * 100, 2)
@@ -151,7 +156,15 @@ async def transcribe_chunk(
         ]
         no_speech_prob = sum(probs) / len(probs) if probs else 0.0
 
-    voice_quality_ratio = calculate_voice_quality_ratio(no_speech_prob)
+    if no_speech_prob >= _NO_SPEECH_PROB_THRESHOLD:
+        log.warning(
+            "STT: hallucination masked (no_speech_prob=%.2f): sessionId=%s, questionOrder=%d, discarded=%s",
+            no_speech_prob, session_id, question_order, transcript[:50],
+        )
+        transcript = ""
+        voice_quality_ratio = 0.0
+    else:
+        voice_quality_ratio = calculate_voice_quality_ratio(no_speech_prob)
 
     log.info(
         "STT final: sessionId=%s, questionOrder=%d, voiceQualityRatio=%.2f, transcript=%s",
