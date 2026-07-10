@@ -1,0 +1,10 @@
+.iv-paywall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 60vh;
+  text-align: center;
+  padding: 40px 24px;
+}
