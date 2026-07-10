@@ -640,7 +640,9 @@ export default function AiMetricsPage() {
         <div className="aiOpsDomainGrid">
         {DOMAIN_CARD_ORDER.map((domain) => {
           const usage = domainUsageByDomain.get(domain);
-          const modelName = usage ? getAiDisplayModelName(usage) : '모델 정보 없음';
+          const modelName = usage
+            ? getAiDisplayModelName(usage)
+            : summaryData?.activeModelName ?? '모델 정보 없음';
 
           return (
             <article className="admin-card aiOpsDomainCard" key={domain}>
@@ -657,7 +659,7 @@ export default function AiMetricsPage() {
               <div className="aiOpsDomainModel">
                 <div>
                   <span>표시 모델</span>
-                  <strong>{domainUsageLoading ? '조회 중' : modelName}</strong>
+                  <strong>{(domainUsageLoading || summaryLoading) ? '조회 중' : modelName}</strong>
                 </div>
                 <div className="aiOpsDomainRisk">
                   <span>위험도</span>
