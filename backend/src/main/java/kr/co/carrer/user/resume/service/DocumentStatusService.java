@@ -48,6 +48,8 @@ public class DocumentStatusService {
                     }
                     document.markFailed("분석이 시간 내에 완료되지 않아 자동으로 실패 처리되었습니다. 다시 시도해주세요.");
                     entitlementService.release(ResourceType.DOCUMENT, documentId);
+                    // 대기 페이지에 머문 클라이언트의 UI 스피너가 멈추지 않도록 FAILED 브로드캐스트 (트리거 실패 경로와 동일)
+                    eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(documentId, "FAILED"));
                     log.warn("[분석 타임아웃 자동 실패 처리] documentId: {}", documentId);
                 },
                 () -> log.warn("[분석 타임아웃 처리 스킵] 문서를 찾을 수 없음. documentId: {}", documentId)
