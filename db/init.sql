@@ -838,6 +838,9 @@ COMMENT ON COLUMN payments.created_at        IS '결제 요청 생성 일시';
 COMMENT ON COLUMN payments.updated_at        IS '결제 상태 변경 일시';
 
 CREATE INDEX IF NOT EXISTS idx_payments_status_created  ON payments (payment_status, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_payments_member_plan_ready
+    ON payments (member_id, plan_id)
+    WHERE payment_status = 'READY';
 
 -- ================================================
 -- 22. admins

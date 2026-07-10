@@ -89,6 +89,11 @@ docker compose exec redis redis-cli ping
 > ```
 > 🚨 `-v` 옵션은 **PostgreSQL과 Redis 데이터를 포함한 모든 로컬 볼륨을 삭제**합니다. 로컬 개발 환경에서만 사용하세요.
 
+> DB SQL 파일은 루트 `db/`를 기준으로 관리합니다.
+> - 초기 스키마: `db/init.sql`
+> - 패치 SQL: `db/patches/`
+> - 로컬 테스트 시드: `db/seed-local.sql`
+
 ### Frontend
 
 ```bash
@@ -137,8 +142,8 @@ cd backend
 ### 테스트 계정
 
 ```bash
-# backend/ 디렉토리에서 실행
-psql -U careerwave -d careerwave -f src/main/resources/db/seed-local.sql
+# repository root에서 실행
+psql -U careerwave -d careerwave -f db/seed-local.sql
 ```
 
 | 아이디 | 비밀번호 | 설명 |
