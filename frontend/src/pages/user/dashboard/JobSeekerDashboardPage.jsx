@@ -272,13 +272,6 @@ function JobSeekerDashboardPage() {
                     >
                       <div className="cw-home-job__title-row">
                         <h3>{job.title}</h3>
-                        <button
-                          type="button"
-                          aria-label={`${job.title} 저장 준비 중`}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Bookmark size={16} />
-                        </button>
                       </div>
                       <p className="cw-home-job__company">
                         {job.company}
