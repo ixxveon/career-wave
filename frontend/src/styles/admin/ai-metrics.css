@@ -511,12 +511,12 @@
 }
 
 .aiOpsYAxis {
-  display: grid;
-  grid-template-rows: repeat(5, 1fr);
-  align-items: end;
+  --ai-chart-height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   justify-items: end;
-  height: 250px;
-  padding: 2px 0 10px;
+  height: var(--ai-chart-height);
   color: #7a90ab;
   font-size: 10px;
   font-weight: 700;
@@ -532,15 +532,16 @@
 }
 
 .aiOpsBars {
+  --ai-chart-height: 250px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
   gap: 8px;
   align-items: end;
-  min-height: 250px;
-  height: 250px;
-  padding: 12px 10px 10px;
+  min-height: var(--ai-chart-height);
+  height: var(--ai-chart-height);
+  padding: 0 10px;
   background:
-    linear-gradient(to bottom, rgba(200, 216, 236, 0.45) 1px, transparent 1px) 0 0 / 100% 36px,
+    linear-gradient(to bottom, rgba(200, 216, 236, 0.45) 1px, transparent 1px) 0 0 / 100% var(--ai-chart-grid-step),
     #f6f9ff;
   border: 1px solid #e1ebf5;
   border-radius: 12px;
@@ -557,7 +558,7 @@
   position: relative;
   width: 100%;
   max-width: 54px;
-  height: 212px;
+  height: 100%;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -591,7 +592,6 @@
 
 .aiOpsBar {
   width: 18px;
-  min-height: 12px;
   border-radius: 4px 4px 0 0;
 }
 
@@ -1465,18 +1465,13 @@
   }
 
   .aiOpsYAxis {
-    height: 220px;
+    --ai-chart-height: 220px;
     font-size: 9px;
   }
 
   .aiOpsBars {
+    --ai-chart-height: 220px;
     min-width: 520px;
-    min-height: 220px;
-    height: 220px;
-  }
-
-  .aiOpsBarGroup {
-    height: 182px;
   }
 
   .aiOpsXAxisLabels {
