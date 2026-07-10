@@ -16,20 +16,15 @@ CareerWave는 구직자가 혼자서도 체계적인 취업 준비를 할 수 �
 
 | 메인 페이지 | 이력서 AI 분석 |
 | :---: | :---: |
-| <img width="1381" height="904" alt="스크린샷 2026-07-10 122157" src="https://github.com/user-attachments/assets/1c482b39-4c80-45be-8ff8-82e480e3ec0e" />
- | <img width="1899" height="896" alt="스크린샷 2026-07-10 122431" src="https://github.com/user-attachments/assets/727efb41-41a3-4d7d-ad90-ba168cca660d" />
- |
+| <img width="1381" alt="메인 페이지" src="https://github.com/user-attachments/assets/1c482b39-4c80-45be-8ff8-82e480e3ec0e" /> | <img width="1899" alt="이력서 AI 분석" src="https://github.com/user-attachments/assets/727efb41-41a3-4d7d-ad90-ba168cca660d" /> |
 
 | 자기소개서 AI 분석 | AI 모의면접 |
 | :---: | :---: |
-| <img width="1474" height="900" alt="스크린샷 2026-07-10 122507" src="https://github.com/user-attachments/assets/fbad1124-cbbe-4029-b0e7-0752a09292e1" />
- | <img width="1788" height="890" alt="스크린샷 2026-07-10 122736" src="https://github.com/user-attachments/assets/cf22fb2a-1fd2-4eb0-9d35-f98e85a10f5a" />
- |
+| <img width="1474" alt="자기소개서 AI 분석" src="https://github.com/user-attachments/assets/fbad1124-cbbe-4029-b0e7-0752a09292e1" /> | <img width="1788" alt="AI 모의면접" src="https://github.com/user-attachments/assets/cf22fb2a-1fd2-4eb0-9d35-f98e85a10f5a" /> |
 
 | 마이페이지 / 구독 | 관리자 백오피스 |
 | :---: | :---: |
-| <img width="1492" height="891" alt="image" src="https://github.com/user-attachments/assets/78080265-1eb9-4c3b-8f41-0e40a9a67001" />
- | 이미지 드래그앤드롭 |
+| <img width="1492" alt="마이페이지 / 구독" src="https://github.com/user-attachments/assets/78080265-1eb9-4c3b-8f41-0e40a9a67001" /> | 이미지 드래그앤드롭 |
 
 ---
 
