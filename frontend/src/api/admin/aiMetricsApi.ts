@@ -72,6 +72,8 @@ export interface AiMetricSummary {
   averageLatencyMs: number;
   healthStatus: AiHealthStatus;
   lastSyncedAt: string;
+  activeModelId: number | null;
+  activeModelName: string | null;
 }
 
 export interface AiDomainUsage extends AiModelNameFields {
@@ -369,6 +371,8 @@ export const mapAiMetricSummary = (raw: AiMetricSummaryRaw): AiMetricSummary => 
   averageLatencyMs: 0,
   healthStatus: AI_HEALTH_STATUS.NORMAL,
   lastSyncedAt: new Date().toISOString(),
+  activeModelId: raw.activeModelId,
+  activeModelName: raw.activeModelName,
 });
 
 export const mapAiDomainUsage = (raw: AiDomainUsageRaw): AiDomainUsage[] =>
