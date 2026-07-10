@@ -283,24 +283,32 @@ _RAG_WAIT_TIMEOUT = 5.0    # 최대 대기 시간 (초)
 
 
 async def _wait_for_rag_context(session_id: str, meta: dict[str, Any]) -> dict[str, Any]:
-    """첫 번째 질문(question_order=0) 생성 전 RAG 컨텍스트가 준비될 때까지 최대 5초 대기.
+    """첫 번째 질문(question_order=0) 생성 전 RAG 컨텍스트가 준비될 때까지 대기.
 
-    RAG 인덱싱은 Spring과 거의 동시에 트리거되는 백그라운드 작업이라 레이스 컨디션이 발생한다.
-    컨텍스트가 없으면 일반 모드로 폴백.
+    - rag_status 없음(서류 미연결): 즉시 반환 (대기 없음)
+    - rag_status=READY: 즉시 반환
+    - rag_status=FAILED: 즉시 반환 (일반 모드 폴백)
+    - rag_status=PENDING: READY 또는 FAILED가 될 때까지 최대 5초 폴링
     """
-    if meta.get("rag_context") is not None:
+    rag_status = meta.get("rag_status")
+
+    if rag_status is None or rag_status == "READY" or rag_status == "FAILED":
         return meta
 
+    # rag_status == "PENDING": 서류가 연결됐고 인덱싱 진행 중
     elapsed = 0.0
     while elapsed < _RAG_WAIT_TIMEOUT:
         await asyncio.sleep(_RAG_WAIT_INTERVAL)
         elapsed += _RAG_WAIT_INTERVAL
         refreshed = await get_session_meta(session_id)
-        if refreshed and refreshed.get("rag_context") is not None:
-            log.info(
-                "[Session: %s] RAG context ready after %.1fs wait",
-                session_id, elapsed,
-            )
+        if not refreshed:
+            break
+        status = refreshed.get("rag_status")
+        if status == "READY":
+            log.info("[Session: %s] RAG context ready after %.1fs", session_id, elapsed)
+            return refreshed
+        if status == "FAILED":
+            log.info("[Session: %s] RAG indexing failed after %.1fs, using general mode", session_id, elapsed)
             return refreshed
 
     log.info("[Session: %s] RAG context not ready after %.1fs, proceeding without", session_id, elapsed)

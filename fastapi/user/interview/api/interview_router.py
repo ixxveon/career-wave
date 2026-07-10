@@ -197,6 +197,9 @@ async def register_rag_context(
     if body.sessionId != session_id:
         raise HTTPException(status_code=400, detail="path sessionId와 body sessionId가 일치하지 않습니다.")
 
+    # 인덱싱 시작 전 PENDING 상태 기록 — LLM 파이프라인이 대기 여부를 판단하는 데 사용
+    await update_session_meta(session_id, {"rag_status": "PENDING"})
+
     task = asyncio.create_task(
         _index_rag_context(session_id, body.documentFilePath)
     )
@@ -230,9 +233,10 @@ async def _index_rag_context(session_id: str, document_file_path: str) -> None:
         safe_path = _resolve_safe_path(document_file_path)
         text = await _extract_document_text(str(safe_path))
         truncated = text[:MAX_RAG_CONTEXT_CHARS]
-        await update_session_meta(session_id, {"rag_context": truncated})
+        await update_session_meta(session_id, {"rag_context": truncated, "rag_status": "READY"})
         log.info("[Session: %s] RAG context indexed: charLen=%d", session_id, len(truncated))
     except Exception as e:
+        await update_session_meta(session_id, {"rag_status": "FAILED"})
         log.warning(
             "[Session: %s] RAG indexing failed (fallback to general mode): %s",
             session_id, e,
