@@ -136,4 +136,8 @@ public class Member {
         this.email = email;
         this.phone = phone;
     }
+
+    public void updateSubscriptionStatus(SubscriptionStatus status) {
+        this.subscriptionStatus = status;
+    }
 }
