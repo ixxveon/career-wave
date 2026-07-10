@@ -39,8 +39,7 @@ public class AdminAuthController implements AdminAuthControllerDocs {
             HttpServletResponse response) {
         String refreshToken = extractRefreshTokenCookie(request);
         if (refreshToken == null) throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
-        String newAccessToken = adminLoginService.refresh(refreshToken, response);
-        return ResponseEntity.ok(ApiResponse.ok("토큰이 갱신되었습니다.", new AdminLoginDto.TokenRefreshResponse(newAccessToken)));
+        return ResponseEntity.ok(ApiResponse.ok("토큰이 갱신되었습니다.", adminLoginService.refresh(refreshToken, response)));
     }
 
     @PostMapping("/logout")
