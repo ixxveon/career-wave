@@ -60,12 +60,13 @@ const JobNoticeListPage = lazy(
 const ApplicationStatusPage = lazy(
   () => import("../pages/user/application/ApplicationStatusPage"),
 );
-const ApplicantManagementPage = lazy(
-  () => import("../pages/user/application/ApplicantManagementPage"),
-);
-const ApplicantDetailPage = lazy(
-  () => import("../pages/user/application/ApplicantDetailPage"),
-);
+// TODO(#977, #1049): 백엔드 미구현으로 지원자 관리 페이지 임시 비활성화
+// const ApplicantManagementPage = lazy(
+//   () => import("../pages/user/application/ApplicantManagementPage"),
+// );
+// const ApplicantDetailPage = lazy(
+//   () => import("../pages/user/application/ApplicantDetailPage"),
+// );
 const ApplyPage = lazy(() => import("../pages/user/application/ApplyPage"));
 
 const ResumeAnalysisPage = lazy(
@@ -170,6 +171,9 @@ const StatisticsPage = lazy(
 const AiMetricsPage = lazy(
   () => import("../pages/admin/AiMetrics/AiMetricsPage"),
 );
+const RagManagementPage = lazy(
+  () => import("../pages/admin/RagManagement/RagManagementPage"),
+);
 const ScrapingPage = lazy(() => import("../pages/admin/Scraping/ScrapingPage"));
 const AuditLogPage = lazy(() => import("../pages/admin/AuditLog/AuditLogPage"));
 const AdminCompanyListPage = lazy(
@@ -211,8 +215,7 @@ function AdminProtectedRoute() {
   }
 
   if (!role) {
-    adminSession.clearToken();
-    adminSession.clearRole();
+    adminSession.clearAll();
     return <Navigate to={ADMIN_ROUTE_PATHS.login} replace />;
   }
 
@@ -327,6 +330,7 @@ function AppRoutes() {
               path="status"
               element={lazyRoute(<ApplicationStatusPage />)}
             />
+            {/* TODO(#977, #1049): 백엔드 미구현으로 지원자 관리 라우트 임시 비활성화
             <Route
               path="applicants"
               element={lazyRoute(<ApplicantManagementPage />)}
@@ -335,6 +339,7 @@ function AppRoutes() {
               path="applicants/:applicationId"
               element={lazyRoute(<ApplicantDetailPage />)}
             />
+            */}
             <Route path="apply" element={lazyRoute(<ApplyPage />)} />
           </Route>
 
@@ -436,6 +441,7 @@ function AppRoutes() {
             <Route path="stats" element={lazyRoute(<StatisticsPage />)} />
             <Route path="ai" element={lazyRoute(<AiMetricsPage />)} />
             <Route path="scraping" element={lazyRoute(<ScrapingPage />)} />
+            <Route path="rag" element={lazyRoute(<RagManagementPage />)} />
             <Route path="log" element={lazyRoute(<AuditLogPage />)} />
             <Route
               path="companies"
