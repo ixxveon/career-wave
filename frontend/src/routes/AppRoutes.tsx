@@ -215,7 +215,8 @@ function AdminProtectedRoute() {
   }
 
   if (!role) {
-    adminSession.clearAll();
+    adminSession.clearToken();
+    adminSession.clearRole();
     return <Navigate to={ADMIN_ROUTE_PATHS.login} replace />;
   }
 

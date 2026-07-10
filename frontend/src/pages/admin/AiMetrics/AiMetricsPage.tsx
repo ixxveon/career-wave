@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/ai-metrics.css';
-import MiniPagination from '../../../components/admin/MiniPagination';
 import { AI_DOMAIN, AI_EVENT_SEVERITY, AI_HEALTH_STATUS, AI_METRIC_INTERVAL, AI_USAGE_RISK_LEVEL, DOMAIN_LABELS, aiMetricsApi, getAiDisplayModelName } from '../../../api/admin/aiMetricsApi';
 import type { AiBudgetSetting, AiDomain, AiDomainUsage, AiEventSeverity, AiHealthStatus, AiHeavyUser, AiMetricLog, AiMetricSummary, AiTokenTrendPoint, AiUsageRiskLevel, PageResult } from '../../../api/admin/aiMetricsApi';
 import { sanitizeLogMessage } from '../../../utils/admin/aiMetricsLogSanitizer';
@@ -112,6 +111,7 @@ export default function AiMetricsPage() {
   const [thresholdDraft, setThresholdDraft] = useState('85');
   const [budgetEditorOpen, setBudgetEditorOpen] = useState(false);
   const [budgetMutationErrorMessage, setBudgetMutationErrorMessage] = useState('');
+  const [selectedTrendDomain, setSelectedTrendDomain] = useState<'ALL' | AiDomain>('ALL');
 
   const {
     data: summaryData,
