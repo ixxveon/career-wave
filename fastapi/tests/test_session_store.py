@@ -7,7 +7,7 @@ session_store.py — LLM 분산 락 단위 테스트
 - release_llm_lock() 호출 후 동일 order 재획득 가능
 """
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from user.interview.store.session_store import acquire_llm_lock, release_llm_lock
 
