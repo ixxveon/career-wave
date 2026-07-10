@@ -1,17 +1,26 @@
 package kr.co.carrer.user.resume.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.co.carrer.global.s3.S3Uploader;
 import kr.co.carrer.user.billing.dto.EntitlementDTO;
 import kr.co.carrer.user.billing.service.EntitlementQueryService;
 import kr.co.carrer.user.billing.service.EntitlementService;
 import kr.co.carrer.user.resume.dto.ResumeDTO;
+import kr.co.carrer.user.resume.repository.CoverLetterContentRepository;
+import kr.co.carrer.user.resume.repository.CoverLetterMetaRepository;
+import kr.co.carrer.user.resume.repository.DocumentFeedbackRepository;
 import kr.co.carrer.user.resume.repository.DocumentRepository;
+import kr.co.carrer.user.resume.service.DocumentStatusService;
+import kr.co.carrer.user.resume.service.FileValidator;
 import kr.co.carrer.user.resume.type.DocumentStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -29,8 +38,16 @@ import static org.mockito.Mockito.verify;
 class ResumeServiceQuotaTest {
 
     @Mock private DocumentRepository documentRepository;
+    @Mock private CoverLetterMetaRepository coverLetterMetaRepository;
+    @Mock private CoverLetterContentRepository coverLetterContentRepository;
+    @Mock private DocumentFeedbackRepository documentFeedbackRepository;
+    @Mock private FileValidator fileValidator;
+    @Mock private S3Uploader s3Uploader;
+    @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private DocumentStatusService documentStatusService;
     @Mock private EntitlementQueryService entitlementQueryService;
     @Mock private EntitlementService entitlementService;
+    @Spy  private ObjectMapper objectMapper;
 
     @InjectMocks private ResumeServiceImpl resumeService;
 
