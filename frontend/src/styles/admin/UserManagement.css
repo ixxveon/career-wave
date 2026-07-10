@@ -51,9 +51,6 @@
 .memberKpiIcon.kpi-purple { background: rgba(92,77,133,0.16);   color: #5c4d85; }
 .memberKpiIcon.kpi-yellow { background: rgba(155,117,53,0.16);  color: #8a5a20; }
 
-.memberFilterBtn { height: 42px; padding: 0 24px; border-radius: 10px; background: #24496f; color: white; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: background 0.18s; }
-.memberFilterBtn:hover { background: #1c3e63; }
-
 .roleBadge { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 6px; font-size: 12px; font-weight: 700; background: #edf3f9; color: #4f6b8a; }
 .roleBadge--user    { background: #dbeafe; color: #1d4ed8; }
 .roleBadge--company { background: #fef9c3; color: #854d0e; }

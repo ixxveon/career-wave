@@ -12,7 +12,6 @@ import {
 } from '../../../api/admin/settlementApi';
 import { ADMIN_ROUTE_PATHS } from '../../../constants/admin/adminRouteConstants';
 import '../../../styles/admin/admin.css';
-import '../../../styles/admin/UserManagement.css';
 
 const STATUS_BADGE_CLS: Record<SettlementStatus, string> = {
   PENDING: 'pending',
