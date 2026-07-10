@@ -640,8 +640,9 @@ export default function AiMetricsPage() {
         <div className="aiOpsDomainGrid">
         {DOMAIN_CARD_ORDER.map((domain) => {
           const usage = domainUsageByDomain.get(domain);
-          const modelName = summaryData?.activeModelName
-            ?? (usage ? getAiDisplayModelName(usage) : '모델 정보 없음');
+          const modelName = usage
+            ? getAiDisplayModelName(usage)
+            : summaryData?.activeModelName ?? '모델 정보 없음';
 
           return (
             <article className="admin-card aiOpsDomainCard" key={domain}>
