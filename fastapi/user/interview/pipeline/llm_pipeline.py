@@ -28,7 +28,7 @@ from user.interview.prompts.interview_prompts import (
     get_system_prompt,
 )
 from core.redis import get_redis
-from user.interview.store.session_store import acquire_llm_lock
+from user.interview.store.session_store import acquire_llm_lock, release_llm_lock
 from user.interview.websocket.interview_ws_handler import (
     InterviewErrorCode,
     get_session_meta,
@@ -122,6 +122,7 @@ async def generate_and_deliver_question(
     delivered = await send_question_to_spring(session_id, payload)
     if not delivered:
         log.error("[Session: %s] question delivery failed: order=%d", session_id, next_question_order)
+        await release_llm_lock(redis, session_id, next_question_order)
         await send_error(
             session_id,
             "질문 전달에 실패했습니다. 잠시 후 다시 시도해 주세요.",

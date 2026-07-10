@@ -230,6 +230,17 @@ async def acquire_llm_lock(redis: aioredis.Redis, session_id: str, question_orde
         return True
 
 
+async def release_llm_lock(redis: aioredis.Redis, session_id: str, question_order: int) -> None:
+    """
+    전달 실패 등 재시도가 필요한 경우 락을 명시적으로 해제한다.
+    TTL 만료 전에 해제해 동일 order의 재시도 가능성을 열어둔다.
+    """
+    try:
+        await redis.delete(_key_llm_lock(session_id, question_order))
+    except Exception as exc:
+        _log.warning("[Session: %s] release_llm_lock failed: %s", session_id, exc)
+
+
 # ── rate limit (슬라이딩 윈도우 — Redis Sorted Set) ──────────────────────────
 
 async def rate_limit_check_and_record(
