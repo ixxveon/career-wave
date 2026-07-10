@@ -102,6 +102,18 @@ function formatDeadline(deadline) {
   })}`;
 }
 
+function getDday(deadline) {
+  if (!deadline) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const end = new Date(deadline);
+  end.setHours(0, 0, 0, 0);
+  const diff = Math.round((end - today) / 86400000);
+  if (diff < 0) return null;
+  if (diff === 0) return 'D-day';
+  return `D-${diff}`;
+}
+
 function toRecommendedJobCard(job) {
   return {
     id: job.id,
@@ -112,6 +124,7 @@ function toRecommendedJobCard(job) {
     location: job.location || '지역 미정',
     career: getCareerLabel(job.careerLevel),
     date: formatDeadline(job.deadline),
+    dday: getDday(job.deadline),
     source: job.source,
     tags: (job.tags ?? []).slice(0, 4),
   };
@@ -204,17 +217,6 @@ function JobSeekerDashboardPage() {
       </section>
 
       <section className="cw-home-jobs" id="jobs">
-        <header>
-          <div>
-            <h2>추천 공고</h2>
-            <p>AI가 당신에게 추천하는 맞춤 공고예요.</p>
-          </div>
-          <Link to="/jobs">
-            전체 공고 보기
-            <ChevronRight size={15} />
-          </Link>
-        </header>
-
         <div className={`cw-home-job-lockup ${isLoggedIn ? '' : 'is-locked'}`}>
           {!isLoggedIn && (
             <div className="cw-home-job-lockup__overlay">
@@ -230,75 +232,82 @@ function JobSeekerDashboardPage() {
             </div>
           )}
 
+          <div className="cw-home-job-lockup__header">
+            <div>
+              <span className="cw-home-job-lockup__badge">
+                <Sparkles size={12} />
+                오늘의 AI 추천
+              </span>
+              <p>AI가 지원 이력과 관심 활동을 반영해 선별했어요</p>
+            </div>
+            <Link to="/jobs">
+              전체 공고 보기
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+
           {recommendedJobsStatus === 'success' && (
             <div className="cw-home-job-carousel" aria-hidden={!isLoggedIn}>
-              <button
-                type="button"
-                className="cw-home-job-carousel__arrow cw-home-job-carousel__arrow--prev"
-                aria-label="이전 공고"
-                disabled={carouselIndex === 0}
-                onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
-              >
-                <ChevronLeft size={20} />
-              </button>
+              {carouselIndex > 0 && (
+                <button
+                  type="button"
+                  className="cw-home-job-carousel__arrow cw-home-job-carousel__arrow--prev"
+                  aria-label="이전 공고"
+                  onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+              )}
               <div className="cw-home-job-carousel__viewport">
                 <div
                   className="cw-home-job-carousel__track"
-                  style={{ transform: `translateX(calc(-${carouselIndex} * (100% / ${CAROUSEL_VISIBLE} + 8px)))` }}
+                  style={{ transform: `translateX(calc(-${carouselIndex} * 100% / ${CAROUSEL_VISIBLE}))` }}
                 >
                   {recommendedJobs.map((job) => (
-                    <article className="cw-home-job" key={job.id}>
-                  <div className="cw-home-job__head">
-                    <span className={`cw-home-job__logo is-${job.logoClass}`}>{job.logo}</span>
-                    <button type="button" aria-label={`${job.title} 저장 준비 중`} disabled>
-                      <Bookmark size={20} />
-                    </button>
-                  </div>
-                  <h3>{job.title}</h3>
-                  <p>{job.company}</p>
-                  <div className="cw-home-job__tags">
-                    {job.tags.length > 0 ? (
-                      job.tags.map((tag) => (
-                        <em key={tag}>{tag}</em>
-                      ))
-                    ) : (
-                      <em>{job.source}</em>
-                    )}
-                  </div>
-                  <dl className="cw-home-job__meta">
-                    <div>
-                      <MapPin size={14} />
-                      <dt>위치</dt>
-                      <dd>{job.location}</dd>
-                    </div>
-                    <div>
-                      <Briefcase size={14} />
-                      <dt>경력</dt>
-                      <dd>{job.career}</dd>
-                    </div>
-                    <div>
-                      <CalendarDays size={14} />
-                      <dt>마감</dt>
-                      <dd>{job.date}</dd>
-                    </div>
-                  </dl>
-                  <Link className="cw-home-job__detail" tabIndex={isLoggedIn ? 0 : -1} to={`/jobs?jobNoticeId=${job.id}`}>
-                    상세보기
-                    <ChevronRight size={15} />
-                  </Link>
-                  </article>
-                ))}
+                    <Link
+                      key={job.id}
+                      className="cw-home-job"
+                      tabIndex={isLoggedIn ? 0 : -1}
+                      to={`/jobs?jobNoticeId=${job.id}`}
+                    >
+                      <div className="cw-home-job__title-row">
+                        <h3>{job.title}</h3>
+                        <button
+                          type="button"
+                          aria-label={`${job.title} 저장 준비 중`}
+                          disabled
+                          onClick={(e) => e.preventDefault()}
+                        >
+                          <Bookmark size={16} />
+                        </button>
+                      </div>
+                      <p className="cw-home-job__company">
+                        {job.company}
+                        {job.dday && <em className="cw-home-job__dday">{job.dday}</em>}
+                      </p>
+                      <div className="cw-home-job__tags">
+                        {job.tags.length > 0
+                          ? job.tags.map((tag) => <span key={tag}>{tag}</span>)
+                          : <span>{job.source}</span>}
+                      </div>
+                      <p className="cw-home-job__location">
+                        <MapPin size={12} />
+                        {job.location}
+                      </p>
+                    </Link>
+                  ))}
                 </div>
               </div>
-              <button
-                type="button"
-                className="cw-home-job-carousel__arrow cw-home-job-carousel__arrow--next"
-                aria-label="다음 공고"
-                disabled={carouselIndex >= recommendedJobs.length - CAROUSEL_VISIBLE}
-                onClick={() => setCarouselIndex((i) => Math.min(recommendedJobs.length - CAROUSEL_VISIBLE, i + 1))}
-              >
-                <ChevronRight size={20} />
-              </button>
+              {carouselIndex < recommendedJobs.length - CAROUSEL_VISIBLE && (
+                <button
+                  type="button"
+                  className="cw-home-job-carousel__arrow cw-home-job-carousel__arrow--next"
+                  aria-label="다음 공고"
+                  onClick={() => setCarouselIndex((i) => Math.min(recommendedJobs.length - CAROUSEL_VISIBLE, i + 1))}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              )}
             </div>
           )}
 
