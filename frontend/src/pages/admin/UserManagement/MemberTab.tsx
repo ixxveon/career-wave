@@ -104,8 +104,15 @@ export default function MemberTab() {
   useEffect(() => { fetchMemberCounts(); }, [fetchMemberCounts]);
 
   const applyMemberSearch = () => {
-    appliedMemberFilters.current = { role: roleFilter, status: statusFilter, plan: planFilter, keyword: userKeyword, startDate, endDate };
+    // 기업 회원은 구독 플랜이 "해당없음"으로 표시되므로, 플랜 필터를 적용하지 않는다.
+    const plan = roleFilter === MEMBER_ROLE.COMPANY ? '' : planFilter;
+    appliedMemberFilters.current = { role: roleFilter, status: statusFilter, plan, keyword: userKeyword, startDate, endDate };
     fetchMembers(1);
+  };
+
+  const handleRoleFilterChange = (value: string) => {
+    setRoleFilter(value);
+    if (value === MEMBER_ROLE.COMPANY) setPlanFilter('');
   };
 
   const openMemberDetail = (memberId: string) => {
@@ -161,12 +168,17 @@ export default function MemberTab() {
       <section className="admin-card memberFilter">
         <input type="text" placeholder="이름, 이메일, 회원 ID 검색" value={userKeyword}
           onChange={(e) => setUserKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && applyMemberSearch()} />
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+        <select value={roleFilter} onChange={(e) => handleRoleFilterChange(e.target.value)}>
           <option value="">권한 전체</option>
           <option value={MEMBER_ROLE.USER}>일반 회원</option>
           <option value={MEMBER_ROLE.COMPANY}>기업 회원</option>
         </select>
-        <select value={planFilter} onChange={(e) => setPlanFilter(e.target.value)}>
+        <select
+          value={roleFilter === MEMBER_ROLE.COMPANY ? '' : planFilter}
+          onChange={(e) => setPlanFilter(e.target.value)}
+          disabled={roleFilter === MEMBER_ROLE.COMPANY}
+          title={roleFilter === MEMBER_ROLE.COMPANY ? '기업 회원은 구독 플랜이 없습니다' : undefined}
+        >
           <option value="">구독 전체</option><option value="FREE">FREE</option><option value="PREMIUM">PREMIUM</option>
         </select>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
