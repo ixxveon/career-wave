@@ -167,12 +167,12 @@ career-wave/
 
 | 이름 | GitHub | 담당 모듈 |
 | :--- | :--- | :--- |
-| 이가연 | [@ixxveon](https://github.com/ixxveon) |  |
+| 이가연 | [@ixxveon](https://github.com/ixxveon) | AI 서류코칭, AI 모의면접 |
 | 홍순찬 | [@hongsoonchan02](https://github.com/hongsoonchan02) |  |
 | 신보라 | [@sbr7518-bit](https://github.com/sbr7518-bit) |  |
 | 마은재 | [@maranqian-bot](https://github.com/maranqian-bot) |  |
 | 고은별 | [@dmsquf9193-dot](https://github.com/dmsquf9193-dot) |  |
-| 고유리 | [@yul941117-wq](https://github.com/yul941117-wq) |  |
+| 고유리 | [@yul941117-wq](https://github.com/yul941117-wq) | 메인페이지, 마이페이지, 커뮤니티 |
 
 ---
 
