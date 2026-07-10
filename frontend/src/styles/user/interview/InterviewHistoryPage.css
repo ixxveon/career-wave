@@ -135,6 +135,9 @@
   font-size: 12px;
   color: var(--color-text-secondary);
 }
+.ih-status--analyzing {
+  color: var(--color-primary, #6366f1);
+}
 
 /* ─── 페이지네이션 ─── */
 .ih-pagination {
