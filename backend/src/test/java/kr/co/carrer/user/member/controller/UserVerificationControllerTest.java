@@ -35,7 +35,7 @@ class UserVerificationControllerTest {
     // ─── 인증번호 발송 ─────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("인증번호 발송 성공 시 200 + statusCode=200 + verificationId를 반환한다")
+    @DisplayName("인증번호 발송 성공 시 200 + verificationId를 반환한다")
     void send_성공_200() throws Exception {
         UUID verificationId = UUID.randomUUID();
         Instant now = Instant.now();
@@ -74,7 +74,7 @@ class UserVerificationControllerTest {
     // ─── 인증번호 확인 ─────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("인증번호 확인 성공 시 200 + statusCode=200 + verificationToken을 반환한다")
+    @DisplayName("인증번호 확인 성공 시 200 + verificationToken을 반환한다")
     void confirm_성공_200() throws Exception {
         when(userVerificationService.confirm(any()))
                 .thenReturn(new UserVerificationDto.ResponseConfirmVerification(

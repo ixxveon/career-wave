@@ -41,7 +41,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {}
 }
@@ -50,8 +49,9 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": false,
-  "statusCode": 400,
-  "message": "요청을 처리할 수 없습니다."
+  "status": 400,
+  "message": "요청을 처리할 수 없습니다.",
+  "data": null
 }
 ```
 
@@ -67,7 +67,7 @@ Authorization: Bearer {accessToken}
 
 ### 공통 Error Cases
 
-| statusCode | 상황 | 프론트 처리 |
+| status | 상황 | 프론트 처리 |
 |------------|------|-------------|
 | `400` | 입력값 검증 실패 | 필드 오류 표시 |
 | `401` | 인증 실패 또는 토큰 만료 | 로그인 페이지 이동 |
@@ -105,7 +105,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "로그인되었습니다.",
   "data": {
     "accessToken": "jwt-access-token",
@@ -124,7 +123,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |------------|------|
 | `401` | 아이디 또는 비밀번호 불일치 |
 | `403` | 승인 대기 기업회원 또는 제재 계정 |
@@ -142,7 +141,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "사용 가능한 아이디입니다.",
   "data": {
     "available": true
@@ -177,7 +175,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "인증번호가 발송되었습니다.",
   "data": {
     "verificationId": "uuid-v4",
@@ -208,7 +205,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "인증이 완료되었습니다.",
   "data": {
     "verificationToken": "short-lived-token",
@@ -249,7 +245,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 201,
   "message": "회원가입이 완료되었습니다.",
   "data": {
     "memberId": "uuid-v4",
@@ -302,7 +297,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 201,
   "message": "기업회원 가입 신청이 완료되었습니다.",
   "data": {
     "memberId": "uuid-v4",
@@ -334,7 +328,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "파일이 업로드되었습니다.",
   "data": {
     "fileId": "uploaded-file-id",
@@ -348,7 +341,7 @@ Authorization: Bearer {accessToken}
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |------------|------|
 | `400` | PDF 형식 아님 / MIME 불일치 / 5MB 초과 |
 | `401` | 인증 필요 또는 토큰 만료 |
@@ -387,7 +380,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 처리되었습니다.",
   "data": {
     "maskedLoginIds": ["caree***01"],
@@ -431,7 +423,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "비밀번호를 재설정할 수 있습니다.",
   "data": {
     "resetToken": "password-reset-token",
@@ -460,7 +451,6 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "비밀번호가 변경되었습니다.",
   "data": {
     "changedAt": "2026-05-31T12:39:00Z"
@@ -490,7 +480,6 @@ refresh token은 HttpOnly cookie 우선, 불가 시 body로 전달한다.
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "토큰이 갱신되었습니다.",
   "data": {
     "accessToken": "new-jwt-access-token",
@@ -501,7 +490,7 @@ refresh token은 HttpOnly cookie 우선, 불가 시 body로 전달한다.
 
 ### Error Cases
 
-| statusCode | 상황 |
+| status | 상황 |
 |------------|------|
 | `401` | refresh token 만료 또는 유효하지 않음 |
 
@@ -517,7 +506,6 @@ refresh token은 HttpOnly cookie 우선, 불가 시 body로 전달한다.
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공적으로 처리되었습니다.",
   "data": {
     "memberId": "uuid-v4",

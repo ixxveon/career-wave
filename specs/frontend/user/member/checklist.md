@@ -23,7 +23,7 @@
 ### 세션 / 에러
 
 - [-] `memberStatus`, `companyApprovalStatus`, `verificationStatus`의 모든 상태가 UI에서 처리되는가?
-- [x] API 호출 실패 시 `statusCode`에 따른 공통 메시지/모달/필드 오류가 정상 노출되는가?
+- [x] API 호출 실패 시 `status`에 따른 공통 메시지/모달/필드 오류가 정상 노출되는가?
 - [x] 네트워크 단절 상태에서 로그인/가입/인증 요청 실패 시 재시도 가능한 안내가 표시되는가?
 - [x] 429 rate limit 응답 시 재시도 제한 안내가 표시되는가?
 

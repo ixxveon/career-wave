@@ -239,7 +239,7 @@ function PersonalTerms({ values, onChange, termDetails }: PersonalTermsProps) {
     label: string;
     details?: TermSection[];
   }> = [
-    { key: 'age', type: 'required', label: '만 15세 이상입니다' },
+    { key: 'age', type: 'required', label: '만 14세 이상입니다' },
     { key: 'service', type: 'required', label: '이용약관 동의', details: termDetails.service },
     { key: 'privacy', type: 'required', label: '개인정보 수집 및 이용 동의', details: termDetails.privacy },
     { key: 'marketing', type: 'optional', label: '광고성 정보 수신 동의', details: termDetails.marketing },

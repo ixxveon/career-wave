@@ -50,7 +50,7 @@ export const INQUIRY_CATEGORY_LABEL: Record<InquiryCategory, string> = {
 };
 
 export const INQUIRY_STATUS_LABEL: Record<InquiryStatus, string> = {
-  PENDING: '접수', IN_PROGRESS: '처리 중', COMPLETED: '답변 완료',
+  PENDING: '접수', IN_PROGRESS: '답변 중', COMPLETED: '답변 완료',
 };
 
 // ── 타입 ───────────────────────────────────────────────────────
