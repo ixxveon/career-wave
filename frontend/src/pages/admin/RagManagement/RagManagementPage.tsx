@@ -227,19 +227,30 @@ export default function RagManagementPage() {
 
   const handleDownloadDocument = (doc: RagDocumentMetric) => {
     void (async () => {
+      let downloadObjectUrl: string | null = null;
+      let anchor: HTMLAnchorElement | null = null;
+
       try {
         setRagActionErrorMessage('');
         const response = await aiMetricsApi.downloadRagDocument(doc.documentId);
-        if (!response.data.success) throw new Error(response.data.message ?? 'RAG 문서 다운로드 정보 조회에 실패했습니다.');
+        if (!response.data.success) throw new Error(response.data.message ?? 'RAG ?? ???? ?? ??? ??????.');
         const download = response.data.data;
-        const anchor = document.createElement('a');
-        anchor.href = download.downloadUrl;
+        const fileResponse = await aiMetricsApi.downloadRagDocumentFile(download.downloadUrl);
+        downloadObjectUrl = URL.createObjectURL(fileResponse.data);
+        anchor = document.createElement('a');
+        anchor.href = downloadObjectUrl;
         anchor.download = download.name;
         document.body.appendChild(anchor);
         anchor.click();
-        document.body.removeChild(anchor);
       } catch (error) {
-        setRagActionErrorMessage(getApiStateMessage(error, 'RAG 문서 다운로드에 실패했습니다.'));
+        setRagActionErrorMessage(getApiStateMessage(error, 'RAG ?? ????? ??????.'));
+      } finally {
+        if (anchor) {
+          document.body.removeChild(anchor);
+        }
+        if (downloadObjectUrl) {
+          URL.revokeObjectURL(downloadObjectUrl);
+        }
       }
     })();
   };
