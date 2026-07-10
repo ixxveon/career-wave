@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -64,6 +65,16 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
             """)
     Optional<ResumeDTO.HistoryItem> findHistoryItemByDocumentIdAndMemberId(
             @Param("documentId") UUID documentId, @Param("memberId") UUID memberId);
+
+    // 방치된 분석 정리용 — 비종료 상태이면서 createdAt 이 cutoff 이전인 문서
+    // (종료 webhook 이 오지 않아 예약이 RESERVED 로 남은 케이스를 스케줄러가 정리)
+    @Query("""
+            SELECT d FROM Document d
+            WHERE d.status IN :statuses
+              AND d.createdAt < :cutoff
+            """)
+    List<Document> findStuckDocuments(@Param("statuses") List<DocumentStatus> statuses,
+                                      @Param("cutoff") ZonedDateTime cutoff);
 
     // 이번 달 분석 사용 횟수 (FAILED 제외)
     @Query("""
