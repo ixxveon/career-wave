@@ -24,7 +24,8 @@ CareerWave는 구직자가 혼자서도 체계적인 취업 준비를 할 수 �
 
 | 마이페이지 / 구독 | 관리자 백오피스 |
 | :---: | :---: |
-| <img width="1492" alt="마이페이지 / 구독" src="https://github.com/user-attachments/assets/78080265-1eb9-4c3b-8f41-0e40a9a67001" /> | 이미지 드래그앤드롭 |
+| <img width="1492" alt="마이페이지 / 구독" src="https://github.com/user-attachments/assets/78080265-1eb9-4c3b-8f41-0e40a9a67001" /> | <img width="1896" height="901" alt="image" src="https://github.com/user-attachments/assets/7d2d243b-bbd6-4fee-a580-e870fb2aaa60" />
+ |
 
 ---
 
