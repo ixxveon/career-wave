@@ -12,6 +12,8 @@
   align-items: center;
   gap: 16px;
   min-height: 66px;
+  max-width: 1480px;
+  margin: 0 auto;
   padding: 0 clamp(20px, 2.5vw, 40px);
 }
 
@@ -20,14 +22,14 @@
   align-items: center;
   gap: 12px;
   color: #243c65;
-  font-size: 19px;
+  font-size: 24px;
   font-weight: 900;
   white-space: nowrap;
 }
 
 .cw-header__brand img {
-  width: 54px;
-  height: 24px;
+  width: auto;
+  height: 50px;
   object-fit: contain;
 }
 
@@ -35,11 +37,12 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: clamp(10px, 1.2vw, 18px);
+  gap: clamp(18px, 2vw, 32px);
   min-width: 0;
+  padding-left: clamp(32px, 4vw, 56px);
   color: #172744;
-  font-size: 14px;
-  font-weight: 900;
+  font-size: 17px;
+  font-weight: 800;
 }
 
 .cw-header__nav-item {
@@ -169,7 +172,7 @@
 /* ?? 醫곸? ?붾㈃: 硫붾돱 媛꾧꺽 異뺤냼 ??????????? */
 @media (max-width: 960px) {
   .cw-header__nav {
-    font-size: 13px;
+    font-size: 20px;
     gap: clamp(10px, 1.4vw, 18px);
   }
 
@@ -199,7 +202,8 @@
     order: 5;
     grid-column: 1 / -1;
     gap: 14px;
-    font-size: 13px;
+    font-size: 18px;
+    padding-left: 0;
     padding-bottom: 2px;
   }
 
@@ -233,7 +237,8 @@
 
   .cw-header__nav {
     gap: 11px;
-    font-size: 12px;
+    font-size: 16px;
+    padding-left: 0;
     flex-wrap: wrap;
     overflow-x: visible;
   }

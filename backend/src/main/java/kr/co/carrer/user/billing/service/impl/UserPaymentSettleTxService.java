@@ -9,6 +9,7 @@ import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.MemberProductEntitlementRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionUsagePeriodRepository;
+import kr.co.carrer.user.billing.service.BillingMemberPort;
 import kr.co.carrer.user.billing.service.EntitlementInitService;
 import kr.co.carrer.user.billing.type.FreeUsageStatus;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class UserPaymentSettleTxService {
     private final MemberProductEntitlementRepository entitlementRepository;
     private final SubscriptionUsagePeriodRepository subscriptionUsagePeriodRepository;
     private final EntitlementInitService entitlementInitService;
+    private final BillingMemberPort billingMemberPort;
 
     // 자동결제(빌링) 결산 — billingProfile(billingKey) 기반 구독 개통.
     @Transactional
@@ -88,6 +90,7 @@ public class UserPaymentSettleTxService {
             entitlement.forfeitFree();
         }
         entitlement.activatePremium(subscription.getSubscriptionId());
+        billingMemberPort.markPremium(payment.getMemberId());
 
         subscriptionUsagePeriodRepository.save(
                 SubscriptionUsagePeriod.create(

@@ -5,6 +5,7 @@ import kr.co.carrer.user.billing.client.dto.TossBillingPaymentResponse;
 import kr.co.carrer.user.billing.entity.*;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.*;
+import kr.co.carrer.user.billing.service.BillingMemberPort;
 import kr.co.carrer.user.billing.type.FreeUsageStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ public class PaymentReconciliationTxService {
     private final MemberProductEntitlementRepository entitlementRepository;
     private final SubscriptionUsagePeriodRepository subscriptionUsagePeriodRepository;
     private final PlanRepository planRepository;
+    private final BillingMemberPort billingMemberPort;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markForReconciliation(UUID paymentId) {
@@ -84,6 +86,7 @@ public class PaymentReconciliationTxService {
             entitlement.forfeitFree();
         }
         entitlement.activatePremium(subscription.getSubscriptionId());
+        billingMemberPort.markPremium(payment.getMemberId());
 
         subscriptionUsagePeriodRepository.save(
                 SubscriptionUsagePeriod.create(
