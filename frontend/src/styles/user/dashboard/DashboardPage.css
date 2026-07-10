@@ -463,12 +463,12 @@
 
 .cw-home-job-carousel__track {
   display: flex;
-  gap: 0;
+  gap: 12px;
   transition: transform 0.3s ease;
 }
 
 .cw-home-job-carousel__track .cw-home-job {
-  flex: 0 0 calc(100% / 3);
+  flex: 0 0 calc((100% - 24px) / 3);
   min-width: 0;
 }
 
@@ -654,19 +654,17 @@
   flex-direction: column;
   min-width: 0;
   padding: 16px;
-  border-right: 1px solid #e8eef8;
+  border: 1px solid #e3eaf5;
+  border-radius: 8px;
+  background: #ffffff;
   text-decoration: none;
   color: inherit;
-  transition: background 0.12s;
-}
-
-.cw-home-job:last-child {
-  border-right: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
 
 .cw-home-job:hover {
-  background: #f7faff;
-  border-radius: 8px;
+  border-color: #b8d0f0;
+  box-shadow: 0 4px 14px rgba(34, 63, 104, 0.08);
 }
 
 .cw-home-job__title-row {
@@ -849,13 +847,7 @@
   }
 
   .cw-home-job-carousel__track .cw-home-job {
-    flex: 0 0 100%;
-    border-right: none;
-    border-bottom: 1px solid #e8eef8;
-  }
-
-  .cw-home-job-carousel__track .cw-home-job:last-child {
-    border-bottom: none;
+    flex: 0 0 calc(100% - 12px);
   }
 
   .cw-home-job-lockup.is-locked {

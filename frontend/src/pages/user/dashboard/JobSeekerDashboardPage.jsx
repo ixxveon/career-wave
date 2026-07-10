@@ -261,7 +261,7 @@ function JobSeekerDashboardPage() {
               <div className="cw-home-job-carousel__viewport">
                 <div
                   className="cw-home-job-carousel__track"
-                  style={{ transform: `translateX(calc(-${carouselIndex} * 100% / ${CAROUSEL_VISIBLE}))` }}
+                  style={{ transform: `translateX(calc(-${carouselIndex} * ((100% + 12px) / ${CAROUSEL_VISIBLE})))` }}
                 >
                   {recommendedJobs.map((job) => (
                     <Link
