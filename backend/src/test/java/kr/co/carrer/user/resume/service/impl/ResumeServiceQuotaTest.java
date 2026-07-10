@@ -9,7 +9,6 @@ import kr.co.carrer.user.resume.type.DocumentStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -75,6 +74,21 @@ class ResumeServiceQuotaTest {
 
         assertThat(quota.usedCount()).isZero();
         assertThat(quota.limitCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("핵심 케이스 — 무료 1회 사용 후 월 중간 구독 전환 시 usedCount=0 / limitCount=30")
+    void getQuota_freeUsedOnce_thenSubscribedMidMonth_returnsZeroUsedAndPremiumLimit() {
+        // 무료로 1회 사용 후 이번 달 중간에 구독 → 구독 기간의 monthlyUsed=0, monthlyReserved=0
+        // 무료 사용분은 PREMIUM 월 카운트에 포함되지 않아야 함
+        EntitlementDTO.EntitlementItem premiumItem = premiumItem(30, 0, 0);
+        givenEntitlements(premiumItem);
+
+        ResumeDTO.ResponseQuota quota = resumeService.getQuota(MEMBER_ID);
+
+        assertThat(quota.usedCount()).isEqualTo(0);
+        assertThat(quota.limitCount()).isEqualTo(30);
+        verify(documentRepository, never()).countUsedThisMonth(any(), any(), any());
     }
 
     @Test
