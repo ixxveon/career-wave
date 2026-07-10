@@ -171,6 +171,9 @@ const StatisticsPage = lazy(
 const AiMetricsPage = lazy(
   () => import("../pages/admin/AiMetrics/AiMetricsPage"),
 );
+const RagManagementPage = lazy(
+  () => import("../pages/admin/RagManagement/RagManagementPage"),
+);
 const ScrapingPage = lazy(() => import("../pages/admin/Scraping/ScrapingPage"));
 const AuditLogPage = lazy(() => import("../pages/admin/AuditLog/AuditLogPage"));
 const AdminCompanyListPage = lazy(
@@ -438,6 +441,7 @@ function AppRoutes() {
             <Route path="stats" element={lazyRoute(<StatisticsPage />)} />
             <Route path="ai" element={lazyRoute(<AiMetricsPage />)} />
             <Route path="scraping" element={lazyRoute(<ScrapingPage />)} />
+            <Route path="rag" element={lazyRoute(<RagManagementPage />)} />
             <Route path="log" element={lazyRoute(<AuditLogPage />)} />
             <Route
               path="companies"

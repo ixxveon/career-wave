@@ -631,6 +631,9 @@ export const aiMetricsApi = {
         data: mapApiResponse(response.data, mapRagDocumentDownload),
       })),
 
+  downloadRagDocumentFile: (downloadUrl: string) =>
+    axiosInstance.get<Blob>(downloadUrl, { responseType: 'blob' }),
+
   deleteRagDocument: (documentId: string) =>
     axiosInstance.delete<ApiResponse<null>>(`${AI_METRICS_API_BASE_PATH}/rag-documents/${documentId}`),
 };

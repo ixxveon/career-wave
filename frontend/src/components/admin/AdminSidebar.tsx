@@ -37,6 +37,7 @@ const menuGroups = [
     items: [
       { label: 'AI 메트릭스', path: ADMIN_ROUTE_PATHS.ai },
       { label: '스크래핑 관리', path: ADMIN_ROUTE_PATHS.scraping },
+      { label: 'RAG 관리', path: ADMIN_ROUTE_PATHS.rag },
       { label: '감사 로그', path: ADMIN_ROUTE_PATHS.log },
     ],
   },
