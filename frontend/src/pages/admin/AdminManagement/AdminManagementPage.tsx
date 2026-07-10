@@ -29,6 +29,10 @@ import type {
   AdminRole,
   AuditSeverity,
 } from '../../../api/admin/adminManagementApi';
+import {
+  ADMIN_MANAGEMENT_ADMINS_QUERY_KEY,
+  ADMIN_MANAGEMENT_QUERY_KEY,
+} from '../../../constants/admin/adminManagementQueryKeys';
 import '../../../styles/admin/admin.css';
 import MiniPagination from '../../../components/admin/MiniPagination';
 
@@ -90,9 +94,7 @@ const MAX_SECURITY_LOGS = 5;
 const ADMIN_PAGE_SIZE = 20;
 const ACL_PAGE_SIZE = 3;
 const ADMIN_SEARCH_DEBOUNCE_MS = 400;
-const ADMIN_MANAGEMENT_QUERY_KEY = ['adminManagement'] as const;
 const ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'summary'] as const;
-const ADMIN_MANAGEMENT_ADMINS_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'admins'] as const;
 const ADMIN_MANAGEMENT_ACLS_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'acls'] as const;
 const ADMIN_MANAGEMENT_AUDIT_LOGS_QUERY_KEY = [...ADMIN_MANAGEMENT_QUERY_KEY, 'auditLogs'] as const;
 
@@ -278,7 +280,6 @@ export default function AdminManagementPage() {
   } = useQuery({
     queryKey: [...ADMIN_MANAGEMENT_ADMINS_QUERY_KEY, adminListQueryParams],
     queryFn: () => getAdminAccounts(adminListQueryParams),
-    refetchOnMount: 'always',
   });
   const filteredAdmins = adminAccounts?.items.map(toAdminAccountRow) ?? [];
   const aclListQueryParams = {
