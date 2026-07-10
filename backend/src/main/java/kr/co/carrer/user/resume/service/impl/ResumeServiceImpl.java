@@ -289,6 +289,8 @@ public class ResumeServiceImpl implements ResumeService {
         return new ResumeDTO.ResponseQuota(usedCount, limitCount);
     }
 
+    private static final int FREE_DOCUMENT_LIMIT = 1;
+
     private int resolveDocumentLimitCount(UUID memberId, int usedCount) {
         EntitlementDTO.ResponseEntitlementList entitlements = entitlementQueryService.getMyEntitlements(memberId);
         return entitlements.entitlementDetails().stream()
@@ -296,7 +298,7 @@ public class ResumeServiceImpl implements ResumeService {
                 .findFirst()
                 .map(item -> item.monthlyLimit() != null
                         ? item.monthlyLimit()
-                        : item.freeRemaining() + usedCount)
+                        : FREE_DOCUMENT_LIMIT)
                 .orElse(0);
     }
 
