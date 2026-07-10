@@ -24,10 +24,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 @SecurityRequirement(name = "bearerAuth")
 public interface AdminManagementDocs {
 
-    String UNAUTHORIZED_EXAMPLE = "{\"success\":false,\"statusCode\":401,\"message\":\"인증이 필요합니다.\",\"code\":\"AUTH_UNAUTHENTICATED\",\"data\":null}";
-    String FORBIDDEN_EXAMPLE = "{\"success\":false,\"statusCode\":403,\"message\":\"접근 권한이 없습니다.\",\"code\":\"AUTH_FORBIDDEN\",\"data\":null}";
-    String BAD_REQUEST_BODY_EXAMPLE = "{\"success\":false,\"statusCode\":400,\"message\":\"요청 본문을 읽을 수 없습니다. JSON 형식 및 필드값을 확인해주세요.\",\"data\":null}";
-    String BAD_REQUEST_QUERY_EXAMPLE = "{\"success\":false,\"statusCode\":400,\"message\":\"요청 파라미터가 올바르지 않습니다.\",\"code\":\"BAD_REQUEST\",\"data\":null}";
+    String UNAUTHORIZED_EXAMPLE = "{\"success\":false,\"status\":401,\"message\":\"인증이 필요합니다.\",\"code\":\"AUTH_UNAUTHENTICATED\",\"data\":null}";
+    String FORBIDDEN_EXAMPLE = "{\"success\":false,\"status\":403,\"message\":\"접근 권한이 없습니다.\",\"code\":\"AUTH_FORBIDDEN\",\"data\":null}";
+    String BAD_REQUEST_BODY_EXAMPLE = "{\"success\":false,\"status\":400,\"message\":\"요청 본문을 읽을 수 없습니다. JSON 형식 및 필드값을 확인해주세요.\",\"data\":null}";
+    String BAD_REQUEST_QUERY_EXAMPLE = "{\"success\":false,\"status\":400,\"message\":\"요청 파라미터가 올바르지 않습니다.\",\"code\":\"BAD_REQUEST\",\"data\":null}";
 
     @Operation(summary = "관리자 관리 KPI 요약 조회")
     @ApiResponses({
@@ -58,12 +58,12 @@ public interface AdminManagementDocs {
         @ApiResponse(
             responseCode = "409",
             description = "이미 사용 중인 관리자 이메일",
-            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"statusCode\":409,\"message\":\"이미 사용 중인 관리자 이메일입니다.\",\"code\":\"ADMIN_EMAIL_ALREADY_EXISTS\",\"data\":null}"))
+            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"status\":409,\"message\":\"이미 사용 중인 관리자 이메일입니다.\",\"code\":\"ADMIN_EMAIL_ALREADY_EXISTS\",\"data\":null}"))
         ),
         @ApiResponse(
             responseCode = "400",
             description = "유효하지 않은 관리자 권한",
-            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"statusCode\":400,\"message\":\"유효하지 않은 관리자 권한입니다.\",\"code\":\"INVALID_ADMIN_ROLE\",\"data\":null}"))
+            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"status\":400,\"message\":\"유효하지 않은 관리자 권한입니다.\",\"code\":\"INVALID_ADMIN_ROLE\",\"data\":null}"))
         ),
         @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(examples = @ExampleObject(value = UNAUTHORIZED_EXAMPLE))),
         @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(examples = @ExampleObject(value = FORBIDDEN_EXAMPLE)))
@@ -80,12 +80,12 @@ public interface AdminManagementDocs {
         @ApiResponse(
             responseCode = "404",
             description = "관리자 계정 없음",
-            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"statusCode\":404,\"message\":\"관리자 계정을 찾을 수 없습니다.\",\"code\":\"ADMIN_NOT_FOUND\",\"data\":null}"))
+            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"status\":404,\"message\":\"관리자 계정을 찾을 수 없습니다.\",\"code\":\"ADMIN_NOT_FOUND\",\"data\":null}"))
         ),
         @ApiResponse(
             responseCode = "400",
             description = "유효하지 않은 관리자 권한",
-            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"statusCode\":400,\"message\":\"유효하지 않은 관리자 권한입니다.\",\"code\":\"INVALID_ADMIN_ROLE\",\"data\":null}"))
+            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"status\":400,\"message\":\"유효하지 않은 관리자 권한입니다.\",\"code\":\"INVALID_ADMIN_ROLE\",\"data\":null}"))
         ),
         @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(examples = @ExampleObject(value = UNAUTHORIZED_EXAMPLE))),
         @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(examples = @ExampleObject(value = FORBIDDEN_EXAMPLE)))
@@ -103,19 +103,19 @@ public interface AdminManagementDocs {
         @ApiResponse(
             responseCode = "404",
             description = "관리자 계정 없음",
-            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"statusCode\":404,\"message\":\"관리자 계정을 찾을 수 없습니다.\",\"code\":\"ADMIN_NOT_FOUND\",\"data\":null}"))
+            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"status\":404,\"message\":\"관리자 계정을 찾을 수 없습니다.\",\"code\":\"ADMIN_NOT_FOUND\",\"data\":null}"))
         ),
         @ApiResponse(
             responseCode = "400",
             description = "유효하지 않은 관리자 상태",
-            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"statusCode\":400,\"message\":\"유효하지 않은 관리자 상태입니다.\",\"code\":\"INVALID_ADMIN_STATUS\",\"data\":null}"))
+            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"status\":400,\"message\":\"유효하지 않은 관리자 상태입니다.\",\"code\":\"INVALID_ADMIN_STATUS\",\"data\":null}"))
         ),
         @ApiResponse(
             responseCode = "409",
             description = "중복 상태 변경",
             content = @Content(examples = {
-                @ExampleObject(name = "alreadyLocked", value = "{\"success\":false,\"statusCode\":409,\"message\":\"이미 잠금 상태인 관리자 계정입니다.\",\"code\":\"ADMIN_ALREADY_LOCKED\",\"data\":null}"),
-                @ExampleObject(name = "alreadyActive", value = "{\"success\":false,\"statusCode\":409,\"message\":\"이미 활성 상태인 관리자 계정입니다.\",\"code\":\"ADMIN_ALREADY_ACTIVE\",\"data\":null}")
+                @ExampleObject(name = "alreadyLocked", value = "{\"success\":false,\"status\":409,\"message\":\"이미 잠금 상태인 관리자 계정입니다.\",\"code\":\"ADMIN_ALREADY_LOCKED\",\"data\":null}"),
+                @ExampleObject(name = "alreadyActive", value = "{\"success\":false,\"status\":409,\"message\":\"이미 활성 상태인 관리자 계정입니다.\",\"code\":\"ADMIN_ALREADY_ACTIVE\",\"data\":null}")
             })
         ),
         @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(examples = @ExampleObject(value = UNAUTHORIZED_EXAMPLE))),
@@ -134,7 +134,7 @@ public interface AdminManagementDocs {
         @ApiResponse(
             responseCode = "404",
             description = "관리자 계정 없음",
-            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"statusCode\":404,\"message\":\"관리자 계정을 찾을 수 없습니다.\",\"code\":\"ADMIN_NOT_FOUND\",\"data\":null}"))
+            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"status\":404,\"message\":\"관리자 계정을 찾을 수 없습니다.\",\"code\":\"ADMIN_NOT_FOUND\",\"data\":null}"))
         ),
         @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(examples = @ExampleObject(value = UNAUTHORIZED_EXAMPLE))),
         @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(examples = @ExampleObject(value = FORBIDDEN_EXAMPLE)))
@@ -162,7 +162,7 @@ public interface AdminManagementDocs {
         @ApiResponse(
             responseCode = "409",
             description = "중복 IP 범위",
-            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"statusCode\":409,\"message\":\"이미 등록된 IP 범위입니다.\",\"code\":\"IP_ACL_DUPLICATED_RANGE\",\"data\":null}"))
+            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"status\":409,\"message\":\"이미 등록된 IP 범위입니다.\",\"code\":\"IP_ACL_DUPLICATED_RANGE\",\"data\":null}"))
         ),
         @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(examples = @ExampleObject(value = UNAUTHORIZED_EXAMPLE))),
         @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(examples = @ExampleObject(value = FORBIDDEN_EXAMPLE)))
@@ -179,14 +179,14 @@ public interface AdminManagementDocs {
         @ApiResponse(
             responseCode = "404",
             description = "IP ACL 정보 없음",
-            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"statusCode\":404,\"message\":\"IP ACL 정보를 찾을 수 없습니다.\",\"code\":\"IP_ACL_NOT_FOUND\",\"data\":null}"))
+            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"status\":404,\"message\":\"IP ACL 정보를 찾을 수 없습니다.\",\"code\":\"IP_ACL_NOT_FOUND\",\"data\":null}"))
         ),
         @ApiResponse(
             responseCode = "409",
             description = "중복 활성 상태 변경",
             content = @Content(examples = {
-                @ExampleObject(name = "alreadyEnabled", value = "{\"success\":false,\"statusCode\":409,\"message\":\"이미 활성 상태인 IP ACL입니다.\",\"code\":\"IP_ACL_ALREADY_ENABLED\",\"data\":null}"),
-                @ExampleObject(name = "alreadyDisabled", value = "{\"success\":false,\"statusCode\":409,\"message\":\"이미 비활성 상태인 IP ACL입니다.\",\"code\":\"IP_ACL_ALREADY_DISABLED\",\"data\":null}")
+                @ExampleObject(name = "alreadyEnabled", value = "{\"success\":false,\"status\":409,\"message\":\"이미 활성 상태인 IP ACL입니다.\",\"code\":\"IP_ACL_ALREADY_ENABLED\",\"data\":null}"),
+                @ExampleObject(name = "alreadyDisabled", value = "{\"success\":false,\"status\":409,\"message\":\"이미 비활성 상태인 IP ACL입니다.\",\"code\":\"IP_ACL_ALREADY_DISABLED\",\"data\":null}")
             })
         ),
         @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(examples = @ExampleObject(value = UNAUTHORIZED_EXAMPLE))),
@@ -205,7 +205,7 @@ public interface AdminManagementDocs {
         @ApiResponse(
             responseCode = "404",
             description = "IP ACL 정보 없음",
-            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"statusCode\":404,\"message\":\"IP ACL 정보를 찾을 수 없습니다.\",\"code\":\"IP_ACL_NOT_FOUND\",\"data\":null}"))
+            content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"status\":404,\"message\":\"IP ACL 정보를 찾을 수 없습니다.\",\"code\":\"IP_ACL_NOT_FOUND\",\"data\":null}"))
         ),
         @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(examples = @ExampleObject(value = UNAUTHORIZED_EXAMPLE))),
         @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(examples = @ExampleObject(value = FORBIDDEN_EXAMPLE)))

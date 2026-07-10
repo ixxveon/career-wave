@@ -1,8 +1,8 @@
 import axiosInstance from '../../utils/axiosInstance';
 
 export type ApiResponse<T> =
-  | { success: true; statusCode: number; message: string | null; data: T; timestamp?: string }
-  | { success: false; statusCode: number; message: string | null; data: null; timestamp?: string };
+  | { success: true; message: string | null; data: T; timestamp?: string }
+  | { success: false; status: number; message: string | null; data: null; timestamp?: string };
 
 export const AI_DOMAIN = {
   DOCUMENT: 'DOCUMENT',

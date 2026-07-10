@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 @SecurityRequirement(name = "bearerAuth")
 public interface DashboardDocs {
 
-    String BAD_REQUEST_EXAMPLE = "{\"success\":false,\"statusCode\":400,\"message\":\"Unsupported dashboard range.\",\"code\":\"BAD_REQUEST\",\"data\":null}";
-    String UNAUTHORIZED_EXAMPLE = "{\"success\":false,\"statusCode\":401,\"message\":\"Authentication is required.\",\"code\":\"UNAUTHORIZED\",\"data\":null}";
-    String FORBIDDEN_EXAMPLE = "{\"success\":false,\"statusCode\":403,\"message\":\"Access is denied.\",\"code\":\"FORBIDDEN\",\"data\":null}";
-    String INTERNAL_SERVER_ERROR_EXAMPLE = "{\"success\":false,\"statusCode\":500,\"message\":\"Dashboard summary aggregation failed.\",\"code\":\"INTERNAL_SERVER_ERROR\",\"data\":null}";
+    String BAD_REQUEST_EXAMPLE = "{\"success\":false,\"status\":400,\"message\":\"Unsupported dashboard range.\",\"code\":\"BAD_REQUEST\",\"data\":null}";
+    String UNAUTHORIZED_EXAMPLE = "{\"success\":false,\"status\":401,\"message\":\"Authentication is required.\",\"code\":\"UNAUTHORIZED\",\"data\":null}";
+    String FORBIDDEN_EXAMPLE = "{\"success\":false,\"status\":403,\"message\":\"Access is denied.\",\"code\":\"FORBIDDEN\",\"data\":null}";
+    String INTERNAL_SERVER_ERROR_EXAMPLE = "{\"success\":false,\"status\":500,\"message\":\"Dashboard summary aggregation failed.\",\"code\":\"INTERNAL_SERVER_ERROR\",\"data\":null}";
 
     @Operation(
             summary = "Get admin dashboard summary",
