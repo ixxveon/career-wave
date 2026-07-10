@@ -57,8 +57,8 @@ PENDING ──► COMPLETED  (환불 처리 확정)
 | 컨트롤러 분리 | AdminPaymentController / AdminSubscriptionController | 도메인별 책임 분리 |
 | 환불 경로 | `POST /api/admin/payments/{paymentId}/refund` | FE에서 paymentId 기준 호출, refundId 별도 조회 불필요 |
 | Toss API 호출 | Service 레이어에서 RestTemplate/WebClient | Controller에서 외부 API 직접 호출 금지 |
-| 트랜잭션 범위 | 환불 확정 시 `refund.complete()` + `payment.cancel()` 동일 트랜잭션 | Toss 성공 후 DB 상태 원자적 처리 |
-| Toss 실패 처리 | `refund.fail()` 후 `TOSS_REFUND_FAILED(502)` | payment_status 변경 없이 재처리 가능하도록 |
+| 트랜잭션 범위 | Toss HTTP 호출은 트랜잭션 밖(`RefundApprovalTxService.prepareCancel`), 성공 후 확정 반영만 별도 트랜잭션(`finalizeApproval`) | 외부 API 응답(최대 10초) 대기 중 DB 커넥션 점유 방지 |
+| Toss 실패 처리 | 4xx(확정 실패) → `refund.fail()` 후 `TOSS_REFUND_FAILED(502)`. 5xx/timeout(불확실) → `FAILED`로 기록하지 않고 `TOSS_REFUND_AMBIGUOUS(503)`만 반환, PENDING 유지 | 실제로는 Toss에서 취소가 처리됐을 수도 있는 불확실한 상태를 확정 실패로 오기록하지 않기 위함 |
 | AI 이용 현황 | 결제 상세 조회 시 포함 | 환불 가능 여부 판단에 필요한 정보 |
 | 구독 조회 | admin 전용 SubscriptionRepository | user 패키지 직접 참조 금지 (CONVENTION.md) |
 | page 1-based | Controller에서 `page - 1` 변환 후 Pageable 전달 | FE 계약(`page=1`이 첫 페이지) 준수 |
