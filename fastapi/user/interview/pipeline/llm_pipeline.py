@@ -73,6 +73,9 @@ async def generate_and_deliver_question(
         log.warning("[Session: %s] LLM skipped: no active session context", session_id)
         return
 
+    if question_order == 0:
+        meta = await _wait_for_rag_context(session_id, meta)
+
     if question_order > 0:
         _record_answer(meta, question_text, answer_text)
         meta["recent_answer_quality"] = _assess_answer_quality(meta, question_order, answer_text)
@@ -273,3 +276,32 @@ def _pick_fallback(meta: dict[str, Any]) -> str:
     used_fallback.add(chosen)
     meta["used_fallback_questions"] = used_fallback
     return chosen
+
+
+_RAG_WAIT_INTERVAL = 0.3   # 폴링 간격 (초)
+_RAG_WAIT_TIMEOUT = 5.0    # 최대 대기 시간 (초)
+
+
+async def _wait_for_rag_context(session_id: str, meta: dict[str, Any]) -> dict[str, Any]:
+    """첫 번째 질문(question_order=0) 생성 전 RAG 컨텍스트가 준비될 때까지 최대 5초 대기.
+
+    RAG 인덱싱은 Spring과 거의 동시에 트리거되는 백그라운드 작업이라 레이스 컨디션이 발생한다.
+    컨텍스트가 없으면 일반 모드로 폴백.
+    """
+    if meta.get("rag_context") is not None:
+        return meta
+
+    elapsed = 0.0
+    while elapsed < _RAG_WAIT_TIMEOUT:
+        await asyncio.sleep(_RAG_WAIT_INTERVAL)
+        elapsed += _RAG_WAIT_INTERVAL
+        refreshed = await get_session_meta(session_id)
+        if refreshed and refreshed.get("rag_context") is not None:
+            log.info(
+                "[Session: %s] RAG context ready after %.1fs wait",
+                session_id, elapsed,
+            )
+            return refreshed
+
+    log.info("[Session: %s] RAG context not ready after %.1fs, proceeding without", session_id, elapsed)
+    return meta
