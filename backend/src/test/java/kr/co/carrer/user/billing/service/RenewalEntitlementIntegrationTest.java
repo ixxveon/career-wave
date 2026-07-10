@@ -35,6 +35,7 @@ class RenewalEntitlementIntegrationTest {
     @Mock UserPaymentRepository userPaymentRepository;
     @Mock SubscriptionRepository subscriptionRepository;
     @Mock MemberProductEntitlementRepository entitlementRepository;
+    @Mock BillingMemberPort billingMemberPort;
 
     private RenewalFailureTxService failureTxService;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
@@ -44,7 +45,7 @@ class RenewalEntitlementIntegrationTest {
     @BeforeEach
     void setUp() {
         failureTxService = new RenewalFailureTxService(
-                userPaymentRepository, subscriptionRepository, entitlementRepository);
+                userPaymentRepository, subscriptionRepository, entitlementRepository, billingMemberPort);
     }
 
     @Test

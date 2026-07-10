@@ -4,6 +4,7 @@ import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.service.BillingMemberPort;
 import kr.co.carrer.user.member.entity.Member;
+import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,13 +25,14 @@ import static org.mockito.Mockito.mock;
 class BillingMemberPortImplTest {
 
     @Mock UserMemberRepository memberRepository;
+    @Mock SubscriptionRepository subscriptionRepository;
 
     private BillingMemberPortImpl impl;
     private final UUID memberId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
-        impl = new BillingMemberPortImpl(memberRepository);
+        impl = new BillingMemberPortImpl(memberRepository, subscriptionRepository);
     }
 
     // ─── getMemberBillingInfo ────────────────────────────────────────────────
