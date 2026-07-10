@@ -169,8 +169,8 @@ career-wave/
 | :--- | :--- | :--- |
 | 이가연 | [@ixxveon](https://github.com/ixxveon) | AI 서류코칭, AI 모의면접 |
 | 홍순찬 | [@hongsoonchan02](https://github.com/hongsoonchan02) | 채용공고 (user), 대시보드·관리자 관리·AI 메트릭스·스크래핑 관리·감사 로그 (admin) |
-| 신보라 | [@sbr7518-bit](https://github.com/sbr7518-bit) | 회원관리, 신고관리, 고객센터(admin/user), 결제/정산, 서비스 통계, 관리자 로그인 |
-| 마은재 | [@maranqian-bot](https://github.com/maranqian-bot) |  |
+| 신보라 | [@sbr7518-bit](https://github.com/sbr7518-bit) | 회원관리, 신고관리, 고객센터 (admin/user), 결제/정산, 서비스 통계, 관리자 로그인 |
+| 마은재 | [@maranqian-bot](https://github.com/maranqian-bot) | 로그인/회원가입, 구독/결제 (user) |
 | 고은별 | [@dmsquf9193-dot](https://github.com/dmsquf9193-dot) |  |
 | 고유리 | [@yul941117-wq](https://github.com/yul941117-wq) | 메인페이지, 마이페이지, 커뮤니티 |
 
