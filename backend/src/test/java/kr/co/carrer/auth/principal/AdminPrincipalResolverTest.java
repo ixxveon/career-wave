@@ -40,4 +40,40 @@ class AdminPrincipalResolverTest {
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED);
     }
+
+    @Test
+    void throwsUnauthorizedWhenPrincipalIdIsNull() {
+        AuthPrincipal principal = new AuthPrincipal(null, AccountType.ADMIN, "ADMIN", "MASTER");
+
+        CustomException exception = catchThrowableOfType(
+                () -> AdminPrincipalResolver.extractAdminId(principal),
+                CustomException.class
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED);
+    }
+
+    @Test
+    void throwsUnauthorizedWhenPrincipalIdIsEmpty() {
+        AuthPrincipal principal = new AuthPrincipal("", AccountType.ADMIN, "ADMIN", "MASTER");
+
+        CustomException exception = catchThrowableOfType(
+                () -> AdminPrincipalResolver.extractAdminId(principal),
+                CustomException.class
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED);
+    }
+
+    @Test
+    void throwsUnauthorizedWhenPrincipalIdIsBlank() {
+        AuthPrincipal principal = new AuthPrincipal("   ", AccountType.ADMIN, "ADMIN", "MASTER");
+
+        CustomException exception = catchThrowableOfType(
+                () -> AdminPrincipalResolver.extractAdminId(principal),
+                CustomException.class
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED);
+    }
 }
