@@ -43,6 +43,7 @@ class AdminPaymentServiceImplTest {
     @Mock private RefundRepository refundRepository;
     @Mock private PaymentCancelClient paymentCancelClient;
     @Mock private RefundFailureTxService refundFailureTxService;
+    @Mock private RefundApprovalTxService refundApprovalTxService;
 
     // ── getSummary ────────────────────────────────────────────────────────────
 
@@ -73,38 +74,39 @@ class AdminPaymentServiceImplTest {
     @DisplayName("환불 확정 처리 - approveRefund()")
     class ApproveRefund {
 
+        // Toss 취소 호출 전/후 DB 읽기·쓰기는 RefundApprovalTxService(별도 빈)의
+        // 트랜잭션 메서드로 분리되어 있음 — approveRefund 자체는 이 두 메서드와
+        // paymentCancelClient만 오케스트레이션한다. 그래서 이 테스트들은 repository를
+        // 직접 스텁하지 않고 refundApprovalTxService를 스텁한다.
+
         @Test
         @DisplayName("PAID 결제 + PENDING 환불 → Toss 취소 호출 후 CANCELED / COMPLETED 반환")
         void approveRefund_success() {
             UUID paymentId = UUID.randomUUID();
-            Payment payment = createPayment(paymentId, PaymentStatus.PAID);
-            Refund refund = createRefund(paymentId, RefundStatus.PENDING);
+            RefundApprovalTxService.CancelRequest cancelRequest =
+                new RefundApprovalTxService.CancelRequest("test_payment_key", "구매 취소", 9900);
+            RefundDTO.ResponseApprove expected =
+                new RefundDTO.ResponseApprove(paymentId.toString(), PaymentStatus.REFUNDED, RefundStatus.COMPLETED);
 
-            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
-            given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
-                .willReturn(Optional.of(refund));
-            given(paymentCancelClient.cancel("test_payment_key", refund.getReason(), refund.getAmount()))
+            given(refundApprovalTxService.prepareCancel(paymentId)).willReturn(cancelRequest);
+            given(paymentCancelClient.cancel("test_payment_key", "구매 취소", 9900))
                 .willReturn(new TossCancelResponse("test_payment_key", "CANCELED"));
+            given(refundApprovalTxService.finalizeApproval(paymentId, 1L)).willReturn(expected);
 
             RefundDTO.ResponseApprove result = adminPaymentService.approveRefund(paymentId, 1L, "MASTER");
 
-            assertThat(result.paymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
-            assertThat(result.refundStatus()).isEqualTo(RefundStatus.COMPLETED);
-            verify(paymentCancelClient).cancel("test_payment_key", refund.getReason(), refund.getAmount());
-            verify(refundRepository).save(refund);
-            verify(paymentRepository).save(payment);
+            assertThat(result).isEqualTo(expected);
+            verify(paymentCancelClient).cancel("test_payment_key", "구매 취소", 9900);
+            verify(refundApprovalTxService).finalizeApproval(paymentId, 1L);
+            verify(refundFailureTxService, never()).saveRefundFailed(any(), any());
         }
 
         @Test
         @DisplayName("Toss 결제 키 없음 → PAYMENT_INVALID_PARAM 예외, Toss 취소 미호출")
         void approveRefund_missingPaymentKey_throwsInvalidParam() {
             UUID paymentId = UUID.randomUUID();
-            Payment payment = createPayment(paymentId, PaymentStatus.PAID, null);
-            Refund refund = createRefund(paymentId, RefundStatus.PENDING);
-
-            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
-            given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
-                .willReturn(Optional.of(refund));
+            given(refundApprovalTxService.prepareCancel(paymentId))
+                .willThrow(new CustomException(AdminPaymentErrorCode.PAYMENT_INVALID_PARAM));
 
             assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "MASTER"))
                 .isInstanceOf(CustomException.class)
@@ -114,16 +116,14 @@ class AdminPaymentServiceImplTest {
         }
 
         @Test
-        @DisplayName("Toss 취소 API 실패 → TOSS_REFUND_FAILED 예외, 환불 실패 이력 별도 저장")
+        @DisplayName("Toss 취소 확정 실패(4xx) → TOSS_REFUND_FAILED 예외, 환불 실패 이력 별도 저장")
         void approveRefund_tossCancelFails_throwsAndSavesFailure() {
             UUID paymentId = UUID.randomUUID();
-            Payment payment = createPayment(paymentId, PaymentStatus.PAID);
-            Refund refund = createRefund(paymentId, RefundStatus.PENDING);
+            RefundApprovalTxService.CancelRequest cancelRequest =
+                new RefundApprovalTxService.CancelRequest("test_payment_key", "구매 취소", 9900);
 
-            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
-            given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
-                .willReturn(Optional.of(refund));
-            given(paymentCancelClient.cancel("test_payment_key", refund.getReason(), refund.getAmount()))
+            given(refundApprovalTxService.prepareCancel(paymentId)).willReturn(cancelRequest);
+            given(paymentCancelClient.cancel("test_payment_key", "구매 취소", 9900))
                 .willThrow(new CustomException(AdminPaymentErrorCode.TOSS_REFUND_FAILED));
 
             assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "MASTER"))
@@ -131,15 +131,38 @@ class AdminPaymentServiceImplTest {
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminPaymentErrorCode.TOSS_REFUND_FAILED);
 
-            verify(refundFailureTxService).saveRefundFailed(refund, 1L);
-            verify(paymentRepository, never()).save(any());
+            verify(refundFailureTxService).saveRefundFailed(paymentId, 1L);
+            verify(refundApprovalTxService, never()).finalizeApproval(any(), any());
+        }
+
+        @Test
+        @DisplayName("Toss 취소 결과 불확실(5xx/timeout) → TOSS_REFUND_AMBIGUOUS 예외, 실패 이력 미저장(PENDING 유지)")
+        void approveRefund_tossCancelAmbiguous_throwsWithoutMarkingFailed() {
+            UUID paymentId = UUID.randomUUID();
+            RefundApprovalTxService.CancelRequest cancelRequest =
+                new RefundApprovalTxService.CancelRequest("test_payment_key", "구매 취소", 9900);
+
+            given(refundApprovalTxService.prepareCancel(paymentId)).willReturn(cancelRequest);
+            given(paymentCancelClient.cancel("test_payment_key", "구매 취소", 9900))
+                .willThrow(new CustomException(AdminPaymentErrorCode.TOSS_REFUND_AMBIGUOUS));
+
+            assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "MASTER"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminPaymentErrorCode.TOSS_REFUND_AMBIGUOUS);
+
+            // 불확실한 실패는 확정 FAILED로 기록하지 않는다 — Toss가 실제로는 취소를
+            // 처리했을 수도 있는 상태이기 때문. 환불은 PENDING으로 남아 수동 확인 대상이 된다.
+            verify(refundFailureTxService, never()).saveRefundFailed(any(), any());
+            verify(refundApprovalTxService, never()).finalizeApproval(any(), any());
         }
 
         @Test
         @DisplayName("존재하지 않는 결제 ID → PAYMENT_NOT_FOUND 예외")
         void approveRefund_paymentNotFound() {
             UUID paymentId = UUID.randomUUID();
-            given(paymentRepository.findById(paymentId)).willReturn(Optional.empty());
+            given(refundApprovalTxService.prepareCancel(paymentId))
+                .willThrow(new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_FOUND));
 
             assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "MASTER"))
                 .isInstanceOf(CustomException.class)
@@ -151,8 +174,8 @@ class AdminPaymentServiceImplTest {
         @DisplayName("결제 상태가 PAID 아님 → PAYMENT_NOT_REFUNDABLE 예외")
         void approveRefund_notPaid_throwsPaymentNotRefundable() {
             UUID paymentId = UUID.randomUUID();
-            Payment payment = createPayment(paymentId, PaymentStatus.FAILED);
-            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
+            given(refundApprovalTxService.prepareCancel(paymentId))
+                .willThrow(new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_REFUNDABLE));
 
             assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "MASTER"))
                 .isInstanceOf(CustomException.class)
@@ -161,7 +184,7 @@ class AdminPaymentServiceImplTest {
         }
 
         @Test
-        @DisplayName("CS 역할 → REFUND_APPROVAL_FORBIDDEN 예외")
+        @DisplayName("CS 역할 → REFUND_APPROVAL_FORBIDDEN 예외, 조회조차 시도하지 않는다")
         void approveRefund_csRole_throwsForbidden() {
             UUID paymentId = UUID.randomUUID();
 
@@ -169,16 +192,15 @@ class AdminPaymentServiceImplTest {
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminPaymentErrorCode.REFUND_APPROVAL_FORBIDDEN);
+            verify(refundApprovalTxService, never()).prepareCancel(any());
         }
 
         @Test
         @DisplayName("PENDING 환불 없음 → REFUND_NOT_PENDING 예외")
         void approveRefund_noPendingRefund_throwsRefundNotPending() {
             UUID paymentId = UUID.randomUUID();
-            Payment payment = createPayment(paymentId, PaymentStatus.PAID);
-            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
-            given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
-                .willReturn(Optional.empty());
+            given(refundApprovalTxService.prepareCancel(paymentId))
+                .willThrow(new CustomException(AdminPaymentErrorCode.REFUND_NOT_PENDING));
 
             assertThatThrownBy(() -> adminPaymentService.approveRefund(paymentId, 1L, "MASTER"))
                 .isInstanceOf(CustomException.class)

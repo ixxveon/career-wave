@@ -81,9 +81,10 @@
 - [ ] `approveRefund(String paymentId, Long adminId)`
   - [ ] `PAYMENT_NOT_FOUND(404)` 예외 처리
   - [ ] `refund_status != PENDING` → `REFUND_NOT_PENDING(409)` 예외
-  - [ ] Toss 환불 API 호출 (`payment_key` 사용)
-  - [ ] 성공: `refund.complete(adminId)` + `payment.cancel()` — `@Transactional` (원자적 처리)
-  - [ ] 실패: `refund.fail()`을 `@Transactional(noRollbackFor = ...)` 또는 `REQUIRES_NEW` 내부 메서드로 분리하여 `FAILED` 상태 영속 보장 후 `TOSS_REFUND_FAILED(502)` 예외 발생
+  - [ ] Toss 환불 API 호출 (`payment_key` 사용) — 트랜잭션 밖에서 수행(외부 HTTP 블로킹 중 DB 커넥션 점유 방지)
+  - [ ] 성공: `refund.approve(adminId)` + `payment.refund()` — 별도 `@Transactional` 메서드(`finalizeApproval`)에서 원자적 처리
+  - [ ] 확정 실패(4xx): `refund.fail()`을 `REQUIRES_NEW` 별도 메서드로 분리하여 `FAILED` 상태 영속 보장 후 `TOSS_REFUND_FAILED(502)` 예외 발생
+  - [ ] 불확실한 실패(5xx/timeout): `FAILED`로 기록하지 않고 PENDING 유지, `TOSS_REFUND_AMBIGUOUS(503)` 예외 발생
   - [ ] 반환: `RefundDTO.ResponseApprove`
 
 - [ ] `rejectRefund(String paymentId, String rejectReason, Long adminId)`
@@ -129,6 +130,7 @@
 - [ ] `REFUND_NOT_PENDING` (409)
 - [ ] `REJECT_REASON_REQUIRED` (400)
 - [ ] `TOSS_REFUND_FAILED` (502)
+- [ ] `TOSS_REFUND_AMBIGUOUS` (503)
 - [ ] `SUBSCRIPTION_NOT_FOUND` (404)
 
 ### 검증
