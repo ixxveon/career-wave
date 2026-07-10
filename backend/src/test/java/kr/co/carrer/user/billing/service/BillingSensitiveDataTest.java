@@ -52,6 +52,7 @@ class BillingSensitiveDataTest {
     @Mock UserPaymentFailureTxService failureTxService;
     @Mock PaymentReconciliationTxService reconciliationTxService;
     @Mock EntitlementInitService entitlementInitService;
+    @Mock BillingMemberPort billingMemberPort;
 
     private UserPaymentConfirmServiceImpl confirmService;
 
@@ -59,7 +60,7 @@ class BillingSensitiveDataTest {
     void setUp() {
         UserPaymentSettleTxService settleTxService = new UserPaymentSettleTxService(
                 subscriptionRepository, entitlementRepository, subscriptionUsagePeriodRepository,
-                entitlementInitService);
+                entitlementInitService, billingMemberPort);
         confirmService = new UserPaymentConfirmServiceImpl(
                 userPaymentRepository, billingProfileRepository, planRepository,
                 tossBillingAuthClient, tossBillingPaymentClient, oneTimePaymentClient, aesCipher,

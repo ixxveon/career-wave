@@ -8,6 +8,7 @@ import kr.co.carrer.user.billing.exception.BillingErrorCode;
 import kr.co.carrer.user.billing.repository.MemberProductEntitlementRepository;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.repository.UserPaymentRepository;
+import kr.co.carrer.user.billing.service.BillingMemberPort;
 import kr.co.carrer.user.billing.type.PaymentFailureReason;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class RenewalFailureTxService {
     private final UserPaymentRepository userPaymentRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final MemberProductEntitlementRepository entitlementRepository;
+    private final BillingMemberPort billingMemberPort;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void fail(UUID paymentId, UUID subscriptionId, String productCode, int attemptSequence) {
@@ -50,6 +52,7 @@ public class RenewalFailureTxService {
                     .findByMemberIdAndProductCodeForUpdate(sub.getMemberId(), productCode)
                     .orElseThrow(() -> new CustomException(BillingErrorCode.ENTITLEMENT_NOT_FOUND));
             entitlement.deactivatePremium();
+            billingMemberPort.markFreeIfNoActivePlan(sub.getMemberId());
         }
     }
 }
