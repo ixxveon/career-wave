@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowUp, FileText, Filter } from 'lucide-react';
 import JobNoticeDetail from './JobNoticeDetail';
@@ -19,6 +20,7 @@ import { mapJobNoticeApiToViewModel, type JobNotice, type JobNoticeBookmarkRespo
 import { jobApi } from '../../../api/user/jobApi';
 import { useJobNoticeDetail } from '../../../hooks/user/jobNotice/useJobNoticeDetail';
 import { useJobNoticeList } from '../../../hooks/user/jobNotice/useJobNoticeList';
+import { invalidateBookmarkQueries } from '../../../hooks/user/bookmark/bookmarkQueryCache';
 import { authSession } from '../../../utils/user/member/authSession';
 import '@/styles/user/jobNotice/JobNoticeListPage.css';
 
@@ -30,6 +32,7 @@ const EMPTY_LIST_STATS: JobNoticeListStats = {
 };
 
 export default function JobNoticeListPage() {
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [period, setPeriod] = useState<Period>('기간 전체');
   const [sort, setSort] = useState<SortOption>('추천순');
@@ -124,6 +127,7 @@ export default function JobNoticeListPage() {
         ...current,
         [bookmarkResult?.jobNoticeId ?? id]: bookmarkResult?.bookmarked ?? nextBookmarked,
       }));
+      void invalidateBookmarkQueries(queryClient);
     } catch {
       setBookmarks((current) => ({
         ...current,
