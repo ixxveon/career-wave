@@ -116,6 +116,86 @@ async def test_stt_final_stores_voice_quality():
         mock_send_final.assert_called_once()
 
 
+# ── hallucination 가드 ───────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_stt_hallucination_guard_above_threshold():
+    """no_speech_prob >= 0.85 이면 send_stt_final에 빈 transcript와 voiceQualityRatio=0.0이 전달된다."""
+    meta = make_meta()
+
+    mock_response = MagicMock()
+    mock_response.text = "Share this video with your friends on social media"
+    mock_response.no_speech_prob = 0.92
+    mock_response.segments = []
+    mock_response.duration = None
+
+    import user.interview.pipeline.stt_pipeline as stt_mod
+    with (
+        patch("user.interview.pipeline.stt_pipeline.get_session_meta", new=AsyncMock(return_value=meta)),
+        patch("user.interview.pipeline.stt_pipeline.update_session_meta", new=AsyncMock()) as mock_update,
+        patch("user.interview.pipeline.stt_pipeline.AsyncOpenAI") as mock_openai_cls,
+        patch.object(stt_mod, "send_stt_final", new=AsyncMock()) as mock_send_final,
+    ):
+        mock_client = AsyncMock()
+        mock_openai_cls.return_value = mock_client
+        mock_client.audio.transcriptions.create = AsyncMock(return_value=mock_response)
+
+        await stt_mod.transcribe_chunk(
+            audio_bytes=b"fake-audio",
+            session_id=TEST_SESSION_ID,
+            question_order=3,
+            chunk_index=0,
+            is_final=True,
+        )
+
+        mock_send_final.assert_called_once()
+        # send_stt_final(session_id, transcript, question_order, voice_quality_ratio)
+        call_args = mock_send_final.call_args[0]
+        assert call_args[1] == ""        # transcript
+        assert call_args[3] == 0.0      # voice_quality_ratio
+
+        updated_patch = mock_update.call_args[0][1]
+        vqbo = updated_patch.get("voice_quality_by_order", {})
+        assert vqbo.get(3) == 0.0
+
+
+@pytest.mark.asyncio
+async def test_stt_hallucination_guard_below_threshold():
+    """no_speech_prob = 0.84 (임계값 바로 아래) 이면 원본 transcript가 유지된다."""
+    meta = make_meta()
+    original_transcript = "저는 백엔드 개발자로 3년 경력이 있습니다."
+
+    mock_response = MagicMock()
+    mock_response.text = original_transcript
+    mock_response.no_speech_prob = 0.84
+    mock_response.segments = []
+    mock_response.duration = None
+
+    import user.interview.pipeline.stt_pipeline as stt_mod
+    with (
+        patch("user.interview.pipeline.stt_pipeline.get_session_meta", new=AsyncMock(return_value=meta)),
+        patch("user.interview.pipeline.stt_pipeline.update_session_meta", new=AsyncMock()),
+        patch("user.interview.pipeline.stt_pipeline.AsyncOpenAI") as mock_openai_cls,
+        patch.object(stt_mod, "send_stt_final", new=AsyncMock()) as mock_send_final,
+    ):
+        mock_client = AsyncMock()
+        mock_openai_cls.return_value = mock_client
+        mock_client.audio.transcriptions.create = AsyncMock(return_value=mock_response)
+
+        await stt_mod.transcribe_chunk(
+            audio_bytes=b"fake-audio",
+            session_id=TEST_SESSION_ID,
+            question_order=4,
+            chunk_index=0,
+            is_final=True,
+        )
+
+        mock_send_final.assert_called_once()
+        call_args = mock_send_final.call_args[0]
+        assert call_args[1] == original_transcript  # transcript 원본 유지
+        assert call_args[3] > 0.0                   # voice_quality_ratio > 0
+
+
 # ── is_final=False 시 STT 호출 없이 버퍼에만 누적 ─────────────────────────────
 
 @pytest.mark.asyncio
