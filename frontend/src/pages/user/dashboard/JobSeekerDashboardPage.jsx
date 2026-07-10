@@ -129,7 +129,7 @@ function JobSeekerDashboardPage() {
     refetch: refetchRecommendedJobs,
   } = useJobNoticeList(RECOMMENDED_JOB_QUERY_PARAMS);
   const recommendedJobs =
-    recommendedJobListApiResponse?.data?.content
+    recommendedJobListApiResponse?.pages?.[0]?.data?.content
       ?.map(mapJobNoticeApiToViewModel)
       .map(toRecommendedJobCard) ?? [];
   const recommendedJobsStatus = isRecommendedJobsLoading
