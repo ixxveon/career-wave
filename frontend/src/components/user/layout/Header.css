@@ -203,6 +203,7 @@
     grid-column: 1 / -1;
     gap: 14px;
     font-size: 18px;
+    padding-left: 0;
     padding-bottom: 2px;
   }
 
@@ -237,6 +238,7 @@
   .cw-header__nav {
     gap: 11px;
     font-size: 16px;
+    padding-left: 0;
     flex-wrap: wrap;
     overflow-x: visible;
   }
