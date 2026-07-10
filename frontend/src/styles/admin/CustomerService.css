@@ -209,6 +209,36 @@
 .csFaqTable th:nth-child(4),
 .csFaqTable td:nth-child(4) { width: 16%; white-space: nowrap; }   /* 관리 */
 
+/* ── 1:1 문의 테이블 컬럼 너비 ─────────────────────────────────── */
+
+.csInquiryTable {
+  table-layout: fixed;
+  width: 100%;
+  min-width: 0;
+}
+
+.csInquiryTable th:nth-child(1),
+.csInquiryTable td:nth-child(1) { width: 8%; }    /* 문의 ID */
+
+.csInquiryTable th:nth-child(2),
+.csInquiryTable td:nth-child(2) { width: 12%; }   /* 회원명 */
+
+.csInquiryTable th:nth-child(3),
+.csInquiryTable td:nth-child(3) { width: 12%; }   /* 카테고리 */
+
+.csInquiryTable th:nth-child(4),
+.csInquiryTable td:nth-child(4) { width: 34%; }   /* 제목 */
+.csInquiryTable td:nth-child(4) { overflow: hidden; text-overflow: ellipsis; }   /* 제목이 길면 말줄임 처리 — 가로 스크롤 방지 */
+
+.csInquiryTable th:nth-child(5),
+.csInquiryTable td:nth-child(5) { width: 12%; white-space: nowrap; }   /* 접수일 */
+
+.csInquiryTable th:nth-child(6),
+.csInquiryTable td:nth-child(6) { width: 10%; white-space: nowrap; }   /* 상태 */
+
+.csInquiryTable th:nth-child(7),
+.csInquiryTable td:nth-child(7) { width: 12%; white-space: nowrap; }   /* 관리 */
+
 /* ── 반응형 ──────────────────────────────────────────────────── */
 
 @media (max-width: 640px) {

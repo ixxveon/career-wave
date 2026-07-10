@@ -1807,7 +1807,8 @@ button {
      깨진다. 이런 테이블은 display:table을 유지하고, 가로 스크롤은 바깥 .tableScroll
      wrapper가 담당한다. */
   .memberTable.csNoticeTable,
-  .memberTable.csFaqTable {
+  .memberTable.csFaqTable,
+  .memberTable.csInquiryTable {
     display: table;
   }
 }
