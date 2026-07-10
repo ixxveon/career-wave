@@ -10,8 +10,7 @@ import kr.co.carrer.admin.admin.type.AdminRole;
 import kr.co.carrer.admin.admin.type.AdminStatus;
 import kr.co.carrer.admin.audit.util.AdminAuditClientIpExtractor;
 import kr.co.carrer.auth.principal.AuthPrincipal;
-import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.auth.principal.AdminPrincipalResolver;
 import kr.co.carrer.global.response.ApiResponse;
 import kr.co.carrer.global.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
@@ -107,7 +106,7 @@ public class AdminManagementController implements AdminManagementDocs {
                 request.name(),
                 request.adminRole()
             ),
-            extractAdminId(principal),
+            AdminPrincipalResolver.extractAdminId(principal),
             AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
@@ -137,7 +136,7 @@ public class AdminManagementController implements AdminManagementDocs {
         AdminManagementService.AdminDetailResult result = adminManagementService.updateAdminRole(
             adminId,
             new AdminManagementService.UpdateAdminRoleCommand(request.adminRole()),
-            extractAdminId(principal),
+            AdminPrincipalResolver.extractAdminId(principal),
             AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
@@ -167,7 +166,7 @@ public class AdminManagementController implements AdminManagementDocs {
         AdminManagementService.AdminDetailResult result = adminManagementService.updateAdminStatus(
             adminId,
             new AdminManagementService.UpdateAdminStatusCommand(request.status()),
-            extractAdminId(principal),
+            AdminPrincipalResolver.extractAdminId(principal),
             AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
@@ -195,7 +194,7 @@ public class AdminManagementController implements AdminManagementDocs {
     ) {
         adminManagementService.deleteAdmin(
             adminId,
-            extractAdminId(principal),
+            AdminPrincipalResolver.extractAdminId(principal),
             AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
@@ -247,7 +246,7 @@ public class AdminManagementController implements AdminManagementDocs {
                 request.ipRange(),
                 request.description()
             ),
-            extractAdminId(principal),
+            AdminPrincipalResolver.extractAdminId(principal),
             AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
@@ -275,7 +274,7 @@ public class AdminManagementController implements AdminManagementDocs {
         AdminManagementService.IpAclDetailResult result = adminManagementService.updateIpAclEnabled(
             aclId,
             new AdminManagementService.UpdateIpAclEnabledCommand(request.isEnabled()),
-            extractAdminId(principal),
+            AdminPrincipalResolver.extractAdminId(principal),
             AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
@@ -301,32 +300,17 @@ public class AdminManagementController implements AdminManagementDocs {
     ) {
         adminManagementService.deleteIpAcl(
             aclId,
-            extractAdminId(principal),
+            AdminPrincipalResolver.extractAdminId(principal),
             AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
         return ResponseEntity.ok(ApiResponse.ok("IP ACL 삭제에 성공했습니다."));
     }
 
-    private Long extractAdminId(AuthPrincipal principal) {
-        if (principal == null || principal.getId() == null || principal.getId().isBlank()) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
-        try {
-            return Long.valueOf(principal.getId());
-        } catch (NumberFormatException exception) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
-    }
-
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {
         if (value == null || value.isBlank()) {
             return null;
         }
-        try {
-            return Enum.valueOf(enumClass, value.toUpperCase());
-        } catch (IllegalArgumentException exception) {
-            throw new CustomException(ErrorCode.BAD_REQUEST);
-        }
+        return Enum.valueOf(enumClass, value.toUpperCase());
     }
 }
