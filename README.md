@@ -47,7 +47,8 @@ CareerWave는 수많은 채용 공고 속에서 방향을 잃은 IT 취준생들
 
 ## 4. 시스템 아키텍처
 
-> _시스템 아키텍처 다이어그램을 여기에 추가해 주세요._
+<img width="1012" height="780" alt="image" src="https://github.com/user-attachments/assets/ae30052a-bf09-4b60-8353-128069372a0d" />
+
 
 ---
 
@@ -166,12 +167,12 @@ career-wave/
 
 | 이름 | GitHub | 담당 모듈 |
 | :--- | :--- | :--- |
-|  | [@ixxveon](https://github.com/ixxveon) |  |
-|  | [@hongsoonchan02](https://github.com/hongsoonchan02) |  |
-|  | [@sbr7518-bit](https://github.com/sbr7518-bit) |  |
-|  | [@maranqian-bot](https://github.com/maranqian-bot) |  |
-|  | [@dmsquf9193-dot](https://github.com/dmsquf9193-dot) |  |
-|  | [@yul941117-wq](https://github.com/yul941117-wq) |  |
+| 이가연 | [@ixxveon](https://github.com/ixxveon) |  |
+| 홍순찬 | [@hongsoonchan02](https://github.com/hongsoonchan02) |  |
+| 신보라 | [@sbr7518-bit](https://github.com/sbr7518-bit) |  |
+| 마은재 | [@maranqian-bot](https://github.com/maranqian-bot) |  |
+| 고은별 | [@dmsquf9193-dot](https://github.com/dmsquf9193-dot) |  |
+| 고유리 | [@yul941117-wq](https://github.com/yul941117-wq) |  |
 
 ---
 
