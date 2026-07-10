@@ -23,7 +23,7 @@
 ## Phase 3 - API
 
 - [x] `GET /api/v1/admin/dashboard/summary` endpoint가 구현되어 있다.
-- [x] 정상 응답이 `ApiResponse<DashboardDTO.ResponseSummary>` 규격을 사용하고 성공 응답에 `statusCode=200`이 포함된다.
+- [x] 정상 응답이 `ApiResponse<DashboardDTO.ResponseSummary>` 규격을 사용하고, 성공 응답에는 `status` 필드가 포함되지 않는다.
 - [x] 예외 응답이 공통 ErrorCode 정책(`UNAUTHORIZED`, `FORBIDDEN`, `BAD_REQUEST`, `INTERNAL_SERVER_ERROR`)과 일치한다.
 - [x] 권한(Role) 정책이 `MASTER`, `BACKEND`, `CS`와 일치한다.
 - [x] 인증 없음 요청은 `UNAUTHORIZED`, 비허용 권한 요청은 `FORBIDDEN`으로 처리된다.

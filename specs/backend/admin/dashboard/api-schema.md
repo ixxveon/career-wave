@@ -32,7 +32,6 @@
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "요청이 성공했습니다.",
   "data": {}
 }
@@ -43,7 +42,7 @@
 ```json
 {
   "success": false,
-  "statusCode": 400,
+  "status": 400,
   "message": "유효하지 않은 요청입니다.",
   "code": "BAD_REQUEST",
   "data": null
@@ -302,7 +301,7 @@
 ```json
 {
   "success": false,
-  "statusCode": 400,
+  "status": 400,
   "message": "유효하지 않은 Query Parameter 입니다.",
   "code": "BAD_REQUEST",
   "data": null

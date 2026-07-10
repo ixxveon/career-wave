@@ -167,7 +167,6 @@ POST /api/v1/user/members/register/social/complete
 ```json
 {
   "success": true,
-  "statusCode": 200,
   "message": "토큰이 갱신되었습니다.",
   "data": {
     "accessToken": "new-jwt-access-token"
@@ -418,8 +417,8 @@ POST /recovery/reset-password
 ## 10. Response / ErrorCode 점검
 
 - [x] 모든 API는 `ApiResponse<T>` wrapper를 사용한다.
-- [x] 성공 응답 필드는 `success`, `statusCode`, `message`, `data`를 유지한다.
-- [x] 실패 응답도 동일한 wrapper 규칙과 맞춘다.
+- [x] 성공 응답 필드는 `success`, `message`, `data`를 유지한다. (`status` 없음)
+- [x] 실패 응답은 `success`, `status`, `message`, `code`(선택), `data`(null 유지) 구조로 맞춘다.
 - [x] Controller에서 직접 `Map`을 반환하지 않는다고 명시한다.
 - [x] Controller에서 반복 try-catch를 작성하지 않는다고 명시한다.
 - [x] 예상 가능한 예외는 `CustomException + UserAuthErrorCode`로 처리한다고 명시한다.
@@ -625,7 +624,7 @@ REJECTED
 NEEDS_REVISION
 ```
 
-- [x] 401 응답 시 프론트가 token refresh 또는 login redirect 흐름을 수행할 수 있도록 statusCode를 정확히 준다.
+- [x] 401 응답 시 프론트가 token refresh 또는 login redirect 흐름을 수행할 수 있도록 `status`를 정확히 준다.
 - [ ] 상태 변경 요청에 대한 401 자동 재시도는 기본 금지이므로, POST API가 중복 실행되지 않도록 설계한다.
 - [ ] idempotency가 필요한 endpoint가 있다면 spec에 별도 명시한다.
 
