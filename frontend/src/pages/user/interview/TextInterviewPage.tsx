@@ -33,8 +33,8 @@ export default function TextInterviewPage() {
   const documentId     = searchParams.get('documentId');
   const focusType      = parseFocusType(searchParams.get('focusType'));
 
-  const { data: entitlements, isLoading: entitlementsLoading } = useEntitlements();
-  const hasInterviewEntitlement = entitlements ? entitlements[PRODUCT_CODE.INTERVIEW] : true;
+  const { data: entitlements, isLoading: entitlementsLoading, isError: isEntitlementsError } = useEntitlements();
+  const hasInterviewEntitlement = entitlements ? entitlements[PRODUCT_CODE.INTERVIEW] : !isEntitlementsError;
 
   const preflight = usePreflightCheck();
 
@@ -185,7 +185,7 @@ export default function TextInterviewPage() {
     }
   }
 
-  if (!entitlementsLoading && !hasInterviewEntitlement) {
+  if (!entitlementsLoading && (isEntitlementsError || !hasInterviewEntitlement)) {
     return <InterviewPaywall />;
   }
 
