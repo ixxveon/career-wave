@@ -12,6 +12,7 @@ import { PRODUCT_CODE } from '../../../types/user/subscription';
 import { SESSION_TYPE_LABEL } from '../../../constants/user/interview';
 
 const DEFAULT_DOC_LIMIT = 30;
+const DEFAULT_IV_LIMIT  = 20;
 
 function scoreClass(s: number): string {
   return s >= 80 ? 'iv-score--high' : s >= 65 ? 'iv-score--mid' : 'iv-score--low';
@@ -40,7 +41,7 @@ function InterviewHomePage() {
 
   // 미구독: 무료 체험 1회 기준 / 구독 중: API 사용량 기준
   const ivUsed  = ivSubscribed ? (ivItem?.usage?.used ?? 0) : (hasIvEntitlement ? 0 : 1);
-  const ivLimit = ivSubscribed ? (ivItem?.usage?.limit ?? 0) : 1;
+  const ivLimit = ivSubscribed ? (ivItem?.usage?.limit ?? DEFAULT_IV_LIMIT) : 1;
   const ivPct   = ivLimit > 0 ? Math.min((ivUsed / ivLimit) * 100, 100) : 100;
 
   return (
