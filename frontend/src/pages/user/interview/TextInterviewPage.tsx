@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { useEntitlements } from '../../../hooks/user/subscription/useEntitlements';
+import { PRODUCT_CODE } from '../../../types/user/subscription';
+import InterviewPaywall from '../../../components/user/interview/InterviewPaywall';
+
 import { interviewSessionApi }              from '../../../api/user/interview';
 import { SESSION_TYPE }                     from '../../../types/user/interview';
 import type { SessionType, Resume, MicStatus, FocusType, InProgressSessionResponse } from '../../../types/user/interview';
@@ -28,6 +32,9 @@ export default function TextInterviewPage() {
   const [searchParams] = useSearchParams();
   const documentId     = searchParams.get('documentId');
   const focusType      = parseFocusType(searchParams.get('focusType'));
+
+  const { data: entitlements, isLoading: entitlementsLoading, isError: isEntitlementsError } = useEntitlements();
+  const hasInterviewEntitlement = entitlements ? entitlements[PRODUCT_CODE.INTERVIEW] : !isEntitlementsError;
 
   const preflight = usePreflightCheck();
 
@@ -176,6 +183,10 @@ export default function TextInterviewPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (!entitlementsLoading && (isEntitlementsError || !hasInterviewEntitlement)) {
+    return <InterviewPaywall />;
   }
 
   if (phase === 'interview' && sessionId) {
