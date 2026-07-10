@@ -29,7 +29,7 @@ const getApiErrorMessage = (error: unknown) => {
   return (error as { response?: { data?: { message?: string } } }).response?.data?.message;
 };
 
-const getApiStateMessage = (error: unknown, fallback: string) => {
+export const getApiStateMessage = (error: unknown, fallback: string) => {
   const status = getApiErrorStatus(error);
   if (status === 401) return '로그인이 만료되어 요청을 처리할 수 없습니다. 다시 로그인해 주세요.';
   if (status === 403) return '관리자 권한이 없어 요청을 처리할 수 없습니다.';
@@ -38,7 +38,7 @@ const getApiStateMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
-const isAllowedRagUploadFile = (file: Pick<File, 'name' | 'type'>) => {
+export const isAllowedRagUploadFile = (file: Pick<File, 'name' | 'type'>) => {
   const fileExtension = file.name.split('.').pop()?.toLowerCase() ?? '';
   const hasAllowedExtension = ALLOWED_RAG_UPLOAD_EXTENSIONS.includes(
     fileExtension as (typeof ALLOWED_RAG_UPLOAD_EXTENSIONS)[number]
