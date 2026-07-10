@@ -248,7 +248,7 @@ export default function RagManagementPage() {
     ragUploadInputRef.current?.click();
   };
 
-  const handleUploadFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleUploadFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
@@ -269,11 +269,11 @@ export default function RagManagementPage() {
     }
 
     setRagUploadErrorMessage('');
-    await uploadRagDocumentMutation.mutateAsync(file);
+    uploadRagDocumentMutation.mutate(file);
   };
 
   const handleDeleteDocument = (documentId: string) => {
-    void deleteRagDocumentMutation.mutateAsync(documentId);
+    deleteRagDocumentMutation.mutate(documentId);
   };
 
   return (
