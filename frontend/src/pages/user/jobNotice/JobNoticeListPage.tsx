@@ -6,8 +6,10 @@ import JobNoticeCard from './JobNoticeCard';
 import { JobNoticeBanner, JobNoticeFilters, JobNoticeResultToolbar } from './JobNoticeListControls';
 import {
   createInitialFilters,
+  createFilterGroups,
   createJobNoticeQueryParams,
   getJobBookmark,
+  normalizeFilters,
   type Bookmarks,
   type FilterLabel,
   type Filters,
@@ -66,6 +68,10 @@ export default function JobNoticeListPage() {
     [jobNoticeListApiResponse?.pages]
   );
   const jobNoticeListResponse = jobNoticeListPages[0];
+  const filterGroups = useMemo(
+    () => createFilterGroups(jobNoticeListResponse?.filterOptions),
+    [jobNoticeListResponse?.filterOptions]
+  );
   const filteredJobs = useMemo(
     () => jobNoticeListPages.flatMap((page) => page.content.map(mapJobNoticeApiToViewModel)),
     [jobNoticeListPages]
@@ -134,7 +140,7 @@ export default function JobNoticeListPage() {
   }
 
   function resetFilter(label: FilterLabel) {
-    updateFilter(label, 'ALL');
+    updateFilter(label, createInitialFilters()[label]);
   }
 
   function selectSort(option: SortOption) {
@@ -170,6 +176,13 @@ export default function JobNoticeListPage() {
     setFilters(createInitialFilters());
     setPeriod('기간 전체');
   }
+
+  useEffect(() => {
+    setFilters((current) => {
+      const next = normalizeFilters(current, filterGroups);
+      return Object.keys(current).every((key) => current[key as FilterLabel] === next[key as FilterLabel]) ? current : next;
+    });
+  }, [filterGroups]);
 
   useEffect(() => {
     const allLoadedJobs = jobNoticeListPages.flatMap((page) => page.content);
@@ -228,7 +241,7 @@ export default function JobNoticeListPage() {
       <JobNoticeBanner searchQuery={searchQuery} onSearch={setSearchQuery} stats={listStats} />
 
       <div className="jn-layout">
-        <JobNoticeFilters filters={filters} onChange={updateFilter} />
+        <JobNoticeFilters filters={filters} filterGroups={filterGroups} onChange={updateFilter} />
 
         <main className="jn-results">
           <JobNoticeResultToolbar
