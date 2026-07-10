@@ -292,27 +292,25 @@ public class ResumeServiceImpl implements ResumeService {
                 .findFirst()
                 .orElse(null);
 
-        ZonedDateTime from = resolveCountFrom(docItem);
-        int usedCount = documentRepository.countUsedThisMonth(memberId, from, DocumentStatus.FAILED);
-        int limitCount = resolveDocumentLimitCount(docItem);
-        return new ResumeDTO.ResponseQuota(usedCount, limitCount);
-    }
+        if (docItem == null) {
+            return new ResumeDTO.ResponseQuota(0, 0);
+        }
 
-    private ZonedDateTime resolveCountFrom(EntitlementDTO.EntitlementItem item) {
+        if (docItem.monthlyLimit() != null) {
+            int usedCount = resolveMonthlyUsedCount(docItem);
+            return new ResumeDTO.ResponseQuota(usedCount, docItem.monthlyLimit());
+        }
+
         ZonedDateTime firstDayOfMonth = ZonedDateTime.now(KST)
                 .withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        if (item != null && item.currentPeriodStart() != null) {
-            ZonedDateTime periodStart = item.currentPeriodStart().withZoneSameInstant(KST);
-            if (periodStart.isAfter(firstDayOfMonth)) {
-                return periodStart;
-            }
-        }
-        return firstDayOfMonth;
+        int usedCount = documentRepository.countUsedThisMonth(memberId, firstDayOfMonth, DocumentStatus.FAILED);
+        return new ResumeDTO.ResponseQuota(usedCount, FREE_DOCUMENT_LIMIT);
     }
 
-    private int resolveDocumentLimitCount(EntitlementDTO.EntitlementItem item) {
-        if (item == null) return 0;
-        return item.monthlyLimit() != null ? item.monthlyLimit() : FREE_DOCUMENT_LIMIT;
+    private int resolveMonthlyUsedCount(EntitlementDTO.EntitlementItem item) {
+        int used = item.monthlyUsed() != null ? item.monthlyUsed() : 0;
+        int reserved = item.monthlyReserved() != null ? item.monthlyReserved() : 0;
+        return used + reserved;
     }
 
     private List<String> parseRecommendedKeywords(String keywordsJson) {

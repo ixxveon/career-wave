@@ -29,7 +29,6 @@ public class EntitlementDTO {
             Integer monthlyUsed,
             Integer monthlyReserved,
             Integer monthlyRemaining,
-            ZonedDateTime resetAt,
-            ZonedDateTime currentPeriodStart
+            ZonedDateTime resetAt
     ) {}
 }

@@ -73,7 +73,6 @@ public class EntitlementQueryServiceImpl implements EntitlementQueryService {
                 null,
                 null,
                 null,
-                null,
                 null
         );
     }
@@ -116,8 +115,7 @@ public class EntitlementQueryServiceImpl implements EntitlementQueryService {
                 period.getUsedCount(),
                 period.getReservedCount(),
                 period.remaining(),
-                period.getPeriodEnd(),
-                period.getPeriodStart()
+                period.getPeriodEnd()
         );
     }
 
@@ -131,7 +129,6 @@ public class EntitlementQueryServiceImpl implements EntitlementQueryService {
                 subscriptionStatus,
                 false,
                 reason,
-                null,
                 null,
                 null,
                 null,

@@ -74,7 +74,7 @@ class EntitlementControllerContractTest {
         EntitlementDTO.EntitlementItem item = new EntitlementDTO.EntitlementItem(
                 "document-coaching", "FREE", 0, "USED", null,
                 false, "SUBSCRIPTION_REQUIRED",
-                null, null, null, null, null, null);
+                null, null, null, null, null);
         given(queryService.getMyEntitlements(memberId))
                 .willReturn(new EntitlementDTO.ResponseEntitlementList(
                         Map.of("document-coaching", false), List.of(item)));
@@ -97,6 +97,6 @@ class EntitlementControllerContractTest {
         return new EntitlementDTO.EntitlementItem(
                 productCode, "FREE", freeRemaining, freeUsageStatus, null,
                 serviceAvailable, unavailableReason,
-                null, null, null, null, null, null);
+                null, null, null, null, null);
     }
 }
