@@ -35,7 +35,7 @@ career-wave/
 ├── frontend/       # React + Vite (TypeScript) — user / admin 통합
 ├── backend/        # Spring Boot (Java 21) — 단일 서버
 ├── fastapi/        # FastAPI (Python 3.11+) — AI 엔진 및 스크래핑
-├── db/             # PostgreSQL init.sql / seed 파일
+├── db/             # PostgreSQL init.sql / patch / seed 파일
 ├── specs/          # 스펙 명세 문서
 └── README.md
 ```
@@ -64,6 +64,11 @@ docker compose exec redis redis-cli ping
 docker compose down -v
 docker compose up -d
 ```
+
+> DB SQL 파일은 루트 `db/`를 기준으로 관리합니다.
+> - 초기 스키마: `db/init.sql`
+> - 패치 SQL: `db/patches/`
+> - 로컬 테스트 시드: `db/seed-local.sql`
 
 ### Frontend
 ```bash
@@ -119,8 +124,8 @@ cd backend
 로컬 DB에 테스트 데이터를 넣으려면 아래 명령어를 실행하세요.
 
 ```bash
-# backend/ 디렉토리에서 실행
-psql -U careerwave -d careerwave -f src/main/resources/db/seed-local.sql
+# repository root에서 실행
+psql -U careerwave -d careerwave -f db/seed-local.sql
 ```
 
 > 재실행해도 안전합니다 (기존 데이터 DELETE 후 재삽입).
