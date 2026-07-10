@@ -558,7 +558,7 @@ button {
 
 .layoutGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
   gap: 22px;
   align-items: stretch;
 }
@@ -918,6 +918,89 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
 
+.serviceListCard {
+  padding: 20px 20px 10px;
+}
+
+.serviceList {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.serviceListRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 18px;
+  border: 1px solid #dbe5ee;
+  border-radius: 10px;
+  background: #fbfdff;
+}
+
+.serviceListRow__main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.serviceListRow__text {
+  min-width: 0;
+}
+
+.serviceListRow__text h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1c3e63;
+}
+
+.serviceListRow__text p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #708397;
+  overflow-wrap: anywhere;
+}
+
+.serviceListRow__meta {
+  min-width: 220px;
+  max-width: 360px;
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.serviceListRow__meta strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #f2f6fb;
+  border: 1px solid #dbe5ee;
+  font-size: 13px;
+  font-weight: 700;
+  color: #10243f;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.serviceListRow__meta button {
+  width: 104px;
+  height: 34px;
+  flex: 0 0 auto;
+}
+
+.serviceList--loading .serviceListRow {
+  background: rgba(255, 255, 255, 0.97);
+}
+
 .adminCard {
   min-height: 235px;
   padding: 24px 20px;
@@ -1045,26 +1128,35 @@ button {
 .logCard {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
-  padding: 20px 22px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px 10px;
 }
 
 .logCard .sectionHead {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .logCard .sectionHead h3 {
   font-size: 20px;
 }
 
+.logList {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
 .logRow {
   min-height: 42px;
   border-bottom: 1px solid #e5edf6;
   display: grid;
-  grid-template-columns: 108px minmax(88px, 132px) minmax(0, 1fr);
+  grid-template-columns: 88px minmax(72px, 96px) minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  padding: 8px 4px;
+  gap: 10px;
+  padding: 8px 2px;
   cursor: pointer;
 }
 
@@ -1076,19 +1168,24 @@ button {
 .logRow strong,
 .logRow p {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   color: #60758c;
 }
 
 .logRow strong {
   font-weight: 700;
   color: #3e5873;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logRow p {
   color: #50657d;
   min-width: 0;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logRow__time {
@@ -1731,6 +1828,17 @@ button {
   .admin-main {
     width: 100%;
   }
+
+  .serviceListRow {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .serviceListRow__meta {
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1820,6 +1928,22 @@ button {
 
   .adminBottom strong,
   .adminCard button {
+    width: 100%;
+    text-align: left;
+  }
+
+  .serviceListRow__main {
+    align-items: flex-start;
+  }
+
+  .serviceListRow__meta {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .serviceListRow__meta strong,
+  .serviceListRow__meta button {
     width: 100%;
     text-align: left;
   }

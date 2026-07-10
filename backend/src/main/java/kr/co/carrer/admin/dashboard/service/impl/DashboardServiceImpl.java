@@ -28,7 +28,6 @@ import java.util.List;
 public class DashboardServiceImpl implements DashboardService {
 
     private static final int ALERT_LIMIT = 5;
-    private static final int RECENT_ACTIVITY_LIMIT = 8;
     private static final String ADMIN_ROUTE_PREFIX = "/cw-manage-2026";
     private static final String ADMIN_MANAGEMENT_PATH = ADMIN_ROUTE_PREFIX + "/admins";
     private static final String AI_METRICS_PATH = ADMIN_ROUTE_PREFIX + "/ai";
@@ -68,7 +67,7 @@ public class DashboardServiceImpl implements DashboardService {
                 validatePaymentRatio(buildPaymentRatio(dashboardSummaryQueryRepository.findPaymentRatios(queryWindow))),
                 buildServiceCards(adminMetrics, aiUsageMetrics, scrapingStatusMetrics, alerts.size()),
                 buildSystemStatus(aiUsageMetrics, ragDocumentMetrics, scrapingStatusMetrics),
-                buildRecentActivities(dashboardSummaryQueryRepository.findRecentActivities(queryWindow, RECENT_ACTIVITY_LIMIT))
+                buildRecentActivities(dashboardSummaryQueryRepository.findRecentActivities())
         );
     }
 
@@ -115,7 +114,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "AI 인터뷰 세션",
                         interviewSessionCount,
                         "건",
-                        "선택 기간 기준",
+                        "선택 기간 내 생성 세션 기준",
                         DashboardSeverityType.NORMAL,
                         AI_METRICS_PATH
                 ),
@@ -124,7 +123,7 @@ public class DashboardServiceImpl implements DashboardService {
                         "오늘 매출",
                         revenue,
                         "원",
-                        "결제 승인 기준",
+                        "오늘 결제 승인 금액 기준",
                         DashboardSeverityType.NORMAL,
                         PAYMENT_PATH
                 )

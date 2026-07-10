@@ -54,7 +54,7 @@ class DashboardServiceImplTest {
                 .thenReturn(List.of());
         lenient().when(dashboardSummaryQueryRepository.findScrapingAlerts(any(DashboardQueryWindow.class), anyInt()))
                 .thenReturn(List.of());
-        lenient().when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), anyInt()))
+        lenient().when(dashboardSummaryQueryRepository.findRecentActivities())
                 .thenReturn(List.of());
     }
 
@@ -108,7 +108,7 @@ class DashboardServiceImplTest {
         assertThat(result.kpis()).anySatisfy(kpi -> {
             assertThat(kpi.key()).isEqualTo(DashboardKpiKeyType.TODAY_REVENUE);
             assertThat(kpi.value()).isEqualTo(29_000L);
-            assertThat(kpi.deltaText()).isEqualTo("결제 승인 기준");
+            assertThat(kpi.deltaText()).isEqualTo("오늘 결제 승인 금액 기준");
         });
     }
 
@@ -195,7 +195,7 @@ class DashboardServiceImplTest {
     @DisplayName("최근 활동은 AuditLog 기반 row를 대시보드 응답으로 매핑한다")
     void recentActivitiesAreMappedFromAuditRows() {
         ZonedDateTime occurredAt = ZonedDateTime.parse("2026-06-28T10:00:00Z");
-        when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), anyInt()))
+        when(dashboardSummaryQueryRepository.findRecentActivities())
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.RecentActivityRow(
                         10L,
                         occurredAt,
@@ -239,7 +239,7 @@ class DashboardServiceImplTest {
                         DashboardAlertLevelType.URGENT,
                         ZonedDateTime.parse("2026-06-22T09:01:00Z")
                 )));
-        when(dashboardSummaryQueryRepository.findRecentActivities(any(DashboardQueryWindow.class), eq(8)))
+        when(dashboardSummaryQueryRepository.findRecentActivities())
                 .thenReturn(List.of(
                         new DashboardSummaryQueryRepository.RecentActivityRow(
                                 3L,
@@ -312,7 +312,7 @@ class DashboardServiceImplTest {
                 .thenReturn(List.of());
         when(repository.findScrapingAlerts(any(DashboardQueryWindow.class), eq(5)))
                 .thenReturn(List.of());
-        when(repository.findRecentActivities(any(DashboardQueryWindow.class), eq(8)))
+        when(repository.findRecentActivities())
                 .thenReturn(List.of(new DashboardSummaryQueryRepository.RecentActivityRow(
                         30L,
                         ZonedDateTime.parse("2026-06-28T09:00:00Z"),
@@ -362,7 +362,7 @@ class DashboardServiceImplTest {
                         DashboardAlertLevelType.URGENT,
                         ZonedDateTime.parse("2026-06-28T09:01:00Z")
                 )));
-        when(repository.findRecentActivities(any(DashboardQueryWindow.class), eq(8)))
+        when(repository.findRecentActivities())
                 .thenReturn(List.of());
 
         DashboardServiceImpl service = new DashboardServiceImpl(repository);
