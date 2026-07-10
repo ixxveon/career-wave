@@ -50,6 +50,14 @@ function renderPage(queryClient: QueryClient) {
   return result;
 }
 
+function getLoginForm(container: HTMLElement) {
+  const form = container.querySelector('form');
+  if (!form) {
+    throw new Error('Login form not found');
+  }
+  return form;
+}
+
 describe('AdminLoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -73,7 +81,7 @@ describe('AdminLoginPage', () => {
     const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
     const { container } = renderPage(queryClient);
 
-    fireEvent.submit(container.querySelector('form')!);
+    fireEvent.submit(getLoginForm(container));
 
     await waitFor(() => {
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ADMIN_MANAGEMENT_ADMINS_QUERY_KEY });
@@ -87,7 +95,7 @@ describe('AdminLoginPage', () => {
     const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
     const { container } = renderPage(queryClient);
 
-    fireEvent.submit(container.querySelector('form')!);
+    fireEvent.submit(getLoginForm(container));
 
     await waitFor(() => {
       expect(adminAuthMock.login).toHaveBeenCalledOnce();
