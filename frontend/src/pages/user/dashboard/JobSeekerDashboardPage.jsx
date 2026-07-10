@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useJobNoticeList } from '@/hooks/user/jobNotice/useJobNoticeList';
 import {
@@ -11,6 +12,7 @@ import {
   Briefcase,
   Building2,
   CalendarDays,
+  ChevronLeft,
   ChevronRight,
   FileSearch,
   Filter,
@@ -48,10 +50,12 @@ const featureCards = [
 
 const RECOMMENDED_JOB_QUERY_PARAMS = {
   page: 1,
-  size: 3,
+  size: 9,
   sort: 'recommend',
   period: 'all',
 };
+
+const CAROUSEL_VISIBLE = 3;
 
 function getCompanyLogo(job) {
   const source = job.source?.trim();
@@ -122,6 +126,7 @@ const stats = [
 
 function JobSeekerDashboardPage() {
   const isLoggedIn = !!authSession.getAccessToken();
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const {
     data: recommendedJobListApiResponse,
     isError: isRecommendedJobsError,
@@ -226,9 +231,23 @@ function JobSeekerDashboardPage() {
           )}
 
           {recommendedJobsStatus === 'success' && (
-            <div className="cw-home-job-grid" aria-hidden={!isLoggedIn}>
-              {recommendedJobs.map((job) => (
-                <article className="cw-home-job" key={job.id}>
+            <div className="cw-home-job-carousel" aria-hidden={!isLoggedIn}>
+              <button
+                type="button"
+                className="cw-home-job-carousel__arrow cw-home-job-carousel__arrow--prev"
+                aria-label="이전 공고"
+                disabled={carouselIndex === 0}
+                onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <div className="cw-home-job-carousel__viewport">
+                <div
+                  className="cw-home-job-carousel__track"
+                  style={{ transform: `translateX(calc(-${carouselIndex} * (100% / ${CAROUSEL_VISIBLE} + 8px)))` }}
+                >
+                  {recommendedJobs.map((job) => (
+                    <article className="cw-home-job" key={job.id}>
                   <div className="cw-home-job__head">
                     <span className={`cw-home-job__logo is-${job.logoClass}`}>{job.logo}</span>
                     <button type="button" aria-label={`${job.title} 저장 준비 중`} disabled>
@@ -267,8 +286,19 @@ function JobSeekerDashboardPage() {
                     상세보기
                     <ChevronRight size={15} />
                   </Link>
-                </article>
-              ))}
+                  </article>
+                ))}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="cw-home-job-carousel__arrow cw-home-job-carousel__arrow--next"
+                aria-label="다음 공고"
+                disabled={carouselIndex >= recommendedJobs.length - CAROUSEL_VISIBLE}
+                onClick={() => setCarouselIndex((i) => Math.min(recommendedJobs.length - CAROUSEL_VISIBLE, i + 1))}
+              >
+                <ChevronRight size={20} />
+              </button>
             </div>
           )}
 
