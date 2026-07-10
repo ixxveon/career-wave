@@ -1197,6 +1197,9 @@ button {
   border-color: #8daeca;
 }
 
+.memberFilterBtn { height: 42px; padding: 0 24px; border-radius: 10px; background: #24496f; color: white; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: background 0.18s; }
+.memberFilterBtn:hover { background: #1c3e63; }
+
 /* table */
 
 .memberTableCard {
