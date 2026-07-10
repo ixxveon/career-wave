@@ -696,8 +696,8 @@
   background: transparent;
 }
 
-.cw-home-job__title-row button:disabled {
-  cursor: not-allowed;
+.cw-home-job__title-row button:hover {
+  color: #3d6fca;
 }
 
 .cw-home-job__company {

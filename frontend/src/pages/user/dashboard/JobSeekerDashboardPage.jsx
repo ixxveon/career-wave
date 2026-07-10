@@ -275,8 +275,7 @@ function JobSeekerDashboardPage() {
                         <button
                           type="button"
                           aria-label={`${job.title} 저장 준비 중`}
-                          disabled
-                          onClick={(e) => e.preventDefault()}
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <Bookmark size={16} />
                         </button>
