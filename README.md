@@ -1,51 +1,77 @@
 # Career Wave
 
-CareerWave는 AI 기반 면접 코칭·서류 분석·커리어 진단 기능을 제공하는 취업 지원 통합 플랫폼입니다.
-구직자와 기업 회원을 위한 사용자 플랫폼과 운영팀을 위한 관리자 백오피스로 구성되어 있습니다.
+> AI 기반 면접 코칭·서류 분석·커리어 진단 기능을 제공하는 취업 지원 통합 플랫폼
 
-## 컨트리뷰션 가이드
+---
 
-브랜치 전략, 커밋 컨벤션, PR 규칙은 아래 문서를 참고해 주세요.
+## 1. 프로젝트 소개 및 개발 배경
 
-👉 [CONTRIBUTION.md](.github/CONTRIBUTION.md)
+**"기존의 지루한 채용 공고 나열형 플랫폼에서 벗어난, 취준생 맞춤형 AI 취업 트레이닝 룸"**
 
-## 기술 스택 (Tech Stack)
+CareerWave는 수많은 채용 공고 속에서 방향을 잃은 IT 취준생들을 위한 **AI 기반 개인화 취업 준비 플랫폼**입니다.
 
-본 프로젝트는 하나의 저장소(Repository)에서 전체 플랫폼 서비스를 관리하는 모노레포(Monorepo) 아키처로 구성되어 있으며, 모듈별 기술 스택은 다음과 같습니다.
+사용자가 이력서·자기소개서를 등록하면 AI가 서류를 정밀 진단해 핵심 역량을 추출하고, 실시간 AI 모의면접으로 취업 실력을 정량적 데이터로 축적합니다.
+
+단순히 공고를 나열하는 것이 아니라, 서류 분석 결과와 면접 데이터를 결합해 **현재 내 역량으로 합격 확률이 가장 높은 채용 공고를 역으로 추천해 주는 선순환 구조**를 지향합니다.
+
+---
+
+## 2. 주요 화면
+
+| 메인 페이지 | 이력서 AI 분석 |
+| :---: | :---: |
+| <img width="1381" alt="메인 페이지" src="https://github.com/user-attachments/assets/1c482b39-4c80-45be-8ff8-82e480e3ec0e" /> | <img width="1899" alt="이력서 AI 분석" src="https://github.com/user-attachments/assets/727efb41-41a3-4d7d-ad90-ba168cca660d" /> |
+
+| 자기소개서 AI 분석 | AI 모의면접 |
+| :---: | :---: |
+| <img width="1474" alt="자기소개서 AI 분석" src="https://github.com/user-attachments/assets/fbad1124-cbbe-4029-b0e7-0752a09292e1" /> | <img width="1788" alt="AI 모의면접" src="https://github.com/user-attachments/assets/cf22fb2a-1fd2-4eb0-9d35-f98e85a10f5a" /> |
+
+| 마이페이지 / 구독 | 관리자 백오피스 |
+| :---: | :---: |
+| <img width="1492" alt="마이페이지 / 구독" src="https://github.com/user-attachments/assets/78080265-1eb9-4c3b-8f41-0e40a9a67001" /> | <img width="1896" alt="관리자 백오피스" src="https://github.com/user-attachments/assets/7d2d243b-bbd6-4fee-a580-e870fb2aaa60" /> |
+
+---
+
+## 3. 핵심 기능
+
+| 기능 | 설명 |
+| :--- | :--- |
+| **이력서 AI 분석** | PDF·Word 파일 업로드 시 직무 적합도·KPI 부족 문장 탐지 및 개선 제안 |
+| **자기소개서 AI 분석** | 문항별 답변을 AI가 분석해 구체성·논리성 피드백 제공 |
+| **AI 모의면접** | 이력서·채용공고 기반 맞춤 질문 실시간 생성, 텍스트·음성 답변 지원 |
+| **채용공고 연동** | 스크래핑 기반 채용공고 수집·검색 및 서류 분석 연동 |
+| **구독 / 결제** | 상품별 월 구독 및 토스페이먼츠 자동 빌링 |
+| **관리자 백오피스** | 회원·결제·AI 메트릭·공지·FAQ 관리 |
+
+---
+
+## 4. 시스템 아키텍처
+
+<img width="1012" alt="시스템 아키텍처 다이어그램" src="https://github.com/user-attachments/assets/ae30052a-bf09-4b60-8353-128069372a0d" />
 
 
-### 1. 모듈별 기술 스택 매트릭스
+---
 
-| 레이어 | 모듈명 | 언어 / 프레임워크 | 주요 라이브러리 및 상세 명세 |
+## 5. 기술 스택
+
+본 프로젝트는 모노레포(Monorepo) 구조로 구성되어 있습니다.
+
+| 레이어 | 모듈 | 언어 / 프레임워크 | 주요 라이브러리 |
 | :--- | :--- | :--- | :--- |
-| **인프라** | `Common` | GitHub, GitHub Actions | 모노레포 CI/CD, 빌드 및 테스트 자동화 파이프라인 |
-| **데이터베이스** | `Data` | PostgreSQL | 관계형 데이터베이스 통합 인프라 구축 |
-| **백엔드** | `user-backend`<br>`admin-backend` | Java 21<br>Spring Boot 3.x<br>Gradle | Spring Data JPA, Spring Security, JWT, Lombok |
-| **AI 및 엔진** | `user-fastapi`<br>`admin-fastapi` | Python 3.11 이상<br>FastAPI | 실시간 AI 면접 분석 피드백, 채용 공고 스크래핑 스케줄러 |
-| **프론트엔드** | `frontend` | TypeScript<br>React | TanStack Query, React Router, MSW, Vite |
+| **인프라** | Common | GitHub Actions | CI/CD, 빌드 및 테스트 자동화 |
+| **데이터베이스** | Data | PostgreSQL, Redis | 관계형 DB, 세션·캐시 |
+| **백엔드** | user-backend, admin-backend | Java 21, Spring Boot 3.x | Spring Data JPA, Spring Security, JWT |
+| **AI 엔진** | user-fastapi, admin-fastapi | Python 3.11, FastAPI | OpenAI API, APScheduler |
+| **프론트엔드** | frontend | TypeScript, React | TanStack Query, React Router, Vite |
 
+---
 
-### 2. 모노레포 프로젝트 디렉토리 구조
-
-각 모듈이 완전히 분리되어 독립적인 레이어로 관리되는 저장소 구조 명세입니다.
-
-```text
-career-wave/
-├── .github/        # CI/CD 워크플로우 및 PR 템플릿
-├── frontend/       # React + Vite (TypeScript) — user / admin 통합
-├── backend/        # Spring Boot (Java 21) — 단일 서버
-├── fastapi/        # FastAPI (Python 3.11+) — AI 엔진 및 스크래핑
-├── db/             # PostgreSQL init.sql / seed 파일
-├── specs/          # 스펙 명세 문서
-└── README.md
-```
-
-## 실행 방법
+## 6. 실행 방법
 
 ### Local Infra (PostgreSQL + Redis)
 
 ```bash
-# 1. 루트 .env 파일 생성 후 DB_PASSWORD 값 채우기
+# 1. 루트 .env 파일 생성
 cp .env.example .env
 
 # 2. PostgreSQL + Redis 컨테이너 실행
@@ -57,30 +83,28 @@ docker compose exec redis redis-cli ping
 ```
 
 > ⚠️ `init.sql`은 볼륨이 비어있는 **최초 실행 시에만** 자동 적용됩니다.
-> DDL이 변경된 경우 아래 명령어로 볼륨을 초기화한 뒤 다시 실행하세요.
-
-```bash
-# 볼륨 초기화 (데이터 전체 삭제 후 재생성)
-docker compose down -v
-docker compose up -d
-```
+> DDL이 변경된 경우 볼륨을 초기화한 뒤 다시 실행하세요.
+> ```bash
+> docker compose down -v && docker compose up -d
+> ```
+> 🚨 `-v` 옵션은 **PostgreSQL과 Redis 데이터를 포함한 모든 로컬 볼륨을 삭제**합니다. 로컬 개발 환경에서만 사용하세요.
 
 ### Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-| 플랫폼 | URL |
-| :--- | :--- |
-| 사용자 | http://localhost:5173 |
-| 관리자 | 내부 문서 참고 |
+| 플랫폼 | 배포 URL | 로컬 URL |
+| :--- | :--- | :--- |
+| 사용자 | https://www.careerwave.kr | http://localhost:5173 |
+| 관리자 | 내부 문서 참고 | 내부 문서 참고 |
 
 ### FastAPI
 
-> **전제 조건**: Python 3.11 이상이 필요합니다.
-> 로컬 환경 세팅 상세는 [`fastapi/LOCAL_DEV_SETUP.md`](fastapi/LOCAL_DEV_SETUP.md)를 참고하세요.
+> **전제 조건**: Python 3.11 이상 / 상세 설정: [`fastapi/LOCAL_DEV_SETUP.md`](fastapi/LOCAL_DEV_SETUP.md)
 
 ```bash
 cd fastapi
@@ -95,123 +119,64 @@ uvicorn main:app --reload --port 8000
 
 ### Backend
 
-> **전제 조건**: JDK 21 이상이 설치되어 있어야 합니다.
-> 로컬 환경 세팅 상세는 [`backend/LOCAL_DEV_SETUP.md`](backend/LOCAL_DEV_SETUP.md)를 참고하세요.
+> **전제 조건**: JDK 21 이상 / 상세 설정: [`backend/LOCAL_DEV_SETUP.md`](backend/LOCAL_DEV_SETUP.md)
 
 ```bash
 cd backend
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
-> **IntelliJ 환경 변수 설정**
-> 1. `Run > Edit Configurations` 선택
-> 2. `CareerWaveApplication` 실행 설정 클릭
-> 3. `Environment variables` 항목에 `backend/.env` 파일 내용 입력
->    (또는 [EnvFile 플러그인](https://plugins.jetbrains.com/plugin/7861-envfile) 설치 후 `.env` 파일 경로 지정)
+> IntelliJ 환경 변수 설정: `Run > Edit Configurations > CareerWaveApplication > Environment variables`에 `backend/.env` 내용 입력
+> ([EnvFile 플러그인](https://plugins.jetbrains.com/plugin/7861-envfile) 사용 권장)
 
 | 항목 | URL |
 | :--- | :--- |
-| Spring Boot API 서버 | http://localhost:8080 |
+| Spring Boot API | http://localhost:8080 |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 
-## 테스트 계정
-
-로컬 DB에 테스트 데이터를 넣으려면 아래 명령어를 실행하세요.
+### 테스트 계정
 
 ```bash
 # backend/ 디렉토리에서 실행
 psql -U careerwave -d careerwave -f src/main/resources/db/seed-local.sql
 ```
 
-> 재실행해도 안전합니다 (기존 데이터 DELETE 후 재삽입).
+| 아이디 | 비밀번호 | 설명 |
+| :--- | :--- | :--- |
+| `testfree` | `Testfree` | 일반회원 (무료) |
+| `testpremium` | `Testpremium` | 일반회원 (구독) |
 
-### 사용자 / 기업 계정
+---
 
-| 아이디 | 비밀번호 | roleType | 설명 |
-| :--- | :--- | :--- | :--- |
-| `testuser01` | `Test1234!` | `USER` | 일반회원 (구독 없음) |
-| `testuser02` | `Test1234!` | `USER` | 일반회원 (면접 구독) |
-| `testuser03` | `Test1234!` | `USER` | 일반회원 (서류 구독) |
-| `testuser04` | `Test1234!` | `USER` | 일반회원 (전체 구독) |
-| `testuser05` | `Test1234!` | `USER` | 일반회원 (정지 계정 테스트용) |
-| `testcompany01` | `Test1234!` | `COMPANY` | 기업회원 |
+## 7. 프로젝트 구조
 
-### 관리자 계정
-
-관리자 계정 정보는 보안상 내부 문서에서 확인하세요.
-
-## 환경 변수
-
-각 모듈 디렉토리의 `.env.example` 파일을 참고하여 `.env` 파일을 생성하세요.
-
-### 루트 `.env` (Docker DB 설정)
-
-```bash
-cp .env.example .env
+```text
+career-wave/
+├── .github/        # CI/CD 워크플로우, PR 템플릿, 컨트리뷰션 가이드
+├── frontend/       # React + Vite (TypeScript) — user / admin 통합
+├── backend/        # Spring Boot (Java 21)
+├── fastapi/        # FastAPI (Python 3.11+) — AI 엔진 및 스크래핑
+├── db/             # PostgreSQL init.sql / seed 파일
+├── docs/           # 컨벤션 문서
+├── specs/          # 스펙 명세 문서
+└── README.md
 ```
 
-| 변수명 | 설명 | 예시 |
+---
+
+## 8. 기능별 담당자
+
+| 이름 | GitHub | 담당 모듈 |
 | :--- | :--- | :--- |
-| `DB_NAME` | PostgreSQL 데이터베이스명 | `careerwave` |
-| `DB_USER` | DB 접속 유저명 | `careerwave` |
-| `DB_PASSWORD` | DB 접속 비밀번호 | `(직접 설정)` |
-| `DB_PORT` | 로컬 포트 (기본 5432) | `5432` |
+| 이가연 | [@ixxveon](https://github.com/ixxveon) | AI 서류코칭, AI 모의면접 |
+| 홍순찬 | [@hongsoonchan02](https://github.com/hongsoonchan02) | 채용공고 (user), 대시보드·관리자 관리·AI 메트릭스·스크래핑 관리·감사 로그 (admin) |
+| 신보라 | [@sbr7518-bit](https://github.com/sbr7518-bit) | 회원관리, 신고관리, 고객센터 (admin/user), 결제/정산, 서비스 통계, 관리자 로그인 |
+| 마은재 | [@maranqian-bot](https://github.com/maranqian-bot) | 로그인/회원가입, 구독/결제 (user) |
+| 고은별 | [@dmsquf9193-dot](https://github.com/dmsquf9193-dot) | UI/UX 디자인 |
+| 고유리 | [@yul941117-wq](https://github.com/yul941117-wq) | 메인페이지, 마이페이지, 커뮤니티 |
 
-### `backend/.env` (Spring Boot 설정)
+---
 
-```bash
-cp backend/.env.example backend/.env
-```
+## 컨트리뷰션 가이드
 
-| 변수명 | 설명 | 예시 |
-| :--- | :--- | :--- |
-| `DB_URL` | JDBC 접속 URL | `jdbc:postgresql://localhost:5432/careerwave` |
-| `DB_USERNAME` | DB 접속 유저명 | `careerwave` |
-| `DB_PASSWORD` | DB 접속 비밀번호 | `(루트 .env와 동일)` |
-| `JWT_USER_SECRET` | 사용자 JWT 서명 비밀키 (256bit 이상) | `(임의 생성)` |
-| `JWT_ADMIN_SECRET` | 관리자 JWT 서명 비밀키 (256bit 이상) | `(임의 생성)` |
-| `REDIS_HOST` | Redis 호스트 | `localhost` |
-| `REDIS_PORT` | Redis 포트 | `6379` |
-| `REDIS_PASSWORD` | Redis 비밀번호 | `(docker-compose와 동일)` |
-| `AWS_ACCESS_KEY_ID` | AWS Access Key | `AKIA...` |
-| `AWS_SECRET_ACCESS_KEY` | AWS Secret Key | `(인프라 팀 요청)` |
-| `AWS_S3_BUCKET_NAME` | S3 버킷명 | `careerwave-files` |
-| `AWS_S3_REGION` | S3 버킷 리전 | `ap-northeast-2` |
-| `AWS_S3_MOCK_UPLOAD` | 로컬 S3 업로드 목업 여부 | `true` |
-| `AWS_SES_REGION` | SES 이메일 발송 리전 | `ap-southeast-2` |
-| `AWS_SES_FROM_EMAIL` | SES 발신 이메일 주소 | `no-reply@careerwave.kr` |
-| `FASTAPI_BASE_URL` | FastAPI 내부 통신 URL | `http://localhost:8000` |
-| `WEBHOOK_SECRET` | FastAPI → Spring Webhook 인증키 | `(임의 생성, FastAPI와 공유)` |
-| `WEBSOCKET_ALLOWED_ORIGINS` | WebSocket 허용 Origin | `*` |
-| `SOLAPI_API_KEY` | CoolSMS SMS 발송 API Key | `(SOLAPI 콘솔)` |
-| `SOLAPI_API_SECRET` | CoolSMS API Secret | `(SOLAPI 콘솔)` |
-| `SOLAPI_SENDER_PHONE` | SMS 발신 번호 | `(등록된 번호)` |
-| `KAKAO_CLIENT_ID` | 카카오 OAuth 앱 키 | `(카카오 개발자 콘솔)` |
-| `KAKAO_CLIENT_SECRET` | 카카오 OAuth 시크릿 | `(카카오 개발자 콘솔)` |
-| `NAVER_CLIENT_ID` | 네이버 OAuth 앱 키 | `(네이버 개발자 콘솔)` |
-| `NAVER_CLIENT_SECRET` | 네이버 OAuth 시크릿 | `(네이버 개발자 콘솔)` |
-| `GOOGLE_CLIENT_ID` | 구글 OAuth 클라이언트 ID | `(Google Cloud Console)` |
-| `GOOGLE_CLIENT_SECRET` | 구글 OAuth 시크릿 | `(Google Cloud Console)` |
-| `TOSS_SECRET_KEY` | 토스 페이먼츠 시크릿 키 | `(토스 페이먼츠 콘솔)` |
-| `TOSS_BILLING_KEY_ENCRYPTION_KEY` | 빌링키 암호화 키 | `(임의 생성)` |
-| `FRONTEND_URL` | OAuth 콜백 redirect 대상 URL | `http://localhost:5173` |
-| `COOKIE_SECURE` | 쿠키 Secure 속성 (로컬: false) | `false` |
-
-### `fastapi/.env` (FastAPI 설정)
-
-```bash
-cp fastapi/.env.example fastapi/.env
-```
-
-> 전체 변수 목록과 설명은 [`fastapi/.env.example`](fastapi/.env.example)을 참고하세요. 아래는 초기 설정 시 반드시 채워야 하는 주요 변수만 안내합니다.
-
-| 변수명 | 설명 | 예시 |
-| :--- | :--- | :--- |
-| `DATABASE_URL` | PostgreSQL 접속 URL | `postgresql://careerwave:pw@localhost:5432/careerwave` |
-| `OPENAI_API_KEY` | OpenAI API Key | `sk-...` |
-| `SPRING_BASE_URL` | Spring 서버 내부 URL | `http://localhost:8080` |
-| `WEBHOOK_SECRET` | Spring Webhook 인증키 | `(backend/.env와 동일 값)` |
-| `JWT_SECRET` | JWT 서명 비밀키 | `(backend/.env와 동일 값)` |
-| `AI_METRICS_INTERNAL_SECRET` | AI 메트릭 내부 API 인증키 | `(임의 생성)` |
-
-> ⚠️ `.env` 파일은 절대 Git에 커밋하지 마세요. `.gitignore`에 등록되어 있습니다.
+브랜치 전략, 커밋 컨벤션, PR 규칙은 [CONTRIBUTION.md](.github/CONTRIBUTION.md)를 참고해 주세요.
