@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import PaymentDetailModal from './PaymentDetailModal';
 import type { Payment } from '../../../api/admin/paymentApi';
@@ -35,5 +35,21 @@ describe('PaymentDetailModal — 환불 처리 진입 시 크래시 방지 (#116
         />
       )
     ).not.toThrow();
+  });
+
+  it('aiUsage 확인 전에는 "환불 가능"으로 단정하지 않고 확정 버튼도 노출하지 않는다', () => {
+    render(
+      <PaymentDetailModal
+        selected={listShapedPendingRefund}
+        isMaster={true}
+        showToast={vi.fn()}
+        onClose={vi.fn()}
+        onRefundSuccess={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText('환불 가능')).toBeNull();
+    expect(screen.queryByText('환불 처리 확정')).toBeNull();
+    expect(screen.getAllByText('확인 중').length).toBeGreaterThan(0);
   });
 });
