@@ -125,7 +125,7 @@ export function getAclRiskMeta(cidr?: string | null) {
   const riskLevel = getAclRiskLevel(cidr);
   if (riskLevel === ACL_RISK_LEVEL.LOW) return { label: '고정 IP', tone: 'low' as const };
   if (riskLevel === ACL_RISK_LEVEL.MEDIUM) return { label: '제한 대역', tone: 'medium' as const };
-  return { label: '광역 대역', tone: 'high' as const };
+  return { label: '넓은 대역', tone: 'high' as const };
 }
 
 export function createEmptyAdminDraft(): AdminDraft {
