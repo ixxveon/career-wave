@@ -27,6 +27,7 @@ public class FaqDTO {
         Long faqId,
         FaqCategory category,
         String question,
+        String answer,
         ZonedDateTime createdAt
     ) {}
 
