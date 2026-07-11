@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { adminAuthApi, adminSession } from '../../../api/admin/adminAuthApi';
 import type { AdminDetailRole } from '../../../constants/admin/adminRoleConstants';
 import { ADMIN_ROUTE_PATHS } from '../../../constants/admin/adminRouteConstants';
@@ -44,9 +45,14 @@ export default function AdminLoginPage() {
 
       syncAdminToken(data.accessToken, data.adminInfo);
       navigate(ADMIN_ROUTE_PATHS.dashboard, { replace: true });
-    } catch {
+    } catch (err) {
       clearAdminToken();
-      setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.');
+      if (axios.isAxiosError(err) && err.response?.status === 423) {
+        const message = (err.response.data as { message?: string } | undefined)?.message;
+        setErrorMessage(message || '로그인 시도 횟수를 초과하여 계정이 잠겼습니다. 관리자에게 문의해주세요.');
+      } else {
+        setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.');
+      }
     } finally {
       setIsLoading(false);
     }
