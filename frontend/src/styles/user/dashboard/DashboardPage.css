@@ -821,6 +821,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .cw-home-job-carousel__viewport .cw-home-job {
+    flex: 0 0 calc((100% - 12px) / 2);
+  }
+
   .cw-home-stat {
     justify-content: flex-start;
   }
