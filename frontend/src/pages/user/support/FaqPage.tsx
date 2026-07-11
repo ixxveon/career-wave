@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Search, HelpCircle } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Search, HelpCircle } from 'lucide-react';
 import { supportApi, FAQ_CATEGORY_LABEL, type FaqCategory, type FaqItem } from '../../../api/user/supportApi';
 import { useDebounce } from '../../../hooks/user/common/useDebounce';
 import '@/styles/user/support/FaqPage.css';
@@ -126,6 +126,14 @@ export default function FaqPage() {
 
       {!loading && !error && totalPages > 1 && (
         <div className="fq-pagination">
+          <button
+            className="fq-page-arrow"
+            aria-label="이전 페이지"
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+          >
+            <ChevronLeft size={16} />
+          </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
             <button
               key={p}
@@ -135,6 +143,14 @@ export default function FaqPage() {
               {p}
             </button>
           ))}
+          <button
+            className="fq-page-arrow"
+            aria-label="다음 페이지"
+            disabled={page >= totalPages}
+            onClick={() => setPage(page + 1)}
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
       )}
     </div>

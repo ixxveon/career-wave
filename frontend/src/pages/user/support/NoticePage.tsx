@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, ChevronRight, Search, Pin } from 'lucide-react';
+import { Bell, ChevronLeft, ChevronRight, Search, Pin } from 'lucide-react';
 import { supportApi, NOTICE_CATEGORY_LABEL, type NoticeCategory, type NoticeItem } from '../../../api/user/supportApi';
 import { useDebounce } from '../../../hooks/user/common/useDebounce';
 import '@/styles/user/support/NoticePage.css';
@@ -114,6 +114,14 @@ export default function NoticePage() {
 
           {totalPages > 1 && (
             <div className="nt-pagination">
+              <button
+                className="nt-page-arrow"
+                aria-label="이전 페이지"
+                disabled={page <= 1}
+                onClick={() => setPage(page - 1)}
+              >
+                <ChevronLeft size={16} />
+              </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                 <button
                   key={p}
@@ -123,6 +131,14 @@ export default function NoticePage() {
                   {p}
                 </button>
               ))}
+              <button
+                className="nt-page-arrow"
+                aria-label="다음 페이지"
+                disabled={page >= totalPages}
+                onClick={() => setPage(page + 1)}
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
           )}
         </>
