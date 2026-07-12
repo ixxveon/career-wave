@@ -31,6 +31,9 @@ SET monthly_budget = ROUND(monthly_budget / 1400, 2),
 WHERE budget_currency = 'KRW';
 
 ALTER TABLE ai_ops_settings
+    ALTER COLUMN budget_currency SET DEFAULT 'USD';
+
+ALTER TABLE ai_ops_settings
     DROP CONSTRAINT IF EXISTS chk_budget_currency;
 
 ALTER TABLE ai_ops_settings

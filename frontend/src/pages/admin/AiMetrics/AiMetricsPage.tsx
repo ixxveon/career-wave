@@ -169,8 +169,8 @@ export default function AiMetricsPage() {
 
   function handleBudgetSave() {
     if (!isBudgetLoaded) return setBudgetMutationErrorMessage('예산 정보를 불러온 뒤 다시 시도해 주세요.');
-    const nextBudget = Number(budgetDraft.replace(/,/g, '').trim());
-    const nextThreshold = Number(thresholdDraft.replace(/,/g, '').trim());
+    const nextBudget = Number(budgetDraft.trim());
+    const nextThreshold = Number(thresholdDraft.trim());
     if (!Number.isFinite(nextBudget) || nextBudget <= 0 || !Number.isFinite(nextThreshold) || nextThreshold < 1 || nextThreshold > 100) return;
     updateBudgetMutation.mutate({ monthlyBudget: nextBudget, thresholdPercent: nextThreshold });
   }
