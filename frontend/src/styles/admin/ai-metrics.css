@@ -480,6 +480,7 @@
 }
 
 .aiOpsChartPlot {
+  --ai-chart-height: 250px;
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   gap: 10px;
@@ -511,7 +512,6 @@
 }
 
 .aiOpsYAxis {
-  --ai-chart-height: 250px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -532,7 +532,6 @@
 }
 
 .aiOpsBars {
-  --ai-chart-height: 250px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
   gap: 8px;
@@ -1460,17 +1459,16 @@
   }
 
   .aiOpsChartPlot {
+    --ai-chart-height: 220px;
     grid-template-columns: 34px minmax(0, 1fr);
     gap: 8px;
   }
 
   .aiOpsYAxis {
-    --ai-chart-height: 220px;
     font-size: 9px;
   }
 
   .aiOpsBars {
-    --ai-chart-height: 220px;
     min-width: 520px;
   }
 
