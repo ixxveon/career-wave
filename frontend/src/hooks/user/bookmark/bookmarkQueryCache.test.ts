@@ -7,7 +7,7 @@ describe('invalidateBookmarkQueries', () => {
   it('invalidates job notice and saved job caches together', async () => {
     const invalidateQueries = vi.fn().mockResolvedValue(undefined);
 
-    await invalidateBookmarkQueries({ invalidateQueries } as never);
+    await invalidateBookmarkQueries({ invalidateQueries });
 
     expect(invalidateQueries).toHaveBeenCalledTimes(2);
     expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
