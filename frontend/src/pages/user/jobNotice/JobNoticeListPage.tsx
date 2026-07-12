@@ -8,6 +8,7 @@ import {
   createInitialFilters,
   createFilterGroups,
   createJobNoticeQueryParams,
+  DEFAULT_FILTER_VALUE,
   getJobBookmark,
   normalizeFilters,
   type Bookmarks,
@@ -140,7 +141,7 @@ export default function JobNoticeListPage() {
   }
 
   function resetFilter(label: FilterLabel) {
-    updateFilter(label, createInitialFilters()[label]);
+    updateFilter(label, DEFAULT_FILTER_VALUE);
   }
 
   function selectSort(option: SortOption) {
