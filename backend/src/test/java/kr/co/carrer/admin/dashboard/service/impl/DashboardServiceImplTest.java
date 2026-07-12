@@ -218,6 +218,27 @@ class DashboardServiceImplTest {
     }
 
     @Test
+    void recentActivitiesAreLimitedToFiveRows() {
+        ZonedDateTime occurredAt = ZonedDateTime.parse("2026-06-28T10:00:00Z");
+        when(dashboardSummaryQueryRepository.findRecentActivities())
+                .thenReturn(java.util.stream.IntStream.rangeClosed(1, 6)
+                        .mapToObj(index -> new DashboardSummaryQueryRepository.RecentActivityRow(
+                                (long) index,
+                                occurredAt.minusMinutes(index),
+                                "admin-" + index,
+                                "activity-" + index,
+                                "/admin/log"
+                        ))
+                        .toList());
+
+        DashboardDTO.ResponseSummary result = dashboardService.getSummary(new DashboardDTO.RequestSummary(DashboardRangeType.TODAY));
+
+        assertThat(result.recentActivities())
+                .extracting(DashboardDTO.RecentActivity::id)
+                .containsExactly(1L, 2L, 3L, 4L, 5L);
+    }
+
+    @Test
     void getSummaryReturnsFrontendAdminRoutePaths() {
         when(dashboardSummaryQueryRepository.findWeeklySignups(any(DashboardQueryWindow.class)))
                 .thenReturn(List.of());

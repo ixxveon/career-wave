@@ -1126,7 +1126,7 @@ button {
 /* logs */
 
 .logCard {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   overflow: hidden;
   display: flex;
@@ -1143,9 +1143,9 @@ button {
 }
 
 .logList {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   padding-right: 4px;
 }
 
@@ -1722,10 +1722,6 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     height: auto;
     position: static;
-  }
-
-  .logCard {
-    min-height: 400px;
   }
 
   .chartGrid {
