@@ -13,6 +13,7 @@ job_notices_table = Table(
     metadata,
     Column("job_notice_id", BigInteger, primary_key=True),
     Column("company_name", String(100), nullable=True),
+    Column("company_logo_url", String(500), nullable=True),
     Column("title", String(200), nullable=False),
     Column("description", Text, nullable=True),
     Column("skill_tags", ARRAY(Text), nullable=True),
@@ -37,6 +38,7 @@ job_notices_table = Table(
 class JobNoticeRecord:
     job_notice_id: int
     company_name: str | None
+    company_logo_url: str | None
     title: str
     description: str | None
     skill_tags: list[str] | None
@@ -62,6 +64,7 @@ class JobNoticeRepository:
     def save(
         self,
         company_name: str | None,
+        company_logo_url: str | None,
         title: str,
         description: str | None,
         skill_tags: list[str] | None,
@@ -81,6 +84,7 @@ class JobNoticeRepository:
             insert(job_notices_table)
             .values(
                 company_name=company_name,
+                company_logo_url=company_logo_url,
                 title=title,
                 description=description,
                 skill_tags=skill_tags,
@@ -132,6 +136,7 @@ class JobNoticeRepository:
         return JobNoticeRecord(
             job_notice_id=row["job_notice_id"],
             company_name=row["company_name"],
+            company_logo_url=row["company_logo_url"],
             title=row["title"],
             description=row["description"],
             skill_tags=list(row["skill_tags"]) if row["skill_tags"] is not None else None,

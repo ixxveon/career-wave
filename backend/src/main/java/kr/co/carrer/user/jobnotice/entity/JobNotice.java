@@ -40,6 +40,9 @@ public class JobNotice {
     @Column(name = "company_name", length = 100)
     private String companyName;
 
+    @Column(name = "company_logo_url", length = 500)
+    private String companyLogoUrl;
+
     @Column(name = "title", nullable = false, length = 200)
     private String title;
 

@@ -7,6 +7,7 @@ class RawJobNotice:
     original_url: str
     title: str
     company_name: str | None = None
+    company_logo_url: str | None = None
     description: str | None = None
     skill_tags: list[str] | None = None
     job_type: str | None = None

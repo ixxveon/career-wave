@@ -154,6 +154,7 @@ class WantedScraper(ScraperAdapter):
             location=self._location(detail) or notice.location,
             salary=self._reward(detail) or notice.salary,
             deadline=self._first(detail, "due_time", "deadline", "end_time") or notice.deadline,
+            company_logo_url=self._company_logo_url(detail) or notice.company_logo_url,
         )
 
     def _iter_jobs(self, payload: dict[str, Any]) -> Iterable[dict[str, Any]]:
@@ -180,6 +181,7 @@ class WantedScraper(ScraperAdapter):
             original_url=f"{self._BASE_URL}/wd/{job_id}",
             title=title,
             company_name=company,
+            company_logo_url=self._company_logo_url(item),
             description=self._first(item, "intro", "description"),
             skill_tags=self._string_list(item.get("skills") or item.get("skill_tags") or item.get("tags")),
             job_type=self._first(item, "job_type"),
@@ -200,6 +202,17 @@ class WantedScraper(ScraperAdapter):
             return str(value) if value is not None else None
         value = item.get("company_name") or item.get("companyName")
         return str(value) if value is not None else None
+
+    @staticmethod
+    def _company_logo_url(item: dict[str, Any]) -> str | None:
+        company = item.get("company")
+        if not isinstance(company, dict):
+            return None
+        for key in ("logo_img", "logo_url", "logoUrl", "image_url", "imageUrl", "image"):
+            value = company.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return None
 
     @staticmethod
     def _location(item: dict[str, Any]) -> str | None:
@@ -278,11 +291,13 @@ class WantedScraper(ScraperAdapter):
         location: str | None = None,
         salary: str | None = None,
         deadline: str | None = None,
+        company_logo_url: str | None = None,
     ) -> RawJobNotice:
         return RawJobNotice(
             original_url=notice.original_url,
             title=notice.title,
             company_name=notice.company_name,
+            company_logo_url=company_logo_url if company_logo_url is not None else notice.company_logo_url,
             description=description if description is not None else notice.description,
             skill_tags=skill_tags if skill_tags is not None else notice.skill_tags,
             job_type=notice.job_type,

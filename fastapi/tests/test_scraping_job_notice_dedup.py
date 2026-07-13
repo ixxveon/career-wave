@@ -50,6 +50,7 @@ def test_job_notice_dedup_service_skips_duplicates_within_same_batch():
     assert len(repository.saved_items) == 2
     assert repository.saved_items[0]["original_url"] == "https://wanted.co.kr/1"
     assert repository.saved_items[1]["original_url"] == "https://wanted.co.kr/2"
+    assert repository.saved_items[0]["company_logo_url"] is None
 
 
 def test_job_notice_dedup_service_delegates_existing_repository_duplicates_to_save_conflict():
