@@ -577,6 +577,7 @@ COMMENT ON COLUMN career_histories.created_at        IS '기록 생성 일시';
 CREATE TABLE job_notices (
     job_notice_id BIGSERIAL    NOT NULL,
     company_name  VARCHAR(100) NULL,
+    company_logo_url VARCHAR(500) NULL,
     title         VARCHAR(200) NOT NULL,
     description   TEXT         NULL,
     search_text   TEXT         NULL,
@@ -606,6 +607,7 @@ CREATE TABLE job_notices (
 COMMENT ON TABLE  job_notices               IS '채용 공고 테이블 (직접 등록 및 스크래핑 공고 통합)';
 COMMENT ON COLUMN job_notices.job_notice_id IS '공고 고유 식별자';
 COMMENT ON COLUMN job_notices.company_name  IS '공고 게시 기업명';
+COMMENT ON COLUMN job_notices.company_logo_url IS '공고 게시 기업 로고 URL';
 COMMENT ON COLUMN job_notices.title         IS '공고 제목';
 COMMENT ON COLUMN job_notices.description   IS '공고 상세 내용';
 COMMENT ON COLUMN job_notices.search_text   IS '검색 성능 최적화를 위해 제목, 설명, 기업명, 출처, 기술 스택, 직무 카테고리를 합친 텍스트';

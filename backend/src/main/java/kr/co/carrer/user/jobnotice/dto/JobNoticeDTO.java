@@ -60,7 +60,10 @@ public class JobNoticeDTO {
             ZonedDateTime createdAt,
 
             @Schema(description = "Whether the current user bookmarked the notice")
-            boolean bookmarked
+            boolean bookmarked,
+
+            @Schema(description = "Company logo URL")
+            String companyLogoUrl
     ) {}
 
     @Schema(description = "Job notice list response")
@@ -177,7 +180,10 @@ public class JobNoticeDTO {
             ZonedDateTime updatedAt,
 
             @Schema(description = "Whether the current user bookmarked the notice")
-            boolean bookmarked
+            boolean bookmarked,
+
+            @Schema(description = "Company logo URL")
+            String companyLogoUrl
     ) {}
 
     @Schema(description = "Job notice bookmark response")

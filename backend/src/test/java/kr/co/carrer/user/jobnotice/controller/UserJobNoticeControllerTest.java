@@ -57,7 +57,8 @@ class UserJobNoticeControllerTest {
                 123,
                 LocalDate.of(2026, 6, 30),
                 ZonedDateTime.parse("2026-06-01T00:00:00Z"),
-                false
+                false,
+                "https://cdn.example.com/careerwave.png"
         );
         JobNoticeDTO.ResponseList response = new JobNoticeDTO.ResponseList(
                 List.of(summary),

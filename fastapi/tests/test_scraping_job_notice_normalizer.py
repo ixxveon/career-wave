@@ -119,6 +119,22 @@ def test_normalizer_keeps_company_size_empty_when_source_value_is_missing():
     assert notice.company_size is None
 
 
+def test_normalizer_keeps_only_http_company_logo_urls():
+    normalizer = JobNoticeNormalizer()
+
+    protocol_relative = normalizer.normalize(
+        source_name="wanted",
+        raw_notice=_raw_notice(company_logo_url="//cdn.example.com/logo.png"),
+    )
+    invalid = normalizer.normalize(
+        source_name="wanted",
+        raw_notice=_raw_notice(company_logo_url="javascript:alert(1)"),
+    )
+
+    assert protocol_relative.company_logo_url == "https://cdn.example.com/logo.png"
+    assert invalid.company_logo_url is None
+
+
 def test_normalizer_closes_notice_when_deadline_is_past():
     normalizer = JobNoticeNormalizer()
 

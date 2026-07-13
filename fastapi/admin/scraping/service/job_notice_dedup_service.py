@@ -19,6 +19,7 @@ class JobNoticeDedupService:
         for notice in self._distinct_notices(notices):
             self._job_notice_repository.save(
                 company_name=notice.company_name,
+                company_logo_url=notice.company_logo_url,
                 title=notice.title,
                 description=notice.description,
                 skill_tags=notice.skill_tags,

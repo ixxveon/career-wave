@@ -21,6 +21,7 @@ class NormalizedJobNotice:
     source: str
     view_count: int
     deadline: date | None
+    company_logo_url: str | None = None
 
 
 class JobNoticeNormalizer:
@@ -88,6 +89,7 @@ class JobNoticeNormalizer:
             source=source_name,
             view_count=0,
             deadline=parsed_deadline,
+            company_logo_url=self._normalize_logo_url(raw_notice.company_logo_url),
         )
 
     @staticmethod
@@ -96,6 +98,17 @@ class JobNoticeNormalizer:
             return None
         normalized = value.strip()
         return normalized or None
+
+    @classmethod
+    def _normalize_logo_url(cls, value: str | None) -> str | None:
+        normalized = cls._normalize_text(value)
+        if normalized is None:
+            return None
+        if normalized.startswith("//"):
+            return f"https:{normalized}"
+        if normalized.startswith(("https://", "http://")):
+            return normalized
+        return None
 
     @classmethod
     def _normalize_required_text(cls, value: str | None, *, fallback: str) -> str:
