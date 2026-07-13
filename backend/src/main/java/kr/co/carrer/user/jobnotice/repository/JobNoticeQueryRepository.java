@@ -93,12 +93,29 @@ public class JobNoticeQueryRepository {
                 period
         );
 
-        return queryFactory
-                .selectFrom(jobNotice)
+        OrderSpecifier<?>[] orderSpecifiers = resolveOrderSpecifiers(sort);
+
+        // deep pagination 최적화 (deferred join / 지연 취행)
+        // 1) 페이지 ID만 먼저 조회 — 무필터 ACTIVE 정렬은 커버링 인덱스(idx_jn_active_keyset)로
+        //    Index Only Scan 되어, OFFSET으로 건너뛰는 앞 행 전체(width~872B)를 힙에서 끌어오지 않는다.
+        //    (기존 selectFrom(...).offset()은 앞 N행 전체를 정렬·폐기해 100만 기준 OFFSET 50만에서 ~84s 소요)
+        List<Long> pageIds = queryFactory
+                .select(jobNotice.jobNoticeId)
+                .from(jobNotice)
                 .where(predicate)
-                .orderBy(resolveOrderSpecifiers(sort))
+                .orderBy(orderSpecifiers)
                 .offset(normalizedPageable.getOffset())
                 .limit(normalizedPageable.getPageSize())
+                .fetch();
+        if (pageIds.isEmpty()) {
+            return List.of();
+        }
+
+        // 2) 해당 페이지의 전체 행만 조회 후 동일 정렬 (페이지 크기만큼이라 재정렬 비용 무시 가능)
+        return queryFactory
+                .selectFrom(jobNotice)
+                .where(jobNotice.jobNoticeId.in(pageIds))
+                .orderBy(orderSpecifiers)
                 .fetch();
     }
 
