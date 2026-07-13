@@ -282,7 +282,7 @@ export default function InterviewRoom({
               status={recorder.status}
               error={recorder.error}
               sttLive={sttLive}
-              ttsPlaying={session.ttsStatus !== 'idle'}
+              ttsPlaying={session.ttsStatus !== 'idle' || session.awaitingTts}
               onStart={handleMicStart}
               onStop={handleMicStop}
               onSwitchToText={handleSwitchToText}
