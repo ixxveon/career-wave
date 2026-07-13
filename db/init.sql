@@ -1205,6 +1205,7 @@ CREATE TABLE ai_models (
     provider           VARCHAR(50)  NOT NULL DEFAULT 'OPENAI',
     input_token_price  NUMERIC(12,6) NOT NULL DEFAULT 0,
     output_token_price NUMERIC(12,6) NOT NULL DEFAULT 0,
+    pricing_unit       VARCHAR(30)   NOT NULL DEFAULT 'PER_MILLION_TOKENS',
     is_enabled         BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -1212,15 +1213,19 @@ CREATE TABLE ai_models (
     CONSTRAINT pk_ai_models           PRIMARY KEY (ai_model_id),
     CONSTRAINT uq_ai_models_name      UNIQUE (model_name),
     CONSTRAINT chk_input_token_price  CHECK (input_token_price  >= 0),
-    CONSTRAINT chk_output_token_price CHECK (output_token_price >= 0)
+    CONSTRAINT chk_output_token_price CHECK (output_token_price >= 0),
+    CONSTRAINT chk_ai_model_pricing_unit CHECK (
+        pricing_unit IN ('PER_MILLION_TOKENS', 'PER_SECOND', 'PER_CHARACTER')
+    )
 );
 COMMENT ON TABLE  ai_models                    IS 'AI 모델 테이블';
 COMMENT ON COLUMN ai_models.ai_model_id        IS '모델 고유 식별자';
 COMMENT ON COLUMN ai_models.model_name         IS '실제 API 호출에 사용하는 모델 이름';
 COMMENT ON COLUMN ai_models.display_type       IS '관리자 화면에 표시되는 모델 유형';
 COMMENT ON COLUMN ai_models.provider           IS 'AI 모델 제공 기업 이름';
-COMMENT ON COLUMN ai_models.input_token_price  IS '입력 토큰 단가';
-COMMENT ON COLUMN ai_models.output_token_price IS '출력 토큰 단가';
+COMMENT ON COLUMN ai_models.input_token_price  IS '입력 사용량 단가 (pricing_unit 기준, USD)';
+COMMENT ON COLUMN ai_models.output_token_price IS '출력 사용량 단가 (pricing_unit 기준, USD)';
+COMMENT ON COLUMN ai_models.pricing_unit       IS '단가 기준 (PER_MILLION_TOKENS / PER_SECOND / PER_CHARACTER)';
 COMMENT ON COLUMN ai_models.is_enabled         IS '모델 활성화 여부';
 COMMENT ON COLUMN ai_models.created_at         IS '모델 등록 시간';
 COMMENT ON COLUMN ai_models.updated_at         IS '모델 수정 시간';
@@ -1232,6 +1237,7 @@ INSERT INTO ai_models (
     provider,
     input_token_price,
     output_token_price,
+    pricing_unit,
     is_enabled
 )
 VALUES
@@ -1241,6 +1247,7 @@ VALUES
     'OPENAI',
     0.150000,
     0.600000,
+    'PER_MILLION_TOKENS',
     TRUE
 ),
 (
@@ -1249,6 +1256,7 @@ VALUES
     'OPENAI',
     2.500000,
     10.000000,
+    'PER_MILLION_TOKENS',
     TRUE
 ),
 (
@@ -1257,6 +1265,7 @@ VALUES
     'OPENAI',
     0.000100,
     0.000000,
+    'PER_SECOND',
     TRUE
 ),
 (
@@ -1265,6 +1274,7 @@ VALUES
     'OPENAI',
     0.000015,
     0.000000,
+    'PER_CHARACTER',
     TRUE
 )
 ON CONFLICT (model_name) DO NOTHING;
@@ -1281,7 +1291,7 @@ CREATE TABLE ai_usage_logs (
     feature_type    VARCHAR(20) NOT NULL,
     input_tokens    INTEGER     NOT NULL,
     output_tokens   INTEGER     NOT NULL,
-    cost            NUMERIC(15,2) NOT NULL,
+    cost            NUMERIC(15,6) NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_ai_usage_logs     PRIMARY KEY (ai_usage_log_id),
@@ -1305,7 +1315,7 @@ COMMENT ON COLUMN ai_usage_logs.ai_model_id     IS '모델 FK';
 COMMENT ON COLUMN ai_usage_logs.feature_type    IS '기능 유형 (DOCUMENT / INTERVIEW / INTERVIEW_STT / INTERVIEW_TTS / ADMIN_CS / ADMIN_REPORT / ADMIN_REPORT_MEMBER)';
 COMMENT ON COLUMN ai_usage_logs.input_tokens    IS '입력 토큰 수';
 COMMENT ON COLUMN ai_usage_logs.output_tokens   IS '출력 토큰 수';
-COMMENT ON COLUMN ai_usage_logs.cost            IS '소모 비용 (원 단위)';
+COMMENT ON COLUMN ai_usage_logs.cost            IS '소모 비용 (USD 단위)';
 COMMENT ON COLUMN ai_usage_logs.created_at      IS '사용 기록 일시';
 
 CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_admin_id ON ai_usage_logs (admin_id);
@@ -1317,6 +1327,7 @@ CREATE TABLE ai_ops_settings (
     ai_ops_setting_id  BIGINT      NOT NULL DEFAULT 1,
     selected_model_id  BIGINT      NOT NULL,
     monthly_budget     NUMERIC(15,2) NOT NULL,
+    budget_currency    CHAR(3)     NOT NULL DEFAULT 'USD',
     alert_enabled      BOOLEAN     NOT NULL DEFAULT TRUE,
     alert_channel      VARCHAR(20) NOT NULL DEFAULT 'DISCORD',
     alert_threshold    INTEGER     NOT NULL DEFAULT 85,
@@ -1327,13 +1338,15 @@ CREATE TABLE ai_ops_settings (
     CONSTRAINT fk_ai_ops_model      FOREIGN KEY (selected_model_id) REFERENCES ai_models (ai_model_id),
     CONSTRAINT chk_ai_ops_singleton CHECK (ai_ops_setting_id = 1),
     CONSTRAINT chk_monthly_budget   CHECK (monthly_budget  > 0),
+    CONSTRAINT chk_budget_currency  CHECK (budget_currency = 'USD'),
     CONSTRAINT chk_alert_channel    CHECK (alert_channel   IN ('DISCORD', 'SLACK', 'EMAIL')),
     CONSTRAINT chk_alert_threshold  CHECK (alert_threshold BETWEEN 1 AND 100)
 );
 COMMENT ON TABLE  ai_ops_settings                    IS 'AI 운영 설정 테이블 (싱글톤)';
 COMMENT ON COLUMN ai_ops_settings.ai_ops_setting_id  IS '운영 설정 고유 식별자 (항상 1)';
 COMMENT ON COLUMN ai_ops_settings.selected_model_id  IS '현재 적용할 AI 모델 FK';
-COMMENT ON COLUMN ai_ops_settings.monthly_budget     IS '월간 AI API 예산';
+COMMENT ON COLUMN ai_ops_settings.monthly_budget     IS '월간 AI API 예산 (USD 단위)';
+COMMENT ON COLUMN ai_ops_settings.budget_currency    IS '월간 AI API 예산 통화 (USD 고정)';
 COMMENT ON COLUMN ai_ops_settings.alert_enabled      IS '알림 사용 여부';
 COMMENT ON COLUMN ai_ops_settings.alert_channel      IS '알림 채널 (DISCORD / SLACK / EMAIL)';
 COMMENT ON COLUMN ai_ops_settings.alert_threshold    IS '알림 발생 임계치 (1~100)';
@@ -1353,7 +1366,7 @@ INSERT INTO ai_ops_settings (
 SELECT
     1,
     ai_model_id,
-    3000000.00,
+    2142.86,
     TRUE,
     'DISCORD',
     85,

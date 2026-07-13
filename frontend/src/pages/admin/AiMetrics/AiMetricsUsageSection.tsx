@@ -116,8 +116,16 @@ export default function AiMetricsUsageSection(props: AiMetricsUsageSectionProps)
                   <>
                     <div className="aiOpsBudgetEditFields">
                       <label>
-                        <span>월간 예산</span>
-                        <input type="text" value={budgetDraft} onChange={(event) => setBudgetDraft(event.target.value.replace(/[^\d,]/g, ''))} aria-label="총 예산 입력" />
+                        <span>월간 예산 (USD)</span>
+                        <input
+                          type="text"
+                          value={budgetDraft}
+                          onChange={(event) => {
+                            const nextValue = event.target.value.replace(/[^\d.]/g, '');
+                            if (/^\d*(?:\.\d{0,2})?$/.test(nextValue)) setBudgetDraft(nextValue);
+                          }}
+                          aria-label="월간 예산 USD 입력"
+                        />
                       </label>
                       <label>
                         <span>임계치</span>
