@@ -431,6 +431,24 @@ async def send_answer_hint(
     })
 
 
+async def send_reask_question(
+    session_id: str,
+    question_text: str,
+    question_order: int,
+) -> None:
+    """무음 감지 시 현재 질문을 AI 말풍선으로 재전송한다. DB 저장 없이 WebSocket으로만 전달."""
+    await _push(session_id, {
+        "type": "REASK",
+        "content": f"다시 한번 질문드릴게요.\n\n{question_text}",
+        "questionOrder": question_order,
+        "chunkIndex": None,
+        "isFinal": None,
+        "voiceQualityRatio": None,
+        "audioData": None,
+        "errorCode": None,
+    })
+
+
 async def send_error(
     session_id: str,
     content: str,

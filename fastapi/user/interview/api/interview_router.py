@@ -18,6 +18,7 @@ from user.interview.websocket.interview_ws_handler import (
     get_session_meta,
     is_session_live,
     update_session_meta,
+    send_reask_question,
 )
 
 log = logging.getLogger(__name__)
@@ -138,11 +139,14 @@ async def trigger_text_answer(
 
     # 무음·hallucination으로 빈 답변이 제출된 경우 LLM 트리거를 건너뜀.
     # 프론트 guard가 있더라도 서버에서도 방어해 꼬리질문 오발 방지.
+    # questionText가 있으면 현재 질문을 AI 말풍선으로 재전송해 자연스러운 면접 흐름 유지.
     if not body.answerText.strip():
         log.info(
             "LLM trigger skipped (empty answerText): sessionId=%s, questionOrder=%d",
             session_id, body.questionOrder,
         )
+        if body.questionText.strip():
+            await send_reask_question(session_id, body.questionText, body.questionOrder)
         return {"accepted": True, "sessionId": session_id, "questionOrder": body.questionOrder}
 
     # 서류 연결 면접 첫 질문: LLM 백그라운드 태스크보다 먼저 PENDING을 기록해
