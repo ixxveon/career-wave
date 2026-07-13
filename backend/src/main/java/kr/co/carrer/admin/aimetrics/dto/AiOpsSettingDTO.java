@@ -19,7 +19,7 @@ public class AiOpsSettingDTO {
     public record RequestUpdateBudget(
             @Schema(description = "운영 모델 ID", requiredMode = Schema.RequiredMode.REQUIRED)
             @NotNull Long selectedModelId,
-            @Schema(description = "월 예산", requiredMode = Schema.RequiredMode.REQUIRED)
+            @Schema(description = "월 예산 (USD)", requiredMode = Schema.RequiredMode.REQUIRED)
             @NotNull @Positive BigDecimal monthlyBudget,
             @Schema(description = "알림 임계치", minimum = "1", maximum = "100", requiredMode = Schema.RequiredMode.REQUIRED)
             @Min(1) @Max(100) int alertThreshold
@@ -44,7 +44,7 @@ public class AiOpsSettingDTO {
     public record ResponseBudget(
             @Schema(description = "AI 운영 설정 ID") Long aiOpsSettingId,
             @Schema(description = "운영 모델 ID") Long selectedModelId,
-            @Schema(description = "월 예산") BigDecimal monthlyBudget,
+            @Schema(description = "월 예산 (USD)") BigDecimal monthlyBudget,
             @Schema(description = "알림 활성 여부") boolean alertEnabled,
             @Schema(description = "알림 채널", allowableValues = {"DISCORD", "SLACK", "EMAIL"}) AlertChannelType alertChannel,
             @Schema(description = "알림 임계치") int alertThreshold,

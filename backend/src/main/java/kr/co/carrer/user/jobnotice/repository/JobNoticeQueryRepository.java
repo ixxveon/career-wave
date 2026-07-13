@@ -32,6 +32,14 @@ public class JobNoticeQueryRepository {
 
     private static final QJobNotice jobNotice = QJobNotice.jobNotice;
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
+    // FastAPI JobNoticeNormalizer가 DB에 저장하는 카테고리/지역 표준값과 반드시 함께 변경한다.
+    private static final List<String> STANDARD_JOB_CATEGORIES = List.of(
+            "BACKEND", "FRONTEND", "DATA", "DEVOPS"
+    );
+    private static final List<String> STANDARD_LOCATIONS = List.of(
+            "\uC11C\uC6B8", "\uACBD\uAE30", "\uC778\uCC9C", "\uBD80\uC0B0", "\uB300\uAD6C", "\uAD11\uC8FC", "\uB300\uC804", "\uC6B8\uC0B0", "\uC138\uC885",
+            "\uAC15\uC6D0", "\uCD09\uBD81", "\uCD09\uB0A8", "\uC804\uBD81", "\uC804\uB0A8", "\uACBD\uBD81", "\uACBD\uB0A8", "\uC81C\uC8FC"
+    );
 
     private final EntityManager entityManager;
     private final JPAQueryFactory queryFactory;
@@ -218,6 +226,7 @@ public class JobNoticeQueryRepository {
 
         return categories.stream()
                 .map(String.class::cast)
+                .filter(STANDARD_JOB_CATEGORIES::contains)
                 .toList();
     }
 
@@ -249,6 +258,7 @@ public class JobNoticeQueryRepository {
                 .stream()
                 .map(String::trim)
                 .filter(value -> !value.isBlank())
+                .filter(STANDARD_LOCATIONS::contains)
                 .distinct()
                 .sorted()
                 .toList();
@@ -295,7 +305,7 @@ public class JobNoticeQueryRepository {
             builder.and(jobNotice.careerLevel.eq(careerLevel));
         }
         if (location != null && !location.isBlank()) {
-            builder.and(jobNotice.location.containsIgnoreCase(location.trim()));
+            builder.and(jobNotice.location.equalsIgnoreCase(location.trim()));
         }
         if (companySize != null) {
             builder.and(jobNotice.companySize.eq(companySize));
@@ -315,15 +325,7 @@ public class JobNoticeQueryRepository {
         }
 
         String normalizedKeyword = keyword.trim();
-
-        BooleanBuilder keywordBuilder = new BooleanBuilder();
-        keywordBuilder.or(jobNotice.title.containsIgnoreCase(normalizedKeyword));
-        keywordBuilder.or(jobNotice.description.containsIgnoreCase(normalizedKeyword));
-        keywordBuilder.or(jobNotice.companyName.containsIgnoreCase(normalizedKeyword));
-        keywordBuilder.or(jobNotice.source.containsIgnoreCase(normalizedKeyword));
-        keywordBuilder.or(arrayContainsIgnoreCase(jobNotice.skillTags, normalizedKeyword));
-        keywordBuilder.or(arrayContainsIgnoreCase(jobNotice.jobCategory, normalizedKeyword));
-        return keywordBuilder.getValue();
+        return jobNotice.searchText.containsIgnoreCase(normalizedKeyword);
     }
 
     private BooleanExpression periodCondition(String period) {
@@ -380,22 +382,6 @@ public class JobNoticeQueryRepository {
         }
 
         return orderSpecifiers.toArray(new OrderSpecifier[0]);
-    }
-
-    private BooleanExpression arrayContainsIgnoreCase(com.querydsl.core.types.dsl.ArrayPath<String[], String> arrayPath, String value) {
-        String escapedValue = escapeLikePattern(value);
-        return Expressions.booleanTemplate(
-                "lower(function('array_to_string', {0}, ',')) like lower({1}) escape '\\'",
-                arrayPath,
-                "%" + escapedValue + "%"
-        );
-    }
-
-    private String escapeLikePattern(String input) {
-        return input
-                .replace("\\", "\\\\")
-                .replace("%", "\\%")
-                .replace("_", "\\_");
     }
 
     private BooleanExpression arrayContains(com.querydsl.core.types.dsl.ArrayPath<String[], String> arrayPath, String value) {

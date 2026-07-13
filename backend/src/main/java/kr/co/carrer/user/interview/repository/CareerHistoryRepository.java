@@ -20,6 +20,7 @@ public interface CareerHistoryRepository extends JpaRepository<CareerHistory, Lo
     @Query("SELECT ch.careerHistoryId AS careerHistoryId, ch.sessionId AS sessionId, " +
            "s.sessionType AS sessionType, s.interviewType AS interviewType, " +
            "s.targetCompany AS targetCompany, s.sessionStatus AS sessionStatus, " +
+           "s.reportStatus AS reportStatus, " +
            "ch.totalScore AS totalScore, ch.pdfUrl AS pdfUrl, ch.createdAt AS createdAt " +
            "FROM CareerHistory ch LEFT JOIN InterviewSession s ON ch.sessionId = s.sessionId " +
            "WHERE ch.memberId = :memberId ORDER BY ch.createdAt DESC")

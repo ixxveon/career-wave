@@ -41,7 +41,9 @@ def test_groupby_scraper_maps_sitemap_and_job_posting_html_to_raw_job_notices():
           },
           "hiringOrganization": {
             "@type": "Organization",
-            "name": "Career Wave"
+            "name": "Career Wave",
+            "logo": "https://cdn.example.com/groupby-logo.png",
+            "companySize": "STARTUP"
           }
         }
         </script>
@@ -75,6 +77,8 @@ def test_groupby_scraper_maps_sitemap_and_job_posting_html_to_raw_job_notices():
     assert notices[0].original_url == "https://groupby.kr/careers/backend-engineer"
     assert notices[0].title == "Backend Engineer"
     assert notices[0].company_name == "Career Wave"
+    assert notices[0].company_logo_url == "https://cdn.example.com/groupby-logo.png"
+    assert notices[0].company_size == "STARTUP"
     assert notices[0].description == "Build reliable admin scraping pipelines."
     assert notices[0].skill_tags == ["Python", "FastAPI"]
     assert notices[0].job_type == "FULL_TIME"
@@ -145,7 +149,7 @@ def test_wanted_scraper_maps_api_jobs_to_raw_job_notices():
                         {
                             "id": 123,
                             "position": "Backend Engineer",
-                            "company": {"name": "Career Wave"},
+                            "company": {"name": "Career Wave", "logo_url": "https://cdn.example.com/wanted-logo.png"},
                             "address": {"country": "Korea", "location": "Seoul"},
                             "skills": [{"title": "Python"}, {"title": "FastAPI"}],
                             "category_tags": [{"title": "Server"}],
@@ -190,6 +194,7 @@ def test_wanted_scraper_maps_api_jobs_to_raw_job_notices():
     assert notices[0].original_url == "https://www.wanted.co.kr/wd/123"
     assert notices[0].title == "Backend Engineer"
     assert notices[0].company_name == "Career Wave"
+    assert notices[0].company_logo_url == "https://cdn.example.com/wanted-logo.png"
     assert "[소개]\nCareer Wave intro." in notices[0].description
     assert "[주요업무]\nBuild scraping pipelines." in notices[0].description
     assert "[자격요건]\nPython experience." in notices[0].description
@@ -287,6 +292,8 @@ def test_saramin_scraper_maps_search_html_to_raw_job_notices():
     search_html = """
     <html>
       <div class="item_recruit">
+        <div class="corp_logo"><img src="//cdn.example.com/saramin-logo.png" /></div>
+        <div class="corp_detail">\uc911\uc18c\uae30\uc5c5</div>
         <div class="corp_name"><a>Career Wave</a></div>
         <h2 class="job_tit">
           <a href="/zf_user/jobs/relay/view?rec_idx=456">Python Backend</a>
@@ -336,6 +343,8 @@ def test_saramin_scraper_maps_search_html_to_raw_job_notices():
     assert notices[0].original_url == "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=456"
     assert notices[0].title == "Python Backend"
     assert notices[0].company_name == "Career Wave"
+    assert notices[0].company_logo_url == "https://cdn.example.com/saramin-logo.png"
+    assert notices[0].company_size == "\uc911\uc18c\uae30\uc5c5"
     assert notices[0].description == "Develop user job notice features."
     assert notices[0].skill_tags == ["Python", "Django"]
     assert notices[0].job_type == "정규직"
@@ -427,6 +436,7 @@ def test_jumpit_scraper_maps_sitemap_and_detail_api_to_raw_job_notices():
                         "id": 54365723,
                         "title": "Backend Platform Engineer",
                         "companyName": "Career Wave",
+                        "companyLogoUrl": "https://cdn.example.com/jumpit-logo.png",
                         "techStacks": [{"stack": "Python"}, {"stack": "FastAPI"}, {"stack": "Python"}],
                         "serviceInfo": "Build internal platforms.",
                         "responsibility": "Operate scraping services.",
@@ -469,6 +479,7 @@ def test_jumpit_scraper_maps_sitemap_and_detail_api_to_raw_job_notices():
     assert notices[0].original_url == "https://jumpit.saramin.co.kr/position/54365723"
     assert notices[0].title == "Backend Platform Engineer"
     assert notices[0].company_name == "Career Wave"
+    assert notices[0].company_logo_url == "https://cdn.example.com/jumpit-logo.png"
     assert "[service]\nBuild internal platforms." in notices[0].description
     assert "[responsibility]\nOperate scraping services." in notices[0].description
     assert notices[0].skill_tags == ["Python", "FastAPI"]

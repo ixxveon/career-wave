@@ -60,6 +60,7 @@ def test_validate_pipeline_list_response_checks_required_item_fields():
                     "displayName": "Wanted",
                     "pipelineStatus": "SUCCESS",
                     "isEnabled": True,
+                    "scheduleIntervalMinutes": 360,
                     "lastStartedAt": None,
                     "lastSuccessAt": None,
                     "lastFailedAt": None,

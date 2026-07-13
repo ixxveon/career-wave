@@ -7,6 +7,8 @@ interface VoiceRecorderProps {
   error: RecorderError | null;
   /** FastAPI WS STT_RESULT로 수신한 실시간 변환 텍스트 (Phase 4 연동 전까지 빈 문자열) */
   sttLive: string;
+  /** TTS 재생 중 여부 — true면 마이크 버튼 비활성화 */
+  ttsPlaying: boolean;
   onStart: () => void;
   onStop: () => void;
   onSwitchToText: () => void;
@@ -18,14 +20,15 @@ const ERROR_MESSAGES: Record<RecorderError, string> = {
   unknown:           '마이크 오류가 발생했습니다. 키보드로 답변해주세요.',
 };
 
-function VoiceRecorder({ status, error, sttLive, onStart, onStop, onSwitchToText }: VoiceRecorderProps) {
+function VoiceRecorder({ status, error, sttLive, ttsPlaying, onStart, onStop, onSwitchToText }: VoiceRecorderProps) {
   const isRecording  = status === 'recording';
   const isRequesting = status === 'requesting';
   const isError      = status === 'error';
+  const isMicDisabled = isRequesting || ttsPlaying;
 
   function handleMicClick() {
-    if (isRecording)  { onStop();  return; }
-    if (isRequesting) return;
+    if (isRecording)   { onStop();  return; }
+    if (isMicDisabled) return;
     onStart();
   }
 
@@ -33,9 +36,9 @@ function VoiceRecorder({ status, error, sttLive, onStart, onStop, onSwitchToText
     <div className="vr">
       {/* 마이크 버튼 */}
       <button
-        className={`vr__mic${isRecording ? ' vr__mic--on' : ''}${isError ? ' vr__mic--err' : ''}`}
+        className={`vr__mic${isRecording ? ' vr__mic--on' : ''}${isError ? ' vr__mic--err' : ''}${ttsPlaying && !isRecording ? ' vr__mic--tts' : ''}`}
         onClick={handleMicClick}
-        disabled={isRequesting}
+        disabled={isMicDisabled}
         type="button"
         aria-label={isRecording ? '녹음 중지 및 전송' : '음성 답변 시작'}
       >
@@ -56,9 +59,10 @@ function VoiceRecorder({ status, error, sttLive, onStart, onStop, onSwitchToText
               <span className="vr__dot" />
               녹음 중 · 버튼을 다시 누르면 전송됩니다
             </span>
-            {/* STT_RESULT WS 수신 시 실시간 표시 (Phase 4 연동) */}
             {sttLive && <p className="vr__stt-preview">{sttLive}</p>}
           </>
+        ) : ttsPlaying ? (
+          <span className="vr__hint vr__hint--tts">AI 면접관이 말하는 중입니다. 잠시 기다려 주세요.</span>
         ) : isRequesting ? (
           <span className="vr__hint">마이크 권한 확인 중...</span>
         ) : isError && error ? (

@@ -30,7 +30,12 @@ public class AdminLoginDto {
         }
     }
 
-    public record TokenRefreshResponse(String accessToken) {}
+    /**
+     * accessToken + adminInfo(id, name, role) 반환.
+     * 프론트가 sessionStorage 부재 상황(탭 재오픈 등)에서 refresh 만으로 세션(토큰·역할·이름)을 완전 복원할 수 있도록
+     * 로그인 응답과 동일하게 adminInfo를 함께 내려준다.
+     */
+    public record TokenRefreshResponse(String accessToken, AdminInfo adminInfo) {}
 
     @Getter
     public static class AdminInfo {

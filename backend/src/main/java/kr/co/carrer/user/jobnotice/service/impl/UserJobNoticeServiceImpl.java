@@ -135,7 +135,8 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 updatedJobNotice.getDeadline(),
                 updatedJobNotice.getCreatedAt(),
                 updatedJobNotice.getUpdatedAt(),
-                isBookmarked(memberId, updatedJobNotice.getJobNoticeId())
+                isBookmarked(memberId, updatedJobNotice.getJobNoticeId()),
+                updatedJobNotice.getCompanyLogoUrl()
         );
     }
 
@@ -186,7 +187,8 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 jobNotice.getViewCount(),
                 jobNotice.getDeadline(),
                 jobNotice.getCreatedAt(),
-                bookmarkedJobNoticeIds.contains(jobNotice.getJobNoticeId())
+                bookmarkedJobNoticeIds.contains(jobNotice.getJobNoticeId()),
+                jobNotice.getCompanyLogoUrl()
         );
     }
 

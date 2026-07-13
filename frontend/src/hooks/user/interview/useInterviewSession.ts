@@ -20,6 +20,7 @@ import {
   SPRING_WS_SYSTEM_SUBTYPE,
   FASTAPI_WS_MESSAGE_TYPE,
   SESSION_STATE,
+  SESSION_TYPE,
 } from '../../../types/user/interview';
 import type { TTSQueueStatus } from './useTTSQueue';
 import type { SpringWSStatus }  from './useSpringWebSocket';
@@ -149,6 +150,8 @@ export interface UseInterviewSessionResult {
   /** LLM_STREAM RAF 배치 업데이트 텍스트 — 스트리밍 중 AI 말풍선에 표시 */
   streamingText:   string;
   ttsStatus:       TTSQueueStatus;
+  /** QUESTION 수신 ~ TTS 재생 완료 사이 마이크 잠금 (음성 면접 전용) */
+  awaitingTts:     boolean;
   springWsStatus:  SpringWSStatus;
   fastApiWsStatus: FastApiWSStatus;
   dispatch:        React.Dispatch<SessionAction>;
@@ -181,6 +184,13 @@ export function useInterviewSession({
       message: { id: Date.now(), role: 'notice', text: '⚠️ 음성 재생에 실패했습니다. 면접은 계속 진행됩니다.' },
     }),
   });
+
+  const [awaitingTts, setAwaitingTts] = useState(false);
+
+  // TTS 재생이 완전히 끝나면(idle) 잠금 해제
+  useEffect(() => {
+    if (tts.status === 'idle') setAwaitingTts(false);
+  }, [tts.status]);
 
   const [springWsStatus,  setSpringWsStatus]  = useState<SpringWSStatus>('DISCONNECTED');
   const [fastApiWsStatus, setFastApiWsStatus] = useState<FastApiWSStatus>('DISCONNECTED');
@@ -268,6 +278,9 @@ export function useInterviewSession({
             dispatch({ type: 'FINISH' });
           }
         }
+        // 음성 면접: QUESTION 수신 ~ TTS 재생 완료 사이 마이크 잠금
+        // ttsStatus는 TTS_AUDIO_END 수신 후에야 loading으로 바뀌므로 별도 플래그 필요
+        if (sessionType === SESSION_TYPE.VOICE) setAwaitingTts(true);
         break;
       case SPRING_WS_MESSAGE_TYPE.SYSTEM:
         dispatch({
@@ -285,7 +298,7 @@ export function useInterviewSession({
         dispatch({ type: 'ERROR' });
         break;
     }
-  }, []);
+  }, [sessionType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSpringStatusChange = useCallback((status: SpringWSStatus) => {
     springWsStatusRef.current = status;
@@ -314,12 +327,18 @@ export function useInterviewSession({
         const text = msg.content ?? '';
         const pid = stateRef.current.pendingVoiceId;
         if (pid !== null) {
-          dispatch({ type: 'UPDATE_MESSAGE', id: pid, updates: { isPending: false, text } });
+          if (text) {
+            dispatch({ type: 'UPDATE_MESSAGE', id: pid, updates: { isPending: false, text } });
+          } else {
+            // 무음/hallucination → pending 말풍선 제거 (ANSWER_HINT가 notice로 대체)
+            dispatch({ type: 'REMOVE_MESSAGE', id: pid });
+          }
           dispatch({ type: 'SET_PENDING_VOICE_ID', id: null });
         }
         dispatch({ type: 'SET_STT_LIVE', text: '' });
         // 음성 경로: pending 말풍선이 이미 있으므로 ADD_MESSAGE 없이 서버 전송만
-        sendTextAnswerRef.current(text, true);
+        // 빈 transcript는 Spring에 제출하지 않음 — 다음 질문으로 넘어가는 것을 방지
+        if (text) sendTextAnswerRef.current(text, true);
         break;
       }
       case FASTAPI_WS_MESSAGE_TYPE.STT_PARTIAL: {
@@ -374,9 +393,29 @@ export function useInterviewSession({
           const merged = mergeTtsChunks(ttsChunkBufferRef.current);
           ttsChunkBufferRef.current = [];
           tts.enqueue(merged);
+        } else {
+          // 청크 미도착 = TTS 생성 실패 — tts.status가 idle 그대로이므로 수동 해제
+          setAwaitingTts(false);
         }
         break;
       }
+      case FASTAPI_WS_MESSAGE_TYPE.ANSWER_HINT:
+        if (msg.content) {
+          dispatch({
+            type:    'ADD_MESSAGE',
+            message: { id: Date.now(), role: 'notice', text: msg.content },
+          });
+        }
+        break;
+      case FASTAPI_WS_MESSAGE_TYPE.REASK:
+        if (msg.content) {
+          dispatch({ type: 'SET_TYPING', typing: false });
+          dispatch({
+            type:    'ADD_MESSAGE',
+            message: { id: Date.now(), role: 'ai', text: msg.content },
+          });
+        }
+        break;
       case FASTAPI_WS_MESSAGE_TYPE.ERROR:
         // STT/LLM/TTS 처리 오류 — 연결은 유지, 토스트로 표시 (api-schema.md §8)
         dispatch({
@@ -508,6 +547,7 @@ export function useInterviewSession({
     pendingVoiceId:  state.pendingVoiceId,
     streamingText,
     ttsStatus:       tts.status,
+    awaitingTts,
     springWsStatus,
     fastApiWsStatus,
     dispatch,

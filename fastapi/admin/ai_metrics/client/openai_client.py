@@ -20,6 +20,7 @@ class AiMetricsModelExecutionContext:
     model_name: str
     input_token_price: Decimal
     output_token_price: Decimal
+    pricing_unit: str = "PER_MILLION_TOKENS"
 
 
 class AiMetricsOpenAIClient:
@@ -53,6 +54,7 @@ class AiMetricsOpenAIClient:
             model_name=ai_model.model_name,
             input_token_price=ai_model.input_token_price,
             output_token_price=ai_model.output_token_price,
+            pricing_unit=ai_model.pricing_unit,
         )
 
     async def create_chat_completion(

@@ -140,3 +140,31 @@ async def test_scraping_task_run_action_fails_fast_when_dedup_service_is_missing
             source_name="wanted",
             action_type=ScrapingActionType.RUN,
         )
+
+
+@pytest.mark.asyncio
+async def test_scraping_task_invalidates_job_notice_caches_after_successful_run(monkeypatch):
+    cache_invalidation_calls: list[bool] = []
+
+    async def invalidate_job_notice_caches() -> None:
+        cache_invalidation_calls.append(True)
+
+    monkeypatch.setattr(
+        "admin.scraping.task.scraping_task.invalidate_job_notice_caches",
+        invalidate_job_notice_caches,
+    )
+    task = ScrapingTask(
+        pipeline_runner_service=_RecordingPipelineRunnerService(),
+        pipeline_status_service=_RecordingPipelineStatusService(),
+        scraping_log_service=_RecordingScrapingLogService(),
+        job_notice_dedup_service=JobNoticeDedupService(_RecordingJobNoticeRepository()),
+        job_notice_normalizer=JobNoticeNormalizer(),
+    )
+
+    result = await task.run(
+        source_name="wanted",
+        action_type=ScrapingActionType.RUN,
+    )
+
+    assert result.pipeline_status == "SUCCESS"
+    assert cache_invalidation_calls == [True]

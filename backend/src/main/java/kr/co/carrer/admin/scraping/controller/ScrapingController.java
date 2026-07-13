@@ -8,8 +8,7 @@ import kr.co.carrer.admin.scraping.dto.ScrapingLogDTO;
 import kr.co.carrer.admin.scraping.dto.ScrapingPipelineDTO;
 import kr.co.carrer.admin.scraping.service.ScrapingService;
 import kr.co.carrer.auth.principal.AuthPrincipal;
-import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.auth.principal.AdminPrincipalResolver;
 import kr.co.carrer.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -58,6 +57,7 @@ public class ScrapingController implements ScrapingDocs {
                                 item.displayName(),
                                 item.pipelineStatus(),
                                 item.isEnabled(),
+                                item.scheduleIntervalMinutes(),
                                 item.lastStartedAt(),
                                 item.lastSuccessAt(),
                                 item.lastFailedAt(),
@@ -106,6 +106,7 @@ public class ScrapingController implements ScrapingDocs {
                 result.displayName(),
                 result.pipelineStatus(),
                 result.isEnabled(),
+                result.scheduleIntervalMinutes(),
                 result.lastStartedAt(),
                 result.lastSuccessAt(),
                 result.lastFailedAt(),
@@ -132,7 +133,7 @@ public class ScrapingController implements ScrapingDocs {
                         request.actionType(),
                         request.reason()
                 ),
-                extractAdminId(principal),
+                AdminPrincipalResolver.extractAdminId(principal),
                 AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
@@ -159,7 +160,7 @@ public class ScrapingController implements ScrapingDocs {
                         request.reason(),
                         request.sourceNames()
                 ),
-                extractAdminId(principal),
+                AdminPrincipalResolver.extractAdminId(principal),
                 AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
 
@@ -220,17 +221,6 @@ public class ScrapingController implements ScrapingDocs {
 
     private int getSizeOrDefault(Integer size) {
         return size == null ? DEFAULT_SIZE : size;
-    }
-
-    private Long extractAdminId(AuthPrincipal principal) {
-        if (principal == null || principal.getId() == null || principal.getId().isBlank()) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
-        try {
-            return Long.valueOf(principal.getId());
-        } catch (NumberFormatException exception) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
     }
 
 }
