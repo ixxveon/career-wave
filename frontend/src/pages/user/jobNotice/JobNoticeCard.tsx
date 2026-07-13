@@ -1,4 +1,5 @@
 import { Bookmark, BookmarkCheck, Eye } from 'lucide-react';
+import JobNoticeCompanyLogo from '../../../components/user/jobNotice/JobNoticeCompanyLogo';
 import { formatJobNoticeDeadlineBadge, type JobNotice } from '../../../types/user/jobNotice';
 
 interface JobNoticeCardProps {
@@ -12,7 +13,11 @@ export default function JobNoticeCard({ job, bookmarked, onBookmark, onClick }: 
   return (
     <article className={`jn-card${job.recommended ? ' jn-card--featured' : ''}`}>
       <div className="jn-card__top">
-        <div className="jn-card__logo">{job.company[0]}</div>
+        <JobNoticeCompanyLogo
+          className="jn-card__logo"
+          companyName={job.company}
+          companyLogoUrl={job.companyLogoUrl}
+        />
         <div className="jn-card__company">
           <strong>{job.company}</strong>
           <span>{job.exp} · {job.employment} · {job.location}</span>

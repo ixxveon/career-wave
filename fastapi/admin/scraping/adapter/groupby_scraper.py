@@ -170,6 +170,7 @@ class GroupByScraper(ScraperAdapter):
             original_url=notice_url,
             title=title,
             company_name=self._extract_company_name(job_posting, soup),
+            company_logo_url=self._extract_company_logo_url(job_posting, soup),
             description=self._extract_description(job_posting, soup),
             skill_tags=self._extract_skill_tags(job_posting, soup),
             job_type=(
@@ -257,6 +258,25 @@ class GroupByScraper(ScraperAdapter):
             if text:
                 return text
         return self._meta_content(soup, "property", "og:site_name")
+
+    def _extract_company_logo_url(self, job_posting: dict[str, object] | None, soup: BeautifulSoup) -> str | None:
+        if isinstance(job_posting, dict):
+            hiring_organization = job_posting.get("hiringOrganization")
+            if isinstance(hiring_organization, dict):
+                logo = hiring_organization.get("logo")
+                if isinstance(logo, dict):
+                    logo = logo.get("url") or logo.get("contentUrl")
+                if isinstance(logo, str) and logo.strip():
+                    return urljoin(self._BASE_URL, logo.strip())
+
+        for selector in ("[data-testid='company-logo'] img", ".company-logo img", ".organization-logo img"):
+            image = soup.select_one(selector)
+            if image is None:
+                continue
+            value = image.get("data-src") or image.get("src")
+            if isinstance(value, str) and value.strip():
+                return urljoin(self._BASE_URL, value.strip())
+        return None
 
     def _extract_description(self, job_posting: dict[str, object] | None, soup: BeautifulSoup) -> str | None:
         description = self._schema_text(job_posting, "description")

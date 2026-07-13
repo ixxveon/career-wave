@@ -577,6 +577,7 @@ COMMENT ON COLUMN career_histories.created_at        IS '기록 생성 일시';
 CREATE TABLE job_notices (
     job_notice_id BIGSERIAL    NOT NULL,
     company_name  VARCHAR(100) NULL,
+    company_logo_url VARCHAR(500) NULL,
     title         VARCHAR(200) NOT NULL,
     description   TEXT         NULL,
     search_text   TEXT         NULL,
@@ -606,6 +607,7 @@ CREATE TABLE job_notices (
 COMMENT ON TABLE  job_notices               IS '채용 공고 테이블 (직접 등록 및 스크래핑 공고 통합)';
 COMMENT ON COLUMN job_notices.job_notice_id IS '공고 고유 식별자';
 COMMENT ON COLUMN job_notices.company_name  IS '공고 게시 기업명';
+COMMENT ON COLUMN job_notices.company_logo_url IS '공고 게시 기업 로고 URL';
 COMMENT ON COLUMN job_notices.title         IS '공고 제목';
 COMMENT ON COLUMN job_notices.description   IS '공고 상세 내용';
 COMMENT ON COLUMN job_notices.search_text   IS '검색 성능 최적화를 위해 제목, 설명, 기업명, 출처, 기술 스택, 직무 카테고리를 합친 텍스트';
@@ -1430,6 +1432,7 @@ CREATE TABLE scraping_pipelines (
     display_name         VARCHAR(100) NOT NULL,
     pipeline_status      VARCHAR(20)  NOT NULL DEFAULT 'IDLE',
     is_enabled           BOOLEAN      NOT NULL DEFAULT TRUE,
+    schedule_interval_minutes INTEGER NOT NULL DEFAULT 360,
     last_started_at      TIMESTAMPTZ  NULL,
     last_success_at      TIMESTAMPTZ  NULL,
     last_failed_at       TIMESTAMPTZ  NULL,
@@ -1442,6 +1445,7 @@ CREATE TABLE scraping_pipelines (
     CONSTRAINT pk_scraping_pipelines              PRIMARY KEY (scraping_pipeline_id),
     CONSTRAINT uq_scraping_source_name            UNIQUE (source_name),
     CONSTRAINT chk_pipeline_status                CHECK (pipeline_status IN ('IDLE', 'RUNNING', 'SUCCESS', 'FAILED')),
+    CONSTRAINT chk_pipeline_schedule_interval     CHECK (schedule_interval_minutes > 0),
     CONSTRAINT chk_pipeline_last_duration_ms      CHECK (last_duration_ms IS NULL OR last_duration_ms >= 0),
     CONSTRAINT chk_pipeline_last_total_count      CHECK (last_total_count IS NULL OR last_total_count >= 0)
 );
@@ -1451,6 +1455,7 @@ COMMENT ON COLUMN scraping_pipelines.source_name         IS '스크래핑 대상
 COMMENT ON COLUMN scraping_pipelines.display_name        IS '파이프라인 표시 이름';
 COMMENT ON COLUMN scraping_pipelines.pipeline_status     IS '파이프라인 현재 상태 (IDLE / RUNNING / SUCCESS / FAILED)';
 COMMENT ON COLUMN scraping_pipelines.is_enabled          IS '파이프라인 활성화 여부 (기본값 TRUE)';
+COMMENT ON COLUMN scraping_pipelines.schedule_interval_minutes IS '자동 수집 주기(분, 기본 360분)';
 COMMENT ON COLUMN scraping_pipelines.last_started_at     IS '마지막 실행 시작 시각';
 COMMENT ON COLUMN scraping_pipelines.last_success_at     IS '마지막 성공 시각';
 COMMENT ON COLUMN scraping_pipelines.last_failed_at      IS '마지막 실패 시각';
@@ -1464,17 +1469,19 @@ INSERT INTO scraping_pipelines (
     source_name,
     display_name,
     pipeline_status,
-    is_enabled
+    is_enabled,
+    schedule_interval_minutes
 )
 VALUES
-    ('groupby', 'GroupBy', 'IDLE', TRUE),
-    ('jumpit', 'Jumpit', 'IDLE', TRUE),
-    ('wanted', 'Wanted', 'IDLE', TRUE),
-    ('saramin', 'Saramin', 'IDLE', TRUE)
+    ('groupby', 'GroupBy', 'IDLE', TRUE, 360),
+    ('jumpit', 'Jumpit', 'IDLE', TRUE, 360),
+    ('wanted', 'Wanted', 'IDLE', TRUE, 360),
+    ('saramin', 'Saramin', 'IDLE', TRUE, 360)
 ON CONFLICT (source_name) DO UPDATE
 SET
     display_name = EXCLUDED.display_name,
     is_enabled = EXCLUDED.is_enabled,
+    schedule_interval_minutes = EXCLUDED.schedule_interval_minutes,
     updated_at = NOW();
 
 -- ================================================

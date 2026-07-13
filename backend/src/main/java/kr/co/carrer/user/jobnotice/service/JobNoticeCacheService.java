@@ -135,7 +135,8 @@ public class JobNoticeCacheService {
                 jobNotice.getViewCount(),
                 jobNotice.getDeadline(),
                 jobNotice.getCreatedAt(),
-                false
+                false,
+                jobNotice.getCompanyLogoUrl()
         );
     }
 

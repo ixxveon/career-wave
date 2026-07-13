@@ -30,6 +30,7 @@ export interface JobNoticeSummary {
   deadline?: string | null;
   source: string;
   bookmarked: boolean;
+  companyLogoUrl?: string | null;
 }
 
 export interface JobNoticeDetail extends JobNoticeSummary {
@@ -69,6 +70,7 @@ export interface JobNotice {
   views: number;
   bookmarked: boolean;
   originalUrl?: string;
+  companyLogoUrl?: string;
   stacks?: string[];
   exp: string;
   employment: string;
@@ -219,6 +221,7 @@ export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoti
     recommendScore: 0,
     views: jobNotice.viewCount,
     bookmarked: jobNotice.bookmarked,
+    companyLogoUrl: jobNotice.companyLogoUrl ?? undefined,
     originalUrl: 'originalUrl' in jobNotice ? jobNotice.originalUrl ?? undefined : undefined,
     stacks: tags,
     exp: jobNotice.careerLevel,
@@ -257,6 +260,7 @@ export function mapJobNoticeViewToApiModel(jobNotice: JobNotice): JobNoticeDetai
     deadline: jobNotice.deadline,
     createdAt: jobNotice.postedAt,
     bookmarked: jobNotice.bookmarked,
+    companyLogoUrl: jobNotice.companyLogoUrl,
     originalUrl: jobNotice.originalUrl,
     industry: jobNotice.industry,
     responsibilities: jobNotice.responsibilities,
