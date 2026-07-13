@@ -73,6 +73,24 @@ def _generate_answer_hint(transcript: str) -> str | None:
 # Whisper는 무음/소음 오디오에서 학습 데이터 기반의 텍스트를 상상해 출력하는 경향이 있다.
 _NO_SPEECH_PROB_THRESHOLD = 0.85
 
+# Whisper가 무음 구간에서 자신 있게 출력하는 대표적 hallucination 패턴.
+# no_speech_prob으로 잡히지 않아도 텍스트 매칭으로 폐기한다.
+_HALLUCINATION_PATTERNS = [
+    "субтитры предоставил",   # "Subtitles provided by" (러시아어 자막 크레딧)
+    "subtitles by",
+    "transcribed by",
+    "translated by",
+    "мфц предоставил",
+    "amara.org",
+    "www.zeoranger.co.uk",
+    "ご視聴ありがとうございました",  # 일본어 "감사합니다" 클리셰
+]
+
+
+def _is_hallucination_text(text: str) -> bool:
+    lower = text.lower()
+    return any(pattern in lower for pattern in _HALLUCINATION_PATTERNS)
+
 
 def calculate_voice_quality_ratio(no_speech_prob: float) -> float:
     """Whisper no_speech_prob 기반 음성 품질 비율 산정 (0.00 ~ 100.00)."""
@@ -156,6 +174,7 @@ async def transcribe_chunk(
         ]
         no_speech_prob = sum(probs) / len(probs) if probs else 0.0
 
+    silent = False
     if no_speech_prob >= _NO_SPEECH_PROB_THRESHOLD:
         log.warning(
             "STT: hallucination masked (no_speech_prob=%.2f): sessionId=%s, questionOrder=%d, discarded=%s",
@@ -163,6 +182,15 @@ async def transcribe_chunk(
         )
         transcript = ""
         voice_quality_ratio = 0.0
+        silent = True
+    elif _is_hallucination_text(transcript):
+        log.warning(
+            "STT: hallucination masked (pattern match): sessionId=%s, questionOrder=%d, discarded=%s",
+            session_id, question_order, transcript[:80],
+        )
+        transcript = ""
+        voice_quality_ratio = 0.0
+        silent = True
     else:
         voice_quality_ratio = calculate_voice_quality_ratio(no_speech_prob)
 
@@ -190,6 +218,14 @@ async def transcribe_chunk(
         )
 
     await send_stt_final(session_id, transcript, question_order, voice_quality_ratio)
+
+    if silent:
+        await send_answer_hint(
+            session_id,
+            "음성이 감지되지 않았습니다. 다시 말씀해 주시겠어요?",
+            question_order,
+        )
+        return
 
     hint = _generate_answer_hint(transcript)
     if hint:

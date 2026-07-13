@@ -314,12 +314,18 @@ export function useInterviewSession({
         const text = msg.content ?? '';
         const pid = stateRef.current.pendingVoiceId;
         if (pid !== null) {
-          dispatch({ type: 'UPDATE_MESSAGE', id: pid, updates: { isPending: false, text } });
+          if (text) {
+            dispatch({ type: 'UPDATE_MESSAGE', id: pid, updates: { isPending: false, text } });
+          } else {
+            // 무음/hallucination → pending 말풍선 제거 (ANSWER_HINT가 notice로 대체)
+            dispatch({ type: 'REMOVE_MESSAGE', id: pid });
+          }
           dispatch({ type: 'SET_PENDING_VOICE_ID', id: null });
         }
         dispatch({ type: 'SET_STT_LIVE', text: '' });
         // 음성 경로: pending 말풍선이 이미 있으므로 ADD_MESSAGE 없이 서버 전송만
-        sendTextAnswerRef.current(text, true);
+        // 빈 transcript는 Spring에 제출하지 않음 — 다음 질문으로 넘어가는 것을 방지
+        if (text) sendTextAnswerRef.current(text, true);
         break;
       }
       case FASTAPI_WS_MESSAGE_TYPE.STT_PARTIAL: {
@@ -377,6 +383,14 @@ export function useInterviewSession({
         }
         break;
       }
+      case FASTAPI_WS_MESSAGE_TYPE.ANSWER_HINT:
+        if (msg.content) {
+          dispatch({
+            type:    'ADD_MESSAGE',
+            message: { id: Date.now(), role: 'notice', text: msg.content },
+          });
+        }
+        break;
       case FASTAPI_WS_MESSAGE_TYPE.ERROR:
         // STT/LLM/TTS 처리 오류 — 연결은 유지, 토스트로 표시 (api-schema.md §8)
         dispatch({

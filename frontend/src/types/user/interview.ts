@@ -43,6 +43,7 @@ export const FASTAPI_WS_MESSAGE_TYPE = {
   LLM_STREAM:    'LLM_STREAM',
   TTS_AUDIO:     'TTS_AUDIO',
   TTS_AUDIO_END: 'TTS_AUDIO_END',
+  ANSWER_HINT:   'ANSWER_HINT',
   ERROR:         'ERROR',
 } as const;
 
