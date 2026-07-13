@@ -49,7 +49,7 @@ public class CacheConfig implements CachingConfigurer {
         Map<String, RedisCacheConfiguration> cacheConfigs = Map.of(
                 JOB_NOTICE_FILTER_OPTIONS, defaults
                         .serializeValuesWith(typedSerializer(objectMapper, JobNoticeDTO.ResponseFilterOptions.class))
-                        .entryTtl(Duration.ofHours(12)),
+                        .entryTtl(Duration.ofMinutes(5)),
                 JOB_NOTICE_STATS, defaults
                         .serializeValuesWith(typedSerializer(objectMapper, JobNoticeDTO.ResponseListStats.class))
                         .entryTtl(Duration.ofMinutes(10)),

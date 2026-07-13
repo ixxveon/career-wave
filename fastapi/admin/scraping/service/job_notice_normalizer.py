@@ -28,6 +28,31 @@ class JobNoticeNormalizer:
     _DEFAULT_JOB_TYPE = "FULLTIME"
     _DEFAULT_COMPANY_SIZE = None
     _DEFAULT_CAREER_LEVEL = "ANY"
+    _STANDARD_JOB_CATEGORIES = (
+        ("BACKEND", ("BACKEND", "SERVER", "API", "\ubc31\uc5d4\ub4dc", "\uc11c\ubc84")),
+        ("FRONTEND", ("FRONTEND", "WEB PUBLISHER", "\ud504\ub860\ud2b8\uc5d4\ub4dc", "\ud37c\ube14\ub9ac\uc154")),
+        ("DATA", ("DATA", "ANALYST", "ANALYTICS", "MACHINE LEARNING", "ML", "AI", "\ub370\uc774\ud130", "\ubd84\uc11d", "\uba38\uc2e0\ub7ec\ub2dd")),
+        ("DEVOPS", ("DEVOPS", "SRE", "INFRA", "INFRASTRUCTURE", "CLOUD", "PLATFORM", "\uc778\ud504\ub77c", "\ud50c\ub7ab\ud3fc")),
+    )
+    _STANDARD_LOCATIONS = (
+        ("\uc11c\uc6b8", ("\uc11c\uc6b8", "SEOUL")),
+        ("\uacbd\uae30", ("\uacbd\uae30", "GYEONGGI")),
+        ("\uc778\ucc9c", ("\uc778\ucc9c", "INCHEON")),
+        ("\ubd80\uc0b0", ("\ubd80\uc0b0", "BUSAN")),
+        ("\ub300\uad6c", ("\ub300\uad6c", "DAEGU")),
+        ("\uad11\uc8fc", ("\uad11\uc8fc", "GWANGJU")),
+        ("\ub300\uc804", ("\ub300\uc804", "DAEJEON")),
+        ("\uc6b8\uc0b0", ("\uc6b8\uc0b0", "ULSAN")),
+        ("\uc138\uc885", ("\uc138\uc885", "SEJONG")),
+        ("\uac15\uc6d0", ("\uac15\uc6d0", "GANGWON")),
+        ("\ucda9\ubd81", ("\ucda9\ubd81", "CHUNGBUK")),
+        ("\ucda9\ub0a8", ("\ucda9\ub0a8", "CHUNGNAM")),
+        ("\uc804\ubd81", ("\uc804\ubd81", "JEONBUK")),
+        ("\uc804\ub0a8", ("\uc804\ub0a8", "JEONNAM")),
+        ("\uacbd\ubd81", ("\uacbd\ubd81", "GYEONGBUK")),
+        ("\uacbd\ub0a8", ("\uacbd\ub0a8", "GYEONGNAM")),
+        ("\uc81c\uc8fc", ("\uc81c\uc8fc", "JEJU")),
+    )
 
     def normalize(self, *, source_name: str, raw_notice: RawJobNotice) -> NormalizedJobNotice:
         if source_name == "wanted":
@@ -41,7 +66,6 @@ class JobNoticeNormalizer:
             source_name="wanted",
             raw_notice=raw_notice,
             skill_tags=self._normalize_distinct_list(raw_notice.skill_tags),
-            job_category=self._normalize_distinct_list(raw_notice.job_category),
         )
 
     def _normalize_saramin(self, raw_notice: RawJobNotice) -> NormalizedJobNotice:
@@ -49,8 +73,6 @@ class JobNoticeNormalizer:
             source_name="saramin",
             raw_notice=raw_notice,
             skill_tags=self._normalize_distinct_list(raw_notice.skill_tags),
-            job_category=self._normalize_distinct_list(raw_notice.job_category),
-            location=self._normalize_compact_text(raw_notice.location),
         )
 
     def _normalize_default(self, *, source_name: str, raw_notice: RawJobNotice) -> NormalizedJobNotice:
@@ -73,16 +95,21 @@ class JobNoticeNormalizer:
         salary: str | None = None,
     ) -> NormalizedJobNotice:
         parsed_deadline = self._parse_deadline(raw_notice.deadline)
+        normalized_title = title if title is not None else self._normalize_required_text(
+            raw_notice.title,
+            fallback=raw_notice.original_url,
+        )
+        raw_categories = job_category if job_category is not None else raw_notice.job_category
         return NormalizedJobNotice(
             company_name=company_name if company_name is not None else self._normalize_text(raw_notice.company_name),
-            title=title if title is not None else self._normalize_required_text(raw_notice.title, fallback=raw_notice.original_url),
+            title=normalized_title,
             description=description if description is not None else self._normalize_text(raw_notice.description),
             skill_tags=skill_tags if skill_tags is not None else self._normalize_list(raw_notice.skill_tags),
             job_type=self._normalize_job_type(job_type if job_type is not None else raw_notice.job_type),
             company_size=self._normalize_company_size(company_size if company_size is not None else raw_notice.company_size),
-            job_category=job_category if job_category is not None else self._normalize_list(raw_notice.job_category),
+            job_category=self._normalize_job_categories(normalized_title, raw_categories),
             career_level=self._normalize_career_level(career_level if career_level is not None else raw_notice.career_level),
-            location=location if location is not None else self._normalize_text(raw_notice.location),
+            location=self._normalize_location(location if location is not None else raw_notice.location),
             salary=salary if salary is not None else self._normalize_text(raw_notice.salary),
             notice_status=self._notice_status_from_date(parsed_deadline),
             original_url=self._normalize_required_text(raw_notice.original_url, fallback=source_name),
@@ -152,6 +179,30 @@ class JobNoticeNormalizer:
         return " ".join(normalized.split())
 
     @classmethod
+    def _normalize_job_categories(cls, title: str, values: list[str] | None) -> list[str] | None:
+        candidates = [title, *(values or [])]
+        normalized_candidates = [cls._normalize_token(value) for value in candidates]
+        categories: list[str] = []
+        for category, keywords in cls._STANDARD_JOB_CATEGORIES:
+            normalized_keywords = tuple(cls._normalize_token(keyword) for keyword in keywords)
+            if any(
+                candidate is not None and any(keyword is not None and keyword in candidate for keyword in normalized_keywords)
+                for candidate in normalized_candidates
+            ):
+                categories.append(category)
+        return categories or None
+
+    @classmethod
+    def _normalize_location(cls, value: str | None) -> str | None:
+        normalized = cls._normalize_token(value)
+        if normalized is None:
+            return None
+        for location, keywords in cls._STANDARD_LOCATIONS:
+            if any((keyword := cls._normalize_token(raw_keyword)) is not None and keyword in normalized for raw_keyword in keywords):
+                return location
+        return None
+
+    @classmethod
     def _normalize_job_type(cls, value: str | None) -> str:
         normalized = cls._normalize_token(value)
         if normalized is None:
@@ -199,7 +250,6 @@ class JobNoticeNormalizer:
             return "SENIOR" if max(years) >= 5 else "JUNIOR"
         return cls._DEFAULT_CAREER_LEVEL
 
-    @classmethod
     @staticmethod
     def _notice_status_from_date(parsed_deadline: date | None) -> str:
         if parsed_deadline is None:
