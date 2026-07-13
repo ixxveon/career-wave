@@ -107,6 +107,7 @@ export default function AuditLogPage() {
   const [logTypeFilter, setLogTypeFilter] = useState<AuditLogTypeFilter>(AUDIT_LOG_TYPE_FILTER.ALL);
   const [severityFilter, setSeverityFilter] = useState<AuditLogSeverityFilter>(AUDIT_LOG_SEVERITY_FILTER.ALL);
   const [adminIdInput, setAdminIdInput] = useState('');
+  const [debouncedAdminIdInput, setDebouncedAdminIdInput] = useState('');
   const [targetTypeFilter, setTargetTypeFilter] = useState('');
   const [query, setQuery] = useState('');
   const [debouncedKeyword, setDebouncedKeyword] = useState('');
@@ -120,8 +121,13 @@ export default function AuditLogPage() {
     return () => window.clearTimeout(timer);
   }, [query]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedAdminIdInput(adminIdInput.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [adminIdInput]);
+
   const dateRange = useMemo(() => getDateRange(dateRangePreset), [dateRangePreset]);
-  const parsedAdminId = Number(adminIdInput);
+  const parsedAdminId = Number(debouncedAdminIdInput);
   const adminId = Number.isInteger(parsedAdminId) && parsedAdminId > 0 ? parsedAdminId : undefined;
 
   useEffect(() => {
@@ -186,6 +192,7 @@ export default function AuditLogPage() {
     setLogTypeFilter(AUDIT_LOG_TYPE_FILTER.ALL);
     setSeverityFilter(AUDIT_LOG_SEVERITY_FILTER.ALL);
     setAdminIdInput('');
+    setDebouncedAdminIdInput('');
     setTargetTypeFilter('');
     setQuery('');
     setDebouncedKeyword('');

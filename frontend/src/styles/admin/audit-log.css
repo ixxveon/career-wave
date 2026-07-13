@@ -1,7 +1,7 @@
 .auditOpsPage { --audit-navy:#143556; --audit-line:#d9e4ef; --audit-muted:#677b90; --audit-blue:#2563c9; display:flex; flex-direction:column; gap:16px; padding-bottom:24px; }
 .auditOpsHeader { margin-bottom:0; }
 .auditOpsShell { overflow:hidden; border:1px solid var(--audit-line); border-radius:8px; background:#fff; }
-.auditOpsFilters { display:grid; grid-template-columns:145px 145px 130px 130px minmax(240px,1fr) 76px; gap:8px; padding:16px; border-bottom:1px solid var(--audit-line); background:#fbfdff; }
+.auditOpsFilters { display:grid; grid-template-columns:145px 145px 130px 130px 145px minmax(240px,1fr) 76px; gap:8px; padding:16px; border-bottom:1px solid var(--audit-line); background:#fbfdff; }
 .auditOpsFilters select,.auditOpsFilters input,.auditOpsReset,.auditOpsPagination button { height:38px; border:1px solid #cad9e8; border-radius:6px; color:var(--audit-navy); background:#fff; font:inherit; font-size:13px; }
 .auditOpsFilters select,.auditOpsFilters input { min-width:0; padding:0 10px; }
 .auditOpsSearch { display:flex; align-items:center; gap:8px; min-width:0; height:38px; padding:0 10px; border:1px solid #cad9e8; border-radius:6px; color:#6b8299; background:#fff; }

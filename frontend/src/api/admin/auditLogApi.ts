@@ -186,7 +186,7 @@ function maskIpAddress(ipAddress: string | null) {
 }
 
 function formatAuditLogSummary(log: BackendAuditLogItem) {
-  if (!log.action) return `${log.logType} 감사 이벤트`;
+  if (!log.action) return `${BACKEND_AUDIT_LOG_TYPE_LABELS[log.logType] ?? log.logType} 감사 이벤트`;
   return AUDIT_LOG_ACTION_LABELS[log.action] ?? log.action.replace(/_/g, ' ');
 }
 

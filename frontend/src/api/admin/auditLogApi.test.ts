@@ -86,6 +86,12 @@ describe('auditLogApi mapper', () => {
     });
   });
 
+  it('uses the domain label when the backend action is missing', () => {
+    const item = mapBackendAuditLogItem({ ...backendAuditLog, action: '' });
+
+    expect(item.summary).toBe(`${item.logTypeLabel} 감사 이벤트`);
+  });
+
   it('masks compressed and IPv4-mapped IPv6 addresses safely', () => {
     expect(mapBackendAuditLogItem({ ...backendAuditLog, ipAddress: 'fe80::' }).ipAddressMasked).toBe('fe80:*');
     expect(mapBackendAuditLogItem({ ...backendAuditLog, ipAddress: '::ffff:10.20.30.40' }).ipAddressMasked).toBe('::ffff:10.20.30.*');
