@@ -3,6 +3,7 @@ package kr.co.carrer.support;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
 import kr.co.carrer.auth.jwt.SessionProperties;
 import kr.co.carrer.auth.filter.IpAclPort;
+import kr.co.carrer.auth.store.LoginRateLimitStore;
 import kr.co.carrer.auth.store.RefreshTokenStore;
 import kr.co.carrer.auth.store.SessionLivenessChecker;
 import kr.co.carrer.auth.store.TokenBlacklistStore;
@@ -42,5 +43,10 @@ public class SecurityMockConfig {
     @Bean
     public IpAclPort ipAclPort() {
         return Mockito.mock(IpAclPort.class);
+    }
+
+    @Bean
+    public LoginRateLimitStore loginRateLimitStore() {
+        return Mockito.mock(LoginRateLimitStore.class);
     }
 }
