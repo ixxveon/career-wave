@@ -31,6 +31,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
           type="button"
           key={p}
           className={`cw-pagination__btn${page === p ? ' cw-pagination__btn--on' : ''}`}
+          aria-current={page === p ? 'page' : undefined}
           onClick={() => onPageChange(p)}
         >
           {p}
