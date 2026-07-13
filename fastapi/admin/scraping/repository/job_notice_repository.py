@@ -15,6 +15,7 @@ job_notices_table = Table(
     Column("company_name", String(100), nullable=True),
     Column("title", String(200), nullable=False),
     Column("description", Text, nullable=True),
+    Column("search_text", Text, nullable=True),
     Column("skill_tags", ARRAY(Text), nullable=True),
     Column("job_type", String(20), nullable=True),
     Column("company_size", String(20), nullable=True),
@@ -39,6 +40,7 @@ class JobNoticeRecord:
     company_name: str | None
     title: str
     description: str | None
+    search_text: str | None
     skill_tags: list[str] | None
     job_type: str | None
     company_size: str | None
@@ -77,12 +79,21 @@ class JobNoticeRepository:
         view_count: int,
         deadline: date | None,
     ) -> JobNoticeRecord:
+        search_text = self._build_search_text(
+            company_name=company_name,
+            title=title,
+            description=description,
+            source=source,
+            skill_tags=skill_tags,
+            job_category=job_category,
+        )
         statement = (
             insert(job_notices_table)
             .values(
                 company_name=company_name,
                 title=title,
                 description=description,
+                search_text=search_text,
                 skill_tags=skill_tags,
                 job_type=job_type,
                 company_size=company_size,
@@ -134,6 +145,7 @@ class JobNoticeRepository:
             company_name=row["company_name"],
             title=row["title"],
             description=row["description"],
+            search_text=row["search_text"],
             skill_tags=list(row["skill_tags"]) if row["skill_tags"] is not None else None,
             job_type=row["job_type"],
             company_size=row["company_size"],
@@ -149,3 +161,29 @@ class JobNoticeRepository:
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )
+
+    @staticmethod
+    def _build_search_text(
+        *,
+        company_name: str | None,
+        title: str,
+        description: str | None,
+        source: str,
+        skill_tags: list[str] | None,
+        job_category: list[str] | None,
+    ) -> str:
+        parts = [
+            company_name,
+            title,
+            description,
+            source,
+            *JobNoticeRepository._list_values(skill_tags),
+            *JobNoticeRepository._list_values(job_category),
+        ]
+        return " ".join(part.strip() for part in parts if part is not None and part.strip())
+
+    @staticmethod
+    def _list_values(values: list[str] | None) -> list[str]:
+        if values is None:
+            return []
+        return values

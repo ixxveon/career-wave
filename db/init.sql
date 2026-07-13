@@ -3,6 +3,7 @@
 -- ================================================
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "btree_gist";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
 -- ================================================
 -- 1. members
@@ -578,6 +579,7 @@ CREATE TABLE job_notices (
     company_name  VARCHAR(100) NULL,
     title         VARCHAR(200) NOT NULL,
     description   TEXT         NULL,
+    search_text   TEXT         NULL,
     skill_tags    TEXT[]       NULL,
     job_type      VARCHAR(20)  NULL,
     company_size  VARCHAR(20)  NULL,
@@ -606,6 +608,7 @@ COMMENT ON COLUMN job_notices.job_notice_id IS '공고 고유 식별자';
 COMMENT ON COLUMN job_notices.company_name  IS '공고 게시 기업명';
 COMMENT ON COLUMN job_notices.title         IS '공고 제목';
 COMMENT ON COLUMN job_notices.description   IS '공고 상세 내용';
+COMMENT ON COLUMN job_notices.search_text   IS '검색 성능 최적화를 위해 제목, 설명, 기업명, 출처, 기술 스택, 직무 카테고리를 합친 텍스트';
 COMMENT ON COLUMN job_notices.skill_tags    IS '요구 기술 스택 (다중 선택, TEXT[])';
 COMMENT ON COLUMN job_notices.job_type      IS '채용 유형 (FULLTIME / INTERN / CONTRACT)';
 COMMENT ON COLUMN job_notices.company_size  IS '기업 규모 (STARTUP / SME / MID_MARKET / LARGE)';
@@ -628,6 +631,9 @@ CREATE INDEX idx_job_notices_active_created
 CREATE INDEX idx_job_notices_active_deadline_created
     ON job_notices (deadline ASC NULLS LAST, created_at DESC)
     WHERE notice_status = 'ACTIVE';
+
+CREATE INDEX idx_job_notices_search_text_trgm
+    ON job_notices USING gin (lower(search_text) gin_trgm_ops);
 
 -- ================================================
 -- 18. bookmarks

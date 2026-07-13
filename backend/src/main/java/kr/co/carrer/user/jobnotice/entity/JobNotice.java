@@ -23,6 +23,9 @@ import org.hibernate.type.SqlTypes;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "job_notices")
@@ -45,6 +48,9 @@ public class JobNotice {
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "search_text", columnDefinition = "TEXT")
+    private String searchText;
 
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "skill_tags", columnDefinition = "text[]")
@@ -96,6 +102,7 @@ public class JobNotice {
 
     @PrePersist
     protected void onCreate() {
+        refreshSearchText();
         ZonedDateTime now = ZonedDateTime.now(SERVICE_ZONE_ID);
         if (this.createdAt == null) {
             this.createdAt = now;
@@ -110,6 +117,29 @@ public class JobNotice {
 
     @PreUpdate
     protected void onUpdate() {
+        refreshSearchText();
         this.updatedAt = ZonedDateTime.now(SERVICE_ZONE_ID);
+    }
+
+    private void refreshSearchText() {
+        this.searchText = Stream.of(
+                        companyName,
+                        title,
+                        description,
+                        source,
+                        joinArray(skillTags),
+                        joinArray(jobCategory)
+                )
+                .filter(value -> value != null && !value.isBlank())
+                .collect(Collectors.joining(" "));
+    }
+
+    private String joinArray(String[] values) {
+        if (values == null) {
+            return null;
+        }
+        return Arrays.stream(values)
+                .filter(value -> value != null && !value.isBlank())
+                .collect(Collectors.joining(" "));
     }
 }
