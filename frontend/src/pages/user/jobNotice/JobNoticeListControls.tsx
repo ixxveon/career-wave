@@ -4,7 +4,6 @@ import { createBannerStats, type BannerStat } from './jobNoticeStats';
 import type { JobNoticeListStats } from '../../../types/user/jobNotice';
 import {
   DEFAULT_FILTER_VALUE,
-  FILTER_GROUPS,
   getFilterOptionLabel,
   PERIODS,
   POPULAR_SEARCH_TAGS,
@@ -200,10 +199,18 @@ export function JobNoticeBanner({ searchQuery, onSearch, stats }: { searchQuery:
   );
 }
 
-export function JobNoticeFilters({ filters, onChange }: { filters: Filters; onChange: (label: FilterLabel, value: string) => void }) {
+export function JobNoticeFilters({
+  filters,
+  filterGroups,
+  onChange,
+}: {
+  filters: Filters;
+  filterGroups: FilterGroup[];
+  onChange: (label: FilterLabel, value: string) => void;
+}) {
   return (
     <aside className="jn-filter-panel">
-      {FILTER_GROUPS.map((group) => (
+      {filterGroups.map((group) => (
         <FilterBlock key={group.label} group={group} value={filters[group.label]} onChange={onChange} />
       ))}
     </aside>

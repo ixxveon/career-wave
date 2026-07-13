@@ -186,7 +186,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
     }
 
     @Test
-    @DisplayName("matches keyword against skill_tags with PostgreSQL unnest")
+    @DisplayName("matches keyword against skill_tags through search_text")
     void findActiveJobNotices_filtersKeywordBySkillTagsArray() {
         persistJobNotice(
                 "Skill Co",
@@ -221,7 +221,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
     }
 
     @Test
-    @DisplayName("matches keyword against job_category with PostgreSQL unnest")
+    @DisplayName("matches keyword against job_category through search_text")
     void findActiveJobNotices_filtersKeywordByJobCategoryArray() {
         persistJobNotice(
                 "Category Co",
@@ -599,6 +599,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                             company_name,
                             title,
                             description,
+                            search_text,
                             skill_tags,
                             job_type,
                             company_size,
@@ -618,6 +619,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                             :companyName,
                             :title,
                             :description,
+                            :searchText,
                             ARRAY['Python', 'FastAPI'],
                             'FULLTIME',
                             'SME',
@@ -638,6 +640,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 .setParameter("companyName", "Scraped Company")
                 .setParameter("title", title)
                 .setParameter("description", title + " description")
+                .setParameter("searchText", "Scraped Company " + title + " " + title + " description wanted Python FastAPI BACKEND AI")
                 .setParameter("location", "Seoul")
                 .setParameter("salary", "Negotiable")
                 .setParameter("noticeStatus", noticeStatus)

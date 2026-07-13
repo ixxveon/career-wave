@@ -41,6 +41,7 @@ def test_openai_client_builds_execution_context_from_model():
     assert context.model_name == "gpt-4.1-mini"
     assert context.input_token_price == Decimal("0.400000")
     assert context.output_token_price == Decimal("1.600000")
+    assert context.pricing_unit == "PER_MILLION_TOKENS"
 
 
 @pytest.mark.asyncio

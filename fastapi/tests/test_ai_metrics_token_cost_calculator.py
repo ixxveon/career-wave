@@ -63,7 +63,49 @@ def test_token_cost_calculator_validates_token_cost_result():
         cost=cost,
     )
 
-    assert cost == Decimal("1200") * Decimal("0.400000") + Decimal("450") * Decimal("1.600000")
+    assert cost == Decimal("0.001200")
+
+
+def test_token_cost_calculator_keeps_non_token_unit_prices_unscaled():
+    calculator = TokenCostCalculator()
+    context = AiMetricsModelExecutionContext(
+        ai_model_id=4,
+        provider="openai",
+        model_name="whisper-1",
+        input_token_price=Decimal("0.000100"),
+        output_token_price=Decimal("0"),
+        pricing_unit="PER_SECOND",
+    )
+
+    cost = calculator.calculate_cost(
+        context,
+        input_tokens=75,
+        output_tokens=0,
+    )
+
+    assert cost == Decimal("0.007500")
+
+
+def test_token_cost_calculator_rejects_unsupported_pricing_unit():
+    calculator = TokenCostCalculator()
+    context = AiMetricsModelExecutionContext(
+        ai_model_id=5,
+        provider="openai",
+        model_name="unknown-model",
+        input_token_price=Decimal("0.1"),
+        output_token_price=Decimal("0.2"),
+        pricing_unit="PER_REQUEST",
+    )
+
+    with pytest.raises(AiMetricsException) as exc_info:
+        calculator.calculate_cost(
+            context,
+            input_tokens=1,
+            output_tokens=1,
+        )
+
+    assert exc_info.value.error_code == AiMetricsErrorCode.TOKEN_CALCULATION_FAILED
+    assert exc_info.value.detail == {"pricingUnit": "PER_REQUEST"}
 
 
 def test_token_cost_calculator_raises_for_invalid_cost_inputs():

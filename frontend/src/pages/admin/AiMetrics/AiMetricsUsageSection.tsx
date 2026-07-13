@@ -1,4 +1,6 @@
 import type { AiDomain } from '../../../api/admin/aiMetricsApi';
+import type { CSSProperties } from 'react';
+import { getTokenBarHeight } from './aiMetricsChartUtils';
 import { DOMAIN_FILTER_OPTIONS, formatBudgetPercent, formatCompactToken, formatCost, getApiStateMessage } from './aiMetricsPageUtils';
 
 interface AiMetricsUsageSectionProps {
@@ -24,6 +26,7 @@ interface AiMetricsUsageSectionProps {
   tokenTrendChartData: Array<{ bucket: string; label: string; input: number; output: number; requestCount: number }>;
   tokenTrendHighlightIndex: number;
   axisMax: number;
+  axisGridStepPercent: number;
   currentSpend: number | null;
   budgetLoading: boolean;
   budgetIsError: boolean;
@@ -68,6 +71,7 @@ export default function AiMetricsUsageSection(props: AiMetricsUsageSectionProps)
     tokenTrendChartData,
     tokenTrendHighlightIndex,
     axisMax,
+    axisGridStepPercent,
     currentSpend,
     budgetLoading,
     budgetIsError,
@@ -116,8 +120,16 @@ export default function AiMetricsUsageSection(props: AiMetricsUsageSectionProps)
                   <>
                     <div className="aiOpsBudgetEditFields">
                       <label>
-                        <span>월간 예산</span>
-                        <input type="text" value={budgetDraft} onChange={(event) => setBudgetDraft(event.target.value.replace(/[^\d,]/g, ''))} aria-label="총 예산 입력" />
+                        <span>월간 예산 (USD)</span>
+                        <input
+                          type="text"
+                          value={budgetDraft}
+                          onChange={(event) => {
+                            const nextValue = event.target.value.replace(/[^\d.]/g, '');
+                            if (/^\d*(?:\.\d{0,2})?$/.test(nextValue)) setBudgetDraft(nextValue);
+                          }}
+                          aria-label="월간 예산 USD 입력"
+                        />
                       </label>
                       <label>
                         <span>임계치</span>
@@ -158,14 +170,17 @@ export default function AiMetricsUsageSection(props: AiMetricsUsageSectionProps)
             <div className="aiOpsYAxis">{axisTicks.map((tick) => <span key={tick}>{tick}</span>)}</div>
 
             <div className="aiOpsChartPanel">
-              <div className="aiOpsBars">
+              <div
+                className="aiOpsBars"
+                style={{ '--ai-chart-grid-step': `${axisGridStepPercent}%` } as CSSProperties}
+              >
                 {tokenTrendChartData.map((item, index) => {
                   const tone = index === tokenTrendHighlightIndex ? 'strong' : 'soft';
                   return (
                     <div className="aiOpsBarItem" key={item.bucket}>
                       <div className="aiOpsBarGroup" data-tooltip={`입력 ${formatCompactToken(item.input)} | 출력 ${formatCompactToken(item.output)} | 요청 ${item.requestCount.toLocaleString()}건`}>
-                        <div className={`aiOpsBar input tone-${tone}`} style={{ height: `${(item.input / axisMax) * 100}%` }} />
-                        <div className={`aiOpsBar output tone-${tone}`} style={{ height: `${(item.output / axisMax) * 100}%` }} />
+                        <div className={`aiOpsBar input tone-${tone}`} style={{ height: `${getTokenBarHeight(item.input, axisMax)}%` }} />
+                        <div className={`aiOpsBar output tone-${tone}`} style={{ height: `${getTokenBarHeight(item.output, axisMax)}%` }} />
                       </div>
                     </div>
                   );

@@ -18,6 +18,7 @@ ai_models_table = Table(
     Column("provider", String(50), nullable=False),
     Column("input_token_price", Numeric(12, 6), nullable=False),
     Column("output_token_price", Numeric(12, 6), nullable=False),
+    Column("pricing_unit", String(30), nullable=False),
     Column("is_enabled", Boolean, nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
@@ -35,6 +36,7 @@ class AiModelRecord:
     is_enabled: bool
     created_at: datetime
     updated_at: datetime
+    pricing_unit: str = "PER_MILLION_TOKENS"
 
 
 class AiModelRepository:
@@ -92,4 +94,5 @@ class AiModelRepository:
             is_enabled=row["is_enabled"],
             created_at=row["created_at"],
             updated_at=row["updated_at"],
+            pricing_unit=row["pricing_unit"],
         )
