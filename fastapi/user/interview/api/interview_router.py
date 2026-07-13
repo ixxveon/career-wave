@@ -138,9 +138,10 @@ async def trigger_text_answer(
         raise HTTPException(status_code=400, detail="path sessionId와 body sessionId가 일치하지 않습니다.")
 
     # 무음·hallucination으로 빈 답변이 제출된 경우 LLM 트리거를 건너뜀.
+    # questionOrder=0은 세션 시작 첫 질문 생성 턴이므로 answerText가 없어도 정상 — 스킵 대상 아님.
     # 프론트 guard가 있더라도 서버에서도 방어해 꼬리질문 오발 방지.
     # questionText가 있으면 현재 질문을 AI 말풍선으로 재전송해 자연스러운 면접 흐름 유지.
-    if not body.answerText.strip():
+    if body.questionOrder > 0 and not body.answerText.strip():
         log.info(
             "LLM trigger skipped (empty answerText): sessionId=%s, questionOrder=%d",
             session_id, body.questionOrder,
