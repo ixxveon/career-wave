@@ -475,7 +475,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
         assertThat(jobNoticeQueryRepository.findDistinctActiveJobCategories())
                 .containsExactly("BACKEND", "FRONTEND");
         assertThat(jobNoticeQueryRepository.findDistinctActiveCareerLevels())
-                .containsExactly("JUNIOR", "SENIOR");
+                .containsExactly("ANY", "JUNIOR", "SENIOR");
         assertThat(jobNoticeQueryRepository.findDistinctActiveLocations())
                 .containsExactly("\uBD80\uC0B0", "\uC11C\uC6B8");
         assertThat(jobNoticeQueryRepository.findDistinctActiveCompanySizes())
