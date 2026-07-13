@@ -73,6 +73,9 @@ async def generate_and_deliver_question(
         log.warning("[Session: %s] LLM skipped: no active session context", session_id)
         return
 
+    if question_order == 0:
+        meta = await _wait_for_rag_context(session_id, meta)
+
     if question_order > 0:
         _record_answer(meta, question_text, answer_text)
         meta["recent_answer_quality"] = _assess_answer_quality(meta, question_order, answer_text)
@@ -273,3 +276,51 @@ def _pick_fallback(meta: dict[str, Any]) -> str:
     used_fallback.add(chosen)
     meta["used_fallback_questions"] = used_fallback
     return chosen
+
+
+_RAG_WAIT_INTERVAL = 0.3   # 폴링 간격 (초)
+_RAG_WAIT_TIMEOUT = 5.0    # 최대 대기 시간 (초)
+
+
+async def _wait_for_rag_context(session_id: str, meta: dict[str, Any]) -> dict[str, Any]:
+    """첫 번째 질문(question_order=0) 생성 전 RAG 컨텍스트가 준비될 때까지 대기.
+
+    - rag_status 없음(서류 미연결): 즉시 반환 (대기 없음)
+    - rag_status=READY: 즉시 반환
+    - rag_status=FAILED: 즉시 반환 (일반 모드 폴백)
+    - rag_status=PENDING: READY 또는 FAILED가 될 때까지 최대 5초 폴링
+    """
+    rag_status = meta.get("rag_status")
+
+    if rag_status is None or rag_status == "READY" or rag_status == "FAILED":
+        return meta
+
+    # rag_status == "PENDING": 서류가 연결됐고 인덱싱 진행 중
+    # latest: 폴링 중 가장 최근에 읽은 스냅샷 — 타임아웃 시 stale pre-poll meta 대신 반환
+    latest = meta
+    deadline = asyncio.get_event_loop().time() + _RAG_WAIT_TIMEOUT
+    while True:
+        remaining = deadline - asyncio.get_event_loop().time()
+        if remaining <= 0:
+            break
+        await asyncio.sleep(min(_RAG_WAIT_INTERVAL, remaining))
+        try:
+            refreshed = await get_session_meta(session_id)
+        except Exception as e:
+            log.warning("[Session: %s] Redis read failed during RAG wait, proceeding without: %s", session_id, e)
+            return latest
+        if not refreshed:
+            break
+        latest = refreshed
+        status = refreshed.get("rag_status")
+        elapsed = _RAG_WAIT_TIMEOUT - (deadline - asyncio.get_event_loop().time())
+        if status == "READY":
+            log.info("[Session: %s] RAG context ready after %.1fs", session_id, elapsed)
+            return refreshed
+        if status == "FAILED":
+            log.info("[Session: %s] RAG indexing failed after %.1fs, using general mode", session_id, elapsed)
+            return refreshed
+
+    elapsed = _RAG_WAIT_TIMEOUT - (deadline - asyncio.get_event_loop().time())
+    log.info("[Session: %s] RAG context not ready after %.1fs, proceeding without", session_id, elapsed)
+    return latest
