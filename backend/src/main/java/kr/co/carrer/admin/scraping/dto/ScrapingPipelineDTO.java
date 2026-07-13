@@ -82,6 +82,9 @@ public class ScrapingPipelineDTO {
             @Schema(description = "Enabled flag")
             boolean isEnabled,
 
+            @Schema(description = "Automatic scraping interval in minutes", example = "360")
+            int scheduleIntervalMinutes,
+
             @Schema(description = "Last started at")
             ZonedDateTime lastStartedAt,
 
@@ -168,6 +171,9 @@ public class ScrapingPipelineDTO {
 
             @Schema(description = "Enabled flag")
             boolean isEnabled,
+
+            @Schema(description = "Automatic scraping interval in minutes", example = "360")
+            int scheduleIntervalMinutes,
 
             @Schema(description = "Last started at")
             ZonedDateTime lastStartedAt,

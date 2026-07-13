@@ -41,6 +41,8 @@ public class ScrapingFastApiResponse {
             ScrapingPipelineStatusType pipelineStatus,
             @JsonAlias("is_enabled")
             boolean isEnabled,
+            @JsonAlias("schedule_interval_minutes")
+            int scheduleIntervalMinutes,
             @JsonAlias("last_started_at")
             ZonedDateTime lastStartedAt,
             @JsonAlias("last_success_at")
@@ -157,6 +159,8 @@ public class ScrapingFastApiResponse {
             ScrapingPipelineStatusType pipelineStatus,
             @JsonAlias("is_enabled")
             boolean isEnabled,
+            @JsonAlias("schedule_interval_minutes")
+            int scheduleIntervalMinutes,
             @JsonAlias("last_started_at")
             ZonedDateTime lastStartedAt,
             @JsonAlias("last_success_at")

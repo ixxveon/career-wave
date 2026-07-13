@@ -43,6 +43,8 @@ export const FASTAPI_WS_MESSAGE_TYPE = {
   LLM_STREAM:    'LLM_STREAM',
   TTS_AUDIO:     'TTS_AUDIO',
   TTS_AUDIO_END: 'TTS_AUDIO_END',
+  ANSWER_HINT:   'ANSWER_HINT',
+  REASK:         'REASK',
   ERROR:         'ERROR',
 } as const;
 
@@ -140,12 +142,15 @@ export interface InterviewReportResponse {
   createdAt: string;
 }
 
+export type ReportStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
+
 export interface HistoryItem {
   sessionId: string;
   sessionType: SessionType;
   interviewType: InterviewType | null;
   targetCompany: string | null;
   sessionStatus: SessionStatus;
+  reportStatus: ReportStatus | null;
   totalScore: number | null;
   createdAt: string;
 }

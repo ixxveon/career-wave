@@ -12,8 +12,7 @@ import kr.co.carrer.admin.aimetrics.type.AiFeatureType;
 import kr.co.carrer.admin.aimetrics.type.IntervalType;
 import kr.co.carrer.admin.audit.util.AdminAuditClientIpExtractor;
 import kr.co.carrer.auth.principal.AuthPrincipal;
-import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.global.exception.ErrorCode;
+import kr.co.carrer.auth.principal.AdminPrincipalResolver;
 import kr.co.carrer.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -169,7 +168,7 @@ public class AiMetricsController implements AiMetricsDocs {
                         request.monthlyBudget(),
                         request.alertThreshold()
                 ),
-                extractAdminId(principal),
+                AdminPrincipalResolver.extractAdminId(principal),
                 AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
         return ResponseEntity.ok(ApiResponse.ok("AI 예산 및 임계치 수정에 성공했습니다.", toBudget(result)));
@@ -183,7 +182,7 @@ public class AiMetricsController implements AiMetricsDocs {
     ) {
         AiMetricsService.ResponseBudget result = aiMetricsService.updateDiscordAlert(
                 new AiMetricsService.RequestUpdateDiscordAlert(request.alertEnabled()),
-                extractAdminId(principal),
+                AdminPrincipalResolver.extractAdminId(principal),
                 AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
         return ResponseEntity.ok(ApiResponse.ok("Discord 알림 설정 변경에 성공했습니다.", toBudget(result)));
@@ -198,7 +197,7 @@ public class AiMetricsController implements AiMetricsDocs {
     ) {
         AiMetricsService.ResponseBudget result = aiMetricsService.updateRateLimit(
                 new AiMetricsService.RequestUpdateRateLimit(request.rateLimitEnabled()),
-                extractAdminId(principal),
+                AdminPrincipalResolver.extractAdminId(principal),
                 AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
         return ResponseEntity.ok(ApiResponse.ok("AI rate limit 설정 변경에 성공했습니다.", toBudget(result)));
@@ -230,7 +229,7 @@ public class AiMetricsController implements AiMetricsDocs {
     ) {
         AiMetricsService.ResponseRagDocumentDetail result = aiMetricsService.uploadRagDocument(
                 file,
-                extractAdminId(principal),
+                AdminPrincipalResolver.extractAdminId(principal),
                 AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
         return ResponseEntity.ok(ApiResponse.ok("RAG 문서 업로드에 성공했습니다.", toRagDocumentDetail(result)));
@@ -261,7 +260,7 @@ public class AiMetricsController implements AiMetricsDocs {
     ) {
         AiMetricsService.ResponseRagDocumentDelete result = aiMetricsService.deleteRagDocument(
                 documentId,
-                extractAdminId(principal),
+                AdminPrincipalResolver.extractAdminId(principal),
                 AdminAuditClientIpExtractor.extract(httpServletRequest)
         );
         RagDocumentDTO.ResponseDelete response = new RagDocumentDTO.ResponseDelete(
@@ -324,17 +323,6 @@ public class AiMetricsController implements AiMetricsDocs {
                 result.createdAt(),
                 result.updatedAt()
         );
-    }
-
-    private Long extractAdminId(AuthPrincipal principal) {
-        if (principal == null || principal.getId() == null || principal.getId().isBlank()) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
-        try {
-            return Long.valueOf(principal.getId());
-        } catch (NumberFormatException exception) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
     }
 
 }

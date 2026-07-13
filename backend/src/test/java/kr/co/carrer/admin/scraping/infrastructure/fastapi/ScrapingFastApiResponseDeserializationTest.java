@@ -23,6 +23,7 @@ class ScrapingFastApiResponseDeserializationTest {
                               "display_name": "Wanted",
                               "pipeline_status": "SUCCESS",
                               "is_enabled": true,
+                              "schedule_interval_minutes": 360,
                               "last_started_at": "2026-06-26T00:00:00Z",
                               "last_success_at": "2026-06-26T00:01:00Z",
                               "last_failed_at": null,
@@ -48,6 +49,7 @@ class ScrapingFastApiResponseDeserializationTest {
         assertThat(response.content().getFirst().scrapingPipelineId()).isEqualTo(1L);
         assertThat(response.content().getFirst().sourceName()).isEqualTo("wanted");
         assertThat(response.content().getFirst().isEnabled()).isTrue();
+        assertThat(response.content().getFirst().scheduleIntervalMinutes()).isEqualTo(360);
     }
 
     @Test

@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { adminAuthApi, adminSession } from '../../../api/admin/adminAuthApi';
+import { ADMIN_MANAGEMENT_ADMINS_QUERY_KEY } from '../../../constants/admin/adminManagementQueryKeys';
 import type { AdminDetailRole } from '../../../constants/admin/adminRoleConstants';
 import { ADMIN_ROUTE_PATHS } from '../../../constants/admin/adminRouteConstants';
 import '../../../styles/admin/admin-login.css';
@@ -25,6 +27,7 @@ function clearAdminToken() {
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -44,6 +47,7 @@ export default function AdminLoginPage() {
       }
 
       syncAdminToken(data.accessToken, data.adminInfo);
+      void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_ADMINS_QUERY_KEY });
       navigate(ADMIN_ROUTE_PATHS.dashboard, { replace: true });
     } catch (err) {
       clearAdminToken();

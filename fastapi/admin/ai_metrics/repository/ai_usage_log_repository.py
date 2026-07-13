@@ -23,7 +23,7 @@ ai_usage_logs_table = Table(
     Column("feature_type", String(20), nullable=False),
     Column("input_tokens", Integer, nullable=False),
     Column("output_tokens", Integer, nullable=False),
-    Column("cost", Numeric(15, 2), nullable=False),
+    Column("cost", Numeric(15, 6), nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
 )
 

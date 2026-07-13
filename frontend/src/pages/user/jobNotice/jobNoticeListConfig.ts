@@ -1,10 +1,9 @@
-import type { JobNotice, JobNoticeBookmarkMap, JobNoticeQueryParams } from '../../../types/user/jobNotice';
+import type { JobNotice, JobNoticeBookmarkMap, JobNoticeFilterOptions, JobNoticeQueryParams } from '../../../types/user/jobNotice';
 import {
   CAREER_LEVEL_LABELS,
+  COMPANY_SIZE_LABELS,
   JOB_CATEGORY_LABELS,
   JOB_NOTICE_ALL_FILTER_VALUE,
-  JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES,
-  JOB_NOTICE_FILTER_OPTIONS,
   JOB_TYPE_LABELS,
 } from '../../../types/user/jobNotice';
 
@@ -42,29 +41,47 @@ export type SortOption = (typeof SORT_OPTIONS)[number];
 export type JobNoticeListStatus = 'loading' | 'success' | 'empty' | 'error';
 type JobNoticeFilterParamKey = 'jobCategory' | 'careerLevel' | 'jobType' | 'location' | 'companySize';
 
-const COMPANY_SIZE_FILTER_PARAM_KEY = 'companySize' satisfies JobNoticeFilterParamKey;
-
 export const FILTER_GROUPS = [
-  { label: '직무', options: JOB_NOTICE_FILTER_OPTIONS.jobCategory },
-  { label: '경력', options: JOB_NOTICE_FILTER_OPTIONS.careerLevel },
-  { label: '채용 유형', options: JOB_NOTICE_FILTER_OPTIONS.jobType },
-  { label: '지역', options: JOB_NOTICE_FILTER_OPTIONS.location },
-  { label: '기업 규모', options: JOB_NOTICE_FILTER_OPTIONS.companySize },
+  { label: '직무', optionKey: 'jobCategory' },
+  { label: '경력', optionKey: 'careerLevel' },
+  { label: '채용 유형', optionKey: 'jobType' },
+  { label: '지역', optionKey: 'location' },
+  { label: '기업 규모', optionKey: 'companySize' },
 ] as const;
 
 const FILTER_OPTION_LABELS = {
   ...JOB_TYPE_LABELS,
   ...JOB_CATEGORY_LABELS,
   ...CAREER_LEVEL_LABELS,
+  ...COMPANY_SIZE_LABELS,
 } as const;
 
 export interface FilterGroup {
   label: FilterLabel;
-  options: readonly string[];
+  options: string[];
 }
 
 export function createInitialFilters(): Filters {
   return Object.fromEntries(FILTER_GROUPS.map((group) => [group.label, DEFAULT_FILTER_VALUE])) as Filters;
+}
+
+export function createFilterGroups(filterOptions?: JobNoticeFilterOptions): FilterGroup[] {
+  return FILTER_GROUPS.map((group) => ({
+    label: group.label,
+    options: [DEFAULT_FILTER_VALUE, ...(filterOptions?.[group.optionKey] ?? [])],
+  }));
+}
+
+export function normalizeFilters(filters: Filters, filterGroups: FilterGroup[]): Filters {
+  const nextFilters = { ...filters };
+
+  filterGroups.forEach((group) => {
+    if (!group.options.includes(nextFilters[group.label])) {
+      nextFilters[group.label] = DEFAULT_FILTER_VALUE;
+    }
+  });
+
+  return nextFilters;
 }
 
 export function getJobBookmark(bookmarks: Bookmarks, job: JobNotice): boolean {
@@ -99,10 +116,7 @@ export function createJobNoticeQueryParams({
   (Object.entries(API_FILTER_PARAM_BY_LABEL) as Array<[FilterLabel, JobNoticeFilterParamKey]>).forEach(([label, paramKey]) => {
     const value = filters[label];
     if (value !== DEFAULT_FILTER_VALUE) {
-      params[paramKey] =
-        paramKey === COMPANY_SIZE_FILTER_PARAM_KEY && value in JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES
-          ? JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES[value as keyof typeof JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES]
-          : value;
+      params[paramKey] = value;
     }
   });
 

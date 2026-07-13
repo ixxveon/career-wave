@@ -19,6 +19,7 @@ import AiMetricsDomainSection from './AiMetricsDomainSection';
 import AiMetricsUsageSection from './AiMetricsUsageSection';
 import AiMetricsHeavyUsersSection from './AiMetricsHeavyUsersSection';
 import AiMetricsLogsSection from './AiMetricsLogsSection';
+import { createTokenChartAxis } from './aiMetricsChartUtils';
 import {
   BUDGET_QUERY_KEY,
   DOMAIN_FILTER_OPTIONS,
@@ -157,11 +158,14 @@ export default function AiMetricsPage() {
   const heavyUsersEmpty = !heavyUsersLoading && !heavyUsersIsError && heavyUsers.length === 0;
   const metricLogs = metricLogsData?.content ?? [];
   const metricLogsEmpty = !metricLogsLoading && !metricLogsIsError && metricLogs.length === 0;
-  const axisMax = useMemo(() => {
-    const maxValue = Math.max(0, ...tokenTrendChartData.map((item) => Math.max(item.input, item.output)));
-    return maxValue <= 0 ? 1 : Math.ceil(maxValue / 10) * 10;
-  }, [tokenTrendChartData]);
-  const axisTicks = useMemo(() => [1, 0.75, 0.5, 0.25, 0].map((ratio) => formatCompactToken(Math.round(axisMax * ratio))), [axisMax]);
+  const tokenChartAxis = useMemo(
+    () => createTokenChartAxis(tokenTrendChartData.flatMap((item) => [item.input, item.output])),
+    [tokenTrendChartData]
+  );
+  const axisTicks = useMemo(
+    () => tokenChartAxis.ticks.map(formatCompactToken),
+    [tokenChartAxis.ticks]
+  );
   const tokenTrendHighlightIndex = useMemo(() => tokenTrendChartData.reduce((highlightIndex, item, index, items) => (items[highlightIndex].input + items[highlightIndex].output) < (item.input + item.output) ? index : highlightIndex, 0), [tokenTrendChartData]);
   const summaryStatusLabel = summaryIsError ? getApiStateMessage(summaryError, 'AI 요약 상태를 불러오지 못했습니다.') : getHealthStatusLabel(summaryData?.healthStatus);
   const summaryLastSyncedLabel = summaryData ? formatLastSyncedLabel(summaryData.lastSyncedAt) : summaryLoading ? '요약 조회 중' : '동기화 정보 없음';
@@ -169,9 +173,9 @@ export default function AiMetricsPage() {
 
   function handleBudgetSave() {
     if (!isBudgetLoaded) return setBudgetMutationErrorMessage('예산 정보를 불러온 뒤 다시 시도해 주세요.');
-    const nextBudget = Number(budgetDraft.replace(/,/g, '').trim());
-    const nextThreshold = Number(thresholdDraft.replace(/,/g, '').trim());
-    if (!Number.isFinite(nextBudget) || nextBudget < 0 || !Number.isFinite(nextThreshold) || nextThreshold < 1 || nextThreshold > 100) return;
+    const nextBudget = Number(budgetDraft.trim());
+    const nextThreshold = Number(thresholdDraft.trim());
+    if (!Number.isFinite(nextBudget) || nextBudget <= 0 || !Number.isFinite(nextThreshold) || nextThreshold < 1 || nextThreshold > 100) return;
     updateBudgetMutation.mutate({ monthlyBudget: nextBudget, thresholdPercent: nextThreshold });
   }
 
@@ -221,7 +225,8 @@ export default function AiMetricsPage() {
             axisTicks={axisTicks}
             tokenTrendChartData={tokenTrendChartData}
             tokenTrendHighlightIndex={tokenTrendHighlightIndex}
-            axisMax={axisMax}
+            axisMax={tokenChartAxis.max}
+            axisGridStepPercent={tokenChartAxis.gridStepPercent}
             currentSpend={currentSpend}
             budgetLoading={budgetLoading}
             budgetIsError={budgetIsError}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowUp, FileText, Filter } from 'lucide-react';
 import JobNoticeDetail from './JobNoticeDetail';
@@ -6,8 +7,11 @@ import JobNoticeCard from './JobNoticeCard';
 import { JobNoticeBanner, JobNoticeFilters, JobNoticeResultToolbar } from './JobNoticeListControls';
 import {
   createInitialFilters,
+  createFilterGroups,
   createJobNoticeQueryParams,
+  DEFAULT_FILTER_VALUE,
   getJobBookmark,
+  normalizeFilters,
   type Bookmarks,
   type FilterLabel,
   type Filters,
@@ -19,6 +23,7 @@ import { mapJobNoticeApiToViewModel, type JobNotice, type JobNoticeBookmarkRespo
 import { jobApi } from '../../../api/user/jobApi';
 import { useJobNoticeDetail } from '../../../hooks/user/jobNotice/useJobNoticeDetail';
 import { useJobNoticeList } from '../../../hooks/user/jobNotice/useJobNoticeList';
+import { invalidateBookmarkQueries } from '../../../hooks/user/bookmark/bookmarkQueryCache';
 import { authSession } from '../../../utils/user/member/authSession';
 import '@/styles/user/jobNotice/JobNoticeListPage.css';
 
@@ -30,6 +35,7 @@ const EMPTY_LIST_STATS: JobNoticeListStats = {
 };
 
 export default function JobNoticeListPage() {
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [period, setPeriod] = useState<Period>('기간 전체');
   const [sort, setSort] = useState<SortOption>('추천순');
@@ -66,6 +72,10 @@ export default function JobNoticeListPage() {
     [jobNoticeListApiResponse?.pages]
   );
   const jobNoticeListResponse = jobNoticeListPages[0];
+  const filterGroups = useMemo(
+    () => createFilterGroups(jobNoticeListResponse?.filterOptions),
+    [jobNoticeListResponse?.filterOptions]
+  );
   const filteredJobs = useMemo(
     () => jobNoticeListPages.flatMap((page) => page.content.map(mapJobNoticeApiToViewModel)),
     [jobNoticeListPages]
@@ -124,6 +134,7 @@ export default function JobNoticeListPage() {
         ...current,
         [bookmarkResult?.jobNoticeId ?? id]: bookmarkResult?.bookmarked ?? nextBookmarked,
       }));
+      void invalidateBookmarkQueries(queryClient);
     } catch {
       setBookmarks((current) => ({
         ...current,
@@ -134,7 +145,7 @@ export default function JobNoticeListPage() {
   }
 
   function resetFilter(label: FilterLabel) {
-    updateFilter(label, 'ALL');
+    updateFilter(label, DEFAULT_FILTER_VALUE);
   }
 
   function selectSort(option: SortOption) {
@@ -170,6 +181,13 @@ export default function JobNoticeListPage() {
     setFilters(createInitialFilters());
     setPeriod('기간 전체');
   }
+
+  useEffect(() => {
+    setFilters((current) => {
+      const next = normalizeFilters(current, filterGroups);
+      return Object.keys(current).every((key) => current[key as FilterLabel] === next[key as FilterLabel]) ? current : next;
+    });
+  }, [filterGroups]);
 
   useEffect(() => {
     const allLoadedJobs = jobNoticeListPages.flatMap((page) => page.content);
@@ -228,7 +246,7 @@ export default function JobNoticeListPage() {
       <JobNoticeBanner searchQuery={searchQuery} onSearch={setSearchQuery} stats={listStats} />
 
       <div className="jn-layout">
-        <JobNoticeFilters filters={filters} onChange={updateFilter} />
+        <JobNoticeFilters filters={filters} filterGroups={filterGroups} onChange={updateFilter} />
 
         <main className="jn-results">
           <JobNoticeResultToolbar

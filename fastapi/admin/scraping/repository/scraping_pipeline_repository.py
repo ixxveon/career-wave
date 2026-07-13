@@ -16,6 +16,7 @@ scraping_pipelines_table = Table(
     Column("display_name", String(100), nullable=False),
     Column("pipeline_status", String(20), nullable=False),
     Column("is_enabled", Boolean, nullable=False),
+    Column("schedule_interval_minutes", Integer, nullable=False),
     Column("last_started_at", DateTime(timezone=True), nullable=True),
     Column("last_success_at", DateTime(timezone=True), nullable=True),
     Column("last_failed_at", DateTime(timezone=True), nullable=True),
@@ -42,6 +43,7 @@ class ScrapingPipelineRecord:
     last_error_message: str | None
     created_at: datetime
     updated_at: datetime
+    schedule_interval_minutes: int = 360
 
 
 @dataclass(frozen=True)
@@ -103,6 +105,29 @@ class ScrapingPipelineRepository:
         row = self._session.execute(statement).mappings().first()
         self._session.flush()
         return self._to_record(row) if row else None
+
+    def find_due_pipelines(self, now: datetime) -> list[ScrapingPipelineRecord]:
+        last_run_at = func.coalesce(
+            scraping_pipelines_table.c.last_started_at,
+            scraping_pipelines_table.c.created_at,
+        )
+        due_at = last_run_at + func.make_interval(
+            0,
+            0,
+            0,
+            0,
+            0,
+            scraping_pipelines_table.c.schedule_interval_minutes,
+        )
+        statement = (
+            select(scraping_pipelines_table)
+            .where(scraping_pipelines_table.c.is_enabled.is_(True))
+            .where(scraping_pipelines_table.c.pipeline_status != "RUNNING")
+            .where(due_at <= now)
+            .order_by(scraping_pipelines_table.c.scraping_pipeline_id.asc())
+        )
+        rows = self._session.execute(statement).mappings().all()
+        return [self._to_record(row) for row in rows]
 
     def mark_success(
         self,
@@ -272,4 +297,5 @@ class ScrapingPipelineRepository:
             last_error_message=row["last_error_message"],
             created_at=row["created_at"],
             updated_at=row["updated_at"],
+            schedule_interval_minutes=row["schedule_interval_minutes"],
         )

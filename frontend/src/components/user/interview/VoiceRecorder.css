@@ -46,6 +46,16 @@
   color: #ef4444;
 }
 
+.vr__mic--tts {
+  background: #eff6ff;
+  color: #93c5fd;
+}
+
+.vr__hint--tts {
+  color: var(--color-primary, #6366f1);
+  font-size: 13px;
+}
+
 /* ── 녹음 중 파동 애니메이션 ── */
 .vr__ring {
   position: absolute;

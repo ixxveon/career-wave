@@ -31,6 +31,6 @@ public class SessionLivenessChecker {
             return true;
         }
         return refreshTokenStore.touchSession(accountType, subject, sessionId,
-                Duration.ofMillis(sessionProperties.getIdleTimeout()), conservativeOnFailure);
+                Duration.ofMillis(sessionProperties.getIdleTimeout(accountType)), conservativeOnFailure);
     }
 }

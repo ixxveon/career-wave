@@ -109,7 +109,8 @@ class UserJobNoticeServiceImplTest {
                             jobNotice.getViewCount(),
                             jobNotice.getDeadline(),
                             jobNotice.getCreatedAt(),
-                            false
+                            false,
+                            jobNotice.getCompanyLogoUrl()
                     )),
                     1, 20, 1, 1,
                     new JobNoticeDTO.ResponseListStats(10L, 2L, null, 20.0),
@@ -154,6 +155,7 @@ class UserJobNoticeServiceImplTest {
             JobNoticeDTO.ResponseSummary summary = response.content().getFirst();
             assertThat(summary.jobNoticeId()).isEqualTo(101L);
             assertThat(summary.companyName()).isEqualTo("CareerWave");
+            assertThat(summary.companyLogoUrl()).isEqualTo("https://cdn.example.com/careerwave.png");
             assertThat(summary.title()).isEqualTo("백엔드 개발자");
             assertThat(summary.skillTags()).containsExactly("Java", "Spring Boot");
             assertThat(summary.jobCategory()).containsExactly("BACKEND");
@@ -301,6 +303,7 @@ class UserJobNoticeServiceImplTest {
 
             assertThat(response.jobNoticeId()).isEqualTo(101L);
             assertThat(response.companyName()).isEqualTo("CareerWave");
+            assertThat(response.companyLogoUrl()).isEqualTo("https://cdn.example.com/careerwave.png");
             assertThat(response.title()).isEqualTo("백엔드 개발자");
             assertThat(response.description()).isEqualTo("Spring Boot 기반 백엔드 개발");
             assertThat(response.skillTags()).containsExactly("Java", "Spring Boot");
@@ -562,6 +565,7 @@ class UserJobNoticeServiceImplTest {
             JobNotice jobNotice = constructor.newInstance();
             setField(jobNotice, "jobNoticeId", jobNoticeId);
             setField(jobNotice, "companyName", companyName);
+            setField(jobNotice, "companyLogoUrl", "https://cdn.example.com/careerwave.png");
             setField(jobNotice, "title", title);
             setField(jobNotice, "description", "Spring Boot 기반 백엔드 개발");
             setField(jobNotice, "skillTags", skillTags);

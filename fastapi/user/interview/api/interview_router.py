@@ -18,6 +18,7 @@ from user.interview.websocket.interview_ws_handler import (
     get_session_meta,
     is_session_live,
     update_session_meta,
+    send_reask_question,
 )
 
 log = logging.getLogger(__name__)
@@ -52,6 +53,7 @@ class TextAnswerRequest(BaseModel):
     interviewType: str | None = None   # TECHNICAL | PERSONALITY | PROJECT
     focusType: str | None = None       # FOLLOW_UP | TECHNICAL_DEPTH | DELIVERY | FLUENCY
     targetCompany: str | None = None   # 기업명 (맞춤 질문 생성용)
+    documentId: str | None = None      # 서류 연결 시 Spring이 전달 — 첫 질문 RAG 대기 판단용
 
 
 class RagContextRequest(BaseModel):
@@ -135,6 +137,24 @@ async def trigger_text_answer(
     if body.sessionId != session_id:
         raise HTTPException(status_code=400, detail="path sessionId와 body sessionId가 일치하지 않습니다.")
 
+    # 무음·hallucination으로 빈 답변이 제출된 경우 LLM 트리거를 건너뜀.
+    # questionOrder=0은 세션 시작 첫 질문 생성 턴이므로 answerText가 없어도 정상 — 스킵 대상 아님.
+    # 프론트 guard가 있더라도 서버에서도 방어해 꼬리질문 오발 방지.
+    # questionText가 있으면 현재 질문을 AI 말풍선으로 재전송해 자연스러운 면접 흐름 유지.
+    if body.questionOrder > 0 and not body.answerText.strip():
+        log.info(
+            "LLM trigger skipped (empty answerText): sessionId=%s, questionOrder=%d",
+            session_id, body.questionOrder,
+        )
+        if body.questionText.strip():
+            await send_reask_question(session_id, body.questionText, body.questionOrder)
+        return {"accepted": True, "sessionId": session_id, "questionOrder": body.questionOrder}
+
+    # 서류 연결 면접 첫 질문: LLM 백그라운드 태스크보다 먼저 PENDING을 기록해
+    # rag_status=None 을 "서류 없음"으로 오인하는 레이스 컨디션을 방지한다.
+    if body.questionOrder == 0 and body.documentId is not None:
+        await update_session_meta(session_id, {"rag_status": "PENDING"})
+
     if not is_session_live(session_id):
         # WS 연결 전 도착한 경우 — Redis pending 큐에 보관 후 WS 연결 시 flush
         redis = await get_redis()
@@ -197,6 +217,9 @@ async def register_rag_context(
     if body.sessionId != session_id:
         raise HTTPException(status_code=400, detail="path sessionId와 body sessionId가 일치하지 않습니다.")
 
+    # 인덱싱 시작 전 PENDING 상태 기록 — LLM 파이프라인이 대기 여부를 판단하는 데 사용
+    await update_session_meta(session_id, {"rag_status": "PENDING"})
+
     task = asyncio.create_task(
         _index_rag_context(session_id, body.documentFilePath)
     )
@@ -230,9 +253,10 @@ async def _index_rag_context(session_id: str, document_file_path: str) -> None:
         safe_path = _resolve_safe_path(document_file_path)
         text = await _extract_document_text(str(safe_path))
         truncated = text[:MAX_RAG_CONTEXT_CHARS]
-        await update_session_meta(session_id, {"rag_context": truncated})
+        await update_session_meta(session_id, {"rag_context": truncated, "rag_status": "READY"})
         log.info("[Session: %s] RAG context indexed: charLen=%d", session_id, len(truncated))
     except Exception as e:
+        await update_session_meta(session_id, {"rag_status": "FAILED"})
         log.warning(
             "[Session: %s] RAG indexing failed (fallback to general mode): %s",
             session_id, e,

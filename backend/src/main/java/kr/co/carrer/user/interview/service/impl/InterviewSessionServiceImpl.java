@@ -91,7 +91,8 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
                             finalSessionType,
                             finalInterviewType,
                             finalFocusType,
-                            finalTargetCompany
+                            finalTargetCompany,
+                            finalDocumentId
                     );
                 }
             });
@@ -139,7 +140,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    fastApiClient.triggerLlmPipeline(sessionId, memberId, questionOrder, answerText, questionText, sessionType, interviewType, focusType, targetCompany);
+                    fastApiClient.triggerLlmPipeline(sessionId, memberId, questionOrder, answerText, questionText, sessionType, interviewType, focusType, targetCompany, null);
                 }
             });
         }
