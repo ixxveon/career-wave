@@ -144,10 +144,12 @@ public class SecurityConfig {
                 new IpAclFilter(ipAclPort, objectMapper, parseCommaSeparated(trustedProxies)),
                 JwtAuthenticationFilter.class
             )
-            .addFilterBefore(
+            // IpAclFilter(IP 허용 목록) → LoginRateLimitFilter(요청 제한) 순서를 명시적으로 고정한다.
+            // 차단 대상 IP가 Redis 카운터를 소모하지 않도록 ACL을 먼저 통과시킨다.
+            .addFilterAfter(
                 new LoginRateLimitFilter(loginRateLimitStore,
                         new ClientIpResolver(parseCommaSeparated(trustedProxies)), objectMapper),
-                JwtAuthenticationFilter.class
+                IpAclFilter.class
             )
             .addFilterAfter(
                 new AccountStatusAuthorizationFilter(accountStatusPorts),

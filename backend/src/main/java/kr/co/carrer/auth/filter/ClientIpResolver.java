@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * 신뢰 프록시(trusted proxy)를 고려한 실제 클라이언트 IP 추출기.
@@ -18,6 +19,9 @@ import java.util.List;
  */
 @Slf4j
 public class ClientIpResolver {
+
+    private static final Pattern IPV4_PATTERN = Pattern.compile(
+            "^(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}$");
 
     private final List<String> trustedProxies;
 
@@ -36,11 +40,40 @@ public class ClientIpResolver {
         String[] hops = xForwardedFor.split(",");
         for (int i = hops.length - 1; i >= 0; i--) {
             String hop = hops[i].trim();
+            // 비-리터럴(호스트명 등) hop은 신뢰하지 않으며, CIDR 매칭 과정의 blocking DNS 조회
+            // (InetAddress.getByName)를 유발하지 않도록 건너뛴다.
+            if (!isIpLiteral(hop)) {
+                continue;
+            }
             if (!isTrustedProxy(hop)) {
                 return hop;
             }
         }
-        return hops[0].trim();
+        // 신뢰 가능한 클라이언트 hop을 특정하지 못하면(모두 신뢰 프록시이거나 비-리터럴),
+        // DNS 위험이 없는 remoteAddr로 폴백한다.
+        return remoteAddr;
+    }
+
+    /** 호스트명(→ DNS 조회) 대신 IPv4/IPv6 리터럴만 허용한다. */
+    private boolean isIpLiteral(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        if (value.indexOf(':') >= 0) {
+            // IPv6 리터럴: 16진수/콜론(및 IPv4-mapped용 점)만 허용. 호스트명은 콜론을 포함할 수 없다.
+            for (int i = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+                boolean ok = (c >= '0' && c <= '9')
+                        || (c >= 'a' && c <= 'f')
+                        || (c >= 'A' && c <= 'F')
+                        || c == ':' || c == '.';
+                if (!ok) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return IPV4_PATTERN.matcher(value).matches();
     }
 
     private boolean isTrustedProxy(String remoteAddr) {

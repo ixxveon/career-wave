@@ -5,12 +5,12 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import kr.co.carrer.auth.exception.AuthErrorCode;
 import kr.co.carrer.auth.store.LoginRateLimitStore;
 import kr.co.carrer.global.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -70,7 +70,17 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         }
 
         String clientIp = clientIpResolver.resolve(request);
-        long count = rateLimitStore.increment(request.getRequestURI(), clientIp, WINDOW);
+        long count;
+        try {
+            count = rateLimitStore.increment(request.getRequestURI(), clientIp, WINDOW);
+        } catch (Exception e) {
+            // fail-open: Redis 장애가 전체 인증(로그인/복구/인증코드) 마비로 번지지 않도록,
+            // 스토어 오류 시에는 제한을 건너뛰고 요청을 통과시킨다("무제한"으로 열화).
+            log.warn("[레이트 리밋] Redis 오류로 제한을 건너뜁니다. path={}, ip={}",
+                    request.getRequestURI(), clientIp, e);
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (count > LIMIT) {
             log.warn("[레이트 리밋] 요청 제한 초과 — path={}, ip={}, count={}",
@@ -88,14 +98,14 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
     }
 
     private void writeTooManyRequests(HttpServletResponse response) throws IOException {
-        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        response.setStatus(AuthErrorCode.AUTH_TOO_MANY_REQUESTS.getStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(WINDOW.toSeconds()));
 
         ApiResponse<Object> body = ApiResponse.fail(
-                HttpStatus.TOO_MANY_REQUESTS.value(),
-                "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+                AuthErrorCode.AUTH_TOO_MANY_REQUESTS.getStatus().value(),
+                AuthErrorCode.AUTH_TOO_MANY_REQUESTS.getMessage());
         response.getWriter().write(objectMapper.writeValueAsString(body));
     }
 }
