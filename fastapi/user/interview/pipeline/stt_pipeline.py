@@ -1,4 +1,5 @@
 import logging
+import re
 from collections import defaultdict
 
 from openai import AsyncOpenAI, OpenAIError
@@ -90,6 +91,15 @@ _HALLUCINATION_PATTERNS = [
 def _is_hallucination_text(text: str) -> bool:
     lower = text.lower()
     return any(pattern in lower for pattern in _HALLUCINATION_PATTERNS)
+
+
+# 한글·영문·숫자가 하나도 없으면 구두점·공백만 있는 무의미한 텍스트로 판단
+# Whisper가 무음 구간에서 ".", "...", ". ." 등을 높은 confidence로 출력하는 케이스 차단
+_MEANINGFUL_CHAR_RE = re.compile(r'[가-힣a-zA-Z0-9]')
+
+
+def _is_meaningless_transcript(text: str) -> bool:
+    return not _MEANINGFUL_CHAR_RE.search(text)
 
 
 def calculate_voice_quality_ratio(no_speech_prob: float) -> float:
@@ -187,6 +197,14 @@ async def transcribe_chunk(
         log.warning(
             "STT: hallucination masked (pattern match): sessionId=%s, questionOrder=%d, discarded=%s",
             session_id, question_order, transcript[:80],
+        )
+        transcript = ""
+        voice_quality_ratio = 0.0
+        silent = True
+    elif _is_meaningless_transcript(transcript):
+        log.warning(
+            "STT: meaningless transcript masked (punctuation only): sessionId=%s, questionOrder=%d, discarded=%r",
+            session_id, question_order, transcript[:20],
         )
         transcript = ""
         voice_quality_ratio = 0.0

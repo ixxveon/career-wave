@@ -44,6 +44,7 @@ export const FASTAPI_WS_MESSAGE_TYPE = {
   TTS_AUDIO:     'TTS_AUDIO',
   TTS_AUDIO_END: 'TTS_AUDIO_END',
   ANSWER_HINT:   'ANSWER_HINT',
+  REASK:         'REASK',
   ERROR:         'ERROR',
 } as const;
 
