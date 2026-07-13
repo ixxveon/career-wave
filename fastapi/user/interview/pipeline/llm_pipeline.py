@@ -296,14 +296,17 @@ async def _wait_for_rag_context(session_id: str, meta: dict[str, Any]) -> dict[s
         return meta
 
     # rag_status == "PENDING": 서류가 연결됐고 인덱싱 진행 중
-    elapsed = 0.0
-    while elapsed < _RAG_WAIT_TIMEOUT:
-        await asyncio.sleep(_RAG_WAIT_INTERVAL)
-        elapsed += _RAG_WAIT_INTERVAL
+    deadline = asyncio.get_event_loop().time() + _RAG_WAIT_TIMEOUT
+    while True:
+        remaining = deadline - asyncio.get_event_loop().time()
+        if remaining <= 0:
+            break
+        await asyncio.sleep(min(_RAG_WAIT_INTERVAL, remaining))
         refreshed = await get_session_meta(session_id)
         if not refreshed:
             break
         status = refreshed.get("rag_status")
+        elapsed = _RAG_WAIT_TIMEOUT - (deadline - asyncio.get_event_loop().time())
         if status == "READY":
             log.info("[Session: %s] RAG context ready after %.1fs", session_id, elapsed)
             return refreshed
@@ -311,5 +314,6 @@ async def _wait_for_rag_context(session_id: str, meta: dict[str, Any]) -> dict[s
             log.info("[Session: %s] RAG indexing failed after %.1fs, using general mode", session_id, elapsed)
             return refreshed
 
+    elapsed = _RAG_WAIT_TIMEOUT - (deadline - asyncio.get_event_loop().time())
     log.info("[Session: %s] RAG context not ready after %.1fs, proceeding without", session_id, elapsed)
     return meta
