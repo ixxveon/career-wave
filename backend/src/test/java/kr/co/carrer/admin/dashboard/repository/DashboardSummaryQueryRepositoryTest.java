@@ -1,11 +1,14 @@
 package kr.co.carrer.admin.dashboard.repository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import kr.co.carrer.admin.dashboard.type.DashboardRangeType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -67,5 +70,22 @@ class DashboardSummaryQueryRepositoryTest {
         assertThat(result)
                 .extracting(DashboardSummaryQueryRepository.WeeklySignupRow::label)
                 .doesNotContain("06/29");
+    }
+
+    @Test
+    void findRecentActivitiesLimitsQueryToFiveRows() {
+        @SuppressWarnings("unchecked")
+        ObjectProvider<NamedParameterJdbcTemplate> jdbcTemplateProvider = mock(ObjectProvider.class);
+        when(jdbcTemplateProvider.getIfAvailable()).thenReturn(null);
+        EntityManager entityManager = mock(EntityManager.class);
+        Query query = mock(Query.class);
+        when(entityManager.createNativeQuery(anyString())).thenReturn(query);
+        when(query.getResultList()).thenReturn(java.util.List.of());
+        DashboardSummaryQueryRepository repository = new DashboardSummaryQueryRepository(jdbcTemplateProvider);
+        ReflectionTestUtils.setField(repository, "entityManager", entityManager);
+
+        repository.findRecentActivities();
+
+        verify(query).setParameter(1, 5);
     }
 }

@@ -28,7 +28,7 @@ import java.util.Map;
 public class DashboardSummaryQueryRepository {
 
     private static final int ALERT_LOOKBACK_DAYS = 7;
-    private static final int RECENT_ACTIVITY_SAFETY_LIMIT = 100;
+    private static final int RECENT_ACTIVITY_LIMIT = 5;
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter WEEKLY_SIGNUP_LABEL_FORMATTER = DateTimeFormatter.ofPattern("MM/dd");
     private static final String PAID_STATUS = "PAID";
@@ -116,7 +116,7 @@ public class DashboardSummaryQueryRepository {
                 LIMIT ?1
                 """;
         Query query = entityManager.createNativeQuery(sql);
-        query.setParameter(1, RECENT_ACTIVITY_SAFETY_LIMIT);
+        query.setParameter(1, RECENT_ACTIVITY_LIMIT);
         return resultRows(query).stream()
                 .map(row -> new RecentActivityRow(
                         longObjectValue(row, 0),
