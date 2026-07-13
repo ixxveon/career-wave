@@ -140,12 +140,15 @@ export interface InterviewReportResponse {
   createdAt: string;
 }
 
+export type ReportStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
+
 export interface HistoryItem {
   sessionId: string;
   sessionType: SessionType;
   interviewType: InterviewType | null;
   targetCompany: string | null;
   sessionStatus: SessionStatus;
+  reportStatus: ReportStatus | null;
   totalScore: number | null;
   createdAt: string;
 }

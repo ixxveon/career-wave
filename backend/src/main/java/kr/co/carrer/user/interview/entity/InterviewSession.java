@@ -3,6 +3,7 @@ package kr.co.carrer.user.interview.entity;
 import jakarta.persistence.*;
 import kr.co.carrer.user.interview.type.FocusType;
 import kr.co.carrer.user.interview.type.InterviewType;
+import kr.co.carrer.user.interview.type.ReportStatus;
 import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
 import lombok.AccessLevel;
@@ -49,6 +50,10 @@ public class InterviewSession {
 
     @Column(name = "total_score")
     private Integer totalScore;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "report_status", length = 20)
+    private ReportStatus reportStatus;
 
     @Column(name = "started_at")
     private ZonedDateTime startedAt;
@@ -101,16 +106,18 @@ public class InterviewSession {
 
     public void complete(ZonedDateTime endedAt) {
         this.sessionStatus = SessionStatus.COMPLETED;
+        this.reportStatus = ReportStatus.PENDING;
         this.endedAt = endedAt;
+    }
+
+    public void completeReport(Integer totalScore) {
+        this.totalScore = totalScore;
+        this.reportStatus = totalScore != null ? ReportStatus.COMPLETED : ReportStatus.FAILED;
     }
 
     public void fail(ZonedDateTime endedAt) {
         this.sessionStatus = SessionStatus.FAILED;
         this.endedAt = endedAt;
-    }
-
-    public void updateTotalScore(Integer totalScore) {
-        this.totalScore = totalScore;
     }
 
     public boolean isInProgress() {

@@ -41,6 +41,7 @@ public class InterviewHistoryServiceImpl implements InterviewHistoryService {
                 row.getInterviewType() != null ? row.getInterviewType().name() : null,
                 row.getTargetCompany(),
                 row.getSessionStatus() != null ? row.getSessionStatus().name() : null,
+                row.getReportStatus() != null ? row.getReportStatus().name() : null,
                 row.getTotalScore(),
                 row.getPdfUrl(),
                 row.getCreatedAt()
