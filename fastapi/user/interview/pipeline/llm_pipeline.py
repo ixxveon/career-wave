@@ -76,12 +76,13 @@ async def generate_and_deliver_question(
     if question_order == 0:
         meta = await _wait_for_rag_context(session_id, meta)
 
-    _record_answer(meta, question_text, answer_text)
-    meta["recent_answer_quality"] = _assess_answer_quality(meta, question_order, answer_text)
-    log.debug(
-        "[Session: %s] answer quality assessed: order=%d, quality=%s",
-        session_id, question_order, meta["recent_answer_quality"],
-    )
+    if question_text.strip() and answer_text.strip():
+        _record_answer(meta, question_text, answer_text)
+        meta["recent_answer_quality"] = _assess_answer_quality(meta, question_order, answer_text)
+        log.debug(
+            "[Session: %s] answer quality assessed: order=%d, quality=%s",
+            session_id, question_order, meta["recent_answer_quality"],
+        )
 
     settings = get_settings()
 
