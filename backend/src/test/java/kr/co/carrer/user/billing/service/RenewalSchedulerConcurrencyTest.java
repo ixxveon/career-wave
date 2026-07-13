@@ -6,6 +6,7 @@ import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.entity.UserPayment;
 import kr.co.carrer.user.billing.repository.BillingProfileRepository;
 import kr.co.carrer.user.billing.repository.PlanRepository;
+import kr.co.carrer.user.billing.repository.UserPaymentRepository;
 import kr.co.carrer.user.billing.service.impl.RenewalFailureTxService;
 import kr.co.carrer.user.billing.service.impl.RenewalPaymentCreateTxService;
 import kr.co.carrer.user.billing.service.impl.RenewalSettleTxService;
@@ -39,6 +40,7 @@ class RenewalSchedulerConcurrencyTest {
 
     @Mock BillingProfileRepository billingProfileRepository;
     @Mock PlanRepository planRepository;
+    @Mock UserPaymentRepository userPaymentRepository;
     @Mock TossBillingPaymentClient tossBillingPaymentClient;
     @Mock AesCipher aesCipher;
     @Mock BillingMemberPort billingMemberPort;
@@ -54,7 +56,7 @@ class RenewalSchedulerConcurrencyTest {
     @BeforeEach
     void setUp() {
         service = new SubscriptionRenewalServiceImpl(
-                billingProfileRepository, planRepository,
+                billingProfileRepository, planRepository, userPaymentRepository,
                 tossBillingPaymentClient, aesCipher, billingMemberPort,
                 renewalPaymentCreateTxService,
                 renewalSettleTxService, renewalFailureTxService);

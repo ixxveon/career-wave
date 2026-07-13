@@ -12,8 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static kr.co.carrer.user.member.type.SubscriptionStatus.FREE;
 import static kr.co.carrer.user.member.type.SubscriptionStatus.PREMIUM;
@@ -43,6 +46,17 @@ public class BillingMemberPortImpl implements BillingMemberPort {
             throw new CustomException(BillingErrorCode.BILLING_EMAIL_REQUIRED);
         }
         return new MemberBillingInfo(member.getName(), member.getEmail());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<UUID, MemberBillingInfo> getMemberBillingInfoBatch(Collection<UUID> memberIds) {
+        // email 없는 회원은 제외 → 배치 호출측에서 memberInfo 부재로 부적격 처리
+        return memberRepository.findAllById(memberIds).stream()
+                .filter(m -> m.getEmail() != null && !m.getEmail().isBlank())
+                .collect(Collectors.toMap(
+                        Member::getMemberId,
+                        m -> new MemberBillingInfo(m.getName(), m.getEmail())));
     }
 
     @Override

@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,6 +44,9 @@ public interface UserPaymentRepository extends JpaRepository<UserPayment, UUID> 
                                                        UserPaymentStatus paymentStatus);
 
     Optional<UserPayment> findByIdempotencyKey(String idempotencyKey);
+
+    // 자동결제 배치 선로딩용 — 여러 idempotencyKey를 IN 절로 한 번에 조회 (건별 findByIdempotencyKey N+1 제거)
+    List<UserPayment> findByIdempotencyKeyIn(Collection<String> idempotencyKeys);
 
     // 대사 대상 ID 목록 배치 조회 — 락 없이 짧은 TX, reconcilingAt 오래된 건부터 처리
     @Query("SELECT p.paymentId FROM UserPayment p WHERE p.paymentStatus = 'RECONCILING' ORDER BY p.reconcilingAt ASC")
