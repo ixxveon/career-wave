@@ -41,6 +41,9 @@ public class ScrapingPipeline {
     @Column(name = "is_enabled", nullable = false)
     private Boolean isEnabled = true;
 
+    @Column(name = "schedule_interval_minutes", nullable = false)
+    private Integer scheduleIntervalMinutes = 360;
+
     @Column(name = "last_started_at")
     private ZonedDateTime lastStartedAt;
 

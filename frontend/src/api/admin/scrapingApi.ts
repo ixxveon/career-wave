@@ -57,6 +57,7 @@ export interface ScrapingSource {
   sourceName: string;
   status: PipelineStatus;
   isEnabled: boolean;
+  scheduleIntervalMinutes: number;
   successRate: number;
   averageDurationMs: number;
   cycleExpression: string;
@@ -75,6 +76,7 @@ export interface BackendScrapingPipelineItem {
   displayName: string;
   pipelineStatus: PipelineStatus;
   isEnabled: boolean;
+  scheduleIntervalMinutes: number;
   lastStartedAt: string | null;
   lastSuccessAt: string | null;
   lastFailedAt: string | null;
@@ -159,13 +161,24 @@ export interface ScrapingLogListParams {
 
 const SCRAPING_API_BASE_PATH = '/api/v1/admin/scraping';
 
+export const formatScheduleInterval = (minutes: number) => {
+  if (minutes < 60) return `${minutes}\uBD84`;
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes === 0
+    ? `${hours}\uC2DC\uAC04`
+    : `${hours}\uC2DC\uAC04 ${remainingMinutes}\uBD84`;
+};
+
 export const toScrapingSource = (item: BackendScrapingPipelineItem): ScrapingSource => ({
   sourceName: item.sourceName,
   status: item.pipelineStatus,
   isEnabled: item.isEnabled,
+  scheduleIntervalMinutes: item.scheduleIntervalMinutes,
   successRate: 0,
   averageDurationMs: item.lastDurationMs ?? 0,
-  cycleExpression: '-',
+  cycleExpression: formatScheduleInterval(item.scheduleIntervalMinutes),
   collectedCount: item.lastTotalCount ?? 0,
   recentErrorCode: null,
   recentErrorMessage: item.lastErrorMessage,
@@ -182,6 +195,7 @@ export const toScrapingSourceDetail = (item: BackendScrapingPipelineItem): Scrap
     sourceName: source.sourceName,
     status: source.status,
     isEnabled: source.isEnabled,
+    scheduleIntervalMinutes: source.scheduleIntervalMinutes,
     successRate: source.successRate,
     averageDurationMs: source.averageDurationMs,
     cycleExpression: source.cycleExpression,
