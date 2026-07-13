@@ -172,7 +172,7 @@
 /* ?? 醫곸? ?붾㈃: 硫붾돱 媛꾧꺽 異뺤냼 ??????????? */
 @media (max-width: 960px) {
   .cw-header__nav {
-    font-size: 20px;
+    font-size: 15px;
     gap: clamp(10px, 1.4vw, 18px);
   }
 
@@ -198,13 +198,19 @@
     width: 44px;
   }
 
+  .cw-header__brand span {
+    display: none;
+  }
+
   .cw-header__nav {
     order: 5;
     grid-column: 1 / -1;
-    gap: 14px;
-    font-size: 18px;
+    gap: 10px;
+    font-size: 14px;
     padding-left: 0;
-    padding-bottom: 2px;
+    padding-bottom: 6px;
+    flex-wrap: wrap;
+    overflow-x: visible;
   }
 
   .cw-header__account {
