@@ -111,15 +111,7 @@ export interface JobNoticeListResponse {
 
 export const JOB_NOTICE_ALL_FILTER_VALUE = '전체';
 
-export const JOB_NOTICE_FILTER_OPTIONS = {
-  jobType: [JOB_NOTICE_ALL_FILTER_VALUE, 'FULLTIME', 'INTERN', 'CONTRACT'],
-  jobCategory: [JOB_NOTICE_ALL_FILTER_VALUE, 'BACKEND', 'FRONTEND', 'DATA', 'DEVOPS'],
-  careerLevel: [JOB_NOTICE_ALL_FILTER_VALUE, 'JUNIOR', 'SENIOR', 'ANY'],
-  location: [JOB_NOTICE_ALL_FILTER_VALUE, '서울', '경기', '원격'],
-  companySize: [JOB_NOTICE_ALL_FILTER_VALUE, '스타트업', '중소', '중견', '대기업'],
-} as const;
-
-export const JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES = {
+export const JOB_NOTICE_COMPANY_SIZE_API_VALUES = {
   스타트업: 'STARTUP',
   중소: 'SME',
   중견: 'MID_MARKET',
@@ -161,8 +153,6 @@ export const JOB_NOTICE_SORT_LABELS = {
   views: '조회순',
 } as const satisfies Record<JobNoticeSort, string>;
 
-export type JobNoticeFilterKey = keyof typeof JOB_NOTICE_FILTER_OPTIONS;
-export type JobNoticeFilterValue = (typeof JOB_NOTICE_FILTER_OPTIONS)[JobNoticeFilterKey][number];
 export type JobNoticePeriod = (typeof JOB_NOTICE_PERIOD_OPTIONS)[number];
 export type JobNoticeSort = (typeof JOB_NOTICE_SORT_OPTIONS)[number];
 
@@ -245,9 +235,9 @@ export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoti
 }
 
 export function mapJobNoticeViewToApiModel(jobNotice: JobNotice): JobNoticeDetail {
-  const companySize = jobNotice.companySize in JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES
-    ? JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES[
-      jobNotice.companySize as keyof typeof JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES
+  const companySize = jobNotice.companySize in JOB_NOTICE_COMPANY_SIZE_API_VALUES
+    ? JOB_NOTICE_COMPANY_SIZE_API_VALUES[
+      jobNotice.companySize as keyof typeof JOB_NOTICE_COMPANY_SIZE_API_VALUES
     ]
     : jobNotice.companySize;
 
