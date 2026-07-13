@@ -19,6 +19,7 @@ import { ADMIN_DETAIL_ROLE, type AdminDetailRole } from '../../../constants/admi
 import '../../../styles/admin/admin.css';
 
 const DASHBOARD_SUMMARY_QUERY_KEY = ['admin', 'dashboard', 'summary'] as const;
+const RECENT_ACTIVITY_DISPLAY_LIMIT = 5;
 
 const KST_DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
   timeZone: 'Asia/Seoul',
@@ -369,7 +370,7 @@ export default function AdminDashboardPage() {
 
   const { recentActivities, hasRecentActivitySectionError } = useMemo(() => {
     try {
-      const items = (dashboardSummary?.recentActivities ?? []).map((item) => ({
+      const items = (dashboardSummary?.recentActivities ?? []).slice(0, RECENT_ACTIVITY_DISPLAY_LIMIT).map((item) => ({
         ...item,
         occurredAtLabel: formatKstDateTime(item.occurredAt),
         hasAccessibleTarget: hasAccessibleAdminTarget(currentAdminRole, item.targetPath),

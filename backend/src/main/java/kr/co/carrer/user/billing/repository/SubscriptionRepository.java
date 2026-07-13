@@ -53,4 +53,6 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
            "AND s.currentPeriodEnd <= :threshold")
     List<Subscription> findExpiredCancelScheduled(@Param("status") SubscriptionStatus status,
                                                    @Param("threshold") ZonedDateTime threshold);
+
+    boolean existsByMemberIdAndSubscriptionStatusIn(UUID memberId, java.util.Collection<SubscriptionStatus> statuses);
 }

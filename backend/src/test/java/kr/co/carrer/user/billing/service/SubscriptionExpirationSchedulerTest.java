@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verify;
 class SubscriptionExpirationSchedulerTest {
 
     @Mock SubscriptionRepository subscriptionRepository;
+    @Mock BillingMemberPort billingMemberPort;
 
     private SubscriptionExpirationScheduler scheduler;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
@@ -37,7 +38,7 @@ class SubscriptionExpirationSchedulerTest {
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(Instant.now(), KST);
-        scheduler = new SubscriptionExpirationScheduler(subscriptionRepository, clock);
+        scheduler = new SubscriptionExpirationScheduler(subscriptionRepository, billingMemberPort, clock);
     }
 
     @Test
@@ -96,7 +97,7 @@ class SubscriptionExpirationSchedulerTest {
         // KST=2026-01-01T09:00 기준 Clock 고정
         ZonedDateTime kstMidnight = ZonedDateTime.of(2026, 1, 1, 0, 0, 0, 0, KST);
         Clock kstClock = Clock.fixed(kstMidnight.toInstant(), KST);
-        scheduler = new SubscriptionExpirationScheduler(subscriptionRepository, kstClock);
+        scheduler = new SubscriptionExpirationScheduler(subscriptionRepository, billingMemberPort, kstClock);
 
         Subscription sub = cancelScheduledSubscription(kstMidnight.minusMinutes(1));
         given(subscriptionRepository.findExpiredCancelScheduled(any(), any())).willReturn(List.of(sub));

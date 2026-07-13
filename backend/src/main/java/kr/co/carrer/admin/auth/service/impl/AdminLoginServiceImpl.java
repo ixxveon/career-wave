@@ -95,9 +95,9 @@ public class AdminLoginServiceImpl implements AdminLoginService {
                 adminId, AccountType.ADMIN, adminRole, sessionId
         );
 
-        // TTL = 유휴 타임아웃(슬라이딩). 절대 상한(refresh 1일)은 refresh 토큰 exp가 담당.
+        // TTL = 유휴 타임아웃(슬라이딩, 관리자 전용). 절대 상한(refresh 1일)은 refresh 토큰 exp가 담당.
         refreshTokenStore.save(AccountType.ADMIN, adminId, sessionId,
-                refreshToken, Duration.ofMillis(sessionProperties.getIdleTimeout()));
+                refreshToken, Duration.ofMillis(sessionProperties.getIdleTimeout(AccountType.ADMIN)));
 
         // access token jti 저장 — 다음 로그인 시 단일 세션 정책으로 blacklist 등록에 사용
         String jti = jwtTokenProvider.extractJti(accessToken, AccountType.ADMIN);
@@ -114,7 +114,7 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         return new AdminLoginDto.Response(accessToken, adminInfo);
     }
 
-    public String refresh(String refreshToken, HttpServletResponse response) {
+    public AdminLoginDto.TokenRefreshResponse refresh(String refreshToken, HttpServletResponse response) {
         if (!jwtTokenProvider.validate(refreshToken, AccountType.ADMIN)) {
             throw new CustomException(AuthErrorCode.AUTH_REFRESH_INVALID);
         }
@@ -158,9 +158,9 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         String newRefreshToken = jwtTokenProvider.createRefreshToken(
                 subject, AccountType.ADMIN, currentAdminRole, sessionId, originalExp);
 
-        // rotate TTL = 유휴 타임아웃(슬라이딩). 절대 상한은 refresh exp가 담당.
+        // rotate TTL = 유휴 타임아웃(슬라이딩, 관리자 전용). 절대 상한은 refresh exp가 담당.
         refreshTokenStore.rotate(AccountType.ADMIN, subject, sessionId,
-                newRefreshToken, Duration.ofMillis(sessionProperties.getIdleTimeout()));
+                newRefreshToken, Duration.ofMillis(sessionProperties.getIdleTimeout(AccountType.ADMIN)));
 
         // session_jti를 회전된 access token의 jti로 갱신 — 세션 퇴출 시 최신 access를 blacklist 등록(보조 방어)
         String newJti = jwtTokenProvider.extractJti(newAccessToken, AccountType.ADMIN);
@@ -168,7 +168,11 @@ public class AdminLoginServiceImpl implements AdminLoginService {
                 Duration.ofMillis(jwtProperties.getAdmin().getAccessExpiration()));
 
         setRefreshTokenCookie(response, newRefreshToken);
-        return newAccessToken;
+
+        // 탭 재오픈 등 sessionStorage 부재 상황에서 refresh 만으로 세션 완전 복원이 가능하도록 adminInfo 동봉
+        AdminLoginDto.AdminInfo adminInfo = new AdminLoginDto.AdminInfo(
+                admin.getAdminId(), admin.getName(), currentAdminRole);
+        return new AdminLoginDto.TokenRefreshResponse(newAccessToken, adminInfo);
     }
 
     public void logout(String refreshToken, String accessToken) {

@@ -181,7 +181,8 @@ def _detect_language(text: str) -> str:
 def build_resume_user_prompt(resume_text: str) -> str:
     # 토큰 절약: 입력 텍스트 3000자 초과 시 자름
     truncated = resume_text[:3000] if len(resume_text) > 3000 else resume_text
-    lang = _detect_language(resume_text)
+    # 모델이 실제로 받는 텍스트 기준으로 언어 감지 (전체 원문과 앞부분 언어가 다를 수 있음)
+    lang = _detect_language(truncated)
     if lang == "en":
         return f"Please analyze the following resume and respond entirely in English:\n\n{truncated}"
     return f"다음 이력서를 분석해 주세요:\n\n{truncated}"
