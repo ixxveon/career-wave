@@ -1,6 +1,7 @@
 package kr.co.carrer.user.interview.entity;
 
 import kr.co.carrer.user.interview.type.InterviewType;
+import kr.co.carrer.user.interview.type.ReportStatus;
 import kr.co.carrer.user.interview.type.SessionStatus;
 import kr.co.carrer.user.interview.type.SessionType;
 import org.junit.jupiter.api.DisplayName;
@@ -107,15 +108,28 @@ class InterviewSessionTest {
     class UpdateTotalScore {
 
         @Test
-        @DisplayName("updateTotalScore() 호출 시 totalScore가 업데이트된다")
-        void updateTotalScore_shouldUpdateScore() {
+        @DisplayName("completeReport() 호출 시 totalScore와 reportStatus가 업데이트된다")
+        void completeReport_shouldUpdateScoreAndStatus() {
             InterviewSession session = InterviewSession.create(
                     UUID.randomUUID(), null, SessionType.TEXT, null, null, null
             );
 
-            session.updateTotalScore(85);
+            session.completeReport(85);
 
             assertThat(session.getTotalScore()).isEqualTo(85);
+            assertThat(session.getReportStatus()).isEqualTo(ReportStatus.COMPLETED);
+        }
+
+        @DisplayName("completeReport(null) 호출 시 reportStatus가 FAILED가 된다")
+        void completeReport_withNull_shouldSetFailed() {
+            InterviewSession session = InterviewSession.create(
+                    UUID.randomUUID(), null, SessionType.TEXT, null, null, null
+            );
+
+            session.completeReport(null);
+
+            assertThat(session.getTotalScore()).isNull();
+            assertThat(session.getReportStatus()).isEqualTo(ReportStatus.FAILED);
         }
     }
 
