@@ -315,15 +315,7 @@ public class JobNoticeQueryRepository {
         }
 
         String normalizedKeyword = keyword.trim();
-
-        BooleanBuilder keywordBuilder = new BooleanBuilder();
-        keywordBuilder.or(jobNotice.title.containsIgnoreCase(normalizedKeyword));
-        keywordBuilder.or(jobNotice.description.containsIgnoreCase(normalizedKeyword));
-        keywordBuilder.or(jobNotice.companyName.containsIgnoreCase(normalizedKeyword));
-        keywordBuilder.or(jobNotice.source.containsIgnoreCase(normalizedKeyword));
-        keywordBuilder.or(arrayContainsIgnoreCase(jobNotice.skillTags, normalizedKeyword));
-        keywordBuilder.or(arrayContainsIgnoreCase(jobNotice.jobCategory, normalizedKeyword));
-        return keywordBuilder.getValue();
+        return jobNotice.searchText.containsIgnoreCase(normalizedKeyword);
     }
 
     private BooleanExpression periodCondition(String period) {
@@ -380,22 +372,6 @@ public class JobNoticeQueryRepository {
         }
 
         return orderSpecifiers.toArray(new OrderSpecifier[0]);
-    }
-
-    private BooleanExpression arrayContainsIgnoreCase(com.querydsl.core.types.dsl.ArrayPath<String[], String> arrayPath, String value) {
-        String escapedValue = escapeLikePattern(value);
-        return Expressions.booleanTemplate(
-                "lower(function('array_to_string', {0}, ',')) like lower({1}) escape '\\'",
-                arrayPath,
-                "%" + escapedValue + "%"
-        );
-    }
-
-    private String escapeLikePattern(String input) {
-        return input
-                .replace("\\", "\\\\")
-                .replace("%", "\\%")
-                .replace("_", "\\_");
     }
 
     private BooleanExpression arrayContains(com.querydsl.core.types.dsl.ArrayPath<String[], String> arrayPath, String value) {
