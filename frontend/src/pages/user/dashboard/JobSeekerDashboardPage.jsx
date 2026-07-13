@@ -9,16 +9,13 @@ import {
   Bell,
   Bookmark,
   Briefcase,
-  Building2,
   CalendarDays,
   ChevronRight,
   FileSearch,
   Filter,
   MapPin,
   Mic,
-  ShieldCheck,
   Sparkles,
-  Users,
 } from 'lucide-react';
 import '@/styles/user/dashboard/DashboardPage.css';
 
@@ -113,12 +110,6 @@ function toRecommendedJobCard(job) {
   };
 }
 
-const stats = [
-  { icon: Sparkles, title: 'AI 기반 정밀 매칭', text: '정확도 높은 추천' },
-  { icon: ShieldCheck, title: '데이터 보안', text: '안전한 개인정보 보호' },
-  { icon: Users, title: '누적 사용자 20만+', text: '신뢰받는 커리어 플랫폼' },
-  { icon: Building2, title: '기업 5,000+', text: '다양한 기업과 함께' },
-];
 
 function JobSeekerDashboardPage() {
   const isLoggedIn = !!authSession.getAccessToken();
@@ -301,19 +292,6 @@ function JobSeekerDashboardPage() {
         </div>
       </section>
 
-      <section className="cw-home-stats" aria-label="서비스 지표">
-        {stats.map(({ icon: Icon, title, text }) => (
-          <div className="cw-home-stat" key={title}>
-            <span>
-              <Icon size={18} />
-            </span>
-            <div>
-              <strong>{title}</strong>
-              <p>{text}</p>
-            </div>
-          </div>
-        ))}
-      </section>
 
     </div>
   );

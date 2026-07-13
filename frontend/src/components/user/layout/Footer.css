@@ -82,8 +82,13 @@
   color: #2f6fce;
 }
 
-/* ── 하단: 카피라이트 ──────────────────────────── */
+/* ── 하단: 카피라이트 + 약관 링크 ─────────────── */
 .cw-footer__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-top: 40px;
   padding-top: 20px;
   border-top: 1px solid #e2eaf5;
@@ -93,6 +98,35 @@
   font-size: 11px;
   font-weight: 700;
   color: #7a8aa3;
+}
+
+.cw-footer__bottom-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cw-footer__bottom-links a {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7a8aa3;
+  transition: color 0.12s;
+}
+
+.cw-footer__bottom-links a:first-child {
+  font-weight: 900;
+  color: #4b6a99;
+}
+
+.cw-footer__bottom-links a:hover {
+  color: #2f6fce;
+}
+
+@media (max-width: 520px) {
+  .cw-footer__bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 /* ── 반응형 ─────────────────────────────────────── */
