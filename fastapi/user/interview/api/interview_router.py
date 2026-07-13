@@ -136,6 +136,15 @@ async def trigger_text_answer(
     if body.sessionId != session_id:
         raise HTTPException(status_code=400, detail="path sessionId와 body sessionId가 일치하지 않습니다.")
 
+    # 무음·hallucination으로 빈 답변이 제출된 경우 LLM 트리거를 건너뜀.
+    # 프론트 guard가 있더라도 서버에서도 방어해 꼬리질문 오발 방지.
+    if not body.answerText.strip():
+        log.info(
+            "LLM trigger skipped (empty answerText): sessionId=%s, questionOrder=%d",
+            session_id, body.questionOrder,
+        )
+        return {"accepted": True, "sessionId": session_id, "questionOrder": body.questionOrder}
+
     # 서류 연결 면접 첫 질문: LLM 백그라운드 태스크보다 먼저 PENDING을 기록해
     # rag_status=None 을 "서류 없음"으로 오인하는 레이스 컨디션을 방지한다.
     if body.questionOrder == 0 and body.documentId is not None:
