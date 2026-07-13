@@ -83,7 +83,15 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
                 plan, billingProfile.getCustomerKey(), memberInfo,
                 attemptSequence, idempotencyKey);
 
-        // 3. 이미 최종 처리된 payment면 Toss 중복 호출 방지
+        // 3. Toss 호출 → 결산/실패 (배치 경로와 공통)
+        settleOrFail(subscriptionId, attemptSequence, plan, billingProfile, memberInfo, payment);
+    }
+
+    // 결제 최종 상태 확인 → Toss 호출 → 결산 또는 실패 처리. processRenewal·renewWithContext 공통.
+    private void settleOrFail(UUID subscriptionId, int attemptSequence, Plan plan,
+                             BillingProfile billingProfile, BillingMemberPort.MemberBillingInfo memberInfo,
+                             UserPayment payment) {
+        // 이미 최종 처리된 payment면 Toss 중복 호출 방지
         if (payment.getPaymentStatus() == UserPaymentStatus.PAID
                 || payment.getPaymentStatus() == UserPaymentStatus.FAILED) {
             log.info("자동결제 이미 처리됨, skip: subscriptionId={}, attemptSequence={}, status={}",
@@ -91,7 +99,7 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
             return;
         }
 
-        // 4. Toss billing 호출 (트랜잭션 밖)
+        // Toss billing 호출 (트랜잭션 밖)
         TossBillingPaymentResponse response;
         try {
             response = tossBillingPaymentClient.pay(
@@ -111,7 +119,7 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
             return;
         }
 
-        // 5. 결산
+        // 결산
         renewalSettleTxService.settle(payment.getPaymentId(), subscriptionId, response, plan);
         log.info("자동결제 성공: subscriptionId={}, attemptSequence={}", subscriptionId, attemptSequence);
     }
@@ -221,39 +229,16 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
         }
 
         String idempotencyKey = buildIdempotencyKey(subscriptionId, attemptSequence, today);
-        UserPayment payment = renewalPaymentCreateTxService.createWithPreloaded(
-                subscriptionId, subscription.getMemberId(),
-                plan, billingProfile.getCustomerKey(), memberInfo,
-                attemptSequence, idempotencyKey, context.existingPayment(idempotencyKey));
+        // 멱등 선로딩된 결제가 있으면 재사용(REQUIRES_NEW TX 미개시), 없으면 신규 생성
+        UserPayment preloaded = context.existingPayment(idempotencyKey);
+        UserPayment payment = (preloaded != null)
+                ? preloaded
+                : renewalPaymentCreateTxService.createNew(
+                        subscriptionId, subscription.getMemberId(),
+                        plan, billingProfile.getCustomerKey(), memberInfo,
+                        attemptSequence, idempotencyKey);
 
-        if (payment.getPaymentStatus() == UserPaymentStatus.PAID
-                || payment.getPaymentStatus() == UserPaymentStatus.FAILED) {
-            log.info("자동결제 이미 처리됨, skip: subscriptionId={}, attemptSequence={}, status={}",
-                    subscriptionId, attemptSequence, payment.getPaymentStatus());
-            return;
-        }
-
-        TossBillingPaymentResponse response;
-        try {
-            response = tossBillingPaymentClient.pay(
-                    aesCipher.decrypt(billingProfile.encryptedBillingKeyForService()),
-                    billingProfile.getCustomerKey(),
-                    memberInfo.email(),
-                    memberInfo.name(),
-                    payment.getOrderId(),
-                    plan.getPlanName(),
-                    plan.getPlanPrice()
-            );
-        } catch (Exception e) {
-            log.warn("자동결제 Toss 호출 실패: subscriptionId={}, attemptSequence={}, error={}",
-                    subscriptionId, attemptSequence, e.getClass().getSimpleName());
-            renewalFailureTxService.fail(payment.getPaymentId(), subscriptionId,
-                    plan.getProductCode(), attemptSequence);
-            return;
-        }
-
-        renewalSettleTxService.settle(payment.getPaymentId(), subscriptionId, response, plan);
-        log.info("자동결제 성공: subscriptionId={}, attemptSequence={}", subscriptionId, attemptSequence);
+        settleOrFail(subscriptionId, attemptSequence, plan, billingProfile, memberInfo, payment);
     }
 
     static String buildIdempotencyKey(UUID subscriptionId, int attemptSequence, LocalDate date) {

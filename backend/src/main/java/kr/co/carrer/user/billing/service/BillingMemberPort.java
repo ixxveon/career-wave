@@ -1,5 +1,7 @@
 package kr.co.carrer.user.billing.service;
 
+import kr.co.carrer.global.exception.CustomException;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,8 +23,8 @@ public interface BillingMemberPort {
         for (UUID memberId : memberIds) {
             try {
                 result.put(memberId, getMemberBillingInfo(memberId));
-            } catch (RuntimeException ignored) {
-                // 부적격 회원(미존재/이메일 없음)은 제외 — 배치 의미와 동일
+            } catch (CustomException ignored) {
+                // 부적격 회원(미존재/이메일 없음)만 제외 — 인프라 예외는 전파
             }
         }
         return result;

@@ -26,6 +26,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.lang.reflect.Field;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -147,7 +149,57 @@ class RenewalSchedulerConcurrencyTest {
         assertThat(settleCount.get()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("processDueBatch — 한 건이 예외로 실패해도 격리되고 나머지는 정상 처리")
+    void processDueBatch_taskFailure_isolated() {
+        UUID m1 = UUID.randomUUID(), s1 = UUID.randomUUID();  // 정상
+        UUID m2 = UUID.randomUUID(), s2 = UUID.randomUUID();  // 부적격(회원정보 없음) → 예외
+        Subscription sub1 = subscription(m1, s1, 1L);
+        Subscription sub2 = subscription(m2, s2, 1L);
+        Plan plan = plan(1L, "document-coaching", 29000);
+
+        given(planRepository.findAllById(anyIterable())).willReturn(List.of(plan));
+        given(billingProfileRepository.findByMemberIdInAndBillingProfileStatus(any(), eq(BillingProfileStatus.ACTIVE)))
+                .willReturn(List.of(billingProfile(m1), billingProfile(m2)));
+        // m2는 배치 회원정보에서 제외 → renewWithContext에서 ACCOUNT_NOT_ELIGIBLE 예외 → 태스크 격리
+        given(billingMemberPort.getMemberBillingInfoBatch(any())).willReturn(Map.of(
+                m1, new BillingMemberPort.MemberBillingInfo("OK", "ok@test.com")));
+        given(userPaymentRepository.findByIdempotencyKeyIn(any())).willReturn(List.of());
+        given(aesCipher.decrypt(any())).willReturn("plain-key");
+        given(renewalPaymentCreateTxService.createNew(any(), any(), any(), any(), any(), anyInt(), any()))
+                .willReturn(autoRenewalPayment(m1, 0));
+        given(tossBillingPaymentClient.pay(any(), any(), any(), any(), any(), any(), anyInt()))
+                .willReturn(payResponse());
+
+        int success = service.processDueBatch(List.of(sub1, sub2), sub -> 0);
+
+        assertThat(success).isEqualTo(1);                             // 정상 1건만 성공 집계
+        verify(renewalSettleTxService, times(1)).settle(any(), any(), any(), any());
+        verify(renewalPaymentCreateTxService, times(1))              // 예외 건은 결제 생성까지 도달 못함
+                .createNew(any(), any(), any(), any(), any(), anyInt(), any());
+    }
+
+    @Test
+    @DisplayName("processDueBatch — attemptSequence 음수 구독은 스킵(선로딩·처리 미수행)")
+    void processDueBatch_negativeAttempt_skipped() {
+        Subscription sub = subscription(UUID.randomUUID(), UUID.randomUUID(), 1L);
+
+        int success = service.processDueBatch(List.of(sub), s -> -1);
+
+        assertThat(success).isEqualTo(0);
+        verifyNoInteractions(planRepository, billingProfileRepository,
+                renewalPaymentCreateTxService, renewalSettleTxService, tossBillingPaymentClient);
+    }
+
     // ── helpers ─────────────────────────────────────────────────────────────
+
+    private Subscription subscription(UUID memberId, UUID subId, Long planId) {
+        ZonedDateTime now = ZonedDateTime.now(KST);
+        Subscription s = Subscription.create(memberId, planId, now.minusDays(30), now);
+        setField(s, "subscriptionId", subId);
+        setField(s, "billingProfileId", UUID.randomUUID());
+        return s;
+    }
 
     private Subscription activeSubscription() {
         ZonedDateTime now = ZonedDateTime.now(KST);

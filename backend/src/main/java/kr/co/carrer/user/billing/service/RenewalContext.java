@@ -45,7 +45,7 @@ public class RenewalContext {
         return memberInfos.get(memberId);
     }
 
-    // 없으면 null — createWithPreloaded가 신규 생성
+    // 없으면 null — 호출측이 createNew로 신규 생성
     public UserPayment existingPayment(String idempotencyKey) {
         return existingPayments.get(idempotencyKey);
     }

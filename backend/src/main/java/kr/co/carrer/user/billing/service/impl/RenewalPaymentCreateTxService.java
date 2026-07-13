@@ -29,17 +29,15 @@ public class RenewalPaymentCreateTxService {
                         memberInfo, attemptSequence, idempotencyKey));
     }
 
-    // 배치 선로딩 경로 전용 — idempotencyKey 조회를 미리 일괄 수행했으므로 여기선 재조회하지 않는다.
-    // preloaded가 있으면 재사용, 없으면 신규 생성(uq_payments_idempotency_key 유니크 제약이 중복 삽입을 최종 방어).
+    // 배치 선로딩 경로 전용 — 멱등 선로딩에서 미존재로 확인된 건만 신규 생성한다.
+    // (선로딩 결과가 있으면 호출측에서 재사용하므로 이 메서드는 실제 삽입이 필요할 때만 호출된다 →
+    //  멱등 히트 시 불필요한 REQUIRES_NEW 트랜잭션을 열지 않는다.)
+    // uq_payments_idempotency_key 유니크 제약이 중복 삽입을 최종 방어한다.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public UserPayment createWithPreloaded(UUID subscriptionId, UUID memberId,
-                                           Plan plan, String customerKey,
-                                           BillingMemberPort.MemberBillingInfo memberInfo,
-                                           int attemptSequence, String idempotencyKey,
-                                           UserPayment preloaded) {
-        if (preloaded != null) {
-            return preloaded;
-        }
+    public UserPayment createNew(UUID subscriptionId, UUID memberId,
+                                 Plan plan, String customerKey,
+                                 BillingMemberPort.MemberBillingInfo memberInfo,
+                                 int attemptSequence, String idempotencyKey) {
         return insertNew(subscriptionId, memberId, plan, customerKey,
                 memberInfo, attemptSequence, idempotencyKey);
     }
