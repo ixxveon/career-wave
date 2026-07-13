@@ -76,13 +76,12 @@ async def generate_and_deliver_question(
     if question_order == 0:
         meta = await _wait_for_rag_context(session_id, meta)
 
-    if question_order > 0:
-        _record_answer(meta, question_text, answer_text)
-        meta["recent_answer_quality"] = _assess_answer_quality(meta, question_order, answer_text)
-        log.debug(
-            "[Session: %s] answer quality assessed: order=%d, quality=%s",
-            session_id, question_order, meta["recent_answer_quality"],
-        )
+    _record_answer(meta, question_text, answer_text)
+    meta["recent_answer_quality"] = _assess_answer_quality(meta, question_order, answer_text)
+    log.debug(
+        "[Session: %s] answer quality assessed: order=%d, quality=%s",
+        session_id, question_order, meta["recent_answer_quality"],
+    )
 
     settings = get_settings()
 
@@ -214,10 +213,16 @@ def _build_messages(meta: dict[str, Any]) -> list[dict[str, str]]:
     if rag_context:
         system_prompt = system_prompt + "\n\n" + build_rag_injection(rag_context)
 
-    messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
-
     # LLM 컨텍스트 초과 방지: 최근 N개만 포함
     history = (meta.get("answer_history") or [])[-MAX_ANSWER_HISTORY:]
+
+    # 이미 한 질문 목록을 system prompt에 명시적으로 주입 — LLM이 assistant 턴 추론에만 의존하지 않도록
+    if history:
+        asked = "\n".join(f"- {r['question']}" for r in history)
+        system_prompt = system_prompt + f"\n\n[이미 한 질문 목록 — 아래 질문과 동일하거나 유사한 질문을 생성하면 안 됩니다]\n{asked}"
+
+    messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
+
     for record in history:
         messages.append({"role": "assistant", "content": record["question"]})
         messages.append({"role": "user", "content": record["answer"]})
