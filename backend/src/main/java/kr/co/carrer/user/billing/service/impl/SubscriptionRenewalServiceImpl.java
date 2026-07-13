@@ -34,6 +34,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
@@ -58,6 +60,11 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
     // 배치 병렬 처리 스레드 수 — HikariCP 커넥션 풀 크기에 맞춰 조정. 기본 20.
     @Value("${billing.renewal.concurrency:20}")
     private int renewalConcurrency = 20;
+
+    // 건당 처리 타임아웃(초) — 지연 태스크가 스케줄러 스레드를 무한 블록하지 않도록.
+    // 실 Toss 클라이언트 responseTimeout(10s)보다 크게 두어 결산 DB 처리 여유 확보. 기본 30s.
+    @Value("${billing.renewal.task-timeout-seconds:30}")
+    private long renewalTaskTimeoutSeconds = 30;
 
     @Override
     public void processRenewal(Subscription subscription, int attemptSequence) {
@@ -170,16 +177,20 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
             int success = 0;
             for (Future<Boolean> future : futures) {
                 try {
-                    if (Boolean.TRUE.equals(future.get())) {
+                    // 건당 타임아웃 — 지연 태스크가 스케줄러 스레드(@Scheduled 단일 스레드)를 무한 블록하는 것 방지
+                    if (Boolean.TRUE.equals(future.get(renewalTaskTimeoutSeconds, TimeUnit.SECONDS))) {
                         success++;
                     }
+                } catch (TimeoutException e) {
+                    future.cancel(true); // 지연 태스크 인터럽트
+                    log.warn("자동결제 태스크 타임아웃({}s) — 취소", renewalTaskTimeoutSeconds);
                 } catch (Exception e) {
                     log.warn("자동결제 태스크 취합 실패: error={}", e.getClass().getSimpleName());
                 }
             }
             return success;
         } finally {
-            pool.shutdown();
+            pool.shutdownNow(); // 남은 지연 태스크 인터럽트 후 종료
         }
     }
 
