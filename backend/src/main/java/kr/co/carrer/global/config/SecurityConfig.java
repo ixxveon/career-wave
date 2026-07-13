@@ -3,9 +3,12 @@ package kr.co.carrer.global.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.co.carrer.auth.filter.AccountStatusAuthorizationFilter;
 import kr.co.carrer.auth.filter.AccountStatusPort;
+import kr.co.carrer.auth.filter.ClientIpResolver;
 import kr.co.carrer.auth.filter.IpAclFilter;
 import kr.co.carrer.auth.filter.IpAclPort;
 import kr.co.carrer.auth.filter.JwtAuthenticationFilter;
+import kr.co.carrer.auth.filter.LoginRateLimitFilter;
+import kr.co.carrer.auth.store.LoginRateLimitStore;
 import kr.co.carrer.auth.exception.JwtAccessDeniedHandler;
 import kr.co.carrer.auth.exception.JwtAuthenticationEntryPoint;
 import kr.co.carrer.auth.jwt.JwtTokenProvider;
@@ -47,6 +50,7 @@ public class SecurityConfig {
     private final List<AccountStatusPort> accountStatusPorts;
     private final IpAclPort ipAclPort;
     private final ObjectMapper objectMapper;
+    private final LoginRateLimitStore loginRateLimitStore;
 
     /**
      * CSP 정책 — HttpOnly가 막지 못하는 XSS 주입 자체를 브라우저 레벨에서 억제하는 심층 방어.
@@ -72,6 +76,12 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    /** 신뢰 프록시 인지 클라이언트 IP 해석기 — admin/user 체인이 공유한다. */
+    @Bean
+    public ClientIpResolver clientIpResolver() {
+        return new ClientIpResolver(parseCommaSeparated(trustedProxies));
     }
 
     @Bean
@@ -140,6 +150,12 @@ public class SecurityConfig {
                 new IpAclFilter(ipAclPort, objectMapper, parseCommaSeparated(trustedProxies)),
                 JwtAuthenticationFilter.class
             )
+            // IpAclFilter(IP 허용 목록) → LoginRateLimitFilter(요청 제한) 순서를 명시적으로 고정한다.
+            // 차단 대상 IP가 Redis 카운터를 소모하지 않도록 ACL을 먼저 통과시킨다.
+            .addFilterAfter(
+                new LoginRateLimitFilter(loginRateLimitStore, clientIpResolver(), objectMapper),
+                IpAclFilter.class
+            )
             .addFilterAfter(
                 new AccountStatusAuthorizationFilter(accountStatusPorts),
                 JwtAuthenticationFilter.class
@@ -207,6 +223,10 @@ public class SecurityConfig {
             .addFilterBefore(
                 new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistStore, sessionLivenessChecker),
                 UsernamePasswordAuthenticationFilter.class
+            )
+            .addFilterBefore(
+                new LoginRateLimitFilter(loginRateLimitStore, clientIpResolver(), objectMapper),
+                JwtAuthenticationFilter.class
             )
             .addFilterAfter(
                 new AccountStatusAuthorizationFilter(accountStatusPorts),
