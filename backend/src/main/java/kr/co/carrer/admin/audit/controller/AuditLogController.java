@@ -62,15 +62,20 @@ public class AuditLogController implements AuditLogDocs {
         int effectivePage = getPageOrDefault(request.page());
         int effectiveSize = getSizeOrDefault(request.size());
 
-        Page<AuditLog> auditLogs = auditLogService.getAuditLogs(
-            request.logType(),
-            request.severity(),
-            request.keyword(),
-            request.from(),
-            request.to(),
-            effectivePage,
-            effectiveSize
-        );
+        Page<AuditLog> auditLogs = request.adminId() == null && request.targetType() == null
+            ? auditLogService.getAuditLogs(
+                request.logType(), request.severity(), request.keyword(),
+                request.from(), request.to(), effectivePage, effectiveSize
+            )
+            : request.targetType() == null
+            ? auditLogService.getAuditLogs(
+                request.logType(), request.severity(), request.keyword(), request.adminId(),
+                request.from(), request.to(), effectivePage, effectiveSize
+            )
+            : auditLogService.getAuditLogs(
+                request.logType(), request.severity(), request.keyword(), request.adminId(), request.targetType(),
+                request.from(), request.to(), effectivePage, effectiveSize
+            );
 
         List<AuditLogDTO.ResponseItem> content = auditLogs.getContent().stream()
             .map(this::toResponseItem)

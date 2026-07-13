@@ -19,6 +19,29 @@ public interface AuditLogService {
         int size
     );
 
+    Page<AuditLog> getAuditLogs(
+        String logType,
+        String severity,
+        String keyword,
+        Long adminId,
+        ZonedDateTime from,
+        ZonedDateTime to,
+        int page,
+        int size
+    );
+
+    Page<AuditLog> getAuditLogs(
+        String logType,
+        String severity,
+        String keyword,
+        Long adminId,
+        String targetType,
+        ZonedDateTime from,
+        ZonedDateTime to,
+        int page,
+        int size
+    );
+
     AuditLog getAuditLogDetail(Long logId);
 
     record ResponseSummary(

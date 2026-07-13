@@ -71,6 +71,65 @@ public class AuditLogServiceImpl implements AuditLogService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<AuditLog> getAuditLogs(
+        String logType,
+        String severity,
+        String keyword,
+        Long adminId,
+        ZonedDateTime from,
+        ZonedDateTime to,
+        int page,
+        int size
+    ) {
+        validateDateRange(from, to);
+        validatePageSize(page, size);
+        AuditLogType auditLogType = parseLogType(logType);
+        AuditLogSeverity auditLogSeverity = parseSeverity(severity);
+        String normalizedKeyword = normalizeKeyword(keyword);
+
+        return auditLogQueryRepository.findAuditLogs(
+            auditLogType,
+            auditLogSeverity,
+            normalizedKeyword,
+            adminId,
+            from,
+            to,
+            PageRequest.of(toInternalPage(page), size)
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AuditLog> getAuditLogs(
+        String logType,
+        String severity,
+        String keyword,
+        Long adminId,
+        String targetType,
+        ZonedDateTime from,
+        ZonedDateTime to,
+        int page,
+        int size
+    ) {
+        validateDateRange(from, to);
+        validatePageSize(page, size);
+        AuditLogType auditLogType = parseLogType(logType);
+        AuditLogSeverity auditLogSeverity = parseSeverity(severity);
+
+        return auditLogQueryRepository.findAuditLogs(
+            auditLogType,
+            auditLogSeverity,
+            normalizeKeyword(keyword),
+            adminId,
+            normalizeKeyword(targetType),
+            from,
+            to,
+            PageRequest.of(toInternalPage(page), size)
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public AuditLog getAuditLogDetail(Long logId) {
         return auditLogQueryRepository.findAuditLogById(logId)
             .orElseThrow(() -> new CustomException(AuditLogErrorCode.AUDIT_LOG_NOT_FOUND));
