@@ -120,6 +120,7 @@ class InterviewSessionTest {
             assertThat(session.getReportStatus()).isEqualTo(ReportStatus.COMPLETED);
         }
 
+        @Test
         @DisplayName("completeReport(null) 호출 시 reportStatus가 FAILED가 된다")
         void completeReport_withNull_shouldSetFailed() {
             InterviewSession session = InterviewSession.create(
