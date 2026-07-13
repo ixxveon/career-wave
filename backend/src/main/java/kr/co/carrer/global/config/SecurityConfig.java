@@ -78,6 +78,12 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /** 신뢰 프록시 인지 클라이언트 IP 해석기 — admin/user 체인이 공유한다. */
+    @Bean
+    public ClientIpResolver clientIpResolver() {
+        return new ClientIpResolver(parseCommaSeparated(trustedProxies));
+    }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -147,8 +153,7 @@ public class SecurityConfig {
             // IpAclFilter(IP 허용 목록) → LoginRateLimitFilter(요청 제한) 순서를 명시적으로 고정한다.
             // 차단 대상 IP가 Redis 카운터를 소모하지 않도록 ACL을 먼저 통과시킨다.
             .addFilterAfter(
-                new LoginRateLimitFilter(loginRateLimitStore,
-                        new ClientIpResolver(parseCommaSeparated(trustedProxies)), objectMapper),
+                new LoginRateLimitFilter(loginRateLimitStore, clientIpResolver(), objectMapper),
                 IpAclFilter.class
             )
             .addFilterAfter(
@@ -220,8 +225,7 @@ public class SecurityConfig {
                 UsernamePasswordAuthenticationFilter.class
             )
             .addFilterBefore(
-                new LoginRateLimitFilter(loginRateLimitStore,
-                        new ClientIpResolver(parseCommaSeparated(trustedProxies)), objectMapper),
+                new LoginRateLimitFilter(loginRateLimitStore, clientIpResolver(), objectMapper),
                 JwtAuthenticationFilter.class
             )
             .addFilterAfter(

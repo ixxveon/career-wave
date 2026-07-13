@@ -63,7 +63,9 @@ class LoginRateLimitFilterTest {
 
         verifyNoInteractions(chain);
         assertThat(response.getStatus()).isEqualTo(429);
-        assertThat(response.getHeader("Retry-After")).isEqualTo("60");
+        // WINDOW(=1분)에서 파생된 값임을 명시 — WINDOW 변경 시 하드코딩된 상수가 조용히 어긋나지 않도록
+        assertThat(response.getHeader("Retry-After"))
+                .isEqualTo(String.valueOf(Duration.ofMinutes(1).toSeconds()));
     }
 
     @Test
@@ -162,5 +164,27 @@ class LoginRateLimitFilterTest {
         verify(store).increment(eq(LOGIN_PATH), ipCaptor.capture(), any(Duration.class));
         // 스푸핑된 XFF(203.0.113.9)가 아니라 실제 remoteAddr(198.51.100.7)로 키가 산정되어야 한다
         assertThat(ipCaptor.getValue()).isEqualTo("198.51.100.7");
+    }
+
+    @Test
+    void 신뢰프록시가_전달한_XForwardedFor는_해당_IP로_카운트한다() throws Exception {
+        LoginRateLimitStore store = Mockito.mock(LoginRateLimitStore.class);
+        given(store.increment(anyString(), anyString(), any(Duration.class))).willReturn(1L);
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("POST");
+        request.setRequestURI(LOGIN_PATH);
+        // 운영 시나리오: 신뢰 프록시(10.0.2.92)가 실제 클라이언트 IP(203.0.113.9)를 XFF로 전달
+        request.setRemoteAddr("10.0.2.92");
+        request.addHeader("X-Forwarded-For", "203.0.113.9");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = Mockito.mock(FilterChain.class);
+
+        newFilter(store, List.of("10.0.2.92")).doFilter(request, response, chain);
+
+        ArgumentCaptor<String> ipCaptor = ArgumentCaptor.forClass(String.class);
+        verify(store).increment(eq(LOGIN_PATH), ipCaptor.capture(), any(Duration.class));
+        // 신뢰 프록시가 전달한 실제 클라이언트 IP를 레이트 리밋 키로 사용해야 한다
+        assertThat(ipCaptor.getValue()).isEqualTo("203.0.113.9");
     }
 }
