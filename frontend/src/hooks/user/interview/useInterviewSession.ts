@@ -377,6 +377,14 @@ export function useInterviewSession({
         }
         break;
       }
+      case FASTAPI_WS_MESSAGE_TYPE.ANSWER_HINT:
+        if (msg.content) {
+          dispatch({
+            type:    'ADD_MESSAGE',
+            message: { id: Date.now(), role: 'notice', text: msg.content },
+          });
+        }
+        break;
       case FASTAPI_WS_MESSAGE_TYPE.ERROR:
         // STT/LLM/TTS 처리 오류 — 연결은 유지, 토스트로 표시 (api-schema.md §8)
         dispatch({

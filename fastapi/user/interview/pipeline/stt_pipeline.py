@@ -174,6 +174,7 @@ async def transcribe_chunk(
         ]
         no_speech_prob = sum(probs) / len(probs) if probs else 0.0
 
+    silent = False
     if no_speech_prob >= _NO_SPEECH_PROB_THRESHOLD:
         log.warning(
             "STT: hallucination masked (no_speech_prob=%.2f): sessionId=%s, questionOrder=%d, discarded=%s",
@@ -181,6 +182,7 @@ async def transcribe_chunk(
         )
         transcript = ""
         voice_quality_ratio = 0.0
+        silent = True
     elif _is_hallucination_text(transcript):
         log.warning(
             "STT: hallucination masked (pattern match): sessionId=%s, questionOrder=%d, discarded=%s",
@@ -188,6 +190,7 @@ async def transcribe_chunk(
         )
         transcript = ""
         voice_quality_ratio = 0.0
+        silent = True
     else:
         voice_quality_ratio = calculate_voice_quality_ratio(no_speech_prob)
 
@@ -215,6 +218,14 @@ async def transcribe_chunk(
         )
 
     await send_stt_final(session_id, transcript, question_order, voice_quality_ratio)
+
+    if silent:
+        await send_answer_hint(
+            session_id,
+            "음성이 감지되지 않았습니다. 다시 말씀해 주시겠어요?",
+            question_order,
+        )
+        return
 
     hint = _generate_answer_hint(transcript)
     if hint:
