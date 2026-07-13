@@ -158,25 +158,6 @@
 }
 .iq-modal__close:hover { background: var(--color-sky); color: var(--color-primary-dark); border-color: var(--color-primary); }
 
-.iq-pagination {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  margin-top: 4px;
-}
-.iq-page-btn, .iq-page-arrow {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border); background: var(--color-surface);
-  font-size: 13px; font-weight: 600; color: var(--color-text-secondary);
-  cursor: pointer; transition: all 0.12s;
-}
-.iq-page-btn:hover, .iq-page-arrow:hover:not(:disabled) {
-  border-color: var(--color-primary); color: var(--color-primary-dark);
-}
-.iq-page-btn--on {
-  border-color: var(--color-primary); background: var(--color-primary); color: #fff;
-}
-.iq-page-arrow:disabled { opacity: 0.4; cursor: not-allowed; }
-
 @media (max-width: 768px) {
   .iq-page    { padding: 20px 0 40px; }
   .iq-toolbar { flex-direction: column; align-items: flex-start; }

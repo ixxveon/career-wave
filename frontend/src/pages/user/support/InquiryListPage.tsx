@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, ChevronLeft, ChevronRight, Clock, CheckCircle, AlertCircle, Plus } from 'lucide-react';
+import { MessageSquare, ChevronRight, Clock, CheckCircle, AlertCircle, Plus } from 'lucide-react';
 import {
   supportApi,
   INQUIRY_CATEGORY_LABEL,
@@ -10,6 +10,7 @@ import {
   type InquiryStatus,
   type InquiryItem,
 } from '../../../api/user/supportApi';
+import Pagination from '../../../components/user/common/Pagination';
 import '@/styles/user/support/InquiryListPage.css';
 
 const CATEGORY_FILTERS: { label: string; value: InquiryCategory | '' }[] = [
@@ -164,34 +165,8 @@ export default function InquiryListPage() {
         </div>
       )}
 
-      {!loading && !error && totalPages > 1 && (
-        <div className="iq-pagination">
-          <button
-            className="iq-page-arrow"
-            aria-label="이전 페이지"
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
-          >
-            <ChevronLeft size={16} />
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-            <button
-              key={p}
-              className={`iq-page-btn${page === p ? ' iq-page-btn--on' : ''}`}
-              onClick={() => setPage(p)}
-            >
-              {p}
-            </button>
-          ))}
-          <button
-            className="iq-page-arrow"
-            aria-label="다음 페이지"
-            disabled={page >= totalPages}
-            onClick={() => setPage(page + 1)}
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+      {!loading && !error && (
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       )}
 
       {selected && (
