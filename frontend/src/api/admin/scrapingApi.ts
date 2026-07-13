@@ -161,7 +161,7 @@ export interface ScrapingLogListParams {
 
 const SCRAPING_API_BASE_PATH = '/api/v1/admin/scraping';
 
-export const formatScheduleInterval = (minutes: number) => {
+export const formatScheduleInterval = (minutes: number): string => {
   if (minutes < 60) return `${minutes}\uBD84`;
 
   const hours = Math.floor(minutes / 60);

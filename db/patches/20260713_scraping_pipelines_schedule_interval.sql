@@ -17,6 +17,8 @@ BEGIN
         SELECT 1
         FROM pg_constraint
         WHERE conname = 'chk_pipeline_schedule_interval'
+          AND conrelid = 'scraping_pipelines'::regclass
+          AND contype = 'c'
     ) THEN
         ALTER TABLE scraping_pipelines
             ADD CONSTRAINT chk_pipeline_schedule_interval
