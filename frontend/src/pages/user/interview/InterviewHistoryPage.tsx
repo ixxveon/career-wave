@@ -30,15 +30,17 @@ export default function InterviewHistoryPage() {
         <td>{row.targetCompany ?? '—'}</td>
         <td>{row.totalScore != null ? `${row.totalScore}점` : '—'}</td>
         <td>
-          {row.sessionStatus === SESSION_STATUS.COMPLETED && row.totalScore !== null ? (
+          {row.reportStatus === 'COMPLETED' ? (
             <button
               className="ih-report-btn"
               onClick={() => navigate(`/interview/report?sessionId=${row.sessionId}`)}
             >
               <FileText size={14} /> 보기
             </button>
-          ) : row.sessionStatus === SESSION_STATUS.COMPLETED ? (
+          ) : row.reportStatus === 'PENDING' ? (
             <span className="ih-status ih-status--analyzing">분석 중</span>
+          ) : row.reportStatus === 'FAILED' ? (
+            <span className="ih-status ih-status--failed">생성 실패</span>
           ) : (
             <span className="ih-status">{row.sessionStatus}</span>
           )}
