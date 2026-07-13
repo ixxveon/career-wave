@@ -152,7 +152,11 @@ describe('AdminLoginPage 로그인 실패 안내', () => {
   });
 
   it('네트워크 오류(응답 없음)에도 기존과 동일한 안내 문구로 대체한다', async () => {
-    adminAuthMock.login.mockRejectedValueOnce(new Error('Network Error'));
+    adminAuthMock.login.mockRejectedValueOnce({
+      isAxiosError: true,
+      code: 'ERR_NETWORK',
+      message: 'Network Error',
+    });
 
     const { container } = renderPage();
     fireEvent.submit(getLoginForm(container));
