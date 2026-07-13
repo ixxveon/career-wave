@@ -1430,6 +1430,7 @@ CREATE TABLE scraping_pipelines (
     display_name         VARCHAR(100) NOT NULL,
     pipeline_status      VARCHAR(20)  NOT NULL DEFAULT 'IDLE',
     is_enabled           BOOLEAN      NOT NULL DEFAULT TRUE,
+    schedule_interval_minutes INTEGER NOT NULL DEFAULT 360,
     last_started_at      TIMESTAMPTZ  NULL,
     last_success_at      TIMESTAMPTZ  NULL,
     last_failed_at       TIMESTAMPTZ  NULL,
@@ -1442,6 +1443,7 @@ CREATE TABLE scraping_pipelines (
     CONSTRAINT pk_scraping_pipelines              PRIMARY KEY (scraping_pipeline_id),
     CONSTRAINT uq_scraping_source_name            UNIQUE (source_name),
     CONSTRAINT chk_pipeline_status                CHECK (pipeline_status IN ('IDLE', 'RUNNING', 'SUCCESS', 'FAILED')),
+    CONSTRAINT chk_pipeline_schedule_interval     CHECK (schedule_interval_minutes > 0),
     CONSTRAINT chk_pipeline_last_duration_ms      CHECK (last_duration_ms IS NULL OR last_duration_ms >= 0),
     CONSTRAINT chk_pipeline_last_total_count      CHECK (last_total_count IS NULL OR last_total_count >= 0)
 );
@@ -1451,6 +1453,7 @@ COMMENT ON COLUMN scraping_pipelines.source_name         IS '스크래핑 대상
 COMMENT ON COLUMN scraping_pipelines.display_name        IS '파이프라인 표시 이름';
 COMMENT ON COLUMN scraping_pipelines.pipeline_status     IS '파이프라인 현재 상태 (IDLE / RUNNING / SUCCESS / FAILED)';
 COMMENT ON COLUMN scraping_pipelines.is_enabled          IS '파이프라인 활성화 여부 (기본값 TRUE)';
+COMMENT ON COLUMN scraping_pipelines.schedule_interval_minutes IS '자동 수집 주기(분, 기본 360분)';
 COMMENT ON COLUMN scraping_pipelines.last_started_at     IS '마지막 실행 시작 시각';
 COMMENT ON COLUMN scraping_pipelines.last_success_at     IS '마지막 성공 시각';
 COMMENT ON COLUMN scraping_pipelines.last_failed_at      IS '마지막 실패 시각';
@@ -1464,17 +1467,19 @@ INSERT INTO scraping_pipelines (
     source_name,
     display_name,
     pipeline_status,
-    is_enabled
+    is_enabled,
+    schedule_interval_minutes
 )
 VALUES
-    ('groupby', 'GroupBy', 'IDLE', TRUE),
-    ('jumpit', 'Jumpit', 'IDLE', TRUE),
-    ('wanted', 'Wanted', 'IDLE', TRUE),
-    ('saramin', 'Saramin', 'IDLE', TRUE)
+    ('groupby', 'GroupBy', 'IDLE', TRUE, 360),
+    ('jumpit', 'Jumpit', 'IDLE', TRUE, 360),
+    ('wanted', 'Wanted', 'IDLE', TRUE, 360),
+    ('saramin', 'Saramin', 'IDLE', TRUE, 360)
 ON CONFLICT (source_name) DO UPDATE
 SET
     display_name = EXCLUDED.display_name,
     is_enabled = EXCLUDED.is_enabled,
+    schedule_interval_minutes = EXCLUDED.schedule_interval_minutes,
     updated_at = NOW();
 
 -- ================================================

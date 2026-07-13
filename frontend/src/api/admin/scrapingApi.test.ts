@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { PIPELINE_STATUS, toScrapingSource, toScrapingSourceDetail, type BackendScrapingPipelineItem } from './scrapingApi';
+import {
+  PIPELINE_STATUS,
+  formatScheduleInterval,
+  toScrapingSource,
+  toScrapingSourceDetail,
+  type BackendScrapingPipelineItem,
+} from './scrapingApi';
 
 const backendPipelineItem: BackendScrapingPipelineItem = {
   scrapingPipelineId: 1,
@@ -7,6 +13,7 @@ const backendPipelineItem: BackendScrapingPipelineItem = {
   displayName: 'Wanted',
   pipelineStatus: PIPELINE_STATUS.RUNNING,
   isEnabled: true,
+  scheduleIntervalMinutes: 360,
   lastStartedAt: '2026-06-22T09:00:00+09:00',
   lastSuccessAt: '2026-06-21T09:10:00+09:00',
   lastFailedAt: null,
@@ -23,9 +30,10 @@ describe('scrapingApi pipeline mapper', () => {
       sourceName: 'wanted',
       status: PIPELINE_STATUS.RUNNING,
       isEnabled: true,
+      scheduleIntervalMinutes: 360,
       successRate: 0,
       averageDurationMs: 1234,
-      cycleExpression: '-',
+      cycleExpression: '6\uC2DC\uAC04',
       collectedCount: 56,
       recentErrorCode: null,
       recentErrorMessage: null,
@@ -61,9 +69,10 @@ describe('scrapingApi pipeline mapper', () => {
       sourceName: 'wanted',
       status: PIPELINE_STATUS.RUNNING,
       isEnabled: true,
+      scheduleIntervalMinutes: 360,
       successRate: 0,
       averageDurationMs: 1234,
-      cycleExpression: '-',
+      cycleExpression: '6\uC2DC\uAC04',
       collectedCount: 56,
       recentErrorCode: null,
       recentErrorMessage: null,
@@ -81,5 +90,14 @@ describe('scrapingApi pipeline mapper', () => {
     });
 
     expect(source.isEnabled).toBe(false);
+  });
+
+  it.each([
+    [10, '10\uBD84'],
+    [360, '6\uC2DC\uAC04'],
+    [720, '12\uC2DC\uAC04'],
+    [90, '1\uC2DC\uAC04 30\uBD84'],
+  ])('formats %i minutes as %s', (minutes, expected) => {
+    expect(formatScheduleInterval(minutes)).toBe(expected);
   });
 });
