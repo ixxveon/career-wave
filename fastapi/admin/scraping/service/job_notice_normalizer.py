@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
@@ -181,16 +182,29 @@ class JobNoticeNormalizer:
     @classmethod
     def _normalize_job_categories(cls, title: str, values: list[str] | None) -> list[str] | None:
         candidates = [title, *(values or [])]
-        normalized_candidates = [cls._normalize_token(value) for value in candidates]
         categories: list[str] = []
         for category, keywords in cls._STANDARD_JOB_CATEGORIES:
-            normalized_keywords = tuple(cls._normalize_token(keyword) for keyword in keywords)
             if any(
-                candidate is not None and any(keyword is not None and keyword in candidate for keyword in normalized_keywords)
-                for candidate in normalized_candidates
+                any(cls._job_category_keyword_matches(keyword, candidate) for keyword in keywords)
+                for candidate in candidates
             ):
                 categories.append(category)
         return categories or None
+
+    @classmethod
+    def _job_category_keyword_matches(cls, keyword: str, candidate: str) -> bool:
+        if keyword.isascii():
+            parts = re.split(r"[\s_-]+", keyword.upper())
+            pattern = r"(?<![A-Z0-9])" + r"[\s_-]+".join(re.escape(part) for part in parts) + r"(?![A-Z0-9])"
+            return re.search(pattern, candidate.upper()) is not None
+
+        normalized_keyword = cls._normalize_token(keyword)
+        normalized_candidate = cls._normalize_token(candidate)
+        return (
+            normalized_keyword is not None
+            and normalized_candidate is not None
+            and normalized_keyword in normalized_candidate
+        )
 
     @classmethod
     def _normalize_location(cls, value: str | None) -> str | None:

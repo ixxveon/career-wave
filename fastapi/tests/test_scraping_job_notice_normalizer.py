@@ -155,6 +155,20 @@ def test_normalizer_drops_unmapped_job_category_and_location_values():
     assert notice.location is None
 
 
+def test_normalizer_does_not_match_short_ascii_keywords_inside_words():
+    normalizer = JobNoticeNormalizer()
+
+    notice = normalizer.normalize(
+        source_name="wanted",
+        raw_notice=_raw_notice(
+            title="Maintenance HTML Capital Engineer",
+            job_category=None,
+        ),
+    )
+
+    assert notice.job_category is None
+
+
 def test_normalizer_keeps_only_http_company_logo_urls():
     normalizer = JobNoticeNormalizer()
 

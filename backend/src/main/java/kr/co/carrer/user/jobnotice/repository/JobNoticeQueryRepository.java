@@ -32,6 +32,7 @@ public class JobNoticeQueryRepository {
 
     private static final QJobNotice jobNotice = QJobNotice.jobNotice;
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
+    // FastAPI JobNoticeNormalizer가 DB에 저장하는 카테고리/지역 표준값과 반드시 함께 변경한다.
     private static final List<String> STANDARD_JOB_CATEGORIES = List.of(
             "BACKEND", "FRONTEND", "DATA", "DEVOPS"
     );
