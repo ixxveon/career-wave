@@ -296,6 +296,8 @@ async def _wait_for_rag_context(session_id: str, meta: dict[str, Any]) -> dict[s
         return meta
 
     # rag_status == "PENDING": 서류가 연결됐고 인덱싱 진행 중
+    # latest: 폴링 중 가장 최근에 읽은 스냅샷 — 타임아웃 시 stale pre-poll meta 대신 반환
+    latest = meta
     deadline = asyncio.get_event_loop().time() + _RAG_WAIT_TIMEOUT
     while True:
         remaining = deadline - asyncio.get_event_loop().time()
@@ -306,9 +308,10 @@ async def _wait_for_rag_context(session_id: str, meta: dict[str, Any]) -> dict[s
             refreshed = await get_session_meta(session_id)
         except Exception as e:
             log.warning("[Session: %s] Redis read failed during RAG wait, proceeding without: %s", session_id, e)
-            return meta
+            return latest
         if not refreshed:
             break
+        latest = refreshed
         status = refreshed.get("rag_status")
         elapsed = _RAG_WAIT_TIMEOUT - (deadline - asyncio.get_event_loop().time())
         if status == "READY":
@@ -320,4 +323,4 @@ async def _wait_for_rag_context(session_id: str, meta: dict[str, Any]) -> dict[s
 
     elapsed = _RAG_WAIT_TIMEOUT - (deadline - asyncio.get_event_loop().time())
     log.info("[Session: %s] RAG context not ready after %.1fs, proceeding without", session_id, elapsed)
-    return meta
+    return latest
