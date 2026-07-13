@@ -33,15 +33,8 @@ public class SubscriptionRenewalScheduler {
         if (due.isEmpty()) return;
 
         log.info("자동결제 대상 {}건 처리 시작", due.size());
-        int success = 0;
-        for (Subscription sub : due) {
-            try {
-                subscriptionRenewalService.processRenewal(sub, 0);
-                success++;
-            } catch (Exception e) {
-                log.warn("자동결제 처리 실패: subscriptionId={}", sub.getSubscriptionId());
-            }
-        }
+        // 배치 선로딩(N+1 제거) + bounded 병렬 처리. 매시 정각 due 전건은 attemptSequence=0.
+        int success = subscriptionRenewalService.processDueBatch(due, sub -> 0);
         log.info("자동결제 완료: 성공={}/{}", success, due.size());
     }
 }

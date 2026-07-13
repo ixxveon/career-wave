@@ -25,22 +25,41 @@ public class RenewalPaymentCreateTxService {
                                       BillingMemberPort.MemberBillingInfo memberInfo,
                                       int attemptSequence, String idempotencyKey) {
         return userPaymentRepository.findByIdempotencyKey(idempotencyKey)
-                .orElseGet(() -> {
-                    String orderId = "RENEWAL-" + UUID.randomUUID().toString().replace("-", "");
-                    UserPayment payment = UserPayment.createAutoRenewal(
-                            memberId,
-                            plan.getPlanId(),
-                            plan.getProductCode(),
-                            orderId,
-                            idempotencyKey,
-                            customerKey,
-                            memberInfo.name(),
-                            memberInfo.email(),
-                            plan.getPlanPrice(),
-                            attemptSequence
-                    );
-                    payment.linkSubscription(subscriptionId); // subscription_id null 방지
-                    return userPaymentRepository.save(payment);
-                });
+                .orElseGet(() -> insertNew(subscriptionId, memberId, plan, customerKey,
+                        memberInfo, attemptSequence, idempotencyKey));
+    }
+
+    // 배치 선로딩 경로 전용 — 멱등 선로딩에서 미존재로 확인된 건만 신규 생성한다.
+    // (선로딩 결과가 있으면 호출측에서 재사용하므로 이 메서드는 실제 삽입이 필요할 때만 호출된다 →
+    //  멱등 히트 시 불필요한 REQUIRES_NEW 트랜잭션을 열지 않는다.)
+    // uq_payments_idempotency_key 유니크 제약이 중복 삽입을 최종 방어한다.
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public UserPayment createNew(UUID subscriptionId, UUID memberId,
+                                 Plan plan, String customerKey,
+                                 BillingMemberPort.MemberBillingInfo memberInfo,
+                                 int attemptSequence, String idempotencyKey) {
+        return insertNew(subscriptionId, memberId, plan, customerKey,
+                memberInfo, attemptSequence, idempotencyKey);
+    }
+
+    private UserPayment insertNew(UUID subscriptionId, UUID memberId,
+                                  Plan plan, String customerKey,
+                                  BillingMemberPort.MemberBillingInfo memberInfo,
+                                  int attemptSequence, String idempotencyKey) {
+        String orderId = "RENEWAL-" + UUID.randomUUID().toString().replace("-", "");
+        UserPayment payment = UserPayment.createAutoRenewal(
+                memberId,
+                plan.getPlanId(),
+                plan.getProductCode(),
+                orderId,
+                idempotencyKey,
+                customerKey,
+                memberInfo.name(),
+                memberInfo.email(),
+                plan.getPlanPrice(),
+                attemptSequence
+        );
+        payment.linkSubscription(subscriptionId); // subscription_id null 방지
+        return userPaymentRepository.save(payment);
     }
 }
