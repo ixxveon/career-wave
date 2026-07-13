@@ -302,7 +302,11 @@ async def _wait_for_rag_context(session_id: str, meta: dict[str, Any]) -> dict[s
         if remaining <= 0:
             break
         await asyncio.sleep(min(_RAG_WAIT_INTERVAL, remaining))
-        refreshed = await get_session_meta(session_id)
+        try:
+            refreshed = await get_session_meta(session_id)
+        except Exception as e:
+            log.warning("[Session: %s] Redis read failed during RAG wait, proceeding without: %s", session_id, e)
+            return meta
         if not refreshed:
             break
         status = refreshed.get("rag_status")
