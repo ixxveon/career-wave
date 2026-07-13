@@ -33,8 +33,9 @@ public interface AdminAuthControllerDocs {
     ResponseEntity<?> login(@Valid @RequestBody AdminLoginDto.Request request, HttpServletRequest httpRequest, HttpServletResponse response);
 
     @Operation(summary = "관리자 토큰 재발급",
-            description = "HttpOnly Cookie의 refreshToken으로 새 accessToken 발급. " +
-                    "새 refreshToken도 Set-Cookie로 재발급(rotation).")
+            description = "HttpOnly Cookie의 refreshToken으로 새 accessToken + adminInfo(id, name, role) 발급. " +
+                    "새 refreshToken도 Set-Cookie로 재발급(rotation). " +
+                    "adminInfo는 프론트가 sessionStorage 부재(탭 재오픈 등) 상황에서 세션을 완전 복원하는 데 사용한다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "토큰 재발급 성공"),
             @ApiResponse(responseCode = "401", description = "refreshToken 없음/만료/위조",

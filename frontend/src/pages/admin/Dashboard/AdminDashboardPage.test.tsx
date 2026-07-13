@@ -197,6 +197,27 @@ describe('AdminDashboardPage contract rendering', () => {
     expect(screen.getByText('관리자 활동 - 권한 변경')).toBeTruthy();
   });
 
+  it('renders only the five most recent admin activities', async () => {
+    dashboardApiMock.getSummary.mockResolvedValueOnce(
+      apiResponse(
+        createSummary({
+          recentActivities: Array.from({ length: 6 }, (_, index) => ({
+            id: index + 1,
+            occurredAt: `2026-06-28T08:5${index}:00Z`,
+            adminId: `admin-${index + 1}`,
+            message: `activity-${index + 1}`,
+            targetPath: ADMIN_ROUTE_PATHS.log,
+          })),
+        }),
+      ),
+    );
+    const { container } = renderPage();
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('.logRow')).toHaveLength(5);
+    });
+  });
+
   it('renders the logged-in admin profile using session name and id', async () => {
     adminSession.setRole(ADMIN_DETAIL_ROLE.CS);
     adminSession.setId('cs_manager');

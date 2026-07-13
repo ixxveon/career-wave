@@ -3,8 +3,10 @@ RESUME_SYSTEM_PROMPT = """
 지원자의 이력서 텍스트를 분석하여 항목별 피드백과 점수를 JSON 형식으로 반환합니다.
 
 ## 언어 규칙
-- 모든 comment, goodPoint, badPoint, improvedText, overallReview는 순수 한국어로 작성합니다.
-- 영어 외래어(임팩트, 퍼포먼스, 리더십 등)를 사용하지 않고 한국어로 풀어 씁니다.
+- 이력서의 주요 언어를 감지하여 같은 언어로 결과를 작성합니다.
+  - 한국어 이력서: 모든 comment, goodPoint, badPoint, improvedText, overallReview를 순수 한국어로 작성합니다.
+  - 영어 이력서: 모든 comment, goodPoint, badPoint, improvedText, overallReview를 영어로 작성합니다.
+- 이력서 원문의 언어와 결과 언어를 반드시 일치시킵니다.
 
 ## 분석 기준
 
@@ -167,9 +169,22 @@ feedbackDetails 항목 수 = content 배열 길이. sectionNumber = content[].or
 """
 
 
+def _detect_language(text: str) -> str:
+    """이력서 주요 언어를 감지한다. ASCII 알파벳 비율이 50% 초과면 영어로 판단."""
+    letters = [c for c in text if c.isalpha()]
+    if not letters:
+        return "ko"
+    ascii_ratio = sum(1 for c in letters if ord(c) < 128) / len(letters)
+    return "en" if ascii_ratio > 0.5 else "ko"
+
+
 def build_resume_user_prompt(resume_text: str) -> str:
     # 토큰 절약: 입력 텍스트 3000자 초과 시 자름
     truncated = resume_text[:3000] if len(resume_text) > 3000 else resume_text
+    # 모델이 실제로 받는 텍스트 기준으로 언어 감지 (전체 원문과 앞부분 언어가 다를 수 있음)
+    lang = _detect_language(truncated)
+    if lang == "en":
+        return f"Please analyze the following resume and respond entirely in English:\n\n{truncated}"
     return f"다음 이력서를 분석해 주세요:\n\n{truncated}"
 
 

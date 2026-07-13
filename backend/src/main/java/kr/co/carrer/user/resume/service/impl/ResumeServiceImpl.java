@@ -280,24 +280,37 @@ public class ResumeServiceImpl implements ResumeService {
         eventPublisher.publishEvent(new DocumentAnalysisCompletedEvent(documentId, dto.status()));
     }
 
+    private static final int FREE_DOCUMENT_LIMIT = 1;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     @Override
     @Transactional(readOnly = true)
     public ResumeDTO.ResponseQuota getQuota(UUID memberId) {
-        ZonedDateTime firstDayOfMonth = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        int usedCount = documentRepository.countUsedThisMonth(memberId, firstDayOfMonth, DocumentStatus.FAILED);
-        int limitCount = resolveDocumentLimitCount(memberId, usedCount);
-        return new ResumeDTO.ResponseQuota(usedCount, limitCount);
-    }
-
-    private int resolveDocumentLimitCount(UUID memberId, int usedCount) {
         EntitlementDTO.ResponseEntitlementList entitlements = entitlementQueryService.getMyEntitlements(memberId);
-        return entitlements.entitlementDetails().stream()
+        EntitlementDTO.EntitlementItem docItem = entitlements.entitlementDetails().stream()
                 .filter(item -> ProductCode.DOCUMENT_COACHING.code().equals(item.productCode()))
                 .findFirst()
-                .map(item -> item.monthlyLimit() != null
-                        ? item.monthlyLimit()
-                        : item.freeRemaining() + usedCount)
-                .orElse(0);
+                .orElse(null);
+
+        if (docItem == null) {
+            return new ResumeDTO.ResponseQuota(0, 0);
+        }
+
+        if (docItem.monthlyLimit() != null) {
+            int usedCount = resolveMonthlyUsedCount(docItem);
+            return new ResumeDTO.ResponseQuota(usedCount, docItem.monthlyLimit());
+        }
+
+        ZonedDateTime firstDayOfMonth = ZonedDateTime.now(KST)
+                .withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        int usedCount = documentRepository.countUsedThisMonth(memberId, firstDayOfMonth, DocumentStatus.FAILED);
+        return new ResumeDTO.ResponseQuota(usedCount, FREE_DOCUMENT_LIMIT);
+    }
+
+    private int resolveMonthlyUsedCount(EntitlementDTO.EntitlementItem item) {
+        int used = item.monthlyUsed() != null ? item.monthlyUsed() : 0;
+        int reserved = item.monthlyReserved() != null ? item.monthlyReserved() : 0;
+        return used + reserved;
     }
 
     private List<String> parseRecommendedKeywords(String keywordsJson) {

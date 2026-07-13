@@ -28,6 +28,7 @@ import java.util.List;
 public class DashboardServiceImpl implements DashboardService {
 
     private static final int ALERT_LIMIT = 5;
+    private static final int RECENT_ACTIVITY_LIMIT = 5;
     private static final String ADMIN_ROUTE_PREFIX = "/cw-manage-2026";
     private static final String ADMIN_MANAGEMENT_PATH = ADMIN_ROUTE_PREFIX + "/admins";
     private static final String AI_METRICS_PATH = ADMIN_ROUTE_PREFIX + "/ai";
@@ -304,6 +305,7 @@ public class DashboardServiceImpl implements DashboardService {
             List<DashboardSummaryQueryRepository.RecentActivityRow> recentActivities
     ) {
         return emptyIfNull(recentActivities).stream()
+                .limit(RECENT_ACTIVITY_LIMIT)
                 .map(row -> new DashboardDTO.RecentActivity(
                         row.id(),
                         row.occurredAt(),

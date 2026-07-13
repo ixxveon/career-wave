@@ -27,6 +27,8 @@ from user.interview.prompts.interview_prompts import (
     get_focus_overlay,
     get_system_prompt,
 )
+from core.redis import get_redis
+from user.interview.store.session_store import acquire_llm_lock, release_llm_lock
 from user.interview.websocket.interview_ws_handler import (
     InterviewErrorCode,
     get_session_meta,
@@ -56,6 +58,16 @@ async def generate_and_deliver_question(
     텍스트 답변 수신 후 LLM으로 다음 질문을 생성하고 Spring에 전달한다.
     실패 시 폴백 질문으로 대체하며 세션을 중단하지 않는다.
     """
+    next_question_order = question_order + 1
+
+    redis = await get_redis()
+    if not await acquire_llm_lock(redis, session_id, next_question_order):
+        log.info(
+            "[Session: %s] LLM skipped (duplicate trigger): order=%d",
+            session_id, next_question_order,
+        )
+        return
+
     meta = await get_session_meta(session_id)
     if meta is None:
         log.warning("[Session: %s] LLM skipped: no active session context", session_id)
@@ -70,7 +82,6 @@ async def generate_and_deliver_question(
         )
 
     settings = get_settings()
-    next_question_order = question_order + 1
 
     if next_question_order > 10:
         log.info("[Session: %s] max questions reached, triggering report", session_id)
@@ -111,6 +122,7 @@ async def generate_and_deliver_question(
     delivered = await send_question_to_spring(session_id, payload)
     if not delivered:
         log.error("[Session: %s] question delivery failed: order=%d", session_id, next_question_order)
+        await release_llm_lock(redis, session_id, next_question_order)
         await send_error(
             session_id,
             "질문 전달에 실패했습니다. 잠시 후 다시 시도해 주세요.",
