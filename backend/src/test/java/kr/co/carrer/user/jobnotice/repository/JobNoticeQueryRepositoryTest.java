@@ -64,7 +64,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 JobType.FULLTIME,
                 CompanySize.STARTUP,
                 CareerLevel.JUNIOR,
-                "Seoul Gangnam",
+                "\uC11C\uC6B8",
                 JobNoticeStatus.ACTIVE,
                 10,
                 LocalDate.of(2026, 6, 30),
@@ -76,7 +76,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 JobType.INTERN,
                 CompanySize.STARTUP,
                 CareerLevel.JUNIOR,
-                "Seoul Gangnam",
+                "\uC11C\uC6B8",
                 JobNoticeStatus.ACTIVE,
                 5,
                 LocalDate.of(2026, 6, 30),
@@ -88,7 +88,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 JobType.FULLTIME,
                 CompanySize.STARTUP,
                 CareerLevel.JUNIOR,
-                "Seoul Gangnam",
+                "\uC11C\uC6B8",
                 JobNoticeStatus.CLOSED,
                 12,
                 LocalDate.of(2026, 6, 30),
@@ -100,7 +100,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 JobType.FULLTIME,
                 CompanySize.LARGE,
                 CareerLevel.SENIOR,
-                "Busan",
+                "\uBD80\uC0B0",
                 JobNoticeStatus.ACTIVE,
                 20,
                 LocalDate.of(2026, 6, 30),
@@ -114,7 +114,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 JobType.FULLTIME,
                 null,
                 CareerLevel.JUNIOR,
-                "Gangnam",
+                "\uC11C\uC6B8",
                 CompanySize.STARTUP,
                 "all",
                 "latest",
@@ -129,6 +129,53 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
     }
 
     @Test
+    @DisplayName("matches normalized representative location exactly")
+    void findActiveJobNotices_filtersByExactNormalizedLocation() {
+        persistJobNotice(
+                "Seoul Co",
+                "Seoul Backend Engineer",
+                JobType.FULLTIME,
+                CompanySize.SME,
+                CareerLevel.JUNIOR,
+                "\uC11C\uC6B8",
+                JobNoticeStatus.ACTIVE,
+                1,
+                LocalDate.of(2026, 6, 30),
+                ZonedDateTime.of(2026, 6, 10, 0, 0, 0, 0, SERVICE_ZONE_ID)
+        );
+        persistJobNotice(
+                "Legacy Co",
+                "Legacy Location Notice",
+                JobType.FULLTIME,
+                CompanySize.SME,
+                CareerLevel.JUNIOR,
+                "\uC11C\uC6B8 \uAC15\uB0A8",
+                JobNoticeStatus.ACTIVE,
+                1,
+                LocalDate.of(2026, 6, 30),
+                ZonedDateTime.of(2026, 6, 10, 0, 0, 0, 0, SERVICE_ZONE_ID)
+        );
+
+        flushAndClear();
+
+        Page<JobNotice> result = jobNoticeQueryRepository.findActiveJobNotices(
+                null,
+                null,
+                null,
+                null,
+                "\uC11C\uC6B8",
+                null,
+                "all",
+                "latest",
+                PageRequest.of(0, 20)
+        );
+
+        assertThat(result.getContent()).extracting(JobNotice::getTitle)
+                .containsExactly("Seoul Backend Engineer");
+        assertThat(result.getTotalElements()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("applies latest, views, and recommend sort contracts")
     void findActiveJobNotices_sortsByContract() {
         persistJobNotice(
@@ -137,7 +184,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 JobType.FULLTIME,
                 CompanySize.STARTUP,
                 CareerLevel.JUNIOR,
-                "Seoul",
+                "\uC11C\uC6B8",
                 JobNoticeStatus.ACTIVE,
                 300,
                 LocalDate.of(2026, 6, 27),
@@ -368,7 +415,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 JobType.FULLTIME,
                 CompanySize.STARTUP,
                 CareerLevel.JUNIOR,
-                "Seoul",
+                "\uC11C\uC6B8",
                 JobNoticeStatus.ACTIVE,
                 10,
                 now.toLocalDate().plusDays(10),
@@ -382,7 +429,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 JobType.CONTRACT,
                 CompanySize.LARGE,
                 CareerLevel.SENIOR,
-                "Busan",
+                "\uBD80\uC0B0",
                 JobNoticeStatus.ACTIVE,
                 20,
                 now.toLocalDate().plusDays(20),
@@ -396,7 +443,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 JobType.INTERN,
                 CompanySize.SME,
                 CareerLevel.ANY,
-                "Daegu",
+                "\uB300\uAD6C",
                 JobNoticeStatus.CLOSED,
                 30,
                 now.toLocalDate().plusDays(30),
@@ -404,21 +451,35 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 new String[]{"Python"},
                 new String[]{"DATA"}
         );
+        persistJobNotice(
+                "Meta Co",
+                "Legacy Metadata Notice",
+                JobType.FULLTIME,
+                CompanySize.SME,
+                CareerLevel.ANY,
+                "\uC11C\uC6B8 \uAC15\uB0A8",
+                JobNoticeStatus.ACTIVE,
+                1,
+                now.toLocalDate().plusDays(15),
+                now.minusDays(3),
+                new String[]{"Terraform"},
+                new String[]{"INFRA"}
+        );
 
         flushAndClear();
 
-        assertThat(jobNoticeQueryRepository.countActiveJobNotices()).isEqualTo(2);
+        assertThat(jobNoticeQueryRepository.countActiveJobNotices()).isEqualTo(3);
         assertThat(jobNoticeQueryRepository.countTodayNewActiveJobNotices()).isEqualTo(1);
         assertThat(jobNoticeQueryRepository.findDistinctActiveJobTypes())
                 .containsExactly("CONTRACT", "FULLTIME");
         assertThat(jobNoticeQueryRepository.findDistinctActiveJobCategories())
                 .containsExactly("BACKEND", "FRONTEND");
         assertThat(jobNoticeQueryRepository.findDistinctActiveCareerLevels())
-                .containsExactly("JUNIOR", "SENIOR");
+                .containsExactly("ANY", "JUNIOR", "SENIOR");
         assertThat(jobNoticeQueryRepository.findDistinctActiveLocations())
-                .containsExactly("Busan", "Seoul");
+                .containsExactly("\uBD80\uC0B0", "\uC11C\uC6B8");
         assertThat(jobNoticeQueryRepository.findDistinctActiveCompanySizes())
-                .containsExactly("LARGE", "STARTUP");
+                .containsExactly("LARGE", "SME", "STARTUP");
     }
 
     @Test

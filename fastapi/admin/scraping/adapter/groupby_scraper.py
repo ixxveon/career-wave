@@ -177,7 +177,7 @@ class GroupByScraper(ScraperAdapter):
                 self._schema_text(job_posting, "employmentType")
                 or self._find_labeled_value(soup, ("employment type", "job type", "type"))
             ),
-            company_size=None,
+            company_size=self._extract_company_size(job_posting, soup),
             job_category=self._extract_job_category(job_posting, soup),
             career_level=self._find_labeled_value(soup, ("experience", "career")),
             location=self._extract_location(job_posting, soup),
@@ -277,6 +277,19 @@ class GroupByScraper(ScraperAdapter):
             if isinstance(value, str) and value.strip():
                 return urljoin(self._BASE_URL, value.strip())
         return None
+
+    def _extract_company_size(self, job_posting: dict[str, object] | None, soup: BeautifulSoup) -> str | None:
+        if isinstance(job_posting, dict):
+            hiring_organization = job_posting.get("hiringOrganization")
+            if isinstance(hiring_organization, dict):
+                for key in ("companySize", "size", "employmentSize"):
+                    value = self._schema_text(hiring_organization, key)
+                    if value:
+                        return value
+        return self._find_labeled_value(
+            soup,
+            ("company size", "organization size", "\uae30\uc5c5 \uaddc\ubaa8", "\ud68c\uc0ac \uaddc\ubaa8"),
+        )
 
     def _extract_description(self, job_posting: dict[str, object] | None, soup: BeautifulSoup) -> str | None:
         description = self._schema_text(job_posting, "description")

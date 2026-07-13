@@ -42,7 +42,8 @@ def test_groupby_scraper_maps_sitemap_and_job_posting_html_to_raw_job_notices():
           "hiringOrganization": {
             "@type": "Organization",
             "name": "Career Wave",
-            "logo": "https://cdn.example.com/groupby-logo.png"
+            "logo": "https://cdn.example.com/groupby-logo.png",
+            "companySize": "STARTUP"
           }
         }
         </script>
@@ -77,6 +78,7 @@ def test_groupby_scraper_maps_sitemap_and_job_posting_html_to_raw_job_notices():
     assert notices[0].title == "Backend Engineer"
     assert notices[0].company_name == "Career Wave"
     assert notices[0].company_logo_url == "https://cdn.example.com/groupby-logo.png"
+    assert notices[0].company_size == "STARTUP"
     assert notices[0].description == "Build reliable admin scraping pipelines."
     assert notices[0].skill_tags == ["Python", "FastAPI"]
     assert notices[0].job_type == "FULL_TIME"
@@ -291,6 +293,7 @@ def test_saramin_scraper_maps_search_html_to_raw_job_notices():
     <html>
       <div class="item_recruit">
         <div class="corp_logo"><img src="//cdn.example.com/saramin-logo.png" /></div>
+        <div class="corp_detail">\uc911\uc18c\uae30\uc5c5</div>
         <div class="corp_name"><a>Career Wave</a></div>
         <h2 class="job_tit">
           <a href="/zf_user/jobs/relay/view?rec_idx=456">Python Backend</a>
@@ -341,6 +344,7 @@ def test_saramin_scraper_maps_search_html_to_raw_job_notices():
     assert notices[0].title == "Python Backend"
     assert notices[0].company_name == "Career Wave"
     assert notices[0].company_logo_url == "https://cdn.example.com/saramin-logo.png"
+    assert notices[0].company_size == "\uc911\uc18c\uae30\uc5c5"
     assert notices[0].description == "Develop user job notice features."
     assert notices[0].skill_tags == ["Python", "Django"]
     assert notices[0].job_type == "정규직"

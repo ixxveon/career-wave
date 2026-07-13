@@ -119,6 +119,56 @@ def test_normalizer_keeps_company_size_empty_when_source_value_is_missing():
     assert notice.company_size is None
 
 
+def test_normalizer_standardizes_job_category_location_and_company_size():
+    normalizer = JobNoticeNormalizer()
+
+    notice = normalizer.normalize(
+        source_name="saramin",
+        raw_notice=_raw_notice(
+            title="Backend Platform Engineer",
+            skill_tags=["Python", "FastAPI"],
+            job_category=["IT", "Python", "2026-07-13"],
+            location="\uc11c\uc6b8\ud2b9\ubcc4\uc2dc \uac15\ub0a8\uad6c",
+            company_size="SME",
+        ),
+    )
+
+    assert notice.job_category == ["BACKEND", "DEVOPS"]
+    assert notice.skill_tags == ["Python", "FastAPI"]
+    assert notice.location == "\uc11c\uc6b8"
+    assert notice.company_size == "SME"
+
+
+def test_normalizer_drops_unmapped_job_category_and_location_values():
+    normalizer = JobNoticeNormalizer()
+
+    notice = normalizer.normalize(
+        source_name="wanted",
+        raw_notice=_raw_notice(
+            title="General Specialist",
+            job_category=["IT", "2026-07-13", "Updated"],
+            location="Remote worldwide",
+        ),
+    )
+
+    assert notice.job_category is None
+    assert notice.location is None
+
+
+def test_normalizer_does_not_match_short_ascii_keywords_inside_words():
+    normalizer = JobNoticeNormalizer()
+
+    notice = normalizer.normalize(
+        source_name="wanted",
+        raw_notice=_raw_notice(
+            title="Maintenance HTML Capital Engineer",
+            job_category=None,
+        ),
+    )
+
+    assert notice.job_category is None
+
+
 def test_normalizer_keeps_only_http_company_logo_urls():
     normalizer = JobNoticeNormalizer()
 
