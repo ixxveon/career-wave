@@ -398,6 +398,13 @@ public class JobNoticeQueryRepository {
             }
         }
 
+        // 모든 정렬에 jobNoticeId ASC를 마지막 tie-breaker로 추가한다.
+        // - 페이지네이션 결정성 확보: 정렬 키가 동률인 행의 순서가 페이지마다 흔들려
+        //   중복/누락되는 문제를 막는다.
+        // - recommend 정렬은 (deadline ASC NULLS LAST, created_at DESC, job_notice_id)
+        //   커버링 인덱스(idx_jn_active_keyset) 순서와 정확히 일치해 Index Only Scan을 유지한다.
+        orderSpecifiers.add(jobNotice.jobNoticeId.asc());
+
         return orderSpecifiers.toArray(new OrderSpecifier[0]);
     }
 
