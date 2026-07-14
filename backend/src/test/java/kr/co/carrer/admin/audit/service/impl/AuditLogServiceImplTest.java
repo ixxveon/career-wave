@@ -137,6 +137,43 @@ class AuditLogServiceImplTest {
         }
 
         @Test
+        @DisplayName("administrator filter is forwarded to the query repository")
+        void passesAdministratorFilterToQueryRepository() {
+            PageRequest pageable = PageRequest.of(0, 20);
+            given(auditLogQueryRepository.findAuditLogs(
+                AuditLogType.ADMIN_ACTIVITY,
+                AuditLogSeverity.INFO,
+                "MEMBER",
+                7L,
+                null,
+                null,
+                pageable
+            )).willReturn(Page.empty(pageable));
+
+            Page<AuditLog> result = auditLogService.getAuditLogs(
+                "ADMIN_ACTIVITY",
+                "INFO",
+                "MEMBER",
+                7L,
+                null,
+                null,
+                1,
+                20
+            );
+
+            verify(auditLogQueryRepository).findAuditLogs(
+                AuditLogType.ADMIN_ACTIVITY,
+                AuditLogSeverity.INFO,
+                "MEMBER",
+                7L,
+                null,
+                null,
+                pageable
+            );
+            assertThat(result).isEmpty();
+        }
+
+        @Test
         @DisplayName("logType 필터를 enum으로 해석해 query repository에 전달한다")
         void passesLogTypeFilterToQueryRepository() {
             AuditLog auditLog = createAuditLog(

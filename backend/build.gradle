@@ -86,8 +86,3 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
-
-// seed-local.sql은 로컬 개발자가 psql로 직접 실행하는 수동 시드 파일이라 배포 아티팩트(jar)에 포함시키지 않는다.
-tasks.named('processResources') {
-    exclude 'db/seed-local.sql'
-}

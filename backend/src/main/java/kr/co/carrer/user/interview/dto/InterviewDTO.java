@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import kr.co.carrer.user.interview.type.ReportStatus;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
@@ -193,6 +194,9 @@ public class InterviewDTO {
 
             @Schema(description = "세션 상태", allowableValues = {"IN_PROGRESS", "COMPLETED", "FAILED"})
             String sessionStatus,
+
+            @Schema(description = "리포트 생성 상태", allowableValues = {"PENDING", "COMPLETED", "FAILED"})
+            String reportStatus,
 
             @Schema(description = "면접 종합 점수 (리포트 미완료 또는 FAILED 시 null)")
             Integer totalScore,

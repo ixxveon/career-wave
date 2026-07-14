@@ -1,9 +1,17 @@
 export interface ApiResponse<T> {
-  success: boolean;
-  statusCode: number;
+  success: true;
   message: string;
-  data: T | null;
+  data: T;
 }
+
+export interface ApiErrorResponse {
+  success: false;
+  status: number;
+  message: string;
+  data: null;
+}
+
+export type JobNoticeApiResponse<T> = ApiResponse<T> | ApiErrorResponse;
 
 export interface JobNoticeSummary {
   jobNoticeId: number;
@@ -22,6 +30,7 @@ export interface JobNoticeSummary {
   deadline?: string | null;
   source: string;
   bookmarked: boolean;
+  companyLogoUrl?: string | null;
 }
 
 export interface JobNoticeDetail extends JobNoticeSummary {
@@ -61,6 +70,7 @@ export interface JobNotice {
   views: number;
   bookmarked: boolean;
   originalUrl?: string;
+  companyLogoUrl?: string;
   stacks?: string[];
   exp: string;
   employment: string;
@@ -103,15 +113,7 @@ export interface JobNoticeListResponse {
 
 export const JOB_NOTICE_ALL_FILTER_VALUE = '전체';
 
-export const JOB_NOTICE_FILTER_OPTIONS = {
-  jobType: [JOB_NOTICE_ALL_FILTER_VALUE, 'FULLTIME', 'INTERN', 'CONTRACT'],
-  jobCategory: [JOB_NOTICE_ALL_FILTER_VALUE, 'BACKEND', 'FRONTEND', 'DATA', 'DEVOPS'],
-  careerLevel: [JOB_NOTICE_ALL_FILTER_VALUE, 'JUNIOR', 'SENIOR', 'ANY'],
-  location: [JOB_NOTICE_ALL_FILTER_VALUE, '서울', '경기', '원격'],
-  companySize: [JOB_NOTICE_ALL_FILTER_VALUE, '스타트업', '중소', '중견', '대기업'],
-} as const;
-
-export const JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES = {
+export const JOB_NOTICE_COMPANY_SIZE_API_VALUES = {
   스타트업: 'STARTUP',
   중소: 'SME',
   중견: 'MID_MARKET',
@@ -153,8 +155,6 @@ export const JOB_NOTICE_SORT_LABELS = {
   views: '조회순',
 } as const satisfies Record<JobNoticeSort, string>;
 
-export type JobNoticeFilterKey = keyof typeof JOB_NOTICE_FILTER_OPTIONS;
-export type JobNoticeFilterValue = (typeof JOB_NOTICE_FILTER_OPTIONS)[JobNoticeFilterKey][number];
 export type JobNoticePeriod = (typeof JOB_NOTICE_PERIOD_OPTIONS)[number];
 export type JobNoticeSort = (typeof JOB_NOTICE_SORT_OPTIONS)[number];
 
@@ -171,9 +171,9 @@ export interface JobNoticeQueryParams {
   size?: number;
 }
 
-export type JobNoticeListApiResponse = ApiResponse<JobNoticeListResponse>;
-export type JobNoticeDetailApiResponse = ApiResponse<JobNoticeDetail>;
-export type JobNoticeBookmarkApiResponse = ApiResponse<JobNoticeBookmarkResponse>;
+export type JobNoticeListApiResponse = JobNoticeApiResponse<JobNoticeListResponse>;
+export type JobNoticeDetailApiResponse = JobNoticeApiResponse<JobNoticeDetail>;
+export type JobNoticeBookmarkApiResponse = JobNoticeApiResponse<JobNoticeBookmarkResponse>;
 export const JOB_NOTICE_DEADLINE_FALLBACK = '\uB9C8\uAC10\uC77C \uBBF8\uC815';
 
 export const JOB_NOTICE_VIEW_FIELD_MAP = {
@@ -221,6 +221,7 @@ export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoti
     recommendScore: 0,
     views: jobNotice.viewCount,
     bookmarked: jobNotice.bookmarked,
+    companyLogoUrl: jobNotice.companyLogoUrl ?? undefined,
     originalUrl: 'originalUrl' in jobNotice ? jobNotice.originalUrl ?? undefined : undefined,
     stacks: tags,
     exp: jobNotice.careerLevel,
@@ -237,9 +238,9 @@ export function mapJobNoticeApiToViewModel(jobNotice: JobNoticeSummary | JobNoti
 }
 
 export function mapJobNoticeViewToApiModel(jobNotice: JobNotice): JobNoticeDetail {
-  const companySize = jobNotice.companySize in JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES
-    ? JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES[
-      jobNotice.companySize as keyof typeof JOB_NOTICE_COMPANY_SIZE_QUERY_VALUES
+  const companySize = jobNotice.companySize in JOB_NOTICE_COMPANY_SIZE_API_VALUES
+    ? JOB_NOTICE_COMPANY_SIZE_API_VALUES[
+      jobNotice.companySize as keyof typeof JOB_NOTICE_COMPANY_SIZE_API_VALUES
     ]
     : jobNotice.companySize;
 
@@ -259,6 +260,7 @@ export function mapJobNoticeViewToApiModel(jobNotice: JobNotice): JobNoticeDetai
     deadline: jobNotice.deadline,
     createdAt: jobNotice.postedAt,
     bookmarked: jobNotice.bookmarked,
+    companyLogoUrl: jobNotice.companyLogoUrl,
     originalUrl: jobNotice.originalUrl,
     industry: jobNotice.industry,
     responsibilities: jobNotice.responsibilities,

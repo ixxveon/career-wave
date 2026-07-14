@@ -1,8 +1,8 @@
 import axiosInstance from '../../utils/axiosInstance';
 
 export type ApiResponse<T> =
-  | { success: true; statusCode: number; message: string | null; data: T; timestamp?: string }
-  | { success: false; statusCode: number; message: string | null; data: null; timestamp?: string };
+  | { success: true; message: string | null; data: T; timestamp?: string }
+  | { success: false; status: number; message: string | null; data: null; timestamp?: string };
 
 export const AI_DOMAIN = {
   DOCUMENT: 'DOCUMENT',
@@ -72,6 +72,8 @@ export interface AiMetricSummary {
   averageLatencyMs: number;
   healthStatus: AiHealthStatus;
   lastSyncedAt: string;
+  activeModelId: number | null;
+  activeModelName: string | null;
 }
 
 export interface AiDomainUsage extends AiModelNameFields {
@@ -369,6 +371,8 @@ export const mapAiMetricSummary = (raw: AiMetricSummaryRaw): AiMetricSummary => 
   averageLatencyMs: 0,
   healthStatus: AI_HEALTH_STATUS.NORMAL,
   lastSyncedAt: new Date().toISOString(),
+  activeModelId: raw.activeModelId,
+  activeModelName: raw.activeModelName,
 });
 
 export const mapAiDomainUsage = (raw: AiDomainUsageRaw): AiDomainUsage[] =>
@@ -626,6 +630,9 @@ export const aiMetricsApi = {
         ...response,
         data: mapApiResponse(response.data, mapRagDocumentDownload),
       })),
+
+  downloadRagDocumentFile: (downloadUrl: string) =>
+    axiosInstance.get<Blob>(downloadUrl, { responseType: 'blob' }),
 
   deleteRagDocument: (documentId: string) =>
     axiosInstance.delete<ApiResponse<null>>(`${AI_METRICS_API_BASE_PATH}/rag-documents/${documentId}`),

@@ -10,7 +10,7 @@ import {
 } from '../../../api/admin/paymentApi';
 
 const PAY_STATUS_CLS: Record<string, string> = {
-  PENDING: 'pending', DONE: 'normal', PAID: 'normal', CANCELED: 'dismissed', FAILED: 'blinded',
+  PENDING: 'pending', DONE: 'normal', PAID: 'normal', CANCELED: 'dismissed', FAILED: 'blinded', REFUNDED: 'dismissed',
 };
 const REFUND_STATUS_CLS: Record<string, string> = {
   PENDING: 'pending', COMPLETED: 'dismissed', FAILED: 'blinded', REJECTED: 'blinded',
@@ -24,9 +24,10 @@ function daysSincePaid(approvedAt: string): number {
   return Math.round((today.getTime() - paid.getTime()) / 86400000);
 }
 
-function checkRefundEligibility(p: Payment): { eligible: boolean; reason: string | null } {
+function checkRefundEligibility(p: Payment): { eligible: boolean | null; reason: string | null } {
   const days = daysSincePaid(p.approvedAt);
   if (days > 7) return { eligible: false, reason: `결제일로부터 ${days}일 경과 — 환불 가능 기간(7일)을 초과하였습니다.` };
+  if (!p.aiUsage) return { eligible: null, reason: '유료 AI 기능 이용 이력을 확인하는 중입니다.' };
   if (p.aiUsage.documentCount > 0 || p.aiUsage.interviewCount > 0) return { eligible: false, reason: '유료 AI 기능 이용 이력이 있어 환불이 불가합니다.' };
   return { eligible: true, reason: null };
 }
@@ -170,24 +171,24 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
                 </div>
                 <div className="refundCheckRow">
                   <span>이력서 분석 유료 이용</span>
-                  <strong className={(selected.aiUsage?.documentCount ?? 0) === 0 ? 'refundOk' : 'refundFail'}>
-                    {(selected.aiUsage?.documentCount ?? 0) === 0 ? '없음' : `${selected.aiUsage?.documentCount}회`}
+                  <strong className={!selected.aiUsage ? '' : selected.aiUsage.documentCount === 0 ? 'refundOk' : 'refundFail'}>
+                    {!selected.aiUsage ? '확인 중' : selected.aiUsage.documentCount === 0 ? '없음' : `${selected.aiUsage.documentCount}회`}
                   </strong>
                 </div>
                 <div className="refundCheckRow">
                   <span>AI 면접 유료 이용</span>
-                  <strong className={(selected.aiUsage?.interviewCount ?? 0) === 0 ? 'refundOk' : 'refundFail'}>
-                    {(selected.aiUsage?.interviewCount ?? 0) === 0 ? '없음' : `${selected.aiUsage?.interviewCount}회`}
+                  <strong className={!selected.aiUsage ? '' : selected.aiUsage.interviewCount === 0 ? 'refundOk' : 'refundFail'}>
+                    {!selected.aiUsage ? '확인 중' : selected.aiUsage.interviewCount === 0 ? '없음' : `${selected.aiUsage.interviewCount}회`}
                   </strong>
                 </div>
                 <div className="refundEligibleRow">
                   <span>환불 가능 여부</span>
-                  <span className={`refundEligibleBadge ${refundCheck.eligible ? 'eligible' : 'ineligible'}`}>
-                    {refundCheck.eligible ? '환불 가능' : '환불 불가'}
+                  <span className={`refundEligibleBadge ${refundCheck.eligible === true ? 'eligible' : refundCheck.eligible === false ? 'ineligible' : ''}`}>
+                    {refundCheck.eligible === true ? '환불 가능' : refundCheck.eligible === false ? '환불 불가' : '확인 중'}
                   </span>
                 </div>
-                {!refundCheck.eligible && <p className="refundIneligibleNote">{refundCheck.reason}</p>}
-                {isMaster && !refundCheck.eligible && (
+                {refundCheck.eligible !== true && <p className="refundIneligibleNote">{refundCheck.reason}</p>}
+                {isMaster && refundCheck.eligible === false && (
                   <textarea placeholder="환불 불가 사유를 입력하세요" value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)} rows={2}
                     style={{ width: '100%', resize: 'vertical', marginTop: 10, padding: '8px 10px', fontSize: 13, borderRadius: 6, border: '1px solid #d0d7de', boxSizing: 'border-box' }} />
@@ -212,10 +213,10 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
                 <button onClick={() => { setRequestMode(false); setRequestReason(''); }} disabled={refundLoading}>취소</button>
               </>
             )}
-            {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible && (
+            {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible === true && (
               <button onClick={confirmRefund} disabled={refundLoading}>{refundLoading ? '처리 중...' : '환불 처리 확정'}</button>
             )}
-            {isMaster && selected.refundStatus === 'PENDING' && refundCheck && !refundCheck.eligible && (
+            {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible === false && (
               <button className="tableBtn--danger" onClick={rejectRefundAction} disabled={refundLoading || !rejectReason.trim()}>
                 {refundLoading ? '처리 중...' : '환불 불가 처리'}
               </button>

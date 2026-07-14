@@ -113,6 +113,7 @@ class UsageLogService:
             model_name=ai_model.model_name,
             input_token_price=ai_model.input_token_price,
             output_token_price=ai_model.output_token_price,
+            pricing_unit=ai_model.pricing_unit,
         )
         input_tokens = self._token_cost_calculator.calculate_input_tokens(
             fallback_input_tokens=request.input_tokens,

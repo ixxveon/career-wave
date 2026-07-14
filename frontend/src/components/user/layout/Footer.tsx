@@ -77,6 +77,11 @@ function Footer() {
 
         <div className="cw-footer__bottom">
           <small>© 2026 Career Wave. All rights reserved.</small>
+          <nav className="cw-footer__bottom-links" aria-label="법적 고지">
+            <Link to="/terms">이용약관</Link>
+            <Link to="/privacy">개인정보처리방침</Link>
+            <Link to="/support/inquiry">고객문의</Link>
+          </nav>
         </div>
       </div>
     </footer>

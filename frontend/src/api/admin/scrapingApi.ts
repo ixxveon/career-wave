@@ -3,11 +3,19 @@ import axiosInstance from '../../utils/axiosInstance';
 // ── 공통 타입 ──────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
-  success: boolean;
-  statusCode: number;
+  success: true;
   message: string;
   data: T;
 }
+
+export interface ApiErrorResponse {
+  success: false;
+  status: number;
+  message: string;
+  data: null;
+}
+
+export type ScrapingApiResponse<T> = ApiResponse<T> | ApiErrorResponse;
 
 export interface PageResult<T> {
   content: T[];
@@ -49,6 +57,7 @@ export interface ScrapingSource {
   sourceName: string;
   status: PipelineStatus;
   isEnabled: boolean;
+  scheduleIntervalMinutes: number;
   successRate: number;
   averageDurationMs: number;
   cycleExpression: string;
@@ -67,6 +76,7 @@ export interface BackendScrapingPipelineItem {
   displayName: string;
   pipelineStatus: PipelineStatus;
   isEnabled: boolean;
+  scheduleIntervalMinutes: number;
   lastStartedAt: string | null;
   lastSuccessAt: string | null;
   lastFailedAt: string | null;
@@ -151,13 +161,24 @@ export interface ScrapingLogListParams {
 
 const SCRAPING_API_BASE_PATH = '/api/v1/admin/scraping';
 
+export const formatScheduleInterval = (minutes: number): string => {
+  if (minutes < 60) return `${minutes}\uBD84`;
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes === 0
+    ? `${hours}\uC2DC\uAC04`
+    : `${hours}\uC2DC\uAC04 ${remainingMinutes}\uBD84`;
+};
+
 export const toScrapingSource = (item: BackendScrapingPipelineItem): ScrapingSource => ({
   sourceName: item.sourceName,
   status: item.pipelineStatus,
   isEnabled: item.isEnabled,
+  scheduleIntervalMinutes: item.scheduleIntervalMinutes,
   successRate: 0,
   averageDurationMs: item.lastDurationMs ?? 0,
-  cycleExpression: '-',
+  cycleExpression: formatScheduleInterval(item.scheduleIntervalMinutes),
   collectedCount: item.lastTotalCount ?? 0,
   recentErrorCode: null,
   recentErrorMessage: item.lastErrorMessage,
@@ -174,6 +195,7 @@ export const toScrapingSourceDetail = (item: BackendScrapingPipelineItem): Scrap
     sourceName: source.sourceName,
     status: source.status,
     isEnabled: source.isEnabled,
+    scheduleIntervalMinutes: source.scheduleIntervalMinutes,
     successRate: source.successRate,
     averageDurationMs: source.averageDurationMs,
     cycleExpression: source.cycleExpression,
@@ -190,51 +212,55 @@ export const scrapingApi = {
   // 스크래핑 source 목록 조회
   getSources: (params?: ScrapingSourceListParams) =>
     axiosInstance
-      .get<ApiResponse<PageResult<BackendScrapingPipelineItem>>>(`${SCRAPING_API_BASE_PATH}/pipelines`, { params })
+      .get<ScrapingApiResponse<PageResult<BackendScrapingPipelineItem>>>(`${SCRAPING_API_BASE_PATH}/pipelines`, { params })
       .then((response) => ({
         ...response,
-        data: {
-          ...response.data,
-          data: {
-            ...response.data.data,
-            content: response.data.data.content.map(toScrapingSource),
-          },
-        },
+        data: response.data.success
+          ? {
+              ...response.data,
+              data: {
+                ...response.data.data,
+                content: response.data.data.content.map(toScrapingSource),
+              },
+            }
+          : response.data,
       })),
 
   // 스크래핑 source 요약 조회
   getSummary: () =>
-    axiosInstance.get<ApiResponse<ScrapingSourceSummary>>(`${SCRAPING_API_BASE_PATH}/pipelines/summary`),
+    axiosInstance.get<ScrapingApiResponse<ScrapingSourceSummary>>(`${SCRAPING_API_BASE_PATH}/pipelines/summary`),
 
   // 단일 source 상세 조회
   getSourceDetail: (sourceName: string) =>
     axiosInstance
-      .get<ApiResponse<BackendScrapingPipelineItem>>(
+      .get<ScrapingApiResponse<BackendScrapingPipelineItem>>(
         `${SCRAPING_API_BASE_PATH}/pipelines/${encodeURIComponent(sourceName)}`
       )
       .then((response) => ({
         ...response,
-        data: {
-          ...response.data,
-          data: toScrapingSourceDetail(response.data.data),
-        },
+        data: response.data.success
+          ? {
+              ...response.data,
+              data: toScrapingSourceDetail(response.data.data),
+            }
+          : response.data,
       })),
 
   // 단일 source 실행 액션 요청
   requestAction: (sourceName: string, data: ScrapingActionRequest) =>
-    axiosInstance.post<ApiResponse<ScrapingActionResult>>(
+    axiosInstance.post<ScrapingApiResponse<ScrapingActionResult>>(
       `${SCRAPING_API_BASE_PATH}/pipelines/${encodeURIComponent(sourceName)}/actions`,
       data
     ),
 
   // 여러 source 실행 액션 요청
   requestBatchAction: (data: ScrapingBatchActionRequest) =>
-    axiosInstance.post<ApiResponse<ScrapingBatchActionResult>>(
+    axiosInstance.post<ScrapingApiResponse<ScrapingBatchActionResult>>(
       `${SCRAPING_API_BASE_PATH}/pipelines/batch-actions`,
       data
     ),
 
   // 스크래핑 운영 로그 조회
   getLogs: (params?: ScrapingLogListParams) =>
-    axiosInstance.get<ApiResponse<PageResult<ScrapingLog>>>(`${SCRAPING_API_BASE_PATH}/logs`, { params }),
+    axiosInstance.get<ScrapingApiResponse<PageResult<ScrapingLog>>>(`${SCRAPING_API_BASE_PATH}/logs`, { params }),
 };

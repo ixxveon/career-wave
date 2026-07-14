@@ -22,6 +22,7 @@ class PipelineItemResponse(ScrapingResponseBase):
     display_name: str = Field(alias="displayName")
     pipeline_status: ScrapingPipelineStatusType = Field(alias="pipelineStatus")
     is_enabled: bool = Field(alias="isEnabled")
+    schedule_interval_minutes: int = Field(alias="scheduleIntervalMinutes", gt=0)
     last_started_at: datetime | None = Field(alias="lastStartedAt")
     last_success_at: datetime | None = Field(alias="lastSuccessAt")
     last_failed_at: datetime | None = Field(alias="lastFailedAt")
@@ -39,6 +40,7 @@ class PipelineItemResponse(ScrapingResponseBase):
             displayName=record.display_name,
             pipelineStatus=record.pipeline_status,
             isEnabled=record.is_enabled,
+            scheduleIntervalMinutes=record.schedule_interval_minutes,
             lastStartedAt=record.last_started_at,
             lastSuccessAt=record.last_success_at,
             lastFailedAt=record.last_failed_at,

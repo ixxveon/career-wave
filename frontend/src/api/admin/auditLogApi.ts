@@ -123,6 +123,8 @@ export interface AuditLogListParams extends AuditLogDateRangeParams {
   logType?: AuditLogType;
   severity?: AuditLogSeverity;
   keyword?: string;
+  adminId?: number;
+  targetType?: string;
   page?: number;
   size?: number;
 }
@@ -137,6 +139,28 @@ export const AUDIT_LOG_TYPE_LABELS: Record<AuditLogType, string> = {
 const BACKEND_AUDIT_LOG_TYPE_LABELS: Record<string, string> = {
   ...AUDIT_LOG_TYPE_LABELS,
   [BACKEND_AUDIT_LOG_TYPE.ADMIN_MANAGEMENT]: '관리자 관리',
+};
+
+const AUDIT_LOG_ACTION_LABELS: Record<string, string> = {
+  VIEW_MEMBER_DETAIL: '회원 상세 조회',
+  SANCTION_MEMBER_BLACKLIST: '회원 블랙리스트 처리',
+  SANCTION_MEMBER_SUSPEND: '회원 이용 정지',
+  UNSUSPEND_MEMBER: '회원 이용 정지 해제',
+  CREATE_ADMIN: '관리자 생성',
+  UPDATE_ADMIN_ROLE: '관리자 역할 변경',
+  UPDATE_ADMIN_STATUS: '관리자 상태 변경',
+  DELETE_ADMIN: '관리자 삭제',
+  CREATE_IP_ACL: '접근 IP 등록',
+  UPDATE_IP_ACL_ENABLED: '접근 IP 상태 변경',
+  DELETE_IP_ACL: '접근 IP 삭제',
+  UPDATE_AI_BUDGET: 'AI 월 예산 변경',
+  UPDATE_DISCORD_ALERT: 'Discord 알림 설정 변경',
+  UPDATE_RATE_LIMIT: 'AI 속도 제한 변경',
+  UPLOAD_RAG_DOCUMENT: 'RAG 문서 업로드',
+  DELETE_RAG_DOCUMENT: 'RAG 문서 삭제',
+  GENERATE_SETTLEMENT: '정산 생성',
+  CONFIRM_SETTLEMENT: '정산 확정',
+  REGENERATE_SETTLEMENT_DELETE_PENDING: '정산 재생성 요청',
 };
 
 function maskIpAddress(ipAddress: string | null) {
@@ -162,7 +186,8 @@ function maskIpAddress(ipAddress: string | null) {
 }
 
 function formatAuditLogSummary(log: BackendAuditLogItem) {
-  return log.action || `${log.logType} audit event`;
+  if (!log.action) return `${BACKEND_AUDIT_LOG_TYPE_LABELS[log.logType] ?? log.logType} 감사 이벤트`;
+  return AUDIT_LOG_ACTION_LABELS[log.action] ?? log.action.replace(/_/g, ' ');
 }
 
 function formatAuditLogDetail(log: BackendAuditLogItem) {
@@ -171,7 +196,8 @@ function formatAuditLogDetail(log: BackendAuditLogItem) {
   }
 
   const target = [log.targetType, log.targetId].filter(Boolean).join(':');
-  return target ? `${log.action} / ${target}` : log.action;
+  const action = formatAuditLogSummary(log);
+  return target ? `${action} / ${target}` : action;
 }
 
 function formatAuditLogOccurredAt(value: string): string {
@@ -210,7 +236,7 @@ export function mapBackendAuditLogItem(log: BackendAuditLogItem): AuditLogItem {
     severity: log.severity as AuditLogSeverity,
     summary: formatAuditLogSummary(log),
     detailSummary: formatAuditLogDetail(log),
-    actorId: log.adminId == null ? '-' : String(log.adminId),
+    actorId: log.adminId == null ? '-' : `admin-${log.adminId}`,
     targetType: log.targetType ?? '-',
     targetId: log.targetId ?? '-',
     ipAddressMasked: maskIpAddress(log.ipAddress),
@@ -223,6 +249,8 @@ export function mapBackendAuditLogDetail(log: BackendAuditLogDetail): AuditLogDe
 }
 
 function mapAuditLogSummaryResponse(response: ApiResponse<BackendAuditLogSummary>): ApiResponse<AuditLogSummary> {
+  if (!response.success) return response;
+
   return {
     ...response,
     data: mapBackendAuditLogSummary(response.data),
@@ -230,6 +258,8 @@ function mapAuditLogSummaryResponse(response: ApiResponse<BackendAuditLogSummary
 }
 
 function mapAuditLogListResponse(response: ApiResponse<PageResult<BackendAuditLogItem>>): ApiResponse<PageResult<AuditLogItem>> {
+  if (!response.success) return response;
+
   return {
     ...response,
     data: {
@@ -240,6 +270,8 @@ function mapAuditLogListResponse(response: ApiResponse<PageResult<BackendAuditLo
 }
 
 function mapAuditLogDetailResponse(response: ApiResponse<BackendAuditLogDetail>): ApiResponse<AuditLogDetail> {
+  if (!response.success) return response;
+
   return {
     ...response,
     data: mapBackendAuditLogDetail(response.data),

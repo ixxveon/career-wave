@@ -159,7 +159,32 @@ public class AuditLogQueryRepository {
             ZonedDateTime to,
             Pageable pageable
     ) {
-        BooleanBuilder predicate = buildPredicate(logType, severity, keyword, from, to);
+        return findAuditLogs(logType, severity, keyword, null, from, to, pageable);
+    }
+
+    public Page<AuditLog> findAuditLogs(
+            AuditLogType logType,
+            AuditLogSeverity severity,
+            String keyword,
+            Long adminId,
+            ZonedDateTime from,
+            ZonedDateTime to,
+            Pageable pageable
+    ) {
+        return findAuditLogs(logType, severity, keyword, adminId, null, from, to, pageable);
+    }
+
+    public Page<AuditLog> findAuditLogs(
+            AuditLogType logType,
+            AuditLogSeverity severity,
+            String keyword,
+            Long adminId,
+            String targetType,
+            ZonedDateTime from,
+            ZonedDateTime to,
+            Pageable pageable
+    ) {
+        BooleanBuilder predicate = buildPredicate(logType, severity, keyword, adminId, targetType, from, to);
         return fetchPage(predicate, pageable);
     }
 
@@ -167,10 +192,11 @@ public class AuditLogQueryRepository {
             AuditLogType logType,
             AuditLogSeverity severity,
             String keyword,
+            Long adminId,
             ZonedDateTime from,
             ZonedDateTime to
     ) {
-        return count(buildPredicate(logType, severity, keyword, from, to));
+        return count(buildPredicate(logType, severity, keyword, adminId, null, from, to));
     }
 
     public Optional<AuditLog> findAuditLogById(Long logId) {
@@ -209,6 +235,8 @@ public class AuditLogQueryRepository {
             AuditLogType logType,
             AuditLogSeverity severity,
             String keyword,
+            Long adminId,
+            String targetType,
             ZonedDateTime from,
             ZonedDateTime to
     ) {
@@ -219,6 +247,12 @@ public class AuditLogQueryRepository {
         }
         if (severity != null) {
             predicate.and(auditLog.severity.eq(severity));
+        }
+        if (adminId != null) {
+            predicate.and(auditLog.adminId.eq(adminId));
+        }
+        if (targetType != null) {
+            predicate.and(auditLog.targetType.equalsIgnoreCase(targetType));
         }
         predicate.and(keywordPredicate(keyword));
         predicate.and(periodPredicate(from, to));

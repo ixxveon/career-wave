@@ -12,6 +12,7 @@ from admin.scraping.repository import (
     ScrapingPipelineRepository,
 )
 from admin.scraping.schema import ScrapingActionType
+from admin.scraping.service.job_notice_cache_invalidator import invalidate_job_notice_caches
 from admin.scraping.service import (
     JobNoticeDedupService,
     JobNoticeNormalizer,
@@ -88,11 +89,14 @@ class ScrapingTask:
         source_name: str,
         action_type: ScrapingActionType,
     ) -> ScrapingTaskResult:
-        return await asyncio.to_thread(
+        result = await asyncio.to_thread(
             self._run_sync,
             source_name=source_name,
             action_type=action_type,
         )
+        if action_type != ScrapingActionType.TEST and result.pipeline_status == "SUCCESS":
+            await invalidate_job_notice_caches()
+        return result
 
     def _run_sync(
         self,

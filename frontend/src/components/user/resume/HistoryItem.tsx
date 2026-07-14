@@ -22,6 +22,7 @@ function formatDate(iso: string): string {
 const HistoryItem = memo(function HistoryItem({ item }: HistoryItemProps) {
   const navigate = useNavigate();
   const isResume = item.fileType === 'RESUME';
+  const isAnalyzing = item.status === 'ANALYZING';
 
   const title = isResume
     ? (item.originalName ?? '이력서')
@@ -64,11 +65,12 @@ const HistoryItem = memo(function HistoryItem({ item }: HistoryItemProps) {
 
       <button
         type="button"
-        className="hi-btn"
-        onClick={() => navigate(`/documents/report?documentId=${item.documentId}`)}
-        aria-label={`${title} 결과 보기`}
+        className={`hi-btn${isAnalyzing ? ' hi-btn--disabled' : ''}`}
+        onClick={() => !isAnalyzing && navigate(`/documents/report?documentId=${item.documentId}`)}
+        disabled={isAnalyzing}
+        aria-label={isAnalyzing ? `${title} 분석 중` : `${title} 결과 보기`}
       >
-        결과 보기 <ChevronRight size={14} aria-hidden="true" />
+        {isAnalyzing ? '분석 중…' : <>결과 보기 <ChevronRight size={14} aria-hidden="true" /></>}
       </button>
     </div>
   );

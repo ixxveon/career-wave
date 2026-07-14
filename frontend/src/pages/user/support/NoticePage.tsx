@@ -104,7 +104,7 @@ export default function NoticePage() {
                   </div>
                   <div className="nt-item__right">
                     <span className="nt-item__views">조회 {n.viewCount.toLocaleString()}</span>
-                    <span className="nt-item__date">{n.createdAt}</span>
+                    <span className="nt-item__date">{new Date(n.createdAt).toLocaleDateString('ko-KR')}</span>
                     <ChevronRight size={14} className="nt-item__arrow" />
                   </div>
                 </Link>

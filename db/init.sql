@@ -3,6 +3,7 @@
 -- ================================================
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "btree_gist";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
 -- ================================================
 -- 1. members
@@ -576,8 +577,10 @@ COMMENT ON COLUMN career_histories.created_at        IS '기록 생성 일시';
 CREATE TABLE job_notices (
     job_notice_id BIGSERIAL    NOT NULL,
     company_name  VARCHAR(100) NULL,
+    company_logo_url VARCHAR(500) NULL,
     title         VARCHAR(200) NOT NULL,
     description   TEXT         NULL,
+    search_text   TEXT         NULL,
     skill_tags    TEXT[]       NULL,
     job_type      VARCHAR(20)  NULL,
     company_size  VARCHAR(20)  NULL,
@@ -604,8 +607,10 @@ CREATE TABLE job_notices (
 COMMENT ON TABLE  job_notices               IS '채용 공고 테이블 (직접 등록 및 스크래핑 공고 통합)';
 COMMENT ON COLUMN job_notices.job_notice_id IS '공고 고유 식별자';
 COMMENT ON COLUMN job_notices.company_name  IS '공고 게시 기업명';
+COMMENT ON COLUMN job_notices.company_logo_url IS '공고 게시 기업 로고 URL';
 COMMENT ON COLUMN job_notices.title         IS '공고 제목';
 COMMENT ON COLUMN job_notices.description   IS '공고 상세 내용';
+COMMENT ON COLUMN job_notices.search_text   IS '검색 성능 최적화를 위해 제목, 설명, 기업명, 출처, 기술 스택, 직무 카테고리를 합친 텍스트';
 COMMENT ON COLUMN job_notices.skill_tags    IS '요구 기술 스택 (다중 선택, TEXT[])';
 COMMENT ON COLUMN job_notices.job_type      IS '채용 유형 (FULLTIME / INTERN / CONTRACT)';
 COMMENT ON COLUMN job_notices.company_size  IS '기업 규모 (STARTUP / SME / MID_MARKET / LARGE)';
@@ -628,6 +633,9 @@ CREATE INDEX idx_job_notices_active_created
 CREATE INDEX idx_job_notices_active_deadline_created
     ON job_notices (deadline ASC NULLS LAST, created_at DESC)
     WHERE notice_status = 'ACTIVE';
+
+CREATE INDEX idx_job_notices_search_text_trgm
+    ON job_notices USING gin (lower(search_text) gin_trgm_ops);
 
 -- ================================================
 -- 18. bookmarks
@@ -838,6 +846,9 @@ COMMENT ON COLUMN payments.created_at        IS '결제 요청 생성 일시';
 COMMENT ON COLUMN payments.updated_at        IS '결제 상태 변경 일시';
 
 CREATE INDEX IF NOT EXISTS idx_payments_status_created  ON payments (payment_status, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_payments_member_plan_ready
+    ON payments (member_id, plan_id)
+    WHERE payment_status = 'READY';
 
 -- ================================================
 -- 22. admins
@@ -1202,6 +1213,7 @@ CREATE TABLE ai_models (
     provider           VARCHAR(50)  NOT NULL DEFAULT 'OPENAI',
     input_token_price  NUMERIC(12,6) NOT NULL DEFAULT 0,
     output_token_price NUMERIC(12,6) NOT NULL DEFAULT 0,
+    pricing_unit       VARCHAR(30)   NOT NULL DEFAULT 'PER_MILLION_TOKENS',
     is_enabled         BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -1209,15 +1221,19 @@ CREATE TABLE ai_models (
     CONSTRAINT pk_ai_models           PRIMARY KEY (ai_model_id),
     CONSTRAINT uq_ai_models_name      UNIQUE (model_name),
     CONSTRAINT chk_input_token_price  CHECK (input_token_price  >= 0),
-    CONSTRAINT chk_output_token_price CHECK (output_token_price >= 0)
+    CONSTRAINT chk_output_token_price CHECK (output_token_price >= 0),
+    CONSTRAINT chk_ai_model_pricing_unit CHECK (
+        pricing_unit IN ('PER_MILLION_TOKENS', 'PER_SECOND', 'PER_CHARACTER')
+    )
 );
 COMMENT ON TABLE  ai_models                    IS 'AI 모델 테이블';
 COMMENT ON COLUMN ai_models.ai_model_id        IS '모델 고유 식별자';
 COMMENT ON COLUMN ai_models.model_name         IS '실제 API 호출에 사용하는 모델 이름';
 COMMENT ON COLUMN ai_models.display_type       IS '관리자 화면에 표시되는 모델 유형';
 COMMENT ON COLUMN ai_models.provider           IS 'AI 모델 제공 기업 이름';
-COMMENT ON COLUMN ai_models.input_token_price  IS '입력 토큰 단가';
-COMMENT ON COLUMN ai_models.output_token_price IS '출력 토큰 단가';
+COMMENT ON COLUMN ai_models.input_token_price  IS '입력 사용량 단가 (pricing_unit 기준, USD)';
+COMMENT ON COLUMN ai_models.output_token_price IS '출력 사용량 단가 (pricing_unit 기준, USD)';
+COMMENT ON COLUMN ai_models.pricing_unit       IS '단가 기준 (PER_MILLION_TOKENS / PER_SECOND / PER_CHARACTER)';
 COMMENT ON COLUMN ai_models.is_enabled         IS '모델 활성화 여부';
 COMMENT ON COLUMN ai_models.created_at         IS '모델 등록 시간';
 COMMENT ON COLUMN ai_models.updated_at         IS '모델 수정 시간';
@@ -1229,6 +1245,7 @@ INSERT INTO ai_models (
     provider,
     input_token_price,
     output_token_price,
+    pricing_unit,
     is_enabled
 )
 VALUES
@@ -1238,6 +1255,7 @@ VALUES
     'OPENAI',
     0.150000,
     0.600000,
+    'PER_MILLION_TOKENS',
     TRUE
 ),
 (
@@ -1246,6 +1264,7 @@ VALUES
     'OPENAI',
     2.500000,
     10.000000,
+    'PER_MILLION_TOKENS',
     TRUE
 ),
 (
@@ -1254,6 +1273,7 @@ VALUES
     'OPENAI',
     0.000100,
     0.000000,
+    'PER_SECOND',
     TRUE
 ),
 (
@@ -1262,6 +1282,7 @@ VALUES
     'OPENAI',
     0.000015,
     0.000000,
+    'PER_CHARACTER',
     TRUE
 )
 ON CONFLICT (model_name) DO NOTHING;
@@ -1278,7 +1299,7 @@ CREATE TABLE ai_usage_logs (
     feature_type    VARCHAR(20) NOT NULL,
     input_tokens    INTEGER     NOT NULL,
     output_tokens   INTEGER     NOT NULL,
-    cost            NUMERIC(15,2) NOT NULL,
+    cost            NUMERIC(15,6) NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_ai_usage_logs     PRIMARY KEY (ai_usage_log_id),
@@ -1302,7 +1323,7 @@ COMMENT ON COLUMN ai_usage_logs.ai_model_id     IS '모델 FK';
 COMMENT ON COLUMN ai_usage_logs.feature_type    IS '기능 유형 (DOCUMENT / INTERVIEW / INTERVIEW_STT / INTERVIEW_TTS / ADMIN_CS / ADMIN_REPORT / ADMIN_REPORT_MEMBER)';
 COMMENT ON COLUMN ai_usage_logs.input_tokens    IS '입력 토큰 수';
 COMMENT ON COLUMN ai_usage_logs.output_tokens   IS '출력 토큰 수';
-COMMENT ON COLUMN ai_usage_logs.cost            IS '소모 비용 (원 단위)';
+COMMENT ON COLUMN ai_usage_logs.cost            IS '소모 비용 (USD 단위)';
 COMMENT ON COLUMN ai_usage_logs.created_at      IS '사용 기록 일시';
 
 CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_admin_id ON ai_usage_logs (admin_id);
@@ -1314,6 +1335,7 @@ CREATE TABLE ai_ops_settings (
     ai_ops_setting_id  BIGINT      NOT NULL DEFAULT 1,
     selected_model_id  BIGINT      NOT NULL,
     monthly_budget     NUMERIC(15,2) NOT NULL,
+    budget_currency    CHAR(3)     NOT NULL DEFAULT 'USD',
     alert_enabled      BOOLEAN     NOT NULL DEFAULT TRUE,
     alert_channel      VARCHAR(20) NOT NULL DEFAULT 'DISCORD',
     alert_threshold    INTEGER     NOT NULL DEFAULT 85,
@@ -1324,13 +1346,15 @@ CREATE TABLE ai_ops_settings (
     CONSTRAINT fk_ai_ops_model      FOREIGN KEY (selected_model_id) REFERENCES ai_models (ai_model_id),
     CONSTRAINT chk_ai_ops_singleton CHECK (ai_ops_setting_id = 1),
     CONSTRAINT chk_monthly_budget   CHECK (monthly_budget  > 0),
+    CONSTRAINT chk_budget_currency  CHECK (budget_currency = 'USD'),
     CONSTRAINT chk_alert_channel    CHECK (alert_channel   IN ('DISCORD', 'SLACK', 'EMAIL')),
     CONSTRAINT chk_alert_threshold  CHECK (alert_threshold BETWEEN 1 AND 100)
 );
 COMMENT ON TABLE  ai_ops_settings                    IS 'AI 운영 설정 테이블 (싱글톤)';
 COMMENT ON COLUMN ai_ops_settings.ai_ops_setting_id  IS '운영 설정 고유 식별자 (항상 1)';
 COMMENT ON COLUMN ai_ops_settings.selected_model_id  IS '현재 적용할 AI 모델 FK';
-COMMENT ON COLUMN ai_ops_settings.monthly_budget     IS '월간 AI API 예산';
+COMMENT ON COLUMN ai_ops_settings.monthly_budget     IS '월간 AI API 예산 (USD 단위)';
+COMMENT ON COLUMN ai_ops_settings.budget_currency    IS '월간 AI API 예산 통화 (USD 고정)';
 COMMENT ON COLUMN ai_ops_settings.alert_enabled      IS '알림 사용 여부';
 COMMENT ON COLUMN ai_ops_settings.alert_channel      IS '알림 채널 (DISCORD / SLACK / EMAIL)';
 COMMENT ON COLUMN ai_ops_settings.alert_threshold    IS '알림 발생 임계치 (1~100)';
@@ -1350,7 +1374,7 @@ INSERT INTO ai_ops_settings (
 SELECT
     1,
     ai_model_id,
-    3000000.00,
+    2142.86,
     TRUE,
     'DISCORD',
     85,
@@ -1408,6 +1432,7 @@ CREATE TABLE scraping_pipelines (
     display_name         VARCHAR(100) NOT NULL,
     pipeline_status      VARCHAR(20)  NOT NULL DEFAULT 'IDLE',
     is_enabled           BOOLEAN      NOT NULL DEFAULT TRUE,
+    schedule_interval_minutes INTEGER NOT NULL DEFAULT 360,
     last_started_at      TIMESTAMPTZ  NULL,
     last_success_at      TIMESTAMPTZ  NULL,
     last_failed_at       TIMESTAMPTZ  NULL,
@@ -1420,6 +1445,7 @@ CREATE TABLE scraping_pipelines (
     CONSTRAINT pk_scraping_pipelines              PRIMARY KEY (scraping_pipeline_id),
     CONSTRAINT uq_scraping_source_name            UNIQUE (source_name),
     CONSTRAINT chk_pipeline_status                CHECK (pipeline_status IN ('IDLE', 'RUNNING', 'SUCCESS', 'FAILED')),
+    CONSTRAINT chk_pipeline_schedule_interval     CHECK (schedule_interval_minutes > 0),
     CONSTRAINT chk_pipeline_last_duration_ms      CHECK (last_duration_ms IS NULL OR last_duration_ms >= 0),
     CONSTRAINT chk_pipeline_last_total_count      CHECK (last_total_count IS NULL OR last_total_count >= 0)
 );
@@ -1429,6 +1455,7 @@ COMMENT ON COLUMN scraping_pipelines.source_name         IS '스크래핑 대상
 COMMENT ON COLUMN scraping_pipelines.display_name        IS '파이프라인 표시 이름';
 COMMENT ON COLUMN scraping_pipelines.pipeline_status     IS '파이프라인 현재 상태 (IDLE / RUNNING / SUCCESS / FAILED)';
 COMMENT ON COLUMN scraping_pipelines.is_enabled          IS '파이프라인 활성화 여부 (기본값 TRUE)';
+COMMENT ON COLUMN scraping_pipelines.schedule_interval_minutes IS '자동 수집 주기(분, 기본 360분)';
 COMMENT ON COLUMN scraping_pipelines.last_started_at     IS '마지막 실행 시작 시각';
 COMMENT ON COLUMN scraping_pipelines.last_success_at     IS '마지막 성공 시각';
 COMMENT ON COLUMN scraping_pipelines.last_failed_at      IS '마지막 실패 시각';
@@ -1442,17 +1469,19 @@ INSERT INTO scraping_pipelines (
     source_name,
     display_name,
     pipeline_status,
-    is_enabled
+    is_enabled,
+    schedule_interval_minutes
 )
 VALUES
-    ('groupby', 'GroupBy', 'IDLE', TRUE),
-    ('jumpit', 'Jumpit', 'IDLE', TRUE),
-    ('wanted', 'Wanted', 'IDLE', TRUE),
-    ('saramin', 'Saramin', 'IDLE', TRUE)
+    ('groupby', 'GroupBy', 'IDLE', TRUE, 360),
+    ('jumpit', 'Jumpit', 'IDLE', TRUE, 360),
+    ('wanted', 'Wanted', 'IDLE', TRUE, 360),
+    ('saramin', 'Saramin', 'IDLE', TRUE, 360)
 ON CONFLICT (source_name) DO UPDATE
 SET
     display_name = EXCLUDED.display_name,
     is_enabled = EXCLUDED.is_enabled,
+    schedule_interval_minutes = EXCLUDED.schedule_interval_minutes,
     updated_at = NOW();
 
 -- ================================================

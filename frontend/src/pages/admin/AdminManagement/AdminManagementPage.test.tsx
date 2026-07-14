@@ -47,7 +47,7 @@ vi.mock('../../../api/admin/adminManagementApi', () => ({
 
     return {
       code: 'UNKNOWN',
-      statusCode: 0,
+      status: 0,
       message: error instanceof Error ? error.message : 'Unknown error',
     };
   },
@@ -277,13 +277,13 @@ describe('AdminManagementPage master-only controls', () => {
     adminSession.setRole(ADMIN_ROLE.MASTER);
     adminManagementApiMock.updateAdminRole.mockRejectedValueOnce({
       code: 'MASTER_ROLE_REQUIRED',
-      statusCode: 403,
+      status: 403,
       message: '마스터 관리자만 수행할 수 있는 작업입니다.',
     });
 
     adminManagementApiMock.createAdminAclRule.mockRejectedValueOnce({
       code: 'MASTER_ROLE_REQUIRED',
-      statusCode: 403,
+      status: 403,
       message: '마스터 관리자만 수행할 수 있는 작업입니다.',
     });
 

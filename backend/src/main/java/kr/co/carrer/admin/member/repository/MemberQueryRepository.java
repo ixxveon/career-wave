@@ -302,13 +302,14 @@ public class MemberQueryRepository {
     }
 
     public MemberDTO.ResponseCounts countMemberKpi() {
+        // 전체 회원(개인+기업) 탭 기준 집계. 단, "프리미엄 구독"은 기업 회원에게 실질적인
+        // 구독 개념이 없어(플랜 "해당없음") 개인 회원(USER)만 집계한다.
         String sql = """
             SELECT
               COUNT(*) FILTER (WHERE (m.created_at AT TIME ZONE 'Asia/Seoul')::date = (NOW() AT TIME ZONE 'Asia/Seoul')::date) AS today_join_count,
-              COUNT(*) FILTER (WHERE m.subscription_status = 'PREMIUM') AS premium_count,
+              COUNT(*) FILTER (WHERE m.role_type = 'USER' AND m.subscription_status = 'PREMIUM') AS premium_count,
               COUNT(*) FILTER (WHERE m.member_status = 'SUSPENDED') AS suspended_count
             FROM members m
-            WHERE m.role_type = 'USER'
             """;
         Object[] row = (Object[]) em.createNativeQuery(sql).getSingleResult();
         return new MemberDTO.ResponseCounts(

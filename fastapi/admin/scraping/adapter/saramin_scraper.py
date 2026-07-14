@@ -74,6 +74,7 @@ class SaraminScraper(ScraperAdapter):
                         original_url=notice.original_url,
                         title=notice.title,
                         company_name=notice.company_name,
+                        company_logo_url=notice.company_logo_url,
                         description=description,
                         skill_tags=notice.skill_tags,
                         job_type=notice.job_type,
@@ -150,8 +151,10 @@ class SaraminScraper(ScraperAdapter):
             original_url=urljoin(self._BASE_URL, str(href)),
             title=title,
             company_name=company,
+            company_logo_url=self._extract_company_logo_url(item),
             description=None,
             skill_tags=sectors or None,
+            company_size=self._extract_company_size(item, conditions),
             job_type=self._pick_condition(conditions, ("정규직", "계약직", "인턴", "프리랜서")),
             job_category=sectors or None,
             career_level=self._pick_condition(conditions, ("경력", "신입")),
@@ -159,6 +162,29 @@ class SaraminScraper(ScraperAdapter):
             salary=salary,
             deadline=deadline,
         )
+
+    def _extract_company_logo_url(self, item: Tag) -> str | None:
+        for selector in (".corp_logo img", ".company_logo img", ".logo img", "img.corp_logo"):
+            image = item.select_one(selector)
+            if image is None:
+                continue
+            value = image.get("data-src") or image.get("src")
+            if isinstance(value, str) and value.strip():
+                return urljoin(self._BASE_URL, value.strip())
+        return None
+
+    def _extract_company_size(self, item: Tag, conditions: list[str]) -> str | None:
+        candidates = [
+            *conditions,
+            self._first_text(item, ".corp_info", ".corp_detail", ".corp_name", ".company_nm"),
+        ]
+        for candidate in candidates:
+            normalized = self._clean_text(candidate)
+            if normalized is None:
+                continue
+            if any(marker in normalized for marker in ("\ub300\uae30\uc5c5", "\uc911\uacac", "\uc911\uc18c", "\uc2a4\ud0c0\ud2b8\uc5c5", "\ubca4\ucc98")):
+                return normalized
+        return None
 
     def _fetch_description(self, client: httpx.Client, original_url: str) -> str | None:
         rec_idx = self._extract_rec_idx(original_url)

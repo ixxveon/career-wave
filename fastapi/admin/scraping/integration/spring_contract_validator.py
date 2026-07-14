@@ -13,6 +13,7 @@ class SpringContractValidator:
         "displayName",
         "pipelineStatus",
         "isEnabled",
+        "scheduleIntervalMinutes",
         "lastStartedAt",
         "lastSuccessAt",
         "lastFailedAt",

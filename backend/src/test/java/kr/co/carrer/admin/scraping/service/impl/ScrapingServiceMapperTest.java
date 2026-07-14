@@ -30,6 +30,7 @@ class ScrapingServiceMapperTest {
                                 "Wanted",
                                 ScrapingPipelineStatusType.SUCCESS,
                                 true,
+                                360,
                                 startedAt,
                                 successAt,
                                 null,
@@ -54,6 +55,7 @@ class ScrapingServiceMapperTest {
         assertThat(result.content().getFirst().scrapingPipelineId()).isEqualTo(1L);
         assertThat(result.content().getFirst().sourceName()).isEqualTo("wanted");
         assertThat(result.content().getFirst().pipelineStatus()).isEqualTo(ScrapingPipelineStatusType.SUCCESS);
+        assertThat(result.content().getFirst().scheduleIntervalMinutes()).isEqualTo(360);
         assertThat(result.content().getFirst().lastStartedAt()).isEqualTo(startedAt);
         assertThat(result.content().getFirst().lastSuccessAt()).isEqualTo(successAt);
     }
@@ -96,6 +98,7 @@ class ScrapingServiceMapperTest {
                         "Saramin",
                         ScrapingPipelineStatusType.FAILED,
                         true,
+                        360,
                         null,
                         null,
                         failedAt,
@@ -110,6 +113,7 @@ class ScrapingServiceMapperTest {
         assertThat(result.scrapingPipelineId()).isEqualTo(2L);
         assertThat(result.sourceName()).isEqualTo("saramin");
         assertThat(result.pipelineStatus()).isEqualTo(ScrapingPipelineStatusType.FAILED);
+        assertThat(result.scheduleIntervalMinutes()).isEqualTo(360);
         assertThat(result.lastFailedAt()).isEqualTo(failedAt);
         assertThat(result.lastErrorMessage()).isEqualTo("timeout");
         assertThat(result.createdAt()).isEqualTo(createdAt);

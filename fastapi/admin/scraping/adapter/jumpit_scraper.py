@@ -144,6 +144,7 @@ class JumpitScraper(ScraperAdapter):
                 self._meta_content(soup, "property", "og:site_name")
                 or self._first_text(soup, "h2", "h1")
             ),
+            "companyLogoUrl": self._meta_content(soup, "property", "og:image"),
             "serviceInfo": description,
         }
 
@@ -157,6 +158,7 @@ class JumpitScraper(ScraperAdapter):
             original_url=position_url,
             title=title,
             company_name=cls._string_value(detail.get("companyName")),
+            company_logo_url=cls._extract_company_logo_url(detail),
             description=cls._build_description(detail),
             skill_tags=cls._extract_tech_stacks(detail.get("techStacks")),
             job_type=None,
@@ -175,6 +177,21 @@ class JumpitScraper(ScraperAdapter):
             return None
         position_id = path.split("/")[-1].strip()
         return position_id or None
+
+    @classmethod
+    def _extract_company_logo_url(cls, detail: dict) -> str | None:
+        for key in ("companyLogoUrl", "companyLogo", "logoUrl", "logo", "companyImageUrl"):
+            value = cls._string_value(detail.get(key))
+            if value:
+                return value
+        company = detail.get("company")
+        if not isinstance(company, dict):
+            return None
+        for key in ("logoUrl", "logo", "imageUrl", "image"):
+            value = cls._string_value(company.get(key))
+            if value:
+                return value
+        return None
 
     @classmethod
     def _build_description(cls, detail: dict) -> str | None:

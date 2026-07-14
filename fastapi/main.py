@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from admin.ai_metrics.client.openai_client import get_ai_metrics_openai_client
 from admin.ai_metrics.router import router as ai_metrics_router
+from admin.scraping.scheduler import ScrapingAutoRunScheduler
 from core.config import get_settings
 from core.middleware import InternalRouteGuardMiddleware
 from core.redis import close_redis
@@ -17,6 +18,7 @@ from user.resume.service.webhook_outbox import init_outbox_db, run_outbox_worker
 log = logging.getLogger(__name__)
 
 scheduler = AsyncIOScheduler()
+scraping_auto_run_scheduler = ScrapingAutoRunScheduler()
 
 
 def _outbox_worker_done_callback(task: asyncio.Task) -> None:
@@ -42,6 +44,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     init_outbox_db()
     outbox_task = asyncio.create_task(run_outbox_worker())
     outbox_task.add_done_callback(_outbox_worker_done_callback)
+    scheduler.add_job(
+        scraping_auto_run_scheduler.run_due_pipelines,
+        "interval",
+        minutes=5,
+        id="scraping-auto-run",
+        replace_existing=True,
+        coalesce=True,
+        max_instances=1,
+    )
     scheduler.start()
     yield
     if get_ai_metrics_openai_client.cache_info().currsize > 0:

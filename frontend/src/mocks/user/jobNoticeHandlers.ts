@@ -118,7 +118,6 @@ function toListItem(jobNotice: JobNoticeDetail): JobNoticeSummary {
 function ok<T>(data: T, message = 'ok'): ApiResponse<T> {
   return {
     success: true,
-    statusCode: 200,
     message,
     data,
   };
@@ -188,7 +187,7 @@ export const jobNoticeHandlers = [
         jobCategory: ['BACKEND', 'FRONTEND', 'DATA', 'DEVOPS'],
         careerLevel: ['JUNIOR', 'SENIOR', 'ANY'],
         location: ['서울', '경기', '원격'],
-        companySize: ['스타트업', '중소', '중견', '대기업'],
+        companySize: ['STARTUP', 'SME', 'MID_MARKET', 'LARGE'],
       },
     };
 
@@ -201,7 +200,7 @@ export const jobNoticeHandlers = [
 
     if (!jobNotice) {
       return HttpResponse.json(
-        { success: false, statusCode: 404, message: '채용공고를 찾을 수 없습니다.', data: null },
+        { success: false, status: 404, message: '채용공고를 찾을 수 없습니다.', data: null },
         { status: 404 },
       );
     }
@@ -215,7 +214,7 @@ export const jobNoticeHandlers = [
 
     if (!jobNotice) {
       return HttpResponse.json(
-        { success: false, statusCode: 404, message: '채용공고를 찾을 수 없습니다.', data: null },
+        { success: false, status: 404, message: '채용공고를 찾을 수 없습니다.', data: null },
         { status: 404 },
       );
     }
@@ -236,7 +235,7 @@ export const jobNoticeHandlers = [
 
     if (!jobNotice) {
       return HttpResponse.json(
-        { success: false, statusCode: 404, message: '채용공고를 찾을 수 없습니다.', data: null },
+        { success: false, status: 404, message: '채용공고를 찾을 수 없습니다.', data: null },
         { status: 404 },
       );
     }

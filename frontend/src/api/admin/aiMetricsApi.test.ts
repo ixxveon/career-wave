@@ -49,6 +49,8 @@ describe("aiMetricsApi usage DTO mapper", () => {
         averageLatencyMs: 0,
         healthStatus: AI_HEALTH_STATUS.NORMAL,
         lastSyncedAt: "2026-06-24T00:00:00.000Z",
+        activeModelId: 1,
+        activeModelName: "gpt-4o-mini",
       });
     } finally {
       vi.useRealTimers();

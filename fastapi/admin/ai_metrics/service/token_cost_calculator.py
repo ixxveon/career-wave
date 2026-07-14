@@ -7,6 +7,11 @@ from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException
 
 
 class TokenCostCalculator:
+    _PER_MILLION_TOKENS = "PER_MILLION_TOKENS"
+    _PER_SECOND = "PER_SECOND"
+    _PER_CHARACTER = "PER_CHARACTER"
+    _MILLION = Decimal("1000000")
+
     @staticmethod
     def _is_non_negative_int(value: Any) -> bool:
         return isinstance(value, int) and not isinstance(value, bool) and value >= 0
@@ -70,9 +75,23 @@ class TokenCostCalculator:
                 },
             )
 
-        input_cost = context.input_token_price * Decimal(input_tokens)
-        output_cost = context.output_token_price * Decimal(output_tokens)
+        divisor = self._resolve_pricing_divisor(context.pricing_unit)
+        input_cost = context.input_token_price * Decimal(input_tokens) / divisor
+        output_cost = context.output_token_price * Decimal(output_tokens) / divisor
         return input_cost + output_cost
+
+    def _resolve_pricing_divisor(self, pricing_unit: str) -> Decimal:
+        if pricing_unit == self._PER_MILLION_TOKENS:
+            return self._MILLION
+
+        if pricing_unit in {self._PER_SECOND, self._PER_CHARACTER}:
+            return Decimal("1")
+
+        raise AiMetricsException(
+            error_code=AiMetricsErrorCode.TOKEN_CALCULATION_FAILED,
+            message="Unsupported AI model pricing unit.",
+            detail={"pricingUnit": pricing_unit},
+        )
 
     def validate_token_cost_result(
         self,

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import MyPageSidebar from "../../../components/user/mypage/MyPageSidebar";
 import { Search, Bookmark } from "lucide-react";
 import JobNoticeDetail from "@/pages/user/jobNotice/JobNoticeDetail";
 import { deleteDashboardBookmark } from "@/api/user/dashboard";
 import { useDashboardBookmarks } from "@/hooks/user/dashboard";
+import { invalidateBookmarkQueries } from "@/hooks/user/bookmark/bookmarkQueryCache";
 import type { ScrapJob } from "@/types/user/dashboard";
 import "@/styles/user/mypage/MyPage.css";
 
@@ -67,6 +69,7 @@ const createJobNoticeViewModel = (job: ScrapJob): JobNoticeViewModel => ({
 });
 
 function ScrappedJobPage() {
+  const queryClient = useQueryClient();
   const [selectedJob, setSelectedJob] = useState<JobNoticeViewModel | null>(
     null,
   );
@@ -90,7 +93,7 @@ function ScrappedJobPage() {
     setScrapMessage("");
   }, [keyword, currentPage]);
 
-  const { data: scrapJobPage, refetch } = useDashboardBookmarks({
+  const { data: scrapJobPage } = useDashboardBookmarks({
     keyword,
     page: currentPage,
     size: 10,
@@ -133,7 +136,7 @@ function ScrappedJobPage() {
 
     try {
       await deleteDashboardBookmark(bookmarkId);
-      await refetch();
+      await invalidateBookmarkQueries(queryClient);
       if (selectedJob?.bookmarkId === bookmarkId) {
         setSelectedJob(null);
       }
@@ -145,23 +148,7 @@ function ScrappedJobPage() {
 
   return (
     <div className="cw-mypage-layout">
-      <aside className="cw-mypage-sidebar">
-        <strong>마이페이지</strong>
-
-        <nav>
-          <NavLink to="/mypage" end>
-            내 정보 관리
-          </NavLink>
-          <NavLink
-            to="/mypage/favorites"
-            className={({ isActive }) => (isActive ? "is-active" : "")}
-          >
-            스크랩 공고
-          </NavLink>
-          <NavLink to="/mypage/subscription">AI 서비스</NavLink>
-          <NavLink to="/mypage/payment-history">구독/결제 내역</NavLink>
-        </nav>
-      </aside>
+      <MyPageSidebar />
 
       <section className="cw-scrap-page">
         <div className="cw-scrap-header">

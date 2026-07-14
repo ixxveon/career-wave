@@ -1,9 +1,10 @@
-import { lazy, Suspense, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import MainLayout from "../components/user/layout/MainLayout";
 import ProtectedRoute from "../components/user/common/ProtectedRoute";
 import AdminLayout from "../layouts/admin/AdminLayout";
 import { adminSession } from "../api/admin/adminSession";
+import { probeAdminAuth } from "../utils/admin/adminTokenRefresh";
 import {
   ADMIN_ROUTE_BASE,
   ADMIN_ROUTE_PATHS,
@@ -171,6 +172,9 @@ const StatisticsPage = lazy(
 const AiMetricsPage = lazy(
   () => import("../pages/admin/AiMetrics/AiMetricsPage"),
 );
+const RagManagementPage = lazy(
+  () => import("../pages/admin/RagManagement/RagManagementPage"),
+);
 const ScrapingPage = lazy(() => import("../pages/admin/Scraping/ScrapingPage"));
 const AuditLogPage = lazy(() => import("../pages/admin/AuditLog/AuditLogPage"));
 const AdminCompanyListPage = lazy(
@@ -202,15 +206,36 @@ function lazyRoute(element: ReactNode) {
   return <Suspense fallback={<RouteLoadingFallback />}>{element}</Suspense>;
 }
 
+type AdminSessionStatus = "checking" | "ok" | "redirect";
+
 function AdminProtectedRoute() {
   const { pathname } = useLocation();
-  const token = adminSession.getToken();
-  const role = adminSession.getRole();
+  // 메모리(sessionStorage)에 토큰이 있으면 즉시 통과. 없으면(탭 재오픈/새로고침)
+  // HttpOnly refresh 쿠키로 세션 복원을 시도한 뒤 판정한다.
+  const [status, setStatus] = useState<AdminSessionStatus>(() =>
+    adminSession.getToken() ? "ok" : "checking",
+  );
 
-  if (!token) {
+  useEffect(() => {
+    if (status !== "checking") return;
+    let cancelled = false;
+
+    probeAdminAuth().then((ok) => {
+      if (!cancelled) setStatus(ok ? "ok" : "redirect");
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
+
+  if (status === "checking") return null;
+
+  if (status === "redirect") {
     return <Navigate to={ADMIN_ROUTE_PATHS.login} replace />;
   }
 
+  const role = adminSession.getRole();
   if (!role) {
     adminSession.clearAll();
     return <Navigate to={ADMIN_ROUTE_PATHS.login} replace />;
@@ -438,6 +463,7 @@ function AppRoutes() {
             <Route path="stats" element={lazyRoute(<StatisticsPage />)} />
             <Route path="ai" element={lazyRoute(<AiMetricsPage />)} />
             <Route path="scraping" element={lazyRoute(<ScrapingPage />)} />
+            <Route path="rag" element={lazyRoute(<RagManagementPage />)} />
             <Route path="log" element={lazyRoute(<AuditLogPage />)} />
             <Route
               path="companies"

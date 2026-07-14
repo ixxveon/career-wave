@@ -143,7 +143,7 @@ public class InterviewCallbackServiceImpl implements InterviewCallbackService {
                 )).toList();
 
         feedbackRepository.saveAll(feedbacks);
-        session.updateTotalScore(dto.totalScore());
+        session.completeReport(dto.totalScore());
 
         CareerHistory history = CareerHistory.create(
                 session.getMemberId(),

@@ -25,6 +25,7 @@ export const PAY_STATUS = {
   PAID:     'PAID',
   CANCELED: 'CANCELED',
   FAILED:   'FAILED',
+  REFUNDED: 'REFUNDED',
 } as const;
 
 export const REFUND_STATUS = {
@@ -59,8 +60,9 @@ export const PAY_STATUS_LABEL: Record<PayStatus, string> = {
   PENDING:  '결제 대기',
   DONE:     '결제 완료',
   PAID:     '결제 완료',
-  CANCELED: '환불 완료',
+  CANCELED: '결제 취소',
   FAILED:   '결제 실패',
+  REFUNDED: '환불 완료',
 };
 
 export const REFUND_STATUS_LABEL: Record<RefundStatus, string> = {
@@ -101,7 +103,7 @@ export interface Payment {
   paymentStatus: PayStatus;
   paymentType: PaymentType;
   paymentMethod?: string;
-  aiUsage: AiUsage;
+  aiUsage?: AiUsage;
   refundStatus?: RefundStatus;
 }
 

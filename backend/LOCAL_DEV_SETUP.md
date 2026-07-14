@@ -186,12 +186,12 @@ CREATE DATABASE careerwave OWNER careerwave;
 
 #### Mac
 ```bash
-psql -U careerwave -d careerwave -f src/main/resources/db/seed-local.sql
+psql -U careerwave -d careerwave -f ../db/seed-local.sql
 ```
 
 #### Windows
 ```cmd
-psql -U careerwave -d careerwave -f src\main\resources\db\seed-local.sql
+psql -U careerwave -d careerwave -f ..\db\seed-local.sql
 ```
 
 > 재실행 안전 — 스크립트 내부에 기존 데이터 DELETE 포함

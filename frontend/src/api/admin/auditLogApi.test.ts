@@ -51,9 +51,9 @@ describe('auditLogApi mapper', () => {
       logType: BACKEND_AUDIT_LOG_TYPE.ADMIN_MANAGEMENT,
       logTypeLabel: '관리자 관리',
       severity: 'INFO',
-      summary: 'UPDATE_ADMIN_ROLE',
+      summary: '관리자 역할 변경',
       detailSummary: 'changed role to BACKEND',
-      actorId: '7',
+      actorId: 'admin-7',
       targetType: 'ADMIN',
       targetId: '10',
       ipAddressMasked: '10.20.30.*',
@@ -76,14 +76,20 @@ describe('auditLogApi mapper', () => {
       logType: BACKEND_AUDIT_LOG_TYPE.ADMIN_MANAGEMENT,
       logTypeLabel: '관리자 관리',
       severity: 'INFO',
-      summary: 'UPDATE_ADMIN_ROLE',
-      detailSummary: 'UPDATE_ADMIN_ROLE',
+      summary: '관리자 역할 변경',
+      detailSummary: '관리자 역할 변경',
       actorId: '-',
       targetType: '-',
       targetId: '-',
       ipAddressMasked: '-',
       occurredAt: '2026-06-26 12:30:00',
     });
+  });
+
+  it('uses the domain label when the backend action is missing', () => {
+    const item = mapBackendAuditLogItem({ ...backendAuditLog, action: '' });
+
+    expect(item.summary).toBe(`${item.logTypeLabel} 감사 이벤트`);
   });
 
   it('masks compressed and IPv4-mapped IPv6 addresses safely', () => {

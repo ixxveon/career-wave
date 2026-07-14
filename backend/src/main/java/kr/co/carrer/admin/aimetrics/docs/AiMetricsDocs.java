@@ -29,11 +29,11 @@ import org.springframework.web.multipart.MultipartFile;
 @SecurityRequirement(name = "bearerAuth")
 public interface AiMetricsDocs {
 
-    String UNAUTHORIZED_EXAMPLE = "{\"success\":false,\"statusCode\":401,\"message\":\"인증 정보가 없습니다.\",\"code\":\"AUTH_UNAUTHENTICATED\",\"data\":null}";
-    String FORBIDDEN_EXAMPLE = "{\"success\":false,\"statusCode\":403,\"message\":\"접근 권한이 없습니다.\",\"code\":\"AUTH_FORBIDDEN\",\"data\":null}";
-    String BAD_REQUEST_EXAMPLE = "{\"success\":false,\"statusCode\":400,\"message\":\"요청 파라미터가 올바르지 않습니다.\",\"code\":\"BAD_REQUEST\",\"data\":null}";
-    String NOT_FOUND_EXAMPLE = "{\"success\":false,\"statusCode\":404,\"message\":\"요청한 리소스를 찾을 수 없습니다.\",\"data\":null}";
-    String CONFLICT_EXAMPLE = "{\"success\":false,\"statusCode\":409,\"message\":\"현재 상태에서는 요청을 처리할 수 없습니다.\",\"data\":null}";
+    String UNAUTHORIZED_EXAMPLE = "{\"success\":false,\"status\":401,\"message\":\"인증 정보가 없습니다.\",\"code\":\"AUTH_UNAUTHENTICATED\",\"data\":null}";
+    String FORBIDDEN_EXAMPLE = "{\"success\":false,\"status\":403,\"message\":\"접근 권한이 없습니다.\",\"code\":\"AUTH_FORBIDDEN\",\"data\":null}";
+    String BAD_REQUEST_EXAMPLE = "{\"success\":false,\"status\":400,\"message\":\"요청 파라미터가 올바르지 않습니다.\",\"code\":\"BAD_REQUEST\",\"data\":null}";
+    String NOT_FOUND_EXAMPLE = "{\"success\":false,\"status\":404,\"message\":\"요청한 리소스를 찾을 수 없습니다.\",\"data\":null}";
+    String CONFLICT_EXAMPLE = "{\"success\":false,\"status\":409,\"message\":\"현재 상태에서는 요청을 처리할 수 없습니다.\",\"data\":null}";
 
     @Operation(summary = "AI 사용량 요약 조회", description = "MASTER 또는 BACKEND 관리자가 ai_usage_logs.created_at 기간 조건과 featureType 필터 기준으로 전체 요청 수, 토큰 수, 비용, 기능별 요청 수, 활성 모델 정보를 조회합니다. from/to는 ISO 8601 UTC 문자열을 사용합니다.")
     @ApiResponses({

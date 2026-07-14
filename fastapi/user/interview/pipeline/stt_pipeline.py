@@ -1,4 +1,5 @@
 import logging
+import re
 from collections import defaultdict
 
 from openai import AsyncOpenAI, OpenAIError
@@ -67,6 +68,38 @@ def _generate_answer_hint(transcript: str) -> str | None:
         return "STAR 구조(상황 → 문제 → 행동 → 결과)로 답변하면 면접관이 이해하기 더 쉬워요."
 
     return None
+
+
+# no_speech_prob이 이 임계값 이상이면 Whisper hallucination으로 판단해 transcript를 폐기한다.
+# Whisper는 무음/소음 오디오에서 학습 데이터 기반의 텍스트를 상상해 출력하는 경향이 있다.
+_NO_SPEECH_PROB_THRESHOLD = 0.85
+
+# Whisper가 무음 구간에서 자신 있게 출력하는 대표적 hallucination 패턴.
+# no_speech_prob으로 잡히지 않아도 텍스트 매칭으로 폐기한다.
+_HALLUCINATION_PATTERNS = [
+    "субтитры предоставил",   # "Subtitles provided by" (러시아어 자막 크레딧)
+    "subtitles by",
+    "transcribed by",
+    "translated by",
+    "мфц предоставил",
+    "amara.org",
+    "www.zeoranger.co.uk",
+    "ご視聴ありがとうございました",  # 일본어 "감사합니다" 클리셰
+]
+
+
+def _is_hallucination_text(text: str) -> bool:
+    lower = text.lower()
+    return any(pattern in lower for pattern in _HALLUCINATION_PATTERNS)
+
+
+# 한글·영문·숫자가 하나도 없으면 구두점·공백만 있는 무의미한 텍스트로 판단
+# Whisper가 무음 구간에서 ".", "...", ". ." 등을 높은 confidence로 출력하는 케이스 차단
+_MEANINGFUL_CHAR_RE = re.compile(r'[가-힣a-zA-Z0-9]')
+
+
+def _is_meaningless_transcript(text: str) -> bool:
+    return not _MEANINGFUL_CHAR_RE.search(text)
 
 
 def calculate_voice_quality_ratio(no_speech_prob: float) -> float:
@@ -151,7 +184,33 @@ async def transcribe_chunk(
         ]
         no_speech_prob = sum(probs) / len(probs) if probs else 0.0
 
-    voice_quality_ratio = calculate_voice_quality_ratio(no_speech_prob)
+    silent = False
+    if no_speech_prob >= _NO_SPEECH_PROB_THRESHOLD:
+        log.warning(
+            "STT: hallucination masked (no_speech_prob=%.2f): sessionId=%s, questionOrder=%d, discarded=%s",
+            no_speech_prob, session_id, question_order, transcript[:50],
+        )
+        transcript = ""
+        voice_quality_ratio = 0.0
+        silent = True
+    elif _is_hallucination_text(transcript):
+        log.warning(
+            "STT: hallucination masked (pattern match): sessionId=%s, questionOrder=%d, discarded=%s",
+            session_id, question_order, transcript[:80],
+        )
+        transcript = ""
+        voice_quality_ratio = 0.0
+        silent = True
+    elif _is_meaningless_transcript(transcript):
+        log.warning(
+            "STT: meaningless transcript masked (punctuation only): sessionId=%s, questionOrder=%d, discarded=%r",
+            session_id, question_order, transcript[:20],
+        )
+        transcript = ""
+        voice_quality_ratio = 0.0
+        silent = True
+    else:
+        voice_quality_ratio = calculate_voice_quality_ratio(no_speech_prob)
 
     log.info(
         "STT final: sessionId=%s, questionOrder=%d, voiceQualityRatio=%.2f, transcript=%s",
@@ -177,6 +236,14 @@ async def transcribe_chunk(
         )
 
     await send_stt_final(session_id, transcript, question_order, voice_quality_ratio)
+
+    if silent:
+        await send_answer_hint(
+            session_id,
+            "음성이 감지되지 않았습니다. 다시 말씀해 주시겠어요?",
+            question_order,
+        )
+        return
 
     hint = _generate_answer_hint(transcript)
     if hint:

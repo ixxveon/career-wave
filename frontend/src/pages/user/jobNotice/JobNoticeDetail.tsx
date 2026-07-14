@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { useJobNoticeDetail } from '../../../hooks/user/jobNotice/useJobNoticeDetail';
+import JobNoticeCompanyLogo from '../../../components/user/jobNotice/JobNoticeCompanyLogo';
 import { formatJobNoticeDeadline, mapJobNoticeApiToViewModel, type JobNotice } from '../../../types/user/jobNotice';
 import '@/styles/user/jobNotice/JobNoticeDetail.css';
 
@@ -99,7 +100,11 @@ function DetailHeader({ job, bookmarked, onBookmark, onClose }: DetailHeaderProp
 
   return (
     <header className="jnd-header">
-      <div className="jnd-logo">{job.company[0]}</div>
+      <JobNoticeCompanyLogo
+        className="jnd-logo"
+        companyName={job.company}
+        companyLogoUrl={job.companyLogoUrl}
+      />
       <div className="jnd-title">
         <span>{job.company}</span>
         <h2>{job.title}</h2>

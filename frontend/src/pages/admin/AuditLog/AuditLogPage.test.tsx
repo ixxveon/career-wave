@@ -5,174 +5,86 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AuditLogPage from './AuditLogPage';
 
 const auditLogApiMock = vi.hoisted(() => ({
-  getSummary: vi.fn(),
   getLogs: vi.fn(),
   getLogDetail: vi.fn(),
 }));
 
 vi.mock('../../../api/admin/auditLogApi', async () => {
-  const actual = await vi.importActual<typeof import('../../../api/admin/auditLogApi')>(
-    '../../../api/admin/auditLogApi',
-  );
-
-  return {
-    ...actual,
-    auditLogApi: auditLogApiMock,
-  };
+  const actual = await vi.importActual<typeof import('../../../api/admin/auditLogApi')>('../../../api/admin/auditLogApi');
+  return { ...actual, auditLogApi: auditLogApiMock };
 });
-
-function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-}
-
-function renderPage() {
-  return render(
-    <QueryClientProvider client={createQueryClient()}>
-      <AuditLogPage />
-    </QueryClientProvider>,
-  );
-}
-
-function seedSummary() {
-  auditLogApiMock.getSummary.mockResolvedValue({
-    data: {
-      success: true,
-      data: {
-        totalCount: 1,
-        adminCount: 1,
-        aiCount: 0,
-        scrapingCount: 0,
-        warningCount: 0,
-        errorCount: 0,
-        lastSyncedAt: '',
-      },
-    },
-  });
-}
 
 const listItem = {
   id: '1001',
-  logType: 'ADMIN_ACTIVITY',
-  logTypeLabel: '관리자 관리',
-  severity: 'INFO',
-  summary: 'UPDATE_ADMIN_ROLE',
-  detailSummary: '관리자 역할 변경 요청',
-  actorId: 'ADM-1',
-  targetType: 'ADMIN',
-  targetId: 'ADM-2',
-  ipAddressMasked: '10.20.**.**',
-  occurredAt: '2026-06-26 10:30:00',
+  logType: 'ADMIN_ACTIVITY' as const,
+  logTypeLabel: '관리자 활동',
+  severity: 'INFO' as const,
+  summary: '회원 상세 조회',
+  detailSummary: 'admin-1 관리자가 회원 상세 정보를 조회했습니다.',
+  actorId: 'admin-1',
+  targetType: 'MEMBER',
+  targetId: '1842',
+  ipAddressMasked: '10.20.30.*',
+  occurredAt: '2026-07-10 17:27:56',
 };
 
-const detailItem = {
-  ...listItem,
-  summary: '관리자 계정 수정 완료',
-  detailSummary: 'MASTER 관리자가 BACKEND 관리자의 역할을 CS로 변경했습니다.',
-};
+function renderPage() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={queryClient}><AuditLogPage /></QueryClientProvider>);
+}
 
-function resolveLogList(content = [listItem]) {
+function resolveList(content = [listItem], page = 1, totalPages = 1) {
   auditLogApiMock.getLogs.mockResolvedValue({
-    data: {
-      success: true,
-      data: {
-        content,
-        page: 1,
-        size: 20,
-        totalElements: content.length,
-        totalPages: content.length > 0 ? 1 : 0,
-      },
-    },
+    data: { success: true, data: { content, page, size: 20, totalElements: 1248, totalPages } },
   });
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  seedSummary();
-  resolveLogList();
-  auditLogApiMock.getLogDetail.mockResolvedValue({
-    data: {
-      success: true,
-      data: detailItem,
-    },
-  });
+  resolveList();
+  auditLogApiMock.getLogDetail.mockResolvedValue({ data: { success: true, data: listItem } });
 });
 
-afterEach(() => {
-  cleanup();
-});
+afterEach(cleanup);
 
-describe('AuditLogPage API state integration', () => {
-  it('selects the first log and renders detail response fields without request id', async () => {
+describe('AuditLogPage', () => {
+  it('renders the operational table and selected log detail', async () => {
     renderPage();
 
-    expect(await screen.findByText('[관리자 관리] UPDATE_ADMIN_ROLE')).toBeTruthy();
+    expect(await screen.findByText('총 1,248건')).toBeTruthy();
+    expect(screen.getByText('07/10 17:27:56')).toBeTruthy();
+    expect(screen.getAllByText('회원 상세 조회').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('MEMBER #1842').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('admin-1').length).toBeGreaterThan(0);
     await waitFor(() => expect(auditLogApiMock.getLogDetail).toHaveBeenCalledWith('1001'));
-
-    expect(await screen.findByText('관리자 계정 수정 완료')).toBeTruthy();
-    expect(screen.getByText('MASTER 관리자가 BACKEND 관리자의 역할을 CS로 변경했습니다.')).toBeTruthy();
-    expect(screen.getByText('ADM-1')).toBeTruthy();
-    expect(screen.getByText('ADMIN:ADM-2')).toBeTruthy();
-    expect(screen.getByText('10.20.**.**')).toBeTruthy();
-    expect(screen.queryByText('REQUEST')).toBeNull();
   });
 
-  it('clears selection and keeps detail API disabled when the list is empty', async () => {
-    resolveLogList([]);
-
+  it('passes the administrator filter and resets it', async () => {
     renderPage();
+    const adminInput = await screen.findByLabelText('관리자 ID');
+    fireEvent.change(adminInput, { target: { value: '7' } });
 
-    expect(await screen.findByText('조건에 맞는 감사 로그가 없습니다.')).toBeTruthy();
-    expect(screen.getByText('표시할 로그가 없습니다.')).toBeTruthy();
-    expect(auditLogApiMock.getLogDetail).not.toHaveBeenCalled();
+    await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenLastCalledWith(expect.objectContaining({ adminId: 7 })));
+    fireEvent.click(screen.getByRole('button', { name: '초기화' }));
+
+    await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenLastCalledWith(expect.not.objectContaining({ adminId: expect.anything() })));
   });
 
-  it('shows list error state and retries list fetch', async () => {
-    auditLogApiMock.getLogs.mockReset();
-    auditLogApiMock.getLogs
-      .mockRejectedValueOnce(new Error('list error'))
-      .mockResolvedValueOnce({
-        data: {
-          success: true,
-          data: {
-            content: [],
-            page: 1,
-            size: 20,
-            totalElements: 0,
-            totalPages: 0,
-          },
-        },
-      });
-
+  it('passes the target type filter', async () => {
     renderPage();
+    const targetTypeSelect = await screen.findByLabelText('대상 유형');
+    fireEvent.change(targetTypeSelect, { target: { value: 'MEMBER' } });
 
-    expect(await screen.findByText('감사 로그 조회에 실패했습니다.')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: '다시 조회' }));
-
-    await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText('조건에 맞는 감사 로그가 없습니다.')).toBeTruthy();
+    await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenLastCalledWith(expect.objectContaining({ targetType: 'MEMBER' })));
   });
 
-  it('shows detail error state and retries detail fetch for the selected log', async () => {
-    auditLogApiMock.getLogDetail
-      .mockRejectedValueOnce(new Error('detail error'))
-      .mockResolvedValueOnce({
-        data: {
-          success: true,
-          data: detailItem,
-        },
-      });
-
+  it('moves to the selected page', async () => {
+    resolveList([listItem], 1, 3);
     renderPage();
 
-    expect(await screen.findByText('상세 정보를 불러오지 못했습니다.')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: '다시 조회' }));
+    await screen.findByText('총 1,248건');
+    fireEvent.click(screen.getByRole('button', { name: '2' }));
 
-    await waitFor(() => expect(auditLogApiMock.getLogDetail).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText('관리자 계정 수정 완료')).toBeTruthy();
+    await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 })));
   });
 });

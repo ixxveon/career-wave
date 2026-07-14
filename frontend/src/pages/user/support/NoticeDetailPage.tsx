@@ -43,7 +43,7 @@ export default function NoticeDetailPage() {
           <div className="nd-meta">
             <span className="nd-meta__item"><Bell size={12} /> 운영팀</span>
             <span className="nd-meta__dot">·</span>
-            <span className="nd-meta__item">{notice.createdAt}</span>
+            <span className="nd-meta__item">{new Date(notice.createdAt).toLocaleDateString('ko-KR')}</span>
             <span className="nd-meta__dot">·</span>
             <span className="nd-meta__item"><Eye size={12} /> 조회 {notice.viewCount.toLocaleString()}</span>
           </div>
@@ -74,10 +74,6 @@ export default function NoticeDetailPage() {
           </button>
         ) : <div className="nd-nav__item nd-nav__item--empty" />}
       </div>
-
-      <button className="nd-list-btn" onClick={() => navigate('/support/notices')}>
-        목록으로
-      </button>
     </div>
   );
 }
