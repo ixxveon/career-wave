@@ -39,6 +39,14 @@ public class AuditLogDTO {
         @Schema(description = "Search keyword", example = "UPDATE_ADMIN_ROLE")
         String keyword,
 
+        @Schema(description = "Actor admin ID", example = "1")
+        @Min(1)
+        Long adminId,
+
+        @Size(max = 50)
+        @Schema(description = "Target type", example = "MEMBER")
+        String targetType,
+
         @Schema(description = "List range start", example = "2026-06-10T00:00:00Z")
         ZonedDateTime from,
 
