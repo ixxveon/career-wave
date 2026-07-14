@@ -95,7 +95,7 @@ function ScrappedJobPage() {
 
   const { data: scrapJobPage } = useDashboardBookmarks({
     keyword,
-    page: currentPage,
+    page: currentPage + 1,
     size: 10,
   });
   const scrappedJobs = scrapJobPage?.items ?? [];
@@ -194,7 +194,13 @@ function ScrappedJobPage() {
             </button>
           </div>
         ) : !hasScrapJobs ? (
-          <div className="cw-state-box">아직 스크랩한 채용공고가 없습니다.</div>
+          <div className="cw-state-box cw-scrap-empty">
+            <Bookmark size={28} aria-hidden="true" />
+            <strong>아직 스크랩한 채용공고가 없습니다.</strong>
+            <p>
+              관심 있는 채용공고를 저장하면 이곳에서 한눈에 확인할 수 있어요.
+            </p>
+          </div>
         ) : (
           <>
             <div className="cw-scrap-grid">
