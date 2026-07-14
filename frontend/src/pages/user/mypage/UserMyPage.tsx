@@ -411,6 +411,10 @@ function UserMyPage() {
             <span className="cw-badge-soon">구현 예정</span>
           </div>
 
+          <p className="cw-card-notice">
+            GitHub 연동 기능은 현재 이용할 수 없습니다. (v2 제공 예정)
+          </p>
+
           {hasGithubProfileError ? (
             <div className="cw-state-box is-error">
               GitHub 정보를 불러오지 못했습니다.
@@ -445,10 +449,8 @@ function UserMyPage() {
               <button
                 type="button"
                 className="cw-github-profile-button"
-                onClick={() =>
-                  alert("GitHub 프로필 이동은 API 연동 후 처리됩니다.")
-                }
-                disabled={!githubProfile?.linked}
+                disabled
+                title="GitHub OAuth 연동 기능은 v2에서 제공될 예정입니다."
               >
                 GitHub 프로필 보기
               </button>
@@ -514,23 +516,6 @@ function UserMyPage() {
                   />
                 </label>
 
-                {!isCompanyMember && (
-                  <label>
-                    GitHub URL
-                    <input
-                      type="text"
-                      value={editForm.githubUrl ?? ""}
-                      placeholder="https://github.com/username"
-                      onChange={(event) =>
-                        handleEditFormChange("githubUrl", event.target.value)
-                      }
-                    />
-                    <small className="cw-input-help">
-                      github.com/username 형식으로 입력하면 https://는 자동으로
-                      추가됩니다.
-                    </small>
-                  </label>
-                )}
               </div>
 
               {editErrorMessage && (

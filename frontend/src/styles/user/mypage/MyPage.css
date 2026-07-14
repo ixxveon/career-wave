@@ -3263,6 +3263,16 @@ Empty UI
   font-weight: 700;
 }
 
+.cw-card-notice {
+  margin: -4px 0 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff9ef;
+  color: #92610a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* 
 스크랩 공고 페이지
 */
